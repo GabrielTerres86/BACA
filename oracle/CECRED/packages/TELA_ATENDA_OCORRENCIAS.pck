@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ATENDA_OCORRENCIAS IS
   --  Sistema  : Procedimentos para tela Atenda / Ocorrencias
   --  Sigla    : CRED
   --  Autor    : Jean Michel
-  --  Data     : Setembro/2016.
+  --  Data     : Setembro/2016.                
   --
   -- Frequencia: -----
   -- Objetivo  : Procedimentos para retorno das informações da tela Atenda Ocorrências
@@ -15,7 +15,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ATENDA_OCORRENCIAS IS
 	--           23/01/2018 - Reginaldo (AMcom) 
   --
   ---------------------------------------------------------------------------------------------------------------
-
+  
   /* Busca dados de risco das contas (contratos de empréstimo e limite de crédito) */
   PROCEDURE pc_busca_dados_risco(pr_nrdconta IN crawepr.nrdconta%TYPE --> Número da conta
                                 ,pr_cdcooper IN crawepr.cdcooper%TYPE --> Código da cooperativa
@@ -26,7 +26,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ATENDA_OCORRENCIAS IS
                                 ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
                                 ,pr_des_erro OUT VARCHAR2);           --> Erros do processo
 
-						/* Busca contratos de acordos do Cooperado */
+  /* Busca contratos de acordos do Cooperado */
   PROCEDURE pc_busca_ctr_acordos(pr_nrdconta   IN crapceb.nrdconta%TYPE --Número da conta solicitada;
                                 ,pr_xmllog     IN VARCHAR2              --XML com informações de LOG
                                 ,pr_cdcritic  OUT PLS_INTEGER           --Código da crítica
@@ -49,9 +49,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
   -- Frequencia: -----
   -- Objetivo  : Procedimentos para retorno das informações da tela Atenda Ocorrências
   --
-  -- Alterado: Criada procedure pc_busca_dados_risco
-	--           23/01/2018 - Reginaldo (AMcom)          
-  --
+  -- Alterado: 23/01/2018 - Criada procedure pc_busca_dados_risco (Reginaldo/AMcom)
+    --
   ---------------------------------------------------------------------------------------------------------------
 
 	-- Registro para armazenar todos os dados que são exibidos em cada linha da aba de Riscos
@@ -1231,7 +1230,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
       ROLLBACK;
   END pc_busca_dados_risco;
 
-	 /* Busca contratos de acordos do Cooperado */
+  /* Busca contratos de acordos do Cooperado */
   PROCEDURE pc_busca_ctr_acordos(pr_nrdconta   IN crapceb.nrdconta%TYPE --Número da conta solicitada;
                                 ,pr_xmllog     IN VARCHAR2              --XML com informações de LOG
                                 ,pr_cdcritic  OUT PLS_INTEGER           --Código da crítica
@@ -1278,7 +1277,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
            AND tbrecup_acordo.cdsituacao = pr_cdsituacao;
 
       rw_acordo cr_acordo%ROWTYPE;
-
+     
       -- Variavel de criticas
       vr_dscritic VARCHAR2(10000);
 
@@ -1325,9 +1324,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
         gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'acordo',   pr_posicao => vr_contador, pr_tag_nova => 'nracordo', pr_tag_cont => TO_CHAR(rw_acordo.nracordo), pr_des_erro => vr_dscritic);
         gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'acordo',   pr_posicao => vr_contador, pr_tag_nova => 'dsorigem', pr_tag_cont => TO_CHAR(rw_acordo.dsorigem), pr_des_erro => vr_dscritic);
         gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'acordo',   pr_posicao => vr_contador, pr_tag_nova => 'nrctremp', pr_tag_cont => GENE0002.fn_mask_contrato(rw_acordo.nrctremp), pr_des_erro => vr_dscritic);
-
+        
         vr_contador := vr_contador + 1;
-      END LOOP;
+      END LOOP;    
 
       gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Dados', pr_posicao => 0, pr_tag_nova => 'qtdregis', pr_tag_cont => TO_CHAR(vr_contador), pr_des_erro => vr_dscritic);
 

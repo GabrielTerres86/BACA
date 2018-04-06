@@ -103,6 +103,8 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS287" (pr_cdcooper IN crapcop.cdcooper
                
                21/09/2017 - Ajustado para não gravar nmarqlog, pois so gera a tbgen_prglog
                             (Ana - Envolti - Chamado 746134)
+               12/01/2018 - Melhoria na gravacao de LOG ao gerar criticas no processamento dos cheques
+                            Heitor (Mouts) - Chamado 827706
      ............................................................................. */
 
      DECLARE
@@ -148,6 +150,8 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS287" (pr_cdcooper IN crapcop.cdcooper
        vr_tab_crapage  typ_tab_doctpchq;
        vr_tab_cheques  typ_tab_cheques;
 
+       vr_log_nrdconta crapass.nrdconta%type;
+       vr_log_dsdocmc7 crapcst.dsdocmc7%type;
        /* Cursores da rotina crps287 */
 
        -- Selecionar os dados da Cooperativa
@@ -529,6 +533,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS287" (pr_cdcooper IN crapcop.cdcooper
          vr_des_log := to_char(sysdate,'hh24:mi:ss')||' - ' || vr_cdprogra 
          || ' --> ' 
          || vr_dstpocorrencia
+         ||' Cta: '||vr_log_nrdconta||' - CMC7: '||vr_log_dsdocmc7||' - '
          || vr_des_erro                                  
          || ' - Module: ' || vr_modulo || ' - Action: ' || vr_acao;
 
@@ -731,6 +736,8 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS287" (pr_cdcooper IN crapcop.cdcooper
                                     ,pr_dtmvtolt  => rw_crapdat.dtmvtolt
                                     ,pr_dtmvtopr  => rw_crapdat.dtmvtopr ) LOOP
          BEGIN
+           vr_log_nrdconta := rw_crapcst.nrdconta;
+           vr_log_dsdocmc7 := rw_crapcst.dsdocmc7;
 
            --Criar ponto de restauracao
            SAVEPOINT sv_crapcst;
@@ -1416,6 +1423,8 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS287" (pr_cdcooper IN crapcop.cdcooper
            END IF; --last-of nrdconta
          EXCEPTION
            WHEN vr_exc_erro THEN
+             -- Gera log
+             pc_log;
              ROLLBACK TO SAVEPOINT sv_crapcst;
              --Levantar Excecao
              --Nao executar raise e pular para o proximo cheque

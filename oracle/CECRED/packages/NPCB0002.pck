@@ -133,30 +133,59 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0002 is
       Sistema : Cobranca - Cooperativa de Credito
       Sigla   : CRED
       Autor   : AJFink SD#791193
-      Data    : Novembro/2017.                     Ultima atualizacao: --/--/----
+      Data    : Novembro/2017.                     Ultima atualizacao: 08/12/2017
       Objetivo: Libera a sessao aberta no SQLSERVER. Implementada devido ao comando
                 select da funcao fn_datamov manter a sessao presa apos o fim
                 do processamento. Deve ser incluída após um commit/rollback.
-                Chamada na cobr0006, npcb0002 e pc_crps618.
 
-      Alteracoes: 
+      Alteracoes: 08/12/2017 - Inclusão do dblink JDNPCBISQL. Tratamento de exceção
+                               individualizado. Rotina deve ser chamada nos programas
+                               que são utilizados com Progress devido ao WebSpeed manter
+                               a sessão aberta e presa no SqlServer (SD#791193 - Ajfink)
 
     ******************************************************************************/
     --
+    dblink_not_open exception;
+    pragma exception_init(dblink_not_open,-2081);
+    --
   begin
     --
+    begin
+      --
     execute immediate 'ALTER SESSION CLOSE DATABASE LINK JDNPCSQL';
     --
   exception
+      when dblink_not_open then
+        null;
     when others then
       begin
-        npcb0001.pc_gera_log_npc( pr_cdcooper => 3,
-                                  pr_nmrotina => 'npcb0002.plssn('||pr_cdprogra_org||')',
-                                  pr_dsdolog  => sqlerrm);
+          npcb0001.pc_gera_log_npc(pr_cdcooper => 3
+                                  ,pr_nmrotina => 'npcb0002.plssn JDNPCSQL('||pr_cdprogra_org||')'
+                                  ,pr_dsdolog  => sqlerrm);
+        exception
+          when others then
+            null;
+        end; 
+    end;
+    --
+    begin
+      --
+      execute immediate 'ALTER SESSION CLOSE DATABASE LINK JDNPCBISQL';
+      --
+    exception
+      when dblink_not_open then
+        null;
+      when others then
+        begin
+          npcb0001.pc_gera_log_npc(pr_cdcooper => 3
+                                  ,pr_nmrotina => 'npcb0002.plssn JDNPCBISQL('||pr_cdprogra_org||')'
+                                  ,pr_dsdolog  => sqlerrm);
       exception
         when others then
           null;
       end; 
+    end;
+    --
   end pc_libera_sessao_sqlserver_npc;
 
   --> Rotina para consultar os titulos CIP
@@ -1436,7 +1465,7 @@ end;';
       Sistema  : Conta-Corrente - Cooperativa de Credito
       Sigla    : CRED
       Autor    : Odirlei Busana(AMcom)
-      Data     : Setembro/2017.                   Ultima atualizacao: 03/01/2018
+      Data     : Setembro/2017.                   Ultima atualizacao: 12/01/2018
     
       Dados referentes ao programa:
     
@@ -1446,12 +1475,13 @@ end;';
                                periodo de convivencia será tratado por faixa de valores
                                (Douglas - Chamado 823963)
         
+                  12/01/2018 - Ajuste para validar o valor do titulo e o valor informado
+                               utilizando ROUND na comparação (Douglas - Chamado 817561)
     ..........................................................................*/
   
     vr_flconviv  INTEGER;
     vr_idrollout INTEGER;
   BEGIN
-  
     vr_flconviv := NPCB0001.fn_valid_periodo_conviv (pr_dtmvtolt => pr_dtmvtolt
                                                     ,pr_vltitulo => pr_vltitulo);
       
@@ -1465,7 +1495,7 @@ end;';
     
       IF pr_flgregis = 0 THEN
         --> se estiver no rollout e valor informado for menor que valor do titulo
-        IF vr_idrollout = 1 AND pr_vlinform < pr_vltitulo THEN
+        IF vr_idrollout = 1 AND ROUND(pr_vlinform, 2) < ROUND(pr_vltitulo, 2) THEN
           RETURN 0; -- Nao permitir        
         ELSE
           -- se nao estiver no rollout ou valor nao for menor
@@ -1475,7 +1505,7 @@ end;';
       ELSE
         IF pr_flgpgdiv = 0 THEN
            -- Se o valor informado for menor que valor do titulo
-           IF pr_vlinform < pr_vltitulo THEN
+           IF ROUND(pr_vlinform, 2) < ROUND(pr_vltitulo, 2) THEN
              RETURN 0; -- Nao permitir     
            ELSE
              -- se nao estiver no rollout ou valor nao for menor

@@ -22,7 +22,7 @@ CREATE OR REPLACE PACKAGE CECRED.GENE0001 AS
   --
   -- 11/11/2016 - Inclusao da origem MOBILE e ACORDO no type de origens. PRJ335 - Analise Fraudes(Odirlei-AMcom)
   --  
-  -- 24/01/2016 - Incluido Origem ANTIFRAUDE. PRJ335 - Analise de fraude (Odirlei-AMcom)
+  -- 24/01/2016 - Incluido Origem ANTIFRAUDE. PRJ335 - Analise de fraude (Odirlei-AMcom) 
   --
   --
   --  08/06/2017 - #665812 le cadastro de critica CRAPCRI (Belli-Envolti)
@@ -30,6 +30,8 @@ CREATE OR REPLACE PACKAGE CECRED.GENE0001 AS
   --  09/06/2017 - #660327 informa acesso dispara a procudere pc_set_modulo  (Belli-Envolti)
   --  16/06/2017 - #660327 Alteração incluindo num comando setar a forma de data e o decimal(Belli-Envolti)
   --  29/06/2017 - #660306 Alteração incluindo a possibilidade de setar somente a Action do Oracle (Belli-Envolti)
+  --
+  --  23/08/2017 - Incluido procedure pc_valida_senha_AD. (PRJ339 - Reinert)
   --  24/10/2017 - #714566 Procedimento para verificar/controlar a execução de programas (Belli-Envolti)
   --
   --  14/12/2017 - Criação nova funçao para busca de quantidade total de paralelismo por cooperativa
@@ -160,6 +162,12 @@ CREATE OR REPLACE PACKAGE CECRED.GENE0001 AS
   PROCEDURE pc_lista_arquivos(pr_lista_arquivo OUT TYP_SIMPLESTRINGARRAY
                              ,pr_path          IN VARCHAR2
                              ,pr_pesq          IN VARCHAR2);
+
+  /* Procedimento para mover arquivo */
+  PROCEDURE pc_mv_arquivo(pr_dsarqori IN VARCHAR2 -- arquivo origem
+                         ,pr_dsarqdes IN VARCHAR2 -- arquivo destino
+                         ,pr_typ_saida OUT VARCHAR2
+                         ,pr_des_saida OUT VARCHAR2);
 
   /* Rotina para executar comandos Host pendentes de execução na tabela CRAPCSO */
   PROCEDURE pc_process_OSCommand_penden(pr_nrseqsol  IN crapcso.nrseqsol%TYPE DEFAULT NULL
@@ -374,7 +382,7 @@ CREATE OR REPLACE PACKAGE CECRED.GENE0001 AS
 
   /* Listagem das cooperativas */
   PROCEDURE pc_lista_cooperativas (pr_des_lista OUT VARCHAR2);
-  
+
   /* Verificacao do controle do batch por agencia ou convenio */
   PROCEDURE pc_verifica_batch_controle(pr_cdcooper    IN tbgen_batch_controle.cdcooper%TYPE    -- Codigo da Cooperativa
                                       ,pr_cdprogra    IN tbgen_batch_controle.cdprogra%TYPE    -- Codigo do Programa
@@ -403,8 +411,17 @@ CREATE OR REPLACE PACKAGE CECRED.GENE0001 AS
   PROCEDURE pc_finaliza_batch_controle(pr_idcontrole IN tbgen_batch_controle.idcontrole%TYPE -- ID de Controle
                                       ,pr_cdcritic  OUT crapcri.cdcritic%TYPE                -- Codigo da critica
                                       ,pr_dscritic  OUT crapcri.dscritic%TYPE);              -- Descricao da critica
-  
 
+  
+  --> Validar conclusao do processo do controle do batch
+  PROCEDURE pc_valid_batch_controle(pr_cdcooper    IN tbgen_batch_controle.cdcooper%TYPE    -- Codigo da Cooperativa
+                                   ,pr_cdprogra    IN tbgen_batch_controle.cdprogra%TYPE    -- Codigo do Programa
+                                   ,pr_dtmvtolt    IN tbgen_batch_controle.dtmvtolt%TYPE    -- Data de Movimento
+                                   ,pr_nrexecucao  IN tbgen_batch_controle.nrexecucao%TYPE  -- Numero de identificacao da execucao do programa
+                                   ,pr_cdcritic   OUT crapcri.cdcritic%TYPE                 -- Codigo da critica
+                                   ,pr_dscritic   OUT crapcri.dscritic%TYPE);               -- Descricao da critica
+  
+  
   -- Definição de tabela de memória que compreende a mesma estrutura da crapcri
   -- Chamado 665812
   TYPE typ_reg_crapcri IS
@@ -433,8 +450,15 @@ CREATE OR REPLACE PACKAGE CECRED.GENE0001 AS
   -- Chamado 660327
   PROCEDURE pc_set_modulo(pr_module IN VARCHAR2
                          ,pr_action IN VARCHAR2 DEFAULT NULL);
+--           
+  /* Validar senha dos operadores no AD */
+  PROCEDURE pc_valida_senha_AD(pr_cdcooper IN crapcop.cdcooper%TYPE  --Codigo Cooperativa                 
+                              ,pr_cdoperad IN VARCHAR2 DEFAULT NULL  --Operador operador                    
+															,pr_nrdsenha IN VARCHAR2               --Numero da senha                                            
+															,pr_cdcritic OUT PLS_INTEGER           --Código da crítica
+                              ,pr_dscritic OUT VARCHAR2);            --Descrição da crítica
 
-                         
+
   /* Procedimento para verificar/controlar a execução de programas */
   -- Chamado 714566
   PROCEDURE pc_controle_exec ( pr_cdcooper  IN crapcop.cdcooper%TYPE        --> Código da coopertiva
@@ -480,7 +504,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
   --  Sistema  : Rotinas genéricas
   --  Sigla    : GENE
   --  Autor    : Marcos E. Martini - Supero
-  --  Data     : Novembro/2012.                   Ultima atualizacao: 24/10/2017
+  --  Data     : Novembro/2012.                   Ultima atualizacao: 19/02/2018
   --
   -- Dados referentes ao programa:
   --
@@ -517,6 +541,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
   --
   --             18/12/2017 - Criação nova funçao para busca de quantidade total registro por commit
   --                          Projeto Ligeirinho. (Jonatas Jaqmam - AMcom)   
+  --
+  --             01/12/2017 - Na rotina pc_submit_job, alterado a forma como é tratado o parâmetro pr_jobname
+  --                          para melhorar os eventuais logs (Carlos)
+  --
+  --             19/02/2018 - #827612 Criado o procedimento pc_mv_arquivo para usar o tipo de comando mv_grid, criado
+  --                          na função fn_type_comando. Este tipo de comando foi criado para usar o user grid no
+  --                          exec_comando_oracle.sh para ganho de performance (Carlos)
   ---------------------------------------------------------------------------------------------------------------
 
   -- Busca do diretório conforme a cooperativa conectada
@@ -1041,6 +1072,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
       vr_typ_comando := 'lp';
     ELSIF UPPER(pr_typ_comando) IN ('SR') THEN
       vr_typ_comando := 'shell_remoto';
+    ELSIF UPPER(pr_typ_comando) IN ('MV') THEN
+      vr_typ_comando := 'mv_grid';
     ELSE
       -- Gerar erro
       pr_des_erro := 'PT_TYP_COMANDO :'||pr_typ_comando||' não suportado';
@@ -1049,6 +1082,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
     -- Retornar
     RETURN vr_typ_comando;
   END;
+
+  /* Procedimento para mover arquivo com o user grid no exec_comando_oracle */
+  PROCEDURE pc_mv_arquivo(pr_dsarqori IN VARCHAR2
+                         ,pr_dsarqdes IN VARCHAR2
+                         ,pr_typ_saida  OUT VARCHAR2
+                         ,pr_des_saida  OUT VARCHAR2) IS
+  BEGIN
+    BEGIN
+      pc_OScommand(pr_typ_comando => 'mv'
+                  ,pr_des_comando => pr_dsarqori || ' ' || pr_dsarqdes
+                  ,pr_flg_aguard  => 'S'
+                  ,pr_typ_saida   => pr_typ_saida
+                  ,pr_des_saida   => pr_des_saida);
+      EXCEPTION
+        WHEN OTHERS THEN
+          cecred.pc_internal_exception;
+    END;
+  END pc_mv_arquivo;
 
     /* Rotina para executar o comando solicitado  */
   PROCEDURE pc_executa_OSCommand(pr_nrseqsol    IN crapcso.nrseqsol%TYPE    --> Sequencia da solicitação
@@ -1158,6 +1209,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
               pr_typ_saida := 'ERR';
               pr_des_saida := 'Erro gene0001.pc_executa_OSCommand: '||vr_des_erro;
             WHEN OTHERS THEN
+              cecred.pc_internal_exception;
               pr_typ_saida := 'ERR';
               pr_des_saida := 'Erro geral gene0001.pc_executa_OSCommand: '||SQLERRM;
           END;
@@ -2748,12 +2800,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
                     ||' - Prox Exec: '||pr_interva|| chr(13) ||'Bloco PLSQL: '||chr(13)||pr_dsplsql||chr(13)
                     ||' Nenhum registro de erro no momento da submissao '||chr(13)
                     ||'*******************************************************************************************************');
-
+                    
       COMMIT;
       
     EXCEPTION
       WHEN OTHERS THEN
-      cecred.pc_internal_exception(pr_compleme => '_'||pr_jobname ||'_');  
+      cecred.pc_internal_exception(pr_compleme => 'Job:'||pr_jobname);  
       
         ROLLBACK;
         -- Preparar saída com erro
@@ -3111,6 +3163,73 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
     --
   END pc_grava_batch_controle;
 
+  
+  --> Validar conclusao do processo do controle do batch
+  PROCEDURE pc_valid_batch_controle(pr_cdcooper    IN tbgen_batch_controle.cdcooper%TYPE    -- Codigo da Cooperativa
+                                   ,pr_cdprogra    IN tbgen_batch_controle.cdprogra%TYPE    -- Codigo do Programa
+                                   ,pr_dtmvtolt    IN tbgen_batch_controle.dtmvtolt%TYPE    -- Data de Movimento
+                                   ,pr_nrexecucao  IN tbgen_batch_controle.nrexecucao%TYPE  -- Numero de identificacao da execucao do programa
+                                   ,pr_cdcritic   OUT crapcri.cdcritic%TYPE                 -- Codigo da critica
+                                   ,pr_dscritic   OUT crapcri.dscritic%TYPE) IS             -- Descricao da critica
+    /*..............................................................................
+
+       Programa: pc_valid_batch_controle
+       Autor   : Odirlei Busana - AMcom
+       Data    : Janeiro/2018                    Ultima atualizacao: 
+
+       Dados referentes ao programa:
+
+       Objetivo: Validar conclusao do processo do controle do batch
+
+       Alteracoes: 
+
+    ..............................................................................*/
+    ---->> CURSORES <<----    
+    --> verificar se existe alguum processo que não conclui com sucesso para ser abortado.
+    CURSOR cr_tbbtch ( pr_cdcooper tbgen_batch_controle.cdcooper%TYPE, 
+                       pr_cdprogra tbgen_batch_controle.cdprogra%TYPE, 
+                       pr_dtmvtolt tbgen_batch_controle.dtmvtolt%TYPE, 
+                       pr_nrexecuc tbgen_batch_controle.nrexecucao%TYPE)IS
+      SELECT 1
+        FROM tbgen_batch_controle ctr
+       WHERE ctr.cdcooper = pr_cdcooper
+         AND ctr.cdprogra = pr_cdprogra
+         AND ctr.dtmvtolt = pr_dtmvtolt
+         AND ctr.nrexecucao = pr_nrexecuc
+         AND ctr.insituacao = 1 ;  
+    rw_tbbtch cr_tbbtch%ROWTYPE;
+    --->> VARIAVEIS <<---
+    vr_exec_erro EXCEPTION;
+    vr_dscritic  VARCHAR2(3000);
+    vr_cdcritic  NUMBER;
+    
+  BEGIN
+    
+    --> verificar se existe alguum processo que não conclui com sucesso para ser abortado.
+    OPEN cr_tbbtch ( pr_cdcooper => pr_cdcooper,
+                     pr_cdprogra => pr_cdprogra,
+                     pr_dtmvtolt => pr_dtmvtolt,
+                     pr_nrexecuc => pr_nrexecucao);
+    FETCH cr_tbbtch INTO rw_tbbtch;
+    IF cr_tbbtch%FOUND THEN 
+      CLOSE cr_tbbtch;
+      
+      vr_dscritic := 'Rotina paralela '||pr_cdprogra||' terminou com ERRO.';
+      RAISE vr_exec_erro;
+    ELSE
+      CLOSE cr_tbbtch;
+    END IF;
+    
+  EXCEPTION
+    WHEN vr_exec_erro THEN
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := vr_dscritic;    
+    WHEN OTHERS THEN
+      pr_cdcritic := 0;
+      pr_dscritic := 'Erro na rotina GENE0001.pc_valid_batch_controle: ' || SQLERRM;
+  END pc_valid_batch_controle;
+
+
   /* Finaliza o controle do batch por agencia ou convenio */
   PROCEDURE pc_finaliza_batch_controle(pr_idcontrole IN tbgen_batch_controle.idcontrole%TYPE -- ID de Controle
                                       ,pr_cdcritic  OUT crapcri.cdcritic%TYPE                -- Codigo da critica
@@ -3286,6 +3405,67 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
     end if;       
   END;
 
+  /* Validar senha dos operadores no AD */
+  PROCEDURE pc_valida_senha_AD(pr_cdcooper IN crapcop.cdcooper%TYPE  --Codigo Cooperativa                 
+                              ,pr_cdoperad IN VARCHAR2 DEFAULT NULL  --Operador operador                    
+															,pr_nrdsenha IN VARCHAR2               --Numero da senha                                            
+															,pr_cdcritic OUT PLS_INTEGER           --Código da crítica
+                              ,pr_dscritic OUT VARCHAR2) IS          --Descrição da crítica
+		/*..............................................................................
+			 Programa: pc_valida_senha_AD
+			 Autor   : Lucas Reinert
+			 Data    : Agosto/2017                        Ultima atualizacao: --/--/----
+
+			 Dados referentes ao programa:
+
+			 Objetivo  : Rotina responsável em fazer a validação da senha dos operadores 
+									 no AD (Active Directory).
+
+			 Alteracoes:
+		..............................................................................*/
+		-- Tratamento de erros
+		vr_exc_erro  EXCEPTION;
+		vr_cdcritic  PLS_INTEGER;
+		vr_dscritic  VARCHAR2(4000);
+		vr_typ_saida VARCHAR2(100);
+		
+		-- Variáveis auxiliares
+		vr_dscomando VARCHAR2(1000);
+	  BEGIN
+			-- Montar comando UNIX
+			vr_dscomando := '/usr/local/bin/exec_comando_oracle.sh shell_remoto /usr/local/bin/autentica_ayllos_ad.sh '||pr_cdoperad||' '||pr_nrdsenha;
+			-- Executar o comando UNIX
+			GENE0001.pc_Oscommand_Shell(pr_des_comando => vr_dscomando
+																 ,pr_flg_aguard => 'S'
+																 ,pr_typ_saida   => vr_typ_saida
+																 ,pr_des_saida   => vr_dscritic);
+	                         
+			IF vr_typ_saida = 'ERR' OR TRIM(vr_dscritic) LIKE '%FALHA%' THEN
+			  -- Retorna código referente mensagem de senha errada
+				vr_cdcritic := 3;
+				vr_dscritic := '';
+				RAISE vr_exc_erro;
+			END IF;    
+			
+    EXCEPTION
+      WHEN vr_exc_erro THEN
+        -- Se possui código da crítica
+        IF vr_cdcritic > 0  AND TRIM(vr_dscritic) IS NULL THEN
+					-- Busca a descrição da crítica
+					vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+				END IF;
+				-- Retornar críticas parametrizadas
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+
+      WHEN OTHERS THEN
+
+        pr_cdcritic := 0;
+        pr_dscritic := 'Erro na rotina GENE0001.pc_valida_senha_AD --> ' || SQLERRM;
+
+	END pc_valida_senha_AD;
+
+
   /* Procedimento para verificar/controlar a execução de programas */
   PROCEDURE pc_controle_exec ( pr_cdcooper  IN crapcop.cdcooper%TYPE        --> Código da coopertiva
                               ,pr_cdtipope  IN VARCHAR2                     --> Tipo de operacao I-incrementar, C-Consultar e V-Validar
@@ -3301,7 +3481,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
   --   Sigla   : CRED
   --   Autor   : Belli - Envolti
   --   Data    : Agosto/2017                       Ultima atualizacao: 
-  --
+--  
   -- Dados referentes ao programa:
   --
   -- Frequencia: Sempre que chamado
@@ -3324,7 +3504,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
     vr_dtctlexc  DATE   := NULL;
     vr_qtctlexc  INTEGER := 0;
     vr_qtdexec   INTEGER := 0;
-    
+
     --
     vr_nmsistem        crapprm.nmsistem%TYPE := 'CRED';
     vr_cdacesso_ctl    crapprm.cdacesso%TYPE;
@@ -3462,14 +3642,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
       ELSE
         vr_qtdexec := nvl(vr_qtctlexc,0) + 1;
       END IF;            
-
-      BEGIN
+		
+	  BEGIN
         UPDATE crapprm
            SET crapprm.dsvlrprm = to_char(pr_dtmvtolt,'DD/MM/RRRR')||'#'||vr_qtdexec
          WHERE nmsistem =  vr_nmsistem
            AND cdcooper IN (pr_cdcooper,0) --> Busca tanto da passada, quanto da geral (se existir)
            AND cdacesso =  vr_cdacesso_ctl;
-        
+	                         
         IF SQL%ROWCOUNT <> 1 THEN
           vr_dscritic := 'Não foi possível atualizar parâmetro , SQL%ROWCOUNT: '||SQL%ROWCOUNT;
           RAISE vr_exc_erro;
@@ -3481,7 +3661,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
           -- No caso de erro de programa gravar tabela especifica de log  
           CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);   
           vr_dscritic := 'Não foi possível atualizar parâmetro '||vr_cdacesso_ctl||':'||SQLERRM;
-          RAISE vr_exc_erro;
+				RAISE vr_exc_erro;
       END;
     --> Validar
     ELSIF pr_cdtipope = 'V' THEN
@@ -3503,15 +3683,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
       pr_flultexe := 1;
     ELSE
       pr_flultexe := 0;
-    END IF;
-
+			END IF;    
+			
     pr_qtdexec := vr_qtdexec;
 
-  EXCEPTION
+    EXCEPTION
     WHEN vr_exc_mensagem THEN  
       -- Efetuar retorno do erro tratado
       pr_dscritic := vr_dscritic;
-    WHEN vr_exc_erro THEN  
+      WHEN vr_exc_erro THEN
       -- Efetuar retorno do erro não tratado
       pr_cdcritic := 9999;
       pr_dscritic := vr_dscritic;
@@ -3526,7 +3706,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
       -- Controla Controla log em banco de dados
       pc_controla_log_programa;
   END;
-  --
+--  
   FUNCTION fn_retorna_qt_paralelo( pr_cdcooper  IN crapcop.cdcooper%TYPE    --> Código da coopertiva
                                  , pr_cdprogra  IN crapprg.cdprogra%TYPE)   --> Codigo do programa
            RETURN tbgen_batch_param.qtparalelo%TYPE IS
@@ -3658,7 +3838,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
     FETCH cr_controle INTO vr_cdrestart;
     IF cr_controle%NOTFOUND THEN  
       vr_cdrestart := 0;
-    END IF;
+				END IF;
     CLOSE cr_controle;
     
     RETURN vr_cdrestart; 
@@ -3674,7 +3854,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
     
     v_qt_erro NUMBER := 0;
   BEGIN
-    
+
     BEGIN
       select count(*)
         into v_qt_erro
@@ -3686,13 +3866,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.GENE0001 AS
          AND c.tpagrupador = pr_tpagrupador
          and c.insituacao  = 1;
      EXCEPTION
-       WHEN OTHERS THEN
+      WHEN OTHERS THEN
          v_qt_erro := 0;
      END; 
-     
-     RETURN v_qt_erro; 
-    
-  END;  
 
+     RETURN v_qt_erro; 
+
+  END;  
+															 
 END GENE0001;
 /

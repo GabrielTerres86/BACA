@@ -5,14 +5,17 @@ CREATE OR REPLACE PACKAGE CECRED.AFRA0001 is
       Sistema  : Rotinas referentes a Analise de Fraude
       Sigla    : AFRA
       Autor    : Odirlei Busana - AMcom
-      Data     : Novembro/2016.                   Ultima atualizacao: 10/11/2016
+      Data     : Novembro/2016.                   Ultima atualizacao: 02/02/2018
 
       Dados referentes ao programa:
 
       Frequencia: -----
       Objetivo  : Rotinas referentes a Analise de Fraude.
 
-      Alteracoes:
+      Alteracoes:		02/02/2018 - Ajuste na variável pr_dhoperac para que sejam desconsiderados
+								     os segundos, desta forma a cursor se torna compatível com  os 
+									 intervalos cadastrados na Tela CADFRA.
+									 Chamado 789957 - Gabriel (Mouts).
 
   ---------------------------------------------------------------------------------------------------------------*/
   
@@ -1634,7 +1637,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
     
       Frequencia: Sempre que for chamado
       Objetivo  : Excecutar rotinas referentes a reprovação da analise de fraude
-      
+      Alteração : 
+        
       Alteração : 06/06/2017 - Ajustado para usar a data dtmvtocd para estornar a TED.
                                PRJ335- Analise de fraude(Odirlei-AMcom)
         
@@ -3327,8 +3331,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
         FROM tbgen_analise_fraude_interv w 
        WHERE w.cdoperacao = pr_cdoperac
          AND w.tpoperacao = pr_tpoperac     
-         AND w.hrinicio <= to_char(pr_dhoperac,'SSSSS')
-         AND w.hrfim    >= to_char(pr_dhoperac,'SSSSS');
+         AND w.hrinicio <= to_char(trunc(pr_dhoperac,'MI'),'SSSSS')
+         AND w.hrfim    >= to_char(trunc(pr_dhoperac,'MI'),'SSSSS');
     rw_afrainter cr_afrainter%ROWTYPE;     
 
     

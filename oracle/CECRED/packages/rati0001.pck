@@ -126,14 +126,14 @@ CREATE OR REPLACE PACKAGE CECRED.rati0001 is
   --                            e TRIM na variável pr_flgefeti(erro quando vem pela EMPR0001)
   --                         Ajuste na pc_ativa_rating para atribuir ROWID à variavel(Guilherme/SUPERO)
   --
-  --      03/06/2016   Alteracao na atribuicao de notas do rating, se for AA, deve
-  --                   assumir a nota referente ao risco A.
-  --             Chamado 431839 (Andrey - RKAM)
+  --			03/06/2016	 Alteracao na atribuicao de notas do rating, se for AA, deve
+  --			             assumir a nota referente ao risco A.
+  --						 Chamado 431839 (Andrey - RKAM)
    --
   --            10/05/2016 - Ajustes referente a conversão da tela ATURAT
   --                         (Andrei - RKAM).
   --
-  --      13/10/2016 - Ajuste na leitura da craptab para utilização de cursor padrão (Rodrigo)
+  --			13/10/2016 - Ajuste na leitura da craptab para utilização de cursor padrão (Rodrigo)
   --
   --            08/11/2016 - Salvar o valor de endividamento em uma variavel de escopo global, pois em
   --                         algumas situacoes, nao estava gravando o valor considerado para rateio
@@ -144,7 +144,7 @@ CREATE OR REPLACE PACKAGE CECRED.rati0001 is
   --                         corretamente para a tela ATURAT. Heitor (Mouts)
   --
   --            15/05/2017 - Tornado procedure pc_nivel_comprometimento publica. (Reinert)
-  --
+	--
   --            28/06/2017 - Acerto da logica procedure pc_param_valor_rating
   --                       - Acerto do padrão de retorno das situações de mensagem
   --                       - Inclusão para setar o modulo de todas procedures da Package
@@ -154,7 +154,7 @@ CREATE OR REPLACE PACKAGE CECRED.rati0001 is
   --                         fatura de cartao de credito (Anderson).
   --
   --            11/10/2017 - Liberacao da melhoria 442 (Heitor - Mouts)
-  --            
+  --
   --            30/01/2018 - Ajuste na flgcriar para que faca o update na tabela crapnrc antes da rotina de limpeza de ratings antigos.
   --                         Heitor (Mouts) - Chamado 839107.
 
@@ -162,6 +162,10 @@ CREATE OR REPLACE PACKAGE CECRED.rati0001 is
   --			             Alterado pc_natureza_operacao para demais parâmetros. 
   --						 (Diego Simas - AMcom) 
   --
+  --            28/03/2018 - Alterar conversao de char para number, ao inves de usar o to_number, 
+  --                         vai utilizar funcao generica da gene0002. Essa funcao ja le os parametros 
+  --                         de formatacao numerica do banco de dados e converte adequadamente, evitando 
+  --                         problemas ao executar a rati0001 por job. Heitor (Mouts)
   ---------------------------------------------------------------------------------------------------------------
   -- Tipo de Tabela para dados provisao CL
   TYPE typ_tab_dsdrisco IS TABLE OF VARCHAR2(5) INDEX BY PLS_INTEGER;
@@ -281,7 +285,7 @@ CREATE OR REPLACE PACKAGE CECRED.rati0001 is
     INDEX BY varchar2(15); --nrtopico(5) + nritetop(5) +nrseqite(5)
 
   /* Tipo para retornar uma lista de contrados a liquidar */
-  TYPE typ_vet_nrctrliq IS VARRAY(10) OF PLS_INTEGER;    
+  TYPE typ_vet_nrctrliq IS VARRAY(10) OF PLS_INTEGER;		
 
   /* Rotina responsavel por buscar a descrição da operacao do tipo de contrato */
   FUNCTION fn_busca_descricao_operacao (pr_tpctrrat IN INTEGER) --Tipo Contrato Rating
@@ -551,7 +555,7 @@ CREATE OR REPLACE PACKAGE CECRED.rati0001 is
                                ,pr_tab_impress_risco_cl OUT rati0001.typ_tab_impress_risco --> Registro Nota e risco do cooperado naquele Rating - PROVISAOCL
                                ,pr_tab_impress_risco_tl OUT rati0001.typ_tab_impress_risco --> Registro Nota e risco do cooperado naquele Rating - PROVISAOTL
                                ,pr_des_reto             OUT VARCHAR2);          --> Indicador erro IS
-                               
+															 
   /* Item 3_1 (Pessoa Fisica) e  5_2 (Pessoa juridica) do Rating */
   PROCEDURE pc_nivel_comprometimento(pr_cdcooper     IN crapcop.cdcooper%TYPE --> Cooperativa conectada
                                     ,pr_cdoperad     IN crapnrc.cdoperad%TYPE --> Código do operador
@@ -566,7 +570,7 @@ CREATE OR REPLACE PACKAGE CECRED.rati0001 is
                                     ,pr_flgdcalc     IN PLS_INTEGER           --> Flag para calcular sim ou não
                                     ,pr_inusatab     IN BOOLEAN               --> Indicador de utilização da tabela de juros
                                     ,pr_vltotpre    OUT NUMBER                --> Valor calculado da prestação
-                                    ,pr_dscritic    OUT VARCHAR2);            --> Descrição de erro                               
+                                    ,pr_dscritic    OUT VARCHAR2);            --> Descrição de erro															 
                                     
   /*****************************************************************************
                   Gravar dados do rating do cooperado
@@ -587,7 +591,7 @@ CREATE OR REPLACE PACKAGE CECRED.rati0001 is
                            ,pr_flgerlog IN INTEGER               --> Identificador de geração de log
                            ,pr_cdcritic OUT NUMBER               --> Codigo Critica
                            ,pr_dscritic OUT VARCHAR2);           --> Descricao critica
-
+                                    
   PROCEDURE pc_grava_his_crapnrc(pr_cdcooper IN crapcop.cdcooper%type
                                 ,pr_nrdconta IN crapass.nrdconta%type
                                 ,pr_nrctrrat IN crapnrc.nrctrrat%type
@@ -695,17 +699,17 @@ CREATE OR REPLACE PACKAGE CECRED.rati0001 is
                                       ,pr_tab_erro             OUT gene0001.typ_tab_erro --> Tabela de retorno de erro
                                       ,pr_des_reto             OUT VARCHAR2);
 
-  /****************************************************************************
+  /* ***************************************************************************
      
      Procedimento para atualização das perguntas de Garantia e Liquidez após 
      alteração dos avalistas na proposta de Empréstimo 
                                        
-  ****************************************************************************/
+     *************************************************************************** */
   PROCEDURE pc_atuali_garant_liquid_epr(pr_cdcooper     IN crapcop.cdcooper%TYPE --> Cooperativa conectada
                                        ,pr_nrdconta     IN crapass.nrdconta%TYPE --> Conta do associado
                                        ,pr_nrctrato     IN crapnrc.nrctrrat%TYPE --> Número do contrato de Rating
-                                       ,pr_dscritic    OUT VARCHAR2);            --> Descrição de erro               
-
+                                       ,pr_dscritic    OUT VARCHAR2);            --> Descrição de erro						   
+                                    
   /***************************************************************************     
     Função para retornar ID Qualificação quando alterado pelo controle.                                       
   ****************************************************************************/       
@@ -786,7 +790,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
   wglb_vlutiliz           number;
   vr_dsvalite             varchar2(50);
   vr_flghisto             number;
-  
+
   /*Variaveis para gravar informacoes utilizadas no rating*/
   rat_dtadmiss   cecred.tbrat_informacao_rating.dtadmiss_cooperado%type;
   rat_qtmaxatr   cecred.tbrat_informacao_rating.qtdias_max_atraso%type;
@@ -1206,8 +1210,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
 
     BEGIN
       
-      -- Incluir nome do módulo logado - Chamado 660306 28/06/2017           
-      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_obtem_risco');    
+	    -- Incluir nome do módulo logado - Chamado 660306 28/06/2017           
+		  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_obtem_risco');    
       
       --Inicializar variavei de retorno
       pr_cdcritic:= NULL;
@@ -1333,8 +1337,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
       
     BEGIN
       
-      -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
-      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_param_valor_rating');       
+	    -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
+		  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_param_valor_rating');       
       
       pr_dscritic := NULL;
       pr_cdcritic := NULL;
@@ -1351,9 +1355,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
           -- Adicionar no vetor cmfe a cooperativa do registro e o valor
           -- de rating está nas 11 posições a partir do caracter 15 do parâmetro
           vr_vet_vlrating(rw_craptab.cdcooper) := gene0002.fn_char_para_number(substr(rw_craptab.dstextab,15,11));
-                                            
-        -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
-      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_param_valor_rating');     
+		                        	              
+	      -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
+		  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_param_valor_rating');     
         END LOOP;
       END IF;
       -- Com a temp-table carregada, iremos buscar o valor correspondente a cooperativa solicitada
@@ -1406,8 +1410,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
          WHERE cdcooper = pr_cdcooper;
     BEGIN
       
-      -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
-      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_valor_maximo_legal');        
+	    -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
+		  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_valor_maximo_legal');        
       
       -- Buscar na CADCOP
       OPEN cr_crapcop;
@@ -1456,8 +1460,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
     ............................................................................. */
     BEGIN
       
-      -- Incluir nome do módulo logado - Chamado 660306 28/06/2017 
-      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_limpa_rating_origem');       
+	    -- Incluir nome do módulo logado - Chamado 660306 28/06/2017 
+		  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_limpa_rating_origem');       
       
       UPDATE crapnrc
          SET flgorige = 0 -- False
@@ -1513,8 +1517,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
            AND nrctrrat = pr_nrctrato;
     BEGIN
       
-      -- Incluir nome do módulo logado - Chamado 660306 28/06/2017 
-      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_grava_rating_origem');        
+	    -- Incluir nome do módulo logado - Chamado 660306 28/06/2017 
+		  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_grava_rating_origem');        
       
       -- Se já foi passado o Rowid a processar
       IF pr_rowidnrc IS NOT NULL THEN
@@ -1592,8 +1596,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
       rw_crapnrc cr_crapnrc%ROWTYPE;
     BEGIN
       
-      -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
-      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_muda_situacao_efetivo');
+	    -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
+		  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_muda_situacao_efetivo');
       
       -- Buscar as informações do rating a partir do Rowid
       OPEN cr_crapnrc;
@@ -1712,8 +1716,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
       vr_flgativo crapnrc.flgativo%TYPE; -- Flag para ativação ou não do rating
     BEGIN
       
-      -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
-      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_muda_situacao_proposto');       
+	    -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
+		  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_muda_situacao_proposto');       
       
       -- Buscar as informações do rating a partir do Rowid
       OPEN cr_crapnrc;
@@ -1758,8 +1762,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
                               ,pr_nrdconta => pr_nrdconta   --> Conta do associado
                               ,pr_dscritic => pr_dscritic); --> Descritivo do erro
       
-        -- Incluir nome do módulo logado - Chamado 660306 28/06/2017 
-        GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_muda_situacao_proposto');      
+	      -- Incluir nome do módulo logado - Chamado 660306 28/06/2017 
+	      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_muda_situacao_proposto');      
       
         -- Se encontrou erro
         IF pr_dscritic IS NOT NULL THEN
@@ -1827,8 +1831,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
                   dtmvtolt desc;
     BEGIN
       
-      -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
-      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_procura_pior_nota');       
+	    -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
+	    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_procura_pior_nota');       
       
       -- Para cada registro de rating
       FOR rw_crapnrc IN cr_crapnrc LOOP
@@ -1883,8 +1887,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
     vr_nrctrliq crawepr.nrctremp%TYPE;
   BEGIN
       
-    -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
-    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.fn_traz_liquidacoes');         
+	  -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
+	  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.fn_traz_liquidacoes');         
       
     -- Efetuar loop de 1 a 10 para varrer as 10 colunas
     FOR vr_ind IN 1..10 LOOP
@@ -1982,8 +1986,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
       
     BEGIN
       
-      -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
-      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_calcula_endividamento');        
+	    -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
+		  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_calcula_endividamento');        
       
       -- Buscar o CPF da conta
       OPEN cr_crapass;
@@ -2046,8 +2050,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
                                ,pr_cdcritic => pr_cdcritic              --> Código de retorno da critica
                                ,pr_dscritic => pr_dscritic);            --> Mensagem de retorno da critica
       
-      -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
-      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_calcula_endividamento');         
+	    -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
+		  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_calcula_endividamento');         
       
     EXCEPTION
       WHEN OTHERS THEN
@@ -2141,8 +2145,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
 
     BEGIN
       
-      -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
-      GENE0001.pc_set_modulo(pr_module => pr_nmdatela, pr_action => 'RATI0001.pc_desativa_rating');        
+	    -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
+		  GENE0001.pc_set_modulo(pr_module => pr_nmdatela, pr_action => 'RATI0001.pc_desativa_rating');        
       
       -- Procura o rating para a proposta solicitada
       OPEN cr_crapnrc;
@@ -2196,8 +2200,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
                                 ,pr_cdcritic => vr_cdcritic     --> Critica encontrada no processo
                                 ,pr_dscritic => vr_dscritic);   --> Descritivo do erro
 
-          -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
-          GENE0001.pc_set_modulo(pr_module => pr_nmdatela, pr_action => 'RATI0001.pc_desativa_rating');        
+	        -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
+		      GENE0001.pc_set_modulo(pr_module => pr_nmdatela, pr_action => 'RATI0001.pc_desativa_rating');        
       
           --------------------------------------------------------------------
           ----- Não versão progress não testava se retornou erro aqui...  ----
@@ -2215,8 +2219,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
                               ,pr_nrdconta => pr_nrdconta   --> Conta do associado
                               ,pr_dscritic => vr_dscritic); --> Descritivo do erro
       
-        -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
-        GENE0001.pc_set_modulo(pr_module => pr_nmdatela, pr_action => 'RATI0001.pc_desativa_rating');        
+	      -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
+		    GENE0001.pc_set_modulo(pr_module => pr_nmdatela, pr_action => 'RATI0001.pc_desativa_rating');        
        
         -- Se encontrou erro
         IF vr_dscritic IS NOT NULL THEN
@@ -2244,8 +2248,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
                                 ,pr_cdcritic   => vr_cdcritic     --> Critica encontrada no processo
                                 ,pr_dscritic   => vr_dscritic);   --> Saída de erro
       
-        -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
-        GENE0001.pc_set_modulo(pr_module => pr_nmdatela, pr_action => 'RATI0001.pc_desativa_rating');        
+	      -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
+		    GENE0001.pc_set_modulo(pr_module => pr_nmdatela, pr_action => 'RATI0001.pc_desativa_rating');        
       
         -- Se houve erro
         IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
@@ -2258,8 +2262,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
                              ,pr_cdcritic => vr_cdcritic
                              ,pr_dscritic => vr_dscritic);
       
-        -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
-        GENE0001.pc_set_modulo(pr_module => pr_nmdatela, pr_action => 'RATI0001.pc_desativa_rating');
+	      -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
+		    GENE0001.pc_set_modulo(pr_module => pr_nmdatela, pr_action => 'RATI0001.pc_desativa_rating');
         
         -- Se houve erro
         IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
@@ -2272,8 +2276,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
                              ,pr_cdcritic => vr_cdcritic
                              ,pr_dscritic => vr_dscritic);
       
-        -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
-        GENE0001.pc_set_modulo(pr_module => pr_nmdatela, pr_action => 'RATI0001.pc_desativa_rating');
+	      -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
+		    GENE0001.pc_set_modulo(pr_module => pr_nmdatela, pr_action => 'RATI0001.pc_desativa_rating');
         
         -- Se houve erro
         IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
@@ -2293,8 +2297,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
                               ,pr_cdcritic => vr_cdcritic
                               ,pr_dscritic => vr_dscritic);
       
-          -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
-          GENE0001.pc_set_modulo(pr_module => pr_nmdatela, pr_action => 'RATI0001.pc_desativa_rating');
+	        -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
+		      GENE0001.pc_set_modulo(pr_module => pr_nmdatela, pr_action => 'RATI0001.pc_desativa_rating');
         
           -- Se houve erro
           IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
@@ -2312,8 +2316,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
                                     ,pr_cdcritic => vr_cdcritic
                                     ,pr_dscritic => vr_dscritic);
 
-            -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
-            GENE0001.pc_set_modulo(pr_module => pr_nmdatela, pr_action => 'RATI0001.pc_desativa_rating');
+	          -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
+		        GENE0001.pc_set_modulo(pr_module => pr_nmdatela, pr_action => 'RATI0001.pc_desativa_rating');
 
             --------------------------------------------------------------------
             ----- Não versão progress não testava se retornou erro aqui...  ----
@@ -2331,8 +2335,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
                                   ,pr_cdcritic => vr_cdcritic     --> Critica encontrada no processo
                                   ,pr_dscritic => vr_dscritic);   --> Descritivo do erro
       
-            -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
-            GENE0001.pc_set_modulo(pr_module => pr_nmdatela, pr_action => 'RATI0001.pc_desativa_rating');
+	          -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
+		        GENE0001.pc_set_modulo(pr_module => pr_nmdatela, pr_action => 'RATI0001.pc_desativa_rating');
         
             -- Se encontrou erro
             IF vr_dscritic IS NOT NULL OR vr_cdcritic IS NOT NULL THEN
@@ -2354,8 +2358,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
                                  ,pr_cdcritic => vr_cdcritic
                                  ,pr_dscritic => vr_dscritic);
       
-        -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
-        GENE0001.pc_set_modulo(pr_module => pr_nmdatela, pr_action => 'RATI0001.pc_desativa_rating');
+	      -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
+		    GENE0001.pc_set_modulo(pr_module => pr_nmdatela, pr_action => 'RATI0001.pc_desativa_rating');
         
         -- Se houve erro
         IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
@@ -2380,8 +2384,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
                             ,pr_nrdconta => pr_nrdconta
                             ,pr_nrdrowid => vr_nrdrowid);
       
-        -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
-        GENE0001.pc_set_modulo(pr_module => pr_nmdatela, pr_action => 'RATI0001.pc_desativa_rating');
+	      -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
+		    GENE0001.pc_set_modulo(pr_module => pr_nmdatela, pr_action => 'RATI0001.pc_desativa_rating');
         
       END IF;
       -- Retorno OK
@@ -2531,8 +2535,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
 
     BEGIN
       
-      -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
-      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_ativa_rating');        
+	    -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
+		  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_ativa_rating');        
       
       --Inicializar parametro saida erro
       pr_des_reto:= 'OK';
@@ -2571,8 +2575,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
                               ,pr_cdcritic   => vr_cdcritic     --> Critica encontrada no processo
                               ,pr_dscritic   => vr_dscritic);   --> Saída de erro
       
-      -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
-      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_ativa_rating');        
+	    -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
+		  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_ativa_rating');        
       
       -- Se houve erro
       IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
@@ -2607,7 +2611,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
         /* Nota deste contrato é pior do que nota do Efetivo */
         IF rw_crapnrc.nrnotrat > rw_crapnrc_efetivo.nrnotrat THEN
 
-      vr_rowidnrc := rw_crapnrc.ROWID;
+		  vr_rowidnrc := rw_crapnrc.ROWID;
 
           /* Volta para Proposto o efetivo atual */
           pc_muda_situacao_proposto(pr_cdcooper  => pr_cdcooper            --> Código da Cooperativa
@@ -2642,8 +2646,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
                                 ,pr_cdcritic => vr_cdcritic     --> Critica encontrada no processo
                                 ,pr_dscritic => vr_dscritic);   --> Descritivo do erro
       
-          -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
-          GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_ativa_rating');          
+	        -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
+	    	  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_ativa_rating');          
       
           -- Se encontrou erro
           IF vr_dscritic IS NOT NULL OR vr_cdcritic IS NOT NULL THEN
@@ -2659,8 +2663,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
                              ,pr_cdcritic => vr_cdcritic
                              ,pr_dscritic => vr_dscritic);
       
-        -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
-        GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_ativa_rating');   
+	      -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
+	  	  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_ativa_rating');   
           
         -- Se houve erro
         IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
@@ -2673,8 +2677,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
                              ,pr_cdcritic => vr_cdcritic
                              ,pr_dscritic => vr_dscritic);
       
-        -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
-        GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_ativa_rating');   
+	      -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
+		    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_ativa_rating');   
           
         -- Se houve erro
         IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
@@ -2693,8 +2697,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
                               ,pr_cdcritic => vr_cdcritic
                               ,pr_dscritic => vr_dscritic);
       
-          -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
-          GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_ativa_rating');   
+	        -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
+		      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_ativa_rating');   
           
           --------------------------------------------------------------------
           ----- Não versão progress não testava se retornou erro aqui...  ----
@@ -2715,8 +2719,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
                                     ,pr_cdcritic => vr_cdcritic
                                     ,pr_dscritic => vr_dscritic);
 
-            -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
-            GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_ativa_rating');   
+	          -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
+		        GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_ativa_rating');   
             
             -- Se houve erro
             IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
@@ -2730,8 +2734,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
                                   ,pr_cdcritic => vr_cdcritic     --> Critica encontrada no processo
                                   ,pr_dscritic => vr_dscritic);   --> Descritivo do erro
       
-            -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
-            GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_ativa_rating');   
+	          -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
+		        GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_ativa_rating');   
           
             -- Se encontrou erro
             IF vr_dscritic IS NOT NULL OR vr_cdcritic IS NOT NULL THEN
@@ -2892,8 +2896,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
       vr_exc_saida EXCEPTION;
     BEGIN
       
-      -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
-      GENE0001.pc_set_modulo(pr_module => pr_nmdatela, pr_action => 'RATI0001.pc_verifica_contrato_rating');        
+	    -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
+		  GENE0001.pc_set_modulo(pr_module => pr_nmdatela, pr_action => 'RATI0001.pc_verifica_contrato_rating');        
       
       --Inicializar parametros erro
       pr_des_erro:= 'OK';
@@ -2952,8 +2956,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
                              ,pr_dscritic => vr_dscritic
                              ,pr_tab_erro => pr_tab_erro);
       
-        -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
-        GENE0001.pc_set_modulo(pr_module => pr_nmdatela, pr_action => 'RATI0001.pc_verifica_contrato_rating');        
+	      -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
+		    GENE0001.pc_set_modulo(pr_module => pr_nmdatela, pr_action => 'RATI0001.pc_verifica_contrato_rating');        
       
         -- Se foi solicitado o envio de LOG
         IF pr_flgerlog THEN
@@ -2971,8 +2975,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
                               ,pr_nrdconta => pr_nrdconta
                               ,pr_nrdrowid => vr_nrdrowid);
       
-          -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
-          GENE0001.pc_set_modulo(pr_module => pr_nmdatela, pr_action => 'RATI0001.pc_verifica_contrato_rating');        
+	        -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
+		      GENE0001.pc_set_modulo(pr_module => pr_nmdatela, pr_action => 'RATI0001.pc_verifica_contrato_rating');        
       
         END IF;
         --Levantar Excecao
@@ -3019,8 +3023,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
                          ,pr_dscritic   => vr_dscritic    --> Descricao do erro
                          ,pr_tab_erro   => vr_tab_erro);  --> Tabela com possíves erros
       
-          -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
-          GENE0001.pc_set_modulo(pr_module => pr_nmdatela, pr_action => 'RATI0001.pc_verifica_contrato_rating');        
+	        -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
+		      GENE0001.pc_set_modulo(pr_module => pr_nmdatela, pr_action => 'RATI0001.pc_verifica_contrato_rating');        
       
           --Se ocorreu erro
           IF vr_des_erro = 'NOK' THEN
@@ -3050,8 +3054,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
                             ,pr_des_reto   => vr_des_erro    --> Retorno OK / NOK
                             ,pr_tab_erro   => vr_tab_erro);  --> Tabela com possíves erros
       
-          -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
-          GENE0001.pc_set_modulo(pr_module => pr_nmdatela, pr_action => 'RATI0001.pc_verifica_contrato_rating');        
+	        -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
+		      GENE0001.pc_set_modulo(pr_module => pr_nmdatela, pr_action => 'RATI0001.pc_verifica_contrato_rating');        
       
           --Se ocorreu erro
           IF vr_des_erro = 'NOK' THEN
@@ -3120,7 +3124,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
   BEGIN
 
     -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
-    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_grava_item_rating');   
+		GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_grava_item_rating');   
 
     /* Criar Rating proposto */
     IF pr_flgcriar = 1 THEN  /* Criar Rating proposto */
@@ -3218,8 +3222,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
 
        Alteracoes: 27/08/2014 - Conversão Progress -> Oracle - Marcos (Supero)
 
-           10/05/2016 - Ajuste para utitlizar rowtype locais 
-                (Andrei  - RKAM).
+				   10/05/2016 - Ajuste para utitlizar rowtype locais 
+								(Andrei  - RKAM).
   
                    28/06/2017 - Inclusão para setar o modulo de todas procedures da Package
                                 ( Belli - Envolti - 28/06/2017 - Chamado 660306).
@@ -3236,8 +3240,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
       
     BEGIN
       
-      -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
-      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.fn_valor_operacao');        
+	    -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
+		  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.fn_valor_operacao');        
       
       -- Para empréstimos
       IF pr_tpctrato = 90 THEN
@@ -3317,8 +3321,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
 
        Alteracoes: 27/08/2014 - Conversão Progress -> Oracle - Marcos (Supero)
 
-                 10/05/2016 - Ajuste para inserir controle de paginação devido a conversão da 
-                        tela ATURAT
+	               10/05/2016 - Ajuste para inserir controle de paginação devido a conversão da 
+				                tela ATURAT
                                 (Andrei - RKAM).
 
                    28/06/2017 - Inclusão para setar o modulo de todas procedures da Package
@@ -3332,7 +3336,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
               ,nrc.tpctrrat
               ,nrc.nrctrrat
               ,ass.cdagenci
-              ,ass.nmprimtl
+			        ,ass.nmprimtl
               ,nrc.indrisco
               ,nrc.dtmvtolt
               ,nrc.dteftrat
@@ -3342,7 +3346,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
               ,nrc.inrisctl
               ,nrc.vlutlrat
               ,nrc.flgorige
-              ,nrc.cdoperad
+			        ,nrc.cdoperad
           FROM crapass ass
               ,crapnrc nrc
          WHERE nrc.cdcooper = ass.cdcooper
@@ -3359,7 +3363,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
            AND nrc.dtmvtolt >= NVL(pr_dtinirat,nrc.dtmvtolt)
            AND nrc.dtmvtolt <= NVL(pr_dtfinrat,nrc.dtmvtolt)
          ORDER BY ass.cdagenci 
-                 ,nrc.nrdconta
+			           ,nrc.nrdconta
                  ,nrc.tpctrrat
                  ,nrc.nrctrrat
                  ,nrc.insitrat DESC
@@ -3380,33 +3384,33 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
       -- Indice para a pltable
       vr_indratng PLS_INTEGER;
 
-    --Variaveis locais
+	  --Variaveis locais
       vr_nrregist  INTEGER; 
       vr_qtregist  INTEGER := 0;
 
     BEGIN
 
-      -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
-      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_ratings_cooperado');        
+	    -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
+		  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_ratings_cooperado');        
       
-    vr_nrregist := pr_nrregist;
+	  vr_nrregist := pr_nrregist;
 
       -- Efetuar laço para retornar todos os registros
       FOR rw_crapnrc IN cr_crapnrc LOOP
 
-      --Incrementar contador
-      vr_qtregist:= nvl(vr_qtregist,0) + 1;
+		  --Incrementar contador
+		  vr_qtregist:= nvl(vr_qtregist,0) + 1;
           
-      -- controles da paginacao 
-      IF (vr_qtregist < pr_nriniseq) OR
-       (vr_qtregist > (pr_nriniseq + pr_nrregist)) THEN
+		  -- controles da paginacao 
+		  IF (vr_qtregist < pr_nriniseq) OR
+			 (vr_qtregist > (pr_nriniseq + pr_nrregist)) THEN
 
-      --Proximo
-      CONTINUE;  
+			--Proximo
+			CONTINUE;  
               
-      END IF; 
+		  END IF; 
           
-      IF vr_nrregist >= 1 THEN
+		  IF vr_nrregist >= 1 THEN
 
         -- Buscar o valor da operacao
         vr_vloperac := fn_valor_operacao(pr_cdcooper => pr_cdcooper
@@ -3417,7 +3421,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
         vr_indratng := pr_tab_ratings.count()+1;
         pr_tab_ratings(vr_indratng).cdagenci := rw_crapnrc.cdagenci;
         pr_tab_ratings(vr_indratng).nrdconta := rw_crapnrc.nrdconta;
-      pr_tab_ratings(vr_indratng).nmprimtl := rw_crapnrc.nmprimtl;
+			pr_tab_ratings(vr_indratng).nmprimtl := rw_crapnrc.nmprimtl;
         pr_tab_ratings(vr_indratng).nrctrrat := rw_crapnrc.nrctrrat;
         pr_tab_ratings(vr_indratng).tpctrrat := rw_crapnrc.tpctrrat;
         pr_tab_ratings(vr_indratng).indrisco := rw_crapnrc.indrisco;
@@ -3438,37 +3442,37 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
 
         -- Buscar a descrição da operação
         pr_tab_ratings(vr_indratng).dsdopera := fn_busca_descricao_operacao(pr_tpctrrat => rw_crapnrc.tpctrrat);
-      
+			
         -- Buscar a descrição da situação
         pr_tab_ratings(vr_indratng).dsditrat := fn_busca_descricao_situacao(pr_insitrat => rw_crapnrc.insitrat);
 
-      OPEN cr_crapope(pr_cdcooper => pr_cdcooper
-                 ,pr_cdoperad => rw_crapnrc.cdoperad);
+			OPEN cr_crapope(pr_cdcooper => pr_cdcooper
+			  			   ,pr_cdoperad => rw_crapnrc.cdoperad);
                          
-      FETCH cr_crapope INTO rw_crapope;
+			FETCH cr_crapope INTO rw_crapope;
           
-      IF cr_crapope%FOUND THEN
+			IF cr_crapope%FOUND THEN
             
-        --Fecha o cursor
-        CLOSE cr_crapope;
+			  --Fecha o cursor
+			  CLOSE cr_crapope;
             
-        pr_tab_ratings(vr_indratng).nmoperad := rw_crapope.nmoperad;
+			  pr_tab_ratings(vr_indratng).nmoperad := rw_crapope.nmoperad;
           
-      ELSE
+			ELSE
             
-        --Fecha o cursor
-        CLOSE cr_crapope;
+			  --Fecha o cursor
+			  CLOSE cr_crapope;
           
-      END IF;               
+			END IF;               
           
-      --Diminuir registros
-      vr_nrregist:= nvl(vr_nrregist,0) - 1;
+			--Diminuir registros
+			vr_nrregist:= nvl(vr_nrregist,0) - 1;
           
-      END IF;
+			END IF;
 
       END LOOP;
 
-    pr_qtregist := vr_qtregist;
+	  pr_qtregist := vr_qtregist;
 
       -- Retorno OK
       pr_des_reto := 'OK';
@@ -3532,8 +3536,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
       rw_crapnrc cr_crapnrc%ROWTYPE;
     BEGIN
       
-      -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
-      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_verifica_efetivacao');           
+	    -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
+		  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_verifica_efetivacao');           
       
       -- Default da efetivação é nao
       pr_flgefeti := 0;
@@ -3543,8 +3547,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
                            ,pr_cdcritic => vr_cdcritic
                            ,pr_dscritic => vr_dscritic);
       
-      -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
-      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_verifica_efetivacao');       
+	    -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
+		  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_verifica_efetivacao');       
       
       -- Se houve erro
       IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
@@ -3557,8 +3561,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
                            ,pr_cdcritic => vr_cdcritic
                            ,pr_dscritic => vr_dscritic);
       
-      -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
-      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_verifica_efetivacao');        
+	    -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
+		  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_verifica_efetivacao');        
       
       -- Se houve erro
       IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
@@ -3656,9 +3660,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
 
        Alteracoes: 27/08/2014 - Conversão Progress -> Oracle - Marcos (Supero)
 
-           10/05/2016 - Ajuste para enviar novos parametros a rotina que efetua
-                a busca dos ratings do cooperado
-                (Andrei - RKAM).
+				   10/05/2016 - Ajuste para enviar novos parametros a rotina que efetua
+								a busca dos ratings do cooperado
+								(Andrei - RKAM).
   
                    28/06/2017 - Inclusão para setar o modulo de todas procedures da Package
                                 ( Belli - Envolti - 28/06/2017 - Chamado 660306).
@@ -3674,11 +3678,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
       vr_rowidnrc ROWID;                 -- Rowid do pior rating
       vr_nrctrrat crapnrc.nrctrrat%TYPE; -- Contrato do pior rating
       vr_dsoperac VARCHAR2(100);         -- Descrição da operação do pior rating
-    vr_qtregist INTEGER;
+	  vr_qtregist INTEGER;
     BEGIN
       
-      -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
-      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_efetivar_rating');        
+	    -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
+		  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_efetivar_rating');        
       
       -- Se tiver um Rating efetivo, mudar para proposto
       pc_muda_situacao_proposto(pr_cdcooper => pr_cdcooper --> Código da Cooperativa
@@ -3688,8 +3692,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
                                ,pr_cdcritic => vr_cdcritic
                                ,pr_dscritic => vr_dscritic);
       
-      -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
-      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_efetivar_rating');         
+	    -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
+		  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_efetivar_rating');         
       
       -- Se houve erro
       IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
@@ -3706,8 +3710,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
                           ,pr_cdcritic => vr_cdcritic
                           ,pr_dscritic => vr_dscritic);
       
-      -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
-      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_efetivar_rating');         
+	    -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
+		  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_efetivar_rating');         
       
       -- Não era tratado retorno de erro no Progress
       ---- Se houve erro
@@ -3724,8 +3728,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
                               ,pr_cdcritic => vr_cdcritic
                               ,pr_dscritic => vr_dscritic);
       
-      -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
-      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_efetivar_rating');          
+	    -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
+		  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_efetivar_rating');          
       
       -- Se houve erro
       IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
@@ -3746,8 +3750,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
                           ,pr_tab_ratings => pr_tab_ratings --> Registro com os ratings do associado
                           ,pr_des_reto    => pr_des_reto);
 
-      -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
-      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_efetivar_rating');                
+	    -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
+		  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_efetivar_rating');                
 
       -- Quando esta voltando atras operacao
       IF pr_tpctrato = 0 AND pr_nrctrato = 0 THEN
@@ -3758,8 +3762,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
                               ,pr_cdcritic => vr_cdcritic   --> Critica encontrada no processo
                               ,pr_dscritic => vr_dscritic); --> Descritivo do erro
       
-        -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
-        GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_efetivar_rating');       
+	      -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
+		    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_efetivar_rating');       
       
       ELSE
         -- Senao grava aquele que realmente originou o efetivo
@@ -3769,8 +3773,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
                               ,pr_cdcritic => vr_cdcritic   --> Critica encontrada no processo
                               ,pr_dscritic => vr_dscritic); --> Descritivo do erro
       
-        -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
-        GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_efetivar_rating');      
+	      -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
+		    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_efetivar_rating');      
       
       END IF;
       --------------------------------------------------------------------
@@ -3878,8 +3882,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
       vr_indimpri number;
     BEGIN
       
-      -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
-      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_descricoes_risco_busca');          
+	    -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
+		  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_descricoes_risco_busca');          
       
       -- Efetuar LOOP sob a temp-table com os riscos
       vr_contador := pr_tab_provisao.first;
@@ -3953,7 +3957,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
                                 
     ............................................................................. */
     DECLARE
-    /* Cursor genérico de parametrização */
+	  /* Cursor genérico de parametrização */
       CURSOR cr_craptab(pr_nmsistem IN craptab.nmsistem%TYPE
                        ,pr_tptabela IN craptab.tptabela%TYPE
                        ,pr_cdempres IN craptab.cdempres%TYPE
@@ -3970,11 +3974,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
 
       -- Indice para gravacao nas temptables
       vr_contador NUMBER;
-    vr_percentu_temp NUMBER;
+	  vr_percentu_temp NUMBER;
     BEGIN
       
-      -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
-      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_descricoes_risco');        
+	    -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
+		  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_descricoes_risco');        
       
       -- Se ainda não foram carregadas as informações na tabela de memória de provisao risco
       IF vr_tab_provisao_cl.count() = 0 THEN
@@ -3985,27 +3989,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
                                     ,pr_cdacesso => 'PROVISAOCL'
                                     ,pr_tpregist => null) LOOP
           -- Carregar na tabela
-          vr_contador := to_number(SUBSTR(rw_craptab.dstextab,12,2));
+          vr_contador := gene0002.fn_char_para_number(SUBSTR(rw_craptab.dstextab,12,2));
           vr_tab_provisao_cl(vr_contador).dsdrisco := TRIM(SUBSTR(rw_craptab.dstextab,8,3));
-          vr_tab_provisao_cl(vr_contador).percentu := to_number(SUBSTR(rw_craptab.dstextab,1,6));
-          vr_tab_provisao_cl(vr_contador).notadefi := to_number(SUBSTR(rw_craptab.dstextab,27,6));
-          vr_tab_provisao_cl(vr_contador).notatefi := to_number(SUBSTR(rw_craptab.dstextab,34,6));
+          vr_tab_provisao_cl(vr_contador).percentu := gene0002.fn_char_para_number(SUBSTR(rw_craptab.dstextab,1,6));
+          vr_tab_provisao_cl(vr_contador).notadefi := gene0002.fn_char_para_number(SUBSTR(rw_craptab.dstextab,27,6));
+          vr_tab_provisao_cl(vr_contador).notatefi := gene0002.fn_char_para_number(SUBSTR(rw_craptab.dstextab,34,6));
           vr_tab_provisao_cl(vr_contador).parecefi := SUBSTR(rw_craptab.dstextab,41,15);
-          vr_tab_provisao_cl(vr_contador).notadeju := to_number(SUBSTR(rw_craptab.dstextab,56,6));
-          vr_tab_provisao_cl(vr_contador).notateju := to_number(SUBSTR(rw_craptab.dstextab,62,6));
+          vr_tab_provisao_cl(vr_contador).notadeju := gene0002.fn_char_para_number(SUBSTR(rw_craptab.dstextab,56,6));
+          vr_tab_provisao_cl(vr_contador).notateju := gene0002.fn_char_para_number(SUBSTR(rw_craptab.dstextab,62,6));
           vr_tab_provisao_cl(vr_contador).pareceju := SUBSTR(rw_craptab.dstextab,70,15);
-      
-      IF vr_tab_provisao_cl(vr_contador).dsdrisco = 'A' THEN
+		  
+		  IF vr_tab_provisao_cl(vr_contador).dsdrisco = 'A' THEN
             vr_percentu_temp := vr_tab_provisao_cl(vr_contador).percentu;
           END IF; 
           IF vr_tab_provisao_cl(vr_contador).dsdrisco = 'AA' THEN
             vr_tab_provisao_cl(vr_contador).percentu := vr_percentu_temp;
           END IF;
-      
+		  
         END LOOP; --> Para cada risco
       END IF;
 
-    vr_percentu_temp := 0;
+	  vr_percentu_temp := 0;
 
       -- Se ainda não foram carregadas as informações na tabela de memória de provisao rating
       IF vr_tab_provisao_tl.count() = 0 THEN
@@ -4016,23 +4020,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
                                     ,pr_cdacesso => 'PROVISAOTL'
                                     ,pr_tpregist => null) LOOP
           -- Carregar na tabela
-          vr_contador := to_number(SUBSTR(rw_craptab.dstextab,12,2));
+          vr_contador := gene0002.fn_char_para_number(SUBSTR(rw_craptab.dstextab,12,2));
           vr_tab_provisao_tl(vr_contador).dsdrisco := TRIM(SUBSTR(rw_craptab.dstextab,8,3));
-          vr_tab_provisao_tl(vr_contador).percentu := to_number(SUBSTR(rw_craptab.dstextab,1,6));
-          vr_tab_provisao_tl(vr_contador).notadefi := to_number(SUBSTR(rw_craptab.dstextab,27,6));
-          vr_tab_provisao_tl(vr_contador).notatefi := to_number(SUBSTR(rw_craptab.dstextab,34,6));
+          vr_tab_provisao_tl(vr_contador).percentu := gene0002.fn_char_para_number(SUBSTR(rw_craptab.dstextab,1,6));
+          vr_tab_provisao_tl(vr_contador).notadefi := gene0002.fn_char_para_number(SUBSTR(rw_craptab.dstextab,27,6));
+          vr_tab_provisao_tl(vr_contador).notatefi := gene0002.fn_char_para_number(SUBSTR(rw_craptab.dstextab,34,6));
           vr_tab_provisao_tl(vr_contador).parecefi := SUBSTR(rw_craptab.dstextab,41,15);
-          vr_tab_provisao_tl(vr_contador).notadeju := to_number(SUBSTR(rw_craptab.dstextab,56,6));
-          vr_tab_provisao_tl(vr_contador).notateju := to_number(SUBSTR(rw_craptab.dstextab,62,6));
+          vr_tab_provisao_tl(vr_contador).notadeju := gene0002.fn_char_para_number(SUBSTR(rw_craptab.dstextab,56,6));
+          vr_tab_provisao_tl(vr_contador).notateju := gene0002.fn_char_para_number(SUBSTR(rw_craptab.dstextab,62,6));
           vr_tab_provisao_tl(vr_contador).pareceju := SUBSTR(rw_craptab.dstextab,70,15);
-      
-      IF vr_tab_provisao_tl(vr_contador).dsdrisco = 'A' THEN
+		  
+		  IF vr_tab_provisao_tl(vr_contador).dsdrisco = 'A' THEN
             vr_percentu_temp := vr_tab_provisao_tl(vr_contador).percentu;
           END IF;
           IF vr_tab_provisao_tl(vr_contador).dsdrisco = 'AA' THEN
             vr_tab_provisao_tl(vr_contador).percentu := vr_percentu_temp;
           END IF;
-      
+		  
         END LOOP; --> Para cada risco
       END IF;
 
@@ -4044,8 +4048,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
                                ,pr_tab_impress_risco => pr_tab_impress_risco_cl --> Registro Nota e risco do cooperado no Rating solicitado
                                ,pr_des_reto          => pr_des_reto);
 
-      -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
-      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_descricoes_risco');               
+	    -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
+		  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_descricoes_risco');               
 
       -- Chamar rotina genérica para gravação das informações da PROVISAOTL (Baseada no Rating)
       pc_descricoes_risco_busca(pr_inpessoa    => pr_inpessoa --> Tipo de pessoa
@@ -4055,8 +4059,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
                                ,pr_tab_impress_risco => pr_tab_impress_risco_tl --> Registro Nota e risco do cooperado no Rating solicitado
                                ,pr_des_reto          => pr_des_reto);
 
-      -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
-      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_descricoes_risco');      
+	    -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
+		  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_descricoes_risco');      
 
       -- Retorno OK
       pr_des_reto := 'OK';
@@ -4109,8 +4113,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
 
        Alteracoes: 28/08/2014 - Conversão Progress -> Oracle - Marcos (Supero)
 
-           10/05/2016 - Ajuste decorrente a reestruturação das PL/TABLE
-                (Andrei - RKAM).
+				   10/05/2016 - Ajuste decorrente a reestruturação das PL/TABLE
+								(Andrei - RKAM).
   
                    28/06/2017 - Inclusão para setar o modulo de todas procedures da Package
                                 ( Belli - Envolti - 28/06/2017 - Chamado 660306).
@@ -4125,7 +4129,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
       vr_nrdrowid ROWID;
       -- Sequencia para a tab_impress_rating
       vr_sqtb_imprat PLS_INTEGER;
-    vr_index_sub PLS_INTEGER;
+	  vr_index_sub PLS_INTEGER;
       vr_index_itens PLS_INTEGER;
       -- Sequencia para a tab_efetivacao
       vr_sqtb_efetiv PLS_INTEGER;
@@ -4219,8 +4223,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
 
     BEGIN
       
-      -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
-      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_gera_arq_impress_rating');         
+	    -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
+		  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_gera_arq_impress_rating');         
       
       -- Validar associado enviado
       OPEN cr_crapass(pr_nrdconta => pr_nrdconta);
@@ -4347,8 +4351,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
                          ,pr_tab_impress_risco_tl => pr_tab_impress_risco_tl --> Registro Nota e risco do cooperado naquele Rating - PROVISAOTL
                          ,pr_des_reto             => pr_des_reto);
 
-      -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
-      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_gera_arq_impress_rating');        
+	    -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
+		  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_gera_arq_impress_rating');        
       
       -- Gravar Tabela com o operador e responsavel para assinatura
       pr_tab_impress_assina(1).dsdedata := to_char(pr_dtmvtolt,'dd') || ' de '
@@ -4400,8 +4404,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
                             ,pr_nrdconta => pr_nrdconta
                             ,pr_nrdrowid => vr_nrdrowid);
       
-        -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
-        GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_gera_arq_impress_rating');       
+	      -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
+  		  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_gera_arq_impress_rating');       
       
       END IF;
       -- Retorno OK
@@ -4570,8 +4574,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
 
     BEGIN
       
-      -- Incluir nome do módulo logado - Chamado 660306 28/06/2017  
-      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_nivel_comprometimento');      
+	    -- Incluir nome do módulo logado - Chamado 660306 28/06/2017  
+		  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_nivel_comprometimento');      
       
       -- Se emprestimo/ financiamento OU se foi solicitado o cálculo para outros casos
       IF pr_tpctrato = 90 OR pr_flgdcalc = 1 THEN
@@ -4608,8 +4612,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
                                      ,pr_des_reto => vr_des_reto
                                      ,pr_tab_erro => vr_tab_erro);
       
-        -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
-        GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_nivel_comprometimento');        
+	      -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
+		    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_nivel_comprometimento');        
       
         -- Se retornou erro
         IF vr_des_reto <> 'OK' THEN
@@ -4799,8 +4803,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
 
   BEGIN
       
-    -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
-    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_historico_cooperado');        
+	  -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
+		GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_historico_cooperado');        
     
     /* Obter as informaões de estouro do cooperado */
     RISC0001.pc_lista_estouros( pr_cdcooper      => pr_cdcooper     --> Codigo Cooperativa
@@ -4813,8 +4817,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
                                ,pr_tab_estouros  => vr_tab_estouros --> Informações de estouro na conta
                                ,pr_dscritic      => vr_dscritic);   --> Retorno de erro
 
-    -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
-    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_historico_cooperado');         
+	  -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
+		GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_historico_cooperado');         
     
     -- verificar se retornou critica
     IF vr_dscritic is not null THEN
@@ -4822,7 +4826,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
     END IF;
 
     /* Data do inicio do estouro a partir de um ano atras */
-    vr_dtiniest  := add_months(pr_dtmvtolt, -12);
+    vr_dtiniest := add_months(pr_dtmvtolt, -12);
     rat_qtdevalo := 0;
     rat_qtdevald := 0;
     rat_qtchqesp := 0;
@@ -4850,7 +4854,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
             rat_qtdevalo := rat_qtdevalo + 1;
           elsif vr_cdalinea = 12 then
             rat_qtdevald := rat_qtdevald + 1;
-        END IF;
+    END IF;
         END IF;
       END LOOP;
     END IF;
@@ -4876,7 +4880,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
         -- se o saldo for negativo e o maior que o limite de credito
         IF rw_crapsda.vlsddisp < 0  AND
            rw_crapsda.vlsddisp >= (rw_crapsda.vllimcre * -1)  THEN
-          vr_qtdiaat2  := nvl(vr_qtdiaat2,0) + 1;
+          vr_qtdiaat2 := nvl(vr_qtdiaat2,0) + 1;
           rat_qtchqesp := rat_qtchqesp + 1;
         ELSE
           -- armazenar maior data
@@ -4965,7 +4969,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
                                 existente na receita federal (Tiago Castro - RKAM)
 
                    10/05/2016 - Ajuste para utitlizar rowtype locais 
-                (Andrei  - RKAM).
+								(Andrei  - RKAM).
   
                    28/06/2017 - Inclusão para setar o modulo de todas procedures da Package
                                 ( Belli - Envolti - 28/06/2017 - Chamado 660306).
@@ -5008,8 +5012,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
       
     BEGIN
       
-      -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
-      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_criticas_rating_jur');       
+	    -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
+	  	GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_criticas_rating_jur');       
       
       -- Nao validar para calculo do Risco cooperado
       IF pr_tpctrrat <> 0 AND pr_nrctrrat <> 0  THEN
@@ -5287,8 +5291,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
                                      ,pr_tab_erro => vr_tab_erro
                                      ,pr_des_reto => pr_des_reto);
       
-      -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
-      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_criticas_rating_jur');          
+	    -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
+	  	GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_criticas_rating_jur');          
       
       -- Se retornou erro
       -- Progress não trata retorno dos erro
@@ -5363,8 +5367,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
     vr_idx VARCHAR2(50);
   BEGIN
 
-    -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
-    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_carrega_temp_qtdiaatr');           
+	  -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
+		GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_carrega_temp_qtdiaatr');           
       
     -- varrer risco para buscar dias de atraso
     FOR rw_crapris IN cr_crapris_all(pr_dtmvtolt => pr_dtmvtolt) LOOP
@@ -5425,8 +5429,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
                               Ajuste nos codigos de natureza juridica para o
                               existente na receita federal. (Tiago Castro - RKAM)
 
-                 10/05/2016 - Ajuste para iniciar corretamente a pltable
-                              (Andrei - RKAM).
+		             10/05/2016 - Ajuste para iniciar corretamente a pltable
+							                (Andrei - RKAM).
                  
                  25/10/2016 - Ajuste no calculo da quantidade de anos, permitindo
                               duas posições decimais. (Kelvin)
@@ -5660,7 +5664,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
 
     -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
     GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_risco_cooperado_pj'); 
-
+      
     IF vr_dscritic IS NOT NULL THEN
       raise vr_exc_erro;
     END IF;
@@ -5806,7 +5810,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
       vr_nrseqite := 5;
     END IF;
 
-    vr_dsvalite  := nvl(vr_qtdiaatr,0) || ' dias de atraso';
+    vr_dsvalite := nvl(vr_qtdiaatr,0) || ' dias de atraso';
     rat_qtmaxatr := nvl(vr_qtdiaatr,0);
     -- Se solicitado o calculo
     IF pr_flgdcalc = 1 THEN
@@ -5952,7 +5956,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
     ELSE
       vr_nrseqite := 1;
     END IF;
-    vr_dsvalite  := rw_crapjfn.perfatcl|| '% faturamento unico cliente';
+    vr_dsvalite := rw_crapjfn.perfatcl|| '% faturamento unico cliente';
     rat_prfatcli := rw_crapjfn.perfatcl;
     -- Se solicitado o calculo
     IF pr_flgdcalc = 1 THEN
@@ -6067,7 +6071,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
           -- Usar valor do endividamento
           vr_vlendivi := nvl(vr_vlendivi,0) + nvl(vr_vlutiliz,0);
         END IF;
-    END IF;
+	  END IF;
       
       RISC0001.pc_obtem_valores_central_risco( pr_cdcooper => pr_cdcooper  --> Codigo Cooperativa
                                               ,pr_cdagenci => pr_cdagenci  --> Codigo Agencia
@@ -6318,7 +6322,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
     IF nvl(vr_cdcritic,0) > 0 THEN
       RAISE vr_exc_erro;
     END IF;
-    
+
     rat_vlpreatv := vr_vltotpre;
     rat_vlparope := vr_vlpresta;
     IF vr_vlmedfat > 0 THEN
@@ -6512,8 +6516,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
 
      Alteracoes: 28/08/2014 - Conversão Progress -> Oracle - Marcos (Supero)
 
-             10/05/2016 - Ajuste para utitlizar rowtype locais 
-               (Andrei  - RKAM).
+		         10/05/2016 - Ajuste para utitlizar rowtype locais 
+							 (Andrei  - RKAM).
   
                  28/06/2017 - Inclusão para setar o modulo de todas procedures da Package
                               ( Belli - Envolti - 28/06/2017 - Chamado 660306).
@@ -6523,7 +6527,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
     vr_exc_erro EXCEPTION;
     vr_cdcritic crapcri.cdcritic%TYPE;
     vr_dscritic VARCHAR2(4000);
-	
+
     -- Indicador se encontrou registro
     vr_fcrawepr  BOOLEAN := FALSE;
     vr_fcraplcr  BOOLEAN := FALSE;
@@ -6543,7 +6547,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
   BEGIN
 
     -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
-    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_calcula_rating_juridica');   
+		GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_calcula_rating_juridica');   
       
     -- Para Risco Cooperado o calculo eh diferenciado
     IF pr_tpctrato <> 0 AND pr_nrctrato <> 0 THEN
@@ -6611,7 +6615,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
                           ,pr_des_reto => pr_des_reto );   --> Ind. de retorno OK/NOK
 
     -- Incluir nome do módulo logado - Chamado 660306 28/06/2017 
-    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_calcula_rating_juridica');     
+		GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_calcula_rating_juridica');     
 
     -- se gerou critica, abortar programa
     IF pr_des_reto <> 'OK' THEN
@@ -6680,11 +6684,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
       rat_cdsubmod := '';
       -- Limite
       IF rw_craplim4.tpctrlim = 1 THEN
-        vr_nrseqite  := 5;
+        vr_nrseqite := 5;
         rat_dstpoper := 'Limite de Credito';
       ELSE
         -- Descontos
-        vr_nrseqite  := 2;
+        vr_nrseqite := 2;
         rat_dstpoper := 'Limite de Desconto';
       END IF;
     END IF;
@@ -6703,7 +6707,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
                          ,pr_dscritic    => vr_dscritic);        -- Descricao do erro
 
     -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
-    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_calcula_rating_juridica');  
+		GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_calcula_rating_juridica');  
       
     -- Se retornou erro, deve abortar
     IF vr_dscritic IS NOT NULL THEN
@@ -6715,13 +6719,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
     -------------------------------------------------------
     -- Emprestimo / Financiamento
     IF pr_tpctrato = 90 THEN
-      vr_nrseqite  := rw_crapprp4.nrgarope;
+      vr_nrseqite := rw_crapprp4.nrgarope;
       rat_flgcjeco := rw_crapprp4.flgdocje;
     -- Descontos / Limite rotativo
     ELSE
       vr_nrseqite := rw_craplim4.nrgarope;
     END IF;
-    
+
     rat_cdgarope := vr_nrseqite;
     -- Grava o item de Rating
     pc_grava_item_rating (pr_cdcooper    => pr_cdcooper             -- Codigo Cooperativa
@@ -6737,7 +6741,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
                          ,pr_dscritic    => vr_dscritic);        -- Descricao do erro
 
     -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
-    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_calcula_rating_juridica');  
+		GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_calcula_rating_juridica');  
       
     -- Se retornou erro, deve abortar
     IF vr_dscritic IS NOT NULL THEN
@@ -6754,7 +6758,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
     ELSE
       vr_nrseqite := rw_craplim4.nrliquid;
     END IF;
-    
+
     rat_cdliqgar := vr_nrseqite;
     -- Grava o item de Rating
     pc_grava_item_rating (pr_cdcooper    => pr_cdcooper             -- Codigo Cooperativa
@@ -6770,7 +6774,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
                          ,pr_dscritic    => vr_dscritic);        -- Descricao do erro
 
     -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
-    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_calcula_rating_juridica');  
+		GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_calcula_rating_juridica');  
       
     -- Se retornou erro, deve abortar
     IF vr_dscritic IS NOT NULL THEN
@@ -6785,17 +6789,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
       -- Se há o cadastro complementar
       IF vr_fcrawepr THEN
          -- Usamos do complemento
-         vr_qtdiapra  := rw_crawepr5.qtpreemp * 30; -- Sempre vezes 30
+         vr_qtdiapra := rw_crawepr5.qtpreemp * 30; -- Sempre vezes 30
          rat_qtpreope := rw_crawepr5.qtpreemp;
       ELSE
          -- Buscar da proposta
-         vr_qtdiapra  := rw_crapprp4.qtparbnd * 30; -- Sempre vezes 30
+         vr_qtdiapra := rw_crapprp4.qtparbnd * 30; -- Sempre vezes 30
          rat_qtpreope := rw_crapprp4.qtparbnd;
       END IF;
     -- Descontos / Limite rotativo
     ELSE
       -- Usar dias de vigencia do limite
-      vr_qtdiapra  := rw_craplim4.qtdiavig;
+      vr_qtdiapra := rw_craplim4.qtdiavig;
       rat_qtpreope := rw_craplim4.qtdiavig / 30;
     END IF;
     -- Geramos o sequncial conforme o range de datas
@@ -6823,7 +6827,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
                          ,pr_dscritic    => vr_dscritic);        -- Descricao do erro
 
     -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
-    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_calcula_rating_juridica');  
+		GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_calcula_rating_juridica');  
       
     -- Se retornou erro, deve abortar
     IF vr_dscritic IS NOT NULL THEN
@@ -6894,8 +6898,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
 
      Alteracoes: 27/08/2014 - Conversão Progress -> Oracle - Odirlei (AMcom)
 
-             10/05/2016 - Ajuste para utitlizar rowtype locais 
-                (Andrei  - RKAM).
+		         10/05/2016 - Ajuste para utitlizar rowtype locais 
+							  (Andrei  - RKAM).
   
                  28/06/2017 - Inclusão para setar o modulo de todas procedures da Package
                               ( Belli - Envolti - 28/06/2017 - Chamado 660306).
@@ -6938,7 +6942,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
   BEGIN
 
     -- Incluir nome do módulo logado - Chamado 660306 28/06/2017    
-    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_verifica_criacao');  
+		GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_verifica_criacao');  
 
     -- Se for tipo de contrato 90
     IF pr_tpctrato = 90 THEN
@@ -6975,7 +6979,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
                             ,pr_dscritic   => vr_dscritic);   --> Saída de erro
 
     -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
-    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_verifica_criacao');       
+		GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_verifica_criacao');       
 
     -- Se houve erro
     IF vr_cdcritic IS NOT NULL OR trim(vr_dscritic) IS NOT NULL THEN
@@ -6983,7 +6987,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
       RAISE vr_exc_erro;
     END IF;
 
-  wglb_vlutiliz := vr_vlutiliz;
+	wglb_vlutiliz := vr_vlutiliz;
 
     -- Retornar valor de parametrização do rating cadastrado na TAB036
     pc_param_valor_rating(pr_cdcooper => pr_cdcooper --> Código da Cooperativa
@@ -6992,7 +6996,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
                          ,pr_dscritic => vr_dscritic);
 
     -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
-    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_verifica_criacao');     
+		GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_verifica_criacao');     
 
     -- Se houve erro
     IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
@@ -7007,7 +7011,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
                          ,pr_dscritic => vr_dscritic);
 
     -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
-    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_verifica_criacao');
+		GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_verifica_criacao');
 
     -- Se houve erro
     IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
@@ -7129,7 +7133,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
   BEGIN
 
     -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
-    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_calcula_singulares');
+		GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_calcula_singulares');
       
     -- Varrer temptable
     vr_index := pr_tab_rating_sing.first;
@@ -7153,7 +7157,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
                             ,pr_dscritic    => pr_dscritic);        -- Descricao do erro
 
       -- Incluir nome do módulo logado - Chamado 660306 28/06/2017 
-      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_calcula_singulares');   
+	  	GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_calcula_singulares');   
 
       -- Se retornou erro, deve abortar
       IF pr_dscritic IS NOT NULL THEN
@@ -7179,7 +7183,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
                             ,pr_dscritic   => vr_dscritic);   --> Saída de erro
 
     -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
-    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_calcula_singulares');
+		GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_calcula_singulares');
       
     -- Se houve erro
     IF vr_cdcritic IS NOT NULL OR trim(vr_dscritic) IS NOT NULL THEN
@@ -7226,19 +7230,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
 
                  28/06/2017 - Inclusão para setar o modulo de todas procedures da Package
                               ( Belli - Envolti - 28/06/2017 - Chamado 660306).
-                 
+
                  31/01/2018 - Alteração para novos parâmetros de entrada 
                               (Atendendo a qualificação da Oper. Controle)
                               (Diego Simas - AMcom)  
 
   ............................................................................. */
   --------------- VARIAVEIS ----------------
-  
   BEGIN
 
     -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
-    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_natureza_operacao');
-    
+		GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_natureza_operacao');
+      
     IF pr_tpctrato = 90 THEN  -- Emprestimo / Financiamento
       IF pr_idquapro > 2 THEN
         -- Renegociacao / Composicao de divida / Cessao de Cartao
@@ -7297,8 +7300,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
 
      Alteracoes: 27/08/2014 - Conversão Progress -> Oracle - Odirlei (AMcom)
 
-               10/05/2016 - Ajuste para utitlizar rowtype locais 
-               (Andrei  - RKAM).
+	             10/05/2016 - Ajuste para utitlizar rowtype locais 
+							 (Andrei  - RKAM).
 
                  28/06/2017 - Inclusão para setar o modulo de todas procedures da Package
                               ( Belli - Envolti - 28/06/2017 - Chamado 660306).
@@ -7369,7 +7372,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
   BEGIN
 
     -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
-    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_criticas_rating_fis');      
+		GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_criticas_rating_fis');      
 
     -- Iniciar variaveis
     vr_nrsequen := 0;
@@ -7733,8 +7736,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
                               com a conta a qual esta sendo passada ou
                               tudo na temp table. (Jaison)
 
-               10/05/2016 - Ajuste para iniciar corretamente a pltable
-                (Andrei - RKAM).
+	             10/05/2016 - Ajuste para iniciar corretamente a pltable
+							  (Andrei - RKAM).
   
                  28/06/2017 - Inclusão para setar o modulo de todas procedures da Package
                               ( Belli - Envolti - 28/06/2017 - Chamado 660306).
@@ -7861,7 +7864,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
   BEGIN
 
     -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
-    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_risco_cooperado_pf'); 
+		GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_risco_cooperado_pf'); 
       
     vr_dsvalite := '';
     -- gera criticas rating
@@ -7875,7 +7878,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
                             ,pr_des_reto => pr_des_reto); --> Ind. de retorno OK/NOK
 
     -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
-    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_risco_cooperado_pf');      
+		GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_risco_cooperado_pf');      
 
     -- se retornou critica, abortar rotina
     IF pr_des_reto <> 'OK' THEN
@@ -7959,7 +7962,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
       vr_nrseqite := 3;
     END IF;
 
-    vr_dsvalite  := round(vr_anodcoop,2) || ' anos';
+    vr_dsvalite := round(vr_anodcoop,2) || ' anos';
     rat_dtadmiss := rw_crapass.dtadmiss;
     -- verificar se deve calcular
     IF pr_flgdcalc = 1 THEN
@@ -7980,7 +7983,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
                             ,pr_dscritic    => vr_dscritic);        -- Descricao do erro
 
       -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
-      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_risco_cooperado_pf');     
+		  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_risco_cooperado_pf');     
 
       -- Se retornou erro, deve abortar
       IF vr_dscritic IS NOT NULL THEN
@@ -8051,7 +8054,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
       END IF;
     END IF;
 
-    vr_dsvalite  := nvl(vr_qtdiaatr,0) || ' dias de atraso';
+    vr_dsvalite := nvl(vr_qtdiaatr,0) || ' dias de atraso';
     rat_qtmaxatr := nvl(vr_qtdiaatr,0);
     IF pr_flgdcalc = 1 THEN
       vr_vldanota := vr_vldanota + vr_vet_nota_002(vr_nrseqite);
@@ -8073,7 +8076,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
                             ,pr_dscritic    => vr_dscritic);        -- Descricao do erro
 
       -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
-      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_risco_cooperado_pf');     
+	  	GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_risco_cooperado_pf');     
 
       -- Se retornou erro, deve abortar
       IF vr_dscritic IS NOT NULL THEN
@@ -8101,7 +8104,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
       END IF;
     END IF;
 
-    vr_dsvalite  := round(vr_anodexpe,2) || ' anos de experiencia';
+    vr_dsvalite := round(vr_anodexpe,2) || ' anos de experiencia';
     rat_dtadmemp := rw_crapttl.dtadmemp;
     rat_cdnatocp := rw_crapttl.cdnatopc;
     IF pr_flgdcalc = 1 THEN
@@ -8121,7 +8124,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
                             ,pr_dscritic    => vr_dscritic);        -- Descricao do erro
 
       -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
-      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_risco_cooperado_pf');       
+		  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_risco_cooperado_pf');       
 
       -- Se retornou erro, deve abortar
       IF vr_dscritic IS NOT NULL THEN
@@ -8182,7 +8185,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
                             ,pr_dscritic    => vr_dscritic);        -- Descricao do erro
 
       -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
-      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_risco_cooperado_pf');   
+	  	GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_risco_cooperado_pf');   
 
       -- Se retornou erro, deve abortar
       IF vr_dscritic IS NOT NULL THEN
@@ -8204,7 +8207,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
                             ,pr_dscritic => vr_dscritic);--> Descricao do erro
 
     -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
-      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_risco_cooperado_pf');       
+	  	GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_risco_cooperado_pf');       
 
     IF vr_dscritic IS NOT NULL THEN
       raise vr_exc_erro;
@@ -8227,7 +8230,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
                             ,pr_dscritic    => vr_dscritic);        -- Descricao do erro
 
       -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
-      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_risco_cooperado_pf'); 
+	  	GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_risco_cooperado_pf'); 
 
       -- Se retornou erro, deve abortar
       IF vr_dscritic IS NOT NULL THEN
@@ -8265,7 +8268,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
                             ,pr_dscritic    => vr_dscritic);        -- Descricao do erro
 
       -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
-      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_risco_cooperado_pf');   
+	  	GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_risco_cooperado_pf');   
 
       -- Se retornou erro, deve abortar
       IF vr_dscritic IS NOT NULL THEN
@@ -8319,7 +8322,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
                             ,pr_dscritic     => vr_dscritic);
 
     -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
-    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_risco_cooperado_pf');   
+		GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_risco_cooperado_pf');   
 
     -- Se retornou erro, deve abortar
     IF nvl(vr_cdcritic,0) > 0 THEN
@@ -8385,7 +8388,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
                             ,pr_dscritic    => vr_dscritic);        -- Descricao do erro
 
       -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
-      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_risco_cooperado_pf');     
+		  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_risco_cooperado_pf');     
 
       -- Se retornou erro, deve abortar
       IF vr_dscritic IS NOT NULL THEN
@@ -8442,7 +8445,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
                             ,pr_dscritic    => vr_dscritic);        -- Descricao do erro
 
       -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
-      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_risco_cooperado_pf');    
+	  	GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_risco_cooperado_pf');    
 
       -- Se retornou erro, deve abortar
       IF vr_dscritic IS NOT NULL THEN
@@ -8476,7 +8479,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
                             ,pr_dscritic   => vr_dscritic);   --> Saída de erro
 
     -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
-    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_risco_cooperado_pf');     
+	  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_risco_cooperado_pf');     
 
     -- Se houve erro
     IF vr_cdcritic IS NOT NULL OR trim(vr_dscritic) IS NOT NULL THEN
@@ -8530,7 +8533,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
         ELSE
           vr_vlendivi := nvl(vr_vlendivi,0) + nvl(vr_vlutiliz,0);
         END IF;
-    END IF;
+	  END IF;
       
       RISC0001.pc_obtem_valores_central_risco( pr_cdcooper => pr_cdcooper  --> Codigo Cooperativa
                                                 ,pr_cdagenci => pr_cdagenci  --> Codigo Agencia
@@ -8542,7 +8545,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
                                                 ,pr_des_reto => pr_des_reto);
 
       -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
-      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_risco_cooperado_pf');    
+	  	GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_risco_cooperado_pf');    
 
       IF pr_des_reto <> 'OK' THEN
         RETURN;
@@ -8565,7 +8568,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
                                                 ,pr_des_reto => pr_des_reto);
 
         -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
-        GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_risco_cooperado_pf');      
+	  	  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_risco_cooperado_pf');      
 
         IF pr_des_reto <> 'OK' THEN
           RETURN;
@@ -8642,7 +8645,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
                             ,pr_dscritic    => vr_dscritic);        -- Descricao do erro
 
       -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
-      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_risco_cooperado_pf');   
+	  	GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_risco_cooperado_pf');   
 
       -- Se retornou erro, deve abortar
       IF vr_dscritic IS NOT NULL THEN
@@ -8714,10 +8717,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
       vr_nrseqite := 4;
     END IF;
 
-    vr_dsvalite  := round(vr_vlendiv2,2) || ' vezes o valor de cotas';
+    vr_dsvalite := round(vr_vlendiv2,2) || ' vezes o valor de cotas';
     rat_vlslcota := nvl(rw_crapcot.vldcotas,0);
     IF pr_flgdcalc = 1 THEN
-      vr_vldanota := vr_vldanota + vr_vet_nota_010(vr_nrseqite);
+       vr_vldanota := vr_vldanota + vr_vet_nota_010(vr_nrseqite);
     ELSE
       -- Gravar itens do rating na crapras
       pc_grava_item_rating ( pr_cdcooper => pr_cdcooper             --Codigo Cooperativa
@@ -8733,7 +8736,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
                             ,pr_dscritic    => vr_dscritic);        -- Descricao do erro
 
       -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
-      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_risco_cooperado_pf');     
+	  	GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'RATI0001.pc_risco_cooperado_pf');     
 
       -- Se retornou erro, deve abortar
       IF vr_dscritic IS NOT NULL THEN
@@ -8831,8 +8834,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
 
      Alteracoes: 27/08/2014 - Conversão Progress -> Oracle - Odirlei (AMcom)
 
-            10/05/2016 - Ajuste para utitlizar rowtype locais 
-              (Andrei  - RKAM).
+		        10/05/2016 - Ajuste para utitlizar rowtype locais 
+							(Andrei  - RKAM).
   
                  28/06/2017 - Inclusão para setar o modulo de todas procedures da Package
                               ( Belli - Envolti - 28/06/2017 - Chamado 660306).
@@ -8945,7 +8948,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
      Item 2_1 - Finalidade da operacao
     **********************************************************************/
 
-	--simas
 	vr_idqualif := fn_verifica_qualificacao(pr_nrdconta => pr_nrdconta,
 												pr_nrctremp => pr_nrctrato,
 												pr_idquapro => rw_crawepr9.idquapro,
@@ -8961,7 +8963,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
         rat_dstpoper := rw_craplcr6.dsoperac;
         pc_natureza_operacao ( pr_tpctrato => pr_tpctrato          --> Tipo Contrato Rating
                               ,pr_idquapro => vr_idqualif          --> Numero Contrato Rating
-                              ,pr_dsoperac => rw_craplcr6.dsoperac --> Indicado se deve criar o rating
+                              ,pr_dsoperac => rw_craplcr6.dsoperac  --> Indicado se deve criar o rating
                               ,pr_cdcooper => pr_cdcooper          --> Código da cooperativa
                               ,pr_nrctrato => pr_nrctrato          --> Número do Contrato
                               ,pr_nrdconta => pr_nrdconta          --> Número da Conta      
@@ -8987,7 +8989,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
                               ,pr_cdcooper => pr_cdcooper          --> Código da Cooperativa 
                               ,pr_nrctrato => pr_nrctrato          --> Número do Contrato
                               ,pr_nrdconta => pr_nrdconta          --> Número da Conta
-                              ,pr_nrseqite => vr_nrseqite          --> Valor da dívida                              
+                              ,pr_nrseqite => vr_nrseqite          --> Valor da dívida
                               ,pr_dscritic => vr_dscritic);        --> Descricao do erro
         -- Se retornou erro
         IF vr_dscritic IS NOT NULL THEN
@@ -9052,7 +9054,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
     ********************************************************************/
 
     IF pr_tpctrato = 90   THEN /* Emprestimo / Financiamento */
-      vr_nrseqite  := rw_crapprp7.nrgarope;
+      vr_nrseqite := rw_crapprp7.nrgarope;
       rat_flgcjeco := rw_crapprp7.flgdocje;
     ELSE                         /* Cheque especial / Desconto */
       vr_nrseqite := rw_craplim7.nrgarope;
@@ -9090,7 +9092,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
     ELSE                           /* Cheque especial / Desconto */
       vr_nrseqite := rw_craplim7.nrliquid;
     END IF;
-    
+
     rat_cdliqgar := vr_nrseqite;
     /**********************************************************
      Gravar itens do rating na crapras
@@ -9120,14 +9122,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
     ********************************************************************/
     IF pr_tpctrato = 90   THEN  /* Emprestimo / Financiamento */
       IF vr_fcrawepr THEN
-        vr_qtdiapra  := rw_crawepr9.qtpreemp * 30; /* Sempre vezes 30 */
+        vr_qtdiapra := rw_crawepr9.qtpreemp * 30; /* Sempre vezes 30 */
         rat_qtpreope := rw_crawepr9.qtpreemp;
       ELSE /* BNDES */
-        vr_qtdiapra  := rw_crapprp7.qtparbnd * 30; /* Sempre vezes 30 */
+        vr_qtdiapra := rw_crapprp7.qtparbnd * 30; /* Sempre vezes 30 */
         rat_qtpreope := rw_crapprp7.qtparbnd;
       END IF;
     ELSE                          /* Cheque especial / Desconto */
-      vr_qtdiapra  := rw_craplim7.qtdiavig;
+      vr_qtdiapra := rw_craplim7.qtdiavig;
       rat_qtpreope := rw_craplim7.qtdiavig / 30;
     END IF;
 
@@ -9243,10 +9245,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
 
      Alteracoes: 27/08/2014 - Conversão Progress -> Oracle - Odirlei (AMcom)
 
-         29/03/2016 - Replicar manutenção realizada no progress SD352945 (Odirlei-AMcom)
+				 29/03/2016 - Replicar manutenção realizada no progress SD352945 (Odirlei-AMcom)
 
-             10/05/2016 - Ajuste para utitlizar rowtype locais 
-               (Andrei  - RKAM).
+		         10/05/2016 - Ajuste para utitlizar rowtype locais 
+							 (Andrei  - RKAM).
 
   ............................................................................. */
   --------------- CURSORES  ----------------
@@ -9258,7 +9260,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
          AND crapass.nrdconta = pr_nrdconta;
     rw_crapass cr_crapass%rowtype;
 
-  -- Lockar conta do associado
+	-- Lockar conta do associado
     CURSOR cr_crapass_lock (pr_cdcooper crapass.cdcooper%TYPE,
                             pr_nrdconta crapass.nrdconta%TYPE) IS
       SELECT crapass.rowid
@@ -9304,7 +9306,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
 
     -- Incluir nome do módulo logado - Chamado 660306 28/06/2017
     GENE0001.pc_set_modulo(pr_module => pr_nmdatela, pr_action => 'RATI0001.pc_calcula_rating');
-
+      
     --Limpeza das variaveis utilizadas para salvar informacoes do rating
     rat_dtadmiss := null;
     rat_qtmaxatr := null;
@@ -9387,8 +9389,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
 
     -- Verifica se tem que criar Rating
     IF pr_flgcriar = 1 THEN
-    
-    vr_flgatuas := TRUE;  
+	  
+	  vr_flgatuas := TRUE;  
 
       -- Verificar se o Rating tem que ser criado.
       pc_verifica_criacao (pr_cdcooper => pr_cdcooper    --> Codigo Cooperativa
@@ -9531,7 +9533,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
       RAISE vr_exc_erro;
     END IF;
 
-  /* Verifica se atualiza o risco do cooperado */
+	/* Verifica se atualiza o risco do cooperado */
     IF vr_flgatuas THEN
       vr_idxrisco := pr_tab_impress_risco_tl.first;
       
@@ -9582,7 +9584,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
 
     -- Se está setada a criação
     IF pr_flgcriar = 1 THEN
-    IF vr_vlutiliz is null and wglb_vlutiliz is not null then
+	  IF vr_vlutiliz is null and wglb_vlutiliz is not null then
         vr_vlutiliz := wglb_vlutiliz;
       end if;
 
@@ -12286,7 +12288,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
   PROCEDURE pc_atuali_garant_liquid_epr(pr_cdcooper     IN crapcop.cdcooper%TYPE --> Cooperativa conectada
                                        ,pr_nrdconta     IN crapass.nrdconta%TYPE --> Conta do associado
                                        ,pr_nrctrato     IN crapnrc.nrctrrat%TYPE --> Número do contrato de Rating
-                                       ,pr_dscritic    OUT VARCHAR2) IS          --> Descrição de erro               
+                                       ,pr_dscritic    OUT VARCHAR2) IS          --> Descrição de erro						   
   /* ..........................................................................
 
      Programa: pc_atuali_garant_liquid_epr
@@ -13133,5 +13135,4 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
   END;  
   
 END RATI0001;
-
-
+/

@@ -104,6 +104,12 @@ create or replace procedure cecred.pc_crps172(pr_cdcooper  in craptab.cdcooper%t
 
                24/04/2017 - Nao considerar valores bloqueados na composicao de saldo disponivel
 			                Heitor (Mouts) - Melhoria 440
+
+               19/12/2017 - Desconsiderar do valor pendente o que foi debitado no mes
+                            Demetrius (Mouts) - Chamado 813105
+
+			   07/03/2018 - Revertendo alteração realizada no chamado 813105 - (Antonio R Jr - Mouts)
+							 
 ............................................................................. */
   -- Buscar os dados da cooperativa
   cursor cr_crapcop (pr_cdcooper in craptab.cdcooper%type) is

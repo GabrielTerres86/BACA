@@ -247,6 +247,7 @@ CREATE OR REPLACE PACKAGE CECRED.cxon0014 AS
                                  ,pr_vloutcre        IN NUMBER         --Valor Saida Creditado
                                  ,pr_tpcptdoc        IN craptit.tpcptdoc%TYPE DEFAULT 1-- Tipo de captura do documento (1=Leitora, 2=Linha digitavel).
                                  ,pr_cdctrlcs        IN tbcobran_consulta_titulo.cdctrlcs%TYPE DEFAULT NULL --> Numero de controle da consulta no NPC
+                                 ,pr_tppagmto        IN craptit.tppagmto%TYPE --TIPO DO PAGAMENTO
                                  ,pr_rowidcob        OUT ROWID         --ROWID da cobranca
                                  ,pr_indpagto        OUT INTEGER       --Indicador Pagamento
                                  ,pr_nrcnvbol        OUT INTEGER       --Numero Convenio Boleto
@@ -300,6 +301,7 @@ CREATE OR REPLACE PACKAGE CECRED.cxon0014 AS
                                  ,pr_vloutcre        IN NUMBER             --Valor Saida Creditado
                                  ,pr_tpcptdoc        IN craptit.tpcptdoc%TYPE DEFAULT 1-- Tipo de captura do documento (1=Leitora, 2=Linha digitavel).
                                  ,pr_cdctrlcs        IN tbcobran_consulta_titulo.cdctrlcs%TYPE DEFAULT NULL --> Numero de controle da consulta no NPC
+                                 ,pr_tppagmto        IN craptit.tppagmto%TYPE --TIPO DO PAGAMENTO
                                  ,pr_recidcob        OUT NUMBER            --RECID da cobranca
                                  ,pr_indpagto        OUT INTEGER           --Indicador Pagamento
                                  ,pr_nrcnvbol        OUT INTEGER           --Numero Convenio Boleto
@@ -624,6 +626,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0014 AS
 
   --              13/06/2017 - Retirado validacao incorreta na procedure pc_retorna_vlr_titulo_iptu
   --                          (Tiago/Elton #691470)
+  --
+  --              07/12/2017 - Melhoria 458, adicionado campo v_tppagmto na procedure pc_gera_titulos_iptu_prog
+  --                           e na procedure pc_gera_titulos_iptu - Antonio R. Jr (Mouts)
   ---------------------------------------------------------------------------------------------------------------
 
   /* Busca dos dados da cooperativa */
@@ -1631,6 +1636,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0014 AS
                                  ,pr_vloutcre        IN NUMBER             --Valor Saida Creditado
                                  ,pr_tpcptdoc        IN craptit.tpcptdoc%TYPE DEFAULT 1-- Tipo de captura do documento (1=Leitora, 2=Linha digitavel).
                                  ,pr_cdctrlcs        IN tbcobran_consulta_titulo.cdctrlcs%TYPE DEFAULT NULL --> Numero de controle da consulta no NPC
+                                 ,pr_tppagmto        IN craptit.tppagmto%TYPE --TIPO DO PAGAMENTO
                                  ,pr_rowidcob        OUT ROWID             --ROWID da cobranca
                                  ,pr_indpagto        OUT INTEGER           --Indicador Pagamento
                                  ,pr_nrcnvbol        OUT INTEGER           --Numero Convenio Boleto
@@ -2259,6 +2265,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0014 AS
           ,craptit.nrterfin
           ,craptit.tpcptdoc
           ,craptit.cdctrlcs
+          ,craptit.tppagmto
           ,craptit.nrdident
           ,craptit.nrispbds
           ,craptit.inpessoa
@@ -2295,6 +2302,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0014 AS
           ,pr_nrterfin                       -- nrterfin
           ,pr_tpcptdoc                       -- tpcptdoc
           ,nvl(pr_cdctrlcs,' ')              -- cdctrlcs
+          ,pr_tppagmto                       -- tppagmto
           ,nvl(vr_nridetit,0)                -- nrdident
           ,nvl(rw_crapban.nrispbif,0)        -- nrispbds
           ,nvl(vr_inpessoa,0)                -- inpessoa
@@ -3271,6 +3279,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0014 AS
                                           ,pr_idorigem    => vr_idorigem         --Identificador Origem pagamento
                                           ,pr_nrdconta    => pr_nrdconta         --Numero da conta
                                           ,pr_indbaixa    => 1                   --Indicador Baixa /* 1-Pagamento 2- Vencimento */
+                                          ,pr_dtintegr    => rw_crapdat.dtmvtocd -- Data de integração do pagamento
                                           ,pr_tab_titulos => vr_tab_titulos      --Titulos a serem baixados
                                           ,pr_cdcritic    => vr_cdcritic         --Codigo Critica
                                           ,pr_dscritic    => vr_dscritic         --Descricao Critica
@@ -3569,6 +3578,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0014 AS
                                  ,pr_vloutcre        IN NUMBER             --Valor Saida Creditado
                                  ,pr_tpcptdoc        IN craptit.tpcptdoc%TYPE DEFAULT 1-- Tipo de captura do documento (1=Leitora, 2=Linha digitavel).
                                  ,pr_cdctrlcs        IN tbcobran_consulta_titulo.cdctrlcs%TYPE DEFAULT NULL --> Numero de controle da consulta no NPC
+                                 ,pr_tppagmto        IN craptit.tppagmto%TYPE --TIPO DO PAGAMENTO
                                  ,pr_recidcob        OUT NUMBER            --RECID da cobranca
                                  ,pr_indpagto        OUT INTEGER           --Indicador Pagamento
                                  ,pr_nrcnvbol        OUT INTEGER           --Numero Convenio Boleto
@@ -3670,6 +3680,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0014 AS
                        , pr_vloutcre => pr_vloutcre
                        , pr_tpcptdoc => pr_tpcptdoc
                        , pr_cdctrlcs => pr_cdctrlcs
+                       , pr_tppagmto => pr_tppagmto
                        , pr_rowidcob => vr_rowidcob
                        , pr_indpagto => pr_indpagto
                        , pr_nrcnvbol => pr_nrcnvbol
@@ -7789,6 +7800,9 @@ END pc_gera_titulos_iptu_prog;
   --
   --             28/07/2017 - Alterar a verificacao de vencimento das faturas de convenio, para que 
   --                          seja feito atraves de parametrizacao na crapprm (Douglas - Chamado 711440)
+  --
+  --             16/03/2018 - Ajuste de acentuação na mensagem de crítica de fatura vencida 
+  --                          (Rafael - Projeto 285 - Nova Conta Online - ID172 - PCT6)
   ---------------------------------------------------------------------------------------------------------------
   BEGIN
     DECLARE
@@ -7840,6 +7854,7 @@ END pc_gera_titulos_iptu_prog;
       vr_lindigit NUMBER;
       vr_fatura   NUMBER;
       vr_calc     VARCHAR2(100);
+      vr_dsc_erro VARCHAR2(100);
       vr_lote     INTEGER;
       vr_digito   INTEGER;
       vr_nrdigito INTEGER;
@@ -8169,11 +8184,17 @@ END pc_gera_titulos_iptu_prog;
         vr_dtmvtoan:= To_Char(rw_crapdat.dtmvtoan - vr_qtdias_tolera,'YYYYMMDD');
         IF To_Number(SUBSTR(pr_codigo_barras,20,8)) <= To_Number(vr_dtmvtoan) THEN
           --Criar Erro
+          IF pr_cod_agencia IN (90,91) THEN
+            vr_dsc_erro := 'Não é possível efetuar esta operação pois a fatura está vencida.';
+          ELSE
+            vr_dsc_erro := 'Nao eh possivel efetuar esta operacao pois a fatura esta vencida.';
+          END IF;
+          
           CXON0000.pc_cria_erro(pr_cdcooper => pr_cdcooper
                                ,pr_cdagenci => pr_cod_agencia
                                ,pr_nrdcaixa => vr_nrdcaixa
                                ,pr_cod_erro => 0
-                               ,pr_dsc_erro => 'Nao eh possivel efetuar esta operacao, pois a fatura esta vencida.'
+                               ,pr_dsc_erro => vr_dsc_erro
                                ,pr_flg_erro => TRUE
                                ,pr_cdcritic => vr_cdcritic
                                ,pr_dscritic => vr_dscritic);
@@ -8182,7 +8203,7 @@ END pc_gera_titulos_iptu_prog;
             RAISE vr_exc_erro;
           ELSE
             vr_cdcritic:= 0;
-            vr_dscritic:= 'Nao eh possivel efetuar esta operacao, pois a fatura esta vencida.';
+            vr_dscritic:= vr_dsc_erro;
             --Levantar Excecao
             RAISE vr_exc_erro;
           END IF;

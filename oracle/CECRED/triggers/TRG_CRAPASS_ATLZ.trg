@@ -9,14 +9,15 @@ CREATE OR REPLACE TRIGGER CECRED.TRG_CRAPASS_ATLZ
      Sistema  : Conta-Corrente - Cooperativa de Credito
      Sigla    : CRED
      Autor    : Odirlei Busana(AMcom)
-     Data     : Agosto/2017.                   Ultima atualizacao:
+     Data     : Agosto/2017.                   Ultima atualizacao: 23/03/2018
 
      Dados referentes ao programa:
 
       Frequencia: Sempre que for chamado
       Objetivo  : Trigger para registrar que informação foi alterada
 
-     Alteração :
+     Alteração : Enviar para o CRM somente PJ, pois PF ja eh enviado na 
+                 CRAPTTL (Andrino-Mouts)
 
   ............................................................................*/
 
@@ -24,6 +25,7 @@ CREATE OR REPLACE TRIGGER CECRED.TRG_CRAPASS_ATLZ
 DECLARE
 
   vr_nmtabela   CONSTANT VARCHAR2(50) := 'CRAPASS';
+  vr_dschave    VARCHAR2(100);
   vr_cdcooper   NUMBER;
   vr_nrdconta   NUMBER;
   vr_idseqttl   NUMBER;
@@ -52,6 +54,11 @@ BEGIN
     vr_cdcooper := :new.cdcooper;
     vr_nrdconta := :new.nrdconta;
     vr_idseqttl := 1;
+    -- Fazer somente se for pessoa juridica, pois para pessoa fisica
+    -- ja eh feito na tabela CRAPTTL. Se chamar duas vezes da erro no CRM
+    IF inserting AND :new.inpessoa <> 1 THEN
+      vr_dschave := 'S';
+    END IF;
   END IF;
 
   -- Incluir registro que o cadastro de pessoa foi atualizado no sistema legado
@@ -59,6 +66,7 @@ BEGIN
                                       ,pr_nrdconta  => vr_nrdconta  --> Numero da conta
                                       ,pr_idseqttl  => vr_idseqttl  --> Sequencial do titular
                                       ,pr_nmtabela  => vr_nmtabela  --> Nome da tabela alteradoa
+                                      ,pr_dschave =>   vr_dschave   --> Chave de complemento
                                       ,pr_cdcritic  => vr_cdcritic  --> Codigo de erro
                                       ,pr_dscritic  => vr_dscritic);
 

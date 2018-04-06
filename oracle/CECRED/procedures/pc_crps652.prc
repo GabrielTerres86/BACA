@@ -13,7 +13,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
    Sistema : CYBER - GERACAO DE ARQUIVO
    Sigla   : CRED
    Autor   : Lucas Reinert
-   Data    : AGOSTO/2013                      Ultima atualizacao: 14/11/2017
+   Data    : AGOSTO/2013                      Ultima atualizacao: 27/02/2018
 
    Dados referentes ao programa:
 
@@ -205,10 +205,24 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                             "Pagto. Boleto Prejuízo", "Descto. Boleto Prejuízo" e "Pagto. de Boleto".
                             Inclusão de verificação dos historicos 2277, 2278 e 2279. Prj. 210.2 (Lombardi)
 
+               09/08/2017 - Inclusao do produto Pos-Fixado. (Jaison/James - PRJ298)
+
                17/09/2017 - Ajuste para efetuar a regularização do contrato quando o mesmo for liquidado
                             (Jonata - SD 742850). 
                             
                14/11/2017 - Log de trace da exception others (Carlos)
+               
+               09/01/2018 - #826598 Concatenação da crítica no parâmetro de retorno do crps (Carlos)
+			   
+			   01/02/2018 - Nao enviar lancamentos efetuados na tabela CRAPLCM, somente devem ser enviados lancamentos
+                            feitos na CRAPLEM e parametrizados na tela PARCYB.
+							Zerar o saldo devedor de registros que tenha sido efetuado acordo.
+                            Heitor (Mouts) - Chamado 798744
+
+               27/02/2018 - Enviar registros da LCM somente para TR, alguns historicos especificos e que conseguimos filtrar
+                            o contrato pelo campo CDPESQBB.
+                            Ajustes no envio de pagamentos de conta corrente.
+                            Heitor (Mouts)
      ............................................................................. */
 
      DECLARE
@@ -442,6 +456,13 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                   and x.nrctremp = crapcyb.nrctremp
 				  and crapcyb.cdorigem IN (2,3)
                   and x.inliquid = 0) vlmrapar
+        ,(select sum(x.vliofcpl)
+                 from crappep x
+                where x.cdcooper = crapcyb.cdcooper
+                  and x.nrdconta = crapcyb.nrdconta
+                  and x.nrctremp = crapcyb.nrctremp
+                  and crapcyb.cdorigem IN (2,3)
+                  and x.inliquid = 0) vliofcpl                         
               ,crapcyb.flgjudic
               ,crapcyb.flextjud
               ,crapcyb.flgehvip              
@@ -563,40 +584,24 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
             AND craplem.dtmvtolt = pr_dtmvtolt
             AND craphis.indcalem = 'S'
          GROUP BY craplem.cdhistor,craphis.dshistor
-         --Melhoria 155
          UNION
-         SELECT /*+ index(craplcm CRAPLCM##CRAPLCM2) */ 
+         SELECT /*+ index(craplcm CRAPLCM##CRAPLCM2) */
                SUM(craplcm.vllanmto) vllanmto
                ,craplcm.cdhistor
                ,craphis.dshistor
            FROM craplcm, craphis, crapepr
           WHERE crapepr.cdcooper = craplcm.cdcooper
             AND crapepr.nrdconta = craplcm.nrdconta
-            and crapepr.tpemprst = 1
+            and crapepr.tpemprst = 0 -- TR
             AND craphis.cdcooper = craplcm.cdcooper
             AND craphis.cdhistor = craplcm.cdhistor
+            AND trim(replace(craplcm.cdpesqbb,'.')) = pr_nrctremp
             AND craplcm.cdcooper = pr_cdcooper
             AND craplcm.nrdconta = pr_nrdconta
             AND crapepr.nrctremp = pr_nrctremp
             AND craplcm.dtmvtolt = pr_dtmvtolt
             --Multa e juros de mora
-            AND craphis.cdhistor in (1070, 1060, 1071, 1072)
-         GROUP BY craplcm.cdhistor,craphis.dshistor
-         UNION
-         SELECT /*+ index(craplcm CRAPLCM##CRAPLCM2) */ 
-               SUM(craplcm.vllanmto) vllanmto
-               ,craplcm.cdhistor
-               ,craphis.dshistor
-           FROM craplcm, craphis, crapepr
-          WHERE crapepr.cdcooper = craplcm.cdcooper
-            AND crapepr.nrdconta = craplcm.nrdconta
-            AND craphis.cdcooper = craplcm.cdcooper
-            AND craphis.cdhistor = craplcm.cdhistor
-            AND craplcm.cdcooper = pr_cdcooper
-            AND craplcm.nrdconta = pr_nrdconta
-            AND crapepr.nrctremp = pr_nrctremp
-            AND craplcm.dtmvtolt = pr_dtmvtolt
-            AND craphis.cdhistor in (2277, 2278, 2279)
+            AND craphis.cdhistor in (2084,2085,2087,2088,2090,2091,2093,2094)
          GROUP BY craplcm.cdhistor,craphis.dshistor;
        --Registro do tipo calendario
        rw_crapdat  BTCH0001.cr_crapdat%ROWTYPE;
@@ -696,6 +701,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
        vr_index           INTEGER;
        vr_idindice        VARCHAR2(40) := ''; -- Indice da tabela de acordos
        vr_idboleto        VARCHAR2(40) := '';
+       vr_flacordo        NUMBER(1);
 
        --Tabela de Erros
        vr_tab_erro       gene0001.typ_tab_erro;
@@ -1857,7 +1863,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                           LPAD(pr_rw_crapcyb.nrdconta,10,'0') || LPAD(pr_rw_crapcyb.nrctremp,10,'0');
 
            IF vr_tab_acordo.EXISTS(vr_cdindice) THEN
-             RETURN;
+             vr_flacordo := 1;
+           ELSE
+             vr_flacordo := 0;
            END IF;
 
            -- Buscar os dados cadastrado na tela CADCYB
@@ -1874,7 +1882,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
            IF pr_rw_crapcyb.cdorigem = 1 THEN
              BEGIN
                -- Caso o contrato estiver em Cobrança Judicial (rw_crapcyc1.flgjudic = 1) nao deve atualizar a data da baixa, apenas os valores para efetuar a regularização do contrato
-               UPDATE crapcyb SET crapcyb.dtdbaixa = decode(NVL(rw_crapcyc1.flgjudic,0),0,pr_dtmvtolt,crapcyb.dtdbaixa)
+               UPDATE crapcyb SET crapcyb.dtdbaixa = case when nvl(rw_crapcyc1.flgjudic,0) = 0 and vr_flacordo = 0 then pr_dtmvtolt
+                                                          else crapcyb.dtdbaixa end
                                  ,crapcyb.vlprapga = pr_rw_crapcyb.vlpreapg
                                  ,crapcyb.vlpreapg = 0
                                  ,crapcyb.vlsdevan = pr_rw_crapcyb.vlsdeved
@@ -1900,7 +1909,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
            ELSE
              BEGIN
                -- Caso o contrato estiver em Cobrança Judicial (rw_crapcyc1.flgjudic = 1) nao deve atualizar a data da baixa, apenas os valores para efetuar a regularização do contrato
-               UPDATE crapcyb SET crapcyb.dtdbaixa = decode(NVL(rw_crapcyc1.flgjudic,0),0,pr_dtmvtolt,crapcyb.dtdbaixa)
+               UPDATE crapcyb SET crapcyb.dtdbaixa = case when nvl(rw_crapcyc1.flgjudic,0) = 0 and vr_flacordo = 0 then pr_dtmvtolt
+                                                          else crapcyb.dtdbaixa end
                                  ,crapcyb.vlprapga = nvl(pr_rw_crapcyb.vlpreapg,0)
                                  ,crapcyb.vlpreapg = 0
                WHERE crapcyb.rowid = pr_rw_crapcyb.rowid
@@ -1920,8 +1930,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
 
            END IF;
 
-           -- Caso o contrato estiver em Cobrança Judicial nao será enviado a baixa para o CYBER
-           IF NVL(rw_crapcyc1.flgjudic,0) = 1 THEN
+           -- Caso o contrato estiver em Cobrança Judicial ou existir acordo, nao será enviado a baixa para o CYBER
+           IF vr_flacordo = 1 or NVL(rw_crapcyc1.flgjudic,0) = 1 THEN
              RETURN;
            END IF;
 
@@ -2042,8 +2052,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
          END IF;
          CLOSE cr_crapcyb;
 
-         -- Se for produto novo, deve-se fazer o calculo antigo
-         IF rw_crapcyb.tpemprst = 1 THEN
+         -- Se for PP ou POS, deve-se fazer o calculo antigo
+         IF rw_crapcyb.tpemprst IN (1,2) THEN
            --Data Pagamento preenchida e Data de Baixa nula
            IF rw_crapcyb.dtdpagto IS NOT NULL AND rw_crapcyb.dtdbaixa IS NULL THEN
              IF rw_crapcyb.cdlcremp = 100 AND rw_crapcyb.flgpreju = 1 THEN
@@ -2293,7 +2303,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
              pc_monta_linha(rpad(rw_craplcr.dslcremp,29,' '),110,pr_idarquivo);
            END IF;
 
-           pc_monta_linha(to_char((pr_rw_crapcyb.vlsdeved + nvl(pr_rw_crapcyb.vlmrapar, 0) + nvl(pr_rw_crapcyb.vlmtapar, 0))*100,'00000000000000'),139,pr_idarquivo);
+           pc_monta_linha(to_char((pr_rw_crapcyb.vlsdeved + nvl(pr_rw_crapcyb.vlmrapar, 0) + nvl(pr_rw_crapcyb.vlmtapar, 0) + nvl(pr_rw_crapcyb.vliofcpl, 0))*100,'00000000000000'),139,pr_idarquivo);
            pc_monta_linha(to_char(pr_rw_crapcyb.vljura60*100,'00000000000000'),154,pr_idarquivo);
            pc_monta_linha(to_char(pr_rw_crapcyb.vlpreemp*100,'00000000000000'),169,pr_idarquivo);
            pc_monta_linha(lpad(pr_rw_crapcyb.qtpreatr,3,' '),184,pr_idarquivo);
@@ -5075,8 +5085,12 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                -- Precisamos gerar arquivo de pagamento e baixa para os registros que nao fizeram atualizacao
                -- financeira no crps280.i (Foram liquidados)
                IF rw_crapcyb.dtmvtolt < vr_dtatual AND rw_crapcyb.dtatufin < vr_dtatual THEN
+                 vr_vllammto := fn_valor_pago_conta_corrente(pr_cdcooper => rw_crapcyb.cdcooper   --Cooperativa
+                                                            ,pr_nrdconta => rw_crapcyb.nrdconta   --Numero Conta
+                                                            ,pr_nrctremp => rw_crapcyb.nrctremp   --Contrato Emprestimo
+                                                            ,pr_dtmvtolt => vr_dtatual);
                  -- Verifica se houve pagamento
-                 IF rw_crapcyb.vlpreapg > 0 THEN
+                 IF (rw_crapcyb.vlpreapg - nvl(vr_vllammto,0)) > 0 THEN
                    
                    -- Melhoria 432 - verifica se é refinanciamento - Jean / Mout´S
                    vr_cdtrscyb := NULL;
@@ -5097,7 +5111,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                                             ,pr_cdorigem => rw_crapcyb.cdorigem    --Codigo Origem
                                             ,pr_nrdconta => rw_crapcyb.nrdconta    --Numero Conta
                                             ,pr_nrctremp => rw_crapcyb.nrctremp    --Numero Contrato Emprestimo
-                                            ,pr_vlrpagto => rw_crapcyb.vlpreapg    --Valor A pagar emprestimo
+                                            ,pr_vlrpagto => (rw_crapcyb.vlpreapg - nvl(vr_vllammto,0))    --Valor A pagar emprestimo
                                             ,pr_dtmvtlt2 => vr_dtmvtlt2            --Data Movimento formatada
                       -- 16/01/2017  - deve gerar historico parametrizado, se generico, gera "PA" (Jean/Mout´S)
                                            -- ,pr_cdhistor => 999999               --Codigo Historico (Genérico)
@@ -5436,7 +5450,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
 
          -- Efetuar retorno do erro nao tratado
          pr_cdcritic := 0;
-         pr_dscritic := sqlerrm;
+         pr_dscritic := vr_dscritic || ' - ' || sqlerrm;
          -- Efetuar rollback
          ROLLBACK;
          --Zerar tabela de memoria auxiliar

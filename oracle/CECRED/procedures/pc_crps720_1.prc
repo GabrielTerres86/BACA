@@ -1,0 +1,430 @@
+CREATE OR REPLACE PROCEDURE CECRED.pc_crps720_1(pr_cdcooper  IN crapcop.cdcooper%TYPE     --> Codigo Cooperativa
+                                               ,pr_idparale  IN crappar.idparale%TYPE     --> Indicador de processo paralelo
+                                               ,pr_cdagenci  IN crapage.cdagenci%TYPE     --> Codigo Agencia
+                                               ,pr_cdrestart IN tbgen_batch_controle.cdrestart%TYPE --> Controle do registro de restart em caso de erro na execucao
+                                               ,pr_dtmvtoan  IN crapdat.dtmvtoan%TYPE     --> Data do movimento anterior
+                                               ,pr_dtmvtolt  IN crapdat.dtmvtolt%TYPE     --> Data do movimento atual
+                                               ,pr_cdcritic OUT crapcri.cdcritic%TYPE     --> Codigo da Critica
+                                               ,pr_dscritic OUT crapcri.dscritic%TYPE) IS --> Descricao da Critica
+BEGIN
+  /* .............................................................................
+
+     Programa: pc_crps720_1
+     Sistema : Conta-Corrente - Cooperativa de Credito
+     Sigla   : CRED
+     Autor   : Jaison
+     Data    : Julho/2017                     Ultima atualizacao: 
+
+     Dados referentes ao programa:
+
+     Frequencia: Diaria.
+     Objetivo  : Calcular o valor da proxima parcela do produto Pos-Fixado.
+
+     Alteracoes: 
+
+  ............................................................................ */
+
+  DECLARE
+
+    ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
+
+    -- Codigo do programa
+    vr_cdprogra  CONSTANT crapprg.cdprogra%TYPE := 'CRPS720';
+
+    -- Tratamento de erros
+    vr_exc_saida EXCEPTION;
+    vr_cdcritic  PLS_INTEGER;
+    vr_dscritic  VARCHAR2(4000);
+
+    ------------------------------- CURSORES ---------------------------------
+
+    -- Busca os dados dos contratos e parcelas
+    CURSOR cr_epr_pep(pr_cdcooper  IN crapcop.cdcooper%TYPE
+                     ,pr_cdagenci  IN crapage.cdagenci%TYPE
+                     ,pr_cdrestart IN tbgen_batch_controle.cdrestart%TYPE
+                     ,pr_dtmvtoan  IN crapdat.dtmvtoan%TYPE
+                     ,pr_dtmvtolt  IN crapdat.dtmvtolt%TYPE) IS
+      SELECT crapepr.cdagenci
+            ,crapepr.nrdconta
+            ,crapepr.nrctremp
+            ,crapepr.dtmvtolt
+            ,crapepr.qtpreemp
+            ,crapepr.vlsprojt
+            ,crawepr.dtdpagto
+            ,crapepr.vlemprst
+            ,crapepr.cdlcremp
+            ,crawepr.txmensal
+            ,crawepr.idcarenc
+            ,crawepr.cddindex
+            ,crappep.nrparepr
+            ,crappep.dtvencto
+            ,ROW_NUMBER() OVER (PARTITION BY crapepr.nrdconta ORDER BY crapepr.cdcooper, crapepr.nrdconta) AS numconta
+            ,COUNT(1) OVER (PARTITION BY crapepr.nrdconta) qtdconta
+        FROM crapepr
+        JOIN crawepr
+          ON crawepr.cdcooper = crapepr.cdcooper
+         AND crawepr.nrdconta = crapepr.nrdconta
+         AND crawepr.nrctremp = crapepr.nrctremp
+        JOIN crappep
+          ON crappep.cdcooper = crapepr.cdcooper
+         AND crappep.nrdconta = crapepr.nrdconta
+         AND crappep.nrctremp = crapepr.nrctremp
+       WHERE crapepr.cdcooper = pr_cdcooper
+         AND crapepr.cdagenci = pr_cdagenci
+         AND crapepr.nrdconta > NVL(pr_cdrestart,0)
+         AND crapepr.tpemprst = 2 -- Pos-Fixado
+         AND crappep.inliquid = 0 -- Pendente
+         AND crappep.dtvencto > ADD_MONTHS(pr_dtmvtoan,1) 
+         AND crappep.dtvencto <= ADD_MONTHS(pr_dtmvtolt,1)
+    ORDER BY crapepr.cdcooper
+            ,crapepr.nrdconta;
+
+    -- Busca os dados da carencia
+    CURSOR cr_carencia IS
+      SELECT param.idcarencia,
+             param.qtddias
+        FROM tbepr_posfix_param_carencia param
+       WHERE param.idparametro = 1;
+
+    -- Busca os dados da linha de credito
+    CURSOR cr_craplcr(pr_cdcooper IN craplcr.cdcooper%TYPE) IS
+      SELECT cdlcremp
+            ,cddindex
+        FROM craplcr
+       WHERE cdcooper = pr_cdcooper;
+
+    -- Buscar a taxa acumulada do CDI
+    CURSOR cr_craptxi(pr_dtiniper IN craptxi.dtiniper%TYPE) IS
+      SELECT cddindex
+            ,vlrdtaxa
+        FROM craptxi
+       WHERE dtiniper = pr_dtiniper;
+
+    ---------------------------- ESTRUTURAS DE REGISTRO ---------------------
+    -- Registro para armazenar informacoes do contrato
+    TYPE typ_parc_atu IS RECORD (cdcooper crappep.cdcooper%TYPE
+                                ,nrdconta crappep.nrdconta%TYPE
+                                ,nrctremp crappep.nrctremp%TYPE
+                                ,nrparepr crappep.nrparepr%TYPE
+                                ,vlparepr crappep.vlparepr%TYPE
+                                ,vltaxatu crappep.vltaxatu%TYPE);
+
+    -- Tabela onde serao armazenados os registros do contrato
+    TYPE typ_tab_parc_atu IS TABLE OF typ_parc_atu INDEX BY PLS_INTEGER;
+
+    vr_tab_parc_epr typ_tab_parc_atu;
+    vr_tab_parc_pep typ_tab_parc_atu;
+    vr_tab_parcelas EMPR0011.typ_tab_parcelas;
+    vr_tab_carencia CADA0001.typ_tab_number;
+    vr_tab_craplcr  CADA0001.typ_tab_number;
+    vr_tab_craptxi  CADA0001.typ_tab_number;
+
+    ------------------------------- VARIAVEIS -------------------------------
+    vr_infimsol        PLS_INTEGER;
+    vr_stprogra        PLS_INTEGER;
+    vr_idx_parc_epr    PLS_INTEGER;
+    vr_idx_parc_pep    PLS_INTEGER;
+    vr_idx_parcelas    INTEGER;
+    vr_qtdconta        INTEGER;
+    vr_idcontrole      tbgen_batch_controle.idcontrole%TYPE;
+    vr_qtdias_carencia tbepr_posfix_param_carencia.qtddias%TYPE;
+
+    --------------------------- SUBROTINAS INTERNAS --------------------------
+    -- Grava os dados das parcelas, emprestimo e controle do batch
+    PROCEDURE pc_grava_dados(pr_tab_parc_pep IN typ_tab_parc_atu
+                            ,pr_tab_parc_epr IN typ_tab_parc_atu) IS
+      vr_nrdconta  crapass.nrdconta%TYPE;
+    BEGIN
+      -- Atualizar Parcelas
+      BEGIN
+        FORALL idx IN 1..pr_tab_parc_pep.COUNT SAVE EXCEPTIONS
+        UPDATE crappep
+           SET vlparepr = pr_tab_parc_pep(idx).vlparepr
+              ,vlsdvpar = pr_tab_parc_pep(idx).vlparepr
+              ,vltaxatu = pr_tab_parc_pep(idx).vltaxatu
+         WHERE cdcooper = pr_tab_parc_pep(idx).cdcooper
+           AND nrdconta = pr_tab_parc_pep(idx).nrdconta
+           AND nrctremp = pr_tab_parc_pep(idx).nrctremp
+           AND nrparepr = pr_tab_parc_pep(idx).nrparepr
+           AND inliquid = 0;
+      EXCEPTION
+        WHEN OTHERS THEN
+          vr_dscritic := 'Erro ao atualizar crappep: ' || SQLERRM(-SQL%BULK_EXCEPTIONS(1).ERROR_CODE);
+          RAISE vr_exc_saida;
+      END;
+
+      -- Atualizar Emprestimos
+      BEGIN
+        FORALL idx IN 1..pr_tab_parc_epr.COUNT SAVE EXCEPTIONS
+        UPDATE crapepr
+           SET vlpreemp = pr_tab_parc_epr(idx).vlparepr
+         WHERE cdcooper = pr_tab_parc_epr(idx).cdcooper
+           AND nrdconta = pr_tab_parc_epr(idx).nrdconta
+           AND nrctremp = pr_tab_parc_epr(idx).nrctremp;
+      EXCEPTION
+        WHEN OTHERS THEN
+          vr_dscritic := 'Erro ao atualizar crapepr: ' || SQLERRM(-SQL%BULK_EXCEPTIONS(1).ERROR_CODE);
+          RAISE vr_exc_saida;
+      END;
+
+      -- Condicao para verificar se foi processado numero da conta
+      vr_nrdconta := 0;
+      IF pr_tab_parc_epr.COUNT > 0 THEN
+        vr_nrdconta := pr_tab_parc_epr(pr_tab_parc_epr.LAST).nrdconta;
+      END IF;
+
+      -- Grava agencia no controle do batch
+      GENE0001.pc_grava_batch_controle(pr_cdcooper    => pr_cdcooper
+                                      ,pr_cdprogra    => vr_cdprogra
+                                      ,pr_dtmvtolt    => pr_dtmvtolt
+                                      ,pr_tpagrupador => 1 -- PA
+                                      ,pr_cdagrupador => pr_cdagenci
+                                      ,pr_cdrestart   => vr_nrdconta
+                                      ,pr_nrexecucao  => 1
+                                      ,pr_idcontrole  => vr_idcontrole
+                                      ,pr_cdcritic    => vr_cdcritic
+                                      ,pr_dscritic    => vr_dscritic);
+      -- Se houve erro
+      IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_saida;
+      END IF;
+
+      COMMIT;
+    END pc_grava_dados;
+
+  BEGIN
+
+    --------------- VALIDACOES INICIAIS -----------------
+
+    -- Incluir nome do módulo logado
+    GENE0001.pc_informa_acesso(pr_module => 'PC_' || vr_cdprogra
+                              ,pr_action => 'PC_' || vr_cdprogra || '_1');
+
+    --------------- REGRA DE NEGOCIO DO PROGRAMA -----------------
+
+    -- Validacoes iniciais do programa
+    BTCH0001.pc_valida_iniprg(pr_cdcooper => pr_cdcooper
+                             ,pr_flgbatch => 1
+                             ,pr_cdprogra => vr_cdprogra
+                             ,pr_infimsol => vr_infimsol
+                             ,pr_cdcritic => vr_cdcritic);
+    -- Se possui erro
+    IF vr_cdcritic <> 0 THEN
+      RAISE vr_exc_saida;
+    END IF;
+
+    -- Incializar controle
+    IF nvl(pr_cdrestart,0) = 0 THEN
+      -- Grava agencia no controle do batch
+      GENE0001.pc_grava_batch_controle(pr_cdcooper    => pr_cdcooper
+                                      ,pr_cdprogra    => vr_cdprogra
+                                      ,pr_dtmvtolt    => pr_dtmvtolt
+                                      ,pr_tpagrupador => 1 -- PA
+                                      ,pr_cdagrupador => pr_cdagenci
+                                      ,pr_cdrestart   => 0
+                                      ,pr_nrexecucao  => 1
+                                      ,pr_idcontrole  => vr_idcontrole
+                                      ,pr_cdcritic    => vr_cdcritic
+                                      ,pr_dscritic    => vr_dscritic);
+      -- Se houve erro
+      IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_saida;
+      END IF;
+    END IF;
+
+    -- Inicializa
+    vr_qtdconta := 0;
+
+    -- Limpa PL Table
+    vr_tab_parc_epr.DELETE;
+    vr_tab_parc_pep.DELETE;
+
+    -- Carregar tabela de carencia
+    FOR rw_carencia IN cr_carencia LOOP
+      vr_tab_carencia(rw_carencia.idcarencia):= rw_carencia.qtddias;
+    END LOOP;
+
+    -- Carregar tabela de linha de credito
+    FOR rw_craplcr IN cr_craplcr(pr_cdcooper => pr_cdcooper) LOOP
+      vr_tab_craplcr(rw_craplcr.cdlcremp):= rw_craplcr.cddindex;
+    END LOOP;
+
+    -- Carregar tabela de taxa
+    FOR rw_craptxi IN cr_craptxi(pr_dtiniper => pr_dtmvtoan) LOOP
+      vr_tab_craptxi(rw_craptxi.cddindex):= rw_craptxi.vlrdtaxa;
+    END LOOP;
+
+    -- Listagem dos contratos e parcelas
+    FOR rw_epr_pep IN cr_epr_pep(pr_cdcooper  => pr_cdcooper
+                                ,pr_cdagenci  => pr_cdagenci
+                                ,pr_cdrestart => pr_cdrestart
+                                ,pr_dtmvtoan  => pr_dtmvtoan
+                                ,pr_dtmvtolt  => pr_dtmvtolt) LOOP
+      -- Limpa PL Table
+      vr_tab_parcelas.DELETE;
+
+      vr_qtdias_carencia := 0; -- Inicializa
+
+      -- Se for Pos-Fixado e existir carencia
+      IF vr_tab_carencia.EXISTS(rw_epr_pep.idcarenc) THEN
+        vr_qtdias_carencia := vr_tab_carencia(rw_epr_pep.idcarenc);
+      END IF;
+
+      -- Se NAO achou linha de credito
+      IF NOT vr_tab_craplcr.EXISTS(rw_epr_pep.cdlcremp) THEN
+        vr_cdcritic := 363;
+        RAISE vr_exc_saida;
+      END IF;
+
+      -- Se NAO achou taxa
+      IF NOT vr_tab_craptxi.EXISTS(vr_tab_craplcr(rw_epr_pep.cdlcremp)) THEN
+        vr_dscritic := 'Taxa do CDI nao cadastrada. Data: ' || TO_CHAR(pr_dtmvtoan,'DD/MM/RRRR');
+        RAISE vr_exc_saida;
+      END IF;
+
+      -- Chama o calculo da proxima parcela
+      EMPR0011.pc_calcula_prox_parcela_pos(pr_cdcooper => pr_cdcooper
+                                          ,pr_flgbatch => TRUE
+                                          ,pr_dtcalcul => pr_dtmvtolt
+                                          ,pr_nrdconta => rw_epr_pep.nrdconta
+                                          ,pr_nrctremp => rw_epr_pep.nrctremp
+                                          ,pr_dtefetiv => rw_epr_pep.dtmvtolt
+                                          ,pr_dtdpagto => rw_epr_pep.dtdpagto
+                                          ,pr_txmensal => rw_epr_pep.txmensal
+                                          ,pr_vlrdtaxa => vr_tab_craptxi(vr_tab_craplcr(rw_epr_pep.cdlcremp))
+                                          ,pr_qtpreemp => rw_epr_pep.qtpreemp
+                                          ,pr_vlsprojt => rw_epr_pep.vlsprojt
+                                          ,pr_vlemprst => rw_epr_pep.vlemprst
+                                          ,pr_nrparepr => rw_epr_pep.nrparepr
+                                          ,pr_dtvencto => rw_epr_pep.dtvencto
+                                          ,pr_qtdias_carencia => vr_qtdias_carencia
+                                          ,pr_tab_parcelas => vr_tab_parcelas
+                                          ,pr_cdcritic => vr_cdcritic
+                                          ,pr_dscritic => vr_dscritic);
+      -- Se houve erro
+      IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_saida;
+      END IF;
+
+      -- Carrega PLTABLE das Parcelas
+      vr_idx_parcelas := vr_tab_parcelas.FIRST;
+      WHILE vr_idx_parcelas IS NOT NULL LOOP
+        vr_idx_parc_pep := vr_tab_parc_pep.COUNT + 1;
+        vr_tab_parc_pep(vr_idx_parc_pep).cdcooper := pr_cdcooper;
+        vr_tab_parc_pep(vr_idx_parc_pep).nrdconta := rw_epr_pep.nrdconta;
+        vr_tab_parc_pep(vr_idx_parc_pep).nrctremp := rw_epr_pep.nrctremp;
+        vr_tab_parc_pep(vr_idx_parc_pep).nrparepr := vr_tab_parcelas(vr_idx_parcelas).nrparepr;
+        vr_tab_parc_pep(vr_idx_parc_pep).vlparepr := vr_tab_parcelas(vr_idx_parcelas).vlparepr;
+        vr_tab_parc_pep(vr_idx_parc_pep).vltaxatu := vr_tab_parcelas(vr_idx_parcelas).vlrdtaxa;
+        vr_idx_parcelas := vr_tab_parcelas.NEXT(vr_idx_parcelas);
+      END LOOP;
+      
+      -- Carrega PLTABLE de Emprestimo
+      vr_idx_parc_epr := vr_tab_parc_epr.COUNT + 1;
+      vr_tab_parc_epr(vr_idx_parc_epr).cdcooper := pr_cdcooper;
+      vr_tab_parc_epr(vr_idx_parc_epr).nrdconta := rw_epr_pep.nrdconta;
+      vr_tab_parc_epr(vr_idx_parc_epr).nrctremp := rw_epr_pep.nrctremp;
+      vr_tab_parc_epr(vr_idx_parc_epr).vlparepr := vr_tab_parcelas(vr_tab_parcelas.FIRST).vlparepr;
+
+      -- Caso seja ultimo registro da conta
+      IF rw_epr_pep.numconta = rw_epr_pep.qtdconta THEN
+           vr_qtdconta := vr_qtdconta + 1;
+           -- Salvar a cada 1.000 contas
+           IF MOD(vr_qtdconta,1000) = 0 THEN
+             -- Grava os dados conforme PL Table
+             pc_grava_dados(pr_tab_parc_pep => vr_tab_parc_pep
+                           ,pr_tab_parc_epr => vr_tab_parc_epr);
+             -- Limpa PL Table
+             vr_tab_parc_epr.DELETE;
+             vr_tab_parc_pep.DELETE;
+           END IF;
+        END IF;
+
+    END LOOP; -- cr_epr_pep
+
+    -- Grava os dados restantes conforme PL Table
+    pc_grava_dados(pr_tab_parc_pep => vr_tab_parc_pep
+                  ,pr_tab_parc_epr => vr_tab_parc_epr);
+
+    -- Finaliza agencia no controle do batch
+    GENE0001.pc_finaliza_batch_controle(pr_idcontrole => vr_idcontrole
+                                       ,pr_cdcritic   => vr_cdcritic
+                                       ,pr_dscritic   => vr_dscritic);
+    -- Se houve erro
+    IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+      RAISE vr_exc_saida;
+    END IF;
+    
+    -- Encerrar o job do processamento paralelo dessa agencia
+    GENE0001.pc_encerra_paralelo(pr_idparale => pr_idparale
+                                ,pr_idprogra => pr_cdagenci
+                                ,pr_des_erro => pr_dscritic);
+    -- Se houve erro
+    IF pr_dscritic IS NOT NULL THEN
+      RAISE vr_exc_saida;
+    END IF;
+
+    -- Processo OK, devemos chamar a fimprg
+    BTCH0001.pc_valida_fimprg(pr_cdcooper => pr_cdcooper
+                             ,pr_cdprogra => vr_cdprogra
+                             ,pr_infimsol => vr_infimsol
+                             ,pr_stprogra => vr_stprogra);
+
+    ----------------- ENCERRAMENTO DO PROGRAMA -------------------
+
+    COMMIT;
+
+  EXCEPTION
+
+    WHEN vr_exc_saida THEN
+      vr_cdcritic := NVL(vr_cdcritic, 0);
+      IF vr_cdcritic > 0 THEN
+        vr_dscritic := GENE0001.fn_busca_critica(vr_cdcritic);
+      END IF;
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := vr_dscritic;
+      -- Efetuar rollback
+      ROLLBACK;
+
+      -- Novamente tenta encerrar o JOB
+      GENE0001.pc_encerra_paralelo(pr_idparale => pr_idparale
+                                  ,pr_idprogra => pr_cdagenci
+                                  ,pr_des_erro => vr_dscritic);
+      -- Se aconteceu erro
+      IF vr_dscritic IS NOT NULL THEN
+        pr_dscritic := pr_dscritic || ' - ' || vr_dscritic;
+      END IF;
+
+      -- Envio centralizado de log de erro
+      BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                ,pr_ind_tipo_log => 2 -- Erro tratato
+                                ,pr_des_log      => TO_CHAR(SYSDATE,'hh24:mi:ss') || ' - '
+                                                 || vr_cdprogra || ' --> PA: ' || pr_cdagenci || ' - '
+                                                 || pr_dscritic);
+
+    WHEN OTHERS THEN
+      pr_cdcritic := 0;
+      pr_dscritic := SQLERRM;
+      -- Efetuar rollback
+      ROLLBACK;
+
+      -- Novamente tenta encerrar o JOB
+      GENE0001.pc_encerra_paralelo(pr_idparale => pr_idparale
+                                  ,pr_idprogra => pr_cdagenci
+                                  ,pr_des_erro => vr_dscritic);
+      -- Se aconteceu erro
+      IF vr_dscritic IS NOT NULL THEN
+        pr_dscritic := pr_dscritic || ' - ' || vr_dscritic;
+      END IF;
+
+      -- Envio centralizado de log de erro
+      BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                ,pr_ind_tipo_log => 2 -- Erro tratato
+                                ,pr_des_log      => TO_CHAR(SYSDATE,'hh24:mi:ss') || ' - '
+                                                 || vr_cdprogra || ' --> PA: ' || pr_cdagenci || ' - '
+                                                 || pr_dscritic);
+
+  END;
+
+END pc_crps720_1;
+/

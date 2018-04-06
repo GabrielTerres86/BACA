@@ -1,16 +1,16 @@
 CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS030 (pr_cdcooper in craptab.cdcooper%type,
-                                                 pr_flgresta IN PLS_INTEGER,             --> Flag 0/1 para utilizar restart na chamada
-                                                 pr_stprogra OUT PLS_INTEGER,            --> Saída de termino da execução
-                                                 pr_infimsol OUT PLS_INTEGER,            --> Saída de termino da solicitação
-                                                 pr_cdcritic out crapcri.cdcritic%type,
-                                                 pr_dscritic out varchar2) as
+                                               pr_flgresta IN PLS_INTEGER,             --> Flag 0/1 para utilizar restart na chamada
+                                               pr_stprogra OUT PLS_INTEGER,            --> Saída de termino da execução
+                                               pr_infimsol OUT PLS_INTEGER,            --> Saída de termino da solicitação
+                                               pr_cdcritic out crapcri.cdcritic%type,
+                                               pr_dscritic out varchar2) as
 /* ..........................................................................
 
    Programa: PC_CRPS030 (Antigo Fontes/crps030.p)
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Deborah/Edson
-   Data    : Fevereiro/92.                       Ultima atualizacao: 28/05/2014
+   Data    : Fevereiro/92.                       Ultima atualizacao: 08/03/2018
 
    Dados referentes ao programa:
 
@@ -56,12 +56,23 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS030 (pr_cdcooper in craptab.cdcooper%t
                             
                28/05/2014 - Ajustes na leitura dos valores de maior cotista (Marcos-Supero)                                  
                             
+               08/03/2018 - Ao encontrar um associado não cadastrado:
+                            - Não abortar o programa e apresentar menagem "Nome nao cadastrado"
+                            - Inclusão log início e fim de execução
+                            - Exception não utilizada vr_exc_fimprg -> eliminada
+                            - Ocorria a tentativa de gravar logs com nomes diferentes. Porém, quando é 
+                              gravado o início do programa, é mantido sempre o memso nome de log
+                              para todas as outras gravações da tbgen_prglog. Sendo assim, nunca 
+                              gravaria 2 logs dentro da mesma execução com noems diferentes.
+                              Mantido nmarqlog = 'CRPS030'
+                            (Ana - Envolti - Ch 805994)
 ............................................................................. */
   -- Data do movimento
   cursor cr_crapdat(pr_cdcooper in craptab.cdcooper%type) is
     select dat.dtmvtolt
       from crapdat dat
      where dat.cdcooper = pr_cdcooper;
+     
   -- Solicitações de emissão do relatório
   cursor cr_crapsol (pr_cdcooper in crapsol.cdcooper%type,
                      pr_dtmvtolt in crapsol.dtrefere%type) is
@@ -74,6 +85,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS030 (pr_cdcooper in craptab.cdcooper%t
        and crapsol.nrsolici = 20
        and crapsol.insitsol = 1;
   rw_crapsol     cr_crapsol%rowtype;
+  
   -- Buscar o valor separador dos maiores cotistas
   cursor cr_craptab is
     select to_number(substr(craptab.dstextab,65,15)) dstextab
@@ -85,6 +97,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS030 (pr_cdcooper in craptab.cdcooper%t
        and upper(craptab.cdacesso) = 'MAIORESDEP'
        and craptab.tpregist = 1;
   rw_craptab   cr_craptab%rowtype;
+  
   -- Lista dos cotistas
   cursor cr_crapcot(pr_cdcooper in craptab.cdcooper%type) is
     select crapcot.nrdconta,
@@ -104,12 +117,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS030 (pr_cdcooper in craptab.cdcooper%t
               crapcot.nrdconta;
   --
   -- Código do programa
-  vr_cdprogra      crapprg.cdprogra%type;
+  vr_cdprogra      crapprg.cdprogra%type := 'CRPS030';
   -- Data do movimento
   vr_dtmvtolt      crapdat.dtmvtolt%type;
   -- Tratamento de erros
   vr_exc_saida      exception;
-  vr_exc_fimprg     exception;
   vr_cdcritic       crapcri.cdcritic%TYPE;
   vr_dscritic       varchar2(4000);
 
@@ -125,6 +137,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS030 (pr_cdcooper in craptab.cdcooper%t
   vr_escreve_arquivo_2  boolean;
   -- Variável auxiliar para armazenar o CPF/CNPJ formatado para a saída no relatório
   vr_nrcpfcgc      varchar2(20);
+
   -- Subrotina para escrever texto na variável CLOB do XML
   procedure pc_escreve_xml(pr_des_dados in varchar2,
                            pr_escreve_arquivo_2 in boolean) is
@@ -134,10 +147,42 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS030 (pr_cdcooper in craptab.cdcooper%t
       dbms_lob.writeappend(vr_des_xml2, length(pr_des_dados), pr_des_dados);
     end if;
   end;
-  --
+
+  -- Inclusao do log padrão - Chamado 805994 - 08/03/2018
+  -- Controla log em banco de dados
+  PROCEDURE pc_gera_log(pr_dstiplog      IN VARCHAR2, -- Tipo de Log
+                        pr_tpocorrencia  IN NUMBER,   -- Tipo de ocorrencia
+                        pr_dscritic      IN VARCHAR2, -- Descrição do Log
+                        pr_cdcritic      IN NUMBER,   -- Codigo da crítica
+                        pr_cdcriticidade IN VARCHAR2)
+  IS
+  BEGIN         
+    --> Controlar geração de log de execução dos jobs
+    --Como executa na cadeira, utiliza pc_gera_log_batch
+    btch0001.pc_gera_log_batch(pr_cdcooper      => pr_cdcooper   
+                              ,pr_ind_tipo_log  => pr_tpocorrencia 
+                              ,pr_nmarqlog      => vr_cdprogra
+                              ,pr_dstiplog      => NVL(pr_dstiplog,'E')
+                              ,pr_cdprograma    => vr_cdprogra     
+                              ,pr_tpexecucao    => 1 -- batch      
+                              ,pr_cdcriticidade => pr_cdcriticidade
+                              ,pr_cdmensagem    => pr_cdcritic    
+                              ,pr_des_log       => to_char(sysdate,'DD/MM/RRRR hh24:mi:ss')||' - ' 
+                                                  ||vr_cdprogra||'-->'||pr_dscritic);
+  EXCEPTION
+    WHEN OTHERS THEN
+      -- No caso de erro de programa gravar tabela especifica de log  
+      CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);                                                             
+  END pc_gera_log;
+  
 begin
-  -- Nome do programa
-  vr_cdprogra := 'CRPS030';
+  --Programa iniciado - Chamado 805994
+  pc_gera_log(pr_dstiplog      => 'I'
+             ,pr_tpocorrencia  => NULL
+             ,pr_dscritic      => NULL
+             ,pr_cdcritic      => NULL
+             ,pr_cdcriticidade => 0);
+
   -- Validações iniciais do programa
   btch0001.pc_valida_iniprg(pr_cdcooper => pr_cdcooper,
                             pr_flgbatch => 1,
@@ -146,18 +191,35 @@ begin
                             pr_cdcritic => vr_cdcritic);
   -- Se retornou algum erro
   if vr_cdcritic <> 0 then
-    -- Buscar descrição do erro
-    vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
     --Envio do log de erro
     RAISE vr_exc_saida;
   end if;
+
   -- Incluir nome do módulo logado
-  gene0001.pc_informa_acesso(pr_module => 'PC_CRPS030',
-                             pr_action => vr_cdprogra);
+  gene0001.pc_informa_acesso(pr_module => 'PC_CRPS030', pr_action => NULL);
+
   -- Buscar a data do movimento
   open cr_crapdat(pr_cdcooper);
     fetch cr_crapdat into vr_dtmvtolt;
-  close cr_crapdat;
+  if cr_crapdat%notfound then
+    -- Fechar o cursor pois efetuaremos raise
+    close cr_crapdat;
+    --Não tinha a validação abaixo, sendo assim, será gravado log mas não será efetuado raise
+    -- Montar mensagem de critica
+    vr_cdcritic := 1;
+    vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+    --Grava log - Chamado 805994
+    pc_gera_log(pr_dstiplog      => 'E'
+               ,pr_tpocorrencia  => 1 -- grava 4 - Mensagems
+               ,pr_dscritic      => vr_dscritic
+               ,pr_cdcritic      => vr_cdcritic
+               ,pr_cdcriticidade => 0);
+    --
+  else
+    -- Apenas fechar o cursor
+    close cr_crapdat;
+  end if;
+
   -- Verifica se houve alguma solicitação para o relatório
   open cr_crapsol (pr_cdcooper,
                    vr_dtmvtolt);
@@ -168,6 +230,7 @@ begin
       raise vr_exc_saida;
     end if;
   close cr_crapsol;
+  
   -- Buscar o valor separador dos maiores cotistas
   open cr_craptab;
     fetch cr_craptab into rw_craptab;
@@ -182,6 +245,7 @@ begin
       end if;
     end if;
   close cr_craptab;
+  
   -- Inicializar os CLOBs para armazenar os arquivos XML
   -- Serão gerados 2 arquivos. Um com todos os cotistas (crrl361) e outro com os maiores cotistas (crrl028).
   -- O parâmetro boolean da pc_escreve_xml define se irá escrever nos dois arquivos (true) ou somente no primeiro (false).
@@ -195,13 +259,23 @@ begin
   -- Inicilizar as informações do XML
   pc_escreve_xml('<?xml version="1.0" encoding="utf-8"?><crps030>', true);
   -- Leitura dos cotistas para inclusão no arquivo XML
+
   for rw_crapcot in cr_crapcot (pr_cdcooper) loop
     -- Verifica se o associado existe. Caso não exista, aborta a execução.
     if rw_crapcot.nmprimtl = 'NAO CADASTRADO' then
-      vr_cdcritic := 9;
-      vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
-      raise vr_exc_saida;
+      --Substituir a crítica "Associado nao cadastrado" por "Nome nãoc adastrado" e não parar a execução
+      vr_cdcritic := 1189;
+      vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+      --Grava log informativo mas não pára execução - Chamado 805994
+      pc_gera_log(pr_dstiplog      => 'E'
+                 ,pr_tpocorrencia  => 1 -- grava 4 - Mensagem
+                 ,pr_dscritic      => vr_dscritic
+                 ,pr_cdcritic      => vr_cdcritic
+                 ,pr_cdcriticidade => 0);
+
+      rw_crapcot.nmprimtl := vr_dscritic;
     end if;
+
     -- Se o valor do cotista for maior que o limite, escreve nos dois arquivos.
     vr_escreve_arquivo_2 := (rw_crapcot.vldcotas >= vr_vlsdmact);
     -- Formata o campo do CPF/CNPJ de acordo com o tipo de pessoa
@@ -220,12 +294,14 @@ begin
                    '</cotista>',
                    vr_escreve_arquivo_2);
   end loop;
+  
   -- Fecha a tag principal para encerrar o XML
   pc_escreve_xml('</crps030>', true);
   -- Busca do diretório base da cooperativa
   vr_nom_diretorio := gene0001.fn_diretorio(pr_tpdireto => 'C', -- /usr/coop
                                             pr_cdcooper => pr_cdcooper,
                                             pr_nmsubdir => '/rl'); --> Utilizaremos o rl
+
   -- Executa os relatórios de acordo com as solicitações
   for rw_crapsol in cr_crapsol (pr_cdcooper,
                                 vr_dtmvtolt) loop
@@ -252,11 +328,17 @@ begin
     begin
       update crapsol
          set crapsol.insitsol = 2
-       where crapsol.rowid = rw_crapsol.row_id;
+       where crapsol.rowid    = rw_crapsol.row_id;
     exception
       when others then
-        vr_cdcritic := 0;
-        vr_dscritic := 'Erro ao marcar a solicitação '||rw_crapsol.row_id||' como executada: '||sqlerrm;
+        vr_cdcritic := 1035;
+        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'crapsol: '
+                       ||'insitsol:2 - executada'
+                       ||' com rowid:'||rw_crapsol.row_id||'. '||sqlerrm;
+
+        -- No caso de erro de programa gravar tabela especifica de log - Chamado 805994
+        CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
+
         raise vr_exc_saida;
     end;
   end loop;
@@ -294,49 +376,46 @@ begin
                            ,pr_infimsol => pr_infimsol
                            ,pr_stprogra => pr_stprogra);
   --
-  commit;
+  --Programa finalizado - Chamado 805994
+  pc_gera_log(pr_dstiplog      => 'F'
+             ,pr_tpocorrencia  => NULL
+             ,pr_dscritic      => NULL
+             ,pr_cdcritic      => NULL
+             ,pr_cdcriticidade => 0);
 
-exception
-  when vr_exc_fimprg then
-    -- se foi retornado apenas código
-    if vr_cdcritic > 0 and vr_dscritic is null then
-      -- buscar a descrição
-      vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
-    end if;
-    -- se foi gerada critica para envio ao log
-    if vr_cdcritic > 0 or vr_dscritic is not null then
-      -- envio centralizado de log de erro
-      btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                ,pr_ind_tipo_log => 2 -- erro tratato
-                                ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                 || vr_cdprogra || ' --> '
-                                                 || vr_dscritic
-                                ,pr_nmarqlog     => vr_cdprogra);
-    end if;
-    -- chamamos a fimprg para encerrarmos o processo sem parar a cadeia
-    btch0001.pc_valida_fimprg(pr_cdcooper => pr_cdcooper
-                             ,pr_cdprogra => vr_cdprogra
-                             ,pr_infimsol => pr_infimsol
-                             ,pr_stprogra => pr_stprogra);
-    -- efetuar commit pois gravaremos o que foi processo até então
-    commit;
-  when vr_exc_saida then
-    -- se foi retornado apenas código
-    if vr_cdcritic > 0 and vr_dscritic is null then
-      -- buscar a descrição
-      vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
-    end if;
-    -- devolvemos código e critica encontradas
+  commit;
+EXCEPTION
+  WHEN vr_exc_saida then
     pr_cdcritic := nvl(vr_cdcritic,0);
-    pr_dscritic := vr_dscritic;
+    pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic, vr_dscritic);
+
+    --Grava log - Chamado 805994
+    pc_gera_log(pr_dstiplog      => 'E'
+               ,pr_tpocorrencia  => 2 -- grava 1 - Erro de negócio
+               ,pr_dscritic      => pr_dscritic
+               ,pr_cdcritic      => pr_cdcritic
+               ,pr_cdcriticidade => 1);
+
     -- efetuar rollback
     rollback;
-  when others then
-    -- efetuar retorno do erro não tratado
-    pr_cdcritic := 0;
-    pr_dscritic := sqlerrm;
-    -- efetuar rollback
-    rollback;
+
+  WHEN others then
+    -- Efetuar retorno do erro não tratado
+    -- Padronização - Chamado 805994
+    pr_cdcritic := 9999;
+    pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic)||'PC_CRPS030'|| '. ' || SQLERRM;
+
+    --Grava log - Chamado 805994
+    pc_gera_log(pr_dstiplog      => 'E'
+               ,pr_tpocorrencia  => 3 -- grava 2 - Erro não tratado
+               ,pr_dscritic      => pr_dscritic
+               ,pr_cdcritic      => pr_cdcritic
+               ,pr_cdcriticidade => 2);
+
+    -- Efetuar rollback
+    ROLLBACK;
+
+    -- No caso de erro de programa gravar tabela especifica de log - Chamado 805994
+    CECRED.pc_internal_exception(pr_cdcooper => pr_cdcooper);
 end;
 /
-

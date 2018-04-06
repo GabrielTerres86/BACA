@@ -11,7 +11,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Guilherme
-       Data    : Agosto/2010                       Ultima atualizacao: 20/03/2018
+       Data    : Agosto/2010                       Ultima atualizacao: 09/02/2018
 
        Dados referentes ao programa:
 
@@ -282,11 +282,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                     
                     01/08/2016 - Resolucao do chamado 497022 - Operacoes de saida 0305. (James)
 
-                    26/09/2016 - Ajustes na rotina pc_carrega_base_risco para o envio correto 
+			        26/09/2016 - Ajustes na rotina pc_carrega_base_risco para o envio correto 
                                  da data de vencimento e quantidade de dias atraso.
                                  SD488220 (Odirlei-AMcom)
 
-                    24/10/2016 - Alterado o Ident de 1 para 2 conforme solicitação realizada no chamado 541753
+					24/10/2016 - Alterado o Ident de 1 para 2 conforme solicitação realizada no chamado 541753
                                  ( Renato Darosci - Supero )
                                  
                     03/11/2016 - Alterada a função de classificação do porte de pessoa física, para que sejam considerados
@@ -298,10 +298,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                     06/01/2017 - Ajuste para desprezar contas migradas da Transulcred para Transpocred antes da incorporação.
                                  PRJ342 - Incorporação Transulcred (Odirlei-AMcom)
                                  
-                    24/02/2017 - Ajuste na tratativa do campo Ident, o qual estava verificando campos incorretos para
-                                informar a baixa do gravames (Daniel - Chamado: 615103) 
+					24/02/2017 - Ajuste na tratativa do campo Ident, o qual estava verificando campos incorretos para
+					             informar a baixa do gravames (Daniel - Chamado: 615103) 
 
-                    08/03/2017 - Alteracao na regra de porte cliente juridico (Daniel - Chamado: 626161) 
+				    08/03/2017 - Alteracao na regra de porte cliente juridico (Daniel - Chamado: 626161) 
 
                     13/04/2016 - Ajustes PRJ343 - Cessao de Credito (Odirlei-AMcom)
 
@@ -319,7 +319,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                     27/12/2017 - Ajustado para enviar a qtd de dias de atraso calculado na 
                                  central de risco para os contratos em prejuizo, devido a auditoria do Bacen.
                                  (Odirlei-AMcom/Oscar) 
-                                 
+
                     09/02/2018 - Correção de erro na consulta de índices quando empréstimo do BNDES (PRJ298), 
                                  erro reportado pelos plantonistas (Jean Michel)
 
@@ -342,7 +342,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
       vr_exc_fimprg EXCEPTION;
       vr_cdcritic   PLS_INTEGER;
       vr_dscritic   VARCHAR2(4000);
-      
+
       -- ** Daniel(AMcom)
       vr_atvprobl   NUMBER := 0;
       vr_reestrut   NUMBER := 0;  
@@ -388,9 +388,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
          WHERE crapris.cdcooper = pr_cdcooper
            AND crapris.dtrefere = pr_dtrefere
            AND crapris.inddocto = 1 -- documento 3020
-           
-and crapris.nrdconta = 1848 and crapris.nrctremp = 219344 -- JFF
-           
           ORDER BY crapris.nrcpfcgc, crapris.innivris, crapris.nrdconta; 
 
       -- Cursor de contas transferidas entre cooperativas
@@ -401,7 +398,7 @@ and crapris.nrdconta = 1848 and crapris.nrctremp = 219344 -- JFF
            AND craptco.nrdconta = pr_nrdconta
            AND craptco.tpctatrf <> 3;
       rw_craptco cr_craptco%ROWTYPE;
-      
+
       -- Cursor para popular tabela temporária liquidado financiado
       CURSOR cr_juros60_ctt(pr_cdcooper IN crapris.cdcooper%TYPE) IS
       SELECT   tlf.nrdconta, epr.nrctremp, tlf.vljuros60
@@ -476,10 +473,7 @@ and crapris.nrdconta = 1848 and crapris.nrctremp = 219344 -- JFF
          where epr.cdcooper = pr_cdcooper
            and epr.cdcooper = wpr.cdcooper (+)
            and epr.nrdconta = wpr.nrdconta (+)
-           and epr.nrctremp = wpr.nrctremp (+)
-           
-and epr.nrdconta = 1848 and epr.nrctremp = 219344 -- JFF
-           ;
+           and epr.nrctremp = wpr.nrctremp (+);
 
       -- Cursor sobre a tabela de vencimento do risco buscando o maior codigo de vencimento
       CURSOR cr_crapvri (pr_nrdconta crapvri.nrdconta%TYPE,
@@ -494,10 +488,7 @@ and epr.nrdconta = 1848 and epr.nrctremp = 219344 -- JFF
            AND crapvri.dtrefere = pr_dtrefere
            AND crapvri.innivris = pr_innivris
            AND crapvri.cdmodali = pr_cdmodali
-           AND crapvri.nrctremp = pr_nrctremp
-           
-and crapvri.nrdconta = 1848 and crapvri.nrctremp = 219344 -- JFF
-           ;
+           AND crapvri.nrctremp = pr_nrctremp;
       rw_crapvri cr_crapvri%ROWTYPE;
 
       -- Cursor sobre a tabela de vencimento do risco
@@ -514,10 +505,7 @@ and crapvri.nrdconta = 1848 and crapvri.nrctremp = 219344 -- JFF
            AND crapvri.nrdconta = pr_nrdconta
            AND crapvri.dtrefere = pr_dtrefere
            AND crapvri.cdmodali = pr_cdmodali
-           AND crapvri.nrctremp = pr_nrctremp
-           
-and crapvri.nrdconta = 1848 and crapvri.nrctremp = 219344 -- JFF
-           ;
+           AND crapvri.nrctremp = pr_nrctremp;
 
 
       -- Cursor sobre a tabela de vencimento do risco
@@ -532,9 +520,6 @@ and crapvri.nrdconta = 1848 and crapvri.nrctremp = 219344 -- JFF
            FROM crapvri
           WHERE crapvri.cdcooper = pr_cdcooper
             AND crapvri.dtrefere = pr_dtrefere
-
-and crapvri.nrdconta = 1848 and crapvri.nrctremp = 219344 -- JFF
-
            ORDER BY cdvencto DESC;
 
       -- Cursor para busca dos percentuais de risco
@@ -993,7 +978,7 @@ and crapvri.nrdconta = 1848 and crapvri.nrctremp = 219344 -- JFF
       vr_tab_crapebn typ_tab_crapebn;
       -- Variavel para o indice
       vr_ind_ebn VARCHAR2(30);
-      
+
       -- Definicao do tipo da tabela de juros +60 refinanciados
       TYPE typ_reg_tbepr_liq_fin IS
        RECORD(vljuros60 tbepr_liquidado_financiado.vljuros60%TYPE);
@@ -1068,7 +1053,7 @@ and crapvri.nrdconta = 1848 and crapvri.nrctremp = 219344 -- JFF
               cdsubmod craplcr.cdsubmod%TYPE,
               txjurfix craplcr.txjurfix%TYPE,
               dsorgrec craplcr.dsorgrec%TYPE,
-              cdusolcr craplcr.cdusolcr%TYPE);  
+              cdusolcr craplcr.cdusolcr%TYPE);	
       TYPE typ_tab_craplcr IS
         TABLE OF typ_reg_craplcr
           INDEX BY PLS_INTEGER; -- Codigo da Linha
@@ -1198,7 +1183,7 @@ and crapvri.nrdconta = 1848 and crapvri.nrctremp = 219344 -- JFF
       vr_nmarqsai_tot VARCHAR2(1000) := NULL;
 
       --------------------------- SUBROTINAS INTERNAS --------------------------
-      
+	    
       -- Retorno do código de localidade cfme UF
       FUNCTION fn_localiza_uf(pr_sig_UF IN VARCHAR2) RETURN NUMBER IS
       BEGIN
@@ -1369,8 +1354,8 @@ and crapvri.nrdconta = 1848 and crapvri.nrctremp = 219344 -- JFF
                 vr_dsorgrec_out := '0202';
               END IF;
             END IF;
-          ELSE --se for BNDES - SD 426476
-            vr_dsorgrec_out := '0203';       
+		      ELSE --se for BNDES - SD 426476
+            vr_dsorgrec_out := '0203'; 			
           END IF;
         -- Para Contratos de Garantias Prestadas
         ELSIF pr_cdorigem = 7 THEN
@@ -1486,9 +1471,6 @@ and crapvri.nrdconta = 1848 and crapvri.nrctremp = 219344 -- JFF
              AND crapris.inpessoa IN (1,2)-- Deve ser CPF ou CNPJ
              AND crapris.vldivida <> 0    -- Com divida
              AND nvl(crapris.cdinfadi,' ') <> '0301' -- Remover saidas para Inddocto=5
-             
-and crapris.nrdconta = 1848 and crapris.nrctremp = 219344 -- JFF
-             
             ORDER BY DECODE(inddocto,3,1,0) desc,nrcpfcgc, nrctremp, cdmodali; --> IndDocto 3 virão primeiro... 
 
         -- Busca informacoes da central de risco de Dsc Titulo
@@ -1503,11 +1485,7 @@ and crapris.nrdconta = 1848 and crapris.nrctremp = 219344 -- JFF
              AND crapris.cdmodali = 0301  -- Dsc Tit 
              AND crapris.cdorigem IN(4,5) -- 4 - Desconto Titulos
              AND crapris.inpessoa IN (1,2)        -- Deve ser CPF ou CNPJ             
-             AND vldivida <> 0
-             
-and crapris.nrdconta = 1848 and crapris.nrctremp = 219344 -- JFF
-             
-             ;
+             AND vldivida <> 0;
         
         --> temptable dos dados dados da tabela de risco
         TYPE typ_rec_ris IS RECORD
@@ -1833,7 +1811,7 @@ and crapris.nrdconta = 1848 and crapris.nrctremp = 219344 -- JFF
                 END IF;    
                 
                 -- Encontrar a faixa de valor conforme tabela
-                --   Anexo 14: Faixa de valor da operação - FaixaVlr  
+                --   Anexo 14: Faixa de valor da operação - FaixaVlr	
                 --   Domínio   Descrição
                 --         1   Acima de 0 a R$ 99,99
                 --         2   R$ 100,00 a R$ 499,99
@@ -2071,11 +2049,7 @@ and crapris.nrdconta = 1848 and crapris.nrctremp = 219344 -- JFF
              AND dtrefere = pr_dtrefere
              AND inddocto IN(2,5) -- Saida ou Garantias Prestadas com Saida
              AND nvl(cdinfadi,' ') <> ' '
-             AND cdmodali <> 0301
-             
-and crapris.nrdconta = 1848 and crapris.nrctremp = 219344 -- JFF
-             
-             ; -- Dsc Tit
+             AND cdmodali <> 0301;
 
         -- Cursor sobre a tabela de risco com modalidade igual a 301
         CURSOR cr_crapris_dsctit IS
@@ -2822,7 +2796,7 @@ and crapris.nrdconta = 1848 and crapris.nrctremp = 219344 -- JFF
                      ** 24/10/2016
                      *********************************************************************************/
                    
-                      -- Informação do Empréstimo
+                   	 -- Informação do Empréstimo
                      gene0002.pc_escreve_xml(pr_xml            => vr_xml_3040
                                             ,pr_texto_completo => vr_xml_3040_temp
                                             ,pr_texto_novo     => '            <Inf Tp="0401" Ident="2" />' || chr(10));
@@ -3110,7 +3084,7 @@ and crapris.nrdconta = 1848 and crapris.nrctremp = 219344 -- JFF
           END IF;
         END IF;
       END;    
-                        
+      
       -- **
       -- Verifica Ativo Problemático - Daniel(AMcom)
       PROCEDURE pc_verif_ativo_problematico(pr_cdcooper    IN NUMBER       -- Cooperativa
@@ -3576,7 +3550,7 @@ and crapris.nrdconta = 1848 and crapris.nrctremp = 219344 -- JFF
           vr_cdnatuop := '01';  
           vr_caracesp := '';
         END IF;
-
+        
         -- **
         -- Verifica Ativo Problemático - Daniel(AMcom)
         pc_verif_ativo_problematico(pr_cdcooper => pr_cdcooper                        -- Cooperativa
@@ -3669,14 +3643,14 @@ and crapris.nrdconta = 1848 and crapris.nrctremp = 219344 -- JFF
                                                       || ' Valor="' || replace(to_char(vr_tab_saida(pr_idxsaida).vldivida,'fm99999999999999990D00'),',','.') || '"'
                                                       || ' />' || chr(10));            
           ELSE
-            -- Enviar informação adicional do contrato
-            gene0002.pc_escreve_xml(pr_xml            => vr_xml_3040
-                                   ,pr_texto_completo => vr_xml_3040_temp
-                                   ,pr_texto_novo     => '                        <Inf Tp="' || TRIM(vr_tab_saida(pr_idxsaida).cdinfadi) || '"' 
-                                                      || ' Cd="' ||vr_nrcontrato_3040 || '"'  
-                                                      || ' Ident="' || to_char(vr_iddident,'fm0000') || '"' 
-                                                      || ' Valor="' || replace(to_char(vr_tab_saida(pr_idxsaida).vldivida,'fm99999999999999990D00'),',','.') || '"' 
-                                                      || ' />' || chr(10));
+          -- Enviar informação adicional do contrato
+          gene0002.pc_escreve_xml(pr_xml            => vr_xml_3040
+                                 ,pr_texto_completo => vr_xml_3040_temp
+                                 ,pr_texto_novo     => '                        <Inf Tp="' || TRIM(vr_tab_saida(pr_idxsaida).cdinfadi) || '"' 
+                                                    || ' Cd="' ||vr_nrcontrato_3040 || '"'  
+                                                    || ' Ident="' || to_char(vr_iddident,'fm0000') || '"' 
+                                                    || ' Valor="' || replace(to_char(vr_tab_saida(pr_idxsaida).vldivida,'fm99999999999999990D00'),',','.') || '"' 
+                                                    || ' />' || chr(10));
           END IF;
         ELSE
           -- Enviar informação adicional do contrato
@@ -3806,9 +3780,6 @@ and crapris.nrdconta = 1848 and crapris.nrctremp = 219344 -- JFF
              AND crapvri.cdmodali = crapris.cdmodali
              AND crapvri.nrctremp = crapris.nrctremp
              AND crapvri.nrseqctr = crapris.nrseqctr
-             
-and crapvri.nrdconta = 1848 and crapvri.nrctremp = 219344 -- JFF
-             
            ORDER BY crapvri.nrdconta, crapvri.nrctremp, crapvri.cdvencto;
 
         -- Variaveis gerais da rotina
@@ -3977,8 +3948,7 @@ and crapvri.nrdconta = 1848 and crapvri.nrctremp = 219344 -- JFF
                                            ,pr_dsxml     => vr_xml_rel_parte
                                            ,pr_dsarqsaid => pr_nom_direto ||'/'|| vr_nmarqsai
                                            ,pr_cdrelato  => null
-                                           --,pr_flg_gerar => 'N'              --> Apenas submeter
-                                           ,pr_flg_gerar => 'S'              --> Apenas submeter
+                                           ,pr_flg_gerar => 'N'              --> Apenas submeter
                                            ,pr_dspathcop => pr_nom_dirmic    --> Copiar para a Micros
                                            ,pr_fldoscop  => 'S'              --> Efetuar cópia com Ux2Dos
                                            ,pr_dscmaxcop => '| tr -d "\032"'
@@ -4197,10 +4167,6 @@ and crapvri.nrdconta = 1848 and crapvri.nrctremp = 219344 -- JFF
       
       -- Carrega a tabela temporaria de emprestimos
       FOR rw_crapepr IN cr_crapepr LOOP
-        if rw_crapepr.nrctremp = 219344 and rw_crapepr.nrdconta = 1848 then
-          null;  
-        end if;
-        
         vr_ind_epr := lpad(rw_crapepr.nrdconta,10,'0')||lpad(rw_crapepr.nrctremp,10,'0');
         vr_tab_crapepr(vr_ind_epr).dtmvtolt := rw_crapepr.dtmvtolt;
         vr_tab_crapepr(vr_ind_epr).cdlcremp := rw_crapepr.cdlcremp;
@@ -4451,7 +4417,7 @@ and crapvri.nrdconta = 1848 and crapvri.nrctremp = 219344 -- JFF
                     -- Empréstimos anteriores a 2013
                     IF vr_tab_crapepr(vr_ind_epr).dtmvtolt <= to_date('31/12/2012','dd/mm/yyyy') THEN
                       vr_cdnatuop := '02';
-                      vr_vlrdivid := vr_tab_individ(vr_idx_individ).vldivida - vr_tab_individ(vr_idx_individ).vljura60;                      
+                      vr_vlrdivid := vr_tab_individ(vr_idx_individ).vldivida - vr_tab_individ(vr_idx_individ).vljura60;
                       -- Descontar Juros +60 refinanciado do saldo devedor
                       vr_ind_tbepr_liq_fin := lpad(vr_tab_individ(vr_idx_individ).nrdconta,10,'0')
                                             ||lpad(vr_tab_individ(vr_idx_individ).nrctremp,10,'0');          
@@ -4684,13 +4650,13 @@ and crapvri.nrdconta = 1848 and crapvri.nrctremp = 219344 -- JFF
 
                 -- Compara refinanciamento
                 IF vr_tab_crapepr(vr_ind_epr).idquaprc = vr_tab_crapepr(vr_ind_epr).idquapro then
-                  -- Se o contrato for uma liquidação de outro contrato
-                  IF vr_tab_crapepr(vr_ind_epr).qtctrliq > 0 THEN
-                    IF vr_caracesp IS NOT NULL THEN
-                      vr_caracesp := vr_caracesp||';';
-                    END IF;
-                    vr_caracesp := vr_caracesp || '01';
+                -- Se o contrato for uma liquidação de outro contrato
+                IF vr_tab_crapepr(vr_ind_epr).qtctrliq > 0 THEN
+                  IF vr_caracesp IS NOT NULL THEN
+                    vr_caracesp := vr_caracesp||';';
                   END IF;
+                  vr_caracesp := vr_caracesp || '01';
+                END IF;
                 ELSE
                   -- Se for refinanciamento                  
                   IF vr_caracesp IS NOT NULL THEN
@@ -4707,13 +4673,13 @@ and crapvri.nrdconta = 1848 and crapvri.nrctremp = 219344 -- JFF
                            || lpad(vr_tab_individ(vr_idx_individ).nrctremp,10,'0');
                          
               
-          IF vr_tab_crapebn.exists(vr_ind_epr) THEN
-            IF vr_caracesp IS NULL THEN
-                    vr_caracesp := '17';
+			    IF vr_tab_crapebn.exists(vr_ind_epr) THEN
+			      IF vr_caracesp IS NULL THEN
+  	                vr_caracesp := '17';
                   ELSE
-            vr_caracesp := vr_caracesp || ';17';
-            END IF;
-          END IF;
+				    vr_caracesp := vr_caracesp || ';17';
+			      END IF;
+			    END IF;
               
               ELSE
                 -- Se existir crapepr
@@ -4732,7 +4698,7 @@ and crapvri.nrdconta = 1848 and crapvri.nrctremp = 219344 -- JFF
                       vr_caracesp := vr_caracesp || ';17';
                     END IF;
                 
-                  END IF;                                
+                  END IF;  															
   
                 END IF;
               
@@ -4786,7 +4752,7 @@ and crapvri.nrdconta = 1848 and crapvri.nrctremp = 219344 -- JFF
                                                         ,pr_nrdconta => vr_tab_individ(vr_idx_individ).nrdconta
                                                         ,pr_nrctremp => vr_tab_individ(vr_idx_individ).nrctremp
                                                         ,pr_cdmodali => vr_cdmodali);
-
+                                                        
        -- **
         -- Verifica Ativo Problemático - Daniel(AMcom)
         pc_verif_ativo_problematico(pr_cdcooper => pr_cdcooper                             -- Cooperativa
@@ -4978,7 +4944,7 @@ and crapvri.nrdconta = 1848 and crapvri.nrctremp = 219344 -- JFF
             CLOSE cr_crapcop;
             vr_idcpfcgc := substr(lpad(rw_crapcop_2.nrdocnpj,14,'0'),1,8);
           END IF;
-
+          
           -- **
           -- Verifica Ativo Problemático(REESTRUTURAÇÃO) - Daniel(AMcom)          
           IF vr_reestrut = 1 AND vr_dtatvprobl IS NOT NULL THEN
@@ -4991,24 +4957,24 @@ and crapvri.nrdconta = 1848 and crapvri.nrctremp = 219344 -- JFF
                                                         || 'Valor="' || replace(to_char(vr_vlrdivid,'fm99999999999999990D00'),',','.')
                                                       || ' />' || chr(10));            
           ELSE       
-            IF vr_tab_individ(vr_idx_individ).flcessao = 1 THEN
-              -- Enviar informação adicional da operação
-              gene0002.pc_escreve_xml(pr_xml            => vr_xml_3040
-                                     ,pr_texto_completo => vr_xml_3040_temp
-                                     ,pr_texto_novo     => '            <Inf Tp="1001" Cd="'|| to_char(vr_tab_individ(vr_idx_individ).dtinictr,'RRRR-MM-DD')
-                                                        || '" Ident="02038232" '
-                                                        || 'Valor="' || replace(to_char(vr_tab_crapepr(vr_ind_epr).vlemprst,'fm99999999999999990D00'),',','.')
-                                                        || '"/>' || chr(10));
-            ELSE          
-              -- Enviar informação adicional da operação
-              gene0002.pc_escreve_xml(pr_xml            => vr_xml_3040
-                                     ,pr_texto_completo => vr_xml_3040_temp
-                                     ,pr_texto_novo     => '            <Inf Tp="1001" Cd="2013-01-02" Ident="'||vr_idcpfcgc||'" '
-                                                        || 'Valor="' || replace(to_char(vr_vlrdivid,'fm99999999999999990D00'),',','.')
-                                                        || '"/>' || chr(10));
-            
-            END IF;
+          IF vr_tab_individ(vr_idx_individ).flcessao = 1 THEN
+            -- Enviar informação adicional da operação
+            gene0002.pc_escreve_xml(pr_xml            => vr_xml_3040
+                                   ,pr_texto_completo => vr_xml_3040_temp
+                                   ,pr_texto_novo     => '            <Inf Tp="1001" Cd="'|| to_char(vr_tab_individ(vr_idx_individ).dtinictr,'RRRR-MM-DD')
+                                                      || '" Ident="02038232" '
+                                                      || 'Valor="' || replace(to_char(vr_tab_crapepr(vr_ind_epr).vlemprst,'fm99999999999999990D00'),',','.')
+                                                      || '"/>' || chr(10));
+          ELSE          
+            -- Enviar informação adicional da operação
+            gene0002.pc_escreve_xml(pr_xml            => vr_xml_3040
+                                   ,pr_texto_completo => vr_xml_3040_temp
+                                   ,pr_texto_novo     => '            <Inf Tp="1001" Cd="2013-01-02" Ident="'||vr_idcpfcgc||'" '
+                                                      || 'Valor="' || replace(to_char(vr_vlrdivid,'fm99999999999999990D00'),',','.')
+                                                      || '"/>' || chr(10));
+          
           END IF;
+        END IF;
         END IF;
         -- Verificação do Ente Consignante
         pc_inf_ente_consignante(pr_nrdconta => vr_tab_individ(vr_idx_individ).nrdconta
@@ -5760,5 +5726,5 @@ and crapvri.nrdconta = 1848 and crapvri.nrctremp = 219344 -- JFF
         -- Efetuar rollback
         ROLLBACK;
     END;
-END pc_crps573;
+  END pc_crps573;
 /

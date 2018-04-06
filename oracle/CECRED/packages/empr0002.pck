@@ -1853,7 +1853,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
                    || '  vr_cdcritic NUMBER;'||chr(13)
                    || '  vr_dscritic VARCHAR2(4000);'||chr(13)
                    || 'BEGIN'||chr(13)
-                   || '  pc_crps682('||vr_cdcooper||',0,0,vr_stprogra,vr_infimsol,vr_cdcritic,vr_dscritic);'||chr(13)
+                   || '  pc_crps682('||vr_cdcooper||',0,0,0,0,0,vr_stprogra,vr_infimsol,vr_cdcritic,vr_dscritic);'||chr(13)
                    || 'END;';
 
         -- Montar o prefixo do código do programa para o jobname

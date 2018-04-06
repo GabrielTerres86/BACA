@@ -31,6 +31,7 @@ CREATE OR REPLACE TRIGGER CECRED.TRG_CRAPTTL_ATLZ
 DECLARE
 
   vr_nmtabela   CONSTANT VARCHAR2(50) := 'CRAPTTL';
+  vr_dschave    VARCHAR2(100);
   vr_cdcooper   NUMBER;
   vr_nrdconta   NUMBER;
   vr_idseqttl   NUMBER;
@@ -60,6 +61,9 @@ BEGIN
     vr_cdcooper := :new.cdcooper;
     vr_nrdconta := :new.nrdconta;
     vr_idseqttl := :new.idseqttl;
+    IF inserting THEN
+      vr_dschave := 'S';
+    END IF;
   END IF;
 
   -- Incluir registro que o cadastro de pessoa foi atualizado no sistema legado
@@ -67,6 +71,7 @@ BEGIN
                                       ,pr_nrdconta  => vr_nrdconta  --> Numero da conta
                                       ,pr_idseqttl  => vr_idseqttl  --> Sequencial do titular
                                       ,pr_nmtabela  => vr_nmtabela  --> Nome da tabela alteradoa
+                                      ,pr_dschave   => vr_dschave   --> Chave de complemento
                                       ,pr_cdcritic  => vr_cdcritic  --> Codigo de erro
                                       ,pr_dscritic  => vr_dscritic);   
 

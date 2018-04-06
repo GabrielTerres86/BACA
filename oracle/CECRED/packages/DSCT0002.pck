@@ -8,10 +8,11 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0002 AS
   --
   --  Dados referentes ao programa:
   --
-  --  Objetivo  : Package para rotinas envolvendo desconto titulos
-  --              titulos.
+  --  Objetivo  : Package para rotinas envolvendo desconto de titulos
   --
-  --  Alteracoes: 05/08/2016 - Conversao Progress para oracle (Odirlei - AMcom)
+  --
+  --  Histórico de Alterações: 
+  --    05/08/2016 - Conversao Progress para oracle (Odirlei - AMcom)
   --
   --              22/12/2016 - Incluidos novos campos para os tipos typ_rec_contrato_limite
   --                           e typ_rec_chq_bordero. Projeto 300 (Lombardi)
@@ -22,7 +23,14 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0002 AS
   --                           (ID + Nome) pois estava estourando a variavel.
   --                           Heitor (Mouts) - Chamado 695581
   --
-  --------------------------------------------------------------------------------------------------------------*/
+  --    25/01/2018 - Inclusão da Procedure "pc_busca_parametros_dsctit", referente à 
+  --                 conversão de Progress para Oracle da tela "TAB052".
+  --                (Gustavo Sene - GFT)
+  --  
+  --    01/02/2018 - Inclusão de Parâmetro de entrada por Tipo de Pessoa (Física / Jurídica)
+  --                 na procedure "pc_busca_parametros_dsctit"
+  --                (Gustavo Sene - GFT)  
+  -------------------------------------------------------------------------------------------------------------*/
  
   -- Tabela para armazenar parametros para desconto de titulo(antigo b1wgen0030tt.i/tt-dsctit.)
   TYPE typ_rec_dados_dsctit 
@@ -417,11 +425,29 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0002 AS
                                      ,pr_nmarqpdf OUT VARCHAR2              --> Retornar nome do relatorio PDF
                                      ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
                                      ,pr_dscritic OUT VARCHAR2);             --> Descrição da crítica     
+
+
+  --> Procedure para obter parametros gerais de desconto de titulos (TAB052)
+  PROCEDURE pc_busca_parametros_dsctit ( pr_cdcooper IN crapcop.cdcooper%TYPE  --> Código da Cooperativa
+                                        ,pr_cdagenci IN crapage.cdagenci%TYPE  --> Código da agencia
+                                        ,pr_nrdcaixa IN crapbcx.nrdcaixa%TYPE  --> Numero do caixa do operador
+                                        ,pr_cdoperad IN crapope.cdoperad%TYPE  --> Código do Operador
+                                        ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE  --> data do movimento
+                                        ,pr_idorigem IN INTEGER                --> Identificador de Origem
+                                        ,pr_tpcobran IN NUMBER                 --> Tipo de Cobrança: 0 = Sem Registro / 1 = Com Registro
+                                     -- ,pr_inpessoa IN NUMBER                 --> Tipo de Pessoa:   0 = Todos / 1 = Física / 2 = Jurídica
+                                         --------> OUT <--------
+                                        ,pr_tab_dados_dsctit  OUT typ_tab_dados_dsctit  --> tabela contendo os parametros da cooperativa
+                                        ,pr_tab_cecred_dsctit OUT typ_tab_cecred_dsctit --> Tabela contendo os parametros da cecred
+                                        ,pr_cdcritic          OUT PLS_INTEGER           --> Código da crítica
+                                        ,pr_dscritic          OUT VARCHAR2);            --> Descrição da crítica
+
+
 END  DSCT0002;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
 
- /*-------------------------------------------------------------------------------------------------------------
+  -------------------------------------------------------------------------------------------------------------
   --
   --  Programa: DSCT0002                       Antiga: generico/procedures/b1wgen0030.p
   --  Autor   : Odirlei Busana - AMcom
@@ -445,7 +471,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
   --             03/10/2017 - Imprimir conta quando o avalista for cooperado
   --                          Junior (Mouts) - Chamado 767055
   --
-  --------------------------------------------------------------------------------------------------------------*/
+  --             25/01/2018 - Inclusão da Procedure "pc_busca_parametros_dsctit", referente à 
+  --                          migração de Progress para Oracle. (Gustavo Sene - GFT)
+  --
+  --             08/03/2018 - Chamado 847579 - Correção da impressão de estado incorreto na impressao do contrato de limite
+  -------------------------------------------------------------------------------------------------------------
   --> Buscar dados do avalista
   PROCEDURE pc_busca_dados_avalista (pr_cdcooper IN crapcop.cdcooper%TYPE           --> Código da Cooperativa
                                     ,pr_nrdconta IN crapass.nrdconta%TYPE           --> Numero da conta do cooperado
@@ -455,7 +485,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
                                      --------> OUT <--------                                   
                                     ,pr_tab_dados_avais IN OUT typ_tab_dados_avais  --> tabela contendo os parametros da cooperativa
                                     ,pr_cdcritic           OUT PLS_INTEGER          --> Código da crítica
-                                    ,pr_dscritic           OUT VARCHAR2) IS         --> Descrição da críticaIS
+                                    ,pr_dscritic           OUT VARCHAR2) IS         --> Descrição da crítica
     ---------->> CURSORES <<--------   
     --> Buscar dados associado
     CURSOR cr_crapass (pr_cdcooper crapass.cdcooper%TYPE,
@@ -858,7 +888,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
                                 ,pr_tab_dados_avais   OUT typ_tab_dados_avais   --> retorna dados do avalista
                                 ,pr_cdcritic          OUT PLS_INTEGER           --> Código da crítica
                                 ,pr_dscritic          OUT VARCHAR2) IS          --> Descrição da crítica
-    /* .........................................................................
+    -- .........................................................................
     --
     --  Programa : pc_lista_avalistas           Antigo: b1wgen9999.p/lista_avalistas
     --  Sistema  : Cred
@@ -872,7 +902,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
     --   Objetivo  : Procedure para listar avalistas de contratos
     --
     --   Alteração : 08/08/2016 - Conversão Progress -> Oracle (Odirlei-AMcom)
-    -- .........................................................................*/
+    -- .........................................................................
     
     ---------->> CURSORES <<--------
     --> Avalistas que possuem conta na cooperativa
@@ -1260,27 +1290,32 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
                                         ,pr_cdoperad IN crapope.cdoperad%TYPE  --> Código do Operador
                                         ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE  --> data do movimento 
                                         ,pr_idorigem IN INTEGER                --> Identificador de Origem
-                                        ,pr_tpcobran IN INTEGER                --> Tipo de cobrança(1-Sim 0-nao)                                    
+                                        ,pr_tpcobran IN NUMBER                 --> Tipo de Cobrança: 0 = Sem Registro / 1 = Com Registro
+                                     -- ,pr_inpessoa IN NUMBER                 --> Tipo de Pessoa:   0 = Todos / 1 = Física / 2 = Jurídica
                                          --------> OUT <--------                                   
                                         ,pr_tab_dados_dsctit        OUT typ_tab_dados_dsctit        --> tabela contendo os parametros da cooperativa
                                         ,pr_tab_cecred_dsctit OUT typ_tab_cecred_dsctit --> Tabela contendo os parametros da cecred
                                         ,pr_cdcritic          OUT PLS_INTEGER           --> Código da crítica
                                         ,pr_dscritic          OUT VARCHAR2) IS          --> Descrição da crítica
-    /* .........................................................................
+    -- .........................................................................
     --
     --  Programa : pc_busca_parametros_dsctit           Antigo: b1wgen0030.p/busca_parametros_dsctit
     --  Sistema  : Cred
     --  Sigla    : DSCT0002
     --  Autor    : Odirlei Busana - AMcom
-    --  Data     : Julho/2013.                   Ultima atualizacao: 25/03/2015
+    --  Data     : Julho/2013.                   Ultima atualizacao: 01/02/2018
     --
     --  Dados referentes ao programa:
     --
     --   Frequencia: Sempre que for chamado
     --   Objetivo  : Procedure para efetuar Busca de parametros gerais de desconto de titulo - TAB052
     --
-    --   Alteração : 08/08/2016 - Conversão Progress -> Oracle (Odirlei-AMcom)
-    -- .........................................................................*/
+    --   Alteração : 
+    --    08/08/2016 - Conversão Progress -> Oracle (Odirlei-AMcom)
+    --
+    --    01/02/2018 - Inclusão de Parâmetro de entrada por Tipo de Pessoa (Física / Jurídica)
+    --                (Gustavo Sene - GFT)      
+    ----------------------------------------------------------------------------
     
     ---------->> CURSORES <<--------  
     --------->> VARIAVEIS <<--------
@@ -1295,7 +1330,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
     vr_tab_dstextab      gene0002.typ_split;
     vr_tab_dados_dsctit  typ_tab_dados_dsctit;
     vr_tab_cecred_dsctit typ_tab_cecred_dsctit;
-    vr_idxdscti          PLS_INTEGER;
+--    vr_idxdscti          PLS_INTEGER;
     
     
     
@@ -1320,49 +1355,50 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
     
     IF vr_tab_dstextab.count() > 0 THEN
      
-      vr_idxdscti := vr_tab_dados_dsctit.count() + 1;
-      vr_tab_dados_dsctit(vr_idxdscti).vllimite := vr_tab_dstextab(01);
-      vr_tab_dados_dsctit(vr_idxdscti).vlconsul := vr_tab_dstextab(02);
-      vr_tab_dados_dsctit(vr_idxdscti).vlmaxsac := vr_tab_dstextab(03);
-      vr_tab_dados_dsctit(vr_idxdscti).vlminsac := vr_tab_dstextab(04);
-      vr_tab_dados_dsctit(vr_idxdscti).qtremcrt := vr_tab_dstextab(05);
-      vr_tab_dados_dsctit(vr_idxdscti).qttitprt := vr_tab_dstextab(06);
-      vr_tab_dados_dsctit(vr_idxdscti).qtrenova := vr_tab_dstextab(07);
-      vr_tab_dados_dsctit(vr_idxdscti).qtdiavig := vr_tab_dstextab(08);
-      vr_tab_dados_dsctit(vr_idxdscti).qtprzmin := vr_tab_dstextab(09);
-      vr_tab_dados_dsctit(vr_idxdscti).qtprzmax := vr_tab_dstextab(10);
-      vr_tab_dados_dsctit(vr_idxdscti).qtminfil := vr_tab_dstextab(11);
-      vr_tab_dados_dsctit(vr_idxdscti).nrmespsq := vr_tab_dstextab(12);
-      vr_tab_dados_dsctit(vr_idxdscti).pctitemi := vr_tab_dstextab(13);
-      vr_tab_dados_dsctit(vr_idxdscti).pctolera := vr_tab_dstextab(14);
-      vr_tab_dados_dsctit(vr_idxdscti).pcdmulta := vr_tab_dstextab(15);
-      vr_tab_dados_dsctit(vr_idxdscti).cardbtit := vr_tab_dstextab(31);
-      vr_tab_dados_dsctit(vr_idxdscti).pcnaopag := vr_tab_dstextab(33);
-      vr_tab_dados_dsctit(vr_idxdscti).qtnaopag := vr_tab_dstextab(34);
-      vr_tab_dados_dsctit(vr_idxdscti).qtprotes := vr_tab_dstextab(35);
-      
-      
-      vr_idxdscti := vr_tab_cecred_dsctit.count() + 1;
-      
-      vr_tab_cecred_dsctit(vr_idxdscti).vllimite := vr_tab_dstextab(16);
-      vr_tab_cecred_dsctit(vr_idxdscti).vlconsul := vr_tab_dstextab(17);
-      vr_tab_cecred_dsctit(vr_idxdscti).vlmaxsac := vr_tab_dstextab(18);
-      vr_tab_cecred_dsctit(vr_idxdscti).vlminsac := vr_tab_dstextab(19);
-      vr_tab_cecred_dsctit(vr_idxdscti).qtremcrt := vr_tab_dstextab(20);
-      vr_tab_cecred_dsctit(vr_idxdscti).qttitprt := vr_tab_dstextab(21);
-      vr_tab_cecred_dsctit(vr_idxdscti).qtrenova := vr_tab_dstextab(22);
-      vr_tab_cecred_dsctit(vr_idxdscti).qtdiavig := vr_tab_dstextab(23);
-      vr_tab_cecred_dsctit(vr_idxdscti).qtprzmin := vr_tab_dstextab(24);
-      vr_tab_cecred_dsctit(vr_idxdscti).qtprzmax := vr_tab_dstextab(25);
-      vr_tab_cecred_dsctit(vr_idxdscti).qtminfil := vr_tab_dstextab(26);
-      vr_tab_cecred_dsctit(vr_idxdscti).nrmespsq := vr_tab_dstextab(27);
-      vr_tab_cecred_dsctit(vr_idxdscti).pctitemi := vr_tab_dstextab(28);
-      vr_tab_cecred_dsctit(vr_idxdscti).pctolera := vr_tab_dstextab(29);
-      vr_tab_cecred_dsctit(vr_idxdscti).pcdmulta := vr_tab_dstextab(30);
-      vr_tab_cecred_dsctit(vr_idxdscti).cardbtit := vr_tab_dstextab(32);
-      vr_tab_cecred_dsctit(vr_idxdscti).pcnaopag := vr_tab_dstextab(36);
-      vr_tab_cecred_dsctit(vr_idxdscti).qtnaopag := vr_tab_dstextab(37);
-      vr_tab_cecred_dsctit(vr_idxdscti).qtprotes := vr_tab_dstextab(38);
+--      vr_idxdscti := vr_tab_dados_dsctit.count() + 1;
+
+      vr_tab_dados_dsctit(pr_tpcobran).vllimite := to_number(vr_tab_dstextab(01),'999999990d00','NLS_NUMERIC_CHARACTERS='',.''');
+      vr_tab_dados_dsctit(pr_tpcobran).vlconsul := to_number(vr_tab_dstextab(02),'999999990d00','NLS_NUMERIC_CHARACTERS='',.''');
+      vr_tab_dados_dsctit(pr_tpcobran).vlmaxsac := to_number(vr_tab_dstextab(03),'999999990d00','NLS_NUMERIC_CHARACTERS='',.''');
+      vr_tab_dados_dsctit(pr_tpcobran).vlminsac := to_number(vr_tab_dstextab(04),'999999990d00','NLS_NUMERIC_CHARACTERS='',.''');
+      vr_tab_dados_dsctit(pr_tpcobran).qtremcrt := vr_tab_dstextab(05);
+      vr_tab_dados_dsctit(pr_tpcobran).qttitprt := vr_tab_dstextab(06);
+      vr_tab_dados_dsctit(pr_tpcobran).qtrenova := vr_tab_dstextab(07);
+      vr_tab_dados_dsctit(pr_tpcobran).qtdiavig := vr_tab_dstextab(08);
+      vr_tab_dados_dsctit(pr_tpcobran).qtprzmin := vr_tab_dstextab(09);
+      vr_tab_dados_dsctit(pr_tpcobran).qtprzmax := vr_tab_dstextab(10);
+      vr_tab_dados_dsctit(pr_tpcobran).qtminfil := vr_tab_dstextab(11);
+      vr_tab_dados_dsctit(pr_tpcobran).nrmespsq := vr_tab_dstextab(12);
+      vr_tab_dados_dsctit(pr_tpcobran).pctitemi := vr_tab_dstextab(13);
+      vr_tab_dados_dsctit(pr_tpcobran).pctolera := vr_tab_dstextab(14);
+      vr_tab_dados_dsctit(pr_tpcobran).pcdmulta := to_number(vr_tab_dstextab(15),'000d000000','NLS_NUMERIC_CHARACTERS='',.''');
+      vr_tab_dados_dsctit(pr_tpcobran).cardbtit := vr_tab_dstextab(31);
+      vr_tab_dados_dsctit(pr_tpcobran).pcnaopag := vr_tab_dstextab(33);
+      vr_tab_dados_dsctit(pr_tpcobran).qtnaopag := vr_tab_dstextab(34);
+      vr_tab_dados_dsctit(pr_tpcobran).qtprotes := vr_tab_dstextab(35);
+
+
+  --    vr_idxdscti := vr_tab_cecred_dsctit.count() + 1;
+
+      vr_tab_cecred_dsctit(pr_tpcobran).vllimite := to_number(vr_tab_dstextab(16),'999999990d00','NLS_NUMERIC_CHARACTERS='',.''');
+      vr_tab_cecred_dsctit(pr_tpcobran).vlconsul := to_number(vr_tab_dstextab(17),'999999990d00','NLS_NUMERIC_CHARACTERS='',.''');
+      vr_tab_cecred_dsctit(pr_tpcobran).vlmaxsac := to_number(vr_tab_dstextab(18),'999999990d00','NLS_NUMERIC_CHARACTERS='',.''');
+      vr_tab_cecred_dsctit(pr_tpcobran).vlminsac := to_number(vr_tab_dstextab(19),'999999990d00','NLS_NUMERIC_CHARACTERS='',.''');
+      vr_tab_cecred_dsctit(pr_tpcobran).qtremcrt := vr_tab_dstextab(20);
+      vr_tab_cecred_dsctit(pr_tpcobran).qttitprt := vr_tab_dstextab(21);
+      vr_tab_cecred_dsctit(pr_tpcobran).qtrenova := vr_tab_dstextab(22);
+      vr_tab_cecred_dsctit(pr_tpcobran).qtdiavig := vr_tab_dstextab(23);
+      vr_tab_cecred_dsctit(pr_tpcobran).qtprzmin := vr_tab_dstextab(24);
+      vr_tab_cecred_dsctit(pr_tpcobran).qtprzmax := vr_tab_dstextab(25);
+      vr_tab_cecred_dsctit(pr_tpcobran).qtminfil := vr_tab_dstextab(26);
+      vr_tab_cecred_dsctit(pr_tpcobran).nrmespsq := vr_tab_dstextab(27);
+      vr_tab_cecred_dsctit(pr_tpcobran).pctitemi := vr_tab_dstextab(28);
+      vr_tab_cecred_dsctit(pr_tpcobran).pctolera := vr_tab_dstextab(29);
+      vr_tab_cecred_dsctit(pr_tpcobran).pcdmulta := to_number(vr_tab_dstextab(30),'000d000000','NLS_NUMERIC_CHARACTERS='',.''');
+      vr_tab_cecred_dsctit(pr_tpcobran).cardbtit := vr_tab_dstextab(32);
+      vr_tab_cecred_dsctit(pr_tpcobran).pcnaopag := vr_tab_dstextab(36);
+      vr_tab_cecred_dsctit(pr_tpcobran).qtnaopag := vr_tab_dstextab(37);
+      vr_tab_cecred_dsctit(pr_tpcobran).qtprotes := vr_tab_dstextab(38);
     
     ELSE
       vr_cdcritic := 0;
@@ -3156,7 +3192,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
                                        ,pr_tab_sacado_nao_pagou       OUT DSCT0002.typ_tab_sacado_nao_pagou
                                        ,pr_cdcritic                   OUT PLS_INTEGER           --> Código da crítica
                                        ,pr_dscritic                   OUT VARCHAR2) IS          --> Descrição da crítica
-    /* .........................................................................
+    -- .........................................................................
     --
     --  Programa : pc_busca_dados_imp_dsctit           Antigo: b1wgen0030.p/busca_dados_impressao_dsctit
     --  Sistema  : Cred
@@ -3169,7 +3205,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
     --   Frequencia: Sempre que for chamado
     --   Objetivo  : Procedure para efetuar busca dados para montar contratos etc para desconto de titulos
     --
-    --   Alteração : 05/08/2016 - Conversão Progress -> Oracle (Odirlei-AMcom)
+    --   Histórico de Alterações: 
+    --     05/08/2016 - Conversão Progress -> Oracle (Odirlei-AMcom)
 	  --
 	  --               24/11/2016 - Ajustes nome do avalista2. (Odirlei-AMcom)
     --
@@ -3182,7 +3219,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
     --               25/07/2017 - Alteração no cálculo da taxa de juros diária do borderô de 
     --                            Desconto de Cheques. PRJ300 - Desconto de cheque (Lombardi) 	
     --               
-    -- .........................................................................*/
+    --    01/02/2018 - Inclusão de Parâmetro de entrada por tipo de pessoa: Física / Jurídica
+    --                (Gustavo Sene - GFT)    
+    -- .........................................................................
+
     
     ---------->> CURSORES <<--------   
     --> Buscar dados associado
@@ -3243,7 +3283,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
     --> Buscar Dados agencia
     CURSOR cr_crapage(pr_cdcooper crapage.cdcooper%TYPE,
                       pr_cdagenci crapage.cdagenci%TYPE) IS
-      SELECT age.nmcidade
+      SELECT age.nmcidade,
+	         age.cdufdcop
         FROM crapage age
        WHERE age.cdcooper = pr_cdcooper
          AND age.cdagenci = pr_cdagenci;
@@ -3984,7 +4025,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
     IF pr_idimpres = 1 THEN
       --> Carregar dados para impressao do contrato de limite
       pc_carrega_dados_ctrlim ( pr_nmcidade   => rw_crapage.nmcidade,
-                                pr_cdufdcop   => rw_crapcop.cdufdcop,
+                                pr_cdufdcop   => rw_crapage.cdufdcop,
                                 pr_nrctrlim   => vr_tab_dados_limite(vr_idxlimit).nrctrlim,
                                 pr_nmextcop   => rw_crapcop.nmextcop,
                                 pr_cdagenci   => rw_crapass.cdagenci,
@@ -4061,7 +4102,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
     ELSIF pr_idimpres = 2  THEN 
       --> Carregar dados para impressao do contrato de limite
       pc_carrega_dados_ctrlim ( pr_nmcidade   => rw_crapage.nmcidade,
-                                pr_cdufdcop   => rw_crapcop.cdufdcop,
+                                pr_cdufdcop   => rw_crapage.cdufdcop,
                                 pr_nrctrlim   => vr_tab_dados_limite(vr_idxlimit).nrctrlim,
                                 pr_nmextcop   => rw_crapcop.nmextcop,
                                 pr_cdagenci   => rw_crapass.cdagenci,

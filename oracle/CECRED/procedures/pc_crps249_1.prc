@@ -83,7 +83,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249_1(pr_cdcooper  IN crapcop.cdcooper
                      pr_nrdocmto in crapepr.nrctremp%type) is
     select crapepr.cdfinemp,
            crapepr.cdlcremp,
-           decode(crapepr.tpemprst,0,'TR','PP') tpemprst     --Tipo do emprestimo 0 - TR e 1 - PP
+           decode(crapepr.tpemprst,0,'TR',1,'PP',2,'POS','') tpemprst     --Tipo do emprestimo 0 - TR e 1 - PP
       from crapepr
      where crapepr.cdcooper = pr_cdcooper
        and crapepr.nrdconta = pr_nrdconta
@@ -692,7 +692,7 @@ BEGIN
     vr_nmcolsql := ' ,x.nrctremp ';    
   END IF;  
 
-  IF pr_nmestrut = upper('CRAPLCM') AND pr_cdhistor IN (2093,2094,2090,2091,1072,1544,1713,1070,1542,1710,1510,1719) THEN
+  IF pr_nmestrut = upper('CRAPLCM') AND pr_cdhistor IN (2093,2094,2090,2091,1072,1544,1713,1070,1542,1710,1510,1719,2372,2376,2364,2368) THEN
     vr_nmcolsql := ' ,trim(replace(x.cdpesqbb,''.'','''')) ';
   END IF;
 
@@ -727,7 +727,7 @@ BEGIN
   dbms_sql.define_column(vr_num_cursor, 8, vr_inpessoa);
   
   IF upper(pr_nmestrut) = 'CRAPLEM' OR 
-     (pr_nmestrut = upper('CRAPLCM') AND pr_cdhistor IN (2093,2094,2090,2091,1072,1544,1713,1070,1542,1710,1510,1719)) THEN
+     (pr_nmestrut = upper('CRAPLCM') AND pr_cdhistor IN (2093,2094,2090,2091,1072,1544,1713,1070,1542,1710,1510,1719,2372,2376,2364,2368)) THEN
     dbms_sql.define_column(vr_num_cursor, 9, vr_nrctremp);
   END IF;
       
@@ -757,14 +757,14 @@ BEGIN
       dbms_sql.column_value(vr_num_cursor, 8, vr_inpessoa);
       
       IF upper(pr_nmestrut) = 'CRAPLEM' OR 
-        (pr_nmestrut = upper('CRAPLCM') AND pr_cdhistor IN (2093,2094,2090,2091,1072,1544,1713,1070,1542,1710,1510,1719)) THEN
+        (pr_nmestrut = upper('CRAPLCM') AND pr_cdhistor IN (2093,2094,2090,2091,1072,1544,1713,1070,1542,1710,1510,1719,2372,2376,2364,2368)) THEN
         dbms_sql.column_value(vr_num_cursor, 9, vr_nrctremp);
       END IF;
       
       -- Inicializa variável de crédito em conta corrente
       vr_flgcrcta := true;
       --
-      if upper(pr_nmestrut) = 'CRAPLEM' and pr_cdhistor in (99,1036,1059) then
+      if upper(pr_nmestrut) = 'CRAPLEM' and pr_cdhistor in (99,1036,1059,2326,2327) then
         -- Verifica se tem empréstimo. Se não tiver, descarta.
         open cr_crapepr (pr_cdcooper,
                          vr_nrdconta,
@@ -869,7 +869,7 @@ BEGIN
       ELSE
         -- Verifica a estrutura e se o historico for
         --  98 - JUROS EMPR. ou 277 - ESTORNO JUROS 08 1038 - JUROS REMUN.
-        if upper(pr_nmestrut) = 'CRAPLEM' and pr_cdhistor in (98, 277, 1038) THEN
+        if upper(pr_nmestrut) = 'CRAPLEM' and pr_cdhistor in (98, 277, 1038, 2343, 2345) THEN
           -- Verifica se tem empréstimo. Se não tiver, descarta.
           open cr_crapepr (pr_cdcooper,
                            vr_nrdconta,
@@ -1088,7 +1088,7 @@ BEGIN
             END IF;
 
           END IF;
-        ELSIF pr_cdhistor in (2093,2094,2090,2091,1072,1544,1713,1070,1542,1710,1510,1719) THEN
+        ELSIF pr_cdhistor in (2093,2094,2090,2091,1072,1544,1713,1070,1542,1710,1510,1719,2372,2376,2364,2368) THEN
               
           -- Verifica se tem empréstimo. Se não tiver, descarta.
           open cr_crapepr (pr_cdcooper,
@@ -1322,7 +1322,7 @@ BEGIN
   -- Verifica a estrutura e se o historico for
   --  98 - JUROS EMPR. ou 277 - ESTORNO JUROS 08 1038 - JUROS REMUN.
   if upper(pr_nmestrut) = 'CRAPLEM' and
-     pr_cdhistor in (98, 277, 1038) then
+     pr_cdhistor in (98, 277, 1038, 2343, 2345) then
     --
     vr_indice_agencia := vr_tab_agencia.first;
     -- Percorre todas as agencias
@@ -1349,7 +1349,7 @@ BEGIN
       vr_dtrefere := 'craplem_499';
     ELSIF pr_cdhistor = '277' THEN
       vr_dtrefere := 'craplem_estfin';
-    ELSIF pr_cdhistor = '1038' THEN
+    ELSIF pr_cdhistor IN ('1038','2343','2345') THEN
       vr_dtrefere := 'craplem';
     END IF;
 

@@ -514,7 +514,14 @@ CREATE OR REPLACE PACKAGE CECRED.inet0001 AS
                                         ,pr_cdcritic     OUT INTEGER        --Codigo do erro
                                         ,pr_dscritic     OUT VARCHAR2);                                                                       
                                     
-    
+  PROCEDURE pc_atu_trans_pend_prep (pr_cdcooper IN crapcop.cdcooper%TYPE   --Codigo Cooperativa
+                                   ,pr_nrdconta IN crapass.nrdconta%TYPE   --Numero conta
+                                   ,pr_nrcpfcgc IN crapass.nrcpfcgc%TYPE   --CPF/CGC
+                                   ,pr_inpessoa IN crapass.inpessoa%TYPE   --Tipo de Pessoa
+                                   ,pr_tpdsenha IN crapsnh.tpdsenha%TYPE   --Tipo de Senha
+                                   ,pr_idastcjt IN crapass.idastcjt%TYPE   --Exige Ass.Conjunta Nao=0 Sim=1
+                                   ,pr_cdcritic   OUT INTEGER              --Código do erro
+                                   ,pr_dscritic   OUT VARCHAR2);
                                     
 END INET0001;
 /
@@ -526,7 +533,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
   --  Sistema  : Procedimentos para o debito de agendamentos feitos na Internet
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Junho/2013.                   Ultima atualizacao: 03/01/2018
+  --  Data     : Junho/2013.                   Ultima atualizacao: 08/02/2018
   --
   -- Dados referentes ao programa:
   --
@@ -607,12 +614,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
   --                         nas variaveis que poderiam ter nulo pois estava possibilitando conta PJ sem limite para 
   --                         TED cadastrado realizar esta operação (Tiago #820218).
   --
+  --            03/01/2018 - Na pc_verifica_operacao foi Corrigido para verificar saldo da conta mesmo quando 
+  --                         for o operador realizando alguma transação (Tiago/Adriano).
+  --
   --            03/01/2018 - Considerar apenas registros ativos para busca de limites na SNH
   --                         quando nao localizar registro para o 1 titular.
   --                         (Chamado 823977) - (Fabricio)
   --
-  --            03/01/2018 - Na pc_verifica_operacao foi Corrigido para verificar saldo da conta mesmo quando 
-  --                         for o operador realizando alguma transação (Tiago/Adriano).
+  --            05/01/2018 - Na pc_verifica_operacao corrigdo acentuação na frase de critica agendamento 
+  --                         e pagamento (Tiago #818723).
+  --
+  --            08/02/2018 - Criado a procedure pc_atu_trans_pend_prep que faz a atualização das transacoes
+  --                         pendentes de aprovação por preposto de conta PJ sem ass conjunta (Tiago #775776).
+  --
+  --            19/03/2018 - Ajuste na pc_verifica_operacao para impedir agendamentos para data retroativa. (Pablão)
+  --
   ---------------------------------------------------------------------------------------------------------------*/
 
   /* Busca dos dados da cooperativa */
@@ -3798,7 +3814,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
    Sistema  : Procedimentos para o debito de agendamentos feitos na Internet
    Sigla    : CRED
    Autor    : Alisson C. Berrido - Amcom
-   Data     : Junho/2013.                   Ultima atualizacao: 03/01/2018
+   Data     : Junho/2013.                   Ultima atualizacao: 22/01/2018
   
   Dados referentes ao programa:
   
@@ -3870,6 +3886,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
                            
               03/01/2018 - Corrigido para verificar saldo da conta mesmo quando for o operador realizando
                            alguma transação (Tiago/Adriano).
+              
+              05/01/2018 - Corrigdo acentuação na frase de critica agendamento e pagamento (Tiago #818723)
+              
+              22/01/2018 - Ajuste para qdo a conta do preposto estiver sem saldo e for um operador fazendo uma 
+                           transação alem da sua alçada enviar para aprovação do preposto (Tiago/Fabricio)
   ---------------------------------------------------------------------------------------------------------------*/
   BEGIN
     DECLARE
@@ -4554,7 +4575,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
            pr_tpoperac <> 4 AND 
            pr_dtmvtopg = vr_dtdialim THEN
            
-          vr_dscritic := 'Nao e possivel efetuar agendamentos para este dia.';
+          vr_dscritic := 'Não é possível efetuar agendamentos para este dia.';
           vr_cdcritic:= 0;
           
           --Levantar Excecao
@@ -4745,9 +4766,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
              (pr_idagenda > 1 AND pr_dtmvtopg = vr_dtdialim) THEN
             vr_cdcritic:= 0;
             IF pr_idagenda = 1 THEN
-              vr_dscritic:= 'Nao e possivel efetuar pagamentos neste dia.';
+              vr_dscritic:= 'Não é possível efetuar pagamentos neste dia.';
             ELSE
-              vr_dscritic:= 'Nao e possivel efetuar agendamentos para este dia.';
+              vr_dscritic:= 'Não é possível efetuar agendamentos para este dia.';
             END IF;
             --Levantar Excecao
             RAISE vr_exc_erro;
@@ -4837,7 +4858,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
       END IF;
       
       IF  pr_idagenda = 1 THEN
-        
+        IF (pr_nrcpfope <> 0 AND pr_assin_conjunta <> 1) OR 
+           (pr_nrcpfope = 0) THEN
           --Limpar tabela saldo e erro
           vr_tab_saldo.DELETE;
           vr_tab_erro.DELETE;
@@ -4893,7 +4915,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
               RAISE vr_exc_erro;
             END IF;
           END IF;      
-
+        END IF;
         /* Nao validar saldo para operadores na internet */
         IF pr_nrcpfope = 0 THEN
          
@@ -4991,9 +5013,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
           pr_vllanmto := nvl(pr_vllanmto,0) + Nvl(vr_vltarifa,0);
         END IF;        
 
-        /** Verifica se data de debito e uma data futura **/
-        IF  pr_dtmvtopg <= Trunc(vr_datdodia) THEN 
-          IF pr_tpoperac = 10 THEN --DARF/DAS            
+        vr_cdcritic := NULL;
+        vr_dscritic := NULL;
+        -- Verifica se data de agendamento e uma data futura
+        IF pr_tpoperac = 10 THEN --DARF/DAS    
+          
+          IF  pr_dtmvtopg <= Trunc(vr_datdodia) THEN 
             --Montar mensagem erro
             vr_cdcritic:= 0;            
             --Data mínima obtida de dtmvtocd se não for dia útil
@@ -5004,15 +5029,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
             END IF;
           --  ELSE
           END IF;
-        END IF;
-        IF pr_dtmvtopg < Trunc(vr_datdodia) THEN 
+          
+        ELSE
+          
+          IF pr_dtmvtopg < vr_datdodia THEN -- Se for agendamento para data retroativa
           --Montar mensagem erro
           vr_cdcritic:= 0;
           vr_dscritic:= 'Agendamento deve ser feito para uma data futura.';
+          ELSIF pr_dtmvtopg = vr_datdodia THEN -- Se for agendamento para hoje
+            --Montar mensagem erro
+            vr_cdcritic:= 0;
+            vr_dscritic:= 'Não é possível agendar para a data de hoje. Utilize a opção "Nesta Data".';
           END IF;
+        
+          END IF;
+        
+        --Se ocorreu erro
+        IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
           --Levantar Excecao
-         -- RAISE vr_exc_erro;
-       -- END IF;
+          RAISE vr_exc_erro;
+        END IF;
+        
         /** Agendamento normal **/
         IF pr_idagenda = 2 THEN
           --Verificar se eh feriado
@@ -6396,8 +6433,54 @@ PROCEDURE pc_verifica_limite_ope_canc (pr_cdcooper     IN crapcop.cdcooper%type 
       pr_dscritic := 'Erro na proc pc_verifica_limite_ope_canc '||sqlerrm;
   
   END pc_verifica_limite_ope_canc;    
-  
 
+  /*Atualiza as transacoes pendentes para o novo preposto*/
+  PROCEDURE pc_atu_trans_pend_prep (pr_cdcooper IN crapcop.cdcooper%TYPE   --Codigo Cooperativa
+                                   ,pr_nrdconta IN crapass.nrdconta%TYPE   --Numero conta
+                                   ,pr_nrcpfcgc IN crapass.nrcpfcgc%TYPE   --CPF/CGC
+                                   ,pr_inpessoa IN crapass.inpessoa%TYPE   --Tipo de Pessoa
+                                   ,pr_tpdsenha IN crapsnh.tpdsenha%TYPE   --Tipo de Senha
+                                   ,pr_idastcjt IN crapass.idastcjt%TYPE   --Exige Ass.Conjunta Nao=0 Sim=1
+                                   ,pr_cdcritic   OUT INTEGER              --Código do erro
+                                   ,pr_dscritic   OUT VARCHAR2) IS         --Descricao do erro
+  BEGIN
+  DECLARE
+    -------------------------> VARIAVEIS <-------------------------
+    vr_exc_erro EXCEPTION;
+    
+    BEGIN
+      
+      IF pr_tpdsenha =  1 /*Internet*/ AND
+         pr_inpessoa > 1 /*PJ*/        AND 
+         pr_idastcjt = 0 /*Nao exige Ass.Conj*/ THEN
+         BEGIN
+           UPDATE tbgen_trans_pend
+              SET tbgen_trans_pend.nrcpf_representante = pr_nrcpfcgc
+            WHERE tbgen_trans_pend.cdcooper = pr_cdcooper
+              AND tbgen_trans_pend.nrdconta = pr_nrdconta
+              AND tbgen_trans_pend.idsituacao_transacao = 1;             
+              
+           UPDATE tbgen_aprova_trans_pend
+              SET tbgen_aprova_trans_pend.nrcpf_responsavel_aprov = pr_nrcpfcgc
+            WHERE tbgen_aprova_trans_pend.cdcooper = pr_cdcooper
+              AND tbgen_aprova_trans_pend.nrdconta = pr_nrdconta
+              AND tbgen_aprova_trans_pend.idsituacao_aprov = 1;             
+              
+         EXCEPTION           
+           WHEN OTHERS THEN
+             RAISE vr_exc_erro;
+         END;
+      END IF;
+      
+    EXCEPTION
+      WHEN vr_exc_erro THEN
+        pr_cdcritic := 0;
+        pr_dscritic := 'Não foi atualizar as transacoes do preposto: '|| SQLERRM;
+      WHEN OTHERS THEN
+        pr_cdcritic := 0;
+        pr_dscritic := 'Não foi atualizar as transacoes do preposto: '|| SQLERRM;    
+    END;
+  END pc_atu_trans_pend_prep;
   
 
 END INET0001;
