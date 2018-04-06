@@ -58,7 +58,7 @@
 
 	if (strtoupper($xmlObj->roottag->tags[0]->name) == 'ERRO') {
 		echo "<script>";
-       echo 'showError("error","'.$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata.'","Alerta - Ayllos","hideMsgAguardo();bloqueiaFundo(divRotina);");';
+       echo 'showError("error","'.$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata.'","Alerta - Ayllos","bloqueiaFundo(divRotina);");setTimeout(function(){bloqueiaFundo($(\'#divError\'))},1);';
 		echo "</script>";
 		// exit;
 	}

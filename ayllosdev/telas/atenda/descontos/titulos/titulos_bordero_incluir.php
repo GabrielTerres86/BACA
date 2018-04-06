@@ -67,9 +67,19 @@
 
 	$vlutiliz = getByTagName($dados->tags,'vlutiliz');
 	$vllimite = getByTagName($dados->tags,'vllimite');
+	$pctolera = getByTagName($dados->tags,'pctolera');
+	$dtfimvig = getByTagName($dados->tags,'dtfimvig');
+	if (diffData($dtfimvig,$glbvars["dtmvtolt"])<0){
+		exibeErro("Data de vig&ecirc;ncia do contrato deve ser maior que a data de movimenta&ccedil;&atilde;o do sistema");
+	}
+	$pctolera = $pctolera ? $pctolera : 0;
+
 	$vldispon = formataMoeda(converteFloat($vllimite)-converteFloat($vlutiliz));
 
-	// Fun&ccedil;&atilde;o para exibir erros na tela atrav&eacute;s de javascript
+	// 
+
+
+	// Função para exibir erros na tela atrav&eacute;s de javascript
 	function exibeErro($msgErro) { 
 		echo '<script type="text/javascript">';
 		echo 'hideMsgAguardo();';
@@ -83,10 +93,11 @@
 <div id="divIncluirBordero">
 	<form id="formPesquisaTitulos" class="formulario">
 		<input type="hidden" id="nrdconta" name="nrdconta" value="<? echo $nrdconta; ?>" />
+		<input type="hidden" id="pctolera" name="pctolera" value="<? echo $pctolera; ?>" />
+		<input type="hidden" id="vllimite" name="vllimite" value="<? echo $vllimite; ?>" />
 		<div id="divFiltros">
 			<fieldset>
-				<legend>Filtrar T&iacute;tulos</legend>
-
+				<legend>Dados do Contrato</legend>
 				<label for="nrctrlim">Contrato</label>
 			    <input type="text" id="nrctrlim" name="nrctrlim" value="<?php echo getByTagName($dados->tags,'nrctrlim') ?>"/>
 
@@ -95,6 +106,15 @@
 
 				<label for="vldispon">Limite Dispon&iacute;vel</label>
 			    <input type="text" id="vldispon" name="vldispon" value="<?php echo $vldispon ?>"/>
+
+				<label for="vlseleci">Valor T&iacute;tulos Selecionados</label>
+			    <input type="text" id="vlseleci" name="vlseleci" value="<?php echo formataMoeda($vlseleci) ?>"/>
+
+				<label for="vlsaldor">Saldo Restante</label>
+			    <input type="text" id="vlsaldor" name="vlsaldor" value="<?php echo $vldispon ?>"/>
+			</fieldset>
+			<fieldset>
+				<legend>Filtrar T&iacute;tulos</legend>
 
 				<label for="nrinssac">CPF/CNPJ Pagador</label>
 			    <input type="text" id="nrinssac" name="nrinssac" value="<?php echo $nrinssac ?>"/>
