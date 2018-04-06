@@ -62,7 +62,7 @@
 				<th>Saldo Dev/Limite</th>
 				<th>Bloqueado</th>
 			<? if ($cddopcao == 'L') { ?>
-				<th>Desbloquear</th>
+				<th>Desbloq.</th>
 			<? } ?>
 			</tr>
 		  </thead>

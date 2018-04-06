@@ -339,10 +339,14 @@ function formataBloqueiosCobertura() {
 
   var arrayLargura = new Array();
   arrayLargura[0] = '80px';
-  arrayLargura[1] = '70px';
-  arrayLargura[2] = '70px';
+  arrayLargura[1] = '60px';
+  arrayLargura[2] = '60px';
   arrayLargura[3] = '115px';
-  arrayLargura[4] = '105px';
+  arrayLargura[4] = '80px';
+  
+  if (cddopcao == 'L'){
+	arrayLargura[5] = '80px';
+  }
  
   var arrayAlinha = new Array();
   arrayAlinha[0] = 'center';
@@ -351,6 +355,9 @@ function formataBloqueiosCobertura() {
   arrayAlinha[3] = 'center';
   arrayAlinha[4] = 'right';
   arrayAlinha[5] = 'right';
+  if (cddopcao == 'L'){
+	arrayAlinha[6] = 'center';
+  }  
   
   tabela.formataTabela( ordemInicial, arrayLargura, arrayAlinha, '' );
   
