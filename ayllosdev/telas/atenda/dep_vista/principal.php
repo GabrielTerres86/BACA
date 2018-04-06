@@ -88,18 +88,16 @@
 	$xml .= " <Dados>";
 	$xml .= "		<nrdconta>".$nrdconta."</nrdconta>";
 	$xml .= "		<cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
-	$xml .= "		<idseqttl>1</idseqttl>";
-	$xml .= "		<nrcpfope>0</nrcpfope>";
 	$xml .= " </Dados>";
 	$xml .= "</Root>";
 
 	// Chamada mensageria
-    $xmlResult = mensageria($xml, "EMPR0002", "BUSCA_DTPRJATR", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
-    $xmlObjeto = getObjectXML($xmlResult);
+  $xmlResult = mensageria($xml, "EMPR0002", "BUSCA_DTPRJATR", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+  $xmlObjeto = getObjectXML($xmlResult);
 
 	if ( strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO" ) {
 		$msgErro	= $xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata;
-		exibirErro('error',$msgErro,'Alerta - Ayllos',$retornoAposErro,false);
+		exibirErro('error',$msgErro,'Alerta - Ayllos');
 	}
 
 	$camposPrejuizo = $xmlObjeto->roottag->tags[0]->tags;
@@ -192,20 +190,20 @@
 		<label for="vlsdchsl"><? echo utf8ToHtml('Cheque Salário:') ?></label>
 		<input name="vlsdchsl" id="vlsdchsl" type="text" value="<?php echo number_format(str_replace(",",".",getByTagName($depvista,"vlsdchsl")),2,",","."); ?>" />
 
-		<label for="dttrapre"><? echo utf8ToHtml('Data Transf.Prejuízo:') ?></label>
-		<input type="text" name="dttrapre" id="dttrapre" value="<?php echo getByTagName($camposPrejuizo, "dttrapre"); ?>">
+		<label for="dtiniatr"><? echo utf8ToHtml('Data Início Atraso:') ?></label>
+		<input type="text" name="dtiniatr" id="dtiniatr" value="<?php echo getByTagName($camposPrejuizo, "dtiniatr"); ?>">
 
 		<label for="vlblqjud"><? echo utf8ToHtml('Bloq. Judicial:') ?></label>
 		<input name="vlblqjud" id="vlblqjud" type="text" value="<?php echo number_format(str_replace(",",".",getByTagName($depvista,"vlblqjud")),2,",","."); ?>" />
 
-		<label for="dtiniatr"><? echo utf8ToHtml('Data Início Atraso:') ?></label>
-		<input type="text" name="dtiniatr" id="dtiniatr" value="<?php echo getByTagName($camposPrejuizo, "dtiniatr"); ?>">
+		<label for="dttrapre"><? echo utf8ToHtml('Data Transf.Prejuízo:') ?></label>
+		<input type="text" name="dttrapre" id="dttrapre" value="<?php echo getByTagName($camposPrejuizo, "dttrapre"); ?>">
 
 		<label for="vlstotal"><? echo utf8ToHtml('Saldo Total:') ?></label>
 		<input name="vlstotal" id="vlstotal" type="text" value="<?php echo number_format(str_replace(",",".",getByTagName($depvista,"vlstotal")),2,",",".");  ?>" />
 
 		<div style="float: right; padding-right: 5px;">
-			<a href="#" class="botao" id="btDetVoltar" onClick="mostraDetalhesAtraso();" style="padding: 3px 6px;">Detahes de atraso/preju&iacute;zo</a>
+			<a href="#" class="botao" id="btDetVoltar" onClick="mostraDetalhesAtraso();" style="padding: 3px 6px;">Detalhes de Atraso</a>
 		</div>
 	</fieldset>
 
