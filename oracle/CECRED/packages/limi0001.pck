@@ -120,8 +120,6 @@ CREATE OR REPLACE PACKAGE CECRED.LIMI0001 AS
                                   ,pr_tplimite IN craprli.tplimite%TYPE --> Tipo de limite de crédito
                                   ,pr_pcliqdez IN craprli.pcliqdez%TYPE --> Percentual mínimo de liquidez
                                   ,pr_qtdialiq IN craprli.qtdialiq%TYPE --> Quantidade de dias para calculo do percentual liquidez                                  
-                                  ,pr_qtcarpag IN craprli.qtcarpag%TYPE --> Contem o periodo de carencia de pagamento
-                                  ,pr_qtaltlim IN craprli.qtaltlim%TYPE --> Contem o periodo de alteracao de limites rejeitados
                                   ,pr_idgerlog IN INTEGER               --> Identificador de Log (Fixo no código, 0 – Não / 1 - Sim)         
                                   ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
                                   ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
@@ -449,8 +447,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
                                   ,pr_tplimite IN craprli.tplimite%TYPE --> Tipo de limite de crédito
                                   ,pr_pcliqdez IN craprli.pcliqdez%TYPE --> Percentual mínimo de liquidez
                                   ,pr_qtdialiq IN craprli.qtdialiq%TYPE --> Quantidade de dias para calculo do percentual liquidez                                  
-                                  ,pr_qtcarpag IN craprli.qtcarpag%TYPE --> Contem o periodo de carencia de pagamento
-                                  ,pr_qtaltlim IN craprli.qtaltlim%TYPE --> Contem o periodo de alteracao de limites rejeitados
                                   ,pr_idgerlog IN INTEGER               --> Identificador de Log (Fixo no código, 0 – Não / 1 - Sim)         
                                   ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
                                   ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
