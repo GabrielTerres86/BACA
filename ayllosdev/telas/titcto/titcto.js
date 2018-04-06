@@ -146,6 +146,7 @@ function manterRotina(operacao) {
             operacao: operacao,
             cddopcao: cddopcao,
             nrdconta: nrdconta,
+            nrcpfcgc: nrcpfcgc,
             redirect: 'script_ajax'
         },
         error: function(objAjax, responseError, objExcept) {

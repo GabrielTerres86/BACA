@@ -29,6 +29,7 @@ $cdbanchq = (isset($_POST['cdbanchq'])) ? $_POST['cdbanchq'] : 0;
 $cdagechq = (isset($_POST['cdagechq'])) ? $_POST['cdagechq'] : 0;
 $nrctachq = (isset($_POST['nrctachq'])) ? $_POST['nrctachq'] : 0;
 $nrcheque = (isset($_POST['nrcheque'])) ? $_POST['nrcheque'] : 0;
+$nrcpfcgc = (isset($_POST['nrcpfcgc'])) ? $_POST['nrcpfcgc'] : 0;
 
 if (($msgError = validaPermissao($glbvars['nmdatela'], $glbvars['nmrotina'], $cddopcao)) <> '') {
     exibirErro('error', $msgError, 'Alerta - Ayllos', '', false);
