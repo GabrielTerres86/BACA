@@ -169,8 +169,8 @@ CREATE OR REPLACE PACKAGE CECRED.RECP0001 IS
                                       ,pr_nrdconta  IN tbrecup_acordo.nrdconta%TYPE 
                                       ,pr_nrctremp  IN tbrecup_acordo_contrato.nrctremp%TYPE                               
                                       ,pr_cdorigem  IN tbrecup_acordo_contrato.cdorigem%TYPE                              
-                                      ,pr_cdmotcin  IN tbrecup_acordo_contrato.cdmotcin%TYPE                                 
-                                      ,pr_flgehvip  IN tbrecup_acordo_contrato.flgehvip%TYPE                                                               
+                                      ,pr_cdmotcin  IN crapcyc.cdmotcin%TYPE                                 
+                                      ,pr_flgehvip  IN crapcyc.flgehvip%TYPE                                                               
                                       ,pr_dscritic OUT VARCHAR2                               
                                       ,pr_cdcritic OUT NUMBER       -- Retorno de critica/erro
                                     );  
@@ -180,8 +180,8 @@ CREATE OR REPLACE PACKAGE CECRED.RECP0001 IS
                                       ,pr_nrdconta  IN tbrecup_acordo.nrdconta%TYPE 
                                       ,pr_nrctremp  IN tbrecup_acordo_contrato.nrctremp%TYPE                               
                                       ,pr_cdorigem  IN tbrecup_acordo_contrato.cdorigem%TYPE                              
-                                      ,pr_cdmotcin  IN tbrecup_acordo_contrato.cdmotcin%TYPE                                 
-                                      ,pr_flgehvip  IN tbrecup_acordo_contrato.flgehvip%TYPE                                                               
+                                      ,pr_cdmotcin  IN crapcyc.cdmotcin%TYPE                                 
+                                      ,pr_flgehvip  IN crapcyc.flgehvip%TYPE                                                               
                                       ,pr_dscritic OUT VARCHAR2                               
                                       ,pr_cdcritic OUT NUMBER       -- Retorno de critica/erro
                                     );   
@@ -2947,8 +2947,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
                                       ,pr_nrdconta  IN tbrecup_acordo.nrdconta%TYPE 
                                       ,pr_nrctremp  IN tbrecup_acordo_contrato.nrctremp%TYPE                               
                                       ,pr_cdorigem  IN tbrecup_acordo_contrato.cdorigem%TYPE                              
-                                      ,pr_cdmotcin  IN tbrecup_acordo_contrato.cdmotcin%TYPE                                 
-                                      ,pr_flgehvip  IN tbrecup_acordo_contrato.flgehvip%TYPE                                                               
+                                      ,pr_cdmotcin  IN crapcyc.cdmotcin%TYPE                                 
+                                      ,pr_flgehvip  IN crapcyc.flgehvip%TYPE                                                               
                                       ,pr_dscritic OUT VARCHAR2                               
                                       ,pr_cdcritic OUT NUMBER       -- Retorno de critica/erro
                                     ) IS                          
@@ -3018,8 +3018,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
                                     ,pr_nrdconta  IN tbrecup_acordo.nrdconta%TYPE 
                                     ,pr_nrctremp  IN tbrecup_acordo_contrato.nrctremp%TYPE                               
                                     ,pr_cdorigem  IN tbrecup_acordo_contrato.cdorigem%TYPE                              
-                                    ,pr_cdmotcin  IN tbrecup_acordo_contrato.cdmotcin%TYPE                                 
-                                    ,pr_flgehvip  IN tbrecup_acordo_contrato.flgehvip%TYPE                                                               
+                                    ,pr_cdmotcin  IN crapcyc.cdmotcin%TYPE                                 
+                                    ,pr_flgehvip  IN crapcyc.flgehvip%TYPE                                                               
                                     ,pr_dscritic OUT VARCHAR2                               
                                     ,pr_cdcritic OUT NUMBER       -- Retorno de critica/erro
                                     ) IS                          
