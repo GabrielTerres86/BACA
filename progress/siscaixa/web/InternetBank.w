@@ -1236,6 +1236,7 @@ DEF VAR aux_dsnomfon AS CHAR                                           NO-UNDO.
 DEF VAR aux_tpcaptur AS INTE                                           NO-UNDO.
 DEF VAR aux_tpleitor AS INTE                                           NO-UNDO.
 DEF VAR aux_nrrefere AS DECI                                           NO-UNDO.
+DEF VAR aux_nrrefere_199 AS CHAR                                       NO-UNDO.
 DEF VAR aux_idrazfan AS INTE										   NO-UNDO.
 DEF VAR aux_nrdcaixa AS INTE										   NO-UNDO.
 DEF VAR aux_titulo1  AS DECI										   NO-UNDO.
@@ -8909,7 +8910,7 @@ PROCEDURE proc_operacao199:
     ASSIGN  aux_dtapurac = DATE(GET-VALUE("aux_dtapurac"))
             aux_tpcaptur = INTE(GET-VALUE("aux_tpcaptur"))
             aux_nrcpfdrf = GET-VALUE("aux_nrcpfcgc")
-            aux_nrrefere = DECI(GET-VALUE("aux_nrrefere"))
+            aux_nrrefere_199 = GET-VALUE("aux_nrrefere")
             aux_dtvencto = DATE(GET-VALUE("aux_dtvencto"))
             aux_cdtribut = GET-VALUE("aux_cdtributo")
             aux_vlrecbru = DECI(GET-VALUE("aux_vlrecbru"))
@@ -8961,7 +8962,7 @@ PROCEDURE proc_operacao199:
                                                    INPUT aux_vlapagar,                    
                                                    INPUT aux_versaldo,                    
                                                    INPUT aux_tpleitor,                    
-                                                   INPUT aux_nrrefere,                    
+                                                   INPUT aux_nrrefere_199,                    
                                                   OUTPUT aux_dsmsgerr,                                                   
                                                   OUTPUT TABLE xml_operacao).
                                                   

@@ -57,7 +57,7 @@ DEF INPUT  PARAM  par_idagenda  AS INTEGER                                NO-UND
 DEF INPUT  PARAM  par_vlapagar  AS DECIMAL                                NO-UNDO.
 DEF INPUT  PARAM  par_versaldo  AS INTEGER                                NO-UNDO.
 DEF INPUT  PARAM  par_tpleitor  AS INTEGER                                NO-UNDO.
-DEF INPUT  PARAM  par_nrrefere  AS DECI                                   NO-UNDO.
+DEF INPUT  PARAM  par_nrrefere  AS CHAR                                   NO-UNDO.
 
 DEF OUTPUT PARAM  xml_dsmsgerr  AS CHAR                                   NO-UNDO.
 DEF OUTPUT PARAM TABLE FOR xml_operacao.
@@ -115,7 +115,7 @@ RUN STORED-PROCEDURE pc_processa_tributos
                                        ,INPUT par_dtvencto               /* pr_dtvencto */
                                        ,INPUT par_dtapurac               /* pr_dtapurac */
                                        ,INPUT par_vlrtotal               /* pr_vlrtotal */
-                                       ,INPUT STRING(par_nrrefere)       /* pr_nrrefere */
+                                       ,INPUT par_nrrefere               /* pr_nrrefere */
                                        ,INPUT par_dsidepag               /* pr_dsidepag */
                                        ,INPUT par_dtmvtopg               /* pr_dtmvtopg */
                                        ,INPUT par_idagenda               /* pr_idagenda */

@@ -432,7 +432,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps728(pr_dscritic OUT VARCHAR2) IS      
             END;
           END LOOP; -- Fim Arq
           
-          pc_move_arq(pr_nmarquiv => vr_nmarquiv||'.PDF',
+          pc_move_arq(pr_nmarquiv => replace(vr_nmarquiv,'%','*')||'.PDF',
                       pr_dsdirori => vr_dsdircon||'/recebe',
                       pr_dsdirdes => '/usr/sistemas/bancoob/convenios/recebidos');
           
