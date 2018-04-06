@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Deborah/Edson
-   Data    : Outubro/96.                     Ultima atualizacao: 14/03/2016
+   Data    : Outubro/96.                     Ultima atualizacao: 24/01/2018
 
    Dados referentes ao programa:
 
@@ -411,6 +411,9 @@
             14/03/2016 - Incluir campo cdpactra na chamada da rotina 
 			             grava-proposta-completa. PRJ207 - Esteira 
 						 (Odirlei-AMcom)						                  
+                         
+            24/01/2018 - Passagem de parametros nulos. (Jaison/James - PRJ298)
+
 ........................................................................... */
 
 DEF INPUT PARAM par_nrdconta AS INTE                                   NO-UNDO.
@@ -426,6 +429,8 @@ DEF VAR aux_flgsenha AS INTE                                           NO-UNDO.
 DEF VAR aux_dsmensag AS CHAR                                           NO-UNDO.
 DEF VAR aux_nsenhaok AS LOGI                                           NO-UNDO.
 DEF VAR aux_cdoperad AS CHAR                                           NO-UNDO.
+DEF VAR aux_dscatbem AS CHAR                                           NO-UNDO.
+DEF VAR aux_dsctrliq AS CHAR                                           NO-UNDO.
 
 { sistema/generico/includes/var_internet.i }
 { sistema/generico/includes/b1wgen0056tt.i }
@@ -901,6 +906,9 @@ DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
                                          INPUT aux_inconfi2,
                                          INPUT 0, /* nrcpfope */
 										 INPUT "", /* cdmodali */
+                                         INPUT ?, /* par_idcarenc */
+                                         INPUT ?, /* par_dtcarenc */
+										 INPUT tt-proposta-epr.idfiniof, /* par_idfiniof */
                                          OUTPUT TABLE tt-erro,
                                          OUTPUT TABLE tt-msg-confirma,
                                          OUTPUT TABLE tt-grupo,
@@ -1023,6 +1031,19 @@ DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
                          END.
                    END.
 
+               ASSIGN aux_dscatbem = "".
+               FOR EACH crapbpr WHERE crapbpr.cdcooper = glb_cdcooper  AND
+                                     crapbpr.nrdconta = par_nrdconta  AND
+                                     crapbpr.nrctrpro = tt-proposta-epr.nrctremp  AND 
+                                     crapbpr.tpctrpro = 90 NO-LOCK:
+                  ASSIGN aux_dscatbem = aux_dscatbem + "|" + crapbpr.dscatbem.
+               END.
+               
+               RUN buscar_liquidacoes_contrato IN h-b1wgen0002(INPUT glb_cdcooper,
+                                                               INPUT par_nrdconta,
+                                                               INPUT tt-proposta-epr.nrctremp,
+                                                               OUTPUT aux_dsctrliq).  
+                                                              
                 /* Calclar o cet automaticamente */
                 RUN calcula_cet_novo IN h-b1wgen0002(
                                      INPUT glb_cdcooper,
@@ -1047,6 +1068,9 @@ DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
                                      INPUT tt-proposta-epr.qtpreemp, 
                                      INPUT tt-proposta-epr.dtdpagto, 
                                      INPUT tt-proposta-epr.cdfinemp,
+                                     INPUT aux_dscatbem, /* dscatbem */
+                                     INPUT tt-proposta-epr.idfiniof, /* idfiniof */
+                                     INPUT aux_dsctrliq, /* dsctrliq */
                                     OUTPUT aux_percetop, /* taxa cet ano */
                                     OUTPUT aux_txcetmes, /* taxa cet mes */
                                     OUTPUT TABLE tt-erro). 
@@ -2010,6 +2034,8 @@ DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
                                 INPUT tt-proposta-epr.dsctrliq,
                                 INPUT aux_nrctaava,
                                 INPUT aux_nrctaav2,
+                                INPUT ?, /* par_idcarenc */
+                                INPUT ?, /* par_dtcarenc */
                                 /* Analise da proposta*/
                                 INPUT tt-dados-analise.nrgarope,
                                 INPUT tt-dados-analise.nrperger,
@@ -2099,6 +2125,8 @@ DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
                                 INPUT TRUE,
                                 INPUT tt-rendimento.dsjusren,
                                 INPUT ?, /* dtlibera */
+								INPUT tt-proposta-epr.idfiniof, /* par_idfiniof */
+								INPUT "", /* par_dscatbem */
                                 OUTPUT TABLE tt-erro,
                                 OUTPUT TABLE tt-msg-confirma,
                                 OUTPUT tt-proposta-epr.nrdrecid,

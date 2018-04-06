@@ -37,6 +37,7 @@ DEF INPUT PARAM par_flgtipar AS   INTEGER                              NO-UNDO.
 DEF INPUT PARAM par_nrdconta LIKE crapaar.nrdconta                     NO-UNDO.
 DEF INPUT PARAM par_idseqttl LIKE crapaar.idseqttl                     NO-UNDO.
 DEF INPUT PARAM par_nrctraar LIKE crapaar.nrctraar                     NO-UNDO.
+DEF INPUT PARAM par_cdsitaar LIKE crapaar.cdsitaar                     NO-UNDO.
 
 DEF OUTPUT PARAM xml_dsmsgerr AS LONGCHAR                              NO-UNDO.
 
@@ -64,6 +65,7 @@ IF VALID-HANDLE(h-b1wgen0081)  THEN
                                                  INPUT 0, /*seq titular*/
                                                  INPUT par_nrctraar, /*cod agendamento*/
                                                  INPUT par_flgtipar, /*tipo agendamento*/
+                                                 INPUT par_cdsitaar, /*situacao*/
                                                  INPUT "InternetBank", /*cdprogra*/
                                                  INPUT 3, /*origem*/ 
                                                  OUTPUT TABLE tt-erro,
@@ -140,8 +142,11 @@ IF VALID-HANDLE(h-b1wgen0081)  THEN
                ELSE
                   ASSIGN xml_operacao.dslinxml = xml_operacao.dslinxml + "<dtmvtolt></dtmvtolt>".
          
-
-          ASSIGN xml_operacao.dslinxml = xml_operacao.dslinxml + "</AGENDAMENTO>". 
+         ASSIGN xml_operacao.dslinxml = xml_operacao.dslinxml + 
+                                        "<incancel>" + STRING(tt-agendamento.incancel) + "</incancel>" +
+                                        "<dssitaar>" + tt-agendamento.dssitaar + "</dssitaar>" +
+                                        "<dstipaar>" + tt-agendamento.dstipaar + "</dstipaar>" +
+                                        "</AGENDAMENTO>". 
 
       END.
 

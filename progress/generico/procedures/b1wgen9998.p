@@ -102,6 +102,9 @@
                              
                 29/02/2016 - Trocando o campo flpolexp para inpolexp conforme
                              solicitado no chamado 402159 (Kelvin).
+                             
+                21/12/2017 - Adicionado o tpoperac = 3 para a melhoria 458.
+                             Antonio R. Jr (Mouts)
  ............................................................................*/
     
 { sistema/generico/includes/var_internet.i }    
@@ -1044,7 +1047,8 @@ PROCEDURE email-controle-movimentacao:
              END.
 
         IF   crapcme.tpoperac <> 1   AND
-             crapcme.tpoperac <> 2   THEN
+             crapcme.tpoperac <> 2   AND
+             crapcme.tpoperac <> 3   THEN
              DO:
                  ASSIGN aux_dscritic = "Tipo de operacao invalida".
                  LEAVE.

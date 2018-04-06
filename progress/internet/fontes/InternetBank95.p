@@ -68,6 +68,7 @@ DEF VAR aux_sldpresg LIKE craplap.vllanmto                             NO-UNDO.
 DEF VAR aux_qtaplica AS INTE                                           NO-UNDO. /* Quantidade de aplicacoes por parametro */
 DEF VAR aux_nraplica AS INTE                                           NO-UNDO. /* numero da aplicação */
 DEF VAR aux_vlresgat AS DECI                                           NO-UNDO. /* Valor de resgate (recuperado do parametro)*/
+DEF VAR aux_tpresgat AS INTE                                           NO-UNDO. 
 
 /* Contadores */
 DEF VAR aux_contador AS INTE                                           NO-UNDO.
@@ -199,14 +200,15 @@ DO:
                 RETURN "NOK".
             END.
 
-            
             /* Verificar se existe valor para resgate*/
-            IF aux_vlresgat = 0 THEN
+            IF  aux_vlresgat = 0 OR aux_vlresgat = tt-saldo-rdca.sldresga  THEN
                 /* Valor solicitado para resgate = VALOR TOTAL */
-                ASSIGN aux_vlsolrgt = aux_vlrgttot.
+                ASSIGN aux_vlsolrgt = aux_vlrgttot
+                       aux_tpresgat = 2.
             ELSE
                 /* Valor solicitado para resgate = VALOR RESGATAR */
-                ASSIGN aux_vlsolrgt = aux_vlresgat.
+                ASSIGN aux_vlsolrgt = aux_vlresgat
+                       aux_tpresgat = 1.
 
 
             /*** Calcular o valor real a ser resgatado quando nao esta na carencia ***/
@@ -338,6 +340,17 @@ DO:
                                                    STRING(tt-saldo-rdca.dtmvtolt + tt-saldo-rdca.qtdiacar,"99/99/9999") +
                                                    " (" + STRING(tt-saldo-rdca.qtdiacar) + " dias)" +
                                                "</dtcarencia>" + 
+                                               /* Novo IB */
+                                               "<dtresgat>" +
+                                                   STRING(par_dtmvtolt,"99/99/9999") +
+                                               "</dtresgat>" +  
+                                               "<dtcarenc>" +
+                                                   STRING(tt-saldo-rdca.dtmvtolt + tt-saldo-rdca.qtdiacar,"99/99/9999") +
+                                               "</dtcarenc>" + 
+                                               "<idtipapl>A</idtipapl>" +  /* Fixo, tratar futuramente */
+                                               "<tpresgat>" +
+                                                   TRIM(STRING(aux_tpresgat,"9")) +
+                                               "</tpresgat>" +                                                                                             
                                            "</APLICACAO>".
 
         END.

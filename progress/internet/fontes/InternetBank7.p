@@ -4,7 +4,7 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : David
-   Data    : Marco/2007                        Ultima atualizacao: 18/08/2017
+   Data    : Marco/2007                        Ultima atualizacao: 06/11/2017
 
    Dados referentes ao programa:
 
@@ -53,17 +53,19 @@
 			                e de sobras na Conta Corrente (Marcos-Supero).
                       
                18/01/2017 - SD595294 - Retorno dos valores pagos em emprestimos
-                            (Marcos-Supero)             
+                            (Marcos-Supero)      
 
                24/03/2017 - SD638033 - Envio dos Rendimentos de Cotas Capital 
-			                sem desconto IR (Marcos-Supero)
+			                      sem desconto IR (Marcos-Supero) 
 
-			   13/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
-			                crapass, crapttl, crapjur 
-							(Adriano - P339).
-
+			         13/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+			                      crapass, crapttl, crapjur 
+							              (Adriano - P339).
+              
                18/08/2017 - Incluida validacao de IR para pessoa juridica
                             (Rafael Faria-Supero)
+               06/11/2017 - Separar telefone do endereco da cooperativa (David)
+
 ............................................................................*/
     
 CREATE WIDGET-POOL.
@@ -465,8 +467,7 @@ PROCEDURE proc_ir_fisica:
                                    STRING(STRING(crapcop.nrcepend,
                                           "99999999"),"xxxxx-xxx") +
                                    " - " + crapcop.nmcidade + " - " +
-                                   crapcop.cdufdcop + " - TELEFONE: " +
-                                   crapcop.nrtelvoz + 
+                                   crapcop.cdufdcop + 
                                    "</dsendcop><nmextcop>" + 
                                    TRIM(crapcop.nmextcop) + 
                                    "</nmextcop><cdagenci>" + 
@@ -534,7 +535,10 @@ PROCEDURE proc_ir_fisica:
                                    TRIM(STRING(aux_vlprepag,"zzz,zzz,zz9.99-")) +
                                    "</vlprepag><atprepag>" +
                                    TRIM(STRING(ant_vlprepag,"zzz,zzz,zz9.99-")) +
-                                   "</atprepag></IRFISICA>".          
+                                   "</atprepag><nrtelcop>" +
+                                   crapcop.nrtelvoz +
+                                   "</nrtelcop></IRFISICA>".
+                                   
 END PROCEDURE. 
 
 PROCEDURE proc_ir_juridica:
@@ -555,8 +559,7 @@ PROCEDURE proc_ir_juridica:
                                    STRING(STRING(crapcop.nrcepend,
                                           "99999999"),"xxxxx-xxx") + " - " + 
                                    crapcop.nmcidade + " - " + 
-                                   crapcop.cdufdcop + " - TELEFONE: " +
-                                   crapcop.nrtelvoz + 
+                                   crapcop.cdufdcop + 
                                    "</dsendcop><nmextcop>" + 
                                    TRIM(crapcop.nmextcop) + 
                                    "</nmextcop><cdagenci>" + 
@@ -961,7 +964,9 @@ PROCEDURE proc_ir_juridica:
            "</vlrendim>".
 
     ASSIGN xml_operacao.dslinxml = xml_operacao.dslinxml +
-                                   "</INFOCOMP></IRJURIDICA>".
+                                   "</INFOCOMP><nrtelcop>" +
+                                   crapcop.nrtelvoz +
+                                   "</nrtelcop></IRJURIDICA>".
     
     RETURN "OK".
     

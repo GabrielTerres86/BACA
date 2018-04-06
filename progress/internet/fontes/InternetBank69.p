@@ -39,6 +39,7 @@ DEF INPUT  PARAM par_dtmvtolt AS DATE                                  NO-UNDO.
 DEF INPUT  PARAM par_cdoperad AS CHAR                                  NO-UNDO.
 DEF INPUT  PARAM par_nmdatela AS CHAR                                  NO-UNDO.
 DEF INPUT  PARAM par_flvalarq AS LOGI                                  NO-UNDO.
+DEF INPUT  PARAM par_iddirarq AS INTE                                  NO-UNDO.
 
 DEF OUTPUT PARAM xml_dsmsgerr AS CHAR                                  NO-UNDO.
 DEF OUTPUT PARAM TABLE FOR xml_operacao.
@@ -61,15 +62,16 @@ DEF VAR aux_xml_operacao69 AS LONGCHAR                                 NO-UNDO.
       aux_handproc = PROC-HANDLE NO-ERROR      
         (INPUT  par_cdcooper           /* --> Codigo da cooperativa         */
         ,INPUT  par_nrdconta           /* --> Numero da conta               */
-		,INPUT  par_nmarquiv           /* --> Nome do arquivo de cobranca   */
-		,INPUT  par_idorigem           /* --> Origem                        */
-		,INPUT  par_dtmvtolt           /* --> Data de movimento             */
+	    	,INPUT  par_nmarquiv           /* --> Nome do arquivo de cobranca   */
+		    ,INPUT  par_idorigem           /* --> Origem                        */
+		    ,INPUT  par_dtmvtolt           /* --> Data de movimento             */
         ,INPUT  par_cdoperad           /* --> Operador                      */
-		,INPUT  par_nmdatela           /* --> Nome da tela                  */
-		,INPUT  int(par_flvalarq)      /* --> Valida arquivo                */
-		,INPUT  0                      /* --> Mobile                        */
-		,INPUT  ''                     /* --> IP                            */
-		,OUTPUT ""                     /* --> Retorno XML de critica        */
+		    ,INPUT  par_nmdatela           /* --> Nome da tela                  */
+		    ,INPUT  int(par_flvalarq)      /* --> Valida arquivo                */
+        ,INPUT  par_iddirarq           /* --> Importar de novo diretorio devido ao SOA */
+		    ,INPUT  0                      /* --> Mobile                        */
+		    ,INPUT  ''                     /* --> IP                            */
+		    ,OUTPUT ""                     /* --> Retorno XML de critica        */
         ,OUTPUT ""                     /* --> Retorno XML da operaçao 26    */
         ,OUTPUT "" ).                  /* --> Retorno de critica (OK ou NOK)*/
 		

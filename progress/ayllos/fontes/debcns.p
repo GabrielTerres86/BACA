@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Lucas R.
-   Data    : Julho/2013                        Ultima atualizacao: 24/10/2016
+   Data    : Julho/2013                        Ultima atualizacao: 21/02/2018
 
    Dados referentes ao programa:
 
@@ -32,6 +32,18 @@
 				
    24/10/2016 - Inserido nova opcao na tela "S - Sumario" para contabilizar
                 os lancamentos do dia - Melhoria349 (Tiago/Elton).       
+                
+   23/10/2017 - Ajustar relatorio e tambem para chamar a rotina efetua-debito-consorcio
+                como 3 "Ultima execucao" (Lucas Ranghetti #739738)
+                
+   15/01/2018 - Adicionar flgativo na busca da crapcop (Lucas Ranghetti #822845)
+                
+   
+   29/01/2018 - Ajustar DEBCNS conforme solicitaçao do chamado (Lucas Ranghetti #837834)
+   
+   14/02/2018 - Retirar validaçao do horario de pagamento SICREDI (Lucas Ranghetti #838937)
+   
+   21/02/2018 - Ajustar layout do relatorio conforme o crps662 (Lucas Ranghetti #852207)
 ..............................................................................*/
 
 { includes/var_online.i }
@@ -129,7 +141,8 @@ DEF TEMP-TABLE tt-obtem-consorcio NO-UNDO
     FIELD dscritic AS CHAR
     FIELD nrdocmto LIKE craplau.nrdocmto
     FIELD nrdgrupo LIKE crapcns.nrdgrupo
-    FIELD nrctrato AS DECI FORMAT "zzz,zzz,zzz".   
+    FIELD nrctrato AS DECI FORMAT "zzz,zzz,zzz"
+    FIELD tpconsor LIKE crapcns.tpconsor.    
 
     FORM SKIP(1)
          "DEBITOS PARA: "                   AT 01
@@ -139,65 +152,66 @@ DEF TEMP-TABLE tt-obtem-consorcio NO-UNDO
          WITH NO-BOX NO-LABEL WIDTH 132 FRAME f_titulo.
 
     FORM SKIP(1)
-         "->"
-         aux_dstiptra FORMAT "x(19)" SKIP
-         "--->"
-         aux_dscooper
-         SKIP(1)
          " PA  "
          "CONTA/DV"
-         "CTA.CONSOR"
-         "NOME                         "
+         "DOCUMENTO"
+         "             CTA.CONSOR"
+         "NOME                       "
          "TIPO     "
-         "GRUPO "
-         "      COTA"
+         "GRUPO"
+         "       COTA"
          "     VALOR"
          SKIP
-         " --- --------- ---------- ----------------------------- ---------"
-         "------ ---------- ----------"
-         WITH NO-BOX NO-LABEL WIDTH 132 FRAME f_transacao.
+         " --- --------- ---------------------- ----------"
+         "--------------------------- --------- ------ ---------- ----------"
+     WITH NO-BOX NO-LABEL WIDTH 234 FRAME f_transacao.
     
     FORM SKIP(1)
          "->"
          aux_dstiptra FORMAT "x(19)" SKIP
          "--->"
          aux_dscooper
-         WITH NO-BOX NO-LABEL WIDTH 132 FRAME f_transacao1.    
+     WITH NO-BOX NO-LABEL WIDTH 234 FRAME f_transacao1.    
 
     FORM SKIP(1)
          " PA  "
          "CONTA/DV"
+     "DOCUMENTO"
          "CTA.CONSOR"
-         "NOME                         "
+         "NOME                       "
          "TIPO     "
          "GRUPO "
          "      COTA"
          "     VALOR"
+         "CRITICA"
          SKIP
-         " --- --------- ---------- ----------------------------- ---------"
-         "------ ---------- ----------"
-         WITH NO-BOX NO-LABEL WIDTH 132 FRAME f_transacao2.
+     " --- --------- ---------------------- ----------"
+     "--------------------------- --------- ------ ---------- ----------"
+     "---------------------------------------"
+     WITH NO-BOX NO-LABEL WIDTH 234 FRAME f_transacao2.
 
     FORM tt-obtem-consorcio.cdagenci FORMAT "zz9"        
          tt-obtem-consorcio.nrdconta FORMAT "zzzz,zzz,9" 
+     tt-obtem-consorcio.nrdocmto FORMAT "9999999999999999999999"
          tt-obtem-consorcio.nrctacns FORMAT "zzzz,zzz,9" 
-         tt-obtem-consorcio.nmprimtl FORMAT "x(29)"      
+         tt-obtem-consorcio.nmprimtl FORMAT "x(27)"      
          tt-obtem-consorcio.dsconsor FORMAT "x(9)"       
          tt-obtem-consorcio.nrdgrupo FORMAT "999999"
          tt-obtem-consorcio.nrcotcns FORMAT "zzzz,zzz,9" 
          tt-obtem-consorcio.vlparcns FORMAT "zzz,zz9.99"
-         tt-obtem-consorcio.dscritic FORMAT "x(44)"
-         WITH NO-BOX NO-LABEL DOWN WIDTH 132 FRAME f_nao_efetuados.
+         tt-obtem-consorcio.dscritic FORMAT "x(39)"
+     WITH NO-BOX NO-LABEL DOWN WIDTH 234 FRAME f_nao_efetuados.
 
     FORM tt-obtem-consorcio.cdagenci FORMAT "zz9"          
          tt-obtem-consorcio.nrdconta FORMAT "zzzz,zzz,9"   
+         tt-obtem-consorcio.nrdocmto FORMAT "9999999999999999999999"
          tt-obtem-consorcio.nrctacns FORMAT "zzzz,zzz,9"   
-         tt-obtem-consorcio.nmprimtl FORMAT "x(29)"        
+         tt-obtem-consorcio.nmprimtl FORMAT "x(27)"        
          tt-obtem-consorcio.dsconsor FORMAT "x(9)"         
          tt-obtem-consorcio.nrdgrupo FORMAT "999999"
          tt-obtem-consorcio.nrcotcns FORMAT "zzzz,zzz,9"   
          tt-obtem-consorcio.vlparcns FORMAT "zzz,zz9.99" 
-         WITH NO-BOX NO-LABEL DOWN WIDTH 132 FRAME f_efetuados.
+     WITH NO-BOX NO-LABEL DOWN WIDTH 234 FRAME f_efetuados.
 
     FORM SKIP(2)
          "TOTAIS --> Quantidade: "                                      AT 01
@@ -205,7 +219,7 @@ DEF TEMP-TABLE tt-obtem-consorcio NO-UNDO
          SKIP
          "                Valor: "                                      AT 01
          aux_vlefetua FORMAT "zzz,zzz,zz9.99"                           AT 24
-         WITH NO-BOX NO-LABEL WIDTH 132 FRAME f_total.
+     WITH NO-BOX NO-LABEL WIDTH 234 FRAME f_total.
 
 
  { includes/crps663.i } 
@@ -293,7 +307,8 @@ ASSIGN glb_cddopcao    = "C"
 /* Alimenta SELECTION-LIST de COOPERATIVAS */
 IF  glb_cdcooper = 3 THEN
     DO:
-        FOR EACH crapcop WHERE crapcop.cdcooper <> 3 NO-LOCK 
+        FOR EACH crapcop WHERE crapcop.cdcooper <> 3 AND
+                               crapcop.flgativo = TRUE NO-LOCK 
                                BY crapcop.cdcooper:
 
             IF  aux_contador = 0 THEN
@@ -374,7 +389,8 @@ DO  WHILE TRUE:
 
             FOR EACH crapcop WHERE crapcop.cdcooper <> 3            AND 
                                    crapcop.cdcooper >= aux_cdcooper AND
-                                   crapcop.cdcooper <= aux_cdcoopfi NO-LOCK:
+                                   crapcop.cdcooper <= aux_cdcoopfi AND
+                                   crapcop.flgativo = TRUE NO-LOCK:
 
                 RUN obtem-consorcio.
     
@@ -426,7 +442,8 @@ DO  WHILE TRUE:
             /*** PROCESSA COOPERATIVAS ***/
             FOR EACH crapcop WHERE crapcop.cdcooper <> 3            AND
                                    crapcop.cdcooper >= aux_cdcooper AND
-                                   crapcop.cdcooper <= aux_cdcoopfi NO-LOCK:
+                                   crapcop.cdcooper <= aux_cdcoopfi AND
+                                   crapcop.flgativo = TRUE NO-LOCK:
                    
                 IF  TIME > crapcop.hrlimsic THEN
                     DO:
@@ -461,12 +478,6 @@ DO  WHILE TRUE:
                                                " - Opcao para processo manual "
                                                   + "desabilitada.".
                         
-                        /** Verifica se horario para pagamentos nao esgotou */
-                        IF  TIME > INT(ENTRY(1,craptab.dstextab," ")) AND
-                            TIME < INT(ENTRY(2,craptab.dstextab," ")) THEN
-                            ASSIGN glb_dscritic = crapcop.nmrescop +
-                                                  " - Horario para " + 
-                                           "pagamentos CONSORCIO nao esgotou". 
                     END.
    
                     IF  glb_dscritic <> ""  THEN
@@ -542,7 +553,7 @@ DO  WHILE TRUE:
             MESSAGE "Aguarde, debitando consorcios ...".
             
             RUN efetua-debito-consorcio(INPUT TRUE,
-			                                  INPUT 2).
+			                                  INPUT 2). /* Segunda execucao */
             
             HIDE MESSAGE NO-PAUSE.
             
@@ -557,7 +568,8 @@ DO  WHILE TRUE:
 
             FOR EACH crapcop WHERE crapcop.cdcooper <> 3            AND 
                                    crapcop.cdcooper >= aux_cdcooper AND
-                                   crapcop.cdcooper <= aux_cdcoopfi 
+                                   crapcop.cdcooper <= aux_cdcoopfi AND
+                                   crapcop.flgativo = TRUE
                                    NO-LOCK:
 
                 ASSIGN aux_nmarquiv = "crrl663_" + STRING(TIME) + ".lst"

@@ -33,7 +33,7 @@
 
     Programa: b1wgen0033.p
     Autor   : Guilherme
-    Data    : Agosto/2008                     Ultima Atualizacao: 04/08/2017
+    Data    : Agosto/2008                     Ultima Atualizacao: 13/03/2018
            
     Dados referentes ao programa:
                 
@@ -225,10 +225,19 @@
 			                 crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava
 							 (Adriano - P339).
 
-				04/08/2017 - Ajuste para retirar o uso de campos removidos da tabela
-			                 crapass, crapttl, crapjur 
-							 (Adriano - P339).
+				       04/08/2017 - Ajuste para retirar o uso de campos removidos da tabela
+			                      crapass, crapttl, crapjur 
+							              (Adriano - P339).
 
+                27/11/2017 - Chamado 792418 - Incluir opções de cancelamento 10 e 11
+                             (Andrei Vieira - MOUTs)
+
+                07/03/2018 - Ajustar relatorio de seguro de vida de acordo com o modelo
+                             enviado pela CHUBB (Lucas Ranghetti #848900)
+							 
+				13/03/2018 - Ajuste no relatorio seguro de vida onde estava escrito
+							 "cerasa" para "serasa", conforme solicitado no chamado
+							 863323. (Kelvin)
 ..............................................................................*/
                     
 { sistema/generico/includes/b1wgen0038tt.i }
@@ -296,6 +305,7 @@ DEF VAR seg_nrcpfcgc    AS CHAR                                       NO-UNDO.
 DEF VAR seg_dsestcvl    AS CHAR FORMAT "x(12)"                        NO-UNDO.
 DEF VAR seg_dssexotl    AS CHAR FORMAT "x(020)"                       NO-UNDO.
 DEF VAR tel_dscobert    AS CHAR FORMAT "x(050)"                       NO-UNDO.
+DEF VAR aux_dscobert    AS CHAR EXTENT 4 FORMAT "x(072)"              NO-UNDO.    
 DEF VAR aux_idadelmt    AS INT FORMAT "z9"                            NO-UNDO.
 DEF VAR aux_idadelm2    AS INT FORMAT "z9"                            NO-UNDO.
 DEF VAR rel_tracoseg    AS CHAR                                       NO-UNDO. 
@@ -308,7 +318,7 @@ DEF VAR aux_premitot    AS DECIMAL                                    NO-UNDO.
 DEF VAR aux_comprela    AS CHAR                                       NO-UNDO.
 DEF VAR rel_prestami    AS CHAR                                       NO-UNDO.
 DEF VAR aux_vlmorada    AS DECI                                       NO-UNDO.
-DEF VAR aux_dscgcseg    AS CHAR FORMAT "99.999.999/9999-99"			  NO-UNDO.
+DEF VAR aux_dscgcseg    AS CHAR FORMAT "99.999.999/9999-99"			      NO-UNDO.
 DEF VAR aux_nmresseg    LIKE crapcsg.nmresseg FORMAT "x(30)"          NO-UNDO.
 
 DEF VAR aux_casa3325    AS CHAR FORMAT "x(76)"                        NO-UNDO.
@@ -328,6 +338,11 @@ DEF VAR aux_casa0614    AS CHAR FORMAT "x(76)"                        NO-UNDO.
 DEF VAR aux_casa0617    AS CHAR FORMAT "x(76)"                        NO-UNDO.
 DEF VAR aux_casa0618    AS CHAR FORMAT "x(76)"                        NO-UNDO.
 DEF VAR aux_casa0619    AS CHAR FORMAT "x(76)"                        NO-UNDO.
+
+DEF VAR aux_nmextcop    AS CHAR FORMAT "x(50)"                        NO-UNDO.
+DEF VAR aux_nrdocnpj    AS CHAR FORMAT "99.999.999/9999-99"           NO-UNDO.
+DEF VAR aux_dsdispge    AS CHAR EXTENT 4  FORMAT "x(88)"              NO-UNDO.
+DEF VAR aux_titulovd    AS CHAR FORMAT "x(52)"                        NO-UNDO.
 
 /*Tabela DE/PARA de plano de seguros inativos*/
 DEF TEMP-TABLE tt-pldepara NO-UNDO
@@ -884,7 +899,7 @@ FORM SKIP(2)
     SKIP(3)
     "AUTORIZO A CONSULTA DE MINHAS INFORMACOES  CADASTRAIS  NOS  SERVICOS"
     SKIP
-    "DE PROTECAO AO CREDITO (SPC, CERASA,...)"
+    "DE PROTECAO AO CREDITO (SPC, SERASA,...)"
     SKIP
     "ALEM DO CADASTRO DA CENTRAL DE RISCO DO  BANCO  CENTRAL  DO  BRASIL."
     SKIP(5)
@@ -1002,6 +1017,91 @@ FORM "PELA PRESENTE AUTORIZO A DEBITAR EM MINHA CONTA CORRENTE DE NUMERO"
      SKIP(1)
      WITH NO-BOX COLUMN 5 NO-LABELS WIDTH 150 FRAME f_autoriza_2a.
 
+FORM aux_nmextcop
+     aux_nrdocnpj AT 65     
+     SKIP
+     tt-cooperativa.nmextcop     
+     tt-cooperativa.nrdocnpj AT 65
+     SKIP(1)
+     aux_titulovd AT 7 
+     aux_comprela  FORMAT "X(30)"
+     SKIP(1)     
+     aux_dssegvid               FORMAT "x(50)"  AT 5        
+     "\024"
+     SKIP
+     "\033\105" 
+     aux_nrcntseg     LABEL "CONTA/DV"  FORMAT "zzzz,zz9,9"     AT 60
+     "\033\106"
+     SKIP
+     "\033\105" 
+     aux_nrctrseg     LABEL "PROPOSTA"  FORMAT "zzzzzz,zz9"     AT 60 
+     "\033\106"
+     SKIP(1)
+     "1. DADOS CADASTRAIS DO PROPONENTE" 
+     SKIP(1)
+     tt-prop-seguros.nrdconta   LABEL "Conta/dv"                AT 3
+     tt-associado.cdagenci      LABEL "PA"
+     tt-prop-seguros.nmdsegur   LABEL "Segurado"                AT 34
+     SKIP(1)
+     seg_nrcpfcgc               LABEL "C.P.F." FORMAT "x(015)"  AT 5
+     seg_dsestcvl               LABEL "Estado civil"            AT 30
+     SKIP
+     tt-prop-seguros.dtnascsg   LABEL "Nascimento"
+     seg_dssexotl               LABEL "Sexo"                    AT 38  
+     SKIP(1)
+     tt-prop-seguros.dsendres   LABEL "Endereco"                AT 3
+     tt-prop-seguros.nmbairro   LABEL "Bairro"                  
+     SKIP                                                       
+     tt-prop-seguros.nmcidade   LABEL "Cidade"                  AT 5
+     tt-prop-seguros.cdufresd   LABEL "U.F."                    AT 38
+     tt-prop-seguros.nrcepend   LABEL "CEP"                     AT 57
+     SKIP(1)
+     "2. DADOS DO SEGURO" 
+     SKIP(1)          
+     tt-prop-seguros.tpplaseg   LABEL "Plano"                   AT 5
+     rel_ddvencto               LABEL "Dia do debito"  FORMAT "99" AT 29
+     SKIP(1)     
+     aux_dscobert[1]            LABEL "Cobertura" 
+     SKIP
+     aux_dscobert[2] 
+     SKIP 
+     aux_dscobert[3] 
+     SKIP
+     aux_dscobert[4] 
+     SKIP(1) 
+     tt-plano-seg.vlplaseg   LABEL "Valor do premio mensal" FORMAT "zzz,zz9.99"
+     " IOF: 0,38%"
+     aux_vlmorada            LABEL "Valor da cobertura"      AT 50
+                                                            FORMAT "zzz,zz9.99"
+     SKIP(1)
+     tt-prop-seguros.dtinivig LABEL "Inicio da vigencia"        AT 5
+     "(apos as 24:00 horas)"
+     SKIP(1)
+     "3. BENEFICIARIOS"
+     "PARENTESCO          % PARTIC"                             AT  42
+     SKIP(1)         
+     tt-seguros.nmbenvid[1] tt-seguros.dsgraupr[1] tt-seguros.txpartic[1] SKIP
+     tt-seguros.nmbenvid[2] tt-seguros.dsgraupr[2] tt-seguros.txpartic[2] SKIP
+     tt-seguros.nmbenvid[3] tt-seguros.dsgraupr[3] tt-seguros.txpartic[3] SKIP
+     tt-seguros.nmbenvid[4] tt-seguros.dsgraupr[4] tt-seguros.txpartic[4] SKIP
+     tt-seguros.nmbenvid[5] tt-seguros.dsgraupr[5] tt-seguros.txpartic[5] 
+     SKIP(2)    
+     "A SOMA DO  PERCENTUAL  DO  RATEIO  NAO  PODERA  ULTRAPASSAR  A  100%. NA AUSENCIA DE"
+     SKIP
+     "INDICACAO,  SERAO  CONSIDERADOS  OS  BENEFICICAIOS  LEGAIS  DE  ACORDO  COM O ARTIGO"
+     SKIP
+     "792 DO CODIGO CIVIL DE 2002."
+     SKIP(1)
+     "SEGURADORA: CHUBB SEGUROS BRASIL S.A. CNPJ: 03.502.099/0001-18  CODIGO SUSEP: 0651-3"
+     SKIP
+     "PROCESSO SUSEP: 10.002766-00-19 | 15414.004280/2001-00"
+     SKIP
+     "CORRETORA: LAZAM – MDS CORRETORA E ADMINISTRADORA DE SEGUROS S.A"
+     SKIP
+     "CNPJ: 48.114.367/0001-62     REGISTRO SUSEP: 10.0059188"
+     SKIP(1)
+     WITH NO-BOX COLUMN 12 NO-LABELS SIDE-LABELS WIDTH 132 FRAME f_vida.
+
 FORM "\033\105"
      tt-cooperativa.nmextcop
      "\033\106"
@@ -1042,17 +1142,17 @@ FORM "\033\105"
      SKIP(1)
      "2. DADOS DO SEGURO" 
      SKIP(1)
-     tt-prop-seguros.nrctrseg   LABEL "Contrato"                AT 2
+     tt-prop-seguros.nrctrseg   LABEL "Contrato"                AT 2     
      tt-prop-seguros.tpplaseg   LABEL "Plano"                   AT 33
      rel_ddvencto               LABEL "           Dia do debito"  FORMAT "99"
-     SKIP
-     tel_dscobert               LABEL "Cobertura"
-     SKIP(1)
+     SKIP(1)     
+     aux_dscobert[1]            LABEL "Cobertura"      
+     SKIP(1) 
      tt-plano-seg.vlplaseg   LABEL "Valor do premio mensal" FORMAT "zzz,zz9.99"
      " IOF: 0,38%"
      aux_vlmorada            LABEL "Valor da cobertura"      AT 50
                                                             FORMAT "zzz,zz9.99"
-     SKIP
+     SKIP(1)
      tt-prop-seguros.dtinivig LABEL "Inicio da vigencia"        AT 5
      "(apos as 24:00 horas)"
      SKIP(1)
@@ -1063,11 +1163,10 @@ FORM "\033\105"
      tt-seguros.nmbenvid[2] tt-seguros.dsgraupr[2] tt-seguros.txpartic[2] SKIP
      tt-seguros.nmbenvid[3] tt-seguros.dsgraupr[3] tt-seguros.txpartic[3] SKIP
      tt-seguros.nmbenvid[4] tt-seguros.dsgraupr[4] tt-seguros.txpartic[4] SKIP
-     tt-seguros.nmbenvid[5] tt-seguros.dsgraupr[5] tt-seguros.txpartic[5]
-     SKIP(1)
-     "4. NA FALTA DE INDICACAO DE BENEFICIARIO, PREVALECERA O QUE"
-     "ESTIPULA A LEGISLACAO."
-     SKIP(1)
+     tt-seguros.nmbenvid[5] tt-seguros.dsgraupr[5] tt-seguros.txpartic[5]   
+     SKIP(1) 
+     "4. NA FALTA DE INDICACAO DE BENEFICIARIO, PREVALECERA O QUE ESTIPULA A LEGISLACAO."
+      SKIP(1)    
      "5. PELA PRESENTE AUTORIZO A DEBITAR DE MINHA CONTA CORRENTE O"
      "VALOR DO PREMIO MENSAL" SKIP
      "   CORRESPONDENTE AO SEGURO ACIMA DESCRITO. CASO NO DIA DO DEBITO NAO"
@@ -1075,9 +1174,6 @@ FORM "\033\105"
      SKIP
      "   POSITIVO NA CONTA CORRENTE INDICADA, CONSIDERA-SE CANCELADO O"
      "PRESENTE SEGURO."
-     WITH NO-BOX COLUMN 12 NO-LABELS SIDE-LABELS WIDTH 132 FRAME f_vida.
-
-FORM     
      SKIP(1)
      "6. A IDADE LIMITE PARA CONTRATACAO DESTE SEGURO E DE" aux_idadelmt
      "ANOS. DECLARO-ME" "CIENTE DE"
@@ -1141,6 +1237,409 @@ FORM   tt-seguros.tpplaseg  AT 1    COLUMN-LABEL "Plano"
                                     FORMAT "zzz9.99"
        tt-seguros.dtmvtolt  AT 70   COLUMN-LABEL "Movto"
        WITH DOWN WIDTH 80 NO-BOX FRAME f_lista.
+       
+       
+FORM 
+    "DECLARACAO PESSOAL DE SAUDE" AT 30
+    SKIP(2)
+    "FAZ PARTE INTEGRANTE DESTA PROPOSTA E OBRIGATORIO PARA CAPITAIS ACIMA DE R$ 60.000,00"
+    SKIP
+    "(SESSENTA MIL REAIS), A DECLARACAO  PESSOAL  DE  SAUDE  QUE  DEVERA  SER  DEVIDAMENTE"
+    SKIP
+    "PREENCHIDA  E  ASSINADA,  DE PROPRIO  PUNHO, PELO(S)  PROPONENTE(S), COM SIM OU NAO E" 
+    SKIP
+    "JUSTIFICAR AS CAUSAS."
+    SKIP(1)
+    "SEGURADO         CONJUGE" AT 62
+    SKIP
+    "1. TEM ALGUMA DEFICIENCIA DE ORGAOS, MEMBROS OU SENTIDOS?"    
+    SKIP
+    "JUSTIFICATIVA: __________________________________________"
+    "________         _______" AT 62
+    SKIP(1)
+    "2. ENCONTRA-SE ATUALMENTE EM PLENA ATIVIDADE DE TRABALHO?"    
+    SKIP
+    "JUSTIFICATIVA: __________________________________________"
+    "________         _______" AT 62
+    SKIP(1)
+    "3. JA TEVE ALGUMA PROPOSTA DE SEGURO RECUSADA?"    
+    SKIP
+    "JUSTIFICATIVA: __________________________________________"
+    "________         _______" AT 62
+    SKIP(1)
+    "4. CONSIDERA-SE ATUALMENTE EM PERFEITAS CONDICOES DE SAUDE?"    
+    SKIP
+    "JUSTIFICATIVA: ____________________________________________"
+    "________         _______" AT 62
+    SKIP(1)
+    "5. SOFRE OU SOFREU  DE ALGUMA MOLESTIA QUE O TENHA OBRIGADO"     
+    SKIP
+    "A CONSULTAR  MEDICOS,  HOSPITALIZAR-SE, EFETUAR  CIRURGIAS,"
+    SKIP
+    "TRATAMENTO MEDICO  OU  AFASTAR-SE  DE  SUAS  ATIVIDADES  DE" 
+    SKIP
+    "TRABALHO?"    
+    SKIP
+    "JUSTIFICATIVA: ____________________________________________"
+    "________         _______" AT 62
+    SKIP(1)
+    "6. FAZ USO ROTINEIRO DE ALGUM MEDICAMENTO?"    
+    SKIP
+    "JUSTIFICATIVA: ____________________________________________"
+    "________         _______" AT 62    
+    SKIP(2)
+    "A ACEITACAO DO SEGURO SOMENTE SERA CONFIRMADA, APOS A ENTREGA E PROTOCOLO DA PROPOSTA,"
+    SKIP
+    "JUNTAMENTE COM A DECLARACAO PESSOAL DE SAUDE. A SEGURADORA TERA 15 (QUINZE)  DIAS PARA"
+    SKIP
+    "MANIFESTAR-SE SOBRE A PROPOSTA, CONTADOS DA DATA DE SEU RECEBIMENTO. A  SOLICITACAO DE"
+    SKIP
+    "DOCUMENTOS  COMPLEMENTARES,  PARA  ANALISE  E  ACEITACAO  DO RISCO OU DA  ALTERACAO DA"
+    SKIP
+    "PROPOSTA,  SUSPENDERA  O  PRAZO,  VOLTANDO  A CORRER A PARTIR DA DATA EM  QUE SE DER A"
+    SKIP
+    "ENTREGA DA DOCUMENTACAO DEVIDAMENTE PROTOCOLADA."   
+    SKIP(2)
+    "DECLARACAO"
+    SKIP(1)
+    "DECLARO PARA TODOS OS FINS E EFEITOS:"
+    SKIP
+    "(I) QUE AS INFORMACOES PRESTADAS SAO VERDADEIRAS E COMPLETAS, QUE NADA OMITI EM RELACAO" 
+    SKIP
+    "AO MEU ESTADO DE SAUDE, BEM COMO DE MEU CONJUGE, ESTANDO CIENTE QUE SE EU TIVER OMITIDO"
+    SKIP
+    "ALGO OU PRESTADO INFORMACAO INEXATA QUE  POSSA INFLUIR  NA ACEITACAO  DESTA PROPOSTA DE"
+    SKIP
+    "SEGURO OU NO VALOR DO PREMIO DO SEGURO,  FICARA  PREJUDICADO OMEU DIREITO A INDENIZACAO"
+    SKIP
+    "EM CASO DE SINISTRO CONFORME DETERMINA O CODIGO CIVIL; (II) CONCORDO QUE AS DECLARACOES"
+    SKIP
+    "QUE PRESTEI PASSEM  A FAZER PARTE  INTEGRANTE DO  CONTRATO DE  SEGURO CELEBRADO ENTRE A"
+    SKIP
+    "SEGURADORA E O ESTIPULANTE,  E DESDE JA  AUTORIZO A AUTORIZO A SEGURADORA A UTILIZAR AS"
+    SKIP
+    "INFORMACOES  CONTIDAS  NESTA  PROPOSTA  DE ADESAO,  EM QUALQUER EPOCA NA DEFESA DE SEUS"
+    SKIP
+    "DIREITOS, SEM IMPLICACOES   EM OFENSA  OU SIGILO  PROFISSIONAL;  (III)ESTAR CIENTE E DE"
+    SKIP
+    "ACORDO  COM O CONTEUDO  DESTA  PROPOSTA E COM AS CONDICOES GERAIS E ESPECIAIS DO SEGURO"
+    SKIP
+    "QUE ME FORAM  APRESENTADAS PELO ESTIPULANTE,  AS QUAIS LI, COMPREENDI E FUI SUFICIENTE-"
+    SKIP
+    "MENTE ESCLARECIDO A RESPEITO  DE SEUS  TERMOS,  INCLUSIVE SOBRE AS EXCLUSOES DAS COBER-"
+    SKIP
+    "TURAS;(IV) PELO PRESENTE A UTORIZO A MINHA INCLUSAO NA APOLICE DE SEGURO E VIDA CONTRA-"
+    SKIP
+    "TADO PELO ESTIPULANTE A QUEM  CONCEDO  O DIREITO DE  AGIR EM MEU NOME NO CUMPRIMENTO DE"
+    SKIP
+    "TODAS AS CLAUSULAS DAS CONDICOES  GERAIS DA  REFERIDA APOLICE. DEVENDO TODAS AS COMUNI-"
+    SKIP
+    "CACOES E AVISOS INERENTES  AO CONTRATO  SEREM  ENCAMINHADOS  DIRETAMENTE AO ESTIPULANTE"
+    SKIP
+    "QUE,  PARA TAL  FIM  FICA  INVESTIDA   DOS  PODERES  DE  REPRESENTACAO  ORA OUTORGADOS."
+    SKIP
+    "ENTRETANTO FICA RESSALTADO QUE TAIS  PODERES DE  REPRESENTACAO NAO LHE DAO O DIREITO DE"
+    SKIP
+    "CANCELAR O SEGURO AQUI PROPOSTO  NO DECORRER DE SUA VIGENCIA E NEM REDUZIR AS IMPORTAN-"
+    SKIP
+    "CIAS SEGURADAS SEM  MEU  EXPRESSO CONSENTIMENTO  ENQUANTO O  PAGAMENTO DO PREMIO CORRER"
+    SKIP
+    "SOB MINHA RESPONSABILIDADE  ESTANDO  CIENTE CONTUDO DE  QUE A  APOLICE PODERA DEIXAR DE"
+    SKIP
+    "SER RENOVADA EM  ANIVERSARIO POR  DECISAO DO ESTIPULANTE OU DA SEGURADORA; (V) AUTORIZO"
+    SKIP
+    "O DEBITO REFERENTE AO PREMIO DE SEGURO EM MINHA CONTA CORRENTE INDICADA, ESTANDO CIENTE" 
+    SKIP
+    "QUE CASO NAO OCORRA O DEBITO  NA  DATA  POR  MIM ESCOLHIDA E, O MESMO NAO FOR EFETUADO,"
+    SKIP
+    "ENSEJA A SUSPENSAO AUTOMATICA DO DIREITO AS COBERTURAS CONTRATADAS.A FALTA DE PAGAMENTO"
+    SKIP
+    "DO PREMIO POR UM PERIODO SUPERIOR A 60 (SESSENTA) DIAS, CONSECUTIVOS  OU NAO, IMPLICARA" 
+    SKIP
+    "NO CANCELAMENTO AUTOMATICO DO SEGURO. A FALTA DE PAGAMENTO DA  PRIMEIRA PARCELA NA DATA" 
+    SKIP
+    "INDICADA IMPLICARA O CANCELAMENTO AUTOMATICO DO CERTIFICADO  INDIVIDUAL DE SEGURO DESDE" 
+    SKIP
+    "O INICIO DE VIGENCIA."
+    SKIP(3)
+    "----------------------------------------" AT 1 
+     rel_tracoseg    AT 44 FORMAT "x(40)" SKIP
+     rel_nmprimtl    AT  1 FORMAT "x(40)"  
+     rel_nmdsegur    AT 44 FORMAT "x(40)"  SKIP
+     rel_nrdconta[2] AT  1 FORMAT "zzzz,zzz,9"
+     SKIP(3)
+     "----------------------------------------" SKIP
+     crapope.nmoperad    AT  1 FORMAT "x(40)"  SKIP
+     "Operador"      AT  1
+WITH NO-BOX COLUMN 12 NO-LABELS SIDE-LABELS WIDTH 132 FRAME f_vida_dps.
+
+FORM 
+    "DECLARACAO"
+    SKIP(1)
+    "DECLARO PARA TODOS OS FINS E EFEITOS:"
+    SKIP
+    "(I) QUE AS INFORMACOES PRESTADAS SAO VERDADEIRAS E COMPLETAS, QUE NADA OMITI EM RELACAO" 
+    SKIP
+    "AO MEU ESTADO DE SAUDE, BEM COMO DE MEU CONJUGE, ESTANDO CIENTE QUE SE EU TIVER OMITIDO"
+    SKIP
+    "ALGO OU PRESTADO INFORMACAO INEXATA QUE  POSSA INFLUIR  NA ACEITACAO  DESTA PROPOSTA DE"
+    SKIP
+    "SEGURO OU NO VALOR DO PREMIO DO SEGURO,  FICARA  PREJUDICADO OMEU DIREITO A INDENIZACAO"
+    SKIP
+    "EM CASO DE SINISTRO CONFORME DETERMINA O CODIGO CIVIL; (II) CONCORDO QUE AS DECLARACOES"
+    SKIP
+    "QUE PRESTEI PASSEM  A FAZER PARTE  INTEGRANTE DO  CONTRATO DE  SEGURO CELEBRADO ENTRE A"
+    SKIP
+    "SEGURADORA E O ESTIPULANTE,  E DESDE JA  AUTORIZO A AUTORIZO A SEGURADORA A UTILIZAR AS"
+    SKIP
+    "INFORMACOES  CONTIDAS  NESTA  PROPOSTA  DE ADESAO,  EM QUALQUER EPOCA NA DEFESA DE SEUS"
+    SKIP
+    "DIREITOS, SEM IMPLICACOES   EM OFENSA  OU SIGILO  PROFISSIONAL;  (III)ESTAR CIENTE E DE"
+    SKIP
+    "ACORDO  COM O CONTEUDO  DESTA  PROPOSTA E COM AS CONDICOES GERAIS E ESPECIAIS DO SEGURO"
+    SKIP
+    "QUE ME FORAM  APRESENTADAS PELO ESTIPULANTE,  AS QUAIS LI, COMPREENDI E FUI SUFICIENTE-"
+    SKIP
+    "MENTE ESCLARECIDO A RESPEITO  DE SEUS  TERMOS,  INCLUSIVE SOBRE AS EXCLUSOES DAS COBER-"
+    SKIP
+    "TURAS;(IV) PELO PRESENTE A UTORIZO A MINHA INCLUSAO NA APOLICE DE SEGURO E VIDA CONTRA-"
+    SKIP
+    "TADO PELO ESTIPULANTE A QUEM  CONCEDO  O DIREITO DE  AGIR EM MEU NOME NO CUMPRIMENTO DE"
+    SKIP
+    "TODAS AS CLAUSULAS DAS CONDICOES  GERAIS DA  REFERIDA APOLICE. DEVENDO TODAS AS COMUNI-"
+    SKIP
+    "CACOES E AVISOS INERENTES  AO CONTRATO  SEREM  ENCAMINHADOS  DIRETAMENTE AO ESTIPULANTE"
+    SKIP
+    "QUE,  PARA TAL  FIM  FICA  INVESTIDA   DOS  PODERES  DE  REPRESENTACAO  ORA OUTORGADOS."
+    SKIP
+    "ENTRETANTO FICA RESSALTADO QUE TAIS  PODERES DE  REPRESENTACAO NAO LHE DAO O DIREITO DE"
+    SKIP
+    "CANCELAR O SEGURO AQUI PROPOSTO  NO DECORRER DE SUA VIGENCIA E NEM REDUZIR AS IMPORTAN-"
+    SKIP
+    "CIAS SEGURADAS SEM  MEU  EXPRESSO CONSENTIMENTO  ENQUANTO O  PAGAMENTO DO PREMIO CORRER"
+    SKIP
+    "SOB MINHA RESPONSABILIDADE  ESTANDO  CIENTE CONTUDO DE  QUE A  APOLICE PODERA DEIXAR DE"
+    SKIP
+    "SER RENOVADA EM  ANIVERSARIO POR  DECISAO DO ESTIPULANTE OU DA SEGURADORA; (V) AUTORIZO"
+    SKIP
+    "O DEBITO REFERENTE AO PREMIO DE SEGURO EM MINHA CONTA CORRENTE INDICADA, ESTANDO CIENTE" 
+    SKIP
+    "QUE CASO NAO OCORRA O DEBITO  NA  DATA  POR  MIM ESCOLHIDA E, O MESMO NAO FOR EFETUADO,"
+    SKIP
+    "ENSEJA A SUSPENSAO AUTOMATICA DO DIREITO AS COBERTURAS CONTRATADAS.A FALTA DE PAGAMENTO"
+    SKIP
+    "DO PREMIO POR UM PERIODO SUPERIOR A 60 (SESSENTA) DIAS, CONSECUTIVOS  OU NAO, IMPLICARA" 
+    SKIP
+    "NO CANCELAMENTO AUTOMATICO DO SEGURO. A FALTA DE PAGAMENTO DA  PRIMEIRA PARCELA NA DATA" 
+    SKIP
+    "INDICADA IMPLICARA O CANCELAMENTO AUTOMATICO DO CERTIFICADO  INDIVIDUAL DE SEGURO DESDE" 
+    SKIP
+    "O INICIO DE VIGENCIA."
+    SKIP(1)
+WITH NO-BOX COLUMN 12 NO-LABELS SIDE-LABELS WIDTH 132 FRAME f_vida_declaracao.
+
+FORM SKIP(1)
+     "DISPOSICOES GERAIS:"
+     SKIP(1)
+     "PODERAO  SER INCLUIDOS  NO SEGURO  OS PROPONENTES  QUE SE ENCONTRE  EM BOAS CONDICOES DE" 
+     SKIP
+     "SAUDE E EM PLENA ATIVIDADE FÍSICA E QUE POSSUAM OS SEGUINTES LIMITES DE IDADE:"     
+     SKIP(1)
+     aux_dsdispge[1] 
+     SKIP
+     aux_dsdispge[2]
+     SKIP
+     aux_dsdispge[3]
+     SKIP
+     aux_dsdispge[4]
+     SKIP(1)
+     "SERVICO DE ASSISTENCIA FUNERAL INDIVIDUAL (TITULAR) EXCLUSIVAMENTE POR CAUSAS ACIDENTAIS"
+     SKIP
+     "PARA O PLANO CONTRATADO."
+     SKIP(1)
+     "A ACEITACAO DO SEGURO ESTARA SUJEITA A ANALISE DO RISCO. O REGISTRO DESTE PLANO NA SUSEP"
+     SKIP
+     "NAO IMPLICA, POR PARTE DA AUTARQUIA, INCENTIVO OU RECOMENDACAO A SUA COMERCIALIZACAO." 
+     SKIP
+     "OS CLIENTES E SEGURADOS PODERAO CONSULTAR A SITUACAO DO SEU CORRETOR DE SEGUROS E TAMBEM"
+     SKIP
+     "TODAS AS INFORMACOES RELATIVAS A ESTE PLANO DE SEGURO NO SITE DA SUSEP: WWW.SUSEP.GOV.BR," 
+     SKIP
+     "PELO NUMERO DE SEU REGISTRO DO CORRETOR, NOME COMPLETO, CPF OU CNPJ, OU PELO ATENDIMENTO"
+     SKIP
+     "EXCLUSIVO AO CONSUMIDOR DA SUSEP: 0800 021 8484  DE  SEGUNDA  A  SEXTA DAS 9:30 AS 17:00"
+     SKIP
+     "HORAS. AS CONDICOES CONTRATUAIS/REGULAMENTO DESTE PRODUTO PROTOCOLIZADAS PELA SOCIEDADE/"
+     SKIP
+     "ENTIDADE JUNTO A SUSEP PODERAO SER CONSULTADAS  NO ENDERECO ELETRONICO WWW.SUSEP.GOV.BR," 
+     SKIP
+     "DE ACORDO COM O NUMERO DE  PROCESSO  CONSTANTE  DO(A)  BILHETE/APOLICE/PROPOSTA. SUSEP –"
+     SKIP
+     "SUPERINTENDENCIA  DE SEGUROS PRIVADOS – AUTARQUIA FEDERAL RESPONSAVEL PELA FISCALIZACAO,"
+     SKIP
+     "NORMATIZACAO E CONTROLE DOS MERCADOS DE SEGURO, PREVIDENCIA COMPLEMENTAR ABERTA, CAPITA-"
+     SKIP
+     "LIZACAO, RESSEGURO E CORRETAGEM DE SEGUROS."
+     SKIP(1)
+     "CENTRAL DE ATENDIMENTO AO CONSUMIDOR (SAC): 0800 200 7056. LIGUE PARA ESCLARECER DUVIDAS," 
+     SKIP
+     "FAZER RECLAMACOES OU SOLICITACOES. DEFICIENCIA AUDITIVA OU DE FALA 0800 7224026."
+     SKIP
+     "(HORARIO DE ATENDIMENTO 24H, 7 DIAS POR SEMANA)."
+     SKIP(1)
+     "UTILIZE A OUVIDORIA QUANDO NAO SE SENTIR SATISFEITO COM AS SOLUCOES APRESENTADAS."
+     SKIP
+     "A OUVIDORIA E UM CANAL DE COMUNICACAO, IMPARCIAL E INDEPENDENTE, QUE AS COMPANHIAS DO"
+     SKIP
+     "GRUPO CHUBB DISPONIBILIZAM PARA SEUS CLIENTES E COLABORADORES. E DEVER DESTA AREA ATUAR"
+     SKIP
+     "DE ACORDO COM AS NORMAS RELATIVAS AOS DIREITOS DOS CONSUMIDORES E A MEDIAR, ESCLARECER,"
+     SKIP
+     "PREVENIR E/OU SOLUCIONAR POSSIVEIS CONFLITOS."
+     SKIP
+     "ESTE CANAL DE COMUNICACAO SO PODE SER UTILIZADO QUANDO CLIENTES E COLABORADORES NAO" 
+     SKIP
+     "ENCONTRAREM UMA SOLUCAO SATISFATORIA PARA SUAS RECLAMACOES, NOS MEIOS TRADICIONAIS DE"
+     SKIP
+     "ATENDIMENTO DAS COMPANHIAS (SAC – SERVICO DE ATENDIMENTO AO CONSUMIDOR; FALE CONOSCO;"
+     SKIP
+     "SINISTROS, ENTRE OUTROS)."
+     SKIP
+     "E-MAIL: OUVIDORIA@CHUBB.COM"
+     SKIP
+     "TELEFONE:  0800 722 50 59 SEGUNDA-FEIRA A SEXTA-FEIRA DAS 08:00 AS 18:00"
+     SKIP
+     "TELEFONE PARA PESSOAS COM DEFICIENCIA AUDITIVA OU DE FALA: 0800 724 50 84 SEGUNDA-FEIRA"
+     SKIP
+     "A SEXTA-FEIRA DAS 08:00 AS 18:00 - CAIXA POSTAL: 310, AGENCIA 72300019, CEP: 01031-970."
+     SKIP(3)
+     rel_dsmvtolt    AT  1 FORMAT "x(40)"
+     SKIP(3)
+     "----------------------------------------" AT 1 
+     rel_tracoseg    AT 44 FORMAT "x(40)" SKIP
+     rel_nmprimtl    AT  1 FORMAT "x(40)"  
+     rel_nmdsegur    AT 44 FORMAT "x(40)"  SKIP
+     rel_nrdconta[2] AT  1 FORMAT "zzzz,zzz,9"
+     SKIP(3)
+     "----------------------------------------" SKIP
+     crapope.nmoperad    AT  1 FORMAT "x(40)"  SKIP
+     "Operador"      AT  1
+WITH NO-BOX COLUMN 12 NO-LABELS SIDE-LABELS WIDTH 132 FRAME f_disposicoes_gerais.
+
+FORM SKIP(1)     
+     "4. CARENCIA DE 2 ANOS NOS CASOS DE MORTE OU INVALIDEZ ACIDENTAL OCASIONADA POR LESAO"
+     SKIP
+     "   INTENCIONALMENTE AUTO INFLIGIDA, SUICIDIO VOLUNTARIO E PREMEDITADO OU QUALQUER "
+     SKIP
+     "   INTENCAO E TENTATIVA DE SUICIDIO VOLUNTARIO E PREMEDITADO, INDEPENDENTEMENTE DA"
+     SKIP
+     "   SANIDADE MENTAL DO SEGURADO."
+     SKIP(1)
+     "5. O CONJUGE PARTICIPA COM UMA INDENIZACAO DE 100% (CEM POR CENTO) DO CAPITAL MAXIMO"
+     SKIP
+     "   DO SEGURADO PRINCIPAL NA GARANTIA DE MORTE ACIDENTAL."     
+     SKIP(1)
+     "6. O REEMBOLSO SERA FEITO PARA AS DESPESAS COM ALTERACAO DE CASA E/OU MODIFICACAO DE"
+     SKIP
+     "   VEICULO QUE CORRERAM EM ATE 2 (DOIS) ANOS A CONTAR DA DATA DO ACIDENTE."
+     SKIP(2)
+     "ESTE SEGURO E POR PRAZO DETERMINADO, TENDO A SEGURADORA A FACULDADE  DE  NAO RENOVAR" 
+     SKIP
+     "ESTE SEGURO NA DATA DE SEU VENCIMENTO, SEM QUALQUER DEVOLUCAO DOS PREMIOS PAGOS PELO"
+     SKIP
+     "SEGURADO, NOS TERMOS DESTA PROPOSTA."
+     SKIP(3)
+     rel_dsmvtolt    AT  1 FORMAT "x(40)"
+     SKIP(3)
+     "----------------------------------------" AT 1 
+     rel_tracoseg    AT 44 FORMAT "x(40)" SKIP
+     rel_nmprimtl    AT  1 FORMAT "x(40)"  
+     rel_nmdsegur    AT 44 FORMAT "x(40)"  SKIP
+     rel_nrdconta[2] AT  1 FORMAT "zzzz,zzz,9"
+     SKIP(3)
+     "----------------------------------------" SKIP
+     crapope.nmoperad    AT  1 FORMAT "x(40)"  SKIP
+     "Operador"      AT  1
+     WITH NO-BOX COLUMN 12 NO-LABELS SIDE-LABELS WIDTH 132
+     FRAME f_vida_cecred_AP.
+     
+FORM SKIP(1)    
+     "4. CARENCIA DE 2 ANOS NOS CASOS DE MORTE OU INVALIDEZ ACIDENTAL OCASIONADA POR LESAO"
+     SKIP
+     "   INTENCIONALMENTE AUTO INFLIGIDA, SUICIDIO VOLUNTARIO E PREMEDITADO OU QUALQUER"
+     SKIP
+     "   INTENCAO E TENTATIVA DE SUICIDIO VOLUNTARIO E PREMEDITADO INDEPENDENTEMENTE DA"     
+     SKIP
+     "   SANIDADE MENTAL DO SEGURADO."
+     SKIP(1)
+     "5. O CONJUGE PARTICIPA COM UMA INDENIZACAO DE 100% (CEM POR CENTO) DO CAPITAL MAXIMO" 
+     SKIP
+     "   DO SEGURADO PRINCIPAL INDEPENDENTEMENTE DA SANIDADE MENTAL DO SEGURADO."
+     SKIP(1)
+     "6. OS FILHOS MENORES E/OU ENTEADOS CONSIDERADOS DEPENDENTES DO SEGURADO PRINCIPAL, "
+     SKIP
+     "   COM IDADES (VINTE E UM) ANOS PARTICIPAM COM UMA INDENIZACAO NA GARANTIA DE MORTE,"
+     SKIP
+     "   LIMITADO A R$ 1.000,00. PARA OS MENORES DE 14 (QUATORZE) ANOS, O SEGURO DESTINA-SE"
+     SKIP
+     "   APENAS AO REEMBOLSO DE DESPESAS COM FUNERAL."
+     SKIP(1)
+     "7. O REEMBOLSO SERA FEITO PARA AS DESPESAS COM ALTERACAO DE CASA E/OU MODIFICACAO DE "
+     SKIP
+     "   VEICULO QUE OCORRERAM EM ATE 2 (DOIS) ANOS A CONTAR DA DATA DO ACIDENTE."
+     SKIP(2)
+     "ESTE SEGURO E POR PRAZO DETERMINADO, TENDO A SEGURADORA A FACULDADE  DE  NAO RENOVAR" 
+     SKIP
+     "ESTE SEGURO NA DATA DE SEU VENCIMENTO, SEM QUALQUER DEVOLUCAO DOS PREMIOS PAGOS PELO"
+     SKIP
+     "SEGURADO, NOS TERMOS DESTA PROPOSTA."
+     SKIP(3)
+     rel_dsmvtolt    AT  1 FORMAT "x(40)"
+     SKIP(3)
+     "----------------------------------------" AT 1 
+     rel_tracoseg    AT 44 FORMAT "x(40)" SKIP
+     rel_nmprimtl    AT  1 FORMAT "x(40)"  
+     rel_nmdsegur    AT 44 FORMAT "x(40)" SKIP
+     rel_nrdconta[2] AT  1 FORMAT "zzzz,zzz,9"
+     SKIP(3)
+     "----------------------------------------" SKIP
+     crapope.nmoperad    AT  1 FORMAT "x(40)"  SKIP
+     "Operador"      AT  1
+     WITH NO-BOX COLUMN 12 NO-LABELS SIDE-LABELS WIDTH 132
+     FRAME f_vida_cecred_3.
+     
+FORM SKIP(1)     
+     "4. CARENCIA DE 2 ANOS NOS CASOS DE MORTE OU INVALIDEZ ACIDENTAL OCASIONADA POR LESAO"
+     SKIP
+     "   INTENCIONALMENTE AUTO INFLIGIDA, SUICIDIO VOLUNTARIO E PREMEDITADO OU QUALQUER "
+     SKIP
+     "   INTENCAO E TENTATIVA DE SUICIDIO VOLUNTARIO E PREMEDITADO, INDEPENDENTEMENTE DA"
+     SKIP
+     "   SANIDADE MENTAL DO SEGURADO."
+     SKIP(1)     
+     "5. O REEMBOLSO SERA FEITO PARA AS DESPESAS COM ALTERACAO DE CASA E/OU MODIFICACAO DE "
+     SKIP
+     "   VEICULO QUE OCORRERAM EM ATE 2 (DOIS) ANOS A CONTAR DA DATA DO ACIDENTE."
+     SKIP(2)
+     "ESTE SEGURO E POR PRAZO DETERMINADO, TENDO A SEGURADORA A FACULDADE  DE  NAO RENOVAR" 
+     SKIP
+     "ESTE SEGURO NA DATA DE SEU VENCIMENTO, SEM QUALQUER DEVOLUCAO DOS PREMIOS PAGOS PELO"
+     SKIP
+     "SEGURADO, NOS TERMOS DESTA PROPOSTA."
+     SKIP(3)
+     rel_dsmvtolt    AT  1 FORMAT "x(40)"
+     SKIP(3)
+     "----------------------------------------" AT 1 
+     rel_tracoseg    AT 44 FORMAT "x(40)" SKIP
+     rel_nmprimtl    AT  1 FORMAT "x(40)"  
+     rel_nmdsegur    AT 44 FORMAT "x(40)"  SKIP
+     rel_nrdconta[2] AT  1 FORMAT "zzzz,zzz,9"
+     SKIP(3)
+     "----------------------------------------" SKIP
+     crapope.nmoperad    AT  1 FORMAT "x(40)"  SKIP
+     "Operador"      AT  1
+     WITH NO-BOX COLUMN 12 NO-LABELS SIDE-LABELS WIDTH 132
+     FRAME f_vida_cecred_1_e_2.
 
 
 
@@ -4628,12 +5127,47 @@ PROCEDURE imprimir_alt_seg_vida:
 
 
         IF  NOT AVAILABLE tt-plano-seg  THEN
-            ASSIGN tel_dscobert = "".
+            ASSIGN aux_dscobert[1] = ""
+                   aux_dscobert[2] = ""
+                   aux_dscobert[3] = ""
+                   aux_dscobert[4] = "".
         ELSE
-            ASSIGN tel_dscobert = tt-plano-seg.dsmorada
-                   aux_idadelmt = tt-plano-seg.nrtabela
-                   aux_idadelm2 = tt-plano-seg.nrtabela.
-
+            DO: 
+                /* AP - CECRED - Capitais Segurados e Premio do Seguro - MA +IPA */
+                IF  CAN-DO("11,15,21,31,41,51,61",STRING(tt-plano-seg.tpplaseg)) THEN 
+                    ASSIGN aux_dscobert[1] = "Morte Acidental"
+                           aux_dscobert[2] = "           Invalidez Permanente Total ou Parcial por Acidente"
+                           aux_dscobert[3] = "           Alteracao de Casa e/ou Modificacao de Veiculo ate R$ 3.000,00"
+                           aux_dscobert[4] = "".
+                /* CECRED I = Capitais Segurados e Premio do Seguro - M + IPA */
+                ELSE IF  CAN-DO("12,16,22,32,42,52,62",STRING(tt-plano-seg.tpplaseg)) THEN 
+                    ASSIGN aux_dscobert[1] = "Morte"
+                           aux_dscobert[2] = "           Invalidez Permanente Total ou Parcial por Acidente"
+                           aux_dscobert[3] = "           Alteracao de Casa e/ou Modificacao de Veiculo ate R$ 3.000,00"
+                           aux_dscobert[4] = "".
+                /* CECRED II - Capitais Segurados e Premio do Seguro - M+ IPA+IFPD */
+                ELSE IF  CAN-DO("13,17,23,33,43,53,63",STRING(tt-plano-seg.tpplaseg)) THEN 
+                    ASSIGN aux_dscobert[1] = "Morte"
+                           aux_dscobert[2] = "           Invalidez Permanente Total ou Parcial por Acidente"
+                           aux_dscobert[3] = "           Invalidez Funcional Permanente Total por Doenca"
+                           aux_dscobert[4] = "           Alteracao de Casa e/ou Modificacao de Veiculo ate R$ 3.000,00".
+                /* CECRED III - Capitais Segurados e Premio do Seguro - M + IPA + IFPD + Cônjuge + Filhos */
+                ELSE IF  CAN-DO("14,18,24,34,44,54,64",STRING(tt-plano-seg.tpplaseg)) THEN 
+                    ASSIGN aux_dscobert[1] = "Morte"
+                           aux_dscobert[2] = "           Invalidez Permanente Total ou Parcial por Acidente"
+                           aux_dscobert[3] = "           Invalidez Funcional Permanente Total por Doenca"
+                           aux_dscobert[4] = "           Alteracao de Casa e/ou Modificacao de Veiculo ate R$ 3.000,00".
+               ELSE
+                 ASSIGN aux_dscobert[1] = tt-plano-seg.dsmorada
+                        aux_dscobert[2] = ""
+                        aux_dscobert[3] = ""
+                        aux_dscobert[4] = "".
+               
+               ASSIGN aux_idadelmt = tt-plano-seg.nrtabela
+                      aux_idadelm2 = tt-plano-seg.nrtabela.
+                       
+            END.
+            
          IF  par_cddopcao = "A" OR par_cddopcao = "ALTERAR" THEN
             ASSIGN aux_comprela = " - Alteracao de Beneficiario".
         ELSE
@@ -4698,6 +5232,13 @@ PROCEDURE imprimir_alt_seg_vida:
                         THEN "     PRESTAMISTA" 
                         ELSE aux_dssegvid .
 
+        /* Buscar nome e CNPJ da central */
+        FIND FIRST crapcop WHERE crapcop.cdcooper = 3 NO-LOCK NO-ERROR.
+        
+        IF  AVAILABLE crapcop THEN
+            ASSIGN aux_nrdocnpj = string(crapcop.nrdocnpj,"99999999999999")
+                   aux_nmextcop = crapcop.nmextcop.
+
         /* Se for prestamista */
         IF  tt-prop-seguros.tpseguro = 4 THEN
             DO:
@@ -4719,158 +5260,249 @@ PROCEDURE imprimir_alt_seg_vida:
         OUTPUT STREAM str_1 TO VALUE(par_nmarqimp) PAGED PAGE-SIZE 87.
 
         VIEW STREAM str_1 FRAME f_config.
-        
-        /* Primeira via */
-        DISPLAY STREAM str_1
-        tt-cooperativa.nmextcop    aux_comprela aux_dssegvid    aux_nrcntseg
-        aux_nrctrseg                tt-prop-seguros.nrdconta    
-        tt-associado.cdagenci       tt-prop-seguros.nmdsegur    seg_nrcpfcgc
-        seg_dsestcvl                tt-prop-seguros.dtnascsg    seg_dssexotl
-        tt-prop-seguros.dsendres    tt-prop-seguros.nmbairro
-        tt-prop-seguros.nmcidade    tt-prop-seguros.cdufresd
-        tt-prop-seguros.nrcepend    tt-prop-seguros.nrctrseg
-        tt-prop-seguros.dtinivig    tt-prop-seguros.tpplaseg
-        tt-plano-seg.vlplaseg       aux_vlmorada                 rel_ddvencto
-        tel_dscobert
-        tt-seguros.nmbenvid[1] tt-seguros.dsgraupr[1] tt-seguros.txpartic[1]
-                                           WHEN tt-seguros.txpartic[1] > 0
-        tt-seguros.nmbenvid[2] tt-seguros.dsgraupr[2] tt-seguros.txpartic[2]
-                                           WHEN tt-seguros.txpartic[2] > 0
-        tt-seguros.nmbenvid[3] tt-seguros.dsgraupr[3] tt-seguros.txpartic[3]
-                                           WHEN tt-seguros.txpartic[3] > 0
-        tt-seguros.nmbenvid[4] tt-seguros.dsgraupr[4] tt-seguros.txpartic[4]
-                                           WHEN tt-seguros.txpartic[4] > 0
-        tt-seguros.nmbenvid[5] tt-seguros.dsgraupr[5] tt-seguros.txpartic[5]
-                                           WHEN tt-seguros.txpartic[5] > 0
-        WITH FRAME f_vida.
 
         FIND FIRST crapope NO-LOCK           WHERE
              crapope.cdcooper = par_cdcooper AND 
              crapope.cdoperad = par_cdoperad NO-ERROR.
 
+        IF  CAN-DO("11,15,21,31,41,51,61",STRING(tt-plano-seg.tpplaseg)) THEN
+            ASSIGN aux_titulovd = "PROPOSTA DE SEGURO DE VIDA ACIDENTES PESSOAIS CECRED".
+        ELSE IF CAN-DO("12,16,22,32,42,52,62",STRING(tt-plano-seg.tpplaseg)) THEN
+            ASSIGN aux_titulovd = "PROPOSTA DE SEGURO DE VIDA CECRED I".
+        ELSE IF CAN-DO("13,17,23,33,43,53,63",STRING(tt-plano-seg.tpplaseg)) THEN
+            ASSIGN aux_titulovd = "PROPOSTA DE SEGURO DE VIDA CECRED II".
+        ELSE IF CAN-DO("14,18,24,34,44,54,64",STRING(tt-plano-seg.tpplaseg)) THEN             
+            ASSIGN aux_titulovd = "PROPOSTA DE SEGURO DE VIDA CECRED III".
+
+        /********** Primeira via *********/
+         
         IF  tt-prop-seguros.tpseguro = 4  THEN
-            DISPLAY STREAM str_1 aux_idadelmt aux_idadelm2 rel_dsmvtolt 
+            DISPLAY STREAM str_1                            
+                           tt-cooperativa.nmextcop    aux_comprela aux_dssegvid    aux_nrcntseg
+                           aux_nrctrseg                tt-prop-seguros.nrdconta    
+                           tt-associado.cdagenci       tt-prop-seguros.nmdsegur    seg_nrcpfcgc
+                           seg_dsestcvl                tt-prop-seguros.dtnascsg    seg_dssexotl
+                           tt-prop-seguros.dsendres    tt-prop-seguros.nmbairro
+                           tt-prop-seguros.nmcidade    tt-prop-seguros.cdufresd
+                           tt-prop-seguros.nrcepend    tt-prop-seguros.nrctrseg
+                           tt-prop-seguros.dtinivig    tt-prop-seguros.tpplaseg
+                           tt-plano-seg.vlplaseg       aux_vlmorada                 rel_ddvencto
+                           aux_dscobert[1]                            
+                           tt-seguros.nmbenvid[1] tt-seguros.dsgraupr[1] tt-seguros.txpartic[1]
+                                                              WHEN tt-seguros.txpartic[1] > 0
+                           tt-seguros.nmbenvid[2] tt-seguros.dsgraupr[2] tt-seguros.txpartic[2]
+                                                              WHEN tt-seguros.txpartic[2] > 0
+                           tt-seguros.nmbenvid[3] tt-seguros.dsgraupr[3] tt-seguros.txpartic[3]
+                                                              WHEN tt-seguros.txpartic[3] > 0
+                           tt-seguros.nmbenvid[4] tt-seguros.dsgraupr[4] tt-seguros.txpartic[4]
+                                                              WHEN tt-seguros.txpartic[4] > 0
+                           tt-seguros.nmbenvid[5] tt-seguros.dsgraupr[5] tt-seguros.txpartic[5]
+                                                              WHEN tt-seguros.txpartic[5] > 0
+                           aux_idadelmt aux_idadelm2 rel_dsmvtolt 
                            rel_nmprimtl rel_nrdconta[2] 
                            rel_nmdsegur rel_tracoseg crapope.nmoperad
             WITH FRAME f_prestamista.
         ELSE
-            DISPLAY STREAM str_1 rel_dsmvtolt rel_nmprimtl rel_nrdconta[2] 
-                           rel_nmdsegur rel_tracoseg crapope.nmoperad
-            WITH FRAME f_nao_prestamista.
-
-        /* Segunda via */
+           DO:
+              DISPLAY STREAM str_1
+                             aux_nrdocnpj aux_nmextcop tt-cooperativa.nrdocnpj
+                             tt-cooperativa.nmextcop   aux_titulovd  aux_comprela aux_dssegvid    
+                             aux_nrcntseg aux_nrctrseg   tt-prop-seguros.nrdconta    
+                             tt-associado.cdagenci       tt-prop-seguros.nmdsegur    seg_nrcpfcgc
+                             seg_dsestcvl                tt-prop-seguros.dtnascsg    seg_dssexotl
+                             tt-prop-seguros.dsendres    tt-prop-seguros.nmbairro
+                             tt-prop-seguros.nmcidade    tt-prop-seguros.cdufresd
+                             tt-prop-seguros.nrcepend    
+                             tt-prop-seguros.dtinivig    tt-prop-seguros.tpplaseg
+                             tt-plano-seg.vlplaseg       aux_vlmorada                 rel_ddvencto
+                             aux_dscobert[1] when aux_dscobert[1] <> ""
+                             aux_dscobert[2] when aux_dscobert[2] <> "" 
+                             aux_dscobert[3] when aux_dscobert[3] <> "" 
+                             aux_dscobert[4] when aux_dscobert[4] <> "" 
+                             tt-seguros.nmbenvid[1] tt-seguros.dsgraupr[1] tt-seguros.txpartic[1]
+                                                                WHEN tt-seguros.txpartic[1] > 0
+                             tt-seguros.nmbenvid[2] tt-seguros.dsgraupr[2] tt-seguros.txpartic[2]
+                                                                WHEN tt-seguros.txpartic[2] > 0
+                             tt-seguros.nmbenvid[3] tt-seguros.dsgraupr[3] tt-seguros.txpartic[3]
+                                                                WHEN tt-seguros.txpartic[3] > 0
+                             tt-seguros.nmbenvid[4] tt-seguros.dsgraupr[4] tt-seguros.txpartic[4]
+                                                                WHEN tt-seguros.txpartic[4] > 0
+                             tt-seguros.nmbenvid[5] tt-seguros.dsgraupr[5] tt-seguros.txpartic[5]
+                                                                WHEN tt-seguros.txpartic[5] > 0
+              WITH FRAME f_vida.
+                       
+              IF  CAN-DO("11,15,21,31,41,51,61",STRING(tt-plano-seg.tpplaseg)) THEN
+                  DO:
+                      DISPLAY STREAM str_1 rel_dsmvtolt rel_nmprimtl rel_nrdconta[2] 
+                                     rel_nmdsegur rel_tracoseg crapope.nmoperad
+                      WITH FRAME f_vida_cecred_AP.
+                                          
+                      ASSIGN aux_dsdispge[1] = "SEGURO DE ACIDENTES PESSOAIS CECRED - PLANOS 1: MINIMA DE 14 (QUATORZE) ANOS E MAXIMA DE"
+                             aux_dsdispge[2] = "64  (SESSENTA  E  QUATRO)  NOS;  PLANO  2:  MINIMA  DE 14 (QUATORZE) ANOS E MAXIMA DE 49" 
+                             aux_dsdispge[3] = "(QUARENTA E NOVE) ANOS; PLANOS 3,4,5, 6 E 7: MINIMA DE 14 (QUATORZE) ANOS E 44 (QUARENTA"
+                             aux_dsdispge[4] = "E QUATRO)ANOS.".
+                  END.
+              ELSE
+              IF  CAN-DO("12,16,22,32,42,52,62",STRING(tt-plano-seg.tpplaseg)) OR 
+                  CAN-DO("13,17,23,33,43,53,63",STRING(tt-plano-seg.tpplaseg)) THEN
+                  DO:
+                      DISPLAY STREAM str_1 rel_dsmvtolt rel_nmprimtl rel_nrdconta[2] 
+                                     rel_nmdsegur rel_tracoseg crapope.nmoperad
+                      WITH FRAME f_vida_cecred_1_e_2.
+                     
+                      IF  CAN-DO("12,16,22,32,42,52,62",STRING(tt-plano-seg.tpplaseg)) THEN
+                          ASSIGN aux_dsdispge[1] = "SEGURO DE VIDA CECRED I - PLANOS 1: MINIMA DE 14 (QUATORZE) ANOS E MAXIMA DE 64".
+                      ELSE
+                          ASSIGN aux_dsdispge[1] = "SEGURO DE VIDA CECRED II - PLANOS 1: MINIMA DE 14 (QUATORZE) ANOS E MAXIMA DE 64".
+                          
+                      ASSIGN aux_dsdispge[2] = "(SESSENTA E QUATRO) ANOS; PLANO 2: MINIMA DE 14 (QUATORZE) ANOS E MAXIMA DE 49 (QUARENTA" 
+                             aux_dsdispge[3] = "E NOVE) ANOS; PLANOS 3,4,5, 6 E 7: MINIMA DE 14 (QUATORZE) ANOS E 44 (QUARENTA E QUATRO)"
+                             aux_dsdispge[4] = "ANOS.".                     
+                  END.
+              ELSE
+              IF  CAN-DO("14,18,24,34,44,54,64",STRING(tt-plano-seg.tpplaseg)) THEN
+                  DO:
+                      DISPLAY STREAM str_1 rel_dsmvtolt rel_nmprimtl rel_nrdconta[2] 
+                                     rel_nmdsegur rel_tracoseg crapope.nmoperad
+                      WITH FRAME f_vida_cecred_3.
+                      
+                      ASSIGN aux_dsdispge[1] = "SEGURO DE VIDA CECRED III - PLANOS 1: MINIMA DE 14 (QUATORZE) ANOS E MAXIMA DE 64" 
+                             aux_dsdispge[2] = "(SESSENTA E QUATRO) ANOS; PLANO 2: MINIMA DE 14 (QUATORZE) ANOS E MAXIMA DE 49 (QUARENTA" 
+                             aux_dsdispge[3] = "E NOVE) ANOS; PLANOS 3,4,5, 6 E 7: MINIMA DE 14 (QUATORZE) ANOS E 44 (QUARENTA E QUATRO)"
+                             aux_dsdispge[4] = "ANOS.".
+                 END.
+                 
+               /* Imprimir DPS somente com valor acima de 60.000,00 */   
+              IF aux_vlmorada > 60000 THEN
+                 DO:
+                    PAGE STREAM str_1.
+                    
+                    VIEW STREAM str_1 FRAME f_config.
+                                        
+                    DISPLAY STREAM str_1 rel_dsmvtolt rel_nmprimtl rel_nrdconta[2] 
+                                       rel_nmdsegur rel_tracoseg crapope.nmoperad
+                        WITH FRAME f_vida_dps.
+                 END.
+                 
+              PAGE STREAM str_1.
+              
+              VIEW STREAM str_1 FRAME f_config.
+              
+              IF   aux_vlmorada <= 60000 THEN
+                  VIEW STREAM str_1 FRAME f_vida_declaracao.
+              
+              DISPLAY STREAM str_1 aux_dsdispge[1] 
+                                   aux_dsdispge[2] 
+                                   aux_dsdispge[3] 
+                                   aux_dsdispge[4]  
+                                   rel_dsmvtolt rel_nmprimtl rel_nrdconta[2] 
+                                   rel_nmdsegur rel_tracoseg crapope.nmoperad
+                                   WITH FRAME f_disposicoes_gerais.
+          END.       
 
         PAGE STREAM str_1.
-
-        DISPLAY STREAM str_1
-        tt-cooperativa.nmextcop   aux_comprela aux_dssegvid   aux_nrcntseg   
-        aux_nrctrseg  tt-prop-seguros.nrdconta   tt-associado.cdagenci
-        tt-prop-seguros.nmdsegur
-        seg_nrcpfcgc   seg_dsestcvl   tt-prop-seguros.dtnascsg   seg_dssexotl
-        tt-prop-seguros.dsendres   tt-prop-seguros.nmbairro
-        tt-prop-seguros.nmcidade   tt-prop-seguros.cdufresd
-        tt-prop-seguros.nrcepend   tt-prop-seguros.nrctrseg
-        tt-prop-seguros.dtinivig   tt-prop-seguros.tpplaseg
-        tt-plano-seg.vlplaseg      aux_vlmorada                  rel_ddvencto
-        tel_dscobert   tt-seguros.nmbenvid[1]   tt-seguros.dsgraupr[1]
-        tt-seguros.txpartic[1] WHEN tt-seguros.txpartic[1] > 0
-        tt-seguros.nmbenvid[2]   tt-seguros.dsgraupr[2]
-        tt-seguros.txpartic[2] WHEN tt-seguros.txpartic[2] > 0
-        tt-seguros.nmbenvid[3]   tt-seguros.dsgraupr[3]   tt-seguros.txpartic[3]
-            WHEN tt-seguros.txpartic[3] > 0
-        tt-seguros.nmbenvid[4]   tt-seguros.dsgraupr[4]   tt-seguros.txpartic[4]
-            WHEN tt-seguros.txpartic[4] > 0
-        tt-seguros.nmbenvid[5]   tt-seguros.dsgraupr[5]   tt-seguros.txpartic[5]
-            WHEN tt-seguros.txpartic[5] > 0
-        WITH FRAME f_vida.
+        VIEW STREAM str_1 FRAME f_config.
+        
+        /****************** Segunda via **************/
 
         IF  tt-prop-seguros.tpseguro = 4  THEN
             DISPLAY STREAM str_1
-            aux_idadelmt   aux_idadelm2   rel_dsmvtolt   rel_nmprimtl
-            rel_nrdconta[2]   rel_nmdsegur   rel_tracoseg   crapope.nmoperad
+                           tt-cooperativa.nmextcop   aux_comprela aux_dssegvid   aux_nrcntseg   
+                           aux_nrctrseg  tt-prop-seguros.nrdconta   tt-associado.cdagenci
+                           tt-prop-seguros.nmdsegur
+                           seg_nrcpfcgc   seg_dsestcvl   tt-prop-seguros.dtnascsg   seg_dssexotl
+                           tt-prop-seguros.dsendres   tt-prop-seguros.nmbairro
+                           tt-prop-seguros.nmcidade   tt-prop-seguros.cdufresd
+                           tt-prop-seguros.nrcepend   
+                           tt-prop-seguros.dtinivig   tt-prop-seguros.tpplaseg
+                           tt-plano-seg.vlplaseg      aux_vlmorada                  rel_ddvencto
+                           aux_dscobert[1]                           
+                           tt-seguros.nmbenvid[1]   tt-seguros.dsgraupr[1]
+                           tt-seguros.txpartic[1] WHEN tt-seguros.txpartic[1] > 0
+                           tt-seguros.nmbenvid[2]   tt-seguros.dsgraupr[2]
+                           tt-seguros.txpartic[2] WHEN tt-seguros.txpartic[2] > 0
+                           tt-seguros.nmbenvid[3]   tt-seguros.dsgraupr[3]   tt-seguros.txpartic[3]
+                               WHEN tt-seguros.txpartic[3] > 0
+                           tt-seguros.nmbenvid[4]   tt-seguros.dsgraupr[4]   tt-seguros.txpartic[4]
+                               WHEN tt-seguros.txpartic[4] > 0
+                           tt-seguros.nmbenvid[5]   tt-seguros.dsgraupr[5]   tt-seguros.txpartic[5]
+                               WHEN tt-seguros.txpartic[5] > 0
+                           aux_idadelmt   aux_idadelm2   rel_dsmvtolt   rel_nmprimtl
+                           rel_nrdconta[2]   rel_nmdsegur   rel_tracoseg   crapope.nmoperad
             WITH FRAME f_prestamista.
         ELSE
-            DISPLAY STREAM str_1
-            rel_dsmvtolt   rel_nmprimtl   rel_nrdconta[2]   rel_nmdsegur
-            rel_tracoseg   crapope.nmoperad
-                WITH FRAME f_nao_prestamista.
-
-        /*IF  tt-prop-seguros.tpseguro <> 4 THEN
-            DO:
-                /* Terceira via */
-                PAGE STREAM str_1.
-
+            DO:           
                 DISPLAY STREAM str_1
-                    tt-cooperativa.nmextcop   aux_comprela aux_dssegvid    
-                    aux_nrcntseg  aux_nrctrseg   tt-prop-seguros.nrdconta
-                    tt-associado.cdagenci
-                    tt-prop-seguros.nmdsegur   seg_nrcpfcgc   seg_dsestcvl
-                    tt-prop-seguros.dtnascsg   seg_dssexotl
-                    tt-prop-seguros.dsendres   tt-prop-seguros.nmbairro
-                    tt-prop-seguros.nmcidade   tt-prop-seguros.cdufresd
-                    tt-prop-seguros.nrcepend   tt-prop-seguros.nrctrseg
-                    tt-prop-seguros.dtinivig   tt-prop-seguros.tpplaseg
-                    tt-plano-seg.vlplaseg      aux_vlmorada
-                    rel_ddvencto   tel_dscobert
-                    tt-seguros.nmbenvid[1]   tt-seguros.dsgraupr[1]
-                    tt-seguros.txpartic[1]
-                       WHEN tt-seguros.txpartic[1] > 0
-                    tt-seguros.nmbenvid[2]   tt-seguros.dsgraupr[2]
-                    tt-seguros.txpartic[2] 
-                       WHEN tt-seguros.txpartic[2] > 0
-                    tt-seguros.nmbenvid[3]   tt-seguros.dsgraupr[3]
-                    tt-seguros.txpartic[3] 
-                       WHEN tt-seguros.txpartic[3] > 0
-                    tt-seguros.nmbenvid[4]   tt-seguros.dsgraupr[4]
-                    tt-seguros.txpartic[4] 
-                       WHEN tt-seguros.txpartic[4] > 0
-                    tt-seguros.nmbenvid[5]   tt-seguros.dsgraupr[5]
-                    tt-seguros.txpartic[5]
-                       WHEN tt-seguros.txpartic[5] > 0
+                               aux_nrdocnpj aux_nmextcop tt-cooperativa.nrdocnpj
+                               tt-cooperativa.nmextcop aux_titulovd aux_comprela aux_dssegvid 
+                               aux_nrcntseg aux_nrctrseg  tt-prop-seguros.nrdconta   tt-associado.cdagenci
+                               tt-prop-seguros.nmdsegur
+                               seg_nrcpfcgc   seg_dsestcvl   tt-prop-seguros.dtnascsg   seg_dssexotl
+                               tt-prop-seguros.dsendres   tt-prop-seguros.nmbairro
+                               tt-prop-seguros.nmcidade   tt-prop-seguros.cdufresd
+                               tt-prop-seguros.nrcepend   
+                               tt-prop-seguros.dtinivig   tt-prop-seguros.tpplaseg
+                               tt-plano-seg.vlplaseg      aux_vlmorada                  rel_ddvencto
+                               aux_dscobert[1] when aux_dscobert[1] <> ""
+                               aux_dscobert[2] when aux_dscobert[2] <> "" 
+                               aux_dscobert[3] when aux_dscobert[3] <> "" 
+                               aux_dscobert[4] when aux_dscobert[4] <> ""
+                               tt-seguros.nmbenvid[1]   tt-seguros.dsgraupr[1]
+                               tt-seguros.txpartic[1] WHEN tt-seguros.txpartic[1] > 0
+                               tt-seguros.nmbenvid[2]   tt-seguros.dsgraupr[2]
+                               tt-seguros.txpartic[2] WHEN tt-seguros.txpartic[2] > 0
+                               tt-seguros.nmbenvid[3]   tt-seguros.dsgraupr[3]   tt-seguros.txpartic[3]
+                                   WHEN tt-seguros.txpartic[3] > 0
+                               tt-seguros.nmbenvid[4]   tt-seguros.dsgraupr[4]   tt-seguros.txpartic[4]
+                                   WHEN tt-seguros.txpartic[4] > 0
+                               tt-seguros.nmbenvid[5]   tt-seguros.dsgraupr[5]   tt-seguros.txpartic[5]
+                                   WHEN tt-seguros.txpartic[5] > 0
                 WITH FRAME f_vida.
-
-                DISPLAY STREAM str_1
-                    rel_dsmvtolt   rel_nmprimtl   rel_nrdconta[2]
-                    rel_nmdsegur   rel_tracoseg   crapope.nmoperad
-                WITH FRAME f_nao_prestamista.
-
-                /* Quarta via */
-
+                
+                IF  CAN-DO("11,15,21,31,41,51,61",STRING(tt-plano-seg.tpplaseg)) THEN 
+                    DISPLAY STREAM str_1 rel_dsmvtolt rel_nmprimtl rel_nrdconta[2] 
+                                   rel_nmdsegur rel_tracoseg crapope.nmoperad
+                    WITH FRAME f_vida_cecred_AP.
+                ELSE
+                IF  CAN-DO("12,16,22,32,42,52,62",STRING(tt-plano-seg.tpplaseg)) OR 
+                    CAN-DO("13,17,23,33,43,53,63",STRING(tt-plano-seg.tpplaseg)) THEN
+                    DISPLAY STREAM str_1 rel_dsmvtolt rel_nmprimtl rel_nrdconta[2] 
+                                   rel_nmdsegur rel_tracoseg crapope.nmoperad
+                    WITH FRAME f_vida_cecred_1_e_2.
+                ELSE
+                IF  CAN-DO("14,18,24,34,44,54,64",STRING(tt-plano-seg.tpplaseg)) THEN               
+                    DISPLAY STREAM str_1 rel_dsmvtolt rel_nmprimtl rel_nrdconta[2] 
+                                   rel_nmdsegur rel_tracoseg crapope.nmoperad
+                    WITH FRAME f_vida_cecred_3.
+                    
+                /* Imprimir DPS somente com valor acima de 60.000,00 */   
+                IF aux_vlmorada > 60000 THEN
+                   DO:
+                      PAGE STREAM str_1.
+                      
+                      VIEW STREAM str_1 FRAME f_config.                      
+                      
+                      DISPLAY STREAM str_1 rel_dsmvtolt rel_nmprimtl rel_nrdconta[2] 
+                                         rel_nmdsegur rel_tracoseg crapope.nmoperad
+                          WITH FRAME f_vida_dps.
+                   END.
+                   
                 PAGE STREAM str_1.
-
-                DISPLAY STREAM str_1
-                    tt-cooperativa.nmextcop  aux_comprela aux_dssegvid    
-                    aux_nrcntseg  aux_nrctrseg   tt-prop-seguros.nrdconta
-                    tt-associado.cdagenci
-                    tt-prop-seguros.nmdsegur   seg_nrcpfcgc   seg_dsestcvl
-                    tt-prop-seguros.dtnascsg   seg_dssexotl
-                    tt-prop-seguros.dsendres   tt-prop-seguros.nmbairro
-                    tt-prop-seguros.nmcidade   tt-prop-seguros.cdufresd
-                    tt-prop-seguros.nrcepend   tt-prop-seguros.nrctrseg
-                    tt-prop-seguros.dtinivig   tt-prop-seguros.tpplaseg
-                    tt-plano-seg.vlplaseg      aux_vlmorada
-                    rel_ddvencto   tel_dscobert   tt-seguros.nmbenvid[1]
-                    tt-seguros.dsgraupr[1]   tt-seguros.txpartic[1] 
-                       WHEN tt-seguros.txpartic[1] > 0
-                    tt-seguros.nmbenvid[2]   tt-seguros.dsgraupr[2]
-                    tt-seguros.txpartic[2] 
-                       WHEN tt-seguros.txpartic[2] > 0
-                    tt-seguros.nmbenvid[3]   tt-seguros.dsgraupr[3]
-                    tt-seguros.txpartic[3] 
-                       WHEN tt-seguros.txpartic[3] > 0
-                    tt-seguros.nmbenvid[4]   tt-seguros.dsgraupr[4]
-                    tt-seguros.txpartic[4] 
-                       WHEN tt-seguros.txpartic[4] > 0
-                    tt-seguros.nmbenvid[5]   tt-seguros.dsgraupr[5]
-                    tt-seguros.txpartic[5]
-                       WHEN tt-seguros.txpartic[5] > 0
-                WITH FRAME f_vida.
-
-                DISPLAY STREAM str_1
-                    rel_dsmvtolt   rel_nmprimtl   rel_nrdconta[2]
-                    rel_nmdsegur   rel_tracoseg   crapope.nmoperad 
-                WITH FRAME f_nao_prestamista.
-            END. */           
+              
+                VIEW STREAM str_1 FRAME f_config.
+                
+                IF  aux_vlmorada <= 60000 THEN
+                    VIEW STREAM str_1 FRAME f_vida_declaracao.
+                
+                DISPLAY STREAM str_1 aux_dsdispge[1] 
+                                     aux_dsdispge[2] 
+                                     aux_dsdispge[3] 
+                                     aux_dsdispge[4]
+                                     rel_dsmvtolt rel_nmprimtl rel_nrdconta[2] 
+                                     rel_nmdsegur rel_tracoseg crapope.nmoperad
+                                     WITH FRAME f_disposicoes_gerais.
+                   
+            END.
 
         OUTPUT STREAM str_1 CLOSE.
 
@@ -8519,7 +9151,7 @@ PROCEDURE buscar_motivo_can:
 
     valida:
     DO:
-        IF par_cdmotcan > 9 THEN
+        IF par_cdmotcan > 11 THEN
             DO:
                 ASSIGN aux_dscritic = "Motivo nao cadastrado".
                 LEAVE valida.
@@ -8562,6 +9194,14 @@ PROCEDURE buscar_motivo_can:
         CREATE tt-mot-can.
         ASSIGN tt-mot-can.cdmotcan = 9
                tt-mot-can.dsmotcan = "Encerramento de conta".
+
+        CREATE tt-mot-can.
+        ASSIGN tt-mot-can.cdmotcan = 10
+               tt-mot-can.dsmotcan = "Insatisfacao".
+
+        CREATE tt-mot-can.
+        ASSIGN tt-mot-can.cdmotcan = 11
+               tt-mot-can.dsmotcan = "Perdido para a concorrencia".
 
         IF par_cdmotcan <> 0 THEN DO:
             FOR EACH tt-mot-can WHERE

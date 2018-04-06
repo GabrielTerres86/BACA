@@ -52,6 +52,13 @@ DEF    VAR       aux_posini    AS INT                   NO-UNDO.
 DEF    VAR       aux_contador  AS INT                   NO-UNDO.
 DEF    VAR       aux_qttotage  AS INT                   NO-UNDO.
 
+/* Regra implementada para atender IB Classico e Novo                                               */
+/* IB Classico envia a posicao inicial sempre com valor par, por exemplo 0 na primeira paginacao    */
+/* Novo IB por padrao envia sempre com valor impar, por exemplo 1 para primeira paginacao           */
+/* Para manter a regra atual verifico se o valor e impar, e nesse caso decremento a posicao inicial */
+IF  par_iniconta MOD 2 <> 0 THEN 
+    ASSIGN par_iniconta = par_iniconta - 1.
+
 /* Consultar os titulos agendados atraves do arquivo */
 { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
 

@@ -96,7 +96,7 @@ IF VALID-HANDLE(h-b1wgen0081)  THEN
                "<dtmvtolt>"  + (IF STRING(tt-agen-det.dtmvtolt) = ? THEN
                                    ""
                                 ELSE
-                                   STRING(tt-agen-det.dtmvtolt)) 
+                                   STRING(tt-agen-det.dtmvtolt,'99/99/9999')) 
                               + "</dtmvtolt>" +
                "<cdagenci>"  + STRING(tt-agen-det.cdagenci) + "</cdagenci>" +
                "<cdbccxlt>"  + STRING(tt-agen-det.cdbccxlt) + "</cdbccxlt>" +
@@ -110,7 +110,7 @@ IF VALID-HANDLE(h-b1wgen0081)  THEN
                "<dtmvtopg>"  + (IF STRING(tt-agen-det.dtmvtopg) = ? THEN
                                    ""
                                 ELSE 
-                                   STRING(tt-agen-det.dtmvtopg))
+                                   STRING(tt-agen-det.dtmvtopg,'99/99/9999'))
                              + "</dtmvtopg>" +
                "<cdbccxpg>"  + STRING(tt-agen-det.cdbccxpg) + "</cdbccxpg>" +
                "<nrdctabb>"  + STRING(tt-agen-det.nrdctabb) + "</nrdctabb>" +
@@ -125,6 +125,14 @@ IF VALID-HANDLE(h-b1wgen0081)  THEN
                                    STRING(tt-agen-det.dtdebito))
                              + "</nrseqlan>" +
                "<cdcooper>"  + STRING(tt-agen-det.cdcooper) + "</cdcooper>" +
+               "<flgtipar>" + STRING(tt-agen-det.flgtipar) + "</flgtipar>" +
+               "<dstipaar>" + tt-agen-det.dstipaar + "</dstipaar>" +
+               "<flgtipin>" + STRING(tt-agen-det.flgtipin) + "</flgtipin>" +
+               "<dstipinv>" + tt-agen-det.dstipinv + "</dstipinv>" +
+               "<qtdiacar>" + STRING(tt-agen-det.qtdiacar) + "</qtdiacar>" +
+               "<dssitlau>" + tt-agen-det.dssitlau + "</dssitlau>" +
+               "<vlsolaar>" + TRIM(STRING(tt-agen-det.vlsolaar,"zzz,zzz,zzz,zz9.99")) + "</vlsolaar>" +
+               "<dsprotoc>" + tt-agen-det.dsprotoc + "</dsprotoc>" +
              "</AGENDAMENTO>".
 
       END.

@@ -5,7 +5,7 @@
    Sistema : Internet - Cooperativa de Credito 
    Sigla   : CRED
    Autor   : Jorge
-   Data    : Setembro/2011                   Ultima Atualizacao: 27/01/2017
+   Data    : Setembro/2011                   Ultima Atualizacao: 07/12/2017
    
    Dados referentes ao programa:
    
@@ -15,8 +15,11 @@
    Alteracoes: 27/01/2017 - Recuperar os campos flserasa e qtdianeg 
 	                        e gravar no objeto boleto (Tiago/Ademir SD601919)
 
-			   11/07/2017 - Inclusão do campo flgcbdda, Prj. 340 - NPC (Jean Michel)
-	                        
+               11/07/2017 - Inclusão do campo flgcbdda, Prj. 340 - NPC (Jean Michel)
+
+               07/12/2017 - Adicionado o retorno dos campo dtmvtatu e flgvenci
+                            (Douglas - Chamado 805008)
+
 ..............................................................................*/
 
 CREATE WIDGET-POOL.
@@ -209,6 +212,8 @@ IF  VALID-HANDLE(h-b1wnet0001)  THEN
                                   "S" ELSE "N")).
 			criaCampo("qtdianeg",STRING(tt-consulta-blt.qtdianeg, "99")).											  
 			criaCampo("flgcbdda",STRING(tt-consulta-blt.flgcbdda)).								 
+            criaCampo("dtmvtatu",STRING(tt-consulta-blt.dtmvtatu,"99/99/9999")).
+            criaCampo("flgvenci",STRING(tt-consulta-blt.flgvenci)).	
 			
         END. /* fim for each tt-consulta-blt */
 

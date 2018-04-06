@@ -179,10 +179,11 @@
                            tarifa e valor total para demonstração do empréstimo (Diogo - Mouts)
                            
               05/04/2017 - Adicionado parametros de carencia do produto Pos-Fixado. (Jaison/James - PRJ298)
-                           
+
               19/04/2017 - Alteraçao DSNACION pelo campo CDNACION.
                            PRJ339 - CRM (Odirlei-AMcom)
-
+              
+			  05/02/2018 - Inclusao do campo vlrdtaxa na tt tt-extrato_epr. (James)
 			  25/01/2018 - Inclusão do FIELD NIVRIORI na tt-proposta-epr.
 			               (Reginaldo AMcom)
 
@@ -211,7 +212,8 @@ DEF TEMP-TABLE tt-extrato_epr NO-UNDO
     FIELD dsextrat AS CHAR
     FIELD flglista AS LOGICAL INITIAL TRUE
     FIELD cdorigem AS INTE
-    FIELD qtdiacal LIKE craplem.qtdiacal.
+    FIELD qtdiacal LIKE craplem.qtdiacal
+	FIELD vlrdtaxa LIKE craplem.vltaxprd.
 
 DEF TEMP-TABLE tt-dados-epr   NO-UNDO  
     FIELD nrdconta AS INTE    FORMAT "zzzz,zzz,9"
@@ -262,7 +264,7 @@ DEF TEMP-TABLE tt-dados-epr   NO-UNDO
     FIELD idseleca AS CHAR
     FIELD nrdrecid AS RECID
     FIELD tplcremp LIKE craplcr.tpctrato
-    FIELD tpemprst LIKE crapepr.tpemprst	
+    FIELD tpemprst LIKE crapepr.tpemprst
     FIELD cdtpempr AS CHAR
     FIELD dstpempr AS CHAR
     FIELD permulta AS DECI FORMAT "zz9.99"
@@ -294,7 +296,7 @@ DEF TEMP-TABLE tt-dados-epr   NO-UNDO
     FIELD qtimpctr LIKE crapepr.qtimpctr
     FIELD dtapgoib AS DATE    FORMAT "99/99/9999"
 	FIELD vliofcpl LIKE crapepr.vliofcpl
-
+    
 	FIELD idenempr LIKE crapepr.tpemprst.
     
 DEF TEMP-TABLE tt-dados-epr-out NO-UNDO LIKE tt-dados-epr.
@@ -327,7 +329,7 @@ DEF TEMP-TABLE tt-proposta-epr NO-UNDO
     FIELD vlemprst LIKE crawepr.vlemprst
     FIELD vlpreemp LIKE crawepr.vlpreemp
     FIELD qtpreemp LIKE crawepr.qtpreemp
-    FIELD nivrisco LIKE crawepr.dsnivris	
+    FIELD nivrisco LIKE crawepr.dsnivris
     FIELD nivcalcu LIKE crawepr.dsnivcal
     FIELD cdlcremp LIKE crawepr.cdlcremp
     FIELD cdfinemp LIKE crawepr.cdfinemp
@@ -376,13 +378,13 @@ DEF TEMP-TABLE tt-proposta-epr NO-UNDO
     FIELD dssitapr AS CHAR
     FIELD insitest LIKE crawepr.insitest
     FIELD inobriga AS CHAR
-	FIELD idfiniof AS INTE
+	FIELD idfiniof AS INTE
     FIELD vliofepr LIKE crapepr.vliofepr
     FIELD vlrtarif AS DECI
     FIELD vlrtotal AS DECI
 	FIELD idcarenc LIKE crawepr.idcarenc
     FIELD dtcarenc LIKE crawepr.dtcarenc
-
+    FIELD vlfinanc AS DECI
 	FIELD nivriori LIKE crawepr.dsnivori.
 
 DEF TEMP-TABLE tt-bens-alienacao NO-UNDO

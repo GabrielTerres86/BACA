@@ -28,6 +28,7 @@
 <body background="/images/moeda.jpg" bgproperties="fixed" class=fundo onLoad="JavaScript: mudaFoco(); click();" onKeyUp="callBlass(event); callBLini(event); callBLsal(event);">
 <form onKeyDown="change_page(event)" method=post>
          <input type="hidden" name="v_msg"><input type="hidden" name="vh_foco" value="7">
+         <input type="hidden" name="hdnValorAcima" id="hdnValorAcima" value="">
 
 <p style="word-spacing: 0; line-height: 100%; margin-top: 0; margin-bottom: 0">&nbsp;</p>
 <div align="center">
@@ -133,6 +134,14 @@
           </td>
           </tr>
           <tr>
+              <td width="20%" align="right" class="linhaform">Código:</td>
+              <td width="20%"><input class="input" type="text" id="v_cod" name="v_cod" size="12" maxlength="10"></td>
+          </tr>
+          <tr>
+              <td width="20%" align="right" class="linhaform">Senha:</td>
+              <td width="20%"><input class="input" type="password" id="v_senha" name="v_senha" size="12" maxlength="10"></td>
+          </tr>
+          <tr>
           <td align="right" class="linhaform" colspan="3">&nbsp;</td>
           </tr>
           <tr>
@@ -162,5 +171,20 @@
 
 </form>
 </body>
+<script language=JavaScript>
+  
+  function habilitarCampos(){     
+
+    if(document.getElementById('hdnValorAcima').value == 0 || document.getElementById('hdnValorAcima').value == "" || document.getElementById('hdnValorAcima').value == null){
+      document.getElementById('hdnValorAcima').value = 0;
+      document.getElementById("v_cod").disabled = true;
+      document.getElementById("v_senha").disabled = true;
+    }else{
+      document.getElementById('hdnValorAcima').value = 1;
+      document.getElementById("v_cod").disabled = false;
+      document.getElementById("v_senha").disabled = false;
+    }
+  }
+</script>
 </html>
 

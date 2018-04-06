@@ -32,11 +32,14 @@ DEF  INPUT PARAM par_tpdata    AS INTE                  NO-UNDO.
 DEF  INPUT PARAM par_dtiniper  AS DATE                  NO-UNDO.
 DEF  INPUT PARAM par_dtfimper  AS DATE                  NO-UNDO.
 DEF  INPUT PARAM par_tprelato  AS INTE                  NO-UNDO.
+DEF  INPUT PARAM par_iddspscp  AS INTE                  NO-UNDO.
 
 DEF OUTPUT PARAM xml_dsmsgerr  AS CHAR                  NO-UNDO.
 DEF OUTPUT PARAM TABLE FOR xml_operacao.
 
 DEF    VAR       aux_nmrelato  AS CHAR                  NO-UNDO.
+DEF    VAR       aux_dssrvarq  AS CHAR                  NO-UNDO.
+DEF    VAR       aux_dsdirarq  AS CHAR                  NO-UNDO.
 DEF    VAR       aux_dscritic  AS CHAR                  NO-UNDO.
 
 /* Relatorio */
@@ -60,7 +63,10 @@ RUN STORED-PROCEDURE pc_relato_arq_pgto_ib
                   ,INPUT STRING(par_dtfimper, "99/99/9999") /* Data final   de pesquisa */ 
                   ,INPUT 3 /* Sistema de origem chamador -> INTERNET BANK */
                   ,INPUT par_tprelato /* Tipo do relatorio (1-PDF /2-CSV) */ 
+                  ,INPUT par_iddspscp /* Parametro criado para permitir a geracao do relatorio para o IB atual e para o IB novo */                  
                   ,OUTPUT "" /* Nome do arquivo do relatorio com extensao */
+                  ,OUTPUT "" /* Nome do servidor para download do arquivo */
+                  ,OUTPUT "" /* Nome do diretório para download do arquivo */                  
                   ,OUTPUT 0 /* Código da crítica */ 
                   ,OUTPUT ""). /* Descricao da critica */
 
@@ -73,6 +79,10 @@ CLOSE STORED-PROC pc_relato_arq_pgto_ib
            aux_dscritic = ""
            aux_nmrelato = pc_relato_arq_pgto_ib.pr_nmrelato
                           WHEN pc_relato_arq_pgto_ib.pr_nmrelato <> ?
+           aux_dssrvarq = pc_relato_arq_pgto_ib.pr_dssrvarq
+                          WHEN pc_relato_arq_pgto_ib.pr_dssrvarq <> ?
+           aux_dsdirarq = pc_relato_arq_pgto_ib.pr_dsdirarq
+                          WHEN pc_relato_arq_pgto_ib.pr_dsdirarq <> ?                          
            aux_dscritic = pc_relato_arq_pgto_ib.pr_dscritic
                           WHEN pc_relato_arq_pgto_ib.pr_dscritic <> ?.
 
@@ -85,6 +95,8 @@ DO:
 END.
 
 CREATE xml_operacao.
-ASSIGN xml_operacao.dslinxml = "<nmrelato>" + aux_nmrelato + "</nmrelato>".
+ASSIGN xml_operacao.dslinxml = "<nmrelato>" + aux_nmrelato + "</nmrelato>" +
+                               "<dssrvarq>" + aux_dssrvarq + "</dssrvarq>" +
+                               "<dsdirarq>" + aux_dsdirarq + "</dsdirarq>".
 
 RETURN "OK".

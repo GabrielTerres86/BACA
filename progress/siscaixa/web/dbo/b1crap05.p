@@ -4,7 +4,7 @@
    Sistema : Caixa On-line
    Sigla   : CRED   
    Autor   : Mirtes.
-   Data    : Marco/2001                      Ultima atualizacao: 03/01/2014
+   Data    : Marco/2001                      Ultima atualizacao: 12/12/2017
 
    Dados referentes ao programa:
 
@@ -70,6 +70,9 @@
                             
                27/06/2016 - Tratamentos para utilizaçao do Cartao CECRED e 
                             PinPad Novo (Lucas Lunelli - [PROJ290])
+                            
+               12/12/2017 - Passar como texto o campo nrcartao na chamada da procedure 
+                            pc_gera_log_ope_cartao (Lucas Ranghetti #810576)
 ............................................................................ */
 /*----------------------------------------------------------------------*/
 /*  b1crap05.p - Solicitacao/Liberacoes Taloes Normal                   */
@@ -1194,7 +1197,7 @@ PROCEDURE solicita-entrega-talao:
                                        INPUT p-idtipcar,
                                        INPUT aux_nrdolote,      /* Nrd Documento */               
                                        INPUT 0, 
-                                       INPUT p-nrcartao,
+                                       INPUT STRING(p-nrcartao),
                                        INPUT IF aux_contador = 1 THEN p-qtde-req-talao ELSE 0,
                                        INPUT p-operador,   /* Código do Operador */
                                        INPUT 0,

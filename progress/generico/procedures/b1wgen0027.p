@@ -21,7 +21,7 @@
 
     Programa  : b1wgen0027.p
     Autor     : Guilherme
-    Data      : Fevereiro/2008                Ultima Atualizacao: 19/06/2015
+    Data      : Fevereiro/2008                Ultima Atualizacao: 24/01/2018
     
     Dados referentes ao programa:
 
@@ -87,6 +87,12 @@
                 
                 19/06/2015 - Ajuste para alimentar o campo tt-ocorren.innivris
                              na procedure lista_ocorren. (James)             
+
+                30/01/2017 - Exibir mensagem de atrasado quando for produto Pos-Fixado.
+                             (Jaison/James - PRJ298)
+					 
+                24/01/2018 - Ajuste na extratos_emitidos_no_cash para mostrar apenas
+                             extratos com numero do terminal financeiro (Tiago #824708).
 ..............................................................................*/
 
 { sistema/generico/includes/b1wgen0027tt.i }
@@ -376,7 +382,8 @@ PROCEDURE lista_ocorren:
     FIND FIRST tt-dados-epr WHERE (tt-dados-epr.tpemprst = 0   AND
                                    tt-dados-epr.vlpreapg > 0)  OR
 
-                                  (tt-dados-epr.tpemprst = 1   AND
+                                 ((tt-dados-epr.tpemprst = 1   OR
+								   tt-dados-epr.tpemprst = 2)  AND
                                    tt-dados-epr.flgatras)      AND                              
 
                                    tt-dados-epr.inprejuz = 0  
@@ -1297,6 +1304,7 @@ PROCEDURE extratos_emitidos_no_cash:
                            crapext.dtreffim >= par_dtrefere            AND
                            crapext.nrdconta =  crapass.nrdconta        AND
                            crapext.tpextrat =  1 /* C/C */             AND
+                           crapext.nrterfin > 0                        AND
                           (crapext.insitext =  1    OR 
                            crapext.insitext =  5)                  NO-LOCK  
                            BY crapext.dtrefere:

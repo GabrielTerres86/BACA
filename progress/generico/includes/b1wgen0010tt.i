@@ -2,7 +2,7 @@
 
    Programa: b1wgen0010tt.i                  
    Autor   : David
-   Data    : Marco/2008                        Ultima atualizacao: 02/01/2017
+   Data    : Marco/2008                        Ultima atualizacao: 07/12/2017
      
    Dados referentes ao programa:
 
@@ -90,18 +90,24 @@
                05/01/2016 - Incluso os campos inserasa ,dsserasa, qtdianeg na
                             tt-consulta-blt (Projeto Negativacao Serasa - Daniel)
   
-			   29/08/2016 - Adicionado novos campos referente a M271. (Kelvin).
+                           29/08/2016 - Adicionado novos campos referente a M271. (Kelvin).
 
                11/10/2016 - Inclusao dos campos de aviso por SMS. 
                             PRJ319 - SMS Cobrança.  (Odirlei-AMcom)
-
-              22/12/2016 - PRJ340 - Nova Plataforma de Cobranca - Fase II. 
-                           (Jaison/Cechet)
+  
+               22/12/2016 - PRJ340 - Nova Plataforma de Cobranca - Fase II. 
+                           (Jaison/Cechet)			  
 
 			   02/01/2017 - Melhorias referentes a performance no IB na parte
 			                de cobrança, adicionado campo flprotes na temptable
 							tt-consulta-blt (Tiago/Ademir SD573538).  
 
+               31/08/2017 - Adicionado novos campos na temp-table tt-consulta-blt
+                            devido ao projeto do novo IB. (PRJ285 - Rafael).  
+
+               07/12/2017 - Adicionado os campos para a data de vencimento e 
+                            identificar se o boleto está vencido 
+                            (Douglas - Chamado 805008)
 .............................................................................*/
 
 DEF TEMP-TABLE tt-consulta-blt
@@ -214,7 +220,7 @@ DEF TEMP-TABLE tt-consulta-blt
 	FIELD vlmormul_atualizado AS DECI
 	FIELD flg2viab AS INTE
 	FIELD flprotes AS INTE
-	FIELD inavisms AS INTE
+    FIELD inavisms AS INTE
 	FIELD insmsant AS INTE
 	FIELD insmsvct AS INTE
 	FIELD insmspos AS INTE
@@ -224,7 +230,23 @@ DEF TEMP-TABLE tt-consulta-blt
 	FIELD dssmspos AS CHAR
     FIELD inenvcip LIKE crapcob.inenvcip
     FIELD inpagdiv LIKE crapcob.inpagdiv
-    FIELD vlminimo LIKE crapcob.vlminimo.
+    FIELD vlminimo LIKE crapcob.vlminimo
+    FIELD dtmvtatu LIKE crapcob.dtmvtolt
+    FIELD flgvenci AS INTE
+    FIELD vldocmto_boleto LIKE crapcob.vltitulo
+    FIELD vlcobrado_boleto LIKE crapcob.vltitulo
+    FIELD dtvencto_boleto LIKE crapcob.dtvencto
+    FIELD dslindig AS CHAR
+    FIELD dscodbar AS CHAR
+    FIELD dsdinst1 AS CHAR
+    FIELD dsdinst2 AS CHAR
+    FIELD dsdinst3 AS CHAR
+    FIELD dsdinst4 AS CHAR
+    FIELD dsdinst5 AS CHAR
+    FIELD dscredit AS CHAR
+    FIELD dsorigem_proc AS CHAR
+    FIELD dsbcoage AS CHAR
+    .
 
 DEF TEMP-TABLE tt-arq-cobranca  
     FIELD cdseqlin AS INTEGER

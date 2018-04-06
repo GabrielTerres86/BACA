@@ -152,7 +152,12 @@ FOR EACH tt-dados-rpp NO-LOCK:
                                    "</dtvctopp><vlblqjud>" +
                                    TRIM(STRING(aux_vlblqjud,
                                                "zzz,zzz,zzz,zz9.99")) +
-                                   "</vlblqjud></POUPANCA>".
+                                   "</vlblqjud><vlprerpp>" +
+                                   TRIM(STRING(tt-dados-rpp.vlprerpp,
+                                               "zzz,zz9.99")) +
+                                   "</vlprerpp><dsprodut>"  +
+                                    "Poupança Programada" +
+                                   "</dsprodut></POUPANCA>".
                            
 END. /** Fim do FOR EACH tt-dados-rpp **/
 

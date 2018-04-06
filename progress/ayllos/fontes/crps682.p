@@ -13,6 +13,11 @@
    
    Alteracoes: 26/11/2014 - Verificacao se o processo noturno esta rodando 
                             e tbm se eh segunda-feira. (Jaison)
+							
+			   29/01/2018 - Projeto Ligeirinho - Foram incluidos novos parâmetros 
+						    na chamada da rotina para execução do programa utilizando 
+							paralelismo. (Roberto - Amcom)
+						
    
  ........................................................................... */
 
@@ -41,7 +46,10 @@ IF  glb_inproces <> 1 AND WEEKDAY(glb_dtmvtolt) = 2 THEN
         { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
         
         RUN STORED-PROCEDURE pc_crps682 aux_handproc = PROC-HANDLE
-           (INPUT glb_cdcooper,
+           (INPUT glb_cdcooper, 
+		    INPUT 0,
+			INPUT 0,
+			INPUT 0,
             INPUT INT(STRING(glb_flgresta,"1/0")),
             INPUT  0, /* NAO Gerar arquivo TXT para SPC/Serasa */
             OUTPUT 0,

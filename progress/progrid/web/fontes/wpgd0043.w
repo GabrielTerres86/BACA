@@ -5,12 +5,14 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
             05/06/2012 - Adaptação dos fontes para projeto Oracle. Alterado
                          busca na gnapses de CONTAINS para MATCHES (Guilherme Maba).
 
-						23/06/2015 - Inclusao de tratamento para todas as cooperativas e 
-						       			 criacao de novas funcoes para melhorar o codigo(Jean Michel).
+            23/06/2015 - Inclusao de tratamento para todas as cooperativas e 
+                          criacao de novas funcoes para melhorar o codigo(Jean Michel).
                          
             25/04/2016 - Correcao na formatacao dos dados gerados (Carlos Rafael Tanholi)             
 
-			09/11/2016 - inclusao de LOG. (Jean Michel)
+            09/11/2016 - inclusao de LOG. (Jean Michel)
+            
+            30/08/2017 - Inclusao do filtro por Programa,Prj. 322 (Jean Michel).
 
 ......................................................................... */
 
@@ -29,7 +31,8 @@ DEFINE TEMP-TABLE ab_unmap
        FIELD aux_idevento AS CHARACTER FORMAT "X(256)":U 
        FIELD aux_lspermis AS CHARACTER FORMAT "X(256)":U 
        FIELD aux_cdoperad AS CHARACTER FORMAT "X(256)":U 
-       FIELD aux_tprelato AS CHARACTER .
+       FIELD aux_tprelato AS CHARACTER
+       FIELD aux_nrseqpgm AS CHARACTER FORMAT "X(256)":U.
 
 
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _DEFINITIONS w-html 
@@ -86,6 +89,7 @@ DEFINE VARIABLE v-descricaoerro       AS CHARACTER                      NO-UNDO.
 DEFINE VARIABLE v-identificacao       AS CHARACTER                      NO-UNDO.
 
 DEFINE VARIABLE aux_crapcop           AS CHAR                           NO-UNDO.
+DEFINE VARIABLE vetorprogra           AS CHAR                           NO-UNDO.
 
 /* _UIB-CODE-BLOCK-END */
 &ANALYZE-RESUME
@@ -103,9 +107,14 @@ DEFINE VARIABLE aux_crapcop           AS CHAR                           NO-UNDO.
 &Scoped-define FRAME-NAME Web-Frame
 
 /* Standard List Definitions                                            */
-&Scoped-Define ENABLED-OBJECTS ab_unmap.aux_idevento ab_unmap.aux_cdcooper ab_unmap.aux_detalhar ab_unmap.aux_dsendurl ab_unmap.aux_dtanoage ab_unmap.aux_lspermis ab_unmap.aux_tprelato ab_unmap.aux_cdoperad
-&Scoped-Define DISPLAYED-OBJECTS ab_unmap.aux_idevento ab_unmap.aux_cdcooper ab_unmap.aux_detalhar ab_unmap.aux_dsendurl ab_unmap.aux_dtanoage ab_unmap.aux_lspermis ab_unmap.aux_tprelato ab_unmap.aux_cdoperad 
-
+&Scoped-Define ENABLED-OBJECTS ab_unmap.aux_idevento ab_unmap.aux_cdcooper ~
+ab_unmap.aux_detalhar ab_unmap.aux_dsendurl ab_unmap.aux_dtanoage ~
+ab_unmap.aux_lspermis ab_unmap.aux_tprelato ab_unmap.aux_cdoperad ~
+ab_unmap.aux_nrseqpgm
+&Scoped-Define DISPLAYED-OBJECTS ab_unmap.aux_idevento ab_unmap.aux_cdcooper ~
+ab_unmap.aux_detalhar ab_unmap.aux_dsendurl ab_unmap.aux_dtanoage ~
+ab_unmap.aux_lspermis ab_unmap.aux_tprelato ab_unmap.aux_cdoperad ~
+ab_unmap.aux_nrseqpgm
 /* Custom List Definitions                                              */
 /* List-1,List-2,List-3,List-4,List-5,List-6                            */
 
@@ -149,6 +158,10 @@ DEFINE FRAME Web-Frame
           VIEW-AS FILL-IN 
           SIZE 20 BY 1
      ab_unmap.aux_tprelato AT ROW 1 COL 1 HELP
+          "" NO-LABEL
+          VIEW-AS SELECTION-LIST SINGLE NO-DRAG 
+          SIZE 20 BY 4
+     ab_unmap.aux_nrseqpgm AT ROW 1 COL 1 HELP
           "" NO-LABEL
           VIEW-AS SELECTION-LIST SINGLE NO-DRAG 
           SIZE 20 BY 4
@@ -270,6 +283,8 @@ PROCEDURE htmOffsets :
     ("aux_cdoperad":U,"ab_unmap.aux_cdoperad":U,ab_unmap.aux_cdoperad:HANDLE IN FRAME {&FRAME-NAME}).
   RUN htmAssociate
     ("aux_tprelato":U,"ab_unmap.aux_tprelato":U,ab_unmap.aux_tprelato:HANDLE IN FRAME {&FRAME-NAME}).
+  RUN htmAssociate
+    ("aux_nrseqpgm":U,"ab_unmap.aux_nrseqpgm":U,ab_unmap.aux_nrseqpgm:HANDLE IN FRAME {&FRAME-NAME}).
 END PROCEDURE.
 
 /* _UIB-CODE-BLOCK-END */
@@ -307,6 +322,14 @@ PROCEDURE PermissaoDeAcesso :
 
 END PROCEDURE.
 
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE CriaListaProgramas w-html 
+PROCEDURE CriaListaProgramas:
+
+ {includes/wpgd0010.i}
+ ASSIGN ab_unmap.aux_nrseqpgm:LIST-ITEM-PAIRS IN FRAME {&FRAME-NAME} = vetorprogra.
+  
+END PROCEDURE.
+
 /* _UIB-CODE-BLOCK-END */
 &ANALYZE-RESUME
 
@@ -340,7 +363,8 @@ ASSIGN opcao                 = GET-FIELD("aux_cddopcao")
        ab_unmap.aux_lspermis = FlagPermissoes
        ab_unmap.aux_dtanoage = GET-VALUE("aux_dtanoage")
        ab_unmap.aux_cdcooper = GET-VALUE("aux_cdcooper")
-       ab_unmap.aux_cdoperad = GET-VALUE("aux_cdoperad").
+       ab_unmap.aux_cdoperad = GET-VALUE("aux_cdoperad")
+       ab_unmap.aux_nrseqpgm = GET-VALUE("aux_nrseqpgm").
 	   
 RUN outputHeader.
 
@@ -391,10 +415,12 @@ ab_unmap.aux_cdcooper:LIST-ITEM-PAIRS IN FRAME {&FRAME-NAME} = TRIM(aux_crapcop)
 
 /* carrega o combo dos tipos de relatório */
 ab_unmap.aux_tprelato:LIST-ITEM-PAIRS IN FRAME {&FRAME-NAME} = "Dados Quantitativos,1,Por Evento,2,Por PA,3".
-   
+
 RUN insere_log_progrid("WPGD0043.w",STRING(opcao) + "|" + STRING(ab_unmap.aux_idevento) + "|" +
 					  STRING(ab_unmap.aux_cdcooper) + "|" + STRING(ab_unmap.aux_cdoperad) + "|" + STRING(ab_unmap.aux_dtanoage)).
 					     
+RUN CriaListaProgramas.
+               
 /* método POST */
 IF REQUEST_METHOD = "POST":U THEN 
    DO:

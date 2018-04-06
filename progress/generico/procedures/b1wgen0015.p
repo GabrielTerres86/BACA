@@ -36,7 +36,7 @@
 
     Programa: b1wgen0015.p
     Autor   : Evandro
-    Data    : Abril/2006                      Ultima Atualizacao: 26/06/2017
+    Data    : Abril/2006                      Ultima Atualizacao: 08/02/2018
     
     Dados referentes ao programa:
 
@@ -403,11 +403,18 @@
 
 
               18/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
-			               crapass, crapttl, crapjur 
-						  (Adriano - P339).
+                          crapass, crapttl, crapjur (Adriano - P339).
 
 			   26/06/2017 - Ajuste para chamar rotina convertida na procedure cancelar-senha-internet
 			                (Jonata - RKAM P364).
+                           
+              12/12/2017 - Passar como texto o campo nrcartao na chamada da procedure 
+                           pc_gera_log_ope_cartao (Lucas Ranghetti #810576)
+              08/02/2018 - Na procedure atualizar-preposto foi atualizado as transacoes pendentes
+                           de aprovacao para o novo preposto qdo for PJ sem ass conjunta(Tiago #775776).
+
+	          30/01/2018 - Adicionado tratamento na valida-inclusao-conta-transferencia
+                           para trocar a mensagem quando a origem for InternetBank (Anderson).
 ..............................................................................*/
 
 { sistema/internet/includes/b1wnet0002tt.i }
@@ -3890,7 +3897,7 @@ PROCEDURE executa_transferencia:
                                  INPUT par_idtipcar,
                                  INPUT par_nrdocdeb,     /* Nrd Documento */               
                                  INPUT par_cdhisdeb,     /* HIST Debito */
-                                 INPUT par_nrcartao,
+                                 INPUT STRING(par_nrcartao),
                                  INPUT par_vllanmto,
                                  INPUT par_cdoperad,     /* Código do Operador */
                                  INPUT 0,
@@ -5959,7 +5966,7 @@ PROCEDURE cancelar-senha-internet:
     
 	/* Fechar o procedimento para buscarmos o resultado */ 
 	CLOSE STORED-PROC pc_cancelar_senha_internet_car
-		aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+                              aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
     
 	{ includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} } 
 
@@ -7710,6 +7717,45 @@ PROCEDURE atualizar-preposto:
                                               "99999999999"),"xxx.xxx.xxx-xx")).
                     END.
             END.
+        
+        /*Atualizar as transaçoes pendentes de aprovaçao para o novo preposto
+          quando for uma conta PJ sem assinatura conjunta Tiago*/
+        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+        RUN STORED-PROCEDURE pc_atu_trans_pend_prep
+            aux_handproc = PROC-HANDLE NO-ERROR
+                          (INPUT par_cdcooper, /* Codigo da Cooperativa */
+                           INPUT par_nrdconta, /* Numero da Conta */
+                           INPUT par_nrcpfcgc, /* CPF/CGC */
+                           INPUT crapass.inpessoa, /* Tipo Pessoa */
+                           INPUT 1,            /* Tipo de senha (1=INTERNET) */
+                           INPUT crapass.idastcjt, /* Exige Ass.Conjunta Nao=0 Sim=1 */
+                          OUTPUT 0,            /* Codigo da critica */
+                          OUTPUT "").          /* Descricao da critica */
+        
+        CLOSE STORED-PROC pc_atu_trans_pend_prep
+              aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+        
+        ASSIGN aux_cdcritic = 0
+               aux_dscritic = ""
+               aux_cdcritic = pc_atu_trans_pend_prep.pr_cdcritic 
+                              WHEN pc_atu_trans_pend_prep.pr_cdcritic <> ?
+               aux_dscritic = pc_atu_trans_pend_prep.pr_dscritic
+                              WHEN pc_atu_trans_pend_prep.pr_dscritic <> ?.
+        
+        IF aux_cdcritic <> 0   OR
+           aux_dscritic <> ""  THEN
+        DO:
+          RUN gera_erro (INPUT par_cdcooper,
+                         INPUT par_cdagenci,
+                         INPUT par_nrdcaixa,
+                         INPUT 1,            /** Sequencia **/
+                         INPUT aux_cdcritic,
+                         INPUT-OUTPUT aux_dscritic).
+                                       
+          UNDO TRANSACAO, LEAVE TRANSACAO.                                   
+        END.
         
         ASSIGN aux_flgtrans = TRUE.
         
@@ -9640,10 +9686,10 @@ PROCEDURE valida-inclusao-conta-transferencia:
     DEF  INPUT PARAM par_cdageban AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_nrctatrf LIKE crapcti.nrctatrf             NO-UNDO.
     DEF  INPUT PARAM par_intipdif AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_intipcta AS INTE                           NO-UNDO.
+    DEF  INPUT-OUTPUT PARAM par_intipcta AS INTE                    NO-UNDO.
     DEF  INPUT PARAM par_insitcta AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_inpessoa AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_nrcpfcgc AS DECI                           NO-UNDO.
+    DEF  INPUT-OUTPUT PARAM par_inpessoa AS INTE                    NO-UNDO.
+    DEF  INPUT-OUTPUT PARAM par_nrcpfcgc AS DECI                    NO-UNDO.
     DEF  INPUT PARAM par_flvldinc AS LOGI                           NO-UNDO.
 
     DEF  INPUT PARAM par_rowidcti AS CHAR                           NO-UNDO.
@@ -9654,6 +9700,8 @@ PROCEDURE valida-inclusao-conta-transferencia:
     DEF  OUTPUT PARAM par_nmdcampo AS CHAR                          NO-UNDO.
     
     DEF OUTPUT PARAM TABLE FOR tt-erro.
+
+	DEF VAR aux_dsibcrit AS CHAR                                    NO-UNDO.
 
     { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
     RUN STORED-PROCEDURE pc_val_inclui_conta_transf
@@ -9675,10 +9723,10 @@ PROCEDURE valida-inclusao-conta-transferencia:
                                             INPUT par_intipcta,
                                             INPUT par_insitcta,
                                             INPUT par_inpessoa,
-                                            INPUT dec(par_nrcpfcgc),
-                                            INPUT INT(pr_flvldinc),
-                                            INPUT int(par_rowidcti),
-                                                  INPUT par_nmtitula,
+                                            INPUT DEC(par_nrcpfcgc),
+                                            INPUT INT(par_flvldinc),
+                                            INPUT INT(par_rowidcti),
+                                            INPUT par_nmtitula,
                                            OUTPUT "",
                                            OUTPUT "",
                                            OUTPUT 0,
@@ -9692,6 +9740,9 @@ PROCEDURE valida-inclusao-conta-transferencia:
     ASSIGN par_dscpfcgc = ""
            par_nmdcampo = ""
            par_nmtitula = "" 
+           par_nrcpfcgc = 0
+           par_inpessoa = 0
+           par_intipcta = 0
            aux_dscritic = ""
            aux_cdcritic = 0
            par_dscpfcgc = pc_val_inclui_conta_transf.pr_dscpfcgc 
@@ -9699,7 +9750,13 @@ PROCEDURE valida-inclusao-conta-transferencia:
            par_nmdcampo = pc_val_inclui_conta_transf.pr_nmdcampo 
                           WHEN pc_val_inclui_conta_transf.pr_nmdcampo <> ?
            par_nmtitula = pc_val_inclui_conta_transf.pr_nmtitula 
-                          WHEN pc_val_inclui_conta_transf.pr_nmtitula <> ?
+                          WHEN pc_val_inclui_conta_transf.pr_nmtitula <> ?                          
+           par_nrcpfcgc = pc_val_inclui_conta_transf.pr_nrcpfcgc 
+                          WHEN pc_val_inclui_conta_transf.pr_nrcpfcgc <> ?                          
+           par_inpessoa = pc_val_inclui_conta_transf.pr_inpessoa 
+                          WHEN pc_val_inclui_conta_transf.pr_inpessoa <> ?
+           par_intipcta = pc_val_inclui_conta_transf.pr_intipcta 
+                          WHEN pc_val_inclui_conta_transf.pr_intipcta <> ?                          
            aux_cdcritic = pc_val_inclui_conta_transf.pr_cdcritic 
                           WHEN pc_val_inclui_conta_transf.pr_cdcritic <> ?
            aux_dscritic = pc_val_inclui_conta_transf.pr_dscritic
@@ -9708,33 +9765,41 @@ PROCEDURE valida-inclusao-conta-transferencia:
     IF aux_cdcritic <> 0  OR
        aux_dscritic <> "" THEN
         DO:
+          EMPTY TEMP-TABLE tt-erro.
 
-            IF aux_dscritic <> ""  OR 
-        aux_cdcritic <> 0   THEN
-        DO: 
-                EMPTY TEMP-TABLE tt-erro.
-
-            RUN gera_erro (INPUT par_cdcooper,
-                           INPUT par_cdagenci,
-                           INPUT par_nrdcaixa,
-                           INPUT 1,            /** Sequencia **/
-                           INPUT aux_cdcritic,
-                           INPUT-OUTPUT aux_dscritic).
+          /* Se for InternetBank, monta critica mais adequada e grava no log a critica real */
+          IF par_idorigem = 3 AND 
+             aux_cdcritic <> 979 THEN /* 979 - Conta de transferencia ja cadastrada [possui tratamento dif. na operacao 80] */
+             DO:
+               ASSIGN aux_dsibcrit = "Conta não encontrada no Sistema CECRED".
+               RUN gera_erro (INPUT par_cdcooper,
+                              INPUT par_cdagenci,
+                              INPUT par_nrdcaixa,
+                              INPUT 1,            /** Sequencia **/
+                              INPUT 0,            /** cdcritic  **/
+                              INPUT-OUTPUT aux_dsibcrit).
+             END.
+          ELSE
+             RUN gera_erro (INPUT par_cdcooper,
+                            INPUT par_cdagenci,
+                            INPUT par_nrdcaixa,
+                            INPUT 1,            /** Sequencia **/
+                            INPUT aux_cdcritic,
+                            INPUT-OUTPUT aux_dscritic).
          
-            IF  par_flgerlog  THEN
-                RUN proc_gerar_log (INPUT par_cdcooper,
-                                    INPUT par_cdoperad,
-                                    INPUT aux_dscritic,
-                                    INPUT aux_dsorigem,
-                                    INPUT aux_dstransa,
-                                    INPUT FALSE,
-                                    INPUT par_idseqttl,
-                                    INPUT par_nmdatela,
-                                    INPUT par_nrdconta,
-                                   OUTPUT aux_nrdrowid).
-                                                   
-            RETURN "NOK".                           
-        END.
+          IF  par_flgerlog  THEN
+              RUN proc_gerar_log (INPUT par_cdcooper,
+                                  INPUT par_cdoperad,
+                                  INPUT aux_dscritic,
+                                  INPUT aux_dsorigem,
+                                  INPUT aux_dstransa,
+                                  INPUT FALSE,
+                                  INPUT par_idseqttl,
+                                  INPUT par_nmdatela,
+                                  INPUT par_nrdconta,
+                                 OUTPUT aux_nrdrowid).
+                                             
+          RETURN "NOK".
       
         END.
       

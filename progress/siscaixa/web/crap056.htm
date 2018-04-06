@@ -15,10 +15,12 @@ Alteracoes: 03/07/2009 - Aumento do campo Operador (Diego).
             05/09/2016 - Melhoria para usar copiar e colar o numero de conta
 			             nas rotinas do caixa online SD 474875 (Tiago/Elton).
      
-            12/09/2016 - Adicionado chamada da função "callBlass(event)" - (Evandro - RKAM).    
+            12/09/2016 - Adicionado chamada da função "callBlass(event)" - (Evandro - RKAM).                 
     
             02/12/2016 - Corrigido a ordem do fluxo da tela para nao reclamar do historico
                          (Tiago/Elton SD563166) .
+						 
+	  	    16/01/2018 - Aumentado tamanho do campo de senha para 30 caracteres. (PRJ339 - Reinert)						    						 
 -->
 <html>
 
@@ -174,7 +176,7 @@ $(document).ready(function(){
         </tr>
         <tr>
           <td width="20%" align="right" class="linhaform">Senha:</td>
-          <td width="67%"><input type="password" name="v_senha" maxlength="10" size="12" class="input"></td>
+          <td width="67%"><input type="password" name="v_senha" maxlength="30" size="12" class="input"></td>
         </tr>
         <tr>
           <td width="20%" align="right" class="linhaform"></td>

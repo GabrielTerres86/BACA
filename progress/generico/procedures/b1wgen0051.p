@@ -26,6 +26,7 @@
 				26/06/2017 - Inclusao de novo tipo de demissao
 							 (Jonata - RKAM P364).
 
+                06/02/2018 -  Incluido campo cdcatego na tt-cabec. PRJ366 (Lombardi)
 .............................................................................*/
 
 
@@ -276,7 +277,7 @@ PROCEDURE obtem-cabecalho:
     Cabec: DO ON ERROR UNDO Cabec, LEAVE Cabec:
         FOR FIRST crapass FIELDS(cdcooper nrdconta inpessoa cdagenci 
                                  cdtipcta nrmatric nmprimtl nrcpfcgc 
-                                 cdsitdct nrdctitg dtdemiss)
+                                 cdsitdct cdcatego nrdctitg dtdemiss)
                           WHERE crapass.cdcooper = par_cdcooper AND
                                 crapass.nrdconta = par_nrdconta NO-LOCK: 
         END.
@@ -395,6 +396,7 @@ PROCEDURE obtem-cabecalho:
             tt-cabec.dstipcta = CAPS(craptip.dstipcta)
             tt-cabec.cdsitdct = crapass.cdsitdct
             tt-cabec.dssitdct = BuscaSitConta(tt-cabec.cdsitdct)
+            tt-cabec.cdcatego = crapass.cdcatego
             tt-cabec.nrdctitg = crapass.nrdctitg 
             tt-cabec.dtnasttl = IF AVAIL crapttl THEN 
                                    crapttl.dtnasttl 

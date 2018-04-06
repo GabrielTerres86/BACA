@@ -13,6 +13,9 @@
 
                 06/02/2017 - #552068 Inclusao da descricao extensa do historico
                              na rotina Busca_Consulta (Carlos)
+                             
+                05/12/2017 - Melhoria 458 adicionado campo inmonpld - Antonio R. Jr (Mouts)
+        
 ............................................................................*/
 
 /*............................. DEFINICOES .................................*/
@@ -59,6 +62,7 @@ PROCEDURE Busca_Dados:
     DEF  INPUT PARAM par_dshistor AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_tpltmvpq AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_cdhinovo AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_cdgrphis AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_nrregist AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_nriniseq AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_flgerlog AS LOGI                           NO-UNDO.
@@ -200,6 +204,7 @@ PROCEDURE Busca_Dados:
               INPUT par_cdhistor,
               INPUT par_dshistor,
               INPUT par_tpltmvpq,
+              INPUT par_cdgrphis,
               INPUT par_nrregist,
               INPUT par_nriniseq,
               INPUT aux_txcpmfcc,
@@ -267,6 +272,7 @@ PROCEDURE Busca_Consulta PRIVATE:
     DEF  INPUT PARAM par_cdhistor AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_dshistor AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_tpltmvpq AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_cdgrphis AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_nrregist AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_nriniseq AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_txcpmfcc AS DECI                           NO-UNDO.
@@ -298,6 +304,8 @@ PROCEDURE Busca_Consulta PRIVATE:
                                  par_tpltmvpq <> 0) OR par_tpltmvpq = 0)
                            AND  (craphis.dshistor MATCHES "*" + TRIM(par_dshistor) + "*" OR
 						         craphis.dsexthst MATCHES "*" + TRIM(par_dshistor) + "*" )
+                           AND ((craphis.cdgrphis = par_cdgrphis    AND
+                                 par_cdgrphis <> 0) OR par_cdgrphis = 0)
                          NO-LOCK
                          BY craphis.cdhistor:
             
@@ -502,6 +510,9 @@ PROCEDURE Busca_Historico:
     DEF VAR aux_cdcritic AS INTE                                    NO-UNDO.
     DEF VAR aux_dscritic AS CHAR                                    NO-UNDO.
 
+    DEF VAR aux_dsgrphis AS CHAR                                    NO-UNDO.
+    DEF VAR aux_des_erro AS CHAR                                    NO-UNDO.
+    
     EMPTY TEMP-TABLE tt-histor.
     EMPTY TEMP-TABLE tt-erro.
 
@@ -553,6 +564,7 @@ PROCEDURE Busca_Historico:
            tt-histor.inautori = craphis.inautori   
            tt-histor.inclasse = craphis.inclasse   
            tt-histor.incremes = craphis.incremes   
+           tt-histor.inmonpld = craphis.inmonpld
            tt-histor.indcompl = craphis.indcompl   
            tt-histor.indebcta = craphis.indebcta   
            tt-histor.indebfol = craphis.indebfol   
@@ -572,6 +584,50 @@ PROCEDURE Busca_Historico:
                                 ELSE
                                     0. 
 
+        IF craphis.cdgrphis > 0 THEN
+            DO:
+                { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+                /* Procedure para buscar as informacoes da CPMF da cooperativa */
+                RUN STORED-PROCEDURE pc_descricao_grupo_historico
+                    aux_handproc = PROC-HANDLE NO-ERROR
+                                            (INPUT craphis.cdgrphis, /* pr_cdgrupo_historico */
+                                             OUTPUT "",  /* pr_dsgrupo_historico */
+                                             OUTPUT "",  /* pr_des_erro */
+                                             OUTPUT ""). /* pr_dscritic */
+                
+                CLOSE STORED-PROC pc_descricao_grupo_historico
+                      aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+                
+                { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+                
+                ASSIGN aux_dsgrphis = ""
+                       aux_des_erro = ""
+                       aux_dscritic = ""
+                       aux_dsgrphis = pc_descricao_grupo_historico.pr_dsgrupo_historico
+                                          WHEN pc_descricao_grupo_historico.pr_dsgrupo_historico <> ?
+                       aux_des_erro = pc_descricao_grupo_historico.pr_des_erro
+                                          WHEN pc_descricao_grupo_historico.pr_des_erro <> ?
+                       aux_dscritic = pc_descricao_grupo_historico.pr_dscritic
+                                          WHEN pc_descricao_grupo_historico.pr_dscritic <> ?.
+                
+                IF aux_des_erro = "NOK" THEN
+                    DO:
+                        ASSIGN aux_cdcritic = 0
+                               par_nmdcampo = "cdgrupo_historico".
+                
+                        RUN gera_erro (INPUT par_cdcooper,
+                                       INPUT par_cdagenci,
+                                       INPUT par_nrdcaixa,
+                                       INPUT 1,
+                                       INPUT aux_cdcritic,
+                                       INPUT-OUTPUT aux_dscritic).
+                        RETURN "NOK".
+                    END.
+            END.
+        ASSIGN tt-histor.cdgrphis = craphis.cdgrphis
+               tt-histor.dsgrphis = aux_dsgrphis.
+            
     FOR EACH crapthi WHERE crapthi.cdcooper = craphis.cdcooper   
                        AND crapthi.cdhistor = craphis.cdhistor   
                      NO-LOCK:
@@ -748,6 +804,7 @@ PROCEDURE Grava_Dados:
     DEF  INPUT PARAM par_inavisar AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_inclasse AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_incremes AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_inmonpld AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_indcompl AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_indebcta AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_indoipmf AS INTE                           NO-UNDO.
@@ -765,6 +822,9 @@ PROCEDURE Grava_Dados:
     
     DEF  INPUT PARAM par_ingercre AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_ingerdeb AS INTE                           NO-UNDO.
+    
+    DEF  INPUT PARAM par_cdgrphis AS INTE                           NO-UNDO.
+    
     DEF  INPUT PARAM par_flgsenha AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_cdprodut AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_cdagrupa AS INTE                           NO-UNDO.
@@ -787,6 +847,8 @@ PROCEDURE Grava_Dados:
     DEF  VAR aux_vltarint AS DECI                                   NO-UNDO.
     DEF  VAR aux_vltarcsh AS DECI                                   NO-UNDO.
     DEF  VAR aux_flgsenha AS LOGI                                   NO-UNDO.
+    DEF  VAR aux_flggphis AS CHAR                                   NO-UNDO.
+    DEF  VAR aux_des_erro AS CHAR                                   NO-UNDO.
 
     ASSIGN aux_dscritic = ""
            aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
@@ -913,6 +975,14 @@ PROCEDURE Grava_Dados:
                 LEAVE Grava.
             END.
 
+        IF par_inmonpld <> 0 AND par_inmonpld <> 1 THEN
+            DO:
+                ASSIGN aux_cdcritic = 0
+                       aux_dscritic = "Indicador para monitoramento invalido."
+                       par_nmdcampo = "inmonpld".
+                LEAVE Grava.
+            END.
+
         IF par_tpctbccu <> 0 AND par_tpctbccu <> 1 THEN
             DO:
                 ASSIGN aux_cdcritic = 0
@@ -944,7 +1014,51 @@ PROCEDURE Grava_Dados:
                        par_nmdcampo = "ingerdeb".
                 LEAVE Grava.
             END.
+        
+        IF par_cdgrphis > 0 THEN
+            DO:
+                { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+                
+                /* Procedure para buscar as informacoes da CPMF da cooperativa */
+                RUN STORED-PROCEDURE pc_valida_grupo_historico
+                    aux_handproc = PROC-HANDLE NO-ERROR
+                                            (INPUT par_cdgrphis, /* pr_cdgrupo_historico */
+                                             OUTPUT "",  /* pr_flggphis */
+                                             OUTPUT "",  /* pr_des_erro */
+                                             OUTPUT ""). /* pr_dscritic */
+                
+                CLOSE STORED-PROC pc_valida_grupo_historico
+                      aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+                
+                { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+                
+                ASSIGN aux_flggphis = ""
+                       aux_des_erro = ""
+                       aux_dscritic = ""
+                       aux_flggphis = pc_valida_grupo_historico.pr_flggphis
+                                          WHEN pc_valida_grupo_historico.pr_flggphis <> ?
+                       aux_des_erro = pc_valida_grupo_historico.pr_des_erro
+                                          WHEN pc_valida_grupo_historico.pr_des_erro <> ?
+                       aux_dscritic = pc_valida_grupo_historico.pr_dscritic
+                                          WHEN pc_valida_grupo_historico.pr_dscritic <> ?.
+                
+                IF aux_des_erro = "NOK" THEN
+                    DO:
+                        ASSIGN aux_cdcritic = 0
+                               par_nmdcampo = "cdgrupo_historico".
+                        LEAVE Grava.
+                    END.
+        
+                IF aux_flggphis = "N" THEN
+                    DO:
+                        ASSIGN aux_cdcritic = 0
+                               aux_dscritic = "Grupo de Historico informado nao encontrado."
+                               par_nmdcampo = "cdgrupo_historico".
+                        LEAVE Grava.
+            END.
 
+            END.
+            
         IF par_cdprodut <> ? AND par_cdprodut <> 0 THEN
             DO:
                 FIND FIRST crapprd WHERE crapprd.cdprodut = par_cdprodut        
@@ -1104,6 +1218,7 @@ PROCEDURE Grava_Dados:
                                        INPUT par_indcompl,
                                        INPUT par_indebcta,
                                        INPUT par_incremes,
+                                       INPUT par_inmonpld,
                                        INPUT par_tpctbcxa,
                                        INPUT par_vltarayl,
                                        INPUT par_vltarcxo,
@@ -1143,6 +1258,7 @@ PROCEDURE Grava_Dados:
                            craphis.inavisar  =  par_inavisar
                            craphis.inclasse  =  par_inclasse
                            craphis.incremes  =  par_incremes
+                           craphis.inmonpld  =  par_inmonpld
                            craphis.indcompl  =  par_indcompl
                            craphis.indebcta  =  par_indebcta
                            craphis.indebfol  =  0 
@@ -1163,7 +1279,8 @@ PROCEDURE Grava_Dados:
                            craphis.cdprodut  =  par_cdprodut
                            craphis.cdagrupa  =  par_cdagrupa
                            craphis.dsextrat  =  CAPS(par_dsextrat)
-                           craphis.flgsenha  =  aux_flgsenha.
+                           craphis.flgsenha  =  aux_flgsenha
+                           craphis.cdgrphis  =  par_cdgrphis.
     
                     /* Atualizar as informacoes das tarifas */
                     FIND FIRST crapthi WHERE crapthi.cdcooper = craphis.cdcooper
@@ -1393,6 +1510,7 @@ PROCEDURE Replica_Dados:
                                INPUT craphis.indcompl,
                                INPUT craphis.indebcta,
                                INPUT craphis.incremes,
+                               INPUT craphis.inmonpld,
                                INPUT craphis.tpctbcxa,
                                INPUT aux_vltarayl,
                                INPUT aux_vltarcxo,
@@ -1864,6 +1982,7 @@ PROCEDURE gera_item_log:
     DEF INPUT PARAM par_indcompl AS INTE                            NO-UNDO.
     DEF INPUT PARAM par_indebcta AS INTE                            NO-UNDO.
     DEF INPUT PARAM par_incremes AS INTE                            NO-UNDO.
+    DEF INPUT PARAM par_inmonpld AS INTE                            NO-UNDO.
     DEF INPUT PARAM par_tpctbcxa AS INTE                            NO-UNDO.
     DEF INPUT PARAM aux_vltarayl AS DECI                            NO-UNDO.
     DEF INPUT PARAM aux_vltarcxo AS DECI                            NO-UNDO.
@@ -2019,6 +2138,15 @@ PROCEDURE gera_item_log:
                       INPUT "Ind. p/estat. credito do mes",
                       INPUT STRING(b-craphis.incremes),
                       INPUT STRING(par_incremes)).
+ 
+    IF par_inmonpld <> b-craphis.inmonpld THEN
+        RUN gera_log (INPUT par_cdcooper,
+                      INPUT par_cdoperad,
+                      INPUT par_cdhistor,
+                      INPUT par_cdcoprep,
+                      INPUT "Ind. Monitoramento",
+                      INPUT STRING(b-craphis.inmonpld),
+                      INPUT STRING(par_inmonpld)).
  
     IF par_tpctbcxa <> b-craphis.tpctbcxa THEN
         RUN gera_log (INPUT par_cdcooper,
@@ -2250,3 +2378,4 @@ PROCEDURE gera_logtel:
                       "/log/histor.log").
 
 END PROCEDURE.
+

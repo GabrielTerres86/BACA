@@ -26,7 +26,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0006.p                  
     Autora  : Junior
-    Data    : 12/09/2005                      Ultima atualizacao: 07/06/2016
+    Data    : 12/09/2005                      Ultima atualizacao: 07/02/2018
 
     Dados referentes ao programa:
 
@@ -125,8 +125,19 @@
                 07/09/2016 - Incluido historico 863 no extrato da poupanca programada da ATENDA
                              Andrey (RKAM) - Chamado 507087
 
-				07/12/2016 - P341-Automatização BACENJUD - Alterar o uso da descrição do
+				        07/12/2016 - P341-Automatização BACENJUD - Alterar o uso da descrição do
                              departamento passando a considerar o código (Renato Darosci)
+
+			          30/11/2017 - Implementei controle de lock sobre a tabela CRAPLOT na efetuar-resgate. 
+							               (SD 799728 - Carlos Rafael Tanholi)
+
+                23/01/2018 - Correcao ao buscar lancamentos de resgate para descontar do saldo da poupanca.
+                             Uma busca utilizava <= dtmvtopr e a outra >= dtmvtolt, sobrepondo lancamentos e
+                             descontando 2x, fazendo com que o cooperado nao conseguisse sacar o valor desejado.
+                             Heitor (Mouts) - Chamado 825869
+
+			   07/02/2018 - Retirada com controle de lock da tabela CRAPLOT. Carlos Rafael Tanholi (SD 845899).
+
 ..............................................................................*/
 
 
@@ -2319,7 +2330,7 @@ PROCEDURE efetuar-resgate:
         
         VALIDATE craplrg.
 
-        FIND CURRENT craplot NO-LOCK NO-ERROR.
+		FIND CURRENT craplot NO-LOCK NO-ERROR.
         FIND CURRENT craplrg NO-LOCK NO-ERROR.
 
         ASSIGN aux_flgtrans = TRUE.
@@ -3847,7 +3858,7 @@ PROCEDURE ver-valores-bloqueados-judicial:
         FIND craplrg WHERE craplrg.cdcooper = par_cdcooper           AND
                            craplrg.nrdconta = par_nrdconta           AND
                            craplrg.nraplica = tt-dados-rpp.nrctrrpp  AND
-                           craplrg.dtresgat >= par_dtmvtolt          AND
+                           craplrg.dtresgat > par_dtmvtopr           AND
                            craplrg.inresgat = 0
                            NO-LOCK NO-ERROR.
          

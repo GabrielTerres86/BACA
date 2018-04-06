@@ -2,13 +2,15 @@
 
    Programa: b1wgen0195.p
    Autora  : Odirlei Busana - AMcom.
-   Data    : 09/03/2016                        Ultima atualizacao: 02/05/2017
+   Data    : 09/03/2016                        Ultima atualizacao: 14/12/2017
 
    Dados referentes ao programa:
 
    Objetivo  : BO - Rotinas para envio de informacoes para a Esteira de Credito
 
    Alteracoes: 02/05/2017 - Ajustes PRJ337 - Motor de Credito (Odirlei-Amcom)
+
+               14/12/2017 - SM Motor de Crédito - Interrupçao de Fluxo (Marcos-Supero)
 
  ..............................................................................*/
 
@@ -192,12 +194,13 @@ PROCEDURE Enviar_proposta_esteira:
     DEF  INPUT PARAM par_dsiduser AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_flreiflx AS INTE                           NO-UNDO.
     /* Tipo de envio dos dados para a Esteira 
-       I - inclusao Proposta
+       I - Inclusao Proposta
        D - Derivacao Proposta
        A - Alteracao Proposta
        N - Alterar Numero Proposta
        C - Cancelar Proposta
-       E - Efetivar Proposta */
+       E - Efetivar Proposta
+       P - Interromper Fluxo */
     DEF  INPUT PARAM par_tpenvest AS CHAR                           NO-UNDO.  
     
     DEF OUTPUT PARAM par_dsmensag AS CHAR                           NO-UNDO.
@@ -262,11 +265,11 @@ PROCEDURE Enviar_proposta_esteira:
               
               /* Se:                                               */
               /*    1 - Jah houve envio para a Esteira             */
-              /*    2 - Nao precisar passar por Analise Automatica */
-              /*    3 - Nao existir protocolo gravado              */
+              /*    2a - Nao precisar passar por Analise Automatica */
+              /*    2b - Ou está em situação Derivar                */
               
-              IF (     crawepr.dtenvest <> ? AND aux_inobriga <> "S" 
-                   AND ( crawepr.dsprotoc = ? OR crawepr.dsprotoc = " " ) ) THEN                    
+              IF crawepr.dtenvest <> ? AND(   aux_inobriga <> "S"  
+                                           OR crawepr.insitapr = 5) THEN                    
                 DO:    
                     /* Significa que a proposta jah foi para a Esteira, */
                     /* entao devemos mandar um reinicio de Fluxo        */
@@ -428,8 +431,37 @@ PROCEDURE Enviar_proposta_esteira:
       END.  
     
     ELSE    
+    /***** INTERROMPER PROPOSTA *****/ 
+    IF CAN-DO("P",par_tpenvest) THEN
+      DO:
+        /* Chamar rotina de cancelamento da proposta na Esteira*/
+        { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
+
+        RUN STORED-PROCEDURE pc_interrompe_proposta_est aux_handproc = PROC-HANDLE
+           (INPUT par_cdcooper,   /* pr_cdcooper */
+            INPUT par_cdagenci,   /* pr_cdagenci */ 
+            INPUT par_cdoperad,   /* pr_cdoperad */
+            INPUT par_idorigem,   /* pr_cdorigem */
+            INPUT par_nrdconta,   /* pr_nrdconta */
+            INPUT par_nrctremp,   /* pr_nrctremp */
+            INPUT par_dtmvtolt,   /* pr_dtmvtolt */
+            OUTPUT 0,             /* pr_cdcritic */
+            OUTPUT ""             /* pr_dscritic */
+            ).        
+
+        CLOSE STORED-PROCEDURE pc_interrompe_proposta_est WHERE PROC-HANDLE = aux_handproc.
+        { includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }
+        
+        ASSIGN par_cdcritic = 0
+               par_cdcritic = pc_interrompe_proposta_est.pr_cdcritic
+                              WHEN pc_interrompe_proposta_est.pr_cdcritic <> ?
+               par_dscritic = ""
+               par_dscritic = pc_interrompe_proposta_est.pr_dscritic
+                              WHEN pc_interrompe_proposta_est.pr_dscritic <> ?.  
+      END.
+    ELSE
     /***** CANCELAR PROPOSTA *****/ 
-    IF par_tpenvest = "C" THEN
+    IF CAN-DO("C",par_tpenvest) THEN
       DO:
         /* Chamar rotina de cancelamento da proposta na Esteira*/
         { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }

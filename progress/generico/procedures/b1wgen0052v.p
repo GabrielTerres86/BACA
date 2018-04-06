@@ -2,7 +2,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0052v.p                  
     Autor(a): Jose Luis Marchezoni (DB1)
-    Data    : Junho/2010                      Ultima atualizacao: 01/12/2017
+    Data    : Junho/2010                      Ultima atualizacao: 23/01/2018
   
     Dados referentes ao programa:
   
@@ -166,6 +166,9 @@
 			   22/11/2017 - Incluido verificao de cartao de credito (Jonata - RKAM p364).
 
 			   01/12/2017 - Retirado verificacao de DDA (Jonata - RKAM P364).
+
+			   23/01/2018 - Buscar valor do cheque descontado (Jonata - RKAM SD 826663).
+			    
 
 ........................................................................*/
 
@@ -1473,20 +1476,39 @@ PROCEDURE Produtos_Servicos_Ativos:
 
 		
         /***************** Bordero *********************/
-      RUN sistema/generico/procedures/b1wgen0009.p PERSISTENT SET h-b1wgen0009.    
+        RUN sistema/generico/procedures/b1wgen0009.p PERSISTENT SET h-b1wgen0009.    
     
-      RUN busca_borderos IN h-b1wgen0009 (INPUT par_cdcooper,
-                                          INPUT par_nrdconta,
-                                          INPUT par_dtmvtolt,
-                                          INPUT FALSE,
-                                         OUTPUT TABLE tt-bordero_chq).
-                              
-      DELETE PROCEDURE h-b1wgen0009.
+	    /* Chamado 826663 - buscar valor do cheque descontado
+        RUN busca_borderos IN h-b1wgen0009 (INPUT par_cdcooper,
+                                            INPUT par_nrdconta,
+                                            INPUT par_dtmvtolt,
+                                            INPUT FALSE,
+                                           OUTPUT TABLE tt-bordero_chq).
+          
+	    */
+		
+	    RUN busca_dados_dscchq IN h-b1wgen0009 (INPUT par_cdcooper,
+                                                INPUT par_cdagenci,
+                                                INPUT par_nrdcaixa,
+                                                INPUT par_cdoperad,
+                                                INPUT par_dtmvtolt,
+                                                INPUT par_nrdconta,
+                                                INPUT par_idseqttl,
+                                                INPUT par_idorigem,
+                                                INPUT par_nmdatela,
+                                                INPUT FALSE, /* LOG*/
+                                               OUTPUT TABLE tt-erro, 
+                                               OUTPUT TABLE tt-desconto_cheques).
+                    
+        DELETE PROCEDURE h-b1wgen0009.
     
-      FOR EACH tt-bordero_chq NO-LOCK:
-        ASSIGN aux_vlborder = aux_vlborder + tt-bordero_chq.vlcompcr.
-      END.
-	  IF aux_vlborder > 0 THEN
+        FOR EACH tt-desconto_cheques NO-LOCK:
+		
+          ASSIGN aux_vlborder = aux_vlborder + tt-desconto_cheques.vldscchq.
+		  
+        END.
+
+	    IF aux_vlborder > 0 THEN
         DO:
             ASSIGN aux_cdseqcia = aux_cdseqcia + 1.
             CREATE tt-prod_serv_ativos.

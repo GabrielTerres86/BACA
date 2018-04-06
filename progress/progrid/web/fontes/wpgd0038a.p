@@ -1,6 +1,6 @@
 /*****************************************************************************
  Programa wpgd0038a.p - Listagem de fechamento (chamado a partir dos dados de wpgd0038)
-
+ 
  Alterações: 23/02/2007 - cfe tarefa 10307
  
              17/12/2007 - Modificado For Each da tabela crapidp para melhorar
@@ -58,6 +58,8 @@
                           
              31/01/2017 - Ajustes no totalizadores de eventos, máscaras de valores e datas,
                           Prj. 229-5 (Jean Michel).
+                          
+             29/08/2017 - Inclusao do filtro por Programa,Prj. 322 (Jean Michel).
                           
 **************************************************************************** */
 
@@ -124,6 +126,7 @@ DEFINE VARIABLE totalVagasReal               AS INT.
 DEFINE VARIABLE geralVagas                   AS INT.
 DEFINE VARIABLE geralVagasCanc               AS INT. 
 DEFINE VARIABLE geralVagasReal               AS INT. 
+DEFINE VARIABLE nrseqpgm                     AS INT. 
 
 DEFINE VARIABLE iQtQstDevolvido              AS INT NO-UNDO.
 DEFINE VARIABLE iQtQstDevolTotal             AS INT NO-UNDO.
@@ -288,7 +291,7 @@ FUNCTION inscricoesNosEventosPorPac RETURNS LOGICAL ():
                 
                totalVagas           = totalVagas + ttCrapadp.MaximoPorTurma
                geralVagas           = geralVagas + ttCrapadp.MaximoPorTurma.
-        
+               
                If ttcrapadp.idstaeve <> 2 Then
                  ASSIGN totalDeEventosDoPac  = totalDeEventosDoPac + 1
                  totalDeEventosDaCoop = totalDeEventosDaCoop + 1.
@@ -339,7 +342,7 @@ FUNCTION inscricoesNosEventosPorPac RETURNS LOGICAL ():
                   TotalEventosRealizados = totalEventosRealizados + 1.
                           
                ASSIGN totalVagasReal         = totalVagasReal + ttCrapadp.MaximoPorTurma
-                        geralVagasReal         = geralVagasReal + ttCrapadp.MaximoPorTurma.  
+                      geralVagasReal         = geralVagasReal + ttCrapadp.MaximoPorTurma.  
             END.
 
         ASSIGN aux_contador = aux_contador + 1.
@@ -797,7 +800,7 @@ ELSE DO:
           consideraEventosForaDaAgenda = IF GET-VALUE("parametro9") = "SIM" THEN YES ELSE NO
           tipoDeRelatorio              = INTEGER(GET-VALUE("parametro10"))
           tpEvento                     = INTEGER(GET-VALUE("parametro11"))
-          NO-ERROR. 
+          nrseqpgm                     = INTEGER(GET-VALUE("parametro12")) NO-ERROR. 
    
    /* *** Localiza os eventos que satisfazem ao filtro (apenas custos diretos) *** */
    IF cdAgenci = 0  THEN /* Todos os PA´s */
@@ -825,7 +828,9 @@ ELSE DO:
                                (tpEvento = 1                        and
                                 crapedp.tpevento = 11)              OR
                                (tpEvento = 2                        AND
-                                crapedp.tpevento <> 11))))          NO-LOCK:
+                                crapedp.tpevento <> 11))))          AND
+                               (crapedp.nrseqpgm = INT(nrseqpgm)    OR
+                               INT(nrseqpgm) = 0) NO-LOCK:
              IF (Crapadp.DtFinEve >= dataInicial AND 
                  Crapadp.DtFinEve <= dataFinal) OR
                 (crapadp.dtinieve = ? AND
@@ -889,7 +894,9 @@ ELSE DO:
                             (tpEvento = 1                        and
                              crapedp.tpevento = 11)              OR
                             (tpEvento = 2                        AND
-                             crapedp.tpevento <> 11))))          NO-LOCK:
+                             crapedp.tpevento <> 11))))          And
+                            (crapedp.nrseqpgm = INT(nrseqpgm)    OR
+                            INT(nrseqpgm) = 0) NO-LOCK:
  
           IF (Crapadp.DtFinEve >= dataInicial AND 
               Crapadp.DtFinEve <= dataFinal) OR
@@ -963,7 +970,9 @@ ELSE DO:
                  crapedp.cdCooper = ttcrapadp.cdcooper AND
                  crapedp.dtAnoAge = ttcrapadp.dtanoage AND
                  crapedp.cdEvento = ttcrapadp.cdevento AND
-                 crapedp.tpevento = 7 ON ERROR UNDO, LEAVE:
+                 crapedp.tpevento = 7                  AND
+                (crapedp.nrseqpgm = INT(nrseqpgm)      OR
+                INT(nrseqpgm) = 0) ON ERROR UNDO, LEAVE:
 
            FOR EACH crapidp NO-LOCK
               WHERE crapidp.idevento = idevento           AND
@@ -991,7 +1000,7 @@ ELSE DO:
        END. /* FOR EACH */
    END. /* idEvento = 2 */ 
    /*****************************************************************************************************/
-                                                                      
+                                                                         
    ASSIGN conta = 0. 
 
    FOR EACH ttCrapadp:
@@ -1000,7 +1009,9 @@ ELSE DO:
        FIND FIRST Crapedp WHERE Crapedp.IdEvento = ttCrapadp.IdEvento AND
                                 Crapedp.CdCooper = ttCrapadp.CdCooper AND
                                 Crapedp.DtAnoAge = ttCrapadp.DtAnoAge AND
-                                Crapedp.CdEvento = ttCrapadp.CdEvento NO-LOCK NO-ERROR.
+                                Crapedp.CdEvento = ttCrapadp.CdEvento AND
+                               (crapedp.nrseqpgm = INT(nrseqpgm)      OR
+                                INT(nrseqpgm) = 0) NO-LOCK NO-ERROR.
                                 
        IF AVAILABLE Crapedp THEN DO:
           ASSIGN frequenciaMinima = crapedp.prfreque. 
@@ -1149,7 +1160,9 @@ ELSE DO:
           WHERE crapedp.idEvento     = crapidp.idevento 
             AND crapedp.cdCooper     = crapidp.cdcooper 
             AND crapedp.dtAnoAge     = crapidp.dtanoage 
-            AND crapedp.cdEvento     = crapidp.cdevento 
+            AND crapedp.cdEvento     = crapidp.cdevento
+            AND (crapedp.nrseqpgm = INT(nrseqpgm)
+             OR  INT(nrseqpgm) = 0)
             AND NOT crapedp.tpevento = 7 
             BREAK BY crapidp.idstains: 
 
@@ -1281,7 +1294,7 @@ ELSE DO:
   
    montaTela(). 
 END.
-          
+  
 PROCEDURE PermissaoDeAcesso :
-    {includes/wpgd0009.i} 
+  {includes/wpgd0009.i} 
 END PROCEDURE.

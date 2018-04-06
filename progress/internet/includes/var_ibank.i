@@ -4,7 +4,7 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Junior
-   Data    : Julho/2004.                       Ultima atualizacao: 12/05/2017
+   Data    : Julho/2004.                       Ultima atualizacao: 09/11/2017
 
    Dados referentes ao programa:
 
@@ -142,9 +142,14 @@
                            xml_operacao38 (Projeto 321 - Lombardi).
                            
 			  12/05/2017 - Segunda fase da melhoria 342 (Kelvin).
-                           
+        
+              21/08/2017 - Inclusao dos campos qtdiacal e vlrdtaxa na
+                           xml_operacao14b. (Jaison/James - PRJ298)
+
               11/09/2017 - Adicionado campos para consulta de agendamento de GPS
                            xml_operacao38 (Projeto 356.2  - Ricardo Linhares).
+                           
+              09/11/2017 - Incluir campos na temp-table xml_operacao14a (David)
                            
 ..............................................................................*/
 
@@ -174,6 +179,10 @@ DEF TEMP-TABLE xml_operacao9                                            NO-UNDO
     FIELD nrdocmto AS CHAR
     FIELD indebcre AS CHAR
     FIELD vllanmto AS CHAR
+    FIELD cdtiptra AS CHAR
+    FIELD idlstdom AS CHAR
+    FIELD idlancto AS CHAR
+    FIELD incancel AS CHAR
     FIELD dscabfim AS CHAR.
  
 DEF TEMP-TABLE xml_operacao10                                           NO-UNDO
@@ -186,35 +195,6 @@ DEF TEMP-TABLE xml_operacao10                                           NO-UNDO
     FIELD vlsldtot AS CHAR
     FIELD dscabfim AS CHAR.
 
-DEF TEMP-TABLE xml_operacao11                                           NO-UNDO
-    FIELD dscabini AS CHAR
-    FIELD nmtitula AS CHAR
-    FIELD incadsen AS CHAR
-    FIELD idseqttl AS CHAR
-    FIELD inbloque AS CHAR
-    FIELD nrcpfope AS CHAR
-    FIELD dscabfim AS CHAR
-    FIELD inpessoa AS CHAR.
-
-DEF TEMP-TABLE xml_operacao13                                           NO-UNDO
-    FIELD dscabini AS CHAR
-    FIELD dtmvtolt AS CHAR
-    FIELD nmprimtl AS CHAR
-    FIELD nrctremp AS CHAR
-    FIELD vlemprst AS CHAR
-    FIELD qtpreemp AS CHAR
-    FIELD qtprecal AS CHAR
-    FIELD vlpreemp AS CHAR
-    FIELD vlsdeved AS CHAR
-    FIELD dslcremp AS CHAR
-    FIELD dsfinemp AS CHAR
-    FIELD dscabfim AS CHAR
-    FIELD tpemprst AS CHAR
-    FIELD flgpreap AS CHAR
-    FIELD cdorigem AS CHAR
-    FIELD dtapgoib AS CHAR
-	FIELD nrdrecid AS CHAR.
- 
 DEF TEMP-TABLE xml_operacao14a                                          NO-UNDO
     FIELD dscabini AS CHAR
     FIELD dtmvtolt AS CHAR
@@ -226,7 +206,14 @@ DEF TEMP-TABLE xml_operacao14a                                          NO-UNDO
     FIELD vlpreemp AS CHAR
     FIELD vlsdeved AS CHAR
     FIELD dslcremp AS CHAR
-    FIELD dsfinemp AS CHAR
+    FIELD dsfinemp AS CHAR    
+    FIELD qtpreres AS CHAR
+    FIELD dsprodut AS CHAR
+    FIELD cddlinha AS CHAR
+    FIELD dsdlinha AS CHAR
+    FIELD cdfinali AS CHAR
+    FIELD dsfinali AS CHAR
+    FIELD tpemprst AS CHAR
     FIELD dscabfim AS CHAR.
                              
 DEF TEMP-TABLE xml_operacao14b                                          NO-UNDO
@@ -241,17 +228,9 @@ DEF TEMP-TABLE xml_operacao14b                                          NO-UNDO
     FIELD dscabfim AS CHAR
     FIELD vldebito AS CHAR
     FIELD vlcredit AS CHAR
-    FIELD cdorigem AS CHAR.   
-  
-DEF TEMP-TABLE xml_operacao21                                           NO-UNDO
-    FIELD dscabini AS CHAR 
-    FIELD dtemschq AS CHAR 
-    FIELD dtretchq AS CHAR 
-    FIELD nrdctabb AS CHAR
-    FIELD nrcheque AS CHAR 
-    FIELD chqtaltb AS CHAR 
-    FIELD dsobserv AS CHAR 
-    FIELD dscabfim AS CHAR.
+    FIELD cdorigem AS CHAR
+    FIELD qtdiacal AS CHAR 
+    FIELD vlrdtaxa AS CHAR.
     
 DEF TEMP-TABLE xml_operacao24                                           NO-UNDO
     FIELD dscabini AS CHAR
@@ -307,22 +286,6 @@ DEF TEMP-TABLE xml_operacao26                                           NO-UNDO
     FIELD intitcop AS CHAR
     FIELD nrdctabb AS CHAR
     FIELD dttransa AS CHAR
-    FIELD dscabfim AS CHAR.
-    
-DEF TEMP-TABLE xml_operacao28a                                           NO-UNDO
-    FIELD dscabini AS CHAR
-    FIELD hrinipag AS CHAR
-    FIELD hrfimpag AS CHAR
-    FIELD idesthor AS CHAR
-    FIELD flgconve AS CHAR
-    FIELD flgtitul AS CHAR
-    FIELD nrtelfax AS CHAR
-    FIELD hrcancel AS CHAR
-    FIELD dscabfim AS CHAR.
-    
-DEF TEMP-TABLE xml_operacao28b                                          NO-UNDO
-    FIELD dscabini AS CHAR
-    FIELD nmextcon AS CHAR
     FIELD dscabfim AS CHAR.
  
 DEF TEMP-TABLE xml_operacao30                                           NO-UNDO
@@ -461,7 +424,8 @@ DEF TEMP-TABLE xml_operacao146                                           NO-UNDO
     FIELD iddstipo AS CHAR
     FIELD vlrpagto AS CHAR
     FIELD dscritic AS CHAR
-    FIELD nrseqpag AS CHAR.
+    FIELD nrseqpag AS CHAR
+    FIELD idanalis AS CHAR.
 
 DEF TEMP-TABLE xml_operacao143                                           NO-UNDO
     FIELD nrdconta AS CHAR

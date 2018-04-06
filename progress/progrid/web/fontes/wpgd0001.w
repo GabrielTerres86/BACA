@@ -30,6 +30,11 @@ Alteracoes: ??/??/???? - Inclusao de widget-pool (Martin - SQWorks)
 			             do departamento para que a mesma seja feita através
 						 do código e não da descrição (Renato Darosci)
 
+			23/08/2017 - Alteracao referente a validacao do usuario apenas pelo AD.
+						 Removido campo operador no ambiente de producao.
+						 Removido campo senha e checkbox "Armazenar as informacoes 
+						 de login". (PRJ339 - Reinert)
+
 ............................................................................. */
 &ANALYZE-SUSPEND _VERSION-NUMBER WDT_v2r12 Web-Object
 /* Maps: wpgd0001.htm */
@@ -55,7 +60,7 @@ DEFINE VARIABLE ContadorAux     AS INTEGER.
 DEFINE VARIABLE v-senha         as char        no-undo init " ".
 DEFINE VARIABLE l-gera          as log                 init no.
 DEFINE VARIABLE aux_nvoperad    LIKE crapope.nvoperad.
-
+DEFINE VARIABLE des_login       AS CHAR        NO-UNDO.
 DEFINE VARIABLE p-retorno       AS CHAR.
 DEFINE VARIABLE l-sucesso       AS LOGICAL     NO-UNDO.
 DEFINE VARIABLE contador        as char.
@@ -82,8 +87,8 @@ else
 &SCOPED-DEFINE FRAME-NAME Web-Frame
 
 /* Standard List Definitions                                            */
-&SCOPED-DEFINE ENABLED-OBJECTS gidnumber cdcooper IND_COOKIE senha vusuario dsmsgerr
-&SCOPED-DEFINE DISPLAYED-OBJECTS gidnumber cdcooper IND_COOKIE senha vusuario dsmsgerr
+&SCOPED-DEFINE ENABLED-OBJECTS gidnumber cdcooper vusuario dsmsgerr
+&SCOPED-DEFINE DISPLAYED-OBJECTS gidnumber cdcooper vusuario dsmsgerr
 
 /* Custom List Definitions                                              */
 /* List-1,List-2,List-3,List-4,List-5,List-6                            */
@@ -103,17 +108,10 @@ DEFINE VARIABLE cdcooper AS CHARACTER FORMAT "x(256)":U
      VIEW-AS SELECTION-LIST SINGLE NO-DRAG 
      SIZE 40 BY 12 NO-UNDO.
 
-DEFINE VARIABLE senha AS CHARACTER FORMAT "x(256)":U 
-     VIEW-AS FILL-IN
-     SIZE 20 BY 1 NO-UNDO.
-
 DEFINE VARIABLE vusuario AS CHARACTER FORMAT "x(256)":U 
      VIEW-AS FILL-IN
      SIZE 20 BY 1 NO-UNDO.
 
-DEFINE VARIABLE IND_COOKIE AS LOGICAL 
-     VIEW-AS TOGGLE-BOX NO-UNDO.
-                 
 DEFINE VARIABLE dsmsgerr AS CHARACTER FORMAT "x(256)":U 
      VIEW-AS FILL-IN
      SIZE 20 BY 1 NO-UNDO.
@@ -123,8 +121,6 @@ DEFINE VARIABLE dsmsgerr AS CHARACTER FORMAT "x(256)":U
 DEFINE FRAME Web-Frame
      gidnumber SKIP
      cdcooper SKIP
-     IND_COOKIE SKIP
-     senha SKIP
      vusuario SKIP
      dsmsgerr SKIP
     WITH NO-LABELS.
@@ -227,10 +223,6 @@ PROCEDURE htm-offsets :
   RUN htm-associate IN THIS-PROCEDURE
     ("cdcooper":U,"cdcooper":U,cdcooper:HANDLE IN FRAME {&FRAME-NAME}).
   RUN htm-associate IN THIS-PROCEDURE
-    ("IND_COOKIE":U,"IND_COOKIE":U,IND_COOKIE:HANDLE IN FRAME {&FRAME-NAME}).
-  RUN htm-associate IN THIS-PROCEDURE
-    ("senha":U,"senha":U,senha:HANDLE IN FRAME {&FRAME-NAME}).
-  RUN htm-associate IN THIS-PROCEDURE
     ("vusuario":U,"vusuario":U,vusuario:HANDLE IN FRAME {&FRAME-NAME}).
   RUN htm-associate IN THIS-PROCEDURE
     ("dsmsgerr":U,"dsmsgerr":U,dsmsgerr:HANDLE IN FRAME {&FRAME-NAME}).                
@@ -273,7 +265,8 @@ PROCEDURE process-web-request :
 IF REQUEST_METHOD = "POST" THEN 
 	DO WITH FRAME {&FRAME-NAME}:                
 		ASSIGN cdcooper  = GET-VALUE("cdcooper")
-               gidnumber = GET-VALUE("gidnumber").
+           gidnumber = GET-VALUE("gidnumber")
+           des_login = GET-VALUE("des_login").
                          
 		/* Se for CECRED, valida a conta como Viacredi */    
         /*IF  cdcooper = "3"  THEN
@@ -299,12 +292,16 @@ IF REQUEST_METHOD = "POST" THEN
         ASSIGN coops = coops + 'carregaCoops("' + cdcooper + '");'.
                                                 
         RUN dispatch IN THIS-PROCEDURE ('input-fields':U).
+
+        IF  INPUT vusuario <> "" THEN DO:
+            ASSIGN v-tipo = "".                  
                 
-        IF  INPUT vusuario <> "" AND INPUT senha <> ""  THEN DO:
-			ASSIGN v-tipo = "".
+        IF CAPS(OS-GETENV("PKGNAME")) = "PKGPROD" THEN
+           ASSIGN vusuario = des_login.
                 
         FIND FIRST crapope WHERE crapope.cdoperad = INPUT vusuario AND
-                   crapope.cdcooper = INTE(cdcooper)  NO-LOCK NO-WAIT NO-ERROR.
+                                 crapope.cdcooper = INTE(cdcooper)  
+                                 NO-LOCK NO-WAIT NO-ERROR.
                                 
         IF  AVAIL crapope  THEN DO:
 			ASSIGN v-tipo   = "USU"
@@ -321,6 +318,7 @@ IF REQUEST_METHOD = "POST" THEN
                     RUN dispatch IN THIS-PROCEDURE ('enable-fields':U).
                     RUN dispatch IN THIS-PROCEDURE ('output-fields':U). 
                     RUN rodajava(coops).
+                    RUN rodajava('verificaAmbiente("' + CAPS(OS-GETENV("PKGNAME")) + '", "' + des_login + '");').
                     RUN rodajava('alert("Operador sem permissão para acessar o Sistema de Relacionamento.")'). 
                     RETURN.
                 END. 
@@ -331,9 +329,10 @@ IF REQUEST_METHOD = "POST" THEN
                     RUN dispatch IN THIS-PROCEDURE ('enable-fields':U).
                     RUN dispatch IN THIS-PROCEDURE ('output-fields':U).  
                     RUN rodajava(coops).
+                    RUN rodajava('verificaAmbiente("' + CAPS(OS-GETENV("PKGNAME")) + '", "' + des_login + '");').              
                     RUN rodajava('alert("Senha do usuário bloqueada.")').
                 END. /* Fim do if avail crapope and crapope.cdsitope = 2 */ 
-                ELSE IF crapope.cddsenha = INPUT senha THEN 
+                ELSE
                 DO:
                     /* tratamento para a conta super */
                     IF  crapope.cddepart = 20 THEN    /* TI */
@@ -345,53 +344,45 @@ IF REQUEST_METHOD = "POST" THEN
 						ELSE
 						IF crapope.flgacres THEN
 							ASSIGN aux_nvoperad = crapope.nvoperad.
-                                                                                                        
-                    END.
-                
-                    CREATE gnapses.
-                    ASSIGN gnapses.cdoperad = crapope.cdoperad
-                           gnapses.cdcooper = INT(cdcooper)
-                           gnapses.idsistem = 2 /* PROGRID */
-                           gnapses.cddsenha = INPUT senha
-                           gnapses.cdagenci = crapope.cdagenci
-                           gnapses.Dtsessao = TODAY
-                           gnapses.Hrsessao = STRING(TIME,"HH:MM:SS")
-                           gnapses.Idsessao = TRIM(STRING(gnapses.cdcooper)) +
-                                              TRIM(STRING(gnapses.cdagenci)) +
-                                              TRIM(STRING(gnapses.cdoperad)) +
-                                              STRING(gnapses.dtsessao,"99999999") +
-                                              SUBSTRING(gnapses.hrsessao,1,2) +
-                                              SUBSTRING(gnapses.hrsessao,4,2) +
-                                              SUBSTRING(gnapses.hrsessao,7,2)
-                           gnapses.nvoperad = aux_nvoperad
 
-                           conteudo-cookie  = gnapses.Idsessao.
-                                                                            
-                    VALIDATE gnapses.
-                    RUN GravaCookie.
+                    END.
+
+                                CREATE gnapses.
+                                ASSIGN gnapses.cdoperad = crapope.cdoperad
+                                       gnapses.cdcooper = INT(cdcooper)
+                                       gnapses.idsistem = 2 /* PROGRID */
+                                       gnapses.cddsenha = "" /* Validacao da senha e feita no AD */
+                                       gnapses.cdagenci = crapope.cdagenci
+                                       gnapses.Dtsessao = TODAY
+                                       gnapses.Hrsessao = STRING(TIME,"HH:MM:SS")
+                                       gnapses.Idsessao = TRIM(STRING(gnapses.cdcooper)) +
+                                                          TRIM(STRING(gnapses.cdagenci)) +
+                                                          TRIM(STRING(gnapses.cdoperad)) +
+                                                          STRING(gnapses.dtsessao,"99999999") +
+                                                          SUBSTRING(gnapses.hrsessao,1,2) +
+                                                          SUBSTRING(gnapses.hrsessao,4,2) +
+                                                          SUBSTRING(gnapses.hrsessao,7,2)
+                                       gnapses.nvoperad = aux_nvoperad
+
+                                       conteudo-cookie  = gnapses.Idsessao.
+
+                                VALIDATE gnapses.
+                                RUN GravaCookie.
 
                 END. /* Fim do IF crapope.cddsenha = INPUT senha */            
-                ELSE 
-                DO:
-                    /*RUN contatentativa(INPUT v-tipo, INPUT crapope.cdoperad).*/
-                    RUN output-header.
-                    RUN dispatch IN THIS-PROCEDURE ('enable-fields':U).
-                    RUN dispatch IN THIS-PROCEDURE ('output-fields':U). 
-                    RUN rodajava(coops).
-                    RUN rodajava('alert("Senha incorreta.")').                               
-                END. /* Fim do ELSE DO */          
             END. /* Fim do if v-tipo = "USU" */
         END.  /* Fim do IF v-tipo <> "" and v-ok */        
         ELSE DO:
-			IF v-ok THEN 
-            DO:
-                /*RUN contatentativa(input "err", input "").*/
-                RUN output-header. 
-                RUN dispatch IN THIS-PROCEDURE ('enable-fields':U).
-                RUN dispatch IN THIS-PROCEDURE ('output-fields':U).
-                RUN rodajava(coops).
-                RUN rodajava('alert("Usuario nao existe.")'). 
-            END. /* Fim do IF v-ok */
+          IF v-ok THEN 
+                DO:
+                    /*RUN contatentativa(input "err", input "").*/
+                    RUN output-header. 
+                    RUN dispatch IN THIS-PROCEDURE ('enable-fields':U).
+                    RUN dispatch IN THIS-PROCEDURE ('output-fields':U).
+                    RUN rodajava(coops).
+                    RUN rodajava('verificaAmbiente("' + CAPS(OS-GETENV("PKGNAME")) + '", "' + des_login + '");'). 
+                    RUN rodajava('alert("Usuario nao existe.")'). 
+                END. /* Fim do IF v-ok */
         END. /* Fim do ELSE DO */
     END.                
     ELSE DO:                        
@@ -399,6 +390,7 @@ IF REQUEST_METHOD = "POST" THEN
         RUN dispatch IN THIS-PROCEDURE ('enable-fields':U).
         RUN dispatch IN THIS-PROCEDURE ('output-fields':U).                 
         RUN rodajava(coops).                                
+        RUN rodajava('verificaAmbiente("' + CAPS(OS-GETENV("PKGNAME")) + '", "' + des_login + '");'). 
     END.                
 END.  /* Fim do DO WITH FRAME {&FRAME-NAME} */
 ELSE DO WITH FRAME {&frame-name}:

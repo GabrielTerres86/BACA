@@ -87,8 +87,11 @@ DO aux_contador = 1 TO aux_qtaplica:
     CREATE tt-dados-resgate.
     ASSIGN tt-dados-resgate.idtipapl = "A"
            tt-dados-resgate.nraplica = INTE(ENTRY(1,aux_info_apl,";"))
-           tt-dados-resgate.tpresgat = ENTRY(2,aux_info_apl,";")
-           tt-dados-resgate.vlresgat = DECI(ENTRY(3,aux_info_apl,";")).
+           tt-dados-resgate.tpresgat = TRIM(ENTRY(2,aux_info_apl,";"))
+           tt-dados-resgate.vlresgat = IF tt-dados-resgate.tpresgat = "1" THEN /* Resgate Parcial */
+                                          DECI(ENTRY(3,aux_info_apl,";")) 
+                                       ELSE /* Resgate Total sempre deve trabalhar com valor zerado devido a regra na procedure de resgate */
+                                          0.
 
 END.
 
@@ -261,6 +264,7 @@ DO:
        ASSIGN aux_dslinxml = aux_dslinxml + 
                              "<APLICACOES>" + 
                                   "<nrdocmto>" + aux_nrdocmto + "</nrdocmto>" +
+                                  "<dsprotoc></dsprotoc>" + /* Implementaçao futura */
                              "</APLICACOES>" +
                              "<dsmsgsuc>Resgate realizado com sucesso.</dsmsgsuc>" +
                              "<idastcjt>" + STRING(aux_idastcjt) + "</idastcjt>".

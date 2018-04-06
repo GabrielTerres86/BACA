@@ -3,7 +3,7 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : David
-   Data    : Abril/2008.                       Ultima atualizacao: 07/03/2017
+   Data    : Abril/2008.                       Ultima atualizacao: 27/11/2017
    Dados referentes ao programa:
    Frequencia: Sempre que for chamado (On-Line)
    Objetivo  : Cancelar agendamento de transferencias e pagamentos
@@ -21,6 +21,10 @@
                             Adicionado tratamento para agendamentos de recarga de 
                             celular (par_cdtiptra = 11). Projeto 321 (Lombardi)
                             
+               27/11/2017 - Encontrar agendamento para cancelamento atraves do 
+                            parametro idlancto e demais parametros nao serao 
+                            informados nesse caso (David)
+                            
 ..............................................................................*/
  
 create widget-pool.
@@ -34,18 +38,33 @@ DEF VAR h-b1wgen0016 AS HANDLE                                         NO-UNDO.
 DEF VAR aux_nrdrowid AS ROWID                                          NO-UNDO.
 DEF VAR aux_dstransa AS CHAR                                           NO-UNDO.
 DEF VAR aux_dscritic AS CHAR                                           NO-UNDO.
+DEF VAR aux_flgrecar AS LOGI                                           NO-UNDO.
 DEF  INPUT PARAM par_cdcooper LIKE crapcop.cdcooper                    NO-UNDO.
 DEF  INPUT PARAM par_nrdconta LIKE crapass.nrdconta                    NO-UNDO.
 DEF  INPUT PARAM par_idseqttl LIKE crapttl.idseqttl                    NO-UNDO.
 DEF  INPUT PARAM par_dtmvtolt LIKE crapdat.dtmvtolt                    NO-UNDO.
 DEF  INPUT PARAM par_dtmvtage LIKE craplau.dtmvtolt                    NO-UNDO.
 DEF  INPUT PARAM par_nrdocmto LIKE craplau.nrdocmto                    NO-UNDO.
+DEF  INPUT PARAM par_idlancto LIKE craplau.idlancto                    NO-UNDO.
 DEF  INPUT PARAM par_flmobile AS LOGI                                  NO-UNDO.
 DEF  INPUT PARAM par_cdtiptra AS INT                                   NO-UNDO.
 DEF  INPUT PARAM par_nrcpfope AS DECI                                  NO-UNDO.
 DEF OUTPUT PARAM xml_dsmsgerr AS CHAR                                  NO-UNDO.
 
-IF par_cdtiptra = 11 THEN
+/* Considerar agendamento de recarga se o tipo foi informado como 1 ou se estiver zerado. 
+No caso de valor zerado sera validado com base no registro da craplau */
+ASSIGN aux_flgrecar = IF par_cdtiptra = 0 OR par_cdtiptra = 11 OR par_cdtiptra = 20 THEN TRUE ELSE FALSE.
+
+IF par_cdtiptra = 0 AND par_idlancto <> 0 THEN
+  DO:
+     /* Verificar qual o tipo do agendamento. Se nao existir na craplau eh um agendamento de recarga */
+     FOR FIRST craplau WHERE craplau.idlancto = par_idlancto NO-LOCK. END.
+     
+     IF AVAIL craplau THEN
+        ASSIGN aux_flgrecar = FALSE.     
+  END.
+
+IF aux_flgrecar THEN
   DO:
     { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
     
@@ -54,7 +73,7 @@ IF par_cdtiptra = 11 THEN
                          ,INPUT par_nrdconta 
                          ,INPUT par_idseqttl
                          ,INPUT 3
-                         ,INPUT par_nrdocmto
+                         ,INPUT IF par_cdtiptra = 11 THEN par_nrdocmto ELSE par_idlancto
                          ,OUTPUT 0
                          ,OUTPUT "").
                          
@@ -97,6 +116,7 @@ ELSE
                                              INPUT "INTERNET",  /** ORIGEM   **/
                                              INPUT par_dtmvtage,
                                              INPUT par_nrdocmto,
+                                             INPUT par_idlancto,
                          INPUT "INTERNETBANK", /*Nome da tela*/ 
                                              INPUT par_nrcpfope,
                                             OUTPUT aux_dstransa,

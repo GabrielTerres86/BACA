@@ -15,7 +15,9 @@ Alterações:  26/02/2008 - Não permitir inscrições quando o mês da Data Final do
                             encerrados, solicitaçao de ficha de presenca quando evento AGO/AGE,
                             alterar inscritos nao confirmados para faltantes quando encerrar evento,
                             Prj. 322 (Jean Michel)
-                            
+ 			  08/02/2018 - Mostrar os eventos encerrados na lista de valores de eventos e permitir inscrições, desde que
+			               o mês do mesmo não esteja fechado na tela de parâmetros das agendas
+  						   PRJ. 322 - SM 8 (Andrei - Mouts)
 -->
 <html>
 <head>
@@ -323,11 +325,13 @@ function validaInsc(){
         var vaux = document.form.aux_lspermis.value;
         var tpevento = $("#aux_tpevento").val();
          
-        if($("#aux_idstaeve").val() == 4){
-          alert("Evento encerrado. Não é possível fazer novas inscrições."); 
-          return false;
-   }
-   
+		 // Início PJ 322 - SM - 8
+		 //Comentar o código abaixo para permitir inscrições mesmo com o evento encerrado
+         //if($("#aux_idstaeve").val() == 4){
+         // alert("Evento encerrado. Não é possível fazer novas inscrições."); 
+         //return false;
+         //}
+		 // Fim PJ 322 - SM - 8   
         if((tpevento == 7 || tpevento== 12) && ($("#aux_nrficpre").val() == 0 || $("#aux_nrficpre").val() == "")){
           alert("Informe o número da ficha de presença.");
           return false;
