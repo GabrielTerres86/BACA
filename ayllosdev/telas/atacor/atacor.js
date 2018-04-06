@@ -98,7 +98,7 @@ function carrega_dados()
     
 	// Valida número da conta
 	if (!validaNumero(nracordo)) {
-		showError("error","Número de acordo inv&aacute;lido.","Atacor - Ayllos","$('#nracordo','#frmCabAtacor').focus();");
+		showError("error","N&uacute;mero de acordo inv&aacute;lido.","Atacor - Ayllos","$('#nracordo','#frmCabAtacor').focus();");
 		return false;
 	}
 
@@ -358,15 +358,5 @@ function gravarContrato() {
 
 function addContratoTabela(nrctrempIncluso)
 {
-	/*var tr = $('#divRegistros table').append('<tr>');
-	var td = tr.append('<td>');
-	td.html('Empréstimo');
-	var td = tr.append('<td>');
-	td.html(nrctrempIncluso);
-	var td = tr.append('<td>');
-	td.html(100);
-	var td = tr.append('<td>');
-	td.html('<input type="checkbox" name="pagar" checked="checked" style="float: none;" onchange="atualizarContrato(this)">');*/
-
 	carrega_dados();
 }

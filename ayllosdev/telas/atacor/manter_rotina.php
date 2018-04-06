@@ -29,14 +29,14 @@
 	$msgError = validaPermissao($glbvars['nmdatela'], $glbvars['nmrotina'], 'C');
 
 	if (!empty($msgError)) {		
-		exibirErro('error', $msgError, 'Alerta - Atacor', '', false);
+		exibirErro('error', $msgError, 'Alerta - Ayllos', '', false);
 	}
 
 	if ($operacao == 'ATUALIZA_CONTRATO') {
 		$indpagar = $_POST['indpagar'];
 
 		if (empty($nracordo)) {
-			exibirErro('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Atacor', '', false);
+			exibirErro('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', '', false);
 		}
 
 		$xml = "<Root>";
@@ -60,12 +60,12 @@
 		// Se ocorrer um erro, mostra mensagem
 		if (strtoupper($xmlObject->roottag->tags[0]->name) == 'ERRO') {	
 			$msgErro  = $xmlObject->roottag->tags[0]->tags[0]->tags[4]->cdata;			
-			exibirErro('error',$msgErro,'Alerta - Atacor','',false);
+			exibirErro('error',$msgErro,'Alerta - Ayllos','',false);
 		}
 	}
 	elseif ($operacao == 'EXCLUIR_CONTRATO') {
 		if (empty($nracordo) || empty($nrctremp)) {
-			exibirErro('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Atacor', '', false);
+			exibirErro('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', '', false);
 		}
 
 		$xml = "<Root>";
@@ -88,14 +88,14 @@
 		// Se ocorrer um erro, mostra mensagem
 		if (strtoupper($xmlObject->roottag->tags[0]->name) == 'ERRO') {	
 			$msgErro  = $xmlObject->roottag->tags[0]->tags[0]->tags[4]->cdata;			
-			exibirErro('error',$msgErro,'Alerta - Atacor','',false);
+			exibirErro('error',$msgErro,'Alerta - Ayllos','',false);
 		}
 
-		exibirErro('inform', 'Contrato removido.', 'Alerta - Atacor','removeContratoTabela();',false);
+		exibirErro('inform', 'Contrato removido.', 'Alerta - Ayllos','removeContratoTabela();',false);
 	}
 	elseif ($operacao == 'VALIDAR_CONTRATO') {
 		if (empty($nracordo) || empty($nrctremp)) {
-			exibirErro('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Atacor', '', false);
+			exibirErro('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', '', false);
 		}
 
 		$xml = "<Root>";
@@ -119,16 +119,16 @@
 		// Se ocorrer um erro, mostra mensagem
 		if (strtoupper($xmlObject->roottag->tags[0]->name) == 'ERRO') {	
 			$msgErro  = $xmlObject->roottag->tags[0]->tags[0]->tags[4]->cdata;			
-			exibirErro('error',$msgErro,'Alerta - Atacor','',false);
+			exibirErro('error',$msgErro,'Alerta - Ayllos','',false);
 		}
 
 		if (getByTagName($xmlObject->roottag->tags[0]->tags, 'valido') == 'N') {
-			exibirErro('error','Contrato inv&aacute;lido.','Alerta - Atacor',"$('#nrctremp', '#frmincctr').focus();",false);
+			exibirErro('error','Contrato inv&aacute;lido.','Alerta - Ayllos',"$('#nrctremp', '#frmincctr').focus();",false);
 		}
 	}
 	elseif($operacao == 'INCLUIR_CONTRATO') {
 		if (empty($nracordo) || empty($nrctremp)) {
-			exibirErro('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Atacor', '', false);
+			exibirErro('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', '', false);
 		}
 
 		$xml = "<Root>";
@@ -151,13 +151,13 @@
 		// Se ocorrer um erro, mostra mensagem
 		if (strtoupper($xmlObject->roottag->tags[0]->name) == 'ERRO') {	
 			$msgErro  = $xmlObject->roottag->tags[0]->tags[0]->tags[4]->cdata;			
-			exibirErro('error',$msgErro,'Alerta - Atacor','',false);
+			exibirErro('error',$msgErro,'Alerta - Ayllos','',false);
 		}
 
 		if (getByTagName($xmlObject->roottag->tags[0]->tags, 'valido') == 'N') {
-			exibirErro('error','Contrato inv&aacute;lido.','Alerta - Atacor',"$('#nrctremp', '#frmincctr').focus();",false);
+			exibirErro('error','Contrato inv&aacute;lido.','Alerta - Ayllos',"$('#nrctremp', '#frmincctr').focus();",false);
 		}
 		elseif (getByTagName($xmlObject->roottag->tags[0]->tags, 'Inserido') == 'S') {
-			exibirErro('inform', 'Contrato inclu&iacute;do.', 'Alerta - Atacor',"fechaRotina($('#divUsoGenerico'),$('#divTela')); addContratoTabela(" . $nrctremp . ");",false);
+			exibirErro('inform', 'Contrato inclu&iacute;do.', 'Alerta - Ayllos',"fechaRotina($('#divUsoGenerico'),$('#divTela')); addContratoTabela(" . $nrctremp . ");",false);
 		}
 	}
