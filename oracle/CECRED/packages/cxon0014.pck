@@ -7800,6 +7800,9 @@ END pc_gera_titulos_iptu_prog;
   --
   --             28/07/2017 - Alterar a verificacao de vencimento das faturas de convenio, para que 
   --                          seja feito atraves de parametrizacao na crapprm (Douglas - Chamado 711440)
+  --
+  --             16/03/2018 - Ajuste de acentuação na mensagem de crítica de fatura vencida 
+  --                          (Rafael - Projeto 285 - Nova Conta Online - ID172 - PCT6)
   ---------------------------------------------------------------------------------------------------------------
   BEGIN
     DECLARE
@@ -7851,6 +7854,7 @@ END pc_gera_titulos_iptu_prog;
       vr_lindigit NUMBER;
       vr_fatura   NUMBER;
       vr_calc     VARCHAR2(100);
+      vr_dsc_erro VARCHAR2(100);
       vr_lote     INTEGER;
       vr_digito   INTEGER;
       vr_nrdigito INTEGER;
@@ -8180,11 +8184,17 @@ END pc_gera_titulos_iptu_prog;
         vr_dtmvtoan:= To_Char(rw_crapdat.dtmvtoan - vr_qtdias_tolera,'YYYYMMDD');
         IF To_Number(SUBSTR(pr_codigo_barras,20,8)) <= To_Number(vr_dtmvtoan) THEN
           --Criar Erro
+          IF pr_cod_agencia IN (90,91) THEN
+            vr_dsc_erro := 'Não é possível efetuar esta operação pois a fatura está vencida.';
+          ELSE
+            vr_dsc_erro := 'Nao eh possivel efetuar esta operacao pois a fatura esta vencida.';
+          END IF;
+          
           CXON0000.pc_cria_erro(pr_cdcooper => pr_cdcooper
                                ,pr_cdagenci => pr_cod_agencia
                                ,pr_nrdcaixa => vr_nrdcaixa
                                ,pr_cod_erro => 0
-                               ,pr_dsc_erro => 'Nao eh possivel efetuar esta operacao, pois a fatura esta vencida.'
+                               ,pr_dsc_erro => vr_dsc_erro
                                ,pr_flg_erro => TRUE
                                ,pr_cdcritic => vr_cdcritic
                                ,pr_dscritic => vr_dscritic);
@@ -8193,7 +8203,7 @@ END pc_gera_titulos_iptu_prog;
             RAISE vr_exc_erro;
           ELSE
             vr_cdcritic:= 0;
-            vr_dscritic:= 'Nao eh possivel efetuar esta operacao, pois a fatura esta vencida.';
+            vr_dscritic:= vr_dsc_erro;
             --Levantar Excecao
             RAISE vr_exc_erro;
           END IF;

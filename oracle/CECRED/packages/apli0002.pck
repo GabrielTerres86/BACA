@@ -17137,7 +17137,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                        ,pr_cdsitaar IN crapaar.cdsitaar%TYPE) IS --> Situacao 
 
         SELECT aar.*
-              ,DECODE(aar.cdsitaar,1,'Em Andamento',2,'Suspenso',3,'Cancelado',4,'Não Efetivado',5,'Vencido','') dssitaar
+              ,DECODE(aar.cdsitaar,1,'Em Andamento',2,'Suspenso',3,'Cancelado',4,'Não Efetivado',5,'Concluído','') dssitaar
               ,DECODE(aar.flgtipar,0,'Aplicação',1,'Resgate','') dstipaar
           FROM crapaar aar
          WHERE aar.cdcooper = pr_cdcooper
@@ -19707,6 +19707,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
 
           /*Se o tipo de agendamento for mensal*/
           ELSE
+
+            IF vr_dtdiaaar > 28 then
+              vr_cdcritic := 0;
+              vr_dscritic := 'Agendamento permitido apenas até o dia 28 de cada mês!';
+              RAISE vr_exc_saida;
+            END IF;
 
             /*aqui temos que compor a data pois foi digitado
               na tela apenas o dia e a qtd de meses*/

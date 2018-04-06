@@ -1665,12 +1665,15 @@ PROCEDURE pc_incluir_provisao(pr_cdcooper        IN tbcc_provisao_especie.cdcoop
                IF(vr_idorigem = 5)THEN
                  vr_pedesenha :=1;
                  vr_aux := 'Atenção! Provisão não autorizada. Minimo de '||vr_lim_qtdiasprov||' dias úteis para o cadastro. Exigência BACEN - circular 3.839/17. Deseja liberar o cadastro?';             
+                 -- volta para o programa chamador
+                 RAISE vr_exc_pedesenha;                     
                ELSE
-                 vr_pedesenha :=0;
-                 vr_aux := 'Atenção! Provisão não autorizada. Minimo de '||vr_lim_qtdiasprov||' dias úteis para o cadastro. Exigência BACEN - circular 3.839/17.';
-               END IF;
-               -- volta para o programa chamador
-               RAISE vr_exc_pedesenha;            
+                 vr_pedesenha := 0;
+                 vr_cdcritic  := 0;
+                 vr_dscritic  := 'Atenção! Provisão não autorizada. Minimo de '||vr_lim_qtdiasprov||' dias úteis para o cadastro. Exigência BACEN - circular 3.839/17.';
+                 -- volta para o programa chamador
+                 RAISE vr_exc_saida;                 
+               END IF;        
              END IF;      
           END IF;                                      
       END IF;
@@ -1711,7 +1714,7 @@ PROCEDURE pc_incluir_provisao(pr_cdcooper        IN tbcc_provisao_especie.cdcoop
                                  pr_dsinfor3 => 'Titularidade da conta: ' || vr_nmtitular || ' - ' || vr_nrcpfcgc || '#Sacador: ' || pr_nmsacpag || ' - ' || pr_nrcpfsacpag || '#Finalidade: ' || pr_txtFinPagto, 
                                  pr_dscedent => NULL, 
                                  pr_flgagend => FALSE, 
-                                 pr_nrcpfope => pr_nrcpfope, 
+                                 pr_nrcpfope => NVL(pr_nrcpfope,0), 
                                  pr_nrcpfpre => 0, 
                                  pr_nmprepos => '', 
                                  pr_dsprotoc => vr_dsprotoc, 
@@ -1776,7 +1779,7 @@ PROCEDURE pc_incluir_provisao(pr_cdcooper        IN tbcc_provisao_especie.cdcoop
        SYSDATE,
        vr_idorigem,
        vr_dsprotoc,
-       pr_nrcpfope,
+       NVL(pr_nrcpfope,0),
        null,
        null);
        
@@ -1815,7 +1818,7 @@ PROCEDURE pc_incluir_provisao(pr_cdcooper        IN tbcc_provisao_especie.cdcoop
                             <br>
                             <b>Operador da transação:</b> ';
                             
-          IF(pr_nrcpfope = 0)THEN
+          IF(NVL(pr_nrcpfope,0) = 0)THEN
             vr_corpoemail := vr_corpoemail || vr_cdoperad || ' - ' || rw_crapope.nmoperad;
           ELSE
             --> Buscar operadores internet

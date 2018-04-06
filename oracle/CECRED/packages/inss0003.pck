@@ -24,6 +24,19 @@ CREATE OR REPLACE PACKAGE CECRED.INSS0003 AS
                                   ,pr_cdcritic  OUT PLS_INTEGER  -- Código da crítica
                                   ,pr_dscritic  OUT VARCHAR2);   -- Descrição da crítica
   
+  
+  
+  PROCEDURE pc_consultar_codigo_nai(pr_nrcpf  IN VARCHAR2          -- Numero CPF
+                                   ,pr_retxml OUT NOCOPY XMLType); -- Retorno XML para SOA
+
+
+
+  PROCEDURE pc_salvar_codigo_nai(pr_nrcpf         IN VARCHAR2          -- CPF do cooperado
+                                ,pr_cdcodigo_nai  IN VARCHAR2          -- Codigo do NAI do cooperado
+                                ,pr_nrcontrole    IN VARCHAR2          -- Numero de controle do Sicredi
+                                ,pr_retxml        OUT NOCOPY XMLType); -- Retorno XML 
+
+  
 END INSS0003;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.INSS0003 AS
@@ -696,6 +709,178 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0003 AS
                                 ,pr_des_erro        => vr_dscritic);
 
   END pc_importar_prova_vida;
+  
+  
+  
+  -- consulta codigo NAI na base CECRED
+  PROCEDURE pc_consultar_codigo_nai(pr_nrcpf  IN VARCHAR2               -- Numero CPF
+                                   ,pr_retxml OUT NOCOPY XMLType) AS    -- Retorno XML
+       
+       vr_xml_temp VARCHAR2(32726) := '';
+       vr_clob     CLOB;
+                                       
+       -- cursor de busca do cod NAI                            
+       CURSOR cr_busca_nai(vr_nrcpf VARCHAR2) IS
+              SELECT nai.nrcpf_titular
+                   , nai.cdnai
+                   , nai.nrcontrole
+                   , nai.dtgeracao
+                FROM CECRED.TBINSS_NAI nai
+               WHERE nai.nrcpf_titular = vr_nrcpf; 
+       
+       rw_busca_nai cr_busca_nai%ROWTYPE;                                        
+  
+   BEGIN
+
+        -- Monta Retorno XML
+        dbms_lob.createtemporary(vr_clob, TRUE);
+        dbms_lob.open(vr_clob, dbms_lob.lob_readwrite);
+          
+        -- Cabecalho do XML
+        GENE0002.pc_escreve_xml(pr_xml            => vr_clob
+                               ,pr_texto_completo => vr_xml_temp
+                               ,pr_texto_novo     => '<?xml version="1.0" encoding="UTF-8"?><Root>');
+      
+        -- abre cursor                                              
+        OPEN cr_busca_nai(pr_nrcpf); 
+           FETCH cr_busca_nai INTO rw_busca_nai;
+         
+        
+        GENE0002.pc_escreve_xml(
+                pr_xml => vr_clob, 
+                pr_texto_completo => vr_xml_temp,
+                pr_texto_novo => '<CPF>' || TRIM(rw_busca_nai.nrcpf_titular) ||'</CPF>' ||
+                                 '<CodigoNAI>' || TRIM(rw_busca_nai.cdnai) ||'</CodigoNAI>' ||
+                                 '<NumeroControle>' || TRIM(rw_busca_nai.nrcontrole) ||'</NumeroControle>' ||
+                                 '<UltimaGeracao>' || to_char(rw_busca_nai.dtgeracao, 'DD/MM/RRRR HH24:MI:SS') ||'</UltimaGeracao>');                   
+        
+        CLOSE cr_busca_nai; --fecha cursor
+        
+        -- Encerrar a tag raiz
+        GENE0002.pc_escreve_xml(pr_xml            => vr_clob
+                               ,pr_texto_completo => vr_xml_temp
+                               ,pr_texto_novo     => '</Root>'
+                               ,pr_fecha_xml      => TRUE);
+
+         -- Atualiza o XML de retorno
+         pr_retxml := xmltype(vr_clob);
+         
+         --dbms_output.put_line(pr_retxml.getStringVal()); --remover depois
+
+         -- Libera a memoria do CLOB
+         dbms_lob.close(vr_clob);
+         dbms_lob.freetemporary(vr_clob);
+                  
+  END pc_consultar_codigo_nai;
+  
+  
+  -- Salva codigo NAI na base CECRED
+  PROCEDURE pc_salvar_codigo_nai(pr_nrcpf        IN VARCHAR2  -- Cod CPF Cooperado
+					                      ,pr_cdcodigo_nai IN VARCHAR2  -- Cod NAI gerado
+					                      ,pr_nrcontrole   IN VARCHAR2  -- Numero de Controle
+                                ,pr_retxml       OUT NOCOPY XMLType) AS --Retorno XML
+       
+       vr_xml_temp VARCHAR2(32726) := '';
+       vr_erro     VARCHAR2(32726) := NULL; --descricao erro 
+       vr_clob     CLOB;
+       
+                                       
+       -- cursor de busca do cod NAI                            
+       CURSOR cr_busca_nai(vr_nrcpf VARCHAR2) IS
+              SELECT nai.nrcpf_titular
+                   , nai.cdnai
+                   , nai.nrcontrole
+                   , nai.dtgeracao
+                FROM CECRED.TBINSS_NAI nai
+               WHERE nai.nrcpf_titular = vr_nrcpf;
+       rw_busca_nai cr_busca_nai%ROWTYPE;
+       
+  BEGIN 
+                                           
+        -- Monta Retorno XML
+        dbms_lob.createtemporary(vr_clob, TRUE);
+        dbms_lob.open(vr_clob, dbms_lob.lob_readwrite);
+          
+        -- Cabecalho do XML
+        GENE0002.pc_escreve_xml(pr_xml            => vr_clob
+                               ,pr_texto_completo => vr_xml_temp
+                               ,pr_texto_novo     => '<?xml version="1.0" encoding="UTF-8"?><Root>');
+                               
+        -- abre cursor NAI
+        OPEN cr_busca_nai(pr_nrcpf);
+             FETCH cr_busca_nai INTO rw_busca_nai;
+             
+        -- ja tem NAI cadastrado neste CPF     
+        IF rw_busca_nai.cdnai IS NOT NULL THEN
+           BEGIN 
+             UPDATE CECRED.TBINSS_NAI  
+                SET cdnai = pr_cdcodigo_nai
+                  , nrcontrole = pr_nrcontrole
+                  , dtgeracao = sysdate
+              WHERE nrcpf_titular = pr_nrcpf;
+              EXCEPTION
+                   WHEN OTHERS THEN    
+                        vr_erro := 'Erro ao atualizar codigo NAI (pc_salvar_codigo_nai): '||SQLERRM;
+            END;             
+        -- nao tem NAI cadastrado neste CPF
+        ELSE
+           BEGIN
+             INSERT INTO CECRED.TBINSS_NAI 
+                       ( nrcpf_titular, cdnai, nrcontrole, dtgeracao ) 
+                VALUES ( pr_nrcpf, pr_cdcodigo_nai, pr_nrcontrole, sysdate);
+               EXCEPTION
+                    WHEN OTHERS THEN    
+                         vr_erro := 'Erro ao inserir codigo NAI (pc_salvar_codigo_nai): '||SQLERRM;
+            END;              
+        END IF;
+        
+        CLOSE cr_busca_nai; --fecha cursor
+        
+        -- se nao deu erro, da commit 
+        IF vr_erro IS NULL THEN
+           COMMIT; --commit transacao
+           
+           -- abre cursor NAI
+           OPEN cr_busca_nai(pr_nrcpf);
+                FETCH cr_busca_nai INTO rw_busca_nai;                       
+            
+           -- escreve tag xml
+           GENE0002.pc_escreve_xml(
+                   pr_xml => vr_clob, 
+                   pr_texto_completo => vr_xml_temp,
+                   pr_texto_novo => '<CPF>' || TRIM(rw_busca_nai.nrcpf_titular) ||'</CPF>' ||
+                                    '<CodigoNAI>' || TRIM(rw_busca_nai.cdnai) ||'</CodigoNAI>' ||
+                                    '<NumeroControle>' || TRIM(rw_busca_nai.nrcontrole) ||'</NumeroControle>' ||
+                                    '<UltimaGeracao>' || to_char(rw_busca_nai.dtgeracao, 'DD/MM/RRRR HH24:MI:SS') ||'</UltimaGeracao>' || 
+                                    '<MensagemSucesso>Código NAI cadastrado com sucesso.</MensagemSucesso>');
+        -- ocorreu erro no PL
+        ELSE
+           ROLLBACK;
+           -- escreve tag de erro
+           GENE0002.pc_escreve_xml(
+                    pr_xml => vr_clob, 
+                    pr_texto_completo => vr_xml_temp,
+                    pr_texto_novo => '<MensagemErro>' || TRIM(vr_erro) ||'</MensagemErro>');
+        END IF;      
+        
+        CLOSE cr_busca_nai; --fecha cursor
+        
+        -- Encerrar a tag raiz
+        GENE0002.pc_escreve_xml(pr_xml            => vr_clob
+                               ,pr_texto_completo => vr_xml_temp
+                               ,pr_texto_novo     => '</Root>'
+                               ,pr_fecha_xml      => TRUE);
+
+         -- Atualiza o XML de retorno
+         pr_retxml := xmltype(vr_clob);
+         
+         --dbms_output.put_line(pr_retxml.getStringVal()); --remover depois
+
+         -- Libera a memoria do CLOB
+         dbms_lob.close(vr_clob);
+         dbms_lob.freetemporary(vr_clob);
+  
+  END pc_salvar_codigo_nai;                                 
 
 END INSS0003;
 /
