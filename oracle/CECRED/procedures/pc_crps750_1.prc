@@ -15,7 +15,7 @@ BEGIN
   Sistema : Conta-Corrente - Cooperativa de Credito
   Sigla   : CRED
   Autor   : Everton (Mout´S)
-  Data    : Abril/2017.                    Ultima atualizacao:  07/12/2017
+  Data    : Abril/2017.                    Ultima atualizacao:  06/04/2018
 
   Dados referentes ao programa:
 
@@ -36,6 +36,8 @@ BEGIN
 
               07/12/2017 - Passagem do idcobope. (Jaison/Marcos Martini - PRJ404)
 
+              06/04/2018 - Remover o resgate de aplicação pois a funcionalidade não deve ser aplicada para
+                           empréstimos TR (Renato - Supero).
     ............................................................................. */
 
   DECLARE
@@ -87,14 +89,9 @@ BEGIN
               ,ass.cdagenci  --ews
               ,epr.cdfinemp
               ,epr.vlemprst
-              ,wpr.idcobope
           FROM crapepr epr,
-               crapass ass,
-               crawepr wpr
-         WHERE epr.cdcooper = wpr.cdcooper
-           AND epr.nrdconta = wpr.nrdconta
-           AND epr.nrctremp = wpr.nrctremp
-           AND epr.cdcooper = ass.cdcooper   --ews
+               crapass ass
+         WHERE epr.cdcooper = ass.cdcooper   --ews
            AND epr.nrdconta = ass.nrdconta
            AND epr.cdcooper = pr_cdcooper          --> Coop conectada
            AND epr.inliquid = 0                    --> Somente não liquidados
@@ -325,21 +322,6 @@ BEGIN
                                                ,pr_cdcritic => vr_cdcritic          -- Retorno de codigo de critica
                                                ,pr_dscritic => vr_dscritic);        -- Retorno de descricao de critica
 
-               -- Se possui cobertura vinculada
-               IF rw_crapepr.idcobope > 0 THEN
-                 -- Chama bloqueio/desbloqueio da garantia
-                 BLOQ0001.pc_bloq_desbloq_cob_operacao(pr_idcobertura    => rw_crapepr.idcobope
-                                                      ,pr_inbloq_desbloq => 'D'
-                                                      ,pr_cdoperador     => '1'
-                                                      ,pr_vldesbloq      => 0
-                                                      ,pr_flgerar_log    => 'S'
-                                                      ,pr_dscritic       => vr_dscritic);
-                 -- Se houve erro
-                 IF TRIM(vr_dscritic) IS NOT NULL THEN
-                   RAISE vr_exc_erro;
-                 END IF;
-               END IF;
-               
              ELSE
                vr_inliquid := 0;
              END IF;
@@ -894,14 +876,9 @@ BEGIN
               ,prc.vltaxa_juros
               ,prc.vlsaldo_devedor
               ,prc.rowid rowidprc
-              ,wpr.idcobope
           FROM crapepr epr,
-               tbepr_tr_parcelas prc,
-               crawepr wpr
-         WHERE epr.cdcooper = wpr.cdcooper
-           AND epr.nrdconta = wpr.nrdconta
-           AND epr.nrctremp = wpr.nrctremp
-           AND epr.cdcooper = prc.cdcooper
+               tbepr_tr_parcelas prc
+         WHERE epr.cdcooper = prc.cdcooper
          --  AND epr.cdagenci = prc.cdagenci  --ews
            AND epr.nrdconta = prc.nrdconta
            AND epr.nrctremp = prc.nrctremp
@@ -1049,11 +1026,7 @@ BEGIN
       vr_flgprc       INTEGER;
       vr_cdagencia    tbepr_tr_parcelas.cdagenci%TYPE;
       vr_seqdig       NUMBER(10);
-      vr_vlresgat     NUMBER; 
-      vr_atr_vlsdeved NUMBER;
-      vr_atr_qtprecal NUMBER;
-      vr_atr_qtdiaatr NUMBER;
-      
+            
       -- Erro em chamadas da pc_gera_erro
       vr_des_reto VARCHAR2(3);
       vr_tab_erro GENE0001.typ_tab_erro;
@@ -1353,63 +1326,6 @@ BEGIN
 
           -- Se o valor de desconto aplicando a CPMF for maior que o saldo total
           IF TRUNC((vr_vldescto * (1 + vr_txcpmfcc)),2) > vr_vlsldtot THEN
-
-            -- Somente se o contrato de empréstimo tem cobertura de operação
-            IF rw_crapepr.idcobope > 0 THEN
-
-              
-              -- Tentar resgatar o valor negativo
-              IF (vr_vlsldtot < 0) THEN
-                 vr_vlresgat := TRUNC((vr_vldescto * (1+ vr_txcpmfcc)),2);
-              ELSE
-              vr_vlresgat := ABS(vr_vlsldtot - (TRUNC((vr_vldescto * (1+ vr_txcpmfcc)),2)));
-              END IF;                
-
-              -- Acionar rotina de calculo de dias em atraso
-              IF rw_crapepr.txjuremp <> rw_crapepr.vltaxa_juros THEN
-                rw_crapepr.txjuremp := rw_crapepr.vltaxa_juros;
-                vr_inusatab := true;
-              ELSE
-                vr_inusatab := false;
-              END IF;
-
-              -- Calcula dias em atraso
-              EMPR0001.pc_calc_dias_atraso(pr_cdcooper   => pr_cdcooper,
-                                           pr_cdprogra   => vr_cdprogra, 
-                                           pr_nrdconta   => rw_crapepr.nrdconta, 
-                                           pr_nrctremp   => rw_crapepr.nrctremp, 
-                                           pr_rw_crapdat => rw_crapdat, 
-                                           pr_inusatab   => vr_inusatab, 
-                                           pr_vlsdeved   => vr_atr_vlsdeved, 
-                                           pr_qtprecal   => vr_atr_qtprecal, 
-                                           pr_qtdiaatr   => vr_atr_qtdiaatr, 
-                                           pr_cdcritic   => vr_cdcritic, 
-                                           pr_des_erro   => vr_dscritic); 
-              -- Em caso de erro
-              IF TRIM(vr_dscritic) IS NOT NULL THEN
-                --Sair do programa
-                RAISE vr_exc_erro;
-              ELSE
-                -- Acionaremos rotina para solicitar o resgate afim de cobrir os valores negativos
-                BLOQ0001.pc_solici_cobertura_operacao(pr_idcobope => rw_crapepr.idcobope
-                                                     ,pr_flgerlog => 1
-                                                     ,pr_cdoperad => '1'
-                                                     ,pr_idorigem => 5
-                                                     ,pr_cdprogra => vr_cdprogra
-                                                     ,pr_qtdiaatr => vr_atr_qtdiaatr
-                                                     ,pr_vlresgat => vr_vlresgat
-                                                     ,pr_dscritic => vr_dscritic); 
-                -- Em caso de erro
-                IF TRIM(vr_dscritic) IS NOT NULL THEN
-                  --Sair do programa
-                  RAISE vr_exc_erro;
-                ELSE
-                  -- Incrementar ao saldo o total resgatado 
-                  vr_vlsldtot := vr_vlsldtot + vr_vlresgat;
-                END IF;
-              END IF;
-
-            END IF; -- rw_crapepr.idcobope > 0
 
             -- Se houver saldo total
             IF vr_vlsldtot > 0 THEN
@@ -1790,21 +1706,6 @@ BEGIN
                                                ,pr_tab_erro => vr_tab_erro          -- Retorno de erros em PlTable
                                                ,pr_cdcritic => vr_cdcritic          -- Retorno de codigo de critica
                                                ,pr_dscritic => vr_dscritic);        -- Retorno de descricao de critica
-
-          -- Se possui cobertura vinculada
-          IF rw_crapepr.idcobope > 0 THEN
-            -- Chama bloqueio/desbloqueio da garantia
-            BLOQ0001.pc_bloq_desbloq_cob_operacao(pr_idcobertura    => rw_crapepr.idcobope
-                                                 ,pr_inbloq_desbloq => 'D'
-                                                 ,pr_cdoperador     => '1'
-                                                 ,pr_vldesbloq      => 0
-                                                 ,pr_flgerar_log    => 'S'
-                                                 ,pr_dscritic       => vr_dscritic);
-            -- Se houve erro
-            IF TRIM(vr_dscritic) IS NOT NULL THEN
-              RAISE vr_exc_erro;
-            END IF;
-          END IF;
 
         ELSE
           -- Indicar que o emprestimo não está liquidado

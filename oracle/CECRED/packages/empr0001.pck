@@ -8785,6 +8785,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                                 Alterado indevidamente em 23/01/2018 SM 12158. (SD#846598 - AJFink)
 
                    24/01/2018 - Adicionada solicitacao de senha de coordenador para utilizacao do saldo bloqueado no pagamento (Luis Fernando - GFT)
+                   
+                   06/04/2018 - Alterar o tratamento relacionado as chamadas de resgate de aplicação,
+                                para que não ocorram problemas com o fluxo atual em caso de ocorrencia
+                                de erros. (Renato - Supero)
     ............................................................................. */
   
     DECLARE
@@ -9003,12 +9007,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                                                ,pr_cdprogra => pr_nmdatela
                                                ,pr_qtdiaatr => vr_qtdiaatr
                                                ,pr_vlresgat => vr_vlresgat
-                                               ,pr_flefetiv => 'N'
+                                               ,pr_flefetiv => 'S' -- Deve efetuar o resgate
                                                ,pr_dscritic => vr_dscritic);
-          -- Em caso de erro
+
+          -- Em caso de erro, deve prosseguir normalmente, considerando que não há valores para resgate
           IF TRIM(vr_dscritic) IS NOT NULL THEN 
-            --Sair do programa
-            RAISE vr_exc_saida;
+            -- Limpar a variável de crítica
+            vr_dscritic := NULL;
+            -- Zerar a variável de valor de resgate
+            vr_vlresgat := 0;
+            -- Atribuir zero para o parametro de retorno
+            pr_vlresgat := 0;
           ELSE 
             -- Incrementar ao saldo o total resgatado
             pr_vlresgat := vr_vlresgat;

@@ -3354,8 +3354,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLOQ0001 AS
     Objetivo  : Receber ID de um bloqueio, valor necessário para cobrir, e devolver o valor resgatado, caso possivel.
 
     Alteracoes: 
+                 06/04/2018 - Transformar a rotina em Pragma, para evitar commits indevidos em processos que estão
+                              utilizando a rotina, visando não interferir em processos externos (Renato - Supero).
 
   .............................................................................*/
+    
+    -- -- -- -- -- -- -- -- -- -- 
+    PRAGMA AUTONOMOUS_TRANSACTION;
+    -- -- -- -- -- -- -- -- -- --
   
   BEGIN
     DECLARE
@@ -3491,6 +3497,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLOQ0001 AS
 
           -- Se o valor de cobertura for menor que o do resgate, não resgatar
           IF vr_tpcontrato = 90 AND vr_vlcobert < vr_vlresgat THEN
+            
+             -- Garantir Rollback da sessão antes de retornar
+             ROLLBACK; -- Necessário devido ao uso do pragma
+          
              RETURN;
           END IF;
 
@@ -3528,6 +3538,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLOQ0001 AS
           IF pr_flefetiv = 'N' THEN
             -- Devolver o valor simulado de resgate
             pr_vlresgat := vr_vlcobert;
+            
+            -- Efetuar o rollback para eliminar possíveis alterações realizadas, pois o objetivo é apenas 
+            -- retornar os valores para resgat
+            ROLLBACK; -- Necessário devido ao uso do pragma
+            
             RETURN;
           END IF;
 
@@ -3624,14 +3639,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLOQ0001 AS
 
       END IF; -- NVL(pr_idcobope,0) > 0
       
+      -- Commitar sessão PRAGMA, efetivando os resgates das aplicações
+      COMMIT;  -- Necessário devido ao uso do PRAGMA
+      
     EXCEPTION 
       WHEN vr_exc_erro THEN
+        
+        ROLLBACK; -- Necessário devido ao uso do PRAGMA
+        
         IF NVL(vr_cdcritic,0) > 0 THEN
           vr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
         END IF;
         pr_dscritic := 'Erro na BLOQ0001.PC_SOLICI_COBERTURA_OPERACAO --> '|| vr_dscritic;
         
       WHEN OTHERS THEN
+        
+        ROLLBACK; -- Necessário devido ao uso do PRAGMA
+        
         pr_dscritic := 'Erro na BLOQ0001.PC_SOLICI_COBERTURA_OPERACAO --> '|| SQLERRM;
     
     END;

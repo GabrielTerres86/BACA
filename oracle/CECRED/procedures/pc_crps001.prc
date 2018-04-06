@@ -221,6 +221,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
                             Foi feito round no campo de IOF (Andrino-Mouts)               
 
                19/01/2018 - Corrigido cálculo de saldo bloqueado (Luis Fernando-Gft)
+               
+               06/04/2018 - Alterar o tratamento relacionado as chamadas de resgate de aplicação,
+                            para que não ocorram problemas com o fluxo atual em caso de ocorrencia
+                            de erros. (Renato - Supero)
      ............................................................................. */
 
      DECLARE
@@ -2088,34 +2092,41 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
              --Se encontrou limite de credito para a conta
              IF vr_tab_craplim.EXISTS(rw_crapsld.nrdconta) THEN
              
-             -- Somente se o contrato de limite tem cobertura de operação
-             IF vr_tab_craplim(rw_crapsld.nrdconta).idcobope > 0 THEN
+               -- Somente se o contrato de limite tem cobertura de operação
+               IF vr_tab_craplim(rw_crapsld.nrdconta).idcobope > 0 THEN
 
-               -- Tentar resgatar o valor negativo
-               vr_vlresgat := ABS(rw_crapsld.vlsddisp);
+                 -- Tentar resgatar o valor negativo
+                 vr_vlresgat := ABS(rw_crapsld.vlsddisp);
 
-               -- Acionaremos rotina para solicitar o resgate afim de cobrir os valores negativos
-               BLOQ0001.pc_solici_cobertura_operacao(pr_idcobope => vr_tab_craplim(rw_crapsld.nrdconta).idcobope
-                                                    ,pr_flgerlog => 1
-                                                    ,pr_cdoperad => '1'
-                                                    ,pr_idorigem => 5
-                                                    ,pr_cdprogra => vr_cdprogra
-                                                    ,pr_qtdiaatr => rw_crapsld.qtddusol + 1
-                                                    ,pr_vlresgat => vr_vlresgat
-                                                    ,pr_dscritic => vr_dscritic);
-               -- Em caso de erro
-               IF TRIM(vr_dscritic) IS NOT NULL THEN
-                 --Sair do programa
-                 RAISE vr_exc_saida;
-               ELSE
-                 -- Decrementar do saldo negativo o valor resgatado
-									 rw_crapsld.vlsddisp := rw_crapsld.vlsddisp + vr_vlresgat;
+                 -- Acionaremos rotina para solicitar o resgate afim de cobrir os valores negativos
+                 BLOQ0001.pc_solici_cobertura_operacao(pr_idcobope => vr_tab_craplim(rw_crapsld.nrdconta).idcobope
+                                                      ,pr_flgerlog => 1
+                                                      ,pr_cdoperad => '1'
+                                                      ,pr_idorigem => 5
+                                                      ,pr_cdprogra => vr_cdprogra
+                                                      ,pr_qtdiaatr => rw_crapsld.qtddusol + 1
+                                                      ,pr_vlresgat => vr_vlresgat
+                                                      ,pr_flefetiv => 'S' -- Efetivar o resgate
+                                                      ,pr_dscritic => vr_dscritic);
+
+                 -- Em caso de erro no resgate, deve limpar os erros e prosseguir normalmente, pois o rollback 
+                 -- já foi efetuado
+                 IF TRIM(vr_dscritic) IS NOT NULL THEN
+                   -- Limpar erros
+                   vr_dscritic := NULL;
+                   -- Indicar que nenhum valor foi resgatado
+                   vr_vlresgat := 0;
+                 ELSE -- Não havendo erros
+                   
+                   ---------------------------------------------------------
+                   -- Decrementar do saldo negativo o valor resgatado
+					   			 rw_crapsld.vlsddisp := rw_crapsld.vlsddisp + vr_vlresgat;
+                   ---------------------------------------------------------
+
                  END IF;
 
                END IF;
-
              END IF;
-
            END IF;
 
            --Valor utilizado recebe:
