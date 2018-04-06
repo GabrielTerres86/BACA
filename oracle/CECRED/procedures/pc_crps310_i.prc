@@ -17,7 +17,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Deborah/Margarete
-     Data    : Maio/2001                       Ultima atualizacao: 13/03/2018
+     Data    : Maio/2001                       Ultima atualizacao: 06/04/2018
      
      Dados referentes ao programa:
 
@@ -740,7 +740,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
            AND ris.nrctremp = pr_nrdconta;
       rw_crapris_9_100 cr_crapris_9_100%ROWTYPE;
      
-                     
+                                                 
       -------- Tipos e registros genéricos ------------
 
       -- Vetor para armazenar os dados de riscos, dessa forma temos o valor
@@ -948,7 +948,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
       TYPE typ_tab_rowid IS TABLE OF ROWID INDEX BY VARCHAR2(20);
       TYPE typ_tab_crapepr_rw IS TABLE OF typ_tab_rowid 
         INDEX BY VARCHAR2(20); -- cdcooper + nrdconta
-      --vr_tab_crapepr_rw typ_tab_crapepr_rw;
+      vr_tab_crapepr_rw typ_tab_crapepr_rw;
       
       -- TempTable para armazenar as contas que possuem risco soberano
       TYPE typ_reg_contas_risco_soberano IS 
@@ -1094,14 +1094,14 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
       vr_index_crapris PLS_INTEGER;
       vr_index_crapris_aux PLS_INTEGER;
       vr_idxpep            VARCHAR2(50);
-      --vr_idxepr            VARCHAR2(20);
-      --vr_idxepr_rw         VARCHAR2(20);
+      vr_idxepr            VARCHAR2(20);
+      vr_idxepr_rw         VARCHAR2(20);
       
       vr_idx_ass_ris   PLS_INTEGER:=0;
 
       vr_dsmensag varchar2(400);
 
-
+      
       -- variaveis para criação de rotina paralela
       vr_dsplsql VARCHAR2(4000);
       vr_jobname VARCHAR2(4000);
@@ -2606,7 +2606,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
         vr_aux_nivel        PLS_INTEGER;           --> Nivel do risco
         vr_nivel_atraso     PLS_INTEGER;           --> Nivel do risco
         vr_qtdiaatr         crapris.qtdiaatr%TYPE; --> Quantidade de dias em atraso
-        --vr_rowid            ROWID;                 --> Guardar o ID do registro criado
+        vr_rowid            ROWID;                 --> Guardar o ID do registro criado
         --vr_vljura60         crapris.vljura60%TYPE; --> Juros do risco
         vr_vldiv060         crapris.vldiv060%TYPE; --> Valor do atraso quando prazo inferior a 60
         vr_vldiv180         crapris.vldiv180%TYPE; --> Valor do atraso quando prazo inferior a 180
@@ -4754,7 +4754,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
       --Executar Calculo Contas Associados  ***************
       PROCEDURE pc_atribui_risco_associado (pr_des_erro  OUT VARCHAR2) IS
       
-      BEGIN
+      BEGIN      
+                        
       -- Busca dos associados unindo com seu saldo na conta
       FOR rw_crapass IN cr_crapass LOOP
         BEGIN
@@ -6008,6 +6009,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                 vr_index_crapvri_temp := vr_tab_crapvri_temp.next(vr_index_crapvri_temp);
               END LOOP;
                             
+              
               -- Atualizar crapvri
               BEGIN
                 FORALL idx IN 1..vr_tab_crapvri.count SAVE EXCEPTIONS
@@ -6050,7 +6052,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                   vr_des_erro := 'Erro ao atualizar a tabela de Restart (CRAPRES) - Conta:'||rw_crapass.nrdconta||'. Detalhes: '||sqlerrm;
                   RAISE vr_exc_undo;
               END;
-
               -- Finalmente efetua commit
               COMMIT;
                 
@@ -6058,7 +6059,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
           END IF;
         EXCEPTION
           WHEN vr_exc_undo THEN
-
             -- Desfazer transacoes desde o ultimo commit
             ROLLBACK;
             -- Gerar um raise para gerar o log e sair do processo
@@ -6307,8 +6307,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
       -- Busca do cadastro de linhas de crédito de empréstimo
       FOR rw_craplcr IN cr_craplcr LOOP
         -- Armazenar na tabela de memória a descrição
-        vr_tab_craplcr(rw_craplcr.cdlcremp) := rw_craplcr.dsoperac;
+        vr_tab_craplcr(rw_craplcr.cdlcremp).dsoperac := rw_craplcr.dsoperac;
+        -- Percentual de Juros de Mora
+        vr_tab_craplcr(rw_craplcr.cdlcremp).perjurmo := rw_craplcr.perjurmo;
       END LOOP;
+      
       -- Buscar notas de rating do contrado da conta
       FOR rw_crapnrc IN cr_crapnrc LOOP
         -- Carregar a temp-table com as informações do
@@ -6435,7 +6438,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
         vr_tab_cessoes(vr_idxpep) := rw_cessao_carga.dtvencto;
       END LOOP;
       
-      
       --> Carrega Temp-Table contendo as contas com risco soberano
  	    pc_cria_table_risco_soberano(pr_cdcooper                  => pr_cdcooper
                                   ,pr_tab_contas_risco_soberano => vr_tab_contas_risco_soberano);
@@ -6484,7 +6486,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
 
         --Gerar o ID para o paralelismo
         vr_idparale := gene0001.fn_gera_ID_paralelo;
-                                                  
+        
        -- Verifica se algum job paralelo executou com erro
         vr_qterro := 0;
         vr_qterro := gene0001.fn_ret_qt_erro_paralelo(pr_cdcooper    => pr_cdcooper,
@@ -6732,13 +6734,12 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                                 ,pr_des_erro  => vr_des_erro);
         END IF;  
 
-pc_controla_log_batch(1, '16 Processa Arrasto: '||pr_cdagenci);
+        pc_controla_log_batch(1, '16 Processa Arrasto: '||pr_cdagenci);
      
         -- Inicialização do XML para o relatorio 349
         dbms_lob.createtemporary(vr_clobxml, TRUE, dbms_lob.CALL);
         dbms_lob.open(vr_clobxml, dbms_lob.lob_readwrite);
         pc_escreve_xml('<?xml version="1.0" encoding="utf-8"?><raiz>');
-        
         -- Chamar rotina de geração do arrasto
         pc_efetua_arrasto(pr_des_erro => vr_des_erro);
         -- Se retornou derro
@@ -6788,7 +6789,7 @@ pc_controla_log_batch(1, '16 Processa Arrasto: '||pr_cdagenci);
         -- Efetuar Commit de informações pendentes de gravação
         COMMIT;
 
- pc_controla_log_batch(1, '17 Empréstimos acima 60: '||pr_cdagenci);
+        pc_controla_log_batch(1, '17 Empréstimos acima 60: '||pr_cdagenci);
       
         -- Calculo dos juros para empréstimos acima 60 dias
         pc_calcula_juros_emp_60dias(pr_dtrefere => vr_dtrefere
@@ -6798,7 +6799,7 @@ pc_controla_log_batch(1, '16 Processa Arrasto: '||pr_cdagenci);
           RAISE vr_exc_erro;
         END IF;
 
- pc_controla_log_batch(1, '18 FIM: '||pr_cdagenci);
+        pc_controla_log_batch(1, '18 FIM: '||pr_cdagenci);
 
         -- Efetuar Commit de informações pendentes de gravação
         COMMIT;
@@ -6889,8 +6890,7 @@ pc_controla_log_batch(1, '16 Processa Arrasto: '||pr_cdagenci);
     
         -- Retornar o erro não tratado
         pr_cdcritic := 0;
-        pr_dscritic := 'Erro não tratado na rotina PC_CRPS310_I. Detalhes: '||sqlerrm;
-        
+        pr_dscritic := 'Erro não tratado na rotina PC_CRPS310_I. Detalhes: '||sqlerrm;      
     END;
   END PC_CRPS310_I;
 /
