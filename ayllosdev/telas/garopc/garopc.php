@@ -5,7 +5,8 @@
  * DATA CRIACAO : Novembro/2017
  * OBJETIVO     : Rotina da tela GAROPC
 
-   Alteracoes   : 
+   Alteracoes   : 07/04/2018 - A tela de garantias deve ser apresentada bloqueada para o 
+                               tipo PRICE TR, da mesma forma como é feito para CDC (Renato - Supero)
  */
 
     session_start();
@@ -19,6 +20,7 @@
     $gar_tipaber  = (isset($_POST['tipaber']))      ? $_POST['tipaber']      : 'C';
     $gar_nmdatela = (isset($_POST['nmdatela']))     ? $_POST['nmdatela']     : '';
     $gar_nrdconta = (isset($_POST['nrdconta']))     ? $_POST['nrdconta']     : 0;
+	$gar_tpemprst = (isset($_POST['tpemprst']))     ? $_POST['tpemprst']     : 9;
     $gar_tpctrato = (isset($_POST['tpctrato']))     ? $_POST['tpctrato']     : 0;
     $gar_idcobert = (isset($_POST['idcobert']))     ? $_POST['idcobert']     : 0;
     $gar_codlinha = (isset($_POST['codlinha']))     ? $_POST['codlinha']     : 0;
@@ -77,8 +79,13 @@
     $gar_nmctater = getByTagName($registros->tags,'NMCTATER');
 	$gar_flfincdc = getByTagName($registros->tags,'FLGFINCDC');
 	
-	if ($gar_flfincdc == 1){
+	// Se for CDC ou se o tipo do empréstimo for PRICE TR
+	if ($gar_flfincdc == 1 || $gar_tpemprst ==0){
 		$gar_tipaber = 'C';
+	}
+
+	if ($gar_tpemprst == 0 || $gar_tpemprst == 2){
+		$gar_inresaut = 0;
 	}
 ?>
 <script type="text/javascript" src="../../telas/garopc/garopc.js"></script>
@@ -221,7 +228,7 @@
                                                 } elseif ($gar_tipaber == 'C') {
 													?><a href="#" class="botao" id="btConfirmar" onClick="fechaRotina($('#divUsoGAROPC')); eval('<?php echo $ret_execfunc ?>');">Continuar</a><?php
 													
-                                                } else {
+												} else {
                                                     ?><a href="#" class="botao" id="btConfirmar" onClick="gravarGAROPC('<?php echo $ret_nomcampo; ?>','<?php echo $ret_nomformu; ?>','<?php echo $ret_execfunc; ?>', 'bloqueiaFundo($(\'#divUsoGAROPC\'))');">Continuar</a><?php
                                                 }
                                             ?>

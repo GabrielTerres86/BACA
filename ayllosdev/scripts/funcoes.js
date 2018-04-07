@@ -107,6 +107,7 @@
  * 093: [06/10/2017] Kelvin 		  (CECRED) : Ajuste para ignorar campos com display none na funcao controlaFocoEnter. (PRJ339 - Kelvin).
  * 095: [06/02/2018] Lombardi 		  (CECRED) : Colocado tratativa para tirar o background quando o type for 'radio'. (PRJ366)
  * 096: [21/03/2018] Reinert		  (CECRED) : Adicionado divUsoGAROPC na lista de divs reposicionaveis. 
+ * 097: [07/04/2018] Renato Darosci   (SUPERO) : Ajustar controle de navegação para que a funcionalidade F1 funcione também na tela GAROPC. (PRJ404). 
 */ 	 
 
 var UrlSite     = parent.window.location.href.substr(0,parent.window.location.href.lastIndexOf("/") + 1); // Url do site
@@ -375,7 +376,11 @@ $(document).ready(function () {
 					// 050 - adicionado a opcao btsair
                     } else if ($('#divRotina').css('visibility') == 'visible') {
                         if ($('#divRotina').find('#' + arrayTeclas[e.which]).length) {
+							if ($('#btConfirmar', '#divUsoGAROPC').css('visibility') == 'visible') {
+								$('#btConfirmar' + ':visible', '#divUsoGAROPC').click();
+							} else { 
                             $('#' + arrayTeclas[e.which] + ':visible', '#divRotina').click();
+							}
                         } else if ($('#divRotina').find('#btSair').length && e.which == 27) {
                             $('#btSair:visible', '#divRotina').click();
 						}
