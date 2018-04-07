@@ -8789,6 +8789,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                    06/04/2018 - Alterar o tratamento relacionado as chamadas de resgate de aplicação,
                                 para que não ocorram problemas com o fluxo atual em caso de ocorrencia
                                 de erros. (Renato - Supero)
+                                
+                   07/04/2018 - Ajustar o calculo do valor a ser resgatado (Renato - Supero)
     ............................................................................. */
   
     DECLARE
@@ -8991,8 +8993,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       
         -- Somente se o contrato de empréstimo tem cobertura de operação e não há saldo
         IF nvl(pr_vlapagar, 0) > nvl(pr_vlsomato, 0) AND rw_crawepr.idcobope > 0 THEN
-          -- Tentar resgatar o valor negativo
-          vr_vlresgat := ABS(nvl(pr_vlsomato, 0) - nvl(pr_vlapagar, 0));
+          
+          -- Quando a conta estiver com estouro deve desconsiderar esse negativo
+          IF nvl(pr_vlsomato, 0) <= 0 THEN
+            -- Valor do resgate deve ser o valor total a pagar apenas
+            vr_vlresgat := nvl(pr_vlapagar, 0);
+          ELSE -- Se há algum saldo para ser consumido
+            -- Deve considerar apenas o valor faltante para pagamento
+            vr_vlresgat := NVL(pr_vlapagar,0) - NVL(pr_vlsomato,0); 
+          END IF;
+          
           -- Acionar rotina de calculo de dias em atraso
           vr_qtdiaatr := EMPR0001.fn_busca_dias_atraso_epr(pr_cdcooper => pr_cdcooper
                                                           ,pr_nrdconta => pr_nrdconta
