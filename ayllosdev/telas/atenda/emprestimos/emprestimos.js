@@ -9704,6 +9704,8 @@ function abrirTelaGAROPC(operacao) {
 	exibeRotina($('#divUsoGAROPC'));
     $('#divRotina').css({'display':'none'});
 	
+	var tpemprst = $('#tpemprst', '#frmNovaProp').val();
+
     // Carrega conteúdo da opção através do Ajax
     $.ajax({
         type: 'POST',
@@ -9713,6 +9715,7 @@ function abrirTelaGAROPC(operacao) {
             nmdatela     : 'EMPRESTIMOS',
             tipaber      : tipaber,
             nrdconta     : nrdconta,
+			tpemprst	 : tpemprst,
             tpctrato     : 90,
             idcobert     : idcobert,
             dsctrliq     : dsctrliq,
