@@ -2,7 +2,7 @@
 
     Programa: b1wgen0075.p
     Autor   : Jose Luis Marchezoni (DB1)
-    Data    : Maio/2010                   Ultima atualizacao: 27/09/2017
+    Data    : Maio/2010                   Ultima atualizacao: 27/02/2018
 
     Objetivo  : Tranformacao BO tela CONTAS - COMERCIAL
 
@@ -107,7 +107,11 @@
                            qnd for da natureza de ocupacao igual a 99, pois
                            campo nao existe mais e nao era utilizado. 
                            PRJ339-CRM (Odirlei-AMcom)
-			  
+			  27/02/2018 - Na procedure grava_dados removido o endereco comercial quando a
+                     natureza da ocupaçao for 12(Sem vinculo) (Tiago #857499)
+					 
+			  16/06/2018 - Bloqueio realizado para que nao seja possivel salvar o CNPJ da empresa
+						   com o cpf do titular. (SD 860231 - Kelvin).
 .............................................................................*/
 
 /*............................. DEFINICOES ..................................*/
@@ -566,7 +570,23 @@ PROCEDURE Valida_Dados:
                    aux_cdcritic = 27.
                LEAVE Valida.
             END.
-
+		
+		FIND crapttl WHERE crapttl.cdcooper = par_cdcooper AND
+						   crapttl.nrdconta = par_nrdconta AND
+						   crapttl.idseqttl = par_idseqttl 
+						   NO-LOCK NO-ERROR.
+		IF AVAIL crapttl THEN
+		DO:
+			IF  STRING(par_nrcpfemp) = STRING(crapttl.nrcpfcgc) THEN
+				DO:
+				   ASSIGN 
+					   par_nmdcampo = "nrcpfemp"
+					   aux_cdcritic = 0.
+					   aux_dscritic = "CNPJ da empresa nao pode ser o CPF da conta".
+					   
+				   LEAVE Valida.
+				END.
+		END.	
         /* funcao */
         IF  par_dsproftl = "" THEN
             DO:
@@ -1004,7 +1024,15 @@ PROCEDURE Grava_Dados:
                        END.
                 END.
             ELSE
-                LEAVE ContadorEnc.
+            DO:
+            
+              IF par_cdnatopc = 12 THEN
+              DO:                
+                DELETE crapenc.
+              END.
+              
+              LEAVE ContadorEnc.
+            END.
         END.
         
         IF par_cepedct1 <> 0 THEN
