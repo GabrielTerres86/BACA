@@ -8176,21 +8176,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                     /* Atualiza os campos de acordo com o tipo
                     da conta do associado que recebe o cheque */
                     
-                    IF rw_verifica_ass.cdtipcta >= 8  AND
+                    /*IF rw_verifica_ass.cdtipcta >= 8  AND
                        rw_verifica_ass.cdtipcta <= 11 THEN                       
                        
                        IF rw_verifica_ass.cdbcochq = 756 THEN -- BANCOOB
                           vr_aux_cdbandep := 756;
                           vr_aux_cdagedep := rw_cod_coop_dest.cdagebcb;
-                       ELSE
+                       ELSE*/
                           vr_aux_cdbandep := rw_cod_coop_dest.cdbcoctl;
                           vr_aux_cdagedep := rw_cod_coop_dest.cdagectl;
-                       END IF;
+                       /*END IF;
                     ELSE
                        -- BANCO DO BRASIL - SEM DIGITO
                        vr_aux_cdbandep := 1;
                        vr_aux_cdagedep := SUBSTR(rw_cod_coop_dest.cdagedbb,LENGTH(rw_cod_coop_dest.cdagedbb)-1);
-                    END IF;                      
+                    END IF;*/                      
                   
                     UPDATE crapfdc fdc
                        SET fdc.incheque = fdc.incheque + 5
@@ -8361,22 +8361,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                                 /* Atualiza os campos de acordo com o tipo
                                 da conta do associado que recebe o cheque */
                                 
-                                IF rw_verifica_ass.cdtipcta >= 8  AND
+                                /*IF rw_verifica_ass.cdtipcta >= 8  AND
                                    rw_verifica_ass.cdtipcta <= 11 THEN                       
                                    
                                    IF rw_verifica_ass.cdbcochq = 756 THEN -- BANCOOB
                                       vr_aux_cdbandep := 756;
                                       vr_aux_cdagedep := rw_cod_coop_dest.cdagebcb;
-                                   ELSE
+                                   ELSE*/
                                       vr_aux_cdbandep := rw_cod_coop_dest.cdbcoctl;
                                       vr_aux_cdagedep := rw_cod_coop_dest.cdagectl;
-                                   END IF;
+                                   /*END IF;
 
                                 ELSE
                                    -- BANCO DO BRASIL - SEM DIGITO
                                    vr_aux_cdbandep := 1;
                                    vr_aux_cdagedep := SUBSTR(rw_cod_coop_dest.cdagedbb,LENGTH(rw_cod_coop_dest.cdagedbb)-1);
-                                END IF;
+                                END IF;*/
                               
                                 UPDATE crapfdc fdc
                                    SET fdc.incheque = fdc.incheque + 5
@@ -11700,21 +11700,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                         /* Atualiza os campos de acordo com o tipo
                         da conta do associado que recebe o cheque */
                                           
-                        IF rw_verifica_ass.cdtipcta >= 8  AND
+                        /*IF rw_verifica_ass.cdtipcta >= 8  AND
                            rw_verifica_ass.cdtipcta <= 11 THEN                       
                                              
                            IF rw_verifica_ass.cdbcochq = 756 THEN -- BANCOOB
                               vr_aux_cdbandep := 756;
                               vr_aux_cdagedep := rw_cod_coop_dest.cdagebcb;
-                           ELSE
+                           ELSE*/
                               vr_aux_cdbandep := rw_cod_coop_dest.cdbcoctl;
                               vr_aux_cdagedep := rw_cod_coop_dest.cdagectl;
-                           END IF;
+                           /*END IF;
                         ELSE
                            -- BANCO DO BRASIL - SEM DIGITO
                            vr_aux_cdbandep := 1;
                            vr_aux_cdagedep := SUBSTR(rw_cod_coop_dest.cdagedbb,LENGTH(rw_cod_coop_dest.cdagedbb)-1);
-                        END IF;
+                        END IF;*/
                                      
                         BEGIN     
                            UPDATE crapfdc fdc
@@ -11856,21 +11856,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                         /* Atualiza os campos de acordo com o tipo
                         da conta do associado que recebe o cheque */
                                           
-                        IF rw_verifica_ass.cdtipcta >= 8  AND
+                        /*IF rw_verifica_ass.cdtipcta >= 8  AND
                            rw_verifica_ass.cdtipcta <= 11 THEN                       
                                              
                            IF rw_verifica_ass.cdbcochq = 756 THEN -- BANCOOB
                               vr_aux_cdbandep := 756;
                               vr_aux_cdagedep := rw_cod_coop_dest.cdagebcb;
-                           ELSE
+                           ELSE*/
                               vr_aux_cdbandep := rw_cod_coop_dest.cdbcoctl;
                               vr_aux_cdagedep := rw_cod_coop_dest.cdagectl;
-                           END IF;
+                           /*END IF;
                         ELSE
                            -- BANCO DO BRASIL - SEM DIGITO
                            vr_aux_cdbandep := 1;
                            vr_aux_cdagedep := SUBSTR(rw_cod_coop_dest.cdagedbb,LENGTH(rw_cod_coop_dest.cdagedbb)-1);
-                        END IF;                      
+                        END IF; */                     
                         
                         BEGIN
                                           

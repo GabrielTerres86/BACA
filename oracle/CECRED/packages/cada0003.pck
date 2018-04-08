@@ -2108,6 +2108,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
     --                            PRJ339-CRM  (Odirlei-AMcom)
     --               16/10/2017 - nao efetuar a duplicacao de PROCURADOR na rotina de 
     --                            duplicacao de contas. (PRJ339  - Kelvin/Andrino)
+    --
+    --               19/02/2018 - Ajustes na criação de pendencia de digitalização.
+    --                            PRJ366 - Ajustes tpconta (Odirlei-AMcom)
     -- .............................................................................*/
 
       -- Cursor sobre a tabela de associados
@@ -2190,6 +2193,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
       -- Variaveis gerais
       vr_contador PLS_INTEGER := 0;
       vr_vlcapmin crapmat.vlcapini%TYPE; --> Valor de capital minumo para a conta
+      vr_cdestcvl INTEGER;
+      vr_criestcv BOOLEAN;
+      vr_idseqttl INTEGER;
+      
 
       -- Variaveis para a duplicacao da conta
       vr_numero VARCHAR2(10);
@@ -2688,29 +2695,62 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
 
       -- Efetua o loop sobre a tabela de controle de documentos digitalizados
       FOR x IN 1..7 LOOP
-        -- Insere na tabela de documentos digitalizados - GED
-        BEGIN
-          INSERT INTO crapdoc
-            (cdcooper,
-             nrdconta,
-             flgdigit,
-             dtmvtolt,
-             tpdocmto,
-             idseqttl,
-             nrcpfcgc)
-           VALUES
-            (pr_cdcooper,
-             pr_nrdconta_dst,
-             0,
-             rw_crapdat.dtmvtolt,
-             x,
-             1,
-             rw_crapass.nrcpfcgc);
-        EXCEPTION
-          WHEN OTHERS THEN
-            vr_dscritic := 'Erro ao inserir na CRAPDOC: '||SQLERRM;
+        
+        -- Tratamentos efetuados com base na b1wgen0055
+        -- Para os documentos (CPF,CARTEIRA DE IDENTIFICACAO E COMPROVANTE DE RENDA) 
+        -- criar pendencia somemente para pessoa fisica
+        IF x IN(1,2,5) AND rw_crapass.inpessoa <> 1 THEN
+          continue;
+        END IF;        
+        
+        -- Validar estado civil
+        IF x = 4 THEN        
+          IF rw_crapass.inpessoa = 1 THEN
+            SELECT cdestcvl INTO vr_cdestcvl
+                FROM crapttl
+               WHERE cdcooper = pr_cdcooper
+                 AND nrdconta = pr_nrdconta_org
+                 AND idseqttl = 1;        
+          ELSE
+            vr_cdestcvl:= 0;
+          END IF;  
+          
+          IF vr_cdestcvl IN(2,3,4,8,9,11,12) AND 
+             rw_crapass.inpessoa = 1 THEN
+            vr_criestcv:= TRUE;
+          ELSE
+            vr_criestcv:= FALSE;
+          END IF;
+          
+          -- Estado civil criar somente para pessoa fisica e a variavel vr_criestcv seja true
+          IF NOT vr_criestcv THEN
+            continue;
+          END IF;
+        END IF;
+        
+        -- Pessoa juridica vamos gravar como zero a titularidade
+        IF rw_crapass.inpessoa <> 1 THEN
+          vr_idseqttl:= 0;
+        ELSE
+          vr_idseqttl:= 1;        
+        END IF;
+                
+        DIGI0001.pc_gera_pend_digitalizacao( pr_cdcooper  => pr_cdcooper         --> Codigo da cooperativa 
+                                          ,pr_nrdconta  => pr_nrdconta_dst     --> Nr. da conta
+                                          ,pr_idseqttl  => 1                   --> Indicador de titular
+                                          ,pr_nrcpfcgc  => rw_crapass.nrcpfcgc --> Numero do CPF/CNPJ
+                                          ,pr_dtmvtolt  => rw_crapdat.dtmvtolt --> Data do movimento
+                                          ,pr_lstpdoct  => x                   --> lista de Tipo do documento separados por ;
+                                          ,pr_cdoperad  => nvl(pr_cdoperad,' ')--> Codigo do operador
+                                          ,pr_cdcritic  => vr_cdcritic         --> Codigo da critica
+                                          ,pr_dscritic  => vr_dscritic);       --> Descricao da critica
+      
+            
+        IF nvl(vr_cdcritic,0) > 0 OR
+           TRIM(vr_dscritic) IS NOT NULL THEN
             RAISE vr_exc_saida;
-        END;
+        END IF;    
+        
       END LOOP;
 
       -- Se for pessoa fisica, cria o primeiro titular
@@ -2914,29 +2954,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
             RAISE vr_exc_saida;
         END;
 
-        BEGIN
-          INSERT INTO crapdoc
-            (cdcooper,
-             nrdconta,
-             flgdigit,
-             dtmvtolt,
-             tpdocmto,
-             idseqttl,
-             nrcpfcgc)
-           VALUES
-            (pr_cdcooper,
-             pr_nrdconta_dst,
-             0,
-             rw_crapdat.dtmvtolt,
-             22,
-             1,
-             rw_crapass.nrcpfcgc);
-        EXCEPTION
-          WHEN OTHERS THEN
-            vr_dscritic := 'Erro ao inserir na CRAPDOC: '||SQLERRM;
-            RAISE vr_exc_saida;
-        END;
-        
       ELSE -- Se for PJ
         -- Insere a tabela de pessoas juridicas
         BEGIN
@@ -4669,6 +4686,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
        WHERE tbcc_produtos_coop.cdcooper = pr_cdcooper
          AND tbcc_produtos_coop.tpconta  = pr_tpconta
          AND tbcc_produtos_coop.inpessoa = pr_inpessoa
+         AND (tbcc_produtos_coop.dtvigencia IS NULL OR
+              tbcc_produtos_coop.dtvigencia >= TRUNC(SYSDATE))
          AND tbcc_produto.cdproduto      = tbcc_produtos_coop.cdproduto
        ORDER BY tbcc_produtos_coop.tpproduto,
                 tbcc_produtos_coop.nrordem_exibicao;
@@ -4704,7 +4723,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
     -- Variaveis gerais
     vr_contador      PLS_INTEGER := 0;
     vr_contador_tipo PLS_INTEGER := -1;
-    vr_tpconta   tbcc_produtos_coop.tpconta%TYPE; --> Tipo de conta
+    --vr_tpconta   tbcc_produtos_coop.tpconta%TYPE; --> Tipo de conta
     vr_check_adesao_externa VARCHAR2(1);          --> Indica se deve ficar habilitado o checkbox de habilitacao externa (outras instituicoes)
     vr_check_vencto         VARCHAR2(1);          --> Indica se deve ficar habilitado o campo de data de vencimento
 
@@ -4738,10 +4757,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
     END IF;
     CLOSE cr_crapass;
 
-	 
-
     -- Atualiza o tipo de conta
-    IF rw_crapass.cdmodali = 2 THEN -- Conta Salario
+    /*IF rw_crapass.cdmodali = 2 THEN -- Conta Salario
       vr_tpconta := 2; -- Conta Salario
     ELSIF rw_crapass.dtnasttl IS NOT NULL AND
       TRUNC((to_char(sysdate,'yyyymmdd') - to_char(rw_crapass.dtnasttl,'yyyymmdd')) / 10000) < 18 THEN
@@ -4752,13 +4769,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
       vr_tpconta := 1; -- Conta PF
     ELSE
       vr_tpconta := 5; -- Conta PJ
-    END IF;
+    END IF;*/
 
     -- Criar cabeçalho do XML
     pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Dados/>');
 
     -- Efetua o loop sobre os produtos
-    FOR rw_produtos_coop IN cr_produtos_coop(pr_tpconta => vr_tpconta
+    FOR rw_produtos_coop IN cr_produtos_coop(pr_tpconta  => rw_crapass.cdtipcta --- vr_tpconta
                                             ,pr_cdcooper => vr_cdcooper
                                             ,pr_inpessoa => rw_crapass.inpessoa) LOOP
 
@@ -4888,6 +4905,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
          WHERE tbcc_produtos_coop.cdcooper = pr_cdcooper
            AND tbcc_produtos_coop.tpconta  = pr_tpconta
            AND tbcc_produtos_coop.inpessoa = pr_inpessoa
+           AND (tbcc_produtos_coop.dtvigencia IS NULL OR
+                tbcc_produtos_coop.dtvigencia >= TRUNC(SYSDATE))
            AND tbcc_produto.cdproduto      = tbcc_produtos_coop.cdproduto
          ORDER BY tbcc_produtos_coop.tpproduto,
                   tbcc_produtos_coop.nrordem_exibicao;
@@ -4909,7 +4928,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
       vr_idorigem VARCHAR2(100);
 
       -- Variaveis gerais
-      vr_tpconta   tbcc_produtos_coop.tpconta%TYPE; --> Tipo de conta
+      --vr_tpconta   tbcc_produtos_coop.tpconta%TYPE; --> Tipo de conta
       vr_retxml    xmltype;                         --> Variavel temporaria de retorno
 
   BEGIN
@@ -4943,7 +4962,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
       CLOSE cr_crapass;
 
       -- Atualiza o tipo de conta
-      IF rw_crapass.cdmodali = 2 THEN -- Cheque Salario
+      /*IF rw_crapass.cdmodali = 2 THEN -- Cheque Salario
         vr_tpconta := 2; -- Conta Salario
       ELSIF rw_crapass.dtnasttl IS NOT NULL AND
         TRUNC((to_char(sysdate,'yyyymmdd') - to_char(to_date(rw_crapass.dtnasttl),'yyyymmdd')) / 10000) < 18 THEN
@@ -4954,10 +4973,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
         vr_tpconta := 1; -- Conta PF
       ELSE
         vr_tpconta := 5; -- Conta PJ
-      END IF;
+      END IF;*/
 
       -- Efetua o loop sobre os produtos
-      FOR rw_produtos_coop IN cr_produtos_coop(pr_tpconta => vr_tpconta
+      FOR rw_produtos_coop IN cr_produtos_coop(pr_tpconta  => rw_crapass.cdtipcta -- vr_tpconta
                                               ,pr_cdcooper => vr_cdcooper
                                               ,pr_inpessoa => rw_crapass.inpessoa) LOOP
 
@@ -8312,11 +8331,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
      WHERE crapcop.cdcooper = pr_cdcooper;
     rw_crapcop cr_crapcop%ROWTYPE;
     
-    CURSOR cr_craptip(pr_cdtipcta IN craptip.cdtipcta%TYPE)IS
+    CURSOR cr_tipo_conta(pr_inpessoa IN tbcc_tipo_conta.inpessoa%TYPE
+                        ,pr_cdtipcta IN tbcc_tipo_conta.cdtipo_conta%TYPE)IS
     SELECT 1
-      FROM craptip
-     WHERE craptip.cdtipcta = pr_cdtipcta;
-    rw_craptip cr_craptip%ROWTYPE;
+      FROM tbcc_tipo_conta  tip
+     WHERE tip.inpessoa     = pr_inpessoa
+       AND tip.cdtipo_conta = pr_cdtipcta;
+    rw_tpconta cr_tipo_conta%ROWTYPE;
     
     CURSOR cr_craptab(pr_cdcopsel IN crapcop.cdcooper%TYPE
                      ,pr_tpdconta IN INTEGER
@@ -8371,13 +8392,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
     
     END IF;
     
-    OPEN cr_craptip(pr_cdtipcta => pr_cdtipcta);
+    -- Buscar o tipo de conta
+    OPEN cr_tipo_conta(pr_inpessoa => pr_tppessoa
+                      ,pr_cdtipcta => pr_cdtipcta);
     
-    FETCH cr_craptip INTO rw_craptip;
+    FETCH cr_tipo_conta INTO rw_tpconta;
     
-    IF cr_craptip%NOTFOUND THEN
+    IF cr_tipo_conta%NOTFOUND THEN
     
-      CLOSE cr_craptip;
+      CLOSE cr_tipo_conta;
       
       -- Montar mensagem de critica
       vr_dscritic := 'Tipo de conta inválido.';
@@ -8386,7 +8409,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
       
     ELSE
       
-      CLOSE cr_craptip;
+      CLOSE cr_tipo_conta;
       
     END IF;
     
@@ -8463,13 +8486,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
      WHERE crapcop.cdcooper = pr_cdcooper;
     rw_crapcop cr_crapcop%ROWTYPE;
     
-    CURSOR cr_craptip(pr_cdtipcta IN craptip.cdtipcta%TYPE)IS
-    SELECT craptip.cdtipcta
-          ,craptip.dstipcta
-      FROM craptip
-     WHERE craptip.cdtipcta = pr_cdtipcta;
-    rw_craptip cr_craptip%ROWTYPE;
-    rw_craptip_antigo cr_craptip%ROWTYPE;
+    CURSOR cr_tipo_conta(pr_inpessoa IN tbcc_tipo_conta.inpessoa%TYPE
+                        ,pr_cdtipcta IN tbcc_tipo_conta.cdtipo_conta%TYPE)IS
+    SELECT tip.cdtipo_conta
+          ,tip.dstipo_conta
+      FROM tbcc_tipo_conta tip
+     WHERE tip.inpessoa     = pr_inpessoa
+       AND tip.cdtipo_conta = pr_cdtipcta;
+    rw_tipconta     cr_tipo_conta%ROWTYPE;
+    rw_tipconta_ant cr_tipo_conta%ROWTYPE;
     
     CURSOR cr_craptab(pr_cdcopsel IN crapcop.cdcooper%TYPE
                      ,pr_tpdconta IN INTEGER
@@ -8555,13 +8580,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
     
     END IF;
     
-    OPEN cr_craptip(pr_cdtipcta => pr_cdtipcta);
+    OPEN cr_tipo_conta(pr_inpessoa => pr_tppessoa
+                      ,pr_cdtipcta => pr_cdtipcta);
     
-    FETCH cr_craptip INTO rw_craptip;
+    FETCH cr_tipo_conta INTO rw_tipconta;
     
-    IF cr_craptip%NOTFOUND THEN
+    IF cr_tipo_conta%NOTFOUND THEN
     
-      CLOSE cr_craptip;
+      CLOSE cr_tipo_conta;
       
       -- Montar mensagem de critica
       vr_dscritic := 'Tipo de conta inválido.';
@@ -8570,7 +8596,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
       
     ELSE
       
-      CLOSE cr_craptip;
+      CLOSE cr_tipo_conta;
       
     END IF;
         
@@ -8610,7 +8636,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
                                                       'Efetuou a inclusao do parametro, ' || 
                                                       ' Cooperativa: ' || rw_crapcop.nmrescop ||
                                                       ', Tipo de pessoa: ' || (CASE WHEN pr_tppessoa = 1 THEN 'Fisica' ELSE 'Juridica' END) || 
-                                                      ', Valor: ' || trim(to_char(rw_craptip.cdtipcta,'99990')) || ' - ' || rw_craptip.dstipcta || ' - ' || 
+                                                      ', Valor: ' || trim(to_char(rw_tipconta.cdtipo_conta,'99990')) || ' - ' || rw_tipconta.dstipo_conta || ' - ' || 
                                                       to_char(pr_vlminimo,'fm999g999g999g999g990d00','NLS_NUMERIC_CHARACTERS='',.''')  || '.');
         
       EXCEPTION
@@ -8631,9 +8657,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
            SET dstextab = pr_cdtipcta || ' ' || nvl(pr_vlminimo,0)
          WHERE craptab.progress_recid = rw_craptab.progress_recid;
            
-        OPEN cr_craptip(pr_cdtipcta => rw_craptab.tpdconta);
+        OPEN cr_tipo_conta(pr_inpessoa => pr_tppessoa
+                          ,pr_cdtipcta => rw_craptab.tpdconta);
     
-        FETCH cr_craptip INTO rw_craptip_antigo;
+        FETCH cr_tipo_conta INTO rw_tipconta_ant;
+        
+        -- fechar o cursor
+        CLOSE cr_tipo_conta;
         
         -- Gera log
         btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper
@@ -8645,9 +8675,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
                                                       'Cooperativa: ' || rw_crapcop.nmrescop ||
                                                       ', Tipo de pessoa de ' || (CASE WHEN rw_craptab.tpregist = 1 THEN 'Fisica' ELSE 'Juridica' END) ||
                                                       ' para ' || (CASE WHEN pr_tppessoa = 1 THEN 'Fisica' ELSE 'Juridica' END) || 
-                                                      ', Valor de ' || trim(to_char(rw_craptip_antigo.cdtipcta,'99990')) || ' - ' || rw_craptip_antigo.dstipcta || ' - ' ||
+                                                      ', Valor de ' || trim(to_char(rw_tipconta_ant.cdtipo_conta,'99990')) || ' - ' || rw_tipconta_ant.dstipo_conta || ' - ' ||
                                                       to_char(rw_craptab.valor_minimo,'fm999g999g999g999g990d00','NLS_NUMERIC_CHARACTERS='',.''') || 
-                                                      ' para ' || trim(to_char(rw_craptip.cdtipcta,'99990')) || ' - ' || rw_craptip.dstipcta || ' - ' ||
+                                                      ' para ' || trim(to_char(rw_tipconta.cdtipo_conta,'99990')) || ' - ' || rw_tipconta.cdtipo_conta || ' - ' ||
                                                        to_char(pr_vlminimo,'fm999g999g999g999g990d00','NLS_NUMERIC_CHARACTERS='',.''')  || '.');
            
       EXCEPTION
@@ -8729,13 +8759,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
       rw_crapcop cr_crapcop%ROWTYPE;
       
       -- Cursores
-      CURSOR cr_craptip(pr_cdcooper IN craptip.cdcooper%TYPE) IS
-      SELECT cdtipcta
-            ,dstipcta
-        FROM craptip
-       WHERE cdcooper = pr_cdcooper
-       ORDER BY cdtipcta;    
-      rw_craptip cr_craptip%ROWTYPE;
+      CURSOR cr_tipo_conta(pr_cdcooper IN tbcc_tipo_conta_coop.cdcooper%TYPE
+                          ,pr_inpessoa IN tbcc_tipo_conta_coop.inpessoa%TYPE) IS
+      SELECT tc.cdtipo_conta
+            ,tp.dstipo_conta
+        FROM tbcc_tipo_conta      tp
+           , tbcc_tipo_conta_coop tc
+       WHERE tp.inpessoa     = tc.inpessoa
+         AND tp.cdtipo_conta = tc.cdtipo_conta
+         AND tc.inpessoa     = pr_inpessoa
+         AND tc.cdcooper     = pr_cdcooper
+       ORDER BY cdtipo_conta;    
+      rw_tipoconta cr_tipo_conta%ROWTYPE;
       
       CURSOR cr_craptab(pr_cdcopsel IN crapcop.cdcooper%TYPE
                        ,pr_tpdconta IN INTEGER
@@ -8829,7 +8864,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
       pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
       gene0007.pc_insere_tag(pr_xml => pr_retxml,pr_tag_pai => 'Root',pr_posicao => 0,pr_tag_nova => 'Tipos',pr_tag_cont => NULL,pr_des_erro => vr_dscritic); 
           
-      FOR rw_craptip IN cr_craptip(pr_cdcooper => pr_cdcopsel) LOOP
+      FOR rw_tipoconta IN cr_tipo_conta(pr_cdcooper => pr_cdcopsel
+                                       ,pr_inpessoa => pr_tppessoa) LOOP
       
         --Incrementar Quantidade Registros do Parametro
         vr_qtregist:= nvl(vr_qtregist,0) + 1;
@@ -8845,11 +8881,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
         IF vr_nrregist > 0 THEN 
         
           gene0007.pc_insere_tag(pr_xml => pr_retxml,pr_tag_pai => 'Tipos',pr_posicao => 0,pr_tag_nova => 'inf',pr_tag_cont => NULL,pr_des_erro => vr_dscritic); 
-          gene0007.pc_insere_tag(pr_xml => pr_retxml,pr_tag_pai => 'inf',pr_posicao => vr_auxconta, pr_tag_nova => 'cdtipcta', pr_tag_cont => rw_craptip.cdtipcta, pr_des_erro => vr_dscritic);
-          gene0007.pc_insere_tag(pr_xml => pr_retxml,pr_tag_pai => 'inf',pr_posicao => vr_auxconta, pr_tag_nova => 'dstipcta', pr_tag_cont => rw_craptip.dstipcta, pr_des_erro => vr_dscritic);
+          gene0007.pc_insere_tag(pr_xml => pr_retxml,pr_tag_pai => 'inf',pr_posicao => vr_auxconta, pr_tag_nova => 'cdtipcta', pr_tag_cont => rw_tipoconta.cdtipo_conta, pr_des_erro => vr_dscritic);
+          gene0007.pc_insere_tag(pr_xml => pr_retxml,pr_tag_pai => 'inf',pr_posicao => vr_auxconta, pr_tag_nova => 'dstipcta', pr_tag_cont => rw_tipoconta.dstipo_conta, pr_des_erro => vr_dscritic);
          
           OPEN cr_craptab(pr_cdcopsel => pr_cdcopsel
-                         ,pr_tpdconta => rw_craptip.cdtipcta
+                         ,pr_tpdconta => rw_tipoconta.cdtipo_conta
                          ,pr_tppessoa => pr_tppessoa);
 
           FETCH cr_craptab into rw_craptab;
