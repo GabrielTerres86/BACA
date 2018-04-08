@@ -462,7 +462,7 @@ BEGIN
       
       /* Saldo devedor da parcela */
       vr_vlapagar     := rw_crappep.vlsdvpar;
-      vr_vlsomato_tmp := nvl(vr_vlsomato,0); -- apenas para log
+      vr_vlsomato     := 0;
       
       -- gera log para futuros rastreios
       gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper
@@ -557,12 +557,23 @@ BEGIN
         END IF;
       END IF;
       
-      -- Se há trava devido a existencia de bloqueio por ação judicial
-      IF vr_idacaojd THEN
-        vr_vlsomato_tmp := 0;
-        vr_vlsomato     := 0;
-      END IF;
+      vr_vlsomato_tmp := nvl(vr_vlsomato,0); -- apenas para log
+      vr_vlresgat := nvl(vr_vlresgat,0);
+      vr_vlsomato := nvl(vr_vlsomato,0);
+      vr_vlapagar := nvl(vr_vlapagar,0);
 
+      /* Tem cobertura de aplicação e é necessário resgate pois não há saldo suficiente */
+      IF (vr_vlresgat > 0) THEN  
+        /* Se conta estiver negativa o resgate não deve cobrir o estouro de conta apenas pagar a parcela emprestimo/financiamento */  
+        IF (vr_vlsomato < 0) THEN
+           vr_vlsomato := vr_vlresgat;
+        ELSE
+          /* Resgate parcial pois há saldo mas não suficiente para pagar a parcela de emprestimo/financiamento então somar com 
+          que existe de saldo para cobrir o valor total da parcela que possui garantia de aplicação */  
+          vr_vlsomato := vr_vlsomato + vr_vlresgat;
+        END IF;
+      END IF;
+        
       gene0001.pc_gera_log_item(pr_nrdrowid => vr_rowid,
                                 pr_nmdcampo => 'Saldo',
                                 pr_dsdadant => to_char(nvl(vr_vlsomato_tmp,0),'fm999G999G990D00'),
@@ -575,9 +586,13 @@ BEGIN
                                   pr_dsdadant => NULL,
                                   pr_dsdadatu => to_char(vr_vlresgat,'fm999G999G990D00'));
       END IF;
-
-      vr_vlsomato_tmp := vr_vlsomato;
       
+      -- Se há trava devido a existencia de bloqueio por ação judicial
+      IF vr_idacaojd THEN
+        vr_vlsomato_tmp := 0;
+        vr_vlsomato     := 0;
+      END IF;
+
       /* Atribuir se operacao esta em dia ou atraso */
       vr_flgemdia := rw_crappep.dtvencto > rw_crapdat.dtmvtoan;
 
@@ -606,7 +621,7 @@ BEGIN
           END;
 
           -- Verificar Pagamento
-          pc_verifica_pagamento (pr_vlsomato => nvl(vr_vlsomato,0) + nvl(vr_vlresgat,0) --> Soma Total + Soma Resgate
+          pc_verifica_pagamento (pr_vlsomato => vr_vlsomato --> Soma Total + Soma Resgate
                                 ,pr_inliquid => rw_crappep.inliquid   --> Indicador Liquidacao
                                 ,pr_flgpagpa => vr_flgpagpa           --> Pagamento OK
                                 ,pr_des_reto => vr_des_erro);         --> Indicador Erro OK/NOK
@@ -801,14 +816,6 @@ BEGIN
             vr_vlsomato:= vr_vlapagar;
           END IF;
 
-          -- Se possuir valor de resgate
-          IF NVL(vr_vlresgat,0) > 0 THEN
-
-            -- Incrementar ao saldo o total resgatado
-            vr_vlsomato := vr_vlsomato + vr_vlresgat; 
-
-          END IF;
-
           -- Efetivar Pagamento Normal da Parcela
           EMPR0001.pc_efetiva_pagto_parcela (pr_cdcooper => pr_cdcooper          --> Codigo Cooperativa
                                             ,pr_cdagenci => pr_cdagenci          --> Codigo Agencia
@@ -870,7 +877,6 @@ BEGIN
           /* 3º se existir boleto de contrato em aberto, nao debitar */
           IF nvl(rw_cde.nrdocmto,0) > 0 THEN
             vr_vlsomato := 0;
-            vr_vlresgat := 0;
           ELSE
             /* 4º cursor para verificar se existe boleto pago pendente de processamento, nao debitar */
             OPEN  cr_ret(pr_cdcooper => rw_crappep.cdcooper
@@ -883,7 +889,6 @@ BEGIN
             /* 6º se existir boleto de contrato pago pendente de processamento, nao debitar */
             IF nvl(rw_ret.nrdocmto,0) > 0 THEN
               vr_vlsomato := 0;
-              vr_vlresgat := 0;
             END IF;
           END IF; -- IF nvl(rw_cde.nrdocmto,0) > 0 
         END IF; -- IF vr_blqresg_cc = 'S' 
@@ -895,11 +900,10 @@ BEGIN
 
         IF vr_tab_acordo.EXISTS(vr_cdindice) THEN
           vr_vlsomato := 0;
-          vr_vlresgat := 0;
         END IF;
 
         -- Se o saldo mais o valor de resgate são menores ou igual a zero
-        IF (vr_vlsomato + nvl(vr_vlresgat,0)) <= 0 THEN
+        IF (vr_vlsomato) <= 0 THEN
           /* Sem nada para pagar */
           gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper
                               ,pr_cdoperad => 1
@@ -1036,14 +1040,6 @@ BEGIN
                                       pr_dsdadatu => to_char(vr_vlresgat,'fm999G999G990D00'));
           END IF;
         END IF; -- IF vr_index_pgto_parcel IS NOT NULL
-
-        -- Se possuir valor de resgate
-        IF nvl(vr_vlresgat,0) > 0 THEN
-          
-          -- Incrementar ao saldo o total resgatado
-          vr_vlsomato := vr_vlsomato + vr_vlresgat; 
-          
-        END IF;
 
         -- Efetivar Pagamento da Parcela Atrasada
         EMPR0001.pc_efetiva_pagto_atr_parcel(pr_cdcooper => pr_cdcooper           --> Cooperativa conectada
