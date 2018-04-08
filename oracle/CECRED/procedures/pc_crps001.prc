@@ -225,6 +225,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
                06/04/2018 - Alterar o tratamento relacionado as chamadas de resgate de aplicação,
                             para que não ocorram problemas com o fluxo atual em caso de ocorrencia
                             de erros. (Renato - Supero)
+                            
+               08/04/2018 - Considerar apenas o valor do estouro de conta para realizar o resgate
+                            automático (Renato - Supero)
      ............................................................................. */
 
      DECLARE
@@ -2086,8 +2089,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
            --Atualizar quantidade de lancamentos na tabela de saldos
            rw_crapsld.qtlanmes:= Nvl(rw_crapsld.qtlanmes,0) + vr_qtlanmes;
 
-           -- Se NAO possui saldo
-           IF rw_crapsld.vlsddisp < 0 THEN
+           -- Se possui estouro de conta
+           IF (rw_crapsld.vlsddisp + rw_craplim.vllimite) < 0 THEN
 
              --Se encontrou limite de credito para a conta
              IF vr_tab_craplim.EXISTS(rw_crapsld.nrdconta) THEN
@@ -2096,7 +2099,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
                IF vr_tab_craplim(rw_crapsld.nrdconta).idcobope > 0 THEN
 
                  -- Tentar resgatar o valor negativo
-                 vr_vlresgat := ABS(rw_crapsld.vlsddisp);
+                 vr_vlresgat := ABS(rw_crapsld.vlsddisp + rw_craplim.vllimite);
 
                  -- Acionaremos rotina para solicitar o resgate afim de cobrir os valores negativos
                  BLOQ0001.pc_solici_cobertura_operacao(pr_idcobope => vr_tab_craplim(rw_crapsld.nrdconta).idcobope
