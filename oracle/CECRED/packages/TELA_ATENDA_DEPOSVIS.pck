@@ -121,7 +121,10 @@ DECLARE
 		-- Informações de saldo atual da conta corrente
 		CURSOR cr_saldos(pr_cdcooper NUMBER
 		               , pr_nrdconta NUMBER) IS
-		SELECT sld.vlsddisp
+		SELECT abs(sld.vlsddisp) - (SELECT ass.vllimcre 
+		                         FROM crapass ass 
+														WHERE ass.cdcooper = sld.cdcooper 
+														  AND ass.nrdconta = sld.nrdconta ) vlsddisp
 		     , sld.dtrisclq
 				 , sld.qtddsdev
 				 , sld.vliofmes
@@ -134,7 +137,7 @@ DECLARE
 		CURSOR cr_crapsda(pr_cdcooper NUMBER
 		                , pr_nrdconta NUMBER
 										, pr_dtmvtolt DATE) IS
-		SELECT sda.vlsddisp
+		SELECT abs(sda.vlsddisp) - sda.vllimcre vlsddisp
 		  FROM crapsda sda
 		 WHERE sda.cdcooper = pr_cdcooper
 		   AND sda.nrdconta = pr_nrdconta
@@ -169,7 +172,7 @@ DECLARE
 		vr_saldo_devedor_total       NUMBER := 0; -- Saldo devedor total
 		vr_valor_iof_debitar         NUMBER := 0; -- Valor do IOF a debitar
 		vr_data_59dias_atraso        DATE;
-		vr_data_corte                DATE := TO_DATE('10/04/2018', 'dd/mm/yyyy'); -- Data de corte para contagem em dias úteis/corridos (substituir por parâmetro do BD)
+		vr_data_corte                DATE ; -- Data de corte para contagem em dias úteis/corridos (substituir por parâmetro do BD)
 
     BEGIN
 			pr_des_erro := 'OK';
@@ -208,6 +211,11 @@ DECLARE
 			OPEN cr_saldos(vr_cdcooper, pr_nrdconta);
 			FETCH cr_saldos INTO rw_saldos;
 			CLOSE cr_saldos;
+			
+			vr_data_corte := to_date(GENE0001.fn_param_sistema (pr_cdcooper => 0
+                                                         ,pr_nmsistem => 'CRED'
+                                                         ,pr_cdacesso => 'DT_CORTE_REGCRE')
+                                                         ,'DD/MM/RRRR');
 
 			IF rw_saldos.dtrisclq IS NOT NULL THEN
 				IF rw_saldos.qtddsdev < 60 THEN
@@ -252,7 +260,7 @@ DECLARE
 																										 'nls_numeric_characters='',.'''),
 															pr_des_erro => vr_dscritic);
 															
-			vr_valor_iof_debitar := nvl(rw_saldos.vliofmes, 0) * -1;
+			vr_valor_iof_debitar := nvl(rw_saldos.vliofmes, 0);
 
       gene0007.pc_insere_tag(pr_xml      => pr_retxml,
 															pr_tag_pai  => 'Dados',
