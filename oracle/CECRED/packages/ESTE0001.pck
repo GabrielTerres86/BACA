@@ -28,7 +28,7 @@ CREATE OR REPLACE PACKAGE CECRED.ESTE0001 is
   --> Funcao que retorna o ultimo Protocolo de Análise Automática do Motor
   FUNCTION fn_protocolo_analise_auto (pr_cdcooper IN NUMBER
                                      ,pr_nrdconta IN NUMBER
-                                     ,pr_nrctremp IN NUMBER) RETURN tbgen_webservice_aciona.dsprotocolo%TYPE;
+                                     ,pr_nrctremp IN NUMBER) RETURN tbepr_acionamento.dsprotocolo%TYPE;
   
   --> Funcao que retorna o ultimo Protocolo de Análise Automática do Motor via Web
   PROCEDURE pr_protocolo_analise_auto_web (pr_nrdconta IN NUMBER
@@ -98,25 +98,25 @@ CREATE OR REPLACE PACKAGE CECRED.ESTE0001 is
   FUNCTION fn_retorna_critica (pr_jsonreto IN VARCHAR2) RETURN VARCHAR2;
    
   --> Rotina responsavel por gravar registro de log de acionamento
-  PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_aciona.cdcooper%TYPE, 
-                                 pr_cdagenci                 IN tbgen_webservice_aciona.cdagenci_acionamento%TYPE,
-                                 pr_cdoperad                 IN tbgen_webservice_aciona.cdoperad%TYPE, 
-                                 pr_cdorigem                 IN tbgen_webservice_aciona.cdorigem%TYPE, 
-                                 pr_nrctrprp                 IN tbgen_webservice_aciona.nrctrprp%TYPE, 
-                                 pr_nrdconta                 IN tbgen_webservice_aciona.nrdconta%TYPE, 
-                                 pr_tpacionamento            IN tbgen_webservice_aciona.tpacionamento%TYPE, 
-                                 pr_dsoperacao               IN tbgen_webservice_aciona.dsoperacao%TYPE, 
-                                 pr_dsuriservico             IN tbgen_webservice_aciona.dsuriservico%TYPE, 
-                                 pr_dtmvtolt                 IN tbgen_webservice_aciona.dtmvtolt%TYPE, 
-                                 pr_dhacionamento            IN tbgen_webservice_aciona.dhacionamento%TYPE DEFAULT SYSTIMESTAMP,
-                                 pr_cdstatus_http            IN tbgen_webservice_aciona.cdstatus_http%TYPE, 
-                                 pr_dsconteudo_requisicao    IN tbgen_webservice_aciona.dsconteudo_requisicao%TYPE,
-                                 pr_dsresposta_requisicao    IN tbgen_webservice_aciona.dsresposta_requisicao%TYPE,
-                                 pr_dsprotocolo              IN tbgen_webservice_aciona.dsprotocolo%TYPE DEFAULT NULL, -- Protocolo do Acionamento
-                                 pr_dsmetodo								 IN tbgen_webservice_aciona.dsmetodo%TYPE DEFAULT NULL,
-                                 pr_tpconteudo               IN tbgen_webservice_aciona.tpconteudo%TYPE DEFAULT NULL,  --tipo de retorno json/xml
-                                 pr_tpproduto                IN tbgen_webservice_aciona.tpproduto%TYPE DEFAULT 0,  --Tipo de produto (0-Emprestimo|Financiamento / 1-Limite Credito / 2-Limite Desconto Cheque / 3-Limite Desconto Titulo)
-                                 pr_idacionamento           OUT tbgen_webservice_aciona.idacionamento%TYPE,
+  PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbepr_acionamento.cdcooper%TYPE, 
+                                 pr_cdagenci                 IN tbepr_acionamento.cdagenci_acionamento%TYPE,
+                                 pr_cdoperad                 IN tbepr_acionamento.cdoperad%TYPE, 
+                                 pr_cdorigem                 IN tbepr_acionamento.cdorigem%TYPE, 
+                                 pr_nrctrprp                 IN tbepr_acionamento.nrctrprp%TYPE, 
+                                 pr_nrdconta                 IN tbepr_acionamento.nrdconta%TYPE, 
+                                 pr_tpacionamento            IN tbepr_acionamento.tpacionamento%TYPE, 
+                                 pr_dsoperacao               IN tbepr_acionamento.dsoperacao%TYPE, 
+                                 pr_dsuriservico             IN tbepr_acionamento.dsuriservico%TYPE, 
+                                 pr_dtmvtolt                 IN tbepr_acionamento.dtmvtolt%TYPE, 
+                                 pr_dhacionamento            IN tbepr_acionamento.dhacionamento%TYPE DEFAULT SYSTIMESTAMP,
+                                 pr_cdstatus_http            IN tbepr_acionamento.cdstatus_http%TYPE, 
+                                 pr_dsconteudo_requisicao    IN tbepr_acionamento.dsconteudo_requisicao%TYPE,
+                                 pr_dsresposta_requisicao    IN tbepr_acionamento.dsresposta_requisicao%TYPE,
+                                 pr_dsprotocolo              IN tbepr_acionamento.dsprotocolo%TYPE DEFAULT NULL, -- Protocolo do Acionamento
+                                 pr_dsmetodo                 IN varchar2 /*tbepr_acionamento.dsmetodo%TYPE*/ DEFAULT NULL,
+                                 pr_tpconteudo               IN number /*tbepr_acionamento.tpconteudo%TYPE*/ DEFAULT NULL,  --tipo de retorno json/xml
+                                 pr_tpproduto                IN number /*tbepr_acionamento.tpproduto%TYPE*/ DEFAULT 0,  --Tipo de produto (0-Emprestimo|Financiamento / 1-Limite Credito / 2-Limite Desconto Cheque / 3-Limite Desconto Titulo)
+                                 pr_idacionamento           OUT tbepr_acionamento.idacionamento%TYPE,
                                  pr_dscritic                OUT VARCHAR2);
                                                                  
   --> Rotina responsavel por gerar a inclusao da proposta para a esteira
@@ -293,11 +293,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
     --> Funcao que retorna o ultimo Protocolo de Análise Automática do Motor
     FUNCTION fn_protocolo_analise_auto (pr_cdcooper IN NUMBER
                                        ,pr_nrdconta IN NUMBER
-                                       ,pr_nrctremp IN NUMBER) RETURN tbgen_webservice_aciona.dsprotocolo%TYPE IS
+                                       ,pr_nrctremp IN NUMBER) RETURN tbepr_acionamento.dsprotocolo%TYPE IS
 
       CURSOR cr_tbepr_acionamento IS
         select aci.dsprotocolo dsprotocolo
-        from   tbgen_webservice_aciona aci
+        from   tbepr_acionamento aci
         where  aci.cdcooper = pr_cdcooper
         and    aci.nrdconta = pr_nrdconta
         and    aci.nrctrprp = pr_nrctremp
@@ -353,7 +353,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
       vr_nrdcaixa VARCHAR2(100);
       vr_idorigem VARCHAR2(100);
 
-      vr_dsprotocolo tbgen_webservice_aciona.dsprotocolo%TYPE;
+      vr_dsprotocolo tbepr_acionamento.dsprotocolo%TYPE;
 
     BEGIN
       -- Recupera dados de log para consulta posterior
@@ -892,26 +892,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
   END;
 
   --> Rotina responsavel por gravar registro de log de acionamento
-  --> Rotina responsavel por gravar registro de log de acionamento
-PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_aciona.cdcooper%TYPE, 
-                               pr_cdagenci                 IN tbgen_webservice_aciona.cdagenci_acionamento%TYPE,
-                               pr_cdoperad                 IN tbgen_webservice_aciona.cdoperad%TYPE, 
-                               pr_cdorigem                 IN tbgen_webservice_aciona.cdorigem%TYPE, 
-                               pr_nrctrprp                 IN tbgen_webservice_aciona.nrctrprp%TYPE, 
-                               pr_nrdconta                 IN tbgen_webservice_aciona.nrdconta%TYPE, 
-                               pr_tpacionamento            IN tbgen_webservice_aciona.tpacionamento%TYPE, 
-                               pr_dsoperacao               IN tbgen_webservice_aciona.dsoperacao%TYPE, 
-                               pr_dsuriservico             IN tbgen_webservice_aciona.dsuriservico%TYPE, 
-                               pr_dtmvtolt                 IN tbgen_webservice_aciona.dtmvtolt%TYPE, 
-                               pr_dhacionamento            IN tbgen_webservice_aciona.dhacionamento%TYPE DEFAULT SYSTIMESTAMP,
-                               pr_cdstatus_http            IN tbgen_webservice_aciona.cdstatus_http%TYPE, 
-                               pr_dsconteudo_requisicao    IN tbgen_webservice_aciona.dsconteudo_requisicao%TYPE,
-                               pr_dsresposta_requisicao    IN tbgen_webservice_aciona.dsresposta_requisicao%TYPE,
-                               pr_dsprotocolo              IN tbgen_webservice_aciona.dsprotocolo%TYPE DEFAULT NULL, -- Protocolo do Acionamento
-                               pr_dsmetodo         IN tbgen_webservice_aciona.dsmetodo%TYPE DEFAULT NULL,
-                               pr_tpconteudo               IN tbgen_webservice_aciona.tpconteudo%TYPE DEFAULT NULL,  --tipo de retorno json/xml
-                               pr_tpproduto                IN tbgen_webservice_aciona.tpproduto%TYPE DEFAULT 0,  --Tipo de produto (0-Emprestimo|Financiamento / 1-Limite Credito / 2-Limite Desconto Cheque / 3-Limite Desconto Titulo)
-                               pr_idacionamento           OUT tbgen_webservice_aciona.idacionamento%TYPE,
+PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbepr_acionamento.cdcooper%TYPE, 
+                               pr_cdagenci                 IN tbepr_acionamento.cdagenci_acionamento%TYPE,
+                               pr_cdoperad                 IN tbepr_acionamento.cdoperad%TYPE, 
+                               pr_cdorigem                 IN tbepr_acionamento.cdorigem%TYPE, 
+                               pr_nrctrprp                 IN tbepr_acionamento.nrctrprp%TYPE, 
+                               pr_nrdconta                 IN tbepr_acionamento.nrdconta%TYPE, 
+                               pr_tpacionamento            IN tbepr_acionamento.tpacionamento%TYPE, 
+                               pr_dsoperacao               IN tbepr_acionamento.dsoperacao%TYPE, 
+                               pr_dsuriservico             IN tbepr_acionamento.dsuriservico%TYPE, 
+                               pr_dtmvtolt                 IN tbepr_acionamento.dtmvtolt%TYPE, 
+                               pr_dhacionamento            IN tbepr_acionamento.dhacionamento%TYPE DEFAULT SYSTIMESTAMP,
+                               pr_cdstatus_http            IN tbepr_acionamento.cdstatus_http%TYPE, 
+                               pr_dsconteudo_requisicao    IN tbepr_acionamento.dsconteudo_requisicao%TYPE,
+                               pr_dsresposta_requisicao    IN tbepr_acionamento.dsresposta_requisicao%TYPE,
+                               pr_dsprotocolo              IN tbepr_acionamento.dsprotocolo%TYPE DEFAULT NULL, -- Protocolo do Acionamento
+                               pr_dsmetodo                 IN varchar2 /*tbepr_acionamento.dsmetodo%TYPE*/ DEFAULT NULL,
+                               pr_tpconteudo               IN number /*tbepr_acionamento.tpconteudo%TYPE*/ DEFAULT NULL,  --tipo de retorno json/xml
+                               pr_tpproduto                IN number /*tbepr_acionamento.tpproduto%TYPE*/ DEFAULT 0,  --Tipo de produto (0-Emprestimo|Financiamento / 1-Limite Credito / 2-Limite Desconto Cheque / 3-Limite Desconto Titulo)
+                               pr_idacionamento           OUT tbepr_acionamento.idacionamento%TYPE,
                                pr_dscritic                OUT VARCHAR2) IS
                  
 /* ..........................................................................
@@ -932,7 +931,7 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
 ..........................................................................*/
   PRAGMA AUTONOMOUS_TRANSACTION;
 BEGIN
-  INSERT INTO tbgen_webservice_aciona                                                                                     /*@TROCAR PARA CECRED.TBGEN_WEBSERVICE_ACIONA*/
+  INSERT INTO tbepr_acionamento /*@TROCAR PARA CECRED.tbepr_acionamento*/
               ( cdcooper, 
                 cdagenci_acionamento, 
                 cdoperad, 
@@ -947,35 +946,35 @@ BEGIN
                 cdstatus_http, 
                 dsconteudo_requisicao,
                 dsresposta_requisicao,
-                dsmetodo,
-                tpconteudo,
-                tpproduto,
+                --dsmetodo,
+                --tpconteudo,
+                --tpproduto,
                 dsprotocolo)  
-        VALUES( pr_cdcooper,        --cdcooper
-                pr_cdagenci,        -- cdagenci_acionamento, 
-                pr_cdoperad,        -- cdoperad, 
-                pr_cdorigem,        -- cdorigem
-                pr_nrctrprp,        -- nrctrprp
-                pr_nrdconta,        -- nrdconta
-                pr_tpacionamento,   -- tpacionamento 
-                pr_dhacionamento,   -- dhacionamento
-                pr_dsoperacao,      -- dsoperacao
-                pr_dsuriservico,    -- dsuriservico
-                pr_dtmvtolt,        -- dtmvtolt
-                pr_cdstatus_http,   -- cdstatus_http
+        VALUES( pr_cdcooper,
+                pr_cdagenci,
+                pr_cdoperad,
+                pr_cdorigem,
+                pr_nrctrprp,
+                pr_nrdconta,
+                pr_tpacionamento,
+                pr_dhacionamento,
+                pr_dsoperacao,
+                pr_dsuriservico,
+                pr_dtmvtolt,
+                pr_cdstatus_http,
                 pr_dsconteudo_requisicao,
-                pr_dsresposta_requisicao, --dsresposta_requisicao       
-                pr_dsmetodo,    -- dsmetodo
-                pr_tpconteudo,   -- tpconteudo
-                pr_tpproduto,    --tpproduto
-                pr_dsprotocolo)     -- protocolo
-         RETURNING tbgen_webservice_aciona.idacionamento INTO pr_idacionamento;
+                pr_dsresposta_requisicao,
+                --pr_dsmetodo,
+                --pr_tpconteudo,
+                --pr_tpproduto,
+                pr_dsprotocolo)
+         RETURNING tbepr_acionamento.idacionamento INTO pr_idacionamento;
   
   --> Commit para garantir que guarde as informações do log de acionamento
   COMMIT;
 EXCEPTION
   WHEN OTHERS THEN
-    pr_dscritic := 'Erro ao inserir tbgen_webservice_aciona: '||SQLERRM;
+    pr_dscritic := 'Erro ao inserir tbepr_acionamento: '||SQLERRM;
     ROLLBACK;
 END pc_grava_acionamento;
 
@@ -1005,7 +1004,7 @@ END pc_grava_acionamento;
     -----------> CURSORES <-----------
   BEGIN
 
-    UPDATE tbgen_webservice_aciona aci
+    UPDATE tbepr_acionamento aci
        SET aci.nrctrprp = pr_nrctremp_novo
      WHERE aci.cdcooper = pr_cdcooper
        AND aci.nrdconta = pr_nrdconta
@@ -1110,7 +1109,7 @@ END pc_grava_acionamento;
     vr_request  json0001.typ_http_request;
     vr_response json0001.typ_http_response;
 
-    vr_idacionamento  tbgen_webservice_aciona.idacionamento%TYPE;
+    vr_idacionamento  tbepr_acionamento.idacionamento%TYPE;
 
     vr_tab_split     gene0002.typ_split;
     vr_idx_split     VARCHAR2(1000);
@@ -1250,7 +1249,7 @@ END pc_grava_acionamento;
         -- Se conseguiu encontrar Protocolo
         IF pr_dsprotocolo IS NOT NULL THEN
           -- Atualizar acionamento
-          UPDATE tbgen_webservice_aciona
+          UPDATE tbepr_acionamento
              SET dsprotocolo = pr_dsprotocolo
            WHERE idacionamento = vr_idacionamento;
         ELSE
@@ -1496,7 +1495,7 @@ END pc_grava_acionamento;
     vr_vllimdis     NUMBER;
     vr_nmarquiv     varchar2(1000);
     vr_dsiduser     varchar2(100);
-        vr_dsprotoc  tbgen_webservice_aciona.dsprotocolo%TYPE;
+        vr_dsprotoc  tbepr_acionamento.dsprotocolo%TYPE;
         vr_dsdirarq  VARCHAR2(1000);
         vr_dscomando VARCHAR2(1000);
 
@@ -1998,13 +1997,13 @@ END pc_grava_acionamento;
     -- Acionamentos de retorno
     CURSOR cr_aciona_retorno(pr_dsprotocolo VARCHAR2) IS
       SELECT ac.dsconteudo_requisicao
-        FROM tbgen_webservice_aciona ac
+        FROM tbepr_acionamento ac
        WHERE ac.cdcooper = pr_cdcooper
          AND ac.nrdconta = pr_nrdconta
          AND ac.nrctrprp = pr_nrctremp
          AND ac.dsprotocolo = pr_dsprotocolo
          AND ac.tpacionamento = 2; -- Somente Retorno
-    vr_dsconteudo_requisicao tbgen_webservice_aciona.dsconteudo_requisicao%TYPE;
+    vr_dsconteudo_requisicao tbepr_acionamento.dsconteudo_requisicao%TYPE;
 
     -- Hora de Envio
     vr_hrenvest crawepr.hrenvest%TYPE;
@@ -2025,7 +2024,7 @@ END pc_grava_acionamento;
 
     -- Variaveis para DEBUG
     vr_flgdebug VARCHAR2(100) := gene0001.fn_param_sistema('CRED',pr_cdcooper,'DEBUG_MOTOR_IBRA');
-    vr_idaciona tbgen_webservice_aciona.idacionamento%TYPE;
+    vr_idaciona tbepr_acionamento.idacionamento%TYPE;
 
   BEGIN
 
@@ -2531,7 +2530,7 @@ END pc_grava_acionamento;
 
     -- Variaveis para DEBUG
     vr_flgdebug VARCHAR2(100) := gene0001.fn_param_sistema('CRED',pr_cdcooper,'DEBUG_MOTOR_IBRA');
-    vr_idaciona tbgen_webservice_aciona.idacionamento%TYPE;
+    vr_idaciona tbepr_acionamento.idacionamento%TYPE;
 
   BEGIN
 
@@ -2821,7 +2820,7 @@ END pc_grava_acionamento;
 
     -- Variaveis para DEBUG
     vr_flgdebug VARCHAR2(100) := gene0001.fn_param_sistema('CRED',pr_cdcooper,'DEBUG_MOTOR_IBRA');
-    vr_idaciona tbgen_webservice_aciona.idacionamento%TYPE;
+    vr_idaciona tbepr_acionamento.idacionamento%TYPE;
 
 
   BEGIN
@@ -3062,7 +3061,7 @@ END pc_grava_acionamento;
 
     -- Variaveis para DEBUG
     vr_flgdebug VARCHAR2(100) := gene0001.fn_param_sistema('CRED',pr_cdcooper,'DEBUG_MOTOR_IBRA');
-    vr_idaciona tbgen_webservice_aciona.idacionamento%TYPE;
+    vr_idaciona tbepr_acionamento.idacionamento%TYPE;
 
   BEGIN
 
@@ -3284,7 +3283,7 @@ END pc_grava_acionamento;
 
     -- Variaveis para DEBUG
     vr_flgdebug VARCHAR2(100) := gene0001.fn_param_sistema('CRED',pr_cdcooper,'DEBUG_MOTOR_IBRA');
-    vr_idaciona tbgen_webservice_aciona.idacionamento%TYPE;
+    vr_idaciona tbepr_acionamento.idacionamento%TYPE;
 
 
   BEGIN
@@ -3574,7 +3573,7 @@ END pc_grava_acionamento;
 
     -- Variaveis para DEBUG
     vr_flgdebug VARCHAR2(100) := gene0001.fn_param_sistema('CRED',pr_cdcooper,'DEBUG_MOTOR_IBRA');
-    vr_idaciona tbgen_webservice_aciona.idacionamento%TYPE;
+    vr_idaciona tbepr_acionamento.idacionamento%TYPE;
 
 
   BEGIN
@@ -3892,7 +3891,7 @@ END pc_grava_acionamento;
 
     -- Variaveis para DEBUG
     vr_flgdebug VARCHAR2(100) := gene0001.fn_param_sistema('CRED',pr_cdcooper,'DEBUG_MOTOR_IBRA');
-    vr_idaciona tbgen_webservice_aciona.idacionamento%TYPE;
+    vr_idaciona tbepr_acionamento.idacionamento%TYPE;
 
   BEGIN
 
@@ -4210,11 +4209,11 @@ END pc_grava_acionamento;
     vr_cdtpprod_ret  VARCHAR2(100);
     vr_nrctremp_ret  crawepr.nrctremp%TYPE;
     vr_nrctremp_ret2 crawepr.nrctremp%TYPE;
-    vr_idacionamento tbgen_webservice_aciona.idacionamento%TYPE;
+    vr_idacionamento tbepr_acionamento.idacionamento%TYPE;
 
     -- Variaveis para DEBUG
     vr_flgdebug VARCHAR2(100) := gene0001.fn_param_sistema('CRED',pr_cdcooper,'DEBUG_MOTOR_IBRA');
-    vr_idaciona tbgen_webservice_aciona.idacionamento%TYPE;
+    vr_idaciona tbepr_acionamento.idacionamento%TYPE;
 
   BEGIN
 
@@ -4672,7 +4671,7 @@ END pc_grava_acionamento;
     vr_dsdirlog      VARCHAR2(500);
     vr_chave_aplica  VARCHAR2(500);
     vr_autori_este   VARCHAR2(500);
-    vr_idacionamento tbgen_webservice_aciona.idacionamento%TYPE;
+    vr_idacionamento tbepr_acionamento.idacionamento%TYPE;
     vr_nrdrowid ROWID;
     vr_dsresana VARCHAR2(100);
     vr_dssitret VARCHAR2(100);
@@ -4733,7 +4732,7 @@ END pc_grava_acionamento;
 
     -- Variaveis para DEBUG
     vr_flgdebug VARCHAR2(100);
-    vr_idaciona tbgen_webservice_aciona.idacionamento%TYPE;
+    vr_idaciona tbepr_acionamento.idacionamento%TYPE;
 
   BEGIN
 

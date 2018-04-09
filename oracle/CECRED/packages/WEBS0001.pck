@@ -164,7 +164,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
       gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => 0, pr_tag_nova => 'msg_detalhe', pr_tag_cont => pr_msg_detalhe, pr_des_erro => vr_des_erro);
       
       BEGIN
-        UPDATE tbgen_webservice_aciona a
+        UPDATE tbepr_acionamento a
            SET a.cdstatus_http = pr_status,
                a.dsresposta_requisicao = pr_retxml.getClobVal(),
                a.dtmvtolt              = pr_dtmvtolt
@@ -2027,7 +2027,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
               ,aci.nrdconta    
               ,aci.nrctrprp    nrctremp
               ,aci.dsprotocolo dsprotoc
-    FROM   tbgen_webservice_aciona aci
+          FROM tbepr_acionamento aci
          WHERE aci.dsprotocolo   = pr_dsprotoc
            AND aci.tpacionamento = 1; /*Envio*/
       rw_aciona cr_aciona%ROWTYPE;
@@ -2079,7 +2079,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
       
       -- Variaveis para DEBUG
       vr_flgdebug VARCHAR2(100) := 'S';
-   vr_idaciona tbgen_webservice_aciona.idacionamento%TYPE;
+      vr_idaciona tbepr_acionamento.idacionamento%TYPE;
       
            
       -- Funçao para verificar se parâmetro passado é numérico
@@ -2739,7 +2739,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
            ,aci.nrdconta    
            ,aci.nrctrprp
            ,aci.dsprotocolo dsprotoc
-     from   tbgen_webservice_aciona aci
+     from   tbepr_acionamento aci
      where  aci.dsprotocolo   = pr_dsprotoc
      and    aci.tpacionamento = 1; /*Envio*/
      rw_aciona cr_aciona%rowtype;
@@ -2799,7 +2799,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
          
      -- Variaveis para DEBUG
      vr_flgdebug varchar2(100) := 'S';
-     vr_idaciona tbgen_webservice_aciona.idacionamento%type;
+     vr_idaciona tbepr_acionamento.idacionamento%type;
          
               
      -- Funçao para verificar se parâmetro passado é numérico
