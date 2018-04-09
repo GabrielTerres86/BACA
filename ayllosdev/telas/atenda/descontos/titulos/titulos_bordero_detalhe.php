@@ -55,7 +55,7 @@
 	$pagador = $dados->tags[0];
 	$biros = $dados->tags[1];
 	$detalhe = $dados->tags[2];
-	$critica = $dados->tags[3];
+	$criticas = $dados->tags[3];
 	// Fun&ccedil;&atilde;o para exibir erros na tela atrav&eacute;s de javascript
 	function exibeErro($msgErro) { 
 		echo '<script type="text/javascript">';
