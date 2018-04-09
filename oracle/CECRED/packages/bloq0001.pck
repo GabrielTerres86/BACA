@@ -2519,17 +2519,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLOQ0001 AS
         RAISE vr_exc_erro;
       END IF;
       
-      vr_cdcooper             := rw_cobertura.cdcooper;
-      vr_nrdconta             := rw_cobertura.nrdconta;
-      vr_tpcontrato           := rw_cobertura.tpcontrato;
-      vr_nrcontrato           := rw_cobertura.nrcontrato;
-      vr_perminimo            := rw_cobertura.perminimo;
-      vr_nrconta_terceiro     := rw_cobertura.nrconta_terceiro;
-      vr_inaplicacao_propria  := rw_cobertura.inaplicacao_propria;
-      vr_inpoupanca_propria   := rw_cobertura.inpoupanca_propria;
-      vr_inaplicacao_terceiro := rw_cobertura.inaplicacao_terceiro;
-      vr_inpoupanca_terceiro  := rw_cobertura.inpoupanca_terceiro;
-      vr_vldesbloq            := rw_cobertura.vldesbloq;
+      vr_cdcooper             := nvl(rw_cobertura.cdcooper,0);
+      vr_nrdconta             := nvl(rw_cobertura.nrdconta,0);
+      vr_tpcontrato           := nvl(rw_cobertura.tpcontrato,0);
+      vr_nrcontrato           := nvl(rw_cobertura.nrcontrato,0);
+      vr_perminimo            := nvl(rw_cobertura.perminimo,0);
+      vr_nrconta_terceiro     := nvl(rw_cobertura.nrconta_terceiro,0);
+      vr_inaplicacao_propria  := nvl(rw_cobertura.inaplicacao_propria,0);
+      vr_inpoupanca_propria   := nvl(rw_cobertura.inpoupanca_propria,0);
+      vr_inaplicacao_terceiro := nvl(rw_cobertura.inaplicacao_terceiro,0);
+      vr_inpoupanca_terceiro  := nvl(rw_cobertura.inpoupanca_terceiro,0);
+      vr_vldesbloq            := nvl(rw_cobertura.vldesbloq,0);
       
       --Verificar se a data existe
       OPEN BTCH0001.cr_crapdat(pr_cdcooper => vr_cdcooper);
@@ -2571,7 +2571,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLOQ0001 AS
           
           CLOSE cr_crawepr;
 
-          vr_valopera_original := rw_crawepr.vlemprst;
+          vr_valopera_original := nvl(rw_crawepr.vlemprst,0);
 					
           -- Buscar tipo de contrato
           OPEN cr_craplcr(pr_cdcooper => vr_cdcooper
@@ -2606,6 +2606,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLOQ0001 AS
                                         ,pr_qtprecal => vr_qtprecal            --> Parcelas calculadas
                                         ,pr_des_reto => vr_des_reto            --> Retorno OK / NOK
                                         ,pr_tab_erro => vr_tab_erro);          --> Tabela com possives erros
+                                        
+          vr_valopera_atualizada := nvl(vr_valopera_atualizada,0);
           -- Se houve retorno de erro
           IF vr_des_reto = 'NOK' THEN
             -- Extrair o codigo e critica de erro da tabela de erro
@@ -2630,19 +2632,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLOQ0001 AS
           
           CLOSE cr_craplim;
           
-          vr_valopera_original := rw_craplim.vllimite;
-          vr_valopera_atualizada := rw_craplim.vllimite;
+          vr_valopera_original := nvl(rw_craplim.vllimite,0);
+          vr_valopera_atualizada := nvl(rw_craplim.vllimite,0);
         END IF;
         
         -- Calcular o valor necessário para cobertura do empréstimo ou do limite
-        vr_vlcobert_original   := vr_valopera_original  * (vr_perminimo / 100);
-        
-        IF (rw_craplcr.tpctrato = 4) OR (vr_valopera_atualizada > vr_vlcobert_original) THEN
-			-- Senão, atribuir o valor da cobertura a partir do cálculo do percentual mínimo da cobertura
-        vr_vlcobert_atualizada := (vr_valopera_atualizada  * (vr_perminimo / 100)) - nvl(vr_vldesbloq,0);
-        ELSE
+        vr_vlcobert_original   := vr_valopera_original  * (vr_perminimo / 100) - vr_vldesbloq;
+
+        IF (vr_valopera_atualizada < vr_vlcobert_original) THEN
            vr_vlcobert_atualizada := vr_valopera_atualizada;
-		END IF;
+        ELSE
+           vr_vlcobert_atualizada := vr_vlcobert_original;
+        END IF;
         
         -- Buscar no cadastro de associados o CPF/CNPJ do garantidor
         OPEN cr_crapass (pr_cdcooper         => vr_cdcooper
