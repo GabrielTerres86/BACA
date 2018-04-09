@@ -846,15 +846,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
       IF vr_vlapagar > vr_vlsdprej THEN 
         vr_vlapagar := vr_vlsdprej;
       END IF;
-    
-      -- Verifica se encontrou valor a pagar
-      IF vr_vlapagar <= 0 THEN
-        -- Caso entrar na condição já foi pago todo o prejuizo do emprestimo
-        -- RETURN;
-				NULL;
-      END IF;
 			
-			IF vr_vlapagar > 0 THEN
+	IF vr_vlapagar > 0 THEN
     
       -- ROTINA PARA EFETUAR O LANÇAMENTO
       EMPR0001.pc_cria_lancamento_lem(pr_cdcooper => pr_cdcooper       -- Codigo Cooperativa
