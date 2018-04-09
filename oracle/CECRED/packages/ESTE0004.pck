@@ -539,7 +539,6 @@ vr_dsramatv gnrativ.nmrmativ%type;
    rw_crawepr_outras cr_crawepr_outras%rowtype;
       
    -- Buscar Contrato Limite Crédito
-   /*
    cursor cr_craplim_chqesp is
      select lim.dtinivig
            ,lim.vllimite
@@ -548,16 +547,6 @@ vr_dsramatv gnrativ.nmrmativ%type;
         and lim.nrdconta = pr_nrdconta
         and lim.insitlim = 2; -- Ativo
    rw_craplim_chqesp cr_craplim_chqesp%rowtype;
-   */ 
-   -- Buscar Proposta Limite Crédito
-   cursor cr_crawlim_chqesp is
-     select lim.dtinivig
-           ,lim.vllimite
-       from crawlim lim
-      where lim.cdcooper = pr_cdcooper
-        and lim.nrdconta = pr_nrdconta
-        and lim.insitlim = 2; -- Ativo
-   rw_crawlim_chqesp cr_crawlim_chqesp%rowtype;
     
    -- Buscar ultimas ocorrencias de Cheques Devolvidos
    cursor cr_crapneg_cheq(pr_qtmeschq     in integer
@@ -843,19 +832,6 @@ vr_vltotbem number;
         and nvl(lim.dtfimvig,pr_dtiniest) >= pr_dtiniest;
    rw_craplim cr_craplim%rowtype;
    
-   -- Cursor para verificar se o cooperado teve proposta linha de credito no periodo
-   
-   cursor cr_crawlim (pr_cdcooper crawlim.cdcooper%type,
-                      pr_nrdconta crawlim.nrdconta%type,
-                      pr_dtiniest crawlim.dtinivig%type) is
-     select 1 
-       from crawlim lim
-      where lim.cdcooper = pr_cdcooper
-        and lim.nrdconta = pr_nrdconta
-        and lim.insitlim in (2,3)
-        and nvl(lim.dtfimvig,pr_dtiniest) >= pr_dtiniest;
-   --rw_crawlim cr_crawlim%rowtype;
-
     BEGIN
       --Verificar se a data existe
       OPEN BTCH0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
@@ -1728,39 +1704,6 @@ vr_vltotbem number;
         END LOOP;
       END IF; -- FIM IF cr_craplim%NOTFOUND 
 
-
-
-      -- se nao possuir proposta de limite de credito, nao precisa
-      -- verificar a sda
-      IF cr_crawlim%NOTFOUND THEN                 
-        CLOSE cr_crawlim;
-      ELSE
-        CLOSE cr_crawlim;                  
-        -- Varrer tabela de saldo do dia
-        FOR rw_crapsda IN cr_crapsda ( pr_cdcooper => pr_cdcooper,
-                                       pr_nrdconta => pr_nrdconta,
-                                       pr_dtiniest => vr_dtiniest) LOOP
-
-          -- se o saldo for negativo e o maior que o limite de credito
-          IF rw_crapsda.vlsddisp < 0  AND
-             rw_crapsda.vlsddisp >= (rw_crapsda.vllimcre*-1) THEN
-            vr_qtdiaat2 := nvl(vr_qtdiaat2,0) + 1;
-          ELSE
-            -- armazenar maior data
-            IF nvl(vr_qtdiaat2,0) > nvl(vr_qqdiacheq,0) THEN
-              vr_qqdiacheq := nvl(vr_qtdiaat2,0);
-            END IF;
-            vr_qtdiaat2 := 0;
-          END IF;
-
-        END LOOP;
-      END IF; -- FIM IF cr_crawlim%NOTFOUND 
-
-      
-      
-      
-      
-
       IF vr_qqdiacheq = 0  THEN
         vr_qqdiacheq := vr_qtdiaat2;
       END IF;
@@ -1773,17 +1716,17 @@ vr_vltotbem number;
       vr_obj_generic2.put('quantDiasChequeEspecial', NVL(vr_qqdiacheq,0));
       
       -- Buscar Contrato Limite Crédito    
-      OPEN cr_crawlim_chqesp;
-      FETCH cr_crawlim_chqesp
-        INTO rw_crawlim_chqesp;
-      CLOSE cr_crawlim_chqesp;
+      OPEN cr_craplim_chqesp;
+      FETCH cr_craplim_chqesp
+        INTO rw_craplim_chqesp;
+      CLOSE cr_craplim_chqesp;
     
       -- Enviar as informaçoes do limite de crédito (somente se houver limite de crédito)
-      IF rw_crawlim_chqesp.vllimite > 0 THEN
+      IF rw_craplim_chqesp.vllimite > 0 THEN
         vr_obj_generic2.put('dataContratoLimiteCred'
-                           ,este0002.fn_data_ibra_motor(rw_crawlim_chqesp.dtinivig));
+                           ,este0002.fn_data_ibra_motor(rw_craplim_chqesp.dtinivig));
         vr_obj_generic2.put('limiteCredito'
-                           ,este0001.fn_decimal_ibra(rw_crawlim_chqesp.vllimite));
+                           ,este0001.fn_decimal_ibra(rw_craplim_chqesp.vllimite));
       
         -- Enviar saldo utilizado do limite de crédito
         if  vr_tab_sald.count > 0 then
@@ -1791,7 +1734,7 @@ vr_vltotbem number;
                 -- Se temos adiantamento a depositante 
                 IF  vr_vladtdep < 0 THEN
                     -- Estamos usando todo o limite
-                    vr_obj_generic2.put('saldoUtilizLimiteCredito',este0001.fn_decimal_ibra(rw_crawlim_chqesp.vllimite));
+                    vr_obj_generic2.put('saldoUtilizLimiteCredito',este0001.fn_decimal_ibra(rw_craplim_chqesp.vllimite));
                 ELSE
                     -- O Saldo negativo é o valor utilizado 
                     vr_obj_generic2.put('saldoUtilizLimiteCredito',este0001.fn_decimal_ibra(vr_tab_sald(0).vlsddisp));
@@ -2102,13 +2045,6 @@ vr_vltotbem number;
                          ,(vr_flgativo > 0));
       vr_obj_generic2.put('limiteCartaoCredit'
                          ,este0001.fn_decimal_ibra(vr_vltotccr));
-    
-      -- Buscar proposta de desconto cheques     
-      OPEN cr_crawlim_chqesp;
-      FETCH cr_crawlim_chqesp
-        INTO rw_crawlim_chqesp;
-      CLOSE cr_crawlim_chqesp;
-      -- Buscar borderôs ativos
     
       -- Buscar contrato de desconto cheques     
       OPEN cr_craplim_chq;
