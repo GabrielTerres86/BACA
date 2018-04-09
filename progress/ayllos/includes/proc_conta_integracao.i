@@ -86,34 +86,37 @@ PROCEDURE existe_conta_integracao:
                ASSIGN aux_nrctaass = crabass5.nrdconta.
          
        END.
-   
-   { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
-   
-   RUN STORED-PROCEDURE pc_busca_tipo_conta_itg
-   aux_handproc = PROC-HANDLE NO-ERROR (INPUT crabass5.inpessoa, /* Tipo de pessoa */
-                                        INPUT crabass5.cdtipcta, /* Tipo de conta */
-                                       OUTPUT 0,                /* Modalidade */
-                                       OUTPUT "",               /* Flag Erro */
-                                       OUTPUT "").              /* Descrição da crítica */
+       
+   IF  AVAIL crabass5   THEN
+       DO:
+           { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+           
+           RUN STORED-PROCEDURE pc_busca_tipo_conta_itg
+           aux_handproc = PROC-HANDLE NO-ERROR (INPUT crabass5.inpessoa, /* Tipo de pessoa */
+                                                INPUT crabass5.cdtipcta, /* Tipo de conta */
+                                               OUTPUT 0,                /* Modalidade */
+                                               OUTPUT "",               /* Flag Erro */
+                                               OUTPUT "").              /* Descrição da crítica */
 
-   CLOSE STORED-PROC pc_busca_tipo_conta_itg
-         aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
-   
-   { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
-   
-   ASSIGN aux_idctaitg = 0
-          aux_des_erro = ""
-          aux_dscritic = ""
-          aux_idctaitg = pc_busca_tipo_conta_itg.pr_indconta_itg 
-                         WHEN pc_busca_tipo_conta_itg.pr_indconta_itg <> ?
-          aux_des_erro = pc_busca_tipo_conta_itg.pr_des_erro 
-                         WHEN pc_busca_tipo_conta_itg.pr_des_erro <> ?
-          aux_dscritic = pc_busca_tipo_conta_itg.pr_dscritic
-                         WHEN pc_busca_tipo_conta_itg.pr_dscritic <> ?.
-   
-   IF aux_des_erro = "NOK"  THEN
-          ASSIGN aux_nrdctitg = "".
-   
+           CLOSE STORED-PROC pc_busca_tipo_conta_itg
+                 aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+           
+           { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+           
+           ASSIGN aux_idctaitg = 0
+                  aux_des_erro = ""
+                  aux_dscritic = ""
+                  aux_idctaitg = pc_busca_tipo_conta_itg.pr_indconta_itg 
+                                 WHEN pc_busca_tipo_conta_itg.pr_indconta_itg <> ?
+                  aux_des_erro = pc_busca_tipo_conta_itg.pr_des_erro 
+                                 WHEN pc_busca_tipo_conta_itg.pr_des_erro <> ?
+                  aux_dscritic = pc_busca_tipo_conta_itg.pr_dscritic
+                                 WHEN pc_busca_tipo_conta_itg.pr_dscritic <> ?.
+           
+           IF aux_des_erro = "NOK"  THEN
+                  ASSIGN aux_nrdctitg = "".
+       END.
+        
    IF   aux_nrdctitg      <> ""   AND
         aux_idctaitg       = 0    AND 
         crabass5.flgctitg <> 2   THEN
