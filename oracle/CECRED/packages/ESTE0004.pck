@@ -4168,7 +4168,7 @@ vr_vltotbem number;
   vr_vllimdis     number;
   vr_nmarquiv     varchar2(1000);
   vr_dsiduser     varchar2(100);
-  vr_dsprotoc  tbgen_webservice_aciona.dsprotocolo%type;
+  vr_dsprotoc  tbepr_acionamento.dsprotocolo%type;
   vr_dsdirarq  varchar2(1000);
   vr_dscomando varchar2(1000);
 

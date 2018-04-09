@@ -737,7 +737,7 @@ PROCEDURE pc_derivar_proposta_est(pr_cdcooper  in crawlim.cdcooper%type     --> 
 
   --> Variaveis para DEBUG
   vr_flgdebug varchar2(100) := gene0001.fn_param_sistema('CRED',pr_cdcooper,'DEBUG_MOTOR_IBRA');
-  vr_idaciona tbgen_webservice_aciona.idacionamento%type;
+  vr_idaciona tbepr_acionamento.idacionamento%type;
 
 BEGIN
    -->  Se o DEBUG estiver habilitado
@@ -943,14 +943,14 @@ PROCEDURE pc_incluir_proposta_est(pr_cdcooper  IN crawlim.cdcooper%TYPE   --> Co
   --> Acionamentos de retorno
   cursor cr_aciona_retorno(pr_dsprotocolo varchar2) is
     select ac.dsconteudo_requisicao
-    from   tbgen_webservice_aciona ac
+    from   tbepr_acionamento ac
     where  ac.cdcooper      = pr_cdcooper
     and    ac.nrdconta      = pr_nrdconta
     and    ac.nrctrprp      = pr_nrctrlim
     and    ac.dsprotocolo   = pr_dsprotocolo
     and    ac.tpacionamento = 2; 
   --> Somente Retorno
-  vr_dsconteudo_requisicao tbgen_webservice_aciona.dsconteudo_requisicao%TYPE;
+  vr_dsconteudo_requisicao tbepr_acionamento.dsconteudo_requisicao%TYPE;
     
   --> Hora de Envio
   vr_hrenvest crawlim.hrenvest%TYPE;
@@ -970,7 +970,7 @@ PROCEDURE pc_incluir_proposta_est(pr_cdcooper  IN crawlim.cdcooper%TYPE   --> Co
     
   --> Variaveis para DEBUG
   vr_flgdebug VARCHAR2(100) := gene0001.fn_param_sistema('CRED',pr_cdcooper,'DEBUG_MOTOR_IBRA');
-  vr_idaciona tbgen_webservice_aciona.idacionamento%TYPE;
+  vr_idaciona tbepr_acionamento.idacionamento%TYPE;
     
 BEGIN    
     
@@ -1351,7 +1351,7 @@ END pc_incluir_proposta_est;
     
     --> Variaveis para DEBUG
     vr_flgdebug VARCHAR2(100) := gene0001.fn_param_sistema('CRED',pr_cdcooper,'DEBUG_MOTOR_IBRA');
-    vr_idaciona tbgen_webservice_aciona.idacionamento%TYPE;    
+    vr_idaciona tbepr_acionamento.idacionamento%TYPE;    
     
   BEGIN                  
     
@@ -1590,7 +1590,7 @@ END pc_incluir_proposta_est;
     vr_request  json0001.typ_http_request;
     vr_response json0001.typ_http_response;
     
-    vr_idacionamento  tbgen_webservice_aciona.idacionamento%TYPE;
+    vr_idacionamento  tbepr_acionamento.idacionamento%TYPE;
             
     vr_tab_split     gene0002.typ_split;
     vr_idx_split     VARCHAR2(1000);
@@ -1728,7 +1728,7 @@ END pc_incluir_proposta_est;
            -->  Se conseguiu encontrar Protocolo
            if  pr_dsprotocolo is not null then 
                --> Atualizar acionamento                                                                                                                                                             
-               update tbgen_webservice_aciona
+               update tbepr_acionamento
                set    dsprotocolo = pr_dsprotocolo
                where  idacionamento = vr_idacionamento;
            else    
@@ -1787,7 +1787,7 @@ END pc_incluir_proposta_est;
   vr_dsdirlog      VARCHAR2(500);
   vr_chave_aplica  VARCHAR2(500);
   vr_autori_este   VARCHAR2(500);
-  vr_idacionamento tbgen_webservice_aciona.idacionamento%TYPE;
+  vr_idacionamento tbepr_acionamento.idacionamento%TYPE;
   vr_nrdrowid ROWID;
   vr_dsresana VARCHAR2(100);
   vr_dssitret VARCHAR2(100);
@@ -1849,7 +1849,7 @@ END pc_incluir_proposta_est;
 
     --> Variaveis para DEBUG
     vr_flgdebug VARCHAR2(100);
-    vr_idaciona tbgen_webservice_aciona.idacionamento%TYPE;
+    vr_idaciona tbepr_acionamento.idacionamento%TYPE;
               
       BEGIN
             --> Buscar todas as Coops com obrigatoriedade de Análise Automática    
@@ -2274,7 +2274,7 @@ END pc_incluir_proposta_est;
  vr_obj_proposta_clob clob;
         
  vr_dsprotoc VARCHAR2(1000);
- vr_idaciona tbgen_webservice_aciona.idacionamento%type;
+ vr_idaciona tbepr_acionamento.idacionamento%type;
   
   --> Busca do nome do associado
   cursor cr_crapass is
