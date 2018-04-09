@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Created with Jaspersoft Studio version 6.3.0.final using JasperReports Library version 6.3.0  -->
-<!-- 2018-04-05T11:05:15 -->
+<!-- 2018-04-07T10:20:32 -->
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="crrl724_aditiv_tipo9" language="groovy" pageWidth="595" pageHeight="842" whenNoDataType="AllSectionsNoDetail" columnWidth="595" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
 	<property name="ireport.zoom" value="0.9558924531310722"/>
 	<property name="ireport.x" value="0"/>
@@ -319,7 +319,7 @@
 				<textElement textAlignment="Center" markup="html">
 					<font fontName="Courier New" size="9" isBold="true" isItalic="false" pdfFontName="Courier-Bold"/>
 				</textElement>
-				<textFieldExpression><![CDATA["TERMO ADITIVO CONTRATO DE LIMITE DE DESCONTO DE TÍTULOS Nº " + $F{nrctremp} + " FIRMADO EM " + $F{dtctrato} + " ENTRE COOPERATIVA E COOPERADO"]]></textFieldExpression>
+				<textFieldExpression><![CDATA["TERMO ADITIVO CONTRATO DE LIMITE DE DESCONTO DE TÍTULOS Nº " + $F{nrctremp} + " FIRMADO EM " + $F{dtctrato} + " ENTRE "+$F{nmextcop} +" E " + $F{nmprimtl}]]></textFieldExpression>
 			</textField>
 			<frame>
 				<reportElement x="20" y="66" width="556" height="65" uuid="ba9932ac-4500-4348-8153-bfb8b413e378">
@@ -352,7 +352,7 @@
 					<textElement textAlignment="Justified" markup="styled">
 						<font fontName="Courier New" size="8" pdfFontName="Courier"/>
 					</textElement>
-					<textFieldExpression><![CDATA["Por este instrumento particular, de um lado o(a) <style isBold='true' pdfFontName='Courier-Bold'>COOPERADO(A)</style>  " + $F{nmprimtl} + ", inscrito(a) no CPF/CNPJ sob nº " + $F{dscpfcgc} + ", e de outro lado, a <style isBold='true' pdfFontName='Courier-Bold'>" + $F{nmextcop} + " - " + $F{nmcopres} +"</style>, todas já devidamente qualificadas no contrato supramencionado, tem, entre si, ajustado o presente Termo Aditivo ao <style isBold='true' pdfFontName='Courier-Bold'>CONTRATO DE LIMITE DE DESCONTO DE TÍTULOS Nº " + $F{nrctremp} + "</style>, vinculado à na conta corrente nº " + $F{nrdconta} + ", nas seguintes cláusulas e condições:"]]></textFieldExpression>
+					<textFieldExpression><![CDATA["Por este instrumento particular, de um lado o(a) <style isBold='true' pdfFontName='Courier-Bold'>COOPERADO(A)</style>  " + $F{nmprimtl} + ", inscrito(a) no CPF/CNPJ sob nº " + $F{dscpfcgc} + ", e de outro lado, a <style isBold='true' pdfFontName='Courier-Bold'>" + $F{nmextcop} + " - " + $F{nmcopres} +"</style>, todas já devidamente qualificadas no contrato supramencionado, tem, entre si, ajustado o presente Termo Aditivo ao <style isBold='true' pdfFontName='Courier-Bold'>CONTRATO DE LIMITE DE DESCONTO DE TÍTULOS Nº " + $F{nrctremp} + "</style>, vinculado à conta corrente nº " + $F{nrdconta} + ", nas seguintes cláusulas e condições:"]]></textFieldExpression>
 				</textField>
 				<line>
 					<reportElement x="494" y="1" width="1" height="64" uuid="e29755e7-2cd9-4c89-b0df-670899b62a6e">
@@ -402,7 +402,7 @@
 					<textElement textAlignment="Justified" markup="styled">
 						<font fontName="Courier New" size="8" pdfFontName="Courier"/>
 					</textElement>
-					<textFieldExpression><![CDATA["<style isBold='true' pdfFontName='Courier-Bold'>1.</style> Para garantir o cumprimento das obrigações assumidas na Cédula de Crédito Bancário ou no Contrato de Crédito Simplificado acima mencionado(a), o(a) <style isBold='true' pdfFontName='Courier-Bold'>COOPERADO(A)</style>, <style isBold='true' pdfFontName='Courier-Bold'>DEVEDOR(ES) SOLIDÁRIO(S)</style>, <style isBold='true' pdfFontName='Courier-Bold'>DEVEDOR(ES) SOLIDÁRIO(S)</style> ou <style isBold='true' pdfFontName='Courier-Bold'>INTERVENIENTE GARANTIDOR</style>, conforme o caso, compromete-se a manter em aplicação financeira/poupança o montante de " + $F{perminimo} + "% do saldo devedor da operação de crédito, sendo que este permanecerá bloqueado e vinculado à conta corrente n° " + $F{dsqualific} + ", até que se cumpram todas as obrigações assumidas na Cédula de Crédito Bancário ou no Contrato de Crédito Simplificado original."]]></textFieldExpression>
+					<textFieldExpression><![CDATA["<style isBold='true' pdfFontName='Courier-Bold'>1.</style> Para garantir o cumprimento das obrigações assumidas na Cédula de Crédito Bancário ou no Contrato de Crédito Simplificado acima mencionado(a), o(a) <style isBold='true' pdfFontName='Courier-Bold'>COOPERADO(A)</style>, <style isBold='true' pdfFontName='Courier-Bold'>DEVEDOR(ES) SOLIDÁRIO(S)</style> ou <style isBold='true' pdfFontName='Courier-Bold'>INTERVENIENTE GARANTIDOR</style>, conforme o caso, compromete-se a manter em aplicação financeira/poupança o montante de " + $F{perminimo} + "% do saldo devedor da operação de crédito, sendo que este permanecerá bloqueado e vinculado à conta corrente n° " + $F{dsqualific} + ", até que se cumpram todas as obrigações assumidas na Cédula de Crédito Bancário ou no Contrato de Crédito Simplificado original."]]></textFieldExpression>
 				</textField>
 				<textField isStretchWithOverflow="true">
 					<reportElement positionType="Float" x="6" y="68" width="545" height="40" uuid="8aae48a7-aef3-462d-904d-80e17b3bb1c2">
@@ -462,7 +462,7 @@
 					<textElement textAlignment="Justified" markup="styled">
 						<font fontName="Courier New" size="8" pdfFontName="Courier"/>
 					</textElement>
-					<textFieldExpression><![CDATA["<style isBold='true' pdfFontName='Courier-Bold'>1.</style> As partes resolvem de comum e recíproco acordo, substituir a garantia descrita no item 2.12 da Cédula de Credito Bancário, conforme descrito na cláusula a seguir."]]></textFieldExpression>
+					<textFieldExpression><![CDATA["<style isBold='true' pdfFontName='Courier-Bold'>1.</style> As partes resolvem de comum e recíproco acordo,substituir a aplicação dada em garantia na Cédula de Credito Bancário, conforme descrito na cláusula a seguir."]]></textFieldExpression>
 				</textField>
 				<textField isStretchWithOverflow="true">
 					<reportElement positionType="Float" x="6" y="35" width="545" height="44" uuid="ea65de7c-1f9b-4af2-b376-095d7929a451">
@@ -596,7 +596,7 @@
 					<textElement textAlignment="Justified" markup="styled">
 						<font fontName="Courier New" size="8" pdfFontName="Courier"/>
 					</textElement>
-					<textFieldExpression><![CDATA["<style isBold='true' pdfFontName='Courier-Bold'>1.</style> As partes resolvem de comum e recíproco acordo, substituir a aplicação dada em garantia no <style isBold='true' pdfFontName='Courier-Bold'>TERMO DE ADESÃO ÀS CONDIÇÕES GERAIS DO CONTRATO DE ABERTURA DE CRÉDITO EM CONTA CORRENTE</style>, conforme descrito na cláusula a seguir."]]></textFieldExpression>
+					<textFieldExpression><![CDATA["<style isBold='true' pdfFontName='Courier-Bold'>1.</style> As partes resolvem de comum e recíproco acordo, substituir a aplicação dada em garantia na Cédula de Credito Bancário, conforme descrito na cláusula a seguir."]]></textFieldExpression>
 				</textField>
 				<textField isStretchWithOverflow="true">
 					<reportElement positionType="Float" x="6" y="35" width="545" height="40" uuid="543b98bc-08ed-493b-aa14-17fc82ecd6c9">
@@ -746,7 +746,7 @@
 					<textElement textAlignment="Justified" markup="styled">
 						<font fontName="Courier New" size="8" pdfFontName="Courier"/>
 					</textElement>
-					<textFieldExpression><![CDATA["<style isBold='true' pdfFontName='Courier-Bold'>1.</style> As partes resolvem de comum e recíproco acordo, substituir a garantia descrita no item 4.13 do <style isBold='true' pdfFontName='Courier-Bold'>CONTRATO DE LIMITE DE DESCONTO DE CHEQUES PRÉ-DATADOS E GARANTIA REAL</style>, conforme descrito na cláusula a seguir."]]></textFieldExpression>
+					<textFieldExpression><![CDATA["<style isBold='true' pdfFontName='Courier-Bold'>1.</style> As partes resolvem de comum e recíproco acordo, substituir a aplicação dada em garantia na Cédula de Credito Bancário, conforme descrito na cláusula a seguir."]]></textFieldExpression>
 				</textField>
 				<textField isStretchWithOverflow="true">
 					<reportElement positionType="Float" x="6" y="35" width="545" height="40" uuid="7d18441c-a131-4c13-ba1a-c9eec1076e04">
@@ -896,7 +896,7 @@
 					<textElement textAlignment="Justified" markup="styled">
 						<font fontName="Courier New" size="8" pdfFontName="Courier"/>
 					</textElement>
-					<textFieldExpression><![CDATA["<style isBold='true' pdfFontName='Courier-Bold'>1.</style> As partes resolvem de comum e recíproco acordo, substituir a garantia descrita no item 4.12 do <style isBold='true' pdfFontName='Courier-Bold'>CONTRATO DE LIMITE DE DESCONTO DE TÍTULOS</style>, conforme descrito na cláusula a seguir."]]></textFieldExpression>
+					<textFieldExpression><![CDATA["<style isBold='true' pdfFontName='Courier-Bold'>1.</style> As partes resolvem de comum e recíproco acordo, substituir a aplicação dada em garantia na Cédula de Credito Bancário, conforme descrito na cláusula a seguir."]]></textFieldExpression>
 				</textField>
 				<textField isStretchWithOverflow="true">
 					<reportElement positionType="Float" x="6" y="35" width="545" height="40" uuid="27d7caac-e5b5-4612-b0c5-336f8f9a4c59">
