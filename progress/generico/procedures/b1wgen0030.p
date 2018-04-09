@@ -50,6 +50,7 @@
                              
                 13/01/2009 - Correcao do calculo de juros devido aos fins de
                              semanas ou feriados (Evandro).
+
                              
                 19/01/2009 - Liquidar o desconto de titulos com a data atual,
                              independente da data do parametro;
@@ -3635,6 +3636,216 @@ PROCEDURE busca_dados_limite_incluir:
 END PROCEDURE.
 
 /****************************************************************************/
+/*    Buscar dados de um limite de desconto de titulos COMPLETO - opcao "M" */
+/****************************************************************************/
+PROCEDURE busca_dados_limite_manutencao:
+    /* DEFINIÇÃO DOS PARAMETROS DE ENTRADA */
+    DEF INPUT PARAM par_cdcooper AS INTE                    NO-UNDO.
+    DEF INPUT PARAM par_cdagenci AS INTE                    NO-UNDO.
+    DEF INPUT PARAM par_nrdcaixa AS INTE                    NO-UNDO.
+    DEF INPUT PARAM par_cdoperad AS CHAR                    NO-UNDO.
+    DEF INPUT PARAM par_dtmvtolt AS DATE                    NO-UNDO.
+    DEF INPUT PARAM par_idorigem AS INTE                    NO-UNDO. 
+    DEF INPUT PARAM par_nrdconta AS INTE                    NO-UNDO.
+    DEF INPUT PARAM par_idseqttl AS INTE                    NO-UNDO.
+    DEF INPUT PARAM par_nmdatela AS CHAR                    NO-UNDO.
+    DEF INPUT PARAM par_nrctrlim AS INTE                    NO-UNDO.
+    
+    /* DEFINIÇÃO DOS PARAMETROS DE SAIDA */
+    DEF OUTPUT PARAM TABLE FOR tt-erro.                     -- Saida da analise de erro
+    DEF OUTPUT PARAM TABLE FOR tt-dsctit_dados_limite.      --
+    DEF OUTPUT PARAM TABLE FOR tt-dados-avais.              --
+    DEF OUTPUT PARAM TABLE FOR tt-risco.                    -- Saido da analise de risco
+    DEF OUTPUT PARAM TABLE FOR tt-dados_dsctit.             -- Retorno do parametro de desconto de titulo vindo da tabela CRAPTAB
+
+    EMPTY TEMP-TABLE tt-erro.                               -- Elimina todos os dados da coluna tt-erro da (Dados do Erro) tabela temporária.
+    EMPTY TEMP-TABLE tt-dsctit_dados_limite.                -- Elimina todos os dados da coluna tt-dados-limite (Dados do Limite) da tabela temporária.
+    EMPTY TEMP-TABLE tt-dados-avais.                        -- Elimina todos os dados da coluna tt-dados-avais (Dados do Avalista) da tabela temporária.
+    EMPTY TEMP-TABLE tt-risco.                              -- Elimina todos os dados da coluna tt-risco (Dados do risco) da tabela temporária.
+    EMPTY TEMP-TABLE tt-dados_dsctit.                       -- Elimina todos os dados da coluna tt-dados-dsctit (Dados do desconto de título) da tabela temporária.
+
+    DEF VAR aux_dsoperac AS CHAR   NO-UNDO.                 --
+    DEF VAR h-b1wgen9999 AS HANDLE NO-UNDO.                 --
+    DEF VAR h-b1wgen0110 AS HANDLE NO-UNDO.                 --
+    
+    /* Define o código da critica como 0 e a descrição como vazio */
+    ASSIGN aux_dscritic = ""
+           aux_cdcritic = 0.
+
+    /* Verifica se o associado esta cadastrado na tabela de associados */
+    /* Em caso de alteração no cadastro da inclusão até a alteração e necessario comprovar que o cadastro esteja ok */
+    FIND crapass WHERE crapass.cdcooper = par_cdcooper AND
+                       crapass.nrdconta = par_nrdconta 
+                       NO-LOCK NO-ERROR.
+    /* Se o associado não for encontrado é gerado umja critica para o eero de cadastro */
+    IF NOT AVAIL(crapass)  THEN
+       DO:
+           ASSIGN aux_cdcritic = 9
+                  aux_dscritic = "".
+           / É feita a localização da descrição da crítica */
+           RUN gera_erro (INPUT par_cdcooper,
+                          INPUT par_cdagenci,
+                          INPUT par_nrdcaixa,
+                          INPUT 1,            /** Sequencia **/
+                          INPUT aux_cdcritic,
+                          INPUT-OUTPUT aux_dscritic).
+           /* É retornado um status de falha de validação "NOK" */ 
+           RETURN "NOK".        
+
+       END.
+    /* Se o associado estiver cadastrado então é atribuido ao Handle o arquivo .p */
+    IF NOT VALID-HANDLE(h-b1wgen0110) THEN
+       RUN sistema/generico/procedures/b1wgen0110.p
+           PERSISTENT SET h-b1wgen0110.
+
+    /*Monta a mensagem da operacao para envio no e-mail*/
+    ASSIGN aux_dsoperac = "Tentativa de alterar a proposta de limite de "  + 
+                          "descontos de titulos na conta "                 +
+                          STRING(crapass.nrdconta,"zzzz,zzz,9")            +
+                          " - CPF/CNPJ "                                   +
+                         (IF crapass.inpessoa = 1 THEN
+                             STRING((STRING(crapass.nrcpfcgc,
+                                     "99999999999")),"xxx.xxx.xxx-xx")
+                          ELSE
+                             STRING((STRING(crapass.nrcpfcgc,
+                                     "99999999999999")),
+                                     "xx.xxx.xxx/xxxx-xx")).
+
+    /*Verifica se o associado esta no cadastro restritivo. Se estiver,
+      sera enviado um e-mail informando a situacao*/
+    RUN alerta_fraude IN h-b1wgen0110(INPUT par_cdcooper,
+                                      INPUT par_cdagenci,
+                                      INPUT par_nrdcaixa,
+                                      INPUT par_cdoperad,
+                                      INPUT par_nmdatela,
+                                      INPUT par_dtmvtolt,
+                                      INPUT par_idorigem,
+                                      INPUT crapass.nrcpfcgc,
+                                      INPUT crapass.nrdconta,
+                                      INPUT par_idseqttl,
+                                      INPUT TRUE, /*bloqueia operacao*/
+                                      INPUT 6, /*cdoperac*/
+                                      INPUT aux_dsoperac,
+                                      OUTPUT TABLE tt-erro).
+    
+    /* Se o handle estiver ativo ele é desativado */
+    IF VALID-HANDLE(h-b1wgen0110) THEN
+       DELETE PROCEDURE(h-b1wgen0110).
+
+    /* se a busca de fraude retorna alguma inconsitencia e gerado um erro a procedure é abortada pelo retorno de um "NOK" */
+    IF RETURN-VALUE <> "OK" THEN
+       DO:
+          IF NOT TEMP-TABLE tt-erro:HAS-RECORDS THEN
+             DO:
+                ASSIGN aux_dscritic = "Nao foi possivel verificar o " + 
+                                      "cadastro restritivo.".
+                RUN gera_erro (INPUT par_cdcooper,
+                               INPUT par_cdagenci,
+                               INPUT par_nrdcaixa,
+                               INPUT 1, /*sequencia*/
+                               INPUT aux_cdcritic,
+                               INPUT-OUTPUT aux_dscritic).
+             END.
+          RETURN "NOK".
+       END.
+
+    /*  Se não houver nenhuma restrição ao associado é feito a busca da proposta desejada. */
+    RUN busca_dados_proposta (INPUT par_cdcooper,
+                              INPUT par_cdagenci, 
+                              INPUT par_nrdcaixa,
+                              INPUT par_cdoperad,
+                              INPUT par_dtmvtolt,
+                              INPUT par_idorigem,
+                              INPUT par_nrdconta,
+                              INPUT par_idseqttl,  
+                              INPUT par_nmdatela,
+                              INPUT par_nrctrlim,
+                              INPUT "A",
+                              OUTPUT TABLE tt-erro,
+                              OUTPUT TABLE tt-dsctit_dados_limite,
+                              OUTPUT TABLE tt-dados_dsctit).
+    
+    /* Caso ocorra uma falha na busca da proposta, é retornado um erro de pesquisa. "NOK" */
+    /* este retorno acarreta na saida da procedure e no retorno de uma falha "NOK" */
+    IF  RETURN-VALUE = "NOK"  THEN
+        RETURN "NOK".
+    
+    /* Verifica a localização de dados do desconto de titulo do limite */
+    FIND FIRST tt-dsctit_dados_limite NO-LOCK NO-ERROR.
+    /* se não forem encontrados dados do desconto de titulo então é gerado um erro */
+    IF  NOT AVAIL tt-dsctit_dados_limite  THEN
+        DO:
+            /* marcado uma critica de limite não encontrado */
+            ASSIGN aux_cdcritic = 0
+                   aux_dscritic = "Dados de limite nao encontrados.".
+            
+            /* É gerado um erro de critica de limite não encontrado */       
+            RUN gera_erro (INPUT par_cdcooper,
+                           INPUT par_cdagenci,
+                           INPUT par_nrdcaixa,
+                           INPUT 1,            /** Sequencia **/
+                           INPUT aux_cdcritic,
+                           INPUT-OUTPUT aux_dscritic).
+            /* E retornado um erro de devido à critica encontrada. */
+            RETURN "NOK".
+        END.
+    
+
+    RUN sistema/generico/procedures/b1wgen9999.p PERSISTENT
+        SET h-b1wgen9999.                                     
+
+    IF  NOT VALID-HANDLE(h-b1wgen9999)  THEN
+        DO:
+            ASSIGN aux_cdcritic = 0
+                   aux_dscritic = "Handle invalido para BO b1wgen9999.".
+                   
+            RUN gera_erro (INPUT par_cdcooper,
+                           INPUT par_cdagenci,
+                           INPUT par_nrdcaixa,
+                           INPUT 1,            /** Sequencia **/
+                           INPUT aux_cdcritic,
+                           INPUT-OUTPUT aux_dscritic).
+                                       
+            RETURN "NOK".
+
+        END.
+    
+    /* Verifica quais avalistas da proposta estão aptos */    
+    RUN lista_avalistas IN h-b1wgen9999 (INPUT par_cdcooper,  
+                                         INPUT par_cdagenci,
+                                         INPUT par_nrdcaixa,
+                                         INPUT par_cdoperad,
+                                         INPUT par_nmdatela,
+                                         INPUT par_idorigem,
+                                         INPUT par_nrdconta,
+                                         INPUT par_idseqttl,
+                                         INPUT 8, /** Tipo do contrato **/
+                                         INPUT par_nrctrlim,    
+                                         INPUT tt-dsctit_dados_limite.nrctaav1,
+                                         INPUT tt-dsctit_dados_limite.nrctaav2,
+                                        OUTPUT TABLE tt-dados-avais,
+                                        OUTPUT TABLE tt-erro).        
+    /* Elimina o handle atribuido */
+    DELETE PROCEDURE h-b1wgen9999.
+    
+
+    /* Caso a lista de avalistas esteja com inconsistencia é retornado um erro */
+    /* O retorno do erro acarreta no retorno de um erro e na saida da procedure com erro de busca de dados. */
+    IF  RETURN-VALUE = "NOK"  THEN
+        RETURN "NOK".
+
+
+    /* Efetua a criação da tabela de riscos */
+    RUN busca_dados_risco (INPUT par_cdcooper,
+                          OUTPUT TABLE tt-risco).    
+    
+
+    /* Retorna "OK" com a finalização da procedure */
+    RETURN "OK".
+
+END PROCEDURE.
+
+/****************************************************************************/
 /*      Buscar dados de um determinado limite de desconto de titulos        */
 /****************************************************************************/
 PROCEDURE busca_dados_limite:
@@ -3887,6 +4098,223 @@ PROCEDURE busca_dados_limite:
 
 END PROCEDURE.
 
+/****************************************************************************/
+/*    Buscar dados de um limite de desconto de titulos COMPLETO - opcao "M" */
+/****************************************************************************/
+PROCEDURE busca_dados_limite_manutencao:
+    /* DEFINIÇÃO DOS PARAMETROS DE ENTRADA */
+    DEF INPUT PARAM par_cdcooper AS INTE                    NO-UNDO.
+    DEF INPUT PARAM par_cdagenci AS INTE                    NO-UNDO.
+    DEF INPUT PARAM par_nrdcaixa AS INTE                    NO-UNDO.
+    DEF INPUT PARAM par_cdoperad AS CHAR                    NO-UNDO.
+    DEF INPUT PARAM par_dtmvtolt AS DATE                    NO-UNDO.
+    DEF INPUT PARAM par_idorigem AS INTE                    NO-UNDO. 
+    DEF INPUT PARAM par_nrdconta AS INTE                    NO-UNDO.
+    DEF INPUT PARAM par_idseqttl AS INTE                    NO-UNDO.
+    DEF INPUT PARAM par_nmdatela AS CHAR                    NO-UNDO.
+    DEF INPUT PARAM par_nrctrlim AS INTE                    NO-UNDO.
+    
+    /* DEFINIÇÃO DOS PARAMETROS DE SAIDA */
+    DEF OUTPUT PARAM TABLE FOR tt-erro.                     -- Saida da analise de erro
+    DEF OUTPUT PARAM TABLE FOR tt-dsctit_dados_limite.      --
+    DEF OUTPUT PARAM TABLE FOR tt-dados-avais.              --
+    DEF OUTPUT PARAM TABLE FOR tt-risco.                    -- Saido da analise de risco
+    DEF OUTPUT PARAM TABLE FOR tt-dados_dsctit.             -- Retorno do parametro de desconto de titulo vindo da tabela CRAPTAB
+
+    EMPTY TEMP-TABLE tt-erro.                               -- Elimina todos os dados da coluna tt-erro da (Dados do Erro) tabela temporária.
+    EMPTY TEMP-TABLE tt-dsctit_dados_limite.                -- Elimina todos os dados da coluna tt-dados-limite (Dados do Limite) da tabela temporária.
+    EMPTY TEMP-TABLE tt-dados-avais.                        -- Elimina todos os dados da coluna tt-dados-avais (Dados do Avalista) da tabela temporária.
+    EMPTY TEMP-TABLE tt-risco.                              -- Elimina todos os dados da coluna tt-risco (Dados do risco) da tabela temporária.
+    EMPTY TEMP-TABLE tt-dados_dsctit.                       -- Elimina todos os dados da coluna tt-dados-dsctit (Dados do desconto de título) da tabela temporária.
+
+    DEF VAR aux_dsoperac AS CHAR   NO-UNDO.                 --
+    DEF VAR h-b1wgen9999 AS HANDLE NO-UNDO.                 --
+    DEF VAR h-b1wgen0110 AS HANDLE NO-UNDO.                 --
+    
+    /* Define o código da critica como 0 e a descrição como vazio */
+    ASSIGN aux_dscritic = ""
+           aux_cdcritic = 0.
+
+    /* Verifica se o associado esta cadastrado na tabela de associados */
+    /* Em caso de alteração no cadastro da inclusão até a alteração e necessario comprovar que o cadastro esteja ok */
+    FIND crapass WHERE crapass.cdcooper = par_cdcooper AND
+                       crapass.nrdconta = par_nrdconta 
+                       NO-LOCK NO-ERROR.
+    /* Se o associado não for encontrado é gerado umja critica para o eero de cadastro */
+    IF NOT AVAIL(crapass)  THEN
+       DO:
+           ASSIGN aux_cdcritic = 9
+                  aux_dscritic = "".
+           / É feita a localização da descrição da crítica */
+           RUN gera_erro (INPUT par_cdcooper,
+                          INPUT par_cdagenci,
+                          INPUT par_nrdcaixa,
+                          INPUT 1,            /** Sequencia **/
+                          INPUT aux_cdcritic,
+                          INPUT-OUTPUT aux_dscritic).
+           /* É retornado um status de falha de validação "NOK" */ 
+           RETURN "NOK".        
+
+       END.
+    /* Se o associado estiver cadastrado então é atribuido ao Handle o arquivo .p */
+    IF NOT VALID-HANDLE(h-b1wgen0110) THEN
+       RUN sistema/generico/procedures/b1wgen0110.p
+           PERSISTENT SET h-b1wgen0110.
+
+    /*Monta a mensagem da operacao para envio no e-mail*/
+    ASSIGN aux_dsoperac = "Tentativa de alterar a proposta de limite de "  + 
+                          "descontos de titulos na conta "                 +
+                          STRING(crapass.nrdconta,"zzzz,zzz,9")            +
+                          " - CPF/CNPJ "                                   +
+                         (IF crapass.inpessoa = 1 THEN
+                             STRING((STRING(crapass.nrcpfcgc,
+                                     "99999999999")),"xxx.xxx.xxx-xx")
+                          ELSE
+                             STRING((STRING(crapass.nrcpfcgc,
+                                     "99999999999999")),
+                                     "xx.xxx.xxx/xxxx-xx")).
+
+    /*Verifica se o associado esta no cadastro restritivo. Se estiver,
+      sera enviado um e-mail informando a situacao*/
+    RUN alerta_fraude IN h-b1wgen0110(INPUT par_cdcooper,
+                                      INPUT par_cdagenci,
+                                      INPUT par_nrdcaixa,
+                                      INPUT par_cdoperad,
+                                      INPUT par_nmdatela,
+                                      INPUT par_dtmvtolt,
+                                      INPUT par_idorigem,
+                                      INPUT crapass.nrcpfcgc,
+                                      INPUT crapass.nrdconta,
+                                      INPUT par_idseqttl,
+                                      INPUT TRUE, /*bloqueia operacao*/
+                                      INPUT 6, /*cdoperac*/
+                                      INPUT aux_dsoperac,
+                                      OUTPUT TABLE tt-erro).
+    
+    /* Se o handle estiver ativo ele é desativado */
+    IF VALID-HANDLE(h-b1wgen0110) THEN
+       DELETE PROCEDURE(h-b1wgen0110).
+
+    /* se a busca de fraude retorna alguma inconsitencia e gerado um erro a procedure é abortada pelo retorno de um "NOK" */
+    IF RETURN-VALUE <> "OK" THEN
+       DO:
+          IF NOT TEMP-TABLE tt-erro:HAS-RECORDS THEN
+             DO:
+                ASSIGN aux_dscritic = "Nao foi possivel verificar o " + 
+                                      "cadastro restritivo.".
+                RUN gera_erro (INPUT par_cdcooper,
+                               INPUT par_cdagenci,
+                               INPUT par_nrdcaixa,
+                               INPUT 1, /*sequencia*/
+                               INPUT aux_cdcritic,
+                               INPUT-OUTPUT aux_dscritic).
+             END.
+          RETURN "NOK".
+       END.
+
+    /*  Se não houver nenhuma restrição ao associado é feito a busca da proposta desejada. */
+    RUN busca_dados_proposta (INPUT par_cdcooper,
+                              INPUT par_cdagenci, 
+                              INPUT par_nrdcaixa,
+                              INPUT par_cdoperad,
+                              INPUT par_dtmvtolt,
+                              INPUT par_idorigem,
+                              INPUT par_nrdconta,
+                              INPUT par_idseqttl,  
+                              INPUT par_nmdatela,
+                              INPUT par_nrctrlim,
+                              INPUT "A",
+                              OUTPUT TABLE tt-erro,
+                              OUTPUT TABLE tt-dsctit_dados_limite,
+                              OUTPUT TABLE tt-dados_dsctit).
+    
+    /* Caso ocorra uma falha na busca da proposta, é retornado um erro de pesquisa. "NOK" */
+    /* este retorno acarreta na saida da procedure e no retorno de uma falha "NOK" */
+    IF  RETURN-VALUE = "NOK"  THEN
+        RETURN "NOK".
+    
+    /* Verifica a localização de dados do desconto de titulo do limite */
+    FIND FIRST tt-dsctit_dados_limite NO-LOCK NO-ERROR.
+    /* se não forem encontrados dados do desconto de titulo então é gerado um erro */
+    IF  NOT AVAIL tt-dsctit_dados_limite  THEN
+        DO:
+            /* marcado uma critica de limite não encontrado */
+            ASSIGN aux_cdcritic = 0
+                   aux_dscritic = "Dados de limite nao encontrados.".
+            
+            /* É gerado um erro de critica de limite não encontrado */       
+            RUN gera_erro (INPUT par_cdcooper,
+                           INPUT par_cdagenci,
+                           INPUT par_nrdcaixa,
+                           INPUT 1,            /** Sequencia **/
+                           INPUT aux_cdcritic,
+                           INPUT-OUTPUT aux_dscritic).
+            /* E retornado um erro de devido à critica encontrada. */
+            RETURN "NOK".
+        END.
+    
+
+    RUN sistema/generico/procedures/b1wgen9999.p PERSISTENT
+        SET h-b1wgen9999.                                     
+
+    IF  NOT VALID-HANDLE(h-b1wgen9999)  THEN
+        DO:
+            ASSIGN aux_cdcritic = 0
+                   aux_dscritic = "Handle invalido para BO b1wgen9999.".
+                   
+            RUN gera_erro (INPUT par_cdcooper,
+                           INPUT par_cdagenci,
+                           INPUT par_nrdcaixa,
+                           INPUT 1,            /** Sequencia **/
+                           INPUT aux_cdcritic,
+                           INPUT-OUTPUT aux_dscritic).
+                                       
+            RETURN "NOK".
+
+        END.
+    
+    /* Verifica quais avalistas da proposta estão aptos */    
+    RUN lista_avalistas IN h-b1wgen9999 (INPUT par_cdcooper,  
+                                         INPUT par_cdagenci,
+                                         INPUT par_nrdcaixa,
+                                         INPUT par_cdoperad,
+                                         INPUT par_nmdatela,
+                                         INPUT par_idorigem,
+                                         INPUT par_nrdconta,
+                                         INPUT par_idseqttl,
+                                         INPUT 8, /** Tipo do contrato **/
+                                         INPUT par_nrctrlim,    
+                                         INPUT tt-dsctit_dados_limite.nrctaav1,
+                                         INPUT tt-dsctit_dados_limite.nrctaav2,
+                                        OUTPUT TABLE tt-dados-avais,
+                                        OUTPUT TABLE tt-erro).        
+    /* Elimina o handle atribuido */
+    DELETE PROCEDURE h-b1wgen9999.
+    
+
+    /* Caso a lista de avalistas esteja com inconsistencia é retornado um erro */
+    /* O retorno do erro acarreta no retorno de um erro e na saida da procedure com erro de busca de dados. */
+    IF  RETURN-VALUE = "NOK"  THEN
+        RETURN "NOK".
+
+
+    /* Efetua a criação da tabela de riscos */
+    RUN busca_dados_risco (INPUT par_cdcooper,
+                          OUTPUT TABLE tt-risco).    
+    
+
+    /* Retorna "OK" com a finalização da procedure */
+    RETURN "OK".
+
+END PROCEDURE.
+
+
+
+
+
+
+
+
 /**********************************************************************************/
 /*      Buscar dados de uma determinada proposta de limite de desconto de titulos */
 /**********************************************************************************/
@@ -4100,6 +4528,7 @@ PROCEDURE busca_dados_proposta:
         END. 
 
     ASSIGN aux_cdtipdoc = INTE(ENTRY(3,craptab.dstextab,";")).
+
 
     CREATE tt-dsctit_dados_limite.  
     ASSIGN tt-dsctit_dados_limite.txdmulta = tt-dados_dsctit.pcdmulta
@@ -7343,7 +7772,7 @@ PROCEDURE busca_parametros_dsctit:
                   tt-dsctit.qtprzmax = INTE(ENTRY(10,craptab.dstextab,";"))
                   tt-dsctit.qtminfil = INTE(ENTRY(11,craptab.dstextab,";"))
                   tt-dsctit.nrmespsq = INTE(ENTRY(12,craptab.dstextab,";"))
-                  tt-dsctit.pctitemi = DECI(ENTRY(13,craptab.dstextab,";"))
+                  //tt-dsctit.pctitemi = DECI(ENTRY(13,craptab.dstextab,";"))
                   tt-dsctit.pctolera = DECI(ENTRY(14,craptab.dstextab,";"))
                   tt-dsctit.pcdmulta = DECI(ENTRY(15,craptab.dstextab,";"))
                   tt-dsctit.cardbtit = INTE(ENTRY(31,craptab.dstextab,";"))
@@ -7364,7 +7793,7 @@ PROCEDURE busca_parametros_dsctit:
                   tt-dados_cecred_dsctit.qtprzmax = INTE(ENTRY(25,craptab.dstextab,";"))
                   tt-dados_cecred_dsctit.qtminfil = INTE(ENTRY(26,craptab.dstextab,";"))
                   tt-dados_cecred_dsctit.nrmespsq = INTE(ENTRY(27,craptab.dstextab,";"))
-                  tt-dados_cecred_dsctit.pctitemi = DECI(ENTRY(28,craptab.dstextab,";"))
+                  //tt-dados_cecred_dsctit.pctitemi = DECI(ENTRY(28,craptab.dstextab,";"))
                   tt-dados_cecred_dsctit.pctolera = DECI(ENTRY(29,craptab.dstextab,";"))
                   tt-dados_cecred_dsctit.pcdmulta = DECI(ENTRY(30,craptab.dstextab,";"))
                   tt-dados_cecred_dsctit.cardbtit = INTE(ENTRY(32,craptab.dstextab,";"))
@@ -7507,7 +7936,7 @@ PROCEDURE grava_parametros_dsctit:
                                + ";" + STRING(tt-dados_dsctit.qtprzmax,"999")
                                + ";" + STRING(tt-dados_dsctit.qtminfil,"999")
                                + ";" + STRING(tt-dados_dsctit.nrmespsq,"99")
-                               + ";" + STRING(tt-dados_dsctit.pctitemi,"999")
+                               //+ ";" + STRING(tt-dados_dsctit.pctitemi,"999")
                                + ";" + STRING(tt-dados_dsctit.pctolera,"999")
                                + ";" + STRING(tt-dados_dsctit.pcdmulta,"999.999999")
                                     /* CECRED */
@@ -7523,7 +7952,7 @@ PROCEDURE grava_parametros_dsctit:
                                + ";" + STRING(tt-dados_cecred_dsctit.qtprzmax,"999")
                                + ";" + STRING(tt-dados_cecred_dsctit.qtminfil,"999")
                                + ";" + STRING(tt-dados_cecred_dsctit.nrmespsq,"99")
-                               + ";" + STRING(tt-dados_cecred_dsctit.pctitemi,"999")
+                               //+ ";" + STRING(tt-dados_cecred_dsctit.pctitemi,"999")
                                + ";" + STRING(tt-dados_cecred_dsctit.pctolera,"999")
                                + ";" + STRING(tt-dados_cecred_dsctit.pcdmulta,"999.999999")
                                /*carencia debito titulos vencidos*/
@@ -16447,28 +16876,33 @@ PROCEDURE analisar-titulo-bordero:
                 
             END.  /*  Fim do FOR EACH  -- crabtdb  */
 
-            IF  ((aux_vltotsac_cr / aux_vltotbdt_cr) * 100) > tt-dados_dsctit_cr.pctitemi  OR
-                ((aux_vltotsac_sr / aux_vltotbdt_sr) * 100) > tt-dados_dsctit.pctitemi     THEN
-                DO:
-                    ASSIGN aux_dsrestri = "Percentual de titulo do " +
-                                          "pagador excedido no bordero"
-                           aux_nrseqdig = IF crapcob.flgregis = TRUE THEN 52
-                                          ELSE 2.
+            
 
-                    /* Se nao passar na validaçao, grava na tabela a crítica referente a Restricao */
-                    RUN grava-restricao-bordero (INPUT par_cdcooper,
-                                                 INPUT par_cdoperad,
-                                                 INPUT par_nrborder,
-                                                 INPUT aux_nrseqdig,
-                                                 INPUT aux_dsrestri,
-                                                 INPUT " ",   /* dsdetres */
-                                                 INPUT FALSE, /* flaprcoo */
-                                                 OUTPUT TABLE tt-erro).
+            //IF  ((aux_vltotsac_cr / aux_vltotbdt_cr) * 100) > tt-dados_dsctit_cr.pctitemi  OR
+            //    ((aux_vltotsac_sr / aux_vltotbdt_sr) * 100) > tt-dados_dsctit.pctitemi     THEN
+            //    DO:
+            //                    ASSIGN aux_dsrestri = "Percentual de titulo do " +
+            //                                          "pagador excedido no bordero"
+            //                           aux_nrseqdig = IF crapcob.flgregis = TRUE THEN 52
+            //                                          ELSE 2.
+            //
+            //                    /* Se nao passar na validaçao, grava na tabela a crítica referente a Restricao */
+            //                    RUN grava-restricao-bordero (INPUT par_cdcooper,
+            //                                                 INPUT par_cdoperad,
+            //                                                 INPUT par_nrborder,
+            //                                                 INPUT aux_nrseqdig,
+            //                                                 INPUT aux_dsrestri,
+            //                                                 INPUT " ",   /* dsdetres */
+            //                                                 INPUT FALSE, /* flaprcoo */
+            //                                                 OUTPUT TABLE tt-erro).
+            //
+            //                    IF  RETURN-VALUE = "NOK" THEN
+            //                        RETURN "NOK".
+            //
+            //                END.
+            //
+            
 
-                    IF  RETURN-VALUE = "NOK" THEN
-                        RETURN "NOK".
-
-                END.
 
             /* Restricao referente a consulta de CPF/CNPJ do Sacado */
             ASSIGN aux_vlcontit = IF crapcob.flgregis = TRUE THEN tt-dados_dsctit_cr.vlconsul
