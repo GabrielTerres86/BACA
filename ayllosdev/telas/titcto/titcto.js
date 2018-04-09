@@ -4,7 +4,8 @@
  * DATA CRIAÇÃO : 07/03/2018
  * OBJETIVO     : Biblioteca de funções da tela TITCTO
  * --------------
- * ALTERAÇÕES   :
+ * ALTERAÇÕES   : 09/04/2018 - Ajuste para inclusão de nova opção para imprimir borderos não liberados (Alex Sandro - GFT).
+ *
  * --------------
  *
  */
@@ -13,7 +14,7 @@
 var frmCab = 'frmCab';
 var frmOpcao = 'frmOpcao';
 
-var cddopcao = 'C';
+var cddopcao = 'B';
 
 var nrJanelas = 0;
 
@@ -27,6 +28,7 @@ var cDtvencto;
 var cTpdepesq;
 var cNrdocmto;
 var cVltitulo;
+var cDtiniper;
 
 $(document).ready(function() {
     estadoInicial();
@@ -47,7 +49,7 @@ function estadoInicial() {
     $('#' + frmOpcao).remove();
     $('#divBotoes').remove();
 
-    cCddopcao.val('C');
+    cCddopcao.val('B');
     cCddopcao.focus();
 
     removeOpacidade('divTela');
@@ -234,7 +236,10 @@ function formataOpcao() {
 
     highlightObjFocus($('#' + frmOpcao));
 
-    if (cddopcao == 'C') {
+    if(cddopcao == 'B'){
+        formataOpcaoB();
+        cDtiniper.focus();
+    } else if (cddopcao == 'C') {
         formataOpcaoC();
         $('#' + frmOpcao +' .listar_resgatados').hide();
         $('#' + frmOpcao +' .tipo_cobranca').hide();
@@ -431,6 +436,114 @@ function formataCabecalho() {
     controlaPesquisas();
     return false;
 }
+
+// opcao C
+function formataOpcaoB() {
+    // label
+    rDtiniper = $('label[for="dtiniper"]', '#' + frmOpcao);
+    rDtfimper = $('label[for="dtfimper"]', '#' + frmOpcao);
+    rCdagenci = $('label[for="cdagenci"]', '#' + frmOpcao);
+    rNrdconta = $('label[for="nrdconta"]', '#' + frmOpcao);
+    rNrborder = $('label[for="nrborder"]', '#' + frmOpcao);
+
+    rDtiniper.css({'width': '110px'}).addClass('rotulo');
+    rDtfimper.css({'width': '25px'}).addClass('rotulo-linha');
+    rCdagenci.css({'width': '25px'}).addClass('rotulo-linha');
+    rNrdconta.css({'width': '45px'}).addClass('rotulo-linha');
+    rNrborder.css({'width': '55px'}).addClass('rotulo-linha');
+
+    // input
+    cDtiniper = $('#dtiniper', '#' + frmOpcao);
+    cDtfimper = $('#dtfimper', '#' + frmOpcao);
+    cCdagenci = $('#cdagenci', '#' + frmOpcao);
+    cNrdconta = $('#nrdconta', '#' + frmOpcao);
+    cNrborder = $('#nrborder', '#' + frmOpcao);
+
+    cDtiniper.css({'width': '75px'}).addClass('data');
+    cDtfimper.css({'width': '75px'}).addClass('data');
+    cCdagenci.css({'width': '75px'}).addClass('inteiro').attr('maxlength', '3');
+    cNrdconta.css({'width': '75px'}).addClass('conta');
+    cNrborder.css({'width': '75px'}).addClass('inteiro');
+
+    // Outros   
+    cTodosOpcao.habilitaCampo();
+
+    // de
+    cDtiniper.unbind('keydown').bind('keydown', function(e) {
+        if (divError.css('display') == 'block') {
+            return false;
+        }
+
+        // Se é a tecla TAB ou ENTER, 
+        if ((e.keyCode == 9 || e.keyCode == 13)) {
+            cDtfimper.focus();
+            return false;
+        }
+
+    });
+
+    // ate
+    cDtfimper.unbind('keydown').bind('keydown', function(e) {
+        if (divError.css('display') == 'block') {
+            return false;
+        }
+
+        // Se é a tecla TAB ou ENTER, 
+        if ((e.keyCode == 9 || e.keyCode == 13)) {
+            cCdagenci.focus();
+            return false;
+        }
+
+    });
+
+    // PA
+    cCdagenci.unbind('keydown').bind('keydown', function(e) {
+        if (divError.css('display') == 'block') {
+            return false;
+        }
+
+        // Se é a tecla TAB ou ENTER, 
+        if ((e.keyCode == 9 || e.keyCode == 13)) {
+            cNrdconta.focus();
+            return false;
+        }
+
+    });
+
+    // conta
+    cNrdconta.unbind('keydown').bind('keydown', function(e) {
+        if (divError.css('display') == 'block') {
+            return false;
+        }
+
+        // Se é a tecla TAB ou ENTER, 
+        if ((e.keyCode == 9 || e.keyCode == 13)) {
+            cNrborder.focus();
+            return false;
+        }
+
+    });
+
+    // bordero
+    cNrborder.unbind('keydown').bind('keydown', function(e) {
+        if (divError.css('display') == 'block') {
+            return false;
+        }
+
+        // Se TAB ou ENTER
+        if (e.keyCode == 9 || e.keyCode == 13) {
+            btnContinuar();
+            return false;
+        }
+    });
+
+    layoutPadrao();
+    controlaPesquisas();
+    return false;
+
+}
+
+
 
 // opcao C
 function formataOpcaoC() {
@@ -1338,7 +1451,22 @@ function btnContinuar() {
     var mensagem = 'Aguarde, buscando dados ...';
     showMsgAguardo(mensagem);
 
-    if(cddopcao == 'C'){
+    if(cddopcao == 'B'){
+        if (cDtiniper.val() == '') {
+            hideMsgAguardo();
+            showError("error","Período de Digita&ccedil;&atilde;o deve ser informado.","Alerta - Ayllos","cDtiniper.focus()");
+        } else if (cDtfimper.val() == '') {
+            hideMsgAguardo();
+            showError("error","Período de Digita&ccedil;&atilde;o deve ser informado.","Alerta - Ayllos","cDtfimper.focus()");
+        } else if (days_between(cDtfimper.val(), cDtiniper.val()) > 60) {
+            hideMsgAguardo();
+            showError("error","Informe um intervalo de até 60 dias.","Alerta - Ayllos","cDtfimper.focus()");
+        } else {
+            hideMsgAguardo();
+            //gerarImpressaoBorderoNaoLiberado();
+            alert("Imprimir Relatório - impelementação em desenvolvimento");
+        }
+    } else if(cddopcao == 'C'){
         if ((!cNrdconta.hasClass('campoTelaSemBorda'))) {
             hideMsgAguardo();
             cNrdconta.keypress();
@@ -1740,6 +1868,29 @@ function gerarImpressaoLote() {
     return false;
 }
 
+function gerarImpressaoBorderoNaoLiberado() {
+    
+    var dtiniper = $('#dtiniper', '#' + frmOpcao).val();
+    var dtfimper = $('#dtfimper', '#' + frmOpcao).val();
+    var cdagenci = $('#cdagenci', '#' + frmOpcao).val();
+    var nrdconta = $('#nrdconta', '#' + frmOpcao).val();
+    var nrborder = $('#nrborder', '#' + frmOpcao).val();
+
+    
+    $("#dtvencto","#frmImprimirBorderoNaoLiberadoTitcto").val(dtvencto);
+    $("#cdagenci","#frmImprimirBorderoNaoLiberadoTitcto").val(cdagenci);
+    
+    var action = $("#frmImprimirBorderoNaoLiberadoTitcto").attr("action");
+    var callafter = "hideMsgAguardo();";
+
+    console.log("[action] - " + action);
+    console.log("[callafter] - " + callafter);
+    
+    carregaImpressaoAyllos("frmImprimirBorderoNaoLiberadoTitcto",action,callafter);
+    hideMsgAguardo();
+    return false;
+}
+
 
 function trocaBotao(botao) {
 
@@ -1750,4 +1901,24 @@ function trocaBotao(botao) {
         $('#divBotoes', '#divTela').append('&nbsp;<a href="#" class="botao" onclick="btnContinuar(); return false;" >' + botao + '</a>');
     }
     return false;
+}
+
+function days_between(date1, date2) {
+
+    date1 = new Date(date1.substr(6,4), date1.substr(3,2) - 1, date1.substr(0,2));
+    date2 = new Date(date2.substr(6,4), date2.substr(3,2) - 1, date2.substr(0,2));
+
+    // The number of milliseconds in one day
+    var ONE_DAY = 1000 * 60 * 60 * 24;
+
+    // Convert both dates to milliseconds
+    var date1_ms = date1.getTime();
+    var date2_ms = date2.getTime();
+
+    // Calculate the difference in milliseconds
+    var difference_ms = Math.abs(date1_ms - date2_ms);
+
+    // Convert back to days and return
+    return Math.round(difference_ms/ONE_DAY);
+
 }
