@@ -5057,6 +5057,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
         CLOSE btch0001.cr_crapdat;
         -- Atribuir a proxima data do movimento
         vr_dtmvtopr := rw_crapdat.dtmvtopr;
+
+        -- Atribuir o indicador de processo
+        vr_inproces := rw_crapdat.inproces; 
       END IF;
       -- Validações iniciais do programa
       BTCH0001.pc_valida_iniprg(pr_cdcooper => pr_cdcooper
