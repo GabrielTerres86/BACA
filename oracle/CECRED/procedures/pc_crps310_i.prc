@@ -15,7 +15,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Deborah/Margarete
-     Data    : Maio/2001                       Ultima atualizacao: 15/02/2018
+     Data    : Maio/2001                       Ultima atualizacao: 06/04/2018
      
      Dados referentes ao programa:
 
@@ -1336,7 +1336,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
         -- AND ris.inddocto  = 1 -- Docto 3020
         AND ris.vldivida  > 0
         AND ris.cdmodali  =101
-  		  AND ris.qtdiaatr  >=60;
+  		AND ris.qtdiaatr  >=60;
         
         IF vr_retorno = 1 THEN
          
@@ -1347,15 +1347,12 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
             AND lcm.cdhistor   = his.cdhistor
             AND lcm.cdcooper   = pr_cdcooper
             AND lcm.nrdconta   = pr_nrdconta
-            --AND  lcm.dtmvtolt = '02/07/2018'
             AND lcm.dtmvtolt  = gene0005.fn_valida_dia_util(pr_cdcooper  => pr_cdcooper
                                                             ,pr_dtmvtolt  => (pr_dtrefere- 1) -- Dia Anterior
                                                             ,pr_tipo      => 'A')
             AND his.indebcre ='D'
-            AND his.cdhistor in(38,37);
+            AND his.cdhistor in(38,37,57);
             
-           -- dbms_output.put_line('Conta: '||pr_nrdconta ||'  Valor Jurso60: '||vr_totjur60CC);
-
         END IF;
 
        RETURN   vr_totjur60CC;  
