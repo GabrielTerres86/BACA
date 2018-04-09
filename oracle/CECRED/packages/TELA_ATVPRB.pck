@@ -2,15 +2,15 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ATVPRB AS
 
   ---------------------------------------------------------------------------------------------------------------
   --
-  --  Programa :                         antigo: /ayllos/fontes/cadcco.p
-  --  Sistema  :Rotina para gravar informações de Operações Ativo Problematico
-  --  Sigla    :
+  --  Programa : TELA_ATVPRB                        
+  --  Sistema  : Rotina para gravar informações de Operações Ativo Problematico
+  --  Sigla    : ATVPRB
   --  Autor    : Rangel Decker
   --  Data     : Marco/2018.                   Ultima atualizacao:
   --
   -- Dados referentes ao programa:
   --
-  -- Frequencia: -----
+  -- Frequencia: Sempre que for chamado
   -- Objetivo  : Atualização e cadastro de Operações Ativo Problematico
 
   -- Alteracoes:
@@ -32,8 +32,8 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ATVPRB AS
                                   ,pr_dscritic OUT VARCHAR2             --Descrição da crítica
                                   ,pr_nmdcampo OUT VARCHAR2             --Nome do Campo
                                   ,pr_des_erro OUT VARCHAR2);
-
- PROCEDURE pc_consulta ( pr_cdcooper  IN tbcadast_ativo_probl.cdcooper%TYPE   --Cooperativa
+ 
+  PROCEDURE pc_consulta ( pr_cdcooper  IN tbcadast_ativo_probl.cdcooper%TYPE   --Cooperativa
                           ,pr_nrdconta IN tbcadast_ativo_probl.nrdconta%TYPE  --Conta
                           ,pr_nrctremp IN tbcadast_ativo_probl.nrctremp%TYPE  --Contrato Emprestimo
                           ,pr_cdmotivo IN tbcadast_ativo_probl.cdmotivo%TYPE  --Codigo do moitvo
@@ -120,17 +120,17 @@ END TELA_ATVPRB;
 CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
 
 /*---------------------------------------------------------------------------------------------------------------
-   Programa: TELA_CADCCO                          antigo:
-   Sistema : Conta-Corrente - Cooperativa de Credito
-   Sigla   : CRED
+   Programa: TELA_ATVPRB                          
+   Sistema : Cadastro - Tela Ativo Problematico
+   Sigla   : ATVPRB 
 
    Autor   : Rangel Decker - AMcom
    Data    : Marco/2018                       Ultima atualizacao:
 
    Dados referentes ao programa:
 
-   Frequencia:
-   Objetivo  : Cadastro Parametros Sistema de Cobranca.
+   Frequencia: Sempre que for chamado
+   Objetivo  : Centralizar rotinas da Tela Ativo Problematico
 
    Alteracoes:
   ---------------------------------------------------------------------------------------------------------------*/
@@ -149,15 +149,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
 
   /*---------------------------------------------------------------------------------------------------------------
 
-    Programa : pc_gera_log                            antiga:
-    Sistema  : Operação Ativo Problematico  - Cooperativa de Credito
-    Sigla    : CRED
+    Programa : pc_gera_log                            
+    Sistema  : Cadastro - Tela Ativo Problematico
+    Sigla    : ATVPRB
     Autor    : Rangel Decker - AMcom
     Data     : Marco/2018                           Ultima atualizacao:
 
     Dados referentes ao programa:
 
-    Frequencia: -----
+    Frequencia : Sempre que for chamado
     Objetivo   : Procedure para gerar log
 
     Alterações :
@@ -208,7 +208,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
      END CASE;
 
      -- Incluir quebra de linha
-     vr_dslogtel := vr_dslogtel || chr(10);
+      vr_dslogtel := vr_dslogtel || chr(10);
 
       btch0001.pc_gera_log_batch(pr_cdcooper => pr_cdcooper,
                                  pr_ind_tipo_log => 2,
@@ -236,15 +236,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
 
   /*---------------------------------------------------------------------------------------------------------------
 
-    Programa : pc_alteracao                           antiga:
-    Sistema  : Operações Ativo Problematico - Cooperativa de Credito
-    Sigla    : CRED
+    Programa : pc_alteracao                           
+    Sistema  : Cadastro - Tela Ativo Problematico
+    Sigla    : ATVPRB
     Autor    : Rangel Decker -AMcom
     Data     : Marco/2018                           Ultima atualizacao:
 
     Dados referentes ao programa:
 
-    Frequencia: -----
+    Frequencia : Sempre que for chamado
     Objetivo   : Altera cadastro Operação Ativo Problematico
 
     Alterações :
@@ -269,23 +269,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
     GENE0001.pc_informa_acesso(pr_module => 'ATVPRB'
                               ,pr_action => null);
 
-    -- Recupera dados de log para consulta posterior
- /*   gene0004.pc_extrai_dados(pr_xml      => pr_retxml
-                            ,pr_cdcooper => vr_cdcooper
-                            ,pr_nmdatela => vr_nmdatela
-                            ,pr_nmeacao  => vr_nmeacao
-                            ,pr_cdagenci => vr_cdagenci
-                            ,pr_nrdcaixa => vr_nrdcaixa
-                            ,pr_idorigem => vr_idorigem
-                            ,pr_cdoperad => vr_cdoperad
-                            ,pr_dscritic => vr_dscritic);*/
-
-    -- Verifica se houve erro recuperando informacoes de log
-    IF vr_dscritic IS NOT NULL THEN
-
-      RAISE vr_exc_erro;
-    END IF;
-
+  
     TELA_ATVPRB.pc_valida_informacoes(pr_cdcooper   => pr_cdcooper --Cooperativa
                                       ,pr_nrdconta  => pr_nrdconta --Conta
                                       ,pr_nrctremp  => pr_nrctremp --Contrato Emprestimo
@@ -403,15 +387,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
 
   /*---------------------------------------------------------------------------------------------------------------
 
-    Programa : pc_exclusao                            antiga:
-    Sistema  : Operações Ativo Problematico - Cooperativa de Credito
-    Sigla    : CRED
+    Programa : pc_exclusao                            
+    Sistema  : Cadastro - Tela Ativo Problematico
+    Sigla    : ATVPRB
     Autor    : Rangel Decker AMcom
     Data     : Marco/2018                           Ultima atualizacao:
 
     Dados referentes ao programa:
 
-    Frequencia: -----
+    Frequencia : Sempre que for chamado
     Objetivo   : Desativa a situação de ativo problematico.
 
     Alterações :
@@ -439,22 +423,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
     GENE0001.pc_informa_acesso(pr_module => 'ATVPRB'
                               ,pr_action => null);
 
-    -- Recupera dados de log para consulta posterior
- /*   gene0004.pc_extrai_dados(pr_xml      => pr_retxml
-                            ,pr_cdcooper => vr_cdcooper
-                            ,pr_nmdatela => vr_nmdatela
-                            ,pr_nmeacao  => vr_nmeacao
-                            ,pr_cdagenci => vr_cdagenci
-                            ,pr_nrdcaixa => vr_nrdcaixa
-                            ,pr_idorigem => vr_idorigem
-                            ,pr_cdoperad => vr_cdoperad
-                            ,pr_dscritic => vr_dscritic);
-
-    -- Verifica se houve erro recuperando informacoes de log
-    IF vr_dscritic IS NOT NULL THEN
-      RAISE vr_exc_erro;
-    END IF;*/
-    
      -- Leitura do calendário da cooperativa
       OPEN btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
       FETCH btch0001.cr_crapdat
@@ -575,15 +543,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
                         ,pr_des_erro  OUT VARCHAR2) IS          --Saida OK/NOK
    /*---------------------------------------------------------------------------------------------------------------
 
-    Programa : pc_inclusao                            antiga:
-    Sistema  : Operação Ativo Problematico - Cooperativa de Credito
-    Sigla    : CRED
+    Programa : pc_inclusao                            
+    Sistema  : Cadastro - Tela Ativo Problematico
+    Sigla    : ATVPRB
     Autor    : Rangel Decker - AMcom
     Data     : Marco/2018                           Ultima atualizacao:
 
     Dados referentes ao programa:
 
-    Frequencia: -----
+    Frequencia:  Sempre que for chamado
     Objetivo   : Inclui cadastro operações ativo problematico.
 
     Alterações :
@@ -634,19 +602,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
         CLOSE btch0001.cr_crapdat;
       END IF;
 
-  -- Recupera dados de log para consulta posterior
-    /*gene0004.pc_extrai_dados(pr_xml      => pr_retxml
-                            ,pr_cdcooper => vr_cdcooper
-                            ,pr_nmdatela => vr_nmdatela
-                            ,pr_nmeacao  => vr_nmeacao
-                            ,pr_cdagenci => vr_cdagenci
-                            ,pr_nrdcaixa => vr_nrdcaixa
-                            ,pr_idorigem => vr_idorigem
-                            ,pr_cdoperad => vr_cdoperad
-                            ,pr_dscritic => vr_dscritic);*/
-
-
-   -- Verifica se houve erro recuperando informacoes de log
+     -- Verifica se houve erro recuperando informacoes de log
      TELA_ATVPRB.pc_valida_informacoes(pr_cdcooper   => pr_cdcooper --Cooperativa
                                       ,pr_nrdconta  => pr_nrdconta --Conta
                                       ,pr_nrctremp  => pr_nrctremp --Contrato Emprestimo
@@ -810,16 +766,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
 
   /*---------------------------------------------------------------------------------------------------------------
 
-    Programa : pc_gera_log_arquivo                            antiga:
-    Sistema  : Conta-Corrente - Cooperativa de Credito
-    Sigla    : CRED
-    Autor    : Marcos - Supero
-    Data     : Maio/2016                           Ultima atualizacao:
+    Programa : pc_gera_log_arquivo                            
+    Sistema  : Cadastro - Tela Ativo Problematico
+    Sigla    : ATVPRB
+    Autor    : Rangel Decker AMcom
+    Data     : Marco/2018                           Ultima atualizacao:
 
     Dados referentes ao programa:
 
-    Frequencia: -----
-    Objetivo   : Procedure para gerar log da memória no arquivo
+    Frequencia: Sempre que for chamado
+    Objetivo   :Procedure para gerar log 
 
     Alterações :
     -------------------------------------------------------------------------------------------------------------*/
@@ -848,16 +804,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
 
   /*---------------------------------------------------------------------------------------------------------------
 
-    Programa : pc_valida_informacoes                            antiga:
-    Sistema  : Conta-Corrente - Cooperativa de Credito
-    Sigla    : CRED
+    Programa : pc_valida_informacoes                            
+    Sistema  : Cadastro - Tela Ativo Problematico
+    Sigla    : ATVPRB
     Autor    : Rangel Decker - AMCom
     Data     : Marco/2018                           Ultima atualizacao:
 
     Dados referentes ao programa:
 
-    Frequencia: -----
-    Objetivo   : Validações das  informações para cadastro
+    Frequencia:  Sempre que for chamado
+    Objetivo   : Validações das  informações para cadastro e atualizações
 
     Alterações :
     -------------------------------------------------------------------------------------------------------------*/
@@ -972,8 +928,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
 
      /* .............................................................................
       Programa: pc_consulta
-      Sistema : Conta-Corrente - Cooperativa de Credito
-      Sigla   :
+      Sistema : Cadastro - Tela Ativo Problematico
+      Sigla   : ATVPRB
       Autor   : Rangel Decker
       Data    : Marco/2018                       Ultima atualizacao:
 
@@ -1021,23 +977,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
 
     BEGIN
           pr_des_erro := 'OK';
-
-          -- Recupera dados de log para consulta posterior
-         /* gene0004.pc_extrai_dados(pr_xml      => pr_retxml
-                                  ,pr_cdcooper => vr_cdcooper
-                                  ,pr_nmdatela => vr_nmdatela
-                                  ,pr_nmeacao  => vr_nmeacao
-                                  ,pr_cdagenci => vr_cdagenci
-                                  ,pr_nrdcaixa => vr_nrdcaixa
-                                  ,pr_idorigem => vr_idorigem
-                                  ,pr_cdoperad => vr_cdoperad
-                                  ,pr_dscritic => vr_dscritic);
-
-          -- Verifica se houve erro recuperando informacoes de log
-          IF vr_dscritic IS NOT NULL THEN
-            RAISE vr_exc_erro;
-          END IF;*/
-
 
           -- Incluir nome
          GENE0001.pc_informa_acesso(pr_module => 'ATVPRB'
@@ -1181,8 +1120,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
 
    /* .............................................................................
     Programa: pc_consulta_historico
-    Sistema : Conta-Corrente - Cooperativa de Credito
-    Sigla   :
+    Sistema : Cadastro - Tela Ativo Problematico
+    Sigla   : ATVPRB 
     Autor   : Diego Simas
     Data    : Marco/2018                       Ultima atualizacao:
 
@@ -1247,25 +1186,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
       vr_auxconta INTEGER := 0; -- Contador auxiliar p/ posicao no XML
 
     BEGIN
-        pr_des_erro := 'OK';
-
-       -- Recupera dados de log para consulta posterior
-       /* gene0004.pc_extrai_dados(pr_xml      => pr_retxml
-                                ,pr_cdcooper => vr_cdcooper
-                                ,pr_nmdatela => vr_nmdatela
-                                ,pr_nmeacao  => vr_nmeacao
-                                ,pr_cdagenci => vr_cdagenci
-                                ,pr_nrdcaixa => vr_nrdcaixa
-                                ,pr_idorigem => vr_idorigem
-                                ,pr_cdoperad => vr_cdoperad
-                                ,pr_dscritic => vr_dscritic);
-
-       -- Verifica se houve erro recuperando informacoes de log
-       IF vr_dscritic IS NOT NULL THEN
-         RAISE vr_exc_erro;
-       END IF;*/
-
-
+       pr_des_erro := 'OK';
 
        -- Incluir nome
        GENE0001.pc_informa_acesso(pr_module => 'ATVPRB'
@@ -1407,15 +1328,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
 
   /*---------------------------------------------------------------------------------------------------------------
 
-    Programa : pc_busca_motivos_probl                            antiga:
+    Programa : pc_busca_motivos_probl                           
     Sistema  : Ativos Problematicos
-    Sigla    :
+    Sigla    : ATVPRB
     Autor    : Rangel Decker
     Data     : Marco/2018                           Ultima atualizacao:
 
     Dados referentes ao programa:
 
-    Frequencia: -----
+    Frequencia:  Sempre que for chamado
     Objetivo   : Pesquisa de motivos de ativos problematicos para cadastro.
 
     Alterações :
@@ -1511,10 +1432,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
       pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||pr_dscritic ||'<Root><Erro></Erro></Root>');
 
     END; 
-
-
-
+  
   END pc_busca_motivos_probl;
+  
 END TELA_ATVPRB;
-/
 /
