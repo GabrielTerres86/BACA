@@ -75,4 +75,6 @@ BEGIN
           , 'CRED'
         );
     END LOOP;
+    
+    COMMIT;
 END;
