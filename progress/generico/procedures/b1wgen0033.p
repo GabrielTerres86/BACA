@@ -33,7 +33,7 @@
 
     Programa: b1wgen0033.p
     Autor   : Guilherme
-    Data    : Agosto/2008                     Ultima Atualizacao: 13/03/2018
+    Data    : Agosto/2008                     Ultima Atualizacao: 09/04/2018
            
     Dados referentes ao programa:
                 
@@ -235,9 +235,12 @@
                 07/03/2018 - Ajustar relatorio de seguro de vida de acordo com o modelo
                              enviado pela CHUBB (Lucas Ranghetti #848900)
 							 
-				13/03/2018 - Ajuste no relatorio seguro de vida onde estava escrito
-							 "cerasa" para "serasa", conforme solicitado no chamado
-							 863323. (Kelvin)
+                13/03/2018 - Ajuste no relatorio seguro de vida onde estava escrito
+                             "cerasa" para "serasa", conforme solicitado no chamado
+                             863323. (Kelvin)
+                             
+                09/04/2018 - Alterar texto do disposicoes_gerais para seguro de vida
+                             (Lucas Ranghetti SCTASK0010471)
 ..............................................................................*/
                     
 { sistema/generico/includes/b1wgen0038tt.i }
@@ -1453,7 +1456,7 @@ FORM SKIP(1)
      SKIP
      aux_dsdispge[4]
      SKIP(1)
-     "SERVICO DE ASSISTENCIA FUNERAL INDIVIDUAL (TITULAR) EXCLUSIVAMENTE POR CAUSAS ACIDENTAIS"
+     "SERVICO DE ASSISTENCIA FUNERAL INDIVIDUAL (TITULAR) POR  CAUSAS  ACIDENTAIS  E  NATURAIS"
      SKIP
      "PARA O PLANO CONTRATADO."
      SKIP(1)
