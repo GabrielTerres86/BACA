@@ -2510,7 +2510,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLOQ0001 AS
       vr_inusatab                        BOOLEAN;
       vr_vltotpre                        NUMBER(25,2) := 0;
       vr_qtprecal                        NUMBER(10) := 0;
-      vr_flgsdeved                       BOOLEAN := FALSE;                 
     BEGIN      
       
       OPEN cr_cobertura(pr_idcobert);
@@ -2617,21 +2616,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLOQ0001 AS
             RAISE vr_exc_erro;
           END IF;
 
-		  -- Se tipo de contrato for diferente de aplicação
-		  IF rw_craplcr.tpctrato <> 4 THEN
-			 -- Se percentual mínimo de cobertura for menor que 100%
-			 IF vr_perminimo < 100 THEN
-				-- Se valor do saldo devedor de empréstimo for maior ou igual ao valor de cobertura original do contrato
-				IF vr_valopera_atualizada >= (vr_valopera_original  * (vr_perminimo / 100)) THEN
-					-- Valor da operação continua calculando o valor do bloqueio da garantia pelo valor original do contrato
-					vr_valopera_atualizada := vr_valopera_original;
-        ELSE
-					-- Senão, valor bloqueado deve ser o mesmo que o saldo devedor
-					vr_flgsdeved := TRUE;
-				END IF;
-		     END IF;
-		   END IF;
-
         ELSE
           -- Buscar limite
           OPEN cr_craplim(pr_cdcooper   => vr_cdcooper
@@ -2652,13 +2636,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLOQ0001 AS
         
         -- Calcular o valor necessário para cobertura do empréstimo ou do limite
         vr_vlcobert_original   := vr_valopera_original  * (vr_perminimo / 100);
-		-- Se valor da cobertura deve ser o saldo devedor
-		IF vr_flgsdeved THEN
-			-- Atribuir o valor da operação sem aplicar o cálculo da cobertura
-			vr_vlcobert_atualizada := vr_valopera_atualizada - nvl(vr_vldesbloq,0);
-		ELSE
+        
+        IF (rw_craplcr.tpctrato = 4) OR (vr_valopera_atualizada > vr_vlcobert_original) THEN
 			-- Senão, atribuir o valor da cobertura a partir do cálculo do percentual mínimo da cobertura
         vr_vlcobert_atualizada := (vr_valopera_atualizada  * (vr_perminimo / 100)) - nvl(vr_vldesbloq,0);
+        ELSE
+           vr_vlcobert_atualizada := vr_valopera_atualizada;
 		END IF;
         
         -- Buscar no cadastro de associados o CPF/CNPJ do garantidor
