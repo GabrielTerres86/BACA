@@ -96,7 +96,7 @@
 		<input type="hidden" id="pctolera" name="pctolera" value="<? echo $pctolera; ?>" />
 		<input type="hidden" id="vllimite" name="vllimite" value="<? echo $vllimite; ?>" />
 		<div id="divFiltros">
-			<fieldset>
+			<fieldset id="divDadosContrato">
 				<legend>Dados do Contrato</legend>
 				<label for="nrctrlim">Contrato</label>
 			    <input type="text" id="nrctrlim" name="nrctrlim" value="<?php echo getByTagName($dados->tags,'nrctrlim') ?>"/>
@@ -107,7 +107,10 @@
 				<label for="vldispon">Limite Dispon&iacute;vel</label>
 			    <input type="text" id="vldispon" name="vldispon" value="<?php echo $vldispon ?>"/>
 
-				<label for="vlseleci">Valor T&iacute;tulos Selecionados</label>
+				<label for="qtseleci">Quantidade T&iacute;tulos</label>
+			    <input type="text" id="qtseleci" name="qtseleci" value="<?php echo $qtseleci ?>"/>
+
+				<label for="vlseleci">Valor T&iacute;tulos</label>
 			    <input type="text" id="vlseleci" name="vlseleci" value="<?php echo formataMoeda($vlseleci) ?>"/>
 
 				<label for="vlsaldor">Saldo Restante</label>

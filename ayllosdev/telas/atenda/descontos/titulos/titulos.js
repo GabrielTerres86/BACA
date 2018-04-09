@@ -291,9 +291,13 @@ function calculaSaldoBordero(){
     var vldispon = $("#vldispon","#divIncluirBordero"); //valor disponivel
     var vlseleci = $("#vlseleci","#divIncluirBordero"); //valor titulos selecionados
     var vlsaldor = $("#vlsaldor","#divIncluirBordero"); //saldo restante
+    var qtseleci = $("#qtseleci","#divIncluirBordero"); //saldo restante
     var total = 0;
     total = converteMoedaFloat(vldispon.val())-converteMoedaFloat(vlseleci.val());
     vlsaldor.val(number_format(total,2,',','.'));
+
+    var selecionados = $(".divRegistrosTitulosSelecionados table","#divIncluirBordero");
+    qtseleci.val(selecionados.find("input[name='selecionados']").length);
 }
 //Busca os titulos do bordero
 function buscarTitulosBordero() {
@@ -351,9 +355,9 @@ function removeTituloBordero(td){
         total = converteMoedaFloat(vlseleci.val());
         total -= valor;
         vlseleci.val(number_format(total,2,',','.'));
-        calculaSaldoBordero();
     }
     tr.remove();
+    calculaSaldoBordero();
     selecionados.zebraTabela();
     selecionados.trigger("update");
     if (typeof arrayLarguraInclusaoBordero != 'undefined') {

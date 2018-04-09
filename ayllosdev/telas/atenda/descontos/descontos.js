@@ -401,6 +401,7 @@ function formataLayout(nomeForm){
 	    var rDtvencto = $("label[for='dtvencto']");
 	    var rVltitulo = $("label[for='vltitulo']");
 	    var rNrnosnum = $("label[for='nrnosnum']");
+	    var rQtseleci = $("label[for='qtseleci']");
 	    var rVlseleci = $("label[for='vlseleci']");
 	    var rVlsaldor = $("label[for='vlsaldor']");
 
@@ -412,7 +413,8 @@ function formataLayout(nomeForm){
 		rDtvencto.css({'width': '115px'}).addClass('rotulo');
 		rVltitulo.css({'width': '133px'}).addClass('rotulo-linha');
 		rNrnosnum.css({'width': '110px'}).addClass('rotulo-linha');
-	    rVlseleci.css({'width': '417px'}).addClass('rotulo');
+	    rQtseleci.css({'width': '115px'}).addClass('rotulo');
+	    rVlseleci.css({'width': '180px'}).addClass('rotulo-linha');
 	    rVlsaldor.css({'width': '150px'}).addClass('rotulo-linha');
 
 		var cNrdconta = $("#nrdconta", "#"+nomeForm);
@@ -424,6 +426,7 @@ function formataLayout(nomeForm){
 		var cDtvencto = $("#dtvencto", "#"+nomeForm);
 		var cVltitulo = $("#vltitulo", "#"+nomeForm);
 		var cNrnosnum = $("#nrnosnum", "#"+nomeForm);
+		var cQtseleci = $("#qtseleci", "#"+nomeForm);
 		var cVlseleci = $("#vlseleci", "#"+nomeForm);
 	    var cVlsaldor = $("#vlsaldor", "#"+nomeForm);
 
@@ -436,6 +439,7 @@ function formataLayout(nomeForm){
 		cDtvencto.css({'width': '115px'}).addClass('data').habilitaCampo();
 		cVltitulo.css({'width': '110px'}).addClass('monetario').habilitaCampo();
 		cNrnosnum.css({'width': '70px'}).addClass('inteiro').habilitaCampo();
+		cQtseleci.css({'width': '115px'}).addClass('inteiro');
 		cVlseleci.css({'width': '110px'}).addClass('monetario');
 		cVlsaldor.css({'width': '110px'}).addClass('monetario');
 
