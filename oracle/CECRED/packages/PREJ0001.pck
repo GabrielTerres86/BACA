@@ -6749,7 +6749,7 @@ PROCEDURE pc_tela_busca_contratos(pr_nrdconta IN crapepr.nrdconta%TYPE --> Numer
     vr_infimsol INTEGER;
     vr_cdcritic crapcri.cdcritic%TYPE;
     vr_dscritic VARCHAR2(10000); 
-    vr_cdprogra VARCHAR2(40) := 'pc_controla_exe_job';
+    vr_cdprogra VARCHAR2(40) := 'PC_CONTROLE_EXE_JOB';
     vr_nomdojob VARCHAR2(40) := 'JBP_TRANSFERENCIA_PREJU'; 
     vr_dserro   VARCHAR2(10000); 
     vr_dstexto  VARCHAR2(2000);
@@ -6789,7 +6789,7 @@ PROCEDURE pc_tela_busca_contratos(pr_nrdconta IN crapepr.nrdconta%TYPE --> Numer
                               ,pr_flproces => 1   --> Flag se deve validar se esta no processo
                               ,pr_flrepjob => 1   --> Flag para reprogramar o job
                               ,pr_flgerlog => 1   --> indicador se deve gerar log
-                              ,pr_nmprogra => 'crps780' --> Nome do programa que esta sendo executado no job
+                              ,pr_nmprogra => vr_cdprogra --> Nome do programa que esta sendo executado no job
                               ,pr_dscritic => vr_dserro);
 
       -- se nao retornou critica chama rotina
@@ -6828,20 +6828,19 @@ PROCEDURE pc_tela_busca_contratos(pr_nrdconta IN crapepr.nrdconta%TYPE --> Numer
           -- Buscar e-mails dos destinatarios do produto cyber
           vr_destinatario_email := gene0001.fn_param_sistema('CRED',vr_cdcooper,'CYBER_RESPONSAVEL');
 
-          cecred.pc_log_programa(
-              PR_DSTIPLOG      => 'E'           --> Tipo do log: I - início; F - fim; O - ocorrência
-             ,PR_CDPROGRAMA    => vr_nomdojob   --> Codigo do programa ou do job
-             ,pr_tpexecucao    => 2             --> Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
-             -- Parametros para Ocorrencia
-             ,pr_tpocorrencia  => 2             --> tp ocorrencia (1-Erro de negocio/ 2-Erro nao tratado/ 3-Alerta/ 4-Mensagem)
-             ,pr_cdcriticidade => 2             --> Nivel criticidade (0-Baixa/ 1-Media/ 2-Alta/ 3-Critica)
-             ,pr_dsmensagem    => vr_dstexto    --> dscritic       
-             ,pr_flgsucesso    => 0             --> Indicador de sucesso da execução
-             ,pr_flabrechamado => 1             --> Abrir chamado (Sim=1/Nao=0)
-             ,pr_texto_chamado => vr_titulo
-             ,pr_destinatario_email => vr_destinatario_email
-             ,pr_flreincidente => 1             --> Erro pode ocorrer em dias diferentes, devendo abrir chamado
-             ,PR_IDPRGLOG      => vr_idprglog); --> Identificador unico da tabela (sequence)
+          cecred.pc_log_programa( PR_DSTIPLOG      => 'E'           --> Tipo do log: I - início; F - fim; O - ocorrência
+                                 ,PR_CDPROGRAMA    => vr_nomdojob   --> Codigo do programa ou do job
+                                 ,pr_tpexecucao    => 2             --> Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                                 -- Parametros para Ocorrencia
+                                 ,pr_tpocorrencia  => 2             --> tp ocorrencia (1-Erro de negocio/ 2-Erro nao tratado/ 3-Alerta/ 4-Mensagem)
+                                 ,pr_cdcriticidade => 2             --> Nivel criticidade (0-Baixa/ 1-Media/ 2-Alta/ 3-Critica)
+                                 ,pr_dsmensagem    => vr_dstexto    --> dscritic       
+                                 ,pr_flgsucesso    => 0             --> Indicador de sucesso da execução
+                                 ,pr_flabrechamado => 1             --> Abrir chamado (Sim=1/Nao=0)
+                                 ,pr_texto_chamado => vr_titulo
+                                 ,pr_destinatario_email => vr_destinatario_email
+                                 ,pr_flreincidente => 1             --> Erro pode ocorrer em dias diferentes, devendo abrir chamado
+                                 ,PR_IDPRGLOG      => vr_idprglog); --> Identificador unico da tabela (sequence)
              
            RAISE vr_exc_erro; 
         END IF;
