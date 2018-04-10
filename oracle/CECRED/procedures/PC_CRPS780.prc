@@ -59,8 +59,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS780(pr_cdcooper IN crapcop.cdcooper%TY
              crapepr epr,
              crapdat dat
        WHERE epr.cdcooper = pr_cdcooper
-         AND epr.nrdconta IN (82244,99635)
-         AND epr.nrctremp IN (5637,650)           
          AND epr.cdcooper = ris.cdcooper
          AND epr.nrdconta = ris.nrdconta
          AND epr.nrctremp = ris.nrctremp
@@ -71,8 +69,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS780(pr_cdcooper IN crapcop.cdcooper%TY
          AND ris.inddocto = 1
          AND (TRUNC(dat.dtmvtolt) - TRUNC(ris.dtdrisco)) > 179
          AND ris.qtdiaatr > 179
-         --AND ris.dttrfprj IS NOT NULL
-         --AND ris.dttrfprj <= dat.dtmvtolt -- data atual
+         AND ris.dttrfprj IS NOT NULL
+         AND ris.dttrfprj <= dat.dtmvtolt -- data atual
          AND ris.dtrefere = dat.dtmvtoan -- dia de ontem
          AND ris.cdcooper = dat.cdcooper
          ;                     
