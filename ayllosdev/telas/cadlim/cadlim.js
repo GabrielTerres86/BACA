@@ -501,40 +501,43 @@ function formataRegra(){
 
 function controlaCampos(op, tplimite) {
 
-    var cTodosCabecalho	= $('input[type="text"],select','#frmCab');	
-	cTodosCabecalho.desabilitaCampo();
+    var cTodosCabecalho = $('input[type="text"],select', '#frmCab');
+    cTodosCabecalho.desabilitaCampo();
 
-	switch(op){
-	
-	    case 'A':
-			$('#vlmaxren','#frmRegra').habilitaCampo();
-			$('#qtdiaren','#frmRegra').habilitaCampo();
-			$('#qtmaxren','#frmRegra').habilitaCampo();
-			$('#qtdiaatr','#frmRegra').habilitaCampo();
-			$('#qtatracc','#frmRegra').habilitaCampo();	
-	        //Diego Simas (AMcom)
-			$('#qtmeslic', '#frmRegra').habilitaCampo();
-			$("input[type=checkbox][name='dssitdop']",'#frmRegra').habilitaCampo();
-			$("input[type=checkbox][name='dstipcta']",'#frmRegra').habilitaCampo();
-			$("input[type=checkbox][name='dsriscop']",'#frmRegra').habilitaCampo();
-			$('#qtmincta','#frmRegra').habilitaCampo();
-			$('#nrrevcad','#frmRegra').habilitaCampo();
-			$('#pcliqdez','#frmRegra').habilitaCampo();
-			$('#qtdialiq','#frmRegra').habilitaCampo();
-			$('#vlmaxren','#frmRegra').focus();
-			trocaBotao('showConfirmacao(\'Confirma a operação?\',\'Confirma&ccedil;&atilde;o - Ayllos\',\'alteraRegra();\',\'btnVoltar();\',\'sim.gif\',\'nao.gif\')','btnVoltar()');
-		break;
-		
-		default:
-			trocaBotao('','btnVoltar()');
-			$('#btSalvar','#divBotoes').css('display','none');			
-		break;		
-	}
-	
-	if (tplimite == 1)
-		$('.cmpstlim','#frmRegra').css({'display':'none'});
-	
-	return false;	
+    switch (op) {
+
+        case 'A':
+            $('#vlmaxren', '#frmRegra').habilitaCampo();
+            $('#qtdiaren', '#frmRegra').habilitaCampo();
+            $('#qtmaxren', '#frmRegra').habilitaCampo();
+            $('#qtdiaatr', '#frmRegra').habilitaCampo();
+            $('#qtatracc', '#frmRegra').habilitaCampo();
+            //Diego Simas (AMcom)
+            $('#qtmeslic', '#frmRegra').habilitaCampo();
+            $("input[type=checkbox][name='dssitdop']", '#frmRegra').habilitaCampo();
+            $("input[type=checkbox][name='dstipcta']", '#frmRegra').habilitaCampo();
+            $("input[type=checkbox][name='dsriscop']", '#frmRegra').habilitaCampo();
+            $('#qtmincta', '#frmRegra').habilitaCampo();
+            $('#nrrevcad', '#frmRegra').habilitaCampo();
+            $('#pcliqdez', '#frmRegra').habilitaCampo();
+            $('#qtdialiq', '#frmRegra').habilitaCampo();
+            $('#vlmaxren', '#frmRegra').focus();
+            trocaBotao('showConfirmacao(\'Confirma a operação?\',\'Confirma&ccedil;&atilde;o - Ayllos\',\'alteraRegra();\',\'btnVoltar();\',\'sim.gif\',\'nao.gif\')', 'btnVoltar()');
+            break;
+
+        default:
+            trocaBotao('', 'btnVoltar()');
+            $('#btSalvar', '#divBotoes').css('display', 'none');
+            break;
+    }
+
+    if (tplimite == 1) {
+        $('.cmpstlim', '#frmRegra').css({ 'display': 'none' });        
+    } else {
+        $('.cmpsLimCred', '#frmRegra').css({ 'display': 'none' });
+    }
+
+	return false;
 }
 
 function btnVoltar(){

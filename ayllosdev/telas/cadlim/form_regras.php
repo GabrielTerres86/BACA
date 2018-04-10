@@ -48,7 +48,7 @@
 				</td>
 			</tr>
 			<!-- DIEGO SIMAS (AMcom) !-->
-			<tr>
+			<tr class="cmpsLimCred">
 				<td>
 					<label for="qtmeslic">Inclusão de Novo Limite após o cancelamento:</label>	
 					<input name="qtmeslic" type="text"  id="qtmeslic" /> <label>&nbsp;Meses</label>
