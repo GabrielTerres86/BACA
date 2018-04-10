@@ -168,12 +168,12 @@ function formataRegra(){
 		var rQtdialiq = $('label[for="qtdialiq"]');
 
 	    //Diego Simas (AMcom)
-		rVlmaxren.css({width:'262px'});
-		rQtdiaren.css({width:'262px'});
-		rQtmeslic.css({width:'262px'});
-		rQtmaxren.css({width:'262px'});
-		rQtdiaatr.css({width:'262px'});
-		rQtatracc.css({width:'262px'});		
+		rVlmaxren.css({width:'270px'});
+		rQtdiaren.css({width:'270px'});
+		rQtmeslic.css({width:'270px'});
+		rQtmaxren.css({width:'270px'});
+		rQtdiaatr.css({width:'270px'});
+		rQtatracc.css({width:'270px'});		
 		rDssitdop.css({width:'200px'});
 		rDssitopt.css({width:'19px'});		
 		rDsriscop.css({width:'200px'});
