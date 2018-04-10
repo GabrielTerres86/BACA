@@ -123,14 +123,14 @@
 				$travaCamposLimite = 'S';
 				echo '<script type="text/javascript">';
 				echo 'hideMsgAguardo();';
-				echo 'showError("inform","Limite de Cr&eacute;dito cancelado por motivo de inadimpl&ecirc;ncia, n&atilde;o &eacute; poss&iacute;vel realizar a opera&ccedil;&atilde;o!","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
+				echo 'showError("error","Limite de Cr&eacute;dito cancelado por motivo de inadimpl&ecirc;ncia, n&atilde;o &eacute; poss&iacute;vel realizar a opera&ccedil;&atilde;o!","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
 				echo '</script>';				
 			}else{			
 				$travaCamposLimite = 'S';
 				// MENSAGEM DE INADIMPLÊNCIA
 				echo '<script type="text/javascript">';
 				echo 'hideMsgAguardo();';
-				echo 'showError("inform","Limite de Cr&eacute;dito cancelado por motivo de inadimpl&ecirc;ncia, &eacute; necess&aacute;rio senha do coordenador!","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
+				echo 'showError("error","Limite de Cr&eacute;dito cancelado por motivo de inadimpl&ecirc;ncia, &eacute; necess&aacute;rio senha do coordenador!","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
 				echo '</script>';				
 				// PEDE SENHA COORDENADOR
 				echo '<script type="text/javascript">';
