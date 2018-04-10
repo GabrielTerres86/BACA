@@ -2638,13 +2638,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLOQ0001 AS
         
         -- Calcular o valor necessário para cobertura do empréstimo ou do limite
         vr_vlcobert_original   := vr_valopera_original  * (vr_perminimo / 100) - vr_vldesbloq;
-
-        IF (vr_valopera_atualizada < vr_vlcobert_original) THEN
-           vr_vlcobert_atualizada := vr_valopera_atualizada;
+        vr_vlcobert_atualizada := vr_valopera_atualizada  * (vr_perminimo / 100) - vr_vldesbloq;
+              
+         IF vr_valopera_atualizada < vr_valopera_original THEN
+           IF vr_perminimo <= 100 THEN
+              vr_vlcobert_atualizada := vr_valopera_atualizada;
+           END IF;
         ELSE
            vr_vlcobert_atualizada := vr_vlcobert_original;
         END IF;
-        
+          
         -- Buscar no cadastro de associados o CPF/CNPJ do garantidor
         OPEN cr_crapass (pr_cdcooper         => vr_cdcooper
                         ,pr_nrdconta         => vr_nrdconta
