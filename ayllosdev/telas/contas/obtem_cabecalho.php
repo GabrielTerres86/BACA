@@ -23,6 +23,7 @@
  * 014: [24/05/2017] Lucas Reinert		  : Nova rotina "Impedimentos Desligamento" (PRJ364). 
  * 015: [11/07/2017] Mauro (MOUTS)        : Desenvolvimento da melhoria 364 - Grupo Economico 
  * 016: [02/10/2017] Diogo (MoutS)        : Adicionado campo tpregtrb no formulário principal da contas (Projeto 410).
+ * 017: [10/04/2018] Heitor (MoutS)       : Remocao da opcao Desabilitar Operacoes, essa opcao agora esta na tela ATENDA.
  */
 
 	session_start();	
@@ -352,11 +353,11 @@
 					$urlRotina  = "impressoes"; 				
 					break;
 				}
-				case "DESABILITAR OPERACOES": {
-					$nomeRotina = "Desabilitar Operações"; 
-					$urlRotina  = "liberar_bloquear";
-					break;
-				}				
+//				case "DESABILITAR OPERACOES": {
+//					$nomeRotina = "Desabilitar Operações"; 
+//					$urlRotina  = "liberar_bloquear";
+//					break;
+//				}				
 				case "GRUPO ECONOMICO": {
 					$nomeRotina = "Grupo Econômico"; 
 					$urlRotina  = "grupo_economico";
