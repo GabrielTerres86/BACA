@@ -1,0 +1,257 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Jaspersoft Studio version 6.3.0.final using JasperReports Library version 6.3.0  -->
+<!-- 2018-04-10T13:26:38 -->
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="crrl739" language="groovy" pageWidth="842" pageHeight="700" orientation="Landscape" columnWidth="762" leftMargin="40" rightMargin="40" topMargin="50" bottomMargin="50" whenResourceMissingType="Empty" uuid="6386a198-a31e-4f65-936d-2bc9fe5ac907">
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="NEW_DATAADAPTER.xml"/>
+	<property name="com.jaspersoft.studio.unit." value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.pageHeight" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.pageWidth" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.topMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.bottomMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.leftMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.rightMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.columnWidth" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.columnSpacing" value="pixel"/>
+	<style name="Sans_Normal" isDefault="true" fontName="SansSerif" fontSize="12" isBold="false" isItalic="false" isUnderline="false" isStrikeThrough="false"/>
+	<style name="Sans_Bold" fontName="SansSerif" fontSize="12" isBold="true" isItalic="false" isUnderline="false" isStrikeThrough="false"/>
+	<style name="Sans_Italic" fontName="SansSerif" fontSize="12" isBold="false" isItalic="true" isUnderline="false" isStrikeThrough="false"/>
+	<style name="Table_TH" mode="Opaque" backcolor="#F0F8FF">
+		<box>
+			<topPen lineWidth="0.5" lineColor="#000000"/>
+			<bottomPen lineWidth="0.5" lineColor="#000000"/>
+		</box>
+	</style>
+	<style name="Table_CH" mode="Opaque" backcolor="#BFE1FF">
+		<box>
+			<topPen lineWidth="0.5" lineColor="#000000"/>
+			<bottomPen lineWidth="0.5" lineColor="#000000"/>
+		</box>
+	</style>
+	<queryString language="xPath">
+		<![CDATA[/consulta_ted]]>
+	</queryString>
+	<field name="cdcooper" class="java.lang.String">
+		<fieldDescription><![CDATA[cdcooper]]></fieldDescription>
+	</field>
+	<field name="dtinicial" class="java.lang.String">
+		<fieldDescription><![CDATA[dtinicial]]></fieldDescription>
+	</field>
+	<field name="dtfinal" class="java.lang.String">
+		<fieldDescription><![CDATA[dtfinal]]></fieldDescription>
+	</field>
+	<field name="vlinicial" class="java.lang.String">
+		<fieldDescription><![CDATA[vlinicial]]></fieldDescription>
+	</field>
+	<field name="vlfinal" class="java.lang.String">
+		<fieldDescription><![CDATA[vlfinal]]></fieldDescription>
+	</field>
+	<field name="dscartorio" class="java.lang.String">
+		<fieldDescription><![CDATA[dscartorio]]></fieldDescription>
+	</field>
+	<field name="Column1" class="java.lang.String">
+		<fieldDescription><![CDATA[Columns/column1]]></fieldDescription>
+	</field>
+	<field name="Column2" class="java.lang.String">
+		<fieldDescription><![CDATA[Columns/column2]]></fieldDescription>
+	</field>
+	<field name="Column3" class="java.lang.String">
+		<fieldDescription><![CDATA[Columns/column3]]></fieldDescription>
+	</field>
+	<field name="Column4" class="java.lang.String">
+		<fieldDescription><![CDATA[Columns/column4]]></fieldDescription>
+	</field>
+	<field name="Column5" class="java.lang.String">
+		<fieldDescription><![CDATA[Columns/column5]]></fieldDescription>
+	</field>
+	<field name="Column6" class="java.lang.String">
+		<fieldDescription><![CDATA[Columns/column6]]></fieldDescription>
+	</field>
+	<field name="Column7" class="java.lang.String">
+		<fieldDescription><![CDATA[Columns/column7]]></fieldDescription>
+	</field>
+	<field name="Column8" class="java.lang.String">
+		<fieldDescription><![CDATA[Columns/column8]]></fieldDescription>
+	</field>
+	<field name="Column9" class="java.lang.String">
+		<fieldDescription><![CDATA[Columns/column9]]></fieldDescription>
+	</field>
+	<field name="Column10" class="java.lang.String">
+		<fieldDescription><![CDATA[Columns/column10]]></fieldDescription>
+	</field>
+	<field name="banco" class="java.lang.String">
+		<fieldDescription><![CDATA[teds/ted/banco]]></fieldDescription>
+	</field>
+	<field name="agencia" class="java.lang.String">
+		<fieldDescription><![CDATA[teds/ted/agencia]]></fieldDescription>
+	</field>
+	<title>
+		<band height="126">
+			<line>
+				<reportElement x="0" y="23" width="758" height="1" uuid="9c2633d9-9bfe-433b-8f5f-533a8280c386"/>
+			</line>
+			<staticText>
+				<reportElement style="Sans_Normal" x="0" y="33" width="758" height="30" uuid="69cf7a16-df9e-4a92-8dee-005fa6f01193"/>
+				<textElement textAlignment="Center">
+					<font fontName="SansSerif" size="22"/>
+				</textElement>
+				<text><![CDATA[Consulta de TEDs]]></text>
+			</staticText>
+			<line>
+				<reportElement x="0" y="65" width="758" height="1" uuid="a2f04c04-8ec3-471a-8fb1-0a98c698b8f6"/>
+			</line>
+			<staticText>
+				<reportElement x="0" y="83" width="183" height="20" uuid="9045c215-8589-4afe-b2e7-c84d85db0d89"/>
+				<textElement textAlignment="Right">
+					<font fontName="SansSerif"/>
+				</textElement>
+				<text><![CDATA[Cooperativa:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="0" y="103" width="91" height="20" uuid="238ca7be-5bed-4bdb-a687-124f7d8f1284"/>
+				<textElement textAlignment="Right"/>
+				<text><![CDATA[Data inicial:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="184" y="103" width="82" height="20" uuid="caeaeb64-367a-44b3-b0af-f2a8a2664206"/>
+				<textElement textAlignment="Right"/>
+				<text><![CDATA[Data final:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="400" y="104" width="80" height="19" uuid="8038b7b0-8a67-487d-bbf4-601b25a431a3"/>
+				<textElement textAlignment="Right"/>
+				<text><![CDATA[Valor inicial:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="569" y="103" width="91" height="20" uuid="75591ddc-80a7-4538-8bd3-d707c93e7b19"/>
+				<textElement textAlignment="Right"/>
+				<text><![CDATA[Valor fim:]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="387" y="83" width="129" height="21" uuid="55da9579-0d8e-4396-abeb-53544586c2ab"/>
+				<textElement textAlignment="Right"/>
+				<text><![CDATA[Cartório de origem:]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="183" y="83" width="203" height="20" uuid="eb2f0339-fb3a-4341-80a2-cef55b80a925"/>
+				<textElement>
+					<font fontName="SansSerif"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{cdcooper}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="90" y="103" width="93" height="20" uuid="2c7756de-b0bc-4d7e-912a-23268de1b0bc"/>
+				<textFieldExpression><![CDATA[$F{dtinicial}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="265" y="103" width="100" height="20" uuid="d2c9b651-cbc4-4075-ac8e-e8a77388c1a1"/>
+				<textFieldExpression><![CDATA[$F{dtfinal}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="480" y="103" width="89" height="20" uuid="6e616a51-d557-481c-a367-f31d4ed02a41"/>
+				<textFieldExpression><![CDATA[$F{vlinicial}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="660" y="103" width="100" height="20" uuid="8041b036-1a43-4dc6-b62e-935d736ffc9b"/>
+				<textFieldExpression><![CDATA[$F{vlfinal}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="516" y="83" width="244" height="19" uuid="56299376-e9c2-46db-a95e-339a5642a175"/>
+				<textFieldExpression><![CDATA[$F{dscartorio}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="0" y="0" width="758" height="22" uuid="1d6b150c-de8f-40ad-8011-0db635963ad2"/>
+				<textFieldExpression><![CDATA[(new SimpleDateFormat("dd")).format(new Date()) + " de " +  (new SimpleDateFormat("MM")).format(new Date())  + " de " +  (new SimpleDateFormat("yyyy")).format(new Date()) + "."]]></textFieldExpression>
+			</textField>
+		</band>
+	</title>
+	<detail>
+		<band height="38">
+			<textField>
+				<reportElement style="Sans_Bold" x="0" y="5" width="120" height="15" isPrintWhenDetailOverflows="true" uuid="880e92c9-d6cc-4ad4-bc60-7e45887b9fe1"/>
+				<textElement>
+					<font size="11"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{Column1}]]></textFieldExpression>
+			</textField>
+			<line>
+				<reportElement x="0" y="20" width="760" height="1" isPrintWhenDetailOverflows="true" uuid="2d5a60ee-3d8d-4f50-ba2a-72f82e76e38e"/>
+			</line>
+			<textField>
+				<reportElement style="Sans_Bold" x="120" y="5" width="125" height="15" isPrintWhenDetailOverflows="true" uuid="c5d7cdb0-d821-4cdd-b3fe-955d28b5e02a">
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Center">
+					<font size="11"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{Column2}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement style="Sans_Bold" x="245" y="5" width="105" height="15" isPrintWhenDetailOverflows="true" uuid="a46de082-b775-4ca8-9fe5-80790ed83eb9">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Center">
+					<font size="11"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{Column3} + "/" + $F{Column4}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement style="Sans_Bold" x="350" y="5" width="60" height="15" isPrintWhenDetailOverflows="true" uuid="1ad279e9-8a79-4fcd-80e8-edbde521128a"/>
+				<textElement textAlignment="Center">
+					<font size="11"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{Column5}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement style="Sans_Bold" x="410" y="5" width="90" height="15" isPrintWhenDetailOverflows="true" uuid="ff2a625b-b364-4904-90b5-e1b0fe42b024"/>
+				<textElement textAlignment="Center">
+					<font size="11"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{Column6}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement style="Sans_Bold" x="500" y="5" width="60" height="15" isPrintWhenDetailOverflows="true" uuid="955bd350-8068-4089-a40c-86ec72d5c14b"/>
+				<textElement textAlignment="Center">
+					<font size="11"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{Column7}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement style="Sans_Bold" x="560" y="5" width="110" height="15" isPrintWhenDetailOverflows="true" uuid="ab730ab2-4a4d-4acc-a271-d2355f519a71"/>
+				<textElement textAlignment="Center">
+					<font size="11"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{Column8} + "/" + $F{Column9}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement style="Sans_Bold" x="670" y="5" width="89" height="15" isPrintWhenDetailOverflows="true" uuid="6e717b79-f97d-4bcf-bbe8-54733da150fb"/>
+				<textElement textAlignment="Center">
+					<font size="11"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{Column10}]]></textFieldExpression>
+			</textField>
+			<subreport>
+				<reportElement x="0" y="22" width="759" height="16" uuid="3045d7d2-7d96-4887-851b-dbe269edec82"/>
+				<subreportParameter name="PR_SQSOLICI"/>
+				<dataSourceExpression><![CDATA[$P{REPORT_DATA_SOURCE}.subDataSource("//teds/ted")]]></dataSourceExpression>
+				<subreportExpression><![CDATA["crrl739_teds.jasper"]]></subreportExpression>
+			</subreport>
+			<line>
+				<reportElement x="0" y="0" width="760" height="1" isPrintWhenDetailOverflows="true" uuid="df57708e-ae5f-44bc-a3d2-c1ea561c443d"/>
+			</line>
+		</band>
+	</detail>
+	<pageFooter>
+		<band height="35">
+			<line>
+				<reportElement x="0" y="1" width="759" height="1" uuid="33a41154-ab20-4fbc-8f20-b47eb00b7c12"/>
+			</line>
+			<textField>
+				<reportElement x="560" y="20" width="199" height="15" uuid="e6339776-ad98-448c-9ede-58a76a109cc0"/>
+				<textElement textAlignment="Right">
+					<font size="11"/>
+				</textElement>
+				<textFieldExpression><![CDATA["Página " + String.valueOf($V{PAGE_NUMBER}) + " de  " + String.valueOf($V{PAGE_NUMBER})]]></textFieldExpression>
+			</textField>
+		</band>
+	</pageFooter>
+</jasperReport>

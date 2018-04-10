@@ -778,3 +778,8 @@ function exportarConsultaCSV(){
     var action = $('#frmExportarCSV').attr('action');
 	carregaImpressaoAyllos("frmExportarCSV", action);
 }
+
+function exportarConsultaPDF(){
+    var action = $('#frmExportarPDF').attr('action');
+	carregaImpressaoAyllos("frmExportarPDF", action);
+}
