@@ -12,8 +12,7 @@ begin
     fetch cr_cooper into rw_cooper;
     exit when cr_cooper%notfound;
 
-    insert into tbgen_batch_controle(IDCONTROLE
-                                    ,CDCOOPER
+    insert into tbgen_batch_controle(CDCOOPER
                                     ,CDPROGRA
                                     ,DTMVTOLT
                                     ,TPAGRUPADOR
@@ -21,9 +20,7 @@ begin
                                     ,CDRESTART
                                     ,INSITUACAO
                                     ,NREXECUCAO)
-                              values((select max(idcontrole)+1
-                                        from tbgen_batch_controle)              -- IDCONTROLE
-                                    ,rw_cooper.cdcooper                         -- CDCOOPER
+                              values(rw_cooper.cdcooper                         -- CDCOOPER
                                     ,'RISC0003.PC_RISCO_CENTRAL_OCR'            -- CDPROGRA
                                     ,(select dat.dtmvtolt
                                         from crapdat dat
@@ -39,3 +36,4 @@ begin
   end loop;
   close cr_cooper;
 end;
+/
