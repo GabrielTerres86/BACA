@@ -3075,10 +3075,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0003 IS
     END;
 
   END pc_reabre_risco_garantia_prest;
-  
-  PROCEDURE PC_RISCO_CENTRAL_OCR(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Cooperativa
-                                ,pr_cdcritic OUT PLS_INTEGER           --> Critica encontrada
-                                ,pr_dscritic OUT VARCHAR2) IS          --> Texto de erro/critica encontrada
+
+PROCEDURE pc_risco_central_ocr(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Cooperativa
+                                ,pr_cdcritic OUT PLS_INTEGER         --> Critica encontrada
+                                ,pr_dscritic OUT VARCHAR2) IS        --> Texto de erro/critica encontrada
   BEGIN
     /* ............................................................................
      Programa: RISCO_CENTRAL_OCR
@@ -3352,7 +3352,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0003 IS
            , ris.nrdconta
            , bdt.nrctrlim nrctremp
            , ris.cdmodali
-           , ris.cdorigem
+           , max(ris.cdorigem) cdorigem
            , ris.inddocto           
            , ris.dtrefere
            , max(ris.dtdrisco) dtdrisco
@@ -3396,7 +3396,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0003 IS
            , ris.nrdconta
            , bdt.nrctrlim
            , ris.cdmodali
-           , ris.cdorigem
            , ris.inddocto           
            , ris.dtrefere
            , ris.innivris
@@ -3426,7 +3425,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0003 IS
            , ris.nrdconta
            , bdc.nrctrlim nrctremp
            , ris.cdmodali
-           , ris.cdorigem
+           , max(ris.cdorigem) cdorigem
            , ris.inddocto           
            , ris.dtrefere
            , max(ris.dtdrisco) dtdrisco
@@ -3470,7 +3469,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0003 IS
            , ris.nrdconta
            , bdc.nrctrlim
            , ris.cdmodali
-           , ris.cdorigem
            , ris.inddocto           
            , ris.dtrefere
            , ris.innivris
@@ -4417,6 +4415,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0003 IS
           -- Efetuar rollback
           ROLLBACK;
     END pc_ajusta_risco_CPF; 
+
+    PROCEDURE pc_atualiza_controle(pr_cdcooper   IN tbgen_batch_controle.cdcooper%TYPE
+                                  ,pr_situacao   IN tbgen_batch_controle.insituacao%TYPE
+                                  ,pr_cdcritic  OUT crapcri.cdcritic%TYPE           
+                                  ,pr_dscritic  OUT crapcri.dscritic%TYPE) IS       
+    BEGIN
+      pr_cdcritic := NULL;
+      pr_dscritic := NULL;      
+      BEGIN
+        -- Atualiza registro na tabela de controle
+        UPDATE tbgen_batch_controle
+           SET insituacao = pr_situacao -- 1-Erro  2-Sucesso
+             , dtmvtolt   = rw_dat.dtmvtolt
+         WHERE cdcooper   = pr_cdcooper
+           AND cdprogra   = 'RISC0003.PC_RISCO_CENTRAL_OCR';
+      EXCEPTION
+        WHEN OTHERS THEN
+          pr_cdcritic := 0;
+          pr_dscritic := 'Erro pc_atualiza_controle: '||SQLERRM;
+      END;
+      --
+      COMMIT;
+    END pc_atualiza_controle;
        
     --************************--
     --   INICIO DO PROGRAMA   --
@@ -4461,6 +4482,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0003 IS
       vr_valor_arrasto := TO_NUMBER(replace(substr(rw_tab.dstextab, 3, 9), '.', ','));
 
       --INICIO
+      -- Atualiza Controle BI      
+      pc_atualiza_controle(pr_cdcooper => pr_cdcooper  -- Cooperativa
+                          ,pr_situacao => 1            -- Situação da execução(1-Erro  2-Sucesso)
+                          ,pr_cdcritic => vr_cdcritic  -- Código da crítica
+                          ,pr_dscritic => vr_dscritic);-- Erros do processo
+        -- Verifica erro na atualização controle BI
+        IF vr_cdcritic = 0 THEN
+          RAISE vr_exc_saida;
+        ELSE
+          COMMIT;
+        END IF;
+                          
       -- Chama processo de limpeza
       pc_limpa_dados_risco(pr_cdcooper => pr_cdcooper  -- Cooperativa
                           ,pr_cdcritic => vr_cdcritic  -- Código da crítica
@@ -4534,9 +4567,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0003 IS
           RAISE vr_exc_saida;
         END IF;       
       --  
+      
       -- Efetuar COMMIT FINAL!
       COMMIT;
       --
+      -- Atualiza Controle BI      
+      pc_atualiza_controle(pr_cdcooper => pr_cdcooper  -- Cooperativa
+                          ,pr_situacao => 1            -- Situação da execução(1-Erro  2-Sucesso)
+                          ,pr_cdcritic => vr_cdcritic  -- Código da crítica
+                          ,pr_dscritic => vr_dscritic);-- Erros do processo
+        -- Verifica erro na atualização controle BI
+        IF vr_cdcritic = 0 THEN
+          RAISE vr_exc_saida;
+        ELSE
+          COMMIT;
+        END IF;    
    EXCEPTION
       WHEN vr_exc_saida THEN
       IF vr_cdcritic <> 0 THEN
@@ -4553,7 +4598,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0003 IS
         -- Efetuar rollback
         ROLLBACK;
    END;
-   END PC_RISCO_CENTRAL_OCR;  
+   END pc_risco_central_ocr;  
 
 END RISC0003;
 /
