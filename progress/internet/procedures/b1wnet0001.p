@@ -994,6 +994,10 @@ PROCEDURE gravar-boleto:
 
     /* EMAIL DOS PAGADORES */
     DEF VAR aux_dsdemail AS CHAR                                    NO-UNDO.
+	
+	/* Limites min-max tolerancia para protesto */
+	DEF VAR aux_qtlimitemin_tolerancia AS INTE						NO-UNDO.
+	DEF VAR aux_qtlimitemax_tolerancia AS INTE						NO-UNDO.
     
     /* Nome do Beneficiario para imprimir no boleto */
     DEF VAR aux_nmdobnfc AS CHAR                                    NO-UNDO.
@@ -1498,6 +1502,7 @@ PROCEDURE gravar-boleto:
 
         /** Cobranca Registrada **/
         IF  par_flgregis THEN DO:
+		
             /** se for cobranca registrada, valor do titulo nescessario **/
             IF NOT par_vltitulo > 0 THEN DO:
                 ASSIGN aux_cdcritic = 0
@@ -1508,14 +1513,55 @@ PROCEDURE gravar-boleto:
 
             /** Instrucao Automatica **/
             IF  par_flgdprot THEN DO:
-                /** Nao permitir dias fora da faixa de 3 a 15 dias **/
-                IF  par_qtdiaprt < 5 OR par_qtdiaprt > 15  THEN DO:
-                    ASSIGN aux_cdcritic = 0
-                           aux_dscritic = 
-                           "Protesto - Qtd. de dias fora do limite permitido!".
-                       
-                    UNDO, LEAVE.
-                END.
+			
+				FIND FIRST crapcco WHERE crapcco.cdcooper = par_cdcooper
+									 AND crapcco.nrconven = par_nrcnvcob
+									 NO-LOCK NO-ERROR.
+
+				IF crapcco.cddbanco = 085 THEN
+				
+					{ includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
+
+					RUN STORED-PROCEDURE pc_consulta_periodo_parprt
+						aux_handproc = PROC-HANDLE NO-ERROR
+												(INPUT par_cdcooper,
+												OUTPUT 0,  /* pr_qtlimitemin_tolerancia */
+												OUTPUT 0,  /* pr_qtlimitemax_tolerancia */
+												OUTPUT "",  /* pr_des_erro */
+												OUTPUT ""). /* pr_dscritic */
+
+					CLOSE STORED-PROC pc_consulta_periodo_parprt
+						  aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+					{ includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+					
+					ASSIGN aux_qtlimitemin_tolerancia = 0
+						   aux_qtlimitemax_tolerancia = 0
+						   aux_qtlimitemin_tolerancia = pc_consulta_periodo_parprt.pr_qtlimitemin_tolerancia
+														WHEN pc_consulta_periodo_parprt.pr_qtlimitemin_tolerancia <> ?
+						   aux_qtlimitemax_tolerancia = pc_consulta_periodo_parprt.pr_qtlimitemax_tolerancia
+														WHEN pc_consulta_periodo_parprt.pr_qtlimitemax_tolerancia <> ?.
+
+					/** Nao permitir dias fora da faixa **/
+					IF  par_qtdiaprt < aux_qtlimitemin_tolerancia OR par_qtdiaprt > aux_qtlimitemax_tolerancia THEN
+					DO:
+						ASSIGN aux_cdcritic = 0
+							   aux_dscritic = 
+							   "Protesto - Qtd. de dias fora do limite permitido!".
+							   
+						   
+						UNDO, LEAVE.
+					END.
+				ELSE
+					/** Nao permitir dias fora da faixa de 3 a 15 dias **/
+					IF  par_qtdiaprt < 5 OR par_qtdiaprt > 15  THEN DO:
+						ASSIGN aux_cdcritic = 0
+							   aux_dscritic = 
+							   "Protesto - Qtd. de dias fora do limite permitido!".
+						   
+						UNDO, LEAVE.
+					END.
+
                 /* se dia for util e superior a 5 dias, recusar */
                 IF  par_indiaprt = 1 AND par_qtdiaprt > 5 THEN DO:
                     ASSIGN aux_cdcritic = 0
@@ -1948,6 +1994,7 @@ PROCEDURE gravar-boleto:
                                    INPUT par_flgdprot,
                                    INPUT par_qtdiaprt,
                                    INPUT par_indiaprt,
+								   INPUT crapcco.insrvprt,
                                    INPUT par_vljurdia,
                                    INPUT par_vlrmulta,
                                    INPUT par_flgaceit,
@@ -4536,6 +4583,7 @@ PROCEDURE p_cria_titulo:
     DEF INPUT   PARAM p-flgdprot    LIKE crapcob.flgdprot   NO-UNDO.
     DEF INPUT   PARAM p-qtdiaprt    LIKE crapcob.qtdiaprt   NO-UNDO.
     DEF INPUT   PARAM p-indiaprt    LIKE crapcob.indiaprt   NO-UNDO.
+	DEF INPUT   PARAM p-insrvprt    LIKE crapcob.insrvprt   NO-UNDO.
     DEF INPUT   PARAM p-vljurdia    LIKE crapcob.vljurdia   NO-UNDO.
     DEF INPUT   PARAM p-vlrmulta    LIKE crapcob.vlrmulta   NO-UNDO.
     DEF INPUT   PARAM p-flgaceit    LIKE crapcob.flgaceit   NO-UNDO.
@@ -4696,9 +4744,16 @@ PROCEDURE p_cria_titulo:
     IF p-flgregis AND 
        p-flgdprot AND 
        crapcco.cddbanco = 085 THEN 
-       ASSIGN p-dsdinstr = 
-              "** Servico de protesto sera efetuado " + 
-              "pelo Banco do Brasil **".
+	DO:
+		IF p-insrvprt = 2 THEN /* TODO: Precisa ser alterado, pois está como lógico, mas deve ser Inteiro (1) */
+			ASSIGN p-dsdinstr = 
+				"** Servico de protesto sera efetuado " + 
+				"pelo Banco do Brasil **".
+		ELSE
+			ASSIGN p-dsdinstr = 
+				"** Servico de protesto sera efetuado " + 
+				"pelo IEPTB **".
+	END.
 
     /* se banco emite e expede, nosso num conv+ceb+doctmo -
        Rafael Cechet 29/03/11 */
@@ -4789,6 +4844,7 @@ PROCEDURE p_cria_titulo:
            crapcob.nrnosnum = aux_nrnosnum
            crapcob.flgdprot = p-flgdprot
            crapcob.qtdiaprt = p-qtdiaprt
+		   crapcob.insrvprt = p-insrvprt
 
            /* Serasa */
            crapcob.flserasa = p-flserasa
@@ -5232,5 +5288,6 @@ PROCEDURE busca_param_negativacao:
 END PROCEDURE.
 
 /*............................................................................*/
+
 
 

@@ -4637,6 +4637,49 @@ PROCEDURE cria_tt-consulta-blt.
          WHEN 1 THEN tt-consulta-blt.dsavisms = "Linha Dig.".
          WHEN 2 THEN tt-consulta-blt.dsavisms = "Sem Linha Dig:".
      END CASE. 
+	 
+	 /* inicio */
+	   IF tt-consulta-blt.cdbandoc = 085 AND 
+		  tt-consulta-blt.dtdbaixa = ?	 AND
+		  crapcob.insrvprt = 1   		 THEN
+	   DO:
+		   IF crapcob.insitcrt = 0 AND crapcob.flgdprot = FALSE THEN
+		   DO:
+				ASSIGN flinstru = 1.
+		   END.
+		   ELSE
+		   DO:
+				ASSIGN flinstru = 0.
+		   END.
+		   
+		   { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
+
+			RUN STORED-PROCEDURE pc_consulta_ufs_parprt
+				aux_handproc = PROC-HANDLE NO-ERROR
+										(INPUT crapcob.cdcooper,
+										OUTPUT "",  /* pr_dsuf */
+										OUTPUT "",  /* pr_des_erro */
+										OUTPUT ""). /* pr_dscritic */
+
+			CLOSE STORED-PROC pc_consulta_ufs_parprt
+				  aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+			{ includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+			
+			ASSIGN aux_dsufs = ""
+				   aux_dsufs = pc_consulta_ufs_parprt.pr_dsuf
+												WHEN pc_consulta_ufs_parprt.pr_dsuf <> ?.
+
+		   IF CAN-DO(aux_dsufs, STRING(crapcob.cdufsaca)) AND crapcob.insitcrt = 5 THEN
+		   DO:
+				ASSIGN flgcarta = 1.
+		   END.
+		   ELSE
+		   DO:
+				ASSIGN flgcarta = 0.
+		   END.
+	   END.
+	   /* fim */
      
    END. /* Fim do DO TRANSACTION */
   

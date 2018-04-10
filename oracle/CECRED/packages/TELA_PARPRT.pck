@@ -38,6 +38,17 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_PARPRT IS
                            ,pr_retxml                 	IN OUT NOCOPY xmltype --> Arquivo de retorno do XML
                            ,pr_nmdcampo               	OUT VARCHAR2 --> Nome do campo com erro
                            ,pr_des_erro               	OUT VARCHAR2); --> Erros do processo
+						   
+  PROCEDURE pc_consulta_periodo_parprt (pr_cdcooper                 IN crapcop.cdcooper%TYPE
+									   ,pr_qtlimitemin_tolerancia  OUT INTEGER
+									   ,pr_qtlimitemax_tolerancia  OUT INTEGER
+									   ,pr_des_erro                OUT VARCHAR2
+									   ,pr_dscritic                OUT VARCHAR2);
+									   
+  PROCEDURE pc_consulta_ufs_parprt (pr_cdcooper                IN crapcop.cdcooper%TYPE
+                                   ,pr_dsuf                    OUT VARCHAR2
+                                   ,pr_des_erro                OUT VARCHAR2
+                                   ,pr_dscritic                OUT VARCHAR2);
 
 END TELA_PARPRT;
 /
@@ -350,6 +361,171 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PARPRT IS
     END;
 
   END pc_atualiza_parprt;
+  
+  /* ..........................................................................
+	
+	  Programa : pc_consulta_periodo_parprt
+	  Sistema  : Conta-Corrente - Cooperativa de Credito
+	  Sigla    : CRED
+	  Autor    : André Clemer 
+	  Data     : Março/2018.                   Ultima atualizacao: --/--/----
+	
+	  Dados referentes ao programa:
+	
+	  Frequencia: Sempre que for chamado
+	  Objetivo  : Procedure para retornar o período de tolerância para protesto
+	
+	  Alteração :
+	
+	...........................................................................*/
+ 
+  PROCEDURE pc_consulta_periodo_parprt (pr_cdcooper                 IN crapcop.cdcooper%TYPE
+                                  ,pr_qtlimitemin_tolerancia  OUT INTEGER
+                                  ,pr_qtlimitemax_tolerancia  OUT INTEGER
+                                  ,pr_des_erro                OUT VARCHAR2
+                                  ,pr_dscritic                OUT VARCHAR2) IS
+  
+    CURSOR cr_tbcobran_param_protesto(p_cdcooper IN crapcop.cdcooper%TYPE) IS    
+      SELECT prt.dsuf
+             , prt.dscnae
+             , prt.qtlimitemin_tolerancia
+             , prt.qtlimitemax_tolerancia
+             , prt.qtdias_cancelamento
+             , prt.flcancelamento
+             , prt.hrenvio_arquivo
+        FROM tbcobran_param_protesto prt
+       WHERE prt.cdcooper = p_cdcooper;
+       
+    rw_tbcobran_param_protesto cr_tbcobran_param_protesto%ROWTYPE;  
+
+    --Variaveis
+    vr_dsuf                          VARCHAR2(5000);
+    vr_dscnae                        VARCHAR2(5000);
+    vr_qtlimitemin_tolerancia        VARCHAR2(5000);
+    vr_qtlimitemax_tolerancia        VARCHAR2(5000);
+    vr_qtdias_cancelamento           VARCHAR2(5000);
+    vr_flcancelamento                VARCHAR2(5000);
+    vr_hrenvio_arquivo               VARCHAR2(5000);
+    
+    --Variaveis de erro
+    vr_exc_saida EXCEPTION;
+    
+  BEGIN
+    
+    --Buscando informacao do associado
+    OPEN cr_tbcobran_param_protesto(pr_cdcooper);
+      FETCH cr_tbcobran_param_protesto
+       INTO rw_tbcobran_param_protesto;
+      
+      IF cr_tbcobran_param_protesto%NOTFOUND THEN
+        CLOSE cr_tbcobran_param_protesto;
+        pr_dscritic := 'Parametros não encontrados ou cooperativa não existe.';
+        RAISE vr_exc_saida;
+      END IF;
+    CLOSE cr_tbcobran_param_protesto;
+    
+    vr_qtlimitemin_tolerancia := rw_tbcobran_param_protesto.qtlimitemin_tolerancia;
+    vr_qtlimitemax_tolerancia := rw_tbcobran_param_protesto.qtlimitemax_tolerancia;
+    vr_dsuf                   := rw_tbcobran_param_protesto.dsuf;
+    vr_dscnae                 := rw_tbcobran_param_protesto.dscnae;
+    vr_qtdias_cancelamento    := rw_tbcobran_param_protesto.qtdias_cancelamento;
+    vr_flcancelamento         := rw_tbcobran_param_protesto.flcancelamento;
+    vr_hrenvio_arquivo        := rw_tbcobran_param_protesto.hrenvio_arquivo;
+    
+    --Retorna dados
+    pr_qtlimitemin_tolerancia := vr_qtlimitemin_tolerancia;
+    pr_qtlimitemax_tolerancia := vr_qtlimitemax_tolerancia;
+    
+    --Retorna OK para a procedure
+    pr_des_erro := 'OK';
+    
+  EXCEPTION   
+     WHEN OTHERS THEN       
+       pr_des_erro := 'NOK';
+       
+       IF pr_dscritic <> '' THEN
+          pr_dscritic := 'Erro nao tratado na procedure TELA_PARPRT.pc_consulta_parprt_ib: ' || SQLERRM;
+       END IF;
+       
+       --Caso de erro, retorna campos vazio
+       vr_qtlimitemin_tolerancia := '';
+       vr_qtlimitemax_tolerancia := '';
+       vr_dsuf                   := '';
+       vr_dscnae                 := '';
+       vr_qtdias_cancelamento    := '';
+       vr_flcancelamento         := '';
+       vr_hrenvio_arquivo        := '';
+
+       btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                 ,pr_ind_tipo_log => 2 
+                                 ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE')
+                                 ,pr_des_log      => to_char(SYSDATE,
+                                                    'hh24:mi:ss') ||
+                                                    ' - ' || 'COBR0009' ||
+                                                    ' --> ' || pr_dscritic);
+    
+  END pc_consulta_periodo_parprt;
+  
+  /* ..........................................................................
+	
+	  Programa : pc_consulta_ufs_parprt
+	  Sistema  : Conta-Corrente - Cooperativa de Credito
+	  Sigla    : CRED
+	  Autor    : André Clemer 
+	  Data     : Março/2018.                   Ultima atualizacao: --/--/----
+	
+	  Dados referentes ao programa:
+	
+	  Frequencia: Sempre que for chamado
+	  Objetivo  : Procedure para retornar os ufs parametrizados para protesto
+	
+	  Alteração :
+	
+	...........................................................................*/
+ 
+  PROCEDURE pc_consulta_ufs_parprt (pr_cdcooper                IN crapcop.cdcooper%TYPE
+                                   ,pr_dsuf                    OUT VARCHAR2
+                                   ,pr_des_erro                OUT VARCHAR2
+                                   ,pr_dscritic                OUT VARCHAR2) IS
+                                   
+    vr_dsuf VARCHAR2(5000);
+    
+    --Variaveis de erro
+    vr_exc_saida EXCEPTION;
+    
+  BEGIN
+    
+    SELECT tbcobran_param_protesto.dsuf
+      INTO vr_dsuf
+      FROM tbcobran_param_protesto
+     WHERE tbcobran_param_protesto.cdcooper = pr_cdcooper;
+     
+    --Retorna dados
+    pr_dsuf := vr_dsuf;
+    
+    --Retorna OK para a procedure
+    pr_des_erro := 'OK';
+    
+  EXCEPTION   
+     WHEN OTHERS THEN       
+       pr_des_erro := 'NOK';
+       
+       IF pr_dscritic <> '' THEN
+          pr_dscritic := 'Erro nao tratado na procedure TELA_PARPRT.pc_consulta_ufs_parprt: ' || SQLERRM;
+       END IF;
+       
+       --Caso de erro, retorna campos vazio
+       pr_dsuf := '';
+
+       btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                 ,pr_ind_tipo_log => 2 
+                                 ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE')
+                                 ,pr_des_log      => to_char(SYSDATE,
+                                                    'hh24:mi:ss') ||
+                                                    ' - ' || 'COBR0009' ||
+                                                    ' --> ' || pr_dscritic);
+    
+  END pc_consulta_ufs_parprt;
 
 END TELA_PARPRT;
 /

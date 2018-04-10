@@ -493,6 +493,8 @@ FOR EACH tt-consulta-blt NO-LOCK:
                                         tt-consulta-blt.dtvctori, "99/99/9999") + "</dtvctori>" + 
                                    "<flgcbdda>" + STRING(IF aux_npc_cip = 1 THEN "S" ELSE "N") + "</flgcbdda>" +
 								   "<vldocmto>" + STRING(tt-consulta-blt.vldocmto)+ "</vldocmto>" +
+								   "<flinstru>" + STRING(tt-consulta-blt.flinstru) + "</flinstru>" +
+								   "<flgcarta>" + STRING(tt-consulta-blt.flgcarta) + "</flgcarta>" +
                                    "</BOLETO>".       
   
 END.

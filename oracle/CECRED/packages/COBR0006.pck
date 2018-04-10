@@ -115,6 +115,7 @@ CREATE OR REPLACE PACKAGE CECRED.COBR0006 IS
                cddespec  crapcob.cddespec%TYPE,
                dtemscob  crapcob.dtretcob%TYPE,
                inenvcip  crapcob.inenvcip%TYPE,
+			   insrvprt  crapcob.insrvprt%TYPE,
                -- Ocorrencia --> Utilizado em diversas linhas
                cdocorre  INTEGER,
                -- Identifica se foi rejeitado
@@ -252,6 +253,7 @@ CREATE OR REPLACE PACKAGE CECRED.COBR0006 IS
                inenvcip  crapcob.inenvcip%TYPE,
                inemiten  crapcob.inemiten%TYPE,
                flgdprot  crapcob.flgdprot%TYPE,
+			   insrvprt  crapcob.insrvprt%TYPE,
                flgaceit  crapcob.flgaceit%TYPE,
                idseqttl  crapcob.idseqttl%TYPE,
                cdoperad  crapcob.cdoperad%TYPE,
@@ -1133,6 +1135,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     pr_rec_cobranca.dsdinstr := NULL;
     pr_rec_cobranca.qtdiaprt := 0;
     pr_rec_cobranca.flgdprot := 0;
+	pr_rec_cobranca.insrvprt := 0;
     pr_rec_cobranca.flgaceit := NULL;
     pr_rec_cobranca.inemiexp := NULL;
     pr_rec_cobranca.cddespec := NULL;
@@ -1322,6 +1325,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     pr_tab_crapcob(vr_index).vlrmulta := pr_rec_cobranca.vldmulta;
     pr_tab_crapcob(vr_index).inemiten := pr_rec_cobranca.inemiten;
     pr_tab_crapcob(vr_index).flgdprot := pr_rec_cobranca.flgdprot;
+	pr_tab_crapcob(vr_index).insrvprt := pr_rec_cobranca.insrvprt;
     pr_tab_crapcob(vr_index).flgaceit := pr_rec_cobranca.flgaceit;
     pr_tab_crapcob(vr_index).idseqttl := 1;
     pr_tab_crapcob(vr_index).cdoperad := '996';
@@ -1671,6 +1675,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     vr_inpessoa  INTEGER;
     vr_cdinstr1  INTEGER;
     vr_cdinstr2  INTEGER;
+	vr_limitemin INTEGER;
+    vr_limitemax INTEGER;
+    
+    vr_des_erro  VARCHAR2(255);
+    vr_dscritic  VARCHAR2(255);
     
   BEGIN
     --> Inicializa variaveis
@@ -1767,6 +1776,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     
     -- Protestar
     IF pr_cdocorre = 09 THEN
+	
+	  tela_parprt.pc_consulta_periodo_parprt(pr_cdcooper => pr_cdcooper,
+										     pr_qtlimitemin_tolerancia => vr_limitemin,
+										     pr_qtlimitemax_tolerancia => vr_limitemax,
+										     pr_des_erro => vr_des_erro,
+										     pr_dscritic => vr_dscritic);
+	
       IF rw_crapcob.dtvencto >= TRUNC(SYSDATE) THEN
         -- Pedido de Protesto Nao Permitido para o Titulo
         pr_cdmotivo := '39';
@@ -1782,12 +1798,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
         END IF;
         
         -- Valida Prazo para Protesto
-        -- Prazo para protesto valido de 5 a 15 dias
-        IF pr_tab_linhas('QTDIAPRT').numero < 5  OR
-           pr_tab_linhas('QTDIAPRT').numero > 15 THEN
-          -- Prazo para Protesto Invalido
-          pr_cdmotivo := '38';
-          RAISE vr_exc_motivo;
+        IF pr_rec_header.cdbandoc = 085 THEN
+          -- Prazo para protesto valido de X a Y dias
+          IF pr_tab_linhas('QTDIAPRT').numero < vr_limitemin OR
+             pr_tab_linhas('QTDIAPRT').numero > vr_limitemax THEN
+            -- Prazo para Protesto Invalido
+            pr_cdmotivo := '38';
+            RAISE vr_exc_motivo;
+          END IF;
+        ELSE
+          -- Prazo para protesto valido de 5 a 15 dias
+          IF pr_tab_linhas('QTDIAPRT').numero < 5  OR
+             pr_tab_linhas('QTDIAPRT').numero > 15 THEN
+            -- Prazo para Protesto Invalido
+            pr_cdmotivo := '38';
+            RAISE vr_exc_motivo;
+          END IF;
         END IF;
 
       ELSE -- CNAB 400
@@ -1806,13 +1832,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
         ELSE
          
           -- Valida Prazo para Protesto
-          -- Prazo para protesto valido de 5 a 15 dias
-          IF pr_tab_linhas('NRDIAPRT').numero < 5  OR
-             pr_tab_linhas('NRDIAPRT').numero > 15 THEN
-            -- Prazo para Protesto Invalido
-            pr_cdmotivo := '38';
-            RAISE vr_exc_motivo;
-          END IF; 
+          IF pr_rec_header.cdbandoc = 085 THEN
+            -- Prazo para protesto valido de X a Y dias
+            IF pr_tab_linhas('NRDIAPRT').numero < vr_limitemin OR
+               pr_tab_linhas('NRDIAPRT').numero > vr_limitemax THEN
+              -- Prazo para Protesto Invalido
+              pr_cdmotivo := '38';
+              RAISE vr_exc_motivo;
+            END IF; 
+          ELSE
+            -- Prazo para protesto valido de 5 a 15 dias
+            IF pr_tab_linhas('NRDIAPRT').numero < 5  OR
+               pr_tab_linhas('NRDIAPRT').numero > 15 THEN
+              -- Prazo para Protesto Invalido
+              pr_cdmotivo := '38';
+              RAISE vr_exc_motivo;
+            END IF;
+          END IF;
         
         END IF;
                
@@ -2130,6 +2166,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                 vlrmulta,
                 inemiten,
                 flgdprot,
+				insrvprt,
                 flgaceit,
                 idseqttl,
                 cdoperad,
@@ -2193,6 +2230,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                 pr_tab_crapcob(vr_idx_cob).vlrmulta,
                 pr_tab_crapcob(vr_idx_cob).inemiten,
                 pr_tab_crapcob(vr_idx_cob).flgdprot,
+				pr_tab_crapcob(vr_idx_cob).insrvprt,
                 pr_tab_crapcob(vr_idx_cob).flgaceit,
                 pr_tab_crapcob(vr_idx_cob).idseqttl,
                 pr_tab_crapcob(vr_idx_cob).cdoperad,
@@ -2590,10 +2628,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
         -- Ocorrencias:
         --   02 - Baixar
         --   10 - Sustar Protesto e Baixar
-        --   11 - Sustar Protesto e Carteira
-        IF vr_instrucao.cdocorre NOT IN (02,10,11) AND
-           rw_crapcob.incobran = 3                 AND -- Baixado
-           TRIM(rw_crapcob.cdtitprt) IS NULL       THEN
+        --   81 - Excluir Protesto com Carta de Anuência
+        IF vr_instrucao.cdocorre NOT IN (02,10,11,81) AND
+           rw_crapcob.incobran = 3                    AND -- Baixado
+           TRIM(rw_crapcob.cdtitprt) IS NULL         THEN
           -- Preparar Lote de Retorno Cooperado
           pc_prep_retorno_cooper_90 (pr_idregcob => rw_crapcob.rowid       --> ROWID da cobranca
                                     ,pr_cdocorre => 26                     --> Instrucao Rejeitada  
@@ -8006,7 +8044,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     vr_dscritic   VARCHAR2(4000);
     vr_stsnrcal   BOOLEAN;
     vr_inpessoa   INTEGER;
+	vr_limitemin  INTEGER;
+    vr_limitemax  INTEGER;
     vr_rej_cdmotivo VARCHAR2(2);
+	
+	vr_des_erro  VARCHAR2(255);
     
   BEGIN
     
@@ -8800,20 +8842,42 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
        Nosso sistema trabalha apenas com prazo de 5 a 15 dias. */
     IF pr_rec_cobranca.cdprotes = 1 THEN -- 01-Registro de titulos
       
+      BEGIN
+        SELECT insrvprt
+          INTO pr_rec_cobranca.insrvprt
+          FROM crapcco
+         WHERE cdcooper = pr_rec_cobranca.cdcooper
+           AND nrconven = pr_rec_cobranca.nrcnvcob;
+      EXCEPTION
+          WHEN OTHERS THEN
+            pr_rec_cobranca.insrvprt := 2;
+      END;
+      
       -- 06-Indica Protesto em dias corridos
       IF pr_rec_cobranca.instcodi  = 6 OR
          pr_rec_cobranca.instcodi2 = 6 THEN
          
         pr_rec_cobranca.qtdiaprt := pr_tab_linhas('NRDIAPRT').numero;
         
-        -- Prazo para protesto valido de 5 a 15 dias
-        IF pr_rec_cobranca.qtdiaprt < 5  OR 
-           pr_rec_cobranca.qtdiaprt > 15 THEN
-           
-          -- Prazo para Protesto Invalido
+        tela_parprt.pc_consulta_periodo_parprt(pr_cdcooper => pr_rec_cobranca.cdcooper,
+                                               pr_qtlimitemin_tolerancia => vr_limitemin,
+                                               pr_qtlimitemax_tolerancia => vr_limitemax,
+                                               pr_des_erro => vr_des_erro,
+                                               pr_dscritic => vr_dscritic);
+                                               
+        IF (vr_des_erro <> 'OK') THEN
           vr_rej_cdmotivo := '38';
           RAISE vr_exc_reje;
-          
+        ELSE
+          -- Prazo para protesto valido de X a Y dias
+          IF pr_rec_cobranca.qtdiaprt < vr_limitemin  OR 
+             pr_rec_cobranca.qtdiaprt > vr_limitemax THEN
+             
+            -- Prazo para Protesto Invalido
+            vr_rej_cdmotivo := '38';
+            RAISE vr_exc_reje;
+            
+          END IF;
         END IF;
         
       END IF;
