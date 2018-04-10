@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Created with Jaspersoft Studio version 6.3.0.final using JasperReports Library version 6.3.0  -->
-<!-- 2018-04-03T09:58:07 -->
+<!-- 2018-04-10T09:23:30 -->
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="crrl100_23" language="groovy" pageWidth="480" pageHeight="924" whenNoDataType="AllSectionsNoDetail" columnWidth="480" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
 	<property name="ireport.zoom" value="2.0"/>
 	<property name="ireport.x" value="17"/>
@@ -1569,7 +1569,7 @@
 				<textElement textAlignment="Justified" markup="html">
 					<font fontName="Courier New" size="8" isBold="false" pdfFontName="Courier"/>
 				</textElement>
-				<textFieldExpression><![CDATA["<b>12.1.</b> Em garantia ao pagamento da presente Cédula, o(s) <b>Interveniente(s) Fiduciante(s) Garantidor(es)</b> aliena(m) fiduciariamente o(s) imóvel(is) descrito(s) no item 3."+ (18 + $V{vr_nrtopico}) + " das Condições Específicas desta Cédula, conforme autorizado no art. 22 e seguintes da Lei nº 9.514/97, ficando, em consequência, constituída a propriedade fiduciária sobre o imóvel em favor da <b>Credora/Cooperativa</b>."]]></textFieldExpression>
+				<textFieldExpression><![CDATA["<b>12.1.</b> Em garantia ao pagamento da presente Cédula, o(s) <b>Interveniente(s) Fiduciante(s) Garantidor(es)</b> aliena(m) fiduciariamente o(s) imóvel(is) descrito(s) no item 4."+ (18 + $V{vr_nrtopico}) + " das Condições Específicas desta Cédula, conforme autorizado no art. 22 e seguintes da Lei nº 9.514/97, ficando, em consequência, constituída a propriedade fiduciária sobre o imóvel em favor da <b>Credora/Cooperativa</b>."]]></textFieldExpression>
 			</textField>
 			<textField isStretchWithOverflow="true">
 				<reportElement positionType="Float" x="7" y="372" width="466" height="11" uuid="946b13ad-179d-4655-8708-85eba67d885c">
@@ -1652,7 +1652,7 @@
 				<textElement textAlignment="Justified" markup="html">
 					<font fontName="Courier New" size="8" isBold="false" pdfFontName="Courier"/>
 				</textElement>
-				<textFieldExpression><![CDATA["<b><u>14. Avaliação do Imóvel</u></b> – Para os efeitos do disposto no artigo 24, VI, da Lei nº 9.514/97, as partes avaliam o bem, objeto de alienação fiduciária, pelo montante mencionado no item 3."+ (18 + $V{vr_nrtopico}) + ", sendo que a correção da avaliação do imóvel terá como base o índice de variação do CUB/SC do mês anterior ou outro critério que vier a ser utilizado e permitido pela legislação."]]></textFieldExpression>
+				<textFieldExpression><![CDATA["<b><u>14. Avaliação do Imóvel</u></b> – Para os efeitos do disposto no artigo 24, VI, da Lei nº 9.514/97, as partes avaliam o bem, objeto de alienação fiduciária, pelo montante mencionado no item 4."+ (18 + $V{vr_nrtopico}) + ", sendo que a correção da avaliação do imóvel terá como base o índice de variação do CUB/SC do mês anterior ou outro critério que vier a ser utilizado e permitido pela legislação."]]></textFieldExpression>
 			</textField>
 			<textField isStretchWithOverflow="true">
 				<reportElement positionType="Float" x="7" y="480" width="466" height="11" uuid="e858555b-d50c-44d4-9591-928133e8d428">
@@ -1742,7 +1742,7 @@
 				<textElement textAlignment="Justified" markup="html">
 					<font fontName="Courier New" size="8" isBold="false" pdfFontName="Courier"/>
 				</textElement>
-				<textFieldExpression><![CDATA["<b>16.4.</b> Em atendimento ao disposto no art. 24, inciso VI, da Lei nº 9.514/97, para efeito de venda em público leilão, fica ajustado entre as partes que o valor do(s) imóvel(is) será o do definido no item 3."+ (18 + $V{vr_nrtopico}) + " da presente Cédula, sendo que à época do respectivo Leilão deverá ser efetuada atualização do valor, com base no estabelecido na mesma cláusula, sendo que a <b>Credora/Cooperativa</b>, a seu critério, poderá providenciar nova avaliação do imóvel através de três imobiliárias ou corretores de imóveis, para após ser definido o valor médio do imóvel a ser leiloado."]]></textFieldExpression>
+				<textFieldExpression><![CDATA["<b>16.4.</b> Em atendimento ao disposto no art. 24, inciso VI, da Lei nº 9.514/97, para efeito de venda em público leilão, fica ajustado entre as partes que o valor do(s) imóvel(is) será o do definido no item 4."+ (18 + $V{vr_nrtopico}) + " da presente Cédula, sendo que à época do respectivo Leilão deverá ser efetuada atualização do valor, com base no estabelecido na mesma cláusula, sendo que a <b>Credora/Cooperativa</b>, a seu critério, poderá providenciar nova avaliação do imóvel através de três imobiliárias ou corretores de imóveis, para após ser definido o valor médio do imóvel a ser leiloado."]]></textFieldExpression>
 			</textField>
 			<textField isStretchWithOverflow="true">
 				<reportElement positionType="Float" x="7" y="60" width="466" height="11" uuid="c8ffe984-28db-4358-a9a9-7deab73b1ee1">

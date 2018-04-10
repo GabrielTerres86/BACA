@@ -379,7 +379,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GAROPC IS
         vr_labgaran := 'Garantia Obrigatória:';
         -- Se for inclusao e parametro geral de resgate for sim
         IF pr_tipaber = 'I' AND vr_inresgate_permitido = 1 THEN
-          vr_inresgate_automatico := 1;
+           vr_inresgate_automatico := 0;       
         END IF;
       ELSE
         vr_labgaran := 'Garantia Sugerida:';

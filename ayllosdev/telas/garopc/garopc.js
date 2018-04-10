@@ -76,11 +76,9 @@ if (cGar_tipaber.val() != 'C') {
     $('#imgGAROPC', '#frmGAROPC').show();
     $('#btLupaAssociado', '#frmGAROPC').attr('onClick','pesquisaAssociadoGAROPC(); return false;');
 
-    // Se estiver parametrizado para alterar ou anteriormente etava marcado como SIM 
-    if (gar_inresaut == 1) {
-        if (gar_inresper == 1) {
+    // Se estiver parametrizado para habilitar o resgate automático habilita o campo
+    if (gar_inresper == 1) {
         cGar_pro_raut.habilitaCampo();
-        }
     }
 
     // Somente permite caso foi informado conta de terceiro
