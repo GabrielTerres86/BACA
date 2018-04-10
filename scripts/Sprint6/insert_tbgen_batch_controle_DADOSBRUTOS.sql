@@ -3,7 +3,8 @@ declare
   CURSOR cr_cooper IS
   select DISTINCT cop.cdcooper
     from crapcop cop
-   where cop.cdcooper <> 3;--CECRED
+   where cop.cdcooper <> 3 --CECRED
+     and cop.flgativo = 1; --ATIVO
   rw_cooper cr_cooper%ROWTYPE;
 begin
   --
