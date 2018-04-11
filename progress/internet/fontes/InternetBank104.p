@@ -38,6 +38,13 @@ DEF OUTPUT PARAM TABLE FOR xml_operacao.
 DEF VAR aux_cdcritic AS INT                                            NO-UNDO.
 DEF VAR aux_dscritic AS CHAR                                           NO-UNDO.
 
+IF par_cdcooper = 13 /* Cooperativa 13 */ THEN
+  DO:
+    ASSIGN aux_dscritic = 'Opção de Resgate Temporariamente Indisponivel'.
+    ASSIGN xml_dsmsgerr = "<dsmsgerr>" + aux_dscritic + "</dsmsgerr>".  
+    RETURN "NOK".
+  END.
+
 { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
 
 RUN STORED-PROCEDURE pc_valid_repre_legal_trans
