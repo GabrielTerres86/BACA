@@ -3282,7 +3282,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
         -- Move informações para as variáveis de RETORNO
         pr_atvprobl   := rw_atvprb_reest.idatvprobl;
         pr_reestrut   := rw_atvprb_reest.idreestrut;
-        pr_dtatvprobl := TO_CHAR(rw_atvprb_reest.dtinreg, 'DD/MM/YYYY');
+        pr_dtatvprobl := TO_CHAR(rw_atvprb_reest.dtinreg, 'YYYY-MM-DD');
         -- Move informações para as variáveis de INSERT      
         vr_cdcooper     := rw_atvprb_reest.cdcooper;
         vr_nrdconta     := rw_atvprb_reest.nrdconta;
@@ -3637,11 +3637,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
             -- Enviar informação adicional do contrato de Reestruturação
             gene0002.pc_escreve_xml(pr_xml            => vr_xml_3040
                                    ,pr_texto_completo => vr_xml_3040_temp
-                                   ,pr_texto_novo     => '                        <Inf Tp="1701"' -- Fixo
+                                   ,pr_texto_novo     => '            <Inf Tp="1701"' -- Fixo
                                                       || ' Cd="' ||vr_dtatvprobl || '"'
-                                                      || ' Ident="' || to_char(vr_iddident,'fm0000') || '"'
-                                                      || ' Valor="' || replace(to_char(vr_tab_saida(pr_idxsaida).vldivida,'fm99999999999999990D00'),',','.') || '"'
-                                                      || ' />' || chr(10));            
+                                                      || '/>' || chr(10));            
           ELSE
           -- Enviar informação adicional do contrato
           gene0002.pc_escreve_xml(pr_xml            => vr_xml_3040
@@ -4892,11 +4890,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
           -- Enviar informação adicional do contrato de Reestruturação
           gene0002.pc_escreve_xml(pr_xml            => vr_xml_3040
                                  ,pr_texto_completo => vr_xml_3040_temp
-                                 ,pr_texto_novo     => '                        <Inf Tp="1701"' -- Fixo
+                                 ,pr_texto_novo     => '            <Inf Tp="1701"' -- Fixo
                                                     || ' Cd="' ||vr_dtatvprobl || '"'
-                                                    || ' Ident="' || to_char(vr_iddident,'fm0000') || '"'
-                                                    || ' Valor="' || replace(to_char(vr_vlrdivid,'fm99999999999999990D00'),',','.') || '"'
-                                                    || ' />' || chr(10));
+                                                    || '/>' || chr(10));
         END IF;                               
 
         -- Quando existir mais de um contrato de origem = 1 (Conta)
