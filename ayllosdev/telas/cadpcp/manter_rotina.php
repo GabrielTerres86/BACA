@@ -53,7 +53,7 @@ switch ($operacao){
 		$xml .= "		<nrinssac>".$nrinssac."</nrinssac>";
 		$xml .= "	</Dados>";
 		$xml .= "</Root>";
-		$xmlResult = mensageria($xml, "TELA_CADPCP", "CADPCP_OBTER_PAGADOR", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+		$xmlResult = mensageria($xml, "COBRAN", "COBR_OBTER_PAGADOR", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 		$xmlObjeto 	= getObjectXML($xmlResult);		
 
 		// Se ocorrer um erro, mostra mensagem

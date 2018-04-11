@@ -146,12 +146,12 @@ function buscaOpcao() {
 }
 
 function mostraPesquisaPagador(){
-    procedure = 'CADPCP_PESQUISA_PAGADORES';
+    procedure = 'COBR_PESQUISA_PAGADORES';
     titulo = 'Pagador';
     qtReg = '30';
     filtros = ';nrinssac;;N;;N;;|Nome do Pagador;nmdsacad;280;S;;S;;|Conta;nrdconta;;N;' + normalizaNumero(cNrdconta.val()) + ';N;;|;vlpercen;;N;;N;;';
     colunas = 'CPF/CNPJ;nrinssac;30%;center|Nome;nmdsacad;80%;left;|;nrdconta;;;;N|;vlpercen;;;;N';
-    mostraPesquisa('TELA_CADPCP', procedure, titulo, qtReg, filtros, colunas, frmOpcao, 'montaPagador();');
+    mostraPesquisa('COBRAN', procedure, titulo, qtReg, filtros, colunas, frmOpcao, 'montaPagador();');
     // $('#formPesquisa').css('display', 'none');
     return false;
 }
