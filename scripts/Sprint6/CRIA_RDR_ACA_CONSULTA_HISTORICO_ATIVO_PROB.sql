@@ -71,7 +71,7 @@ begin
                  VALUES('CONSULTA_HIS_ATIVO_PROB',
                         'TELA_ATVPRB',
                         'pc_consulta_historico',
-                        'pr_cdcooper, pr_nrdconta, pr_nrctremp',
+                        'pr_cdcooper, pr_nrdconta, pr_nrctremp, pr_cdmotivo, pr_datainic, pr_datafina',
                         rw_craprdr.nrseqrdr);
                              
     dbms_output.put_line('Insere CRAPACA -> CONSULTA_HIS_ATIVO_PROB -> TELA_ATVPRB.pc_consulta_historico');
