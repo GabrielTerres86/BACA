@@ -5520,7 +5520,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
     -- controle execuções programa
     vr_flultexe     INTEGER;
     vr_qtdexec      INTEGER;
-    vr_primeira_execucao VARCHAR2(1);
+    
     --
     vr_dsconteu VARCHAR2(4000);
     vr_des_erro VARCHAR2(4000);
@@ -5654,10 +5654,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
     -- indica que não é um dia util, então deve abortar o programa sem executa-lo
     IF gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper ,
                                    pr_dtmvtolt => TRUNC(SYSDATE)) <> TRUNC(SYSDATE) THEN
-
-    -- ATUALIZA TARIFA VIGENTE
-      pc_atualiza_tarifa_vigente;
-      
+      -- para fazer somente na primeira execução do dia
+      IF vr_qtdexec = 1 then
+		-- ATUALIZA TARIFA VIGENTE
+		pc_atualiza_tarifa_vigente;
+      end if;  
+	  
       RETURN;
     END IF;
 
@@ -5882,8 +5884,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
         RAISE vr_exc_saida;
     END;
 
-    -- CHAMADA DE FUNCAO PARA ATUALIZACAO DE TARIFA
-    pc_atualiza_tarifa_vigente;
+    -- para fazer somente na primeira execução do dia
+    IF vr_qtdexec = 1 then
+        -- CHAMADA DE FUNCAO PARA ATUALIZACAO DE TARIFA
+		pc_atualiza_tarifa_vigente;
+    end if;  
+	
 	
     -- informar no log o final do processo
     pc_gera_log(pr_des_log => 'Final da execucao: '||
