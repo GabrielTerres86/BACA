@@ -22,40 +22,40 @@
 				</tr>
 			</thead>
 			<tbody>
-				<? foreach( $registro as $r ) { ?>
+				<? for ($x = 0; $x <= ($qtregist - 1); $x++) { ?>
 					<tr>
 						
-						<td><span><? echo getByTagName($r->tags,'nmremetente') ?></span>
-							      <? echo getByTagName($r->tags,'nmremetente') ?>
-								  <input type="hidden" id="nmcartorioflgcbdda" name="nmcartorio" value="<? echo getByTagName($r->tags,'nmcartorio') ?>" />
-								  <input type="hidden" id="nmremetente" name="nmremetente" value="<? echo getByTagName($r->tags,'nmremetente') ?>" />
-								  <input type="hidden" id="cnpj_cpf" name="cnpj_cpf" value="<? echo getByTagName($r->tags,'cnpj_cpf') ?>" />
-								  <input type="hidden" id="banco" name="banco" value="<? echo getByTagName($r->tags,'banco') ?>" />
-								  <input type="hidden" id="agencia" name="agencia" value="<? echo getByTagName($r->tags,'agencia') ?>" />
-								  <input type="hidden" id="conta" name="conta" value="<? echo getByTagName($r->tags,'conta') ?>" />
-								  <input type="hidden" id="dtrecebimento" name="dtrecebimento" value="<? echo getByTagName($r->tags,'dtrecebimento') ?>" />
-								  <input type="hidden" id="valor" name="valor" value="<? echo getByTagName($r->tags,'valor') ?>" />
-								  <input type="hidden" id="estado" name="estado" value="<? echo getByTagName($r->tags,'estado') ?>" />
-								  <input type="hidden" id="cidade" name="cidade" value="<? echo getByTagName($r->tags,'cidade') ?>" />
-								  <input type="hidden" id="status" name="status" value="<? echo getByTagName($r->tags,'status') ?>" />
+						<td><span><? echo getByTagName($registro[$x]->tags,'nmremetente') ?></span>
+							      <? echo getByTagName($registro[$x]->tags,'nmremetente') ?>
+								  <input type="hidden" id="nmcartorio" name="nmcartorio" value="<? echo getByTagName($registro[$x]->tags,'nmcartorio') ?>" />
+								  <input type="hidden" id="nmremetente" name="nmremetente" value="<? echo getByTagName($registro[$x]->tags,'nmremetente') ?>" />
+								  <input type="hidden" id="cnpj_cpf" name="cnpj_cpf" value="<? echo getByTagName($registro[$x]->tags,'cnpj_cpf') ?>" />
+								  <input type="hidden" id="banco" name="banco" value="<? echo getByTagName($registro[$x]->tags,'banco') ?>" />
+								  <input type="hidden" id="agencia" name="agencia" value="<? echo getByTagName($registro[$x]->tags,'agencia') ?>" />
+								  <input type="hidden" id="conta" name="conta" value="<? echo getByTagName($registro[$x]->tags,'conta') ?>" />
+								  <input type="hidden" id="dtrecebimento" name="dtrecebimento" value="<? echo getByTagName($registro[$x]->tags,'dtrecebimento') ?>" />
+								  <input type="hidden" id="valor" name="valor" value="<? echo getByTagName($registro[$x]->tags,'valor') ?>" />
+								  <input type="hidden" id="estado" name="estado" value="<? echo getByTagName($registro[$x]->tags,'estado') ?>" />
+								  <input type="hidden" id="cidade" name="cidade" value="<? echo getByTagName($registro[$x]->tags,'cidade') ?>" />
+								  <input type="hidden" id="status" name="status" value="<? echo getByTagName($registro[$x]->tags,'status') ?>" />
 						</td>
-                        <td><span><? echo getByTagName($r->tags,'cnpj_cpf') ?></span>
-							      <? echo getByTagName($r->tags,'cnpj_cpf') ?>
+                        <td><span><? echo getByTagName($registro[$x]->tags,'cnpj_cpf') ?></span>
+							      <? echo getByTagName($registro[$x]->tags,'cnpj_cpf') ?>
 						</td>
-                        <td><span><? echo getByTagName($r->tags,'banco') ?></span>
-							      <? echo getByTagName($r->tags,'banco') ?>
+                        <td><span><? echo getByTagName($registro[$x]->tags,'banco') ?></span>
+							      <? echo getByTagName($registro[$x]->tags,'banco') ?>
 						</td>
-						<td><span><? echo getByTagName($r->tags,'agencia') ?></span>
-							      <? echo getByTagName($r->tags,'agencia') ?>
+						<td><span><? echo getByTagName($registro[$x]->tags,'agencia') ?></span>
+							      <? echo getByTagName($registro[$x]->tags,'agencia') ?>
 						</td>
-						<td><span><? echo getByTagName($r->tags,'conta') ?></span>
-							      <? echo getByTagName($r->tags,'conta') ?>
+						<td><span><? echo getByTagName($registro[$x]->tags,'conta') ?></span>
+							      <? echo getByTagName($registro[$x]->tags,'conta') ?>
 						</td>
-						<td><span><? echo getByTagName($r->tags,'dtrecebimento') ?></span>
-							      <? echo getByTagName($r->tags,'dtrecebimento') ?>
+						<td><span><? echo getByTagName($registro[$x]->tags,'dtrecebimento') ?></span>
+							      <? echo getByTagName($registro[$x]->tags,'dtrecebimento') ?>
 						</td>
-						<td><span><? echo getByTagName($r->tags,'valor') ?></span>
-							      <? echo getByTagName($r->tags,'valor') ?>
+						<td><span><? echo getByTagName($registro[$x]->tags,'valor') ?></span>
+							      <? echo getByTagName($registro[$x]->tags,'valor') ?>
 						</td>
 						
 					</tr>
