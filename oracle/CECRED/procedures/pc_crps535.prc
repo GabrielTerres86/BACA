@@ -896,7 +896,7 @@ BEGIN
 
       -- Verifica se é final de arquivo
       IF SUBSTR(vr_dstexto,1,10)  = '9999999999' AND
-        (SUBSTR(vr_dstexto,48,06) = 'CEL615')    THEN 
+         SUBSTR(vr_dstexto,48,06) = 'CEL615'    THEN 
 		IF substr(vr_dstexto,151,10) <> ww_nrlinha THEN
             vr_cdcritic := 166;
             vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
