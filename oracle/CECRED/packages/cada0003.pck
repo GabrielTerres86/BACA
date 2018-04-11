@@ -3884,6 +3884,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
            AND tpseguro IN (1,11); -- Seguro de casa
       rw_crapseg_casa cr_crapseg_casa%ROWTYPE;
 
+      -- Cursor sobre a tabela de seguros prestamista
+      CURSOR cr_crapseg_prest IS
+        SELECT 1
+          FROM crapseg
+         WHERE cdcooper = pr_cdcooper
+           AND nrdconta = pr_nrdconta
+           AND cdsitseg IN (1,3) -- Ativo
+           AND tpseguro = 4; -- Seguro Prestamista
+      rw_crapseg_prest cr_crapseg_prest%ROWTYPE;
+      
       -- Cursor sobre a tabela de consorcios
       CURSOR cr_crapcns IS
         SELECT 1
@@ -4620,6 +4630,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
         CLOSE cr_crapcpt;
         
         RETURN 'N'; -- Retorna como produto nao aderido   
+        
+      ELSIF pr_cdproduto = 40 THEN -- Seguro Prestamista
+        -- Abre a tabela de Seguros
+        OPEN cr_crapseg_prest;
+        FETCH cr_crapseg_prest INTO rw_crapseg_prest;
+        -- Se nao encotrou, nao possui nenhum seguro de vida
+        IF cr_crapseg_prest%NOTFOUND THEN
+          CLOSE cr_crapseg_prest;
+          RETURN 'N'; -- Retorna como produto nao aderido
+      END IF;
+        CLOSE cr_crapseg_prest;
+        RETURN 'S'; -- Retorna como produto aderido
         
       END IF;
 
