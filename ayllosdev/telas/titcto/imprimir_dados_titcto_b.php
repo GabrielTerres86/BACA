@@ -37,12 +37,14 @@
 		<script language="javascript">alert('Parâmetros incorretos.');</script>
 	<?php
 		exit();
-	}	
+	}
+
+	$c = array('.', '-');
 
 	$dtiniper = $_POST["dtiniper"];
 	$dtfimper = $_POST["dtfimper"];
 	$cdagenci = $_POST["cdagenci"];
-	$nrdconta = $_POST["nrdconta"];
+	$nrdconta = str_ireplace($c, '', $_POST['nrdconta']);
 	$nrborder = $_POST["nrborder"];
 
   	$dsiduser = session_id();	
@@ -59,7 +61,7 @@
     $xml .= " </Dados>";
     $xml .= "</Root>";
 
-    $xmlResult = mensageria($xml, "TITCTO", "TITCTO_BORDERO_N_LIBERADO_IMPRESSAO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+    $xmlResult = mensageria($xml, "TITCTO", "TITCTO_BORDERO_IMPRESSAO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
     $xmlObject = getObjectXML($xmlResult);
 
     if (strtoupper($xmlObject->roottag->tags[0]->name) == "ERRO") {

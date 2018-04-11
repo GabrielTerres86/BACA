@@ -14,7 +14,7 @@
 var frmCab = 'frmCab';
 var frmOpcao = 'frmOpcao';
 
-var cddopcao = 'B';
+var cddopcao = 'C';
 
 var nrJanelas = 0;
 
@@ -49,7 +49,7 @@ function estadoInicial() {
     $('#' + frmOpcao).remove();
     $('#divBotoes').remove();
 
-    cCddopcao.val('B');
+    cCddopcao.val('C');
     cCddopcao.focus();
 
     removeOpacidade('divTela');
@@ -1463,8 +1463,7 @@ function btnContinuar() {
             showError("error","Informe um intervalo de até 60 dias.","Alerta - Ayllos","cDtfimper.focus()");
         } else {
             hideMsgAguardo();
-            //gerarImpressaoBorderoNaoLiberado();
-            alert("Imprimir Relatório - impelementação em desenvolvimento");
+            gerarImpressaoBorderoNaoLiberado();
         }
     } else if(cddopcao == 'C'){
         if ((!cNrdconta.hasClass('campoTelaSemBorda'))) {
@@ -1877,8 +1876,11 @@ function gerarImpressaoBorderoNaoLiberado() {
     var nrborder = $('#nrborder', '#' + frmOpcao).val();
 
     
-    $("#dtvencto","#frmImprimirBorderoNaoLiberadoTitcto").val(dtvencto);
+    $("#dtiniper","#frmImprimirBorderoNaoLiberadoTitcto").val(dtiniper);
+    $("#dtfimper","#frmImprimirBorderoNaoLiberadoTitcto").val(dtfimper);
     $("#cdagenci","#frmImprimirBorderoNaoLiberadoTitcto").val(cdagenci);
+    $("#nrdconta","#frmImprimirBorderoNaoLiberadoTitcto").val(nrdconta);
+    $("#nrborder","#frmImprimirBorderoNaoLiberadoTitcto").val(nrborder);
     
     var action = $("#frmImprimirBorderoNaoLiberadoTitcto").attr("action");
     var callafter = "hideMsgAguardo();";
