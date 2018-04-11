@@ -3934,8 +3934,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
       rw_craplim cr_craplim%ROWTYPE;
        
       -- Cursor para verificar se existe bordero de titulos ativo
-      CURSOR cr_crapbdt(pr_cdcooper IN craplim.cdcooper%TYPE
-                       ,pr_nrdconta IN craplim.nrdconta%TYPE)IS
+      CURSOR cr_crapbdt(pr_cdcooper IN crapbdt.cdcooper%TYPE
+                       ,pr_nrdconta IN crapbdt.nrdconta%TYPE)IS
       SELECT 1 
         FROM crapbdt
        WHERE crapbdt.cdcooper = pr_cdcooper 
@@ -3944,8 +3944,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
       rw_crapbdt cr_crapbdt%ROWTYPE;
 
       -- Cursor para verificar se existe bordero de cheques ativo
-      CURSOR cr_crapbdc(pr_cdcooper IN craplim.cdcooper%TYPE
-                       ,pr_nrdconta IN craplim.nrdconta%TYPE)IS
+      CURSOR cr_crapbdc(pr_cdcooper IN crapbdc.cdcooper%TYPE
+                       ,pr_nrdconta IN crapbdc.nrdconta%TYPE)IS
       SELECT 1 
         FROM crapbdc
        WHERE crapbdc.cdcooper = pr_cdcooper 
@@ -4509,22 +4509,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
         
       ELSIF pr_cdproduto = 34 THEN -- Borderô de cheques
         
-        --Busca registro de bordero de titulos
-        OPEN cr_crapbdt(pr_cdcooper => pr_cdcooper
+        --Busca registro de bordero de cheques
+        OPEN cr_crapbdc(pr_cdcooper => pr_cdcooper
                        ,pr_nrdconta => pr_nrdconta); 
                            
-        FETCH cr_crapbdt INTO rw_crapbdt;
+        FETCH cr_crapbdc INTO rw_crapbdt;
             
         -- Se encotrou, possui bordero liberado
-        IF cr_crapbdt%FOUND THEN
+        IF cr_crapbdc%FOUND THEN
              
-          CLOSE cr_crapbdt;
+          CLOSE cr_crapbdc;
           
           RETURN 'S'; -- Retorna como produto aderido          
             
         END IF; 
         
-        CLOSE cr_crapbdt;
+        CLOSE cr_crapbdc;
         
         RETURN 'N'; -- Retorna como produto nao aderido
         
