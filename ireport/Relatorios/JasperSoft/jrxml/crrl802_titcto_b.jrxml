@@ -1,0 +1,516 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Jaspersoft Studio version 6.3.0.final using JasperReports Library version 6.3.0  -->
+<!-- 2018-04-11T14:48:19 -->
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="crrl802_titcto_b" language="groovy" pageWidth="842" pageHeight="496" orientation="Landscape" whenNoDataType="AllSectionsNoDetail" columnWidth="842" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
+	<property name="ireport.zoom" value="2.0"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="One Empty Record"/>
+	<property name="com.jaspersoft.studio.unit." value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.pageHeight" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.pageWidth" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.topMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.bottomMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.leftMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.rightMargin" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.columnWidth" value="pixel"/>
+	<property name="com.jaspersoft.studio.unit.columnSpacing" value="pixel"/>
+	<parameter name="PR_NMRESCOP" class="java.lang.String">
+		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
+	</parameter>
+	<parameter name="PR_NMRELATO" class="java.lang.String"/>
+	<parameter name="PR_DTMVTOLT" class="java.lang.String"/>
+	<parameter name="PR_NMMODULO" class="java.lang.String"/>
+	<parameter name="PR_CDRELATO" class="java.lang.String"/>
+	<parameter name="PR_PROGERAD" class="java.lang.String"/>
+	<parameter name="PR_NMDESTIN" class="java.lang.String"/>
+	<parameter name="PR_SQSOLICI" class="java.lang.String"/>
+	<queryString language="xPath">
+		<![CDATA[/raiz/Relat/Bordero]]>
+	</queryString>
+	<field name="dtmvtolt" class="java.lang.String">
+		<fieldDescription><![CDATA[dtmvtolt]]></fieldDescription>
+	</field>
+	<field name="cdagenci" class="java.lang.String">
+		<fieldDescription><![CDATA[cdagenci]]></fieldDescription>
+	</field>
+	<field name="nmresage" class="java.lang.String">
+		<fieldDescription><![CDATA[nmresage]]></fieldDescription>
+	</field>
+	<field name="nrdconta" class="java.lang.String">
+		<fieldDescription><![CDATA[nrdconta]]></fieldDescription>
+	</field>
+	<field name="nrborder" class="java.lang.String">
+		<fieldDescription><![CDATA[nrborder]]></fieldDescription>
+	</field>
+	<field name="dat_real" class="java.lang.String">
+		<fieldDescription><![CDATA[dat_real]]></fieldDescription>
+	</field>
+	<field name="hor_real" class="java.lang.String">
+		<fieldDescription><![CDATA[hor_real]]></fieldDescription>
+	</field>
+	<field name="qt_titulo" class="java.lang.Integer">
+		<fieldDescription><![CDATA[qt_titulo]]></fieldDescription>
+	</field>
+	<field name="vl_titulo" class="java.lang.Double">
+		<fieldDescription><![CDATA[vl_titulo]]></fieldDescription>
+	</field>
+	<field name="nmoperad" class="java.lang.String">
+		<fieldDescription><![CDATA[nmoperad]]></fieldDescription>
+	</field>
+	<field name="dssitbdt" class="java.lang.String">
+		<fieldDescription><![CDATA[dssitbdt]]></fieldDescription>
+	</field>
+	<field name="cons_dtiniper" class="java.lang.String">
+		<fieldDescription><![CDATA[ancestor::Relat/@dtiniper]]></fieldDescription>
+	</field>
+	<field name="cons_dtfimper" class="java.lang.String">
+		<fieldDescription><![CDATA[ancestor::Relat/@dtfimper]]></fieldDescription>
+	</field>
+	<field name="cons_cdagenci" class="java.lang.String">
+		<fieldDescription><![CDATA[ancestor::Relat/@cdagenci]]></fieldDescription>
+	</field>
+	<field name="cons_nrdconta" class="java.lang.String">
+		<fieldDescription><![CDATA[ancestor::Relat/@nrdconta]]></fieldDescription>
+	</field>
+	<field name="cons_nrborder" class="java.lang.String">
+		<fieldDescription><![CDATA[ancestor::Relat/@nrborder]]></fieldDescription>
+	</field>
+	<variable name="vr_tot_bordero" class="java.lang.Integer" resetType="Group" resetGroup="Agencia" calculation="Count">
+		<variableExpression><![CDATA[$F{nrborder}]]></variableExpression>
+	</variable>
+	<variable name="vr_tot_qt_titulo" class="java.lang.Integer" resetType="Group" resetGroup="Agencia" calculation="Sum">
+		<variableExpression><![CDATA[$F{qt_titulo}]]></variableExpression>
+	</variable>
+	<variable name="vr_tot_vl_titulo" class="java.lang.Double" resetType="Group" resetGroup="Agencia" calculation="Sum">
+		<variableExpression><![CDATA[$F{vl_titulo}]]></variableExpression>
+	</variable>
+	<variable name="vr_tot_qtpa" class="java.lang.Integer" resetType="Group" resetGroup="Agencia" calculation="Sum">
+		<variableExpression><![CDATA[$F{qt_titulo}]]></variableExpression>
+	</variable>
+	<variable name="vr_tot_vlpa" class="java.lang.Double" resetType="Group" resetGroup="Agencia" calculation="Sum">
+		<variableExpression><![CDATA[$F{vl_titulo}]]></variableExpression>
+	</variable>
+	<variable name="vr_tot_geral_bordero" class="java.lang.Integer" calculation="Count">
+		<variableExpression><![CDATA[$F{nrborder}]]></variableExpression>
+	</variable>
+	<variable name="vr_tot_geral_qt_titulo" class="java.lang.Integer" calculation="Sum">
+		<variableExpression><![CDATA[$F{qt_titulo}]]></variableExpression>
+	</variable>
+	<variable name="vr_tot_geral_vl_titulo" class="java.lang.Double" calculation="Sum">
+		<variableExpression><![CDATA[$F{vl_titulo}]]></variableExpression>
+	</variable>
+	<variable name="vr_tot_geral_qtpa" class="java.lang.Integer" calculation="Sum">
+		<variableExpression><![CDATA[$F{qt_titulo}]]></variableExpression>
+	</variable>
+	<variable name="vr_tot_geral_vlpa" class="java.lang.Double" calculation="Sum">
+		<variableExpression><![CDATA[$F{vl_titulo}]]></variableExpression>
+	</variable>
+	<group name="Agencia" minHeightToStartNewPage="8" keepTogether="true">
+		<groupExpression><![CDATA[$F{cdagenci}]]></groupExpression>
+		<groupHeader>
+			<band height="43">
+				<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				<staticText>
+					<reportElement x="20" y="26" width="43" height="8" uuid="c754bffa-b6c6-4885-8209-f911ce686402">
+						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					</reportElement>
+					<textElement textAlignment="Center">
+						<font fontName="Courier New" size="7" pdfFontName="Courier"/>
+					</textElement>
+					<text><![CDATA[DIGITAÇÃO]]></text>
+				</staticText>
+				<staticText>
+					<reportElement x="90" y="26" width="43" height="8" uuid="24d1b6d4-a93b-4794-845c-59cb7a175e3d">
+						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					</reportElement>
+					<textElement textAlignment="Center">
+						<font fontName="Courier New" size="7" pdfFontName="Courier"/>
+					</textElement>
+					<text><![CDATA[CONTA/DV]]></text>
+				</staticText>
+				<staticText>
+					<reportElement x="160" y="26" width="43" height="8" uuid="2a88ef7a-b3d8-47af-92c0-8c91166db7f1">
+						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					</reportElement>
+					<textElement textAlignment="Center">
+						<font fontName="Courier New" size="7" pdfFontName="Courier"/>
+					</textElement>
+					<text><![CDATA[BORDERÔ]]></text>
+				</staticText>
+				<staticText>
+					<reportElement x="230" y="26" width="70" height="8" uuid="a6f02cb6-18d4-4139-a33a-974f773cf809">
+						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					</reportElement>
+					<textElement textAlignment="Center">
+						<font fontName="Courier New" size="7" pdfFontName="Courier"/>
+					</textElement>
+					<text><![CDATA[DATA/HORA INCLUSÃO]]></text>
+				</staticText>
+				<staticText>
+					<reportElement x="330" y="26" width="20" height="8" uuid="f193889c-f599-4a63-ad77-2d6bab8aac58">
+						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					</reportElement>
+					<textElement textAlignment="Center">
+						<font fontName="Courier New" size="7" pdfFontName="Courier"/>
+					</textElement>
+					<text><![CDATA[QTD]]></text>
+				</staticText>
+				<staticText>
+					<reportElement x="380" y="26" width="50" height="8" uuid="a9d7162f-6564-44c0-ab58-32da70db4d87">
+						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					</reportElement>
+					<textElement textAlignment="Center">
+						<font fontName="Courier New" size="7" pdfFontName="Courier"/>
+					</textElement>
+					<text><![CDATA[VALOR]]></text>
+				</staticText>
+				<staticText>
+					<reportElement x="540" y="26" width="51" height="8" uuid="35be1045-f8f3-4544-b2fc-7f518007b426">
+						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					</reportElement>
+					<textElement textAlignment="Center">
+						<font fontName="Courier New" size="7" pdfFontName="Courier"/>
+					</textElement>
+					<text><![CDATA[OPERADOR]]></text>
+				</staticText>
+				<staticText>
+					<reportElement x="460" y="26" width="50" height="8" uuid="efb8421c-51be-47f9-973f-e805db19cf47">
+						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					</reportElement>
+					<textElement textAlignment="Center">
+						<font fontName="Courier New" size="7" pdfFontName="Courier"/>
+					</textElement>
+					<text><![CDATA[SITUAÇÃO]]></text>
+				</staticText>
+				<textField>
+					<reportElement x="20" y="10" width="264" height="8" isPrintWhenDetailOverflows="true" uuid="6fb32050-27ee-460f-8193-ca18e4c979c7">
+						<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					</reportElement>
+					<textElement textAlignment="Left" verticalAlignment="Top">
+						<font fontName="Courier New" size="7" isBold="true" pdfFontName="Courier"/>
+					</textElement>
+					<textFieldExpression><![CDATA["PA: " + $F{cdagenci} + " - " + $F{nmresage}]]></textFieldExpression>
+				</textField>
+				<line>
+					<reportElement x="20" y="38" width="43" height="1" uuid="870dc9f9-ad49-402e-8e70-bc4216ee7a54">
+						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					</reportElement>
+					<graphicElement>
+						<pen lineWidth="0.5" lineStyle="Dashed"/>
+					</graphicElement>
+				</line>
+				<line>
+					<reportElement x="90" y="38" width="43" height="1" uuid="be13d8b2-386a-4ba3-9a9f-92ef9ece3fdd">
+						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					</reportElement>
+					<graphicElement>
+						<pen lineWidth="0.5" lineStyle="Dashed"/>
+					</graphicElement>
+				</line>
+				<line>
+					<reportElement x="160" y="38" width="43" height="1" uuid="83cd3c7c-4d56-4ec6-9842-bb879e729396">
+						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					</reportElement>
+					<graphicElement>
+						<pen lineWidth="0.5" lineStyle="Dashed"/>
+					</graphicElement>
+				</line>
+				<line>
+					<reportElement x="230" y="38" width="71" height="1" uuid="1921f803-ca4f-4690-82b8-93da58333ac5">
+						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					</reportElement>
+					<graphicElement>
+						<pen lineWidth="0.5" lineStyle="Dashed"/>
+					</graphicElement>
+				</line>
+				<line>
+					<reportElement x="330" y="38" width="20" height="1" uuid="5a77c1a9-65af-49ab-8161-42d77ba357eb">
+						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					</reportElement>
+					<graphicElement>
+						<pen lineWidth="0.5" lineStyle="Dashed"/>
+					</graphicElement>
+				</line>
+				<line>
+					<reportElement x="380" y="38" width="51" height="1" uuid="1326d398-0417-4deb-b720-cbb0480be903">
+						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					</reportElement>
+					<graphicElement>
+						<pen lineWidth="0.5" lineStyle="Dashed"/>
+					</graphicElement>
+				</line>
+				<line>
+					<reportElement x="460" y="38" width="50" height="1" uuid="cd41dbf2-bb00-4c80-8edf-9f5b3456b7e3">
+						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					</reportElement>
+					<graphicElement>
+						<pen lineWidth="0.5" lineStyle="Dashed"/>
+					</graphicElement>
+				</line>
+				<line>
+					<reportElement x="540" y="38" width="127" height="1" uuid="a19a252c-77e1-4a10-8fea-ae98581862a4">
+						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					</reportElement>
+					<graphicElement>
+						<pen lineWidth="0.5" lineStyle="Dashed"/>
+					</graphicElement>
+				</line>
+				<staticText>
+					<reportElement x="340" y="10" width="70" height="8" uuid="0029bbde-ea57-48d1-81e9-ddbd8bc6b076">
+						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					</reportElement>
+					<textElement textAlignment="Center">
+						<font fontName="Courier New" size="7" pdfFontName="Courier"/>
+					</textElement>
+					<text><![CDATA[TÍTULOS]]></text>
+				</staticText>
+			</band>
+		</groupHeader>
+		<groupFooter>
+			<band height="29">
+				<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+				<textField>
+					<reportElement x="150" y="7" width="53" height="8" uuid="404687d0-7cd3-4b30-900d-0db093a2b674">
+						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					</reportElement>
+					<textElement textAlignment="Right">
+						<font fontName="Courier New" size="7" pdfFontName="Courier"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$V{vr_tot_bordero} + " BORDERÔ(S)"]]></textFieldExpression>
+				</textField>
+				<staticText>
+					<reportElement x="20" y="7" width="113" height="8" uuid="44655bc5-1b2b-4d00-8bc8-a4929c4842db">
+						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					</reportElement>
+					<textElement>
+						<font fontName="Courier New" size="7" pdfFontName="Courier"/>
+					</textElement>
+					<text><![CDATA[TOTAL DO PA ==>]]></text>
+				</staticText>
+				<textField>
+					<reportElement x="320" y="7" width="40" height="8" uuid="28944eca-a4c0-44b9-8d07-c208a2135283">
+						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					</reportElement>
+					<textElement textAlignment="Center">
+						<font fontName="Courier New" size="7" pdfFontName="Courier"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$V{vr_tot_qt_titulo} == 0 ? "" : $V{vr_tot_qt_titulo}]]></textFieldExpression>
+				</textField>
+				<textField pattern="#,##0.00#">
+					<reportElement x="370" y="7" width="60" height="8" uuid="6aa465c3-d8d1-4197-ad80-c1d18a836a76">
+						<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+						<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					</reportElement>
+					<textElement textAlignment="Right">
+						<font fontName="Courier New" size="7" pdfFontName="Courier"/>
+					</textElement>
+					<textFieldExpression><![CDATA[$V{vr_tot_vl_titulo} == 0 ? "" : $V{vr_tot_vl_titulo}]]></textFieldExpression>
+				</textField>
+			</band>
+		</groupFooter>
+	</group>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<detail>
+		<band height="8" splitType="Stretch">
+			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+			<textField>
+				<reportElement x="20" y="0" width="60" height="8" uuid="ae0779a1-dc08-4851-8111-099e3144e250">
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<textElement>
+					<font fontName="Courier New" size="7" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{dtmvtolt}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="80" y="0" width="53" height="8" uuid="f902435f-82fd-43ed-a2cf-fb4fe79c8288">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{nrdconta}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="150" y="0" width="53" height="8" uuid="f9192b01-a8ed-4ba1-82aa-2c38028595ef">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{nrborder}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="220" y="0" width="90" height="8" uuid="72f327e4-833c-4163-aa7d-0a1bfb449e06">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Center">
+					<font fontName="Courier New" size="7" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA[($F{dat_real} == null ? "" : $F{dat_real}) + " " + $F{hor_real}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="320" y="0" width="40" height="8" uuid="b227dca3-f299-456f-ba43-7212ba6c3621">
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Center">
+					<font fontName="Courier New" size="7" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{qt_titulo} == 0 ? "" : $F{qt_titulo}]]></textFieldExpression>
+			</textField>
+			<textField pattern="#,##0.00#">
+				<reportElement x="370" y="0" width="60" height="8" uuid="28d452ee-f0da-4651-befc-1aad233b851c">
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{vl_titulo} == 0 ? "" : $F{vl_titulo}]]></textFieldExpression>
+			</textField>
+			<textField pattern="#,##0.00#" isBlankWhenNull="true">
+				<reportElement x="540" y="0" width="190" height="8" uuid="1edc8fb5-bb56-4898-b006-d5bf5360c53d">
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Left">
+					<font fontName="Courier New" size="7" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{nmoperad}]]></textFieldExpression>
+			</textField>
+			<textField pattern="#,##0.00#">
+				<reportElement x="450" y="0" width="70" height="8" uuid="f64e00e7-28b5-4d87-bec2-6fe74c37cbc6"/>
+				<textElement textAlignment="Center">
+					<font fontName="Courier New" size="7" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{dssitbdt}]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+	<summary>
+		<band height="66">
+			<staticText>
+				<reportElement x="20" y="7" width="43" height="8" uuid="9489836b-d340-4301-b1a5-52b975c55c4e">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+				</reportElement>
+				<textElement>
+					<font fontName="Courier New" size="7" pdfFontName="Courier"/>
+				</textElement>
+				<text><![CDATA[GERAL]]></text>
+			</staticText>
+			<staticText>
+				<reportElement x="20" y="15" width="113" height="8" uuid="90518ef6-a61f-4e29-a853-cf372a4216d3">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<textElement>
+					<font fontName="Courier New" size="7" pdfFontName="Courier"/>
+				</textElement>
+				<text><![CDATA[TOTAL GERAL ==>]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="150" y="15" width="53" height="8" uuid="bfedce87-4c93-44d1-a7d5-6f59a5113af9">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$V{vr_tot_geral_bordero} + " BORDERÔ(S)"]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="320" y="15" width="40" height="8" uuid="c16419bf-52ae-4b2b-bebb-cac326e74030">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Center">
+					<font fontName="Courier New" size="7" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$V{vr_tot_geral_qt_titulo} == 0 ? "" : $V{vr_tot_geral_qt_titulo}]]></textFieldExpression>
+			</textField>
+			<textField pattern="#,##0.00#">
+				<reportElement x="370" y="15" width="60" height="8" uuid="1199a5f5-4340-478e-a45c-a58d4af86a0a">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Right">
+					<font fontName="Courier New" size="7" pdfFontName="Courier"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$V{vr_tot_geral_vl_titulo} == 0 ? "" : $V{vr_tot_geral_vl_titulo}]]></textFieldExpression>
+			</textField>
+			<staticText>
+				<reportElement x="628" y="56" width="150" height="8" uuid="c431f647-3f2d-467b-aab5-daeb1ff99bde">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+				</reportElement>
+				<textElement textAlignment="Center">
+					<font fontName="Courier New" size="7" pdfFontName="Courier"/>
+				</textElement>
+				<text><![CDATA[CADASTRO E VISTO DO FUNCIONÁRIO]]></text>
+			</staticText>
+			<line>
+				<reportElement x="610" y="54" width="180" height="1" uuid="16893898-61c5-4207-b763-7176df1a0f79">
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
+				</reportElement>
+				<graphicElement>
+					<pen lineWidth="0.5" lineStyle="Solid"/>
+				</graphicElement>
+			</line>
+		</band>
+	</summary>
+</jasperReport>
