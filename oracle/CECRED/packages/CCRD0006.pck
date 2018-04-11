@@ -7332,7 +7332,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
                                 ,pr_ind_tipo_log => 1 -- Aviso
                                 ,pr_des_log      => 'retorno valida antecipacao COM DIFERENCA vr_TotLancamento='||vr_TotLancamento||'  pr_vlrlancto='||pr_vlrlancto
                                 ,pr_nmarqlog => 'CONSLC');
-             return('S');
+             return('N');
              
           ELSE
              for r in cr_liq_antecip_sum_update loop
