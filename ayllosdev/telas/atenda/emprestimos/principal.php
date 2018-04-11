@@ -704,6 +704,7 @@
 				arrayStatusApprov['altdtpgt'] = '<? echo getByTagName($insitapv[0]->tags,'altdtpgt'); ?>';
 				arrayStatusApprov['idcobope'] = '<? echo getByTagName($insitapv[0]->tags,'idcobope'); ?>';
 				arrayStatusApprov['vlfinanc'] = '<? echo getByTagName($insitapv[0]->tags,'vlfinanc'); ?>';				
+				arrayStatusApprov['flliquid'] = '<? echo getByTagName($insitapv[0]->tags,'flliquid'); ?>';				
 
 				var arrayMensagemAval = new Array();
 

@@ -8617,6 +8617,7 @@ function efetivaProposta() {
     nrctremp = arrayStatusApprov['nrctremp'];
     dtdpagto = arrayStatusApprov['dtdpagto'];
     idcobope = arrayStatusApprov['idcobope'];
+    flliquid = arrayStatusApprov['flliquid'];
 
     // Executa script de confirmação através de ajax
     $.ajax({
@@ -8627,6 +8628,7 @@ function efetivaProposta() {
             nrdconta: nrdconta, idseqttl: idseqttl,
             nrctremp: nrctremp, insitapv: insitapv,
             dtdpagto: dtdpagto, idcobope: idcobope, 
+			flliquid: flliquid,
 			redirect: 'html_ajax'
         },
         error: function(objAjax, responseError, objExcept) {

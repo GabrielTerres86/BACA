@@ -34,29 +34,28 @@
 	$dtdpagto = (isset($_POST['dtdpagto'])) ? $_POST['dtdpagto'] : '';
 	$operacao = (isset($_POST['operacao'])) ? $_POST['operacao'] : '';
 	$idcobope = (isset($_POST['idcobope'])) ? $_POST['idcobope'] : '';
+	$flliquid = (isset($_POST['flliquid'])) ? $_POST['flliquid'] : 0;
 					
-	if ($idcobope > 0){
-				
-	// Monta o xml dinâmico de acordo com a operação 
-	$xml  = '';
-	$xml .= '<Root>';
-	$xml .= '	<Dados>';
-	$xml .= '       <nmdatela>ATENDA</nmdatela>';
-	$xml .= '       <idcobert>'.$idcobope.'</idcobert>';
-	$xml .= '	</Dados>';
-	$xml .= '</Root>';
+	if ($idcobope > 0 && $flliquid == 0){	
+		// Monta o xml dinâmico de acordo com a operação 
+		$xml  = '';
+		$xml .= '<Root>';
+		$xml .= '	<Dados>';
+		$xml .= '       <nmdatela>ATENDA</nmdatela>';
+		$xml .= '       <idcobert>'.$idcobope.'</idcobert>';
+		$xml .= '	</Dados>';
+		$xml .= '</Root>';
 
-	$xmlResult = mensageria($xml, "BLOQ0001", "REVALIDA_BLOQ_GARANTIA", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
-	$xmlObjeto = getObjectXML($xmlResult);
+		$xmlResult = mensageria($xml, "BLOQ0001", "REVALIDA_BLOQ_GARANTIA", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+		$xmlObjeto = getObjectXML($xmlResult);
 
-	//----------------------------------------------------------------------------------------------------------------------------------	
-	// Controle de Erros
-	//----------------------------------------------------------------------------------------------------------------------------------
-	if ( strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO" ) {
-		echo "showConfirmacao('Garantia de aplica&ccedil;&atilde;o resgatada/bloqueada. Deseja alterar a proposta?', 'Confirma&ccedil;&atilde;o - Ayllos', 'controlaOperacao(\'A_NOVA_PROP\');', 'hideMsgAguardo(); bloqueiaFundo($(\'#divRotina\'))', 'sim.gif', 'nao.gif');";
-		exit();
-	}
-
+		//----------------------------------------------------------------------------------------------------------------------------------	
+		// Controle de Erros
+		//----------------------------------------------------------------------------------------------------------------------------------
+		if ( strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO" ) {
+			echo "showConfirmacao('Garantia de aplica&ccedil;&atilde;o resgatada/bloqueada. Deseja alterar a proposta?', 'Confirma&ccedil;&atilde;o - Ayllos', 'controlaOperacao(\'A_NOVA_PROP\');', 'hideMsgAguardo(); bloqueiaFundo($(\'#divRotina\'))', 'sim.gif', 'nao.gif');";
+			exit();
+		}
 	}
 					
 	// Monta o xml de requisi��o
