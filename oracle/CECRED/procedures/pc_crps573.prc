@@ -4885,6 +4885,20 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
         gene0002.pc_escreve_xml(pr_xml            => vr_xml_3040
                                ,pr_texto_completo => vr_xml_3040_temp
                                ,pr_texto_novo     => '/>'||chr(10));
+
+        -- **
+        -- Verifica Ativo Problemático(REESTRUTURAÇÃO) - Daniel(AMcom)
+        IF vr_reestrut = 1 AND vr_dtatvprobl IS NOT NULL THEN
+          -- Enviar informação adicional do contrato de Reestruturação
+          gene0002.pc_escreve_xml(pr_xml            => vr_xml_3040
+                                 ,pr_texto_completo => vr_xml_3040_temp
+                                 ,pr_texto_novo     => '                        <Inf Tp="1701"' -- Fixo
+                                                    || ' Cd="' ||vr_dtatvprobl || '"'
+                                                    || ' Ident="' || to_char(vr_iddident,'fm0000') || '"'
+                                                    || ' Valor="' || replace(to_char(vr_vlrdivid,'fm99999999999999990D00'),',','.') || '"'
+                                                    || ' />' || chr(10));
+        END IF;                               
+
         -- Quando existir mais de um contrato de origem = 1 (Conta)
         -- os garantidores devem ir preferencialmente no limite não utilizado (1901),
         -- então testamos a flag que é ativa quando já foram enviados os garantidores no CPF
@@ -4945,18 +4959,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
             vr_idcpfcgc := substr(lpad(rw_crapcop_2.nrdocnpj,14,'0'),1,8);
           END IF;
           
-          -- **
-          -- Verifica Ativo Problemático(REESTRUTURAÇÃO) - Daniel(AMcom)          
-          IF vr_reestrut = 1 AND vr_dtatvprobl IS NOT NULL THEN
-            -- Enviar informação adicional do contrato de Reestruturação
-            gene0002.pc_escreve_xml(pr_xml            => vr_xml_3040
-                                   ,pr_texto_completo => vr_xml_3040_temp
-                                   ,pr_texto_novo     => '                        <Inf Tp="1701"' -- Fixo
-                                                      || ' Cd="' ||vr_dtatvprobl || '"'
-                                                      || ' Ident="' || to_char(vr_iddident,'fm0000') || '"'
-                                                        || 'Valor="' || replace(to_char(vr_vlrdivid,'fm99999999999999990D00'),',','.')
-                                                      || ' />' || chr(10));            
-          ELSE       
           IF vr_tab_individ(vr_idx_individ).flcessao = 1 THEN
             -- Enviar informação adicional da operação
             gene0002.pc_escreve_xml(pr_xml            => vr_xml_3040
@@ -4974,7 +4976,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                                                       || '"/>' || chr(10));
           
           END IF;
-        END IF;
         END IF;
         -- Verificação do Ente Consignante
         pc_inf_ente_consignante(pr_nrdconta => vr_tab_individ(vr_idx_individ).nrdconta
