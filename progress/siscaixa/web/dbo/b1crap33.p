@@ -25,6 +25,9 @@
                 09/12/2013 - Alterado estrutura de leitura da tabela craplot (Daniel).     
                 
                 05/08/2014 - Alteração da Nomeclatura para PA (Vanessa).        
+                
+                03/07/2017 - Remover separaçao de cheques Superiores e Inferiores na geraçao 
+                             do relatório Resumido. PRJ367 - Compe Sessao Unica (Lombardi)
 ------------------------------------------------------------------------------*/
 {dbo/bo-erro1.i}
 
@@ -53,8 +56,6 @@ DEF VAR rel_nmrelato AS CHAR       FORMAT "x(40)"               NO-UNDO.
 DEF VAR tab_vlchqmai AS DEC                                     NO-UNDO.
 
 DEF VAR res_qtchqcop AS INT        FORMAT "zzz,zz9"             NO-UNDO.
-DEF VAR res_qtchqmen AS INT        FORMAT "zzz,zz9"             NO-UNDO.
-DEF VAR res_qtchqmai AS INT        FORMAT "zzz,zz9"             NO-UNDO.
 
 DEF VAR res_vlchqcop AS DECIMAL    FORMAT "zzz,zzz,zz9.99"      NO-UNDO.
 DEF VAR res_vlchqmen AS DECIMAL    FORMAT "zzz,zzz,zz9.99"      NO-UNDO.
@@ -114,13 +115,6 @@ FORM SKIP(1)
      res_qtchqcop AT 24 NO-LABEL
      res_vlchqcop AT 34 NO-LABEL   */
      "** CARTA REMESSA **" AT 25
-     SKIP(1)                           
-     res_qtchqmen AT  4 LABEL "Cheques Inferiores"
-     res_vlchqmen AT 34 NO-LABEL
-     SKIP(1)                           
-     res_qtchqmai AT  4 LABEL "Cheques Superiores" 
-     res_vlchqmai AT 34 NO-LABEL "( >=" tab_vlchqmai FORMAT "zzz,zz9.99" 
-                        NO-LABEL ")  "
      SKIP(1)
      tot_qtcheque AT  8 LABEL "TOTAL DIGITADO"
      tot_vlcheque AT 34 NO-LABEL
@@ -410,26 +404,13 @@ PROCEDURE Impressao:
        ASSIGN res_dschqcop = "Cheques " +
                            STRING(crapcop.nmrescop,"x(11)") + ":".
 
-
-       FIND craptab WHERE craptab.cdcooper = crapcop.cdcooper   AND
-                          craptab.nmsistem = "CRED"             AND
-                          craptab.tptabela = "USUARI"           AND
-                          craptab.cdempres = 11                 AND
-                          craptab.cdacesso = "MAIORESCHQ"       AND
-                          craptab.tpregist = 1              
-                          NO-LOCK NO-ERROR.
-
-       IF   NOT AVAIL craptab   THEN
-            ASSIGN tab_vlchqmai = 1.
-       ELSE
-            ASSIGN tab_vlchqmai = DEC(SUBSTR(craptab.dstextab,01,15)).
-
-
         ASSIGN i-nrlote1 = 11000 + p-nro-lote 
                i-nrlote2 = 23000 + p-nro-lote
                i-nrlote3 = 28000 + p-nro-lote
-               i-nrlote4 = 30000 + p-nro-lote.
-        
+               i-nrlote4 = 30000 + p-nro-lote
+               tot_qtcheque = 0
+               tot_vlcheque = 0.
+               
         FOR EACH craplot WHERE 
                  craplot.cdcooper = crapcop.cdcooper    AND
                  craplot.dtmvtolt = crapdat.dtmvtolt    AND
@@ -455,30 +436,18 @@ PROCEDURE Impressao:
                     NEXT.
                 END.
 
-           IF   crapchd.vlcheque >= tab_vlchqmai   THEN
-                ASSIGN res_qtchqmai = res_qtchqmai + 1
-                       res_vlchqmai = res_vlchqmai + crapchd.vlcheque.
-           ELSE
-                ASSIGN res_qtchqmen = res_qtchqmen + 1
-                       res_vlchqmen = res_vlchqmen + crapchd.vlcheque.
+           ASSIGN tot_qtcheque = tot_qtcheque + 1
+                  tot_vlcheque = tot_vlcheque + crapchd.vlcheque.
 
         END.  /*  for each crapchd */
-
-        ASSIGN tot_qtcheque = /* res_qtchqcop + */ res_qtchqmen + res_qtchqmai
-               tot_vlcheque = /* res_vlchqcop + */ res_vlchqmen + res_vlchqmai.
 
         IF   tot_qtcheque > 0  THEN   DO:
              DISPLAY STREAM str_1
                      /* res_qtchqcop */
-                     res_qtchqmen
-                     res_qtchqmai
                      /* res_vlchqcop */
-                     res_vlchqmen
-                     res_vlchqmai
                      tot_qtcheque 
                      tot_vlcheque 
-                     tab_vlchqmai
-                     /* res_dschqcop */
+                   /* res_dschqcop */
                      WITH FRAME f_resumo.
         END.
       

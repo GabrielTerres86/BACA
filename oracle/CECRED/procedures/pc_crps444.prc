@@ -344,6 +344,9 @@ BEGIN
                               lançamentos contábeis de críticas de integração de contas do BB
                               P307 - (Jonatas Supero)
 
+                 21/06/2017 - Removidas condições que validam o valor de cheque VLB e enviam
+                              email para o SPB. PRJ367 - Compe Sessao Unica (Lombardi)
+
                  01/09/2017 - Ajustado critica 110 no AAMMDD_XX_CRITICAITG.txt
                               (Rafael Faria - Supero)
 
@@ -4724,99 +4727,6 @@ BEGIN
              --Fechar Cursor
              IF cr_craprej%ISOPEN THEN
                CLOSE cr_craprej;
-             END IF;
-           END IF;
-
-           /* Entrada, Cheque e Valor Lancamento > Limite */
-           IF vr_flgentra AND vr_flgchequ AND vr_vllanmto >= vr_vlchqvlb THEN
-             --Inserir rejeitado
-             BEGIN
-               INSERT INTO craprej
-                   (craprej.cdcooper
-                   ,craprej.dtmvtolt
-                   ,craprej.cdagenci
-                   ,craprej.cdbccxlt
-                   ,craprej.nrdolote
-                   ,craprej.tpintegr
-                   ,craprej.dtrefere
-                   ,craprej.nrdconta
-                   ,craprej.nrdocmto
-                   ,craprej.vllanmto
-                   ,craprej.nrseqdig
-                   ,craprej.cdcritic
-                   ,craprej.cdpesqbb
-                   ,craprej.dshistor
-                   ,craprej.nrdctabb
-                   ,craprej.indebcre)
-               VALUES
-                   (pr_cdcooper
-                   ,rw_crapdat.dtmvtolt
-                   ,nvl(vr_cdagenci,0)
-                   ,nvl(vr_cdbccxlt,0)
-                   ,nvl(vr_nrdolote,0)
-                   ,vr_contaarq
-                   ,vr_dtrefere
-                   ,nvl(vr_nrdconta,0)
-                   ,nvl(vr_nrdocmto,0)
-                   ,nvl(vr_vllanmto,0)
-                   ,nvl(vr_nrseqint,0)
-                   ,929
-                   ,nvl(vr_cdpesqbb,' ')
-                   ,nvl(vr_dshistor,' ')
-                   ,nvl(vr_nrdctabb,0)
-                   ,vr_indebcre);
-             EXCEPTION
-               WHEN OTHERS THEN
-                 vr_cdcritic:= 0;
-                 vr_dscritic:= 'Erro ao inserir na tabela craprej. '||sqlerrm;
-                 --Levantar Excecao
-                 RAISE vr_exc_saida;
-             END;
-             --Montar Conteudo do Email
-             vr_conteudo:= 'Segue dados do Cheque VLB:<br><br>'||
-                           'Cooperativa: '|| pr_cdcooper||
-                           ' - '|| rw_crapcop.nmrescop ||
-                           '<br>PA: ' || TRIM(rw_crapass.cdagenci)||
-                           '<br>Banco: '||gene0002.fn_mask(vr_cdbccxlt,'zz9')|| '<br>'||
-                           'Conta/dv: '||gene0002.fn_mask_conta(vr_nrdconta)||'<br>'||
-                           'Cheque: '|| gene0002.fn_mask_conta(vr_nrdocmto)|| '<br>'||
-                           'Valor: R$ '||gene0002.fn_mask(vr_vllanmto,'zzz,zzz,zz9.99')||'<br>'||
-                           'Data: '|| TO_CHAR(vr_dtleiarq,'DD/MM/YYYY');
-
-             --Montar Assunto
-             vr_des_assunto:= 'Cheque VLB '||gene0002.fn_mask(vr_cdbccxlt,'999')||' - '||
-                              TO_CHAR(vr_dtleiarq,'DD/MM/YYYY');
-
-             --Recuperar emails de destino
-             vr_email_dest:= gene0001.fn_param_sistema('CRED',pr_cdcooper,'DEVOLUCAO_VLB');
-
-             IF vr_email_dest IS NULL THEN
-               --Montar mensagem de erro
-               vr_dscritic:= 'Nao foi encontrado destinatario para os Cheques VLB.';
-               --Levantar Excecao
-               RAISE vr_exc_saida;
-             END IF;
-
-             --Enviar Email
-             gene0003.pc_solicita_email(pr_cdcooper        => pr_cdcooper
-                                       ,pr_cdprogra        => vr_cdprogra
-                                       ,pr_des_destino     => vr_email_dest
-                                       ,pr_des_assunto     => vr_des_assunto
-                                       ,pr_des_corpo       => vr_conteudo
-                                       ,pr_des_anexo       => NULL
-                                       ,pr_flg_remove_anex => 'N' --> Remover os anexos passados
-                                       ,pr_flg_remete_coop => 'N' --> Se o envio serÃ¡ do e-mail da Cooperativa
-                                       ,pr_flg_enviar      => 'N' --> Enviar o e-mail na hora
-                                       ,pr_des_erro        => vr_dscritic);
-             IF vr_dscritic IS NOT NULL  THEN
-               -- Envio centralizado de log de erro
-               btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                         ,pr_ind_tipo_log => 2 -- Erro tratato
-                                         ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                             || vr_cdprogra || ' --> '
-                                                             || vr_dscritic );
-               --Levantar Excecao
-               RAISE vr_exc_saida;
              END IF;
            END IF;
 

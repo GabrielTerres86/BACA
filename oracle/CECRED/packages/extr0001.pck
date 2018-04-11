@@ -2873,7 +2873,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
         Sistema : Conta-Corrente - Cooperativa de Credito
         Sigla   : CRED
         Autor   : Marcos (Supero)
-        Data    : Dez/2012                         Ultima atualizacao: 17/05/2016
+        Data    : Dez/2012                         Ultima atualizacao: 03/04/2018
 
         Dados referetes ao programa:
         Frequencia: Sempre que chamado pelos programas de extrato da conta
@@ -2903,6 +2903,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
                                  descrição no historico e para caso for um lançamento de 
                                  debito automatico concatenar com historico complementar
                                  PRJ320 - Ofernta conv Debaut(Odirlei-AMcom)
+
+					
+					03/04/2018 - Adicionados historicos 2433 e 2658 - COMPE SESSAO UNICA (Diego).
 
     */
     DECLARE
@@ -3402,7 +3405,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
           pr_tab_extr(vr_ind_tab).flgdetal := 0;               
         END IF;
         
-        IF rw_craplcm.cdhistor IN (386,3,4,1524,1526,1523) THEN
+        IF rw_craplcm.cdhistor IN (386,3,4,2433,1524,1526,1523,2658) THEN
           OPEN cr_crapchd (pr_cdcooper => rw_craplcm.cdcooper
                           ,pr_nrdconta => rw_craplcm.nrdconta
                           ,pr_dtmvtolt => rw_craplcm.dtmvtolt

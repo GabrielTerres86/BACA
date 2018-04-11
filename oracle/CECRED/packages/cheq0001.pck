@@ -316,7 +316,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Deborah/Edson
-   Data    : Outubro/94.                     Ultima atualizacao: 23/03/2016
+   Data    : Outubro/94.                     Ultima atualizacao: 21/06/2017
 
    Dados referentes ao programa:
 
@@ -397,6 +397,9 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
 
                23/03/2016 - Ajustar o substr e o formato da data que esta gravada
                             no campo craplcm.cdpesqbb (Douglas - Melhoria 100 Alineas)
+                            
+               21/06/2017 - Remoção de 2 condições que tratam o envio de e-mail referente
+                            a cheques VLB. PRJ367 - Compe Sessao Unica (Lombardi)
 ............................................................................. */
     DECLARE
 
@@ -893,74 +896,6 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
              RAISE vr_exc_erro;
          END;
 
-
-         IF  (vr_aux_cdbanchq = 756 OR vr_aux_cdbanchq = 1) AND
-              pr_cdprogra = 'DEVOLU'                 AND
-              pr_vllanmto >= vr_aux_vlchqvlb                THEN
-
-           --Montar o conteudo do email
-           vr_aux_conteudo:= 'Segue dados do cheque marcado para devolucao:' ||
-                             Chr(13)||
-                             Chr(13)||
-                             'Cooperativa: ' || pr_cdcooper ||
-                             Chr(13)||
-                             'Banco: ' ||
-                             LTRIM(RTRIM(gene0002.fn_mask(vr_aux_cdbanchq, 'zz9'))) ||
-                             Chr(13) ||
-                             'Conta/dv: ' ||
-                             LTrim(RTRIM(gene0002.fn_mask(pr_nrdconta, 'zzzz.zzz.9'))) ||
-                             Chr(13) ||
-                             'Cheque: ' ||
-                             LTrim(RTRIM(gene0002.fn_mask(pr_nrdocmto, 'zzz.zz9.9'))) ||
-                             Chr(13) ||
-                             'Valor: R$ ' ||
-                             LTrim(RTRIM(gene0002.fn_mask(pr_vllanmto, 'zzz.zzz.zz9,99'))) ||
-                             Chr(13) ||
-                             'Alinea: '||
-                             LTrim(RTrim(gene0002.fn_mask(pr_cdalinea, 'zzz9')))||
-                             Chr(13) ||
-                             'Data: '|| To_Char(pr_dtmvtolt, 'DD/MM/RRRR');
-
-           --Montar o assunto do Email
-           vr_des_assunto:= 'Devolucao ' ||
-                            gene0002.fn_mask(vr_aux_cdbanchq, 'zz9')
-                            ||' - '||
-                            To_Char(pr_dtmvtolt,'DD/MM/RRRR');
-
-           --Recuperar emails de destino
-           vr_email_dest:= gene0001.fn_param_sistema('CRED',pr_cdcooper,'DEVOLUCAO_VLB');
-
-           IF vr_email_dest IS NULL THEN
-             --Montar mensagem de erro
-             vr_des_erro:= 'Não foi encontrado destinatário para as devoluções VLB.';
-             --Levantar Exceção
-             RAISE vr_exc_erro;
-           END IF;
-
-           --Enviar Email
-           gene0003.pc_solicita_email(pr_cdcooper        => pr_cdcooper
-                                     ,pr_cdprogra        => pr_cdprogra
-                                     ,pr_des_destino     => vr_email_dest
-                                     ,pr_des_assunto     => vr_des_assunto
-                                     ,pr_des_corpo       => vr_aux_conteudo
-                                     ,pr_des_anexo       => NULL
-                                     ,pr_flg_remove_anex => 'N' --> Remover os anexos passados
-                                     ,pr_flg_remete_coop => 'N' --> Se o envio será do e-mail da Cooperativa
-                                     ,pr_flg_enviar      => 'N' --> Enviar o e-mail na hora
-                                     ,pr_des_erro        => vr_des_erro);
-           IF vr_des_erro IS NOT NULL  THEN
-             -- Envio centralizado de log de erro
-             btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                       ,pr_ind_tipo_log => 2 -- Erro tratato
-                                       ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                           || vr_cdprogra || ' --> '
-                                                           || vr_des_erro );
-             RAISE vr_exc_erro;
-           END IF;
-
-         END IF;  -- IF  (vr_aux_cdbanchq = 756 OR vr_aux_cdbanchq = 1)
-
-
        ELSIF pr_inchqdev = 2 OR  pr_inchqdev = 4  THEN
 
          --Selecionar devolucoes de cheques
@@ -1149,73 +1084,6 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
              vr_des_erro:= 'Erro ao inserir na tabela crapdev. Rotina CHEQ0001.pc_gera_devolucao_cheque: '||sqlerrm;
              RAISE vr_exc_erro;
          END;
-
-         IF  (vr_aux_cdbanchq = 756 OR vr_aux_cdbanchq = 1) AND
-              pr_cdprogra = 'DEVOLU'                        AND
-              pr_vllanmto >= vr_aux_vlchqvlb                THEN
-
-           --Montar o conteúdo do email
-           vr_aux_conteudo:= 'Segue dados do cheque marcado para devolucao:' ||
-                             Chr(13)||
-                             Chr(13)||
-                             'Cooperativa: ' || pr_cdcooper ||
-                             Chr(13)||
-                             'Banco: ' ||
-                             LTRIM(RTRIM(gene0002.fn_mask(vr_aux_cdbanchq, 'zz9'))) ||
-                             Chr(13) ||
-                             'Conta/dv: ' ||
-                             LTrim(RTRIM(gene0002.fn_mask(pr_nrdconta, 'zzzz.zzz.9'))) ||
-                             Chr(13) ||
-                             'Cheque: ' ||
-                             LTrim(RTRIM(gene0002.fn_mask(pr_nrdocmto, 'zzz.zz9.9'))) ||
-                             Chr(13) ||
-                             'Valor: R$ ' ||
-                             LTrim(RTRIM(gene0002.fn_mask(pr_vllanmto, 'zzz.zzz.zz9,99'))) ||
-                             Chr(13) ||
-                             'Alinea: '||
-                             LTrim(RTrim(gene0002.fn_mask(pr_cdalinea, 'zzz9')))||
-                             Chr(13) ||
-                             'Data: '|| To_Char(pr_dtmvtolt, 'DD/MM/RRRR');
-
-           --Montar o assunto do Email
-           vr_des_assunto:= 'Devolucao VLB ' ||
-                            gene0002.fn_mask(vr_aux_cdbanchq, 'zz9')
-                            ||' - '||
-                            To_Char(pr_dtmvtolt,'DD/MM/RRRR');
-
-           --Recuperar emails de destino
-           vr_email_dest:= gene0001.fn_param_sistema('CRED',pr_cdcooper,'DEVOLUCAO_VLB');
-
-           IF vr_email_dest IS NULL THEN
-             --Montar mensagem de erro
-             vr_des_erro:= 'Não foi encontrado destinatário para as devoluções VLB.';
-             --Levantar Exceção
-             RAISE vr_exc_erro;
-           END IF;
-
-           --Enviar Email
-           gene0003.pc_solicita_email(pr_cdcooper        => pr_cdcooper
-                                     ,pr_cdprogra        => pr_cdprogra
-                                     ,pr_des_destino     => vr_email_dest
-                                     ,pr_des_assunto     => vr_des_assunto
-                                     ,pr_des_corpo       => vr_aux_conteudo
-                                     ,pr_des_anexo       => NULL
-                                     ,pr_flg_remove_anex => 'N' --> Remover os anexos passados
-                                     ,pr_flg_remete_coop => 'N' --> Se o envio será do e-mail da Cooperativa
-                                     ,pr_flg_enviar      => 'N' --> Enviar o e-mail na hora
-                                     ,pr_des_erro        => vr_des_erro);
-           IF vr_des_erro IS NOT NULL  THEN
-             -- Envio centralizado de log de erro
-             btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                       ,pr_ind_tipo_log => 2 -- Erro tratato
-                                       ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                           || vr_cdprogra || ' --> '
-                                                           || vr_des_erro );
-             RAISE vr_exc_erro;
-           END IF;
-
-         END IF;  -- IF  (vr_aux_cdbanchq = 756 OR vr_aux_cdbanchq = 1)
-
 
        ELSIF pr_inchqdev = 5  THEN
 

@@ -9,6 +9,9 @@
    
    Alteracoes:              
               12/09/2016 - Adicionado chamada da função "callBlass(event)" - (Evandro - RKAM).   
+              
+              27/06/2017 - Retiradas conticoes que tratam a praça do cheque e os números DE 
+                           documento 3,4 e 5. PRJ367 - Compe Sessao Unica (Lombardi)
 -->
 
 <html>
@@ -88,13 +91,42 @@ function initPage() {
    document.form1.v_codcoop.value = document.form1.v_cooppara.value;
    
 }
+
+function MostraCheques(){
+	
+	var div = document.getElementById("divcheques"); 
+	var campos = "";
+	
+	// Apaga todas as linhas, menos a do cabeçalho
+	for (var i = document.all.tbcheques.rows.length; i>1; i--){
+		document.all.tbcheques.deleteRow(i-1);
+	}
+
+	for(i=0;i<cheques.length;i++){
+
+		row = tbcheques.insertRow();
+		//LABEL
+		cell = row.insertCell();
+		cell.align = "right" ;
+		cell.className = "linhaform";
+		cell.width = '34%';
+		cell.innerHTML = "&nbsp;Cheq. Outros Bancos:&nbsp;";
+		
+		//CAMPO
+		cell = row.insertCell();
+		cell.width = '67%';
+		cell.innerHTML = "<input type=\"text\" size=\"20\" class=\"input\" maxlength=\"14\" value=\"" + cheques[i].vlcheque + "\" onKeyUp=\"callCalc(event, this)\" onKeyDown=\"JavaScript:FormataValor(this,11,event)\" style=\"text-align: right\" disabled>" +
+						 "&nbsp;<input type=\"text\" size=\"12\" class=\"input\" maxlength=\"8\" disabled value=\"" + cheques[i].dtcheque + "\" >";
+}
+		
+}
 </script>
 
 
 </head>
 
 
-<body background="/images/moeda.jpg" bgproperties="fixed" class="fundo" onLoad="JavaScript: initPage();" onKeyUp="callBlass(event); callBLini(event); callBLsal(event); callconta(event); callfin(event);"> 
+<body background="/images/moeda.jpg" bgproperties="fixed" class="fundo" onLoad="JavaScript: initPage(); MostraCheques();" onKeyUp="callBlass(event); callBLini(event); callBLsal(event); callconta(event); callfin(event);"> 
 
 <form name="form1" onKeyDown="change_page(event)" method=post>
 
@@ -231,32 +263,10 @@ function initPage() {
                    <input type="text" name="v_chequescoop" size="20" class="input" maxlength="14" onKeyUp="callCalc(event, this)" onKeyDown="JavaScript:FormataValor(this,11,event)" style="text-align: right" disabled>
                    </td>
                 </tr>
-                <tr>
-                  <td width="34%" align="right" class="linhaform"> Cheq. Menores Praça: </td>
-                     <td width="67%">
-                     <input type="text" name="v_vlmenorpraca" size="20" class="input" maxlength="14" onKeyUp="callCalc(event, this)" onKeyDown="JavaScript:FormataValor(this,11,event)" style="text-align: right" disabled>
-                     <input type="text" name="v_dtmenorpraca" size="12" class="input" maxlength="8" disabled>
-                   </td>
-                </tr>
-                <tr>
-                  <td width="34%" align="right" class="linhaform">Cheq. Maiores
-                    Praça:</td>
-                   <td width="67%">
-                   <input type="text" name="v_vlmaiorpraca" size="20" class="input" maxlength="14" onKeyUp="callCalc(event, this)" onKeyDown="JavaScript:FormataValor(this,11,event)" style="text-align: right" disabled>
-                   <input type="text" name="v_dtmaiorpraca" size="12" disabled maxlength="8" class="input"></td>
-                </tr>
-                <tr>
-                  <td width="34%" align="right" nowrap class="linhaform">Cheq. Menores Fora Praça:</td>
-                   <td width="67%">
-                   <input type="text" name="v_vlmenorforapraca" size="20" class="input" maxlength="14" onKeyUp="callCalc(event, this)" onKeyDown="JavaScript:FormataValor(this,11,event)" style="text-align: right" disabled>
-        		   <input type="text" name="v_dtmenorforapraca" size="12" disabled maxlength="8" class="input"></td>
-                </tr>
-                <tr>
-                  <td width="34%" align="right" class="linhaform">Cheq. Maiores Fora Praça:</td>
-                    <td width="67%">
-                    <input type="text" name="v_vlmaiorforapraca" size="20" class="input" maxlength="14" onKeyUp="callCalc(event, this)" onKeyDown="JavaScript:FormataValor(this,11,event)" style="text-align: right" disabled>
-                    <input type="text" name="v_dtmaiorforapraca" size="12" disabled maxlength="8" class="input"></td>
-                </tr>
+			  </table>
+			  <table id="tbcheques" name="tbcheques" width="100%" cellspacing = 0 cellpadding = 1>
+			  </table>
+			  <table width="100%" cellspacing = 0 cellpadding = 1>
                 <tr>
                   <td width="34%" align="right" class="linhaform">Total do Deposito:</td>
                   <td width="67%"><input type="text" name="v_totdepos" size="20" class="input" maxlength="14" onKeyUp="callCalc(event, this)" onKeyDown="JavaScript:FormataValor(this,11,event)" style="text-align: right" disabled></td>

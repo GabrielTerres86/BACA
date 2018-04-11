@@ -15,7 +15,7 @@ AS
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Guilherme / Supero
-    Data    : Novembro/2009.                   Ultima atualizacao: 07/04/2017
+    Data    : Novembro/2009.                   Ultima atualizacao: 08/03/2018
 
     Dados referentes ao programa:
 
@@ -66,6 +66,12 @@ AS
 
                07/04/2017 - #642531 Tratamento do tail para pegar/validar os dados da última linha
                             do arquivo corretamente (Carlos)
+               19/06/2017 - Retirados tratamentos efetuados para separação de cheques 
+                            com valor Inferior e Superior.
+
+               08/03/2018 - #prj367 Adicionado o parâmetro pr_nrvergrl = 1 para utilizar a versão do jasper
+                            compilado pelo TIBCO (Carlos)
+
     ........................................................................ */
     DECLARE
       -- Identificacao do programa
@@ -92,7 +98,6 @@ AS
       vr_exc_semlog EXCEPTION;              -- Excecao para saida sem log
       vr_exc_fimprg EXCEPTION;              -- Exceção com fimprg sem interromper a cadeia.
       vr_dstextab   CRAPTAB.DSTEXTAB%TYPE;  -- Retorno para funcao tabe0001.fn_busca_dstextab
-      vr_vlchqsup   NUMERIC;                -- Valor maior cheque
       vr_cdbanctl   VARCHAR2(500);          -- Codigo Banco Central
       vr_contado2   PLS_INTEGER;            -- Contador auxiliar 2
       vr_dtauxili   VARCHAR2(50);           -- Data auxiliar
@@ -163,18 +168,6 @@ AS
         vr_tot_vlregint NUMBER := 0;
         vr_tot_qtregrej PLS_INTEGER := 0;
         vr_tot_vlregrej NUMBER := 0;
-        vr_tot_qtrejinf PLS_INTEGER := 0;
-        vr_tot_vlrejinf NUMBER := 0;
-        vr_tot_qtrejsup PLS_INTEGER := 0;
-        vr_tot_vlrejsup NUMBER := 0;
-        vr_tot_qtintinf PLS_INTEGER := 0;
-        vr_tot_vlintinf NUMBER := 0;
-        vr_tot_qtintsup PLS_INTEGER := 0;
-        vr_tot_vlintsup NUMBER := 0;
-        vr_tot_qtrecinf PLS_INTEGER := 0;
-        vr_tot_vlrecinf NUMBER := 0;
-        vr_tot_qtrecsup PLS_INTEGER := 0;
-        vr_tot_vlrecsup NUMBER := 0;
         vr_des_comando  VARCHAR2(500);       -- Comando Unix
         vr_des_saida    VARCHAR2(4000);      -- Retorno do comando executado
         vr_vet_arquivos GENE0002.TYP_SPLIT;  -- Vetor para receber a quebra do retorno do comando no Unix
@@ -568,26 +561,16 @@ AS
                         exit;
                     end;
                     -- Alimenta contadores integrados
-                    if vr_vlcheque >= vr_vlchqsup then
-                      vr_tot_qtintsup := vr_tot_qtintsup + 1;
-                      vr_tot_vlintsup := vr_tot_vlintsup + (to_char(SUBSTR(vr_setlinha,34,17)) / 100);
-                    else
-                      vr_tot_qtintinf := vr_tot_qtintinf + 1;
-                      vr_tot_vlintinf := vr_tot_vlintinf + (to_char(SUBSTR(vr_setlinha,34,17)) / 100);
-                    end if; -- Fim alimenta contadores integrados
+                    vr_tot_qtregint := vr_tot_qtregint + 1;
+                    vr_tot_vlregint := vr_tot_vlregint + (to_char(SUBSTR(vr_setlinha,34,17)) / 100);
 
                   end if; -- Fim verifica tipo do registro encontrado
 
                 end if; -- Fim Verifica se registro existe
                 close cr_gncpchq;
                 -- Alimenta contadores recebidos
-                if vr_vlcheque >= vr_vlchqsup then
-                  vr_tot_qtrecsup := vr_tot_qtrecsup + 1;
-                  vr_tot_vlrecsup := vr_tot_vlrecsup + vr_vlcheque;
-                else
-                  vr_tot_qtrecinf := vr_tot_qtrecinf + 1;
-                  vr_tot_vlrecinf := vr_tot_vlrecinf + vr_vlcheque;
-                end if; -- Fim alimenta contadores recebidos
+                vr_tot_qtregrec := vr_tot_qtregrec + 1;
+                vr_tot_vlregrec := vr_tot_vlregrec + vr_vlcheque;
 
               end loop; -- Fim das linhas do arquivo
 
@@ -609,11 +592,6 @@ AS
               vr_cdcritic := 0;
 
               -- Começa a montagem do relatorio
-              -- Monta totais do relatorio
-              vr_tot_qtregint := vr_tot_qtintinf + vr_tot_qtintsup;
-              vr_tot_vlregint := vr_tot_vlintinf + vr_tot_vlintsup;
-              vr_tot_qtregrec := vr_tot_qtrecinf + vr_tot_qtrecsup;
-              vr_tot_vlregrec := vr_tot_vlrecinf + vr_tot_vlrecsup;
 
               -- Inicializar o CLOB (XML)
               dbms_lob.createtemporary(vr_dsxmldad, TRUE);
@@ -645,19 +623,10 @@ AS
                 pc_escreve_clob(' </rejeitados>');
 
                 -- Alimenta contadores rejeitados
-                if rw_craprej.vllanmto >= vr_vlchqsup then
-                  vr_tot_qtrejsup := vr_tot_qtrejsup + 1;
-                  vr_tot_vlrejsup := vr_tot_vlrejsup + rw_craprej.vllanmto;
-                else
-                  vr_tot_qtrejinf := vr_tot_qtrejinf + 1;
-                  vr_tot_vlrejinf := vr_tot_vlrejinf + rw_craprej.vllanmto;
-                end if;
+                vr_tot_qtregrej := vr_tot_qtregrej + 1;
+                vr_tot_vlregrej := vr_tot_vlregrej + rw_craprej.vllanmto;
               end loop; -- Fim dos rejeitados
               close cr_craprej;
-
-              -- Alimenta totais dos rejeitados
-              vr_tot_qtregrej := vr_tot_qtrejinf + vr_tot_qtrejsup;
-              vr_tot_vlregrej := vr_tot_vlrejinf + vr_tot_vlrejsup;
 
               -- Insere os totais gerais
               pc_escreve_clob(' <totais>');
@@ -667,18 +636,6 @@ AS
               pc_escreve_clob(' <vlregint>' || vr_tot_vlregint || '</vlregint>');
               pc_escreve_clob(' <qtregrej>' || vr_tot_qtregrej || '</qtregrej>');
               pc_escreve_clob(' <vlregrej>' || vr_tot_vlregrej || '</vlregrej>');
-              pc_escreve_clob(' <qtrejinf>' || vr_tot_qtrejinf || '</qtrejinf>');
-              pc_escreve_clob(' <vlrejinf>' || vr_tot_vlrejinf || '</vlrejinf>');
-              pc_escreve_clob(' <qtrejsup>' || vr_tot_qtrejsup || '</qtrejsup>');
-              pc_escreve_clob(' <vlrejsup>' || vr_tot_vlrejsup || '</vlrejsup>');
-              pc_escreve_clob(' <qtintinf>' || vr_tot_qtintinf || '</qtintinf>');
-              pc_escreve_clob(' <vlintinf>' || vr_tot_vlintinf || '</vlintinf>');
-              pc_escreve_clob(' <qtintsup>' || vr_tot_qtintsup || '</qtintsup>');
-              pc_escreve_clob(' <vlintsup>' || vr_tot_vlintsup || '</vlintsup>');
-              pc_escreve_clob(' <qtrecinf>' || vr_tot_qtrecinf || '</qtrecinf>');
-              pc_escreve_clob(' <vlrecinf>' || vr_tot_vlrecinf || '</vlrecinf>');
-              pc_escreve_clob(' <qtrecsup>' || vr_tot_qtrecsup || '</qtrecsup>');
-              pc_escreve_clob(' <vlrecsup>' || vr_tot_vlrecsup || '</vlrecsup>');
               pc_escreve_clob(' </totais>');
 
               -- Fecha tag inicial
@@ -703,6 +660,7 @@ AS
                                          ,pr_qtcoluna  => 132                              --> Qtd colunas do relatório (80,132,234)
                                          ,pr_flg_impri=> 'S'                               --> Chamar a impressão (Imprim.p)
                                          ,pr_nrcopias  => 1                                --> Número de cópias para impressão
+                                         ,pr_nrvergrl  => 1                                --> Numero da versão da função de geração de relatorio
                                          ,pr_des_erro  => vr_dscritic);                    --> Saída com erro
 
               -- Liberando a memória alocada pro CLOB
@@ -840,21 +798,6 @@ AS
 
 
       -- Inicio da Regra de Negocio
-
-      --Busca na crapdat valor do maior cheque.
-      vr_dstextab := tabe0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
-                                               ,pr_nmsistem => 'CRED'
-                                               ,pr_tptabela => 'USUARI'
-                                               ,pr_cdempres => 11
-                                               ,pr_cdacesso => 'MAIORESCHQ'
-                                               ,pr_tpregist => 1);
-
-      -- Alimenta variavel de acordo com o retorno da funcao
-      if trim(vr_dstextab) is not null then
-        vr_vlchqsup := to_char(substr(vr_dstextab, 1, 15));
-      else
-        vr_vlchqsup := 0;
-      end if;
 
       -- Inicia contado2
       vr_contado2 := 1;
