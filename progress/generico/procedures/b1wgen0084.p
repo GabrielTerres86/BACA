@@ -6391,7 +6391,6 @@ PROCEDURE buscar_historico_e_lote_efet_prop:
             IF par_dsoperac = "FINANCIAMENTO" THEN
                 ASSIGN par_nrdolote = 600013.
             ELSE
-              IF par_dsoperac = "EMPRESTIMO" THEN
                 ASSIGN par_nrdolote = 600012.
           END.
       END.
