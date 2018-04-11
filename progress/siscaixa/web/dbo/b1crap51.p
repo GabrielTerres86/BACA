@@ -4,7 +4,7 @@
    Sistema : Caixa On-line
    Sigla   : CRED   
    Autor   : Mirtes.
-   Data    : Marco/2001                      Ultima atualizacao: 27/10/2016
+   Data    : Marco/2001                      Ultima atualizacao: 01/06/2017
 
    Dados referentes ao programa:
 
@@ -161,6 +161,10 @@
                             de cheques de bancos que nao participam da COMPE
                             Utilizar apenas BANCO e FLAG ativo
                             (Tiago - Chamado 546031)
+
+               17/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+			                crapass, crapttl, crapjur 
+							(Adriano - P339).
 
                01/06/2017 - Incluso tratativa para critica 757 apenas quando 
 			                cheque nao estiver descontado. (Daniel)	
@@ -5131,8 +5135,23 @@ PROCEDURE atualiza-deposito-com-captura:
                        NO-LOCK NO-ERROR.
     
     IF   AVAIL crapass   THEN
-         ASSIGN c-nome-titular1 = crapass.nmprimtl
-                c-nome-titular2 = crapass.nmsegntl.
+	   DO:
+           ASSIGN c-nome-titular1 = crapass.nmprimtl.
+
+		   IF crapass.inpessoa = 1 THEN
+			  DO:
+				  FOR FIRST crapttl FIELDS(crapttl.nmextttl)
+				                     WHERE crapttl.cdcooper = crapass.cdcooper AND
+									       crapttl.nrdconta = crapass.nrdconta AND
+									       crapttl.idseqttl = 2 
+									       NO-LOCK:
+
+					 ASSIGN c-nome-titular2 = crapttl.nmextttl.
+
+				  END.
+
+			  END.
+	   END.
 
     ASSIGN c-literal = " "
            c-literal[1]  = TRIM(crapcop.nmrescop) + " - " + 
@@ -6683,8 +6702,23 @@ PROCEDURE atualiza-deposito-com-captura-migrado:
                        NO-LOCK NO-ERROR.
     
     IF   AVAIL crapass   THEN
-         ASSIGN c-nome-titular1 = crapass.nmprimtl
-                c-nome-titular2 = crapass.nmsegntl.
+	   DO:
+           ASSIGN c-nome-titular1 = crapass.nmprimtl.
+
+		   IF crapass.inpessoa = 1 THEN
+			  DO:
+				  FOR FIRST crapttl FIELDS(crapttl.nmextttl)
+				                     WHERE crapttl.cdcooper = crapass.cdcooper AND
+									       crapttl.nrdconta = crapass.nrdconta AND
+									       crapttl.idseqttl = 2 
+									       NO-LOCK:
+				  
+					 ASSIGN c-nome-titular2 = crapttl.nmextttl.
+
+                  END.
+
+			  END.
+	   END.
 
     ASSIGN c-literal = " "
            c-literal[1]  = TRIM(crapcop.nmrescop) + " - " + 
@@ -8311,8 +8345,23 @@ PROCEDURE atualiza-deposito-com-captura-migrado-host:
                        NO-LOCK NO-ERROR.
     
     IF   AVAIL crapass   THEN
-         ASSIGN c-nome-titular1 = crapass.nmprimtl
-                c-nome-titular2 = crapass.nmsegntl.
+	   DO:
+           ASSIGN c-nome-titular1 = crapass.nmprimtl.
+
+		   IF crapass.inpessoa = 1 THEN
+			  DO:
+				  FOR FIRST crapttl FIELDS(crapttl.nmextttl)
+				                     WHERE crapttl.cdcooper = crapass.cdcooper AND
+   									       crapttl.nrdconta = crapass.nrdconta AND
+									       crapttl.idseqttl = 2 
+									       NO-LOCK:
+				  
+					 ASSIGN c-nome-titular2 = crapttl.nmextttl.
+
+                  END.
+
+			  END.
+	   END.
 
     ASSIGN c-literal = " "
            c-literal[1]  = TRIM(crapcop.nmrescop) + " - " + 

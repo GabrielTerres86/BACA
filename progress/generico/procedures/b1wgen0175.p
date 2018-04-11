@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Andre Santos - SUPERO
-   Data    : Setembro/2013                      Ultima atualizacao: 29/12/2016
+   Data    : Setembro/2013                      Ultima atualizacao: 27/03/2017
    Dados referentes ao programa:
 
    Frequencia: Diario (on-line)
@@ -93,6 +93,9 @@
    29/12/2016 - Ajustes na procedure busca-devolucoes-cheque para considerar
                 conta migrada e buscar de forma correta no PA correto
 				(Tiago/Elton SD579158)
+                
+   27/03/2017 - Incluir tratamento para formularios migrados da acredi para viacredi 
+                (Lucas Ranghetti #619830)
 ............................................................................. */
 DEF STREAM str_1.  /*  Para relatorio de entidade  */
 
@@ -1663,6 +1666,16 @@ PROCEDURE verifica_alinea:
 
     END.
 
+    /* se for um formulario migrado, vamos buscar a coop antiga*/
+    FOR EACH craptco WHERE craptco.cdcopant = par_cdcooper
+                       AND craptco.nrctaant = par_nrctachq
+                       AND craptco.tpctatrf = 1         
+                       AND craptco.flgativo = TRUE 
+                       NO-LOCK:
+    
+        ASSIGN aux_nrdconta = craptco.nrdconta.
+    END.
+
     aux_nrcalcul = INT(SUBSTR(STRING(par_nrdocmto,"9999999"),1,6)).
 
     FIND crapfdc WHERE crapfdc.cdcooper = par_cdcooper
@@ -1688,7 +1701,9 @@ PROCEDURE verifica_alinea:
                          
     RUN valida-alinea (INPUT crapfdc.cdcooper,
                        INPUT crapfdc.nrdconta,
-                       INPUT crapfdc.nrdctabb,
+                       INPUT IF aux_nrdconta > 0 THEN 
+                                aux_nrdconta 
+                             ELSE crapfdc.nrdctabb,
                        INPUT par_nrdocmto,
                        INPUT par_cdalinea,
                        INPUT par_dtmvtolt,

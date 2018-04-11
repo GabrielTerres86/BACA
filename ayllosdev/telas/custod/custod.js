@@ -11,6 +11,8 @@
  * [30/09/2016] Odirlei Busana   (AMcom) : Inclusao relatorio de detalhamento de remessa custodia.
  * [16/12/2016] Lucas Reinert (CECRED)   : Alterações referentes ao projeto 300.
  * [11/04/2017] Permitir acessar o Ayllos mesmo vindo do CRM. (Jaison/Andrino)
+ * [16/01/2018] Lucas Reinert (CECRED)	 : Aumentado tamanho do campo de senha para 30 caracteres. (PRJ339)
+ * [06/02/2018] Mateus Zimmermann (Mouts): Alterações referentes ao projeto 454.1 - Resgate de cheque em custodia. ()
  */
 
 //Formulários e Tabela
@@ -391,6 +393,10 @@ function formataOpcao() {
 		formataOpcaoI();
         $('#divCustch').css({'display': 'none'});        
 		cNrdconta.habilitaCampo().focus();
+    } else if (cddopcao == 'N') {
+        formataOpcaoN();
+
+        cNrdconta.habilitaCampo().focus();
     }
 
     controlaPesquisas();
@@ -539,6 +545,9 @@ function controlaAssociado() {
 		cVlcheque.habilitaCampo();
 		cDsdocmc7.habilitaCampo();
 		trocaBotoesI();
+    } else if (cddopcao == 'N'){
+        cDtresgat.habilitaCampo().select();
+        cNrcheque.habilitaCampo();
     }
 
     controlaPesquisas();
@@ -2109,7 +2118,7 @@ function formataSenha() {
     cSenha = $('#codsenha', '#frmSenha');
 
     cOperador.addClass('campo').css({'width': '100px'}).attr('maxlength', '10').focus();
-    cSenha.addClass('campo').css({'width': '100px'}).attr('maxlength', '10');
+    cSenha.addClass('campo').css({'width': '100px'}).attr('maxlength', '30');
 
 
 
@@ -2413,6 +2422,10 @@ function btnContinuar() {
 		
 	} else if (cddopcao == 'I' && !cDtchqbom.hasClass('campoTelaSemBorda')) {
 		finalizarCustodia();
+
+    } else if (cddopcao == 'N' && !cDtresgat.hasClass('campoTelaSemBorda')) {
+        buscarChequesResgatados();
+
     }
 	
 
@@ -3101,8 +3114,8 @@ function adicionaChequeGrid(){
 function validarResgate(){
 	
 	var aux_flgerro = false;
-	var btnResgatar = $('#btResgatar','#divBotoes');
-	var btnProsseguir = $('#btProsseguir','#divBotoes');
+	var btnResgatar = $('#btResgatar','#divTela');
+	var btnProsseguir = $('#btProsseguir','#divTela');
 	if( $('#tbCheques tbody tr').length > 0 ){
 		showMsgAguardo('Aguarde, validando cheque(s) informado(s) ...');
 		
@@ -3141,12 +3154,12 @@ function validarResgate(){
 		
 		if ((btnResgatar.css('display') == 'inline-block') && (!aux_flgerro)){
 			hideMsgAguardo();			
-			showConfirmacao('Confirma o resgate do(s) cheque(s) informado(s)?', 'Confirma&ccedil;&atilde;o - Ayllos', 'efetuaResgate('+nrdconta+',"'+dscheque+'");', 'return false;', 'sim.gif', 'nao.gif'); //bloqueiaFundo( $(\'#divRotina\') )
+			showConfirmacao('Confirma o resgate do(s) cheque(s) informado(s)?', 'Confirma&ccedil;&atilde;o - Ayllos', 'mostraAutorizaResgate();', 'return false;', 'sim.gif', 'nao.gif'); //bloqueiaFundo( $(\'#divRotina\') )
 		}else{
 			$.ajax({        
 				type: 'POST',
 				dataType: 'html',
-				url: UrlSite + 'telas/custod/valida_resgate.php', 
+				url: UrlSite + 'telas/custod/valida_resgate.php',
 				async: false,
 				data: {
 					nrdconta: nrdconta,
@@ -3176,30 +3189,62 @@ function validarResgate(){
 	
 }
 
-function efetuaResgate(nrdconta,dscheque){
+function efetuaResgate(flgImpressao){
 	
 	showMsgAguardo('Aguarde, efetuando resgate do(s) cheque(s) informado(s) ...');
-	
-	$.ajax({        
-		type: 'POST',
-		dataType: 'html',
-		url: UrlSite + 'telas/custod/valida_resgate.php', 
+
+    var nrdconta = normalizaNumero($('#nrdconta', '#' + frmOpcao).val());
+    var nomeresg = $('#nomeresg', '#frmAutorizar').val();
+    var docuresg = $('#docuresg', '#frmAutorizar').val();
+    var dscheque = "";
+
+    $('#tbCheques tbody tr').each(function(){
+        if( dscheque != "" ){
+            dscheque += "|";
+        }
+
+        if ($("#aux_dscritic",this).text() != ''){                  
+            aux_flgerro = true;     
+        }
+
+        dscheque += $("#aux_dsdocmc7",this).val(); // CMC-7
+              
+    });
+
+    if( dscheque == "" ){
+        unblockBackground();
+        showError('error','Nenhum cheque foi informado para resgate.','Alerta - Ayllos','');
+        return false;
+    }
+
+    $.ajax({
+      type: 'POST',
+      dataType: 'html',
+      url: UrlSite + 'telas/custod/valida_resgate.php', 
 		async: false,
 		data: {
 			nrdconta: nrdconta,
 			dscheque: dscheque,
+            nomeresg: nomeresg,
+            docuresg: docuresg,
 			inresgte: 1, // Efetua resgate
 			redirect: 'html_ajax'           
 			}, 
 		error: function(objAjax,responseError,objExcept) {
-			hideMsgAguardo();           
+			hideMsgAguardo();
 			showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos',"unblockBackground()");
 		},
 		success: function(response) {
 			hideMsgAguardo();
 			try {
+                if (response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1) {
+                    if (flgImpressao) {
+                        var action = UrlSite + "telas/custod/comprovante_pdf.php";
+                        carregaImpressaoAyllos("formImpres",action,'estadoInicial();');
+                    }
+                }
 				eval( response );					
-			} catch(error) {						
+			} catch(error) {					
 				showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','unblockBackground();');
 			}
 		}
@@ -5312,4 +5357,478 @@ function incluiEmitente(){
 	
 	return false;
 	
+}
+
+function mostraAutorizaResgate() {
+
+    // Executa script através de ajax
+    $.ajax({        
+        type: 'POST',
+        dataType: 'html',
+        url: UrlSite + 'telas/custod/autorizar_resgate.php', 
+        data: {         
+            redirect: 'html_ajax'           
+            }, 
+        error: function(objAjax,responseError,objExcept) {
+            hideMsgAguardo();
+            showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos',"unblockBackground()");
+        },
+        success: function(response) {           
+            $('#divRotina').html(response);             
+            exibeRotina($('#divRotina'));
+            formataAutorizarRegaste();         
+        }               
+    });
+    
+    return false;
+    
+}
+
+function formataAutorizarRegaste(){
+
+    divRotina.css('width', '300px');
+    divRotina.css('height', '400px');
+
+    $('#divAutSenha').css('display', 'none');
+    $('#divNomeDoc').css('display', 'none');
+
+    if (inpessoa > 1 && idastcjt == 1) {
+        $('#divAutIB').css('display', 'block');
+    } else {
+        $('#divAutIB').css('display', 'none');
+    }
+    
+    // label
+    var rSenha     = $('label[for="dssencar"]', '#frmAutorizar');
+    var rNome      = $('label[for="nomeresg"]', '#frmAutorizar');
+    var rDocumento = $('label[for="docuresg"]', '#frmAutorizar');
+
+    rSenha.addClass('rotulo').css('width', '40px');
+    rNome.addClass('rotulo').css('width', '40px');
+    rDocumento.addClass('rotulo').css('width', '40px');
+
+    // input
+    var cSenha                  = $('#dssencar', '#frmAutorizar');
+    var cFlgAutorizaSenha       = $('#flgAutorizaSenha', '#frmAutorizar');
+    var cFlgAutorizaIB          = $('#flgAutorizaIB', '#frmAutorizar');
+    var cFlgAutorizaComprovante = $('#flgAutorizaComprovante', '#frmAutorizar');
+    var cNome                   = $('#nomeresg', '#frmAutorizar');
+    var cDocumento              = $('#docuresg', '#frmAutorizar');
+    
+    cSenha.css('width', '100px').addClass('campo');
+    cFlgAutorizaSenha.css('clear', 'left');
+    cFlgAutorizaIB.css('clear', 'left');
+    cFlgAutorizaComprovante.css('clear', 'left');
+    cNome.css('width', '220px').addClass('campo');
+    cDocumento.css('width', '220px').addClass('campo');
+}
+
+function alteraOpcaoAutorizar(){
+    var opcaoSelecionada = $('input[type=radio][name=flgautoriza]:checked', '#frmAutorizar').val();
+    if (opcaoSelecionada == 'senha') {
+        $('#divAutSenha').css('display', 'block');
+        $('#divNomeDoc').css('display', 'none');
+    } else if (opcaoSelecionada == 'ib') {
+        $('#divAutSenha').css('display', 'none');
+        $('#divNomeDoc').css('display', 'none');
+    } else if (opcaoSelecionada == 'comprovante') {
+        $('#divAutSenha').css('display', 'none');
+        //$('#divNomeDoc').css('display', 'block');
+    }
+}
+
+function prosseguirAutorizacao() {
+
+    hideMsgAguardo();
+
+    var nrdconta = normalizaNumero($('#nrdconta', '#' + frmOpcao).val());
+    var opcaoSelecionada = $('input[type=radio][name=flgautoriza]:checked', '#frmAutorizar').val();
+
+    if (opcaoSelecionada == 'senha') {
+        // Validar a senha digitada
+        var dssencar = $('#dssencar', '#frmAutorizar').val();
+
+        showMsgAguardo('Aguarde, validando ...');
+
+        $.ajax({
+            type: 'POST',
+            async: true,
+            url: UrlSite + 'telas/custod/valida_senha_cooperado.php',
+            data: {
+                nrdconta: nrdconta,
+                dssencar: dssencar,
+                inpessoa: inpessoa,
+                idastcjt: idastcjt,
+                redirect: 'script_ajax'
+            },
+            error: function(objAjax, responseError, objExcept) {
+                hideMsgAguardo();
+                showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'unblockBackground()');
+            },
+            success: function(response) {
+                try {
+                    eval(response);
+                    return false;
+                } catch (error) {
+                    hideMsgAguardo();
+                    showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'unblockBackground()');
+                }
+            }
+        });
+    } else if(opcaoSelecionada == 'ib'){
+        criaTransPendenteCheque('ib');
+    } else if(opcaoSelecionada == 'comprovante'){
+        geraImpressaoComprovante('frmAutorizar');
+    }
+
+    return false;
+
+}
+
+function geraImpressaoComprovante(form){
+
+    showMsgAguardo('Aguarde, buscando cheque(s) resgatados(s) ...');
+
+    var nrdconta = cNrdconta.val();
+    var nmprimtl = cNmprimtl.val();
+    // var nomeresg = $('#nomeresg', '#' + form).val();
+    // var docuresg = $('#docuresg', '#' + form).val();
+    var dscheque = "";
+    
+    $('#tbCheques tbody tr').each(function(){
+
+        // Verificar se o cheque está "checado" para imprimir o comprovante e se a opcao escolhida é N
+        if(!$('#flgcompr' + $("#aux_cheque",  this).val()).is(':checked') && cddopcao == 'N'){
+            return true;
+        }
+
+        if( dscheque != "" ){
+            dscheque += "|";
+        }
+        
+        dscheque += $("#aux_cheque",  this).val() + ";" ; // Número Cheque
+        if (cddopcao == 'N') {
+            dscheque += $("#aux_vlcheque",this).val() + ";" ; // Valor Cheque
+        } else {
+            dscheque += $("#aux_vlcheque",this).html() + ";" ; // Valor Cheque
+        }
+        dscheque += $("#aux_cmc7",    this).val();        // CMC-7
+    });
+
+    $('#formImpres').html('');
+
+    $('#formImpres').append('<input type="hidden" id="nrdconta" name="nrdconta" value="'+nrdconta+'"/>');
+    $('#formImpres').append('<input type="hidden" id="nmprimtl" name="nmprimtl" value="'+nmprimtl+'"/>');
+    $('#formImpres').append('<input type="hidden" id="dscheque" name="dscheque" value="'+dscheque+'"/>');
+    $('#formImpres').append('<input type="hidden" id="sidlogin" name="sidlogin" value="'+ $('#sidlogin','#frmMenu').val() + '"/>');
+    $('#formImpres').append('<input type="hidden" id="inpessoa" name="inpessoa" value="'+inpessoa+'"/>');
+    $('#formImpres').append('<input type="hidden" id="idastcjt" name="idastcjt" value="'+idastcjt+'"/>');
+
+    buscarResponsaveisAssinatura();
+}
+
+// opcao N
+function formataOpcaoN() {
+
+    // label
+    rNrdconta = $('label[for="nrdconta"]', '#' + frmOpcao);
+    rDtresgat = $('label[for="dtresgat"]', '#' + frmOpcao);
+    rNrcheque = $('label[for="nrcheque"]', '#' + frmOpcao);
+
+    rNrdconta.css({'width': '120px'}).addClass('rotulo');
+    rDtresgat.css({'width': '120px'}).addClass('rotulo');
+    rNrcheque.css({'width': '120px'}).addClass('rotulo');
+
+    // input
+    cNrdconta = $('#nrdconta', '#' + frmOpcao);
+    cDtresgat = $('#dtresgat', '#' + frmOpcao);
+    cNmprimtl = $('#nmprimtl', '#' + frmOpcao);
+    cNrcheque = $('#nrcheque', '#' + frmOpcao);
+    cDsdocmc7 = $('#dsdocmc7', '#' + frmOpcao);
+
+    cNrdconta.css({'width': '75px'}).addClass('pesquisa conta');
+    cNmprimtl.css({'width': '553px'});
+    cDtresgat.css({'width': '75px'}).addClass('data');
+    cNrcheque.css({'width': '553px'});
+
+    // Outros   
+    cTodosOpcao.desabilitaCampo();
+
+    //
+    if ($.browser.msie) {
+        rDtresgat.css({'width': '152px'});
+    }
+
+    // conta
+    cNrdconta.unbind('keydown').bind('keydown', function(e) {
+        if (divError.css('display') == 'block') {
+            return false;
+        }
+
+        var auxconta = normalizaNumero(cNrdconta.val());
+
+        // Se é a tecla TAB, 
+        if ((e.keyCode == 9 || e.keyCode == 13 || typeof e.keyCode == 'undefined') && (auxconta === 0 || validaCampo('nrdconta', auxconta))) {
+            manterRotina('BIA');
+            return false;
+        } else if (e.keyCode == 9 || e.keyCode == 13 || typeof e.keyCode == 'undefined') {
+            return false;
+        }
+
+    });
+
+    layoutPadrao();
+    controlaPesquisas();
+    
+    cDtresgat.attr('tabindex', 1);
+    cNrcheque.attr('tabindex', 2);
+    
+    return false;
+
+}
+
+function buscarChequesResgatados(){
+
+    showMsgAguardo('Aguarde, buscando cheque(s) resgatados(s) ...');
+    
+    var nrdconta = normalizaNumero(cNrdconta.val());
+    var dtresgat = cDtresgat.val();
+    var nrcheque = cNrcheque.val();
+    
+    $.ajax({        
+        type: 'POST',
+        dataType: 'html',
+        url: UrlSite + 'telas/custod/busca_cheques_resgatados.php', 
+        data: {
+            nrdconta: nrdconta,
+            dtresgat: dtresgat,
+            nrcheque: nrcheque,
+            redirect: 'html_ajax'           
+            }, 
+        error: function(objAjax,responseError,objExcept) {
+            hideMsgAguardo();           
+            showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos',"unblockBackground()");
+        },
+        success: function(response) {
+            hideMsgAguardo();
+            if (response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1) {
+                try{
+                    $('#divCheques').html(response);
+                    formataTabelaN();
+                } catch(error){
+                    showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','unblockBackground();');
+                }
+            }else{
+                try {
+                    eval( response );                   
+                } catch(error) {                        
+                    showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','unblockBackground();');
+                }
+            }
+        }
+    });
+
+}
+
+function formataTabelaN(){
+    
+    // tabela
+    var divRegistro = $('div.divRegistros', '#divCheques');
+    var tabela = $('table', divRegistro);
+    
+    $('#' + frmOpcao).css({'margin-top': '5px'});
+    divRegistro.css({'height': '207px', 'padding-bottom': '2px'});
+
+    var ordemInicial = new Array();
+
+    var arrayLargura = new Array();
+    arrayLargura[0] = '20px';
+    arrayLargura[1] = '80px';
+    arrayLargura[2] = '80px';
+    arrayLargura[3] = '80px';
+    arrayLargura[4] = '80px';
+    arrayLargura[5] = '80px';
+    
+    var arrayAlinha = new Array();
+    arrayAlinha[0] = 'center';
+    arrayAlinha[1] = 'right';
+    arrayAlinha[2] = 'right';
+    arrayAlinha[3] = 'right';
+    arrayAlinha[4] = 'right';
+    arrayAlinha[5] = 'right';
+    arrayAlinha[6] = 'center';
+
+    tabela.formataTabela(ordemInicial, arrayLargura, arrayAlinha, '');
+
+    $('#btProsseguir').css('display', 'none');
+    $('#btImprimir').css('display', '');
+    
+}
+
+function formRespAssinatura(){
+
+    var nrdconta = normalizaNumero($('#nrdconta', '#' + frmOpcao).val());
+    
+    // Executa script através de ajax
+    $.ajax({        
+        type: 'POST',
+        dataType: 'html',
+        url: UrlSite + 'telas/custod/form_resp_assinatura.php', 
+        data: {         
+            nrdconta: nrdconta,
+            redirect: 'html_ajax'           
+            }, 
+        error: function(objAjax,responseError,objExcept) {
+            hideMsgAguardo();
+            showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos',"unblockBackground()");
+        },
+        success: function(response) {
+            hideMsgAguardo();  
+            if (response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1) {
+                try{
+                    $('#divAutorizar').html(response);           
+                    formataTabelaResponsaveisAssinatura();
+                } catch(error){
+                    showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','unblockBackground();');
+                }
+            }else{
+                try {
+                    eval( response );                   
+                } catch(error) {                        
+                    showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','unblockBackground();');
+                }
+            }         
+        }               
+    });
+    
+    return false;
+    
+}
+
+function formataTabelaResponsaveisAssinatura(){
+    
+    // tabela
+    var divRegistro = $('div.divRegistros', '#divAutorizar');
+    var tabela = $('table', divRegistro);
+
+    var ordemInicial = new Array();
+
+    var arrayLargura = new Array();
+	arrayLargura[0] = '13px';
+    
+    var arrayAlinha = new Array();
+    arrayAlinha[0] = 'center';
+
+    tabela.formataTabela(ordemInicial, arrayLargura, arrayAlinha, '');
+    
+}
+
+function selecionarResponsavel(){
+    var nrcpfcgc = $('input[type=radio][name=nrcpfcgc]:checked', '#tabelaResponsaveis').val();
+
+    criaTransPendenteCheque('senha', nrcpfcgc);
+}
+
+function buscarResponsaveisAssinatura(){
+
+    var nrdconta = normalizaNumero($('#nrdconta', '#' + frmOpcao).val());
+    
+    // Executa script através de ajax
+    $.ajax({        
+        type: 'POST',
+        dataType: 'html',
+        url: UrlSite + 'telas/custod/busca_responsaveis_assinatura.php', 
+        data: {         
+            nrdconta: nrdconta,
+            redirect: 'html_ajax'           
+            }, 
+        error: function(objAjax,responseError,objExcept) {
+            hideMsgAguardo();
+            showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos',"unblockBackground()");
+        },
+        success: function(response) {
+            hideMsgAguardo();
+            if (response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1) {
+                try{
+
+                    $('#formImpres').append(response);
+                    if (cddopcao == 'N') {
+                        var action = UrlSite + "telas/custod/comprovante_pdf.php";
+                        carregaImpressaoAyllos("formImpres",action,'estadoInicial();');
+                    } else if (cddopcao == 'H') {
+                        efetuaResgate(true);
+                    }
+
+                } catch(error){
+                    showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','unblockBackground();');
+                }
+            }else{
+                try {
+                    eval( response );                   
+                } catch(error) {                        
+                    showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','unblockBackground();');
+                }
+            }
+        }
+    });
+    
+    return false;
+    
+}
+
+function criaTransPendenteCheque(opcao, nrcpfcgc){
+    
+    showMsgAguardo('Aguarde, criando pendencias...');
+
+    if (opcao == 'senha' && (nrcpfcgc == '' || nrcpfcgc == undefined)) {
+        hideMsgAguardo();
+        showError('error','Nenhum respons&aacute;vel foi selecionado.','Alerta - Ayllos',"unblockBackground()");
+    }
+
+    var nrdconta = normalizaNumero($('#nrdconta', '#' + frmOpcao).val());
+    var dscheque = "";
+
+    $('#tbCheques tbody tr').each(function(){
+        if( dscheque != "" ){
+            dscheque += "|";
+        }
+
+        if ($("#aux_dscritic",this).text() != ''){                  
+            aux_flgerro = true;     
+        }
+
+        dscheque += $("#aux_dsdocmc7",this).val(); // CMC-7
+              
+    });
+
+    if( dscheque == "" ){
+        unblockBackground();
+        showError('error','Nenhum cheque foi informado para resgate.','Alerta - Ayllos','');
+        return false;
+    }
+
+    $.ajax({
+      type: 'POST',
+      dataType: 'html',
+      url: UrlSite + 'telas/custod/cria_trans_pend_resgate_cst.php', 
+        async: false,
+        data: {
+            nrdconta: nrdconta,
+            dscheque: dscheque,
+            nrcpfcgc: nrcpfcgc,
+            redirect: 'html_ajax'
+            }, 
+        error: function(objAjax,responseError,objExcept) {
+            hideMsgAguardo();
+            showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos',"unblockBackground()");
+        },
+        success: function(response) {
+            hideMsgAguardo();
+            try {
+                eval( response );
+            } catch(error) {                    
+                showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','unblockBackground();');
+            }
+        }
+    });
 }
