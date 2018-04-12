@@ -155,6 +155,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
       FROM vwcadast_pessoa_fisica
      WHERE idpessoa = pr_idpessoa;
 
+  -- Retornar todos os dados da pessoa fisica
+  CURSOR cr_pessoa_fis_CPF (pr_nrcpf tbcadast_pessoa.nrcpfcgc%TYPE) IS
+    SELECT *
+      FROM vwcadast_pessoa_fisica
+     WHERE nrcpf = pr_nrcpf;
+
   -- Retornar todos os dados da pessoa juridica
   CURSOR cr_pessoa_jur (pr_idpessoa tbcadast_pessoa.idpessoa%TYPE) IS
     SELECT *
@@ -4327,7 +4333,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
     --   Frequencia: Sempre que for chamado
     --   Objetivo  : Rotina para atualizacao da tabela de dados titulares(CRAPTTL)
     --
-    --  Alteração :
+    --  Alteração : 12/04/2018 - Alterando tpcadastro ao excluir o titular. (INC0010388 - Kelvin)
     --
     --
     -- ..........................................................................*/
@@ -4347,6 +4353,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
          AND rel.tprelacao        = pr_tprelacao
          AND rel.idpessoa_relacao = pes.idpessoa;
     rw_pessoa_rel cr_pessoa_rel%ROWTYPE;
+    
+    CURSOR cr_existe_crapttl(pr_nrcpfcgc crapttl.nrcpfcgc%TYPE) IS
+      SELECT 1
+        FROM crapttl ttl
+       WHERE ttl.nrcpfcgc = pr_nrcpfcgc;
+    rw_existe_crapttl cr_existe_crapttl%ROWTYPE;
 
     ---------------> VARIAVEIS <-----------------
     -- Tratamento de erros
@@ -4362,8 +4374,30 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
 
     -- Se for uma exclusao
     IF pr_tpoperacao = 3 THEN
-      --> Tabela nao permite exclusão, nao é necessario tratar
-      NULL;
+      
+      --Se existe titular
+      OPEN cr_existe_crapttl(pr_crapttl.nrcpfcgc);
+      FETCH cr_existe_crapttl INTO rw_existe_crapttl;
+     
+      IF cr_existe_crapttl%NOTFOUND THEN 
+        CLOSE cr_existe_crapttl;
+        -- Buscar dados pessoa fisica
+        OPEN cr_pessoa_fis_cpf(pr_nrcpf => pr_crapttl.nrcpfcgc);
+        FETCH cr_pessoa_fis_cpf INTO rw_pessoa_fis;
+        CLOSE cr_pessoa_fis_cpf;
+      
+        rw_pessoa_fis.tpcadastro             := 2; -- Cadastro basico
+        
+        -- Atualiza o Cadastro de pessoa fisica
+        cada0010.pc_cadast_pessoa_fisica(pr_pessoa_fisica => rw_pessoa_fis,
+                                         pr_cdcritic      => vr_cdcritic,
+                                         pr_dscritic      => vr_dscritic);
+        IF nvl(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+          RAISE vr_exc_erro;
+        END IF;
+      ELSE
+        CLOSE cr_existe_crapttl;
+      END IF;
     ELSE -- Se for alteracao ou inclusao
 
       -- Se nao for informado o IDPESSOA, deve-se buscar
@@ -5537,6 +5571,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0015 IS
             rw_crapttl.cdcooper := rw_pessoa_atlz.cdcooper;
             rw_crapttl.nrdconta := rw_pessoa_atlz.nrdconta;
             rw_crapttl.idseqttl := rw_pessoa_atlz.idseqttl;
+            -- Passa o CPF que eh atualizado na trigger quando ocorre delecao
+            BEGIN
+              rw_crapttl.nrcpfcgc := rw_pessoa_atlz.dschave;
+            EXCEPTION
+              WHEN OTHERS THEN
+                rw_crapttl.nrcpfcgc := 0;
+            END;
 
           ELSE
 						-- Fechar cursor
