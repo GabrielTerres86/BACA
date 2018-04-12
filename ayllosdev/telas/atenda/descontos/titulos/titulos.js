@@ -210,7 +210,7 @@ function mostraDadosBorderoDscTit(opcaomostra) {
     return false;
 }
 
-// Mostrar dados do bordero para fazer
+// Mostrar tela de inclusao de borderos
 function mostrarBorderoIncluir() {
     // Mostra mensagem de aguardo
     showMsgAguardo("Aguarde, carregando dados do border&ocirc; ...");
@@ -222,6 +222,31 @@ function mostrarBorderoIncluir() {
         dataType: "html",
         data: {
             nrdconta: nrdconta,
+            redirect: "html_ajax"
+        },
+        error: function (objAjax, responseError, objExcept) {
+            hideMsgAguardo();
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+        },
+        success: function (response) {
+            $("#divOpcoesDaOpcao3").html(response);
+        }
+    });
+    return false;
+}
+// Mostrar dados para alterar um bordero
+function mostrarBorderoAlterar() {
+    // Mostra mensagem de aguardo
+    showMsgAguardo("Aguarde, carregando dados do border&ocirc; ...");
+
+    // Carrega conteúdo da opção através de ajax
+    $.ajax({
+        type: "POST",
+        url: UrlSite + "telas/atenda/descontos/titulos/titulos_bordero_alterar.php",
+        dataType: "html",
+        data: {
+            nrdconta: nrdconta,
+            nrborder: nrbordero,
             redirect: "html_ajax"
         },
         error: function (objAjax, responseError, objExcept) {
@@ -291,9 +316,13 @@ function calculaSaldoBordero(){
     var vldispon = $("#vldispon","#divIncluirBordero"); //valor disponivel
     var vlseleci = $("#vlseleci","#divIncluirBordero"); //valor titulos selecionados
     var vlsaldor = $("#vlsaldor","#divIncluirBordero"); //saldo restante
+    var qtseleci = $("#qtseleci","#divIncluirBordero"); //saldo restante
     var total = 0;
     total = converteMoedaFloat(vldispon.val())-converteMoedaFloat(vlseleci.val());
     vlsaldor.val(number_format(total,2,',','.'));
+
+    var selecionados = $(".divRegistrosTitulosSelecionados table","#divIncluirBordero");
+    qtseleci.val(selecionados.find("input[name='selecionados']").length);
 }
 //Busca os titulos do bordero
 function buscarTitulosBordero() {
@@ -305,6 +334,7 @@ function buscarTitulosBordero() {
     var dtvencto = $("#dtvencto","#"+nomeForm).val();
     var vltitulo = $("#vltitulo","#"+nomeForm).val();
     var nrnosnum = normalizaNumero($("#nrnosnum","#"+nomeForm).val());
+    var nrborder = normalizaNumero($("#nrborder","#"+nomeForm).val());
 
     $.ajax({        
         type    : 'POST',
@@ -318,6 +348,7 @@ function buscarTitulosBordero() {
                     dtvencto: dtvencto,
                     vltitulo: vltitulo,
                     nrnosnum: nrnosnum,
+                    nrborder: nrborder,
                     frmOpcao: nomeForm,
                     redirect: 'script_ajax'
 
@@ -351,9 +382,9 @@ function removeTituloBordero(td){
         total = converteMoedaFloat(vlseleci.val());
         total -= valor;
         vlseleci.val(number_format(total,2,',','.'));
-        calculaSaldoBordero();
     }
     tr.remove();
+    calculaSaldoBordero();
     selecionados.zebraTabela();
     selecionados.trigger("update");
     if (typeof arrayLarguraInclusaoBordero != 'undefined') {
@@ -2171,6 +2202,61 @@ function mostrarBorderoResumo() {
     return false;
 }
 
+function mostrarBorderoResumoAlterar() {
+    /*Testa se o valor disponivel mais a tolerancia são maiores que o total de titulos selecionados*/
+    var vlutiliz = $("#vlutiliz","#divIncluirBordero"); //valor descontado
+    var vllimite = $("#vllimite","#divIncluirBordero"); //valor disponivel
+    var vlseleci = $("#vlseleci","#divIncluirBordero"); //valor titulos selecionados
+    var pctolera = $("#pctolera","#divIncluirBordero"); //porcentagem de tolerancia (tab052)
+    var nrborder = $("#nrborder","#divIncluirBordero"); //porcentagem de tolerancia (tab052)
+    var total = 0;
+    vllimite = converteMoedaFloat(vllimite.val());
+    vlutiliz = converteMoedaFloat(vlutiliz.val());
+    vlseleci = converteMoedaFloat(vlseleci.val());
+    pctolera = converteMoedaFloat(pctolera.val());
+
+    total = vllimite + (vllimite * pctolera / 100) - vlutiliz; // valor disponivel considerando a tolerancia
+
+
+    if(total<(vlseleci)){
+        showError("error", "Valor do border&ocirc; excede o valor do limite dispon&iacute;vel. Permitido at&eacute;: "+number_format(total,2,',','.'), "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+    }
+    else{
+        var divSelecionados = $(".divRegistrosTitulosSelecionados table","#divIncluirBordero");
+        var selecionados = $("input[name*='selecionados'",divSelecionados);
+        if(selecionados.length>0){
+            // Mostra mensagem de aguardo
+            showMsgAguardo("Aguarde, carregando dados do border&ocirc; ...");
+
+            // Carrega conteúdo da opção através de ajax
+            $.ajax({
+                type: "POST",
+                url: UrlSite + "telas/atenda/descontos/titulos/titulos_bordero_resumo_alterar.php",
+                dataType: "html",
+                data: {
+                    nrdconta: nrdconta,
+                    nrborder: nrborder.val(),
+                    selecionados: selecionados.map(function(){return $(this).val();}).get(),
+                    redirect: "html_ajax"
+                },
+                error: function (objAjax, responseError, objExcept) {
+                    hideMsgAguardo();
+                    showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+                },
+                success: function (response) {
+                    $("#divOpcoesDaOpcao4").html(response);
+                }
+            });
+        }
+        else{
+            showError("error", "Adicione pelo menos um t&iacute;tulo.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+        }
+    }
+    
+    return false;
+}
+
+
 function mostrarDetalhesPagador() {
     if(tituloSelecionadoResumo){
     showMsgAguardo("Aguarde, carregando dados do pagador ...");
@@ -2252,6 +2338,41 @@ function confirmarInclusao(){
             data: {
                 nrdconta: nrdconta,
                 operacao: 'INSERIR_BORDERO',
+                selecionados: selecionados.map(function(){return $(this).val();}).get(),
+                redirect: "html_ajax"
+            },
+            error: function (objAjax, responseError, objExcept) {
+                hideMsgAguardo();
+                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+            },
+            success: function (response) {
+                eval(response);
+            }
+        });
+    }
+    else{
+        showError("error", "Adicione pelo menos um t&iacute;tulo.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+    }
+    
+    return false;
+}
+
+function confirmarAlteracao(){
+    var divSelecionados = $(".divRegistrosTitulos table","#divResumoBordero");
+    var selecionados = $("input[name*='selecionados'",divSelecionados);
+    if(selecionados.length>0){
+        // Mostra mensagem de aguardo
+        showMsgAguardo("Aguarde, carregando dados do border&ocirc; ...");
+
+        // Carrega conteúdo da opção através de ajax
+        $.ajax({
+            type: "POST",
+            url: UrlSite + "telas/atenda/descontos/manter_rotina.php",
+            dataType: "html",
+            data: {
+                nrdconta: nrdconta,
+                nrborder: nrbordero,
+                operacao: 'ALTERAR_BORDERO',
                 selecionados: selecionados.map(function(){return $(this).val();}).get(),
                 redirect: "html_ajax"
             },

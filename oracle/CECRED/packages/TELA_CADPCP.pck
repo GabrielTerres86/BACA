@@ -3,7 +3,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_CADPCP IS
     Programa : TELA_CADPCP
     Sistema  : Ayllos Web
     Autor    : Luis Fernando (GFT)
-    Data     : Mar√ßo - 2018                 Ultima atualizacao: 16/03/2018
+    Data     : MarÁo - 2018                 Ultima atualizacao: 16/03/2018
 
     Dados referentes ao programa:
 
@@ -23,9 +23,9 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_CADPCP IS
                                  ,pr_nmdsacad IN VARCHAR2               --> Nome do pagador
                                  ,pr_nriniseq IN PLS_INTEGER            --> Numero inicial do registro para enviar
                                  ,pr_nrregist IN PLS_INTEGER            --> Numero de registros que deverao ser retornados
-                                 ,pr_xmllog   IN VARCHAR2               --> XML com informa√ß√µes de LOG
-                                 ,pr_cdcritic OUT PLS_INTEGER           --> C√≥digo da cr√≠tica
-                                 ,pr_dscritic OUT VARCHAR2              --> Descri√ß√£o da cr√≠tica
+                                 ,pr_xmllog   IN VARCHAR2               --> XML com informaÁıes de LOG
+                                 ,pr_cdcritic OUT PLS_INTEGER           --> CÛdigo da crÌtica
+                                 ,pr_dscritic OUT VARCHAR2              --> DescriÁ„o da crÌtica
                                  ,pr_retxml   IN OUT NOCOPY XMLType     --> Arquivo de retorno do XML
                                  ,pr_nmdcampo OUT VARCHAR2              --> Nome do campo com erro
                                  ,pr_des_erro OUT VARCHAR2              --> Erros do processo
@@ -33,9 +33,9 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_CADPCP IS
                                  
   PROCEDURE pc_obter_pagador(pr_nrdconta IN crapass.nrdconta%TYPE  --> Nr. da conta
                                  ,pr_nrinssac IN crapsab.nrinssac%TYPE  --> CPF/CNPJ do pagador
-                                 ,pr_xmllog   IN VARCHAR2               --> XML com informa√ß√µes de LOG
-                                 ,pr_cdcritic OUT PLS_INTEGER           --> C√≥digo da cr√≠tica
-                                 ,pr_dscritic OUT VARCHAR2              --> Descri√ß√£o da cr√≠tica
+                                 ,pr_xmllog   IN VARCHAR2               --> XML com informaÁıes de LOG
+                                 ,pr_cdcritic OUT PLS_INTEGER           --> CÛdigo da crÌtica
+                                 ,pr_dscritic OUT VARCHAR2              --> DescriÁ„o da crÌtica
                                  ,pr_retxml   IN OUT NOCOPY XMLType     --> Arquivo de retorno do XML
                                  ,pr_nmdcampo OUT VARCHAR2              --> Nome do campo com erro
                                  ,pr_des_erro OUT VARCHAR2              --> Erros do processo
@@ -44,9 +44,9 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_CADPCP IS
   PROCEDURE pc_alterar_pagador(pr_nrdconta IN crapass.nrdconta%TYPE  --> Nr. da conta
                                  ,pr_nrinssac IN crapsab.nrinssac%TYPE  --> CPF/CNPJ do pagador
                                  ,pr_vlpercen IN crapsab.vlpercen%TYPE  --> Valor da nova porcentagem
-                                 ,pr_xmllog   IN VARCHAR2               --> XML com informa√ß√µes de LOG
-                                 ,pr_cdcritic OUT PLS_INTEGER           --> C√≥digo da cr√≠tica
-                                 ,pr_dscritic OUT VARCHAR2              --> Descri√ß√£o da cr√≠tica
+                                 ,pr_xmllog   IN VARCHAR2               --> XML com informaÁıes de LOG
+                                 ,pr_cdcritic OUT PLS_INTEGER           --> CÛdigo da crÌtica
+                                 ,pr_dscritic OUT VARCHAR2              --> DescriÁ„o da crÌtica
                                  ,pr_retxml   IN OUT NOCOPY XMLType     --> Arquivo de retorno do XML
                                  ,pr_nmdcampo OUT VARCHAR2              --> Nome do campo com erro
                                  ,pr_des_erro OUT VARCHAR2              --> Erros do processo
@@ -58,7 +58,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPCP IS
     Programa : TELA_CADPCP
     Sistema  : Ayllos Web
     Autor    : Luis Fernando (GFT)
-    Data     : Mar√ßo - 2018                 Ultima atualizacao: 16/03/2018
+    Data     : MarÁo - 2018                 Ultima atualizacao: 16/03/2018
 
     Dados referentes ao programa:
 
@@ -67,11 +67,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPCP IS
   /* tratamento de erro */
   vr_exc_erro exception;
 
-  /* descri√ßao e c√≥digo da critica */
+  /* descriÁao e cÛdigo da critica */
   vr_cdcritic crapcri.cdcritic%type;
   vr_dscritic varchar2(4000);
   
-    -- Buscar informa√ß√µes da conta  
+    -- Buscar informaÁıes da conta  
   PROCEDURE pc_busca_conta(pr_nrdconta IN crapass.nrdconta%TYPE --> Nr. da conta
                           ,pr_xmllog   IN VARCHAR2              --> XML com informacoes de LOG
                           ,pr_cdcritic OUT PLS_INTEGER          --> Codigo da critica
@@ -84,7 +84,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPCP IS
     Programa: pc_busca_conta
     Sistema : Ayllos Web
     Autor   : Luis Fernando (GFT)
-    Data    : Mar√ßo/2018
+    Data    : MarÁo/2018
 
     Dados referentes ao programa:
     Frequencia: Sempre que for chamado
@@ -119,7 +119,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPCP IS
       vr_nmprimtl crapass.nmprimtl%TYPE;
       
     BEGIN
-      -- Incluir nome do m√≥dulo logado
+      -- Incluir nome do mÛdulo logado
       GENE0001.pc_informa_acesso(pr_module => 'TELA_CADPCP'
                                 ,pr_action => null); 
       
@@ -136,7 +136,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPCP IS
 
       -- Se retornou algum erro
       IF vr_cdcritic > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
-        -- Levanta exce√ß√£o
+        -- Levanta exceÁ„o
         RAISE vr_exc_erro;
       END IF;
       -- Buscar nome do associado
@@ -144,14 +144,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPCP IS
                      ,pr_nrdconta => pr_nrdconta);
       FETCH cr_crapass INTO vr_nmprimtl;
       
-      -- Se n√£o encontrou associado
+      -- Se n„o encontrou associado
       IF cr_crapass%NOTFOUND THEN
         -- Fechar cursor
         CLOSE cr_crapass;
-        -- Gera cr√≠tica
+        -- Gera crÌtica
         vr_cdcritic := 9;
         vr_dscritic := '';
-        -- Levanta exce√ß√£o
+        -- Levanta exceÁ„o
         RAISE vr_exc_erro;
       END IF;
       -- Fechar cursor
@@ -193,9 +193,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPCP IS
                                  ,pr_nmdsacad IN VARCHAR2               --> Nome do pagador
                                  ,pr_nriniseq IN PLS_INTEGER            --> Numero inicial do registro para enviar
                                  ,pr_nrregist IN PLS_INTEGER            --> Numero de registros que deverao ser retornados
-                                 ,pr_xmllog   IN VARCHAR2               --> XML com informa√ß√µes de LOG
-                                 ,pr_cdcritic OUT PLS_INTEGER           --> C√≥digo da cr√≠tica
-                                 ,pr_dscritic OUT VARCHAR2              --> Descri√ß√£o da cr√≠tica
+                                 ,pr_xmllog   IN VARCHAR2               --> XML com informaÁıes de LOG
+                                 ,pr_cdcritic OUT PLS_INTEGER           --> CÛdigo da crÌtica
+                                 ,pr_dscritic OUT VARCHAR2              --> DescriÁ„o da crÌtica
                                  ,pr_retxml   IN OUT NOCOPY XMLType     --> Arquivo de retorno do XML
                                  ,pr_nmdcampo OUT VARCHAR2              --> Nome do campo com erro
                                  ,pr_des_erro OUT VARCHAR2) IS          --> Erros do processo
@@ -203,7 +203,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPCP IS
     Programa: pc_pesquisa_pagadores
     Sistema : Ayllos Web
     Autor   : Luis Fernando (GFT)
-    Data    : Mar√ßo/2018
+    Data    : MarÁo/2018
 
     Dados referentes ao programa:
     Frequencia: Chamado pelo mostrapesquisa
@@ -213,7 +213,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPCP IS
 
         
 
-      -- Vari√°vel de cr√≠ticas
+      -- Vari·vel de crÌticas
       vr_cdcritic      crapcri.cdcritic%TYPE;
       vr_dscritic      VARCHAR2(10000);
 
@@ -265,7 +265,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPCP IS
         -- Monta documento XML de ERRO
         dbms_lob.createtemporary(vr_clob, TRUE);
         dbms_lob.open(vr_clob, dbms_lob.lob_readwrite);
-        -- Criar cabe√ßalho do XML
+        -- Criar cabeÁalho do XML
         gene0002.pc_escreve_xml(pr_xml            => vr_clob
                                ,pr_texto_completo => vr_xml_temp
                                ,pr_texto_novo     => '<?xml version="1.0" encoding="ISO-8859-1"?><Dados>');
@@ -290,7 +290,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPCP IS
                                          ,pr_texto_completo => vr_xml_temp
                                          ,pr_texto_novo     => '<inf>'||
                                                                   '<nrinssac>'|| rw_crapsab.nrinssac ||'</nrinssac>'||
-                                                                  '<nmdsacad>'|| rw_crapsab.nmdsacad||'</nmdsacad>'||                                                           
+                                                                  '<nmdsacad>'|| rw_crapsab.nmdsacad||'</nmdsacad>'||																														
                                                                   '<cdtpinsc>' || rw_crapsab.cdtpinsc ||'</cdtpinsc>'||
                                                                   '<vlpercen>' || rw_crapsab.vlpercen ||'</vlpercen>'||
                                                                   '<nrdconta>' || pr_nrdconta ||'</nrdconta>'||
@@ -305,7 +305,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPCP IS
 
         -- Se nao possuir nenhum registro, envia a quantidade de registros zerada
         IF vr_posreg = 0 THEN
-          -- Gerar cr√≠tica
+					-- Gerar crÌtica
           gene0002.pc_escreve_xml(pr_xml            => vr_clob
                                  ,pr_texto_completo => vr_xml_temp
                                  ,pr_texto_novo     => '<PAGADORES qtregist="0">');
@@ -329,8 +329,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPCP IS
         pr_cdcritic := vr_cdcritic;
         pr_dscritic := 'Erro geral na pesquisa pagadores: ' || SQLERRM;
 
-        -- Carregar XML padr√£o para vari√°vel de retorno n√£o utilizada.
-        -- Existe para satisfazer exig√™ncia da interface.
+        -- Carregar XML padr„o para vari·vel de retorno n„o utilizada.
+        -- Existe para satisfazer exigÍncia da interface.
         pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                        '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
   END pc_pesquisa_pagadores;
@@ -338,9 +338,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPCP IS
    -- Rotina para pesquisar pagadores
   PROCEDURE pc_obter_pagador(pr_nrdconta IN crapass.nrdconta%TYPE  --> Nr. da conta
                                  ,pr_nrinssac IN crapsab.nrinssac%TYPE  --> CPF/CNPJ do pagador
-                                 ,pr_xmllog   IN VARCHAR2               --> XML com informa√ß√µes de LOG
-                                 ,pr_cdcritic OUT PLS_INTEGER           --> C√≥digo da cr√≠tica
-                                 ,pr_dscritic OUT VARCHAR2              --> Descri√ß√£o da cr√≠tica
+                                 ,pr_xmllog   IN VARCHAR2               --> XML com informaÁıes de LOG
+                                 ,pr_cdcritic OUT PLS_INTEGER           --> CÛdigo da crÌtica
+                                 ,pr_dscritic OUT VARCHAR2              --> DescriÁ„o da crÌtica
                                  ,pr_retxml   IN OUT NOCOPY XMLType     --> Arquivo de retorno do XML
                                  ,pr_nmdcampo OUT VARCHAR2              --> Nome do campo com erro
                                  ,pr_des_erro OUT VARCHAR2) IS          --> Erros do processo
@@ -348,7 +348,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPCP IS
     Programa: pc_obter_pagador
     Sistema : Ayllos Web
     Autor   : Luis Fernando (GFT)
-    Data    : Mar√ßo/2018
+    Data    : MarÁo/2018
 
     Dados referentes ao programa:
     Frequencia: Sempre que chamado
@@ -356,7 +356,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPCP IS
     Alteracoes: -----
     ..............................................................................*/
 
-      -- Vari√°vel de cr√≠ticas
+      -- Vari·vel de crÌticas
       vr_cdcritic      crapcri.cdcritic%TYPE;
       vr_dscritic      VARCHAR2(10000);
 
@@ -411,7 +411,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPCP IS
             vr_dscritic := 'Pagador nao encontrado para essa conta';
             raise vr_exc_erro;
          END IF;
-        -- Criar cabe√ßalho do XML
+        -- Criar cabeÁalho do XML
         gene0002.pc_escreve_xml(pr_xml            => vr_clob
                                ,pr_texto_completo => vr_xml_temp
                                ,pr_texto_novo     => '<?xml version="1.0" encoding="ISO-8859-1"?><Dados>');
@@ -421,7 +421,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPCP IS
                                          ,pr_texto_completo => vr_xml_temp
                                          ,pr_texto_novo     => '<inf>'||
                                                                   '<nrinssac>'|| rw_crapsab.nrinssac ||'</nrinssac>'||
-                                                                  '<nmdsacad>'|| rw_crapsab.nmdsacad||'</nmdsacad>'||                                                           
+                                                                  '<nmdsacad>'|| rw_crapsab.nmdsacad||'</nmdsacad>'||																														
                                                                   '<cdtpinsc>' || rw_crapsab.cdtpinsc ||'</cdtpinsc>'||
                                                                   '<vlpercen>' || rw_crapsab.vlpercen ||'</vlpercen>'||
                                                                   '<nrdconta>' || pr_nrdconta ||'</nrdconta>'||
@@ -450,8 +450,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPCP IS
         pr_cdcritic := vr_cdcritic;
         pr_dscritic := 'Erro geral na BUSCA DE PAGADOR: ' || SQLERRM;
 
-        -- Carregar XML padr√£o para vari√°vel de retorno n√£o utilizada.
-        -- Existe para satisfazer exig√™ncia da interface.
+        -- Carregar XML padr„o para vari·vel de retorno n„o utilizada.
+        -- Existe para satisfazer exigÍncia da interface.
         pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                        '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
   END pc_obter_pagador;
@@ -460,9 +460,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPCP IS
   PROCEDURE pc_alterar_pagador(pr_nrdconta IN crapass.nrdconta%TYPE  --> Nr. da conta
                                  ,pr_nrinssac IN crapsab.nrinssac%TYPE  --> CPF/CNPJ do pagador
                                  ,pr_vlpercen IN crapsab.vlpercen%TYPE  --> Valor da nova porcentagem
-                                 ,pr_xmllog   IN VARCHAR2               --> XML com informa√ß√µes de LOG
-                                 ,pr_cdcritic OUT PLS_INTEGER           --> C√≥digo da cr√≠tica
-                                 ,pr_dscritic OUT VARCHAR2              --> Descri√ß√£o da cr√≠tica
+                                 ,pr_xmllog   IN VARCHAR2               --> XML com informaÁıes de LOG
+                                 ,pr_cdcritic OUT PLS_INTEGER           --> CÛdigo da crÌtica
+                                 ,pr_dscritic OUT VARCHAR2              --> DescriÁ„o da crÌtica
                                  ,pr_retxml   IN OUT NOCOPY XMLType     --> Arquivo de retorno do XML
                                  ,pr_nmdcampo OUT VARCHAR2              --> Nome do campo com erro
                                  ,pr_des_erro OUT VARCHAR2) IS          --> Erros do processo
@@ -470,7 +470,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPCP IS
     Programa: pc_obter_pagador
     Sistema : Ayllos Web
     Autor   : Luis Fernando (GFT)
-    Data    : Mar√ßo/2018
+    Data    : MarÁo/2018
 
     Dados referentes ao programa:
     Frequencia: Sempre que chamado
@@ -478,7 +478,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPCP IS
     Alteracoes: -----
     ..............................................................................*/
 
-      -- Vari√°vel de cr√≠ticas
+      -- Vari·vel de crÌticas
       vr_cdcritic      crapcri.cdcritic%TYPE;
       vr_dscritic      VARCHAR2(10000);
 
@@ -545,7 +545,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPCP IS
         dbms_lob.createtemporary(vr_clob, TRUE);
         dbms_lob.open(vr_clob, dbms_lob.lob_readwrite);
         
-        -- Criar cabe√ßalho do XML
+        -- Criar cabeÁalho do XML
         gene0002.pc_escreve_xml(pr_xml            => vr_clob
                                ,pr_texto_completo => vr_xml_temp
                                ,pr_texto_novo     => '<?xml version="1.0" encoding="ISO-8859-1"?><Dados>');
@@ -555,7 +555,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPCP IS
                                          ,pr_texto_completo => vr_xml_temp
                                          ,pr_texto_novo     => '<inf>'||
                                                                   '<vlpercenan>'|| vr_vlpercen ||'</vlpercenan>'||
-                                                                  '<vlpercen>'|| pr_vlpercen ||'</vlpercen>'||  
+                                                                  '<vlpercen>'|| pr_vlpercen ||'</vlpercen>'||	
                                                                '</inf>');
         -- Encerrar a tag raiz
         gene0002.pc_escreve_xml(pr_xml            => vr_clob
@@ -581,8 +581,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPCP IS
         pr_cdcritic := vr_cdcritic;
         pr_dscritic := 'Erro geral na ALTERACAO DE PAGADOR: ' || SQLERRM;
 
-        -- Carregar XML padr√£o para vari√°vel de retorno n√£o utilizada.
-        -- Existe para satisfazer exig√™ncia da interface.
+        -- Carregar XML padr„o para vari·vel de retorno n„o utilizada.
+        -- Existe para satisfazer exigÍncia da interface.
         pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                        '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
   END pc_alterar_pagador;
