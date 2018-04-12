@@ -51,12 +51,14 @@
 	$xml .= "</Root>";		
 	
 	$xmlResult = mensageria($xml, "TELA_SITCTA", "ALTERAR_SITUACAO_CONTA_COOP", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
-	$xml_dados = simplexml_load_string($xmlResult);
+	//$xml_dados = simplexml_load_string($xmlResult);
+	$xml_dados = getObjectXML($xmlResult);
 	
-	if ( $xml_dados->Erro != "" ) {
-		exibirErro('error',$xml_dados->Erro,'Alerta - Ayllos','',false);
+	if ( strtoupper($xml_dados->roottag->tags[0]->name) == "ERRO" ) {
+		$msgErro	= $xml_dados->roottag->tags[0]->tags[0]->tags[4]->cdata;
+		exibirErro('error',utf8_encode($msgErro),'Alerta - Ayllos','',false);
 	}
-	
+		
 	exibirErro('inform','Situa&ccedil;&atilde;o de Conta cadastrado com sucesso!','Alerta - Ayllos','estadoInicial();',false);
 	
 ?>
