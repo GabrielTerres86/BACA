@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Created with Jaspersoft Studio version 6.3.0.final using JasperReports Library version 6.3.0  -->
-<!-- 2016-11-17T17:02:08 -->
+<!-- 2018-04-12T16:00:55 -->
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="crrl519_bordero_cheques" language="groovy" pageWidth="595" pageHeight="672" whenNoDataType="AllSectionsNoDetail" columnWidth="595" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
 	<property name="ireport.zoom" value="2.0"/>
 	<property name="ireport.x" value="0"/>
@@ -24,6 +24,9 @@
 	</field>
 	<field name="dsopecoo" class="java.lang.String">
 		<fieldDescription><![CDATA[ancestor::restricoes_coord/@dsopecoo]]></fieldDescription>
+	</field>
+	<field name="flgrestr" class="java.lang.Integer">
+		<fieldDescription><![CDATA[flgrestr]]></fieldDescription>
 	</field>
 	<background>
 		<band splitType="Stretch"/>
@@ -49,6 +52,7 @@
 	<detail>
 		<band height="8">
 			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+			<printWhenExpression><![CDATA[$F{flgrestr} != 0]]></printWhenExpression>
 			<textField isStretchWithOverflow="true">
 				<reportElement positionType="Float" x="0" y="0" width="380" height="8" isRemoveLineWhenBlank="true" uuid="abe7d43e-076e-4020-9c43-453eaacbb84e">
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>

@@ -441,6 +441,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
                    
       20/12/2017 - Ajuste para considerar a data de liberação do bordero no cursor cr_crapcdb_dsc
                   (Adriano - SD 791712).                   
+                  
+                  
+      12/04/2018 - Adicionado novo parametro na chamada da procedure DSCT0002.pc_gera_impressao_bordero                   
   --------------------------------------------------------------------------------------------------------------*/
 
   PROCEDURE pc_busca_tab_limdescont(  pr_cdcooper IN crapcop.cdcooper%TYPE --> Codigo da cooperativa 
@@ -2661,6 +2664,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 
     Alteracoes: 26/05/2017 - Alterado para tipo de impressao 10 - Analise
                              PRJ300 - Desconto de cheque (Odirlei-AMcom) 
+                12/04/2018 - Adicionado novo parametro na chamada da procedure DSCT0002.pc_gera_impressao_bordero
     ..............................................................................*/
     DECLARE
       -- Cursor da data
@@ -2751,6 +2755,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
                                              pr_dsiduser => pr_dsiduser,
                                              pr_flgemail => pr_flgemail,
                                              pr_flgerlog => pr_flgerlog,
+                                             pr_flgrestr => pr_flgrestr,
                                              pr_nmarqpdf => vr_nmarqpdf,
                                              pr_cdcritic => vr_cdcritic,
                                              pr_dscritic => vr_dscritic);

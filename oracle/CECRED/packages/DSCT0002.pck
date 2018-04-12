@@ -466,6 +466,7 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0002 AS
                                      ,pr_dsiduser IN VARCHAR2               --> Descricao do id do usuario
                                      ,pr_flgemail IN INTEGER                --> Indicador de envia por email (0-nao, 1-sim)
                                      ,pr_flgerlog IN INTEGER                --> Indicador se deve gerar log(0-nao, 1-sim)
+                                     ,pr_flgrestr IN INTEGER DEFAULT 0      --> Indicador se deve imprimir restricoes(0-nao, 1-sim)
                                      --------> OUT <--------
                                      ,pr_nmarqpdf OUT VARCHAR2              --> Retornar nome do relatorio PDF
                                      ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
@@ -547,6 +548,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
   --
   --    13/03/2018 - Inclusão da Procedure "pc_efetua_analise_pagador", referente à rotina (JOB)
   --                 de validação diária dos Pagadores (Borderô). (Gustavo Sene - GFT)
+  --
+  --   12/04/2018 - Adicionado novo parametro na chamada da procedure pc_gera_impressao_bordero
+  --                referente ao indicador se deve imprimir restricoes. (Alex Sandro - GFT)
   -------------------------------------------------------------------------------------------------------------
   --> Buscar dados do avalista
   PROCEDURE pc_busca_dados_avalista (pr_cdcooper IN crapcop.cdcooper%TYPE           --> Código da Cooperativa
@@ -5376,6 +5380,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
                                      ,pr_dsiduser IN VARCHAR2               --> Descricao do id do usuario
                                      ,pr_flgemail IN INTEGER                --> Indicador de envia por email (0-nao, 1-sim)
                                      ,pr_flgerlog IN INTEGER                --> Indicador se deve gerar log(0-nao, 1-sim)
+                                     ,pr_flgrestr IN INTEGER DEFAULT 0      --> Indicador se deve imprimir restricoes(0-nao, 1-sim)
                                      --------> OUT <--------
                                      ,pr_nmarqpdf OUT VARCHAR2              --> Retornar nome do relatorio PDF
                                      ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
@@ -5676,7 +5681,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
                          '<txmensal>'|| TO_CHAR(vr_tab_dados_itens_bordero(vr_idxborde).txmensal,'fm9999g999g990d000000') ||'</txmensal>'||
                          '<txdiaria>'|| TO_CHAR(vr_tab_dados_itens_bordero(vr_idxborde).txdiaria,'fm9999g999g990d000000') ||'</txdiaria>'||
                          '<dsmvtolt>'|| vr_dsmvtolt ||'</dsmvtolt>'||
-                         '<nmoperad>'|| vr_tab_dados_itens_bordero(vr_idxborde).nmoperad ||'</nmoperad>');
+                         '<nmoperad>'|| vr_tab_dados_itens_bordero(vr_idxborde).nmoperad ||'</nmoperad>' ||
+                         '<flgrestr>'|| pr_flgrestr ||'</flgrestr>');
 
 
       --> reordenar para exibição no relatorio
@@ -5748,7 +5754,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
 
               vr_tab_totais(vr_idxtot).qtrestri := nvl(vr_tab_totais(vr_idxtot).qtrestri,0) + 1;
 
-              pc_escreve_xml('<restricao><texto>'|| gene0007.fn_caract_controle(vr_tab_bordero_restri(idx2).dsrestri) ||'</texto></restricao>');
+              pc_escreve_xml('<restricao><texto>'|| gene0007.fn_caract_controle(vr_tab_bordero_restri(idx2).dsrestri) ||'</texto>' ||
+              '<flgrestr>'|| pr_flgrestr ||'</flgrestr>' ||
+              '</restricao>');
               -- Se foi aprovado pelo coordenador
               IF vr_tab_bordero_restri(idx2).flaprcoo = 1 THEN
 
@@ -5804,6 +5812,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
                           <vltotliq>'|| to_char(vr_tab_totais(idxtot).vltotliq,'fm999G999G999G990D00') ||'</vltotliq>
                           <vldmedia>'|| to_char(vr_tab_totais(idxtot).vlmedtit,'fm999G999G999G990D00') ||'</vldmedia>
                           <qtrestri>'|| vr_tab_totais(idxtot).qtrestri ||'</qtrestri>
+                          <flgrestr>'|| pr_flgrestr ||'</flgrestr>
                         </total>');
         END LOOP;
       END IF;
@@ -5815,7 +5824,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
         pc_escreve_xml(  '<restricoes_coord dsopecoo="'|| vr_tab_dados_itens_bordero(vr_idxborde).dsopecoo ||'">');
         vr_idxrestr := vr_tab_restri_apr_coo.FIRST;
         WHILE vr_idxrestr IS NOT NULL LOOP
-          pc_escreve_xml(    '<restricao><texto>'|| gene0007.fn_caract_controle(vr_idxrestr) ||'</texto></restricao>');
+          pc_escreve_xml(    '<restricao><texto>'|| gene0007.fn_caract_controle(vr_idxrestr) ||'</texto>' || 
+                             '<flgrestr>'|| pr_flgrestr ||'</flgrestr>' ||
+          '</restricao>');
           vr_idxrestr := vr_tab_restri_apr_coo.NEXT(vr_idxrestr);
         END LOOP;
         pc_escreve_xml(  '</restricoes_coord>');
