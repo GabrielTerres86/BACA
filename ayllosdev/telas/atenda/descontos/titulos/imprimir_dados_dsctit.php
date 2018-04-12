@@ -21,8 +21,11 @@
 				  12/09/2016 - Alteracao para chamar a rotina do Oracle na
 							   geracao da impressao. (Jaison/Daniel)
           
-          23/11/2016 - Alterado para atribuir variavel $dsiduser ao carregar variavel
+          		  23/11/2016 - Alterado para atribuir variavel $dsiduser ao carregar variavel
                        PRJ314 - Indexacao Centralizada (Odirlei-Amcom)
+
+                  12/04/2018 - Ajustes para adicionar parâmetro para controle da exibição da 
+                  			   restrição no report de borderô de desct. de tít
 
 	************************************************************************/ 
 
@@ -119,6 +122,7 @@
         $xml .= "    <dsiduser>".$dsiduser."</dsiduser>";
         $xml .= "    <flgemail>".($flgemail == 'yes' ? 1 : 0)."</flgemail>";
         $xml .= "    <flgerlog>0</flgerlog>";
+        $xml .= "    <flgrestr>0</flgrestr>"; // Indicador se deve imprimir restricoes(0-nao, 1-sim)
         $xml .= "  </Dados>";
         $xml .= "</Root>";
 
