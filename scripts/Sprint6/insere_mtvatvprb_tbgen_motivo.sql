@@ -1,7 +1,7 @@
 ﻿-- Insere Motivos de Ativo Problemático
-insert into tbcc_produto values(42, 'ATIVO PROBLEMATICO', 0, 0, 0, 0);
+insert into tbcc_produto values(42, 'ATIVO PROBLEMATICO', 0, 0, 0, 0, 0);
 --
-insert into tbgen_motivo values(57, 'Atraso > 90 dias (Reestruturação)', 42);
+insert into tbgen_motivo values(57, 'Reestruturação', 42);
 insert into tbgen_motivo values(58, 'Atraso > 90 dias', 42);
 insert into tbgen_motivo values(59, 'Prejuizo', 42);
 insert into tbgen_motivo values(60, 'Socio falecido', 42);
