@@ -340,7 +340,7 @@
 		$xmlGetDados .= "<Root>";
 		$xmlGetDados .= "	<Cabecalho>";
 		$xmlGetDados .= "		<Bo>b1wgen0030.p</Bo>";
-		$xmlGetDados .= "		<Proc>realizar_manut_contrato</Proc>";
+		$xmlGetDados .= "		<Proc>realizar_manutencao_contrato</Proc>";
 		$xmlGetDados .= "	</Cabecalho>";
 		$xmlGetDados .= "	<Dados>";
 		$xmlGetDados .= "		<cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
