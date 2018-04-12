@@ -41,6 +41,9 @@
 
 			 04/04/2018 - Ajustes na formatação da tela 'divDetalheBordero'. (Leonardo Oliveira - GFT)
 
+			 12/04/2018 - Formatação do layout 'frmTitLimiteManutencao' e inclusão do botão manutenção no layout 'frmTitulos'. (Leonardo Oliveira - GFT)
+			 
+
 ************************************************************************/
 
 // Carrega biblioteca javascript referente ao RATING
@@ -340,7 +343,6 @@ function formataLayout(nomeForm){
 		
 		ajustarCentralizacao();
 	
-
 	}else if ( nomeForm == 'divBorderosTitulos' ){
 	
 		$('#'+nomeForm).css('width','785px');
@@ -381,8 +383,6 @@ function formataLayout(nomeForm){
 		});
 		
 		ajustarCentralizacao();
-
-
 
 	}else if ( nomeForm == 'divIncluirBordero' ){
 		$('#'+nomeForm).css('width','940px');
@@ -512,7 +512,7 @@ function formataLayout(nomeForm){
 		layoutPadrao();
 		ajustarCentralizacao();
 	
-	}else if( nomeForm == 'frmBordero' ){
+	}else if ( nomeForm == 'frmBordero' ){
 	
 		var Ldspesqui = $('label[for="dspesqui"]','#'+nomeForm);
 		var Lnrborder = $('label[for="nrborder"]','#'+nomeForm);
@@ -582,9 +582,7 @@ function formataLayout(nomeForm){
 		Cdsopelib.desabilitaCampo();
 		Ctxjurmor.desabilitaCampo();
 
-
-/*Add else if para propostas*/
-}	else if( nomeForm == 'divPropostas' ){
+	}else if ( nomeForm == 'divPropostas' ){
 
 			
 		$('#'+nomeForm).css('width','800px');
@@ -628,9 +626,7 @@ function formataLayout(nomeForm){
 	
 		ajustarCentralizacao();
 
-
-/*Add else if para contratos*/
-}	else if( nomeForm == 'divContratos' ){
+	}else if ( nomeForm == 'divContratos' ){
 
 		$('#'+nomeForm).css('width','800px');
 	
@@ -671,8 +667,7 @@ function formataLayout(nomeForm){
 	
 		ajustarCentralizacao();
 
-		
-	} else if( nomeForm == 'divLimites' ){
+	}else if ( nomeForm == 'divLimites' ){
 				
 		$('#'+nomeForm).css('width','800px');
 	
@@ -712,7 +707,7 @@ function formataLayout(nomeForm){
 	
 		ajustarCentralizacao();
 		
-	}else if(  nomeForm == 'frmDadosLimiteDscChq' || nomeForm == 'frmDadosLimiteDscTit'){
+	}else if ( nomeForm == 'frmDadosLimiteDscChq' || nomeForm == 'frmDadosLimiteDscTit'){
 	
 		var Lnrctrlim = $('label[for="nrctrlim"]','#'+nomeForm);
 		var Lvllimite = $('label[for="vllimite"]','#'+nomeForm);
@@ -801,96 +796,62 @@ function formataLayout(nomeForm){
 		
 		
 		Cnrctrlim.unbind('keypress').bind('keypress', function(e){
-		
 			/*Se foi pressionado a telca ENTER*/
 			if(e.keyCode == 13){
-			
 				Cvllimite.focus();
-			
 			}
-		
 		});
 		
 		Cvllimite.unbind('keypress').bind('keypress', function(e){
-		
 			/*Se foi pressionado a telca ENTER*/
 			if(e.keyCode == 13){
-			
 				Ccddlinha.focus();
-			
 			}
-		
 		});
 		
 		Cdsramati.unbind('keypress').bind('keypress', function(e){
-		
 			/*Se foi pressionado a telca ENTER*/
 			if(e.keyCode == 13){
-			
 				Cvlmedtit.focus();
-			
 			}
-		
 		});
 		
 		Cvlmedtit.unbind('keypress').bind('keypress', function(e){
-		
 			/*Se foi pressionado a telca ENTER*/
 			if(e.keyCode == 13){
-			
 				Cvlfatura.focus();
-			
 			}
-		
 		});
 		
 		Cvlsalari.unbind('keypress').bind('keypress', function(e){
-		
 			/*Se foi pressionado a telca ENTER*/
 			if(e.keyCode == 13){
-			
 				Cvlsalcon.focus();
-			
 			}
-		
 		});
 		
 		Cvlsalcon.unbind('keypress').bind('keypress', function(e){
-		
 			/*Se foi pressionado a telca ENTER*/
 			if(e.keyCode == 13){
-			
 				Cvloutras.focus();
-			
 			}
-		
 		});
 		
 		Cvloutras.unbind('keypress').bind('keypress', function(e){
-		
 			/*Se foi pressionado a telca ENTER*/
 			if(e.keyCode == 13){
-			
 					Cdsdbens1.focus();
-			
 			}
-		
 		});
 		
 		Cdsdbens1.unbind('keypress').bind('keypress', function(e){
-		
 			/*Se foi pressionado a telca ENTER*/
 			if(e.keyCode == 13){
-			
 					Cdsdbens2.focus();
-			
 			}
-		
 		});
 		
-		
-		
-	}else if( nomeForm == 'frmTitulos' ){
+	}else if ( nomeForm == 'frmTitulos' ){
 	
 		var Lnrctrlim = $('label[for="nrctrlim"]','#'+nomeForm);
 		var Ldtinivig = $('label[for="dtinivig"]','#'+nomeForm);
@@ -913,7 +874,7 @@ function formataLayout(nomeForm){
 		var Cdtrenova = $('#dtrenova','#'+nomeForm);
 		var Cperrenov = $('#hd_perrenov','#'+nomeForm);
 
-		$('#'+nomeForm).css('width','430px');
+		$('#'+nomeForm).css('width','530px');
 		
 		Lnrctrlim.addClass('rotulo').css('width','80px');
 		Ldtinivig.css('width','60px');
@@ -957,6 +918,12 @@ function formataLayout(nomeForm){
 			if (Cperrenov.val() != 1) {return false}
 			acessaValorLimite();
 			return false;			
+		});
+
+
+		$('#btnManutencao').unbind('click').bind('click', function(){
+			realizarManutencaoDeLimite();
+			return false;
 		});
 
 	}else if ( nomeForm == 'divRestricoes' ){
@@ -1067,6 +1034,7 @@ function formataLayout(nomeForm){
 		tabela.formataTabela(ordemInicial, arrayLargura, arrayAlinha, '');
 		ajustarCentralizacao();	
 		formataTabelaEmiten();
+	
 	}else if ( nomeForm == 'frmChequesCustodia'){
 		// Ajustar tamnaho do form
 		$('#'+nomeForm).css('width','900px');
@@ -1113,7 +1081,8 @@ function formataLayout(nomeForm){
 		tabelaChq.formataTabela(ordemInicial, arrayLargura, arrayAlinha, '');
 		tabelaSel.formataTabela(ordemInicial, arrayLargura, arrayAlinha, '');
 		ajustarCentralizacao();	
-	}else if( nomeForm == 'frmChequesCustodiaNovo'){		
+	
+	}else if ( nomeForm == 'frmChequesCustodiaNovo'){		
 		// Ajustar tamnaho do form
 		$('#'+nomeForm).css('width','820px');
 		
@@ -1231,7 +1200,8 @@ function formataLayout(nomeForm){
 
 		tabelaChq.formataTabela(ordemInicial, arrayLargura, arrayAlinha, '');
 		ajustarCentralizacao();	
-	}else if(nomeForm == 'frmBorderosAnalise'){
+	
+	}else if ( nomeForm == 'frmBorderosAnalise'){
 		$('#'+nomeForm).css('width','1100px');
 		
 		var flgcheckd = 0;
@@ -1312,7 +1282,8 @@ function formataLayout(nomeForm){
 
 		tabela.formataTabela(ordemInicial, arrayLargura, arrayAlinha, '');
 		ajustarCentralizacao();			
-	}else if(nomeForm == 'frmBorderoResgate'){
+	
+	}else if ( nomeForm == 'frmBorderoResgate'){
 		$('#'+nomeForm).css('width','820px');
 		
 		var rNrborder = $('label[for="nrborder"]','#'+nomeForm);
@@ -1546,7 +1517,6 @@ function formataLayout(nomeForm){
 		ajustarCentralizacao();
 	
 	}
-	
 	return false;
 }
 
