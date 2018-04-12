@@ -229,7 +229,7 @@ function manterRotina(dados) {
 			data: {
 				cddopcao: cddopcao,
 				operacao: dados.operacao,
-				nrdconta: dados.nrdconta,
+				nrdconta: retiraCaracteres(dados.nrdconta, "0123456789", true),
 				nrctrato: dados.nrctremp,
 				flmotivo: dados.flmotivo,
 				datainic: dados.datainic,
