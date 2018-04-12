@@ -42,6 +42,25 @@
 			</tbody>
 		</table>
 	</div>
+  <div id="divPesquisaRodape" class="divPesquisaRodape">
+    <table>
+      <tr>
+        <td>
+          <?php if (!$ehPrimeiraPagina): ?>
+            <a class='paginacaoAnt'><<< Anterior</a>
+          <?php endif; ?>
+        </td>
+        <td>
+            Exibindo <?= $regInicial ?> at&eacute; <?= $regFinal ?> de <?= $totRegistros ?>
+        </td>
+        <td>
+          <?php if (!$ehUltimaPagina): ?>
+            <a class='paginacaoProx'>Pr&oacute;ximo >>></a>
+          <?php endif; ?>
+        </td>
+      </tr>
+    </table>
+  </div>
   <div style="padding-top:10px">
     <label for="dsobserv" class="rotulo">Observa&ccedil;&atilde;o:</label>
     <input name="dsobserv" id="dsobserv" type="text"  class="campo" value="<?= $dsobserv ?>" disabled/>
@@ -60,3 +79,13 @@
     <a href="#" class="botao" id="btExcluir" onclick="perguntaExcluir();">Excluir</a>
   <?php endif; ?>
 </div>
+
+<script type="text/javascript">
+  $('a.paginacaoAnt').unbind('click').bind('click', function() {
+    trocaPagina(-1);
+  });
+
+  $('a.paginacaoProx').unbind('click').bind('click', function() {
+    trocaPagina(1);
+  });
+</script>

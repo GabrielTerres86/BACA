@@ -7,6 +7,7 @@
 
 var cCddopcao, btnOK, cTodosCabecalho;
 var	cddopcao = 'C';
+var nrpagina = 1;
 var frmCab = 'frmCab';
 var frmCad = 'frmCad';
 var frmFiltro = 'frmFiltro';
@@ -167,6 +168,7 @@ function desabilitarCamposFiltro() {
 
 function habilitarCamposFiltro() {
 	var camposFiltro = $('input[type="text"],select','#'+frmFiltro);
+	nrpagina = 1;
 
 	$.each(camposFiltro, function(idx, campo){
 		$(campo).habilitaCampo();
@@ -233,6 +235,7 @@ function manterRotina(dados) {
 				datainic: dados.datainic,
 				datafina: dados.datafina,
 				dsobserv: dados.dsobserv,
+				nrpagina: nrpagina,
 				redirect: 'script_ajax'
 			},
 			error: function(objAjax,responseError,objExcept) {
@@ -299,6 +302,7 @@ function formataHistorico() {
 	$('#divRotina').css({'width':'425px'});
 	$('#divConteudo').css({'width':'400px'});
 	$('#divRotina').centralizaRotinaH();
+	$('#divPesquisaRodape').formataRodapePesquisa();
 
 	return false;
 }
@@ -330,6 +334,7 @@ function formataConsulta() {
 	$('#divRotina').css({'width':'425px'});
 	$('#divConteudo').css({'width':'400px'});
 	$('#divRotina').centralizaRotinaH();
+	$('#divPesquisaRodape').formataRodapePesquisa();
 
 	$('#ckApenasAtivos').change(function() { filtraAtivos(); });
 
@@ -506,4 +511,9 @@ function salvarCadastro(operacao) {
 	} else {
 		manterRotina(dados);
 	}
+}
+
+function trocaPagina(salto) {
+	nrpagina += salto;
+	continuarFiltro();
 }

@@ -30,10 +30,10 @@ begin
   -- Verifica se existe a tela do ayllos web
   IF cr_craprdr%NOTFOUND THEN
    
-    -- Se nÃ£o encontrar
+    -- Se não encontrar
     CLOSE cr_craprdr;
 
-    -- Insere aÃ§Ã£o da tela do ayllos web
+    -- Insere ação da tela do ayllos web
     INSERT INTO craprdr(nmprogra
                        ,dtsolici) 
                  values('TELA_ATVPRB'
@@ -59,10 +59,10 @@ begin
                    
   FETCH cr_crapaca INTO rw_crapaca;
     
-  -- Verifica se existe a aÃ§Ã£o tela do ayllos web
+  -- Verifica se existe a ação tela do ayllos web
   IF cr_crapaca%NOTFOUND THEN
     
-    -- Insere aÃ§Ã£o da tela do ayllos web
+    -- Insere ação da tela do ayllos web
     INSERT INTO crapaca(nmdeacao, 
                         nmpackag, 
                         nmproced, 
@@ -71,7 +71,7 @@ begin
                  VALUES('CONSULTA_HIS_ATIVO_PROB',
                         'TELA_ATVPRB',
                         'pc_consulta_historico',
-                        'pr_cdcooper, pr_nrdconta, pr_nrctremp, pr_cdmotivo, pr_datainic, pr_datafina',
+                        'pr_cdcooper, pr_nrdconta, pr_nrctremp, pr_cdmotivo, pr_datainic, pr_datafina, pr_pagina',
                         rw_craprdr.nrseqrdr);
                              
     dbms_output.put_line('Insere CRAPACA -> CONSULTA_HIS_ATIVO_PROB -> TELA_ATVPRB.pc_consulta_historico');

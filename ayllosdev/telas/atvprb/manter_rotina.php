@@ -25,6 +25,7 @@
   $datainic		= (isset($_POST['datainic'])) ? $_POST['datainic']  : '01/01/1980';
   $datafina		= (isset($_POST['datafina'])) ? $_POST['datafina']  : '01/01/1980';
   $dsobserv		= (isset($_POST['dsobserv'])) ? $_POST['dsobserv']  : '';
+  $nrpagina		= (isset($_POST['nrpagina'])) ? $_POST['nrpagina']  : '1';
 
   // Montar o xml de Requisicao com os dados da operação
 	$xml = "";
@@ -37,6 +38,7 @@
   $xml .= "		<datainic>".$datainic."</datainic>";
   $xml .= "		<datafina>".$datafina."</datafina>";
 	$xml .= "		<dsobserv>".$dsobserv."</dsobserv>";
+  $xml .= "		<pagina>".$nrpagina."</pagina>";
 	$xml .= " </Dados>";
 	$xml .= "</Root>";
 
@@ -48,23 +50,20 @@
                       "Historico_Dados"=>"CONSULTA_HIS_ATIVO_PROB");
   $nomeAcao   = $nomesAcao[$operacao];
 
-  // $xml = "";
-	// $xml .= "<Root>";
-  // $xml .= " <Dados>";
-	// $xml .= "		<nrdconta>213</nrdconta>";
-	// $xml .= "		<cdcooper>11</cdcooper>";
-	// $xml .= "		<nrctremp>158003</nrctremp>";
-	// $xml .= "		<cdmotivo>58</cdmotivo>";
-	// $xml .= "		<dsobserv>aaaa</dsobserv>";
-  // $xml .= " </Dados>";
-  // $xml .= "</Root>";
-  //
-  // $nomeAcao   ="ATVPRB_INCLUSAO";
-
   if (!empty($nomeAcao)) {
     $xmlResult = mensageria($xml, "TELA_ATVPRB", $nomeAcao, $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
     $xmlObjeto = getObjectXML($xmlResult);
     $retornoRotina = $xmlObjeto->roottag->tags[0]->tags;
+
+    if ($operacao == 'Valida_Dados' || $operacao == 'Historico_Dados') {
+      $nrRegRetorno = count($retornoRotina);
+      $regInicial = $nrRegRetorno > 0 ? $xmlObjeto->roottag->tags[1]->cdata : 0;
+      $totRegistros = $xmlObjeto->roottag->tags[3]->cdata;
+      $regPorPagina = $xmlObjeto->roottag->tags[2]->cdata;
+      $regFinal = $regInicial > 0 ? (($regInicial-1) + $nrRegRetorno) : 0;
+      $ehPrimeiraPagina = (($regInicial - $regPorPagina) <= 0);
+      $ehUltimaPagina = (($regInicial + $regPorPagina) >= $totRegistros);
+    }
 
     if ( strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO" ) {
       $msgErro	= $xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata;

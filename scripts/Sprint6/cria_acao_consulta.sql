@@ -2,8 +2,8 @@ declare
   vr_nompkg varchar(100) := 'TELA_ATVPRB'; -- nome da package
   vr_refaca varchar(100) := 'ATVPRB_CONSULTA'; -- nome de referencia da acao, que será chamada no front
   vr_nomprc varchar(100) := 'pc_consulta'; -- nome da procedure dentro da package
-  vr_params varchar(300) := 'pr_cdcooper,pr_nrdconta,pr_nrctremp,pr_cdmotivo,pr_datainic,pr_datafina'; -- parametros da package
-  
+  vr_params varchar(300) := 'pr_cdcooper,pr_nrdconta,pr_nrctremp,pr_cdmotivo,pr_datainic,pr_datafina,pr_pagina'; -- parametros da package
+
   CURSOR cr_craprdr(pr_nmprogra IN craprdr.nmprogra%TYPE) IS
   SELECT * FROM craprdr
    WHERE craprdr.nmprogra = pr_nmprogra;

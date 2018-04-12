@@ -8,22 +8,6 @@
  * ALTERAÇÕES   :
  * --------------
  */
-
-function generateRandomString($length = 10, $minLength = 3) {
-    return substr(str_shuffle(str_repeat($x='abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ', ceil(rand($minLength, $length)/strlen($x)) )),1,$length);
-}
-
-$registros = array();
-for ($i=0; $i < rand(0, 15) ; $i++) {
-	array_push($registros, array('nrdconta'=>rand(0,1000),
-								 'contrato'=>rand(0,1000),
-								 'motivo'=>generateRandomString(32),
-								 'observac'=>'',
-								 'dtinicio'=>date("d/m/Y", mt_rand(1262055681,1262055681)),
-								 'dtfinal'=>date("d/m/Y", mt_rand(1262055681,1262055681))
-								 )
-			 );
-}
 ?>
 
 <div id="divConta">
@@ -51,8 +35,37 @@ for ($i=0; $i < rand(0, 15) ; $i++) {
 			</tbody>
 		</table>
 	</div>
+  <div id="divPesquisaRodape" class="divPesquisaRodape">
+    <table>
+      <tr>
+        <td>
+          <?php if (!$ehPrimeiraPagina): ?>
+            <a class='paginacaoAnt'><<< Anterior</a>
+          <?php endif; ?>
+        </td>
+        <td>
+            Exibindo <?= $regInicial ?> at&eacute; <?= $regFinal ?> de <?= $totRegistros ?>
+        </td>
+        <td>
+          <?php if (!$ehUltimaPagina): ?>
+            <a class='paginacaoProx'>Pr&oacute;ximo >>></a>
+          <?php endif; ?>
+        </td>
+      </tr>
+    </table>
+  </div>
 </div>
 
 <div id="divBotoes" style="text-align:center; padding-bottom:10px; clear: both; float: none;">
   <a href="#" class="botao" id="btVoltar" onclick="voltarListagem();">Voltar</a>
 </div>
+
+<script type="text/javascript">
+  $('a.paginacaoAnt').unbind('click').bind('click', function() {
+    trocaPagina(-1);
+  });
+
+  $('a.paginacaoProx').unbind('click').bind('click', function() {
+    trocaPagina(1);
+  });
+</script>
