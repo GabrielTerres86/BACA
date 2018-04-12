@@ -2,7 +2,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0104.p
     Autor   : Guilherme/Gabriel
-    Data    : Julho/2011                        Ultima Atualizacao: 28/10/2015
+    Data    : Julho/2011                        Ultima Atualizacao: 12/04/2018
      
     Dados referentes ao programa:
    
@@ -27,7 +27,7 @@
                 
                 04/12/2017 - Melhoria 458 ajustes de procs - Antonio R. JR (Mouts)
 
-				 08/03/2018 - Alterado tipo do parametro docmto de INT para DECIMAL
+				08/03/2018 - Alterado tipo do parametro docmto de INT para DECIMAL
                              Chamado 851313 (Antonio R JR)
 .............................................................................*/
 

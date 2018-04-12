@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Fernando Hilgenstieler
-   Data    : Julho/2003.                     Ultima atualizacao: 17/01/2014
+   Data    : Julho/2003.                     Ultima atualizacao: 10/04/2018
          
    Dados referentes ao programa:
 

@@ -2,7 +2,7 @@
 
     Programa: xb1wgen0104.p
     Autor   : Guilherme/Gabriel
-    Data    : Julho/2011                   Ultima atualizacao: 19/07/2012 
+    Data    : Julho/2011                   Ultima atualizacao: 10/04/2018
 
     Objetivo  : BO de Comunicacao XML x BO CMEDEP/CMESAQ (b1wgen0104.p)
 

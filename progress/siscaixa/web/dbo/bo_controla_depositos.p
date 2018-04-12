@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Margarete
-   Data    : Julho/2003.                     Ultima atualizacao: 28/10/2015
+   Data    : Julho/2003.                     Ultima atualizacao: 12/04/2018
 
    Dados referentes ao programa:
 
@@ -60,6 +60,9 @@
                
                08/12/2017 - Melhoria 458, criada procedure atualiza-crapcme-pagamento
                             Antonio R. Jr (mouts)
+
+			   12/04/2018 - Ajuste no formato do campo nrdocmto utilizando a mascara z,zzz,zzz,zz9
+							Antonio R. Jr (mouts)
 ............................................................................. */
 
 {dbo/bo-erro1.i}
@@ -109,7 +112,7 @@ FORM SKIP(3)
      SKIP(2)
      "\033\017\033\016OPERACAO:\024\022"
      SKIP(2)
-     "Tipo de Operacao:" rel_tpoperac "      Documento:" crabcme.nrdocmto
+     "Tipo de Operacao:" rel_tpoperac "      Documento:" crabcme.nrdocmto FORMAT "z,zzz,zzz,zz9"
      SKIP
      "     Valor em R$:" rel_vllanmto
      SKIP(2)

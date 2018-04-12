@@ -9,6 +9,7 @@
  * 19/07/2012 - Jorge        (CECRED) : Ajustes para informar nrdconta no cabeçalho.
  * 19/12/2017 - Antonio R. Jr (mouts) : Remover validacao numero da conta.
  * 08/03/2018 - Antonio R. Jr (mouts) : Ajustado o tamanho do campo nrdocmento para aceitar valores com 10 digitos.
+
  * --------------
  */
 

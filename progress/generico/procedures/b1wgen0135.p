@@ -2,7 +2,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0135.p
     Autor(a): Fabricio
-    Data    : Fevereiro/2012                     Ultima atualizacao: 29/02/2016
+    Data    : Fevereiro/2012                     Ultima atualizacao: 10/04/2018
   
     Dados referentes ao programa:
   

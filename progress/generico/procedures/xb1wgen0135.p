@@ -2,7 +2,7 @@
 
    Programa: xb1wgen0135.p
    Autor   : Fabricio
-   Data    : Fevereiro/2012                     Ultima atualizacao:
+   Data    : Fevereiro/2012                     Ultima atualizacao: 10/04/2018
 
    Dados referentes ao programa:
 
