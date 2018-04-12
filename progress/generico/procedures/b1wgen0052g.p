@@ -4340,9 +4340,9 @@ PROCEDURE Inclui PRIVATE :
 
 
                    IF par_inpessoa = 1 THEN
-                       aux_cdpartar = 38.
+                       aux_cdpartar = 54.  /* TIPO DE CONTA INICIAL PF */
                    ELSE
-                       aux_cdpartar = 39.
+                       aux_cdpartar = 55.  /* TIPO DE CONTA INICIAL PJ */
                        
                    FIND crappco WHERE crappco.cdcooper = par_cdcooper AND
                                       crappco.cdpartar = aux_cdpartar NO-ERROR NO-WAIT.
