@@ -82,7 +82,7 @@
     
 	if (strtoupper($xmlObj->roottag->tags[0]->name) == 'ERRO') {
 		echo "<script>";
-       echo 'showError("error","'.$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata.'","Alerta - Ayllos","bloqueiaFundo(divRotina);carregaLimitesTitulos();");';
+       echo 'showError("error","'.$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata.'","Alerta - Ayllos","bloqueiaFundo(divRotina);");';
 		echo "</script>";
 		exit;
 	}

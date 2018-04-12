@@ -159,7 +159,7 @@
 	<input type="button" class="botao" value="Incluir" onClick="mostrarBorderoIncluir();return false;" style="<?php echo $dispI;?>"  />
 	<input type="button" class="botao" value="Consultar" <?php if ($qtBorderos == 0) { echo 'style="cursor: default;'.$dispC.'" onClick="return false;"'; } else { echo 'style="'.$dispC.'" onClick="mostraDadosBorderoDscTit(\'C\');return false;"'; } ?> />
 
-	<input type="button" class="botao" value="Alterar"  onClick="alert('Implementação em desenvolvimento.');return false;" />
+	<input type="button" class="botao" value="Alterar"  onClick="mostrarBorderoAlterar();return false;" />
 
 	<input type="button" class="botao" value="Analisar" onClick="alert('Implementação em desenvolvimento.');return false;" />
 		

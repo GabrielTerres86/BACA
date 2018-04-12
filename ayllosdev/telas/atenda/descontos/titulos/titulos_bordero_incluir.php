@@ -24,11 +24,6 @@
 	
 	setVarSession("nmrotina","DSC TITS - BORDERO");
 
-	// Carrega permissões do operador
-	// include("../../../../includes/carrega_permissoes.php");	
-	
-	// setVarSession("opcoesTela",$opcoesTela);
-	
 	// Verifica se o número da conta foi informado
 	if (!isset($_POST["nrdconta"])) {
 		exibeErro("Par&acirc;metros incorretos.");
@@ -184,13 +179,6 @@
 		</div>
 	</form>
 </div>
-<?php
-	$dispA = (!in_array("A",$glbvars["opcoesTela"])) ? 'display:none;' : '';
-	$dispX = (!in_array("X",$glbvars["opcoesTela"])) ? 'display:none;' : '';
-	$dispC = (!in_array("C",$glbvars["opcoesTela"])) ? 'display:none;' : '';
-	$dispE = (!in_array("E",$glbvars["opcoesTela"])) ? 'display:none;' : '';
-	$dispM = (!in_array("M",$glbvars["opcoesTela"])) ? 'display:none;' : '';
-?>
 
 <div id="divBotoesTitulosLimite" style="margin-bottom:10px;">
 	<input type="button" class="botao" value="Voltar"  onClick="carregaBorderosTitulos(); voltaDiv(3,2,4,'DESCONTO DE TÍTULOS - BORDERÔS');return false; " />

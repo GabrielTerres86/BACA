@@ -34,6 +34,7 @@
 	$dtvencto = (isset($_POST['dtvencto'])) ? $_POST['dtvencto'] : '' ;
 	$nrnosnum = (isset($_POST['nrnosnum'])) ? $_POST['nrnosnum'] : '' ;
 	$form 	  = (isset($_POST['frmOpcao'])) ? $_POST['frmOpcao'] : '' ;
+	$nrborder = (isset($_POST['nrborder'])) ? $_POST['nrborder'] : '' ;
 
 	if ($operacao == 'ENVIAR_ANALISE' ) {
 		
@@ -224,6 +225,7 @@
 	    $xml .= "	<dtvencto>".$dtvencto."</dtvencto>";
 	    $xml .= "	<nrnosnum>".$nrnosnum."</nrnosnum>";
 	    $xml .= "	<nrctrlim>".$nrctrlim."</nrctrlim>";
+	    $xml .= "	<nrborder>".$nrborder."</nrborder>";
 		$xml .= "	<insitlim>2</insitlim>";
 		$xml .= "	<tpctrlim>3</tpctrlim>";
 	    $xml .= " </Dados>";
@@ -305,7 +307,6 @@
 		}
 		$selecionados = implode($selecionados,",");
 
-		// LISTA TODOS OS TITULOS SELECIONADOS COM AS CRITICAS E RETORNO DA IBRATAN
 		$xml = "<Root>";
 	    $xml .= " <Dados>";
 	    $xml .= "   <tpctrlim>3</tpctrlim>";
@@ -330,6 +331,45 @@
 
 			
 	    echo 'showError("inform","'.$xmlObj->roottag->tags[0]->tags[0]->cdata.'","Alerta - Ayllos","carregaTitulos();dscShowHideDiv(\'divOpcoesDaOpcao1\',\'divOpcoesDaOpcao2;divOpcoesDaOpcao3;divOpcoesDaOpcao4;divOpcoesDaOpcao5\');");';
+			
+	}
+	else if($operacao =='ALTERAR_BORDERO'){
+
+		$selecionados = isset($_POST["selecionados"]) ? $_POST["selecionados"] : array();
+		if(count($selecionados)==0){
+			exibeErro("Selecione ao menos um t&iacute;tulo");
+			exit;
+		}
+		$selecionados = implode($selecionados,",");
+		if(!$nrborder || $nrborder==''){
+			exibeErro("Selecione um border&ocirc;");
+			exit;
+		}
+
+		$xml = "<Root>";
+	    $xml .= " <Dados>";
+	    $xml .= "   <tpctrlim>3</tpctrlim>";
+	    $xml .= "   <insitlim>2</insitlim>";
+	    $xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
+	    $xml .= "   <nrnosnum>".$selecionados."</nrnosnum>";
+	    $xml .= "   <nrborder>".$nrborder."</nrborder>";
+	    $xml .= "	<dtmvtolt>".$glbvars["dtmvtolt"]."</dtmvtolt>";
+	    $xml .= " </Dados>";
+	    $xml .= "</Root>";
+
+	    $xmlResult = mensageria($xml,"TELA_ATENDA_DESCTO","ALTERAR_TITULOS_BORDERO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	    $xmlObj = getObjectXML($xmlResult);
+
+	    // Se ocorrer um erro, mostra mensagem
+		if (strtoupper($xmlObj->roottag->tags[0]->name) == 'ERRO') {
+	       echo 'showError("error","'.$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata.'","Alerta - Ayllos","hideMsgAguardo();bloqueiaFundo(divRotina);");';
+			exit;
+		}
+
+    	$dados = $xmlObj->roottag->tags[0];
+
+			
+	    echo 'showError("inform","'.$xmlObj->roottag->tags[0]->tags[0]->cdata.'","Alerta - Ayllos","carregaBorderosTitulos();dscShowHideDiv(\'divOpcoesDaOpcao2\',\'divOpcoesDaOpcao1;divOpcoesDaOpcao3;divOpcoesDaOpcao4;divOpcoesDaOpcao5\');");';
 			
 	}
 
