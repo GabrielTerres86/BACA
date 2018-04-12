@@ -68,9 +68,7 @@
 								
 								if ( getByTagName($cooper->tags, 'CDCOOPER') <> '' ) {
 						?>
-          <option value=""
-            <?= getByTagName($cooper->tags, 'CDCOOPER'); ?>"><?= getByTagName($cooper->tags, 'NMRESCOP'); ?>
-          </option>
+          <option value="<?= getByTagName($cooper->tags, 'CDCOOPER'); ?>"><?= getByTagName($cooper->tags, 'NMRESCOP'); ?></option>
 
           <?php
 								}
