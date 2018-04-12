@@ -95,11 +95,12 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_CENTRALRISCO_OCR(pr_cdcooper in crapco
         END IF;
 
         -- Verifica TBRISCO_CENTRAL_OCR
-        OPEN  cr_tbrisco_centralocr(pr_cdcooper => rw_crapcop.cdcooper);
-        FETCH cr_tbrisco_centralocr INTO rw_tbrisco_centralocr;
+        OPEN cr_tbrisco_centralocr(pr_cdcooper => rw_crapcop.cdcooper);
+       FETCH cr_tbrisco_centralocr
+        INTO rw_tbrisco_centralocr;
+       CLOSE cr_tbrisco_centralocr;        
         
-		-- Somente cria o job de execução se a diária estiver concluída e se não houver atualização na tabela tbrisco_central_ocr		
-        IF rw_crapdat.inproces = 1 and rw_crapdat.dtmvtoan > rw_tbrisco_centralocr.dtrefere then
+        IF rw_crapdat.inproces = 1 and rw_crapdat.dtmvtoan > nvl(rw_tbrisco_centralocr.dtrefere,'01/01/1900') then
           -- Criar o nome para o job
           vr_jobname := 'JOB_CENTRALRISCO_OCR'||LPAD(rw_crapcop.cdcooper,2,'0')||'_$';
   
