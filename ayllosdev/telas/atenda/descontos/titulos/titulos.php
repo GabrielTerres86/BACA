@@ -25,6 +25,8 @@
 
 				 28/03/2018 - Novos botões Contratos e Propostas. (Andre Avila - GFT)
 
+				 12/04/2018 - Criação do botão manutenção e ajuste no tamanho da tela. (Leonardo Oliveira - GFT)
+
 	***************************************************************************/
 	 
 	session_start();
@@ -144,54 +146,62 @@
 <div id="divBotoes" >
 
 	<a
-	href="#"
-	class="botao" 
-	name="btnvoltar"
-	id="btnvoltar"
-	onClick="voltaDiv(1,0,4,'DESCONTOS','DESCONTOS');return false;" >
-		Voltar
+		href="#"
+		class="botao" 
+		name="btnvoltar"
+		id="btnvoltar"
+		onClick="voltaDiv(1,0,4,'DESCONTOS','DESCONTOS');return false;" >
+			Voltar
 	</a>
 	<a
-	href="#"
-	class="botao" 
-	type="image" 
-	name="btnbordero" 
-	id="btnbordero"
-	<?php if (!in_array("DSC TITS - BORDERO",$rotinasTela)) { echo 'style="cursor: default;display:none;" onClick="return false;"'; } 
-	else { echo 'onClick="carregaBorderosTitulos();return false;"'; } ?> >
-		Border&ocirc;s
-	</a>
-
-	<a
-	href="#"
-	class="botao"
-	type="image"
-	name="btnlimite"
-	id="btnlimite"
-	 <?php if (!in_array("DSC TITS - LIMITE",$rotinasTela)) { echo 'style="cursor: default;display:none;" onClick="return false;"'; } 
-	else { echo 'onClick="carregaLimitesTitulos();return false;"'; } ?> >
-		Contratos
+		href="#"
+		class="botao" 
+		type="image" 
+		name="btnbordero" 
+		id="btnbordero"
+		<?php if (!in_array("DSC TITS - BORDERO",$rotinasTela)) { echo 'style="cursor: default;display:none;" onClick="return false;"'; } 
+		else { echo 'onClick="carregaBorderosTitulos();return false;"'; } ?> >
+			Border&ocirc;s
 	</a>
 
 	<a
-	href="#"
-	class="botao" 
-	type="image" 
-	name="btnpropostas" 
-	id="btnpropostas"
+		href="#"
+		class="botao"
+		type="image"
+		name="btnlimite"
+		id="btnlimite"
+	 	<?php if (!in_array("DSC TITS - LIMITE",$rotinasTela)) { echo 'style="cursor: default;display:none;" onClick="return false;"'; } 
+		else { echo 'onClick="carregaLimitesTitulos();return false;"'; } ?> >
+			Contratos
+	</a>
 
-	<?php if (!in_array("DSC TITS - LIMITE",$rotinasTela)) { echo 'style="cursor: default;display:block;" onClick="carregaLimitesTitulosPropostas() return false;"'; } 
-	else { echo 'onClick="carregaLimitesTitulosPropostas();return false;"'; } ?> >
-		Propostas
+	<a
+		href="#"
+		class="botao" 
+		type="image" 
+		name="btnpropostas" 
+		id="btnpropostas"
+		<?php if (!in_array("DSC TITS - LIMITE",$rotinasTela)) { echo 'style="cursor: default;display:block;" onClick="carregaLimitesTitulosPropostas() return false;"'; } 
+		else { echo 'onClick="carregaLimitesTitulosPropostas();return false;"'; } ?> >
+			Propostas
 	</a>
 
 	<a 
-	href="#" 
-	class="botao"
-	id="btnrenovacao"
-	name="btnrenovacao">
+		href="#" 
+		class="botao"
+		id="btnrenovacao"
+		name="btnrenovacao">
 		Renovar
 	</a>
+
+	<a 
+		href="#" 
+		class="botao"
+		id="btnManutencao"
+		name="btnManutencao">
+		Manuten&ccedil;&atilde;o
+	</a>
+
 </div>
 <script type="text/javascript">
 	dscShowHideDiv("divOpcoesDaOpcao1","divConteudoOpcao");

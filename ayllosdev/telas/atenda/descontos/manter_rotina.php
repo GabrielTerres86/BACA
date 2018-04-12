@@ -5,7 +5,7 @@
  * DATA CRIAÇÃO : 15/02/2018
  * OBJETIVO     : Descrição da rotina
  * --------------
- * ALTERAÇÕES   :
+ * ALTERAÇÕES   : 12/04/2018 - Inclusão da rotina 'REALIZAR_MANUTENCAO_LIMITE'. (Leonardo Oliveira - GFT)
  * --------------
 
  */
@@ -33,6 +33,7 @@
 	$vltitulo = (isset($_POST['vltitulo'])) ? $_POST['vltitulo'] : '' ;
 	$dtvencto = (isset($_POST['dtvencto'])) ? $_POST['dtvencto'] : '' ;
 	$nrnosnum = (isset($_POST['nrnosnum'])) ? $_POST['nrnosnum'] : '' ;
+	$cddlinha = (isset($_POST['cddlinha'])) ? $_POST['cddlinha'] : 0  ;
 	$form 	  = (isset($_POST['frmOpcao'])) ? $_POST['frmOpcao'] : '' ;
 	$nrborder = (isset($_POST['nrborder'])) ? $_POST['nrborder'] : '' ;
 
@@ -187,8 +188,7 @@
 			} // OK
 		}// != ERROR
 		
-	}
-	else if ($operacao == 'BUSCAR_PAGADOR'){
+	}else if ($operacao == 'BUSCAR_PAGADOR'){
 		if (!validaInteiro($nrdconta) || $nrdconta == 0) exibirErro('error','Informe o número da conta.','Alerta - Ayllos','$(\'#nrdconta\', \'#'.$form.'\').focus()',false);
 		if (!validaInteiro($nrinssac) || $nrinssac == 0) exibirErro('error','Informe o número do CPF/CNPJ.','Alerta - Ayllos','$(\'#nrinssac\', \'#'.$form.'\').focus()',false);
 		$xml  = "";
@@ -214,7 +214,7 @@
 		echo "$('#vlpercen', '#$form').val('$vlpercen');";
 		echo "controlaOpcao();";
 
-	}else if ($operacao =='BUSCAR_TITULOS_BORDERO'){
+	}else if ($operacao == 'BUSCAR_TITULOS_BORDERO'){
 
 		$xml = "<Root>";
 	    $xml .= " <Dados>";
@@ -299,7 +299,8 @@
 			echo '</script>';
 	    }
     	exit();
-	} else if($operacao =='INSERIR_BORDERO'){
+	
+	}else if ($operacao == 'INSERIR_BORDERO'){
 		$selecionados = isset($_POST["selecionados"]) ? $_POST["selecionados"] : array();
 		if(count($selecionados)==0){
 			exibeErro("Selecione ao menos um t&iacute;tulo");
@@ -332,6 +333,46 @@
 			
 	    echo 'showError("inform","'.$xmlObj->roottag->tags[0]->tags[0]->cdata.'","Alerta - Ayllos","carregaTitulos();dscShowHideDiv(\'divOpcoesDaOpcao1\',\'divOpcoesDaOpcao2;divOpcoesDaOpcao3;divOpcoesDaOpcao4;divOpcoesDaOpcao5\');");';
 			
+	}else if ($operacao == 'REALIZAR_MANUTENCAO_LIMITE'){
+
+		// Monta o xml de requisição
+		$xmlGetDados = "";
+		$xmlGetDados .= "<Root>";
+		$xmlGetDados .= "	<Cabecalho>";
+		$xmlGetDados .= "		<Bo>b1wgen0030.p</Bo>";
+		$xmlGetDados .= "		<Proc>realizar_manut_contrato</Proc>";
+		$xmlGetDados .= "	</Cabecalho>";
+		$xmlGetDados .= "	<Dados>";
+		$xmlGetDados .= "		<cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
+		$xmlGetDados .= "		<cdagenci>".$glbvars["cdagenci"]."</cdagenci>";
+		$xmlGetDados .= "		<nrdcaixa>".$glbvars["nrdcaixa"]."</nrdcaixa>";
+		$xmlGetDados .= "		<cdoperad>".$glbvars["cdoperad"]."</cdoperad>";
+		$xmlGetDados .= "		<dtmvtolt>".$glbvars["dtmvtolt"]."</dtmvtolt>";
+		$xmlGetDados .= "		<idorigem>".$glbvars["idorigem"]."</idorigem>";	
+		$xmlGetDados .= "		<nrdconta>".$nrdconta."</nrdconta>";
+		$xmlGetDados .= "		<idseqttl>1</idseqttl>";
+		$xmlGetDados .= "		<nmdatela>".$glbvars["nmdatela"]."</nmdatela>";
+		$xmlGetDados .= "		<nrctrlim>".$nrctrlim."</nrctrlim>";
+		$xmlGetDados .= "		<vllimite>".$vllimite."</vllimite>";
+		$xmlGetDados .= "		<cddlinha>".$cddlinha."</cddlinha>";
+		$xmlGetDados .= "	</Dados>";
+		$xmlGetDados .= "</Root>";
+			
+		// Executa script para envio do XML
+		$xmlResult = getDataXML($xmlGetDados);
+		echo $xmlResult;
+		// Cria objeto para classe de tratamento de XML
+		$xmlObjDados = getObjectXML(retiraAcentos(removeCaracteresInvalidos($xmlResult)));
+		
+	    // Se ocorrer um erro, mostra mensagem
+		if (strtoupper($xmlObjDados->roottag->tags[0]->name) == 'ERRO') {
+	       echo 'showError("error","'.$xmlObjDados->roottag->tags[0]->tags[0]->tags[4]->cdata.'","Alerta - Ayllos","mostrarBorderoResumo();hideMsgAguardo();bloqueiaFundo(divRotina);");';
+			exit;
+		}
+			
+	    echo 'showError("inform","'.$xmlObjDados->roottag->tags[0]->tags[0]->cdata.'","Alerta - Ayllos","'
+	    	.'voltaDiv(3,2,4,\'DESCONTO DE T&Iacute;TULOS - LIMITE\');'
+	    	.'carregaTitulos();';	
 	}
 	else if($operacao =='ALTERAR_BORDERO'){
 
@@ -372,6 +413,7 @@
 	    echo 'showError("inform","'.$xmlObj->roottag->tags[0]->tags[0]->cdata.'","Alerta - Ayllos","carregaBorderosTitulos();dscShowHideDiv(\'divOpcoesDaOpcao2\',\'divOpcoesDaOpcao1;divOpcoesDaOpcao3;divOpcoesDaOpcao4;divOpcoesDaOpcao5\');");';
 			
 	}
+
 
 	// Função para exibir erros na tela através de javascript
 	function exibeErro($msgErro) { 

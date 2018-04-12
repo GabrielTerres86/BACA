@@ -39,6 +39,8 @@
                             efetua_liber_anali_bordero. (Jaison/James)
 
                28/07/2017 - Desenvolvimento da melhoria 364 - Grupo Economico Novo. (Mauro)
+
+               12/02/2018 -Exposição das procedures 'busca_dados_limite_manutencao' e 'realizar_manutencao_contrato' (Leonardo Oliveira - GFT)
 ............................................................................ */
 
 { sistema/generico/includes/b1wgen0138tt.i }
@@ -1224,6 +1226,94 @@ PROCEDURE busca_restricoes_coordenador:
     RUN piXmlExport (INPUT TEMP-TABLE tt-dsctit_bordero_restricoes:HANDLE,
                      INPUT "Restricoes").
     RUN piXmlSave.
+        
+END PROCEDURE.
+
+/***************************************************************************
+    Buscar dados de um limite para manutencao 
+***************************************************************************/
+PROCEDURE busca_dados_limite_manutencao:
+
+    RUN busca_dados_limite_manutencao IN hBO (INPUT aux_cdcooper,
+                                          INPUT aux_cdagenci,
+                                          INPUT aux_nrdcaixa,
+                                          INPUT aux_cdoperad,
+                                          INPUT aux_dtmvtolt,
+                                          INPUT aux_idorigem,
+                                          INPUT aux_nrdconta,
+                                          INPUT aux_idseqttl,
+                                          INPUT aux_nmdatela,
+                                          INPUT aux_nrctrlim,
+                                         OUTPUT TABLE tt-erro,
+                                         OUTPUT TABLE tt-dsctit_dados_limite,
+                                         OUTPUT TABLE tt-dados_dsctit).
+
+    IF  RETURN-VALUE = "NOK"  THEN
+        DO:
+            FIND FIRST tt-erro NO-LOCK NO-ERROR.
+      
+            IF  NOT AVAILABLE tt-erro  THEN
+                DO:
+                    CREATE tt-erro.
+                    ASSIGN tt-erro.dscritic = "Nao foi possivel concluir a " +
+                                              "operacao.".
+                END.
+                
+            RUN piXmlSaida (INPUT TEMP-TABLE tt-erro:HANDLE,
+                            INPUT "Erro").
+        END.
+    ELSE 
+        DO:
+            RUN piXmlNew.
+            RUN piXmlExport (INPUT TEMP-TABLE tt-dsctit_dados_limite:HANDLE,
+                             INPUT "Dados_Limite").
+            RUN piXmlExport (INPUT TEMP-TABLE tt-dados_dsctit:HANDLE,
+                             INPUT "Dados_Desconto").
+            RUN piXmlSave.
+        END.
+        
+END PROCEDURE.
+
+/*****************************************************************************
+       Realizar a manutençao do contrato                                   
+****************************************************************************/
+PROCEDURE realizar_manutencao_contrato:
+
+    RUN realizar_manutencao_contrato IN hBO (INPUT aux_cdcooper,    
+                                        INPUT aux_cdagenci,    
+                                        INPUT aux_nrdcaixa,
+                                        INPUT aux_cdoperad,
+                                        INPUT aux_dtmvtolt,
+                                        INPUT aux_idorigem,
+                                        INPUT aux_nrdconta, 
+                                        INPUT aux_idseqttl,      
+                                        INPUT aux_nmdatela,
+                                        INPUT aux_nrctrlim,
+                                        INPUT aux_vllimite,
+                                        INPUT aux_cddlinha,
+                                        OUTPUT TABLE tt-erro,
+                                        OUTPUT TABLE tt-msg-confirma).
+
+                                    
+    IF  RETURN-VALUE = "NOK"  THEN
+        DO:
+            FIND FIRST tt-erro NO-LOCK NO-ERROR.
+      
+            IF  NOT AVAILABLE tt-erro  THEN
+                DO:
+                    CREATE tt-erro.
+                    ASSIGN tt-erro.dscritic = "Nao foi possivel concluir a " +
+                                              "operacao.".
+                END.
+                
+            RUN piXmlSaida (INPUT TEMP-TABLE tt-erro:HANDLE,
+                            INPUT "Erro").
+        END.
+    ELSE 
+        DO:
+            RUN piXmlNew.
+            RUN piXmlSave.
+        END.
         
 END PROCEDURE.
 
