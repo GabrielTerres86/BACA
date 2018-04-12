@@ -701,6 +701,10 @@
                  
                  09/10/2017 - Ajustes de retorno na operacao 31 (David)
 
+				 05/03/2018 - Incluído o carrossel de banners para o mobile 
+							  (6214  -  Ederson - Supero)
+
+
 ------------------------------------------------------------------------------*/
 
 /*----------------------------------------------------------------*/
@@ -1696,9 +1700,9 @@ PROCEDURE process-web-request :
             ASSIGN aux_tpoperac = INT(GET-VALUE("tpoperac")).
 
         /* Verificar senha e frase */
-        IF  aux_flgcript AND NOT CAN-DO("2,11,18",STRING(aux_operacao))  OR /** Utiliza criptografia **/
-           (
-               NOT aux_flgcript AND 
+        IF  (aux_flgcript AND NOT CAN-DO("2,11,18",STRING(aux_operacao)))  OR /** Utiliza criptografia **/
+            (
+               NOT aux_flgcript AND aux_nrcpfope = 0 AND
                ( 
                  (
                   /** Nao utiliza criptografia se for confirmacao de pagamento **/
@@ -1731,10 +1735,6 @@ PROCEDURE process-web-request :
                (
                   /** Nao utiliza criptografia se for pagamento de GPS **/
                   CAN-DO("153",STRING(aux_operacao)) AND (aux_tpoperac = 3 OR aux_tpoperac = 5)
-               ) OR
-               (
-                  /** Nao utiliza criptografia se for pagamento de emprestimo **/
-                  CAN-DO("158",STRING(aux_operacao))
                ) OR
                (
                   /** Nao utiliza criptografia se for reprovacao de transacao pendente **/
@@ -2386,6 +2386,9 @@ PROCEDURE process-web-request :
         ELSE
             IF  aux_operacao = 214 THEN /* Obter quantidade de notificações não visualizadas do cooperado */
                 RUN proc_operacao214.
+		ELSE
+            IF  aux_operacao = 215 THEN /* Obter banners para o carrossel do mobile */
+                RUN proc_operacao215.
     END.
 /*....................................................................*/
     
@@ -5787,7 +5790,7 @@ PROCEDURE proc_operacao97:
            aux_dtvencto = DATE(GET-VALUE("dtvencto"))
            aux_qtdiaven = INTEGER(GET-VALUE("qtdiaven")).
 
-    IF  NOT aux_flgcript AND aux_flgtipar = 1 THEN /* Nao possui criptografia no front e autenticacao e realizada junto com a propria operacao*/
+    IF  aux_nrcpfope = 0 AND NOT aux_flgcript AND aux_flgtipar = 1 THEN /* Nao possui criptografia no front e autenticacao e realizada junto com a propria operacao*/
         DO:
             RUN proc_operacao2.
 
@@ -5882,13 +5885,11 @@ PROCEDURE proc_operacao99:
                                          OUTPUT TABLE xml_operacao).
 
     IF RETURN-VALUE <> "OK" THEN
-            {&out} aux_dsmsgerr. 
-
-    FOR EACH xml_operacao NO-LOCK:
-
-        {&out} xml_operacao.dslinxml.
-
-        END.
+       {&out} aux_dsmsgerr. 
+    ELSE
+       FOR EACH xml_operacao NO-LOCK:
+           {&out} xml_operacao.dslinxml.
+       END.
 
     {&out} aux_tgfimprg.
 
@@ -6273,7 +6274,7 @@ PROCEDURE proc_operacao112:
 
     ASSIGN aux_nrctraar = INTEGER(GET-VALUE("nrctraar")).
 
-    IF  NOT aux_flgcript THEN /* Nao possui criptografia no front e autenticacao e realizada junto com a propria operacao*/
+    IF  aux_nrcpfope = 0 AND NOT aux_flgcript THEN /* Nao possui criptografia no front e autenticacao e realizada junto com a propria operacao*/
         DO:
             RUN proc_operacao2.
 
@@ -6511,7 +6512,7 @@ PROCEDURE proc_operacao119:
 
     ASSIGN aux_detagend = GET-VALUE("detagend").
 
-    IF  NOT aux_flgcript THEN /* Nao possui criptografia no front e autenticacao e realizada junto com a propria operacao*/
+    IF  aux_nrcpfope = 0 AND NOT aux_flgcript THEN /* Nao possui criptografia no front e autenticacao e realizada junto com a propria operacao*/
         DO:
             RUN proc_operacao2.
 
@@ -7655,6 +7656,14 @@ END PROCEDURE.
 
 PROCEDURE proc_operacao158:
 
+    IF  NOT aux_flgcript THEN /* Nao possui criptografia no front e autenticacao e realizada junto com a propria operacao*/
+        DO:
+            RUN proc_operacao2.
+
+            IF   RETURN-VALUE = "NOK"   THEN
+                 RETURN "NOK".
+        END. 
+
     aux_nrctremp = INT(GET-VALUE("nrctremp")).
     aux_ordempgo = GET-VALUE("ordempgo").
     aux_qtdprepr = INT(GET-VALUE("qtdprepr")).
@@ -7961,7 +7970,7 @@ PROCEDURE proc_operacao167:
 		   aux_dtinivig = GET-VALUE("aux_dtinivig")
 		   aux_vlpacote = DECI(GET-VALUE("aux_vlpacote")).
 
-  IF  NOT aux_flgcript  THEN /* Nao possui criptografia no front e autenticacao e realizada junto com a propria operacao*/
+  IF  aux_nrcpfope = 0 AND NOT aux_flgcript  THEN /* Nao possui criptografia no front e autenticacao e realizada junto com a propria operacao*/
       DO:
           RUN proc_operacao2.
           
@@ -8307,7 +8316,7 @@ PROCEDURE proc_operacao179:
            aux_nrremess =     (GET-VALUE("aux_nrremret"))
            aux_iddspscp = INTE(GET-VALUE("aux_iddspscp")).
            
-    IF  NOT aux_flgcript AND aux_operacao = 5 THEN /* Nao possui criptografia no front e autenticacao e realizada junto com a propria operacao*/
+    IF  aux_nrcpfope = 0 AND NOT aux_flgcript AND aux_operacao = 5 THEN /* Nao possui criptografia no front e autenticacao e realizada junto com a propria operacao*/
         DO:
             RUN proc_operacao2.
 
@@ -8539,7 +8548,7 @@ PROCEDURE proc_operacao189:
          aux_idpacote   = INTE(GET-VALUE("idpacote"))
          aux_iddspscp   = INTE(GET-VALUE("aux_iddspscp")).
   
-  IF  NOT aux_flgcript AND (aux_cddopcao = "A" OR aux_cddopcao = "CA") THEN /* Nao possui criptografia no front e autenticacao e realizada junto com a propria operacao*/
+  IF  aux_nrcpfope = 0 AND NOT aux_flgcript AND (aux_cddopcao = "A" OR aux_cddopcao = "CA") THEN /* Nao possui criptografia no front e autenticacao e realizada junto com a propria operacao*/
       DO:
           RUN proc_operacao2.
   
@@ -9333,6 +9342,24 @@ PROCEDURE proc_operacao214:
     {&out} aux_tgfimprg.
 
 END PROCEDURE.
+
+PROCEDURE proc_operacao215:
+    
+    RUN sistema/internet/fontes/InternetBank215.p (INPUT aux_cdcooper,
+                                                   INPUT aux_nrdconta,
+                                                   INPUT aux_idseqttl,
+                                                   INPUT aux_cdcanal,
+                                                   OUTPUT TABLE xml_operacao).
+
+    FOR EACH xml_operacao NO-LOCK:
+        {&out} xml_operacao.dslinxml.
+    END.
+    
+    {&out} aux_tgfimprg.
+
+END PROCEDURE.
+
+
 
 /*............................................................................*/
 
