@@ -6749,7 +6749,7 @@ PROCEDURE pc_tela_busca_contratos(pr_nrdconta IN crapepr.nrdconta%TYPE --> Numer
     vr_infimsol INTEGER;
     vr_cdcritic crapcri.cdcritic%TYPE;
     vr_dscritic VARCHAR2(10000); 
-    vr_cdprogra VARCHAR2(40) := 'PC_CONTROLE_EXE_JOB';
+    vr_cdprogra VARCHAR2(40) := 'PC_CONTROLA_EXE_JOB';
     vr_nomdojob VARCHAR2(40) := 'JBP_TRANSFERENCIA_PREJU'; 
     vr_dserro   VARCHAR2(10000); 
     vr_dstexto  VARCHAR2(2000);
