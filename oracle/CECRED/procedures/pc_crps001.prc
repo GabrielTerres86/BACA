@@ -211,6 +211,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
                             empr0002.pc_gerar_carga_vig_crapsda com o objetivo de popular o campo
                             crapsda.vllimcap - Melhoria M441 - Roberto Holz (Mout´s)
                             
+               07/12/2017 - Passagem do idcobope. (Jaison/Marcos Martini - PRJ404)
+                            
                28/12/2017 - #783710 Melhoria das informações dos logs quando ñ encontrar os 
                             registros crapfdc; e alterado o arquivo de log dos mesmos, de 
                             proc_batch para proc_message (Carlos)
@@ -219,6 +221,13 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
                             Foi feito round no campo de IOF (Andrino-Mouts)               
 
                19/01/2018 - Corrigido cálculo de saldo bloqueado (Luis Fernando-Gft)
+               
+               06/04/2018 - Alterar o tratamento relacionado as chamadas de resgate de aplicação,
+                            para que não ocorram problemas com o fluxo atual em caso de ocorrencia
+                            de erros. (Renato - Supero)
+                            
+               08/04/2018 - Considerar apenas o valor do estouro de conta para realizar o resgate
+                            automático (Renato - Supero)
      ............................................................................. */
 
      DECLARE
@@ -310,7 +319,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
        RECORD (nrdconta craplim.nrdconta%TYPE
               ,cddlinha craplim.cddlinha%TYPE
               ,dtinivig craplim.dtinivig%TYPE
-              ,vllimite craplim.vllimite%TYPE);
+              ,vllimite craplim.vllimite%TYPE
+              ,idcobope craplim.idcobope%TYPE);
 
        -- Definicao do tipo de tabela de associados
        TYPE typ_tab_crapass IS
@@ -611,6 +621,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
                ,craplim.cddlinha
                ,craplim.dtinivig
                ,craplim.vllimite
+               ,craplim.idcobope
                ,MAX (craplim.progress_recid) OVER (partition by craplim.nrdconta) maior
          FROM craplim craplim
          WHERE  craplim.cdcooper = pr_cdcooper
@@ -731,11 +742,13 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
        vr_tab_erro  GENE0001.typ_tab_erro;
        vr_ingerneg  BOOLEAN := TRUE;
        vr_des_erro  VARCHAR2(100);
+       vr_vlresgat  NUMBER;
 
        vr_vliofpri NUMBER := 0; --> valor do IOF principal
        vr_vliofadi NUMBER := 0; --> valor do IOF adicional
        vr_vliofcpl NUMBER := 0; --> valor do IOF complementar
        vr_idlancto NUMBER;
+       vr_flgimune PLS_INTEGER;
        --Tipo da tabela de saldos
        vr_tab_saldo EXTR0001.typ_tab_saldos;
        -- Cursor genérico de calendário
@@ -956,6 +969,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
          vr_tab_craplim(rw_craplim.nrdconta).cddlinha:= rw_craplim.cddlinha;
          vr_tab_craplim(rw_craplim.nrdconta).dtinivig:= rw_craplim.dtinivig;
          vr_tab_craplim(rw_craplim.nrdconta).vllimite:= rw_craplim.vllimite;
+         vr_tab_craplim(rw_craplim.nrdconta).idcobope:= rw_craplim.idcobope;
        END LOOP;
 
        --Carregar tabela memoria com as linhas de credito
@@ -1016,6 +1030,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
              rw_craplim.dtinivig:= vr_tab_craplim(rw_crapsld.nrdconta).dtinivig;
              --Valor do limite recebe valor do cursor
              rw_craplim.vllimite:= vr_tab_craplim(rw_crapsld.nrdconta).vllimite;
+             --Valor do idcobope recebe valor do cursor
+             rw_craplim.idcobope := vr_tab_craplim(rw_crapsld.nrdconta).idcobope;
              --Atribuir verdadeiro para flag existe craplim
              vr_flglimite:= TRUE;
            ELSE
@@ -2073,6 +2089,49 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
            --Atualizar quantidade de lancamentos na tabela de saldos
            rw_crapsld.qtlanmes:= Nvl(rw_crapsld.qtlanmes,0) + vr_qtlanmes;
 
+           -- Se possui estouro de conta
+           IF (rw_crapsld.vlsddisp + rw_craplim.vllimite) < 0 THEN
+
+             --Se encontrou limite de credito para a conta
+             IF vr_tab_craplim.EXISTS(rw_crapsld.nrdconta) THEN
+             
+               -- Somente se o contrato de limite tem cobertura de operação
+               IF vr_tab_craplim(rw_crapsld.nrdconta).idcobope > 0 THEN
+
+                 -- Tentar resgatar o valor negativo
+                 vr_vlresgat := ABS(rw_crapsld.vlsddisp + rw_craplim.vllimite);
+
+                 -- Acionaremos rotina para solicitar o resgate afim de cobrir os valores negativos
+                 BLOQ0001.pc_solici_cobertura_operacao(pr_idcobope => vr_tab_craplim(rw_crapsld.nrdconta).idcobope
+                                                      ,pr_flgerlog => 1
+                                                      ,pr_cdoperad => '1'
+                                                      ,pr_idorigem => 5
+                                                      ,pr_cdprogra => vr_cdprogra
+                                                      ,pr_qtdiaatr => rw_crapsld.qtddusol + 1
+                                                      ,pr_vlresgat => vr_vlresgat
+                                                      ,pr_flefetiv => 'S' -- Efetivar o resgate
+                                                      ,pr_dscritic => vr_dscritic);
+
+                 -- Em caso de erro no resgate, deve limpar os erros e prosseguir normalmente, pois o rollback 
+                 -- já foi efetuado
+                 IF TRIM(vr_dscritic) IS NOT NULL THEN
+                   -- Limpar erros
+                   vr_dscritic := NULL;
+                   -- Indicar que nenhum valor foi resgatado
+                   vr_vlresgat := 0;
+                 ELSE -- Não havendo erros
+                   
+                   ---------------------------------------------------------
+                   -- Decrementar do saldo negativo o valor resgatado
+					   			 rw_crapsld.vlsddisp := rw_crapsld.vlsddisp + vr_vlresgat;
+                   ---------------------------------------------------------
+
+                 END IF;
+
+               END IF;
+             END IF;
+           END IF;
+
            --Valor utilizado recebe:
            --vlsdblfp = valor do saldo bloqueado fora da praca
            --vlsdbloq = valor saldo bloqueado
@@ -2133,6 +2192,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
                                           ,pr_vliofadi   => vr_vliofadi
                                           ,pr_vliofcpl   => vr_vliofcpl
                                           ,pr_vltaxa_iof_principal => vr_vltaxa_iof_principal
+                                          ,pr_flgimune    => vr_flgimune
                                           ,pr_dscritic   => vr_dscritic);
                                           
              -- Condicao para verificar se houve critica                             
@@ -2163,6 +2223,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
                                           ,pr_vliofadi   => vr_vliofadi
                                           ,pr_vliofcpl   => vr_vliofcpl
                                           ,pr_vltaxa_iof_principal => vr_vltaxa_iof_principal
+                                          ,pr_flgimune   => vr_flgimune
                                           ,pr_dscritic   => vr_dscritic);
              
              -- Condicao para verificar se houve critica                             
@@ -2192,6 +2253,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
                                         ,pr_vliofadi   => vr_vliofadi
                                         ,pr_vliofcpl   => vr_vliofcpl
                                         ,pr_vltaxa_iof_principal => vr_vltaxa_iof_principal
+                                        ,pr_flgimune   => vr_flgimune
                                         ,pr_dscritic   => vr_dscritic);
              
            -- Condicao para verificar se houve critica                             
@@ -2209,6 +2271,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
                                  ,pr_nrcontrato => 0
                                  ,pr_vliofpri   => vr_vliof_principal
                                  ,pr_vliofadi   => vr_vliofadi
+                                 ,pr_flgimune   => vr_flgimune
                                  ,pr_cdcritic   => vr_cdcritic
                                  ,pr_dscritic   => vr_dscritic);
                                 
@@ -2217,10 +2280,15 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
              RAISE vr_exc_saida;
            END IF;
            
+           IF vr_flgimune = 0 THEN
            --Valor base iof recebe valor base iof existente + valor base iof calculado
            rw_crapsld.vlbasiof := Nvl(rw_crapsld.vlbasiof,0) + Nvl(vr_vlbasiof,0);
            --Valor iod no mes recebe valor iof mes + valor base iof multiplicado pela taxa de iof
-           rw_crapsld.vliofmes := round(Nvl(rw_crapsld.vliofmes,0) + NVL(vr_vliofadi,0) + NVL(vr_vliof_principal,0),2);
+           rw_crapsld.vliofmes := Nvl(rw_crapsld.vliofmes,0) + NVL(vr_vliofadi,0) + NVL(vr_vliof_principal,0);
+           ELSE
+             rw_crapsld.vlbasiof := Nvl(rw_crapsld.vlbasiof,0);
+             rw_crapsld.vliofmes := Nvl(rw_crapsld.vliofmes,0);
+           END IF;
 
             --Se deve calcular cpmf
            IF vr_flgdcpmf THEN  --linha(905)
