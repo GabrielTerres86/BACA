@@ -28,7 +28,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
   --  Sistema  : Rotinas referentes a importacao de arquivos CYBER de acordos de emprestimos
   --  Sigla    : RECP
   --  Autor    : Jean Michel Deschamps
-  --  Data     : Outubro/2016.                   Ultima atualizacao: 06/04/2018
+  --  Data     : Outubro/2016.                   Ultima atualizacao: 13/03/2018
   --
   -- Dados referentes ao programa:
   --
@@ -55,10 +55,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                               na procedure pc_imp_arq_acordo_cancel. (SD#791193 - AJFink)
 
   --             13/03/2018 - Chamado 806202 - ALterado update CRAPCYC para não atualizar motivos 2 e 7.
-
-			     06/04/2018 - Alteração do cursor "cr_crapcyb" para considerar somente contratos marcados
-							  com INDPAGAR = 'S' e considerar o contrato LC100 que não está na CRAPCYB.
-															(Reginaldo - AMcom)
 
   ---------------------------------------------------------------------------------------------------------------*/
 
@@ -603,30 +599,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
 
       -- Consulta contratos em acordo
       CURSOR cr_crapcyb(pr_nracordo tbrecup_acordo.nracordo%TYPE) IS
-			  WITH acordo_contrato AS (
-				     SELECT a.cdcooper
-						  , a.nracordo
-              , a.nrdconta
-              , c.nrctremp
-              , c.cdorigem
-              , c.indpagar
-           FROM tbrecup_acordo a
-              , tbrecup_acordo_contrato c
-         WHERE a.nracordo = pr_nracordo
-           AND c.nracordo = a.nracordo 
-					 AND c.indpagar = 'S'
-				)
-        SELECT acc.nracordo
-              ,acc.cdcooper
-              ,acc.nrdconta
-              ,acc.cdorigem
-              ,acc.nrctremp
-          FROM acordo_contrato acc,
+        SELECT acordo.nracordo
+              ,acordo.cdcooper
+              ,acordo.nrdconta
+              ,cyb.cdorigem
+              ,acordoctr.nrctremp
+          FROM tbrecup_acordo acordo,
+               tbrecup_acordo_contrato acordoctr,
                crapcyb cyb
-         WHERE cyb.cdcooper(+) = acc.cdcooper
-           AND cyb.nrdconta(+) = acc.nrdconta
-           AND cyb.nrctremp(+) = acc.nrctremp
-           AND cyb.cdorigem(+) = acc.cdorigem          
+         WHERE acordo.nracordo = acordoctr.nracordo      
+           AND cyb.cdcooper = acordo.cdcooper
+           AND cyb.nrdconta = acordo.nrdconta
+           AND cyb.nrctremp = acordoctr.nrctremp
+           AND cyb.cdorigem = acordoctr.cdorigem          
+           AND acordoctr.nracordo = pr_nracordo
       ORDER BY cyb.cdorigem;
       rw_crapcyb cr_crapcyb%ROWTYPE;
 

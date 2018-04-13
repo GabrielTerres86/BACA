@@ -196,7 +196,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
   --  Sistema  : Rotinas genéricas com foco no Sistema de Acordos
   --  Sigla    : RECP
   --  Autor    : Renato Darosci / James Prust Junior
-  --  Data     : Setembro/2016.                   Ultima atualizacao: 05/04/2018
+  --  Data     : Setembro/2016.                   Ultima atualizacao: 13/03/2018
   --
   -- Dados referentes ao programa:
   --
@@ -221,9 +221,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
   --             13/03/2018 - Chamado 806202 - ALterado update CRAPCYC para não atualizar motivos 2 e 7.
   --
   --             02/04/2018 - Gravar usuario cyber quando efetuado pagamento da primeira parcela. Chamado 868775 (Heitor - Mouts)
-  --
-  --             05/04/2018 - Ajuste na rotina pc_pagar_emprestimo_prejuizo para correta realização de lançamento com histórico 384 
-  --                          na CRAPLCM ao pagar todo o valor do prejuízo. Reginaldo (AMcom) / Daniel Zimmermann
   -- 
   ---------------------------------------------------------------------------------------------------------------
   
@@ -875,42 +872,44 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
         vr_vlapagar := vr_vlsdprej;
       END IF;
     
-	  IF vr_vlapagar > 0 THEN
-    
-        -- ROTINA PARA EFETUAR O LANÇAMENTO
-        EMPR0001.pc_cria_lancamento_lem(pr_cdcooper => pr_cdcooper       -- Codigo Cooperativa
-                                       ,pr_dtmvtolt => pr_crapdat.dtmvtolt       -- Data Emprestimo
-                                       ,pr_cdagenci => pr_cdagenci       -- Codigo Agencia
-                                       ,pr_cdbccxlt => 100               -- Codigo Caixa
-                                       ,pr_cdoperad => pr_cdoperad       -- Operador
-                                       ,pr_cdpactra => pr_cdagenci       -- Posto Atendimento
-                                       ,pr_tplotmov => 5                 -- Tipo movimento
-                                       ,pr_nrdolote => 650002            -- Numero Lote
-                                       ,pr_nrdconta => pr_nrdconta       -- Numero da Conta
-                                       ,pr_cdhistor => 391               -- Codigo Historico
-                                       ,pr_nrctremp => pr_nrctremp       -- Numero Contrato
-                                       ,pr_vllanmto => vr_vlapagar       -- Valor Lancamento
-                                       ,pr_dtpagemp => pr_crapdat.dtmvtolt       -- Data Pagamento Emprestimo
-                                       ,pr_txjurepr => 0                 -- Taxa Juros Emprestimo
-                                       ,pr_vlpreemp => pr_vlpreemp       -- Valor Emprestimo
-                                       ,pr_nrsequni => 0                 -- Numero Sequencia
-                                       ,pr_nrparepr => 0                 -- Numero Parcelas Emprestimo
-                                       ,pr_flgincre => TRUE              -- Indicador Credito
-                                       ,pr_flgcredi => TRUE              -- Credito
-                                       ,pr_nrseqava => 0                 -- Pagamento: Sequencia do avalista
-                                       ,pr_cdorigem => 1                 -- Origem do Lançamento
-                                       ,pr_cdcritic => vr_cdcritic       -- Codigo Erro
-                                       ,pr_dscritic => vr_dscritic);     -- Descricao Erro
-       
-        -- Se ocorreu erro
-        IF vr_dscritic IS NOT NULL THEN
-          pr_cdcritic := vr_cdcritic;
-          pr_dscritic := vr_dscritic;
-          RAISE vr_exc_erro;
-        END IF;
-
+      -- Verifica se encontrou valor a pagar
+      IF vr_vlapagar <= 0 THEN
+        -- Caso entrar na condição já foi pago todo o prejuizo do emprestimo
+        RETURN;
       END IF;
-
+    
+      -- ROTINA PARA EFETUAR O LANÇAMENTO
+      EMPR0001.pc_cria_lancamento_lem(pr_cdcooper => pr_cdcooper       -- Codigo Cooperativa
+                                     ,pr_dtmvtolt => pr_crapdat.dtmvtolt       -- Data Emprestimo
+                                     ,pr_cdagenci => pr_cdagenci       -- Codigo Agencia
+                                     ,pr_cdbccxlt => 100               -- Codigo Caixa
+                                     ,pr_cdoperad => pr_cdoperad       -- Operador
+                                     ,pr_cdpactra => pr_cdagenci       -- Posto Atendimento
+                                     ,pr_tplotmov => 5                 -- Tipo movimento
+                                     ,pr_nrdolote => 650002            -- Numero Lote
+                                     ,pr_nrdconta => pr_nrdconta       -- Numero da Conta
+                                     ,pr_cdhistor => 391               -- Codigo Historico
+                                     ,pr_nrctremp => pr_nrctremp       -- Numero Contrato
+                                     ,pr_vllanmto => vr_vlapagar       -- Valor Lancamento
+                                     ,pr_dtpagemp => pr_crapdat.dtmvtolt       -- Data Pagamento Emprestimo
+                                     ,pr_txjurepr => 0                 -- Taxa Juros Emprestimo
+                                     ,pr_vlpreemp => pr_vlpreemp       -- Valor Emprestimo
+                                     ,pr_nrsequni => 0                 -- Numero Sequencia
+                                     ,pr_nrparepr => 0                 -- Numero Parcelas Emprestimo
+                                     ,pr_flgincre => TRUE              -- Indicador Credito
+                                     ,pr_flgcredi => TRUE              -- Credito
+                                     ,pr_nrseqava => 0                 -- Pagamento: Sequencia do avalista
+                                     ,pr_cdorigem => 1                 -- Origem do Lançamento
+                                     ,pr_cdcritic => vr_cdcritic       -- Codigo Erro
+                                     ,pr_dscritic => vr_dscritic);     -- Descricao Erro
+       
+      -- Se ocorreu erro
+      IF vr_dscritic IS NOT NULL THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+        RAISE vr_exc_erro;
+      END IF;
+    
       -- Acumula o valor de pagamento realizado
       pr_vltotpag := NVL(pr_vltotpag,0) + vr_vlapagar;
     
@@ -933,8 +932,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
              , epr.dtliquid = NVL(vr_dtliquid,epr.dtliquid)
          WHERE epr.cdcooper = pr_cdcooper
            AND epr.nrdconta = pr_nrdconta
-           AND epr.nrctremp = pr_nrctremp
-           AND epr.dtliquid IS NULL;
+           AND epr.nrctremp = pr_nrctremp;
       
       EXCEPTION
         WHEN OTHERS THEN
@@ -2386,34 +2384,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
     
     -- Buscar todos os contratos que estao amarrados no acordo
     CURSOR cr_acordo_contrato IS
-		  WITH contratos_acordo AS (
-			   SELECT a.cdcooper
-				      , a.nrdconta
-							, c.nrctremp
-							, c.cdorigem
-							, c.indpagar
-				   FROM tbrecup_acordo a
-					    , tbrecup_acordo_contrato c
-				 WHERE a.nracordo = pr_nracordo
-				   AND c.nracordo = a.nracordo			  
-			)
-      SELECT acc.cdcooper
-           , acc.nrdconta
+      SELECT aco.cdcooper
+           , aco.nrdconta
            , acc.cdorigem 
            , acc.nrctremp
         FROM crapass                  ass
            , crapcyb                  cyb
-           , contratos_acordo acc
-       WHERE ass.cdcooper = acc.cdcooper
-         AND ass.nrdconta = acc.nrdconta
-         AND cyb.cdcooper(+) = acc.cdcooper
-         AND cyb.nrdconta(+) = acc.nrdconta
-         AND cyb.nrctremp(+) = acc.nrctremp
-         AND cyb.cdorigem(+) = acc.cdorigem          
-				 AND acc.indpagar = 'S'    -- Somente os contratos marcados como 'Pagar' na tela ATACOR (Reginaldo - AMcom)
+           , tbrecup_acordo_contrato  acc
+           , tbrecup_acordo           aco
+       WHERE ass.cdcooper = aco.cdcooper
+         AND ass.nrdconta = aco.nrdconta
+         AND cyb.cdcooper = aco.cdcooper
+         AND cyb.nrdconta = aco.nrdconta
+         AND cyb.nrctremp = acc.nrctremp
+         AND cyb.cdorigem = acc.cdorigem          
+         AND acc.nracordo = aco.nracordo
+         AND aco.nracordo = pr_nracordo
        ORDER BY acc.cdorigem       -- 1. Efetuar pagamento do estouro de conta corrente
-              , nvl(cyb.qtdiaatr,0) DESC  -- 2. Efetuar pagamento do contrato com maior tempo de atraso
-              , nvl(cyb.vlsdeved,0) DESC  -- 3. Caso haja empate, então, considerar primeiro o contrato com maior saldo devedor
+              , cyb.qtdiaatr DESC  -- 2. Efetuar pagamento do contrato com maior tempo de atraso
+              , cyb.vlsdeved DESC  -- 3. Caso haja empate, então, considerar primeiro o contrato com maior saldo devedor
               , cyb.nrctremp ASC;  -- 4. Caso os saldos devedores também sejam iguais, considerar o contrato de menor número
     
     -- REGISTROS
