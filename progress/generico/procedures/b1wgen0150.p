@@ -21,6 +21,7 @@
 { sistema/generico/includes/gera_erro.i }
 { sistema/generico/includes/gera_log.i }
 { sistema/generico/includes/b1wgen0150tt.i }
+{ sistema/generico/includes/var_oracle.i }
 
 DEF STREAM str_1.
 
@@ -374,17 +375,34 @@ PROCEDURE lista-demiss-pac:
                        tt-demiss.cdmotdem = crapass.cdmotdem
                        par_qtdemmes       = par_qtdemmes + 1.
             
-                FIND craptab WHERE craptab.cdcooper = par_cdcooper      AND
-                                   craptab.nmsistem = "CRED"            AND
-                                   craptab.tptabela = "GENERI"          AND
-                                   craptab.cdempres = 0                 AND
-                                   craptab.cdacesso = "MOTIVODEMI"      AND
-                                   craptab.tpregist = crapass.cdmotdem  NO-LOCK NO-ERROR.
-            
-                IF   NOT AVAILABLE craptab   THEN
+           
+               { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+                            
+                /* Efetuar a chamada a rotina Oracle  */
+                RUN STORED-PROCEDURE prc_busca_motivo_demissao
+                aux_handproc = PROC-HANDLE NO-ERROR 
+                  ( INPUT par_cdcooper      /* pr_cdcooper --> Codigo da cooperativa */
+                   ,INPUT crapass.cdmotdem  /* pr_cdmotdem --> Código Motivo Demissao */
+                   /* --------- OUT --------- */
+                   ,OUTPUT ""           /* pr_dsmotdem --> Descriçao Motivo Demissao */
+                   ,OUTPUT 0            /* pr_cdcritic --> Codigo da critica    */
+                   ,OUTPUT "" ).        /* pr_dscritic --> Descriçao da critica).     */
+                                        
+                /* Fechar o procedimento para buscarmos o resultado */ 
+                CLOSE STORED-PROC prc_busca_motivo_demissao
+                aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.                 
+                
+                { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+                ASSIGN aux_cdcritic = prc_busca_motivo_demissao.pr_cdcritic
+                                 WHEN prc_busca_motivo_demissao.pr_cdcritic <> ?.
+                                  
+                IF   aux_cdcritic = 848   THEN
                      ASSIGN tt-demiss.dsmotdem = "MOTIVO NAO CADASTRADO".
                 ELSE
-                     ASSIGN tt-demiss.dsmotdem = craptab.dstextab.
+                     ASSIGN tt-demiss.dsmotdem = prc_busca_motivo_demissao.pr_dsmotdem
+                                                 WHEN prc_busca_motivo_demissao.pr_dsmotdem <> ?.
+
             
                 IF  crapass.inpessoa = 1 THEN
                     DO:

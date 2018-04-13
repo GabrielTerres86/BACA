@@ -883,19 +883,51 @@ PROCEDURE Altera PRIVATE :
         /* o associado esta sendo readmitido - mudou o motivo da demissao */
         IF  (par_dtdemiss = ? AND crabass.dtdemiss <> ?) OR 
             (par_cdmotdem <> crabass.cdmotdem) THEN
-            /* fontes/le_motivo_demissao.p - antigo (gravado na base) */
-            DYNAMIC-FUNCTION("BuscaMotivoDemi" IN h-b1wgen0060,
-                             INPUT crabass.cdcooper,
-                             INPUT crabass.cdmotdem,
-                             OUTPUT aux_dsmotant,
-                             OUTPUT par_dscritic).
+            /* busca motivo demissão */
+              { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+                            
+                /* Efetuar a chamada a rotina Oracle */ 
+                RUN STORED-PROCEDURE prc_busca_motivo_demissao
+                aux_handproc = PROC-HANDLE NO-ERROR 
+                  ( INPUT crabass.cdcooper      /* pr_cdcooper --> Codigo da cooperativa */
+                   ,INPUT crabass.cdmotdem      /* pr_cdmotdem --> Código Motivo Demissao */
+                   /* --------- OUT --------- */
+                   ,OUTPUT ""           /* pr_dsmotdem --> Descriçao Motivo Demissao */
+                   ,OUTPUT 0            /* pr_cdcritic --> Codigo da critica)   */
+                   ,OUTPUT "" ).        /* pr_dscritic --> Descriçao da critica).  */
+                                        
+                /* Fechar o procedimento para buscarmos o resultado */ 
+                CLOSE STORED-PROC prc_busca_motivo_demissao
+                aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+                            
+                { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
 
-        /* fontes/le_motivo_demissao.p - novo (informou na tela) */
-        DYNAMIC-FUNCTION("BuscaMotivoDemi" IN h-b1wgen0060,
-                         INPUT crabass.cdcooper,
-                         INPUT par_cdmotdem,
-                         OUTPUT aux_dsmotdem,
-                         OUTPUT par_dscritic).
+                ASSIGN aux_dsmotant = prc_busca_motivo_demissao.pr_dsmotdem
+                                 WHEN prc_busca_motivo_demissao.pr_dsmotdem <> ?.   
+                                 
+
+        /* busca motivo demissão - novo (informou na tela) */
+              { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+                            
+                /* Efetuar a chamada a rotina Oracle */ 
+                RUN STORED-PROCEDURE prc_busca_motivo_demissao
+                aux_handproc = PROC-HANDLE NO-ERROR 
+                  ( INPUT crabass.cdcooper      /* pr_cdcooper --> Codigo da cooperativa */
+                   ,INPUT par_cdmotdem      /* pr_cdmotdem --> Código Motivo Demissao */
+                   /* --------- OUT --------- */
+                   ,OUTPUT ""           /* pr_dsmotdem --> Descriçao Motivo Demissao */
+                   ,OUTPUT 0            /* pr_cdcritic --> Codigo da critica)   */
+                   ,OUTPUT "" ).        /* pr_dscritic --> Descriçao da critica).  */
+                                        
+                /* Fechar o procedimento para buscarmos o resultado */ 
+                CLOSE STORED-PROC prc_busca_motivo_demissao
+                aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+                            
+                { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+                ASSIGN aux_dsmotdem = prc_busca_motivo_demissao.pr_dsmotdem
+                                 WHEN prc_busca_motivo_demissao.pr_dsmotdem <> ?.  
+
 
         /* Atualiza o conjuge somente se o estado civil for correspondente */
         IF  CAN-DO("01,05,06,07",STRING(par_cdestcvl,"99")) THEN
