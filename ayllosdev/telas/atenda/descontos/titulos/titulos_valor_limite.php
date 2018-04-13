@@ -75,7 +75,7 @@
 
 <input 
 	type="button" 
-	class="botao gft" 
+	class="botao" 
 	value="Voltar"  
 	id="btnVoltar" 
 	name="btnVoltar" 
@@ -83,7 +83,7 @@
 <?php if($flgstlcr != 0){?>
 <input 
 	type="button" 
-	class="botao gft" 
+	class="botao" 
 	value="Renovar"
 	id="btRenovar"
 	name="btRenovar"

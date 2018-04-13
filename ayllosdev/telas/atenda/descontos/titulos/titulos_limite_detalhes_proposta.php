@@ -85,7 +85,7 @@ $qtregist = $xmlObj->roottag->tags[1]->cdata;
         </div>
     </fieldset>
     <div id="divBotoesAcionamento" style="margin-top:5px;">
-        <a href="#" class="botao gft" id="btVoltar" onclick="fechaRotinaDetalhe();//controlaOperacao('TESTE');bloqueiaFundo(divRotina);">Voltar</a>
+        <a href="#" class="botao" id="btVoltar" onclick="fechaRotinaDetalhe();//controlaOperacao('TESTE');bloqueiaFundo(divRotina);">Voltar</a>
     </div>
     <form id="frmImprimir" name="frmImprimir">
         <input type="hidden" name="sidlogin" id="sidlogin" value="<?php echo $glbvars["sidlogin"]; ?>" />
