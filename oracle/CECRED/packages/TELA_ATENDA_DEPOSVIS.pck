@@ -12,6 +12,24 @@ PROCEDURE pc_busca_saldos_devedores(pr_nrdconta crapass.nrdconta%TYPE    --> COn
                                   , pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
                                   , pr_des_erro OUT VARCHAR2);
 
+  -- retorna datas de prejuizo da conta, em XML                              
+  PROCEDURE pc_busca_dts_preju_atraso ( pr_nrdconta  IN crapcpa.nrdconta%TYPE --> Conta do cooperado
+                                               ,pr_cdcooper  IN crapcop.cdcooper%TYPE
+                                               ,pr_xmllog    IN VARCHAR2              --> XML com informações de LOG
+                                               ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
+                                               ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
+                                               ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+                                               ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
+                                               ,pr_des_erro OUT VARCHAR2);
+
+  PROCEDURE pc_busca_preju_cc_L100(pr_nrdconta  IN crapcpa.nrdconta%TYPE --> Conta do cooperado
+                                   ,pr_cdcooper IN crapcop.cdcooper%TYPE --> Código da cooperativa
+                                   ,pr_valorprj OUT NUMBER             --> valor do prejuizo
+                                   ,pr_dtiniprj OUT DATE);          --> data de registro do prejuizo
+
+  PROCEDURE pc_busca_inicio_atraso (pr_nrdconta  IN crapcpa.nrdconta%TYPE --> Conta do cooperado
+                                   ,pr_cdcooper IN crapcop.cdcooper%TYPE --> Código da cooperativa
+                                   ,pr_dtiniatr OUT DATE);          --> retorno da data de inicio de atraso
 END TELA_ATENDA_DEPOSVIS;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_DEPOSVIS IS
@@ -303,5 +321,165 @@ DECLARE
     END;
 END pc_busca_saldos_devedores;
 
+
+    /* .............................................................................
+
+     Programa: pc_busca_dts_preju_atraso
+     Sistema : Emprestimo Pre-Aprovado - Cooperativa de Credito
+     Sigla   : EMPR
+     Autor   : Marcel Kohls
+     Data    : Marco/2018.                    Ultima atualizacao: 
+
+     Dados referentes ao programa:
+
+     Frequencia: Sempre que for chamado
+
+     Objetivo  : Retorna XML com as datas, de transferencia de conta para prejuizo e Data de início de atraso
+
+     Alteracoes: 
+     ..............................................................................*/ 
+  PROCEDURE pc_busca_dts_preju_atraso ( pr_nrdconta  IN crapcpa.nrdconta%TYPE --> Conta do cooperado
+                                               ,pr_cdcooper  IN crapcop.cdcooper%TYPE --> Código da cooperativa (0-processa todas)
+                                               ,pr_xmllog    IN VARCHAR2              --> XML com informações de LOG
+                                               ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
+                                               ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
+                                               ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+                                               ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
+                                               ,pr_des_erro OUT VARCHAR2)  IS
+    vr_exc_erro EXCEPTION;
+    vr_dscritic VARCHAR2(4000);
+    vr_dttrapre date;
+    vr_dtiniatr date;
+    vr_vlratra number;
+  BEGIN
+    pc_busca_inicio_atraso(pr_nrdconta=>pr_nrdconta,
+                           pr_cdcooper=>pr_cdcooper,
+                           pr_dtiniatr=>vr_dtiniatr);
+                           
+    pc_busca_preju_cc_L100(pr_nrdconta=>pr_nrdconta,
+                           pr_cdcooper=>pr_cdcooper,
+                           pr_valorprj=>vr_vlratra,
+                           pr_dtiniprj=>vr_dttrapre);
+    
+    pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
+    
+    GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+                          ,pr_tag_pai  => 'Root'
+                          ,pr_posicao  => 0
+                          ,pr_tag_nova => 'Dados'
+                          ,pr_tag_cont => NULL
+                          ,pr_des_erro => vr_dscritic);
+
+    GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+                          ,pr_tag_pai  => 'Dados'
+                          ,pr_posicao  => 0
+                          ,pr_tag_nova => 'dttrapre'
+                          ,pr_tag_cont => to_char(vr_dttrapre, 'DD/MM/RRRR')
+                          ,pr_des_erro => vr_dscritic);
+                          
+    GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+                          ,pr_tag_pai  => 'Dados'
+                          ,pr_posicao  => 0
+                          ,pr_tag_nova => 'dtiniatr'
+                          ,pr_tag_cont => to_char(vr_dtiniatr, 'DD/MM/RRRR')
+                          ,pr_des_erro => vr_dscritic);                          
+                          
+    EXCEPTION
+        WHEN vr_exc_erro THEN
+          -- Carregar XML padrão para variável de retorno não utilizada.
+          -- Existe para satisfazer exigência da interface.
+          pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                         '<Root><Erro>' || vr_dscritic || SQLERRM || '</Erro></Root>');
+        WHEN OTHERS THEN
+          -- Carregar XML padrão para variável de retorno não utilizada.
+          -- Existe para satisfazer exigência da interface.
+          pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                         '<Root><Erro>' || vr_dscritic || SQLERRM || '</Erro></Root>');
+
+  END pc_busca_dts_preju_atraso;
+
+/* .............................................................................
+     Programa: pc_busca_inicio_atraso
+     Sistema : Emprestimo Pre-Aprovado - Cooperativa de Credito
+     Sigla   : EMPR
+     Autor   : Marcel Kohls
+     Data    : Marco/2018.                    Ultima atualizacao: 
+
+     Dados referentes ao programa:
+
+     Frequencia: Sempre que for chamado
+
+     Objetivo  : retorna data do inicio de atraso de uma conta 
+
+     Alteracoes: 
+     ..............................................................................*/ 
+  PROCEDURE pc_busca_inicio_atraso (pr_nrdconta  IN crapcpa.nrdconta%TYPE --> Conta do cooperado
+                                   ,pr_cdcooper IN crapcop.cdcooper%TYPE --> Código da cooperativa
+                                   ,pr_dtiniatr OUT DATE)  IS          --> retorno da data de inicio de atraso
+    CURSOR cr_crapris (
+                    pr_cdcooper IN crapris.cdcooper%TYPE,
+                    pr_nrdconta IN crapris.nrdconta%TYPE
+                   ) IS                         
+    SELECT dtinictr FROM crapris
+     WHERE cdcooper = pr_cdcooper
+       AND nrdconta = pr_nrdconta
+       AND cdmodali = 101 -- ADP
+       AND cdorigem = 1 -- c/c
+       and dtrefere = (select dtmvtoan from crapdat where cdcooper=pr_cdcooper);
+
+    rw_crapris cr_crapris%ROWTYPE;
+  BEGIN
+    -- Busca data de inicio do atraso
+    OPEN cr_crapris(pr_cdcooper, pr_nrdconta);
+    FETCH cr_crapris 
+     INTO rw_crapris;
+    -- Fecha o cursor
+    CLOSE cr_crapris;
+    
+    pr_dtiniatr := rw_crapris.dtinictr;    
+  END pc_busca_inicio_atraso;
+
+    /* .............................................................................
+     Programa: fn_busca_preju_cc_L100
+     Sistema : Emprestimo Pre-Aprovado - Cooperativa de Credito
+     Sigla   : EMPR
+     Autor   : Marcel Kohls
+     Data    : Marco/2018.                    Ultima atualizacao: 
+
+     Dados referentes ao programa:
+
+     Frequencia: Sempre que for chamado
+
+     Objetivo  : retorna informacoes de prejuizo de conta corrente com base no contrato linha 100 e base nos dados gerados pela central de risco
+
+     Alteracoes: 
+     ..............................................................................*/ 
+  PROCEDURE pc_busca_preju_cc_L100(pr_nrdconta  IN crapcpa.nrdconta%TYPE --> Conta do cooperado
+                                   ,pr_cdcooper IN crapcop.cdcooper%TYPE --> Código da cooperativa
+                                   ,pr_valorprj OUT NUMBER            --> valor do prejuizo
+                                   ,pr_dtiniprj OUT DATE)  IS          --> data de registro do prejuizo
+    CURSOR cr_crapepr (
+                      pr_cdcooper IN crapepr.cdcooper%TYPE,
+                      pr_nrdconta IN crapris.nrdconta%TYPE
+                     ) IS
+    SELECT vlsdprej, dtmvtolt FROM crapepr
+     WHERE cdcooper = pr_cdcooper
+       AND nrdconta = pr_nrdconta
+       AND cdlcremp = 100 -- Linha 100 (indicador de que conta tem um contrato de prejuizo)
+       AND vlsdprej > 0; -- com valor pendente
+
+    rw_crapepr cr_crapepr%ROWTYPE;
+  BEGIN
+    -- Busca registro de linha 100, indicando contrato de prejuizo
+    OPEN cr_crapepr(pr_cdcooper, pr_nrdconta);
+    FETCH cr_crapepr 
+     INTO rw_crapepr;
+    -- Fecha o cursor
+    CLOSE cr_crapepr;
+
+    pr_valorprj := nvl(rw_crapepr.vlsdprej, 0);
+    pr_dtiniprj := rw_crapepr.dtmvtolt;
+  END pc_busca_preju_cc_L100;
+  
 END TELA_ATENDA_DEPOSVIS;
 /
