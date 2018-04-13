@@ -197,7 +197,7 @@ function continuarFiltro() {
 	var dados = {
 		operacao: (cddopcao == "C" ? 'Valida_Dados' : "Historico_Dados"),
 		nrdconta: normalizaNumero( $("#"+frmFiltro+" #nrdconta").val() ),
-		nrctrato: normalizaNumero( $("#"+frmFiltro+" #nrctrato").val() ),
+		nrctremp: $("#"+frmFiltro+" #nrctrato").val(),
 		flmotivo: $("#"+frmFiltro+" #flmotivo").val(),
 		datainic: $("#"+frmFiltro+" #fldtinic").val(),
 		datafina: $("#"+frmFiltro+" #fldtfina").val(),
@@ -230,7 +230,7 @@ function manterRotina(dados) {
 				cddopcao: cddopcao,
 				operacao: dados.operacao,
 				nrdconta: retiraCaracteres(dados.nrdconta, "0123456789", true),
-				nrctrato: dados.nrctremp,
+				nrctrato: retiraCaracteres(dados.nrctremp, "0123456789", true),
 				flmotivo: dados.flmotivo,
 				datainic: dados.datainic,
 				datafina: dados.datafina,

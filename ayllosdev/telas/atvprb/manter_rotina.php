@@ -17,15 +17,15 @@
   require_once('../../class/xmlfile.php');
 
 	// Recebe dados
-	$operacao		= (isset($_POST['operacao'])) ? $_POST['operacao']  : '';
-	$cddopcao		= (isset($_POST['cddopcao'])) ? $_POST['cddopcao']  : '';
-	$nrdconta		= (isset($_POST['nrdconta'])) ? $_POST['nrdconta']  : '0';
-  $nrctrato		= (isset($_POST['nrctrato'])) ? $_POST['nrctrato']  : '0';
-  $cdmotivo		= (isset($_POST['flmotivo'])) ? $_POST['flmotivo']  : '0';
-  $datainic		= (isset($_POST['datainic'])) ? $_POST['datainic']  : '01/01/1980';
-  $datafina		= (isset($_POST['datafina'])) ? $_POST['datafina']  : '01/01/1980';
-  $dsobserv		= (isset($_POST['dsobserv'])) ? $_POST['dsobserv']  : '';
-  $nrpagina		= (isset($_POST['nrpagina'])) ? $_POST['nrpagina']  : '1';
+	$operacao		= (!empty($_POST['operacao'])) ? $_POST['operacao']  : '';
+	$cddopcao		= (!empty($_POST['cddopcao'])) ? $_POST['cddopcao']  : '';
+	$nrdconta		= (!empty($_POST['nrdconta'])) ? $_POST['nrdconta']  : '0';
+  $nrctrato		= (!empty($_POST['nrctrato'])) ? $_POST['nrctrato']  : '0';
+  $cdmotivo		= (!empty($_POST['flmotivo'])) ? $_POST['flmotivo']  : '0';
+  $datainic		= (!empty($_POST['datainic'])) ? $_POST['datainic']  : '01/01/1980';
+  $datafina		= (!empty($_POST['datafina'])) ? $_POST['datafina']  : '01/01/1980';
+  $dsobserv		= (!empty($_POST['dsobserv'])) ? $_POST['dsobserv']  : '';
+  $nrpagina		= (!empty($_POST['nrpagina'])) ? $_POST['nrpagina']  : '1';
 
   // Montar o xml de Requisicao com os dados da operação
 	$xml = "";
