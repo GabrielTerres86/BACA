@@ -34,7 +34,11 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0002 AS
   --    13/03/2018 - Inclusão da Procedure "pc_efetua_analise_pagador", referente à rotina (JOB)
   --                 de validação diária dos Pagadores (Borderô). (Gustavo Sene - GFT)
   --
-  --    02/04/2018 - Exposição da procedure 'pc_busca_titulos_bordero' na interface da package
+  --    12/04/2018 - Adicionado novo parametro na chamada da procedure pc_gera_impressao_bordero
+  --                referente ao indicador se deve imprimir restricoes. (Alex Sandro - GFT)
+  --
+  --    13/04/2018 - Remoção do campo 'pctitemi' Percentual de títulos por pagador da procedure 
+  --                 'pc_busca_parametros_dsctit'  (Leonardo Oliveira - GFT). 
   --------------------------------------------------------------------------------------------------------------
 
   -- Registro para armazenar parametros para desconto de titulo
@@ -51,7 +55,6 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0002 AS
                   qtprzmax  INTEGER,
                   qtminfil  INTEGER,
                   nrmespsq  INTEGER,
-                  pctitemi  NUMBER,
                   pctolera  NUMBER,
                   pcdmulta  NUMBER,
                   cardbtit  NUMBER,
@@ -181,7 +184,13 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0002 AS
   TYPE typ_tab_dados_border IS TABLE OF typ_rec_dados_border
        INDEX BY PLS_INTEGER;
 
-
+/*
+      pr_tab_tit_bordero(vr_idxtitul).cdbandoc := rw_craptdb.cdbandoc;
+      pr_tab_tit_bordero(vr_idxtitul).dtlibbdt := rw_craptdb.dtlibbdt;
+      pr_tab_tit_bordero(vr_idxtitul).nrdctabb := rw_craptdb.nrdctabb;
+      pr_tab_tit_bordero(vr_idxtitul).vlliquid := rw_craptdb.vlliquid;
+      pr_tab_tit_bordero(vr_idxtitul).insittit := rw_craptdb.insittit;
+*/
   --> Armazenar dados dos titulos do bordero antigo(b1wgen0030tt.i/tt-tits_do_bordero)
   TYPE typ_rec_tit_bordero
        IS RECORD (nrdctabb craptdb.nrdctabb%TYPE,
@@ -196,8 +205,8 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0002 AS
                   vltitulo craptdb.vltitulo%TYPE,
                   vlliquid craptdb.vlliquid%TYPE,
                   nmsacado crapsab.nmdsacad%TYPE,
-                  insittit craptdb.insittit%TYPE,
-                  flgregis crapcob.flgregis%TYPE);
+                  flgregis crapcob.flgregis%TYPE,
+                  insittit craptdb.insittit%TYPE);
 
   TYPE typ_tab_tit_bordero IS TABLE OF typ_rec_tit_bordero
        INDEX BY VARCHAR2(50);
@@ -497,7 +506,6 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0002 AS
                                         ,pr_dscritic          OUT VARCHAR2             --> Descrição da crítica
                                         );
 
-  --> Buscar titulos de um determinado bordero a partir da craptdb
   PROCEDURE pc_busca_titulos_bordero (pr_cdcooper IN crapcop.cdcooper%TYPE  --> Código da Cooperativa
                                      ,pr_nrborder IN crapbdt.nrborder%TYPE  --> numero do bordero
                                      ,pr_nrdconta IN crapass.nrdconta%TYPE  --> Número da Conta
@@ -507,8 +515,6 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0002 AS
                                      ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
                                      ,pr_dscritic OUT VARCHAR2);          --> Descrição da crítica
                                       
-
-
 END  DSCT0002;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
@@ -551,6 +557,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
   --
   --   12/04/2018 - Adicionado novo parametro na chamada da procedure pc_gera_impressao_bordero
   --                referente ao indicador se deve imprimir restricoes. (Alex Sandro - GFT)
+  --
+  --   13/04/2018 - Remoção do campo 'pctitemi' Percentual de títulos por pagador da procedure 
+  --               'pc_busca_parametros_dsctit'  (Leonardo Oliveira - GFT). 
   -------------------------------------------------------------------------------------------------------------
   --> Buscar dados do avalista
   PROCEDURE pc_busca_dados_avalista (pr_cdcooper IN crapcop.cdcooper%TYPE           --> Código da Cooperativa
@@ -990,14 +999,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
                            pr_nrdconta crapavt.nrdconta%TYPE,
                            pr_nrctrlim craplim.nrctrlim%TYPE,
                            pr_tpctrato craplim.tpctrlim%TYPE) IS
-      SELECT MAX nrdconta
-        FROM craplim
+    select max nrdconta
+    from   craplim
          --> Converter as duas colunas em linha para o for
-         UNPIVOT ( MAX FOR conta IN (nrctaav1, nrctaav2) )
-       WHERE cdcooper = pr_cdcooper
-         AND nrdconta = pr_nrdconta
-         AND nrctrlim = pr_nrctrlim
-         AND tpctrlim = pr_tpctrato;
+           unpivot ( max for conta in (nrctaav1, nrctaav2) )
+    where  cdcooper    = pr_cdcooper
+    and    nrdconta    = pr_nrdconta
+    and    nrctrlim    = pr_nrctrlim
+    and    tpctrlim    = pr_tpctrato
+    and    pr_tpctrato <> 3
+
+    union  all
+
+    select max nrdconta
+    from   crawlim
+           --> Converter as duas colunas em linha para o for
+           unpivot ( max for conta in (nrctaav1, nrctaav2) )
+    where  cdcooper    = pr_cdcooper
+    and    nrdconta    = pr_nrdconta
+    and    nrctrlim    = pr_nrctrlim
+    and    tpctrlim    = pr_tpctrato
+    and    pr_tpctrato = 3;
 
     --> Avalistas de emprestimo que possuem conta na cooperativa
     CURSOR cr_crawepr_ava (pr_cdcooper crawepr.cdcooper%TYPE,
@@ -1456,7 +1478,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
       vr_tab_dados_dsctit(1).qtprzmax := vr_tab_dstextab(10);
       vr_tab_dados_dsctit(1).qtminfil := vr_tab_dstextab(11);
       vr_tab_dados_dsctit(1).nrmespsq := vr_tab_dstextab(12);
-      vr_tab_dados_dsctit(1).pctitemi := vr_tab_dstextab(13);
+      
       vr_tab_dados_dsctit(1).pctolera := vr_tab_dstextab(14);
       vr_tab_dados_dsctit(1).pcdmulta := to_number(vr_tab_dstextab(15),'000d000000','NLS_NUMERIC_CHARACTERS='',.''');
       vr_tab_dados_dsctit(1).cardbtit := vr_tab_dstextab(31);
@@ -1496,7 +1518,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
       vr_tab_cecred_dsctit(1).qtprzmax := vr_tab_dstextab(25);
       vr_tab_cecred_dsctit(1).qtminfil := vr_tab_dstextab(26);
       vr_tab_cecred_dsctit(1).nrmespsq := vr_tab_dstextab(27);
-      vr_tab_cecred_dsctit(1).pctitemi := vr_tab_dstextab(28);
+      
       vr_tab_cecred_dsctit(1).pctolera := vr_tab_dstextab(29);
       vr_tab_cecred_dsctit(1).pcdmulta := to_number(vr_tab_dstextab(30),'000d000000','NLS_NUMERIC_CHARACTERS='',.''');
       vr_tab_cecred_dsctit(1).cardbtit := vr_tab_dstextab(32);
@@ -1591,33 +1613,65 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
     ---------->> CURSORES <<--------
     --> Buscar Contrato de limite
     CURSOR cr_craplim IS
-      SELECT lim.nrdconta,
-             lim.vllimite,
-             lim.cddlinha,
-             lim.nrctrlim,
-             lim.dtrenova,
-             lim.dtinivig,
-             lim.qtdiavig,
-             lim.dtfimvig,
-             lim.dsencfin##1,
-             lim.dsencfin##2,
-             lim.dsencfin##3,
-             lim.nrgarope,
-             lim.nrinfcad,
-             lim.nrliquid,
-             lim.nrpatlvr,
-             lim.vltotsfn,
-             lim.nrctaav1,
-             lim.nrctaav2,
-             lim.insitlim,
-             lim.dtcancel,
-             lim.flgdigit,
-             lim.nrperger
-        FROM craplim lim
-       WHERE lim.cdcooper = pr_cdcooper
-         AND lim.nrdconta = pr_nrdconta
-         AND lim.nrctrlim = pr_nrctrlim
-         AND lim.tpctrlim = pr_tpctrlim;
+    select lim.nrdconta
+          ,lim.vllimite
+          ,lim.cddlinha
+          ,lim.nrctrlim
+          ,lim.dtrenova
+          ,lim.dtinivig
+          ,lim.qtdiavig
+          ,lim.dtfimvig
+          ,lim.dsencfin##1
+          ,lim.dsencfin##2
+          ,lim.dsencfin##3
+          ,lim.nrgarope
+          ,lim.nrinfcad
+          ,lim.nrliquid
+          ,lim.nrpatlvr
+          ,lim.vltotsfn
+          ,lim.nrctaav1
+          ,lim.nrctaav2
+          ,lim.insitlim
+          ,lim.dtcancel
+          ,lim.flgdigit
+          ,lim.nrperger
+    from   craplim lim
+    where  lim.cdcooper = pr_cdcooper
+    and    lim.nrdconta = pr_nrdconta
+    and    lim.nrctrlim = pr_nrctrlim
+    and    lim.tpctrlim = pr_tpctrlim
+    and    pr_tpctrlim <> 3
+    
+    union  all
+    
+    select lim.nrdconta
+          ,lim.vllimite
+          ,lim.cddlinha
+          ,lim.nrctrlim
+          ,lim.dtrenova
+          ,lim.dtinivig
+          ,lim.qtdiavig
+          ,lim.dtfimvig
+          ,lim.dsencfin##1
+          ,lim.dsencfin##2
+          ,lim.dsencfin##3
+          ,lim.nrgarope
+          ,lim.nrinfcad
+          ,lim.nrliquid
+          ,lim.nrpatlvr
+          ,lim.vltotsfn
+          ,lim.nrctaav1
+          ,lim.nrctaav2
+          ,lim.insitlim
+          ,lim.dtcancel
+          ,lim.flgdigit
+          ,lim.nrperger
+    from   crawlim lim
+    where  lim.cdcooper = pr_cdcooper
+    and    lim.nrdconta = pr_nrdconta
+    and    lim.nrctrlim = pr_nrctrlim
+    and    lim.tpctrlim = pr_tpctrlim
+    and    pr_tpctrlim  = 3;
     rw_craplim cr_craplim%ROWTYPE;
 
     --> Buscar proposta de Contrato de limite
@@ -2230,7 +2284,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
     ELSIF pr_cddopcao = 'L' THEN
       IF rw_crapbdt.insitbdt <> 2 THEN
         vr_cdcritic := 0;
-        vr_dscritic := 'O bordero deve estar na situacao ANALISADO.';
+        vr_dscritic := 'O bordero deve estar na situacao ANALISADOooo.';
         RAISE vr_exc_erro;
       END IF;
     ELSIF pr_cddopcao = 'I' THEN
@@ -4573,16 +4627,31 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
 
     --> Buscar Contrato de limite
     CURSOR cr_craplim IS
-      SELECT lim.nrdconta,
-             lim.cdageori,
-             lim.vllimite,
-             lim.cddlinha,
-             lim.dtinivig
-        FROM craplim lim
-       WHERE lim.cdcooper = pr_cdcooper
-         AND lim.nrdconta = pr_nrdconta
-         AND lim.nrctrlim = pr_nrctrlim
-         AND lim.tpctrlim = pr_tpctrlim;
+    select lim.nrdconta
+          ,lim.cdageori
+          ,lim.vllimite
+          ,lim.cddlinha
+          ,lim.dtinivig
+    from   craplim lim
+    where  lim.cdcooper = pr_cdcooper
+    and    lim.nrdconta = pr_nrdconta
+    and    lim.nrctrlim = pr_nrctrlim
+    and    lim.tpctrlim = pr_tpctrlim
+    and    pr_tpctrlim <> 3
+    
+    union  all
+    
+    select lim.nrdconta
+          ,lim.cdageori
+          ,lim.vllimite
+          ,lim.cddlinha
+          ,lim.dtinivig
+    from   crawlim lim
+    where  lim.cdcooper = pr_cdcooper
+    and    lim.nrdconta = pr_nrdconta
+    and    lim.nrctrlim = pr_nrctrlim
+    and    lim.tpctrlim = pr_tpctrlim
+    and    pr_tpctrlim  = 3;
     rw_craplim cr_craplim%ROWTYPE;
 
     --> Buscar dados de Linhas de Desconto
@@ -6007,6 +6076,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
     
     rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;
 
+
     ----------------------> CURSORES <----------------------
 
     -- PASSO 1: OBTENÇÃO DOS REGISTROS SUJEITOS À ANÁLISE --
@@ -6210,7 +6280,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
                                cob.nrdconta = tdb.nrdconta and
                                cob.nrcnvcob = tdb.nrcnvcob and
                                cob.nrdocmto = tdb.nrdocmto
-    where  tdb.vltitulo   < cdnae.vlmaximo
+    where  tdb.vltitulo   > cdnae.vlmaximo
     and    cdnae.vlmaximo > 0
     and    cob.flgregis   = 1
     and    ass.cdcooper   = pr_cdcooper
@@ -6266,35 +6336,38 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
 
     -- [PAGADORES] - Verificar se Cooperado Possui Títulos Descontados na Conta do Pagador	 
     cursor cr_coop_tit_conta_pag is
-    select count(1)
+    select count(1) tem_tit_conta_pag
     from   crapcob cob_pag
-           inner join craptdb tdb on tdb.cdcooper = cob_pag.cdcooper and
-                                     tdb.cdbandoc = cob_pag.cdbandoc and
-                                     tdb.nrdctabb = cob_pag.nrdctabb and
-                                     tdb.nrdconta = cob_pag.nrdconta and
-                                     tdb.nrcnvcob = cob_pag.nrcnvcob and
-                                     tdb.nrdocmto = cob_pag.nrdocmto
-    where  cob_pag.nrdconta = rw_crapsab.nrdconta
-      and  cob_pag.cdcooper = pr_cdcooper
-      and  tdb.dtresgat is null and tdb.dtlibbdt is not null -- Titulos Descontados
-      
-      and  cob_pag.nrinssac in
-               (select cob_rem.nrinssac
-                  from crapcob cob_rem
-                       inner join craptdb tdb on tdb.cdcooper = cob_rem.cdcooper and
-                                                 tdb.cdbandoc = cob_rem.cdbandoc and
-                                                 tdb.nrdctabb = cob_rem.nrdctabb and
-                                                 tdb.nrdconta = cob_rem.nrdconta and
-                                                 tdb.nrcnvcob = cob_rem.nrcnvcob and
-                                                 tdb.nrdocmto = cob_rem.nrdocmto
-                  WHERE 
-                     cob_pag.cdcooper = pr_cdcooper                            
-                     and   cob_rem.nrinssac = cob_pag.nrinssac
-                     and   cob_rem.nrdconta in 
+          ,craptdb tdb 
+    where  cob_pag.cdcooper = pr_cdcooper
+      and  cob_pag.nrdconta = rw_crapsab.nrdconta
+      and  tdb.dtresgat is null and tdb.dtlibbdt is not null -- titulos descontados
+      and  tdb.cdcooper = cob_pag.cdcooper 
+      and  tdb.cdbandoc = cob_pag.cdbandoc 
+      and  tdb.nrdctabb = cob_pag.nrdctabb 
+      and  tdb.nrdconta = cob_pag.nrdconta 
+      and  tdb.nrcnvcob = cob_pag.nrcnvcob 
+      and  tdb.nrdocmto = cob_pag.nrdocmto
+      --
+      and  exists -- cob_pag.nrinssac in
+             (select  1
+                from  crapcob cob_rem
+                     ,craptdb tdb
+                where cob_pag.cdcooper = pr_cdcooper
+                  and cob_pag.nrinssac = rw_crapsab.nrinssac
+                  and cob_rem.nrinssac = cob_pag.nrinssac
+                  and tdb.cdcooper     = cob_rem.cdcooper 
+                  and tdb.cdbandoc     = cob_rem.cdbandoc 
+                  and tdb.nrdctabb     = cob_rem.nrdctabb 
+                  and tdb.nrdconta     = cob_rem.nrdconta 
+                  and tdb.nrcnvcob     = cob_rem.nrcnvcob 
+                  and tdb.nrdocmto     = cob_rem.nrdocmto                     
+                  and cob_rem.nrdconta in 
                                (select nrdconta
                                   from crapass rem
-                                 where rem.nrcpfcgc = cob_pag.nrinssac
-                                   and rem.cdcooper = pr_cdcooper)
+                           where rem.nrcpfcgc     = cob_pag.nrinssac
+                             and rem.cdcooper     = pr_cdcooper
+                             and cob_pag.nrinssac = rw_crapsab.nrinssac)
                );
     rw_coop_tit_conta_pag cr_coop_tit_conta_pag%rowtype;                                                                   
 
@@ -6325,7 +6398,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
 
     BEGIN
        
-      if nvl(vr_inpossui_criticas, 0) > 0 then                                                        
          insert into tbdsct_analise_pagador
                 (cdcooper
                 ,nrdconta
@@ -6357,7 +6429,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
                 ,vr_tab_analise_pagador(1).inpossui_titdesc
                 ,vr_tab_analise_pagador(1).invalormax_cnae
                 ,vr_inpossui_criticas);
-      end if;                          
+
 
     EXCEPTION
       WHEN DUP_VAL_ON_INDEX THEN
@@ -6520,23 +6592,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
          end if;
          close cr_socio;
 
-         if  vr_tab_dados_dsctit(1).flemipar = 1 and (vr_conjuge = 1 or vr_socio = 1) then
+         if  vr_tab_dados_dsctit(1).flemipar = 1 and ( nvl(vr_conjuge, 0) > 0 or nvl(vr_socio, 0) > 0 ) then
              vr_tab_analise_pagador(1).inemitente_conjsoc := 1;
              vr_inpossui_criticas := 1;
          end if;
 
          --  INPOSSUI_TITDESC   : Cooperado possui Títulos Descontados na Conta deste Pagador  (0 = Não / 1 = Sim). (Ref. TAB052: flpdctcp)
+         if vr_tab_dados_dsctit(1).flpdctcp = 1 then 
          open  cr_coop_tit_conta_pag;
          fetch cr_coop_tit_conta_pag into rw_coop_tit_conta_pag;
          if    cr_coop_tit_conta_pag%found then
-               vr_coop_tit_conta_pag := 1;
+                 vr_coop_tit_conta_pag := rw_coop_tit_conta_pag.tem_tit_conta_pag;
          end if;
          close cr_coop_tit_conta_pag;      
    
-         if  vr_tab_dados_dsctit(1).flpdctcp = 1 and vr_coop_tit_conta_pag = 1 then
+           if  nvl(vr_coop_tit_conta_pag, 0) > 0 then
              vr_tab_analise_pagador(1).inpossui_titdesc := 1;
              vr_inpossui_criticas := 1;
          end if;
+
+         end if;  
 
          --  INVALORMAX_CNAE    : Valor Máximo Permitido por CNAE excedido (0 = Não / 1 = Sim). (Ref. TAB052: vlmxprat)
          if  vr_tab_dados_dsctit(1).vlmxprat = 1 then
@@ -6585,8 +6660,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
         pr_dscritic := replace(replace('Nao foi possivel efetuar a analise diaria dos Pagadores: ' || SQLERRM, chr(13)),chr(10));
 
   END pc_efetua_analise_pagador;
-
-
 
 END DSCT0002;
 /

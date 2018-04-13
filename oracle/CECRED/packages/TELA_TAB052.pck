@@ -22,7 +22,9 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_TAB052 AS
   --              (Gustavo Sene - GFT)
   --
   --  21/02/2018 - Inclusão do campo "Qtd. máxima de títulos por borderô Ayllos" (qtmxtbay / qtmxtbay_c)
-  --              (Gustavo Sene - GFT)  
+  --              (Gustavo Sene - GFT)
+  --
+  --  13/04/2018 - Remoção do campo 'pctitemi' Percentual de títulos por pagador (Leonardo Oliveira - GFT). 
   -----------------------------------------------------------------------------------------
 
   ------------------------- ESTRUTURAS DE REGISTRO --------------------------
@@ -41,7 +43,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_TAB052 AS
   --  10       qtprzmax     120;            pr_qtprzmax      Operacional - Prazo Máximo
   --  11       qtminfil     000;            pr_qtminfil      Operacional - Tempo Mínimo de Filiação
   --  12       nrmespsq     03;             pr_nrmespsq      Operacional - Nr. de Meses para Pesquisa de Pagador
-  --  13       pctitemi     030;            pr_pctitemi      Operacional - Percentual de Títulos por Pagador
+  --  13
   --  14       pctolera     010;            pr_pctolera      Operacional - Tolerância para Limite Excedido
   --  15       pcdmulta     002,000000;     pr_pcdmulta      Operacional - Percentual de Multa
   --  16       vllimite_c   000150000,00;   pr_vllimite_c    CECRED      - Limite Máximo do Contrato
@@ -56,7 +58,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_TAB052 AS
   --  25       qtprzmax_c   180;            pr_qtprzmax_c    CECRED      - Prazo Máximo
   --  26       qtminfil_c   000;            pr_qtminfil_c    CECRED      - Tempo Mínimo de Filiação
   --  27       nrmespsq_c   03;             pr_nrmespsq_c    CECRED      - Nr. de Meses para Pesquisa de Pagador
-  --  28       pctitemi_c   030;            pr_pctitemi_c    CECRED      - Percentual de Títulos por Pagador
+  --  28
   --  29       pctolera_c   010;            pr_pctolera_c    CECRED      - Tolerância para Limite Excedido
   --  30       pcdmulta_c   002,000000;     pr_pcdmulta_c    CECRED      - Percentual de Multa
   --  31       cardbtit     005;            pr_cardbtit      Operacional - Carência Débito Título Vencido
@@ -140,7 +142,6 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_TAB052 AS
                              ,pr_qtprzmax    IN NUMBER
                              ,pr_qtminfil    IN NUMBER
                              ,pr_nrmespsq    IN NUMBER
-                             ,pr_pctitemi    IN NUMBER
                              ,pr_pctolera    IN NUMBER
                              ,pr_pcdmulta    IN NUMBER
                              ,pr_vllimite_c  IN NUMBER
@@ -155,7 +156,6 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_TAB052 AS
                              ,pr_qtprzmax_c  IN NUMBER
                              ,pr_qtminfil_c  IN NUMBER
                              ,pr_nrmespsq_c  IN NUMBER
-                             ,pr_pctitemi_c  IN NUMBER
                              ,pr_pctolera_c  IN NUMBER
                              ,pr_pcdmulta_c  IN NUMBER
                              ,pr_cardbtit    IN NUMBER
@@ -241,7 +241,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB052 AS
   --              (Gustavo Sene - GFT)
   --
   --  21/02/2018 - Inclusão do campo "Qtd. máxima de títulos por borderô Ayllos" (qtmxtbay / qtmxtbay_c)
-  --              (Gustavo Sene - GFT)  
+  --              (Gustavo Sene - GFT)
+  --
+  --  13/04/2018 - Remoção do campo 'pctitemi' Percentual de títulos por pagador (Leonardo Oliveira - GFT).
   -----------------------------------------------------------------------------------------
 
 
@@ -620,21 +622,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB052 AS
                              pr_posicao  => vr_auxconta,
                              pr_tag_nova => 'nrmespsq_c',
                              pr_tag_cont => to_char(vr_tab_cecred_dsctit(1).nrmespsq),
-                             pr_des_erro => vr_dscritic);
-
-		------------------ pctitemi
-	  gene0007.pc_insere_tag(pr_xml      => pr_retxml,
-                             pr_tag_pai  => 'inf',
-                             pr_posicao  => vr_auxconta,
-                             pr_tag_nova => 'pctitemi',
-                             pr_tag_cont => to_char(vr_tab_dados_dsctit(1).pctitemi),
-                             pr_des_erro => vr_dscritic);
-
-      gene0007.pc_insere_tag(pr_xml      => pr_retxml,
-                             pr_tag_pai  => 'inf',
-                             pr_posicao  => vr_auxconta,
-                             pr_tag_nova => 'pctitemi_c',
-                             pr_tag_cont => to_char(vr_tab_cecred_dsctit(1).pctitemi),
                              pr_des_erro => vr_dscritic);
 
 		------------------ pctolera
@@ -1058,7 +1045,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB052 AS
                              ,pr_qtprzmax    IN NUMBER
                              ,pr_qtminfil    IN NUMBER
                              ,pr_nrmespsq    IN NUMBER
-                             ,pr_pctitemi    IN NUMBER
                              ,pr_pctolera    IN NUMBER
                              ,pr_pcdmulta    IN NUMBER
                              ,pr_vllimite_c  IN NUMBER
@@ -1073,7 +1059,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB052 AS
                              ,pr_qtprzmax_c  IN NUMBER
                              ,pr_qtminfil_c  IN NUMBER
                              ,pr_nrmespsq_c  IN NUMBER
-                             ,pr_pctitemi_c  IN NUMBER
                              ,pr_pctolera_c  IN NUMBER
                              ,pr_pcdmulta_c  IN NUMBER
                              ,pr_cardbtit    IN NUMBER
@@ -1336,18 +1321,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB052 AS
 
     END IF;
     
-    /* -- Campo excluído da Tela
-    IF pr_vlmaxsac > pr_vlmaxsac_c THEN
-      -- Montar mensagem de critica
-      vr_cdcritic := 0;
-      vr_dscritic := 'O Valor Máximo Permitido por Título deve ser inferior ou igual ao estipulado pela CECRED';
-      pr_nmdcampo := 'vlmaxsac';
-      -- volta para o programa chamador
-      RAISE vr_exc_saida;
-
-    END IF;
-    */
-    
     IF pr_qtprzmax > pr_qtprzmax_c THEN
       -- Montar mensagem de critica
       vr_cdcritic := 0;
@@ -1497,18 +1470,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB052 AS
 
     END IF;
 
-    /* -- Campo excluído da Tela
-    IF pr_vlmaxsac > pr_vlmaxsac_c THEN
-      -- Montar mensagem de critica
-      vr_cdcritic := 0;
-      vr_dscritic := 'O valor não pode ser menor que o da cooperativa';
-      pr_nmdcampo := 'vlmaxsac_c';
-      -- volta para o programa chamador
-      RAISE vr_exc_saida;
-
-    END IF;
-    */
-
     IF pr_qtprzmax > pr_qtprzmax_c THEN
       -- Montar mensagem de critica
       vr_cdcritic := 0;
@@ -1538,7 +1499,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB052 AS
 
     ---- VALIDAÇÕES NOVOS CAMPOS - CECRED ----
 
-
     vr_dstextab := to_char(pr_vllimite,     'FM000000000D00', 'NLS_NUMERIC_CHARACTERS='',.''') ||';'||
                    to_char(pr_vlconsul,     'FM000000000D00', 'NLS_NUMERIC_CHARACTERS='',.''') ||';'||
                    to_char(pr_vlmaxsac,     'FM000000000D00', 'NLS_NUMERIC_CHARACTERS='',.''') ||';'||
@@ -1551,7 +1511,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB052 AS
                    to_char(pr_qtprzmax,     'FM000')                                           ||';'||
                    to_char(pr_qtminfil,     'FM000')                                           ||';'||
                    to_char(pr_nrmespsq,     'FM00')                                           ||';'|| -- **
-                   to_char(pr_pctitemi,     'FM000')                                           ||';'||
+                   to_char(0,               'FM000')                                           ||';'||-- campo removido pctitemi
                    to_char(pr_pctolera,     'FM000')                                           ||';'||
                    to_char(pr_pcdmulta,     'FM000D000000', 'NLS_NUMERIC_CHARACTERS='',.''')   ||';'||
                    to_char(pr_vllimite_c,   'FM000000000D00', 'NLS_NUMERIC_CHARACTERS='',.''') ||';'||
@@ -1566,7 +1526,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB052 AS
                    to_char(pr_qtprzmax_c,   'FM000')                                           ||';'||
                    to_char(pr_qtminfil_c,   'FM000')                                           ||';'||
                    to_char(pr_nrmespsq_c,   'FM00')                                           ||';'|| -- **
-                   to_char(pr_pctitemi_c,   'FM000')                                           ||';'||
+                   to_char(0,               'FM000')                                           ||';'||-- campo removido pctitemi
                    to_char(pr_pctolera_c,   'FM000')                                           ||';'||
                    to_char(pr_pcdmulta_c,   'FM000D000000', 'NLS_NUMERIC_CHARACTERS='',.''')   ||';'||
                    to_char(pr_cardbtit,     'FM000')                                           ||';'||
@@ -1806,28 +1766,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB052 AS
                                     to_char(vr_tab_cecred_dsctit(1).qtrenova,'FM9999999990D00', 'NLS_NUMERIC_CHARACTERS='',.''') ||
                                     ' para R$ ' || to_char(pr_qtrenova_c,'FM9999999990D00', 'NLS_NUMERIC_CHARACTERS='',.'''));
     END IF;
-
-
-----> pctitemi
-    IF vr_tab_dados_dsctit(1).pctitemi <> pr_pctitemi THEN
-      --> gerar log da tela
-      pc_log_tab052(pr_cdcooper => vr_cdcooper,
-                    pr_cdoperad => vr_cdoperad,
-                    pr_dscdolog => 'alterou o percentual de cheques por emitente de ' ||
-                                    to_char(vr_tab_dados_dsctit(1).pctitemi) ||
-                                    ' para ' || to_char(pr_pctitemi));
-    END IF;
-
-----> pctitemi_c
-    IF vr_tab_cecred_dsctit(1).pctitemi <> pr_pctitemi_c THEN
-      --> gerar log da tela
-      pc_log_tab052(pr_cdcooper => vr_cdcooper,
-                    pr_cdoperad => vr_cdoperad,
-                    pr_dscdolog => 'alterou o percentual de cheques por emitente CECRED de ' ||
-                                    to_char(vr_tab_cecred_dsctit(1).pctitemi) ||
-                                    ' para ' || to_char(pr_pctitemi_c));
-    END IF;
-
 
 ---- LOG NOVOS CAMPOS ----
 

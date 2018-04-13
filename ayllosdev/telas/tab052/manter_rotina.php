@@ -7,6 +7,7 @@
  * OBJETIVO     : Rotina para controlar as operações da tela TAB052 
  * --------------
  * ALTERAÇÕES   :
+ *                  13/04/2018 - Remoção do campo 'pctitemi' Percentual de títulos por pagador (Leonardo Oliveira - GFT).
  * -------------- 
  */
 ?> 
@@ -37,7 +38,6 @@ $qtprzmax = (isset($_POST['qtprzmax'])) ? $_POST['qtprzmax'] : 0;
 $cardbtit = (isset($_POST['cardbtit'])) ? $_POST['cardbtit'] : 0;
 $qtminfil = (isset($_POST['qtminfil'])) ? $_POST['qtminfil'] : 0;
 $nrmespsq = (isset($_POST['nrmespsq'])) ? $_POST['nrmespsq'] : 0;
-$pctitemi = (isset($_POST['pctitemi'])) ? $_POST['pctitemi'] : 0;
 $pctolera = (isset($_POST['pctolera'])) ? $_POST['pctolera'] : 0;
 $pcdmulta = (isset($_POST['pcdmulta'])) ? $_POST['pcdmulta'] : 0;
 $pcnaopag = (isset($_POST['pcnaopag'])) ? $_POST['pcnaopag'] : 0;
@@ -66,8 +66,6 @@ $qtmxdene = (isset($_POST['qtmxdene'])) ? $_POST['qtmxdene'] : 0;
 $qtdiexbo = (isset($_POST['qtdiexbo'])) ? $_POST['qtdiexbo'] : 0; 
 $qtmxtbay = (isset($_POST['qtmxtbay'])) ? $_POST['qtmxtbay'] : 0;
 
-//$pctitpag = (isset($_POST['pctitpag'])) ? $_POST['pctitpag'] : 0;
-
 
 /*_c*/
 $vllimite_c = (isset($_POST['vllimite_c'])) ? $_POST['vllimite_c'] : 0;
@@ -81,7 +79,6 @@ $qtprzmax_c = (isset($_POST['qtprzmax_c'])) ? $_POST['qtprzmax_c'] : 0;
 $cardbtit_c = (isset($_POST['cardbtit_c'])) ? $_POST['cardbtit_c'] : 0;
 $qtminfil_c = (isset($_POST['qtminfil_c'])) ? $_POST['qtminfil_c'] : 0;
 $nrmespsq_c = (isset($_POST['nrmespsq_c'])) ? $_POST['nrmespsq_c'] : 0;
-$pctitemi_c = (isset($_POST['pctitemi_c'])) ? $_POST['pctitemi_c'] : 0;
 $pctolera_c = (isset($_POST['pctolera_c'])) ? $_POST['pctolera_c'] : 0;
 $pcdmulta_c = (isset($_POST['pcdmulta_c'])) ? $_POST['pcdmulta_c'] : 0;
 $pcnaopag_c = (isset($_POST['pcnaopag_c'])) ? $_POST['pcnaopag_c'] : 0;
@@ -109,8 +106,6 @@ $qtmxdene_c = (isset($_POST['qtmxdene_c'])) ? $_POST['qtmxdene_c'] : 0;
 $qtdiexbo_c = (isset($_POST['qtdiexbo_c'])) ? $_POST['qtdiexbo_c'] : 0;
 
 $qtmxtbay_c = (isset($_POST['qtmxtbay_c'])) ? $_POST['qtmxtbay_c'] : 0;
-
-//$pctitpag_c = (isset($_POST['pctitpag_c'])) ? $_POST['pctitpag_c'] : 0;
 
 $cdopcao = '';
 
@@ -181,8 +176,6 @@ if ($cdopcao == 'C') {
     $xml .= "   <nrmespsq>". $nrmespsq."</nrmespsq>";
     $xml .= "   <nrmespsq_c>". $nrmespsq_c."</nrmespsq_c>";
 
-    $xml .= "   <pctitemi>". $pctitemi."</pctitemi>";
-    $xml .= "   <pctitemi_c>". $pctitemi_c."</pctitemi_c>";
 
     $xml .= "   <pctolera>". $pctolera."</pctolera>";
     $xml .= "   <pctolera_c>". $pctolera_c."</pctolera_c>";
@@ -351,9 +344,6 @@ if ($cdopcao == 'C') {
         echo '$("#nrmespsq", "#frmTab052").val("' . getByTagName($r->tags, 'nrmespsq') . '");';
         echo '$("#nrmespsq_c", "#frmTab052").val("' . getByTagName($r->tags, 'nrmespsq_c') . '");';
 
-        echo '$("#pctitemi", "#frmTab052").val("' . getByTagName($r->tags, 'pctitemi') . '");';
-        echo '$("#pctitemi_c", "#frmTab052").val("' . getByTagName($r->tags, 'pctitemi_c') . '");';
-
         echo '$("#pctolera", "#frmTab052").val("' . getByTagName($r->tags, 'pctolera') . '");';
         echo '$("#pctolera_c", "#frmTab052").val("' . getByTagName($r->tags, 'pctolera_c') . '");';
 
@@ -402,7 +392,6 @@ if ($cdopcao == 'C') {
         echo '$("#vlmintcl_c", "#frmTab052").val("' . getByTagName($r->tags, 'vlmintcl_c') . '");'; 
         //fim novo
         
-		
 		echo '$("#qtmesliq", "#frmTab052").val("' . getByTagName($r->tags, 'qtmesliq') . '");';
         echo '$("#qtmesliq_c", "#frmTab052").val("' . getByTagName($r->tags, 'qtmesliq_c') . '");'; 
 		
@@ -425,10 +414,7 @@ if ($cdopcao == 'C') {
         echo '$("#qtmxtbib_c", "#frmTab052").val("' . getByTagName($r->tags, 'qtmxtbib_c') . '");'; 
 
         echo '$("#qtmxtbay", "#frmTab052").val("' . getByTagName($r->tags, 'qtmxtbay') . '");';
-        echo '$("#qtmxtbay_c", "#frmTab052").val("' . getByTagName($r->tags, 'qtmxtbay_c') . '");'; 
-
-        //echo '$("#pctitpag", "#frmTab052").val("' . getByTagName($r->tags, 'pctitpag') . '");';
-        //echo '$("#pctitpag_c", "#frmTab052").val("' . getByTagName($r->tags, 'pctitpag_c') . '");'; 
+        echo '$("#qtmxtbay_c", "#frmTab052").val("' . getByTagName($r->tags, 'qtmxtbay_c') . '");';
 
     }
 }
