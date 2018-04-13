@@ -23,6 +23,9 @@
 							   (Jean Michel).
 							   
 			      08/10/2015 - Reformulacao cadastral (Gabriel-RKAM).				   
+				  
+				  04/04/2018 - Chamada da rotina para verificar se o tipo de conta permite 
+				               produto 16 - Poupança Programada. PRJ366 (Lombardi).
 							  
 	**************************************************************************/
 	
@@ -62,6 +65,24 @@
 	if (!validaInteiro($nraplica) && $nraplica != 0) {
 		exibeErro("Aplica&ccedil;&atilde;o inv&aacute;lida.");
 	}	
+	
+	// Montar o xml de Requisicao
+	$xml  = "";
+	$xml .= "<Root>";
+	$xml .= " <Dados>";	
+	$xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
+	$xml .= "   <cdprodut>". 3 ."</cdprodut>"; //Aplicação
+	$xml .= " </Dados>";
+	$xml .= "</Root>";
+	
+	$xmlResult = mensageria($xml, "CADA0006", "VALIDA_ADESAO_PRODUTO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	$xmlObject = getObjectXML($xmlResult);
+	
+	// Se ocorrer um erro, mostra crítica
+	if (strtoupper($xmlObject->roottag->tags[0]->name) == "ERRO") {
+		$msgErro = $xmlObject->roottag->tags[0]->tags[0]->tags[4]->cdata;
+		exibeErro(utf8_encode($msgErro));
+	}
 	
 	// Monta o xml de requisição
 	$xmlAplicacao  = "";

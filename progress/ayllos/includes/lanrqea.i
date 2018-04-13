@@ -69,8 +69,11 @@
                             3, conforme solicitado no chamado 627236. (Kelvin)
                   
                18/05/2017 - Retirar glb_cddopcao do form f_lanrqe (Lucas Ranghetti #646559)
+                  
+               21/03/2018 - Substituida verificacao "cdtipcta = 8,9,10,11" pela consulta 
+                            se o produto de folhas de cheque está liberado para o tipo 
+                            de conta. PRJ366 (Lombardi).
 ............................................................................ */
-
 
 DO WHILE TRUE:
 
@@ -328,9 +331,43 @@ DO WHILE TRUE:
                    IF crapass.inpessoa <> 2   THEN
                       ASSIGN glb_cdcritic = 331.
                    ELSE
-                   IF NOT CAN-DO("8,9,10,11",STRING(crapass.cdtipcta))
-                      THEN 
-                      ASSIGN glb_cdcritic = 17.
+                      DO:
+                         
+                         { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+                         
+                         RUN STORED-PROCEDURE pc_permite_produto_tipo
+                         aux_handproc = PROC-HANDLE NO-ERROR (INPUT 38,               /* Codigo do produto */
+                                                              INPUT crapass.cdtipcta, /* Tipo de conta */
+                                                              INPUT crapass.cdcooper, /* Cooperativa */
+                                                              INPUT crapass.inpessoa, /* Tipo de pessoa */
+                                                             OUTPUT "",   /* Possui produto */
+                                                             OUTPUT 0,   /* Codigo da crítica */
+                                                             OUTPUT "").  /* Descriçao da crítica */
+                         
+                         CLOSE STORED-PROC pc_permite_produto_tipo
+                               aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+                         { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+                         
+                         ASSIGN aux_possuipr = ""
+                                aux_cdcritic = 0
+                                aux_dscritic = ""
+                                aux_possuipr = pc_permite_produto_tipo.pr_possuipr 
+                                               WHEN pc_permite_produto_tipo.pr_possuipr <> ?
+                                aux_cdcritic = pc_permite_produto_tipo.pr_cdcritic 
+                                               WHEN pc_permite_produto_tipo.pr_cdcritic <> ?
+                                aux_dscritic = pc_permite_produto_tipo.pr_dscritic
+                                               WHEN pc_permite_produto_tipo.pr_dscritic <> ?.
+                         
+                         IF aux_cdcritic > 0 OR aux_dscritic <> ""  THEN
+                              DO:
+                                 ASSIGN glb_cdcritic = aux_cdcritic
+                                        glb_dscritic = aux_dscritic.
+                              END.
+
+                         IF aux_possuipr = "N" THEN 
+                            ASSIGN glb_cdcritic = 17.
+                      END.
                    /*** Magui fora em 14/06/2010 enquanto nao houver emissao
                         de cheques com a nossa IF
                    ELSE

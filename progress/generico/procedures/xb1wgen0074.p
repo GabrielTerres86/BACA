@@ -25,8 +25,8 @@
                              correspondente a tela CONTAS, OPCAO Conta Corrente                             
                              (Projeto 218 - Melhorias Tarifas (Carlos Rafael Tanholi)   
    
-				27/10/2015 - Inclusao de novo campo para a tela CONTAS,
-							 crapass.idastcjt (Jean Michel) 
+                27/10/2015 - Inclusao de novo campo para a tela CONTAS,
+                             crapass.idastcjt (Jean Michel)  
 
                 12/01/2016 - Remoção do campo flgcrdpa (Anderson).
 
@@ -113,7 +113,7 @@ PROCEDURE valores_entrada:
             WHEN "tpatlcad" THEN aux_tpatlcad = INTE(tt-param.valorCampo).
             WHEN "flgrestr" THEN aux_flgrestr = LOGICAL(tt-param.valorCampo).
             WHEN "indserma" THEN aux_indserma = LOGICAL(tt-param.valorCampo).
-			WHEN "idastcjt" THEN aux_idastcjt = INTE(tt-param.valorCampo).
+            WHEN "idastcjt" THEN aux_idastcjt = INTE(tt-param.valorCampo).
             WHEN "cdcatego" THEN aux_cdcatego = INTE(tt-param.valorCampo).
 
         END CASE.
@@ -225,6 +225,7 @@ PROCEDURE Verifica_Exclusao_Titulares:
                                             INPUT aux_nrdconta,
                                             INPUT aux_idseqttl,
                                             INPUT aux_cdtipcta,
+                                            INPUT aux_cdcatego,
                                             INPUT TRUE,
                                            OUTPUT aux_tipconfi,
                                            OUTPUT aux_msgconfi,
@@ -362,7 +363,7 @@ PROCEDURE Grava_Dados:
                             INPUT aux_flgexclu,
                             INPUT aux_flgrestr,
                             INPUT aux_indserma,
-							INPUT aux_idastcjt,
+                            INPUT aux_idastcjt,
                             INPUT aux_cdcatego,
                            OUTPUT aux_tpatlcad,
                            OUTPUT aux_msgatcad,

@@ -32,6 +32,10 @@
 
               14/11/2017 - Ajuste permitir não permitir acesso a opção de integralização quando
                            (Jonata - RKAM P364).
+
+			  04/04/2018 - Chamada da rotina para verificar se o tipo de conta permite produto 
+                           15 - Plano de Cotas. Ajuste para chamar a rotina de senha do coordenador. 
+						   PRJ366 (Lombardi).
  					
 *************************************************************************/
 
@@ -297,6 +301,9 @@ function validaNovoPlano(altera) {
         showError("error", "Data de in&iacute;cio do plano inv&aacute;lida.", "Alerta - Ayllos", "$('#dtdpagto','#frmNovoPlano').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
 		return false;
 	}
+	
+	// Verifica se tipo de conta permite produto 15 – Plano de Cotas
+	validaAdesaoProduto(nrdconta, 15, '');
 	
 	// Executa script de valida&ccedil;&atilde;o do plano atrav&eacute;s de ajax
 	$.ajax({		
@@ -910,4 +917,8 @@ function controlaBotoes(tipo) {
     }
 
     
+}
+
+function senhaCoordenador(executaDepois) {
+	pedeSenhaCoordenador(2,executaDepois,'divRotina');
 }

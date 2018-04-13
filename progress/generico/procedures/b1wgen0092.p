@@ -215,6 +215,10 @@
                            
               07/03/2018 - Alterar validacao do digito do samae Pomerode para validar com o modulo 11
                            (Lucas Ranghetti #858121).
+                           
+              03/04/2018 - Adicionada chamada pc_valida_adesao_produto para verificar se o tipo de conta 
+                           permite a contrataçao do produto. PRJ366 (Lombardi).
+                           
 .............................................................................*/
 
 /*............................... DEFINICOES ................................*/
@@ -1110,6 +1114,7 @@ PROCEDURE valida-dados:
     DEF VAR aux_nrdigito AS INTE                                    NO-UNDO.
     DEF VAR aux_nrrefere AS CHAR                                    NO-UNDO.
     DEF VAR aux_qtdigito AS INTE                                    NO-UNDO.
+    DEF VAR aux_cdprodut AS INTE                                    NO-UNDO.
 
     EMPTY TEMP-TABLE tt-erro.
 
@@ -1140,6 +1145,39 @@ PROCEDURE valida-dados:
                         LEAVE Valida.
                     END.
                               
+                IF CAN-DO("1,5",TRIM(STRING(par_idorigem))) THEN
+                    aux_cdprodut = 10. /* Débito Automático */
+                ELSE
+                    aux_cdprodut = 29. /* Débito Automático Fácil */
+                    
+                /* buscar quantidade maxima de digitos aceitos para o convenio */
+                { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
+                              
+                RUN STORED-PROCEDURE pc_valida_adesao_produto
+                    aux_handproc = PROC-HANDLE NO-ERROR
+                                            (INPUT par_cdcooper,
+                                             INPUT par_nrdconta,
+                                             INPUT aux_cdprodut,
+                                             OUTPUT 0,   /* pr_cdcritic */
+                                             OUTPUT ""). /* pr_dscritic */
+                            
+                CLOSE STORED-PROC pc_valida_adesao_produto
+                      aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+                { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+                ASSIGN aux_cdcritic = 0
+                       aux_dscritic = ""
+                       aux_cdcritic = pc_valida_adesao_produto.pr_cdcritic                          
+                                          WHEN pc_valida_adesao_produto.pr_cdcritic <> ?
+                       aux_dscritic = pc_valida_adesao_produto.pr_dscritic
+                                          WHEN pc_valida_adesao_produto.pr_dscritic <> ?.
+                
+                IF  aux_cdcritic <> 0 OR aux_dscritic <> "" THEN
+                  DO:
+                      LEAVE Valida.
+                  END.
+                
                 /* buscar quantidade maxima de digitos aceitos para o convenio */
                 { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
                               

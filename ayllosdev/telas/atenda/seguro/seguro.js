@@ -52,6 +52,9 @@
                   21/11/2017 - Ajuste para controle das mensagens de alerta referente a seguro (Jonata - RKAM P364).
 
                   22/11/2017 - Ajuste para permitir apenas consulta de acordo com a situação da conta (Jonata - RKAM p364).
+
+                  02/04/2018 - Chamada rotina "validaAdesaoProduto" para verificar se tipo de conta permite a contratação
+                               do produto. PRJ366 (Lombardi).
  * */
  
 //**************************************************
@@ -311,13 +314,27 @@ function controlaOperacao(operacao) {
 				resetaVars();
 				break;
 			case 'TF'://tela formulario
-				tpseguro = $('#tpemprst').val();
-            if (tpseguro == 11 || tpseguro == 4) {   // se for casa            
-					valida_inclusao(tpseguro);
+				tpseguro = parseInt($('#tpemprst').val());
+				var cdprodut = 0;
+				var executa_depois = '';
+				switch (tpseguro) {
+					case 3: //Seguro de Vida
+						cdprodut = 18;
+						break;
+					case 4: // Seguro Prestamista
+						cdprodut = 40;
+						break;
+					case 11: // Seguro Residência
+						cdprodut = 19;
+						break;
 				}
-            else { // se não for casa
-					validaAssociados();
+				if (tpseguro == 11 || tpseguro == 4) {   // se for casa            
+					executa_depois = 'valida_inclusao(' + tpseguro + ');';
 				}
+				else { // se não for casa
+					executa_depois = 'validaAssociados();';
+				}
+				validaAdesaoProduto(nrdconta, cdprodut, executa_depois);
 				return false;
 				break;
 			case 'BUSCAEND':

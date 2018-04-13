@@ -73,6 +73,10 @@
                             
                12/12/2017 - Passar como texto o campo nrcartao na chamada da procedure 
                             pc_gera_log_ope_cartao (Lucas Ranghetti #810576)
+                            
+               04/04/2018 - Adicionada chamada pc_valida_adesao_produto para verificar se o 
+                            tipo de conta permite a contrataçao do produto. PRJ366 (Lombardi).
+                            
 ............................................................................ */
 /*----------------------------------------------------------------------*/
 /*  b1crap05.p - Solicitacao/Liberacoes Taloes Normal                   */
@@ -148,6 +152,8 @@ PROCEDURE valida-dados:
     DEF VAR aux_contorig             AS INT                           NO-UNDO.
     DEF VAR aux_cdorigem             AS INT                           NO-UNDO.
     DEF VAR aux_dsrotina             AS CHAR                          NO-UNDO.
+    DEF VAR aux_cdcritic             AS INT                           NO-UNDO.
+    DEF VAR aux_dscritic             AS CHAR                          NO-UNDO.
 
     DEF VAR h-b1wgen0001 AS HANDLE                                    NO-UNDO.
     DEF VAR h-b1wgen0110 AS HANDLE                                    NO-UNDO.
@@ -409,17 +415,17 @@ PROCEDURE valida-dados:
                              NO-LOCK NO-ERROR NO-WAIT.
     
     IF  NOT AVAIL crappco THEN
-       DO:
+        DO:
            ASSIGN i-cod-erro  = 0
                   c-desc-erro = "Nao foi possivel obter limite de taloes.".
                              
-          RUN cria-erro (INPUT p-cooper,
-                         INPUT p-cod-agencia,
-                         INPUT p-nro-caixa,
-                         INPUT i-cod-erro,
-                         INPUT c-desc-erro,
-                         INPUT YES).
-          RETURN "NOK".
+           RUN cria-erro (INPUT p-cooper,
+                          INPUT p-cod-agencia,
+                          INPUT p-nro-caixa,
+                          INPUT i-cod-erro,
+                          INPUT c-desc-erro,
+                          INPUT YES).
+           RETURN "NOK".
         END.
 
     IF p-qtde-req-talao > INTEGER(crappco.dsconteu) THEN  
@@ -473,256 +479,280 @@ PROCEDURE valida-dados:
            RETURN "NOK".
        END.
     ELSE
-    IF crapass.cdtipcta <= 07   OR
-       crapass.cdtipcta  = 17   OR
-       crapass.cdtipcta  = 18   THEN
        DO:
-           ASSIGN i-cod-erro  = 17
-                  c-desc-erro = "".
-           
-           RUN cria-erro (INPUT p-cooper,
-                          INPUT p-cod-agencia,
-                          INPUT p-nro-caixa,
-                          INPUT i-cod-erro,
-                          INPUT c-desc-erro,
-                          INPUT YES).
-           RETURN "NOK".
-       END.
-    ELSE
-    /* Verifica se tem conta integracao e se esta ativa  - somente p chq.BB */
-    IF  p-banco-chq = 1             AND
-        crapass.cdtipcta >= 12      AND
-        crapass.cdtipcta <= 18      AND
-       (crapass.nrdctitg  = "" OR
-        crapass.flgctitg <> 2)      THEN
-        DO:
-            ASSIGN i-cod-erro  = 860
-                   c-desc-erro = "".
+           /* buscar quantidade maxima de digitos aceitos para o convenio */
+            { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
+                          
+            RUN STORED-PROCEDURE pc_valida_adesao_produto
+                aux_handproc = PROC-HANDLE NO-ERROR
+                                        (INPUT crapcop.cdcooper,
+                                         INPUT aux_nrdconta,
+                                         INPUT 38, /* Folhas de Cheque */
+                                         OUTPUT 0,   /* pr_cdcritic */
+                                         OUTPUT ""). /* pr_dscritic */
+                        
+            CLOSE STORED-PROC pc_valida_adesao_produto
+                  aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+            { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+            ASSIGN aux_cdcritic = 0
+                   aux_dscritic = ""
+                   aux_cdcritic = pc_valida_adesao_produto.pr_cdcritic                          
+                                      WHEN pc_valida_adesao_produto.pr_cdcritic <> ?
+                   aux_dscritic = pc_valida_adesao_produto.pr_dscritic
+                                      WHEN pc_valida_adesao_produto.pr_dscritic <> ?.
             
-            RUN cria-erro (INPUT p-cooper,
-                           INPUT p-cod-agencia,
-                           INPUT p-nro-caixa,
-                           INPUT i-cod-erro,
-                           INPUT c-desc-erro,
-                           INPUT YES).
-            RETURN "NOK".
-        END.
-    ELSE
-       DO:
+            IF  aux_cdcritic <> 0 OR aux_dscritic <> "" THEN
+                DO:
+                    ASSIGN i-cod-erro  = aux_cdcritic
+                           c-desc-erro = aux_dscritic.
+                    
+                    RUN cria-erro (INPUT p-cooper,
+                                   INPUT p-cod-agencia,
+                                   INPUT p-nro-caixa,
+                                   INPUT i-cod-erro,
+                                   INPUT c-desc-erro,
+                                   INPUT YES).
+                    RETURN "NOK".
+                END.
+            /*
+            ELSE 
+            /* Verifica se tem conta integracao e se esta ativa  - somente p chq.BB */
+            IF  p-banco-chq = 1             AND
+                crapass.cdtipcta >= 12      AND
+                crapass.cdtipcta <= 18      AND
+               (crapass.nrdctitg  = "" OR
+                crapass.flgctitg <> 2)      THEN
+                DO:
+                    ASSIGN i-cod-erro  = 860
+                           c-desc-erro = "".
+                    
+                    RUN cria-erro (INPUT p-cooper,
+                                   INPUT p-cod-agencia,
+                                   INPUT p-nro-caixa,
+                                   INPUT i-cod-erro,
+                                   INPUT c-desc-erro,
+                                   INPUT YES).
+                    RETURN "NOK".
+                END. */
+            ELSE
+               DO:
        
-           /* Comentado Andrino/Lucas - PROJ290
-           IF  crapass.inpessoa = 1         AND
-              (crapass.cdtipcta = 12   OR
-               crapass.cdtipcta = 13   OR            
-               crapass.cdtipcta = 8    OR
-               crapass.cdtipcta = 9)        AND
-               p-qtde-req-talao > 2         THEN
-               DO:
-                   ASSIGN i-cod-erro  = 26
-                          c-desc-erro = "".
-                   
-                   RUN cria-erro (INPUT p-cooper,
-                                  INPUT p-cod-agencia,
-                                  INPUT p-nro-caixa,
-                                  INPUT i-cod-erro,
-                                  INPUT c-desc-erro,
-                                  INPUT YES).
-                   RETURN "NOK".
-               END.
-           ELSE
-           IF  crapass.inpessoa = 1         AND
-              (crapass.cdtipcta = 14   OR
-               crapass.cdtipcta = 15   OR      
-               crapass.cdtipcta = 10   OR
-               crapass.cdtipcta = 11)       AND
-               p-qtde-req-talao > 4         THEN
-               DO:
-                   ASSIGN i-cod-erro  = 26
-                          c-desc-erro = "".
-                   
-                   RUN cria-erro (INPUT p-cooper,
-                                  INPUT p-cod-agencia,
-                                  INPUT p-nro-caixa,
-                                  INPUT i-cod-erro,
-                                  INPUT c-desc-erro,
-                                  INPUT YES).
-                   RETURN "NOK".
-               END.
-           */
+                   /* Comentado Andrino/Lucas - PROJ290
+                   IF  crapass.inpessoa = 1         AND
+                      (crapass.cdtipcta = 12   OR
+                       crapass.cdtipcta = 13   OR            
+                       crapass.cdtipcta = 8    OR
+                       crapass.cdtipcta = 9)        AND
+                       p-qtde-req-talao > 2         THEN
+                       DO:
+                           ASSIGN i-cod-erro  = 26
+                                  c-desc-erro = "".
+                           
+                           RUN cria-erro (INPUT p-cooper,
+                                          INPUT p-cod-agencia,
+                                          INPUT p-nro-caixa,
+                                          INPUT i-cod-erro,
+                                          INPUT c-desc-erro,
+                                          INPUT YES).
+                           RETURN "NOK".
+                       END.
+                   ELSE
+                   IF  crapass.inpessoa = 1         AND
+                      (crapass.cdtipcta = 14   OR
+                       crapass.cdtipcta = 15   OR      
+                       crapass.cdtipcta = 10   OR
+                       crapass.cdtipcta = 11)       AND
+                       p-qtde-req-talao > 4         THEN
+                       DO:
+                           ASSIGN i-cod-erro  = 26
+                                  c-desc-erro = "".
+                           
+                           RUN cria-erro (INPUT p-cooper,
+                                          INPUT p-cod-agencia,
+                                          INPUT p-nro-caixa,
+                                          INPUT i-cod-erro,
+                                          INPUT c-desc-erro,
+                                          INPUT YES).
+                           RETURN "NOK".
+                       END.               
+                   */
 
-           RUN sistema/generico/procedures/b1wgen0001.p
-               PERSISTENT SET h-b1wgen0001.
-      
-           IF VALID-HANDLE(h-b1wgen0001)   THEN
-              DO:
-                   RUN ver_capital IN h-b1wgen0001(INPUT  crapcop.cdcooper,
-                                                   INPUT  aux_nrdconta,
-                                                   INPUT  p-cod-agencia,
-                                                   INPUT  p-nro-caixa,
-                                                   0,
-                                                   INPUT  crapdat.dtmvtolt,
-                                                   INPUT  "b1crap05",
-                                                   INPUT  2, /*CAIXA*/
-                                                   OUTPUT TABLE tt-erro).
+                   RUN sistema/generico/procedures/b1wgen0001.p
+                       PERSISTENT SET h-b1wgen0001.
               
-                   DELETE PROCEDURE h-b1wgen0001.
-              END.
-       
-           /* Verifica se houve erro */
-           FIND FIRST tt-erro NO-LOCK NO-ERROR.
-
-           IF AVAILABLE tt-erro   THEN
-              DO:
-                   ASSIGN i-cod-erro  = tt-erro.cdcritic
-                          c-desc-erro = tt-erro.dscritic.
-                       
-                   RUN cria-erro (INPUT p-cooper,
-                                  INPUT p-cod-agencia,
-                                  INPUT p-nro-caixa,
-                                  INPUT i-cod-erro,
-                                  INPUT c-desc-erro,
-                                  INPUT YES).
-                   RETURN "NOK".
-              END.
-
-           IF p-nro-final  > 0   THEN
-              DO:
-                  /* Digito do cheque final */
-                  ASSIGN glb_nrcalcul = p-nro-final.
-
-                  RUN fontes/digfun.p.
-
-                  IF NOT glb_stsnrcal   THEN
-                     DO:
-                         ASSIGN i-cod-erro  = 0
-                                c-desc-erro = "008 - Digito errado(" + 
-                                              STRING(p-nro-final) + ")".
-                         
-                         RUN cria-erro (INPUT p-cooper,
-                                        INPUT p-cod-agencia,
-                                        INPUT p-nro-caixa,
-                                        INPUT i-cod-erro,
-                                        INPUT c-desc-erro,
-                                        INPUT YES).
-                         RETURN "NOK".
-                     END.
-                  ELSE
-                     DO:
-                         /* Verifica se o cheque final existe */
-                         FIND crapfdc WHERE 
-                              crapfdc.cdcooper = crapcop.cdcooper  AND
-                              crapfdc.cdbanchq = p-banco-chq       AND
-                              crapfdc.cdagechq = p-agencia-chq     AND
-                              crapfdc.nrctachq = p-nro-conta       AND
-                              crapfdc.nrcheque = 
-                                      INTE(SUBSTR(STRING(p-nro-final,
-                                                  "99999999"),1,7))
-                              NO-LOCK NO-ERROR.
-
-                         IF NOT AVAIL crapfdc   THEN 
-                            DO: 
-                                ASSIGN i-cod-erro  = 108
-                                       c-desc-erro = "".
-                                
-                                RUN cria-erro (INPUT p-cooper,
-                                               INPUT p-cod-agencia,
-                                               INPUT p-nro-caixa,
-                                               INPUT i-cod-erro,
-                                               INPUT c-desc-erro,
-                                               INPUT YES).
-                                RETURN "NOK".
-                            END.
-                         ELSE
-                            DO:
-                                ASSIGN aux_seqatual = crapfdc.nrseqems.
-
-                                /* Verifica se existe um cheque
-                                   posterior que nao entrou
-                                   (incheque = 0) e eh do mesmo
-                                   sequencial de emissao */
-                                FIND NEXT crapfdc WHERE
-                                          crapfdc.cdcooper = 
-                                                  crapcop.cdcooper  AND
-                                          crapfdc.cdbanchq = 
-                                                  p-banco-chq       AND
-                                          crapfdc.cdagechq = 
-                                                  p-agencia-chq     AND
-                                          crapfdc.nrctachq = 
-                                                  p-nro-conta
-                                          USE-INDEX crapfdc1
-                                          NO-LOCK NO-ERROR.
+                   IF VALID-HANDLE(h-b1wgen0001)   THEN
+                      DO:
+                           RUN ver_capital IN h-b1wgen0001(INPUT  crapcop.cdcooper,
+                                                           INPUT  aux_nrdconta,
+                                                           INPUT  p-cod-agencia,
+                                                           INPUT  p-nro-caixa,
+                                                           0,
+                                                           INPUT  crapdat.dtmvtolt,
+                                                           INPUT  "b1crap05",
+                                                           INPUT  2, /*CAIXA*/
+                                                           OUTPUT TABLE tt-erro).
                       
-                                IF AVAILABLE crapfdc      AND
-                                   crapfdc.incheque = 0   AND
-                                   crapfdc.tpforchq <> "FC" THEN
-                                   DO:
-                                       IF crapfdc.nrcheque <>
-                                             INTE(SUBSTR(STRING(
-                                             p-nro-final,
-                                             "99999999"),1,7))  AND
-                                          crapfdc.nrseqems  =
-                                             aux_seqatual
-                                          THEN
-                                          DO:
-                                              ASSIGN i-cod-erro  = 129
-                                                     c-desc-erro = "".
-                                              
-                                              RUN cria-erro (
-                                               INPUT p-cooper,
-                                               INPUT p-cod-agencia,
-                                               INPUT p-nro-caixa,
-                                               INPUT i-cod-erro,
-                                               INPUT c-desc-erro,
-                                               INPUT YES).
-                                               
-                                              RETURN "NOK".
-                                          END.
+                           DELETE PROCEDURE h-b1wgen0001.
+                      END.
+               
+                   /* Verifica se houve erro */
+                   FIND FIRST tt-erro NO-LOCK NO-ERROR.
 
-                                   END.
+                   IF AVAILABLE tt-erro   THEN
+                      DO:
+                           ASSIGN i-cod-erro  = tt-erro.cdcritic
+                                  c-desc-erro = tt-erro.dscritic.
+                               
+                           RUN cria-erro (INPUT p-cooper,
+                                          INPUT p-cod-agencia,
+                                          INPUT p-nro-caixa,
+                                          INPUT i-cod-erro,
+                                          INPUT c-desc-erro,
+                                          INPUT YES).
+                           RETURN "NOK".
+                      END.
 
-                            END.
+                   IF p-nro-final  > 0   THEN
+                      DO:
+                          /* Digito do cheque final */
+                          ASSIGN glb_nrcalcul = p-nro-final.
 
-                     END.
+                          RUN fontes/digfun.p.
 
-              END.      
-                
-           FIND crapreq WHERE crapreq.cdcooper = crapcop.cdcooper   AND
-                              crapreq.dtmvtolt = crapdat.dtmvtolt   AND
-                              crapreq.tprequis = p-tprequis         AND
-                              crapreq.nrdctabb = p-nro-conta        AND
-                              crapreq.nrinichq = p-nro-inicial      AND
-                              crapreq.cdagelot = p-cod-agencia     
-                              USE-INDEX crapreq2 NO-LOCK NO-ERROR.
-          
-           IF AVAILABLE crapreq   THEN
-              IF crapreq.insitreq = 6   THEN
-                 DO:
-                     ASSIGN i-cod-erro  = 350
-                            c-desc-erro = "".
-                     
-                     RUN cria-erro (INPUT p-cooper,
-                                    INPUT p-cod-agencia,
-                                    INPUT p-nro-caixa,
-                                    INPUT i-cod-erro,
-                                    INPUT c-desc-erro,
-                                    INPUT YES).
-                     RETURN "NOK".
-                 END.
-              ELSE
-                 DO:
-                     ASSIGN i-cod-erro  = 68
-                            c-desc-erro = "".
-                     
-                     RUN cria-erro (INPUT p-cooper,
-                                    INPUT p-cod-agencia,
-                                    INPUT p-nro-caixa,
-                                    INPUT i-cod-erro,
-                                    INPUT c-desc-erro,
-                                    INPUT YES).
-                     RETURN "NOK".
-                 END.
-           
-       END. /* Fim das Validacoes da conta e existencia do cheque final */
+                          IF NOT glb_stsnrcal   THEN
+                             DO:
+                                 ASSIGN i-cod-erro  = 0
+                                        c-desc-erro = "008 - Digito errado(" + 
+                                                      STRING(p-nro-final) + ")".
+                                 
+                                 RUN cria-erro (INPUT p-cooper,
+                                                INPUT p-cod-agencia,
+                                                INPUT p-nro-caixa,
+                                                INPUT i-cod-erro,
+                                                INPUT c-desc-erro,
+                                                INPUT YES).
+                                 RETURN "NOK".
+                             END.
+                          ELSE
+                             DO:
+                                 /* Verifica se o cheque final existe */
+                                 FIND crapfdc WHERE 
+                                      crapfdc.cdcooper = crapcop.cdcooper  AND
+                                      crapfdc.cdbanchq = p-banco-chq       AND
+                                      crapfdc.cdagechq = p-agencia-chq     AND
+                                      crapfdc.nrctachq = p-nro-conta       AND
+                                      crapfdc.nrcheque = 
+                                              INTE(SUBSTR(STRING(p-nro-final,
+                                                          "99999999"),1,7))
+                                      NO-LOCK NO-ERROR.
+
+                                 IF NOT AVAIL crapfdc   THEN 
+                                    DO: 
+                                        ASSIGN i-cod-erro  = 108
+                                               c-desc-erro = "".
+                                        
+                                        RUN cria-erro (INPUT p-cooper,
+                                                       INPUT p-cod-agencia,
+                                                       INPUT p-nro-caixa,
+                                                       INPUT i-cod-erro,
+                                                       INPUT c-desc-erro,
+                                                       INPUT YES).
+                                        RETURN "NOK".
+                                    END.
+                                 ELSE
+                                    DO:
+                                        ASSIGN aux_seqatual = crapfdc.nrseqems.
+
+                                        /* Verifica se existe um cheque
+                                           posterior que nao entrou
+                                           (incheque = 0) e eh do mesmo
+                                           sequencial de emissao */
+                                        FIND NEXT crapfdc WHERE
+                                                  crapfdc.cdcooper = 
+                                                          crapcop.cdcooper  AND
+                                                  crapfdc.cdbanchq = 
+                                                          p-banco-chq       AND
+                                                  crapfdc.cdagechq = 
+                                                          p-agencia-chq     AND
+                                                  crapfdc.nrctachq = 
+                                                          p-nro-conta
+                                                  USE-INDEX crapfdc1
+                                                  NO-LOCK NO-ERROR.
+                              
+                                        IF AVAILABLE crapfdc      AND
+                                           crapfdc.incheque = 0   AND
+                                           crapfdc.tpforchq <> "FC" THEN
+                                           DO:
+                                               IF crapfdc.nrcheque <>
+                                                     INTE(SUBSTR(STRING(
+                                                     p-nro-final,
+                                                     "99999999"),1,7))  AND
+                                                  crapfdc.nrseqems  =
+                                                     aux_seqatual
+                                                  THEN
+                                                  DO:
+                                                      ASSIGN i-cod-erro  = 129
+                                                             c-desc-erro = "".
+                                                      
+                                                      RUN cria-erro (
+                                                       INPUT p-cooper,
+                                                       INPUT p-cod-agencia,
+                                                       INPUT p-nro-caixa,
+                                                       INPUT i-cod-erro,
+                                                       INPUT c-desc-erro,
+                                                       INPUT YES).
+                                                       
+                                                      RETURN "NOK".
+                                                  END.
+
+                                           END.
+
+                                    END.
+
+                             END.
+
+                      END.      
+                        
+                   FIND crapreq WHERE crapreq.cdcooper = crapcop.cdcooper   AND
+                                      crapreq.dtmvtolt = crapdat.dtmvtolt   AND
+                                      crapreq.tprequis = p-tprequis         AND
+                                      crapreq.nrdctabb = p-nro-conta        AND
+                                      crapreq.nrinichq = p-nro-inicial      AND
+                                      crapreq.cdagelot = p-cod-agencia     
+                                      USE-INDEX crapreq2 NO-LOCK NO-ERROR.
+                  
+                   IF AVAILABLE crapreq   THEN
+                      IF crapreq.insitreq = 6   THEN
+                         DO:
+                             ASSIGN i-cod-erro  = 350
+                                    c-desc-erro = "".
+                             
+                             RUN cria-erro (INPUT p-cooper,
+                                            INPUT p-cod-agencia,
+                                            INPUT p-nro-caixa,
+                                            INPUT i-cod-erro,
+                                            INPUT c-desc-erro,
+                                            INPUT YES).
+                             RETURN "NOK".
+                         END.
+                      ELSE
+                         DO:
+                             ASSIGN i-cod-erro  = 68
+                                    c-desc-erro = "".
+                             
+                             RUN cria-erro (INPUT p-cooper,
+                                            INPUT p-cod-agencia,
+                                            INPUT p-nro-caixa,
+                                            INPUT i-cod-erro,
+                                            INPUT c-desc-erro,
+                                            INPUT YES).
+                             RETURN "NOK".
+                         END.
+                   
+               END. /* Fim das Validacoes da conta e existencia do cheque final */
+       END.
     
     IF  p-banco-chq = 1  THEN
         /* Banco do Brasil - sem DV */
@@ -914,276 +944,276 @@ PROCEDURE solicita-entrega-talao:
 
        FOR EACH tt-taloes NO-LOCK:
                         
-       ASSIGN in99 = 0.
+           ASSIGN in99 = 0.
        
            ASSIGN p-nrcpfcgc = REPLACE(p-nrcpfcgc, ".", "").
            ASSIGN p-nrcpfcgc = REPLACE(p-nrcpfcgc, "-", "").
            
-       DO WHILE TRUE:            
-         
-          FIND craptrq WHERE craptrq.cdcooper = crapcop.cdcooper     AND
-                             craptrq.cdagelot = p-cod-agencia        AND
-                             craptrq.tprequis = 0                    AND
-                             craptrq.nrdolote = aux_nrdolote 
-                             EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
-                            
-          ASSIGN in99 = in99 + 1.
-           
-          IF NOT AVAIL craptrq   THEN 
-             DO:
-                 IF LOCKED craptrq   THEN 
-                    DO:
-                        /* Tenta por 3 segundos */
-                        IF in99 < 3   THEN 
-                           DO:
-                               PAUSE 1 NO-MESSAGE.
-                               NEXT.
-                           END.
-                        ELSE 
-                           DO:
-                               ASSIGN i-cod-erro  = 0
-                                      c-desc-erro = 
-                                            "Tabela CRAPTRQ em uso ".
-                                            
-                               RUN cria-erro (INPUT p-cooper,
-                                              INPUT p-cod-agencia,
-                                              INPUT p-nro-caixa,
-                                              INPUT i-cod-erro,
-                                              INPUT c-desc-erro,
-                                              INPUT YES).
-                               RETURN "NOK".
-                           END.
+           DO WHILE TRUE:            
+             
+              FIND craptrq WHERE craptrq.cdcooper = crapcop.cdcooper     AND
+                                 craptrq.cdagelot = p-cod-agencia        AND
+                                 craptrq.tprequis = 0                    AND
+                                 craptrq.nrdolote = aux_nrdolote 
+                                 EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+                                
+              ASSIGN in99 = in99 + 1.
+               
+              IF NOT AVAIL craptrq   THEN 
+                 DO:
+                     IF LOCKED craptrq   THEN 
+                        DO:
+                            /* Tenta por 3 segundos */
+                            IF in99 < 3   THEN 
+                               DO:
+                                   PAUSE 1 NO-MESSAGE.
+                                   NEXT.
+                               END.
+                            ELSE 
+                               DO:
+                                   ASSIGN i-cod-erro  = 0
+                                          c-desc-erro = 
+                                                "Tabela CRAPTRQ em uso ".
+                                                
+                                   RUN cria-erro (INPUT p-cooper,
+                                                  INPUT p-cod-agencia,
+                                                  INPUT p-nro-caixa,
+                                                  INPUT i-cod-erro,
+                                                  INPUT c-desc-erro,
+                                                  INPUT YES).
+                                   RETURN "NOK".
+                               END.
 
-                    END.
-                 ELSE 
-                    DO:
-                       /* Para o AYLLOS, o registro ja deveria ter sido
-                          criado na tela LOTREQ */
-                       IF p-sistema = "AYLLOS"   THEN
-                          DO:
-                              ASSIGN i-cod-erro  = 63
-                                     c-desc-erro = "".
+                        END.
+                     ELSE 
+                        DO:
+                           /* Para o AYLLOS, o registro ja deveria ter sido
+                              criado na tela LOTREQ */
+                           IF p-sistema = "AYLLOS"   THEN
+                              DO:
+                                  ASSIGN i-cod-erro  = 63
+                                         c-desc-erro = "".
                                      
                                   UNDO TRANS_1, LEAVE TRANS_1.
-                          END.
-                       ELSE
-                          /* Para o CAIXA ON-LINE, a criacao do
-                             registro eh automatica */
-                          DO:
-                              CREATE craptrq.
+                              END.
+                           ELSE
+                              /* Para o CAIXA ON-LINE, a criacao do
+                                 registro eh automatica */
+                              DO:
+                                  CREATE craptrq.
 
-                              ASSIGN craptrq.cdcooper = 
-                                             crapcop.cdcooper
-                                     craptrq.cdagelot = p-cod-agencia
-                                     craptrq.nrdolote = aux_nrdolote
-                                     craptrq.tprequis = 0
-                                     craptrq.nrseqdig = 0
-                                     craptrq.cdoperad = p-operador.
-                          END.
+                                  ASSIGN craptrq.cdcooper = 
+                                                 crapcop.cdcooper
+                                         craptrq.cdagelot = p-cod-agencia
+                                         craptrq.nrdolote = aux_nrdolote
+                                         craptrq.tprequis = 0
+                                         craptrq.nrseqdig = 0
+                                         craptrq.cdoperad = p-operador.
+                              END.
 
-                    END.
+                        END.
 
-             END.
-         
-          LEAVE.
+                 END.
+             
+              LEAVE.
 
-       END. /* Fim do WHILE */
+           END. /* Fim do WHILE */
 
-       ASSIGN aux_nrseqdig = craptrq.nrseqdig + 1.
+           ASSIGN aux_nrseqdig = craptrq.nrseqdig + 1.
        
            IF tt-taloes.nrinicial > 0   AND
               tt-taloes.nrfinal   > 0   THEN
-          DO:
-              /* Verifica o digito da conta */
-              RUN fontes/digbbx.p (INPUT  p-nro-conta,
-                                   OUTPUT glb_dsdctitg,
-                                   OUTPUT glb_stsnrcal).
+              DO:
+                  /* Verifica o digito da conta */
+                  RUN fontes/digbbx.p (INPUT  p-nro-conta,
+                                       OUTPUT glb_dsdctitg,
+                                       OUTPUT glb_stsnrcal).
 
-              IF NOT glb_stsnrcal   THEN
-                 DO:
-                     ASSIGN i-cod-erro  = 8
-                            c-desc-erro = "".
+                  IF NOT glb_stsnrcal   THEN
+                     DO:                                               
+                         ASSIGN i-cod-erro  = 8
+                                c-desc-erro = "".
                      
                          UNDO TRANS_1, LEAVE TRANS_1.
-                 END.
+                     END.
 
-                     /* Cheque inicial sem digito */
-              ASSIGN aux_num_cheque_inicial = INT(SUBSTR(STRING(
+                         /* Cheque inicial sem digito */
+                  ASSIGN aux_num_cheque_inicial = INT(SUBSTR(STRING(
                                                              tt-taloes.nrinicial,
-                                                         "9999999"),1,6))
-                     /* Cheque final sem digito */
+                                                             "9999999"),1,6))
+                         /* Cheque final sem digito */
                          aux_num_cheque_final   = INT(SUBSTR(STRING(tt-taloes.nrfinal,
-                                                         "9999999"),1,6))
-                     aux_nrseqems = 0
-                     aux_qttalent = 0
-                     aux_tpchqerr = NO.
+                                                             "9999999"),1,6))
+                         aux_nrseqems = 0
+                         aux_qttalent = 0
+                         aux_tpchqerr = NO.
 
-              /* Verifica se os cheques correspondem ao tipo informado */
-              FOR EACH crapfdc WHERE crapfdc.cdcooper = crapcop.cdcooper  AND
-                                     crapfdc.cdbanchq = p-banco-chq       AND
-                                     crapfdc.cdagechq = p-agencia-chq     AND
-                                     crapfdc.nrctachq = p-nro-conta       AND
-                                     crapfdc.nrcheque >= 
-                                             aux_num_cheque_inicial       AND
-                                     crapfdc.nrcheque <= 
-                                             aux_num_cheque_final
-                                     NO-LOCK:
+                  /* Verifica se os cheques correspondem ao tipo informado */
+                  FOR EACH crapfdc WHERE crapfdc.cdcooper = crapcop.cdcooper  AND
+                                         crapfdc.cdbanchq = p-banco-chq       AND
+                                         crapfdc.cdagechq = p-agencia-chq     AND
+                                         crapfdc.nrctachq = p-nro-conta       AND
+                                         crapfdc.nrcheque >= 
+                                                 aux_num_cheque_inicial       AND
+                                         crapfdc.nrcheque <= 
+                                                 aux_num_cheque_final
+                                         NO-LOCK:
        
-                  IF crapfdc.tpcheque <> p-tprequis   THEN /* chq normal */
-                     DO:
-                         ASSIGN i-cod-erro  = 68
-                                c-desc-erro = "".
+                      IF crapfdc.tpcheque <> p-tprequis   THEN /* chq normal */
+                         DO:
+                             ASSIGN i-cod-erro  = 68
+                                    c-desc-erro = "".
                          
                              UNDO TRANS_1, LEAVE TRANS_1.
-                     END.
+                         END.
 
                   /* Se nao tiver taloes, atualiza o talao */
                   IF tt-taloes.nrtalao = 0 THEN
                     ASSIGN tt-taloes.nrtalao = crapfdc.nrseqems.
 
-              END.
+                  END.
    
-              /* Faz a entrega dos cheques */
-              DO aux_nrcheque = aux_num_cheque_inicial TO 
-                                aux_num_cheque_final   BY 1:
-   
-                 ASSIGN in99 = 0.
-
-                 DO WHILE TRUE:
-
-                    FIND crapfdc WHERE
-                                 crapfdc.cdcooper = crapcop.cdcooper   AND
-                                 crapfdc.cdbanchq = p-banco-chq        AND
-                                 crapfdc.cdagechq = p-agencia-chq      AND
-                                 crapfdc.nrctachq = p-nro-conta        AND
-                                 crapfdc.nrcheque = aux_nrcheque
-                                 USE-INDEX crapfdc1
-                                 EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+                  /* Faz a entrega dos cheques */
+                  DO aux_nrcheque = aux_num_cheque_inicial TO 
+                                    aux_num_cheque_final   BY 1:
        
-                    IF NOT AVAILABLE crapfdc   THEN
-                       IF LOCKED crapfdc   THEN
-                          DO:
-                              /* Tenta por 3 segundos */
-                              IF in99 = 3   THEN
-                                 DO:
-                                     ASSIGN i-cod-erro  = 077
-                                            c-desc-erro = "".
+                     ASSIGN in99 = 0.
+
+                     DO WHILE TRUE:
+
+                        FIND crapfdc WHERE
+                                     crapfdc.cdcooper = crapcop.cdcooper   AND
+                                     crapfdc.cdbanchq = p-banco-chq        AND
+                                     crapfdc.cdagechq = p-agencia-chq      AND
+                                     crapfdc.nrctachq = p-nro-conta        AND
+                                     crapfdc.nrcheque = aux_nrcheque
+                                     USE-INDEX crapfdc1
+                                     EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+           
+                        IF NOT AVAILABLE crapfdc   THEN
+                           IF LOCKED crapfdc   THEN
+                              DO:
+                                  /* Tenta por 3 segundos */
+                                  IF in99 = 3   THEN
+                                     DO:
+                                         ASSIGN i-cod-erro  = 077
+                                                c-desc-erro = "".
                                     
                                          UNDO TRANS_1, LEAVE TRANS_1.
-                                 END.
-                              
-                              PAUSE 1 NO-MESSAGE.
-                              ASSIGN in99 = in99 + 1.
-                              NEXT.
+                                     END.
+                                  
+                                  PAUSE 1 NO-MESSAGE.
+                                  ASSIGN in99 = in99 + 1.
+                                  NEXT.
 
-                          END.
-                       ELSE
-                          DO:
-                              ASSIGN i-cod-erro  = 108
-                                     c-desc-erro = "".
+                              END.
+                           ELSE
+                              DO:
+                                  ASSIGN i-cod-erro  = 108
+                                         c-desc-erro = "".
                               
                                   UNDO TRANS_1, LEAVE TRANS_1.
 
-                          END.
+                              END.
 
-                    LEAVE.
+                        LEAVE.
 
-                 END. /* do while */         
-                 
-                 IF crapfdc.dtemschq = ?   THEN
-                    DO:
-                        ASSIGN i-cod-erro  = 224
-                               c-desc-erro = "".
+                     END. /* do while */         
+                     
+                     IF crapfdc.dtemschq = ?   THEN
+                        DO:
+                            ASSIGN i-cod-erro  = 224
+                                   c-desc-erro = "".
                         
                             UNDO TRANS_1, LEAVE TRANS_1.
-                    END.
-                 ELSE
-                 IF crapfdc.dtretchq <> ?            AND
-                    crapfdc.dtretchq <> 01/01/0001   THEN
-                    DO:
-                        ASSIGN i-cod-erro  = 112
-                               c-desc-erro = "".
+                        END.
+                     ELSE
+                     IF crapfdc.dtretchq <> ?            AND
+                        crapfdc.dtretchq <> 01/01/0001   THEN
+                        DO:
+                            ASSIGN i-cod-erro  = 112
+                                   c-desc-erro = "".
                         
                             UNDO TRANS_1, LEAVE TRANS_1.
-                    END.
-                 ELSE
-                 IF p-nro-conta <> crapfdc.nrctachq   THEN
-                    DO:
-                        ASSIGN i-cod-erro  = 517
-                               c-desc-erro = "".
+                        END.
+                     ELSE
+                     IF p-nro-conta <> crapfdc.nrctachq   THEN
+                        DO:
+                            ASSIGN i-cod-erro  = 517
+                                   c-desc-erro = "".
                         
                             UNDO TRANS_1, LEAVE TRANS_1.
-                    END.
-                 ELSE
-                 IF crapfdc.tpcheque <> p-tprequis   THEN
-                    DO:
-                        ASSIGN i-cod-erro  = 646
-                               c-desc-erro = "".
+                        END.
+                     ELSE
+                     IF crapfdc.tpcheque <> p-tprequis   THEN
+                        DO:
+                            ASSIGN i-cod-erro  = 646
+                                   c-desc-erro = "".
                         
                             UNDO TRANS_1, LEAVE TRANS_1.
-                    END.
-                 ELSE
-                 IF crapfdc.incheque = 8   THEN
-                    DO:
-                        ASSIGN i-cod-erro  = 320
-                               c-desc-erro = "".
+                        END.
+                     ELSE
+                     IF crapfdc.incheque = 8   THEN
+                        DO:
+                            ASSIGN i-cod-erro  = 320
+                                   c-desc-erro = "".
                         
                             UNDO TRANS_1, LEAVE TRANS_1.
                             
-                    END.
-     
+                        END.
+         
 
-                 /* Atualiza o registro do cheque */
-                 ASSIGN crapfdc.dtretchq = crapdat.dtmvtolt
-                        crapfdc.cdoperad = p-operador
-                        aux_nrdconta     = crapfdc.nrdconta.
-   
-                 IF aux_nrseqems <> crapfdc.nrseqems   THEN
-                    ASSIGN aux_nrseqems = crapfdc.nrseqems
-                           aux_qttalent = aux_qttalent + 1.
+                     /* Atualiza o registro do cheque */
+                     ASSIGN crapfdc.dtretchq = crapdat.dtmvtolt
+                            crapfdc.cdoperad = p-operador
+                            aux_nrdconta     = crapfdc.nrdconta.
        
-              END.  /* Fim do DO ... TO ... */
+                     IF aux_nrseqems <> crapfdc.nrseqems   THEN
+                        ASSIGN aux_nrseqems = crapfdc.nrseqems
+                               aux_qttalent = aux_qttalent + 1.
+           
+                  END.  /* Fim do DO ... TO ... */
 
-          END.
+              END.
 
-       FIND crapass WHERE crapass.cdcooper = crapcop.cdcooper   AND
-                          crapass.nrdconta = aux_nrdconta       
-                          NO-LOCK NO-ERROR.
-    
-       CREATE crapreq.
+           FIND crapass WHERE crapass.cdcooper = crapcop.cdcooper   AND
+                              crapass.nrdconta = aux_nrdconta       
+                              NO-LOCK NO-ERROR.
+        
+           CREATE crapreq.
 
-       ASSIGN crapreq.nrdconta = aux_nrdconta
-              crapreq.nrdctabb = p-nro-conta
-              crapreq.cdagelot = p-cod-agencia
-              crapreq.nrdolote = aux_nrdolote
-              crapreq.cdagenci = crapass.cdagenci
-              crapreq.cdtipcta = crapass.cdtipcta
+           ASSIGN crapreq.nrdconta = aux_nrdconta
+                  crapreq.nrdctabb = p-nro-conta
+                  crapreq.cdagelot = p-cod-agencia
+                  crapreq.nrdolote = aux_nrdolote
+                  crapreq.cdagenci = crapass.cdagenci
+                  crapreq.cdtipcta = crapass.cdtipcta
                   crapreq.nrinichq = tt-taloes.nrinicial
-              crapreq.insitreq = 1
+                  crapreq.insitreq = 1
                   crapreq.nrfinchq = tt-taloes.nrfinal
                   crapreq.qtreqtal = IF aux_contador = 1 THEN p-qtde-req-talao ELSE 0
-              crapreq.nrseqdig = aux_nrseqdig
-              crapreq.dtmvtolt = crapdat.dtmvtolt
-              crapreq.tprequis = p-tprequis
-              crapreq.tpformul = 1
-              crapreq.cdcooper = crapcop.cdcooper
-              crapreq.cdoperad = p-operador
-              crapreq.dtpedido = crapdat.dtmvtolt
+                  crapreq.nrseqdig = aux_nrseqdig
+                  crapreq.dtmvtolt = crapdat.dtmvtolt
+                  crapreq.tprequis = p-tprequis
+                  crapreq.tpformul = 1
+                  crapreq.cdcooper = crapcop.cdcooper
+                  crapreq.cdoperad = p-operador
+                  crapreq.dtpedido = crapdat.dtmvtolt
     
-              craptrq.qtcomprq = craptrq.qtcomprq + 1
+                  craptrq.qtcomprq = craptrq.qtcomprq + 1
                   craptrq.qtcomptl = IF aux_contador = 1 THEN (craptrq.qtcomptl + p-qtde-req-talao) ELSE craptrq.qtcomptl
-              craptrq.qtcompen = craptrq.qtcompen + aux_qttalent
-              craptrq.nrseqdig = aux_nrseqdig.
-              
-       VALIDATE crapreq.
+                  craptrq.qtcompen = craptrq.qtcompen + aux_qttalent
+                  craptrq.nrseqdig = aux_nrseqdig.
+                  
+           VALIDATE crapreq.
 
-       /* Para o CAIXA ON-LINE, atualiza tambem as quantidades informadas */
-       IF p-sistema = "CAIXA"   THEN
-          ASSIGN craptrq.qtinforq = craptrq.qtinforq + 1
+           /* Para o CAIXA ON-LINE, atualiza tambem as quantidades informadas */
+           IF p-sistema = "CAIXA"   THEN
+              ASSIGN craptrq.qtinforq = craptrq.qtinforq + 1
                      craptrq.qtinfotl = IF aux_contador = 1 THEN (craptrq.qtinfotl + p-qtde-req-talao) ELSE craptrq.qtinfotl
-                 craptrq.qtinfoen = craptrq.qtinfoen + aux_qttalent.
+                     craptrq.qtinfoen = craptrq.qtinfoen + aux_qttalent.
 
-       VALIDATE craptrq.
+           VALIDATE craptrq.           
 
            /* GERAÇAO DE LOG para cada talao processado */    
            { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }

@@ -271,40 +271,44 @@
                             que qnd quebra a pagina e a primeira linha esta em branco
                             nao conta como uma pagina nova (Douglas - Chamado 405904)
                             
-                17/06/2016 - Inclusão de campos de controle de vendas - M181 ( Rafael Maciel - RKAM)
+               17/06/2016 - Inclusão de campos de controle de vendas - M181 ( Rafael Maciel - RKAM)
 
-                02/08/2016 - #480602 Melhoria de tratamentos de erros para <> "OK" no lugar de 
-                             = "NOK". Inclusao de VALIDATE na crapass. (Carlos)
-			  
- 			    14/09/2016 - Ajuste para aceitar mais uma casa decimal nos juros anual do CET
-				 			(Andrey Formigari - RKAM)
-			  
-                15/09/2016 - Inclusao dos parametros default na rotina oracle
-				             pc_imprime_limites_cet PRJ314 (Odirlei-AMcom)
+               02/08/2016 - #480602 Melhoria de tratamentos de erros para <> "OK" no lugar de 
+                            = "NOK". Inclusao de VALIDATE na crapass. (Carlos)
+                          
+               14/09/2016 - Ajuste para aceitar mais uma casa decimal nos juros anual do CET
+                            (Andrey Formigari - RKAM)
+                          
+               15/09/2016 - Inclusao dos parametros default na rotina oracle
+                            pc_imprime_limites_cet PRJ314 (Odirlei-AMcom)
 
-		        25/10/2016 - Validacao de CNAE restrito Melhoria 310 (Tiago/Thiago)
+               25/10/2016 - Validacao de CNAE restrito Melhoria 310 (Tiago/Thiago)
 
-				07/02/2017 - Alterardo a forma de pegar o cdagenci na hora de 
-				             confirmar o limite de credito na procedure
-							 confirmar-novo-limite (Tiago/Ademir SD590361).
+               07/02/2017 - Alterardo a forma de pegar o cdagenci na hora de 
+                            confirmar o limite de credito na procedure
+                            confirmar-novo-limite (Tiago/Ademir SD590361).
 
-				19/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
-			                 crapass, crapttl, crapjur 
-							(Adriano - P339).
+               19/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+                            crapass, crapttl, crapjur 
+                            (Adriano - P339).
 
-                 12/05/2017 - Passagem de 0 para a nacionalidade. (Jaison/Andrino)
+               12/05/2017 - Passagem de 0 para a nacionalidade. (Jaison/Andrino)
 
-                 17/07/2017 - Alteraçao CDOEDTTL pelo campo IDORGEXP.
-                              PRJ339 - CRM (Odirlei-AMcom) 
+               17/07/2017 - Alteraçao CDOEDTTL pelo campo IDORGEXP.
+                            PRJ339 - CRM (Odirlei-AMcom) 
 
-				 29/07/2017 - Desenvolvimento da melhoria 364 - Grupo Economico Novo. (Mauro)
+               29/07/2017 - Desenvolvimento da melhoria 364 - Grupo Economico Novo. (Mauro)
          
-                 28/09/2017 - Ajuste leitura IDORGEXP.
-                              PRJ339 - CRM (Odirlei-AMcom)
+               28/09/2017 - Ajuste leitura IDORGEXP.
+                            PRJ339 - CRM (Odirlei-AMcom)
  				 
-                 22/11/2017 - Incluído o número do cpf ou cnpj na tabela crapdoc.
-                              Projeto 339 - CRM. (Lombardi)
+               22/11/2017 - Incluído o número do cpf ou cnpj na tabela crapdoc.
+                            Projeto 339 - CRM. (Lombardi)
          
+               20/03/2018 - Substituida verificacao "cdtipcta = 8,9,10,11" pela consulta se 
+                            o produto limite de credito está liberado para o tipo de conta.
+                          - Retirada alteracao do tipo de conta. Projeto 366 (Lombardi).
+
 ..............................................................................*/
 
 
@@ -348,6 +352,8 @@ DEF        VAR par_dsdevice AS CHAR                                  NO-UNDO.
 DEF        VAR par_dtconnec AS CHAR                                  NO-UNDO.
 DEF        VAR par_numipusr AS CHAR                                  NO-UNDO.
 DEF        VAR h-b1wgen9999 AS HANDLE                                NO-UNDO.
+
+DEF        VAR aux_possuipr AS CHAR                                  NO-UNDO.
 
 /*............................ PROCEDURES EXTERNAS ...........................*/
 
@@ -819,8 +825,8 @@ PROCEDURE confirmar-novo-limite:
     DEF VAR old_vllimite AS DECI                                    NO-UNDO.
     
     DEF VAR aux_contador AS INTE                                    NO-UNDO.
-    DEF VAR aux_cdtipcta AS INTE                                    NO-UNDO.
-    DEF VAR old_cdtipcta AS INTE                                    NO-UNDO.
+  /*DEF VAR aux_cdtipcta AS INTE                                    NO-UNDO.
+    DEF VAR old_cdtipcta AS INTE                                    NO-UNDO.*/
     DEF VAR old_nrctrlim AS INTE                                    NO-UNDO.
     DEF VAR old_tplimcre AS INTE                                    NO-UNDO.
     DEF VAR old_cddlinha AS INTE                                    NO-UNDO.
@@ -1202,7 +1208,38 @@ PROCEDURE confirmar-novo-limite:
                 UNDO TRANSACAO, LEAVE TRANSACAO.
             END.
 
-        IF  LOOKUP(STRING(crapass.cdtipcta),"5,6,7,17,18") <> 0  THEN
+        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+        
+        RUN STORED-PROCEDURE pc_permite_produto_tipo
+        aux_handproc = PROC-HANDLE NO-ERROR (INPUT 13,               /* Codigo do produto */
+                                             INPUT crapass.cdtipcta, /* Tipo de conta */
+                                             INPUT crapass.cdcooper, /* Cooperativa */
+                                             INPUT crapass.inpessoa, /* Tipo de pessoa */
+                                            OUTPUT "",   /* Possui produto */
+                                            OUTPUT 0,   /* Codigo da crítica */
+                                            OUTPUT "").  /* Descriçao da crítica */
+        
+        CLOSE STORED-PROC pc_permite_produto_tipo
+              aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+        
+        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+        
+        ASSIGN aux_possuipr = ""
+               aux_cdcritic = 0
+               aux_dscritic = ""
+               aux_possuipr = pc_permite_produto_tipo.pr_possuipr 
+                              WHEN pc_permite_produto_tipo.pr_possuipr <> ?
+               aux_cdcritic = pc_permite_produto_tipo.pr_cdcritic 
+                              WHEN pc_permite_produto_tipo.pr_cdcritic <> ?
+               aux_dscritic = pc_permite_produto_tipo.pr_dscritic
+                              WHEN pc_permite_produto_tipo.pr_dscritic <> ?.
+        
+        IF aux_cdcritic > 0 OR aux_dscritic <> ""  THEN
+             DO:
+                UNDO TRANSACAO, LEAVE TRANSACAO.
+             END.
+        
+        IF aux_possuipr = "N" THEN 
             DO:
                 ASSIGN aux_cdcritic = 104
                        aux_dscritic = "".
@@ -1210,17 +1247,17 @@ PROCEDURE confirmar-novo-limite:
                 UNDO TRANSACAO, LEAVE TRANSACAO.
             END.
           
-        ASSIGN aux_cdtipcta = crapass.cdtipcta
-               old_cdtipcta = crapass.cdtipcta
+        ASSIGN /*aux_cdtipcta = crapass.cdtipcta
+               old_cdtipcta = crapass.cdtipcta*/
                old_tplimcre = crapass.tplimcre
                old_dtultlcr = crapass.dtultlcr
                old_nrctrlim = 0
                old_vllimite = 0
                old_cddlinha = 0.
-        
+        /*
         IF  CAN-DO("1,3,8,10,12,14",STRING(crapass.cdtipcta))  THEN
             ASSIGN aux_cdtipcta = crapass.cdtipcta + 1.
- 
+        */
         /** Cancela limite atual **/
         DO aux_contador = 1 TO 10:  
 
@@ -1455,7 +1492,7 @@ PROCEDURE confirmar-novo-limite:
                                          INPUT par_cdoperad,
                                          INPUT par_nrdconta,
                                          INPUT par_dtmvtolt,
-                                         INPUT aux_cdtipcta,
+                                         INPUT 0,
                                          INPUT craplim.vllimite,
                                          INPUT craplim.inbaslim,
                                         OUTPUT TABLE tt-erro).
@@ -1614,6 +1651,7 @@ PROCEDURE confirmar-novo-limite:
                                                            "zzz,zzz,zz9,99")),
                                          INPUT TRIM(STRING(craplim.vllimite,
                                                            "zzz,zzz,zz9.99"))).
+            /*
             /** Tipo da Conta **/
             IF  old_cdtipcta <> aux_cdtipcta  THEN
                 RUN proc_gerar_log_item (INPUT aux_nrdrowid,
@@ -1622,7 +1660,7 @@ PROCEDURE confirmar-novo-limite:
                                                            "z9")),
                                          INPUT TRIM(STRING(aux_cdtipcta,
                                                            "z9"))).
-                                              
+            */
             /** Tipo do Limite **/
             IF  old_tplimcre <> craplim.inbaslim  THEN
                 RUN proc_gerar_log_item (INPUT aux_nrdrowid,
@@ -2198,8 +2236,8 @@ PROCEDURE cancelar-limite-atual:
     DEF VAR old_dtultlcr AS DATE                                    NO-UNDO.
     
     DEF VAR aux_contador AS INTE                                    NO-UNDO.
-    DEF VAR aux_cdtipcta AS INTE                                    NO-UNDO.
-    DEF VAR old_cdtipcta AS INTE                                    NO-UNDO.
+  /*DEF VAR aux_cdtipcta AS INTE                                    NO-UNDO.
+    DEF VAR old_cdtipcta AS INTE                                    NO-UNDO.*/
     DEF VAR old_nrctrlim AS INTE                                    NO-UNDO.
     DEF VAR old_tplimcre AS INTE                                    NO-UNDO.
         
@@ -2319,7 +2357,38 @@ PROCEDURE cancelar-limite-atual:
                 UNDO TRANSACAO, LEAVE TRANSACAO.
             END.
                    
-        IF  LOOKUP(STRING(crapass.cdtipcta),"5,6,7,17,18") <> 0   THEN
+        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+        
+        RUN STORED-PROCEDURE pc_permite_produto_tipo
+        aux_handproc = PROC-HANDLE NO-ERROR (INPUT 13,               /* Codigo do produto */
+                                             INPUT crapass.cdtipcta, /* Tipo de conta */
+                                             INPUT crapass.cdcooper, /* Cooperativa */
+                                             INPUT crapass.inpessoa, /* Tipo de pessoa */
+                                            OUTPUT "",   /* Possui produto */
+                                            OUTPUT 0,   /* Codigo da crítica */
+                                            OUTPUT "").  /* Descriçao da crítica */
+        
+        CLOSE STORED-PROC pc_permite_produto_tipo
+              aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+        
+        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+        
+        ASSIGN aux_possuipr = ""
+               aux_cdcritic = 0
+               aux_dscritic = ""
+               aux_possuipr = pc_permite_produto_tipo.pr_possuipr 
+                              WHEN pc_permite_produto_tipo.pr_possuipr <> ?
+               aux_cdcritic = pc_permite_produto_tipo.pr_cdcritic 
+                              WHEN pc_permite_produto_tipo.pr_cdcritic <> ?
+               aux_dscritic = pc_permite_produto_tipo.pr_dscritic
+                              WHEN pc_permite_produto_tipo.pr_dscritic <> ?.
+        
+        IF aux_cdcritic > 0 OR aux_dscritic <> ""  THEN
+             DO:
+                UNDO TRANSACAO, LEAVE TRANSACAO.
+             END.
+        
+        IF aux_possuipr = "N" THEN 
             DO:
                 ASSIGN aux_cdcritic = 104
                        aux_dscritic = "".
@@ -2349,16 +2418,16 @@ PROCEDURE cancelar-limite-atual:
                 UNDO TRANSACAO, LEAVE TRANSACAO.
             END.
 
-        ASSIGN aux_cdtipcta = crapass.cdtipcta
-               old_cdtipcta = crapass.cdtipcta
+        ASSIGN /*aux_cdtipcta = crapass.cdtipcta
+               old_cdtipcta = crapass.cdtipcta*/
                old_tplimcre = crapass.tplimcre
                old_dtultlcr = crapass.dtultlcr
                old_nrctrlim = 0
                old_vllimite = 0.
-        
+        /*
         IF  CAN-DO("2,4,9,11,13,15",STRING(crapass.cdtipcta))  THEN
             ASSIGN aux_cdtipcta = crapass.cdtipcta - 1.
-        
+        */
           
         DO aux_contador = 1 TO 10:
 
@@ -2465,7 +2534,7 @@ PROCEDURE cancelar-limite-atual:
                                          INPUT par_cdoperad,
                                          INPUT par_nrdconta,
                                          INPUT par_dtmvtolt,
-                                         INPUT aux_cdtipcta,
+                                         INPUT 0,
                                          INPUT 0,
                                          INPUT craplim.inbaslim,
                                         OUTPUT TABLE tt-erro).
@@ -2614,7 +2683,7 @@ PROCEDURE cancelar-limite-atual:
                                      INPUT TRIM(STRING(old_vllimite,
                                                        "zzz,zzz,zz9,99")),
                                      INPUT "0").
-                                                                  
+            /*                  
             /** Tipo da Conta **/
             IF  old_cdtipcta <> aux_cdtipcta  THEN
                 RUN proc_gerar_log_item (INPUT aux_nrdrowid,
@@ -2623,7 +2692,7 @@ PROCEDURE cancelar-limite-atual:
                                                            "z9")),
                                          INPUT TRIM(STRING(aux_cdtipcta,
                                                            "z9"))).
-                                              
+            */
             /** Data Alteracao do Limite **/
             IF  old_dtultlcr <> par_dtmvtolt  THEN
                 RUN proc_gerar_log_item (INPUT aux_nrdrowid,
@@ -4104,6 +4173,7 @@ PROCEDURE cadastrar-novo-limite:
                                  INPUT "vllimite",
                                  INPUT "",
                                  INPUT TRIM(STRING(craplim.vllimite, "zzz,zzz,zz9.99"))).
+        
         /** Tipo da Conta **/
         
         RUN proc_gerar_log_item (INPUT aux_nrdrowid,
@@ -6559,8 +6629,10 @@ PROCEDURE atualiza-registro-associado:
                         
     ASSIGN crapass.vllimcre = par_vllimite
            crapass.tplimcre = par_inbaslim              
-           crapass.dtultlcr = par_dtmvtolt
-           crapass.cdtipcta = par_cdtipcta.
+           crapass.dtultlcr = par_dtmvtolt.
+    
+    IF par_cdtipcta > 0 THEN       
+       ASSIGN crapass.cdtipcta = par_cdtipcta.
             
     VALIDATE crapass.
     

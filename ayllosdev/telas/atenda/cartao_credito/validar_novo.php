@@ -16,7 +16,8 @@
  * 006: [09/10/2015] James		 (CECRED) : Desenvolvimento do projeto 126.
  * 007: [17/06/2016] Rafael M.   (RKAM)   : - M181 - Alterar o CDAGENCI para passar o CDPACTRA
  * 008: [29/06/2016] Kelvin      (CECRED) : Ajuste para que o campo "Plastico da Empresa" seja obrigatório. SD 476461
- * 009: [09/12/2016] Kelvin		 (CECRED) : Ajuste realizado conforme solicitado no chamado 574068. 										  
+ * 009: [09/12/2016] Kelvin		 (CECRED) : Ajuste realizado conforme solicitado no chamado 574068. 		
+ * 010: [29/03/2018] Lombardi	 (CECRED) : Ajuste para chamar a rotina de senha do coordenador. PRJ366.
  */
 ?>
 
@@ -143,16 +144,18 @@
 	// Mostra se Bo retornar mensagem de atualização de cadastro
 	$idconfir = $xmlObjCartao->roottag->tags[0]->tags[0]->tags[0]->cdata;
 	$dsmensag = $xmlObjCartao->roottag->tags[0]->tags[0]->tags[1]->cdata;
+	$solcoord = $xmlObjCartao->roottag->tags[0]->attributes["SOLCOORD"];
+	
+	$executar = "";
 	
 	if ($inpessoa <> "1") {
 	
-		echo 'habilitaAvalista(true);';
-		echo 'hideMsgAguardo();';
-		echo 'bloqueiaFundo(divRotina,\'nrctaav1\',\'frmNovoCartao\',false);';		
+		$executar .= "habilitaAvalista(true);";
+		$executar .= "hideMsgAguardo();";
+		$executar .= "bloqueiaFundo(divRotina,\"nrctaav1\",\"frmNovoCartao\",false);";		
 		
 		// Mostra mensagem de confirmação para finalizar a operação
-		echo "showConfirmacao('".(trim($dsmensag) <> "" ? $dsmensag."<br><br>" : "")."Deseja cadastrar a proposta de novo cart&atilde;o de cr&eacute;dito?','Confirma&ccedil;&atilde;o - Ayllos','cadastrarNovoCartao()','bloqueiaFundo(divRotina)','sim.gif','nao.gif');";		
-		exit();
+		$executar .= "showConfirmacao(\"".(trim($dsmensag) <> "" ? $dsmensag."<br><br>" : "")."Deseja cadastrar a proposta de novo cart&atilde;o de cr&eacute;dito?\",\"Confirma&ccedil;&atilde;o - Ayllos\",\"cadastrarNovoCartao()\",\"bloqueiaFundo(divRotina)\",\"sim.gif\",\"nao.gif\");";
 		
 	} else {
 	   
@@ -164,15 +167,29 @@
 		echo 'bloqueiaFundo(divRotina,\'nrctaav1\',\'frmNovoCartao\',false);';*/
 		
 		// Esconde mensagem de aguardo
-		echo 'hideMsgAguardo();';
-		echo 'bloqueiaFundo(divRotina);';
-		echo 'showConfirmacao("Deseja cadastrar a proposta de novo cart&atilde;o de cr&eacute;dito?","Confirma&ccedil;&atilde;o - Ayllos","cadastrarNovoCartao()","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))","sim.gif","nao.gif");';
+		$executar .= "hideMsgAguardo();";
+		$executar .= "bloqueiaFundo(divRotina);";
+		$executar .= "showConfirmacao(\"Deseja cadastrar a proposta de novo cart&atilde;o de cr&eacute;dito?\",\"Confirma&ccedil;&atilde;o - Ayllos\",\"cadastrarNovoCartao()\",\"blockBackground(parseInt($(\\\"#divRotina\\\").css(\\\"z-index\\\")))\",\"sim.gif\",\"nao.gif\");";
 		
 
 		// Mostra a mensagem de informação para verificar atualização cadastral se for adm BB
 		if ($idconfir == 1) {
-			echo 'showError("inform","'.$dsmensag.'","Alerta - Ayllos","bloqueiaFundo(divRotina,\'nrctaav1\',\'frmNovoCartao\',false)");';		
+			$executar .= "showError(\"inform\",\"".$dsmensag."\",\"Alerta - Ayllos\",\"bloqueiaFundo(divRotina,\\\"nrctaav1\\\",\\\"frmNovoCartao\\\",false)\");";
 		} 	
+	}
+	
+	//echo 'alert(\''.$executar.'\');'; exit();
+	// Se ocorrer um erro, mostra crítica
+	if (strtoupper($xmlObjCartao->roottag->tags[1]->name) == "ERRO") {
+		
+		$executar = str_replace("\"","\\\"", str_replace("\\", "\\\\", $executar));
+		$executar = str_replace("\"","\\\"", str_replace("\\", "\\\\", $executar));
+		$executar = str_replace("\"","\\\"", str_replace("\\", "\\\\", $executar));
+		
+		exibirErro("error",$xmlObjCartao->roottag->tags[1]->tags[0]->tags[4]->cdata,"Alerta - Ayllos", ($solcoord == 1 ? "senhaCoordenador(\\\"".$executar."\\\");" : ""),false);
+		
+	} else {
+		echo $executar;
 	}
 	
 ?>

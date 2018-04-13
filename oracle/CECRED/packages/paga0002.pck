@@ -6012,6 +6012,10 @@ create or replace package body cecred.PAGA0002 is
     --              05/08/2016 - Incluido tratamento para verificacao de transacoes duplicadas,
     --                           SD 494025 (Jean Michel).
     --
+    --              04/04/2018 - Adicionada chamada para a proc pc_permite_produto_tipo
+    --                           para verificar se o tipo de conta permite a contratação 
+    --                           do produto. PRJ366 (Lombardi).
+    --
     ...........................................................................*/
 
     ---------------> CURSORES <-----------------
@@ -6020,7 +6024,9 @@ create or replace package body cecred.PAGA0002 is
                        pr_nrdconta  crapass.nrdconta%TYPE) IS
       SELECT crapass.nrdconta,
              crapass.nmprimtl,
-             crapass.idastcjt
+             crapass.idastcjt,
+             crapass.cdtipcta,
+             crapass.inpessoa
         FROM crapass
        WHERE crapass.cdcooper = pr_cdcooper
          AND crapass.nrdconta = pr_nrdconta;
@@ -6229,6 +6235,8 @@ create or replace package body cecred.PAGA0002 is
 
     vr_idorigem INTEGER;
     vr_idanalise_fraude tbgen_analise_fraude.idanalise_fraude%TYPE;
+    vr_cdprodut INTEGER;
+    vr_possuipr VARCHAR2(1);
 
   BEGIN
 
@@ -6341,13 +6349,33 @@ create or replace package body cecred.PAGA0002 is
         IF cr_crapcon%FOUND THEN
 
           IF rw_crapcon.flgcnvsi = 1 THEN
-          vr_tpdvalor := 1;
-        END IF;
+            vr_tpdvalor := 1;
+          END IF;
+          
+          IF pr_dsorigem LIKE '%AYLLOS%' THEN
+            vr_cdprodut := 10; -- Débito automático
+          ELSE
+            vr_cdprodut := 29; -- Débito Automático Fácil
+          END IF;
+          
+          -- Verifica se o tipo de conta permite a contratação do produto
+          CADA0006.pc_permite_produto_tipo(pr_cdprodut => vr_cdprodut
+                                          ,pr_cdtipcta => rw_crapass.cdtipcta
+                                          ,pr_cdcooper => pr_cdcooper
+                                          ,pr_inpessoa => rw_crapass.inpessoa
+                                          ,pr_possuipr => vr_possuipr
+                                          ,pr_cdcritic => vr_cdcritic
+                                          ,pr_dscritic => vr_dscritic);
+          -- Se ocorrer erro
+          IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
+            RAISE vr_exc_erro;
+          END IF;
 
           OPEN cr_crapcop2 (pr_cdcooper => pr_cdcooper);
           FETCH cr_crapcop2 INTO rw_crapcop2;
 
-          IF rw_crapcop2.flgofatr = 1 THEN
+          IF rw_crapcop2.flgofatr = 1 AND
+             vr_possuipr = 'S'        THEN
 
             IF  rw_crapcon.flgcnvsi = 0 THEN
               OPEN cr_gnconve(pr_cdhistor => rw_crapcon.cdhistor);

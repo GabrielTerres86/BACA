@@ -386,6 +386,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
                01/08/2017 - ajuste no relatorio 007 - inclusão de uma subdivisão 
 
                01/02/2018 - Alteração para permitir paralelismo. Projeto Ligeirinho. (Josiane - AMcom)
+
+               20/03/2018 - Substituida validacao "cdtipcta IN (6,7,17,18)" pelo "cdmodali = 3".
+                            Substituida validacao "cdtipcta IN (2,4,9,11,13,15)" pela chamada
+                            da procedure pc_permite_produto_tipo. (Josiane - AMcom)
      ............................................................................. */
 
      DECLARE
@@ -902,9 +906,13 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
                 ,crapass.nrcpfcgc
                 ,crapass.nrdctitg
                 ,crapass.tpvincul
+                ,tpcta.cdmodalidade_tipo cdmodali
          FROM crapass crapass
+             ,tbcc_tipo_conta tpcta
          WHERE  crapass.cdcooper = pr_cdcooper
-         AND    crapass.cdagenci = pr_cdagenci;
+         AND    crapass.cdagenci = pr_cdagenci
+         AND    crapass.cdtipcta = tpcta.cdtipo_conta
+         AND    crapass.inpessoa = tpcta.inpessoa;
 
        --Selecionar informacoes dos titulares da conta
        CURSOR cr_crapttl (pr_cdcooper IN crapttl.cdcooper%TYPE
@@ -1195,6 +1203,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
        vr_listalcr  VARCHAR2(4000);
        vr_lispnmpo  VARCHAR2(4000);
        vr_vlstotal  NUMBER;
+       vr_possuipr  VARCHAR2(1);
 
        -- Variaveis para include do calculo de dias includes/crp398.i
        vr_dias       INTEGER:= 0;
@@ -8598,7 +8607,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
 
 
               /* Saldos conta poupanca >= 15,00 ou > 4,00*/
-              IF rw_crapsld.vlsddisp >= vr_vlminpop AND rw_crapass.cdtipcta IN (6,7,17,18) THEN
+              IF rw_crapsld.vlsddisp >= vr_vlminpop AND rw_crapass.cdmodali = 3 THEN
                 --Executar rotina
                 pc_cria_crat071 (pr_cdagenci => rw_crapass.cdagenci
                                 ,pr_nrdconta => rw_crapass.nrdconta
@@ -8629,9 +8638,20 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
                 vr_flgimprm:= TRUE;
 
                 /*   CHEQUE ESPECIAL  */
+                CADA0006.pc_permite_produto_tipo (pr_cdprodut => 13
+                                                 ,pr_cdtipcta => rw_crapass.cdtipcta
+                                                 ,pr_cdcooper => pr_cdcooper
+                                                 ,pr_inpessoa => rw_crapass.inpessoa
+                                                 ,pr_possuipr => vr_possuipr
+                                                 ,pr_cdcritic => vr_cdcritic
+                                                 ,pr_dscritic => vr_dscritic);
+                
+                IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
+                  RAISE vr_exc_saida;
+                END IF;
 
                 --Se o tipo da conta for ESPECIAL, ESPEC. CONJUNTA, ESPEC. CONVENIO, CONJ.ESP.CONV., ESPECIAL ITG, ESPEC.CJTA ITG
-                IF rw_crapass.cdtipcta IN (2,4,9,11,13,15) THEN
+                IF vr_possuipr = 'S' THEN
                   --Se valor disponivel for maior limite de credito
                   IF (rw_crapsld.vlsddisp * -1) > rw_crapass.vllimcre THEN
                     vr_flgimprm:= TRUE;

@@ -82,7 +82,10 @@
 
 				17/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
 			                 crapass, crapttl, crapjur 
-							 (Adriano - P339).
+							 (Adriano - P339).	 
+                           
+                04/04/2018 - Adicionada chamada pc_valida_adesao_produto para verificar se o 
+                             tipo de conta permite a contrataçao do produto. PRJ366 (Lombardi).
 
 
 .............................................................................*/
@@ -1849,6 +1852,41 @@ PROCEDURE Busca_Conta_Emp:
                              NO-LOCK NO-ERROR.
         
         IF  AVAIL crapass THEN DO:
+        
+            /* buscar quantidade maxima de digitos aceitos para o convenio */
+            { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
+                          
+            RUN STORED-PROCEDURE pc_valida_adesao_produto
+                aux_handproc = PROC-HANDLE NO-ERROR
+                                        (INPUT par_cdcooper,
+                                         INPUT par_nrdconta,
+                                         INPUT 8, /* Convenio Folha de Pagamento */
+                                         OUTPUT 0,   /* pr_cdcritic */
+                                         OUTPUT ""). /* pr_dscritic */
+                        
+            CLOSE STORED-PROC pc_valida_adesao_produto
+                  aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+            { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+            ASSIGN aux_cdcritic = 0
+                   aux_dscritic = ""
+                   aux_cdcritic = pc_valida_adesao_produto.pr_cdcritic                          
+                                      WHEN pc_valida_adesao_produto.pr_cdcritic <> ?
+                   aux_dscritic = pc_valida_adesao_produto.pr_dscritic
+                                      WHEN pc_valida_adesao_produto.pr_dscritic <> ?.
+            
+            IF  aux_cdcritic <> 0 OR aux_dscritic <> "" THEN
+                DO:
+                    RUN gera_erro (INPUT par_cdcooper,
+                                   INPUT 0,
+                                   INPUT 0,
+                                   INPUT 0,
+                                   INPUT aux_cdcritic,
+                                   INPUT-OUTPUT aux_dscritic).
+                    RETURN "NOK".
+                END.
+            
             IF  par_cdopcao = "A" THEN DO:
                      FIND FIRST crabemp
                      WHERE crabemp.cdcooper = crapass.cdcooper

@@ -69,20 +69,22 @@ BEGIN
 
                  12/07/2016 - Pre-Aprovado fase III. (Lombardi)
 
-         03/02/2017 - Inclusao de mais um digito no campo de telefone do arquivo de pre-aprovado.
-                      Andrey (Mouts) - Chamado 577203
+                 03/02/2017 - Inclusao de mais um digito no campo de telefone do arquivo de pre-aprovado.
+                              Andrey (Mouts) - Chamado 577203
 
                  19/06/2017 - Melhoria 441
-                      - Nova regra de validação : verificar se a conta corrente do cooperado possui
-                        uma carga manual vigente e liberada. (crítica 51-Carga Manual).
-                      - Armazenamento de atributos de decisão. Todas as críticas deverão ser feitas e as
-                        informações utilizadas deverão ser armazenadas para consultas posteriores.
+                            - Nova regra de validação : verificar se a conta corrente do cooperado possui
+                              uma carga manual vigente e liberada. (crítica 51-Carga Manual).
+                            - Armazenamento de atributos de decisão. Todas as críticas deverão ser feitas e as
+                              informações utilizadas deverão ser armazenadas para consultas posteriores.
 
-		30/08/2017 - Incluido commit antes de iniciar a manipulacao dos arquivos.
-		             Melhorias na geracao de LOG de erros para identificar possiveis erros.
-					 Heitor (Mouts)
+                 30/08/2017 - Incluido commit antes de iniciar a manipulacao dos arquivos.
+                              Melhorias na geracao de LOG de erros para identificar possiveis erros.
+                              Heitor (Mouts)
                  13/12/2017 - Projeto Ligeirinho - Tratar paralelismo para ganho de performance - Mauro       
 
+                 20/03/2018 - Alterados cursores para retornar apenas contas com tipos de conta que 
+                              tenham o produto "25 – CREDITO PRE-APROVADO". PRJ366 (Lombardi).
 
   ............................................................................ */
 
@@ -137,7 +139,11 @@ BEGIN
        WHERE ass.cdcooper = pr_cdcooper
          AND ass.dtdemiss IS NULL
          AND ass.dtelimin IS NULL
-         AND ass.cdtipcta IN (1, 2, 3, 4, 8, 9, 10, 11)
+         AND ass.cdtipcta IN (SELECT pcp.tpconta
+                            FROM tbcc_produtos_coop pcp
+                           WHERE pcp.cdcooper  = ass.cdcooper
+                             AND pcp.inpessoa  = ass.inpessoa
+                             AND pcp.cdproduto = 25)  -- Pré-Aprovado
          and (pr_qterro = 0 or
              (pr_qterro > 0 and exists (select 1
                                         from tbgen_batch_controle
@@ -190,7 +196,11 @@ BEGIN
          AND ass.dtdemiss IS NULL
          AND ass.dtelimin IS NULL
          AND ','||pr_cdsitdct||',' LIKE ('%,'||ass.cdsitdct||',%')
-         AND ass.cdtipcta IN (1, 2, 3, 4, 8, 9, 10, 11)
+         AND ass.cdtipcta IN (SELECT pcp.tpconta
+                            FROM tbcc_produtos_coop pcp
+                           WHERE pcp.cdcooper  = ass.cdcooper
+                             AND pcp.inpessoa  = ass.inpessoa
+                             AND pcp.cdproduto = 25)  -- Pré-Aprovado
          AND ass.inpessoa = pr_inpessoa;
 
     -- Listagem de parametros
@@ -981,8 +991,8 @@ BEGIN
       vr_tab_risco(rw_riscos.cdcooper || rw_riscos.inpessoa || rw_riscos.dsrisco).cdlcremp := rw_riscos.cdlcremp;
     END LOOP;
 
-      -- Leitura do calendario
-    OPEN BTCH0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
+    -- Leitura do calendario
+      OPEN BTCH0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
       FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
       vr_flgachou := BTCH0001.cr_crapdat%FOUND;
       CLOSE BTCH0001.cr_crapdat;
@@ -1174,9 +1184,9 @@ BEGIN
                                                   pr_tpagrupador => 1,
                                                   pr_nrexecucao  => 1);
     if vr_qterro > 0 then 
-       vr_cdcritic := 0;
-       vr_dscritic := 'Paralelismo possui job executado com erro. Verificar na tabela tbgen_batch_controle e tbgen_prglog';
-       raise vr_exc_saida;
+      vr_cdcritic := 0;
+      vr_dscritic := 'Paralelismo possui job executado com erro. Verificar na tabela tbgen_batch_controle e tbgen_prglog';
+      raise vr_exc_saida;
     end if;   
 
 -- Inclusão procedimento para geração do arquivo. Será ao final do paralelismo -- Mauro

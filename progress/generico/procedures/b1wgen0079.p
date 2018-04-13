@@ -101,15 +101,18 @@
     20/07/2017 - Ajuste para remover caracteres especiais na listar titulo sacado
                  PRJ340 - NPC (Odirlei-AMcom)      
                    									
-	01/08/2017 - Substituir caracter "." por "," na conversao de valores, devido
-				 ao ajuste realizado no retorno do XML da cabine JDNPC (Rafael).
+    01/08/2017 - Substituir caracter "." por "," na conversao de valores, devido
+                 ao ajuste realizado no retorno do XML da cabine JDNPC (Rafael).
 
     06/09/2017 - Removido tag JDNPCSitTitulo por orientação da JD. (Rafael)
 
 
     25/10/2017 - Ajuste para criar arquivo de chamada web com chaves para tratamento
-				 de concorrência.
+                 de concorrência.
                  PRJ356.4 - DDA (Ricardo Linhares)  
+                           
+    04/04/2018 - Adicionada chamada pc_valida_adesao_produto para verificar se o 
+                 tipo de conta permite a contrataçao do produto. PRJ366 (Lombardi).
 .............................................................................*/
 
 
@@ -752,6 +755,32 @@ PROCEDURE requisicao-incluir-sacado:
 
        ASSIGN aux_tppessoa = IF crapass.inpessoa = 1 THEN "F" ELSE "J".
 
+       /* buscar quantidade maxima de digitos aceitos para o convenio */
+       { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
+                     
+       RUN STORED-PROCEDURE pc_valida_adesao_produto
+           aux_handproc = PROC-HANDLE NO-ERROR
+                                   (INPUT par_cdcooper,
+                                    INPUT par_nrdconta,
+                                    INPUT 9, /* DDA */
+                                    OUTPUT 0,   /* pr_cdcritic */
+                                    OUTPUT ""). /* pr_dscritic */
+                   
+       CLOSE STORED-PROC pc_valida_adesao_produto
+             aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+       { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+       ASSIGN aux_cdcritic = 0
+              aux_dscritic = ""
+              aux_cdcritic = pc_valida_adesao_produto.pr_cdcritic                          
+                                 WHEN pc_valida_adesao_produto.pr_cdcritic <> ?
+              aux_dscritic = pc_valida_adesao_produto.pr_dscritic
+                                 WHEN pc_valida_adesao_produto.pr_dscritic <> ?.
+       
+       IF  aux_cdcritic <> 0 OR aux_dscritic <> "" THEN
+         LEAVE.
+       
        RUN obtem-dados-legado (INPUT par_cdcooper,
                                INPUT par_nrdconta,
                                INPUT par_idseqttl,

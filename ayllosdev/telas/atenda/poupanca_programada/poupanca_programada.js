@@ -30,6 +30,9 @@
 //***                          quando conta demitida                    ***//
 //***                         (Jonata - RKAM P364).                     ***//
 //***                                                                   ***//
+//***             04/04/2018 -  Ajuste para chamar a rotina de senha    ***//
+//***                           do coordenador. PRJ366 (Lombardi)       ***//
+//***                                                                   ***//
 //*************************************************************************//
 
 var nrctrrpp    = 0;        // Variável para armazenar número da poupança selecionada
@@ -1218,4 +1221,8 @@ function controlaLayout( nomeForm ){
 	}
 
 	return false;
+}
+
+function senhaCoordenador(executaDepois) {
+	pedeSenhaCoordenador(2,executaDepois,'divRotina');
 }

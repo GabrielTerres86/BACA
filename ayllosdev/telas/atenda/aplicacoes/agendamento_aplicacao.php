@@ -16,8 +16,26 @@
 							  (Adriano).
 
 	************************************************************************/
-
+	
 	include("agendamento.php");
+	
+	// Montar o xml de Requisicao
+	$xml  = "";
+	$xml .= "<Root>";
+	$xml .= " <Dados>";	
+	$xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
+	$xml .= "   <cdprodut>". 3 ."</cdprodut>"; //Aplicação
+	$xml .= " </Dados>";
+	$xml .= "</Root>";
+	
+	$xmlResult = mensageria($xml, "CADA0006", "VALIDA_ADESAO_PRODUTO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	$xmlObject = getObjectXML($xmlResult);
+	
+	// Se ocorrer um erro, mostra crítica
+	if (strtoupper($xmlObject->roottag->tags[0]->name) == "ERRO") {
+		$msgErro = $xmlObject->roottag->tags[0]->tags[0]->tags[4]->cdata;
+		exibeErro(utf8_encode($msgErro));
+	}
 	
 ?>
 var strHTML = "";

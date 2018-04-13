@@ -498,14 +498,14 @@
                 
                 17/06/2016 - Inclusão de campos de controle de vendas - M181 ( Rafael Maciel - RKAM)
 
-				07/12/2016 - P341-Automatização BACENJUD - Alterar o uso da descrição do
+                07/12/2016 - P341-Automatização BACENJUD - Alterar o uso da descrição do
                              departamento passando a considerar o código (Renato Darosci)
 							 
-				23/03/2017 - Removendo a possibilidade de solicitar novo cartão com vencimento para o dia	
-						     27, conforme solicitado no chamado 636445. (Kelvin)
+                23/03/2017 - Removendo a possibilidade de solicitar novo cartão com vencimento para o dia	
+                             27, conforme solicitado no chamado 636445. (Kelvin)
 							 
-				06/04/2017 - Ajuste realizado para resolver o problema de estouro de sequence, conforme
-							 solicitado no chamado 645013. (Kelvin)
+                06/04/2017 - Ajuste realizado para resolver o problema de estouro de sequence, conforme
+                             solicitado no chamado 645013. (Kelvin)
                 
                 12/05/2017 - Passagem de 0 para a nacionalidade. (Jaison/Andrino)
                 
@@ -513,23 +513,27 @@
                              entre conta x conta cartao (Anderson).
 
                 19/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
-			                 crapass, crapttl, crapjur 
-							(Adriano - P339).
+                             crapass, crapttl, crapjur 
+                             (Adriano - P339).
 
                 13/09/2017 - Tratamento para nao permitir solicitacao de novos Cartoes BB.
                              (Jaison/Elton - M459)
 
-				19/09/2017 - Ajuste na procedure cadastra_novo_cartao para nao permitir que a cooperativa 
-							 solicite cartao CECRED para ela mesma. Por exemplo: Viacredi acessa sua própria 
-							 onta no Ayllos Web e tenta solicitar um cartao Cecred para si mesma. 
-							 (Chamado 712927) (Kelvin/Douglas)
+                19/09/2017 - Ajuste na procedure cadastra_novo_cartao para nao permitir que a cooperativa 
+                             solicite cartao CECRED para ela mesma. Por exemplo: Viacredi acessa sua própria 
+                             onta no Ayllos Web e tenta solicitar um cartao Cecred para si mesma. 
+                             (Chamado 712927) (Kelvin/Douglas)
 
                 16/10/2017 - Remocao de Tratamento para nao permitir solicitacao de novos Cartoes BB.
                              (Jaison/Elton - M459)
 
-				27/11/2017 - Ajuste na rotina exclui_cartao na verificacao de existencia de cartao Cecred adicional.
-							 (Chamado 788309) - (Fabricio)
+                27/11/2017 - Ajuste na rotina exclui_cartao na verificacao de existencia de cartao Cecred adicional.
+                             (Chamado 788309) - (Fabricio)
 
+                22/03/2018 - Substituidas verificacoes onde o tipo de conta (cdtipcta) estava fixo. 
+                           - Chamar rotina pc_valida_adesao_produto e pc_valida_valor_adesao na proc
+                             valida_nova_proposta. PRJ366 (Lombardi).
+                
 ..............................................................................*/
 
 { sistema/generico/includes/b1wgen0001tt.i }
@@ -566,6 +570,8 @@ DEF VAR aux_dsorigem AS CHAR                                           NO-UNDO.
 DEF VAR aux_cdagenci LIKE crapage.cdagenci                             NO-UNDO.
 DEF VAR aux_nmconjug LIKE crapcje.nmconjug                             NO-UNDO.
 DEF VAR aux_dtnasccj LIKE crapcje.dtnasccj                             NO-UNDO.
+
+DEF VAR aux_possuipr AS CHAR                                           NO-UNDO.
 
 DEFINE VARIABLE aux_qtregist AS INTEGER     NO-UNDO.
 
@@ -1272,11 +1278,47 @@ PROCEDURE carrega_dados_inclusao:
             
         END.
 
-    IF   crapass.cdtipcta = 5 OR
-         crapass.cdtipcta = 6 OR
-         crapass.cdtipcta = 7 OR
-         crapass.cdtipcta = 17 OR
-         crapass.cdtipcta = 18 THEN
+    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+    
+    RUN STORED-PROCEDURE pc_permite_lista_prod_tipo
+    aux_handproc = PROC-HANDLE NO-ERROR (INPUT "4,21,24",        /* Codigo do produto */
+                                         INPUT crapass.cdtipcta, /* Tipo de conta */
+                                         INPUT par_cdcooper, /* Cooperativa */
+                                         INPUT crapass.inpessoa, /* Tipo de pessoa */
+                                        OUTPUT "",   /* Possui produto */
+                                        OUTPUT 0,   /* Codigo da crítica */
+                                        OUTPUT "").  /* Descriçao da crítica */
+    
+    CLOSE STORED-PROC pc_permite_lista_prod_tipo
+          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+    
+    ASSIGN aux_possuipr = ""
+           aux_cdcritic = 0
+           aux_dscritic = ""
+           aux_possuipr = pc_permite_lista_prod_tipo.pr_possuipr 
+                          WHEN pc_permite_lista_prod_tipo.pr_possuipr <> ?
+           aux_cdcritic = pc_permite_lista_prod_tipo.pr_cdcritic 
+                          WHEN pc_permite_lista_prod_tipo.pr_cdcritic <> ?
+           aux_dscritic = pc_permite_lista_prod_tipo.pr_dscritic
+                          WHEN pc_permite_lista_prod_tipo.pr_dscritic <> ?.
+    
+    IF aux_cdcritic > 0 OR aux_dscritic <> ""  THEN
+         DO:
+            RUN gera_erro (INPUT par_cdcooper,
+                           INPUT par_cdagenci,
+                           INPUT par_nrdcaixa,
+                           INPUT 1,            /** Sequencia **/
+                           INPUT aux_cdcritic,
+                           INPUT-OUTPUT aux_dscritic).
+                          
+            RETURN "NOK".
+         END.
+    
+    IF   SUBSTRING(aux_possuipr,1,1) = "N" AND  /* Cartao de Crédito */
+         SUBSTRING(aux_possuipr,3,1) = "N" AND  /* Cartao Crédito CECRED */
+         SUBSTRING(aux_possuipr,5,1) = "N" THEN /* Cartao Crédito Empresarial */
          DO:
             ASSIGN aux_cdcritic = 332
                    aux_dscritic = "".
@@ -1384,6 +1426,18 @@ PROCEDURE carrega_dados_inclusao:
             (crapass.inpessoa = 1 AND crapadc.tpctahab = 2) THEN
             NEXT.
 
+        IF CAN-DO ("3,83,85,87", STRING(crapadc.cdadmcrd)) AND
+           SUBSTRING(aux_possuipr,1,1) = "N"                THEN /* Cartao de Crédito */
+            NEXT.
+        
+        IF CAN-DO ("11,12,13,14,16", STRING(crapadc.cdadmcrd)) AND
+           SUBSTRING(aux_possuipr,3,1) = "N"                    THEN /* Cartao Crédito CECRED */
+            NEXT.
+        
+        IF CAN-DO ("15,17", STRING(crapadc.cdadmcrd)) AND
+           SUBSTRING(aux_possuipr,5,1) = "N"           THEN /* Cartao Crédito Empresarial */
+            NEXT.
+        
         IF par_idorigem = 1 AND par_nmdatela = "ATENDA" THEN
             DO:
 
@@ -1803,6 +1857,7 @@ PROCEDURE valida_nova_proposta:
     DEF  INPUT  PARAM par_dsrepinc                             AS CHAR NO-UNDO.
     DEF  INPUT  PARAM par_dsrepres                             AS CHAR NO-UNDO.
 
+    DEF OUTPUT  PARAM par_solcoord                             AS INTE NO-UNDO.
     DEF OUTPUT  PARAM TABLE FOR tt-msg-confirma.
     DEF OUTPUT  PARAM TABLE FOR tt-erro.
 
@@ -1833,7 +1888,11 @@ PROCEDURE valida_nova_proposta:
     DEF  VAR aux_dsdidade AS CHAR   NO-UNDO.
     DEF  VAR aux_dsoperac AS CHAR   NO-UNDO.
     DEF  VAR aux_nmbandei AS CHAR   NO-UNDO.
-	DEF  VAR aux_inhabmen LIKE crapttl.inhabmen NO-UNDO.
+    DEF  VAR aux_inhabmen LIKE crapttl.inhabmen NO-UNDO.
+    DEF  VAR aux_cdprodut AS INTE   NO-UNDO.
+    
+    DEF  VAR aux_inctaitg AS INTE   NO-UNDO.
+    DEF  VAR aux_des_erro AS CHAR   NO-UNDO.
     
     DEF  BUFFER crabcrd FOR crawcrd.
     DEF  BUFFER crabtlc FOR craptlc.
@@ -1847,7 +1906,7 @@ PROCEDURE valida_nova_proposta:
     EMPTY TEMP-TABLE tt-erro.
 
     
-    FOR crapass FIELDS(inpessoa nrdconta nrcpfcgc cdcooper cdtipcta nrdctitg flgctitg cdsitdct)
+    FOR crapass FIELDS(inpessoa nrdconta nrcpfcgc cdcooper cdtipcta nrdctitg flgctitg cdsitdct cdcatego)
                     WHERE crapass.cdcooper = par_cdcooper AND
                       crapass.nrdconta = par_nrdconta
                       NO-LOCK: END.
@@ -2062,12 +2121,7 @@ PROCEDURE valida_nova_proposta:
     
     IF   crapass.inpessoa = 1             AND
          par_dsgraupr = "Segundo Titular" THEN 
-         IF   crapass.cdtipcta <>  3 AND
-              crapass.cdtipcta <>  4 AND
-              crapass.cdtipcta <> 10 AND
-              crapass.cdtipcta <> 11 AND
-              crapass.cdtipcta <> 14 AND
-              crapass.cdtipcta <> 15 THEN
+         IF   crapass.cdcatego = 1 THEN
              DO:
                  ASSIGN aux_cdcritic = 332
                         aux_dscritic = "".
@@ -2722,11 +2776,49 @@ PROCEDURE valida_nova_proposta:
                                  END.    
     END.
 
+    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+    
+    RUN STORED-PROCEDURE pc_busca_tipo_conta_itg
+    aux_handproc = PROC-HANDLE NO-ERROR (INPUT crapass.inpessoa, /* Tipo de pessoa */
+                                         INPUT crapass.cdtipcta, /* Tipo de conta */
+                                        OUTPUT 0,   /* Possui produto */
+                                        OUTPUT "",  /* Codigo da crítica */
+                                        OUTPUT ""). /* Descriçao da crítica */
+    
+    CLOSE STORED-PROC pc_busca_tipo_conta_itg
+          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+    
+    ASSIGN aux_inctaitg = 0
+           aux_des_erro = ""
+           aux_dscritic = ""
+           aux_inctaitg = pc_busca_tipo_conta_itg.pr_indconta_itg 
+                          WHEN pc_busca_tipo_conta_itg.pr_indconta_itg <> ?
+           aux_des_erro = pc_busca_tipo_conta_itg.pr_des_erro 
+                          WHEN pc_busca_tipo_conta_itg.pr_des_erro <> ?
+           aux_dscritic = pc_busca_tipo_conta_itg.pr_dscritic
+                          WHEN pc_busca_tipo_conta_itg.pr_dscritic <> ?.
+    
+    IF aux_des_erro = "NOK"  THEN
+         DO:
+            ASSIGN aux_cdcritic = 0.
+            
+            RUN gera_erro (INPUT par_cdcooper,
+                           INPUT par_cdagenci,
+                           INPUT par_nrdcaixa,
+                           INPUT 1,            /** Sequencia **/
+                           INPUT aux_cdcritic,
+                           INPUT-OUTPUT aux_dscritic).
+               
+            RETURN "NOK".
+         END.
+      
     /* Se for administradora de cartao conta integracao, faz validacao */
     /*IF   f_verifica_adm(craptlc.cdadmcrd) = 1 AND*/
       IF   f_verifica_adm(crapadc.cdadmcrd) = 1 AND
         (crapass.nrdctitg  = ""   OR
-         crapass.cdtipcta  < 8    OR
+         aux_inctaitg = 0         OR
          crapass.flgctitg <> 2)             THEN
          DO:
             
@@ -2990,6 +3082,88 @@ PROCEDURE valida_nova_proposta:
             END.
 
         END.
+    
+    IF CAN-DO("3,83,85,87",STRING(crapadc.cdadmcrd)) THEN
+        ASSIGN aux_cdprodut = 4. /* Cartao de Crédito */
+    ELSE
+    IF CAN-DO("11,12,13,14,16",STRING(crapadc.cdadmcrd)) THEN
+        ASSIGN aux_cdprodut = 21. /* Cartao de Crédito CECRED */
+    ELSE
+    IF CAN-DO("15,17",STRING(crapadc.cdadmcrd)) THEN
+        ASSIGN aux_cdprodut = 24. /* Cartao Cred Empresarial */
+    
+    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+    
+    RUN STORED-PROCEDURE pc_valida_adesao_produto
+    aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper, /* Cooperativa */
+                                         INPUT par_nrdconta, /* Numero da conta */
+                                         INPUT aux_cdprodut, /* Codigo do produto */
+                                        OUTPUT 0,            /* Codigo da crítica */
+                                        OUTPUT "").          /* Descriçao da crítica */
+    
+    CLOSE STORED-PROC pc_valida_adesao_produto
+          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+    
+    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+    
+    ASSIGN aux_cdcritic = 0
+           aux_dscritic = ""
+           aux_cdcritic = pc_valida_adesao_produto.pr_cdcritic 
+                          WHEN pc_valida_adesao_produto.pr_cdcritic <> ?
+           aux_dscritic = pc_valida_adesao_produto.pr_dscritic
+                          WHEN pc_valida_adesao_produto.pr_dscritic <> ?.
+    
+    IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
+         DO:
+            RUN gera_erro (INPUT par_cdcooper,
+                           INPUT par_cdagenci,
+                           INPUT par_nrdcaixa,
+                           INPUT 1,            /** Sequencia **/
+                           INPUT aux_cdcritic,
+                           INPUT-OUTPUT aux_dscritic).
+               
+            RETURN "NOK".
+         END.
+    
+    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+    
+    RUN STORED-PROCEDURE pc_valida_valor_adesao
+    aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper, /* Cooperativa */
+                                         INPUT par_nrdconta, /* Numero da conta */
+                                         INPUT aux_cdprodut, /* Codigo do produto */
+                                         INPUT par_vllimpro, /* Valor contratado */
+                                         INPUT par_idorigem, /* Codigo do produto */
+                                        OUTPUT 0,            /* Solicita senha coordenador */
+                                        OUTPUT 0,            /* Codigo da crítica */
+                                        OUTPUT "").          /* Descriçao da crítica */
+    
+    CLOSE STORED-PROC pc_valida_valor_adesao
+          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+    
+    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+    
+    ASSIGN par_solcoord = 0
+           aux_cdcritic = 0
+           aux_dscritic = ""
+           par_solcoord = pc_valida_valor_adesao.pr_solcoord 
+                          WHEN pc_valida_valor_adesao.pr_solcoord <> ?
+           aux_cdcritic = pc_valida_valor_adesao.pr_cdcritic 
+                          WHEN pc_valida_valor_adesao.pr_cdcritic <> ?
+           aux_dscritic = pc_valida_valor_adesao.pr_dscritic
+                          WHEN pc_valida_valor_adesao.pr_dscritic <> ?.
+    
+    IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
+         DO:
+            
+            RUN gera_erro (INPUT par_cdcooper,
+                           INPUT par_cdagenci,
+                           INPUT par_nrdcaixa,
+                           INPUT 1,            /** Sequencia **/
+                           INPUT aux_cdcritic,
+                           INPUT-OUTPUT aux_dscritic).
+            IF par_solcoord = 0 THEN
+              RETURN "NOK".
+         END.
 
     RETURN "OK".
          
@@ -11552,11 +11726,49 @@ PROCEDURE carrega_dados_renovacao:
 /*          crapass.nrdconta <> 1868594  THEN                                      */
 /*          aux_dscritic = "Nao permitido cartao de credito para pessoa juridica". */
 /*     ELSE                                                                        */
-    IF   crapass.cdtipcta = 5    OR
-         crapass.cdtipcta = 6    OR
-         crapass.cdtipcta = 7    OR
-         crapass.cdtipcta = 17   OR
-         crapass.cdtipcta = 18   THEN
+    
+    
+    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+    
+    RUN STORED-PROCEDURE pc_permite_lista_prod_tipo
+    aux_handproc = PROC-HANDLE NO-ERROR (INPUT "4,21,24",        /* Codigo do produto */
+                                         INPUT crapass.cdtipcta, /* Tipo de conta */
+                                         INPUT par_cdcooper,     /* Cooperativa */
+                                         INPUT crapass.inpessoa, /* Tipo de pessoa */
+                                        OUTPUT "",               /* Possui produto */
+                                        OUTPUT 0,                /* Codigo da crítica */
+                                        OUTPUT "").              /* Descriçao da crítica */
+    
+    CLOSE STORED-PROC pc_permite_lista_prod_tipo
+          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+    
+    ASSIGN aux_possuipr = ""
+           aux_cdcritic = 0
+           aux_dscritic = ""
+           aux_possuipr = pc_permite_lista_prod_tipo.pr_possuipr 
+                          WHEN pc_permite_lista_prod_tipo.pr_possuipr <> ?
+           aux_cdcritic = pc_permite_lista_prod_tipo.pr_cdcritic 
+                          WHEN pc_permite_lista_prod_tipo.pr_cdcritic <> ?
+           aux_dscritic = pc_permite_lista_prod_tipo.pr_dscritic
+                          WHEN pc_permite_lista_prod_tipo.pr_dscritic <> ?.
+    
+    IF aux_cdcritic > 0 OR aux_dscritic <> ""  THEN
+         DO:
+            RUN gera_erro (INPUT par_cdcooper,
+                           INPUT par_cdagenci,
+                           INPUT par_nrdcaixa,
+                           INPUT 1,            /** Sequencia **/
+                           INPUT aux_cdcritic,
+                           INPUT-OUTPUT aux_dscritic).
+                          
+            RETURN "NOK".
+         END.
+    
+    IF   SUBSTRING(aux_possuipr,1,1) = "N" AND  /* Cartao de Crédito */
+         SUBSTRING(aux_possuipr,3,1) = "N" AND  /* Cartao Crédito CECRED */
+         SUBSTRING(aux_possuipr,5,1) = "N" THEN /* Cartao Crédito Empresarial */
          aux_cdcritic = 332.
     ELSE
     IF   crapass.cdsitdct <> 1   AND

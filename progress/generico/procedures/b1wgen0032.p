@@ -139,12 +139,15 @@
 
                 17/06/2016 - Inclusão de campos de controle de vendas - M181 ( Rafael Maciel - RKAM)
 
-				07/12/2016 - P341-Automatização BACENJUD - Alterar o uso da descrição do
+                07/12/2016 - P341-Automatização BACENJUD - Alterar o uso da descrição do
                              departamento passando a considerar o código (Renato Darosci)
 
-				19/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
-			                 crapass, crapttl, crapjur 
-							(Adriano - P339).
+                19/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+                             crapass, crapttl, crapjur 
+                             (Adriano - P339).
+
+                29/03/2018 - Chamar rotina pc_valida_adesao_produto na proc 
+                             obtem-permissao-solicitacao. PRJ366 (Lombardi).
 
 ..............................................................................*/
 
@@ -920,6 +923,51 @@ PROCEDURE obtem-permissao-solicitacao:
      
                     RETURN "NOK".
                 END.
+            
+            { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+            
+            RUN STORED-PROCEDURE pc_valida_adesao_produto
+            aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper, /* Cooperativa */
+                                                 INPUT par_nrdconta, /* Numero da conta */
+                                                 INPUT 5,            /* Codigo do produto */
+                                                OUTPUT 0,            /* Codigo da crítica */
+                                                OUTPUT "").          /* Descriçao da crítica */
+            
+            CLOSE STORED-PROC pc_valida_adesao_produto
+                  aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+            
+            { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+            
+            ASSIGN aux_cdcritic = 0
+                   aux_dscritic = ""
+                   aux_cdcritic = pc_valida_adesao_produto.pr_cdcritic 
+                                  WHEN pc_valida_adesao_produto.pr_cdcritic <> ?
+                   aux_dscritic = pc_valida_adesao_produto.pr_dscritic
+                                  WHEN pc_valida_adesao_produto.pr_dscritic <> ?.
+            
+            IF aux_cdcritic > 0 OR aux_dscritic <> ""  THEN
+                 DO:
+                    RUN gera_erro (INPUT par_cdcooper,
+                                   INPUT par_cdagenci,
+                                   INPUT par_nrdcaixa,
+                                   INPUT 1,            /** Sequencia **/
+                                   INPUT aux_cdcritic,
+                                   INPUT-OUTPUT aux_dscritic).
+                    
+                    IF  par_flgerlog  THEN
+                        RUN proc_gerar_log (INPUT par_cdcooper,
+                                            INPUT par_cdoperad,
+                                            INPUT aux_dscritic,
+                                            INPUT aux_dsorigem,
+                                            INPUT aux_dstransa,
+                                            INPUT FALSE,
+                                            INPUT par_idseqttl,
+                                            INPUT par_nmdatela,
+                                            INPUT par_nrdconta,
+                                           OUTPUT aux_nrdrowid).
+     
+                    RETURN "NOK".
+                 END.
         END.
         
 
@@ -1121,17 +1169,17 @@ PROCEDURE obtem-permissao-solicitacao:
 					IF AVAIL crapttl THEN
 					   DO:
 						   RUN corrige_segtl (INPUT crapttl.nmextttl,
-                                       OUTPUT aux_nmtitcrd).
+										      OUTPUT aux_nmtitcrd).
 
-                    RUN abreviar (INPUT aux_nmtitcrd,
-                                  INPUT 28,
-                                 OUTPUT aux_nmtitcrd).
+						   RUN abreviar (INPUT aux_nmtitcrd,
+									     INPUT 28,
+										 OUTPUT aux_nmtitcrd).
                 
-                    CREATE tt-titular-magnetico.
-                    ASSIGN tt-titular-magnetico.tpusucar = 2
-                           tt-titular-magnetico.dsusucar = "(SEGUNDO TITULAR)"
-                           tt-titular-magnetico.nmtitcrd = aux_nmtitcrd
-                           tt-titular-magnetico.flusucar = FALSE.
+						   CREATE tt-titular-magnetico.
+						   ASSIGN tt-titular-magnetico.tpusucar = 2
+							      tt-titular-magnetico.dsusucar = "(SEGUNDO TITULAR)"
+								  tt-titular-magnetico.nmtitcrd = aux_nmtitcrd
+								  tt-titular-magnetico.flusucar = FALSE.
 
 					   END.
 

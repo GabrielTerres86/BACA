@@ -2,7 +2,7 @@
 	//************************************************************************//
 	//*** Fonte: form_tele_atendimento.php                                 ***//
 	//*** Autor: Rogérius Militão - DB1                                    ***//
-	//*** Data : 30/06/2011               Ultima Alteracao: 28/01/2014     ***//
+	//*** Data : 30/06/2011               Ultima Alteracao: 11/04/2018     ***//
 	//***                                                                  ***//
 	//*** Objetivo  : Mostrar rotina de Tele Atendimento da tela ATENDA    ***//
 	//***                                                                  ***//	 
@@ -16,6 +16,10 @@
 	//***     		  28/01/2014 - Alterado evento ao clicar em alterar e  ***//
 	//***						   cadastrar senha para chamar a procedure ***//
 	//***						   verifica_senha_ura. (Reinert)		   ***//
+	//***						   										   ***//
+	//***     		  11/04/2018 - Adicionada chamada para a funcao        ***//
+	//***						   validaAdesaoProduto para verificar      ***//
+	//***						   adesao do produto. (Lombardi)		   ***//
 	//************************************************************************//
 
 	
@@ -27,6 +31,7 @@
 	require_once('../../../class/xmlfile.php');
 	isPostMethod();	
 	
+	$nrdconta = $_POST['nrdconta'];
 	
 ?>	
 	<div id="divDadosSenhaURA">
@@ -90,7 +95,7 @@
 		
 			<br />
 			<label for="botao3"></label>
-			<input type="image" src="<?php echo $UrlImagens; ?>botoes/cadastrar_senha.gif" onClick="mostraCriaSenhaURA();return false;">
+			<input type="image" src="<?php echo $UrlImagens; ?>botoes/cadastrar_senha.gif" onClick="validaAdesaoProduto (<?php echo $nrdconta; ?>, 2, 'mostraCriaSenhaURA()');return false;">
 			
 		</form>
 		

@@ -8,6 +8,9 @@
  Alterações: 10/03/2015 - Realizado a chamada da rotina direto no oracle
 						  devido a conversão para PLSQSL
 						  (Adriano).
+
+			 04/04/2018 - Chamada da rotina para verificar se o tipo de conta permite produto 
+				          33 - INSS. PRJ366 (Lombardi).
  
  ******************************************************************************************************/
 ?>
@@ -25,6 +28,24 @@
 	$cddopcao = (isset($_POST['cddopcao'])) ? $_POST['cddopcao'] : '';
 	$nrregist = (isset($_POST['nrregist'])) ? $_POST['nrregist'] : 30;
 	$nriniseq = (isset($_POST['nriniseq'])) ? $_POST['nriniseq'] : 1;
+	
+	// Montar o xml de Requisicao
+	$xml  = "";
+	$xml .= "<Root>";
+	$xml .= " <Dados>";	
+	$xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
+	$xml .= "   <cdprodut>". 33 ."</cdprodut>"; //INSS
+	$xml .= " </Dados>";
+	$xml .= "</Root>";
+
+	$xmlResult = mensageria($xml, "CADA0006", "VALIDA_ADESAO_PRODUTO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	$xmlObject = getObjectXML($xmlResult);
+
+	// Se ocorrer um erro, mostra crítica
+	if (strtoupper($xmlObject->roottag->tags[0]->name) == "ERRO") {
+		$msgErro = $xmlObject->roottag->tags[0]->tags[0]->tags[4]->cdata;
+		exibirErro('error',utf8_encode($msgErro),'Alerta - Ayllos','',false);
+	}
 	
 	// Monta o xml de requisição
 	$xmlBuscaTitulares  = "";

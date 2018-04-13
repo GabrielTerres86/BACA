@@ -62,6 +62,9 @@
 
           
 				  30/08/2016 - Adição dos campos de data e hora de acesso ao Mobile (Dionathan).
+				  
+				  05/04/2018 - Chamada rotina "validaAdesaoProduto" para verificar se tipo de 
+                               conta permite a contratação do produto. PRJ366 (Lombardi).
 
 	*******************************************************************************/
 	
@@ -417,7 +420,7 @@
     <input type="image" src="<?php echo $UrlImagens; ?>botoes/cancelamento.gif" <?php if (in_array("X",$glbvars["opcoesTela"])) { ?>onClick="cancelaSenhaAcesso(1);return false;"<?php } else { ?>style="cursor: default;" onClick="return false;"<?php } ?> />
     <input type="image" src="<?php echo $UrlImagens; ?>botoes/impressao.gif" <?php if (in_array("M",$glbvars["opcoesTela"])) { ?>onClick="carregarContrato('','yes');return false;"<?php } else { ?>style="cursor: default;" onClick="return false;"<?php } ?> />
     <input type="image" src="<?php echo $UrlImagens; ?>botoes/senha.gif" <?php if (in_array("S",$glbvars["opcoesTela"])) { ?>onClick="mostraDivAlteraSenha();return false;"<?php } else {?>style="cursor: default;" onClick="return false;"<?php } ?> />
-    <input id="liberacao"   type="image" src="<?php echo $UrlImagens; ?>botoes/liberacao.gif" <?php if (in_array("L",$glbvars["opcoesTela"])) { ?>onClick="mostraDivLiberaSenha();return false;"<?php } else { ?>style="cursor: default;" onClick="return false;"<?php } ?> />
+    <input id="liberacao"   type="image" src="<?php echo $UrlImagens; ?>botoes/liberacao.gif" <?php if (in_array("L",$glbvars["opcoesTela"])) { ?>onClick="validaAdesaoProduto(<?php echo $nrdconta ?>, 1, 'mostraDivLiberaSenha();');return false;"<?php } else { ?>style="cursor: default;" onClick="return false;"<?php } ?> />
     <input id="habilitacao" type="image" src="<?php echo $UrlImagens; ?>botoes/habilitacao.gif" <?php if (in_array("H",$glbvars["opcoesTela"])) { ?>onClick="carregaHabilitacao();return false;"<?php } else { ?>style="cursor: default;" onClick="return false;"<?php } ?> />
   </div>
 </div>

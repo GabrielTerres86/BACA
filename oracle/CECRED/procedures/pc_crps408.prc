@@ -279,6 +279,8 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
   vr_qtfoltal_10     NUMBER := 0;
   vr_qtfoltal_20     NUMBER := 0;
 
+  vr_possuipr   VARCHAR2(1);
+  
   -- Procedimento para inserir texto no CLOB do arquivo XML
   PROCEDURE pc_escreve_xml(pr_des_dados in VARCHAR2,
                            pr_tpxml     IN NUMBER) is
@@ -296,8 +298,6 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
 
   -- Subrotina que vai gerar o relatorio sobre o talonario
   PROCEDURE Pc_Gera_Talonario(pr_cdcooper     IN crapreq.cdcooper%TYPE,
-                              pr_cdtipcta_ini IN crapreq.cdtipcta%TYPE,
-                              pr_cdtipcta_fim IN crapreq.cdtipcta%TYPE,
                               pr_cdbanchq     IN crapass.cdbcochq%TYPE,
                               pr_nrcontab     IN NUMBER,
                               pr_nrdserie     IN NUMBER,
@@ -321,8 +321,6 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
     -- Cursor para leitura de requisicoes de talonarios
     CURSOR cr_crapreq(pr_cdcooper     IN crapreq.cdcooper%TYPE,
                       pr_cdbanchq     IN crapcop.cdbcoctl%TYPE,
-                      pr_cdtipcta_ini IN crapreq.cdtipcta%TYPE,
-                      pr_cdtipcta_fim IN crapreq.cdtipcta%TYPE,
                       pr_tprequis     in crapreq.tprequis%TYPE) IS
       SELECT crapreq.ROWID,
              crapreq.cdagenci,
@@ -337,7 +335,12 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
          AND (crapreq.tprequis  = 1
           OR  (crapreq.tprequis = 3
          AND   crapreq.tpformul = 999))         
-         AND crapreq.cdtipcta BETWEEN pr_cdtipcta_ini and pr_cdtipcta_fim         
+         AND (crapass.inpessoa, crapreq.cdtipcta) 
+          IN (SELECT t.inpessoa
+                   , t.tpconta
+                FROM tbcc_produtos_coop t
+               WHERE t.cdcooper  = pr_cdcooper
+                       AND t.cdproduto = 38) -- Folhas de Cheque 
          AND crapreq.insitreq IN (1,4,5)
          AND crapass.cdcooper = crapreq.cdcooper
          AND crapass.nrdconta = crapreq.nrdconta
@@ -383,7 +386,8 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
              idorgexp,
              cdufdptl,
              dtabtcct,
-             dtadmiss
+             dtadmiss,
+             cdcatego
         FROM crapass
        WHERE crapass.cdcooper = pr_cdcooper
          AND crapass.nrdconta = pr_nrdconta;
@@ -412,13 +416,13 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
     rw_crapjur cr_crapjur%ROWTYPE;
 
     -- Cursor para buscar o tipo de conta para os rejeitados
-    CURSOR cr_craptip(pr_cdcooper IN craptip.cdcooper%TYPE,
-                      pr_cdtipcta IN craptip.cdtipcta%TYPE) IS
-      SELECT dstipcta
-        FROM craptip
-       WHERE craptip.cdcooper = pr_cdcooper
-         AND craptip.cdtipcta = pr_cdtipcta;
-    rw_craptip cr_craptip%ROWTYPE;
+    CURSOR cr_tpconta(pr_inpessoa IN tbcc_tipo_conta.inpessoa%TYPE,
+                      pr_cdtipcta IN tbcc_tipo_conta.cdtipo_conta%TYPE) IS
+      SELECT tip.dstipo_conta
+        FROM tbcc_tipo_conta tip
+       WHERE tip.inpessoa     = pr_inpessoa
+         AND tip.cdtipo_conta = pr_cdtipcta;
+    rw_tpconta cr_tpconta%ROWTYPE;
 
     -- Cursor para buscar o nome do banco
     CURSOR cr_crapban(pr_cdbccxlt IN crapban.cdbccxlt%TYPE) IS
@@ -640,8 +644,6 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
     -- Verifica se ha requisicoes a serem atendidas
     FOR rw_crapreq IN cr_crapreq(pr_cdcooper,
                                  pr_cdbanchq,
-                                 pr_cdtipcta_ini,
-                                 pr_cdtipcta_fim,
                                  pr_tprequis) LOOP
 
       -- Verifica se é o primeiro dia útil do mês ou primeiro dia útil a partir do dia 15, pois as
@@ -693,6 +695,23 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
 
       vr_cdcritic := 0;
 
+      /*   CHEQUE ESPECIAL  */
+      CADA0006.pc_permite_produto_tipo (pr_cdprodut => 38
+                                       ,pr_cdtipcta => rw_crapass.cdtipcta
+                                       ,pr_cdcooper => pr_cdcooper
+                                       ,pr_inpessoa => rw_crapass.inpessoa
+                                       ,pr_possuipr => vr_possuipr
+                                       ,pr_cdcritic => vr_cdcritic
+                                       ,pr_dscritic => vr_dscritic);
+      
+      IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_saida;
+      END IF;
+      
+      IF vr_possuipr = 'N' THEN
+        vr_cdcritic := 65;-- 065 - Tipo de conta nao permite req.
+      END IF;
+      /*
       -- Verificacao se o cooperado nao esta rejeitado
       IF pr_cdtipcta_ini = 12 THEN -- NORMAL ITG
         IF rw_crapass.cdtipcta < 12 THEN
@@ -709,7 +728,7 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
           vr_cdcritic := 65;-- 065 - Tipo de conta nao permite req.
         END IF;
       END IF;
-
+      */
       -- Se não houver rejeição no associado
       IF vr_cdcritic = 0 THEN
         IF rw_crapass.cdsitdct <> 1 THEN -- Se a situação da conta for diferente de ativo
@@ -729,8 +748,7 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
                       2);
       FETCH cr_crapttl INTO rw_crapttl;
       IF cr_crapttl%FOUND AND vr_cdcritic = 0 THEN
-        IF rw_crapass.cdtipcta IN (1,2,7,8,9,12,13,18) THEN --1=NORMAL, 2=ESPECIAL, 7=CTA APLIC INDIV, 8=NORMAL CONVENIO
-                                                            --9=ESPEC. CONVENIO, 12=NORMAL ITG, 13=ESPECIAL ITG, 18=CTA APL.IND.ITG
+        IF rw_crapass.cdcatego = 1 THEN --INDIVIDUAL
           vr_cdcritic := 832; --832 - Tipo de conta nao permite MAIS DE UM TITULAR.
         END IF;
       END IF;
@@ -844,13 +862,15 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
         -- Contador para executar a cada solicitacao de talão, pois a mesma requisição pode solicitar mais de um talão
         LOOP
           EXIT WHEN vr_qtreqtal > rw_crapreq.qtreqtal;
-
+          /*
           -- Busca do numero da conta de integracao
           IF pr_cdtipcta_ini = 12 THEN  -- NORMAL ITG
             vr_nrctaitg := rw_crapass.nrdctitg;
           ELSE
             vr_nrctaitg := rw_crapass.nrdconta;
           END IF;
+          */
+          vr_nrctaitg := rw_crapass.nrdconta;
 
           -- Atualiza o numero do talao
           rw_crapass.flchqitg := rw_crapass.flchqitg + 1;
@@ -917,9 +937,7 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
                  (rw_crapass.nrdconta,  --nrdconta
                   vr_nrctaitg,          --nrdctabb
                   vr_nrctaitg,          --nrctachq
-                  decode(pr_cdtipcta_ini,
-                           12,rw_crapass.nrdctitg
-                             ,' '),    --nrdctitg
+                  ' ',                  --nrdctitg
                   rw_gnsequt.vlsequtl,  --nrpedido
                   vr_nrflcheq,          --nrcheque
                   rw_crapass.flchqitg,  --nrseqems
@@ -1097,7 +1115,7 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
             vr_nrfolhas := rw_crapreq.qtreqtal;
             vr_numtalon := 0;
           END IF;
-
+          /*
           -- Define a conta base
           IF pr_cdtipcta_ini = 12 THEN --NORMAL ITG
             IF rw_crapass.nrdctitg IS NULL THEN -- numero da conta de integracao
@@ -1116,7 +1134,11 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
             vr_nrdctitg_aux := rw_crapass.nrdconta;
             vr_nrdctitg := substr(to_char(rw_crapass.nrdconta,'fm00000000'),1,7);
             vr_nrdigctb := substr(rw_crapass.nrdconta,-1,1);
-          END IF;
+          END IF;*/
+          
+          vr_nrdctitg_aux := rw_crapass.nrdconta;
+          vr_nrdctitg := substr(to_char(rw_crapass.nrdconta,'fm00000000'),1,7);
+          vr_nrdigctb := substr(rw_crapass.nrdconta,-1,1);
 
           vr_auxiliar := vr_nrdctitg_aux * 10;
           vr_retorno  := gene0005.fn_calc_digito(pr_nrcalcul => vr_auxiliar); -- O retorno é ignorado, pois a variável vr_agencia é atualiza pelo programa
@@ -1142,7 +1164,7 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
           END IF;
 
           -- Busca os dados cadastrais do titular
-          IF rw_crapass.cdtipcta = 12   OR --NORMAL ITG
+          /*IF rw_crapass.cdtipcta = 12   OR --NORMAL ITG
              rw_crapass.cdtipcta = 13   THEN --ESPECIAL ITG
             vr_literal2 := vr_dscpfcgc ||
                            rpad(vr_nrcpfcgc,18,' ')||
@@ -1153,7 +1175,7 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
                            TRIM(vr_cdorgexp)|| ' '||
                            TRIM(vr_cdufdptl);
             vr_literal4 := '';
-          ELSE
+          ELSE*/
             vr_literal2 := vr_nmsegtal;
             vr_literal3 := vr_dscpfcgc ||
                            rpad(vr_nrcpfcgc,18,' ')||
@@ -1163,7 +1185,7 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
                            SUBSTR(TRIM(vr_nrdocptl),1,15) || ' '||
                            TRIM(vr_cdorgexp)|| ' '||
                            TRIM(vr_cdufdptl);
-          END IF;
+          --END IF;
 
 
           OPEN cr_crapsfn(pr_cdcooper,
@@ -1185,14 +1207,14 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
           ELSE
             vr_literal5 := 'Cooperado desde: '||to_char(vr_dtabtcc2,'MM/YYYY')|| '          ';
           END IF;
-
+          /*
           IF rw_crapass.cdtipcta IN (9,  --ESPEC. CONVENIO
                                      11, --CONJ.ESP.CONV.
                                      13, --ESPECIAL ITG
                                      15) THEN --ESPEC.CJTA ITG
             vr_literal6 := 'CHEQUE ESPECIAL';
           END IF;
-
+          */
           IF nvl(rw_crapage.dsinform##1,' ') = ' ' AND
              nvl(rw_crapage.dsinform##2,' ') = ' ' AND
              nvl(rw_crapage.dsinform##3,' ') = ' ' THEN
@@ -1296,13 +1318,13 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
         END IF;
 
         -- Abre o cursor de tipo de conta
-        OPEN cr_craptip(pr_cdcooper,
+        OPEN cr_tpconta(pr_cdcooper,
                         rw_crapass.cdtipcta);
-        FETCH cr_craptip INTO rw_craptip;
-        IF cr_craptip%NOTFOUND THEN
-          rw_craptip.dstipcta := '';
+        FETCH cr_tpconta INTO rw_tpconta;
+        IF cr_tpconta%NOTFOUND THEN
+          rw_tpconta.dstipo_conta := '';
         END IF;
-        CLOSE cr_craptip;
+        CLOSE cr_tpconta;
 
         -- Busca a situacao da conta
         IF rw_crapass.cdsitdct = 1   THEN
@@ -1330,7 +1352,7 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
                            '<nrdconta>'||gene0002.fn_mask(rw_crapass.nrdconta,'zzzz.zzz.z')||'</nrdconta>'||
                            '<nmprimtl>'||rw_crapass.nmprimtl||'</nmprimtl>'||
                            '<dtdemiss>'||to_char(rw_crapass.dtdemiss,'DD/MM/YYYY')||'</dtdemiss>'||
-                           '<dstipcta>'||lpad(rw_crapass.cdtipcta,2,'0')||'-'||rw_craptip.dstipcta||'</dstipcta>'||
+                           '<dstipcta>'||lpad(rw_crapass.cdtipcta,2,'0')||'-'||rw_tpconta.dstipo_conta||'</dstipcta>'||
                            '<dssitdct>'||vr_dssitdct        ||'</dssitdct>'||
                            '<qtreqtal>'||rw_crapreq.qtreqtal||'</qtreqtal>'||
                            '<dscritic>'||substr(vr_dscritic,1,34)    ||'</dscritic>'||
@@ -1341,7 +1363,7 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
                            '<nrdconta>'||gene0002.fn_mask(rw_crapass.nrdconta,'zzzz.zzz.z')||'</nrdconta>'||
                            '<nmprimtl>'||substr(rw_crapass.nmprimtl,1,30)||'</nmprimtl>'||
                            '<dtdemiss>'||to_char(rw_crapass.dtdemiss,'DD/MM/YYYY')||'</dtdemiss>'||
-                           '<dstipcta>'||lpad(rw_crapass.cdtipcta,2,'0')||'-'||rw_craptip.dstipcta||'</dstipcta>'||
+                           '<dstipcta>'||lpad(rw_crapass.cdtipcta,2,'0')||'-'||rw_tpconta.dstipo_conta||'</dstipcta>'||
                            '<dssitdct>'||vr_dssitdct        ||'</dssitdct>'||
                            '<qtreqtal>'||rw_crapreq.qtreqtal||'</qtreqtal>'||
                            '<dscritic>'||substr(vr_dscritic,1,34)||'</dscritic>'||
@@ -1373,7 +1395,7 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
       END;
 
     END LOOP;
-
+    /*
     -- Se nao teve requisicoes gera mensagem de alerta
     IF nvl(vr_qttotreq,0) + nvl(vr_qttotrej_fc,0) + nvl(vr_qttotrej_tl,0) = 0 AND  pr_cdtipcta_ini = 12 THEN
       btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
@@ -1381,9 +1403,7 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
                           ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
                                            || vr_cdprogra || ' --> NAO HA REQUISICOES PARA CHEQUES NORMAIS');
     END IF;
-
-
-
+    */
     -- Verifica se a tag PAC das requisicoes de Talões esta fechada. Em caso negativo, fecha a tag.
     IF NOT vr_fechapac_req_tl THEN
       pc_escreve_xml(       '<qttotreq>'||vr_qttotreq_tl||'</qttotreq>'||
@@ -1880,8 +1900,6 @@ BEGIN
 
   -- CECRED
   Pc_Gera_Talonario(pr_cdcooper     => pr_cdcooper,
-                    pr_cdtipcta_ini => 08, --NORMAL CONVENIO
-                    pr_cdtipcta_fim => 11, --CONJ.ESP.CONV.
                     pr_cdbanchq     => rw_crapcop.cdbcoctl,
                     pr_nrcontab     => 0,
                     pr_nrdserie     => 1,
@@ -1894,8 +1912,6 @@ BEGIN
                     pr_tprequis     => 1);
   -- CECRED
   Pc_Gera_Talonario(pr_cdcooper     => pr_cdcooper,
-                    pr_cdtipcta_ini => 08, --NORMAL CONVENIO
-                    pr_cdtipcta_fim => 11, --CONJ.ESP.CONV.
                     pr_cdbanchq     => rw_crapcop.cdbcoctl,
                     pr_nrcontab     => 0,
                     pr_nrdserie     => 1,

@@ -45,6 +45,9 @@
 
 				13/12/2016 - PRJ340 - Nova Plataforma de Cobranca - Fase II. (Jaison/Cechet)
 
+				09/04/2018 - Chamada da rotina para verificar se o tipo de conta permite produto 
+				             6 - Cobrança Bancária. PRJ366 (Lombardi).
+
 *************************************************************************/
 
 session_start();
@@ -93,6 +96,34 @@ $insrvprt    = trim($_POST["insrvprt"]);
 $qtdecprz    = trim($_POST["qtdecprz"]);
 $idrecipr	 = trim($_POST["idrecipr"]);
 $inenvcob	 = trim($_POST["inenvcob"]);
+
+// Monta o xml de requisição
+$xml  = "";
+$xml .= "<Root>";
+$xml .= "	<Dados>";
+$xml .= "		<nrdconta>".$nrdconta."</nrdconta>";
+$xml .= "		<cdprodut>".    6    ."</cdprodut>";
+$xml .= "	</Dados>";
+$xml .= "</Root>";
+
+// Executa script para envio do XML
+$xmlResult = mensageria($xml, "CADA0006", "VALIDA_ADESAO_PRODUTO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+$xmlObj = getObjectXML($xmlResult);
+
+// Se ocorrer um erro, mostra crítica
+if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
+	$msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
+	exibeErro(utf8_encode($msgErro));
+}
+
+// Função para exibir erros na tela através de javascript
+function exibeErro($msgErro) { 
+	echo '<script type="text/javascript">';
+	echo 'hideMsgAguardo();';
+	echo 'showError("error","'.$msgErro.'","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
+	echo '</script>';
+	exit();
+}	
 
 // Titulo de tela dependendo a opcao de CONSULTA/HABILITACAO
 $dstitulo = ($cddopcao == "C")? "CONSULTA" : "HABILITA&Ccedil;&Atilde;O"; 

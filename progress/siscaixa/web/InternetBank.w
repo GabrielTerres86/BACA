@@ -692,7 +692,10 @@
                  13/10/2017 - Criação da variável aux_cdcanal - (Pablao)
                               
                  25/10/2017 -  Ajustes diversos para projeto de DDA Mobile
-                               PRJ356.4 - DDA (Ricardo Linhares)
+                               PRJ356.4 - DDA (Ricardo Linhares)	 
+                 
+                 10/04/2018 - Adicionada opcao 216 para verificar permissao para adesao do produto
+                              pelo tipo de conta. PRJ366 (Lombardi) 
 
 ------------------------------------------------------------------------------*/
 
@@ -2314,6 +2317,9 @@ PROCEDURE process-web-request :
         ELSE
             IF  aux_operacao = 214 THEN /* Obter quantidade de notificações não visualizadas do cooperado */
                 RUN proc_operacao214.
+        ELSE
+            IF  aux_operacao = 216 THEN /* Validar adesao do produto por tipo de conta */
+                RUN proc_operacao216.
     END.
 /*....................................................................*/
     
@@ -8876,6 +8882,33 @@ PROCEDURE proc_operacao214:
         {&out} xml_operacao.dslinxml.
     END.
     
+    {&out} aux_tgfimprg.
+
+END PROCEDURE.
+
+/* Obter quantidade de notificações não visualizadas do cooperado */
+PROCEDURE proc_operacao216:
+    
+    ASSIGN aux_cdproduto =  INT(GET-VALUE("aux_cdproduto"))
+           aux_vlcontra  = DECI(GET-VALUE("aux_vlcontra"))
+           aux_operacao  =  INT(GET-VALUE("aux_operacao")).
+    
+    RUN sistema/internet/fontes/InternetBank216.p (INPUT aux_cdcooper,
+                                                   INPUT aux_nrdconta,
+                                                   INPUT aux_cdproduto,
+                                                   INPUT aux_vlcontra,
+                                                   INPUT aux_operacao,
+                                                  OUTPUT aux_dsmsgerr,
+                                                  OUTPUT TABLE xml_operacao).
+    
+    IF  RETURN-VALUE = "NOK"  THEN
+        {&out} aux_dsmsgerr. 
+    ELSE
+    FOR EACH xml_operacao NO-LOCK: 
+      
+        {&out} xml_operacao.dslinxml.
+        
+        END.
     {&out} aux_tgfimprg.
 
 END PROCEDURE.

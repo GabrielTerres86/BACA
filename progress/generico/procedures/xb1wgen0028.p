@@ -71,13 +71,13 @@
                             (Jorge/Gielow) - SD 156112          
                             
                21/08/2014 - Incluso parametro inpessoa na procedure valida_dados_cartao 
-                           (Daniel) - SoftDesk  188116   
+                            (Daniel) - SoftDesk  188116   
 						   
-			   24/09/2014 - Incluir parametro nmempres na chamada da cadastra_novo_cartao
-							(Renato - Supero) - SD 204631
+               24/09/2014 - Incluir parametro nmempres na chamada da cadastra_novo_cartao
+                            (Renato - Supero) - SD 204631
                             
                02/10/2014 - Incluso parametro aux_bthabipj na procedure carrega_dados_inclusao 
-                             (Vanessa) 
+                            (Vanessa) 
                              
                09/04/2015 - #272659 Adicionado alerta para bloqueio de cartão BB (Carlos)
                
@@ -86,9 +86,14 @@
                             
                29/07/215 - Inclusao procedure "verifica_acesso_tela_taa". (James)             
 			   
-			   06/12/2016 - P341-Automatização BACENJUD - Alterar a passagem 
-			                da descrição do departamento como parametro e 
-							passar o código (Renato Darosci)           
+               06/12/2016 - P341-Automatização BACENJUD - Alterar a passagem 
+                            da descrição do departamento como parametro e 
+                            passar o código (Renato Darosci)   
+              
+               29/03/2018 - Ajustes na proc valida_nova_proposta pra retornar flag
+                            aux_solcoord e sempre retornar a temp-table erro.
+                            PRJ366 (Lombardi).
+               
 ............................................................................ */
 
 
@@ -237,6 +242,8 @@ DEF VAR aux_flgcadas AS CHAR                                           NO-UNDO.
 DEF VAR aux_dsrepres AS CHAR                                           NO-UNDO.
 DEF VAR aux_flgdebit AS LOG                                            NO-UNDO.
 DEF VAR aux_flpurcrd AS LOG                                            NO-UNDO.
+
+DEF VAR aux_solcoord AS INT                                            NO-UNDO.
 
 { sistema/generico/includes/b1wgen0019tt.i }
 { sistema/generico/includes/b1wgen0028tt.i }
@@ -547,6 +554,7 @@ PROCEDURE valida_nova_proposta:
                                      INPUT aux_nrdoccrd,
                                      INPUT aux_dsrepinc,
                                      INPUT aux_dsrepres,
+                                    OUTPUT aux_solcoord,
                                     OUTPUT TABLE tt-msg-confirma, 
                                     OUTPUT TABLE tt-erro).
 
@@ -565,8 +573,18 @@ PROCEDURE valida_nova_proposta:
                             INPUT "Erro").
         END.
     ELSE
-        RUN piXmlSaida (INPUT TEMP-TABLE tt-msg-confirma:HANDLE,
-                        INPUT "Mensagem").
+        DO:
+            RUN piXmlNew.
+            RUN piXmlExport (INPUT TEMP-TABLE tt-msg-confirma:HANDLE,
+                             INPUT "Mensagem").
+            RUN piXmlAtributo (INPUT "solcoord",INPUT STRING(aux_solcoord)).
+            
+            FIND FIRST tt-erro NO-LOCK NO-ERROR.
+            IF AVAILABLE tt-erro  THEN
+                RUN piXmlExport (INPUT TEMP-TABLE tt-erro:HANDLE,
+                                 INPUT "Erro").
+            RUN piXmlSave.      
+        END.
        
 END PROCEDURE.
 

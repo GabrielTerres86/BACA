@@ -165,7 +165,10 @@
                             ou arquivo de remessa enviado 
                             (Douglas - M271.3 Upload de Arquivo de Pagamento)
 
-               06/10/2017 - Criar a procedure obtem-acesso-anterior (David)
+               06/10/2017 - Criar a procedure obtem-acesso-anterior (David)	 
+                           
+               04/04/2018 - Adicionada chamada pc_valida_adesao_produto para verificar se o 
+                            tipo de conta permite a contrataçao do produto. PRJ366 (Lombardi).
                
 ..............................................................................*/
 
@@ -3117,9 +3120,12 @@ PROCEDURE permissoes-menu-mobile:
     
     DEF VAR aux_flgsittp AS LOGI                                    NO-UNDO.
     DEF VAR aux_flgaprov AS LOGI                                    NO-UNDO.
+    DEF VAR aux_flgdebau AS LOGI                                    NO-UNDO.
     DEF VAR aux_flgsitrc AS LOGI                                    NO-UNDO.
+    DEF VAR aux_flgaplic AS LOGI                                    NO-UNDO.
     DEF VAR h-b1wgen0188 AS HANDLE                                  NO-UNDO.
     DEF VAR h-b1wgen0018 AS HANDLE                                  NO-UNDO.
+    DEF VAR aux_possuipr AS CHAR NO-UNDO.
     
     EMPTY TEMP-TABLE tt-erro.
     EMPTY TEMP-TABLE tt-itens-menu.
@@ -3192,6 +3198,55 @@ PROCEDURE permissoes-menu-mobile:
             DELETE PROCEDURE h-b1wgen0018.
     END.
     
+    /* buscar quantidade maxima de digitos aceitos para o convenio */
+    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
+    
+    RUN STORED-PROCEDURE pc_permite_lista_prod_tipo
+        aux_handproc = PROC-HANDLE NO-ERROR
+                                (INPUT "29,3", /* DEBITO AUTOMATICO, APLICACAO */
+                                 INPUT crapass.cdtipcta,
+                                 INPUT par_cdcooper,
+                                 INPUT crapass.inpessoa,
+                                 OUTPUT "",  /* pr_possuipr */
+                                 OUTPUT 0,   /* pr_cdcritic */
+                                 OUTPUT ""). /* pr_dscritic */
+    
+    CLOSE STORED-PROC pc_permite_lista_prod_tipo
+          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+    
+    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+    
+    ASSIGN aux_possuipr = ""
+           aux_cdcritic = 0
+           aux_dscritic = ""
+           aux_possuipr = pc_permite_lista_prod_tipo.pr_possuipr                          
+                              WHEN pc_permite_lista_prod_tipo.pr_possuipr <> ?
+           aux_cdcritic = pc_permite_lista_prod_tipo.pr_cdcritic                          
+                              WHEN pc_permite_lista_prod_tipo.pr_cdcritic <> ?
+           aux_dscritic = pc_permite_lista_prod_tipo.pr_dscritic
+                              WHEN pc_permite_lista_prod_tipo.pr_dscritic <> ?.
+    
+    IF  aux_cdcritic <> 0 OR aux_dscritic <> "" THEN
+      DO:
+          RUN gera_erro (INPUT par_cdcooper,
+                         INPUT par_cdagenci,
+                         INPUT par_nrdcaixa,
+                         INPUT 1,            /** Sequencia **/
+                         INPUT aux_cdcritic,
+                         INPUT-OUTPUT aux_dscritic).
+                                  
+          RETURN "NOK".                
+      END.
+    
+    IF SUBSTRING(aux_possuipr,1,1) = "S" THEN
+      aux_flgdebau = TRUE.
+    ELSE
+      aux_flgdebau = FALSE.
+    
+    IF SUBSTRING(aux_possuipr,3,1) = "S" THEN
+      aux_flgaplic = TRUE.
+    ELSE
+      aux_flgaplic = FALSE.
     
     CREATE tt-itens-menu-mobile.
     ASSIGN tt-itens-menu-mobile.cditemmn = 204. /*TRANSAÇOES PENDENTES*/
@@ -3204,6 +3259,22 @@ PROCEDURE permissoes-menu-mobile:
     CREATE tt-itens-menu-mobile.
     ASSIGN tt-itens-menu-mobile.cditemmn = 901. /*RECARGA DE CELULAR*/
            tt-itens-menu-mobile.flcreate = aux_flgsitrc.  
+    
+    CREATE tt-itens-menu-mobile.
+    ASSIGN tt-itens-menu-mobile.cditemmn = 902. /*DEBITO AUTOMATICO*/
+           tt-itens-menu-mobile.flcreate = aux_flgdebau.  
+    
+    IF aux_flgsitrc = FALSE AND 
+       aux_flgdebau = FALSE THEN
+        DO:
+            CREATE tt-itens-menu-mobile.
+            ASSIGN tt-itens-menu-mobile.cditemmn = 900. /*CONVENIENCIA*/
+                   tt-itens-menu-mobile.flcreate = FALSE.  
+        END.
+    
+    CREATE tt-itens-menu-mobile.
+    ASSIGN tt-itens-menu-mobile.cditemmn = 602. /*APLICACAO*/
+           tt-itens-menu-mobile.flcreate = aux_flgaplic.  
     
     FIND FIRST crapopi WHERE crapopi.cdcooper = par_cdcooper AND
 							 crapopi.nrdconta = par_nrdconta NO-LOCK NO-ERROR. 

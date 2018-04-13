@@ -17,7 +17,11 @@
 	//***							para pessoa juridica				   ***//
     //*** 							(Tiago Castro - RKAM).				   ***//
 	//***                                                                  ***//
-    //***             04/10/2015 - Reformulacao cadastral(Gabriel-RKAM)    ***//					  
+    //***             04/10/2015 - Reformulacao cadastral(Gabriel-RKAM)    ***//
+    //***                                                                  ***//
+	//***             06/04/2018 - Adicionada chamada para a function      ***//
+	//***                          validaValorAdesao. PRJ366 (Lombardi).   ***//
+	//***                                                                  ***//
 	//************************************************************************//
 	
 	session_start();
@@ -142,7 +146,7 @@
 	</form> 
 	<div id="divBotoes">
 		<input type="image" id = "btVoltar"  src="<? echo $UrlImagens; ?>botoes/voltar.gif" onClick="carregaHabilitacao();return false;" />
-		<input type="image" id = "btAlterar" src="<? echo $UrlImagens; ?>botoes/alterar.gif" onClick="validaDadosLimites(<?php echo $limites[3]->cdata; ?>);return false;" />
+		<input type="image" id = "btAlterar" src="<? echo $UrlImagens; ?>botoes/alterar.gif" onClick="validaValorAdesao(<?php echo $limites[3]->cdata; ?>);return false;" />
 	</div>
 </div>
 

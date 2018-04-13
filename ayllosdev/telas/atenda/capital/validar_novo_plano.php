@@ -148,27 +148,58 @@
 	// Esconde mensagem de aguardo
 	echo 'hideMsgAguardo();';
 	
-  if($tpautori == "1"){
-  
-	  if ($flcancel == "false"){
-		  // Mensagem para confirmar cadastro do novo plano
-		  echo 'showConfirmacao("Deseja cadastrar o novo plano de capital?","Confirma&ccedil;&atilde;o - Ayllos","solicitaSenhaMagnetico(\'cadastraNovoPlano('.$flcancel.','.$tpautori.')\','.$nrdconta.')","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))","sim.gif","nao.gif");';
-	  
-    }else{
-    
-		  echo 'showConfirmacao("Deseja alterar o plano de capital?","Confirma&ccedil;&atilde;o - Ayllos","solicitaSenhaMagnetico(\'cadastraNovoPlano('.$flcancel.','.$tpautori.')\','.$nrdconta.')","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))","sim.gif","nao.gif");';
-	 
-    }
-    
-  }else{
-  
-      if ($flcancel == "false"){
-		// Mensagem para confirmar cadastro do novo plano
-		    echo 'showConfirmacao("Deseja cadastrar o novo plano de capital?","Confirma&ccedil;&atilde;o - Ayllos","cadastraNovoPlano('.$flcancel.','.$tpautori.')","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))","sim.gif","nao.gif");';
-	    }else{
-		    echo 'showConfirmacao("Deseja alterar o plano de capital?","Confirma&ccedil;&atilde;o - Ayllos","cadastraNovoPlano('.$flcancel.','.$tpautori.')","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))","sim.gif","nao.gif");';
-      }
-  }
+	$vlprepla = str_replace(',','.',str_replace('.','',$vlprepla));
+	
+	// Montar o xml de Requisicao
+	$xml  = "";
+	$xml .= "<Root>";
+	$xml .= " <Dados>";	
+	$xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
+	$xml .= "   <cdprodut>".    15   ."</cdprodut>"; //Cobrança Bancária
+	$xml .= "   <vlcontra>".$vlprepla."</vlcontra>";
+	$xml .= " </Dados>";
+	$xml .= "</Root>";
+
+	$xmlResult = mensageria($xml, "CADA0006", "VALIDA_VALOR_ADESAO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	$xmlObject = getObjectXML($xmlResult);
+
+	// Se ocorrer um erro, mostra crítica
+	if (strtoupper($xmlObject->roottag->tags[0]->name) == "ERRO") {
+		$msgErro = $xmlObject->roottag->tags[0]->tags[0]->tags[4]->cdata;
+		exibirErro('error',utf8_encode($msgErro),'Alerta - Ayllos','',false);
+	}
+	
+	$solcoord = $xmlObject->roottag->tags[0]->cdata;
+	$mensagem = $xmlObject->roottag->tags[1]->cdata;
+	
+	$executar = "";
+	
+	if($tpautori == "1") {
+		if ($flcancel == "false") {
+			// Mensagem para confirmar cadastro do novo plano
+			$executar .= "showConfirmacao(\"Deseja cadastrar o novo plano de capital?\",\"Confirma&ccedil;&atilde;o - Ayllos\",\"solicitaSenhaMagnetico(\\\"cadastraNovoPlano(".$flcancel.",".$tpautori.")\\\",".$nrdconta.")\",\"blockBackground(parseInt($(\\\"#divRotina\\\").css(\\\"z-index\\\")))\",\"sim.gif\",\"nao.gif\");";
+		}else{
+			$executar .= "showConfirmacao(\"Deseja alterar o plano de capital?\",\"Confirma&ccedil;&atilde;o - Ayllos\",\"solicitaSenhaMagnetico(\\\"cadastraNovoPlano(".$flcancel.",".$tpautori.")\\\",".$nrdconta.")\",\"blockBackground(parseInt($(\\\"#divRotina\\\").css(\\\"z-index\\\")))\",\"sim.gif\",\"nao.gif\");";
+		}
+	}else{
+		if ($flcancel == "false") {
+			// Mensagem para confirmar cadastro do novo plano
+			$executar .= "showConfirmacao(\"Deseja cadastrar o novo plano de capital?\",\"Confirma&ccedil;&atilde;o - Ayllos\",\"cadastraNovoPlano(".$flcancel.",".$tpautori.")\",\"blockBackground(parseInt($(\\\"#divRotina\\\").css(\\\"z-index\\\")))\",\"sim.gif\",\"nao.gif\");";
+		}else{
+			$executar .= "showConfirmacao(\"Deseja alterar o plano de capital?\",\"Confirma&ccedil;&atilde;o - Ayllos\",\"cadastraNovoPlano(".$flcancel.",".$tpautori.")\",\"blockBackground(parseInt($(\\\"#divRotina\\\").css(\\\"z-index\\\")))\",\"sim.gif\",\"nao.gif\");";
+		}
+	}
+	
+	// Se ocorrer um erro, mostra crítica
+	if ($mensagem != "") {
+		$executar = str_replace("\"","\\\"", str_replace("\\", "\\\\", $executar));
+		$executar = str_replace("\"","\\\"", str_replace("\\", "\\\\", $executar));
+		$executar = str_replace("\"","\\\"", str_replace("\\", "\\\\", $executar));
+		
+		exibirErro("error",$mensagem,"Alerta - Ayllos", ($solcoord == 1 ? "senhaCoordenador(\\\"".$executar."\\\");" : ""),false);
+	} else {
+		echo $executar;
+	}
 	
 	// Fun&ccedil;&atilde;o para exibir erros na tela atrav&eacute;s de javascript
 	function exibeErro($msgErro) { 
