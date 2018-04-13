@@ -413,7 +413,7 @@ function carregaConsulta(cdBanner, cdCanal) {
 function excluirBanner() {
 	showConfirmacao('Deseja excluir o item '+bannerName+'?', 
 	'Confirma&ccedil;&atilde;o - Ayllos', 'excluirBannerAction()', 
-	"blockBackground(parseInt($('#divRotina').css('z-index')));", 'sim.gif', 'nao.gif');
+	"hideMsgAguardo();", 'sim.gif', 'nao.gif');
 }
 
 function excluirBannerAction() {
