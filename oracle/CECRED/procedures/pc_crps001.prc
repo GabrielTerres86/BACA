@@ -2228,7 +2228,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
            --Valor base iof recebe valor base iof existente + valor base iof calculado
            rw_crapsld.vlbasiof := Nvl(rw_crapsld.vlbasiof,0) + Nvl(vr_vlbasiof,0);
            --Valor iod no mes recebe valor iof mes + valor base iof multiplicado pela taxa de iof
-           rw_crapsld.vliofmes := Nvl(rw_crapsld.vliofmes,0) + NVL(vr_vliofadi,0) + NVL(vr_vliof_principal,0);
+           rw_crapsld.vliofmes := ROUND(Nvl(rw_crapsld.vliofmes,0) + NVL(vr_vliofadi,0) + NVL(vr_vliof_principal,0),2);
            ELSE
              rw_crapsld.vlbasiof := Nvl(rw_crapsld.vlbasiof,0);
              rw_crapsld.vliofmes := Nvl(rw_crapsld.vliofmes,0);
