@@ -1,15 +1,17 @@
 <?php 
 	
-	//************************************************************************//
+	//***********************************************************************************************************************//
 	//*** Fonte: altera_bloqueio.php                                       ***//
 	//*** Autor: Lucas R.                                                  ***//
-	//*** Data : Junho/2013                   Última Alteração:            ***//
+	//*** Data : Junho/2013                   Última Alteração: 13/04/2018                                                ***//
 	//***                                                                  ***//
 	//*** Objetivo  : Funcoes relativas ao Bloqueio Judicial               ***//	
 	//***                                                                  ***//
 	//***                          								           ***//
 	//*** Alterações: 												       ***//
 	//***															       ***//
+    //*** 13/04/2018 - inc0012826 Inclusão da função removeCaracteresInvalidos nos campos dsjuizem, dsresord, dsinfadc e  ***//
+	//***              dsinfdes (Carlos)                                                                                  ***//
 	//************************************************************************//
 	
 	session_start();
@@ -61,16 +63,16 @@
 	$xmlRegistro .= "		<vlresblq>".$vlresblq."</vlresblq>";
 	$xmlRegistro .= "		<nroficio>".$nroficio."</nroficio>";
     $xmlRegistro .= "		<nrproces>".$nrproces."</nrproces>";
-    $xmlRegistro .= "		<dsjuizem>".$dsjuizem."</dsjuizem>";
-    $xmlRegistro .= "		<dsresord>".$dsresord."</dsresord>";
+    $xmlRegistro .= "		<dsjuizem>".removeCaracteresInvalidos($dsjuizem)."</dsjuizem>";
+    $xmlRegistro .= "		<dsresord>".removeCaracteresInvalidos($dsresord)."</dsresord>";
     $xmlRegistro .= "		<flblcrft>".$flblcrft."</flblcrft>";
     $xmlRegistro .= "		<dtenvres>".$dtenvres."</dtenvres>";
 	$xmlRegistro .= "		<nroficon>".$nroficon."</nroficon>";
 	$xmlRegistro .= "		<nrctacon>".$nrctacon."</nrctacon>"; 	
-	$xmlRegistro .= "       <dsinfadc>".$dsinfadc."</dsinfadc>"; 
+	$xmlRegistro .= "       <dsinfadc>".removeCaracteresInvalidos($dsinfadc)."</dsinfadc>"; 
 	$xmlRegistro .= "       <nrofides>".$nrofides."</nrofides>"; 
 	$xmlRegistro .= "       <dtenvdes>".$dtenvdes."</dtenvdes>"; 
-	$xmlRegistro .= "       <dsinfdes>".$dsinfdes."</dsinfdes>"; 
+	$xmlRegistro .= "       <dsinfdes>".removeCaracteresInvalidos($dsinfdes)."</dsinfdes>"; 
 	$xmlRegistro .= "       <fldestrf>".$fldestrf."</fldestrf>"; 
 	$xmlRegistro .= "	</Dados>";
 	$xmlRegistro .= "</Root>";

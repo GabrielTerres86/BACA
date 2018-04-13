@@ -1,9 +1,9 @@
 <?php
 
-	//**************************************************************************//
+	//***********************************************************************************************************************//
 	//*** Fonte: consulta_bloqueio.php                                       ***//
 	//*** Autor: Guilherme / SUPERO                                          ***//
-	//*** Data : Maio/2013                   Última Alteração: 08/02/2017    ***//
+	//*** Data : Maio/2013                   Última Alteração: 13/04/2018                                                 ***//
 	//***                                                                    ***//
 	//*** Objetivo  : Exibir os dados obtidos na consulta dos                ***//	
 	//***             processamentos do BLOQUEIO JUDICIAL.                   ***//
@@ -27,7 +27,10 @@
 	//***	  					   562089 (Kelvin)							                         ***//  
   //***                                                                      ***//
   //***             29/09/2017 - Melhoria 460 - (Andrey Formigari - Mouts)   ***//
-	//****************************************************************************//
+    //***                                                                                                                 ***//
+    //*** 13/04/2018 - inc0012826 Inclusão da função removeCaracteresInvalidos nos campos dsjuizem, dsresord, dsinfadc e  ***//
+	//***              dsinfdes (Carlos)                                                                                  ***//
+	//***********************************************************************************************************************//
 	
 	
 	session_start();
@@ -133,14 +136,14 @@
 		echo "arrbloqu".$seq."['dtblqfim'] = '".getByTagName($banco->tags,'DTBLQFIM')."';";
 		echo "arrbloqu".$seq."['nroficio'] = '".getByTagName($banco->tags,'NROFICIO')."';";
 		echo "arrbloqu".$seq."['nrproces'] = '".getByTagName($banco->tags,'NRPROCES')."';";
-		echo "arrbloqu".$seq."['dsjuizem'] = '".getByTagName($banco->tags,'DSJUIZEM')."';";
-		echo "arrbloqu".$seq."['dsresord'] = '".getByTagName($banco->tags,'DSRESORD')."';";
+		echo "arrbloqu".$seq."['dsjuizem'] = '".removeCaracteresInvalidos(getByTagName($banco->tags,'DSJUIZEM'))."';";
+		echo "arrbloqu".$seq."['dsresord'] = '".removeCaracteresInvalidos(getByTagName($banco->tags,'DSRESORD'))."';";
 		echo "arrbloqu".$seq."['dtenvres'] = '".getByTagName($banco->tags,'DTENVRES')."';";
 		echo "arrbloqu".$seq."['vltotblq'] = '".number_format(str_replace(",",".",getByTagName($dados[0]->tags,'VLTOTBLQ')),2,",",".")."';";
-		echo "arrbloqu".$seq."['dsinfadc'] = '".getByTagName($banco->tags,'DSINFADC')."';";
+		echo "arrbloqu".$seq."['dsinfadc'] = '".removeCaracteresInvalidos(getByTagName($banco->tags,'DSINFADC'))."';";
 		echo "arrbloqu".$seq."['nrofides'] = '".getByTagName($banco->tags,'NROFIDES')."';";
 		echo "arrbloqu".$seq."['dtenvdes'] = '".getByTagName($banco->tags,'DTENVDES')."';";
-		echo "arrbloqu".$seq."['dsinfdes'] = '".getByTagName($banco->tags,'DSINFDES')."';";
+		echo "arrbloqu".$seq."['dsinfdes'] = '".removeCaracteresInvalidos(getByTagName($banco->tags,'DSINFDES'))."';";
 		echo "arrbloqu".$seq."['idmodali'] = '".getByTagName($banco->tags,'IDMODALI')."';";
 		echo "arrbloqu".$seq."['vlbloque'] = '".number_format(str_replace(",",".",getByTagName($banco->tags,'VLBLOQUE')),2,",",".")."';";
 		echo "arrbloqueios[".$seq."] = arrbloqu".$seq.";";

@@ -3,7 +3,7 @@
 	/******************************************************************
 	 Fonte: incluir_bloqueio.php                                      
 	 Autor: Guilherme/SUPERO                                          
-	 Data : Março/2013                   Última Alteração: 31/10/2016
+	 Data : Março/2013                   Última Alteração: 13/04/2018
 	                                                                  
 	 Objetivo  : Funcoes relativas ao Bloqueio Judicial               	
 	                                                    
@@ -19,7 +19,7 @@
 						      BLOQUEIO-JUD diretamente do oracle via 
 						      mensageria (Renato Darosci - Supero)     
 	                          						 				   
-	                          									       
+                 13/04/2018 - inc0012826 Inclusão da função removeCaracteresInvalidos nos campos dsjuizem, dsresord e dsinfadc (Carlos)
 	*********************************************************************/
 	
 	session_start();
@@ -78,13 +78,13 @@
 	$xmlRegistro .= "		<vlbloque>".$vlbloque."</vlbloque>";
 	$xmlRegistro .= "		<nroficio>".$nroficio."</nroficio>";
     $xmlRegistro .= "		<nrproces>".$nrproces."</nrproces>";
-    $xmlRegistro .= "		<dsjuizem>".$dsjuizem."</dsjuizem>";
-    $xmlRegistro .= "		<dsresord>".$dsresord."</dsresord>";
+    $xmlRegistro .= "		<dsjuizem>".removeCaracteresInvalidos($dsjuizem)."</dsjuizem>";
+    $xmlRegistro .= "		<dsresord>".removeCaracteresInvalidos($dsresord)."</dsresord>";
     $xmlRegistro .= "		<flblcrft>".$flblcrft."</flblcrft>";
     $xmlRegistro .= "		<dtenvres>".$dtenvres."</dtenvres>";    
     $xmlRegistro .= "		<vlrsaldo>".$vlrsaldo."</vlrsaldo>";
     $xmlRegistro .= "		<cdoperad>".$glbvars['cdoperad']."</cdoperad>";
-    $xmlRegistro .= "       <dsinfadc>".$dsinfadc."</dsinfadc>";
+    $xmlRegistro .= "       <dsinfadc>".removeCaracteresInvalidos($dsinfadc)."</dsinfadc>";
 	$xmlRegistro .= "	</Dados>";
 	$xmlRegistro .= "</Root>";
 		
