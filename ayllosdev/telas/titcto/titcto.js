@@ -446,7 +446,7 @@ function formataOpcaoB() {
     rNrdconta = $('label[for="nrdconta"]', '#' + frmOpcao);
     rNrborder = $('label[for="nrborder"]', '#' + frmOpcao);
 
-    rDtiniper.css({'width': '110px'}).addClass('rotulo');
+    rDtiniper.css({'width': '115px'}).addClass('rotulo');
     rDtfimper.css({'width': '25px'}).addClass('rotulo-linha');
     rCdagenci.css({'width': '25px'}).addClass('rotulo-linha');
     rNrdconta.css({'width': '45px'}).addClass('rotulo-linha');
