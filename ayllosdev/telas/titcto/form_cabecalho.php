@@ -17,6 +17,8 @@ isPostMethod();
 
 <form id="frmCab" name="frmCab" class="formulario cabecalho" onSubmit="return false;">
 
+
+
     <label for="cddopcao"><?php echo utf8ToHtml('Op&ccedil;&atilde;o') ?></label>
     <select id="cddopcao" name="cddopcao">
         <option value="B" <?php echo $cddopcao == 'B' ? 'selected' : '' ?>>B - Imprimir relat&oacute;rio de borderos n&atilde;o liberados</option>
@@ -31,5 +33,7 @@ isPostMethod();
 
     <a href="#" class="botao" id="btnOk1">Ok</a>
     <br style="clear:both" />	
+
+    <input type="hidden" id="glbdtmvtolt" name="glbdtmvtolt" value="<? echo $glbvars["dtmvtolt"] ?>" />
 
 </form>

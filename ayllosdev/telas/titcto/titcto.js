@@ -1451,6 +1451,12 @@ function btnContinuar() {
     var mensagem = 'Aguarde, buscando dados ...';
     showMsgAguardo(mensagem);
 
+
+
+
+    var dtmvtolt = $('#glbdtmvtolt','#frmCab').val();
+
+
     if(cddopcao == 'B'){
         if (cDtiniper.val() == '') {
             hideMsgAguardo();
@@ -1461,7 +1467,17 @@ function btnContinuar() {
         } else if (days_between(cDtfimper.val(), cDtiniper.val()) > 60) {
             hideMsgAguardo();
             showError("error","Informe um intervalo de até 60 dias.","Alerta - Ayllos","cDtfimper.focus()");
-        } else {
+        }else if (cDtiniper.val() > cDtfimper.val()){
+            hideMsgAguardo();
+            showError("error","Data de in&iacute;cio do periodo deve ser menor ou igual a data final","Alerta - Ayllos","cDtiniper.focus()");
+        }else if (cDtiniper.val() > dtmvtolt){
+            hideMsgAguardo();
+            showError("error","Data de in&iacute;cio do per&iacute;odo deve ser menor ou igual do que a data de movimentação do sistema","Alerta - Ayllos","cDtiniper.focus()");
+        }else if(cDtfimper.val() > dtmvtolt){
+            hideMsgAguardo();
+            showError("error","Data de fim do per&iacute;odo deve ser menor ou igual do que a data de movimentação do sistema","Alerta - Ayllos","cDtfimper.focus()");
+        }
+        else {
             gerarImpressaoBorderoNaoLiberado();
         }
     } else if(cddopcao == 'C'){
