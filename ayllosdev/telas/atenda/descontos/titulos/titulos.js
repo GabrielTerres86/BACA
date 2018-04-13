@@ -333,7 +333,7 @@ function incluiTituloBordero(td){
             total += valor;
             vlseleci.val(number_format(total,2,',','.'));
             calculaSaldoBordero();
-        }   
+        }
         /*Soma titulo incluso no valor total de titulos selecionados*/
         var vlseleci = $("#vlseleci","#divIncluirBordero"); //valor titulos selecionados
         var valor = converteMoedaFloat(tr.find("input[name='vltituloselecionado']").val());
@@ -343,7 +343,7 @@ function incluiTituloBordero(td){
             total += valor;
             vlseleci.val(number_format(total,2,',','.'));
             calculaSaldoBordero();
-        }   
+        }
 
     }
 }
@@ -858,7 +858,8 @@ function carregaDadosConsultaLimiteDscTit() {
 function carregaDadosInclusaoLimiteDscTit(inconfir) {
 
     showMsgAguardo("Aguarde, carregando dados de desconto de t&iacute;tulos ...");
-    
+
+
     // Carrega conteúdo da opção através de ajax
     $.ajax({        
         type: "POST", 
@@ -866,6 +867,7 @@ function carregaDadosInclusaoLimiteDscTit(inconfir) {
         dataType: "html",
         data: {
             nrdconta: nrdconta,
+            inconfir: inconfir,
             redirect: "html_ajax"
         },      
         error: function(objAjax,responseError,objExcept) {
