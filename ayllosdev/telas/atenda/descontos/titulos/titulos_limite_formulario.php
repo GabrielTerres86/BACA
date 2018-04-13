@@ -34,12 +34,20 @@
 		
 			<legend>Dados do Limite</legend>
 			
-			<label for="nrctrlim"><? echo utf8ToHtml('Contrato:') ?></label>
-			<input type="text" name="nrctrlim" id="nrctrlim" value="0" class="campo" disabled>
-			<br />
+			<? if ($cddopcao == "I") { ?>
+				
+				<input type="hidden" name="nrctrlim" id="nrctrlim" value="0" class="campo" disabled>
+
+			<? }else { ?> 
+				
+				<label for="nrctrlim"><? echo utf8ToHtml('Contrato:') ?></label>
+				<input type="text" name="nrctrlim" id="nrctrlim" value="0" class="campo" disabled>
+				<br />
 			
-			<label></label>
-			<br />
+				<label></label>
+				<br />
+
+			<? } ?>
 			
 			<label for="vllimite"><? echo utf8ToHtml('Valor do Limite:') ?></label>
 			<input type="text" name="vllimite" id="vllimite" value="0,00" class="campo">
