@@ -96,6 +96,7 @@ function realizaoConsultaTed(nriniseq, nrregist) {
         },
         success: function (response) {
             hideMsgAguardo();
+            formataCabecalho();
             if (response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1) {
                 try {
                     $('#divTela').html(response);
@@ -156,6 +157,7 @@ function realizaoConsultaConciliacao(nriniseq, nrregist) {
         },
         success: function (response) {
             hideMsgAguardo();
+            formataCabecalho();
             if (response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1) {
                 try {
                     $('#divTela').html(response);
@@ -775,6 +777,12 @@ function selecionaTabela(tr) {
 }
 
 function exportarConsultaCSV(){
+
+    if (cddopcao == 'R'){
+        formatFormCSVOpcaoR();
+    }
+    
+
     var action = $('#frmExportarCSV').attr('action');
 	carregaImpressaoAyllos("frmExportarCSV", action);
 }
@@ -782,4 +790,20 @@ function exportarConsultaCSV(){
 function exportarConsultaPDF(){
     var action = $('#frmExportarPDF').attr('action');
 	carregaImpressaoAyllos("frmExportarPDF", action);
+}
+
+function formatFormCSVOpcaoR(){
+    var inidtpro = $('#inidtpro', '#' + frmOpcao).val();
+    var fimdtpro = $('#fimdtpro', '#' + frmOpcao).val();
+    var cdcooper = $('#nmrescop', '#' + frmOpcao).val();
+    var nrdconta = $('#nrdconta', '#' + frmOpcao).val();
+    var cduflogr = $('#cduflogr', '#' + frmOpcao).val();
+    var dscartor = $('#dscartor', '#' + frmOpcao).val();
+
+    $('#inidtpro', '#frmExportarCSV').val(inidtpro);
+    $('#fimdtpro', '#frmExportarCSV').val(fimdtpro);
+    $('#cdcooper', '#frmExportarCSV').val(cdcooper);
+    $('#nrdconta', '#frmExportarCSV').val(nrdconta.replace(/[^\w\s]/gi, ''));
+    $('#cduflogr', '#frmExportarCSV').val(cduflogr);
+    $('#dscartor', '#frmExportarCSV').val(dscartor);
 }

@@ -66,9 +66,7 @@
 			<div id="divCooper">
                 <label for="nmrescop"><? echo utf8ToHtml('Cooperativa:') ?></label>
                 <select id="nmrescop" name="nmrescop">
-                <? if ($glbvars["cdcooper"] == 3 ){ ?> 
-                <option value="0"><? echo utf8ToHtml(' Todas') ?></option> <? } ?> 
-                
+                                
                 <?php
                 foreach ($registros as $r) {
                     
@@ -104,8 +102,17 @@
 <div id="divBotoes" style="padding-bottom:10px">
 	<a href="#" class="botao" id="btVoltar" onclick="btnVoltar(); return false;">Voltar</a>
 	<a href="#" class="botao" onclick="btnContinuar(); return false;" ><? echo utf8ToHtml('Exportar PDF'); ?></a>
-    <a href="#" class="botao" onclick="btnContinuar(); return false;" ><? echo utf8ToHtml('Exportar CSV'); ?></a>
+    <a href="#" class="botao" onclick="exportarConsultaCSV(); return false;" ><? echo utf8ToHtml('Exportar CSV'); ?></a>
 </div>
+
+<form action="<?php echo $UrlSite;?>telas/manprt/imprimir_consulta_custas_csv.php" method="post" id="frmExportarCSV" name="frmExportarCSV">
+	<input type="hidden" name="inidtpro" id="inidtpro" value="<?php echo $inidtpro; ?>">
+	<input type="hidden" name="fimdtpro" id="fimdtpro" value="<?php echo $fimdtpro; ?>">
+	<input type="hidden" name="cdcooper" id="cdcooper" value="<?php echo $nmrescop; ?>">
+	<input type="hidden" name="nrdconta" id="nrdconta" value="<?php echo $nrdconta; ?>">
+	<input type="hidden" name="dscartor" id="dscartor" value="<?php echo $dscartor; ?>">
+	<input type="hidden" name="sidlogin" id="sidlogin" value="<?php echo $glbvars["sidlogin"]; ?>">
+</form>
 
 
 
