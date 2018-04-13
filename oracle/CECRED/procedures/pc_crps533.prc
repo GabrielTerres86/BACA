@@ -13,7 +13,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Guilherme/Supero
-   Data    : Dezembro/2009                   Ultima atualizacao: 23/03/2018
+   Data    : Dezembro/2009                   Ultima atualizacao: 13/04/2018
 
    Dados referentes ao programa:
 
@@ -305,6 +305,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
 
 			   23/03/2018 - Devido a uma solicitação da ABBC, foi necessário retirar os ajustes efetuados para atender 
 					        o chamado SD813179 (Adriano).
+
+               13/04/2018 - Removidas criticas 929 - COMPE SESSAO UNICA (Diego).
                             
 ............................................................................. */
 
@@ -868,47 +870,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                  RAISE vr_exc_erro;
              END;
            END IF; --vr_contareg = 1
-
-           --Se foi informado craptab
-           IF trim(pr_dstextab) IS NOT NULL THEN
-             --Encontrar o valor do 2º parametro do VALORESVLB
-             vr_segpar:= GENE0002.fn_char_para_number
-                           (GENE0002.fn_busca_entrada(2,pr_dstextab,';'));
-             --Critica quando o valor do lancamento for maior que o param 2 do VALORESVLB
-             IF vr_tab_chqtco(idx).vllanmto >= vr_segpar THEN
-               --Executa rotina pi_cria_generica_tco para cdcritic=929
-               pc_cria_generica_tco(pr_cdcooper   => vr_tab_chqtco(idx).cdcooper
-                                   ,pr_cdagenci   => vr_tab_chqtco(idx).cdagenci
-                                   ,pr_dtmvtolt   => pr_dtmvtolt
-                                   ,pr_cdcritic   => 929
-                                   ,pr_dtleiarq   => pr_dtleiarq
-                                   ,pr_cdagectl   => pr_cdagectl
-                                   ,pr_nmarquiv   => pr_nmarquiv
-                                   ,pr_nrdocmto   => vr_tab_chqtco(idx).nrdocmto
-                                   ,pr_cdbanchq   => vr_tab_chqtco(idx).cdbanchq
-                                   ,pr_cdagechq   => vr_tab_chqtco(idx).cdagechq
-                                   ,pr_nrctachq   => vr_tab_chqtco(idx).nrctachq
-                                   ,pr_cdcmpchq   => vr_tab_chqtco(idx).cdcmpchq
-                                   ,pr_vlcheque   => vr_tab_chqtco(idx).vllanmto
-                                   ,pr_nrdconta   => vr_tab_chqtco(idx).nrdconta
-                                   ,pr_nrddigv1   => vr_tab_chqtco(idx).nrddigv1
-                                   ,pr_nrddigv2   => vr_tab_chqtco(idx).nrddigv2
-                                   ,pr_nrddigv3   => vr_tab_chqtco(idx).nrddigv3
-                                   ,pr_cdtipchq   => vr_tab_chqtco(idx).cdtipchq
-                                   ,pr_cdtipdoc   => vr_tab_chqtco(idx).cdtipdoc
-                                   ,pr_nrseqarq   => vr_tab_chqtco(idx).nrseqarq
-                                   ,pr_dsidenti   => vr_tab_chqtco(idx).cdpesqbb
-                                   ,pr_dscritic   => vr_dscritic);
-
-               IF vr_dscritic IS NOT NULL THEN
-                 --Abortar o programa
-                 RAISE vr_exc_erro;
-               END IF;
-
-               --Ir para proximo registro do loop
-               continue;
-             END IF; --vr_tab_chqtco(idx).vllanmto >= vr_segpar
-           END IF;
            
            -- iniciar variavel
            vr_flgeneri := FALSE;
