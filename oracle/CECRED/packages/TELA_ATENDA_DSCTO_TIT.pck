@@ -74,13 +74,13 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ATENDA_DSCTO_TIT IS
   
   /*Tabela que retorna os dados do contrato de limite*/
   TYPE typ_reg_dados_limite IS RECORD(
-        dtpropos 		craplim.dtpropos%TYPE,
-        dtinivig 		craplim.dtinivig%TYPE,
-        nrctrlim 		craplim.nrctrlim%TYPE,
-        vllimite 		craplim.vllimite%TYPE,
-        qtdiavig 		craplim.qtdiavig%TYPE,
-        cddlinha 		craplim.cddlinha%TYPE,
-        tpctrlim 		craplim.tpctrlim%TYPE,
+        dtpropos    craplim.dtpropos%TYPE,
+        dtinivig    craplim.dtinivig%TYPE,
+        nrctrlim    craplim.nrctrlim%TYPE,
+        vllimite    craplim.vllimite%TYPE,
+        qtdiavig    craplim.qtdiavig%TYPE,
+        cddlinha    craplim.cddlinha%TYPE,
+        tpctrlim    craplim.tpctrlim%TYPE,
         vlutiliz    NUMBER,
         qtutiliz    INTEGER,
         dtfimvig    craplim.dtfimvig%TYPE,
@@ -237,7 +237,7 @@ PROCEDURE pc_analisar_proposta(pr_tpenvest in varchar2               --> Tipo do
                               ,pr_nrctrlim in  craplim.nrctrlim%type --> Numero do Contrato do Limite.
                               ,pr_tpctrlim in  craplim.tpctrlim%type --> Tipo de contrato do limite
                               ,pr_nrdconta in  crapass.nrdconta%type --> Conta do associado
-                              ,pr_dtmovito in  varchar2	             -- crapdat.dtmvtolt%type  --> Data do movimento atual
+                              ,pr_dtmovito in  varchar2              -- crapdat.dtmvtolt%type  --> Data do movimento atual
                               ,pr_xmllog   in  varchar2              --> XML com informações de LOG
                                --------> OUT <--------
                               ,pr_cdcritic out pls_integer           --> Codigo da critica
@@ -297,7 +297,7 @@ PROCEDURE pc_negar_proposta(pr_nrdconta  IN crapass.nrdconta%TYPE --> Número da 
 PROCEDURE pc_enviar_proposta_manual(pr_nrctrlim in  craplim.nrctrlim%type --> Numero do Contrato do Limite.
                                    ,pr_tpctrlim in  craplim.tpctrlim%type --> Tipo de contrato do limite
                                    ,pr_nrdconta in  crapass.nrdconta%type --> Conta do associado
-                                   ,pr_dtmovito in  varchar2	             -- crapdat.dtmvtolt%type  --> Data do movimento atual
+                                   ,pr_dtmovito in  varchar2               -- crapdat.dtmvtolt%type  --> Data do movimento atual
                                    ,pr_xmllog   in  varchar2              --> XML com informações de LOG
                                    ,pr_cdcritic out pls_integer           --> Codigo da critica
                                    ,pr_dscritic out varchar2              --> Descricao da critica
@@ -339,7 +339,7 @@ PROCEDURE pc_buscar_titulos_bordero(pr_cdcooper IN crapcop.cdcooper%TYPE  --> Có
                                   ,pr_tab_dados_titulos   out  typ_tab_dados_titulos --> Tabela de retorno
                                   ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
                                   ,pr_dscritic OUT VARCHAR2);            --> Descrição da crítica
-	  
+    
 PROCEDURE pc_buscar_titulos_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> Número da Conta
                                   ,pr_dtmvtolt IN VARCHAR2               --> Data da Movimentação
                                   ,pr_nrinssac IN crapsab.nrinssac%TYPE  --> Filtro de Tela de Inscricao do Pagador
@@ -1313,7 +1313,7 @@ BEGIN
         -- Se não houver nenhuma Mensagem/Inconsistência, efetuar o processo de Confirmação do novo Limite normalmente
         ELSE
            pc_confirmar_novo_limite(pr_cdcooper => vr_cdcooper
-                                 	 ,pr_nrdconta => pr_nrdconta
+                                   ,pr_nrdconta => pr_nrdconta
                                    ,pr_nrctrlim => pr_nrctrlim
                                    ,pr_tpctrlim => 3 -- Título
                                    ,pr_vllimite => pr_vllimite
@@ -1340,7 +1340,7 @@ BEGIN
     else
         if  vr_em_contingencia_ibratan then
            pc_confirmar_novo_limite(pr_cdcooper => vr_cdcooper
-                                 	 ,pr_nrdconta => pr_nrdconta
+                                   ,pr_nrdconta => pr_nrdconta
                                    ,pr_nrctrlim => pr_nrctrlim
                                    ,pr_tpctrlim => 3 -- Título
                                    ,pr_vllimite => pr_vllimite
@@ -1359,7 +1359,7 @@ BEGIN
 
         else
           pc_confirmar_novo_limite(pr_cdcooper => vr_cdcooper
-                                 	 ,pr_nrdconta => pr_nrdconta
+                                   ,pr_nrdconta => pr_nrdconta
                                    ,pr_nrctrlim => pr_nrctrlim
                                    ,pr_tpctrlim => 3 -- Título
                                    ,pr_vllimite => pr_vllimite
@@ -1986,7 +1986,7 @@ END pc_negar_proposta;
 PROCEDURE pc_enviar_proposta_manual(pr_nrctrlim in  craplim.nrctrlim%type --> Numero do Contrato do Limite.
                                    ,pr_tpctrlim in  craplim.tpctrlim%type --> Tipo de contrato do limite
                                    ,pr_nrdconta in  crapass.nrdconta%type --> Conta do associado
-                                   ,pr_dtmovito in  varchar2	             -- crapdat.dtmvtolt%type  --> Data do movimento atual
+                                   ,pr_dtmovito in  varchar2               -- crapdat.dtmvtolt%type  --> Data do movimento atual
                                    ,pr_xmllog   in  varchar2              --> XML com informações de LOG
                                    ,pr_cdcritic out pls_integer           --> Codigo da critica
                                    ,pr_dscritic out varchar2              --> Descricao da critica
@@ -2338,7 +2338,7 @@ PROCEDURE pc_renovar_lim_desc_titulo(pr_nrdconta  IN crapass.nrdconta%TYPE --> N
         
     /*Cursor para verificar se boleto já nao esta em outro bordero*/   
     CURSOR cr_craptdb (pr_nrdocmto IN craptdb.nrdocmto%TYPE) IS
-     SELECT	
+     SELECT 
         craptdb.nrdocmto,
         craptdb.nrborder
      FROM
@@ -2536,7 +2536,7 @@ PROCEDURE pc_renovar_lim_desc_titulo(pr_nrdconta  IN crapass.nrdconta%TYPE --> N
                               '<nrnosnum>' || vr_tab_dados_titulos(vr_index).nrnosnum || '</nrnosnum>' ||
                               '<flgregis>' || vr_tab_dados_titulos(vr_index).flgregis || '</flgregis>' ||
                               '<cdtpinsc>' || vr_tab_dados_titulos(vr_index).cdtpinsc || '</cdtpinsc>' ||
-                              '<dssituac>' || vr_tab_dados_titulos(vr_index).dssituac || '</dssituac>' ||	
+                              '<dssituac>' || vr_tab_dados_titulos(vr_index).dssituac || '</dssituac>' || 
                            '</inf>'
                           );
           /* buscar proximo */
@@ -3300,8 +3300,8 @@ PROCEDURE pc_listar_titulos_resumo(pr_cdcooper          in crapcop.cdcooper%type
                                 '<nrnosnum>' || vr_tab_dados_titulos(vr_index).nrnosnum || '</nrnosnum>' ||
                                 '<flgregis>' || vr_tab_dados_titulos(vr_index).flgregis || '</flgregis>' ||
                                 '<cdtpinsc>' || vr_tab_dados_titulos(vr_index).cdtpinsc || '</cdtpinsc>' ||
-                                '<dssituac>' || vr_situacao || '</dssituac>' ||	
-                                '<sitibrat>' || vr_ibratan  || '</sitibrat>' ||	
+                                '<dssituac>' || vr_situacao || '</dssituac>' || 
+                                '<sitibrat>' || vr_ibratan  || '</sitibrat>' || 
                              '</inf>'
                             );
             /* buscar proximo */
@@ -3696,7 +3696,7 @@ END pc_solicita_biro_bordero;
       /*Insere um lote novo*/
       vr_flg_criou_lot:=false;
       WHILE NOT vr_flg_criou_lot
-	    LOOP
+      LOOP
       -- Rotina para criar lote e bordero
       vr_nrdolote := fn_sequence(pr_nmtabela => 'CRAPLOT'
                                 ,pr_nmdcampo => 'NRDOLOTE'
@@ -3974,7 +3974,7 @@ END pc_solicita_biro_bordero;
     --
     rw_crapcob cr_crapcob%rowtype;  
 
-    -- Percentual de Concentração de Títulos por Pagador	 
+    -- Percentual de Concentração de Títulos por Pagador   
     cursor cr_concentracao is
     select * from (
         select nrdconta,
@@ -4285,7 +4285,7 @@ END pc_solicita_biro_bordero;
 
       if rw_analise_pagador.inpossui_criticas > 0 then
 
-        -- qtremessa_cartorio	-> Crítica: Qtd Remessa em Cartório acima do permitido. (Ref. TAB052: qtremcrt).
+        -- qtremessa_cartorio -> Crítica: Qtd Remessa em Cartório acima do permitido. (Ref. TAB052: qtremcrt).
         if rw_analise_pagador.qtremessa_cartorio > 0 then
            pr_tab_dados_critica(vr_idtabcritica).dsc := 'Qtd Remessa em Cartório acima do permitido'; 
            pr_tab_dados_critica(vr_idtabcritica).varint := rw_analise_pagador.qtremessa_cartorio;
@@ -4301,7 +4301,7 @@ END pc_solicita_biro_bordero;
            vr_idtabcritica := vr_idtabcritica + 1;
         end if;
               
-        -- qttit_naopagos	-> Crítica: Qtd de Títulos Não Pagos pelo Pagador acima do permitido. (Ref. TAB052: qtnaopag).
+        -- qttit_naopagos -> Crítica: Qtd de Títulos Não Pagos pelo Pagador acima do permitido. (Ref. TAB052: qtnaopag).
         if rw_analise_pagador.qttit_naopagos > 0 then
            pr_tab_dados_critica(vr_idtabcritica).dsc := 'Qtd de Títulos Não Pagos pelo Pagador acima do permitido';
            pr_tab_dados_critica(vr_idtabcritica).varint := rw_analise_pagador.qttit_naopagos; 
@@ -4309,7 +4309,7 @@ END pc_solicita_biro_bordero;
            vr_idtabcritica := vr_idtabcritica + 1;
         end if;
               
-        -- pemin_liquidez_qt ->	Crítica: Perc. Mínimo de Liquidez Cedente x Pagador abaixo do permitido (Qtd. de Títulos).  (Ref. TAB052: qttliqcp).
+        -- pemin_liquidez_qt -> Crítica: Perc. Mínimo de Liquidez Cedente x Pagador abaixo do permitido (Qtd. de Títulos).  (Ref. TAB052: qttliqcp).
         if rw_analise_pagador.pemin_liquidez_qt > 0.0 then
            pr_tab_dados_critica(vr_idtabcritica).dsc := 'Perc. Mínimo de Liquidez Cedente x Pagador abaixo do permitido (Qtd. de Títulos)';
            pr_tab_dados_critica(vr_idtabcritica).varper := rw_analise_pagador.pemin_liquidez_qt; 
@@ -4317,7 +4317,7 @@ END pc_solicita_biro_bordero;
            vr_idtabcritica := vr_idtabcritica + 1;
         end if;
               
-        -- pemin_liquidez_vl ->	Crítica: Perc. Mínimo de Liquidez Cedente x Pagador abaixo do permitido (Valor dos Títulos).  (Ref. TAB052: vltliqcp).
+        -- pemin_liquidez_vl -> Crítica: Perc. Mínimo de Liquidez Cedente x Pagador abaixo do permitido (Valor dos Títulos).  (Ref. TAB052: vltliqcp).
         if rw_analise_pagador.pemin_liquidez_vl > 0.0 then
            pr_tab_dados_critica(vr_idtabcritica).dsc := 'Perc. Mínimo de Liquidez Cedente x Pagador abaixo do permitido (Valor dos Títulos)';
            pr_tab_dados_critica(vr_idtabcritica).varper := rw_analise_pagador.pemin_liquidez_vl; 
@@ -4325,7 +4325,7 @@ END pc_solicita_biro_bordero;
            vr_idtabcritica := vr_idtabcritica + 1;
         end if;
              
-        -- peconcentr_maxtit ->	Crítica: Perc. Concentração Máxima Permitida de Títulos excedida. (Ref. TAB052: pcmxctip).
+        -- peconcentr_maxtit -> Crítica: Perc. Concentração Máxima Permitida de Títulos excedida. (Ref. TAB052: pcmxctip).
         if rw_analise_pagador.peconcentr_maxtit > 0.0 then
            pr_tab_dados_critica(vr_idtabcritica).dsc := 'Perc. Concentração Máxima Permitida de Títulos excedida';
            pr_tab_dados_critica(vr_idtabcritica).varper := rw_analise_pagador.peconcentr_maxtit; 
@@ -4333,7 +4333,7 @@ END pc_solicita_biro_bordero;
            vr_idtabcritica := vr_idtabcritica + 1;
         end if;
               
-        -- inemitente_conjsoc	-> Crítica: Emitente é Cônjuge/Sócio do Pagador (0 = Não / 1 = Sim). (Ref. TAB052: flemipar).
+        -- inemitente_conjsoc -> Crítica: Emitente é Cônjuge/Sócio do Pagador (0 = Não / 1 = Sim). (Ref. TAB052: flemipar).
         if rw_analise_pagador.inemitente_conjsoc > 0 then
            pr_tab_dados_critica(vr_idtabcritica).dsc := 'Emitente é Cônjuge/Sócio do Pagador.';
            pr_tab_dados_critica(vr_idtabcritica).varint := rw_analise_pagador.inemitente_conjsoc;
@@ -4341,7 +4341,7 @@ END pc_solicita_biro_bordero;
            vr_idtabcritica := vr_idtabcritica + 1;
         end if;
               
-        -- inpossui_titdesc	-> Crítica: Cooperado possui Títulos Descontados na Conta deste Pagador  (0 = Não / 1 = Sim). (Ref. TAB052: flpdctcp).
+        -- inpossui_titdesc -> Crítica: Cooperado possui Títulos Descontados na Conta deste Pagador  (0 = Não / 1 = Sim). (Ref. TAB052: flpdctcp).
         if rw_analise_pagador.inpossui_titdesc > 0 then
            pr_tab_dados_critica(vr_idtabcritica).dsc := 'Cooperado possui Títulos Descontados na Conta deste Pagador.';
            pr_tab_dados_critica(vr_idtabcritica).varint := rw_analise_pagador.inpossui_titdesc; 
@@ -4349,7 +4349,7 @@ END pc_solicita_biro_bordero;
            vr_idtabcritica := vr_idtabcritica + 1;
         end if;
               
-        -- invalormax_cnae ->	Crítica: Valor Máximo Permitido por CNAE excedido (0 = Não / 1 = Sim). (Ref. TAB052: vlmxprat).
+        -- invalormax_cnae -> Crítica: Valor Máximo Permitido por CNAE excedido (0 = Não / 1 = Sim). (Ref. TAB052: vlmxprat).
         if rw_analise_pagador.invalormax_cnae > 0 then
            pr_tab_dados_critica(vr_idtabcritica).dsc := 'Valor Máximo Permitido por CNAE excedido.';
            pr_tab_dados_critica(vr_idtabcritica).varint := rw_analise_pagador.invalormax_cnae; 
@@ -4472,7 +4472,7 @@ END pc_solicita_biro_bordero;
       -- ler os registros de detalhe e incluir no xml
 
       pc_escreve_xml('<detalhe>'||
-                        '<concpaga>' 	|| vr_tab_dados_detalhe(0).concpaga || '</concpaga>' ||
+                        '<concpaga>'  || vr_tab_dados_detalhe(0).concpaga || '</concpaga>' ||
                         '<liqpagcd>'  || vr_tab_dados_detalhe(0).liqpagcd || '</liqpagcd>'  ||
                         '<liqgeral>'  || vr_tab_dados_detalhe(0).liqgeral || '</liqgeral>' ||
                      '</detalhe>'
@@ -4847,7 +4847,8 @@ PROCEDURE pc_buscar_tit_bordero_web (
       SELECT 
         crapbdt.nrborder,
         crapbdt.nrctrlim,
-        crapbdt.insitbdt
+        crapbdt.insitbdt,
+        crapbdt.cdoperad
       FROM 
         crapbdt
       where 
@@ -4981,6 +4982,7 @@ PROCEDURE pc_buscar_tit_bordero_web (
                           '<insitbdt>' || rw_crapbdt.insitbdt || '</insitbdt>' ||
                           '<qttitulo>' || vr_qtregist || '</qttitulo>' ||
                           '<vltitulo>' || vr_vltitulo || '</vltitulo>' ||
+                          '<cdoperad>' || rw_crapbdt.cdoperad || '</cdoperad>' ||
                      '</bordero>');
       
                   
@@ -5140,7 +5142,12 @@ PROCEDURE pc_buscar_tit_bordero_web (
                    'cob.incobran '||
                  ' from   crapcob cob '||
                    ' INNER JOIN crapsab sab ON sab.nrinssac = cob.nrinssac AND sab.cdtpinsc = cob.cdtpinsc AND sab.cdcooper = cob.cdcooper AND sab.nrdconta = cob.nrdconta ' ||
-                   ' INNER JOIN craptdb tdb ON tdb.cdcooper=cob.cdcooper AND tdb.nrdconta=cob.nrdconta AND tdb.nrdocmto = cob.nrdocmto ' ||
+                   ' INNER JOIN craptdb tdb ON cob.cdcooper = tdb.cdcooper AND
+                                                      cob.cdbandoc = tdb.cdbandoc AND
+                                                      cob.nrdctabb = tdb.nrdctabb AND
+                                                      cob.nrdconta = tdb.nrdconta AND
+                                                      cob.nrcnvcob = tdb.nrcnvcob AND
+                                                      cob.nrdocmto = tdb.nrdocmto ' ||
                  'where  ' ||
                  ' cob.nrnosnum in ('||pr_nrnosnum||') '||
                  'and    cob.nrdconta = :nrdconta '||
@@ -5654,5 +5661,120 @@ PROCEDURE pc_buscar_tit_bordero_web (
             ROLLBACK;
     END pc_altera_bordero ;
     
+    PROCEDURE pc_resgate_titulo_bordero (pr_cdcooper    IN crapbdt.cdcooper%TYPE  --> Codigo Cooperativa
+                                       ,pr_cdoperad    IN crapbdt.cdoperad%TYPE  --> Codigo operador
+                                       ,pr_dtmvtolt    IN crapbdt.dtmvtolt%TYPE  --> Data Movimento
+                                       ,pr_dtmvtoan    IN crapbdt.dtmvtolt%TYPE  --> Data anterior do movimento
+                                       ,pr_dtresgat    IN crapbdt.dtmvtolt%TYPE  --> Data do resgate
+                                       ,pr_idorigem    IN INTEGER                --> Identificador Origem pagamento
+                                       ,pr_nrdconta    IN crapbdt.nrdconta%TYPE  --> Numero da conta
+                                       ,pr_nrborder    IN crapbdt.nrborder%TYPE  --> Numero do bordero
+                                       ,pr_nrnosnum    IN VARCHAR2               --> Lista de titulos a serem resgatados
+                                       -->OUT<--
+                                       ,pr_cdcritic    OUT INTEGER                 --> Codigo Critica
+                                       ,pr_dscritic    OUT VARCHAR2                --> Descricao Critica
+                                       ) IS
+                                       
+
+       -- Variável de críticas
+       vr_cdcritic crapcri.cdcritic%type; --> Cód. Erro
+       vr_dscritic varchar2(1000);        --> Desc. Erro
+
+       vr_dtmvtolt     DATE;
+       vr_qtregist     NUMBER;
+      -- variaveis de entrada vindas no xml
+      vr_cdcooper integer;
+      vr_cdoperad varchar2(100);
+      vr_nmdatela varchar2(100);
+      vr_nmeacao  varchar2(100);
+      vr_cdagenci varchar2(100);
+      vr_nrdcaixa varchar2(100);
+      vr_idorigem varchar2(100);
+      
+      -- Tratamento de erros
+      vr_exc_erro exception;
+     
+      vr_cddlinha integer;
+      /*Contrato do limite*/
+      CURSOR cr_craplim IS      
+        SELECT 
+          craplim.dtpropos,
+          craplim.dtinivig,
+          craplim.nrctrlim,
+          craplim.vllimite,
+          craplim.qtdiavig,
+          craplim.cddlinha,
+          craplim.tpctrlim,
+          craplim.dtfimvig
+        FROM 
+          craplim
+        where 
+          craplim.cdcooper = vr_cdcooper
+          AND craplim.tpctrlim = 3
+          AND craplim.nrdconta = pr_nrdconta
+          AND craplim.insitlim = 2
+        ;
+      rw_craplim cr_craplim%rowtype;
+      
+      /*Cooperado*/
+      CURSOR cr_crapass IS
+         SELECT
+            crapass.inpessoa
+         FROM
+            crapass
+         WHERE
+            crapass.nrdconta = pr_nrdconta
+            AND crapass.cdcooper = vr_cdcooper;
+      rw_crapass cr_crapass%rowtype;
+        
+      /*Linha de crédito*/
+      CURSOR cr_crapldc IS
+        SELECT 
+          cddlinha,
+          txmensal
+        FROM 
+          crapldc
+        WHERE
+          crapldc.cdcooper = vr_cdcooper 
+          AND crapldc.cddlinha = vr_cddlinha 
+          AND crapldc.tpdescto = 3;
+      rw_crapldc cr_crapldc%rowtype;
+      
+      
+      /*CURSOR do bordero sendo alterado*/
+      CURSOR cr_crapbdt IS
+         SELECT
+             *
+         FROM
+             crapbdt
+         WHERE
+             crapbdt.nrborder = pr_nrborder
+             AND crapbdt.cdcooper = vr_cdcooper
+             AND crapbdt.nrdconta = pr_nrdconta;
+      rw_crapbdt cr_crapbdt%ROWTYPE;
+      
+      /*Títulos sendo resgatados*/ 
+      type tpy_ref_cob is ref cursor;
+      cr_tab_cob       tpy_ref_cob;
+      rw_cob       typ_tab_dados_titulos;
+      vr_sql       varchar2(32767);
+      vr_idtabtitulo INTEGER;
+      vr_tab_dados_titulos typ_tab_dados_titulos;
+      
+      /*Cursor para o associado*/
+      /*/*Cursor para o bordero*/
+      /*Cursor para os titulos*/       
+       
+      -- Pega os dados do Associado
+       
+      -- Pega os dados do bordero
+       
+      -- Pega os dados do titulo
+          -- Pega os dados do lançamento
+          
+       BEGIN
+         
+       NULL;
+    END pc_resgate_titulo_bordero;
 END TELA_ATENDA_DSCTO_TIT;
 /
