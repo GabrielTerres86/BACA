@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.ZOOM0001 AS
     Sistema  : Rotinas genericas referente a zoom de pesquisa
     Sigla    : ZOOM
     Autor    : Adriano Marchi
-    Data     : 30/11/2015.                   Ultima atualizacao: 09/02/2018
+    Data     : 30/11/2015.                   Ultima atualizacao: 12/04/2018
   
    Dados referentes ao programa:
   
@@ -27,7 +27,9 @@ CREATE OR REPLACE PACKAGE CECRED.ZOOM0001 AS
                                            
 			   29/01/2018 - Inclusão da rotina pc_busca_qualif_oper_web - Diego Simas (AMcom).			   
   
-			   09/02/2018 - Inclusão de rotina pc_consultar_limite_adp - Daniel(AMcom).			   
+			   09/02/2018 - Inclusão de rotina pc_consultar_limite_adp - Daniel(AMcom).		
+			   
+			   12/04/2018 - Inclusão da rotina pc_busca_motivo_demissao	   
 
   ---------------------------------------------------------------------------------------------------------------*/
   
@@ -515,7 +517,18 @@ PROCEDURE pc_consultar_limite_adp(pr_cdcooper IN NUMBER             --> Cooperat
 
   PROCEDURE pc_busca_operadoras(pr_cdopetfn IN NUMBER            -- Codigo da operadora
                                ,pr_nmopetfn IN VARCHAR2          -- Descricao da operadora
-                               ,pr_retxml   OUT NOCOPY XMLType); -- Arquivo de retorno do XML                              
+                               ,pr_retxml   OUT NOCOPY XMLType); -- Arquivo de retorno do XML  
+
+  PROCEDURE pc_busca_motivo_demissao(pr_cdmotdem  IN crapnac.cdnacion%TYPE  -- código da nacionalidade
+                                   ,pr_dsmotdem  IN crapnac.dsnacion%TYPE   -- descrição da nacionalidade
+                                   ,pr_nrregist  IN INTEGER                 -- Quantidade de registros
+                                   ,pr_nriniseq  IN INTEGER                 -- Qunatidade inicial
+                                   ,pr_xmllog    IN VARCHAR2                -- XML com informações de LOG
+                                   ,pr_cdcritic  OUT PLS_INTEGER            -- Código da crítica
+                                   ,pr_dscritic  OUT VARCHAR2               -- Descrição da crítica
+                                   ,pr_retxml    IN OUT NOCOPY XMLType      -- Arquivo de retorno do XML
+                                   ,pr_nmdcampo  OUT VARCHAR2               -- Nome do Campo
+                                   ,pr_des_erro  OUT VARCHAR2);   							                               
                                                                                                           
 END ZOOM0001;
 /
@@ -527,7 +540,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ZOOM0001 AS
    Sigla   : CRED
 
    Autor   : Adriano Marchi
-   Data    : 30/11/2015                       Ultima atualizacao: 04/08/2017
+   Data    : 30/11/2015                       Ultima atualizacao: 12/04/2018
 
    Dados referentes ao programa:
 
@@ -556,6 +569,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ZOOM0001 AS
                                                     
      09/02/2018 - Inclusão da pc_consultar_limite_adp 
                   Rotina para consultar informações de limite e adp - Daniel(AMcom)
+
+			   12/04/2018 - Inclusão da rotina pc_busca_motivo_demissao	
 
   ---------------------------------------------------------------------------------------------------------------*/
   
@@ -7243,7 +7258,120 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ZOOM0001 AS
         
       END LOOP; 
                                
-  END pc_busca_operadoras;                              
+  END pc_busca_operadoras;     
+
+  PROCEDURE pc_busca_motivo_demissao(pr_cdmotdem  IN crapnac.cdnacion%TYPE -- código da nacionalidade
+                                   ,pr_dsmotdem  IN crapnac.dsnacion%TYPE -- descrição da nacionalidade
+                                   ,pr_nrregist  IN INTEGER                 -- Quantidade de registros
+                                   ,pr_nriniseq  IN INTEGER                 -- Qunatidade inicial
+                                   ,pr_xmllog    IN VARCHAR2                -- XML com informações de LOG
+                                   ,pr_cdcritic  OUT PLS_INTEGER            -- Código da crítica
+                                   ,pr_dscritic  OUT VARCHAR2               -- Descrição da crítica
+                                   ,pr_retxml    IN OUT NOCOPY XMLType      -- Arquivo de retorno do XML
+                                   ,pr_nmdcampo  OUT VARCHAR2               -- Nome do Campo
+                                   ,pr_des_erro  OUT VARCHAR2)IS
+
+  /*---------------------------------------------------------------------------------------------------------------
+
+  Programa : pc_busca_motivo_demissao                            antiga:
+  Sistema  : Conta-Corrente - Cooperativa de Credito
+  Sigla    : CRED
+  Autor    : Everton - Mouts
+  Data     : Abril/2018                           Ultima atualizacao:
+
+  Dados referentes ao programa:
+
+  Frequencia: -----
+  Objetivo   : Pesquisa de dominios
+
+  Alterações :
+  -------------------------------------------------------------------------------------------------------------*/
+
+  --Variaveis de Criticas
+  vr_cdcritic INTEGER;
+  vr_dscritic VARCHAR2(4000);
+
+  -- Variaveis de log
+  vr_cdcooper crapcop.cdcooper%TYPE;
+  vr_cdoperad VARCHAR2(100);
+  vr_nmdatela VARCHAR2(100);
+  vr_nmeacao  VARCHAR2(100);
+  vr_cdagenci VARCHAR2(100);
+  vr_nrdcaixa VARCHAR2(100);
+  vr_idorigem VARCHAR2(100);
+
+  --Variaveis de Excecoes
+  vr_exc_erro  EXCEPTION;
+
+  BEGIN
+
+    --Inicializa as variaveis
+    vr_cdcritic:= 0;
+    vr_dscritic:= NULL;
+
+    -- Recupera dados de log para consulta posterior
+    gene0004.pc_extrai_dados(pr_xml      => pr_retxml
+                            ,pr_cdcooper => vr_cdcooper
+                            ,pr_nmdatela => vr_nmdatela
+                            ,pr_nmeacao  => vr_nmeacao
+                            ,pr_cdagenci => vr_cdagenci
+                            ,pr_nrdcaixa => vr_nrdcaixa
+                            ,pr_idorigem => vr_idorigem
+                            ,pr_cdoperad => vr_cdoperad
+                            ,pr_dscritic => vr_dscritic);
+
+    -- Verifica se houve erro recuperando informacoes de log
+    IF vr_dscritic IS NOT NULL THEN
+      RAISE vr_exc_erro;
+    END IF;
+
+    TELA_CADMDE.pc_pesq_mtv_desligamento(pr_cdmotdem => pr_cdmotdem
+                                       ,pr_dsmotdem => pr_dsmotdem
+                                       ,pr_nrregist => pr_nrregist
+                                       ,pr_nriniseq => pr_nriniseq
+                                       ,pr_xmllog   => pr_xmllog
+                                       ,pr_cdcritic => vr_cdcritic
+                                       ,pr_dscritic => vr_dscritic
+                                       ,pr_retxml   => pr_retxml
+                                       ,pr_nmdcampo => pr_nmdcampo
+                                       ,pr_des_erro => pr_des_erro);
+
+    IF pr_des_erro <> 'OK' THEN
+
+      IF nvl(vr_cdcritic,0) = 0    AND
+         TRIM(vr_dscritic) IS NULL THEN
+
+        vr_dscritic := 'Erro na chamada da rotina TELA_CADMDE.pc_pesq_mtv_desligamento.';
+
+      END IF;
+
+      RAISE vr_exc_erro;
+
+    END IF;
+
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+      -- Erro
+      pr_cdcritic:= vr_cdcritic;
+      pr_dscritic:= vr_dscritic;
+
+      -- Existe para satisfazer exigência da interface.
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_cdcritic||'-'||pr_dscritic || '</Erro></Root>');
+
+    WHEN OTHERS THEN
+      -- Retorno não OK
+      pr_des_erro:= 'NOK';
+
+      -- Erro
+      pr_cdcritic:= 0;
+      pr_dscritic:= 'Erro na ZOOM0001.pc_busca_motivo_demissao --> '|| SQLERRM;
+
+      -- Existe para satisfazer exigência da interface.
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || pr_cdcritic||'-'||pr_dscritic || '</Erro></Root>');
+
+  END pc_busca_motivo_demissao;                            
   
 END ZOOM0001;
 /

@@ -11080,13 +11080,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
                              ,pr_dsdadant => to_char(rw_crapass.dtdemiss,'DD/MM/RRRR')
                              ,pr_dsdadatu => to_char(nvl(vr_dtdemiss, rw_crapdat.dtmvtolt),'DD/MM/RRRR') );      
 
-    -- Buscar configuração na tabela
-    vr_dstextab := TABE0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
-                                             ,pr_nmsistem => 'CRED'
-                                             ,pr_tptabela => 'GENERI'
-                                             ,pr_cdempres => 0
-                                             ,pr_cdacesso => 'MOTIVODEMI'
-                                             ,pr_tpregist => pr_mtdemiss);
+    -- Buscar motivo demissão
+    CADA0001.pc_busca_motivo_demissao(pr_cdcooper => pr_cdcooper,
+                                      pr_cdmotdem => pr_mtdemiss,
+                                      pr_dsmotdem => vr_dstextab,
+                                      pr_cdcritic => vr_cdcritic,
+                                      pr_des_erro => vr_dscritic);                                             
+
+    --Se não achou motivo
+    IF vr_cdcritic = 848 THEN
+      --Retornar que nao encontrou
+      vr_dsmotdem:= 'MOTIVO NAO CADASTRADO';
+    ELSIF vr_dscritic IS NULL THEN
+      --Retornar o motivo encontrado
+      vr_dsmotdem:= pr_mtdemiss || ' - ' || vr_dstextab;
+    ELSE
+      vr_dsmotdem:= 'ERRO NA BUSCA DE MOTIVO';
+    END IF; 
 
     --Se nao encontrou registro
     IF TRIM(vr_dstextab) IS NULL THEN

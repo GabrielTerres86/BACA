@@ -5,7 +5,7 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0001 is
     Sistema  : Rotinas para cadastros Web
     Sigla    : CADA
     Autor    : Petter R. Villa Real  - Supero
-    Data     : Maio/2013.                   Ultima atualizacao: 22/06/2017
+    Data     : Maio/2013.                   Ultima atualizacao: 12/04/2018
   
    Dados referentes ao programa:
   
@@ -22,7 +22,9 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0001 is
                22/06/2017 - Ajustes para retirar as rotinas de consulta/inclusão de naciondalidade, pois
                             foi criado a tela CADNAC para genrenciar as nacionalidades
                             (Adriano - P339).
-                                             
+			   
+               12/04/2018 - Inserida procedure prc_busca_motivo_demissao e alterada origem de dados da 
+			                procedure prc_busca_motivo_demissao                              
   ---------------------------------------------------------------------------------------------------------------*/
 
   --Tipo de Registro para os lançamentos
@@ -366,6 +368,13 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0001 is
                            ,pr_dsdidade OUT VARCHAR2              --Descricao da idade
                            ,pr_des_erro OUT VARCHAR2);            --Mensagem de Erro
 
+  /* Rotina responsavel por Buscar o Motivo da demissao - via progress*/
+  PROCEDURE prc_busca_motivo_demissao (pr_cdcooper IN crapcop.cdcooper%TYPE  --Código Cooperativa
+                                     ,pr_cdmotdem IN crapass.cdmotdem%TYPE  --Código Motivo Demissao
+                                     ,pr_dsmotdem OUT VARCHAR2              --Descrição Motivo Demissao
+                                     ,pr_cdcritic OUT INTEGER               --Codigo da Critica
+                                     ,pr_des_erro OUT VARCHAR2);
+
   /* Rotina responsavel por Buscar o Motivo da demissao */
   PROCEDURE pc_busca_motivo_demissao (pr_cdcooper IN crapcop.cdcooper%TYPE  --Código Cooperativa
                                      ,pr_cdmotdem IN crapass.cdmotdem%TYPE  --Código Motivo Demissao
@@ -597,7 +606,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
     Sistema  : Rotinas para cadastros Web
     Sigla    : CADA
     Autor    : Petter R. Villa Real  - Supero
-    Data     : Maio/2013.                   Ultima atualizacao: 22/06/2017
+    Data     : Maio/2013.                   Ultima atualizacao: 12/04/2018
   
    Dados referentes ao programa:
   
@@ -631,6 +640,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
               
 			  24/07/2017 - Alterar cdoedptl para idorgexp.
                            PRJ339-CRM  (Odirlei-AMcom)
+
+			  12/04/2018 - Inserida procedure prc_busca_motivo_demissao e alterada origem de dados da 
+			                procedure prc_busca_motivo_demissao 
 	
   ---------------------------------------------------------------------------------------------------------------*/
 
@@ -894,6 +906,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
     END;
   END;
 
+  /* Rotina responsavel por Buscar o Motivo da demissao - via progress*/
+  PROCEDURE prc_busca_motivo_demissao (pr_cdcooper IN crapcop.cdcooper%TYPE  --Código Cooperativa
+                                     ,pr_cdmotdem IN crapass.cdmotdem%TYPE  --Código Motivo Demissao
+                                     ,pr_dsmotdem OUT VARCHAR2              --Descrição Motivo Demissao
+                                     ,pr_cdcritic OUT INTEGER               --Codigo da Critica
+                                     ,pr_des_erro OUT VARCHAR2) IS          --Mensagem de Erro
+  BEGIN
+     cada0001.pc_busca_motivo_demissao (pr_cdcooper  --Código Cooperativa
+                                       ,pr_cdmotdem  --Código Motivo Demissao
+                                       ,pr_dsmotdem  --Descrição Motivo Demissao
+                                       ,pr_cdcritic  --Codigo da Critica
+                                       ,pr_des_erro);
+
+  END;
 
   /* Rotina responsavel por Buscar o Motivo da demissao */
   PROCEDURE pc_busca_motivo_demissao (pr_cdcooper IN crapcop.cdcooper%TYPE  --Código Cooperativa
@@ -922,25 +948,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
                16/09/2013 - Altera¿¿o da rotina para trabalhar com registros de
                             memória,afim de melhorar a performance (Renato - Supero)
   ............................................................................. */
-    DECLARE
+     DECLARE
 
       --Cursores Locais
-      CURSOR cr_craptab (pr_cdcooper IN craptab.cdcooper%TYPE
-                        ,pr_nmsistem IN craptab.nmsistem%TYPE
-                        ,pr_tptabela IN craptab.tptabela%TYPE
-                        ,pr_cdempres IN craptab.cdempres%TYPE
-                        ,pr_cdacesso IN craptab.cdacesso%TYPE
-                        ,pr_tpregist IN craptab.tpregist%TYPE) IS
-        SELECT craptab.tpregist
-             , craptab.dstextab
-        FROM craptab craptab
-        WHERE craptab.cdcooper = pr_cdcooper
-        AND   UPPER(craptab.nmsistem) = pr_nmsistem
-        AND   UPPER(craptab.tptabela) = pr_tptabela
-        AND   craptab.cdempres = pr_cdempres
-        AND   UPPER(craptab.cdacesso) = pr_cdacesso
-        AND   (craptab.tpregist = pr_tpregist OR pr_tpregist IS NULL);
-      rw_craptab cr_craptab%ROWTYPE;
+       CURSOR cr_motivo_deslig (pr_cdmotivo IN tbcotas_motivo_desligamento.cdmotivo%TYPE) IS
+        SELECT cdmotivo
+             , dsmotivo
+          FROM tbcotas_motivo_desligamento 
+         WHERE cdmotivo = pr_cdmotivo OR pr_cdmotivo IS NULL;
 
       --Variaveis Locais
       vr_exc_erro     EXCEPTION;
@@ -952,45 +967,32 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
       pr_cdcritic:= 0;
       pr_des_erro:= NULL;
 
-      -- Se n¿o informar o motivo da demiss¿o
+      -- Se nao informar o motivo da demissao
       IF pr_cdmotdem IS NULL THEN
         -- Limpar os dados em memória
         vr_tbmotdem.DELETE;
         -- Percorre os motivos de demiss¿o
-        FOR rg_craptab IN cr_craptab(pr_cdcooper => pr_cdcooper
-                                    ,pr_nmsistem => 'CRED'
-                                    ,pr_tptabela => 'GENERI'
-                                    ,pr_cdempres => 0
-                                    ,pr_cdacesso => 'MOTIVODEMI'
-                                    ,pr_tpregist => NULL) LOOP
+        FOR rw_motivo_deslig IN cr_motivo_deslig(pr_cdmotivo => NULL) LOOP
           -- Inclui o registro na memória
-          vr_tbmotdem(rg_craptab.tpregist) := rg_craptab.dstextab;
-
+          vr_tbmotdem(rw_motivo_deslig.cdmotivo) := rw_motivo_deslig.dsmotivo;
         END LOOP;
-
+        --
       ELSIF NOT vr_tbmotdem.EXISTS(pr_cdmotdem) THEN
         --Se o codigo do motivo da demissao for zero ignora
         IF NVL(pr_cdmotdem,-1) <> 0 THEN
-
-          -- Buscar configuração na tabela
-          vr_dstextab := TABE0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
-                          ,pr_nmsistem => 'CRED'
-                          ,pr_tptabela => 'GENERI'
-                          ,pr_cdempres => 0
-                          ,pr_cdacesso => 'MOTIVODEMI'
-                          ,pr_tpregist => pr_cdmotdem);
-
+          -- inicaliza variável
+          pr_dsmotdem := null;
+          -- Buscar registro específico
+          FOR rw_motivo_deslig IN cr_motivo_deslig(pr_cdmotivo => pr_cdmotdem) LOOP
+            -- Inclui o registro na memória
+            pr_dsmotdem := rw_motivo_deslig.dsmotivo;
+          END LOOP;
           --Se nao encontrou registro
-          IF TRIM(vr_dstextab) IS NULL THEN
+          IF pr_dsmotdem IS NULL THEN
             --Retornar que nao encontrou
             pr_cdcritic:= 848;
             pr_dsmotdem:= 'MOTIVO NAO CADASTRADO';
-          ELSE
-            --Retornar o motivo encontrado
-            pr_dsmotdem:= vr_dstextab;
           END IF;
-          --Fechar Cursor
-          CLOSE cr_craptab;
         END IF;
       ELSIF vr_tbmotdem.EXISTS(pr_cdmotdem) THEN
         -- Retorna a descrição do registro de memória
