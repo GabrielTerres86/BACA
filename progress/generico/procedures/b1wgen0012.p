@@ -2,7 +2,7 @@
 
    Programa: b1wgen0012.p                  
    Autora  : Ze Eduardo
-   Data    : 20/11/2006                        Ultima atualizacao: 24/11/2017
+   Data    : 20/11/2006                        Ultima atualizacao: 13/04/2018
 
    Dados referentes ao programa:
 
@@ -216,7 +216,9 @@
                24/11/2017 - Retirado (nrborder = 0) e feita validacao para verificar
                             se o cheque esta em bordero de desconto efetivado
                             antes de prosseguir com a custodia
-                            Rotina gerar_digita (Tiago/Adriano #766582)               
+                            Rotina gerar_digita (Tiago/Adriano #766582)      
+							
+			   13/04/2018 - Removidas validacoes de valor do cheque - COMPE SESSAO UNICA (Diego)          
 ............................................................................. */
 
 DEF STREAM str_1.
@@ -2156,37 +2158,6 @@ PROCEDURE gerar_compel:
 
            ASSIGN aux_totqtchq = aux_totqtchq + 1
                   aux_totvlchq = aux_totvlchq + (crapchd.vlcheque * 100).
-
-           IF   ((crapchd.tpdmovto = 1)                       AND
-                 (DECIMAL(SUBSTR(craptab.dstextab,01,15)) > 
-                                           crapchd.vlcheque)) OR
-                ((crapchd.tpdmovto = 2)                       AND
-                 (DECIMAL(SUBSTR(craptab.dstextab,01,15)) < 
-                                           crapchd.vlcheque)) THEN
-                DO:
-                     ret_cdcritic = 711.
-                           
-                     IF aux_flgdepin THEN
-                        UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") + 
-                           " - Ref.: " + STRING(par_dtmvtolt,"99/99/9999") +
-                           " Parametro do cheque superior alterado" +
-                           " Cheque: " + STRING(crapchd.nrcheque,"999999") +
-                           " Agencia destino: " + STRING(crapchd.cdagedst) +
-                           " Conta: " + STRING(crapchd.nrctadst,
-                           "999999999999") + " >> " + aux_dscooper +
-                           "log/compel.log").
-                     ELSE                                                    
-                         UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") +
-                              " - Ref.: " + STRING(par_dtmvtolt,"99/99/9999") +
-                              " Parametro do cheque superior alterado" +
-                              " Cheque: " + STRING(crapchd.nrcheque,"999999") +
-                              " Conta: " + STRING(crapchd.nrdconta,
-                              "999999999999") + " >> " + aux_dscooper +
-                              "log/compel.log").
-
-                     aux_flgerror = TRUE.
-                     LEAVE.
-                END.
 
            IF   LAST-OF(crapchd.cdagenci) THEN
                 DO:
@@ -4234,49 +4205,6 @@ PROCEDURE gerar_compel_prcctl:
        ASSIGN aux_totqtchq = aux_totqtchq + 1
               aux_totvlchq = aux_totvlchq + (crapchd.vlcheque * 100).
 
-       IF   ((crapchd.tpdmovto = 1) AND
-             (DECIMAL(SUBSTR(craptab.dstextab,01,15)) > crapchd.vlcheque)) OR
-            ((crapchd.tpdmovto = 2) AND
-             (DECIMAL(SUBSTR(craptab.dstextab,01,15)) < crapchd.vlcheque)) THEN
-             DO:
-                  ret_cdcritic = 711.
-
-                  IF aux_nmdatela = "PRCCTL" THEN
-                     DO:
-                         IF aux_flgdepin THEN
-                            UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") + 
-                               " - Coop:" + STRING(par_cdcooper,"99") +
-                               " - Processar:" + aux_nmprgexe +
-                               " - Ref.: " + STRING(par_dtmvtolt,"99/99/9999") +
-                               " Parametro do cheque superior alterado" +
-                               " Cheque: " + STRING(crapchd.nrcheque,"999999") +
-                               " Agencia destino: " + STRING(crapchd.cdagedst) +
-                               " Conta: " + STRING(crapchd.nrctadst,
-                               "999999999999") + 
-                               " >> " + aux_nmarqlog).
-                         ELSE
-                             UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") + 
-                                   " - Coop:" + STRING(par_cdcooper,"99") +
-                                   " - Processar:" + aux_nmprgexe +
-                                   " - Ref.: " + STRING(par_dtmvtolt,"99/99/9999") +
-                                   " Parametro do cheque superior alterado" +
-                                   " Cheque: " + STRING(crapchd.nrcheque,"999999") +
-                                   " Conta: " + STRING(crapchd.nrdconta,
-                                   "999999999999") + " >> " + aux_nmarqlog).
-                     END.
-                  ELSE
-                      UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") +
-                          " - Ref.: " + STRING(par_dtmvtolt,"99/99/9999") +
-                          " Parametro do cheque superior alterado" +
-                          " Cheque: " + STRING(crapchd.nrcheque,"999999") +
-                          " Conta: " + STRING(crapchd.nrdconta,
-                          "999999999999") + " >> " + aux_dscooper +
-                          "log/compel.log").
-
-                  aux_flgerror = TRUE.
-                  LEAVE.
-             END.
-
        IF   LAST-OF(crapchd.cdagenci) THEN
             DO:
                 ASSIGN ret_vlrtotal = ret_vlrtotal + aux_totvlchq
@@ -4656,24 +4584,6 @@ PROCEDURE gerar_compel_altoVale:
        ASSIGN aux_totqtchq = aux_totqtchq + 1
               aux_totvlchq = aux_totvlchq + (crapchd.vlcheque * 100).
 
-       IF   ((crapchd.tpdmovto = 1) AND
-             (DEC(SUBSTR(craptab.dstextab,01,15)) > crapchd.vlcheque)) OR
-            ((crapchd.tpdmovto = 2) AND
-             (DEC(SUBSTR(craptab.dstextab,01,15)) < crapchd.vlcheque)) THEN
-            DO:
-                ret_cdcritic = 711.
-
-                UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") +
-                           " - Ref.: " + STRING(par_dtmvtolt,"99/99/9999") +
-                           " Parametro do cheque superior alterado" +
-                           " Cheque: " + STRING(crapchd.nrcheque,"999999") +
-                           " Conta: " + STRING(crapchd.nrdconta,
-                           "999999999999") + " >> " + aux_dscooper +
-                           "log/compel.log").
-
-                aux_flgerror = TRUE.
-                LEAVE.
-            END.
         
    END.   /*  Fim do FOR EACH  */
 
