@@ -191,7 +191,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                             que venceram no dia útil anterior. (Rafael)
 
                25/11/2017 - Ajuste para cobrar IOF. (James - P410)
-               
+
                16/02/2018 - Ref. História KE00726701-36 - Inclusão de Filtro e Parâmetro por Tipo de Pessoa na TAB052
                            (Gustavo Sene - GFT)               
   ---------------------------------------------------------------------------------------------------------------*/
@@ -1006,7 +1006,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
          -- se ainda nao acabou a carencia deve verificar saldo
          -- contar a partir do primeiro dia util qdo a data de vencimento cair no final de semana ou feriado
          --
-         -- Com Registro, Pessoa Física 
+         -- Com Registro, Pessoa Física
          IF (gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper,
                                          pr_dtmvtolt => rw_craptdb.dtvencto) + vr_cardbtitcrpf) > pr_dtmvtolt THEN
 
@@ -1057,11 +1057,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
            END IF;
 
          END IF;
-         -- 
-         
+         --
+
          -- Com Registro, Pessoa Jurídica
          IF (gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper,
-                                         pr_dtmvtolt => rw_craptdb.dtvencto) + vr_cardbtitcrpj) > pr_dtmvtolt THEN  
+                                         pr_dtmvtolt => rw_craptdb.dtvencto) + vr_cardbtitcrpj) > pr_dtmvtolt THEN
 
 
            EXTR0001.pc_obtem_saldo_dia (pr_cdcooper   => pr_cdcooper
@@ -1111,9 +1111,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
            END IF;
 
          END IF;
-         -- 
+         --
 
-         -- Sem Registro, Pessoa Física 
+         -- Sem Registro, Pessoa Física
          IF (gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper,
                                          pr_dtmvtolt => rw_craptdb.dtvencto) + vr_cardbtitpf) > pr_dtmvtolt THEN
 
@@ -1165,7 +1165,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
            END IF;
 
          END IF;
-         -- 
+         --
 
          -- Sem Registro, Pessoa Jurídica
          IF (gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper,
@@ -1219,7 +1219,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
            END IF;
 
          END IF;
-         -- 
+         --
         /*###################################FIM REGRAS####################################################*/
 
         --Gravar lancamento
@@ -4458,14 +4458,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
 
     --> Busca saldo e limite de desconto de cheques
     CURSOR cr_craplim(pr_tpctrlim craplim.tpctrlim%TYPE) IS
-      SELECT /*+index_asc (craplim CRAPLIM##CRAPLIM1)*/
-             craplim.nrdconta ,
-             craplim.vllimite
-        FROM craplim craplim
-       WHERE craplim.cdcooper = pr_cdcooper
-         AND craplim.nrdconta = pr_nrdconta
-         AND craplim.tpctrlim = pr_tpctrlim
-         AND craplim.insitlim = 2;
+    select /*+index_asc (craplim CRAPLIM##CRAPLIM1)*/
+           lim.nrdconta
+          ,lim.vllimite
+    from   craplim lim
+    where  lim.insitlim = 2
+    and    lim.cdcooper = pr_cdcooper
+    and    lim.nrdconta = pr_nrdconta
+    and    lim.tpctrlim = pr_tpctrlim
+    and    pr_tpctrlim <> 3
+    
+    union  all
+    
+    select /*+index_asc (crawlim CRAWLIM##CRAWLIM1)*/
+           lim.nrdconta
+          ,lim.vllimite
+    from   crawlim lim
+    where  lim.insitlim = 2
+    and    lim.cdcooper = pr_cdcooper
+    and    lim.nrdconta = pr_nrdconta
+    and    lim.tpctrlim = pr_tpctrlim
+    and    pr_tpctrlim  = 3;
     rw_craplim cr_craplim%ROWTYPE;
 
     --> Busca Cheques contidos do Bordero de desconto de cheques
