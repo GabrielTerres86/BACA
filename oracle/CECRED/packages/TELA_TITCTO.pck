@@ -238,7 +238,9 @@ PROCEDURE pc_gerar_impressao_titcto_c(
                                         ,pr_des_erro OUT VARCHAR2      --> Erros do processo
                                       );
 END TELA_TITCTO;
-/CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
+/
+CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
+
   /*---------------------------------------------------------------------------------------------------------------------
     Programa : TELA_TITCTO
     Sistema  : Ayllos Web
