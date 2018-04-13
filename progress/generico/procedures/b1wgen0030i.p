@@ -1880,17 +1880,17 @@ PROCEDURE gera-impressao-limite:
             IF  NOT AVAIL crapass THEN
                 ASSIGN aux_flgcriti = TRUE.
 
-            FIND FIRST craplim WHERE craplim.cdcooper = par_cdcooper AND
-                                     craplim.nrdconta = par_nrdconta AND
-                                     craplim.tpctrlim = 3            AND
-                                     craplim.nrctrlim = par_nrctrlim 
+            FIND FIRST crawlim WHERE crawlim.cdcooper = par_cdcooper AND
+                                     crawlim.nrdconta = par_nrdconta AND
+                                     crawlim.tpctrlim = 3            AND
+                                     crawlim.nrctrlim = par_nrctrlim 
                                      NO-LOCK NO-ERROR.
          
-            IF  NOT AVAILABLE craplim   THEN 
+            IF  NOT AVAILABLE crawlim   THEN 
                 ASSIGN aux_flgcriti = TRUE.
 
            FIND crapldc WHERE crapldc.cdcooper = par_cdcooper     AND
-                              crapldc.cddlinha = craplim.cddlinha AND
+                              crapldc.cddlinha = crawlim.cddlinha AND
                               crapldc.tpdescto = 3
                               NO-LOCK NO-ERROR.   
         
@@ -1931,11 +1931,11 @@ PROCEDURE gera-impressao-limite:
                              INPUT INT(tt-contrato_limite.nrdconta),
                              INPUT INT(crapass.inpessoa),
                              INPUT 1, /* p-cdusolcr */
-                             INPUT INT(craplim.cddlinha),
+                             INPUT INT(crawlim.cddlinha),
                              INPUT 3, /*1-Chq Esp./ 2-Desc Chq./ 3-Desc Tit*/
                              INPUT INT(tt-contrato_limite.nrctrlim),
-                             INPUT (IF craplim.dtinivig <> ? THEN
-                                       craplim.dtinivig
+                             INPUT (IF crawlim.dtinivig <> ? THEN
+                                       crawlim.dtinivig
                                    ELSE par_dtmvtolt),
                              INPUT INT(tt-contrato_limite.qtdiavig),
                              INPUT DEC(tt-contrato_limite.vllimite),
@@ -2198,7 +2198,7 @@ PROCEDURE gera-impressao-limite:
             /** Todos os outros ratings de operacoes ainda em aberto **/
             FOR EACH tt-ratings WHERE 
                 NOT (tt-ratings.tpctrrat = 2                 AND
-                     tt-ratings.nrctrrat = craplim.nrctrlim) NO-LOCK
+                     tt-ratings.nrctrrat = crawlim.nrctrlim) NO-LOCK
                      BY tt-ratings.insitrat DESC
                         BY tt-ratings.nrnotrat DESC:
         

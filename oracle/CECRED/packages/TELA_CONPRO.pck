@@ -1304,7 +1304,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONPRO IS
 
   PROCEDURE pc_consulta_acionamento_web(pr_nrdconta IN crawepr.nrdconta%TYPE --> Nr. da Conta
                                        ,pr_nrctremp IN crawepr.nrctremp%TYPE --> Nr. Contrato   
-                                       ,pr_tpproduto IN tbgen_webservice_aciona.tpproduto%TYPE DEFAULT 0 --> Tipo de produto   
+                                       ,pr_tpproduto IN tbgen_webservice_aciona.tpproduto%TYPE DEFAULT 0--> Tipo de produto   
                                        ,pr_dtinicio IN VARCHAR2 -->
                                        ,pr_dtafinal IN VARCHAR2 -->
                                        ,pr_xmllog   IN VARCHAR2 --> XML com informações de LOG
@@ -1509,7 +1509,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONPRO IS
       ELSE
         -- Atribui crítica
         vr_cdcritic := 0;
-        vr_dscritic := 'Dados nao encontrados!';
+        vr_dscritic := 'Nenhum regitro de acionamento encontrado.';
         -- Levanta exceção
         RAISE vr_exc_saida;
       END IF;

@@ -514,7 +514,7 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0002 AS
                                      ,pr_tab_tit_bordero_restri OUT typ_tab_bordero_restri --> retorna restrições do titulos do bordero
                                      ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
                                      ,pr_dscritic OUT VARCHAR2);          --> Descrição da crítica
-                                      
+
 END  DSCT0002;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
@@ -554,6 +554,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
   --
   --    13/03/2018 - Inclusão da Procedure "pc_efetua_analise_pagador", referente à rotina (JOB)
   --                 de validação diária dos Pagadores (Borderô). (Gustavo Sene - GFT)
+  --
+  --    11/04/2018 - Adicionado a utilização da tabela crawlim Paulo Penteado (GFT) 
   --
   --   12/04/2018 - Adicionado novo parametro na chamada da procedure pc_gera_impressao_bordero
   --                referente ao indicador se deve imprimir restricoes. (Alex Sandro - GFT)
@@ -1001,7 +1003,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
                            pr_tpctrato craplim.tpctrlim%TYPE) IS
     select max nrdconta
     from   craplim
-         --> Converter as duas colunas em linha para o for
+           --> Converter as duas colunas em linha para o for
            unpivot ( max for conta in (nrctaav1, nrctaav2) )
     where  cdcooper    = pr_cdcooper
     and    nrdconta    = pr_nrdconta
@@ -6139,7 +6141,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
     and    ret.nrdconta = cob.nrdconta 
     and    ret.nrcnvcob = cob.nrcnvcob 
     and    ret.nrdocmto = cob.nrdocmto
-    and    ret.cdocorre = 23; -- Remetidos ao Cartório    
+    and    ret.cdocorre = 23; -- Remetidos ao Cartório
     rw_qt_remessa_cartorio cr_qt_remessa_cartorio%rowtype;
 
     -- [PAGADORES] - Obter Qtd. de Títulos Protestados do Sacado (Pagador) para o Cedente em questão
@@ -6334,7 +6336,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
     rw_concentracao_excecao cr_concentracao_excecao%rowtype;
 
 
-    -- [PAGADORES] - Verificar se Cooperado Possui Títulos Descontados na Conta do Pagador	 
+    -- [PAGADORES] - Verificar se Cooperado Possui Títulos Descontados na Conta do Pagador
     cursor cr_coop_tit_conta_pag is
     select count(1) tem_tit_conta_pag
     from   crapcob cob_pag
@@ -6363,12 +6365,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
                   and tdb.nrcnvcob     = cob_rem.nrcnvcob 
                   and tdb.nrdocmto     = cob_rem.nrdocmto                     
                   and cob_rem.nrdconta in 
-                               (select nrdconta
-                                  from crapass rem
+                         (select nrdconta
+                            from crapass rem
                            where rem.nrcpfcgc     = cob_pag.nrinssac
                              and rem.cdcooper     = pr_cdcooper
                              and cob_pag.nrinssac = rw_crapsab.nrinssac)
-               );
+             );
     rw_coop_tit_conta_pag cr_coop_tit_conta_pag%rowtype;                                                                   
 
 
@@ -6397,38 +6399,37 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
                                                          ) IS
 
     BEGIN
-       
-         insert into tbdsct_analise_pagador
-                (cdcooper
-                ,nrdconta
-                ,nrinssac
-                ,dtanalise
-                ,hranalise
-                ,qtremessa_cartorio
-                ,qttit_protestados
-                ,qttit_naopagos
-                ,pemin_liquidez_qt
-                ,pemin_liquidez_vl
-                ,peconcentr_maxtit
-                ,inemitente_conjsoc
-                ,inpossui_titdesc
-                ,invalormax_cnae
-                ,inpossui_criticas)
-         values (pr_cdcooper
-                ,pr_nrdconta
-                ,pr_nrinssac
-                ,SYSDATE
-                ,to_char(SYSDATE,'sssss')
-                ,vr_tab_analise_pagador(1).qtremessa_cartorio
-                ,vr_tab_analise_pagador(1).qttit_protestados
-                ,vr_tab_analise_pagador(1).qttit_naopagos
-                ,vr_tab_analise_pagador(1).pemin_liquidez_qt
-                ,vr_tab_analise_pagador(1).pemin_liquidez_vl
-                ,vr_tab_analise_pagador(1).peconcentr_maxtit
-                ,vr_tab_analise_pagador(1).inemitente_conjsoc
-                ,vr_tab_analise_pagador(1).inpossui_titdesc
-                ,vr_tab_analise_pagador(1).invalormax_cnae
-                ,vr_inpossui_criticas);
+       insert into tbdsct_analise_pagador
+              (cdcooper
+              ,nrdconta
+              ,nrinssac
+              ,dtanalise
+              ,hranalise
+              ,qtremessa_cartorio
+              ,qttit_protestados
+              ,qttit_naopagos
+              ,pemin_liquidez_qt
+              ,pemin_liquidez_vl
+              ,peconcentr_maxtit
+              ,inemitente_conjsoc
+              ,inpossui_titdesc
+              ,invalormax_cnae
+              ,inpossui_criticas)
+       values (pr_cdcooper
+              ,pr_nrdconta
+              ,pr_nrinssac
+              ,SYSDATE
+              ,to_char(SYSDATE,'sssss')
+              ,vr_tab_analise_pagador(1).qtremessa_cartorio
+              ,vr_tab_analise_pagador(1).qttit_protestados
+              ,vr_tab_analise_pagador(1).qttit_naopagos
+              ,vr_tab_analise_pagador(1).pemin_liquidez_qt
+              ,vr_tab_analise_pagador(1).pemin_liquidez_vl
+              ,vr_tab_analise_pagador(1).peconcentr_maxtit
+              ,vr_tab_analise_pagador(1).inemitente_conjsoc
+              ,vr_tab_analise_pagador(1).inpossui_titdesc
+              ,vr_tab_analise_pagador(1).invalormax_cnae
+              ,vr_inpossui_criticas);
 
 
     EXCEPTION
@@ -6599,17 +6600,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
 
          --  INPOSSUI_TITDESC   : Cooperado possui Títulos Descontados na Conta deste Pagador  (0 = Não / 1 = Sim). (Ref. TAB052: flpdctcp)
          if vr_tab_dados_dsctit(1).flpdctcp = 1 then 
-         open  cr_coop_tit_conta_pag;
-         fetch cr_coop_tit_conta_pag into rw_coop_tit_conta_pag;
-         if    cr_coop_tit_conta_pag%found then
+           open  cr_coop_tit_conta_pag;
+           fetch cr_coop_tit_conta_pag into rw_coop_tit_conta_pag;
+           if    cr_coop_tit_conta_pag%found then
                  vr_coop_tit_conta_pag := rw_coop_tit_conta_pag.tem_tit_conta_pag;
-         end if;
-         close cr_coop_tit_conta_pag;      
-   
+           end if;
+           close cr_coop_tit_conta_pag;      
+           
            if  nvl(vr_coop_tit_conta_pag, 0) > 0 then
-             vr_tab_analise_pagador(1).inpossui_titdesc := 1;
-             vr_inpossui_criticas := 1;
-         end if;
+               vr_tab_analise_pagador(1).inpossui_titdesc := 1;
+               vr_inpossui_criticas := 1;
+           end if;
 
          end if;  
 

@@ -522,6 +522,8 @@
                             a tabela de proposta CRAWLIM.
                             Criado a procedure busca_dados_proposta para preencher a tt-dsctit_dados_limite com os dados da proposta, ela é chamada na procedure 
                             busca_dados_limite_altera (Paulo Penteado GFT)
+                            
+               10/04/2018 - Adicionado o procedimento busca_dados_proposta_consulta (Paulo Penteado GFT)
 
                12/04/2018 - Criado a procedure 'busca_dados_limite_manutencao',
                               - Criado a procedure 'realizar_manutencao_contrato', 
@@ -3076,6 +3078,114 @@ PROCEDURE busca_dados_limite_consulta:
         DO:
             ASSIGN aux_cdcritic = 0
                    aux_dscritic = "Dados de limite nao encontrados.".
+                   
+            RUN gera_erro (INPUT par_cdcooper,
+                           INPUT par_cdagenci,
+                           INPUT par_nrdcaixa,
+                           INPUT 1,            /** Sequencia **/
+                           INPUT aux_cdcritic,
+                           INPUT-OUTPUT aux_dscritic).
+                                       
+            RETURN "NOK".            
+        END.
+    
+    RUN sistema/generico/procedures/b1wgen9999.p PERSISTENT
+        SET h-b1wgen9999.                                     
+
+    IF  NOT VALID-HANDLE(h-b1wgen9999)  THEN
+        DO:
+            ASSIGN aux_cdcritic = 0
+                   aux_dscritic = "Handle invalido para BO b1wgen9999.".
+                   
+            RUN gera_erro (INPUT par_cdcooper,
+                           INPUT par_cdagenci,
+                           INPUT par_nrdcaixa,
+                           INPUT 1,            /** Sequencia **/
+                           INPUT aux_cdcritic,
+                           INPUT-OUTPUT aux_dscritic).
+                                       
+            RETURN "NOK".
+
+        END.
+        
+    RUN lista_avalistas IN h-b1wgen9999 (INPUT par_cdcooper,  
+                                         INPUT par_cdagenci,
+                                         INPUT par_nrdcaixa,
+                                         INPUT par_cdoperad,
+                                         INPUT par_nmdatela,
+                                         INPUT par_idorigem,
+                                         INPUT par_nrdconta,
+                                         INPUT par_idseqttl,
+                                         INPUT 8, /** Tipo do contrato **/
+                                         INPUT par_nrctrlim,    
+                                         INPUT tt-dsctit_dados_limite.nrctaav1,
+                                         INPUT tt-dsctit_dados_limite.nrctaav2,
+                                        OUTPUT TABLE tt-dados-avais,
+                                        OUTPUT TABLE tt-erro).      
+                                          
+    DELETE PROCEDURE h-b1wgen9999.
+    
+    IF  RETURN-VALUE = "NOK"  THEN
+        RETURN "NOK".
+
+    RETURN "OK".
+
+END PROCEDURE.
+
+/*******************************************************************/
+/*    Buscar dados de uma proposta limite de desconto de titulos   */
+/*******************************************************************/
+PROCEDURE busca_dados_proposta_consulta:
+
+    DEF INPUT PARAM par_cdcooper AS INTE                    NO-UNDO.
+    DEF INPUT PARAM par_cdagenci AS INTE                    NO-UNDO.
+    DEF INPUT PARAM par_nrdcaixa AS INTE                    NO-UNDO.
+    DEF INPUT PARAM par_cdoperad AS CHAR                    NO-UNDO.
+    DEF INPUT PARAM par_dtmvtolt AS DATE                    NO-UNDO.
+    DEF INPUT PARAM par_idorigem AS INTE                    NO-UNDO. 
+    DEF INPUT PARAM par_nrdconta AS INTE                    NO-UNDO.
+    DEF INPUT PARAM par_idseqttl AS INTE                    NO-UNDO.
+    DEF INPUT PARAM par_nmdatela AS CHAR                    NO-UNDO.
+    DEF INPUT PARAM par_nrctrlim AS INTE                    NO-UNDO.
+    
+    DEF OUTPUT PARAM TABLE FOR tt-erro.
+    DEF OUTPUT PARAM TABLE FOR tt-dsctit_dados_limite.
+    DEF OUTPUT PARAM TABLE FOR tt-dados-avais.
+    DEF OUTPUT PARAM TABLE FOR tt-dados_dsctit.
+    
+    EMPTY TEMP-TABLE tt-erro.
+    EMPTY TEMP-TABLE tt-dsctit_dados_limite.
+    EMPTY TEMP-TABLE tt-dados-avais.
+    EMPTY TEMP-TABLE tt-dados_dsctit.
+    
+    ASSIGN aux_dscritic = ""
+           aux_cdcritic = 0.
+    
+    DEF VAR h-b1wgen9999 AS HANDLE NO-UNDO.
+    
+    RUN busca_dados_proposta(INPUT par_cdcooper,
+                             INPUT par_cdagenci, 
+                             INPUT par_nrdcaixa,
+                             INPUT par_cdoperad,
+                             INPUT par_dtmvtolt,
+                             INPUT par_idorigem,
+                             INPUT par_nrdconta,
+                             INPUT par_idseqttl,  
+                             INPUT par_nmdatela,
+                             INPUT par_nrctrlim,
+                             INPUT "C",
+                             OUTPUT TABLE tt-erro,
+                             OUTPUT TABLE tt-dsctit_dados_limite,
+                             OUTPUT TABLE tt-dados_dsctit).
+    
+    IF  RETURN-VALUE = "NOK"  THEN
+        RETURN "NOK".
+    
+    FIND FIRST tt-dsctit_dados_limite NO-LOCK NO-ERROR.
+    IF  NOT AVAIL tt-dsctit_dados_limite  THEN
+        DO:
+            ASSIGN aux_cdcritic = 0
+                   aux_dscritic = "Dados da proposta nao encontrados.".
                    
             RUN gera_erro (INPUT par_cdcooper,
                            INPUT par_cdagenci,
@@ -7362,7 +7472,7 @@ PROCEDURE busca_parametros_dsctit:
                   tt-dsctit.qtprzmax = INTE(ENTRY(10,craptab.dstextab,";"))
                   tt-dsctit.qtminfil = INTE(ENTRY(11,craptab.dstextab,";"))
                   tt-dsctit.nrmespsq = INTE(ENTRY(12,craptab.dstextab,";"))
-                  tt-dsctit.pctitemi = DECI(ENTRY(13,craptab.dstextab,";"))
+                  //tt-dsctit.pctitemi = DECI(ENTRY(13,craptab.dstextab,";"))
                   tt-dsctit.pctolera = DECI(ENTRY(14,craptab.dstextab,";"))
                   tt-dsctit.pcdmulta = DECI(ENTRY(15,craptab.dstextab,";"))
                   tt-dsctit.cardbtit = INTE(ENTRY(31,craptab.dstextab,";"))
@@ -7383,7 +7493,7 @@ PROCEDURE busca_parametros_dsctit:
                   tt-dados_cecred_dsctit.qtprzmax = INTE(ENTRY(25,craptab.dstextab,";"))
                   tt-dados_cecred_dsctit.qtminfil = INTE(ENTRY(26,craptab.dstextab,";"))
                   tt-dados_cecred_dsctit.nrmespsq = INTE(ENTRY(27,craptab.dstextab,";"))
-                  tt-dados_cecred_dsctit.pctitemi = DECI(ENTRY(28,craptab.dstextab,";"))
+                  //tt-dados_cecred_dsctit.pctitemi = DECI(ENTRY(28,craptab.dstextab,";"))
                   tt-dados_cecred_dsctit.pctolera = DECI(ENTRY(29,craptab.dstextab,";"))
                   tt-dados_cecred_dsctit.pcdmulta = DECI(ENTRY(30,craptab.dstextab,";"))
                   tt-dados_cecred_dsctit.cardbtit = INTE(ENTRY(32,craptab.dstextab,";"))
@@ -7526,7 +7636,7 @@ PROCEDURE grava_parametros_dsctit:
                                + ";" + STRING(tt-dados_dsctit.qtprzmax,"999")
                                + ";" + STRING(tt-dados_dsctit.qtminfil,"999")
                                + ";" + STRING(tt-dados_dsctit.nrmespsq,"99")
-                               + ";" + STRING(tt-dados_dsctit.pctitemi,"999")
+                               //+ ";" + STRING(tt-dados_dsctit.pctitemi,"999")
                                + ";" + STRING(tt-dados_dsctit.pctolera,"999")
                                + ";" + STRING(tt-dados_dsctit.pcdmulta,"999.999999")
                                     /* CECRED */
@@ -7542,7 +7652,7 @@ PROCEDURE grava_parametros_dsctit:
                                + ";" + STRING(tt-dados_cecred_dsctit.qtprzmax,"999")
                                + ";" + STRING(tt-dados_cecred_dsctit.qtminfil,"999")
                                + ";" + STRING(tt-dados_cecred_dsctit.nrmespsq,"99")
-                               + ";" + STRING(tt-dados_cecred_dsctit.pctitemi,"999")
+                               //+ ";" + STRING(tt-dados_cecred_dsctit.pctitemi,"999")
                                + ";" + STRING(tt-dados_cecred_dsctit.pctolera,"999")
                                + ";" + STRING(tt-dados_cecred_dsctit.pcdmulta,"999.999999")
                                /*carencia debito titulos vencidos*/
@@ -10650,20 +10760,20 @@ PROCEDURE busca_dados_impressao_dsctit:
                                          OUTPUT rel_nmrescop[1],
                                          OUTPUT rel_nmrescop[2]).
 
-    RUN busca_dados_limite_consulta (INPUT par_cdcooper,
-                                     INPUT par_cdagenci, 
-                                     INPUT par_nrdcaixa, 
-                                     INPUT par_cdoperad,
-                                     INPUT par_dtmvtolt,
-                                     INPUT par_idorigem, 
-                                     INPUT par_nrdconta,
-                                     INPUT par_idseqttl, 
-                                     INPUT par_nmdatela,
-                                     INPUT par_nrctrlim,
-                                    OUTPUT TABLE tt-erro,
-                                    OUTPUT TABLE tt-dsctit_dados_limite,
-                                    OUTPUT TABLE tt-dados-avais,
-                                    OUTPUT TABLE tt-dados_dsctit).
+    RUN busca_dados_proposta_consulta (INPUT par_cdcooper,
+                                       INPUT par_cdagenci, 
+                                       INPUT par_nrdcaixa, 
+                                       INPUT par_cdoperad,
+                                       INPUT par_dtmvtolt,
+                                       INPUT par_idorigem, 
+                                       INPUT par_nrdconta,
+                                       INPUT par_idseqttl, 
+                                       INPUT par_nmdatela,
+                                       INPUT par_nrctrlim,
+                                      OUTPUT TABLE tt-erro,
+                                      OUTPUT TABLE tt-dsctit_dados_limite,
+                                      OUTPUT TABLE tt-dados-avais,
+                                      OUTPUT TABLE tt-dados_dsctit).
 
     IF  RETURN-VALUE = "NOK"  THEN
         DO:
@@ -17820,8 +17930,6 @@ PROCEDURE valida_titulos_bordero:
 
     RETURN "OK".
 END PROCEDURE.
-
-/* .......................................................................... */
 
 /****************************************************************************/
 /*    Buscar dados de um limite de desconto de titulos COMPLETO - opcao "A" */

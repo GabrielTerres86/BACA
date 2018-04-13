@@ -1317,6 +1317,54 @@ PROCEDURE realizar_manutencao_contrato:
         
 END PROCEDURE.
 
+/********************************************************************/
+/*    Buscar dados de uma proposta limite de desconto de titulos    */
+/********************************************************************/
+PROCEDURE busca_dados_proposta_consulta:
+
+    RUN busca_dados_proposta_consulta IN hBO (INPUT aux_cdcooper,
+                                            INPUT aux_cdagenci,
+                                            INPUT aux_nrdcaixa,
+                                            INPUT aux_cdoperad,
+                                            INPUT aux_dtmvtolt,
+                                            INPUT aux_idorigem,
+                                            INPUT aux_nrdconta,
+                                            INPUT aux_idseqttl,
+                                            INPUT aux_nmdatela,
+                                            INPUT aux_nrctrlim,
+                                           OUTPUT TABLE tt-erro,
+                                           OUTPUT TABLE tt-dsctit_dados_limite,
+                                           OUTPUT TABLE tt-dados-avais,
+                                           OUTPUT TABLE tt-dados_dsctit).
+
+    IF  RETURN-VALUE = "NOK"  THEN
+        DO:
+            FIND FIRST tt-erro NO-LOCK NO-ERROR.
+      
+            IF  NOT AVAILABLE tt-erro  THEN
+                DO:
+                    CREATE tt-erro.
+                    ASSIGN tt-erro.dscritic = "Nao foi possivel concluir a " +
+                                              "operacao.".
+                END.
+                
+            RUN piXmlSaida (INPUT TEMP-TABLE tt-erro:HANDLE,
+                            INPUT "Erro").
+        END.
+    ELSE 
+        DO:
+            RUN piXmlNew.
+            RUN piXmlExport (INPUT TEMP-TABLE tt-dsctit_dados_limite:HANDLE,
+                             INPUT "Dados_Limite").
+            RUN piXmlExport (INPUT TEMP-TABLE tt-dados-avais:HANDLE,
+                             INPUT "Avais").
+            RUN piXmlExport (INPUT TEMP-TABLE tt-dados_dsctit:HANDLE,
+                             INPUT "Dados_Desconto").
+            RUN piXmlSave.
+        END.
+        
+END PROCEDURE.
+
 /* .......................................................................... */
 
 
