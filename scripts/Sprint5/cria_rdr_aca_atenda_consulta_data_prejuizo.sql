@@ -26,7 +26,7 @@ begin
   dbms_output.put_line('Inicio do programa');
   
   -- Mensageria
-  OPEN cr_craprdr(pr_nmprogra => 'EMPR0002');
+  OPEN cr_craprdr(pr_nmprogra => 'LIMI0001');
   FETCH cr_craprdr INTO rw_craprdr;
     
   -- Verifica se existe a tela do ayllos web
@@ -38,13 +38,13 @@ begin
     -- Insere ação da tela do ayllos web
     INSERT INTO craprdr(nmprogra
                        ,dtsolici) 
-                 values('EMPR0002'
+                 values('LIMI0001'
                        ,SYSDATE);
     -- Posiciona no registro criado
-    OPEN cr_craprdr(pr_nmprogra => 'EMPR0002');
+    OPEN cr_craprdr(pr_nmprogra => 'LIMI0001');
     FETCH cr_craprdr INTO rw_craprdr;
 
-    dbms_output.put_line('Insere CRAPRDR -> EMPR0002: ' || rw_craprdr.nrseqrdr);
+    dbms_output.put_line('Insere CRAPRDR -> LIMI0001: ' || rw_craprdr.nrseqrdr);
 
   END IF;  
   
@@ -55,7 +55,7 @@ begin
   
   -- TAB089 - ACAO CONSULTAR
   OPEN cr_crapaca(pr_nmdeacao => 'BUSCA_DTPRJATR'
-                 ,pr_nmpackag => 'EMPR0002'
+                 ,pr_nmpackag => 'LIMI0001'
                  ,pr_nmproced => 'pc_busca_dts_preju_atraso'
                  ,pr_nrseqrdr => rw_craprdr.nrseqrdr);
                    
@@ -71,12 +71,12 @@ begin
                         lstparam, 
                         nrseqrdr) 
                  VALUES('BUSCA_DTPRJATR',
-                        'EMPR0002',
+                        'LIMI0001',
                         'pc_busca_dts_preju_atraso',
                         'pr_nrdconta,pr_cdcooper,pr_idseqttl,pr_nrcpfope',
                         rw_craprdr.nrseqrdr);
                              
-    dbms_output.put_line('Insere CRAPACA -> BUSCA_DTPRJATR -> EMPR0002.pc_busca_dts_preju_atraso');
+    dbms_output.put_line('Insere CRAPACA -> BUSCA_DTPRJATR -> LIMI0001.pc_busca_dts_preju_atraso');
     
   END IF;
   
