@@ -248,6 +248,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TIPCTA IS
       -- Variaveis auxiliares
       vr_maior_id     tbcc_tipo_conta.cdtipo_conta%TYPE;
       vr_cdtipo_conta tbcc_tipo_conta.cdtipo_conta%TYPE;
+      vr_nmtabela     tbcc_campo_historico.nmtabela_oracle%TYPE;
+      
+      -- Variaveis de log
+      vr_cdoperad VARCHAR2(100);
+      vr_cdcooper NUMBER;
+      vr_nmdatela VARCHAR2(100);
+      vr_nmeacao  VARCHAR2(100);
+      vr_cdagenci VARCHAR2(100);
+      vr_nrdcaixa VARCHAR2(100);
+      vr_idorigem VARCHAR2(100);
       
       -- Busca ultimo id de tipo de conta
       CURSOR cr_ult_tipo_conta (pr_inpessoa     IN tbcc_tipo_conta.inpessoa%TYPE) IS
@@ -257,6 +267,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TIPCTA IS
       
     BEGIN
       
+      -- Extrair dados do xml gerado na requisição
+      gene0004.pc_extrai_dados(pr_xml      => pr_retxml
+                              ,pr_cdcooper => vr_cdcooper
+                              ,pr_nmdatela => vr_nmdatela
+                              ,pr_nmeacao  => vr_nmeacao
+                              ,pr_cdagenci => vr_cdagenci
+                              ,pr_nrdcaixa => vr_nrdcaixa
+                              ,pr_idorigem => vr_idorigem
+                              ,pr_cdoperad => vr_cdoperad
+                              ,pr_dscritic => vr_dscritic);
+
+      -- Verifica se houve erro recuperando informacoes de log
+      IF vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_saida;
+      END IF;
+    
       IF pr_inpessoa = 0 THEN
         vr_dscritic := 'Tipo de pessoa inválido.';
         RAISE vr_exc_saida;
@@ -314,6 +340,157 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TIPCTA IS
           RAISE vr_exc_saida;
         WHEN OTHERS THEN
           vr_dscritic := 'Erro ao inserir tipo de conta. ' || SQLERRM;
+          RAISE vr_exc_saida;
+      END;
+      
+      -- CRIAR OS REGISTROS DE HISTÓRICO
+      DECLARE
+        vr_exphistor   EXCEPTION;
+      BEGIN
+        -- Fixa o nome da tabela 
+        vr_nmtabela := 'TBCC_TIPO_CONTA';
+        
+        -- INPESSOA
+        CADA0006.pc_grava_dados_hist(pr_nmtabela => vr_nmtabela
+                                    ,pr_nmdcampo => 'INPESSOA'
+                                    ,pr_cdtipcta => vr_cdtipo_conta
+                                    ,pr_tpoperac => 1 -- Inclusão
+                                    ,pr_dsvalant => NULL 
+                                    ,pr_dsvalnov => pr_inpessoa
+                                    ,pr_cdoperad => vr_cdoperad
+                                    ,pr_dscritic => vr_dscritic);
+        
+        -- Se ocorrer erro 
+        IF vr_dscritic IS NOT NULL THEN
+          RAISE vr_exphistor;
+        END IF;
+        
+        -- CDTIPO_CONTA
+        CADA0006.pc_grava_dados_hist(pr_nmtabela => vr_nmtabela
+                                    ,pr_nmdcampo => 'CDTIPO_CONTA'
+                                    ,pr_cdtipcta => vr_cdtipo_conta
+                                    ,pr_tpoperac => 1 -- Inclusão
+                                    ,pr_dsvalant => NULL 
+                                    ,pr_dsvalnov => vr_cdtipo_conta
+                                    ,pr_cdoperad => vr_cdoperad
+                                    ,pr_dscritic => vr_dscritic);
+        
+        -- Se ocorrer erro 
+        IF vr_dscritic IS NOT NULL THEN
+          RAISE vr_exphistor;
+        END IF;
+        
+        -- DSTIPO_CONTA
+        CADA0006.pc_grava_dados_hist(pr_nmtabela => vr_nmtabela
+                                    ,pr_nmdcampo => 'DSTIPO_CONTA'
+                                    ,pr_cdtipcta => vr_cdtipo_conta
+                                    ,pr_tpoperac => 1 -- Inclusão
+                                    ,pr_dsvalant => NULL 
+                                    ,pr_dsvalnov => pr_dstipo_conta
+                                    ,pr_cdoperad => vr_cdoperad
+                                    ,pr_dscritic => vr_dscritic);
+        
+        -- Se ocorrer erro 
+        IF vr_dscritic IS NOT NULL THEN
+          RAISE vr_exphistor;
+        END IF;
+        
+        -- IDINDIVIDUAL
+        CADA0006.pc_grava_dados_hist(pr_nmtabela => vr_nmtabela
+                                    ,pr_nmdcampo => 'IDINDIVIDUAL'
+                                    ,pr_cdtipcta => vr_cdtipo_conta
+                                    ,pr_tpoperac => 1 -- Inclusão
+                                    ,pr_dsvalant => NULL 
+                                    ,pr_dsvalnov => pr_individual
+                                    ,pr_cdoperad => vr_cdoperad
+                                    ,pr_dscritic => vr_dscritic);
+        
+        -- Se ocorrer erro 
+        IF vr_dscritic IS NOT NULL THEN
+          RAISE vr_exphistor;
+        END IF;
+        
+        -- IDCONJUNTA_SOLIDARIA
+        CADA0006.pc_grava_dados_hist(pr_nmtabela => vr_nmtabela
+                                    ,pr_nmdcampo => 'IDCONJUNTA_SOLIDARIA'
+                                    ,pr_cdtipcta => vr_cdtipo_conta
+                                    ,pr_tpoperac => 1 -- Inclusão
+                                    ,pr_dsvalant => NULL 
+                                    ,pr_dsvalnov => pr_conjunta_solidaria
+                                    ,pr_cdoperad => vr_cdoperad
+                                    ,pr_dscritic => vr_dscritic);
+        
+        -- Se ocorrer erro 
+        IF vr_dscritic IS NOT NULL THEN
+          RAISE vr_exphistor;
+        END IF;
+        
+        -- IDCONJUNTA_NAO_SOLIDARIA
+        CADA0006.pc_grava_dados_hist(pr_nmtabela => vr_nmtabela
+                                    ,pr_nmdcampo => 'IDCONJUNTA_NAO_SOLIDARIA'
+                                    ,pr_cdtipcta => vr_cdtipo_conta
+                                    ,pr_tpoperac => 1 -- Inclusão
+                                    ,pr_dsvalant => NULL 
+                                    ,pr_dsvalnov => pr_conjunta_nao_solidaria
+                                    ,pr_cdoperad => vr_cdoperad
+                                    ,pr_dscritic => vr_dscritic);
+        
+        -- Se ocorrer erro 
+        IF vr_dscritic IS NOT NULL THEN
+          RAISE vr_exphistor;
+        END IF;
+        
+        -- IDTIPO_CADASTRO
+        CADA0006.pc_grava_dados_hist(pr_nmtabela => vr_nmtabela
+                                    ,pr_nmdcampo => 'IDTIPO_CADASTRO'
+                                    ,pr_cdtipcta => vr_cdtipo_conta
+                                    ,pr_tpoperac => 1 -- Inclusão
+                                    ,pr_dsvalant => NULL 
+                                    ,pr_dsvalnov => pr_tpcadast
+                                    ,pr_cdoperad => vr_cdoperad
+                                    ,pr_dscritic => vr_dscritic);
+        
+        -- Se ocorrer erro 
+        IF vr_dscritic IS NOT NULL THEN
+          RAISE vr_exphistor;
+        END IF;
+        
+        -- CDMODALIDADE_TIPO
+        CADA0006.pc_grava_dados_hist(pr_nmtabela => vr_nmtabela
+                                    ,pr_nmdcampo => 'CDMODALIDADE_TIPO'
+                                    ,pr_cdtipcta => vr_cdtipo_conta
+                                    ,pr_tpoperac => 1 -- Inclusão
+                                    ,pr_dsvalant => NULL 
+                                    ,pr_dsvalnov => pr_cdmodali
+                                    ,pr_cdoperad => vr_cdoperad
+                                    ,pr_dscritic => vr_dscritic);
+        
+        -- Se ocorrer erro 
+        IF vr_dscritic IS NOT NULL THEN
+          RAISE vr_exphistor;
+        END IF;
+        
+        -- INDCONTA_ITG
+        CADA0006.pc_grava_dados_hist(pr_nmtabela => vr_nmtabela
+                                    ,pr_nmdcampo => 'INDCONTA_ITG'
+                                    ,pr_cdtipcta => vr_cdtipo_conta
+                                    ,pr_tpoperac => 1 -- Inclusão
+                                    ,pr_dsvalant => NULL 
+                                    ,pr_dsvalnov => pr_indconta_itg
+                                    ,pr_cdoperad => vr_cdoperad
+                                    ,pr_dscritic => vr_dscritic);
+        
+        -- Se ocorrer erro 
+        IF vr_dscritic IS NOT NULL THEN
+          RAISE vr_exphistor;
+        END IF;
+        
+      EXCEPTION
+        WHEN vr_exphistor THEN
+          vr_dscritic := 'Erro ao gerar histórico: '||vr_dscritic;
+          RAISE vr_exc_saida;
+        WHEN OTHERS THEN
+          vr_dscritic := 'Erro ao gerar histórico: '||SQLERRM;
           RAISE vr_exc_saida;
       END;
       
@@ -389,17 +566,33 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TIPCTA IS
       -- Variável de críticas
       vr_cdcritic crapcri.cdcritic%TYPE; --> Cód. Erro
       vr_dscritic VARCHAR2(1000); --> Desc. Erro
-    
+      
       -- Tratamento de erros
       vr_exc_saida EXCEPTION;
+      
+      -- Variáveis
+      vr_nmtabela     tbcc_campo_historico.nmtabela_oracle%TYPE;
+      
+      -- Variaveis de log
+      vr_cdoperad VARCHAR2(100);
+      vr_cdcooper NUMBER;
+      vr_nmdatela VARCHAR2(100);
+      vr_nmeacao  VARCHAR2(100);
+      vr_cdagenci VARCHAR2(100);
+      vr_nrdcaixa VARCHAR2(100);
+      vr_idorigem VARCHAR2(100);
       
       -- Busca tipo de conta
       CURSOR cr_ult_tipo_conta (pr_inpessoa     IN tbcc_tipo_conta.inpessoa%TYPE
                                ,pr_cdtipo_conta IN tbcc_tipo_conta.cdtipo_conta%TYPE) IS
         SELECT cta.cdtipo_conta
+              ,cta.dstipo_conta
               ,cta.idindividual
               ,cta.idconjunta_solidaria
               ,cta.idconjunta_nao_solidaria
+              ,cta.idtipo_cadastro
+              ,cta.cdmodalidade_tipo
+              ,cta.indconta_itg
           FROM tbcc_tipo_conta cta
          WHERE cta.inpessoa = pr_inpessoa
            AND cta.cdtipo_conta = pr_cdtipo_conta;
@@ -419,6 +612,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TIPCTA IS
       
     BEGIN
       
+      -- Extrair dados do xml gerado na requisição
+      gene0004.pc_extrai_dados(pr_xml      => pr_retxml
+                              ,pr_cdcooper => vr_cdcooper
+                              ,pr_nmdatela => vr_nmdatela
+                              ,pr_nmeacao  => vr_nmeacao
+                              ,pr_cdagenci => vr_cdagenci
+                              ,pr_nrdcaixa => vr_nrdcaixa
+                              ,pr_idorigem => vr_idorigem
+                              ,pr_cdoperad => vr_cdoperad
+                              ,pr_dscritic => vr_dscritic);
+
+      -- Verifica se houve erro recuperando informacoes de log
+      IF vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_saida;
+      END IF;  
+    
       IF pr_inpessoa = 0 THEN
         vr_dscritic := 'Tipo de pessoa inválido.';
         RAISE vr_exc_saida;
@@ -526,6 +735,127 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TIPCTA IS
           RAISE vr_exc_saida;
       END;
       
+      -- CRIAR OS REGISTROS DE HISTÓRICO
+      DECLARE
+        vr_exphistor   EXCEPTION;
+      BEGIN
+        -- Fixa o nome da tabela 
+        vr_nmtabela := 'TBCC_TIPO_CONTA';
+        
+        -- DSTIPO_CONTA
+        CADA0006.pc_grava_dados_hist(pr_nmtabela => vr_nmtabela
+                                    ,pr_nmdcampo => 'DSTIPO_CONTA'
+                                    ,pr_cdtipcta => pr_cdtipo_conta
+                                    ,pr_tpoperac => 2 -- Alteração
+                                    ,pr_dsvalant => rw_ult_tipo_conta.dstipo_conta 
+                                    ,pr_dsvalnov => pr_dstipo_conta
+                                    ,pr_cdoperad => vr_cdoperad
+                                    ,pr_dscritic => vr_dscritic);
+        
+        -- Se ocorrer erro 
+        IF vr_dscritic IS NOT NULL THEN
+          RAISE vr_exphistor;
+        END IF;
+        
+        -- IDINDIVIDUAL
+        CADA0006.pc_grava_dados_hist(pr_nmtabela => vr_nmtabela
+                                    ,pr_nmdcampo => 'IDINDIVIDUAL'
+                                    ,pr_cdtipcta => pr_cdtipo_conta
+                                    ,pr_tpoperac => 2 -- Alteração
+                                    ,pr_dsvalant => rw_ult_tipo_conta.idindividual
+                                    ,pr_dsvalnov => pr_individual 
+                                    ,pr_cdoperad => vr_cdoperad
+                                    ,pr_dscritic => vr_dscritic);
+        
+        -- Se ocorrer erro 
+        IF vr_dscritic IS NOT NULL THEN
+          RAISE vr_exphistor;
+        END IF;
+        
+        -- IDCONJUNTA_SOLIDARIA
+        CADA0006.pc_grava_dados_hist(pr_nmtabela => vr_nmtabela
+                                    ,pr_nmdcampo => 'IDCONJUNTA_SOLIDARIA'
+                                    ,pr_cdtipcta => pr_cdtipo_conta
+                                    ,pr_tpoperac => 2 -- Alteração
+                                    ,pr_dsvalant => rw_ult_tipo_conta.idconjunta_solidaria
+                                    ,pr_dsvalnov => pr_conjunta_solidaria 
+                                    ,pr_cdoperad => vr_cdoperad
+                                    ,pr_dscritic => vr_dscritic);
+        
+        -- Se ocorrer erro 
+        IF vr_dscritic IS NOT NULL THEN
+          RAISE vr_exphistor;
+        END IF;
+        
+        -- IDCONJUNTA_NAO_SOLIDARIA
+        CADA0006.pc_grava_dados_hist(pr_nmtabela => vr_nmtabela
+                                    ,pr_nmdcampo => 'IDCONJUNTA_NAO_SOLIDARIA'
+                                    ,pr_cdtipcta => pr_cdtipo_conta
+                                    ,pr_tpoperac => 2 -- Alteração
+                                    ,pr_dsvalant => rw_ult_tipo_conta.idconjunta_nao_solidaria
+                                    ,pr_dsvalnov => pr_conjunta_nao_solidaria 
+                                    ,pr_cdoperad => vr_cdoperad
+                                    ,pr_dscritic => vr_dscritic);
+        
+        -- Se ocorrer erro 
+        IF vr_dscritic IS NOT NULL THEN
+          RAISE vr_exphistor;
+        END IF;
+        
+        -- IDTIPO_CADASTRO
+        CADA0006.pc_grava_dados_hist(pr_nmtabela => vr_nmtabela
+                                    ,pr_nmdcampo => 'IDTIPO_CADASTRO'
+                                    ,pr_cdtipcta => pr_cdtipo_conta
+                                    ,pr_tpoperac => 2 -- Alteração
+                                    ,pr_dsvalant => rw_ult_tipo_conta.idtipo_cadastro
+                                    ,pr_dsvalnov => pr_tpcadast 
+                                    ,pr_cdoperad => vr_cdoperad
+                                    ,pr_dscritic => vr_dscritic);
+        
+        -- Se ocorrer erro 
+        IF vr_dscritic IS NOT NULL THEN
+          RAISE vr_exphistor;
+        END IF;
+        
+        -- CDMODALIDADE_TIPO
+        CADA0006.pc_grava_dados_hist(pr_nmtabela => vr_nmtabela
+                                    ,pr_nmdcampo => 'CDMODALIDADE_TIPO'
+                                    ,pr_cdtipcta => pr_cdtipo_conta
+                                    ,pr_tpoperac => 2 -- Alteração
+                                    ,pr_dsvalant => rw_ult_tipo_conta.cdmodalidade_tipo
+                                    ,pr_dsvalnov => pr_cdmodali 
+                                    ,pr_cdoperad => vr_cdoperad
+                                    ,pr_dscritic => vr_dscritic);
+        
+        -- Se ocorrer erro 
+        IF vr_dscritic IS NOT NULL THEN
+          RAISE vr_exphistor;
+        END IF;
+        
+        -- INDCONTA_ITG
+        CADA0006.pc_grava_dados_hist(pr_nmtabela => vr_nmtabela
+                                    ,pr_nmdcampo => 'INDCONTA_ITG'
+                                    ,pr_cdtipcta => pr_cdtipo_conta
+                                    ,pr_tpoperac => 2 -- Alteração
+                                    ,pr_dsvalant => rw_ult_tipo_conta.indconta_itg
+                                    ,pr_dsvalnov => pr_indconta_itg 
+                                    ,pr_cdoperad => vr_cdoperad
+                                    ,pr_dscritic => vr_dscritic);
+        
+        -- Se ocorrer erro 
+        IF vr_dscritic IS NOT NULL THEN
+          RAISE vr_exphistor;
+        END IF;
+        
+      EXCEPTION
+        WHEN vr_exphistor THEN
+          vr_dscritic := 'Erro ao gerar histórico: '||vr_dscritic;
+          RAISE vr_exc_saida;
+        WHEN OTHERS THEN
+          vr_dscritic := 'Erro ao gerar histórico: '||SQLERRM;
+          RAISE vr_exc_saida;
+      END;
+      
       -- Criar cabecalho do XML
       pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root>OK</Root>');
       
@@ -595,10 +925,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TIPCTA IS
       -- Tratamento de erros
       vr_exc_saida EXCEPTION;
       
+      -- Variáveis 
+      vr_nmtabela     tbcc_campo_historico.nmtabela_oracle%TYPE;
+      
+      -- Variaveis de log
+      vr_cdoperad VARCHAR2(100);
+      vr_cdcooper NUMBER;
+      vr_nmdatela VARCHAR2(100);
+      vr_nmeacao  VARCHAR2(100);
+      vr_cdagenci VARCHAR2(100);
+      vr_nrdcaixa VARCHAR2(100);
+      vr_idorigem VARCHAR2(100);
+      
+      
       -- Busca tipo de conta
       CURSOR cr_ult_tipo_conta (pr_inpessoa     IN tbcc_tipo_conta.inpessoa%TYPE
                                ,pr_cdtipo_conta IN tbcc_tipo_conta.cdtipo_conta%TYPE) IS
-        SELECT cta.cdtipo_conta
+        SELECT cta.dstipo_conta
+             , cta.idindividual
+             , cta.idconjunta_solidaria
+             , cta.idconjunta_nao_solidaria
+             , cta.idtipo_cadastro
+             , cta.cdmodalidade_tipo
+             , cta.indconta_itg
           FROM tbcc_tipo_conta cta
          WHERE cta.inpessoa = pr_inpessoa
            AND cta.cdtipo_conta = pr_cdtipo_conta;
@@ -624,7 +973,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TIPCTA IS
       
     BEGIN
       
-    -- Verifica tipo de pessoa
+      -- Extrair dados do xml gerado na requisição
+      gene0004.pc_extrai_dados(pr_xml      => pr_retxml
+                              ,pr_cdcooper => vr_cdcooper
+                              ,pr_nmdatela => vr_nmdatela
+                              ,pr_nmeacao  => vr_nmeacao
+                              ,pr_cdagenci => vr_cdagenci
+                              ,pr_nrdcaixa => vr_nrdcaixa
+                              ,pr_idorigem => vr_idorigem
+                              ,pr_cdoperad => vr_cdoperad
+                              ,pr_dscritic => vr_dscritic);
+
+      -- Verifica se houve erro recuperando informacoes de log
+      IF vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_saida;
+      END IF;
+    
+      -- Verifica tipo de pessoa
       IF pr_inpessoa = 0 THEN
         vr_dscritic := 'Tipo de pessoa inválido.';
         RAISE vr_exc_saida;
@@ -635,6 +1000,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TIPCTA IS
         RAISE vr_exc_saida;
       END IF;
       
+      -- Buscar os dados do tipo de conta, validando se o mesmo existe
       OPEN cr_ult_tipo_conta (pr_inpessoa     => pr_inpessoa
                              ,pr_cdtipo_conta => pr_cdtipo_conta);
       FETCH cr_ult_tipo_conta INTO rw_ult_tipo_conta;
@@ -663,13 +1029,166 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TIPCTA IS
       -- Exclui o tipo de conta
       BEGIN
         DELETE tbcc_tipo_conta cta
-         WHERE cta.inpessoa = pr_inpessoa
+         WHERE cta.inpessoa     = pr_inpessoa
            AND cta.cdtipo_conta = pr_cdtipo_conta;
       EXCEPTION
         WHEN OTHERS THEN
           vr_dscritic := 'Erro ao excluir tipo de conta. ' || SQLERRM;
           RAISE vr_exc_saida;
       END;
+      
+      
+      -- CRIAR OS REGISTROS DE HISTÓRICO
+      DECLARE
+        vr_exphistor   EXCEPTION;
+      BEGIN
+        -- Fixa o nome da tabela 
+        vr_nmtabela := 'TBCC_TIPO_CONTA';
+        
+        -- INPESSOA
+        CADA0006.pc_grava_dados_hist(pr_nmtabela => vr_nmtabela
+                                    ,pr_nmdcampo => 'INPESSOA'
+                                    ,pr_cdtipcta => pr_cdtipo_conta
+                                    ,pr_tpoperac => 3 -- Exclusão
+                                    ,pr_dsvalant => pr_inpessoa
+                                    ,pr_dsvalnov => NULL 
+                                    ,pr_cdoperad => vr_cdoperad
+                                    ,pr_dscritic => vr_dscritic);
+        
+        -- Se ocorrer erro 
+        IF vr_dscritic IS NOT NULL THEN
+          RAISE vr_exphistor;
+        END IF;
+        
+        -- CDTIPO_CONTA
+        CADA0006.pc_grava_dados_hist(pr_nmtabela => vr_nmtabela
+                                    ,pr_nmdcampo => 'CDTIPO_CONTA'
+                                    ,pr_cdtipcta => pr_cdtipo_conta
+                                    ,pr_tpoperac => 3 -- Exclusão
+                                    ,pr_dsvalant => pr_cdtipo_conta 
+                                    ,pr_dsvalnov => NULL
+                                    ,pr_cdoperad => vr_cdoperad
+                                    ,pr_dscritic => vr_dscritic);
+        
+        -- Se ocorrer erro 
+        IF vr_dscritic IS NOT NULL THEN
+          RAISE vr_exphistor;
+        END IF;
+        
+        -- DSTIPO_CONTA
+        CADA0006.pc_grava_dados_hist(pr_nmtabela => vr_nmtabela
+                                    ,pr_nmdcampo => 'DSTIPO_CONTA'
+                                    ,pr_cdtipcta => pr_cdtipo_conta
+                                    ,pr_tpoperac => 3 -- Exclusão
+                                    ,pr_dsvalant => rw_ult_tipo_conta.dstipo_conta 
+                                    ,pr_dsvalnov => NULL
+                                    ,pr_cdoperad => vr_cdoperad
+                                    ,pr_dscritic => vr_dscritic);
+        
+        -- Se ocorrer erro 
+        IF vr_dscritic IS NOT NULL THEN
+          RAISE vr_exphistor;
+        END IF;
+        
+        -- IDINDIVIDUAL
+        CADA0006.pc_grava_dados_hist(pr_nmtabela => vr_nmtabela
+                                    ,pr_nmdcampo => 'IDINDIVIDUAL'
+                                    ,pr_cdtipcta => pr_cdtipo_conta
+                                    ,pr_tpoperac => 3 -- Exclusão
+                                    ,pr_dsvalant => rw_ult_tipo_conta.idindividual
+                                    ,pr_dsvalnov => NULL 
+                                    ,pr_cdoperad => vr_cdoperad
+                                    ,pr_dscritic => vr_dscritic);
+        
+        -- Se ocorrer erro 
+        IF vr_dscritic IS NOT NULL THEN
+          RAISE vr_exphistor;
+        END IF;
+        
+        -- IDCONJUNTA_SOLIDARIA
+        CADA0006.pc_grava_dados_hist(pr_nmtabela => vr_nmtabela
+                                    ,pr_nmdcampo => 'IDCONJUNTA_SOLIDARIA'
+                                    ,pr_cdtipcta => pr_cdtipo_conta
+                                    ,pr_tpoperac => 3 -- Exclusão
+                                    ,pr_dsvalant => rw_ult_tipo_conta.idconjunta_solidaria
+                                    ,pr_dsvalnov => NULL 
+                                    ,pr_cdoperad => vr_cdoperad
+                                    ,pr_dscritic => vr_dscritic);
+        
+        -- Se ocorrer erro 
+        IF vr_dscritic IS NOT NULL THEN
+          RAISE vr_exphistor;
+        END IF;
+        
+        -- IDCONJUNTA_NAO_SOLIDARIA
+        CADA0006.pc_grava_dados_hist(pr_nmtabela => vr_nmtabela
+                                    ,pr_nmdcampo => 'IDCONJUNTA_NAO_SOLIDARIA'
+                                    ,pr_cdtipcta => pr_cdtipo_conta
+                                    ,pr_tpoperac => 3 -- Exclusão
+                                    ,pr_dsvalant => rw_ult_tipo_conta.idconjunta_nao_solidaria
+                                    ,pr_dsvalnov => NULL 
+                                    ,pr_cdoperad => vr_cdoperad
+                                    ,pr_dscritic => vr_dscritic);
+        
+        -- Se ocorrer erro 
+        IF vr_dscritic IS NOT NULL THEN
+          RAISE vr_exphistor;
+        END IF;
+        
+        -- IDTIPO_CADASTRO
+        CADA0006.pc_grava_dados_hist(pr_nmtabela => vr_nmtabela
+                                    ,pr_nmdcampo => 'IDTIPO_CADASTRO'
+                                    ,pr_cdtipcta => pr_cdtipo_conta
+                                    ,pr_tpoperac => 3 -- Exclusão
+                                    ,pr_dsvalant => rw_ult_tipo_conta.idtipo_cadastro
+                                    ,pr_dsvalnov => NULL 
+                                    ,pr_cdoperad => vr_cdoperad
+                                    ,pr_dscritic => vr_dscritic);
+        
+        -- Se ocorrer erro 
+        IF vr_dscritic IS NOT NULL THEN
+          RAISE vr_exphistor;
+        END IF;
+        
+        -- CDMODALIDADE_TIPO
+        CADA0006.pc_grava_dados_hist(pr_nmtabela => vr_nmtabela
+                                    ,pr_nmdcampo => 'CDMODALIDADE_TIPO'
+                                    ,pr_cdtipcta => pr_cdtipo_conta
+                                    ,pr_tpoperac => 3 -- Exclusão
+                                    ,pr_dsvalant => rw_ult_tipo_conta.cdmodalidade_tipo
+                                    ,pr_dsvalnov => NULL 
+                                    ,pr_cdoperad => vr_cdoperad
+                                    ,pr_dscritic => vr_dscritic);
+        
+        -- Se ocorrer erro 
+        IF vr_dscritic IS NOT NULL THEN
+          RAISE vr_exphistor;
+        END IF;
+        
+        -- INDCONTA_ITG
+        CADA0006.pc_grava_dados_hist(pr_nmtabela => vr_nmtabela
+                                    ,pr_nmdcampo => 'INDCONTA_ITG'
+                                    ,pr_cdtipcta => pr_cdtipo_conta
+                                    ,pr_tpoperac => 3 -- Exclusão
+                                    ,pr_dsvalant => rw_ult_tipo_conta.indconta_itg
+                                    ,pr_dsvalnov => NULL 
+                                    ,pr_cdoperad => vr_cdoperad
+                                    ,pr_dscritic => vr_dscritic);
+        
+        -- Se ocorrer erro 
+        IF vr_dscritic IS NOT NULL THEN
+          RAISE vr_exphistor;
+        END IF;
+        
+      EXCEPTION
+        WHEN vr_exphistor THEN
+          vr_dscritic := 'Erro ao gerar histórico: '||vr_dscritic;
+          RAISE vr_exc_saida;
+        WHEN OTHERS THEN
+          vr_dscritic := 'Erro ao gerar histórico: '||SQLERRM;
+          RAISE vr_exc_saida;
+      END;
+      
       
       -- Criar cabecalho do XML
       pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root>OK</Root>');
@@ -738,24 +1257,53 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TIPCTA IS
       -- Variável de críticas
       vr_cdcritic crapcri.cdcritic%TYPE; --> Cód. Erro
       vr_dscritic crapcri.dscritic%TYPE; --> Desc. Erro
-    
+      
+      -- Variáveis 
+      vr_nmtabela     tbcc_campo_historico.nmtabela_oracle%TYPE;
+      
+      -- Variaveis de log
+      vr_cdoperad VARCHAR2(100);
+      vr_cdcooper NUMBER;
+      vr_nmdatela VARCHAR2(100);
+      vr_nmeacao  VARCHAR2(100);
+      vr_cdagenci VARCHAR2(100);
+      vr_nrdcaixa VARCHAR2(100);
+      vr_idorigem VARCHAR2(100);
+      
       -- Tratamento de erros
       vr_exc_saida EXCEPTION;
       
     BEGIN
       
+      -- Extrair dados do xml gerado na requisição
+      gene0004.pc_extrai_dados(pr_xml      => pr_retxml
+                              ,pr_cdcooper => vr_cdcooper
+                              ,pr_nmdatela => vr_nmdatela
+                              ,pr_nmeacao  => vr_nmeacao
+                              ,pr_cdagenci => vr_cdagenci
+                              ,pr_nrdcaixa => vr_nrdcaixa
+                              ,pr_idorigem => vr_idorigem
+                              ,pr_cdoperad => vr_cdoperad
+                              ,pr_dscritic => vr_dscritic);
+
+      -- Verifica se houve erro recuperando informacoes de log
+      IF vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_saida;
+      END IF;  
+    
       -- Valida transferencia
       cada0006.pc_valida_transferencia(pr_inpessoa => pr_inpessoa
                                       ,pr_cdcooper => pr_cdcooper
                                       ,pr_tipcta_ori => pr_tipcta_ori
                                       ,pr_tipcta_des => pr_tipcta_des
+                                      ,pr_cdoperad => vr_cdoperad
                                       ,pr_cdcritic => vr_cdcritic
                                       ,pr_dscritic => vr_dscritic);
       -- Se ocorrer algum erro
       IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
         RAISE vr_exc_saida;
       END IF;
-      /*
+      
       -- Realiza transferencia
       BEGIN
         UPDATE crapass
@@ -769,7 +1317,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TIPCTA IS
                                               ' para o tipo de conta ' || pr_tipcta_des || '. ' || SQLERRM;
           RAISE vr_exc_saida;
       END;     
-      */
+      
       -- Criar cabecalho do XML
       pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root>OK</Root>');
       

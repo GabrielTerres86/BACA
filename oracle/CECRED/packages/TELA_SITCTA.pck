@@ -393,15 +393,34 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_SITCTA IS
       
       -- Variaveis auxiliares
       vr_lancamentos GENE0002.typ_split; -- tabela de serviços
+      vr_nmtabela    tbcc_campo_historico.nmtabela_oracle%TYPE;
+      vr_cdgrupo     tbcc_grupo_situacao_cta.cdgrupo_historico%TYPE;
+      
+      -- Tabela de memória
+      TYPE tp_reg_grupos IS TABLE OF tbcc_grupo_situacao_cta.cdgrupo_historico%TYPE INDEX BY BINARY_INTEGER;
+      vr_tab_grupo_old  tp_reg_grupos;
+      vr_tab_grupo_new  tp_reg_grupos;
       
       -- Busca tipo de conta
       CURSOR cr_situacao (pr_cdcooper   IN tbcc_situacao_conta_coop.cdcooper%TYPE
                          ,pr_cdsituacao IN tbcc_situacao_conta_coop.cdsituacao%TYPE) IS
         SELECT sit.cdsituacao
+             , sit.inimpede_credito
+             , sit.inimpede_talionario
+             , sit.incontratacao_produto
+             , sit.tpacesso
           FROM tbcc_situacao_conta_coop sit
          WHERE sit.cdcooper = pr_cdcooper
            AND sit.cdsituacao = pr_cdsituacao;
       rw_situacao cr_situacao%ROWTYPE;
+      
+      -- Buscar todos os grupos selecionados
+      CURSOR cr_grupos(pr_cdcooper   IN tbcc_situacao_conta_coop.cdcooper%TYPE
+                      ,pr_cdsituacao IN tbcc_situacao_conta_coop.cdsituacao%TYPE) IS
+        SELECT grp.cdgrupo_historico cdgrupo
+          FROM tbcc_grupo_situacao_cta grp
+         WHERE grp.cdsituacao = pr_cdsituacao
+           AND grp.cdcooper   = pr_cdcooper;
       
     BEGIN
       
@@ -448,6 +467,92 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_SITCTA IS
           RAISE vr_exc_saida;
       END;
       
+      -- CRIAR OS REGISTROS DE HISTÓRICO
+      DECLARE
+        vr_exphistor   EXCEPTION;
+      BEGIN
+        -- Fixa o nome da tabela 
+        vr_nmtabela := 'TBCC_SITUACAO_CONTA_COOP';
+        
+        -- INIMPEDE_CREDITO
+        CADA0006.pc_grava_dados_hist(pr_nmtabela => vr_nmtabela
+                                    ,pr_nmdcampo => 'INIMPEDE_CREDITO'
+                                    ,pr_cdcooper => vr_cdcooper
+                                    ,pr_cdsituac => pr_cdsituacao
+                                    ,pr_tpoperac => 2 -- Alteração
+                                    ,pr_dsvalant => rw_situacao.inimpede_credito
+                                    ,pr_dsvalnov => pr_inimpede_credito
+                                    ,pr_cdoperad => vr_cdoperad
+                                    ,pr_dscritic => vr_dscritic);
+        
+        -- Se ocorrer erro 
+        IF vr_dscritic IS NOT NULL THEN
+          RAISE vr_exphistor;
+        END IF;
+        
+        -- INIMPEDE_TALIONARIO
+        CADA0006.pc_grava_dados_hist(pr_nmtabela => vr_nmtabela
+                                    ,pr_nmdcampo => 'INIMPEDE_TALIONARIO'
+                                    ,pr_cdcooper => vr_cdcooper
+                                    ,pr_cdsituac => pr_cdsituacao
+                                    ,pr_tpoperac => 2 -- Alteração
+                                    ,pr_dsvalant => rw_situacao.inimpede_talionario
+                                    ,pr_dsvalnov => pr_inimpede_talionario
+                                    ,pr_cdoperad => vr_cdoperad
+                                    ,pr_dscritic => vr_dscritic);
+        
+        -- Se ocorrer erro 
+        IF vr_dscritic IS NOT NULL THEN
+          RAISE vr_exphistor;
+        END IF;
+        
+        -- INCONTRATACAO_PRODUTO
+        CADA0006.pc_grava_dados_hist(pr_nmtabela => vr_nmtabela
+                                    ,pr_nmdcampo => 'INCONTRATACAO_PRODUTO'
+                                    ,pr_cdcooper => vr_cdcooper
+                                    ,pr_cdsituac => pr_cdsituacao
+                                    ,pr_tpoperac => 2 -- Alteração
+                                    ,pr_dsvalant => rw_situacao.incontratacao_produto
+                                    ,pr_dsvalnov =>  pr_incontratacao_produto
+                                    ,pr_cdoperad => vr_cdoperad
+                                    ,pr_dscritic => vr_dscritic);
+        
+        -- Se ocorrer erro 
+        IF vr_dscritic IS NOT NULL THEN
+          RAISE vr_exphistor;
+        END IF;
+        
+        -- TPACESSO
+        CADA0006.pc_grava_dados_hist(pr_nmtabela => vr_nmtabela
+                                    ,pr_nmdcampo => 'TPACESSO'
+                                    ,pr_cdcooper => vr_cdcooper
+                                    ,pr_cdsituac => pr_cdsituacao
+                                    ,pr_tpoperac => 2 -- Alteração
+                                    ,pr_dsvalant => rw_situacao.tpacesso
+                                    ,pr_dsvalnov => pr_tpacesso
+                                    ,pr_cdoperad => vr_cdoperad
+                                    ,pr_dscritic => vr_dscritic);
+        
+        -- Se ocorrer erro 
+        IF vr_dscritic IS NOT NULL THEN
+          RAISE vr_exphistor;
+        END IF;
+        
+      EXCEPTION
+        WHEN vr_exphistor THEN
+          vr_dscritic := 'Erro ao gerar histórico: '||vr_dscritic;
+          RAISE vr_exc_saida;
+        WHEN OTHERS THEN
+          vr_dscritic := 'Erro ao gerar histórico: '||SQLERRM;
+          RAISE vr_exc_saida;
+      END;
+      
+      -- Buscar e guardar todos os grupos selecionados atualmente
+      FOR rw_grupos IN cr_grupos(vr_cdcooper, pr_cdsituacao) LOOP
+        -- Adiciona o registro 
+        vr_tab_grupo_old(rw_grupos.cdgrupo) := rw_grupos.cdgrupo;
+      END LOOP;
+      
       BEGIN
         -- Exclui os registros anteriores
         DELETE 
@@ -464,18 +569,83 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_SITCTA IS
       vr_lancamentos := GENE0002.fn_quebra_string(pr_string  => pr_lancamentos
                                                  ,pr_delimit => ';');
       IF vr_lancamentos.COUNT() > 0 THEN
-      -- Loop pelos lancamentos permitidos
-      FOR vr_indice IN vr_lancamentos.FIRST()..vr_lancamentos.LAST() LOOP
-        -- Insere os registros de lancamentos permitidos
-        BEGIN 
-          INSERT INTO tbcc_grupo_situacao_cta (cdcooper, cdsituacao, cdgrupo_historico)
-                                       VALUES (vr_cdcooper, pr_cdsituacao, to_number(vr_lancamentos(vr_indice)));
-        EXCEPTION 
-          WHEN OTHERS THEN
-            vr_dscritic := 'Erro ao excluir lancamentos permitidos. ' || SQLERRM;
+        -- Loop pelos lancamentos permitidos
+        FOR vr_indice IN vr_lancamentos.FIRST()..vr_lancamentos.LAST() LOOP
+          -- Insere os registros de lancamentos permitidos
+          BEGIN 
+            INSERT INTO tbcc_grupo_situacao_cta (cdcooper, cdsituacao, cdgrupo_historico)
+                                         VALUES (vr_cdcooper, pr_cdsituacao, to_number(vr_lancamentos(vr_indice)));
+          EXCEPTION 
+            WHEN OTHERS THEN
+              vr_dscritic := 'Erro ao excluir lancamentos permitidos. ' || SQLERRM;
+              RAISE vr_exc_saida;
+          END;
+          
+          -- Insere o os dados no registro de memória
+          vr_tab_grupo_new(vr_lancamentos(vr_indice)) := vr_lancamentos(vr_indice);
+        END LOOP;
+      END IF;
+      
+      -- Se tem registros antigos
+      IF vr_tab_grupo_old.count() > 0 THEN
+        -- Percorrer os grupos para gerar os históricos
+        vr_cdgrupo := vr_tab_grupo_old.FIRST();
+        
+        LOOP
+          -- Verifica se o grupo foi REMOVIDO
+          IF NOT vr_tab_grupo_new.EXISTS(vr_cdgrupo) THEN
+            
+            -- Gravar Histórico
+            CADA0006.pc_grava_dados_hist(pr_nmtabela => 'TBCC_GRUPO_SITUACAO_CTA'
+                                        ,pr_nmdcampo => 'CDGRUPO_HISTORICO'
+                                        ,pr_cdcooper => vr_cdcooper
+                                        ,pr_cdsituac => pr_cdsituacao
+                                        ,pr_tpoperac => 2 -- Alteração
+                                        ,pr_dsvalant => vr_cdgrupo
+                                        ,pr_dsvalnov => NULL
+                                        ,pr_cdoperad => vr_cdoperad
+                                        ,pr_dscritic => vr_dscritic);
+          
+            -- Se ocorrer erro 
+            IF vr_dscritic IS NOT NULL THEN
+              RAISE vr_exc_saida;
+            END IF;
+          
+          ELSE
+            -- Se existir deve remover pois não alterou
+            vr_tab_grupo_new.DELETE(vr_cdgrupo);
+          END IF;
+                
+          EXIT WHEN vr_cdgrupo = vr_tab_grupo_old.LAST();
+          vr_cdgrupo := vr_tab_grupo_old.NEXT(vr_cdgrupo);
+        END LOOP;
+      END IF;
+      
+      -- Se há registros indica grupos incluídos
+      IF vr_tab_grupo_new.count() > 0 THEN
+        -- Percorrer os grupos para gerar os históricos
+        vr_cdgrupo := vr_tab_grupo_new.FIRST();
+        
+        LOOP
+          -- Gravar Histórico
+          CADA0006.pc_grava_dados_hist(pr_nmtabela => 'TBCC_GRUPO_SITUACAO_CTA'
+                                      ,pr_nmdcampo => 'CDGRUPO_HISTORICO'
+                                      ,pr_cdcooper => vr_cdcooper
+                                      ,pr_cdsituac => pr_cdsituacao
+                                      ,pr_tpoperac => 2 -- Alteração
+                                      ,pr_dsvalant => NULL
+                                      ,pr_dsvalnov => vr_cdgrupo
+                                      ,pr_cdoperad => vr_cdoperad
+                                      ,pr_dscritic => vr_dscritic);
+          
+          -- Se ocorrer erro 
+          IF vr_dscritic IS NOT NULL THEN
             RAISE vr_exc_saida;
-        END;
-      END LOOP;
+          END IF;
+          
+          EXIT WHEN vr_cdgrupo = vr_tab_grupo_new.LAST();
+          vr_cdgrupo := vr_tab_grupo_new.NEXT(vr_cdgrupo);
+        END LOOP;
       END IF;
       
       -- Criar cabecalho do XML
