@@ -1147,7 +1147,7 @@ function aceitarRejeicao(confirm) {
         return false;
     }
     if(confirm == 1){
-            showMsgAguardo("Aguarde, confirmando rejei&ccedil;&atilde;o do limite ...");
+            showMsgAguardo("Aguarde, confirmando cancelamento da proposta...");
 
             var operacao = "ACEITAR_REJEICAO_LIMITE";
             
