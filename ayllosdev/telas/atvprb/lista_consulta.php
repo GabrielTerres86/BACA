@@ -69,13 +69,13 @@
 
 <div id="divBotoes" style="text-align:center; padding-bottom:10px; clear: both; float: none;">
   <a href="#" class="botao" id="btVoltar" onclick="voltarListagem();">Voltar</a>
-  <?php if(in_array('I', $glbvars['opcoesTela'])  && in_array($glbvars['cddepart'], $permisDptos['Incluir'])) : ?>
+  <?php if(in_array('I', $glbvars['opcoesTela'])) : ?>
     <a href="#" class="botao" id="btIncluir" onclick="abreIncluir();">Incluir</a>
   <?php endif; ?>
-  <?php if(in_array('A', $glbvars['opcoesTela']) && in_array($glbvars['cddepart'], $permisDptos['Alterar'])) : ?>
+  <?php if(in_array('A', $glbvars['opcoesTela'])) : ?>
     <a href="#" class="botao" id="btAlterar" onclick="abreAlterar();">Alterar</a>
   <?php endif; ?>
-  <?php if(in_array('E', $glbvars['opcoesTela']) && in_array($glbvars['cddepart'], $permisDptos['Excluir'])) : ?>
+  <?php if(in_array('E', $glbvars['opcoesTela'])) : ?>
     <a href="#" class="botao" id="btExcluir" onclick="perguntaExcluir();">Excluir</a>
   <?php endif; ?>
 </div>
