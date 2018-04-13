@@ -5,6 +5,7 @@
  * OBJETIVO     : Biblioteca de funções da tela TAB052 
  * --------------
  * ALTERAÇÕES   : 
+ *                  13/04/2018 - Remoção do campo 'pctitemi' Percentual de títulos por pagador (Leonardo Oliveira - GFT).
  * --------------
  */
 
@@ -120,7 +121,6 @@ function formataCampos() {
     cQtprzmax = $('#qtprzmax', '#frmTab052');
     cQtminfil = $('#qtminfil', '#frmTab052');
     cNrmespsq = $('#nrmespsq', '#frmTab052');
-    cPctitemi = $('#pctitemi', '#frmTab052');
     cPctolera = $('#pctolera', '#frmTab052');
     cPcdmulta = $('#pcdmulta', '#frmTab052');
     cCardbtit = $('#cardbtit', '#frmTab052');
@@ -148,7 +148,6 @@ function formataCampos() {
     cQtdiexbo = $('#qtdiexbo', '#frmTab052');
     cQtmxtbib = $('#qtmxtbib', '#frmTab052');
     cQtmxtbay = $('#qtmxtbay', '#frmTab052');
-    //cPctitpag = $('#pctitpag', '#frmTab052');
 
     cVllimite_c = $('#vllimite_c', '#frmTab052');
     cVlconsul_c = $('#vlconsul_c', '#frmTab052');
@@ -160,7 +159,6 @@ function formataCampos() {
     cQtprzmax_c = $('#qtprzmax_c', '#frmTab052');
     cQtminfil_c = $('#qtminfil_c', '#frmTab052');
     cNrmespsq_c = $('#nrmespsq_c', '#frmTab052');
-    cPctitemi_c = $('#pctitemi_c', '#frmTab052');
     cPctolera_c = $('#pctolera_c', '#frmTab052');
     cPcdmulta_c = $('#pcdmulta_c', '#frmTab052');
     cCardbtit_c = $('#cardbtit_c', '#frmTab052');
@@ -199,8 +197,7 @@ function formataCampos() {
     cQtprzmin.css('width', '40px').addClass('editcooper').setMask('INTEGER','zzz','','');// INTE
     cQtprzmax.css('width', '40px').addClass('editcooper').setMask('INTEGER','zzz','','');// INTE
     cQtminfil.css('width', '40px').addClass('editcooper').setMask('INTEGER','zzz','','');// INTE    
-	cNrmespsq.css('width', '40px').addClass('editcooper').setMask('INTEGER','zz','','');// INTE 
-    cPctitemi.css('width', '40px').addClass('editcooper').setMask('INTEGER','zzz','','');// INTE
+	cNrmespsq.css('width', '40px').addClass('editcooper').setMask('INTEGER','zz','','');// INTE
     cPctolera.css('width', '40px').addClass('editcooper').setMask('INTEGER','zzz','','');// INTE
     cPcdmulta.css('width', '40px').addClass('editcooper').setMask('INTEGER','zzz','','');// INTE
     cCardbtit.css('width', '40px').addClass('editcooper').setMask('INTEGER','zzz','','');// INTE
@@ -242,8 +239,7 @@ function formataCampos() {
     cQtprzmin_c.css('width', '40px').addClass('editcecred').setMask('INTEGER','zzz','','');// INTE
     cQtprzmax_c.css('width', '40px').addClass('editcecred').setMask('INTEGER','zzz','','');// INTE
     cQtminfil_c.css('width', '40px').addClass('editcecred').setMask('INTEGER','zzz','','');// INTE    
-	cNrmespsq_c.css('width', '40px').addClass('editcecred').setMask('INTEGER','zz','','');// INTE 
-    cPctitemi_c.css('width', '40px').addClass('editcecred').setMask('INTEGER','zzz','','');// INTE
+	cNrmespsq_c.css('width', '40px').addClass('editcecred').setMask('INTEGER','zz','','');// INTE
     cPctolera_c.css('width', '40px').addClass('editcecred').setMask('INTEGER','zzz','','');// INTE
     cPcdmulta_c.css('width', '40px').addClass('editcecred').setMask('INTEGER','zzz','','');// INTE
     cCardbtit_c.css('width', '40px').addClass('editcecred').setMask('INTEGER','zzz','','');// INTE
@@ -558,13 +554,6 @@ function controlaFoco() {
 
     $('#qtdiexbo', '#frmTab052').unbind('keypress').bind('keypress', function(e) {
         if (e.keyCode == 9 || e.keyCode == 13) {
-            $('#pctitemi', '#frmTab052').focus();
-            return false;
-        }
-    });
-
-    $('#pctitemi', '#frmTab052').unbind('keypress').bind('keypress', function(e) {
-        if (e.keyCode == 9 || e.keyCode == 13) {
             $('#qtmxtbay', '#frmTab052').focus();
             return false;
         }
@@ -821,17 +810,11 @@ function controlaFoco() {
 
     $('#qtdiexbo_c', '#frmTab052').unbind('keypress').bind('keypress', function(e) {
         if (e.keyCode == 9 || e.keyCode == 13) {
-            $('#pctitemi_c', '#frmTab052').focus();
-            return false;
-        }
-    });
-
-    $('#pctitemi_c', '#frmTab052').unbind('keypress').bind('keypress', function(e) {
-        if (e.keyCode == 9 || e.keyCode == 13) {
             $('#qtmxtbay_c', '#frmTab052').focus();
             return false;
         }
     });
+
 
     $('#qtmxtbay_c', '#frmTab052').unbind('keypress').bind('keypress', function(e) {
         if (e.keyCode == 9 || e.keyCode == 13) {
@@ -908,7 +891,6 @@ function manterRotina(cddopcao) {
     var cardbtit = normalizaNumero($('#cardbtit', '#frmTab052').val());
     var qtminfil = normalizaNumero($('#qtminfil', '#frmTab052').val());
     var nrmespsq = normalizaNumero($('#nrmespsq', '#frmTab052').val());
-    var pctitemi = normalizaNumero($('#pctitemi', '#frmTab052').val());
     var pctolera = normalizaNumero($('#pctolera', '#frmTab052').val());
     var pcdmulta = normalizaNumero($('#pcdmulta', '#frmTab052').val());
     var pcnaopag = normalizaNumero($('#pcnaopag', '#frmTab052').val());
@@ -936,7 +918,6 @@ function manterRotina(cddopcao) {
     var qtmxtbib = normalizaNumero($('#qtmxtbib', '#frmTab052').val());
 
     var qtmxtbay = normalizaNumero($('#qtmxtbay', '#frmTab052').val());
-    //var pctitpag = normalizaNumero($('#pctitpag', '#frmTab052').val());
     
 
     var vllimite_c = normalizaNumero($('#vllimite_c', '#frmTab052').val());
@@ -950,7 +931,6 @@ function manterRotina(cddopcao) {
     var cardbtit_c = normalizaNumero($('#cardbtit_c', '#frmTab052').val());
     var qtminfil_c = normalizaNumero($('#qtminfil_c', '#frmTab052').val());
     var nrmespsq_c = normalizaNumero($('#nrmespsq_c', '#frmTab052').val());
-    var pctitemi_c = normalizaNumero($('#pctitemi_c', '#frmTab052').val());
     var pctolera_c = normalizaNumero($('#pctolera_c', '#frmTab052').val());
     var pcdmulta_c = normalizaNumero($('#pcdmulta_c', '#frmTab052').val());
     var pcnaopag_c = normalizaNumero($('#pcnaopag_c', '#frmTab052').val());
@@ -978,9 +958,6 @@ function manterRotina(cddopcao) {
     var qtmxtbib_c = normalizaNumero($('#qtmxtbib_c', '#frmTab052').val());
     var qtmxtbay_c = normalizaNumero($('#qtmxtbay_c', '#frmTab052').val());
 
-    //var pctitpag_c = normalizaNumero($('#pctitpag_c', '#frmTab052').val());
-
-
     mensagem = 'Aguarde, efetuando solicitacao...';
     showMsgAguardo(mensagem);
 
@@ -1003,7 +980,6 @@ function manterRotina(cddopcao) {
 			cardbtit: cardbtit,
 			qtminfil: qtminfil,
 			nrmespsq: nrmespsq,
-			pctitemi: pctitemi,
 			pctolera: pctolera,
 			pcdmulta: pcdmulta,
 			pcnaopag: pcnaopag,
@@ -1030,7 +1006,6 @@ function manterRotina(cddopcao) {
             qtdiexbo: qtdiexbo,
             qtmxtbib: qtmxtbib,
             qtmxtbay: qtmxtbay,
-            //pctitpag: pctitpag,
 
 			vllimite_c: vllimite_c,
 			vlconsul_c: vlconsul_c,
@@ -1043,7 +1018,6 @@ function manterRotina(cddopcao) {
 			cardbtit_c: cardbtit_c,
 			qtminfil_c: qtminfil_c,
 			nrmespsq_c: nrmespsq_c,
-			pctitemi_c: pctitemi_c,
 			pctolera_c: pctolera_c,
 			pcdmulta_c: pcdmulta_c,
 			pcnaopag_c: pcnaopag_c,
@@ -1070,7 +1044,6 @@ function manterRotina(cddopcao) {
             qtdiexbo_c: qtdiexbo_c,
             qtmxtbib_c: qtmxtbib_c,
             qtmxtbay_c: qtmxtbay_c,
-            //pctitpag_c: pctitpag_c,
 
             redirect: 'script_ajax'
         },
@@ -1405,11 +1378,6 @@ function validarCampos() {
         return false;
     }
 
-    // pctitemi > 100% o valor deve ser inferior ou igual a 100
-    if( converteMoedaFloat($('#pctitemi', '#frmTab052').val()) > 100  ){
-        showError('error','O valor de Percentual de T&iacutetulos por Pagador: deve ser inferior ou igual a 100%','Alerta - Ayllos',"$(\'#pctitemi\',\'#frmTab052\').focus();");
-        return false;
-    }
     */
 
 	return true;

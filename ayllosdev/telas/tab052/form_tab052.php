@@ -6,6 +6,7 @@
  * OBJETIVO     : Formulário de exibição da tela TAB052 
  * --------------
  * ALTERAÇÕES   :
+ *                  13/04/2018 - Remoção do campo 'pctitemi' Percentual de títulos por pagador (Leonardo Oliveira - GFT).
  * --------------
  */
 ?>
@@ -345,16 +346,6 @@
 					<label><?php echo utf8ToHtml('&nbsp;dia(s)') ?></label>
 				</td>
 			</tr>
-
-			<!-- pctitemi -->
-			<tr>
-				<td width="300px"><label for="pctitemi" class='labelPri'><?php echo utf8ToHtml('Percentual de Títulos por Pagador:') ?></label></td>
-				<td width="170px"><input type="text" id="pctitemi" name="pctitemi" value="<?php echo $pctitemi == 0 ? '' : $pctitemi ?>" maxlength="3" style="text-align:right;"/>	
-					<label><?php echo utf8ToHtml('&nbsp;%') ?></label></td>
-				<td width="170px"><input type="text" id="pctitemi_c" name="pctitemi_c" value="<?php echo $pctitemi_c == 0 ? '' : $pctitemi_c ?>" maxlength="3" style="text-align:right;"/>	
-					<label><?php echo utf8ToHtml('&nbsp;%') ?></label></td>
-			</tr>
-
 
 			<!-- qtmxtbay -->
 			<tr>

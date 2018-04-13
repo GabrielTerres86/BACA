@@ -33,6 +33,12 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0002 AS
   --
   --    13/03/2018 - Inclusão da Procedure "pc_efetua_analise_pagador", referente à rotina (JOB)
   --                 de validação diária dos Pagadores (Borderô). (Gustavo Sene - GFT)
+  --
+  --    12/04/2018 - Adicionado novo parametro na chamada da procedure pc_gera_impressao_bordero
+  --                referente ao indicador se deve imprimir restricoes. (Alex Sandro - GFT)
+  --
+  --    13/04/2018 - Remoção do campo 'pctitemi' Percentual de títulos por pagador da procedure 
+  --                 'pc_busca_parametros_dsctit'  (Leonardo Oliveira - GFT). 
   --------------------------------------------------------------------------------------------------------------
 
   -- Registro para armazenar parametros para desconto de titulo
@@ -49,7 +55,6 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0002 AS
                   qtprzmax  INTEGER,
                   qtminfil  INTEGER,
                   nrmespsq  INTEGER,
-                  pctitemi  NUMBER,
                   pctolera  NUMBER,
                   pcdmulta  NUMBER,
                   cardbtit  NUMBER,
@@ -500,7 +505,7 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0002 AS
                                         ,pr_cdcritic          OUT PLS_INTEGER           --> Código da crítica
                                         ,pr_dscritic          OUT VARCHAR2             --> Descrição da crítica
                                         );
-                                        
+
   PROCEDURE pc_busca_titulos_bordero (pr_cdcooper IN crapcop.cdcooper%TYPE  --> Código da Cooperativa
                                      ,pr_nrborder IN crapbdt.nrborder%TYPE  --> numero do bordero
                                      ,pr_nrdconta IN crapass.nrdconta%TYPE  --> Número da Conta
@@ -509,7 +514,7 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0002 AS
                                      ,pr_tab_tit_bordero_restri OUT typ_tab_bordero_restri --> retorna restrições do titulos do bordero
                                      ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
                                      ,pr_dscritic OUT VARCHAR2);          --> Descrição da crítica
-
+                                      
 END  DSCT0002;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
@@ -552,6 +557,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
   --
   --   12/04/2018 - Adicionado novo parametro na chamada da procedure pc_gera_impressao_bordero
   --                referente ao indicador se deve imprimir restricoes. (Alex Sandro - GFT)
+  --
+  --   13/04/2018 - Remoção do campo 'pctitemi' Percentual de títulos por pagador da procedure 
+  --               'pc_busca_parametros_dsctit'  (Leonardo Oliveira - GFT). 
   -------------------------------------------------------------------------------------------------------------
   --> Buscar dados do avalista
   PROCEDURE pc_busca_dados_avalista (pr_cdcooper IN crapcop.cdcooper%TYPE           --> Código da Cooperativa
@@ -993,14 +1001,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
                            pr_tpctrato craplim.tpctrlim%TYPE) IS
     select max nrdconta
     from   craplim
-           --> Converter as duas colunas em linha para o for
+         --> Converter as duas colunas em linha para o for
            unpivot ( max for conta in (nrctaav1, nrctaav2) )
     where  cdcooper    = pr_cdcooper
     and    nrdconta    = pr_nrdconta
     and    nrctrlim    = pr_nrctrlim
     and    tpctrlim    = pr_tpctrato
     and    pr_tpctrato <> 3
-    
+
     union  all
 
     select max nrdconta
@@ -1470,7 +1478,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
       vr_tab_dados_dsctit(1).qtprzmax := vr_tab_dstextab(10);
       vr_tab_dados_dsctit(1).qtminfil := vr_tab_dstextab(11);
       vr_tab_dados_dsctit(1).nrmespsq := vr_tab_dstextab(12);
-      vr_tab_dados_dsctit(1).pctitemi := vr_tab_dstextab(13);
+      
       vr_tab_dados_dsctit(1).pctolera := vr_tab_dstextab(14);
       vr_tab_dados_dsctit(1).pcdmulta := to_number(vr_tab_dstextab(15),'000d000000','NLS_NUMERIC_CHARACTERS='',.''');
       vr_tab_dados_dsctit(1).cardbtit := vr_tab_dstextab(31);
@@ -1510,7 +1518,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
       vr_tab_cecred_dsctit(1).qtprzmax := vr_tab_dstextab(25);
       vr_tab_cecred_dsctit(1).qtminfil := vr_tab_dstextab(26);
       vr_tab_cecred_dsctit(1).nrmespsq := vr_tab_dstextab(27);
-      vr_tab_cecred_dsctit(1).pctitemi := vr_tab_dstextab(28);
+      
       vr_tab_cecred_dsctit(1).pctolera := vr_tab_dstextab(29);
       vr_tab_cecred_dsctit(1).pcdmulta := to_number(vr_tab_dstextab(30),'000d000000','NLS_NUMERIC_CHARACTERS='',.''');
       vr_tab_cecred_dsctit(1).cardbtit := vr_tab_dstextab(32);
@@ -6017,7 +6025,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
       END IF;
   END pc_gera_impressao_bordero;
   
-PROCEDURE pc_efetua_analise_pagador  ( pr_cdcooper IN crapsab.cdcooper%TYPE  --> Código da Cooperativa do Pagador (Sacado)
+  PROCEDURE pc_efetua_analise_pagador  ( pr_cdcooper IN crapsab.cdcooper%TYPE  --> Código da Cooperativa do Pagador (Sacado)
                                         ,pr_nrdconta IN crapsab.nrdconta%TYPE  --> Número da Conta do Pagador       (Sacado)
                                         ,pr_nrinssac IN crapsab.nrinssac%TYPE  --> Número de Inscrição do Pagador   (Sacado)
                                          --------------> OUT <--------------
@@ -6131,7 +6139,7 @@ PROCEDURE pc_efetua_analise_pagador  ( pr_cdcooper IN crapsab.cdcooper%TYPE  -->
     and    ret.nrdconta = cob.nrdconta 
     and    ret.nrcnvcob = cob.nrcnvcob 
     and    ret.nrdocmto = cob.nrdocmto
-    and    ret.cdocorre = 23; -- Remetidos ao Cartório
+    and    ret.cdocorre = 23; -- Remetidos ao Cartório    
     rw_qt_remessa_cartorio cr_qt_remessa_cartorio%rowtype;
 
     -- [PAGADORES] - Obter Qtd. de Títulos Protestados do Sacado (Pagador) para o Cedente em questão
@@ -6164,7 +6172,7 @@ PROCEDURE pc_efetua_analise_pagador  ( pr_cdcooper IN crapsab.cdcooper%TYPE  -->
     and    ret.nrdocmto = cob.nrdocmto
     and    ret.cdocorre = 9 -- Protestados
     --
-    and    ret.cdmotivo = 14;    
+    and    ret.cdmotivo = 14;
     rw_qt_protestados cr_qt_protestados%rowtype;
     
     -- [PAGADORES] - Obter Qtd. de Títulos Não Pagos pelo Sacado (Pagador) em questão
@@ -6326,7 +6334,7 @@ PROCEDURE pc_efetua_analise_pagador  ( pr_cdcooper IN crapsab.cdcooper%TYPE  -->
     rw_concentracao_excecao cr_concentracao_excecao%rowtype;
 
 
-    -- [PAGADORES] - Verificar se Cooperado Possui Títulos Descontados na Conta do Pagador
+    -- [PAGADORES] - Verificar se Cooperado Possui Títulos Descontados na Conta do Pagador	 
     cursor cr_coop_tit_conta_pag is
     select count(1) tem_tit_conta_pag
     from   crapcob cob_pag
@@ -6355,12 +6363,12 @@ PROCEDURE pc_efetua_analise_pagador  ( pr_cdcooper IN crapsab.cdcooper%TYPE  -->
                   and tdb.nrcnvcob     = cob_rem.nrcnvcob 
                   and tdb.nrdocmto     = cob_rem.nrdocmto                     
                   and cob_rem.nrdconta in 
-                         (select nrdconta
-                            from crapass rem
+                               (select nrdconta
+                                  from crapass rem
                            where rem.nrcpfcgc     = cob_pag.nrinssac
                              and rem.cdcooper     = pr_cdcooper
                              and cob_pag.nrinssac = rw_crapsab.nrinssac)
-             );            
+               );
     rw_coop_tit_conta_pag cr_coop_tit_conta_pag%rowtype;                                                                   
 
 
@@ -6389,38 +6397,38 @@ PROCEDURE pc_efetua_analise_pagador  ( pr_cdcooper IN crapsab.cdcooper%TYPE  -->
                                                          ) IS
 
     BEGIN
-                                                    
-       insert into tbdsct_analise_pagador
-              (cdcooper
-              ,nrdconta
-              ,nrinssac
-              ,dtanalise
-              ,hranalise
-              ,qtremessa_cartorio
-              ,qttit_protestados
-              ,qttit_naopagos
-              ,pemin_liquidez_qt
-              ,pemin_liquidez_vl
-              ,peconcentr_maxtit
-              ,inemitente_conjsoc
-              ,inpossui_titdesc
-              ,invalormax_cnae
-              ,inpossui_criticas)
-       values (pr_cdcooper
-              ,pr_nrdconta
-              ,pr_nrinssac
-              ,SYSDATE
-              ,to_char(SYSDATE,'sssss')
-              ,vr_tab_analise_pagador(1).qtremessa_cartorio
-              ,vr_tab_analise_pagador(1).qttit_protestados
-              ,vr_tab_analise_pagador(1).qttit_naopagos
-              ,vr_tab_analise_pagador(1).pemin_liquidez_qt
-              ,vr_tab_analise_pagador(1).pemin_liquidez_vl
-              ,vr_tab_analise_pagador(1).peconcentr_maxtit
-              ,vr_tab_analise_pagador(1).inemitente_conjsoc
-              ,vr_tab_analise_pagador(1).inpossui_titdesc
-              ,vr_tab_analise_pagador(1).invalormax_cnae
-              ,vr_inpossui_criticas);
+       
+         insert into tbdsct_analise_pagador
+                (cdcooper
+                ,nrdconta
+                ,nrinssac
+                ,dtanalise
+                ,hranalise
+                ,qtremessa_cartorio
+                ,qttit_protestados
+                ,qttit_naopagos
+                ,pemin_liquidez_qt
+                ,pemin_liquidez_vl
+                ,peconcentr_maxtit
+                ,inemitente_conjsoc
+                ,inpossui_titdesc
+                ,invalormax_cnae
+                ,inpossui_criticas)
+         values (pr_cdcooper
+                ,pr_nrdconta
+                ,pr_nrinssac
+                ,SYSDATE
+                ,to_char(SYSDATE,'sssss')
+                ,vr_tab_analise_pagador(1).qtremessa_cartorio
+                ,vr_tab_analise_pagador(1).qttit_protestados
+                ,vr_tab_analise_pagador(1).qttit_naopagos
+                ,vr_tab_analise_pagador(1).pemin_liquidez_qt
+                ,vr_tab_analise_pagador(1).pemin_liquidez_vl
+                ,vr_tab_analise_pagador(1).peconcentr_maxtit
+                ,vr_tab_analise_pagador(1).inemitente_conjsoc
+                ,vr_tab_analise_pagador(1).inpossui_titdesc
+                ,vr_tab_analise_pagador(1).invalormax_cnae
+                ,vr_inpossui_criticas);
 
 
     EXCEPTION
@@ -6510,7 +6518,7 @@ PROCEDURE pc_efetua_analise_pagador  ( pr_cdcooper IN crapsab.cdcooper%TYPE  -->
          open  cr_qt_nao_pagos;
          fetch cr_qt_nao_pagos into rw_qt_nao_pagos;
          close cr_qt_nao_pagos;
-
+         
          if  rw_qt_nao_pagos.qt_tit_nao_pagos > vr_tab_dados_dsctit(1).qtnaopag then
              vr_tab_analise_pagador(1).qttit_naopagos := rw_qt_nao_pagos.qt_tit_nao_pagos;
              vr_inpossui_criticas := 1;
@@ -6565,7 +6573,7 @@ PROCEDURE pc_efetua_analise_pagador  ( pr_cdcooper IN crapsab.cdcooper%TYPE  -->
          close cr_concentracao;
 
          if  rw_concentracao.pe_conc > vr_concentracao_maxima then
-             vr_tab_analise_pagador(1).peconcentr_maxtit := rw_concentracao.pe_conc;           
+             vr_tab_analise_pagador(1).peconcentr_maxtit := rw_concentracao.pe_conc;
              vr_inpossui_criticas := 1;
          end if;
 
@@ -6591,17 +6599,17 @@ PROCEDURE pc_efetua_analise_pagador  ( pr_cdcooper IN crapsab.cdcooper%TYPE  -->
 
          --  INPOSSUI_TITDESC   : Cooperado possui Títulos Descontados na Conta deste Pagador  (0 = Não / 1 = Sim). (Ref. TAB052: flpdctcp)
          if vr_tab_dados_dsctit(1).flpdctcp = 1 then 
-           open  cr_coop_tit_conta_pag;
-           fetch cr_coop_tit_conta_pag into rw_coop_tit_conta_pag;
-           if    cr_coop_tit_conta_pag%found then
+         open  cr_coop_tit_conta_pag;
+         fetch cr_coop_tit_conta_pag into rw_coop_tit_conta_pag;
+         if    cr_coop_tit_conta_pag%found then
                  vr_coop_tit_conta_pag := rw_coop_tit_conta_pag.tem_tit_conta_pag;
-           end if;
-           close cr_coop_tit_conta_pag;      
-           
+         end if;
+         close cr_coop_tit_conta_pag;      
+   
            if  nvl(vr_coop_tit_conta_pag, 0) > 0 then
-               vr_tab_analise_pagador(1).inpossui_titdesc := 1;
-               vr_inpossui_criticas := 1;
-           end if;
+             vr_tab_analise_pagador(1).inpossui_titdesc := 1;
+             vr_inpossui_criticas := 1;
+         end if;
 
          end if;  
 
