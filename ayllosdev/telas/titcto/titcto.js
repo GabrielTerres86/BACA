@@ -1462,7 +1462,6 @@ function btnContinuar() {
             hideMsgAguardo();
             showError("error","Informe um intervalo de até 60 dias.","Alerta - Ayllos","cDtfimper.focus()");
         } else {
-            hideMsgAguardo();
             gerarImpressaoBorderoNaoLiberado();
         }
     } else if(cddopcao == 'C'){
@@ -1863,7 +1862,6 @@ function gerarImpressaoLote() {
     console.log("[callafter] - " + callafter);
     
     carregaImpressaoAyllos("frmImprimirLoteTitcto",action,callafter);
-    hideMsgAguardo();
     return false;
 }
 
@@ -1889,7 +1887,6 @@ function gerarImpressaoBorderoNaoLiberado() {
     console.log("[callafter] - " + callafter);
     
     carregaImpressaoAyllos("frmImprimirBorderoNaoLiberadoTitcto",action,callafter);
-    hideMsgAguardo();
     return false;
 }
 
