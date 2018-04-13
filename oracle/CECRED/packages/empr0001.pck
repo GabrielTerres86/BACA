@@ -696,6 +696,7 @@ CREATE OR REPLACE PACKAGE CECRED.empr0001 AS
                                       ,pr_dtrefere         IN crapdat.dtmvtolt%TYPE --Data Referencia
                                       ,pr_vlapagar         IN NUMBER --Valor Pagar
                                       ,pr_tab_crawepr      IN empr0001.typ_tab_crawepr --Tabela com Contas e Contratos
+                                      ,pr_efetresg         IN VARCHAR2 DEFAULT 'N'
                                       ,pr_vlsomato         OUT NUMBER --Soma Total
                                       ,pr_vlresgat         OUT NUMBER --Soma
                                       ,pr_tab_erro         OUT gene0001.typ_tab_erro --tabela Erros
@@ -8736,6 +8737,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                                       ,pr_dtrefere         IN crapdat.dtmvtolt%TYPE --Data Referencia
                                       ,pr_vlapagar         IN NUMBER --Valor Pagar
                                       ,pr_tab_crawepr      IN empr0001.typ_tab_crawepr --Tabela com Contas e Contratos
+                                      ,pr_efetresg         IN VARCHAR2 DEFAULT 'N'
                                       ,pr_vlsomato         OUT NUMBER --Soma Total
                                       ,pr_vlresgat         OUT NUMBER --Soma
                                       ,pr_tab_erro         OUT gene0001.typ_tab_erro --tabela Erros
@@ -9013,11 +9015,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           BLOQ0001.pc_solici_cobertura_operacao(pr_idcobope => rw_crawepr.idcobope
                                                ,pr_flgerlog => 1
                                                ,pr_cdoperad => '1'
-                                               ,pr_idorigem => 5
+                                               ,pr_idorigem => 1
                                                ,pr_cdprogra => pr_nmdatela
                                                ,pr_qtdiaatr => vr_qtdiaatr
                                                ,pr_vlresgat => vr_vlresgat
-                                               ,pr_flefetiv => 'S' -- Deve efetuar o resgate
+                                               ,pr_flefetiv => pr_efetresg
                                                ,pr_dscritic => vr_dscritic);
 
           -- Em caso de erro, deve prosseguir normalmente, considerando que não há valores para resgate

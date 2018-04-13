@@ -14407,17 +14407,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
           ELSIF rw_crapdtc.tpaplrdc = 2 THEN
             -- Verifica se aplicacao esta em carência e não permite vários saques
             -- parciais no mesmo dia deixando a aplicação zerada durante a carência.
-            IF (rw_craplrg.dtmvtolt - rw_craprda.dtmvtolt) < rw_craprda.qtdiauti
-               AND rw_craplrg.vllanmto <> 0
-               AND rw_craprda.vlsdrdca - rw_craplrg.vllanmto <= 0 THEN
-              vr_cdcritic := 913;
+            IF NOT (UPPER(pr_cdprogra) LIKE 'CRPS750%' OR UPPER(pr_cdprogra) = 'CRPS001') THEN
+              IF (rw_craplrg.dtmvtolt - rw_craprda.dtmvtolt) < rw_craprda.qtdiauti
+                 AND rw_craplrg.vllanmto <> 0
+                 AND rw_craprda.vlsdrdca - rw_craplrg.vllanmto <= 0 THEN
+                vr_cdcritic := 913;
 
-              -- Desfazer as transações pendentes de COMMIT
-              ROLLBACK TO SAVEPOINT initFor;
-              -- Passar para o próximo registro do loop na craplrg
-              CONTINUE;
+                -- Desfazer as transações pendentes de COMMIT
+                ROLLBACK TO SAVEPOINT initFor;
+                -- Passar para o próximo registro do loop na craplrg
+                CONTINUE;
+              END IF;
             END IF;
-
             -- Incluido nova rotina de calculo de saldo para o caso de haver
             -- dois resgates parciais para o mesmo dia
             apli0001.pc_saldo_rgt_rdc_pos (pr_cdcooper => pr_cdcooper
@@ -16297,6 +16298,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
     vr_dtvencto     DATE;
     vr_flgcrapdtc   BOOLEAN;    
     vr_existresp    BOOLEAN;  
+    vr_qtdiasdif    NUMBER;
+    vr_auxdtvenc    DATE;
       
   BEGIN    
       
@@ -16390,9 +16393,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
 
           -- Fecha cursor
           CLOSE cr_craplrg;
-
-          IF (vr_tab_saldo_rdca_ord(vr_idxsald).dtvencto > pr_dtmvtolt) THEN
-            IF ((vr_tab_saldo_rdca_ord(vr_idxsald).dtvencto - pr_dtmvtolt) < 10) THEN
+          
+           IF (vr_tab_saldo_rdca_ord(vr_idxsald).dtvencto > pr_dtmvtolt) THEN
+             
+            IF NOT (UPPER(pr_cdprogra) LIKE 'CRPS750%' OR UPPER(pr_cdprogra) = 'CRPS001') 
+            AND ((vr_tab_saldo_rdca_ord(vr_idxsald).dtvencto - pr_dtmvtolt) < 10) THEN 
                
               pr_tab_resposta_cliente(vr_idxsald).nraplica := vr_tab_saldo_rdca_ord(vr_idxsald).nraplica;
               pr_tab_resposta_cliente(vr_idxsald).dtvencto := vr_tab_saldo_rdca_ord(vr_idxsald).dtvencto;
@@ -16421,7 +16426,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
               pr_tab_dados_resgate(vr_idxsald).saldo_rdca.idtipapl := vr_tab_saldo_rdca_ord(vr_idxsald).idtipapl;                
               pr_tab_dados_resgate(vr_idxsald).saldo_rdca.tpaplica := vr_tab_saldo_rdca_ord(vr_idxsald).tpaplica;
                             
-            END IF;    
+            END IF;   
             
           ELSE
             IF (nvl(pr_vltotrgt,0) >= NVL(vr_tab_saldo_rdca_ord(vr_idxsald).sldresga,0)) THEN
@@ -16532,8 +16537,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
             vr_idxresp := pr_tab_resposta_cliente.next(vr_idxresp);
           END LOOP;  
             
-          IF vr_existresp OR 
-             NVL(pr_vltotrgt,0) = 0 THEN
+          IF (vr_existresp OR NVL(pr_vltotrgt,0) = 0) AND (NOT (UPPER(pr_cdprogra) LIKE 'CRPS750%' OR UPPER(pr_cdprogra) = 'CRPS001')) THEN 
              -- SAIR retornando QUESTION
              pr_des_reto := 'QUESTION';
              RETURN; 

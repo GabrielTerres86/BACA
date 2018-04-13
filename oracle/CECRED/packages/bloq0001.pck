@@ -1561,6 +1561,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLOQ0001 AS
               ,inpoupanca_propria
               ,inaplicacao_terceiro
               ,inpoupanca_terceiro
+              ,idcobertura
               ,nrconta_terceiro
               ,vldesbloq
           FROM tbgar_cobertura_operacao
@@ -1601,6 +1602,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLOQ0001 AS
       vr_vlendivi NUMBER := 0;
       vr_vltotpre NUMBER(25,2) := 0;
       vr_qtprecal NUMBER(10) := 0;
+      vr_vlroriginal NUMBER;
+      vr_vlratualiza NUMBER;
+      vr_nrcpfcnpj NUMBER;
       
       TYPE typ_vet_liquida IS TABLE OF NUMBER
            INDEX BY PLS_INTEGER;     
@@ -1655,9 +1659,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLOQ0001 AS
           -- Continuar ao próximo registro, pois este será liquidade e não deve compor o saldo devedor.
           continue;
         END IF;
+
+        vr_vlendivi := 0;
         
         IF rw_gar.tpcontrato = 90 THEN
-          vr_vlendivi := 0;
+
           -- Buscar saldo devedor
           EMPR0001.pc_saldo_devedor_epr (pr_cdcooper => pr_cdcooper --> Cooperativa conectada
                                         ,pr_cdagenci => 1 --> Codigo da agencia
@@ -1698,10 +1704,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLOQ0001 AS
         END IF;
         
         -- Aplicar o percentual mínimo de garantia
-        vr_vlendivi := vr_vlendivi * (rw_gar.perminimo / 100);
+        --vr_vlendivi := vr_vlendivi * (rw_gar.perminimo / 100);
+        
+        -- Retornar valor atualizado de cobertura da operacao
+        pc_bloqueio_garantia_atualizad(pr_idcobert            => rw_gar.idcobertura 
+                                      ,pr_vlroriginal         => vr_vlroriginal 
+                                      ,pr_vlratualizado       => vr_vlratualiza 
+                                      ,pr_nrcpfcnpj_cobertura => vr_nrcpfcnpj
+                                      ,pr_dscritic            => vr_dscritic);
+        -- Se houve erro
+        IF TRIM(vr_dscritic) IS NOT NULL THEN
+           RAISE vr_exc_erro;
+        END IF;
         
         -- Remover possíveis valores de Desbloqueio
-        vr_vlendivi := nvl(vr_vlendivi,0) - nvl(rw_gar.vldesbloq,0);
+        vr_vlendivi := vr_vlratualiza;
         
         -- Acumular aos valores a bloquear conforme configuração de seleção:
         IF rw_gar.nrdconta = pr_nrdconta THEN
@@ -2640,7 +2657,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLOQ0001 AS
         vr_vlcobert_original   := vr_valopera_original  * (vr_perminimo / 100) - vr_vldesbloq;
         vr_vlcobert_atualizada := vr_valopera_atualizada  * (vr_perminimo / 100) - vr_vldesbloq;
               
-         IF vr_valopera_atualizada < vr_valopera_original THEN
+        IF vr_valopera_atualizada < vr_vlcobert_original THEN
            IF vr_perminimo <= 100 THEN
               vr_vlcobert_atualizada := vr_valopera_atualizada;
            END IF;
@@ -3483,13 +3500,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLOQ0001 AS
           vr_vlcobert := LEAST(vr_vlcobert,vr_vlsaldo_aplica);
 
           -- Se o valor de cobertura for menor que o do resgate, não resgatar
-          IF vr_tpcontrato = 90 AND vr_vlcobert < vr_vlresgat THEN
+          /*IF vr_tpcontrato = 90 AND vr_vlcobert < vr_vlresgat THEN
             
              -- Garantir Rollback da sessão antes de retornar
              ROLLBACK; -- Necessário devido ao uso do pragma
           
              RETURN;
-          END IF;
+          END IF;*/
 
           -- Buscar calendario
           OPEN BTCH0001.cr_crapdat(vr_cdcooper);
@@ -3559,7 +3576,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLOQ0001 AS
                   ELSE NULL;
                 END CASE;
               END LOOP;
-
+              
               vr_tab_resgates(ind_registro).saldo_rdca.nraplica := vr_aux_nraplica;
               vr_tab_resgates(ind_registro).saldo_rdca.dtmvtolt := vr_aux_dtmvtolt;
               vr_tab_resgates(ind_registro).saldo_rdca.dshistor := vr_aux_dshistor;

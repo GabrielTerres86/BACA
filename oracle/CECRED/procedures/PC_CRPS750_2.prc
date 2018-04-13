@@ -217,6 +217,7 @@ BEGIN
     vr_flgpripr         BOOLEAN;
     vr_dstransa         VARCHAR2(1000);
     vr_idacaojd         BOOLEAN := FALSE; -- Indicar Ação Judicial
+    vr_vlatrpag         NUMBER;
 
     -- Variaveis de Indices
     vr_cdindice         VARCHAR2(30) := ''; -- Indice da tabela de acordos
@@ -410,6 +411,9 @@ BEGIN
                                  ,pr_nrctremp => pr_nrctremp
                                  ,pr_nrparepr => pr_nrparepr) LOOP
 
+      /* Atribuir se operacao esta em dia ou atraso */
+      vr_flgemdia := rw_crappep.dtvencto > rw_crapdat.dtmvtoan;
+
       vr_tab_crawepr.DELETE;
 
       vr_vlresgat := 0;
@@ -518,6 +522,55 @@ BEGIN
         END IF;        
       END IF;
       
+      /* Se tem cobertura e está em atraso calcular o valor com atraso antes pois o resgate é feito 
+      dentro da procedure e pc_valida_pagamentos_geral */
+      IF ((rw_crappep.idcobope > 0) AND (NOT vr_flgemdia)) THEN
+        
+         -- Buscar pagamentos Parcela
+        EMPR0001.pc_busca_pgto_parcelas(pr_cdcooper => pr_cdcooper                --> Cooperativa conectada
+                                       ,pr_cdagenci => pr_cdagenci                --> Código da agência
+                                       ,pr_nrdcaixa => 0                          --> Número do caixa
+                                       ,pr_cdoperad => vr_cdoperad                --> Código do Operador
+                                       ,pr_nmdatela => pr_nmdatela                --> Nome da tela
+                                       ,pr_idorigem => 7 /*Batch*/                --> Id do módulo de sistema
+                                       ,pr_nrdconta => rw_crappep.nrdconta        --> Número da conta
+                                       ,pr_idseqttl => 1                          --> Seq titula
+                                       ,pr_dtmvtolt => rw_crapdat.dtmvtolt        --> Movimento atual
+                                       ,pr_flgerlog => 'N'                        --> Indicador S/N para geração de log
+                                       ,pr_nrctremp => rw_crappep.nrctremp        --> Número do contrato de empréstimo
+                                       ,pr_dtmvtoan => rw_crapdat.dtmvtoan        --> Data anterior
+                                       ,pr_nrparepr => rw_crappep.nrparepr        --> Número parcelas empréstimo
+                                       ,pr_des_reto => vr_des_erro                --> Retorno OK / NOK
+                                       ,pr_tab_erro => vr_tab_erro                --> Tabela com possíves erros
+                                       ,pr_tab_pgto_parcel => vr_tab_pgto_parcel  --> Tabela com registros de pagamentos
+                                       ,pr_tab_calculado   => vr_tab_calculado);  --> Tabela com totais calculados
+        -- Se ocorreu erro
+        IF vr_des_erro <> 'OK' THEN
+          -- Se tem erro
+          IF vr_tab_erro.count > 0 THEN
+            
+            -- Envio centralizado de log de erro
+            btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                      ,pr_ind_tipo_log => 2 -- Erro tratato
+                                      ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
+                                                          || vr_cdprogra || ' --> '
+                                                          || vr_dscritic );
+          END IF;
+        END IF;
+
+        -- Se retornou dados Buscar primeiro registro
+        vr_index_pgto_parcel := vr_tab_pgto_parcel.FIRST;
+        vr_vlatrpag := 0;
+        IF vr_index_pgto_parcel IS NOT NULL THEN
+           vr_vlatrpag:= nvl(vr_tab_pgto_parcel(vr_index_pgto_parcel).vlatrpag,0);
+        END IF;
+        
+        IF vr_vlatrpag > vr_vlapagar THEN
+           vr_vlapagar := vr_vlatrpag;
+        END IF;
+      
+      END IF;
+      
       -- Validar Pagamentos
       EMPR0001.pc_valida_pagamentos_geral(pr_cdcooper    => pr_cdcooper                --> Codigo Cooperativa
                                          ,pr_cdagenci    => pr_cdagenci                --> Codigo Agencia
@@ -533,6 +586,7 @@ BEGIN
                                          ,pr_dtrefere    => rw_crapdat.dtmvtolt        --> Data Referencia
                                          ,pr_vlapagar    => vr_vlapagar                --> Valor Pagar
                                          ,pr_tab_crawepr => vr_tab_crawepr             --> Tabela com Contas e Contratos
+                                         ,pr_efetresg    => 'S'                        --> Efetuar o resgate de cobertura de aplicação   
                                          ,pr_vlsomato    => vr_vlsomato                --> Soma Total
                                          ,pr_vlresgat    => vr_vlresgat                --> Soma
                                          ,pr_tab_erro    => vr_tab_erro                --> tabela Erros
@@ -565,7 +619,7 @@ BEGIN
       /* Tem cobertura de aplicação e é necessário resgate pois não há saldo suficiente */
       IF (vr_vlresgat > 0) THEN  
         /* Se conta estiver negativa o resgate não deve cobrir o estouro de conta apenas pagar a parcela emprestimo/financiamento */  
-        IF (vr_vlsomato < 0) THEN
+        IF (vr_vlsomato <= 0) THEN
            vr_vlsomato := vr_vlresgat;
         ELSE
           /* Resgate parcial pois há saldo mas não suficiente para pagar a parcela de emprestimo/financiamento então somar com 
@@ -592,9 +646,6 @@ BEGIN
         vr_vlsomato_tmp := 0;
         vr_vlsomato     := 0;
       END IF;
-
-      /* Atribuir se operacao esta em dia ou atraso */
-      vr_flgemdia := rw_crappep.dtvencto > rw_crapdat.dtmvtoan;
 
       IF vr_flgemdia THEN /* PARCELA EM DIA */
         /* Parcela em dia */
