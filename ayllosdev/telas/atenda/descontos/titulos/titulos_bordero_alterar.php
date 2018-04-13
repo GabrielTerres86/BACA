@@ -69,6 +69,9 @@
 	$vllimite = $contrato->vllimite;
 	$pctolera = $contrato->pctolera;
 	$dtfimvig = $contrato->dtfimvig;
+	if ($bordero->cdoperad!=$glbvars["cdoperad"]){
+		exibeErro("Operador deve ser o mesmo que criou o border&ocirc;");
+	}
 
 	if (diffData($dtfimvig,$glbvars["dtmvtolt"])<0){
 		exibeErro("Data de vig&ecirc;ncia do contrato deve ser maior que a data de movimenta&ccedil;&atilde;o do sistema");
