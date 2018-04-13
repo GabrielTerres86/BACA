@@ -4847,7 +4847,8 @@ PROCEDURE pc_buscar_tit_bordero_web (
       SELECT 
         crapbdt.nrborder,
         crapbdt.nrctrlim,
-        crapbdt.insitbdt
+        crapbdt.insitbdt,
+        crapbdt.cdoperad
       FROM 
         crapbdt
       where 
@@ -4981,6 +4982,7 @@ PROCEDURE pc_buscar_tit_bordero_web (
                           '<insitbdt>' || rw_crapbdt.insitbdt || '</insitbdt>' ||
                           '<qttitulo>' || vr_qtregist || '</qttitulo>' ||
                           '<vltitulo>' || vr_vltitulo || '</vltitulo>' ||
+                          '<cdoperad>' || rw_crapbdt.cdoperad || '</cdoperad>' ||
                      '</bordero>');
       
                   
@@ -5140,7 +5142,12 @@ PROCEDURE pc_buscar_tit_bordero_web (
                    'cob.incobran '||
                  ' from   crapcob cob '||
                    ' INNER JOIN crapsab sab ON sab.nrinssac = cob.nrinssac AND sab.cdtpinsc = cob.cdtpinsc AND sab.cdcooper = cob.cdcooper AND sab.nrdconta = cob.nrdconta ' ||
-                   ' INNER JOIN craptdb tdb ON tdb.cdcooper=cob.cdcooper AND tdb.nrdconta=cob.nrdconta AND tdb.nrdocmto = cob.nrdocmto ' ||
+                   ' INNER JOIN craptdb tdb ON cob.cdcooper = tdb.cdcooper AND
+                                                      cob.cdbandoc = tdb.cdbandoc AND
+                                                      cob.nrdctabb = tdb.nrdctabb AND
+                                                      cob.nrdconta = tdb.nrdconta AND
+                                                      cob.nrcnvcob = tdb.nrcnvcob AND
+                                                      cob.nrdocmto = tdb.nrdocmto ' ||
                  'where  ' ||
                  ' cob.nrnosnum in ('||pr_nrnosnum||') '||
                  'and    cob.nrdconta = :nrdconta '||
@@ -5654,5 +5661,120 @@ PROCEDURE pc_buscar_tit_bordero_web (
             ROLLBACK;
     END pc_altera_bordero ;
     
+    PROCEDURE pc_resgate_titulo_bordero (pr_cdcooper    IN crapbdt.cdcooper%TYPE  --> Codigo Cooperativa
+                                       ,pr_cdoperad    IN crapbdt.cdoperad%TYPE  --> Codigo operador
+                                       ,pr_dtmvtolt    IN crapbdt.dtmvtolt%TYPE  --> Data Movimento
+                                       ,pr_dtmvtoan    IN crapbdt.dtmvtolt%TYPE  --> Data anterior do movimento
+                                       ,pr_dtresgat    IN crapbdt.dtmvtolt%TYPE  --> Data do resgate
+                                       ,pr_idorigem    IN INTEGER                --> Identificador Origem pagamento
+                                       ,pr_nrdconta    IN crapbdt.nrdconta%TYPE  --> Numero da conta
+                                       ,pr_nrborder    IN crapbdt.nrborder%TYPE  --> Numero do bordero
+                                       ,pr_nrnosnum    IN VARCHAR2               --> Lista de titulos a serem resgatados
+                                       -->OUT<--
+                                       ,pr_cdcritic    OUT INTEGER                 --> Codigo Critica
+                                       ,pr_dscritic    OUT VARCHAR2                --> Descricao Critica
+                                       ) IS
+                                       
+
+       -- Variável de críticas
+       vr_cdcritic crapcri.cdcritic%type; --> Cód. Erro
+       vr_dscritic varchar2(1000);        --> Desc. Erro
+
+       vr_dtmvtolt     DATE;
+       vr_qtregist     NUMBER;
+      -- variaveis de entrada vindas no xml
+      vr_cdcooper integer;
+      vr_cdoperad varchar2(100);
+      vr_nmdatela varchar2(100);
+      vr_nmeacao  varchar2(100);
+      vr_cdagenci varchar2(100);
+      vr_nrdcaixa varchar2(100);
+      vr_idorigem varchar2(100);
+      
+      -- Tratamento de erros
+      vr_exc_erro exception;
+     
+      vr_cddlinha integer;
+      /*Contrato do limite*/
+      CURSOR cr_craplim IS      
+        SELECT 
+          craplim.dtpropos,
+          craplim.dtinivig,
+          craplim.nrctrlim,
+          craplim.vllimite,
+          craplim.qtdiavig,
+          craplim.cddlinha,
+          craplim.tpctrlim,
+          craplim.dtfimvig
+        FROM 
+          craplim
+        where 
+          craplim.cdcooper = vr_cdcooper
+          AND craplim.tpctrlim = 3
+          AND craplim.nrdconta = pr_nrdconta
+          AND craplim.insitlim = 2
+        ;
+      rw_craplim cr_craplim%rowtype;
+      
+      /*Cooperado*/
+      CURSOR cr_crapass IS
+         SELECT
+            crapass.inpessoa
+         FROM
+            crapass
+         WHERE
+            crapass.nrdconta = pr_nrdconta
+            AND crapass.cdcooper = vr_cdcooper;
+      rw_crapass cr_crapass%rowtype;
+        
+      /*Linha de crédito*/
+      CURSOR cr_crapldc IS
+        SELECT 
+          cddlinha,
+          txmensal
+        FROM 
+          crapldc
+        WHERE
+          crapldc.cdcooper = vr_cdcooper 
+          AND crapldc.cddlinha = vr_cddlinha 
+          AND crapldc.tpdescto = 3;
+      rw_crapldc cr_crapldc%rowtype;
+      
+      
+      /*CURSOR do bordero sendo alterado*/
+      CURSOR cr_crapbdt IS
+         SELECT
+             *
+         FROM
+             crapbdt
+         WHERE
+             crapbdt.nrborder = pr_nrborder
+             AND crapbdt.cdcooper = vr_cdcooper
+             AND crapbdt.nrdconta = pr_nrdconta;
+      rw_crapbdt cr_crapbdt%ROWTYPE;
+      
+      /*Títulos sendo resgatados*/ 
+      type tpy_ref_cob is ref cursor;
+      cr_tab_cob       tpy_ref_cob;
+      rw_cob       typ_tab_dados_titulos;
+      vr_sql       varchar2(32767);
+      vr_idtabtitulo INTEGER;
+      vr_tab_dados_titulos typ_tab_dados_titulos;
+      
+      /*Cursor para o associado*/
+      /*/*Cursor para o bordero*/
+      /*Cursor para os titulos*/       
+       
+      -- Pega os dados do Associado
+       
+      -- Pega os dados do bordero
+       
+      -- Pega os dados do titulo
+          -- Pega os dados do lançamento
+          
+       BEGIN
+         
+       NULL;
+    END pc_resgate_titulo_bordero;
 END TELA_ATENDA_DSCTO_TIT;
 /
