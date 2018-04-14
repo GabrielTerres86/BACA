@@ -18394,8 +18394,12 @@ PROCEDURE realizar_manutencao_contrato:
     DEF INPUT PARAM par_nrctrlim AS INTE                    NO-UNDO.
     DEF INPUT PARAM par_vllimite AS DECI                    NO-UNDO.
     DEF INPUT PARAM par_cddlinha AS INTE                    NO-UNDO.
+    
     DEF OUTPUT PARAM TABLE FOR tt-erro.
     DEF OUTPUT PARAM TABLE FOR tt-msg-confirma.
+    DEF OUTPUT PARAM TABLE FOR tt-dsctit_dados_limite.
+    DEF OUTPUT PARAM TABLE FOR tt-dados-avais.
+    DEF OUTPUT PARAM TABLE FOR tt-dados_dsctit.
     
     DEF VAR aux_nrctrlim AS INTE    NO-UNDO.
     
@@ -18440,10 +18444,10 @@ PROCEDURE realizar_manutencao_contrato:
     DEF VAR aux_nrcxaps2 AS INTE    NO-UNDO.
     
     EMPTY TEMP-TABLE tt-erro.
+    EMPTY TEMP-TABLE tt-msg-confirma.
     EMPTY TEMP-TABLE tt-dsctit_dados_limite.
     EMPTY TEMP-TABLE tt-dados-avais.
     EMPTY TEMP-TABLE tt-dados_dsctit.
-    EMPTY TEMP-TABLE tt-msg-confirma.
     
     ASSIGN aux_dscritic = ""
            aux_cdcritic = 0
@@ -18518,6 +18522,7 @@ PROCEDURE realizar_manutencao_contrato:
 
              END.
 
+        
           RETURN "NOK".
 
        END.
@@ -18671,13 +18676,13 @@ PROCEDURE realizar_manutencao_contrato:
           RUN STORED-PROCEDURE pc_efetivar_proposta
              aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper
                                                   ,INPUT par_nrdconta
-                                                  ,INPUT par_nrctrlim
+                                                  ,INPUT aux_nrctrlim
                                                   ,INPUT 3
                                                   ,INPUT par_cdoperad
                                                   ,INPUT par_cdagenci
                                                   ,INPUT par_nrdcaixa
                                                   ,INPUT par_idorigem
-                                                  ,INPUT 0
+                                                  ,INPUT ?
                                                   ,OUTPUT 0
                                                   ,OUTPUT "").
           

@@ -2507,7 +2507,7 @@ function concluirManutencaoDeLimite(){
     showMsgAguardo('Aguarde, realizando manutenção do limite do contrato...');
     //nrdconta
     var nrctrlim = normalizaNumero($("#nrctrlim","#frmTitLimiteManutencao").val());
-    var vllimite = converteNumero($('#vllimite','#frmTitLimiteManutencao').val());
+    var vllimite = $('#vllimite','#frmTitLimiteManutencao').val().replace(/\./g,"");
     var cddlinha = $('#cddlinha','#frmTitLimiteManutencao').val();
 
     $.ajax({        
