@@ -357,10 +357,10 @@
 		$xmlGetDados .= "		<cddlinha>".$cddlinha."</cddlinha>";
 		$xmlGetDados .= "	</Dados>";
 		$xmlGetDados .= "</Root>";
-			
+
 		// Executa script para envio do XML
 		$xmlResult = getDataXML($xmlGetDados);
-		echo $xmlResult;
+
 		// Cria objeto para classe de tratamento de XML
 		$xmlObjDados = getObjectXML(retiraAcentos(removeCaracteresInvalidos($xmlResult)));
 		
@@ -369,10 +369,10 @@
 	       echo 'showError("error","'.$xmlObjDados->roottag->tags[0]->tags[0]->tags[4]->cdata.'","Alerta - Ayllos","mostrarBorderoResumo();hideMsgAguardo();bloqueiaFundo(divRotina);");';
 			exit;
 		}
-			
-	    echo 'showError("inform","'.$xmlObjDados->roottag->tags[0]->tags[0]->cdata.'","Alerta - Ayllos","'
-	    	.'voltaDiv(3,2,4,\'DESCONTO DE T&Iacute;TULOS - LIMITE\');'
-	    	.'carregaTitulos();';	
+
+	    echo 'showError("inform","Manuten&ccedil;&atilde;o realizada com sucesso","Alerta - Ayllos","'
+	    	.'voltaDiv(2,1,4,\'DESCONTO DE T&Iacute;TULOS\',\'DSC TITS\');'
+	    	.'carregaTitulos();");';	
 	}
 	else if($operacao =='ALTERAR_BORDERO'){
 

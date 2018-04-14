@@ -1292,7 +1292,10 @@ PROCEDURE realizar_manutencao_contrato:
                                         INPUT aux_vllimite,
                                         INPUT aux_cddlinha,
                                         OUTPUT TABLE tt-erro,
-                                        OUTPUT TABLE tt-msg-confirma).
+                                        OUTPUT TABLE tt-msg-confirma,
+                                        OUTPUT TABLE tt-dsctit_dados_limite,
+                                        OUTPUT TABLE tt-dados-avais,
+                                        OUTPUT TABLE tt-dados_dsctit).
 
                                     
     IF  RETURN-VALUE = "NOK"  THEN
@@ -1312,10 +1315,18 @@ PROCEDURE realizar_manutencao_contrato:
     ELSE 
         DO:
             RUN piXmlNew.
+            RUN piXmlExport (INPUT TEMP-TABLE tt-dsctit_dados_limite:HANDLE,
+                             INPUT "Dados_Limite").
+            RUN piXmlExport (INPUT TEMP-TABLE tt-dados-avais:HANDLE,
+                             INPUT "Avais").
+            RUN piXmlExport (INPUT TEMP-TABLE tt-dados_dsctit:HANDLE,
+                             INPUT "Dados_Desconto").
             RUN piXmlSave.
         END.
         
 END PROCEDURE.
+
+/* .......................................................................... */
 
 /********************************************************************/
 /*    Buscar dados de uma proposta limite de desconto de titulos    */
