@@ -6,19 +6,15 @@ create or replace package cecred.ESTE0003 is
       Sigla    : CADA
       Autor    : Paulo Penteado (Gft)
       Data     : Março/2018.                   Ultima atualizacao: 23/03/2018
-
+      
       Dados referentes ao programa:
       Frequencia: Sempre que solicitado
       Objetivo  : Rotinas referentes a comunicaçao com a ESTEIRA de CREDITO da IBRATAN
 
-      Alteracoes: 18/02/2018 Adicionado pc_enviar_proposta_esteira (Paulo Penteado (GFT)) 
-
-                  14/03/2018 Adicionado os procedimentos pc_verifica_contigenc_esteira e 
-                    pc_verifica_contigenc_motor no cabecalho para serem expostos
-
-                   23/03/2018 - Alterado a referencia que era para a tabela CRAPLIM para a tabela CRAWLIM nos procedimentos 
-                                Referentes a proposta. (Lindon Carlos Pecile - GFT)
-
+      Alteracoes: 23/03/2018 - Alterado a referencia que era para a tabela CRAPLIM para a tabela CRAWLIM nos procedimentos 
+                               Referentes a proposta. (Lindon Carlos Pecile - GFT)
+                  14/04/2018 - Adicionado a procedure pc_crps703 (Paulo Penteado (GFT)) 
+  
   ---------------------------------------------------------------------------------------------------------------*/
 
 --> Tratamento de erro
@@ -159,10 +155,16 @@ procedure pc_enviar_analise_manual(pr_cdcooper    in crawlim.cdcooper%type  --> 
                                    ,pr_des_erro out varchar2              --> Erros do processo OK ou NOK
                                    );
 
+
+PROCEDURE pc_crps703(pr_cdcritic out number   --> Código da Crítica
+                    ,pr_dscritic out varchar2 --> Descriçao da Critica
+                    );
+
 end ESTE0003;
 /
 create or replace package body cecred.ESTE0003 is
 
+vr_dsmensag varchar2(1000);
 vr_flctgest boolean;
 vr_flctgmot boolean;
 
@@ -511,7 +513,7 @@ PROCEDURE pc_verifica_regras(pr_cdcooper  IN crawlim.cdcooper%TYPE  --> Codigo d
         RETURN;
       END IF;
       --> Nao será possível enviar/reenviar para a Esteira
-      vr_dscritic := 'A proposta nao pode ser enviada para Análise de crédito, verifique a situaçao da proposta!';
+      vr_dscritic := 'A proposta nao pode ser enviada para Análise de crédito, verifique a situação da proposta!';
       RAISE vr_exc_erro;      
     END IF;
     
@@ -928,7 +930,7 @@ BEGIN
                      ,pr_tpenvest    => 'M'                                                       --> Tipo de Envestimento
                      ,pr_dsprotocolo => vr_dsprotoc                                               --> Descriçao DO PRotocoço
                      ,pr_dscritic    => vr_dscritic);                                             --> Descriçao da critica
-
+                                                                                                  
     --> Liberando a memória alocada pro CLOB                                                       
     dbms_lob.close(vr_obj_proposta_clob);
     dbms_lob.freetemporary(vr_obj_proposta_clob);                        
@@ -1027,7 +1029,7 @@ BEGIN
           elsif rw_crawlim.insitapr = 8 then
                 pr_dsmensag := '<b>Refazer</b>';
           end   if;
-    end   if;
+    end if; 
       
     --> Gerar mensagem padrao:
     pr_dsmensag := 'Resultado da Avaliaçao: '||pr_dsmensag;
@@ -2302,5 +2304,456 @@ END pc_incluir_proposta;
 
           ROLLBACK;
    END pc_enviar_analise_manual;
+   
+   
+PROCEDURE pc_efetivar_limite_esteira(pr_cdcooper  in crawlim.cdcooper%type
+                                    ,pr_nrdconta  in crawlim.nrdconta%type
+                                    ,pr_nrctrlim  in crawlim.nrctrlim%type
+                                    ,pr_tpctrlim  in crawlim.tpctrlim%type
+                                    ,pr_cdagenci  in crapage.cdagenci%type
+                                    ,pr_cdoperad  in crapope.cdoperad%type
+                                    ,pr_cdorigem  in integer
+                                    ,pr_dtmvtolt  in crapdat.dtmvtolt%type
+                                    ---- OUT ----
+                                    ,pr_cdcritic out number
+                                    ,pr_dscritic out varchar2
+                                    ) is
+   /* ...........................................................................
+  
+    Programa : pc_efetivar_limite_esteira        
+    Sistema  : Conta-Corrente - Cooperativa de Credito
+    Sigla    : CRED
+    Autor    : Paulo Penteado (GFT) 
+    Data     : Abril/2018
+    
+    Dados referentes ao programa:
+    
+    Objetivo  : Enviadar proposta de limites de desconto de titulos como efetivadas para o Ibratan
+
+    Alteraçao : 14/04/2018 - Criação Paulo Penteado (GFT) 
+                
+   ..........................................................................*/
+   -- Tratamento de erros
+   vr_cdcritic number := 0;
+   vr_dscritic varchar2(4000);
+   vr_exc_erro exception;
+
+   -- Objeto json da proposta
+   vr_obj_efetivar json := json();
+   vr_obj_agencia  json := json();
+
+   -- Auxiliares
+   vr_dsprotocolo  varchar2(1000);
+
+   -- Variaveis para DEBUG
+   vr_flgdebug varchar2(100) := gene0001.fn_param_sistema('CRED',pr_cdcooper,'DEBUG_MOTOR_IBRA');
+   vr_idaciona tbgen_webservice_aciona.idacionamento%type;
+
+   --     Buscar dados do associado
+   cursor cr_crapass is
+   select ass.nrdconta
+         ,ass.nmprimtl
+         ,ass.cdagenci
+         ,age.nmextage
+         ,ass.inpessoa
+         ,decode(ass.inpessoa,1,0,2,1) inpessoa_ibra
+         ,ass.nrcpfcgc
+   from   crapage age
+         ,crapass ass
+   where  ass.cdcooper = age.cdcooper
+   and    ass.cdagenci = age.cdagenci
+   and    ass.cdcooper = pr_cdcooper
+   and    ass.nrdconta = pr_nrdconta;
+   rw_crapass cr_crapass%rowtype;
+
+   --     Buscar dados da proposta de limite
+   cursor cr_crawlim is
+   select lim.nrctrlim
+         ,lim.vllimite
+         ,0 qtpreemp
+         ,lim.dtpropos
+         ,lim.dtfimvig
+         ,lim.hrinclus
+         ,lim.cdagenci
+         ,lim.cddlinha
+         ,ldc.dsdlinha
+         ,0 cdfinemp
+         ,ldc.tpctrato
+         ,lim.cdoperad
+         ,ope.nmoperad nmoperad_efet
+         ,lim.cdagenci cdagenci_efet
+   from   crapope ope
+         ,crapldc ldc
+         ,crawlim lim
+   where  ldc.cdcooper = lim.cdcooper
+   and    ldc.cddlinha = lim.cddlinha
+   and    ldc.tpdescto = lim.tpctrlim
+   and    upper(ope.cdoperad(+))= upper(lim.cdoperad)
+   and    ope.cdcooper       (+)= lim.cdcooper
+   and    lim.tpctrlim = pr_tpctrlim
+   and    lim.nrctrlim = pr_nrctrlim
+   and    lim.nrdconta = pr_nrdconta
+   and    lim.cdcooper = pr_cdcooper;
+   rw_crawlim cr_crawlim%rowtype;
+
+BEGIN
+   --  Se o DEBUG estiver habilitado
+   if  vr_flgdebug = 'S' then
+       -- Gravar dados log acionamento
+       este0001.pc_grava_acionamento(pr_cdcooper              => pr_cdcooper
+                                    ,pr_cdagenci              => pr_cdagenci
+                                    ,pr_cdoperad              => pr_cdoperad
+                                    ,pr_cdorigem              => pr_cdorigem
+                                    ,pr_nrctrprp              => pr_nrctrlim
+                                    ,pr_nrdconta              => pr_nrdconta
+                                    ,pr_tpproduto             => 3
+                                    ,pr_tpacionamento         => 0  /* 0 - DEBUG */
+                                    ,pr_dsoperacao            => 'INICIO EFETIVAR PROPOSTA'
+                                    ,pr_dsuriservico          => null
+                                    ,pr_dtmvtolt              => pr_dtmvtolt
+                                    ,pr_cdstatus_http         => 0
+                                    ,pr_dsconteudo_requisicao => null
+                                    ,pr_dsresposta_requisicao => null
+                                    ,pr_idacionamento         => vr_idaciona
+                                    ,pr_dscritic              => vr_dscritic);
+   end if;
+
+   open  cr_crapass;
+   fetch cr_crapass into rw_crapass;
+   if    cr_crapass%notfound then
+         close cr_crapass;
+         vr_cdcritic := 9;
+         raise vr_exc_erro;
+   end   if;
+   close cr_crapass;
+
+   open  cr_crawlim;
+   fetch cr_crawlim into rw_crawlim;
+   if    cr_crawlim%notfound then
+         close cr_crawlim;
+         vr_cdcritic := 535; -- 535 - Proposta nao encontrada.
+         raise vr_exc_erro;
+   end   if;
+   close cr_crawlim;
+
+   -- Criar objeto json para agencia da proposta
+   vr_obj_agencia.put('cooperativaCodigo', pr_cdcooper);
+   vr_obj_agencia.put('PACodigo', rw_crawlim.cdagenci);
+   vr_obj_efetivar.put('PA' ,vr_obj_agencia);
+   vr_obj_agencia := json();
+
+   -- Criar objeto json para agencia do cooperado
+   vr_obj_agencia.put('cooperativaCodigo', pr_cdcooper);
+   vr_obj_agencia.put('PACodigo', rw_crapass.cdagenci);
+   vr_obj_efetivar.put('cooperadoContaPA' ,vr_obj_agencia);
+   vr_obj_agencia := json();
+
+   -- Nr. conta sem o digito
+   vr_obj_efetivar.put('cooperadoContaNum'      , to_number(substr(rw_crapass.nrdconta,1,length(rw_crapass.nrdconta)-1)));
+   -- Somente o digito
+   vr_obj_efetivar.put('cooperadoContaDv'       , to_number(substr(rw_crapass.nrdconta,-1)));
+
+   if  rw_crapass.inpessoa = 1 then
+       vr_obj_efetivar.put('cooperadoDocumento' , lpad(rw_crapass.nrcpfcgc,11,'0'));
+   else
+       vr_obj_efetivar.put('cooperadoDocumento' , lpad(rw_crapass.nrcpfcgc,14,'0'));
+   end if;
+
+   --  Verificar se possui o operador que realizou a efetivacao
+   if  trim(rw_crawlim.cdoperad) is null then
+       vr_dscritic := 'Operador da efetivacao da proposta nao encontrado.';
+       raise vr_exc_erro;
+   end if;
+
+   vr_obj_efetivar.put('numero'                 , pr_nrctrlim);
+   vr_obj_efetivar.put('operadorEfetivacaoLogin', rw_crawlim.cdoperad);
+   vr_obj_efetivar.put('operadorEfetivacaoNome' , rw_crawlim.nmoperad_efet) ;
+   -- Criar objeto json para agencia do cooperado
+   vr_obj_agencia.put('cooperativaCodigo'       , pr_cdcooper);
+   vr_obj_agencia.put('PACodigo'                , rw_crawlim.cdagenci_efet);
+   vr_obj_efetivar.put('operadorEfetivacaoPA'   , vr_obj_agencia);
+   vr_obj_efetivar.put('dataHora'               , este0001.fn_datatempo_ibra(sysdate)) ;
+   vr_obj_efetivar.put('contratoNumero'         , pr_nrctrlim);
+   vr_obj_efetivar.put('valor'                  , rw_crawlim.vllimite);
+   vr_obj_efetivar.put('parcelaQuantidade'      , rw_crawlim.qtpreemp);
+   vr_obj_efetivar.put('parcelaPrimeiroVencimento', este0001.fn_data_ibra( rw_crawlim.dtfimvig));
+   vr_obj_efetivar.put('parcelaValor'           , este0001.fn_decimal_ibra(rw_crawlim.vllimite));
+
+   --  Se o DEBUG estiver habilitado
+   if  vr_flgdebug = 'S' then
+       -- Gravar dados log acionamento
+       este0001.pc_grava_acionamento(pr_cdcooper              => pr_cdcooper
+                                    ,pr_cdagenci              => pr_cdagenci
+                                    ,pr_cdoperad              => pr_cdoperad
+                                    ,pr_cdorigem              => pr_cdorigem
+                                    ,pr_nrctrprp              => pr_nrctrlim
+                                    ,pr_nrdconta              => pr_nrdconta
+                                    ,pr_tpproduto             => 3
+                                    ,pr_tpacionamento         => 0  /* 0 - DEBUG */
+                                    ,pr_dsoperacao            => 'ANTES EFETIVAR PROPOSTA'
+                                    ,pr_dsuriservico          => null
+                                    ,pr_dtmvtolt              => pr_dtmvtolt
+                                    ,pr_cdstatus_http         => 0
+                                    ,pr_dsconteudo_requisicao => vr_obj_efetivar.to_char
+                                    ,pr_dsresposta_requisicao => null
+                                    ,pr_idacionamento         => vr_idaciona
+                                    ,pr_dscritic              => vr_dscritic);
+   end if;
+
+   -- Enviar dados para Esteira
+   pc_enviar_analise(pr_cdcooper    => pr_cdcooper               --> Codigo da cooperativa
+                    ,pr_cdagenci    => pr_cdagenci               --> Codigo da agencia
+                    ,pr_cdoperad    => pr_cdoperad               --> codigo do operador
+                    ,pr_cdorigem    => pr_cdorigem               --> Origem da operacao
+                    ,pr_nrdconta    => pr_nrdconta               --> Numero da conta do cooperado
+                    ,pr_nrctrlim    => pr_nrctrlim               --> Numero da proposta de emprestimo atual/antigo
+                    ,pr_dtmvtolt    => pr_dtmvtolt               --> Data do movimento
+                    ,pr_comprecu    => '/efetivar'               --> Complemento do recuros da URI
+                    ,pr_dsmetodo    => 'PUT'                     --> Descricao do metodo
+                    ,pr_conteudo    => vr_obj_efetivar.to_char   --> Conteudo no Json para comunicacao
+                    ,pr_dsoperacao  => 'ENVIO DA EFETIVACAO DA PROPOSTA DE ANALISE DE CREDITO'       --> Operacao realizada
+                    ,pr_dsprotocolo => vr_dsprotocolo
+                    ,pr_dscritic    => vr_dscritic);
+
+   --  verificar se retornou critica
+   if  vr_dscritic is not null then
+       raise vr_exc_erro;
+   end if;
+
+   -- Atualizar proposta
+   begin
+      update crawlim lim
+      set    dtenefes = trunc(sysdate)
+      where  lim.tpctrlim = pr_tpctrlim
+      and    lim.nrctrlim = pr_nrctrlim
+      and    lim.nrdconta = pr_nrdconta
+      and    lim.cdcooper = pr_cdcooper;
+   exception
+      when others then
+           vr_dscritic := 'Nao foi possivel atualizar proposta apos envio da efetivacao de Analise de Credito: '||sqlerrm;
+           raise vr_exc_erro;
+   end;
+
+   if  vr_flgdebug = 'S' then
+       -- Gravar dados log acionamento
+       este0001.pc_grava_acionamento(pr_cdcooper              => pr_cdcooper
+                                    ,pr_cdagenci              => pr_cdagenci
+                                    ,pr_cdoperad              => pr_cdoperad
+                                    ,pr_cdorigem              => pr_cdorigem
+                                    ,pr_nrctrprp              => pr_nrctrlim
+                                    ,pr_nrdconta              => pr_nrdconta
+                                    ,pr_tpacionamento         => 0  /* 0 - DEBUG */
+                                    ,pr_dsoperacao            => 'TERMINO EFETIVAR PROPOSTA'
+                                    ,pr_dsuriservico          => null
+                                    ,pr_dtmvtolt              => pr_dtmvtolt
+                                    ,pr_cdstatus_http         => 0
+                                    ,pr_dsconteudo_requisicao => null
+                                    ,pr_dsresposta_requisicao => null
+                                    ,pr_idacionamento         => vr_idaciona
+                                    ,pr_dscritic              => vr_dscritic);
+   end if;
+
+   commit;
+
+EXCEPTION
+   when vr_exc_erro then
+        if  nvl(vr_cdcritic,0) > 0 and trim(vr_dscritic) is null then
+            vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+        end if;
+
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+
+   when others then
+        pr_cdcritic := 0;
+        pr_dscritic := 'Não foi possivel realizar efetivacao da proposta de Analise de Credito: '||sqlerrm;
+
+END pc_efetivar_limite_esteira;
+
+   
+
+PROCEDURE pc_solicitar_limite_efetivacao(pr_cdcooper  in crawlim.cdcooper%type
+                                        ,pr_tpctrlim  in crawlim.tpctrlim%type
+                                        ,pr_dtmvtolt  in crapdat.dtmvtolt%type
+                                        ,pr_cdcritic out number
+                                        ,pr_dscritic out varchar2
+                                        ) is
+   /* ...........................................................................
+  
+    Programa : pc_solicitar_limite_efetivacao        
+    Sistema  : Conta-Corrente - Cooperativa de Credito
+    Sigla    : CRED
+    Autor    : Paulo Penteado (GFT) 
+    Data     : Abril/2018
+    
+    Dados referentes ao programa:
+    
+    Objetivo  : Buscar as propostas de limites de desconto de titulos que foram efetivadas
+                no sistema Ayllos e ainda não foram enviadas como efetivadas para o Ibratan
+
+    Alteraçao : 14/04/2018 - Criação Paulo Penteado (GFT) 
+                
+   ..........................................................................*/
+    
+   --> Tratamento de erros
+   vr_cdcritic number := 0;
+   vr_dscritic varchar2(4000);
+   vr_exc_erro exception;
+
+   --     buscar as propostas que já foram analisada e efetivadas no Ayllos
+   cursor cr_crawlim is
+   select pro.cdcooper
+         ,pro.nrdconta
+         ,pro.nrctrlim
+         ,pro.tpctrlim
+         ,pro.cdagenci
+         ,pro.cdoperad
+   from   craplim ctr
+         ,crawlim pro
+   where  ctr.dtpropos  < pr_dtmvtolt
+   and    ctr.tpctrlim  = pro.tpctrlim
+   and    ctr.nrctrlim  = pro.nrctrlim
+   and    ctr.nrdconta  = pro.nrdconta
+   and    ctr.cdcooper  = pro.cdcooper
+   and    pro.dtenefes is null
+   and    pro.cdopeapr <> 'MOTOR'
+   and    pro.dtenvest is not null
+   and    pro.insitlim  = 2
+   and    pro.tpctrlim  = pr_tpctrlim
+   and    pro.cdcooper  = pr_cdcooper;
+   rw_crawlim cr_crawlim%rowtype;
+
+BEGIN
+   open  cr_crawlim;
+   loop
+         fetch cr_crawlim into rw_crawlim;
+         exit  when cr_crawlim%notfound;
+         
+         pc_efetivar_limite_esteira(pr_cdcooper => rw_crawlim.cdcooper
+                                   ,pr_nrdconta => rw_crawlim.nrdconta
+                                   ,pr_nrctrlim => rw_crawlim.nrctrlim
+                                   ,pr_tpctrlim => rw_crawlim.tpctrlim
+                                   ,pr_cdagenci => rw_crawlim.cdagenci
+                                   ,pr_cdoperad => rw_crawlim.cdoperad
+                                   ,pr_cdorigem => 9 /*Esteira */
+                                   ,pr_dtmvtolt => pr_dtmvtolt
+                                   ,pr_cdcritic => vr_cdcritic
+                                   ,pr_dscritic => vr_dscritic );
+
+         if  nvl(vr_cdcritic,0) > 0 or trim(vr_dscritic) is not null then
+             raise vr_exc_erro;        
+         end if;
+   end   loop;
+   close cr_crawlim;
+
+   commit;   
+    
+EXCEPTION
+   when vr_exc_erro then
+        if  nvl(vr_cdcritic,0) > 0 and  trim(vr_dscritic) is null then
+            vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);        
+        end if;  
+      
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+    
+   when others then
+        pr_cdcritic := 0;
+        pr_dscritic := 'Nao foi possivel realizar a efetivação de proposta de Análise de Crédito: '||sqlerrm;
+
+END pc_solicitar_limite_efetivacao;
+
+
+PROCEDURE pc_crps703(pr_cdcritic out number   --> Código da Crítica
+                    ,pr_dscritic out varchar2 --> Descriçao da Critica
+                    ) is
+   /* ...........................................................................
+  
+    Programa : pc_crps703        
+    Sistema  : Conta-Corrente - Cooperativa de Credito
+    Sigla    : CRED
+    Autor    : Paulo Penteado (GFT) 
+    Data     : Abril/2018
+    
+    Dados referentes ao programa:
+    
+    Objetivo  : Enviar a proposta de limite de desconto de títulos e Borderos ao Ibratan
+                após a análise e efetivação de ambor, para confirmar ao Ibratan que forão
+                efetivados no sistema Ayllos
+
+    Alteraçao : 14/04/2018 - Criação Paulo Penteado (GFT) 
+                
+   ..........................................................................*/
+    
+   --> Tratamento de erros
+   vr_cdcritic number := 0;
+   vr_dscritic varchar2(4000);
+   vr_exc_erro exception;
+
+   --     buscar todas as cooperativas ativas sem nenhum processamento ativo
+   cursor cr_copdat is
+   select cop.cdcooper
+         ,dat.dtmvtolt
+   from   crapdat dat
+         ,crapcop cop
+   where  dat.inproces  = 1 -- online
+   and    dat.cdcooper  = cop.cdcooper
+   and    cop.flgativo  = 1; -- ativas
+   rw_copdat cr_copdat%rowtype;
+
+BEGIN
+   open  cr_copdat;
+   loop
+         fetch cr_copdat into rw_copdat;
+         exit  when cr_copdat%notfound;
+         
+         pc_verifica_contigenc_esteira(pr_cdcooper => rw_copdat.cdcooper
+                                      ,pr_flctgest => vr_flctgest
+                                      ,pr_dsmensag => vr_dsmensag
+                                      ,pr_dscritic => vr_dscritic);     
+
+         if  trim(vr_dscritic)  is not null then
+             raise vr_exc_erro;
+         end if; 
+                                      
+         if  vr_flctgest then -- se a esteira estiver em contigencia
+             vr_dscritic := vr_dsmensag;
+             raise vr_exc_erro;
+         end if;
+         
+         pc_solicitar_limite_efetivacao(pr_cdcooper => rw_copdat.cdcooper
+                                       ,pr_tpctrlim => 3
+                                       ,pr_dtmvtolt => rw_copdat.dtmvtolt
+                                       ,pr_cdcritic => vr_cdcritic
+                                       ,pr_dscritic => vr_dscritic );
+
+         if  nvl(vr_cdcritic,0) > 0 or trim(vr_dscritic) is not null then
+             raise vr_exc_erro;        
+         end if;
+         
+   end   loop;
+   close cr_copdat;
+
+   commit;   
+    
+EXCEPTION
+   when vr_exc_erro then
+        if  nvl(vr_cdcritic,0) > 0 and  trim(vr_dscritic) is null then
+            vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);        
+        end if;  
+      
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+        
+        rollback;
+    
+   when others then
+        pr_cdcritic := 0;
+        pr_dscritic := 'Nao foi possivel realizar a efetivação de proposta de Análise de Crédito: '||sqlerrm;
+        
+        rollback;
+
+END pc_crps703;
+
 END ESTE0003;
 /
