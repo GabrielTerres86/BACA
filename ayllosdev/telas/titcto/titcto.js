@@ -1458,25 +1458,59 @@ function btnContinuar() {
 
 
     if(cddopcao == 'B'){
+        if(cddopcao == 'B'){
+
+
+        var dtmvtoltarr = dtmvtolt.split("/");
+        var dtmvtolt_convert = new Date(Date.UTC(dtmvtoltarr[2], dtmvtoltarr[1]-1, dtmvtoltarr[0], 0, 0, 0));
+
+        var dtcDtiniper = cDtiniper.val();
+        var dtcDtiniperarr = dtcDtiniper.split("/");
+        var cDtiniper_convert = new Date(Date.UTC(dtcDtiniperarr[2], dtcDtiniperarr[1]-1, dtcDtiniperarr[0], 0, 0, 0));
+
+        var dtcDtfimper = cDtfimper.val();
+        var dtcDtfimperarr = dtcDtfimper.split("/");
+        var cDtfimper_convert = new Date(Date.UTC(dtcDtfimperarr[2], dtcDtfimperarr[1]-1, dtcDtfimperarr[0], 0, 0, 0));
+
+        dtmvtolt_convert_time = dtmvtolt_convert.getTime();
+        cDtiniper_convert_time = cDtiniper_convert.getTime();
+        cDtfimper_convert_time = cDtfimper_convert.getTime();
+
+
         if (cDtiniper.val() == '') {
+        
             hideMsgAguardo();
             showError("error","Período de Digita&ccedil;&atilde;o deve ser informado.","Alerta - Ayllos","cDtiniper.focus()");
+        
         } else if (cDtfimper.val() == '') {
+        
             hideMsgAguardo();
             showError("error","Período de Digita&ccedil;&atilde;o deve ser informado.","Alerta - Ayllos","cDtfimper.focus()");
+        
         } else if (days_between(cDtfimper.val(), cDtiniper.val()) > 60) {
+        
             hideMsgAguardo();
             showError("error","Informe um intervalo de até 60 dias.","Alerta - Ayllos","cDtfimper.focus()");
-        }else if (cDtiniper.val() > cDtfimper.val()){
+        
+        //}else if (cDtiniper.val() > cDtfimper.val()){
+        }else if (cDtiniper_convert_time > cDtfimper_convert_time){
+        
             hideMsgAguardo();
             showError("error","Data de in&iacute;cio do periodo deve ser menor ou igual a data final","Alerta - Ayllos","cDtiniper.focus()");
-        }else if (cDtiniper.val() > dtmvtolt){
+        
+        //}else if (cDtiniper.val() > dtmvtolt){
+        }else if (cDtiniper_convert_time > dtmvtolt_convert_time){
+        
             hideMsgAguardo();
             showError("error","Data de in&iacute;cio do per&iacute;odo deve ser menor ou igual do que a data de movimentação do sistema","Alerta - Ayllos","cDtiniper.focus()");
-        }else if(cDtfimper.val() > dtmvtolt){
+        
+        //}else if(cDtfimper.val() > dtmvtolt){
+        }else if(cDtfimper_convert_time > dtmvtolt_convert_time){
+        
             hideMsgAguardo();
             showError("error","Data de fim do per&iacute;odo deve ser menor ou igual do que a data de movimentação do sistema","Alerta - Ayllos","cDtfimper.focus()");
         }
+        
         else {
             gerarImpressaoBorderoNaoLiberado();
         }
