@@ -655,12 +655,11 @@ function gerarImpressao(idimpres,limorbor,flgemail,fnfinish) {
 
 // OPÇÃO ANALISAR
 // Analisar bordero de desconto de títulos
-function analisarBorderoDscTit(opcao,nrdconta,nrbordero) {
+function analisarBorderoDscTit() {
 
     // Mostra mensagem de aguardo
-    hideMsgAguardo();
     showMsgAguardo("Aguarde, analisando o border&ocirc; ...");
-
+    
     // Carrega conteúdo da opção através de ajax
     $.ajax({
         type: "POST",
@@ -669,7 +668,6 @@ function analisarBorderoDscTit(opcao,nrdconta,nrbordero) {
         data: {
             nrdconta: nrdconta,
             nrborder: nrbordero,
-            cddopcao: opcao,
             redirect: "script_ajax"
         },
         error: function (objAjax, responseError, objExcept) {
@@ -678,11 +676,9 @@ function analisarBorderoDscTit(opcao,nrdconta,nrbordero) {
         },
         success: function (response) {
             try {
-
-                //eval(response);
                 hideMsgAguardo();
-                showConfirmacao("Deseja liberar o border&ocirc; de desconto de t&iacute;tulos?","Confirma&ccedil;&atilde;o - Ayllos","carregaBorderosTitulos()","return false;","sim.gif","nao.gif");
-                botaoLiberar = 'S';
+                eval(response);
+                //botaoLiberar = 'S';
 
             } catch (error) {
                 hideMsgAguardo();
@@ -2864,4 +2860,45 @@ function formataManutencaoDeLimite(){
         });
     return false;
 
+}
+
+// Mostrar dados para liberar um bordero
+function liberarBorderoDscTit() {
+    // Mostra mensagem de aguardo
+    showMsgAguardo("Aguarde, liberando o border&ocirc; ...");
+    
+    // Carrega conteúdo da opção através de ajax
+    $.ajax({
+        type: "POST",
+        url: UrlSite + "telas/atenda/descontos/titulos/titulos_bordero_liberar.php",
+        data: {
+            nrdconta: nrdconta,
+            nrborder: nrbordero,
+            redirect: "script_ajax"
+        },
+        error: function (objAjax, responseError, objExcept) {
+            hideMsgAguardo();
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+        },
+        success: function (response) {
+            try {
+                hideMsgAguardo();
+                eval(response);
+            } catch (error) {
+                hideMsgAguardo();
+                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+            }
+        }
+    });
+    return false;
+}
+
+function mostrarBorderoAnalisar() {
+    showConfirmacao("Deseja analisar o border&ocirc; de desconto de t&iacute;tulos?","Confirma&ccedil;&atilde;o - Ayllos","analisarBorderoDscTit();","","sim.gif","nao.gif");
+    return false;
+}
+
+function mostrarBorderoLiberar() {
+    showConfirmacao("Deseja liberar o border&ocirc; de desconto de t&iacute;tulos?","Confirma&ccedil;&atilde;o - Ayllos","liberarBorderoDscTit();","","sim.gif","nao.gif");
+    return false;
 }
