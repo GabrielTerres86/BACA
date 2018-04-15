@@ -17,6 +17,8 @@
 				 
 				 24/07/2014 - Ajustes para incluir botao do cet e ajustado 
 							  novo padrao os botoes (Lucas R./Gielow - Projeto CET)
+
+				 15/04/2018 - Correção botão voltar (Leonardo Oliveira - GFT)
 	************************************************************************/
 	
 	session_start();
@@ -32,6 +34,7 @@
 	// Classe para leitura do xml de retorno
 	require_once("../../../../class/xmlfile.php");
 	
+	$tipo = (isset($_POST['tipo'])) ? $_POST['tipo'] : "CONTRATO";
 	// Verifica permissão
 	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"M")) <> "") {
 		exibeErro($msgError);		
@@ -50,13 +53,13 @@
 
 <div id="divBotoes" style="width:550px" >
 	
-	<a href="#" class="botao" id="btVoltar"   		 onClick="carregaLimitesTitulosPropostas();return false;">Voltar </a>
+	<a href="#" class="botao" id="btVoltar"   		 onClick="fecharRotinaGenerico('<?php echo $tipo ?>');return false;">Voltar </a>
 	<a href="#" class="botao" id="btCompleta" 		 onClick="verificaEnvioEmail(1,1);return false;">Completa</a>
 	<a href="#" class="botao" id="btContrato" 		 onClick="verificaEnvioEmail(2,1);return false;">Contrato</a>
 	<a href="#" class="botao" id="btCet"      		 onClick="verificaEnvioEmail(9,1);return false;">CET     </a>
 	<a href="#" class="botao" id="btProposta"        onClick="verificaEnvioEmail(3,1);return false;">Proposta</a>
 	<a href="#" class="botao" id="btNotaPromissoria" onClick="verificaEnvioEmail(4,1);return false;">Nota Promissoria</a>
-	<a href="#" class="botao" id="btRating" 		 onClick="gerarImpressao(8,1,'no','mostraImprimirLimite()');return false;">Rating</a>
+	<a href="#" class="botao" id="btRating" 		 onClick="gerarImpressao(8,1,'no','mostraImprimirGenerico()');return false;">Rating</a>
 	<br/>
 	<br/>
 	
@@ -70,6 +73,10 @@ include("../../../../includes/rating/rating_formulario_impressao.php");
 <script type="text/javascript">
 dscShowHideDiv("divOpcoesDaOpcao3","divOpcoesDaOpcao2");
 
+function mostraImprimirGenerico(){
+	mostraImprimirLimite('<?php echo $tipo ?>');
+	return false;
+}
 // Esconde mensagem de aguardo
 hideMsgAguardo();
 

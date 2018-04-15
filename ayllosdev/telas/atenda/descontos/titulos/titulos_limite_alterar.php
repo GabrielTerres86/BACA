@@ -32,6 +32,7 @@
 	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"A")) <> "") {
 		exibeErro($msgError);		
 	}	
+	$tipo = (isset($_POST['tipo'])) ? $_POST['tipo'] : "CONTRATO";
 	
 	// Verifica se o número da conta foi informado
 	if (!isset($_POST["nrdconta"]) ||

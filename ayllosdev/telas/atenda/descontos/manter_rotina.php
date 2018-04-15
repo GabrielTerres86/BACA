@@ -6,6 +6,8 @@
  * OBJETIVO     : Descrição da rotina
  * --------------
  * ALTERAÇÕES   : 12/04/2018 - Inclusão da rotina 'REALIZAR_MANUTENCAO_LIMITE'. (Leonardo Oliveira - GFT)
+ *				  15/04/2018 - Inclusão da rotina 'BUSCAR_ACIONAMENTOS_PROPOSTA'. (Leonardo Oliveira - GFT)
+ *
  * --------------
 
  */
@@ -54,13 +56,13 @@
 	    $xmlObj = getObjectXML($xmlResult);
 
 		if (strtoupper($xmlObj->roottag->tags[0]->name) == 'ERRO'){  
-           echo 'showError("error","'.$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata.'","Alerta - Ayllos","bloqueiaFundo(divRotina);carregaLimitesTitulos();");';           
+           echo 'showError("error","'.$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata.'","Alerta - Ayllos","bloqueiaFundo(divRotina);fecharRotinaGenerico(\'PROPOSTA\');");';           
            exit;
 		}
 		if($xmlObj->roottag->tags[0]){
-			echo 'showError("inform","'.$xmlObj->roottag->tags[0]->cdata.'","Alerta - Ayllos","bloqueiaFundo(divRotina);carregaLimitesTitulos();");';
+			echo 'showError("inform","'.$xmlObj->roottag->tags[0]->cdata.'","Alerta - Ayllos","bloqueiaFundo(divRotina);fecharRotinaGenerico(\'PROPOSTA\');");';
 		} else{
-			echo 'showError("inform","An&aacute;lise enviada com sucesso!","Alerta - Ayllos","bloqueiaFundo(divRotina);carregaLimitesTitulos();");';
+			echo 'showError("inform","An&aacute;lise enviada com sucesso!","Alerta - Ayllos","bloqueiaFundo(divRotina);fecharRotinaGenerico(\'PROPOSTA\');");';
 		}	
 		
         exit;
@@ -154,8 +156,9 @@
 		}
 		else{
 			if ($xmlObj->roottag->tags[0]->cdata == 'OK') {
-				echo 'showError("inform","Opera&ccedil;&atilde;o efetuada com sucesso!","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));carregaLimitesTitulos();");';
+				echo 'showError("inform","Opera&ccedil;&atilde;o efetuada com sucesso!","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));carregaLimitesTitulosPropostas();");';
 			}
+
 		}
 		
 	}else if ($operacao == 'ACEITAR_REJEICAO_LIMITE' ) {
@@ -183,7 +186,7 @@
 		}
 		else{
 			if ($xmlObj->roottag->tags[0]->cdata == 'OK') {
-				echo 'showError("inform","Opera&ccedil;&atilde;o efetuada com sucesso!","Alerta - 	Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));carregaLimitesTitulosProposta();");';
+				echo 'showError("inform","Opera&ccedil;&atilde;o efetuada com sucesso!","Alerta - 	Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));fecharRotinaGenerico(\'PROPOSTA\');");';
 				exit;
 			} // OK
 		}// != ERROR
@@ -519,6 +522,88 @@
 			
 	    echo 'showError("inform","'.$dados.'","Alerta - Ayllos","carregaBorderosTitulos();voltaDiv(3,2,5,\'DESCONTO DE T&Iacute;TULOS - BORDEROS\');");';
 			
+	}else if($operacao =='BUSCAR_ACIONAMENTOS_PROPOSTA'){
+
+
+    	$xml = "<Root>";
+		$xml .= " <Dados>";
+		$xml .= "   <nrdconta>" . $nrdconta . "</nrdconta>";
+		$xml .= "   <nrctremp>" . $nrctrlim . "</nrctremp>";
+		$xml .= "   <tpproduto>3</tpproduto>";
+		$xml .= "   <dtinicio>01/01/0001</dtinicio>";
+		$xml .= "   <dtafinal>31/12/9999</dtafinal>";
+		$xml .= " </Dados>";
+		$xml .= "</Root>";
+
+		$xmlResult = mensageria($xml, "CONPRO", "CONPRO_ACIONAMENTO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+		$xmlObj = getObjectXML($xmlResult);
+
+		if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
+			$html = '<script type="text/javascript">';
+			$html .= '    showError("error","'.$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata.'","Alerta - Ayllos","bloqueiaFundo(divRotina);fechaRotinaDetalhe();");';
+			$html .='</script>';
+			$html .=  '<legend id="tabConteudoLegend" ><b>'. utf8ToHtml('Detalhes Proposta: ').formataNumericos("zzz.zz9",$nrctrlim,".").'</b></legend>';
+			$html .= '<div id="divAcionamento" class="divRegistros">';
+			$html .= '<table class="tituloRegistros">';
+	      	$html .= '    <thead>';
+	        $html .= '        <tr>';
+	        $html .= '            <th>'.utf8ToHtml('Acionamento').'</th>';
+	        $html .= '            <th>'.utf8ToHtml('PA').'</th>';
+	        $html .= '            <th>'.utf8ToHtml('Operador').'</th>';
+	        $html .= '            <th>'.utf8ToHtml('Operação').'</th>';
+	        $html .= '            <th>'.utf8ToHtml('Data e Hora').'</th>';
+	        $html .= '            <th>'.utf8ToHtml('Retorno').'</th>';
+	        $html .= '        </tr>';
+	        $html .= '    </thead>';
+	     	$html .= '    <tbody>';
+	     	$html .= '   </tbody>';
+		    $html .= '</table>';
+		    $html .= '</div>';
+		    echo $html;
+		    exit;
+		}
+
+		$registros = $xmlObj->roottag->tags[0]->tags;
+		$qtregist = $xmlObj->roottag->tags[1]->cdata;
+		//var_dump($registros);
+		$html =  '<legend id="tabConteudoLegend" ><b>'. utf8ToHtml('Detalhes Proposta: ').formataNumericos("zzz.zz9",$nrctrlim,".").'</b></legend>';
+		$html .= '<div id="divAcionamento" class="divRegistros">';
+		$html .= '<table class="tituloRegistros">';
+      	$html .= '    <thead>';
+        $html .= '        <tr>';
+        $html .= '            <th>'.utf8ToHtml('Acionamento').'</th>';
+        $html .= '            <th>'.utf8ToHtml('PA').'</th>';
+        $html .= '            <th>'.utf8ToHtml('Operador').'</th>';
+        $html .= '            <th>'.utf8ToHtml('Operação').'</th>';
+        $html .= '            <th>'.utf8ToHtml('Data e Hora').'</th>';
+        $html .= '            <th>'.utf8ToHtml('Retorno').'</th>';
+        $html .= '        </tr>';
+        $html .= '    </thead>';
+     	$html .= '    <tbody>';
+     	 
+	    foreach ($registros as $r) {
+	            $dsoperacao = wordwrap(getByTagName($r->tags, 'operacao'),40, "<br />\n");
+	            $dsprotocolo = getByTagName($r->tags, 'dsprotocolo');
+	            if ($dsprotocolo) {
+	                $dsoperacao = '<a href="#" onclick="abreProtocoloAcionamento(\''.$dsprotocolo.'\');" style="font-size: inherit">'.$dsoperacao.'</a>';
+	             }
+
+	            $html .= '    <tr>';
+	            $html .= '        <td>'. getByTagName($r->tags, 'acionamento') .'</td>';
+	            $html .= '        <td>'. getByTagName($r->tags, 'nmagenci') .'</td>';
+	            $html .= '        <td>'. getByTagName($r->tags, 'cdoperad') .'</td>';
+	            $html .= '        <td>'.$dsoperacao.'</td>';
+	            $html .= '        <td>'. getByTagName($r->tags, 'dtmvtolt') .'</td>';
+	            $html .= '        <td>'.wordwrap(getByTagName($r->tags, 'retorno'),40, "<br />\n").'</td>';
+	            $html .= '    </tr>';
+	    }
+
+	    $html .= '   </tbody>';
+	    $html .= '</table>';
+	    $html .= '</div>';
+	    //$html .= '<input type="hidden" name="qtregist" id="qtregist" value="'.$qtregist.'" />';
+
+	    echo $html;
 	}
 
 

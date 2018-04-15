@@ -7,6 +7,7 @@
  * --------------
  * ALTERAÇÕES   : 18/04/2017 - Alterações referentes ao projeto 337 - Motor de Crédito. (Reinert)
  *                12/06/2017 - Retornar o protocolo. (Jaison/Marcos - PRJ337)
+                  15/04/2018 - Alteração para carregar propostas dos contratos (Leonardo Oliveira - GFT)
  * -------------- 
  */
 ?>
@@ -20,36 +21,66 @@ require_once("../../../../includes/controla_secao.php");
 require_once("../../../../class/xmlfile.php");	
 isPostMethod();
 
-$nrdconta = (isset($_POST['nrdconta'])) ? $_POST['nrdconta'] : '';
-$nrctrlim = (isset($_POST['nrctrlim'])) ? $_POST['nrctrlim'] : '';
+$tipo = (isset($_POST['tipo'])) ? $_POST['tipo'] : "CONTRATO";
+$nrdconta = (isset($_POST['nrdconta'])) ? $_POST['nrdconta'] : 0;
+$nrctrlim = (isset($_POST['nrctrlim'])) ? $_POST['nrctrlim'] : 0;  //contrato
 
-$xml = "<Root>";
-$xml .= " <Dados>";
-$xml .= "   <nrdconta>" . $nrdconta . "</nrdconta>";
-$xml .= "   <nrctremp>" . $nrctrlim . "</nrctremp>";
-$xml .= "   <tpproduto>3</tpproduto>";
-$xml .= "   <dtinicio>01/01/0001</dtinicio>";
-$xml .= "   <dtafinal>31/12/9999</dtafinal>";
-$xml .= " </Dados>";
-$xml .= "</Root>";
+    $xml = "<Root>";
+    $xml .= " <Dados>";
+    $xml .= "   <nrdconta>" . $nrdconta . "</nrdconta>";
+    $xml .= "   <nrctrlim>" . $nrctrlim . "</nrctrlim>";
+    $xml .= " </Dados>";
+    $xml .= "</Root>";
 
-$xmlResult = mensageria($xml, "CONPRO", "CONPRO_ACIONAMENTO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
-$xmlObj = getObjectXML($xmlResult);
+    $xmlResult = mensageria($xml, "TELA_ATENDA_DESCTO", "OBTEM_PROPOSTA_ACIONA",
+     $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], 
+        $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+    $xmlObj = getObjectXML($xmlResult);
 
-if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
-	echo 'showError("error","'.$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata.'","Alerta - Ayllos","bloqueiaFundo(divRotina);fechaRotinaDetalhe();");';
-    exit;
-}
 
-$registros = $xmlObj->roottag->tags[0]->tags;
-$qtregist = $xmlObj->roottag->tags[1]->cdata;
+    if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
+	   echo 'showError("error","'.$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata.'","Alerta - Ayllos","bloqueiaFundo(divRotina);fechaRotinaDetalhe();");';
+        exit;
+    }
+
+    $propostas = $xmlObj->roottag->tags[0]->tags;
+
+    
+
+    if($nrctrlim==0)
+    {
+        $nrctrlim = getByTagName($propostas->tags[0]->tags, 'nrctrlim');
+    }
+    echo '<script type="text/javascript">';
+    echo '    $("nrprolim", "#tabForm").val("'.$nrctrlim.'");';
+    echo '    nrctrlim = '.$nrctrlim.';';
+    echo '    carregarAcionamentosDaProposta("'.$tipo.'",nrctrlim);';
+    echo '</script>';
 
 ?>
-
 <div id='divResultadoAciona'>
+    <fieldset id='divForm'>
+        <div id="divFormContent">
+            <label for="nrctrlim"><? echo utf8ToHtml('Proposta: ') ?></label>
+
+            <select id="nrctrlim" name ="nrctrlim" >
+            <?php foreach($propostas as $p){ ?> 
+                <option 
+                    value="<? echo getByTagName($p->tags, 'nrctrlim');?>">
+                    <?php 
+                        $valor_retira_ponto_virgula = str_replace(",","",getByTagName($p->tags, 'vllimite'));
+                        $valor_retira_ponto_virgula = str_replace(".","",$valor_retira_ponto_virgula);
+                        $valor_formatado = formataNumericos('zzz.zz9,99',$valor_retira_ponto_virgula,'.,'); 
+                        echo  getByTagName($p->tags, 'nrctrlim').' - '.getByTagName($p->tags, 'dtpropos').' - '.$valor_formatado;
+                    ?>
+                </option>
+            <?php } ?>
+            </select>
+        </div>
+    </fieldset>
     <fieldset id='tabConteudo'>
-        <legend><b><?= utf8ToHtml('Detalhes Proposta: '); echo formataNumericos("zzz.zz9",$nrctrlim,"."); ?></b></legend>
-        <div class='divRegistros'>
+        <legend id= 'tabConteudoLegend' ><b><?= utf8ToHtml('Detalhes Proposta: '); echo formataNumericos("zzz.zz9",$nrctrlim,"."); ?></b></legend>
+        <div id="divAcionamento" class='divRegistros'>
             <table>
             <thead>
                 <tr>
@@ -62,30 +93,20 @@ $qtregist = $xmlObj->roottag->tags[1]->cdata;
                 </tr>
             </thead>
             <tbody>
-            <?php
-            foreach ($registros as $r) {
-                $dsoperacao = wordwrap(getByTagName($r->tags, 'operacao'),40, "<br />\n");
-                if (getByTagName($r->tags, 'dsprotocolo')) {
-                    $dsoperacao = '<a href="#" onclick="abreProtocoloAcionamento(\''.getByTagName($r->tags, 'dsprotocolo').'\');" style="font-size: inherit">'.$dsoperacao.'</a>';
-                }
-                ?>
-                <tr>
-                    <td><?= getByTagName($r->tags, 'acionamento'); ?></td>
-                    <td><?= getByTagName($r->tags, 'nmagenci'); ?></td>
-                    <td><?= getByTagName($r->tags, 'cdoperad'); ?></td>
-                    <td><?= $dsoperacao; ?></td>
-                    <td><?= getByTagName($r->tags, 'dtmvtolt'); ?></td>
-                    <td><?= wordwrap(getByTagName($r->tags, 'retorno'),40, "<br />\n"); ?></td>
+                <tr id="">
+                    <td id="acionamento">acionamento</td>
+                    <td id="nmagenci">nmagenci</td>
+                    <td id="cdoperad">cdoperad</td>
+                    <td id="operacao"><a href="#" onclick="" style="font-size: inherit">dsoperacao</a></td>
+                    <td id="dtmvtolt">dtmvtolt</td>
+                    <td id="retorno">retorno</td>
                 </tr>
-                <?php
-            }
-            ?>
             </tbody>
             </table>
         </div>
     </fieldset>
     <div id="divBotoesAcionamento" style="margin-top:5px;">
-        <a href="#" class="botao" id="btVoltar" onclick="fechaRotinaDetalhe();//controlaOperacao('TESTE');bloqueiaFundo(divRotina);">Voltar</a>
+        <a href="#" class="botao" id="btVoltar" onclick="fecharRotinaGenerico('<? echo $tipo ?>');">Voltar</a>
     </div>
     <form id="frmImprimir" name="frmImprimir">
         <input type="hidden" name="sidlogin" id="sidlogin" value="<?php echo $glbvars["sidlogin"]; ?>" />
@@ -94,18 +115,12 @@ $qtregist = $xmlObj->roottag->tags[1]->cdata;
 </div>
 
 <script type="text/javascript">
-dscShowHideDiv("divOpcoesDaOpcao2","divOpcoesDaOpcao1;divOpcoesDaOpcao3");
 
-// Muda o título da tela
-//$("#tdTitRotina").html("DESCONTO DE T&Iacute;TULOS - ACIONAM");
+    formatarTelaAcionamentosDaProposta();
 
-//formataLayout('divLimites');
-
-// Bloqueia conteúdo que está átras do div da rotina
-//blockBackground(parseInt($("#divRotina").css("z-index")));
-//layoutPadrao();
-hideMsgAguardo();
-bloqueiaFundo(divRotina);
+    dscShowHideDiv("divOpcoesDaOpcao2","divOpcoesDaOpcao1;divOpcoesDaOpcao3");
+    hideMsgAguardo();
+    bloqueiaFundo(divRotina);
 
 </script>
 
