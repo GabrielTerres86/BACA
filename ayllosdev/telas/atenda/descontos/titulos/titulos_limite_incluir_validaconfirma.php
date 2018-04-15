@@ -26,6 +26,8 @@
 	// Verifica se os parâmetros necessários foram informados
 	$params = array("nrdconta","nrctrlim","nrctaav1","nrctaav2","redirect");
 
+	$tipo = (isset($_POST['tipo'])) ? $_POST['tipo'] : "CONTRATO";
+
 	foreach ($params as $nomeParam) {
 		if (!in_array($nomeParam,array_keys($_POST))) {			
 			exibeErro("Par&acirc;metros incorretos.");
@@ -86,7 +88,7 @@
 		exibeErro($xmlObjDadosLimIncluir->roottag->tags[0]->tags[0]->tags[4]->cdata);
 	} 
 	echo 'hideMsgAguardo();';
-	echo 'showConfirmacao("Deseja incluir o limite de desconto de t&iacute;tulos?","Confirma&ccedil;&atilde;o - Ayllos","gravaLimiteDscTit(\'I\');","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))","sim.gif","nao.gif");';
+	echo 'showConfirmacao("Deseja incluir o limite de desconto de t&iacute;tulos?","Confirma&ccedil;&atilde;o - Ayllos","gravaLimiteDscTit(\'I\', \''.$tipo.'\');","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))","sim.gif","nao.gif");';
 	
 	// Função para exibir erros na tela através de javascript
 	function exibeErro($msgErro) { 

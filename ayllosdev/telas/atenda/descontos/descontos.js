@@ -43,6 +43,7 @@
 
 			 12/04/2018 - Formatação do layout 'frmTitLimiteManutencao' e inclusão do botão manutenção no layout 'frmTitulos'. (Leonardo Oliveira - GFT)
 			 
+             15/04/2018 - Correção de sobreescrita.
 
 ************************************************************************/
 
@@ -912,8 +913,8 @@ function formataLayout(nomeForm){
 
 		$('#btnrenovacao').unbind('click').bind('click', function(){
 			if (Cperrenov.val() != 1) {return false}
-			acessaValorLimite();
-			return false;			
+			renovarLimiteTitulo();
+			return false;
 		});
 
 
