@@ -79,6 +79,7 @@ DEF VAR aux_vllimite AS DECI                                           NO-UNDO.
 DEF VAR aux_dtrating AS DATE                                           NO-UNDO.
 DEF VAR aux_vlrrisco AS DECI                                           NO-UNDO.
 DEF VAR aux_cddlinha AS INTE                                           NO-UNDO.
+DEF VAR aux_nrctrmnt AS INTE                                           NO-UNDO.
 
 DEF VAR aux_dsramati AS CHAR                                           NO-UNDO.
 DEF VAR aux_vlmedtit AS DECI                                           NO-UNDO.
@@ -787,10 +788,11 @@ PROCEDURE efetua_inclusao_limite:
                                        INPUT aux_nrperger,
                                        INPUT aux_vltotsfn,
                                        INPUT aux_perfatcl,
+                                       INPUT aux_nrctrmnt,
                                       OUTPUT aux_nrctrlim, 
                                       OUTPUT TABLE tt-erro,
                                       OUTPUT TABLE tt-msg-confirma).
-                                    
+
     IF  RETURN-VALUE = "NOK"  THEN
         DO:
             FIND FIRST tt-erro NO-LOCK NO-ERROR.
