@@ -352,27 +352,51 @@ function formataAssociado() {
 
 function controlaAssociado() {
 
+    cNrdconta.desabilitaCampo();
     if (cddopcao == 'C') {
+        if(cNrdconta.val()=='0'){
+            cNrdconta.val('').habilitaCampo();
+            cNrcpfcgc.val('').desabilitaCampo();
+            cNmprimtl.val('').desabilitaCampo();
+            showError('error', 'Associado n&atilde;o cadastrado.', 'Alerta - Ayllos', '$(\'#' + cNrdconta.attr("id") + '\',\'#frmOpcao\').select();');
+        }
+        else{
         cNrcpfcgc.desabilitaCampo();
         cFlresgat.habilitaCampo();
         $('#' + frmOpcao +' .listar_resgatados').show();
         $('#' + frmOpcao +' .tipo_cobranca').show();
         cTpcobran.habilitaCampo().focus();
+        }
     } else if (cddopcao == 'Q') {
+        if(cNrdconta.val()=='0'){
+            cNrdconta.val('').habilitaCampo();
+            cNrcpfcgc.val('').desabilitaCampo();
+            cNmprimtl.val('').desabilitaCampo();
+            showError('error', 'Associado n&atilde;o cadastrado.', 'Alerta - Ayllos', '$(\'#' + cNrdconta.attr("id") + '\',\'#frmOpcao\').select();');
+        }
+        else{
         cNrcpfcgc.desabilitaCampo();
         $('#' + frmOpcao +' .tipo_cobranca').show();
+        }
         cTpcobran.habilitaCampo().focus();
     } else if (cddopcao == 'F') {
         $('#' + frmOpcao +' .tipo_cobranca').show();
         cTpcobran.habilitaCampo().focus();
     } else if (cddopcao == 'T') {
+        if(cNrdconta.val()=='0'){
+            cNrdconta.val('').habilitaCampo();
+            cNrcpfcgc.val('').desabilitaCampo();
+            cNmprimtl.val('').desabilitaCampo();
+            showError('error', 'Associado n&atilde;o cadastrado.', 'Alerta - Ayllos', '$(\'#' + cNrdconta.attr("id") + '\',\'#frmOpcao\').select();');
+        }
+        else{
         $('#' + frmOpcao + ' fieldset:eq(1)').show();
         cTpdepesq.habilitaCampo().focus();
         cNrdocmto.habilitaCampo();
         cVltitulo.habilitaCampo();
     }
+    }
 
-    cNrdconta.desabilitaCampo();
     hideMsgAguardo();
     controlaPesquisas();
 
@@ -1524,7 +1548,11 @@ function btnContinuar() {
         else if ($('#' + frmOpcao + ' fieldset:eq(1)').css('display')=='block') {
             gerarImpressaoConsulta();
         }
+
+
     } else if (cddopcao == 'F'){
+        
+
         if((!cNrdconta.hasClass('campoTelaSemBorda'))) {
             cNrdconta.keypress();
         }
