@@ -28,7 +28,7 @@
 				 12/04/2018 - Criação do botão manutenção e ajuste no tamanho da tela. (Leonardo Oliveira - GFT)
 
 	***************************************************************************/
-	
+	 
 	session_start();
 	
 	// Includes para controle da session, variáveis globais de controle, e biblioteca de funções	
@@ -87,7 +87,7 @@
 	} 
 	
 	$dados = $xmlObjDscTit->roottag->tags[0]->tags[0]->tags;
-		
+
 	
 	// Função para exibir erros na tela através de javascript
 	function exibeErro($msgErro) { 
@@ -146,38 +146,38 @@
 <div id="divBotoes" >
 
 	<a
-	href="#"
-	class="botao" 
-	name="btnvoltar"
-	id="btnvoltar"
-	onClick="voltaDiv(1,0,4,'DESCONTOS','DESCONTOS');return false;" >
-		Voltar
+		href="#"
+		class="botao" 
+		name="btnvoltar"
+		id="btnvoltar"
+		onClick="voltaDiv(1,0,4,'DESCONTOS','DESCONTOS');return false;" >
+			Voltar
 	</a>
 	<a
-	href="#"
-	class="botao" 
-	type="image" 
-	name="btnbordero" 
-	id="btnbordero"
-	<?php if (!in_array("DSC TITS - BORDERO",$rotinasTela)) { echo 'style="cursor: default;display:none;" onClick="return false;"'; } 
-	else { echo 'onClick="carregaBorderosTitulos();return false;"'; } ?> >
-		Border&ocirc;s
+		href="#"
+		class="botao" 
+		type="image" 
+		name="btnbordero" 
+		id="btnbordero"
+		<?php if (!in_array("DSC TITS - BORDERO",$rotinasTela)) { echo 'style="cursor: default;display:none;" onClick="return false;"'; } 
+		else { echo 'onClick="carregaBorderosTitulos();return false;"'; } ?> >
+			Border&ocirc;s
 	</a>
 
 	<a
-	href="#"
-	class="botao"
-	type="image"
-	name="btnlimite"
-	id="btnlimite"
-	 <?php if (!in_array("DSC TITS - LIMITE",$rotinasTela)) { echo 'style="cursor: default;display:none;" onClick="return false;"'; } 
-	else { echo 'onClick="carregaLimitesTitulos();return false;"'; } ?> >
-		Limite
+		href="#"
+		class="botao"
+		type="image"
+		name="btnlimite"
+		id="btnlimite"
+	 	<?php if (!in_array("DSC TITS - LIMITE",$rotinasTela)) { echo 'style="cursor: default;display:none;" onClick="return false;"'; } 
+		else { echo 'onClick="carregaLimitesTitulos();return false;"'; } ?> >
+			Contratos
 	</a>
 
-	<a 
-	href="#" 
-	class="botao"
+	<a
+		href="#"
+		class="botao" 
 		type="image" 
 		name="btnpropostas" 
 		id="btnpropostas"
@@ -189,8 +189,8 @@
 	<a 
 		href="#" 
 		class="botao"
-	id="btnrenovacao"
-	name="btnrenovacao">
+		id="btnrenovacao"
+		name="btnrenovacao">
 		Renovar
 	</a>
 
