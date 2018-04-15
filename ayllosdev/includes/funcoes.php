@@ -68,6 +68,7 @@ A PARTIR DE 10/MAI/2013, FAVOR ENTRAR EM CONTATO COM AS SEGUINTES PESSOAS:
  * 046: [12/04/2017] Reinert				: Ajustado funcao RemoveCaracteresInvalidos para ignorar caractere "#".
  * 047:	[28/08/2017] Carlos Rafael Tanholi	: Ajuste nas rotinas xmlFilho, dataParaTimestamp, validaPermissao, mensageria. SD 743183. 	
 	 * 045: [28/09/2017] Jean Michel (CECRED)   : Adicionado função get_http_response_code para retornar o status code de arquivo ou domínio
+ * 048: [10/04/2018] Luis Fernando (Gft)	: Criada nova função getClassXml que devolve um objeto modificado do xmlFile fazendo algumas alterações em métodos para facilitar a construção
  */
 
 // Função para requisição de dados através de XML 
@@ -168,6 +169,105 @@ function getObjectXML($xmlResult) {
 	//Retorna objeto XML tratado
 	return $xmlObj;
 }
+
+// Função para criação do objeto responsável pelo tratamento do XML
+// Includes necessárias: - includes/xmlfile.php
+function getClassXML($xmlResult){
+	global $UrlLogin;
+	global $glbvars;
+	
+	if (!class_exists('oXmlTag')){
+		class oXmlTag extends XMLTag{
+		    function add_subtag($name, $attributes=0)
+		    {
+		        $tag = new oXmlTag( $this );
+		        $tag->set_name( $name );
+		        if (is_array($attributes)) {
+		            $tag->set_attributes( $attributes );
+		        }
+		        $this->tags[] = &$tag;
+		        $this->curtag = &$tag;
+		    }
+
+		    function __toString(){
+		        return $this->cdata;
+		    }
+
+		    function __get($name){
+		        $tags = $this->find($name);
+		        if($tags){
+		            if(count($tags)===1){
+		                $this->{$name} = $tags[0];
+		                return $tags[0];
+		            }
+		            $this->{$name} = $tags;
+		            return $tags;
+		        }
+		        return false;
+		    }
+
+		    function find($name){
+		        return $this->find_subtags_by_name($name);
+		    }
+
+		    function findFirst($name){
+		        $tags = $this->find_subtags_by_name($name);
+		        if (is_array($tags)){
+		            return $tags[0];
+		        }
+		        return false;
+		    }
+
+		    function getAttribute($name){
+		        if(isset($this->attributes[$name])){
+		            return $this->attributes[$name];
+		        }
+		        return '';
+		    }
+		}
+		class oXmlFile extends XMLFile{
+		    function create_root()
+		    {
+		        $null = 0;
+		        $this->roottag = new oXmlTag($null);
+		        $this->curtag = &$this->roottag;
+		    }
+
+		    function _tag_open( $parser, $tag, $attributes )
+		    {
+		        if (!is_object($this->curtag)) {
+		            $null = 0;
+		            $this->curtag = new oXmlTag($null);
+		            $this->curtag->set_name( $tag );
+		            $this->curtag->set_attributes( $attributes );
+		        }
+		        else {
+		            $this->curtag->add_subtag( $tag, $attributes );
+		            $this->curtag = &$this->curtag->curtag;
+		        }
+		    }
+		}
+	}
+	if (!strpos($xmlResult,"Unable") === false && !strpos($xmlResult,"distribuidor.p") === false) {
+		redirecionaErro($glbvars["redirect"],$UrlLogin,"_parent","Sistema indispon&iacute;vel.");
+	}
+	
+	// Cria objeto para classe de tratamento de XML
+	$xmlObj = new oXmlFile();
+
+	// Executa leitura do XML
+	$xmlObj->read_xml_string($xmlResult);
+	
+	// Verifica se não foi retornado XML, mas retornado HMTL com erro do WEBSPEED
+	if (strtoupper($xmlObj->roottag->name) == "HTML" && !(strpos(strtoupper($xmlObj->roottag->tags[0]->tags[0]->cdata),"WEBSPEED") === false)) {
+		redirecionaErro($glbvars["redirect"],$UrlLogin,"_parent","Sistema indispon&iacute;vel.");
+	}			
+	
+	//Retorna objeto XML tratado
+	return $xmlObj;
+
+}
+
 
 // Função para verificar o método de requisição para telas
 function isPostMethod($flgIndex=false) {
