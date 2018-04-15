@@ -22,14 +22,11 @@
 
 	// Classe para leitura do xml de retorno
 	require_once("../../../../class/xmlfile.php");
-
 	// Verifica se os parâmetros necessários foram informados
 	if (!isset($_POST["nrdconta"]) || !isset($_POST["nrborder"])){
-
 		exibeErro("Par&acirc;metros incorretos.");
 	}
 
-	$cddopcao = $_POST["cddopcao"];
 	$nrdconta = $_POST["nrdconta"];
 	$nrborder = $_POST["nrborder"];
 
@@ -38,6 +35,7 @@
 		exibeErro($msgError);		
 	}	
 	
+
 	// Verifica se número da conta é um inteiro válido
 	if (!validaInteiro($nrdconta)) {
 		exibeErro("Conta/dv inv&aacute;lida.");
@@ -48,43 +46,35 @@
 		exibeErro("N&uacute;mero do border&ocirc; inv&aacute;lido.");
 	}
 
-
 	// Carrega permissões do operador
 	include("../../includes/carrega_permissoes.php");	
 	
-	setVarSession("opcoesTela",$opcoesTela);
+	//setVarSession("opcoesTela",$opcoesTela);
+	
+	$xml .= "<Root>";
+	$xml .= "	<Dados>";
+	$xml .= "		<nrdconta>".$nrdconta."</nrdconta>";
+	$xml .= "		<nrborder>".$nrborder."</nrborder>";	
+	$xml .= "	</Dados>";
+	$xml .= "</Root>";
 
-	if( ($cddopcao == "N") && (in_array('N', $glbvars['opcoesTela'])) ) {
+	$xmlResult = mensageria($xml, 'TELA_ATENDA_DESCTO', 'EFETUA_ANALISE_BORDERO',  $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	
+	$xmlObj = getClassXML($xmlResult);
+    $root = $xmlObj->roottag;
+    // Se ocorrer um erro, mostra crítica
+	if ($root->erro){
+		exibeErro(htmlentities($root->erro->registro->dscritic));
+		exit;
+	}
 
-		$xmlLiberacao .= "<Root>";
-		$xmlLiberacao .= "	<Dados>";
-		$xmlLiberacao .= "		<nrdconta>".$nrdconta."</nrdconta>";
-		$xmlLiberacao .= "		<nrborder>".$nrborder."</nrborder>";	
-		$xmlLiberacao .= "	</Dados>";
-		$xmlLiberacao .= "</Root>";
-			
-		$procedure_acao = 'EFETUA_ANALISE_BORDERO';
-		$pakage = 'TELA_ATENDA_DESCTO';
-
-		$xmlResult = mensageria($xmlLiberacao, $pakage, $procedure_acao,  $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
-
-	} 
-
-	// Cria objeto para classe de tratamento de XML
-	$xmlObjLiberacao = getObjectXML($xmlResult);
-
-	// Se ocorrer um erro, mostra crítica
-	if (strtoupper($xmlObjLiberacao->roottag->tags[0]->name) == "ERRO") {
-
-		$msgErro = $xmlObjLiberacao->roottag->tags[0]->tags[0]->tags[4]->cdata;
-		exibeErro(htmlentities($msgErro));
-	} 
+	echo 'showError("inform","'.htmlentities($root->dados->analisebordero->msgretorno->cdata).'","Alerta - Ayllos","carregaBorderosTitulos();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
 	
 	// Função para exibir erros na tela através de javascript
 	function exibeErro($msgErro) { 
 
 		echo 'hideMsgAguardo();';
-		echo 'habilitaBotaoLiberar(\'N\');';
+		//echo 'habilitaBotaoLiberar(\'N\');';
 		echo 'showError("error","'.$msgErro.'","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
 		exit();
 	}
