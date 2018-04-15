@@ -92,6 +92,7 @@ if (strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO") {
 if ($operacao == 'BA') {
     $associado = $xmlObjeto->roottag->tags[0]->tags[0]->tags; // dados associado
     echo "cNmprimtl.val('" . getByTagName($associado, 'nmprimtl') . "');";
+    echo "cNrdconta.val('" . getByTagName($associado, 'nrdconta') . "');";
     echo "controlaAssociado();";
 }
 ?>
