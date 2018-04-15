@@ -316,7 +316,6 @@ PROCEDURE pc_obtem_dados_proposta_web(pr_nrdconta in crapass.nrdconta%type --> C
 
 PROCEDURE pc_obtem_proposta_aciona_web(pr_nrdconta in crapass.nrdconta%type --> Conta do associado
                                       ,pr_nrctrlim in crawlim.nrctrlim%type --> Numero do Contrato do Limite
-                                      ,pr_nrprolim in crawlim.nrctrlim%type --> Numero da Proposta do Limite
                                       ,pr_xmllog   in varchar2              --> XML com informações de LOG
                                        -- OUT
                                       ,pr_cdcritic out pls_integer          --> Codigo da critica
@@ -863,16 +862,6 @@ BEGIN
        raise vr_exc_saida;
    end if;
 
-   --    Verifica se ja existe limite ativo
-   open  cr_craplim;
-   fetch cr_craplim into rw_craplim;
-   if    cr_craplim%found then
-         close cr_craplim;
-         vr_dscritic := 'Efetivação de proposta não permitida! O contrato ' ||rw_craplim.nrctrlim || ' já ativo deve ser cancelado primeiro.';
-         raise vr_exc_saida;
-   end   if;
-   close cr_craplim;
-
    open  cr_crawlim;
    fetch cr_crawlim into rw_crawlim;
    if    cr_crawlim%notfound then
@@ -893,6 +882,16 @@ BEGIN
        vr_dscritic := 'Para esta operação, a situação da análise deve ser "Não Enviado" ou "Análise Finalizada".';
        raise vr_exc_saida;
    end if;
+
+   --    Verifica se ja existe limite ativo
+   open  cr_craplim;
+   fetch cr_craplim into rw_craplim;
+   if    cr_craplim%found then
+         close cr_craplim;
+         vr_dscritic := 'Efetivação de proposta não permitida! O contrato ' ||rw_craplim.nrctrlim || ' já ativo deve ser cancelado primeiro.';
+         raise vr_exc_saida;
+   end   if;
+   close cr_craplim;
 
    --    Verifica se ja existe lancamento
    open  cr_crapcdc;
@@ -1927,7 +1926,7 @@ PROCEDURE pc_cancelar_proposta(pr_cdcooper    in crapcop.cdcooper%type --> Códig
    vr_rowid_log    rowid;
    vr_insitapr     number;
    
-   /*cursor cr_crawlim is
+   cursor cr_crawlim is
    select lim.insitlim
          ,lim.insitest
    from   crawlim lim
@@ -1935,26 +1934,18 @@ PROCEDURE pc_cancelar_proposta(pr_cdcooper    in crapcop.cdcooper%type --> Códig
    and    lim.nrdconta = pr_nrdconta
    and    lim.nrctrlim = pr_nrctrlim
    and    lim.tpctrlim = pr_tpctrlim;
-   rw_crawlim cr_crawlim%rowtype;*/
+   rw_crawlim cr_crawlim%rowtype;
 
 BEGIN
-   /*  10/04/2018 atualmente vai poder cancelar a proposta a qualquer momento, não precisa verificar a análise
    open  cr_crawlim;
    fetch cr_crawlim into rw_crawlim;
    close cr_crawlim; 
 
-   --  Verifica se a situação está 'Em Estudo' ou 'Não Aprovado'
-   if  rw_crawlim.insitlim not in (1,6) then
-       vr_dscritic := 'Para esta operação, a situação da Proposta deve ser "Em Estudo" ou "Não Aprovado".';
+   --  Verifica se a situação está 'Ativo' ou 'Cancelado'
+   if  rw_crawlim.insitlim in (2,3) then
+       vr_dscritic := 'Para esta operação, a situação da Proposta não deve ser "Ativa" ou "Cancelada".';
        raise vr_exc_saida;
    end if;
-
-   --  Verifica se a situação da Análise está 'Não Enviado' ou 'Análise Finalizada'
-   /*  10/04/2018 atualmente vai poder cancelar a proposta a qualquer momento, não precisa verificar a análise
-   if  rw_crawlim.insitest not in (0,3) then
-       vr_dscritic := 'Para esta operação, a situação da Análise deve ser "Não Enviado" ou "Análise Finalizada".';
-       raise vr_exc_saida;
-   end if;*/
 
    if  fn_em_contingencia_ibratan(pr_cdcooper => pr_cdcooper) then
        vr_insitapr := 6; -- Rejeitado com contingencia
@@ -2867,7 +2858,6 @@ END pc_obtem_dados_proposta_web;
 PROCEDURE pc_obtem_proposta_aciona(pr_cdcooper           in crapcop.cdcooper%type   --> Cooperativa conectada
                                   ,pr_nrdconta           in crapass.nrdconta%type   --> Conta do associado
                                   ,pr_nrctrlim           in crawlim.nrctrlim%type   --> Numero do Contrato do Limite
-                                  ,pr_nrprolim           in crawlim.nrctrlim%type   --> Numero da Proposta do Limite
                                   ,pr_tpctrlim           in crawlim.tpctrlim%type   --> Tipo de contrato de Limite
                                   ,pr_qtregist           out integer                --> Qtde total de registros
                                   ,pr_tab_dados_proposta out typ_tab_dados_proposta --> Saida com os dados do empréstimo
@@ -2962,7 +2952,6 @@ END pc_obtem_proposta_aciona;
 
 PROCEDURE pc_obtem_proposta_aciona_web(pr_nrdconta in crapass.nrdconta%type --> Conta do associado
                                       ,pr_nrctrlim in crawlim.nrctrlim%type --> Numero do Contrato do Limite
-                                      ,pr_nrprolim in crawlim.nrctrlim%type --> Numero da Proposta do Limite
                                       ,pr_xmllog   in varchar2              --> XML com informações de LOG
                                        -- OUT
                                       ,pr_cdcritic out pls_integer          --> Codigo da critica
@@ -3017,7 +3006,6 @@ BEGIN
    pc_obtem_proposta_aciona(pr_cdcooper           => vr_cdcooper
                            ,pr_nrdconta           => pr_nrdconta
                            ,pr_nrctrlim           => pr_nrctrlim
-                           ,pr_nrprolim           => pr_nrprolim
                            ,pr_tpctrlim           => 3
                            ,pr_qtregist           => vr_qtregist
                            ,pr_tab_dados_proposta => vr_tab_dados_proposta
