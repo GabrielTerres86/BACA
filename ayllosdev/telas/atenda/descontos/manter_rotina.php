@@ -412,6 +412,113 @@
 			
 	    echo 'showError("inform","'.$xmlObj->roottag->tags[0]->tags[0]->cdata.'","Alerta - Ayllos","carregaBorderosTitulos();dscShowHideDiv(\'divOpcoesDaOpcao2\',\'divOpcoesDaOpcao1;divOpcoesDaOpcao3;divOpcoesDaOpcao4;divOpcoesDaOpcao5\');");';
 			
+	}else if ($operacao =='BUSCAR_TITULOS_RESGATE'){
+
+		$xml = "<Root>";
+	    $xml .= " <Dados>";
+	    $xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
+		$xml .= "	<dtmvtolt>".$glbvars["dtmvtolt"]."</dtmvtolt>";
+	    $xml .= "	<nrinssac>".$nrinssac."</nrinssac>";
+	    $xml .= "	<vltitulo>".converteFloat($vltitulo)."</vltitulo>";
+	    $xml .= "	<dtvencto>".$dtvencto."</dtvencto>";
+	    $xml .= "	<nrnosnum>".$nrnosnum."</nrnosnum>";
+	    $xml .= "	<nrctrlim>".$nrctrlim."</nrctrlim>";
+	    $xml .= "	<nrborder>".$nrborder."</nrborder>";
+		$xml .= "	<insitlim>2</insitlim>";
+		$xml .= "	<tpctrlim>3</tpctrlim>";
+	    $xml .= " </Dados>";
+	    $xml .= "</Root>";
+
+	    $xmlResult = mensageria($xml,"TELA_ATENDA_DESCTO","BUSCAR_TITULOS_RESGATE", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	    $xmlObj = getClassXML($xmlResult);
+	    $root = $xmlObj->roottag;
+	    // Se ocorrer um erro, mostra crítica
+		if ($root->erro){
+			echo '<script>';
+			exibeErro(htmlentities($root->erro->registro->dscritic));
+			echo '</script>';
+			exit;
+		}
+
+    	$dados = $root->dados;
+        $qtregist = $dados->getAttribute("QTREGIST");
+    	if($qtregist>0){
+	    	$html = "<table class='tituloRegistros'>";
+			$html .= 	"<thead>
+								<tr>
+									<th>Conv&ecirc;nio</th>
+									<th>Boleto n&ordm;</th>
+									<th>Pagador</th>
+									<th>Vencimento</th>
+									<th>Valor</th>
+									<th>Border&ocirc;</th>
+									<th>Selecionar</th>
+								</tr>
+							</thead>
+							<tbody>
+					";
+	    	foreach($dados->tags AS $t){
+	    		$html .= "<tr id='titulo_".$t->nrnosnum."'>";
+	    		$html .=	"<td>
+	    						<input type='hidden' name='vltituloselecionado' value='".formataMoeda($t->vltitulo)."'/>
+	    						<input type='hidden' name='selecionados' value='".$t->nrnosnum."'/>".$t->nrcnvcob."
+	    					</td>";
+	    		$html .=	"<td>".$t->nrdocmto."</td>";
+	    		$html .=	"<td>".$t->nrinssac.' - '.$t->nmdsacad."</td>";
+	    		$html .=	"<td>".$t->dtvencto."</td>";
+	    		$html .=	"<td><span>".converteFloat($t->vltitulo)."</span>".formataMoeda($t->vltitulo)."</td>";
+	    		$html .=	"<td>".$t->nrborder."</td>";
+	    		$html .=	"<td class='botaoSelecionar' onclick='incluiTituloBordero(this);'><button type='button' class='botao'>Incluir</button></td>";
+	    		$html .= "</tr>";
+	    	}
+	    	$html .= "</tbody>
+	    			</table>";
+	    	echo $html;
+	    }
+	    else{
+			echo '<script>';
+			exibeErro("N&atilde;o foi encontrado nenhum t&iacute;tulo utilizando esses filtros.");
+			echo 'setTimeout(function(){bloqueiaFundo($("#divError"))},1)';
+
+			echo '</script>';
+	    }
+    	exit();
+	}
+	else if($operacao =='RESGATAR_TITULOS'){
+
+		$selecionados = isset($_POST["selecionados"]) ? $_POST["selecionados"] : array();
+		if(count($selecionados)==0){
+			exibeErro("Selecione ao menos um t&iacute;tulo");
+			exit;
+		}
+		$selecionados = implode($selecionados,",");
+
+		$xml = "<Root>";
+	    $xml .= " <Dados>";
+	    $xml .= "   <nrctrlim>".$nrctrlim."</nrctrlim>";
+	    $xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
+	    $xml .= "	<dtmvtolt>".$glbvars["dtmvtolt"]."</dtmvtolt>";
+	    $xml .= "	<dtmvtoan>".$glbvars["dtmvtoan"]."</dtmvtoan>";
+	    $xml .= "	<dtresgat>".$glbvars["dtmvtolt"]."</dtresgat>";
+	    $xml .= "	<inproces>".$glbvars["inproces"]."</inproces>";
+	    $xml .= "   <nrnosnum>".$selecionados."</nrnosnum>";
+	    $xml .= " </Dados>";
+	    $xml .= "</Root>";
+
+	    $xmlResult = mensageria($xml,"TELA_ATENDA_DESCTO","RESGATAR_TITULOS_BORDERO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	    $xmlObj = getClassXML($xmlResult);
+	    $root = $xmlObj->roottag;
+	    // Se ocorrer um erro, mostra crítica
+		if ($root->erro){
+			exibeErro(htmlentities($root->erro->registro->dscritic));
+			exit;
+		}
+
+    	$dados = $root->dados;
+
+			
+	    echo 'showError("inform","'.$dados.'","Alerta - Ayllos","carregaBorderosTitulos();voltaDiv(3,2,5,\'DESCONTO DE T&Iacute;TULOS - BORDEROS\');");';
+			
 	}
 
 

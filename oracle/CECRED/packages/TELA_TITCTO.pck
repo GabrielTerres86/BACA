@@ -201,7 +201,7 @@ PROCEDURE pc_obtem_dados_lotes (pr_cdcooper    IN crapcop.cdcooper%TYPE, --> Cód
                                     pr_cdcritic out number,                         --> codigo da critica
                                     pr_dscritic out varchar2                        --> descricao da critica.                    
                                 );
-
+                                
   PROCEDURE pc_gerar_impressao_titcto_b(pr_dtiniper   IN VARCHAR2              --> Data inicial
                                         ,pr_dtfimper   IN VARCHAR2              --> Data final
                                         ,pr_cdagenci   IN crapass.cdagenci%TYPE --> Numero do PA
@@ -237,6 +237,8 @@ PROCEDURE pc_gerar_impressao_titcto_c(
                                         ,pr_nmdcampo OUT VARCHAR2          --> Nome do campo com erro
                                         ,pr_des_erro OUT VARCHAR2      --> Erros do processo
                                       );
+                                      
+                                
 END TELA_TITCTO;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
@@ -1183,6 +1185,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
          pr_tab_dados_conciliacao(0).vlcredit := vr_vlcredit;
     END;
     EXCEPTION
+      when vr_exc_erro then
+           /*  se foi retornado apenas código */
+           if  nvl(vr_cdcritic,0) > 0 and vr_dscritic is null then
+               /* buscar a descriçao */
+               vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+           end if;
+           /* variavel de erro recebe erro ocorrido */
+           pr_cdcritic := nvl(vr_cdcritic,0);
+           pr_dscritic := vr_dscritic;
       WHEN OTHERS THEN
            /* montar descriçao de erro nao tratado */
            pr_dscritic := 'erro nao tratado na TELA_TITCTO.pc_obtem_dados_conciliacao ' ||sqlerrm;
@@ -2309,7 +2320,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
       vr_texto_completo := null;
       
       
-        --> INICIO
+      --> INICIO
       vr_nmmodulo := 'TITCTO';
       vr_nmrelato := 'Opção Consulta';
       vr_dstitulo := 'Consulta de títulos descontados que não foram pagos';
@@ -2784,5 +2795,4 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
   END pc_gerar_impressao_titcto_l;
   
 END TELA_TITCTO;
-
 /
