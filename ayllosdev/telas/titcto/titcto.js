@@ -352,27 +352,51 @@ function formataAssociado() {
 
 function controlaAssociado() {
 
+    cNrdconta.desabilitaCampo();
     if (cddopcao == 'C') {
-        cNrcpfcgc.desabilitaCampo();
-        cFlresgat.habilitaCampo();
-        $('#' + frmOpcao +' .listar_resgatados').show();
-        $('#' + frmOpcao +' .tipo_cobranca').show();
-        cTpcobran.habilitaCampo().focus();
+        if(cNrdconta.val()=='0'){
+            cNrdconta.val('').habilitaCampo();
+            cNrcpfcgc.val('').desabilitaCampo();
+            cNmprimtl.val('').desabilitaCampo();
+            showError('error', 'Associado n&atilde;o cadastrado.', 'Alerta - Ayllos', '$(\'#' + cNrdconta.attr("id") + '\',\'#frmOpcao\').select();');
+        }
+        else{
+            cNrcpfcgc.desabilitaCampo();
+            cFlresgat.habilitaCampo();
+            $('#' + frmOpcao +' .listar_resgatados').show();
+            $('#' + frmOpcao +' .tipo_cobranca').show();
+            cTpcobran.habilitaCampo().focus();
+        }
     } else if (cddopcao == 'Q') {
-        cNrcpfcgc.desabilitaCampo();
-        $('#' + frmOpcao +' .tipo_cobranca').show();
+        if(cNrdconta.val()=='0'){
+            cNrdconta.val('').habilitaCampo();
+            cNrcpfcgc.val('').desabilitaCampo();
+            cNmprimtl.val('').desabilitaCampo();
+            showError('error', 'Associado n&atilde;o cadastrado.', 'Alerta - Ayllos', '$(\'#' + cNrdconta.attr("id") + '\',\'#frmOpcao\').select();');
+        }
+        else{
+            cNrcpfcgc.desabilitaCampo();
+            $('#' + frmOpcao +' .tipo_cobranca').show();
+        }
         cTpcobran.habilitaCampo().focus();
     } else if (cddopcao == 'F') {
         $('#' + frmOpcao +' .tipo_cobranca').show();
         cTpcobran.habilitaCampo().focus();
     } else if (cddopcao == 'T') {
-        $('#' + frmOpcao + ' fieldset:eq(1)').show();
-        cTpdepesq.habilitaCampo().focus();
-        cNrdocmto.habilitaCampo();
-        cVltitulo.habilitaCampo();
+        if(cNrdconta.val()=='0'){
+            cNrdconta.val('').habilitaCampo();
+            cNrcpfcgc.val('').desabilitaCampo();
+            cNmprimtl.val('').desabilitaCampo();
+            showError('error', 'Associado n&atilde;o cadastrado.', 'Alerta - Ayllos', '$(\'#' + cNrdconta.attr("id") + '\',\'#frmOpcao\').select();');
+        }
+        else{
+            $('#' + frmOpcao + ' fieldset:eq(1)').show();
+            cTpdepesq.habilitaCampo().focus();
+            cNrdocmto.habilitaCampo();
+            cVltitulo.habilitaCampo();
+        }
     }
 
-    cNrdconta.desabilitaCampo();
     hideMsgAguardo();
     controlaPesquisas();
 
