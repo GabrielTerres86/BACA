@@ -6759,6 +6759,9 @@ PROCEDURE pc_tela_busca_contratos(pr_nrdconta IN crapepr.nrdconta%TYPE --> Numer
     vr_exc_erro   EXCEPTION;
     vr_dtmvtolt DATE;
     vr_flgerlog    BOOLEAN := FALSE;
+    vr_dsvlrgar  VARCHAR2(32000) := '';
+    vr_tipsplit  gene0002.typ_split;   
+    vr_permite_trans NUMBER(1); 
     --
     PROCEDURE pc_controla_log_batch(pr_cdcooper IN NUMBER,
                                     pr_dstiplog IN VARCHAR2, -- 'I' início; 'F' fim; 'E' erro
@@ -6780,6 +6783,17 @@ PROCEDURE pc_tela_busca_contratos(pr_nrdconta IN crapepr.nrdconta%TYPE --> Numer
       
       vr_cdcooper := rw_crapcop.cdcooper;
       --
+      vr_dsvlrgar := GENE0001.fn_param_sistema(pr_nmsistem => 'CRED',pr_cdcooper => 0,pr_cdacesso => 'BLOQ_AUTO_PREJ');
+      vr_tipsplit := gene0002.fn_quebra_string(pr_string => vr_dsvlrgar, pr_delimit => ';');
+      vr_permite_trans := 1;
+      FOR i IN vr_tipsplit.first..vr_tipsplit.last LOOP
+        IF vr_cdcooper = vr_tipsplit(i) THEN
+          vr_permite_trans := 0;
+        END IF;
+      END LOOP;
+      --  
+      IF vr_permite_trans = 1 THEN
+        --
       pc_controla_log_batch(pr_cdcooper => vr_cdcooper,
                             pr_dstiplog => 'I',
                             pr_dscritic => vr_dscritic);                
@@ -6857,6 +6871,7 @@ PROCEDURE pc_tela_busca_contratos(pr_nrdconta IN crapepr.nrdconta%TYPE --> Numer
       pc_controla_log_batch(pr_cdcooper => vr_cdcooper,
                             pr_dstiplog => 'F',
                             pr_dscritic => vr_dscritic);
+      END IF;
     END LOOP;
 
   EXCEPTION
@@ -6873,12 +6888,15 @@ PROCEDURE pc_tela_busca_contratos(pr_nrdconta IN crapepr.nrdconta%TYPE --> Numer
       vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;
 
       pr_cdcritic := 0;
-      pr_dscritic := vr_dscritic;      
+      pr_dscritic := NULL;      
 
       -- Log de erro de execucao
       pc_controla_log_batch(pr_cdcooper => vr_cdcooper,
                             pr_dstiplog => 'E',
                             pr_dscritic => vr_dscritic);
+                            
+      cecred.pc_internal_exception(pr_cdcooper => nvl(vr_cdcooper,3),
+                                   pr_compleme => vr_dscritic);                            
 
       ROLLBACK;
         

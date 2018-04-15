@@ -94,6 +94,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS770(pr_cdcooper IN crapcop.cdcooper%TY
   vr_tab_sald    extr0001.typ_tab_saldos;
   vr_des_reto    VARCHAR2(3);
   rw_crapdat btch0001.cr_crapdat%ROWTYPE;
+  --
+  vr_dsvlrgar  VARCHAR2(32000) := '';
+  vr_tipsplit  gene0002.typ_split;   
   
   PROCEDURE pc_controla_log_batch(pr_dstiplog IN VARCHAR2, -- 'I' início; 'F' fim; 'E' erro
                                   pr_dscritic IN VARCHAR2 DEFAULT NULL) IS
@@ -108,6 +111,14 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS770(pr_cdcooper IN crapcop.cdcooper%TY
   END pc_controla_log_batch; 
  
 BEGIN
+  vr_dsvlrgar := GENE0001.fn_param_sistema(pr_nmsistem => 'CRED',pr_cdcooper => 0,pr_cdacesso => 'BLOQ_AUTO_PREJ');
+  vr_tipsplit := gene0002.fn_quebra_string(pr_string => vr_dsvlrgar, pr_delimit => ';');
+  
+  FOR i IN vr_tipsplit.first..vr_tipsplit.last LOOP
+    IF pr_cdcooper = vr_tipsplit(i) THEN
+      RETURN;
+    END IF;
+  END LOOP;
 
   pc_controla_log_batch(pr_dstiplog => 'I',
                             pr_dscritic => vr_dscritic); 
