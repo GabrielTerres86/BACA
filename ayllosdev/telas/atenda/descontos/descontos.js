@@ -473,7 +473,6 @@ function formataLayout(nomeForm){
 	     });
 
 	    cNrinssac.unbind('keypress').unbind('change').bind('change keypress', function(e) {
-	        if (cNrinssac.hasClass('campoTelaSemBorda')) return false;
 	        if ((e.keyCode == 9 || e.keyCode == 13 || e.type ==='change')) {
 	            if(cNrinssac.val()!=''){
 	                buscaPagador(cNrdconta.val(),cNrinssac.val(),nomeForm);
@@ -486,7 +485,6 @@ function formataLayout(nomeForm){
 	    });
 
 	    cDtvencto.unbind('keypress').bind('keypress', function(e) {
-	        if (cNrinssac.hasClass('campoTelaSemBorda')) return false;
 	        if ((e.keyCode == 9 || e.keyCode == 13)) {
 	            cVltitulo.focus();
 	            return false;
@@ -494,7 +492,6 @@ function formataLayout(nomeForm){
 	    });
 
 	    cVltitulo.unbind('keypress').bind('keypress', function(e) {
-	        if (cNrinssac.hasClass('campoTelaSemBorda')) return false;
 	        if ((e.keyCode == 9 || e.keyCode == 13)) {
 	            cNrnosnum.focus();
 	            return false;
@@ -502,7 +499,6 @@ function formataLayout(nomeForm){
 	    });
 
 	    cNrnosnum.unbind('keypress').bind('keypress', function(e) {
-	        if (cNrinssac.hasClass('campoTelaSemBorda')) return false;
 	        if ((e.keyCode == 9 || e.keyCode == 13)) {
 	            buscarTitulosBordero();
 	            return false;

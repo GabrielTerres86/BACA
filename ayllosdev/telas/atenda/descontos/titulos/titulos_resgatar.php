@@ -1,10 +1,10 @@
 <?php 
 	/************************************************************************
-	 Fonte: titulos_bordero_alterar.php                                        
+	 Fonte: titulos_resgatar.php                                        
 	 Autor: Luis Fernando (GFT)
-	 Data : 09/04/2018                Última Alteração: 
+	 Data : 14/04/2018                Última Alteração: 
 	                                                                  
-	 Objetivo  : Alteração de um novo Bordero
+	 Objetivo  : Resgate de títulos de borderôes
 
 	************************************************************************/
 	
@@ -24,32 +24,33 @@
 	setVarSession("nmrotina","DSC TITS - BORDERO");
 
 	// Verifica se o número da conta foi informado
-	if (!isset($_POST["nrdconta"]) || !isset($_POST["nrborder"] ))  {
+	if (!isset($_POST["nrdconta"]) || !isset($_POST["nrctrlim"] ))  {
 		exibeErro("Par&acirc;metros incorretos.");
 	}	
 
 	$nrdconta = $_POST["nrdconta"];
-	$nrborder = $_POST["nrborder"];
+	$nrctrlim = $_POST["nrctrlim"];
 
 	// Verifica se o número da conta é um inteiro válido
 	if (!validaInteiro($nrdconta)) {
 		exibeErro("Conta/dv inv&aacute;lida.");
 	}
-	// Verifica se o número do borderô é um inteiro válido
-	if (!validaInteiro($nrborder)) {
-		exibeErro("Border&ocirc; inv&aacute;lido.");
+	// Verifica se o número do contrato é um inteiro válido
+	if (!validaInteiro($nrctrlim)) {
+		exibeErro("Contrato inv&aacute;lido.");
 	}
 
 
 	$xml = "<Root>";
     $xml .= " <Dados>";
     $xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
-    $xml .= "   <nrborder>".$nrborder."</nrborder>";
+	$xml .= "	<tpctrlim>3</tpctrlim>";
+	$xml .= "	<insitlim>2</insitlim>";
 	$xml .= "	<dtmvtolt>".$glbvars["dtmvtolt"]."</dtmvtolt>";
     $xml .= " </Dados>";
     $xml .= "</Root>";
 
-    $xmlResult = mensageria($xml,"TELA_ATENDA_DESCTO","BUSCAR_DADOS_BORDERO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+    $xmlResult = mensageria($xml,"TELA_ATENDA_DESCTO","OBTEM_DADOS_CONTRATO_LIMITE", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
     $xmlObj = getClassXML($xmlResult);
     $root = $xmlObj->roottag;
     // Se ocorrer um erro, mostra crítica
@@ -59,27 +60,19 @@
 	}
 
 	$dados 		= $root->dados;
-	$contrato 	= $dados->contrato;
-	$bordero 	= $dados->bordero;
-	$titulos 	= $dados->findFirst("titulos");
-	$quantidade = $titulos->getAttribute("qtregist");
-	$arrTitulos = $titulos->find("titulo");
-
+	$contrato 	= $dados->inf;
 	$vlutiliz = $contrato->vlutiliz;
 	$vllimite = $contrato->vllimite;
 	$pctolera = $contrato->pctolera;
 	$dtfimvig = $contrato->dtfimvig;
-	if ($bordero->cdoperad!=$glbvars["cdoperad"]){
-		exibeErro("Operador deve ser o mesmo que criou o border&ocirc;");
-	}
 
 	if (diffData($dtfimvig,$glbvars["dtmvtolt"])<0){
 		exibeErro("Data de vig&ecirc;ncia do contrato deve ser maior que a data de movimenta&ccedil;&atilde;o do sistema");
 	}
+
 	$pctolera = $pctolera ? $pctolera : 0;
 
 	$vldispon = formataMoeda(converteFloat($vllimite)-converteFloat($vlutiliz));
-	$vlsaldor = formataMoeda(converteFloat($vllimite)-converteFloat($vlutiliz)-converteFloat($bordero->vltitulo));
 	// Função para exibir erros na tela atrav&eacute;s de javascript
 	function exibeErro($msgErro) { 
 		echo '<script type="text/javascript">';
@@ -97,10 +90,7 @@
 		<input type="hidden" id="vllimite" name="vllimite" value="<? echo $vllimite; ?>" />
 		<div id="divFiltros">
 			<fieldset id="divDadosContrato">
-				<legend>Dados do Border&ocirc;</legend>
-				<label for="nrborder">N&uacute;mero do Border&ocirc;</label>
-			    <input type="text" id="nrborder" name="nrborder" value="<?php echo $bordero->nrborder?>"/>
-
+				<legend>Dados do Contrato</legend>
 				<label for="nrctrlim">Contrato</label>
 			    <input type="text" id="nrctrlim" name="nrctrlim" value="<?php echo $contrato->nrctrlim ?>"/>
 
@@ -111,16 +101,17 @@
 			    <input type="text" id="vldispon" name="vldispon" value="<?php echo $vldispon ?>"/>
 
 				<label for="qtseleci">Quantidade T&iacute;tulos</label>
-			    <input type="text" id="qtseleci" name="qtseleci" value="<?php echo $bordero->qttitulo ?>"/>
+			    <input type="text" id="qtseleci" name="qtseleci" value="0"/>
 
-				<label for="vlseleci">Valor T&iacute;tulos</label>
-			    <input type="text" id="vlseleci" name="vlseleci" value="<?php echo formataMoeda($bordero->vltitulo) ?>"/>
+				<label for="vlseleci">Valor Resgatados</label>
+			    <input type="text" id="vlseleci" name="vlseleci" value="0"/>
 
-				<label for="vlsaldor">Saldo Restante</label>
-			    <input type="text" id="vlsaldor" name="vlsaldor" value="<?php echo $vlsaldor ?>"/>
 			</fieldset>
 			<fieldset>
 				<legend>Filtrar T&iacute;tulos</legend>
+
+			    <label for="nrborder">Border&ocirc;</label>
+			    <input type="text" id="nrborder" name="nrborder" value="<?php echo $nrborder ?>" />
 
 				<label for="nrinssac">CPF/CNPJ Pagador</label>
 			    <input type="text" id="nrinssac" name="nrinssac" value="<?php echo $nrinssac ?>"/>
@@ -140,7 +131,7 @@
 			    <input type="text" id="nrnosnum" name="nrnosnum" value="<?php echo $nrnosnum ?>" />
 
 			    <br>
-				<input style="float:right;" type="button" class="botao" onclick="buscarTitulosBordero();" value="Pesquisar T&iacute;tulos"/>
+				<input style="float:right;" type="button" class="botao" onclick="buscarTitulosResgatar();" value="Pesquisar T&iacute;tulos"/>
 			</fieldset>
 		</div>
 		<div id="divTitulos" class="formulario">
@@ -155,7 +146,7 @@
 								<th>Pagador</th>
 								<th>Vencimento</th>
 								<th>Valor</th>
-								<th>Situa&ccedil;&atilde;o</th>
+								<th>Border&ocirc;</th>
 								<th>Selecionar</th>
 							</tr>			
 						</thead>
@@ -175,7 +166,7 @@
 								<th>Pagador</th>
 								<th>Vencimento</th>
 								<th>Valor</th>
-								<th>Situa&ccedil;&atilde;o</th>
+								<th>Border&ocirc;</th>
 								<th>Remover</th>
 							</tr>
 						</thead>
@@ -216,11 +207,11 @@
 </div>
 
 <div id="divBotoesTitulosLimite" style="margin-bottom:10px;">
-	<input type="button" class="botao" value="Voltar"  onClick="carregaBorderosTitulos(); voltaDiv(3,2,4,'DESCONTO DE TÍTULOS - BORDERÔS');return false; " />
-	<input type="button" class="botao" value="Continuar" onClick="mostrarBorderoResumoAlterar();return false;"/>
+	<input type="button" class="botao" value="Voltar"  onClick="voltaDiv(2,1,4,'DESCONTO DE T&Iacute;TULOS','DSC TITS');carregaTitulos();return false; " />
+	<input type="button" class="botao" value="Continuar" onClick="mostrarBorderoResumoResgatar();return false;"/>
 </div>
 <script type="text/javascript">
-	dscShowHideDiv("divOpcoesDaOpcao3","divOpcoesDaOpcao1;divOpcoesDaOpcao2");
+	dscShowHideDiv("divOpcoesDaOpcao2","divOpcoesDaOpcao1;divOpcoesDaOpcao3");
 
 	// Muda o título da tela
 	$("#tdTitRotina").html("DESCONTO DE T&Iacute;TULOS - BORDERO - INCLUIR");
@@ -240,5 +231,23 @@
 		
 	}
 
+    var rNrborder = $("label[for='nrborder']");
+	rNrborder.css({'width': '112px'}).addClass('rotulo-linha');
+	var cNrborder = $("#nrborder", "#divIncluirBordero");
+	cNrborder.css({'width': '114px'}).addClass('inteiro').habilitaCampo();
 
+    cNrborder.unbind('keypress').bind('keypress', function(e) {
+        if ((e.keyCode == 9 || e.keyCode == 13)) {
+            $("#nrdconta", "#divIncluirBordero").focus();
+            return false;
+        }
+    });
+
+	var cNrnosnum = $("#nrnosnum", "#divIncluirBordero");
+    cNrnosnum.unbind('keypress').bind('keypress', function(e) {
+        if ((e.keyCode == 9 || e.keyCode == 13)) {
+            buscarTitulosResgatar();
+            return false;
+        }
+    });
 </script>
