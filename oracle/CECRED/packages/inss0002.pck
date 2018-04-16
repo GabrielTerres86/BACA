@@ -5002,9 +5002,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INSS0002 AS
               pr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
               --Levantar Excecao
               RAISE vr_exc_saida;
-       END IF;
-              --Fechar Cursor
-              CLOSE cr_existe_bcx;
+           ELSE
+             --Fechar Cursor
+             CLOSE cr_existe_bcx;
+           END IF;
 
         --Atualizar tabela crapbcx
         BEGIN
