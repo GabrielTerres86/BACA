@@ -372,10 +372,20 @@
 	       echo 'showError("error","'.$xmlObjDados->roottag->tags[0]->tags[0]->tags[4]->cdata.'","Alerta - Ayllos","mostrarBorderoResumo();hideMsgAguardo();bloqueiaFundo(divRotina);");';
 			exit;
 		}
+		$dados = $xmlObjDados->roottag->tags[0]->tags[0]->tags;
 
-	    echo 'showError("inform","Manuten&ccedil;&atilde;o realizada com sucesso","Alerta - Ayllos","'
+		$per_vllimite = number_format(str_replace(",",".",$dados[15]->cdata),2,",","");
+		$per_cddlinha = formataNumericos('zz9',$dados[17]->cdata,'.');
+
+		if($vllimite > $per_vllimite){
+			echo 'showError("inform","Majora&ccedil;&atilde;o criada com sucesso","Alerta - Ayllos","'
 	    	.'voltaDiv(2,1,4,\'DESCONTO DE T&Iacute;TULOS\',\'DSC TITS\');'
 	    	.'carregaTitulos();");';
+		} else {
+			echo 'showError("inform","Manuten&ccedil;&atilde;o realizada com sucesso","Alerta - Ayllos","'
+	    	.'voltaDiv(2,1,4,\'DESCONTO DE T&Iacute;TULOS\',\'DSC TITS\');'
+	    	.'carregaTitulos();");';
+		}
 
 	}
 	else if($operacao =='ALTERAR_BORDERO'){

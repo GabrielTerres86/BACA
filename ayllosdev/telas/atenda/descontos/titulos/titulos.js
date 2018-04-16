@@ -2759,22 +2759,21 @@ function visualizarTituloDeBordero() {
     return false;
 }
 
+
 function realizarManutencaoDeLimite(operacao, flgstlcr) {
     showMsgAguardo("Aguarde, carregando dados do contrato...");
-    var nrctrlim = normalizaNumero($("#nrctrlim","#frmTitulos").val());
-    if(!operacao){operacao = 0;}
-    console.log(operacao);
-    console.log(flgstlcr);
+    var nrctrlim = normalizaNumero($("#nrctrlim", "#frmTitulos").val());
+    if (!operacao) { operacao = 0; }
 
-    var callback = "realizarManutencaoDeLimite(1,"+flgstlcr+" )";
+    var callback = "realizarManutencaoDeLimite(1," + flgstlcr + " )";
 
 
 
     // linha bloqueada
-    if(flgstlcr === 0){
+    if (flgstlcr === 0) {
 
         //se a operação não for a de carregar a tela
-        if(operacao !== 1){
+        if (operacao !== 1) {
             showError(
                 "inform",
                 "Linha de crédito bloqueada, para realizar a operação altere para uma linha liberada ou efetue o desbloqueio da linha",
@@ -2784,16 +2783,17 @@ function realizarManutencaoDeLimite(operacao, flgstlcr) {
         }
     }
     // operação 0 mostra a janela de confirmação
-    if(operacao === 0){
-            showError(
-                "inform",
-                "Deseja realizar a manuten&ccedil;&atilde;o do contrato?",
-                "Alerta - Ayllos",
-                callback);
-            return false;
+    if (operacao === 0) {
+        showConfirmacao("Deseja realizar a manuten&ccedil;&atilde;o do contrato?",
+            "Confirma&ccedil;&atilde;o - Ayllos",
+           callback,
+            "",
+            "sim.gif",
+            "nao.gif");
+        return false;
     }
 
-    if(operacao === 1){
+    if (operacao === 1) {
         $.ajax({
             type: "POST",
             url: UrlSite + "telas/atenda/descontos/titulos/titulos_limite_manutencao.php",
@@ -2808,15 +2808,15 @@ function realizarManutencaoDeLimite(operacao, flgstlcr) {
                 showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
             },
             success: function (response) {
-                 $("#divOpcoesDaOpcao2").html(response);
-                 formataManutencaoDeLimite();
-                 hideMsgAguardo();
+                $("#divOpcoesDaOpcao2").html(response);
+                formataManutencaoDeLimite();
+                hideMsgAguardo();
             }
         });
         return false;
     }
 
-    if(operacao == 2){
+    if (operacao == 2) {
         concluirManutencaoDeLimite();
         return false;;
     }
@@ -2830,6 +2830,13 @@ function concluirManutencaoDeLimite(){
     var nrctrlim = normalizaNumero($("#nrctrlim","#frmTitLimiteManutencao").val());
     var vllimite = $('#vllimite','#frmTitLimiteManutencao').val().replace(/\./g,"");
     var cddlinha = $('#cddlinha','#frmTitLimiteManutencao').val();
+    var per_vllimite = $('#per_vllimite', '#frmTitLimiteManutencao').val().replace(/\./g, "");
+    var per_cddlinha = $('#per_cddlinha', '#frmTitLimiteManutencao').val();
+    if(vllimite == per_vllimite &&
+        cddlinha == per_cddlinha) {
+        showError('error', 'Nenhum valor foi alterado.', 'Alerta - Ayllos', '');
+        return;
+    }
 
     $.ajax({        
         type    : 'POST',

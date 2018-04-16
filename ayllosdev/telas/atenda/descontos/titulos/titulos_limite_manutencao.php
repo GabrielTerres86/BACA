@@ -96,6 +96,8 @@
 	<fieldset>
 	
 		<legend>Dados do Limite</legend>
+			<input type="hidden" name="per_vllimite" id="per_vllimite" value="0,00"/>
+			<input  type="hidden"  name="per_cddlinha" id="per_cddlinha" value="0"/>
 
 			<label for="nrctrlim"><? echo utf8ToHtml('Contrato:') ?></label>
 			<input type="text" name="nrctrlim" id="nrctrlim" value="0" class="campo" disabled>
@@ -200,8 +202,10 @@
 	<?php 
 		echo '$("#nrctrlim","#frmTitLimiteManutencao").val("'.formataNumericos('z.zzz.zz9',$dados[14]->cdata,'.').'");';
 		echo '$("#vllimite","#frmTitLimiteManutencao").val("'.number_format(str_replace(",",".",$dados[15]->cdata),2,",",".").'");';
+		echo '$("#per_vllimite","#frmTitLimiteManutencao").val("'.number_format(str_replace(",",".",$dados[15]->cdata),2,",",".").'");';
 		echo '$("#qtdiavig","#frmTitLimiteManutencao").val("'.formataNumericos('zzz.zz9',$dados[16]->cdata,'.').' dias");';
 		echo '$("#cddlinha","#frmTitLimiteManutencao").val("'.formataNumericos('zz9',$dados[17]->cdata,'.').'");';
+		echo '$("#per_cddlinha","#frmTitLimiteManutencao").val("'.formataNumericos('zz9',$dados[17]->cdata,'.').'");';
 		echo '$("#dsdlinha","#frmTitLimiteManutencao").val("'.$dados[2]->cdata.'");';//#cddlinh2
 		echo '$("#txdmulta","#frmTitLimiteManutencao").val("'.number_format(str_replace(",",".",$dados[0]->cdata),6,",",".").'%");';
 		echo '$("#dsramati","#frmTitLimiteManutencao").val("'.$dados[4]->cdata.'");';
@@ -214,7 +218,6 @@
 		echo '$("#dsdbens2","#frmTitLimiteManutencao").val("'.trim($dados[11]->cdata).'");';	
 		echo '$("#dsobserv","#frmTitLimiteManutencao").val("'.str_replace(chr(13),"\\n",str_replace(chr(10),"\\r",$dados[12]->cdata)).'");';
 		echo '$("#antnrctr","#frmTitLimiteManutencao").val("'.formataNumericos('zzz.zz9',$dados[14]->cdata,'.').'");';
-
 	?>
 
 </script>
