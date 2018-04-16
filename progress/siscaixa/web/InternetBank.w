@@ -1272,6 +1272,7 @@ DEF VAR aux_nmbenefi AS CHAR                         NO-UNDO.
 /* Operacao 212 */
 DEF VAR aux_dsagdcan AS LONGCHAR                     NO-UNDO.
 
+DEF VAR aux_vlcontra AS DECI                         NO-UNDO.
 
 /* _UIB-CODE-BLOCK-END */
 &ANALYZE-RESUME
