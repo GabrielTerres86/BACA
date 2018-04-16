@@ -2493,9 +2493,6 @@ function mostrarBorderoResumoAlterar() {
             showError("error", "Adicione pelo menos um t&iacute;tulo.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
         }
     }
-    
-    return false;
-    }
     return false;
 }
     
@@ -2913,7 +2910,7 @@ function formataManutencaoDeLimite(){
 
                         if ( campoAnterior == 'cddlinha' ) {
                             
-                        filtrosPesq =   'Código;cddlinha;30px;S;|Descrição;dsdlinha;200px;S;|;flgstlcr;;;;N|Tipo;tpdescto;;;3;N';
+                        filtrosPesq =   'Código;cddlinha;30px;S;|Descrição;dsdlinha;200px;S;|;flgstlcr;;;1;N|Tipo;tpdescto;;;3;N';
                         colunas =       'Código;cddlinha;15%;right|Descrição;dsdlinha;60%;left|Status;flgstlcr;25%;center;';//|Tipo;tpdescto;;;;N
 
                             mostraPesquisa('zoom0001',
