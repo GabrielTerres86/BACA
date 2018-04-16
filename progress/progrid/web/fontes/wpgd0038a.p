@@ -60,6 +60,10 @@
                           Prj. 229-5 (Jean Michel).
                           
              29/08/2017 - Inclusao do filtro por Programa,Prj. 322 (Jean Michel).
+			 
+			 16/04/2018 - Ajustes nos filtros do relatório somente para EAD.
+                          Para que os números deste relatório batam com o relatório 
+						  especifico do EAD(Chamado #INC0012368, Wagner/Sustentação).
                           
 **************************************************************************** */
 
@@ -801,7 +805,7 @@ ELSE DO:
           tipoDeRelatorio              = INTEGER(GET-VALUE("parametro10"))
           tpEvento                     = INTEGER(GET-VALUE("parametro11"))
           nrseqpgm                     = INTEGER(GET-VALUE("parametro12")) NO-ERROR. 
-   
+
    /* *** Localiza os eventos que satisfazem ao filtro (apenas custos diretos) *** */
    IF cdAgenci = 0  THEN /* Todos os PA´s */
       /*IF cdEvento = 0  /* Todos os eventos */ */
@@ -809,14 +813,19 @@ ELSE DO:
          FOR EACH Crapadp WHERE Crapadp.IdEvento = idEvento  AND
                                 Crapadp.CdCooper = cdCooper  AND
                                (Crapadp.CdAgenci > 0   OR
-                                idevento         = 2)        AND
-                                Crapadp.DtAnoAge = dtAnoAge  AND
+                                idevento         = 2)        AND 
+                                /*Crapadp.DtAnoAge = dtAnoAge  AND*/
                                 Crapadp.CdEvento > 0         AND
                                 Crapadp.NrSeqDig > 0         NO-LOCK,
             FIRST crapedp WHERE crapedp.cdcooper = Crapadp.cdcooper AND
                                 crapedp.idevento = Crapadp.idevento AND
                                 crapedp.cdevento = Crapadp.cdevento AND
                                 crapedp.dtanoage = Crapadp.dtanoage AND
+								((crapadp.DtAnoAge = dtAnoAge AND
+								  crapedp.tpevento <> 10 AND 
+								  crapedp.tpevento <> 11) OR
+							     (crapedp.tpevento = 10 OR
+								  crapedp.tpevento = 11)) AND
                               ((idEvento = 1                        AND
                                (tpEvento = 0                        OR
                                (tpEvento = 1                        AND
@@ -833,6 +842,8 @@ ELSE DO:
                                INT(nrseqpgm) = 0) NO-LOCK:
              IF (Crapadp.DtFinEve >= dataInicial AND 
                  Crapadp.DtFinEve <= dataFinal) OR
+				(crapedp.tpevento = 10 OR
+				 crapedp.tpevento = 11) OR
                 (crapadp.dtinieve = ? AND
                  crapadp.dtfineve = ? AND
                  crapadp.nrmeseve >= MONTH(datainicial) AND
@@ -846,19 +857,31 @@ ELSE DO:
          END.
       END.
       ELSE DO: 
-         FIND FIRST Crapadp WHERE Crapadp.IdEvento = idEvento    AND
+	  
+	     FIND FIRST Crapadp WHERE Crapadp.IdEvento = idEvento    AND
                                   Crapadp.CdCooper = cdCooper    AND
-                                  Crapadp.DtAnoAge = dtAnoAge    AND
+                                  /*Crapadp.DtAnoAge = dtAnoAge    AND*/
                                   Crapadp.NrSeqDig = nrseqeve    NO-LOCK.
          FOR EACH bfCrapadp WHERE bfCrapadp.IdEvento = IdEvento          AND
                                   bfCrapadp.CdCooper = CdCooper          AND
                                  (bfCrapadp.CdAgenci > 0   OR
                                   idevento           = 2)                AND
-                                  bfCrapadp.DtAnoAge = DtAnoAge          AND
-                                  bfCrapadp.CdEvento = Crapadp.cdEvento  NO-LOCK:
+                                  /*bfCrapadp.DtAnoAge = DtAnoAge          AND*/
+								  bfCrapadp.CdEvento = Crapadp.cdEvento  NO-LOCK,
+           FIRST crapedp WHERE crapedp.cdcooper = bfCrapadp.cdcooper AND
+                               crapedp.idevento = bfCrapadp.idevento AND
+                               crapedp.cdevento = bfCrapadp.cdevento AND
+                               crapedp.dtanoage = bfCrapadp.dtanoage AND
+			 				 ((crapadp.DtAnoAge = dtAnoAge AND
+							   crapedp.tpevento <> 10 AND 
+							   crapedp.tpevento <> 11) OR
+							  (crapedp.tpevento = 10 OR
+							   crapedp.tpevento = 11)) NO-LOCK:
           
              IF (bfCrapadp.DtFinEve >= dataInicial AND 
                  bfCrapadp.DtFinEve <= dataFinal) OR
+				(crapedp.tpevento = 10 OR
+				 crapedp.tpevento = 11) OR 
                 (bfCrapadp.dtinieve = ? AND
                  bfCrapadp.dtfineve = ? AND
                  bfCrapadp.nrmeseve >= MONTH(datainicial) AND
@@ -868,6 +891,7 @@ ELSE DO:
                 CREATE ttCrapadp.
                 BUFFER-COPY bfCrapadp TO ttCrapadp.
              END.
+		   
          END.
       END.
    ELSE IF nrseqeve = 0 THEN DO: /* Todos os eventos */
@@ -876,13 +900,18 @@ ELSE DO:
                              Crapadp.CdCooper = cdCooper      AND
                             (Crapadp.CdAgenci = cdAgenci  OR
                              crapadp.cdagenci = 0)            AND
-                             Crapadp.DtAnoAge = dtAnoAge      AND
+                             /* Crapadp.DtAnoAge = dtAnoAge      AND*/
                              Crapadp.CdEvento > 0             AND
                              Crapadp.NrSeqDig > 0             NO-LOCK,
          FIRST crapedp WHERE crapedp.cdcooper = Crapadp.cdcooper AND
                              crapedp.idevento = Crapadp.idevento AND
                              crapedp.cdevento = Crapadp.cdevento AND
                              crapedp.dtanoage = Crapadp.dtanoage AND
+							 ((crapadp.DtAnoAge = dtAnoAge AND
+								  crapedp.tpevento <> 10 AND 
+								  crapedp.tpevento <> 11) OR
+							     (crapedp.tpevento = 10 OR
+								  crapedp.tpevento = 11)) AND
                            ((idEvento = 1                        AND
                             (tpEvento = 0                        OR
                             (tpEvento = 1                        AND
@@ -900,6 +929,8 @@ ELSE DO:
  
           IF (Crapadp.DtFinEve >= dataInicial AND 
               Crapadp.DtFinEve <= dataFinal) OR
+			 (crapedp.tpevento = 10 OR
+			  crapedp.tpevento = 11) OR
              (crapadp.dtinieve = ? AND
               crapadp.dtfineve = ? AND
               crapadp.nrmeseve >= MONTH(datainicial) AND
@@ -918,18 +949,29 @@ ELSE DO:
                                Crapadp.CdCooper = cdCooper      AND
                               (Crapadp.CdAgenci = cdAgenci  OR
                                crapadp.cdagenci = 0)            AND
-                               Crapadp.DtAnoAge = dtAnoAge      AND
+                               /*Crapadp.DtAnoAge = dtAnoAge      AND*/
                                Crapadp.NrSeqDig = nrSeqEve      NO-LOCK.
  
       FOR EACH bfCrapadp WHERE bfCrapadp.IdEvento = idEvento          AND
                                bfcrapadp.CdCooper = cdCooper          AND
                               (bfCrapadp.CdAgenci = cdAgenci  OR
                                bfcrapadp.cdagenci = 0)                AND
-                               bfCrapadp.DtAnoAge = dtAnoAge          AND
-                               bfCrapadp.CdEvento = crapadp.cdEvento  NO-LOCK:
+                               /*bfCrapadp.DtAnoAge = dtAnoAge          AND*/
+                               bfCrapadp.CdEvento = crapadp.cdEvento  NO-LOCK,
+           FIRST crapedp WHERE crapedp.cdcooper = bfCrapadp.cdcooper AND
+                               crapedp.idevento = bfCrapadp.idevento AND
+                               crapedp.cdevento = bfCrapadp.cdevento AND
+                               crapedp.dtanoage = bfCrapadp.dtanoage AND
+			 				 ((crapadp.DtAnoAge = dtAnoAge AND
+							   crapedp.tpevento <> 10 AND 
+							   crapedp.tpevento <> 11) OR
+							  (crapedp.tpevento = 10 OR
+							   crapedp.tpevento = 11)) NO-LOCK:
 
           IF (bfCrapadp.DtFinEve >= dataInicial AND 
               bfCrapadp.DtFinEve <= dataFinal) OR
+		     (crapedp.tpevento = 10 OR
+			  crapedp.tpevento = 11) OR 
              (bfCrapadp.dtinieve = ? AND
               bfCrapadp.dtfineve = ? AND
               bfCrapadp.nrmeseve >= MONTH(datainicial) AND
@@ -960,7 +1002,7 @@ ELSE DO:
 
    /* Assembleia Geral - devera aparecer agrupado por Agencia de Inscricao - Joao(RKAM) - 30/11/2010 */
    IF idEvento = 2  THEN
-   DO:
+   DO:   
        FOR EACH ttcrapadp EXCLUSIVE-LOCK
           WHERE ttcrapadp.idevento = idEvento AND
                 ttcrapadp.cdcooper = cdCooper AND
@@ -1152,7 +1194,10 @@ ELSE DO:
             AND crapidp.dtanoage = ttCrapadp.DtAnoAge           
             AND crapidp.cdagenci = ttCrapadp.cdagenci           
             AND crapidp.cdevento = ttCrapadp.cdevento           
-            AND crapidp.nrseqeve = ttCrapadp.nrSeqDig           
+            AND crapidp.nrseqeve = ttCrapadp.nrSeqDig			
+			AND ((crapidp.dtconins >= dataInicial
+              AND crapidp.dtconins <= dataFinal)
+                OR (idevento         <> 1))
             AND (idevento         = 1                            
             OR   cdagenci         = 0                  
             OR   crapidp.cdageins = cdagenci),
