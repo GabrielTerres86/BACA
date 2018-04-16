@@ -7326,7 +7326,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
         vr_tab_historico(2384).dsrefere_jur := 'ESTORNO DE REVERSAO JUROS +60 PP P/ PREJUIZO - PESSOA JURIDICA';
         
         vr_tab_historico(2399).nrctaori_fis := 7135;
-        vr_tab_historico(2399).nrctades_fis := 8442;
+        vr_tab_historico(2399).nrctades_fis := 7028;
         vr_tab_historico(2399).dsrefere_fis := 'ESTORNO DE REVERSAO JUROS +60 PP P/ PREJUIZO - PESSOA FISICA';
         vr_tab_historico(2399).nrctaori_jur := 7135;
         vr_tab_historico(2399).nrctades_jur := 7029;
