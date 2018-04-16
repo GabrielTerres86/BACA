@@ -125,6 +125,23 @@
 		exit();
 	}
 	
+	function getDecisao($nrdconta, $nrctrcrd, $glbvars){
+			$adxml .= "<Root>";
+			$adxml .= " <Dados>";
+			$adxml .= "   <nrdconta>$nrdconta</nrdconta>";
+			$adxml .= "   <nrctrcrd>$nrctrcrd</nrctrcrd>";
+			$adxml .= " </Dados>";
+			$adxml .= "</Root>";
+
+			$result = mensageria($adxml, "ATENDA_CRD", "BUSCAR_SITUACAO_DECISAO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+			$admxmlObj = simplexml_load_string($result);
+			if($admxmlObj->Dados->cartoes->descricao)
+				echo $admxmlObj->Dados->cartoes->descricao;
+			else 
+				echo " ";
+
+
+	}
 ?>
 
 
@@ -150,6 +167,7 @@
 						<th>Administradora</th>
 						<th>N&uacute;mero do cart&atilde;o</th>
 						<th>Situa&ccedil;&atilde;o</th>
+						<th  style="width: 55px;">Decis&atilde;o</th>
 					</tr>			
 				</thead>
 				<tbody>
@@ -166,8 +184,10 @@
 							<?php } ?>
 							<td><?php echo getByTagName($ccredito[$i]->tags,"NMTITCRD"); ?></td>
 							<td style="width:50px" ><?php echo getByTagName($ccredito[$i]->tags,"NMRESADM"); ?></td>
-							<td><?php echo getByTagName($ccredito[$i]->tags,"DSCRCARD"); ?></td>
+							
+							<td  style="width: 95px;"><?php echo getByTagName($ccredito[$i]->tags,"DSCRCARD"); ?></td>
 							<td><?php echo getByTagName($ccredito[$i]->tags,"DSSITCRD"); ?></td>
+							<td  style="width: 40px;"><?php getDecisao(getByTagName($ccredito[$i]->tags,"NRDCONTA"), getByTagName($ccredito[$i]->tags,'NRCTRCRD'), $glbvars); ?></td>
 							
 						</tr>				
 					<? } ?>			
@@ -178,7 +198,7 @@
 		<div id="divBotoes">
 			
 			<input type="image" id="btncons" src="<?php echo $UrlImagens; ?>botoes/consultar.gif" <?php if (!in_array("C",$glbvars["opcoesTela"])) { echo "style='cursor: default' onClick='return false;'"; } else { echo "onClick='consultaCartao();return false;'"; } ?>>
-			
+			<input type="image" id="btnalterarLimite" src="<?php echo $UrlImagens; ?>botoes/alterar.gif"  onClick="alteraCartao(this,'<? echo $_POST["nrdconta"]; ?>')" disabled>
 			<?php if(!($sitaucaoDaContaCrm == '4' || 
 				       $sitaucaoDaContaCrm == '7' || 
 				       $sitaucaoDaContaCrm == '8'  )){?>

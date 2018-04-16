@@ -291,6 +291,12 @@
 	// Número do novo contrato
 	$nrctrcrd = $xmlObjCartao->roottag->tags[1]->tags[0]->tags[0]->cdata;
 
+	if($cdadmcrd == 11 ||$cdadmcrd == 12 || $cdadmcrd == 13 ||$cdadmcrd == 4 || $cdadmcrd == 16){
+
+		echo "hideMsgAguardo();";
+		echo "solicitaSenha($nrctrcrd, $cdadmcrd);";
+		return;
+	}
 	// Efetua a impressão PF ou PJ
 	if ($inpessoa == "1") {
 		$opcao = "3";

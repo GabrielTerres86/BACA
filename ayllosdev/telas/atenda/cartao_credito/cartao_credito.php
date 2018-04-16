@@ -42,7 +42,7 @@ setVarSession("opcoesTela",$opcoesTela);
 <table cellpadding="0" cellspacing="0" border="0" width="100%">
     <tr>
         <td align="center">		
-            <table border="0" cellpadding="0" cellspacing="0" width="545">
+            <table border="0" cellpadding="0" cellspacing="0" width="600">
                 <tr>
                     <td>
                         <table width="100%" border="0" cellspacing="0" cellpadding="0">

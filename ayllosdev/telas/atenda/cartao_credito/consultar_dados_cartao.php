@@ -344,6 +344,14 @@
 		<? if (($cdadmcrd >= 10) && ($cdadmcrd <= 80)){ ?>
 		<a href="#" class="botao" id="bthislim" onClick="mostraHisLimite(); return false;">Hist. Limite</a>
 		<? } ?>
+				<a href="#" class="botao" id="btHistoricoProposta" onclick="carregaHistorico(0);"> <? echo utf8ToHtml("Hist. Proposta");?></a>
+					<a  cdcooper="<?php echo $glbvars['cdcooper']; ?>" 
+					cdagenci="<?php echo $glbvars['cdoperad']; ?>" 
+					nrdcaixa="<?php echo $glbvars['nrdcaixa']; ?>" 
+					idorigem="<?php echo $glbvars['idorigem']; ?>" 
+					cdoperad="<?php echo $glbvars['cdoperad']; ?>"
+					dsdircop="<?php echo $glbvars['dsdircop']; ?>"
+					   href="#" class="botao" id="btHistoricoProposta" onclick="imprimirTermoDeAdesao(this);"> <? echo utf8ToHtml("Imprimir Termo de Adesão");?></a>
 	</div>
 </div>
 

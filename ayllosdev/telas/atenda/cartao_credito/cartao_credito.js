@@ -1251,6 +1251,34 @@ function opcaoNovo(cdcooper) {
 		
 }
 
+// - CECRED CArt?o fase III - Amasonas Supero
+function alteraCartao(elem, nrdconta) {
+//idAnt
+    if (cdcooper == 17) {
+        showError("error", "Solicita&ccedil;&atilde;o n&atilde;o autorizada.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+        return false;
+    }
+    var nrcrcard = $("#btnalterarLimite").attr("nrcrcard");
+    var cdAdmCartao = $("#btnalterarLimite").attr("cdAdmCartao");
+
+
+    $.ajax({
+        type: "POST",
+        dataType: "html",
+        url: UrlSite + "telas/atenda/cartao_credito/alterar_limite_cartao.php",
+        data: {
+            nrcrcard: nrcrcard,
+            nrdconta: nrdconta,
+            cdAdmCartao: cdAdmCartao
+        },
+        error: function (objAjax, responseError, objExcept) {
+
+            hideMsgAguardo();
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+        },
+        success: function (response) {
+            $("#divOpcoesDaOpcao1").html(response);
+        }
 function mostraDivDadosCartao() {
     $("#divDadosNovoCartao").css("display", "block");
     $("#divDadosAvalistas").css("display", "none");
@@ -1258,6 +1286,15 @@ function mostraDivDadosCartao() {
 
 function buscaDados(cdtipcta, nrcpfstl, inpessoa, dtnasstl, nrdocstl, nmconjug, dtnasccj, nmtitcrd, nrcpfcgc, dtnasccr, nrdoccrd, vlsalari, nmsegntl) {
 
+    if (nrcpfcgc == "000.000.000-00") {
+        $(".campoTelaSemBorda").each(function (k, v) {
+            if ($(v).attr("id") == "nrcpfcgc") {
+                nrcpfcgc = v.value;
+                return false;
+            }
+
+        });
+    }
 	var cdadmcrd;
 	var objSelectPar = document.frmNovoCartao.dsgraupr;
 	var escolha = objSelectPar.options[objSelectPar.options.selectedIndex].value;
@@ -1265,7 +1302,10 @@ function buscaDados(cdtipcta, nrcpfstl, inpessoa, dtnasstl, nrdocstl, nmconjug, 
     nrcpfau = nrcpfau.replace(/\-/g, "");
 	cdadmcrd = $("#dsadmcrd").val().split(";");
 	cdadmcrd = cdadmcrd[0];
-	
+    if (("" + cdadmcrd).indexOf("CRED") > -1) {
+        cdadmcrd = $("#cdadmcrd").val();
+
+    }
     if (cdadmcrd >= 10 && cdadmcrd < 81) {
 	
 		/*Tratamento para busca limite, dia de débito, proposto, forma de pagamento, envio*/	
@@ -1307,6 +1347,8 @@ function buscaDados(cdtipcta, nrcpfstl, inpessoa, dtnasstl, nrdocstl, nmconjug, 
         $("#nrdoccrd", "#frmNovoCartao").val(nrdoccrd);
         $("#dtnasccr", "#frmNovoCartao").val(dtnasccr);
         $("#vlsalari", "#frmNovoCartao").val(vlsalari);
+
+        carregarRepresentante("N", 0, nrcpfcgc);
     } else if (escolha == 7 || escolha == 8) { // Terceiro Titular e Quarto Titular
         buscaTitulares(nrdconta, escolha);
     } else if (escolha == 3 || escolha == 4) { // Filhos ou Companheiro
@@ -1480,8 +1522,11 @@ function validarNovoCartao() {
 	var dsrepres = "";
     var codadmct = $("#dsadmcrd option:selected", "#frmNovoCartao").val();
     var codgroup = $("#dsgraupr option:selected", "#frmNovoCartao").val();
-	
-	var nmbandei = codadmct.split(";")[3];
+    if (codadmct) {
+        var nmbandei = codadmct.split(";")[3];
+        codadmct = codadmct.split(";");
+        codadmct = codadmct[0];
+    }
     var tpdpagto = $("#tpdpagto option:selected", "#frmNovoCartao").val();
     var vllimpro = trim($("#vllimpro", "#frmNovoCartao").val()).replace(/\./g, "");
     vllimpro.replace(/\./g, ",");
@@ -1558,7 +1603,19 @@ function validarNovoCartao() {
         showError("error", "Selecione uma Forma de Pagamento.", "Alerta - Ayllos", "$('#tpdpagto','#frmNovoCartao').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
 		return false
 	}
+        var cdadmcrd = "";
+        if ($("#cdadmcrd").val()) {
+            cdadmcrd = $("#cdadmcrd").val();
+            if (!dsadmcrd)
+                dsadmcrd = dsadmcrdList[cdadmcrd];            
 	
+        }
+        cdadmcrd = $("#cdadmcrd").val();
+        if (!cdadmcrd) {
+            cdadmcrd = 15;
+            dsadmcrd = dsadmcrdList[cdadmcrd];
+
+        }
     // Executa script de validação do cartão através de ajax
 	$.ajax({
 		type: "POST",
@@ -1630,8 +1687,21 @@ function cadastrarNovoCartao() {
     var nmextttl = trim($('#nmextttl', '#' + nomeForm).val());
 	
     var dtnasccr = $('#dtnasccr', '#' + nomeForm).val();
-    var dsadmcrd = $('#dsadmcrd option:selected', '#' + nomeForm).text();
-    var cdadmcrd = $('#dsadmcrd', '#' + nomeForm).val().slice(0, $('#dsadmcrd', '#' + nomeForm).val().search(';'));
+    var dsadmcrd = "";
+    var cdadmcrd = "";
+
+    if (!($("#dsadmcrd").val().indexOf(";") > -1)) {
+        dsadmcrd = $("#dsadmcrd").val();
+
+        cdadmcrd = $("#cdadmcrd").val();
+        dsadmcrd = dsadmcrdList[cdadmcrd];
+
+    }
+    else {
+
+        dsadmcrd = $('#dsadmcrd option:selected', '#' + nomeForm).text();
+        cdadmcrd = $('#dsadmcrd', '#' + nomeForm).val().slice(0, $('#dsadmcrd', '#' + nomeForm).val().search(';'));
+    }
     var dscartao = $('#dscartao', '#' + nomeForm).val();
     var dddebito = $('#dddebito', '#' + nomeForm).val();
 	
@@ -5342,3 +5412,238 @@ function mostraHisLimite() {
         }
     });
 }
+
+function carregaHistorico(type) {
+    showMsgAguardo("Aguarde, carregando hist&oacute;rico ...");
+    $.ajax({
+        type: "POST",
+        dataType: "html",
+        url: UrlSite + "telas/atenda/cartao_credito/historico.php",
+        data: {
+            nrcrcard: nrcrcard,
+            nrdconta: nrdconta,
+            nrctrcrd: nrctrcrd,
+            type: type
+        },
+        error: function (objAjax, responseError, objExcept) {
+
+            hideMsgAguardo();
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+        },
+        success: function (response) {
+            $("#divConteudoCartoes").hide();
+            hideMsgAguardo();
+            $("#divOpcoesDaOpcao1").html(response);
+            $("#divOpcoesDaOpcao1").show();
+        }
+    });
+}
+
+function enviaSolicitacao() {
+    $('#nmtitcrd').click();
+    $('#nmextttl').click();
+    verificaEfetuaGravacao();
+    return false;
+}
+
+function validarSenha(nrctrcrd) {
+    if (inpessoa == 1) {
+        solicitaSenhaMagnetico('enviarBancoob(' + nrctrcrd + ')', nrdconta, '', 'sim.gif', 'nao.gif');
+        return;
+    }
+    if ($("#agentPassword:checked").val() != undefined) {
+        solicitaSenhaMagnetico('enviarBancoob(' + nrctrcrd + ')', nrdconta, '', 'sim.gif', 'nao.gif');
+
+    } else {
+        showError("error", "<?php echo utf8ToHtml('Selecione um Representante para validar a senha.'); ?>", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+    }
+
+}
+
+function solicitaSenha(nrctrcrd,cdadmcrdd) {
+    if (inpessoa == 1) {
+        validarSenha(nrctrcrd);
+        return;
+    }
+    showMsgAguardo("Aguarde ...");
+    $.ajax({
+        type: "POST",
+        dataType: "html",
+        url: UrlSite + "telas/atenda/cartao_credito/aprovacao_representantes.php",
+        data: {
+            tpacao: 'montagrid',
+            nrdconta: nrdconta,
+            nrctrcrd: nrctrcrd
+        },
+        error: function (objAjax, responseError, objExcept) {
+
+            hideMsgAguardo();
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+        },
+        success: function (response) {
+            $("#divConteudoCartoes").hide();
+            hideMsgAguardo();
+            $("#ValidaSenha").html(response);
+            $("#ValidaSenha").show();
+            $("#stepRequest").hide();
+        }
+    });
+    /*$("#ValidaSenha").show();
+$("#stepRequest").hide();*/
+}
+
+
+function voltadados() {
+    $("#stepRequest").show();
+    $("#ValidaSenha").hide();
+
+}
+
+function imprimirTermoDeAdesao(btn) {
+
+    var mapForm = document.createElement("form");
+    mapForm.target = "Map";
+    mapForm.method = "POST";
+    mapForm.action = UrlSite + "telas/atenda/cartao_credito/imprimir_bancoob.php?inpessoa=" + inpessoa;
+
+    var mapInput = document.createElement("input");
+    mapInput.type = "text";
+    mapInput.name = "nrdconta";
+    mapInput.value = nrdconta;
+    var mapInput1 = document.createElement("input");
+    mapInput1.type = "text";
+    mapInput1.name = "nrctrcrd";
+	if($("#emiteTermoBTN").attr("nrctrcrd"))
+		mapInput1.value = $("#emiteTermoBTN").attr("nrctrcrd");
+	else
+    	mapInput1.value = nrctrcrd;
+	console.log(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>    "+mapInput1.value+"        <<<<<<<<<<<<<<<<<<<<<<<<<");
+    var mapInput2 = document.createElement("input");
+    mapInput2.type = "text";
+    mapInput2.name = "cdcooper";
+    mapInput2.value = $(btn).attr("cdcooper");
+    var mapInput3 = document.createElement("input");
+    mapInput3.type = "text";
+    mapInput3.name = "cdagenci";
+    mapInput3.value = $(btn).attr("cdagenci");
+    var mapInput4 = document.createElement("input");
+    mapInput4.type = "text";
+    mapInput4.name = "nrdcaixa";
+    mapInput4.value = $(btn).attr("nrdcaixa");
+    var mapInput5 = document.createElement("input");
+    mapInput5.type = "text";
+    mapInput5.name = "idorigem";
+    mapInput5.value = $(btn).attr("idorigem");
+    var mapInput6 = document.createElement("input");
+    mapInput6.type = "text";
+    mapInput6.name = "cdoperad";
+    mapInput6.value = $(btn).attr("cdoperad");//dsdircop
+    var mapInput7 = document.createElement("input");
+    mapInput7.type = "text";
+    mapInput7.name = "dsdircop";
+    mapInput7.value = $(btn).attr("dsdircop");
+    mapForm.appendChild(mapInput);
+    mapForm.appendChild(mapInput1);
+    mapForm.appendChild(mapInput2);
+    mapForm.appendChild(mapInput3);
+    mapForm.appendChild(mapInput4);
+    mapForm.appendChild(mapInput5);
+    mapForm.appendChild(mapInput6);
+    mapForm.appendChild(mapInput7);
+
+    document.body.appendChild(mapForm);
+
+    map = window.open("", "Map");
+
+    if (map) {
+        mapForm.submit();
+		voltaDiv(0, 1, 4);
+    } else {
+		showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. Pop Up bloqueados.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+    }
+}
+
+function registraSenha(){
+
+}
+
+
+function enviarBancoob(nrctrcrd){
+	  showMsgAguardo("Aguarde Enviando solicita&ccedil;&atilde;o para bancoob");
+	  var nrcpf = $("#nrcpfcgc","#frmNovoCartao").val();
+	  var nmaprovador = $("#nmextttl","#frmNovoCartao").val();
+	  $.ajax({
+		type: "POST",
+		dataType: "html",
+		url: UrlSite + "telas/atenda/cartao_credito/registra_senha.php",
+		data: {
+			tpacao: 'montagrid',
+			nrdconta    : nrdconta,
+			nrctrcrd    : nrctrcrd,
+			nrcpf       : nrcpf,
+			nmaprovador : nmaprovador
+		},
+		error: function (objAjax, responseError, objExcept) {
+
+			hideMsgAguardo();
+			showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+		},
+		success: function (response) {
+		
+
+			/* envia bancoob*/ 
+				$.ajax({
+					type: "POST",
+					dataType: "html",
+					url: UrlSite + "telas/atenda/cartao_credito/solicitar_cartao_bancoob.php",
+					data: {
+						tpacao: 'montagrid',
+						nrdconta: nrdconta,
+						nrctrcrd: nrctrcrd
+					},
+					error: function (objAjax, responseError, objExcept) {
+
+						hideMsgAguardo();
+						showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+					},
+					success: function (response) {
+					
+
+						hideMsgAguardo();
+						eval(response);
+						//imprimirTermoDeAdesao(btn);
+					}
+				});
+
+			/* fim */ 
+		}
+	});
+	  
+/*	$.ajax({
+		type: "POST",
+		dataType: "html",
+		url: UrlSite + "telas/atenda/cartao_credito/solicitar_cartao_bancoob.php",
+		data: {
+			tpacao: 'montagrid',
+			nrdconta: nrdconta,
+			nrctrcrd: nrctrcrd
+		},
+		error: function (objAjax, responseError, objExcept) {
+
+			hideMsgAguardo();
+			showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+		},
+		success: function (response) {
+		
+
+			hideMsgAguardo();
+			eval(response);
+			//imprimirTermoDeAdesao(btn);
+		}
+	});*/
+
+
+
+}
+
+
