@@ -3633,8 +3633,6 @@ end pc_gera_prejuizo_cc;*/
                                  ,pr_nrctremp => pr_nrctremp) THEN
         vr_cdcritic := 0;
         vr_dscritic := 'Não é possível fazer estorno da tranferência de prejuízo, existem pagamentos para a conta / contrato informado';
-        --  vr_dscritic := 'RAFAEL';
-
         gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
                              ,pr_cdagenci => pr_cdagenci
                              ,pr_nrdcaixa => pr_nrdcaixa
@@ -6721,7 +6719,7 @@ PROCEDURE pc_tela_busca_contratos(pr_nrdconta IN crapepr.nrdconta%TYPE --> Numer
        --/* Envia e-mail para o Operador */
       gene0003.pc_solicita_email(pr_cdcooper        => vr_cdcooper
                                 ,pr_cdprogra        => 'PREJ0001'
-                                ,pr_des_destino     => 'fernanda.buettgen@cecred.coop.br;rafael.monteiro@mouts.info;'
+                                ,pr_des_destino     => ''
                                 ,pr_des_assunto     => 'ERRO NA EXECUCAO JOB: Estorno em Lote'
                                 ,pr_des_corpo       => vr_conteudo
                                 ,pr_des_anexo       => NULL
