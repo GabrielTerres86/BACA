@@ -1031,7 +1031,7 @@ function mostraTelaAltera() {
 }
 
 function confirmaEnvioAnalise(){
-    showConfirmacao('Confirma envio da Proposta para An&aacute;lise de Cr&eacute;dito?', 'Confirma&ccedil;&atilde;o - Ayllos', 'validaAnaliseTitulo();', 'return false;', 'sim.gif', 'nao.gif');
+    showConfirmacao('Confirma envio da Proposta para An&aacute;lise de Cr&eacute;dito?', 'Confirma&ccedil;&atilde;o - Ayllos', 'validaAnaliseTitulo();', "blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))", 'sim.gif', 'nao.gif');
 }
 
 //OPÇÂO ANALISAR
