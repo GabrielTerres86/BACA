@@ -653,8 +653,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
     END IF;
 
     -- executa o processo CCRD0006.gera_arquivo_33
-    if sysdate between to_date(to_char(sysdate,'ddmmyyyy')||vr_horini_33,'ddmmyyyyhh24:mi')
-               and to_date(to_char(sysdate,'ddmmyyyy')||vr_horfim_33,'ddmmyyyyhh24:mi') then
+    if (sysdate between to_date(to_char(sysdate,'ddmmyyyy')||vr_horini_33,'ddmmyyyyhh24:mi')
+               and to_date(to_char(sysdate,'ddmmyyyy')||vr_horfim_33,'ddmmyyyyhh24:mi') 
+       ) or     -- Primeiro ciclo do horário retorno arquivo 33
+       (
+       sysdate between to_date(to_char(sysdate,'ddmmyyyy')||vr_horini_33_cancel,'ddmmyyyyhh24:mi') 
+               and to_date(to_char(sysdate,'ddmmyyyy')||vr_horfim_33_cancel,'ddmmyyyyhh24:mi')-10/1440
+       )  -- Segundo ciclo do horário retorno arquivo 33
+       then
       CCRD0006.gera_arquivo_xml_33(pr_dscritic => vr_dscritic);
       IF vr_dscritic IS NOT NULL THEN
          RAISE vr_exc_saida;
@@ -671,7 +677,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
     IF sysdate > to_date(to_char(sysdate,'ddmmyyyy')||vr_horfim_23_2cicl,'ddmmyyyyhh24:mi') AND
        sysdate > to_date(to_char(sysdate,'ddmmyyyy')||vr_horfim_25_2cicl,'ddmmyyyyhh24:mi') AND
-       sysdate > to_date(to_char(sysdate,'ddmmyyyy')||vr_horfim_33,'ddmmyyyyhh24:mi') THEN
+       sysdate > to_date(to_char(sysdate,'ddmmyyyy')||vr_horfim_33_cancel,'ddmmyyyyhh24:mi') THEN
        IF trunc(sysdate) > to_date(nvl(var_dt_ult_envio_email_slc,'01/01/0001'),'DD/MM/YYYY') THEN
           pc_verif_arq_nao_enviados(pr_cdcritic    => vr_cdcritic
                                    ,pr_dscritic    => vr_dscritic);
@@ -683,9 +689,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
     END IF;
 
     -- executa o processo CCRD0006.gera_arquivo_33_cancel para enviar informações sobre as antecipações que não foram liquidadas
-    IF (sysdate between to_date(to_char(sysdate,'ddmmyyyy')||vr_horini_33_cancel,'ddmmyyyyhh24:mi')
+    -- somente últimos 10 minutos pois restante do tempo e usado para enviar retorno ainda 
+    IF (sysdate between to_date(to_char(sysdate,'ddmmyyyy')||vr_horfim_33_cancel,'ddmmyyyyhh24:mi')-10/1440
                and to_date(to_char(sysdate,'ddmmyyyy')||vr_horfim_33_cancel,'ddmmyyyyhh24:mi')) or
-       (to_char(sysdate,'hh24mi')>=replace(vr_horini_33_cancel,':') and
+       (to_char(sysdate,'hh24mi')>=to_char(to_date(to_char(sysdate,'ddmmyyyy')||vr_horfim_33_cancel,'ddmmyyyyhh24:mi')-10/1440,'hh24mi') and
         to_char(sysdate,'hh24mi')<=replace(vr_horfim_33_cancel,':')
        ) then
 
@@ -732,15 +739,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
       -- Efetuar rollback
       ROLLBACK;
-      -- Enviar email em caso de erro
-      vr_para     := 'alexandre.borgmann@mouts.info';
-      vr_assunto  := 'Erro execução CCRD0006';
-      vr_mensagem := 'Erro na execução CCRD0006: '||pr_dscritic;
-      pc_envia_email(pr_cdcooper   => 1
-                    ,pr_dspara     => vr_para
-                    ,pr_dsassunto  => vr_assunto
-                    ,pr_dstexto    => vr_mensagem
-                    ,pr_dscritic   => vr_dscritic);
       raise_application_error(-20001, 'Erro na execução CCRD0006: '||pr_dscritic);
     WHEN OTHERS THEN
       -- Efetuar retorno do erro não tratado
@@ -752,15 +750,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
       -- Log de erro de execucao
       pc_controla_log_batch(pr_dstiplog => 'E',
                             pr_dscritic => pr_dscritic);
-      -- Enviar email em caso de erro
-      vr_para     := 'alexandre.borgmann@mouts.info';
-      vr_assunto  := 'Erro execução CCRD0006';
-      vr_mensagem := 'Erro na execução CCRD0006: '||pr_dscritic;
-      pc_envia_email(pr_cdcooper   => 1
-                    ,pr_dspara     => vr_para
-                    ,pr_dsassunto  => vr_assunto
-                    ,pr_dstexto    => vr_mensagem
-                    ,pr_dscritic   => vr_dscritic);
       raise_application_error(-20001, 'Erro na execução CCRD0006: '||pr_dscritic);
   END;
 
@@ -850,7 +839,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
         vr_arquivo := substr(vr_tab_arqtmp(vr_indice),1,7);
 
         -- Inserindo quebra de linha no arquivo e gerando arquivo temporario
-        --dbms_output.put_line('Antes do cat: ' ||to_char(sysdate,'DDMMYYYY HH24:MI:SS'));
 
         -- Copia o arquivo XML antes de formatar
         vr_nmarqtemp := to_char(sysdate,'yyyymmddhh24miss');
@@ -877,8 +865,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
           vr_cdcritic := 0;
           RAISE vr_exc_saida;
         END IF;
-        --dbms_output.put_line('Depois do mv: ' ||to_char(sysdate,'DDMMYYYY HH24:MI:SS'));
-
         -- Chama o procedimento que faz a leitura do arquivo
 
         -- Carrega o arquivo XML para uma tabela em memória
@@ -1954,7 +1940,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
        END IF;
      END;
     END LOOP;
-    dbms_output.put_line('Número de linhas processadas do arquivo '||vr_nomarq||' = '||w_indice);
 
   EXCEPTION
      WHEN vr_exc_saida THEN
@@ -3518,7 +3503,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
            vr_iderro := 1;
         END IF;
 
-    --    dbms_output.put_line('liquida: '||to_char(SYSDATE,'HH24:MI:ss')||' '||vr_CtCreddr);
 
         -- CHAMA A PROCEDURE DE INSERT DOS REGISTROS DA TABELA
         insere_liquidacao_transacao (pr_IdentdPartPrincipal => vr_IdentdPartPrincipal
@@ -3652,7 +3636,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
              END IF;
           END IF;
 
-    --      dbms_output.put_line('central: '||to_char(SYSDATE,'HH24:MI:ss')||' '||vr_CtCentrlz);
 
           -- CHAMA A PROCEDURE DE INSERT DOS REGISTROS DA TABELA INSERE_LIQ_TRN_CENTRAL
           insere_liq_trn_central(pr_TpPessoaCentrlz  => vr_TpPessoaCentrlz
@@ -3976,7 +3959,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
           END IF;
         END;
       END LOOP;
-    dbms_output.put_line('Número de linhas processadas do arquivo '||vr_nomarq||' = '||w_indice);
   EXCEPTION
      WHEN vr_exc_saida THEN
         pr_dscritic := vr_dscritic;
@@ -5750,7 +5732,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
       END;
 
     END LOOP;
-    dbms_output.put_line('Número de linhas processadas do arquivo '||vr_nomarq||' = '||w_indice);
   EXCEPTION
      WHEN vr_exc_saida THEN
         pr_dscritic := vr_dscritic;
@@ -7269,7 +7250,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
   BEGIN
     -- Verifica se existe informação de liquidação
     --vr_sum_vl_pagamento := 0;
-    dbms_output.put_line('fn_valida_liquidacao pr_dtreferencia='||pr_dtreferencia||' pr_cicloliquidacao='||pr_cicloliquidacao||'pr_cdinst_arranjo_pagamento='||pr_cdinst_arranjo_pagamento );
 
     IF pr_tpformatransf = 5 THEN
        return('S');
@@ -7348,7 +7328,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
           FETCH cr_liq_slc_sum INTO vr_existe;
           CLOSE cr_liq_slc_sum;
 
-          dbms_output.put_line('credito e debito');
           IF vr_existe=0 or vr_existe is null THEN
              OPEN cr_liq_slc;
              FETCH cr_liq_slc INTO vr_existe;
@@ -7356,7 +7335,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
              
              IF vr_existe=0 or vr_existe is null THEN
 
-                dbms_output.put_line('credito e debito rw_msg.id_existe_liquid := N pr_cicloliquidacao='||pr_cicloliquidacao||' pr_vlrlancto='||pr_vlrlancto);
                 btch0001.pc_gera_log_batch(pr_cdcooper     => 3 -- Cecred
                                 ,pr_ind_tipo_log => 1 -- Aviso
                                 ,pr_des_log      => 'credito e debito rw_msg.id_existe_liquid := N pr_cicloliquidacao='||pr_cicloliquidacao||' pr_vlrlancto='||pr_vlrlancto
@@ -7463,10 +7441,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
 
     FOR rw_arranjos IN cr_arranjos LOOP
 
-      dbms_output.put_line('rw_arranjos.nrcnpj_credenciador='||rw_arranjos.nrcnpj_credenciador||' rw_arranjos.tpforma_transf='||rw_arranjos.tpforma_transf||' rw_arranjos.cdinst_arranjo_pagamento='||rw_arranjos.cdinst_arranjo_pagamento||' '||pr_nmarquivo_origem);
-      dbms_output.put_line('vr_ciclo='||vr_ciclo||' pr_dtprocesso='||pr_dtprocesso||' tochar='||to_char(pr_dtprocesso,'YYYY-MM-DD'));
-      dbms_output.put_line('vr_total_pagamento='||rw_arranjos.vlpagamento||' - '||rw_arranjos.nrcnpj_credenciador||' pr_tparquiv='||pr_tparquivO||' rw_arranjos.cdinst_arranjo_pagamento='||rw_arranjos.cdinst_arranjo_pagamento);
-
       btch0001.pc_gera_log_batch(pr_cdcooper     => 3 -- Cecred
                                 ,pr_ind_tipo_log => 1 -- Aviso
                                 ,pr_des_log      => 'rw_arranjos.nrcnpj_credenciador='||rw_arranjos.nrcnpj_credenciador||' rw_arranjos.tpforma_transf='||rw_arranjos.tpforma_transf||' rw_arranjos.cdinst_arranjo_pagamento='||rw_arranjos.cdinst_arranjo_pagamento||'vr_ciclo='||vr_ciclo||' pr_dtprocesso='||pr_dtprocesso||' tochar='||to_char(pr_dtprocesso,'YYYY-MM-DD')||'vr_total_pagamento='||rw_arranjos.vlpagamento||' - '||rw_arranjos.nrcnpj_credenciador||' pr_tparquiv='||pr_tparquivO||' pr_nmarquivo_origem='||pr_nmarquivo_origem||' pr_idarquivo='||pr_idarquivo||' rw_arranjos.cdinst_arranjo_pagamento='||rw_arranjos.cdinst_arranjo_pagamento||' '||to_char(sysdate,'hh24:mi:ss')
@@ -7504,7 +7478,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
                                 ,pr_des_log      => 'vai ser com erro'
                                 ,pr_nmarqlog => 'CONSLC');
 
-                  dbms_output.put_line('vai ser com erro');
                   UPDATE tbdomic_liqtrans_pdv pdv
                      SET pdv.cdocorrencia = '30'
                         ,pdv.dserro = 'Lançamento recusado por falta de transferência financeira'
@@ -7523,8 +7496,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
                END IF;
            END LOOP;
         END IF;
-      ELSE
-        DBMS_OUTPUT.PUT_LINE('LIQUIDACAO OK');
+
       END IF;
     END LOOP;
 --    COMMIT;
@@ -7729,11 +7701,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
       /* 23/11/2017 - Se for arquivo tipo 2 ou 3 verifica se tem crédito SLC - LTR
       Se for tipo 1 ou 2, a validação já foi feita na procedure pc_valida_reg_pendentes */
 
-      if rw_lancamento.tparquivo = 3 then
-         dbms_output.put_line('rw_lancamento.tparquivo='||rw_lancamento.tparquivo||' rw_lancamento.vlpagamento='||rw_lancamento.vlpagamento||' '||rw_lancamento.nrcnpj_credenciador);
-
-
-      end if;
       IF rw_lancamento.tparquivo <> 3 OR
         (rw_lancamento.tparquivo = 3 AND
 
@@ -7832,6 +7799,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
               vr_dtprocesso   := nvl(pr_dtprocesso,trunc(sysdate));
             END IF;
             -- Não pode processar data de pagamento anterior
+
 
             IF to_date(rw_tabela.dtpagamento) < trunc(to_date(vr_dtprocesso)) THEN
               vr_dserro := 'Data de pagamento menor que a data da cooperativa';
@@ -8127,7 +8095,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
         vr_cdocorr_arq := '99';
       END IF;
 
-      dbms_output.put_line('segundo vr_hor_email_dom5='||vr_hor_email_dom5||' '||(vr_hor_email_dom5+4)||' tpforma_transf='||rw_lancamento.tpforma_transf);
 
       IF rw_lancamento.tpforma_transf=5 then
          null;
@@ -8146,7 +8113,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
                                       ,pr_cdinst_arranjo_pagamento => null
                                       ,pr_idatualiza => 'S') = 'N' THEN
 
-           dbms_output.put_line('tipo 5 vr_hor_email_dom5='||vr_hor_email_dom5||' '||(vr_hor_email_dom5+4));
 
             IF to_char(sysdate,'hh24MI')>=vr_hor_email_dom5 and
                to_char(sysdate,'hh24MI')<=(vr_hor_email_dom5+4)  THEN
@@ -8171,21 +8137,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
                              ,pr_dstexto    => vr_mensagem
                              ,pr_dscritic   => vr_dscritic);
             END IF;
-            DBMS_OUTPUT.PUT_LINE('antes do if  '||to_char(sysdate,'hh24MI')||' '||to_date(rw_lancamento.dtpagamento,'yyyy-mm-dd')||' '||pr_dtprocesso||' '||vr_hor_dom5);
 
             IF (to_char(sysdate,'hh24MI')>=vr_hor_dom5 and
                 to_date(rw_lancamento.dtpagamento,'yyyy-mm-dd')=trunc(NVL(pr_dtprocesso,SYSDATE)))
                or to_date(rw_lancamento.dtpagamento,'yyyy-mm-dd')<trunc(NVL(pr_dtprocesso,SYSDATE)) THEN
 
 
-               DBMS_OUTPUT.PUT_LINE('entrei vai rejeitar por falta de liquidacao tipo 5');
-
                btch0001.pc_gera_log_batch(pr_cdcooper     => 3 -- Cecred
                                 ,pr_ind_tipo_log => 1 -- Aviso
                                 ,pr_des_log      => 'pc_efetiva_reg_pendentes vai rejeitar por falta de liquidacao '||to_date(rw_lancamento.dtpagamento,'yyyy-mm-dd')||' '||trunc(NVL(pr_dtprocesso,SYSDATE))||' idlancto='||rw_lancamento.idlancto||'  '||to_char(sysdate,'hh24:mi:ss')
                                 ,pr_nmarqlog => 'CONSLC');
 
---               DBMS_OUTPUT.PUT_LINE('pc_efetiva_reg_pendentes vai rejeitar por falta de liquidacao idlancto='||rw_lancamento.idlancto||'  '||to_char(sysdate,'hh24:mi:ss'));
 
                FOR rw_tabela_5 IN cr_tabela(rw_lancamento.idlancto,rw_lancamento.tpforma_transf) LOOP
                    UPDATE tbdomic_liqtrans_pdv pdv
@@ -9479,7 +9441,6 @@ from  (
                     pr_texto_novo => vr_linha_csv
                  );
                          
-                 --Dbms_Output.put_line(vr_linha_csv);
                  vr_linha_csv := '';
                                                                        
              END LOOP;
@@ -10424,10 +10385,6 @@ from  (
        NULL;
     END  IF;
 
-      -- Se possuir arquivos para serem processados
-    IF vr_listaarq IS NOT NULL THEN
-       dbms_output.put_line(vr_listaarq);
-    END IF;
 
    END;
 
@@ -10524,11 +10481,6 @@ from  (
       pc_controla_log_batch(pr_dstiplog => 'E',
                             pr_dscritic => pr_dscritic);
 
-      pc_envia_email(pr_cdcooper   => 1
-                    ,pr_dspara     => 'alexandre.borgmann@mouts.info'
-                    ,pr_dsassunto  =>'Erro execução CCRD0006.pc_insere_msg_ltr_str'
-                    ,pr_dstexto    => 'Erro CCRD0006.pc_insere_msg_ltr_str: '||pr_dscritic
-                    ,pr_dscritic   => pr_dscritic);
   END;
 
   PROCEDURE pc_insere_msg_slc (pr_VlrLanc            IN NUMBER
@@ -10599,12 +10551,6 @@ from  (
         pc_controla_log_batch(pr_dstiplog => 'E',
                             pr_dscritic => pr_dscritic);
 
-      -- Enviar email em caso de erro
-      pc_envia_email(pr_cdcooper   => 1
-                    ,pr_dspara     => 'alexandre.borgmann@mouts.info'
-                    ,pr_dsassunto  =>'Erro execução CCRD0006.pc_insere_msg_slc'
-                    ,pr_dstexto    => 'Erro CCRD0006.pc_insere_msg_slc: '||pr_dscritic
-                    ,pr_dscritic   => pr_dscritic);
 
   END;
 
@@ -10642,12 +10588,6 @@ PROCEDURE pc_insere_horario_grade (pr_cdmsg IN VARCHAR2,
                                   ,pr_des_log      => 'pc_insere_horario_grade '||pr_dscritic||' '||to_char(sysdate,'hh24:mi:ss')
                                   ,pr_nmarqlog => 'CONSLC');
 
-        -- Enviar email em caso de erro
-        pc_envia_email(pr_cdcooper   => 1
-                    ,pr_dspara     => 'alexandre.borgmann@mouts.info'
-                    ,pr_dsassunto  =>'Erro execução CCRD0006.pc_insere_horario_grade'
-                    ,pr_dstexto    => 'Erro CCRD0006.pc_insere_horario_grade: '||pr_dscritic
-                    ,pr_dscritic   => pr_dscritic);
 
   END pc_insere_horario_grade;
 
