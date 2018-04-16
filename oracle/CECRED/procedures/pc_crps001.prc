@@ -746,6 +746,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
        vr_exc_saida  EXCEPTION;
        vr_exc_fimprg EXCEPTION;
 
+       vr_idprglog integer := 0;
+
        vr_vldjuros  NUMBER:= 0;
        vr_qtdiacor  NUMBER;
        vr_dsctajud crapprm.dsvlrprm%TYPE;
@@ -2226,7 +2228,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
            --Valor base iof recebe valor base iof existente + valor base iof calculado
            rw_crapsld.vlbasiof := Nvl(rw_crapsld.vlbasiof,0) + Nvl(vr_vlbasiof,0);
            --Valor iod no mes recebe valor iof mes + valor base iof multiplicado pela taxa de iof
-           rw_crapsld.vliofmes := Nvl(rw_crapsld.vliofmes,0) + NVL(vr_vliofadi,0) + NVL(vr_vliof_principal,0);
+           rw_crapsld.vliofmes := ROUND(Nvl(rw_crapsld.vliofmes,0) + NVL(vr_vliofadi,0) + NVL(vr_vliof_principal,0),2);
            ELSE
              rw_crapsld.vlbasiof := Nvl(rw_crapsld.vlbasiof,0);
              rw_crapsld.vliofmes := Nvl(rw_crapsld.vliofmes,0);
@@ -2934,9 +2936,19 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
              END IF;
            END IF;
          EXCEPTION
+           WHEN vr_exc_saida THEN
+             RAISE;
            WHEN OTHERS THEN
              cecred.pc_internal_exception(pr_cdcooper);
-
+             vr_dscritic := 'Erro loopcrapsld('||pr_cdcooper||','||rw_crapsld.nrdconta||'):'||SQLERRM
+                          ||' DbmsUtility: '||dbms_utility.format_error_backtrace
+                          ||' - '||dbms_utility.format_error_stack;
+             /*erro pode ser encontrado na tabela tbgen_erro_sistema*/
+             cecred.pc_log_programa(PR_DSTIPLOG => 'E'
+                                   ,PR_CDPROGRAMA => 'CRPS001'
+                                   ,pr_cdcooper => pr_cdcooper
+                                   ,pr_dsmensagem => vr_dscritic
+                                   ,PR_IDPRGLOG => vr_idprglog);
              RAISE vr_exc_saida;
          END;
        END LOOP; --rw_crapsld
@@ -3126,12 +3138,39 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
         -- Devolvemos código e critica encontradas
         pr_cdcritic := NVL(vr_cdcritic,0);
         pr_dscritic := vr_dscritic;
+
+        declare
+          vr_idprglog integer := 0;
+        begin
+          /*erro pode ser encontrado na tabela tbgen_erro_sistema*/
+          cecred.pc_log_programa(PR_DSTIPLOG => 'E'
+                                ,PR_CDPROGRAMA => 'CRPS001'
+                                ,pr_cdcooper => pr_cdcooper
+                                ,pr_dsmensagem => pr_dscritic
+                                ,PR_IDPRGLOG => vr_idprglog);
+        end;
+
         -- Efetuar rollback
         ROLLBACK;
       WHEN OTHERS THEN
         cecred.pc_internal_exception(pr_cdcooper);
 
         pc_limpa_tabela;
+
+        declare
+          vr_dscritic varchar2(32000);
+          vr_idprglog integer := 0;
+        begin
+          vr_dscritic := 'Erro geral crps001:'||SQLERRM
+                       ||' DbmsUtility: '||dbms_utility.format_error_backtrace
+                       ||' - '||dbms_utility.format_error_stack;
+          /*erro pode ser encontrado na tabela tbgen_erro_sistema*/
+          cecred.pc_log_programa(PR_DSTIPLOG => 'E'
+                                ,PR_CDPROGRAMA => 'CRPS001'
+                                ,pr_cdcooper => pr_cdcooper
+                                ,pr_dsmensagem => vr_dscritic
+                                ,PR_IDPRGLOG => vr_idprglog);
+        end;
 
         -- Efetuar retorno do erro não tratado
         pr_cdcritic := 0;
