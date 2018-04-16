@@ -2607,29 +2607,68 @@ function visualizarTituloDeBordero() {
     return false;
 }
 
-function realizarManutencaoDeLimite() {
+function realizarManutencaoDeLimite(operacao, flgstlcr) {
     showMsgAguardo("Aguarde, carregando dados do contrato...");
     var nrctrlim = normalizaNumero($("#nrctrlim","#frmTitulos").val());
+    if(!operacao){operacao = 0;}
+    console.log(operacao);
+    console.log(flgstlcr);
 
-    $.ajax({
-        type: "POST",
-        url: UrlSite + "telas/atenda/descontos/titulos/titulos_limite_manutencao.php",
-        dataType: "html",
-        data: {
-            nrdconta: nrdconta,
-            nrctrlim: nrctrlim,
-            redirect: "html_ajax"
-        },
-        error: function (objAjax, responseError, objExcept) {
-            hideMsgAguardo();
-            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
-        },
-        success: function (response) {
-             $("#divOpcoesDaOpcao2").html(response);
-             formataManutencaoDeLimite();
-             hideMsgAguardo();
+    var callback = "realizarManutencaoDeLimite(1,"+flgstlcr+" )";
+
+
+
+    // linha bloqueada
+    if(flgstlcr === 0){
+
+        //se a operação não for a de carregar a tela
+        if(operacao !== 1){
+            showError(
+                "inform",
+                "Linha de crédito bloqueada, para realizar a operação altere para uma linha liberada ou efetue o desbloqueio da linha",
+                "Alerta - Ayllos",
+                callback);
+            return false;
         }
-    });
+    }
+    // operação 0 mostra a janela de confirmação
+    if(operacao === 0){
+            showError(
+                "inform",
+                "Deseja realizar a manuten&ccedil;&atilde;o do contrato?",
+                "Alerta - Ayllos",
+                callback);
+            return false;
+    }
+
+    if(operacao === 1){
+        $.ajax({
+            type: "POST",
+            url: UrlSite + "telas/atenda/descontos/titulos/titulos_limite_manutencao.php",
+            dataType: "html",
+            data: {
+                nrdconta: nrdconta,
+                nrctrlim: nrctrlim,
+                redirect: "html_ajax"
+            },
+            error: function (objAjax, responseError, objExcept) {
+                hideMsgAguardo();
+                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+            },
+            success: function (response) {
+                 $("#divOpcoesDaOpcao2").html(response);
+                 formataManutencaoDeLimite();
+                 hideMsgAguardo();
+            }
+        });
+        return false;
+    }
+
+    if(operacao == 2){
+        concluirManutencaoDeLimite();
+        return false;;
+    }
+
     return false;
 }
 

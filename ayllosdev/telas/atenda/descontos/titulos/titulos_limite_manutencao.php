@@ -121,6 +121,8 @@
 			<label for="dsdlinha"></label>
 			<input name="dsdlinha" id="dsdlinha" type="text" value="" />
 
+			<input type="hidden" id="flgstlcr" name="flgstlcr" value="<? echo $flgstlcr; ?>" />
+
 			<br />
 
 			
@@ -167,7 +169,7 @@
 		name="btnConcluir"
 		id="btnConcluir"
 		onClick="
-			concluirManutencaoDeLimite();
+			executarRealizarManutencaoDeLimite();
 			return false;">
 			Concluir
 	</a>
@@ -189,6 +191,11 @@
 
 	// Bloqueia conteúdo que está átras do div da rotina
 	blockBackground(parseInt($("#divRotina").css("z-index")));
+
+	function executarRealizarManutencaoDeLimite(){
+		var flgstlcr = $('#flgstlcr','#frmTitLimiteManutencao').val();
+		realizarManutencaoDeLimite(2,flgstlcr);
+	}
 
 	<?php 
 		echo '$("#nrctrlim","#frmTitLimiteManutencao").val("'.formataNumericos('z.zzz.zz9',$dados[14]->cdata,'.').'");';

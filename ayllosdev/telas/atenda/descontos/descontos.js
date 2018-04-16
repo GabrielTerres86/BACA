@@ -919,7 +919,11 @@ function formataLayout(nomeForm){
 
 
 		$('#btnManutencao').unbind('click').bind('click', function(){
-			realizarManutencaoDeLimite();
+			var val_flgstlcr = 0;
+			if($('#flgstlcr','#'+nomeForm).val() == "yes"){
+				val_flgstlcr = 1;
+			}
+			realizarManutencaoDeLimite(0, val_flgstlcr);
 			return false;
 		});
 
