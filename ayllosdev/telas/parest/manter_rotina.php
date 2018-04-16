@@ -33,6 +33,7 @@ $qtsstime = (isset($_POST['qtsstime'])) ? $_POST['qtsstime'] : 0;
 $qtmeschq = (isset($_POST['qtmeschq'])) ? $_POST['qtmeschq'] : 0;
 $qtmesest = (isset($_POST['qtmesest'])) ? $_POST['qtmesest'] : 0;
 $qtmesemp = (isset($_POST['qtmesemp'])) ? $_POST['qtmesemp'] : 0;
+$tpproduto = (isset($_POST['tpproduto'])) ? $_POST['tpproduto'] : 0;
 
 $cdopcao  = '';
 
@@ -50,7 +51,7 @@ if ($anlautom == 1 && $cdopcao == 'A' && $tlcooper <> 0){
     exit();
   }
   
-  if ((!isset($_POST['nmregmpj'])) || $_POST['nmregmpj'] == ''){
+  if (((!isset($_POST['nmregmpj'])) || $_POST['nmregmpj'] == '')&& $tpproduto == 0){
     echo 'hideMsgAguardo();';
     echo 'showError("error","Regra An&aacute;lise Autom&aacute;tica PJ &eacute; obrigat&oacute;ria! Favor preench&ecirc;-la","Alerta - Ayllos","$(\'#nmregmpj\', \'#frmParest\').focus()");';
     exit();
@@ -100,6 +101,7 @@ if ( $cdopcao == 'C') {
 	$xml = "<Root>";
 	$xml .= " <Dados>";
 	$xml .= "   <tlcooper>" . $tlcooper . "</tlcooper>";
+	$xml .= "   <tpprodut>" . $tpproduto . "</tpprodut>";
 	$xml .= "   <flgativo>1</flgativo>";
 	$xml .= " </Dados>";
 	$xml .= "</Root>";
@@ -108,7 +110,8 @@ if ( $cdopcao == 'C') {
 	$xmlObj = getObjectXML($xmlResult);
 
 } else {
-	
+	if($tpproduto == 4)
+		$nmregmpj = "teste";
 	$xml = "<Root>";
 	$xml .= " <Dados>";
 	$xml .= "   <tlcooper>" . $tlcooper . "</tlcooper>";
@@ -122,9 +125,11 @@ if ( $cdopcao == 'C') {
 	$xml .= "   <qtmeschq>" . $qtmeschq . "</qtmeschq>";
 	$xml .= "   <qtmesest>" . $qtmesest . "</qtmesest>";
 	$xml .= "   <qtmesemp>" . $qtmesemp . "</qtmesemp>";
+	$xml .= "   <tpprodut>" . $tpproduto . "</tpprodut>";
 	$xml .= " </Dados>";
 	$xml .= "</Root>";
 
+	
 	$xmlResult = mensageria($xml, "PAREST", "PAREST_ALTERA_PARAM", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 	$xmlObj = getObjectXML($xmlResult);
 	
@@ -147,54 +152,70 @@ if ( $cddopcao == 'C') {
 	include('tab_resultado.php');
 } else {
 	if ( $cddopcao == 'X') {
+		if($tpproduto == 0){
+			foreach ($registros as $r) {
+				
+				if ( getByTagName($r->tags, 'contigen') == 'SIM' ) {
+					echo '$("#contigen", "#divAlteracao").val("1");';
+				} else {
+					echo '$("#contigen", "#divAlteracao").val("0");';
+					echo '$("#incomite", "#divAlteracao").desabilitaCampo();';
+					echo '$("#incomite", "#divAlteracao").val("0");';
+				}
+				
+				if ( getByTagName($r->tags, 'incomite') == 'SIM' ) {
+					echo '$("#incomite", "#divAlteracao").val("1");';
+				} else {
+					echo '$("#incomite", "#divAlteracao").val("0");';
+				}
 		
-		foreach ($registros as $r) {
-			
-			if ( getByTagName($r->tags, 'contigen') == 'SIM' ) {
-				echo '$("#contigen", "#divAlteracao").val("1");';
-			} else {
-				echo '$("#contigen", "#divAlteracao").val("0");';
-				echo '$("#incomite", "#divAlteracao").desabilitaCampo();';
-				echo '$("#incomite", "#divAlteracao").val("0");';
-			}
-			
-			if ( getByTagName($r->tags, 'incomite') == 'SIM' ) {
-				echo '$("#incomite", "#divAlteracao").val("1");';
-			} else {
-				echo '$("#incomite", "#divAlteracao").val("0");';
-			}
-      
-			if ( getByTagName($r->tags, 'anlautom') == 'SIM' ) {
-				echo '$("#anlautom", "#divAlteracao").val("1");';
-			} else {
-				echo '$("#anlautom", "#divAlteracao").val("0");';
-				echo '$("#nmregmpf", "#divAlteracao").desabilitaCampo();';
-				echo '$("#nmregmpj", "#divAlteracao").desabilitaCampo();';
-				echo '$("#qtsstime", "#divAlteracao").desabilitaCampo();';
-				echo '$("#qtmeschq", "#divAlteracao").desabilitaCampo();';
-				echo '$("#qtmesest", "#divAlteracao").desabilitaCampo();';
-				echo '$("#qtmesemp", "#divAlteracao").desabilitaCampo();';
-				echo '$("#nmregmpf", "#divAlteracao").val("");';
-				echo '$("#nmregmpj", "#divAlteracao").val("");';
-				echo '$("#qtsstime", "#divAlteracao").val("0");';
-				echo '$("#qtmeschq", "#divAlteracao").val("0");';
-				echo '$("#qtmesest", "#divAlteracao").val("0");';
-				echo '$("#qtmesemp", "#divAlteracao").val("0");';
-			}
+				if ( getByTagName($r->tags, 'anlautom') == 'SIM' ) {
+					echo '$("#anlautom", "#divAlteracao").val("1");';
+				} else {
+					echo '$("#anlautom", "#divAlteracao").val("0");';
+					echo '$("#nmregmpf", "#divAlteracao").desabilitaCampo();';
+					echo '$("#nmregmpj", "#divAlteracao").desabilitaCampo();';
+					echo '$("#qtsstime", "#divAlteracao").desabilitaCampo();';
+					echo '$("#qtmeschq", "#divAlteracao").desabilitaCampo();';
+					echo '$("#qtmesest", "#divAlteracao").desabilitaCampo();';
+					echo '$("#qtmesemp", "#divAlteracao").desabilitaCampo();';
+					echo '$("#nmregmpf", "#divAlteracao").val("");';
+					echo '$("#nmregmpj", "#divAlteracao").val("");';
+					echo '$("#qtsstime", "#divAlteracao").val("0");';
+					echo '$("#qtmeschq", "#divAlteracao").val("0");';
+					echo '$("#qtmesest", "#divAlteracao").val("0");';
+					echo '$("#qtmesemp", "#divAlteracao").val("0");';
+				}
 
-			echo '$("#nmregmpf", "#divAlteracao").val("'.getByTagName($r->tags, 'nmregmpf').'");';
-			echo '$("#nmregmpj", "#divAlteracao").val("'.getByTagName($r->tags, 'nmregmpj').'");';
-			echo '$("#qtsstime", "#divAlteracao").val("'.getByTagName($r->tags, 'qtsstime').'");';
-			echo '$("#qtmeschq", "#divAlteracao").val("'.getByTagName($r->tags, 'qtmeschq').'");';
-			echo '$("#qtmesest", "#divAlteracao").val("'.getByTagName($r->tags, 'qtmesest').'");';
-			echo '$("#qtmesemp", "#divAlteracao").val("'.getByTagName($r->tags, 'qtmesemp').'");';
+				echo '$("#nmregmpf", "#divAlteracao").val("'.getByTagName($r->tags, 'nmregmpf').'");';
+				echo '$("#nmregmpj", "#divAlteracao").val("'.getByTagName($r->tags, 'nmregmpj').'");';
+				echo '$("#qtsstime", "#divAlteracao").val("'.getByTagName($r->tags, 'qtsstime').'");';
+				echo '$("#qtmeschq", "#divAlteracao").val("'.getByTagName($r->tags, 'qtmeschq').'");';
+				echo '$("#qtmesest", "#divAlteracao").val("'.getByTagName($r->tags, 'qtmesest').'");';
+				echo '$("#qtmesemp", "#divAlteracao").val("'.getByTagName($r->tags, 'qtmesemp').'");';
+				
+			}
+			echo '$("#divBotoes").css({ "display": "block" });';
+			echo '$("#divAlteracao").css({ "display": "block" });';
+			echo '$("#contigen", "#divAlteracao").focus();';
+			echo '$("#btContinuar", "#divBotoes").show();';
+			echo 'hideMsgAguardo();';
+		}else if($tpproduto == 4){
 			
+			$labels = array("cdcooper","nmrescop","contigen","anlautom","nmregmpf","qtsstime","qtmeschq","qtmesest","qtmesemp");
+			foreach ($registros as $r) {
+				foreach($labels as $label){
+					echo '$("#'. $label.'", "#divAlteracao04").val("'.getByTagName($r->tags,  $label).'"); ';
+				}
+			}
+			//echo " /* $xmlResult  */ ";
+			echo '$("#divBotoes").css({ "display": "block" });';
+			echo '$("#divAlteracao04").css({ "display": "block" });';
+			echo '$("#contigen", "#divAlteracao").focus();';
+			echo '$("#btContinuar", "#divBotoes").show();';
+			echo 'hideMsgAguardo();';
+
 		}
-		echo '$("#divBotoes").css({ "display": "block" });';
-		echo '$("#divAlteracao").css({ "display": "block" });';
-		echo '$("#contigen", "#divAlteracao").focus();';
-		echo '$("#btContinuar", "#divBotoes").show();';
-		echo 'hideMsgAguardo();';
 	} else {
 		echo 'showError("inform","Parametro alterado com sucesso.","Notifica&ccedil;&atilde;o - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));estadoInicial();");';		
 	}

@@ -80,3 +80,62 @@
 
 </form>
 
+<form name="frmParest04" id="frmParest04" class="formulario" style="display:none">		
+
+    <div id="divAlteracao04" style="display:none">
+        <fieldset>
+
+          <legend><?php echo utf8ToHtml('Parâmetros da Esteira de Crédito - Cartão') ?></legend>
+          
+          <input type="hidden" id="cdcooper" name="cdcooper">
+          <input type="hidden" id="nmrescop" name="nmrescop">
+
+          <label style="width: 300px; " for="contigen"><?php echo utf8ToHtml('Habilita Contigência Esteira:') ?></label>
+          <select id="contigen" name="contigen">
+            <option value="<? echo utf8ToHtml('SIM') ?>"><? echo utf8ToHtml(' Sim') ?></option> 
+            <option value="<? echo utf8ToHtml('NAO') ?>"><? echo utf8ToHtml(' Não') ?></option>
+          </select>
+        
+          <br style="clear:both" />
+
+          <label style="width: 300px; " for="anlautom"><?php echo utf8ToHtml('Habilita Contigência Motor:') ?></label>
+          <select id="anlautom" name="anlautom">
+            <option value="SIM"><? echo utf8ToHtml(' Sim') ?></option> 
+            <option value="<? echo utf8ToHtml('NAO') ?>"><? echo utf8ToHtml(' Não') ?></option>
+          </select>
+          
+          <br style="clear:both" class="nparaTodos"/>	
+        
+          <label style="width: 300px; " for="nmregmpf" class="nparaTodos">Regra An&aacute;lise  Autom&aacute;tica:</label>
+          <input type="text" id="nmregmpf" name="nmregmpf" class="campo nparaTodos" title="Somente letras, n&uacute;meros e '_' neste campo">
+        
+          <br style="clear:both" class="nparaTodos"/>	
+
+          <label style="width: 300px; " for="qtsstime" class="nparaTodos">Timeout Motor:</label>
+          <input type="text" id="qtsstime" name="qtsstime" class="campo nparaTodos">
+          <label class="rotulo-linha nparaTodos" >segundos</label>
+        
+          <br style="clear:both"class="nparaTodos" />	    
+          <label class="rotulo nparaTodos" style="width:300px" >Quantidade de meses para:</label>        
+          <br style="clear:both" class="nparaTodos"/>	
+
+          <label class="nparaTodos" style="width: 300px; " for="qtmeschq">Dev. Cheques:</label>
+          <input type="text" id="qtmeschq" name="qtmeschq" class="campo nparaTodos">
+        
+          <br style="clear:both" class="nparaTodos"/>	
+        
+          <label style="width: 300px; " for="qtmesest" class="nparaTodos">Estouros:</label>
+          <input type="text" id="qtmesest" name="qtmesest" class="campo nparaTodos">
+        
+          <br style="clear:both" class="nparaTodos"/>	
+        
+          <label style="width: 300px; " for="qtmesemp" class="nparaTodos" >Atraso Empr&eacute;stimos:</label>
+          <input type="text" id="qtmesemp" name="qtmesemp" class="campo nparaTodos">
+        
+          <br style="clear:both" />	
+
+        </fieldset>	
+    </div>
+
+</form>
+
