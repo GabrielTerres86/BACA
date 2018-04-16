@@ -55,7 +55,7 @@
 	$xml = "<Root>";
     $xml .= " <Dados>";
     $xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
-    $xml .= "   <nrnosnum>".$selecionados."</nrnosnum>";
+    $xml .= "   <chave>".$selecionados."</chave>";
     $xml .= " </Dados>";
     $xml .= "</Root>";
 
@@ -98,7 +98,9 @@
 							<?
 						    	foreach($dados->find("inf") AS $t){ ?>
 						    		<tr id="titulo_<? echo $t->nrnosnum;?>" onclick="selecionaTituloResumo('<? echo $t->nrnosnum;?>');">
-						    			<td><input type='hidden' name='selecionados' value='<? echo $t->nrnosnum;?>'/><? echo $t->nrcnvcob;?></td>
+						    			<td>
+						    				<input type='hidden' name='selecionados' value='<? echo $t->cdbandoc; ?>;<? echo $t->nrdctabb; ?>;<? echo $t->nrcnvcob; ?>;<? echo $t->nrdocmto; ?>'/><? echo $t->nrcnvcob ;?>
+						    			</td>
 						    			<td><? echo $t->nrdocmto;?></td>
 						    			<td><? echo $t->nrinssac.' - '.$t->nmdsacad;?></td>
 						    			<td><? echo $t->dtvencto;?></td>
@@ -124,9 +126,7 @@
 	<input type="button" class="botao" value="Confirmar Resgate" onClick="showConfirmacao('Confirma resgate dos t&iacute;tulos selecionados?','Confirma&ccedil;&atilde;o - Ayllos','confirmarResgate();','bloqueiaFundo(divRotina);','sim.gif','nao.gif');" />
 </div>
 <script type="text/javascript">
-	//dscShowHideDiv("divOpcoesDaOpcao4","divOpcoesDaOpcao1;divOpcoesDaOpcao2;divOpcoesDaOpcao3;divOpcoesDaOpcao5");
-
-	dscShowHideDiv("divOpcoesDaOpcao1","divOpcoesDaOpcao2;divOpcoesDaOpcao3;divOpcoesDaOpcao4;divOpcoesDaOpcao5");
+	dscShowHideDiv("divOpcoesDaOpcao4","divOpcoesDaOpcao1;divOpcoesDaOpcao2;divOpcoesDaOpcao3;divOpcoesDaOpcao5");
 
 
 	// Muda o título da tela
