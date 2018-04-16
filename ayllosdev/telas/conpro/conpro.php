@@ -36,7 +36,67 @@ setVarSession("opcoesTela", $opcoesTela);
         <script type="text/javascript" src="../../scripts/mascara.js"></script>
         <script type="text/javascript" src="../../scripts/menu.js"></script>
         <script type="text/javascript" src="../../includes/pesquisa/pesquisa.js"></script>
-        <script type="text/javascript" src="conpro.js"></script>
+        <script>
+             var situacoes = [];
+                    situacoes[0] = {  
+                        '9':'Todos',
+                        '0':'<?php echo utf8ToHtml("Não enviada"); ?>',
+                        '1':'<?php echo utf8ToHtml("Env. P/ Análise autom."); ?>',
+                        '2':'<?php echo utf8ToHtml("Env. P/ Análise manual"); ?>',
+                        '3':'<?php echo utf8ToHtml("Análise Finalizada"); ?>',
+                        '4':'<?php echo utf8ToHtml("Expirado"); ?>'                        
+                    };
+                    situacoes[3] = {  
+                        '9':'Todos',
+                        '3':'<?php echo utf8ToHtml("Análise Finalizada"); ?>',
+                        '1':'<?php echo utf8ToHtml("Env. P/ Análise autom."); ?>',
+                        '2':'<?php echo utf8ToHtml("Env. P/ Análise manual"); ?>',
+                        '4':'<?php echo utf8ToHtml("Expirado"); ?>'
+                    };
+                    situacoes[4] = {  
+                        '9':'Todos',
+                        '0':'Estudo',
+                        '1':'Aprovada',
+                        '2':'Solicitada',
+                        '3':'Liberada',
+                        '4':'Em uso',
+                        '5':'Cancelada',
+                        '6':'<?php echo utf8ToHtml("Em análise"); ?>',
+                        '7':'Enviado Bancoob'                        
+                    };
+                    var parecer=[];
+                    parecer[0] = {
+                        '9':'Todos',
+                        '0':"<?php echo utf8ToHtml("Não analisado"); ?>",
+                        '1':"Aprovado",
+                        '2':"Rejeitado",
+                        '3':"<?php echo utf8ToHtml("Com Restrição"); ?>",
+                        '4':"Refazer",
+                        '5':"Derivar",
+                        '6':"Erro"
+                        
+                    };
+                    parecer[3] = {  
+                        '9':'Todos',
+                        '0':"<?php echo utf8ToHtml("Não analisado"); ?>",
+                        '1':"Aprovado",
+                        '2':"<?php echo utf8ToHtml("Não Aprovado"); ?>",
+                        '3':"<?php echo utf8ToHtml("Com Restrição"); ?>",
+                        '4':"Refazer",
+                        '5':"Erro Consultar"
+                    };
+                    parecer[4] = {
+                        '9':'Todos',
+                        '1':"<?php echo utf8ToHtml("Sem aprovação"); ?>",
+                        '2':"Aprovada Auto",
+                        '3':"Erro",
+                        '4':"Rejeitada",
+                        '5':"Refazer",
+                        '6':"Expirada",
+                        
+                    };
+        </script>
+        <script type="text/javascript" src="conpro.js?version=<?php echo rand();?>"></script>
     </head>
     <body>
         <table width="100%" border="0" cellpadding="0" cellspacing="0">

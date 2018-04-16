@@ -15,7 +15,18 @@
     <div id="divFiltros">
         <fieldset>
 
-            <legend><?php echo utf8ToHtml('Filtros') ?></legend>
+            <legend><?php echo utf8ToHtml('Filtros 1') ?></legend>
+
+            <label class="tpproduto" for="tpproduto">
+             <?php echo utf8ToHtml('Tipo produto:') ?>
+            </label>
+            <select class="tpproduto" id="tpproduto" name="tpproduto" onchange="alteraProduto(this.value);" >
+                <option value="9"> <?php echo utf8ToHtml('Selecione') ?> </option>
+                <option value="4" > <?php echo utf8ToHtml('Cartão')?> </option>
+                <option value="0"> <?php echo utf8ToHtml('Empréstimo') ?> </option>
+            </select>     
+
+            <br style="clear:both" />	
 
             <label for="nrdconta"><?php echo utf8ToHtml('Conta/DV:') ?></label>
             <input name="nrdconta" id="nrdconta" type="text" />
@@ -42,18 +53,15 @@
             <label for="dtafinal"><?php echo utf8ToHtml('Data Final:') ?></label>
             <input name="dtafinal" id="dtafinal" type="text" />
 
+          
+
             <br style="clear:both" />	
 
             <label for="insitest"><?php echo utf8ToHtml('Situação:') ?></label>
-            <select id="insitest" name="insitest">
-                <option value="9"> <?php echo utf8ToHtml('Todos') ?> </option> 
-                <option value="3"> <?php echo utf8ToHtml('Analise Finalizada') ?> </option> 
-                <option value="1"> <?php echo utf8ToHtml('Enviada p/ Analise Aut.') ?> </option> 
-                <option value="2"> <?php echo utf8ToHtml('Enviada p/ Analise Man.') ?> </option> 
-                <option value="4"> <?php echo utf8ToHtml('Expirado') ?> </option> 
-                <option value="0"> <?php echo utf8ToHtml('Não Enviada') ?> </option> 
-            </select>
-
+            <div id="sitSelect">
+                <select id="insitest" name="insitest">
+                </select>
+            </div>                
             <label for="insitefe"><?php echo utf8ToHtml('Efetivação:') ?></label>
             <select id="insitefe" name="insitefe">
                 <option value="9"> <?php echo utf8ToHtml('Todos') ?></option> 
@@ -64,13 +72,6 @@
 
             <label for="insitapr"><?php echo utf8ToHtml('Parecer Esteira:') ?></label>
             <select id="insitapr" name="insitapr">
-                <option value="9"> <?php echo utf8ToHtml('Todos') ?></option> 
-                <option value="0"> <?php echo utf8ToHtml('Não Analisado') ?></option> 
-                <option value="1"> <?php echo utf8ToHtml('Aprovado') ?></option> 
-                <option value="3"> <?php echo utf8ToHtml('Com Restrição') ?></option> 
-                <option value="2"> <?php echo utf8ToHtml('Não Aprovado') ?></option> 
-                <option value="4"> <?php echo utf8ToHtml('Refazer') ?></option> 
-                <option value="5"> <?php echo utf8ToHtml('Erro Consultas') ?></option> 
             </select>
         </fieldset>	
     </div>

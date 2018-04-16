@@ -14,7 +14,16 @@
     <div id="divFiltrosAciona">
         <fieldset>
 
-            <legend><?php echo utf8ToHtml('Filtros') ?></legend>
+            <legend><?php echo utf8ToHtml('Filtros 2') ?></legend>
+
+            <label class="tpproduto" for="tpproduto">
+             <?php echo utf8ToHtml('Tipo produto:') ?>
+            </label>
+            <select class="tpproduto acionamentoTpproduto" id="tpproduto" name="tpproduto" onchange="alteraProduto(this.value);" >
+                <option value="9"> <?php echo utf8ToHtml('Selecione') ?> </option>
+                <option value="4" > <?php echo utf8ToHtml('Cartão')?> </option>
+                <option value="0"> <?php echo utf8ToHtml('Empréstimo') ?> </option>
+            </select>
 
             <label for="nrdconta"><?php echo utf8ToHtml('Conta/DV:') ?></label>
             <input name="nrdconta" id="nrdconta" type="text" />
@@ -36,6 +45,8 @@
             <label for="dtafinal"><?php echo utf8ToHtml('Data Final:') ?></label>
             <input name="dtafinal" id="dtafinal" type="text" />
 			
+               
+            
 		</fieldset>
 	</div>
 

@@ -32,9 +32,11 @@ $dtafinal = (isset($_POST['dtafinal'])) ? $_POST['dtafinal'] : '';
 $insitest = (isset($_POST['insitest'])) ? $_POST['insitest'] : '';
 $insitefe = (isset($_POST['insitefe'])) ? $_POST['insitefe'] : '';
 $insitapr = (isset($_POST['insitapr'])) ? $_POST['insitapr'] : '';
+$tpproduto = (isset($_POST['tpproduto'])) ? $_POST['tpproduto'] : '9';
 
 $nriniseq = (isset($_POST['nriniseq'])) ? $_POST['nriniseq'] : 0;
 $nrregist = (isset($_POST['nrregist'])) ? $_POST['nrregist'] : 0;
+
 
 
 if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') {		
@@ -51,16 +53,17 @@ $xml .= "   <dtafinal>" . $dtafinal . "</dtafinal>";
 $xml .= "   <insitest>" . $insitest . "</insitest>";
 $xml .= "   <insitefe>" . $insitefe . "</insitefe>";
 $xml .= "   <insitapr>" . $insitapr . "</insitapr>";
-
+$xml .= "   <tpproduto>". $tpproduto. "</tpproduto>";
 $xml .= "   <nriniseq>" . $nriniseq . "</nriniseq>";
 $xml .= "   <nrregist>" . $nrregist . "</nrregist>";
-
-
 $xml .= " </Dados>";
 $xml .= "</Root>";
 
 $xmlResult = mensageria($xml, "CONPRO", "CONPRO_CONSULTA", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 $xmlObj = getObjectXML($xmlResult);
+
+
+
 
 if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
     $msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
