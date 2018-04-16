@@ -88,14 +88,62 @@
 																			
 																			<div id="divTela">
 																				
-																				<? include('form_menu.php'); ?>
-																				<div id="divCabecalho" style="display:none"></div>
-																				<div id="divDetalhe" style="display:none"></div>
+																				<? include('form_cabecalho.php'); ?>
 																				
-																				<div id="divBotoes" style="margin-top:5px; margin-bottom :10px;display:none">
-																					<a href="#" class="botao" id="btVoltar"  onclick="btnVoltar(); return false;">Voltar</a>
-																					<a href="#" class="botao" id="btSalvar"  onClick="btnContinuar(); return false;">Salvar</a>
-																				</div>
+																				<table id="divAbas" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin: 25px 0px; display: block;">
+																					<tr>
+																						<td align="center">		
+																							<table cellpadding="0" cellspacing="0" border="0" width="850">       
+																								<tr>
+																									<td class="tdConteudoTela" align="center" style="background-color: transparent;">
+																										<table width="100%"  border="0" cellspacing="0" cellpadding="0">
+																											<tr>
+																												<td>
+																													<table border="0" cellspacing="0" cellpadding="0">
+																														<tr>
+																															<td><img src="<?php echo $UrlImagens; ?>background/mnu_nle.gif" width="4" height="21" id="imgAbaEsq0"></td>
+																															<td align="center" style="background-color: #C6C8CA;" id="imgAbaCen0"><a href="#" id="linkAba0" class="txtNormalBold" onClick="acessaOpcaoAba(0);return false;">Prioridades</a></td>
+																															<td><img src="<?php echo $UrlImagens; ?>background/mnu_nld.gif" width="4" height="21" id="imgAbaDir0"></td>
+																															<td width="1"></td>
+
+																															<td><img src="<?php echo $UrlImagens; ?>background/mnu_nle.gif" width="4" height="21" id="imgAbaEsq1"></td>
+																															<td align="center" style="background-color: #C6C8CA;" id="imgAbaCen1"><a href="#" id="linkAba1" class="txtNormalBold" onClick="acessaOpcaoAba(1);return false;">Horários</a></td>
+																															<td><img src="<?php echo $UrlImagens; ?>background/mnu_nld.gif" width="4" height="21" id="imgAbaDir1"></td>
+																															<td width="1"></td>
+
+																															<td><img src="<?php echo $UrlImagens; ?>background/mnu_nle.gif" width="4" height="21" id="imgAbaEsq2"></td>
+																															<td align="center" style="background-color: #C6C8CA;" id="imgAbaCen2"><a href="#" id="linkAba2" class="txtNormalBold" onClick="acessaOpcaoAba(2);return false;">Execução Emergencial</a></td>
+																															<td><img src="<?php echo $UrlImagens; ?>background/mnu_nld.gif" width="4" height="21" id="imgAbaDir2"></td>
+																															<td width="1"></td>
+
+																															<td><img src="<?php echo $UrlImagens; ?>background/mnu_nle.gif" width="4" height="21" id="imgAbaEsq3"></td>
+																															<td align="center" style="background-color: #C6C8CA;" id="imgAbaCen3"><a href="#" id="linkAba3" class="txtNormalBold" onClick="acessaOpcaoAba(3);return false;">Histórico</a></td>
+																															<td><img src="<?php echo $UrlImagens; ?>background/mnu_nld.gif" width="4" height="21" id="imgAbaDir3"></td>
+																															<td width="1"></td>
+																														</tr>
+																													</table>
+																												</td>
+																											</tr>
+																											<tr>
+																												<td align="center" style="border: 2px solid #969FA9; background-color: #F4F3F0; padding: 2px;">
+																													<div id="divConteudoOpcao" style="height: 400px; padding-top: 15px;">
+																														&nbsp;
+																													</div>
+																													<div id="divBotoes" style="margin-top:5px; margin-bottom :10px;display:none">
+																														<a href="#" class="botao" id="btVoltar"  onclick="btnVoltar(); return false;">Voltar</a>
+																														<a href="#" class="botao" id="btSalvar"  onClick="btnContinuar(); return false;">Salvar</a>
+																													</div>
+																												</td>
+																											</tr>
+																										</table>
+																									</td>        
+																								</tr>   
+																							</table>				
+																						</td>
+																					</tr>
+																				</table>
+																				
+																				
 																				
 																			</div>
 

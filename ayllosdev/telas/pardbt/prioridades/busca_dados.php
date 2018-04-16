@@ -21,10 +21,12 @@
 	isPostMethod();		
 
     $cddopcao = $_POST['cddopcao'];
+	$idhora_processamento = $_POST['idhora_processamento'];
 
     // Monta o xml de requisição
 	$xml = "<Root>";
     $xml .= " <Dados>";
+	$xml .= "   <idhora_processamento>" . $idhora_processamento . "</idhora_processamento>";
     $xml .= " </Dados>";
     $xml .= "</Root>";
 
@@ -44,18 +46,16 @@
 	
 	$processos = $xmlObjeto->roottag->tags[0]->tags;
 	
-	echo '<fieldset style="clear: both; border: 1px solid rgb(119, 119, 119); margin: 3px 0px; padding: 10px 3px 5px;">';
-	echo '  <legend style="font-size: 11px; color: rgb(119, 119, 119); margin-left: 5px; padding: 0px 2px;">'.utf8ToHtml('Prioridades dos Programas').'</legend>';
 	echo '	<div class="divRegistros">';
 	echo '		<table>';
 	echo '			<thead>';
 	echo '				<tr>';	
-	echo '					<th>Prioridade</th>';	
-    echo '					<th>' . utf8ToHtml('Descrição do Programa') . '</th>';
+	echo '					<th title="' . utf8ToHtml('Prioridade') . '">Priorid.</th>';	
+    echo '					<th>' . utf8ToHtml('Programa') . '</th>';
     echo '					<th>Ativo</th>';
-    echo '					<th>Debita<br>Sem saldo</th>';
-    echo '					<th>' . utf8ToHtml('Débito<br>parcial') . '</th>';
-    echo '					<th>' . utf8ToHtml('Repescagem<br>Qtd. dias') . '</th>';
+    echo '					<th title="' . utf8ToHtml('Debita sem saldo') . '">Deb.S/<br> saldo</th>';
+    echo '					<th title="' . utf8ToHtml('Débito Parcial') . '">' . utf8ToHtml('Déb.<br>parc.') . '</th>';
+    echo '					<th title="' . utf8ToHtml('Repescagem - quantidade de dias') . '">' . utf8ToHtml('Repes.') . '</th>';
     echo '					<th>' . utf8ToHtml('Horários de<br>Processamento') . '</th>';
 	echo '				</tr>';
 	echo '			</thead>';
@@ -66,7 +66,7 @@
         $horarios = $processo->tags[6]->tags;
 
         foreach($horarios as $horario) {
-            $listaHorarios .= (!empty($listaHorarios) ? '<br>' : '') . getByTagName($horario->tags, 'dhprocessamento');
+            $listaHorarios .= (!empty($listaHorarios) ? '&nbsp;&nbsp;' : '') . getByTagName($horario->tags, 'dhprocessamento');
         }
 
 		$ativo = getByTagName($processo->tags, 'nrprioridade') != '' ? 'Sim' : 'Não';
@@ -78,7 +78,8 @@
 		
 		echo "<tr>";	
 		echo	"<td style=\"vertical-align: middle;\">" . getByTagName($processo->tags, 'nrprioridade') . "</td>" ;
-        echo	"<td style=\"vertical-align: middle; text-align: justify;\">" . getByTagName($processo->tags, 'dsprocesso') . "</td>" ;
+        echo	"<td style=\"vertical-align: middle; text-align: justify;\" title=\"" . getByTagName($processo->tags, 'dsprocesso') . "\">" . 
+		        getByTagName($processo->tags, 'cdprocesso') . "</td>" ;
         echo	"<td style=\"vertical-align: middle;\">" . utf8ToHtml($ativo) . "</td>" ;
         echo    "<td style=\"vertical-align: middle;\">" . utf8ToHtml($indeb_sem_saldo) . "</td>";
         echo    "<td style=\"vertical-align: middle;\">" . utf8ToHtml($indeb_parcial) . "</td>";
@@ -90,4 +91,3 @@
 	echo '			</tbody>';
 	echo '		</table>';
 	echo '	</div>';
-	echo '</fieldset>';

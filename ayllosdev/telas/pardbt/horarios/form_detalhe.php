@@ -22,7 +22,7 @@
  }
 ?>
 
-                    <form id="frmDet" name="frmDet" class="formulario detalhe" onSubmit="return false;" style="display:none">
+                    <form id="frmDet" name="frmDet" class="formulario detalhe" onSubmit="return false;" style="display:none; width: 50%; margin: auto;">
                         <fieldset>
                             <legend>Cadastro de hor&aacute;rios</legend>
                             <input type="hidden" id="idhora_processamento" name="idhora_processamento" value="<?php echo $idhora_processamento; ?>">

@@ -14,17 +14,16 @@ var cddopcao		= 'C';
 	
 //Formulários
 var frmCab   		= 'frmCab';
-var frmMenu         = 'frmParam';
 var frmDet          = 'frmDet';
 
 //Labels/Campos do cabeçalho
-var rCddopcao, rCdcoopex, cCddopcao, cCdcoopex, cCddparam, cTodosCabecalho, cTodosMenu, btnCab, btnMenu, subFolder;
-var glbTabIdHorario;
+var rCddopcao, rCdcoopex, cCddopcao, cCdcoopex, cTodosCabecalho, btnCab, subFolder;
+var abaAtiva, horarioSelecionadoConsulta = 0;
 
 $(document).ready(function() {
 	estadoInicial();
 	
-	highlightObjFocus($('#'+frmMenu));
+	highlightObjFocus($('#'+frmCab));
 	
 	$('fieldset > legend').css({'font-size':'11px','color':'#777','margin-left':'5px','padding':'0px 2px'});
 	$('fieldset').css({'clear':'both','border':'1px solid #777','margin':'3px 0px','padding':'10px 3px 5px 3px'});
@@ -35,89 +34,32 @@ function limpaCabecalho() {
 	$('#divCabecalho').empty();
 }
 
-function carregaComponente() {
-	if ( cCddopcao.hasClass('campoTelaSemBorda')  ) { 
-		return false; 
-	}	
-
-	// Desabilita campo opção
-	cTodosCabecalho		= $('input[type="text"],select','#frmCab'); 
-	cTodosCabecalho.desabilitaCampo();
-	$('#btnOK', '#frmCab').removeClass('botao').addClass('botaoDesativado');
-	// Desabilita campo opção
-	cTodosMenu = $('input[type="text"],select', '#' + frmMenu);
-	cTodosMenu.desabilitaCampo();
-	$('#btnOK', '#frmParam').removeClass('botao').addClass('botaoDesativado');
-			
-	$('#divBotoes', '#divTela').css({'display':'block'});
-
-	$("#btVoltar","#divBotoes").show();
-	
-	switch (cCddparam.val()) {
-		case 'H':
-			switch (cCddopcao.val()) {
-				case 'C':  // Consulta
-				case 'A':  // Alteração
-				case 'E':  // Exclusão
-					carregaDetalhamentoHorarios();
-					break;
-				case 'I': // Inclusão
-					carregaFormularioHorarios();
-					break;
-				case 'H': // Histórico
-					carregarHistorico(2);
-			}
-			break;
-		case 'P':
-			switch (cCddopcao.val()) {
-				case 'C': // Consultar
-				case 'A': // Alterar
-					carregarPrioridadesProcessos();
-					break;
-				case 'H': // Hirstórico
-					carregarHistorico(1);
-			}
-			break;
-		case 'E':
-			switch (cCddopcao.val()) {
-				case 'E': // Executar
-					carregarProcessos();
-					break;
-				case 'H': // Histórico
-					carregarHistorico(3);
-			}
-	}
-}
-
 function btnVoltar() {
-	if (cCddparam.val() == 'H' && cCddopcao.val() == 'A' && $('#frmDet', '#divDetalhe').css('display') == 'block') {
-		carregaDetalhamentoHorarios();
-		trocaBotao('');
+	if ($('.checkboxAddHorario').length > 0) {
+		carregarPrioridadesProcessos();
 		return false;
 	}
-	else if (cCddparam.val() == 'P' && cCddopcao.val() == 'A' && $('#frmDet').length > 0) { // Formulário de ativação de processo
-		carregarPrioridadesProcessos();
-		trocaBotao('');
+	else if (horarioSelecionadoConsulta != 0) {
+		subFolder = 'horarios';
+		horarioSelecionadoConsulta = 0;
+		carregaDetalhamentoHorarios();
 		return false;
-	}	
+	}
 
-	estadoInicialCab();
+	estadoInicial();
 }
 
 function btnContinuar() {
 	$('input,select', '#frmCab').removeClass('campoErro');
-	
-	cddparam = cCddparam.val();
-	cddopcao = cCddopcao.val();
 
-	switch(cddparam) {
-		case 'H':
-			processaBotaoHorarios();
-			break;
-		case 'P':
+	switch(abaAtiva) {
+		case 0:
 			processaBotaoPrioridades();
 			break;
-		case 'E':
+		case 1:
+			processaBotaoHorarios();
+			break;
+		case 2:
 			processaBotaoEmergencial();
 			break;
 	}
@@ -130,7 +72,6 @@ function processaBotaoHorarios() {
 
 	switch (cCddopcao.val()) {
 		case 'I':
-		case 'A':
 			gravarHorario();
 			break;
 	}
@@ -138,7 +79,7 @@ function processaBotaoHorarios() {
 
 function processaBotaoEmergencial() {
 	switch (cCddopcao.val()) {
-		case 'E':
+		case 'I':
 			executarEmergencial();
 			break;
 	}
@@ -153,7 +94,7 @@ function processaBotaoPrioridades() {
 }
 
 function efetivaAtivacaoProcesso() {
-	if ($('.checkboxAddHorario:checked', '#divDetalhe').length == 0) {
+	if ($('.checkboxAddHorario:checked', '#divConteudoOpcao').length == 0) {
 		showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. <br>Nenhum hor&aacute;rio selecionado.",
 			"Alerta - Ayllos", "");
 
@@ -162,7 +103,7 @@ function efetivaAtivacaoProcesso() {
 
 	var listaHorarios = '';
 
-	$('.checkboxAddHorario:checked', '#divDetalhe').each(function (i, elem) {
+	$('.checkboxAddHorario:checked', '#divConteudoOpcao').each(function (i, elem) {
 		listaHorarios += 'X' + $(elem).parent().find('input[type="hidden"').first().val() + ',';
 	});
 
@@ -209,7 +150,6 @@ function efetivaDesativacaoProcesso(cdprocesso) {
 			redirect: "script_ajax"
 		},
 		error: function (objAjax, responseError, objExcept) {
-			console.log(response);
 			hideMsgAguardo();
 			showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.",
 				"Alerta - Ayllos", 'unblockBackground()');
@@ -228,7 +168,7 @@ function efetivaDesativacaoProcesso(cdprocesso) {
 }
 
 function executarEmergencial() {
-	if ($('.checkboxExecutar:checked', '#divDetalhe').length == 0) {
+	if ($('.checkboxExecutar:checked', '#divConteudoOpcao').length == 0) {
 		showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. <br>Nenhum processo marcado para execu&ccedil;&atilde;o.",
 			"Alerta - Ayllos", "");
 
@@ -237,7 +177,7 @@ function executarEmergencial() {
 
 	var listaProcessos = '';
 
-	$('.checkboxExecutar:checked', '#divDetalhe').each(function(i, elem) {
+	$('.checkboxExecutar:checked', '#divConteudoOpcao').each(function(i, elem) {
 		listaProcessos += $(elem).parent().find('input[type="hidden"').first().val() + ',';
 	});
 
@@ -343,12 +283,12 @@ function carregarHistorico(tporigem) {
 		},
 		error   : function(objAjax,responseError,objExcept) {
 			hideMsgAguardo();
-			showError('error','N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','estadoInicialCab();');
+			showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','estadoInicialCab();');
 		},
 		success : function(response) { 
 			if ( response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1 ) {
 				try {	
-					$('#divDetalhe')
+					$('#divDadosHistoricos')
 						.html(response)
 						.css({'display':'block'});
 					
@@ -389,7 +329,7 @@ function carregarProcessos() {
 		success: function (response) {
 			if (response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1) {
 				try {
-					$('#divDetalhe')
+					$('#divConteudoOpcao')
 						.html(response)
 						.css({
 							'display': 'block'
@@ -462,7 +402,7 @@ function trocaBotao( botao ) {
 	}
 }
 
-function carregaFormularioHorarios(id = '', horario = '') {
+function carregaFormularioHorarios(id, horario) {
 	showMsgAguardo("Aguarde, carregando formul&aacute;rio de cadastro de hor&aacute;rios...");
 
 	// Carrega dados parametro através de ajax
@@ -483,7 +423,7 @@ function carregaFormularioHorarios(id = '', horario = '') {
 		success: function (response) {
 			if (response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1) {
 				try {
-					$('#divDetalhe')
+					$('#divConteudoOpcao')
 						.html(response)
 						.css({
 							'display': 'block'
@@ -537,7 +477,7 @@ function carregaFormularioAtivarProc(cdprocesso, dsprocesso) {
 		success: function (response) {
 			if (response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1) {
 				try {
-					$('#divDetalhe')
+					$('#divConteudoOpcao')
 						.html(response)
 						.css({
 							'display': 'block'
@@ -639,14 +579,13 @@ function formataFormularioAtivarProc() {
 	$('label[for="dsprocesso"]', '#frmDet').addClass('rotulo').css('width', '180px');
 	$('#dsprocesso', '#frmDet').css('width', '550px')
 
-	var divRegistro = $('div.divRegistros', '#divDetalhe');
+	var divRegistro = $('div.divRegistros', '#divConteudoOpcao');
 	var tabela = $('table', divRegistro);
 	var linha = $('table > tbody > tr', divRegistro);
 
-	divRegistro.css({ 'height': '250px', 'width': '100%' });
+	divRegistro.css({ 'height': '220px', 'width': '100%' });
 
 	var ordemInicial = new Array();
-	ordemInicial = [[0, 0]];
 
 	var arrayLargura = ['100%'];
 
@@ -657,6 +596,24 @@ function formataFormularioAtivarProc() {
 	tabela.formataTabela(ordemInicial, arrayLargura, arrayAlinha, metodoTabela);
 
 	trocaBotao('Ativar');
+}
+
+function formataHorariosExluir() {
+	var divRegistro = $('div.divRegistros', '#frmDet');
+	var tabela = $('table', divRegistro);
+	var linha = $('table > tbody > tr', divRegistro);
+
+	divRegistro.css({ 'height': '140px', 'width': '100%' });
+
+	var ordemInicial = new Array();
+
+	var arrayLargura = ['100%'];
+
+	var arrayAlinha = ['center'];
+
+	var metodoTabela = '';
+
+	tabela.formataTabela(ordemInicial, arrayLargura, arrayAlinha, metodoTabela);
 }
 
 function carregaDetalhamentoHorarios(){	
@@ -680,7 +637,7 @@ function carregaDetalhamentoHorarios(){
 		success : function(response) { 
 			if ( response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1 ) {
 				try {	
-					$('#divDetalhe')
+					$('#divConteudoOpcao')
 						.html(response)
 						.css({'display':'block'});
 					
@@ -703,7 +660,15 @@ function carregaDetalhamentoHorarios(){
 	});
 }
 
-function carregarPrioridadesProcessos(nrprioridade = null) {
+function carregaProcessosHorario(id) {
+	horarioSelecionadoConsulta = id;
+
+	subFolder = 'prioridades';
+
+	carregarPrioridadesProcessos();
+}
+
+function carregarPrioridadesProcessos(nrprioridade) {
 	showMsgAguardo("Aguarde, buscando prioridades dos programas...");
 
 	cddopcao = $('#cddopcao', '#frmCab').val();
@@ -720,6 +685,7 @@ function carregarPrioridadesProcessos(nrprioridade = null) {
 		dataType: 'html',
 		url: UrlSite + 'telas/pardbt/' + subFolder + arquivo,
 		data: {
+			idhora_processamento: horarioSelecionadoConsulta, 
 			redirect: 'script_ajax'
 		},
 		error: function (objAjax, responseError, objExcept) {
@@ -729,7 +695,8 @@ function carregarPrioridadesProcessos(nrprioridade = null) {
 		success: function (response) {
 			if (response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1) {
 				try {
-					$('#divDetalhe')
+					$('#divConteudoOpcao')
+						.empty()
 						.html(response)
 						.css({
 							'display': 'block'
@@ -764,38 +731,41 @@ function carregarPrioridadesProcessos(nrprioridade = null) {
 	});
 }
 
-function excluirHorarioProc(cdprocesso, idhora_processamento) {
-	showConfirmacao('Confirmar exclus&atilde;o?', 'Confirma&ccedil;&atilde;o - Ayllos', 'efetivaExclusaoHorarioProc(\'' + cdprocesso + '\',' + idhora_processamento +');', '', 'sim.gif', 'nao.gif');
+function excluirHorariosProc() {
+	if ($('.checkboxDelHorario:checked', '#frmDet').length == $('.checkboxDelHorario', '#frmDet').length) {
+		showError('error', 'N&atilde;o &eacute; poss&iacute;vel excluir todos os hor&aacute;rios de um processo.', 'Alerta - Ayllos', '');
+		return false;
+	}
+
+	showConfirmacao('Confirmar exclus&atilde;o?', 'Confirma&ccedil;&atilde;o - Ayllos', 'processarExclusaoHorarios();', '', 'sim.gif', 'nao.gif');
 }
 
-function efetivaExclusaoHorarioProc(cdprocesso, idhora_processamento) {
-	showMsgAguardo("Aguarde, excluindo horário do programa...");
+function excluirHorarioProc(cdprocesso) {
+	showMsgAguardo('Aguarde, abrindo exclus&atilde;o de hor&aacute;rio(s)...');
 
-	// Carrega dados parametro através de ajax
+	exibeRotina($('#divUsoGenerico'));
+
 	$.ajax({
 		type: 'POST',
 		dataType: 'html',
-		url: UrlSite + 'telas/pardbt/' + subFolder + '/manter_rotina.php',
+		url: UrlSite + 'telas/pardbt/' + subFolder + '/form_exclusao_horario.php',
 		data: {
 			cdprocesso: cdprocesso,
-			horarios: idhora_processamento,
-			operacao: 'EXCLUIR_HORARIO_PROC',
-			redirect: 'script_ajax'
+			redirect: 'html_ajax'
 		},
 		error: function (objAjax, responseError, objExcept) {
 			hideMsgAguardo();
-			showError('error', 'N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'estadoInicialCab();');
+			showError('error', 'N&atilde;o foi poss&iacute;&shy;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', "blockBackground(parseInt($('#divRotina').css('z-index')))");
 		},
 		success: function (response) {
 			if (response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1) {
+				$('#divUsoGenerico').html(response);
+				layoutPadrao();
 				hideMsgAguardo();
-
-				try {
-					eval(response);					
-				} catch (error) {
-					showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'unblockBackground()');
-				}
-			} else {
+				bloqueiaFundo($('#divUsoGenerico'));
+				formataHorariosExluir();
+			}
+			else {
 				try {
 					eval(response);
 				} catch (error) {
@@ -868,7 +838,60 @@ function gravarNovoHorarioProc() {
 			showError('error', 'N&atilde;o foi poss&iacute;&shy;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'unblockBackground()');
 		},
 		success: function (response) {
-			console.log(response);
+			if (response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1) {
+				hideMsgAguardo();
+
+				try {
+					eval(response);
+				} catch (error) {
+					showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'unblockBackground()');
+				}
+			} else {
+				try {
+					eval(response);
+				} catch (error) {
+					hideMsgAguardo();
+					showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'unblockBackground()');
+				}
+			}
+		}
+	});
+}
+
+function processarExclusaoHorarios() {
+	if ($('.checkboxDelHorario:checked', '#frmDet').length == 0) {
+		showError('error', 'Selecione o(s) hor&aacute;rio(s) que deseja excluir.', 'Alerta - Ayllos', '');
+	}
+
+	showMsgAguardo('Aguarde, excluindo hor&aacute;rio(s)...');
+
+	var cdprocesso = $('#cdprocesso', '#frmDet').val();
+
+	var listaHorarios = '';
+
+	$('.checkboxDelHorario:checked', '#frmDet').each(function (i, elem) {
+		listaHorarios += 'X' + $(elem).parent().find('input[type="hidden"').first().val() + ',';
+	});
+
+	if (listaHorarios != '') {
+		listaHorarios = listaHorarios.substr(0, listaHorarios.length - 1);
+	}
+
+	$.ajax({
+		type: 'POST',
+		dataType: 'html',
+		url: UrlSite + 'telas/pardbt/' + subFolder + '/manter_rotina.php',
+		data: {
+			cdprocesso: cdprocesso,
+			horarios: listaHorarios,
+			operacao: 'EXCLUIR_HORARIO_PROC',
+			redirect: 'html_ajax'
+		},
+		error: function (objAjax, responseError, objExcept) {
+			hideMsgAguardo();
+			showError('error', 'N&atilde;o foi poss&iacute;&shy;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'unblockBackground()');
+		},
+		success: function (response) {
 			if (response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1) {
 				hideMsgAguardo();
 
@@ -890,14 +913,13 @@ function gravarNovoHorarioProc() {
 }
 
 function formataHorarios() {
-	var divRegistro = $('div.divRegistros','#divDetalhe');		
+	var divRegistro = $('div.divRegistros','#divConteudoOpcao');		
 	var tabela      = $('table', divRegistro );
 	var linha       = $('table > tbody > tr', divRegistro );
 			
 	divRegistro.css({'height':'250px','width':'100%'});
 	
 	var ordemInicial = new Array();
-	ordemInicial = [[0,0]];	
 	
 	var arrayLargura = ['100%'];	
 		
@@ -916,7 +938,7 @@ function formataHorarios() {
 		});
 	}
 	else if (cddopcao == 'E') {
-		// Carrega o formulário de alteração para o registro clicado
+		// Carrega o formulário de exclusão para o registro clicado
 		$('table > tbody > tr', divRegistro).click(function () {
 			processarExclusaoHorario($(this).find('input[name="idhora_processamento"]').val());
 		});
@@ -924,7 +946,7 @@ function formataHorarios() {
 }
 
 function formataProcessos() {
-	var divRegistro = $('div.divRegistros', '#divDetalhe');
+	var divRegistro = $('div.divRegistros', '#divConteudoOpcao');
 	var tabela = $('table', divRegistro);
 	var linha = $('table > tbody > tr', divRegistro);
 
@@ -946,23 +968,23 @@ function formataProcessos() {
 
 	tabela.formataTabela(ordemInicial, arrayLargura, arrayAlinha, metodoTabela);
 
-	$('#execTodos', '#divDetalhe').parent().attr('class', '');
-	$('#execTodos', '#divDetalhe').parent().unbind();
+	$('#execTodos', '#divConteudoOpcao').parent().attr('class', '');
+	$('#execTodos', '#divConteudoOpcao').parent().unbind();
 }
 
 function formataPrioridades() {
-	var divRegistro = $('div.divRegistros', '#divDetalhe');
+	var divRegistro = $('div.divRegistros', '#divConteudoOpcao');
 	var tabela = $('table', divRegistro);
 	var linha = $('table > tbody > tr', divRegistro);
 
 	divRegistro.css({
-		'height': '400px',
+		'height': '350px',
 		'width': '100%'
 	});
 
 	var ordemInicial = new Array();
 	
-	var arrayLargura = ['90px', '230px', '55px', '80px', '80px', '100px', '113px'];
+	var arrayLargura = ['50px', '315px', '54px', '42px', '42px', '42px', '190px'];
 
 	var alinhaPrioridade = cCddopcao.val() == 'C' ? 'right' : 'left';
 
@@ -989,20 +1011,20 @@ function formataPrioridades() {
 }
 
 function marcarExecutarTodos(e) {	
-	$('.checkboxExecutar', '#divDetalhe').each(function(i, elem) {
-		$(elem).prop('checked', $('#execTodos', '#divDetalhe').prop('checked'));
+	$('.checkboxExecutar', '#divConteudoOpcao').each(function(i, elem) {
+		$(elem).prop('checked', $('#execTodos', '#divConteudoOpcao').prop('checked'));
 	});
 }
 
 function formataHistoricos() {
-	var divRegistro = $('div.divRegistros','#divDetalhe');		
+	var divRegistro = $('div.divRegistros','#divConteudoOpcao');		
 	var tabela      = $('table', divRegistro );
 	var linha       = $('table > tbody > tr', divRegistro );
 			
-	divRegistro.css({'height':'250px','width':'100%'});
+	divRegistro.css({'height':'330px','width':'100%'});
 	
 	var ordemInicial = new Array();
-	ordemInicial = [[0,0]];	
+	ordemInicial = [];	
 	
 	var arrayLargura = ['120px', '100px', '80px', '483px'];	
 		
@@ -1052,7 +1074,7 @@ function excluirHorario(id) {
 	});
 }
 
-function bindKeyPressEvent(sourceElem, targetElem = null, functionCall = null)
+function bindKeyPressEvent(sourceElem, targetElem, functionCall)
 {
 	sourceElem.unbind('keypress').bind('keypress', function (e) {
 		if (e.keyCode == 9 || e.keyCode == 13) {
@@ -1067,30 +1089,8 @@ function bindKeyPressEvent(sourceElem, targetElem = null, functionCall = null)
 	})
 }
 
-function controlaFocoMenu() {
-	bindKeyPressEvent($('#cddparam', '#' + frmMenu), $('#btnOK', '#' + frmMenu));
-}
-
 function controlaFocoCab() {
 	bindKeyPressEvent($('#cddopcao', '#' + frmCab), $('#btnOK', '#' + frmCab));
-}
-
-function formataCamposMenu() {
-	$('label[for="cddparam"]', '#' + frmMenu).css('width', '71px');
-	
-	cCddparam       = $('#cddparam', '#' + frmMenu);
-	cTodosMenu	    = $('input[type="text"],select','#'+frmMenu);
-	btnMenu			= $('#btOK','#'+frmMenu);
-	
-	cCddparam.css({
-		'width': '460px'
-	});
-	
-	cTodosMenu.habilitaCampo();
-	
-	cCddparam.focus();
-				
-	layoutPadrao();
 }
 
 function formataCamposCab() {
@@ -1104,8 +1104,6 @@ function formataCamposCab() {
 		'width': '460px'
 	});
 
-	cTodosMenu.habilitaCampo();
-
 	cTodosCabecalho.habilitaCampo();
 
 	controlaFocoCab();
@@ -1118,20 +1116,18 @@ function formataCamposCab() {
 function estadoInicial() {
 	$('#divTela').fadeTo(0,0.1);
 
-	$('#' + frmMenu).css({
+	$('#' + frmCab).css({
 		'display': 'block'
 	});
 
 	$('#divBotoes').css({'display':'none'});
-	$('#divCabecalho').empty();
-	$('#divCabecalho').hide();
 
-	$('#divDetalhe').empty();
-	$('#divDetalhe').hide();
+	$('#divConteudoOpcao').empty();
+	$('#divAbas').hide();
 			
-	formataCamposMenu();
+	formataCamposCab();
 		
-	cTodosMenu.limpaFormulario();
+	cTodosCabecalho.limpaFormulario();
 	
 	removeOpacidade('divTela');	
 	unblockBackground();
@@ -1140,57 +1136,120 @@ function estadoInicial() {
 	trocaBotao('');
 	$("#btVoltar","#divBotoes").hide();
 	
-	$('input,select', '#frmMenu').removeClass('campoErro');
-	
-	controlaFocoMenu();
-}
-
-function estadoInicialCab() {
-	$('#divBotoes').css({
-		'display': 'none'
-	});
-
-	$('#divDetalhe').empty();
-	$('#divDetalhe').hide();
-
-	formataCamposCab();
-
-	cTodosCabecalho.limpaFormulario();
+	$('input,select', '#frmCab').removeClass('campoErro');
 	$('#btnOK', '#frmCab').removeClass('botaoDesativado').addClass('botao');
-	$('#btnOK', '#frmParam').removeClass('botaoDesativado').addClass('botao');
-
-	trocaBotao('');
 }
 
 function carregaOpcoes()
 {
-	if ($('#btnOK', '#frmParam').hasClass('botaoDesativado')) {
+	if ($('#btnOK', '#frmCab').hasClass('botaoDesativado')) {
 		return false;
 	}
+
+	// Desabilita campo opção
+	cTodosCabecalho = $('input[type="text"],select', '#frmCab');
+	cTodosCabecalho.desabilitaCampo();
 	
-	$('#divCabecalho').empty();
-	$('#divCabecalho').hide();
-	
-	subFolder = '';
+	cddopcao = $('#cddopcao', '#frmCab').val();
 
-	if (cCddparam.val() == 'H') {
-		subFolder = 'horarios';
-	}
-	else if (cCddparam.val() == 'P') {
-		subFolder = 'prioridades';
-	}
-	else if (cCddparam.val() == 'E') {
-		subFolder = 'emergencial';
+	switch (cddopcao) {
+		case 'C':
+			acessaOpcaoAba(0);
+			break;
+		case 'I':
+			acessaOpcaoAba(1);
+			break;
+		case 'A':
+			acessaOpcaoAba(0);
+			break;
+		case 'E':
+			acessaOpcaoAba(1);
 	}
 
-	$('#divCabecalho').load(UrlSite + 'telas/pardbt/' + subFolder + '/form_cabecalho.php', function () {
-		$('#divCabecalho').css({
-			'display': 'block'
-		});
-		$('#frmCab').css({
-			'display': 'block'
-		});
+	$('#divBotoes').css({ 'display': 'block' });
+	trocaBotao('');
+	$('#btnOK', '#frmCab').removeClass('botao').addClass('botaoDesativado');
+}
 
-		formataCamposCab();
-	});
+function acessaOpcaoAba(aba) {
+	var opcoesMenu = 'CIAE';
+
+	var cddopcao = $('#cddopcao', '#frmCab').val();
+
+	/*
+	  Matriz de permissão das abas de acordo com a opção do menu.
+	  permissoesOpcoes[<cddopcao>][<numeroaba>] = 1 (permite acesso)
+	*/
+	var permissoesOpcoes = [
+		[1, 1, 0, 1],
+		[0, 1, 1, 0],
+		[1, 0, 0, 0],
+		[0, 1, 0, 0]
+	];
+
+	if (permissoesOpcoes[opcoesMenu.indexOf(cddopcao)][aba] != 1) {
+		showError('inform','Op&ccedil;&atilde;o n&atilde;o aplic&aacute;vel a esta aba.', 'Alerta - Ayllos', '');
+		return false;
+	}
+
+	abaAtiva = aba;
+	horarioSelecionadoConsulta = 0;
+
+	$('#divAbas').show();
+
+	for (var i = 0; i < 4; i++) {
+		if (aba == i) { 
+			$("#linkAba" + aba).attr("class", "txtBrancoBold");
+			$("#imgAbaEsq" + aba).attr("src", UrlImagens + "background/mnu_sle.gif");
+			$("#imgAbaDir" + aba).attr("src", UrlImagens + "background/mnu_sld.gif");
+			$("#imgAbaCen" + aba).css("background-color", "#969FA9");
+			continue;
+		}
+
+		$("#linkAba" + i).attr("class", "txtNormalBold");
+		$("#imgAbaEsq" + i).attr("src", UrlImagens + "background/mnu_nle.gif");
+		$("#imgAbaDir" + i).attr("src", UrlImagens + "background/mnu_nld.gif");
+		$("#imgAbaCen" + i).css("background-color", "#C6C8CA");
+	}
+
+	switch (aba) {
+		case 0: // Prioridades
+			subFolder = 'prioridades';
+
+			carregarPrioridadesProcessos();
+			break;
+		case 1: // Horários
+			subFolder = 'horarios';
+			
+			switch (cCddopcao.val()) {
+				case 'C':  // Consulta
+				case 'E':  // Exclusão
+					carregaDetalhamentoHorarios();
+					break;
+				case 'I': // Inclusão
+					carregaFormularioHorarios();
+			}
+			break;
+		case 2: // Execução emergencial
+			subFolder = 'emergencial';
+			
+			if (cCddopcao.val() == 'I') {
+				carregarProcessos();
+			}
+			break;
+		case 3: // 
+			carregarAbaHistoricos();
+	}
+}
+
+function carregarAbaHistoricos() {
+	$('#divConteudoOpcao').load(UrlSite + "telas/pardbt/aba_historicos.php");
+	$('label[for="tporigem"]', '#divSelecaoOrigem').css('width', '71px');
+	carregarHistorico(1);
+}
+
+function carregarDadosHistoricos() {
+	var tporigem = parseInt($('#tporigem', '#divSelecaoOrigem').val());
+
+	carregarHistorico(tporigem);
 }

@@ -50,9 +50,10 @@
     else if ($cddopcao == 'E') { // Exclusão
         echo '<p style="text-align: center; color: grey; padding:7px;">Clique sobre o hor&aacute;rio que deseja excluir.</p>';
     }
+	else if ($cddopcao == 'C') { //Consulta
+        echo '<p style="text-align: center; color: grey; padding:7px;">Clique sobre o hor&aacute;rio para visualizar os programas agendados.</p>';
+    }
 	
-	echo '<fieldset style="clear: both; border: 1px solid rgb(119, 119, 119); margin: 3px 0px; padding: 10px 3px 5px;">';
-	echo '  <legend style="font-size: 11px; color: rgb(119, 119, 119); margin-left: 5px; padding: 0px 2px;">'.utf8ToHtml('Horários cadastrados').'</legend>';
 	echo '	<div class="divRegistros">';
 	echo '		<table>';
 	echo '			<thead>';
@@ -65,7 +66,14 @@
 	foreach( $horarios as $horario ) { 	
 		echo "<tr>";	
 		echo	"<td style=\"text-align: center;\" id='dhprocessamento'><span>".getByTagName($horario->tags,'dhprocessamento')."</span>";
-		echo    "            <input type=\"hidden\" name=\"idhora_processamento\" value=\"" . getByTagName($horario->tags,'idhora_processamento') ."\">" . getByTagName($horario->tags,'dhprocessamento');
+		echo    "            <input type=\"hidden\" name=\"idhora_processamento\" value=\"" . getByTagName($horario->tags,'idhora_processamento') ."\">";
+		if ($cddopcao == 'C') {
+			echo '<a href="javascript:" onclick="carregaProcessosHorario(' . getByTagName($horario->tags,'idhora_processamento') . ')">';
+		}
+		echo getByTagName($horario->tags,'dhprocessamento');
+		if ($cddopcao == 'C') {
+			echo '</a>';
+		}
 		echo    "</td>";
 		echo "</tr>";
 	} 	
@@ -73,5 +81,4 @@
 	echo '			</tbody>';
 	echo '		</table>';
 	echo '	</div>';
-	echo '</fieldset>';
 ?>

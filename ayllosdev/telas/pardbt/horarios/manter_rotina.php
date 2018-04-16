@@ -60,7 +60,9 @@
 			exibirErro('error', utf8_encode($msgErro), 'Alerta - Ayllos', '', false);
 		}
 
-        exibirErro('inform', 'Novo hor&aacute;rio inclu&iacute;do.', 'Alerta - Ayllos','estadoInicialCab();', false);
+		$mensagemRetorno = getByTagName($xmlObject->roottag->tags[0]->tags, 'mensagem');
+
+        exibirErro('inform', utf8_encode($mensagemRetorno), 'Alerta - Ayllos','estadoInicial();', false);
 	}
 	elseif ($operacao == 'ALTERAR_HORARIO') {
 		if (empty($dhprocessamento) || empty($idhora_processamento)) {

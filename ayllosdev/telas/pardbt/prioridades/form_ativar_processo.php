@@ -60,8 +60,7 @@
 
     echo '<p style="text-align: center; color: grey; padding:7px;">' . utf8ToHtml('Selecione os horários para os quais deseja agendar o programa.') . '</p>';
 	
-	echo '<fieldset style="clear: both; border: 1px solid rgb(119, 119, 119); margin: 3px 0px; padding: 10px 3px 5px;">';
-	echo '  <legend style="font-size: 11px; color: rgb(119, 119, 119); margin-left: 5px; padding: 0px 2px;">'.utf8ToHtml('Horários').'</legend>';
+
 	echo '	<div class="divRegistros">';
 	echo '		<table>';
 	echo '			<thead>';
@@ -80,4 +79,3 @@
 	echo '			</tbody>';
 	echo '		</table>';
 	echo '	</div>';
-	echo '</fieldset>';

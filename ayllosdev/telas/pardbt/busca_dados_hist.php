@@ -58,8 +58,7 @@
 	
 	$historicos = $xmlObjeto->roottag->tags[0]->tags;
 	
-	echo '<fieldset style="clear: both; border: 1px solid rgb(119, 119, 119); margin: 3px 0px; padding: 10px 3px 5px;">';
-	echo '  <legend style="font-size: 11px; color: rgb(119, 119, 119); margin-left: 5px; padding: 0px 2px;">'.utf8ToHtml('Histórico de operações - ' . $origens[$tporigem]).'</legend>';
+
 	echo '	<div class="divRegistros">';
 	echo '		<table>';
 	echo '			<thead>';
@@ -80,7 +79,7 @@
         $dsprocesso = getByTagName($historico->tags,'dsprocesso');
 
         $nomesCampos = array(
-            'idhora_processamento' => 'Cód. Horário',
+            'idhora_processamento' => 'Horário',
             'dhprocessamento' => 'Horário',
             'horario' => 'Horário',
             'nrprioridade' => 'Prioridade',
@@ -134,5 +133,4 @@
 	echo '			</tbody>';
 	echo '		</table>';
 	echo '	</div>';
-	echo '</fieldset>';
 ?>

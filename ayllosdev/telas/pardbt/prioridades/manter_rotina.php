@@ -86,7 +86,9 @@
 			exibirErro('error', utf8_encode($msgErro), 'Alerta - Ayllos', '', false);
 		}
 
-        exibirErro('inform', 'Programa ativado.', 'Alerta - Ayllos','trocaBotao(\'\'); carregarPrioridadesProcessos();', false);
+		$nrprioridade  = getByTagName($xmlObject->roottag->tags[0]->tags, 'nrprioridade');
+
+        exibirErro('inform', 'Programa ativado.', 'Alerta - Ayllos','trocaBotao(\'\'); carregarPrioridadesProcessos(' . $nrprioridade . ');', false);
 	}
     elseif ($operacao == 'DESATIVAR_PROCESSO') {
 		if (empty($cdprocesso)) {
@@ -125,7 +127,7 @@
 		$xml = "<Root>";
 		$xml .= "  <Dados>";
         $xml .= "    <cdprocesso>" . $cdprocesso . "</cdprocesso>";			
-        $xml .= "    <idhora_processamento>" . $horarios . "</idhora_processamento>";	
+        $xml .= "    <horarios>" . $horarios . "</horarios>";	
 		$xml .= "  </Dados>";
 		$xml .= "</Root>";
 
@@ -147,7 +149,7 @@
 
 		$prioridade = getByTagName($xmlObject->roottag->tags[0]->tags, 'nrprioridade');
 
-        exibirErro('inform', 'Hor&aacute;rio de processamento exclu&iacute;do.', 'Alerta - Ayllos','carregarPrioridadesProcessos(' . $prioridade . ');', false);
+        exibirErro('inform', 'Hor&aacute;rio(s) de processamento exclu&iacute;do(s).', 'Alerta - Ayllos','fechaRotina($(\'#divUsoGenerico\'),$(\'#divTela\')); $(\'#divUsoGenerico\').empty(); carregarPrioridadesProcessos(' . $prioridade . ');', false);
 	}
     elseif ($operacao == 'INCLUIR_HORARIO_PROC') {
 		if (empty($cdprocesso) || empty($horarios)) {
