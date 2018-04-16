@@ -235,23 +235,19 @@
 	    $xml .= "</Root>";
 
 	    $xmlResult = mensageria($xml,"TELA_ATENDA_DESCTO","BUSCAR_TITULOS_BORDERO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
-	    $xmlObj = getObjectXML($xmlResult);
-
+	    $xmlObj = getClassXML($xmlResult);
+    	$root = $xmlObj->roottag;
 
 	    // Se ocorrer um erro, mostra crítica
-		if (strtoupper($xmlObj->roottag->tags[0]->name) == 'ERRO'){
-			$msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
-			if ($msgErro == "") {
-				$msgErro = $xmlObj->roottag->tags[0]->cdata;
-			}
+		if ($root->erro){
 			echo '<script>';
-			exibeErro(htmlentities($msgErro));
+			exibeErro(htmlentities($root->erro->registro->dscritic));
 			echo '</script>';
 			exit;
 		}
-
-    	$dados = $xmlObj->roottag->tags[0];
-        $qtregist = $xmlObj->roottag->tags[0]->attributes['QTREGIST'];
+    	$dados = $root->dados;
+    	// var_dump($dados);die();
+        $qtregist = $dados->getAttribute('QTREGIST');
     	if($qtregist>0){
 	    	$html = "<table class='tituloRegistros'>";
 			$html .= 	"<thead>
@@ -267,17 +263,17 @@
 							</thead>
 							<tbody>
 					";
-	    	foreach($dados->tags AS $t){
-	    		$html .= "<tr id='titulo_".getByTagName($t->tags,'nrnosnum')."'>";
+	    	foreach($dados->find("inf") AS $t){
+	    		$html .= "<tr id='titulo_".$t->nrnosnum."'>";
 	    		$html .=	"<td>
-	    						<input type='hidden' name='vltituloselecionado' value='".formataMoeda(getByTagName($t->tags,'vltitulo'))."'/>
-	    						<input type='hidden' name='selecionados' value='".getByTagName($t->tags,'nrnosnum')."'/>".getByTagName($t->tags,'nrcnvcob')."
+	    						<input type='hidden' name='vltituloselecionado' value='".formataMoeda($t->vltitulo)."'/>
+	    						<input type='hidden' name='selecionados' value='".$t->cdbandoc.";".$t->nrdctabb.";".$t->nrcnvcob.";".$t->nrdocmto."'/>".$t->nrcnvcob."
 	    					</td>";
-	    		$html .=	"<td>".getByTagName($t->tags,'nrdocmto')."</td>";
-	    		$html .=	"<td>".getByTagName($t->tags,'nrinssac').' - '.getByTagName($t->tags,'nmdsacad')."</td>";
-	    		$html .=	"<td>".getByTagName($t->tags,'dtvencto')."</td>";
-	    		$html .=	"<td><span>".converteFloat(getByTagName($t->tags,'vltitulo'))."</span>".formataMoeda(getByTagName($t->tags,'vltitulo'))."</td>";
-	    		$sit = getByTagName($t->tags,'dssituac');
+	    		$html .=	"<td>".$t->nrdocmto."</td>";
+	    		$html .=	"<td>".$t->nrinssac.' - '.$t->nmdsacad."</td>";
+	    		$html .=	"<td>".$t->dtvencto."</td>";
+	    		$html .=	"<td><span>".converteFloat($t->vltitulo)."</span>".formataMoeda($t->vltitulo)."</td>";
+	    		$sit = $t->dssituac;
 	    		if ($sit=="N") {
 		    		$html .=	"<td><img src='../../imagens/icones/sit_ok.png'/></td>";
 	    		}
@@ -316,11 +312,10 @@
 	    $xml .= "   <tpctrlim>3</tpctrlim>";
 	    $xml .= "   <insitlim>2</insitlim>";
 	    $xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
-	    $xml .= "   <nrnosnum>".$selecionados."</nrnosnum>";
+	    $xml .= "   <chave>".$selecionados."</chave>";
 	    $xml .= "	<dtmvtolt>".$glbvars["dtmvtolt"]."</dtmvtolt>";
 	    $xml .= " </Dados>";
 	    $xml .= "</Root>";
-
 
 	    $xmlResult = mensageria($xml,"TELA_ATENDA_DESCTO","INSERIR_TITULOS_BORDERO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 	    $xmlObj = getObjectXML($xmlResult);
@@ -395,7 +390,7 @@
 	    $xml .= "   <tpctrlim>3</tpctrlim>";
 	    $xml .= "   <insitlim>2</insitlim>";
 	    $xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
-	    $xml .= "   <nrnosnum>".$selecionados."</nrnosnum>";
+	    $xml .= "   <chave>".$selecionados."</chave>";
 	    $xml .= "   <nrborder>".$nrborder."</nrborder>";
 	    $xml .= "	<dtmvtolt>".$glbvars["dtmvtolt"]."</dtmvtolt>";
 	    $xml .= " </Dados>";
@@ -464,7 +459,7 @@
 	    		$html .= "<tr id='titulo_".$t->nrnosnum."'>";
 	    		$html .=	"<td>
 	    						<input type='hidden' name='vltituloselecionado' value='".formataMoeda($t->vltitulo)."'/>
-	    						<input type='hidden' name='selecionados' value='".$t->nrnosnum."'/>".$t->nrcnvcob."
+	    						<input type='hidden' name='selecionados' value='".$t->cdbandoc.";".$t->nrdctabb.";".$t->nrcnvcob.";".$t->nrdocmto."'/>".$t->nrcnvcob."
 	    					</td>";
 	    		$html .=	"<td>".$t->nrdocmto."</td>";
 	    		$html .=	"<td>".$t->nrinssac.' - '.$t->nmdsacad."</td>";
@@ -504,7 +499,7 @@
 	    $xml .= "	<dtmvtoan>".$glbvars["dtmvtoan"]."</dtmvtoan>";
 	    $xml .= "	<dtresgat>".$glbvars["dtmvtolt"]."</dtresgat>";
 	    $xml .= "	<inproces>".$glbvars["inproces"]."</inproces>";
-	    $xml .= "   <nrnosnum>".$selecionados."</nrnosnum>";
+	    $xml .= "   <chave>".$selecionados."</chave>";
 	    $xml .= " </Dados>";
 	    $xml .= "</Root>";
 

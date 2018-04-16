@@ -48,42 +48,39 @@
 	$xml = "<Root>";
     $xml .= " <Dados>";
     $xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
-    $xml .= "   <nrnosnum>".$selecionados."</nrnosnum>";
+    $xml .= "   <chave>".$selecionados."</chave>";
     $xml .= " </Dados>";
     $xml .= "</Root>";
 
  	// CONSULTA DA IBRATAN	
     $xmlResult = mensageria($xml,"TELA_ATENDA_DESCTO","SOLICITA_BIRO_BORDERO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
-    $xmlObj = getObjectXML($xmlResult);
-
-	if (strtoupper($xmlObj->roottag->tags[0]->name) == 'ERRO') {
-		echo "<script>";
-       echo 'showError("error","'.$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata.'","Alerta - Ayllos","bloqueiaFundo(divRotina);");setTimeout(function(){bloqueiaFundo($(\'#divError\'))},1);';
-		echo "</script>";
-		// exit;
+    $xmlObj = getClassXML($xmlResult);
+	if ($root->erro){
+		echo '<script>';
+		exibeErro(htmlentities($root->erro->registro->dscritic));
+		echo '</script>';
+		exit;
 	}
-	
 	// LISTA TODOS OS TITULOS SELECIONADOS COM AS CRITICAS E RETORNO DA IBRATAN
 	$xml = "<Root>";
     $xml .= " <Dados>";
     $xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
-    $xml .= "   <nrnosnum>".$selecionados."</nrnosnum>";
+    $xml .= "   <chave>".$selecionados."</chave>";
     $xml .= " </Dados>";
     $xml .= "</Root>";
 
     // FAZER O INSERT CRAPRDR e CRAPACA
     $xmlResult = mensageria($xml,"TELA_ATENDA_DESCTO","LISTAR_TITULOS_RESUMO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
-    $xmlObj = getObjectXML($xmlResult);
-
-	$dados = $xmlObj->roottag->tags[0];
-    $qtTitulos = $xmlObj->roottag->tags[0]->attributes['QTREGIST'];
+    $xmlObj = getClassXML($xmlResult);
+    $root = $xmlObj->roottag;
+	$dados = $root->dados;
+    $qtTitulos = $dados->getAttribute('QTREGIST');
 
     // Se ocorrer um erro, mostra mensagem
-    
-	if (strtoupper($xmlObj->roottag->tags[0]->name) == 'ERRO') {
-		echo "<script>";
-       echo 'showError("error","'.$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata.'","Alerta - Ayllos","bloqueiaFundo(divRotina);");';
-		echo "</script>";
+	if ($root->erro){
+		echo '<script>';
+		exibeErro(htmlentities($root->erro->registro->dscritic));
+		echo '</script>';
 		exit;
 	}
 
@@ -113,15 +110,17 @@
 						</thead>
 						<tbody>
 							<?
-						    	foreach($dados->tags AS $t){ ?>
-						    		<tr id="titulo_<? echo getByTagName($t->tags,'nrnosnum');?>" onclick="selecionaTituloResumo('<? echo getByTagName($t->tags,'nrnosnum');?>');">
-						    			<td><input type='hidden' name='selecionados' value='<? echo getByTagName($t->tags,'nrnosnum');?>'/><? echo getByTagName($t->tags,'nrcnvcob');?></td>
-						    			<td><? echo getByTagName($t->tags,'nrdocmto');?></td>
-						    			<td><? echo getByTagName($t->tags,'nrinssac').' - '.getByTagName($t->tags,'nmdsacad');?></td>
-						    			<td><? echo getByTagName($t->tags,'dtvencto');?></td>
-						    			<td><span><? echo converteFloat(getByTagName($t->tags,'vltitulo'));?></span><? echo formataMoeda(getByTagName($t->tags,'vltitulo'));?></td>
+						    	foreach($dados->find("inf") AS $t){ ?>
+						    		<tr id="titulo_<? echo $t->nrnosnum;?>" onclick="selecionaTituloResumo('<? echo $t->nrnosnum;?>');">
+						    			<td>
+						    				<input type='hidden' name='selecionados' value='<? echo $t->cdbandoc; ?>;<? echo $t->nrdctabb; ?>;<? echo $t->nrcnvcob; ?>;<? echo $t->nrdocmto; ?>'/><? echo $t->nrcnvcob ;?>
+						    			</td>
+						    			<td><? echo $t->nrdocmto;?></td>
+						    			<td><? echo $t->nrinssac.' - '.$t->nmdsacad;?></td>
+						    			<td><? echo $t->dtvencto;?></td>
+						    			<td><span><? echo converteFloat($t->vltitulo);?></span><? echo formataMoeda($t->vltitulo);?></td>
 						    			<?
-							    			$sit = getByTagName($t->tags,'dssituac');
+							    			$sit = $t->dssituac;
 								    		if ($sit=="N") { ?>
 									    		<td><img src='../../imagens/icones/sit_ok.png'/></td>
 								    		<? }
@@ -133,7 +132,7 @@
 								    		<? }
 								    	?>
 						    			<?
-							    			$sit = getByTagName($t->tags,'sitibrat');
+							    			$sit = $t->sitibrat;
 								    		if ($sit=="N") { ?>
 									    		<td><img src='../../imagens/icones/sit_ok.png'/></td>
 								    		<? }

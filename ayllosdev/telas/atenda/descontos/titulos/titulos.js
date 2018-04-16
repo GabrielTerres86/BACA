@@ -657,7 +657,7 @@ function analisarBorderoDscTit() {
 
     // Mostra mensagem de aguardo
     showMsgAguardo("Aguarde, analisando o border&ocirc; ...");
-    
+
     // Carrega conteúdo da opção através de ajax
     $.ajax({
         type: "POST",
@@ -2642,27 +2642,27 @@ function realizarManutencaoDeLimite(operacao, flgstlcr) {
     }
 
     if(operacao === 1){
-        $.ajax({
-            type: "POST",
-            url: UrlSite + "telas/atenda/descontos/titulos/titulos_limite_manutencao.php",
-            dataType: "html",
-            data: {
-                nrdconta: nrdconta,
-                nrctrlim: nrctrlim,
-                redirect: "html_ajax"
-            },
-            error: function (objAjax, responseError, objExcept) {
-                hideMsgAguardo();
-                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
-            },
-            success: function (response) {
-                 $("#divOpcoesDaOpcao2").html(response);
-                 formataManutencaoDeLimite();
-                 hideMsgAguardo();
-            }
-        });
-        return false;
-    }
+    $.ajax({
+        type: "POST",
+        url: UrlSite + "telas/atenda/descontos/titulos/titulos_limite_manutencao.php",
+        dataType: "html",
+        data: {
+            nrdconta: nrdconta,
+            nrctrlim: nrctrlim,
+            redirect: "html_ajax"
+        },
+        error: function (objAjax, responseError, objExcept) {
+            hideMsgAguardo();
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+        },
+        success: function (response) {
+             $("#divOpcoesDaOpcao2").html(response);
+             formataManutencaoDeLimite();
+             hideMsgAguardo();
+        }
+    });
+    return false;
+}
 
     if(operacao == 2){
         concluirManutencaoDeLimite();
