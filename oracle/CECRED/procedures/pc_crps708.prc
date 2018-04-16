@@ -10,7 +10,7 @@ BEGIN
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Jonata - RKAM
-   Data    : Setembro/2016                        Ultima atualizacao: 24/11/2016
+   Data    : Setembro/2016                        Ultima atualizacao: 16/04/2018
 
    Dados referentes ao programa:
 
@@ -24,7 +24,11 @@ BEGIN
                24/11/2016 - Ajuste para alimentar correta o lote utilizado no 
 							              lançamento de créditos na conta do cooperado
 							              (Adriano - SD 563707).            
-                            
+               16/04/2018 - Este programa foi desenvolvido para rodar na segunda-feira. Em fev/2018
+			                ele foi executado em uma quarta-feira devido ao feriado de carnaval,
+							afetando a lógica do programa e gerando divergencias nos lançamentos
+							feitos para a Sicredi. Gabriel Fronza - Mouts - Chamado 851502. 
+
    ............................................................................. */
    DECLARE
 
@@ -177,8 +181,21 @@ BEGIN
        -- Busca datas para processamento
        vr_date := rw_crapdat.dtmvtolt;
        
+	   /* Este  programa  foi  desenvolvido  para ser rodado às Segundas-Feiras. Então
+		  o Loop Busca-Ult-Quarta diminui  o dia atual, 1 por 1 até  que vr_date  seja
+		  igual à Quarta-Feira anterior. Então quando to_char(vr_date,'D') = 4, o loop 
+		  define as variáveis inicio e final, sendo  sempre  vr_inicio =  Quinta-Feira
+		  e vr_final =  Quarta-Feira.  Em  fev/2018 o  programa  foi  executado em uma 
+		  quarta-feira, ao inves de Segunda-Feira devido ao feriado de carnaval. Então 
+		  o intervalo definido por vr_inicio e vr_final não funcionou corretamente.    
+	   */
+       
+       WHILE to_char(vr_date,'D') <> 2 LOOP
+         vr_date := vr_date - 1;
+       END LOOP;
+
        -- Buscar período inicial e final para efetuar o acumulado das taxas
-       WHILE NOT vr_achou LOOP
+       WHILE NOT vr_achou LOOP --Inicio Busca-Ult-Quarta
          IF to_char(vr_date,'D') <> 4 THEN
            vr_date := vr_date - 1;
             
@@ -188,7 +205,7 @@ BEGIN
            vr_final  := vr_date;
            vr_achou  := TRUE;
          END IF;
-       END LOOP;
+       END LOOP; --Fim Busca-Ult-Quarta
          
        -- Buscaremos todos os lançamentos de TEDs efetuadas no período para cada Cooperativa
        FOR rw_lcm IN cr_craplcm(vr_inicio,vr_final) LOOP
