@@ -85,11 +85,9 @@
 	// Esconde mensagem de aguardo
 	echo 'idLinhaL = 0;';
 	echo 'hideMsgAguardo();';
-	echo 'blockBackground(parseInt($("#divRotina").css("z-index")));';	
+	echo 'showError("inform","Opera&ccedil;&atilde;o efetuada com sucesso!","Alerta - 	Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\'))); fecharRotinaGenerico(\'CONTRATO\');");';	
 
-	// Recarrega os limites
-	echo 'carregaLimitesTitulos();';
-	
+
 	// Função para exibir erros na tela através de javascript
 	function exibeErro($msgErro) { 
 		echo 'hideMsgAguardo();';
