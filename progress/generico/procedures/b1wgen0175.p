@@ -100,7 +100,10 @@
    13/06/2017 - Ajustes para o novo formato de devoluçao de Sessao Única, de 
                 Fraudes/Impedimentos e remoçao do processo de devoluçao de Cheques.
                 PRJ367 - Compe Sessao Unica (Lombardi)
-   
+
+   12/04/2018 - Ajustes para permitir devolver o cheque com alinea 11 em casos de já haver
+                devolução pela alinea 22 (Wagner/Sustentação #839414)
+                 
 ............................................................................. */
 DEF STREAM str_1.  /*  Para relatorio de entidade  */
 
@@ -1932,6 +1935,7 @@ PROCEDURE valida-alinea:
 
     IF  par_cdalinea = 11 THEN DO:
 		IF NOT CAN-DO(aux_lsalinea,"")   AND
+		   NOT CAN-DO(aux_lsalinea,"22") AND /* 22 - Cheque sem assinatura*/
 		   NOT CAN-DO(aux_lsalinea,"31") AND
 		   NOT CAN-DO(aux_lsalinea,"39") AND
 		   NOT CAN-DO(aux_lsalinea,"48") AND
