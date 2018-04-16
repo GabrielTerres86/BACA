@@ -73,7 +73,7 @@ begin
                  VALUES('BUSCA_DTPRJATR',
                         'TELA_ATENDA_DEPOSVIS',
                         'pc_busca_dts_preju_atraso',
-                        'pr_nrdconta,pr_cdcooper',
+                        'pr_cdcooper, pr_nrdconta',
                         rw_craprdr.nrseqrdr);
                              
     dbms_output.put_line('Insere CRAPACA -> BUSCA_DTPRJATR -> TELA_ATENDA_DEPOSVIS.pc_busca_dts_preju_atraso');
