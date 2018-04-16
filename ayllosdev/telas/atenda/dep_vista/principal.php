@@ -92,7 +92,7 @@
 	$xml .= "</Root>";
 
 	// Chamada mensageria
-  $xmlResult = mensageria($xml, "EMPR0002", "BUSCA_DTPRJATR", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+  $xmlResult = mensageria($xml, "TELA_ATENDA_DEPOSVIS", "BUSCA_DTPRJATR", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
   $xmlObjeto = getObjectXML($xmlResult);
 
 	if ( strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO" ) {
