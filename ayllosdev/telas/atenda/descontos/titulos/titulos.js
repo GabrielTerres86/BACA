@@ -2611,8 +2611,6 @@ function realizarManutencaoDeLimite(operacao, flgstlcr) {
     showMsgAguardo("Aguarde, carregando dados do contrato...");
     var nrctrlim = normalizaNumero($("#nrctrlim","#frmTitulos").val());
     if(!operacao){operacao = 0;}
-    console.log(operacao);
-    console.log(flgstlcr);
 
     var callback = "realizarManutencaoDeLimite(1,"+flgstlcr+" )";
 
@@ -2633,12 +2631,13 @@ function realizarManutencaoDeLimite(operacao, flgstlcr) {
     }
     // operação 0 mostra a janela de confirmação
     if(operacao === 0){
-            showError(
-                "inform",
-                "Deseja realizar a manuten&ccedil;&atilde;o do contrato?",
-                "Alerta - Ayllos",
-                callback);
-            return false;
+        showConfirmacao("Deseja realizar a manuten&ccedil;&atilde;o do contrato?",
+            "Confirma&ccedil;&atilde;o - Ayllos",
+           callback,
+            "",
+            "sim.gif",
+            "nao.gif");
+        return false;
     }
 
     if(operacao === 1){
@@ -2678,6 +2677,14 @@ function concluirManutencaoDeLimite(){
     var nrctrlim = normalizaNumero($("#nrctrlim","#frmTitLimiteManutencao").val());
     var vllimite = $('#vllimite','#frmTitLimiteManutencao').val().replace(/\./g,"");
     var cddlinha = $('#cddlinha','#frmTitLimiteManutencao').val();
+
+    var per_vllimite = $('#per_vllimite','#frmTitLimiteManutencao').val().replace(/\./g,"");
+    var per_cddlinha = $('#per_cddlinha','#frmTitLimiteManutencao').val();
+    if(vllimite == per_vllimite &&
+        cddlinha == per_cddlinha){
+        showError('error','Nenhum valor foi alterado.','Alerta - Ayllos','');
+        return;
+    }
 
     $.ajax({        
         type    : 'POST',
