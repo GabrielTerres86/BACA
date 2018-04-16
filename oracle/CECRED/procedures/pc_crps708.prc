@@ -1,11 +1,11 @@
-CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS708 (pr_cdcooper IN crapcop.cdcooper%TYPE   --> Código Cooperativa
+CREATE OR REPLACE PROCEDURE cecred.PC_CRPS708 (pr_cdcooper IN crapcop.cdcooper%TYPE   --> Código Cooperativa
                                               ,pr_stprogra OUT PLS_INTEGER            --> Saída de termino da execução
                                               ,pr_infimsol OUT PLS_INTEGER            --> Saída de termino da solicitação
                                               ,pr_cdcritic OUT crapcri.cdcritic%TYPE  --> Código da Critica
                                               ,pr_dscritic OUT VARCHAR2) IS           --> Descricao da Critica
 BEGIN
    /* .............................................................................
-
+ 
    Programa: PC_CRPS708
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
@@ -18,16 +18,13 @@ BEGIN
    Objetivo  : Efetuar a contabilização do repasse dos recursos de TED entre as cooperativas
 
    Alteracoes: 01/11/2016 - Ajustes realizados para corrigir os problemas encontrados
-                            durante a homologação da área de negócio
-                            (Adriano - M211).
-
-               24/11/2016 - Ajuste para alimentar correta o lote utilizado no
-                            lançamento de créditos na conta do cooperado
-                            (Adriano - SD 563707).
-
-               20/03/2018 - Correção para quando rodar na quarta por motivo de feriados fazer
-                      corretamente intervalo de terça a quarta. (Alexandre Borgmann-Mouts chamado 851502)
-
+							              durante a homologação da área de negócio
+							              (Adriano - M211).
+                            
+               24/11/2016 - Ajuste para alimentar correta o lote utilizado no 
+							              lançamento de créditos na conta do cooperado
+							              (Adriano - SD 563707).            
+                            
    ............................................................................. */
    DECLARE
 
@@ -37,12 +34,12 @@ BEGIN
        FROM crapcop cop
       WHERE cop.cdcooper = pr_cdcooper;
      rw_crapcop cr_crapcop%ROWTYPE;
-
+     
      -- Busca do valor de tarifa
      CURSOR cr_tarifa IS
      SELECT vltedtec
        FROM gncdtrf;
-     vr_vltedtec gncdtrf.vltedtec%TYPE;
+     vr_vltedtec gncdtrf.vltedtec%TYPE;    
 
      --Registro do tipo calendario
      rw_crapdat  BTCH0001.cr_crapdat%ROWTYPE;
@@ -54,7 +51,7 @@ BEGIN
            ,cop.nrctactl
            ,COUNT(1) qtlanmto
        FROM craplcm lcm
-           ,crapcop cop
+           ,crapcop cop 
       WHERE cop.cdcooper = lcm.cdcooper
         AND NOT cop.cdcooper IN (3,16)
         AND cop.flgativo = 1
@@ -65,9 +62,9 @@ BEGIN
         AND lcm.dtmvtolt BETWEEN pr_ini AND pr_fim
         GROUP BY cop.cdcooper
                 ,cop.nrctactl;
-     -- Quantidade acumulado total
+     -- Quantidade acumulado total 
      vr_qtlanmto NUMBER;
-
+   
      -- Buscar Lote
      CURSOR cr_craplot (pr_cdcooper IN crapcop.cdcooper%TYPE
                        ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE
@@ -92,12 +89,13 @@ BEGIN
      vr_cdprogra VARCHAR2(10);
      vr_dscritic VARCHAR2(4000);
      vr_nmarqlog VARCHAR2(400) := 'prcctl_' || to_char(SYSDATE, 'RRRR') || to_char(SYSDATE,'MM') || to_char(SYSDATE,'DD') || '.log';
-
+      
      --Variaveis de Excecao
-     vr_exc_saida   EXCEPTION;
+     vr_exc_saida   EXCEPTION;     
      vr_exc_fimprg  EXCEPTION;
-
+     
      -- Busca das datas para processar
+     vr_achou BOOLEAN :=FALSE;
      vr_inicio DATE;
      vr_final  DATE;
      vr_date   DATE;
@@ -123,35 +121,35 @@ BEGIN
 
      --Se retornou critica aborta programa
      IF vr_cdcritic <> 0 THEN
-
+       
        --Descricao do erro recebe mensagam da critica
        vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
-
+       
        -- Envio centralizado de log de erro
        btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                  ,pr_ind_tipo_log => 2 -- Erro tratato
                                  ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
                                                      || vr_cdprogra || ' --> '
                                                      || vr_dscritic );
-
+                                                     
        --Sair do programa
        RAISE vr_exc_saida;
-
+       
      END IF;
 
      -- Verificação do calendário
      OPEN BTCH0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
-
+     
      FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
-
-     IF BTCH0001.cr_crapdat%NOTFOUND THEN
+ 
+     IF BTCH0001.cr_crapdat%NOTFOUND THEN     
        CLOSE BTCH0001.cr_crapdat;
-
+        
       -- Montar mensagem de critica
       vr_cdcritic:= 1;
       vr_dscritic:= gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
       RAISE vr_exc_saida;
-
+        
      ELSE
        -- Apenas fechar o cursor
        CLOSE BTCH0001.cr_crapdat;
@@ -162,38 +160,48 @@ BEGIN
                                 pr_ind_tipo_log => 2, --> erro tratado
                                 pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
                                                    ' - '|| vr_cdprogra ||' --> Iniciando repasse de TEDs Sicredi',
-                                pr_nmarqlog     => vr_nmarqlog);
-
+                                pr_nmarqlog     => vr_nmarqlog);                                
+     
      -- Busca do valor de tarifa
      OPEN cr_tarifa;
-
+     
      FETCH cr_tarifa INTO vr_vltedtec;
-
-     CLOSE cr_tarifa;
-
+     
+     CLOSE cr_tarifa; 
+     
      vr_qtlanmto := 0;
-
+     
      -- Somente se achou tarifa
      IF nvl(vr_vltedtec,0) > 0 THEN
-
+       
        -- Busca datas para processamento
-       vr_date := next_day(rw_crapdat.dtmvtolt-8,'QUARTA-FEIRA');
-
-       vr_inicio := vr_date - 6;
-       vr_final  := vr_date;
-
+       vr_date := rw_crapdat.dtmvtolt;
+       
+       -- Buscar período inicial e final para efetuar o acumulado das taxas
+       WHILE NOT vr_achou LOOP
+         IF to_char(vr_date,'D') <> 4 THEN
+           vr_date := vr_date - 1;
+            
+           continue;
+         ELSE
+           vr_inicio := vr_date - 6;
+           vr_final  := vr_date;
+           vr_achou  := TRUE;
+         END IF;
+       END LOOP;
+         
        -- Buscaremos todos os lançamentos de TEDs efetuadas no período para cada Cooperativa
        FOR rw_lcm IN cr_craplcm(vr_inicio,vr_final) LOOP
-
+         
          -- Busca Lote
          OPEN cr_craplot(pr_cdcooper => pr_cdcooper
                         ,pr_dtmvtolt => rw_crapdat.dtmvtolt
                         ,pr_nrdolote => 8485);
-
+                        
          FETCH cr_craplot INTO rw_craplot;
-
+         
          vr_hasfound := cr_craplot%FOUND;
-
+         
          CLOSE cr_craplot;
 
          -- Se não existir
@@ -251,7 +259,7 @@ BEGIN
                RAISE vr_exc_saida;
            END;
          END IF;
-
+           
          -- Cria o lancamento em C/C
          BEGIN
            INSERT INTO craplcm (dtmvtolt
@@ -285,23 +293,23 @@ BEGIN
              vr_dscritic := 'Erro ao criar repasse: '||SQLERRM;
              RAISE vr_exc_saida;
          END;
-
+           
          -- Acumular ao total
          vr_qtlanmto := vr_qtlanmto + rw_lcm.qtlanmto;
-
+         
        END LOOP;
-
+         
        -- Se houve valor acumulado
-       IF vr_qtlanmto > 0 THEN
+       IF vr_qtlanmto > 0 THEN 
          -- Busca Lote
          OPEN cr_craplot(pr_cdcooper => pr_cdcooper
                         ,pr_dtmvtolt => rw_crapdat.dtmvtolt
                         ,pr_nrdolote => 8486);
-
+                        
          FETCH cr_craplot INTO rw_craplot;
-
+         
          vr_hasfound := cr_craplot%FOUND;
-
+         
          CLOSE cr_craplot;
 
          -- Se não existir
@@ -345,7 +353,7 @@ BEGIN
                   , qtinfoln = nvl(craplot.qtinfoln,0) + 1
                   , vlinfocr = nvl(craplot.vlinfocr,0) + (vr_qtlanmto*vr_vltedtec)
                   , vlcompcr = nvl(craplot.vlcompcr,0) + (vr_qtlanmto*vr_vltedtec)
-                  , nrseqdig = nvl(craplot.nrseqdig,0) + 1
+                  , nrseqdig = nvl(craplot.nrseqdig,0) + 1                  
               WHERE craplot.cdcooper = pr_cdcooper
                 AND craplot.dtmvtolt = rw_crapdat.dtmvtolt
                 AND craplot.cdagenci = 1
@@ -359,14 +367,14 @@ BEGIN
                RAISE vr_exc_saida;
            END;
          END IF;
-
+           
          -- Buscar conta da AV na Central
          OPEN cr_crapcop (pr_cdcooper => 16);
-
+         
          FETCH cr_crapcop INTO rw_crapcop;
-
+         
          CLOSE cr_crapcop;
-
+           
          -- Cria o lancamento em C/C
          BEGIN
            INSERT INTO craplcm (dtmvtolt
@@ -399,8 +407,8 @@ BEGIN
            WHEN OTHERS THEN
              vr_dscritic := 'Erro ao criar repasse no destino: '||SQLERRM;
              RAISE vr_exc_saida;
-         END;
-       END IF;
+         END;              
+       END IF;  
      END IF;
 
      -- Processo OK, devemos chamar a fimprg
@@ -414,11 +422,11 @@ BEGIN
                                 pr_ind_tipo_log => 2, --> erro tratado
                                 pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
                                                    ' - '|| vr_cdprogra ||' --> Encerramento do Repasse de TEDs Sicredi',
-                                pr_nmarqlog     => vr_nmarqlog);
+                                pr_nmarqlog     => vr_nmarqlog);                                
 
      --Salvar informacoes no banco de dados
      COMMIT;
-
+     
    EXCEPTION
      WHEN vr_exc_fimprg THEN
        -- Se foi retornado apenas codigo
@@ -472,8 +480,8 @@ BEGIN
        -- Efetuar rollback
        ROLLBACK;
 
-   END;
-
+   END;   
+   
 
 END;
 /
