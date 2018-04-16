@@ -100,25 +100,7 @@
 		echo '</script>';
 		exit();
 	}
-
-	$insitlim = $limites[$i]->tags[7]->cdata;
-	$dssitest = $limites[$i]->tags[8]->cdata;
-	$insitapr = $limites[$i]->tags[9]->cdata;
-	
 ?>
-
-<?  for ($i = 0; $i < $qtLimites; $i++) {
-
-?>
-	<input type="hidden" id="vlLimite" name="vlLimite" value="<? echo $limites[$i]->tags[2]->cdata; ?>" />
-	<input type="hidden" id="insitlim" name="insitlim" value="<? echo $limites[$i]->tags[7]->cdata; ?>" />
-	<input type="hidden" id="dssitest" name="dssitest" value="<? echo $limites[$i]->tags[8]->cdata; ?>" />
-	<input type="hidden" id="insitapr" name="insitapr" value="<? echo $limites[$i]->tags[9]->cdata; ?>" />
-
-<?
-}
-?>
-
 
 <div id="divContratos">
 	<div class="divRegistros">
@@ -137,25 +119,51 @@
 			<tbody>
 				
 				<?  for ($i = 0; $i < $qtLimites; $i++) {
-						
+   
+					    $pr_dtpropos = getByTagName($limites[$i]->tags,"dtpropos");//0
+					    $pr_dtinivig = getByTagName($limites[$i]->tags,"dtinivig");//1
+					    $pr_vllimite = getByTagName($limites[$i]->tags,"vllimite");//2
+						$pr_nrctrlim = getByTagName($limites[$i]->tags,"nrctrlim");//3
+						$pr_qtdiavig = getByTagName($limites[$i]->tags,"qtdiavig");//4
+						$pr_cddlinha = getByTagName($limites[$i]->tags,"cddlinha");//5
+						$pr_tpctrlim = getByTagName($limites[$i]->tags,"tpctrlim");//6
+						$pr_dssitlim = getByTagName($limites[$i]->tags,"dssitlim");//7
+						$pr_dssitest = getByTagName($limites[$i]->tags,"dssitest");//8
+						$pr_dssitapr = getByTagName($limites[$i]->tags,"dssitapr");//9
+						$pr_flgenvio = getByTagName($limites[$i]->tags,"flgenvio");//10
+						$pr_insitlim = getByTagName($limites[$i]->tags,"flgenvio");//11
+						$pr_idcobope = getByTagName($limites[$i]->tags,"idcobope");//12
+						$pr_cdageori = getByTagName($limites[$i]->tags,"cdageori");//13
 
-						$mtdClick = "selecionaLimiteTitulos('".($i + 1)."', '".$qtLimites."', '".($limites[$i]->tags[3]->cdata)."', '".($limites[$i]->tags[7]->cdata)."', '".($limites[$i]->tags[8]->cdata)."', '".($limites[$i]->tags[9]->cdata)."', '".($limites[$i]->tags[2]->cdata)."');";
+						$mtdClick = "selecionaLimiteTitulos('"
+							.($i + 1)."', '"
+							.$qtLimites."', '"
+							.$pr_nrctrlim."', '"
+							.$pr_dssitlim."', '"
+							.$pr_dssitest."', '"
+							.$pr_dssitapr."', '"
+							.$pr_vllimite."');";
 				?>
 
 					<tr id="trLimite<? echo $i + 1; ?>" onFocus="<? echo $mtdClick; ?>" onClick="<? echo $mtdClick; ?>">
 
-						<td><? echo getByTagName($limites[$i]->tags,"DTPROPOS"); ?></td>
+						<td><? echo $pr_dtpropos; ?></td>
 
-						<td><? echo $limites[$i]->tags[1]->cdata; ?></td>
+						<td><? echo $pr_dtinivig; ?></td>
 						
-						<td><span><? echo $limites[$i]->tags[3]->cdata; ?></span>
-							<? echo formataNumericos('zzz.zzz.zzz',$limites[$i]->tags[3]->cdata,'.'); ?></td>
+						<td>
+							<span><? echo $pr_nrctrlim ?></span>
+							<? echo formataNumericos('zzz.zzz.zzz',$pr_nrctrlim,'.'); ?>
+						</td>
 
-						<td><span><? echo $limites[$i]->tags[2]->cdata; ?></span>
-							<? echo number_format(str_replace(",",".",$limites[$i]->tags[2]->cdata),2,",","."); ?></td>
-						<td><? echo $limites[$i]->tags[4]->cdata; ?></td>
-						<td><? echo $limites[$i]->tags[5]->cdata; ?></td>
-						<td><? echo getByTagName($limites[$i]->tags,"dssitlim"); ?></td>
+						<td>
+							<span><? echo $pr_vllimite; ?></span>
+							<? echo number_format(str_replace(",",".",$pr_vllimite),2,",","."); ?>
+						</td>
+						
+						<td><? echo $pr_qtdiavig; ?></td>
+						<td><? echo $pr_cddlinha; ?></td>
+						<td><? echo $pr_dssitlim; ?></td>
 				
 												
 					</tr>
@@ -175,18 +183,45 @@
 
 <div id="divBotoesTitulosLimite" style="margin-bottom:10px;">
 	
-	<input type="button" class="botao" value="Voltar"  onClick="voltaDiv(2,1,4,'DESCONTO DE T&Iacute;TULOS','DSC TITS');carregaTitulos();return false;" />
+	<input 
+		type="button" 
+		class="botao" 
+		value="Voltar"  
+		onClick="
+			voltaDiv(2,1,4,'DESCONTO DE T&Iacute;TULOS','DSC TITS');
+			carregaTitulos();
+			return false;" 
+		/>
 
-	<input type="button" class="botao" value="Cancelar"  <?php if ($qtLimites == 0) { echo 'style="cursor: default;'.$dispX.'" onClick="return false;"'; } else { echo 'style="'.$dispX.'" onClick="showConfirmacao(\'Deseja cancelar o Contrato?\',\'Confirma&ccedil;&atilde;o - Ayllos\',\'cancelaLimiteDscTit()\',\'metodoBlock()\',\'sim.gif\',\'nao.gif\');return false;"'; } ?>  />
+	<input 
+		type="button"
+		class="botao"
+		value="Cancelar"
+		<?php if ($qtLimites == 0) {
+			echo 'style="cursor: default;'.$dispX.'" onClick="return false;"';
+		} else {
+			echo 'style="'.$dispX.'" onClick="showConfirmacao(\'Deseja cancelar o Contrato?\',\'Confirma&ccedil;&atilde;o - Ayllos\',\'cancelaLimiteDscTit()\',\'metodoBlock()\',\'sim.gif\',\'nao.gif\');return false;"';
+		} ?>  />
 	
-	<input type="button" class="botao" value="Consultar"  
-		<?php if ($qtLimites == 0) { 
+	<input 
+		type="button"
+		class="botao"
+		value="Consultar"
+		<?php if ($qtLimites == 0) {
 				echo 'style="cursor: default;'.$dispC.'" onClick="return false;"'; 
-			} else { 
+			} else {
 				echo 'style="'.$dispC.'" onClick="carregaDadosConsultaLimiteDscTit();return false;"'; 
 		} ?> />
 	
-	<input type="button" class="botao" value="Imprimir" <?php if ($qtLimites == 0) { echo 'style="cursor: default;'.$dispM.'" onClick="return false;"'; } else { echo 'style="'.$dispM.'" onClick="mostraImprimirLimite(\'CONTRATO\');return false;"'; } ?> />
+	<input 
+		type="button"
+		class="botao"
+		value="Imprimir"
+		<?php if ($qtLimites == 0) { 
+			echo 'style="cursor: default;'.$dispM.'" onClick="return false;"';
+		} else {
+			echo 'style="'.$dispM.'" onClick="mostraImprimirLimite(\'CONTRATO\');return false;"';
+		} ?> />
 
 	<input 
 		type="button" 
@@ -202,18 +237,19 @@
 </div>
 
 <script type="text/javascript">
-dscShowHideDiv("divOpcoesDaOpcao2","divOpcoesDaOpcao1;divOpcoesDaOpcao3");
 
-// Muda o título da tela
-$("#tdTitRotina").html("DESCONTO DE T&Iacute;TULOS - LIMITE");
+	dscShowHideDiv("divOpcoesDaOpcao2","divOpcoesDaOpcao1;divOpcoesDaOpcao3");
 
-formataLayout('divContratos');
+	// Muda o título da tela
+	$("#tdTitRotina").html("DESCONTO DE T&Iacute;TULOS - LIMITE");
 
-// Esconde mensagem de aguardo
-hideMsgAguardo();
+	formataLayout('divContratos');
 
-// Bloqueia conteúdo que está átras do div da rotina
-blockBackground(parseInt($("#divRotina").css("z-index")));
+	// Esconde mensagem de aguardo
+	hideMsgAguardo();
+
+	// Bloqueia conteúdo que está átras do div da rotina
+	blockBackground(parseInt($("#divRotina").css("z-index")));
 	
 	//Se esta tela foi chamada através da rotina "Produtos" então acessa a opção conforme definido pelos responsáveis do projeto P364
 	if (executandoProdutos == true) {
@@ -221,4 +257,5 @@ blockBackground(parseInt($("#divRotina").css("z-index")));
 		$("#btnIncluirLimite", "#divBotoesTitulosLimite").click();
 		
 	}
+
 </script>
