@@ -657,7 +657,7 @@ function analisarBorderoDscTit() {
 
     // Mostra mensagem de aguardo
     showMsgAguardo("Aguarde, analisando o border&ocirc; ...");
-
+    
     // Carrega conteúdo da opção através de ajax
     $.ajax({
         type: "POST",
@@ -2928,7 +2928,7 @@ function formatarTelaAcionamentosDaProposta(){
 }
 
 // Mostrar dados para liberar um bordero
-function liberarBorderoDscTit() {
+function liberarBorderoDscTit(confirma) {
     // Mostra mensagem de aguardo
     showMsgAguardo("Aguarde, liberando o border&ocirc; ...");
     
@@ -2939,6 +2939,7 @@ function liberarBorderoDscTit() {
         data: {
             nrdconta: nrdconta,
             nrborder: nrbordero,
+            confirma: confirma,
             redirect: "script_ajax"
         },
         error: function (objAjax, responseError, objExcept) {
@@ -2964,6 +2965,6 @@ function mostrarBorderoAnalisar() {
 }
 
 function mostrarBorderoLiberar() {
-    showConfirmacao("Deseja liberar o border&ocirc; de desconto de t&iacute;tulos?","Confirma&ccedil;&atilde;o - Ayllos","liberarBorderoDscTit();","","sim.gif","nao.gif");
+    showConfirmacao("Deseja liberar o border&ocirc; de desconto de t&iacute;tulos?","Confirma&ccedil;&atilde;o - Ayllos","liberarBorderoDscTit(0);","","sim.gif","nao.gif");
     return false;
 }
