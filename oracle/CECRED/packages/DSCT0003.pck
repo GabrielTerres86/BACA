@@ -307,8 +307,70 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0003 AS
     AND   craplot.nrdolote = pr_nrdolote;
   rw_craplot cr_craplot%ROWTYPE;
 
+  -- Rotina para escrever texto na variável CLOB do XML
+  PROCEDURE pc_escreve_xml( pr_des_dados in varchar2
+                          , pr_fecha_xml in boolean default false
+                          ) is
+  BEGIN
+     gene0002.pc_escreve_xml( vr_des_xml
+                            , vr_texto_completo
+                            , pr_des_dados
+                            , pr_fecha_xml );
+  END pc_escreve_xml;
 
-
+  PROCEDURE pc_valida_bordero (pr_cdcooper IN craptdb.cdcooper%TYPE --> Código da Cooperativa
+                               ,pr_nrborder IN crapbdt.nrborder%TYPE --> Número do Bordero
+                               ,pr_cddeacao IN VARCHAR2      
+                               ,pr_dscritic OUT VARCHAR2             --> Descriçao da crítica
+                               ) IS
+      vr_exc_erro exception;
+      vr_dscritic VARCHAR2(10000);
+          
+      --============== CURSORES ==================
+      CURSOR cr_crapbdt (pr_cdcooper IN crapbdt.cdcooper%TYPE
+                        ,pr_nrborder IN crapbdt.nrborder%TYPE) IS
+        SELECT crapbdt.cdcooper
+              ,crapbdt.nrborder
+              ,crapbdt.nrdconta
+              ,crapbdt.insitbdt
+              ,crapbdt.rowid
+        FROM crapbdt
+        WHERE crapbdt.cdcooper = pr_cdcooper
+        AND   crapbdt.nrborder = pr_nrborder;
+      rw_crapbdt cr_crapbdt%ROWTYPE;                           
+    BEGIN
+       
+      --Selecionar bordero titulo
+      OPEN cr_crapbdt (pr_cdcooper => pr_cdcooper
+                      ,pr_nrborder => pr_nrborder);
+      --Posicionar no proximo registro
+      FETCH cr_crapbdt INTO rw_crapbdt;
+      --Se não encontrar
+      IF cr_crapbdt%NOTFOUND THEN
+        CLOSE cr_crapbdt;
+        vr_dscritic:= 'Registro de Borderô Não Encontrado.';
+        RAISE vr_exc_erro;
+      ELSE
+        -- Verifica situação do Bordero
+        if rw_crapbdt.insitbdt <> 2 AND pr_cddeacao = 'LIBERAR' THEN
+          vr_dscritic := 'O Borderô deve estar na situação APROVADO ou APROVADO AUTOMATICAMENTE.';
+          CLOSE cr_crapbdt;
+          raise vr_exc_erro;
+        ELSIF rw_crapbdt.insitbdt > 2 AND pr_cddeacao = 'ANALISAR' THEN
+          vr_dscritic := 'O Borderô deve estar na situação EM ESTUDO ou ANALISADO.';
+          CLOSE cr_crapbdt;
+          raise vr_exc_erro;
+        ELSE 
+          vr_dscritic := NULL;
+          CLOSE cr_crapbdt;
+          END IF;
+        END IF;	
+      
+      EXCEPTION
+        WHEN vr_exc_erro THEN
+          pr_dscritic := vr_dscritic;
+      
+    END pc_valida_bordero;
 
 
   /* Procedure para efetuar liberação de titulos de um determinado borderô */
@@ -2486,6 +2548,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0003 AS
       -- Inicia Variável de msg de contingência.
       vr_msgcontingencia := '';
 
+      pc_valida_bordero(pr_cdcooper => vr_cdcooper
+                       ,pr_nrborder => pr_nrborder
+                       ,pr_cddeacao => 'ANALISAR'
+                       ,pr_dscritic => vr_dscritic);
+      
+      IF (vr_dscritic IS NOT NULL) THEN
+         raise vr_exc_erro;
+      END IF;
+      
       /*Executar a Análise do Bordero*/
       pc_efetua_analise_bordero (pr_cdcooper => vr_cdcooper
                                 ,pr_cdagenci => vr_cdagenci

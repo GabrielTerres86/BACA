@@ -830,46 +830,6 @@ function analisarBorderoDscTit() {
     return false;
 }
 
-// OPÇÃO ANALISAR
-// Analisar bordero de desconto de títulos
-function analisarBorderoDscTit(opcao,nrdconta,nrbordero) {
-
-    // Mostra mensagem de aguardo
-    hideMsgAguardo();
-    showMsgAguardo("Aguarde, analisando o border&ocirc; ...");
-
-    // Carrega conteúdo da opção através de ajax
-    $.ajax({
-        type: "POST",
-        //url: UrlSite + "telas/atenda/descontos/titulos/titulos_bordero_liberaranalisar.php",
-        url: UrlSite + "telas/atenda/descontos/titulos/titulos_bordero_analisar.php",
-        data: {
-            nrdconta: nrdconta,
-            nrborder: nrbordero,
-            cddopcao: opcao,
-            redirect: "script_ajax"
-        },
-        error: function (objAjax, responseError, objExcept) {
-            hideMsgAguardo();
-            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
-        },
-        success: function (response) {
-            try {
-
-                //eval(response);
-                hideMsgAguardo();
-                showConfirmacao("Deseja liberar o border&ocirc; de desconto de t&iacute;tulos?","Confirma&ccedil;&atilde;o - Ayllos","carregaBorderosTitulos()","return false;","sim.gif","nao.gif");
-                botaoLiberar = 'S';
-
-            } catch (error) {
-                hideMsgAguardo();
-                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
-            }
-        }
-    });
-    return false;
-}
-
 // OPÇÃO LIBERAR
 // Liberar/Analisar bordero de desconto de títulos
 function liberaAnalisaBorderoDscTit(opcao, idconfir, idconfi2, idconfi3, idconfi4, idconfi5, idconfi6, indentra, indrestr) {
