@@ -16536,10 +16536,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
             -- ir para o proximo  
             vr_idxresp := pr_tab_resposta_cliente.next(vr_idxresp);
           END LOOP;  
-            
-          IF (vr_existresp OR NVL(pr_vltotrgt,0) = 0) AND (NOT (UPPER(pr_cdprogra) LIKE 'CRPS750%' OR UPPER(pr_cdprogra) = 'CRPS001')) THEN 
+
+          IF (vr_existresp OR NVL(pr_vltotrgt,0) = 0) THEN
              -- SAIR retornando QUESTION
-             pr_des_reto := 'QUESTION';
+             IF (NOT (UPPER(pr_cdprogra) LIKE 'CRPS750%' OR UPPER(pr_cdprogra) = 'CRPS001')) THEN 
+                pr_des_reto := 'QUESTION';
+             END IF;
              RETURN; 
           END IF;   
         END IF; -- Fim if de validação da aplicação    
