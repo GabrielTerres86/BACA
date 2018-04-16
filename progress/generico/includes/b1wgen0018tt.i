@@ -19,7 +19,10 @@
                             da tela DESCTO, opcao "A" (Adriano).
                             
                16/02/2015 - Melhorias Nova Operacao 129,130,131 e 132- Desconto
-                              de Cheque/Titulos (Andre Santos - SUPERO)        
+                              de Cheque/Titulos (Andre Santos - SUPERO) 
+                            
+               26/06/2017 - Adicionados campos vlcheque e qtcheque nas tabelas 
+                            crawlot, tt-relat-lotes e tt-relat-custod. PRJ367. (Lombardi)
                             
 .............................................................................*/
 DEFINE TEMP-TABLE tt-detalhe-conta NO-UNDO
@@ -100,10 +103,12 @@ DEF TEMP-TABLE crawlot             NO-UNDO
     FIELD qtchqcop AS INT     FORMAT "zz9"
     FIELD qtchqmen AS INT     FORMAT "zz9"
     FIELD qtchqmai AS INT     FORMAT "zz9"
+    FIELD qtcheque AS INT     FORMAT "zz9"
     FIELD qtchqtot AS INT     FORMAT "zz9"
     FIELD vlchqcop AS DECIMAL FORMAT "zzz,zzz,zz9.99"
     FIELD vlchqmen AS DECIMAL FORMAT "zzz,zzz,zz9.99"
     FIELD vlchqmai AS DECIMAL FORMAT "zzz,zzz,zz9.99"
+    FIELD vlcheque AS DECIMAL FORMAT "zzz,zzz,zz9.99"
     FIELD vlchqtot AS DECIMAL FORMAT "zzz,zzz,zz9.99"
     FIELD nmoperad AS CHAR    FORMAT "x(10)"
     FIELD dtlibera AS DATE    FORMAT "99/99/9999"
@@ -118,10 +123,12 @@ DEF TEMP-TABLE tt-relat-lotes      NO-UNDO
     FIELD qtchqcop AS INT  FORMAT "zzz9"
     FIELD qtchqmen AS INT  FORMAT "zzz9"
     FIELD qtchqmai AS INT  FORMAT "zzz9"
+    FIELD qtcheque AS INT  FORMAT "zzz9"
     FIELD qtchqtot AS INT  FORMAT "zzz9"
     FIELD vlchqcop AS DECI FORMAT "zzz,zzz,zz9.99"
     FIELD vlchqmen AS DECI FORMAT "zzz,zzz,zz9.99"
     FIELD vlchqmai AS DECI FORMAT "zzz,zzz,zz9.99"
+    FIELD vlcheque AS DECI FORMAT "zzz,zzz,zz9.99"
     FIELD vlchqtot AS DECI FORMAT "zzz,zzz,zz9.99"
     FIELD vlchmatb AS DECI FORMAT "zzz,zzz,zz9.99".
 
@@ -160,10 +167,12 @@ DEF TEMP-TABLE tt-relat-custod     NO-UNDO
     FIELD qtchqcop AS INTE  FORMAT "zzz9"
     FIELD qtchqmen AS INTE  FORMAT "zzz9"
     FIELD qtchqmai AS INTE  FORMAT "zzz9"
+    FIELD qtcheque AS INTE  FORMAT "zzz9"
     FIELD qtchqtot AS INTE  FORMAT "zzz9"
     FIELD vlchqcop AS DECI
     FIELD vlchqmen AS DECI FORMAT "zzzz,zzz,zz9.99"
     FIELD vlchqmai AS DECI FORMAT "zzzz,zzz,zz9.99"
+    FIELD vlcheque AS DECI FORMAT "zzzz,zzz,zz9.99"
     FIELD vlchqtot AS DECI FORMAT "zzzz,zzz,zz9.99".
 
 DEF TEMP-TABLE crabcst             NO-UNDO

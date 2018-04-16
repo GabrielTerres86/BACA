@@ -109,6 +109,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
   --
   --  Alteracoes: 30/09/2013 - Conversao Progress para oracle (Odirlei-AMcom).
   --
+  --              30/09/2013 - Remover as validações de cheque VLB. 
+  --                           PRJ367 - Compe Sessao Unica (Lombardi)
+  --
   ---------------------------------------------------------------------------------------------------------------
   
     -- Armazenar os valores da CRAPTAB na sessão
@@ -5966,7 +5969,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
 
     vr_exc_erro      EXCEPTION;
     vr_dstextab      CRAPTAB.Dstextab%type;
-    vr_valorvlb      NUMBER := 0;
     vr_vlrttdev      NUMBER := 0;
 
     --Buscar Compensacao de Cheques Devolvidos da Central
@@ -6073,20 +6075,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
         CLOSE cr_crapcop;
       END IF;
 
-      -- Buscar informacoes CRAPTAB
-      vr_dstextab := tabe0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
-                                               ,pr_nmsistem => 'CRED'
-                                               ,pr_tptabela => 'GENERI'
-                                               ,pr_cdempres => 0
-                                               ,pr_cdacesso => 'VALORESVLB'
-                                               ,pr_tpregist => 0);
-      IF vr_dstextab IS NOT NULL THEN
-        vr_valorvlb := to_number(gene0002.fn_busca_entrada(2,vr_dstextab,';'));
-      ELSE
-        pr_dscritic := 'NOK';
-        Return;
-      END IF;
-
       --Ler Arquivo intermediario para a devolucao de cheques ou taxa de devolucao.
       FOR rw_crapdev IN cr_crapdev(pr_cdbcoctl => rw_crapcop.cdbcoctl,
                                    pr_cdcooper => pr_cdcooper) LOOP
@@ -6094,14 +6082,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
         -- Se não foi informada a conta
         IF rw_crapdev.nrdconta = 0 THEN
           -- calcular valor de devolução
-          CASE rw_crapdev.indevarq
-            WHEN 1 THEN  -- devolução enviada pelo arquivo
               vr_vlrttdev := vr_vlrttdev + nvl(rw_crapdev.vllanmto,0);
-            WHEN 2 THEN
-              IF nvl(rw_crapdev.vllanmto,0) < vr_valorvlb THEN
-                vr_vlrttdev := vr_vlrttdev + nvl(rw_crapdev.vllanmto,0);
-              END IF;
-          END CASE;
         ELSE
           IF rw_crapdev.cdpesqui is null THEN
             --Buscar ultimo registro na Compensacao de Cheques da Central
@@ -6156,16 +6137,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
            rw_crapdev.cdpesqui <> 'TCO'    THEN
           continue;
         ELSE
-          -- calcular valor de devolução
-          CASE rw_crapdev.indevarq
-            WHEN 1 THEN
-              vr_vlrttdev := vr_vlrttdev + nvl(rw_crapdev.vllanmto,0);
-            WHEN 2 THEN
-              IF rw_crapdev.vllanmto < vr_valorvlb THEN
                 vr_vlrttdev := vr_vlrttdev + nvl(rw_crapdev.vllanmto,0);
               END IF;
-          END CASE;
-        END IF;
       END LOOP; -- Fim loop cr_gncpdev
 
     END IF; -- Fim pr_nmdatela <> 'PREVIS'

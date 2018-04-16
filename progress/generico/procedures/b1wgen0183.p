@@ -5,7 +5,7 @@
   Sistema : Conta-Corrente - Cooperativa de Credito
   Sigla   : CRED
   Autor   : Tiago
-  Data    : Fevereiro/14                           Ultima alteracao: 17/10/2017
+  Data    : Fevereiro/14                           Ultima alteracao: 08/03/2018
 
   Objetivo  : Procedures referentes a tela HRCOMP.
 
@@ -46,6 +46,9 @@
                          nao estava encontrando o job fazendo com que as 
                          alteracoes na HRCOMP nao surtissem o efeito desejado
                          (Tiago #753784).
+
+		    08/03/2018 - Removida DEVOLUCAO VLB - COMPE Sessao Unica (Diego).
+
 ............................................................................ */
 
 { sistema/generico/includes/b1wgen0183tt.i }
@@ -711,62 +714,8 @@ PROCEDURE valida_seq_execucao:
 
     EMPTY TEMP-TABLE tt-erro.
 
-    IF  TRIM(par_dsprogra) <> "DEVOLUCAO VLB"     AND
-        (TRIM(par_dsprogra) =  "DEVOLUCAO DIURNA"  OR
-         TRIM(par_dsprogra) =  "DEVOLUCAO NOTURNA") THEN
-        DO:
-            FIND FIRST crabhec WHERE crabhec.cdcooper  = par_cdcooper   AND
-                                     crabhec.dsprogra  = "DEVOLUCAO VLB" 
-                                     NO-LOCK NO-ERROR.
-    
-            IF  AVAIL(crabhec) THEN
-                DO:
-                    IF (crabhec.hriniexe >= par_hriniexe OR
-                        crabhec.hrfimexe >= par_hrfimexe) THEN
-                        DO: 
-                            ASSIGN aux_cdcritic = 0
-                                   aux_dscritic = "Devolucao VLB deve ser o primeiro processo.".
-    
-                            RUN gera_erro (INPUT par_cdcooper,
-                                           INPUT 0,
-                                           INPUT 0,
-                                           INPUT 1,     /** Sequencia **/
-                                           INPUT aux_cdcritic,
-                                           INPUT-OUTPUT aux_dscritic).
-    
-                            RETURN "NOK".
-                        END.
-                END.
-        END.
 
     CASE par_dsprogra:
-        WHEN "DEVOLUCAO VLB" THEN /*executado antes de todos outros processos*/
-            DO: 
-                        
-                FIND FIRST crabhec WHERE crabhec.cdcooper  = par_cdcooper AND
-                                         crabhec.dsprogra <> par_dsprogra AND
-                                         (crabhec.dsprogra = "DEVOLUCAO DIURNA" OR
-                                          crabhec.dsprogra = "DEVOLUCAO NOTURNA") AND
-                                         (crabhec.hriniexe <= par_hriniexe OR
-                                          crabhec.hrfimexe <= par_hrfimexe)
-                                         NO-LOCK NO-ERROR.
-
-                IF  AVAIL(crabhec) THEN
-                    DO:
-                        ASSIGN aux_cdcritic = 0
-                               aux_dscritic = "Devolucao VLB deve ser o primeiro processo.".
-    
-                        RUN gera_erro (INPUT par_cdcooper,
-                                       INPUT 0,
-                                       INPUT 0,
-                                       INPUT 1,     /** Sequencia **/
-                                       INPUT aux_cdcritic,
-                                       INPUT-OUTPUT aux_dscritic).
-    
-                        RETURN "NOK".
-
-                    END.
-            END.
 
         WHEN "DEVOLUCAO DIURNA" THEN
             DO:
@@ -793,7 +742,7 @@ PROCEDURE valida_seq_execucao:
                     END.
             END.
 
-        WHEN "DEVOLUCAO NOTURNA" THEN
+        WHEN "DEVOLUCAO FRAUDES E IMPEDIMENTOS" THEN
             DO:
                 FIND crabhec WHERE crabhec.cdcooper  = par_cdcooper       AND
                                    crabhec.dsprogra  = "DEVOLUCAO DIURNA" AND
@@ -805,7 +754,7 @@ PROCEDURE valida_seq_execucao:
                 IF  AVAIL(crabhec) THEN
                     DO:
                         ASSIGN aux_cdcritic = 0
-                               aux_dscritic = "Devolucao Nortuna deve rodar apos Devolucao Diurna.".
+                               aux_dscritic = "Devolucao Fraudes e Impedimentos deve rodar apos Devolucao Diurna.".
     
                         RUN gera_erro (INPUT par_cdcooper,
                                        INPUT 0,

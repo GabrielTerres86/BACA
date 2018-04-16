@@ -68,7 +68,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_FLUXOS IS
   --
   -- Objetivo  : Centralizar rotinas relacionadas a tela FLUXOS
   --
-  -- Alteracoes:
+  -- Alteracoes:  19/06/2017 - Retirados tratamentos craptab = MAIORESCHQ e atribuições 
+  --                           das variáveis: vr_valorchq, vr_vlchqnot, vr_vlchqdia, 
+  --                           vr_vlcmpnot e vr_vlcmpdiu. PRJ367 - Compe Sessao Unica (Lombardi)
   --
   ---------------------------------------------------------------------------
 
@@ -1798,28 +1800,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_FLUXOS IS
     ..............................................................................*/
     DECLARE
 
-      -- Busca lancamentos
-      CURSOR cr_craplcm(pr_cdcooper IN craplcm.cdcooper%TYPE
-                       ,pr_dtmvtolt IN craplcm.dtmvtolt%TYPE) IS
-        SELECT cdbanchq
-              ,dsidenti
-              ,vllanmto
-          FROM craplcm
-         WHERE cdcooper = pr_cdcooper
-           AND dtmvtolt = pr_dtmvtolt
-           AND cdhistor IN (47,191,338,573);
-
-      -- Busca cheques acolhidos para depositos
-      CURSOR cr_crapchd(pr_cdcooper IN crapchd.cdcooper%TYPE
-                       ,pr_dtmvtolt IN crapchd.dtmvtolt%TYPE) IS
-        SELECT cdcmpchq
-              ,vlcheque
-          FROM crapchd
-         WHERE cdcooper = pr_cdcooper
-           AND dtmvtolt = pr_dtmvtolt
-           AND insitchq IN (0,2)
-           AND inchqcop = 0;
-
       -- Busca tranferencia de valores
       CURSOR cr_craptvl(pr_cdcooper IN craptvl.cdcooper%TYPE
                        ,pr_dtmvtolt IN craptvl.dtmvtolt%TYPE) IS
@@ -1845,14 +1825,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_FLUXOS IS
            AND tpdocmto = 20
            AND intitcop = 0
            AND insittit IN (2,4);
-
-      -- Busca agencia
-      CURSOR cr_crapage(pr_cdcooper IN crapage.cdcooper%TYPE) IS
-        SELECT cdcomchq
-          FROM crapage
-         WHERE cdcooper = pr_cdcooper
-           AND flgdsede = 1;
-      rw_crapage cr_crapage%ROWTYPE;
 
       -- Busca informacoes da movimentacao
       CURSOR cr_crapffm(pr_cdcooper IN crapffm.cdcooper%TYPE
@@ -1882,22 +1854,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_FLUXOS IS
       vr_idorigem VARCHAR2(100);
 
       -- Variaveis
-      vr_blnfound BOOLEAN;
       vr_dtrefere DATE;
       vr_dtliquid DATE;
       vr_dtliqui2 DATE;
       vr_vlcbdonr NUMBER;
       vr_vlcbdosr NUMBER;
       vr_vlpreliq NUMBER;
-      vr_vlcmpnot NUMBER;
-      vr_vlcmpdiu NUMBER;
       vr_valorvlb NUMBER;
       vr_valorchq NUMBER;
       vr_vlcobbil NUMBER := 0;
       vr_vlcobmlt NUMBER := 0;
       vr_vldoctit NUMBER := 0;
-      vr_vlchqnot NUMBER := 0;
-      vr_vlchqdia NUMBER := 0;
       vr_dstextab craptab.dstextab%TYPE;
 
     BEGIN
@@ -1947,10 +1914,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_FLUXOS IS
                              (pr_cdcooper => pr_cdcooper
                              ,pr_dtmvtolt => vr_dtrefere - 1
                              ,pr_tipo     => 'A');
-      vr_dtliqui2 := GENE0005.fn_valida_dia_util
-                             (pr_cdcooper => pr_cdcooper
-                             ,pr_dtmvtolt => vr_dtliquid - 1
-                             ,pr_tipo     => 'A');
 
       -- Busca as informacoes da cooperativa
       FOR rw_crapcop IN cr_crapcop(pr_cdcooper => pr_cdcooper) LOOP
@@ -1981,66 +1944,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_FLUXOS IS
           vr_valorchq := SUBSTR(vr_dstextab,1,15);
         ELSE
           vr_valorchq := 300; 
-        END IF;
-
-        -- COMPE NOTURNA - DEVOLU
-        FOR rw_craplcm IN cr_craplcm(pr_cdcooper => rw_crapcop.cdcooper
-                                    ,pr_dtmvtolt => vr_dtliquid) LOOP
-          IF rw_craplcm.cdbanchq = 85  AND
-             rw_craplcm.dsidenti = '1' THEN -- Noturna
-             vr_vlchqnot := vr_vlchqnot + rw_craplcm.vllanmto;
-          END IF;
-        END LOOP;
-
-        -- COMPE DIURNA - DEVOLU
-        FOR rw_craplcm IN cr_craplcm(pr_cdcooper => rw_crapcop.cdcooper
-                                    ,pr_dtmvtolt => vr_dtrefere) LOOP
-          IF rw_craplcm.cdbanchq = 85  AND
-             rw_craplcm.dsidenti = '2' THEN -- Diurna
-             vr_vlchqdia := vr_vlchqdia + rw_craplcm.vllanmto;
-          END IF;
-        END LOOP;
-
-        -- Busca agencia
-        OPEN cr_crapage(pr_cdcooper => rw_crapcop.cdcooper);
-        FETCH cr_crapage INTO rw_crapage;
-        -- Alimenta a booleana se achou ou nao
-        vr_blnfound := cr_crapage%FOUND;
-        -- Fecha cursor
-        CLOSE cr_crapage;
-        -- Se encontrou
-        IF vr_blnfound THEN
-
-          -- COMPE 16 (D - 1)
-          FOR rw_crapchd IN cr_crapchd(pr_cdcooper => rw_crapcop.cdcooper
-                                      ,pr_dtmvtolt => vr_dtliquid) LOOP
-            -- Se for DIFERENTE => NACIONAL (DESCONSIDERA)
-            IF rw_crapage.cdcomchq <> rw_crapchd.cdcmpchq THEN
-              CONTINUE;
-            END IF;
-              
-            IF rw_crapchd.vlcheque >= vr_valorchq THEN
-              vr_vlchqnot := vr_vlchqnot + rw_crapchd.vlcheque;
-            ELSE
-              vr_vlchqdia := vr_vlchqdia + rw_crapchd.vlcheque;
-            END IF;
-          END LOOP;
-
-          -- COMPE NACIONAL (D - 2)
-          FOR rw_crapchd IN cr_crapchd(pr_cdcooper => rw_crapcop.cdcooper
-                                      ,pr_dtmvtolt => vr_dtliqui2) LOOP
-            -- Se for IGUAL => COMPE16 (DESCONSIDERA)
-            IF rw_crapage.cdcomchq = rw_crapchd.cdcmpchq THEN
-              CONTINUE;
-            END IF;
-              
-            IF rw_crapchd.vlcheque >= vr_valorchq THEN
-              vr_vlchqnot := vr_vlchqnot + rw_crapchd.vlcheque;
-            ELSE
-              vr_vlchqdia := vr_vlchqdia + rw_crapchd.vlcheque;
-            END IF;
-          END LOOP;
-
         END IF;
 
         -- Busca tranferencia de valores
@@ -2076,8 +1979,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_FLUXOS IS
       vr_vlcbdonr := vr_vlcobbil + vr_vlcobmlt;
       vr_vlcbdosr := vr_vldoctit;
       vr_vlpreliq := vr_vldoctit - vr_vlcbdonr;
-      vr_vlcmpnot := vr_vlchqnot;
-      vr_vlcmpdiu := vr_vlchqdia;
 
       -- Criar cabecalho do XML
       pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
@@ -2108,20 +2009,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_FLUXOS IS
                             ,pr_posicao  => 0
                             ,pr_tag_nova => 'vlpreliq'
                             ,pr_tag_cont => TO_CHAR(vr_vlpreliq,'FM999G999G999G990D00')
-                            ,pr_des_erro => vr_dscritic);
-
-      GENE0007.pc_insere_tag(pr_xml      => pr_retxml
-                            ,pr_tag_pai  => 'Dados'
-                            ,pr_posicao  => 0
-                            ,pr_tag_nova => 'vlcmpnot'
-                            ,pr_tag_cont => TO_CHAR(vr_vlcmpnot,'FM999G999G999G990D00')
-                            ,pr_des_erro => vr_dscritic);
-
-      GENE0007.pc_insere_tag(pr_xml      => pr_retxml
-                            ,pr_tag_pai  => 'Dados'
-                            ,pr_posicao  => 0
-                            ,pr_tag_nova => 'vlcmpdiu'
-                            ,pr_tag_cont => TO_CHAR(vr_vlcmpdiu,'FM999G999G999G990D00')
                             ,pr_des_erro => vr_dscritic);
 
     EXCEPTION

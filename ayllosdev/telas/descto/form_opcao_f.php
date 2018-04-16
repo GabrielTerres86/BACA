@@ -5,7 +5,7 @@
  * DATA CRIAÇÃO : 19/01/2012 
  * OBJETIVO     : Formulario que apresenta a opcao F da tela DESCTO
  * --------------
- * ALTERAÇÕES   :
+ * ALTERAÇÕES   : 20/06/2017 - Retiradas as linhas Menor e Maior. PRJ367 - Compe Sessao Unica (Lombardi)
  * --------------
  */
  
@@ -71,22 +71,6 @@
 		<input type="text" id="qtchqban" name="qtchqban" value="<?php echo getByTagName($dados,'qtchqban') ?>" />
 		<label for="vlchqban"></label>
 		<input type="text" id="vlchqban" name="vlchqban" value="<?php echo getByTagName($dados,'vlchqban') ?>" />
-
-		<br />
-		
-		<label for="dsdmenor">Menor:</label>
-		<label for="qtdmenor"></label>
-		<input type="text" id="qtdmenor" name="qtdmenor" value="<?php echo getByTagName($dados,'qtdmenor') ?>" />
-		<label for="vlrmenor"></label>
-		<input type="text" id="vlrmenor" name="vlrmenor" value="<?php echo getByTagName($dados,'vlrmenor') ?>" />
-
-		<br />
-		
-		<label for="dsdmaior">Maior:</label>
-		<label for="qtdmaior"></label>
-		<input type="text" id="qtdmaior" name="qtdmaior" value="<?php echo getByTagName($dados,'qtdmaior') ?>" />
-		<label for="vlrmaior"></label>
-		<input type="text" id="vlrmaior" name="vlrmaior" value="<?php echo getByTagName($dados,'vlrmaior') ?>" />
 
 		<br />
 		

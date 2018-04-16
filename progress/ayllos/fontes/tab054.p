@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : GATI - Eder
-   Data    : Dezembro/2009                        Ultima alteracao: 07/12/2016
+   Data    : Dezembro/2009                        Ultima alteracao: 13/06/2017
 
    Dados referentes ao programa:
 
@@ -23,6 +23,9 @@
                
                07/12/2016 - Alterado campo dsdepart para cddepart.
                             PRJ341 - BANCENJUD (Odirlei-AMcom)
+                            
+               13/06/2017 - Nao permitir mais alterar o valor do campo “VLB Para Cheques”, apenas
+                            exibi-lo em tela. PRJ367 - Compe Sessao Unica (Lombardi)
                             
 ............................................................................. */
 
@@ -163,7 +166,10 @@ DO WHILE TRUE:
 
                DO WHILE TRUE:
                
-                  UPDATE tel_vlvlbtit tel_vlvlbchq tel_vlprtruc 
+                  DISPLAY tel_vlvlbchq 
+                         WITH FRAME f_tab054.
+                         
+                  UPDATE tel_vlvlbtit tel_vlprtruc 
                          WITH FRAME f_tab054.
                   
                   LEAVE.

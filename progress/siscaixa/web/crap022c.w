@@ -3,7 +3,7 @@
    Programa: siscaixa/web/crap022c.w
    Sistema : Caixa On-Line
    Autor   : Andre Santos - Supero
-   Data    : Junho/2014                      Ultima atualizacao: 17/11/2015
+   Data    : Junho/2014                      Ultima atualizacao: 27/06/2017
 
    Dados referentes ao programa:
 
@@ -12,7 +12,10 @@
 
    Alteracoes: 17/11/2015 #345791 Melhoria no recebimento das variaveis do form
                           (Carlos)
-                          
+               
+               27/06/2017 - Retiradas conticoes que tratam a praça do cheque e os números DE 
+                           documento 3,4 e 5. PRJ367 - Compe Sessao Unica (Lombardi)
+                           
 -----------------------------------------------------------------------------*/
 
 &ANALYZE-SUSPEND _VERSION-NUMBER AB_v9r12 GUI adm2
@@ -43,14 +46,6 @@ DEFINE TEMP-TABLE ab_unmap
        FIELD v_msgsaldo AS CHARACTER FORMAT "X(256)":U
        FIELD v_identificador AS CHARACTER FORMAT "X(256)":U
        FIELD v_chequescoop AS CHARACTER FORMAT "X(256)":U
-       FIELD v_vlmenorpraca AS CHARACTER FORMAT "X(256)":U
-       FIELD v_dtmenorpraca AS CHARACTER FORMAT "X(256)":U
-       FIELD v_vlmaiorpraca AS CHARACTER FORMAT "X(256)":U
-       FIELD v_dtmaiorpraca AS CHARACTER FORMAT "X(256)":U
-       FIELD v_vlmenorforapraca AS CHARACTER FORMAT "X(256)":U
-       FIELD v_dtmenorforapraca AS CHARACTER FORMAT "X(256)":U
-       FIELD v_vlmaiorforapraca AS CHARACTER FORMAT "X(256)":U
-       FIELD v_dtmaiorforapraca AS CHARACTER FORMAT "X(256)":U
        FIELD v_totdepos AS CHARACTER FORMAT "X(256)":U
        FIELD v_qtdchqs AS CHARACTER FORMAT "X(256)":U.
        
@@ -120,6 +115,7 @@ DEF VAR v_coop-migrada          AS CHAR                NO-UNDO.
 DEF VAR v_nrsequni              AS CHAR                NO-UNDO.
 DEF VAR v_dtenvelo              AS CHAR                NO-UNDO.
 DEF VAR aux_achou               AS LOGI                NO-UNDO. 
+DEF VAR vetorcheque             AS CHAR                NO-UNDO.
 
 DEF TEMP-TABLE tt-erro NO-UNDO LIKE craperr.
 
@@ -158,8 +154,8 @@ DEFINE TEMP-TABLE tt-cheques NO-UNDO
 &Scoped-define FRAME-NAME Web-Frame
 
 /* Standard List Definitions                                            */
-&Scoped-Define ENABLED-OBJECTS ab_unmap.v_codcoop ab_unmap.v_nroconta ab_unmap.v_cooppara ab_unmap.v_nome1 ab_unmap.v_nome2 ab_unmap.v_cpfcgc1 ab_unmap.v_cpfcgc2 ab_unmap.TpDocto ab_unmap.vh_doc ab_unmap.vh_foco ab_unmap.vh_TpDoctoAnt ab_unmap.v_caixa ab_unmap.v_coop ab_unmap.v_data ab_unmap.v_msg ab_unmap.v_operador ab_unmap.v_pac ab_unmap.v_vlrdocumento ab_unmap.v_btn_ok ab_unmap.v_msgsaldo ab_unmap.v_identificador ab_unmap.v_chequescoop ab_unmap.v_vlmenorpraca ab_unmap.v_dtmenorpraca ab_unmap.v_vlmaiorpraca ab_unmap.v_dtmaiorpraca ab_unmap.v_vlmenorforapraca ab_unmap.v_dtmenorforapraca ab_unmap.v_vlmaiorforapraca ab_unmap.v_dtmaiorforapraca ab_unmap.v_totdepos ab_unmap.v_qtdchqs
-&Scoped-Define DISPLAYED-OBJECTS ab_unmap.v_codcoop ab_unmap.v_nroconta ab_unmap.v_cooppara ab_unmap.v_nome1 ab_unmap.v_nome2 ab_unmap.v_cpfcgc1 ab_unmap.v_cpfcgc2 ab_unmap.TpDocto ab_unmap.vh_doc ab_unmap.vh_foco ab_unmap.vh_TpDoctoAnt ab_unmap.v_caixa ab_unmap.v_coop ab_unmap.v_data ab_unmap.v_msg ab_unmap.v_operador ab_unmap.v_pac ab_unmap.v_vlrdocumento ab_unmap.v_btn_ok ab_unmap.v_msgsaldo ab_unmap.v_identificador ab_unmap.v_chequescoop ab_unmap.v_vlmenorpraca ab_unmap.v_dtmenorpraca ab_unmap.v_vlmaiorpraca ab_unmap.v_dtmaiorpraca ab_unmap.v_vlmenorforapraca ab_unmap.v_dtmenorforapraca ab_unmap.v_vlmaiorforapraca ab_unmap.v_dtmaiorforapraca ab_unmap.v_totdepos ab_unmap.v_qtdchqs
+&Scoped-Define ENABLED-OBJECTS ab_unmap.v_codcoop ab_unmap.v_nroconta ab_unmap.v_cooppara ab_unmap.v_nome1 ab_unmap.v_nome2 ab_unmap.v_cpfcgc1 ab_unmap.v_cpfcgc2 ab_unmap.TpDocto ab_unmap.vh_doc ab_unmap.vh_foco ab_unmap.vh_TpDoctoAnt ab_unmap.v_caixa ab_unmap.v_coop ab_unmap.v_data ab_unmap.v_msg ab_unmap.v_operador ab_unmap.v_pac ab_unmap.v_vlrdocumento ab_unmap.v_btn_ok ab_unmap.v_msgsaldo ab_unmap.v_identificador ab_unmap.v_chequescoop ab_unmap.v_totdepos ab_unmap.v_qtdchqs
+&Scoped-Define DISPLAYED-OBJECTS ab_unmap.v_codcoop ab_unmap.v_nroconta ab_unmap.v_cooppara ab_unmap.v_nome1 ab_unmap.v_nome2 ab_unmap.v_cpfcgc1 ab_unmap.v_cpfcgc2 ab_unmap.TpDocto ab_unmap.vh_doc ab_unmap.vh_foco ab_unmap.vh_TpDoctoAnt ab_unmap.v_caixa ab_unmap.v_coop ab_unmap.v_data ab_unmap.v_msg ab_unmap.v_operador ab_unmap.v_pac ab_unmap.v_vlrdocumento ab_unmap.v_btn_ok ab_unmap.v_msgsaldo ab_unmap.v_identificador ab_unmap.v_chequescoop ab_unmap.v_totdepos ab_unmap.v_qtdchqs
 
 /* Custom List Definitions                                              */
 /* List-1,List-2,List-3,List-4,List-5,List-6                            */
@@ -273,38 +269,6 @@ DEFINE FRAME Web-Frame
           VIEW-AS FILL-IN 
           SIZE 20 BY 1
     ab_unmap.v_chequescoop  AT ROW 1 COL 1 HELP
-          "" NO-LABEL FORMAT "X(256)":U
-          VIEW-AS FILL-IN 
-          SIZE 20 BY 1
-    ab_unmap.v_vlmenorpraca  AT ROW 1 COL 1 HELP
-          "" NO-LABEL FORMAT "X(256)":U
-          VIEW-AS FILL-IN 
-          SIZE 20 BY 1
-    ab_unmap.v_dtmenorpraca  AT ROW 1 COL 1 HELP
-          "" NO-LABEL FORMAT "X(256)":U
-          VIEW-AS FILL-IN 
-          SIZE 20 BY 1
-    ab_unmap.v_vlmaiorpraca  AT ROW 1 COL 1 HELP
-          "" NO-LABEL FORMAT "X(256)":U
-          VIEW-AS FILL-IN 
-          SIZE 20 BY 1
-    ab_unmap.v_dtmaiorpraca  AT ROW 1 COL 1 HELP
-          "" NO-LABEL FORMAT "X(256)":U
-          VIEW-AS FILL-IN 
-          SIZE 20 BY 1
-    ab_unmap.v_vlmenorforapraca  AT ROW 1 COL 1 HELP
-          "" NO-LABEL FORMAT "X(256)":U
-          VIEW-AS FILL-IN 
-          SIZE 20 BY 1
-    ab_unmap.v_dtmenorforapraca  AT ROW 1 COL 1 HELP
-          "" NO-LABEL FORMAT "X(256)":U
-          VIEW-AS FILL-IN 
-          SIZE 20 BY 1
-    ab_unmap.v_vlmaiorforapraca  AT ROW 1 COL 1 HELP
-          "" NO-LABEL FORMAT "X(256)":U
-          VIEW-AS FILL-IN 
-          SIZE 20 BY 1
-    ab_unmap.v_dtmaiorforapraca  AT ROW 1 COL 1 HELP
           "" NO-LABEL FORMAT "X(256)":U
           VIEW-AS FILL-IN 
           SIZE 20 BY 1
@@ -565,22 +529,6 @@ PROCEDURE htmOffsets :
   RUN htmAssociate
     ("v_chequescoop":U,"ab_unmap.v_chequescoop":U,ab_unmap.v_chequescoop:HANDLE IN FRAME {&FRAME-NAME}).
   RUN htmAssociate
-    ("v_vlmenorpraca":U,"ab_unmap.v_vlmenorpraca":U,ab_unmap.v_vlmenorpraca:HANDLE IN FRAME {&FRAME-NAME}).
-  RUN htmAssociate
-    ("v_dtmenorpraca":U,"ab_unmap.v_dtmenorpraca":U,ab_unmap.v_dtmenorpraca:HANDLE IN FRAME {&FRAME-NAME}).
-  RUN htmAssociate
-    ("v_vlmaiorpraca":U,"ab_unmap.v_vlmaiorpraca":U,ab_unmap.v_vlmaiorpraca:HANDLE IN FRAME {&FRAME-NAME}).
-  RUN htmAssociate
-    ("v_dtmaiorpraca":U,"ab_unmap.v_dtmaiorpraca":U,ab_unmap.v_dtmaiorpraca:HANDLE IN FRAME {&FRAME-NAME}).
-  RUN htmAssociate
-    ("v_vlmenorforapraca":U,"ab_unmap.v_vlmenorforapraca":U,ab_unmap.v_vlmenorforapraca:HANDLE IN FRAME {&FRAME-NAME}).
-  RUN htmAssociate
-    ("v_dtmenorforapraca":U,"ab_unmap.v_dtmenorforapraca":U,ab_unmap.v_dtmenorforapraca:HANDLE IN FRAME {&FRAME-NAME}).
-  RUN htmAssociate
-    ("v_vlmaiorforapraca":U,"ab_unmap.v_vlmaiorforapraca":U,ab_unmap.v_vlmaiorforapraca:HANDLE IN FRAME {&FRAME-NAME}).
-  RUN htmAssociate
-    ("v_dtmaiorforapraca":U,"ab_unmap.v_dtmaiorforapraca":U,ab_unmap.v_dtmaiorforapraca:HANDLE IN FRAME {&FRAME-NAME}).
-  RUN htmAssociate
     ("v_totdepos":U,"ab_unmap.v_totdepos":U,ab_unmap.v_totdepos:HANDLE IN FRAME {&FRAME-NAME}).
   RUN htmAssociate
     ("v_qtdchqs":U,"ab_unmap.v_qtdchqs":U,ab_unmap.v_qtdchqs:HANDLE IN FRAME {&FRAME-NAME}).
@@ -756,15 +704,6 @@ PROCEDURE process-web-request :
                         ASSIGN v_chequescoop = STRING(crapmrw.vlchqcop,"zzz,zzz,zzz,zz9.99")
                                v_totdepos    = STRING(DEC(v_totdepos) + crapmrw.vlchqcop,"zzz,zzz,zzz,zz9.99").
             
-            
-                    FIND FIRST craptab WHERE craptab.cdcooper = crapcop.cdcooper
-                                         AND craptab.nmsistem = "CRED"
-                                         AND craptab.tptabela = "USUARI"
-                                         AND craptab.cdempres = 11
-                                         AND craptab.cdacesso = "MAIORESCHQ"
-                                         AND craptab.tpregist = 1
-                                         NO-LOCK NO-ERROR.
-            
                     /* Buscar os totais de cheque maior e menor da Praca ou fora Praca */
                     FOR EACH crapmdw WHERE crapmdw.cdcooper = crapcop.cdcooper
                                        AND crapmdw.cdagenci = INT(v_pac)
@@ -779,77 +718,39 @@ PROCEDURE process-web-request :
                     
                         IF  NOT AVAIL tt-cheques  THEN
                             CREATE tt-cheques.
-                            
-                        IF  crapmdw.vlcompel < DEC(SUBSTR(craptab.dstextab,1,15))  THEN
-                            ASSIGN  aux_tpdmovto = 2.
-                        ELSE
-                            ASSIGN  aux_tpdmovto = 1.                
-                            
-                        IF  crapmdw.cdhistor = 3  THEN DO: /* Praca */
-                            IF  aux_tpdmovto = 2  THEN /* Menor Praca */
-                                ASSIGN tt-cheques.dtlibera = crapmdw.dtlibcom
-                                       tt-cheques.vlcompel = tt-cheques.vlcompel + crapmdw.vlcompel
-                                       tt-cheques.nrdocmto = 3
-                                       v_totdepos = STRING(DEC(v_totdepos) + crapmdw.vlcompel,"zzz,zzz,zzz,zz9.99").
-                            ELSE                       /* Maior Praca */
-                                ASSIGN tt-cheques.dtlibera = crapmdw.dtlibcom
-                                       tt-cheques.vlcompel = tt-cheques.vlcompel + crapmdw.vlcompel
-                                       tt-cheques.nrdocmto = 4
-                                       v_totdepos = STRING(DEC(v_totdepos) + crapmdw.vlcompel,"zzz,zzz,zzz,zz9.99").
-                            END.
-                        ELSE
-                        IF  crapmdw.cdhistor = 4  THEN DO: /* Fora Praca */
-                            IF  aux_tpdmovto = 2  THEN /* Menor Fora Praca */
-                                ASSIGN tt-cheques.dtlibera = crapmdw.dtlibcom
-                                       tt-cheques.vlcompel = tt-cheques.vlcompel + crapmdw.vlcompel
-                                       tt-cheques.nrdocmto = 5
-                                       v_totdepos = STRING(DEC(v_totdepos) + crapmdw.vlcompel,"zzz,zzz,zzz,zz9.99").
-                            ELSE                       /* Maior Fora Praca */
-                                ASSIGN tt-cheques.dtlibera = crapmdw.dtlibcom
-                                       tt-cheques.vlcompel = tt-cheques.vlcompel + crapmdw.vlcompel
-                                       tt-cheques.nrdocmto = 6
-                                       v_totdepos = STRING(DEC(v_totdepos) + crapmdw.vlcompel,"zzz,zzz,zzz,zz9.99").
-                        END.
-                            
+                        
+                        IF  crapmdw.cdhistor = 2433  THEN
+                            ASSIGN tt-cheques.nrdocmto = 6
+                                   tt-cheques.dtlibera = crapmdw.dtlibcom
+                                   tt-cheques.vlcompel = tt-cheques.vlcompel + crapmdw.vlcompel
+                                   v_totdepos = STRING(DEC(v_totdepos) + crapmdw.vlcompel,"zzz,zzz,zzz,zz9.99").
+                        
                         FIND CURRENT tt-cheques NO-LOCK.
                         
                     END.
 
-                    ASSIGN v_vlmenorpraca = '0.00'
-                           v_vlmaiorpraca = '0.00'
-                           v_vlmenorforapraca = '0.00'
-                           v_vlmaiorforapraca = '0.00'.
-            
-                    FOR EACH tt-cheques NO-LOCK:
-            
-                        CASE tt-cheques.nrdocmto:
-                            WHEN 3 THEN
-                                ASSIGN v_vlmenorpraca = STRING(tt-cheques.vlcompel,"zzz,zzz,zzz,zz9.99")
-                                       v_dtmenorpraca = STRING(tt-cheques.dtlibera,"99/99/99").
-                            WHEN 4 THEN
-                                ASSIGN v_vlmaiorpraca = STRING(tt-cheques.vlcompel,"zzz,zzz,zzz,zz9.99")
-                                       v_dtmaiorpraca = STRING(tt-cheques.dtlibera,"99/99/99").
-                            WHEN 5 THEN
-                                ASSIGN v_vlmenorforapraca = STRING(tt-cheques.vlcompel,"zzz,zzz,zzz,zz9.99")
-                                       v_dtmenorforapraca = STRING(tt-cheques.dtlibera,"99/99/99").
-                            WHEN 6 THEN
-                                ASSIGN v_vlmaiorforapraca = STRING(tt-cheques.vlcompel,"zzz,zzz,zzz,zz9.99")
-                                       v_dtmaiorforapraca = STRING(tt-cheques.dtlibera,"99/99/99").
-                        END CASE.
-            
+                    ASSIGN vetorcheque = "".
+                    
+                    FOR EACH tt-cheques WHERE tt-cheques.nrdocmto = 6  NO-LOCK:
+                        
+                          IF TRIM(vetorcheque) <> "" AND TRIM(vetorcheque) <> ? THEN
+                              ASSIGN vetorcheque = vetorcheque + ",".
+                                
+                          ASSIGN vetorcheque = vetorcheque + "~{vlcheque:'" + TRIM(STRING(tt-cheques.vlcompel,"zzz,zzz,zzz,zz9.99"))
+                                                           + "',dtcheque:'" + TRIM(STRING(tt-cheques.dtlibera,"99/99/99"))+ "'~}".
                     END.
-
-
+                    
+                    {&OUT} '<script language="JavaScript">var cheques = new Array(); cheques.push(' + STRING(vetorcheque) + ');</script>'.
+        
                     IF  get-value('v_btn_ok') <> '' THEN DO:
                        ASSIGN l-houve-erro = NO.
-
                     END. /* Final do GET VALUE OK <> "" */
                     ELSE DO:
                         IF  get-value('retorna') <> '' THEN DO: /* Botao Deposito */
 
                             RUN carregaCooperativa IN THIS-PROCEDURE ('Cheque').
 
-                            {&OUT} "<script>window.location='crap022b.p"
+                            {&OUT} "<script language='JavaScript'>window.location='crap022b.p"
                                    "?v_cooppara="      + v_cooppara                   +
                                    "&v_nroconta="      + GET-VALUE("v_nroconta")      +
                                    "&v_vlrdocumento="  + GET-VALUE("v_vlrdocumento")  +
@@ -885,7 +786,7 @@ PROCEDURE process-web-request :
                         ASSIGN vh_TpDoctoAnt = 'Deposito'.
 
                         /* Volta a tela Principal Iniciando a Opercao */
-                        {&OUT} "<script>window.location='crap022.w"      + 
+                        {&OUT} "<script language='JavaScript'>window.location='crap022.w"      + 
                                "?tpDoctoSel=" + tpDocto                  +
                                "'</script>".
                     END.
@@ -909,7 +810,7 @@ PROCEDURE process-web-request :
                         ASSIGN vh_TpDoctoAnt = 'Transferencia'.
 
                         /* Volta a tela Principal Iniciando a Opercao */
-                        {&OUT} "<script>window.location='crap022.w"      + 
+                        {&OUT} "<script language='JavaScript'>window.location='crap022.w"      + 
                                "?tpDoctoSel=" + tpDocto                  +
                                "'</script>".
                     END.
@@ -1058,7 +959,7 @@ MESSAGE "chw ENTROU - CONTA NAO MIGRADA" VIEW-AS ALERT-BOX INFO BUTTONS OK.
                                        craperr.nrdcaixa = INT(v_caixa) no-error.
                         
                             IF  AVAIL craperr  THEN
-                                {&OUT} "<script>window.open='mensagem.p','werro','height=220,width=400,scrollbars=yes,alwaysRaised=true'</script>".
+                                {&OUT} "<script language='JavaScript'>window.open='mensagem.p','werro','height=220,width=400,scrollbars=yes,alwaysRaised=true'</script>".
                                    
                         END. /* Final do IF erro YES */
                         ELSE DO: 
@@ -1095,7 +996,7 @@ MESSAGE "chw ENTROU - CONTA NAO MIGRADA" VIEW-AS ALERT-BOX INFO BUTTONS OK.
                             END.
 
                             {&OUT}
-                             '<script>window.open("autentica.html?v_plit=" + "' STRING(v_literal_autentica) '" + 
+                             '<script language="JavaScript">window.open("autentica.html?v_plit=" + "' STRING(v_literal_autentica) '" + 
                               "&v_pseq=" + "' STRING(v_ult_seq_autentica) '" + "&v_prec=" + "YES"  + "&v_psetcook=" + "YES","waut","width=250,height=145,scrollbars=auto,alwaysRaised=true")
                              </script>'.
                             
@@ -1114,7 +1015,7 @@ MESSAGE "chw ENTROU - CONTA NAO MIGRADA" VIEW-AS ALERT-BOX INFO BUTTONS OK.
                         END.
                         
                         /* Volta a tela Principal Iniciando a Opercao */
-                        {&OUT} "<script>window.location='crap022.w"      + 
+                        {&OUT} "<script language='JavaScript'>window.location='crap022.w"      + 
                                "?tpDoctoSel=Deposito"                    +
                                "'</script>".
                         
@@ -1147,7 +1048,7 @@ MESSAGE "chw ENTROU - CONTA NAO MIGRADA" VIEW-AS ALERT-BOX INFO BUTTONS OK.
                 {include/i-erro.i}
 
                 {&OUT}
-                     '<script> window.location = "crap002.html" </script>'.
+                     '<script language="JavaScript"> window.location = "crap002.html" </script>'.
         
             END.
 
@@ -1158,7 +1059,7 @@ MESSAGE "chw ENTROU - CONTA NAO MIGRADA" VIEW-AS ALERT-BOX INFO BUTTONS OK.
                 {include/i-erro.i}
 
                 {&OUT}
-                     '<script> window.location = "crap002.html" </script>'.
+                     '<script language="JavaScript"> window.location = "crap002.html" </script>'.
             END.
         END.
 
@@ -1213,15 +1114,6 @@ MESSAGE "chw ENTROU - CONTA NAO MIGRADA" VIEW-AS ALERT-BOX INFO BUTTONS OK.
             ASSIGN v_chequescoop = STRING(crapmrw.vlchqcop,"zzz,zzz,zzz,zz9.99")
                    v_totdepos    = STRING(DEC(v_totdepos) + crapmrw.vlchqcop,"zzz,zzz,zzz,zz9.99").
 
-
-        FIND FIRST craptab WHERE craptab.cdcooper = crapcop.cdcooper
-                             AND craptab.nmsistem = "CRED"
-                             AND craptab.tptabela = "USUARI"
-                             AND craptab.cdempres = 11
-                             AND craptab.cdacesso = "MAIORESCHQ"
-                             AND craptab.tpregist = 1
-                             NO-LOCK NO-ERROR.
-
         /* Buscar os totais de cheque maior e menor da Praca ou fora Praca */
         FOR EACH crapmdw WHERE crapmdw.cdcooper = crapcop.cdcooper
                            AND crapmdw.cdagenci = INT(v_pac)
@@ -1237,65 +1129,29 @@ MESSAGE "chw ENTROU - CONTA NAO MIGRADA" VIEW-AS ALERT-BOX INFO BUTTONS OK.
             IF  NOT AVAIL tt-cheques  THEN
                 CREATE tt-cheques.
                 
-            IF  crapmdw.vlcompel < DEC(SUBSTR(craptab.dstextab,1,15))  THEN
-                ASSIGN  aux_tpdmovto = 2.
-            ELSE
-                ASSIGN  aux_tpdmovto = 1.                
-                
-            IF  crapmdw.cdhistor = 3  THEN DO: /* Praca */
-                IF  aux_tpdmovto = 2  THEN /* Menor Praca */
-                    ASSIGN tt-cheques.dtlibera = crapmdw.dtlibcom
-                           tt-cheques.vlcompel = tt-cheques.vlcompel + crapmdw.vlcompel
-                           tt-cheques.nrdocmto = 3
-                           v_totdepos = STRING(DEC(v_totdepos) + crapmdw.vlcompel,"zzz,zzz,zzz,zz9.99").
-                ELSE                       /* Maior Praca */
-                    ASSIGN tt-cheques.dtlibera = crapmdw.dtlibcom
-                           tt-cheques.vlcompel = tt-cheques.vlcompel + crapmdw.vlcompel
-                           tt-cheques.nrdocmto = 4
-                           v_totdepos = STRING(DEC(v_totdepos) + crapmdw.vlcompel,"zzz,zzz,zzz,zz9.99").
-                END.
-            ELSE
-            IF  crapmdw.cdhistor = 4  THEN DO: /* Fora Praca */
-                IF  aux_tpdmovto = 2  THEN /* Menor Fora Praca */
-                    ASSIGN tt-cheques.dtlibera = crapmdw.dtlibcom
-                           tt-cheques.vlcompel = tt-cheques.vlcompel + crapmdw.vlcompel
-                           tt-cheques.nrdocmto = 5
-                           v_totdepos = STRING(DEC(v_totdepos) + crapmdw.vlcompel,"zzz,zzz,zzz,zz9.99").
-                ELSE                       /* Maior Fora Praca */
-                    ASSIGN tt-cheques.dtlibera = crapmdw.dtlibcom
-                           tt-cheques.vlcompel = tt-cheques.vlcompel + crapmdw.vlcompel
-                           tt-cheques.nrdocmto = 6
-                           v_totdepos = STRING(DEC(v_totdepos) + crapmdw.vlcompel,"zzz,zzz,zzz,zz9.99").
-            END.
+            IF  crapmdw.cdhistor = 2433  THEN
+                ASSIGN tt-cheques.nrdocmto = 6
+                       tt-cheques.dtlibera = crapmdw.dtlibcom
+                       tt-cheques.vlcompel = tt-cheques.vlcompel + crapmdw.vlcompel
+                       v_totdepos = STRING(DEC(v_totdepos) + crapmdw.vlcompel,"zzz,zzz,zzz,zz9.99").
                 
             FIND CURRENT tt-cheques NO-LOCK.
             
         END.
 
-        ASSIGN v_vlmenorpraca = '0.00'
-               v_vlmaiorpraca = '0.00'
-               v_vlmenorforapraca = '0.00'
-               v_vlmaiorforapraca = '0.00'.
-
-        FOR EACH tt-cheques NO-LOCK:
-
-            CASE tt-cheques.nrdocmto:
-                WHEN 3 THEN
-                    ASSIGN v_vlmenorpraca = STRING(tt-cheques.vlcompel,"zzz,zzz,zzz,zz9.99")
-                           v_dtmenorpraca = STRING(tt-cheques.dtlibera,"99/99/99").
-                WHEN 4 THEN
-                    ASSIGN v_vlmaiorpraca = STRING(tt-cheques.vlcompel,"zzz,zzz,zzz,zz9.99")
-                           v_dtmaiorpraca = STRING(tt-cheques.dtlibera,"99/99/99").
-                WHEN 5 THEN
-                    ASSIGN v_vlmenorforapraca = STRING(tt-cheques.vlcompel,"zzz,zzz,zzz,zz9.99")
-                           v_dtmenorforapraca = STRING(tt-cheques.dtlibera,"99/99/99").
-                WHEN 6 THEN
-                    ASSIGN v_vlmaiorforapraca = STRING(tt-cheques.vlcompel,"zzz,zzz,zzz,zz9.99")
-                           v_dtmaiorforapraca = STRING(tt-cheques.dtlibera,"99/99/99").
-            END CASE.
-
+        ASSIGN vetorcheque = "".
+            
+        FOR EACH tt-cheques WHERE tt-cheques.nrdocmto = 6 NO-LOCK:
+            
+              IF TRIM(vetorcheque) <> "" AND TRIM(vetorcheque) <> ? THEN
+                  ASSIGN vetorcheque = vetorcheque + ",".
+                    
+              ASSIGN vetorcheque = vetorcheque + "~{vlcheque:'" + TRIM(STRING(tt-cheques.vlcompel,"zzz,zzz,zzz,zz9.99"))
+                                               + "',dtcheque:'" + TRIM(STRING(tt-cheques.dtlibera,"99/99/99"))+ "'~}".                            
         END.
 
+        {&OUT} '<script language="JavaScript">var cheques = new Array(); cheques.push(' + STRING(vetorcheque) + ');</script>'.  
+        
         /*** Fim da montagem dos dados do resumo ***/
  
         RUN displayFields.   
@@ -1315,4 +1171,3 @@ END PROCEDURE.
 
 /* _UIB-CODE-BLOCK-END */
 &ANALYZE-RESUME
-
