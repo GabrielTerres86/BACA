@@ -2904,6 +2904,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
                                  debito automatico concatenar com historico complementar
                                  PRJ320 - Ofernta conv Debaut(Odirlei-AMcom)
 
+					13/04/2018 - Ajustado para filtrar os protocolos pela dtmvtolt. (Linhares).
+
     */
     DECLARE
       -- Varíaveis para montagem do novo registro
@@ -3044,7 +3046,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
          WHERE crappro.cdcooper = pr_cdcooper    
            AND crappro.nrdconta = pr_nrdconta
            AND crappro.cdtippro = pr_cdtippro
-           AND crappro.nrdocmto = pr_nrdocmto;
+           AND crappro.nrdocmto = pr_nrdocmto
+           AND crappro.dtmvtolt = pr_dtmvtolt;
       rw_crappro cr_crappro%ROWTYPE;
 
       --Busca o inprocess na crapdat
