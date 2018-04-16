@@ -18371,7 +18371,28 @@ PROCEDURE realizar_manutencao_contrato:
            aux_complen2 = ""
            aux_nrcxaps2 = 0.
     
-    
+    FIND crapldc WHERE crapldc.cdcooper = par_cdcooper   AND
+                      crapldc.cddlinha = par_cddlinha   AND
+                      crapldc.tpdescto = 3              AND
+                      crapldc.flgstlcr = TRUE /*ATIVA*/
+                      NO-LOCK NO-ERROR.
+   
+    IF NOT AVAILABLE crapldc THEN
+      DO:
+          ASSIGN aux_cdcritic = 0
+                 aux_dscritic = "Linha de desconto nao cadastrada ou bloqueada.".
+                 
+          RUN gera_erro (INPUT par_cdcooper,
+                         INPUT par_cdagenci,
+                         INPUT par_nrdcaixa,
+                         INPUT 1,            /** Sequencia **/
+                         INPUT aux_cdcritic,
+                         INPUT-OUTPUT aux_dscritic).
+          
+          RETURN "NOK".
+          
+      END.
+      
     RUN busca_dados_limite_consulta(
                             INPUT par_cdcooper,
                             INPUT par_cdagenci,
