@@ -1643,6 +1643,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
                                a rotina que efetua o lançamento
                                (Adriano - SD 804308).
 
+                  17/04/2018 - Implementado codigo de erro para acordos ativos no Cyber
+				               e inexistentes no Ayllos.
+                               (GSaquetta - Chamado 848110).
+
     ..............................................................................*/                                    
     
     ---------------> CURSORES <-------------
@@ -1712,7 +1716,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
     FETCH cr_tbacordo INTO rw_tbacordo;
     IF cr_tbacordo%NOTFOUND THEN
       CLOSE cr_tbacordo;
-      vr_dscritic := 'Acordo nao encontrado.';
+      -- Retornar critica que o acordo não foi encontrado.
+      vr_cdcritic := 1205;
       RAISE vr_exc_erro; 
     END IF;
     CLOSE cr_tbacordo;
