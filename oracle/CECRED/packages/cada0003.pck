@@ -709,7 +709,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
   --  Sistema  : Rotinas acessadas pelas telas de cadastros Web
   --  Sigla    : CADA
   --  Autor    : Andrino Carlos de Souza Junior - RKAM
-  --  Data     : Julho/2014.                   Ultima atualizacao: 07/12/2017
+  --  Data     : Julho/2014.                   Ultima atualizacao: 12/04/2018
   --
   -- Dados referentes ao programa:
   --
@@ -813,6 +813,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
   --                          tambem na tabela CRAPRDA. Demetrius (Mouts) - Chamado 833672
   --
   --             02/01/2018 - Adicionados produtos 11,17,22,25,26,29 na function fn_produto_habilitado. (PRJ366 - Lombardi)
+  --
+  --             12/04/2018 - Criar os documentos corretos ao duplicar uma conta 
+  --                          (Lucas Ranghetti INC0012381)
   ---------------------------------------------------------------------------------------------------------------
 
   CURSOR cr_tbchq_param_conta(pr_cdcooper crapcop.cdcooper%TYPE
@@ -2450,7 +2453,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
     --  Sistema  : Rotinas acessadas pelas telas de cadastros Web
     --  Sigla    : CADA
     --  Autor    : 
-    --  Data     :                      Ultima atualizacao: 14/11/2017
+    --  Data     :                      Ultima atualizacao: 12/04/2018
     --
     --  Dados referentes ao programa:
     --
@@ -2464,7 +2467,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
     
                      14/11/2017 - Efetuar tratamentos para gravar corretamente os registros
                                   na tabela crapdoc (Lucas Ranghetti #760235)
-
+    
+                     12/04/2018 - Criar os documentos corretos ao duplicar uma conta 
+                                  (Lucas Ranghetti INC0012381)
     -- .............................................................................*/
 
       -- Cursor sobre a tabela de associados
@@ -2550,6 +2555,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
       vr_cdestcvl INTEGER;
       vr_criestcv BOOLEAN;
       vr_idseqttl INTEGER;
+      vr_tpdocmto INTEGER;
 
       -- Variaveis para a duplicacao da conta
       vr_numero VARCHAR2(10);
@@ -3047,40 +3053,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
       END;
 
       -- Efetua o loop sobre a tabela de controle de documentos digitalizados
-      FOR x IN 1..7 LOOP
-        
-        -- Tratamentos efetuados com base na b1wgen0055
-        -- Para os documentos (CPF,CARTEIRA DE IDENTIFICACAO E COMPROVANTE DE RENDA) 
-        -- criar pendencia somemente para pessoa fisica
-        IF x IN(1,2,5) AND rw_crapass.inpessoa <> 1 THEN
-          continue;
-        END IF;        
-        
-        -- Validar estado civil
-        IF x = 4 THEN        
-          IF rw_crapass.inpessoa = 1 THEN
-            SELECT cdestcvl INTO vr_cdestcvl
-                FROM crapttl
-               WHERE cdcooper = pr_cdcooper
-                 AND nrdconta = pr_nrdconta_org
-                 AND idseqttl = 1;        
-          ELSE
-            vr_cdestcvl:= 0;
-          END IF;  
-          
-          IF vr_cdestcvl IN(2,3,4,8,9,11,12) AND 
-             rw_crapass.inpessoa = 1 THEN
-            vr_criestcv:= TRUE;
-          ELSE
-            vr_criestcv:= FALSE;
-          END IF;
-          
-          -- Estado civil criar somente para pessoa fisica e a variavel vr_criestcv seja true
-          IF NOT vr_criestcv THEN
-            continue;
-          END IF;
-        END IF;
-        
+      FOR x IN 6..7 LOOP
+                
         -- Pessoa juridica vamos gravar como zero a titularidade
         IF rw_crapass.inpessoa <> 1 THEN
           vr_idseqttl:= 0;
@@ -3114,6 +3088,42 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
             RAISE vr_exc_saida;
         END;
       END LOOP;
+      
+      -- Tabela de controle de documentos digitalizados, Contrato Abertura de Conta      
+      -- Pessoa juridica vamos gravar como zero a titularidade
+      IF rw_crapass.inpessoa <> 1 THEN
+        vr_idseqttl:= 0;
+        vr_tpdocmto:= 46; -- Contrato Abertura de Conta Juridico
+      ELSE
+        vr_idseqttl:= 1;        
+        vr_tpdocmto:= 45; -- Contrato Abertura de Conta Fisica
+      END IF;
+        
+      -- Insere na tabela de documentos digitalizados - GED
+      BEGIN
+        INSERT INTO crapdoc
+          (cdcooper,
+           nrdconta,
+           flgdigit,
+           dtmvtolt,
+           tpdocmto,
+           idseqttl,
+           nrcpfcgc,
+           cdoperad)
+         VALUES
+          (pr_cdcooper,
+           pr_nrdconta_dst,
+           0,
+           rw_crapdat.dtmvtolt,
+           vr_tpdocmto,
+           vr_idseqttl,
+           rw_crapass.nrcpfcgc,
+           nvl(pr_cdoperad,' '));
+      EXCEPTION
+        WHEN OTHERS THEN
+          vr_dscritic := 'Erro ao inserir na CRAPDOC: '||SQLERRM;
+          RAISE vr_exc_saida;
+      END;
 
       -- Se for pessoa fisica, cria o primeiro titular
       IF rw_crapass.inpessoa = 1 THEN
