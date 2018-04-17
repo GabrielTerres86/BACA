@@ -709,7 +709,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
   --  Sistema  : Rotinas acessadas pelas telas de cadastros Web
   --  Sigla    : CADA
   --  Autor    : Andrino Carlos de Souza Junior - RKAM
-  --  Data     : Julho/2014.                   Ultima atualizacao: 07/12/2017
+  --  Data     : Julho/2014.                   Ultima atualizacao: 12/04/2018
   --
   -- Dados referentes ao programa:
   --
@@ -758,7 +758,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
   --                          pois estava ocasionando problemas na abertura de contas 
   --                          na MATRIC criando registros com PA zerado (Tiago/Thiago).
   --
-  --             19/01/2016 - Adicionada function fn_busca_codigo_cidade. (Reinert)
+  --			 19/01/2016 - Adicionada function fn_busca_codigo_cidade. (Reinert)
   --
   --             21/02/2017 - Removido um dos meses exibido pela rotina pc_lista_cred_recebidos,
   --                          pois a tela é semestral e estava sendo exibido 7 meses, conforme 
@@ -768,7 +768,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
   --             21/02/2017 - Ajuste para tratar os valores a serem enviados para
   --                          geração do relatório
   --                          (Adriano - SD 614408).
-  --                         
+  --
   --             17/04/2017 - Buscar a nacionalidade com CDNACION. (Jaison/Andrino)
   --
   --             25/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
@@ -783,7 +783,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
   -- 
   --  			 25/07/2017 - Inclusão de rotinas para atendar a nova opção/botão desligamento (Mateus - Mouts M364)
   -- 
-  --             04/08/2017 - Movido a rotina pc_busca_cnae para a TELA_CADCNA (Adriano).	
+  --             04/08/2017 - Movido a rotina pc_busca_cnae para a TELA_CADCNA (Adriano).
   --
   --             11/08/2017 - Incluído o número do cpf ou cnpj na tabela crapdoc.
   --                          Procedure pc_duplica_conta. Projeto 339 - CRM. (Lombardi)	
@@ -813,6 +813,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
   --                          tambem na tabela CRAPRDA. Demetrius (Mouts) - Chamado 833672
   --
   --             02/01/2018 - Adicionados produtos 11,17,22,25,26,29 na function fn_produto_habilitado. (PRJ366 - Lombardi)
+  --
+  --             12/04/2018 - Criar os documentos corretos ao duplicar uma conta 
+  --                          (Lucas Ranghetti INC0012381)
   ---------------------------------------------------------------------------------------------------------------
 
   CURSOR cr_tbchq_param_conta(pr_cdcooper crapcop.cdcooper%TYPE
@@ -2110,18 +2113,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
         IF cr_tbcadast_pessoa%FOUND THEN          
           
           CLOSE cr_tbcadast_pessoa;          
-          
-          -- Loop sobre as versoes do questionario de microcredito
-          FOR rw_crapass IN cr_crapass LOOP
-            
-            gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Dados'   , pr_posicao => 0          , pr_tag_nova => 'inf', pr_tag_cont => NULL, pr_des_erro => vr_dscritic);
-            gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'nrdconta', pr_tag_cont => gene0002.fn_mask_conta(rw_crapass.nrdconta), pr_des_erro => vr_dscritic);
-            gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'dtadmiss', pr_tag_cont => to_char(rw_crapass.dtadmiss,'DD/MM/YYYY'), pr_des_erro => vr_dscritic);
 
-            vr_contador := vr_contador + 1;
+      -- Loop sobre as versoes do questionario de microcredito
+      FOR rw_crapass IN cr_crapass LOOP
+
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Dados'   , pr_posicao => 0          , pr_tag_nova => 'inf', pr_tag_cont => NULL, pr_des_erro => vr_dscritic);
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'nrdconta', pr_tag_cont => gene0002.fn_mask_conta(rw_crapass.nrdconta), pr_des_erro => vr_dscritic);
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'dtadmiss', pr_tag_cont => to_char(rw_crapass.dtadmiss,'DD/MM/YYYY'), pr_des_erro => vr_dscritic);
+
+        vr_contador := vr_contador + 1;
             
-          END LOOP; 
-          
+      END LOOP;
+
           IF vr_contador > 0 THEN
             vr_flgdpcnt := 2; --Duplicar conta
           ELSE
@@ -2202,7 +2205,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
         
         gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Dados'   , pr_posicao => 0          , pr_tag_nova => 'flgopcao', pr_tag_cont => NULL, pr_des_erro => vr_dscritic);
         gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'flgopcao', pr_posicao => 0, pr_tag_nova => 'flgdpcnt', pr_tag_cont => vr_flgdpcnt, pr_des_erro => vr_dscritic);
-      
+
     EXCEPTION
       WHEN vr_exc_saida THEN
 
@@ -2450,7 +2453,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
     --  Sistema  : Rotinas acessadas pelas telas de cadastros Web
     --  Sigla    : CADA
     --  Autor    : 
-    --  Data     :                      Ultima atualizacao: 14/11/2017
+    --  Data     :                      Ultima atualizacao: 12/04/2018
     --
     --  Dados referentes ao programa:
     --
@@ -2464,7 +2467,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
     
                      14/11/2017 - Efetuar tratamentos para gravar corretamente os registros
                                   na tabela crapdoc (Lucas Ranghetti #760235)
-
+    
+                     12/04/2018 - Criar os documentos corretos ao duplicar uma conta 
+                                  (Lucas Ranghetti INC0012381)
     -- .............................................................................*/
 
       -- Cursor sobre a tabela de associados
@@ -2550,6 +2555,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
       vr_cdestcvl INTEGER;
       vr_criestcv BOOLEAN;
       vr_idseqttl INTEGER;
+      vr_tpdocmto INTEGER;
 
       -- Variaveis para a duplicacao da conta
       vr_numero VARCHAR2(10);
@@ -3047,40 +3053,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
       END;
 
       -- Efetua o loop sobre a tabela de controle de documentos digitalizados
-      FOR x IN 1..7 LOOP
-        
-        -- Tratamentos efetuados com base na b1wgen0055
-        -- Para os documentos (CPF,CARTEIRA DE IDENTIFICACAO E COMPROVANTE DE RENDA) 
-        -- criar pendencia somemente para pessoa fisica
-        IF x IN(1,2,5) AND rw_crapass.inpessoa <> 1 THEN
-          continue;
-        END IF;        
-        
-        -- Validar estado civil
-        IF x = 4 THEN        
-          IF rw_crapass.inpessoa = 1 THEN
-            SELECT cdestcvl INTO vr_cdestcvl
-                FROM crapttl
-               WHERE cdcooper = pr_cdcooper
-                 AND nrdconta = pr_nrdconta_org
-                 AND idseqttl = 1;        
-          ELSE
-            vr_cdestcvl:= 0;
-          END IF;  
-          
-          IF vr_cdestcvl IN(2,3,4,8,9,11,12) AND 
-             rw_crapass.inpessoa = 1 THEN
-            vr_criestcv:= TRUE;
-          ELSE
-            vr_criestcv:= FALSE;
-          END IF;
-          
-          -- Estado civil criar somente para pessoa fisica e a variavel vr_criestcv seja true
-          IF NOT vr_criestcv THEN
-            continue;
-          END IF;
-        END IF;
-        
+      FOR x IN 6..7 LOOP
+                
         -- Pessoa juridica vamos gravar como zero a titularidade
         IF rw_crapass.inpessoa <> 1 THEN
           vr_idseqttl:= 0;
@@ -3114,6 +3088,42 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
             RAISE vr_exc_saida;
         END;
       END LOOP;
+      
+      -- Tabela de controle de documentos digitalizados, Contrato Abertura de Conta      
+      -- Pessoa juridica vamos gravar como zero a titularidade
+      IF rw_crapass.inpessoa <> 1 THEN
+        vr_idseqttl:= 0;
+        vr_tpdocmto:= 46; -- Contrato Abertura de Conta Juridico
+      ELSE
+        vr_idseqttl:= 1;        
+        vr_tpdocmto:= 45; -- Contrato Abertura de Conta Fisica
+      END IF;
+        
+      -- Insere na tabela de documentos digitalizados - GED
+      BEGIN
+        INSERT INTO crapdoc
+          (cdcooper,
+           nrdconta,
+           flgdigit,
+           dtmvtolt,
+           tpdocmto,
+           idseqttl,
+           nrcpfcgc,
+           cdoperad)
+         VALUES
+          (pr_cdcooper,
+           pr_nrdconta_dst,
+           0,
+           rw_crapdat.dtmvtolt,
+           vr_tpdocmto,
+           vr_idseqttl,
+           rw_crapass.nrcpfcgc,
+           nvl(pr_cdoperad,' '));
+      EXCEPTION
+        WHEN OTHERS THEN
+          vr_dscritic := 'Erro ao inserir na CRAPDOC: '||SQLERRM;
+          RAISE vr_exc_saida;
+      END;
 
       -- Se for pessoa fisica, cria o primeiro titular
       IF rw_crapass.inpessoa = 1 THEN
@@ -9868,28 +9878,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
        AND tbcd.nrdconta = pr_nrdconta
        AND tbcd.tpdevolucao IN (1,2);
        rw_tbcotas_devolucao cr_tbcotas_devolucao%ROWTYPE;
-    --
-    -- Cursor para buscar o saldo pelo extrato
-    CURSOR cr_extrato (pr_cdcooper IN crapcop.cdcooper%TYPE
-                      ,pr_nrdconta IN crapass.nrdconta%TYPE)IS
-      SELECT (SELECT SUM(lct.vllanmto)
-                FROM craplct lct,
-                     craphis his
-               WHERE lct.cdcooper = pr_cdcooper
-                 AND lct.nrdconta = pr_nrdconta
-                 AND lct.cdcooper = his.cdcooper
-                 AND lct.cdhistor = his.cdhistor
-                 AND his.indebcre = 'C')
-                 -
-                (SELECT SUM(lct.vllanmto)
-                   FROM craplct lct,
-                        craphis his
-                  WHERE lct.cdcooper = pr_cdcooper
-                    AND lct.nrdconta = pr_nrdconta
-                    AND lct.cdcooper = his.cdcooper
-                    AND lct.cdhistor = his.cdhistor
-                    AND his.indebcre = 'D') saldo_Extrato
-        FROM dual;    
        
     --Variaveis locais
     vr_cdoperad VARCHAR2(100);
@@ -9929,7 +9917,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
       RAISE vr_exc_saida;
     END IF;
         
-/*    OPEN cr_tbcotas_devolucao(pr_cdcooper => vr_cdcooper
+    OPEN cr_tbcotas_devolucao(pr_cdcooper => vr_cdcooper
                              ,pr_nrdconta => pr_nrdconta);
                    
     FETCH cr_tbcotas_devolucao INTO vr_vldcotas;
@@ -9949,13 +9937,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
       
       CLOSE cr_crapcot;
     
-    END IF;*/
-    --
-    vr_vldcotas := 0;
-    FOR rw_extrato IN cr_extrato(vr_cdcooper
-                                ,pr_nrdconta )LOOP
-      vr_vldcotas := rw_extrato.saldo_extrato;
-    END LOOP;      
+    END IF;
     
     pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
     gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Root', pr_posicao => 0, pr_tag_nova => 'cotas', pr_tag_cont => null, pr_des_erro => vr_dscritic);
@@ -10265,8 +10247,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
        AND cot.nrdconta = pr_nrdconta;
     rw_crapcot cr_crapcot%ROWTYPE;
        
-  
-    --   
     --Cursor para encontrar se ja existe registro de devolucao de cotas
     CURSOR cr_tbcotas_devolucao (pr_cdcooper IN crapcop.cdcooper%TYPE
                                 ,pr_nrdconta IN crapass.nrdconta%TYPE)IS
@@ -10368,13 +10348,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
     
     CLOSE cr_crapass;
     
-/*    IF nvl(pr_vldcotas,0) = 0 THEN
+    IF nvl(pr_vldcotas,0) = 0 THEN
       
       vr_dscritic := 'Valor de cotas não informado.';
       pr_nmdcampo := 'vldcotas';
       RAISE vr_exc_saida;
     
-    END IF;*/
+    END IF;
             
     --Processo de demissão BACEN       
     IF rw_crapass.cdsitdct = 8 THEN
@@ -10403,50 +10383,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
         RAISE vr_exc_saida;
       
       END IF;  
-      -- 
-      -- RMM - Correções da melhoria M364
-      -- Busca o valor de cotas do associado
-      OPEN cr_crapcot(pr_cdcooper => pr_cdcooper
-                     ,pr_nrdconta => pr_nrdconta);
-      
-      FETCH cr_crapcot INTO rw_crapcot;
-      
-      -- Se nao encontrar o valor das cotas, encerra o programa com erro
-      IF cr_crapcot%NOTFOUND THEN
-        
-        CLOSE cr_crapcot;
-        vr_dscritic := 'Valor de cotas não encontrado.';
-        pr_nmdcampo := 'nrdconta';
-        RAISE vr_exc_saida;
-        
-      END IF;
-      
-      CLOSE cr_crapcot;
-      IF NVL(rw_crapcot.vldcotas,0) > 0 THEN
-        IF nvl(pr_vldcotas,0) > rw_crapcot.vldcotas THEN
-          
-          vr_dscritic := '(1) Valor de devolução de cotas maior que o valor de cotas disponível.';
-          pr_nmdcampo := 'vldcotas';
-          RAISE vr_exc_saida;
-        
-        END IF;  
-        
-        vr_vldcotas := pr_vldcotas;
-        
-        BEGIN
-          --Atualiza o valor de cotas do associado                        
-          UPDATE crapcot
-             SET vldcotas = vldcotas - pr_vldcotas
-           WHERE cdcooper = pr_cdcooper
-             AND nrdconta = pr_nrdconta
-           RETURNING crapcot.vldcotas INTO vr_vldcotas;
-              
-        EXCEPTION
-          WHEN OTHERS THEN
-            vr_dscritic := '(1) Erro ao atualizar a tabela crapcot.' ||SQLERRM;
-            RAISE vr_exc_saida;
-        END;      
-      END IF;
     
     ELSE
       
@@ -10516,7 +10452,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
             
       EXCEPTION
         WHEN OTHERS THEN
-          vr_dscritic := '(2)Erro ao atualizar a tabela crapcot.' ||SQLERRM;
+          vr_dscritic := 'Erro ao atualizar a tabela crapcot.' ||SQLERRM;
           RAISE vr_exc_saida;
       END; 
             
@@ -10574,7 +10510,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
     
     --Devolução total        
     IF pr_formadev = 1 THEN
-      IF pr_vldcotas > 0 THEN   
+       
       --Em processo de demissão BACEN
       IF rw_crapass.cdsitdct = 8 THEN
                
@@ -10919,7 +10855,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
        
        
       END IF;             
-      END IF;                    
+                        
     END IF;
          
     
@@ -11144,13 +11080,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
                              ,pr_dsdadant => to_char(rw_crapass.dtdemiss,'DD/MM/RRRR')
                              ,pr_dsdadatu => to_char(nvl(vr_dtdemiss, rw_crapdat.dtmvtolt),'DD/MM/RRRR') );      
 
-    -- Buscar configuração na tabela
-    vr_dstextab := TABE0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
-                                             ,pr_nmsistem => 'CRED'
-                                             ,pr_tptabela => 'GENERI'
-                                             ,pr_cdempres => 0
-                                             ,pr_cdacesso => 'MOTIVODEMI'
-                                             ,pr_tpregist => pr_mtdemiss);
+    -- Buscar motivo demissão
+    CADA0001.pc_busca_motivo_demissao(pr_cdcooper => pr_cdcooper,
+                                      pr_cdmotdem => pr_mtdemiss,
+                                      pr_dsmotdem => vr_dstextab,
+                                      pr_cdcritic => vr_cdcritic,
+                                      pr_des_erro => vr_dscritic);                                             
+
+    --Se não achou motivo
+    IF vr_cdcritic = 848 THEN
+      --Retornar que nao encontrou
+      vr_dsmotdem:= 'MOTIVO NAO CADASTRADO';
+    ELSIF vr_dscritic IS NULL THEN
+      --Retornar o motivo encontrado
+      vr_dsmotdem:= pr_mtdemiss || ' - ' || vr_dstextab;
+    ELSE
+      vr_dsmotdem:= 'ERRO NA BUSCA DE MOTIVO';
+    END IF; 
 
     --Se nao encontrou registro
     IF TRIM(vr_dstextab) IS NULL THEN
@@ -13543,7 +13489,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
         gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Dados' , pr_posicao => 0          , pr_tag_nova => 'inf', pr_tag_cont => NULL, pr_des_erro => vr_dscritic);
         gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'cdcooper', pr_tag_cont => rw_contas.cdcooper, pr_des_erro => vr_dscritic);
         gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'nrdconta', pr_tag_cont => rw_contas.nrdconta, pr_des_erro => vr_dscritic);
-        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'vlcapital', pr_tag_cont => rw_contas.vlcapital/*to_char(rw_contas.vlcapital,'fm999g999g990d00')*/, pr_des_erro => vr_dscritic);
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'vlcapital', pr_tag_cont => to_char(rw_contas.vlcapital,'fm999g999g990d00'), pr_des_erro => vr_dscritic);
         gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'nmprimtl', pr_tag_cont => rw_contas.nmprimtl, pr_des_erro => vr_dscritic);
         gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'dscdevolucao', pr_tag_cont => rw_contas.dscdevolucao, pr_des_erro => vr_dscritic);
         gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'tpdevolucao', pr_tag_cont => rw_contas.tpdevolucao, pr_des_erro => vr_dscritic);
