@@ -1132,6 +1132,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
                 08/12/2017 - Inclusão de chamada da npcb0002.pc_libera_sessao_sqlserver_npc
                              (SD#791193 - AJFink)
 
+				17/04/2018 - Validação se o vr_insitceb é diferente de 2, tratamento para permitir inativação
+                             da cobrança caso o cooperado esteja classificado na categoria de risco de fraude.
+                             (Chamado 853600 - GSaquetta)
+
     ..............................................................................*/
     DECLARE
 
@@ -1386,32 +1390,33 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
       END IF;
 
       vr_insitceb := pr_insitceb;
+      IF vr_insitceb <> 2 THEN
+        -- Monta a mensagem da operacao para envio no e-mail
+        vr_dsoperac := 'Tentativa de habilitacao de cobranca na conta ' ||
+                       GENE0002.fn_mask_conta(rw_crapass.nrdconta) || ' - CPF/CNPJ ' ||
+                       GENE0002.fn_mask_cpf_cnpj(rw_crapass.nrcpfcgc,rw_crapass.inpessoa);
 
-      -- Monta a mensagem da operacao para envio no e-mail
-      vr_dsoperac := 'Tentativa de habilitacao de cobranca na conta ' ||
-                     GENE0002.fn_mask_conta(rw_crapass.nrdconta) || ' - CPF/CNPJ ' ||
-                     GENE0002.fn_mask_cpf_cnpj(rw_crapass.nrcpfcgc,rw_crapass.inpessoa);
-
-	    -- Verificar se a conta esta no cadastro restritivo
-      CADA0004.pc_alerta_fraude (pr_cdcooper => vr_cdcooper         --> Cooperativa
-                                ,pr_cdagenci => vr_cdagenci         --> PA
-                                ,pr_nrdcaixa => vr_nrdcaixa         --> Nr. do caixa
-                                ,pr_cdoperad => vr_cdoperad         --> Cod. operador
-                                ,pr_nmdatela => vr_nmdatela         --> Nome da tela
-                                ,pr_dtmvtolt => rw_crapdat.dtmvtolt --> Data de movimento
-                                ,pr_idorigem => vr_idorigem         --> ID de origem
-                                ,pr_nrcpfcgc => rw_crapass.nrcpfcgc --> Nr. do CPF/CNPJ
-                                ,pr_nrdconta => pr_nrdconta         --> Nr. da conta
-                                ,pr_idseqttl => pr_idseqttl         --> Id de sequencia do titular
-                                ,pr_bloqueia => 1                   --> Flag Bloqueia operacao
-                                ,pr_cdoperac => 2                   --> Cod da operacao
-                                ,pr_dsoperac => vr_dsoperac         --> Desc. da operacao
-                                ,pr_cdcritic => vr_cdcritic         --> Cod. da critica
-                                ,pr_dscritic => vr_dscritic         --> Desc. da critica
-                                ,pr_des_erro => vr_des_erro);       --> Retorno de erro  OK/NOK
-      -- Se retornou erro
-      IF vr_des_erro <> 'OK' THEN
-        RAISE vr_exc_saida;
+	      -- Verificar se a conta esta no cadastro restritivo
+        CADA0004.pc_alerta_fraude (pr_cdcooper => vr_cdcooper         --> Cooperativa
+                                  ,pr_cdagenci => vr_cdagenci         --> PA
+                                  ,pr_nrdcaixa => vr_nrdcaixa         --> Nr. do caixa
+                                  ,pr_cdoperad => vr_cdoperad         --> Cod. operador
+                                  ,pr_nmdatela => vr_nmdatela         --> Nome da tela
+                                  ,pr_dtmvtolt => rw_crapdat.dtmvtolt --> Data de movimento
+                                  ,pr_idorigem => vr_idorigem         --> ID de origem
+                                  ,pr_nrcpfcgc => rw_crapass.nrcpfcgc --> Nr. do CPF/CNPJ
+                                  ,pr_nrdconta => pr_nrdconta         --> Nr. da conta
+                                  ,pr_idseqttl => pr_idseqttl         --> Id de sequencia do titular
+                                  ,pr_bloqueia => 1                   --> Flag Bloqueia operacao
+                                  ,pr_cdoperac => 2                   --> Cod da operacao
+                                  ,pr_dsoperac => vr_dsoperac         --> Desc. da operacao
+                                  ,pr_cdcritic => vr_cdcritic         --> Cod. da critica
+                                  ,pr_dscritic => vr_dscritic         --> Desc. da critica
+                                  ,pr_des_erro => vr_des_erro);       --> Retorno de erro  OK/NOK
+        -- Se retornou erro
+        IF vr_des_erro <> 'OK' THEN
+          RAISE vr_exc_saida;
+        END IF;
       END IF;
 
       -- Busca o cadastro de convenio
