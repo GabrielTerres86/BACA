@@ -1132,6 +1132,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
                 08/12/2017 - Inclusão de chamada da npcb0002.pc_libera_sessao_sqlserver_npc
                              (SD#791193 - AJFink)
 
+				17/04/2018 - Validação se o vr_insitceb é diferente de 2, tratamento para permitir inativação
+                             da cobrança caso o cooperado esteja classificado na categoria de risco de fraude.
+                             (Chamado 853600 - GSaquetta)
+
     ..............................................................................*/
     DECLARE
 
@@ -1386,7 +1390,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
       END IF;
 
       vr_insitceb := pr_insitceb;
-
+      IF vr_insitceb <> 2 THEN
       -- Monta a mensagem da operacao para envio no e-mail
       vr_dsoperac := 'Tentativa de habilitacao de cobranca na conta ' ||
                      GENE0002.fn_mask_conta(rw_crapass.nrdconta) || ' - CPF/CNPJ ' ||
@@ -1412,6 +1416,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
       -- Se retornou erro
       IF vr_des_erro <> 'OK' THEN
         RAISE vr_exc_saida;
+        END IF;
       END IF;
 
       -- Busca o cadastro de convenio
