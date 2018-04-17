@@ -2634,7 +2634,7 @@ function realizarManutencaoDeLimite(operacao, flgstlcr) {
         showConfirmacao("Deseja realizar a manuten&ccedil;&atilde;o do contrato?",
             "Confirma&ccedil;&atilde;o - Ayllos",
            callback,
-            "",
+            "hideMsgAguardo();",
             "sim.gif",
             "nao.gif");
         return false;
