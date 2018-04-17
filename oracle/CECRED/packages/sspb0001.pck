@@ -73,8 +73,11 @@ CREATE OR REPLACE PACKAGE CECRED.sspb0001 AS
                 18/10/2016 - Ajustado Tags do STR0007 para ficarem de acordo com o 
                              catalogo 4.07 na procedure pc_gera_xml (Lucas Ranghetti #537580)
 
-    	          30/11/2016 - Incluido STR0025 e PAG0121 para processos de transferencias 
+      	        30/11/2016 - Incluido STR0025 e PAG0121 para processos de transferencias 
                              judiciais (Andrino-Mouts / Projeto 341-Bacenjud)
+
+	     	        17/04/2018 - Ajuste nas mensagens PAG0101 para inativar a situacao das PAGs
+                             que nao estiverem no arquivo (SD 639810 - Andrino (Mouts))
 ..............................................................................*/
 
   --criação TempTable
@@ -5544,7 +5547,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
       vr_dsdemail VARCHAR2(1000);
       vr_dscritic VARCHAR2(4000);
       vr_exc_erro EXCEPTION;
-      vr_lista_ispb VARCHAR2(4000);
+      vr_lista_ispb VARCHAR2(4000) := ';';
       vr_nmarqlog VARCHAR2(1000) := gene0002.fn_busca_entrada(pr_postext => 6
                                                              ,pr_dstext => pr_nmarqlog
                                                              ,pr_delimitador => '/');
@@ -5587,6 +5590,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                         ,ban.flgoppag = 1
                    WHERE ban.nrispbif = pr_tab_situa_if(vr_idx).nrispbif
                      AND ban.cdbccxlt = 1;             
+                  -- Concatena os ISPBs ativos                     
+                  vr_lista_ispb := vr_lista_ispb ||pr_tab_situa_if(vr_idx).nrispbif||';';
                 END IF;
                 -- Fecha cursor
                 CLOSE cr_crapban_bb;
@@ -5611,6 +5616,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                      SET ban.dtaltpag = CASE WHEN ban.flgoppag <> 1 THEN trunc(SYSDATE) ELSE ban.dtaltpag END
                         ,ban.flgoppag = 1
                    WHERE ban.nrispbif = pr_tab_situa_if(vr_idx).nrispbif;             
+
+                  -- Concatena os ISPBs ativos                     
+                  vr_lista_ispb := vr_lista_ispb ||pr_tab_situa_if(vr_idx).nrispbif||';';
                 END IF;
                 -- Fecha cursor
                 CLOSE cr_crapban;
@@ -5624,6 +5632,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
             END IF;    
           END IF;        
         END LOOP;
+        -- Efetuar a alteracao para inativar todas as PAGs de todos os bancos,
+        -- conforme chamado 639810 (Andrino-Mouts)
+        UPDATE crapban ban
+           SET ban.dtaltpag = trunc(SYSDATE)
+              ,ban.flgoppag = 0
+         WHERE flgoppag = 1 -- Que esteja ativo
+           AND instr(vr_lista_ispb,';'||ban.nrispbif||';') = 0; -- E que nao tenha sido enviado
+
       END IF;  
       
       -- Execução OK
