@@ -194,7 +194,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                                  que agora o nrctremp não contém mais o contrato de limite, mas sim
                                  o número do Borderô. (Marcos-Supero)
 
-                    19/12/2014 - Inclusão das informações de Ente Consignante quando empréstimo ou
+                   19/12/2014 - Inclusão das informações de Ente Consignante quando empréstimo ou
                                  financiamento consignado em folha (Marcos-Supero)
 
                     16/01/2015 - Ajustes no campo para definir o vencimento da operação de empréstimos
@@ -323,7 +323,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                     09/02/2018 - Correção de erro na consulta de índices quando empréstimo do BNDES (PRJ298),
                                  erro reportado pelos plantonistas (Jean Michel)
 
-                    24/01/2017 - Inclusão de consistência do novo campo para identificação da qualificação da operação(crapepr.idquaprc)
+                    24/01/2018 - Inclusão de consistência do novo campo para identificação da qualificação da operação(crapepr.idquaprc)
                                  (Daniel-AMcom)
 
                     02/04/2018 - Inclusão de envio de Carac Espec=19 para ATIVO PROBLEMÁTICO - Daniel(AMcom)
@@ -398,36 +398,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
            AND craptco.nrdconta = pr_nrdconta
            AND craptco.tpctatrf <> 3;
       rw_craptco cr_craptco%ROWTYPE;
-
-      -- Cursor para popular tabela temporária liquidado financiado
-      CURSOR cr_juros60_ctt(pr_cdcooper IN crapris.cdcooper%TYPE) IS
-      SELECT   tlf.nrdconta, epr.nrctremp, tlf.vljuros60
-        FROM   crawepr crwpr,
-               crapepr epr,
-               tbepr_liquidado_financiado tlf,
-               crapass ass
-       WHERE  (crwpr.nrctrliq##1 = tlf.nrctremp
-          OR   crwpr.nrctrliq##2 = tlf.nrctremp
-          OR   crwpr.nrctrliq##3 = tlf.nrctremp
-          OR   crwpr.nrctrliq##4 = tlf.nrctremp
-          OR   crwpr.nrctrliq##5 = tlf.nrctremp
-          OR   crwpr.nrctrliq##6 = tlf.nrctremp
-          OR   crwpr.nrctrliq##7 = tlf.nrctremp
-          OR   crwpr.nrctrliq##8 = tlf.nrctremp
-          OR   crwpr.nrctrliq##9 = tlf.nrctremp
-          OR   crwpr.nrctrliq##10= tlf.nrctremp)
-          AND  crwpr.nrctremp = epr.nrctremp
-          AND  crwpr.cdcooper = epr.cdcooper
-          AND  crwpr.cdagenci = epr.cdagenci
-          AND  crwpr.nrdconta = epr.nrdconta
-          AND  epr.cdcooper   = tlf.cdcooper
-          AND  epr.nrdconta   = tlf.nrdconta
-          AND     tlf.cdcooper   = ass.cdcooper
-          AND     tlf.nrdconta   = ass.nrdconta
-          AND     epr.inprejuz   = 0 --SEM PREJUIZO
-          AND     epr.inliquid   = 0 --ATIVO
-          AND     crwpr.cdcooper = pr_cdcooper;
-      rw_juros60_ref cr_juros60_ctt%ROWTYPE;
 
       -- Cursor de contas transferidas entre cooperativas
       CURSOR cr_craptco_b (pr_nrdconta     crapass.nrdconta%TYPE) IS
@@ -979,17 +949,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
       -- Variavel para o indice
       vr_ind_ebn VARCHAR2(30);
 
-      -- Definicao do tipo da tabela de juros +60 refinanciados
-      TYPE typ_reg_tbepr_liq_fin IS
-       RECORD(vljuros60 tbepr_liquidado_financiado.vljuros60%TYPE);
-      TYPE typ_tab_tbepr_liq_fin IS
-        TABLE OF typ_reg_tbepr_liq_fin
-          INDEX BY VARCHAR2(30);
-      -- Vetor para armazenar os dados da tabela de juros +60 refinanciados
-      vr_tab_tbepr_liq_fin typ_tab_tbepr_liq_fin;
-      -- Variavel para o indice
-      vr_ind_tbepr_liq_fin VARCHAR2(30);
-
       -- Definicao do tipo da tabela de emprestimos
       TYPE typ_reg_crapepr IS
        RECORD(dtmvtolt crapepr.dtmvtolt%TYPE
@@ -1207,7 +1166,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
             RETURN 10092;
           WHEN 'GO' THEN
             RETURN 10092;
-          WHEN 'MA' THEN
+         WHEN 'MA' THEN
             RETURN 10030;
           WHEN 'MG' THEN
             RETURN 10050;
@@ -1237,7 +1196,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
             RETURN 10077;
           WHEN 'SC' THEN
             RETURN 10075;
-          WHEN 'SE' THEN
+         WHEN 'SE' THEN
             RETURN 10038;
           WHEN 'SP' THEN
             RETURN 10058;
@@ -1528,7 +1487,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
              dsinfaux   crapris.dsinfaux%TYPE,
              dtprxpar   crapris.dtprxpar%TYPE,
              vlprxpar   crapris.vlprxpar%TYPE,
-             qtparcel   crapris.qtparcel%TYPE,
+            qtparcel   crapris.qtparcel%TYPE,
              dtvencop   crapris.dtvencop%TYPE,
              flcessao   INTEGER);
 
@@ -1580,7 +1539,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
             END IF;
           END IF;
 
-          -- Incrementar contador
+         -- Incrementar contador
           vr_vlcont_ris := vr_vlcont_ris + 1;
           vr_indice_ris := lpad(rw_crapris.nrcpfcgc,14,'0')||lpad(vr_vlcont_ris,10,'0');
           -- Adicionar a tabela
@@ -2629,7 +2588,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                                         ,pr_inpessoa => vr_inpessoa);
 
             -- Enviar Garantidor
-            gene0002.pc_escreve_xml(pr_xml            => vr_xml_3040
+           gene0002.pc_escreve_xml(pr_xml            => vr_xml_3040
                                    ,pr_texto_completo => vr_xml_3040_temp
                                   ,pr_texto_novo     => '            <Gar Tp="09' || to_char(vr_inpessoa,'fm00')
                                                      || '" Ident="' ||vr_nrdocnpj
@@ -3029,7 +2988,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
         -- Testar se a linha de crédito do Empréstimo/Financiamento é
         -- Consignação em Folha de Pagamento e já trazer a empresa
         CURSOR cr_consigna IS
-          SELECT decode(emp.nrdocnpj,0,ttl.nrcpfemp,emp.nrdocnpj) nrdocnpj
+         SELECT decode(emp.nrdocnpj,0,ttl.nrcpfemp,emp.nrdocnpj) nrdocnpj
                 ,epr.cdempres
                 ,epr.inprejuz
             FROM crapttl ttl
@@ -3146,7 +3105,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                      AND ris.cdcooper  = pr_cdcooper
                      AND ris.nrdconta  = pr_nrdconta
                      AND ris.nrctremp  = pr_nrctremp
-                     AND ris.dtrefere  = rw_crapdat.dtmvtoan)
+                    AND ris.dtrefere  = rw_crapdat.dtultdma)
            WHERE dtinreg IS NOT NULL
              AND ROWNUM = 1
         ORDER BY dtinreg;
@@ -3175,15 +3134,15 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                        , ris.dtinictr dtinreg
                   FROM crapris ris, crapepr epr
                  WHERE ris.qtdiaatr >= 90
-                   AND epr.idquaprc NOT IN (3, 4) -- Somente contrato diferente 3-Renegociação
-                                                  --                            4-Composição de Dívida
-                   AND ris.cdcooper  = epr.cdcooper
-                   AND ris.nrdconta  = epr.nrdconta
-                   AND ris.nrctremp  = epr.nrctremp
+                   AND epr.idquaprc(+) NOT IN (3, 4) -- Somente contrato diferente 3-Renegociação
+                                                     --                            4-Composição de Dívida
+                   AND ris.cdcooper  = epr.cdcooper(+)
+                   AND ris.nrdconta  = epr.nrdconta(+)
+                   AND ris.nrctremp  = epr.nrctremp(+)
                    AND ris.cdcooper  = pr_cdcooper
                    AND ris.nrdconta  = pr_nrdconta
                    AND ris.nrctremp  = pr_nrctremp
-                   AND ris.dtrefere  = rw_crapdat.dtmvtoan
+                   AND ris.dtrefere  = rw_crapdat.dtultdma
                    AND ris.innivris <> 10 -- Prejuízo
                  UNION
                 SELECT DISTINCT
@@ -3196,21 +3155,21 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                        , 0 idreestrut
                        , ris.dtinictr dtinreg
                   FROM crapris ris, crapepr epr
-                 WHERE epr.idquaprc NOT IN (3, 4) -- Somente contrato diferente 3-Renegociação
-                                                  --                            4-Composição de Dívida
-                   AND ris.cdcooper  = epr.cdcooper
-                   AND ris.nrdconta  = epr.nrdconta
-                   AND ris.nrctremp  = epr.nrctremp
+                 WHERE epr.idquaprc(+) NOT IN (3, 4) -- Somente contrato diferente 3-Renegociação
+                                                     --                            4-Composição de Dívida
+                   AND ris.cdcooper  = epr.cdcooper(+)
+                   AND ris.nrdconta  = epr.nrdconta(+)
+                   AND ris.nrctremp  = epr.nrctremp(+)
                    AND ris.cdcooper  = pr_cdcooper
                    AND ris.nrdconta  = pr_nrdconta
                    AND ris.nrctremp  = pr_nrctremp
-                   AND ris.dtrefere  = rw_crapdat.dtmvtoan
+                   AND ris.dtrefere  = rw_crapdat.dtultdma
                    AND ris.innivris  >= 10
                  UNION
                 SELECT DISTINCT
                          a.cdcooper
                        , a.nrdconta
-                       , NULL nrctremp
+                       , pr_nrctremp nrctremp
                        , 60 cdmotivo -- 60 - SOCIO FALECIDO
                        , 1 idtipo_envio
                        , 1 idatvprobl
@@ -3313,6 +3272,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
         vr_cdmotivo     := rw_atvprb.cdmotivo;
         vr_idtipo_envio := rw_atvprb.idtipo_envio;
       end if;
+       -- 
+       
         --
         -- Gravar HISTORICO se existir um registro de Ativo Problemático
         if pr_atvprobl = 1 then
@@ -3329,7 +3290,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                                              ,vr_nrdconta
                                              ,vr_nrctremp
                                              ,vr_dtinreg
-                                             ,rw_crapdat.dtmvtolt  -- dthistreg
+                                             ,rw_crapdat.dtultdma  -- dthistreg
                                              ,vr_cdmotivo
                                              ,NULL                 -- dsobserv
                                              ,vr_idtipo_envio);
@@ -3566,7 +3527,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
         ELSE
           -- Se identificou como Ativo Problemático, envia CaracEspecial=19
           IF vr_atvprobl = 1 THEN
-            vr_caracesp := '19';
+            IF vr_caracesp IS NOT NULL THEN
+              vr_caracesp := vr_caracesp||';19';
+            ELSE
+              vr_caracesp := '19';
+            END IF;
           END IF;
         END IF;
 
@@ -3639,7 +3604,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                                    ,pr_texto_novo     => '            <Inf Tp="1701"' -- Fixo
                                                       || ' Cd="' ||vr_dtatvprobl || '"'
                                                       || '/>' || chr(10));
-          ELSE
+          END IF;
+          
           -- Enviar informação adicional do contrato
           gene0002.pc_escreve_xml(pr_xml            => vr_xml_3040
                                  ,pr_texto_completo => vr_xml_3040_temp
@@ -3648,12 +3614,24 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                                                     || ' Ident="' || to_char(vr_iddident,'fm0000') || '"'
                                                     || ' Valor="' || replace(to_char(vr_tab_saida(pr_idxsaida).vldivida,'fm99999999999999990D00'),',','.') || '"'
                                                     || ' />' || chr(10));
-          END IF;
+          
         ELSE
+          -- **
+          -- Verifica Ativo Problemático(REESTRUTURAÇÃO) - Daniel(AMcom)
+          IF vr_reestrut = 1 and vr_dtatvprobl is not null THEN
+            -- Enviar informação adicional do contrato de Reestruturação
+            gene0002.pc_escreve_xml(pr_xml            => vr_xml_3040
+                                   ,pr_texto_completo => vr_xml_3040_temp
+                                   ,pr_texto_novo     => '                        <Inf Tp="1701"' -- Fixo
+                                                      || ' Cd="' ||vr_dtatvprobl || '"'
+                                                      || '/>' || chr(10));
+          END IF;
+          
           -- Enviar informação adicional do contrato
           gene0002.pc_escreve_xml(pr_xml            => vr_xml_3040
                                  ,pr_texto_completo => vr_xml_3040_temp
                                  ,pr_texto_novo     => '                        <Inf Tp="' || TRIM(vr_tab_saida(pr_idxsaida).cdinfadi) || '" />' ||chr(10));
+          
         END IF;
         -- Verificação do Ente Consignante
         pc_inf_ente_consignante(pr_nrdconta => vr_tab_saida(pr_idxsaida).nrdconta
@@ -4116,20 +4094,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
         END IF;
       END LOOP;
 
-      -- Carrega a tabela temporaria de juros +60 refinanciado
-      vr_tab_tbepr_liq_fin.delete;
-      FOR rw_tbepr_liq_fin IN cr_juros60_ctt(pr_cdcooper) LOOP
-       vr_ind_tbepr_liq_fin := lpad(rw_tbepr_liq_fin.nrdconta,10,'0')||lpad(rw_tbepr_liq_fin.nrctremp,10,'0');
-
-       IF NOT vr_tab_tbepr_liq_fin.EXISTS(vr_ind_tbepr_liq_fin) THEN
-          vr_tab_tbepr_liq_fin(vr_ind_tbepr_liq_fin).vljuros60 := 0;
-       END IF;
-
-       vr_tab_tbepr_liq_fin(vr_ind_tbepr_liq_fin).vljuros60 :=
-           NVL(vr_tab_tbepr_liq_fin(vr_ind_tbepr_liq_fin).vljuros60,0) +
-           rw_tbepr_liq_fin.vljuros60;
-      END LOOP;
-
       -- Carrega a tabela temporaria de emprestimos do Bndes
       FOR rw_crapebn IN cr_crapebn LOOP
         vr_ind_ebn := lpad(rw_crapebn.nrdconta,10,'0')||lpad(rw_crapebn.nrctremp,10,'0');
@@ -4415,13 +4379,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                     IF vr_tab_crapepr(vr_ind_epr).dtmvtolt <= to_date('31/12/2012','dd/mm/yyyy') THEN
                       vr_cdnatuop := '02';
                       vr_vlrdivid := vr_tab_individ(vr_idx_individ).vldivida - vr_tab_individ(vr_idx_individ).vljura60;
-                      -- Descontar Juros +60 refinanciado do saldo devedor
-                      vr_ind_tbepr_liq_fin := lpad(vr_tab_individ(vr_idx_individ).nrdconta,10,'0')
-                                            ||lpad(vr_tab_individ(vr_idx_individ).nrctremp,10,'0');
-                      IF vr_tab_tbepr_liq_fin.exists(vr_ind_tbepr_liq_fin) THEN
-                         -- PERCORRER TEMP TABLE JUROS +60 REF
-                         vr_vlrdivid := vr_vlrdivid - vr_tab_tbepr_liq_fin(vr_ind_tbepr_liq_fin).vljuros60;
-                    END IF;
                     END IF;
                   END IF;
                   CLOSE cr_craptco;
@@ -4437,13 +4394,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                     IF vr_tab_crapepr(vr_ind_epr).dtmvtolt <= to_date('31/12/2013','dd/mm/yyyy') THEN
                       vr_cdnatuop := '02';
                       vr_vlrdivid := vr_tab_individ(vr_idx_individ).vldivida - vr_tab_individ(vr_idx_individ).vljura60;
-                      -- Descontar Juros +60 refinanciado do saldo devedor
-                      vr_ind_tbepr_liq_fin := lpad(vr_tab_individ(vr_idx_individ).nrdconta,10,'0')
-                                            ||lpad(vr_tab_individ(vr_idx_individ).nrctremp,10,'0');
-                      IF vr_tab_tbepr_liq_fin.exists(vr_ind_tbepr_liq_fin) THEN
-                         -- PERCORRER TEMP TABLE JUROS +60 REF
-                         vr_vlrdivid := vr_vlrdivid - vr_tab_tbepr_liq_fin(vr_ind_tbepr_liq_fin).vljuros60;
-                    END IF;
                     END IF;
                   END IF;
                   CLOSE cr_craptco_b;
@@ -4473,7 +4423,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
               vr_txeanual := fn_busca_taxeft(vr_tab_individ(vr_idx_individ).cdmodali
                                             ,vr_tab_individ(vr_idx_individ).nrdconta
                                             ,vr_tab_individ(vr_idx_individ).nrctremp
-                                            ,vr_tab_individ(vr_idx_individ).inddocto
+                                           ,vr_tab_individ(vr_idx_individ).inddocto
                                             ,vr_tab_individ(vr_idx_individ).inpessoa
                                             ,vr_tab_individ(vr_idx_individ).dsinfaux
                                             ,vr_tab_individ(vr_idx_individ).cdorigem);
@@ -4630,7 +4580,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
             vr_dsorgrec := fn_busca_dsorgrec(vr_tab_individ(vr_idx_individ).cdmodali
                                             ,vr_tab_individ(vr_idx_individ).nrdconta
                                             ,vr_tab_individ(vr_idx_individ).nrctremp
-                                            ,vr_tab_individ(vr_idx_individ).cdorigem
+                                           ,vr_tab_individ(vr_idx_individ).cdorigem
                                             ,vr_tab_individ(vr_idx_individ).dsinfaux);
 
             -- Buscar valor do contrato para inddocto = 5
@@ -4766,7 +4716,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
         ELSE
           -- Se identificou como Ativo Problemático, envia CaracEspecial=19
           IF vr_atvprobl = 1 THEN
-            vr_caracesp := '19';
+            IF vr_caracesp IS NOT NULL THEN
+              vr_caracesp := vr_caracesp||';19';
+            ELSE
+              vr_caracesp := '19';
+            END IF;
           END IF;
         END IF;
 
@@ -4878,11 +4832,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
 
           vr_indice_venc := vr_tab_venc.next(vr_indice_venc);
         END LOOP;
-        -- Finaliza a TAG <Venc>                
+        -- Finaliza a TAG <Venc>
         gene0002.pc_escreve_xml(pr_xml            => vr_xml_3040
                                ,pr_texto_completo => vr_xml_3040_temp
-                               ,pr_texto_novo     => '/>'||chr(10));                                                           
-                               
+                               ,pr_texto_novo     => '/>'||chr(10));
         -- Quando existir mais de um contrato de origem = 1 (Conta)
         -- os garantidores devem ir preferencialmente no limite não utilizado (1901),
         -- então testamos a flag que é ativa quando já foram enviados os garantidores no CPF
@@ -4914,27 +4867,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                                vr_tab_individ(vr_idx_individ).cdorigem,
                                vr_tab_individ(vr_idx_individ).dsinfaux);
         vr_vlrdivid := vr_tab_individ(vr_idx_individ).vldivida - vr_tab_individ(vr_idx_individ).vljura60;
-
-        -- Descontar Juros +60 refinanciado do saldo devedor
-        vr_ind_tbepr_liq_fin := lpad(vr_tab_individ(vr_idx_individ).nrdconta,10,'0')
-                              ||lpad(vr_tab_individ(vr_idx_individ).nrctremp,10,'0');
-
-        IF vr_tab_tbepr_liq_fin.exists(vr_ind_tbepr_liq_fin) THEN
-          -- PERCORRER TEMP TABLE JUROS +60 REF
-          vr_vlrdivid := vr_vlrdivid - vr_tab_tbepr_liq_fin(vr_ind_tbepr_liq_fin).vljuros60;
-        END IF;
-
-        -- **
-        -- Verifica Ativo Problemático(REESTRUTURAÇÃO) - Daniel(AMcom)
-        IF vr_reestrut = 1 AND vr_dtatvprobl IS NOT NULL THEN
-          -- Enviar informação adicional do contrato de Reestruturação
-          gene0002.pc_escreve_xml(pr_xml            => vr_xml_3040
-                                 ,pr_texto_completo => vr_xml_3040_temp
-                                 ,pr_texto_novo     => '            <Inf Tp="1701"' -- Fixo
-                                                    || ' Cd="' ||vr_dtatvprobl || '"'
-                                                    || '/>' || chr(10));
-        END IF;
-
         -- TAG <Inf> para NatuOp="02" emprestimos/financiamentos migrados
         IF ( vr_cdnatuop = '02' ) THEN
           vr_idcpfcgc := '';
@@ -4954,23 +4886,35 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
             vr_idcpfcgc := substr(lpad(rw_crapcop_2.nrdocnpj,14,'0'),1,8);
           END IF;
 
-          IF vr_tab_individ(vr_idx_individ).flcessao = 1 THEN
-            -- Enviar informação adicional da operação
+          -- **
+          -- Verifica Ativo Problemático(REESTRUTURAÇÃO) - Daniel(AMcom)
+          IF vr_reestrut = 1 AND vr_dtatvprobl IS NOT NULL THEN
+            -- Enviar informação adicional do contrato de Reestruturação
             gene0002.pc_escreve_xml(pr_xml            => vr_xml_3040
                                    ,pr_texto_completo => vr_xml_3040_temp
-                                   ,pr_texto_novo     => '            <Inf Tp="1001" Cd="'|| to_char(vr_tab_individ(vr_idx_individ).dtinictr,'RRRR-MM-DD')
-                                                      || '" Ident="02038232" '
-                                                      || 'Valor="' || replace(to_char(vr_tab_crapepr(vr_ind_epr).vlemprst,'fm99999999999999990D00'),',','.')
-                                                      || '"/>' || chr(10));
-          ELSE
-            -- Enviar informação adicional da operação
-            gene0002.pc_escreve_xml(pr_xml            => vr_xml_3040
-                                   ,pr_texto_completo => vr_xml_3040_temp
-                                   ,pr_texto_novo     => '            <Inf Tp="1001" Cd="2013-01-02" Ident="'||vr_idcpfcgc||'" '
-                                                      || 'Valor="' || replace(to_char(vr_vlrdivid,'fm99999999999999990D00'),',','.')
-                                                      || '"/>' || chr(10));
-
+                                   ,pr_texto_novo     => '            <Inf Tp="1701"' -- Fixo
+                                                      || ' Cd="' ||vr_dtatvprobl || '"'
+                                                      || '/>' || chr(10));
           END IF;
+          
+            IF vr_tab_individ(vr_idx_individ).flcessao = 1 THEN
+              -- Enviar informação adicional da operação
+              gene0002.pc_escreve_xml(pr_xml            => vr_xml_3040
+                                     ,pr_texto_completo => vr_xml_3040_temp
+                                     ,pr_texto_novo     => '            <Inf Tp="1001" Cd="'|| to_char(vr_tab_individ(vr_idx_individ).dtinictr,'RRRR-MM-DD')
+                                                        || '" Ident="02038232" '
+                                                        || 'Valor="' || replace(to_char(vr_tab_crapepr(vr_ind_epr).vlemprst,'fm99999999999999990D00'),',','.')
+                                                        || '"/>' || chr(10));
+            ELSE
+              -- Enviar informação adicional da operação
+              gene0002.pc_escreve_xml(pr_xml            => vr_xml_3040
+                                     ,pr_texto_completo => vr_xml_3040_temp
+                                     ,pr_texto_novo     => '            <Inf Tp="1001" Cd="2013-01-02" Ident="'||vr_idcpfcgc||'" '
+                                                        || 'Valor="' || replace(to_char(vr_vlrdivid,'fm99999999999999990D00'),',','.')
+                                                        || '"/>' || chr(10));
+
+            END IF;
+
         END IF;
         -- Verificação do Ente Consignante
         pc_inf_ente_consignante(pr_nrdconta => vr_tab_individ(vr_idx_individ).nrdconta
