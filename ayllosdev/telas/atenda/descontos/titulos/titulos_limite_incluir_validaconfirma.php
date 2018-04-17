@@ -7,7 +7,8 @@
 	                                                                  
 	 Objetivo  : Validar número do contrato e confirma a inclusão
 	                                                                  	 
-	 Alterações: 10/06/2010 - Adaptação para RATNG (David).                                                     
+	 Alterações: 10/06/2010 - Adaptação para RATNG (David).        
+				 22/03/2013 - Ajustes referente a geracao automatica do numero do contrato. Daniel (Cecred) : 
 	************************************************************************/
 	
 	session_start();
@@ -24,7 +25,7 @@
 	require_once("../../../../class/xmlfile.php");
 	
 	// Verifica se os parâmetros necessários foram informados
-	$params = array("nrdconta","nrctrlim","antnrctr","nrctaav1","nrctaav2","redirect");
+	$params = array("nrdconta","nrctrlim","nrctaav1","nrctaav2","redirect");
 
 	foreach ($params as $nomeParam) {
 		if (!in_array($nomeParam,array_keys($_POST))) {			
@@ -34,7 +35,6 @@
 	
 	$nrdconta = $_POST["nrdconta"];
 	$nrctrlim = $_POST["nrctrlim"];
-	$antnrctr = $_POST["antnrctr"];
 	$nrctaav1 = $_POST["nrctaav1"];
 	$nrctaav2 = $_POST["nrctaav2"];	
 
@@ -46,11 +46,6 @@
 	// Verifica se o do contrato é um inteiro válido
 	if (!validaInteiro($nrctrlim)) {
 		exibeErro("N&uacute;mero do contrato inv&aacute;lido.");
-	}
-	
-	// Verifica se o do contrato de validação é um inteiro válido
-	if (!validaInteiro($antnrctr)) {
-		exibeErro("N&uacute;mero do contrato de valida&ccedil;&atilde;o inv&aacute;lido.");
 	}	
 	
 	// Verifica se número da conta do 1° avalista é um inteiro válido
