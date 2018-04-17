@@ -522,7 +522,7 @@
     	$dados = $root->dados;
 
 			
-	    echo 'showError("inform","'.$dados.'","Alerta - Ayllos","carregaBorderosTitulos();voltaDiv(3,2,5,\'DESCONTO DE T&Iacute;TULOS - BORDEROS\');");';
+	    echo 'showError("inform","'.$dados.'","Alerta - Ayllos","carregaBorderosTitulos();voltaDiv(3,1,5,\'DESCONTO DE T&Iacute;TULOS - BORDEROS\');");';
 			
 	}else if($operacao =='BUSCAR_ACIONAMENTOS_PROPOSTA'){
 
