@@ -731,7 +731,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps156 (pr_cdcooper IN crapcop.cdcooper%T
         END IF;   
         CLOSE cr_craptab;
       END IF;
-      
+
+      /*
       -- Se não há critica ainda 
       IF nvl(vr_cdcritic,0) NOT IN(484,828,640)  THEN
         -- Validar resgate
@@ -757,7 +758,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps156 (pr_cdcooper IN crapcop.cdcooper%T
           -- Enviaremos a critica 640 ao relatório
           vr_cdcritic := 640; 
         END IF; 
-      END IF;
+      END IF;  */
       
       /* Se nao houve erro ou é uma bloqueada vencida r ser resgatada */
       IF  nvl(vr_cdcritic,0) = 0 OR vr_cdcritic = 828  THEN
