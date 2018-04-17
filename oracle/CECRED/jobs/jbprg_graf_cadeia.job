@@ -54,7 +54,7 @@ BEGIN
       vr_dscritic VARCHAR2(1000); 
       BEGIN
 
-        CECRED.PC_GRAFICO_CADEIA(pr_cdcooper => 1
+        CECRED.PC_GRAFICO_CADEIA(pr_cdcooper => 1,
                                  pr_dscritic => vr_dscritic);
 
         IF vr_dscritic IS NOT NULL THEN
