@@ -462,7 +462,7 @@ BEGIN
           RAISE vr_exc_erro;                 
         END IF;
       
-        /* Verificar se possui acordo na CRAPCYC */
+      /*  \* Verificar se possui acordo na CRAPCYC *\
         OPEN c_crapcyc(pr_cdcooper, pr_nrdconta, pr_nrctremp);
         FETCH c_crapcyc INTO vr_flgativo;
         CLOSE c_crapcyc;
@@ -471,7 +471,7 @@ BEGIN
           vr_cdcritic := 0;
           vr_dscritic := 'Pagamento nao permitido, emprestimo em acordo';
           RAISE vr_exc_erro;             
-        END IF;
+        END IF;*/
         --
         vr_txcpmfcc:=0;
         vr_txrdcpmf:=1;
