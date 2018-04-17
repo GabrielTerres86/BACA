@@ -3,16 +3,16 @@
 	/************************************************************************
 	 Fonte: titulos_limite.php                                        
 	 Autor: Guilherme                                                 
-	 Data : Novembro/2008                Ãšltima AlteraÃ§Ã£o: 26/06/2017
+	 Data : Novembro/2008                Última Alteração: 26/06/2017
 	                                                                  
 	 Objetivo  : Mostrar opcao Limites de descontos da rotina         
 	             Descontos da tela ATENDA                 		   	  
 	                                                                  	 
-	 AlteraÃ§Ãµes: 09/06/2010 - Mostrar descriÃ§Ã£o da situaÃ§Ã£o (David).
+	 Alterações: 09/06/2010 - Mostrar descrição da situação (David).
 
 				 25/06/2010 - Mostar campo de envio a sede (Gabriel).
 				 
-				 12/07/2011 - Alterado para layout padrÃ£o (Gabriel Capoia - DB1)
+				 12/07/2011 - Alterado para layout padrão (Gabriel Capoia - DB1)
 				 
 				 18/11/2011 - Ajustes para nao mostrar botao quando nao tiver permissao (Jorge)
 				 
@@ -20,24 +20,24 @@
  							  de proposta de novo limite de desconto de titulo para
  							  menores nao emancipados (Reinert).
 
-				 17/12/2015 - EdiÃ§Ã£o de nÃºmero do contrato de limite (Lunelli - SD 360072 [M175])
+				 17/12/2015 - Edição de número do contrato de limite (Lunelli - SD 360072 [M175])
 
-				 26/06/2017 - Ajuste para rotina ser chamada atravÃ©s da tela ATENDA > Produtos (Jonata - RKAM / P364).
+				 26/06/2017 - Ajuste para rotina ser chamada através da tela ATENDA > Produtos (Jonata - RKAM / P364).
 
 				 28/08/2018 - Adaptado arquivo para Porpostas. Andre Avila.
 
-				 15/04/2018 - AlteraÃ§Ã£o no botÃ£o 'Detalhes da Proposta' (Leonardo Oliveira - GFT).
+				 15/04/2018 - Alteração no botão 'Detalhes da Proposta' (Leonardo Oliveira - GFT).
 
 	************************************************************************/
 	
 	session_start();
 
-	// Includes para controle da session, variÃ¡veis globais de controle, e biblioteca de funÃ§Ãµes	
+	// Includes para controle da session, variáveis globais de controle, e biblioteca de funções	
 	require_once("../../../../includes/config.php");
 	require_once("../../../../includes/funcoes.php");
 	require_once("../../../../includes/controla_secao.php");
 
-	// Verifica se tela foi chamada pelo mÃ©todo POST
+	// Verifica se tela foi chamada pelo método POST
 	isPostMethod();	
 		
 	// Classe para leitura do xml de retorno
@@ -45,19 +45,19 @@
 	
 	setVarSession("nmrotina","DSC TITS - LIMITE");
 
-	// Carrega permissÃµes do operador
+	// Carrega permissões do operador
 	include("../../../../includes/carrega_permissoes.php");	
 	
 	setVarSession("opcoesTela",$opcoesTela);
 	
-	// Verifica se o nÃºmero da conta foi informado
+	// Verifica se o número da conta foi informado
 	if (!isset($_POST["nrdconta"])) {
 		exibeErro("Par&acirc;metros incorretos.");
 	}	
 
 	$nrdconta = $_POST["nrdconta"];
 
-	// Verifica se o nÃºmero da conta Ã© um inteiro vÃ¡lido
+	// Verifica se o número da conta é um inteiro válido
 	if (!validaInteiro($nrdconta)) {
 		exibeErro("Conta/dv inv&aacute;lida.");
 	}
@@ -80,7 +80,7 @@ $xmlResult = mensageria($xmlGetLimites, $pakage, $procedure_acao,  $glbvars["cdc
 $xmlObjLimites = getObjectXML($xmlResult);
 
 
-	// Se ocorrer um erro, mostra crÃ­tica
+	// Se ocorrer um erro, mostra crítica
 	if (strtoupper($xmlObjLimites->roottag->tags[0]->name) == "ERRO") {
 
 		exibeErro($xmlObjLimites->roottag->tags[0]->tags[0]->tags[4]->cdata);
@@ -180,8 +180,7 @@ $xmlObjLimites = getObjectXML($xmlResult);
 	$dispM = (!in_array("M",$glbvars["opcoesTela"])) ? 'display:none;' : '';
 ?>
 
-<div id="divBotoesTitulosLimite" style="margin-bottom:10px;">
-	
+<div id="divBotoesTitulosLimite" style="margin-bottom:10px;	margin-top: 10px;">
 	
 	<input 
 		type="button"
@@ -296,7 +295,7 @@ $xmlObjLimites = getObjectXML($xmlResult);
 
 	dscShowHideDiv("divOpcoesDaOpcao2","divOpcoesDaOpcao1;divOpcoesDaOpcao3");
 
-	// Muda o tÃ­tulo da tela
+	// Muda o título da tela
 	$("#tdTitRotina").html("DESCONTO DE T&Iacute;TULOS - LIMITE");
 
 	formataLayout('divPropostas');
@@ -304,10 +303,10 @@ $xmlObjLimites = getObjectXML($xmlResult);
 	// Esconde mensagem de aguardo
 	hideMsgAguardo();
 
-	// Bloqueia conteÃºdo que estÃ¡ Ã¡tras do div da rotina
+	// Bloqueia conteúdo que está átras do div da rotina
 	blockBackground(parseInt($("#divRotina").css("z-index")));
 		
-	//Se esta tela foi chamada atravÃ©s da rotina "Produtos" entÃ£o acessa a opÃ§Ã£o conforme definido pelos responsÃ¡veis do projeto P364
+	//Se esta tela foi chamada através da rotina "Produtos" então acessa a opção conforme definido pelos responsáveis do projeto P364
 	if (executandoProdutos == true) {
 		
 		$("#btnIncluirLimite", "#divBotoesTitulosLimite").click();
