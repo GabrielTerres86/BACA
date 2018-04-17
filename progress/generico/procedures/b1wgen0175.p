@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Andre Santos - SUPERO
-   Data    : Setembro/2013                      Ultima atualizacao: 13/06/2017
+   Data    : Setembro/2013                      Ultima atualizacao: 16/04/2018
    Dados referentes ao programa:
 
    Frequencia: Diario (on-line)
@@ -100,6 +100,10 @@
    13/06/2017 - Ajustes para o novo formato de devoluçao de Sessao Única, de 
                 Fraudes/Impedimentos e remoçao do processo de devoluçao de Cheques.
                 PRJ367 - Compe Sessao Unica (Lombardi)
+
+   16/04/2018 - Incluido tratamento na procedure valida-alinea para nao 
+                criticar horario limite de devolucao quando se tratar de 
+				cheques trocados no caixa (Diego).
    
 ............................................................................. */
 DEF STREAM str_1.  /*  Para relatorio de entidade  */
@@ -2494,16 +2498,41 @@ PROCEDURE valida-alinea:
     IF ret_execucao AND
        NOT CAN-DO("20,21,24,25,28,30,35,70",STRING(par_cdalinea)) THEN
        DO:
-           ASSIGN aux_cdcritic = 0
-                  aux_dscritic = "Hora limite para marcar cheques foi ultrapassada!".
+	       FIND crapdat WHERE crapdat.cdcooper = par_cdcooper 
+                NO-LOCK NO-ERROR.
+                           
+           /* Sistema so deve criticar horario quando for 
+		      cheque recebido via COMPE. Devolucao de cheque
+			  trocado no caixa devera permitir */
+		   IF  CAN-FIND(craplcm WHERE 
+                        craplcm.cdcooper = par_cdcooper      AND
+                        craplcm.nrdconta = par_nrdconta      AND
+                        craplcm.dtmvtolt = crapdat.dtmvtoan  AND  
+                        craplcm.cdhistor = 524               AND
+                        craplcm.nrdocmto = par_nrcheque)
+                OR
+               CAN-FIND(craplcm WHERE                       
+                        craplcm.cdcooper = par_cdcooper      AND
+                        craplcm.nrdconta = par_nrdconta      AND
+                        craplcm.dtmvtolt = crapdat.dtmvtolt  AND
+                        craplcm.cdhistor = 1873              AND
+                        craplcm.nrdocmto = par_nrcheque)  
+                     THEN
+               DO:
+                   ASSIGN aux_cdcritic = 0
+                          aux_dscritic = "Hora limite para marcar " + 
+                                         "cheques foi ultrapassada!".
            
-           RUN gera_erro (INPUT par_cdcooper,
-                          INPUT 0,
-                          INPUT 0,
-                          INPUT 1, /*sequencia*/
-                          INPUT aux_cdcritic,
-                          INPUT-OUTPUT aux_dscritic).
-           RETURN "NOK".
+                   RUN gera_erro (INPUT par_cdcooper,
+                                  INPUT 0,
+                                  INPUT 0,
+                                  INPUT 1, /*sequencia*/
+                                  INPUT aux_cdcritic,   
+                                  INPUT-OUTPUT aux_dscritic).
+                   RETURN "NOK".
+               END.
+           ELSE              
+                .
        END.
     
     RETURN "OK".
