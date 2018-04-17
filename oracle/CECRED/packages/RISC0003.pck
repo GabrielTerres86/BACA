@@ -3231,6 +3231,7 @@ PROCEDURE pc_risco_central_ocr(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Coopera
          AND ass.cdcooper = grp.cdcooper(+)
          AND ass.nrdconta = grp.nrctasoc(+)
          AND ass.nrcpfcgc = grp.nrcpfcgc(+)
+         AND ass.dtdemiss IS NOT NULL -- Não gera registro para cooperados falecidos ou demitidos
          AND NOT EXISTS (SELECT 1
                            FROM crapris ris
                           WHERE ris.dtrefere = rw_dat.dtmvtoan
