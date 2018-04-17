@@ -21,7 +21,7 @@ begin
 vr_cdcritic number;
 vr_dscritic varchar2(10000);								
 begin 
-cecred.prej0001.pc_controla_exe_job(pr_cdcritic => vr_cdcritic
+cecred.prej0001.pc_controla_exe_job(pr_cdcritic => vr_cdcritic,
                                     pr_dscritic => vr_dscritic); 
 if vr_dscritic is not null then
 RAISE_application_error(-20500,''Erro rotina prej0001: ''||vr_dscritic);
