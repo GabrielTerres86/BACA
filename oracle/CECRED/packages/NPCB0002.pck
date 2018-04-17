@@ -121,6 +121,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0002 is
                   03/01/2018 - Ajustar a chamada da fn_valid_periodo_conviv pois o 
                                periodo de convivencia será tratado por faixa de valores
                                (Douglas - Chamado 823963)
+                               
+                  12/04/2018 - Ajustado o cursor cr_crapage na function pc_consultar_titulo_cip,
+                               inclusa clausula que validar se o municipio pertence ao mesmo 
+                               estado do municipio é o mesmo da praça financeira.
+                               (INC0012121 - GSaquetta)
 
   ---------------------------------------------------------------------------------------------------------------*/
   -- Declaração de variáveis/constantes gerais
@@ -698,8 +703,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0002 is
       SELECT a.cdcidade
         FROM crapcaf a
            , crapmun m
-           , crapage t 
+           , crapage t
        WHERE TRIM(a.nmcidade) = TRIM(m.dscidade)
+         AND a.cdufresd = m.cdestado
          AND m.idcidade = t.idcidade
          AND t.cdagenci = pr_cdagenci 
          AND t.cdcooper = pr_cdcooper;
