@@ -416,6 +416,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                                      - processa os registros do arquivo somente do PA passado pelo parâmetro.
                                      - Processa os arquivos .RET e cobrança.
                                      - gera os movimentos para consolidação em tabela _WRK.          
+
+               03/04/2018 - ajuste no tratamento de restart do paralelismo;
+                            ajuste no tratamento de erro na exception others (AMcom-Mario)
+                            
    .............................................................................*/
 
      DECLARE
@@ -564,6 +568,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
        -- Agências por cooperativa com clientes
        cursor cr_crapass_age (pr_cdcooper in crapass.cdcooper%type,
                               pr_dtmvtolt in crapdat.dtmvtolt%type,
+                              pr_qterro   in number,
                               pr_cdprogra in tbgen_batch_controle.cdprogra%type) is
          SELECT distinct cdagenci
          FROM crapass crapass
@@ -572,8 +577,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
          -- Selecionar somente alguns PA's para teste de Paralelismo  --aqui
          -- and  cdagenci in (1,2,3)--(1,2,3,4,5,6,7,8,9,10)
          --
-         and (pr_flgresta = 0 or      -- Processamento Normal
-             (pr_flgresta = 1         -- Reprocessamento
+         and (pr_qterro = 0  or      -- Processamento Normal
+             (pr_qterro >= 1         -- Reprocessamento
                               and exists (select 1
                                             from tbgen_batch_controle
                                            where tbgen_batch_controle.cdcooper    = pr_cdcooper
@@ -1250,6 +1255,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
        vr_inreproc     BOOLEAN := FALSE;
        vr_dsarqrep     VARCHAR2(100);
        vr_dsreproc     VARCHAR2(5);
+       vr_qterro        number := 0;
        
        --Variaveis para retorno de erro
        vr_des_erro     VARCHAR2(3);
@@ -1377,13 +1383,13 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
        -- Controla Controla log
        PROCEDURE pc_controla_log_batch(pr_idtiplog     IN NUMBER       -- Tipo de Log
                                       ,pr_dscritic     IN VARCHAR2) IS -- Descrição do Log
-         vr_dstiplog VARCHAR2 (10);
+         vr_dstiplog VARCHAR2 (15);
        BEGIN
          -- Descrição do tipo de log
          IF pr_idtiplog = 2 THEN
            vr_dstiplog := 'ERRO: ';
          ELSE
-           vr_dstiplog := 'ALERTA: ';
+           vr_dstiplog := 'PROCESSANDO: ';
          END IF;
          -- Envio centralizado de log de erro
          btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
@@ -4386,7 +4392,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                  IF cr_crapcob%ISOPEN THEN
                    CLOSE cr_crapcob;
                  END IF;
-
+                 
                  --> Devolução de Pagamento Fraudado
                  IF rw_crapcob.incobran = 2 THEN                   
                  
@@ -5682,7 +5688,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
 
                --Efetuar a baixa do titulo
                DSCT0001.pc_efetua_baixa_titulo (pr_cdcooper    => pr_cdcooper         --Codigo Cooperativa
-                                               ,pr_cdagenci    => pr_cdagenci         --Codigo Agencia    --Alterado de 0 para Agencia do Cooperado Aqui
+                                               ,pr_cdagenci    => 0                   --Codigo Agencia
                                                ,pr_nrdcaixa    => 0                   --Numero Caixa
                                                ,pr_cdoperad    => 0                   --Codigo operador
                                                ,pr_dtmvtolt    => rw_crapdat.dtmvtolt --Data Movimento
@@ -5716,7 +5722,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                                      ,pr_ind_tipo_log => 2 -- Erro tratato
                                      ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE')
                                      ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                         || vr_cdprogra || ' --> Erro retorno na DSTC0001: '||vr_tab_erro2(idx).dscritic
+                                                         || vr_cdprogra || ' --> Erro retorno na DSCT0001: '||vr_tab_erro2(idx).dscritic
                                                          || 'Conta:'||vr_tab_descontar(vr_index_desc).nrdconta);
 
                  END LOOP;
@@ -6808,8 +6814,16 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
             RAISE vr_exc_saida;
          END IF;
 
+         -- Verifica se algum job paralelo executou com erro
+         vr_qterro := 0;
+         vr_qterro := gene0001.fn_ret_qt_erro_paralelo(pr_cdcooper    => pr_cdcooper,
+                                                       pr_cdprogra    => vr_cdprogra,
+                                                       pr_dtmvtolt    => rw_crapdat.dtmvtolt,
+                                                       pr_tpagrupador => 1,
+                                                       pr_nrexecucao  => 1);
+
          --Limpa tabelas de Work Consolidadas
-         if nvl(pr_flgresta,0) = 0 then -- quando não Restart
+         if vr_qterro = 0 then -- quando não Restart    
            BEGIN 
              delete TBGEN_BATCH_RELATORIO_WRK
               WHERE cdcooper = pr_cdcooper
@@ -6865,9 +6879,18 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
          --Gerar o ID para o paralelismo
          vr_idparale := gene0001.fn_gera_ID_paralelo;
                                                   
+         -- Verifica se algum job paralelo executou com erro
+         vr_qterro := 0;
+         vr_qterro := gene0001.fn_ret_qt_erro_paralelo(pr_cdcooper    => pr_cdcooper,
+                                                       pr_cdprogra    => vr_cdprogra,
+                                                       pr_dtmvtolt    => TO_DATE(vr_dtleiarq,'YYYYMMDD'),
+                                                       pr_tpagrupador => 1,
+                                                       pr_nrexecucao  => 1);
+                                                  
          -- Retorna as agências, com poupança programada
          for rw_crapass_age in cr_crapass_age (pr_cdcooper
                                               ,TO_DATE(vr_dtleiarq,'YYYYMMDD')
+                                              ,vr_qterro
                                               ,vr_cdprogra) loop
                                           
            -- Montar o prefixo do código do programa para o jobname
@@ -6991,12 +7014,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                                             ,pr_cdcritic              --pr_cdcritic   OUT crapcri.cdcritic%TYPE                 -- Codigo da critica
                                             ,pr_dscritic              --pr_dscritic   OUT crapcri.dscritic%TYPE
                                             );      
-
-           -- Testar saida com erro
-           --if vr_dscritic is not null then 
-           --  -- Levantar exceçao
-           --  raise vr_exc_saida;
-           --end if;  
 
            --Grava LOG sobre o ínicio da execução da procedure na tabela tbgen_prglog
            vr_idlog_ini_par := null;
@@ -7461,6 +7478,40 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
          pr_dscritic := sqlerrm;
          
          ROLLBACK;
+         -- Chamamos a fimprg para encerrarmos o processo sem parar a cadeia
+         if rw_crapdat.inproces > 2
+         and pr_cdagenci > 0
+         and vr_qtdjobs  > 0  then    
+           -- Processo JOB           
+
+           pc_controla_log_batch(1, 'Erro 3: '||pr_cdagenci||' - '||pr_dscritic);
+
+           -- Grava LOG de ocorrência final da procedure apli0001.pc_calc_poupanca
+           pc_log_programa(PR_DSTIPLOG           => 'E',
+                           PR_CDPROGRAMA         => vr_cdprogra||'_'||pr_cdagenci,
+                           pr_cdcooper           => pr_cdcooper,
+                           pr_tpexecucao         => 2,  -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                           pr_tpocorrencia       => 2,
+                           pr_dsmensagem         => 'pr_cdcritic:'||pr_cdcritic||CHR(13)||
+                                                    'pr_dscritic:'||pr_dscritic,
+                           PR_IDPRGLOG           => vr_idlog_ini_par);  
+  
+           --Grava data fim para o JOB na tabela de LOG 
+           pc_log_programa(pr_dstiplog   => 'F',    
+                           pr_cdprograma => vr_cdprogra||'_'||pr_cdagenci,           
+                           pr_cdcooper   => pr_cdcooper, 
+                           pr_tpexecucao => 2,          -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                           pr_idprglog   => vr_idlog_ini_par,
+						   pr_flgsucesso => 0);  
+
+           -- Encerrar o job do processamento paralelo dessa agência
+           gene0001.pc_encerra_paralelo(pr_idparale => pr_idparale
+                                       ,pr_idprogra => LPAD(pr_cdagenci,3,'0')
+                                       ,pr_des_erro => vr_dscritic);  
+
+         END IF;
+         
+
          --Finaliza sessão aberta com SQL SERVER
          npcb0002.pc_libera_sessao_sqlserver_npc('PC_CRPS538_6');
      END;

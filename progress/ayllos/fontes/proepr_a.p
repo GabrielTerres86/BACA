@@ -412,8 +412,9 @@
 			             grava-proposta-completa. PRJ207 - Esteira 
 						 (Odirlei-AMcom)						                  
                          
-            24/01/2018 - Passagem de parametros nulos. (Jaison/James - PRJ298)
+            15/12/2017 - Inserção do campo idcobope. PRJ404 (Lombardi)
 
+            24/01/2018 - Passagem de parametros nulos. (Jaison/James - PRJ298)
 ........................................................................... */
 
 DEF INPUT PARAM par_nrdconta AS INTE                                   NO-UNDO.
@@ -2125,6 +2126,7 @@ DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
                                 INPUT TRUE,
                                 INPUT tt-rendimento.dsjusren,
                                 INPUT ?, /* dtlibera */
+                                INPUT 0, /* idcobope */
 								INPUT tt-proposta-epr.idfiniof, /* par_idfiniof */
 								INPUT "", /* par_dscatbem */
                                 OUTPUT TABLE tt-erro,

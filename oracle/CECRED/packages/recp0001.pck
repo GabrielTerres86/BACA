@@ -164,6 +164,28 @@ CREATE OR REPLACE PACKAGE CECRED.RECP0001 IS
                                     ,pr_cdcritic OUT NUMBER                                -- Retorno de critica/erro
                                     ,pr_dscritic OUT VARCHAR2);                            -- Retorno de critica/erro
 
+ -- Gera histórico de alteração CRAPCYC
+ PROCEDURE pc_gerar_historico_cdmotcin(pr_cdcooper  IN tbrecup_acordo.cdcooper%TYPE         
+                                      ,pr_nrdconta  IN tbrecup_acordo.nrdconta%TYPE 
+                                      ,pr_nrctremp  IN tbrecup_acordo_contrato.nrctremp%TYPE                               
+                                      ,pr_cdorigem  IN tbrecup_acordo_contrato.cdorigem%TYPE                              
+                                      ,pr_cdmotcin  IN crapcyc.cdmotcin%TYPE                                 
+                                      ,pr_flgehvip  IN crapcyc.flgehvip%TYPE                                                               
+                                      ,pr_dscritic OUT VARCHAR2                               
+                                      ,pr_cdcritic OUT NUMBER       -- Retorno de critica/erro
+                                    );  
+
+ -- Consistir alteração CRAPCYC
+ PROCEDURE pc_consistir_alt_cdmotcin(pr_cdcooper  IN tbrecup_acordo.cdcooper%TYPE         
+                                      ,pr_nrdconta  IN tbrecup_acordo.nrdconta%TYPE 
+                                      ,pr_nrctremp  IN tbrecup_acordo_contrato.nrctremp%TYPE                               
+                                      ,pr_cdorigem  IN tbrecup_acordo_contrato.cdorigem%TYPE                              
+                                      ,pr_cdmotcin  IN crapcyc.cdmotcin%TYPE                                 
+                                      ,pr_flgehvip  IN crapcyc.flgehvip%TYPE                                                               
+                                      ,pr_dscritic OUT VARCHAR2                               
+                                      ,pr_cdcritic OUT NUMBER       -- Retorno de critica/erro
+                                    );   
+
 END RECP0001;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
@@ -174,7 +196,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
   --  Sistema  : Rotinas genéricas com foco no Sistema de Acordos
   --  Sigla    : RECP
   --  Autor    : Renato Darosci / James Prust Junior
-  --  Data     : Setembro/2016.                   Ultima atualizacao: 22/02/2017
+  --  Data     : Setembro/2016.                   Ultima atualizacao: 13/03/2018
   --
   -- Dados referentes ao programa:
   --
@@ -195,6 +217,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
   --             27/09/2017 - Ajuste para atender SM 3 do projeto 210.2 (Daniel)
   --
   --             02/10/2017 - Tratamento no update da tabela CRAPCYC para tratamento da origem 2. (Heitor - Mouts) - Chamado 760624.
+  --
+  --             13/03/2018 - Chamado 806202 - ALterado update CRAPCYC para não atualizar motivos 2 e 7.
+  --
+  --             02/04/2018 - Gravar usuario cyber quando efetuado pagamento da primeira parcela. Chamado 868775 (Heitor - Mouts)
+  -- 
   ---------------------------------------------------------------------------------------------------------------
   
   -- Constante com o nome do programa
@@ -2583,9 +2610,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
       FOR rw_acordo_contrato IN cr_acordo_contrato LOOP
         BEGIN
           UPDATE crapcyc 
-             SET flgehvip = 1
-               , cdmotcin = 1
+             SET flvipant = flgehvip
+               , cdmotant = decode(cdmotcin,2,cdmotant,7,cdmotant,cdmotcin)
+               , flgehvip = 1
+               , cdmotcin = decode(cdmotcin,2,cdmotcin,7,cdmotcin,1)
                , dtaltera = BTCH0001.rw_crapdat.dtmvtolt
+			   , cdoperad = 'cyber'
            WHERE cdcooper = rw_acordo_contrato.cdcooper
              AND cdorigem = DECODE(rw_acordo_contrato.cdorigem,2,3,rw_acordo_contrato.cdorigem)
              AND nrdconta = rw_acordo_contrato.nrdconta
@@ -2911,6 +2941,183 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
       pr_cdcritic := 0;
       pr_dscritic := 'Erro na PC_PAGAR_CONTRATO_ACORDO: '||SQLERRM; 
   END pc_pagar_contrato_acordo;
+
+ -- Gera histórico de alteração CRAPCYC
+ PROCEDURE pc_gerar_historico_cdmotcin(pr_cdcooper  IN tbrecup_acordo.cdcooper%TYPE         
+                                      ,pr_nrdconta  IN tbrecup_acordo.nrdconta%TYPE 
+                                      ,pr_nrctremp  IN tbrecup_acordo_contrato.nrctremp%TYPE                               
+                                      ,pr_cdorigem  IN tbrecup_acordo_contrato.cdorigem%TYPE                              
+                                      ,pr_cdmotcin  IN crapcyc.cdmotcin%TYPE                                 
+                                      ,pr_flgehvip  IN crapcyc.flgehvip%TYPE                                                               
+                                      ,pr_dscritic OUT VARCHAR2                               
+                                      ,pr_cdcritic OUT NUMBER       -- Retorno de critica/erro
+                                    ) IS                          
+  
+    -- Buscar dados acordo
+    /*
+    CURSOR cr_acordo IS
+      select A.rowid 
+        from tbrecup_acordo_contrato a, 
+             tbrecup_acordo b
+       where a.nracordo = b.nracordo
+         and b.cdcooper = pr_cdcooper
+         and b.nrdconta = pr_nrdconta
+         and a.nrctremp = pr_nrctremp
+         and a.cdorigem = pr_cdorigem;
+    */ 
+
+    -- EXCEPTIONS
+    vr_exc_erro       EXCEPTION;   
+
+  BEGIN      
+    --FOR rw_acordo in cr_acordo LOOP
+      --
+      IF pr_cdmotcin NOT IN (1,2,7) THEN
+        --
+        /*
+        BEGIN
+          UPDATE tbrecup_acordo_contrato
+             SET cdmotcin = pr_cdmotcin,
+                 flgehvip = pr_flgehvip
+           WHERE ROWID = rw_acordo.rowid; 
+        EXCEPTION
+           WHEN OTHERS THEN
+             pr_cdcritic := 0;
+             pr_dscritic := 'Erro UPDATE tbrecup_acordo_contrato: '||SQLERRM;             
+        END;
+        */
+        
+        BEGIN
+          UPDATE crapcyc
+             SET cdmotant = pr_cdmotcin,
+                 flvipant = pr_flgehvip
+           WHERE cdcooper = pr_cdcooper
+             and nrdconta = pr_nrdconta
+             and nrctremp = pr_nrctremp
+             and cdorigem = pr_cdorigem; 
+        EXCEPTION
+           WHEN OTHERS THEN
+             pr_cdcritic := 0;
+             pr_dscritic := 'Erro UPDATE crapcyc: '||SQLERRM;             
+        END;
+        --
+      END IF;
+      --
+    --END LOOP;
+
+  EXCEPTION
+    WHEN  vr_exc_erro THEN
+      pr_cdcritic := 0;    
+    WHEN OTHERS THEN 
+      pr_cdcritic := 0;
+      pr_dscritic := 'Erro na pc_gerar_historico_cdmotcin: '||SQLERRM; 
+  END pc_gerar_historico_cdmotcin;  
+  
+ -- Consistir alteração CRAPCYC
+ PROCEDURE pc_consistir_alt_cdmotcin(pr_cdcooper  IN tbrecup_acordo.cdcooper%TYPE         
+                                    ,pr_nrdconta  IN tbrecup_acordo.nrdconta%TYPE 
+                                    ,pr_nrctremp  IN tbrecup_acordo_contrato.nrctremp%TYPE                               
+                                    ,pr_cdorigem  IN tbrecup_acordo_contrato.cdorigem%TYPE                              
+                                    ,pr_cdmotcin  IN crapcyc.cdmotcin%TYPE                                 
+                                    ,pr_flgehvip  IN crapcyc.flgehvip%TYPE                                                               
+                                    ,pr_dscritic OUT VARCHAR2                               
+                                    ,pr_cdcritic OUT NUMBER       -- Retorno de critica/erro
+                                    ) IS                          
+
+    -- Buscar dados acordo
+    CURSOR cr_acordo IS
+      select b.cdsituacao
+        from tbrecup_acordo_contrato a, 
+             tbrecup_acordo b
+       where b.cdsituacao = 1
+         and a.nracordo = b.nracordo
+         and b.cdcooper = pr_cdcooper
+         and b.nrdconta = pr_nrdconta
+         and a.nrctremp = pr_nrctremp
+         and a.cdorigem = pr_cdorigem;
+
+    vr_cdsituacao tbrecup_acordo.cdsituacao%type;
+
+    CURSOR cr_crapcyc IS
+      select c.flvipant flgehvip
+           , c.cdmotant cdmotcin
+        from crapcyc c
+       where c.cdcooper = pr_cdcooper
+         and c.nrdconta = pr_nrdconta
+         and c.nrctremp = pr_nrctremp
+         and c.cdorigem = pr_cdorigem;
+
+    rw_crapcyc cr_crapcyc%rowtype;
+
+    -- EXCEPTIONS
+    vr_exc_erro       EXCEPTION;   
+    
+  BEGIN
+    open cr_crapcyc;
+    fetch cr_crapcyc into rw_crapcyc;
+    if cr_crapcyc%notfound then
+      close cr_crapcyc;
+      pr_cdcritic := 0;
+      pr_dscritic := 'Registro nao encontrado na tabela crapcyc!';
+      raise vr_exc_erro;
+    else
+      close cr_crapcyc;
+    end if;
+    
+    open cr_acordo;
+    fetch cr_acordo into vr_cdsituacao;
+    if cr_acordo%notfound then
+      vr_cdsituacao := 0;
+    else
+      vr_cdsituacao := 1;
+    end if;
+    close cr_acordo;
+
+    IF nvl(pr_cdmotcin,0) IN (2,7) THEN
+       pr_cdcritic := NULL;
+       pr_dscritic := NULL;
+    ELSIF rw_crapcyc.flgehvip = 1 and rw_crapcyc.cdmotcin = 1 THEN
+      IF vr_cdsituacao = 1 THEN
+         IF pr_cdmotcin <> 1 THEN
+            pr_cdcritic := 0;
+            pr_dscritic := 'Acordo Ativo. Motivo CIN sera alterado para: 1 ';  
+         END IF;
+      ELSE
+         IF pr_flgehvip = 1 THEN
+            pr_cdcritic := 0;
+            pr_dscritic := 'Acordo nao esta Ativo. Motivo CIN sera desabilitado.';               
+         END IF;
+      END IF;
+    ELSIF rw_crapcyc.flgehvip = 1 and rw_crapcyc.cdmotcin <> 1 THEN
+      IF vr_cdsituacao = 1 THEN
+         IF pr_cdmotcin <> 1 THEN
+            pr_cdcritic := 0;
+            pr_dscritic := 'Acordo Ativo. Motivo CIN sera alterado para: 1 ';  
+         END IF;
+      ELSE
+        pr_cdcritic := 0;
+        pr_dscritic := 'Sera mantido motivo salvo antes da Determinacao Judicial. Motivo CIN sera alterado para: '||rw_crapcyc.cdmotcin;
+      END IF;
+    ELSIF  rw_crapcyc.flgehvip = 0 THEN 
+      IF vr_cdsituacao = 1 THEN
+         IF pr_cdmotcin <> 1 THEN
+            pr_cdcritic := 0;
+            pr_dscritic := 'Acordo Ativo. Motivo CIN sera alterado para: 1 ';  
+         END IF;
+      ELSE
+         IF pr_flgehvip = 1 THEN
+            pr_cdcritic := 0;
+            pr_dscritic := 'Acordo nao esta Ativo. Motivo CIN sera desabilitado.';               
+         END IF;
+      END IF;        
+    END IF;
+  EXCEPTION
+    WHEN  vr_exc_erro THEN
+      null;
+    WHEN OTHERS THEN 
+      pr_cdcritic := 0;
+      pr_dscritic := 'Erro na pc_consistir_alt_cdmotcin: '||SQLERRM; 
+  END pc_consistir_alt_cdmotcin; 
    
 END RECP0001;
 /

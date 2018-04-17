@@ -4,7 +4,7 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : David
-   Data    : Julho/2007.                       Ultima atualizacao: 17/12/2015
+   Data    : Julho/2007.                       Ultima atualizacao: 29/11/2017
 
    Dados referentes ao programa:
 
@@ -66,6 +66,9 @@
 	           
 			   17/12/2015 - Ajuste na regra para liberar cancelamento de aplicação
                             (Dionathan).
+                            
+               29/11/2017 - Inclusao do valor de bloqueio em garantia. 
+                            PRJ404 - Garantia.(Odirlei-AMcom)             
 ..............................................................................*/
     
 CREATE WIDGET-POOL.
@@ -80,6 +83,7 @@ DEF VAR h-b1wgen0004 AS HANDLE                                         NO-UNDO.
 DEF VAR h-b1wgen0155 AS HANDLE                                         NO-UNDO.
 DEF VAR h-b1wgen0148 AS HANDLE                                         NO-UNDO.
 DEF VAR h-b1wgen0081 AS HANDLE                                         NO-UNDO.
+DEF VAR h-b1wgen0112 AS HANDLE                                         NO-UNDO.
 
 DEF VAR aux_nrdrowid AS ROWID                                          NO-UNDO.
 
@@ -97,6 +101,9 @@ DEF VAR aux_hrlimini AS INT                                            NO-UNDO.
 DEF VAR aux_hrlimfim AS INT                                            NO-UNDO.
 DEF VAR aux_flgstapl AS LOGI                                           NO-UNDO.
 DEF VAR aux_rsgtdisp AS LOGI                                           NO-UNDO.
+DEF VAR aux_vlblqapl_gar  AS DECI                                      NO-UNDO.
+DEF VAR aux_vlblqpou_gar  AS DECI                                      NO-UNDO.
+
 /*DEF VAR aux_intipapl AS CHAR										   NO-UNDO.*/
 
 /* Variaveis para o XML */ 
@@ -138,7 +145,9 @@ DEF VAR xml_req       AS LONGCHAR NO-UNDO.
            aux_vlsldtot = 0
            aux_vlsldisp = 0
            aux_vlsldblq = 0
-           aux_vlsldnew = 0.
+           aux_vlsldnew = 0
+           aux_vlblqapl_gar = 0
+           aux_vlblqpou_gar = 0.
     
     FIND FIRST crapdat WHERE crapdat.cdcooper = par_cdcooper 
                              NO-LOCK NO-ERROR.
@@ -159,6 +168,29 @@ DEF VAR xml_req       AS LONGCHAR NO-UNDO.
 
     IF VALID-HANDLE(h-b1wgen0155) THEN
       DELETE PROCEDURE h-b1wgen0155.
+    
+    
+    /*** Busca Saldo Bloqueado Garantia ***/
+    IF  NOT VALID-HANDLE(h-b1wgen0112) THEN
+        RUN sistema/generico/procedures/b1wgen0112.p 
+            PERSISTENT SET h-b1wgen0112.
+
+    RUN calcula_bloq_garantia IN h-b1wgen0112
+                             ( INPUT par_cdcooper,
+                               INPUT par_nrdconta,                                             
+                              OUTPUT aux_vlblqapl_gar,
+                              OUTPUT aux_vlblqpou_gar,
+                              OUTPUT aux_dscritic).
+
+    IF aux_dscritic <> "" THEN
+    DO:
+       ASSIGN xml_dsmsgerr = "<dsmsgerr>" + aux_dscritic + "</dsmsgerr>".          
+       RETURN "NOK".
+
+    END.
+        
+    IF  VALID-HANDLE(h-b1wgen0112) THEN
+        DELETE PROCEDURE h-b1wgen0112.    
     
     { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
     
@@ -540,6 +572,19 @@ DEF VAR xml_req       AS LONGCHAR NO-UNDO.
                                                  TRIM(STRING(aux_vlsldnew,"zzz,zzz,zz9.99-")) +
                                           "</vlsldnew>" + 
                                      "</SALDOAPLINOVA>".
+      
+      CREATE xml_operacao.
+      ASSIGN xml_operacao.dslinxml = "<SALDOBLOQ_GARANTIA>" + 
+                                          "<vlblqapl_gar>" +
+                                           TRIM(STRING(aux_vlblqapl_gar,
+                                                       "zzz,zzz,zzz,zz9.99")) +
+                                          "</vlblqapl_gar>"+
+                                          "<vlblqpou_gar>" +
+                                           TRIM(STRING(aux_vlblqpou_gar,
+                                                       "zzz,zzz,zzz,zz9.99")) +
+                                          "</vlblqpou_gar>"+      
+                                     "</SALDOBLOQ_GARANTIA>".
+                                     
     RUN proc_geracao_log (INPUT TRUE). 
        
     RETURN "OK".

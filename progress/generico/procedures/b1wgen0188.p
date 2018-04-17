@@ -101,6 +101,9 @@
                 
                 08/12/2017 - Projeto 410 - Ajuste na chamada à procedure pc_calcula_iof_epr, passando como parametro 
                              o numero do contrato - Jean (Mout´S)
+                
+                15/12/2017 - Inserção do campo idcobope. PRJ404 (Lombardi)
+									   
                 21/11/2017 - Incluir campo cdcoploj e nrcntloj na chamada da rotina 
                              grava-proposta-completa. PRJ402 - Integracao CDC
                              (Reinert)						                  
@@ -1104,6 +1107,7 @@ PROCEDURE grava_dados:
                                                    INPUT aux_flgerlog,
                                                    INPUT aux_dsjusren,
                                                    INPUT par_dtmvtolt,
+                                                   INPUT 0, /* idcobope */
                                                    INPUT 0, /* idfiniof */
                                                    INPUT "", /* DSCATBEM */
                                                    OUTPUT TABLE tt-erro,
@@ -1684,7 +1688,7 @@ PROCEDURE grava_dados_conta PRIVATE:
                   LEAVE.
         
                END.  /*  Fim do DO WHILE TRUE  */
-               
+        
                /* Condicao para verificar se eh Financiamento */
                IF craplcr.dsoperac = 'FINANCIAMENTO' THEN
                   ASSIGN aux_cdhistor = 2309.

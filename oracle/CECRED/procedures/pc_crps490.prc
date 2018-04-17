@@ -54,6 +54,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps490(pr_cdcooper IN crapcop.cdcooper%TY
                    05/09/2014 - #187032 Correção da verificação de feriados e
                                 geração do relatório para a última agência (Carlos)
 
+                   27/11/2017 - Inclusao do valor de bloqueio em garantia nos relatorios. 
+                                PRJ404 - Garantia.(Odirlei-AMcom)                            
+
     ............................................................................ */
 
     DECLARE
@@ -102,6 +105,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps490(pr_cdcooper IN crapcop.cdcooper%TY
       vr_tab_craptfc    typ_tab_craptfc;
       vr_clobtam        PLS_INTEGER;
       vr_contador       PLS_INTEGER := 0;
+      vr_vlblqjud       NUMBER;
+      vr_vlresblq       NUMBER;
+      vr_vlblqapl       NUMBER;
+      vr_vlblqpou       NUMBER;
 
       ------------------------------- CURSORES ---------------------------------
       -- Buscar dados da cooperativa
@@ -144,6 +151,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps490(pr_cdcooper IN crapcop.cdcooper%TY
           AND rda.tpaplica = dtc.tpaplica
           AND ass.cdcooper = dtc.cdcooper
           AND ass.nrdconta = rda.nrdconta
+          AND rownum <= 200     
         ORDER BY ass.cdagenci
                 ,dtc.tpaplrdc
                 ,rda.nrdconta
@@ -459,6 +467,52 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps490(pr_cdcooper IN crapcop.cdcooper%TY
           END IF;
         END IF;
 
+        vr_vlblqjud := 0;
+        vr_vlresblq := 0;
+        vr_vlblqapl := 0;
+        vr_vlblqpou := 0;
+        
+        /*** Busca Saldo Bloqueado Judicial ***/
+        gene0005.pc_retorna_valor_blqjud (pr_cdcooper => pr_cdcooper          --Cooperativa
+                                         ,pr_nrdconta => rw_capta.nrdconta    --Conta Corrente
+                                         ,pr_nrcpfcgc => 0 /*fixo*/           --Cpf/cnpj
+                                         ,pr_cdtipmov => 1 /*bloqueio*/       --Tipo Movimento
+                                         ,pr_cdmodali => 2 /*Aplicacao*/      --Modalidade
+                                         ,pr_dtmvtolt => rw_crapdat.dtmvtolt  --Data Atual
+                                         ,pr_vlbloque => vr_vlblqjud          --Valor Bloqueado
+                                         ,pr_vlresblq => vr_vlresblq          --Valor Residual
+                                         ,pr_dscritic => vr_dscritic);        --Critica
+        --Se ocorreu erro
+        IF vr_dscritic IS NOT NULL THEN
+          -- Gerar entrada no LOG de erro
+          btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                    ,pr_ind_tipo_log => 2
+                                    ,pr_des_log      => TO_CHAR(SYSDATE,'hh24:mi:ss') || ' - ' || vr_cdprogra || ' --> ' || vr_dscritic || ' ' ||
+                                                        TO_CHAR(rw_capta.nrdconta, 'FM9999G999G9') || ' ' || TO_CHAR(rw_capta.nraplica, 'FM999G999')
+                                    ,pr_nmarqlog     => 'PROC_BATCH');
+          vr_dscritic := NULL;
+        END IF;
+        
+        /*** Busca valor bloquedo garantia epr ***/
+        vr_vlblqapl := 0;
+        vr_vlblqpou := 0;
+        bloq0001.pc_calc_bloqueio_garantia( pr_cdcooper => pr_cdcooper          --Cooperativa
+                                           ,pr_nrdconta => rw_capta.nrdconta    --Conta Corrente                                        
+                                           ,pr_vlbloque_aplica => vr_vlblqapl   --Valor Bloqueado aplicacao
+                                           ,pr_vlbloque_poupa  => vr_vlblqpou   --Valor Bloqueado poupanca
+                                           ,pr_dscritic        => vr_dscritic); --Critica
+        --Se ocorreu erro
+        IF vr_dscritic IS NOT NULL THEN
+          -- Gerar entrada no LOG de erro
+          btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                    ,pr_ind_tipo_log => 2
+                                    ,pr_des_log      => TO_CHAR(SYSDATE,'hh24:mi:ss') || ' - ' || vr_cdprogra || ' --> ' || vr_dscritic || ' ' ||
+                                                        TO_CHAR(rw_capta.nrdconta, 'FM9999G999G9') || ' ' || TO_CHAR(rw_capta.nraplica, 'FM999G999')
+                                    ,pr_nmarqlog     => 'PROC_BATCH');
+          vr_dscritic := NULL;
+        END IF;
+        
+
         -- Controlar pelo tipo
         IF rw_capta.inpessoa = 1 THEN
           vr_tptelefo := 1;
@@ -488,7 +542,17 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps490(pr_cdcooper IN crapcop.cdcooper%TY
         vr_xmlb := vr_xmlb || '<dtvencto>' || TO_CHAR(rw_capta.dtvencto, 'DD/MM/RR') || '</dtvencto>';
         vr_xmlb := vr_xmlb || '<vlsldrdc>' || TO_CHAR(vr_vlsldrdc, 'FM999G999G999G990D00') || '</vlsldrdc>';
         gene0002.pc_clob_buffer(pr_dados => vr_xmlb, pr_gravfim => FALSE, pr_clob => vr_xmlc);
-        vr_xmlb := vr_xmlb || '<nrramfon>' || vr_nrramfon || '</nrramfon></reg>';
+        vr_xmlb := vr_xmlb || '<nrramfon>' || vr_nrramfon || '</nrramfon>';
+        gene0002.pc_clob_buffer(pr_dados => vr_xmlb, pr_gravfim => FALSE, pr_clob => vr_xmlc);
+        --> Incluir tags valor de bloqueio
+        vr_xmlb := vr_xmlb || '<vlblqjud>' || nvl(vr_vlblqjud,0) || '</vlblqjud>';
+        gene0002.pc_clob_buffer(pr_dados => vr_xmlb, pr_gravfim => FALSE, pr_clob => vr_xmlc);
+        vr_xmlb := vr_xmlb || '<vlblqapl>' || nvl(vr_vlblqapl,0) || '</vlblqapl>';
+        gene0002.pc_clob_buffer(pr_dados => vr_xmlb, pr_gravfim => FALSE, pr_clob => vr_xmlc);        
+        --> Fechar tag regs
+        vr_xmlb := vr_xmlb || '</reg>';
+        gene0002.pc_clob_buffer(pr_dados => vr_xmlb, pr_gravfim => FALSE, pr_clob => vr_xmlc);
+        
 
         -- Gerar relatório no último registro da agência
           IF rw_capta.nrseqreg = rw_capta.nrtotreg THEN
@@ -508,7 +572,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps490(pr_cdcooper IN crapcop.cdcooper%TY
                                      ,pr_dsjasper  => 'crrl458.jasper'
                                      ,pr_dsparams  => NULL
                                      ,pr_dsarqsaid => vr_nom_dir || '/' || vr_nmarqrel
-                                     ,pr_flg_gerar => 'N'
+                                     ,pr_flg_gerar => 'S'
                                      ,pr_qtcoluna  => 132
                                      ,pr_sqcabrel  => 1
                                      ,pr_cdrelato  => NULL
@@ -595,4 +659,3 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps490(pr_cdcooper IN crapcop.cdcooper%TY
     END;
   END pc_crps490;
 /
-

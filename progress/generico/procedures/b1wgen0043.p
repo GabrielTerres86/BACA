@@ -248,6 +248,9 @@
 						   pegar a Qualificacao da Operacao (Controle). (Diego Simas - AMcom)
                
 			  16/03/2018 - Alterado proc calcula_rating_fisica, caso as variaveis aux_vlsalari e rat_vlsalcje sejam nulas, atribuir 0 a elas. Chamado 830113 Alcemir (Mouts).
+              
+              16/03/2018 - Ajuste para ignorar validacao valida-item-rating quando for cessao de credito (crps714).
+                           Chamado 858710 (Mateus Z / Mouts).
 .............................................................................*/
   
   
@@ -1902,12 +1905,17 @@ PROCEDURE valida-itens-rating:
     DEF OUTPUT PARAM TABLE FOR tt-erro.                            
                                                                    
     DEF  VAR         aux_flgvalid AS LOGI                            NO-UNDO.
+    DEF  VAR         aux_flgcescr AS LOG INIT FALSE                  NO-UNDO.
 
 
     EMPTY TEMP-TABLE tt-erro.
 
     ASSIGN aux_cdcritic = 0
            aux_dscritic = "".
+
+    /* Carregar flag de cessao de credito */
+    IF par_nmdatela = "CRPS714" THEN
+       ASSIGN aux_flgcescr = TRUE.       
 
     IF  par_flgerlog  THEN
         ASSIGN aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
@@ -1930,6 +1938,9 @@ PROCEDURE valida-itens-rating:
        /* Para cooperativa 3 somente sera necessario validar o campo Liquidez*/
        IF  par_cdcooper = 3  THEN
            DO:
+                /* Validar apenas se nao for cessao de credito */
+                 IF  NOT aux_flgcescr THEN
+                    DO:
                 RUN valida-item-rating (INPUT  par_cdcooper,
                                         INPUT  0,
                                         INPUT  0,
@@ -1949,6 +1960,7 @@ PROCEDURE valida-itens-rating:
                          LEAVE.
 
                      END.
+                    END.
 
                RUN valida-item-rating (INPUT  par_cdcooper,
                                         INPUT  0,
@@ -1996,6 +2008,9 @@ PROCEDURE valida-itens-rating:
                          LEAVE.
                      END.
 
+                 /* Validar apenas se nao for cessao de credito */
+                 IF  NOT aux_flgcescr THEN
+                    DO: 
                  RUN valida-item-rating (INPUT  par_cdcooper,
                                          INPUT  0,
                                          INPUT  0,
@@ -2015,6 +2030,7 @@ PROCEDURE valida-itens-rating:
                             "014 - Opcao errada - Informacoes cadastrais.".
                          LEAVE.
                      END.
+                    END.
 
                 RUN valida-item-rating (INPUT  par_cdcooper,
                                         INPUT  0,
@@ -2098,6 +2114,9 @@ PROCEDURE valida-itens-rating:
                          LEAVE.
                      END.
 
+                 /* Validar apenas se nao for cessao de credito */
+                 IF  NOT aux_flgcescr THEN
+                    DO:
                 RUN valida-item-rating (INPUT  par_cdcooper,
                                         INPUT  0,
                                         INPUT  0,
@@ -2116,6 +2135,7 @@ PROCEDURE valida-itens-rating:
                          aux_dscritic = "014 - Opcao errada - Informacoes cadastrais.".
                          LEAVE.
                      END.
+                    END.
 
                 RUN valida-item-rating (INPUT  par_cdcooper,
                                         INPUT  0,
@@ -5237,7 +5257,7 @@ PROCEDURE calcula_rating_fisica:
 	
 	IF rat_vlsalcje = ? THEN
 	   ASSIGN rat_vlsalcje = 0.
-	 		  
+
     IF  (crapttl.vlsalari + 
          crapttl.vldrendi[1] + crapttl.vldrendi[2] + 
          crapttl.vldrendi[3] + crapttl.vldrendi[4] + 
@@ -6425,7 +6445,7 @@ PROCEDURE calcula_rating_juridica:
                                             INPUT par_nrdconta,
                                             INPUT par_nrctrato,
                                             INPUT crawepr.idquapro). 
-				
+
 				/* IF   crawepr.idquapro > 2 THEN  */
                 /* Alterado para quando o controle alterar 
                    a qualificacao da operacao, pegar o do controle 

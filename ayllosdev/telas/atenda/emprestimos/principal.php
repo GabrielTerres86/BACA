@@ -40,7 +40,10 @@
  * 029: [10/07/2017] Criacao do insitest no arrayProposta. (Jaison/Marcos Martini - PRJ337)
  * 030: [20/09/2017] Projeto 410 - Incluir campo Indicador de financiamento do IOF (Diogo - Mouts)
  * 031: [01/12/2017] Não permitir acesso a opção de incluir quando conta demitida (Jonata - RKAM P364).
- * 032: [26/01/2018] Alteração para exibição do nível de risco original (Reginaldo - AMcom).
+ * 032: [17/12/2017] Inserção do campo idcobope. PRJ404 (Lombardi)
+ * 033: [26/01/2018] Alteração para exibição do nível de risco original (Reginaldo - AMcom).
+ * 034: [05/03/2018] Inclusão do campo idcobope no array arrayStatusApprov. PRJ404 (Reinert)
+
  */
 
 	session_start();
@@ -271,6 +274,7 @@
 			arrayProposta['idcarenc'] = '<? echo getByTagName($proposta,'idcarenc'); ?>';
 			arrayProposta['dtcarenc'] = '<? echo getByTagName($proposta,'dtcarenc'); ?>';
 			arrayProposta['insitest'] = '<? echo getByTagName($proposta,'insitest'); ?>';
+            arrayProposta['idcobope'] = '<? echo getByTagName($proposta,'idcobope'); ?>';
 			arrayProposta['idfiniof'] = '<? echo getByTagName($proposta,'idfiniof') != '' ? getByTagName($proposta,'idfiniof') : '1'; ?>';
 			arrayProposta['vliofepr'] = '<? echo getByTagName($proposta,'vliofepr') != '' ? getByTagName($proposta,'vliofepr') : '0'; ?>';
 			arrayProposta['vlrtarif'] = '<? echo getByTagName($proposta,'vlrtarif') != '' ? getByTagName($proposta,'vlrtarif') : '0'; ?>';
@@ -281,7 +285,7 @@
 			arrayProposta['tpfinali'] = '<? echo getByTagName($proposta,'tpfinali'); ?>';
 
 
-      vleprori 	 = arrayProposta['vlemprst'];
+			vleprori 	 = arrayProposta['vlemprst'];
 			bkp_vlpreemp = arrayProposta["vlpreemp"];
 			bkp_dslcremp = arrayProposta["dslcremp"];
 			bkp_dsfinemp = arrayProposta["dsfinemp"];
@@ -698,7 +702,9 @@
 				arrayStatusApprov['avalist1'] = '<? echo getByTagName($insitapv[0]->tags,'avalist1'); ?>';
 				arrayStatusApprov['avalist2'] = '<? echo getByTagName($insitapv[0]->tags,'avalist2'); ?>';
 				arrayStatusApprov['altdtpgt'] = '<? echo getByTagName($insitapv[0]->tags,'altdtpgt'); ?>';
+				arrayStatusApprov['idcobope'] = '<? echo getByTagName($insitapv[0]->tags,'idcobope'); ?>';
 				arrayStatusApprov['vlfinanc'] = '<? echo getByTagName($insitapv[0]->tags,'vlfinanc'); ?>';				
+				arrayStatusApprov['flliquid'] = '<? echo getByTagName($insitapv[0]->tags,'flliquid'); ?>';				
 
 				var arrayMensagemAval = new Array();
 

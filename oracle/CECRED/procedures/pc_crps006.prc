@@ -191,7 +191,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS006
 
               08/07/2017 - Ajuste para inclusão de novos lotes (Jonata - RKAM P364).
 
-			  18/11/2017 - Ajuste para inclusão de novos lotes (Jonata - RKAM P364).
+              18/11/2017 - Ajuste para inclusão de novos lotes (Jonata - RKAM P364).
+              
+              26/03/2018 - Ajuste para inclusão de novo filtro por situação, na seleção dos pedidos 
+                           de cheques a serem listados no relatório crrl080 - PEDIDOS DE TALONARIOS 
+                           NAO RECEBIDOS. (Wagner - CECRED/Sustentação - Chamado 826394).
     ............................................................................. */
     DECLARE
       TYPE typ_reg_craphis_res IS
@@ -822,8 +826,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS006
                ,crapped.nrdctabb
         FROM   crapped
         WHERE crapped.cdcooper = pr_cdcooper
-        AND   crapped.dtrecped IS NULL;
-          -- seleciona as folhas de cheques emitidas para o cooperado de
+        AND   crapped.dtrecped IS NULL
+        AND   crapped.insitped <> 4; -- Excluído (Pedidos que tiveram algum erro interno, e não serão processados)
+        
+      -- seleciona as folhas de cheques emitidas para o cooperado de
       -- conforme o número do pedido de talonário
       CURSOR cr_crapfdc( pr_cdcooper IN crapped.cdcooper%TYPE
                         ,pr_nrpedido IN crapfdc.nrpedido%TYPE) IS

@@ -183,7 +183,11 @@
               19/04/2017 - Alteraçao DSNACION pelo campo CDNACION.
                            PRJ339 - CRM (Odirlei-AMcom)
               
+              15/12/2017 - Inserção do campo idcobope nas TEMP-TABLE tt-dados-epr
+                           e tt-proposta-epr. PRJ404 (Lombardi)
+
 			  05/02/2018 - Inclusao do campo vlrdtaxa na tt tt-extrato_epr. (James)
+
 			  25/01/2018 - Inclusão do FIELD NIVRIORI na tt-proposta-epr.
 			               (Reginaldo AMcom)
 
@@ -296,7 +300,7 @@ DEF TEMP-TABLE tt-dados-epr   NO-UNDO
     FIELD qtimpctr LIKE crapepr.qtimpctr
     FIELD dtapgoib AS DATE    FORMAT "99/99/9999"
 	FIELD vliofcpl LIKE crapepr.vliofcpl
-    
+    FIELD idcobope AS INTE
 	FIELD idenempr LIKE crapepr.tpemprst.
     
 DEF TEMP-TABLE tt-dados-epr-out NO-UNDO LIKE tt-dados-epr.
@@ -384,6 +388,7 @@ DEF TEMP-TABLE tt-proposta-epr NO-UNDO
     FIELD vlrtotal AS DECI
 	FIELD idcarenc LIKE crawepr.idcarenc
     FIELD dtcarenc LIKE crawepr.dtcarenc
+    FIELD idcobope AS INTE
     FIELD vlfinanc AS DECI
 	FIELD nivriori LIKE crawepr.dsnivori.
 

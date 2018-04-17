@@ -30,7 +30,13 @@
                             SD331188 (Odirlei-AMcom)
 
                03/01/2017 - Ajustado para apenas efetuar leitura das cooperativas
-			                ativas quando for Cecred (Daniel)     
+                            ativas quando for Cecred (Daniel)     
+
+               04/04/2018 - Ajustado o momento da geração do arquivo "Processo_ABBC.Ok."
+                            para somente gerar após finalizar a geração do arquivo "ArquivosBB.OK".
+                            Necessário a alteração, para evitar a execução dos programas
+                            da CENTRAL(CRPS568, resposável pela validação)antes da finalização
+                            dos processos nas cooperativas (INC0012100 - Wagner/Sustentação).
 ............................................................................. */
 
 { includes/var_batch.i }
@@ -158,15 +164,6 @@ IF   glb_cdcooper = 3 THEN
 ELSE                  /* glb_cdcooper <> 3 */
      DO:
 
-         ASSIGN aux_narqabbc = "/usr/coop/" + TRIM(LC(crapcop.dsdircop)) +
-                               "/controles/Processo_ABBC.Ok".
-
-         /* Cria o arquivo de Controle ABBC */
-         OUTPUT TO VALUE(aux_narqabbc).
-         PUT UNFORM " ".
-         OUTPUT CLOSE.
-
-
          /********************************************************************
                             BAIXA DOS ARQUIVOS BB e BANCOOB
           
@@ -215,6 +212,14 @@ ELSE                  /* glb_cdcooper <> 3 */
 
          END.  /** FIM do DO WHILE TRUE **/
 
+         ASSIGN aux_narqabbc = "/usr/coop/" + TRIM(LC(crapcop.dsdircop)) +
+                               "/controles/Processo_ABBC.Ok".
+
+         /* Cria o arquivo de Controle ABBC */
+         OUTPUT TO VALUE(aux_narqabbc).
+         PUT UNFORM " ".
+         OUTPUT CLOSE.
+ 
      END.      /** FIM do ELSE DO **/
 
 RUN fontes/fimprg.p.

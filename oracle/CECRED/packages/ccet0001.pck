@@ -1851,6 +1851,7 @@ create or replace package body cecred.CCET0001 is
       vr_vltarbem NUMBER := 0;                -- Valor tarifa bem
       vr_cdhistor NUMBER := 0;                -- Historico
       vr_cdusolcr NUMBER := 0;                -- Uso linha de credito
+      vr_vlfinanc NUMBER := 0;
       vr_cdfvlcop crapfco.cdfvlcop%TYPE;
 
       vr_qtdias_carencia tbepr_posfix_param_carencia.qtddias%TYPE;
@@ -2205,10 +2206,14 @@ create or replace package body cecred.CCET0001 is
       vr_vlrtarif := ROUND(nvl(vr_vlrtarif,0),2) + nvl(vr_vlrtares,0) + nvl(vr_vltarbem,0);
        
       -- valor total emprestado
-      vr_vlemprst := nvl(pr_vlemprst,0) - nvl(vr_vlrdoiof,0) - nvl(vr_vlrtarif,0);      
+      IF rw_dados.idfiniof = 1 THEN
+        vr_vlemprst := nvl(pr_vlemprst,0);
+      ELSE
+        vr_vlemprst := nvl(pr_vlemprst,0) - nvl(vr_vlrdoiof,0) - nvl(vr_vlrtarif,0);
+      END IF;
                                                     
       -- Porcentagem do valor do limite
-      vr_txjurlim := ((nvl(pr_vlemprst,0) - nvl(vr_vlrdoiof,0) - nvl(vr_vlrtarif,0)) * 100) / pr_vlemprst;
+      vr_txjurlim := (vr_vlemprst * 100) / pr_vlemprst;
             
       -- Taxa de juros do iof
       vr_txjuriof := (vr_vlrdoiof * 100) / pr_vlemprst;
@@ -2235,17 +2240,52 @@ create or replace package body cecred.CCET0001 is
           CLOSE cr_crappep_vldivida;          
         END IF;  
             
+        -- Busca quantidade de dias da carencia
+        EMPR0011.pc_busca_qtd_dias_carencia(pr_idcarencia => rw_dados.idcarenc
+                                           ,pr_qtddias    => vr_qtdias_carencia
+                                           ,pr_cdcritic   => vr_cdcritic
+                                           ,pr_dscritic   => vr_dscritic);
+        -- Se retornou erro
+        IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
+          RAISE vr_exc_erro;
+        END IF;
+        
+        IF rw_dados.idfiniof > 0 THEN
+           vr_vlfinanc := (pr_vlemprst + nvl(vr_vlrdoiof,0) + nvl(vr_vlrtarif ,0));
+        ELSE
+          vr_vlfinanc := pr_vlemprst;
+        END IF;
+
+        -- Chama o calculo da parcela
+        EMPR0011.pc_busca_prest_principal_pos(pr_cdcooper        => pr_cdcooper
+                                             ,pr_dtefetiv        => rw_dados.dtmvtolt
+                                             ,pr_dtcalcul        => (CASE WHEN rw_dados.dtmvtolt IS NULL THEN pr_dtmvtolt ELSE rw_dados.dtmvtolt END)
+                                             ,pr_cdlcremp        => pr_cdlcremp
+                                             ,pr_dtcarenc        => rw_dados.dtcarenc
+                                             ,pr_dtdpagto        => pr_dtdpagto
+                                             ,pr_qtpreemp        => pr_qtpreemp
+                                             ,pr_vlemprst        => vr_vlfinanc
+                                             ,pr_qtdias_carencia => vr_qtdias_carencia
+                                             ,pr_vlpreemp        => vr_vlpreemp
+                                             ,pr_vljurcor        => vr_vljurcor
+                                             ,pr_cdcritic        => vr_cdcritic
+                                             ,pr_dscritic        => vr_dscritic);
+        -- Se retornou erro
+        IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
+          RAISE vr_exc_erro;
+        END IF;
+            
       ELSE
       
-      -- Valor total da divida
-        vr_vltotdiv := round(nvl(pr_qtpreemp,0) * nvl(pr_vlpreemp,0),2);
+        -- Valor total da divida
+        vr_vltotdiv := round(nvl(pr_qtpreemp,0) * nvl(vr_vlpreemp,0),2);
       END IF;
       -- Porcentagem  do valor total
       vr_txjuremp := 100;
       
       -- Busca juros do cet
       CCET0001.pc_juros_cet(pr_nro_parcelas   => pr_qtpreemp
-                           ,pr_vlr_prestacao  => pr_vlpreemp
+                           ,pr_vlr_prestacao  => vr_vlpreemp
                            ,pr_vlr_financiado => vr_vlemprst
                            ,pr_data_contrato  => pr_dtlibera
                            ,pr_primeiro_vcto  => pr_dtdpagto
@@ -2302,7 +2342,7 @@ create or replace package body cecred.CCET0001 is
                      '<txjurlim>' || to_char(nvl(vr_txjurlim,0),'990D00') || '</txjurlim>' ||
                      '<dtmvtolt>' || to_char(pr_dtmvtolt,'dd/mm/rrrr') || '</dtmvtolt>'||
                      '<dsdprazo>' || to_char(trim(vr_dsdprazo)) || '</dsdprazo>' ||
-                     '<vlparemp>' || to_char(nvl(pr_vlpreemp,0),'fm999G990D00') || '</vlparemp>' ||
+                     '<vlparemp>' || to_char(nvl(vr_vlpreemp,0),'fm999G990D00') || '</vlparemp>' ||
                      '<vltotemp>' || to_char(nvl(vr_vltotdiv,0),'fm999G999G990D00') || '</vltotemp>' ||
                      '<dtpripag>' || to_char(pr_dtdpagto,'dd/mm/rrrr') || '</dtpripag>' ||
                      '<dscooper>' || vr_dscooper || '</dscooper>');
@@ -2968,8 +3008,13 @@ create or replace package body cecred.CCET0001 is
         -- valor total emprestado
         vr_vlemprst := nvl(pr_vlemprst,0) - nvl(vr_vlrtarif,0);        
       ELSE
-        -- valor total emprestado
-        vr_vlemprst := nvl(pr_vlemprst,0) - nvl(vr_vlrdoiof,0) - nvl(vr_vlrtarif,0);
+        IF pr_idfiniof > 0 THEN
+          -- valor total emprestado
+          vr_vlemprst := nvl(pr_vlemprst,0);
+        ELSE
+          vr_vlemprst := nvl(pr_vlemprst,0) - nvl(vr_vlrdoiof,0) - nvl(vr_vlrtarif,0);
+        END IF;
+          
       END IF;
       
       vr_data_contrato := nvl(pr_dtlibera,pr_dtmvtolt);                

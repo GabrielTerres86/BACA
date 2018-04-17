@@ -32,7 +32,13 @@
                               vencimento errada (SD - 237402)		
   						     (Adriano).	
 
+				 21/07/2016 - Inicializei a varivale $xml, tratei o retorno do XML "ERRO"
+							  consisti os indices do XML retornados. SD 479874 (Carlos R.)
+							  
 			     01/12/2017 - Não permitir acesso a opção de incluir quando conta demitida (Jonata - RKAM P364).
+		    
+				 27/11/2017 - Inclusao do valor de bloqueio em garantia.
+                              PRJ404 - Garantia(Odirlei-AMcom)              
 		    
 	************************************************************************/
 	
@@ -57,7 +63,7 @@
 	if (!isset($_POST["nrdconta"])) {
 		exibeErro("Par&acirc;metros incorretos.");
 	}	
-	
+
 	$sitaucaoDaContaCrm = (isset($_POST['sitaucaoDaContaCrm']) ? $_POST['sitaucaoDaContaCrm']:'');
 	$nrdconta = $_POST["nrdconta"];
 
@@ -67,6 +73,7 @@
 	}
 	
 	// Montar o xml de Requisicao
+	$xml = '';
 	$xml .= "<Root>";
 	$xml .= " <Dados>";
 	$xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
@@ -85,11 +92,11 @@
 	$xmlObjAplicacoes = getObjectXML($xmlResult);
 	
 	// Se ocorrer um erro, mostra crítica
-	if (strtoupper($xmlObjAplicacoes->roottag->tags[0]->name) == "ERRO") {
+	if (isset($xmlObjAplicacoes->roottag->tags[0]->name) && strtoupper($xmlObjAplicacoes->roottag->tags[0]->name) == "ERRO") {
 		
-		$msgErro = $xmlObjAplicacoes->roottag->tags[0]->cdata;
+		$msgErro = ( isset($xmlObjAplicacoes->roottag->tags[0]->cdata) ) ? $xmlObjAplicacoes->roottag->tags[0]->cdata : '';
 		if($msgErro == null || $msgErro == ''){
-			$msgErro = $xmlObjAplicacoes->roottag->tags[0]->tags[0]->tags[4]->cdata;
+			$msgErro = ( isset($xmlObjAplicacoes->roottag->tags[0]->tags[0]->tags[4]->cdata) ) ? $xmlObjAplicacoes->roottag->tags[0]->tags[0]->tags[4]->cdata : '';
 		}
 		
 		exibeErro($msgErro);		
@@ -166,6 +173,30 @@
 		exibeErro($xmlObjBlqJud->roottag->tags[0]->tags[0]->tags[4]->cdata);
 	} 	
 	
+    
+	$xml = "<Root>";
+    $xml .= " <Dados>";
+    $xml .= "  <nrdconta>".$nrdconta."</nrdconta>";    
+    $xml .= " </Dados>";
+    $xml .= "</Root>";
+
+    $xmlResult = mensageria($xml, "BLOQ0001", "CALC_BLOQ_GARANTIA", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+    $xmlObj = getObjectXML($xmlResult);
+
+    if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
+        $msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
+        if ($msgErro == "") {
+            $msgErro = $xmlObj->roottag->tags[0]->cdata;
+        }
+
+        exibeErro($msgErro);
+        exit();
+    }
+
+    $registros = $xmlObj->roottag->tags[0]->tags;
+    $vlblqapl  = getByTagName($registros, 'vlblqapl');   
+    
+    
 	include('principal_tabela.php');
 	include('principal_dados.php');
 	include('principal_resgate.php');
@@ -445,16 +476,16 @@
 	$("#divDadosAplicacao").css("display","none");
 	$("#divAplicacoesPrincipal").css("display","block");
 		
-	var auxApl = "<?php echo $aplicacoes[0]->tags[1]->cdata; ?>";
+	var auxApl = "<?php echo (isset($aplicacoes[0]->tags[1]->cdata)) ? $aplicacoes[0]->tags[1]->cdata : ''; ?>";
 	
 	if (idLinha > 0) {
-		selecionaAplicacao(idLinha,<?php echo $qtAplicacoes; ?>,nraplica,'<?php echo $aplicacoes[0]->tags[16]->cdata; ?>');	
+		selecionaAplicacao(idLinha,<?php echo $qtAplicacoes; ?>,nraplica,'<?php echo ( isset($aplicacoes[0]->tags[16]->cdata) ) ? $aplicacoes[0]->tags[16]->cdata : ''; ?>');	
 	} else {
 		
 		if(auxApl != ""){
-			selecionaAplicacao(0,<?php echo $qtAplicacoes; ?>,'<?php echo $aplicacoes[0]->tags[1]->cdata; ?>','<?php echo $aplicacoes[0]->tags[16]->cdata; ?>');				
+			selecionaAplicacao(0,<?php echo $qtAplicacoes; ?>,'<?php echo ( isset($aplicacoes[0]->tags[1]->cdata) ) ? $aplicacoes[0]->tags[1]->cdata : ''; ?>','<?php echo ( isset($aplicacoes[0]->tags[16]->cdata) ) ? $aplicacoes[0]->tags[16]->cdata : ''; ?>');				
 		}else{
-			selecionaAplicacao(idLinha,<?php echo $qtAplicacoes; ?>,nraplica,'<?php echo $aplicacoes[0]->tags[16]->cdata; ?>');	
+			selecionaAplicacao(idLinha,<?php echo $qtAplicacoes; ?>,nraplica,'<?php echo ( isset($aplicacoes[0]->tags[16]->cdata) ) ? $aplicacoes[0]->tags[16]->cdata : ''; ?>');	
 		}
 	}
 	

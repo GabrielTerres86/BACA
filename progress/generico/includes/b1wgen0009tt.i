@@ -58,6 +58,8 @@
 
                31/05/2017 - Inclusao campo flcusthj.               
                             Projeto 300. (Odirlei-AMcom)
+                            
+               11/12/2017 - P404 - Inclusao de Garantia de Cobertura das Operaçoes de Crédito (Augusto / Marcos (Supero))
 ..............................................................................*/
 
 DEF TEMP-TABLE tt-desconto_cheques NO-UNDO
@@ -84,7 +86,8 @@ DEF TEMP-TABLE tt-limite_chq NO-UNDO
     FIELD cddopcao AS INTEGER
     FIELD nrdrecid AS RECID
     FIELD flgenvio AS CHAR
-    FIELD insitlim AS INTE.
+    FIELD insitlim AS INTE
+    FIELD idcobope AS INTE.
 
 /* TAB019 */
 DEF TEMP-TABLE tt-dados_dscchq NO-UNDO
@@ -136,7 +139,8 @@ DEF TEMP-TABLE tt-dscchq_dados_limite NO-UNDO
     FIELD cdtipdoc AS INTEGER
     FIELD dtinivig AS DATE
     FIELD txcetano AS DECI
-    FIELD txcetmes AS DECI.
+    FIELD txcetmes AS DECI
+    FIELD idcobope AS INTEGER.
 
 DEFINE TEMP-TABLE tt-dados_nota_pro_chq NO-UNDO
     FIELD ddmvtolt AS INTE
@@ -394,9 +398,3 @@ DEF TEMP-TABLE tt-linhas-desc-chq NO-UNDO
     FIELD txmensal LIKE crapldc.txmensal.
 
 /* ......................................................................... */ 
-
-
-
-
-
-

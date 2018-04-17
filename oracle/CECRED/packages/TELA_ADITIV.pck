@@ -19,7 +19,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ADITIV IS
 
   ---------------------------- ESTRUTURAS DE REGISTRO -----------------------
   --> Descricao dos tipo de aditivos
-  TYPE typ_dsaditiv IS VARRAY(8) OF VARCHAR2(40);
+  TYPE typ_dsaditiv IS VARRAY(9) OF VARCHAR2(50);
   vr_tab_dsaditiv typ_dsaditiv := typ_dsaditiv('1- Alteracao Data do Debito',
                                                '2- Aplicacao Vinculada',
                                                '3- Aplicacao Vinculada Terceiro',
@@ -27,7 +27,8 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ADITIV IS
                                                '5- Substituicao de Veiculo',
                                                '6- Interveniente Garantidor Veiculo',
                                                '7- Sub-rogacao - C/ Nota Promissoria',
-                                               '8- Sub-rogacao - S/ Nota Promissoria');
+                                               '8- Sub-rogacao - S/ Nota Promissoria',
+                                               '9- Cobertura de Aplicacao Vinculada a Operacao');
   
   
   TYPE typ_rec_promis 
@@ -42,7 +43,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ADITIV IS
                    nraditiv crapadt.nraditiv%TYPE,
                    nrdconta crapadt.nrdconta%TYPE,
                    nrctremp crapadt.nrctremp%TYPE,
-                   dsaditiv VARCHAR2(40),
+                   dsaditiv VARCHAR2(50),
                    dtmvtolt crapadt.dtmvtolt%TYPE,
                    nrctagar crapadt.nrctagar%TYPE,
                    nrcpfgar crapadt.nrcpfgar%TYPE,
@@ -75,7 +76,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ADITIV IS
        IS RECORD (nraplica craprda.nraplica%TYPE,
                   dtmvtolt craprda.dtmvtolt%TYPE,
                   dshistor craphis.dshistor%TYPE,
-                  nrdocmto craplap.nrdocmto%TYPE,
+                  nrdocmto VARCHAR2(50),
                   dtvencto craprda.dtvencto%TYPE,
                   vlsldapl craprda.vlsdrdca%TYPE,
                   sldresga craprda.vlsdrdca%TYPE,
@@ -97,6 +98,35 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ADITIV IS
        
        
   ----------------------------------- ROTINAS -------------------------------
+  --> Buscar dados do aditivo do emprestimo
+  PROCEDURE pc_busca_dados_aditiv_prog(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Codigo da cooperativa            
+                                      ,pr_cdagenci  IN crapage.cdagenci%TYPE --> Codigo da agencia
+                                      ,pr_nrdcaixa  IN crapbcx.nrdcaixa%TYPE --> Numero do caixa 
+                                      ,pr_cdoperad  IN crapope.cdoperad%TYPE --> Codigo do operador
+                                      ,pr_nmdatela  IN craptel.nmdatela%TYPE --> Nome da tela
+                                      ,pr_idorigem  IN INTEGER               --> Origem 
+                                      ,pr_dtmvtolt  IN VARCHAR2              --> Data de movimento
+                                      ,pr_dtmvtopr  IN VARCHAR2              --> Data do prox. movimento
+                                      ,pr_inproces  IN crapdat.inproces%TYPE --> Indicador de processo
+                                      ,pr_cddopcao  IN VARCHAR2              --> Codigo da opcao
+                                      ,pr_nrdconta  IN crapass.nrdconta%TYPE --> Numero da conta
+                                      ,pr_nrctremp  IN crapepr.nrctremp%TYPE --> Numero do contrato
+                                      ,pr_dtmvtolx  IN VARCHAR2              --> Data de consulta
+                                      ,pr_nraditiv  IN crapadt.nraditiv%TYPE --> Numero do aditivo
+                                      ,pr_cdaditiv  IN crapadt.cdaditiv%TYPE --> Codigo do aditivo
+                                      ,pr_tpaplica  IN craprda.tpaplica%TYPE --> tipo de aplicacao
+                                      ,pr_nrctagar  IN crapass.nrdconta%TYPE --> conta garantia
+                                      ,pr_tpctrato  IN crapadt.tpctrato%TYPE --> Tipo do Contrato do Aditivo
+                                      ,pr_flgpagin  IN INTEGER               --> Flag (0-false 1-true)
+                                      ,pr_nrregist  IN INTEGER               --> Numero de registros a serem retornados
+                                      ,pr_nriniseq  IN INTEGER               --> Registro inicial
+                                      ,pr_flgerlog  IN INTEGER               --> Gerar log(0-false 1-true)
+                                      --------> OUT <--------
+                                      ,pr_qtregist OUT INTEGER               --> Retornar quantidade de registros
+                                      ,pr_clob_xml OUT CLOB                  --> XML com informacoes do retorno
+                                      ,pr_cdcritic OUT PLS_INTEGER           --> Codigo da critica
+                                      ,pr_dscritic OUT VARCHAR2);            --> Descricao da critica
+
   --> Gerar a impressao do contrato de aditivo
   PROCEDURE pc_gera_impressao_aditiv 
                           ( pr_cdcooper   IN crapcop.cdcooper%TYPE --> Codigo da cooperativa            
@@ -114,10 +144,44 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ADITIV IS
                            ,pr_dtmvtolt   IN crapdat.dtmvtolt%TYPE --> Data de movimento
                            ,pr_dtmvtopr   IN crapdat.dtmvtopr%TYPE --> Data do prox. movimento
                            ,pr_inproces   IN crapdat.inproces%TYPE --> Indicador de processo
+                           ,pr_tpctrato   IN crapadt.tpctrato%TYPE --> Tipo do Contrato do Aditivo
                            --------> OUT <--------
                            ,pr_nmarqpdf  OUT VARCHAR2              --> Retornar quantidad de registros                           
                            ,pr_cdcritic  OUT PLS_INTEGER           --> Código da crítica
                            ,pr_dscritic  OUT VARCHAR2    );        --> Descrição da crítica
+
+  PROCEDURE pc_busca_dados_garopc(pr_cddopcao     IN VARCHAR2 --> Opcao selecionada
+                                 ,pr_nrdconta     IN crapadt.nrdconta%TYPE --> Numero da conta
+                                 ,pr_tpctrato     IN crapadt.tpctrato%TYPE --> Tipo do contrato
+                                 ,pr_nrctremp     IN crapadt.nrctremp%TYPE --> Numero do contrato
+                                 ,pr_xmllog       IN VARCHAR2 --> XML com informacoes de LOG
+                                 ,pr_cdcritic    OUT PLS_INTEGER --> Codigo da critica
+                                 ,pr_dscritic    OUT VARCHAR2 --> Descricao da critica
+                                 ,pr_retxml   IN OUT NOCOPY xmltype --> Arquivo de retorno do XML
+                                 ,pr_nmdcampo    OUT VARCHAR2 --> Nome do campo com erro
+                                 ,pr_des_erro    OUT VARCHAR2); --> Erros do processo
+
+  PROCEDURE pc_busca_cobert_garopc_prog(pr_idcobert  IN tbgar_cobertura_operacao.idcobertura%TYPE --> Identificador da cobertura
+                                       ,pr_inresaut OUT tbgar_cobertura_operacao.inresgate_automatico%TYPE --> Resgate Automatico (0-Nao/ 1-Sim)
+                                       ,pr_permingr OUT tbgar_cobertura_operacao.perminimo%TYPE --> Percentual minimo da cobertura da garantia
+                                       ,pr_inaplpro OUT tbgar_cobertura_operacao.inaplicacao_propria%TYPE --> Aplicacao propria (0-Nao/ 1-Sim)
+                                       ,pr_inpoupro OUT tbgar_cobertura_operacao.inpoupanca_propria%TYPE --> Poupanca propria (0-Nao/ 1-Sim)
+                                       ,pr_nrctater OUT tbgar_cobertura_operacao.nrconta_terceiro%TYPE --> Conta de terceiro
+                                       ,pr_inaplter OUT tbgar_cobertura_operacao.inaplicacao_terceiro%TYPE --> Aplicacao de terceiro (0-Nao/ 1-Sim)
+                                       ,pr_inpouter OUT tbgar_cobertura_operacao.inpoupanca_terceiro%TYPE --> Poupanca de terceiro (0-Nao/ 1-Sim)
+                                       ,pr_cdcritic OUT PLS_INTEGER --> Codigo da critica
+                                       ,pr_dscritic OUT VARCHAR2); --> Descricao da critica
+
+  PROCEDURE pc_busca_tipo_aditivo(pr_nrdconta     IN crapadt.nrdconta%TYPE --> Numero da conta
+                                 ,pr_nrctremp     IN crapadt.nrctremp%TYPE --> Numero do contrato
+                                 ,pr_nraditiv     IN crapadt.nraditiv%TYPE --> Numero do Adivito
+                                 ,pr_tpctrato     IN crapadt.tpctrato%TYPE --> Tipo do contrato
+                                 ,pr_xmllog       IN VARCHAR2 --> XML com informacoes de LOG
+                                 ,pr_cdcritic    OUT PLS_INTEGER --> Codigo da critica
+                                 ,pr_dscritic    OUT VARCHAR2 --> Descricao da critica
+                                 ,pr_retxml   IN OUT NOCOPY xmltype --> Arquivo de retorno do XML
+                                 ,pr_nmdcampo    OUT VARCHAR2 --> Nome do campo com erro
+                                 ,pr_des_erro    OUT VARCHAR2); --> Erros do processo
 END TELA_ADITIV;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ADITIV IS
@@ -813,6 +877,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ADITIV IS
                            ,pr_cdaditiv   IN crapadt.cdaditiv%TYPE --> Codigo do aditivo
                            ,pr_tpaplica   IN craprda.tpaplica%TYPE --> tipo de aplicacao
                            ,pr_nrctagar   IN crapass.nrdconta%TYPE --> conta garantia
+                           ,pr_tpctrato   IN crapadt.tpctrato%TYPE --> Tipo do Contrato do Aditivo
                            ,pr_flgpagin   IN INTEGER               --> Flag (0-false 1-true)
                            ,pr_nrregist   IN INTEGER               --> Numero de registros a serem retornados
                            ,pr_nriniseq   IN INTEGER               --> Registro inicial
@@ -830,7 +895,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ADITIV IS
         Sistema : CECRED
         Sigla   : EMPR
         Autor   : Odirlei Busana (Amcom)
-        Data    : Julho/2016.                    Ultima atualizacao: --/--/----
+        Data    : Julho/2016.                    Ultima atualizacao: 01/11/2017
     
         Dados referentes ao programa:
     
@@ -843,6 +908,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ADITIV IS
         Alteracoes: 23/01/2017 - Quando garantia do aditivo é aplicação de
                                  terceiros, passar número da conta como parâmetro
                                  ao invés de zero. (AJFink SD#597917)
+
+                    01/11/2017 - Ajustes conforme inclusao do campo tipo de contrato.
+                                 (Jaison/Marcos Martini - PRJ404)
 
     ..............................................................................*/
     
@@ -878,7 +946,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ADITIV IS
        WHERE crapadi.cdcooper = pr_cdcooper
          AND crapadi.nrdconta = pr_nrdconta
          AND crapadi.nrctremp = pr_nrctremp
-         AND crapadi.nraditiv = pr_nraditiv;
+         AND crapadi.nraditiv = pr_nraditiv
+         AND crapadi.tpctrato = pr_tpctrato;
     rw_crapadi cr_crapadi%ROWTYPE;
     
     --> Buscar aditivo
@@ -889,7 +958,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ADITIV IS
          AND crapadi.nrdconta = pr_nrdconta
          AND crapadi.nrctremp = pr_nrctremp
          AND crapadi.nraditiv = pr_nraditiv
-         AND crapadi.nrsequen = 1;
+         AND crapadi.nrsequen = 1
+         AND crapadi.tpctrato = pr_tpctrato;
     
     --> Buscar dados associado
     CURSOR cr_crapass IS
@@ -932,7 +1002,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ADITIV IS
        WHERE adt.cdcooper = pr_cdcooper
          AND adt.nrdconta = nvl(nullif(pr_nrdconta,0),adt.nrdconta)
          AND adt.nrctremp = nvl(nullif(pr_nrctremp,0),adt.nrctremp) 
-         AND adt.dtmvtolt >= nvl(pr_dtmvtolx,adt.dtmvtolt);
+         AND adt.dtmvtolt >= nvl(pr_dtmvtolx,adt.dtmvtolt)
+         AND adt.tpctrato = pr_tpctrato;
     
     --> Buscar aditivos contratuais
     CURSOR cr_crapadt2 IS
@@ -941,8 +1012,43 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ADITIV IS
        WHERE adt.cdcooper = pr_cdcooper
          AND adt.nrdconta = pr_nrdconta
          AND adt.nrctremp = pr_nrctremp
-         AND adt.nraditiv =  pr_nraditiv;
+         AND adt.nraditiv = pr_nraditiv
+         AND adt.tpctrato = pr_tpctrato;
     rw_crapadt cr_crapadt2%ROWTYPE;
+    
+    --> Buscar aditivos contratuais
+    CURSOR cr_crapadt3(pr_dsbemfin IN crapbpr.dsbemfin%TYPE
+                      ,pr_dschassi IN crapbpr.dschassi%TYPE
+                      ,pr_nrdplaca IN crapbpr.nrdplaca%TYPE
+                      ,pr_dscorbem IN crapbpr.dscorbem%TYPE
+                      ,pr_nranobem IN crapbpr.nranobem%TYPE
+                      ,pr_nrmodbem IN crapbpr.nrmodbem%TYPE
+                      ,pr_nrrenava IN crapbpr.nrrenava%TYPE
+                      ,pr_tpchassi IN crapbpr.tpchassi%TYPE
+                      ,pr_ufdplaca IN crapbpr.ufdplaca%TYPE
+                      ,pr_uflicenc IN crapbpr.uflicenc%TYPE) IS
+      SELECT 1
+        FROM crapadt
+        JOIN crapadi
+          ON crapadi.cdcooper = crapadt.cdcooper
+         AND crapadi.nrdconta = crapadt.nrdconta
+         AND crapadi.nrctremp = crapadt.nrctremp
+         AND crapadi.nraditiv = crapadt.nraditiv
+       WHERE crapadt.cdcooper = pr_cdcooper
+         AND crapadt.nrdconta = pr_nrdconta
+         AND crapadt.nrctremp = pr_nrctremp
+         AND crapadt.cdaditiv = 5
+         AND crapadi.dsbemfin = pr_dsbemfin
+         AND crapadi.dschassi = pr_dschassi
+         AND crapadi.nrdplaca = pr_nrdplaca
+         AND crapadi.dscorbem = pr_dscorbem
+         AND crapadi.nranobem = pr_nranobem
+         AND crapadi.nrmodbem = pr_nrmodbem
+         AND crapadi.nrrenava = pr_nrrenava
+         AND crapadi.tpchassi = pr_tpchassi
+         AND crapadi.ufdplaca = pr_ufdplaca
+         AND crapadi.uflicenc = pr_uflicenc;
+    rw_crapadt3 cr_crapadt3%ROWTYPE;
     
     --> Buscar bens da proposta de emprestimo do cooperado.
     CURSOR cr_crapbpr IS
@@ -965,38 +1071,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ADITIV IS
          AND bpr.nrctrpro = pr_nrctremp
          AND bpr.flgalien = 1; --TRUE
          
-    --> Buscar bens da proposta de emprestimo do cooperado.
-    CURSOR cr_crapbpr2 IS
-      SELECT bpr.idseqbem,
-             bpr.dsbemfin,
-             bpr.nrcpfbem
-        FROM crapbpr bpr
-       WHERE bpr.cdcooper = pr_cdcooper
-         AND bpr.nrdconta = pr_nrdconta
-         AND bpr.tpctrpro = 90
-         AND bpr.nrctrpro = pr_nrctremp
-         AND bpr.flgalien = 1--TRUE
-         AND NOT EXISTS ( SELECT 1
-                            FROM crapadt adt
-                                ,crapadi adi
-                           WHERE adt.cdcooper = bpr.cdcooper
-                             AND adt.nrdconta = bpr.nrdconta
-                             AND adt.nrctremp = bpr.nrctrpro
-                             AND adi.cdcooper = adt.cdcooper
-                             AND adi.nrdconta = adt.nrdconta
-                             AND adi.nrctremp = adt.nrctremp
-                             AND adi.nraditiv = adt.nraditiv
-                             AND adi.dsbemfin = bpr.dsbemfin
-                             AND adi.dschassi = bpr.dschassi
-                             AND adi.nrdplaca = bpr.nrdplaca
-                             AND adi.dscorbem = bpr.dscorbem
-                             AND adi.nranobem = bpr.nranobem
-                             AND adi.nrmodbem = bpr.nrmodbem
-                             AND adi.nrrenava = bpr.nrrenava
-                             AND adi.tpchassi = bpr.tpchassi
-                             AND adi.ufdplaca = bpr.ufdplaca
-                             AND adi.uflicenc = bpr.uflicenc); 
-   
+    --> Buscar dados do contrato de limite
+    CURSOR cr_craplim IS
+      SELECT lim.nrctrlim,
+             lim.dtinivig, 
+             lim.nrdconta 
+        FROM craplim lim
+       WHERE lim.cdcooper = pr_cdcooper
+         AND lim.tpctrlim = pr_tpctrato 
+         AND((nvl(pr_nrdconta,0) <> 0 AND lim.nrdconta = pr_nrdconta) OR
+             (nvl(pr_nrdconta,0) = 0))
+         AND lim.nrctrlim = pr_nrctremp;
+    rw_craplim cr_craplim%ROWTYPE;
     
     --------------------------- SUBROTINAS INTERNAS --------------------------
   BEGIN
@@ -1034,6 +1120,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ADITIV IS
       END IF;
       
       IF pr_nrctremp <> 0 THEN
+        IF pr_tpctrato = 90 THEN
         --> Validar emprestimo
         OPEN cr_crawepr;
         FETCH cr_crawepr INTO rw_crawepr;
@@ -1043,12 +1130,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ADITIV IS
           RAISE vr_exc_erro;
         ELSE
           CLOSE cr_crawepr;
+          END IF;
+        ELSE
+          --> Validar Contrato de Limite
+          OPEN cr_craplim;
+          FETCH cr_craplim INTO rw_craplim;
+          IF cr_craplim%NOTFOUND THEN
+            CLOSE cr_craplim;
+            vr_dscritic := 'Contrato de Limite nao encontrado';
+            RAISE vr_exc_erro;
+          ELSE
+            CLOSE cr_craplim;
+          END IF;
         END IF;
       END IF;
       
       --> Buscar aditivos contratuais
       FOR rw_crapadt IN cr_crapadt LOOP
-        pr_qtregist := pr_qtregist + 1;
+        pr_qtregist := nvl(pr_qtregist,0) + 1;
         
         --> Controlar paginacao
         IF pr_flgpagin =1                 AND
@@ -1073,6 +1172,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ADITIV IS
     -- C-Consulta, E-Exclusao e I-Inclusao 
     ELSIF pr_cddopcao IN ('C','E','I') THEN
       
+      -- Se NAO for Emprestimo/Financiamento e NAO for
+      -- Cobertura de Aplicacao Vinculada a Operacao
+      IF pr_tpctrato <> 90 AND
+         pr_cdaditiv <> 9  THEN
+         vr_dscritic := 'TIPO DE ADITIVO NAO ' || (CASE WHEN pr_cddopcao = 'C' THEN 'ENCONTRADO' ELSE 'PERMITIDO' END);
+         RAISE vr_exc_erro;
+      END IF;
+      
       --> Validar associado
       OPEN cr_crapass;
       FETCH cr_crapass INTO rw_crapass;
@@ -1084,6 +1191,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ADITIV IS
         CLOSE cr_crapass;
       END IF;       
       
+      IF pr_tpctrato = 90 THEN
       --> Validar emprestimo
       OPEN cr_crawepr;
       FETCH cr_crawepr INTO rw_crawepr;
@@ -1093,6 +1201,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ADITIV IS
         RAISE vr_exc_erro;
       ELSE
         CLOSE cr_crawepr;
+        END IF;
+      ELSE
+        --> Validar Contrato de Limite
+        OPEN cr_craplim;
+        FETCH cr_craplim INTO rw_craplim;
+        IF cr_craplim%NOTFOUND THEN
+          CLOSE cr_craplim;
+          vr_dscritic := 'Contrato de Limite nao encontrado';
+          RAISE vr_exc_erro;
+        ELSE
+          CLOSE cr_craplim;
+        END IF;
       END IF;
       
       --> Buscar aditivos contratuais
@@ -1146,33 +1266,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ADITIV IS
           
         IF pr_cddopcao = 'I' THEN
         
-          IF pr_tpaplica = 0 THEN
-            -- apensa sair do programa
-            RAISE vr_exc_sucesso;        
-          ELSE
-            --> buscar as aplicacooes do aditivo
-            pc_buscar_aplicacoes (pr_cdcooper   => pr_cdcooper  --> Codigo da cooperativa            
-                                 ,pr_cdagenci   => pr_cdagenci  --> Codigo da agencia
-                                 ,pr_nrdcaixa   => pr_nrdcaixa  --> Numero do caixa 
-                                 ,pr_cdoperad   => pr_cdoperad  --> Codigo do operador
-                                 ,pr_nmdatela   => pr_nmdatela  --> Nome da tela
-                                 ,pr_idorigem   => pr_idorigem  --> Origem 
-                                 ,pr_dtmvtolt   => pr_dtmvtolt  --> Data de movimento
-                                 ,pr_dtmvtopr   => pr_dtmvtopr  --> Data do prox. movimento
-                                 ,pr_inproces   => pr_inproces  --> Indicador de processo
-                                 ,pr_cddopcao   => pr_cddopcao  --> Codigo da opcao
-                                 ,pr_nrdconta   => vr_nrdconta  --> Numero da conta                                 
-                                 ,pr_tpaplica   => pr_tpaplica  --> tipo de aplicacao
-                                 ,pr_nraplica   => 0            --> Numero da aplicacao    
-                                 --------> OUT <--------
-                                 ,pr_tab_aplicacoes => pr_tab_aplicacoes  --> Retornar dados das aplicações 
-                                 ,pr_cdcritic  => vr_cdcritic           --> Código da crítica
-                                 ,pr_dscritic  => vr_dscritic );        --> Descrição da crítica
-            IF nvl(vr_cdcritic,0) > 0 OR
-               TRIM(vr_dscritic) IS NOT NULL THEN
+          vr_dscritic := 'Tipo de aditivo permite somente CONSULTA';
               RAISE vr_exc_erro; 
-            END IF;   
-          END IF;
         
         ELSE
           --> Buscar itens do aditivo contratual
@@ -1214,6 +1309,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ADITIV IS
           pr_tab_aditiv(vr_idxaditv).nmdgaran := rw_crapadi.nmdavali;          
         END LOOP;  
       
+      ELSIF pr_cdaditiv = 9   AND
+            pr_cddopcao = 'E' THEN
+
+        vr_dscritic := 'Tipo de aditivo nao permite EXCLUSAO';
+        RAISE vr_exc_erro;
+
       ELSE
         --> Buscar iten do aditivo contratual
         OPEN cr_crapadi;
@@ -1342,6 +1443,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ADITIV IS
       ---->> BENS ALIENADOS <<----
       --> Buscar bens da proposta de emprestimo do cooperado.
       FOR rw_crapbpr IN cr_crapbpr LOOP
+
+        -- Se houver aditivo nao elim.
+        OPEN cr_crapadt3(pr_dsbemfin => rw_crapbpr.dsbemfin
+                        ,pr_dschassi => rw_crapbpr.dschassi
+                        ,pr_nrdplaca => rw_crapbpr.nrdplaca
+                        ,pr_dscorbem => rw_crapbpr.dscorbem
+                        ,pr_nranobem => rw_crapbpr.nranobem
+                        ,pr_nrmodbem => rw_crapbpr.nrmodbem
+                        ,pr_nrrenava => rw_crapbpr.nrrenava
+                        ,pr_tpchassi => rw_crapbpr.tpchassi
+                        ,pr_ufdplaca => rw_crapbpr.ufdplaca
+                        ,pr_uflicenc => rw_crapbpr.uflicenc);
+        FETCH cr_crapadt3 INTO rw_crapadt3;
+        vr_fcrapadt := cr_crapadt3%FOUND;
+        CLOSE cr_crapadt3;
+
+        -- Se encontrou
+        IF vr_fcrapadt THEN
+          CONTINUE;
+        END IF;
+
         vr_idxaditv := pr_tab_aditiv.COUNT + 1;
         pr_tab_aditiv(vr_idxaditv).dsbemfin := rw_crapbpr.dsbemfin;
         pr_tab_aditiv(vr_idxaditv).dschassi := rw_crapbpr.dschassi;
@@ -1405,6 +1527,242 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ADITIV IS
       pr_dscritic := 'Erro ao buscar dados aditivo: ' || SQLERRM;         
   END pc_busca_dados_aditiv;  
   
+  --> Buscar dados do aditivo do emprestimo
+  PROCEDURE pc_busca_dados_aditiv_prog(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Codigo da cooperativa            
+                                      ,pr_cdagenci  IN crapage.cdagenci%TYPE --> Codigo da agencia
+                                      ,pr_nrdcaixa  IN crapbcx.nrdcaixa%TYPE --> Numero do caixa 
+                                      ,pr_cdoperad  IN crapope.cdoperad%TYPE --> Codigo do operador
+                                      ,pr_nmdatela  IN craptel.nmdatela%TYPE --> Nome da tela
+                                      ,pr_idorigem  IN INTEGER               --> Origem 
+                                      ,pr_dtmvtolt  IN VARCHAR2              --> Data de movimento
+                                      ,pr_dtmvtopr  IN VARCHAR2              --> Data do prox. movimento
+                                      ,pr_inproces  IN crapdat.inproces%TYPE --> Indicador de processo
+                                      ,pr_cddopcao  IN VARCHAR2              --> Codigo da opcao
+                                      ,pr_nrdconta  IN crapass.nrdconta%TYPE --> Numero da conta
+                                      ,pr_nrctremp  IN crapepr.nrctremp%TYPE --> Numero do contrato
+                                      ,pr_dtmvtolx  IN VARCHAR2              --> Data de consulta
+                                      ,pr_nraditiv  IN crapadt.nraditiv%TYPE --> Numero do aditivo
+                                      ,pr_cdaditiv  IN crapadt.cdaditiv%TYPE --> Codigo do aditivo
+                                      ,pr_tpaplica  IN craprda.tpaplica%TYPE --> tipo de aplicacao
+                                      ,pr_nrctagar  IN crapass.nrdconta%TYPE --> conta garantia
+                                      ,pr_tpctrato  IN crapadt.tpctrato%TYPE --> Tipo do Contrato do Aditivo
+                                      ,pr_flgpagin  IN INTEGER               --> Flag (0-false 1-true)
+                                      ,pr_nrregist  IN INTEGER               --> Numero de registros a serem retornados
+                                      ,pr_nriniseq  IN INTEGER               --> Registro inicial
+                                      ,pr_flgerlog  IN INTEGER               --> Gerar log(0-false 1-true)
+                                      --------> OUT <--------
+                                      ,pr_qtregist OUT INTEGER               --> Retornar quantidade de registros
+                                      ,pr_clob_xml OUT CLOB                  --> XML com informacoes do retorno
+                                      ,pr_cdcritic OUT PLS_INTEGER           --> Codigo da critica
+                                      ,pr_dscritic OUT VARCHAR2) IS          --> Descricao da critica
+                                    
+    /* .............................................................................
+    
+        Programa: pc_busca_dados_aditiv_prog
+        Sistema : CECRED
+        Sigla   : EMPR
+        Autor   : Jaison Fernando
+        Data    : Novembro/2017.                    Ultima atualizacao: 
+    
+        Dados referentes ao programa:
+    
+        Frequencia: Sempre que for chamado.
+    
+        Objetivo  : Rotina responsavel em buscar dados do aditivo do emprestimo e retornar ao Progress.
+    
+        Observacao: -----
+    
+        Alteracoes: 
+
+    ..............................................................................*/
+
+    ----------->>> VARIAVEIS <<<--------   
+    -- Variável de críticas
+    vr_cdcritic        crapcri.cdcritic%TYPE; --> Cód. Erro
+    vr_dscritic        VARCHAR2(1000);        --> Desc. Erro
+    vr_exc_erro        EXCEPTION;
+
+    -- Variaveis locais
+    vr_idxpromi        PLS_INTEGER;
+    vr_tab_aditiv      typ_tab_aditiv;
+    vr_tab_aplicacoes  typ_tab_aplicacoes;  
+    vr_xml_temp        VARCHAR2(32767);
+    vr_dtmvtolt        DATE;
+    vr_dtmvtopr        DATE;
+    vr_dtmvtolx        DATE;
+
+  BEGIN
+    -- Converte as datas
+    vr_dtmvtolt := TO_DATE(TRIM(pr_dtmvtolt),'DD/MM/RRRR');
+    vr_dtmvtopr := TO_DATE(TRIM(pr_dtmvtopr),'DD/MM/RRRR');
+    vr_dtmvtolx := TO_DATE(TRIM(pr_dtmvtolx),'DD/MM/RRRR');
+
+    --> Buscar dados do aditivo do emprestimo
+    pc_busca_dados_aditiv(pr_cdcooper   => pr_cdcooper
+                         ,pr_cdagenci   => pr_cdagenci
+                         ,pr_nrdcaixa   => pr_nrdcaixa
+                         ,pr_cdoperad   => pr_cdoperad
+                         ,pr_nmdatela   => pr_nmdatela
+                         ,pr_idorigem   => pr_idorigem
+                         ,pr_dtmvtolt   => vr_dtmvtolt
+                         ,pr_dtmvtopr   => vr_dtmvtopr
+                         ,pr_inproces   => pr_inproces
+                         ,pr_cddopcao   => pr_cddopcao
+                         ,pr_nrdconta   => pr_nrdconta
+                         ,pr_nrctremp   => pr_nrctremp
+                         ,pr_dtmvtolx   => vr_dtmvtolx
+                         ,pr_nraditiv   => pr_nraditiv
+                         ,pr_cdaditiv   => pr_cdaditiv
+                         ,pr_tpaplica   => pr_tpaplica
+                         ,pr_nrctagar   => pr_nrctagar
+                         ,pr_tpctrato   => pr_tpctrato
+                         ,pr_flgpagin   => pr_flgpagin
+                         ,pr_nrregist   => pr_nrregist
+                         ,pr_nriniseq   => pr_nriniseq
+                         ,pr_flgerlog   => pr_flgerlog
+                         --------> OUT <--------
+                         ,pr_qtregist       => pr_qtregist        --> Retornar quantidad de registros
+                         ,pr_tab_aditiv     => vr_tab_aditiv      --> Retornar dados do aditivo
+                         ,pr_tab_aplicacoes => vr_tab_aplicacoes  --> Retornar dados das aplicações 
+                         ,pr_cdcritic       => vr_cdcritic        --> Código da crítica
+                         ,pr_dscritic       => vr_dscritic);      --> Descrição da crítica
+    -- Se houve erro
+    IF nvl(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+      RAISE vr_exc_erro;
+    END IF; 
+
+    -- Criar documento XML
+    dbms_lob.createtemporary(pr_clob_xml, TRUE);
+    dbms_lob.open(pr_clob_xml, dbms_lob.lob_readwrite);
+
+    -- Insere o cabeçalho do XML
+    gene0002.pc_escreve_xml(pr_xml            => pr_clob_xml
+                           ,pr_texto_completo => vr_xml_temp
+                           ,pr_texto_novo     => '<?xml version="1.0" encoding="ISO-8859-1"?><root>');
+
+    IF vr_tab_aditiv.COUNT > 0 THEN
+
+      -- Abertura de TAG
+      gene0002.pc_escreve_xml(pr_xml            => pr_clob_xml
+                             ,pr_texto_completo => vr_xml_temp
+                             ,pr_texto_novo     => '<aditivos>');
+
+      -- Percorre todos os aditivos
+      FOR vr_idx IN vr_tab_aditiv.FIRST..vr_tab_aditiv.LAST LOOP
+
+        -- Montar XML com registros
+        gene0002.pc_escreve_xml(pr_xml            => pr_clob_xml
+                               ,pr_texto_completo => vr_xml_temp
+                               ,pr_texto_novo     => '<aditivo>'
+                                                  ||  '<nrdconta>' || vr_tab_aditiv(vr_idx).nrdconta || '</nrdconta>'
+                                                  ||  '<nrctremp>' || vr_tab_aditiv(vr_idx).nrctremp || '</nrctremp>'
+                                                  ||  '<nraditiv>' || vr_tab_aditiv(vr_idx).nraditiv || '</nraditiv>'
+                                                  ||  '<cdaditiv>' || vr_tab_aditiv(vr_idx).cdaditiv || '</cdaditiv>'
+                                                  ||  '<dsaditiv>' || vr_tab_aditiv(vr_idx).dsaditiv || '</dsaditiv>'
+                                                  ||  '<dtmvtolt>' || TO_CHAR(vr_tab_aditiv(vr_idx).dtmvtolt,'DD/MM/RRRR') || '</dtmvtolt>'
+                                                  ||  '<nrctagar>' || vr_tab_aditiv(vr_idx).nrctagar || '</nrctagar>'
+                                                  ||  '<nrcpfgar>' || vr_tab_aditiv(vr_idx).nrcpfgar || '</nrcpfgar>'
+                                                  ||  '<nrdocgar>' || vr_tab_aditiv(vr_idx).nrdocgar || '</nrdocgar>'
+                                                  ||  '<nmdgaran>' || vr_tab_aditiv(vr_idx).nmdgaran || '</nmdgaran>'
+                                                  ||  '<flgpagto>' || vr_tab_aditiv(vr_idx).flgpagto || '</flgpagto>'
+                                                  ||  '<dtdpagto>' || TO_CHAR(vr_tab_aditiv(vr_idx).dtdpagto,'DD/MM/RRRR') || '</dtdpagto>'
+                                                  ||  '<dsbemfin>' || vr_tab_aditiv(vr_idx).dsbemfin || '</dsbemfin>'
+                                                  ||  '<dschassi>' || vr_tab_aditiv(vr_idx).dschassi || '</dschassi>'
+                                                  ||  '<nrdplaca>' || vr_tab_aditiv(vr_idx).nrdplaca || '</nrdplaca>'
+                                                  ||  '<dscorbem>' || vr_tab_aditiv(vr_idx).dscorbem || '</dscorbem>'
+                                                  ||  '<nranobem>' || vr_tab_aditiv(vr_idx).nranobem || '</nranobem>'
+                                                  ||  '<nrmodbem>' || vr_tab_aditiv(vr_idx).nrmodbem || '</nrmodbem>'
+                                                  ||  '<nrrenava>' || vr_tab_aditiv(vr_idx).nrrenava || '</nrrenava>'
+                                                  ||  '<tpchassi>' || vr_tab_aditiv(vr_idx).tpchassi || '</tpchassi>'
+                                                  ||  '<ufdplaca>' || vr_tab_aditiv(vr_idx).ufdplaca || '</ufdplaca>'
+                                                  ||  '<uflicenc>' || vr_tab_aditiv(vr_idx).uflicenc || '</uflicenc>'
+                                                  ||  '<nmdavali>' || vr_tab_aditiv(vr_idx).nmdavali || '</nmdavali>'
+                                                  ||  '<tpdescto>' || vr_tab_aditiv(vr_idx).tpdescto || '</tpdescto>'
+                                                  ||  '<dscpfavl>' || vr_tab_aditiv(vr_idx).dscpfavl || '</dscpfavl>'
+                                                  ||  '<nrcpfcgc>' || vr_tab_aditiv(vr_idx).nrcpfcgc || '</nrcpfcgc>'
+                                                  ||  '<nrsequen>' || vr_tab_aditiv(vr_idx).nrsequen || '</nrsequen>'
+                                                  ||  '<idseqbem>' || vr_tab_aditiv(vr_idx).idseqbem || '</idseqbem>'
+                                                  ||  '<promissorias>');
+
+        -- Listagem das promissorias
+        vr_idxpromi := vr_tab_aditiv(vr_idx).promis.first;
+        WHILE vr_idxpromi IS NOT NULL LOOP
+          gene0002.pc_escreve_xml(pr_xml            => pr_clob_xml
+                                 ,pr_texto_completo => vr_xml_temp
+                                 ,pr_texto_novo     => '<promis>
+                                                          <nrseqpro>'|| vr_idxpromi ||'</nrseqpro>
+                                                          <nrpromis>'|| vr_tab_aditiv(vr_idx).promis(vr_idxpromi).nrpromis ||'</nrpromis>
+                                                          <vlpromis>'|| vr_tab_aditiv(vr_idx).promis(vr_idxpromi).vlpromis ||'</vlpromis>
+                                                        </promis>');
+          vr_idxpromi := vr_tab_aditiv(vr_idx).promis.next(vr_idxpromi);
+        END LOOP;
+
+        -- Fechamento de TAGs
+        gene0002.pc_escreve_xml(pr_xml            => pr_clob_xml
+                               ,pr_texto_completo => vr_xml_temp
+                               ,pr_texto_novo     => '</promissorias></aditivo>');	
+
+      END LOOP;
+
+      -- Fechamento de TAG
+      gene0002.pc_escreve_xml(pr_xml            => pr_clob_xml
+                             ,pr_texto_completo => vr_xml_temp
+                             ,pr_texto_novo     => '</aditivos>');
+    END IF;
+
+    IF vr_tab_aplicacoes.COUNT > 0 THEN
+
+      -- Abertura de TAG
+      gene0002.pc_escreve_xml(pr_xml            => pr_clob_xml
+                             ,pr_texto_completo => vr_xml_temp
+                             ,pr_texto_novo     => '<aplicacoes>');
+
+      -- Percorre todas as aplicacoes
+      FOR vr_idx IN vr_tab_aplicacoes.FIRST..vr_tab_aplicacoes.LAST LOOP
+
+        -- Montar XML com registros de aplicacao
+        gene0002.pc_escreve_xml(pr_xml            => pr_clob_xml
+                               ,pr_texto_completo => vr_xml_temp
+                               ,pr_texto_novo     => '<aplicacao>'
+                                                  ||  '<nraplica>' || vr_tab_aplicacoes(vr_idx).nraplica || '</nraplica>'
+                                                  ||  '<dtmvtolt>' || TO_CHAR(vr_tab_aplicacoes(vr_idx).dtmvtolt,'DD/MM/RRRR') || '</dtmvtolt>'
+                                                  ||  '<dshistor>' || vr_tab_aplicacoes(vr_idx).dshistor || '</dshistor>'
+                                                  ||  '<vlaplica>' || vr_tab_aplicacoes(vr_idx).vlaplica || '</vlaplica>'
+                                                  ||  '<nrdocmto>' || vr_tab_aplicacoes(vr_idx).nrdocmto || '</nrdocmto>'
+                                                  ||  '<dtvencto>' || TO_CHAR(vr_tab_aplicacoes(vr_idx).dtvencto,'DD/MM/RRRR') || '</dtvencto>'
+                                                  ||  '<vlsldapl>' || vr_tab_aplicacoes(vr_idx).vlsldapl || '</vlsldapl>'
+                                                  ||  '<sldresga>' || vr_tab_aplicacoes(vr_idx).sldresga || '</sldresga>'
+                                                  || '</aplicacao>');	
+
+      END LOOP;
+
+      -- Fechamento de TAG
+      gene0002.pc_escreve_xml(pr_xml            => pr_clob_xml
+                             ,pr_texto_completo => vr_xml_temp
+                             ,pr_texto_novo     => '</aplicacoes>');
+    END IF;
+
+    -- Encerrar a tag raiz
+    gene0002.pc_escreve_xml(pr_xml            => pr_clob_xml
+                           ,pr_texto_completo => vr_xml_temp
+                           ,pr_texto_novo     => '</root>'
+                           ,pr_fecha_xml      => TRUE);
+
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+      IF nvl(vr_cdcritic,0) > 0 THEN
+        vr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+      END IF;
+
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := vr_dscritic;
+
+    WHEN OTHERS THEN
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := 'Erro ao buscar dados aditivo: ' || SQLERRM;
+
+  END pc_busca_dados_aditiv_prog;
+
   --> Rotina responsavel em buscar dados para assinatura do contrato
   PROCEDURE pc_Trata_Dados_Assinatura ( pr_cdcooper     IN crapavl.cdcooper%TYPE,
                                         pr_nrdconta     IN crapavl.nrdconta%TYPE,
@@ -1817,6 +2175,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ADITIV IS
                            ,pr_dtmvtolt   IN crapdat.dtmvtolt%TYPE --> Data de movimento
                            ,pr_dtmvtopr   IN crapdat.dtmvtopr%TYPE --> Data do prox. movimento
                            ,pr_inproces   IN crapdat.inproces%TYPE --> Indicador de processo
+                           ,pr_tpctrato   IN crapadt.tpctrato%TYPE --> Tipo do Contrato do Aditivo
                            --------> OUT <--------
                            ,pr_nmarqpdf  OUT VARCHAR2              --> Retornar quantidad de registros                           
                            ,pr_cdcritic  OUT PLS_INTEGER           --> Código da crítica
@@ -1828,7 +2187,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ADITIV IS
         Sistema : CECRED
         Sigla   : EMPR
         Autor   : Odirlei Busana (Amcom)
-        Data    : Julho/2016.                    Ultima atualizacao: --/--/----
+        Data    : Julho/2016.                    Ultima atualizacao: 01/11/2017
     
         Dados referentes ao programa:
     
@@ -1838,7 +2197,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ADITIV IS
     
         Observacao: -----
     
-        Alteracoes:
+        Alteracoes: 01/11/2017 - Ajustes conforme inclusao do campo tipo de contrato.
+                                 (Jaison/Marcos Martini - PRJ404)
+
     ..............................................................................*/
     ---------->>> CURSORES <<<--------
     -- Busca dos dados da cooperativa
@@ -1862,7 +2223,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ADITIV IS
              epr.nmdaval1,
              epr.nrctaav1,
              epr.nmdaval2,
-             epr.nrctaav2
+             epr.nrctaav2,
+             epr.idcobope,
+             epr.idcobefe
         FROM crawepr epr            
        WHERE epr.cdcooper = pr_cdcooper
          AND epr.nrdconta = pr_nrdconta
@@ -1874,13 +2237,63 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ADITIV IS
                        pr_nrdconta crapass.nrdconta%TYPE)IS
       SELECT ass.nrcpfcgc,
              ass.nmprimtl,
-             ass.inpessoa
+             ass.inpessoa,
+             ass.cdagenci
         FROM crapass ass
        WHERE ass.cdcooper = pr_cdcooper
          AND ass.nrdconta = pr_nrdconta;
     rw_crapass     cr_crapass%ROWTYPE;
     rw_crapass_gar cr_crapass%ROWTYPE;
     
+    --> Buscar qualificações do cooperado
+    CURSOR cr_crapass_quali (pr_cdcooper crapass.cdcooper%TYPE,
+                             pr_nrdconta crapass.nrdconta%TYPE )IS
+      SELECT ass.nrcpfcgc,
+             ass.nmprimtl,
+             ass.cdagenci,
+             ass.inpessoa,
+             ass.nrdconta,
+             ass.nrdocptl,
+             ass.idorgexp,
+             ass.tpdocptl,
+             ass.cdufdptl,
+             ass.cdnacion,
+             enc.dsendere,
+             enc.nrendere,
+             enc.nmbairro,
+             enc.nmcidade,
+             enc.cdufende,
+             enc.nrcepend
+        FROM crapass ass
+            ,crapenc enc
+       WHERE ass.cdcooper = pr_cdcooper
+         AND ass.nrdconta = pr_nrdconta
+         AND enc.cdcooper = ass.cdcooper
+         AND enc.nrdconta = ass.nrdconta
+         AND enc.idseqttl = 1
+         AND enc.tpendass = DECODE(ass.inpessoa,1,10,9); -- 9 - comercial / 10 - residencial
+    rw_crapass_quali cr_crapass_quali%ROWTYPE;
+		
+    --> Busca a Nacionalidade
+    CURSOR cr_crapnac(pr_cdnacion IN crapnac.cdnacion%TYPE) IS
+      SELECT crapnac.dsnacion
+        FROM crapnac
+       WHERE crapnac.cdnacion = pr_cdnacion;
+    rw_crapnac cr_crapnac%ROWTYPE;
+
+    --> Cursor para buscar estado civil da pessoa fisica, jurida nao tem
+    CURSOR cr_gnetcvl(pr_cdcooper crapttl.cdcooper%TYPE
+                     ,pr_nrdconta crapttl.nrdconta%TYPE) IS
+      SELECT gnetcvl.rsestcvl,
+             crapttl.dsproftl
+       FROM  crapttl,
+             gnetcvl
+       WHERE crapttl.cdcooper = pr_cdcooper
+         AND crapttl.nrdconta = pr_nrdconta
+         AND crapttl.idseqttl = 1 -- Primeiro Titular
+         AND gnetcvl.cdestcvl = crapttl.cdestcvl;
+    rw_gnetcvl cr_gnetcvl%ROWTYPE;
+		    
     --> buscar operador
     CURSOR cr_crapope IS
       SELECT ope.cdoperad
@@ -1899,6 +2312,30 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ADITIV IS
          AND craplcr.cdlcremp = pr_cdlcremp;
     rw_craplcr cr_craplcr%ROWTYPE;
     
+    --> Seleciona dados do limite
+    CURSOR cr_craplim(pr_cdcooper IN craplim.cdcooper%TYPE
+                     ,pr_nrdconta IN craplim.nrdconta%TYPE
+                     ,pr_nrctrlim IN craplim.nrctrlim%TYPE
+                     ,pr_tpctrlim IN craplim.tpctrlim%TYPE) IS
+      SELECT craplim.idcobope,
+             craplim.idcobefe,
+             craplim.dtinivig
+        FROM craplim
+       WHERE craplim.cdcooper = pr_cdcooper
+         AND craplim.nrdconta = pr_nrdconta
+         AND craplim.nrctrlim = pr_nrctrlim
+         AND craplim.tpctrlim = pr_tpctrlim;
+    rw_craplim cr_craplim%ROWTYPE;
+
+    --> Seleciona dados da cobertura
+    CURSOR cr_cobertura(pr_idcobert IN tbgar_cobertura_operacao.idcobertura%TYPE) IS
+      SELECT tco.perminimo,
+             tco.nrconta_terceiro,
+             tco.qtdias_atraso_permitido
+        FROM tbgar_cobertura_operacao tco
+       WHERE tco.idcobertura = pr_idcobert;
+    rw_cobertura cr_cobertura%ROWTYPE;
+
     ----------->>> VARIAVEIS <<<--------   
     -- Variável de críticas
     vr_cdcritic        crapcri.cdcritic%TYPE; --> Cód. Erro
@@ -1940,7 +2377,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ADITIV IS
     vr_dscpfgar        VARCHAR2(100);
     vr_nmprigar        crapass.nmprimtl%TYPE;
     vr_nrctaavl        crapass.nrdconta%TYPE;
+    vr_cdagenci        crapass.cdagenci%TYPE;
     vr_tpchassi        VARCHAR2(100);
+    vr_dtctrato        DATE;
+    vr_dstitulo        VARCHAR2(200);
+    vr_modrelat        VARCHAR2(10);
+    vr_tpctrava        INTEGER;
+    vr_idcobert        NUMBER;
     
     vr_linhatra        VARCHAR2(100);
     vr_nmdevsol        VARCHAR2(100);
@@ -1955,6 +2398,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ADITIV IS
     
     vr_tab_clau_adi    typ_tab_clau_adi;
     vr_tab_clausulas   typ_tab_clausula;
+    vr_tab_aval        DSCT0002.typ_tab_dados_avais;
+    
+	vr_nrdconta_quali crapass.nrdconta%TYPE;
+	vr_dsqualifica    VARCHAR2(1000);
     
     -- Variáveis para armazenar as informações em XML
     vr_des_xml   CLOB;
@@ -2024,6 +2471,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ADITIV IS
                            ,pr_cdaditiv   => pr_cdaditiv --> Codigo do aditivo
                            ,pr_tpaplica   => 0 --> tipo de aplicacao
                            ,pr_nrctagar   => 0 --> conta garantia
+                           ,pr_tpctrato   => pr_tpctrato --> Tipo do Contrato do Aditivo
                            ,pr_flgpagin   => 0 --> Flag (0-false 1-true)
                            ,pr_nrregist   => 0 --> Numero de registros a serem retornados
                            ,pr_nriniseq   => 0 --> Registro inicial
@@ -2035,10 +2483,36 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ADITIV IS
                            ,pr_cdcritic       => vr_cdcritic                --> Código da crítica
                            ,pr_dscritic       => vr_dscritic      );     --> Descrição da crítica
       
-    --> Validar emprestimo
+    --> Dados do associado
+    OPEN cr_crapass(pr_cdcooper => pr_cdcooper,
+                    pr_nrdconta => pr_nrdconta);
+    FETCH cr_crapass INTO rw_crapass;
+    CLOSE cr_crapass;
+      
+    IF pr_tpctrato = 90 THEN
+      --> Dados do emprestimo
     OPEN cr_crawepr;
     FETCH cr_crawepr INTO rw_crawepr;
     CLOSE cr_crawepr;
+      
+      vr_cdagenci := rw_crawepr.cdagenci;
+      vr_dtctrato := rw_crawepr.dtmvtolt;
+      vr_idcobert := rw_crawepr.idcobope;
+      vr_modrelat := (CASE WHEN rw_crawepr.idcobope = rw_crawepr.idcobefe THEN '_1' ELSE '_2' END);
+    ELSE
+      --> Dados do limite
+      OPEN cr_craplim(pr_cdcooper => pr_cdcooper
+                     ,pr_nrdconta => pr_nrdconta
+                     ,pr_nrctrlim => pr_nrctremp
+                     ,pr_tpctrlim => pr_tpctrato);
+      FETCH cr_craplim INTO rw_craplim;
+      CLOSE cr_craplim;
+      
+      vr_cdagenci := rw_crapass.cdagenci;
+      vr_dtctrato := rw_craplim.dtinivig;
+      vr_idcobert := rw_craplim.idcobope;
+      vr_modrelat := (CASE WHEN rw_craplim.idcobope = rw_craplim.idcobefe THEN '_1' ELSE '_2' END);
+    END IF;
     
     vr_dstextab :=  TABE0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper, 
                                                pr_nmsistem => 'CRED'      , 
@@ -2053,7 +2527,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ADITIV IS
     
     --> Montar o qrcode para digitalização
     vr_dsqrcode := fn_qrcode_digitaliz (pr_cdcooper => pr_cdcooper,
-                                        pr_cdagenci => rw_crawepr.cdagenci,
+                                        pr_cdagenci => vr_cdagenci,
                                         pr_nrdconta => pr_nrdconta,
                                         pr_nrborder => 0,
                                         pr_nrcontra => pr_nrctremp,
@@ -2062,12 +2536,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ADITIV IS
                                     
     vr_idxaditi := vr_tab_aditiv.first;
     vr_dtmvtolt := vr_tab_aditiv(vr_idxaditi).dtmvtolt;
-    
-    --> Pegar o nome do associado
-    OPEN cr_crapass(pr_cdcooper => pr_cdcooper,
-                    pr_nrdconta => pr_nrdconta);
-    FETCH cr_crapass INTO rw_crapass;
-    CLOSE cr_crapass;
     
     --> buscar dados do operador                                              
     OPEN cr_crapope; 
@@ -2081,6 +2549,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ADITIV IS
     END IF;
     
     vr_cdc := 'N';
+    
+    IF pr_cdaditiv < 9 THEN
     --> Verificar se linha é CDC        
     OPEN cr_craplcr(pr_cdcooper => pr_cdcooper,
                     pr_cdlcremp => rw_crawepr.cdlcremp);
@@ -2089,6 +2559,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ADITIV IS
     
     vr_cdc := empr0003.fn_verifica_cdc(pr_cdcooper => pr_cdcooper, 
                                        pr_dslcremp => rw_craplcr.dslcremp);
+    END IF;
     
     -- Montar mascara CNPJ/CPF
     vr_rel_nrcpfcgc := gene0002.fn_mask_cpf_cnpj(rw_crapass.nrcpfcgc,
@@ -2191,6 +2662,131 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ADITIV IS
         
     IF pr_cdaditiv < 7 THEN
       pc_escreve_xml('<flctrcdc>' || vr_cdc                || '</flctrcdc>' );
+
+    ELSIF pr_cdaditiv = 9 THEN
+
+      --> Atribuir conta de qualificação
+	  vr_nrdconta_quali := pr_nrdconta;
+
+      --> Dados da cobertura
+      OPEN cr_cobertura(pr_idcobert => vr_idcobert);
+      FETCH cr_cobertura INTO rw_cobertura;
+      CLOSE cr_cobertura;
+      
+      -- Se possui garantidor terceiro
+      IF NVL(rw_cobertura.nrconta_terceiro,0) > 0 THEN
+        OPEN cr_crapass(pr_cdcooper => pr_cdcooper,
+                        pr_nrdconta => rw_cobertura.nrconta_terceiro);
+        FETCH cr_crapass INTO rw_crapass_gar;
+        CLOSE cr_crapass;
+	      --> Atribuir conta de qualificação
+		  vr_nrdconta_quali := rw_cobertura.nrconta_terceiro;
+      END IF;
+			
+			-- Buscar qualificação do cooperado
+			OPEN cr_crapass_quali(pr_cdcooper => pr_cdcooper
+			                     ,pr_nrdconta => vr_nrdconta_quali);
+			FETCH cr_crapass_quali INTO rw_crapass_quali;
+			CLOSE cr_crapass_quali;
+			
+			-- Verifica se o documento eh um CPF ou CNPJ
+			IF rw_crapass_quali.inpessoa = 1 THEN
+				-- Busca estado civil e profissao
+				OPEN  cr_gnetcvl(pr_cdcooper => pr_cdcooper,
+												 pr_nrdconta => vr_nrdconta_quali); 
+				FETCH cr_gnetcvl INTO rw_gnetcvl;
+				CLOSE cr_gnetcvl;
+
+				-- Busca a Nacionalidade
+				OPEN  cr_crapnac(pr_cdnacion => rw_crapass_quali.cdnacion);
+				FETCH cr_crapnac INTO rw_crapnac;
+				CLOSE cr_crapnac;
+
+				vr_dsqualifica := trim(gene0002.fn_mask_conta(rw_crapass_quali.nrdconta)) || ', de titularidade de ' || rw_crapass_quali.nmprimtl
+				                 || (CASE WHEN TRIM(rw_crapnac.dsnacion) IS NOT NULL THEN ', nacionalidade ' || LOWER(rw_crapnac.dsnacion) ELSE '' END)
+												 || (CASE WHEN TRIM(rw_gnetcvl.dsproftl) IS NOT NULL THEN ', ' || LOWER(rw_gnetcvl.dsproftl) ELSE '' END)
+												 || (CASE WHEN TRIM(rw_gnetcvl.rsestcvl) IS NOT NULL THEN ', ' || LOWER(rw_gnetcvl.rsestcvl) ELSE '' END)
+												 || ', inscrito(a) no CPF sob nº ' || gene0002.fn_mask_cpf_cnpj(rw_crapass_quali.nrcpfcgc,rw_crapass_quali.inpessoa)
+												 || ', portador(a) do RG n° ' || rw_crapass_quali.nrdocptl 
+												 || ', residente e domiciliado(a) na ' || rw_crapass_quali.dsendere 
+												 || ', n° '|| rw_crapass_quali.nrendere || ', bairro ' || rw_crapass_quali.nmbairro
+												 || ', da cidade de ' || rw_crapass_quali.nmcidade || '/' || rw_crapass_quali.cdufende
+												 || ', CEP '|| gene0002.fn_mask(rw_crapass_quali.nrcepend,'99.999-999');
+    ELSE
+				vr_dsqualifica := trim(gene0002.fn_mask_conta(rw_crapass_quali.nrdconta)) || ', de titularidade de ' || rw_crapass_quali.nmprimtl
+				                 || ', inscrita no CNPJ sob n° '|| gene0002.fn_mask_cpf_cnpj(rw_crapass_quali.nrcpfcgc,rw_crapass_quali.inpessoa)
+												 || ' com sede na ' || rw_crapass_quali.dsendere || ', n° ' || rw_crapass_quali.nrendere
+												 || ', bairro ' || rw_crapass_quali.nmbairro || ', da cidade de ' || rw_crapass_quali.nmcidade || '/' || rw_crapass_quali.cdufende
+												 || ', CEP ' || gene0002.fn_mask(rw_crapass_quali.nrcepend,'99.999-999');
+			END IF;
+			
+
+      vr_modrelat := pr_tpctrato || vr_modrelat;
+
+      pc_escreve_xml('<modrelat>'   || vr_modrelat             || '</modrelat>' ||
+                     '<tpctrato>'   || pr_tpctrato             || '</tpctrato>' ||
+                     '<dscpfcgc>'   || vr_rel_nrcpfcgc         || '</dscpfcgc>' ||
+                     '<nmextcop>'   || rw_crapcop.nmextcop     || '</nmextcop>' ||
+                     '<nmcopres>'   || rw_crapcop.nmrescop     || '</nmcopres>' ||
+                     '<nrdocnpj>'   || GENE0002.fn_mask_cpf_cnpj(rw_crapcop.nrdocnpj,2) || '</nrdocnpj>' ||
+                     '<dtctrato>'   || TO_CHAR(vr_dtctrato,'DD/MM/RRRR') || '</dtctrato>' ||
+                     '<perminimo>'  || TO_CHAR(rw_cobertura.perminimo,'FM999G999G999G990D00')  || '</perminimo>' ||
+                     '<nminterv>'   || rw_crapass_gar.nmprimtl    ||'</nminterv>'  ||
+                     '<cpfinterv>'  || GENE0002.fn_mask_cpf_cnpj(rw_crapass_gar.nrcpfcgc,rw_crapass_gar.inpessoa) || '</cpfinterv>' ||
+                     '<qtdiatraso>' || rw_cobertura.qtdias_atraso_permitido || '</qtdiatraso>' ||
+					 '<dsqualific>' || vr_dsqualifica || '</dsqualific>');
+
+      CASE pr_tpctrato
+        --> LIM CRED
+        WHEN 1 THEN
+          vr_tpctrava := 3;
+        --> DSC CHQ 
+        WHEN 2 THEN
+          vr_tpctrava := 2;
+        --> DSC TIT 
+        WHEN 3 THEN
+          vr_tpctrava := 8;
+        --> EMPRESTIMO
+        WHEN 90 THEN
+          vr_tpctrava := 1;
+      END CASE;
+
+      -- Listar avalistas de contratos
+      DSCT0002.pc_lista_avalistas(pr_cdcooper => pr_cdcooper  --> Codigo da Cooperativa
+                                 ,pr_cdagenci => pr_cdagenci  --> Codigo da agencia
+                                 ,pr_nrdcaixa => pr_nrdcaixa  --> Numero do caixa do operador
+                                 ,pr_cdoperad => pr_cdoperad  --> Codigo do Operador
+                                 ,pr_nmdatela => pr_nmdatela  --> Nome da tela
+                                 ,pr_idorigem => pr_idorigem  --> Identificador de Origem
+                                 ,pr_nrdconta => pr_nrdconta  --> Numero da conta do cooperado
+                                 ,pr_idseqttl => 1            --> Sequencial do titular
+                                 ,pr_tpctrato => vr_tpctrava  --> Tipo de contrato
+                                 ,pr_nrctrato => pr_nrctremp  --> Numero do contrato
+                                 ,pr_nrctaav1 => 0            --> Numero da conta do primeiro avalista
+                                 ,pr_nrctaav2 => 0            --> Numero da conta do segundo avalista
+                                  --------> OUT <--------                                   
+                                 ,pr_tab_dados_avais => vr_tab_aval   --> retorna dados do avalista
+                                 ,pr_cdcritic        => vr_cdcritic   --> Código da crítica
+                                 ,pr_dscritic        => vr_dscritic); --> Descrição da crítica
+      
+      IF NVL(vr_cdcritic,0) > 0 OR 
+         TRIM(vr_dscritic) IS NOT NULL THEN
+        RAISE vr_exc_erro;
+      END IF;
+
+      IF vr_tab_aval.COUNT > 0 THEN
+        pc_escreve_xml('<fiadores>');
+        FOR vr_ind_aval IN vr_tab_aval.FIRST..vr_tab_aval.LAST LOOP
+          pc_escreve_xml('<fiador'|| vr_ind_aval || '>
+                               <nmdavali>' || vr_tab_aval(vr_ind_aval).nmdavali || '</nmdavali>
+                               <cpfavali>' || GENE0002.fn_mask_cpf_cnpj(vr_tab_aval(vr_ind_aval).nrcpfcgc,vr_tab_aval(vr_ind_aval).inpessoa) || '</cpfavali>
+                               <nmconjug>' || vr_tab_aval(vr_ind_aval).nmconjug || '</nmconjug>
+                               <nrcpfcjg>' || GENE0002.fn_mask_cpf_cnpj(vr_tab_aval(vr_ind_aval).nrcpfcjg,1) || '</nrcpfcjg>
+                         </fiador'|| vr_ind_aval || '>');
+        END LOOP;
+        pc_escreve_xml('</fiadores>');
+      END IF;
+
     ELSE
 
       --Listar promissorias
@@ -2229,7 +2825,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ADITIV IS
     END IF;
     
     --> EXIBIR CLAUSULAS DO CONTRATO
-    IF vr_tab_clau_adi.count > 0 THEN
+    IF vr_tab_clau_adi.EXISTS(pr_cdaditiv) THEN
       vr_tab_clausulas := vr_tab_clau_adi(pr_cdaditiv).clausula;
       IF vr_tab_clausulas.count > 0 THEN
         pc_escreve_xml('<clausulas>');
@@ -2243,7 +2839,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ADITIV IS
     END IF;  
     
     --> ASSINATURAS
+    IF pr_cdaditiv = 9 THEN
+      vr_rel_nmcidade := rw_crapcop.nmcidade||'/'|| rw_crapcop.cdufdcop ||', '||gene0005.fn_data_extenso(pr_dtmvtolt)||'.';
+    ELSE
     vr_rel_nmcidade := rw_crapcop.nmcidade||', '||gene0005.fn_data_extenso(pr_dtmvtolt)||'.';
+    END IF;
+
     pc_escreve_xml('<nmcidade>'||vr_rel_nmcidade||'</nmcidade>');
     
     IF pr_cdaditiv < 7 THEN
@@ -2336,6 +2937,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ADITIV IS
     
     IF pr_cdaditiv < 7 THEN
       vr_dsjasper := 'crrl724_aditiv.jasper';
+    ELSIF pr_cdaditiv = 9 THEN
+      vr_dsjasper := 'crrl724_aditiv_tipo9.jasper';
     ELSE
       vr_dsjasper := 'crrl724_aditiv_declaracao.jasper';
     END IF;
@@ -2415,6 +3018,446 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ADITIV IS
       pr_cdcritic := vr_cdcritic;
       pr_dscritic := replace(replace('Erro ao gerar impressao aditivo: ' || SQLERRM, chr(13)),chr(10));   
   END pc_gera_impressao_aditiv;
+
+  PROCEDURE pc_busca_dados_garopc(pr_cddopcao     IN VARCHAR2 --> Opcao selecionada
+                                 ,pr_nrdconta     IN crapadt.nrdconta%TYPE --> Numero da conta
+                                 ,pr_tpctrato     IN crapadt.tpctrato%TYPE --> Tipo do contrato
+                                 ,pr_nrctremp     IN crapadt.nrctremp%TYPE --> Numero do contrato
+                                 ,pr_xmllog       IN VARCHAR2 --> XML com informacoes de LOG
+                                 ,pr_cdcritic    OUT PLS_INTEGER --> Codigo da critica
+                                 ,pr_dscritic    OUT VARCHAR2 --> Descricao da critica
+                                 ,pr_retxml   IN OUT NOCOPY xmltype --> Arquivo de retorno do XML
+                                 ,pr_nmdcampo    OUT VARCHAR2 --> Nome do campo com erro
+                                 ,pr_des_erro    OUT VARCHAR2) IS --> Erros do processo
+  BEGIN
+
+    /* .............................................................................
+
+    Programa: pc_busca_dados_garopc
+    Sistema : Ayllos Web
+    Autor   : Jaison Fernando
+    Data    : Novembro/2017                 Ultima atualizacao:
+
+    Dados referentes ao programa:
+
+    Frequencia: Sempre que for chamado
+
+    Objetivo  : Rotina para buscar os dados para tela GAROPC.
+
+    Alteracoes: -----
+    ..............................................................................*/
+    DECLARE
+      -- Seleciona dados do emprestimo
+      CURSOR cr_crapepr(pr_cdcooper IN crapepr.cdcooper%TYPE
+                       ,pr_nrdconta IN crapepr.nrdconta%TYPE
+                       ,pr_nrctremp IN crapepr.nrctremp%TYPE
+                       ,pr_cddopcao IN VARCHAR2) IS
+        SELECT wpr.idcobope
+              ,lcr.cdlcremp codlinha
+              ,0 vlropera
+          FROM crawepr wpr
+              ,crapepr epr
+              ,craplcr lcr 
+         WHERE wpr.cdcooper = pr_cdcooper
+           AND wpr.nrdconta = pr_nrdconta
+           AND wpr.nrctremp = pr_nrctremp
+           AND wpr.cdcooper = lcr.cdcooper
+           AND wpr.cdlcremp = lcr.cdlcremp
+           AND wpr.cdcooper = epr.cdcooper
+           AND wpr.nrdconta = epr.nrdconta
+           AND wpr.nrctremp = epr.nrctremp
+           AND epr.inliquid = DECODE(pr_cddopcao, 'I', 0, epr.inliquid); -- 0 - Ativo
+           
+      -- Seleciona dados do limite
+      CURSOR cr_craplim(pr_cdcooper IN craplim.cdcooper%TYPE
+                       ,pr_nrdconta IN craplim.nrdconta%TYPE
+                       ,pr_nrctrlim IN craplim.nrctrlim%TYPE
+                       ,pr_tpctrlim IN craplim.tpctrlim%TYPE
+                       ,pr_cddopcao IN VARCHAR2) IS
+        SELECT craplim.idcobope
+              ,craplim.cddlinha codlinha
+              ,craplim.vllimite vlropera
+          FROM craplim
+         WHERE craplim.cdcooper = pr_cdcooper
+           AND craplim.nrdconta = pr_nrdconta
+           AND craplim.nrctrlim = pr_nrctrlim
+           AND craplim.tpctrlim = pr_tpctrlim
+           AND craplim.insitlim = DECODE(pr_cddopcao, 'I', 2, craplim.insitlim); -- 2 - Ativo
+
+      rw_dados   cr_crapepr%ROWTYPE;
+      
+      rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;
+
+      -- Variavel de criticas
+      vr_cdcritic crapcri.cdcritic%TYPE;
+      vr_dscritic VARCHAR2(10000);
+      vr_des_reto VARCHAR2(3);
+      vr_tab_erro GENE0001.typ_tab_erro;
+
+      -- Tratamento de erros
+      vr_exc_erro EXCEPTION;
+
+      -- Variaveis de log
+      vr_cdcooper INTEGER;
+      vr_cdoperad VARCHAR2(100);
+      vr_nmdatela VARCHAR2(100);
+      vr_nmeacao  VARCHAR2(100);
+      vr_cdagenci VARCHAR2(100);
+      vr_nrdcaixa VARCHAR2(100);
+      vr_idorigem VARCHAR2(100);
+      
+      -- Variaveis locais
+      vr_blnachou BOOLEAN;
+      vr_dstextab craptab.dstextab%TYPE;
+      vr_inusatab BOOLEAN;
+      vr_vltotpre NUMBER(25,2) := 0;
+      vr_qtprecal NUMBER(10) := 0;
+
+    BEGIN
+      -- Incluir nome do modulo logado
+      GENE0001.pc_informa_acesso(pr_module => 'TELA_ADITIV'
+                                ,pr_action => NULL);
+
+      -- Extrai os dados vindos do XML
+      GENE0004.pc_extrai_dados(pr_xml      => pr_retxml
+                              ,pr_cdcooper => vr_cdcooper
+                              ,pr_nmdatela => vr_nmdatela
+                              ,pr_nmeacao  => vr_nmeacao
+                              ,pr_cdagenci => vr_cdagenci
+                              ,pr_nrdcaixa => vr_nrdcaixa
+                              ,pr_idorigem => vr_idorigem
+                              ,pr_cdoperad => vr_cdoperad
+                              ,pr_dscritic => vr_dscritic);
+
+      -- Se for Emprestimo/Financiamento
+      IF pr_tpctrato = 90 THEN
+        -- Seleciona dados do emprestimo
+        OPEN cr_crapepr(pr_cdcooper => vr_cdcooper
+                       ,pr_nrdconta => pr_nrdconta
+                       ,pr_nrctremp => pr_nrctremp
+                       ,pr_cddopcao => pr_cddopcao);
+        FETCH cr_crapepr INTO rw_dados;
+        vr_blnachou := cr_crapepr%FOUND;
+        CLOSE cr_crapepr;
+
+        -- Calendario da cooperativa
+        OPEN BTCH0001.cr_crapdat(pr_cdcooper => vr_cdcooper);
+        FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
+        CLOSE BTCH0001.cr_crapdat;
+
+        -- Buscar configurações necessárias para busca de saldo de empréstimo
+        -- Verificar se usa tabela juros
+        vr_dstextab := TABE0001.fn_busca_dstextab(pr_cdcooper => vr_cdcooper
+                                                 ,pr_nmsistem => 'CRED'
+                                                 ,pr_tptabela => 'USUARI'
+                                                 ,pr_cdempres => 11
+                                                 ,pr_cdacesso => 'TAXATABELA'
+                                                 ,pr_tpregist => 0);
+        -- Se a primeira posição do campo dstextab for diferente de zero
+        vr_inusatab := SUBSTR(vr_dstextab,1,1) != '0';
+                    
+        -- Buscar o saldo devedor atualizado do contrato
+        EMPR0001.pc_saldo_devedor_epr (pr_cdcooper => vr_cdcooper       --> Cooperativa conectada
+                                      ,pr_cdagenci => 1                 --> Codigo da agencia
+                                      ,pr_nrdcaixa => 0                 --> Numero do caixa
+                                      ,pr_cdoperad => '1'               --> Codigo do operador
+                                      ,pr_nmdatela => 'ATENDA'          --> Nome datela conectada
+                                      ,pr_idorigem => 1 /*Ayllos*/      --> Indicador da origem da chamada
+                                      ,pr_nrdconta => pr_nrdconta       --> Conta do associado
+                                      ,pr_idseqttl => 1                 --> Sequencia de titularidade da conta
+                                      ,pr_rw_crapdat => rw_crapdat      --> Vetor com dados de parametro (CRAPDAT)
+                                      ,pr_nrctremp => pr_nrctremp       --> Numero contrato emprestimo
+                                      ,pr_cdprogra => 'B1WGEN0001'      --> Programa conectado
+                                      ,pr_inusatab => vr_inusatab       --> Indicador de utilizacão da tabela
+                                      ,pr_flgerlog => 'N'               --> Gerar log S/N
+                                      ,pr_vlsdeved => rw_dados.vlropera --> Saldo devedor calculado
+                                      ,pr_vltotpre => vr_vltotpre       --> Valor total das prestacães
+                                      ,pr_qtprecal => vr_qtprecal       --> Parcelas calculadas
+                                      ,pr_des_reto => vr_des_reto       --> Retorno OK / NOK
+                                      ,pr_tab_erro => vr_tab_erro);     --> Tabela com possives erros
+        -- Se houve retorno de erro
+        IF vr_des_reto = 'NOK' THEN
+          -- Extrair o codigo e critica de erro da tabela de erro
+          vr_cdcritic := vr_tab_erro(vr_tab_erro.first).cdcritic;
+          vr_dscritic := vr_tab_erro(vr_tab_erro.first).dscritic;
+          -- Limpar tabela de erros
+          vr_tab_erro.DELETE;
+          RAISE vr_exc_erro;
+        END IF;
+      ELSE
+        -- Seleciona dados do limite
+        OPEN cr_craplim(pr_cdcooper => vr_cdcooper
+                       ,pr_nrdconta => pr_nrdconta
+                       ,pr_nrctrlim => pr_nrctremp
+                       ,pr_tpctrlim => pr_tpctrato
+                       ,pr_cddopcao => pr_cddopcao);
+        FETCH cr_craplim INTO rw_dados;
+        vr_blnachou := cr_craplim%FOUND;
+        CLOSE cr_craplim;
+      END IF;
+
+      -- Se NAO achou
+      IF NOT vr_blnachou THEN
+        vr_dscritic := 'Contrato inexistente ou inativo.';
+        RAISE vr_exc_erro;
+      END IF;
+
+      -- Se nao achou linha
+      IF rw_dados.codlinha = 0 THEN
+        vr_dscritic := 'Linha não encontrada.';
+        RAISE vr_exc_erro;
+      END IF;
+
+      -- Se nao achou valor
+      IF rw_dados.vlropera = 0 THEN
+        vr_dscritic := 'Valor da operação deverá ser superior a 0.';
+        RAISE vr_exc_erro;
+      END IF;
+
+      -- Criar cabecalho do XML
+      pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
+
+      GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+                            ,pr_tag_pai  => 'Root'
+                            ,pr_posicao  => 0
+                            ,pr_tag_nova => 'Dados'
+                            ,pr_tag_cont => NULL
+                            ,pr_des_erro => vr_dscritic);
+
+      GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+                            ,pr_tag_pai  => 'Dados'
+                            ,pr_posicao  => 0
+                            ,pr_tag_nova => 'idcobope'
+                            ,pr_tag_cont => (CASE WHEN pr_cddopcao = 'I' THEN 0 ELSE rw_dados.idcobope END)
+                            ,pr_des_erro => vr_dscritic);
+
+      GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+                            ,pr_tag_pai  => 'Dados'
+                            ,pr_posicao  => 0
+                            ,pr_tag_nova => 'codlinha'
+                            ,pr_tag_cont => rw_dados.codlinha
+                            ,pr_des_erro => vr_dscritic);
+
+      GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+                            ,pr_tag_pai  => 'Dados'
+                            ,pr_posicao  => 0
+                            ,pr_tag_nova => 'vlropera'
+                            ,pr_tag_cont => TO_CHAR(rw_dados.vlropera,'FM999G999G999G990D00')
+                            ,pr_des_erro => vr_dscritic);
+
+    EXCEPTION
+      WHEN vr_exc_erro THEN
+        IF vr_cdcritic <> 0 THEN
+          vr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+        END IF;
+
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+
+        -- Carregar XML padrao para variavel de retorno
+        pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+      WHEN OTHERS THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := 'Erro geral na rotina da tela CADPAC: ' || SQLERRM;
+
+        -- Carregar XML padrao para variavel de retorno
+        pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+    END;
+
+  END pc_busca_dados_garopc;
+
+  PROCEDURE pc_busca_cobert_garopc_prog(pr_idcobert  IN tbgar_cobertura_operacao.idcobertura%TYPE --> Identificador da cobertura
+                                       ,pr_inresaut OUT tbgar_cobertura_operacao.inresgate_automatico%TYPE --> Resgate Automatico (0-Nao/ 1-Sim)
+                                       ,pr_permingr OUT tbgar_cobertura_operacao.perminimo%TYPE --> Percentual minimo da cobertura da garantia
+                                       ,pr_inaplpro OUT tbgar_cobertura_operacao.inaplicacao_propria%TYPE --> Aplicacao propria (0-Nao/ 1-Sim)
+                                       ,pr_inpoupro OUT tbgar_cobertura_operacao.inpoupanca_propria%TYPE --> Poupanca propria (0-Nao/ 1-Sim)
+                                       ,pr_nrctater OUT tbgar_cobertura_operacao.nrconta_terceiro%TYPE --> Conta de terceiro
+                                       ,pr_inaplter OUT tbgar_cobertura_operacao.inaplicacao_terceiro%TYPE --> Aplicacao de terceiro (0-Nao/ 1-Sim)
+                                       ,pr_inpouter OUT tbgar_cobertura_operacao.inpoupanca_terceiro%TYPE --> Poupanca de terceiro (0-Nao/ 1-Sim)
+                                       ,pr_cdcritic OUT PLS_INTEGER --> Codigo da critica
+                                       ,pr_dscritic OUT VARCHAR2) IS --> Descricao da critica
+  BEGIN
+
+    /* .............................................................................
+
+        Programa: pc_busca_cobert_garopc_prog
+        Sistema : CECRED
+        Sigla   : EMPR
+        Autor   : Jaison Fernando
+        Data    : Novembro/2017.                    Ultima atualizacao: 
+
+        Dados referentes ao programa:
+
+        Frequencia: Sempre que for chamado.
+
+        Objetivo  : Rotina responsavel em buscar dados da cobertura e retornar ao Progress.
+
+        Observacao: -----
+
+        Alteracoes: 
+
+    ..............................................................................*/
+    DECLARE
+      -- Seleciona garantias para operacoes de credito
+      CURSOR cr_cobertura(pr_idcobert IN tbgar_cobertura_operacao.idcobertura%TYPE) IS
+        SELECT tco.inresgate_automatico
+              ,tco.perminimo           
+              ,tco.inaplicacao_propria 
+              ,tco.inpoupanca_propria  
+              ,tco.nrconta_terceiro    
+              ,tco.inaplicacao_terceiro
+              ,tco.inpoupanca_terceiro 
+          FROM tbgar_cobertura_operacao tco
+         WHERE tco.idcobertura = pr_idcobert;
+      rw_cobertura cr_cobertura%ROWTYPE;
+
+    BEGIN
+
+      -- Seleciona garantias para operacoes de credito
+      OPEN cr_cobertura(pr_idcobert => pr_idcobert);
+      FETCH cr_cobertura INTO rw_cobertura;
+      CLOSE cr_cobertura;
+
+      -- Retorna os valores
+      pr_inresaut := NVL(rw_cobertura.inresgate_automatico,0);
+      pr_permingr := NVL(rw_cobertura.perminimo,0);
+      pr_inaplpro := NVL(rw_cobertura.inaplicacao_propria,0);
+      pr_inpoupro := NVL(rw_cobertura.inpoupanca_propria,0);
+      pr_nrctater := NVL(rw_cobertura.nrconta_terceiro,0);
+      pr_inaplter := NVL(rw_cobertura.inaplicacao_terceiro,0);
+      pr_inpouter := NVL(rw_cobertura.inpoupanca_terceiro,0);
+
+    EXCEPTION
+      WHEN OTHERS THEN
+        pr_cdcritic := 0;
+        pr_dscritic := 'Erro ao buscar dados tbgar_cobertura_operacao: ' || SQLERRM;
+    END;
+
+  END pc_busca_cobert_garopc_prog;
+
+  PROCEDURE pc_busca_tipo_aditivo(pr_nrdconta     IN crapadt.nrdconta%TYPE --> Numero da conta
+                                 ,pr_nrctremp     IN crapadt.nrctremp%TYPE --> Numero do contrato
+                                 ,pr_nraditiv     IN crapadt.nraditiv%TYPE --> Numero do Adivito
+                                 ,pr_tpctrato     IN crapadt.tpctrato%TYPE --> Tipo do contrato
+                                 ,pr_xmllog       IN VARCHAR2 --> XML com informacoes de LOG
+                                 ,pr_cdcritic    OUT PLS_INTEGER --> Codigo da critica
+                                 ,pr_dscritic    OUT VARCHAR2 --> Descricao da critica
+                                 ,pr_retxml   IN OUT NOCOPY xmltype --> Arquivo de retorno do XML
+                                 ,pr_nmdcampo    OUT VARCHAR2 --> Nome do campo com erro
+                                 ,pr_des_erro    OUT VARCHAR2) IS --> Erros do processo
+  BEGIN
+
+    /* .............................................................................
+
+    Programa: pc_busca_tipo_aditivo
+    Sistema : Ayllos Web
+    Autor   : Jaison Fernando
+    Data    : Novembro/2017                 Ultima atualizacao:
+
+    Dados referentes ao programa:
+
+    Frequencia: Sempre que for chamado
+
+    Objetivo  : Rotina para buscar o tipo do aditivo.
+
+    Alteracoes: -----
+    ..............................................................................*/
+    DECLARE
+      -- Seleciona tipo
+      CURSOR cr_crapadt(pr_cdcooper IN crapadt.cdcooper%TYPE
+                       ,pr_nrdconta IN crapadt.nrdconta%TYPE
+                       ,pr_nrctremp IN crapadt.nrctremp%TYPE
+                       ,pr_nraditiv IN crapadt.nraditiv%TYPE
+                       ,pr_tpctrato IN crapadt.tpctrato%TYPE) IS
+        SELECT crapadt.cdaditiv
+          FROM crapadt
+         WHERE crapadt.cdcooper = pr_cdcooper
+           AND crapadt.nrdconta = pr_nrdconta
+           AND crapadt.nrctremp = pr_nrctremp
+           AND crapadt.nraditiv = pr_nraditiv
+           AND crapadt.tpctrato = pr_tpctrato;
+
+      -- Variavel de criticas
+      vr_cdcritic crapcri.cdcritic%TYPE;
+      vr_dscritic VARCHAR2(10000);
+
+      -- Tratamento de erros
+      vr_exc_erro EXCEPTION;
+
+      -- Variaveis de log
+      vr_cdcooper INTEGER;
+      vr_cdoperad VARCHAR2(100);
+      vr_nmdatela VARCHAR2(100);
+      vr_nmeacao  VARCHAR2(100);
+      vr_cdagenci VARCHAR2(100);
+      vr_nrdcaixa VARCHAR2(100);
+      vr_idorigem VARCHAR2(100);
+      
+      -- Variaveis locais
+      vr_cdaditiv crapadt.cdaditiv%TYPE;
+
+    BEGIN
+      -- Extrai os dados vindos do XML
+      GENE0004.pc_extrai_dados(pr_xml      => pr_retxml
+                              ,pr_cdcooper => vr_cdcooper
+                              ,pr_nmdatela => vr_nmdatela
+                              ,pr_nmeacao  => vr_nmeacao
+                              ,pr_cdagenci => vr_cdagenci
+                              ,pr_nrdcaixa => vr_nrdcaixa
+                              ,pr_idorigem => vr_idorigem
+                              ,pr_cdoperad => vr_cdoperad
+                              ,pr_dscritic => vr_dscritic);
+
+      -- Seleciona tipo
+      OPEN cr_crapadt(pr_cdcooper => vr_cdcooper
+                     ,pr_nrdconta => pr_nrdconta
+                     ,pr_nrctremp => pr_nrctremp
+                     ,pr_nraditiv => pr_nraditiv
+                     ,pr_tpctrato => pr_tpctrato);
+      FETCH cr_crapadt INTO vr_cdaditiv;
+      CLOSE cr_crapadt;
+
+      -- Criar cabecalho do XML
+      pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
+
+      GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+                            ,pr_tag_pai  => 'Root'
+                            ,pr_posicao  => 0
+                            ,pr_tag_nova => 'Dados'
+                            ,pr_tag_cont => NULL
+                            ,pr_des_erro => vr_dscritic);
+
+      GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+                            ,pr_tag_pai  => 'Dados'
+                            ,pr_posicao  => 0
+                            ,pr_tag_nova => 'cdaditiv'
+                            ,pr_tag_cont => NVL(vr_cdaditiv,0)
+                            ,pr_des_erro => vr_dscritic);
+
+    EXCEPTION
+      WHEN vr_exc_erro THEN
+        IF vr_cdcritic <> 0 THEN
+          vr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+        END IF;
+
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+
+        -- Carregar XML padrao para variavel de retorno
+        pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+      WHEN OTHERS THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := 'Erro geral na rotina da tela CADPAC: ' || SQLERRM;
+
+        -- Carregar XML padrao para variavel de retorno
+        pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+    END;
+
+  END pc_busca_tipo_aditivo;
   
 END TELA_ADITIV;
 /

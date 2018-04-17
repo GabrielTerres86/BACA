@@ -514,10 +514,10 @@ PROCEDURE pi_processa_chq_nossa:
                      ASSIGN qtd_chqrouba = qtd_chqrouba + 1.
                 ELSE 
                      DO: /* Cheque Normal */
-                         ASSIGN qtd_lancasup = qtd_lancasup + 1.
+                              ASSIGN qtd_lancasup = qtd_lancasup + 1.
                      END.
                      
-                ASSIGN vlr_lantotsu = vlr_lantotsu + gncpchq.vlcheque.
+                     ASSIGN vlr_lantotsu = vlr_lantotsu + gncpchq.vlcheque.
             END.
        ELSE 
             DO:

@@ -4,7 +4,7 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : David
-   Data    : Marco/2007                        Ultima atualizacao: 07/06/2013
+   Data    : Marco/2007                        Ultima atualizacao: 29/11/2017
 
    Dados referentes ao programa:
 
@@ -21,6 +21,9 @@
                07/06/2013 - Incluir procedure retorna-valor-blqjud e tag xml
                             <vlblqjud> (Lucas R.).
                             
+               29/11/2017 - Inclusao do valor de bloqueio em garantia. 
+                            PRJ404 - Garantia.(Odirlei-AMcom)               
+                            
 ..............................................................................*/
     
     
@@ -32,6 +35,8 @@ CREATE WIDGET-POOL.
 
 DEF VAR h-b1wgen0006 AS HANDLE                                         NO-UNDO.
 DEF VAR h-b1wgen0155 AS HANDLE                                         NO-UNDO.
+DEF VAR h-b1wgen0112 AS HANDLE                                         NO-UNDO.
+
 
 DEF VAR aux_dscritic AS CHAR                                           NO-UNDO.
 
@@ -41,6 +46,9 @@ DEF VAR aux_nrdrowid AS ROWID                                          NO-UNDO.
 
 DEF VAR aux_vlblqjud AS DECI                                           NO-UNDO.
 DEF VAR aux_vlresblq AS DECI                                           NO-UNDO.
+DEF VAR aux_vlblqapl_gar  AS DECI                                      NO-UNDO.
+DEF VAR aux_vlblqpou_gar  AS DECI                                      NO-UNDO.
+
 
 DEF  INPUT PARAM par_cdcooper LIKE crapcob.cdcooper                    NO-UNDO.
 DEF  INPUT PARAM par_nrdconta LIKE crapcob.nrdconta                    NO-UNDO.
@@ -54,7 +62,9 @@ DEF OUTPUT PARAM xml_dsmsgerr AS CHAR                                  NO-UNDO.
 DEF OUTPUT PARAM TABLE FOR xml_operacao.
 
 ASSIGN aux_vlblqjud = 0
-       aux_vlresblq = 0.
+       aux_vlresblq = 0
+       aux_vlblqapl_gar = 0
+       aux_vlblqpou_gar = 0.
 
 /*** Busca Saldo Bloqueado Judicial ***/
 IF  NOT VALID-HANDLE(h-b1wgen0155) THEN
@@ -72,6 +82,28 @@ RUN retorna-valor-blqjud IN h-b1wgen0155(INPUT par_cdcooper,
 
 IF  VALID-HANDLE(h-b1wgen0155) THEN
     DELETE PROCEDURE h-b1wgen0155.
+
+/*** Busca Saldo Bloqueado Garantia ***/
+IF  NOT VALID-HANDLE(h-b1wgen0112) THEN
+    RUN sistema/generico/procedures/b1wgen0112.p 
+        PERSISTENT SET h-b1wgen0112.
+
+RUN calcula_bloq_garantia IN h-b1wgen0112
+                         ( INPUT par_cdcooper,
+                           INPUT par_nrdconta,                                             
+                          OUTPUT aux_vlblqapl_gar,
+                          OUTPUT aux_vlblqpou_gar,
+                          OUTPUT aux_dscritic).
+
+IF aux_dscritic <> "" THEN
+DO:
+   ASSIGN xml_dsmsgerr = "<dsmsgerr>" + aux_dscritic + "</dsmsgerr>".          
+   RETURN "NOK".
+
+END.
+    
+IF  VALID-HANDLE(h-b1wgen0112) THEN
+    DELETE PROCEDURE h-b1wgen0112.    
 
 
 RUN sistema/generico/procedures/b1wgen0006.p PERSISTENT SET h-b1wgen0006.
@@ -152,12 +184,16 @@ FOR EACH tt-dados-rpp NO-LOCK:
                                    "</dtvctopp><vlblqjud>" +
                                    TRIM(STRING(aux_vlblqjud,
                                                "zzz,zzz,zzz,zz9.99")) +
-                                   "</vlblqjud><vlprerpp>" +
-                                   TRIM(STRING(tt-dados-rpp.vlprerpp,
-                                               "zzz,zz9.99")) +
-                                   "</vlprerpp><dsprodut>"  +
-                                    "Poupança Programada" +
-                                   "</dsprodut></POUPANCA>".
+                                   "</vlblqjud>"+
+                                   "<vlblqapl_gar>" +
+                                   TRIM(STRING(aux_vlblqapl_gar,
+                                               "zzz,zzz,zzz,zz9.99")) +
+                                   "</vlblqapl_gar>"+
+                                   "<vlblqpou_gar>" +
+                                   TRIM(STRING(aux_vlblqpou_gar,
+                                               "zzz,zzz,zzz,zz9.99")) +
+                                   "</vlblqpou_gar>"+                                   
+                                   "</POUPANCA>".
                            
 END. /** Fim do FOR EACH tt-dados-rpp **/
 

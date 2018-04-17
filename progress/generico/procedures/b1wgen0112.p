@@ -34,7 +34,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0112.p
     Autor   : Gabriel Capoia dos Santos (DB1)
-    Data    : Agosto/2011                        Ultima atualizacao: 21/08/2017
+    Data    : Agosto/2011                        Ultima atualizacao: 02/03/2018
 
     Objetivo  : Tranformacao BO tela IMPRES
 
@@ -225,6 +225,14 @@
 
                 21/08/2017 - Inclusao do produto Pos-Fixado. (Jaison/James - PRJ298)
 
+                27/11/2017 - Inclusao do valor de bloqueio em garantia nos relatorios. 
+                             PRJ404 - Garantia Empr.(Odirlei-AMcom)  
+
+                02/03/2018 - Lucas Skroch (Supero TI) - Ajustes nos saldos de cobertura, judicial, total geral e total resgate
+
+    29/01/2018 - #770327 Chamada da rotina pc_lista_aplicacoes_car alterada para 
+                 pc_lista_demons_apli, rotina Gera_Impressao_Aplicacao (Carlos)
+
 ............................................................................*/
 
 /*............................. DEFINICOES .................................*/
@@ -274,6 +282,10 @@ DEF VAR rel_nmresage AS CHAR    FORMAT "x(15)"                      NO-UNDO.
 
 DEF VAR aux_vlblqjud AS DECI                                        NO-UNDO.
 DEF VAR aux_vlresblq AS DECI                                        NO-UNDO.
+DEF VAR aux_vlblqapl_gar AS DECI                                    NO-UNDO.
+DEF VAR aux_vlblqpou_gar AS DECI                                    NO-UNDO.
+DEF VAR aux_vltot_resgat AS DECI                                    NO-UNDO.
+
 
 DEF STREAM str_1.
 
@@ -2384,7 +2396,7 @@ PROCEDURE Gera_Impressao_Aplicacao:
          { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} } 
          
          /* Efetuar a chamada a rotina Oracle */ 
-         RUN STORED-PROCEDURE pc_lista_aplicacoes_car
+         RUN STORED-PROCEDURE pc_lista_demons_apli
              aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper, /* Código da Cooperativa */
                                                   INPUT par_cdoperad, /* Código do Operador */
                                                   INPUT par_nmdatela, /* Nome da Tela */
@@ -2399,12 +2411,14 @@ PROCEDURE Gera_Impressao_Aplicacao:
                                                   INPUT par_dtmvtolt, /* Data de Movimento */
                                                   INPUT 5,            /* Identificador de Consulta (0 – Ativas / 1 – Encerradas / 2 – Todas) */
                                                   INPUT 1,            /* Identificador de Log (0 – Não / 1 – Sim) */                                                                                                                                  
+                                                  INPUT aux_dtiniper,
+                                                  INPUT aux_dtfimper,
                                                  OUTPUT ?,            /* XML com informações de LOG */
                                                  OUTPUT 0,            /* Código da crítica */
                                                  OUTPUT "").          /* Descrição da crítica */
         
          /* Fechar o procedimento para buscarmos o resultado */ 
-         CLOSE STORED-PROC pc_lista_aplicacoes_car
+         CLOSE STORED-PROC pc_lista_demons_apli
                 aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
         
          { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
@@ -2412,10 +2426,10 @@ PROCEDURE Gera_Impressao_Aplicacao:
          /* Busca possíveis erros */ 
          ASSIGN aux_cdcritic = 0
                 aux_dscritic = ""
-                aux_cdcritic = pc_lista_aplicacoes_car.pr_cdcritic 
-                               WHEN pc_lista_aplicacoes_car.pr_cdcritic <> ?
-                aux_dscritic = pc_lista_aplicacoes_car.pr_dscritic 
-                               WHEN pc_lista_aplicacoes_car.pr_dscritic <> ?.
+                aux_cdcritic = pc_lista_demons_apli.pr_cdcritic 
+                               WHEN pc_lista_demons_apli.pr_cdcritic <> ?
+                aux_dscritic = pc_lista_demons_apli.pr_dscritic 
+                               WHEN pc_lista_demons_apli.pr_dscritic <> ?.
     
     
          IF aux_cdcritic <> 0 OR aux_dscritic <> "" THEN
@@ -2431,7 +2445,7 @@ PROCEDURE Gera_Impressao_Aplicacao:
          EMPTY TEMP-TABLE tt-saldo-rdca.
         
          /* Buscar o XML na tabela de retorno da procedure Progress */ 
-         ASSIGN xml_req = pc_lista_aplicacoes_car.pr_clobxmlc. 
+         ASSIGN xml_req = pc_lista_demons_apli.pr_clobxmlc. 
         
          /* Efetuar a leitura do XML*/ 
          SET-SIZE(ponteiro_xml) = LENGTH(xml_req) + 1. 
@@ -2903,12 +2917,15 @@ PROCEDURE gera_impressao_sintetico:
             FRAME f_dados_relat_sintetico.
 
     FORM SKIP(2)
-         "Saldo disponivel para resgate:"                 AT  01
-         tot_sldresga  FORMAT "z,zzz,zz9.99"              AT  46
+         "SALDO DISPONIVEL R$:"                 AT  01
+         tot_sldresga  FORMAT "zz,zzz,zzz,zzz,zzz,zzz,zz9.99"              AT  40
          WITH NO-BOX NO-ATTR-SPACE DOWN NO-LABEL WIDTH 80 FRAME f_footer_total.
 
     ASSIGN aux_vlblqjud = 0
-           aux_vlresblq = 0.
+           aux_vlresblq = 0
+           aux_vlblqapl_gar = 0
+           aux_vlblqpou_gar = 0
+           aux_vltot_resgat = 0.
 
     /*** Busca Saldo Bloqueado Judicial ***/
     IF  NOT VALID-HANDLE(h-b1wgen0155) THEN
@@ -2926,6 +2943,24 @@ PROCEDURE gera_impressao_sintetico:
     
     IF  VALID-HANDLE(h-b1wgen0155) THEN
         DELETE PROCEDURE h-b1wgen0155.
+
+    /* PRJ404 - Retornar valor bloqueado de garantia */
+    RUN calcula_bloq_garantia (INPUT par_cdcooper,
+                               INPUT par_nrdconta,                                             
+                               OUTPUT aux_vlblqapl_gar,
+                               OUTPUT aux_vlblqpou_gar,
+                               OUTPUT aux_dscritic).
+
+    IF aux_dscritic <> "" THEN
+      DO:
+           RUN gera_erro (INPUT par_cdcooper,
+                          INPUT 1,
+                          INPUT 1,
+                          INPUT 1,          /** Sequencia **/
+                          INPUT 0,
+                          INPUT-OUTPUT aux_dscritic).
+            RETURN "NOK".
+      END.
 
     FIND crapass WHERE crapass.cdcooper = par_cdcooper
                    AND crapass.nrdconta = par_nrdconta 
@@ -3012,13 +3047,27 @@ PROCEDURE gera_impressao_sintetico:
     DISPLAY STREAM str_1 
             tot_sldresga WITH FRAME f_footer_total.
 
-    IF  aux_vlblqjud > 0 THEN
-        DO: 
             PUT STREAM str_1
-                "Valor Bloqueado Judicialmente e de R$: "
-                aux_vlblqjud FORMAT "zzz,zzz,zzz,zz9.99"
+                "VALOR BLOQUEADO JUDICIALMENTE R$:      "
+                aux_vlblqjud FORMAT "zz,zzz,zzz,zzz,zzz,zzz,zz9.99"
                 SKIP.
+        
+            PUT STREAM str_1
+                "VALOR BLOQUEADO COBERTURA GARANTIA R$: "
+                aux_vlblqapl_gar FORMAT "zz,zzz,zzz,zzz,zzz,zzz,zz9.99"                
+                SKIP.
+			
+			aux_vltot_resgat = tot_sldresga - (aux_vlblqjud + aux_vlblqapl_gar).
+
+			IF aux_vltot_resgat < 0 THEN DO:
+			   aux_vltot_resgat = 0.
         END.
+
+            PUT STREAM str_1
+                "SALDO DISPONIVEL PARA RESGATE R$:      "
+                aux_vltot_resgat FORMAT "zz,zzz,zzz,zzz,zzz,zzz,zz9.99"
+                SKIP.
+     
 
     OUTPUT STREAM str_1 CLOSE.
 
@@ -3148,7 +3197,10 @@ PROCEDURE gera_impressao_demonstrativo:
        WITH NO-BOX NO-ATTR-SPACE DOWN NO-LABEL WIDTH 234 FRAME f_dados_colunas.
 
     ASSIGN aux_vlblqjud = 0
-           aux_vlresblq = 0.
+           aux_vlresblq = 0
+           aux_vlblqapl_gar = 0
+           aux_vlblqpou_gar = 0
+           aux_vltot_resgat = 0.
 
     /*** Busca Saldo Bloqueado Judicial ***/
     IF  NOT VALID-HANDLE(h-b1wgen0155) THEN
@@ -3166,6 +3218,25 @@ PROCEDURE gera_impressao_demonstrativo:
     
     IF  VALID-HANDLE(h-b1wgen0155) THEN
         DELETE PROCEDURE h-b1wgen0155.
+        
+      
+    /* PRJ404 - Retornar valor bloqueado de garantia */
+    RUN calcula_bloq_garantia (INPUT par_cdcooper,
+                               INPUT par_nrdconta,                                             
+                               OUTPUT aux_vlblqapl_gar,
+                               OUTPUT aux_vlblqpou_gar,
+                               OUTPUT aux_dscritic).
+
+    IF aux_dscritic <> "" THEN
+      DO:
+           RUN gera_erro (INPUT par_cdcooper,
+                          INPUT 1,
+                          INPUT 1,
+                          INPUT 1,          /** Sequencia **/
+                          INPUT 0,
+                          INPUT-OUTPUT aux_dscritic).
+            RETURN "NOK".
+      END.
 
     FIND crapass WHERE crapass.cdcooper = par_cdcooper
                    AND crapass.nrdconta = par_nrdconta 
@@ -3401,14 +3472,30 @@ PROCEDURE gera_impressao_demonstrativo:
 
     END.
 
-    IF  aux_vlblqjud > 0 THEN
-        DO: 
             PUT STREAM str_1
                 SKIP(1)
-                "Valor Bloqueado Judicialmente e de R$: "
-                aux_vlblqjud FORMAT "zzz,zzz,zzz,zz9.99"
+                "VALOR BLOQUEADO JUDICIALMENTE R$:      "
+                aux_vlblqjud FORMAT "z,zzz,zzz,zzz,zzz,zzz,zz9.99"
                 SKIP.
+
+
+            PUT STREAM str_1
+                SKIP(1)
+                "VALOR BLOQUEADO COBERTURA GARANTIA R$: "
+                aux_vlblqapl_gar FORMAT "z,zzz,zzz,zzz,zzz,zzz,zz9.99"
+                SKIP.
+
+            aux_vltot_resgat = tot_sldresga - (aux_vlblqjud + aux_vlblqapl_gar).
+
+            IF aux_vltot_resgat < 0 THEN DO:
+			   aux_vltot_resgat = 0.
         END.
+
+            PUT STREAM str_1
+                SKIP(1)
+                "SALDO DISPONIVEL PARA RESGATE R$:     "
+                aux_vltot_resgat FORMAT "zz,zzz,zzz,zzz,zzz,zzz,zz9.99"
+                SKIP.
 
     /** FIM Processamento do Extrato **/       
 
@@ -3693,9 +3780,11 @@ PROCEDURE pi_monta_demonstrativo:
                    AND tt-demonstrativo.dstplanc = "SALDO" 
                 EXCLUSIVE-LOCK NO-ERROR.
 
-            ASSIGN tt-demonstrativo.vlcolu14 = "SALDO RESGATE"
+
+            ASSIGN tt-demonstrativo.vlcolu14 = "SALDO"
                    tt-demonstrativo.vlcolu15 = 
                       STRING(tot_sldresga,"zz,zzz,zz9.99").
+      
         END.
                     
         /** Processamento dos dados do extrato **/
@@ -4364,6 +4453,20 @@ PROCEDURE extrato_pos_fixado:
 
         BUFFER-COPY tt-extrato_epr TO tt-extrato_epr_aux.
 
+        ASSIGN tt-extrato_epr_aux.vlrdtaxa = 0.
+        
+        /* Lancamento de Juros de Correcao */
+        IF CAN-DO("2344,2345",STRING(tt-extrato_epr.cdhistor)) THEN
+           DO:
+                FOR crappep FIELDS(vltaxatu) WHERE crappep.cdcooper = par_cdcooper            AND
+                                                   crappep.nrdconta = par_nrdconta            AND
+                                                   crappep.nrctremp = par_nrctremp            AND
+                                                   crappep.nrparepr = INTE(tt-extrato_epr.nrparepr)
+                                                   NO-LOCK:
+                  ASSIGN tt-extrato_epr_aux.vlrdtaxa = crappep.vltaxatu.
+                END.
+           END.
+           
         IF FIRST (tt-extrato_epr.dtmvtolt) THEN
            DO:
                /* Saldo Inicial */
@@ -4408,4 +4511,112 @@ PROCEDURE extrato_pos_fixado:
     RETURN "OK".
 
 END PROCEDURE. /*   extrato pos-fixado   */
+
+/***********************************************************************/
+PROCEDURE calcula_bloq_garantia_avancado:
+    
+    /* parametros de entrada */ 
+    DEF INPUT PARAM par_cdcooper LIKE crapcop.cdcooper NO-UNDO.       
+    DEF INPUT PARAM par_nrdconta LIKE crapcop.nrdconta NO-UNDO.       
+    DEF INPUT PARAM par_tpctrato AS INTEGER            NO-UNDO.       
+    DEF INPUT PARAM par_nrctaliq AS CHAR               NO-UNDO.           
+    DEF INPUT PARAM par_dsctrliq AS CHAR               NO-UNDO.                  
+    DEF INPUT PARAM par_vlsldapl AS DEC                NO-UNDO.             
+    DEF INPUT PARAM par_vlblqapl AS DEC                NO-UNDO.                    
+    DEF INPUT PARAM par_vlsldpou AS DEC                NO-UNDO.                    
+    DEF INPUT PARAM par_vlblqpou AS DEC                NO-UNDO.                    
+    /* parametros de retorno */
+    DEF OUTPUT PARAM par_vlblqapl_gar AS DEC           NO-UNDO.
+    DEF OUTPUT PARAM par_vlblqpou_gar AS DEC           NO-UNDO.
+    DEF OUTPUT PARAM par_dscritic AS CHAR              NO-UNDO.
+
+
+
+    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} } 
+
+     /* Efetuar a chamada a rotina Oracle */
+     RUN STORED-PROCEDURE pc_calc_bloqueio_garantia
+     aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper /* pr_cdcooper   */    
+                                         ,INPUT par_nrdconta /* pr_nrdconta   */       
+                                         ,INPUT par_tpctrato /* pr_tpctrato   */       
+                                         ,INPUT par_nrctaliq /* pr_nrctaliq   */       
+                                         ,INPUT par_dsctrliq /* pr_dsctrliq   */       
+                                         ,INPUT par_vlsldapl /* pr_vlsldapl   */       
+                                         ,INPUT par_vlblqapl /* pr_vlblqapl   */        
+                                         ,INPUT par_vlsldpou /* pr_vlsldpou   */       
+                                         ,INPUT par_vlblqpou /* pr_vlblqpou   */                                                
+                                         ,OUTPUT 0           /* pr_vlbloque_aplica  */
+                                         ,OUTPUT 0           /* pr_vlbloque_poupa   */  
+                                         ,OUTPUT "").        /* pr_dscritic         */  
+
+     /* Fechar o procedimento para buscarmos o resultado */ 
+     CLOSE STORED-PROC pc_calc_bloqueio_garantia
+           aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+
+     
+     { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
+
+     /* Busca possíveis erros */ 
+     ASSIGN aux_dscritic = ""
+            aux_dscritic = pc_calc_bloqueio_garantia.pr_dscritic 
+                           WHEN pc_calc_bloqueio_garantia.pr_dscritic <> ?.
+
+
+     IF aux_dscritic <> "" THEN
+     DO:
+         ASSIGN par_dscritic = aux_dscritic.
+
+         RETURN "NOK".
+     END.
+
+     /* Buscar valores */ 
+     ASSIGN par_vlblqapl_gar = pc_calc_bloqueio_garantia.pr_vlbloque_aplica 
+                           WHEN pc_calc_bloqueio_garantia.pr_vlbloque_aplica <> ?
+            par_vlblqpou_gar = pc_calc_bloqueio_garantia.pr_vlbloque_poupa 
+                           WHEN pc_calc_bloqueio_garantia.pr_vlbloque_poupa <> ?                .
+
+
+     RETURN "OK".
+
+END PROCEDURE.
+
+/***********************************************************************/
+PROCEDURE calcula_bloq_garantia:
+    
+    /* parametros de entrada */ 
+    DEF INPUT PARAM par_cdcooper LIKE crapcop.cdcooper NO-UNDO.       
+    DEF INPUT PARAM par_nrdconta LIKE crapcop.nrdconta NO-UNDO.       
+    /* parametros de retorno */
+    DEF OUTPUT PARAM par_vlblqapl_gar AS DEC           NO-UNDO.
+    DEF OUTPUT PARAM par_vlblqpou_gar AS DEC           NO-UNDO.
+    DEF OUTPUT PARAM par_dscritic AS CHAR              NO-UNDO.
+    
+
+     /* Efetuar a chamada a rotina Oracle */
+     RUN calcula_bloq_garantia_avancado
+            (INPUT par_cdcooper /* pr_cdcooper   */    
+            ,INPUT par_nrdconta /* pr_nrdconta   */       
+            ,INPUT 0  /* pr_tpctrato   */       
+            ,INPUT "" /* pr_nrctaliq   */       
+            ,INPUT "" /* pr_dsctrliq   */       
+            ,INPUT 0  /* pr_vlsldapl   */       
+            ,INPUT 0  /* pr_vlblqapl   */        
+            ,INPUT 0  /* pr_vlsldpou   */       
+            ,INPUT 0  /* pr_vlblqpou   */                                                
+            ,OUTPUT par_vlblqapl_gar      /* pr_vlbloque_aplica  */
+            ,OUTPUT par_vlblqpou_gar      /* pr_vlbloque_poupa   */  
+            ,OUTPUT aux_dscritic).        /* pr_dscritic         */  
+
+     IF aux_dscritic <> "" THEN
+     DO:
+         ASSIGN par_dscritic = aux_dscritic.
+
+         RETURN "NOK".
+     END.
+
+    
+     RETURN "OK".
+
+END PROCEDURE.
+
 

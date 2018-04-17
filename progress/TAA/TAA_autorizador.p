@@ -7,7 +7,7 @@
    
      Autor: Evandro
     
-      Data: Janeiro/2010                        Ultima alteracao: 13/10/2017
+      Data: Janeiro/2010                        Ultima alteracao: 29/11/2017
     
 Alteracoes: 30/06/2010 - Retirar telefone da ouvidoria (Evandro).
 
@@ -308,6 +308,9 @@ Alteracoes: 30/06/2010 - Retirar telefone da ouvidoria (Evandro).
             09/11/2017 - Ajuste na rotina lancamentos-futuros para retornar no XML os valores
                          totais que sao calculados na bo03
                          Heitor (Mouts) - Chamado 689749
+
+            29/11/2017 - Inclusao do valor de bloqueio em garantia. 
+                         PRJ404 - Garantia.(Odirlei-AMcom)                 
 ............................................................................. */
 
 CREATE WIDGET-POOL.
@@ -556,6 +559,7 @@ DEFINE VARIABLE h-b1wgen0155             AS HANDLE   NO-UNDO.
 DEFINE VARIABLE h-b1wgen0188             AS HANDLE   NO-UNDO.
 DEFINE VARIABLE h-b1wgen9998             AS HANDLE   NO-UNDO.
 DEFINE VARIABLE h-b1wgen9999             AS HANDLE   NO-UNDO. 
+DEFINE VARIABLE h-b1wgen0112             AS HANDLE   NO-UNDO.
 
 
 DEFINE VARIABLE h-bo_algoritmo_seguranca AS HANDLE   NO-UNDO.
@@ -6677,6 +6681,9 @@ PROCEDURE retorna_valor_blqjud:
     DEFINE VARIABLE aux_cdmodali AS INTEGER                           NO-UNDO.    
     DEFINE VARIABLE aux_cdcritic AS INTEGER                           NO-UNDO.
     DEFINE VARIABLE aux_dscritic AS CHARACTER                         NO-UNDO.
+    DEFINE VARIABLE aux_vlblqapl_gar  AS DECI                         NO-UNDO.
+    DEFINE VARIABLE aux_vlblqpou_gar  AS DECI                         NO-UNDO.
+
 	
 	/* Variaveis para o XML */ 
     DEF VAR xDoc_ora            AS HANDLE   NO-UNDO.   
@@ -6862,12 +6869,46 @@ PROCEDURE retorna_valor_blqjud:
 			ASSIGN tot_vlblqjud = tot_vlblqjud + aux_vlblqjud.
         END.
   
+      ASSIGN aux_vlblqapl_gar = 0
+             aux_vlblqpou_gar = 0.
+      
+      /*** Busca Saldo Bloqueado Garantia ***/
+      IF  NOT VALID-HANDLE(h-b1wgen0112) THEN
+          RUN sistema/generico/procedures/b1wgen0112.p 
+              PERSISTENT SET h-b1wgen0112.
+            
+      RUN calcula_bloq_garantia IN h-b1wgen0112
+                             ( INPUT aux_cdcooper,
+                               INPUT aux_nrdconta,                                             
+                              OUTPUT aux_vlblqapl_gar,
+                              OUTPUT aux_vlblqpou_gar,
+                              OUTPUT aux_dscritic).
+                              
+      IF  VALID-HANDLE(h-b1wgen0112) THEN
+      DELETE PROCEDURE h-b1wgen0112.  
+  
     /*---------------*/
     xDoc:CREATE-NODE(xField,"VLBLQJUD","ELEMENT").
     xRoot:APPEND-CHILD(xField).
 
     xDoc:CREATE-NODE(xText,"","TEXT").
     xText:NODE-VALUE = STRING(tot_vlblqjud).
+    xField:APPEND-CHILD(xText).
+
+    /*---------------*/
+    xDoc:CREATE-NODE(xField,"VLBLQAPL_GAR","ELEMENT").
+    xRoot:APPEND-CHILD(xField).
+
+    xDoc:CREATE-NODE(xText,"","TEXT").
+    xText:NODE-VALUE = STRING(aux_vlblqapl_gar).
+    xField:APPEND-CHILD(xText).
+    
+    /*---------------*/
+    xDoc:CREATE-NODE(xField,"VLBLQPOU_GAR","ELEMENT").
+    xRoot:APPEND-CHILD(xField).
+
+    xDoc:CREATE-NODE(xText,"","TEXT").
+    xText:NODE-VALUE = STRING(aux_vlblqpou_gar).
     xField:APPEND-CHILD(xText).
 
     RETURN "OK".

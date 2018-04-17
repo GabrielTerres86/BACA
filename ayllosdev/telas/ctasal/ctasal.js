@@ -18,7 +18,10 @@
 				  07/08/2017 - Ajuste realizado para gerar numero de conta automaticamente na
 							   inclusao, conforme solicitado no chamado 689996. (Kelvin)
   
-				  08/02/2018 - Ajuste para caracteres especiais não gerarem problemas. (SD 845660 - Kelvin).			   
+				  08/02/2018 - Ajuste para caracteres especiais não gerarem problemas. (SD 845660 - Kelvin).		
+					
+				  05/04/2018 - Ajuste na tela ctasal para que caso o operador tente inserir o nome do funcionario
+							   com apenas um caractere especial, não permita cadastrar. (SD 866541 - Kelvin)
   
  */
 
@@ -760,6 +763,9 @@ function retirarAcentuacao(str) {
 function validaDados(){
 	
 	nmfuncio = $.trim($('#nmfuncio','#frmDados').val());	
+	nmfuncio = retiraCaracteres(nmfuncio,'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz ',true);
+	
+	$('#nmfuncio', '#frmDados').val(nmfuncio);
 	
 	if (nmfuncio == '') {
 		showError('error','Informe o Titular.','Alerta - Ayllos','focaCampoErro(\'nmfuncio\',\'frmDados\');'); 		

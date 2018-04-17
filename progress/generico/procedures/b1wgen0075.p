@@ -543,6 +543,23 @@ PROCEDURE Valida_Dados:
                LEAVE Valida.
             END.
                  
+        FIND crapttl WHERE crapttl.cdcooper = par_cdcooper AND
+						   crapttl.nrdconta = par_nrdconta AND
+						   crapttl.idseqttl = par_idseqttl 
+						   NO-LOCK NO-ERROR.
+		IF AVAIL crapttl THEN
+		DO:
+			IF  STRING(par_nrcpfemp) = STRING(crapttl.nrcpfcgc) THEN
+				DO:
+				   ASSIGN 
+					   par_nmdcampo = "nrcpfemp"
+					   aux_cdcritic = 0.
+					   aux_dscritic = "CNPJ da empresa nao pode ser o CPF da conta".
+					   
+				   LEAVE Valida.
+				END.
+		END.	
+		
         /* efetuar validacoes quando o contrato de trabalho for = 1 ou 2 */
         IF  par_tpcttrab = 3   OR
             par_tpcttrab = 4   THEN
@@ -571,22 +588,7 @@ PROCEDURE Valida_Dados:
                LEAVE Valida.
             END.
 		
-		FIND crapttl WHERE crapttl.cdcooper = par_cdcooper AND
-						   crapttl.nrdconta = par_nrdconta AND
-						   crapttl.idseqttl = par_idseqttl 
-						   NO-LOCK NO-ERROR.
-		IF AVAIL crapttl THEN
-		DO:
-			IF  STRING(par_nrcpfemp) = STRING(crapttl.nrcpfcgc) THEN
-				DO:
-				   ASSIGN 
-					   par_nmdcampo = "nrcpfemp"
-					   aux_cdcritic = 0.
-					   aux_dscritic = "CNPJ da empresa nao pode ser o CPF da conta".
 					   
-				   LEAVE Valida.
-				END.
-		END.	
         /* funcao */
         IF  par_dsproftl = "" THEN
             DO:

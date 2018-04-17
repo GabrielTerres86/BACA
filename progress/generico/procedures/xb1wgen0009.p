@@ -42,6 +42,8 @@
                26/05/2017 - Alterado efetua_inclusao_limite para gerar o numero do 
                            contrato de limite.  PRJ-300 - Desconto de cheque(Odirlei-AMcom)              
 			   28/07/2017 - Desenvolvimento da melhoria 364 - Grupo Economico Novo. (Mauro
+         
+               11/12/2017 - P404 - Inclusao de Garantia de Cobertura das Operaçoes de Crédito (Augusto / Marcos (Supero))
 ............................................................................ */
 
 
@@ -149,6 +151,7 @@ DEF VAR aux_qtregist AS INT                                            NO-UNDO.
 DEF VAR aux_nrregist AS INT                                            NO-UNDO.
 DEF VAR aux_nriniseq AS INT                                            NO-UNDO.
 DEF VAR aux_vllanmto AS DEC                                            NO-UNDO.
+DEF VAR aux_idcobope AS INT                                            NO-UNDO.
 
 { sistema/generico/includes/b1wgen0009tt.i }
 { sistema/generico/includes/b1wgen0138tt.i }
@@ -271,6 +274,8 @@ PROCEDURE valores_entrada:
             WHEN "nriniseq" THEN aux_nriniseq = INTE(tt-param.valorCampo).
             WHEN "nrregist" THEN aux_nrregist = INTE(tt-param.valorCampo).
             WHEN "vllanmto" THEN aux_vllanmto = DEC(tt-param.valorCampo).
+
+            WHEN "idcobope" THEN aux_idcobope = INTE(tt-param.valorCampo).
 
         END CASE.
         
@@ -779,6 +784,7 @@ PROCEDURE efetua_inclusao_limite:
                                        INPUT aux_perfatcl,
                                        INPUT aux_nrperger,
                                        INPUT TRUE, /* LOG */
+                                       INPUT aux_idcobope,
                                       OUTPUT aux_nrctrlim, 
                                       OUTPUT TABLE tt-erro,
                                       OUTPUT TABLE tt-msg-confirma).
@@ -1053,6 +1059,7 @@ PROCEDURE efetua_alteracao_limite:
                                         INPUT aux_perfatcl,
                                         INPUT aux_nrperger,
                                         INPUT TRUE,       
+                                        INPUT aux_idcobope,
                                        OUTPUT TABLE tt-erro).
                                     
     IF  RETURN-VALUE = "NOK"  THEN

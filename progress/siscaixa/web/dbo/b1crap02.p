@@ -4,7 +4,7 @@
    Sistema : Caixa On-line
    Sigla   : CRED   
    Autor   : Mirtes.
-   Data    : Marco/2001                      Ultima atualizacao: 17/04/2017
+   Data    : Marco/2001                      Ultima atualizacao: 29/11/2017
 
    Dados referentes ao programa:
 
@@ -82,7 +82,10 @@
                            PRJ339 - CRM (Odirlei-AMcom)  
              
                17/07/2017 - Ajustes para nao buscar IDORGEXP para pessoa jur.
-                            PRJ339 - CRM (Odirlei-AMcom)  
+                            PRJ339 - CRM (Odirlei-AMcom)
+
+               29/11/2017 - Inclusao do valor de bloqueio em garantia. 
+                            PRJ404 - Garantia.(Odirlei-AMcom)                      
              
 ........................................................................... */
 
@@ -107,11 +110,15 @@ DEF  VAR aux_nrcpfcgc    AS CHAR                               NO-UNDO.
 DEF  VAR aux_vltotrda    AS DEC                                NO-UNDO.    
 
 DEF VAR h-b1wgen0155 AS HANDLE                                 NO-UNDO.
+DEF VAR h-b1wgen0112 AS HANDLE                                 NO-UNDO.
 DEF VAR h-b1wgen0052b AS HANDLE                                NO-UNDO.
 DEF VAR aux_vlblqjud AS DECI                                   NO-UNDO.
 DEF VAR aux_vlblqpop AS DECI                                   NO-UNDO.
 DEF VAR aux_vlresblq AS DECI                                   NO-UNDO.
 DEF VAR aux_vlrespop AS DECI                                   NO-UNDO.
+DEF VAR aux_vlblqapl_gar  AS DECI                              NO-UNDO.
+DEF VAR aux_vlblqpou_gar  AS DECI                              NO-UNDO.          
+
 
 DEF  TEMP-TABLE tt-erro  NO-UNDO     LIKE craperr. 
 DEF  TEMP-TABLE craterr  NO-UNDO     LIKE craperr.   
@@ -442,30 +449,30 @@ PROCEDURE consulta-conta:
     
     IF crapass.inpessoa = 1 THEN
     DO:
-      /* Retornar orgao expedidor */
-      IF  NOT VALID-HANDLE(h-b1wgen0052b) THEN
-          RUN sistema/generico/procedures/b1wgen0052b.p 
-              PERSISTENT SET h-b1wgen0052b.
+    /* Retornar orgao expedidor */
+    IF  NOT VALID-HANDLE(h-b1wgen0052b) THEN
+        RUN sistema/generico/procedures/b1wgen0052b.p 
+            PERSISTENT SET h-b1wgen0052b.
 
-      ASSIGN aux_cdorgexp = "".
-      RUN busca_org_expedidor IN h-b1wgen0052b 
-                         ( INPUT crapass.idorgexp,
-                          OUTPUT aux_cdorgexp,
-                          OUTPUT i-cod-erro, 
-                          OUTPUT c-desc-erro).
+    ASSIGN aux_cdorgexp = "".
+    RUN busca_org_expedidor IN h-b1wgen0052b 
+                       ( INPUT crapass.idorgexp,
+                        OUTPUT aux_cdorgexp,
+                        OUTPUT i-cod-erro, 
+                        OUTPUT c-desc-erro).
 
-      DELETE PROCEDURE h-b1wgen0052b.   
+    DELETE PROCEDURE h-b1wgen0052b.   
     
-      IF c-desc-erro <> "" THEN
-      DO:       
-          RUN cria-erro (INPUT p-cooper,
-                         INPUT p-cod-agencia,
-                         INPUT p-nro-caixa,
-                         INPUT i-cod-erro,
-                         INPUT c-desc-erro,
-                         INPUT YES).
-          LEAVE.
-      END.        
+    IF c-desc-erro <> "" THEN
+    DO:       
+        RUN cria-erro (INPUT p-cooper,
+                       INPUT p-cod-agencia,
+                       INPUT p-nro-caixa,
+                       INPUT i-cod-erro,
+                       INPUT c-desc-erro,
+                       INPUT YES).
+        LEAVE.
+    END.        
     END.        
     
     ASSIGN tt-conta.identidade = crapass.nrdocptl
@@ -734,6 +741,8 @@ PROCEDURE impressao-saldo:
     DEF INPUT  PARAM p-tipo-impressao    AS INT                       NO-UNDO.
     DEF OUTPUT PARAM p-literal-autentica AS CHAR                      NO-UNDO.
                  
+    DEF VAR aux_dscritic                 AS CHAR                      NO-UNDO.
+                 
     FIND crapcop WHERE crapcop.nmrescop = p-cooper NO-LOCK NO-ERROR.
  
     FIND crapdat WHERE crapdat.cdcooper = crapcop.cdcooper
@@ -754,7 +763,9 @@ PROCEDURE impressao-saldo:
             ASSIGN aux_vlblqjud = 0
                    aux_vlblqpop = 0
                    aux_vlresblq = 0
-                   aux_vlrespop = 0.
+                   aux_vlrespop = 0
+                   aux_vlblqapl_gar = 0
+                   aux_vlblqpou_gar = 0.
             
             RUN retorna-valor-blqjud IN h-b1wgen0155(INPUT crapcop.cdcooper,
                                                      INPUT p-nro-conta,
@@ -779,6 +790,22 @@ PROCEDURE impressao-saldo:
                    
             IF  RETURN-VALUE <> "OK" THEN
                 RETURN "NOK".
+            
+            /*** Busca Saldo Bloqueado Garantia ***/
+            IF  NOT VALID-HANDLE(h-b1wgen0112) THEN
+                RUN sistema/generico/procedures/b1wgen0112.p 
+                    PERSISTENT SET h-b1wgen0112.
+
+            RUN calcula_bloq_garantia IN h-b1wgen0112
+                                     ( INPUT crapcop.cdcooper,
+                                       INPUT p-nro-conta,                                             
+                                      OUTPUT aux_vlblqapl_gar,
+                                      OUTPUT aux_vlblqpou_gar,
+                                      OUTPUT aux_dscritic).
+                
+            IF  VALID-HANDLE(h-b1wgen0112) THEN
+                DELETE PROCEDURE h-b1wgen0112.  
+                
         END.    
     ELSE
         DO:
@@ -857,19 +884,29 @@ PROCEDURE impressao-saldo:
                                     STRING(aux_vlblqjud,"ZZZ,ZZZ,ZZZ,ZZ9.99-")
                                 ELSE
                                     " "   
-                c-literal[13] = " " 
+                c-literal[13] = IF  aux_vlblqapl_gar > 0 THEN 
+                                    "VALOR BLOQ. GARANTIA:      " +
+                                    STRING(aux_vlblqapl_gar,"ZZZ,ZZZ,ZZZ,ZZ9.99-")
+                                ELSE
+                                    " "
                 c-literal[14] = " "
-                c-literal[15] = "SALDO POUPANCA PROGRAMADA: " +
+                c-literal[15] = " "
+                c-literal[16] = "SALDO POUPANCA PROGRAMADA: " +
                                 STRING(p-valor-poupanca,"ZZZ,ZZZ,ZZZ,ZZ9.99-") 
-                c-literal[16] = IF  aux_vlblqpop > 0 THEN 
+                c-literal[17] = IF  aux_vlblqpop > 0 THEN 
                                     "VALOR BLOQ. JUDICIALMENTE: " +
                                     STRING(aux_vlblqpop,"ZZZ,ZZZ,ZZZ,ZZ9.99-")
                                 ELSE
                                     " "
-                c-literal[17] = " " 
-                c-literal[18] = " "
+                c-literal[18] = IF  aux_vlblqpou_gar > 0 THEN 
+                                    "VALOR BLOQ. GARANTIA:      " +
+                                    STRING(aux_vlblqpou_gar,"ZZZ,ZZZ,ZZZ,ZZ9.99-")
+                                ELSE
+                                    " "                    
                 c-literal[19] = " "
-                c-literal[20] = " ".
+                c-literal[20] = " "
+                c-literal[21] = " "
+                c-literal[22] = " ".
     ELSE
          ASSIGN c-literal[11] = "               DISPONIVEL: " + 
                                 STRING(p-valor-disponivel,"ZZZ,ZZZ,ZZZ,ZZ9.99-")

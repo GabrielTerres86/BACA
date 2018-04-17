@@ -11,7 +11,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps156 (pr_cdcooper IN crapcop.cdcooper%T
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Deborah/Edson
-     Data    : Abril/96.                       Ultima atualizacao: 29/11/2016
+     Data    : Abril/96.                       Ultima atualizacao: 01/12/2017
 
      Dados referentes ao programa:
 
@@ -88,6 +88,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps156 (pr_cdcooper IN crapcop.cdcooper%T
                    
                  29/11/2016 - Efetuar o resgate no dia quando passado uma conta especifica
                               Utilizado pela rotina BLQJ0002 (Andrino-Mouts)
+                              
+                 01/12/2017 - Inclusao da validação de bloqueis de aplic.
+                              PRJ404 - Garantia(Odirlei-AMcom)             
                               
   ............................................................................ */
 
@@ -727,6 +730,33 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps156 (pr_cdcooper IN crapcop.cdcooper%T
           END IF;
         END IF;   
         CLOSE cr_craptab;
+      END IF;
+      
+      -- Se não há critica ainda 
+      IF nvl(vr_cdcritic,0) NOT IN(484,828,640)  THEN
+        -- Validar resgate
+        Apli0002.pc_ver_val_bloqueio_aplica
+                        (pr_cdcooper => pr_cdcooper
+                        ,pr_cdagenci => 1
+                        ,pr_nrdcaixa => 1
+                        ,pr_cdoperad => '1'
+                        ,pr_nmdatela => 'CRPS156'
+                        ,pr_idorigem => 5
+                        ,pr_nrdconta => rw_craplrg.nrdconta
+                        ,pr_nraplica => rw_craplrg.nraplica
+                        ,pr_idseqttl => 1
+                        ,pr_cdprogra => 'CRPS156'
+                        ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                        ,pr_vlresgat => vr_vlresgat
+                        ,pr_flgerlog => 0 -- false
+                        ,pr_des_reto => vr_des_reto 
+                        ,pr_tab_erro => vr_tab_erro);
+                        
+        -- Verifica se houve retorno de erros
+        IF NVL(vr_des_reto,'OK' ) = 'NOK'  THEN
+          -- Enviaremos a critica 640 ao relatório
+          vr_cdcritic := 640; 
+        END IF; 
       END IF;
       
       /* Se nao houve erro ou é uma bloqueada vencida r ser resgatada */

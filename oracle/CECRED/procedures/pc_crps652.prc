@@ -212,6 +212,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                             
                14/11/2017 - Log de trace da exception others (Carlos)
                
+               23/11/2017 - Alterado processo de envio das Garantias ao Cyber para sinalizar quando a operação possui
+                            cobertura da operação vinculada a operação de crédito. Projeto 404 (Lombardi)
+
                09/01/2018 - #826598 Concatenação da crítica no parâmetro de retorno do crps (Carlos)
 			   
 			   01/02/2018 - Nao enviar lancamentos efetuados na tabela CRAPLCM, somente devem ser enviados lancamentos
@@ -4010,6 +4013,21 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
              AND   craptfc.idsittfc = 1
              ORDER BY craptfc.progress_recid ASC;
            rw_craptfc_next cr_craptfc_next%ROWTYPE;
+           
+           CURSOR cr_garant (pr_cdcooper IN crawepr.cdcooper%TYPE
+                            ,pr_nrdconta IN crawepr.nrdconta%TYPE
+                            ,pr_nrctremp IN crawepr.nrctremp%TYPE) IS
+             SELECT wpr.idcobope
+               FROM crawepr wpr
+              WHERE wpr.cdcooper = pr_cdcooper
+                AND wpr.nrdconta = pr_nrdconta
+                AND wpr.nrctremp = pr_nrctremp;
+           
+           vr_idcobope    crawepr.idcobope%TYPE;
+           vr_vlcobert    NUMBER := 0;
+           vr_vlroriginal NUMBER;
+           vr_nrcpfcnpj   NUMBER;
+
            --Variaveis Locais
            vr_atributo INTEGER;
            vr_craptfc  BOOLEAN;
@@ -4554,6 +4572,196 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                END IF; --rw_crapbpr.tpctrato = 2
              END IF;  --rw_crapbpr.tpctrato = 3
            END LOOP;
+           
+           OPEN cr_garant(pr_cdcooper => pr_cdcooper
+                         ,pr_nrdconta => pr_nrdconta
+                         ,pr_nrctremp => pr_nrctremp);
+           FETCH cr_garant INTO vr_idcobope;
+          
+           -- Se encontrar
+           IF cr_garant%FOUND THEN
+             CLOSE cr_garant;
+             
+             -- Acionaremos função para retornar se há valor de cobertura
+             BLOQ0001.pc_bloqueio_garantia_atualizad(pr_idcobert            => vr_idcobope
+                                                    ,pr_vlroriginal         => vr_vlroriginal
+                                                    ,pr_vlratualizado       => vr_vlcobert
+                                                    ,pr_nrcpfcnpj_cobertura => vr_nrcpfcnpj
+                                                    ,pr_dscritic            => vr_dscritic);
+             -- Se há valor de Bloqueio
+             IF vr_vlcobert > 0 THEN
+               -- Categoria Bem Fixa
+               vr_dscatcyb:= 'APLICACAO';
+               
+               -- Incrementar Contador Linha
+               pc_incrementa_linha(pr_nrolinha => 4);
+               
+               -- Montar linha
+               pc_monta_linha('1',1,4);
+               pc_monta_linha('1',2,4);
+               pc_monta_linha(gene0002.fn_mask(pr_rw_crapcyb.cdcooper,'9999'),3,4);
+               pc_monta_linha(gene0002.fn_mask(pr_rw_crapcyb.cdorigem,'9999'),7,4);
+               pc_monta_linha(gene0002.fn_mask(pr_rw_crapcyb.nrdconta,'99999999'),11,4);
+               pc_monta_linha(gene0002.fn_mask(pr_rw_crapcyb.nrctremp,'99999999'),19,4);
+               pc_monta_linha(gene0002.fn_mask(0,'zzzzzzzz9'),28,4); -- Fixo ID 0
+               pc_monta_linha(RPad(vr_dscatcyb,30,' '),37,4); -- Fixo APLICACAO
+               
+               -- Descrição
+               pc_monta_linha(RPad('APLICACAO VINCULADA',600,' '),187,4);
+               
+               -- Valor Atualizado Bem
+               pc_monta_linha(to_char(vr_vlcobert*100,'00000000000000'),827,4);
+               pc_monta_linha('REAL',842,4);
+               pc_monta_linha(RPad(' ',41,' '),846,4);
+               
+               --Gravar linha no arquivo
+               pc_escreve_xml(NULL,4);
+               
+               -- Incrementar Contador Linha
+               pc_incrementa_linha(pr_nrolinha => 4);
+               
+               --Montar Linha
+               pc_monta_linha('2',1,4);
+               pc_monta_linha('1',2,4);
+               pc_monta_linha(gene0002.fn_mask(pr_rw_crapcyb.cdcooper,'9999'),3,4);
+               pc_monta_linha(gene0002.fn_mask(pr_rw_crapcyb.cdorigem,'9999'),7,4);
+               pc_monta_linha(gene0002.fn_mask(pr_rw_crapcyb.nrdconta,'99999999'),11,4);
+               pc_monta_linha(gene0002.fn_mask(pr_rw_crapcyb.nrctremp,'99999999'),19,4);
+               pc_monta_linha(gene0002.fn_mask(0,'zzzzzzzz9'),28,4); -- Fixo ID 0
+               pc_monta_linha(RPad(vr_dscatcyb,10,' '),37,4); -- Fixo APLICACAO
+               
+               -- Codigo
+               pc_monta_linha(gene0002.fn_mask(482,'zzzzzz9'),47,4);
+               
+               -- Atributos
+               pc_monta_linha(RPad('APLICACAO VINCULADA',100,' '),54,4);
+               pc_monta_linha(RPad(' ',29,'0'),141,4);
+               pc_monta_linha(RPad(' ',31,' '),170,4);
+               
+               -- Gravar linha no arquivo
+               pc_escreve_xml(NULL,4);
+               
+               -- Se Existe associado
+               IF vr_tab_crapass.EXISTS(pr_nrdconta) then
+                 -- Mesmo CPF ou bem sem cpf
+                 IF vr_tab_crapass(pr_nrdconta).nrcpfcgc = vr_nrcpfcnpj OR vr_nrcpfcnpj IS NULL THEN
+                   
+                   --Pessoa Fisica
+                   IF vr_tab_crapass(pr_nrdconta).inpessoa = 1 THEN
+                     --Tipo Endereco
+                     vr_tpendass:= 10; /* RESIDENCIAL */
+                   ELSIF vr_tab_crapass(pr_nrdconta).inpessoa = 2 THEN
+                     vr_tpendass:= 9; /* COMERCIAL */
+                   END IF;
+                   
+                   --Endereco
+                   OPEN cr_crapenc(pr_cdcooper => pr_cdcooper
+                                  ,pr_nrdconta => pr_nrdconta
+                                  ,pr_idseqttl => 1
+                                  ,pr_tpendass => vr_tpendass);
+                   
+                   --Posicionar primeiro registro
+                   FETCH cr_crapenc INTO rw_crapenc;
+                   
+                   --Verificar se encontrou
+                   vr_crapenc:= cr_crapenc%FOUND;
+                   
+                   --Fechar Cursor
+                   CLOSE cr_crapenc;
+                   
+                 ELSE
+                   
+                   --Selecionar Associado pelo CPF
+                   OPEN cr_crapass_cpf(pr_cdcooper => pr_cdcooper
+                                      ,pr_nrcpfcgc => vr_nrcpfcnpj);
+                   
+                   --Posicionar Primeiro registro
+                   FETCH cr_crapass_cpf INTO rw_crapass_cpf;
+                   
+                   --Se encontrou
+                   IF cr_crapass_cpf%FOUND THEN
+                     --Pessoa Fisica
+                     IF rw_crapass_cpf.inpessoa = 1 THEN
+                       --Tipo Endereco
+                       vr_tpendass:= 10; /* RESIDENCIAL */
+                     ELSIF rw_crapass_cpf.inpessoa = 2 THEN
+                       vr_tpendass:= 9; /* COMERCIAL */
+                     END IF;
+                     --Endereco
+                     OPEN cr_crapenc(pr_cdcooper => rw_crapass_cpf.cdcooper
+                                    ,pr_nrdconta => rw_crapass_cpf.nrdconta
+                                    ,pr_idseqttl => 1
+                                    ,pr_tpendass => vr_tpendass);
+                     --Posicionar primeiro registro
+                     FETCH cr_crapenc INTO rw_crapenc;
+                     --Verificar se encontrouvr_crapenc:= cr_crapenc%FOUND;
+                     --Fechar Cursor
+                     CLOSE cr_crapenc;
+                   ELSE
+                     vr_crapenc := false;
+                   END IF;
+                   
+                   --Fechar Cursor
+                   CLOSE cr_crapass_cpf;
+                   
+                 END IF;
+               ELSE
+                 vr_crapenc := false;
+               END IF;
+               
+               --Incrementar Contador Linha
+               pc_incrementa_linha(pr_nrolinha => 4);
+               
+               --Montar Linha
+               pc_monta_linha('3',1,4);
+               pc_monta_linha('1',2,4);
+               pc_monta_linha(gene0002.fn_mask(pr_rw_crapcyb.cdcooper,'9999'),3,4);
+               pc_monta_linha(gene0002.fn_mask(pr_rw_crapcyb.cdorigem,'9999'),7,4);
+               pc_monta_linha(gene0002.fn_mask(pr_rw_crapcyb.nrdconta,'99999999'),11,4);
+               pc_monta_linha(gene0002.fn_mask(pr_rw_crapcyb.nrctremp,'99999999'),19,4);
+               pc_monta_linha(gene0002.fn_mask(0,'zzzzzzzz9'),28,4); -- Fixo ID 0
+               
+               --Se possuir Endereco
+               IF vr_crapenc THEN
+                 pc_monta_linha(rpad(rw_crapenc.dsendere|| ', '||rw_crapenc.nrendere,80,' '),37,4);
+                 pc_monta_linha(RPad(rw_crapenc.nmbairro,80,' '),117,4);
+                 pc_monta_linha(RPad(rw_crapenc.nmcidade,30,' '),197,4);
+                 pc_monta_linha(RPad(rw_crapenc.nrcxapst,10,' '),227,4);
+                 pc_monta_linha(RPad(rw_crapenc.cdufende,30,' '),237,4);
+                 pc_monta_linha(RPad('BRASIL',30,' '),267,4);
+               END IF;
+               
+               --Se possuir Telefone
+               IF vr_craptfc THEN
+                 pc_monta_linha(RPad(rw_craptfc.nrdddtfc||rw_craptfc.nrtelefo,25,' '),297,4);
+               ELSE
+                 pc_monta_linha(RPad(' ',25,' '),297,4);
+               END IF;
+               
+               --Selecionar Proximo Telefone
+               OPEN cr_craptfc_next(pr_cdcooper => pr_cdcooper
+                                   ,pr_nrdconta => pr_nrdconta
+                                   ,pr_idseqttl => 1
+                                   ,pr_progress_recid => nvl(rw_craptfc.progress_recid, 0));
+               FETCH cr_craptfc_next INTO rw_craptfc_next;
+               
+               --Se Encontrou
+               IF cr_craptfc_next%FOUND THEN
+                 pc_monta_linha(RPad(rw_craptfc_next.nrdddtfc||rw_craptfc_next.nrtelefo,25,' '),322,4);
+               ELSE
+                 pc_monta_linha(RPad(' ',25,' '),322,4);
+               END IF;
+               
+               --Fechar Cursor
+               CLOSE cr_craptfc_next;
+               
+               --Escrever Linha Arquivo
+               pc_escreve_xml(NULL,4);
+             END IF;
+           ELSE
+             CLOSE cr_garant;
+           END IF;
+           
          EXCEPTION
            WHEN vr_exc_erro THEN
              pr_cdcritic:= vr_cdcritic;

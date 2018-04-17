@@ -533,7 +533,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
   --  Sistema  : Procedimentos para o debito de agendamentos feitos na Internet
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Junho/2013.                   Ultima atualizacao: 08/02/2018
+  --  Data     : Junho/2013.                   Ultima atualizacao: 04/04/2018
   --
   -- Dados referentes ao programa:
   --
@@ -629,6 +629,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
   --
   --            19/03/2018 - Ajuste na pc_verifica_operacao para impedir agendamentos para data retroativa. (Pablão)
   --
+                04/04/2018 - Ajustar para aparecer a critica 'Não é possível agendar para a data de hoje. 
+                             Utilize a opção "Nesta Data".' somente quando não for aprovação de transação
+                             pendente (Lucas Ranghetti #INC0011082)
   ---------------------------------------------------------------------------------------------------------------*/
 
   /* Busca dos dados da cooperativa */
@@ -3814,7 +3817,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
    Sistema  : Procedimentos para o debito de agendamentos feitos na Internet
    Sigla    : CRED
    Autor    : Alisson C. Berrido - Amcom
-   Data     : Junho/2013.                   Ultima atualizacao: 22/01/2018
+   Data     : Junho/2013.                   Ultima atualizacao: 04/04/2018
   
   Dados referentes ao programa:
   
@@ -3891,6 +3894,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
               
               22/01/2018 - Ajuste para qdo a conta do preposto estiver sem saldo e for um operador fazendo uma 
                            transação alem da sua alçada enviar para aprovação do preposto (Tiago/Fabricio)
+                           
+              04/04/2018 - Ajustar para aparecer a critica 'Não é possível agendar para a data de hoje. 
+                           Utilize a opção "Nesta Data".' somente quando não for aprovação de transação
+                           pendente (Lucas Ranghetti #INC0011082)
   ---------------------------------------------------------------------------------------------------------------*/
   BEGIN
     DECLARE
@@ -5036,7 +5043,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
           --Montar mensagem erro
           vr_cdcritic:= 0;
           vr_dscritic:= 'Agendamento deve ser feito para uma data futura.';
-          ELSIF pr_dtmvtopg = vr_datdodia THEN -- Se for agendamento para hoje
+          ELSIF pr_dtmvtopg = vr_datdodia AND -- Se for agendamento para hoje
+                pr_assin_conjunta <> 1 THEN -- e não for transacao pendente
             --Montar mensagem erro
             vr_cdcritic:= 0;
             vr_dscritic:= 'Não é possível agendar para a data de hoje. Utilize a opção "Nesta Data".';

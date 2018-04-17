@@ -29,7 +29,7 @@
 
     Programa: b1wgen0059.p
     Autor   : Jose Luis Marchezoni (DB1)
-    Data    : Marco/2010                   Ultima atualizacao:  02/08/2017
+    Data    : Marco/2010                   Ultima atualizacao:  31/10/2017
 
     Objetivo  : Buscar os dados p/ telas de pesquisas ou zoom's
 
@@ -204,6 +204,8 @@
 							 (Adriano - P339).
 
 				15/07/2017 - Nova procedure. busca-crapass para listar os associados. (Mauro).
+
+                31/10/2017 - Passagem do tpctrato. (Jaison/Marcos Martini - PRJ404)
 
 .............................................................................*/
 
@@ -3626,6 +3628,7 @@ PROCEDURE busca-crapadt:
     DEF  INPUT PARAM par_cdcooper AS INTE                              NO-UNDO.
     DEF  INPUT PARAM par_nrdconta AS INTE                              NO-UNDO.
     DEF  INPUT PARAM par_nrctremp AS INTE                              NO-UNDO.
+    DEF  INPUT PARAM par_tpctrato AS INTE                              NO-UNDO.
     DEF  INPUT PARAM par_nrregist AS INTE                              NO-UNDO.
     DEF  INPUT PARAM par_nriniseq AS INTE                              NO-UNDO.
                                                                      
@@ -3642,7 +3645,8 @@ PROCEDURE busca-crapadt:
 
         FOR EACH crapadt WHERE crapadt.cdcooper = par_cdcooper AND
                                crapadt.nrdconta = par_nrdconta AND
-                               crapadt.nrctremp = par_nrctremp NO-LOCK:
+                               crapadt.nrctremp = par_nrctremp AND
+                               crapadt.tpctrato = par_tpctrato NO-LOCK:
 
             ASSIGN par_qtregist = par_qtregist + 1.
 

@@ -103,6 +103,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps635_i( pr_cdcooper    IN crapcop.cdcoo
       vr_dtrefere   DATE;       --> Data de referência do processo
       vr_dtrefere_aux DATE;       --> Data de referência auxiliar do processo
       vr_dtdrisco   crapris.dtdrisco%TYPE; -- Data da atualização do risco
+      vr_dttrfprj   DATE;
       
       ------------------------------- CURSORES ---------------------------------
 
@@ -141,6 +142,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps635_i( pr_cdcooper    IN crapcop.cdcoo
                 ,crapris.cdorigem
                 ,crapris.nrctremp
                 ,crapris.nrseqctr
+                ,crapris.qtdiaatr
                 ,crapris.progress_recid
         FROM    crapris 
         WHERE   crapris.cdcooper = pr_cdcooper     
@@ -218,7 +220,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps635_i( pr_cdcooper    IN crapcop.cdcoo
                                      ,pr_inpessoa IN INTEGER
                                      ,pr_innivris IN INTEGER
                                      ,pr_des_erro OUT VARCHAR2) IS
-    
+      
         -- BUSCA TODAS AS CONTAS DE UM CNPJ RAIZ
         CURSOR cr_cpfcnpj IS
           SELECT ass.nrdconta, ass.nrcpfcgc
@@ -227,9 +229,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps635_i( pr_cdcooper    IN crapcop.cdcoo
              AND ((pr_inpessoa = 1 AND ass.nrcpfcgc  = to_number(pr_cpfcnpj)) Or
                   (pr_inpessoa = 2 AND ass.nrcpfcgc >= to_number(pr_cpfcnpj||'000000') 
                                    AND ass.nrcpfcgc <= to_number(pr_cpfcnpj||'999999')) );
-
-    BEGIN
-          
+      
+      BEGIN  
+        
         -- SE PF, POPULA DIRETO O CPF COM O RISCO (não ha variacoes de cpf)
         IF pr_inpessoa = 1 THEN
            --se for maior que ao ja existente, atualiza.
@@ -330,6 +332,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps635_i( pr_cdcooper    IN crapcop.cdcoo
                  ,ris.innivris
                  ,ris.dtdrisco
                  ,ris.nrcpfcgc
+                 ,ris.qtdiaatr
                  -- CDCOOPER, DTREFERE, NRDCONTA, INNIVRIS, CDMODALI, NRCTREMP, NRSEQCTR, CDVENCTO
                  ,ris.cdmodali
                  ,ris.nrctremp
@@ -378,14 +381,20 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps635_i( pr_cdcooper    IN crapcop.cdcoo
           -- PERCORRER TODOS CONTRATOS DA RIS - COM RISCO DIFERENTE DO GRUPO  
             FOR rw_riscos_cpfcnpj IN cr_riscos_cpfcnpj( pr_nrdconta => vr_chave_assris
                                                      ,pr_innivris => vr_maxrisco) LOOP
-
-
+              vr_dttrfprj := NULL;
+              IF vr_maxrisco >= 9 THEN
+                vr_dttrfprj := PREJ0001.fn_regra_dtprevisao_prejuizo(pr_cdcooper,
+                                                                     vr_maxrisco,
+                                                                     rw_riscos_cpfcnpj.qtdiaatr,
+                                                                     pr_dtrefere);            
+              END IF;
             -- Efetuar atualização da CENTRAL RISCO cfme os valores maior risco
             BEGIN
               UPDATE crapris
                  SET innivris = vr_maxrisco
                     ,inindris = vr_maxrisco
                     ,dtdrisco = pr_dtrefere
+                    ,dttrfprj = vr_dttrfprj
                WHERE rowid = rw_riscos_cpfcnpj.rowid;
             EXCEPTION
               WHEN OTHERS THEN
@@ -510,6 +519,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps635_i( pr_cdcooper    IN crapcop.cdcoo
                  ris.cdcooper
                , ris.nrdconta
                , ris.nrctremp
+               , ris.qtdiaatr
                , ris.innivris   risco_atual
                , r_ant.innivris risco_anterior
                , ris.dtdrisco   dtdrisco_atual
@@ -518,17 +528,17 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps635_i( pr_cdcooper    IN crapcop.cdcoo
             FROM crapris ris
                , (SELECT /*+ INDEX (r CRAPRIS##CRAPRIS2) */ * -- Busca risco anterior
                     FROM crapris r
-                   WHERE r.cdcooper = pr_cdcooper
-                     AND r.dtrefere = pr_dtrefant) r_ant
-           WHERE ris.cdcooper   = pr_cdcooper
-             AND ris.dtrefere   = vr_dtrefere
+                   WHERE r.dtrefere = pr_dtrefant
+                     AND r.cdcooper = pr_cdcooper) r_ant
+           WHERE ris.dtrefere   = vr_dtrefere
+             AND ris.cdcooper   = pr_cdcooper
              AND r_ant.cdcooper = ris.cdcooper
              AND r_ant.nrdconta = ris.nrdconta
              AND r_ant.nrctremp = ris.nrctremp
              AND r_ant.cdmodali = ris.cdmodali
              AND r_ant.cdorigem = ris.cdorigem
              -- Quando o nível de risco for o mesmo e a data ainda estiver divergente
-             AND (r_ant.innivris = ris.innivris AND r_ant.dtdrisco <> ris.dtdrisco);
+             AND (r_ant.innivris = ris.innivris AND r_ant.dtdrisco <> ris.dtdrisco)  ;
 
     BEGIN
 
@@ -542,11 +552,19 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps635_i( pr_cdcooper    IN crapcop.cdcoo
 
   
           FOR rw_crapris IN cr_crapris (vr_dtrefere_aux) LOOP
-
+            vr_dttrfprj := NULL;
+            IF rw_crapris.risco_atual >= 9 THEN
+              vr_dttrfprj := PREJ0001.fn_regra_dtprevisao_prejuizo(pr_cdcooper,
+                                                                   rw_crapris.risco_atual,
+                                                                   rw_crapris.qtdiaatr,
+                                                                   rw_crapris.dtdrisco_anterior);            
+            END IF;
+            --
             -- atualiza data dos riscos que não sofreram alteração de risco
             BEGIN
               UPDATE crapris r
                  SET r.dtdrisco = rw_crapris.dtdrisco_anterior
+                    ,r.dttrfprj = vr_dttrfprj
                WHERE r.rowid    = rw_crapris.rowid;
             EXCEPTION
               WHEN OTHERS THEN
@@ -689,12 +707,20 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps635_i( pr_cdcooper    IN crapcop.cdcoo
             -- Fechar o cursor
             CLOSE cr_crapris_last;
             
+            vr_dttrfprj := NULL;
+            IF rw_crapgrp.innivrge >= 9 THEN
+              vr_dttrfprj := PREJ0001.fn_regra_dtprevisao_prejuizo(pr_cdcooper,
+                                                                   rw_crapgrp.innivrge,
+                                                                   rw_crapris.qtdiaatr,
+                                                                   vr_dtdrisco);            
+            END IF;            
             
             -- atualiza controle de riscos.
             BEGIN
               UPDATE  crapris
               SET     crapris.innivris = rw_crapgrp.innivrge,
-                      crapris.dtdrisco = vr_dtdrisco
+                      crapris.dtdrisco = vr_dtdrisco,
+                      crapris.dttrfprj = vr_dttrfprj
               WHERE   cdcooper         = rw_crapris.cdcooper       
               AND     nrdconta         = rw_crapris.nrdconta      
               AND     dtrefere         = rw_crapris.dtrefere      
