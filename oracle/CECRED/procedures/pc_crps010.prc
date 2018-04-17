@@ -2952,13 +2952,10 @@ BEGIN
       END LOOP;
 
       -- Carregar tabela de memoria com motivos de demissao
-      FOR rw_craptab IN cr_craptab_motivo (pr_cdcooper => pr_cdcooper
-                                          ,pr_nmsistem => 'CRED'
-                                          ,pr_tptabela => 'GENERI'
-                                          ,pr_cdempres => 0
-                                          ,pr_cdacesso => 'MOTIVODEMI') LOOP
-         -- Atribuir valor da provisao para a tabela de memoria
-         vr_tab_craptab_motivo(rw_craptab.tpregist):= rw_craptab.dstextab;
+      FOR rw_motivo IN (SELECT A.CDMOTIVO, A.DSMOTIVO
+                          FROM TBCOTAS_MOTIVO_DESLIGAMENTO A) LOOP
+         -- Atribuir valor de motivo para a tabela de memoria
+         vr_tab_craptab_motivo(rw_motivo.CDMOTIVO):= rw_motivo.DSMOTIVO;
       END LOOP;
 
       -- Carregar tabela de memoria com limites dos associados

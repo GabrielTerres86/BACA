@@ -768,7 +768,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
   --             21/02/2017 - Ajuste para tratar os valores a serem enviados para
   --                          geração do relatório
   --                          (Adriano - SD 614408).
-  --                         
+  --
   --             17/04/2017 - Buscar a nacionalidade com CDNACION. (Jaison/Andrino)
   --
   --             25/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
@@ -783,7 +783,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
   -- 
   --  			 25/07/2017 - Inclusão de rotinas para atendar a nova opção/botão desligamento (Mateus - Mouts M364)
   -- 
-  --             04/08/2017 - Movido a rotina pc_busca_cnae para a TELA_CADCNA (Adriano).	
+  --             04/08/2017 - Movido a rotina pc_busca_cnae para a TELA_CADCNA (Adriano).
   --
   --             11/08/2017 - Incluído o número do cpf ou cnpj na tabela crapdoc.
   --                          Procedure pc_duplica_conta. Projeto 339 - CRM. (Lombardi)	
@@ -2113,18 +2113,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
         IF cr_tbcadast_pessoa%FOUND THEN          
           
           CLOSE cr_tbcadast_pessoa;          
-          
-          -- Loop sobre as versoes do questionario de microcredito
-          FOR rw_crapass IN cr_crapass LOOP
-            
-            gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Dados'   , pr_posicao => 0          , pr_tag_nova => 'inf', pr_tag_cont => NULL, pr_des_erro => vr_dscritic);
-            gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'nrdconta', pr_tag_cont => gene0002.fn_mask_conta(rw_crapass.nrdconta), pr_des_erro => vr_dscritic);
-            gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'dtadmiss', pr_tag_cont => to_char(rw_crapass.dtadmiss,'DD/MM/YYYY'), pr_des_erro => vr_dscritic);
 
-            vr_contador := vr_contador + 1;
+      -- Loop sobre as versoes do questionario de microcredito
+      FOR rw_crapass IN cr_crapass LOOP
+
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Dados'   , pr_posicao => 0          , pr_tag_nova => 'inf', pr_tag_cont => NULL, pr_des_erro => vr_dscritic);
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'nrdconta', pr_tag_cont => gene0002.fn_mask_conta(rw_crapass.nrdconta), pr_des_erro => vr_dscritic);
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'dtadmiss', pr_tag_cont => to_char(rw_crapass.dtadmiss,'DD/MM/YYYY'), pr_des_erro => vr_dscritic);
+
+        vr_contador := vr_contador + 1;
             
-          END LOOP; 
-          
+      END LOOP;
+
           IF vr_contador > 0 THEN
             vr_flgdpcnt := 2; --Duplicar conta
           ELSE
@@ -2205,7 +2205,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
         
         gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Dados'   , pr_posicao => 0          , pr_tag_nova => 'flgopcao', pr_tag_cont => NULL, pr_des_erro => vr_dscritic);
         gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'flgopcao', pr_posicao => 0, pr_tag_nova => 'flgdpcnt', pr_tag_cont => vr_flgdpcnt, pr_des_erro => vr_dscritic);
-      
+
     EXCEPTION
       WHEN vr_exc_saida THEN
 
@@ -11080,13 +11080,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
                              ,pr_dsdadant => to_char(rw_crapass.dtdemiss,'DD/MM/RRRR')
                              ,pr_dsdadatu => to_char(nvl(vr_dtdemiss, rw_crapdat.dtmvtolt),'DD/MM/RRRR') );      
 
-    -- Buscar configuração na tabela
-    vr_dstextab := TABE0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
-                                             ,pr_nmsistem => 'CRED'
-                                             ,pr_tptabela => 'GENERI'
-                                             ,pr_cdempres => 0
-                                             ,pr_cdacesso => 'MOTIVODEMI'
-                                             ,pr_tpregist => pr_mtdemiss);
+    -- Buscar motivo demissão
+    CADA0001.pc_busca_motivo_demissao(pr_cdcooper => pr_cdcooper,
+                                      pr_cdmotdem => pr_mtdemiss,
+                                      pr_dsmotdem => vr_dstextab,
+                                      pr_cdcritic => vr_cdcritic,
+                                      pr_des_erro => vr_dscritic);                                             
+
+    --Se não achou motivo
+    IF vr_cdcritic = 848 THEN
+      --Retornar que nao encontrou
+      vr_dsmotdem:= 'MOTIVO NAO CADASTRADO';
+    ELSIF vr_dscritic IS NULL THEN
+      --Retornar o motivo encontrado
+      vr_dsmotdem:= pr_mtdemiss || ' - ' || vr_dstextab;
+    ELSE
+      vr_dsmotdem:= 'ERRO NA BUSCA DE MOTIVO';
+    END IF; 
 
     --Se nao encontrou registro
     IF TRIM(vr_dstextab) IS NULL THEN

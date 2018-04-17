@@ -1371,14 +1371,24 @@ PROCEDURE Pesquisa_Associado PRIVATE :
                 PERSISTENT SET h-b1wgen0060.
 
         /* Motivo de demissao */
-        DYNAMIC-FUNCTION("BuscaMotivoDemi" IN h-b1wgen0060,
-                          INPUT tt-crapass.cdcooper,
-                          INPUT tt-crapass.cdmotdem,
-                         OUTPUT tt-crapass.dsmotdem,
-                         OUTPUT par_dscritic).
+                /* Efetuar a chamada a rotina Oracle */ 
+                RUN STORED-PROCEDURE prc_busca_motivo_demissao
+                aux_handproc = PROC-HANDLE NO-ERROR 
+                  ( INPUT tt-crapass.cdcooper      /* pr_cdcooper --> Codigo da cooperativa */
+                   ,INPUT tt-crapass.cdmotdem      /* pr_cdmotdem --> Código Motivo Demissao */
+                   /* --------- OUT --------- */
+                   ,OUTPUT ""           /* pr_dsmotdem --> Descriçao Motivo Demissao */
+                   ,OUTPUT 0            /* pr_cdcritic --> Codigo da critica)   */
+                   ,OUTPUT "" ).        /* pr_dscritic --> Descriçao da critica).  */
+                                        
+                /* Fechar o procedimento para buscarmos o resultado */ 
+                CLOSE STORED-PROC prc_busca_motivo_demissao
+                aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+                            
+                { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
 
-        IF  tt-crapass.dsmotdem = "NAO CADASTRADO" THEN
-            ASSIGN tt-crapass.dsmotdem = "".
+                ASSIGN tt-crapass.dsmotdem = prc_busca_motivo_demissao.pr_dsmotdem
+                                 WHEN prc_busca_motivo_demissao.pr_dsmotdem <> ?.                          
 
         /* PAC */
         DYNAMIC-FUNCTION("BuscaPac" IN h-b1wgen0060,
