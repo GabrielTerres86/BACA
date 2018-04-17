@@ -72,7 +72,7 @@
 						//
 						if (isset($qtregist) and $qtregist == 0) $nriniseq = 0;
 						
-						// Se a paginaÃ§Ã£o nÃ£o estÃ¡ na primeira, exibe botÃ£o voltar
+						// Se a paginação não está na primeira, exibe botão voltar
 						if ($nriniseq > 1) { 
 							?> <a class='paginacaoAnt'><<< Anterior</a> <? 
 						} else {
@@ -89,7 +89,7 @@
 				</td>
 				<td>
 					<?
-						// Se a paginaÃ§Ã£o nÃ£o estÃ¡ na &uacute;ltima pÃ¡gina, exibe botÃ£o proximo
+						// Se a paginação não está na última página, exibe botão proximo
 						if ($qtregist > ($nriniseq + $nrregist - 1)) {
 							?> <a class='paginacaoProx'>Pr&oacute;ximo >>></a> <?
 						} else {
@@ -154,7 +154,8 @@
 		<a href="#" class="botao" onclick="exportarConsultaPDF(); return false;">Exportar PDF</a>
 		<a href="#" class="botao" onclick="exportarConsultaCSV(); return false;">Exportar CSV</a>
 		<a href="#" class="botao" onclick="buscaExportar(); return false;">Devolver</a>
-		<a href="#" class="botao" onclick="geraCartaAnuencia(); return false;">Extornar</a>
+		<a href="#" class="botao" onclick="geraCartaAnuencia(); return false;">Estornar</a>
+		<a href="#" class="botao" onclick="abrirModalConciliacao(); return false;">Conciliar</a>
 	<?php
 	}
 	?>

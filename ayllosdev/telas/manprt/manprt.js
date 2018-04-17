@@ -1,11 +1,11 @@
 /*!
  * FONTE        : manprt.js
- * CRIAÇÃO      : Helinton Steffens (DB1) 
- * DATA CRIAÇÃO : 13/03/2018
- * OBJETIVO     : Biblioteca de funções da tela MANPRT
+ * CRIAï¿½ï¿½O      : Helinton Steffens (DB1) 
+ * DATA CRIAï¿½ï¿½O : 13/03/2018
+ * OBJETIVO     : Biblioteca de funï¿½ï¿½es da tela MANPRT
  */
 
-//Formulários e Tabela
+//Formulï¿½rios e Tabela
 var frmCab = 'frmCab';
 var frmOpcao = 'frmOpcao';
 var frmTabela = 'frmTabela';
@@ -215,7 +215,7 @@ function formataCabecalho() {
     // opcao
     cCddopcao.unbind('keydown').bind('keydown', function (e) {
         if (divError.css('display') == 'block') { return false; }
-        // Se é a tecla ENTER, 
+        // Se ï¿½ a tecla ENTER, 
         if (e.keyCode == 13) {
             btnOK1.click();
             return false;
@@ -231,7 +231,7 @@ function formataCabecalho() {
 function buscaOpcao() {
 
     showMsgAguardo('Aguarde, buscando dados ...');
-    // Executa script de confirmações através de ajax
+    // Executa script de confirmaï¿½ï¿½es atravï¿½s de ajax
     $.ajax({
         type: 'POST',
         dataType: 'html',
@@ -241,7 +241,7 @@ function buscaOpcao() {
         },
         error: function (objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError('error', 'N&atildeo foi poss&iacute­vel concluir a requisi&ccedil&atildeo.', 'Alerta - Ayllos', "unblockBackground()");
+            showError('error', 'N&atildeo foi poss&iacuteï¿½vel concluir a requisi&ccedil&atildeo.', 'Alerta - Ayllos', "unblockBackground()");
         },
         success: function (response) {
             $('#divTela').html(response);
@@ -497,6 +497,34 @@ function controlaOpcao() {
     return false;
 }
 
+function formataTabelaConciliacao() {
+    var tabela = $('table', '#divRotina .divRegistros');
+
+    var arrayLargura = new Array();
+    arrayLargura[0] = '15px';
+    arrayLargura[1] = '230px';
+    arrayLargura[2] = '120px';
+    arrayLargura[3] = '80px';
+    arrayLargura[4] = '80px';
+    arrayLargura[5] = '65px';
+    arrayLargura[6] = '80px';
+    arrayLargura[7] = '80px';
+
+    var arrayAlinha = new Array();
+    arrayAlinha[0] = 'center';
+    arrayAlinha[1] = 'left';
+    arrayAlinha[2] = 'left';
+    arrayAlinha[3] = 'center';
+    arrayAlinha[4] = 'center';
+    arrayAlinha[5] = 'center';
+    arrayAlinha[6] = 'center';
+    arrayAlinha[7] = 'right';
+
+    tabela.formataTabela([], arrayLargura, arrayAlinha, '');
+
+    return false;
+}
+
 function formataTabelaTeds() {
 
     var divRegistro = $('div.divRegistros', '#' + frmTabela);
@@ -573,7 +601,7 @@ function formataTabelaTeds() {
     $('li:eq(2)', linha5).addClass('txtNormalBold').css({ 'width': '14%', 'text-align': 'right' });
     $('li:eq(3)', linha5).addClass('txtNormal');
 
-    // seleciona o registro que é clicado
+    // seleciona o registro que ï¿½ clicado
     $('table > tbody > tr', divRegistro).die("click").live("click", function () {
         selecionaTabela($(this));
     });
@@ -672,7 +700,7 @@ function formataTabelaConciliacoes() {
     $('li:eq(2)', linha6).addClass('txtNormalBold').css({ 'width': '15%', 'text-align': 'right' });
     $('li:eq(3)', linha6).addClass('txtNormal');
 
-    // seleciona o registro que é clicado
+    // seleciona o registro que ï¿½ clicado
     $('table > tbody > tr', divRegistro).die("click").live("click", function () {
         selecionaTabela($(this));
     });
@@ -794,18 +822,101 @@ function exportarConsultaPDF(){
 	carregaImpressaoAyllos("frmExportarPDF", action);
 }
 
-function formatFormOpcaoR(form){
-    var inidtpro = $('#inidtpro', '#' + frmOpcao).val();
-    var fimdtpro = $('#fimdtpro', '#' + frmOpcao).val();
-    var cdcooper = $('#nmrescop', '#' + frmOpcao).val();
-    var nrdconta = $('#nrdconta', '#' + frmOpcao).val();
-    var cduflogr = $('#cduflogr', '#' + frmOpcao).val();
-    var dscartor = $('#dscartor', '#' + frmOpcao).val();
+function abrirModalConciliacao() {
+    showMsgAguardo('Aguarde, obtendo dados ...');	
 
-    $('#inidtpro', form).val(inidtpro);
-    $('#fimdtpro', form).val(fimdtpro);
-    $('#cdcooper', form).val(cdcooper);
-    $('#nrdconta', form).val(nrdconta.replace(/[^\w\s]/gi, ''));
-    $('#cduflogr', form).val(cduflogr);
-    $('#dscartor', form).val(dscartor);
+    var dtinicio = $('#dtrecebimento', '.complemento').html();
+    var vlrfinal = $('#vlted', '.complemento').html();
+    var cartorio = $('#dscartorio', '.complemento').html();
+
+    $.ajax({
+        type: 'POST',
+        dataType: 'html',
+        url: UrlSite + 'telas/manprt/modal_conciliacao.php',
+        data: {
+            dtinicio: dtinicio,
+            vlrfinal: vlrfinal,
+            cartorio: cartorio,
+            redirect: 'script_ajax'
+        },
+        error: function (objAjax, responseError, objExcept) {
+            hideMsgAguardo();
+            showError('error', 'N&atilde;o foi poss&iacute;ï¿½vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'estadoInicial();');
+        },
+        success: function (response) {
+            hideMsgAguardo();
+            $('#divRotina').html(response);
+            exibeRotina($('#divRotina'));
+            formataTabelaConciliacao();
+            verificaCheckbox();
+            $('#divRotina').css('left','50%');
+            $('#divRotina').css('margin-left','-'+(parseInt($('#divRotina table').css('width'))/2)+'px');
+        }
+    });
+
+}
+
+function verificaCheckbox(elem, valorCheckbox) {
+    var valorInput = $('#vltitulos').val() ? converteMoedaFloat($('#vltitulos').val()) : 0;
+    var totalConc = 0;
+
+    totalConc = $(elem).is(':checked') ? (valorInput + valorCheckbox) : (valorInput - valorCheckbox);
+    $('#vltitulos').val(number_format(totalConc, 2, ',', '.'));
+
+    if (!totalConc || totalConc != converteMoedaFloat($('#vltotal').val())) {
+        // habilitaBotao('btModalConciliar', 'D'); // uncomment
+        habilitaBotao('btModalConciliar', ''); //comment
+    } else {
+        habilitaBotao('btModalConciliar', '');
+    }
+}
+
+function validaConciliacao() {
+    if (converteMoedaFloat($('#vltitulos').val()) < converteMoedaFloat($('#vltotal').val())) {
+        var msg = 'O somat&oacute;rio dos valores dos t&iacute;tulos &eacute; inferior ao da TED. A concilia&ccedil;&atilde;o ser&aacute; realizada de forma parcial.<br>Confirma a concilia&ccedil;&atilde;o?';
+        showConfirmacao(msg, 'MANPRT', "pedeSenhaCoordenador(2, 'alert(\"oi\");fechaRotina($(\"#divRotina\"));', 'divRotina')", 'voltaDiv();', 'sim.gif', 'nao.gif');
+    } else {
+        showConfirmacao('Confirma a concilia&ccedil;&atilde;o?', 'MANPRT', "pedeSenhaCoordenador(2, 'alert(\"oi\");fechaRotina($(\"#divRotina\"));', 'divRotina')", 'voltaDiv();', 'sim.gif', 'nao.gif');
+    }
+}
+
+function habilitaBotao(botao, opcao) {
+    if (opcao == 'D') {
+        // Desabilitar
+        $("#" + botao).prop("disabled",true).addClass("botaoDesativado").attr("onClick","return false;");
+    } else {
+        // Habilitar
+        $("#" + botao).prop("disabled",false).removeClass("botaoDesativado").attr("onClick","validaConciliacao()");
+    }
+}
+
+function filtraConciliacao(elem) {
+    showMsgAguardo('Aguarde, obtendo dados ...');
+
+    var dtinicio = $('#dtinicio').length && $('#dtinicio').is(':checked') ? $('#dtinicio').val() : '';
+    var vlrfinal = $('#vlrfinal').length && $('#vlrfinal').is(':checked') ? $('#vlrfinal').val() : '';
+    var cartorio = $('#cartorio').length && $('#cartorio').is(':checked') ? $('#cartorio').val() : '';
+
+    $.ajax({
+        type: 'POST',
+        dataType: 'html',
+        url: UrlSite + 'telas/manprt/tabela_conciliacao.php',
+        data: {
+            dtinicio: dtinicio,
+            vlrfinal: vlrfinal,
+            cartorio: cartorio,
+            redirect: 'script_ajax'
+        },
+        error: function (objAjax, responseError, objExcept) {
+            hideMsgAguardo();
+            showError('error', 'N&atilde;o foi poss&iacute;ï¿½vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'estadoInicial();');
+        },
+        success: function (response) {
+            hideMsgAguardo();
+            $('.tituloRegistros', '#divRotina').remove();
+            $('.tdConteudoTela .divRegistros', '#divRotina').html(response);
+            formataTabelaConciliacao();
+            verificaCheckbox();
+        }
+    });
 }
