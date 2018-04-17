@@ -768,7 +768,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
   --             21/02/2017 - Ajuste para tratar os valores a serem enviados para
   --                          geração do relatório
   --                          (Adriano - SD 614408).
-  --                         
+  --
   --             17/04/2017 - Buscar a nacionalidade com CDNACION. (Jaison/Andrino)
   --
   --             25/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
@@ -783,7 +783,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
   -- 
   --  			 25/07/2017 - Inclusão de rotinas para atendar a nova opção/botão desligamento (Mateus - Mouts M364)
   -- 
-  --             04/08/2017 - Movido a rotina pc_busca_cnae para a TELA_CADCNA (Adriano).	
+  --             04/08/2017 - Movido a rotina pc_busca_cnae para a TELA_CADCNA (Adriano).
   --
   --             11/08/2017 - Incluído o número do cpf ou cnpj na tabela crapdoc.
   --                          Procedure pc_duplica_conta. Projeto 339 - CRM. (Lombardi)	
@@ -2115,18 +2115,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
         IF cr_tbcadast_pessoa%FOUND THEN          
           
           CLOSE cr_tbcadast_pessoa;          
-          
-          -- Loop sobre as versoes do questionario de microcredito
-          FOR rw_crapass IN cr_crapass LOOP
-            
-            gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Dados'   , pr_posicao => 0          , pr_tag_nova => 'inf', pr_tag_cont => NULL, pr_des_erro => vr_dscritic);
-            gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'nrdconta', pr_tag_cont => gene0002.fn_mask_conta(rw_crapass.nrdconta), pr_des_erro => vr_dscritic);
-            gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'dtadmiss', pr_tag_cont => to_char(rw_crapass.dtadmiss,'DD/MM/YYYY'), pr_des_erro => vr_dscritic);
 
-            vr_contador := vr_contador + 1;
+      -- Loop sobre as versoes do questionario de microcredito
+      FOR rw_crapass IN cr_crapass LOOP
+
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Dados'   , pr_posicao => 0          , pr_tag_nova => 'inf', pr_tag_cont => NULL, pr_des_erro => vr_dscritic);
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'nrdconta', pr_tag_cont => gene0002.fn_mask_conta(rw_crapass.nrdconta), pr_des_erro => vr_dscritic);
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'dtadmiss', pr_tag_cont => to_char(rw_crapass.dtadmiss,'DD/MM/YYYY'), pr_des_erro => vr_dscritic);
+
+        vr_contador := vr_contador + 1;
             
-          END LOOP; 
-          
+      END LOOP;
+
           IF vr_contador > 0 THEN
             vr_flgdpcnt := 2; --Duplicar conta
           ELSE
@@ -2207,7 +2207,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
         
         gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Dados'   , pr_posicao => 0          , pr_tag_nova => 'flgopcao', pr_tag_cont => NULL, pr_des_erro => vr_dscritic);
         gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'flgopcao', pr_posicao => 0, pr_tag_nova => 'flgdpcnt', pr_tag_cont => vr_flgdpcnt, pr_des_erro => vr_dscritic);
-      
+
     EXCEPTION
       WHEN vr_exc_saida THEN
 
@@ -9921,7 +9921,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
        AND tbcd.nrdconta = pr_nrdconta
        AND tbcd.tpdevolucao IN (1,2);
        rw_tbcotas_devolucao cr_tbcotas_devolucao%ROWTYPE;
-       
+    --
     --Variaveis locais
     vr_cdoperad VARCHAR2(100);
     vr_cdcooper NUMBER;
@@ -9960,7 +9960,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
       RAISE vr_exc_saida;
     END IF;
         
-    OPEN cr_tbcotas_devolucao(pr_cdcooper => vr_cdcooper
+/*    OPEN cr_tbcotas_devolucao(pr_cdcooper => vr_cdcooper
                              ,pr_nrdconta => pr_nrdconta);
                    
     FETCH cr_tbcotas_devolucao INTO vr_vldcotas;
@@ -9980,7 +9980,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
       
       CLOSE cr_crapcot;
     
-    END IF;
+    END IF;*/
+    --
+    vr_vldcotas := 0;
+    FOR rw_crapcot IN cr_crapcot(vr_cdcooper
+                                ,pr_nrdconta )LOOP
+      vr_vldcotas := rw_crapcot.vldcotas;
+    END LOOP;      
     
     pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
     gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Root', pr_posicao => 0, pr_tag_nova => 'cotas', pr_tag_cont => null, pr_des_erro => vr_dscritic);
@@ -10391,13 +10397,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
     
     CLOSE cr_crapass;
     
-    IF nvl(pr_vldcotas,0) = 0 THEN
+/*    IF nvl(pr_vldcotas,0) = 0 THEN
       
       vr_dscritic := 'Valor de cotas não informado.';
       pr_nmdcampo := 'vldcotas';
       RAISE vr_exc_saida;
     
-    END IF;
+    END IF;*/
             
     --Processo de demissão BACEN       
     IF rw_crapass.cdsitdct = 8 THEN
@@ -10425,6 +10431,50 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
         pr_nmdcampo := 'vldcotas';
         RAISE vr_exc_saida;
       
+      END IF;  
+      -- 
+      -- RMM - Correções da melhoria M364
+      -- Busca o valor de cotas do associado
+      OPEN cr_crapcot(pr_cdcooper => pr_cdcooper
+                     ,pr_nrdconta => pr_nrdconta);
+      
+      FETCH cr_crapcot INTO rw_crapcot;
+      
+      -- Se nao encontrar o valor das cotas, encerra o programa com erro
+      IF cr_crapcot%NOTFOUND THEN
+        
+        CLOSE cr_crapcot;
+        vr_dscritic := 'Valor de cotas não encontrado.';
+        pr_nmdcampo := 'nrdconta';
+        RAISE vr_exc_saida;
+        
+      END IF;
+      
+      CLOSE cr_crapcot;
+      IF NVL(rw_crapcot.vldcotas,0) > 0 THEN
+        IF nvl(pr_vldcotas,0) > rw_crapcot.vldcotas THEN
+          
+          vr_dscritic := '(1) Valor de devolução de cotas maior que o valor de cotas disponível.';
+          pr_nmdcampo := 'vldcotas';
+          RAISE vr_exc_saida;
+      
+        END IF;  
+        
+        vr_vldcotas := pr_vldcotas;
+        
+        BEGIN
+          --Atualiza o valor de cotas do associado                        
+          UPDATE crapcot
+             SET vldcotas = vldcotas - pr_vldcotas
+           WHERE cdcooper = pr_cdcooper
+             AND nrdconta = pr_nrdconta
+           RETURNING crapcot.vldcotas INTO vr_vldcotas;
+              
+        EXCEPTION
+          WHEN OTHERS THEN
+            vr_dscritic := '(1) Erro ao atualizar a tabela crapcot.' ||SQLERRM;
+            RAISE vr_exc_saida;
+        END;      
       END IF;  
     
     ELSE
@@ -10495,7 +10545,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
             
       EXCEPTION
         WHEN OTHERS THEN
-          vr_dscritic := 'Erro ao atualizar a tabela crapcot.' ||SQLERRM;
+          vr_dscritic := '(2)Erro ao atualizar a tabela crapcot.' ||SQLERRM;
           RAISE vr_exc_saida;
       END; 
             
@@ -10553,7 +10603,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
     
     --Devolução total        
     IF pr_formadev = 1 THEN
-       
+      IF pr_vldcotas > 0 THEN   
       --Em processo de demissão BACEN
       IF rw_crapass.cdsitdct = 8 THEN
                
@@ -10898,7 +10948,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
        
        
       END IF;             
-                        
+      END IF;                    
     END IF;
          
     
@@ -13532,7 +13582,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
         gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Dados' , pr_posicao => 0          , pr_tag_nova => 'inf', pr_tag_cont => NULL, pr_des_erro => vr_dscritic);
         gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'cdcooper', pr_tag_cont => rw_contas.cdcooper, pr_des_erro => vr_dscritic);
         gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'nrdconta', pr_tag_cont => rw_contas.nrdconta, pr_des_erro => vr_dscritic);
-        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'vlcapital', pr_tag_cont => to_char(rw_contas.vlcapital,'fm999g999g990d00'), pr_des_erro => vr_dscritic);
+        gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'vlcapital', pr_tag_cont => rw_contas.vlcapital/*to_char(rw_contas.vlcapital,'fm999g999g990d00')*/, pr_des_erro => vr_dscritic);
         gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'nmprimtl', pr_tag_cont => rw_contas.nmprimtl, pr_des_erro => vr_dscritic);
         gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'dscdevolucao', pr_tag_cont => rw_contas.dscdevolucao, pr_des_erro => vr_dscritic);
         gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'tpdevolucao', pr_tag_cont => rw_contas.tpdevolucao, pr_des_erro => vr_dscritic);
