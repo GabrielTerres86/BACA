@@ -43,6 +43,14 @@
                20/06/2016 - Adicionado validacao para nao permitir o recebimento 
                             de cheques de bancos que nao participam da COMPE
                             (Douglas - Chamado 417655)
+                            
+               27/07/2016 - Alterado validacao para nao permitir o recebimento 
+                            de cheques de bancos que nao participam da COMPE
+                            Utilizar apenas BANCO e FLAG ativo
+                            (Douglas - Chamado 417655)
+
+               16/03/2018 - Substituida verificacao "cdtipcta = 6,7" pela
+                            modalidade do tipo de conta igual a 3. PRJ366 (Lombardi).
 ............................................................................. */
 
 /*--------------------------------------------------------------------------*/
@@ -239,6 +247,9 @@ PROCEDURE valida-conta:
     DEF OUTPUT PARAM p-poupanca             AS LOG  NO-UNDO.
        
     DEF VAR h-b1wgen0001 AS HANDLE                                    NO-UNDO.
+    DEF VAR aux_cdmodali AS INTE                    NO-UNDO.
+    DEF VAR aux_des_erro AS CHAR                    NO-UNDO.
+    DEF VAR aux_dscritic AS CHAR                    NO-UNDO.
     
     FIND crapcop WHERE crapcop.nmrescop = p-cooper NO-LOCK NO-ERROR.
 
@@ -381,8 +392,46 @@ PROCEDURE valida-conta:
                 aux_nrdconta          = aux_nrtrfcta.
 
     ASSIGN p-nome-titular = crapass.nmprimtl.
-    IF   crapass.cdtipcta = 6   OR
-         crapass.cdtipcta = 7   THEN /* Conta tipo Poupanca */
+    
+    
+    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+    RUN STORED-PROCEDURE pc_busca_modalidade_tipo
+    aux_handproc = PROC-HANDLE NO-ERROR (INPUT crapass.inpessoa, /* Tipo de pessoa */
+                                         INPUT crapass.cdtipcta, /* Tipo de conta */
+                                        OUTPUT 0,                /* Modalidade */
+                                        OUTPUT "",               /* Flag Erro */
+                                        OUTPUT "").              /* Descriçao da crítica */
+
+    CLOSE STORED-PROC pc_busca_modalidade_tipo
+          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+    ASSIGN aux_cdmodali = 0
+           aux_des_erro = ""
+           aux_dscritic = ""
+           aux_cdmodali = pc_busca_modalidade_tipo.pr_cdmodalidade_tipo 
+                          WHEN pc_busca_modalidade_tipo.pr_cdmodalidade_tipo <> ?
+           aux_des_erro = pc_busca_modalidade_tipo.pr_des_erro 
+                          WHEN pc_busca_modalidade_tipo.pr_des_erro <> ?
+           aux_dscritic = pc_busca_modalidade_tipo.pr_dscritic
+                          WHEN pc_busca_modalidade_tipo.pr_dscritic <> ?.
+    
+    IF aux_des_erro = "NOK"  THEN
+        DO:
+            ASSIGN i-cod-erro  = 0
+                   c-desc-erro = aux_dscritic.
+            RUN cria-erro (INPUT p-cooper,
+                           INPUT p-cod-agencia,
+                           INPUT p-nro-caixa,
+                           INPUT i-cod-erro,
+                           INPUT c-desc-erro,
+                           INPUT YES).
+            RETURN "NOK".
+        END.
+    
+    IF   aux_cdmodali = 3 THEN /* Conta tipo Poupanca */
          ASSIGN p-poupanca = YES.
 
     IF   CAN-DO("3",STRING(crapass.cdsitdtl))   THEN
@@ -705,16 +754,16 @@ PROCEDURE valida-codigo-cheque:
            por isso rejeitamos o cheque */
         IF crapagb.cdsitagb = "N" THEN
         DO:
-            ASSIGN i-cod-erro  = 956
-                   c-desc-erro = " ".           
-            RUN cria-erro (INPUT p-cooper,
-                           INPUT p-cod-agencia,
-                           INPUT p-nro-caixa,
-                           INPUT i-cod-erro,
-                           INPUT c-desc-erro,
-                           INPUT YES).
-            RETURN "NOK".
-        END.
+        ASSIGN i-cod-erro  = 956
+               c-desc-erro = " ".           
+        RUN cria-erro (INPUT p-cooper,
+                       INPUT p-cod-agencia,
+                       INPUT p-nro-caixa,
+                       INPUT i-cod-erro,
+                       INPUT c-desc-erro,
+                       INPUT YES).
+        RETURN "NOK".
+    END.
     END.
          
     ASSIGN  p-cdcmpchq = INT(SUBSTR(c-cmc-7,11,03)) NO-ERROR.
@@ -883,16 +932,16 @@ PROCEDURE valida-deposito-com-captura:
            por isso rejeitamos o cheque */
         IF crapagb.cdsitagb = "N" THEN
         DO:
-            ASSIGN i-cod-erro  = 956
-                   c-desc-erro = " ".           
-            RUN cria-erro (INPUT p-cooper,
-                           INPUT p-cod-agencia,
-                           INPUT p-nro-caixa,
-                           INPUT i-cod-erro,
-                           INPUT c-desc-erro,
-                           INPUT YES).
-            RETURN "NOK".
-        END.
+        ASSIGN i-cod-erro  = 956
+               c-desc-erro = " ".           
+        RUN cria-erro (INPUT p-cooper,
+                       INPUT p-cod-agencia,
+                       INPUT p-nro-caixa,
+                       INPUT i-cod-erro,
+                       INPUT c-desc-erro,
+                       INPUT YES).
+        RETURN "NOK".
+    END.
     END.
 
     ASSIGN i-nro-lote = 30000 + p-nro-caixa.

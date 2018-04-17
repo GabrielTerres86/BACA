@@ -91,12 +91,16 @@
 			   24/04/2017 - Removido o form f_conta pois nao eh mais utilizado
 			               (Adriano - P339).
 
+               08/03/2018 - Declaraçao das variáveis "shr_cdtipcta" e "shr_dstipcta" 
+                            alteradas para nao referenciarem mais a tabela CRAPTIP.
+                            PRJ366 (Lombardi).
+
 ............................................................................. */
 
 DEF {1} SHARED VAR shr_dsnatura AS CHAR                              NO-UNDO.
 DEF {1} SHARED VAR shr_inpessoa AS INT                               NO-UNDO.
-DEF {1} SHARED VAR shr_cdtipcta LIKE craptip.cdtipcta                NO-UNDO.
-DEF {1} SHARED VAR shr_dstipcta LIKE craptip.dstipcta                NO-UNDO.
+DEF {1} SHARED VAR shr_cdtipcta AS INT                               NO-UNDO.
+DEF {1} SHARED VAR shr_dstipcta AS CHAR    FORMAT "x(50)"            NO-UNDO.
 
 DEF {1} SHARED VAR tel_nrdconta AS INT     FORMAT "zzzz,zzz,9"       NO-UNDO.
 DEF {1} SHARED VAR tel_dsagenci AS CHAR    FORMAT "x(15)"            NO-UNDO.

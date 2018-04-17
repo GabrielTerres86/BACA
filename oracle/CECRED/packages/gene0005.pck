@@ -261,7 +261,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
   --                          (Lucas Ranghetti #717352)   
   --
   --             24/11/2017 - Correção na consulta de bloqueios judiciais pc_retorna_valor_blqjud, para somar todas 
-  --                          as ocorrencias e retornar o valor correto. SD 800517 (Carlos Rafael Tanholi)
+  --                          as ocorrencias e retornar o valor correto. SD 800517 (Carlos Rafael Tanholi)               
   --
   --             28/03/2018 - #inc0011243 Na rotina pc_saldo_utiliza, alimentado o retorno da crítica para conta 
   --                          não encontrada por nrdconta ou nrcpfcgc (Carlos)
@@ -607,7 +607,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Margarete
-   Data    : Setembro/2004                   Ultima atualizacao: 10/06/2016
+   Data    : Setembro/2004                   Ultima atualizacao: 26/02/2018
 
    Dados referentes ao programa:
 
@@ -634,6 +634,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
                             crapass em campos de indice que possuem UPPER
                             (Adriano - SD 463762).
                             
+               26/02/2018 - Substituida a verificação do tipo de conta entre 
+                            1 e 11, pela verificação do indicador de conta 
+                            integração do tipo de conta igual a zero.
+                            PRJ366 (Lombardi).
+                            
 ............................................................................. */
     DECLARE
 
@@ -641,11 +646,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
       CURSOR cr_crapass (pr_cdcooper IN crapass.cdcooper%TYPE
                         ,pr_nrdctitg IN crapass.nrdctitg%TYPE) IS
         SELECT crapass.nrdconta
-              ,crapass.cdtipcta
               ,crapass.flgctitg
+              ,tpcta.indconta_itg
         FROM crapass crapass
+            ,tbcc_tipo_conta tpcta
         WHERE crapass.cdcooper = pr_cdcooper
-        AND   UPPER(crapass.nrdctitg) = UPPER(pr_nrdctitg);
+          AND UPPER(crapass.nrdctitg) = UPPER(pr_nrdctitg)
+          AND tpcta.inpessoa = crapass.inpessoa
+          AND tpcta.cdtipo_conta = crapass.cdtipcta;
       rw_crapass cr_crapass%ROWTYPE;
 
       --Variaveis Locais
@@ -706,7 +714,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0005 AS
         --Se a conta for
         -- 1=NORMAL, 2=ESPECIAL, 3=NORMAL CONJUNTA, 4=ESPEC. CONJUNTA, 5=CHEQUE SALARIO, 6=CTA APLIC CONJ., 7=CTA APLIC INDIV,
         -- 8=NORMAL CONVENIO, 9=ESPEC. CONVENIO, 10=CONJ. CONVENIO, 11=CONJ.ESP.CONV.
-        IF rw_crapass.cdtipcta BETWEEN 1 AND 11 THEN
+        IF rw_crapass.indconta_itg = 0 THEN
           --Se a conta integracao nao for cadastrada e inativa
           IF rw_crapass.flgctitg NOT IN (2,3) THEN
             --Atribuir nulo para conta integracão

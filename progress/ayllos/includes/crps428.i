@@ -91,9 +91,34 @@
 							contas migradas de outras cooperativas. (SD: 592825, 
 							Andrey Formigari - Mouts).
 
+               08/03/2018 - Buscar descricao do tipo de conta do oracle. Substituir
+                            "cdtipcta = 1, 2, 3 e 4" pela flag de conta integracao
+                            do oracle. PRJ366 (Lombardi).
+               
 ............................................................................. */
 
+{ sistema/generico/includes/var_oracle.i }
+
+DEF VAR aux_dstipcta   AS CHAR                                       NO-UNDO.
+DEF VAR aux_des_erro   AS CHAR                                       NO-UNDO.
+DEF VAR aux_dscritic   AS CHAR                                       NO-UNDO.
+
+/* Variaveis para o XML */ 
+DEF VAR xDoc          AS HANDLE                                      NO-UNDO.   
+DEF VAR xRoot         AS HANDLE                                      NO-UNDO.  
+DEF VAR xRoot2        AS HANDLE                                      NO-UNDO.  
+DEF VAR xField        AS HANDLE                                      NO-UNDO. 
+DEF VAR xText         AS HANDLE                                      NO-UNDO. 
+DEF VAR aux_cont_raiz AS INTEGER                                     NO-UNDO. 
+DEF VAR aux_cont      AS INTEGER                                     NO-UNDO. 
+DEF VAR ponteiro_xml  AS MEMPTR                                      NO-UNDO. 
+DEF VAR aux_tpsconta  AS LONGCHAR                                    NO-UNDO.
+
 DEF   VAR b1wgen0011   AS HANDLE                                     NO-UNDO.
+
+DEF TEMP-TABLE tt_tipos_conta
+    FIELD inpessoa AS INTEGER
+    FIELD cdtipcta AS INTEGER.
 
 /* apaga os relatorios */
 UNIX SILENT VALUE("rm rl/crrl396* 2>/dev/null").
@@ -297,15 +322,104 @@ DO:
                "SITUACAO CONTA"  AT 79
                SKIP.
     
+    
+    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+    RUN STORED-PROCEDURE pc_lista_tipo_conta_itg
+    aux_handproc = PROC-HANDLE NO-ERROR (INPUT 0,    /* Flag conta itg */
+                                         INPUT 1,    /* modalidade */
+                                        OUTPUT "",   /* Tipos de conta */
+                                        OUTPUT "",   /* Flag Erro */
+                                        OUTPUT "").  /* Descrição da crítica */
+
+    CLOSE STORED-PROC pc_lista_tipo_conta_itg
+          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+    ASSIGN aux_tpsconta = ""
+           aux_des_erro = ""
+           aux_dscritic = ""
+           aux_tpsconta = pc_lista_tipo_conta_itg.pr_tiposconta 
+                          WHEN pc_lista_tipo_conta_itg.pr_tiposconta <> ?
+           aux_des_erro = pc_lista_tipo_conta_itg.pr_des_erro 
+                          WHEN pc_lista_tipo_conta_itg.pr_des_erro <> ?
+           aux_dscritic = pc_lista_tipo_conta_itg.pr_dscritic
+                          WHEN pc_lista_tipo_conta_itg.pr_dscritic <> ?.
+
+    IF aux_des_erro = "NOK"  THEN
+        DO:
+            glb_dscritic = aux_dscritic.
+            UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") +
+                              " - " + glb_cdprogra + "' --> '"  +
+                              glb_dscritic + " >> " + aux_nmarqlog).
+            QUIT.
+        END.
+    
+    /* Inicializando objetos para leitura do XML */ 
+    CREATE X-DOCUMENT xDoc.    /* Vai conter o XML completo */ 
+    CREATE X-NODEREF  xRoot.   /* Vai conter a tag DADOS em diante */ 
+    CREATE X-NODEREF  xRoot2.  /* Vai conter a tag INF em diante */ 
+    CREATE X-NODEREF  xField.  /* Vai conter os campos dentro da tag INF */ 
+    CREATE X-NODEREF  xText.   /* Vai conter o texto que existe dentro da tag xField */ 
+    
+    EMPTY TEMP-TABLE tt_tipos_conta.
+    
+    /* Efetuar a leitura do XML*/ 
+    SET-SIZE(ponteiro_xml) = LENGTH(aux_tpsconta) + 1. 
+    PUT-STRING(ponteiro_xml,1) = aux_tpsconta. 
+       
+    IF ponteiro_xml <> ? THEN
+        DO:
+            xDoc:LOAD("MEMPTR",ponteiro_xml,FALSE). 
+            xDoc:GET-DOCUMENT-ELEMENT(xRoot).
+        
+            DO  aux_cont_raiz = 1 TO xRoot:NUM-CHILDREN: 
+        
+                xRoot:GET-CHILD(xRoot2,aux_cont_raiz).
+        
+                IF xRoot2:SUBTYPE <> "ELEMENT" THEN 
+                 NEXT. 
+        
+                IF xRoot2:NUM-CHILDREN > 0 THEN
+                  CREATE tt_tipos_conta.
+        
+                DO aux_cont = 1 TO xRoot2:NUM-CHILDREN:
+                    
+                    xRoot2:GET-CHILD(xField,aux_cont).
+                        
+                    IF xField:SUBTYPE <> "ELEMENT" THEN 
+                        NEXT. 
+                    
+                    xField:GET-CHILD(xText,1).
+                   
+                    ASSIGN tt_tipos_conta.inpessoa =  INT(xText:NODE-VALUE) WHEN xField:NAME = "inpessoa".
+                    ASSIGN tt_tipos_conta.cdtipcta =  INT(xText:NODE-VALUE) WHEN xField:NAME = "cdtipo_conta".
+                    
+                END. 
+                
+            END.
+        
+            SET-SIZE(ponteiro_xml) = 0. 
+        END.
+
+    DELETE OBJECT xDoc. 
+    DELETE OBJECT xRoot. 
+    DELETE OBJECT xRoot2. 
+    DELETE OBJECT xField. 
+    DELETE OBJECT xText.
+        
     FOR EACH crapass WHERE crapass.cdcooper = glb_cdcooper AND
                            crapass.cdsitdct = 1            AND
-                          (crapass.cdtipcta = 1 OR
-                           crapass.cdtipcta = 2 OR
-                           crapass.cdtipcta = 3 OR
-                           crapass.cdtipcta = 4)           AND
                            crapass.dtdemiss = ? NO-LOCK
                            BREAK BY crapass.cdagenci:
     
+        FIND tt_tipos_conta WHERE tt_tipos_conta.inpessoa = crapass.inpessoa AND
+                                  tt_tipos_conta.cdtipcta = crapass.cdtipcta NO-LOCK NO-ERROR.
+
+        IF NOT AVAILABLE tt_tipos_conta THEN
+            NEXT.
+        
         FIND w_resumo WHERE w_resumo.cdagenci = crapass.cdagenci 
                       NO-LOCK NO-ERROR.
         
@@ -317,12 +431,35 @@ DO:
                  
         ASSIGN w_resumo.totaisok = w_resumo.totaisok + 1.  
         
-        FIND craptip WHERE craptip.cdcooper = glb_cdcooper       
-                       AND craptip.cdtipcta = crapass.cdtipcta   
-                       NO-LOCK NO-ERROR.
+        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+        
+        RUN STORED-PROCEDURE pc_descricao_tipo_conta
+        aux_handproc = PROC-HANDLE NO-ERROR (INPUT crapass.inpessoa, /* Tipo de pessoa */
+                                             INPUT crapass.cdtipcta, /* Tipo de conta */
+                                            OUTPUT "",               /* Modalidade */
+                                            OUTPUT "",               /* Flag Erro */
+                                            OUTPUT "").              /* Descrição da crítica */
+        
+        CLOSE STORED-PROC pc_descricao_tipo_conta
+              aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+        
+        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+        
+        ASSIGN aux_dstipcta = ""
+               aux_des_erro = ""
+               aux_dscritic = ""
+               aux_dstipcta = pc_descricao_tipo_conta.pr_dstipo_conta 
+                              WHEN pc_descricao_tipo_conta.pr_dstipo_conta <> ?
+               aux_des_erro = pc_descricao_tipo_conta.pr_des_erro 
+                              WHEN pc_descricao_tipo_conta.pr_des_erro <> ?
+               aux_dscritic = pc_descricao_tipo_conta.pr_dscritic
+                              WHEN pc_descricao_tipo_conta.pr_dscritic <> ?.
+        
+        IF aux_des_erro = "NOK" THEN 
+            aux_dstipcta = "".
     
         ASSIGN tel_dstipcta = STRING(crapass.cdtipcta,"99") + " - " +              
-                                    craptip.dstipcta.
+                                    aux_dstipcta.
         
         tel_dssitdct = STRING(crapass.cdsitdct,"9") + " - " +
                        IF crapass.cdsitdct = 1
