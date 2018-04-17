@@ -9879,28 +9879,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
        AND tbcd.tpdevolucao IN (1,2);
        rw_tbcotas_devolucao cr_tbcotas_devolucao%ROWTYPE;
     --
-    -- Cursor para buscar o saldo pelo extrato
-    CURSOR cr_extrato (pr_cdcooper IN crapcop.cdcooper%TYPE
-                      ,pr_nrdconta IN crapass.nrdconta%TYPE)IS
-      SELECT (SELECT SUM(lct.vllanmto)
-                FROM craplct lct,
-                     craphis his
-               WHERE lct.cdcooper = pr_cdcooper
-                 AND lct.nrdconta = pr_nrdconta
-                 AND lct.cdcooper = his.cdcooper
-                 AND lct.cdhistor = his.cdhistor
-                 AND his.indebcre = 'C')
-                 -
-                (SELECT SUM(lct.vllanmto)
-                   FROM craplct lct,
-                        craphis his
-                  WHERE lct.cdcooper = pr_cdcooper
-                    AND lct.nrdconta = pr_nrdconta
-                    AND lct.cdcooper = his.cdcooper
-                    AND lct.cdhistor = his.cdhistor
-                    AND his.indebcre = 'D') saldo_Extrato
-        FROM dual;    
-       
     --Variaveis locais
     vr_cdoperad VARCHAR2(100);
     vr_cdcooper NUMBER;
@@ -9962,9 +9940,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
     END IF;*/
     --
     vr_vldcotas := 0;
-    FOR rw_extrato IN cr_extrato(vr_cdcooper
+    FOR rw_crapcot IN cr_crapcot(vr_cdcooper
                                 ,pr_nrdconta )LOOP
-      vr_vldcotas := rw_extrato.saldo_extrato;
+      vr_vldcotas := rw_crapcot.vldcotas;
     END LOOP;      
     
     pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
