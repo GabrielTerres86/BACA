@@ -9,7 +9,9 @@
 //*** [19/07/2016] Evandro (RKAM)   :  adicionado condição se não carregar conteudo atribui tabindex -1 ao campo;
 //***                                  adicionado encerraAnotacoes na condição ESC;
 //***                    
-//*** [21/07/2016] Evandro (RKAM)   :  adicionado condição de navegação para janelas modals;             
+//*** [21/07/2016] Evandro (RKAM)   :  adicionado condição de navegação para janelas modals;
+//***
+//*** [17/04/2018] Marcos (MOUTS)   :  Removido chamada .click do UnblockBackground. (CRM)
 //************************************************************************//
 
 /** Navegação com o teclado nos campos **/
@@ -119,7 +121,7 @@ onload = function () {
                     if (DefaultFoco == '#labelRot') {
                         $('#divConfirm').css('display','none');
                         $(CaptaIdRetornoFoco).focus();
-                        unblockBackground().click();
+                        unblockBackground();
                         encerraRotina().click();
                     }
                     else {
