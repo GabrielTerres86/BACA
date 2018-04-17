@@ -218,6 +218,7 @@
 		echo '$("#dsdbens2","#frmTitLimiteManutencao").val("'.trim($dados[11]->cdata).'");';	
 		echo '$("#dsobserv","#frmTitLimiteManutencao").val("'.str_replace(chr(13),"\\n",str_replace(chr(10),"\\r",$dados[12]->cdata)).'");';
 		echo '$("#antnrctr","#frmTitLimiteManutencao").val("'.formataNumericos('zzz.zz9',$dados[14]->cdata,'.').'");';
+
 	?>
 
 </script>

@@ -184,7 +184,7 @@
 						    	foreach($arrTitulos AS $t){ ?>
 						    		<tr id="titulo_<? echo $t->nrnosnum;?>" onclick="selecionaTituloResumo('<? echo $t->nrnosnum;?>');">
 						    			<td>
-						    				<input type='hidden' name='selecionados' value='<? echo $t->nrnosnum;?>'/><? echo $t->nrcnvcob;?>
+						    				<input type='hidden' name='selecionados' value='<? echo $t->cdbandoc; ?>;<? echo $t->nrdctabb; ?>;<? echo $t->nrcnvcob; ?>;<? echo $t->nrdocmto; ?>'/><? echo $t->nrcnvcob ;?>
 						    				<input type='hidden' name='vltituloselecionado' value='<? echo formataMoeda($t->vltitulo)?>'/>
 						    			</td>
 						    			<td><? echo $t->nrdocmto;?></td>

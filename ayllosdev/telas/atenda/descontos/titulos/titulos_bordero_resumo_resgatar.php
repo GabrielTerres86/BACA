@@ -55,7 +55,7 @@
 	$xml = "<Root>";
     $xml .= " <Dados>";
     $xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
-    $xml .= "   <nrnosnum>".$selecionados."</nrnosnum>";
+    $xml .= "   <chave>".$selecionados."</chave>";
     $xml .= " </Dados>";
     $xml .= "</Root>";
 
@@ -98,7 +98,9 @@
 							<?
 						    	foreach($dados->find("inf") AS $t){ ?>
 						    		<tr id="titulo_<? echo $t->nrnosnum;?>" onclick="selecionaTituloResumo('<? echo $t->nrnosnum;?>');">
-						    			<td><input type='hidden' name='selecionados' value='<? echo $t->nrnosnum;?>'/><? echo $t->nrcnvcob;?></td>
+						    			<td>
+						    				<input type='hidden' name='selecionados' value='<? echo $t->cdbandoc; ?>;<? echo $t->nrdctabb; ?>;<? echo $t->nrcnvcob; ?>;<? echo $t->nrdocmto; ?>'/><? echo $t->nrcnvcob ;?>
+						    			</td>
 						    			<td><? echo $t->nrdocmto;?></td>
 						    			<td><? echo $t->nrinssac.' - '.$t->nmdsacad;?></td>
 						    			<td><? echo $t->dtvencto;?></td>
