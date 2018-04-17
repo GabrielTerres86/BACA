@@ -6,8 +6,6 @@
  * OBJETIVO     : Descrição da rotina
  * --------------
  * ALTERAÇÕES   : 12/04/2018 - Inclusão da rotina 'REALIZAR_MANUTENCAO_LIMITE'. (Leonardo Oliveira - GFT)
- *				  15/04/2018 - Inclusão da rotina 'BUSCAR_ACIONAMENTOS_PROPOSTA'. (Leonardo Oliveira - GFT)
- *
  * --------------
 
  */
@@ -56,13 +54,13 @@
 	    $xmlObj = getObjectXML($xmlResult);
 
 		if (strtoupper($xmlObj->roottag->tags[0]->name) == 'ERRO'){  
-           echo 'showError("error","'.$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata.'","Alerta - Ayllos","bloqueiaFundo(divRotina);fecharRotinaGenerico(\'PROPOSTA\');");';           
+           echo 'showError("error","'.$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata.'","Alerta - Ayllos","bloqueiaFundo(divRotina);carregaLimitesTitulos();");';           
            exit;
 		}
 		if($xmlObj->roottag->tags[0]){
-			echo 'showError("inform","'.$xmlObj->roottag->tags[0]->cdata.'","Alerta - Ayllos","bloqueiaFundo(divRotina);fecharRotinaGenerico(\'PROPOSTA\');");';
+			echo 'showError("inform","'.$xmlObj->roottag->tags[0]->cdata.'","Alerta - Ayllos","bloqueiaFundo(divRotina);carregaLimitesTitulos();");';
 		} else{
-			echo 'showError("inform","An&aacute;lise enviada com sucesso!","Alerta - Ayllos","bloqueiaFundo(divRotina);fecharRotinaGenerico(\'PROPOSTA\');");';
+			echo 'showError("inform","An&aacute;lise enviada com sucesso!","Alerta - Ayllos","bloqueiaFundo(divRotina);carregaLimitesTitulos();");';
 		}	
 		
         exit;
@@ -156,9 +154,8 @@
 		}
 		else{
 			if ($xmlObj->roottag->tags[0]->cdata == 'OK') {
-				echo 'showError("inform","Opera&ccedil;&atilde;o efetuada com sucesso!","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));carregaLimitesTitulosPropostas();");';
+				echo 'showError("inform","Opera&ccedil;&atilde;o efetuada com sucesso!","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));carregaLimitesTitulos();");';
 			}
-
 		}
 		
 	}else if ($operacao == 'ACEITAR_REJEICAO_LIMITE' ) {
@@ -186,7 +183,7 @@
 		}
 		else{
 			if ($xmlObj->roottag->tags[0]->cdata == 'OK') {
-				echo 'showError("inform","Opera&ccedil;&atilde;o efetuada com sucesso!","Alerta - 	Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));fecharRotinaGenerico(\'PROPOSTA\');");';
+				echo 'showError("inform","Opera&ccedil;&atilde;o efetuada com sucesso!","Alerta - 	Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));carregaLimitesTitulosProposta();");';
 				exit;
 			} // OK
 		}// != ERROR
@@ -523,11 +520,11 @@
 		}
 
     	$dados = $root->dados;
-    	
-	    echo 'showError("inform","'.$dados.'","Alerta - Ayllos","carregaTitulos();voltaDiv(3,1,5,\'DESCONTO DE T&Iacute;TULOS - BORDEROS\');");';
+
+			
+	    echo 'showError("inform","'.$dados.'","Alerta - Ayllos","carregaBorderosTitulos();voltaDiv(3,2,5,\'DESCONTO DE T&Iacute;TULOS - BORDEROS\');");';
 			
 	}else if($operacao =='BUSCAR_ACIONAMENTOS_PROPOSTA'){
-
 
 
     	$xml = "<Root>";
