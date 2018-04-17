@@ -6061,7 +6061,7 @@ END;
           END IF;
 
           -- Mensagem nao tratada pelo sistema CECRED e devemos enviar uma mensagem STR0010 como resposta. SD 553778
-          IF vr_aux_CodMsg IN('STR0006R2','PAG0142R2','STR0034R2','PAG0134R2') THEN
+          IF vr_aux_CodMsg IN('PAG0142R2','STR0034R2','PAG0134R2') THEN
             -- Buscar Coop destino
             rw_crapcop_mensag := NULL;
             OPEN cr_crapcop(pr_cdagectl => vr_aux_AgCredtd);
@@ -6122,7 +6122,7 @@ END;
                                                       || vr_dscritic
                                     ,pr_nmarqlog      => vr_nmarqlog);
 
-			  IF vr_aux_CodMsg = 'STR0006R2' and vr_aux_FinlddCli <> '15' and vr_aux_CNPJ_CPFDeb<>'01027058000191' THEN
+			  IF vr_aux_CodMsg = 'STR0006R2' and vr_aux_FinlddCli <> '15' and (vr_aux_CNPJ_CPFDeb<>'01027058000191' and vr_aux_CNPJ_CPFDeb<>'1027058000191') THEN
 				
 					/* Mensagem Invalida para o Tipo de Transacao ou Finalidade*/  
             vr_aux_codierro := 4;
