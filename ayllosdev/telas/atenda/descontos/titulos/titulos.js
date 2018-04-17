@@ -2614,7 +2614,14 @@ function realizarManutencaoDeLimite(operacao, flgstlcr) {
 
     var callback = "realizarManutencaoDeLimite(1,"+flgstlcr+" )";
 
-
+    if(nrctrlim == 0){
+        showError(
+                "inform",
+                "Não existe contrato ativo.",
+                "Alerta - Ayllos",
+                "hideMsgAguardo();");
+        return false;
+    }
 
     // linha bloqueada
     if(flgstlcr === 0){
