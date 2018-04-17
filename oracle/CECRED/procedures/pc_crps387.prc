@@ -11,7 +11,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autora  : Mirtes
-   Data    : Abril/2004                        Ultima atualizacao: 02/02/2018
+   Data    : Abril/2004                        Ultima atualizacao: 17/04/2018
 
    Dados referentes ao programa:
 
@@ -445,6 +445,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
 
                02/02/2018 - Ajsutar exception da referencia para gravar ndb somente para
                             a cooperativa do agendamento (Lucas Ranghetti #837177) 
+                            
+               17/04/2018 - Validar valor ao efetuar o cancelamento do agendamento na
+                            procedure pc_critica_debito_cancelado (Lucas Ranghetti INC0012982)
 ............................................................................ */
 
     DECLARE
@@ -1640,14 +1643,14 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                                             pr_dtmvtolt craplau.dtmvtolt%TYPE,
                                             pr_dtmvtopg craplau.dtmvtopg%TYPE,
                                             pr_cdhistor craplau.cdhistor%TYPE,
-                                            pr_nrdocmto craplau.nrdocmto%TYPE) IS
-
-
+                                            pr_nrdocmto craplau.nrdocmto%TYPE,
+                                            pr_vllanaut craplau.vllanaut%TYPE) IS
+        vr_critica_arq VARCHAR2(2);
       BEGIN
         -- Inclusão do módulo e ação logado - Chamado 758608 - 24/10/2017
         GENE0001.pc_set_modulo(pr_module => 'PC_CRPS387.pc_critica_debito_cancelado', pr_action => NULL);
 
-    BEGIN
+        BEGIN
           UPDATE craplau
              SET dtdebito = pr_dtmvtolt,
                  insitlau = 3
@@ -1657,6 +1660,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
            OR   craplau.dtmvtopg = pr_dtmvtopg)
            AND  craplau.cdhistor = pr_cdhistor
            AND  craplau.nrdocmto = pr_nrdocmto
+           AND  craplau.vllanaut = pr_vllanaut
            AND  craplau.insitlau <> 3
            AND  craplau.dsorigem <> 'CAIXA'
            AND  craplau.dsorigem <> 'INTERNET'
@@ -1664,7 +1668,15 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
            AND  craplau.dsorigem <> 'PG555'
            AND  craplau.dsorigem <> 'CARTAOBB'
            AND  craplau.dsorigem <> 'BLOQJUD'
-           AND  craplau.dsorigem <> 'DAUT BANCOOB';
+           AND  craplau.dsorigem <> 'DAUT BANCOOB';    
+           
+          IF SQL%ROWCOUNT = 0 THEN
+            vr_critica_arq:= '97'; -- Cancelamento nao Encontrado 
+            vr_cdcritic:= 998;     -- Cancelamento nao Encontrado
+          ELSE
+            vr_critica_arq:= '99'; -- Cancelamento cancelado conforme solicitacao
+            vr_cdcritic:= 739;     -- Lancamento de Debito Cancelado.
+          END IF;       
         EXCEPTION
           WHEN OTHERS THEN
              -- No caso de erro de programa gravar tabela especifica de log - 02/10/2017 - Ch 708424 
@@ -1677,7 +1689,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                             ||'. '||SQLERRM;
             RAISE vr_exc_saida;
         END;
-        vr_cdcritic := 739; -- Lancamento de Debito Cancelado.
 
         BEGIN
           INSERT INTO crapndb
@@ -1692,7 +1703,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
              pr_nrdconta,
              pr_cdhistor,
              0,
-             'F' ||SUBSTR(vr_setlinha,2,66) || '99' || SUBSTR(vr_setlinha,70,81),
+             'F' ||SUBSTR(vr_setlinha,2,66) || vr_critica_arq || SUBSTR(vr_setlinha,70,81),
              vr_cdcooper);
         EXCEPTION
           WHEN OTHERS THEN
@@ -4535,7 +4546,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                             WHILE vr_ind_deb IS NOT NULL LOOP
                                 IF vr_tab_debcancel(vr_ind_deb).setlinha = vr_setlinha  THEN
                                   vr_ind_debcancel:= 'S';
-                                  pc_critica_debito_cancelado(vr_cdcooper, vr_nrdconta, rw_crapdat.dtmvtolt, vr_dtrefere, rw_gnconve.cdhisdeb, vr_nrdocmto_int);
+                                  pc_critica_debito_cancelado(vr_cdcooper, vr_nrdconta, rw_crapdat.dtmvtolt, vr_dtrefere, rw_gnconve.cdhisdeb, vr_nrdocmto_int, SUBSTR(vr_tab_debcancel(vr_ind_deb).setlinha,53,15) / 100);
                                   -- Retorna nome do modulo logado - 02/10/2017 - Ch 708424 
                                   GENE0001.pc_set_modulo(pr_module => 'PC_'||vr_cdprogra, pr_action => NULL);
 
@@ -4581,7 +4592,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                                vr_nrdocmto_cancel := vr_dsrefere_cancel;
                                IF(  vr_nrdconta = vr_nrconta_cancel AND vr_dtrefere_cancel = vr_dtrefere AND  vr_nrdocmto_int = vr_nrdocmto_cancel )THEN
                                     vr_ind_debcancel:= 'S';
-                                    pc_critica_debito_cancelado(vr_cdcooper, vr_nrconta_cancel, rw_crapdat.dtmvtolt, vr_dtrefere_cancel, rw_gnconve.cdhisdeb, vr_nrdocmto_cancel);
+                                    pc_critica_debito_cancelado(vr_cdcooper, vr_nrconta_cancel, rw_crapdat.dtmvtolt, vr_dtrefere_cancel, rw_gnconve.cdhisdeb, vr_nrdocmto_cancel, SUBSTR(vr_tab_debcancel(vr_ind_deb).setlinha,53,15) / 100);
                                     -- Retorna nome do modulo logado - 02/10/2017 - Ch 708424 
                                     GENE0001.pc_set_modulo(pr_module => 'PC_'||vr_cdprogra, pr_action => NULL);
 
@@ -5316,8 +5327,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
               vr_dscritic_tmp := ' ';
 
               -- Se possuir critica
-              IF vr_tab_relato(vr_ind).cdcritic <> 0 THEN
+              IF vr_tab_relato(vr_ind).cdcritic <> 0 AND 
+                 vr_tab_relato(vr_ind).cdcritic <> 998 THEN
                 vr_dscritic_tmp := gene0001.fn_busca_critica(vr_tab_relato(vr_ind).cdcritic);
+              ELSIF vr_tab_relato(vr_ind).cdcritic = 998 THEN
+                vr_dscritic_tmp := 'CANCELAMENTO NAO ENCONTRADO.';
               END IF;
 
               IF vr_tab_relato(vr_ind).nrdconta <> 999999999 THEN
