@@ -362,6 +362,9 @@ BEGIN
 
 
                  20/02/2018 - Paralelismo - Projeto Ligeirinho (Fabiano B. Dias - AMcom)
+
+                 01/03/2018 - Alterado a Data do Risco e Quantidade de Dias Risco para considerar a diária
+                              nos relatórios 354 e 227. (Diego Simas - AMcom)
   ............................................................................. */
 
   DECLARE
@@ -3990,13 +3993,14 @@ BEGIN
         vr_dtdrisco := NULL;
         vr_qtdiaris := 0;
 
-        -- Buscar o ultimo lançamento de risco para a conta com
-        -- valor superior ao valor de arrasto e data igual ao final do mês
+         -- Busca o ultimo lançamento de risco para a conta com
+         -- valor superior ao valor de arrasto e desta vez com a data igual
+         -- a data de referência passada para buscarmos as informações do risco atual
         vr_nivrisco     := NULL;
         rw_crapris_last := NULL;
 
          FOR rw_crapris_last IN cr_crapris_last(pr_nrdconta => vr_tab_crapris(vr_des_chave_crapris).nrdconta
-                                                ,pr_dtrefere => pr_rw_crapdat.dtultdma) LOOP  --> Final do mês anterior
+                                                ,pr_dtrefere => pr_dtrefere) LOOP  --> Data passada
           IF rw_crapris_last.vldivida > vr_vlarrast THEN
             vr_nivrisco := vr_tab_risco_aux(rw_crapris_last.innivris).dsdrisco;
             vr_dtdrisco := rw_crapris_last.dtdrisco;
@@ -4015,14 +4019,13 @@ BEGIN
           END IF;
         END LOOP;
 
-        -- Novamente busca o ultimo lançamento de risco para a conta com
-        -- valor superior ao valor de arrasto e desta vez com a data igual
-        -- a data de referência passada para buscarmos as informações do risco atual
+         -- Buscar novamente o ultimo lançamento de risco para a conta com
+         -- valor superior ao valor de arrasto e data igual ao final do mês         
         vr_dsnivris     := 'A';
         rw_crapris_last := NULL;
 
          FOR rw_crapris_last IN cr_crapris_last(pr_nrdconta => vr_tab_crapris(vr_des_chave_crapris).nrdconta
-                                                ,pr_dtrefere => pr_dtrefere) LOOP  --> Data passada
+                                               ,pr_dtrefere => pr_rw_crapdat.dtultdma) LOOP  --> Final do mês anterior
           IF vr_dtdrisco IS NULL THEN
             vr_dtdrisco := rw_crapris_last.dtdrisco;
           END IF;

@@ -2,7 +2,7 @@
 	/************************************************************************
 	      Fonte: riscos.php
 	      Autor: Reginaldo Silva (AMcom)
-	      Data : Janeiro/2018               Última Alteração:  
+	      Data : Janeiro/2018               Última Alteração: 25/03/2018
 
 	      Objetivo  : Mostrar aba "Riscos" da rotina de OCORRÊNCIAS
                       da tela ATENDA
@@ -10,6 +10,8 @@
 	      Alterações:		
 
 		  09/02/2018 - Inclusão das colunas Risco Melhora e Risco Final
+		  25/03/2018 - Adicionada coluna de Risco Refinanciamento 
+		               e carregamento de dados brutos (Reginaldo / Marcel)
 
 	************************************************************************/	
 	session_start();
@@ -46,14 +48,16 @@
 	}
 	
 	// Monta o xml de requisição
-	$xml = "<Root>";
-    $xml .= " <Dados>";
-	$xml .= "   <nrdconta>" . $nrdconta . "</nrdconta>";
-    $xml .= "   <cdcooper>" . $glbvars["cdcooper"] . "</cdcooper>";
-    $xml .= " </Dados>";
-    $xml .= "</Root>";
+	$xml = '<Root>';
+	$xml .= ' <Dados>';
+	$xml .= '   <nrdconta>' . $nrdconta . '</nrdconta>';
+	$xml .= '   <cdcooper>' . $glbvars['cdcooper'] . '</cdcooper>';
+	$xml .= ' </Dados>';
+	$xml .= '</Root>';
 
-    $xmlResultRiscos = mensageria($xml, "TELA_ATENDA_OCORRENCIAS", "BUSCA_DADOS_RISCO", 
+	$nmdeacao = 'BUSCA_DADOS_RISCO';
+
+    $xmlResultRiscos = mensageria($xml, "TELA_ATENDA_OCORRENCIAS", $nmdeacao,
 		$glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], 
 		$glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
     
@@ -120,6 +124,7 @@
 					<th><span title="Risco Inclusão">R. Incl.</span></th>
 					<th><span title="Rating">Rat.</span></th>
 					<th><span title="Risco Atraso">R. Atr.</span></th>
+					<th><span title="Risco Refinanciamento">R. Ref.</span></th>
 					<th><span title="Risco Agravado">R. Agr.</span></th>
 					<th><span title="Risco Melhora">R. Melh.</span></th>
 					<th><span title="Risco da Operação">R. Oper.</span></th>
@@ -130,66 +135,26 @@
 			</thead>
 			<tbody>				
 				<? 
-				$riscosOperacao = array(); // riscos das opera??es para c?lculo do risco CPF
-				$dadosRisco     = array(); // dados dos riscos para exibi??o na tabela
 				foreach ($listaRiscos as $risco) {
-					$cpfCnpj = getByTagName($risco->tags, 'cpf_cnpj');
-					$cpfCnpjRaiz = extraiRaizCpfCnpj($cpfCnpj); // para o caso de CNPJ de matriz/filial
-
-					if (!isset($riscosOperacao[$cpfCnpjRaiz])) {
-						$riscosOperacao[$cpfCnpjRaiz] = array();
-						$dadosRisco[$cpfCnpjRaiz] = array();
-					}
-
-					$riscoOperacao = getByTagName($risco->tags, 'risco_operacao');
-
-					// evita arrasto de operações que não atendem ao critério da materialidade
-					if (getByTagName($risco->tags, 'arrasta_operacao') == 'S') {
-						array_push($riscosOperacao[$cpfCnpjRaiz], $riscoOperacao);
-					}
-
-					array_push($dadosRisco[$cpfCnpjRaiz], 
-						array(
-							'cpf_cnpj' => $cpfCnpj,
-							'numero_conta' => getByTagName($risco->tags, 'numero_conta'),
-							'contrato' => getByTagName($risco->tags, 'contrato'),
-							'risco_inclusao' => getByTagName($risco->tags, 'risco_inclusao'),
-							'rating' => getByTagName($risco->tags, 'rating'),
-							'risco_atraso' => getByTagName($risco->tags, 'risco_atraso'),
-							'risco_agravado' => getByTagName($risco->tags, 'risco_agravado'),
-							'risco_melhora' => getByTagName($risco->tags, 'risco_melhora'),
-							'risco_operacao' => $riscoOperacao,
-							'risco_grupo' => getByTagName($risco->tags, 'risco_grupo'),
-							'risco_final' => getByTagName($risco->tags, 'risco_final'),
-							'tipo_registro' => getByTagName($risco->tags, 'tipo_registro')
-						));
-				}
-
-				foreach ($riscosOperacao as $cpfCnpj => $niveisRisco) {
-					// Calcula o risco CPF como o maior risco das operações do mesmo CPF
-					$riscoCpfCnpj = max('A', max($niveisRisco));
-
-					foreach ($dadosRisco[$cpfCnpj] as $risco) {
-						$riscoGrupo = $risco['risco_grupo'];
 				?>
 					<tr>
-						<td><? echo aplicaMascara($risco['cpf_cnpj']); ?></td>
-						<td><? echo formataContaDV($risco['numero_conta']); ?></td>
-						<td><? echo number_format($risco['contrato'], 0, '', '.'); ?></td>
-						<td><? echo $risco['tipo_registro']; ?></td>
-						<td><? echo $risco['risco_inclusao']; ?></td>
-						<td><? echo $risco['rating']; ?></td>
-						<td><? echo $risco['risco_atraso']; ?></td>
-						<td><? echo $risco['risco_agravado']; ?></td>
-						<td><? echo $risco['risco_melhora']; ?></td>
-						<td><? echo $risco['risco_operacao']; ?></td>						
-						<td><? echo $riscoCpfCnpj; ?></td>
-						<td><? echo $riscoGrupo ?></td>
-						<td><? echo !empty($risco['risco_final']) ? $risco['risco_final'] : max($riscoCpfCnpj, $riscoGrupo); ?></td>
+						<td><? echo aplicaMascara(getByTagName($risco->tags, 'cpf_cnpj')); ?></td>
+						<td><? echo formataContaDV(getByTagName($risco->tags, 'numero_conta')); ?></td>
+						<td><? echo number_format(getByTagName($risco->tags, 'contrato'), 0, '', '.'); ?></td>
+						<td><? echo getByTagName($risco->tags, 'tipo_registro'); ?></td>
+						<td><? echo getByTagName($risco->tags, 'risco_inclusao'); ?></td>
+						<td><? echo getByTagName($risco->tags, 'rating'); ?></td>
+						<td><? echo getByTagName($risco->tags, 'risco_atraso'); ?></td>
+						<td><? echo getByTagName($risco->tags, 'risco_refin'); ?></td>
+						<td><? echo getByTagName($risco->tags, 'risco_agravado'); ?></td>
+						<td><? echo getByTagName($risco->tags, 'risco_melhora'); ?></td>
+						<td><? echo getByTagName($risco->tags, 'risco_operacao'); ?></td>
+						<td><? echo getByTagName($risco->tags, 'risco_cpf'); ?></td>
+						<td><? echo getByTagName($risco->tags, 'risco_grupo'); ?></td>
+						<td><? echo getByTagName($risco->tags, 'risco_final'); ?></td>
 					</tr>
 				<?
 					}
-				}
 				?>
 			</tbody>
 		</table>

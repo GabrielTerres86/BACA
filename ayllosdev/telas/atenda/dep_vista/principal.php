@@ -15,6 +15,7 @@
 				   06/10/2016 - Incluido campo de valores bloqueados em acordos de empréstimos,
 								Prj. 302 (Jean Michel).
 				   11/07/2017 - Novos campos Limite Pré-aprovado disponível e Última Atu. Lim. Pré-aprovado na aba Principal, Melhoria M441. ( Mateus Zimmermann/MoutS )
+                   12/03/2018 - Campos de data de inicio de atraso e data transf prejuizo (Marcel Kohls / AMCom)
 	
 	 ************************************************************************/
 	
@@ -81,6 +82,26 @@
 		exibeErro($xmlGetDepVista->roottag->tags[0]->tags[0]->tags[4]->cdata);
 	}
 	
+	// Montar o xml de Requisicao das datas de prejuizo
+	$xml = "";
+	$xml .= "<Root>";
+	$xml .= " <Dados>";
+	$xml .= "		<nrdconta>".$nrdconta."</nrdconta>";
+	$xml .= "		<cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
+	$xml .= " </Dados>";
+	$xml .= "</Root>";
+
+	// Chamada mensageria
+  $xmlResult = mensageria($xml, "TELA_ATENDA_DEPOSVIS", "BUSCA_DTPRJATR", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+  $xmlObjeto = getObjectXML($xmlResult);
+
+	if ( strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO" ) {
+		$msgErro	= $xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata;
+		exibirErro('error',$msgErro,'Alerta - Ayllos');
+	}
+
+	$camposPrejuizo = $xmlObjeto->roottag->tags[0]->tags;
+
 	// Montar o xml de Requisicao M441
 	$xml = "";
 	$xml .= "<Root>";
@@ -151,35 +172,39 @@
 		<input name="vlsdblpr" id="vlsdblpr" type="text" value="<?php echo number_format(str_replace(",",".",getByTagName($depvista,"vlsdblpr")),2,",","."); ?>" />
 		<br />
 		
+		<label for="vlipmfpg"><? echo utf8ToHtml('Prox. Deb. CPMF:') ?></label>
+		<input name="vlipmfpg" id="vlipmfpg" type="text" value="<?php echo number_format(str_replace(",",".",getByTagName($depvista,"vlipmfpg")),2,",","."); ?>" />
+
 		<label for="vlsdblfp"><? echo utf8ToHtml('Bloq. Fora Praça:') ?></label>
 		<input name="vlsdblfp" id="vlsdblfp" type="text" value="<?php echo number_format(str_replace(",",".",getByTagName($depvista,"vlsdblfp")),2,",","."); ?>" />
 		
-		<label for="vlipmfpg"><? echo utf8ToHtml('Prox. Deb. CPMF:') ?></label>
-		<input name="vlipmfpg" id="vlipmfpg" type="text" value="<?php echo number_format(str_replace(",",".",getByTagName($depvista,"vlipmfpg")),2,",","."); ?>" />
-		<br />
+		<label for="vllimdis"><? echo utf8ToHtml('Limite Pré-aprovado disponível:') ?></label>
+		<input name="vllimdis" id="vllimdis" type="text" value="<?php echo number_format(str_replace(",",".",getByTagName($camposLimData,"vllimdis")),2,",","."); ?>" />
 		
 		<label for="vlblqaco"><? echo utf8ToHtml('Bloqueado Acordo:') ?></label>
 		<input name="vlblqaco" id="vlblqaco" type="text" value="<?php echo number_format(str_replace(",",".",getByTagName($depvista,"vlblqaco")),2,",","."); ?>" />
-		<br />
+
+		<label for="dtliberacao"><? echo utf8ToHtml('Última Atu. Lim. Pré-aprovado:') ?></label>
+		<input name="dtliberacao" id="dtliberacao" type="text" value="<?php echo getByTagName($camposLimData,"dtliberacao"); ?>" />
 
 		<label for="vlsdchsl"><? echo utf8ToHtml('Cheque Salário:') ?></label>
 		<input name="vlsdchsl" id="vlsdchsl" type="text" value="<?php echo number_format(str_replace(",",".",getByTagName($depvista,"vlsdchsl")),2,",","."); ?>" />
-		<br />
+
+		<label for="dtiniatr"><? echo utf8ToHtml('Data Início Atraso:') ?></label>
+		<input type="text" name="dtiniatr" id="dtiniatr" value="<?php echo getByTagName($camposPrejuizo, "dtiniatr"); ?>">
 		
 		<label for="vlblqjud"><? echo utf8ToHtml('Bloq. Judicial:') ?></label>
 		<input name="vlblqjud" id="vlblqjud" type="text" value="<?php echo number_format(str_replace(",",".",getByTagName($depvista,"vlblqjud")),2,",","."); ?>" />
 		
-		<label for="vllimdis"><? echo utf8ToHtml('Limite Pré-aprovado disponível:') ?></label>
-		<input name="vllimdis" id="vllimdis" type="text" value="<?php echo number_format(str_replace(",",".",getByTagName($camposLimData,"vllimdis")),2,",","."); ?>" />
-		<br />
+		<label for="dttrapre"><? echo utf8ToHtml('Data Transf.Prejuízo:') ?></label>
+		<input type="text" name="dttrapre" id="dttrapre" value="<?php echo getByTagName($camposPrejuizo, "dttrapre"); ?>">
 		
 		<label for="vlstotal"><? echo utf8ToHtml('Saldo Total:') ?></label>
 		<input name="vlstotal" id="vlstotal" type="text" value="<?php echo number_format(str_replace(",",".",getByTagName($depvista,"vlstotal")),2,",",".");  ?>" />
 		
-		<label for="dtliberacao"><? echo utf8ToHtml('Última Atu. Lim. Pré-aprovado:') ?></label>
-		<input name="dtliberacao" id="dtliberacao" type="text" value="<?php echo getByTagName($camposLimData,"dtliberacao"); ?>" />
-		<br />
-		
+		<div style="float: right; padding-right: 5px;">
+			<a href="#" class="botao" id="btDetVoltar" onClick="mostraDetalhesAtraso();" style="padding: 3px 6px;">Detalhes de Atraso</a>
+		</div>
 	</fieldset>
 	
 	<fieldset>
