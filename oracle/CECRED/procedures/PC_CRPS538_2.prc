@@ -107,25 +107,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
        vr_inproces          crapdat.inproces%TYPE;       
        vr_dtmvtaux          crapdat.dtmvtoan%TYPE;       
        vr_dtmvtpro          crapdat.dtmvtolt%TYPE;
-
-       -- Variáveis relacionadas ao processo de REPROC
-       vr_inreproc          BOOLEAN;
-       
-       --Tabela para receber arquivos lidos no unix
-       vr_tab_nmarqtel      GENE0002.typ_split;
-       
+     
        --Variaveis locais arquivo
-       vr_setlinha           VARCHAR2(1000);
-       vr_contador           INTEGER;
-       vr_listadir           VARCHAR2(4000);
-       vr_nmarqret           VARCHAR2(100);
-       vr_caminho_puro       VARCHAR2(1000);
-       vr_caminho_salvar     VARCHAR2(1000);
-       vr_comando            VARCHAR2(1000);
-       vr_typ_saida          VARCHAR2(1000);
-       vr_dstipcob           VARCHAR2(6);
-       vr_dtleiaux           VARCHAR2(8);
-       vr_intemarq           BOOLEAN;
        vr_interminocoopers   NUMBER(1);
        
        -- Variaveis de controle de DBA SCHEDULER JOB LOG      
@@ -688,132 +671,17 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
                                 ) 
     IS    
     BEGIN           
-      --Inicializar contador
-      vr_contador       := 0;
-      --Filtro arquivo retorno
-      vr_nmarqret       := '29999%.RET';
 
-      --Verifica se é o último dia do mês
-      --Se for último dia do mês, nesse caso deve ler os arquivos da pasta "win12\salvar"
-      --IF trunc(sysdate) = trunc(last_day(vr_dtmvtaux)) THEN
-
-      --se o mês de dtmvtoan é diferente do mês de dtmvtolt SD#842900
-      if to_char(vr_dtmvtaux /*rw_crapdat.dtmvtoan*/,'yyyymm')
-      <> to_char(vr_dtmvtpro /*rw_crapdat.dtmvtolt*/,'yyyymm') then
-        --Buscar Diretorio Integracao da Cooperativa
-        vr_caminho_puro := gene0001.fn_diretorio(pr_tpdireto => 'W' --> Usr/Coop/Win12
-                                                ,pr_cdcooper => pr_cdcooper
-                                                ,pr_nmsubdir => NULL);   
-      
-      ELSE
-        --Se não, continua lendo os arquivos da pasta "\salvar"
-        --Buscar Diretorio Integracao da Cooperativa
-        vr_caminho_puro   := gene0001.fn_diretorio(pr_tpdireto => 'C' --> Usr/Coop
-                                               ,pr_cdcooper => pr_cdcooper
-                                               ,pr_nmsubdir => NULL);   
-
-      END IF;
-      --
-
-      -- Buscar o diretorio padrao da cooperativa conectada
-      vr_caminho_salvar := vr_caminho_puro||'/salvar';
-
-      --Listar arquivos no diretorio
-      gene0001.pc_lista_arquivos(pr_path     => vr_caminho_salvar
-                                ,pr_pesq     => vr_nmarqret
-                                ,pr_listarq  => vr_listadir
-                                ,pr_des_erro => vr_dscritic);
+      -- Gera arq cooperado
+      pc_gera_arq_cooperado(pr_cdcooper => pr_cdcooper
+                           ,pr_cdcritic => vr_cdcritic
+                           ,pr_dscritic => vr_dscritic);
       --Se ocorreu erro
-      IF vr_dscritic IS NOT NULL THEN
+      IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
         --Levantar Excecao
+        vr_dscritic := 'pc_gera_arq_cooperado - '||vr_dscritic;
         RAISE vr_exc_saida;
-      END IF;
-
-      --Montar vetor com nomes dos arquivos
-      vr_tab_nmarqtel:= GENE0002.fn_quebra_string(pr_string => vr_listadir);
-
-      --Se nao encontrou arquivos
-      IF vr_tab_nmarqtel.COUNT <= 0 THEN
-        -- Montar mensagem de critica
-        vr_cdcritic:= 182;
-        vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
-        -- Envio centralizado de log de erro
-        pc_controla_log_programa('O', 4, vr_dscritic || ' - Arquivo: integra/'||vr_nmarqret);         
-        --Levantar Excecao pois nao tem arquivo para processar
-        RAISE vr_exc_final;
-      END IF;
-
-      --Inicializar variaveis
-      vr_inreproc  := FALSE;      
-      vr_intemarq  := FALSE;                        
-
-      --Percorrer todos os arquivos
-      FOR idx IN 1..vr_tab_nmarqtel.COUNT LOOP
-
-        -- Verificar o Header  - Comando para listar a primeira linha do arquivo
-        vr_comando:= 'head -1 ' ||vr_caminho_salvar||'/'||vr_tab_nmarqtel(idx);  
-
-        --Executar o comando no unix
-        GENE0001.pc_OScommand(pr_typ_comando => 'S'
-                             ,pr_des_comando => vr_comando
-                             ,pr_typ_saida   => vr_typ_saida
-                             ,pr_des_saida   => vr_setlinha);
-        --Se ocorreu erro dar RAISE
-        IF vr_typ_saida = 'ERR' THEN
-          vr_dscritic:= 'Não foi possivel executar comando unix. '||vr_comando;
-          RAISE vr_exc_saida;
-        END IF;
-
-        --Montar Tipo Cobranca
-        vr_dstipcob:= SUBSTR(vr_setlinha,48,6);
-        --Montar Data Arquivo
-        vr_dtleiaux:= SUBSTR(vr_setlinha,66,8);
-
-        -- Verifica a primeira linha do arquivo importado
-        IF SUBSTR(vr_setlinha,1,10) <> '0000000000'  THEN
-          vr_cdcritic:= 468;
-        ELSIF vr_dstipcob <> 'COB615' THEN
-          vr_cdcritic:= 181;
-        END IF;
-    
-        --Se ocorreu algum erro na validacao
-        IF NVL(vr_cdcritic,0) <> 0 THEN
-          --Buscar descricao da critica
-          vr_dscritic  := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
-          -- Envio centralizado de log de erro        
-          pc_controla_log_programa('E', 2, vr_dscritic||' - Arquivo: integra/'||vr_tab_nmarqtel(idx)); 
-          --Zerar variavel critica
-          vr_cdcritic  := NULL;
-          vr_dscritic  := NULL;
-          --Ir para proximo arquivo
-          CONTINUE;
-        END IF;                       
-        
-        -- Verificar se o arquivo é um REPROC 
-        IF TRIM(SUBSTR(vr_setlinha,99,3)) = 'REP' THEN
-          -- Indica que o arquivo é de reprocessamento
-          vr_inreproc := TRUE;
-        ELSE     
-          vr_intemarq := TRUE;            
-        END IF;  
-      END LOOP; --Contador arquivos           
-
-      -- Não é reprocesso, então processa
-      IF NOT vr_inreproc THEN
-        -- tem arquivo para processar
-        IF vr_intemarq THEN
-          -- Gera arq cooperado
-          pc_gera_arq_cooperado(pr_cdcooper => pr_cdcooper
-                               ,pr_cdcritic => vr_cdcritic
-                               ,pr_dscritic => vr_dscritic);
-          --Se ocorreu erro
-          IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
-            --Levantar Excecao
-            vr_dscritic := 'pc_gera_arq_cooperado - '||vr_dscritic;
-            RAISE vr_exc_saida;
-          END IF;              
-        END IF;                  
-      END IF;    
+      END IF;              
 
     EXCEPTION
       WHEN vr_exc_final THEN
@@ -933,9 +801,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
       -- Busca o diretorio da cooperativa conectada
       vr_caminho_rl := gene0001.fn_diretorio(pr_tpdireto => 'C' --> usr/coop
                                             ,pr_cdcooper => pr_cdcooper
-                                            ,pr_nmsubdir => NULL);									  
+                                            ,pr_nmsubdir => NULL);                    
       -- Buscar o diretorio padrao da cooperativa conectada
-      vr_caminho_rl  := vr_caminho_rl||'/rl';		
+      vr_caminho_rl  := vr_caminho_rl||'/rl';    
 
       pc_avalia_execucao(pr_cdcritic => vr_cdcritic
                         ,pr_dscritic => vr_dscritic);
@@ -1359,7 +1227,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
       
     EXCEPTION
       WHEN vr_exc_saida THEN
-        -- Devolvemos codigo e critica encontradas	   
+        -- Devolvemos codigo e critica encontradas     
         pr_cdcritic := nvl(vr_cdcritic,0);
         pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic, vr_dscritic);
         pc_controla_log_programa('E', 2, pr_dscritic);
