@@ -199,7 +199,7 @@ function tabela(){
 	var tabela      = $('table', divRegistro );
 	var cabecalho   = $('table > thead > tr', divRegistro );
 	
-	divRegistro.css({'height':'50%','width':'100%'});
+	divRegistro.css({'height':'175px','width':'100%'});
 	
 	if($("#qtdConsultas").val() > 0){
 		var ordemInicial = new Array();

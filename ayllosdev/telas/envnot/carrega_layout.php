@@ -100,19 +100,17 @@
 								
 		$tpfiltro = getByTagName($msgCons,'TPFILTRO');
 		$dsfiltro_cooperativas = getByTagName($msgCons,'DSFILTRO_COOPERATIVAS');
-    
 		$dsfiltro_tipos_conta = getByTagName($msgCons,'DSFILTRO_TIPOS_CONTA');
-		$arrDsFiltro = explode(",",$dsfiltro_tipos_conta);
-		if(count($arrDsFiltro) == 2){
-			$dsfiltro_tipos_conta_fis = (isset($arrDsFiltro[0]) && $arrDsFiltro[0] == 1) ? " checked" : "";
-			$dsfiltro_tipos_conta_jur = (isset($arrDsFiltro[1]) && $arrDsFiltro[0] == 2) ? " checked" : "";
-		}else{
-			if($arrDsFiltro[0] == 1){
-				$dsfiltro_tipos_conta_fis = " checked";	
-			}else if($arrDsFiltro[0] == 2){
-				$dsfiltro_tipos_conta_jur = " checked";	
-			}
-		}	
+		$arrfiltro_tipos_conta = explode(",",$dsfiltro_tipos_conta);
+		$dsfiltro_tipos_conta_fis = in_array(1, $arrfiltro_tipos_conta) ? " checked" : "";
+		$dsfiltro_tipos_conta_jur = in_array(2, $arrfiltro_tipos_conta)  ? " checked" : "";
+		
+		//print_r($xmlObjetoMsgCons->roottag->tags[0]->tags[1]);
+		$total_registros_importados = 0;
+		$nmarquivo_upload = '';
+		//$total_registros_importados = (getByTagName($msgCons,'TOTAL_COOPERADOS_IMPORTADO') == "") ? 0 : getByTagName($msgCons,'TOTAL_COOPERADOS_IMPORTADO');  
+		//$nmarquivo_upload = (getByTagName($msgCons,'NMARQUIVO_UPLOAD') == "") ? "" : getByTagName($msgCons,'NMARQUIVO_UPLOAD'); 
+		
 		
 		$tpfiltro_mobile = getByTagName($msgCons,'TPFILTRO_MOBILE');
 				
@@ -273,11 +271,10 @@
 		
 		$tpfiltro = getByTagName($msgManu,'TPFILTRO');
 		$dsfiltro_cooperativas = getByTagName($msgManu,'DSFILTRO_COOPERATIVAS');
-    $dsfiltro_tipos_conta = getByTagName($msgManu,'DSFILTRO_TIPOS_CONTA');
-		$dsfiltro_tipos_conta_fis = in_array(1, $arrDsFiltro) ? " checked" : "";
-		$dsfiltro_tipos_conta_jur = in_array(2, $arrDsFiltro)  ? " checked" : "";
-		$dsfiltro_tipos_conta_fis = " checked";	
-		$dsfiltro_tipos_conta_jur = " checked";	
+		$dsfiltro_tipos_conta = getByTagName($msgManu,'DSFILTRO_TIPOS_CONTA');
+		$arrfiltro_tipos_conta = explode(",",$dsfiltro_tipos_conta);
+		$dsfiltro_tipos_conta_fis = in_array(1, $arrfiltro_tipos_conta) ? " checked" : "";
+		$dsfiltro_tipos_conta_jur = in_array(2, $arrfiltro_tipos_conta)  ? " checked" : "";
 		
 		$tpfiltro_mobile = getByTagName($msgManu,'tpfiltro_mobile');
 		

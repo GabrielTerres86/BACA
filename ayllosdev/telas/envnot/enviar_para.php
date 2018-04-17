@@ -17,9 +17,17 @@
 				<option value="1" <?php if($tpfiltro == 1){ echo " selected"; } ?> >Escolher os Filtros</option>
 				<option value="2" <?php if($tpfiltro == 2){ echo " selected"; } ?>>Importar arquivo CSV</option>
 			</select>
+		<input type="hidden" id="totalRegistrosImportados" name="totalRegistrosImportados" value="<?php echo($total_registros_importados); ?>" />
 		
 		<div id="divFile" name="divFile" style="padding-top: 20px; width: 100%; clear:both;">
 			<div>
+				<?php
+
+					if($total_registros_importados > 0){
+						echo("&nbsp;&nbsp;Nome do arquivo importado:<b> $nmarquivo_upload</b></br>"); 
+						echo("&nbsp;&nbsp;Total de registros importados:<b> $total_registros_importados</b></br>"); 
+					}
+				?>
 				<input name="arq_upload[]" id="nmarquivo_csv" type="file" class="campo" style="width:49%; height: 100%;" alt="<? echo utf8ToHtml('Informe o caminho do arquivo.'); ?>" />
 			</div>	
 			<div id="divCSVObs" name="divCSVObs" style="width:50%; float: right;">
