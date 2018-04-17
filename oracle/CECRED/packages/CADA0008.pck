@@ -1643,6 +1643,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0008 IS
     CLOSE cr_pessoa;
   EXCEPTION
     WHEN OTHERS THEN
+      CECRED.pc_internal_exception();
       pr_dscritic := 'Erro nao previsto CADA0008.PC_BUSCA_NOME_PESSOA: '||SQLERRM;
   END pc_busca_nome_pessoa;
   
@@ -1692,9 +1693,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0008 IS
                                   
   EXCEPTION
     WHEN vr_exc_saida THEN
+      CECRED.pc_internal_exception();
       pr_dscritic := vr_dscritic;
 
     WHEN OTHERS THEN
+      CECRED.pc_internal_exception();
       pr_dscritic := 'Erro nao previsto CADA0008.PC_BUSCA_NOME_PESSOA_XML: '||SQLERRM;
   END pc_busca_nome_pessoa_xml;
   
