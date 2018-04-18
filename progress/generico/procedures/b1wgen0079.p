@@ -123,6 +123,7 @@
 { sistema/generico/includes/var_internet.i }
 { sistema/generico/includes/gera_erro.i }
 { sistema/generico/includes/gera_log.i }
+{ sistema/generico/includes/var_oracle.i }
 
 DEF TEMP-TABLE bb-instr-tit-sacado-dda  NO-UNDO LIKE tt-instr-tit-sacado-dda.
 DEF TEMP-TABLE bb-descto-tit-sacado-dda NO-UNDO LIKE tt-descto-tit-sacado-dda.

@@ -44,7 +44,27 @@
 	// Se ocorrer um erro, mostra crítica
 	if (strtoupper($xmlObject->roottag->tags[0]->name) == "ERRO") {
 		$msgErro = $xmlObject->roottag->tags[0]->tags[0]->tags[4]->cdata;
-		exibirErro('error',utf8_encode($msgErro),'Alerta - Ayllos','',false);
+		
+		if($glbvars['nmrotina'] == 'CONSULTA'){
+			$mtdErro = "$('input,select','#frmTrocaOpContaCorrente').removeClass('campoErro');focaCampoErro('nrdconta','frmTrocaOpContaCorrente');blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));";  		
+			echo '$("#idseqttl","#frmTrocaOpContaCorrente").html("").desabilitaCampo();';
+			echo '$("#cdorgins","#frmTrocaOpContaCorrente").val("");';
+			
+			echo '$("#btConcluir","#divBotoesTrocaOpContaCorrente").unbind("click").bind("click", function(){';
+			echo '   buscaOrgaoPagador(normalizaNumero($(\'#nrdconta\',\'#frmTrocaOpContaCorrente\').val()),cddopcao);';
+			echo '   return false;';
+			echo '});';
+		}else{
+			$mtdErro = "$('input,select','#frmTrocaDomicilio').removeClass('campoErro');focaCampoErro('nrdconta','frmTrocaDomicilio');";
+			echo '$("#idseqttl","#frmTrocaDomicilio").html("").desabilitaCampo();';
+			
+			echo '$("#btConcluir","#divBotoesTrocaDomicilio").unbind("click").bind("click", function(){';
+			echo '   buscaTitulares(normalizaNumero($("#nrdconta","#frmTrocaDomicilio").val()),cddopcao);';
+			echo '   return false;';
+			echo '});';
+		}
+		
+		exibirErro('error',utf8_encode($msgErro),'Alerta - Ayllos',$mtdErro,false);
 	}
 	
 	// Monta o xml de requisição

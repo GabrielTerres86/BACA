@@ -186,29 +186,35 @@
 		
 	} 
 	
-	$vllanmto = str_replace(',','.',str_replace('.','',$vllanmto));
+	if ($flgvalid == "true") {
+		
+		$vllanmto = str_replace(',','.',str_replace('.','',$vllanmto));
 	
-	// Montar o xml de Requisicao
-	$xml  = "";
-	$xml .= "<Root>";
-	$xml .= " <Dados>";	
-	$xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
-	$xml .= "   <cdprodut>".    3    ."</cdprodut>"; //Poupança Programada
-	$xml .= "   <vlcontra>".$vllanmto."</vlcontra>";
-	$xml .= " </Dados>";
-	$xml .= "</Root>";
+		// Montar o xml de Requisicao
+		$xml  = "";
+		$xml .= "<Root>";
+		$xml .= " <Dados>";	
+		$xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
+		$xml .= "   <cdprodut>".    3    ."</cdprodut>"; //Poupança Programada
+		$xml .= "   <vlcontra>".$vllanmto."</vlcontra>";
+		$xml .= " </Dados>";
+		$xml .= "</Root>";
 
-	$xmlResult = mensageria($xml, "CADA0006", "VALIDA_VALOR_ADESAO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
-	$xmlObject = getObjectXML($xmlResult);
+		$xmlResult = mensageria($xml, "CADA0006", "VALIDA_VALOR_ADESAO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+		$xmlObject = getObjectXML($xmlResult);
 
-	// Se ocorrer um erro, mostra crítica
-	if (strtoupper($xmlObject->roottag->tags[0]->name) == "ERRO") {
-		$msgErro = $xmlObject->roottag->tags[0]->tags[0]->tags[4]->cdata;
-		exibeErro(utf8_encode($msgErro));
+		// Se ocorrer um erro, mostra crítica
+		if (strtoupper($xmlObject->roottag->tags[0]->name) == "ERRO") {
+			$msgErro = $xmlObject->roottag->tags[0]->tags[0]->tags[4]->cdata;
+			exibeErro(utf8_encode($msgErro));
+		}
+		
+		$solcoord = $xmlObject->roottag->tags[0]->cdata;
+		$mensagem = $xmlObject->roottag->tags[1]->cdata;
+	} else {
+		$solcoord = 0;
+		$mensagem = "";
 	}
-	
-	$solcoord = $xmlObject->roottag->tags[0]->cdata;
-	$mensagem = $xmlObject->roottag->tags[1]->cdata;
 	
 	$executar = "";
 	

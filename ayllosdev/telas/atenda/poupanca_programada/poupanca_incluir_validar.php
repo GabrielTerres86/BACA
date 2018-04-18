@@ -131,7 +131,7 @@
 		
 	} 
 	
-	$vlprerpp = str_replace(',','.',str_replace('.','',$vlprerpp));
+	$vlcontra = str_replace(',','.',str_replace('.','',$vlprerpp));
 	
 	// Montar o xml de Requisicao
 	$xml  = "";
@@ -139,7 +139,7 @@
 	$xml .= " <Dados>";	
 	$xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
 	$xml .= "   <cdprodut>".    16   ."</cdprodut>"; //Poupança Programada
-	$xml .= "   <vlcontra>".$vlprerpp."</vlcontra>";
+	$xml .= "   <vlcontra>".$vlcontra."</vlcontra>";
 	$xml .= " </Dados>";
 	$xml .= "</Root>";
 
