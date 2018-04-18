@@ -2623,7 +2623,7 @@ function realizarManutencaoDeLimite(operacao, flgstlcr) {
         if(operacao !== 1){
             showError(
                 "inform",
-                "Linha de crédito bloqueada, para realizar a operação altere para uma linha liberada ou efetue o desbloqueio da linha",
+                "Linha de descontos bloqueada, para realizar a operação altere para uma linha liberada ou efetue o desbloqueio da linha",
                 "Alerta - Ayllos",
                 callback);
             return false;
