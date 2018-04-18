@@ -27,19 +27,23 @@
  * 011: [22/11/2016] Jaison/James (CECRED) : Zerar glb_codigoOperadorLiberacao antes da cdopcolb.
  * 012: [09/03/2017] Adriano    (CECRED): Ajuste devido ao tratamento para validar titulos já inclusos em outro borderô - SD 603451.
  * 013: [26/06/2017] Jonata (RKAM): Ajuste para rotina ser chamada através da tela ATENDA > Produtos ( P364).
- * 014: [13/03/2018] Leonardo Oliveira (GFT): Novos métodos 'acessaValorLimite', 'formataValorLimite', 'renovaValorLimite' e 'converteNumero'.
- * 015: [16/03/2018] Leonardo Oliveira (GFT): Alteração dos métodos 'acessaValorLimite', 'formataValorLimite' e 'renovaValorLimite' para mostrar dialogo de confirmação e condirerar alteração de linha
- * 016: [22/03/2018] Leonardo Oliveira (GFT): Ajustes no fluxo de renovação do limite de desconto de titulos, validação das linhas de credito bloqueadas
- * 017: [28/03/2018] Andre Avila (GFT): Criação do método carregaLimitesTitulosPropostas e carregaDadosAlteraLimiteDscTitPropostas. 
- * 018: [02/04/2018] Leonardo Oliveira (GFT): Criação dos metodos para mostrar detalhes do titulo do borderô 'selecionarTituloDeBordero' 'visualizarTituloDeBordero' 
- * 019: [06/04/2018] Luis Fernando (GFT): Mudanças de layot na inclusão de borderos
- * 020: [12/04/2018] Leonardo Oliveira (GFT): Criação dos métodos 'realizarManutencaoDeLimite', 'concluirManutencaoDeLimite' e 'formataManutencaoDeLimite' para a tela de manutenção de limite.
- * 021: [15/04/2018] Leonardo Oliveira (GFT): Criação dos métodos 'formatarTelaAcionamentosDaProposta', 'carregarAcionamentosDaProposta' e 'carregaDadosDetalhesProposta' para a tela de acionamentos/detalhes da proposta, correção dos códicos sobreescritos.
-*/
+ * 014: [11/12/2017] P404 - Inclusão de Garantia de Cobertura das Operações de Crédito (Augusto / Marcos (Supero))  
+ * 015: [13/03/2018] Leonardo Oliveira (GFT): Novos métodos 'acessaValorLimite', 'formataValorLimite', 'renovaValorLimite' e 'converteNumero'.
+ * 016: [16/03/2018] Leonardo Oliveira (GFT): Alteração dos métodos 'acessaValorLimite', 'formataValorLimite' e 'renovaValorLimite' para mostrar dialogo de confirmação e condirerar alteração de linha
+ * 017: [22/03/2018] Daniel (Cecred) Alteracoes para geracao no numero do contrato automaticamente. 
+ * 018: [22/03/2018] Leonardo Oliveira (GFT): Ajustes no fluxo de renovação do limite de desconto de titulos, validação das linhas de credito bloqueadas
+ * 019: [28/03/2018] Andre Avila (GFT): Criação do método carregaLimitesTitulosPropostas e carregaDadosAlteraLimiteDscTitPropostas. 
+ * 020: [02/04/2018] Leonardo Oliveira (GFT): Criação dos metodos para mostrar detalhes do titulo do borderô 'selecionarTituloDeBordero' 'visualizarTituloDeBordero' 
+ * 021: [06/04/2018] Luis Fernando (GFT): Mudanças de layot na inclusão de borderos
+ * 022: [12/04/2018] Leonardo Oliveira (GFT): Criação dos métodos 'realizarManutencaoDeLimite', 'concluirManutencaoDeLimite' e 'formataManutencaoDeLimite' para a tela de manutenção de limite.
+ * 023: [15/04/2018] Leonardo Oliveira (GFT): Criação dos métodos 'formatarTelaAcionamentosDaProposta', 'carregarAcionamentosDaProposta' e 'carregaDadosDetalhesProposta' para a tela de acionamentos/detalhes da proposta, correção dos códicos sobreescritos.
+ 
+ */
 
 var contWin    = 0;  // Variável para contagem do número de janelas abertas para impressos
 var nrcontrato = ""; // Variável para armazenar número do contrato de descto selecionado
 var nrbordero = ""; // Variável para armazenar número do bordero de descto selecionado
+var cd_situacao_lim = 0; // Variável para armazenar o código da situação do limite atualmente selecionado
 var situacao_limite = ""; // Variável para armazenar a situação do limite atualmente selecionado
 var idLinhaB   = 0;  // Variável para armazanar o id da linha que contém o bordero selecionado
 var idLinhaL   = 0;  // Variável para armazanar o id da linha que contém o limite selecionado
@@ -777,7 +781,7 @@ function carregaLimitesTitulos() {
 
 // Função para seleção do limite
 
-function selecionaLimiteTitulos(id,qtLimites,limite,dssitlim, dssitest, insitapr, vlLimite) {
+function selecionaLimiteTitulos(id,qtLimites,limite,insitlim,dssitlim, dssitest, insitapr, vlLimite) {
 
     situacao_analise = dssitest;
     decisao = insitapr;
@@ -806,6 +810,7 @@ function selecionaLimiteTitulos(id,qtLimites,limite,dssitlim, dssitest, insitapr
             // Armazena número do limite selecionado
             nrcontrato = limite;
             idLinhaL = id;
+            cd_situacao_lim = insitlim;
             situacao_limite = dssitlim;
 
         }
@@ -1005,6 +1010,11 @@ function mostraTelaAltera() {
         return false;
     }
 
+	hideMsgAguardo();
+	fechaRotinaAltera();
+	carregaDadosAlteraLimiteDscTit();
+	return false;
+/*
     limpaDivGenerica();
 
     $.ajax({
@@ -1028,6 +1038,7 @@ function mostraTelaAltera() {
 
     $('#todaProp', '#frmAltera').focus();
     return false;
+	*/
 }
 
 function confirmaEnvioAnalise(){
@@ -1527,6 +1538,7 @@ function gravaLimiteDscTit(cddopcao, tipo) {
             nrender2: normalizaNumero($("#nrender2","#frmDadosLimiteDscTit").val()),
             complen2: $("#complen2","#frmDadosLimiteDscTit").val(),
             nrcxaps2: normalizaNumero($("#nrcxaps2","#frmDadosLimiteDscTit").val()),
+            idcobope: normalizaNumero($('#idcobert', '#frmDadosLimiteDscTit').val()),
             
             // Variáveis globais alimentadas na função validaDadosRating em rating.js 
             nrgarope: nrgarope,
@@ -1837,7 +1849,59 @@ function buscaGrupoEconomico(tipo) {
     
 }
 
-function calcEndividRiscoGrupo(nrdgrupo, tipo) {
+function abrirTelaGAROPC(cddopcao) {
+
+    showMsgAguardo('Aguarde, carregando ...');
+
+    var idcobert = normalizaNumero($('#idcobert','#'+nomeForm).val());
+    var codlinha = normalizaNumero($('#cddlinha','#'+nomeForm).val());
+    var vlropera = $('#vllimite','#'+nomeForm).val();
+    
+    var nrctrlim = '';
+    // Se estamos consultando e está em estudo ou se iremos incluir ou se iremos alterar o limite enviaremos o codigo do contrato ativo
+    if ( (cddopcao == 'C' && cd_situacao_lim == 1) || cddopcao == 'I' || cddopcao == 'A') {
+      nrctrlim = normalizaNumero($('#nrcontratoativo').val());
+    }
+  
+    // Se estivermos alterando, porém não houver cobertura é por que estamos alterando algo antigo (devemos criar um novo para estes casos)
+    if (cddopcao == 'A' && idcobert == '') {
+      cddopcao = 'I';
+    }
+
+    // Carrega conteúdo da opção através do Ajax
+    $.ajax({
+        type: 'POST',
+        dataType: 'html',
+        url: UrlSite + 'telas/garopc/garopc.php',
+        data: {
+            tipaber      : cddopcao,
+            idcobert     : idcobert,
+            nrdconta     : nrdconta,
+            tpctrato     : 3,
+            dsctrliq     : nrctrlim,
+            codlinha     : codlinha,
+            vlropera     : vlropera
+        },
+        error: function (objAjax, responseError, objExcept) {
+            hideMsgAguardo();
+            showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
+        },
+        success: function (response) {
+            hideMsgAguardo();
+            // Criaremos uma div oculta para conter toda a estrutura da tela GAROPC
+            $('#divUsoGAROPC').html(response).hide();
+            // Iremos incluir o conteúdo do form da div oculta dentro da div principal de descontos
+            $("#frmGAROPC", "#divUsoGAROPC").appendTo('#divFormGAROPC');
+            // Iremos remover os botões originais da GAROPC e usar os proprios da tela
+            $("#divBotoes","#frmGAROPC").detach();
+            dscShowHideDiv("divFormGAROPC;divBotoesGAROPC","divDscTit_Limite;divBotoesLimite");
+            bloqueiaFundo($('#divFormGAROPC'));
+            $("#frmDadosLimiteDscTit").css("width", 540);
+        }
+    });
+}
+
+function calcEndividRiscoGrupo(nrdgrupo) {
 
     showMsgAguardo("Aguarde, calculando endividamento e risco do grupo econ&ocirc;mico...");
 
@@ -2614,7 +2678,14 @@ function realizarManutencaoDeLimite(operacao, flgstlcr) {
 
     var callback = "realizarManutencaoDeLimite(1,"+flgstlcr+" )";
 
-
+    if(nrctrlim == 0){
+        showError(
+                "inform",
+                "Não existe contrato ativo.",
+                "Alerta - Ayllos",
+                "hideMsgAguardo();");
+        return false;
+    }
 
     // linha bloqueada
     if(flgstlcr === 0){

@@ -17,6 +17,8 @@
          17/06/2016 - M181 - Alterar o CDAGENCI para          
                       passar o CDPACTRA (Rafael Maciel - RKAM)					  
 		 28/07/2017 - Desenvolvimento da melhoria 364 - Grupo Economico Novo. (Mauro)
+		 
+		 22/03/2018 - Incluso tratativa para retornar numero de contrato gerado automaticamente. (Daniel - projeto 403)
  */
 ?>
 
@@ -42,7 +44,7 @@
 	$params = array("nrdconta","nrctrlim","cddlinha","vllimite","dsramati","vlmedtit","vlfatura","vloutras","vlsalari","vlsalcon","dsdbens1","dsdbens2","dsobserv",
                     "nrctaav1","nmdaval1","nrcpfav1","tpdocav1","dsdocav1","nmdcjav1","cpfcjav1","tdccjav1","doccjav1","ende1av1","ende2av1","nrcepav1","nmcidav1","cdufava1","nrfonav1","emailav1",
                     "nrctaav2","nmdaval2","nrcpfav2","tpdocav2","dsdocav2","nmdcjav2","cpfcjav2","tdccjav2","doccjav2","ende1av2","ende2av2","nrcepav2","nmcidav2","cdufava2","nrfonav2","emailav2",
-					"nrgarope","nrinfcad","nrliquid","nrpatlvr","nrperger","vltotsfn","perfatcl",
+					"nrgarope","nrinfcad","nrliquid","nrpatlvr","nrperger","vltotsfn","perfatcl","idcobope",
 					"cddopcao","nrcpfcgc","redirect");
 
 	foreach ($params as $nomeParam) {
@@ -115,6 +117,7 @@
 	$nrperger = $_POST["nrperger"];	
 	$vltotsfn = $_POST["vltotsfn"];	
 	$perfatcl = $_POST["perfatcl"];
+    $idcobope = $_POST["idcobope"];
 
 	$cddopcao = $_POST["cddopcao"];
 	
@@ -292,7 +295,7 @@
 	$xmlSetGravarLimite .= "		<nrperger>".$nrperger."</nrperger>";	
 	$xmlSetGravarLimite .= "		<vltotsfn>".$vltotsfn."</vltotsfn>";
 	$xmlSetGravarLimite .= "		<perfatcl>".$perfatcl."</perfatcl>";
-	$xmlSetGravarLimite .= "		<idcobope>0</idcobope>";
+    $xmlSetGravarLimite .= "		<idcobope>".$idcobope."</idcobope>";
 	$xmlSetGravarLimite .= "	</Dados>";
 	$xmlSetGravarLimite .= "</Root>";
 	
@@ -334,7 +337,7 @@
 	// Mensagens de alerta
 	$msg = Array();
 	foreach( $mensagens as $mensagem ) {
-		$msg[] = getByTagName($mensagem->tags,'dsmensag');
+		$msg[] = str_replace('|@|','<br>',getByTagName($mensagem->tags,'dsmensag'));
 	}
 	$stringArrayMsg = implode( "|", $msg);
 	echo 'exibirMensagens("'.$stringArrayMsg.'","atualizaDadosRating(\"divOpcoesDaOpcao3\");");';
