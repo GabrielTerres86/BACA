@@ -8,7 +8,8 @@
  * ALTERAÇÕES   : 22/12/2015 - Variável para alteração do número da proposta de limite de crédito. (Lunelli - SD 360072 [M175])
  *                10/10/2016 - Remover verificacao de digitalizaco para o botao de consultar imagem (Lucas Ranghetti #510032)
  *                15/12/2016 - Alterado tag do botão consultar imagem href para Onclick adaptando-se a função controlaFoco() (Evandro Guaranha-Mout's TI #562864)
- *                08/08/2017 - Implementacao da melhoria 438. Heitor (Mouts).
+ *                08/08/2017 - Implementacao da melhoria 438. Heitor (Mouts).	
+ *                13/04/2018 - Incluida chamada da function validaAdesaoValorProduto. PRJ366 (Lombardi)
  *
  */	
 ?>
@@ -109,7 +110,7 @@
 					<td><input type="image" src="<?php echo $UrlImagens; ?>botoes/confirmar_novo_limite.gif" onClick="showConfirmacao('Deseja confirmar novo ' + strTitRotinaLC + '?','Confirma&ccedil;&atilde;o - Ayllos','confirmaNovoLimite(1,false)',metodoBlock,'sim.gif','nao.gif');return false;"></td>					
 					
 					<? if (strtoupper($dssitlli) == "ATIVO"){ ?>
-						<td><input type="image" src="<?php echo $UrlImagens; ?>botoes/renovar.gif" onClick="showConfirmacao('Deseja renovar o ' + strTitRotinaLC + ' atual?','Confirma&ccedil;&atilde;o - Ayllos','renovarLimiteAtual(<?php echo intval($nrctrlim); ?>)',metodoBlock,'sim.gif','nao.gif');return false;"></td>
+						<td><input type="image" src="<?php echo $UrlImagens; ?>botoes/renovar.gif" onClick="showConfirmacao('Deseja renovar o ' + strTitRotinaLC + ' atual?','Confirma&ccedil;&atilde;o - Ayllos','validaAdesaoValorProduto(\'renovarLimiteAtual(<?php echo intval($nrctrlim); ?>)\',<?php echo $vllimite; ?>)',metodoBlock,'sim.gif','nao.gif');return false;"></td>
 					<?	
 					   }
 					} 
@@ -124,7 +125,7 @@
 				<img src="<?php echo $UrlImagens; ?>botoes/cancelar_limite_atual.gif" /></a>
 				
 				<? if (strtoupper($dssitlli) == "ATIVO"){ ?>
-				<input type="image" src="<?php echo $UrlImagens; ?>botoes/renovar.gif" onClick="showConfirmacao('Deseja renovar o ' + strTitRotinaLC + ' atual?','Confirma&ccedil;&atilde;o - Ayllos','renovarLimiteAtual(<?php echo intval($nrctrlim); ?>)',metodoBlock,'sim.gif','nao.gif');return false;">
+				<input type="image" src="<?php echo $UrlImagens; ?>botoes/renovar.gif" onClick="showConfirmacao('Deseja renovar o ' + strTitRotinaLC + ' atual?','Confirma&ccedil;&atilde;o - Ayllos','validaAdesaoValorProduto(\'renovarLimiteAtual(<?php echo intval($nrctrlim); ?>)\',<?php echo $vllimite; ?>)',metodoBlock,'sim.gif','nao.gif');return false;">
 				<? } ?>
 				
 				<a onclick="window.open('http://<?php echo $GEDServidor;?>/smartshare/clientes/viewerexterno.aspx?tpdoc=<?php echo $tpdocmto ?>&conta=<?php echo formataContaDVsimples($nrdconta); ?>&contrato=<?php echo formataNumericos("z.zzz.zz9",$nrctrlim,"."); ?>&cooperativa=<?php echo $glbvars["cdcooper"]; ?>', '_blank')">						

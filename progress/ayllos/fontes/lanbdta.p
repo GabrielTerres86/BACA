@@ -15,7 +15,11 @@
                             inclusão de Títulos com Cobrança Registrada no Borderô
                           - Chamada da procedure 'valida-titulos-bordero' 
                           - Chamada da Procedure 'busca_dados_exclusao_bordero'
-                            substituida por 'busca_dados_validacao_bordero' (Lucas).
+                            substituida por 'busca_dados_validacao_bordero' (Lucas).	 
+               
+               17/04/2017 - Inlusao da procedure valida_alteracao_bordero para tratar 
+                            chamada da rotina que pede a senha do coordenador.
+                            Projeto 366 (Lombardi).
                           
 ............................................................................. */
 
@@ -31,6 +35,9 @@ DEF VAR h-browse     AS HANDLE                                      NO-UNDO.
 DEF VAR aux_flgok    AS LOGICAL                                     NO-UNDO.
 DEF VAR aux_flgalter AS LOGICAL                                     NO-UNDO.
 DEF VAR aux_vlutiliz AS DECIMAL                                     NO-UNDO.
+DEF VAR aux_solcoord AS DECIMAL                                     NO-UNDO.
+DEF VAR aux_flginclu AS LOGICAL                                     NO-UNDO.
+DEF VAR aux_cdoperad AS CHAR                                        NO-UNDO.
 
 ASSIGN tel_nmcustod = ""
        tel_nrcustod = 0.
@@ -54,6 +61,7 @@ ON "RETURN" OF b_browse IN FRAME f_browse DO:
         
     RUN valida-titulo-bordero IN h-b1wgen0030
                                  (INPUT glb_cdcooper,
+                                  INPUT tel_nrcustod,
                                   INPUT tel_cdagenci,
                                   INPUT 0,
                                   INPUT glb_cdoperad,
@@ -321,7 +329,9 @@ DO WHILE TRUE:
                         LEAVE.
                     END.
                 
-                RUN efetua_alteracao_bordero IN h-b1wgen0030
+                ASSIGN aux_flginclu = TRUE.
+                
+                RUN valida_alteracao_bordero IN h-b1wgen0030
                                                (INPUT glb_cdcooper,
                                                 INPUT tel_cdagenci,
                                                 INPUT 0, /*nrdcaixa*/
@@ -333,25 +343,68 @@ DO WHILE TRUE:
                                                 INPUT tel_qtcompln, /*quantidade de titulos */
                                                 INPUT tel_vlcompdb, /*valor total de titulos*/
                                                 INPUT TABLE tt-titulos,
+                                               OUTPUT aux_solcoord,
                                                OUTPUT TABLE tt-erro).
-                
-                DELETE PROCEDURE h-b1wgen0030.
                 
                 IF  RETURN-VALUE = "NOK"  THEN
                     DO:
                         FIND FIRST tt-erro NO-LOCK NO-ERROR.
                         IF  AVAIL tt-erro  THEN
                             DO:
-                                MESSAGE tt-erro.dscritic.
-                                LEAVE.
+                                IF aux_solcoord = 1 THEN
+                                    MESSAGE tt-erro.dscritic VIEW-AS ALERT-BOX.
+                                ELSE
+                                    MESSAGE tt-erro.dscritic.
                             END.
                         ELSE
                             DO:
                                 MESSAGE "Ocorreu erro na alteracao do bordero.".
-                                LEAVE.
                             END.    
+                        
+                        IF  aux_solcoord = 1 THEN
+                            DO:
+                                RUN fontes/pedesenha.p (INPUT glb_cdcooper,
+                                                        INPUT 2,
+                                                       OUTPUT aux_flginclu,
+                                                       OUTPUT aux_cdoperad).
+                            END.
+                         ELSE
+                             LEAVE.
                     END.
-               
+                
+                IF  aux_flginclu THEN 
+                    DO:
+                        RUN efetua_alteracao_bordero IN h-b1wgen0030
+                                                       (INPUT glb_cdcooper,
+                                                        INPUT tel_cdagenci,
+                                                        INPUT 0, /*nrdcaixa*/
+                                                        INPUT glb_cdoperad,
+                                                        INPUT glb_dtmvtolt,
+                                                        INPUT 1, /*idorigem*/
+                                                        INPUT tel_nrcustod,
+                                                        INPUT tel_nrborder,
+                                                        INPUT tel_qtcompln, /*quantidade de titulos */
+                                                        INPUT tel_vlcompdb, /*valor total de titulos*/
+                                                        INPUT TABLE tt-titulos,
+                                                       OUTPUT TABLE tt-erro).
+                        
+                        DELETE PROCEDURE h-b1wgen0030.
+                        
+                        IF  RETURN-VALUE = "NOK"  THEN
+                            DO:
+                                FIND FIRST tt-erro NO-LOCK NO-ERROR.
+                                IF  AVAIL tt-erro  THEN
+                                    DO:
+                                        MESSAGE tt-erro.dscritic.
+                                        LEAVE.
+                                    END.
+                                ELSE
+                                    DO:
+                                        MESSAGE "Ocorreu erro na alteracao do bordero.".
+                                        LEAVE.
+                                    END.    
+                            END.
+                    END.
                 LEAVE.
             END.
        

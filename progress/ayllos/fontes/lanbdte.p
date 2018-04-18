@@ -15,7 +15,11 @@
                           - Chamada da Procedure 'busca_dados_exclusao_bordero'
                             substituida por 'busca_dados_validacao_bordero'
                           - Adicionada funcionalidade de exclusão
-                            do Borderô inteiro (Lucas).
+                            do Borderô inteiro (Lucas).		 
+               
+               17/04/2017 - Inlusao da procedure valida_exclusao_tit_bordero para 
+                            tratar chamada da rotina que pede a senha do coordenador.
+                            Projeto 366 (Lombardi).
 
 ............................................................................. */
 
@@ -29,6 +33,9 @@ DEF VAR h-b1wgen0030 AS HANDLE                                      NO-UNDO.
 DEF VAR h-browse     AS HANDLE                                      NO-UNDO.
 DEF VAR aux_flgok    AS LOGICAL                                     NO-UNDO.
 DEF VAR aux_flgalter AS LOGICAL                                     NO-UNDO.
+DEF VAR aux_solcoord AS DECIMAL                                     NO-UNDO.
+DEF VAR aux_flginclu AS LOGICAL                                     NO-UNDO.
+DEF VAR aux_cdoperad AS CHAR                                        NO-UNDO.
 
 ASSIGN tel_nmcustod = ""
        tel_nrcustod = 0.
@@ -357,7 +364,9 @@ DO WHILE TRUE:
                     LEAVE.
                 END.
             
-            RUN efetua_exclusao_tit_bordero IN h-b1wgen0030
+            ASSIGN aux_flginclu = TRUE.
+            
+            RUN valida_exclusao_tit_bordero IN h-b1wgen0030
                                               (INPUT glb_cdcooper,
                                                INPUT tel_cdagenci,
                                                INPUT 0, /*nrdcaixa*/
@@ -368,22 +377,67 @@ DO WHILE TRUE:
                                                INPUT tel_cdbccxlt,
                                                INPUT tel_nrdolote,
                                                INPUT glb_dtmvtolt,
+                                               INPUT tel_vlcompdb, /*valor total de titulos*/
                                                INPUT TABLE tt-titulos,
+                                              OUTPUT aux_solcoord,
                                               OUTPUT TABLE tt-erro).
 
-            DELETE PROCEDURE h-b1wgen0030.
-            
             IF  RETURN-VALUE = "NOK"  THEN
                 DO:
                     FIND FIRST tt-erro NO-LOCK NO-ERROR.
                     IF  AVAIL tt-erro  THEN
                         DO:
-                            MESSAGE glb_dscritic.
-                            LEAVE.
+                            IF aux_solcoord = 1 THEN
+                                MESSAGE tt-erro.dscritic VIEW-AS ALERT-BOX.
+                            ELSE
+                                MESSAGE tt-erro.dscritic.
                         END.
                     ELSE
                         DO:
-                            MESSAGE "Ocorreu erro na exclusao do titulo.".
+                            MESSAGE "Ocorreu erro na alteracao do bordero.".
+                        END.
+                    
+                    IF  aux_solcoord = 1 THEN
+                        DO:
+                            RUN fontes/pedesenha.p (INPUT glb_cdcooper,
+                                                    INPUT 2,
+                                                   OUTPUT aux_flginclu,
+                                                   OUTPUT aux_cdoperad).
+                        END.
+                     ELSE
+                         LEAVE.
+                END.
+            
+            IF  aux_flginclu THEN 
+                DO:
+                    RUN efetua_exclusao_tit_bordero IN h-b1wgen0030
+                                                      (INPUT glb_cdcooper,
+                                                       INPUT tel_cdagenci,
+                                                       INPUT 0, /*nrdcaixa*/
+                                                       INPUT glb_cdoperad,
+                                                       INPUT tel_dtmvtolt,
+                                                       INPUT 1, /*idorigem*/
+                                                       INPUT tel_nrcustod,
+                                                       INPUT tel_cdbccxlt,
+                                                       INPUT tel_nrdolote,
+                                                       INPUT glb_dtmvtolt,
+                                                       INPUT TABLE tt-titulos,
+                                                      OUTPUT TABLE tt-erro).
+
+                    DELETE PROCEDURE h-b1wgen0030.
+                    
+                    IF  RETURN-VALUE = "NOK"  THEN
+                        DO:
+                            FIND FIRST tt-erro NO-LOCK NO-ERROR.
+                            IF  AVAIL tt-erro  THEN
+                                DO:
+                                    MESSAGE glb_dscritic.
+                                    LEAVE.
+                                END.
+                            ELSE
+                                DO:
+                                    MESSAGE "Ocorreu erro na exclusao do titulo.".
+                                END.    
                         END.    
                 END.
 

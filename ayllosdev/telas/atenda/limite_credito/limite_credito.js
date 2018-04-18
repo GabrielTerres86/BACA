@@ -35,6 +35,7 @@
  * 019: [15/07/2016] Andrei    (RKAM)    : Ajuste para utilizar rotina convertida a buscar as linhas de limite de credito.
  * 020:	[25/07/2016] Evandro     (RKAM)  : Alterado função controlaFoco.
  * 021: [01/12/2017] Jonata      (RKAM)  : Não permitir acesso a opção de incluir quando conta demitida.
+ * 022: [13/04/2018] Lombardi  (CECRED)  : Inluidas funcoes validaAdesaoValorProduto e senhaCoordenador. PRJ366 (Lombardi).
  */
 
 var callafterLimiteCred = '';
@@ -1945,4 +1946,37 @@ function AlteraNrContrato() {
             bloqueiaFundo($('#divUsoGenerico'));
         }
     });
+}
+
+function validaAdesaoValorProduto(executar, vllimite) {
+	
+    var vllimite = vllimite != null ? vllimite : $("#vllimite", "#frmNovoLimite").val().replace(/\./g, "");
+	
+	$.ajax({
+		type: 'POST',
+		dataType: 'html',
+		url: UrlSite + 'telas/atenda/limite_credito/valida_valor_adesao_produto.php', 
+		data: {
+			nrdconta: nrdconta,
+			vllimite: vllimite,
+			executar: executar,
+			redirect: 'script_ajax'
+		}, 
+		error: function (objAjax, responseError, objExcept) {
+			hideMsgAguardo();
+			showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
+		},
+		success: function (response) {
+			hideMsgAguardo();
+            try {
+				eval(response);
+			} catch (error) {
+				showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'unblockBackground();');
+			}
+		}				
+	});	
+}
+
+function senhaCoordenador(executaDepois) {
+	pedeSenhaCoordenador(2,executaDepois,'divRotina');
 }

@@ -106,7 +106,8 @@
  * 092: [15/09/2017] Kelvin 		  (CECRED) : Alterações referente a melhoria 339.
  * 093: [06/10/2017] Kelvin 		  (CECRED) : Ajuste para ignorar campos com display none na funcao controlaFocoEnter. (PRJ339 - Kelvin).
  * 095: [06/02/2018] Lombardi 		  (CECRED) : Colocado tratativa para tirar o background quando o type for 'radio'. (PRJ366)
- * 095: [02/04/2018] Lombardi 		  (CECRED) : Adicionado função validaAdesaoProduto para verificar se o tipo de conta permite a contratação do produto. (PRJ366)
+ * 096: [02/04/2018] Lombardi 		  (CECRED) : Adicionado função validaAdesaoProduto para verificar se o tipo de conta permite a contratação do produto. (PRJ366)
+ * 097: [16/04/2018] Lombardi 		  (CECRED) : Adicionado função validaValorProduto para verificar se o tipo de conta permite o valor da contratação do produto. (PRJ366)
 */ 	 
 
 var UrlSite = parent.window.location.href.substr(0, parent.window.location.href.lastIndexOf("/") + 1); // Url do site
@@ -2984,6 +2985,35 @@ function validaAdesaoProduto (nrdconta, cdprodut, executa_depois) {
 			nrdconta: nrdconta,
 			cdprodut: cdprodut, 
 			executa_depois: executa_depois,
+			redirect: 'script_ajax'
+		}, 
+		error: function (objAjax, responseError, objExcept) {
+			hideMsgAguardo();
+			showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
+		},
+		success: function (response) {
+			hideMsgAguardo();
+            try {
+				eval(response);
+			} catch (error) {
+				showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'unblockBackground();');
+			}
+		}				
+	});	
+}
+
+function validaValorProduto(nrdconta, cdprodut, vlcontra, executar, nmdivfnc) {
+	
+	$.ajax({
+		type: 'POST',
+		dataType: 'html',
+		url: UrlSite + 'includes/valida_valor_produto.php', 
+		data: {
+			nrdconta: nrdconta,
+			cdprodut: cdprodut,
+			vlcontra: vlcontra,
+			executar: executar,
+			nmdivfnc: nmdivfnc,
 			redirect: 'script_ajax'
 		}, 
 		error: function (objAjax, responseError, objExcept) {

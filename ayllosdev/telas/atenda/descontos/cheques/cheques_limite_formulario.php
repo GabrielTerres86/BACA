@@ -27,6 +27,7 @@
  * 011: [10/10/2016] Lucas Ranghetti (CECRED): Remover verificacao de digitalizaco para o botao de consultar imagem(#510032)
  * 012: [26/05/2017] Odirlei Busana (AMcom)  : Desabilitar campo de numero do contrato, será gerado automaticamente. PRJ300 - desconto de cheque
  * 013: [26/06/2017] Jonata            (RKAM): Ajuste para rotina ser chamada através da tela ATENDA > Produtos ( P364)
+ * 014: [13/04/2018] Lombardi     (CECRED) : Incluida chamada da function validaValorProduto. PRJ366
  */
 ?>
 
@@ -292,7 +293,7 @@
 			aux_inconfi4 = 71; 
 			aux_inconfi5 = 30;
 			aux_inconfi6 = 51;
-			validaLimiteDscChq("<? echo $cddopcao; ?>",1,11,30);
+			validaValorProduto(nrdconta, 36, $("#vllimite","#frmDadosLimiteDscChq").val().replace('.','').replace(',','.'),"validaLimiteDscChq(\"<? echo $cddopcao; ?>\",1,11,30);","divRotina");
 		<? } ?>
 		return false;
 	});

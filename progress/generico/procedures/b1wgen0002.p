@@ -753,6 +753,9 @@
                            na coluna nrrenavo, caso sim, retorna esse valor, senao retorna o nrrenava.
                            Chamado 845869 - (Mateus Z - Mouts)
 
+              13/04/2018 - Ajuste na procedure valida-dados-gerais para verificar se o tipo de conta
+                           do cooperado permite adesao do produto 31 - Emprestimo. PRJ366 (Lombardi)
+
  ..............................................................................*/
 
 /*................................ DEFINICOES ................................*/
@@ -3663,7 +3666,7 @@ PROCEDURE valida-dados-gerais:
     DEF OUTPUT PARAM aux_dtdpagto AS DATE                           NO-UNDO.
     DEF OUTPUT PARAM par_vlutiliz AS DECI                           NO-UNDO.
     DEF OUTPUT PARAM par_nivrisco AS CHAR                           NO-UNDO.
-
+    
     DEF   VAR        aux_contador AS INTE                           NO-UNDO.
     DEF   VAR        aux_nrdodias AS INTE                           NO-UNDO.
     DEF   VAR        aux_dtmvtolt AS DATE                           NO-UNDO.
@@ -3690,6 +3693,7 @@ PROCEDURE valida-dados-gerais:
     DEF   VAR        aux_vlemprst AS DECIMAL                        NO-UNDO.
     DEF   VAR        aux_vlrtarif AS DECIMAL                        NO-UNDO.
     DEF   VAR        aux_dscatbem AS CHAR                           NO-UNDO.
+    DEF   VAR        aux_valida_adesao AS LOGICAL                   NO-UNDO.
 		
     ASSIGN aux_cdcritic = 0
            aux_dscritic = "".
@@ -3791,7 +3795,70 @@ PROCEDURE valida-dados-gerais:
        END.
     
     DO WHILE TRUE:
+        
+        IF  NOT CAN-DO("0,58,59", STRING(par_cdfinemp)) THEN /* CDC */
+            DO:
+                aux_valida_adesao = TRUE.
+                IF par_cddopcao = "A" THEN
+                    DO:
+                        FIND crawepr WHERE crawepr.cdcooper = par_cdcooper   AND
+                                           crawepr.nrdconta = par_nrdconta   AND
+                                           crawepr.nrctremp = par_nrctremp
+                                           NO-LOCK NO-ERROR.
+                        
+                        /* Se mudou finalidade de contrato  ... */
+                        /* Verifica se valida */
+                        IF  AVAIL crawepr   THEN
+                            DO:
+                                IF  CAN-DO("0,58,59", STRING(crawepr.cdfinemp)) THEN
+                                    aux_valida_adesao = TRUE.
+                                ELSE 
+                                    aux_valida_adesao = FALSE.
+                             END.
+                        
+                    END.
+                IF  aux_valida_adesao = TRUE THEN
+                    DO:
+                        /* buscar quantidade maxima de digitos aceitos para o convenio */
+                        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
+                        
+                        RUN STORED-PROCEDURE pc_valida_adesao_produto
+                            aux_handproc = PROC-HANDLE NO-ERROR
+                                                    (INPUT par_cdcooper,
+                                                     INPUT par_nrdconta,
+                                                     INPUT 31,   /* Emprestimos */
+                                                     OUTPUT 0,   /* pr_cdcritic */
+                                                     OUTPUT ""). /* pr_dscritic */
 
+                        CLOSE STORED-PROC pc_valida_adesao_produto
+                              aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+                        
+                        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+                        
+                        ASSIGN aux_cdcritic = 0
+                               aux_dscritic = ""
+                               aux_cdcritic = pc_valida_adesao_produto.pr_cdcritic                          
+                                                  WHEN pc_valida_adesao_produto.pr_cdcritic <> ?
+                               aux_dscritic = pc_valida_adesao_produto.pr_dscritic
+                                                  WHEN pc_valida_adesao_produto.pr_dscritic <> ?.
+                        
+                        IF  aux_cdcritic <> 0 OR aux_dscritic <> "" THEN
+                            DO:
+                                IF aux_dscritic = "" THEN
+                                   DO:
+                                      FIND crapcri WHERE crapcri.cdcritic = aux_cdcritic 
+                                                         NO-LOCK NO-ERROR.
+                                      
+                                      IF AVAIL crapcri THEN
+                                         ASSIGN aux_dscritic = crapcri.dscritic.
+                                      ELSE
+                                         ASSIGN aux_dscritic =  "Nao foi possivel validar a adesao do produto.".
+                                   END.
+                                LEAVE.
+                            END.
+                    END.
+            END.
+        
         IF  NOT CAN-DO("0,", par_cdmodali) AND 
             NOT CAN-FIND(craplcr WHERE
                          craplcr.cdcooper = par_cdcooper AND
@@ -3805,34 +3872,34 @@ PROCEDURE valida-dados-gerais:
                 LEAVE.
             END.        
                 
-		IF crapass.inpessoa = 1  THEN
-		DO:
+        IF crapass.inpessoa = 1  THEN
+            DO:
 
-			IF CAN-FIND(craplcr WHERE
-						 craplcr.cdcooper = par_cdcooper AND
-						 craplcr.cdlcremp = par_cdlcremp AND
-						 craplcr.cdmodali = "02" AND 
-						 craplcr.cdsubmod = "15") THEN
-			DO:	   
-				ASSIGN aux_cdcritic = 0
-					   aux_dscritic = "Capital de giro apenas permito para conta pessoa juridica.".
+              IF CAN-FIND(craplcr WHERE
+                     craplcr.cdcooper = par_cdcooper AND
+                     craplcr.cdlcremp = par_cdlcremp AND
+                     craplcr.cdmodali = "02" AND 
+                     craplcr.cdsubmod = "15") THEN
+              DO:	   
+                ASSIGN aux_cdcritic = 0
+                     aux_dscritic = "Capital de giro apenas permito para conta pessoa juridica.".
 
-				LEAVE.
-			END.
+                LEAVE.
+              END.
 
-			IF CAN-FIND(craplcr WHERE
-						 craplcr.cdcooper = par_cdcooper AND
-						 craplcr.cdlcremp = par_cdlcremp AND
-						 craplcr.cdmodali = "02" AND 
-						 craplcr.cdsubmod = "16") THEN
-			DO:	   
-				ASSIGN aux_cdcritic = 0
-					   aux_dscritic = "Capital de giro apenas permito para conta pessoa juridica.".
+              IF CAN-FIND(craplcr WHERE
+                     craplcr.cdcooper = par_cdcooper AND
+                     craplcr.cdlcremp = par_cdlcremp AND
+                     craplcr.cdmodali = "02" AND 
+                     craplcr.cdsubmod = "16") THEN
+              DO:	   
+                ASSIGN aux_cdcritic = 0
+                     aux_dscritic = "Capital de giro apenas permito para conta pessoa juridica.".
 
-				LEAVE.
-			END.
+                LEAVE.
+              END.
 
-		END.	     
+            END.	     
                 
 
         IF   par_vlemprst = 0   THEN
@@ -3914,7 +3981,7 @@ PROCEDURE valida-dados-gerais:
         ELSE IF par_tpemprst = 2 THEN
             DO:
                 				 
-        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+                { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
 
                 /* Efetuar a chamada a rotina Oracle  */
                 RUN STORED-PROCEDURE pc_valida_dados_pos_fixado
@@ -4538,7 +4605,7 @@ PROCEDURE valida-dados-gerais:
            
         IF RETURN-VALUE <> "OK" THEN
            RETURN "NOK".
-
+        
         LEAVE.
 
     END. /* Fim tratamento de criticas */

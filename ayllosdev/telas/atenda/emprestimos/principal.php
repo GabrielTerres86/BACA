@@ -40,6 +40,7 @@
  * 029: [10/07/2017] Criacao do insitest no arrayProposta. (Jaison/Marcos Martini - PRJ337)
  * 030: [20/09/2017] Projeto 410 - Incluir campo Indicador de financiamento do IOF (Diogo - Mouts)
  * 031: [01/12/2017] Não permitir acesso a opção de incluir quando conta demitida (Jonata - RKAM P364).
+ * 032: [13/04/2018] Adicionada verificacao se Tipo de Conta permite empréstimo. PRJ366 (Lombardi).
 
  */
 
@@ -98,7 +99,30 @@
 	if (!validaInteiro($idseqttl)) exibirErro('error','Seq.Ttl inválida.','Alerta - Ayllos','fechaRotina(divRotina)',false);
 
 	$procedure = (in_array($operacao,array('A_NOVA_PROP','A_VALOR','A_AVALISTA','A_NUMERO','TE','TI','TC'))) ? 'obtem-dados-proposta-emprestimo' : 'obtem-propostas-emprestimo';
-
+	
+	if ($operacao == "TI") {
+		// Monta o xml de requisição
+		$xml  = "";
+		$xml .= "<Root>";
+		$xml .= "	<Dados>";
+		$xml .= "		<nrdconta>".$nrdconta."</nrdconta>";
+		$xml .= "		<cdprodut>".   31    ."</cdprodut>";
+		$xml .= "	</Dados>";
+		$xml .= "</Root>";
+		
+		// Executa script para envio do XML
+		$xmlResult = mensageria($xml, "CADA0006", "VALIDA_ADESAO_PRODUTO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+		$xmlObj = getObjectXML($xmlResult);
+		
+		// Se ocorrer um erro, mostra crítica
+		if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
+			//exibirErro('error','Tipo de Conta não permite empréstimo. Será permitido apenas inclusão de propostas de CDC.','Alerta - Ayllos','',false);
+			echo '<script type="text/javascript">';
+			echo 'showError("alert","Tipo de Conta n&atilde;o permite empr&eacute;stimo. Ser&aacute; permitido apenas inclus&atilde;o de propostas de CDC.","Alerta - Ayllos","bloqueiaFundo(divRotina);");';
+			echo '</script>';
+		}
+	}
+	
 	if (in_array($operacao,array('A_NOVA_PROP','A_NUMERO','A_VALOR','A_AVALISTA','TI','TE','TC',''))) {
 
 		$xml = "<Root>";

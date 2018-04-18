@@ -88,8 +88,8 @@
 
              01/12/2017 - Não permitir acesso a opção de incluir quando conta demitida (Jonata - RKAM P364).
 			 
-			 04/04/2018 - Ajuste para chamar a rotina de senha do coordenador. 
-						  PRJ366 (Lombardi).
+			 04/04/2018 - Ajuste para chamar as rotinas de validacao do valor de adesao do produto e 
+						  senha do coordenador. PRJ366 (Lombardi).
 
 ***************************************************************************/
 
@@ -3286,6 +3286,11 @@ function ativaCampo() {
     $("#vllanmto", "#frmDadosAplicacaoPos").bind("keyup", function (e) {
         return $(this).setMaskOnKeyUp("DECIMAL", "zz.zzz.zz9,99", "", e);
     });
+}
+
+function validaValorProdutoResgate (executa, campo, form) {
+	var vlresgat = $("#"+campo, "#"+form).val().replace(/\./g, "").replace(",", ".");
+	validaValorProduto(nrdconta, 41, vlresgat, executa, 'divRotina');
 }
 
 function senhaCoordenador(executaDepois) {
