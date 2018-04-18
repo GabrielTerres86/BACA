@@ -1292,7 +1292,7 @@ function formataMensagem03() {
 function aceitarRejeicao(confirm, tipo) {
     if(!confirm || confirm == 0){
         showConfirmacao(
-                        "Deseja rejeitar este limite?",
+                        "Deseja cancelar este limite?",
                         "Confirma&ccedil;&atilde;o - Ayllos",
                         "aceitarRejeicao(1);",
                         "blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))",
