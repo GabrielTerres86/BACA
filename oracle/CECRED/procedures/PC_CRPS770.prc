@@ -1,4 +1,5 @@
 CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS770(pr_cdcooper IN crapcop.cdcooper%TYPE      --> Codigo Cooperativa
+                                             ,pr_cdagenci IN NUMBER
                                              ,pr_nmdatela  in varchar2              --> Nome da tela
                                              ,pr_infimsol OUT PLS_INTEGER
                                              ,pr_cdcritic OUT crapcri.cdcritic%TYPE     --> Codigo da Critica
