@@ -45,6 +45,8 @@
 			 
              15/04/2018 - Correção de sobreescrita.
 
+			 18/04/2018 - Alteração da coluna 'contrato' para 'prospota', inclusão da coluna 'contrato' (Leonardo Oliveira - GFT).
+
 ************************************************************************/
 
 // Carrega biblioteca javascript referente ao RATING
@@ -582,7 +584,7 @@ function formataLayout(nomeForm){
 	}else if ( nomeForm == 'divPropostas' ){
 
 			
-		$('#'+nomeForm).css('width','800px');
+		$('#'+nomeForm).css('width','860px');
 	
 		var divRegistro = $('div.divRegistros','#'+nomeForm);		
 		var tabela      = $('table', divRegistro );	
@@ -598,20 +600,22 @@ function formataLayout(nomeForm){
 		arrayLargura[2] = '60px';
 		arrayLargura[3] = '60px';
 		arrayLargura[4] = '60px';
-		arrayLargura[5] = '100px';
+		arrayLargura[5] = '60px';
 		arrayLargura[6] = '120px';
-		//arrayLargura[7] = '120px';	//não descomentar ou remover esta linha	
-
+		arrayLargura[7] = '120px';
+		arrayLargura[8] = '120px';
+				
 		var arrayAlinha = new Array();
 		
 		arrayAlinha[0] = 'center';
 		arrayAlinha[1] = 'center';
-		arrayAlinha[2] = 'right';
+		arrayAlinha[2] = 'center';
 		arrayAlinha[3] = 'right';
-		arrayAlinha[4] = 'center';
+		arrayAlinha[4] = 'right';
 		arrayAlinha[5] = 'center';
 		arrayAlinha[6] = 'center';
 		arrayAlinha[7] = 'center';
+		arrayAlinha[8] = 'center';
 						
 		tabela.formataTabela( ordemInicial, arrayLargura, arrayAlinha, '' );
 		
