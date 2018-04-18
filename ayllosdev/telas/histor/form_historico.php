@@ -7,6 +7,8 @@
 	* --------------
 	* ALTERAÇÕES   : 24/02/2017 - Remocao dos caracteres "')?>" dos textos dos campos no form. (Jaison/James)
 	*				 05/12/2017 - Adicionado campo Ind. Monitoramento - Melhoria 458 - Antonio R. Jr (mouts)
+	*                11/04/2018 - Incluído novo campo "Estourar a conta corrente" (inestocc)
+    *                             Diego Simas - AMcom  
 	* --------------
 	*/ 
 
@@ -220,6 +222,15 @@
 					<td>
 						<label for="nrctatrd">Conta Tarifa D&eacute;bito:</label>
 						<input id="nrctatrd" name="nrctatrd" type="text"/>
+					</td>
+				</tr>
+				<tr class='estouraConta'>
+					<td colspan="2">
+						<label for="inestocc">Estourar a conta corrente:</label>
+						<select id="inestocc" name="inestocc">
+							<option value="0">0 - N&atilde;o</option>
+							<option value="1">1 - Sim</option>
+						</select>
 					</td>
 				</tr>
 			</table>

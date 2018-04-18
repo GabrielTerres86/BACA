@@ -6,6 +6,8 @@
  * OBJETIVO     : Rotina para alteração e inclusão cadastral da tela HISTOR
  * --------------
  * ALTERAÇÕES   :  05/12/2017 - Adicionado campo Ind. Monitoramento - Melhoria 458 - Antonio R. Jr (mouts)
+ *                 11/04/2018 - Incluído novo campo "Estourar a conta corrente" (inestocc)
+ *                              Diego Simas - AMcom
  * -------------- 
  */
 ?> 
@@ -27,7 +29,7 @@
 	$cdhistor = (isset($_POST['cdhistor'])) ? $_POST['cdhistor'] : 0;
 	$cdhinovo = (isset($_POST['cdhinovo'])) ? $_POST['cdhinovo'] : 0;
 	
-	$cdhstctb = (isset($_POST['cdhstctb'])) ? $_POST['cdhstctb'] : 0;
+	$cdhstctb = (isset($_POST['cdhstctb'])) ? $_POST['cdhstctb'] : 0;	
 	$dsexthst = (isset($_POST['dsexthst'])) ? $_POST['dsexthst'] : '';
 	$dshistor = (isset($_POST['dshistor'])) ? $_POST['dshistor'] : '';
 	$inautori = (isset($_POST['inautori'])) ? $_POST['inautori'] : 0;
@@ -38,6 +40,7 @@
 	$indcompl = (isset($_POST['indcompl'])) ? $_POST['indcompl'] : 0;
 	$indebcta = (isset($_POST['indebcta'])) ? $_POST['indebcta'] : 0;
 	$indoipmf = (isset($_POST['indoipmf'])) ? $_POST['indoipmf'] : 0;
+	$inestocc = (isset($_POST['inestocc'])) ? $_POST['inestocc'] : 0;
 
 	$inhistor = (isset($_POST['inhistor'])) ? $_POST['inhistor'] : 0;
 	$indebcre = (isset($_POST['indebcre'])) ? $_POST['indebcre'] : '';
@@ -131,6 +134,10 @@
     if ($ingercre != 1 && $ingercre != 2 && $ingercre != 3) {
 		exibirErro('error','Gerencial a cr&eacute;dito inv&aacute;lido.','Alerta - Ayllos',"focaCampoErro('ingercre','frmHistorico');",false);
 	}
+
+	if ($inestocc != 0 && $inestocc != 1) {
+		exibirErro('error','Estourar a Conta Corrente inv&aacute;lido.','Alerta - Ayllos',"focaCampoErro('inestocc','frmHistorico');",false);
+	}
 	
     if ($ingerdeb != 1 && $ingerdeb != 2 && $ingerdeb != 3) {
 		exibirErro('error','Gerencial a d&eacute;bito inv&aacute;lido.','Alerta - Ayllos',"focaCampoErro('ingerdeb','frmHistorico');",false);
@@ -186,7 +193,7 @@
 	$xml .= '       <inmonpld>'.$inmonpld.'</inmonpld>';
 	$xml .= '       <indcompl>'.$indcompl.'</indcompl>';
 	$xml .= '       <indebcta>'.$indebcta.'</indebcta>';
-	$xml .= '       <indoipmf>'.$indoipmf.'</indoipmf>';
+	$xml .= '       <indoipmf>'.$indoipmf.'</indoipmf>';	
 
 	$xml .= '       <inhistor>'.$inhistor.'</inhistor>';
 	$xml .= '       <indebcre>'.$indebcre.'</indebcre>';
@@ -200,6 +207,7 @@
 	$xml .= '       <tpctbcxa>'.$tpctbcxa.'</tpctbcxa>';
 
 	$xml .= '       <ingercre>'.$ingercre.'</ingercre>';
+	$xml .= '       <inestocc>'.$inestocc.'</inestocc>';
 	$xml .= '       <ingerdeb>'.$ingerdeb.'</ingerdeb>';
 	
 	$xml .= '       <cdgrphis>'.$cdgrupo_historico.'</cdgrphis>';

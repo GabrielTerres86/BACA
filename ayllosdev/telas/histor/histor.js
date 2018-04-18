@@ -8,14 +8,18 @@
  *                07/02/2017 - #552068 Aumento da largura da tabela para comportar os dados corretamente 
  *                             Retirada a coluna de CPMF na função formataTabelaConsulta (Carlos)
  *				  05/12/2017 - Adicionado novo campo Ind. Monitaoramento - Melhoria 458 - Antonio R. Jr (mouts)
+ *                11/04/2018 - Incluído novo campo "Estourar a conta corrente" (inestocc)
+ *                             Diego Simas - AMcom
  * --------------
  */
 
 // Definir a quantidade de registros que devem ser carregados nas consultas 
 var nrregist = 50; 
+var aux_inestocc = 0;
 	
 $(document).ready(function () {
-	estadoInicial();
+	aux_inestocc = $('#inestocc', '#frmHistorico').val();
+	estadoInicial();	
 	return false;
 });
 
@@ -51,6 +55,7 @@ function estadoInicial() {
 	
 	// Adicionar o foco no campo de OPCAO 
     $("#cddopcao", "#frmCab").focus();
+    
 }
 
 /**
@@ -179,7 +184,8 @@ function formataCadastroHistorico() {
     $('label[for="ingerdeb"]', '#frmHistorico').addClass('rotulo-linha').css({ 'width': '175px' });
     $('label[for="nrctatrc"]', '#frmHistorico').addClass('rotulo').css({ 'width': '180px' });
     $('label[for="nrctatrd"]', '#frmHistorico').addClass('rotulo-linha').css({ 'width': '175px' });
-
+    $('label[for="inestocc"]', '#frmHistorico').addClass('rotulo').css({ 'width': '180px' });
+	
 	// CAMPOS - Dados Contabeis
     $('#cdhstctb', '#frmHistorico').css({ 'width': '50px' }).attr('maxlength', '5').setMask('INTEGER', 'zzzzz', '', '');
     $('#tpctbcxa', '#frmHistorico').css({ 'width': '295px' });
@@ -190,6 +196,7 @@ function formataCadastroHistorico() {
     $('#ingerdeb', '#frmHistorico').css({ 'width': '80px' });
     $('#nrctatrc', '#frmHistorico').css({ 'width': '50px' }).attr('maxlength', '4').setMask('INTEGER', 'zzzz', '', '');
     $('#nrctatrd', '#frmHistorico').css({ 'width': '50px' }).attr('maxlength', '4').setMask('INTEGER', 'zzzz', '', '');
+    $('#inestocc', '#frmHistorico').css({ 'width': '80px' });
 
 	
 	// LABEL - Tarifas
@@ -403,9 +410,10 @@ function liberaCadastro() {
     $('#inmonpld', '#frmHistorico').val("0");
     $('#tpctbcxa', '#frmHistorico').val("0");
     $('#tpctbccu', '#frmHistorico').val("0");
+	$('#inestocc', '#frmHistorico').val("0");
     $('#ingercre', '#frmHistorico').val("1");
     $('#ingerdeb', '#frmHistorico').val("1");
-    $('#flgsenha', '#frmHistorico').val("1");
+    $('#flgsenha', '#frmHistorico').val("1");	
 	
 	// Adicionar foco no primeiro campo
     $("#cdhistor", "#frmHistorico").habilitaCampo().val("").focus();
@@ -502,7 +510,7 @@ function controlaCamposCadastroHistorico() {
     $("#cdhinovo", "#frmHistorico").unbind('keypress').bind('keypress', function (e) {
 		if (e.keyCode == 9 || e.keyCode == 13) {
 			// Executar a opcao de selecionar o historico
-			executaSelecaoHistorico(1);
+			executaSelecaoHistorico(1);			
 			return false;
 		}
     });	
@@ -709,10 +717,19 @@ function controlaCamposCadastroHistorico() {
     $("#nrctatrc", "#frmHistorico").unbind('keypress').bind('keypress', function (e) {
 		if (e.keyCode == 9 || e.keyCode == 13) {
 			// Setar foco no proximo campo
-            $("#nrctatrd", "#frmHistorico").focus();
+			$("#inestocc", "#frmHistorico").focus();
 			return false;
 		}
     });	
+
+	//Define ação para ENTER e TAB no campo estourar a conta corrente
+	$("#inestocc", "#frmHistorico").unbind('keypress').bind('keypress', function (e) {
+		if (e.keyCode == 9 || e.keyCode == 13) {
+			// Setar foco no proximo campo
+			$("#nrctatrd", "#frmHistorico").focus();
+			return false;
+		}
+	});
 	
 	//Define ação para ENTER e TAB no campo conta tarifa debito
     $("#nrctatrd", "#frmHistorico").unbind('keypress').bind('keypress', function (e) {
@@ -825,8 +842,44 @@ function controlaCamposCadastroHistorico() {
 			$('#btSalvar', '#divBotoes').focus();
 			return false;
 		}
-    });	
+    });
+	
+	//Chama tela para pedir senha de coordenador quando o histórico for flegado sim
+	//para estourar a conta (Diego Simas - AMcom)	
+	$("#inestocc", "#frmHistorico").unbind('change').bind('change', function () {			
+		var inestocc = $(this).val();
+		var opcao = $("#cddopcao", "#frmCab").val();		
+		//só pedir senha caso haja alteração no inesstocc (Indicador para Estourar Conta)
+		if(opcao == "A"){	
+			if(inestocc == 0){
+				$('#inestocc', '#frmHistorico').val(1);
+			}else{
+				$('#inestocc', '#frmHistorico').val(0);
+			}			
+				bloqueiaFundo(divRotina);
+				pedeSenhaCoordenador(2, 'voltaTelaSenha('+inestocc+');', '');
+				return false;			
+		}else{
+			if (aux_inestocc != inestocc) {
+				$('#inestocc', '#frmHistorico').val(0);
+				bloqueiaFundo(divRotina);
+				pedeSenhaCoordenador(2, 'voltaTelaSenha(1);', '');
+				return false;
+			}			
+		}		
+	});	
 }
+
+/**
+ * Funcao para controlar a execucao do botao VOLTAR
+ */
+function voltaTelaSenha(valor) {
+	$('#inestocc', '#frmHistorico').val(valor);
+	$("#divUsoGenerico").css("visibility", "hidden");
+	$("#divUsoGenerico").html("");
+	unblockBackground();				
+}
+
 
 /**
  * Funcao para controlar a execucao do botao VOLTAR
@@ -948,8 +1001,9 @@ function prosseguir() {
  * Controlar a pesquisa de historicos
  */
 function controlaPesquisaHistorico() {
+
 	// Definir o tamanho da tela de pesquisa
-    $("#divCabecalhoPesquisa").css("width", "100%");
+	$("#divCabecalhoPesquisa").css("width", "100%");
     $("#divResultadoPesquisa").css("width", "100%");
 
 	// Se esta desabilitado o campo 
@@ -1079,7 +1133,6 @@ function trocaBotao(labelBotao) {
  * paginacao -> se os registros estao sendo paginados
  */
 function consultarHistoricos(nriniseq, paginacao) {	
-	
 	// Campos da tela
     var cddopcao = $('#cddopcao','#frmCab').val();
     var cdhistor = $('#cdhistor','#fsetFiltroConsultar').val();	
@@ -1304,7 +1357,8 @@ function geraImpressao() {
  * Funcao para executar a selecao de um historico
  */
 function executaSelecaoHistorico(validaNovoHistorico) {
-    var cddopcao = $('#cddopcao', '#frmCab').val();
+	
+	var cddopcao = $('#cddopcao', '#frmCab').val();
     var cdhistor = $('#cdhistor', '#frmHistorico').val();
     var cdhinovo = $('#cdhinovo', '#frmHistorico').val();
 	
@@ -1315,7 +1369,6 @@ function executaSelecaoHistorico(validaNovoHistorico) {
             showError('error', 'C&oacute;digo do Hist&oacute;rico deve ser informado.', 'Alerta - Ayllos', "focaCampoErro(\'cdhistor\', \'frmHistorico\');");
 			return false;
 		}
-
 	    // Se chegou aqui todas as validacoes estao OK
 		buscaHistorico();
     }
@@ -1425,6 +1478,7 @@ function manterRotina() {
     var indcompl = $('#indcompl', '#frmHistorico').val();
     var indebcta = $('#indebcta', '#frmHistorico').val();
     var indoipmf = $('#indoipmf', '#frmHistorico').val();
+	var inestocc = $('#inestocc', '#frmHistorico').val();
 
     var inhistor = $('#inhistor', '#frmHistorico').val();
     var indebcre = $('#indebcre', '#frmHistorico').val();
@@ -1441,7 +1495,7 @@ function manterRotina() {
 	var ingerdeb  = $('#ingerdeb','#frmHistorico').val();
 	
 	var cdgrupo_historico  = $('#cdgrupo_historico','#frmHistorico').val();
-	
+
 	var flgsenha  = $('#flgsenha','#frmHistorico').val();
 	var cdprodut  = $('#cdprodut','#frmHistorico').val();
 	var cdagrupa  = $('#cdagrupa','#frmHistorico').val();
@@ -1475,6 +1529,7 @@ function manterRotina() {
 				  indcompl : indcompl,
 				  indebcta : indebcta,
 				  indoipmf : indoipmf,
+				  inestocc : inestocc,
 				  inhistor : inhistor,
 				  indebcre : indebcre,
 				  nmestrut : nmestrut,
