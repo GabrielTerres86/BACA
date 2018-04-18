@@ -3127,6 +3127,7 @@ PROCEDURE busca-craplcr:
                                        WHEN 1 THEN ASSIGN tt-craplcr.dsgarant = "AVAL".
                                        WHEN 2 THEN ASSIGN tt-craplcr.dsgarant = "VEICULOS".
                                        WHEN 3 THEN ASSIGN tt-craplcr.dsgarant = "IMOVEIS".
+									   WHEN 4 THEN ASSIGN tt-craplcr.dsgarant = "APLICACAO".
                                        OTHERWISE ASSIGN tt-craplcr.dsgarant = "NAO CADASTRADO".
                                    END CASE.                                   
                                        
