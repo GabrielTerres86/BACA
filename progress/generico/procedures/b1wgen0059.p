@@ -3,11 +3,11 @@
                            ATENCAO!    CONVERSAO PROGRESS - ORACLE
             ESTE FONTE ESTA ENVOLVIDO NA MIGRACAO PROGRESS->ORACLE!
   +-------------------------------------+----------------------------------------+
-  | Rotina Progress                     | Rotina Oracle PLSQL                    |
+  | Rotina Progress                     | Rotina Oracle PLSQL                  |
   +-------------------------------------+----------------------------------------+
-  | busca-crapope			            | ZOOM0001.pc_busca_operadores           |
-  | busca-crapban					    | ZOOM0001.pc_busca_bancos               |
-  | busca-historico                     | ZOOM0001.pc_busca_historico            |
+  | busca-crapope			            | ZOOM0001.pc_busca_operadores         |
+  | busca-crapban					    | ZOOM0001.pc_busca_bancos             |
+  | busca-historico                     | ZOOM0001.pc_busca_historico          |
   | busca-craplrt					    | ZOOM0001.pc_busca_craplrt			     | 
   | busca-craplcr                       | ZOOM0001.pc_busca_craplcr              | 
   | busca-crapfin						| ZOOM0001.pc_busca_finalidades_empr_web |
@@ -189,7 +189,7 @@
 			    22/02/2017 - Removido as rotinas busca_nat_ocupacao, busca_ocupacao devido a conversao 
 				             da busca_gncdnto e da busca-gncdocp
 							 (Adriano - SD 614408).
-
+							 				
                 29/03/2017 - Criacao de filtro por tpprodut na busca-craplcr.
                              (Jaison/James - PRJ298)
 							 				
@@ -3119,7 +3119,7 @@ PROCEDURE busca-craplcr:
     DEF  INPUT PARAM par_nriniseq AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_cdmodali AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_tpprodut AS INTE                           NO-UNDO.
-
+    
     DEF OUTPUT PARAM par_qtregist AS INTE                           NO-UNDO.
     DEF OUTPUT PARAM TABLE FOR tt-craplcr.
 
@@ -3184,6 +3184,7 @@ PROCEDURE busca-craplcr:
                                        WHEN 1 THEN ASSIGN tt-craplcr.dsgarant = "AVAL".
                                        WHEN 2 THEN ASSIGN tt-craplcr.dsgarant = "VEICULOS".
                                        WHEN 3 THEN ASSIGN tt-craplcr.dsgarant = "IMOVEIS".
+									   WHEN 4 THEN ASSIGN tt-craplcr.dsgarant = "APLICACAO".
                                        OTHERWISE ASSIGN tt-craplcr.dsgarant = "NAO CADASTRADO".
                                    END CASE.                                   
                                        

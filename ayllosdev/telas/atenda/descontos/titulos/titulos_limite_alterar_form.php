@@ -5,7 +5,7 @@
  * DATA CRIAÇÃO : 16/12/2015 
  * OBJETIVO     : Tela para alteração do número da proposta de limite de desc de títulos. (Lunelli - SD 360072 [M175])
  * --------------
- * ALTERAÇÕES   : 
+ * ALTERAÇÕES   : 22/03/2018 - Retirado opcao de alteracao do numero da proposta. (Daniel - Projeto 403)
  * --------------
  * 000:
  *
@@ -56,7 +56,7 @@
 									<div style="width: 240px; height: 100px;" id="divConteudoAltara" class="divBotoes">
 												
 										<a href="#" class="botao" style="margin: 4px 0px 4px 0px; width:230px; " id="todaProp" onClick="fechaRotinaAltera();carregaDadosAlteraLimiteDscTit();return false;">Toda a proposta </a>
-										<a href="#" class="botao" style="margin: 4px 0px 4px 0px; width:230px; " onClick="exibeAlteraNumero();return false;"> Alterar o n&uacute;mero do contrato </a>
+									<!--	<a href="#" class="botao" style="margin: 4px 0px 4px 0px; width:230px; " onClick="exibeAlteraNumero();return false;"> Alterar o n&uacute;mero do contrato </a> -->
 										<a href="#" class="botao" style="margin: 6px 0px 0px 0px;" id="btVoltar" onClick="fechaRotinaAltera();return false;"> Voltar </a>
 										
 																				
