@@ -297,8 +297,6 @@ function controlaFoco() {
           $('#qtmeschq', '#divAlteracao').desabilitaCampo();
           $('#qtmesest', '#divAlteracao').desabilitaCampo();
           $('#qtmesemp', '#divAlteracao').desabilitaCampo();
-	      $('#nmregmpf', '#divAlteracao').val('');
-          $('#nmregmpj', '#divAlteracao').val('');
           $('#qtsstime', '#divAlteracao').val('0');
           $('#qtmeschq', '#divAlteracao').val('0');
           $('#qtmesest', '#divAlteracao').val('0');
@@ -423,8 +421,10 @@ function manterRotina(cdopcao) {
             contigen: contigen,
             anlautom: anlautom,
             incomite: incomite,
+            
             nmregmpf: nmregmpf,
             nmregmpj: nmregmpj,
+            
             qtsstime: qtsstime,
             qtmeschq: qtmeschq,
             qtmesest: qtmesest,
