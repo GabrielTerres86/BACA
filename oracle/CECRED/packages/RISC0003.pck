@@ -3076,7 +3076,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0003 IS
 
   END pc_reabre_risco_garantia_prest;
 
-  PROCEDURE pc_risco_central_ocr(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Cooperativa
+PROCEDURE pc_risco_central_ocr(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Cooperativa
                                 ,pr_cdcritic OUT PLS_INTEGER           --> Critica encontrada
                                 ,pr_dscritic OUT VARCHAR2) IS          --> Texto de erro/critica encontrada
   BEGIN
@@ -3160,8 +3160,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0003 IS
       SELECT distinct t.nrdconta,(SELECT max(tt.inrisco_cpf) inrisco_cpf
                                     FROM tbrisco_central_ocr tt
                                        , crapris rr
-                                   WHERE /*rr.vldivida > vr_valor_arrasto
-                                     and */rr.cdcooper = tt.cdcooper
+                                   WHERE rr.cdcooper = tt.cdcooper
                                      and rr.nrdconta = tt.nrdconta
                                      and rr.nrctremp = tt.nrctremp
                                      and rr.dtrefere = tt.dtrefere
@@ -3182,8 +3181,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0003 IS
          and t.inrisco_cpf < (SELECT max(tt.inrisco_cpf) inrisco_cpf
                                  FROM tbrisco_central_ocr tt
                                     , crapris rr
-                                WHERE /*rr.vldivida > vr_valor_arrasto
-                                  and */rr.cdcooper = tt.cdcooper
+                                WHERE rr.cdcooper = tt.cdcooper
                                   and rr.nrdconta = tt.nrdconta
                                   and rr.nrctremp = tt.nrctremp
                                   and rr.dtrefere = tt.dtrefere
@@ -3304,7 +3302,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0003 IS
          AND ris.nrdconta = epr.nrdconta
          AND ris.nrctremp = epr.nrctremp         
          AND ris.cdmodali IN(299,499) -- Empréstimos         
-        -- AND ris.inddocto = 1
          AND ris.cdorigem = 3
          AND ris.cdcooper = pr_cdcooper
          AND ris.dtrefere = rw_dat.dtmvtoan;
@@ -3417,7 +3414,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0003 IS
          AND ris.cdcooper = bdt.cdcooper
          AND ris.nrdconta = bdt.nrdconta               
          AND ris.nrctremp = bdt.nrborder
-         --AND ris.inddocto = 1
          AND ris.cdmodali = 301 -- Desconto títulos
          AND ris.vldivida > vr_valor_arrasto -- Materialidade(Arrasto)
          AND ris.cdcooper = pr_cdcooper
@@ -3491,7 +3487,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0003 IS
          AND ris.cdcooper = bdc.cdcooper
          AND ris.nrdconta = bdc.nrdconta         
          AND ris.nrctremp = bdc.nrborder
-         --AND ris.inddocto = 1
          AND ris.cdmodali = 302 -- Desconto cheques
          AND ris.vldivida > vr_valor_arrasto -- Materialidade(Arrasto)
          AND ris.cdcooper = pr_cdcooper
@@ -3582,7 +3577,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0003 IS
                  AND ris.nrdconta = wpr.nrdconta
                  AND ris.nrctremp = wpr.nrctremp
                  AND ris.cdmodali IN(299,499)
-                 --AND ris.inddocto = 1
                  AND ris.cdorigem = 3
                  AND ris.cdcooper = pr_cdcooper
                  AND ris.dtrefere = rw_dat.dtmvtoan
@@ -3632,7 +3626,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0003 IS
                                           AND ris.cdcooper = bdt.cdcooper
                                           AND ris.nrdconta = bdt.nrdconta               
                                           AND ris.nrctremp = bdt.nrborder
-                                          --AND ris.inddocto = 1
                                           AND ris.cdmodali = 301 -- Desconto títulos
                                           AND ris.vldivida > vr_valor_arrasto -- Materialidade(Arrasto)
                                           AND ris.cdcooper = pr_cdcooper
@@ -3673,7 +3666,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0003 IS
                                           AND ris.cdcooper = bdc.cdcooper
                                           AND ris.nrdconta = bdc.nrdconta         
                                           AND ris.nrctremp = bdc.nrborder
-                                          --AND ris.inddocto = 1
                                           AND ris.cdmodali = 302 -- Desconto cheques
                                           AND ris.vldivida > vr_valor_arrasto -- Materialidade(Arrasto)
                                           AND ris.cdcooper = pr_cdcooper
@@ -3775,7 +3767,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0003 IS
        WHERE g.cdcooper(+) = pr_cdcooper
          AND g.nrctasoc(+) = pr_nrdconta
          AND g.nrcpfcgc(+) = pr_nrcpfcgc;
---         AND g.nrdgrupo(+) = pr_nrdgrupo;
       rw_grupo cr_grupo%ROWTYPE;
     BEGIN
       OPEN cr_grupo;
@@ -4631,6 +4622,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0003 IS
       --
       -- Ajustar Risco CPF por Grupo Econômico
       -- Chama processo de ajuste CPF
+      -- Não considera a materialidade
       pc_ajusta_risco_CPF(pr_cdcooper => pr_cdcooper  -- Cooperativa
                          ,pr_cdcritic => vr_cdcritic  -- Código da crítica
                          ,pr_dscritic => vr_dscritic);-- Erros do processo
@@ -4670,7 +4662,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0003 IS
         -- Efetuar rollback
         ROLLBACK;
    END;
- END pc_risco_central_ocr;
+   END pc_risco_central_ocr;
 
 END RISC0003;
 /
