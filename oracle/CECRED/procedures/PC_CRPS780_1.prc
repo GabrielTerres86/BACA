@@ -1263,7 +1263,7 @@ BEGIN
         pr_cdcritic := NVL(vr_cdcritic,0);
         pr_dscritic := vr_dscritic;
         -- Efetuar rollback
-        ROLLBACK;      
+        --ROLLBACK;      
     
       WHEN OTHERS THEN
         --Variavel de erro recebe erro ocorrido
