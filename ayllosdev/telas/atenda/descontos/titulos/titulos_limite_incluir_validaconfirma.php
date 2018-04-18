@@ -8,6 +8,7 @@
 	 Objetivo  : Validar número do contrato e confirma a inclusão
 	                                                                  	 
 	 Alterações: 10/06/2010 - Adaptação para RATNG (David).                                                     
+				 22/03/2013 - Ajustes referente a geracao automatica do numero do contrato. Daniel (Cecred) : 
 	************************************************************************/
 	
 	session_start();
