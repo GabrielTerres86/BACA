@@ -163,13 +163,5 @@ begin
     end if;
   end loop;
 end;
-/*
-  ATVPRB  @ t0031670    1 1 5 2 24196552
 
-
-select * from crapace where nmdatela='ATVPRB';
-select * from crapope o where 
-o.cdoperad like 'F%'
-
-;
-o.cdoperad='f0030066';*/
+commit;
