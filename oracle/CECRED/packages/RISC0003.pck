@@ -3076,7 +3076,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0003 IS
 
   END pc_reabre_risco_garantia_prest;
 
-PROCEDURE pc_risco_central_ocr(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Cooperativa
+  PROCEDURE pc_risco_central_ocr(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Cooperativa
                                 ,pr_cdcritic OUT PLS_INTEGER           --> Critica encontrada
                                 ,pr_dscritic OUT VARCHAR2) IS          --> Texto de erro/critica encontrada
   BEGIN
@@ -3114,6 +3114,11 @@ PROCEDURE pc_risco_central_ocr(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Coopera
 
     vr_grupo_economico  NUMBER(11):= NULL;
     
+    vr_tipo             NUMBER       := NULL;
+    vr_data             VARCHAR2(20) := NULL;
+    vr_contrato         NUMBER       := NULL;
+    vr_vldivida         NUMBER       := 0;
+        
   --**************************--
   --*** CURSORES GENÉRICOS ***--
   --**************************--
@@ -3155,41 +3160,34 @@ PROCEDURE pc_risco_central_ocr(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Coopera
       SELECT distinct t.nrdconta,(SELECT max(tt.inrisco_cpf) inrisco_cpf
                                     FROM tbrisco_central_ocr tt
                                        , crapris rr
-                                   WHERE rr.vldivida > vr_valor_arrasto
-                                     and rr.cdcooper = tt.cdcooper
+                                   WHERE /*rr.vldivida > vr_valor_arrasto
+                                     and */rr.cdcooper = tt.cdcooper
                                      and rr.nrdconta = tt.nrdconta
                                      and rr.nrctremp = tt.nrctremp
                                      and rr.dtrefere = tt.dtrefere
                                      and tt.cdmodali not in(0,999)
-                                     and tt.dtdrisco is not null
-                                     and tt.nrdgrupo is not null
                                      and tt.dtrefere = t.dtrefere
                                      and tt.nrdconta = t.nrdconta
                                      and tt.cdcooper = t.cdcooper
                                 group by tt.nrdconta) inrisco_cpf
         FROM tbrisco_central_ocr t
            , crapris r
-       WHERE r.vldivida > vr_valor_arrasto
-         and r.cdcooper = t.cdcooper
+       WHERE r.cdcooper = t.cdcooper
          and r.nrdconta = t.nrdconta
          and r.nrctremp = t.nrctremp
          and r.dtrefere = t.dtrefere
          and t.cdmodali not in(0,999)
-         and t.dtdrisco is not null
-         and t.nrdgrupo is not null
          and t.dtrefere = rw_dat.dtmvtoan
          and t.cdcooper = pr_cdcooper
          and t.inrisco_cpf < (SELECT max(tt.inrisco_cpf) inrisco_cpf
                                  FROM tbrisco_central_ocr tt
                                     , crapris rr
-                                WHERE rr.vldivida > vr_valor_arrasto
-                                  and rr.cdcooper = tt.cdcooper
+                                WHERE /*rr.vldivida > vr_valor_arrasto
+                                  and */rr.cdcooper = tt.cdcooper
                                   and rr.nrdconta = tt.nrdconta
                                   and rr.nrctremp = tt.nrctremp
                                   and rr.dtrefere = tt.dtrefere
                                   and tt.cdmodali not in(0,999)
-                                  and tt.dtdrisco is not null
-                                  and tt.nrdgrupo is not null
                                   and tt.dtrefere = t.dtrefere
                                   and tt.nrdconta = t.nrdconta
                                   and tt.cdcooper = t.cdcooper
@@ -3227,7 +3225,6 @@ PROCEDURE pc_risco_central_ocr(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Coopera
         FROM crapass ass
            , crapgrp grp
        WHERE ass.cdcooper = pr_cdcooper
-         --AND ass.dtdemiss IS NULL ???
          AND ass.cdcooper = grp.cdcooper(+)
          AND ass.nrdconta = grp.nrctasoc(+)
          AND ass.nrcpfcgc = grp.nrcpfcgc(+)
@@ -3249,7 +3246,6 @@ PROCEDURE pc_risco_central_ocr(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Coopera
            , ris.dtdrisco
            , ris.cdorigem
            , ris.inddocto
-           , ris.vldivida
            , ris.qtdiaatr
            , ris.innivris
            , ris.innivori
@@ -3293,7 +3289,8 @@ PROCEDURE pc_risco_central_ocr(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Coopera
                   WHEN wpr.dsnivris = 'G'  THEN 8
                   WHEN wpr.dsnivris = 'H'  THEN 9
                   WHEN wpr.dsnivris = 'HH' THEN 10
-               ELSE 2 END innivris_ctr                
+               ELSE 2 END innivris_ctr
+           , ris.vldivida  
         FROM crapris ris
            , crapass ass
            , crawepr wpr
@@ -3345,7 +3342,8 @@ PROCEDURE pc_risco_central_ocr(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Coopera
                   WHEN ass.inrisctl = 'G'  THEN 8
                   WHEN ass.inrisctl = 'H'  THEN 9
                   WHEN ass.inrisctl = 'HH' THEN 10
-               ELSE NULL END innivris_ctl                 
+               ELSE NULL END innivris_ctl   
+           , ris.vldivida
         FROM crapris ris
            , crapass ass
        WHERE ris.cdcooper = ass.cdcooper
@@ -3377,6 +3375,7 @@ PROCEDURE pc_risco_central_ocr(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Coopera
            , innivris           
            , innivris_cta
            , innivris_ctl
+           , sum(vldivida) vldivida
       FROM (           
       SELECT DISTINCT ris.cdcooper
            , ris.nrcpfcgc
@@ -3387,7 +3386,7 @@ PROCEDURE pc_risco_central_ocr(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Coopera
            , ris.inddocto           
            , ris.dtrefere
            , max(ris.dtdrisco) dtdrisco
-           , MAX(ris.qtdiaatr) qtdiaatr
+           , max(ris.qtdiaatr) qtdiaatr
            , ris.innivris           
            , CASE WHEN ass.dsnivris = 'A'  THEN 2
                   WHEN ass.dsnivris = 'B'  THEN 3
@@ -3408,7 +3407,8 @@ PROCEDURE pc_risco_central_ocr(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Coopera
                   WHEN ass.inrisctl = 'G'  THEN 8
                   WHEN ass.inrisctl = 'H'  THEN 9
                   WHEN ass.inrisctl = 'HH' THEN 10
-               ELSE NULL END innivris_ctl                 
+               ELSE NULL END innivris_ctl 
+           , sum(ris.vldivida) vldivida              
         FROM crapris ris
            , crapass ass
            , crapbdt bdt -- Desconto títulos
@@ -3481,7 +3481,8 @@ PROCEDURE pc_risco_central_ocr(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Coopera
                   WHEN ass.inrisctl = 'G'  THEN 8
                   WHEN ass.inrisctl = 'H'  THEN 9
                   WHEN ass.inrisctl = 'HH' THEN 10
-               ELSE NULL END innivris_ctl                 
+               ELSE NULL END innivris_ctl      
+           , sum(ris.vldivida) vldivida
         FROM crapris ris
            , crapass ass
            , crapbdc bdc -- Desconto cheques
@@ -3888,8 +3889,6 @@ PROCEDURE pc_risco_central_ocr(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Coopera
         BEGIN
           FOR rw_risco_emp IN cr_risco_emp(pr_cdcooper) LOOP
 
-            -- Se o valor da dívida é maior que a Materialidade(Arrasto)
-            IF rw_risco_emp.vldivida > vr_valor_arrasto THEN
               -- Processa as variáveis de Riscos a serem inseridos
               vr_inrisco_inclusao := rw_risco_emp.innivori_ctr;
               --
@@ -3901,22 +3900,29 @@ PROCEDURE pc_risco_central_ocr(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Coopera
               --
               vr_inrisco_atraso   := fn_calcula_risco_atraso(rw_risco_emp.qtdiaatr);
               --
+              vr_inrisco_refin    := rw_risco_emp.inrisco_refin;
+              --
               vr_inrisco_agravado := fn_busca_risco_agravado(rw_risco_emp.cdcooper
                                                             ,rw_risco_emp.nrdconta
                                                             ,rw_dat.dtmvtoan);
               --
               -- Só existirá melhora se o nível risco estiver menor que o nível risco inclusão
-              vr_inrisco_melhora  := (CASE WHEN rw_risco_emp.innivris_ctr < vr_inrisco_inclusao THEN
-                                       rw_risco_emp.innivris_ctr
+              vr_inrisco_melhora  := (CASE WHEN rw_risco_emp.innivris < rw_risco_emp.innivori THEN
+                                       rw_risco_emp.innivris
                                      ELSE NULL END);
-              --              
-              vr_inrisco_operacao := greatest(nvl(vr_inrisco_rating,2)
-                                              ,vr_inrisco_atraso
-                                              ,(CASE WHEN rw_risco_emp.innivris_ctr <> rw_risco_emp.innivori_ctr
-                                                 AND rw_risco_emp.innivris_ctr = 2 THEN
-                                                   rw_risco_emp.innivris_ctr
-                                                ELSE rw_risco_emp.innivori_ctr END)
-                                               ,nvl(vr_inrisco_agravado, 2));
+              --
+                if rw_risco_emp.vldivida > vr_valor_arrasto then 
+                    vr_inrisco_operacao := greatest(nvl(vr_inrisco_rating,2)
+                                                   ,vr_inrisco_atraso
+                                                   ,(CASE WHEN vr_inrisco_melhora <>  vr_inrisco_inclusao
+                                                      AND vr_inrisco_melhora = 2 THEN
+                                                          vr_inrisco_melhora
+                                                     ELSE  vr_inrisco_inclusao END)
+                                                   ,nvl(vr_inrisco_agravado, 2)
+                                                   ,nvl(vr_inrisco_refin,2));
+                else
+                   vr_inrisco_operacao := nvl(vr_inrisco_inclusao, 2);
+                end if;
               --
               vr_inrisco_cpf      := vr_inrisco_operacao;
               --              
@@ -3924,8 +3930,6 @@ PROCEDURE pc_risco_central_ocr(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Coopera
                                                              ,rw_risco_emp.nrdconta
                                                              ,rw_risco_emp.nrcpfcgc);
               --
-              vr_inrisco_refin    := rw_risco_emp.inrisco_refin;
-              
               vr_inrisco_final    := greatest(nvl(rw_risco_emp.innivris,2)
                                              ,nvl(vr_inrisco_cpf,2)
                                              ,nvl(vr_inrisco_grupo,2));
@@ -3973,7 +3977,6 @@ PROCEDURE pc_risco_central_ocr(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Coopera
                                            , vr_inrisco_final
                                            , vr_inrisco_refin);
             --
-            END IF;
           END LOOP;
         EXCEPTION
           WHEN OTHERS THEN
@@ -4031,10 +4034,14 @@ PROCEDURE pc_risco_central_ocr(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Coopera
             --
             vr_inrisco_melhora  := NULL; -- Limite/ ADP não possui Melhora
             --
-            vr_inrisco_operacao := greatest(nvl(vr_inrisco_rating, 2)
-                                           ,vr_inrisco_inclusao
-                                           ,vr_inrisco_atraso
-                                           ,nvl(vr_inrisco_agravado, 2));
+            if rw_riscoAL.vldivida > vr_valor_arrasto and rw_riscoAL.cdmodali <> 1901 then  
+              vr_inrisco_operacao := greatest(nvl(vr_inrisco_rating, 2)
+                                             ,vr_inrisco_inclusao
+                                             ,vr_inrisco_atraso
+                                             ,nvl(vr_inrisco_agravado, 2));
+            else 
+              vr_inrisco_operacao := vr_inrisco_inclusao;
+            end if;
             --
             vr_inrisco_cpf      := vr_inrisco_operacao;
             --
@@ -4144,10 +4151,14 @@ PROCEDURE pc_risco_central_ocr(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Coopera
                                                           ,rw_dat.dtmvtoan);
             vr_inrisco_melhora  := NULL;
             --
-            vr_inrisco_operacao := greatest(nvl(vr_inrisco_rating, 2)
-                                            ,vr_inrisco_inclusao
-                                            ,vr_inrisco_atraso
-                                            ,nvl(vr_inrisco_agravado, 2));
+            if rw_riscoLD.vldivida > vr_valor_arrasto then  
+              vr_inrisco_operacao := greatest(nvl(vr_inrisco_rating, 2)
+                                             ,vr_inrisco_inclusao
+                                             ,vr_inrisco_atraso
+                                             ,nvl(vr_inrisco_agravado, 2));
+            else 
+              vr_inrisco_operacao := vr_inrisco_inclusao;
+            end if;            
             --
             vr_inrisco_cpf      := vr_inrisco_operacao;
             --
@@ -4222,6 +4233,7 @@ PROCEDURE pc_risco_central_ocr(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Coopera
     PROCEDURE pc_insere_dados_contaX(pr_cdcooper IN NUMBER         -- Cooperativa
                                     ,pr_cdcritic OUT PLS_INTEGER   -- Código da crítica
                                     ,pr_dscritic OUT VARCHAR2) IS  -- Erros do processo) IS
+
       BEGIN
         pr_cdcritic := NULL;
         pr_dscritic := NULL;
@@ -4237,6 +4249,7 @@ PROCEDURE pc_risco_central_ocr(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Coopera
         vr_inrisco_grupo    := NULL;
         vr_inrisco_final    := NULL;
         vr_grupo_economico  := NULL;        
+        vr_vldivida         := 0;                
 
         FOR rw_contaX IN cr_contaX(pr_cdcooper) LOOP
           -- Processa as variáveis de Riscos a serem inseridos
@@ -4248,11 +4261,35 @@ PROCEDURE pc_risco_central_ocr(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Coopera
           vr_inrisco_grupo    := fn_busca_grupo_economico(rw_contaX.cdcooper
                                                          ,rw_contaX.nrdconta
                                                          ,rw_contaX.nrcpfcgc);
-          --
-          vr_inrisco_operacao := greatest(nvl(vr_inrisco_rating, 2)
-                                             ,vr_inrisco_inclusao
-                                             ,vr_inrisco_atraso
-                                             ,nvl(vr_inrisco_agravado, 2));          
+          -- 
+          vr_tipo     := NULL;
+          vr_data     := NULL;
+          vr_contrato := NULL;
+          vr_vldivida := 0;
+          
+          zoom0001.pc_consultar_limite_adp(pr_cdcooper => rw_contaX.cdcooper --> Cooperativa
+                                          ,pr_nrdconta => rw_contaX.nrdconta --> Conta
+                                          -- OUT
+                                          ,pr_tipo     => vr_tipo        --> Tipo do registro
+                                          ,pr_data     => vr_data        --> Data
+                                          ,pr_contrato => vr_contrato    --> Contrato
+                                          ,pr_saldo    => vr_vldivida    --> Saldo à liquidar
+                                          ,pr_cdcritic => vr_cdcritic    --> Código da crítica
+                                          ,pr_dscritic => vr_dscritic);  --> Descrição da crítica
+         -- Se retornou alguma crítica
+         IF TRIM(vr_dscritic) IS NOT NULL THEN
+           -- Levanta exceção
+           RAISE vr_exc_saida;
+         END IF;                                          
+
+         if vr_vldivida > vr_valor_arrasto then  
+            vr_inrisco_operacao := greatest(nvl(vr_inrisco_rating, 2)
+                                           ,vr_inrisco_inclusao
+                                           ,vr_inrisco_atraso
+                                           ,nvl(vr_inrisco_agravado, 2));          
+          else 
+            vr_inrisco_operacao := vr_inrisco_inclusao;
+          end if;
           --
           vr_inrisco_cpf      := vr_inrisco_operacao;
           --
@@ -4337,10 +4374,34 @@ PROCEDURE pc_risco_central_ocr(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Coopera
                                                         ,rw_semrisco.nrdconta
                                                         ,rw_dat.dtmvtoan);
           --
-          vr_inrisco_operacao := greatest(nvl(vr_inrisco_rating, 2)
-                                             ,vr_inrisco_inclusao
-                                             ,vr_inrisco_atraso
-                                             ,nvl(vr_inrisco_agravado, 2));
+          vr_tipo     := NULL;
+          vr_data     := NULL;
+          vr_contrato := NULL;
+          vr_vldivida := 0;
+          
+          zoom0001.pc_consultar_limite_adp(pr_cdcooper => rw_semrisco.cdcooper --> Cooperativa
+                                          ,pr_nrdconta => rw_semrisco.nrdconta --> Conta
+                                          -- OUT
+                                          ,pr_tipo     => vr_tipo        --> Tipo do registro
+                                          ,pr_data     => vr_data        --> Data
+                                          ,pr_contrato => vr_contrato    --> Contrato
+                                          ,pr_saldo    => vr_vldivida    --> Saldo à liquidar
+                                          ,pr_cdcritic => vr_cdcritic    --> Código da crítica
+                                          ,pr_dscritic => vr_dscritic);  --> Descrição da crítica
+          -- Se retornou alguma crítica
+          IF TRIM(vr_dscritic) IS NOT NULL THEN
+            -- Levanta exceção
+            RAISE vr_exc_saida;
+          END IF;                                                    
+          
+          if vr_vldivida > vr_valor_arrasto then  
+            vr_inrisco_operacao := greatest(nvl(vr_inrisco_rating, 2)
+                                           ,vr_inrisco_inclusao
+                                           ,vr_inrisco_atraso
+                                           ,nvl(vr_inrisco_agravado, 2));          
+          else 
+            vr_inrisco_operacao := vr_inrisco_inclusao;
+          end if;
           --
           vr_inrisco_cpf      := vr_inrisco_operacao;
           --
@@ -4414,8 +4475,7 @@ PROCEDURE pc_risco_central_ocr(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Coopera
                                                             
           UPDATE tbrisco_central_ocr
              SET inrisco_cpf = rw_ajusta_cpf.inrisco_cpf
-           WHERE cdmodali not in(0,999)
-             AND dtrefere = rw_dat.dtmvtoan
+           WHERE dtrefere = rw_dat.dtmvtoan
              AND nrdconta = rw_ajusta_cpf.nrdconta
              AND cdcooper = pr_cdcooper;
          --
@@ -4610,7 +4670,7 @@ PROCEDURE pc_risco_central_ocr(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Coopera
         -- Efetuar rollback
         ROLLBACK;
    END;
-   END pc_risco_central_ocr;
+ END pc_risco_central_ocr;
 
 END RISC0003;
 /
