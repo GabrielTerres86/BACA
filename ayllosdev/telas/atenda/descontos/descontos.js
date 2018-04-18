@@ -598,10 +598,10 @@ function formataLayout(nomeForm){
 		arrayLargura[2] = '60px';
 		arrayLargura[3] = '60px';
 		arrayLargura[4] = '60px';
-		arrayLargura[5] = '120px';
+		arrayLargura[5] = '100px';
 		arrayLargura[6] = '120px';
-		arrayLargura[7] = '120px';
-				
+		//arrayLargura[7] = '120px';	//não descomentar ou remover esta linha		
+		
 		var arrayAlinha = new Array();
 		
 		arrayAlinha[0] = 'center';
