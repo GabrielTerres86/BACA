@@ -30,6 +30,10 @@
                09/10/2017 - Habilitar condicoes especificas do app mobile para
                             projeto 285 (David).
                
+			   18/04/2018 - Alterar mensagem de retorno e condicional das rotinas
+			                pc_gps_pagamento e pc_gps_agmto_novo.
+							(PRJ381 - Analise de Fraude, Teobaldo Jamunda-AMcom)
+
 ..............................................................................*/
     
 CREATE WIDGET-POOL.
@@ -258,13 +262,13 @@ ELSE IF  par_tpoperac = 3 THEN DO: /* Efetua pagamento GPS */
     { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
 
 	
-  IF aux_dscritic <> "" AND (NOT aux_dscritic MATCHES "*Transacoes pendentes*") THEN DO:
+  IF aux_dscritic <> "" AND (NOT aux_dscritic MATCHES "*Aguardando aprovação do(s) preposto(s)*") THEN DO:
         ASSIGN par_dsmsgerr = "<dsmsgerr>" + aux_dscritic + "</dsmsgerr>".
         RETURN "NOK".
     END.
 
     CREATE xml_operacao.
-  ASSIGN xml_operacao.dslinxml = "<dsmsg>" + (IF aux_idastcjt = 1 AND aux_dscritic MATCHES "*Transacoes pendentes*" THEN aux_dscritic ELSE "Pagamento(s) efetuado(s) com sucesso!") + "</dsmsg>" + 
+  ASSIGN xml_operacao.dslinxml = "<dsmsg>" + (IF aux_idastcjt = 1 AND aux_dscritic MATCHES "*Aguardando aprovação do(s) preposto(s)*" THEN aux_dscritic ELSE "Transação(ões) registrada(s) com sucesso.") + "</dsmsg>" + 
                    "<idastcjt>" + STRING(aux_idastcjt) + "</idastcjt>" + 
                    "<dsprotoc>" + (IF pc_gps_pagamento.pr_dsprotoc <> ? THEN pc_gps_pagamento.pr_dsprotoc ELSE "") + "</dsprotoc>".
 
@@ -348,13 +352,13 @@ ELSE IF  par_tpoperac = 5 THEN DO: /* Efetua Agendamento de GPS */
     { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
 
 	
-  IF aux_dscritic <> "" AND (NOT aux_dscritic MATCHES "*Transacoes pendentes*") THEN DO:
+  IF aux_dscritic <> "" AND (NOT aux_dscritic MATCHES "*Aguardando aprovação do(s) preposto(s)*") THEN DO:
         ASSIGN par_dsmsgerr = "<dsmsgerr>" + aux_dscritic + "</dsmsgerr>".
         RETURN "NOK".
     END.
 
     CREATE xml_operacao.
-  ASSIGN xml_operacao.dslinxml = "<dsmsg>" + (IF aux_idastcjt = 1 AND aux_dscritic MATCHES "*Transacoes pendentes*" THEN aux_dscritic ELSE "Pagamento(s) efetuado(s) com sucesso!") + "</dsmsg>" + 
+  ASSIGN xml_operacao.dslinxml = "<dsmsg>" + (IF aux_idastcjt = 1 AND aux_dscritic MATCHES "*Aguardando aprovação do(s) preposto(s)*" THEN aux_dscritic ELSE "Transação(ões) registrada(s) com sucesso.") + "</dsmsg>" + 
                    "<idastcjt>" + STRING(aux_idastcjt) + "</idastcjt>" + 
                    "<dsprotoc>" + (IF pc_gps_agmto_novo.pr_dsprotoc <> ? THEN pc_gps_agmto_novo.pr_dsprotoc ELSE "") + "</dsprotoc>".
 
