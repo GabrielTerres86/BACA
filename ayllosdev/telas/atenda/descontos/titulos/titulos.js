@@ -28,6 +28,7 @@
  * 012: [09/03/2017] Adriano    (CECRED): Ajuste devido ao tratamento para validar titulos já inclusos em outro borderô - SD 603451.
  * 013: [26/06/2017] Jonata (RKAM): Ajuste para rotina ser chamada através da tela ATENDA > Produtos ( P364).
  * 014: [11/12/2017] P404 - Inclusão de Garantia de Cobertura das Operações de Crédito (Augusto / Marcos (Supero)) 
+ * 015: [22/03/2018] Daniel (Cecred) Alteracoes para geracao no numero do contrato automaticamente.
  */
 
 var contWin    = 0;  // Variável para contagem do número de janelas abertas para impressos
@@ -524,7 +525,12 @@ function mostraTelaAltera() {
         showError("error", "N&atilde;o &eacute; poss&iacute;vel alterar contrato. Situa&ccedil;&atilde;o do limite ATIVO.", "Alerta - Ayllos", "fechaRotinaAltera();");
         return false;
     }
-
+	
+	hideMsgAguardo();
+	fechaRotinaAltera();
+	carregaDadosAlteraLimiteDscTit();
+	return false;
+/*
     limpaDivGenerica();
 
     $.ajax({
@@ -548,6 +554,7 @@ function mostraTelaAltera() {
 
     $('#todaProp', '#frmAltera').focus();
     return false;
+	*/
 }
 
 function exibeAlteraNumero() {
@@ -809,22 +816,13 @@ function validaNrContrato() {
 	// Mostra mensagem de aguardo
 	showMsgAguardo("Aguarde, validando n&uacute;mero do contrato ...");
 	
-	var antnrctr = $("#antnrctr","#frmDadosLimiteDscTit").val().replace(/\./g,"");
-	
-	// Valida número do contrato
-	if (antnrctr == "" || !validaNumero(antnrctr,true,0,0)) {
-		hideMsgAguardo();
-		showError("error","Confirme o n&uacute;mero do contrato.","Alerta - Ayllos","$('#antnrctr','#frmDadosLimiteDscTit').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
-		return false;
-	} 
-	
 	$.ajax({		
 		type: "POST", 
 		url: UrlSite + "telas/atenda/descontos/titulos/titulos_limite_incluir_validaconfirma.php",
 		data: {
 			nrdconta: nrdconta,
             nrctrlim: $("#nrctrlim","#frmDadosLimiteDscTit").val().replace(/\./g,""),
-			antnrctr: antnrctr,
+
 			nrctaav1: 0,
 			nrctaav2: 0,
 			redirect: "script_ajax"

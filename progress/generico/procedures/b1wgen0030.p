@@ -1096,7 +1096,7 @@ PROCEDURE efetua_liber_anali_bordero:
                                    INPUT par_dtmvtolt,
                                    OUTPUT TABLE tt-erro,
                                    OUTPUT TABLE tt-iof).
-
+                               
     RUN busca_iof_simples_nacional IN h-b1wgen9999 (INPUT par_cdcooper,
                                       INPUT 0, /* agenci */
                                       INPUT 0, /* caixa  */
@@ -2109,7 +2109,7 @@ PROCEDURE efetua_liber_anali_bordero:
                                    NO-LOCK:
               ASSIGN aux_vltotoperac = aux_vltotoperac + crabtdb.vlliquid.
             END.
-            
+                           
             ASSIGN aux_vltotiof = 0
                    aux_vltotiofpri = 0
                    aux_vltotiofadi = 0
@@ -2245,7 +2245,7 @@ PROCEDURE efetua_liber_anali_bordero:
                 IF pc_calcula_valor_iof_prg.pr_vltaxa_iof_principal <> "" THEN
                   DO:
                     ASSIGN aux_vltxiofatraso = DECI(pc_calcula_valor_iof_prg.pr_vltaxa_iof_principal).
-                  END.
+                  END.                  
                 IF pc_calcula_valor_iof_prg.pr_flgimune <> ? THEN
                   DO:
                     ASSIGN aux_flgimune = pc_calcula_valor_iof_prg.pr_flgimune.
@@ -2513,36 +2513,36 @@ PROCEDURE efetua_liber_anali_bordero:
                    IF aux_dscritic <> ""   THEN
                       UNDO LIBERACAO, LEAVE.
                 
-                     CREATE craplcm.
-                     ASSIGN craplcm.dtmvtolt = craplot.dtmvtolt
-                            craplcm.cdagenci = craplot.cdagenci
-                            craplcm.cdbccxlt = craplot.cdbccxlt
-                            craplcm.nrdolote = craplot.nrdolote
-                            craplcm.nrdconta = crapbdt.nrdconta
-                            craplcm.nrdctabb = crapbdt.nrdconta
-                            craplcm.nrdctitg = STRING(crapbdt.nrdconta,
-                                                      "99999999")
-                            craplcm.nrdocmto = craplot.nrseqdig + 1
-                            /* craplcm.cdhistor = 688 */
-                            craplcm.cdhistor = 2320 /* Novo histórico - projeto 410 */
+                   CREATE craplcm.
+                   ASSIGN craplcm.dtmvtolt = craplot.dtmvtolt
+                          craplcm.cdagenci = craplot.cdagenci
+                          craplcm.cdbccxlt = craplot.cdbccxlt
+                          craplcm.nrdolote = craplot.nrdolote
+                          craplcm.nrdconta = crapbdt.nrdconta
+                          craplcm.nrdctabb = crapbdt.nrdconta
+                          craplcm.nrdctitg = STRING(crapbdt.nrdconta,
+                                                    "99999999")
+                          craplcm.nrdocmto = craplot.nrseqdig + 1
+                          /* craplcm.cdhistor = 688 */
+                          craplcm.cdhistor = 2320 /* Novo histórico - projeto 410 */
 
-                            craplcm.nrseqdig = craplot.nrseqdig + 1
-                            craplcm.cdpesqbb = "Bordero " +
-                                               STRING(crapbdt.nrborder)
-                                               + " - " +
-                                               STRING(aux_vlborder,
-                                                      "999,999,999.99")
-                            /* craplcm.vllanmto = ROUND( ( ROUND(aux_vlborder * tt-iof.txccdiof,2) + aux_vltotiof ) , 2 ) */
-                            craplcm.vllanmto = ROUND(aux_vltotiof, 2)
-                            craplcm.cdcooper = par_cdcooper
-                            craplot.vlinfodb = craplot.vlinfodb + 
-                                                       craplcm.vllanmto
-                            craplot.vlcompdb = craplot.vlcompdb + 
-                                                       craplcm.vllanmto
-                            craplot.qtinfoln = craplot.qtinfoln + 1
-                            craplot.qtcompln = craplot.qtcompln + 1
-                            craplot.nrseqdig = craplot.nrseqdig + 1.
-
+                          craplcm.nrseqdig = craplot.nrseqdig + 1
+                          craplcm.cdpesqbb = "Bordero " +
+                                             STRING(crapbdt.nrborder)
+                                             + " - " +
+                                             STRING(aux_vlborder,
+                                                    "999,999,999.99")
+                          /* craplcm.vllanmto = ROUND( ( ROUND(aux_vlborder * tt-iof.txccdiof,2) + aux_vltotiof ) , 2 ) */
+                          craplcm.vllanmto = ROUND(aux_vltotiof, 2)
+                          craplcm.cdcooper = par_cdcooper
+                          craplot.vlinfodb = craplot.vlinfodb + 
+                                                     craplcm.vllanmto
+                          craplot.vlcompdb = craplot.vlcompdb + 
+                                                     craplcm.vllanmto
+                          craplot.qtinfoln = craplot.qtinfoln + 1
+                          craplot.qtcompln = craplot.qtcompln + 1
+                          craplot.nrseqdig = craplot.nrseqdig + 1.
+                     
                    VALIDATE craplot.
                    VALIDATE craplcm.
 
@@ -4391,7 +4391,6 @@ PROCEDURE efetua_inclusao_limite:
     DEF  INPUT PARAM par_vlsalcon AS DECI                           NO-UNDO.
     DEF  INPUT PARAM par_dsdbens1 AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_dsdbens2 AS CHAR                           NO-UNDO.
-    DEF  INPUT PARAM par_nrctrlim AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_cddlinha AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_dsobserv AS CHAR                           NO-UNDO.   
     DEF  INPUT PARAM par_qtdiavig AS INTE                           NO-UNDO. 
@@ -4445,7 +4444,7 @@ PROCEDURE efetua_inclusao_limite:
     DEF  INPUT PARAM par_vltotsfn AS DECI                           NO-UNDO.
     DEF  INPUT PARAM par_perfatcl AS DECI                           NO-UNDO.
     DEF  INPUT PARAM par_idcobope AS INTE                           NO-UNDO.
-                                       
+    DEF OUTPUT PARAM par_nrctrlim AS INTE                           NO-UNDO.                                   
     DEF OUTPUT PARAM TABLE FOR tt-erro.
     DEFINE OUTPUT PARAM TABLE FOR tt-msg-confirma.
         
@@ -4454,6 +4453,8 @@ PROCEDURE efetua_inclusao_limite:
     DEF VAR aux_contador AS INTE    NO-UNDO.
     DEF VAR aux_lscontas AS CHAR    NO-UNDO.
     DEF VAR aux_flgderro AS LOGI    NO-UNDO.
+    DEF VAR aux_nrctrlim AS INTE    NO-UNDO.
+    DEF VAR aux_nrseqcar AS INTE	NO-UNDO.
     DEF VAR aux_mensagens AS CHAR    NO-UNDO.    
     
     EMPTY TEMP-TABLE tt-erro.
@@ -4530,6 +4531,43 @@ PROCEDURE efetua_inclusao_limite:
 
     TRANS_INCLUI:    
     DO  TRANSACTION ON ERROR UNDO TRANS_INCLUI, LEAVE TRANS_INCLUI:
+    
+        DO WHILE TRUE:
+          { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+          /* Busca a proxima sequencia do campo crapldt.nrsequen */
+          RUN STORED-PROCEDURE pc_sequence_progress
+          aux_handproc = PROC-HANDLE NO-ERROR (INPUT "CRAPLIM"
+                                              ,INPUT "NRCTRLIM"
+                                              ,STRING(par_cdcooper) + ";" + "3" /* tpctrlim */
+                                              ,INPUT "N"
+                                              ,"").
+
+          CLOSE STORED-PROC pc_sequence_progress
+          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+          { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+          ASSIGN aux_nrseqcar = INTE(pc_sequence_progress.pr_sequence)
+                                WHEN pc_sequence_progress.pr_sequence <> ?.
+          
+          ASSIGN aux_nrctrlim = aux_nrseqcar.
+                            
+          
+          
+          FIND FIRST craplim 
+               WHERE craplim.cdcooper = par_cdcooper
+                 AND craplim.tpctrlim = 3
+                 AND craplim.nrctrlim = aux_nrctrlim
+                 NO-LOCK NO-ERROR.
+          IF NOT AVAILABLE craplim THEN       
+          DO:
+            LEAVE.
+          END.
+                 
+        END.       
+        
+        ASSIGN par_nrctrlim = aux_nrctrlim.
     
         RUN cria-tabelas-avalistas IN h-b1wgen9999 (INPUT par_cdcooper,
                                                     INPUT par_cdoperad,
@@ -4876,8 +4914,8 @@ PROCEDURE efetua_inclusao_limite:
 
         { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
 
-        ASSIGN aux_cdcritic  = 0
-               aux_dscritic  = ""
+        ASSIGN aux_cdcritic      = 0
+               aux_dscritic     = ""
                aux_cdcritic  = INT(pc_obtem_mensagem_grp_econ_prg.pr_cdcritic) WHEN pc_obtem_mensagem_grp_econ_prg.pr_cdcritic <> ?
                aux_dscritic  = pc_obtem_mensagem_grp_econ_prg.pr_dscritic WHEN pc_obtem_mensagem_grp_econ_prg.pr_dscritic <> ?
                aux_mensagens = pc_obtem_mensagem_grp_econ_prg.pr_mensagens WHEN pc_obtem_mensagem_grp_econ_prg.pr_mensagens <> ?.
@@ -6228,7 +6266,7 @@ PROCEDURE efetua_exclusao_limite:
 
                 ASSIGN aux_flgderro = TRUE.                
                 UNDO TRANS_EXCLUSAO, LEAVE TRANS_EXCLUSAO.
-           END.
+            END.
 
         DELETE craplim.
         DELETE crapprp.

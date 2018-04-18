@@ -15,8 +15,10 @@
  *								         	    especiais na observação, conforme solicitado
  *	   										    no chamado 315453. 
          17/06/2016 - M181 - Alterar o CDAGENCI para          
-                      passar o CDPACTRA (Rafael Maciel - RKAM) 
+                      passar o CDPACTRA (Rafael Maciel - RKAM)					  
 		 28/07/2017 - Desenvolvimento da melhoria 364 - Grupo Economico Novo. (Mauro)
+		 
+		 22/03/2018 - Incluso tratativa para retornar numero de contrato gerado automaticamente. (Daniel - projeto 403)
  */
 ?>
 
@@ -309,6 +311,8 @@
 	if ($cddopcao == "A"){
 		$opermail = "Alterar Limite de Desconto de Titulos";
 	}else{  if ($cddopcao == "I"){
+				// Buscar numero do contrato gerado 
+                $nrctrlim = $xmlObjLimite->roottag->tags[0]->attributes["NRCTRLIM"];	
 				$opermail = "Novo Limite de Desconto de Titulos";
 			}
 	}

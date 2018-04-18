@@ -25,6 +25,7 @@
  * 010: [10/10/2016] Lucas Ranghetti (CECRED): Remover verificacao de digitalizaco para o botao de consultar imagem(#510032)
  * 011: [26/06/2017] Jonata (RKAM): Ajuste para rotina ser chamada através da tela ATENDA > Produtos (P364).
  * 012: [11/12/2017] P404 - Inclusão de Garantia de Cobertura das Operações de Crédito (Augusto / Marcos (Supero)) 
+ * 013: [22/03/2013] Daniel (Cecred) : Ajustes referente a geracao automatica do numero do contrato.
  */
 ?>
 <form action="" name="frmDadosLimiteDscTit" id="frmDadosLimiteDscTit" onSubmit="return false;">
@@ -38,7 +39,7 @@
 			<legend>Dados do Limite</legend>
 			
 			<label for="nrctrlim"><? echo utf8ToHtml('Contrato:') ?></label>
-			<input type="text" name="nrctrlim" id="nrctrlim" value="0" class="campo">
+			<input type="text" name="nrctrlim" id="nrctrlim" value="0" class="campo" disabled>
 			<br />
 			
 			<label></label>
@@ -131,20 +132,7 @@
 		<? 	// ALTERAÇÃO 001: Substituido formulário antigo pelo include				
 			include('../../../../includes/avalistas/form_avalista.php'); 
 		?>	
-		
-		<div id="divDscChq_Confirma">					
-		
-			<fieldset>
-			
-				<legend>Contrato</legend>
-				<label for="antnrctr" class="rotulo" style="width:250px;">Confirme o n&uacute;mero do contrato:</label>
-				<input type="text" name="antnrctr" id="antnrctr" value="" style="width: 80px; text-align: right;" class="campo">
-				
-			</fieldset>
-			
 		</div>									
-		
-	</div>
 		
 </form>
 
@@ -259,7 +247,7 @@
 	// Para demais operações, configurar máscaras para campos do formulário
 	} else {
 	
-		if (operacao == 'A') {
+		if (operacao == 'A' || operacao == 'I' ) {
 			$("#nrctrlim",'#'+nomeForm).prop("disabled",true).attr("class","campoTelaSemBorda");
 		} 
 	
@@ -340,7 +328,7 @@
       dscShowHideDiv('divFormGAROPC;divBotoesGAROPC','divDscTit_Renda;divBotoesRenda');
       $("#frmDadosLimiteDscTit").css("width", 540);
     <? } else { ?>
-        dscShowHideDiv('divDscTit_Limite;divBotoesLimite','divDscTit_Renda;divBotoesRenda');
+		dscShowHideDiv('divDscTit_Limite;divBotoesLimite','divDscTit_Renda;divBotoesRenda');
     <? } ?>
 		return false;
 	});
