@@ -731,7 +731,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps156 (pr_cdcooper IN crapcop.cdcooper%T
         END IF;   
         CLOSE cr_craptab;
       END IF;
-      
+
+      /*
       -- Se não há critica ainda 
       IF nvl(vr_cdcritic,0) NOT IN(484,828,640)  THEN
         -- Validar resgate
@@ -757,7 +758,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps156 (pr_cdcooper IN crapcop.cdcooper%T
           -- Enviaremos a critica 640 ao relatório
           vr_cdcritic := 640; 
         END IF; 
-      END IF;
+      END IF;  */
       
       /* Se nao houve erro ou é uma bloqueada vencida r ser resgatada */
       IF  nvl(vr_cdcritic,0) = 0 OR vr_cdcritic = 828  THEN
@@ -1150,11 +1151,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps156 (pr_cdcooper IN crapcop.cdcooper%T
                                 tplotmov="'||rw_craplot.tplotmov||'" >');
           
         END IF;
-              
+    
       END IF;
-      
+        
       vr_cdcritic := 0;
-      
+        
       -- ler criticas
       FOR rw_craprej  IN cr_craprej (pr_cdcooper => pr_cdcooper,
                                      pr_dtmvtopr => rw_crapdat.dtmvtopr) LOOP
@@ -1178,13 +1179,13 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps156 (pr_cdcooper IN crapcop.cdcooper%T
         IF rw_craprej.vllanmto = 0   THEN
           vr_rel_qtdrejln := nvl(vr_rel_qtdrejln,0) + 1;
           vr_rel_vldrejdb := nvl(vr_rel_vldrejdb,0) + rw_craprej.vldaviso;
-        END IF;  
-        
+      END IF;
+      
       END LOOP;
       
       IF vr_regexist THEN
         pc_escreve_xml('</lote>');
-        
+      
         pc_escreve_xml('<total>
                           <tot_qtcompln>'|| rw_craplot.qtcompln  ||'</tot_qtcompln>
                           <tot_vlcompdb>'|| rw_craplot.vlcompdb  ||'</tot_vlcompdb>
@@ -1197,12 +1198,12 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps156 (pr_cdcooper IN crapcop.cdcooper%T
       
       -- Finalizar o agrupador do relatório
       pc_escreve_xml('</crrl125>',TRUE);
-      
+
       -- Busca do diretório base da cooperativa para PDF
       vr_nom_direto := gene0001.fn_diretorio(pr_tpdireto => 'C' -- /usr/coop
                                             ,pr_cdcooper => pr_cdcooper
                                             ,pr_nmsubdir => '/rl'); --> Utilizaremos o rl
-      
+    
       -- Efetuar solicitação de geração de relatório --
       gene0002.pc_solicita_relato(pr_cdcooper  => pr_cdcooper         --> Cooperativa conectada
                                  ,pr_cdprogra  => vr_cdprogra         --> Programa chamador
