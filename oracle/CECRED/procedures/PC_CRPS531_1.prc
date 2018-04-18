@@ -1406,7 +1406,7 @@ BEGIN
                                    ,pr_cdagenci => 0
                                    ,pr_nrdcaixa => 0
                                    ,pr_cdoperad => '1'
-                                   ,pr_nrispbif => vr_aux_ISPBIFCredtd
+                                   ,pr_nrispbif => vr_aux_ISPBIFDebtd
                                    ,pr_inestcri => vr_aux_inestcri
                                    ,pr_cdcritic => vr_cdcritic
                                    ,pr_dscritic => vr_dscritic);
@@ -1463,7 +1463,7 @@ BEGIN
                                    ,pr_cdagenci => 0
                                    ,pr_nrdcaixa => 0
                                    ,pr_cdoperad => '1'
-                                   ,pr_nrispbif => vr_aux_ISPBIFCredtd
+                                   ,pr_nrispbif => vr_aux_ISPBIFDebtd
                                    ,pr_inestcri => vr_aux_inestcri
                                    ,pr_cdcritic => vr_cdcritic
                                    ,pr_dscritic => vr_dscritic);
@@ -2200,6 +2200,8 @@ BEGIN
             vr_elem_node_grpsit := xmldom.makeElement(vr_item_node);
             -- Faz o get de toda a lista de filhos da GrupoTabErro
             vr_node_list_grpsit := xmldom.getChildrenByTagName(vr_elem_node_grpsit,'*');
+            -- Criar registro na PLTABLE 
+              vr_idx_grpsit := vr_tab_situacao_if.COUNT()+1;
             -- Percorrer os elementos
             FOR i IN 0..xmldom.getLength(vr_node_list_grpsit)-1 LOOP
               -- Buscar o item atual
@@ -2210,8 +2212,6 @@ BEGIN
               IF xmldom.getNodeType(vr_item_node_grpsit) <> xmldom.ELEMENT_NODE THEN
                 CONTINUE;
               END IF;
-              -- Criar registro na PLTABLE
-              vr_idx_grpsit := vr_tab_situacao_if.COUNT()+1;
               -- Para o node ISPBIF
               IF vr_node_name_grpsit = 'ISPBIF' THEN
                 -- Buscar valor da TAG
