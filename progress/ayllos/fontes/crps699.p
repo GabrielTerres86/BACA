@@ -94,12 +94,12 @@ FOR EACH crapcop WHERE crapcop.cdcooper <> 3
                           "logprt.log".
 
     /* Busca todas as propostas de PORTABILIDADE aprovadas 
-       a partir de 3 dias atras, pois apos enviarmos o pagamento para
+       a partir de 15 dias atras, pois apos enviarmos o pagamento para
        a IF Credora Original, ela tera mais 2 dias para confirmar o nosso
        pagamento e a proposta ser efetivada na cabine JDCTC */
     FOR EACH crawepr WHERE crawepr.cdcooper = crapcop.cdcooper
                        AND CAN-DO("1,3", STRING(crawepr.insitapr))
-                       AND crawepr.dtaprova >= (crapdat.dtmvtolt - 9)
+                       AND crawepr.dtaprova >= (crapdat.dtmvtolt - 15)
 					   AND crawepr.insitest = 3
                        NO-LOCK,
         FIRST crapfin WHERE crapfin.cdcooper = crawepr.cdcooper
