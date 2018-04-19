@@ -202,10 +202,7 @@
 		class='botao'
 		id='btnrerroraccess'
 		name='btnrerroraccess' 
-		onClick=\"
-		showError('error','Usu&aacute;rio n&atilde;o possui permiss&atilde;o para Manuten&ccedil;&atilde;o.','Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))');
-		\"
-		disabled >
+		onClick=\"showError('error','Usu&aacute;rio n&atilde;o possui permiss&atilde;o para Manuten&ccedil;&atilde;o.','Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))');\" >
 		Manuten&ccedil;&atilde;o
 		</a>";
 		} else { 
@@ -226,6 +223,7 @@
 		class="botao"
 		id="btnResgatar"
 		name="btnResgatar"
+		style="margin-top: 8px; margin-bottom: 8px;" 
 		<?php if (!in_array("DSC TITS - BORDERO",$rotinasTela)) { echo 'style="cursor: default;display:none;" onClick="return false;"'; } 
 		else { echo 'onClick="carregaResgatarTitulos();return false;"'; } ?> >
 		Resgatar T&iacute;tulos
