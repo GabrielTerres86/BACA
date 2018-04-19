@@ -222,7 +222,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_BLQRGT IS
                                                    ||'  <dstipapl>'||rw_craprpp.dstipapl||'</dstipapl>'
                                                    ||'  <nrctrrpp>'||rw_craprpp.nrctrrpp||'</nrctrrpp>'
                                                    ||'  <vlsdrdpp>'||rw_craprpp.vlsdrdpp||'</vlsdrdpp>'
-                                                   ||'  <tpaplica>0</tpaplica>'
+                                                   ||'  <tpaplica>1</tpaplica>'
                                                    ||'  <idtipapl>A</idtipapl>'
                                                    ||'  <nmprodut> </nmprodut>'
                                                    ||'</bloq>'));
