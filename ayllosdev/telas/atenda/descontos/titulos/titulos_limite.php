@@ -108,10 +108,10 @@
 			<thead>
 				<tr>
 					<th>Data Efetiva&ccedil;&atilde;o</th>
-					<th>In&iacute;cio Vig&acirc;ncia</th>
+					<th>In&iacute;cio Vig&ecirc;ncia</th>
 					<th>Contrato</th>
 					<th>Limite</th>
-					<th>Dias de Vig&acirc;ncia</th>
+					<th>Dias de Vig&ecirc;ncia</th>
 					<th>Linha de Desconto</th>
 					<th >Situa&ccedil;&atilde;o do Limite</th>
 				</tr>			
@@ -181,7 +181,7 @@
 	$dispM = (!in_array("M",$glbvars["opcoesTela"])) ? 'display:none;' : '';
 ?>
 
-<div id="divBotoesTitulosLimite" style="margin-bottom:10px;">
+<div id="divBotoesTitulosLimite" style="margin-bottom:10px; margin-top: 10px;">
 	
 	<input 
 		type="button" 
