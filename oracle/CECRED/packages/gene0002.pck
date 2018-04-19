@@ -360,7 +360,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
   --  Sistema  : Rotinas genéricas para mascaras e relatórios
   --  Sigla    : GENE
   --  Autor    : Marcos E. Martini - Supero
-  --  Data     : Novembro/2012.                   Ultima atualizacao: 24/11/2017
+  --  Data     : Novembro/2012.                   Ultima atualizacao: 19/04/2018
   --
   -- Dados referentes ao programa:
   --
@@ -409,6 +409,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
   --
   --             24/11/2017 - Ajuste na rotina fn_char_para_number, para sair da mesma quando o parâmetro estiver
   --                          nulo (Carlos)
+  --
+  --             19/04/2018 - #812349 Na rotina pc_gera_relato, utilizada a rotina pc_mv_arquivo para ganho de
+  --                          perfomance no comando (Carlos)
   ---------------------------------------------------------------------------------------------------------------
 
   /* Lista de variáveis para armazenar as mascaras parametrizadas */
@@ -2789,7 +2792,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     --  Sistema  : Rotinas genéricas
     --  Sigla    : GENE
     --  Autor    : Petter Rafael - Supero Tecnologia
-    --  Data     : Dezembro/2012.                   Ultima atualizacao: 18/10/2017
+    --  Data     : Dezembro/2012.                   Ultima atualizacao: 21/12/2017
     --
     --  Dados referentes ao programa:
     --
@@ -2821,6 +2824,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     --                           (Ana - Envolti - Chamado 776896)
     --              18/10/2017 - Incluído pc_set_modulo com novo padrão
     --                           (Ana - Envolti - Chamado 776896)
+    --              
+    --              21/12/2017 - Melhorado consulta da crapprg com UPPER (Tiago #812349)
     -- ...........................................................................
     DECLARE
       -- Buscar dados da solicitação
@@ -2855,7 +2860,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
         SELECT prg.nrsolici
           FROM crapprg prg
          WHERE prg.cdcooper = rw_crapslr.cdcooper
-           AND prg.cdprogra = UPPER(rw_crapslr.cdprogra);
+           AND UPPER(prg.cdprogra) = UPPER(rw_crapslr.cdprogra);
       rw_crapprg cr_crapprg%ROWTYPE;
       -- Busca do cadastro de relatórios
       CURSOR cr_craprel(pr_cdrelato craprel.cdrelato%TYPE) IS
@@ -3125,10 +3130,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
           END IF;
 
           -- Efetuar mv do arquivo temporário gerado para o nome real do relatório
-          GENE0001.pc_OScommand(pr_typ_comando => 'S'
-                               ,pr_des_comando => 'mv '||rw_crapslr.dsarqsai||'.tmp  '||rw_crapslr.dsarqsai
-                               ,pr_typ_saida   => vr_typ_saida
-                               ,pr_des_saida   => vr_des_saida);
+          gene0001.pc_mv_arquivo(pr_dsarqori  => rw_crapslr.dsarqsai||'.tmp', 
+                                 pr_dsarqdes  => rw_crapslr.dsarqsai, 
+                                 pr_typ_saida => vr_typ_saida, 
+                                 pr_des_saida => vr_des_saida);
 
           -- Testa se a saída da execução acusou erro
           IF vr_typ_saida = 'ERR' THEN
@@ -3174,7 +3179,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
         Sistema  : Rotinas genéricas
         Sigla    : GENE
         Autor    : Marcos E. Martini - Supero
-        Data     : Dezembro/2012.                   Ultima atualizacao: 18/10/2017
+        Data     : Dezembro/2012.                   Ultima atualizacao: 21/12/2017
 
         Dados referentes ao programa:
 
@@ -3222,6 +3227,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
                                   (Ana - Envolti - Chamado 776896)
                      18/10/2017 - Incluído pc_set_modulo com novo padrão
                                   (Ana - Envolti - Chamado 776896)
+                     21/12/2017 - Retirado clob da consulta principal na CRAPSLR pois era algo
+                                  usado em um caso especifico e contribuia para uma baixa 
+                                  performance do programa (Tiago #812349)                     
        ............................................................................. */
     DECLARE
       -- Busca de informações da fila
@@ -3256,7 +3264,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
               ,slr.fldosmail
               ,slr.dscmaxmail
               ,slr.flarquiv
-              ,slr.dsxmldad
               ,slr.flremarq
               ,slr.flappend
           FROM crapslr slr
@@ -3278,6 +3285,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
                  ,slr.nrseqsol;     --> e dentro da mesma prioridade os mais antigos primeiro
 
       rw_crapslr cr_crapslr%ROWTYPE;
+      
+      CURSOR cr_crapslr_xml (pr_rowid ROWID) IS
+        SELECT slr.rowid,
+               slr.dsxmldad
+          FROM crapslr slr
+         WHERE slr.ROWID = pr_rowid;
+
+      rw_crapslr_xml cr_crapslr_xml%ROWTYPE;
       
       -- lockar registro, porém sem aguardar em caso se ja estar lockado
       CURSOR cr_crapslr_rowid (pr_rowid ROWID) IS
@@ -3416,12 +3431,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
                                          ,pr_arquivo => vr_dsarq);
           -- Se for para gerar o arquivo texto puro
           IF Nvl(rw_crapslr.flarquiv,'N') = 'S' THEN
+            OPEN cr_crapslr_xml(pr_rowid => rw_crapslr.rowid);
+            FETCH cr_crapslr_xml INTO rw_crapslr_xml;
+            
+            IF cr_crapslr_xml%NOTFOUND THEN
+              CLOSE cr_crapslr_xml;
+              vr_des_erro := 'GENE0002.pc_process_relato_penden --> CLOB do relatorio pendente nao encontrado. rowid: '||rw_crapslr.rowid;              
+            ELSE           
+              CLOSE cr_crapslr_xml;
             -- Criar o arquivo no diretorio especificado
-            pc_clob_para_arquivo(pr_clob     => rw_crapslr.dsxmldad
+              pc_clob_para_arquivo(pr_clob     => rw_crapslr_xml.dsxmldad
                                 ,pr_caminho  => vr_dsdir
                                 ,pr_arquivo  => vr_dsarq
                                 ,pr_flappend => rw_crapslr.flappend
                                 ,pr_des_erro => vr_des_erro);
+            END IF;
           ELSE
             -- Chamar a geração
             pc_gera_relato(pr_nrseqsol => rw_crapslr.nrseqsol
@@ -3770,7 +3794,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     --  Sistema  : Rotinas genéricas
     --  Sigla    : GENE
     --  Autor    : Marcos E. Martini - Supero
-    --  Data     : Dezembro/2012.                   Ultima atualizacao: 18/10/2017
+    --  Data     : Dezembro/2012.                   Ultima atualizacao: 21/12/2017
     --
     --  Dados referentes ao programa:
     --
@@ -3808,6 +3832,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     --                            (Ana - Envolti - Chamado 776896)
     --               18/10/2017 - Incluído pc_set_modulo com novo padrão
     --                            (Ana - Envolti - Chamado 776896)
+    --
+    --               21/12/2017 - Melhorado consulta na crapprg com UPPER (Tiago #812349)
     -- ............................................................................. */
     DECLARE
       -- Busca do indicador do processo no calendário
@@ -3830,7 +3856,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
                                    ,prg.cdrelato##1) cdrelato  --> Retornar o codigo cfme o solicitavdo (1,2,3,4,5)
           FROM crapprg prg
          WHERE prg.cdcooper = pr_cdcooper
-           AND prg.cdprogra = UPPER(pr_cdprogra);
+           AND UPPER(prg.cdprogra) = UPPER(pr_cdprogra);
       rw_crapprg cr_crapprg%ROWTYPE;
       -- Busca do cadastro de relatórios
       CURSOR cr_craprel(pr_cdrelato craprel.cdrelato%TYPE) IS
@@ -4160,7 +4186,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     --  Sistema  : Rotinas genéricas
     --  Sigla    : GENE
     --  Autor    : Alisson C. Berrido - Amcom
-    --  Data     : Abril/2013.                   Ultima atualizacao: 18/10/2017
+    --  Data     : Abril/2013.                   Ultima atualizacao: 21/12/2017
     --
     --  Dados referentes ao programa:
     --
@@ -4186,6 +4212,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
     --                            (Ana - Envolti - Chamado 776896)
     --               18/10/2017 - Incluído pc_set_modulo com novo padrão
     --                            (Ana - Envolti - Chamado 776896)
+    --
+    --               21/12/2017 - Melhorado consulta na crapprg com UPPER (Tiago #812349)
     -- .............................................................................
     DECLARE
       -- Busca do indicador do processo no calendário
@@ -4200,7 +4228,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0002 AS
         SELECT prg.nrsolici
           FROM crapprg prg
          WHERE prg.cdcooper = pr_cdcooper
-           AND prg.cdprogra = UPPER(pr_cdprogra);
+           AND UPPER(prg.cdprogra) = UPPER(pr_cdprogra);
       rw_crapprg cr_crapprg%ROWTYPE;
       -- Busca do cadastro de relatórios
       CURSOR cr_craprel(pr_cdrelato craprel.cdrelato%TYPE) IS
