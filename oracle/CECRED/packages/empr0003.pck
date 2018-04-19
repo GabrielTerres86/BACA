@@ -1059,6 +1059,7 @@ BEGIN
                crapage.nmcidade,
                crapage.cdufdcop,
                crawepr.nrseqrrq,
+               crawepr.idcobope,
                -- Projeto 410 - 14/03/2018 - SM - incluir campos para calculo IOF e tarifa
                crawepr.idfiniof,
                 crawepr.nrctrliq##1 || ',' ||
@@ -1085,8 +1086,10 @@ BEGIN
       rw_crawepr cr_crawepr%ROWTYPE;--armazena informacoes do cursor cr_crawepr
 
       --cursor para buscar estado civil da pessoa fisica, jurida nao tem
-      CURSOR cr_gnetcvl IS
-          SELECT gnetcvl.rsestcvl
+      CURSOR cr_gnetcvl(pr_cdcooper IN crapttl.cdcooper%TYPE
+			           ,pr_nrdconta IN crapttl.nrdconta%TYPE) IS
+          SELECT gnetcvl.rsestcvl,
+			     crapttl.dsproftl
           FROM  crapttl,
                 gnetcvl
           WHERE crapttl.cdcooper = pr_cdcooper
@@ -1194,6 +1197,14 @@ BEGIN
       rw_crapavi_01 cr_crapass%ROWTYPE; --armazena informacoes do cursor cr_crapass para avalista 1
       rw_crapavi_02 cr_crapass%ROWTYPE; --armazena informacoes do cursor cr_crapass para avalista 2
 
+      -- Verificar se possui interveniente garantidor
+	  CURSOR cr_cobertura(pr_idcobert IN tbgar_cobertura_operacao.idcobertura%TYPE) IS
+        SELECT 1
+          FROM tbgar_cobertura_operacao tco
+         WHERE tco.idcobertura = pr_idcobert
+		   AND tco.nrconta_terceiro > 0;
+	  rw_cobertura cr_cobertura%ROWTYPE;
+
      -- Projeto 410 - 14/03/2018 - SM - buscar bens da proposta (Jean - Mout´S) 
      CURSOR cr_crapbpr IS 
         SELECT t.dscatbem
@@ -1275,6 +1286,15 @@ BEGIN
       -- controle versão
       vr_nrversao       NUMBER;
 
+      -- Tabela temporaria para o descritivo dos avais
+      TYPE typ_reg_avl IS RECORD(descricao VARCHAR2(4000));
+      TYPE typ_tab_avl IS TABLE OF typ_reg_avl INDEX BY PLS_INTEGER;
+      -- Vetor para armazenar os riscos
+      vr_tab_avl typ_tab_avl;
+      vr_ind_add_item   INTEGER := 0;                 --> Indicador se possui terceiro garantidor (0-Nao / 1-Sim)
+      vr_ind_aval       PLS_INTEGER;                  --> Indice da PL Table
+      vr_tab_aval       DSCT0002.typ_tab_dados_avais; --> PL Table dos avalistas			
+						
     BEGIN
       -- Inicializar o CLOB
       vr_des_xml := NULL;
@@ -1299,6 +1319,21 @@ BEGIN
       ELSE
         vr_nrversao := 1;
       END IF;
+
+			-- Se possuir cobertura e data for superior ao do novo contrato
+			IF rw_crawepr.idcobope > 0 AND
+				 rw_crawepr.dtmvtolt >= TO_DATE(GENE0001.fn_param_sistema(pr_nmsistem => 'CRED'
+																																 ,pr_cdacesso => 'DT_VIG_IMP_CTR_V2'),'DD/MM/RRRR') THEN
+				--> Garantia Operacoes de Credito
+				OPEN  cr_cobertura(pr_idcobert => rw_crawepr.idcobope);
+				FETCH cr_cobertura INTO rw_cobertura;
+				-- Se encontrou
+				IF cr_cobertura%FOUND THEN
+					-- Atribui flag de interveniente garantidor
+					vr_ind_add_item := 1;
+				END IF;
+				CLOSE cr_cobertura;
+			END IF;								
 
       -- Busca os dados do cadastro de linhas de credito
       OPEN cr_craplcr(rw_crawepr.cdlcremp);
@@ -1389,6 +1424,84 @@ BEGIN
         nomcredora_if_origem := '';
       END IF;
       
+			-- Reseta as variaveis
+			vr_tab_avl(1).descricao := '';
+			vr_tab_avl(2).descricao := '';
+					
+			IF rw_crawepr.tpemprst = 1 AND --PP
+				 vr_nrversao = 1         THEN
+						 
+				-- Listar avalistas de contratos
+				DSCT0002.pc_lista_avalistas(pr_cdcooper => pr_cdcooper  --> Codigo da Cooperativa
+																	 ,pr_cdagenci => 0            --> Codigo da agencia
+																	 ,pr_nrdcaixa => 0            --> Numero do caixa do operador
+																	 ,pr_cdoperad => '1'          --> Codigo do Operador
+																	 ,pr_nmdatela => 'EMPR0003'   --> Nome da tela
+																	 ,pr_idorigem => 0            --> Identificador de Origem
+																	 ,pr_nrdconta => pr_nrdconta  --> Numero da conta do cooperado
+																	 ,pr_idseqttl => 1            --> Sequencial do titular
+																	 ,pr_tpctrato => 1            --> Emprestimo  
+																	 ,pr_nrctrato => pr_nrctremp  --> Numero do contrato
+																	 ,pr_nrctaav1 => 0            --> Numero da conta do primeiro avalista
+																	 ,pr_nrctaav2 => 0            --> Numero da conta do segundo avalista
+																		--------> OUT <--------                                   
+																	 ,pr_tab_dados_avais => vr_tab_aval   --> retorna dados do avalista
+																	 ,pr_cdcritic        => vr_cdcritic   --> Código da crítica
+																	 ,pr_dscritic        => vr_dscritic); --> Descrição da crítica
+				-- Se retornou erro
+				IF NVL(vr_cdcritic,0) > 0 OR 
+					 TRIM(vr_dscritic) IS NOT NULL THEN
+					RAISE vr_exc_saida;
+				-- Se possuir terceiro garantidor
+				ELSIF vr_tab_aval.COUNT > 0 THEN
+					vr_ind_add_item := 1;
+			        
+					-- Buscar Primeiro registro
+					vr_ind_aval := vr_tab_aval.FIRST;
+					-- Percorrer todos os registros
+					WHILE vr_ind_aval IS NOT NULL LOOP
+						-- monta descricao para o relatorio com os dados do emitente
+						IF vr_tab_aval(vr_ind_aval).inpessoa = 1 THEN
+						-- Se possuir conta
+						IF nvl(vr_tab_aval(vr_ind_aval).nrctaava,0) > 0 THEN
+							-- Busca estado civil e profissao
+							OPEN  cr_gnetcvl(pr_cdcooper => pr_cdcooper,
+															 pr_nrdconta => vr_tab_aval(vr_ind_aval).nrctaava); 
+							FETCH cr_gnetcvl INTO rw_gnetcvl;
+							CLOSE cr_gnetcvl;
+						END IF;
+
+						vr_tab_avl(vr_ind_aval).descricao := '<terceiro_0' || vr_ind_aval || '>'
+																		   || vr_tab_aval(vr_ind_aval).nmdavali || ', ' 
+																		   || (CASE WHEN TRIM(vr_tab_aval(vr_ind_aval).dsnacion) IS NOT NULL THEN 'nacionalidade '||LOWER(vr_tab_aval(vr_ind_aval).dsnacion) || ', ' ELSE '' END)
+																		   || (CASE WHEN nvl(vr_tab_aval(vr_ind_aval).nrctaava,0) > 0 AND TRIM(rw_gnetcvl.dsproftl) IS NOT NULL THEN LOWER(rw_gnetcvl.dsproftl) || ', ' ELSE '' END)
+																		   || (CASE WHEN nvl(vr_tab_aval(vr_ind_aval).nrctaava,0) > 0 AND TRIM(rw_gnetcvl.rsestcvl) IS NOT NULL THEN LOWER(rw_gnetcvl.rsestcvl) || ', ' ELSE '' END)
+																		   || 'inscrito no CPF/CNPJ n° ' || gene0002.fn_mask_cpf_cnpj(vr_tab_aval(vr_ind_aval).nrcpfcgc, vr_tab_aval(vr_ind_aval).inpessoa) || ', '
+																		   || 'residente e domiciliado(a) na ' || vr_tab_aval(vr_ind_aval).dsendere || ', '
+																		   || 'n° '|| vr_tab_aval(vr_ind_aval).nrendere || ', bairro ' || vr_tab_aval(vr_ind_aval).dsendcmp || ', '
+																		   || 'da cidade de ' || vr_tab_aval(vr_ind_aval).nmcidade || '/' || vr_tab_aval(vr_ind_aval).cdufresd || ', '
+																		   || 'CEP ' || gene0002.fn_mask_cep(vr_tab_aval(vr_ind_aval).nrcepend)
+																		   || (CASE WHEN vr_tab_aval(vr_ind_aval).nrctaava > 0 THEN ', titular da conta corrente n° ' || TRIM(gene0002.fn_mask_conta(vr_tab_aval(vr_ind_aval).nrctaava)) ELSE '' END)
+																							|| (CASE WHEN rw_crawepr.dtmvtolt >= TO_DATE(GENE0001.fn_param_sistema(pr_nmsistem => 'CRED',pr_cdacesso => 'DT_VIG_IMP_CTR_V2'),'DD/MM/RRRR') THEN ', na condição de DEVEDOR SOLIDÁRIO' ELSE '' END)
+																		   || '.</terceiro_0' || vr_ind_aval || '>';
+						ELSE
+							vr_tab_avl(vr_ind_aval).descricao := '<terceiro_0' || vr_ind_aval || '>'
+																			   || vr_tab_aval(vr_ind_aval).nmdavali || ', '
+																			   || 'inscrita no CNPJ sob n° '|| gene0002.fn_mask_cpf_cnpj(vr_tab_aval(vr_ind_aval).nrcpfcgc, vr_tab_aval(vr_ind_aval).inpessoa)
+																			   || ' com sede na ' || vr_tab_aval(vr_ind_aval).dsendere || ', n° ' || vr_tab_aval(vr_ind_aval).nrendere || ', '
+																			   || 'bairro ' || vr_tab_aval(vr_ind_aval).dsendcmp || ', da cidade de ' || vr_tab_aval(vr_ind_aval).nmcidade || '/' || vr_tab_aval(vr_ind_aval).cdufresd || ', '
+																			   || 'CEP ' || gene0002.fn_mask_cep(vr_tab_aval(vr_ind_aval).nrcepend) 
+																			   || (CASE WHEN vr_tab_aval(vr_ind_aval).nrctaava > 0 THEN ', conta corrente n° ' || TRIM(gene0002.fn_mask_conta(vr_tab_aval(vr_ind_aval).nrctaava)) ELSE '' END)
+																								|| (CASE WHEN rw_crawepr.dtmvtolt >= TO_DATE(GENE0001.fn_param_sistema(pr_nmsistem => 'CRED',pr_cdacesso => 'DT_VIG_IMP_CTR_V2'),'DD/MM/RRRR') THEN ', na condição de DEVEDOR SOLIDÁRIO' ELSE '' END)
+																			   || '.</terceiro_0' || vr_ind_aval || '>';
+						END IF;
+
+						-- Proximo Registro
+						vr_ind_aval := vr_tab_aval.NEXT(vr_ind_aval);
+					END LOOP;
+				END IF;
+			END IF;
+			
       /*IF rw_craplcr.tplcremp <> 1 THEN  -- tipo de linha de credito <> 1=Normal
           vr_dscritic := 'Contrato fora do layout padrao';
           RAISE vr_exc_saida; -- encerra programa e retorna critica
@@ -1396,7 +1509,7 @@ BEGIN
       -- Verifica se o documento eh um CPF ou CNPJ
       IF rw_crawepr.inpessoa = 1 THEN
         vr_tppessoa := 'CPF';
-        OPEN cr_gnetcvl; -- busca estado civil
+        OPEN cr_gnetcvl(pr_cdcooper, pr_nrdconta); -- busca estado civil
         FETCH cr_gnetcvl INTO rw_gnetcvl;
         CLOSE cr_gnetcvl;
               -- monta descricao para o relatorio com os dados do emitente
@@ -1404,14 +1517,16 @@ BEGIN
                      ' e portador do RG n.° '||SUBSTR(TRIM(rw_crawepr.nrdocptl),1,15)||', com o estado civil '||rw_gnetcvl.rsestcvl||
                      ', residente e domiciliado na '||rw_crapenc.dsendere||', n.° '||rw_crapenc.nrendere||
                      ', bairro '||rw_crapenc.nmbairro|| ', da cidade de '||rw_crapenc.nmcidade||'/'||rw_crapenc.cdufende||
-                     ', CEP '||gene0002.fn_mask_cep(rw_crapenc.nrcepend)||', também  qualificado na proposta de abertura de conta corrente indicada no subitem 1.1, designado Emitente.';
+                     ', CEP '||gene0002.fn_mask_cep(rw_crapenc.nrcepend)||', também  qualificado na proposta de abertura de conta corrente indicada no subitem ' ||
+					 (2 + vr_ind_add_item) || '.1, designado Emitente.';
       ELSE -- pessoa juridica nao tem estado civil
         vr_tppessoa := 'CNPJ';
         -- monta descricao para o relatorio com os dados do emitente
         vr_campo_01 := 'inscrita no '||vr_tppessoa||' sob n.° '|| gene0002.fn_mask_cpf_cnpj(rw_crawepr.nrcpfcgc, rw_crawepr.inpessoa)||
                      ' com sede na '||rw_crapenc.dsendere||', n.° '||rw_crapenc.nrendere||
                      ', bairro '||rw_crapenc.nmbairro|| ', da cidade de '||rw_crapenc.nmcidade||'/'||rw_crapenc.cdufende||
-                     ', CEP '||gene0002.fn_mask_cep(rw_crapenc.nrcepend)||', também  qualificado na proposta de abertura de conta corrente indicada no subitem 1.1, designado Emitente.';
+                     ', CEP '||gene0002.fn_mask_cep(rw_crapenc.nrcepend)||', também  qualificado na proposta de abertura de conta corrente indicada no subitem ' ||
+					 (2 + vr_ind_add_item) || '.1, designado Emitente.';
       END IF;
 
       IF rw_craplcr.flgcobmu = 1 THEN
@@ -1435,152 +1550,152 @@ BEGIN
                      '-'||rw_crapcop.cdufdcop;
 
       IF rw_crawepr.tpemprst = 0 THEN -- TR
-         vr_taxjream := rw_craplcr.txjurfix;
+        vr_taxjream := rw_craplcr.txjurfix;
       ELSIF  rw_crawepr.tpemprst = 1 THEN -- Pre-fixado
-         vr_taxjream := rw_craplcr.perjurmo;
-      END IF;
+        vr_taxjream := rw_craplcr.perjurmo;
+     END IF;
 
-      IF  vr_taxjream > 0 THEN -- taxa juros > 0
-         vr_taxjrean := ROUND((POWER(1 + (vr_taxjream / 100),12) - 1) * 100,2);--calculo juros ano
-      ELSE
-         vr_taxjrean := 0;
-      END IF;
+     IF  vr_taxjream > 0 THEN -- taxa juros > 0
+        vr_taxjrean := ROUND((POWER(1 + (vr_taxjream / 100),12) - 1) * 100,2);--calculo juros ano
+     ELSE
+        vr_taxjrean := 0;
+     END IF;
 
-      -- relatorio crrl100_03
-      IF rw_craplcr.tpctrato = 1 AND -- modelo = 1 NORMAL
-         rw_craplcr.cdusolcr = 0 AND -- codigo de uso = 0 Normal
-         rw_crawepr.tpemprst = 1 AND -- Tipo PP
-         rw_crawepr.inpessoa = 2 THEN -- pessoa juridica
-         -- clausula 2 do relatorio
-         vr_coment01 := '2. Empréstimo - O crédito ora aberto e aceito pelo Emitente é um empréstimo em dinheiro, tendo como origem recursos ' ||
-                        'de fontes de Depósitos Interfinanceiros de Repasses – DIM , com pagamento em parcelas, na quantidade ' ||
-                        'e valor contratados pelo Emitente, pelo que o Emitente.';
-         vr_nmarqim := '/crrl100_03_'||pr_nrdconta||pr_nrctremp||'.pdf';   -- nome do relatorio + nr contrato
-         -- titulo do relatorio
-         vr_dstitulo := 'CÉDULA DE CRÉDITO BANCÁRIO - EMPRÉSTIMO AO COOPERADO No. '||gene0002.fn_mask(pr_nrctremp,'99.999.999') ;
-         vr_dsjasper := 'crrl100_14.jasper'; -- nome do jasper
-
-      -- relatorio crrl100_04
-      ELSIF rw_craplcr.tpctrato = 1 AND -- MODELO: = 1 NORMAL
-         rw_craplcr.cdusolcr = 0 AND -- codigo de uso = 0 Normal
-         rw_crawepr.tpemprst = 1 AND -- Tipo PP
-         rw_crawepr.inpessoa = 1 THEN -- pessoa fisica
-         vr_coment01 := '2. Empréstimo - O crédito ora aberto e aceito pelo Emitente é um empréstimo em dinheiro, tendo como origem recursos ' ||
-                        'de fontes de Depósitos Interfinanceiros de Repasses – DIM , com pagamento em parcelas, na quantidade ' ||
-                        'e valor contratados pelo Emitente, pelo que o Emitente.';
-         vr_nmarqim := '/crrl100_04_'||pr_nrdconta||pr_nrctremp||'.pdf';   -- nome do relatorio + nr contrato
-         -- titulo do relatorio
-         vr_dstitulo := 'CÉDULA DE CRÉDITO BANCÁRIO - EMPRÉSTIMO AO COOPERADO No. '||gene0002.fn_mask(pr_nrctremp,'99.999.999') ;
-         -- Se for um contrato de portabilidade
-         IF vr_portabilidade = TRUE THEN
-           vr_dsjasper := 'crrl100_18_portab.jasper'; -- nome do jasper
-         ELSE
-           vr_dsjasper := 'crrl100_18.jasper'; -- nome do jasper
-         END IF;
-
-      -- relatorios crrl100_11 / crrl100_10 ou crrl100_14
-      ELSIF rw_craplcr.tpctrato = 1 AND -- MODELO: = 1 NORMAL
-         rw_craplcr.cdusolcr = 0 AND -- codigo de uso = 0 Normal
-         rw_crawepr.tpemprst = 0 THEN -- Tipo TR
-         IF rw_crawepr.flgpagto <> 1 THEN -- consignado
-            IF rw_craplcr.tpdescto = 2 THEN -- desconto = em folha
-              vr_nmarqim := '/crrl100_11_'||pr_nrdconta||pr_nrctremp||'.pdf'; -- nome do relatorio + nr contrato
-              -- titulo do relatorio
-              vr_dstitulo := 'CÉDULA DE CRÉDITO BANCÁRIO-EMPRÉSTIMO AO COOPERADO–CONSIGNADO–COM INDEXADOR–No. '||gene0002.fn_mask(pr_nrctremp,'99.999.999') ;
-              vr_dsjasper := 'crrl100_07.jasper'; -- nome do jasper
-            ELSE -- desconto = conta corrente
-              vr_nmarqim := '/crrl100_10_'||pr_nrdconta||pr_nrctremp||'.pdf'; -- nome do relatorio + nr contrato
-              -- titulo do relatorio
-              vr_dstitulo := 'CÉDULA DE CRÉDITO BANCÁRIO - EMPRÉSTIMO AO COOPERADO – COM INDEXADOR – No. '||gene0002.fn_mask(pr_nrctremp,'99.999.999') ;
-              vr_dsjasper := 'crrl100_06.jasper'; -- nome do jasper
-            END IF;
-         ELSE -- folha
-           vr_nmarqim := '/crrl100_14_'||pr_nrdconta||pr_nrctremp||'.pdf'; -- nome do relatorio + nr contrato
-           -- titulo do relatorio
-           vr_dstitulo := 'CÉDULA DE CRÉDITO BANCÁRIO-EMPRÉSTIMO AO COOPERADO – SALÁRIO – COM INDEXADOR–No. '||gene0002.fn_mask(pr_nrctremp,'99.999.999') ;
-           vr_dsjasper := 'crrl100_09.jasper'; -- nome do jasper
-         END IF;
-
-      -- relatorios crrl100_12 ou crrl100_13
-      ELSIF rw_craplcr.tpctrato = 1 AND -- MODELO: = 1 NORMAL
-         rw_craplcr.cdusolcr = 1 AND -- codigo de uso = 1 Microcredito
-         rw_crawepr.tpemprst = 0 THEN -- Tipo TR
-         IF rw_craplcr.dsorgrec IN ('MICROCREDITO PNMPO BNDES','MICROCREDITO PNMPO BRDE', 'MICROCREDITO PNMPO BNDES CECRED') THEN -- Origem do recurso
-             vr_nmarqim := '/crrl100_12_'||pr_nrdconta||pr_nrctremp||'.pdf'; -- nome do relatorio + nr contrato
-             vr_dstitulo := 'CÉDULA DE CRÉDITO BANCÁRIO - EMPRÉSTIMO AO COOPERADO – MICROCRÉDITO – COM INDEXADOR No. '||gene0002.fn_mask(pr_nrctremp,'99.999.999');
-             vr_dsjasper := 'crrl100_08.jasper'; -- nome do jasper
-         ELSE
-            vr_nmarqim := '/crrl100_13_'||pr_nrdconta||pr_nrctremp||'.pdf'; -- nome do relatorio + nr contrato
+     -- relatorio crrl100_03
+      IF rw_craplcr.tpctrato IN (1,4) AND -- modelo = 1 NORMAL ou 4 = APLICAÇÃO
+        rw_craplcr.cdusolcr = 0 AND -- codigo de uso = 0 Normal
+        rw_crawepr.tpemprst = 1 AND -- Tipo PP
+        rw_crawepr.inpessoa = 2 THEN -- pessoa juridica
+        -- clausula 2 do relatorio
+        vr_coment01 := '2. Empréstimo - O crédito ora aberto e aceito pelo Emitente é um empréstimo em dinheiro, tendo como origem recursos ' ||
+                       'de fontes de Depósitos Interfinanceiros de Repasses – DIM , com pagamento em parcelas, na quantidade ' ||
+                       'e valor contratados pelo Emitente, pelo que o Emitente.';
+           vr_nmarqim := '/crrl100_03_'||pr_nrdconta||pr_nrctremp||'.pdf';   -- nome do relatorio + nr contrato
             -- titulo do relatorio
-            vr_dstitulo := 'CÉDULA DE CRÉDITO BANCÁRIO - EMPRÉSTIMO AO COOPERADO – MICROCRÉDITO – COM INDEXADOR No. '||gene0002.fn_mask(pr_nrctremp,'99.999.999');
-            vr_dsjasper := 'crrl100_17.jasper';  -- nome do jasper
-         END IF;
+           vr_dstitulo := 'CÉDULA DE CRÉDITO BANCÁRIO - EMPRÉSTIMO AO COOPERADO No. '||gene0002.fn_mask(pr_nrctremp,'99.999.999') ;
+           vr_dsjasper := 'crrl100_14.jasper'; -- nome do jasper
 
-      -- relatorios crrl100_02 e crrl100_09 e crrl100_16
-      ELSIF rw_craplcr.tpctrato = 2 AND -- MODELO: 2 ALIENAÇÃO
-            rw_craplcr.cdusolcr = 0 THEN -- Cod Uso = NORMAL
-         pc_busca_bens(pr_cdcooper => pr_cdcooper
-                     , pr_nrdconta => pr_nrdconta
-                     , pr_nrctremp => pr_nrctremp
-                     , pr_cdagenci => rw_crapavi_01.cdagenci
-                     );
-         IF rw_crawepr.tpemprst = 1 THEN -- Tipo PP
-           -- Se for bens móveis
-           IF vr_tab_bens.exists(vr_tab_bens.first) AND
-             vr_tab_bens(vr_tab_bens.first).dscatbem IN ('MAQUINA DE COSTURA','EQUIPAMENTO') THEN
-             -- clausula 2 do relatorio
-             vr_coment01 := '2. Financiamento - O crédito ora aberto e aceito pelo Emitente é um empréstimo em dinheiro, com pagamento em parcelas,'||
-                            ' na quantidade e valor contratados pelo Emitente.';
-             vr_nmarqim := '/crrl100_05_'||pr_nrdconta||pr_nrctremp||'.pdf'; -- nome do relatorio + nr contrato
+     -- relatorio crrl100_04
+      ELSIF rw_craplcr.tpctrato IN (1,4) AND -- modelo = 1 NORMAL ou 4 = APLICAÇÃO
+        rw_craplcr.cdusolcr = 0 AND -- codigo de uso = 0 Normal
+        rw_crawepr.tpemprst = 1 AND -- Tipo PP
+        rw_crawepr.inpessoa = 1 THEN -- pessoa fisica
+        vr_coment01 := '2. Empréstimo - O crédito ora aberto e aceito pelo Emitente é um empréstimo em dinheiro, tendo como origem recursos ' ||
+                      'de fontes de Depósitos Interfinanceiros de Repasses – DIM , com pagamento em parcelas, na quantidade ' ||
+                      'e valor contratados pelo Emitente, pelo que o Emitente.';
+        vr_nmarqim := '/crrl100_04_'||pr_nrdconta||pr_nrctremp||'.pdf';   -- nome do relatorio + nr contrato
+        -- titulo do relatorio
+        vr_dstitulo := 'CÉDULA DE CRÉDITO BANCÁRIO - EMPRÉSTIMO AO COOPERADO No. '||gene0002.fn_mask(pr_nrctremp,'99.999.999') ;
+		-- Se for um contrato de portabilidade
+        IF vr_portabilidade = TRUE THEN
+          vr_dsjasper := 'crrl100_18_portab.jasper'; -- nome do jasper
+        ELSE
+		    vr_dsjasper := 'crrl100_18.jasper'; -- nome do jasper
+        END IF;
+
+     -- relatorios crrl100_11 / crrl100_10 ou crrl100_14
+     ELSIF rw_craplcr.tpctrato = 1 AND -- MODELO: = 1 NORMAL
+        rw_craplcr.cdusolcr = 0 AND -- codigo de uso = 0 Normal
+        rw_crawepr.tpemprst = 0 THEN -- Tipo TR
+        IF rw_crawepr.flgpagto <> 1 THEN -- consignado
+           IF rw_craplcr.tpdescto = 2 THEN -- desconto = em folha
+             vr_nmarqim := '/crrl100_11_'||pr_nrdconta||pr_nrctremp||'.pdf'; -- nome do relatorio + nr contrato
              -- titulo do relatorio
-             vr_dstitulo := 'CÉDULA DE CRÉDITO BANCÁRIO-FINANCIAMENTO COM ALIENAÇÃO FIDUCIÁRIA DE BENS MÓVEIS No. '||gene0002.fn_mask(pr_nrctremp,'99.999.999') ;
-             vr_dsjasper := 'crrl100_02.jasper'; -- nome do jasper
-             vr_bens := NULL;
+             vr_dstitulo := 'CÉDULA DE CRÉDITO BANCÁRIO-EMPRÉSTIMO AO COOPERADO–CONSIGNADO–COM INDEXADOR–No. '||gene0002.fn_mask(pr_nrctremp,'99.999.999') ;
+             vr_dsjasper := 'crrl100_07.jasper'; -- nome do jasper
+           ELSE -- desconto = conta corrente
+             vr_nmarqim := '/crrl100_10_'||pr_nrdconta||pr_nrctremp||'.pdf'; -- nome do relatorio + nr contrato
+             -- titulo do relatorio
+             vr_dstitulo := 'CÉDULA DE CRÉDITO BANCÁRIO - EMPRÉSTIMO AO COOPERADO – COM INDEXADOR – No. '||gene0002.fn_mask(pr_nrctremp,'99.999.999') ;
+             vr_dsjasper := 'crrl100_06.jasper'; -- nome do jasper
+           END IF;
+        ELSE -- folha
+          vr_nmarqim := '/crrl100_14_'||pr_nrdconta||pr_nrctremp||'.pdf'; -- nome do relatorio + nr contrato
+          -- titulo do relatorio
+          vr_dstitulo := 'CÉDULA DE CRÉDITO BANCÁRIO-EMPRÉSTIMO AO COOPERADO – SALÁRIO – COM INDEXADOR–No. '||gene0002.fn_mask(pr_nrctremp,'99.999.999') ;
+          vr_dsjasper := 'crrl100_09.jasper'; -- nome do jasper
+        END IF;
+
+     -- relatorios crrl100_12 ou crrl100_13
+     ELSIF rw_craplcr.tpctrato = 1 AND -- MODELO: = 1 NORMAL
+        rw_craplcr.cdusolcr = 1 AND -- codigo de uso = 1 Microcredito
+        rw_crawepr.tpemprst = 0 THEN -- Tipo TR
+        IF rw_craplcr.dsorgrec IN ('MICROCREDITO PNMPO BNDES','MICROCREDITO PNMPO BRDE', 'MICROCREDITO PNMPO BNDES CECRED') THEN -- Origem do recurso
+            vr_nmarqim := '/crrl100_12_'||pr_nrdconta||pr_nrctremp||'.pdf'; -- nome do relatorio + nr contrato
+            vr_dstitulo := 'CÉDULA DE CRÉDITO BANCÁRIO - EMPRÉSTIMO AO COOPERADO – MICROCRÉDITO – COM INDEXADOR No. '||gene0002.fn_mask(pr_nrctremp,'99.999.999');
+            vr_dsjasper := 'crrl100_08.jasper'; -- nome do jasper
+        ELSE
+           vr_nmarqim := '/crrl100_13_'||pr_nrdconta||pr_nrctremp||'.pdf'; -- nome do relatorio + nr contrato
+           -- titulo do relatorio
+           vr_dstitulo := 'CÉDULA DE CRÉDITO BANCÁRIO - EMPRÉSTIMO AO COOPERADO – MICROCRÉDITO – COM INDEXADOR No. '||gene0002.fn_mask(pr_nrctremp,'99.999.999');
+           vr_dsjasper := 'crrl100_17.jasper';  -- nome do jasper
+        END IF;
+
+     -- relatorios crrl100_02 e crrl100_09 e crrl100_16
+      ELSIF rw_craplcr.tpctrato IN (2,4) AND -- MODELO: 2 ALIENAÇÃO ou 4 APLICAÇÃO
+           rw_craplcr.cdusolcr = 0 THEN -- Cod Uso = NORMAL
+        pc_busca_bens(pr_cdcooper => pr_cdcooper
+                    , pr_nrdconta => pr_nrdconta
+                    , pr_nrctremp => pr_nrctremp
+                    , pr_cdagenci => rw_crapavi_01.cdagenci
+                    );
+        IF rw_crawepr.tpemprst = 1 THEN -- Tipo PP
+          -- Se for bens móveis
+          IF vr_tab_bens.exists(vr_tab_bens.first) AND
+            vr_tab_bens(vr_tab_bens.first).dscatbem IN ('MAQUINA DE COSTURA','EQUIPAMENTO') THEN
+            -- clausula 2 do relatorio
+            vr_coment01 := '2. Financiamento - O crédito ora aberto e aceito pelo Emitente é um empréstimo em dinheiro, com pagamento em parcelas,'||
+                           ' na quantidade e valor contratados pelo Emitente.';
+            vr_nmarqim := '/crrl100_05_'||pr_nrdconta||pr_nrctremp||'.pdf'; -- nome do relatorio + nr contrato
+            -- titulo do relatorio
+            vr_dstitulo := 'CÉDULA DE CRÉDITO BANCÁRIO-FINANCIAMENTO COM ALIENAÇÃO FIDUCIÁRIA DE BENS MÓVEIS No. '||gene0002.fn_mask(pr_nrctremp,'99.999.999') ;
+            vr_dsjasper := 'crrl100_02.jasper'; -- nome do jasper
+            vr_bens := NULL;
            ELSE -- Se for veiculos
              vr_nmarqim := '/crrl100_09_'||pr_nrdconta||pr_nrctremp||'.pdf'; -- nome do relatorio + nr contrato
-             -- Se for de portabilidade
+			 -- Se for de portabilidade
              IF vr_portabilidade THEN
-                -- Titulo do relatorio
+             -- Titulo do relatorio
                 vr_dstitulo := 'CÉDULA DE CRÉDITO BANCÁRIO-EMPRÉSTIMO COM ALIENAÇÃO FIDUCIÁRIA DE VEÍCULO No. '||gene0002.fn_mask(pr_nrctremp,'99.999.999');
                 -- nome do jasper
                 vr_dsjasper := 'crrl100_05_portab.jasper';
              ELSE
                 -- Titulo do relatorio
-                vr_dstitulo := 'CÉDULA DE CRÉDITO BANCÁRIO-FINANCIAMENTO COM ALIENAÇÃO FIDUCIÁRIA DE VEÍCULO No. '||gene0002.fn_mask(pr_nrctremp,'99.999.999');
-                -- nome do jasper
-                vr_dsjasper := 'crrl100_05.jasper'; -- nome do jasper             
-             END IF;
+             vr_dstitulo := 'CÉDULA DE CRÉDITO BANCÁRIO-FINANCIAMENTO COM ALIENAÇÃO FIDUCIÁRIA DE VEÍCULO No. '||gene0002.fn_mask(pr_nrctremp,'99.999.999');
+             -- nome do jasper
+             vr_dsjasper := 'crrl100_05.jasper'; -- nome do jasper             
            END IF;
-         ELSE -- TR
+           END IF;
+        ELSE -- TR
            vr_nmarqim := '/crrl100_16_'||pr_nrdconta||pr_nrctremp||'.pdf'; -- nome do relatorio + nr contrato
            -- Titulo do relatorio
            vr_dstitulo := 'CÉDULA DE CRÉDITO BANCÁRIO-FINANCIAMENTO COM ALIENAÇÃO FIDUCIÁRIA DE VEÍCULO–COM INDEXADOR No. '||gene0002.fn_mask(pr_nrctremp,'99.999.999');
            vr_dsjasper := 'crrl100_11.jasper'; -- nome do jasper
-         END IF;
+        END IF;
 
-      -- relatorio crrl100_06
-      ELSIF rw_craplcr.tpctrato = 3 AND -- MODELO: = 3 Hipoteca
-         rw_craplcr.cdusolcr = 0 AND -- codigo de uso = 0 Normal
-         rw_crawepr.tpemprst = 1 THEN -- Tipo PP
-         -- clausula 2 do relatorio
-         vr_coment01 := '2. Financiamento - O crédito ora aberto e aceito pelo Emitente é um empréstimo em dinheiro, com pagamento em parcelas,'||
-                        ' na quantidade e valor contratados pelo Emitente.';
-         vr_nmarqim := '/crrl100_06_'||pr_nrdconta||pr_nrctremp||'.pdf'; -- nome do relatorio + nr contrato
-         -- titulo do relatorio
-         vr_dstitulo := 'CÉDULA DE CRÉDITO BANCÁRIO-FINANCIAMENTO COM ALIENAÇÃO FIDUCIÁRIA DE IMÓVEL No. '||gene0002.fn_mask(pr_nrctremp,'99.999.999') ;
-         vr_dsjasper := 'crrl100_03.jasper'; -- nome do jasper
-         vr_bens := NULL;
+     -- relatorio crrl100_06
+      ELSIF rw_craplcr.tpctrato IN (3,4) AND -- MODELO: = 3 Hipoteca ou 4 Aplicação
+        rw_craplcr.cdusolcr = 0 AND -- codigo de uso = 0 Normal
+        rw_crawepr.tpemprst = 1 THEN -- Tipo PP
+        -- clausula 2 do relatorio
+        vr_coment01 := '2. Financiamento - O crédito ora aberto e aceito pelo Emitente é um empréstimo em dinheiro, com pagamento em parcelas,'||
+                       ' na quantidade e valor contratados pelo Emitente.';
+        vr_nmarqim := '/crrl100_06_'||pr_nrdconta||pr_nrctremp||'.pdf'; -- nome do relatorio + nr contrato
+        -- titulo do relatorio
+        vr_dstitulo := 'CÉDULA DE CRÉDITO BANCÁRIO-FINANCIAMENTO COM ALIENAÇÃO FIDUCIÁRIA DE IMÓVEL No. '||gene0002.fn_mask(pr_nrctremp,'99.999.999') ;
+        vr_dsjasper := 'crrl100_03.jasper'; -- nome do jasper
+        vr_bens := NULL;
 
-         pc_busca_bens(pr_cdcooper => pr_cdcooper
-                     , pr_nrdconta => pr_nrdconta
-                     , pr_nrctremp => pr_nrctremp
-                     , pr_cdagenci => rw_crapavi_01.cdagenci
-                     );
+        pc_busca_bens(pr_cdcooper => pr_cdcooper
+                    , pr_nrdconta => pr_nrdconta
+                    , pr_nrctremp => pr_nrctremp
+                    , pr_cdagenci => rw_crapavi_01.cdagenci
+                    );
 
-      -- relatorio crrl100_07, crrl100_08, crrl100_17 ou crrl100_18
-      ELSIF rw_craplcr.tpctrato = 2 AND -- MODELO: 2 ALIENAÇÃO
-            rw_craplcr.cdusolcr = 1 THEN -- Cod Uso = MICROCRÉDITO
-        IF rw_crawepr.tpemprst = 1 THEN -- Tipo PP
+     -- relatorio crrl100_07, crrl100_08, crrl100_17 ou crrl100_18
+      ELSIF rw_craplcr.tpctrato IN (2,4) AND -- MODELO: 2 ALIENAÇÃO ou 4 Aplicação
+           rw_craplcr.cdusolcr = 1 THEN -- Cod Uso = MICROCRÉDITO
+       IF rw_crawepr.tpemprst = 1 THEN -- Tipo PP
            IF rw_craplcr.dsorgrec IN ('MICROCREDITO PNMPO BNDES','MICROCREDITO PNMPO BRDE', 'MICROCREDITO PNMPO BNDES CECRED') THEN -- Origem do recurso
              vr_nmarqim := '/crrl100_07_'||pr_nrdconta||pr_nrctremp||'.pdf';  -- nome do relatorio + nr contrato
              -- titulo do relatorio
@@ -1592,7 +1707,7 @@ BEGIN
              vr_dstitulo := 'CÉDULA DE CRÉDITO BANCÁRIO-FINANCIAMENTO COM ALIENAÇÃO FIDUCIÁRIA DE VEÍCULO MICROCRÉDITO No. '||gene0002.fn_mask(pr_nrctremp,'99.999.999');
              vr_dsjasper := 'crrl100_16.jasper'; -- nome jasper
            END IF;
-        ELSE -- Tipo TR
+       ELSE -- Tipo TR
           IF rw_craplcr.dsorgrec IN ('MICROCREDITO PNMPO BNDES','MICROCREDITO PNMPO BRDE', 'MICROCREDITO PNMPO BNDES CECRED') THEN -- Origem do recurso
               vr_nmarqim := '/crrl100_18_'||pr_nrdconta||pr_nrctremp||'.pdf';  -- nome do relatorio + nr contrato
               -- Titulo do relatorio
@@ -1604,16 +1719,16 @@ BEGIN
               vr_dstitulo := 'CÉDULA DE CRÉDITO BANCÁRIO-FINANCIAMENTO COM ALIENAÇÃO FIDUCIÁRIA DE VEÍCULO MICROCRÉDITO–COM INDEXADOR No. '||gene0002.fn_mask(pr_nrctremp,'99.999.999');
               vr_dsjasper := 'crrl100_12.jasper'; -- nome do jasper
           END IF;
-        END IF;
+       END IF;
 
-        pc_busca_bens(pr_cdcooper => pr_cdcooper
-                    , pr_nrdconta => pr_nrdconta
-                    , pr_nrctremp => pr_nrctremp
-                    , pr_cdagenci => rw_crapavi_01.cdagenci
-                    );
+       pc_busca_bens(pr_cdcooper => pr_cdcooper
+                   , pr_nrdconta => pr_nrdconta
+                   , pr_nrctremp => pr_nrctremp
+                   , pr_cdagenci => rw_crapavi_01.cdagenci
+                   );
 
-      -- relatorio crrl100_15
-      ELSIF rw_craplcr.tpctrato = 3 AND -- MODELO: = 3 Hipoteca
+     -- relatorio crrl100_15
+     ELSIF rw_craplcr.tpctrato = 3 AND -- MODELO: = 3 Hipoteca
         rw_craplcr.cdusolcr = 0 AND -- codigo de uso = 0 Normal
         rw_crawepr.tpemprst = 0 THEN -- Tipo TR
         vr_nmarqim := '/crrl100_15_'||pr_nrdconta||pr_nrctremp||'.pdf';  -- nome do relatorio + nr contrato
@@ -1627,24 +1742,24 @@ BEGIN
                     , pr_cdagenci => rw_crapavi_01.cdagenci
                     );
 
-      -- relatorio crrl100_01
-      ELSIF  rw_craplcr.tpctrato = 1 AND -- MODELO: = 1 NORMAL
+     -- relatorio crrl100_01
+      ELSIF  rw_craplcr.tpctrato IN (1,4) AND -- MODELO: = 1 NORMAL ou 4 = APLICAÇÃO
         rw_crawepr.tpemprst = 1 AND -- Tipo PP
         rw_craplcr.cdusolcr = 1 AND -- codigo de uso = 1 Microcreditorw_craplcr.dsoperac IN ('FINANCIAMENTO', 'EMPRESTIMO') AND
         rw_craplcr.dsorgrec IN ('MICROCREDITO PNMPO BNDES','MICROCREDITO PNMPO BRDE', 'MICROCREDITO PNMPO BNDES CECRED') THEN -- Origem do recurso
-        vr_nmarqim := '/crrl100_01_'||pr_nrdconta||pr_nrctremp||'.pdf';  -- nome do relatorio + nr contrato
-        vr_dstitulo := 'CÉDULA DE CRÉDITO BANCÁRIO - EMPRÉSTIMO AO COOPERADO MICROCRÉDITO No. '||gene0002.fn_mask(pr_nrctremp,'99.999.999');
-        vr_dsjasper := 'crrl100_01.jasper';--nome do jasper
+       vr_nmarqim := '/crrl100_01_'||pr_nrdconta||pr_nrctremp||'.pdf';  -- nome do relatorio + nr contrato
+       vr_dstitulo := 'CÉDULA DE CRÉDITO BANCÁRIO - EMPRÉSTIMO AO COOPERADO MICROCRÉDITO No. '||gene0002.fn_mask(pr_nrctremp,'99.999.999');
+       vr_dsjasper := 'crrl100_01.jasper';--nome do jasper
 
-      -- relatorio crrl100_02
-      ELSIF rw_craplcr.tpctrato = 1 AND -- MODELO: = 1 NORMAL
+     -- relatorio crrl100_02
+     ELSIF rw_craplcr.tpctrato = 1 AND -- MODELO: = 1 NORMAL
         rw_crawepr.tpemprst = 1 AND -- Tipo PP
         rw_craplcr.cdusolcr = 1 THEN -- codigo de uso = 1 Microcredito
-        vr_nmarqim := '/crrl100_02_'||pr_nrdconta||pr_nrctremp||'.pdf'; -- nome do relatorio + nr contrato
-        -- titulo do relatorio
-        vr_dstitulo := 'CÉDULA DE CRÉDITO BANCÁRIO - EMPRÉSTIMO AO COOPERADO MICROCRÉDITO No. '||gene0002.fn_mask(pr_nrctremp,'99.999.999');
-        vr_dsjasper := 'crrl100_15.jasper'; -- nome do jasper
-      END IF;
+       vr_nmarqim := '/crrl100_02_'||pr_nrdconta||pr_nrctremp||'.pdf'; -- nome do relatorio + nr contrato
+       -- titulo do relatorio
+       vr_dstitulo := 'CÉDULA DE CRÉDITO BANCÁRIO - EMPRÉSTIMO AO COOPERADO MICROCRÉDITO No. '||gene0002.fn_mask(pr_nrctremp,'99.999.999');
+       vr_dsjasper := 'crrl100_15.jasper'; -- nome do jasper
+     END IF;
 
       IF vr_nmarqim IS NULL OR vr_dsjasper IS NULL THEN -- se nome do relatorio for nullo, contrato esta fora do novo padrao
         vr_dscritic := 'Conta/Contrato fora do padrao de layout';--monta critica
@@ -1687,13 +1802,14 @@ BEGIN
 
           -- clausulas 1 para relatorio por cooperativa
           IF rw_crawepr.tpemprst = 1 THEN -- PP
-            vr_campo_02 := 'Nas condições de vencimento indicadas nos subitens 1.9. e 1.10, '||
+            vr_campo_02 := 'Nas condições de vencimento indicadas nos subitens ' || (2 + vr_ind_add_item) || '.9. e ' || (2 + vr_ind_add_item) || '.10, '||
                            'o Emitente pagará por esta Cédula de Crédito Bancário, à '||rw_crapcop.nmextcop||' - '||rw_crapcop.nmrescop||
                            ', sociedade cooperativa de crédito, inscrita no CNPJ sob n.º '||gene0002.fn_mask_cpf_cnpj(rw_crapcop.nrdocnpj,2)||
                            ', estabelecida na ' ||rw_crapcop.dsendcop||', n.º '||rw_crapcop.nrendcop||', bairro '||rw_crapcop.nmbairro||
                            ', CEP: '||gene0002.fn_mask_cep(rw_crapcop.nrcepend)||', cidade de '||rw_crapcop.nmcidade||'-'||rw_crapcop.cdufdcop||
                            ', designada Cooperativa, a dívida em dinheiro, certa, líquida e exigível correspondente ao '||
-                           'valor total emprestado (subitem 1.3.).';
+                           'valor total emprestado (subitem ' ||
+							(2 + vr_ind_add_item) || '.3.).';
          ELSE
            vr_campo_02 := 'O Emitente pagará por esta Cédula de Crédito Bancário, à '||rw_crapcop.nmextcop||' - '||rw_crapcop.nmrescop||
                            ', sociedade cooperativa de crédito, inscrita no CNPJ sob n.º '||gene0002.fn_mask_cpf_cnpj(rw_crapcop.nrdocnpj,2)||
@@ -1843,6 +1959,7 @@ BEGIN
        
           -- gera corpo do xml
           gene0002.pc_escreve_xml(vr_des_xml, vr_texto_completo,
+                                 '<ind_add_item>'  || vr_ind_add_item                        || '</ind_add_item>' || -- Indicador se possui terceiro garantidor (0-Nao / 1-Sim)					
                                  '<versao>'        ||vr_nrversao                             ||'</versao>' ||
                                  '<digitalizacao>' ||vr_digitalizacao                        ||'</digitalizacao>'||
                                  '<dsqrcode>'      || vr_qrcode                              ||'</dsqrcode>'||
@@ -1903,7 +2020,9 @@ BEGIN
                                  '<nrctremp>'||gene0002.fn_mask(pr_nrctremp,'99.999.999')    ||'</nrctremp>'|| -- contrato
                                  '<amigalvel>'||vr_dados_coop                                ||'</amigalvel>'|| -- dados de atendimento da coop para clausula de solucao amigavel
                                  '<flginterv>'||vr_flginterv                                 ||'</flginterv>'|| -- Indica se deve ou nao imprimir a linha de assinatura do interveniente
-                                 '<negociavel>'||vr_negociavel                               ||'</negociavel>' -- Indicador de impressao do texto "nao negociavel"
+                                 '<negociavel>'||vr_negociavel                               ||'</negociavel>'|| -- Indicador de impressao do texto "nao negociavel"
+								  vr_tab_avl(1).descricao ||
+								  vr_tab_avl(2).descricao															 
                                  , TRUE);
       END IF;
 
@@ -1985,6 +2104,7 @@ BEGIN
                crawepr.qtpreemp,
                crawepr.dtvencto,
                crawepr.percetop,
+			   crawepr.idcobope,
                crapass.inpessoa,
                crapass.nrcpfcgc,
                crapass.nrdocptl,
@@ -2134,6 +2254,7 @@ BEGIN
       CURSOR cr_crapcje (pr_cdcooper IN crapcje.cdcooper%TYPE,
                          pr_nrdconta IN crapcje.nrdconta%TYPE )IS
         SELECT nvl(trim(cje.nmconjug),ass.nmprimtl) nmconjug
+			  ,cje.nrcpfcjg
           FROM crapcje cje,
                crapass ass
          WHERE cje.cdcooper = ass.cdcooper(+)
@@ -2142,6 +2263,14 @@ BEGIN
            AND cje.nrdconta = pr_nrdconta
            AND cje.idseqttl = 1; 
       rw_crapcje cr_crapcje%ROWTYPE;
+
+      -- Verificar se possui interveniente garantidor
+	  CURSOR cr_cobertura(pr_idcobert IN tbgar_cobertura_operacao.idcobertura%TYPE) IS
+        SELECT 1
+          FROM tbgar_cobertura_operacao tco
+         WHERE tco.idcobertura = pr_idcobert
+		   AND tco.nrconta_terceiro > 0;
+	  rw_cobertura cr_cobertura%ROWTYPE;
       
      -- Projeto 410 - 14/03/2018 - SM - buscar bens da proposta (Jean - Mout´S) 
      CURSOR cr_crapbpr IS 
@@ -2190,6 +2319,8 @@ BEGIN
       vr_vljurcor	      NUMBER;                       --> Valor do juros de correcao
       vr_vlminpre       NUMBER;                       --> Valor minimo da parcela
       vr_perjurmo       NUMBER;                       --> Juro mora
+	  vr_nrcpfcgc       VARCHAR2(50);                 --> CPF/CNPJ do emitente
+	  vr_nrcpfcjg       VARCHAR2(50);                 --> CPF do conjuge
 
       -- Projeto 410 - 14/03/2018 - SM - Verificar informaçoes de IOF e tarifa
       vr_dscatbem       varchar2(1000);
@@ -2248,6 +2379,21 @@ BEGIN
         vr_negociavel := 'S'; -- Imprime
       END IF;
       
+			-- Se possuir cobertura e data for superior ao do novo contrato
+			IF rw_crawepr.idcobope > 0 AND
+				 rw_crawepr.dtmvtolt >= TO_DATE(GENE0001.fn_param_sistema(pr_nmsistem => 'CRED'
+																																 ,pr_cdacesso => 'DT_VIG_IMP_CTR_V2'),'DD/MM/RRRR') THEN
+				--> Garantia Operacoes de Credito
+				OPEN  cr_cobertura(pr_idcobert => rw_crawepr.idcobope);
+				FETCH cr_cobertura INTO rw_cobertura;
+				-- Se encontrou
+				IF cr_cobertura%FOUND THEN
+					-- Atribui flag de interveniente garantidor
+					vr_ind_add_item := 1;
+				END IF;
+				CLOSE cr_cobertura;
+      END IF;			
+			
       -- Busca os dados da credora
       vr_credora := rw_crapcop.nmextcop||' - '||rw_crapcop.nmrescop||', sociedade Credora/Cooperativa de crédito, inscrita no CNPJ sob n° '||
                     gene0002.fn_mask_cpf_cnpj(rw_crapcop.nrdocnpj,2)||', estabelecida na '||
@@ -2255,6 +2401,9 @@ BEGIN
                     ', CEP: '||gene0002.fn_mask_cep(rw_crapcop.nrcepend)||', cidade de '||rw_crapcop.nmcidade||
                     '-'||rw_crapcop.cdufdcop;
 
+      -- Capturar CPF/CNPJ
+      vr_nrcpfcgc := gene0002.fn_mask_cpf_cnpj(rw_crawepr.nrcpfcgc, rw_crawepr.inpessoa);
+			
       -- Verifica se o documento eh um CPF ou CNPJ
       IF rw_crawepr.inpessoa = 1 THEN
         -- Busca estado civil e profissao
@@ -2342,6 +2491,7 @@ BEGIN
                                             || 'da cidade de ' || vr_tab_aval(vr_ind_aval).nmcidade || '/' || vr_tab_aval(vr_ind_aval).cdufresd || ', '
                                             || 'CEP ' || gene0002.fn_mask_cep(vr_tab_aval(vr_ind_aval).nrcepend)
                                             || (CASE WHEN vr_tab_aval(vr_ind_aval).nrctaava > 0 THEN ', titular da conta corrente n° ' || TRIM(gene0002.fn_mask_conta(vr_tab_aval(vr_ind_aval).nrctaava)) ELSE '' END)
+																						|| (CASE WHEN rw_crawepr.dtmvtolt >= TO_DATE(GENE0001.fn_param_sistema(pr_nmsistem => 'CRED',pr_cdacesso => 'DT_VIG_IMP_CTR_V2'),'DD/MM/RRRR') THEN ', na condição de DEVEDOR SOLIDÁRIO' ELSE '' END)
                                               || '.</terceiro_0' || vr_ind_aval || '>';
           ELSE
             vr_tab_avl(vr_ind_aval).descricao := '<terceiro_0' || vr_ind_aval || '>'
@@ -2351,6 +2501,7 @@ BEGIN
                                               || 'bairro ' || vr_tab_aval(vr_ind_aval).dsendcmp || ', da cidade de ' || vr_tab_aval(vr_ind_aval).nmcidade || '/' || vr_tab_aval(vr_ind_aval).cdufresd || ', '
                                               || 'CEP ' || gene0002.fn_mask_cep(vr_tab_aval(vr_ind_aval).nrcepend) 
                                               || (CASE WHEN vr_tab_aval(vr_ind_aval).nrctaava > 0 THEN ', conta corrente n° ' || TRIM(gene0002.fn_mask_conta(vr_tab_aval(vr_ind_aval).nrctaava)) ELSE '' END)
+																							|| (CASE WHEN rw_crawepr.dtmvtolt >= TO_DATE(GENE0001.fn_param_sistema(pr_nmsistem => 'CRED',pr_cdacesso => 'DT_VIG_IMP_CTR_V2'),'DD/MM/RRRR') THEN ', na condição de DEVEDOR SOLIDÁRIO' ELSE '' END)
                                               || '.</terceiro_0' || vr_ind_aval || '>';
           END IF;
 
@@ -2448,6 +2599,8 @@ BEGIN
       
         FETCH cr_crapcje INTO rw_crapcje;
         CLOSE cr_crapcje;
+        -- Capturar CPF do conjuge				
+		vr_nrcpfcjg := gene0002.fn_mask_cpf_cnpj(rw_crapcje.nrcpfcjg, 1);
       END IF;
       
       -- Incluir nome do modulo logado
@@ -2578,7 +2731,7 @@ BEGIN
                                            ,pr_dtcarenc        => rw_crawepr.dtcarenc
                                            ,pr_dtdpagto        => rw_crawepr.dtdpagto
                                            ,pr_qtpreemp        => rw_crawepr.qtpreemp
-                                           ,pr_vlemprst        => vr_vlemprst
+                                           ,pr_vlemprst        => rw_crawepr.vlemprst
                                            ,pr_qtdias_carencia => rw_crawepr.qtddias
                                            ,pr_vlpreemp        => vr_vlpreemp
                                            ,pr_vljurcor        => vr_vljurcor
@@ -2603,12 +2756,14 @@ BEGIN
                              '<dsqrcode>'     || vr_qrcode                                   || '</dsqrcode>'     ||
                              '<credora>'      || vr_credora                                  || '</credora>'      ||
                              '<emitente>'     || vr_emitente                                 || '</emitente>'     ||
+							 '<nrcpfcgc>'     || vr_nrcpfcgc                                 || '</nrcpfcgc>'     ||
                              '<nmemitente>'   || rw_crawepr.nmprimtl                         || '</nmemitente>'   ||
                              '<nminterven>'   || vr_nminterv                                 || '</nminterven>'   ||
                              '<nmconjug>'     || TRIM(rw_crapcje.nmconjug)                   || '</nmconjug>'     ||                             
+							 '<nrcpfcjg>'     || vr_nrcpfcjg                                 || '</nrcpfcjg>'     ||
                              '<conta>'        || TRIM(gene0002.fn_mask_conta(pr_nrdconta))   || '</conta>'        ||
                              '<pa>'           || rw_crawepr.cdagenci                         || '</pa>'           ||
-                             '<vlemprst>'     || 'R$ '|| to_char(vr_vlemprst,'FM99G999G990D00')  || '</vlemprst>' ||
+                             '<vlemprst>'     || 'R$ '|| to_char(rw_crawepr.vlemprst,'FM99G999G990D00')  || '</vlemprst>' ||
                              '<dslcremp>'     || rw_craplcr.dslcremp || ' ('|| rw_crawepr.cdlcremp ||')' || '</dslcremp>' || -- Linha de credito
                              '<origem>'       || rw_crawepr.nmcidade || '- '|| rw_crawepr.cdufdcop       || '</origem>'   || -- Local Origem
                              '<destino>'      || rw_crawepr.nmcidade || '-' || rw_crawepr.cdufdcop       || '</destino>'  || -- Local destino
@@ -2630,7 +2785,10 @@ BEGIN
                              '<vlminpre>'     || 'R$ ' || to_char(vr_vlminpre,'FM99G999G990D00') || ' + 100% do CDI</vlminpre>' ||
                              '<dtpagcar>'     || rw_crawepr.dscarencia                       || '</dtpagcar>'     ||
                              '<dtpricar>'     || nvl(to_char(rw_crawepr.dtcarenc,'DD/MM/YYYY'),UPPER('Sem carência'))   || '</dtpricar>'     ||
-                             vr_tab_avl(1).descricao || vr_tab_avl(2).descricao, TRUE);
+
+                             vr_tab_avl(1).descricao ||
+                             vr_tab_avl(2).descricao
+                             , TRUE);
 
       -- Liberando a memória alocada pro CLOB
       dbms_lob.close(vr_des_xml);
@@ -2735,7 +2893,9 @@ BEGIN
                crawepr.dtdpagto,
                crawepr.txmensal,
                crawepr.nrseqrrq,
-               crawepr.idfiniof
+               crawepr.idfiniof,
+               crawepr.dtmvtolt,               
+               crawepr.idcobope
           FROM crapass,
                crawepr
          WHERE crawepr.cdcooper = pr_cdcooper
@@ -2754,6 +2914,71 @@ BEGIN
            AND nrctremp = pr_nrctremp;
       rw_crapepr cr_crapepr%ROWTYPE;--armazena informacoes do cursor cr_crapepr
 
+      -- Garantia Operacoes de Credito
+      CURSOR cr_cobertura (pr_idcobert IN tbgar_cobertura_operacao.idcobertura%TYPE) IS
+        SELECT tco.perminimo,
+               tco.nrconta_terceiro,
+               tco.inresgate_automatico,
+               tco.qtdias_atraso_permitido
+          FROM tbgar_cobertura_operacao tco
+         WHERE tco.idcobertura = pr_idcobert;
+      rw_cobertura cr_cobertura%ROWTYPE;
+
+      -- Cursor para buscar nome do titular da conta
+      CURSOR cr_crapass(pr_cdcooper IN crapass.cdcooper%TYPE
+			                 ,pr_nrdconta IN crapass.nrdconta%TYPE) IS
+				SELECT ass.nmprimtl,
+				       ass.nrcpfcgc,
+					   ass.inpessoa,
+					   ass.cdnacion,
+					   ass.nrdocptl
+				  FROM crapass ass
+				 WHERE ass.cdcooper = pr_cdcooper
+				   AND ass.nrdconta = pr_nrdconta;
+			rw_crapass cr_crapass%ROWTYPE;
+			
+      -- Cursor para buscar estado civil da pessoa fisica, jurida nao tem
+      CURSOR cr_gnetcvl(pr_cdcooper crapttl.cdcooper%TYPE
+                       ,pr_nrdconta crapttl.nrdconta%TYPE) IS
+        SELECT gnetcvl.rsestcvl,
+               crapttl.dsproftl
+         FROM  crapttl,
+               gnetcvl
+         WHERE crapttl.cdcooper = pr_cdcooper
+           AND crapttl.nrdconta = pr_nrdconta
+           AND crapttl.idseqttl = 1 -- Primeiro Titular
+           AND gnetcvl.cdestcvl = crapttl.cdestcvl;
+      rw_gnetcvl cr_gnetcvl%ROWTYPE;--armazena informacoes do cursor cr_gnetcvl			
+			
+      -- Busca a Nacionalidade
+      CURSOR cr_crapnac(pr_cdnacion IN crapnac.cdnacion%TYPE) IS
+        SELECT crapnac.dsnacion
+          FROM crapnac
+         WHERE crapnac.cdnacion = pr_cdnacion;
+      rw_crapnac cr_crapnac%ROWTYPE;--armazena informacoes do cursor cr_crapnac			
+			
+      -- Cursor sobre o endereco do associado
+      CURSOR cr_crapenc(pr_cdcooper crapenc.cdcooper%TYPE
+			                 ,pr_nrdconta crapenc.nrdconta%TYPE
+			                 ,pr_inpessoa crapass.inpessoa%TYPE) IS
+        SELECT crapenc.dsendere,
+               crapenc.nrendere,
+               crapenc.nmbairro,
+               crapenc.nmcidade,
+               crapenc.cdufende,
+               crapenc.nrcepend
+          FROM crapenc
+         WHERE cdcooper = pr_cdcooper
+           AND nrdconta = pr_nrdconta
+           AND idseqttl = 1
+           AND tpendass = CASE
+                          WHEN pr_inpessoa = 1 THEN
+                            10 --Residencial
+                          ELSE
+                            9 -- Comercial
+                          END;
+      rw_crapenc cr_crapenc%ROWTYPE;--armazena informacoes do cursor cr_crapenc			
+			
       -- Tratamento de erros
       vr_exc_saida  EXCEPTION;
       vr_cdcritic   PLS_INTEGER;
@@ -2771,6 +2996,13 @@ BEGIN
       vr_dtlibera       DATE;                        --> Data de liberacao do contrato
       vr_nmarqimp       VARCHAR2(50);                --> nome do arquivo PDF
       vr_vlemprst       NUMBER;
+      vr_flgachou       BOOLEAN;
+      vr_inaddcob       INTEGER := 0;
+      vr_inresaut       INTEGER := 0;
+      vr_nrctater       INTEGER := 0;
+	  vr_nminterv       crapass.nmprimtl%TYPE;
+	  vr_nrcpfcgc       VARCHAR2(50);
+      vr_interven       VARCHAR2(500);  --> Descrição do interveniente
 
       -- variaveis de críticas
       vr_tab_erro       GENE0001.typ_tab_erro;
@@ -2841,6 +3073,112 @@ BEGIN
       -- Inicializa o XML
       gene0002.pc_escreve_xml(vr_des_xml, vr_texto_completo,'<?xml version="1.0" encoding="utf-8"?><contrato>', TRUE);
 
+      -- Se for PP ou POS-FIXADO
+      IF rw_crawepr.tpemprst IN (1,2) THEN
+        -- Se possuir cobertura e data for superior ao do novo contrato
+        IF rw_crawepr.idcobope > 0 AND
+           rw_crawepr.dtmvtolt >= TO_DATE(GENE0001.fn_param_sistema(pr_nmsistem => 'CRED'
+                                                                   ,pr_cdacesso => 'DT_VIG_IMP_CTR_V2'),'DD/MM/RRRR') THEN
+          --> Garantia Operacoes de Credito
+          OPEN  cr_cobertura(pr_idcobert => rw_crawepr.idcobope);
+          FETCH cr_cobertura INTO rw_cobertura;
+          vr_flgachou := cr_cobertura%FOUND;
+          CLOSE cr_cobertura;
+          -- Se achou
+          IF vr_flgachou THEN
+						 
+					   -- Se possui conta de interveniente
+					   IF rw_cobertura.nrconta_terceiro > 0 THEN
+							 -- Buscar conta do cooperado
+							 OPEN cr_crapass(pr_cdcooper => pr_cdcooper
+							                ,pr_nrdconta => rw_cobertura.nrconta_terceiro);
+							 FETCH cr_crapass INTO rw_crapass;
+							 
+							 -- Se não encontrou
+							 IF cr_crapass%NOTFOUND THEN
+								 -- Fechar cursor
+								 CLOSE cr_crapass;
+								 -- Gerar crítica
+								 vr_cdcritic := 9;
+								 -- Levantar exceção
+								 RAISE vr_exc_saida;
+							 END IF;
+							 -- Fechar cursor
+							 CLOSE cr_crapass;							 
+							 
+							 -- Busca os dados do endereco residencial do associado
+							 OPEN  cr_crapenc(pr_cdcooper => pr_cdcooper
+							                 ,pr_nrdconta => rw_cobertura.nrconta_terceiro
+															 ,pr_inpessoa => rw_crapass.inpessoa);
+							 FETCH cr_crapenc INTO rw_crapenc;
+							 -- Se nao encontrar o endereco finaliza o programa
+							 IF cr_crapenc%NOTFOUND THEN
+							 	 vr_dscritic := 'Endereco do interveniente nao encontrada para impressao'; -- monta critica
+								 CLOSE cr_crapenc;
+								 RAISE vr_exc_saida;
+							 END IF;
+							 CLOSE cr_crapenc;
+							 
+							 -- Capturar nome, conta e cpf/cnpj do interveniente
+							 vr_nminterv := rw_crapass.nmprimtl;
+                             vr_nrctater := rw_cobertura.nrconta_terceiro;
+							 vr_nrcpfcgc := gene0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => rw_crapass.nrcpfcgc
+							                                         ,pr_inpessoa => rw_crapass.inpessoa);																											 
+							 
+							 -- Verifica se o documento eh um CPF ou CNPJ
+							 IF rw_crapass.inpessoa = 1 THEN
+								 -- Busca estado civil e profissao
+								 OPEN  cr_gnetcvl(pr_cdcooper => pr_cdcooper,
+																	pr_nrdconta => rw_cobertura.nrconta_terceiro); 
+								 FETCH cr_gnetcvl INTO rw_gnetcvl;
+								 CLOSE cr_gnetcvl;
+
+								 -- Busca a Nacionalidade
+								 OPEN  cr_crapnac(pr_cdnacion => rw_crapass.cdnacion);
+								 FETCH cr_crapnac INTO rw_crapnac;
+								 CLOSE cr_crapnac;
+
+								 -- monta descricao para o relatorio com os dados do emitente
+								 vr_interven := vr_nminterv || ', ' 
+														 || (CASE WHEN TRIM(rw_crapnac.dsnacion) IS NOT NULL THEN 'nacionalidade '||LOWER(rw_crapnac.dsnacion) || ', ' ELSE '' END)
+														 || (CASE WHEN TRIM(rw_gnetcvl.dsproftl) IS NOT NULL THEN LOWER(rw_gnetcvl.dsproftl) || ', ' ELSE '' END)
+														 || (CASE WHEN TRIM(rw_gnetcvl.rsestcvl) IS NOT NULL THEN LOWER(rw_gnetcvl.rsestcvl) || ', ' ELSE '' END)
+														 || 'inscrito(a) no CPF sob n° ' || vr_nrcpfcgc || ', '
+														 || 'portador(a) do RG n° ' || rw_crapass.nrdocptl || ', residente e domiciliado(a) na ' || rw_crapenc.dsendere || ', '
+														 || 'n° '|| rw_crapenc.nrendere || ', bairro ' || rw_crapenc.nmbairro || ', '
+														 || 'da cidade de ' || rw_crapenc.nmcidade || '/' || rw_crapenc.cdufende || ', '
+														 || 'CEP ' || gene0002.fn_mask_cep(rw_crapenc.nrcepend) || ', '
+														 || 'titular da conta corrente n° ' || TRIM(gene0002.fn_mask_conta(vr_nrctater)) 
+														 || ', na condição de INTERVENIENTE GARANTIDOR.';
+							 ELSE
+								 -- monta descricao para o relatorio com os dados do emitente
+								 vr_interven := vr_nminterv || ', inscrita no CNPJ sob n° '|| vr_nrcpfcgc
+														 || ' com sede na ' || rw_crapenc.dsendere || ', n° ' || rw_crapenc.nrendere || ', '
+														 || 'bairro ' || rw_crapenc.nmbairro || ', da cidade de ' || rw_crapenc.nmcidade || '/' || rw_crapenc.cdufende || ', '
+														 || 'CEP ' || gene0002.fn_mask_cep(rw_crapenc.nrcepend) || ', conta corrente n° ' || TRIM(gene0002.fn_mask_conta(vr_nrctater)) 
+														 || ', na condição de INTERVENIENTE GARANTIDOR.';
+						 END IF;
+							  
+						 END IF;
+						 
+             vr_inaddcob := 1;
+             vr_inresaut := rw_cobertura.inresgate_automatico;
+             GENE0002.pc_escreve_xml(vr_des_xml, vr_texto_completo,
+                                    '<cob_qtdiatraso>' || rw_cobertura.qtdias_atraso_permitido || '</cob_qtdiatraso>' ||
+                                    '<cob_perminimo>'  || TO_CHAR(rw_cobertura.perminimo,'FM999G999G999G990D00') || '</cob_perminimo>' ||
+																		'<cob_interven>'   || vr_interven || '</cob_interven>');
+          END IF;
+        END IF;
+      END IF;
+
+      -- Cria nos de cobertura de operacao e resgate automatico
+      GENE0002.pc_escreve_xml(vr_des_xml, vr_texto_completo,
+                             '<cob_nrctater>' || trim(gene0002.fn_mask_conta(nvl(vr_nrctater,0))) || '</cob_nrctater>' ||
+                             '<cob_nminterv>' || trim(vr_nminterv) || '</cob_nminterv>' ||														 
+                             '<cob_nrcpfint>' || trim(vr_nrcpfcgc) || '</cob_nrcpfint>' ||														 
+                             '<cob_inaddcob>' || vr_inaddcob || '</cob_inaddcob>' ||
+                             '<cob_inresaut>' || vr_inresaut || '</cob_inresaut>');
+
       -- Concatena com xml contratos
       dbms_lob.append(vr_des_xml, vr_des_xml2);
       dbms_lob.freetemporary(vr_des_xml2);
@@ -2850,59 +3188,59 @@ BEGIN
       
       gene0002.pc_escreve_xml(vr_des_xml, vr_texto_completo, ' ', TRUE);
 
-      vr_dtlibera := nvl(nvl(rw_crapepr.dtmvtolt, rw_crawepr.dtlibera),rw_crapdat.dtmvtolt);
+          vr_dtlibera := nvl(nvl(rw_crapepr.dtmvtolt, rw_crawepr.dtlibera),rw_crapdat.dtmvtolt);
       
       --Passar só o valor do empréstimo para a CCET001, pois lá recalcula tudo que precisa
       vr_vlemprst := rw_crawepr.vlemprst;
 
       -- Chama rotina de CET
-      ccet0001.pc_imprime_emprestimos_cet(pr_cdcooper => pr_cdcooper
-                                        , pr_dtmvtolt => rw_crapdat.dtmvtolt
-                                        , pr_cdprogra => vr_cdprogra
-                                        , pr_nrdconta => pr_nrdconta
-                                        , pr_inpessoa => rw_crawepr.inpessoa
-                                        , pr_cdusolcr => 0 -- Segundo o Lucas, deve ser passado zero
-                                        , pr_cdlcremp => rw_crawepr.cdlcremp
-                                        , pr_tpemprst => rw_crawepr.tpemprst
-                                        , pr_nrctremp => pr_nrctremp
-                                        , pr_dtlibera => vr_dtlibera
-                                        , pr_dtultpag => trunc(SYSDATE)
+          ccet0001.pc_imprime_emprestimos_cet(pr_cdcooper => pr_cdcooper
+                                            , pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                            , pr_cdprogra => vr_cdprogra
+                                            , pr_nrdconta => pr_nrdconta
+                                            , pr_inpessoa => rw_crawepr.inpessoa
+                                            , pr_cdusolcr => 0 -- Segundo o Lucas, deve ser passado zero
+                                            , pr_cdlcremp => rw_crawepr.cdlcremp
+                                            , pr_tpemprst => rw_crawepr.tpemprst
+                                            , pr_nrctremp => pr_nrctremp
+                                            , pr_dtlibera => vr_dtlibera
+                                            , pr_dtultpag => trunc(SYSDATE)
                                             , pr_vlemprst => vr_vlemprst
-                                        , pr_txmensal => rw_crawepr.txmensal
-                                        , pr_vlpreemp => rw_crawepr.vlpreemp
-                                        , pr_qtpreemp => rw_crawepr.qtpreemp
-                                        , pr_dtdpagto => rw_crawepr.dtdpagto
+                                            , pr_txmensal => rw_crawepr.txmensal
+                                            , pr_vlpreemp => rw_crawepr.vlpreemp
+                                            , pr_qtpreemp => rw_crawepr.qtpreemp
+                                            , pr_dtdpagto => rw_crawepr.dtdpagto
                                         , pr_nmarqimp => vr_nmarqcet
-                                        , pr_des_xml  => vr_des_xml2
-                                        , pr_cdcritic => vr_cdcritic
-                                        , pr_dscritic => vr_dscritic
-                                        );
-      IF nvl(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
-        RAISE vr_exc_saida;
-      END IF;
+                                            , pr_des_xml  => vr_des_xml2
+                                            , pr_cdcritic => vr_cdcritic
+                                            , pr_dscritic => vr_dscritic
+                                            );
+          IF nvl(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+            RAISE vr_exc_saida;
+          END IF;
 
       gene0002.pc_escreve_xml(vr_des_xml, vr_texto_completo, ' ', TRUE);
 
       -- Concatena xml retornado CET com xml contratos
-      dbms_lob.append(vr_des_xml, vr_des_xml2);
-      dbms_lob.freetemporary(vr_des_xml2);
-      vr_des_xml2 := NULL;
-      dbms_lob.createtemporary(vr_des_xml2, TRUE);
-      dbms_lob.open(vr_des_xml2, dbms_lob.lob_readwrite);
+          dbms_lob.append(vr_des_xml, vr_des_xml2);
+          dbms_lob.freetemporary(vr_des_xml2);
+          vr_des_xml2 := NULL;
+          dbms_lob.createtemporary(vr_des_xml2, TRUE);
+          dbms_lob.open(vr_des_xml2, dbms_lob.lob_readwrite);
 
       IF rw_crawepr.nrseqrrq <> 0 THEN -- somenmte se for microcredito
-        -- chama rotinar para geracao de questionario
-        empr0003.pc_gera_perfil_empr(pr_cdcooper => pr_cdcooper
-                                   , pr_nrdconta => pr_nrdconta
-                                   , pr_nrctremp => pr_nrctremp
-                                   , pr_cdcritic => vr_cdcritic
-                                   , pr_dscritic => vr_dscritic
-                                   , pr_retxml   => vr_des_xml2
-                                   );
-        -- concatena xml retornado empr0005 com xml contratos
-        dbms_lob.append(vr_des_xml, vr_des_xml2);
-        dbms_lob.freetemporary(vr_des_xml2);
-      END IF;
+            -- chama rotinar para geracao de questionario
+            empr0003.pc_gera_perfil_empr(pr_cdcooper => pr_cdcooper
+                                       , pr_nrdconta => pr_nrdconta
+                                       , pr_nrctremp => pr_nrctremp
+                                       , pr_cdcritic => vr_cdcritic
+                                       , pr_dscritic => vr_dscritic
+                                       , pr_retxml   => vr_des_xml2
+                                       );
+            -- concatena xml retornado empr0005 com xml contratos
+            dbms_lob.append(vr_des_xml, vr_des_xml2);
+            dbms_lob.freetemporary(vr_des_xml2);
+          END IF;
 
       dbms_lob.writeappend(vr_des_xml, length('</contrato>'), '</contrato>');
 
@@ -2988,7 +3326,7 @@ BEGIN
         END;
       END IF;
 
-      COMMIT;
+    COMMIT;
 
     EXCEPTION
       WHEN vr_exc_saida THEN
@@ -4184,7 +4522,7 @@ BEGIN
                          '<portabil>' || vr_tab_co_responsavel(vr_index).portabil ||'</portabil>'||
                          '<dsorgrec>' || vr_tab_co_responsavel(vr_index).dsorgrec ||'</dsorgrec>'||
                          '<dtinictr>' || vr_tab_co_responsavel(vr_index).dtinictr ||'</dtinictr>'||
-                     '</responsavel>';
+                      '</responsavel>';
         
         -- Escrever no XML
         gene0002.pc_escreve_xml(pr_xml            => pr_xml_co_responsavel 
@@ -4320,7 +4658,7 @@ BEGIN
 			    RAISE vr_exc_saida;
 			END IF;
 			CLOSE cr_crapass;
-
+  
 			--XML de envio
 			vr_temp := '<?xml version="1.0" encoding="utf-8"?>' ||
 						 '<associado>' || 
