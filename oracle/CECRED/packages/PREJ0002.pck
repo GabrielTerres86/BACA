@@ -14,7 +14,9 @@ CREATE OR REPLACE PACKAGE CECRED.PREJ0002 AS
    Objetivo  : Centralizar os procedimentos e funcoes referente aos processos de 
                pagamentos (recuperação) de prejuizos
 
-   Alteracoes:
+   Alteracoes: 19/04/2018 - Removida atualizacao de lote que estava sendo feita indevidamente.
+                            As rotinas chamadas para geracao dos lancamentos ja fazem a atualizacao.
+                            Heitor (Mouts) - Prj 324
 
 ..............................................................................*/
 
@@ -409,6 +411,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0002 AS
                --
                dt_gerarlcm := r_craplem.dtmvtolt;
               -- atualiza lote
+              /*
               BEGIN
                 UPDATE craplot 
                    SET craplot.nrseqdig = craplot.nrseqdig + 1
@@ -425,6 +428,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0002 AS
                   vr_dscritic := 'Erro ao atualizar lote: ' || sqlerrm;
                   pr_des_reto := 'NOK';
               END;
+              */
               -- cria lancamento LCM
               IF gl_nrdolote IS NULL THEN
                 OPEN c_busca_prx_lote(pr_dtmvtolt => RW_CRAPDAT.DTMVTOLT
