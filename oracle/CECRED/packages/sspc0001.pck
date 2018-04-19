@@ -163,7 +163,10 @@ PROCEDURE pc_solicita_consulta_biro(pr_cdcooper IN  crapepr.cdcooper%TYPE, --> C
 -- Efetua a consulta ao biro da Ibratan para os títulos de um Borderô
 PROCEDURE pc_solicita_cons_bordero_biro(pr_cdcooper IN  crapcob.cdcooper%TYPE, --> Codigo da cooperativa de emprestimo
                                         pr_nrdconta IN  crapcob.nrdconta%TYPE, --> Numero da conta de emprestimo
-                                        pr_nrnosnum IN  crapcob.nrnosnum%TYPE, --> Numero do documento a ser consultado
+                                        pr_nrdocmto IN  crapcob.nrdocmto%TYPE,
+                                        pr_cdbandoc IN  crapcob.cdbandoc%TYPE,
+                                        pr_nrdctabb IN  crapcob.nrdctabb%TYPE,
+                                        pr_nrcnvcob IN  crapcob.nrcnvcob%TYPE,
                                         pr_inprodut IN  PLS_INTEGER DEFAULT 7, --> Indicador de produto (7 - Borderô)
                                         pr_cdoperad IN  crapcob.cdoperad%TYPE, --> Operador que solicitou a consulta
                                         pr_cdcritic OUT crapcri.cdcritic%TYPE, --> Critica encontrada
@@ -7056,7 +7059,10 @@ PROCEDURE pc_solicita_consulta_biro(pr_cdcooper IN  crapepr.cdcooper%TYPE, --> C
 -- Efetua a consulta ao biro da Ibratan para os Pagadores de Títulos de um Borderô
 PROCEDURE pc_solicita_cons_bordero_biro(pr_cdcooper IN  crapcob.cdcooper%TYPE, --> Codigo da cooperativa de emprestimo
                                         pr_nrdconta IN  crapcob.nrdconta%TYPE, --> Numero da conta de emprestimo
-                                        pr_nrnosnum IN  crapcob.nrnosnum%TYPE, --> Numero do documento a ser consultado
+                                        pr_nrdocmto IN  crapcob.nrdocmto%TYPE,
+                                        pr_cdbandoc IN  crapcob.cdbandoc%TYPE,
+                                        pr_nrdctabb IN  crapcob.nrdctabb%TYPE,
+                                        pr_nrcnvcob IN  crapcob.nrcnvcob%TYPE,
                                         pr_inprodut IN  PLS_INTEGER DEFAULT 7, --> Indicador de produto (7 - Borderô)
                                         pr_cdoperad IN  crapcob.cdoperad%TYPE, --> Operador que solicitou a consulta
                                         pr_cdcritic OUT crapcri.cdcritic%TYPE, --> Critica encontrada
@@ -7089,8 +7095,10 @@ PROCEDURE pc_solicita_cons_bordero_biro(pr_cdcooper IN  crapcob.cdcooper%TYPE, -
          -- filtros paramétricos 
          AND cob.cdcooper = pr_cdcooper
          AND cob.nrdconta = pr_nrdconta
-         AND cob.nrnosnum = pr_nrnosnum
-        ;
+         AND cob.nrdocmto = pr_nrdocmto
+         and cob.cdbandoc = pr_cdbandoc
+         and cob.nrdctabb = pr_nrdctabb
+         and cob.nrcnvcob = pr_nrcnvcob;
 
     -- Busca as tags para a consulta do biro
     CURSOR cr_crapmbr(pr_cdbircon crapmbr.cdbircon%TYPE,
