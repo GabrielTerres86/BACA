@@ -231,7 +231,7 @@
 		<?php if ($qtLimites == 0) { 
 			echo 'style="cursor: default;" onClick="return false;"'; 
 		} else { 
-			echo 'onClick="carregaDadosDetalhesProposta(\'CONTRATO\', nrcontrato);return false;"'; 
+			echo 'onClick="carregaDadosDetalhesProposta(\'CONTRATO\', nrcontrato, 0);return false;"'; 
 		} ?> />
 
 </div>

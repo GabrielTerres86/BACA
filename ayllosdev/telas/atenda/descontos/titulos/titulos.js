@@ -37,7 +37,7 @@
  * 021: [06/04/2018] Luis Fernando (GFT): Mudanças de layot na inclusão de borderos
  * 022: [12/04/2018] Leonardo Oliveira (GFT): Criação dos métodos 'realizarManutencaoDeLimite', 'concluirManutencaoDeLimite' e 'formataManutencaoDeLimite' para a tela de manutenção de limite.
  * 023: [15/04/2018] Leonardo Oliveira (GFT): Criação dos métodos 'formatarTelaAcionamentosDaProposta', 'carregarAcionamentosDaProposta' e 'carregaDadosDetalhesProposta' para a tela de acionamentos/detalhes da proposta, correção dos códicos sobreescritos.
- 
+ * 024: [19/04/2018] Leonardo Oliveira (GFT): Criação do método 'selecionaLimiteTitulosProposta', novo parâmetro 'nrctrmnt'/ numero da proposta, ao selecionar uma proposta   
  */
 
 var contWin    = 0;  // Variável para contagem do número de janelas abertas para impressos
@@ -786,6 +786,44 @@ function selecionaLimiteTitulos(id,qtLimites,limite,insitlim,dssitlim, dssitest,
     situacao_analise = dssitest;
     decisao = insitapr;
     valor_limite = vlLimite;
+
+    nrcontrato = null;
+    idLinhaL = null;
+    situacao_limite = null;
+
+    var cor = "";
+    
+    // Formata cor da linha da tabela que lista os limites de descto titulos
+    for (var i = 1; i <= qtLimites; i++) {      
+        if (cor == "#F4F3F0") {
+            cor = "#FFFFFF";
+        } else {
+            cor = "#F4F3F0";
+        }       
+        
+        // Formata cor da linha
+        $("#trLimite" + i).css("background-color",cor);
+        
+        if (i == id) {
+            // Atribui cor de destaque para limite selecionado
+            $("#trLimite" + id).css("background-color","#FFB9AB");
+            // Armazena número do limite selecionado
+            nrcontrato = limite;
+            idLinhaL = id;
+            cd_situacao_lim = insitlim;
+            situacao_limite = dssitlim;
+
+        }
+    }
+    return false;
+}
+
+function selecionaLimiteTitulosProposta(id,qtLimites,limite,insitlim,dssitlim, dssitest, insitapr, vlLimite, nrctrmnt) {
+
+    situacao_analise = dssitest;
+    decisao = insitapr;
+    valor_limite = vlLimite;
+    nrproposta = nrctrmnt;
 
     nrcontrato = null;
     idLinhaL = null;
@@ -2928,13 +2966,16 @@ function formataManutencaoDeLimite(){
     return false;
 }
 
-function carregaDadosDetalhesProposta(tipo, nrctrlim){
+function carregaDadosDetalhesProposta(tipo, nrctrlim, nrctrmnt){
     showMsgAguardo("Aguarde, carregando detalhes da proposta ...");
     
     exibeRotina($('#divOpcoesDaOpcao2'));
 
-    if(!nrcontrato){
-        nrcontrato = 0;
+    if(!nrctrlim){
+        nrctrlim = 0;
+    }
+    if(!nrctrmnt){
+        nrctrmnt = 0;
     }
 
     // Carrega conteúdo da opção através de ajax
@@ -2946,6 +2987,7 @@ function carregaDadosDetalhesProposta(tipo, nrctrlim){
             tipo: tipo,
             nrdconta: nrdconta,
             nrctrlim: nrctrlim,
+            nrctrmnt: nrctrmnt,
             redirect: "html_ajax"
         },      
         error: function(objAjax,responseError,objExcept) {
@@ -2966,7 +3008,7 @@ function carregaDadosDetalhesProposta(tipo, nrctrlim){
 	return false;
 }
 
-function carregarAcionamentosDaProposta(tipo, nrctrlim){
+function carregarAcionamentosDaProposta(tipo, nrctrlim, nrctrmnt){
     showMsgAguardo('Aguarde, buscando acionamentos da Proposta');  
 
     $.ajax({        
@@ -2978,6 +3020,7 @@ function carregarAcionamentosDaProposta(tipo, nrctrlim){
                     operacao: 'BUSCAR_ACIONAMENTOS_PROPOSTA',
                     nrdconta: nrdconta,   
                     nrctrlim: nrctrlim,
+                    nrctrmnt: nrctrmnt,
                     redirect: 'script_ajax'
 
                 },
@@ -3003,17 +3046,32 @@ function formatarTelaAcionamentosDaProposta(){
 
     var Lnrctrlim = $('label[for="nrctrlim"]',divFormContent);
     var Cnrctrlim = $('#nrctrlim', divFormContent);
-
+    var Cnrctrmnt = $('#nrctrmnt', divFormContent);
+    var Ctipo = $('#tipo', divFormContent);
 
     divFormContent.css({'width':'360px', 'float':'left', 'display':'block'});//'width':'120px', 'height':'360px'
 
+
     Lnrctrlim.css({'width': '60px'}).addClass('rotulo');
     Cnrctrlim.css({'width': '300px'});
-    Cnrctrlim.habilitaCampo();
-    Cnrctrlim.focus();
+    
+   
+
+    if(Ctipo.val() === "PROPOSTA"){
+        Cnrctrlim.desabilitaCampo();
+        Cnrctrlim.focus();
+
+    }else{
+        Cnrctrlim.habilitaCampo();
+        Cnrctrlim.focus();
+
+    }
+
     Cnrctrlim.unbind('change').bind('change',function() {  
             nrctrlim = Cnrctrlim.val();
-            carregarAcionamentosDaProposta('<? echo $tipo ?>', nrctrlim ); 
+            nrctrmnt = Cnrctrmnt.val();
+            tipo = Ctipo.val();
+            carregarAcionamentosDaProposta(tipo, nrctrlim, nrctrmnt);
         });
 
         // tabela

@@ -8,6 +8,7 @@
  * ALTERAÇÕES   : 18/04/2017 - Alterações referentes ao projeto 337 - Motor de Crédito. (Reinert)
  *                12/06/2017 - Retornar o protocolo. (Jaison/Marcos - PRJ337)
                   15/04/2018 - Alteração para carregar propostas dos contratos (Leonardo Oliveira - GFT)
+				  19/04/2018 - Adaptação da tela para quando for selecionardo uma proposta. (Leonardo Oliveira - GFT)
  * -------------- 
  */
 ?>
@@ -24,11 +25,13 @@ isPostMethod();
 $tipo = (isset($_POST['tipo'])) ? $_POST['tipo'] : "CONTRATO";
 $nrdconta = (isset($_POST['nrdconta'])) ? $_POST['nrdconta'] : 0;
 $nrctrlim = (isset($_POST['nrctrlim'])) ? $_POST['nrctrlim'] : 0;  //contrato
+$nrctrmnt = (isset($_POST['nrctrmnt'])) ? $_POST['nrctrmnt'] : 0;  //proposta
 
     $xml = "<Root>";
     $xml .= " <Dados>";
     $xml .= "   <nrdconta>" . $nrdconta . "</nrdconta>";
     $xml .= "   <nrctrlim>" . $nrctrlim . "</nrctrlim>";
+    $xml .= "   <nrctrmnt>" . $nrctrmnt . "</nrctrmnt>";
     $xml .= " </Dados>";
     $xml .= "</Root>";
 
@@ -39,7 +42,7 @@ $nrctrlim = (isset($_POST['nrctrlim'])) ? $_POST['nrctrlim'] : 0;  //contrato
 
 
     if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
-	   echo 'showError("error","'.$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata.'","Alerta - Ayllos","bloqueiaFundo(divRotina);fechaRotinaDetalhe();");';
+	   echo 'showError("error","'.$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata.'","Alerta - Ayllos","bloqueiaFundo(divRotina);fecharRotinaGenerico(\''.$tipo.'\');");';
         exit;
     }
 
@@ -61,20 +64,50 @@ $nrctrlim = (isset($_POST['nrctrlim'])) ? $_POST['nrctrlim'] : 0;  //contrato
 <div id='divResultadoAciona'>
     <fieldset id='divForm'>
         <div id="divFormContent">
-            <label for="nrctrlim"><? echo utf8ToHtml('Proposta: ') ?></label>
 
-            <select id="nrctrlim" name ="nrctrlim" >
-            <?php foreach($propostas as $p){ ?> 
-                <option 
-                    value="<? echo getByTagName($p->tags, 'nrctrlim');?>">
-                    <?php 
-                        $valor_retira_ponto_virgula = str_replace(",","",getByTagName($p->tags, 'vllimite'));
-                        $valor_retira_ponto_virgula = str_replace(".","",$valor_retira_ponto_virgula);
-                        $valor_formatado = formataNumericos('zzz.zz9,99',$valor_retira_ponto_virgula,'.,'); 
-                        echo  getByTagName($p->tags, 'nrctrlim').' - '.getByTagName($p->tags, 'dtpropos').' - '.$valor_formatado;
-                    ?>
-                </option>
-            <?php } ?>
+            <input id="tipo" name ="tipo" type="hidden" value="<? echo $tipo ?>"/>
+            <input id="nrctrmnt" name ="nrctrmnt" type="hidden" value="<? echo $nrctrmnt ?>"/>
+            
+            pr_nrctrmnt
+
+            <label for="nrctrlim"><? echo utf8ToHtml('Proposta: ') ?></label>
+            
+            <?php 
+                //propsta
+                if($tipo === "PROPOSTA"){ ?>
+
+                    <?php foreach($propostas as $p){ ?> 
+                        <?php 
+                            $valor_retira_ponto_virgula = str_replace(",","",getByTagName($p->tags, 'vllimite'));
+                            $valor_retira_ponto_virgula = str_replace(".","",$valor_retira_ponto_virgula);
+                            $valor_formatado = formataNumericos('zzz.zz9,99',$valor_retira_ponto_virgula,'.,'); 
+                            $value = getByTagName($p->tags, 'nrctrlim').' - '.getByTagName($p->tags, 'dtpropos').' - '.$valor_formatado;
+                        ?>
+
+                        <input id="nrctrlim" name ="nrctrlim" type="text" value="<? echo $value ?>"/>
+
+                <?php
+                    break;
+                    } // end for each ?>
+
+            <?php
+                //contrato
+                } else { // else?>
+
+                <select id="nrctrlim" name ="nrctrlim" >
+                <?php foreach($propostas as $p){ ?> 
+                    <option 
+                        value="<? echo getByTagName($p->tags, 'nrctrlim');?>">
+                        <?php 
+                            $valor_retira_ponto_virgula = str_replace(",","",getByTagName($p->tags, 'vllimite'));
+                            $valor_retira_ponto_virgula = str_replace(".","",$valor_retira_ponto_virgula);
+                            $valor_formatado = formataNumericos('zzz.zz9,99',$valor_retira_ponto_virgula,'.,'); 
+                            echo  getByTagName($p->tags, 'nrctrlim').' - '.getByTagName($p->tags, 'dtpropos').' - '.$valor_formatado;
+                        ?>
+                    </option>
+                <?php } // end for each ?>
+
+            <?php } // end if ?>
             </select>
         </div>
     </fieldset>
