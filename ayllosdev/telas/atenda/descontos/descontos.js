@@ -598,12 +598,12 @@ function formataLayout(nomeForm){
 		arrayLargura[0] = '80px';
 		arrayLargura[1] = '60px';
 		arrayLargura[2] = '60px';
-		arrayLargura[3] = '60px';
+		arrayLargura[3] = '80px';
 		arrayLargura[4] = '60px';
 		arrayLargura[5] = '60px';
-		arrayLargura[6] = '120px';
-		arrayLargura[7] = '120px';
-		arrayLargura[8] = '120px';
+		arrayLargura[6] = '100px';
+		arrayLargura[7] = '110px';
+		//arrayLargura[8] = '120px';	//não descomentar essa linha pois desalinha as colunas
 				
 		var arrayAlinha = new Array();
 		
