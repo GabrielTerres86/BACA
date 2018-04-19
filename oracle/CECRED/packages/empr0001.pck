@@ -4782,7 +4782,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         -- Arredondar juros no mês
         vr_vljurmes := ROUND(vr_vljurmes, 2);
         -- Acumular juros calculados
-        vr_vljurmes := 0; -- projeto prejuizo - Melhoria 324 - Jean Calao
+        --vr_vljurmes := 0; -- projeto prejuizo - Melhoria 324 - Jean Calao
         pr_vljuracu := pr_vljuracu + vr_vljurmes;
         -- Incluir no saldo devedor os juros do mês
         pr_vlsdeved := pr_vlsdeved + vr_vljurmes;
