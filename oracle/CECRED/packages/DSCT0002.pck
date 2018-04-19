@@ -4624,12 +4624,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
 
     --> Buscar Contrato de limite
     CURSOR cr_craplim IS
+    --     descontos de titulos
     select lim.nrdconta
           ,lim.cdageori
           ,lim.vllimite
           ,lim.cddlinha
           ,lim.dtinivig
-          ,0 nrctrmnt
+          ,lim.nrctrlim
     from   craplim lim
     where  lim.cdcooper = pr_cdcooper
     and    lim.nrdconta = pr_nrdconta
@@ -4639,14 +4640,37 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
     
     union  all
     
+    --     proposta principal do limites de desconto de titulo
     select lim.nrdconta
           ,lim.cdageori
           ,lim.vllimite
           ,lim.cddlinha
           ,lim.dtinivig
-          ,nvl(lim.nrctrmnt,0) nrctrmnt
+          ,lim.nrctrlim
     from   crawlim lim
     where  lim.cdcooper = pr_cdcooper
+    and    lim.nrdconta = pr_nrdconta
+    and    lim.nrctrlim = pr_nrctrlim
+    and    lim.tpctrlim = pr_tpctrlim
+    and    lim.nrctrmnt = 0
+    and    pr_tpctrlim  = 3
+    
+    union  all
+    
+    --     proposta de manutenção de limites de desconto de titulo
+    select mnt.nrdconta
+          ,mnt.cdageori
+          ,mnt.vllimite
+          ,mnt.cddlinha
+          ,mnt.dtinivig
+          ,mnt.nrctrlim
+    from   crawlim mnt
+          ,crawlim lim
+    where  mnt.cdcooper = lim.cdcooper
+    and    mnt.nrdconta = lim.nrdconta
+    and    mnt.nrctrlim = lim.nrctrmnt
+    and    mnt.tpctrlim = lim.tpctrlim
+    and    lim.cdcooper = lim.cdcooper
     and    lim.nrdconta = pr_nrdconta
     and    lim.nrctrlim = pr_nrctrlim
     and    lim.tpctrlim = pr_tpctrlim
@@ -4742,8 +4766,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
     vr_dsavali1        VARCHAR2(500);
     vr_dsavali2        VARCHAR2(500);
     
-    vr_nrctrlim        crawlim.nrctrlim%type;
-
     --> CET
     vr_desxml_CET      CLOB;
     vr_nmarqimp_CET    varchar2(60);
@@ -4821,12 +4843,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
     fetch cr_craplim into rw_craplim;
     if    cr_craplim%notfound then
           vr_flgcriti := true;
-    else
-          if  rw_craplim.nrctrmnt = 0 then
-              vr_nrctrlim := pr_nrctrlim;
-          else
-              vr_nrctrlim := rw_craplim.nrctrmnt;
-          end if;
     end   if;
     close cr_craplim;
 
@@ -4844,7 +4860,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
                                ,pr_dtmvtopr => pr_dtmvtopr  --> Data do proximo Movimento
                                ,pr_inproces => pr_inproces  --> Indicador do processo
                                ,pr_idimpres => pr_idimpres  --> Indicador de impresao
-                               ,pr_nrctrlim => vr_nrctrlim  --> Contrato
+                               ,pr_nrctrlim => rw_craplim.nrctrlim  --> Contrato
                                ,pr_nrborder => 0            --> Numero do bordero
                                ,pr_flgerlog => 0            --> Indicador se deve gerar log(0-nao, 1-sim)
                                ,pr_limorbor => 1            --> Indicador do tipo de dado( 1 - LIMITE DSCTIT 2 - BORDERO DSCTIT )
@@ -4993,7 +5009,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
                                       ,pr_cdusolcr  => 1                   -- Codigo de uso da linha de credito
                                       ,pr_cdlcremp  => rw_craplim.cddlinha -- Linha de credio
                                       ,pr_tpctrlim  => 3                   --> Tipo da operacao (1-Chq Esp./ 2-Desc Chq./ 3-Desc Tit)
-                                      ,pr_nrctrlim  => vr_nrctrlim         -- Contrato
+                                      ,pr_nrctrlim  => rw_craplim.nrctrlim         -- Contrato
                                       ,pr_dtinivig  => nvl(rw_craplim.dtinivig,pr_dtmvtolt)         -- Data liberacao
                                       ,pr_qtdiavig  => vr_tab_contrato_limite(vr_idxctlim).qtdiavig -- Dias de vigencia
                                       ,pr_vlemprst  => vr_tab_contrato_limite(vr_idxctlim).vllimite -- Valor emprestado
@@ -5039,7 +5055,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
                    vr_cdageqrc ||'_'||
                    TRIM(gene0002.fn_mask_conta(pr_nrdconta)) ||'_'||
                    0           ||'_'||
-                   TRIM(gene0002.fn_mask_contrato(vr_nrctrlim)) ||'_'||
+                   TRIM(gene0002.fn_mask_contrato(rw_craplim.nrctrlim)) ||'_'||
                    0           ||'_'||
                    vr_cdtipdoc;
 
@@ -5070,7 +5086,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
                          '<dsqrcode>'|| vr_qrcode                                    ||'</dsqrcode>'||
                          '<dstitulo>'|| vr_dstitulo                                  ||'</dstitulo>'||
                          '<tpctrlim>'|| pr_tpctrlim                                  ||'</tpctrlim>'||
-                         '<nrctrlim>'|| TRIM(gene0002.fn_mask_contrato(vr_nrctrlim)) ||'</nrctrlim>'||
+                         '<nrctrlim>'|| TRIM(gene0002.fn_mask_contrato(rw_craplim.nrctrlim)) ||'</nrctrlim>'||
                          '<nrdconta>'|| gene0002.fn_mask_conta(pr_nrdconta)          ||'</nrdconta>'||
                          '<nmextcop>'|| vr_tab_contrato_limite(vr_idxctlim).nmextcop ||'</nmextcop>'||
                          '<cdagenci>'|| vr_tab_contrato_limite(vr_idxctlim).cdagenci ||'</cdagenci>'||
@@ -5157,7 +5173,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
                                       ,pr_cdusolcr  => 1                           -- Codigo de uso da linha de credito
                                       ,pr_cdlcremp  => rw_craplim.cddlinha         -- Linha de credio
                                       ,pr_tpctrlim  => pr_tpctrlim                 -- Tipo da operacao (1-Chq Esp./ 2-Desc Chq./ 3-Desc Tit)
-                                      ,pr_nrctrlim  => vr_nrctrlim                 -- Contrato
+                                      ,pr_nrctrlim  => rw_craplim.nrctrlim                 -- Contrato
                                       ,pr_dtinivig  => nvl(rw_craplim.dtinivig,pr_dtmvtolt)         -- Data liberacao
                                       ,pr_qtdiavig  => vr_tab_contrato_limite(vr_idxctlim).qtdiavig -- Dias de vigencia
                                       ,pr_vlemprst  => vr_tab_contrato_limite(vr_idxctlim).vllimite -- Valor emprestado
@@ -5406,7 +5422,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
         gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
                                   pr_nmdcampo => 'nrctrlim',
                                   pr_dsdadant => NULL,
-                                  pr_dsdadatu => vr_nrctrlim);
+                                  pr_dsdadatu => rw_craplim.nrctrlim);
       END IF;
 
 
@@ -5432,7 +5448,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
         gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
                                   pr_nmdcampo => 'nrctrlim',
                                   pr_dsdadant => NULL,
-                                  pr_dsdadatu => vr_nrctrlim);
+                                  pr_dsdadatu => rw_craplim.nrctrlim);
       END IF;
   END pc_gera_impressao_limite;
 

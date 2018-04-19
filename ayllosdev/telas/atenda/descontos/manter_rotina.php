@@ -370,11 +370,11 @@
 		$per_cddlinha = formataNumericos('zz9',$dados[17]->cdata,'.');
 
 		if($vllimite > $per_vllimite){
-			echo 'showError("inform","Majora&ccedil;&atilde;o criada com sucesso","Alerta - Ayllos","'
+			echo 'showError("inform","Proposta de majora&ccedil;&atilde;o criada com sucesso","Alerta - Ayllos","'
 	    	.'voltaDiv(2,1,4,\'DESCONTO DE T&Iacute;TULOS\',\'DSC TITS\');'
 	    	.'carregaTitulos();");';
 		} else {
-			echo 'showError("inform","Manuten&ccedil;&atilde;o realizada com sucesso","Alerta - Ayllos","'
+			echo 'showError("inform","Manuten&ccedil;&atilde;o do contrato realizada com sucesso","Alerta - Ayllos","'
 	    	.'voltaDiv(2,1,4,\'DESCONTO DE T&Iacute;TULOS\',\'DSC TITS\');'
 	    	.'carregaTitulos();");';
 		}

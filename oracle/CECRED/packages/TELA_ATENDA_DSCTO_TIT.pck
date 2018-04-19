@@ -317,6 +317,7 @@ PROCEDURE pc_obtem_dados_proposta_web(pr_nrdconta in crapass.nrdconta%type --> C
 
 PROCEDURE pc_obtem_proposta_aciona_web(pr_nrdconta in crapass.nrdconta%type --> Conta do associado
                                       ,pr_nrctrlim in crawlim.nrctrlim%type --> Numero do Contrato do Limite
+                                      ,pr_nrctrmnt in crawlim.tpctrlim%type --> Numero da proposta do Limite
                                       ,pr_xmllog   in varchar2              --> XML com informações de LOG
                                        -- OUT
                                       ,pr_cdcritic out pls_integer          --> Codigo da critica
@@ -2660,7 +2661,9 @@ PROCEDURE pc_obtem_dados_proposta(pr_cdcooper           in crapcop.cdcooper%type
 
    cursor cr_crawlim is
    select lim.dtpropos
-         ,lim.nrctrmnt
+         ,case when lim.nrctrmnt > 0 then lim.nrctrmnt
+               else ctr.nrctrlim
+          end nrctrmnt
          ,lim.nrctrlim
          ,lim.vllimite
          ,lim.qtdiavig
@@ -2694,6 +2697,10 @@ PROCEDURE pc_obtem_dados_proposta(pr_cdcooper           in crapcop.cdcooper%type
                             else        'DIFERENTE'
           end dssitapr
    from   crawlim lim
+     left outer join craplim ctr on (ctr.nrctrlim = lim.nrctrlim and
+                                     ctr.tpctrlim = lim.tpctrlim and
+                                     ctr.nrdconta = lim.nrdconta and
+                                     ctr.cdcooper = lim.cdcooper)
    where  case when lim.insitlim in (1,5,6) and lim.dtpropos >= vr_dtpropos then 1
                when lim.insitlim = 2 and 
                     lim.nrctrlim = (select max(lim_ativo.nrctrlim)
@@ -2897,6 +2904,7 @@ PROCEDURE pc_obtem_proposta_aciona(pr_cdcooper           in crapcop.cdcooper%typ
                                   ,pr_nrdconta           in crapass.nrdconta%type   --> Conta do associado
                                   ,pr_nrctrlim           in crawlim.nrctrlim%type   --> Numero do Contrato do Limite
                                   ,pr_tpctrlim           in crawlim.tpctrlim%type   --> Tipo de contrato de Limite
+                                  ,pr_nrctrmnt           in crawlim.tpctrlim%type   --> Numero da proposta do Limite
                                   ,pr_qtregist           out integer                --> Qtde total de registros
                                   ,pr_tab_dados_proposta out typ_tab_dados_proposta --> Saida com os dados do empréstimo
                                   ,pr_cdcritic           out pls_integer            --> Codigo da critica
@@ -2927,7 +2935,7 @@ PROCEDURE pc_obtem_proposta_aciona(pr_cdcooper           in crapcop.cdcooper%typ
    rw_crapdat  btch0001.cr_crapdat%rowtype;
 
    cursor cr_crawlim is
-      select lim.nrctrlim
+   select lim.nrctrlim
          ,lim.nrctrmnt
          ,lim.dtpropos
          ,lim.vllimite
@@ -2937,6 +2945,7 @@ PROCEDURE pc_obtem_proposta_aciona(pr_cdcooper           in crapcop.cdcooper%typ
    and    lim.tpctrlim = pr_tpctrlim
    and    lim.nrdconta = pr_nrdconta
    and    lim.cdcooper = pr_cdcooper
+   and    pr_nrctrmnt  = 0
    
    union  all
    
@@ -2946,7 +2955,8 @@ PROCEDURE pc_obtem_proposta_aciona(pr_cdcooper           in crapcop.cdcooper%typ
          ,lim.vllimite
          ,lim.cddlinha
    from   crawlim lim
-   where  lim.nrctrmnt = pr_nrctrlim
+   where  lim.nrctrmnt = decode(pr_nrctrmnt, 0, pr_nrctrlim, pr_nrctrmnt)
+   and    lim.nrctrlim = decode(pr_nrctrmnt, 0, lim.nrctrlim, pr_nrctrlim)
    and    lim.tpctrlim = pr_tpctrlim
    and    lim.nrdconta = pr_nrdconta
    and    lim.cdcooper = pr_cdcooper;
@@ -2967,6 +2977,7 @@ BEGIN
          pr_tab_dados_proposta(vr_idxdados).nrctrlim := rw_crawlim.nrctrlim;
          pr_tab_dados_proposta(vr_idxdados).vllimite := rw_crawlim.vllimite;
          pr_tab_dados_proposta(vr_idxdados).cddlinha := rw_crawlim.cddlinha;
+         pr_tab_dados_proposta(vr_idxdados).nrctrmnt := rw_crawlim.nrctrmnt;
          
          pr_qtregist := nvl(pr_qtregist,0) + 1;
    end   loop;
@@ -2990,6 +3001,7 @@ END pc_obtem_proposta_aciona;
 
 PROCEDURE pc_obtem_proposta_aciona_web(pr_nrdconta in crapass.nrdconta%type --> Conta do associado
                                       ,pr_nrctrlim in crawlim.nrctrlim%type --> Numero do Contrato do Limite
+                                      ,pr_nrctrmnt in crawlim.tpctrlim%type --> Numero da proposta do Limite
                                       ,pr_xmllog   in varchar2              --> XML com informações de LOG
                                        -- OUT
                                       ,pr_cdcritic out pls_integer          --> Codigo da critica
@@ -3045,6 +3057,7 @@ BEGIN
                            ,pr_nrdconta           => pr_nrdconta
                            ,pr_nrctrlim           => pr_nrctrlim
                            ,pr_tpctrlim           => 3
+                           ,pr_nrctrmnt           => pr_nrctrmnt
                            ,pr_qtregist           => vr_qtregist
                            ,pr_tab_dados_proposta => vr_tab_dados_proposta
                            ,pr_cdcritic           => vr_cdcritic
@@ -3071,6 +3084,7 @@ BEGIN
                            '<vllimite>'|| to_char(vr_tab_dados_proposta(vr_index).vllimite, 'FM999G999G999G990D00') ||'</vllimite>'||
                            '<cddlinha>'|| vr_tab_dados_proposta(vr_index).cddlinha ||'</cddlinha>'||
                            '<dtpropos>'|| to_char(vr_tab_dados_proposta(vr_index).dtpropos, 'DD/MM/RRRR') ||'</dtpropos>'||
+                           '<nrctrmnt>'|| vr_tab_dados_proposta(vr_index).nrctrmnt ||'</nrctrmnt>'||
                         '</proposta_aciona>');
 
        vr_index := vr_tab_dados_proposta.next(vr_index);
