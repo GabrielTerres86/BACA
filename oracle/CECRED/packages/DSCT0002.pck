@@ -184,13 +184,7 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0002 AS
   TYPE typ_tab_dados_border IS TABLE OF typ_rec_dados_border
        INDEX BY PLS_INTEGER;
 
-/*
-      pr_tab_tit_bordero(vr_idxtitul).cdbandoc := rw_craptdb.cdbandoc;
-      pr_tab_tit_bordero(vr_idxtitul).dtlibbdt := rw_craptdb.dtlibbdt;
-      pr_tab_tit_bordero(vr_idxtitul).nrdctabb := rw_craptdb.nrdctabb;
-      pr_tab_tit_bordero(vr_idxtitul).vlliquid := rw_craptdb.vlliquid;
-      pr_tab_tit_bordero(vr_idxtitul).insittit := rw_craptdb.insittit;
-*/
+
   --> Armazenar dados dos titulos do bordero antigo(b1wgen0030tt.i/tt-tits_do_bordero)
   TYPE typ_rec_tit_bordero
        IS RECORD (nrdctabb craptdb.nrdctabb%TYPE,
@@ -506,6 +500,7 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0002 AS
                                         ,pr_dscritic          OUT VARCHAR2             --> Descrição da crítica
                                         );
 
+  --> Buscar titulos de um determinado bordero a partir da craptdb
   PROCEDURE pc_busca_titulos_bordero (pr_cdcooper IN crapcop.cdcooper%TYPE  --> Código da Cooperativa
                                      ,pr_nrborder IN crapbdt.nrborder%TYPE  --> numero do bordero
                                      ,pr_nrdconta IN crapass.nrdconta%TYPE  --> Número da Conta
@@ -2286,7 +2281,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
     ELSIF pr_cddopcao = 'L' THEN
       IF rw_crapbdt.insitbdt <> 2 THEN
         vr_cdcritic := 0;
-        vr_dscritic := 'O bordero deve estar na situacao ANALISADOooo.';
+        vr_dscritic := 'O bordero deve estar na situacao ANALISADO.';
         RAISE vr_exc_erro;
       END IF;
     ELSIF pr_cddopcao = 'I' THEN
@@ -4634,6 +4629,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
           ,lim.vllimite
           ,lim.cddlinha
           ,lim.dtinivig
+          ,0 nrctrmnt
     from   craplim lim
     where  lim.cdcooper = pr_cdcooper
     and    lim.nrdconta = pr_nrdconta
@@ -4648,6 +4644,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
           ,lim.vllimite
           ,lim.cddlinha
           ,lim.dtinivig
+          ,nvl(lim.nrctrmnt,0) nrctrmnt
     from   crawlim lim
     where  lim.cdcooper = pr_cdcooper
     and    lim.nrdconta = pr_nrdconta
@@ -4744,6 +4741,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
     vr_nrfonres2       VARCHAR2(20);
     vr_dsavali1        VARCHAR2(500);
     vr_dsavali2        VARCHAR2(500);
+    
+    vr_nrctrlim        crawlim.nrctrlim%type;
 
     --> CET
     vr_desxml_CET      CLOB;
@@ -4817,6 +4816,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
       CLOSE cr_crapass;
     END IF;
 
+    --> Buscar Contrato de limite
+    open  cr_craplim;
+    fetch cr_craplim into rw_craplim;
+    if    cr_craplim%notfound then
+          vr_flgcriti := true;
+    else
+          if  rw_craplim.nrctrmnt = 0 then
+              vr_nrctrlim := pr_nrctrlim;
+          else
+              vr_nrctrlim := rw_craplim.nrctrmnt;
+          end if;
+    end   if;
+    close cr_craplim;
+
     --> Buscar dados para montar contratos etc para desconto de titulos
     pc_busca_dados_imp_descont( pr_cdcooper => pr_cdcooper  --> Código da Cooperativa
                                ,pr_cdagenci => pr_cdagecxa  --> Código da agencia
@@ -4831,7 +4844,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
                                ,pr_dtmvtopr => pr_dtmvtopr  --> Data do proximo Movimento
                                ,pr_inproces => pr_inproces  --> Indicador do processo
                                ,pr_idimpres => pr_idimpres  --> Indicador de impresao
-                               ,pr_nrctrlim => pr_nrctrlim  --> Contrato
+                               ,pr_nrctrlim => vr_nrctrlim  --> Contrato
                                ,pr_nrborder => 0            --> Numero do bordero
                                ,pr_flgerlog => 0            --> Indicador se deve gerar log(0-nao, 1-sim)
                                ,pr_limorbor => 1            --> Indicador do tipo de dado( 1 - LIMITE DSCTIT 2 - BORDERO DSCTIT )
@@ -4954,16 +4967,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
         RAISE vr_exc_erro;
       END IF;
 
-      --> Buscar Contrato de limite
-      OPEN cr_craplim;
-      FETCH cr_craplim INTO rw_craplim;
-      IF cr_craplim%NOTFOUND THEN
-        CLOSE cr_craplim;
-        vr_flgcriti := TRUE;
-      ELSE
-        CLOSE cr_craplim;
-      END IF;
-
       --> Buscar dados de Linhas de Desconto
       OPEN cr_crapldc (pr_cdcooper => pr_cdcooper,
                        pr_cddlinha => rw_craplim.cddlinha);
@@ -4990,7 +4993,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
                                       ,pr_cdusolcr  => 1                   -- Codigo de uso da linha de credito
                                       ,pr_cdlcremp  => rw_craplim.cddlinha -- Linha de credio
                                       ,pr_tpctrlim  => 3                   --> Tipo da operacao (1-Chq Esp./ 2-Desc Chq./ 3-Desc Tit)
-                                      ,pr_nrctrlim  => pr_nrctrlim         -- Contrato
+                                      ,pr_nrctrlim  => vr_nrctrlim         -- Contrato
                                       ,pr_dtinivig  => nvl(rw_craplim.dtinivig,pr_dtmvtolt)         -- Data liberacao
                                       ,pr_qtdiavig  => vr_tab_contrato_limite(vr_idxctlim).qtdiavig -- Dias de vigencia
                                       ,pr_vlemprst  => vr_tab_contrato_limite(vr_idxctlim).vllimite -- Valor emprestado
@@ -5036,7 +5039,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
                    vr_cdageqrc ||'_'||
                    TRIM(gene0002.fn_mask_conta(pr_nrdconta)) ||'_'||
                    0           ||'_'||
-                   TRIM(gene0002.fn_mask_contrato(pr_nrctrlim)) ||'_'||
+                   TRIM(gene0002.fn_mask_contrato(vr_nrctrlim)) ||'_'||
                    0           ||'_'||
                    vr_cdtipdoc;
 
@@ -5067,7 +5070,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
                          '<dsqrcode>'|| vr_qrcode                                    ||'</dsqrcode>'||
                          '<dstitulo>'|| vr_dstitulo                                  ||'</dstitulo>'||
                          '<tpctrlim>'|| pr_tpctrlim                                  ||'</tpctrlim>'||
-                         '<nrctrlim>'|| TRIM(gene0002.fn_mask_contrato(pr_nrctrlim)) ||'</nrctrlim>'||
+                         '<nrctrlim>'|| TRIM(gene0002.fn_mask_contrato(vr_nrctrlim)) ||'</nrctrlim>'||
                          '<nrdconta>'|| gene0002.fn_mask_conta(pr_nrdconta)          ||'</nrdconta>'||
                          '<nmextcop>'|| vr_tab_contrato_limite(vr_idxctlim).nmextcop ||'</nmextcop>'||
                          '<cdagenci>'|| vr_tab_contrato_limite(vr_idxctlim).cdagenci ||'</cdagenci>'||
@@ -5154,7 +5157,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
                                       ,pr_cdusolcr  => 1                           -- Codigo de uso da linha de credito
                                       ,pr_cdlcremp  => rw_craplim.cddlinha         -- Linha de credio
                                       ,pr_tpctrlim  => pr_tpctrlim                 -- Tipo da operacao (1-Chq Esp./ 2-Desc Chq./ 3-Desc Tit)
-                                      ,pr_nrctrlim  => pr_nrctrlim                 -- Contrato
+                                      ,pr_nrctrlim  => vr_nrctrlim                 -- Contrato
                                       ,pr_dtinivig  => nvl(rw_craplim.dtinivig,pr_dtmvtolt)         -- Data liberacao
                                       ,pr_qtdiavig  => vr_tab_contrato_limite(vr_idxctlim).qtdiavig -- Dias de vigencia
                                       ,pr_vlemprst  => vr_tab_contrato_limite(vr_idxctlim).vllimite -- Valor emprestado
@@ -5403,7 +5406,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
         gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
                                   pr_nmdcampo => 'nrctrlim',
                                   pr_dsdadant => NULL,
-                                  pr_dsdadatu => pr_nrctrlim);
+                                  pr_dsdadatu => vr_nrctrlim);
       END IF;
 
 
@@ -5429,7 +5432,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
         gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
                                   pr_nmdcampo => 'nrctrlim',
                                   pr_dsdadant => NULL,
-                                  pr_dsdadatu => pr_nrctrlim);
+                                  pr_dsdadatu => vr_nrctrlim);
       END IF;
   END pc_gera_impressao_limite;
 
@@ -6027,7 +6030,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
       END IF;
   END pc_gera_impressao_bordero;
   
-  PROCEDURE pc_efetua_analise_pagador  ( pr_cdcooper IN crapsab.cdcooper%TYPE  --> Código da Cooperativa do Pagador (Sacado)
+PROCEDURE pc_efetua_analise_pagador  ( pr_cdcooper IN crapsab.cdcooper%TYPE  --> Código da Cooperativa do Pagador (Sacado)
                                         ,pr_nrdconta IN crapsab.nrdconta%TYPE  --> Número da Conta do Pagador       (Sacado)
                                         ,pr_nrinssac IN crapsab.nrinssac%TYPE  --> Número de Inscrição do Pagador   (Sacado)
                                          --------------> OUT <--------------
@@ -6370,7 +6373,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
                            where rem.nrcpfcgc     = cob_pag.nrinssac
                              and rem.cdcooper     = pr_cdcooper
                              and cob_pag.nrinssac = rw_crapsab.nrinssac)
-             );
+             );            
     rw_coop_tit_conta_pag cr_coop_tit_conta_pag%rowtype;                                                                   
 
 
@@ -6399,6 +6402,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
                                                          ) IS
 
     BEGIN
+                                                    
        insert into tbdsct_analise_pagador
               (cdcooper
               ,nrdconta
@@ -6519,7 +6523,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
          open  cr_qt_nao_pagos;
          fetch cr_qt_nao_pagos into rw_qt_nao_pagos;
          close cr_qt_nao_pagos;
-         
+
          if  rw_qt_nao_pagos.qt_tit_nao_pagos > vr_tab_dados_dsctit(1).qtnaopag then
              vr_tab_analise_pagador(1).qttit_naopagos := rw_qt_nao_pagos.qt_tit_nao_pagos;
              vr_inpossui_criticas := 1;

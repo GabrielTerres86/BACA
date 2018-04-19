@@ -145,7 +145,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0004 IS
           ,ldc.cddlinha cdlcremp
           ,ldc.dsdlinha dslcremp
           ,lim.tpctrlim
-          ,'LM' tpproduto
+          ,case when nvl(lim.nrctrmnt,0) = 0 then 'LM'
+                else                              'MJ'
+           end tpproduto
           ,ldc.tpctrato -- Tipo do contrato de Limite Desconto  (0-Generico/ 1-Aplicacao)
           ,0 cdfinemp -- finalidadeCodigo: Codigo Finalidade da Proposta de Empréstimo
           ,'' dsfinemp -- finalidadeDescricao: Descricao Finalidade da Proposta de Empréstimo
@@ -496,8 +498,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0004 IS
     vr_obj_generico.put('cooperativa', pr_cdcooper); 
     vr_obj_generico.put('agenci', pr_cdagenci);
 
-    vr_obj_generico.put('segmentoCodigo' ,3); 
-    vr_obj_generico.put('segmentoDescricao' ,'Limite Desct Titulo');     
+    vr_obj_generico.put('segmentoCodigo' ,5); 
+    vr_obj_generico.put('segmentoDescricao' ,'Desconto Titulo Limite');
 
     vr_obj_generico.put('linhaCreditoCodigo'    ,rw_crawlim.cdlcremp);
     vr_obj_generico.put('linhaCreditoDescricao' ,rw_crawlim.dslcremp);
@@ -1378,7 +1380,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0004 IS
         ,lim.insitapr
         ,upper(lim.cdopeapr) cdopeapr
         ,'0,0,0,0,0,0,0,0,0,0' dsliquid
-        ,decode(lim.tpctrlim,1,'PP','TR') tpproduto
+        ,case when nvl(lim.nrctrmnt,0) = 0 then 'LM'
+              else                              'MJ'
+         end tpproduto
   from   crawlim lim
         ,crapldc ldc
         ,crapope ope
@@ -1564,8 +1568,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0004 IS
                            'DD/MM/RRRR HH24:MI:SS');
      vr_obj_proposta.put('dataHora'           , este0001.fn_datatempo_ibra(vr_data_aux));
 
-     vr_obj_proposta.put('produtoCreditoSegmentoCodigo' ,3); 
-     vr_obj_proposta.put('produtoCreditoSegmentoDescricao' ,'Limite Desct Titulo');   
+     vr_obj_proposta.put('produtoCreditoSegmentoCodigo'    , 5); 
+     vr_obj_proposta.put('produtoCreditoSegmentoDescricao' , 'Desconto Titulo Limite');   
 
      vr_obj_proposta.put('linhaCreditoCodigo'    ,rw_crawlim.cdlcremp);
      vr_obj_proposta.put('linhaCreditoDescricao' ,rw_crawlim.dslcremp);
