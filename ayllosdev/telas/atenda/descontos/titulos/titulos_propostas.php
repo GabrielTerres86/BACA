@@ -112,7 +112,7 @@ $xmlObjLimites = getObjectXML($xmlResult);
 					<th>Contrato</th>
 					<th>Proposta</th>
 					<th>Valor Limite</th>
-					<th>Dias de Vig&acirc;ncia</th>
+					<th>Dias de Vig&ecirc;ncia</th>
 					<th>Linha de Desconto</th>
 					<th >Situa&ccedil;&atilde;o da Proposta</th>
 					<th>Situa&ccedil;&atilde;o da An&aacute;lise</th>
