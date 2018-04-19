@@ -352,7 +352,7 @@ DO:
             glb_dscritic = aux_dscritic.
             UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") +
                               " - " + glb_cdprogra + "' --> '"  +
-                              glb_dscritic + " >> " + aux_nmarqlog).
+                              glb_dscritic + " >> log/proc_batch.log").
             QUIT.
         END.
     
