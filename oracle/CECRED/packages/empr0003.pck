@@ -2731,7 +2731,7 @@ BEGIN
                                            ,pr_dtcarenc        => rw_crawepr.dtcarenc
                                            ,pr_dtdpagto        => rw_crawepr.dtdpagto
                                            ,pr_qtpreemp        => rw_crawepr.qtpreemp
-                                           ,pr_vlemprst        => rw_crawepr.vlemprst
+                                           ,pr_vlemprst        => vr_vlemprst
                                            ,pr_qtdias_carencia => rw_crawepr.qtddias
                                            ,pr_vlpreemp        => vr_vlpreemp
                                            ,pr_vljurcor        => vr_vljurcor
@@ -2763,7 +2763,7 @@ BEGIN
 							 '<nrcpfcjg>'     || vr_nrcpfcjg                                 || '</nrcpfcjg>'     ||
                              '<conta>'        || TRIM(gene0002.fn_mask_conta(pr_nrdconta))   || '</conta>'        ||
                              '<pa>'           || rw_crawepr.cdagenci                         || '</pa>'           ||
-                             '<vlemprst>'     || 'R$ '|| to_char(rw_crawepr.vlemprst,'FM99G999G990D00')  || '</vlemprst>' ||
+                             '<vlemprst>'     || 'R$ '|| to_char(vr_vlemprst,'FM99G999G990D00')  || '</vlemprst>' ||
                              '<dslcremp>'     || rw_craplcr.dslcremp || ' ('|| rw_crawepr.cdlcremp ||')' || '</dslcremp>' || -- Linha de credito
                              '<origem>'       || rw_crawepr.nmcidade || '- '|| rw_crawepr.cdufdcop       || '</origem>'   || -- Local Origem
                              '<destino>'      || rw_crawepr.nmcidade || '-' || rw_crawepr.cdufdcop       || '</destino>'  || -- Local destino
