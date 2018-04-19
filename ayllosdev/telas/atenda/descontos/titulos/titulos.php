@@ -208,9 +208,7 @@
 		disabled >
 		Manuten&ccedil;&atilde;o
 		</a>";
-
 		} else { 
-
 		echo "
 		<a 
 		href='#' 
