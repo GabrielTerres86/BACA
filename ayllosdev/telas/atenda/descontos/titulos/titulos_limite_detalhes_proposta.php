@@ -67,9 +67,6 @@ $nrctrmnt = (isset($_POST['nrctrmnt'])) ? $_POST['nrctrmnt'] : 0;  //proposta
 
             <input id="tipo" name ="tipo" type="hidden" value="<? echo $tipo ?>"/>
             <input id="nrctrmnt" name ="nrctrmnt" type="hidden" value="<? echo $nrctrmnt ?>"/>
-            
-            pr_nrctrmnt
-
             <label for="nrctrlim"><? echo utf8ToHtml('Proposta: ') ?></label>
             
             <?php 
