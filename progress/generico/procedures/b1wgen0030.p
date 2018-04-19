@@ -18525,8 +18525,19 @@ PROCEDURE realizar_manutencao_contrato:
 
     IF  AVAILABLE crawlim  THEN
         DO:
-            ASSIGN aux_cdcritic = 0
-                   aux_dscritic = "Manutencao nao efetivada. Já existe alguma proposta de limite com a situacao EM ESTUDO, APROVADA ou NAO APROVADA".
+            ASSIGN aux_cdcritic = 0.
+            
+            IF  crawlim.insitlim = 1  THEN
+                ASSIGN aux_dscritic = "Manutenção solicitada não executada. Já existe a proposta " + STRING(crawlim.nrctrlim) +
+                                      " com a situação EM ESTUDO".
+            ELSE
+            IF  crawlim.insitlim = 5  THEN
+                ASSIGN aux_dscritic = "Manutenção solicitada não executada. Já existe a proposta " + STRING(crawlim.nrctrlim) +
+                                      " com a situação APROVADA".
+            ELSE
+            IF  crawlim.insitlim = 6  THEN
+                ASSIGN aux_dscritic = "Manutenção solicitada não executada. Já existe a proposta " + STRING(crawlim.nrctrlim) +
+                                      " com a situação NÃO APROVADA".
 
             RUN gera_erro (INPUT par_cdcooper,
                            INPUT par_cdagenci,
