@@ -1141,6 +1141,7 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0002 AS
                                      ,pr_cdprogra  IN crapprg.cdprogra%TYPE              --> Codigo do programa
                                      ,pr_vlresgat  IN NUMBER                             --> Valor para resgate
                                      ,pr_flgerlog  IN INTEGER                            --> Gravar log
+                                     ,pr_flgrespr  IN INTEGER DEFAULT 1                  --> Considerar resgate programado
                                      ,pr_cdcritic OUT crapcri.cdcritic%TYPE              --> Codigo de critica
                                      ,pr_dscritic OUT VARCHAR2);
 
@@ -10156,6 +10157,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
         
         -- Verifica se a cooperativa esta cadastrada
         OPEN BTCH0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
+        
         FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
         
         -- Se não encontrar
@@ -10174,26 +10176,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
         ELSE
           -- Apenas fechar o cursor
           CLOSE BTCH0001.cr_crapdat;
-			END IF;
-          
-			IF (rw_crapdat.inproces >= 3) OR -- processo rodando
-				 (TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS')) < TO_NUMBER(pr_hrlimini)  OR
-					TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS')) > TO_NUMBER(pr_hrlimfim)) THEN -- estouro de horário						
-					pr_idesthor := 1; -- fora do limite
-        END IF;
-        
-      -- Verifica se o processo ainda esta rodando e valida os horarios limites
-      IF pr_tpvalida = 1 THEN
-
-        IF TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS')) < TO_NUMBER(pr_hrlimini) OR
-           TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS')) > TO_NUMBER(pr_hrlimfim) THEN
-
-          -- Monta critica
-          vr_cdcritic := 0;
-          vr_dscritic := 'Horario esgotado para acesso as operacoes de aplicacao.';
-
-          -- Gera exceção
-          RAISE vr_exc_erro;
           
         END IF;
         
@@ -22326,6 +22308,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                                      ,pr_cdprogra  IN crapprg.cdprogra%TYPE              --> Codigo do programa
                                      ,pr_vlresgat  IN NUMBER                             --> Valor para resgate
                                      ,pr_flgerlog  IN INTEGER                            --> Gravar log
+                                     ,pr_flgrespr  IN INTEGER DEFAULT 1                  --> Considerar resgate programado
                                      ,pr_cdcritic OUT crapcri.cdcritic%TYPE              --> Codigo de critica
                                      ,pr_dscritic OUT VARCHAR2                           --> Descricao de critica
                                      ) IS
@@ -22455,27 +22438,30 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
         --Verificar Bloq. Garantia
         IF vr_tab_dados_rpp(idx).dsblqrpp <> 'Sim'  THEN
           --> Buscar lançamento de resgate
-          OPEN cr_craplrg(pr_cdcooper => pr_cdcooper
-                         ,pr_nrdconta => pr_nrdconta
-                         ,pr_nraplica => vr_tab_dados_rpp(idx).nrctrrpp
-                         ,pr_dtmvtolt => pr_dtmvtolt);
-          FETCH cr_craplrg INTO rw_craplrg;
-          IF cr_craplrg%FOUND THEN
-            CLOSE cr_craplrg;
-            IF rw_craplrg.tpresgat = 2 THEN
-              --> buscar proximo registro de rpp
-              continue;
-            ELSE
-              vr_vlsldtot := nvl(vr_vlsldtot,0) +
-                             (nvl(vr_tab_dados_rpp(idx).vlrgtrpp,0) - rw_craplrg.vllanmto);
-            END IF;
-
+          IF pr_flgrespr = 1 THEN
+          
+              OPEN cr_craplrg(pr_cdcooper => pr_cdcooper
+                             ,pr_nrdconta => pr_nrdconta
+                             ,pr_nraplica => vr_tab_dados_rpp(idx).nrctrrpp
+                             ,pr_dtmvtolt => pr_dtmvtolt);
+              FETCH cr_craplrg INTO rw_craplrg;
+              IF cr_craplrg%FOUND THEN
+                CLOSE cr_craplrg;
+                IF rw_craplrg.tpresgat = 2 THEN
+                  --> buscar proximo registro de rpp
+                  continue;
+                ELSE
+                  vr_vlsldtot := nvl(vr_vlsldtot,0) +
+                                 (nvl(vr_tab_dados_rpp(idx).vlrgtrpp,0) - rw_craplrg.vllanmto);
+                END IF;
+             
+              ELSE
+                CLOSE cr_craplrg;
+                vr_vlsldtot := nvl(vr_vlsldtot,0) + nvl(vr_tab_dados_rpp(idx).vlrgtrpp,0);
+              END IF;
           ELSE
-            CLOSE cr_craplrg;
             vr_vlsldtot := nvl(vr_vlsldtot,0) + nvl(vr_tab_dados_rpp(idx).vlrgtrpp,0);
-
           END IF;
-
         END IF;
       END LOOP;
     END IF;
@@ -22526,14 +22512,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
     IF vr_vlblqpou > 0 then
       IF vr_vlresgat > (nvl(vr_vlsldtot,0) - nvl(vr_vlblqjud,0) - nvl(vr_vlblqpou,0)) THEN
         vr_cdcritic := NULL;
-        vr_dscritic := 'Nao foi possivel resgatar devido a Garantia de Operacoes de Crédito.';
+        vr_dscritic := 'Nao foi possivel resgatar devido a Garantia de Operacoes de Credito.';
 
         -- Calcular valor disponível resgate
         vr_vldispon_resgate := greatest(0,vr_vlsldtot - vr_vlblqjud - vr_vlblqpou);
 
         -- Somente se há valor disponível resgate, então incrementa a mensagem.
         IF vr_vldispon_resgate > 0 THEN
-          vr_dscritic := vr_dscritic || 'Valor disponível para Resgate é de R$ '|| to_char(vr_vldispon_resgate,'fm999g999g999g990d00');
+          vr_dscritic := vr_dscritic || 'Valor disponivel para Resgate e de R$ '|| to_char(vr_vldispon_resgate,'fm999g999g999g990d00');
         END IF;
 
         RAISE vr_exc_erro;
