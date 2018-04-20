@@ -475,7 +475,7 @@ FOR EACH tt-consulta-blt NO-LOCK:
                                     /* Identifica se o boleto pertence a algum carne */
                                     "<flgcarne>" + (IF(tt-consulta-blt.flgcarne) THEN "1" ELSE "0")  + "</flgcarne>" +
                                     
-                                    "<inserasa>" + STRING(tt-consulta-blt.inserasa, "9") + "</inserasa>" +
+                                    "<inserasa>" + STRING(tt-consulta-blt.cdserasa, "9") + "</inserasa>" +
                                     "<dsserasa>" + tt-consulta-blt.dsserasa + "</dsserasa>" +
                                     "<flserasa>" + (IF (tt-consulta-blt.flserasa = TRUE) THEN 
                                        "S" ELSE "N") + "</flserasa>" +
@@ -511,6 +511,7 @@ FOR EACH tt-consulta-blt NO-LOCK:
                                    "<dsdinst3>" + STRING(tt-consulta-blt.dsdinst3) + "</dsdinst3>" +                                   
                                    "<dsdinst4>" + STRING(tt-consulta-blt.dsdinst4) + "</dsdinst4>" +                                   
                                    "<dsdinst5>" + STRING(tt-consulta-blt.dsdinst5) + "</dsdinst5>" +                                                                      
+                                   "<dtbloqueio>" + (IF tt-consulta-blt.dtbloqueio = ? THEN " " ELSE STRING(tt-consulta-blt.dtbloqueio,"99/99/9999")) + "</dtbloqueio>" + 
                                    "</BOLETO>".
 END.
 

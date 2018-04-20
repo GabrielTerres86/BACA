@@ -14,7 +14,7 @@
    Sistema : Internet - aux_cdcooper de Credito
    Sigla   : CRED
    Autor   : Junior
-   Data    : Julho/2004.                       Ultima atualizacao: 09/10/2017
+   Data    : Julho/2004.                       Ultima atualizacao: 19/04/2018
 
    Dados referentes ao programa:
 
@@ -704,7 +704,8 @@
 				 05/03/2018 - Incluído o carrossel de banners para o mobile 
 							  (6214  -  Ederson - Supero)
 
-
+				 19/04/2018 - Incluido operacao217 referente ao servico SOA 
+                              ObterDetalheTituloCobranca (PRJ285 - Novo IB)
 ------------------------------------------------------------------------------*/
 
 /*----------------------------------------------------------------*/
@@ -2389,6 +2390,9 @@ PROCEDURE process-web-request :
 		ELSE
             IF  aux_operacao = 215 THEN /* Obter banners para o carrossel do mobile */
                 RUN proc_operacao215.
+        ELSE
+            IF  aux_operacao = 217 THEN /* Obter Detalhe Titulo Cobranca (SOA) */
+                RUN proc_operacao217.
     END.
 /*....................................................................*/
     
@@ -9359,6 +9363,30 @@ PROCEDURE proc_operacao215:
 
 END PROCEDURE.
 
+PROCEDURE proc_operacao217:
+
+    ASSIGN aux_nrdocmto = DECI(GET-VALUE("nrdocmto"))
+           aux_nrcnvcob = DECI(GET-VALUE("nrcnvcob")).
+
+    RUN sistema/internet/fontes/InternetBank217.p (INPUT aux_cdcooper,
+                                                   INPUT aux_nrdconta,
+                                                   INPUT aux_idseqttl,
+                                                   INPUT aux_nrcnvcob,
+                                                   INPUT aux_nrdocmto,                                                            OUTPUT aux_dsmsgerr,
+                                                  OUTPUT TABLE xml_operacao).
+
+    IF  RETURN-VALUE = "NOK"  THEN
+        {&out} aux_dsmsgerr. 
+    ELSE
+        FOR EACH xml_operacao NO-LOCK: 
+
+            {&out} xml_operacao.dslinxml.
+            
+        END.
+    
+    {&out} aux_tgfimprg.
+
+END PROCEDURE.
 
 
 /*............................................................................*/

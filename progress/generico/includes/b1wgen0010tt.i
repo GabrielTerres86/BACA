@@ -2,7 +2,7 @@
 
    Programa: b1wgen0010tt.i                  
    Autor   : David
-   Data    : Marco/2008                        Ultima atualizacao: 02/01/2017
+   Data    : Marco/2008                        Ultima atualizacao: 07/12/2017
      
    Dados referentes ao programa:
 
@@ -101,6 +101,13 @@
 			   02/01/2017 - Melhorias referentes a performance no IB na parte
 			                de cobrança, adicionado campo flprotes na temptable
 							tt-consulta-blt (Tiago/Ademir SD573538).  
+
+               07/12/2017 - Adicionado os campos para a data de vencimento e 
+                            identificar se o boleto está vencido 
+                            (Douglas - Chamado 805008)
+
+               31/01/2018 - Adicionado novos campos na temp-table tt-consulta-blt
+                            devido ao projeto do novo IB. (PRJ285 - Rafael).  
 
 .............................................................................*/
 
@@ -205,6 +212,7 @@ DEF TEMP-TABLE tt-consulta-blt
     FIELD dsemiten AS CHAR
     FIELD dsemitnt AS CHAR
     FIELD flgcarne AS LOGI
+    FIELD cdserasa LIKE crapcob.inserasa
     FIELD inserasa AS CHAR
     FIELD dsserasa AS CHAR
     FIELD flserasa AS LOGI
@@ -224,7 +232,24 @@ DEF TEMP-TABLE tt-consulta-blt
 	FIELD dssmspos AS CHAR
     FIELD inenvcip LIKE crapcob.inenvcip
     FIELD inpagdiv LIKE crapcob.inpagdiv
-    FIELD vlminimo LIKE crapcob.vlminimo.
+    FIELD vlminimo LIKE crapcob.vlminimo
+    FIELD dtmvtatu LIKE crapcob.dtmvtolt
+    FIELD flgvenci AS INTE
+    FIELD vldocmto_boleto LIKE crapcob.vltitulo
+    FIELD vlcobrado_boleto LIKE crapcob.vltitulo
+    FIELD dtvencto_boleto LIKE crapcob.dtvencto
+    FIELD dslindig AS CHAR
+    FIELD dscodbar AS CHAR
+    FIELD dsdinst1 AS CHAR
+    FIELD dsdinst2 AS CHAR
+    FIELD dsdinst3 AS CHAR
+    FIELD dsdinst4 AS CHAR
+    FIELD dsdinst5 AS CHAR
+    FIELD dscredit AS CHAR
+    FIELD dsorigem_proc AS CHAR
+    FIELD dsbcoage AS CHAR
+    FIELD dtbloqueio AS DATE
+    .
 
 DEF TEMP-TABLE tt-arq-cobranca  
     FIELD cdseqlin AS INTEGER

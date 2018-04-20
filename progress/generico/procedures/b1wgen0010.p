@@ -959,7 +959,8 @@ PROCEDURE consulta-boleto-2via.
                /* Data de Movimento atualizada */ 
                tt-consulta-blt.dtmvtatu = crapdat.dtmvtocd
                /* Identificar se o boleto esta vencido */
-               tt-consulta-blt.flgvenci = IF aux_critdata = YES THEN 1 ELSE 0.
+               tt-consulta-blt.flgvenci = IF aux_critdata = YES THEN 1 ELSE 0
+               tt-consulta-blt.dtbloqueio = crapcob.dtbloque.
 
 			VALIDATE tt-consulta-blt.
 	   END.
@@ -1338,6 +1339,7 @@ PROCEDURE consulta-bloqueto.
 
                                             /* Carregar as datas do boleto que esta sendo consultado */
                                             tt-consulta-blt.dtvctori = crapcob.dtvctori
+                                            tt-consulta-blt.dtbloqueio = crapcob.dtbloque
                                             tt-consulta-blt.dtvencto = crapcob.dtvencto
                                             /* Data de Movimento atualizada */ 
                                             tt-consulta-blt.dtmvtatu = crapdat.dtmvtocd
@@ -1577,6 +1579,7 @@ PROCEDURE consulta-bloqueto.
                                               
                                             /* Carregar as datas do boleto que esta sendo consultado */
                                             tt-consulta-blt.dtvctori = crapcob.dtvctori
+                                            tt-consulta-blt.dtbloqueio = crapcob.dtbloque
                                             tt-consulta-blt.dtvencto = crapcob.dtvencto
                                             /* Data de Movimento atualizada */ 
                                             tt-consulta-blt.dtmvtatu = crapdat.dtmvtocd
@@ -1815,6 +1818,7 @@ PROCEDURE consulta-bloqueto.
                                               
                                                       /* Carregar as datas do boleto que esta sendo consultado */
                                                       tt-consulta-blt.dtvctori = crapcob.dtvctori
+                                                      tt-consulta-blt.dtbloqueio = crapcob.dtbloque
                                                       tt-consulta-blt.dtvencto = crapcob.dtvencto
                                                       /* Data de Movimento atualizada */ 
                                                       tt-consulta-blt.dtmvtatu = crapdat.dtmvtocd
@@ -2056,6 +2060,7 @@ PROCEDURE consulta-bloqueto.
 
                                                 /* Carregar as datas do boleto que esta sendo consultado */
                                                 tt-consulta-blt.dtvctori = crapcob.dtvctori
+                                                tt-consulta-blt.dtbloqueio = crapcob.dtbloque
                                                 tt-consulta-blt.dtvencto = crapcob.dtvencto
                                                 /* Data de Movimento atualizada */ 
                                                 tt-consulta-blt.dtmvtatu = crapdat.dtmvtocd
@@ -2514,6 +2519,7 @@ PROCEDURE consulta-bloqueto.
 
                                             /* Carregar as datas do boleto que esta sendo consultado */
                                             tt-consulta-blt.dtvctori = crapcob.dtvctori
+                                            tt-consulta-blt.dtbloqueio = crapcob.dtbloque
                                             tt-consulta-blt.dtvencto = crapcob.dtvencto
                                             /* Data de Movimento atualizada */ 
                                             tt-consulta-blt.dtmvtatu = crapdat.dtmvtocd
@@ -4322,6 +4328,7 @@ PROCEDURE cria_tt-consulta-blt.
                                         ELSE
                                            crapcob.dtvencto)
             tt-consulta-blt.dtvctori = crapcob.dtvctori /* P340 - Rafael */
+            tt-consulta-blt.dtbloqueio = crapcob.dtbloque
             tt-consulta-blt.vltitulo = crapcob.vltitulo
             tt-consulta-blt.nrinssac = crapcob.nrinssac
             tt-consulta-blt.cdtpinsc = crapcob.cdtpinsc
@@ -4356,6 +4363,7 @@ PROCEDURE cria_tt-consulta-blt.
      ASSIGN tt-consulta-blt.flserasa = crapcob.flserasa
             tt-consulta-blt.qtdianeg = crapcob.qtdianeg
             tt-consulta-blt.inserasa = STRING(crapcob.inserasa)
+            tt-consulta-blt.cdserasa = crapcob.inserasa
             tt-consulta-blt.flgdprot = crapcob.flgdprot
             tt-consulta-blt.qtdiaprt = crapcob.qtdiaprt.
 
@@ -5161,6 +5169,7 @@ PROCEDURE cria_tt-consulta-blt_tdb.
                                           ELSE
                                              craptdb.dtvencto)
               tt-consulta-blt.dtvctori = crapcob.dtvctori /* P340 - Rafael */                                             
+              tt-consulta-blt.dtbloqueio = crapcob.dtbloque
               tt-consulta-blt.flgcbdda = (IF aux_npc_cip = 1 THEN "S" ELSE "N")
               tt-consulta-blt.vltitulo = crapcob.vltitulo.
    END.
@@ -5443,6 +5452,8 @@ PROCEDURE proc_nosso_numero.
           aux_nrvarcar = 2.
 
         CREATE tt-consulta-blt. 
+        
+        ASSIGN tt-consulta-blt.cdserasa = crapcob.inserasa.
 
         CASE crapcob.inserasa:
           WHEN 1 THEN 
