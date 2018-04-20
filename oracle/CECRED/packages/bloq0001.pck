@@ -585,7 +585,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLOQ0001 AS
         OPEN cr_crapjur(pr_cdcooper => pr_cdcooper
                        ,pr_nrdconta => pr_nrdconta);        
                        
-        FETCH cr_crapjur INTO pr_dsdconta;
+        FETCH cr_crapass INTO pr_dsdconta;
         
         IF cr_crapjur%NOTFOUND THEN
           
