@@ -24,9 +24,14 @@
 	require_once('../../../../class/xmlfile.php');		
 	isPostMethod();		
 	
+	require_once("../../../../includes/carrega_permissoes.php");
+
+	setVarSession("opcoesTela",$opcoesTela);
+
 	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"I")) <> "") {
-		exibirErro('error',$msgError,'Alerta - Ayllos','bloqueiaFundo(divRotina)');
-	}	
+		exibeErro($msgError);		
+	}
+	
 	$tipo = (isset($_POST['tipo'])) ? $_POST['tipo'] : "CONTRATO";
 	
 	// Verifica se o número da conta foi informado
