@@ -1112,8 +1112,8 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0002 AS
                             ,pr_dtmvtopr OUT crapdat.dtmvtopr%TYPE   --> Proxima data movimento
                             ,pr_cdcritic OUT crapcri.cdcritic%TYPE   --> Codigo de Critica
                             ,pr_dscritic OUT crapcri.dscritic%TYPE); --> Descricao de Critica                           
-														
 
+  
   PROCEDURE pc_processa_lote_resgt(pr_cdcooper IN crapcop.cdcooper%TYPE     --> Codigo Cooperativa
                                   ,pr_cdagenci IN crapass.cdagenci%TYPE    --> Codigo Agencia
                                   ,pr_nrdcaixa IN INTEGER                  --> Numero do Caixa
@@ -3366,7 +3366,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
       vr_hrlimini INTEGER;
 	    vr_hrlimfim INTEGER;
 			vr_idesthor INTEGER;
-      
+
       -- Rowid tabela de log
       vr_nrdrowid ROWID;
     
@@ -6287,7 +6287,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
       pr_nrdocmto := vr_nrdocmto;
 			-- e o protocolo
 			pr_dsprotoc := vr_dsprotoc;
-      
+
       --Gerar log                                                  
       IF pr_flgerlog = 1 THEN
             
@@ -9736,6 +9736,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                 19/12/2017 - adicionada chamada para a procedure pc_ver_val_bloqueio_aplica para 
                              Validar bloqueios para resgate de aplicacao. PRJ404 (Lombardi)
                              
+                04/04/2018 - Ajuste para quando for Resgate, validar se existe saldo disponivel de aplicacao. 
+                            (Anderson P285)
+                
   .......................................................................................*/
   PROCEDURE pc_valida_limite_internet(pr_cdcooper IN crapcop.cdcooper%TYPE    --> Codigo Cooperativa
                                      ,pr_cdagenci IN crapass.cdagenci%TYPE    --> Codigo Agencia
@@ -10016,6 +10019,48 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
           -- Gera exceção
           RAISE vr_exc_erro;
         END IF;
+      ELSIF pr_dstpapli = 'R' THEN -- Se for resgate, vamos validar se existe saldo disponivel.
+
+        -- Leitura do calendário da cooperativa
+        OPEN btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
+        FETCH btch0001.cr_crapdat
+          INTO rw_crapdat;
+        -- Se não encontrar
+        IF btch0001.cr_crapdat%NOTFOUND THEN
+          CLOSE btch0001.cr_crapdat;
+        ELSE
+          CLOSE btch0001.cr_crapdat;
+        END IF;
+      
+        APLI0005.pc_busca_saldo_total_resgate(pr_cdcooper => pr_cdcooper
+                                             ,pr_cdoperad => pr_cdoperad
+                                             ,pr_nmdatela => pr_nmdatela
+                                             ,pr_idorigem => pr_idorigem
+                                             ,pr_nrdcaixa => pr_nrdcaixa
+                                             ,pr_nrdconta => pr_nrdconta
+                                             ,pr_idseqttl => pr_idseqttl
+                                             ,pr_cdagenci => pr_cdagenci
+                                             ,pr_cdprogra => pr_nmdatela
+                                             ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                             ,pr_idconsul => 0             --> Identificador de Consulta (0 – Ativas / 1 – Encerradas / 2 – Todas)
+                                             ,pr_idgerlog => 1             --> Identificador de Log (0 – Não / 1 – Sim)
+                                             ,pr_vlsldisp => vr_sldresga   --> OUT - Valor do saldo disponivel para resgate
+                                             ,pr_cdcritic => vr_cdcritic
+                                             ,pr_dscritic => vr_dscritic);
+        IF vr_cdcritic > 0 OR 
+           TRIM(vr_dscritic) IS NOT NULL THEN
+          vr_cdcritic := 0;
+          vr_dscritic := 'Problemas foram encontrados durante a busca do saldo aplicado.'; 
+          RAISE vr_exc_erro;
+        END if;
+        
+        -- Valida se existe saldo disponivel para resgate
+        IF pr_vlaplica > vr_sldresga THEN
+          vr_cdcritic := 0;
+          vr_dscritic := 'ATENÇÃO: O valor de resgate não pode ser maior que o valor do saldo disponível para resgate.'; 
+          RAISE vr_exc_erro;
+        END IF;
+
       END IF;
       
     EXCEPTION
@@ -17442,7 +17487,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                                 ,pr_vlsldinv => pr_vlsldinv
                                 ,pr_des_reto => vr_des_reto
                                 ,pr_tab_erro => vr_tab_erro);
-      
+  
       -- Verifica se houve erro recuperando informacoes de log                              
       IF vr_des_reto = 'NOK' THEN
         -- Tenta buscar o erro no vetor de erro
@@ -17774,7 +17819,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
           vr_tab_agen(vr_ind_agen).incancel := CASE WHEN rw_crapaar.dtmvtolt = rw_crapdat.dtmvtocd THEN 1 ELSE 0 END;
           vr_tab_agen(vr_ind_agen).dssitaar := rw_crapaar.dssitaar;
           vr_tab_agen(vr_ind_agen).dstipaar := rw_crapaar.dstipaar;
-          
+
         END LOOP;
 
         CLOSE cr_crapaar;
@@ -19328,9 +19373,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
       
       IF vr_des_reto = 'NOK' THEN
         RAISE vr_exc_erro;        
-        END IF;
-        
+      END IF;   
       
+
       BEGIN
         
         -- Inserir lancamento do resgate solicitado
@@ -20490,7 +20535,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
     BEGIN
    
       vr_nrdocsrc := TO_CHAR(pr_nrdolote,'fm00000')||TO_CHAR(pr_nrdocmto,'fm0000000000')||'%';
-  
+
       OPEN cr_crapaar(pr_cdcooper => pr_cdcooper,
                       pr_nrdconta => pr_nrdconta,
                       pr_nrdocmto => pr_nrdocmto);
@@ -22684,7 +22729,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
           pr_cdcritic := 0;
           pr_dscritic := 'Erro ao ' || vr_dscritic || ' - APLI0002.pc_processa_lote_resgt: '||SQLERRM;
       END;  
-      
+
   END pc_processa_lote_resgt;
   
 END APLI0002;
