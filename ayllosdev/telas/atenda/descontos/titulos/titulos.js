@@ -3032,6 +3032,7 @@ function carregarAcionamentosDaProposta(tipo, nrctrlim, nrctrmnt){
                 var tabConteudo = $("#tabConteudo");
                 tabConteudo.html(response);
                 formatarTelaAcionamentosDaProposta();
+                formatarTabelaAcionamentosDaProposta();
                 hideMsgAguardo();
                 bloqueiaFundo(divRotina);
             }
@@ -3064,17 +3065,19 @@ function formatarTelaAcionamentosDaProposta(){
     }else{
         Cnrctrlim.habilitaCampo();
         Cnrctrlim.focus();
-
-    }
-
-    Cnrctrlim.unbind('change').bind('change',function() {  
+        Cnrctrlim.unbind('change').bind('change',function() {  
             nrctrlim = Cnrctrlim.val();
             nrctrmnt = Cnrctrmnt.val();
             tipo = Ctipo.val();
             carregarAcionamentosDaProposta(tipo, nrctrlim, nrctrmnt);
         });
+    }
+	return false;
+}
 
+function formatarTabelaAcionamentosDaProposta(){
         // tabela
+        var tabConteudo    = $('#tabConteudo', '#divResultadoAciona');
         var divRegistro = $('div.divRegistros', tabConteudo);
         var tabela = $('table', divRegistro);
 
@@ -3099,7 +3102,7 @@ function formatarTelaAcionamentosDaProposta(){
         arrayAlinha[5] = 'center';//Retorno
 
         tabela.formataTabela(ordemInicial, arrayLargura, arrayAlinha, '');
-	return false;
+        return false;
 }
 
 // Mostrar dados para liberar um bordero
