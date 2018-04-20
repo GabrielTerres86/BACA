@@ -90,7 +90,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps156 (pr_cdcooper IN crapcop.cdcooper%T
                               Utilizado pela rotina BLQJ0002 (Andrino-Mouts)
                               
                  01/12/2017 - Inclusao da validação de bloqueis de aplic.
-                              PRJ404 - Garantia(Odirlei-AMcom) 
+                              PRJ404 - Garantia(Odirlei-AMcom)             
                               
                  18/04/2018 - Tratamento se existe valor bloqueado como garantia de operação com poupança programa
                               PRJ404 - Garantia(Oscar-AMcom)              
@@ -791,7 +791,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps156 (pr_cdcooper IN crapcop.cdcooper%T
 
       IF nvl(vr_cdcritic,0) NOT IN(484,640,494)  THEN
         -- Validar resgate
-        
+              
         Apli0002.pc_ver_val_bloqueio_poup(pr_cdcooper => pr_cdcooper,
                                           pr_cdagenci => 1,
                                           pr_nrdcaixa => 1,
@@ -808,7 +808,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps156 (pr_cdcooper IN crapcop.cdcooper%T
                                           pr_flgerlog => 0,
                                           pr_cdcritic => vr_cdcritic,
                                           pr_dscritic => vr_dscritic);
-
+        
         -- Verifica se houve retorno de erros
         IF NVL(vr_dscritic, 'OK') <> 'OK'  THEN
           -- Enviaremos a critica 999 ao relatório para gravar dscritic no cdpesqbb da craprej
@@ -1078,7 +1078,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps156 (pr_cdcooper IN crapcop.cdcooper%T
                       ,pr_cdcooper
                       ,NVL(vr_dscritic, '')); 
                       
-          vr_cdcritic := 0;
+          vr_cdcritic := 0;            
           vr_dscritic := '';            
           
         EXCEPTION
@@ -1172,12 +1172,13 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps156 (pr_cdcooper IN crapcop.cdcooper%T
         
         -- buscar descrição da critica
         IF nvl(vr_cdcritic,0) <> rw_craprej.cdcritic THEN
+          
           vr_cdcritic := rw_craprej.cdcritic;
           IF vr_cdcritic = 999 THEN
              vr_dscritic := rw_craprej.cdpesqbb;
           ELSE
-             vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
-          END IF;
+          vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+        END IF;
         END IF;
         
         pc_escreve_xml('<rejeitados>
