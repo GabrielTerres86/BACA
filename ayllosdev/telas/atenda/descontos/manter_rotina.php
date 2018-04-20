@@ -22,6 +22,20 @@
 	require_once('../../../class/xmlfile.php');
 	isPostMethod();
 
+	require_once("../../../includes/carrega_permissoes.php");
+	
+	setVarSession("opcoesTela",$opcoesTela);
+
+	//operacao VER QUAIS SERÃO ENVIADAS.
+
+
+	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"@")) <> "") {
+		exibeErro($msgError);		
+	}	
+
+
+	
+
 	// parâmetos do POST em variáveis
 	$operacao = (isset($_POST['operacao'])) ? $_POST['operacao'] : '' ;
 	$nrdconta = (isset($_POST['nrdconta'])) ? $_POST['nrdconta'] : 0 ;
