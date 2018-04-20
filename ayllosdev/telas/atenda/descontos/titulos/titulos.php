@@ -169,8 +169,9 @@
 		class="botao" 
 		type="image" 
 		name="btnbordero" 
-		id="btnbordero" >
-			Border&ocirc;s
+		id="btnbordero"
+		onClick="carregaBorderosTitulos();return false;" >
+		Border&ocirc;s
 	</a>
 
 	<a
@@ -178,7 +179,8 @@
 		class="botao"
 		type="image"
 		name="btnlimite"
-		id="btnlimite" >
+		id="btnlimite"
+		onClick="carregaLimitesTitulos();return false;" >
 			Contratos
 	</a>
 
@@ -187,9 +189,11 @@
 		class="botao" 
 		type="image" 
 		name="btnpropostas" 
-		id="btnpropostas" >
+		id="btnpropostas"
+		onClick="carregaLimitesTitulosPropostas();return false;" >
 			Propostas
 	</a>
+
 
 	<a 
 		href="#" 
