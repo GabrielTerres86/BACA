@@ -783,6 +783,25 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0005 IS
                                    ,pr_retxml   IN OUT NOCOPY XMLType    -- Arquivo de retorno do XML
                                    ,pr_nmdcampo OUT VARCHAR2             -- Nome do campo com erro
                                    ,pr_des_erro OUT VARCHAR2);           -- Erros do processo
+
+  PROCEDURE pc_busca_saldo_total_resgate(pr_cdcooper  IN craprac.cdcooper%TYPE           --> Código da Cooperativa
+                                        ,pr_cdoperad  IN crapope.cdoperad%TYPE DEFAULT 1 --> Código do Operador
+                                        ,pr_nmdatela  IN craptel.nmdatela%TYPE           --> Nome da Tela
+                                        ,pr_idorigem  IN INTEGER                         --> Identificador de Origem (1 - AYLLOS / 2 - CAIXA / 3 - INTERNET / 4 - TAA / 5 - AYLLOS WEB / 6 - URA                  
+                                        ,pr_nrdcaixa  IN craplot.nrdcaixa%TYPE           --> Numero do Caixa                  
+                                        ,pr_nrdconta  IN craprac.nrdconta%TYPE           --> Número da Conta
+                                        ,pr_idseqttl  IN crapttl.idseqttl%TYPE           --> Titular da Conta
+                                        ,pr_cdagenci  IN crapage.cdagenci%TYPE           --> Codigo da Agencia
+                                        ,pr_cdprogra  IN craplog.cdprogra%TYPE           --> Codigo do Programa
+                                        ,pr_nraplica  IN craprac.nraplica%TYPE DEFAULT 0 --> Número da Aplicação - Parâmetro Opcional
+                                        ,pr_cdprodut  IN craprac.cdprodut%TYPE DEFAULT 0 --> Código do Produto – Parâmetro Opcional 
+                                        ,pr_dtmvtolt  IN crapdat.dtmvtolt%TYPE           --> Data de Movimento
+                                        ,pr_idconsul  IN INTEGER                         --> Identificador de Consulta (0 – Ativas / 1 – Encerradas / 2 – Todas)
+                                        ,pr_idgerlog  IN INTEGER                         --> Identificador de Log (0 – Não / 1 – Sim)                                  
+                                        ,pr_vlsldisp OUT craprda.vlsdrdca%TYPE           --> Valor do saldo disponivel para resgate
+                                        ,pr_cdcritic OUT PLS_INTEGER                     --> Código da crítica
+                                        ,pr_dscritic OUT VARCHAR2);
+
 END APLI0005;
 /
 
@@ -14804,6 +14823,169 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
 		END;
 
 	END pc_obtem_resg_conta_web;
+
+  PROCEDURE pc_busca_saldo_total_resgate(pr_cdcooper  IN craprac.cdcooper%TYPE           --> Código da Cooperativa
+                                        ,pr_cdoperad  IN crapope.cdoperad%TYPE DEFAULT 1 --> Código do Operador
+                                        ,pr_nmdatela  IN craptel.nmdatela%TYPE           --> Nome da Tela
+                                        ,pr_idorigem  IN INTEGER                         --> Identificador de Origem (1 - AYLLOS / 2 - CAIXA / 3 - INTERNET / 4 - TAA / 5 - AYLLOS WEB / 6 - URA                  
+                                        ,pr_nrdcaixa  IN craplot.nrdcaixa%TYPE           --> Numero do Caixa                  
+                                        ,pr_nrdconta  IN craprac.nrdconta%TYPE           --> Número da Conta
+                                        ,pr_idseqttl  IN crapttl.idseqttl%TYPE           --> Titular da Conta
+                                        ,pr_cdagenci  IN crapage.cdagenci%TYPE           --> Codigo da Agencia
+                                        ,pr_cdprogra  IN craplog.cdprogra%TYPE           --> Codigo do Programa
+                                        ,pr_nraplica  IN craprac.nraplica%TYPE DEFAULT 0 --> Número da Aplicação - Parâmetro Opcional
+                                        ,pr_cdprodut  IN craprac.cdprodut%TYPE DEFAULT 0 --> Código do Produto – Parâmetro Opcional 
+                                        ,pr_dtmvtolt  IN crapdat.dtmvtolt%TYPE           --> Data de Movimento
+                                        ,pr_idconsul  IN INTEGER                         --> Identificador de Consulta (0 – Ativas / 1 – Encerradas / 2 – Todas)
+                                        ,pr_idgerlog  IN INTEGER                         --> Identificador de Log (0 – Não / 1 – Sim)                                  
+                                        ,pr_vlsldisp OUT craprda.vlsdrdca%TYPE           --> Valor do saldo disponivel para resgate
+                                        ,pr_cdcritic OUT PLS_INTEGER                     --> Código da crítica
+                                        ,pr_dscritic OUT VARCHAR2) IS
+  
+  BEGIN
+    /* .............................................................................
+   
+     Programa: pc_busca_saldo_total_resgate
+     Sistema : Novos Produtos de Captação
+     Sigla   : APLI
+     Autor   : Anderson Fossa
+     Data    : Abril/18.                        Ultima atualizacao: 
+
+     Dados referentes ao programa:
+
+     Frequencia: Sempre que for chamado
+
+     Objetivo  : Rotina para busca do saldo total para disponivel para resgate
+                 de todas as aplicacoes. Utilizado para operacoes no InternetBank e Mobile.
+				 Baseado no comportamento do InternetBank15.p
+
+     Observacao: -----
+    ..............................................................................*/  
+   DECLARE
+     -- Variável de críticas
+     vr_cdcritic crapcri.cdcritic%TYPE;
+     vr_dscritic VARCHAR2(10000);
+     
+     -- Tratamento de erros
+     vr_exc_saida EXCEPTION;
+     
+     vr_tab_aplica apli0001.typ_tab_saldo_rdca;
+     
+     vr_contador PLS_INTEGER;
+     vr_flgstapl PLS_INTEGER;
+     vr_dstransa VARCHAR2(100) := 'Busca saldo aplicacao';
+     vr_dsorigem VARCHAR2(100) := gene0001.vr_vet_des_origens(pr_idorigem);
+	 vr_nrdrowid ROWID;
+    BEGIN
+      pr_vlsldisp := 0;
+      
+      -- Carrega PL table com aplicacoes da conta
+      apli0005.pc_lista_aplicacoes(pr_cdcooper => pr_cdcooper         --> Código da Cooperativa
+                                  ,pr_cdoperad => pr_cdoperad         --> Codigo do Operador
+                                  ,pr_nmdatela => pr_nmdatela         --> Nome da tela
+                                  ,pr_idorigem => pr_idorigem         --> Identificador de Origem (1 - AYLLOS / 2 - CAIXA / 3 - INTERNET / 4 - TAA / 5 - AYLLOS WEB / 6 - URA
+                                  ,pr_nrdcaixa => pr_nrdcaixa         --> Numero do Caixa 
+                                  ,pr_nrdconta => pr_nrdconta         --> Número da Conta
+                                  ,pr_idseqttl => pr_idseqttl         --> Titular da Conta
+                                  ,pr_cdagenci => pr_cdagenci         --> Codigo da Agencia
+                                  ,pr_cdprogra => pr_nmdatela         --> Codigo do Programa
+                                  ,pr_nraplica => pr_nraplica         --> Número da Aplicação - Parâmetro Opcional
+                                  ,pr_cdprodut => pr_cdprodut         --> Código do Produto – Parâmetro Opcional 
+                                  ,pr_dtmvtolt => pr_dtmvtolt         --> Data de Movimento
+                                  ,pr_idconsul => pr_idconsul         --> Identificador de Consulta (0 – Ativas / 1 – Encerradas / 2 – Todas)
+                                  ,pr_idgerlog => pr_idgerlog         --> Identificador de Log (0 – Não / 1 – Sim)   
+                                  ,pr_cdcritic => vr_cdcritic         --> Código da crítica
+                                  ,pr_dscritic => vr_dscritic         --> Descrição da crítica
+                                  ,pr_saldo_rdca => vr_tab_aplica);   --> Tabela com os dados da aplicação
+
+      IF vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_saida;
+      END IF;
+      
+      IF vr_tab_aplica.COUNT > 0 THEN
+        -- Percorre todas as aplicações de captação da conta                       
+        FOR vr_contador IN vr_tab_aplica.FIRST..vr_tab_aplica.LAST LOOP
+          
+          -- verificar se a aplicacao esta bloqueada
+          BLOQ0001.pc_busca_blqrgt(pr_cdcooper => pr_cdcooper                         --> Código da cooperativa
+                                  ,pr_cdagenci => pr_cdagenci                         --> Código da agência
+                                  ,pr_nrdcaixa => pr_nrdcaixa                         --> Número do caixa
+                                  ,pr_cdoperad => pr_cdoperad                         --> Código do operador
+                                  ,pr_nrdconta => pr_nrdconta                         --> Número da conta
+                                  ,pr_tpaplica => vr_tab_aplica(vr_contador).tpaplica --> Tipo da aplicação
+                                  ,pr_nraplica => vr_tab_aplica(vr_contador).nraplica --> Número da aplicação
+                                  ,pr_dtmvtolt => pr_dtmvtolt                         --> Data de movimento
+                                  ,pr_inprodut => vr_tab_aplica(vr_contador).idtipapl --> Identificador de produto (A= Antigo / N=Novo)
+                                  ,pr_flgstapl => vr_flgstapl                         --> Status da aplicação
+                                  ,pr_cdcritic => vr_cdcritic                         --> Código do erro
+                                  ,pr_dscritic => vr_dscritic);
+          IF vr_dscritic IS NOT NULL THEN
+            RAISE vr_exc_saida;
+          END IF;
+          
+          IF vr_flgstapl = 0 OR  /* Se estiver bloqueada ou foi incluida neste mesmo dia */
+             pr_dtmvtolt = vr_tab_aplica(vr_contador).dtmvtolt THEN
+             /* nao considera como saldo disponivel */
+             CONTINUE;
+          ELSE
+            pr_vlsldisp := pr_vlsldisp + vr_tab_aplica(vr_contador).sldresga;
+          END IF;
+        
+        END LOOP;
+      ELSE
+        pr_vlsldisp := 0;
+      END IF;
+      
+    EXCEPTION
+      WHEN vr_exc_saida THEN
+
+        IF vr_cdcritic <> 0 AND TRIM(vr_dscritic) IS NULL THEN
+          vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+        END IF;
+
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+
+        -- Verifica se deve gerar log
+        IF pr_idgerlog = 1 THEN
+          GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper
+                              ,pr_cdoperad => pr_cdoperad
+                              ,pr_dscritic => pr_dscritic
+                              ,pr_dsorigem => vr_dsorigem
+                              ,pr_dstransa => vr_dstransa
+                              ,pr_dttransa => TRUNC(SYSDATE)
+                              ,pr_flgtrans => 0 --> FALSE
+                              ,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS'))
+                              ,pr_idseqttl => pr_idseqttl
+                              ,pr_nmdatela => pr_nmdatela
+                              ,pr_nrdconta => pr_nrdconta
+                              ,pr_nrdrowid => vr_nrdrowid);
+          COMMIT;                    
+        END IF;
+
+      WHEN OTHERS THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := 'Erro nao tratado na busca do saldo total para resgate APLI0005.pc_busca_saldo_total_resgate: ' || SQLERRM;
+
+        -- Verifica se deve gerar log
+        IF pr_idgerlog = 1 THEN
+          GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper
+                              ,pr_cdoperad => pr_cdoperad
+                              ,pr_dscritic => pr_dscritic
+                              ,pr_dsorigem => vr_dsorigem
+                              ,pr_dstransa => vr_dstransa
+                              ,pr_dttransa => TRUNC(SYSDATE)
+                              ,pr_flgtrans => 0 --> FALSE
+                              ,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS'))
+                              ,pr_idseqttl => pr_idseqttl
+                              ,pr_nmdatela => pr_nmdatela
+                              ,pr_nrdconta => pr_nrdconta
+                              ,pr_nrdrowid => vr_nrdrowid);
+          COMMIT;                    
+        END IF;
+      
+    END;
+  END pc_busca_saldo_total_resgate;
 
 END APLI0005;
 /

@@ -9618,6 +9618,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                     
                 23/05/2016 - Ajuste para utilizar rotina genérico para buscar registros na craptab
                             (Adriano - 452932).
+
+                04/04/2018 - Ajuste para quando for Resgate, validar se existe saldo disponivel de aplicacao. 
+                            (Anderson P285)
                 
   .......................................................................................*/
   PROCEDURE pc_valida_limite_internet(pr_cdcooper IN crapcop.cdcooper%TYPE    --> Codigo Cooperativa
@@ -9830,6 +9833,48 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
           -- Gera exceção
           RAISE vr_exc_erro;
         END IF;
+      ELSIF pr_dstpapli = 'R' THEN -- Se for resgate, vamos validar se existe saldo disponivel.
+
+        -- Leitura do calendário da cooperativa
+        OPEN btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
+        FETCH btch0001.cr_crapdat
+          INTO rw_crapdat;
+        -- Se não encontrar
+        IF btch0001.cr_crapdat%NOTFOUND THEN
+          CLOSE btch0001.cr_crapdat;
+        ELSE
+          CLOSE btch0001.cr_crapdat;
+        END IF;
+      
+        APLI0005.pc_busca_saldo_total_resgate(pr_cdcooper => pr_cdcooper
+                                             ,pr_cdoperad => pr_cdoperad
+                                             ,pr_nmdatela => pr_nmdatela
+                                             ,pr_idorigem => pr_idorigem
+                                             ,pr_nrdcaixa => pr_nrdcaixa
+                                             ,pr_nrdconta => pr_nrdconta
+                                             ,pr_idseqttl => pr_idseqttl
+                                             ,pr_cdagenci => pr_cdagenci
+                                             ,pr_cdprogra => pr_nmdatela
+                                             ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                             ,pr_idconsul => 0             --> Identificador de Consulta (0 – Ativas / 1 – Encerradas / 2 – Todas)
+                                             ,pr_idgerlog => 1             --> Identificador de Log (0 – Não / 1 – Sim)
+                                             ,pr_vlsldisp => vr_sldresga   --> OUT - Valor do saldo disponivel para resgate
+                                             ,pr_cdcritic => vr_cdcritic
+                                             ,pr_dscritic => vr_dscritic);
+        IF vr_cdcritic > 0 OR 
+           TRIM(vr_dscritic) IS NOT NULL THEN
+          vr_cdcritic := 0;
+          vr_dscritic := 'Problemas foram encontrados durante a busca do saldo aplicado.'; 
+          RAISE vr_exc_erro;
+        END if;
+        
+        -- Valida se existe saldo disponivel para resgate
+        IF pr_vlaplica > vr_sldresga THEN
+          vr_cdcritic := 0;
+          vr_dscritic := 'ATENÇÃO: O valor de resgate não pode ser maior que o valor do saldo disponível para resgate.'; 
+          RAISE vr_exc_erro;
+        END IF;
+
       END IF;
       
     EXCEPTION
