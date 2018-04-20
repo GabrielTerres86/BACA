@@ -140,6 +140,17 @@
 		<label for="dtrenova"><? echo utf8ToHtml('Data Renovação: ') ?></label>
 		<input type="text" name="dtrenova" id="dtrenova" value="<?php echo $dados[13]->cdata ?>"/>
 		<br />
+
+		<label for="dtrenova"><? echo utf8ToHtml('Data Manutenção: ') ?></label>
+		<input 
+			type="text"
+			name="dtpropos"
+			id="dtpropos"
+			value="
+			<?php
+				echo getByTagName($limites[$i]->tags,"dtpropos");
+			?>"/>
+		<br />
 		
 	</fieldset>
 </form>
@@ -194,6 +205,7 @@
 		Renovar
 	</a>
 
+
 	<?php 
 		if (!in_array("MA",$glbvars['opcoesTela'])) { 
 		echo "
@@ -205,7 +217,9 @@
 		onClick=\"showError('error','Usu&aacute;rio n&atilde;o possui permiss&atilde;o para Manuten&ccedil;&atilde;o.','Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))');\" >
 		Manuten&ccedil;&atilde;o
 		</a>";
+
 		} else { 
+
 		echo "
 		<a 
 		href='#' 
@@ -216,7 +230,6 @@
 		</a>";
 		}
 	?>
-
 
 	<a 
 		href="#" 
@@ -229,6 +242,9 @@
 		Resgatar T&iacute;tulos
 	</a>
 </div>
+
+
+
 <script type="text/javascript">
 	dscShowHideDiv("divOpcoesDaOpcao1","divConteudoOpcao");
 
