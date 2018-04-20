@@ -2907,6 +2907,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
 					
 					03/04/2018 - Adicionados historicos 2433 e 2658 - COMPE SESSAO UNICA (Diego).
 
+					13/04/2018 - Ajustado para filtrar os protocolos pela dtmvtolt. (Linhares).
+
     */
     DECLARE
       -- Varíaveis para montagem do novo registro
@@ -3047,7 +3049,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
          WHERE crappro.cdcooper = pr_cdcooper    
            AND crappro.nrdconta = pr_nrdconta
            AND crappro.cdtippro = pr_cdtippro
-           AND crappro.nrdocmto = pr_nrdocmto;
+           AND crappro.nrdocmto = pr_nrdocmto
+           AND crappro.dtmvtolt = pr_dtmvtolt;
       rw_crappro cr_crappro%ROWTYPE;
 
       --Busca o inprocess na crapdat
