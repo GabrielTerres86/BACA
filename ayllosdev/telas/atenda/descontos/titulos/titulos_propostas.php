@@ -51,9 +51,13 @@
 	setVarSession("nmrotina","DSC TITS - LIMITE");
 
 	// Carrega permissões do operador
-	include("../../../../includes/carrega_permissoes.php");	
+	require_once("../../../../includes/carrega_permissoes.php");	
 	
 	setVarSession("opcoesTela",$opcoesTela);
+
+	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"@")) <> "") {
+		exibeErro($msgError);		
+	}
 	
 	// Verifica se o número da conta foi informado
 	if (!isset($_POST["nrdconta"])) {
