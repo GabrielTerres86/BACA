@@ -1193,6 +1193,25 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
           NULL;
       END;
 
+      -- Limpa Risco Acelerado - Daniel(AMcom)
+      PROCEDURE pc_limpa_risco_acelerado(pr_cdcooper IN NUMBER          --> Cooperativa
+                                        ,pr_nrdconta IN NUMBER          --> Conta
+                                        ,pr_nrctremp IN NUMBER          --> Contrato
+                                        ,pr_inrisco_refin IN NUMBER) IS --> Risco Acelerado
+      --
+      BEGIN
+        UPDATE CRAPEPR
+           SET INRISCO_REFIN = NULL
+         WHERE cdcooper = pr_cdcooper
+           AND nrdconta = pr_nrdconta
+           AND nrctremp = pr_nrctremp
+           AND INRISCO_REFIN IS NOT NULL;
+      EXCEPTION
+        WHEN OTHERS THEN
+          -- Ignorar qualquer problema
+          NULL;
+      END;
+
       -- Funcao para calcular o Juros 60 do produto PP
       FUNCTION fn_calcula_juros_60d_pp(pr_dtmvtolt IN crapdat.dtmvtolt%TYPE
                                       ,pr_dtmvtopr IN crapdat.dtmvtopr%TYPE
@@ -2125,6 +2144,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                                   ,pr_nrdconta => pr_rw_crapepr.nrdconta --> Conta
                                   ,pr_nrctremp => pr_rw_crapepr.nrctremp --> Contrato
                                   ,pr_inrisco_refin => vr_aux_nivel);    --> Risco Acelerado
+	    else
+          pc_limpa_risco_acelerado(pr_cdcooper => pr_cdcooper            --> Cooperativa
+                                  ,pr_nrdconta => pr_rw_crapepr.nrdconta --> Conta
+                                  ,pr_nrctremp => pr_rw_crapepr.nrctremp --> Contrato
+                                  ,pr_inrisco_refin => vr_aux_nivel);    --> Risco Acelerado
         end if;
 
         -- Armazenar o nível encontrado como o de atraso
@@ -2851,6 +2875,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                                   ,pr_nrdconta => pr_rw_crapepr.nrdconta --> Conta
                                   ,pr_nrctremp => pr_rw_crapepr.nrctremp --> Contrato
                                   ,pr_inrisco_refin => vr_aux_nivel);    --> Risco Acelerado
+        else
+          pc_limpa_risco_acelerado(pr_cdcooper => pr_cdcooper            --> Cooperativa
+                                  ,pr_nrdconta => pr_rw_crapepr.nrdconta --> Conta
+                                  ,pr_nrctremp => pr_rw_crapepr.nrctremp --> Contrato
+                                  ,pr_inrisco_refin => vr_aux_nivel);    --> Risco Acelerado
         end if;
         
         -- Backup da variavel vr_aux_nivel
@@ -3499,6 +3528,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
         -- Gravar o risco acelerado - Daniel(AMcom)
         if vr_qtdiaacl > 0 then
           pc_grava_risco_acelerado(pr_cdcooper => pr_cdcooper            --> Cooperativa
+                                  ,pr_nrdconta => pr_rw_crapepr.nrdconta --> Conta
+                                  ,pr_nrctremp => pr_rw_crapepr.nrctremp --> Contrato
+                                  ,pr_inrisco_refin => vr_aux_nivel);    --> Risco Acelerado
+        else
+          pc_limpa_risco_acelerado(pr_cdcooper => pr_cdcooper            --> Cooperativa
                                   ,pr_nrdconta => pr_rw_crapepr.nrdconta --> Conta
                                   ,pr_nrctremp => pr_rw_crapepr.nrctremp --> Contrato
                                   ,pr_inrisco_refin => vr_aux_nivel);    --> Risco Acelerado
