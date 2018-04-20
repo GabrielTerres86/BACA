@@ -140,6 +140,17 @@
 		<label for="dtrenova"><? echo utf8ToHtml('Data Renovação: ') ?></label>
 		<input type="text" name="dtrenova" id="dtrenova" value="<?php echo $dados[13]->cdata ?>"/>
 		<br />
+
+		<label for="dtrenova"><? echo utf8ToHtml('Data Manutenção: ') ?></label>
+		<input 
+			type="text"
+			name="dtpropos"
+			id="dtpropos"
+			value="
+			<?php
+				echo getByTagName($limites[$i]->tags,"dtpropos");
+			?>"/>
+		<br />
 		
 	</fieldset>
 </form>
