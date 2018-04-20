@@ -35,10 +35,18 @@
 	require_once("../../../../class/xmlfile.php");
 	
 	$tipo = (isset($_POST['tipo'])) ? $_POST['tipo'] : "CONTRATO";
-	// Verifica permissão
+
+
+	require_once("../../../../includes/carrega_permissoes.php");
+
+	setVarSession("opcoesTela",$opcoesTela);
+
+	$tipo = (isset($_POST['tipo'])) ? $_POST['tipo'] : "CONTRATO";
+	
+
 	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"M")) <> "") {
 		exibeErro($msgError);		
-	}			
+	}		
 	
 	// Função para exibir erros na tela através de javascript
 	function exibeErro($msgErro) { 
