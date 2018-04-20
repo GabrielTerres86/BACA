@@ -30,6 +30,9 @@
 
 				 18/04/2018 - Alteração da coluna 'contrato' para 'prospota', inclusão da coluna 'contrato' (Leonardo Oliveira - GFT).
 
+				 19/04/2018 - Adição do parâmetro 'nrctrmnt' ao ser selecionado uma proposta.  (Leonardo Oliveira - GFT).
+
+				 
 	************************************************************************/
 	
 	session_start();
@@ -133,14 +136,15 @@ $xmlObjLimites = getObjectXML($xmlResult);
 						$pr_dssitapr = getByTagName($limites[$i]->tags,"dssitapr");//7
 						$pr_nrctrmnt = getByTagName($limites[$i]->tags,"nrctrmnt");//8
 
-						$mtdClick = "selecionaLimiteTitulos('"
+						$mtdClick = "selecionaLimiteTitulosProposta('"
 							.($i + 1)."', '"
 							.$qtLimites."', '"
 							.$pr_nrctrlim."', '"
 							.$pr_dssitlim."', '"
 							.$pr_dssitest."', '"
 							.$pr_dssitapr."', '"
-							.$pr_vllimite."');";				
+							.$pr_vllimite."', '"
+							.$pr_nrctrmnt."');";				
 				?>
 					<tr id="trLimite<? echo $i + 1; ?>" onFocus="<? echo $mtdClick; ?>" onClick="<? echo $mtdClick; ?>">
 
@@ -171,7 +175,7 @@ $xmlObjLimites = getObjectXML($xmlResult);
 						
 						<td><? echo $pr_dssitlim; ?></td>
 						
-						<td width="110px"><? echo $pr_dssitest; ?></td>
+						<td width="120px"><? echo $pr_dssitest; ?></td>
 
 						<td><? echo $pr_dssitapr; ?></td>
 
@@ -282,7 +286,7 @@ $xmlObjLimites = getObjectXML($xmlResult);
 		<?php if ($qtLimites == 0) {
 			echo 'style="cursor: default;" onClick="return false;"'; 
 		} else { 
-			echo 'onClick="carregaDadosDetalhesProposta(\'PROPOSTA\', nrcontrato);return false;"'; 
+			echo 'onClick="carregaDadosDetalhesProposta(\'PROPOSTA\', nrcontrato, nrproposta);return false;"'; 
 		} ?>/>
 	
 
