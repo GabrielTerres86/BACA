@@ -1143,13 +1143,16 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
         WHERE epr.cdcooper = wpr.cdcooper
           AND epr.nrdconta = wpr.nrdconta
           AND epr.nrctremp = wpr.nrctremp
-          --AND wpr.dsnivori > wpr.dsnivris
           -- Somente contrato 3 - Renegociação
           --                  4 - Composição de Dívida
           AND epr.idquaprc IN (3, 4)
-          AND epr.cdcooper = pr_cdcooper  -- Cooper   1
-          AND epr.nrdconta = pr_nrdconta  -- Conta    80280161
-          AND epr.nrctremp = pr_nrctremp; -- Contrato 1000844
+          AND epr.dtmvtolt >= to_date(GENE0001.fn_param_sistema (pr_cdcooper => 0
+                                                                ,pr_nmsistem => 'CRED'
+                                                                ,pr_cdacesso => 'DT_CORTE_RISCO_REFIN')
+                                                                ,'DD/MM/RRRR')
+          AND epr.cdcooper = pr_cdcooper
+          AND epr.nrdconta = pr_nrdconta
+          AND epr.nrctremp = pr_nrctremp;
       rw_diaacl cr_diaacl%ROWTYPE;
 
       BEGIN

@@ -3,8 +3,6 @@ INSERT INTO crapprm
            ,0
            ,'DT_CORTE_RISCO_REFIN'
            ,'Data de corte para aceleracao do risco na Central'
-           ,to_char(SYSDATE,'DD/MM/YYYY')
-           ,NULL)
-/           
-COMMIT
-/
+           ,'25/04/2018')
+           ,NULL);
+COMMIT;
