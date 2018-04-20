@@ -42,6 +42,9 @@ CREATE OR REPLACE PACKAGE CECRED.empr0001 AS
   --                          Heitor (Mouts) - Chamado 718395
   --
   --             24/01/2018 - Adicionada solicitacao de senha de coordenador para utilizacao do saldo bloqueado no pagamento (Luis Fernando - GFT)
+  --
+  --             19/04/2018 - Ajustado para so descontar do campo Valores Pagos, historicos novos de abono. Os historicos antigos nao devem descontar.
+  --                          Heitor (Mouts) - Prj 324
   ---------------------------------------------------------------------------------------------------------------
   -- CURSOR para buscar o saldo que será no Extrato PP.
   -- Usado também an rotina PREJ0001
@@ -5157,7 +5160,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
            AND c.nrdconta = pr_nrdconta
            AND c.nrctremp = prc_nrctremp
            AND c.cdhistor in (382,2388,2473,2389,2391, 2392,2474,2393,2395);
-       --           
+       --
+
+      --nova M324
+      CURSOR cr_craplem4(prc_nrctremp craplem.nrctremp%TYPE) IS
+        SELECT nvl(sum(case when c.cdhistor in (2391) then c.vllanmto else 0 end) 
+               - 
+               sum(case when c.cdhistor in (2395) then c.vllanmto else 0 end),0) valor_pago_abono
+          FROM craplem c
+         WHERE c.cdcooper = pr_cdcooper
+           AND c.nrdconta = pr_nrdconta
+           AND c.nrctremp = prc_nrctremp
+           AND c.cdhistor in(2391, /*ABONO DE PREJUIZO*/
+                             2395);
+
+      vr_vlrabono_novo craplem.vllanmto%type;
+
       -- Temp table para armazenar os avalistas encontrados
       TYPE typ_reg_avalist IS RECORD(
          nrgeneri VARCHAR2(30) --> Pode ser o CPF ou NroConta
@@ -5864,9 +5882,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
             FOR r_craplem2 IN cr_craplem2(prc_nrctremp => rw_crapepr.nrctremp) LOOP
               pr_tab_dados_epr(vr_indadepr).vlrabono := NVL(r_craplem2.valor_pago_abono,0);
             END LOOP;
+            
+            FOR r_craplem4 IN cr_craplem4(prc_nrctremp => rw_crapepr.nrctremp) LOOP
+              vr_vlrabono_novo := NVL(r_craplem4.valor_pago_abono,0);
+            END LOOP;
+            
             -- Valores pagos Prejuizo
             FOR r_craplem1 IN cr_craplem1(prc_nrctremp => rw_crapepr.nrctremp) LOOP
-              pr_tab_dados_epr(vr_indadepr).vlrpagos := nvl(r_craplem1.valor_pago,0) - NVL(pr_tab_dados_epr(vr_indadepr).vlrabono,0) ;
+              pr_tab_dados_epr(vr_indadepr).vlrpagos := nvl(r_craplem1.valor_pago,0) - vr_vlrabono_novo;
             END LOOP;            
             -- Saldo original prejuizo
             FOR r_craplem3 IN cr_craplem3(prc_nrctremp => rw_crapepr.nrctremp) LOOP

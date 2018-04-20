@@ -1550,152 +1550,152 @@ BEGIN
                      '-'||rw_crapcop.cdufdcop;
 
       IF rw_crawepr.tpemprst = 0 THEN -- TR
-         vr_taxjream := rw_craplcr.txjurfix;
+        vr_taxjream := rw_craplcr.txjurfix;
       ELSIF  rw_crawepr.tpemprst = 1 THEN -- Pre-fixado
-         vr_taxjream := rw_craplcr.perjurmo;
-      END IF;
+        vr_taxjream := rw_craplcr.perjurmo;
+     END IF;
 
-      IF  vr_taxjream > 0 THEN -- taxa juros > 0
-         vr_taxjrean := ROUND((POWER(1 + (vr_taxjream / 100),12) - 1) * 100,2);--calculo juros ano
-      ELSE
-         vr_taxjrean := 0;
-      END IF;
+     IF  vr_taxjream > 0 THEN -- taxa juros > 0
+        vr_taxjrean := ROUND((POWER(1 + (vr_taxjream / 100),12) - 1) * 100,2);--calculo juros ano
+     ELSE
+        vr_taxjrean := 0;
+     END IF;
 
-      -- relatorio crrl100_03
+     -- relatorio crrl100_03
       IF rw_craplcr.tpctrato IN (1,4) AND -- modelo = 1 NORMAL ou 4 = APLICAÇÃO
-         rw_craplcr.cdusolcr = 0 AND -- codigo de uso = 0 Normal
-         rw_crawepr.tpemprst = 1 AND -- Tipo PP
-         rw_crawepr.inpessoa = 2 THEN -- pessoa juridica
-         -- clausula 2 do relatorio
-         vr_coment01 := '2. Empréstimo - O crédito ora aberto e aceito pelo Emitente é um empréstimo em dinheiro, tendo como origem recursos ' ||
-                        'de fontes de Depósitos Interfinanceiros de Repasses – DIM , com pagamento em parcelas, na quantidade ' ||
-                        'e valor contratados pelo Emitente, pelo que o Emitente.';
-         vr_nmarqim := '/crrl100_03_'||pr_nrdconta||pr_nrctremp||'.pdf';   -- nome do relatorio + nr contrato
-         -- titulo do relatorio
-         vr_dstitulo := 'CÉDULA DE CRÉDITO BANCÁRIO - EMPRÉSTIMO AO COOPERADO No. '||gene0002.fn_mask(pr_nrctremp,'99.999.999') ;
-         vr_dsjasper := 'crrl100_14.jasper'; -- nome do jasper
-
-      -- relatorio crrl100_04
-      ELSIF rw_craplcr.tpctrato IN (1,4) AND -- modelo = 1 NORMAL ou 4 = APLICAÇÃO
-         rw_craplcr.cdusolcr = 0 AND -- codigo de uso = 0 Normal
-         rw_crawepr.tpemprst = 1 AND -- Tipo PP
-         rw_crawepr.inpessoa = 1 THEN -- pessoa fisica
-         vr_coment01 := '2. Empréstimo - O crédito ora aberto e aceito pelo Emitente é um empréstimo em dinheiro, tendo como origem recursos ' ||
-                        'de fontes de Depósitos Interfinanceiros de Repasses – DIM , com pagamento em parcelas, na quantidade ' ||
-                        'e valor contratados pelo Emitente, pelo que o Emitente.';
-         vr_nmarqim := '/crrl100_04_'||pr_nrdconta||pr_nrctremp||'.pdf';   -- nome do relatorio + nr contrato
-         -- titulo do relatorio
-         vr_dstitulo := 'CÉDULA DE CRÉDITO BANCÁRIO - EMPRÉSTIMO AO COOPERADO No. '||gene0002.fn_mask(pr_nrctremp,'99.999.999') ;
-         -- Se for um contrato de portabilidade
-         IF vr_portabilidade = TRUE THEN
-           vr_dsjasper := 'crrl100_18_portab.jasper'; -- nome do jasper
-         ELSE
-           vr_dsjasper := 'crrl100_18.jasper'; -- nome do jasper
-         END IF;
-
-      -- relatorios crrl100_11 / crrl100_10 ou crrl100_14
-      ELSIF rw_craplcr.tpctrato = 1 AND -- MODELO: = 1 NORMAL
-         rw_craplcr.cdusolcr = 0 AND -- codigo de uso = 0 Normal
-         rw_crawepr.tpemprst = 0 THEN -- Tipo TR
-         IF rw_crawepr.flgpagto <> 1 THEN -- consignado
-            IF rw_craplcr.tpdescto = 2 THEN -- desconto = em folha
-              vr_nmarqim := '/crrl100_11_'||pr_nrdconta||pr_nrctremp||'.pdf'; -- nome do relatorio + nr contrato
-              -- titulo do relatorio
-              vr_dstitulo := 'CÉDULA DE CRÉDITO BANCÁRIO-EMPRÉSTIMO AO COOPERADO–CONSIGNADO–COM INDEXADOR–No. '||gene0002.fn_mask(pr_nrctremp,'99.999.999') ;
-              vr_dsjasper := 'crrl100_07.jasper'; -- nome do jasper
-            ELSE -- desconto = conta corrente
-              vr_nmarqim := '/crrl100_10_'||pr_nrdconta||pr_nrctremp||'.pdf'; -- nome do relatorio + nr contrato
-              -- titulo do relatorio
-              vr_dstitulo := 'CÉDULA DE CRÉDITO BANCÁRIO - EMPRÉSTIMO AO COOPERADO – COM INDEXADOR – No. '||gene0002.fn_mask(pr_nrctremp,'99.999.999') ;
-              vr_dsjasper := 'crrl100_06.jasper'; -- nome do jasper
-            END IF;
-         ELSE -- folha
-           vr_nmarqim := '/crrl100_14_'||pr_nrdconta||pr_nrctremp||'.pdf'; -- nome do relatorio + nr contrato
-           -- titulo do relatorio
-           vr_dstitulo := 'CÉDULA DE CRÉDITO BANCÁRIO-EMPRÉSTIMO AO COOPERADO – SALÁRIO – COM INDEXADOR–No. '||gene0002.fn_mask(pr_nrctremp,'99.999.999') ;
-           vr_dsjasper := 'crrl100_09.jasper'; -- nome do jasper
-         END IF;
-
-      -- relatorios crrl100_12 ou crrl100_13
-      ELSIF rw_craplcr.tpctrato = 1 AND -- MODELO: = 1 NORMAL
-         rw_craplcr.cdusolcr = 1 AND -- codigo de uso = 1 Microcredito
-         rw_crawepr.tpemprst = 0 THEN -- Tipo TR
-         IF rw_craplcr.dsorgrec IN ('MICROCREDITO PNMPO BNDES','MICROCREDITO PNMPO BRDE', 'MICROCREDITO PNMPO BNDES CECRED') THEN -- Origem do recurso
-             vr_nmarqim := '/crrl100_12_'||pr_nrdconta||pr_nrctremp||'.pdf'; -- nome do relatorio + nr contrato
-             vr_dstitulo := 'CÉDULA DE CRÉDITO BANCÁRIO - EMPRÉSTIMO AO COOPERADO – MICROCRÉDITO – COM INDEXADOR No. '||gene0002.fn_mask(pr_nrctremp,'99.999.999');
-             vr_dsjasper := 'crrl100_08.jasper'; -- nome do jasper
-         ELSE
-            vr_nmarqim := '/crrl100_13_'||pr_nrdconta||pr_nrctremp||'.pdf'; -- nome do relatorio + nr contrato
+        rw_craplcr.cdusolcr = 0 AND -- codigo de uso = 0 Normal
+        rw_crawepr.tpemprst = 1 AND -- Tipo PP
+        rw_crawepr.inpessoa = 2 THEN -- pessoa juridica
+        -- clausula 2 do relatorio
+        vr_coment01 := '2. Empréstimo - O crédito ora aberto e aceito pelo Emitente é um empréstimo em dinheiro, tendo como origem recursos ' ||
+                       'de fontes de Depósitos Interfinanceiros de Repasses – DIM , com pagamento em parcelas, na quantidade ' ||
+                       'e valor contratados pelo Emitente, pelo que o Emitente.';
+           vr_nmarqim := '/crrl100_03_'||pr_nrdconta||pr_nrctremp||'.pdf';   -- nome do relatorio + nr contrato
             -- titulo do relatorio
-            vr_dstitulo := 'CÉDULA DE CRÉDITO BANCÁRIO - EMPRÉSTIMO AO COOPERADO – MICROCRÉDITO – COM INDEXADOR No. '||gene0002.fn_mask(pr_nrctremp,'99.999.999');
-            vr_dsjasper := 'crrl100_17.jasper';  -- nome do jasper
-         END IF;
+           vr_dstitulo := 'CÉDULA DE CRÉDITO BANCÁRIO - EMPRÉSTIMO AO COOPERADO No. '||gene0002.fn_mask(pr_nrctremp,'99.999.999') ;
+           vr_dsjasper := 'crrl100_14.jasper'; -- nome do jasper
 
-      -- relatorios crrl100_02 e crrl100_09 e crrl100_16
-      ELSIF rw_craplcr.tpctrato IN (2,4) AND -- MODELO: 2 ALIENAÇÃO ou 4 APLICAÇÃO
-            rw_craplcr.cdusolcr = 0 THEN -- Cod Uso = NORMAL
-         pc_busca_bens(pr_cdcooper => pr_cdcooper
-                     , pr_nrdconta => pr_nrdconta
-                     , pr_nrctremp => pr_nrctremp
-                     , pr_cdagenci => rw_crapavi_01.cdagenci
-                     );
-         IF rw_crawepr.tpemprst = 1 THEN -- Tipo PP
-           -- Se for bens móveis
-           IF vr_tab_bens.exists(vr_tab_bens.first) AND
-             vr_tab_bens(vr_tab_bens.first).dscatbem IN ('MAQUINA DE COSTURA','EQUIPAMENTO') THEN
-             -- clausula 2 do relatorio
-             vr_coment01 := '2. Financiamento - O crédito ora aberto e aceito pelo Emitente é um empréstimo em dinheiro, com pagamento em parcelas,'||
-                            ' na quantidade e valor contratados pelo Emitente.';
-             vr_nmarqim := '/crrl100_05_'||pr_nrdconta||pr_nrctremp||'.pdf'; -- nome do relatorio + nr contrato
+     -- relatorio crrl100_04
+      ELSIF rw_craplcr.tpctrato IN (1,4) AND -- modelo = 1 NORMAL ou 4 = APLICAÇÃO
+        rw_craplcr.cdusolcr = 0 AND -- codigo de uso = 0 Normal
+        rw_crawepr.tpemprst = 1 AND -- Tipo PP
+        rw_crawepr.inpessoa = 1 THEN -- pessoa fisica
+        vr_coment01 := '2. Empréstimo - O crédito ora aberto e aceito pelo Emitente é um empréstimo em dinheiro, tendo como origem recursos ' ||
+                      'de fontes de Depósitos Interfinanceiros de Repasses – DIM , com pagamento em parcelas, na quantidade ' ||
+                      'e valor contratados pelo Emitente, pelo que o Emitente.';
+        vr_nmarqim := '/crrl100_04_'||pr_nrdconta||pr_nrctremp||'.pdf';   -- nome do relatorio + nr contrato
+        -- titulo do relatorio
+        vr_dstitulo := 'CÉDULA DE CRÉDITO BANCÁRIO - EMPRÉSTIMO AO COOPERADO No. '||gene0002.fn_mask(pr_nrctremp,'99.999.999') ;
+		-- Se for um contrato de portabilidade
+        IF vr_portabilidade = TRUE THEN
+          vr_dsjasper := 'crrl100_18_portab.jasper'; -- nome do jasper
+        ELSE
+		    vr_dsjasper := 'crrl100_18.jasper'; -- nome do jasper
+        END IF;
+
+     -- relatorios crrl100_11 / crrl100_10 ou crrl100_14
+     ELSIF rw_craplcr.tpctrato = 1 AND -- MODELO: = 1 NORMAL
+        rw_craplcr.cdusolcr = 0 AND -- codigo de uso = 0 Normal
+        rw_crawepr.tpemprst = 0 THEN -- Tipo TR
+        IF rw_crawepr.flgpagto <> 1 THEN -- consignado
+           IF rw_craplcr.tpdescto = 2 THEN -- desconto = em folha
+             vr_nmarqim := '/crrl100_11_'||pr_nrdconta||pr_nrctremp||'.pdf'; -- nome do relatorio + nr contrato
              -- titulo do relatorio
-             vr_dstitulo := 'CÉDULA DE CRÉDITO BANCÁRIO-FINANCIAMENTO COM ALIENAÇÃO FIDUCIÁRIA DE BENS MÓVEIS No. '||gene0002.fn_mask(pr_nrctremp,'99.999.999') ;
-             vr_dsjasper := 'crrl100_02.jasper'; -- nome do jasper
-             vr_bens := NULL;
+             vr_dstitulo := 'CÉDULA DE CRÉDITO BANCÁRIO-EMPRÉSTIMO AO COOPERADO–CONSIGNADO–COM INDEXADOR–No. '||gene0002.fn_mask(pr_nrctremp,'99.999.999') ;
+             vr_dsjasper := 'crrl100_07.jasper'; -- nome do jasper
+           ELSE -- desconto = conta corrente
+             vr_nmarqim := '/crrl100_10_'||pr_nrdconta||pr_nrctremp||'.pdf'; -- nome do relatorio + nr contrato
+             -- titulo do relatorio
+             vr_dstitulo := 'CÉDULA DE CRÉDITO BANCÁRIO - EMPRÉSTIMO AO COOPERADO – COM INDEXADOR – No. '||gene0002.fn_mask(pr_nrctremp,'99.999.999') ;
+             vr_dsjasper := 'crrl100_06.jasper'; -- nome do jasper
+           END IF;
+        ELSE -- folha
+          vr_nmarqim := '/crrl100_14_'||pr_nrdconta||pr_nrctremp||'.pdf'; -- nome do relatorio + nr contrato
+          -- titulo do relatorio
+          vr_dstitulo := 'CÉDULA DE CRÉDITO BANCÁRIO-EMPRÉSTIMO AO COOPERADO – SALÁRIO – COM INDEXADOR–No. '||gene0002.fn_mask(pr_nrctremp,'99.999.999') ;
+          vr_dsjasper := 'crrl100_09.jasper'; -- nome do jasper
+        END IF;
+
+     -- relatorios crrl100_12 ou crrl100_13
+     ELSIF rw_craplcr.tpctrato = 1 AND -- MODELO: = 1 NORMAL
+        rw_craplcr.cdusolcr = 1 AND -- codigo de uso = 1 Microcredito
+        rw_crawepr.tpemprst = 0 THEN -- Tipo TR
+        IF rw_craplcr.dsorgrec IN ('MICROCREDITO PNMPO BNDES','MICROCREDITO PNMPO BRDE', 'MICROCREDITO PNMPO BNDES CECRED') THEN -- Origem do recurso
+            vr_nmarqim := '/crrl100_12_'||pr_nrdconta||pr_nrctremp||'.pdf'; -- nome do relatorio + nr contrato
+            vr_dstitulo := 'CÉDULA DE CRÉDITO BANCÁRIO - EMPRÉSTIMO AO COOPERADO – MICROCRÉDITO – COM INDEXADOR No. '||gene0002.fn_mask(pr_nrctremp,'99.999.999');
+            vr_dsjasper := 'crrl100_08.jasper'; -- nome do jasper
+        ELSE
+           vr_nmarqim := '/crrl100_13_'||pr_nrdconta||pr_nrctremp||'.pdf'; -- nome do relatorio + nr contrato
+           -- titulo do relatorio
+           vr_dstitulo := 'CÉDULA DE CRÉDITO BANCÁRIO - EMPRÉSTIMO AO COOPERADO – MICROCRÉDITO – COM INDEXADOR No. '||gene0002.fn_mask(pr_nrctremp,'99.999.999');
+           vr_dsjasper := 'crrl100_17.jasper';  -- nome do jasper
+        END IF;
+
+     -- relatorios crrl100_02 e crrl100_09 e crrl100_16
+      ELSIF rw_craplcr.tpctrato IN (2,4) AND -- MODELO: 2 ALIENAÇÃO ou 4 APLICAÇÃO
+           rw_craplcr.cdusolcr = 0 THEN -- Cod Uso = NORMAL
+        pc_busca_bens(pr_cdcooper => pr_cdcooper
+                    , pr_nrdconta => pr_nrdconta
+                    , pr_nrctremp => pr_nrctremp
+                    , pr_cdagenci => rw_crapavi_01.cdagenci
+                    );
+        IF rw_crawepr.tpemprst = 1 THEN -- Tipo PP
+          -- Se for bens móveis
+          IF vr_tab_bens.exists(vr_tab_bens.first) AND
+            vr_tab_bens(vr_tab_bens.first).dscatbem IN ('MAQUINA DE COSTURA','EQUIPAMENTO') THEN
+            -- clausula 2 do relatorio
+            vr_coment01 := '2. Financiamento - O crédito ora aberto e aceito pelo Emitente é um empréstimo em dinheiro, com pagamento em parcelas,'||
+                           ' na quantidade e valor contratados pelo Emitente.';
+            vr_nmarqim := '/crrl100_05_'||pr_nrdconta||pr_nrctremp||'.pdf'; -- nome do relatorio + nr contrato
+            -- titulo do relatorio
+            vr_dstitulo := 'CÉDULA DE CRÉDITO BANCÁRIO-FINANCIAMENTO COM ALIENAÇÃO FIDUCIÁRIA DE BENS MÓVEIS No. '||gene0002.fn_mask(pr_nrctremp,'99.999.999') ;
+            vr_dsjasper := 'crrl100_02.jasper'; -- nome do jasper
+            vr_bens := NULL;
            ELSE -- Se for veiculos
              vr_nmarqim := '/crrl100_09_'||pr_nrdconta||pr_nrctremp||'.pdf'; -- nome do relatorio + nr contrato
-             -- Se for de portabilidade
+			 -- Se for de portabilidade
              IF vr_portabilidade THEN
-                -- Titulo do relatorio
+             -- Titulo do relatorio
                 vr_dstitulo := 'CÉDULA DE CRÉDITO BANCÁRIO-EMPRÉSTIMO COM ALIENAÇÃO FIDUCIÁRIA DE VEÍCULO No. '||gene0002.fn_mask(pr_nrctremp,'99.999.999');
                 -- nome do jasper
                 vr_dsjasper := 'crrl100_05_portab.jasper';
              ELSE
                 -- Titulo do relatorio
-                vr_dstitulo := 'CÉDULA DE CRÉDITO BANCÁRIO-FINANCIAMENTO COM ALIENAÇÃO FIDUCIÁRIA DE VEÍCULO No. '||gene0002.fn_mask(pr_nrctremp,'99.999.999');
-                -- nome do jasper
-                vr_dsjasper := 'crrl100_05.jasper'; -- nome do jasper             
-             END IF;
+             vr_dstitulo := 'CÉDULA DE CRÉDITO BANCÁRIO-FINANCIAMENTO COM ALIENAÇÃO FIDUCIÁRIA DE VEÍCULO No. '||gene0002.fn_mask(pr_nrctremp,'99.999.999');
+             -- nome do jasper
+             vr_dsjasper := 'crrl100_05.jasper'; -- nome do jasper             
            END IF;
-         ELSE -- TR
+           END IF;
+        ELSE -- TR
            vr_nmarqim := '/crrl100_16_'||pr_nrdconta||pr_nrctremp||'.pdf'; -- nome do relatorio + nr contrato
            -- Titulo do relatorio
            vr_dstitulo := 'CÉDULA DE CRÉDITO BANCÁRIO-FINANCIAMENTO COM ALIENAÇÃO FIDUCIÁRIA DE VEÍCULO–COM INDEXADOR No. '||gene0002.fn_mask(pr_nrctremp,'99.999.999');
            vr_dsjasper := 'crrl100_11.jasper'; -- nome do jasper
-         END IF;
+        END IF;
 
-      -- relatorio crrl100_06
+     -- relatorio crrl100_06
       ELSIF rw_craplcr.tpctrato IN (3,4) AND -- MODELO: = 3 Hipoteca ou 4 Aplicação
-         rw_craplcr.cdusolcr = 0 AND -- codigo de uso = 0 Normal
-         rw_crawepr.tpemprst = 1 THEN -- Tipo PP
-         -- clausula 2 do relatorio
-         vr_coment01 := '2. Financiamento - O crédito ora aberto e aceito pelo Emitente é um empréstimo em dinheiro, com pagamento em parcelas,'||
-                        ' na quantidade e valor contratados pelo Emitente.';
-         vr_nmarqim := '/crrl100_06_'||pr_nrdconta||pr_nrctremp||'.pdf'; -- nome do relatorio + nr contrato
-         -- titulo do relatorio
-         vr_dstitulo := 'CÉDULA DE CRÉDITO BANCÁRIO-FINANCIAMENTO COM ALIENAÇÃO FIDUCIÁRIA DE IMÓVEL No. '||gene0002.fn_mask(pr_nrctremp,'99.999.999') ;
-         vr_dsjasper := 'crrl100_03.jasper'; -- nome do jasper
-         vr_bens := NULL;
+        rw_craplcr.cdusolcr = 0 AND -- codigo de uso = 0 Normal
+        rw_crawepr.tpemprst = 1 THEN -- Tipo PP
+        -- clausula 2 do relatorio
+        vr_coment01 := '2. Financiamento - O crédito ora aberto e aceito pelo Emitente é um empréstimo em dinheiro, com pagamento em parcelas,'||
+                       ' na quantidade e valor contratados pelo Emitente.';
+        vr_nmarqim := '/crrl100_06_'||pr_nrdconta||pr_nrctremp||'.pdf'; -- nome do relatorio + nr contrato
+        -- titulo do relatorio
+        vr_dstitulo := 'CÉDULA DE CRÉDITO BANCÁRIO-FINANCIAMENTO COM ALIENAÇÃO FIDUCIÁRIA DE IMÓVEL No. '||gene0002.fn_mask(pr_nrctremp,'99.999.999') ;
+        vr_dsjasper := 'crrl100_03.jasper'; -- nome do jasper
+        vr_bens := NULL;
 
-         pc_busca_bens(pr_cdcooper => pr_cdcooper
-                     , pr_nrdconta => pr_nrdconta
-                     , pr_nrctremp => pr_nrctremp
-                     , pr_cdagenci => rw_crapavi_01.cdagenci
-                     );
+        pc_busca_bens(pr_cdcooper => pr_cdcooper
+                    , pr_nrdconta => pr_nrdconta
+                    , pr_nrctremp => pr_nrctremp
+                    , pr_cdagenci => rw_crapavi_01.cdagenci
+                    );
 
-      -- relatorio crrl100_07, crrl100_08, crrl100_17 ou crrl100_18
+     -- relatorio crrl100_07, crrl100_08, crrl100_17 ou crrl100_18
       ELSIF rw_craplcr.tpctrato IN (2,4) AND -- MODELO: 2 ALIENAÇÃO ou 4 Aplicação
-            rw_craplcr.cdusolcr = 1 THEN -- Cod Uso = MICROCRÉDITO
-        IF rw_crawepr.tpemprst = 1 THEN -- Tipo PP
+           rw_craplcr.cdusolcr = 1 THEN -- Cod Uso = MICROCRÉDITO
+       IF rw_crawepr.tpemprst = 1 THEN -- Tipo PP
            IF rw_craplcr.dsorgrec IN ('MICROCREDITO PNMPO BNDES','MICROCREDITO PNMPO BRDE', 'MICROCREDITO PNMPO BNDES CECRED') THEN -- Origem do recurso
              vr_nmarqim := '/crrl100_07_'||pr_nrdconta||pr_nrctremp||'.pdf';  -- nome do relatorio + nr contrato
              -- titulo do relatorio
@@ -1707,7 +1707,7 @@ BEGIN
              vr_dstitulo := 'CÉDULA DE CRÉDITO BANCÁRIO-FINANCIAMENTO COM ALIENAÇÃO FIDUCIÁRIA DE VEÍCULO MICROCRÉDITO No. '||gene0002.fn_mask(pr_nrctremp,'99.999.999');
              vr_dsjasper := 'crrl100_16.jasper'; -- nome jasper
            END IF;
-        ELSE -- Tipo TR
+       ELSE -- Tipo TR
           IF rw_craplcr.dsorgrec IN ('MICROCREDITO PNMPO BNDES','MICROCREDITO PNMPO BRDE', 'MICROCREDITO PNMPO BNDES CECRED') THEN -- Origem do recurso
               vr_nmarqim := '/crrl100_18_'||pr_nrdconta||pr_nrctremp||'.pdf';  -- nome do relatorio + nr contrato
               -- Titulo do relatorio
@@ -1719,16 +1719,16 @@ BEGIN
               vr_dstitulo := 'CÉDULA DE CRÉDITO BANCÁRIO-FINANCIAMENTO COM ALIENAÇÃO FIDUCIÁRIA DE VEÍCULO MICROCRÉDITO–COM INDEXADOR No. '||gene0002.fn_mask(pr_nrctremp,'99.999.999');
               vr_dsjasper := 'crrl100_12.jasper'; -- nome do jasper
           END IF;
-        END IF;
+       END IF;
 
-        pc_busca_bens(pr_cdcooper => pr_cdcooper
-                    , pr_nrdconta => pr_nrdconta
-                    , pr_nrctremp => pr_nrctremp
-                    , pr_cdagenci => rw_crapavi_01.cdagenci
-                    );
+       pc_busca_bens(pr_cdcooper => pr_cdcooper
+                   , pr_nrdconta => pr_nrdconta
+                   , pr_nrctremp => pr_nrctremp
+                   , pr_cdagenci => rw_crapavi_01.cdagenci
+                   );
 
-      -- relatorio crrl100_15
-      ELSIF rw_craplcr.tpctrato = 3 AND -- MODELO: = 3 Hipoteca
+     -- relatorio crrl100_15
+     ELSIF rw_craplcr.tpctrato = 3 AND -- MODELO: = 3 Hipoteca
         rw_craplcr.cdusolcr = 0 AND -- codigo de uso = 0 Normal
         rw_crawepr.tpemprst = 0 THEN -- Tipo TR
         vr_nmarqim := '/crrl100_15_'||pr_nrdconta||pr_nrctremp||'.pdf';  -- nome do relatorio + nr contrato
@@ -1742,24 +1742,24 @@ BEGIN
                     , pr_cdagenci => rw_crapavi_01.cdagenci
                     );
 
-      -- relatorio crrl100_01
+     -- relatorio crrl100_01
       ELSIF  rw_craplcr.tpctrato IN (1,4) AND -- MODELO: = 1 NORMAL ou 4 = APLICAÇÃO
         rw_crawepr.tpemprst = 1 AND -- Tipo PP
         rw_craplcr.cdusolcr = 1 AND -- codigo de uso = 1 Microcreditorw_craplcr.dsoperac IN ('FINANCIAMENTO', 'EMPRESTIMO') AND
         rw_craplcr.dsorgrec IN ('MICROCREDITO PNMPO BNDES','MICROCREDITO PNMPO BRDE', 'MICROCREDITO PNMPO BNDES CECRED') THEN -- Origem do recurso
-        vr_nmarqim := '/crrl100_01_'||pr_nrdconta||pr_nrctremp||'.pdf';  -- nome do relatorio + nr contrato
-        vr_dstitulo := 'CÉDULA DE CRÉDITO BANCÁRIO - EMPRÉSTIMO AO COOPERADO MICROCRÉDITO No. '||gene0002.fn_mask(pr_nrctremp,'99.999.999');
-        vr_dsjasper := 'crrl100_01.jasper';--nome do jasper
+       vr_nmarqim := '/crrl100_01_'||pr_nrdconta||pr_nrctremp||'.pdf';  -- nome do relatorio + nr contrato
+       vr_dstitulo := 'CÉDULA DE CRÉDITO BANCÁRIO - EMPRÉSTIMO AO COOPERADO MICROCRÉDITO No. '||gene0002.fn_mask(pr_nrctremp,'99.999.999');
+       vr_dsjasper := 'crrl100_01.jasper';--nome do jasper
 
-      -- relatorio crrl100_02
-      ELSIF rw_craplcr.tpctrato = 1 AND -- MODELO: = 1 NORMAL
+     -- relatorio crrl100_02
+     ELSIF rw_craplcr.tpctrato = 1 AND -- MODELO: = 1 NORMAL
         rw_crawepr.tpemprst = 1 AND -- Tipo PP
         rw_craplcr.cdusolcr = 1 THEN -- codigo de uso = 1 Microcredito
-        vr_nmarqim := '/crrl100_02_'||pr_nrdconta||pr_nrctremp||'.pdf'; -- nome do relatorio + nr contrato
-        -- titulo do relatorio
-        vr_dstitulo := 'CÉDULA DE CRÉDITO BANCÁRIO - EMPRÉSTIMO AO COOPERADO MICROCRÉDITO No. '||gene0002.fn_mask(pr_nrctremp,'99.999.999');
-        vr_dsjasper := 'crrl100_15.jasper'; -- nome do jasper
-      END IF;
+       vr_nmarqim := '/crrl100_02_'||pr_nrdconta||pr_nrctremp||'.pdf'; -- nome do relatorio + nr contrato
+       -- titulo do relatorio
+       vr_dstitulo := 'CÉDULA DE CRÉDITO BANCÁRIO - EMPRÉSTIMO AO COOPERADO MICROCRÉDITO No. '||gene0002.fn_mask(pr_nrctremp,'99.999.999');
+       vr_dsjasper := 'crrl100_15.jasper'; -- nome do jasper
+     END IF;
 
       IF vr_nmarqim IS NULL OR vr_dsjasper IS NULL THEN -- se nome do relatorio for nullo, contrato esta fora do novo padrao
         vr_dscritic := 'Conta/Contrato fora do padrao de layout';--monta critica
@@ -1974,7 +1974,7 @@ BEGIN
                                  '<nmcredora>'     ||nomcredora_if_origem                    ||'</nmcredora>'||
                                  '<cnpjdacop>'     ||GENE0002.fn_mask_cpf_cnpj(rw_crapcop.nrdocnpj, 2)              ||'</cnpjdacop>'||
                                  '<dtmvtolt>'||to_char(rw_crawepr.dtmvtolt,'dd/mm/yyyy')     ||'</dtmvtolt>'||
-                                 '<vlemprst>'||'R$ '||to_char(rw_crawepr.vlemprst,'FM99G999G990D00')||'</vlemprst>'||
+                                 '<vlemprst>'||'R$ '||to_char(vr_vlemprst,'FM99G999G990D00')||'</vlemprst>'||
                                  '<txminima>'||to_char(rw_craplcr.txminima,'FM990D00')||' %' ||'</txminima>'||  --% juros remuneratorios ao mes
                                  '<prjurano>'||to_char(rw_craplcr.prjurano ,'FM990D00')||' %'||'</prjurano>'|| --% juros remuneratorios ao ano
                                  '<dsperiod>'||'MENSAL'                                      ||'</dsperiod>'||
@@ -2731,7 +2731,7 @@ BEGIN
                                            ,pr_dtcarenc        => rw_crawepr.dtcarenc
                                            ,pr_dtdpagto        => rw_crawepr.dtdpagto
                                            ,pr_qtpreemp        => rw_crawepr.qtpreemp
-                                           ,pr_vlemprst        => rw_crawepr.vlemprst
+                                           ,pr_vlemprst        => vr_vlemprst
                                            ,pr_qtdias_carencia => rw_crawepr.qtddias
                                            ,pr_vlpreemp        => vr_vlpreemp
                                            ,pr_vljurcor        => vr_vljurcor
@@ -2763,7 +2763,7 @@ BEGIN
 							 '<nrcpfcjg>'     || vr_nrcpfcjg                                 || '</nrcpfcjg>'     ||
                              '<conta>'        || TRIM(gene0002.fn_mask_conta(pr_nrdconta))   || '</conta>'        ||
                              '<pa>'           || rw_crawepr.cdagenci                         || '</pa>'           ||
-                             '<vlemprst>'     || 'R$ '|| to_char(rw_crawepr.vlemprst,'FM99G999G990D00')  || '</vlemprst>' ||
+                             '<vlemprst>'     || 'R$ '|| to_char(vr_vlemprst,'FM99G999G990D00')  || '</vlemprst>' ||
                              '<dslcremp>'     || rw_craplcr.dslcremp || ' ('|| rw_crawepr.cdlcremp ||')' || '</dslcremp>' || -- Linha de credito
                              '<origem>'       || rw_crawepr.nmcidade || '- '|| rw_crawepr.cdufdcop       || '</origem>'   || -- Local Origem
                              '<destino>'      || rw_crawepr.nmcidade || '-' || rw_crawepr.cdufdcop       || '</destino>'  || -- Local destino
@@ -3188,59 +3188,59 @@ BEGIN
       
       gene0002.pc_escreve_xml(vr_des_xml, vr_texto_completo, ' ', TRUE);
 
-      vr_dtlibera := nvl(nvl(rw_crapepr.dtmvtolt, rw_crawepr.dtlibera),rw_crapdat.dtmvtolt);
+          vr_dtlibera := nvl(nvl(rw_crapepr.dtmvtolt, rw_crawepr.dtlibera),rw_crapdat.dtmvtolt);
       
       --Passar só o valor do empréstimo para a CCET001, pois lá recalcula tudo que precisa
       vr_vlemprst := rw_crawepr.vlemprst;
 
       -- Chama rotina de CET
-      ccet0001.pc_imprime_emprestimos_cet(pr_cdcooper => pr_cdcooper
-                                        , pr_dtmvtolt => rw_crapdat.dtmvtolt
-                                        , pr_cdprogra => vr_cdprogra
-                                        , pr_nrdconta => pr_nrdconta
-                                        , pr_inpessoa => rw_crawepr.inpessoa
-                                        , pr_cdusolcr => 0 -- Segundo o Lucas, deve ser passado zero
-                                        , pr_cdlcremp => rw_crawepr.cdlcremp
-                                        , pr_tpemprst => rw_crawepr.tpemprst
-                                        , pr_nrctremp => pr_nrctremp
-                                        , pr_dtlibera => vr_dtlibera
-                                        , pr_dtultpag => trunc(SYSDATE)
+          ccet0001.pc_imprime_emprestimos_cet(pr_cdcooper => pr_cdcooper
+                                            , pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                            , pr_cdprogra => vr_cdprogra
+                                            , pr_nrdconta => pr_nrdconta
+                                            , pr_inpessoa => rw_crawepr.inpessoa
+                                            , pr_cdusolcr => 0 -- Segundo o Lucas, deve ser passado zero
+                                            , pr_cdlcremp => rw_crawepr.cdlcremp
+                                            , pr_tpemprst => rw_crawepr.tpemprst
+                                            , pr_nrctremp => pr_nrctremp
+                                            , pr_dtlibera => vr_dtlibera
+                                            , pr_dtultpag => trunc(SYSDATE)
                                             , pr_vlemprst => vr_vlemprst
-                                        , pr_txmensal => rw_crawepr.txmensal
-                                        , pr_vlpreemp => rw_crawepr.vlpreemp
-                                        , pr_qtpreemp => rw_crawepr.qtpreemp
-                                        , pr_dtdpagto => rw_crawepr.dtdpagto
+                                            , pr_txmensal => rw_crawepr.txmensal
+                                            , pr_vlpreemp => rw_crawepr.vlpreemp
+                                            , pr_qtpreemp => rw_crawepr.qtpreemp
+                                            , pr_dtdpagto => rw_crawepr.dtdpagto
                                         , pr_nmarqimp => vr_nmarqcet
-                                        , pr_des_xml  => vr_des_xml2
-                                        , pr_cdcritic => vr_cdcritic
-                                        , pr_dscritic => vr_dscritic
-                                        );
-      IF nvl(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
-        RAISE vr_exc_saida;
-      END IF;
+                                            , pr_des_xml  => vr_des_xml2
+                                            , pr_cdcritic => vr_cdcritic
+                                            , pr_dscritic => vr_dscritic
+                                            );
+          IF nvl(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+            RAISE vr_exc_saida;
+          END IF;
 
       gene0002.pc_escreve_xml(vr_des_xml, vr_texto_completo, ' ', TRUE);
 
       -- Concatena xml retornado CET com xml contratos
-      dbms_lob.append(vr_des_xml, vr_des_xml2);
-      dbms_lob.freetemporary(vr_des_xml2);
-      vr_des_xml2 := NULL;
-      dbms_lob.createtemporary(vr_des_xml2, TRUE);
-      dbms_lob.open(vr_des_xml2, dbms_lob.lob_readwrite);
+          dbms_lob.append(vr_des_xml, vr_des_xml2);
+          dbms_lob.freetemporary(vr_des_xml2);
+          vr_des_xml2 := NULL;
+          dbms_lob.createtemporary(vr_des_xml2, TRUE);
+          dbms_lob.open(vr_des_xml2, dbms_lob.lob_readwrite);
 
       IF rw_crawepr.nrseqrrq <> 0 THEN -- somenmte se for microcredito
-        -- chama rotinar para geracao de questionario
-        empr0003.pc_gera_perfil_empr(pr_cdcooper => pr_cdcooper
-                                   , pr_nrdconta => pr_nrdconta
-                                   , pr_nrctremp => pr_nrctremp
-                                   , pr_cdcritic => vr_cdcritic
-                                   , pr_dscritic => vr_dscritic
-                                   , pr_retxml   => vr_des_xml2
-                                   );
-        -- concatena xml retornado empr0005 com xml contratos
-        dbms_lob.append(vr_des_xml, vr_des_xml2);
-        dbms_lob.freetemporary(vr_des_xml2);
-      END IF;
+            -- chama rotinar para geracao de questionario
+            empr0003.pc_gera_perfil_empr(pr_cdcooper => pr_cdcooper
+                                       , pr_nrdconta => pr_nrdconta
+                                       , pr_nrctremp => pr_nrctremp
+                                       , pr_cdcritic => vr_cdcritic
+                                       , pr_dscritic => vr_dscritic
+                                       , pr_retxml   => vr_des_xml2
+                                       );
+            -- concatena xml retornado empr0005 com xml contratos
+            dbms_lob.append(vr_des_xml, vr_des_xml2);
+            dbms_lob.freetemporary(vr_des_xml2);
+          END IF;
 
       dbms_lob.writeappend(vr_des_xml, length('</contrato>'), '</contrato>');
 
@@ -3326,7 +3326,7 @@ BEGIN
         END;
       END IF;
 
-      COMMIT;
+    COMMIT;
 
     EXCEPTION
       WHEN vr_exc_saida THEN
@@ -4522,7 +4522,7 @@ BEGIN
                          '<portabil>' || vr_tab_co_responsavel(vr_index).portabil ||'</portabil>'||
                          '<dsorgrec>' || vr_tab_co_responsavel(vr_index).dsorgrec ||'</dsorgrec>'||
                          '<dtinictr>' || vr_tab_co_responsavel(vr_index).dtinictr ||'</dtinictr>'||
-                     '</responsavel>';
+                      '</responsavel>';
         
         -- Escrever no XML
         gene0002.pc_escreve_xml(pr_xml            => pr_xml_co_responsavel 
@@ -4658,7 +4658,7 @@ BEGIN
 			    RAISE vr_exc_saida;
 			END IF;
 			CLOSE cr_crapass;
-
+  
 			--XML de envio
 			vr_temp := '<?xml version="1.0" encoding="utf-8"?>' ||
 						 '<associado>' || 

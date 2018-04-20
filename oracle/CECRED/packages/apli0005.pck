@@ -6113,12 +6113,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
 							,cpc.idtxfixa
 							,cpc.cdprodut
 							,cpc.nmprodut
-              ,ind.nmdindex
+                            ,ind.nmdindex
 				  FROM crapcpc cpc, crapind ind
 				 WHERE cpc.cdprodut = pr_cdprodut
            AND cpc.cddindex = ind.cddindex;         
 			rw_crapcpc cr_crapcpc%ROWTYPE;
-	
+			
 			-- Seleciona registro de resgate disponível
 			CURSOR cr_craprga_disp(pr_cdcooper craprga.cdcooper%TYPE
 														,pr_nrdconta craprga.nrdconta%TYPE
@@ -13636,6 +13636,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
       -- Variaveis locais
       vr_nrdrowid ROWID;
       vr_dstransa VARCHAR(200) := 'Consulta saldo de resgate de varias aplicacoes';
+      vr_vlbloque_aplica NUMBER := 0;
+      vr_vlbloque_poupa NUMBER := 0;
+      vr_vlbloque_ambos NUMBER := 0;
       
       -- Indice da temp-table
       vr_ind NUMBER;
@@ -13745,7 +13748,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0005 IS
 
       END LOOP;
       
-      pr_vlsldtot := vr_vlsldtot;
+      BLOQ0001.pc_retorna_bloqueio_garantia(pr_cdcooper => pr_cdcooper
+                                           ,pr_nrdconta => pr_nrdconta
+                                           ,pr_tpctrato => 0
+                                           ,pr_nrctaliq => pr_nrdconta -- Conta em que o contrato está em liquidação
+                                           ,pr_dsctrliq => '' -- Lista separada em “;”
+                                           ,pr_vlbloque_aplica => vr_vlbloque_aplica
+                                           ,pr_vlbloque_poupa => vr_vlbloque_poupa
+                                           ,pr_vlbloque_ambos => vr_vlbloque_ambos
+                                           ,pr_dscritic => vr_dscritic);
+                                         
+      IF vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_saida;
+      END IF;                                 
+      
+      pr_vlsldtot := vr_vlsldtot - vr_vlbloque_aplica;
                                    
       -- Verifica se deve haver gravacao de log
       IF pr_flgerlog = 1 THEN
