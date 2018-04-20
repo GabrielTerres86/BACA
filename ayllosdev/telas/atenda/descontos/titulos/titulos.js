@@ -2989,6 +2989,7 @@ function carregarAcionamentosDaProposta(tipo, nrctrlim){
                 var tabConteudo = $("#tabConteudo");
                 tabConteudo.html(response);
                 formatarTelaAcionamentosDaProposta();
+                formatarTabelaAcionamentosDaProposta();
                 hideMsgAguardo();
                 bloqueiaFundo(divRotina);
             }
@@ -3003,20 +3004,37 @@ function formatarTelaAcionamentosDaProposta(){
 
     var Lnrctrlim = $('label[for="nrctrlim"]',divFormContent);
     var Cnrctrlim = $('#nrctrlim', divFormContent);
-
+    var Cnrctrmnt = $('#nrctrmnt', divFormContent);
+    var Ctipo = $('#tipo', divFormContent);
 
     divFormContent.css({'width':'360px', 'float':'left', 'display':'block'});//'width':'120px', 'height':'360px'
 
+
     Lnrctrlim.css({'width': '60px'}).addClass('rotulo');
     Cnrctrlim.css({'width': '300px'});
-    Cnrctrlim.habilitaCampo();
-    Cnrctrlim.focus();
-    Cnrctrlim.unbind('change').bind('change',function() {  
-            nrctrlim = Cnrctrlim.val();
-            carregarAcionamentosDaProposta('<? echo $tipo ?>', nrctrlim ); 
-        });
+    
+   
 
+    if(Ctipo.val() === "PROPOSTA"){
+        Cnrctrlim.desabilitaCampo();
+        Cnrctrlim.focus();
+
+    }else{
+        Cnrctrlim.habilitaCampo();
+        Cnrctrlim.focus();
+        Cnrctrlim.unbind('change').bind('change',function() {  
+            nrctrlim = Cnrctrlim.val();
+            nrctrmnt = Cnrctrmnt.val();
+            tipo = Ctipo.val();
+            carregarAcionamentosDaProposta(tipo, nrctrlim, nrctrmnt);
+        });
+    }
+	return false;
+}
+
+function formatarTabelaAcionamentosDaProposta(){
         // tabela
+        var tabConteudo    = $('#tabConteudo', '#divResultadoAciona');
         var divRegistro = $('div.divRegistros', tabConteudo);
         var tabela = $('table', divRegistro);
 
@@ -3041,7 +3059,7 @@ function formatarTelaAcionamentosDaProposta(){
         arrayAlinha[5] = 'center';//Retorno
 
         tabela.formataTabela(ordemInicial, arrayLargura, arrayAlinha, '');
-	return false;
+        return false;
 }
 
 // Mostrar dados para liberar um bordero
