@@ -1549,16 +1549,15 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
 			 AND tvl.tpdoctrf = 3;
 	rw_craptvl_recarg cr_craptvl_recarg%ROWTYPE;
 	
-  cursor cr_crapcon (pr_cdcooper in crapcon.cdcooper%type) is
-    select crapcon.cdempcon,
-           crapcon.cdsegmto,
-           crapcon.cdhistor,
-           crapcon.nmextcon
-      from crapcon
-     where crapcon.cdcooper = pr_cdcooper
-       and crapcon.tparrecd = 1 -- Convenio com o SICREDI.
-     order by crapcon.progress_recid;
-  rw_crapcon     cr_crapcon%rowtype;
+  CURSOR cr_crapcon (pr_cdcooper in crapcon.cdcooper%TYPE
+                    ,pr_cdempcon IN crapcon.cdempcon%TYPE
+					,pr_cdsegmto IN crapcon.cdsegmto%TYPE) IS
+    SELECT crapcon.nmextcon
+      FROM crapcon
+     WHERE crapcon.cdcooper = pr_cdcooper
+       AND crapcon.cdempcon = pr_cdempcon
+	   AND crapcon.cdsegmto = pr_cdsegmto;
+  rw_crapcon     cr_crapcon%ROWTYPE;
 
 
   -- Convênio Sicredi
@@ -1640,14 +1639,20 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
   -- Lançamento de faturas
   cursor cr_craplft (pr_cdcooper in craplft.cdcooper%type,
                      pr_dtmvtolt in craplft.dtmvtolt%type,
-                     pr_cdempcon in craplft.cdempcon%type,
-                     pr_cdsegmto in craplft.cdsegmto%type,
                      pr_cdhistor in craplft.cdhistor%type) is
     select craplft.cdempcon,
            craplft.cdsegmto,
            craplft.cdagenci,
            craplft.cdhistor,
-           lead (craplft.cdagenci,1) OVER (ORDER BY craplft.cdagenci) AS proxima_agencia,
+           lead (craplft.cdagenci,1) OVER (ORDER BY craplft.cdempcon,
+																										craplft.cdsegmto,
+																										craplft.cdagenci) AS proxima_agencia,
+           lead (craplft.cdempcon,1) OVER (ORDER BY craplft.cdempcon,
+																										craplft.cdsegmto,
+																										craplft.cdagenci) AS proximo_cdempcon,					 
+           lead (craplft.cdsegmto,1) OVER (ORDER BY craplft.cdempcon,
+																										craplft.cdsegmto,
+																										craplft.cdagenci) AS proximo_cdsegmto,
            decode(craplft.cdagenci,
                   90, nvl(crapass.cdagenci, craplft.cdagenci),
                   91, nvl(crapass.cdagenci, craplft.cdagenci),
@@ -1661,8 +1666,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
            craplft
      where craplft.cdcooper = pr_cdcooper
        and craplft.dtmvtolt = pr_dtmvtolt
-       and craplft.cdempcon = pr_cdempcon
-       and craplft.cdsegmto = pr_cdsegmto
        and craplft.cdhistor = pr_cdhistor
        and crapass.cdcooper (+) = craplft.cdcooper
        and crapass.nrdconta (+) = craplft.nrdconta
@@ -2181,38 +2184,45 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
              crapass.cdagenci;
                           
   --> Buscar convenios Bancoob                        
-  CURSOR cr_crapcon_bancoob (pr_cdcooper in crapcon.cdcooper%type) is
-    SELECT con.cdempcon,
-           con.cdsegmto,
-           con.cdhistor,
-           con.nmextcon,
-           con.nmrescon,
-           arr.cdempres,
-           his.nrctacrd,
-           his.cdhstctb,
+  CURSOR cr_crapcon_bancoob (pr_cdcooper in crapcon.cdcooper%TYPE
+	                        ,pr_cdempcon IN crapcon.cdempcon%TYPE
+	                        ,pr_cdsegmto IN crapcon.cdsegmto%TYPE) is
+    SELECT con.nmextcon
+      FROM crapcon con
+     WHERE con.cdempcon = pr_cdempcon
+       AND con.cdsegmto = pr_cdsegmto
+       AND con.cdcooper = pr_cdcooper;
+  rw_crapcon_bancoob cr_crapcon_bancoob%ROWTYPE;
+             
+	-- Buscar valores de tarifas do bancoob
+	CURSOR cr_conv_arrecad(pr_cdempcon IN crapcon.cdempcon%TYPE
+	                      ,pr_cdsegmto IN crapcon.cdsegmto%TYPE) IS
+		SELECT arr.cdempres,
            arr.vltarifa_caixa,
            arr.vltarifa_internet,
            arr.vltarifa_taa
-      FROM crapcon con,
-           craphis his,
-           tbconv_arrecadacao arr
-     WHERE con.cdcooper = his.cdcooper
-       AND con.cdhistor = his.cdhistor
-       AND con.cdempcon = arr.cdempcon
-       AND con.cdsegmto = arr.cdsegmto
-       AND con.cdcooper = pr_cdcooper     
-       AND con.tparrecd = 2 -- Contem convenio bancoob
-     order by con.cdempcon,con.cdsegmto;
-             
+		  FROM tbconv_arrecadacao arr
+		 WHERE arr.cdempcon = pr_cdempcon
+		   AND arr.cdsegmto = pr_cdsegmto;
+  rw_conv_arrecad cr_conv_arrecad%ROWTYPE;
+		 
   -- Lançamento de faturas do convênio bancoob
   cursor cr_craplft_bancoob 
                      (pr_cdcooper in craplft.cdcooper%type,
                       pr_dtmvtolt in craplft.dtmvtolt%type,
-                      pr_cdempcon in craplft.cdempcon%type,
-                      pr_cdsegmto in craplft.cdsegmto%TYPE,
                       pr_cdhistor in craplft.cdhistor%TYPE) is
     SELECT craplft.cdagenci,
-           lead (craplft.cdagenci,1) OVER (ORDER BY craplft.cdagenci) AS proxima_agencia,
+		   craplft.cdempcon,
+		   craplft.cdsegmto,
+           lead (craplft.cdagenci,1) OVER (ORDER BY craplft.cdempcon,
+																										craplft.cdsegmto,
+																										craplft.cdagenci) AS proxima_agencia,
+           lead (craplft.cdempcon,1) OVER (ORDER BY craplft.cdempcon,
+																										craplft.cdsegmto,
+																										craplft.cdagenci) AS proximo_cdempcon,					 
+           lead (craplft.cdsegmto,1) OVER (ORDER BY craplft.cdempcon,
+																										craplft.cdsegmto,
+																										craplft.cdagenci) AS proximo_cdsegmto,
            decode(craplft.cdagenci,
                   90, nvl(crapass.cdagenci, craplft.cdagenci),
                   91, nvl(crapass.cdagenci, craplft.cdagenci),
@@ -2223,14 +2233,16 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
            craplft
      WHERE craplft.cdcooper = pr_cdcooper
        AND craplft.dtmvtolt = pr_dtmvtolt
-       AND craplft.cdempcon = pr_cdempcon
-       and craplft.cdsegmto = pr_cdsegmto
        AND craplft.cdhistor = pr_cdhistor
        and crapass.cdcooper (+) = craplft.cdcooper
        and crapass.nrdconta (+) = craplft.nrdconta
-     group BY craplft.cdagenci,
+     group by craplft.cdempcon,
+              craplft.cdsegmto,
+              craplft.cdagenci,
               nvl(crapass.cdagenci, craplft.cdagenci)              
-     order by 1, 3;
+     order by craplft.cdempcon,
+              craplft.cdsegmto,
+			  craplft.cdagenci;
              
   -- PL/Table contendo informações por agencia e segregadas em PF e PJ
   TYPE typ_pf_pj_op_cred IS TABLE OF NUMBER INDEX BY PLS_INTEGER;
@@ -8105,12 +8117,36 @@ BEGIN
   vr_cdestrut := '50';
 
   -- Convênio Sicredi
-  for rw_crapcon in cr_crapcon (pr_cdcooper) LOOP
-    OPEN cr_crapscn(rw_crapcon.cdempcon, rw_crapcon.cdsegmto);
+	open cr_craplft(pr_cdcooper,
+									vr_dtmvtolt,
+									rw_craphis2.cdhistor);
+	loop
+      
+		--joga dados do cursor na variável de 5000 em 5000
+		fetch cr_craplft bulk collect into rw_craplft limit 5000;		
+					
+		--para cada linha de retorno na variável indexada de 5000 em 5000, faz os cálculos
+		for i in 1..rw_craplft.count LOOP
+			
+			OPEN cr_crapcon(pr_cdcooper
+			               ,rw_craplft(i).cdempcon
+										 ,rw_craplft(i).cdsegmto);
+			FETCH cr_crapcon INTO rw_crapcon;
+			
+			-- Se não encontrou convênio
+			IF cr_crapcon%NOTFOUND THEN
+				-- Fechar cursor
+        CLOSE cr_crapcon;
+				continue;
+			END IF;
+			-- Fechar cursor
+			CLOSE cr_crapcon;
+			
+			OPEN cr_crapscn(rw_craplft(i).cdempcon, rw_craplft(i).cdsegmto);
     FETCH cr_crapscn INTO rw_crapscn;
     IF cr_crapscn%NOTFOUND THEN
       CLOSE cr_crapscn;
-      OPEN cr_crapscn3(rw_crapcon.cdempcon, rw_crapcon.cdsegmto);
+				OPEN cr_crapscn3(rw_craplft(i).cdempcon, rw_craplft(i).cdsegmto);
       FETCH cr_crapscn3 INTO rw_crapscn;
       IF cr_crapscn3%NOTFOUND THEN
         CLOSE cr_crapscn3;
@@ -8128,19 +8164,6 @@ BEGIN
       vr_nrctasic := vr_nrctacrd;
     END IF;
 
-    vr_vllanmto_fat := 0;
-    vr_qtlanmto_fat := 0;
-    open cr_craplft(pr_cdcooper,
-                                  vr_dtmvtolt,
-                                  rw_crapcon.cdempcon,
-                                  rw_crapcon.cdsegmto,
-                    rw_crapcon.cdhistor);
-    loop
-      --joga dados do cursor na variável de 5000 em 5000
-      fetch cr_craplft bulk collect into rw_craplft limit 5000;
-
-      --para cada linha de retorno na variável indexada de 5000 em 5000, faz os cálculos
-      for i in 1..rw_craplft.count loop
 
       -- Incrementa o contador na pl/table de faturas
         vr_indice_faturas := to_char(rw_craplft(i).tpfatura, 'fm0')||to_char(rw_craplft(i).cdagenci_fatura, 'fm000');
@@ -8149,8 +8172,8 @@ BEGIN
         vr_tab_faturas(vr_indice_faturas).vr_qtlanmto := nvl(vr_tab_faturas(vr_indice_faturas).vr_qtlanmto, 0) + rw_craplft(i).qtlanmto;
 
       -- Faz a soma dos valores, pois é possível existir mais de uma fatura com agencia 90 ou 91
-        vr_vllanmto_fat := vr_vllanmto_fat + rw_craplft(i).vllanmto;
-        vr_qtlanmto_fat := vr_qtlanmto_fat + rw_craplft(i).qtlanmto;
+			vr_vllanmto_fat := nvl(vr_vllanmto_fat,0) + rw_craplft(i).vllanmto;
+			vr_qtlanmto_fat := nvl(vr_qtlanmto_fat,0) + rw_craplft(i).qtlanmto;
 
       -- Tratamento para Tarifa
         if rw_craplft(i).cdagenci = 90 then
@@ -8203,11 +8226,13 @@ BEGIN
             RAISE vr_exc_saida;
         END;
       END IF;
-      -- Verifica se é a mesma agência e, se for, busca o próximo registro
-        if rw_craplft(i).cdagenci = rw_craplft(i).proxima_agencia then
-        continue;
-      end if;
-      --
+    -- Verifica se é a mesma Agência/Convênio/Segmento, se for, busca o próximo registro
+		if rw_craplft(i).cdagenci = rw_craplft(i).proxima_agencia  AND
+			 rw_craplft(i).cdempcon = rw_craplft(i).proximo_cdempcon AND
+ 			 rw_craplft(i).cdsegmto = rw_craplft(i).proximo_cdsegmto THEN
+			continue;
+		end if;		
+		
       vr_linhadet := trim(vr_cdestrut)||
                      trim(vr_dtmvtolt_yymmdd)||','||
                      trim(to_char(vr_dtmvtolt,'ddmmyy'))||','||
@@ -8217,7 +8242,7 @@ BEGIN
                      trim(to_char(rw_craphis2.cdhstctb))||','||
                      '"('||trim(to_char(rw_craphis2.cdhistor,'0000'))||
                      ') '||trim(rw_crapscn.cdempres)||' - '||
-                     trim(rw_crapcon.nmextcon)||'"';
+									 trim(nvl(rw_crapcon.nmextcon, 'CONVENIO NAO ENCONTRADO(crapcon)'))||'"';
       gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
       --
         vr_linhadet := to_char(rw_craplft(i).cdagenci,'fm000')||','||trim(to_char(vr_vllanmto_fat, '999999990.00'));
@@ -8231,8 +8256,6 @@ BEGIN
       exit when cr_craplft%rowcount <= 5000;
     end loop;
     close cr_craplft;
-    --
-  END LOOP; --cr_crapcon
 
   -- DARF's sem código de barras - Sicredi
   -- Primeiro serão lidas as DARF's com código de tributo 6106
@@ -8534,34 +8557,83 @@ BEGIN
   --*************************--
   ----->>> INICIO Convenio BANCOOB <<<-----
   
+  -- Convênio Bancoob
+  OPEN cr_craphis2 (pr_cdcooper, 2515);
+  FETCH cr_craphis2 INTO rw_craphis2;
+  IF cr_craphis2%NOTFOUND THEN
+    CLOSE cr_craphis2;
+    vr_cdcritic := 526;
+    vr_dscritic := '2515 - '||gene0001.fn_busca_critica(vr_cdcritic);
+    RAISE vr_exc_saida;
+  END IF;
+  CLOSE cr_craphis2;	
+  
   vr_cdestrut := '50';
-  FOR rw_crapcon IN cr_crapcon_bancoob(pr_cdcooper => pr_cdcooper) LOOP
   
     vr_vllanmto_fat := 0;
     vr_qtlanmto_fat := 0;
       
-    -- Lançamento de faturas do convênio bancoob
-    FOR rw_craplft IN cr_craplft_bancoob (pr_cdcooper => pr_cdcooper,
-                                          pr_dtmvtolt => vr_dtmvtolt,
-                                          pr_cdempcon => rw_crapcon.cdempcon,
-                                          pr_cdsegmto => rw_crapcon.cdsegmto,
-                                          pr_cdhistor => rw_crapcon.cdhistor) LOOP 
-  
+	-- Lançamento de faturas do convênio bancoob
+	FOR rw_craplft IN cr_craplft_bancoob (pr_cdcooper => pr_cdcooper,
+																				pr_dtmvtolt => vr_dtmvtolt,
+                                        pr_cdhistor => rw_craphis2.cdhistor) LOOP 
+    -- Buscar convenio
+    OPEN cr_crapcon_bancoob(pr_cdcooper
+		                       ,rw_craplft.cdempcon
+													 ,rw_craplft.cdsegmto);
+		FETCH cr_crapcon_bancoob INTO rw_crapcon_bancoob;
+		
+		-- Se não encontrou convênio
+		IF cr_crapcon_bancoob%NOTFOUND THEN
+			-- Fechar cursor
+			CLOSE cr_crapcon_bancoob;
+			continue;
+		END IF;
+		-- Fechar cursor
+		CLOSE cr_crapcon_bancoob;
+
+	  -- Buscar valores de tarifa
+		OPEN cr_conv_arrecad(rw_craplft.cdempcon
+											  ,rw_craplft.cdsegmto);
+		FETCH cr_conv_arrecad INTO rw_conv_arrecad;
+			
+		-- Se não encontrou valor de tarifa
+		IF cr_conv_arrecad%NOTFOUND THEN
+			-- Fechar cursor
+			CLOSE cr_conv_arrecad;
+			vr_cdcritic := 0;
+			vr_dscritic := 'Valor de tarifa nao encontrado(tbconv_arrecadao). Cod. convenio : ' || rw_craplft.cdempcon 
+			            || ' | Cod. Segmento: ' || rw_craplft.cdsegmto || ' | Historico: ' || rw_craphis2.cdhistor;
+			-- Gera a mensagem de erro no log e não prossegue a rotina.
+			btch0001.pc_gera_log_batch(pr_cdcooper      => pr_cdcooper
+																,pr_ind_tipo_log  => 2 -- Erro de negócio
+																,pr_nmarqlog      => 'proc_batch.log'
+																,pr_tpexecucao    => 1 -- Job
+																,pr_cdcriticidade => 1 -- Medio
+																,pr_cdmensagem    => vr_cdcritic
+																,pr_des_log       => to_char(sysdate,'DD/MM/RRRR hh24:mi:ss')||' - '
+																										|| vr_cdprogra || ' --> '|| vr_dscritic);
+			-- Buscar próximo registro
+			continue;
+				
+		END IF;
+		-- Fechar cursor
+		CLOSE cr_conv_arrecad;		
+		
       -- Faz a soma dos valores, pois é possível existir mais de uma fatura com agencia 90 ou 91
       vr_vllanmto_fat := vr_vllanmto_fat + rw_craplft.vllanmto;
       vr_qtlanmto_fat := vr_qtlanmto_fat + rw_craplft.qtlanmto;
       
       -- Incrementa o contador na pl/table de faturas
-      vr_indice_faturas := lpad(rw_crapcon.cdempcon,5,0) ||
-                           lpad(rw_crapcon.cdsegmto,5,0) ||
-                           lpad(rw_crapcon.cdempres,10,0);
+		vr_indice_faturas := lpad(rw_craplft.cdempcon,5,0) ||
+												 lpad(rw_craplft.cdsegmto,5,0) ||
+                           lpad(rw_conv_arrecad.cdempres,10,0);
                            
                            
-      vr_tab_fat_bancoob(vr_indice_faturas).cdempres := rw_crapcon.cdempres;
-      vr_tab_fat_bancoob(vr_indice_faturas).nmextcon := rw_crapcon.nmextcon;
-      vr_tab_fat_bancoob(vr_indice_faturas).nmextcon := rw_crapcon.nmextcon;
-      vr_tab_fat_bancoob(vr_indice_faturas).cdhistor := rw_crapcon.cdhistor;
-      vr_tab_fat_bancoob(vr_indice_faturas).cdhstctb := rw_crapcon.cdhstctb;
+      vr_tab_fat_bancoob(vr_indice_faturas).cdempres := rw_conv_arrecad.cdempres;
+		vr_tab_fat_bancoob(vr_indice_faturas).nmextcon := nvl(rw_crapcon_bancoob.nmextcon, 'CONVENIO NAO CADASTRADO (crapcon)');
+		vr_tab_fat_bancoob(vr_indice_faturas).cdhistor := rw_craphis2.cdhistor;
+		vr_tab_fat_bancoob(vr_indice_faturas).cdhstctb := rw_craphis2.cdhstctb;
       vr_tab_fat_bancoob(vr_indice_faturas).qtdtotal := nvl(vr_tab_fat_bancoob(vr_indice_faturas).qtdtotal, 0) + rw_craplft.qtlanmto;
       
       vr_idx_age := lpad(rw_craplft.cdagenci_fatura,5,'0');     
@@ -8571,33 +8643,35 @@ BEGIN
       --> Calcular total de tarifas por cada canal, e será agrupado o valor pelo PA do cooperado ou PA do caixa     
       vr_vltarifa := 0;
       IF rw_craplft.cdagenci = 90 THEN
-        vr_vltarifa := rw_craplft.qtlanmto * rw_crapcon.vltarifa_internet;
+			vr_vltarifa := rw_craplft.qtlanmto * rw_conv_arrecad.vltarifa_internet;
       ELSIF rw_craplft.cdagenci = 91 THEN
-        vr_vltarifa := rw_craplft.qtlanmto * rw_crapcon.vltarifa_taa;
+			vr_vltarifa := rw_craplft.qtlanmto * rw_conv_arrecad.vltarifa_taa;
       ELSE  
-        vr_vltarifa := rw_craplft.qtlanmto * rw_crapcon.vltarifa_caixa;
+			vr_vltarifa := rw_craplft.qtlanmto * rw_conv_arrecad.vltarifa_caixa;
       END IF;
       
       
       vr_tab_fat_bancoob(vr_indice_faturas).vltottar := nvl(vr_tab_fat_bancoob(vr_indice_faturas).vltottar, 0) + vr_vltarifa;      
       vr_tab_fat_bancoob(vr_indice_faturas).agencias(vr_idx_age).vltarifa := nvl(vr_tab_fat_bancoob(vr_indice_faturas).agencias(vr_idx_age).vltarifa, 0) + vr_vltarifa;      
       
-      IF rw_craplft.cdagenci = rw_craplft.proxima_agencia THEN
-        continue;      
-      END IF;
-      
+    -- Verifica se é a mesma Agência/Convênio/Segmento, se for, busca o próximo registro
+		if rw_craplft.cdagenci = rw_craplft.proxima_agencia  AND
+			 rw_craplft.cdempcon = rw_craplft.proximo_cdempcon AND
+ 			 rw_craplft.cdsegmto = rw_craplft.proximo_cdsegmto THEN
+			continue;
+		end if;		
       
       -- Antes de ir para proxima agencia, deve gerar linha no arquivo
       vr_linhadet := trim(vr_cdestrut)||
                      trim(vr_dtmvtolt_yymmdd)||','||
                      trim(to_char(vr_dtmvtolt,'ddmmyy'))||','||
                      trim(to_char(vr_tab_agencia2(rw_craplft.cdagenci).vr_cdcxaage,'fm0000'))||','||
-                     trim(to_char(rw_crapcon.nrctacrd))||','||
+									 trim(to_char(rw_craphis2.nrctacrd))||','||
                      trim(to_char(vr_vllanmto_fat, '99999999999990.00'))||','||
-                     trim(to_char(rw_crapcon.cdhstctb))||','||
-                     '"('||trim(to_char(rw_crapcon.cdhistor,'0000'))||
-                     ') '||trim(rw_crapcon.cdempres)||' - '||
-                     trim(rw_crapcon.nmextcon)||'"';
+									 trim(to_char(rw_craphis2.cdhstctb))||','||
+									 '"('||trim(to_char(rw_craphis2.cdhistor,'0000'))||
+                     ') '||trim(rw_conv_arrecad.cdempres)||' - '||
+									 trim(nvl(rw_crapcon_bancoob.nmextcon, 'CONVENIO NAO CADASTRADO(crapcon)'))||'"';
       gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
       --
       vr_linhadet := to_char(rw_craplft.cdagenci,'fm000')||','||
@@ -8608,7 +8682,6 @@ BEGIN
       vr_qtlanmto_fat := 0;
     
     END LOOP; --> Fim loop craplft
-  END LOOP; --Fim loop crapcon
   
   -- Listar Valores de tarifa
   vr_cdestrut := '55';

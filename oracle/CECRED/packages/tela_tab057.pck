@@ -809,8 +809,8 @@ create or replace package body cecred.tela_tab057 is
     -- Lista as arrecadações
     CURSOR cr_arrecad(pr_cdcooper gncontr.cdcooper%TYPE -- Código da Cooperativa
                      ,pr_cdempres gncontr.cdconven%TYPE -- Código da Empresa
-                     ,pr_dtiniper VARCHAR2              -- Data início
-                     ,pr_dtfimper VARCHAR2              -- Data fim
+                     ,pr_dtiniper DATE                  -- Data início
+                     ,pr_dtfimper DATE                  -- Data fim
                      ) IS
       SELECT crapcop.cdcooper
             ,crapcop.nmrescop
@@ -827,9 +827,9 @@ create or replace package body cecred.tela_tab057 is
             ,crapcop
        WHERE gncontr.cdcooper = crapcop.cdcooper
          AND gncontr.tpdcontr = 6 -- Bancoob
-         AND gncontr.cdcooper = decode(pr_cdcooper, 0, gncontr.cdcooper, pr_cdcooper)
-         AND gncontr.cdconven = decode(pr_cdempres, 0, gncontr.cdconven, pr_cdempres)
-         AND gncontr.dtmvtolt BETWEEN to_date(pr_dtiniper, 'DD/MM/YYYY') AND to_date(pr_dtfimper, 'DD/MM/YYYY');
+         AND gncontr.cdcooper = (CASE WHEN pr_cdcooper = 0 THEN gncontr.cdcooper ELSE pr_cdcooper END)
+         AND gncontr.cdconven = (CASE WHEN pr_cdempres = 0 THEN gncontr.cdconven ELSE pr_cdempres END)
+         AND gncontr.dtmvtolt BETWEEN pr_dtiniper AND pr_dtfimper;
     --
     rw_arrecad cr_arrecad%ROWTYPE;
     -- Variável de críticas
@@ -878,8 +878,8 @@ create or replace package body cecred.tela_tab057 is
     --*/
     OPEN cr_arrecad(pr_cdcooper => pr_cdcooper
                    ,pr_cdempres => pr_cdempres
-                   ,pr_dtiniper => pr_dtiniper
-                   ,pr_dtfimper => pr_dtfimper
+                   ,pr_dtiniper => to_date(pr_dtiniper, 'DD/MM/RRRR')
+                   ,pr_dtfimper => to_date(pr_dtfimper, 'DD/MM/RRRR')
                    );
     --
     vr_qt_reg  := 0;
@@ -1316,9 +1316,9 @@ create or replace package body cecred.tela_tab057 is
     */
     
     vr_nmarqret := to_char(rw_gncontr.cdagebcb,'fm0000')       ||
-                   '-RT' ||
+                   '-RT'                                       ||
                    to_char(rw_gncontr.cdconven,'fm0000000000') ||  
-                   to_char(rw_gncontr.dtmvtolt,'RRRRMMDD') ||
+                   to_char(rw_gncontr.dtmvtolt,'RRRRMMDD')     ||
                    substr(LPAD(rw_gncontr.nrsequen,10,0),-3)   ||
                    '.'||rw_crapcop_central.nmrescop            ||
                    '.RET';
@@ -1357,7 +1357,7 @@ create or replace package body cecred.tela_tab057 is
                              <nmarquiv>'|| vr_nmarqret                               ||'</nmarquiv>
                              <dtmvtolt>'|| to_char(rw_gncontr.dtmvtolt,'DD/MM/RRRR') ||'</dtmvtolt>
                              <dsincons>'|| rw_tbincons.dsinconsist                   ||'</dsincons>
-                             <nrseqret>'|| vr_nrseqret                               ||'</nrseqret>
+                             <nrseqret>'|| lpad(vr_nrseqret,8,'0')                   ||'</nrseqret>
                           </retorno>
                       </arquivos>');                                 
                                      

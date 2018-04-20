@@ -4546,7 +4546,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
                           WHEN rw_crapcon.cdempcon IN (0178,0240) THEN SUBSTR(pr_cdbarras, 26,3)
                           ELSE NULL
                         END)                          -- nrseqgrde            
-                      ,pr_nrrefere                    -- nridentificador 
+                      ,trim(pr_nrrefere)              -- nridentificador 
                       ,vr_dsidepag                    -- dsidenti_pagto
                       );
         EXCEPTION
@@ -4655,9 +4655,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
     WHEN vr_exc_erro THEN
       pr_cdcritic := vr_cdcritic;
       pr_dscritic := vr_dscritic;
+			ROLLBACK;
     WHEN OTHERS THEN
       pr_dscritic := 'Erro na rotina PAGA0003.pc_cria_agend_tributos. ' ||SQLERRM;
-			
+			ROLLBACK;
   END pc_cria_agend_tributos;
   
   /* Procedimento do internetbank operação 187 - Consulta de Horario Limite DARF/DAS */
@@ -5145,7 +5146,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
       
       --> IDENTIFICADOR
       IF vr_cdempcon IN ( '0239','0451') THEN
-        vr_nrrecolh := SUBSTR(pr_cdbarras, 28, 17);
+        vr_nrrecolh := SUBSTR(pr_cdbarras, 30, 15);
       
       ELSIF vr_cdempcon IN ( '0178','0240') THEN
         --> SEQUENCIAL DA GRDE 
@@ -5446,7 +5447,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
                      '<dtvalidade>'      || to_char(vr_dtvencto,'DD/MM/RRRR') ||'</dtvalidade>'     ||
                      '<competencia>'     || to_char(vr_dtcompet,'DD/MM/RRRR') ||'</competencia>'    ||
                      '<nrseqgrde>'       || vr_nrsqgrde                       ||'</nrseqgrde>'      ||
-                     '<identificador>'   || vr_nrrecolh                       ||'</identificador>'  ||   
+                     '<identificador>'   || lpad(vr_nrrecolh,15,'0')           ||'</identificador>'  ||   
                      '<nrdocumento>'     || lpad(vr_nrdocmto,17,'0')          ||'</nrdocumento>'    ||      
                      '<vlrtotal>'        || vr_vldocmto                       ||'</vlrtotal>';
                      
@@ -6415,6 +6416,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
         RAISE vr_exc_erro;
       END IF;
       
+			IF pr_idagenda <> 2 THEN
       --Selecionar Horarios Limites Internet
       vr_dstextab:= TABE0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
                                               ,pr_nmsistem => 'CRED'
@@ -6452,6 +6454,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
         
         RAISE vr_exc_erro;
       END IF;
+			END IF;
       
       BEGIN
         vr_flginval := FALSE;
@@ -8095,7 +8098,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
                   vr_nrrefere := NULL;
                   --
                 END IF;
-                -- Somente para convênios FGTS (0178,0179,0180,0181,0239,0240 e 0451), deverá informar o número CAF do PA do cooperado
+								/* Inicialmente BANCOOB solicitou que informassemos o número CAF para 
+								 convênios FGTS, mas durante a homologação pediram para enviar sempre
+								 a agência da singular no BANCOOB */ 
+								
+                /*-- Somente para convênios FGTS (0178,0179,0180,0181,0239,0240 e 0451), deverá informar o número CAF do PA do cooperado
                 IF rw_conven.cdempcon IN (0178, 0179, 0180, 0181, 0239, 0240, 0451) THEN
                   --
                   vr_cdagebcb := fn_busca_age_cef(pr_cdcooper => rw_cooper.cdcooper
@@ -8104,11 +8111,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
                                                                                  )
                                                  );
                   --
-                ELSE
-                  --
+                ELSE*/
                   vr_cdagebcb := rw_cooper.cdagebcb;
                   --
-                END IF;
+                --END IF;
                 -- Gera a linha de detalhe
                 pc_gera_detalhe(pr_dtvencto => rw_conven.dtvencto -- IN
                                ,pr_cdbarras => rw_conven.cdbarras -- IN

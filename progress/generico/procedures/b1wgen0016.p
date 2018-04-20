@@ -1554,8 +1554,8 @@ PROCEDURE proc_cria_critica_transacao_oper:
                     END.
                   END. /* FIM DARF/DAS */
                   
-                ELSE IF tbgen_trans_pend.tptransacao = 14 AND /* FGTS */
-                        tbgen_trans_pend.tptransacao = 15 THEN /* DAE */
+              ELSE IF tbgen_trans_pend.tptransacao = 14 OR /* FGTS */
+                      tbgen_trans_pend.tptransacao = 15 THEN /* DAE */
 					      DO:                    
                     FIND tt-tbpagto_tributos_trans_pend 
                    WHERE tt-tbpagto_tributos_trans_pend.cdtransacao_pendente = tbgen_trans_pend.cdtransacao_pendente 
@@ -1576,7 +1576,7 @@ PROCEDURE proc_cria_critica_transacao_oper:
                     END.
                   END. /* FIM FGTS/DAE */  
                   
-                            ELSE
+                ELSE
                     IF  tbgen_trans_pend.tptransacao = 16  OR /** CONTRATO SMS **/
                             tbgen_trans_pend.tptransacao = 17  THEN
                             DO:
@@ -6390,19 +6390,21 @@ PROCEDURE busca_trans_pend_trib:
                 
             IF xField:SUBTYPE <> "ELEMENT" THEN 
               NEXT. 
-            
+
             xField:GET-CHILD(xText,1).
             ASSIGN tt-tbpagto_tributos_trans_pend.cdtransacao_pendente =  DEC(xText:NODE-VALUE) WHEN xField:NAME  = "cdtransacao_pendente".
             ASSIGN tt-tbpagto_tributos_trans_pend.cdcooper             =  DEC(xText:NODE-VALUE) WHEN xField:NAME  = "cdcooper".
             ASSIGN tt-tbpagto_tributos_trans_pend.nrdconta             =  DEC(xText:NODE-VALUE) WHEN xField:NAME  = "nrdconta".
             ASSIGN tt-tbpagto_tributos_trans_pend.tppagamento          =  DEC(xText:NODE-VALUE) WHEN xField:NAME  = "tppagamento".
-            ASSIGN tt-tbpagto_tributos_trans_pend.nridentificacao      =  (xText:NODE-VALUE) WHEN xField:NAME     = "nridentificacao".
-            ASSIGN tt-tbpagto_tributos_trans_pend.cdtributo            =  (xText:NODE-VALUE) WHEN xField:NAME     = "cdtributo".
+            ASSIGN tt-tbpagto_tributos_trans_pend.dscod_barras         =  TRIM(xText:NODE-VALUE) WHEN xField:NAME = "dscod_barras".
+            ASSIGN tt-tbpagto_tributos_trans_pend.dslinha_digitavel    =  TRIM(xText:NODE-VALUE) WHEN xField:NAME = "dslinha_digitavel".
+            ASSIGN tt-tbpagto_tributos_trans_pend.nridentificacao      =  TRIM(xText:NODE-VALUE) WHEN xField:NAME = "nridentificacao".
+            ASSIGN tt-tbpagto_tributos_trans_pend.cdtributo            =  TRIM(xText:NODE-VALUE) WHEN xField:NAME = "cdtributo".
             ASSIGN tt-tbpagto_tributos_trans_pend.dtvalidade           =  DATE(xText:NODE-VALUE) WHEN xField:NAME = "dtvalidade".
             ASSIGN tt-tbpagto_tributos_trans_pend.dtcompetencia        =  DATE(xText:NODE-VALUE) WHEN xField:NAME = "dtcompetencia".
             ASSIGN tt-tbpagto_tributos_trans_pend.nrseqgrde            =  DEC(xText:NODE-VALUE) WHEN xField:NAME  = "nrseqgrde".
-            ASSIGN tt-tbpagto_tributos_trans_pend.nridentificador      =  (xText:NODE-VALUE) WHEN xField:NAME     = "nridentificador".
-            ASSIGN tt-tbpagto_tributos_trans_pend.dsidenti_pagto       =  (xText:NODE-VALUE) WHEN xField:NAME     = "dsidenti_pagto".
+            ASSIGN tt-tbpagto_tributos_trans_pend.nridentificador      =  TRIM(xText:NODE-VALUE) WHEN xField:NAME = "nridentificador".
+            ASSIGN tt-tbpagto_tributos_trans_pend.dsidenti_pagto       =  TRIM(xText:NODE-VALUE) WHEN xField:NAME = "dsidenti_pagto".
             ASSIGN tt-tbpagto_tributos_trans_pend.vlpagamento          =  DEC(xText:NODE-VALUE) WHEN xField:NAME  = "vlpagamento".
             ASSIGN tt-tbpagto_tributos_trans_pend.dtdebito             =  DATE(xText:NODE-VALUE) WHEN xField:NAME = "dtdebito".
             ASSIGN tt-tbpagto_tributos_trans_pend.idagendamento        =  INT(xText:NODE-VALUE) WHEN xField:NAME  = "idagendamento".  
@@ -7159,7 +7161,7 @@ PROCEDURE aprova_trans_pend:
                     ASSIGN aux_trandarf = aux_trandarf + STRING(aux_cddoitem).
                     
                   END.				  
-				ELSE IF tbgen_trans_pend.tptransacao = 14 AND  /* FGTS */ 
+				ELSE IF tbgen_trans_pend.tptransacao = 14 OR  /* FGTS */ 
                 tbgen_trans_pend.tptransacao = 15 THEN /* DAE */
           DO:
             ASSIGN tt-tbgen_trans_pend.idmovimento_conta = IdentificaMovCC(tbgen_trans_pend.tptransacao,1,0)
@@ -7328,7 +7330,7 @@ PROCEDURE aprova_trans_pend:
                            INPUT par_cdoperad,
                            INPUT par_nmdatela,
                            INPUT par_nrdconta,
-                           INPUT aux_trandarf,
+                           INPUT aux_trantrib,
                           OUTPUT aux_qtdregis, 
                           OUTPUT aux_cdcritic,
                           OUTPUT aux_dscritic).
@@ -12667,7 +12669,7 @@ PROCEDURE aprova_trans_pend:
                                                 INPUT aux_conttran).
                     END. /* 13 */                
  
-                ELSE IF tt-tbgen_trans_pend.tptransacao = 14 AND  /* FGTS */
+                ELSE IF tt-tbgen_trans_pend.tptransacao = 14 OR  /* FGTS */
                         tt-tbgen_trans_pend.tptransacao = 15 THEN /* DAE */
                   DO: 
                     FOR FIRST tt-tbpagto_tributos_trans_pend 

@@ -959,7 +959,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADCOP IS
     gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'crapcop', pr_posicao => 0, pr_tag_nova => 'hrlimsic', pr_tag_cont => to_char(to_date(rw_crapcop.hrlimsic,'sssss'),'hh24:mi'), pr_des_erro => vr_dscritic);
 
     --> Bancoob
-    gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'crapcop', pr_posicao => 0, pr_tag_nova => 'nrctabcb', pr_tag_cont => to_char(rw_crapcop.nrctabcb,'fm9g999g990'), pr_des_erro => vr_dscritic);
+    gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'crapcop', pr_posicao => 0, pr_tag_nova => 'nrctabcb', pr_tag_cont => gene0002.fn_mask(rw_crapcop.nrctabcb,'zzzz.zzzzz-z'), pr_des_erro => vr_dscritic);
     gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'crapcop', pr_posicao => 0, pr_tag_nova => 'vltarbcb', pr_tag_cont => to_char(rw_crapcop.vltarbcb,'fm990d00','NLS_NUMERIC_CHARACTERS='',.'''), pr_des_erro => vr_dscritic);    
     gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'crapcop', pr_posicao => 0, pr_tag_nova => 'vlgarbcb', pr_tag_cont => to_char(rw_crapcop.vlgarbcb,'fm999g999g999g990d00','NLS_NUMERIC_CHARACTERS='',.'''), pr_des_erro => vr_dscritic);    
     gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'crapcop', pr_posicao => 0, pr_tag_nova => 'nrsacbcb', pr_tag_cont => rw_crapcop.nrsacbcb, pr_des_erro => vr_dscritic);    

@@ -2,7 +2,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps728(pr_dscritic OUT VARCHAR2) IS      
 
   /*..............................................................................
 
-    Programa: pc_crps727                      
+    Programa: pc_crps728                      
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Odirlei Busana - AMcom
@@ -43,7 +43,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps728(pr_dscritic OUT VARCHAR2) IS      
   
   vr_dsdircon     VARCHAR2(400);
   vr_nmarquiv     VARCHAR2(400);
-  vr_listarq      VARCHAR2(400);
+  vr_listarq      VARCHAR2(32000);
   vr_tab_arquiv   gene0002.typ_split;
   vr_tab_linhas   gene0009.typ_tab_linhas;
   
@@ -234,7 +234,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps728(pr_dscritic OUT VARCHAR2) IS      
                                               pr_dscritic   => vr_dscritic, 
                                               pr_tab_linhas => vr_tab_linhas);
               IF vr_dscritic IS NOT NULL THEN
-                vr_dscritic := 'Motivo:'|| vr_dscritic;
+                vr_dscritic := vr_dscritic;
                 RAISE vr_exc_prox;               
               END IF;
               
@@ -275,7 +275,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps728(pr_dscritic OUT VARCHAR2) IS      
                       FETCH cr_gncontr INTO rw_gncontr;
                       IF cr_gncontr%NOTFOUND THEN
                         CLOSE cr_gncontr;
-                        vr_dscritic := 'Motivo: Sequencial do arquivo não encontrado.';
+                        vr_dscritic := 'Sequencial do arquivo não encontrado.';
                         RAISE vr_exc_prox;
                       ELSE
                         CLOSE cr_gncontr;
@@ -283,7 +283,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps728(pr_dscritic OUT VARCHAR2) IS      
                       
                       --> Verificar se ja foi processado
                       IF rw_gncontr.cdsitret > 1 THEN
-                        vr_dscritic := 'Motivo: Arquivo de retorno já processado.';             
+                        vr_dscritic := 'Arquivo de retorno já processado.';             
                         RAISE vr_exc_prox;
                       END IF;
                     
@@ -340,12 +340,23 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps728(pr_dscritic OUT VARCHAR2) IS      
                                                      pr_tpincons => 2, 
                                                      pr_dsregist => 'Arquivo: '|| vr_tab_arquiv(idx) ||
                                                                     '<br> NSR: '|| vr_tab_linhas(i)('NRSEQREG').numero, 
-                                                     pr_dsincons => vr_tab_linhas(i)('DSMTVREC').texto, 
+                                                     pr_dsincons => CONVERT(vr_tab_linhas(i)('DSMTVREC').texto, 'WE8ISO8859P1', 'AL32UTF8'), 
                                                      pr_flg_enviar => 'N',
                                                      pr_des_erro => vr_des_erro, 
                                                      pr_dscritic => vr_dscritic_aux);  
                   
-                  
+				    IF vr_tab_linhas(i)('NRSEQREG').numero = 0        OR   --> Se for erro no HEADER
+					   vr_tab_linhas(i)('NRSEQREG').numero = 99999999 THEN --  ou TRAILER
+                      --> Atualizar registro de controle
+                      BEGIN
+                        UPDATE gncontr ctr
+                           SET ctr.cdsitret = 4 -- Rejeitado
+                         WHERE ctr.ROWID = rw_gncontr.rowid;  
+                      EXCEPTION
+                        WHEN OTHERS THEN
+                          vr_dscritic := vr_dscritic ||' Erro ao atulizar registro de controle '||SQLERRM;                          
+                      END;										  
+					END IF;
                   ------------------- Resumo do Arquivo -------------------- 
                   ELSIF vr_tab_linhas(i)('$LAYOUT$').texto = 'D' THEN 
                     vr_cdsitret := 0;
@@ -407,7 +418,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps728(pr_dscritic OUT VARCHAR2) IS      
                 END IF;
                 
               ELSE
-                vr_dscritic := 'Motivo: Arquivo vazio.';
+                vr_dscritic := 'Arquivo vazio.';
                 RAISE vr_exc_prox;               
               END IF;
               
@@ -421,7 +432,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps728(pr_dscritic OUT VARCHAR2) IS      
               
             EXCEPTION 
               WHEN vr_exc_prox THEN
-                pc_gera_log_prccon('Connect --> Retorno não processado: '|| vr_tab_arquiv(idx) ||'. '||vr_dscritic);
+                pc_gera_log_prccon('Connect --> Retorno não processado: '|| vr_tab_arquiv(idx) ||'. Motivo: '||vr_dscritic);
                 vr_dscritic := NULL;
                 pc_move_arq(pr_nmarquiv => vr_tab_arquiv(idx),
                             pr_dsdirori => vr_dsdircon||'/recebe',

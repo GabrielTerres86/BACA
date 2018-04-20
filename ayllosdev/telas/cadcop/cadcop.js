@@ -502,7 +502,7 @@ function formataFormularioConsulta() {
     $('#hrlimsic', '#frmConsulta5').css({ 'width': '60px', 'text-align': 'right' }).desabilitaCampo().setMask('STRING', '99:99', ':', '');
 
     //Bancoob
-    $('#nrctabcb', '#frmConsulta5').css({ 'width': '100px', 'text-align': 'right' }).desabilitaCampo().addClass('inteiro').attr('maxlength', '10').setMask("INTEGER", "zz.zzz.zzz", "", "");
+    $('#nrctabcb', '#frmConsulta5').css({ 'width': '100px', 'text-align': 'right' }).desabilitaCampo().addClass('inteiro').attr('maxlength', '12').setMask("INTEGER", "zzzz.zzzzz-z", "", "");
     $('#vltarbcb', '#frmConsulta5').css({ 'width': '60px', 'text-align': 'right' }).addClass('porcento_n').attr('maxlength', '4').desabilitaCampo();    
     $('#vlgarbcb', '#frmConsulta5').css({ 'width': '100px', 'text-align': 'right' }).desabilitaCampo().addClass('inteiro').attr('maxlength', '18').setMask("DECIMAL", "zzz.zzz.zzz.zz9,99", "", "");
     $('#nrouvbcb', '#frmConsulta5').css({ 'width': '100px', 'text-align': 'right' }).desabilitaCampo().addClass('alphanum').attr('maxlength', '20');

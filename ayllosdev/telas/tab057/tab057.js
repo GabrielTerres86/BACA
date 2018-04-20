@@ -368,10 +368,13 @@ function exibeFormulario() {
 	  formataFiltros();
 	  $('#frmFiltros').css({'display':'block'});
       $("#tlcooper","#frmFiltros").focus();
+      $("#btSalvar", "#divBotoes").show();
+
     //Alteração
     } else {
 		formataFiltros();
 		$('#frmFiltros').css({'display':'block'});
+		$("#btSalvar", "#divBotoes").show();
 		trocaBotao('Prosseguir');
     }
   }

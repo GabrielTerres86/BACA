@@ -6403,7 +6403,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
       SELECT trib.*
       FROM   tbpagto_tributos_trans_pend trib
       WHERE  trib.cdtransacao_pendente = pr_cddoitem
-        AND  trib.dtdebito BETWEEN pr_dtiniper AND pr_dtfimper;
+			  AND ((pr_dtiniper IS NOT NULL AND pr_dtfimper IS NOT NULL AND trib.dtdebito BETWEEN  pr_dtiniper AND pr_dtfimper)
+				 OR  (pr_dtiniper IS NULL AND pr_dtfimper IS NULL));
       rw_tbtrib_pend cr_tbtrib_pend%ROWTYPE;
       --Cadastro de Transferencias pela Internet.
       CURSOR cr_crapcti( pr_cdcooper IN crapcti.cdcooper%TYPE,
@@ -6652,6 +6653,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
       va_existe_operador NUMBER(1);
       va_nrcpfcgc crapsnh.nrcpfcgc%type;
       va_vllimweb crapsnh.vllimweb%type;
+	  vr_stsnrcal BOOLEAN;
+	  vr_inpessoa INTEGER;
       
       --Pagamento
       vr_cdcopdes VARCHAR2(100);
@@ -6765,7 +6768,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
       
       --> Tributos
       vr_dsidenti_pagto   tbpagto_tributos_trans_pend.dsidenti_pagto%TYPE;
-      vr_nridentificacao  tbpagto_tributos_trans_pend.nridentificacao%TYPE;
+      vr_nridentificacao  VARCHAR2(20);
       vr_nridentificador  tbpagto_tributos_trans_pend.nridentificador%TYPE;
       vr_nrseqgrde        tbpagto_tributos_trans_pend.nrseqgrde%TYPE;            
       vr_nrdocdae         tbpagto_tributos_trans_pend.nridentificador%TYPE;
@@ -8096,8 +8099,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                   CLOSE cr_tbtrib_pend;
 				          --Controle de paginação
                   vr_qttotpen := vr_qttotpen + 1;
-                  IF ((vr_qttotpen <= pr_nriniseq) OR
-                    (vr_qttotpen > (pr_nriniseq + pr_nrregist))) THEN
+                IF ((vr_qttotpen <= vr_nriniseq) OR
+                   (vr_qttotpen > (vr_nriniseq + pr_nrregist))) AND NVL(pr_nrregist,0) > 0 THEN
                     CONTINUE;
                   END IF;	
                END IF;
@@ -8111,11 +8114,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                                 ELSE TO_CHAR(rw_tbtrib_pend.dtdebito,'DD/MM/RRRR')  -- Data Efetivacao     
                               END;             
                IF vr_tptranpe = 14 THEN
-                 vr_dsdescri := 'Pagamento de FGTS';
                  vr_dstptran := 'Pagamento de FGTS';
                ELSIF vr_tptranpe = 15 THEN  
-                 
-                 vr_dsdescri := 'Pagamento de DAE';
                  vr_dstptran := 'Pagamento de DAE';
                END IF;
                
@@ -8125,17 +8125,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                                 ELSE 'SIM' 
                               END; 
                
+               vr_dsdescri          := rw_tbtrib_pend.dsidenti_pagto;
                vr_dsidenti_pagto    := rw_tbtrib_pend.dsidenti_pagto;     -- Identificação do Pagamento 
                vr_dscod_barras      := rw_tbtrib_pend.dscod_barras  ;     -- Código de Barras    
                vr_dslinha_digitavel := rw_tbtrib_pend.dslinha_digitavel ; -- Linha Digitável    
                vr_vlrtotal          := rw_tbtrib_pend.vlpagamento  ;      -- Valor Total   
-               vr_dtdebito          := rw_tbtrib_pend.dtdebito ;          -- Débito Em   
+               vr_dtdebito          := to_char(rw_tbtrib_pend.dtdebito, 'DD/MM/RRRR') ;          -- Débito Em   
                vr_idagendamento     := NVL(rw_tbtrib_pend.idagendamento,0);   
                
+							 gene0005.pc_valida_cpf_cnpj(pr_nrcalcul => trim(rw_tbtrib_pend.nridentificacao)    -- CNPJ / CEI Empresa / CPF  
+																					,pr_stsnrcal => vr_stsnrcal
+																					,pr_inpessoa => vr_inpessoa);							 
+							 
                --Variaveis especificas FGTS: tipo 14                              
-               vr_nridentificacao   := rw_tbtrib_pend.nridentificacao;    -- CNPJ / CEI Empresa / CPF  
+               vr_nridentificacao   := CASE WHEN vr_stsnrcal THEN gene0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => rw_tbtrib_pend.nridentificacao
+							                                                                             ,pr_inpessoa => vr_inpessoa)
+																						ELSE rw_tbtrib_pend.nridentificacao END;
                vr_cdtributo         := rw_tbtrib_pend.cdtributo  ;        -- Cod. Convênio  
-               vr_dtvencto          := rw_tbtrib_pend.dtvalidade  ;       -- Data da Validade   
+               vr_dtvencto          := to_char(rw_tbtrib_pend.dtvalidade, 'DD/MM/RRRR');       -- Data da Validade   
                vr_dtapuracao        := rw_tbtrib_pend.dtcompetencia  ;    -- Competência      
                vr_nrseqgrde         := rw_tbtrib_pend.nrseqgrde  ;        -- Sequencial da GRDE                 
                vr_nridentificador   := rw_tbtrib_pend.nridentificador  ;  -- Identificador   
@@ -8472,30 +8479,35 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
              --> Nao exibir para convenios 239 e 451
              IF vr_cdtributo NOT IN (0239,0451) THEN
                vr_xml_auxi := vr_xml_auxi ||
-                            '<dados_campo><label>CNPJ/CEI Empresa/CPF       </label><valor>'   || vr_nridentificacao     ||'</valor></dados_campo>' ||
-                            '<dados_campo><label>Cod. Convênio              </label><valor>'   || vr_cdtributo           ||'</valor></dados_campo>';
+                            '<dados_campo><label>CNPJ/CEI/CPF               </label><valor>'   || vr_nridentificacao     ||'</valor></dados_campo>';
              END IF;  
                           
              vr_xml_auxi := vr_xml_auxi ||
-                            '<dados_campo><label>Data da Validade           </label><valor>'   || vr_dtvencto            ||'</valor></dados_campo>';
+                            '<dados_campo><label>Cod. Convênio              </label><valor>'   || vr_cdtributo           ||'</valor></dados_campo>' ||
+                            '<dados_campo><label>Data do Vencimento         </label><valor>'   || vr_dtvencto            ||'</valor></dados_campo>';
                             
              IF vr_cdtributo IN (0178,0240) THEN
                vr_xml_auxi := vr_xml_auxi ||
-                            '<dados_campo><label>Sequencial da GRDE         </label><valor>'   || vr_nrseqgrde           ||'</valor></dados_campo>';
+                            '<dados_campo><label>Competência                </label><valor>'   || to_char(vr_nrseqgrde, 'fm000') ||'</valor></dados_campo>';
                             
              --> Mostrar para convenios 239 e 451
              ELSIF vr_cdtributo IN (0239,0451) THEN
                vr_xml_auxi := vr_xml_auxi ||
-                            '<dados_campo><label>Identificador              </label><valor>'   || vr_nridentificador     ||'</valor></dados_campo>';
+                            '<dados_campo><label>Identificador              </label><valor>'   || lpad(vr_nridentificador,15, '0')     ||'</valor></dados_campo>';
+             --> Mostrar para convenio 181
+             ELSIF vr_cdtributo = 181 THEN
+               vr_xml_auxi := vr_xml_auxi ||
+               							'<dados_campo><label>Competência                </label><valor>'   || to_char(vr_dtapuracao,'MM/RRRR')          ||'</valor></dados_campo>' ||
+                            '<dados_campo><label>Identificador              </label><valor>'   || lpad(vr_nridentificador,16, '0')     ||'</valor></dados_campo>';
              ELSE
                vr_xml_auxi := vr_xml_auxi ||
-                            '<dados_campo><label>Competência                </label><valor>'   || vr_dtapuracao          ||'</valor></dados_campo>';
+                            '<dados_campo><label>Competência                </label><valor>'   || to_char(vr_dtapuracao,'MM/RRRR')          ||'</valor></dados_campo>';
              END IF;
              
              vr_xml_auxi := vr_xml_auxi ||
-                            '<dados_campo><label>Valor Total                </label><valor>'   || vr_vlrtotal            ||'</valor></dados_campo>' ||
+                            '<dados_campo><label>Valor Total                </label><valor>'   || to_char(vr_vlrtotal,'fm999g999g990d00')            ||'</valor></dados_campo>' ||
                             '<dados_campo><label>Débito Em                  </label><valor>'   || vr_dtdebito            ||'</valor></dados_campo>' ||
-                            '<dados_campo><label>Indicador de Agendamento   </label><valor>'   || vr_idagendamento       ||'</valor></dados_campo>';
+                            '<dados_campo><label>Indicador de Agendamento   </label><valor>'   || vr_dsagenda            ||'</valor></dados_campo>';
                             
     
          ELSIF vr_tptranpe = 15 THEN --DAE
@@ -8503,15 +8515,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
              vr_xml_auxi := vr_xml_auxi ||
                             '<dados_campo><label>Identificação do Pagamento </label><valor>'   || vr_dsidenti_pagto      ||'</valor></dados_campo>' ||
                             '<dados_campo><label>Código de Barras           </label><valor>'   || vr_dscod_barras        ||'</valor></dados_campo>' ||
-                            '<dados_campo><label>Linha Digitável            </label><valor>'   || vr_dslinha_digitavel   ||'</valor></dados_campo>' ;
+                            '<dados_campo><label>Linha Digitável            </label><valor>'   || vr_dslinha_digitavel   ||'</valor></dados_campo>' ||
+                            '<dados_campo><label>Cod. Convênio              </label><valor>'   || vr_cdtributo           ||'</valor></dados_campo>';
                       
              vr_xml_auxi := vr_xml_auxi ||
-                            '<dados_campo><label>Número Documento (DAE)     </label><valor>'   || vr_nrdocdae            ||'</valor></dados_campo>';
+                            '<dados_campo><label>Número Documento           </label><valor>'   || LPAD(vr_nrdocdae,17,'0') ||'</valor></dados_campo>';
                                                       
              vr_xml_auxi := vr_xml_auxi ||
                             '<dados_campo><label>Valor Total                </label><valor>'   || vr_vlrtotal            ||'</valor></dados_campo>' ||
                             '<dados_campo><label>Débito Em                  </label><valor>'   || vr_dtdebito            ||'</valor></dados_campo>' ||
-                            '<dados_campo><label>Indicador de Agendamento   </label><valor>'   || vr_idagendamento       ||'</valor></dados_campo>';
+                            '<dados_campo><label>Indicador de Agendamento   </label><valor>'   || vr_dsagenda            ||'</valor></dados_campo>';
                             
     
          ELSIF vr_tptranpe IN (16,17) THEN --> Contrato de SMS
@@ -11987,7 +12000,7 @@ PROCEDURE pc_busca_limite_preposto(pr_cdcooper IN VARCHAR2
                 ,pr_dtvencto       -- dtvalidade
                 ,pr_dtapurac       -- dtcompetencia
                 ,pr_nrsqgrde       -- nrseqgrde
-                ,pr_identificador  -- nridentificador
+                ,TRIM(pr_identificador)  -- nridentificador
                 ,pr_dsidepag       -- dsidenti_pagto
                 ,pr_vlrtotal       -- vlpagamento
                 ,pr_dtagenda       -- dtdebito
@@ -12275,36 +12288,42 @@ PROCEDURE pc_busca_limite_preposto(pr_cdcooper IN VARCHAR2
 					gene0002.pc_escreve_xml(pr_xml            => pr_clobxmlc 
 																 ,pr_texto_completo => vr_xml_temp 
 																 ,pr_texto_novo     => '<registro>' ||
-                                                          '<cdtransacao_pendente>' || NVL(vr_tab_tributos(vr_contador).cdtransacao_pendente,0)         || '<cdtransacao_pendente>' || 
-                                                          '<cdcooper>            ' || NVL(vr_tab_tributos(vr_contador).cdcooper,0)                     || '<cdcooper>            ' );
+                                                          '<cdtransacao_pendente>' || NVL(vr_tab_tributos(vr_contador).cdtransacao_pendente,0)         || '</cdtransacao_pendente>' || 
+                                                          '<cdcooper>            ' || NVL(vr_tab_tributos(vr_contador).cdcooper,0)                     || '</cdcooper>            ' );
           gene0002.pc_escreve_xml(pr_xml            => pr_clobxmlc 
 																 ,pr_texto_completo => vr_xml_temp 
 																 ,pr_texto_novo     =>                                                 
-                                                          '<nrdconta>            ' || NVL(vr_tab_tributos(vr_contador).nrdconta,0)                     || '<nrdconta>            ' || 
-                                                          '<tppagamento>         ' || NVL(vr_tab_tributos(vr_contador).tppagamento,0)                  || '<tppagamento>         ' || 
-                                                          '<dscod_barras>        ' || NVL(vr_tab_tributos(vr_contador).dscod_barras,' ')               || '<dscod_barras>        ' ); 
+                                                          '<nrdconta>            ' || NVL(vr_tab_tributos(vr_contador).nrdconta,0)                     || '</nrdconta>            ' || 
+                                                          '<tppagamento>         ' || NVL(vr_tab_tributos(vr_contador).tppagamento,0)                  || '</tppagamento>         ' || 
+                                                          '<dscod_barras>        ' || NVL(vr_tab_tributos(vr_contador).dscod_barras,' ')               || '</dscod_barras>        ' ); 
                                                           
           gene0002.pc_escreve_xml(pr_xml            => pr_clobxmlc 
 																 ,pr_texto_completo => vr_xml_temp 
-																 ,pr_texto_novo     =>    '<dslinha_digitavel>   ' || NVL(vr_tab_tributos(vr_contador).dslinha_digitavel,' ')          || '<dslinha_digitavel>   ' || 
-                                                          '<nridentificacao>     ' || NVL(vr_tab_tributos(vr_contador).nridentificacao,' ')            || '<nridentificacao>     ' || 
-                                                          '<cdtributo>           ' || NVL(vr_tab_tributos(vr_contador).cdtributo,' ')                  || '<cdtributo>           ' || 
-                                                          '<dtvalidade>          ' || to_char(vr_tab_tributos(vr_contador).dtvalidade,'DD/MM/RRRR')    || '<dtvalidade>          ' );
+																 ,pr_texto_novo     =>    '<dslinha_digitavel>   ' || NVL(vr_tab_tributos(vr_contador).dslinha_digitavel,' ')          || '</dslinha_digitavel>   ' || 
+                                                          '<nridentificacao>     ' || NVL(vr_tab_tributos(vr_contador).nridentificacao,' ')            || '</nridentificacao>     ' || 
+                                                          '<cdtributo>           ' || NVL(vr_tab_tributos(vr_contador).cdtributo,' ')                  || '</cdtributo>           ' || 
+                                                          '<dtvalidade>          ' || to_char(vr_tab_tributos(vr_contador).dtvalidade,'DD/MM/RRRR')    || '</dtvalidade>          ' );
           gene0002.pc_escreve_xml(pr_xml            => pr_clobxmlc 
 																 ,pr_texto_completo => vr_xml_temp 
-																 ,pr_texto_novo     =>    '<dtcompetencia>       ' || to_char(vr_tab_tributos(vr_contador).dtcompetencia,'DD/MM/RRRR') || '<dtcompetencia>       ' || 
-                                                          '<nrseqgrde>           ' || NVL(vr_tab_tributos(vr_contador).nrseqgrde,0)                    || '<nrseqgrde>           ' );
+																 ,pr_texto_novo     =>    '<dtcompetencia>       ' || to_char(vr_tab_tributos(vr_contador).dtcompetencia,'DD/MM/RRRR') || '</dtcompetencia>       ' || 
+                                                          '<nrseqgrde>           ' || NVL(vr_tab_tributos(vr_contador).nrseqgrde,0)                    || '</nrseqgrde>           ' );
           
           gene0002.pc_escreve_xml(pr_xml            => pr_clobxmlc 
 																 ,pr_texto_completo => vr_xml_temp 
-																 ,pr_texto_novo     =>    '<nridentificador>     ' || NVL(vr_tab_tributos(vr_contador).nridentificador,0)              || '<nridentificador>     ' || 
-                                                          '<dsidenti_pagto>      ' || NVL(vr_tab_tributos(vr_contador).dsidenti_pagto,' ')             || '<dsidenti_pagto>      ' );
+																 ,pr_texto_novo     =>    '<nridentificador>     ' || (case when vr_tab_tributos(vr_contador).cdtributo in ('239','451') then
+                                                                                      NVL(lpad(vr_tab_tributos(vr_contador).nridentificador, 15, '0'),0)              
+                                                                                      when vr_tab_tributos(vr_contador).cdtributo = '181' then
+                                                                                      NVL(lpad(vr_tab_tributos(vr_contador).nridentificador, 16, '0'),0)         
+                                                                                      else
+                                                                                      NVL(lpad(vr_tab_tributos(vr_contador).nridentificador, 17, '0'),0)
+                                                                                      end) || '</nridentificador>     ' || 
+                                                          '<dsidenti_pagto>      ' || NVL(vr_tab_tributos(vr_contador).dsidenti_pagto,' ')             || '</dsidenti_pagto>      ' );
                                                           
           gene0002.pc_escreve_xml(pr_xml            => pr_clobxmlc 
 																 ,pr_texto_completo => vr_xml_temp 
-																 ,pr_texto_novo     =>    '<vlpagamento>         ' || NVL(vr_tab_tributos(vr_contador).vlpagamento,0)                  || '<vlpagamento>         ' || 
-                                                          '<dtdebito>            ' || to_char(vr_tab_tributos(vr_contador).dtdebito,'DD/MM/RRRR')      || '<dtdebito>            ' || 
-                                                          '<idagendamento>       ' || NVL(vr_tab_tributos(vr_contador).idagendamento,0)                || '<idagendamento>       ' );
+																 ,pr_texto_novo     =>    '<vlpagamento>         ' || NVL(vr_tab_tributos(vr_contador).vlpagamento,0)                  || '</vlpagamento>         ' || 
+                                                          '<dtdebito>            ' || to_char(vr_tab_tributos(vr_contador).dtdebito,'DD/MM/RRRR')      || '</dtdebito>            ' || 
+                                                          '<idagendamento>       ' || NVL(vr_tab_tributos(vr_contador).idagendamento,0)                || '</idagendamento>       ' );
                                                           
           gene0002.pc_escreve_xml(pr_xml            => pr_clobxmlc 
 																 ,pr_texto_completo => vr_xml_temp 
