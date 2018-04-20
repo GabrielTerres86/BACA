@@ -1406,6 +1406,7 @@ PROCEDURE Pesquisa_Associado PRIVATE :
                 PERSISTENT SET h-b1wgen0060.
 
         /* Motivo de demissao */
+		       { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
                 /* Efetuar a chamada a rotina Oracle */ 
                 RUN STORED-PROCEDURE prc_busca_motivo_demissao
                 aux_handproc = PROC-HANDLE NO-ERROR 
