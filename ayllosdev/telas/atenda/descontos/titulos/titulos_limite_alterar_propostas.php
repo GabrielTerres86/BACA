@@ -30,6 +30,10 @@
 	// Classe para leitura do xml de retorno
 	require_once("../../../../class/xmlfile.php");
 	
+		require_once("../../../../includes/carrega_permissoes.php");
+
+	setVarSession("opcoesTela",$opcoesTela);
+	
 	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"A")) <> "") {
 		exibeErro($msgError);		
 	}	
