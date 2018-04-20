@@ -222,7 +222,8 @@ blockBackground(parseInt($("#divRotina").css("z-index")));
 			aux_inconfi4 = 71; 
 			aux_inconfi5 = 30;
 			aux_inconfi6 = 51;
-			showConfirmacao("Deseja liberar o border&ocirc; de desconto de t&iacute;tulos?","Confirma&ccedil;&atilde;o - Ayllos","liberaAnalisaBorderoDscTit('L','1','11','21','71','30','51','1','0')","metodoBlock()","sim.gif","nao.gif");
+			//showConfirmacao("Deseja liberar o border&ocirc; de desconto de t&iacute;tulos?","Confirma&ccedil;&atilde;o - Ayllos","liberaAnalisaBorderoDscTit('L','1','11','21','71','30','51','1','0')","metodoBlock()","sim.gif","nao.gif");
+			showConfirmacao("Deseja liberar o border&ocirc; de desconto de t&iacute;tulos?","Confirma&ccedil;&atilde;o - Ayllos","liberaBorderoDscTit()","metodoBlock()","sim.gif","nao.gif");
 <?php } elseif ($cddopcao == "E") { ?>
 			showConfirmacao("Deseja excluir o border&ocirc; de desconto de t&iacute;tulos?","Confirma&ccedil;&atilde;o - Ayllos","excluirBorderoDscTit()","metodoBlock()","sim.gif","nao.gif");
 <?php } ?>
