@@ -24,9 +24,15 @@
 	// Classe para leitura do xml de retorno
 	require_once("../../../../class/xmlfile.php");
 	
-	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"A")) <> "") {
+	require_once("../../../../includes/carrega_permissoes.php");
+
+	setVarSession("opcoesTela",$opcoesTela);
+
+
+	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"MA")) <> "") {
 		exibeErro($msgError);		
 	}	
+	
 	
 	// Verifica se o número da conta foi informado
 	if (!isset($_POST["nrdconta"]) ||
