@@ -82,8 +82,8 @@ $nrctrmnt = (isset($_POST['nrctrmnt'])) ? $_POST['nrctrmnt'] : 0;  //proposta
     echo '</script>';
 
 ?>
-<div id='divResultadoAciona'>
-    <fieldset id='divForm'>
+<div id="divResultadoAciona">
+    <fieldset id="divForm">
         <div id="divFormContent">
 
             <input id="tipo" name ="tipo" type="hidden" value="<? echo $tipo ?>"/>
@@ -129,8 +129,8 @@ $nrctrmnt = (isset($_POST['nrctrmnt'])) ? $_POST['nrctrmnt'] : 0;  //proposta
             </select>
         </div>
     </fieldset>
-    <fieldset id='tabConteudo'>
-        <legend id= 'tabConteudoLegend' ><b><?= utf8ToHtml('Detalhes Proposta: '); echo formataNumericos("zzz.zz9",$nrctrlim,"."); ?></b></legend>
+    <fieldset id="tabConteudo">
+        <legend id="tabConteudoLegend" ><b><?= utf8ToHtml('Detalhes Proposta: '); echo formataNumericos("zzz.zz9",$nrctrlim,"."); ?></b></legend>
         <div id="divAcionamento" class="divRegistros">
             <table>
             <thead>
@@ -156,15 +156,5 @@ $nrctrmnt = (isset($_POST['nrctrmnt'])) ? $_POST['nrctrmnt'] : 0;  //proposta
         <input type="hidden" name="nmarquiv" id="nmarquiv" />
     </form>
 </div>
-
-
-<script type="text/javascript">
-
-    formatarTelaAcionamentosDaProposta();
-    dscShowHideDiv("divOpcoesDaOpcao2","divOpcoesDaOpcao1;divOpcoesDaOpcao3");
-    hideMsgAguardo();
-    bloqueiaFundo(divRotina);
-
-</script>
 
     

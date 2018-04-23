@@ -2081,48 +2081,7 @@ function mostraMsgsGenericas(){
     
     return false;
     
-        }               
-    
-
-function formataDetalhesProposta() {
-    var divRegistro = $('div.divRegistros', '#divResultadoAciona');
-    var tabela = $('table', divRegistro);
-    var tabelaHeader = $('table > thead > tr > th', divRegistro);
-    var fonteLinha = $('table > tbody > tr > td', divRegistro);
-
-    tabelaHeader.css({'font-size': '11px'});
-    fonteLinha.css({'font-size': '11px'});
-
-    $('fieldset').css({'clear': 'both', 'border': '1px solid #777', 'margin': '3px 0px', 'padding': '10px 3px 5px 3px'});
-    $('fieldset > legend').css({'font-size': '11px', 'color': '#777', 'margin-left': '5px', 'padding': '0px 2px'});
-
-    divRegistro.css({'height':'205px', 'width':'930px'});
-    
-    var ordemInicial = new Array();
-
-    var arrayLargura = new Array();
-
-    arrayLargura[0] = '80px';
-    arrayLargura[1] = '110px';
-    arrayLargura[2] = '100px';
-    arrayLargura[3] = '196px';
-    arrayLargura[4] = '120px';
-    //arrayLargura[5] = '20px';
-
-    var arrayAlinha = new Array();
-    arrayAlinha[0] = 'center';
-    arrayAlinha[1] = 'left';
-    arrayAlinha[2] = 'center';
-    arrayAlinha[3] = 'left';
-    arrayAlinha[4] = 'center';
-    arrayAlinha[5] = 'left';
-
-    var metodoTabela = '';
-
-    tabela.formataTabela(ordemInicial, arrayLargura, arrayAlinha, metodoTabela);
-    
-    return false;
-}
+}               
 
 function abreProtocoloAcionamento(dsprotocolo) {
 
@@ -2996,9 +2955,7 @@ function carregaDadosDetalhesProposta(tipo, nrctrlim, nrctrmnt){
         },
         success: function(response) {
             if (response.indexOf('showError("error"') == -1) {
-                $('#divOpcoesDaOpcao2').html(response);
-                $("#divConteudoOpcao").css('display','none');
-                formataDetalhesProposta();
+                carregarAcionamentosDaProposta(tipo, nrctrlim, nrctrmnt, response);
             } else {
                 eval(response);
             }
@@ -3008,8 +2965,12 @@ function carregaDadosDetalhesProposta(tipo, nrctrlim, nrctrmnt){
 	return false;
 }
 
-function carregarAcionamentosDaProposta(tipo, nrctrlim, nrctrmnt){
-    showMsgAguardo('Aguarde, buscando acionamentos da Proposta');  
+function carregarAcionamentosDaProposta(tipo, nrctrlim, nrctrmnt, body){
+    showMsgAguardo('Aguarde, buscando acionamentos da Proposta');
+    
+    if(!body){
+        body = null;
+    }
 
     $.ajax({        
         type    : 'POST',
@@ -3029,12 +2990,15 @@ function carregarAcionamentosDaProposta(tipo, nrctrlim, nrctrmnt){
                     showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','$(\'#nrinssac\',\''+nomeForm+'\').focus();');
                 },
         success : function(response) {
+                if(body !== null){
+                    $('#divOpcoesDaOpcao2').html(body);
+                    dscShowHideDiv("divOpcoesDaOpcao2","divOpcoesDaOpcao1;divOpcoesDaOpcao3");
+                    body = null;
+                }
                 var tabConteudo = $("#tabConteudo");
                 tabConteudo.html(response);
                 formatarTelaAcionamentosDaProposta();
                 formatarTabelaAcionamentosDaProposta();
-                hideMsgAguardo();
-                bloqueiaFundo(divRotina);
             }
     });
 	return false;
@@ -3072,6 +3036,18 @@ function formatarTelaAcionamentosDaProposta(){
             carregarAcionamentosDaProposta(tipo, nrctrlim, nrctrmnt);
         });
     }
+
+    var divRegistro = $('div.divRegistros', '#divResultadoAciona');
+    var tabela = $('table', divRegistro);
+    var tabelaHeader = $('table > thead > tr > th', divRegistro);
+    var fonteLinha = $('table > tbody > tr > td', divRegistro);
+
+    tabelaHeader.css({'font-size': '11px'});
+    fonteLinha.css({'font-size': '11px'});
+
+    $('fieldset').css({'clear': 'both', 'border': '1px solid #777', 'margin': '3px 0px', 'padding': '10px 3px 5px 3px'});
+    $('fieldset > legend').css({'font-size': '11px', 'color': '#777', 'margin-left': '5px', 'padding': '0px 2px'});
+
 	return false;
 }
 
