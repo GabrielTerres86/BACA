@@ -335,6 +335,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                                 procedimento de paralelismo para ganho de performance. - Mauro Amancio (Amcom).                                              
                                  
                    02/04/2018 - Inclusão de envio de Carac Espec=19 para ATIVO PROBLEMÁTICO - Daniel(AMcom)
+
+                   17/04/2018 - Incluir no arquivo somente fluxo de vencimento com valor maior que 0
+                                ou menor que -100. Empresa 81, o sistema deve validar (se não tem mais
+                                CNPJ deve ser enviado 1) conforme o manual do 3040. (SD#855059-AJFink)
 .............................................................................................................................*/
 
     DECLARE
@@ -4386,7 +4390,12 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
             ELSE
                If vr_tpexecucao = 2 Then
                   vr_seq_relato := vr_seq_relato + 1;
+                  --SD#855059
+                  if nvl(rw_consigna.nrdocnpj,0) = 0 then
+                    vr_texto_xml := vr_texto_xml || '            <Inf Tp="1502" Cd="1"/>'|| chr(10);
+                  else
                   vr_texto_xml := vr_texto_xml || '            <Inf Tp="1502" Ident="' || SUBSTR(lpad(rw_consigna.nrdocnpj,14,'0'),1,14) || '"/>'|| chr(10);
+                  end if;
                   -- Procedimento para gravar wrk, para posteriormente descarregar xml
                   pc_popular_tbgen_batch_rel_wrk(pr_cdcooper      => pr_cdcooper, 
                                                  pr_cdagenci      => pr_cdagenci,
@@ -4404,10 +4413,21 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                       raise vr_exc_saida;
                    end if;
                Else
-                -- Devemos enviar a informação adicional com o CNPJ do Ente Consignante
-                gene0002.pc_escreve_xml(pr_xml            => vr_xml_3040
-                                       ,pr_texto_completo => vr_xml_3040_temp
-                                       ,pr_texto_novo     => '            <Inf Tp="1502" Ident="' || SUBSTR(lpad(rw_consigna.nrdocnpj,14,'0'),1,14) || '"/>'|| chr(10));
+                 --SD#855059
+                 if nvl(rw_consigna.nrdocnpj,0) = 0 then
+                    -- Enviamos a informação adicional com Cd=1, que significa que a operação foi desconsignada
+                    gene0002.pc_escreve_xml(pr_xml            => vr_xml_3040
+                                           ,pr_texto_completo => vr_xml_3040_temp
+                                           ,pr_texto_novo     => '            <Inf Tp="1502" Cd="1"/>'|| chr(10));  
+
+                 else
+                   -- Devemos enviar a informação adicional com o CNPJ do Ente Consignante
+                   gene0002.pc_escreve_xml(pr_xml            => vr_xml_3040
+                                          ,pr_texto_completo => vr_xml_3040_temp
+                                          ,pr_texto_novo     => '            <Inf Tp="1502" Ident="' || SUBSTR(lpad(rw_consigna.nrdocnpj,14,'0'),1,14) || '"/>'|| chr(10));
+                 end if;
+
+
                End If; -- Fim tratamento WRK
             END IF;
           ELSE
@@ -6739,13 +6759,14 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                   vr_tab_totmodali(vr_cdmodali) := 0;
                 END IF;
 
-                IF vr_vldivnor <> 0 THEN             
+                --IF vr_vldivnor <> 0 THEN
+                IF vr_vldivnor > 0 or vr_vldivnor < -100 or nvl(vr_tab_venc.count,0) = 1 THEN /*SD#855059*/
+                  IF vr_vldivnor <= 0 and vr_vldivnor > -100 THEN /*SD#855059*/
+                    vr_vldivnor := 1/100; --atribui 0,01 /*SD#855059*/
+                  END IF; /*SD#855059*/
                 -- Acumular
                 vr_tab_totmodali(vr_cdmodali) := vr_tab_totmodali(vr_cdmodali) + nvl(vr_vldivnor,0);          
 
-          
-
-                
                 -- Tratamento para WRK
                 PR_Texto := ' v' || vr_tab_venc(vr_indice_venc).cdvencto 
                                                           || '="' || replace(to_char(vr_vldivnor,'fm99999999990D00'),',','.') 
@@ -7420,7 +7441,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                     vr_tab_totmodali(vr_cdmodali) := 0;
                   END IF;
 
-                  IF vr_vldivnor <> 0 THEN    
+                  --IF vr_vldivnor <> 0 THEN
+                  IF vr_vldivnor > 0 or vr_vldivnor < -100 or nvl(vr_tab_totmodali.count,0) = 1 THEN /*SD#855059*/
+                    IF vr_vldivnor <= 0 and vr_vldivnor > -100 THEN /*SD#855059*/
+                      vr_vldivnor := 1/100; --atribui 0,01 /*SD#855059*/
+                    END IF; /*SD#855059*/
                     -- Acumular
                     vr_tab_totmodali(vr_cdmodali) := vr_tab_totmodali(vr_cdmodali) + nvl(vr_vldivnor,0);                      
 
