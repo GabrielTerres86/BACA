@@ -247,7 +247,7 @@ END.
         
 FOR EACH tt-consulta-blt NO-LOCK:
    
-    IF tt-consulta-blt.nrcnvcob <> par_nrcnvcob AND 
+    IF tt-consulta-blt.nrcnvcob <> par_nrcnvcob OR 
        tt-consulta-blt.nrdocmto <> par_nrdocmto THEN
        NEXT. 
               
