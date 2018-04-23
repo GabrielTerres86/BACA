@@ -72,7 +72,7 @@
 		exibeErro(htmlentities($root->erro->registro->dscritic));
 		exit;
 	} else if ($confirma == 0 && $root->dados->indrestr->cdata == 1) {
-		echo 'showConfirmacao("'.htmlentities($root->dados->msgretorno->cdata).'","Confirma&ccedil;&atilde;o - Ayllos","liberarBorderoDscTit(1);","","sim.gif","nao.gif");';
+		echo 'showConfirmacao("'.htmlentities($root->dados->msgretorno->cdata).'","Confirma&ccedil;&atilde;o - Ayllos","liberarBorderoDscTit(1);","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))","sim.gif","nao.gif");';
 		exit;
 	} else {
 		echo 'showError("inform","'.htmlentities($root->dados->msgretorno->cdata).'","Alerta - Ayllos","carregaBorderosTitulos();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
