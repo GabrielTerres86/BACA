@@ -22,6 +22,27 @@ require_once("../../../../includes/controla_secao.php");
 require_once("../../../../class/xmlfile.php");	
 isPostMethod();
 
+
+require_once("../../../../includes/carrega_permissoes.php");
+
+setVarSession("opcoesTela",$opcoesTela);
+
+if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"D")) <> "") {
+    exibeErro($msgError);       
+}   
+
+
+
+    // Função para exibir erros na tela através de javascript
+    function exibeErro($msgErro) { 
+        echo 'hideMsgAguardo();';
+        echo 'showError("error","'.$msgErro.'","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
+        exit();
+    }
+
+
+
+
 $tipo = (isset($_POST['tipo'])) ? $_POST['tipo'] : "CONTRATO";
 $nrdconta = (isset($_POST['nrdconta'])) ? $_POST['nrdconta'] : 0;
 $nrctrlim = (isset($_POST['nrctrlim'])) ? $_POST['nrctrlim'] : 0;  //contrato
@@ -61,8 +82,8 @@ $nrctrmnt = (isset($_POST['nrctrmnt'])) ? $_POST['nrctrmnt'] : 0;  //proposta
     echo '</script>';
 
 ?>
-<div id='divResultadoAciona'>
-    <fieldset id='divForm'>
+<div id="divResultadoAciona">
+    <fieldset id="divForm">
         <div id="divFormContent">
 
             <input id="tipo" name ="tipo" type="hidden" value="<? echo $tipo ?>"/>
@@ -109,7 +130,7 @@ $nrctrmnt = (isset($_POST['nrctrmnt'])) ? $_POST['nrctrmnt'] : 0;  //proposta
         </div>
     </fieldset>
     <fieldset id="tabConteudo">
-        <legend id= 'tabConteudoLegend' ><b><?= utf8ToHtml('Detalhes Proposta: '); echo formataNumericos("zzz.zz9",$nrctrlim,"."); ?></b></legend>
+        <legend id="tabConteudoLegend" ><b><?= utf8ToHtml('Detalhes Proposta: '); echo formataNumericos("zzz.zz9",$nrctrlim,"."); ?></b></legend>
         <div id="divAcionamento" class="divRegistros">
             <table>
             <thead>
@@ -135,14 +156,5 @@ $nrctrmnt = (isset($_POST['nrctrmnt'])) ? $_POST['nrctrmnt'] : 0;  //proposta
         <input type="hidden" name="nmarquiv" id="nmarquiv" />
     </form>
 </div>
-
-<script type="text/javascript">
-
-    formatarTelaAcionamentosDaProposta();
-    dscShowHideDiv("divOpcoesDaOpcao2","divOpcoesDaOpcao1;divOpcoesDaOpcao3");
-    hideMsgAguardo();
-    bloqueiaFundo(divRotina);
-
-</script>
 
     

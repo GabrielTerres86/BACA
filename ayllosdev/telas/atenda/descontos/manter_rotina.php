@@ -591,16 +591,19 @@
 		$html = '';
 
 		if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
+			//SE FOR UMA PROPOSA CASO NÃO RETORNE ACIONAMENTOS ELE VOLTA 
 			if($tipo == 'PROPOSTA'){
 				$html .= '<script type="text/javascript">';
 				$html .= '    hideMsgAguardo();';
+				$html .= '    bloqueiaFundo(divRotina);';
 				$html .= '    showError("error","'.$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata.'","Alerta - Ayllos","bloqueiaFundo(divRotina);fecharRotinaGenerico(\''.$tipo.'\');");';
 				$html .='</script>';
-			} else {
+			} else { // CASO SEJA CONTRATO E NÃO TENHA ACIONAMENTO ELE PERMANECE NA TELA 
 				$html .= '<script type="text/javascript">';
 				$html .= '    hideMsgAguardo();';
+				$html .= '    bloqueiaFundo(divRotina);';
 				$html .= '    showError("error","'.$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata.'","Alerta - Ayllos","");';
-				$html .='</script>';
+				$html .= '</script>';
 			}
 			$html .=  '<legend id="tabConteudoLegend" ><b>'. utf8ToHtml('Detalhes Proposta: ').formataNumericos("zzz.zz9",$nrctrlim,".").'</b></legend>';
 			$html .= '<div id="divAcionamento" class="divRegistros">';
@@ -625,7 +628,12 @@
 
 		$registros = $xmlObj->roottag->tags[0]->tags;
 		$qtregist = $xmlObj->roottag->tags[1]->cdata;
-		//var_dump($registros);
+
+		$html .= '<script type="text/javascript">';
+		$html .= '    hideMsgAguardo();';
+		$html .= '    bloqueiaFundo(divRotina);';
+		$html .= '</script>';
+
 		$html .= '<legend id="tabConteudoLegend" ><b>'. utf8ToHtml('Detalhes Proposta: ').formataNumericos("zzz.zz9",$nrctrlim,".").'</b></legend>';
 		$html .= '<div id="divAcionamento" class="divRegistros">';
 		$html .= '<table class="tituloRegistros">';
@@ -666,9 +674,9 @@
 	    echo $html;
 	}
 
-
 	// Função para exibir erros na tela através de javascript
 	function exibeErro($msgErro) { 
+
 		echo 'hideMsgAguardo();';
 		echo 'showError("error","'.$msgErro.'","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
 		exit();

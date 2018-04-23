@@ -37,7 +37,7 @@
  * 021: [06/04/2018] Luis Fernando (GFT): Mudanças de layot na inclusão de borderos
  * 022: [12/04/2018] Leonardo Oliveira (GFT): Criação dos métodos 'realizarManutencaoDeLimite', 'concluirManutencaoDeLimite' e 'formataManutencaoDeLimite' para a tela de manutenção de limite.
  * 023: [15/04/2018] Leonardo Oliveira (GFT): Criação dos métodos 'formatarTelaAcionamentosDaProposta', 'carregarAcionamentosDaProposta' e 'carregaDadosDetalhesProposta' para a tela de acionamentos/detalhes da proposta, correção dos códicos sobreescritos.
- 
+ * 024: [19/04/2018] Leonardo Oliveira (GFT): Criação do método 'selecionaLimiteTitulosProposta', novo parâmetro 'nrctrmnt'/ numero da proposta, ao selecionar uma proposta   
  */
 
 var contWin    = 0;  // Variável para contagem do número de janelas abertas para impressos
@@ -786,6 +786,44 @@ function selecionaLimiteTitulos(id,qtLimites,limite,insitlim,dssitlim, dssitest,
     situacao_analise = dssitest;
     decisao = insitapr;
     valor_limite = vlLimite;
+
+    nrcontrato = null;
+    idLinhaL = null;
+    situacao_limite = null;
+
+    var cor = "";
+    
+    // Formata cor da linha da tabela que lista os limites de descto titulos
+    for (var i = 1; i <= qtLimites; i++) {      
+        if (cor == "#F4F3F0") {
+            cor = "#FFFFFF";
+        } else {
+            cor = "#F4F3F0";
+        }       
+        
+        // Formata cor da linha
+        $("#trLimite" + i).css("background-color",cor);
+        
+        if (i == id) {
+            // Atribui cor de destaque para limite selecionado
+            $("#trLimite" + id).css("background-color","#FFB9AB");
+            // Armazena número do limite selecionado
+            nrcontrato = limite;
+            idLinhaL = id;
+            cd_situacao_lim = insitlim;
+            situacao_limite = dssitlim;
+
+        }
+    }
+    return false;
+}
+
+function selecionaLimiteTitulosProposta(id,qtLimites,limite,insitlim,dssitlim, dssitest, insitapr, vlLimite, nrctrmnt) {
+
+    situacao_analise = dssitest;
+    decisao = insitapr;
+    valor_limite = vlLimite;
+    nrproposta = nrctrmnt;
 
     nrcontrato = null;
     idLinhaL = null;
@@ -2043,48 +2081,7 @@ function mostraMsgsGenericas(){
     
     return false;
     
-        }               
-    
-
-function formataDetalhesProposta() {
-    var divRegistro = $('div.divRegistros', '#divResultadoAciona');
-    var tabela = $('table', divRegistro);
-    var tabelaHeader = $('table > thead > tr > th', divRegistro);
-    var fonteLinha = $('table > tbody > tr > td', divRegistro);
-
-    tabelaHeader.css({'font-size': '11px'});
-    fonteLinha.css({'font-size': '11px'});
-
-    $('fieldset').css({'clear': 'both', 'border': '1px solid #777', 'margin': '3px 0px', 'padding': '10px 3px 5px 3px'});
-    $('fieldset > legend').css({'font-size': '11px', 'color': '#777', 'margin-left': '5px', 'padding': '0px 2px'});
-
-    divRegistro.css({'height':'205px', 'width':'930px'});
-    
-    var ordemInicial = new Array();
-
-    var arrayLargura = new Array();
-
-    arrayLargura[0] = '80px';
-    arrayLargura[1] = '110px';
-    arrayLargura[2] = '100px';
-    arrayLargura[3] = '196px';
-    arrayLargura[4] = '120px';
-    //arrayLargura[5] = '20px';
-
-    var arrayAlinha = new Array();
-    arrayAlinha[0] = 'center';
-    arrayAlinha[1] = 'left';
-    arrayAlinha[2] = 'center';
-    arrayAlinha[3] = 'left';
-    arrayAlinha[4] = 'center';
-    arrayAlinha[5] = 'left';
-
-    var metodoTabela = '';
-
-    tabela.formataTabela(ordemInicial, arrayLargura, arrayAlinha, metodoTabela);
-    
-    return false;
-}
+}               
 
 function abreProtocoloAcionamento(dsprotocolo) {
 
@@ -2928,13 +2925,16 @@ function formataManutencaoDeLimite(){
     return false;
 }
 
-function carregaDadosDetalhesProposta(tipo, nrctrlim){
+function carregaDadosDetalhesProposta(tipo, nrctrlim, nrctrmnt){
     showMsgAguardo("Aguarde, carregando detalhes da proposta ...");
     
     exibeRotina($('#divOpcoesDaOpcao2'));
 
-    if(!nrcontrato){
-        nrcontrato = 0;
+    if(!nrctrlim){
+        nrctrlim = 0;
+    }
+    if(!nrctrmnt){
+        nrctrmnt = 0;
     }
 
     // Carrega conteúdo da opção através de ajax
@@ -2946,6 +2946,7 @@ function carregaDadosDetalhesProposta(tipo, nrctrlim){
             tipo: tipo,
             nrdconta: nrdconta,
             nrctrlim: nrctrlim,
+            nrctrmnt: nrctrmnt,
             redirect: "html_ajax"
         },      
         error: function(objAjax,responseError,objExcept) {
@@ -2954,9 +2955,7 @@ function carregaDadosDetalhesProposta(tipo, nrctrlim){
         },
         success: function(response) {
             if (response.indexOf('showError("error"') == -1) {
-                $('#divOpcoesDaOpcao2').html(response);
-                $("#divConteudoOpcao").css('display','none');
-                formataDetalhesProposta();
+                carregarAcionamentosDaProposta(tipo, nrctrlim, nrctrmnt, response);
             } else {
                 eval(response);
             }
@@ -2966,8 +2965,12 @@ function carregaDadosDetalhesProposta(tipo, nrctrlim){
 	return false;
 }
 
-function carregarAcionamentosDaProposta(tipo, nrctrlim){
-    showMsgAguardo('Aguarde, buscando acionamentos da Proposta');  
+function carregarAcionamentosDaProposta(tipo, nrctrlim, nrctrmnt, body){
+    showMsgAguardo('Aguarde, buscando acionamentos da Proposta');
+    
+    if(!body){
+        body = null;
+    }
 
     $.ajax({        
         type    : 'POST',
@@ -2978,6 +2981,7 @@ function carregarAcionamentosDaProposta(tipo, nrctrlim){
                     operacao: 'BUSCAR_ACIONAMENTOS_PROPOSTA',
                     nrdconta: nrdconta,   
                     nrctrlim: nrctrlim,
+                    nrctrmnt: nrctrmnt,
                     redirect: 'script_ajax'
 
                 },
@@ -2986,12 +2990,15 @@ function carregarAcionamentosDaProposta(tipo, nrctrlim){
                     showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','$(\'#nrinssac\',\''+nomeForm+'\').focus();');
                 },
         success : function(response) {
+                if(body !== null){
+                    $('#divOpcoesDaOpcao2').html(body);
+                    dscShowHideDiv("divOpcoesDaOpcao2","divOpcoesDaOpcao1;divOpcoesDaOpcao3");
+                    body = null;
+                }
                 var tabConteudo = $("#tabConteudo");
                 tabConteudo.html(response);
                 formatarTelaAcionamentosDaProposta();
                 formatarTabelaAcionamentosDaProposta();
-                hideMsgAguardo();
-                bloqueiaFundo(divRotina);
             }
     });
 	return false;
@@ -3029,6 +3036,18 @@ function formatarTelaAcionamentosDaProposta(){
             carregarAcionamentosDaProposta(tipo, nrctrlim, nrctrmnt);
         });
     }
+
+    var divRegistro = $('div.divRegistros', '#divResultadoAciona');
+    var tabela = $('table', divRegistro);
+    var tabelaHeader = $('table > thead > tr > th', divRegistro);
+    var fonteLinha = $('table > tbody > tr > td', divRegistro);
+
+    tabelaHeader.css({'font-size': '11px'});
+    fonteLinha.css({'font-size': '11px'});
+
+    $('fieldset').css({'clear': 'both', 'border': '1px solid #777', 'margin': '3px 0px', 'padding': '10px 3px 5px 3px'});
+    $('fieldset > legend').css({'font-size': '11px', 'color': '#777', 'margin-left': '5px', 'padding': '0px 2px'});
+
 	return false;
 }
 
