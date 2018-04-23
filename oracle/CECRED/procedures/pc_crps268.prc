@@ -336,9 +336,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps268(pr_cdcooper IN crapcop.cdcooper%TY
             RAISE vr_exc_saida;
           END IF;
           
-          podeDebitar := CENTRAL_DEBITADORA.fn_pode_debitar(pr_cdcooper => pr_cdcooper,
-                                                            pr_nrdconta => rw_crapseg.nrdconta,
-                                                            pr_cdhistor => vr_cdhistor);
+          podeDebitar := lanc0001.fn_pode_debitar(pr_cdcooper => pr_cdcooper,
+                                                  pr_nrdconta => rw_crapseg.nrdconta,
+                                                  pr_cdhistor => vr_cdhistor);
 
           IF podeDebitar THEN             
             -- Insere o lançamento de débito no valor do seguro
@@ -357,7 +357,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps268(pr_cdcooper IN crapcop.cdcooper%TY
               CLOSE cr_craplot;
               -- Inserir capa de lote caso não haja
               BEGIN
-							   CENTRAL_DEBITADORA.pc_incluir_lote(pr_dtmvtolt => rw_crapdat.dtmvtolt -- dtmvtolt
+							   LANC0001.pc_incluir_lote(pr_dtmvtolt => rw_crapdat.dtmvtolt -- dtmvtolt
                                                   , pr_cdagenci => 1    -- cdagenci
                                                   , pr_cdbccxlt => 100  -- cdbccxlt
                                                   , pr_nrdolote => 4154 -- nrdolote
@@ -419,7 +419,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps268(pr_cdcooper IN crapcop.cdcooper%TY
 
             -- Efetua o lançamento do débito
             BEGIN
-              CENTRAL_DEBITADORA.pc_lancar_debito_lcm(pr_cdagenci => rw_craplot.cdagenci
+              LANC0001.pc_incluir_lcto_lcm(pr_cdagenci => rw_craplot.cdagenci
                                                     , pr_cdbccxlt => rw_craplot.cdbccxlt
                                                     , pr_cdhistor => vr_cdhistor
                                                     , pr_dtmvtolt => rw_crapdat.dtmvtolt
