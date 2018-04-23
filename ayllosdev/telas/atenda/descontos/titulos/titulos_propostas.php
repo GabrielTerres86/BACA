@@ -190,14 +190,6 @@ $xmlObjLimites = getObjectXML($xmlResult);
 	</div>
 </div>
 
-<?php
-	$dispA = (!in_array("A",$glbvars["opcoesTela"])) ? 'display:none;' : '';
-	$dispX = (!in_array("X",$glbvars["opcoesTela"])) ? 'display:none;' : '';
-	$dispC = (!in_array("C",$glbvars["opcoesTela"])) ? 'display:none;' : '';
-	$dispE = (!in_array("E",$glbvars["opcoesTela"])) ? 'display:none;' : '';
-	$dispM = (!in_array("M",$glbvars["opcoesTela"])) ? 'display:none;' : '';
-?>
-
 <div id="divBotoesTitulosLimite" style="margin-bottom:10px;	margin-top: 10px;">
 	
 	<input 
