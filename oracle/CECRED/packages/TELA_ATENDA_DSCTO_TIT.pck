@@ -1962,7 +1962,7 @@ BEGIN
 
    --  Verifica se a situação está 'Ativo' ou 'Cancelado'
    if  rw_crawlim.insitlim in (2,3) then
-       vr_dscritic := 'Para esta operação, a situação da Proposta não deve ser "Ativa" ou "Cancelada".';
+       vr_dscritic := 'Para esta operação, a situação da Proposta não deve ser "Ativa"';-- ou "Cancelada".';
        raise vr_exc_saida;
    end if;
 
@@ -2701,7 +2701,9 @@ PROCEDURE pc_obtem_dados_proposta(pr_cdcooper           in crapcop.cdcooper%type
                                      ctr.tpctrlim = lim.tpctrlim and
                                      ctr.nrdconta = lim.nrdconta and
                                      ctr.cdcooper = lim.cdcooper)
-   where  case when lim.insitlim in (1,5,6) and lim.dtpropos >= vr_dtpropos then 1
+   where  case --   mostrar propostas em situações de analise (em estudo) dentro de x dias
+               when lim.insitlim in (1,5,6) and lim.dtpropos >= vr_dtpropos then 1
+               --   mostrar somente a última proposta ativa
                when lim.insitlim = 2 and 
                     lim.nrctrlim = (select max(lim_ativo.nrctrlim)
                                     from   crawlim lim_ativo
@@ -2709,7 +2711,10 @@ PROCEDURE pc_obtem_dados_proposta(pr_cdcooper           in crapcop.cdcooper%type
                                     and    lim_ativo.tpctrlim = lim.tpctrlim
                                     and    lim_ativo.nrdconta = lim.nrdconta
                                     and    lim_ativo.cdcooper = lim.cdcooper) then 1
-               when lim.insitlim in (3,4,7) then 1
+               --   não mostrar as propostas canceladas
+               when lim.insitlim = 3 then 0
+               --   mostrar todas as demais
+               when lim.insitlim in (4,7) then 1
                else 0
           end = 1
    and    lim.tpctrlim = pr_tpctrlim
