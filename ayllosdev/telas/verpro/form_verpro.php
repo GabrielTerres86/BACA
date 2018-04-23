@@ -21,6 +21,8 @@
  * 012: [19/09/2016] - Alteraçoes pagamento/agendamento de DARF/DAS pelo InternetBanking (Projeto 338 - Lucas Lunelli) 
  * 013: [23/03/2017] - Inclusão do protocolo de Recarga de celular (PRJ321 - Reinert)
  * 014: [29/05/2017] - Ajuste para apresentar valores corretamente - Adriano SD 679022.
+ * 015: [05/09/2017] - Alteração referente ao Projeto Assinatura conjunta (Proj 397)
+
  */
 
 session_start();
@@ -130,6 +132,14 @@ if ($cdtippro >= 16 && $cdtippro <= 19) {
 	$hrrecarga	 = $hrautenx;	
 	$dtdebito	 = $dtmvtolt;
 	$nsuopera	 = $aux_dslinha2[4];
+} elseif ($cdtippro == 21){
+	$cpfopera  = trim($aux_dslinha2[0]);
+	$nmoperad  = trim($aux_dslinha2[1]);
+	$vlrboleto = trim($aux_dslinha2[2]);
+	$vlrtrans  = trim($aux_dslinha2[3]);
+	$vlrted    = trim($aux_dslinha2[4]); 
+	$vlrvrbol  = trim($aux_dslinha2[5]); 
+	$vlrflpgto = trim($aux_dslinha2[6]); 
 }
 
 ?>
@@ -220,6 +230,14 @@ if ($cdtippro >= 16 && $cdtippro <= 19) {
                                                     echo $htmlLinhas;
                                                 } ?>
 
+												<? if($cdtippro == 21){?>
+												<label for="nmprepos"><? echo utf8ToHtml('Cadastrado por:') ?></label>
+                                                <input name="nmprepos" id="nmprepos" type="text" value="<? echo $nmprepos ?>" />
+												<label for="nmoperad"><? echo utf8ToHtml('Operador:') ?></label>
+                                                <input name="nmoperad" id="nmoperad" type="text" value="<? echo $nmoperad ?>" />
+												<label for="nmoperad"><? echo utf8ToHtml('CPF Operador:') ?></label>
+                                                <input name="nmoperad" id="nmoperad" type="text" value="<? echo formatar($cpfopera, 'cpf') ?>" />
+												<? } else {?>
                                                 <label for="nmprepos"><? echo utf8ToHtml('Preposto:') ?></label>
                                                 <input name="nmprepos" id="nmprepos" type="text" value="<? echo $nmprepos ?>" />
 
@@ -234,6 +252,7 @@ if ($cdtippro >= 16 && $cdtippro <= 19) {
 
                                                 <label for="dsdbanco"><? if ($cdtippro == 9) echo utf8ToHtml('Banco Favorecido:');else echo utf8ToHtml('Banco:'); ?></label>
                                                 <input name="dsdbanco" id="dsdbanco" type="text" value="<? echo ($arrayBanco[0] == '000' || $arrayBanco[0] == '0') ? $arrayBanco[1] : $dsdbanco ?>" />
+												<? }?>
                                                 <? if ($cdtippro == 9) { ?>
                                                     <label for="dsispbif"><? echo utf8ToHtml(' ISPB Favorecido:'); ?></label> 
                                                     <input name="dsispbif" id="dsispbif" type="text" value="<? echo ($dsispbif == '0' || $dsispbif == '') && trim($arrayBanco[0]) != "001" ? "" : str_pad($dsispbif, 8, "0", STR_PAD_LEFT) ?>" />
@@ -366,13 +385,13 @@ if ($cdtippro >= 16 && $cdtippro <= 19) {
 													<input name="dspacote" id="dspacote" type="text" value="<? echo trim(substr($aux_dslinha2[0], strpos($aux_dslinha2[0], "#"))) ?>" />													
 												
 												<?}?>
-												
+												<? if($cdtippro != 21){?>
                                                 <label for="dtmvtolt"><? echo utf8ToHtml('Data Pagamento:') ?></label>
                                                 <input name="dtmvtolt" id="dtmvtolt" type="text" value="<? echo $dtmvtolt ?>" />
 
                                                 <label for="vldocmto"><? echo utf8ToHtml('Valor:') ?></label>
                                                 <input name="vldocmto" id="vldocmto" type="text" value="<? echo formataMoeda($vldocmto) ?>" />
-
+												<? }?>
 												<!-- Pacote de tarfas -->
 												<?php if ($cdtippro == 14){?>
 													
@@ -519,6 +538,65 @@ if ($cdtippro >= 16 && $cdtippro <= 19) {
 												<label for="nrseqaut">Seq. Autentica&ccedil;&atilde;o:</label>
                                                 <input name="nrseqaut" id="nrseqaut" type="text" value="<? echo $nrseqaut ?>" />
 
+												<? if($cdtippro == 21){?>
+													<fieldset>
+													<legend> Limites </legend>
+													<label for="vlrtrans"><?=utf8ToHtml(Transferência)?>:</label>
+													<input name="vlrtrans" id="vlrtrans" type="text" value="<? echo formataMoeda($vlrtrans) ?>" />
+													<label for="vlrboleto">Boletos:</label>
+													<input name="vlrboleto" id="vlrboleto" type="text" value="<? echo formataMoeda($vlrboleto) ?>" />
+													<label for="vlrted">TED:</label>
+													<input name="vlrted" id="vlrted" type="text" value="<? echo formataMoeda($vlrted) ?>" />
+													<label for="vlrvrbol">VR Boletos:</label>
+													<input name="vlrvrbol" id="vlrvrbol" type="text" value="<? echo formataMoeda($vlrvrbol) ?>" />
+													<label for="vlrflpgto">Folhas de PGTO:</label>
+													<input name="vlrflpgto" id="vlrflpgto" type="text" value="<? echo formataMoeda($vlrflpgto) ?>" />
+													</fieldset>
+													<? if(isset($aux_dslinha3[0])){?>
+														<label style="width: auto; text-align:right; width: 170px;" for="preaprov1">Preposto Responsavel:</label>
+														<input style="width: 380px" name="preaprov" id="preaprov1" type="text" value="<?=$aux_dslinha3[0]?> - <?=$aux_dslinha3[1]?>" />
+													<? }?>
+													<? if(isset($aux_dslinha3[2])){?>
+														<label style="width: auto; text-align:right; width: 170px;" for="preaprov1">Prepostos Aprovarores#1:</label>
+														<input style="width: 380px" name="preaprov" id="preaprov1" type="text" value="<?=$aux_dslinha3[2]?> - <?=$aux_dslinha3[3]?>" />
+													<? }?>
+													<? if(isset($aux_dslinha3[4])){?>
+														<label style="width: auto; text-align:right; width: 170px;" for="preaprov2">Prepostos Aprovarores#2:</label>
+														<input style="width: 380px" name="preaprov" id="preaprov2" type="text" value="<?=$aux_dslinha3[4]?> - <?=$aux_dslinha3[5]?>" />
+													<? }?>
+													<? if(isset($aux_dslinha3[6])){?>
+														<label style="width: auto; text-align:right; width: 170px;" for="preaprov3">Prepostos Aprovarores#3:</label>
+														<input style="width: 380px" name="preaprov" id="preaprov3" type="text" value="<?=$aux_dslinha3[6]?> - <?=$aux_dslinha3[7]?>" />
+													<? }?>
+													<? if(isset($aux_dslinha3[8])){?>
+														<label style="width: auto; text-align:right; width: 170px;" for="preaprov4">Prepostos Aprovarores#4:</label>
+														<input style="width: 380px" name="preaprov" id="preaprov4" type="text" value="<?=$aux_dslinha3[8]?> - <?=$aux_dslinha3[9]?>" />
+													<? }?>
+													<? if(isset($aux_dslinha3[10])){?>
+														<label style="width: auto; text-align:right; width: 170px;" for="preaprov5">Prepostos Aprovarores#5:</label>
+														<input style="width: 380px" name="preaprov" id="preaprov5" type="text" value="<?=$aux_dslinha3[10]?> - <?=$aux_dslinha3[11]?>" />
+													<? }?>
+													<? if(isset($aux_dslinha3[12])){?>
+														<label style="width: auto; text-align:right; width: 170px;" for="preaprov<6">Prepostos Aprovarores#6:</label>
+														<input style="width: 380px" name="preaprov" id="preaprov6" type="text" value="<?=$aux_dslinha3[12]?> - <?=$aux_dslinha3[13]?>" />
+													<? }?>
+													<? if(isset($aux_dslinha3[14])){?>
+														<label style="width: auto; text-align:right; width: 170px;" for="preaprov7">Prepostos Aprovarores#7:</label>
+														<input style="width: 380px" name="preaprov" id="preaprov7" type="text" value="<?=$aux_dslinha3[14]?> - <?=$aux_dslinha3[15]?>" />
+													<? }?>
+													<? if(isset($aux_dslinha3[16])){?>
+														<label style="width: auto; text-align:right; width: 170px;" for="preaprov8">Prepostos Aprovarores#8:</label>
+														<input style="width: 380px" name="preaprov" id="preaprov8" type="text" value="<?=$aux_dslinha3[16]?> - <?=$aux_dslinha3[17]?>" />
+													<? }?>
+													<? if(isset($aux_dslinha3[18])){?>
+														<label style="width: auto; text-align:right; width: 170px;" for="preaprov9">Prepostos Aprovarores#9:</label>
+														<input style="width: 380px" name="preaprov" id="preaprov9" type="text" value="<?=$aux_dslinha3[18]?> - <?=$aux_dslinha3[19]?>" />
+													<? }?>
+													<? if(isset($aux_dslinha3[20])){?>
+														<label style="width: auto; text-align:right; width: 170px;" for="preaprov10">Prepostos Aprovarores#10:</label>
+														<input style="width: 380px" name="preaprov" id="preaprov10" type="text" value="<?=$aux_dslinha3[20]?> - <?=$aux_dslinha3[21]?>" />
+													<? }?>
+												<? }?>
                                                 <label for="dsprotoc">Protocolo:</label>
                                                 <input name="dsprotoc" id="dsprotoc" type="text" value="<? echo $dsprotoc ?>" />
                                             </fieldset>		

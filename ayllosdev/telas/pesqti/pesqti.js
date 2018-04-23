@@ -1,7 +1,7 @@
 /***************************************************************************
  Fonte: pesqti.js                                                    
  Autor: Adriano                                                      
- Data : Agosto/2011                Última Alteração: 12/05/2016
+ Data : Agosto/2011                Última Alteração: 19/09/2016
                                                                      
  Objetivo  : Biblioteca de funções da tela PESQTI                    
                                                                       
@@ -30,6 +30,10 @@
 
              12/05/2016 - Adicionado o campo de linha digitavel 
                           (Douglas - Chamado 426870)
+						  
+			 19/09/2016 - Alteraçoes pagamento/agendamento de DARF/DAS 
+						  pelo InternetBanking (Projeto 338 - Lucas Lunelli)
+							  
 ****************************************************************************/
 
 var frmPesqti    = 'frmPesqti';
@@ -1016,6 +1020,7 @@ function formataFormularios() {
     rDslindig  	= $('label[for="dslindig"]', '#'+frmFaturas);    
 	rDscptdoc  	= $('label[for="dscptdoc"]', '#'+frmFaturas);    
 	rInsitfat  	= $('label[for="insitfat"]', '#'+frmFaturas);
+	rDsnomfon  	= $('label[for="dsnomfon"]', '#'+frmFaturas);    
 	
 	rDspactaa.addClass('rotulo').css({'width':'145px'});
 	rNrautdoc.addClass('rotulo').css({'width':'95px'});
@@ -1024,7 +1029,8 @@ function formataFormularios() {
     rDslindig.addClass('rotulo').css({'width':'95px'});
 	rDscptdoc.addClass('rotulo').css({'width':'95px'});
     rNmempres.addClass('rotulo').css({'width':'95px'});
-	
+	rDsnomfon.addClass('rotulo').css({'width':'95px'});
+
 	if ($.browser.msie){
 		rVlconfoz.addClass('rotulo-linha').css({'width':'353px'});
 		rInsitfat.addClass('rotulo-linha').css({'width':'60px'});
@@ -1049,7 +1055,8 @@ function formataFormularios() {
 	cDslindig   = $('#dslindig', '#'+frmFaturas);
 	cDscptdoc  	= $('#dscptdoc', '#'+frmFaturas);
     cNmempres  	= $('#nmempres', '#'+frmFaturas);
-	
+	cDsnomfon  	= $('#dsnomfon', '#'+frmFaturas);
+
 	cVlconfoz.css({'width':'80px'}).desabilitaCampo();
 	cInsitfat.css({'width':'60px'}).desabilitaCampo();
 	cDspactaa.css({'width':'150px'}).desabilitaCampo();	
@@ -1059,7 +1066,7 @@ function formataFormularios() {
 	cNrdconta.css({'width':'90px'}).desabilitaCampo();
 	cDscodbar.setMask("STRING","44",charPermitido(),"");	
     cNmempres.css({'width':'320px'}).desabilitaCampo();
-	
+	cDsnomfon.css({'width':'381px'}).desabilitaCampo();
 	
 	if($.browser.msie){
 		cDscodbar.css({'width':'354px'}).desabilitaCampo();
@@ -1285,6 +1292,7 @@ function selecionaFaturas(tr){
 	$('#dscodbar','#'+frmFaturas).val( $('#dscodbar', tr ).val() );
     $('#dslindig','#'+frmFaturas).val( $('#dslindig', tr ).val() );
 	$('#dscptdoc','#'+frmFaturas).val( $('#dscptdoc', tr ).val() );
+	$('#dsnomfon','#'+frmFaturas).val( $('#dsnomfon', tr ).val() );
 	
 	if (dspactaa == "") {
 		
