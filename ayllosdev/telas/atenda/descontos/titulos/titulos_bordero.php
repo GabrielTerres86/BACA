@@ -17,6 +17,8 @@
 				 
 				 26/06/2017 - Ajuste para rotina ser chamada através da tela ATENDA > Produtos (Jonata - RKAM / P364).
 
+				 17/04/2018 - Ajustes nos processos de análise e liberação de borderô (Lucas Lazari - GFT)
+
 	************************************************************************/
 	
 	session_start();
