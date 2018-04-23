@@ -37,7 +37,7 @@
 
     Programa: b1wgen0030.p
     Autor   : Guilherme
-    Data    : Julho/2008                     Ultima Atualizacao: 11/12/2017
+    Data    : Julho/2008                     Ultima Atualizacao: 20/04/2018
            
     Dados referentes ao programa:
                 
@@ -540,6 +540,8 @@
 
                18/04/2018 - Na procedure realizar_manutencao_contrato, adicionado validação para não incluir uma proposta de manutenção caso já tenha uma outra proposta
                             na situação Em estudo, Aprovada ou Não Aprovada (Paulo Penteado GFT)
+
+               20/04/2018 - Na procedure busca_dados_dsctit, adicionado o retorno da data da ultima proposta de manutenção ativa (Paulo Penteado GFT)
 
 ..............................................................................*/
 
@@ -6112,8 +6114,8 @@ PROCEDURE efetua_alteracao_limite:
                old_dsobser1     = crapprp.dsobserv[1]
                crapprp.dsobserv[1] = CAPS(par_dsobserv)
                crapprp.dsobserv[2] = ""
-               crapprp.dsobserv[3] = "".
-{ includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+			   crapprp.dsobserv[3] = "".
+        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
         RUN STORED-PROCEDURE pc_vincula_cobertura_operacao
           aux_handproc = PROC-HANDLE NO-ERROR (INPUT 0
                                               ,INPUT par_idcobope
@@ -7553,7 +7555,8 @@ PROCEDURE busca_dados_dsctit:
                     tt-desconto_titulos.dtrenova = ?
                     tt-desconto_titulos.perrenov = 0
                     tt-desconto_titulos.cddlinha = 0
-                    tt-desconto_titulos.flgstlcr = ?.
+                    tt-desconto_titulos.flgstlcr = ?
+                    tt-desconto_titulos.dtultmnt = ?.
                     
              FOR EACH craptdb WHERE (craptdb.cdcooper = par_cdcooper AND
                                      craptdb.nrdconta = par_nrdconta AND
@@ -7638,7 +7641,19 @@ PROCEDURE busca_dados_dsctit:
                         tt-desconto_titulos.qtutilsr = tt-desconto_titulos.qtutilsr + 
                                                        (IF crapcco.flgregis = FALSE THEN 1 ELSE 0).
 
-             END.  /*  Fim do FOR EACH craptdb  */                    
+             END.  /*  Fim do FOR EACH craptdb  */
+
+             FOR EACH crawlim WHERE crawlim.cdcooper = par_cdcooper     AND
+                                    crawlim.nrdconta = par_nrdconta     AND
+                                    crawlim.tpctrlim = 3                AND
+                                    crawlim.nrctrmnt = craplim.nrctrlim AND
+                                    crawlim.insitlim = 2
+                                    NO-LOCK
+                                    BY crawlim.dtpropos DESCENDING:
+                 ASSIGN tt-desconto_titulos.dtultmnt = crawlim.dtpropos.
+                 LEAVE.
+             END.
+
          END.
 
     IF  par_flgerlog  THEN

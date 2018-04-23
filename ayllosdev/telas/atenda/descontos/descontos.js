@@ -863,7 +863,7 @@ function formataLayout(nomeForm){
 		var Lvlutilcr = $('label[for="vlutilcr"]','#'+nomeForm);
 		var Lvlutilsr = $('label[for="vlutilsr"]','#'+nomeForm);
 		var Ldtrenova = $('label[for="dtrenova"]','#'+nomeForm);
-		var Ldtpropos = $('label[for="dtpropos"]','#'+nomeForm);
+		var Ldtultmnt = $('label[for="dtultmnt"]','#'+nomeForm);
 		
 		var Cnrctrlim = $('#nrctrlim','#'+nomeForm);
 		var Cdtinivig = $('#dtinivig','#'+nomeForm);
@@ -874,7 +874,7 @@ function formataLayout(nomeForm){
 		var Cvlutilcr = $('#vlutilcr','#'+nomeForm);
 		var Cvlutilsr = $('#vlutilsr','#'+nomeForm);
 		var Cdtrenova = $('#dtrenova','#'+nomeForm);
-		var Cdtpropos = $('#dtpropos','#'+nomeForm);
+		var Cdtultmnt = $('#dtultmnt','#'+nomeForm);
 		var Cperrenov = $('#hd_perrenov','#'+nomeForm);
 
 		$('#'+nomeForm).css('width','530px');
@@ -888,7 +888,7 @@ function formataLayout(nomeForm){
 		Lvlutilcr.addClass('rotulo').css('width','200px');
 		Lvlutilsr.addClass('rotulo').css('width','200px');
 		Ldtrenova.addClass('rotulo').css('width','200px');
-		Ldtpropos.addClass('rotulo').css('width','200px');
+		Ldtultmnt.addClass('rotulo').css('width','200px');
 		
 		
 		Cnrctrlim.css({'width':'60px','text-align':'right'});
@@ -900,7 +900,7 @@ function formataLayout(nomeForm){
 		Cvlutilcr.css({'width':'150px','text-align':'right'});
 		Cvlutilsr.css({'width':'150px','text-align':'right'});
 		Cdtrenova.css({'width':'150px','text-align':'right'});
-		Cdtpropos.css({'width':'150px','text-align':'right'});
+		Cdtultmnt.css({'width':'150px','text-align':'right'});
 		
 		Cnrctrlim.desabilitaCampo();
 		Cdtinivig.desabilitaCampo();
@@ -911,7 +911,7 @@ function formataLayout(nomeForm){
 		Cvlutilcr.desabilitaCampo();
 		Cvlutilsr.desabilitaCampo();
 		Cdtrenova.desabilitaCampo();
-		Cdtpropos.desabilitaCampo();
+		Cdtultmnt.desabilitaCampo();
 
 		if (Cperrenov.val() != 1) {
 			$('#btnrenovacao').css({'color':'gray'});
