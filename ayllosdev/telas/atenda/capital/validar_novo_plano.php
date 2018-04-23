@@ -155,8 +155,9 @@
 	$xml .= "<Root>";
 	$xml .= " <Dados>";	
 	$xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
-	$xml .= "   <cdprodut>".    15   ."</cdprodut>"; //Cobrança Bancária
+	$xml .= "   <cdprodut>".    15   ."</cdprodut>"; //Plano de Cotas
 	$xml .= "   <vlcontra>".$vlprepla."</vlcontra>";
+	$xml .= "   <cddchave>".    0    ."</cddchave>";
 	$xml .= " </Dados>";
 	$xml .= "</Root>";
 

@@ -292,7 +292,7 @@
 			aux_inconfi4 = 71; 
 			aux_inconfi5 = 30;
 			aux_inconfi6 = 51;
-			validaValorProduto(nrdconta, 37, $("#vllimite","#divDscTit_Limite").val().replace('.','').replace(',','.'),"validaLimiteDscTit(\"" + operacao + "\",1,11,30);","divRotina");
+			validaValorProduto(nrdconta, 37, $("#vllimite","#divDscTit_Limite").val().replace('.','').replace(',','.'),"validaLimiteDscTit(\"" + operacao + "\",1,11,30);","divRotina", 0);
 		}
 		return false;
 	});

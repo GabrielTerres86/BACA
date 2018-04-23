@@ -140,6 +140,7 @@
 	$xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
 	$xml .= "   <cdprodut>".    16   ."</cdprodut>"; //Poupança Programada
 	$xml .= "   <vlcontra>".$vlcontra."</vlcontra>";
+	$xml .= "   <cddchave>".    0    ."</cddchave>";
 	$xml .= " </Dados>";
 	$xml .= "</Root>";
 

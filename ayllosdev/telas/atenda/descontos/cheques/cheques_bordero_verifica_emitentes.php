@@ -72,7 +72,7 @@
 			exit();
 		}else{
 		// Emitentes já cadastrados, finalizar custodia
-		echo "validaValorProduto(".$nrdconta.", 34, ".$vlcompcr.",\"prosseguirManterBordero();\",\"divRotina\");";
+		echo "validaValorProduto(".$nrdconta.", 34, ".$vlcompcr.",\"prosseguirManterBordero();\",\"divRotina\", 0);";
 		}
 	}	
 ?>

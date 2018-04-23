@@ -18,6 +18,7 @@
 	$vlcontra = (isset($_POST['vlcontra'])) ? $_POST['vlcontra'] : 0;
 	$executar = (isset($_POST['executar'])) ? $_POST['executar'] : "";
 	$nmdivfnc = (isset($_POST['nmdivfnc'])) ? $_POST['nmdivfnc'] : "";
+	$cddchave = (isset($_POST['cddchave'])) ? $_POST['cddchave'] : 0;
 	
 	// Monta o xml de requisição
 	$xml  = "";
@@ -26,6 +27,7 @@
 	$xml .= "		<nrdconta>".$nrdconta."</nrdconta>";
 	$xml .= "		<cdprodut>".$cdprodut."</cdprodut>";
 	$xml .= "		<vlcontra>".$vlcontra."</vlcontra>";
+	$xml .= "		<cddchave>".$cddchave."</cddchave>";
 	$xml .= "	</Dados>";
 	$xml .= "</Root>";
 	

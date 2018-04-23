@@ -1273,6 +1273,7 @@ DEF VAR aux_nmbenefi AS CHAR                         NO-UNDO.
 DEF VAR aux_dsagdcan AS LONGCHAR                     NO-UNDO.
 
 DEF VAR aux_vlcontra AS DECI                         NO-UNDO.
+DEF VAR aux_cddchave AS INTE                         NO-UNDO.
 
 /* _UIB-CODE-BLOCK-END */
 &ANALYZE-RESUME
@@ -8887,18 +8888,20 @@ PROCEDURE proc_operacao214:
 
 END PROCEDURE.
 
-/* Obter quantidade de notificações não visualizadas do cooperado */
+/* Verificar validacao de adesao de produto */
 PROCEDURE proc_operacao216:
     
     ASSIGN aux_cdproduto =  INT(GET-VALUE("aux_cdproduto"))
            aux_vlcontra  = DECI(GET-VALUE("aux_vlcontra"))
-           aux_operacao  =  INT(GET-VALUE("aux_operacao")).
+           aux_operacao  =  INT(GET-VALUE("aux_operacao"))
+           aux_cddchave =   INT(GET-VALUE("aux_cddchave")).
     
     RUN sistema/internet/fontes/InternetBank216.p (INPUT aux_cdcooper,
                                                    INPUT aux_nrdconta,
                                                    INPUT aux_cdproduto,
                                                    INPUT aux_vlcontra,
                                                    INPUT aux_operacao,
+                                                   INPUT aux_cddchave,
                                                   OUTPUT aux_dsmsgerr,
                                                   OUTPUT TABLE xml_operacao).
     

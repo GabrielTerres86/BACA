@@ -84,7 +84,7 @@
 		exibeErro($xmlObjAlterar->roottag->tags[0]->tags[0]->tags[4]->cdata);
 	} 
 	
-	$vlprerpp = str_replace(',','.',str_replace('.','',$vlprerpp));
+	$vlcontra = str_replace(',','.',str_replace('.','',$vlprerpp));
 	
 	// Montar o xml de Requisicao
 	$xml  = "";
@@ -92,7 +92,8 @@
 	$xml .= " <Dados>";	
 	$xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
 	$xml .= "   <cdprodut>".    16   ."</cdprodut>"; //Poupança Programada
-	$xml .= "   <vlcontra>".$vlprerpp."</vlcontra>";
+	$xml .= "   <vlcontra>".$vlcontra."</vlcontra>";
+	$xml .= "   <cddchave>".$nrctrrpp."</cddchave>";
 	$xml .= " </Dados>";
 	$xml .= "</Root>";
 	

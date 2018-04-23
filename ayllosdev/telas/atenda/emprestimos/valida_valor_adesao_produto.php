@@ -28,6 +28,26 @@
 	
 	/* Desconsidera CDC */
 	if ($cdfinemp <> 0 && $cdfinemp <> 58 && $cdfinemp <> 59) {
+		
+		// Monta o xml de requisição
+		$xml  = "";
+		$xml .= "<Root>";
+		$xml .= "	<Dados>";
+		$xml .= "		<nrdconta>".$nrdconta."</nrdconta>";
+		$xml .= "		<cdprodut>".    31   ."</cdprodut>";
+		$xml .= "	</Dados>";
+		$xml .= "</Root>";
+		
+		// Executa script para envio do XML
+		$xmlResult = mensageria($xml, "CADA0006", "VALIDA_ADESAO_PRODUTO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+		$xmlObject = getObjectXML($xmlResult);
+		
+		// Se ocorrer um erro, mostra crítica
+		if (strtoupper($xmlObject->roottag->tags[0]->name) == "ERRO") {
+			$msgErro = $xmlObject->roottag->tags[0]->tags[0]->tags[4]->cdata;
+			exibirErro('error',utf8_encode($msgErro),'Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
+		}
+		
 		$vlemprst = str_replace(',','.',str_replace('.','',$vlemprst));
 		$dsctrliq = str_replace('.','',$dsctrliq);
 		$dsctrliq_antigo = str_replace('.','',$dsctrliq_antigo);

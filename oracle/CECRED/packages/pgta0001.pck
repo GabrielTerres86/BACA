@@ -7012,6 +7012,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
     Objetivo  : Rotina para incluir o convenio de pagto por arquivo
 
     Alteracoes: 24/11/2017 - Adicinar DECODE no campo inpessoa (Douglas - Melhoria 271.3)
+                
+                20/04/2018 - Adicionada verificação de adesao do produto 39 Pagamento por 
+                             por Arquivo. PRJ366 (Lombardi).
     ..............................................................................*/
     DECLARE
 
@@ -7083,6 +7086,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
          RAISE vr_exc_saida;
       END IF;
 
+      -- Valida adesao do produto
+      CADA0006.pc_valida_adesao_produto(pr_cdcooper => vr_cdcooper
+                                       ,pr_nrdconta => pr_nrdconta
+                                       ,pr_cdprodut => 39 -- Pagto por Arquivo
+                                       ,pr_cdcritic => vr_cdcritic
+                                       ,pr_dscritic => vr_dscritic);
+      
+      IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_saida;
+      END IF;
+      
 		  -- Alimenta descrição da origem
 		  --vr_dsorigem := TRIM(GENE0001.vr_vet_des_origens(vr_idorigem));
 
