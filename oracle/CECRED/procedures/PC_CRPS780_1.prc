@@ -447,7 +447,7 @@ BEGIN
         RECP0001.pc_verifica_acordo_ativo (pr_cdcooper => pr_cdcooper
                                           ,pr_nrdconta => pr_nrdconta
                                           ,pr_nrctremp => pr_nrctremp
-                                          ,pr_cdorigem => 0
+                                          ,pr_cdorigem => 3
                                           ,pr_flgativo => vr_flgativo
                                           ,pr_cdcritic => vr_cdcritic
                                           ,pr_dscritic => vr_dscritic);
@@ -462,7 +462,7 @@ BEGIN
           RAISE vr_exc_erro;                 
         END IF;
       
-        /* Verificar se possui acordo na CRAPCYC */
+      /*  \* Verificar se possui acordo na CRAPCYC *\
         OPEN c_crapcyc(pr_cdcooper, pr_nrdconta, pr_nrctremp);
         FETCH c_crapcyc INTO vr_flgativo;
         CLOSE c_crapcyc;
@@ -471,7 +471,7 @@ BEGIN
           vr_cdcritic := 0;
           vr_dscritic := 'Pagamento nao permitido, emprestimo em acordo';
           RAISE vr_exc_erro;             
-        END IF;
+        END IF;*/
         --
         vr_txcpmfcc:=0;
         vr_txrdcpmf:=1;
@@ -1263,7 +1263,7 @@ BEGIN
         pr_cdcritic := NVL(vr_cdcritic,0);
         pr_dscritic := vr_dscritic;
         -- Efetuar rollback
-        ROLLBACK;      
+        --ROLLBACK;      
     
       WHEN OTHERS THEN
         --Variavel de erro recebe erro ocorrido
