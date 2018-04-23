@@ -77,6 +77,8 @@
 
                16/03/2018 - Inclusão dos novos campos 'flgstlcr' e 'cddlinha' na TEMP-TABLE 'tt-desconto_titulos' (Leonardo Oliveira - GFT)
 
+               20/04/2018 - Incluido o campo 'dtultmnt' na TEMP-TABLE tt-desconto_titulos (Paulo Penteado GFT)
+
 ..............................................................................*/
     
 DEF TEMP-TABLE crawljt NO-UNDO
@@ -209,7 +211,8 @@ DEF TEMP-TABLE tt-desconto_titulos NO-UNDO
     FIELD dtrenova AS DATE
     FIELD perrenov AS INTE
     FIELD flgstlcr LIKE crapldc.flgstlcr
-    FIELD cddlinha LIKE crapldc.cddlinha.
+    FIELD cddlinha LIKE crapldc.cddlinha
+    FIELD dtultmnt LIKE craplim.dtpropos.
 
 DEF TEMP-TABLE tt-tot_descontos NO-UNDO
     FIELD vldscchq AS DECI
