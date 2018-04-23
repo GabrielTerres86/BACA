@@ -3,10 +3,11 @@
 	 * FONTE        : form_filtro.php
 	 * CRIA«√O      : Jonathan - RKAM
 	 * DATA CRIA«√O : 17/11/2015
-	 * OBJETIVO     : Apresenta o formulario com os filtros para pesquisa
+	 * OBJETIVO     : Apresenta o formul√°rio com os filtros para pesquisa
 	 * --------------
 	 * ALTERA«’ES   : 29/06/2016 - m117 Inclusao do campo tipo de transacao no filtro (Carlos)
 	 *				  29/07/2016 - Corrigi o uso desnecessario da funcao session_start. SD 491672 (Carlos R.)
+     *			      31/11/2017 - Exibir TEDs Canceladas devido a fraude PRJ335 - Analise de fraude(Odirlei-AMcom)
 	 *
 	 */
 
@@ -38,6 +39,7 @@
 				<option value="1" >Pendentes</option> 
 				<option value="2" >Efetivados</option> 
 				<option value="3" >Cancelados</option> 
+                <option value="31" >Cancelados por Fraude</option> <!-- 3.1 - cancelamento por suspeita de fraude -->
 				<option value="4" >N&atilde;o Efetivados</option> 
 			</select>
 
@@ -49,6 +51,8 @@
 				<option value="3" >Capital</option> 
 				<option value="4" >TED</option> 
 				<option value="5" >Transfer&ecirc;ncia Intercooperativa</option> 
+				<option value="10" >Pagamentos DARF/DAS</option> 
+				<option value="11" id="opt_recarga">Recarga de celular</option>
 			</select>
 
 			<label for="dtiniper">Data Inicial:</label>
