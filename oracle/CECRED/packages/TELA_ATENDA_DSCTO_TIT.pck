@@ -215,6 +215,9 @@ TYPE typ_reg_dados_critica IS RECORD(
 
 TYPE typ_tab_dados_critica IS TABLE OF typ_reg_dados_critica INDEX BY BINARY_INTEGER;  
 
+
+
+
 --> Função que retorna se o Serviço IBRATAN está em Contigência ou Não.
 FUNCTION fn_em_contingencia_ibratan (pr_cdcooper IN crapcop.cdcooper%TYPE) RETURN BOOLEAN;
 
@@ -572,6 +575,8 @@ PROCEDURE pc_titulos_resumo_resgatar_web (pr_nrdconta           in crapass.nrdco
                               ,pr_nmdcampo OUT VARCHAR2          --> Nome do campo com erro
                               ,pr_des_erro OUT VARCHAR2      --> Erros do processo
                             );
+                                                       
+
 END TELA_ATENDA_DSCTO_TIT;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_DSCTO_TIT IS
@@ -2344,12 +2349,14 @@ BEGIN
    end if;
 
 
-   vr_dsmensag := replace(replace(vr_dsmensag, '<b>', '\"'), '</b>', '\"');
+   --vr_dsmensag := replace(replace(vr_dsmensag, '<b>', '\"'), '</b>', '\"');
+   --vr_dsmensag := replace(replace(vr_dsmensag, '<br>', chr(10)||chr(13)), '<BR>', chr(10)||chr(13));
    vr_dsmensag := replace(replace(vr_dsmensag, '<br>', ' '), '<BR>', ' ');
-   pr_retxml   := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
-                                    '<Root><dsmensag>' || vr_dsmensag || '</dsmensag></Root>');
+   --vr_dsmensag := '"'||vr_dsmensag||'"';
    dbms_output.put_line(vr_dsmensag);
-
+   pr_retxml   := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                    '<Root><dsmensag>'||vr_dsmensag||'</dsmensag></Root>');
+   
    COMMIT;
 
 EXCEPTION
@@ -6039,6 +6046,7 @@ PROCEDURE pc_buscar_tit_bordero_web (
       vr_cdagenci varchar2(100);
       vr_nrdcaixa varchar2(100);
       vr_idorigem varchar2(100);
+      vr_inseriu boolean;
       
       vr_rowid_log    ROWID;
       vr_dslog        VARCHAR2(4000);
@@ -6321,6 +6329,7 @@ PROCEDURE pc_buscar_tit_bordero_web (
         
         /*INSERE OS TITULOS DO PONTEIRO vr_tab_dados_titulos*/
         vr_index:= vr_tab_dados_titulos.first;
+        vr_inseriu := false;
         WHILE vr_index IS NOT NULL LOOP
             INSERT INTO 
                    craptdb
@@ -6377,7 +6386,20 @@ PROCEDURE pc_buscar_tit_bordero_web (
                                            vr_tab_dados_titulos(vr_index).nrcnvcob || ' ' || 
                                            vr_tab_dados_titulos(vr_index).nrdocmto || ' ';
             vr_index  := vr_tab_dados_titulos.next(vr_index);
+            vr_inseriu := true;
         END   LOOP;
+        
+        IF vr_inseriu THEN
+           UPDATE
+              crapbdt
+           SET
+              insitbdt = 1 --Em Estudo
+           WHERE
+              crapbdt.nrborder = pr_nrborder
+              AND crapbdt.cdcooper = vr_cdcooper
+              AND crapbdt.nrdconta = pr_nrdconta
+           ;
+        END IF;
 
         btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper
                                   ,pr_ind_tipo_log => 1 -- Erro tratato
@@ -7102,5 +7124,10 @@ PROCEDURE pc_buscar_tit_bordero_web (
               pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                              '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
     END pc_titulos_resumo_resgatar_web;
+    
+    
+    
+    
+    
 END TELA_ATENDA_DSCTO_TIT;
 /
