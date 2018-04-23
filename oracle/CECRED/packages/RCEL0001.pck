@@ -2366,7 +2366,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 					CLOSE cr_operacao_repetida;
 					-- Gerar crítica
 					vr_cdcritic := 0;
-					vr_dscritic := 'Não foi possível efetuar a recarga.';
+					vr_dscritic := 'Recarga de celular efetuada com sucesso.';
 					vr_dserrlog := 'NSU já processado.';
 					
 					-- Se for registro em processamento
