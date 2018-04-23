@@ -132,12 +132,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_prvsaq IS
   --  Programa : TELA_PARMON
   --  Sistema  : Ayllos Web
   --  Autor    : Antonio R. Junior (mouts)
-  --  Data     : Novembro - 2017.                Ultima atualizacao:
+  --  Data     : Novembro - 2017.                Ultima atualizacao: 06/02/2018
   --
   -- Dados referentes ao programa:
   --
   -- Objetivo  : Centralizar rotinas relacionadas a tela prvsaq
   --
+  --
+  --  Alterações: 06/02/2018 - Ajuste para não considerar a senha na validação do operador devido a mesma ser valida através do AD
+  --  						  (Adriano - SD 845176).
   ---------------------------------------------------------------------------
   
 PROCEDURE pc_alterar_provisao(pr_cdcooper         IN tbcc_provisao_especie.cdcooper%TYPE      -->CODIGO COOPER
@@ -396,8 +399,8 @@ PROCEDURE pc_alterar_provisao(pr_cdcooper         IN tbcc_provisao_especie.cdcoo
       SELECT NVL(SUM(p.vlsaque),0) INTO vr_tot_saq
       FROM tbcc_provisao_especie p
       WHERE p.cdcooper = pr_cdcooper AND
-            p.nrdconta = rw_prv_saq.nrdconta AND
             p.nrcpfcgc = rw_prv_saq.nrcpfcgc AND
+            p.insit_provisao <> 3           AND  /* Cancelada */
             TRUNC(p.dhprevisao_operacao) = TRUNC(vr_dhsaque);  
    
       vr_valor_ant := rw_prv_saq.vlsaque;
@@ -416,7 +419,7 @@ PROCEDURE pc_alterar_provisao(pr_cdcooper         IN tbcc_provisao_especie.cdcoo
        IF(vr_dhsaque < vr_data_lim)THEN
          -- Montar mensagem de critica
          vr_cdcritic := 0;
-         vr_dscritic := '383917 - Atenção! Provisão não autorizada. Minimo de '||vr_lim_qtdiasprov||' dias para o cadastro. Exigência BACEN - circular 3.839/17. Deseja Liberar o cadastro?';
+         vr_dscritic := '383917 - Atenção! Provisão não autorizada. Minimo de '||vr_lim_qtdiasprov||' dias para o cadastro. Exigência BACEN - circular 3.839/17. Deseja liberar o cadastro?';
          -- volta para o programa chamador
          RAISE vr_exc_saida;            
        END IF;       
@@ -431,14 +434,15 @@ PROCEDURE pc_alterar_provisao(pr_cdcooper         IN tbcc_provisao_especie.cdcoo
     WHERE p.cdcooper = pr_cdcooper AND
           p.nrcpfcgc = pr_nrcpfcnpjori AND
           p.dhprevisao_operacao = TO_DATE(pr_dhsaqueori,'DD/MM/YYYY HH24:MI:SS') AND
-          p.nrdconta = pr_nrdcontaori;          
+          p.nrdconta = pr_nrdcontaori AND
+          p.insit_provisao = 1;          
     
     
     --ENVIAR EMAIL SEG CORP, SEDE COOP, PA CADAST, PA COOP
         select listagg(valor, ';') within group(order by valor) INTO vr_emails
           from (select distinct valor
                   from (select c.cdcooper cdcooper,
-                               c.dsdemail emailcop,
+                               c.dsemlcof emailcop,
                                a.dsdemail emailage,
                                m.dsdemail emailmon
                           from crapcop c
@@ -455,23 +459,23 @@ PROCEDURE pc_alterar_provisao(pr_cdcooper         IN tbcc_provisao_especie.cdcoo
                                   pr_cdprogra => 'PRVSAQ',
                                   pr_des_destino => vr_emails,
                                   pr_des_assunto => 'Alteração em provisionamento saque em espécie - PA '||rw_prv_saq.cdagenci_saque,
-                                  pr_des_corpo => 'Cooperativa: '|| pr_cdcooper || '
+                                  pr_des_corpo => '<b>Cooperativa:</b> '|| pr_cdcooper || '
                                   <br/>
-                                  Data: ' || TO_CHAR(vr_dhsaque,'DD/MM/YYYY') ||'
+                                  <b>Data:</b> ' || TO_CHAR(vr_dhsaque,'DD/MM/YYYY') ||'
                                   <br/>
-                                  Conta: ' || rw_prv_saq.nrdconta || '
+                                  <b>Conta:</b> ' || gene0002.fn_mask_conta(rw_prv_saq.nrdconta) || '
                                   <br/>
-                                  Nome: '|| rw_crapass.nmprimtl || '
+                                  <b>Nome:</b> '|| rw_crapass.nmprimtl || '
                                   <br/>
-                                  CPF/CNPJ: '|| rw_prv_saq.nrcpfcgc || '
+                                  <b>CPF/CNPJ:</b> '|| gene0002.fn_mask_cpf_cnpj(rw_prv_saq.nrcpfcgc,rw_crapass.inpessoa) || '
                                   <br/>
-                                  Valor operação: ' || pr_vlsaqpagtoalt || '
+                                  <b>Valor operação:</b> ' || cada0014.fn_formata_valor(pr_vlsaqpagtoalt) || '
                                   <br/>
-                                  PA saque: ' || rw_prv_saq.cdagenci_saque || '
+                                  <b>PA saque:</b> ' || rw_prv_saq.cdagenci_saque || '
                                   <br/>
-                                  Operador da transação: ' || vr_cdoperad || ' - ' || rw_crapope.nmoperad || '
+                                  <b>Operador da transação:</b> ' || vr_cdoperad || ' - ' || rw_crapope.nmoperad || '
                                   <br/>
-                                  Número do protocolo: ' || rw_prv_saq.dsprotocolo,
+                                  <b>Número do protocolo:</b> ' || rw_prv_saq.dsprotocolo,
                                   pr_des_anexo => null,                                    
                                   pr_des_erro => pr_des_erro);
        
@@ -611,6 +615,7 @@ PROCEDURE pc_consultar_provisao(pr_cdcooper        IN tbcc_provisao_especie.cdco
       vr_nrdcaixa VARCHAR2(100);
       vr_idorigem VARCHAR2(100);
       vr_aux      VARCHAR2(255);                     
+      vr_dsprotocolo crappro.dsprotoc%TYPE;                     
       vr_nrregist NUMBER;
       vr_qtregist NUMBER;
       vr_aloc     NUMBER;
@@ -737,6 +742,8 @@ PROCEDURE pc_consultar_provisao(pr_cdcooper        IN tbcc_provisao_especie.cdco
     BEGIN    
       pr_des_erro := 'OK';
       
+      vr_dsprotocolo := UPPER(pr_dsprotocolo);
+      
       vr_nrregist := pr_nrregist;
       
       -- Extrai dados do xml
@@ -859,7 +866,7 @@ PROCEDURE pc_consultar_provisao(pr_cdcooper        IN tbcc_provisao_especie.cdco
                                    pr_idorigem       => vr_idorigem,                      
                                    pr_vlsaqpagto     => pr_vlsaqpagto,
                                    pr_nrcpfcnpj      => pr_nrcpfcnpj,                       
-                                   pr_dsprotocolo    => pr_dsprotocolo,
+                                   pr_dsprotocolo    => vr_dsprotocolo,
                                    pr_nriniseq       => pr_nriniseq,
                                    pr_nrregist       => pr_nrregist,
                                    pr_cdopcao        => pr_cdopcao) LOOP
@@ -1121,6 +1128,13 @@ PROCEDURE pc_consultar_provisao(pr_cdcooper        IN tbcc_provisao_especie.cdco
                                pr_tag_cont => rw_prv_saq.dsfinalidade,
                                pr_des_erro => vr_dscritic);
                                                                                              
+        gene0007.pc_insere_tag(pr_xml     => pr_retxml,
+                               pr_tag_pai  => 'inf',
+                               pr_posicao  => vr_auxconta,
+                               pr_tag_nova => 'dsobervacao',
+                               pr_tag_cont => rw_prv_saq.dsobervacao,
+                               pr_des_erro => vr_dscritic);
+                                                                                             
         gene0007.pc_insere_tag(pr_xml      => pr_retxml,
                                pr_tag_pai  => 'inf',
                                pr_posicao  => vr_auxconta,
@@ -1291,16 +1305,15 @@ PROCEDURE pc_incluir_provisao(pr_cdcooper        IN tbcc_provisao_especie.cdcoop
       CURSOR cr_tbcc_provisao_especie(pr_cdcooper   IN tbcc_provisao_especie.cdcooper%TYPE,
                                       pr_nrCpfCnpj  IN tbcc_provisao_especie.nrcpfcgc%TYPE,
                                       pr_dtSaqPagto IN tbcc_provisao_especie.dhprevisao_operacao%TYPE,
-                                      pr_nrContTit  IN tbcc_provisao_especie.nrdconta%TYPE,
-                                      pr_vlSaqPagto IN tbcc_provisao_especie.vlsaque%TYPE) IS
+                                      pr_nrContTit  IN tbcc_provisao_especie.nrdconta%TYPE) IS
         SELECT m.cdcooper
           FROM tbcc_provisao_especie m
-         WHERE m.cdcooper = pr_cdcooper AND
+        WHERE m.cdcooper = pr_cdcooper  AND
                m.nrcpfcgc = pr_nrCpfCnpj AND
                m.nrdconta = pr_nrContTit AND
-               m.vlsaque = pr_vlSaqPagto AND
-               TRUNC(m.dhprevisao_operacao) = TRUNC(pr_dtSaqPagto);
-      rw_tbcc_provisao_especie tbcc_provisao_especie%ROWTYPE;
+              TRUNC(m.dhprevisao_operacao) = TRUNC(pr_dtSaqPagto)  AND
+              m.insit_provisao = 1;
+        rw_tbcc_provisao_especie cr_tbcc_provisao_especie%ROWTYPE;
       
        /* Busca cheque */
     CURSOR cr_cheque(pr_cdcooper     IN tbcc_provisao_especie.cdcooper%TYPE 
@@ -1374,7 +1387,7 @@ PROCEDURE pc_incluir_provisao(pr_cdcooper        IN tbcc_provisao_especie.cdcoop
      -- Cursor genérico de calendário
      rw_crapdat btch0001.cr_crapdat%ROWTYPE;      
     
-    BEGIN                                                             
+    BEGIN                                           
       -- Extrai dados do xml
       gene0004.pc_extrai_dados(pr_xml      => pr_retxml,
                                pr_cdcooper => vr_cdcooper,
@@ -1619,8 +1632,8 @@ PROCEDURE pc_incluir_provisao(pr_cdcooper        IN tbcc_provisao_especie.cdcoop
       SELECT NVL(SUM(p.vlsaque),0),NVL(SUM(p.vlpagamento),0) INTO vr_tot_saq,vr_tot_pagto
       FROM tbcc_provisao_especie p
       WHERE p.cdcooper = vr_cdcooper AND
-            p.nrdconta = pr_nrContTit AND
             p.nrcpfcgc = vr_nrcpfcgc AND
+            p.insit_provisao <> 3    AND   /* Cancelada */
             TRUNC(p.dhprevisao_operacao) = TRUNC(vr_dhsaque);
             
       --SE DATA FOR MENOR QUE A DATA ATUAL
@@ -1651,15 +1664,39 @@ PROCEDURE pc_incluir_provisao(pr_cdcooper        IN tbcc_provisao_especie.cdcoop
                vr_cdcritic := 0;
                IF(vr_idorigem = 5)THEN
                  vr_pedesenha :=1;
-                 vr_aux := 'Atenção! Provisão não autorizada. Minimo de '||vr_lim_qtdiasprov||' dias úteis para o cadastro. Exigência BACEN - circular 3.839/17. Deseja Liberar o cadastro?';             
+                 vr_aux := 'Atenção! Provisão não autorizada. Minimo de '||vr_lim_qtdiasprov||' dias úteis para o cadastro. Exigência BACEN - circular 3.839/17. Deseja liberar o cadastro?';             
+                 -- volta para o programa chamador
+                 RAISE vr_exc_pedesenha;                     
                ELSE
-                 vr_pedesenha :=0;
-                 vr_aux := 'Atenção! Provisão não autorizada. Minimo de '||vr_lim_qtdiasprov||' dias úteis para o cadastro. Exigência BACEN - circular 3.839/17.';
-               END IF;
-               -- volta para o programa chamador
-               RAISE vr_exc_pedesenha;            
+                 vr_pedesenha := 0;
+                 vr_cdcritic  := 0;
+                 vr_dscritic  := 'Atenção! Provisão não autorizada. Minimo de '||vr_lim_qtdiasprov||' dias úteis para o cadastro. Exigência BACEN - circular 3.839/17.';
+                 -- volta para o programa chamador
+                 RAISE vr_exc_saida;                 
+               END IF;        
              END IF;      
           END IF;                                      
+      END IF;
+      
+      --BUSCA PROVISAO
+        OPEN cr_tbcc_provisao_especie(pr_cdcooper   => vr_cdcooper,
+                                      pr_nrCpfCnpj  => vr_nrcpfcgc,
+                                      pr_dtSaqPagto => vr_dhsaque,
+                                      pr_nrContTit  => pr_nrconttit);
+        FETCH cr_tbcc_provisao_especie INTO rw_tbcc_provisao_especie;
+      
+        -- Se nao encontrar
+        IF cr_tbcc_provisao_especie%FOUND THEN
+          -- Fechar o cursor
+          CLOSE cr_tbcc_provisao_especie;
+        
+          -- Montar mensagem de critica
+          vr_cdcritic := 0;
+          vr_dscritic := 'Provisao ja cadastrada.';
+          -- volta para o programa chamador
+          RAISE vr_exc_saida;
+        ELSE    
+          CLOSE cr_tbcc_provisao_especie;
       END IF;
       
       gene0006.pc_gera_protocolo(pr_cdcooper => vr_cdcooper, 
@@ -1677,7 +1714,7 @@ PROCEDURE pc_incluir_provisao(pr_cdcooper        IN tbcc_provisao_especie.cdcoop
                                  pr_dsinfor3 => 'Titularidade da conta: ' || vr_nmtitular || ' - ' || vr_nrcpfcgc || '#Sacador: ' || pr_nmsacpag || ' - ' || pr_nrcpfsacpag || '#Finalidade: ' || pr_txtFinPagto, 
                                  pr_dscedent => NULL, 
                                  pr_flgagend => FALSE, 
-                                 pr_nrcpfope => pr_nrcpfope, 
+                                 pr_nrcpfope => NVL(pr_nrcpfope,0), 
                                  pr_nrcpfpre => 0, 
                                  pr_nmprepos => '', 
                                  pr_dsprotoc => vr_dsprotoc, 
@@ -1742,7 +1779,7 @@ PROCEDURE pc_incluir_provisao(pr_cdcooper        IN tbcc_provisao_especie.cdcoop
        SYSDATE,
        vr_idorigem,
        vr_dsprotoc,
-       pr_nrcpfope,
+       NVL(pr_nrcpfope,0),
        null,
        null);
        
@@ -1769,7 +1806,7 @@ PROCEDURE pc_incluir_provisao(pr_cdcooper        IN tbcc_provisao_especie.cdcoop
                             <br>
                             <b>Data:</b> ' || TO_CHAR(vr_dhsaque,'DD/MM/YYYY') ||'
                             <br>
-                            <b>Conta:</b> ' || pr_nrContTit || '
+                            <b>Conta:</b> ' || gene0002.fn_mask_conta(pr_nrContTit) || '
                             <br>
                             <b>Nome:</b> '|| vr_nmtitular || '
                             <br>
@@ -1781,7 +1818,7 @@ PROCEDURE pc_incluir_provisao(pr_cdcooper        IN tbcc_provisao_especie.cdcoop
                             <br>
                             <b>Operador da transação:</b> ';
                             
-          IF(pr_nrcpfope = 0)THEN
+          IF(NVL(pr_nrcpfope,0) = 0)THEN
             vr_corpoemail := vr_corpoemail || vr_cdoperad || ' - ' || rw_crapope.nmoperad;
           ELSE
             --> Buscar operadores internet
@@ -1853,7 +1890,7 @@ PROCEDURE pc_incluir_provisao(pr_cdcooper        IN tbcc_provisao_especie.cdcoop
                              pr_tag_nova => 'pedesenha',
                              pr_tag_cont => vr_pedesenha,
                              pr_des_erro => vr_dscritic); 
-       
+                                                                                          
       pr_des_erro := 'OK';
                                                                                          
   EXCEPTION
@@ -2101,7 +2138,8 @@ PROCEDURE pc_excluir_provisao(pr_cdcooper       IN tbcc_provisao_especie.cdcoope
       WHERE p.cdcooper = pr_cdcooper AND
             p.dhprevisao_operacao = vr_dhsaque AND
             p.nrcpfcgc = pr_nrcpfcnpj AND 
-            p.nrdconta = pr_nrdconta;           
+            p.nrdconta = pr_nrdconta AND
+            p.insit_provisao = 1;           
       
       vr_valor := rw_tbcc_provisao_especie.vlsaque;
        
@@ -2957,7 +2995,7 @@ PROCEDURE pc_imprimir_protocolo(pr_cdcooper       IN tbcc_provisao_especie.cdcoo
                                             ,pr_cdcooper => pr_cdcooper
                                             ,pr_nmsubdir => '/rlnsv'); --> Utilizaremos o não salvo
                                             
-      vr_nom_arquivo := 'TELA_PRVSAQ_PROTOCOLO_' || pr_nrpa || pr_nrconttit; --> Nome do arquivo é igual a PA + Número de Conta
+      vr_nom_arquivo := 'TELA_PRVSAQ_PROTOCOLO_' || pr_nrpa ||'_'|| pr_nrconttit; --> Nome do arquivo é igual a PA + Número de Conta
       
       gene0002.pc_solicita_relato(pr_cdcooper  => pr_cdcooper                                --> Cooperativa conectada
                                  ,pr_cdprogra  => 'PRVSAQ'                                   --> Programa chamador
@@ -3062,28 +3100,28 @@ PROCEDURE pc_imprimir_protocolo(pr_cdcooper       IN tbcc_provisao_especie.cdcoo
     Sigla   : PRVSAQ
 
     Autor   : Antonio R. Jr
-    Data    : 11/12/2017                        Ultima atualizacao: 
+    Data    : 11/12/2017                        Ultima atualizacao: 06/02/2018
 
     Dados referentes ao programa:
 
     Frequencia: Sempre que for chamado
     Objetivo  : Validar o operador para a rotina de alterar dados da tela PRVSAQ 
 
-    Alteracoes:
+    Alteracoes: 06/02/2018 - Ajuste para não considerar a senha na validação do operador devido a mesma ser valida através do AD
+               							(Adriano - SD 845176).
+
   ---------------------------------------------------------------------------------------------------------------*/
 
   ------------------------------- CURSORES ---------------------------------
   -- Busca os dados do operador
   CURSOR cr_crapope (pr_cdcooper IN crapope.cdcooper%TYPE,
-                     pr_cdoperad IN crapope.cdoperad%TYPE,
-                     pr_cddsenha IN crapope.cddsenha%TYPE) IS
+                     pr_cdoperad IN crapope.cdoperad%TYPE) IS
   SELECT ope.nvoperad
         ,ope.cdsitope
         ,ope.insaqesp
     FROM crapope ope
    WHERE ope.cdcooper = pr_cdcooper
-     AND UPPER(ope.cdoperad) = UPPER(pr_cdoperad)
-     AND ope.cddsenha = pr_cddsenha;     
+     AND UPPER(ope.cdoperad) = UPPER(pr_cdoperad);     
   rw_crapope cr_crapope%ROWTYPE;
   
   -- Selecionar os dados da Cooperativa
@@ -3136,8 +3174,7 @@ PROCEDURE pc_imprimir_protocolo(pr_cdcooper       IN tbcc_provisao_especie.cdcoo
     
     -- Verificar os dados do operador
     OPEN cr_crapope (pr_cdcooper => pr_cdcooper,
-                     pr_cdoperad => pr_cdoperad,
-                     pr_cddsenha => pr_nrdsenha);
+                     pr_cdoperad => pr_cdoperad);
     
     FETCH cr_crapope INTO rw_crapope;
     
@@ -3147,8 +3184,8 @@ PROCEDURE pc_imprimir_protocolo(pr_cdcooper       IN tbcc_provisao_especie.cdcoo
       CLOSE cr_crapope;
       
       -- Montar mensagem de critica
-      vr_cdcritic := 0;
-      vr_dscritic := 'Senha invalida.';
+      vr_cdcritic := 67; -- 067 - Operador nao cadastrado.
+      vr_dscritic := NULL;
            
       RAISE vr_exc_saida; 
     ELSE             
@@ -3317,7 +3354,8 @@ PROCEDURE pc_job_cancela_provisao(pr_dscritic OUT crapcri.dscritic%TYPE) IS
               WHERE prv.cdcooper = rw_prv_saq.cdcooper
                    AND prv.dhprevisao_operacao = rw_prv_saq.dhprevisao_operacao
                    AND prv.nrcpfcgc = rw_prv_saq.nrcpfcgc
-                   AND prv.nrdconta = rw_prv_saq.nrdconta;  
+                   AND prv.nrdconta = rw_prv_saq.nrdconta
+                   AND prv.insit_provisao = 1;  
                
               -- Log de sucesso.
               CECRED.pc_log_programa(pr_dstiplog => 'O'
