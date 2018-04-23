@@ -105,11 +105,7 @@
 		<br />
 		
 		<label for="cdusolcr"><? echo utf8ToHtml("C&oacute;digo de uso:"); ?></label>
-		<select  id="cdusolcr" name="cdusolcr" value="<?echo getByTagName($linha->tags,'cdusolcr'); ?>">
-			<option value="0" <?php if (getByTagName($linha->tags,'cdusolcr') == 0) { ?> selected <?php } ?> >Normal</option>
-			<option value="1" <?php if (getByTagName($linha->tags,'cdusolcr') == 1) { ?> selected <?php } ?> >Micro Cr&eacute;dito</option>
-			<option value="2" <?php if (getByTagName($linha->tags,'cdusolcr') == 2) { ?> selected <?php } ?> >Epr/Boletos</option>
-		</select>
+		<select  id="cdusolcr" name="cdusolcr" val_cdusolcr="<?php echo getByTagName($linha->tags,'cdusolcr'); ?>"></select>
 
 		<label for="flgtarif"><? echo utf8ToHtml("Tarifa normal:"); ?></label>
 		<select  id="flgtarif" name="flgtarif" value="<?echo getByTagName($linha->tags,'flgtarif'); ?>">
