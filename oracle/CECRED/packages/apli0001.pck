@@ -1871,7 +1871,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
                                                ,'CRPS175','CRPS176','CRPS168','CRPS140','CRPS169'
                                                ,'CRPS210','CRPS323','CRPS349','CRPS414','CRPS445'
                                                ,'CRPS563','CRPS029','CRPS688','CRPS005','ATENDA'
-                                               ,'ANOTA','IMPRES','INTERNETBANK') THEN
+                                               ,'ANOTA','IMPRES','INTERNETBANK', 'RESGATE','GAROPC') THEN
         -- Buscar a taxa da RDCA
         OPEN cr_craptrd(rw_craprda.dtiniper);
         FETCH cr_craptrd
@@ -2292,7 +2292,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
       IF pr_inproces > 2 AND pr_cdprogra NOT IN('CRPS011','CRPS105','CRPS109','CRPS110','CRPS113','CRPS117',
                         'CRPS128','CRPS175','CRPS176','CRPS168','CRPS135','CRPS431','CRPS140','CRPS169',
                         'CRPS210','CRPS323','CRPS349','CRPS414','CRPS445','CRPS563','CRPS029','CRPS688',
-                        'CRPS005','ATENDA','ANOTA','IMPRES','INTERNETBANK') THEN
+                        'CRPS005','ATENDA','ANOTA','IMPRES','INTERNETBANK', 'RESGATE', 'GAROPC') THEN
 
         IF pr_cdprogra = 'CRPS103' THEN                     /*  MENSAL  */
           vr_dtdolote := pr_dtmvtolt;
@@ -11276,7 +11276,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
                            'CRPS175', 'CRPS176', 'CRPS168', 'CRPS140', 'CRPS169',
                            'CRPS210', 'CRPS323', 'CRPS349', 'CRPS414', 'CRPS445',
                            'CRPS563', 'CRPS029', 'CRPS688', 'CRPS005', 'ATENDA', 
-                           'ANOTA','INTERNETBANK') then
+                           'ANOTA','INTERNETBANK', 'RESGATE','GAROPC') then
       vr_incalcul := 1;
       if pr_cdprogra = 'CRPS103' then -- mensal
         vr_dtmvtolt := pr_dtmvtolt + 1;
@@ -11517,7 +11517,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
                            'CRPS128', 'CRPS175', 'CRPS176', 'CRPS168', 'CRPS135', 'CRPS431',
                            'CRPS140', 'CRPS169', 'CRPS210', 'CRPS323', 'CRPS349', 'CRPS414',
                            'CRPS445', 'CRPS563', 'CRPS029', 'CRPS688', 'CRPS005', 'ATENDA', 
-                           'ANOTA', 'INTERNETBANK') then
+                           'ANOTA', 'INTERNETBANK', 'RESGATE', 'GAROPC') then
       if pr_cdprogra = 'CRPS103' then  -- MENSAL
         vr_dtdolote := pr_dtmvtolt;
         vr_nrdolote := 8380;
