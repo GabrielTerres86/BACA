@@ -205,31 +205,13 @@
 		Renovar
 	</a>
 
-
-	<?php 
-		if (!in_array("MA",$glbvars['opcoesTela'])) { 
-		echo "
-		<a 
-		href='#' 
-		class='botao'
-		id='btnrerroraccess'
-		name='btnrerroraccess' 
-		onClick=\"showError('error','Usu&aacute;rio n&atilde;o possui permiss&atilde;o para Manuten&ccedil;&atilde;o.','Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))');\" >
-		Manuten&ccedil;&atilde;o
-		</a>";
-
-		} else { 
-
-		echo "
 		<a 
 		href='#' 
 		class='botao'
 		id='btnManutencao'
 		name='btnManutencao' >
 		Manuten&ccedil;&atilde;o
-		</a>";
-		}
-	?>
+	</a>
 
 	<a 
 		href="#" 

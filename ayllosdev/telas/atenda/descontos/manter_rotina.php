@@ -22,6 +22,51 @@
 	require_once('../../../class/xmlfile.php');
 	isPostMethod();
 
+	require_once("../../../includes/carrega_permissoes.php");
+	
+	setVarSession("opcoesTela",$opcoesTela);
+
+	//operacao VER QUAIS SERÃO ENVIADAS.
+
+	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"@")) <> "") {
+		exibeErro($msgError);		
+	}	
+
+
+		switch ($_POST['operacao']){
+
+		case 'ACEITAR_REJEICAO_LIMITE': 
+
+			if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"R","")) <> "") {
+
+				exibeErro($msgError);		
+			}	
+	
+		break; 
+
+	
+		case 'ENVIAR_ANALISE': 
+
+			if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"N","")) <> "") {
+
+				exibeErro($msgError);		
+			}	
+	
+		break; 
+
+		
+		case 'CONFIMAR_NOVO_LIMITE': 
+
+			if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"E","")) <> "") {
+
+				exibeErro($msgError);		
+			}	
+	
+		break; 
+
+		}
+
+
 	// parâmetos do POST em variáveis
 	$operacao = (isset($_POST['operacao'])) ? $_POST['operacao'] : '' ;
 	$nrdconta = (isset($_POST['nrdconta'])) ? $_POST['nrdconta'] : 0 ;
@@ -626,7 +671,7 @@
 	function exibeErro($msgErro) { 
 		echo 'hideMsgAguardo();';
 		echo 'showError("error","'.$msgErro.'","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
-		// exit();
+		exit();
 	}
 
 	function exibeErroNew($msgErro,$nmdcampo) {
