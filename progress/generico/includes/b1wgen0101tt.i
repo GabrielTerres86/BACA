@@ -2,7 +2,7 @@
 
     Programa: sistema/generico/includes/b1wgen0101tt.i
     Autor   : Adriano
-    Data    : Agosto/2011               Ultima Atualizacao: 12/05/2016
+    Data    : Agosto/2011               Ultima Atualizacao: 19/09/2016
      
     Dados referentes ao programa:
    
@@ -31,6 +31,10 @@
 
                 12/05/2016 - Incluido campo dslindig na tt-dados-pesqti para mostrar
 				             a linha digitavel (Douglas - Chamado 426870)
+                             
+                19/09/2016 - Alteraçoes pagamento/agendamento de DARF/DAS 
+                             pelo InternetBanking (Projeto 338 - Lucas Lunelli)
+                             
 .............................................................................*/
 
 DEF TEMP-TABLE tt-dados-pesqti NO-UNDO
@@ -64,8 +68,8 @@ DEF TEMP-TABLE tt-dados-pesqti NO-UNDO
     /* Tipo de captura do documento (1=Leitora, 2=Linha digitavel) */
     FIELD tpcptdoc AS INTE
     FIELD dscptdoc AS CHAR FORMAT "x(30)"
-	/* Linha Digitavel */
-	FIELD dslindig AS CHAR.
+    FIELD dslindig AS CHAR
+    FIELD dsnomfon LIKE craplft.dsnomfon.
 
 
 DEF TEMP-TABLE tt-historicos NO-UNDO

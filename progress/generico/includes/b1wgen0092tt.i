@@ -2,7 +2,7 @@
 
     Programa: b1wgen0092tt.i                  
     Autor   : André (DB1)
-    Data    : Maio/2011                       Ultima atualizacao: 30/05/2016
+    Data    : Maio/2011                       Ultima atualizacao: 07/11/2017
 
     Dados referentes ao programa:
 
@@ -29,6 +29,9 @@
                              de Débito Fácil (Lucas Lunelli - Out/2014).
                             
                 30/05/2016 - Alteraçoes Oferta DEBAUT Sicredi (Lucas Lunelli - [PROJ320])
+                
+                07/11/2017 - Incluir campos nas temp-tables tt-lancamentos e
+                             tt-autorizacoes-cadastradas (David).
                             
 .............................................................................*/
 
@@ -105,7 +108,10 @@ DEF TEMP-TABLE tt-autorizacoes-cadastradas NO-UNDO
     FIELD vlmaxdeb LIKE crapatr.vlrmaxdb
     FIELD dshisext LIKE crapatr.dshisext
     FIELD inaltera AS LOGICAL
-    FIELD cdhistor AS INTEGER.
+    FIELD cdhistor AS INTEGER
+    FIELD insituac AS INTEGER
+    FIELD dssituac AS CHAR
+    FIELD dssegmto AS CHAR.
 
 DEF TEMP-TABLE tt-autorizacoes-suspensas NO-UNDO
     FIELD nmextcon LIKE crapcon.nmextcon
@@ -123,7 +129,9 @@ DEF TEMP-TABLE tt-lancamentos NO-UNDO
     FIELD nrdocmto LIKE craplcm.nrdocmto
     FIELD vllanmto LIKE craplcm.vllanmto
     FIELD situacao LIKE crapatr.dshisext
-    FIELD cdhistor LIKE craplcm.cdhistor.
+    FIELD cdhistor LIKE craplcm.cdhistor
+    FIELD insituac AS INTEGER
+    FIELD dsprotoc LIKE crappro.dsprotoc.
     
 DEF TEMP-TABLE tt-motivos-cancel-debaut NO-UNDO
     FIELD idmotivo AS INTEGER
