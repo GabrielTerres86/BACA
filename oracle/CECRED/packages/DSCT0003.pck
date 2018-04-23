@@ -692,7 +692,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0003 AS
                                         ,pr_dtmvtolt             => pr_dtmvtolt 
                                         ,pr_qtdiaiof             => rw_craptdb.qtdiaiof 
                                         ,pr_vloperacao           => rw_craptdb.vlliquid 
-                                        ,pr_vltotalope           => 0 
+                                        ,pr_vltotalope           => pr_vltotliq 
                                         ,pr_vltaxa_iof_atraso    => '0' 
                                         ,pr_vliofpri             => vr_vliofpri 
                                         ,pr_vliofadi             => vr_vliofadi 
