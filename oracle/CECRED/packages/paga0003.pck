@@ -5096,6 +5096,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
      vr_vldocmto      NUMBER;
      vr_nrdocmto      NUMBER;
      vr_nrsqgrde      VARCHAR2(44);
+		 vr_stsnrcal      BOOLEAN;
      
      
     BEGIN
@@ -5128,13 +5129,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
           vr_nrdigito:= GENE0005.fn_retorna_digito_cnpj(pr_nrcalcul => vr_nrinsemp); 
           vr_nrinsemp:= vr_nrinsemp || GENE0002.fn_mask(vr_nrdigito,'99');
         
-        --> CEI/ CPF
+        --> CEI
         ELSIF vr_tpidempr IN (3,5,7) THEN
           --> valor ja esta atribuido na variavel vr_nrinsemp, apenas para detalhar regra
           NULL;
+				--> CEI ou CPF
         ELSIF vr_tpidempr = 9 THEN
-          --> valor ja esta atribuido na variavel vr_nrinsemp, apenas para detalhar regra
-          NULL;
+          --> Verificar se é CPF
+          gene0005.pc_valida_cpf(pr_nrcalcul => to_number(trim(vr_nrinsemp))
+					                      ,pr_stsnrcal => vr_stsnrcal);
+          -- Se for cpf
+          IF vr_stsnrcal THEN
+						-- Retiramos a primeira posição
+						vr_nrinsemp := substr(vr_nrinsemp, 2, 11);
+					END IF;
         
         ELSE
           vr_dscritic := 'Cod.Barras invalido.';
