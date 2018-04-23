@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Created with Jaspersoft Studio version 6.3.0.final using JasperReports Library version 6.3.0  -->
-<!-- 2018-03-12T15:55:38 -->
+<!-- 2018-03-15T12:53:55 -->
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="crrl519_contrato_limite" language="groovy" pageWidth="595" pageHeight="842" whenNoDataType="AllSectionsNoDetail" columnWidth="595" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
 	<property name="ireport.zoom" value="2.0"/>
 	<property name="ireport.x" value="0"/>
 	<property name="ireport.y" value="0"/>
-	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="CTRLIMD"/>
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="crrl519"/>
 	<property name="com.jaspersoft.studio.unit." value="pixel"/>
 	<parameter name="PR_NMRESCOP" class="java.lang.String">
 		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
@@ -49,10 +49,11 @@
 				<subreportExpression><![CDATA["crrl519_dados_contrato_limite_novo.jasper"]]></subreportExpression>
 			</subreport>
 		</band>
-		<band height="11">
+		<band height="12">
 			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+			<printWhenExpression><![CDATA[$F{idimpres} == "1" || $F{idimpres} == "4"]]></printWhenExpression>
 			<subreport>
-				<reportElement x="65" y="0" width="450" height="11" uuid="1866860f-ce26-42d5-ae75-43f0343bbdf0">
+				<reportElement x="65" y="1" width="450" height="11" uuid="9c6554c2-57b0-4e27-bf04-a04936dd6d86">
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
@@ -61,11 +62,14 @@
 				<dataSourceExpression><![CDATA[$P{REPORT_DATA_SOURCE}.subDataSource("//Promissoria")]]></dataSourceExpression>
 				<subreportExpression><![CDATA["nota_promissoria.jasper"]]></subreportExpression>
 			</subreport>
+			<break>
+				<reportElement x="0" y="0" width="100" height="1" uuid="30db5681-b94b-483c-80d3-116fff608823"/>
+			</break>
 		</band>
 		<band height="11">
 			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 			<subreport>
-				<reportElement x="65" y="0" width="470" height="11" uuid="7416f6cb-1317-46c5-89fa-44c7569ac6c2">
+				<reportElement x="65" y="0" width="470" height="11" uuid="4c7b8bce-1e19-414f-ac02-f3f4699e782e">
 					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
