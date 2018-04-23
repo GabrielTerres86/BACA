@@ -603,6 +603,36 @@
 
     </fieldset>
 
+    <fieldset id="fsetBancoob" name="fsetBancoob" style="padding:0px; margin:0px; padding-bottom:10px;">
+
+        <legend>BANCOOB</legend>
+
+        <label for="nrctabcb"><?php echo utf8ToHtml("Conta Bancoob:"); ?></label>
+        <input type="text" id="nrctabcb" name="nrctabcb" value="<?php echo getByTagName($cooperativa->tags,'nrctabcb');?>" >
+        
+        <label for="nrouvbcb"><?php echo utf8ToHtml("Telefone Ouvidoria:"); ?></label>
+        <input type="text" id="nrouvbcb" name="nrouvbcb" value="<?php echo getByTagName($cooperativa->tags,'nrouvbcb');?>" >
+                
+        <br />
+        <label for="vltarbcb"><?php echo utf8ToHtml("Tarifa Arrecadação:"); ?></label>
+        <input type="text" id="vltarbcb" name="vltarbcb" value="<?php echo getByTagName($cooperativa->tags,'vltarbcb');?>" >
+        
+        <label for="nrsacbcb"><?php echo utf8ToHtml("SAC:"); ?></label>
+        <input type="text" id="nrsacbcb" name="nrsacbcb" value="<?php echo getByTagName($cooperativa->tags,'nrsacbcb');?>" >        
+        
+        <br />
+        
+        <?php // campo vlgarbcb será exibido apenas na cecred 
+        if (getByTagName($cooperativa->tags,'cdcooper') == 3 ){ ?>
+            
+            <label for="vlgarbcb"><?php echo utf8ToHtml("Garantia para arrecadação de convênios:"); ?></label>
+            <input type="text" id="vlgarbcb" name="vlgarbcb" value="<?php echo getByTagName($cooperativa->tags,'vlgarbcb');?>" >
+            
+            <br />
+        <?php }?>
+
+    </fieldset> 
+    
     <fieldset id="fsetSangria" name="fsetSangria" style="padding:0px; margin:0px; padding-bottom:10px;">
 
         <legend>Sangria de CAIXA</legend>

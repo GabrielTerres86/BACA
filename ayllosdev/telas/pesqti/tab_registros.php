@@ -10,6 +10,8 @@
  *				  19/09/2016 - Alteraçoes pagamento/agendamento de DARF/DAS 
  *					  		   pelo InternetBanking (Projeto 338 - Lucas Lunelli)
  *
+ *                18/01/2018 - Alterações referentes ao PJ406.
+ *
  * --------------
  */ 
 
@@ -57,8 +59,8 @@
 						<input type="hidden" id="nrdolote" name="nrdolote" value="<? echo getByTagName($result->tags,'nrdolote') ?>" />	
 						<input type="hidden" id="cdagenci" name="cdagenci" value="<? echo getByTagName($result->tags,'cdagenci') ?>" />	
 						<input type="hidden" id="cdbccxlt" name="cdbccxlt" value="<? echo getByTagName($result->tags,'cdbandst') ?>" />
-						<input type="hidden" id="dtdpagto" name="dtdpagto" value="<? echo $dtdpagto?>" />	
-						<input type="hidden" id="cdhiscxa" name="cdhiscxa" value="<? echo $cdhiscxa ?>" />	
+						<input type="hidden" id="dtdpagto" name="dtdpagto" value="<? echo getByTagName($result->tags,'dtdpagto') ?>" />	
+						<input type="hidden" id="cdhiscxa" name="cdhiscxa" value="<? echo $cdhiscxa ?>" />
 						
 						<input type="hidden" id="dtapurac" name="dtapurac" value="<? echo getByTagName($result->tags,'dtapurac') ?>" />
 						<input type="hidden" id="nrcpfcgc" name="nrcpfcgc" value="<? echo getByTagName($result->tags,'nrcpfcgc') ?>" />
@@ -142,8 +144,8 @@
 	});		
 	
 	$('#divPesquisaRodape','#divConsulta').formataRodapePesquisa();
-	
+
 	formataFormularios();
-	controlaLayout("1");		
+	controlaLayout("1");	
 			
 </script>
