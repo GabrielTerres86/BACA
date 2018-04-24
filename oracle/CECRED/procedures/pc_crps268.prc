@@ -394,6 +394,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps268(pr_cdcooper IN crapcop.cdcooper%TY
                   --Levantar Exceção
                   RAISE vr_exc_saida;
               END;
+						ELSE
+							CLOSE cr_craplot;
             END IF;
 
             -- Posiciona a capa de lote
@@ -419,7 +421,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps268(pr_cdcooper IN crapcop.cdcooper%TY
 
             -- Efetua o lançamento do débito
             BEGIN
-              LANC0001.pc_incluir_lcto_lcm(pr_cdagenci => rw_craplot.cdagenci
+               LANC0001.pc_incluir_lcto_lcm(pr_cdagenci => rw_craplot.cdagenci
                                                     , pr_cdbccxlt => rw_craplot.cdbccxlt
                                                     , pr_cdhistor => vr_cdhistor
                                                     , pr_dtmvtolt => rw_crapdat.dtmvtolt
@@ -436,8 +438,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps268(pr_cdcooper IN crapcop.cdcooper%TY
                                                     , pr_dscritic => vr_dscritic);
                                                     
                                                     
-              /* TRATAR pr_dscritic <> NULL (não foi possível debitar) */
-                                                    
+               IF pr_cdcritic = 1139 THEN -- Bloqueio do débito por inadimplência
+					        NULL; -- Incluir tratamento para o bloqueio do débito
+				       END IF;                                                     
                                                     
          /*     INSERT INTO craplcm(craplcm.cdagenci,
                                   craplcm.cdbccxlt,
