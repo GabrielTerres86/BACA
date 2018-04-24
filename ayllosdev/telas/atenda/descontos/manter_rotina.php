@@ -8,6 +8,7 @@
  * ALTERAÇÕES   : 12/04/2018 - Inclusão da rotina 'REALIZAR_MANUTENCAO_LIMITE'. (Leonardo Oliveira - GFT)
  *				  15/04/2018 - Inclusão da rotina 'BUSCAR_ACIONAMENTOS_PROPOSTA'. (Leonardo Oliveira - GFT)
  *				  19/04/2018 - Correção das funções para voltar para a tela anterior, utilizando a função 'fecharRotinaGenerico'que verifica se é um contrato ou proposta em questão. (Leonardo Oliveira - GFT)
+ *				  24/04/2018 - Mensagem de retorno da análise. (Leonardo Oliveira - GFT)
  * --------------
 
  */
@@ -98,7 +99,6 @@
 	    $xml .= " </Dados>";
 	    $xml .= "</Root>";
 
-
 	    $xmlResult = mensageria($xml,"TELA_ATENDA_DESCTO","ENVIAR_ESTEIRA_DESCT", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 	    $xmlObj = getObjectXML($xmlResult);
 
@@ -106,12 +106,24 @@
            echo 'showError("error","'.$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata.'","Alerta - Ayllos","bloqueiaFundo(divRotina); fecharRotinaGenerico(\'PROPOSTA\');");';           
            exit;
 		}
-		if($xmlObj->roottag->tags[0]){
-			echo 'showError("inform","'.$xmlObj->roottag->tags[0]->cdata.'","Alerta - Ayllos","bloqueiaFundo(divRotina); fecharRotinaGenerico(\'PROPOSTA\');");';
-		} else{
-			echo 'showError("inform","An&aacute;lise enviada com sucesso!","Alerta - Ayllos","bloqueiaFundo(divRotina); fecharRotinaGenerico(\'PROPOSTA\');");';
-		}
+		
+		$oMensagem = getByTagName($xmlObj->roottag->tags,'dsmensag');
+        $arMessage = explode("###", $oMensagem);
+        //dsmensag1
+        $dsmensag1 = $arMessage[0];
+        $dsmensag1 = '<div style=\"text-align:left;\">'.$dsmensag1.'</div>';
+        //dsmensag2
+        $dsmensag2 = '';
+        if (count($arMessage) > 1) {
+            $dsmensag2 = $arMessage[1];
+            $dsmensag2 = str_replace('[APROVAR]',  '<img src=\"../../../imagens/geral/motor_APROVAR.png\"  height=\"20\" width=\"20\" style=\"vertical-align:middle;margin-bottom:2px;\">', $dsmensag2);
+            $dsmensag2 = str_replace('[DERIVAR]',  '<img src=\"../../../imagens/geral/motor_DERIVAR.png\"  height=\"20\" width=\"20\" style=\"vertical-align:middle;margin-bottom:2px;\">', $dsmensag2);
+            $dsmensag2 = str_replace('[INFORMAR]', '<img src=\"../../../imagens/geral/motor_INFORMAR.png\" height=\"20\" width=\"20\" style=\"vertical-align:middle;margin-bottom:2px;\">', $dsmensag2);
+            $dsmensag2 = str_replace('[REPROVAR]', '<img src=\"../../../imagens/geral/motor_REPROVAR.png\" height=\"20\" width=\"20\" style=\"vertical-align:middle;margin-bottom:2px;\">', $dsmensag2);
+            $dsmensag2 = '<div style=\"text-align:left; height:100px; overflow-x:hidden; padding-right:25px; font-size:11px; font-weight:normal;\">'.$dsmensag2.'</div>';
+        }
 
+        echo 'showError("inform","'.$dsmensag1.$dsmensag2.'","Alerta - Ayllos","bloqueiaFundo(divRotina); fecharRotinaGenerico(\'PROPOSTA\');");';
         exit;
 
 	}else if ($operacao == 'ENVIAR_ESTEIRA' ) {
