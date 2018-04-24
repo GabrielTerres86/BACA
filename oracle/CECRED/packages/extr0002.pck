@@ -4836,7 +4836,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
         END IF;
         
         pr_tab_lancamento_futuro(vr_index).idlstdom := vr_idlstdom;
-        pr_tab_lancamento_futuro(vr_index).incancel := 1;
+        pr_tab_lancamento_futuro(vr_index).incancel := 0;
         
         /* Pagtos INTERNET */  
         IF rw_craplau.cdhistor = 508 THEN
@@ -6266,7 +6266,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
         pr_tab_lancamento_futuro(vr_index).cdtiptra:= 20;
         pr_tab_lancamento_futuro(vr_index).idlancto:= rw_recarga.idoperacao;
         pr_tab_lancamento_futuro(vr_index).idlstdom:= 20;
-        pr_tab_lancamento_futuro(vr_index).incancel:= 1;
+        pr_tab_lancamento_futuro(vr_index).incancel:= 0;
         --Acumular valor automatico
         vr_vllautom:= nvl(vr_vllautom,0) - rw_recarga.vlrecarga;
         --Acumular valor Credito
