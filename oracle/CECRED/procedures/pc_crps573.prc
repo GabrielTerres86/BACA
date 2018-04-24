@@ -4505,7 +4505,15 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                        , 0 idreestrut
                        , ris.dtinictr dtinreg
                   FROM crapris ris, crapepr epr
-                 WHERE ris.qtdiaatr >= 90
+                  -- Verifica se o contrato está atraso a mais de 90 dias ou se não foi quitado após estar em 90 dias de atraso
+                 WHERE (ris.qtdiaatr > 90 or (ris.qtdiaatr > 0 
+                                         and exists(select distinct 1
+                                                      from tbhist_ativo_probl his
+                                                     where his.cdcooper  = ris.cdcooper
+                                                       and his.nrdconta  = ris.nrdconta
+                                                       and his.nrctremp  = ris.nrctremp
+                                                       and his.cdmotivo  = 58 
+                                                       and to_char(his.dthistreg, 'YYYYMM') = to_char(ADD_MONTHS(rw_crapdat.dtultdma, -1), 'YYYYMM'))))
                    AND epr.idquaprc(+) NOT IN (3, 4) -- Somente contrato diferente 3-Renegociação
                                                      --                            4-Composição de Dívida
                    AND ris.cdcooper  = epr.cdcooper(+)
@@ -4581,7 +4589,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                    AND ap.nrdconta = pr_nrdconta
                    AND ap.nrctremp = pr_nrctremp
                    AND ap.dtexclus is null
-                   AND ap.cdmotivo IN( 62  -- COOPERADO PRESO
+                   AND ap.cdmotivo IN( 60  -- SOCIO FALECIDO MANUAL
+				                     , 62  -- COOPERADO PRESO
                                      , 63  -- FALENCIA PJ
                                      , 64  -- RECUPERACAO JUDICIAL PJ
                                      , 65) -- OUTROS
