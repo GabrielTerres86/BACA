@@ -79,7 +79,7 @@
 	value="Voltar"  
 	id="btnVoltar" 
 	name="btnVoltar" 
-	onClick="voltaDiv(2,1,4,'DESCONTO DE T&Iacute;TULOS','DSC TITS');carregaTitulos(); return false;"/>
+	onClick="voltar();"/>
 <?php if($flgstlcr != 0){?>
 <input 
 	type="button" 
@@ -87,23 +87,35 @@
 	value="Renovar"
 	id="btRenovar"
 	name="btRenovar"
-	onClick="renovaValorLimite();voltaDiv(2,1,4,'DESCONTO DE T&Iacute;TULOS','DSC TITS');carregaTitulos();return false;"/>
+	onClick="executarRenovaValorLimite();"/>
 	<?php } ?>
 	
 </div>
 
 <script type="text/javascript">
+	//Metodo de formatação 'formataValorLimite'
 
 	dscShowHideDiv("divOpcoesDaOpcao2","divOpcoesDaOpcao1;divOpcoesDaOpcao3");
 
 	// Muda o título da tela
 	$("#tdTitRotina").html("DESCONTO DE T&Iacute;TULOS - VALOR LIMITE");
 
-	formataLayout('divValorLimite');
-
 	// Esconde mensagem de aguardo
 	hideMsgAguardo();
 
+	function executarRenovaValorLimite(){
+		var vllimite = $('#vllimite','#frmReLimite').val();
+    	var nrctrlim = $('#nrctrlim','#frmReLimite').val();
+    	var cddlinha = $('#cddlinha','#frmReLimite').val();
+    	renovaValorLimite(vllimite, nrctrlim, cddlinha);
+		fecharRotinaGenerico('TITULOS');
+        return false;
+	}
+
+	function voltar(){
+		fecharRotinaGenerico('TITULOS');
+		return false;
+	}
 	// Bloqueia conteúdo que está átras do div da rotina
 	blockBackground(parseInt($("#divRotina").css("z-index")));
 

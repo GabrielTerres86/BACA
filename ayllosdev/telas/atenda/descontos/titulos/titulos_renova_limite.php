@@ -73,6 +73,6 @@
 			\"inform\",
 			\"Opera&ccedil;&atilde;o efetuada com sucesso!\",
 			\"Alerta - Ayllos\",
-			\"fechaRotina($('#divUsoGenerico'),divRotina);carregaTitulos();\");";
+			\"fecharRotinaGenerico('TITULOS');\");";
 	
 ?>
