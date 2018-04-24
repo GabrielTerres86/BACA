@@ -2681,18 +2681,21 @@ function visualizarTituloDeBordero() {
 }
 
 function realizarManutencaoDeLimite(operacao, flgstlcr) {
+
+    // operacao = 0 (mostrar dialogo confirmacao), operacao = 1 (carregar tela), operacao = 3 (executar operacao)
     showMsgAguardo("Aguarde, carregando dados do contrato...");
     var nrctrlim = normalizaNumero($("#nrctrlim","#frmTitulos").val());
     if(!operacao){operacao = 0;}
 
-    var callback = "realizarManutencaoDeLimite(1,"+flgstlcr+" )";
+    var callback = "realizarManutencaoDeLimite(1,"+flgstlcr+" );";
 
     if(nrctrlim == 0){
         showError(
                 "inform",
                 "Não existe contrato ativo.",
                 "Alerta - Ayllos",
-                "hideMsgAguardo();");
+                "hideMsgAguardo();blockBackground(parseInt($('#divRotina').css('z-index')));");
+
         return false;
     }
 
@@ -2712,9 +2715,8 @@ function realizarManutencaoDeLimite(operacao, flgstlcr) {
     // operação 0 mostra a janela de confirmação
     if(operacao === 0){
         showConfirmacao("Deseja realizar a manuten&ccedil;&atilde;o do contrato?",
-            "Confirma&ccedil;&atilde;o - Ayllos",
-           callback,
-            "hideMsgAguardo();",
+            "Confirma&ccedil;&atilde;o - Ayllos", callback,
+            "hideMsgAguardo();blockBackground(parseInt($('#divRotina').css('z-index')));",
             "sim.gif",
             "nao.gif");
         return false;
@@ -2738,6 +2740,8 @@ function realizarManutencaoDeLimite(operacao, flgstlcr) {
              $("#divOpcoesDaOpcao2").html(response);
              formataManutencaoDeLimite();
              hideMsgAguardo();
+             blockBackground(parseInt($('#divRotina').css('z-index')));
+
         }
     });
     return false;
