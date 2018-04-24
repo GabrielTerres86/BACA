@@ -790,6 +790,7 @@ function controlaPesquisaCartorio() {
 function selecionaTabela(tr) {
     registro = tr;
 
+    $('#idlancto', '.complemento').val($('#idlancto', tr).val());
     $('#dscartorio', '.complemento').html($('#nmcartorio', tr).val());
     $('#nmremetente', '.complemento').html($('#nmremetente', tr).val());
     $('#cpfcnpj', '.complemento').html($('#cnpj_cpf', tr).val());
@@ -825,6 +826,7 @@ function exportarConsultaPDF(){
 function abrirModalConciliacao() {
     showMsgAguardo('Aguarde, obtendo dados ...');	
 
+    var idlancto = $('#idlancto', '.complemento').val();
     var dtinicio = $('#dtrecebimento', '.complemento').html();
     var vlrfinal = $('#vlted', '.complemento').html();
     var cartorio = $('#dscartorio', '.complemento').html();
@@ -834,6 +836,7 @@ function abrirModalConciliacao() {
         dataType: 'html',
         url: UrlSite + 'telas/manprt/modal_conciliacao.php',
         data: {
+            idlancto: idlancto,
             dtinicio: dtinicio,
             vlrfinal: vlrfinal,
             cartorio: cartorio,
@@ -856,30 +859,6 @@ function abrirModalConciliacao() {
 
 }
 
-function verificaCheckbox(elem, valorCheckbox) {
-    var valorInput = $('#vltitulos').val() ? converteMoedaFloat($('#vltitulos').val()) : 0;
-    var totalConc = 0;
-
-    totalConc = $(elem).is(':checked') ? (valorInput + valorCheckbox) : (valorInput - valorCheckbox);
-    $('#vltitulos').val(number_format(totalConc, 2, ',', '.'));
-
-    if (!totalConc || totalConc != converteMoedaFloat($('#vltotal').val())) {
-        // habilitaBotao('btModalConciliar', 'D'); // uncomment
-        habilitaBotao('btModalConciliar', ''); //comment
-    } else {
-        habilitaBotao('btModalConciliar', '');
-    }
-}
-
-function validaConciliacao() {
-    if (converteMoedaFloat($('#vltitulos').val()) < converteMoedaFloat($('#vltotal').val())) {
-        var msg = 'O somat&oacute;rio dos valores dos t&iacute;tulos &eacute; inferior ao da TED. A concilia&ccedil;&atilde;o ser&aacute; realizada de forma parcial.<br>Confirma a concilia&ccedil;&atilde;o?';
-        showConfirmacao(msg, 'MANPRT', "pedeSenhaCoordenador(2, 'alert(\"oi\");fechaRotina($(\"#divRotina\"));', 'divRotina')", 'voltaDiv();', 'sim.gif', 'nao.gif');
-    } else {
-        showConfirmacao('Confirma a concilia&ccedil;&atilde;o?', 'MANPRT', "pedeSenhaCoordenador(2, 'alert(\"oi\");fechaRotina($(\"#divRotina\"));', 'divRotina')", 'voltaDiv();', 'sim.gif', 'nao.gif');
-    }
-}
-
 function habilitaBotao(botao, opcao) {
     if (opcao == 'D') {
         // Desabilitar
@@ -888,6 +867,59 @@ function habilitaBotao(botao, opcao) {
         // Habilitar
         $("#" + botao).prop("disabled",false).removeClass("botaoDesativado").attr("onClick","validaConciliacao()");
     }
+}
+
+function verificaCheckbox(elem, valorCheckbox) {
+    var valorInput = $('#vltitulos').val() ? converteMoedaFloat($('#vltitulos').val()) : 0;
+    var totalConc = 0;
+
+    totalConc = $(elem).is(':checked') ? (valorInput + valorCheckbox) : (valorInput - valorCheckbox);
+    $('#vltitulos').val(number_format(totalConc, 2, ',', '.'));
+
+    if (true || totalConc && totalConc == converteMoedaFloat($('#vltotal').val())) {
+        habilitaBotao('btModalConciliar', '');
+    } else {
+        habilitaBotao('btModalConciliar', 'D');
+    }
+}
+
+function validaConciliacao() {
+    showConfirmacao('Confirma a concilia&ccedil;&atilde;o?', 'MANPRT', "pedeSenhaCoordenador(2, 'efetuaConciliacao();', 'fechaRotina($(\"#divRotina\"))')", 'estadoInicial();', 'sim.gif', 'nao.gif');
+    /* parcial, não será feito, caso, volte, descomentar bloco abaixo: */
+    // if (converteMoedaFloat($('#vltitulos').val()) < converteMoedaFloat($('#vltotal').val())) {
+    //     var msg = 'O somat&oacute;rio dos valores dos t&iacute;tulos &eacute; inferior ao da TED. A concilia&ccedil;&atilde;o ser&aacute; realizada de forma parcial.<br>Confirma a concilia&ccedil;&atilde;o?';
+    //     showConfirmacao(msg, 'MANPRT', "pedeSenhaCoordenador(2, 'alert(\"oi\");fechaRotina($(\"#divRotina\"));', 'divRotina')", 'voltaDiv();', 'sim.gif', 'nao.gif');
+    // } else {
+    //     showConfirmacao('Confirma a concilia&ccedil;&atilde;o?', 'MANPRT', "pedeSenhaCoordenador(2, 'alert(\"oi\");fechaRotina($(\"#divRotina\"));', 'divRotina')", 'voltaDiv();', 'sim.gif', 'nao.gif');
+    // }
+}
+
+function efetuaConciliacao() {
+    showMsgAguardo('Aguarde, efetuando concilia&ccedil;&atilde;o...');
+
+    var idsTitulo = [];
+    var idlancto = $('#idlancto', '.complemento').val();
+    $('[name=idsTitulo]:checkbox:checked').each(function(i){
+        idsTitulo[i] = $(this).val();
+    });
+
+    $.ajax({
+        type: 'POST',
+        dataType: 'html',
+        url: UrlSite + 'telas/manprt/grava_conciliacao.php',
+        data: {
+            idsTitulo: idsTitulo,
+            idlancto: idlancto,
+            redirect: 'script_ajax'
+        },
+        error: function (objAjax, responseError, objExcept) {
+            hideMsgAguardo();
+            showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'estadoInicial();');
+        },
+        success: function (response) {
+            eval(response);
+        }
+    });
 }
 
 function filtraConciliacao(elem) {
@@ -909,7 +941,7 @@ function filtraConciliacao(elem) {
         },
         error: function (objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError('error', 'N&atilde;o foi poss&iacute;�vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'estadoInicial();');
+            showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'estadoInicial();');
         },
         success: function (response) {
             hideMsgAguardo();
