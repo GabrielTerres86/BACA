@@ -168,6 +168,10 @@
 
                01/06/2017 - Incluso tratativa para critica 757 apenas quando 
 			                cheque nao estiver descontado. (Daniel)	
+                            
+               21/06/2017 - Substituidos os históricos 3 e 4 pelo histórico 2433-DEPOSITO BLOQ. 
+                            PRJ367 - Compe Sessao Unica (Lombardi)
+               
                       
                16/03/2018 - Substituida verificacao "cdtipcta entre 8 e 11" pela
                             modalidade do tipo de conta igual a 3. PRJ366 (Lombardi).
@@ -1340,12 +1344,7 @@ PROCEDURE valida-deposito-com-captura:
     IF   aux_nrctcomp > 0   THEN
          ASSIGN i-cdhistor = 386.
     ELSE
-         IF   /*p-cdcmpchq   = 16 OR       /* Comp    */
-              p-cdcmpchq   = 38*/
-              p-cdcmpchq = crapage.cdcomchq   THEN
-              ASSIGN i-cdhistor = 3.    /* Cheque Praca        */
-         ELSE
-              ASSIGN i-cdhistor = 4.    /* Cheque Fora Praca   */
+         ASSIGN i-cdhistor = 2433.
 
     FIND craphis WHERE craphis.cdcooper = crapcop.cdcooper   AND
                        craphis.cdhistor = i-cdhistor
@@ -1813,21 +1812,9 @@ PROCEDURE valida-deposito-com-captura:
                    ASSIGN crapmdw.nrtalchq = aux_nrtalchq
                           crapmdw.nrposchq = i_posicao.
               
-              IF   crapmdw.cdhistor = 3   THEN /* Praca */
-                   DO:
-                       IF  aux_tpdmovto = 2  THEN /* Menor Praca */
-                           ASSIGN crapmdw.nrdocmto = 3.
-                       ELSE                       /* Maior Praca */
-                           ASSIGN crapmdw.nrdocmto = 4.
-                   END.
-              ELSE
-              IF   crapmdw.cdhistor = 4   THEN /* Fora Praca */
-                   DO:
-                       IF  aux_tpdmovto = 2  THEN /* Menor Fora Praca */
-                           ASSIGN crapmdw.nrdocmto = 5.
-                       ELSE                       /* Maior Fora Praca */
+              /* antiga separaçao: 3-Menor Praca,4-Maior Praca,5-Menor Fora Praca,6-Maior Fora Praca */
+              IF crapmdw.cdhistor = 2433 THEN
                            ASSIGN crapmdw.nrdocmto = 6.
-                   END.
 
               RELEASE crapmdw.
 
@@ -2263,12 +2250,7 @@ PROCEDURE valida-deposito-com-captura-migrado-host:
     IF   aux_nrctcomp > 0   THEN
          ASSIGN i-cdhistor = 386.
     ELSE
-         IF   /*p-cdcmpchq   = 16 OR       /* Comp    */
-              p-cdcmpchq   = 38*/
-              p-cdcmpchq = crapage.cdcomchq   THEN
-              ASSIGN i-cdhistor = 3.    /* Cheque Praca        */
-         ELSE
-              ASSIGN i-cdhistor = 4.    /* Cheque Fora Praca   */
+         ASSIGN i-cdhistor = 2433.
 
     FIND craphis WHERE craphis.cdcooper = crapcop.cdcooper   AND
                        craphis.cdhistor = i-cdhistor
@@ -2707,21 +2689,9 @@ PROCEDURE valida-deposito-com-captura-migrado-host:
                    ASSIGN crapmdw.nrtalchq = aux_nrtalchq
                           crapmdw.nrposchq = i_posicao.
               
-              IF   crapmdw.cdhistor = 3   THEN /* Praca */
-                   DO:
-                       IF  aux_tpdmovto = 2  THEN /* Menor Praca */
-                           ASSIGN crapmdw.nrdocmto = 3.
-                       ELSE                       /* Maior Praca */
-                           ASSIGN crapmdw.nrdocmto = 4.
-                   END.
-              ELSE
-              IF   crapmdw.cdhistor = 4   THEN /* Fora Praca */
-                   DO:
-                       IF  aux_tpdmovto = 2  THEN /* Menor Fora Praca */
-                           ASSIGN crapmdw.nrdocmto = 5.
-                       ELSE                       /* Maior Fora Praca */
+              /* antiga separaçao: 3-Menor Praca,4-Maior Praca,5-Menor Fora Praca,6-Maior Fora Praca */
+              IF crapmdw.cdhistor = 2433 THEN
                            ASSIGN crapmdw.nrdocmto = 6.
-                   END.
 
               RELEASE crapmdw.
 
@@ -3330,12 +3300,7 @@ PROCEDURE valida-deposito-com-captura-migrado:
     IF   aux_nrctcomp > 0   THEN
          ASSIGN i-cdhistor = 386.
     ELSE
-         IF   /*p-cdcmpchq   = 16 OR       /* Comp    */
-              p-cdcmpchq   = 38*/
-              p-cdcmpchq = crapage.cdcomchq   THEN
-              ASSIGN i-cdhistor = 3.    /* Cheque Praca        */
-         ELSE
-              ASSIGN i-cdhistor = 4.    /* Cheque Fora Praca   */
+         ASSIGN i-cdhistor = 2433.
 
     FIND craphis WHERE craphis.cdcooper = crabcop.cdcooper   AND
                        craphis.cdhistor = i-cdhistor
@@ -3706,22 +3671,9 @@ PROCEDURE valida-deposito-com-captura-migrado:
               IF   aux_nrtalchq <> 0   THEN
                    ASSIGN crapmdw.nrtalchq = aux_nrtalchq
                           crapmdw.nrposchq = i_posicao.
-              
-              IF   crapmdw.cdhistor = 3   THEN /* Praca */
-                   DO:
-                       IF  aux_tpdmovto = 2  THEN /* Menor Praca */
-                           ASSIGN crapmdw.nrdocmto = 3.
-                       ELSE                       /* Maior Praca */
-                           ASSIGN crapmdw.nrdocmto = 4.
-                   END.
-              ELSE
-              IF   crapmdw.cdhistor = 4   THEN /* Fora Praca */
-                   DO:
-                       IF  aux_tpdmovto = 2  THEN /* Menor Fora Praca */
-                           ASSIGN crapmdw.nrdocmto = 5.
-                       ELSE                       /* Maior Fora Praca */
+              /* antiga separaçao: 3-Menor Praca,4-Maior Praca,5-Menor Fora Praca,6-Maior Fora Praca */
+              IF crapmdw.cdhistor = 2433 THEN
                            ASSIGN crapmdw.nrdocmto = 6.
-                   END.
 
               RELEASE crapmdw.
 
@@ -4199,51 +4151,17 @@ PROCEDURE atualiza-deposito-com-captura:
         ELSE
             ASSIGN  aux_tpdmovto = 1.                
         
-        IF  crapmdw.cdhistor = 3  THEN /* Praca */
-            DO:
-                IF  aux_tpdmovto = 2  THEN /* Menor Praca */
-                    ASSIGN tt-cheques.dtlibera = crapmdw.dtlibcom
-                           tt-cheques.vlcompel = tt-cheques.vlcompel + 
-                                                 crapmdw.vlcompel
-                           tt-cheques.nrdocmto = 3
-                           de-menor-praca      = de-menor-praca +
-                                                 crapmdw.vlcompel.
-                ELSE                       /* Maior Praca */
-                    ASSIGN tt-cheques.dtlibera = crapmdw.dtlibcom
-                           tt-cheques.vlcompel = tt-cheques.vlcompel +
-                                                 crapmdw.vlcompel
-                           tt-cheques.nrdocmto = 4
-                           de-maior-praca      = de-maior-praca +
-                                                 crapmdw.vlcompel.
-            END.
-        ELSE
-        IF  crapmdw.cdhistor = 4  THEN /* Fora Praca */
-            DO:
-                IF  aux_tpdmovto = 2  THEN /* Menor Fora Praca */
-                    ASSIGN tt-cheques.dtlibera = crapmdw.dtlibcom
-                           tt-cheques.vlcompel = tt-cheques.vlcompel + 
-                                                 crapmdw.vlcompel
-                           tt-cheques.nrdocmto = 5
-                           de-menor-fpraca     = de-menor-fpraca +
-                                                 crapmdw.vlcompel.
-                ELSE                       /* Maior Fora Praca */
-                    ASSIGN tt-cheques.dtlibera = crapmdw.dtlibcom
-                           tt-cheques.vlcompel = tt-cheques.vlcompel + 
-                                                 crapmdw.vlcompel
-                           tt-cheques.nrdocmto = 6
-                           de-menor-fpraca     = de-menor-fpraca +
-                                                 crapmdw.vlcompel.
-            END.
+        IF crapmdw.cdhistor = 2433 THEN
+            ASSIGN tt-cheques.nrdocmto = 6
+                   tt-cheques.dtlibera = crapmdw.dtlibcom
+                   tt-cheques.vlcompel = tt-cheques.vlcompel + crapmdw.vlcompel
+                   de-valor = de-valor + crapmdw.vlcompel.
         
         FIND CURRENT tt-cheques NO-LOCK.
         
     END.    
     /* Fim da montagem do Resumo */     
          
-    ASSIGN de-valor = de-valor + 
-                      de-menor-fpraca + de-menor-praca + 
-                      de-maior-fpraca + de-maior-praca.
-
     ASSIGN i-nro-docto = INT(c-docto-salvo)
            p-nro-docto = INT(c-docto-salvo).
     
@@ -4449,18 +4367,16 @@ PROCEDURE atualiza-deposito-com-captura:
 
     /* Cheques praça e fora praça serao dinamicos 
        pela influencia do CAF */
+
     ASSIGN aux_nrsequen = 0.
     
-    /* Cheques menor praça */
-    FOR EACH tt-cheques WHERE tt-cheques.nrdocmto = 3 EXCLUSIVE-LOCK:
-
+    FOR EACH tt-cheques WHERE tt-cheques.nrdocmto = 6 EXCLUSIVE-LOCK:
         /* Sequencial utilizado para separar um lançamento em conta para cada
            data nao ocorrendo duplicidade de chave */
         ASSIGN aux_nrsequen = aux_nrsequen + 1
-               dt-menor-praca = tt-cheques.dtlibera
-               c-docto = c-docto-salvo + 
-                         STRING(aux_nrsequen,"99") + 
-                         STRING(tt-cheques.nrdocmto)
+               c-docto = c-docto-salvo + /* TIME atribuído anteriormente */
+                         STRING(aux_nrsequen,"99") + /* sequenciaL para cada data de liberaçao */
+                         STRING(tt-cheques.nrdocmto) /* será sempre 6 */
                /* numero de sequencia sera utilizado para identificar cada
                   cheque(crapchd) do lancamento total da data */
                tt-cheques.nrsequen = aux_nrsequen.
@@ -4522,7 +4438,7 @@ PROCEDURE atualiza-deposito-com-captura:
                craplcm.nrdconta = aux_nrdconta
                craplcm.nrdocmto = INT(c-docto)
                craplcm.vllanmto = tt-cheques.vlcompel
-               craplcm.cdhistor = 3
+              craplcm.cdhistor = 2433
                craplcm.nrseqdig = craplot.nrseqdig + 1
                craplcm.nrdctabb = p-nro-conta
                craplcm.nrautdoc = p-ult-sequencia
@@ -4537,15 +4453,13 @@ PROCEDURE atualiza-deposito-com-captura:
         ASSIGN craplot.nrseqdig  = craplot.nrseqdig + 1
                craplot.qtcompln  = craplot.qtcompln + 1
                craplot.qtinfoln  = craplot.qtinfoln + 1
-               craplot.vlcompcr  = craplot.vlcompcr +  
-                                   tt-cheques.vlcompel
-               craplot.vlinfocr  = craplot.vlinfocr +  
-                                   tt-cheques.vlcompel.
+              craplot.vlcompcr  = craplot.vlcompcr + tt-cheques.vlcompel
+              craplot.vlinfocr  = craplot.vlinfocr + tt-cheques.vlcompel.
         CREATE crapdpb.
         ASSIGN crapdpb.cdcooper = crapcop.cdcooper
                crapdpb.nrdconta = aux_nrdconta
                crapdpb.dtliblan = tt-cheques.dtlibera
-               crapdpb.cdhistor = 3
+              crapdpb.cdhistor = 2433
                crapdpb.nrdocmto = INT(c-docto)
                crapdpb.dtmvtolt = crapdat.dtmvtolt
                crapdpb.cdagenci = p-cod-agencia
@@ -4554,328 +4468,9 @@ PROCEDURE atualiza-deposito-com-captura:
                crapdpb.vllanmto = tt-cheques.vlcompel
                crapdpb.inlibera = 1.
         VALIDATE crapdpb.
-    END. /* Fim cheques menor praça */
-
-    ASSIGN aux_nrsequen = 0.
-    
-    /* Cheques maior praça */
-    FOR EACH tt-cheques WHERE tt-cheques.nrdocmto = 4 NO-LOCK:
-
-        /* Sequencial utilizado para separar um lançamento para cada
-           data nao ocorrendo duplicidade de chave */
-        ASSIGN aux_nrsequen = aux_nrsequen + 1
-               dt-maior-praca = tt-cheques.dtlibera
-               c-docto = c-docto-salvo + 
-                         STRING(aux_nrsequen,"99") +
-                         STRING(tt-cheques.nrdocmto)
-               tt-cheques.nrsequen = aux_nrsequen.
-
-        /*--- Verifica se Lancamento ja Existe ---*/
-        FIND FIRST craplcm WHERE
-                   craplcm.cdcooper = crapcop.cdcooper    AND
-                   craplcm.dtmvtolt = crapdat.dtmvtolt    AND
-                   craplcm.cdagenci = p-cod-agencia       AND
-                   craplcm.cdbccxlt = 11                  AND
-                   craplcm.nrdolote = i-nro-lote          AND
-                   craplcm.nrseqdig = craplot.nrseqdig + 1 
-                   USE-INDEX craplcm3 NO-LOCK NO-ERROR.
-       
-        IF   AVAIL craplcm   THEN 
-             DO:
-                 ASSIGN i-cod-erro  = 0
-                        c-desc-erro = "Lancamento  ja existente".
-                 RUN cria-erro (INPUT p-cooper,
-                                INPUT p-cod-agencia,
-                                INPUT p-nro-caixa,
-                                INPUT i-cod-erro,
-                                INPUT c-desc-erro,
-                                INPUT YES).
-                 RETURN "NOK".
-             END.
-       
-        FIND FIRST craplcm WHERE
-                   craplcm.cdcooper = crapcop.cdcooper    AND
-                   craplcm.dtmvtolt = crapdat.dtmvtolt    AND
-                   craplcm.cdagenci = p-cod-agencia       AND
-                   craplcm.cdbccxlt = 11                  AND
-                   craplcm.nrdolote = i-nro-lote          AND
-                   craplcm.nrdctabb = p-nro-conta         AND
-                   craplcm.nrdocmto = inte(c-docto) 
-                   USE-INDEX craplcm1 NO-LOCK NO-ERROR.
-       
-        IF   AVAIL craplcm   THEN 
-             DO:
-                 ASSIGN i-cod-erro  = 0
-                        c-desc-erro = 
-                              "Lancamento(Primario) ja existente".
-                 RUN cria-erro (INPUT p-cooper,
-                                INPUT p-cod-agencia,
-                                INPUT p-nro-caixa,
-                                INPUT i-cod-erro,
-                                INPUT c-desc-erro,
-                                INPUT YES).
-                 RETURN "NOK".
-             END.
-                      
-        CREATE craplcm.
-        ASSIGN craplcm.cdcooper = crapcop.cdcooper
-               craplcm.dtmvtolt = crapdat.dtmvtolt
-               craplcm.cdagenci = p-cod-agencia
-               craplcm.cdbccxlt = 11
-               craplcm.nrdolote = i-nro-lote
-               craplcm.dsidenti = p-identifica
-               craplcm.nrdconta = aux_nrdconta
-               craplcm.nrdocmto = inte(c-docto)
-               craplcm.vllanmto = tt-cheques.vlcompel
-               craplcm.cdhistor = 3
-               craplcm.nrseqdig = craplot.nrseqdig + 1
-               craplcm.nrdctabb = p-nro-conta
-               craplcm.nrautdoc = p-ult-sequencia
-               craplcm.cdpesqbb = "CRAP51"
-               craplcm.nrdctitg = glb_dsdctitg
-               
-               /* Guarda o sequencial usado no lancamento */
-               tt-cheques.nrseqlcm = craplcm.nrseqdig.       
-      
-        VALIDATE craplcm.
-
-        ASSIGN craplot.nrseqdig  = craplot.nrseqdig + 1
-               craplot.qtcompln  = craplot.qtcompln + 1
-               craplot.qtinfoln  = craplot.qtinfoln + 1
-               craplot.vlcompcr  = craplot.vlcompcr + 
-                                   tt-cheques.vlcompel
-               craplot.vlinfocr  = craplot.vlinfocr +  
-                                   tt-cheques.vlcompel.
-        CREATE crapdpb.
-        ASSIGN crapdpb.cdcooper = crapcop.cdcooper
-               crapdpb.nrdconta = aux_nrdconta
-               crapdpb.dtliblan = tt-cheques.dtlibera
-               crapdpb.cdhistor = 3
-               crapdpb.nrdocmto = inte(c-docto)
-               crapdpb.dtmvtolt = crapdat.dtmvtolt
-               crapdpb.cdagenci = p-cod-agencia
-               crapdpb.cdbccxlt = 11
-               crapdpb.nrdolote = i-nro-lote
-               crapdpb.vllanmto = tt-cheques.vlcompel
-               crapdpb.inlibera = 1.
-        VALIDATE crapdpb.
                 
-    END. /* fim cheques maior praça */
-
-    ASSIGN aux_nrsequen = 0.
-    
-    /* Cheques menor fora praça */
-    FOR EACH tt-cheques WHERE tt-cheques.nrdocmto = 5 NO-LOCK:
-
-        /* Sequencial utilizado para separar um lançamento para cada
-           data nao ocorrendo duplicidade de chave */
-        ASSIGN aux_nrsequen = aux_nrsequen + 1
-               dt-menor-fpraca = tt-cheques.dtlibera
-               c-docto = c-docto-salvo + 
-                         STRING(aux_nrsequen,"99") +
-                         STRING(tt-cheques.nrdocmto)
-               tt-cheques.nrsequen = aux_nrsequen.
-
-        /*--- Verifica se Lancamento ja Existe ---*/
-        FIND FIRST craplcm WHERE
-                   craplcm.cdcooper = crapcop.cdcooper    AND
-                   craplcm.dtmvtolt = crapdat.dtmvtolt    AND
-                   craplcm.cdagenci = p-cod-agencia       AND
-                   craplcm.cdbccxlt = 11                  AND
-                   craplcm.nrdolote = i-nro-lote          AND
-                   craplcm.nrseqdig = craplot.nrseqdig + 1 
-                   USE-INDEX craplcm3 NO-LOCK NO-ERROR.
-       
-        IF   AVAIL craplcm   THEN 
-             DO:
-                 ASSIGN i-cod-erro  = 0
-                        c-desc-erro = "Lancamento  ja existente".
-                 RUN cria-erro (INPUT p-cooper,
-                                INPUT p-cod-agencia,
-                                INPUT p-nro-caixa,
-                                INPUT i-cod-erro,
-                                INPUT c-desc-erro,
-                                INPUT YES).
-                 RETURN "NOK".
              END.
        
-        FIND FIRST craplcm WHERE
-                   craplcm.cdcooper = crapcop.cdcooper    AND
-                   craplcm.dtmvtolt = crapdat.dtmvtolt    AND
-                   craplcm.cdagenci = p-cod-agencia       AND
-                   craplcm.cdbccxlt = 11                  AND
-                   craplcm.nrdolote = i-nro-lote          AND
-                   craplcm.nrdctabb = p-nro-conta         AND
-                   craplcm.nrdocmto = INT(c-docto) 
-                   USE-INDEX craplcm1 NO-LOCK NO-ERROR.
-       
-        IF   AVAIL craplcm   THEN 
-             DO:
-                 ASSIGN i-cod-erro  = 0
-                        c-desc-erro = 
-                              "Lancamento(Primario) ja existente".
-                 RUN cria-erro (INPUT p-cooper,
-                                INPUT p-cod-agencia,
-                                INPUT p-nro-caixa,
-                                INPUT i-cod-erro,
-                                INPUT c-desc-erro,
-                                INPUT YES).
-                 RETURN "NOK".
-             END.
-        /*----------------------------------------------------*/
-                      
-        CREATE craplcm.
-        ASSIGN craplcm.cdcooper = crapcop.cdcooper
-               craplcm.dtmvtolt = crapdat.dtmvtolt
-               craplcm.cdagenci = p-cod-agencia
-               craplcm.cdbccxlt = 11
-               craplcm.nrdolote = i-nro-lote
-               craplcm.dsidenti = p-identifica
-               craplcm.nrdconta = aux_nrdconta
-               craplcm.nrdocmto = INT(c-docto)
-               craplcm.vllanmto = tt-cheques.vlcompel
-               craplcm.cdhistor = 4
-               craplcm.nrseqdig = craplot.nrseqdig + 1
-               craplcm.nrdctabb = p-nro-conta
-               craplcm.nrautdoc = p-ult-sequencia
-               craplcm.cdpesqbb = "CRAP51"
-               craplcm.nrdctitg = glb_dsdctitg
-               
-               /* Guarda o sequencial usado no lancamento */
-               tt-cheques.nrseqlcm = craplcm.nrseqdig.
-       
-        VALIDATE craplcm.
-
-        ASSIGN craplot.nrseqdig  = craplot.nrseqdig + 1
-               craplot.qtcompln  = craplot.qtcompln + 1
-               craplot.qtinfoln  = craplot.qtinfoln + 1
-               craplot.vlcompcr  = craplot.vlcompcr +  
-                                   tt-cheques.vlcompel
-               craplot.vlinfocr  = craplot.vlinfocr +  
-                                   tt-cheques.vlcompel.
-       
-        CREATE crapdpb.
-        ASSIGN crapdpb.cdcooper = crapcop.cdcooper
-               crapdpb.nrdconta = aux_nrdconta
-               crapdpb.dtliblan = tt-cheques.dtlibera
-               crapdpb.cdhistor = 4
-               crapdpb.nrdocmto = inte(c-docto)
-               crapdpb.dtmvtolt = crapdat.dtmvtolt
-               crapdpb.cdagenci = p-cod-agencia
-               crapdpb.cdbccxlt = 11
-               crapdpb.nrdolote = i-nro-lote
-               crapdpb.vllanmto = tt-cheques.vlcompel
-               crapdpb.inlibera = 1.
-        VALIDATE crapdpb.
-
-    END. /* fim dos cheques menor fora praça */
-    
-    ASSIGN aux_nrsequen = 0.
-    
-    /* Cheques menor fora praça */
-    FOR EACH tt-cheques WHERE tt-cheques.nrdocmto = 6 NO-LOCK:
-
-        /* Sequencial utilizado para separar um lançamento para cada
-           data nao ocorrendo duplicidade de chave */
-        ASSIGN aux_nrsequen = aux_nrsequen + 1
-               dt-menor-fpraca = tt-cheques.dtlibera
-               c-docto = c-docto-salvo + 
-                         STRING(aux_nrsequen,"99") +
-                         STRING(tt-cheques.nrdocmto)
-               tt-cheques.nrsequen = aux_nrsequen.
-
-       /*--- Verifica se Lancamento ja Existe ---*/
-       FIND FIRST craplcm WHERE
-                  craplcm.cdcooper = crapcop.cdcooper    AND
-                  craplcm.dtmvtolt = crapdat.dtmvtolt    AND
-                  craplcm.cdagenci = p-cod-agencia       AND
-                  craplcm.cdbccxlt = 11                  AND
-                  craplcm.nrdolote = i-nro-lote          AND
-                  craplcm.nrseqdig = craplot.nrseqdig + 1 
-                  USE-INDEX craplcm3 NO-LOCK NO-ERROR.
-
-       IF   AVAIL craplcm   THEN 
-            DO:
-                ASSIGN i-cod-erro  = 0
-                       c-desc-erro = "Lancamento  ja existente".
-                RUN cria-erro (INPUT p-cooper,
-                               INPUT p-cod-agencia,
-                               INPUT p-nro-caixa,
-                               INPUT i-cod-erro,
-                               INPUT c-desc-erro,
-                               INPUT YES).
-                RETURN "NOK".
-            END.
-
-       FIND FIRST craplcm WHERE
-                  craplcm.cdcooper = crapcop.cdcooper    AND
-                  craplcm.dtmvtolt = crapdat.dtmvtolt    AND
-                  craplcm.cdagenci = p-cod-agencia       AND
-                  craplcm.cdbccxlt = 11                  AND
-                  craplcm.nrdolote = i-nro-lote          AND
-                  craplcm.nrdctabb = p-nro-conta         AND
-                  craplcm.nrdocmto = inte(c-docto) 
-                  USE-INDEX craplcm1 NO-LOCK NO-ERROR.
-
-       IF   AVAIL craplcm   THEN 
-            DO:
-                ASSIGN i-cod-erro  = 0
-                       c-desc-erro = 
-                             "Lancamento(Primario) ja existente".
-                RUN cria-erro (INPUT p-cooper,
-                               INPUT p-cod-agencia,
-                               INPUT p-nro-caixa,
-                               INPUT i-cod-erro,
-                               INPUT c-desc-erro,
-                               INPUT YES).
-                RETURN "NOK".
-            END.
-       /*----------------------------------------------------*/
-                     
-       CREATE craplcm.
-       ASSIGN craplcm.cdcooper = crapcop.cdcooper
-              craplcm.dtmvtolt = crapdat.dtmvtolt
-              craplcm.cdagenci = p-cod-agencia
-              craplcm.cdbccxlt = 11
-              craplcm.nrdolote = i-nro-lote
-              craplcm.dsidenti = p-identifica
-              craplcm.nrdconta = aux_nrdconta
-              craplcm.nrdocmto = INT(c-docto)
-              craplcm.vllanmto = tt-cheques.vlcompel
-              craplcm.cdhistor = 4
-              craplcm.nrseqdig = craplot.nrseqdig + 1
-              craplcm.nrdctabb = p-nro-conta
-              craplcm.nrautdoc = p-ult-sequencia
-              craplcm.cdpesqbb = "CRAP51"
-              craplcm.nrdctitg = glb_dsdctitg
-              
-              /* Guarda o sequencial usado no lancamento */
-              tt-cheques.nrseqlcm = craplcm.nrseqdig.
-       VALIDATE craplcm.
-
-       ASSIGN craplot.nrseqdig  = craplot.nrseqdig + 1
-              craplot.qtcompln  = craplot.qtcompln + 1
-              craplot.qtinfoln  = craplot.qtinfoln + 1
-              craplot.vlcompcr  = craplot.vlcompcr +  
-                                  tt-cheques.vlcompel
-              craplot.vlinfocr  = craplot.vlinfocr +  
-                                  tt-cheques.vlcompel.
-       CREATE crapdpb.
-       ASSIGN crapdpb.cdcooper = crapcop.cdcooper
-              crapdpb.nrdconta = aux_nrdconta
-              crapdpb.dtliblan = tt-cheques.dtlibera
-              crapdpb.cdhistor = 4
-              crapdpb.nrdocmto = INT(c-docto)
-              crapdpb.dtmvtolt = crapdat.dtmvtolt
-              crapdpb.cdagenci = p-cod-agencia
-              crapdpb.cdbccxlt = 11
-              crapdpb.nrdolote = i-nro-lote
-              crapdpb.vllanmto = tt-cheques.vlcompel
-              crapdpb.inlibera = 1.
-       VALIDATE crapdpb.
-
-    END. /* fim dos cheques menor fora praça */
-    
     FOR EACH crapmdw WHERE crapmdw.cdcooper = crapcop.cdcooper  AND
                            crapmdw.cdagenci = p-cod-agencia     AND
                            crapmdw.nrdcaixa = p-nro-caixa       NO-LOCK:
@@ -4915,33 +4510,8 @@ PROCEDURE atualiza-deposito-com-captura:
                               tt-cheques.nrdocmto = crapmdw.nrdocmto
                               NO-LOCK NO-ERROR.
 
-        IF   crapmdw.cdhistor = 3   THEN 
-             DO:   /* Praca  menor */
-                 IF   crapmdw.tpdmovto = 2   THEN
-                      ASSIGN i-nrdocmto = 
-                             INTEGER(c-docto-salvo + 
-                                     STRING(tt-cheques.nrsequen,"99") + 
-                                     "3").
-                 ELSE
-                     ASSIGN i-nrdocmto = 
-                            INTEGER(c-docto-salvo + 
-                                    STRING(tt-cheques.nrsequen,"99") + 
-                                    "4").
-             END.
-        ELSE
-        IF   crapmdw.cdhistor = 4   THEN 
-             DO:     /* Fora Praca menor */
-                 IF   crapmdw.tpdmovto = 2   THEN
-                     ASSIGN i-nrdocmto = 
-                            INTEGER(c-docto-salvo + 
-                                    STRING(tt-cheques.nrsequen,"99") + 
-                                    "5").
-                 ELSE
-                     ASSIGN i-nrdocmto = 
-                            INTEGER(c-docto-salvo + 
-                                    STRING(tt-cheques.nrsequen,"99") + 
-                                    "6").
-             END.
+        IF crapmdw.cdhistor = 2433 THEN
+           ASSIGN i-nrdocmto = INTEGER(c-docto-salvo + STRING(tt-cheques.nrsequen,"99") + "6").
 
         CREATE crapchd.
         ASSIGN crapchd.cdcooper = crapcop.cdcooper
@@ -5240,53 +4810,14 @@ PROCEDURE atualiza-deposito-com-captura:
          ASSIGN p-literal-autentica = p-literal-autentica + 
                                       STRING(c-literal[17],"x(48)").
     
-    FOR EACH tt-cheques NO-LOCK:
-    
-        IF  tt-cheques.nrdocmto = 3  THEN
-        DO:
-            ASSIGN p-literal-autentica = 
-                                p-literal-autentica + 
-                         STRING("CHEQ.PRACA MENOR...: " +
+    FOR EACH tt-cheques WHERE tt-cheques.nrdocmto = 6 NO-LOCK:
+        ASSIGN p-literal-autentica = p-literal-autentica +
+                     STRING("CHEQ. OUTROS BANCOS: " +
                                 STRING(tt-cheques.vlcompel,"ZZZ,ZZZ,ZZ9.99") +
-                                "   " +
+                            " " +
                                 STRING(tt-cheques.dtlibera,"99/99/9999"),
                                 "x(48)").
         END.
-        ELSE
-        IF  tt-cheques.nrdocmto = 4  THEN
-        DO:
-            ASSIGN p-literal-autentica = 
-                                p-literal-autentica + 
-                         STRING("CHEQ.PRACA MAIOR...: " +
-                                STRING(tt-cheques.vlcompel,"ZZZ,ZZZ,ZZ9.99") +
-                                "   " +
-                                STRING(tt-cheques.dtlibera,"99/99/9999"),
-                                "x(48)").
-
-        END.
-        ELSE
-        IF  tt-cheques.nrdocmto = 5  THEN
-        DO:
-            ASSIGN p-literal-autentica = 
-                                p-literal-autentica + 
-                         STRING("CHEQ.F.PRACA MENOR.: " +
-                                STRING(tt-cheques.vlcompel,"ZZZ,ZZZ,ZZ9.99") +
-                                "   " +
-                                STRING(tt-cheques.dtlibera,"99/99/9999"),
-                                "x(48)").
-        END.
-        ELSE
-        IF  tt-cheques.nrdocmto = 6  THEN
-        DO:
-            ASSIGN p-literal-autentica = 
-                                p-literal-autentica + 
-                         STRING("CHEQ.F.PRACA MAIOR.: " +
-                                STRING(tt-cheques.vlcompel,"ZZZ,ZZZ,ZZ9.99") +
-                                "   " +
-                                STRING(tt-cheques.dtlibera,"99/99/9999"),
-                                "x(48)").
-        END.
-    END.
 
     ASSIGN c-literal[30] = centraliza("SAC - " + STRING(crapcop.nrtelsac),48)
            c-literal[31] = centraliza("Atendimento todos os dias das " + REPLACE(REPLACE(STRING(crapcop.hrinisac,"HH:MM"),':','h'),'h00','h') + " as " + REPLACE(REPLACE(STRING(crapcop.hrfimsac,"HH:MM"),':','h'),'h00','h'),48)
@@ -5636,51 +5167,17 @@ PROCEDURE atualiza-deposito-com-captura-migrado:
         ELSE
             ASSIGN  aux_tpdmovto = 1.                
         
-        IF  crapmdw.cdhistor = 3  THEN /* Praca */
-            DO:
-                IF  aux_tpdmovto = 2  THEN /* Menor Praca */
-                    ASSIGN tt-cheques.dtlibera = crapmdw.dtlibcom
-                           tt-cheques.vlcompel = tt-cheques.vlcompel + 
-                                                 crapmdw.vlcompel
-                           tt-cheques.nrdocmto = 3
-                           de-menor-praca      = de-menor-praca +
-                                                 crapmdw.vlcompel.
-                ELSE                       /* Maior Praca */
-                    ASSIGN tt-cheques.dtlibera = crapmdw.dtlibcom
-                           tt-cheques.vlcompel = tt-cheques.vlcompel +
-                                                 crapmdw.vlcompel
-                           tt-cheques.nrdocmto = 4
-                           de-maior-praca      = de-maior-praca +
-                                                 crapmdw.vlcompel.
-            END.
-        ELSE
-        IF  crapmdw.cdhistor = 4  THEN /* Fora Praca */
-            DO:
-                IF  aux_tpdmovto = 2  THEN /* Menor Fora Praca */
-                    ASSIGN tt-cheques.dtlibera = crapmdw.dtlibcom
-                           tt-cheques.vlcompel = tt-cheques.vlcompel + 
-                                                 crapmdw.vlcompel
-                           tt-cheques.nrdocmto = 5
-                           de-menor-fpraca     = de-menor-fpraca +
-                                                 crapmdw.vlcompel.
-                ELSE                       /* Maior Fora Praca */
-                    ASSIGN tt-cheques.dtlibera = crapmdw.dtlibcom
-                           tt-cheques.vlcompel = tt-cheques.vlcompel + 
-                                                 crapmdw.vlcompel
-                           tt-cheques.nrdocmto = 6
-                           de-menor-fpraca     = de-menor-fpraca +
-                                                 crapmdw.vlcompel.
-            END.
+        IF  crapmdw.cdhistor = 2433  THEN
+            ASSIGN tt-cheques.nrdocmto = 6
+                   tt-cheques.dtlibera = crapmdw.dtlibcom
+                   tt-cheques.vlcompel = tt-cheques.vlcompel + crapmdw.vlcompel
+                   de-valor = de-valor + crapmdw.vlcompel.
         
         FIND CURRENT tt-cheques NO-LOCK.
         
     END.    
     /* Fim da montagem do Resumo */     
          
-    ASSIGN de-valor = de-valor + 
-                      de-menor-fpraca + de-menor-praca + 
-                      de-maior-fpraca + de-maior-praca.
-
     ASSIGN i-nro-docto = INT(c-docto-salvo)
            p-nro-docto = INT(c-docto-salvo).
     
@@ -5940,16 +5437,14 @@ PROCEDURE atualiza-deposito-com-captura-migrado:
        pela influencia do CAF */
     ASSIGN aux_nrsequen = 0.
     
-    /* Cheques menor praça */
-    FOR EACH tt-cheques WHERE tt-cheques.nrdocmto = 3 EXCLUSIVE-LOCK:
+    FOR EACH tt-cheques WHERE tt-cheques.nrdocmto = 6 EXCLUSIVE-LOCK:
 
         /* Sequencial utilizado para separar um lançamento em conta para cada
            data nao ocorrendo duplicidade de chave */
         ASSIGN aux_nrsequen = aux_nrsequen + 1
-               dt-menor-praca = tt-cheques.dtlibera
-               c-docto = c-docto-salvo + 
-                         STRING(aux_nrsequen,"99") + 
-                         STRING(tt-cheques.nrdocmto)
+               c-docto = c-docto-salvo + /* TIME atribuído anteriormente */
+                         STRING(aux_nrsequen,"99") + /* sequenciaL para cada data de liberaçao */
+                         STRING(tt-cheques.nrdocmto) /* será sempre 6 */
                /* numero de sequencia sera utilizado para identificar cada
                   cheque(crapchd) do lancamento total da data */
                tt-cheques.nrsequen = aux_nrsequen.
@@ -6012,7 +5507,7 @@ PROCEDURE atualiza-deposito-com-captura-migrado:
                craplcm.nrdconta = aux_nrdconta
                craplcm.nrdocmto = INT(c-docto)
                craplcm.vllanmto = tt-cheques.vlcompel
-               craplcm.cdhistor = 3
+              craplcm.cdhistor = 2433
                craplcm.nrseqdig = craplot.nrseqdig + 1
                craplcm.nrdctabb = p-nro-conta
                craplcm.nrautdoc = p-ult-sequencia
@@ -6034,7 +5529,7 @@ PROCEDURE atualiza-deposito-com-captura-migrado:
         ASSIGN crapdpb.cdcooper = crapcop.cdcooper
                crapdpb.nrdconta = aux_nrdconta
                crapdpb.dtliblan = tt-cheques.dtlibera
-               crapdpb.cdhistor = 3
+              crapdpb.cdhistor = 2433
                crapdpb.nrdocmto = INT(c-docto)
                crapdpb.dtmvtolt = crapdat.dtmvtolt
                crapdpb.cdagenci = p-cod-agencia
@@ -6043,327 +5538,10 @@ PROCEDURE atualiza-deposito-com-captura-migrado:
                crapdpb.vllanmto = tt-cheques.vlcompel
                crapdpb.inlibera = 1.
         VALIDATE crapdpb.
-    END. /* Fim cheques menor praça */
-
-    ASSIGN aux_nrsequen = 0.
-    
-    /* Cheques maior praça */
-    FOR EACH tt-cheques WHERE tt-cheques.nrdocmto = 4 NO-LOCK:
-
-        /* Sequencial utilizado para separar um lançamento para cada
-           data nao ocorrendo duplicidade de chave */
-        ASSIGN aux_nrsequen = aux_nrsequen + 1
-               dt-maior-praca = tt-cheques.dtlibera
-               c-docto = c-docto-salvo + 
-                         STRING(aux_nrsequen,"99") +
-                         STRING(tt-cheques.nrdocmto)
-               tt-cheques.nrsequen = aux_nrsequen.
-
-        /*--- Verifica se Lancamento ja Existe ---*/
-        FIND FIRST craplcm WHERE
-                   craplcm.cdcooper = crapcop.cdcooper    AND
-                   craplcm.dtmvtolt = crapdat.dtmvtolt    AND
-                   craplcm.cdagenci = p-cod-agencia       AND
-                   craplcm.cdbccxlt = 11                  AND
-                   craplcm.nrdolote = i-nro-lote          AND
-                   craplcm.nrseqdig = craplot.nrseqdig + 1 
-                   USE-INDEX craplcm3 NO-LOCK NO-ERROR.
        
-        IF   AVAIL craplcm   THEN 
-             DO:
-                 ASSIGN i-cod-erro  = 0
-                        c-desc-erro = "Lancamento  ja existente".
-                 RUN cria-erro (INPUT p-cooper,
-                                INPUT p-cod-agencia,
-                                INPUT p-nro-caixa,
-                                INPUT i-cod-erro,
-                                INPUT c-desc-erro,
-                                INPUT YES).
-                 RETURN "NOK".
-             END.
-       
-        FIND FIRST craplcm WHERE
-                   craplcm.cdcooper = crapcop.cdcooper    AND
-                   craplcm.dtmvtolt = crapdat.dtmvtolt    AND
-                   craplcm.cdagenci = p-cod-agencia       AND
-                   craplcm.cdbccxlt = 11                  AND
-                   craplcm.nrdolote = i-nro-lote          AND
-                   craplcm.nrdctabb = p-nro-conta         AND
-                   craplcm.nrdocmto = inte(c-docto) 
-                   USE-INDEX craplcm1 NO-LOCK NO-ERROR.
-       
-        IF   AVAIL craplcm   THEN 
-             DO:
-                 ASSIGN i-cod-erro  = 0
-                        c-desc-erro = 
-                              "Lancamento(Primario) ja existente".
-                 RUN cria-erro (INPUT p-cooper,
-                                INPUT p-cod-agencia,
-                                INPUT p-nro-caixa,
-                                INPUT i-cod-erro,
-                                INPUT c-desc-erro,
-                                INPUT YES).
-                 RETURN "NOK".
              END.
         
-        CREATE craplcm.
-        ASSIGN craplcm.cdcooper = crapcop.cdcooper
-               craplcm.dtmvtolt = crapdat.dtmvtolt
-               craplcm.cdagenci = p-cod-agencia
-               craplcm.cdbccxlt = 11
-               craplcm.nrdolote = i-nro-lote
-               craplcm.dsidenti = p-identifica
-               craplcm.nrdconta = aux_nrdconta
-               craplcm.nrdocmto = inte(c-docto)
-               craplcm.vllanmto = tt-cheques.vlcompel
-               craplcm.cdhistor = 3
-               craplcm.nrseqdig = craplot.nrseqdig + 1
-               craplcm.nrdctabb = p-nro-conta
-               craplcm.nrautdoc = p-ult-sequencia
-               craplcm.cdpesqbb = "CRAP51"
-               craplcm.nrdctitg = glb_dsdctitg
-               
-               /* Guarda o sequencial usado no lancamento */
-               tt-cheques.nrseqlcm = craplcm.nrseqdig.       
-        VALIDATE craplcm.
 
-        ASSIGN craplot.nrseqdig  = craplot.nrseqdig + 1
-               craplot.qtcompln  = craplot.qtcompln + 1
-               craplot.qtinfoln  = craplot.qtinfoln + 1
-               craplot.vlcompcr  = craplot.vlcompcr + 
-                                   tt-cheques.vlcompel
-               craplot.vlinfocr  = craplot.vlinfocr +  
-                                   tt-cheques.vlcompel.
-        CREATE crapdpb.
-        ASSIGN crapdpb.cdcooper = crapcop.cdcooper
-               crapdpb.nrdconta = aux_nrdconta
-               crapdpb.dtliblan = tt-cheques.dtlibera
-               crapdpb.cdhistor = 3
-               crapdpb.nrdocmto = inte(c-docto)
-               crapdpb.dtmvtolt = crapdat.dtmvtolt
-               crapdpb.cdagenci = p-cod-agencia
-               crapdpb.cdbccxlt = 11
-               crapdpb.nrdolote = i-nro-lote
-               crapdpb.vllanmto = tt-cheques.vlcompel
-               crapdpb.inlibera = 1.
-       
-        VALIDATE crapdpb.        
-    END. /* fim cheques maior praça */
-
-    ASSIGN aux_nrsequen = 0.
-    
-    /* Cheques menor fora praça */
-    FOR EACH tt-cheques WHERE tt-cheques.nrdocmto = 5 NO-LOCK:
-
-        /* Sequencial utilizado para separar um lançamento para cada
-           data nao ocorrendo duplicidade de chave */
-        ASSIGN aux_nrsequen = aux_nrsequen + 1
-               dt-menor-fpraca = tt-cheques.dtlibera
-               c-docto = c-docto-salvo + 
-                         STRING(aux_nrsequen,"99") +
-                         STRING(tt-cheques.nrdocmto)
-               tt-cheques.nrsequen = aux_nrsequen.
-
-        /*--- Verifica se Lancamento ja Existe ---*/
-        FIND FIRST craplcm WHERE
-                   craplcm.cdcooper = crapcop.cdcooper    AND
-                   craplcm.dtmvtolt = crapdat.dtmvtolt    AND
-                   craplcm.cdagenci = p-cod-agencia       AND
-                   craplcm.cdbccxlt = 11                  AND
-                   craplcm.nrdolote = i-nro-lote          AND
-                   craplcm.nrseqdig = craplot.nrseqdig + 1 
-                   USE-INDEX craplcm3 NO-LOCK NO-ERROR.
-       
-        IF   AVAIL craplcm   THEN 
-             DO:
-                 ASSIGN i-cod-erro  = 0
-                        c-desc-erro = "Lancamento  ja existente".
-                 RUN cria-erro (INPUT p-cooper,
-                                INPUT p-cod-agencia,
-                                INPUT p-nro-caixa,
-                                INPUT i-cod-erro,
-                                INPUT c-desc-erro,
-                                INPUT YES).
-                 RETURN "NOK".
-             END.
-       
-        FIND FIRST craplcm WHERE
-                   craplcm.cdcooper = crapcop.cdcooper    AND
-                   craplcm.dtmvtolt = crapdat.dtmvtolt    AND
-                   craplcm.cdagenci = p-cod-agencia       AND
-                   craplcm.cdbccxlt = 11                  AND
-                   craplcm.nrdolote = i-nro-lote          AND
-                   craplcm.nrdctabb = p-nro-conta         AND
-                   craplcm.nrdocmto = INT(c-docto) 
-                   USE-INDEX craplcm1 NO-LOCK NO-ERROR.
-       
-        IF   AVAIL craplcm   THEN 
-             DO:
-                 ASSIGN i-cod-erro  = 0
-                        c-desc-erro = 
-                              "Lancamento(Primario) ja existente".
-                 RUN cria-erro (INPUT p-cooper,
-                                INPUT p-cod-agencia,
-                                INPUT p-nro-caixa,
-                                INPUT i-cod-erro,
-                                INPUT c-desc-erro,
-                                INPUT YES).
-                 RETURN "NOK".
-             END.
-        /*----------------------------------------------------*/
-        
-        CREATE craplcm.
-        ASSIGN craplcm.cdcooper = crapcop.cdcooper
-               craplcm.dtmvtolt = crapdat.dtmvtolt
-               craplcm.cdagenci = p-cod-agencia
-               craplcm.cdbccxlt = 11
-               craplcm.nrdolote = i-nro-lote
-               craplcm.dsidenti = p-identifica
-               craplcm.nrdconta = aux_nrdconta
-               craplcm.nrdocmto = INT(c-docto)
-               craplcm.vllanmto = tt-cheques.vlcompel
-               craplcm.cdhistor = 4
-               craplcm.nrseqdig = craplot.nrseqdig + 1
-               craplcm.nrdctabb = p-nro-conta
-               craplcm.nrautdoc = p-ult-sequencia
-               craplcm.cdpesqbb = "CRAP51"
-               craplcm.nrdctitg = glb_dsdctitg
-               
-               /* Guarda o sequencial usado no lancamento */
-               tt-cheques.nrseqlcm = craplcm.nrseqdig.
-        VALIDATE craplcm.
-
-        ASSIGN craplot.nrseqdig  = craplot.nrseqdig + 1
-               craplot.qtcompln  = craplot.qtcompln + 1
-               craplot.qtinfoln  = craplot.qtinfoln + 1
-               craplot.vlcompcr  = craplot.vlcompcr +  
-                                   tt-cheques.vlcompel
-               craplot.vlinfocr  = craplot.vlinfocr +  
-                                   tt-cheques.vlcompel.
-       
-        CREATE crapdpb.
-        ASSIGN crapdpb.cdcooper = crapcop.cdcooper
-               crapdpb.nrdconta = aux_nrdconta
-               crapdpb.dtliblan = tt-cheques.dtlibera
-               crapdpb.cdhistor = 4
-               crapdpb.nrdocmto = inte(c-docto)
-               crapdpb.dtmvtolt = crapdat.dtmvtolt
-               crapdpb.cdagenci = p-cod-agencia
-               crapdpb.cdbccxlt = 11
-               crapdpb.nrdolote = i-nro-lote
-               crapdpb.vllanmto = tt-cheques.vlcompel
-               crapdpb.inlibera = 1.
-        VALIDATE crapdpb.
-
-    END. /* fim dos cheques menor fora praça */
-    
-    ASSIGN aux_nrsequen = 0.
-    
-    /* Cheques menor fora praça */
-    FOR EACH tt-cheques WHERE tt-cheques.nrdocmto = 6 NO-LOCK:
-
-        /* Sequencial utilizado para separar um lançamento para cada
-           data nao ocorrendo duplicidade de chave */
-        ASSIGN aux_nrsequen = aux_nrsequen + 1
-               dt-menor-fpraca = tt-cheques.dtlibera
-               c-docto = c-docto-salvo + 
-                         STRING(aux_nrsequen,"99") +
-                         STRING(tt-cheques.nrdocmto)
-               tt-cheques.nrsequen = aux_nrsequen.
-
-       /*--- Verifica se Lancamento ja Existe ---*/
-       FIND FIRST craplcm WHERE
-                  craplcm.cdcooper = crapcop.cdcooper    AND
-                  craplcm.dtmvtolt = crapdat.dtmvtolt    AND
-                  craplcm.cdagenci = p-cod-agencia       AND
-                  craplcm.cdbccxlt = 11                  AND
-                  craplcm.nrdolote = i-nro-lote          AND
-                  craplcm.nrseqdig = craplot.nrseqdig + 1 
-                  USE-INDEX craplcm3 NO-LOCK NO-ERROR.
-
-       IF   AVAIL craplcm   THEN 
-            DO:
-                ASSIGN i-cod-erro  = 0
-                       c-desc-erro = "Lancamento  ja existente".
-                RUN cria-erro (INPUT p-cooper,
-                               INPUT p-cod-agencia,
-                               INPUT p-nro-caixa,
-                               INPUT i-cod-erro,
-                               INPUT c-desc-erro,
-                               INPUT YES).
-                RETURN "NOK".
-            END.
-
-       FIND FIRST craplcm WHERE
-                  craplcm.cdcooper = crapcop.cdcooper    AND
-                  craplcm.dtmvtolt = crapdat.dtmvtolt    AND
-                  craplcm.cdagenci = p-cod-agencia       AND
-                  craplcm.cdbccxlt = 11                  AND
-                  craplcm.nrdolote = i-nro-lote          AND
-                  craplcm.nrdctabb = p-nro-conta         AND
-                  craplcm.nrdocmto = inte(c-docto) 
-                  USE-INDEX craplcm1 NO-LOCK NO-ERROR.
-
-       IF   AVAIL craplcm   THEN 
-            DO:
-                ASSIGN i-cod-erro  = 0
-                       c-desc-erro = 
-                             "Lancamento(Primario) ja existente".
-                RUN cria-erro (INPUT p-cooper,
-                               INPUT p-cod-agencia,
-                               INPUT p-nro-caixa,
-                               INPUT i-cod-erro,
-                               INPUT c-desc-erro,
-                               INPUT YES).
-                RETURN "NOK".
-            END.
-       /*----------------------------------------------------*/
-       
-       CREATE craplcm.
-       ASSIGN craplcm.cdcooper = crapcop.cdcooper
-              craplcm.dtmvtolt = crapdat.dtmvtolt
-              craplcm.cdagenci = p-cod-agencia
-              craplcm.cdbccxlt = 11
-              craplcm.nrdolote = i-nro-lote
-              craplcm.dsidenti = p-identifica
-              craplcm.nrdconta = aux_nrdconta
-              craplcm.nrdocmto = INT(c-docto)
-              craplcm.vllanmto = tt-cheques.vlcompel
-              craplcm.cdhistor = 4
-              craplcm.nrseqdig = craplot.nrseqdig + 1
-              craplcm.nrdctabb = p-nro-conta
-              craplcm.nrautdoc = p-ult-sequencia
-              craplcm.cdpesqbb = "CRAP51"
-              craplcm.nrdctitg = glb_dsdctitg
-              
-              /* Guarda o sequencial usado no lancamento */
-              tt-cheques.nrseqlcm = craplcm.nrseqdig.
-       VALIDATE craplcm.
-
-       ASSIGN craplot.nrseqdig  = craplot.nrseqdig + 1
-              craplot.qtcompln  = craplot.qtcompln + 1
-              craplot.qtinfoln  = craplot.qtinfoln + 1
-              craplot.vlcompcr  = craplot.vlcompcr +  
-                                  tt-cheques.vlcompel
-              craplot.vlinfocr  = craplot.vlinfocr +  
-                                  tt-cheques.vlcompel.
-       CREATE crapdpb.
-       ASSIGN crapdpb.cdcooper = crapcop.cdcooper
-              crapdpb.nrdconta = aux_nrdconta
-              crapdpb.dtliblan = tt-cheques.dtlibera
-              crapdpb.cdhistor = 4
-              crapdpb.nrdocmto = INT(c-docto)
-              crapdpb.dtmvtolt = crapdat.dtmvtolt
-              crapdpb.cdagenci = p-cod-agencia
-              crapdpb.cdbccxlt = 11
-              crapdpb.nrdolote = i-nro-lote
-              crapdpb.vllanmto = tt-cheques.vlcompel
-              crapdpb.inlibera = 1.
-       VALIDATE crapdpb.
-
-    END. /* fim dos cheques menor fora praça */
-    
-    
     FOR EACH crapmdw WHERE crapmdw.cdcooper = crapcop.cdcooper  AND
                            crapmdw.cdagenci = p-cod-agencia     AND
                            crapmdw.nrdcaixa = p-nro-caixa       NO-LOCK:
@@ -6404,33 +5582,8 @@ PROCEDURE atualiza-deposito-com-captura-migrado:
                               tt-cheques.nrdocmto = crapmdw.nrdocmto
                               NO-LOCK NO-ERROR.
 
-        IF   crapmdw.cdhistor = 3   THEN 
-             DO:   /* Praca  menor */
-                 IF   crapmdw.tpdmovto = 2   THEN
-                      ASSIGN i-nrdocmto = 
-                             INTEGER(c-docto-salvo + 
-                                     STRING(tt-cheques.nrsequen,"99") + 
-                                     "3").
-                 ELSE
-                     ASSIGN i-nrdocmto = 
-                            INTEGER(c-docto-salvo + 
-                                    STRING(tt-cheques.nrsequen,"99") + 
-                                    "4").
-             END.
-        ELSE
-        IF   crapmdw.cdhistor = 4   THEN 
-             DO:     /* Fora Praca menor */
-                 IF   crapmdw.tpdmovto = 2   THEN
-                     ASSIGN i-nrdocmto = 
-                            INTEGER(c-docto-salvo + 
-                                    STRING(tt-cheques.nrsequen,"99") + 
-                                    "5").
-                 ELSE
-                     ASSIGN i-nrdocmto = 
-                            INTEGER(c-docto-salvo + 
-                                    STRING(tt-cheques.nrsequen,"99") + 
-                                    "6").
-             END.
+        IF  crapmdw.cdhistor = 2433 THEN 
+            ASSIGN i-nrdocmto = INTEGER(c-docto-salvo + STRING(tt-cheques.nrsequen,"99") + "6").
 
         CREATE crapchd.
         ASSIGN crapchd.cdcooper = crapcop.cdcooper
@@ -6846,52 +5999,15 @@ PROCEDURE atualiza-deposito-com-captura-migrado:
                                       STRING(c-literal[17],"x(48)").
     
     FOR EACH tt-cheques NO-LOCK:
-    
-        IF  tt-cheques.nrdocmto = 3  THEN
-        DO:
+        IF  tt-cheques.nrdocmto = 6 THEN
             ASSIGN p-literal-autentica = 
                                 p-literal-autentica + 
-                         STRING("CHEQ.PRACA MENOR...: " +
+                     STRING("CHEQ. OUTROS BANCOS: " +
                                 STRING(tt-cheques.vlcompel,"ZZZ,ZZZ,ZZ9.99") +
-                                "   " +
+                            " " +
                                 STRING(tt-cheques.dtlibera,"99/99/9999"),
                                 "x(48)").
         END.
-        ELSE
-        IF  tt-cheques.nrdocmto = 4  THEN
-        DO:
-            ASSIGN p-literal-autentica = 
-                                p-literal-autentica + 
-                         STRING("CHEQ.PRACA MAIOR...: " +
-                                STRING(tt-cheques.vlcompel,"ZZZ,ZZZ,ZZ9.99") +
-                                "   " +
-                                STRING(tt-cheques.dtlibera,"99/99/9999"),
-                                "x(48)").
-
-        END.
-        ELSE
-        IF  tt-cheques.nrdocmto = 5  THEN
-        DO:
-            ASSIGN p-literal-autentica = 
-                                p-literal-autentica + 
-                         STRING("CHEQ.F.PRACA MENOR.: " +
-                                STRING(tt-cheques.vlcompel,"ZZZ,ZZZ,ZZ9.99") +
-                                "   " +
-                                STRING(tt-cheques.dtlibera,"99/99/9999"),
-                                "x(48)").
-        END.
-        ELSE
-        IF  tt-cheques.nrdocmto = 6  THEN
-        DO:
-            ASSIGN p-literal-autentica = 
-                                p-literal-autentica + 
-                         STRING("CHEQ.F.PRACA MAIOR.: " +
-                                STRING(tt-cheques.vlcompel,"ZZZ,ZZZ,ZZ9.99") +
-                                "   " +
-                                STRING(tt-cheques.dtlibera,"99/99/9999"),
-                                "x(48)").
-        END.
-    END.
 
 
     ASSIGN c-literal[30] = centraliza("SAC - " + STRING(crapcop.nrtelsac),48)
@@ -7292,51 +6408,17 @@ PROCEDURE atualiza-deposito-com-captura-migrado-host:
         ELSE
             ASSIGN  aux_tpdmovto = 1.                
         
-        IF  crapmdw.cdhistor = 3  THEN /* Praca */
-            DO:
-                IF  aux_tpdmovto = 2  THEN /* Menor Praca */
-                    ASSIGN tt-cheques.dtlibera = crapmdw.dtlibcom
-                           tt-cheques.vlcompel = tt-cheques.vlcompel + 
-                                                 crapmdw.vlcompel
-                           tt-cheques.nrdocmto = 3
-                           de-menor-praca      = de-menor-praca +
-                                                 crapmdw.vlcompel.
-                ELSE                       /* Maior Praca */
-                    ASSIGN tt-cheques.dtlibera = crapmdw.dtlibcom
-                           tt-cheques.vlcompel = tt-cheques.vlcompel +
-                                                 crapmdw.vlcompel
-                           tt-cheques.nrdocmto = 4
-                           de-maior-praca      = de-maior-praca +
-                                                 crapmdw.vlcompel.
-            END.
-        ELSE
-        IF  crapmdw.cdhistor = 4  THEN /* Fora Praca */
-            DO:
-                IF  aux_tpdmovto = 2  THEN /* Menor Fora Praca */
-                    ASSIGN tt-cheques.dtlibera = crapmdw.dtlibcom
-                           tt-cheques.vlcompel = tt-cheques.vlcompel + 
-                                                 crapmdw.vlcompel
-                           tt-cheques.nrdocmto = 5
-                           de-menor-fpraca     = de-menor-fpraca +
-                                                 crapmdw.vlcompel.
-                ELSE                       /* Maior Fora Praca */
-                    ASSIGN tt-cheques.dtlibera = crapmdw.dtlibcom
-                           tt-cheques.vlcompel = tt-cheques.vlcompel + 
-                                                 crapmdw.vlcompel
-                           tt-cheques.nrdocmto = 6
-                           de-menor-fpraca     = de-menor-fpraca +
-                                                 crapmdw.vlcompel.
-            END.
+        IF crapmdw.cdhistor = 2433 THEN
+            ASSIGN tt-cheques.nrdocmto = 6
+                   tt-cheques.dtlibera = crapmdw.dtlibcom
+                   tt-cheques.vlcompel = tt-cheques.vlcompel + crapmdw.vlcompel
+                   de-valor = de-valor + crapmdw.vlcompel.
         
         FIND CURRENT tt-cheques NO-LOCK.
         
     END.    
     /* Fim da montagem do Resumo */     
          
-    ASSIGN de-valor = de-valor + 
-                      de-menor-fpraca + de-menor-praca + 
-                      de-maior-fpraca + de-maior-praca.
-
     ASSIGN i-nro-docto = INT(c-docto-salvo)
            p-nro-docto = INT(c-docto-salvo).
     
@@ -7544,16 +6626,13 @@ PROCEDURE atualiza-deposito-com-captura-migrado-host:
        pela influencia do CAF */
     ASSIGN aux_nrsequen = 0.
     
-    /* Cheques menor praça */
-    FOR EACH tt-cheques WHERE tt-cheques.nrdocmto = 3 EXCLUSIVE-LOCK:
-
+    FOR EACH tt-cheques WHERE tt-cheques.nrdocmto = 6 EXCLUSIVE-LOCK:
         /* Sequencial utilizado para separar um lançamento em conta para cada
            data nao ocorrendo duplicidade de chave */
         ASSIGN aux_nrsequen = aux_nrsequen + 1
-               dt-menor-praca = tt-cheques.dtlibera
-               c-docto = c-docto-salvo + 
-                         STRING(aux_nrsequen,"99") + 
-                         STRING(tt-cheques.nrdocmto)
+               c-docto = c-docto-salvo + /* TIME atribuído anteriormente */
+                         STRING(aux_nrsequen,"99") + /* sequenciaL para cada data de liberaçao */
+                         STRING(tt-cheques.nrdocmto) /* será sempre 6 */
                /* numero de sequencia sera utilizado para identificar cada
                   cheque(crapchd) do lancamento total da data */
                tt-cheques.nrsequen = aux_nrsequen.
@@ -7615,7 +6694,7 @@ PROCEDURE atualiza-deposito-com-captura-migrado-host:
                craplcm.nrdconta = aux_nrdconta
                craplcm.nrdocmto = INT(c-docto)
                craplcm.vllanmto = tt-cheques.vlcompel
-               craplcm.cdhistor = 3
+              craplcm.cdhistor = 2433
                craplcm.nrseqdig = craplot.nrseqdig + 1
                craplcm.nrdctabb = p-nro-conta
                craplcm.nrautdoc = p-ult-sequencia
@@ -7637,7 +6716,7 @@ PROCEDURE atualiza-deposito-com-captura-migrado-host:
         ASSIGN crapdpb.cdcooper = crapcop.cdcooper
                crapdpb.nrdconta = aux_nrdconta
                crapdpb.dtliblan = tt-cheques.dtlibera
-               crapdpb.cdhistor = 3
+              crapdpb.cdhistor = 2433
                crapdpb.nrdocmto = INT(c-docto)
                crapdpb.dtmvtolt = crapdat.dtmvtolt
                crapdpb.cdagenci = p-cod-agencia
@@ -7646,327 +6725,9 @@ PROCEDURE atualiza-deposito-com-captura-migrado-host:
                crapdpb.vllanmto = tt-cheques.vlcompel
                crapdpb.inlibera = 1.
         VALIDATE crapdpb.
-
-    END. /* Fim cheques menor praça */
-
-    ASSIGN aux_nrsequen = 0.
-    
-    /* Cheques maior praça */
-    FOR EACH tt-cheques WHERE tt-cheques.nrdocmto = 4 NO-LOCK:
-
-        /* Sequencial utilizado para separar um lançamento para cada
-           data nao ocorrendo duplicidade de chave */
-        ASSIGN aux_nrsequen = aux_nrsequen + 1
-               dt-maior-praca = tt-cheques.dtlibera
-               c-docto = c-docto-salvo + 
-                         STRING(aux_nrsequen,"99") +
-                         STRING(tt-cheques.nrdocmto)
-               tt-cheques.nrsequen = aux_nrsequen.
-
-        /*--- Verifica se Lancamento ja Existe ---*/
-        FIND FIRST craplcm WHERE
-                   craplcm.cdcooper = crapcop.cdcooper    AND
-                   craplcm.dtmvtolt = crapdat.dtmvtolt    AND
-                   craplcm.cdagenci = p-cod-agencia       AND
-                   craplcm.cdbccxlt = 11                  AND
-                   craplcm.nrdolote = i-nro-lote          AND
-                   craplcm.nrseqdig = craplot.nrseqdig + 1 
-                   USE-INDEX craplcm3 NO-LOCK NO-ERROR.
-       
-        IF   AVAIL craplcm   THEN 
-             DO:
-                 ASSIGN i-cod-erro  = 0
-                        c-desc-erro = "Lancamento  ja existente".
-                 RUN cria-erro (INPUT p-cooper,
-                                INPUT p-cod-agencia,
-                                INPUT p-nro-caixa,
-                                INPUT i-cod-erro,
-                                INPUT c-desc-erro,
-                                INPUT YES).
-                 RETURN "NOK".
              END.
        
-        FIND FIRST craplcm WHERE
-                   craplcm.cdcooper = crapcop.cdcooper    AND
-                   craplcm.dtmvtolt = crapdat.dtmvtolt    AND
-                   craplcm.cdagenci = p-cod-agencia       AND
-                   craplcm.cdbccxlt = 11                  AND
-                   craplcm.nrdolote = i-nro-lote          AND
-                   craplcm.nrdctabb = p-nro-conta         AND
-                   craplcm.nrdocmto = inte(c-docto) 
-                   USE-INDEX craplcm1 NO-LOCK NO-ERROR.
-       
-        IF   AVAIL craplcm   THEN 
-             DO:
-                 ASSIGN i-cod-erro  = 0
-                        c-desc-erro = 
-                              "Lancamento(Primario) ja existente".
-                 RUN cria-erro (INPUT p-cooper,
-                                INPUT p-cod-agencia,
-                                INPUT p-nro-caixa,
-                                INPUT i-cod-erro,
-                                INPUT c-desc-erro,
-                                INPUT YES).
-                 RETURN "NOK".
-             END.
-        
-        CREATE craplcm.
-        ASSIGN craplcm.cdcooper = crapcop.cdcooper
-               craplcm.dtmvtolt = crapdat.dtmvtolt
-               craplcm.cdagenci = p-cod-agencia
-               craplcm.cdbccxlt = 11
-               craplcm.nrdolote = i-nro-lote
-               craplcm.dsidenti = p-identifica
-               craplcm.nrdconta = aux_nrdconta
-               craplcm.nrdocmto = inte(c-docto)
-               craplcm.vllanmto = tt-cheques.vlcompel
-               craplcm.cdhistor = 3
-               craplcm.nrseqdig = craplot.nrseqdig + 1
-               craplcm.nrdctabb = p-nro-conta
-               craplcm.nrautdoc = p-ult-sequencia
-               craplcm.cdpesqbb = "CRAP51"
-               craplcm.nrdctitg = glb_dsdctitg
-               
-               /* Guarda o sequencial usado no lancamento */
-               tt-cheques.nrseqlcm = craplcm.nrseqdig.       
-        VALIDATE craplcm.
 
-        ASSIGN craplot.nrseqdig  = craplot.nrseqdig + 1
-               craplot.qtcompln  = craplot.qtcompln + 1
-               craplot.qtinfoln  = craplot.qtinfoln + 1
-               craplot.vlcompcr  = craplot.vlcompcr + 
-                                   tt-cheques.vlcompel
-               craplot.vlinfocr  = craplot.vlinfocr +  
-                                   tt-cheques.vlcompel.
-        CREATE crapdpb.
-        ASSIGN crapdpb.cdcooper = crapcop.cdcooper
-               crapdpb.nrdconta = aux_nrdconta
-               crapdpb.dtliblan = tt-cheques.dtlibera
-               crapdpb.cdhistor = 3
-               crapdpb.nrdocmto = inte(c-docto)
-               crapdpb.dtmvtolt = crapdat.dtmvtolt
-               crapdpb.cdagenci = p-cod-agencia
-               crapdpb.cdbccxlt = 11
-               crapdpb.nrdolote = i-nro-lote
-               crapdpb.vllanmto = tt-cheques.vlcompel
-               crapdpb.inlibera = 1.
-        VALIDATE crapdpb.
-                
-    END. /* fim cheques maior praça */
-
-    ASSIGN aux_nrsequen = 0.
-    
-    /* Cheques menor fora praça */
-    FOR EACH tt-cheques WHERE tt-cheques.nrdocmto = 5 NO-LOCK:
-
-        /* Sequencial utilizado para separar um lançamento para cada
-           data nao ocorrendo duplicidade de chave */
-        ASSIGN aux_nrsequen = aux_nrsequen + 1
-               dt-menor-fpraca = tt-cheques.dtlibera
-               c-docto = c-docto-salvo + 
-                         STRING(aux_nrsequen,"99") +
-                         STRING(tt-cheques.nrdocmto)
-               tt-cheques.nrsequen = aux_nrsequen.
-
-        /*--- Verifica se Lancamento ja Existe ---*/
-        FIND FIRST craplcm WHERE
-                   craplcm.cdcooper = crapcop.cdcooper    AND
-                   craplcm.dtmvtolt = crapdat.dtmvtolt    AND
-                   craplcm.cdagenci = p-cod-agencia       AND
-                   craplcm.cdbccxlt = 11                  AND
-                   craplcm.nrdolote = i-nro-lote          AND
-                   craplcm.nrseqdig = craplot.nrseqdig + 1 
-                   USE-INDEX craplcm3 NO-LOCK NO-ERROR.
-       
-        IF   AVAIL craplcm   THEN 
-             DO:
-                 ASSIGN i-cod-erro  = 0
-                        c-desc-erro = "Lancamento  ja existente".
-                 RUN cria-erro (INPUT p-cooper,
-                                INPUT p-cod-agencia,
-                                INPUT p-nro-caixa,
-                                INPUT i-cod-erro,
-                                INPUT c-desc-erro,
-                                INPUT YES).
-                 RETURN "NOK".
-             END.
-       
-        FIND FIRST craplcm WHERE
-                   craplcm.cdcooper = crapcop.cdcooper    AND
-                   craplcm.dtmvtolt = crapdat.dtmvtolt    AND
-                   craplcm.cdagenci = p-cod-agencia       AND
-                   craplcm.cdbccxlt = 11                  AND
-                   craplcm.nrdolote = i-nro-lote          AND
-                   craplcm.nrdctabb = p-nro-conta         AND
-                   craplcm.nrdocmto = INT(c-docto) 
-                   USE-INDEX craplcm1 NO-LOCK NO-ERROR.
-       
-        IF   AVAIL craplcm   THEN 
-             DO:
-                 ASSIGN i-cod-erro  = 0
-                        c-desc-erro = 
-                              "Lancamento(Primario) ja existente".
-                 RUN cria-erro (INPUT p-cooper,
-                                INPUT p-cod-agencia,
-                                INPUT p-nro-caixa,
-                                INPUT i-cod-erro,
-                                INPUT c-desc-erro,
-                                INPUT YES).
-                 RETURN "NOK".
-             END.
-        /*----------------------------------------------------*/
-        
-        CREATE craplcm.
-        ASSIGN craplcm.cdcooper = crapcop.cdcooper
-               craplcm.dtmvtolt = crapdat.dtmvtolt
-               craplcm.cdagenci = p-cod-agencia
-               craplcm.cdbccxlt = 11
-               craplcm.nrdolote = i-nro-lote
-               craplcm.dsidenti = p-identifica
-               craplcm.nrdconta = aux_nrdconta
-               craplcm.nrdocmto = INT(c-docto)
-               craplcm.vllanmto = tt-cheques.vlcompel
-               craplcm.cdhistor = 4
-               craplcm.nrseqdig = craplot.nrseqdig + 1
-               craplcm.nrdctabb = p-nro-conta
-               craplcm.nrautdoc = p-ult-sequencia
-               craplcm.cdpesqbb = "CRAP51"
-               craplcm.nrdctitg = glb_dsdctitg
-               
-               /* Guarda o sequencial usado no lancamento */
-               tt-cheques.nrseqlcm = craplcm.nrseqdig.
-        VALIDATE craplcm.
-
-        ASSIGN craplot.nrseqdig  = craplot.nrseqdig + 1
-               craplot.qtcompln  = craplot.qtcompln + 1
-               craplot.qtinfoln  = craplot.qtinfoln + 1
-               craplot.vlcompcr  = craplot.vlcompcr +  
-                                   tt-cheques.vlcompel
-               craplot.vlinfocr  = craplot.vlinfocr +  
-                                   tt-cheques.vlcompel.
-       
-        CREATE crapdpb.
-        ASSIGN crapdpb.cdcooper = crapcop.cdcooper
-               crapdpb.nrdconta = aux_nrdconta
-               crapdpb.dtliblan = tt-cheques.dtlibera
-               crapdpb.cdhistor = 4
-               crapdpb.nrdocmto = inte(c-docto)
-               crapdpb.dtmvtolt = crapdat.dtmvtolt
-               crapdpb.cdagenci = p-cod-agencia
-               crapdpb.cdbccxlt = 11
-               crapdpb.nrdolote = i-nro-lote
-               crapdpb.vllanmto = tt-cheques.vlcompel
-               crapdpb.inlibera = 1.
-        VALIDATE crapdpb.
-
-    END. /* fim dos cheques menor fora praça */
-    
-    ASSIGN aux_nrsequen = 0.
-    
-    /* Cheques menor fora praça */
-    FOR EACH tt-cheques WHERE tt-cheques.nrdocmto = 6 NO-LOCK:
-
-        /* Sequencial utilizado para separar um lançamento para cada
-           data nao ocorrendo duplicidade de chave */
-        ASSIGN aux_nrsequen = aux_nrsequen + 1
-               dt-menor-fpraca = tt-cheques.dtlibera
-               c-docto = c-docto-salvo + 
-                         STRING(aux_nrsequen,"99") +
-                         STRING(tt-cheques.nrdocmto)
-               tt-cheques.nrsequen = aux_nrsequen.
-
-       /*--- Verifica se Lancamento ja Existe ---*/
-       FIND FIRST craplcm WHERE
-                  craplcm.cdcooper = crapcop.cdcooper    AND
-                  craplcm.dtmvtolt = crapdat.dtmvtolt    AND
-                  craplcm.cdagenci = p-cod-agencia       AND
-                  craplcm.cdbccxlt = 11                  AND
-                  craplcm.nrdolote = i-nro-lote          AND
-                  craplcm.nrseqdig = craplot.nrseqdig + 1 
-                  USE-INDEX craplcm3 NO-LOCK NO-ERROR.
-
-       IF   AVAIL craplcm   THEN 
-            DO:
-                ASSIGN i-cod-erro  = 0
-                       c-desc-erro = "Lancamento  ja existente".
-                RUN cria-erro (INPUT p-cooper,
-                               INPUT p-cod-agencia,
-                               INPUT p-nro-caixa,
-                               INPUT i-cod-erro,
-                               INPUT c-desc-erro,
-                               INPUT YES).
-                RETURN "NOK".
-            END.
-
-       FIND FIRST craplcm WHERE
-                  craplcm.cdcooper = crapcop.cdcooper    AND
-                  craplcm.dtmvtolt = crapdat.dtmvtolt    AND
-                  craplcm.cdagenci = p-cod-agencia       AND
-                  craplcm.cdbccxlt = 11                  AND
-                  craplcm.nrdolote = i-nro-lote          AND
-                  craplcm.nrdctabb = p-nro-conta         AND
-                  craplcm.nrdocmto = inte(c-docto) 
-                  USE-INDEX craplcm1 NO-LOCK NO-ERROR.
-
-       IF   AVAIL craplcm   THEN 
-            DO:
-                ASSIGN i-cod-erro  = 0
-                       c-desc-erro = 
-                             "Lancamento(Primario) ja existente".
-                RUN cria-erro (INPUT p-cooper,
-                               INPUT p-cod-agencia,
-                               INPUT p-nro-caixa,
-                               INPUT i-cod-erro,
-                               INPUT c-desc-erro,
-                               INPUT YES).
-                RETURN "NOK".
-            END.
-       /*----------------------------------------------------*/
-       
-       CREATE craplcm.
-       ASSIGN craplcm.cdcooper = crapcop.cdcooper
-              craplcm.dtmvtolt = crapdat.dtmvtolt
-              craplcm.cdagenci = p-cod-agencia
-              craplcm.cdbccxlt = 11
-              craplcm.nrdolote = i-nro-lote
-              craplcm.dsidenti = p-identifica
-              craplcm.nrdconta = aux_nrdconta
-              craplcm.nrdocmto = INT(c-docto)
-              craplcm.vllanmto = tt-cheques.vlcompel
-              craplcm.cdhistor = 4
-              craplcm.nrseqdig = craplot.nrseqdig + 1
-              craplcm.nrdctabb = p-nro-conta
-              craplcm.nrautdoc = p-ult-sequencia
-              craplcm.cdpesqbb = "CRAP51"
-              craplcm.nrdctitg = glb_dsdctitg
-              
-              /* Guarda o sequencial usado no lancamento */
-              tt-cheques.nrseqlcm = craplcm.nrseqdig.
-       VALIDATE craplcm.
-
-       ASSIGN craplot.nrseqdig  = craplot.nrseqdig + 1
-              craplot.qtcompln  = craplot.qtcompln + 1
-              craplot.qtinfoln  = craplot.qtinfoln + 1
-              craplot.vlcompcr  = craplot.vlcompcr +  
-                                  tt-cheques.vlcompel
-              craplot.vlinfocr  = craplot.vlinfocr +  
-                                  tt-cheques.vlcompel.
-       CREATE crapdpb.
-       ASSIGN crapdpb.cdcooper = crapcop.cdcooper
-              crapdpb.nrdconta = aux_nrdconta
-              crapdpb.dtliblan = tt-cheques.dtlibera
-              crapdpb.cdhistor = 4
-              crapdpb.nrdocmto = INT(c-docto)
-              crapdpb.dtmvtolt = crapdat.dtmvtolt
-              crapdpb.cdagenci = p-cod-agencia
-              crapdpb.cdbccxlt = 11
-              crapdpb.nrdolote = i-nro-lote
-              crapdpb.vllanmto = tt-cheques.vlcompel
-              crapdpb.inlibera = 1.
-       VALIDATE crapdpb.
-    END. /* fim dos cheques menor fora praça */
-    
-    
     FOR EACH crapmdw WHERE crapmdw.cdcooper = crapcop.cdcooper  AND
                            crapmdw.cdagenci = p-cod-agencia     AND
                            crapmdw.nrdcaixa = p-nro-caixa       NO-LOCK:
@@ -8006,33 +6767,8 @@ PROCEDURE atualiza-deposito-com-captura-migrado-host:
                               tt-cheques.nrdocmto = crapmdw.nrdocmto
                               NO-LOCK NO-ERROR.
 
-        IF   crapmdw.cdhistor = 3   THEN 
-             DO:   /* Praca  menor */
-                 IF   crapmdw.tpdmovto = 2   THEN
-                      ASSIGN i-nrdocmto = 
-                             INTEGER(c-docto-salvo + 
-                                     STRING(tt-cheques.nrsequen,"99") + 
-                                     "3").
-                 ELSE
-                     ASSIGN i-nrdocmto = 
-                            INTEGER(c-docto-salvo + 
-                                    STRING(tt-cheques.nrsequen,"99") + 
-                                    "4").
-             END.
-        ELSE
-        IF   crapmdw.cdhistor = 4   THEN 
-             DO:     /* Fora Praca menor */
-                 IF   crapmdw.tpdmovto = 2   THEN
-                     ASSIGN i-nrdocmto = 
-                            INTEGER(c-docto-salvo + 
-                                    STRING(tt-cheques.nrsequen,"99") + 
-                                    "5").
-                 ELSE
-                     ASSIGN i-nrdocmto = 
-                            INTEGER(c-docto-salvo + 
-                                    STRING(tt-cheques.nrsequen,"99") + 
-                                    "6").
-             END.
+        IF crapmdw.cdhistor = 2433 THEN
+           ASSIGN i-nrdocmto = INTEGER(c-docto-salvo + STRING(tt-cheques.nrsequen,"99") + "6").
 
         CREATE crapchd.
         ASSIGN crapchd.cdcooper = crapcop.cdcooper
@@ -8489,52 +7225,15 @@ PROCEDURE atualiza-deposito-com-captura-migrado-host:
                                       STRING(c-literal[17],"x(48)").
     
     FOR EACH tt-cheques NO-LOCK:
-    
-        IF  tt-cheques.nrdocmto = 3  THEN
-        DO:
-            ASSIGN p-literal-autentica = 
-                                p-literal-autentica + 
-                         STRING("CHEQ.PRACA MENOR...: " +
-                                STRING(tt-cheques.vlcompel,"ZZZ,ZZZ,ZZ9.99") +
-                                "   " +
-                                STRING(tt-cheques.dtlibera,"99/99/9999"),
-                                "x(48)").
-        END.
-        ELSE
-        IF  tt-cheques.nrdocmto = 4  THEN
-        DO:
-            ASSIGN p-literal-autentica = 
-                                p-literal-autentica + 
-                         STRING("CHEQ.PRACA MAIOR...: " +
-                                STRING(tt-cheques.vlcompel,"ZZZ,ZZZ,ZZ9.99") +
-                                "   " +
-                                STRING(tt-cheques.dtlibera,"99/99/9999"),
-                                "x(48)").
-
-        END.
-        ELSE
-        IF  tt-cheques.nrdocmto = 5  THEN
-        DO:
-            ASSIGN p-literal-autentica = 
-                                p-literal-autentica + 
-                         STRING("CHEQ.F.PRACA MENOR.: " +
-                                STRING(tt-cheques.vlcompel,"ZZZ,ZZZ,ZZ9.99") +
-                                "   " +
-                                STRING(tt-cheques.dtlibera,"99/99/9999"),
-                                "x(48)").
-        END.
-        ELSE
         IF  tt-cheques.nrdocmto = 6  THEN
-        DO:
             ASSIGN p-literal-autentica = 
                                 p-literal-autentica + 
-                         STRING("CHEQ.F.PRACA MAIOR.: " +
+                     STRING("CHEQ. OUTROS BANCOS: " +
                                 STRING(tt-cheques.vlcompel,"ZZZ,ZZZ,ZZ9.99") +
-                                "   " +
+                            " " +
                                 STRING(tt-cheques.dtlibera,"99/99/9999"),
                                 "x(48)").
         END.
-    END.
 
     ASSIGN c-literal[30] = centraliza("SAC - " + STRING(crapcop.nrtelsac),48)
            c-literal[31] = centraliza("Atendimento todos os dias das " + REPLACE(REPLACE(STRING(crapcop.hrinisac,"HH:MM"),':','h'),'h00','h') + " as " + REPLACE(REPLACE(STRING(crapcop.hrfimsac,"HH:MM"),':','h'),'h00','h'),48)

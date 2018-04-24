@@ -129,6 +129,9 @@
                  19/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
 			                  crapass, crapttl, crapjur 
 							 (Adriano - P339).
+
+                 20/06/2017 - Retirada separaçao de cheques maiores e menores no relatório CRRL308.
+                              PRJ367 - Compe Sessao Unica (Lombardi)
                               
                  12/03/2018 - Alterado para buscar descricao do tipo de conta do oracle. 
                               PRJ366 (Lombardi).
@@ -3781,14 +3784,6 @@ PROCEDURE pi_grava_tt-fechamento_descto:
              ASSIGN tt-fechamento.qtchqban = tt-fechamento.qtchqban + 1
                     tt-fechamento.vlchqban = tt-fechamento.vlchqban + 
                                              crapcdb.vlcheque.
-             IF  crapcdb.vlcheque < 300 THEN
-                 ASSIGN tt-fechamento.vlrmenor = tt-fechamento.vlrmenor + 
-                                                 crapcdb.vlcheque
-                        tt-fechamento.qtdmenor = tt-fechamento.qtdmenor + 1.
-             ELSE
-                 ASSIGN tt-fechamento.vlrmaior = tt-fechamento.vlrmaior + 
-                                                 crapcdb.vlcheque
-                        tt-fechamento.qtdmaior = tt-fechamento.qtdmaior + 1.
          END.
 
 END PROCEDURE. /* pi_grava_tt-fechamento_descto */
@@ -3821,15 +3816,6 @@ PROCEDURE pi_grava_tt-fechamento_custodia:
              ASSIGN tt-fechamento.qtchqban = tt-fechamento.qtchqban + 1
                     tt-fechamento.vlchqban = tt-fechamento.vlchqban + 
                                              crapcst.vlcheque.
-             
-             IF  crapcst.vlcheque < 300 THEN
-                 ASSIGN tt-fechamento.vlrmenor = tt-fechamento.vlrmenor + 
-                                                 crapcst.vlcheque
-                        tt-fechamento.qtdmenor = tt-fechamento.qtdmenor + 1.   
-             ELSE
-                 ASSIGN tt-fechamento.vlrmaior = tt-fechamento.vlrmaior + 
-                                                 crapcst.vlcheque
-                        tt-fechamento.qtdmaior = tt-fechamento.qtdmaior + 1.
          END.
 
 END PROCEDURE. /* pi_grava_tt-fechamento_custodia */

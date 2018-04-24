@@ -98,6 +98,9 @@
                              relatorio crrl262 nao estava sendo gerado (Douglas - Chamado 832279)
                              
                 29/01/2018 - Ajustar DEBCNS conforme solicitaçao do chamado (Lucas Ranghetti #837834)
+
+				08/03/2018 - Removida DEVOLUCAO VLB - COMPE Sessao Unica (Diego).
+
 .............................................................................*/
 
 { includes/var_batch.i "NEW" }
@@ -864,8 +867,6 @@ PROCEDURE gera_arq:
                   
           /*pegar numero da seq*/
           CASE aux_tpdevolu:
-              WHEN "VLB" THEN
-                  aux_nrseqsol = 4.
               WHEN "DIURNA" THEN
                   aux_nrseqsol = 5.
               OTHERWISE
@@ -880,40 +881,6 @@ PROCEDURE gera_arq:
                                INPUT aux_nrseqsol).
 
          
-          IF  TRIM(aux_tpdevolu) = "VLB" THEN 
-              DO:
-                   /* Grava Data e Hora da execucao */ 
-                   RUN grava_dthr_proc(INPUT par_cdcooper,
-                                       INPUT par_dtmvtolt,
-                                       INPUT TIME,
-                                       INPUT "DEVOLUCAO VLB"). 
-        
-                   RUN gera_log_execucao (INPUT par_nmprgexe + "(VLB)",
-                                          INPUT "Inicio execucao", 
-                                          INPUT par_cdcooper,
-                                          INPUT "").
-                   
-                    /* Cria solicitação na Coop. filiada. Esta solicitacao 
-                       nao deve ser eliminada durante o dia, pois garante 
-                       que nao serao marcados novos cheques na DEVOLU depois
-                       que o arquivo ja tiver sido processado  */ 
-                   RUN cria_solicitacao(INPUT par_cdcooper,
-                                        INPUT par_dtmvtolt,
-                                        INPUT par_nmprgexe,
-                                        INPUT 78,
-                                        INPUT aux_nrseqsol).
-
-                   RUN fontes/crps264.p 
-                           (INPUT INT(par_cdcooper),
-                            INPUT aux_nrseqsol).
-
-                   RUN gera_log_execucao (INPUT par_nmprgexe + "(VLB)",
-                                          INPUT "Fim execucao", 
-                                          INPUT par_cdcooper,
-                                          INPUT "").
-
-              END.
-          ELSE
           IF  TRIM(aux_tpdevolu) = "DIURNA" THEN
               DO:
 
@@ -1003,9 +970,9 @@ PROCEDURE gera_arq:
                     RUN grava_dthr_proc(INPUT par_cdcooper,
                                         INPUT par_dtmvtolt,
                                         INPUT TIME,
-                                        INPUT "DEVOLUCAO NOTURNA"). 
+                                        INPUT "DEVOLUCAO FRAUDES E IMPEDIMENTOS"). 
 
-                    RUN gera_log_execucao (INPUT par_nmprgexe + "(NOTURNA)",
+                    RUN gera_log_execucao (INPUT par_nmprgexe + "(FRAUDES E IMPEDIMENTOS)",
                                            INPUT "Inicio execucao", 
                                            INPUT par_cdcooper,
                                            INPUT "").
@@ -1026,7 +993,7 @@ PROCEDURE gera_arq:
                     RUN fontes/crps264.p
                                 (INPUT INT(par_cdcooper),
                                  INPUT aux_nrseqsol).
-                    RUN gera_log_execucao (INPUT par_nmprgexe + "(NOTURNA)",
+                    RUN gera_log_execucao (INPUT par_nmprgexe + "(FRAUDES E IMPEDIMENTOS)",
                                            INPUT "Fim execucao", 
                                            INPUT par_cdcooper,
                                            INPUT "").
