@@ -5123,12 +5123,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                              384, /*PAGAMENTO DE PREJUIZO*/
                              2388, /* 2388 - PAGAMENTO DE PREJUIZO VALOR PRINCIPAL */
                              2473, /* 2473 - PAGAMENTO JUROS +60 PREJUIZO */
-                            -- 2389, /* 2389 - PAGAMENTO JUROS PREJUIZO */
+                             2389, /* 2389 - PAGAMENTO JUROS PREJUIZO */
                              2390, /* 2390 - PAGAMENTO MULTA ATRASO PREJUIZO */
                              2475, /* 2475 - PAGAMENTO JUROS MORA PREJUIZO */
                              2392, /* 2392 - ESTORNO PAGAMENTO DE PREJUIZO VALOR PRINCIPAL */
                              2474, /* 2474 - ESTORNO PAGAMENTO JUROS +60 PREJUIZO */
-                             --2393, /* 2393 - ESTORNO PAGAMENTO DE JUROS PREJUIZO */
+                             2393, /* 2393 - ESTORNO PAGAMENTO DE JUROS PREJUIZO */
                              2394, /* 2394 - ESTORNO PAGAMENTO MULTA ATRASO PREJUIZO */
                              2476);      
        /* SELECT sum(case when c.cdhistor in (2386,384) then c.vllanmto else 0 end) 
