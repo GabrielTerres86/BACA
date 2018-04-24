@@ -90,6 +90,7 @@
 		echo '<script type="text/javascript">';
 		echo 'hideMsgAguardo();';
 		echo 'showError("error","'.$msgErro.'","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
+		echo 'bloqueiaFundo("#divError");';
 		echo '</script>';
 		exit();
 	}

@@ -37,7 +37,7 @@
 
     Programa: b1wgen0030.p
     Autor   : Guilherme
-    Data    : Julho/2008                     Ultima Atualizacao: 20/04/2018
+    Data    : Julho/2008                     Ultima Atualizacao: 24/04/2018
            
     Dados referentes ao programa:
                 
@@ -542,6 +542,9 @@
                             na situação Em estudo, Aprovada ou Não Aprovada (Paulo Penteado GFT)
 
                20/04/2018 - Na procedure busca_dados_dsctit, adicionado o retorno da data da ultima proposta de manutenção ativa (Paulo Penteado GFT)
+
+               24/04/2018 - Copiado a validação de verificação de proposta em estudo existente na rotina b1wgen0030.p > realizar_manutencao_contrato para a 
+                            rotina b1wgen0030.p > busca_dados_limite_manutencao (Paulo Penteado GFT).
 
 ..............................................................................*/
 
@@ -18440,6 +18443,50 @@ PROCEDURE busca_dados_limite_manutencao:
     ASSIGN aux_dscritic = ""
            aux_cdcritic = 0.
 
+    FIND crawlim WHERE (crawlim.cdcooper = par_cdcooper   AND
+                        crawlim.nrdconta = par_nrdconta   AND
+                        crawlim.tpctrlim = 3              AND
+                        crawlim.nrctrmnt = par_nrctrlim   AND
+                        crawlim.insitlim = 1 /*em estudo*/ )
+                       OR
+                       (crawlim.cdcooper = par_cdcooper   AND
+                        crawlim.nrdconta = par_nrdconta   AND
+                        crawlim.tpctrlim = 3              AND
+                        crawlim.nrctrmnt = par_nrctrlim   AND
+                        crawlim.insitlim = 5 /*aprovada*/ )
+                       OR
+                       (crawlim.cdcooper = par_cdcooper   AND
+                        crawlim.nrdconta = par_nrdconta   AND
+                        crawlim.tpctrlim = 3              AND
+                        crawlim.nrctrmnt = par_nrctrlim   AND
+                        crawlim.insitlim = 6 /*não aprovada*/ )
+                       NO-LOCK NO-ERROR.
+
+    IF  AVAILABLE crawlim  THEN
+        DO:
+            ASSIGN aux_cdcritic = 0.
+            
+            IF  crawlim.insitlim = 1  THEN
+                ASSIGN aux_dscritic = "Manutenção solicitada não executada. Já existe a proposta " + STRING(crawlim.nrctrlim) +
+                                      " com a situação EM ESTUDO".
+            ELSE
+            IF  crawlim.insitlim = 5  THEN
+                ASSIGN aux_dscritic = "Manutenção solicitada não executada. Já existe a proposta " + STRING(crawlim.nrctrlim) +
+                                      " com a situação APROVADA".
+            ELSE
+            IF  crawlim.insitlim = 6  THEN
+                ASSIGN aux_dscritic = "Manutenção solicitada não executada. Já existe a proposta " + STRING(crawlim.nrctrlim) +
+                                      " com a situação NÃO APROVADA".
+
+            RUN gera_erro (INPUT par_cdcooper,
+                           INPUT par_cdagenci,
+                           INPUT par_nrdcaixa,
+                           INPUT 1,            /** Sequencia **/
+                           INPUT aux_cdcritic,
+                           INPUT-OUTPUT aux_dscritic).
+            RETURN "NOK".
+        END.
+
     FIND crapass WHERE crapass.cdcooper = par_cdcooper AND
                        crapass.nrdconta = par_nrdconta 
                        NO-LOCK NO-ERROR.
@@ -18671,50 +18718,6 @@ PROCEDURE realizar_manutencao_contrato:
            aux_nrender2 = 0
            aux_complen2 = ""
            aux_nrcxaps2 = 0.
-
-    FIND crawlim WHERE (crawlim.cdcooper = par_cdcooper   AND
-                        crawlim.nrdconta = par_nrdconta   AND
-                        crawlim.tpctrlim = 3              AND
-                        crawlim.nrctrmnt = par_nrctrlim   AND
-                        crawlim.insitlim = 1 /*em estudo*/ )
-                       OR
-                       (crawlim.cdcooper = par_cdcooper   AND
-                        crawlim.nrdconta = par_nrdconta   AND
-                        crawlim.tpctrlim = 3              AND
-                        crawlim.nrctrmnt = par_nrctrlim   AND
-                        crawlim.insitlim = 5 /*aprovada*/ )
-                       OR
-                       (crawlim.cdcooper = par_cdcooper   AND
-                        crawlim.nrdconta = par_nrdconta   AND
-                        crawlim.tpctrlim = 3              AND
-                        crawlim.nrctrmnt = par_nrctrlim   AND
-                        crawlim.insitlim = 6 /*não aprovada*/ )
-                       NO-LOCK NO-ERROR.
-
-    IF  AVAILABLE crawlim  THEN
-        DO:
-            ASSIGN aux_cdcritic = 0.
-            
-            IF  crawlim.insitlim = 1  THEN
-                ASSIGN aux_dscritic = "Manutenção solicitada não executada. Já existe a proposta " + STRING(crawlim.nrctrlim) +
-                                      " com a situação EM ESTUDO".
-            ELSE
-            IF  crawlim.insitlim = 5  THEN
-                ASSIGN aux_dscritic = "Manutenção solicitada não executada. Já existe a proposta " + STRING(crawlim.nrctrlim) +
-                                      " com a situação APROVADA".
-            ELSE
-            IF  crawlim.insitlim = 6  THEN
-                ASSIGN aux_dscritic = "Manutenção solicitada não executada. Já existe a proposta " + STRING(crawlim.nrctrlim) +
-                                      " com a situação NÃO APROVADA".
-
-            RUN gera_erro (INPUT par_cdcooper,
-                           INPUT par_cdagenci,
-                           INPUT par_nrdcaixa,
-                           INPUT 1,            /** Sequencia **/
-                           INPUT aux_cdcritic,
-                           INPUT-OUTPUT aux_dscritic).
-            RETURN "NOK".
-        END.
     
     FIND crapldc WHERE crapldc.cdcooper = par_cdcooper   AND
                       crapldc.cddlinha = par_cddlinha   AND
