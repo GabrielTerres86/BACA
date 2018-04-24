@@ -701,6 +701,9 @@
                  
                  09/10/2017 - Ajustes de retorno na operacao 31 (David)
 
+                 03/01/2017 - Incluido tratativas para operacao 199 - FGTS
+                              PRJ406-FGTS (Odirlei-AMcom)
+
 				 05/03/2018 - Incluído o carrossel de banners para o mobile 
 							  (6214  -  Ederson - Supero)
 
@@ -1238,6 +1241,7 @@ DEF VAR aux_dsnomfon AS CHAR                                           NO-UNDO.
 DEF VAR aux_tpcaptur AS INTE                                           NO-UNDO.
 DEF VAR aux_tpleitor AS INTE                                           NO-UNDO.
 DEF VAR aux_nrrefere AS DECI                                           NO-UNDO.
+DEF VAR aux_nrrefere_199 AS CHAR                                       NO-UNDO.
 DEF VAR aux_idrazfan AS INTE										   NO-UNDO.
 DEF VAR aux_nrdcaixa AS INTE										   NO-UNDO.
 DEF VAR aux_titulo1  AS DECI										   NO-UNDO.
@@ -1701,7 +1705,7 @@ PROCEDURE process-web-request :
 
         /* Verificar senha e frase */
         IF  (aux_flgcript AND NOT CAN-DO("2,11,18",STRING(aux_operacao)))  OR /** Utiliza criptografia **/
-            (
+           (
                NOT aux_flgcript AND aux_nrcpfope = 0 AND
                ( 
                  (
@@ -5885,11 +5889,11 @@ PROCEDURE proc_operacao99:
                                          OUTPUT TABLE xml_operacao).
 
     IF RETURN-VALUE <> "OK" THEN
-       {&out} aux_dsmsgerr. 
+            {&out} aux_dsmsgerr. 
     ELSE
-       FOR EACH xml_operacao NO-LOCK:
-           {&out} xml_operacao.dslinxml.
-       END.
+    FOR EACH xml_operacao NO-LOCK:
+        {&out} xml_operacao.dslinxml.
+        END.
 
     {&out} aux_tgfimprg.
 
@@ -7103,7 +7107,7 @@ PROCEDURE proc_operacao141:
            aux_flgravar = INTE(GET-VALUE("flgravar"))
            aux_vltarapr = DECI(GET-VALUE("vltarapr"))
            aux_xmldados = GET-VALUE("xmldados")
-           aux_dssessao = GET-VALUE("dssessao")
+           aux_dssessao = GET-VALUE("dssessao")           
            aux_iddspscp = INTE(GET-VALUE("aux_iddspscp")).
 
     IF  aux_tpoperac = 3 OR aux_tpoperac = 6  THEN
@@ -7405,7 +7409,7 @@ PROCEDURE proc_operacao151:
    RUN sistema/internet/fontes/InternetBank151.p (INPUT aux_cdcooper,
                                                   INPUT aux_nrdconta,
                                                   INPUT aux_idtipfol,
-                                                  INPUT aux_lisrowid,                                                 
+                                                  INPUT aux_lisrowid,     
                                                   INPUT aux_iddspscp,
                                                   OUTPUT aux_dsmsgerr,
                                                   OUTPUT TABLE xml_operacao).
@@ -8826,7 +8830,7 @@ PROCEDURE proc_operacao205:
         DO:
             {&out} aux_dsmsgerr aux_tgfimprg.
             RETURN.
-        END.
+                END.
 
     {&out} aux_tgfimprg.    
 
@@ -9015,16 +9019,16 @@ PROCEDURE proc_operacao199:
     ASSIGN  aux_dtapurac = DATE(GET-VALUE("aux_dtapurac"))
             aux_tpcaptur = INTE(GET-VALUE("aux_tpcaptur"))
             aux_nrcpfdrf = GET-VALUE("aux_nrcpfcgc")
-            aux_nrrefere = DECI(GET-VALUE("aux_nrrefere"))
+            aux_nrrefere_199 = GET-VALUE("aux_nrrefere")
             aux_dtvencto = DATE(GET-VALUE("aux_dtvencto"))
-            aux_cdtribut = GET-VALUE("aux_cdtribut")
+            aux_cdtribut = GET-VALUE("aux_cdtributo")
             aux_vlrecbru = DECI(GET-VALUE("aux_vlrecbru"))
             aux_vlpercen = DECI(GET-VALUE("aux_vlpercen"))
             aux_vlprinci = DECI(GET-VALUE("aux_vlprinci"))
             aux_vlrmulta = DECI(GET-VALUE("aux_vlrmulta"))
             aux_vlrjuros = DECI(GET-VALUE("aux_vlrjuros"))
             aux_vlrtotal = DECI(GET-VALUE("aux_vlrtotal"))
-            aux_dsexthis = GET-VALUE("aux_dsexthis")
+            aux_dsexthis = GET-VALUE("aux_dsidepag")
             aux_idagenda = INTE(GET-VALUE("aux_idagenda"))
             aux_vlapagar = DECI(GET-VALUE("aux_vlapagar"))
             aux_cdbarras = GET-VALUE("aux_cdbarras")
@@ -9067,7 +9071,7 @@ PROCEDURE proc_operacao199:
                                                    INPUT aux_vlapagar,                    
                                                    INPUT aux_versaldo,                    
                                                    INPUT aux_tpleitor,                    
-                                                   INPUT aux_nrrefere,                    
+                                                   INPUT aux_nrrefere_199,                    
                                                   OUTPUT aux_dsmsgerr,                                                   
                                                   OUTPUT TABLE xml_operacao).
                                                   
@@ -9082,7 +9086,7 @@ PROCEDURE proc_operacao199:
     
         {&out} xml_operacao.dslinxml.
         
-    END.
+        END.
     {&out} aux_tgfimprg.
 
 END PROCEDURE.

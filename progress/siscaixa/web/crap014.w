@@ -16,8 +16,9 @@
            procedures da b1crap14 e b1crap00 na maioria das vezes que tem o parametro
            p_coop esta se referindo a nmrescop e nao a cdcooper, verificar as chamadas
            pois dentro desta procedure e feito find dentro da tabela crapcop
-           buscando por nmrescop =/ . */
+           buscando por nmrescop =/ . 
 
+*/
 /*..............................................................................
 
 Programa: siscaixa/web/crap014.w
@@ -121,6 +122,9 @@ Alteracoes: 22/08/2007 - Alterado os parametros nas chamadas para as
                         a limpeza das variaves v_codbarras e v_fmtcodbar para titulos
                         (Lucas Ranghetti #760721)
 
+           12/12/2017 - Alterar campo flgcnvsi por tparrecd.
+                        PRJ406-FGTS (Odirlei-AMcom)             
+
 ..............................................................................*/
 
 /* comentado pq dentro da include  {dbo/bo-erro1.i} tbem tem o var_oracle
@@ -160,7 +164,7 @@ DEFINE TEMP-TABLE ab_unmap
        FIELD hdnEstorno    AS CHARACTER FORMAT "X(256)":U
        FIELD hdnVerifEstorno    AS CHARACTER FORMAT "X(256)":U
        FIELD hdnValorAcima AS CHARACTER FORMAT "X(256)":U.
-       
+
 
 
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _DEFINITIONS w-html 
@@ -599,7 +603,7 @@ PROCEDURE htmOffsets :
   RUN htmAssociate
     ("v_cod":U,"ab_unmap.v_cod":U,ab_unmap.v_cod:HANDLE IN FRAME {&FRAME-NAME}).  
   RUN htmAssociate
-    ("v_senha":U,"ab_unmap.v_senha":U,ab_unmap.v_senha:HANDLE IN FRAME {&FRAME-NAME}). 
+    ("v_senha":U,"ab_unmap.v_senha":U,ab_unmap.v_senha:HANDLE IN FRAME {&FRAME-NAME}).  
   RUN htmAssociate
     ("hdnEstorno":U,"ab_unmap.hdnEstorno":U,ab_unmap.hdnEstorno:HANDLE IN FRAME {&FRAME-NAME}).
   RUN htmAssociate
@@ -1662,7 +1666,7 @@ PROCEDURE processa-fatura:
                              
         IF  AVAILABLE crapcon THEN           
             DO:                
-                IF  crapcon.flgcnvsi = TRUE THEN
+                IF  crapcon.tparrecd = 1 THEN
                     DO:                    
                         /* Verificar se convênio possui debito automatico */
                         FIND FIRST crapscn WHERE (crapscn.cdempcon = crapcon.cdempcon          AND
@@ -1747,9 +1751,9 @@ PROCEDURE processa-fatura:
                                         par_funcaojs = par_funcaojs + "&v_pprograma=CRAP014"
                                         par_funcaojs = par_funcaojs + "&v_ptpdocmto=1"
                                         par_funcaojs = par_funcaojs + '";'.
-            END.
-        
         END.        
+        
+   END.
    END.
    
    RETURN "OK".
@@ -2167,7 +2171,7 @@ PROCEDURE validar-valor-limite:
        RETURN "OK".
       
     RUN dbo/b1crap14.p PERSISTENT SET h_b1crap14.
-          
+                           
     RUN valida-valor-limite IN h_b1crap14(INPUT par_cdcooper,
                                           INPUT par_cdoperad,
                                           INPUT par_cdagenci,
@@ -2177,39 +2181,39 @@ PROCEDURE validar-valor-limite:
                                           OUTPUT par_des_erro,
                                           OUTPUT par_dscritic,
                                           OUTPUT aux_inssenha).
-  DELETE PROCEDURE h_b1crap14.
-
-  IF RETURN-VALUE = 'NOK' THEN  
-   DO:
+    DELETE PROCEDURE h_b1crap14.
+    
+    IF RETURN-VALUE = 'NOK' THEN  
+     DO:
    
       ASSIGN vr_cdcriticValorAcima = 1. 
    
-      ASSIGN ab_unmap.vh_foco = "10".
-      RUN gerar-mensagem-tela(INPUT par_cdcooper,
-                              INPUT par_cdagenci,
-                              INPUT par_nrocaixa,
-                              INPUT par_dscritic).
+        ASSIGN ab_unmap.vh_foco = "10".
+        RUN gerar-mensagem-tela(INPUT par_cdcooper,
+                                INPUT par_cdagenci,
+                                INPUT par_nrocaixa,
+                                INPUT par_dscritic).
                               
-      RETURN "NOK".
-   END.
-         
+        RETURN "NOK".
+     END.
+     
    ASSIGN vr_cdcriticValorAcima = 0.
-
+  
    /* Solicita confirmaçao operacao depois de inserida a senha DO coordenador, mas apenas para os pagamentos que nao podem ser estornados */
    IF (aux_inssenha > 0 AND (par_codconv = 119 OR par_codconv = 24 OR par_codconv = 98 OR par_codconv = 64 OR par_codconv = 153 OR par_codconv = 385 OR par_codconv = 328)) THEN
      DO:
        IF INT(ab_unmap.hdnVerifEstorno) = 1 THEN
-        DO:
+      DO:  
           RETURN "OK".
-        END.
+      END.
        ELSE
-         DO:
+        DO:
            ASSIGN vr_cdcriticEstorno = 1.
            RETURN "NOK".
          END.         
-     END.
-     
-  RETURN "OK".
+        END.
+        
+    RETURN "OK".
     
 END PROCEDURE.
 /* _UIB-CODE-BLOCK-END */
