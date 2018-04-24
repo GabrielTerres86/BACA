@@ -45,16 +45,6 @@
 		break; 
 
 	
-		case 'CONFIMAR_NOVO_LIMITE': 
-
-			if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"L","")) <> "") {
-
-				exibeErro($msgError);		
-			}	
-	
-		break; 
-
-
 		case 'ENVIAR_ANALISE': 
 
 			if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"N","")) <> "") {
@@ -67,7 +57,7 @@
 		
 		case 'CONFIMAR_NOVO_LIMITE': 
 
-			if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"E","")) <> "") {
+			if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"F","")) <> "") {
 
 				exibeErro($msgError);		
 			}	
