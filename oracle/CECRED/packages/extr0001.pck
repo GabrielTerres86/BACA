@@ -36,7 +36,10 @@ CREATE OR REPLACE PACKAGE CECRED.EXTR0001 AS
                06/10/2016 - Inclusao da procedure de retorno de valores referente a acordos de emprestimos,
                             na procedure pc_obtem_saldo_dia, Prj. 302 (Jean Michel).                                           
                             
-               10/07/2017 - Inclusao do campo vllimcpa na procedure pc_obtem_saldos_anteriores  (Roberto Holz - M441)                                         
+               10/07/2017 - Inclusao do campo vllimcpa na procedure pc_obtem_saldos_anteriores  (Roberto Holz - M441)
+
+               21/04/2018 - Adicionar campo idlstdom no typ_reg_extrato_conta para retorno para
+                            a operacao 12 do IB (Anderson - P285).
 ..............................................................................*/
 
   -- Tipo para guardar as 5 linhas da mensagem de e-mail
@@ -150,7 +153,8 @@ CREATE OR REPLACE PACKAGE CECRED.EXTR0001 AS
              ,nrseqlmt INTEGER
              ,cdtippro crappro.cdtippro%TYPE
              ,dsprotoc crappro.dsprotoc%TYPE
-             ,flgdetal INTEGER);
+             ,flgdetal INTEGER
+             ,idlstdom PLS_INTEGER);
   /* Definição de tabela que compreende os registros acima declarados */
   TYPE typ_tab_extrato_conta IS
     TABLE OF typ_reg_extrato_conta
@@ -2919,6 +2923,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
       vr_inhistor craphis.inhistor%TYPE;
       vr_cdhistor craphis.cdhistor%TYPE;
       vr_cdtippro crappro.cdtippro%TYPE;
+      vr_idlstdom PLS_INTEGER;
       vr_dsextrat VARCHAR2(100);
       vr_dshistor VARCHAR2(100);
       vr_nrdocmto VARCHAR2(40);
@@ -3343,43 +3348,62 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
         
         IF ','||pr_lshiscon||',' LIKE ('%,'||rw_craplcm.cdhistor||',%') THEN
           vr_cdtippro := 15; -- Débito Automático
+          vr_idlstdom := 32; -- Débito Automático
         ELSIF ','||pr_lshisrec||',' LIKE ('%,'||rw_craplcm.cdhistor||',%') THEN
           vr_cdtippro := 20; -- Recarga de Celular
-        ELSIF rw_craplcm.cdhistor IN (537,538,1009) THEN
-          vr_cdtippro := 1;  -- Transferência Intercoop e Intracoop
+          vr_idlstdom := 20; -- Recarga de Celular
+        ELSIF rw_craplcm.cdhistor IN (537,538) THEN --Transferência Intracoop
+          vr_cdtippro := 1; -- Transferência Intercoop e Intracoop
+          vr_idlstdom := 5; -- Transferência Intracoop
+        ELSIF rw_craplcm.cdhistor IN (1009) THEN --Transferência Intercoop
+          vr_cdtippro := 1; -- Transferência Intercoop e Intracoop
+          vr_idlstdom := 6; -- Transferência Intercoop
         ELSIF rw_craplcm.cdhistor IN (771) THEN
-          vr_cdtippro := 4;  -- Crédito de Salário (Transferência)
+          vr_cdtippro := 4; -- Crédito de Salário (Transferência)
+          vr_idlstdom := 3; -- Crédito de Salário (Transferência)
         ELSIF rw_craplcm.cdhistor IN (555) THEN
-          vr_cdtippro := 9;  -- TED
+          vr_cdtippro := 9; -- TED
+          vr_idlstdom := 4; -- TED
         ELSIF rw_craplcm.cdhistor IN (527) THEN
           vr_cdtippro := 10; -- Nova Aplicação
+          vr_idlstdom := 30; -- Nova Aplicação
         ELSIF rw_craplcm.cdhistor IN (508) THEN  
           IF rw_craplcm.cdpesqbb like '%INTERNET - PAGAMENTO ON-LINE - BANCO%' THEN
             vr_cdtippro := 2; -- Título
+            vr_idlstdom := 1; -- Título
           ELSIF rw_craplcm.cdpesqbb like '%INTERNET - PAGAMENTO ON-LINE – GUIA PREVIDENCIA SOCIAL%' THEN
             vr_cdtippro := 13; -- GPS
+            vr_idlstdom := 9;  -- GPS
           ELSIF rw_craplcm.cdpesqbb like '%INTERNET - PAGAMENTO ON-LINE – CONVENIO%' THEN
             vr_nmconven := TRIM(SUBSTR(rw_craplcm.cdpesqbb,41));
             
             IF vr_nmconven IN ('DARFC0064','DARFC0153','DARFS0154','DARFB0385','DARF 81 PRETO EUROPA COOPERATIVA','DARF 67 SIMPLES COOPERATIVA') THEN
               vr_cdtippro := 16; -- DARF
+              vr_idlstdom := 7;  -- DARF
             ELSIF vr_nmconven IN ('DAS') THEN
               vr_cdtippro := 17; -- DAS
+              vr_idlstdom := 8;  -- DAS
             ELSIF vr_nmconven IN ('FGTS - 0179','FGTS - 0180','FGTS - 0181','FGTS - 0239','FGTS - 0240') THEN          
               vr_cdtippro := 24; -- FGTS
+              vr_idlstdom := 10; -- FGTS
             ELSIF vr_nmconven IN ('RFB - DOC ARREC') THEN
               vr_cdtippro := 23; -- DAE         
+              vr_idlstdom := 11; -- DAE
             ELSE
-              vr_cdtippro := 2; -- Demais Convênios
+              vr_cdtippro := 2;  -- Demais Convênios
+              vr_idlstdom := 15; -- Demais Convênios
             END IF;
           ELSE
-            vr_cdtippro := 0;      
+            vr_cdtippro := 0; 
+            vr_idlstdom := 0;     
           END IF;
         ELSE
           vr_cdtippro := 0; 
+          vr_idlstdom := 0;
         END IF;
         
         pr_tab_extr(vr_ind_tab).cdtippro := vr_cdtippro;
+        pr_tab_extr(vr_ind_tab).idlstdom := vr_idlstdom;
         
         -- Obter protocolo do comprovante gerado no lançamento
         IF vr_cdtippro <> 0 THEN          
@@ -7083,6 +7107,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
                         '<cdtippro>'||NVL(TO_CHAR(vr_tab_extrato_conta(vr_index).cdtippro),'0')|| '</cdtippro>'|| 
                         '<dsprotoc>'||NVL(TO_CHAR(vr_tab_extrato_conta(vr_index).dsprotoc),' ')|| '</dsprotoc>'|| 
                         '<flgdetal>'||NVL(TO_CHAR(vr_tab_extrato_conta(vr_index).flgdetal),'0')|| '</flgdetal>'||  
+                        '<idlstdom>'||NVL(TO_CHAR(vr_tab_extrato_conta(vr_index).idlstdom),'0')|| '</idlstdom>'||  
                       '</extrato>';
 
           -- Escrever no XML

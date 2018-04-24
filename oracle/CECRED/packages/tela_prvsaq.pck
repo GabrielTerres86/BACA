@@ -1222,7 +1222,7 @@ PROCEDURE pc_incluir_provisao(pr_cdcooper        IN tbcc_provisao_especie.cdcoop
         Sistema : CECRED
         Sigla   : PRVSAQ
         Autor   : Antonio Remualdo Junior
-        Data    : Novembro/2017.                    Ultima atualizacao: --/--/----
+        Data    : Novembro/2017.                    Ultima atualizacao: 23/04/2018
     
         Dados referentes ao programa:
     
@@ -1232,7 +1232,8 @@ PROCEDURE pc_incluir_provisao(pr_cdcooper        IN tbcc_provisao_especie.cdcoop
     
         Observacao: -----
     
-        Alteracoes:
+        Alteracoes: 23/04/2018 - Alterado para não exigir a informação dos cheques quando o cadastro for 
+                                 realizado através do IB, por solicitação do negócio. (Anderson P285).
     ..............................................................................*/
       ----------->>> VARIAVEIS <<<--------   
       -- Variável de críticas
@@ -1447,7 +1448,10 @@ PROCEDURE pc_incluir_provisao(pr_cdcooper        IN tbcc_provisao_especie.cdcoop
       -- Fechar o cursor
       CLOSE cr_crapope;
       
-      IF(pr_selsaqcheq = 1)THEN
+      IF(pr_selsaqcheq = 1 and 
+         ((vr_idorigem <> 3) or  -- Ou nao é pelo Canal IB
+         ((vr_idorigem =  3) and ((pr_nrcheque > 0) or (pr_nrcontcheq > 0)))) -- Ou se for pelo IB, o cheque ou a conta devem estar preenchidos.
+         ) THEN
         --> Buscar cheque
         OPEN cr_cheque(pr_cdcooper => vr_cdcooper    
                        ,pr_nrbanco => pr_nrbanco    
