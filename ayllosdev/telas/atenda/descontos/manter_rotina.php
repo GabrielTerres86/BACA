@@ -37,7 +37,7 @@
 
 		case 'ACEITAR_REJEICAO_LIMITE': 
 
-			if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"R","")) <> "") {
+			if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"R")) <> "") {
 
 				exibeErro($msgError);		
 			}	
@@ -47,7 +47,7 @@
 	
 		case 'ENVIAR_ANALISE': 
 
-			if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"N","")) <> "") {
+			if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"N")) <> "") {
 
 				exibeErro($msgError);		
 			}	
@@ -57,7 +57,7 @@
 		
 		case 'CONFIMAR_NOVO_LIMITE': 
 
-			if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"F","")) <> "") {
+			if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"F")) <> "") {
 
 				exibeErro($msgError);		
 			}	
