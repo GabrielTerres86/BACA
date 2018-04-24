@@ -781,8 +781,7 @@ function carregaLimitesTitulos() {
 
 // Função para seleção do limite
 
-function selecionaLimiteTitulos(id,qtLimites,limite,insitlim,dssitlim, dssitest, insitapr, vlLimite) {
-
+function selecionaLimiteTitulos(id,qtLimites,limite,dssitlim, dssitest, insitapr, vlLimite) {
     situacao_analise = dssitest;
     decisao = insitapr;
     valor_limite = vlLimite;
@@ -810,7 +809,6 @@ function selecionaLimiteTitulos(id,qtLimites,limite,insitlim,dssitlim, dssitest,
             // Armazena número do limite selecionado
             nrcontrato = limite;
             idLinhaL = id;
-            cd_situacao_lim = insitlim;
             situacao_limite = dssitlim;
 
         }
@@ -1048,11 +1046,7 @@ function mostraTelaAltera() {
         return false;
     }
 
-	hideMsgAguardo();
-	fechaRotinaAltera();
-	carregaDadosAlteraLimiteDscTit();
-	return false;
-/*
+
     limpaDivGenerica();
 
     $.ajax({
@@ -1076,7 +1070,6 @@ function mostraTelaAltera() {
 
     $('#todaProp', '#frmAltera').focus();
     return false;
-	*/
 }
 
 function confirmaEnvioAnalise(){
@@ -1580,7 +1573,7 @@ function gravaLimiteDscTit(cddopcao, tipo) {
             nrender2: normalizaNumero($("#nrender2","#frmDadosLimiteDscTit").val()),
             complen2: $("#complen2","#frmDadosLimiteDscTit").val(),
             nrcxaps2: normalizaNumero($("#nrcxaps2","#frmDadosLimiteDscTit").val()),
-            idcobope: normalizaNumero($('#idcobert', '#frmDadosLimiteDscTit').val()),
+            
             
             // Variáveis globais alimentadas na função validaDadosRating em rating.js 
             nrgarope: nrgarope,
@@ -1891,59 +1884,7 @@ function buscaGrupoEconomico(tipo) {
     
 }
 
-function abrirTelaGAROPC(cddopcao) {
-
-    showMsgAguardo('Aguarde, carregando ...');
-
-    var idcobert = normalizaNumero($('#idcobert','#'+nomeForm).val());
-    var codlinha = normalizaNumero($('#cddlinha','#'+nomeForm).val());
-    var vlropera = $('#vllimite','#'+nomeForm).val();
-    
-    var nrctrlim = '';
-    // Se estamos consultando e está em estudo ou se iremos incluir ou se iremos alterar o limite enviaremos o codigo do contrato ativo
-    if ( (cddopcao == 'C' && cd_situacao_lim == 1) || cddopcao == 'I' || cddopcao == 'A') {
-      nrctrlim = normalizaNumero($('#nrcontratoativo').val());
-    }
-  
-    // Se estivermos alterando, porém não houver cobertura é por que estamos alterando algo antigo (devemos criar um novo para estes casos)
-    if (cddopcao == 'A' && idcobert == '') {
-      cddopcao = 'I';
-    }
-
-    // Carrega conteúdo da opção através do Ajax
-    $.ajax({
-        type: 'POST',
-        dataType: 'html',
-        url: UrlSite + 'telas/garopc/garopc.php',
-        data: {
-            tipaber      : cddopcao,
-            idcobert     : idcobert,
-            nrdconta     : nrdconta,
-            tpctrato     : 3,
-            dsctrliq     : nrctrlim,
-            codlinha     : codlinha,
-            vlropera     : vlropera
-        },
-        error: function (objAjax, responseError, objExcept) {
-            hideMsgAguardo();
-            showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
-        },
-        success: function (response) {
-            hideMsgAguardo();
-            // Criaremos uma div oculta para conter toda a estrutura da tela GAROPC
-            $('#divUsoGAROPC').html(response).hide();
-            // Iremos incluir o conteúdo do form da div oculta dentro da div principal de descontos
-            $("#frmGAROPC", "#divUsoGAROPC").appendTo('#divFormGAROPC');
-            // Iremos remover os botões originais da GAROPC e usar os proprios da tela
-            $("#divBotoes","#frmGAROPC").detach();
-            dscShowHideDiv("divFormGAROPC;divBotoesGAROPC","divDscTit_Limite;divBotoesLimite");
-            bloqueiaFundo($('#divFormGAROPC'));
-            $("#frmDadosLimiteDscTit").css("width", 540);
-        }
-    });
-}
-
-function calcEndividRiscoGrupo(nrdgrupo) {
+function calcEndividRiscoGrupo(nrdgrupo, tipo) {
 
     showMsgAguardo("Aguarde, calculando endividamento e risco do grupo econ&ocirc;mico...");
 
