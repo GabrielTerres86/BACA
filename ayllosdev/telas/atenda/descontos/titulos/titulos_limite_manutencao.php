@@ -23,20 +23,15 @@
 		
 	// Classe para leitura do xml de retorno
 	require_once("../../../../class/xmlfile.php");
-	
+
 	require_once("../../../../includes/carrega_permissoes.php");
 
 	setVarSession("opcoesTela",$opcoesTela);
-
-
+	
 	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"U")) <> "") {
 		exibeErro($msgError);		
 	}	
 	
-	
-
-
-
 	// Verifica se o número da conta foi informado
 	if (!isset($_POST["nrdconta"]) ||
 		!isset($_POST["nrctrlim"])) {
@@ -95,6 +90,7 @@
 		echo '<script type="text/javascript">';
 		echo 'hideMsgAguardo();';
 		echo 'showError("error","'.$msgErro.'","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
+		echo 'bloqueiaFundo("#divError");';
 		echo '</script>';
 		exit();
 	}

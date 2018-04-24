@@ -575,8 +575,6 @@ PROCEDURE pc_titulos_resumo_resgatar_web (pr_nrdconta           in crapass.nrdco
                               ,pr_nmdcampo OUT VARCHAR2          --> Nome do campo com erro
                               ,pr_des_erro OUT VARCHAR2      --> Erros do processo
                             );
-                                                       
-
 END TELA_ATENDA_DSCTO_TIT;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_DSCTO_TIT IS
@@ -810,7 +808,7 @@ PROCEDURE pc_validar_efetivacao_proposta(pr_cdcooper          in crapcop.cdcoope
 
    cursor cr_crawlim is
    select insitlim
-         ,insitest
+         ,insitapr
          ,vllimite
          ,nvl(nrctrmnt,0) nrctrmnt
    from   crawlim
@@ -883,8 +881,8 @@ BEGIN
        raise vr_exc_saida;
    end if;
 
-   if  rw_crawlim.insitest not in (0,3) then
-       vr_dscritic := 'Para esta operação, a situação da análise deve ser "Não Enviado" ou "Análise Finalizada".';
+   if  rw_crawlim.insitapr not in (1,2) then
+       vr_dscritic := 'Para esta operação, a Decisão deve ser "Aprovada Automaticamente" ou "Aprovada Manual".';
        raise vr_exc_saida;
    end if;
 
@@ -2688,18 +2686,18 @@ PROCEDURE pc_obtem_dados_proposta(pr_cdcooper           in crapcop.cdcooper%type
                             when 1 then 'ENVIADA ANALISE AUTOMATICA'
                             when 2 then 'ENVIADA ANALISE MANUAL'
                             when 3 then 'ANALISE FINALIZADA'
-                            when 4 then 'EXPIRADO'
+                            when 4 then 'EXPIRADA'
                             else        'DIFERENTE'
           end dssitest
          ,lim.insitapr
          ,case lim.insitapr when 0 then 'NAO ANALISADO'
-                            when 1 then 'APROVADO AUTOMATICAMENTE'
-                            when 2 then 'APROVADO MANUAL'
+                            when 1 then 'APROVADA AUTOMATICAMENTE'
+                            when 2 then 'APROVADA MANUAL'
                             when 3 then 'APROVADA'
-                            when 4 then 'REJEITADO MANUAL'
-                            when 5 then 'REJEITADO AUTOMATICAMENTE'
-                            when 6 then 'REJEITADO'
-                            when 7 then 'NAO ANALISADO'
+                            when 4 then 'REJEITADA MANUAL'
+                            when 5 then 'REJEITADA AUTOMATICAMENTE'
+                            when 6 then 'REJEITADA'
+                            when 7 then 'NAO ANALISADA'
                             when 8 then 'REFAZER'
                             else        'DIFERENTE'
           end dssitapr
@@ -2712,7 +2710,7 @@ PROCEDURE pc_obtem_dados_proposta(pr_cdcooper           in crapcop.cdcooper%type
                when lim.insitlim in (1,5,6) and lim.dtpropos >= vr_dtpropos then 1
                --   mostrar somente a última proposta ativa
                when lim.insitlim = 2 and 
-                    lim.nrctrlim = (select max(lim_ativo.nrctrlim)
+                    lim.dtpropos = (select max(lim_ativo.dtpropos)
                                     from   crawlim lim_ativo
                                     where  lim_ativo.insitlim = 2
                                     and    lim_ativo.tpctrlim = lim.tpctrlim
@@ -7124,10 +7122,5 @@ PROCEDURE pc_buscar_tit_bordero_web (
               pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                              '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
     END pc_titulos_resumo_resgatar_web;
-    
-    
-    
-    
-    
 END TELA_ATENDA_DSCTO_TIT;
 /
