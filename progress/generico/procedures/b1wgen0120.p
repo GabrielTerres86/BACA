@@ -5680,7 +5680,6 @@ PROCEDURE gera_tt-histor:
                END.
          END.
     /*Deposito a vista*/   
-	/**** Aguardando nova data de implantacao do projeto
 	/*Projeto 367 - DEP. CHQ. OUTROS BANCOS:  inferiores e superiores */
     IF CAN-DO("2433,372",STRING(crabhis.cdhistor)) AND
 	   par_dtmvtolt >= 16/04/2018  THEN  /* Inicio COMPE SESSAO UNICA */
@@ -5689,7 +5688,7 @@ PROCEDURE gera_tt-histor:
                   par_qtchqout = par_qtchqout + 1.
          END.
     ELSE
-	*******/
+
 	/*Projeto 367 -  Serao mantidos os contadores(inferir e superior)
 	para nao alterar a descricao dos boletins gerados antes do projeto */ 
 	 
