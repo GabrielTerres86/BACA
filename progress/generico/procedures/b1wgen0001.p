@@ -417,6 +417,9 @@
                              pois haviam casos em que nao estavamos entrando na rotina
                              na procedure gera-tarifa-extrato (Lucas Ranghetti #787894)
 
+                21/04/2018 - Alterar tratamento do retorno da pc_consulta_extrato_car para
+                             tratar o novo campo idlstdom (Anderson - P285)
+
 ..............................................................................*/
 
 { sistema/generico/includes/b1wgen0001tt.i }
@@ -679,6 +682,7 @@ PROCEDURE consulta-extrato:
                     ASSIGN tt-extrato_conta.cdtippro = INT(xText:NODE-VALUE) WHEN xField:NAME = "cdtippro".
                     ASSIGN tt-extrato_conta.dsprotoc = xText:NODE-VALUE WHEN xField:NAME = "dsprotoc".
                     ASSIGN tt-extrato_conta.flgdetal = INT(xText:NODE-VALUE) WHEN xField:NAME = "flgdetal".
+                    ASSIGN tt-extrato_conta.idlstdom = INT(xText:NODE-VALUE) WHEN xField:NAME = "idlstdom".
 
                 END. 
 
