@@ -52,6 +52,8 @@ var diaratin   = 0;  // Dia do rating da tabela tt-risco (é alimentada no titul
 var vlrrisco   = 0;  // Valor do risco (é alimentada no titulos_limite_incluir.php)
 
 var botaoLiberar   = '';  // Botão Liberar borderô habilitado se analise confirmada. - GFT (André Ávila).
+var sitinctrmnt  = "";  // Variável de parametro para identificar se a proposta é de manutenção. 0 = Não, 1 = Sim. - GFT (André Ávila).
+
 
 // ALTERAÇÃO 001: Criação de variáveis globais 
 var nomeForm        = 'frmDadosLimiteDscTit';   // Variável para guardar o nome do formulário corrente
@@ -603,28 +605,37 @@ function carregaResgatarTitulos() {
 // Carregar os dados para consulta de propostas de limite de desconto de títulos
 function carregaDadosAlteraLimiteDscTitPropostas() {
 
-    // Mostra mensagem de aguardo
-    showMsgAguardo("Aguarde, carregando dados da Proposta de limites de desconto de t&iacute;tulos ...");
-    
-    // Carrega conteúdo da opção através de ajax
-    $.ajax({        
-        type: "POST", 
-        url: UrlSite + "telas/atenda/descontos/titulos/titulos_limite_alterar_propostas.php",
-        dataType: "html",
-        data: {
-            nrdconta: nrdconta,
-            nrctrlim: nrcontrato,
-            redirect: "html_ajax"
-        },      
-        error: function(objAjax,responseError,objExcept) {
-            hideMsgAguardo();
-            showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
-        },
-        success: function(response) {
-            $("#divOpcoesDaOpcao3").html(response);
-            controlaLupas(nrdconta);
-        }               
-    });     
+    if (sitinctrmnt == 1){
+
+        realizarManutencaoDeLimite(1,1);
+        return false;
+
+    } else {
+
+        // Mostra mensagem de aguardo
+        showMsgAguardo("Aguarde, carregando dados da Proposta de limites de desconto de t&iacute;tulos ...");
+
+        // Carrega conteúdo da opção através de ajax
+        $.ajax({        
+            type: "POST", 
+            url: UrlSite + "telas/atenda/descontos/titulos/titulos_limite_alterar_propostas.php",
+            dataType: "html",
+            data: {
+                nrdconta: nrdconta,
+                nrctrlim: nrcontrato,
+                redirect: "html_ajax"
+            },      
+            error: function(objAjax,responseError,objExcept) {
+                hideMsgAguardo();
+                showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+            },
+            success: function(response) {
+                $("#divOpcoesDaOpcao3").html(response);
+                controlaLupas(nrdconta);
+            }               
+        });     
+    }
+
 }
 
 
@@ -816,7 +827,8 @@ function selecionaLimiteTitulos(id,qtLimites,limite,dssitlim, dssitest, insitapr
     return false;
 }
 
-function selecionaLimiteTitulosProposta(id,qtLimites,limite,insitlim,dssitlim, dssitest, insitapr, vlLimite, nrctrmnt) {
+function selecionaLimiteTitulosProposta(id,qtLimites,limite,insitlim,dssitlim, dssitest, insitapr, vlLimite, nrctrmnt,inctrmnt) {
+
 
     situacao_analise = dssitest;
     decisao = insitapr;
@@ -848,6 +860,8 @@ function selecionaLimiteTitulosProposta(id,qtLimites,limite,insitlim,dssitlim, d
             idLinhaL = id;
             cd_situacao_lim = insitlim;
             situacao_limite = dssitlim;
+            sitinctrmnt = inctrmnt;
+
 
         }
     }
@@ -2626,6 +2640,11 @@ function realizarManutencaoDeLimite(operacao, flgstlcr) {
     // operacao = 0 (mostrar dialogo confirmacao), operacao = 1 (carregar tela), operacao = 3 (executar operacao)
     showMsgAguardo("Aguarde, carregando dados do contrato...");
     var nrctrlim = normalizaNumero($("#nrctrlim","#frmTitulos").val());
+
+    if(sitinctrmnt == 1){       
+        nrctrlim = nrcontrato;
+    }
+
     if(!operacao){operacao = 0;}
 
     var callback = "realizarManutencaoDeLimite(1,"+flgstlcr+" );";
@@ -2671,6 +2690,7 @@ function realizarManutencaoDeLimite(operacao, flgstlcr) {
         data: {
             nrdconta: nrdconta,
             nrctrlim: nrctrlim,
+            inctrmnt: sitinctrmnt,
             redirect: "html_ajax"
         },
         error: function (objAjax, responseError, objExcept) {
