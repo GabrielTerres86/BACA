@@ -4364,6 +4364,7 @@ PROCEDURE pc_solicita_biro_bordero(pr_nrdconta in crapass.nrdconta%type --> Cont
    vr_cdagenci varchar2(100);
    vr_nrdcaixa varchar2(100);
    vr_idorigem varchar2(100);
+   fl_erro_biro boolean;
 
    
    cursor cr_analise_pagador(pr_nrinssac crapcob.nrinssac%type) is
@@ -4398,6 +4399,7 @@ BEGIN
    end if;
 
    vr_index := vr_tab_dados_titulos.first;
+   fl_erro_biro := false;
    while vr_index is not null loop
    
          open  cr_analise_pagador(vr_tab_dados_titulos(vr_index).nrinssac);
@@ -4429,13 +4431,19 @@ BEGIN
                                                ,pr_cdcritic => vr_cdcritic
                                                ,pr_dscritic => vr_dscritic);
 
+          --Caso não consiga conexao ou der erro no biro, nao parar a execucao, tratar somente depois do loop
          if  vr_cdcritic > 0  or vr_dscritic is not null then
-             raise vr_exc_saida;
+             fl_erro_biro := true;
          end if;
 
          vr_index := vr_tab_dados_titulos.next(vr_index);
    end   loop;
-
+   
+   --Caso tenha algum erro durante o BIRO levanta a exception
+   if fl_erro_biro then
+      raise vr_exc_saida;
+   end if;
+   
    pr_retxml   := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                     '<Root><dsmensag>Ok</dsmensag></Root>');
 
@@ -5215,6 +5223,7 @@ END pc_solicita_biro_bordero;
       open cr_crapcob;
       fetch cr_crapcob into rw_crapcob;
       vr_nrinssac := rw_crapcob.nrinssac;
+      vr_cdtpinsc := rw_crapcob.cdtpinsc;
       
       open cr_crapsab;
       fetch cr_crapsab into rw_crapsab;
@@ -5278,7 +5287,7 @@ END pc_solicita_biro_bordero;
           fetch cr_craptdb_npag_geral into rw_craptdb_npag_geral;
           close cr_craptdb_npag_geral;
 
-          vr_vlliquidez := (rw_craptdb_npag_geral.vltitulo / rw_craptdb_npag_geral.vltitulo) * 100;
+          vr_vlliquidez := (rw_craptdb_npag_geral.vltitulo / rw_craptdb_desc_geral.vltitulo) * 100;
       end if;
 
       pr_tab_dados_detalhe(0).liqgeral := vr_vlliquidez;
