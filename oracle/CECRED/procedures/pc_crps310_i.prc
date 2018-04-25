@@ -3427,6 +3427,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
         vr_vlprxpar      crapris.vlprxpar%TYPE; --> Valor da proxima parcela
         vr_dtprxpar      crapris.dtprxpar%TYPE; --> Data da proxima parcela
         vr_vlju60mo      NUMBER(25,2);
+        vr_dsnivris      VARCHAR2(2);           --> Nivel do risco atual
 
         -- Cursor para juros mora em atraso ha mais de 60 dias
         CURSOR cr_craplem_60_mora(pr_qtdiaatr IN NUMBER) IS
@@ -3541,8 +3542,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
         -- Backup da variavel vr_aux_nivel
         vr_nivel_atraso := vr_aux_nivel;
 
+        vr_dsnivris := NULL;
+        vr_dsnivris := pr_rw_crapepr.dsnivris; --  vt_tab_nivepr(LPAD(pr_rw_crapepr.nrdconta,10,'0')||lpad(pr_rw_crapepr.nrctremp,10,'0'));
+
         -- Verifica se o risco da proposta é pior que o risco acelerado - Daniel(AMcom)
-        IF pr_rw_crapepr.dsnivris > vr_aux_nivel THEN
+        IF vr_tab_risco(vr_dsnivris) > vr_aux_nivel THEN
           -- Vamos verificar qual nivel de risco esta na proposta do emprestimo
           CASE
             WHEN pr_rw_crapepr.dsnivris = ' '  THEN
