@@ -156,6 +156,7 @@ CREATE OR REPLACE PACKAGE CECRED.FOLH0001 AS
                                   ,pr_dsdireto  IN VARCHAR2
                                   ,pr_dssessao  IN VARCHAR2 -- Passar NULL quando origem for diferente de 3 - Internet Banking
                                   ,pr_dtcredit  IN VARCHAR2
+                                  ,pr_iddspscp  IN NUMBER                                  
                                   ,pr_dscritic  OUT VARCHAR2
                                   ,pr_retxml    OUT CLOB);
   
@@ -178,6 +179,7 @@ CREATE OR REPLACE PACKAGE CECRED.FOLH0001 AS
                                   ,pr_nrseqpag  IN NUMBER
                                   ,pr_dsarquiv  IN VARCHAR2
                                   ,pr_dsdireto  IN VARCHAR2
+                                  ,pr_iddspscp  IN NUMBER                                  
                                   ,pr_dscritic  OUT VARCHAR2
                                   ,pr_retxml    OUT CLOB);          --> Erros do processo
   
@@ -1146,7 +1148,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
   --  Sistema  : Ayllos
   --  Sigla    : CRED
   --  Autor    : Lucas Afonso Lombardi Moreira
-  --  Data     : Julho/2015.                   Ultima atualizacao: 07/07/2016
+  --  Data     : Julho/2015.                   Ultima atualizacao: 30/10/2017
   --
   -- Dados referentes ao programa:
   --
@@ -1160,6 +1162,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
   --
   --             07/07/2016 - Mudança nos parâmetros da chamada de saldo para melhora
   --                          de performance - Marcos(Supero)
+  --
+  --             30/10/2017 - Somando os pagamentos aprovados e nao debitados na verificação
+  --                          de estouro, conforme solicitado no chamado 707298 (Kelvin).
   --
   ---------------------------------------------------------------------------------------------------------------
 
@@ -1190,10 +1195,38 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
              ,trunc(pfp.dtsolest)
              ,ass.vllimcre;
 
+  -- Busca empresas que possuem pagamentos com débitos pendentes
+  CURSOR cr_crapemp_debito_pendente(pr_cdcooper IN crapemp.cdcooper%TYPE
+                                   ,pr_cdempres IN crapemp.cdempres%TYPE) IS
+    SELECT SUM(lfp.vllancto) vllancto
+      FROM crappfp pfp
+          ,crapemp emp
+          ,craplfp lfp
+          ,crapass ass
+     WHERE pfp.cdcooper = pr_cdcooper
+       AND pfp.cdcooper = emp.cdcooper
+       AND pfp.cdempres = emp.cdempres
+       AND lfp.cdcooper = pfp.cdcooper
+       AND lfp.cdempres = pfp.cdempres
+       AND lfp.nrseqpag = pfp.nrseqpag
+       AND ass.cdcooper = pfp.cdcooper
+       AND ass.nrdconta = emp.nrdconta
+       AND pfp.idsitapr = 5 --> Aprovados
+       AND pfp.flsitdeb = 0 --> Ainda nao debitado
+       AND pfp.cdempres = pr_cdempres
+     GROUP BY emp.cdempres
+             ,emp.nrdconta
+             ,emp.dsdemail
+             ,trunc(pfp.dtsolest)
+             ,ass.vllimcre;
+
+  rw_crapemp_debito_pendente cr_crapemp_debito_pendente%ROWTYPE;
+  
   -- Variaveis
   vr_tab_saldo  EXTR0001.typ_tab_saldos;
   vr_saldo      NUMBER;
   vr_des_erro   VARCHAR2(3);
+  vr_vllancto    NUMBER;
 
   --Variaveis de E-mail
   vr_email_assunto VARCHAR(300);
@@ -1229,10 +1262,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
           vr_dscritic := ' – ERRO NAO TRATADO AO VERIFICAR SALDO' || ' - ' || vr_tab_erro(0).dscritic;
           RAISE vr_exc_erro;
         END IF;
+        
         vr_saldo := (vr_tab_saldo(0).vlsddisp + vr_tab_saldo(0).vllimcre);
 
+        --Busca também os pagamentos aprovados para somar
+        OPEN cr_crapemp_debito_pendente(pr_cdcooper => pr_cdcooper
+                                       ,pr_cdempres => rw_crapemp.cdempres);
+          FETCH cr_crapemp_debito_pendente 
+           INTO rw_crapemp_debito_pendente;
+        CLOSE cr_crapemp_debito_pendente;          
+        
+        --Soma vllancto dos estourados + vllancto aprovados
+        vr_vllancto := rw_crapemp.vllancto + nvl(rw_crapemp_debito_pendente.vllancto,0);
+        
         -- Se houver saldo
-        IF vr_saldo >= rw_crapemp.vllancto THEN
+        IF vr_saldo >= vr_vllancto THEN
           -- Atualiza os pagamentos para aprovados
           BEGIN
             UPDATE crappfp
@@ -5501,7 +5545,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
   --  Sistema  : Ayllos
   --  Sigla    : CRED
   --  Autor    : Kelvin
-  --  Data     : Janeiro/2017.                   Ultima atualizacao: 
+  --  Data     : Janeiro/2017.                   Ultima atualizacao:27/02/2018 
   --
   -- Dados referentes ao programa:
   --
@@ -5531,6 +5575,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
   --                          dia da dtmvtopr for anterior ao dia limite para debitos. 
   --                          (Jaison/Marcos - Supero)
   --
+  --             27/02/2018 - Ajuste para que a central receba e-mail caso aconteca
+  --                          problemas nos pagamentos para outras instituincoes financeiras
+  --                          e tambem alterado o conteudo, conforme solicitado no chamado
+  --                          845975. (Kelvin)
   ---------------------------------------------------------------------------------------------------------------
 
     -- Busca os dados do lote
@@ -6388,13 +6436,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
                   vr_dsmensag := 'Houveram erros inesperados no sistema e as transferências TEC salário ' ||
                                  'da empresa não puderam ser efetuadas automaticamente. Abaixo trazemos o ' ||
                                  'erro ocorrido:<br>' || vr_cdcritic || '-' || vr_dscritic || '<br><br>' ||
-                                 'Lembramos que estes pagamentos continuam pendentes de processamento e ' ||
-                                 'sugerimos que os mesmos sejam gerados pela tela TRFSAL, opção B.';
+                                 'Consulte a tela TRFSAL, opção C para verificar se ainda há lançamentos ' ||
+                                 'pendentes.';
 
                   -- Solicita envio do email
                   GENE0003.pc_solicita_email(pr_cdcooper        => pr_cdcooper
                                             ,pr_cdprogra        => 'FOLH0001'
-                                            ,pr_des_destino     => TRIM(vr_emailds2)
+                                            ,pr_des_destino     => TRIM(vr_emailds2) || ';' || TRIM(vr_emailds1)
                                             ,pr_des_assunto     => 'Folha de Pagamento - Problema com as TECs – Empresa ' || rw_crapemp.cdempres || ' - ' || rw_crapemp.nmresemp
                                             ,pr_des_corpo       => vr_dsmensag
                                             ,pr_des_anexo       => NULL--> nao envia anexo, anexo esta disponivel no dir conf. geracao do arq.
@@ -7863,6 +7911,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
   --
   --             22/12/2015 - Chamar a rotina de debito na mesma frequencia do crédito (Marcos-Suoero)
   --
+  --             25/10/2017 - Realizando o processamento dos pagamentos antigos cadastrados na tela SOL062,
+  --                          para ajustar o problema relatado no chamado 654712 (Kelvin)
+  --
   ---------------------------------------------------------------------------------------------------------------
 
   -- Busca as cooperativas
@@ -7875,6 +7926,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
      WHERE flgativo = 1
        AND cdcooper <> 3;
 
+  CURSOR cr_existe_folha_antiga(pr_cdcooper crapcop.cdcooper%TYPE
+                               ,pr_dtmvtolt crapdat.dtmvtolt%TYPE) IS
+    SELECT 1 
+      FROM craplcs lcs
+     WHERE lcs.cdcooper = pr_cdcooper
+       AND lcs.dtmvtolt = pr_dtmvtolt
+           -- FOLHA EMAIL   --> 560
+           -- CAIXA ON-LINE --> 561
+           -- FOLHA IBANK   --> gene0001.fn_param_sistema('CRED',rw_crapcop.cdcooper,'FOLHAIB_HIS_CRE_TECSAL')
+       AND lcs.cdhistor IN(560,561,gene0001.fn_param_sistema('CRED',pr_cdcooper,'FOLHAIB_HIS_CRE_TECSAL'))         
+       AND lcs.flgenvio = 0 --Nao enviado  
+       AND lcs.nrridlfp = 0; --Folha velha
+  rw_existe_folha_antiga cr_existe_folha_antiga%ROWTYPE; 
+   
   -- Cursor generico de calendario
   rw_crapdat BTCH0001.CR_CRAPDAT%ROWTYPE;
 
@@ -7953,7 +8018,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
            rw_crapdat.inproces = 1 AND
            trunc(SYSDATE) = gene0005.fn_valida_dia_util(vr_cdcooper, SYSDATE) THEN
 
-          -------- ROTINA 01 - Alerta ou cancelamento automático das empresas sem uso ------------------------
+  -------- ROTINA 01 - Alerta ou cancelamento automático das empresas sem uso ------------------------
 
           -- Executada apenas uma vez por dia
           vr_dtsemus := to_date(gene0001.fn_param_sistema('CRED', vr_cdcooper, 'FOLHAIB_CHECK_SEM_USO'),'DD/MM/RRRR');
@@ -7985,12 +8050,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
             pc_aviso_cancel_emp_sem_uso(vr_cdcooper, rw_crapcop.nmrescop);
           END IF;
 
-          -------- ROTINA 02 - Aprovação automática de estouros com saldo ------------------------------------
+  -------- ROTINA 02 - Aprovação automática de estouros com saldo ------------------------------------
 
           -- Acionar a rotina 02
           pc_aprova_estouros_automatico (vr_cdcooper, rw_crapdat);
 
-          -------- ROTINA 03 - Reprovação automática de estouros com horário de análise expirado -------------
+  -------- ROTINA 03 - Reprovação automática de estouros com horário de análise expirado -------------
 
           -- Busca o horário limite para análise de estouros
           vr_dtexpest := to_date(to_char(SYSDATE,'DD/MM/RRRR ') || gene0001.fn_param_sistema('CRED', vr_cdcooper,'FOLHAIB_HOR_LIM_ANA_EST'), 'DD/MM/RRRR HH24:MI');
@@ -8027,7 +8092,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
             END IF;
           END IF;
 
-          -------- ROTINA 04 - Alerta de créditos após a expiração da portabilidade --------------------------
+  -------- ROTINA 04 - Alerta de créditos após a expiração da portabilidade --------------------------
 
           -- Busca o horário limite para portabilidade em folha
           vr_dtexppor := to_date(to_char(SYSDATE,'DD/MM/RRRR ') || gene0001.FN_param_sistema('CRED', vr_cdcooper,'FOLHAIB_HOR_LIM_PORTAB'), 'DD/MM/RRRR HH24:MI');
@@ -8064,14 +8129,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
             END IF;
           END IF;
 
-          -------- ROTINA 05 - Débitos pendentes -------------------------------------------------------------
-          -------- ROTINA 06 - Créditos pendentes ------------------------------------------------------------
-          -------- ROTINA 06.01 - Créditos pendentes conta cooperativa ---------------------------------------
-          -------- ROTINA 06.02 - Créditos pendentes conta ctasal --------------------------------------------
-          -------- ROTINA 06.03 - Atualiza o XML do comprovante liquido --------------------------------------
+  -------- ROTINA 05 - Débitos pendentes -------------------------------------------------------------
+  -------- ROTINA 06 - Créditos pendentes ------------------------------------------------------------
+  -------- ROTINA 06.01 - Créditos pendentes conta cooperativa ---------------------------------------
+  -------- ROTINA 06.02 - Créditos pendentes conta ctasal --------------------------------------------
+  -------- ROTINA 06.03 - Atualiza o XML do comprovante liquido --------------------------------------
 
-          -- Acionar a rotina 05
-          pc_debito_pagto_aprovados (vr_cdcooper, rw_crapdat);
+            -- Acionar a rotina 05
+            pc_debito_pagto_aprovados (vr_cdcooper, rw_crapdat);
 
           -- Horario limite para contas da cooperativa
           vr_hrlimcop := to_date(to_char(SYSDATE,'DD/MM/RRRR ') || gene0001.fn_param_sistema('CRED', vr_cdcooper, 'FOLHAIB_HOR_LIM_PAG_COOP'),'DD/MM/RRRR HH24:MI');
@@ -8093,17 +8158,39 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
 
                --Acionar a rotina 6.2
                pc_cr_pagto_aprovados_ctasal(vr_cdcooper, rw_crapdat);
+               
+               OPEN cr_existe_folha_antiga(pr_cdcooper => vr_cdcooper
+                                          ,pr_dtmvtolt => rw_crapdat.dtmvtolt);
+                 FETCH cr_existe_folha_antiga
+                   INTO rw_existe_folha_antiga;
+                 
+                 --Valida se há folhas antigas para serem processadas  
+                 IF cr_existe_folha_antiga%FOUND THEN
+                   CLOSE cr_existe_folha_antiga;
+                   --Faz o processamanento dos pagamentos carregados pela tela SOL062 (Antigos)
+                   SSPB0001.pc_trfsal_opcao_b(pr_cdcooper => vr_cdcooper
+                                             ,pr_cdagenci => 0
+                                             ,pr_nrdcaixa => 1
+                                             ,pr_cdoperad => 1
+                                             ,pr_cdempres => 0
+                                             ,pr_cdcritic => vr_cdcritic
+                                             ,pr_dscritic => vr_dscritic);
+               
+                 ELSE
+               CLOSE cr_existe_folha_antiga;
+            END IF;
+
             END IF;
 
             -- Acionar a rotina 06.03
             pc_atualiza_xml_comprov_liquid(vr_cdcooper, rw_crapdat);
           END IF;
 
-          -------- ROTINA 07 - Cobrança das tarifas pendentes -----------------------------------------------
+  -------- ROTINA 07 - Cobrança das tarifas pendentes -----------------------------------------------
 
           pc_cobra_tarifas_pendentes (vr_cdcooper, rw_crapdat);
 
-          -------- ROTINA 08 - Conciliação dos pagamentos pendentes de devolução -----------------------------
+  -------- ROTINA 08 - Conciliação dos pagamentos pendentes de devolução -----------------------------
 
           -- Busca a data e hora da última execucao nos parâmetros de sistema
           vr_dtcobtar := to_date(gene0001.fn_param_sistema('CRED',vr_cdcooper,'FOLHAIB_CONCILI_ESTORNO'),'DD/MM/RRRR HH24:MI:SS');
@@ -8137,7 +8224,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
             pc_concili_estornos_pendentes (vr_cdcooper, rw_crapdat);
           END IF;
 
-          -------- ROTINA 09 - Estorno automático de rejeições TEC -------------------------------------------
+  -------- ROTINA 09 - Estorno automático de rejeições TEC -------------------------------------------
 
           -- Busca a data e hora da última execucao nos parâmetros de sistema
           vr_dtcobtar := to_date(gene0001.fn_param_sistema('CRED',vr_cdcooper,'FOLHAIB_ESTORNO_TEC'),'DD/MM/RRRR HH24:MI:SS');
@@ -8171,7 +8258,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
             pc_estorno_automati_rejeicoes (vr_cdcooper, rw_crapdat);
           END IF;
 
-          -------- ROTINA 10 - Alerta as 19:00 de TRFSAL sem retorno SPB -------------------------------------------
+  -------- ROTINA 10 - Alerta as 19:00 de TRFSAL sem retorno SPB -------------------------------------------
 
           -- Executada apenas uma vez por dia após as 19:00
           vr_dtavispb := to_date(gene0001.fn_param_sistema('CRED', vr_cdcooper, 'FOLHAIB_SEM_RETORN_SPB'),'DD/MM/RRRR');
@@ -8203,7 +8290,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
             pc_alerta_transf_penden_spb(vr_cdcooper, rw_crapdat);
           END IF;
 
-          -----------------------------TERMINO DAS ROTINAS ---------------------------------------------------
+  -----------------------------TERMINO DAS ROTINAS ---------------------------------------------------
         END IF;
       EXCEPTION
       WHEN vr_exc_erro THEN
@@ -8224,7 +8311,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
                                              ' - FOLH0001 --> Rotina pc_processo_controlador.' || SQLERRM);
         -- Desfazer a operacao
         ROLLBACK;
-
+        
       END;
     END LOOP;
 
@@ -8631,6 +8718,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
                           ,pr_dsdireto => pr_dsdireto
                           ,pr_dssessao => NULL
                           ,pr_dtcredit => NULL -- Valida apenas para IB
+                          ,pr_iddspscp => 0
                           ,pr_dscritic => pr_dscritic
                           ,pr_retxml   => vr_retxml);
 
@@ -8667,6 +8755,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
                                   ,pr_dsdireto  IN VARCHAR2
                                   ,pr_dssessao  IN VARCHAR2 -- Passar NULL quando origem for diferente de 3 - Internet Banking
                                   ,pr_dtcredit  IN VARCHAR2
+                                  ,pr_iddspscp  IN NUMBER
                                   ,pr_dscritic  OUT VARCHAR2
                                   ,pr_retxml    OUT CLOB) IS
   ---------------------------------------------------------------------------------------------------------------
@@ -8698,6 +8787,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
   ---------------------------------------------------------------------------------------------------------------
 
     -- CURSORES
+    CURSOR cr_crapcop(pr_cdcooper crapcop.cdcooper%TYPE) IS
+      SELECT cop.dsdircop
+        FROM crapcop cop
+       WHERE cop.cdcooper = pr_cdcooper;
+    rw_crapcop cr_crapcop%ROWTYPE;  
+        
     -- Buscar os dados de Origens para Pagamentos de Folha
     CURSOR cr_crapofp(pr_cdcooper  crapofp.cdcooper%TYPE
                      ,pr_cdorigem  crapofp.cdorigem%TYPE) IS
@@ -8772,6 +8867,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
     vr_excerror    EXCEPTION;
 
     vr_dsdireto    VARCHAR2(100);
+    vr_dsdirgra    VARCHAR2(100);
     vr_dsdlinha    VARCHAR2(500);
     vr_dscrilot    VARCHAR2(500); -- Critica a ser replicada no arquivo
     vr_dscriarq    VARCHAR2(500); -- Critica a ser replicada no arquivo
@@ -8853,6 +8949,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
 
   BEGIN
 
+    --> Verificar cooperativa
+    OPEN cr_crapcop (pr_cdcooper => pr_cdcooper);    
+    FETCH cr_crapcop INTO rw_crapcop;
+      
+    --> verificar se encontra registro
+    IF cr_crapcop%NOTFOUND THEN      
+      CLOSE cr_crapcop;    
+        
+      pr_dscritic := 'Cooperativa de destino nao cadastrada.';      
+      RAISE vr_excerror;      
+    ELSE
+      CLOSE cr_crapcop;
+    END IF;   
+
+    IF pr_iddspscp = 0 THEN -- Diretorio de upload do gnusites
     -- Busca o diretório do upload do arquivo
     vr_dsdireto := GENE0001.fn_diretorio(pr_tpdireto => 'C'
                                         ,pr_cdcooper => pr_cdcooper
@@ -8868,6 +8979,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
       -- O comando shell executou com erro, gerar log e sair do processo
       pr_dscritic := 'Erro realizar o upload do arquivo: ' || vr_des_erro;
       RAISE vr_excerror;
+    END IF;
+    ELSE
+      vr_dsdireto := gene0001.fn_diretorio('C',0)                                ||
+                     gene0001.fn_param_sistema('CRED',0,'PATH_DOWNLOAD_ARQUIVO') ||
+                     '/'                                                         ||
+                     rw_crapcop.dsdircop                                         ||
+                     '/upload';
     END IF;
 
     -- Verifica se o arquivo existe
@@ -9850,6 +9968,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
                                                     ||'<dscritic>'||vr_dscritic ||'</dscritic>'
                                                     ||'<dsorigem>'||NVL(vr_tbcritic(ind).dsorigem, ' ')||'</dsorigem>'
                                                     ||'<vlrpagto>'||vr_tbcritic(ind).vlrpagto||'</vlrpagto>'
+                                                    ||'<idanalis>'||vr_tbcritic(ind).inderror||'</idanalis>'                                                    
                                                     ||'</critica>'||chr(13));
 
         END LOOP; -- Loop das críticas
@@ -9913,9 +10032,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
 
           END LOOP;
 
+          vr_dsdirgra := GENE0001.fn_diretorio(pr_tpdireto => 'C'
+                                              ,pr_cdcooper => pr_cdcooper
+                                              ,pr_nmsubdir => 'upload');
+                                            
           -- Gravar o xml gerado em um arquivo que será lido pela rotina gravar
           GENE0002.pc_xml_para_arquivo(pr_xml      => vr_retxml
-                                      ,pr_caminho  => vr_dsdireto
+                                      ,pr_caminho  => vr_dsdirgra
                                       ,pr_arquivo  => vr_nmarquiv
                                       ,pr_des_erro => pr_dscritic);
 
@@ -10055,6 +10178,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
                           ,pr_nrseqpag => pr_nrseqpag
                           ,pr_dsarquiv => pr_dsarquiv
                           ,pr_dsdireto => pr_dsdireto
+                          ,pr_iddspscp => 0
                           ,pr_dscritic => pr_dscritic
                           ,pr_retxml   => vr_retxml);
 
@@ -10090,6 +10214,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
                                    ,pr_nrseqpag  IN NUMBER
                                    ,pr_dsarquiv  IN VARCHAR2
                                    ,pr_dsdireto  IN VARCHAR2
+                                   ,pr_iddspscp  IN NUMBER
                                    ,pr_dscritic  OUT VARCHAR2
                                    ,pr_retxml    OUT CLOB) IS        --> Erros do processo
   ---------------------------------------------------------------------------------------------------------------
@@ -10165,6 +10290,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
                ,ofp.dsorigem ;
     rw_craplfp  cr_craplfp%ROWTYPE;
 
+    CURSOR cr_crapcop(pr_cdcooper crapcop.cdcooper%TYPE) IS
+      SELECT cop.dsdircop
+        FROM crapcop cop
+       WHERE cop.cdcooper = pr_cdcooper;
+    rw_crapcop cr_crapcop%ROWTYPE;    
+
     -- Registros
     TYPE typ_reccritc IS RECORD (nrdlinha NUMBER
                                 ,dsdconta VARCHAR2(20)
@@ -10218,6 +10349,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
     -- Variaveis
     vr_excerror    EXCEPTION;
     vr_dsdireto    VARCHAR2(100);
+    vr_dsdirgra    VARCHAR2(100);
     vr_dsdlinha    VARCHAR2(500);
     vr_dserhead    VARCHAR2(500); -- Critica a ser replicada no arquivo
     vr_dserrfun    VARCHAR2(500); -- Critica a ser replicada para o funcionario
@@ -10345,6 +10477,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
 
   BEGIN
 
+    --> Verificar cooperativa
+    OPEN cr_crapcop (pr_cdcooper => pr_cdcooper);    
+    FETCH cr_crapcop INTO rw_crapcop;
+      
+    --> verificar se encontra registro
+    IF cr_crapcop%NOTFOUND THEN      
+      CLOSE cr_crapcop;    
+        
+      pr_dscritic := 'Cooperativa de destino nao cadastrada.';      
+      RAISE vr_excerror;      
+    ELSE
+      CLOSE cr_crapcop;
+    END IF;  
+
+    IF pr_iddspscp = 0 THEN -- Diretorio de upload do gnusites                                           
     -- Busca o diretório do upload do arquivo
     vr_dsdireto := GENE0001.fn_diretorio(pr_tpdireto => 'C'
                                         ,pr_cdcooper => pr_cdcooper
@@ -10360,6 +10507,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
         -- O comando shell executou com erro, gerar log e sair do processo
         pr_dscritic := 'Erro realizar o upload do arquivo: ' || vr_des_erro;
         RAISE vr_excerror;
+      END IF;
+    ELSE
+      vr_dsdireto := gene0001.fn_diretorio('C',0)                                ||
+                     gene0001.fn_param_sistema('CRED',0,'PATH_DOWNLOAD_ARQUIVO') ||
+                     '/'                                                         ||
+                     rw_crapcop.dsdircop                                         ||
+                     '/upload';
       END IF;
 
     -- Verifica se o arquivo existe
@@ -11254,9 +11408,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0001 AS
                              ,pr_texto_completo => vr_dsauxml
                              ,pr_texto_novo     => ('</folhas></Root>'||chr(10))
                              ,pr_fecha_xml      => TRUE);
+                             
+        vr_dsdirgra := GENE0001.fn_diretorio(pr_tpdireto => 'C'
+                                            ,pr_cdcooper => pr_cdcooper
+                                            ,pr_nmsubdir => 'upload');
+       
         -- Ao final, iremos gravar o XML na pasta Upload para gravação caso o usuário clique no botão gravar
         gene0002.pc_XML_para_arquivo(pr_XML      => pr_retxml
-                                    ,pr_caminho  => vr_dsdireto              -- Diretório Upload
+                                    ,pr_caminho  => vr_dsdirgra              -- Diretório Upload
                                     ,pr_arquivo  => pr_dsarquiv||'.proc.xml' -- Nome Original + .proc.xml
                                     ,pr_des_erro => pr_dscritic);
         IF pr_dscritic IS NOT NULL THEN
