@@ -23,6 +23,7 @@
                                           (Jonata - RKAM P364).
 							 24/01/2018 - Na funcao controlaLayout havia erros de sintaxe ocasionando problemas na 
 							              formatação da tela (Tiago #824708)
+							 12/03/2018 - Campos de data de inicio de atraso e data transf prejuizo (Marcel Kohls / AMCom)
  ***********************************************************************/
 
 var contWin  = 0;  // Variável para contagem do número de janelas abertas para impressão de extratos
@@ -374,7 +375,6 @@ function controlaLayout( nomeForm ){
 	var altura = '253px';
 
 	if (nomeForm == 'frmDadosDepVista') {
-
         //Seleção dos Labels e Inputs
         if ($.browser.msie) {
             $('fieldset').css({ 'padding-top': '6px' });
@@ -405,6 +405,9 @@ function controlaLayout( nomeForm ){
         var Lvlipmfpg = $('label[for="vlipmfpg"]', '#' + nomeForm);
         var Cvlipmfpg = $('#vlipmfpg', '#' + nomeForm);
 	
+		var Lvlblqaco = $('label[for="vlblqaco"]', '#' + nomeForm);
+        var Cvlblqaco = $('#vlblqaco', '#' + nomeForm);
+
         var Lvlsdchsl = $('label[for="vlsdchsl"]', '#' + nomeForm);
         var Cvlsdchsl = $('#vlsdchsl', '#' + nomeForm);
 
@@ -426,6 +429,12 @@ function controlaLayout( nomeForm ){
         var Ldtliberacao = $('label[for="dtliberacao"]', '#' + nomeForm);
         var Cdtliberacao = $('#dtliberacao', '#' + nomeForm);
 
+		var Ldttrapre = $('label[for="dttrapre"]', '#' + nomeForm);
+        var Cdttrapre = $('#dttrapre', '#' + nomeForm);
+
+		var Ldtiniatr = $('label[for="dtiniatr"]', '#' + nomeForm);
+        var Cdtiniatr = $('#dtiniatr', '#' + nomeForm);
+
         //Formatação dos Labels
         Lvlsddisp.addClass('rotulo').css('width', '110px');
         Lvlsaqmax.css('width', '180px');
@@ -434,6 +443,7 @@ function controlaLayout( nomeForm ){
         Lvlsdblpr.addClass('rotulo').css('width', '110px');
         Lvlsdblfp.addClass('rotulo').css('width', '110px');
         Lvlipmfpg.css('width', '180px');
+		Lvlblqaco.addClass('rotulo').css('width', '110px');
         Lvlsdchsl.addClass('rotulo').css('width', '110px');
         Lvlblqjud.addClass('rotulo').css('width', '110px');
         Lvlstotal.addClass('rotulo').css('width', '110px');
@@ -441,6 +451,8 @@ function controlaLayout( nomeForm ){
         Ldtultlcr.css('width', '180px');
         Lvllimdis.css('width', '180px');
         Ldtliberacao.css('width', '180px');
+		Ldtiniatr.css('width', '180px');
+		Ldttrapre.css('width', '180px');
 
         //Formatação dos campos
         Cvlsddisp.css('width', '87px').addClass('monetario');
@@ -450,6 +462,7 @@ function controlaLayout( nomeForm ){
         Cvlsdblpr.css('width', '87px').addClass('monetario');
         Cvlsdblfp.css('width', '87px').addClass('monetario');
         Cvlipmfpg.css('width', '93px').addClass('monetario');
+		Cvlblqaco.css('width', '87px').addClass('monetario');
         Cvlsdchsl.css('width', '87px').addClass('monetario');
         Cvlblqjud.css('width', '87px').addClass('monetario');
         Cvlstotal.css('width', '87px').addClass('monetario');
@@ -457,6 +470,8 @@ function controlaLayout( nomeForm ){
         Cdtultlcr.css('width', '93px').addClass('data');
         Cvllimdis.css('width', '93px').addClass('monetario');
         Cdtliberacao.css('width', '93px').addClass('data');
+		Cdtiniatr.css('width', '93px').addClass('data');
+		Cdttrapre.css('width', '93px').addClass('data');
 
         cTodos.desabilitaCampo();
 
@@ -760,6 +775,13 @@ function controlaLayout( nomeForm ){
 						
 		});		
 		
+	} else if (nomeForm == 'frmDadosDetalhesAtraso') {
+		var divForm = '#' + nomeForm;
+
+		$(divForm + ' .rotulo').css({'width':'180px'});
+		$(divForm + ' .campo').css({'width':'100px','text-align':'right'}); //.desabilitaCampo();
+
+        $('input, select', divForm).desabilitaCampo();
 	}
 
 	$('#divConteudoOpcao').css('height',altura);
@@ -775,4 +797,30 @@ function selecionaExtrato(dshistor,dtlibera) {
 
 }
 
+function mostraDetalhesAtraso() {
+	showMsgAguardo('Aguarde, abrindo detalhes...');
 
+    exibeRotina($('#divUsoGenerico'));
+
+    $.ajax({
+        type: 'POST',
+        dataType: 'html',
+        url: UrlSite + 'telas/atenda/dep_vista/detalhes_atraso.php',
+        data: {
+            nrdconta: nrdconta,
+			cdcooper: cdcooper,
+            redirect: 'html_ajax'
+            },
+        error: function(objAjax,responseError,objExcept) {
+            hideMsgAguardo();
+            showError('error','N?o foi poss?vel concluir a requisi??o.','Alerta - Ayllos',"blockBackground(parseInt($('#divRotina').css('z-index')))");
+        },
+        success: function(response) {
+			//console.log(response);
+            $('#divUsoGenerico').html(response);
+            //layoutPadrao();
+            hideMsgAguardo();
+            bloqueiaFundo($('#divUsoGenerico'));
+        }
+    });
+}

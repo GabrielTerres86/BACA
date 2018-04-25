@@ -1,7 +1,7 @@
 /***********************************************************************
     Fonte: ocorrencias.js
     Autor: Guilherme
-    Data : Fevereiro/2007                Última Alteração: 29/10/2012
+    Data : Fevereiro/2007                Última Alteração: 25/03/2018
 
     Objetivo  : Biblioteca de funções da rotina OCORRENCIAS da tela
                 ATENDA
@@ -19,6 +19,8 @@
 
 				24/01/2018 - Ajustes referentes a inclusão da opção "Riscos".
 					         Reginaldo - AMcom
+			    25/03/2018 - Adicionada coluna de Risco Refinanciamento e carregamento de dados brutos
+										Marcel Kohls - AMCom
 							 
  ***********************************************************************/
 
@@ -166,7 +168,6 @@ function formataPrincipal() {
 	cCampo17 = $('#campo17', '#'+nomeForm);	
 	cCampo18 = $('#campo18', '#'+nomeForm);
 
-	
 	cCampo00.css({'width':'100px'});
 	cCampo01.css({'width':'70px'});
 	cCampo02.css({'width':'100px'});
@@ -192,11 +193,9 @@ function formataPrincipal() {
 		rCampo06.addClass('rotulo-linha').css({'width':'105px'});
 		rCampo10.addClass('rotulo').css({'width':'367px'});
 		rCampo11.addClass('rotulo').css({'width':'367px'});
-
 }
 
 	return false;
-	
 }
 
 // Função que formata a tabela contra-ordens
@@ -280,10 +279,10 @@ function formataRiscos() {
 
 	var ordemInicial = new Array();
 
-	var arrayLargura = ['140px', '70px', '60px', '40px', '40px', '40px', '40px', '40px', '40px', 
+	var arrayLargura = ['99px', '67px', '55px', '40px', '40px', '40px', '40px', '40px', '40px', '40px',
 		'40px', '40px', '40px', '40px'];
 
-	var arrayAlinha = ['center', 'right', 'right', 'center', 'center', 'center', 'center', 'center',
+	var arrayAlinha = ['center', 'right', 'right', 'center', 'center', 'center', 'center', 'center', 'center',
 		'center', 'center', 'center', 'center', 'center'];
 
 	tabela.formataTabela(ordemInicial, arrayLargura, arrayAlinha);
@@ -527,4 +526,3 @@ function selecionaEstouros(tr) {
 
 	return false;
 }
-

@@ -82,10 +82,13 @@
                            PRJ339 - CRM (Odirlei-AMcom)  
              
                17/07/2017 - Ajustes para nao buscar IDORGEXP para pessoa jur.
-                            PRJ339 - CRM (Odirlei-AMcom)
-
+                            PRJ339 - CRM (Odirlei-AMcom)  
+             
                29/11/2017 - Inclusao do valor de bloqueio em garantia. 
                             PRJ404 - Garantia.(Odirlei-AMcom)                      
+             
+               15/03/2018 - Ajuste para buscar a descricao do tipo de conta do oracle. 
+                            PRJ366 (Lombardi)
              
 ........................................................................... */
 
@@ -189,6 +192,9 @@ PROCEDURE consulta-conta:
     
     DEF VAR aux_cdempres   AS INT                           NO-UNDO.
     DEF VAR aux_cdorgexp   AS CHAR                          NO-UNDO.
+    DEF VAR aux_dstipcta   AS CHAR                          NO-UNDO.
+    DEF VAR aux_des_erro   AS CHAR                          NO-UNDO.
+    DEF VAR aux_dscritic   AS CHAR                          NO-UNDO.
 
     RUN elimina-erro (INPUT p-cooper,
                       INPUT p-cod-agencia,
@@ -309,89 +315,36 @@ PROCEDURE consulta-conta:
 
     IF  crapass.cdtipcta > 0   THEN 
         DO:
-            /* FIND craptip OF crapass NO-LOCK NO-ERROR. */
-            FIND craptip WHERE craptip.cdcooper = crapcop.cdcooper  AND
-                               craptip.cdtipcta = crapass.cdtipcta 
-                               NO-LOCK NO-ERROR.
             
-            IF  AVAIL craptip   THEN
-                DO:
-                    ASSIGN tt-conta.tipo-conta = 
-                           STRING(crapass.cdtipcta,"z9") + 
-                           " - " + craptip.dstipcta.
+            { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
+            RUN STORED-PROCEDURE pc_descricao_tipo_conta
+              aux_handproc = PROC-HANDLE NO-ERROR
+                                      (INPUT crapass.inpessoa, /* Tipo de pessoa */
+                                       INPUT crapass.cdtipcta, /* Tipo de conta */
+                                      OUTPUT "",               /* Descriçao do Tipo de conta */
+                                      OUTPUT "",               /* Flag Erro */
+                                      OUTPUT "").              /* Descriçao da crítica */
 
-                   IF  crapass.cdtipcta = 8  THEN
-                       DO:
-                           IF  crapass.cdbcochq = 756 THEN
-                               DO:
-                                   ASSIGN tt-conta.tipo-conta = 
-                                          STRING(crapass.cdtipcta,"z9") + 
-                                          " - Normal Conv-BCB".
-                               END.
-                           ELSE
-                               DO: 
-                                   ASSIGN tt-conta.tipo-conta = 
-                                          STRING(crapass.cdtipcta,"z9") + 
-                                          " - Normal Conv-CTR".
-                               END.
-                       END.
-                   ELSE
-                   IF  crapass.cdtipcta = 9  THEN
-                       DO:
-                           IF  crapass.cdbcochq = 756 THEN
-                               DO:
-                                   ASSIGN tt-conta.tipo-conta = 
-                                          STRING(crapass.cdtipcta,"z9") + 
-                                          " - Espec. Conv-BCB".
-                               END.
-                           ELSE
-                               DO: 
-                                   ASSIGN tt-conta.tipo-conta = 
-                                          STRING(crapass.cdtipcta,"z9") + 
-                                          " - Espec. Conv-CTR".
-                               END.
-                       END.
-                   ELSE
-                   IF  crapass.cdtipcta = 10  THEN
-                       DO:
-                           IF  crapass.cdbcochq = 756 THEN
-                               DO:
-                                   ASSIGN tt-conta.tipo-conta = 
-                                          STRING(crapass.cdtipcta,"z9") + 
-                                          " - Cj. Conv-BCB".
-                               END.
-                           ELSE
-                               DO: 
-                                   ASSIGN tt-conta.tipo-conta = 
-                                          STRING(crapass.cdtipcta,"z9") + 
-                                          " - Cj. Conv-CTR".
-                               END.
-                       END.
-                   ELSE
-                   IF  crapass.cdtipcta = 11  THEN
-                       DO:
-                           IF  crapass.cdbcochq = 756 THEN
-                               DO:
-                                   ASSIGN tt-conta.tipo-conta = 
-                                          STRING(crapass.cdtipcta,"z9") + 
-                                          " - Cj.Esp.Conv-BCB".
-                               END.
-                           ELSE
-                               DO: 
-                                   ASSIGN tt-conta.tipo-conta = 
-                                          STRING(crapass.cdtipcta,"z9") + 
-                                          " - Cj.Esp.Conv-CTR".
-                               END.
-                       END.
-                   ELSE
-                       ASSIGN tt-conta.tipo-conta = 
-                              STRING(crapass.cdtipcta,"z9") + " - " +
-                              craptip.dstipcta.
+            CLOSE STORED-PROC pc_descricao_tipo_conta
+                  aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+            
+            { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
 
-                END.
+            ASSIGN aux_dstipcta = ""
+                   aux_des_erro = ""
+                   aux_dscritic = ""
+                   aux_dstipcta = pc_descricao_tipo_conta.pr_dstipo_conta 
+                                   WHEN pc_descricao_tipo_conta.pr_dstipo_conta <> ?
+                   aux_des_erro = pc_descricao_tipo_conta.pr_des_erro 
+                                   WHEN pc_descricao_tipo_conta.pr_des_erro <> ?
+                   aux_dscritic = pc_descricao_tipo_conta.pr_dscritic
+                                   WHEN pc_descricao_tipo_conta.pr_dscritic <> ?.
 
-            ELSE
+            IF aux_des_erro = "NOK"  THEN
                 ASSIGN tt-conta.tipo-conta = STRING(crapass.cdtipcta,"z9").
+            ELSE
+                ASSIGN tt-conta.tipo-conta = STRING(crapass.cdtipcta,"z9") + " - " + aux_dstipcta.
+            
         END.
     ELSE
         ASSIGN tt-conta.tipo-conta = STRING(crapass.cdtipcta,"z9").
@@ -449,30 +402,30 @@ PROCEDURE consulta-conta:
     
     IF crapass.inpessoa = 1 THEN
     DO:
-    /* Retornar orgao expedidor */
-    IF  NOT VALID-HANDLE(h-b1wgen0052b) THEN
-        RUN sistema/generico/procedures/b1wgen0052b.p 
-            PERSISTENT SET h-b1wgen0052b.
+      /* Retornar orgao expedidor */
+      IF  NOT VALID-HANDLE(h-b1wgen0052b) THEN
+          RUN sistema/generico/procedures/b1wgen0052b.p 
+              PERSISTENT SET h-b1wgen0052b.
 
-    ASSIGN aux_cdorgexp = "".
-    RUN busca_org_expedidor IN h-b1wgen0052b 
-                       ( INPUT crapass.idorgexp,
-                        OUTPUT aux_cdorgexp,
-                        OUTPUT i-cod-erro, 
-                        OUTPUT c-desc-erro).
+      ASSIGN aux_cdorgexp = "".
+      RUN busca_org_expedidor IN h-b1wgen0052b 
+                         ( INPUT crapass.idorgexp,
+                          OUTPUT aux_cdorgexp,
+                          OUTPUT i-cod-erro, 
+                          OUTPUT c-desc-erro).
 
-    DELETE PROCEDURE h-b1wgen0052b.   
+      DELETE PROCEDURE h-b1wgen0052b.   
     
-    IF c-desc-erro <> "" THEN
-    DO:       
-        RUN cria-erro (INPUT p-cooper,
-                       INPUT p-cod-agencia,
-                       INPUT p-nro-caixa,
-                       INPUT i-cod-erro,
-                       INPUT c-desc-erro,
-                       INPUT YES).
-        LEAVE.
-    END.        
+      IF c-desc-erro <> "" THEN
+      DO:       
+          RUN cria-erro (INPUT p-cooper,
+                         INPUT p-cod-agencia,
+                         INPUT p-nro-caixa,
+                         INPUT i-cod-erro,
+                         INPUT c-desc-erro,
+                         INPUT YES).
+          LEAVE.
+      END.        
     END.        
     
     ASSIGN tt-conta.identidade = crapass.nrdocptl

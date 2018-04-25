@@ -21,7 +21,7 @@
 
     Programa: b1wgen0055.p
     Autor   : Jose Luis (DB1)
-    Data    : Janeiro/2010                   Ultima atualizacao: 07/03/2018
+    Data    : Janeiro/2010                   Ultima atualizacao: 13/03/2018
 
     Objetivo  : Tranformacao BO tela CONTAS - Pessoa Fisica
 
@@ -168,6 +168,9 @@
 				07/03/2018 - Voltando validacao para que nao seja possivel cadastrar escolaridade
 							 que nao esteja cadastrada no sistema, conforme solicitado no chamado
 							 849651. (Kelvin)
+
+                13/03/2018 - Substituir verificacao "cdtipcta = 6,7,17,18"  pela verificacao 
+                             da modalidade do tipo de conta. PRJ366 (Lombardi).
 .............................................................................*/
 
 
@@ -189,6 +192,9 @@ DEF VAR aux_dsorigem AS CHAR                                           NO-UNDO.
 DEF VAR aux_nrdrowid AS ROWID                                          NO-UNDO.
 DEF VAR aux_retorno  AS CHAR                                           NO-UNDO.
 DEF VAR h-b1wgen0052b AS HANDLE                                        NO-UNDO.
+
+DEF VAR aux_cdmodali AS INTE                                           NO-UNDO.
+DEF VAR aux_des_erro AS CHAR                                           NO-UNDO.
 
 FUNCTION BuscaUltimoTtl  RETURNS INTEGER
     ( INPUT par_cdcooper AS INTEGER,
@@ -569,8 +575,37 @@ PROCEDURE Busca_Inclusao:
                                  crabass.nrdconta = crabttl.nrdconta AND
                                  crabass.dtdemiss = ?  NO-LOCK:
 
+            { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+            RUN STORED-PROCEDURE pc_busca_modalidade_tipo
+            aux_handproc = PROC-HANDLE NO-ERROR (INPUT crabass.inpessoa, /* Tipo de pessoa */
+                                                 INPUT crabass.cdtipcta, /* Tipo de conta */
+                                                OUTPUT 0,                /* Modalidade */
+                                                OUTPUT "",               /* Flag Erro */
+                                                OUTPUT "").              /* Descriçao da crítica */
+
+            CLOSE STORED-PROC pc_busca_modalidade_tipo
+                  aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+            { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+            ASSIGN aux_cdmodali = 0
+                   aux_des_erro = ""
+                   aux_dscritic = ""
+                   aux_cdmodali = pc_busca_modalidade_tipo.pr_cdmodalidade_tipo 
+                                  WHEN pc_busca_modalidade_tipo.pr_cdmodalidade_tipo <> ?
+                   aux_des_erro = pc_busca_modalidade_tipo.pr_des_erro 
+                                  WHEN pc_busca_modalidade_tipo.pr_des_erro <> ?
+                   aux_dscritic = pc_busca_modalidade_tipo.pr_dscritic
+                                  WHEN pc_busca_modalidade_tipo.pr_dscritic <> ?.
+
+            IF aux_des_erro = "NOK"  THEN
+                DO:
+                   ASSIGN par_dscritic = aux_dscritic.
+                   LEAVE BuscaI.
+                END.
             /** Ignora conta aplicacao **/
-            IF  CAN-DO("6,7,17,18",STRING(crabass.cdtipcta))  THEN 
+            IF  aux_cdmodali = 3 THEN 
                 NEXT.
             
             FIND LAST crapalt WHERE 
@@ -974,8 +1009,38 @@ PROCEDURE Busca_Alteracao:
                                  crabass.dtdemiss = ?  
                                  NO-LOCK:
                                
+            { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+            RUN STORED-PROCEDURE pc_busca_modalidade_tipo
+            aux_handproc = PROC-HANDLE NO-ERROR (INPUT crabass.inpessoa, /* Tipo de pessoa */
+                                                 INPUT crabass.cdtipcta, /* Tipo de conta */
+                                                OUTPUT 0,                /* Modalidade */
+                                                OUTPUT "",               /* Flag Erro */
+                                                OUTPUT "").              /* Descriçao da crítica */
+
+            CLOSE STORED-PROC pc_busca_modalidade_tipo
+                  aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+            { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+            ASSIGN aux_cdmodali = 0
+                   aux_des_erro = ""
+                   aux_dscritic = ""
+                   aux_cdmodali = pc_busca_modalidade_tipo.pr_cdmodalidade_tipo 
+                                  WHEN pc_busca_modalidade_tipo.pr_cdmodalidade_tipo <> ?
+                   aux_des_erro = pc_busca_modalidade_tipo.pr_des_erro 
+                                  WHEN pc_busca_modalidade_tipo.pr_des_erro <> ?
+                   aux_dscritic = pc_busca_modalidade_tipo.pr_dscritic
+                                  WHEN pc_busca_modalidade_tipo.pr_dscritic <> ?.
+
+            IF aux_des_erro = "NOK"  THEN
+                DO:
+                   ASSIGN par_dscritic = aux_dscritic.
+                   LEAVE BuscaA.
+                END.
+                
             /** Ignora conta aplicacao **/
-            IF  CAN-DO("6,7,17,18",STRING(crabass.cdtipcta))  THEN
+            IF  aux_cdmodali = 3 THEN
                 NEXT.
             
             FIND LAST crapalt WHERE 
@@ -2142,19 +2207,19 @@ PROCEDURE Grava_Dados:
     /* Apenas chamar replicacao ao incluir titular  */
     IF par_cddopcao = "I" THEN
     DO:
-      { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
+      { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
                         
-      RUN STORED-PROCEDURE pc_marca_replica_ayllos 
-        aux_handproc = PROC-HANDLE NO-ERROR
-                 (INPUT par_cdcooper,  
-                  INPUT par_nrdconta,
-                  INPUT par_idseqttl,
-                 OUTPUT "").
+    RUN STORED-PROCEDURE pc_marca_replica_ayllos 
+      aux_handproc = PROC-HANDLE NO-ERROR
+               (INPUT par_cdcooper,  
+                INPUT par_nrdconta,
+                INPUT par_idseqttl,
+               OUTPUT "").
 
-      CLOSE STORED-PROC pc_marca_replica_ayllos 
-          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+    CLOSE STORED-PROC pc_marca_replica_ayllos 
+        aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
 
-      { includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }		
+      { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }		
     END.
         
     IF  VALID-HANDLE(h-b1wgen0060) THEN
@@ -2408,8 +2473,38 @@ PROCEDURE Grava_Inclusao:
                                  crabass.nrdconta = crabttl.nrdconta AND
                                  crabass.dtdemiss = ?  NO-LOCK:
                                
+            { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+            RUN STORED-PROCEDURE pc_busca_modalidade_tipo
+            aux_handproc = PROC-HANDLE NO-ERROR (INPUT crabass.inpessoa, /* Tipo de pessoa */
+                                                 INPUT crabass.cdtipcta, /* Tipo de conta */
+                                                OUTPUT 0,                /* Modalidade */
+                                                OUTPUT "",               /* Flag Erro */
+                                                OUTPUT "").              /* Descriçao da crítica */
+
+            CLOSE STORED-PROC pc_busca_modalidade_tipo
+                  aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+            { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+            ASSIGN aux_cdmodali = 0
+                   aux_des_erro = ""
+                   aux_dscritic = ""
+                   aux_cdmodali = pc_busca_modalidade_tipo.pr_cdmodalidade_tipo 
+                                  WHEN pc_busca_modalidade_tipo.pr_cdmodalidade_tipo <> ?
+                   aux_des_erro = pc_busca_modalidade_tipo.pr_des_erro 
+                                  WHEN pc_busca_modalidade_tipo.pr_des_erro <> ?
+                   aux_dscritic = pc_busca_modalidade_tipo.pr_dscritic
+                                  WHEN pc_busca_modalidade_tipo.pr_dscritic <> ?.
+
+            IF aux_des_erro = "NOK"  THEN
+                DO:
+                   ASSIGN par_dscritic = aux_dscritic.
+                   UNDO Inclusao, LEAVE Inclusao.
+                END.
+                
             /** Ignora conta aplicacao **/
-            IF  CAN-DO("6,7,17,18",STRING(crabass.cdtipcta))  THEN
+            IF aux_cdmodali = 3 THEN
                 NEXT.
             
             FIND LAST crapalt WHERE 
@@ -2716,8 +2811,38 @@ PROCEDURE Grava_Alteracao:
                                  crabass.dtdemiss = ?  
                                  NO-LOCK:
                                
+            { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+            RUN STORED-PROCEDURE pc_busca_modalidade_tipo
+            aux_handproc = PROC-HANDLE NO-ERROR (INPUT crabass.inpessoa, /* Tipo de pessoa */
+                                                 INPUT crabass.cdtipcta, /* Tipo de conta */
+                                                OUTPUT 0,                /* Modalidade */
+                                                OUTPUT "",               /* Flag Erro */
+                                                OUTPUT "").              /* Descriçao da crítica */
+
+            CLOSE STORED-PROC pc_busca_modalidade_tipo
+                  aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+            { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+            ASSIGN aux_cdmodali = 0
+                   aux_des_erro = ""
+                   aux_dscritic = ""
+                   aux_cdmodali = pc_busca_modalidade_tipo.pr_cdmodalidade_tipo 
+                                  WHEN pc_busca_modalidade_tipo.pr_cdmodalidade_tipo <> ?
+                   aux_des_erro = pc_busca_modalidade_tipo.pr_des_erro 
+                                  WHEN pc_busca_modalidade_tipo.pr_des_erro <> ?
+                   aux_dscritic = pc_busca_modalidade_tipo.pr_dscritic
+                                  WHEN pc_busca_modalidade_tipo.pr_dscritic <> ?.
+
+            IF aux_des_erro = "NOK"  THEN
+                DO:
+                   ASSIGN par_dscritic = aux_dscritic.
+                   UNDO Alteracao, LEAVE Alteracao.
+                END.
+                
             /** Ignora conta aplicacao **/
-            IF  CAN-DO( "6,7,17,18",STRING(crabass.cdtipcta))  THEN
+            IF aux_cdmodali = 3 THEN
                 NEXT.
 
             FIND LAST crapalt WHERE 
@@ -3160,8 +3285,38 @@ PROCEDURE Grava_Alteracao:
                     brapttl.cdestcvl = 7   THEN  /* DIVORCIADO */                    
                RELEASE crabttl. 
                                           
+               { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+               RUN STORED-PROCEDURE pc_busca_modalidade_tipo
+               aux_handproc = PROC-HANDLE NO-ERROR (INPUT crabass.inpessoa, /* Tipo de pessoa */
+                                                    INPUT crabass.cdtipcta, /* Tipo de conta */
+                                                   OUTPUT 0,                /* Modalidade */
+                                                   OUTPUT "",               /* Flag Erro */
+                                                   OUTPUT "").              /* Descriçao da crítica */
+
+               CLOSE STORED-PROC pc_busca_modalidade_tipo
+                     aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+               { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+               ASSIGN aux_cdmodali = 0
+                      aux_des_erro = ""
+                      aux_dscritic = ""
+                      aux_cdmodali = pc_busca_modalidade_tipo.pr_cdmodalidade_tipo 
+                                     WHEN pc_busca_modalidade_tipo.pr_cdmodalidade_tipo <> ?
+                      aux_des_erro = pc_busca_modalidade_tipo.pr_des_erro 
+                                     WHEN pc_busca_modalidade_tipo.pr_des_erro <> ?
+                      aux_dscritic = pc_busca_modalidade_tipo.pr_dscritic
+                                     WHEN pc_busca_modalidade_tipo.pr_dscritic <> ?.
+
+               IF aux_des_erro = "NOK"  THEN
+                   DO:
+                      ASSIGN par_dscritic = aux_dscritic.
+                      UNDO Alteracao, LEAVE Alteracao.
+                   END.
+                   
                /** Ignora replicacao para conta aplicacao **/
-               IF  NOT CAN-DO("6,7,17,18",STRING(brapass.cdtipcta))  THEN
+               IF  aux_cdmodali <> 3 THEN
                    DO:
                        /** Atualiza titulares de outras contas onde cpf seja o
                            mesmo do primeiro titular desta conta.         **/

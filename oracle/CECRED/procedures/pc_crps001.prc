@@ -228,6 +228,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
                             
                08/04/2018 - Considerar apenas o valor do estouro de conta para realizar o resgate
                             automático (Renato - Supero)
+
+               10/04/2018 - Consistencia para considerar dias úteis ou corridos na atualização do saldo - Daniel(AMcom)
      ............................................................................. */
 
      DECLARE
@@ -711,6 +713,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
        vr_dtmvtopr  DATE;
        vr_dtmvtoan  DATE;
 
+       vr_dtrisclq_aux DATE;
+	   vr_dtcorte_prm  DATE;
+
+       vr_qtddsdev_aux  NUMBER:= 0;
+
        -- Variáveis de CPMF
        vr_dtinipmf DATE;
        vr_dtfimpmf DATE;
@@ -757,6 +764,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
        --Variaveis de Excecao
        vr_exc_saida  EXCEPTION;
        vr_exc_fimprg EXCEPTION;
+
+       vr_idprglog integer := 0;
 
        vr_vldjuros  NUMBER:= 0;
        vr_qtdiacor  NUMBER;
@@ -2534,12 +2543,50 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
              -- Atualiza dias de credito em liquidacao
              --Se estourou limite
              IF vr_flgestou THEN
+               --
+               -- Regra para cálculo de dias úteis ou dias corridos - Daniel(AMcom)
+               vr_dtrisclq_aux := nvl(rw_crapsld.dtrisclq, rw_crapdat.dtmvtolt);
+               --
+               BEGIN
+                 -- Buscar data parametro de referencia para calculo de juros
+                 vr_dtcorte_prm := to_date(GENE0001.fn_param_sistema (pr_cdcooper => 0
+                                                                     ,pr_nmsistem => 'CRED'
+                                                                     ,pr_cdacesso => 'DT_CORTE_REGCRE')
+                                                                     ,'DD/MM/RRRR');     
+    	         EXCEPTION
+                 WHEN OTHERS THEN
+                   vr_dtcorte_prm := rw_crapdat.dtmvtolt;
+               END;               
+               --
+               IF vr_dtrisclq_aux <= vr_dtcorte_prm THEN 
+			     -- Considerar dias úteis -- Regra atual
                --Incrementar quantidade dias devedor
                rw_crapsld.qtddsdev:= Nvl(rw_crapsld.qtddsdev,0) + 1;
                --Incrementar quantidade total dias conta devedora
                rw_crapsld.qtddtdev:= Nvl(rw_crapsld.qtddtdev,0) + 1;
                --Incrementar quantidade dias saldo negativo risco
                rw_crapsld.qtdriclq:= Nvl(rw_crapsld.qtdriclq,0) + 1;
+             ELSE
+                 -- Considerar dias corridos -- Daniel(AMcom)
+                 -- Guardar posição inicial de quantidade de dias SLD
+                 vr_qtddsdev_aux     := nvl(rw_crapsld.qtddsdev,0);
+                 --
+                 IF rw_crapdat.dtmvtolt = vr_dtrisclq_aux THEN
+                   -- Incrementar quantidade dias corridos devedor 
+                   rw_crapsld.qtddsdev := 1;
+                   -- Incrementar quantidade total dias corridos conta devedora
+                   rw_crapsld.qtddtdev := nvl(rw_crapsld.qtddtdev,0)+1;
+                   -- Incrementar quantidade dias corridos saldo negativo risco
+                   rw_crapsld.qtdriclq := 1;
+                 ELSE 
+                   -- Incrementar quantidade dias corridos devedor 
+                   rw_crapsld.qtddsdev := (rw_crapdat.dtmvtolt-vr_dtrisclq_aux);
+                   -- Incrementar quantidade total dias corridos conta devedora
+                   rw_crapsld.qtddtdev := nvl(rw_crapsld.qtddtdev,0)+(rw_crapsld.qtddsdev-vr_qtddsdev_aux);
+                   -- Incrementar quantidade dias corridos saldo negativo risco
+                   rw_crapsld.qtdriclq := (rw_crapdat.dtmvtolt-vr_dtrisclq_aux);                   
+                 END IF;
+               END IF;
              ELSE
                --Zerar quantidade dias devedor
                rw_crapsld.qtddsdev:= 0;
@@ -2992,9 +3039,19 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
              END IF;
            END IF;
          EXCEPTION
+           WHEN vr_exc_saida THEN
+             RAISE;
            WHEN OTHERS THEN
              cecred.pc_internal_exception(pr_cdcooper);
-
+             vr_dscritic := 'Erro loopcrapsld('||pr_cdcooper||','||rw_crapsld.nrdconta||'):'||SQLERRM
+                          ||' DbmsUtility: '||dbms_utility.format_error_backtrace
+                          ||' - '||dbms_utility.format_error_stack;
+             /*erro pode ser encontrado na tabela tbgen_erro_sistema*/
+             cecred.pc_log_programa(PR_DSTIPLOG => 'E'
+                                   ,PR_CDPROGRAMA => 'CRPS001'
+                                   ,pr_cdcooper => pr_cdcooper
+                                   ,pr_dsmensagem => vr_dscritic
+                                   ,PR_IDPRGLOG => vr_idprglog);
              RAISE vr_exc_saida;
          END;
        END LOOP; --rw_crapsld
@@ -3184,12 +3241,39 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
         -- Devolvemos código e critica encontradas
         pr_cdcritic := NVL(vr_cdcritic,0);
         pr_dscritic := vr_dscritic;
+
+        declare
+          vr_idprglog integer := 0;
+        begin
+          /*erro pode ser encontrado na tabela tbgen_erro_sistema*/
+          cecred.pc_log_programa(PR_DSTIPLOG => 'E'
+                                ,PR_CDPROGRAMA => 'CRPS001'
+                                ,pr_cdcooper => pr_cdcooper
+                                ,pr_dsmensagem => pr_dscritic
+                                ,PR_IDPRGLOG => vr_idprglog);
+        end;
+
         -- Efetuar rollback
         ROLLBACK;
       WHEN OTHERS THEN
         cecred.pc_internal_exception(pr_cdcooper);
 
         pc_limpa_tabela;
+
+        declare
+          vr_dscritic varchar2(32000);
+          vr_idprglog integer := 0;
+        begin
+          vr_dscritic := 'Erro geral crps001:'||SQLERRM
+                       ||' DbmsUtility: '||dbms_utility.format_error_backtrace
+                       ||' - '||dbms_utility.format_error_stack;
+          /*erro pode ser encontrado na tabela tbgen_erro_sistema*/
+          cecred.pc_log_programa(PR_DSTIPLOG => 'E'
+                                ,PR_CDPROGRAMA => 'CRPS001'
+                                ,pr_cdcooper => pr_cdcooper
+                                ,pr_dsmensagem => vr_dscritic
+                                ,PR_IDPRGLOG => vr_idprglog);
+        end;
 
         -- Efetuar retorno do erro não tratado
         pr_cdcritic := 0;

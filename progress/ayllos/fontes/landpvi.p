@@ -502,10 +502,10 @@
               11/07/2017 - Ajustes historico 354
                            (Demetrius Wolff MOUTS - Prj 364)
 
-                            
                10/08/2017 - Somente vamos exibir a critica 728 para casos em que o Tipo do 
                             cartao do titular nao for de um operador isso na leitura da crapcrm 
                             (Lucas Ranghetti #726238)
+
 			  19/11/2017 - Ajustes para retirar o uso do historico 354
                            (Jonata RKAM - P364)
 
@@ -518,6 +518,8 @@
                            a fim de pegar os valore de alteraçao do dia.
                            ( Lindon GFT )
 
+               08/03/2018 - Substituidas verificacoes pelo campo "cdtipcta" fixos pelo código da modalidade e 
+                            flag de conta integraçao. PRJ366 (Lombardi).
 
 ............................................................................. */
 /*** Historico 351 aceita nossos cheques e de outros bancos ***/
@@ -570,6 +572,9 @@ DEF VAR par_numipusr         AS CHAR                            NO-UNDO.
 DEF VAR aux_vlblqjud         AS DEC                             NO-UNDO.
 DEF VAR aux_vlresblq         AS DEC                             NO-UNDO.
 DEF VAR aux_flgativo         AS DEC                             NO-UNDO.
+DEF VAR aux_cdmodali         AS INT                             NO-UNDO.
+DEF VAR aux_idctaitg         AS INT                             NO-UNDO.
+DEF VAR aux_des_erro         AS CHAR                            NO-UNDO.
 
 DEF VAR h-b1wgen9999         AS HANDLE                          NO-UNDO.
 DEF VAR h-b1wgen0175         AS HANDLE                          NO-UNDO.
@@ -1853,10 +1858,40 @@ DO WHILE TRUE ON ERROR UNDO, NEXT.
 
       IF   craphis.indebcre = "C"   AND    glb_cdcritic = 0   THEN
            DO:
-               IF   crapass.cdtipcta = 6   OR
-                    crapass.cdtipcta = 7   OR
-                    crapass.cdtipcta = 17  OR
-                    crapass.cdtipcta = 18  THEN
+               
+               { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+               RUN STORED-PROCEDURE pc_busca_modalidade_tipo
+               aux_handproc = PROC-HANDLE NO-ERROR (INPUT crapass.inpessoa, /* Tipo de pessoa */
+                                                    INPUT crapass.cdtipcta, /* Tipo de conta */
+                                                   OUTPUT 0,                /* Modalidade */
+                                                   OUTPUT "",               /* Flag Erro */
+                                                   OUTPUT "").              /* Descrição da crítica */
+
+               CLOSE STORED-PROC pc_busca_modalidade_tipo
+                     aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+               { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+               ASSIGN aux_cdmodali = 0
+                      aux_des_erro = ""
+                      aux_dscritic = ""
+                      aux_cdmodali = pc_busca_modalidade_tipo.pr_cdmodalidade_tipo 
+                                     WHEN pc_busca_modalidade_tipo.pr_cdmodalidade_tipo <> ?
+                      aux_des_erro = pc_busca_modalidade_tipo.pr_des_erro 
+                                     WHEN pc_busca_modalidade_tipo.pr_des_erro <> ?
+                      aux_dscritic = pc_busca_modalidade_tipo.pr_dscritic
+                                     WHEN pc_busca_modalidade_tipo.pr_dscritic <> ?.
+
+               IF aux_des_erro = "NOK"  THEN
+                   DO:
+                      BELL.
+                      ASSIGN glb_dscritic = aux_dscritic.
+                      MESSAGE glb_dscritic.
+                      LEAVE.
+                   END.
+               
+               IF   aux_cdmodali = 3 THEN
                     DO:
                         BELL.
 
@@ -5206,17 +5241,42 @@ DO WHILE TRUE ON ERROR UNDO, NEXT.
                               crabass5.nrdconta = tel_nrdctabb
                               NO-LOCK NO-ERROR.
           
-          IF   crabass5.cdtipcta >= 8    AND
-               crabass5.cdtipcta <= 11   THEN
+          { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+          RUN STORED-PROCEDURE pc_busca_tipo_conta_itg
+          aux_handproc = PROC-HANDLE NO-ERROR (INPUT crabass5.inpessoa, /* Tipo de pessoa */
+                                               INPUT crabass5.cdtipcta, /* Tipo de conta */
+                                              OUTPUT 0,                /* Modalidade */
+                                              OUTPUT "",               /* Flag Erro */
+                                              OUTPUT "").              /* Descrição da crítica */
+
+          CLOSE STORED-PROC pc_busca_tipo_conta_itg
+                aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+          { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+          ASSIGN aux_idctaitg = 0
+                 aux_des_erro = ""
+                 aux_dscritic = ""
+                 aux_idctaitg = pc_busca_tipo_conta_itg.pr_indconta_itg 
+                                WHEN pc_busca_tipo_conta_itg.pr_indconta_itg <> ?
+                 aux_des_erro = pc_busca_tipo_conta_itg.pr_des_erro 
+                                WHEN pc_busca_tipo_conta_itg.pr_des_erro <> ?
+                 aux_dscritic = pc_busca_tipo_conta_itg.pr_dscritic
+                                WHEN pc_busca_tipo_conta_itg.pr_dscritic <> ?.
+
+          IF aux_des_erro = "NOK"  THEN
                DO:
-                        /* IF CECRED */
-                   IF  crabass5.cdbcochq = crapcop.cdbcoctl  THEN
+                 BELL.
+                 ASSIGN glb_dscritic = aux_dscritic.
+                 MESSAGE glb_dscritic.
+                 LEAVE.
+              END.
+          
+          IF aux_idctaitg = 0 THEN
+               DO:
                        ASSIGN crabfdc.cdbandep = crapcop.cdbcoctl
                               crabfdc.cdagedep = crapcop.cdagectl.
-                   ELSE /* BANCOOB */
-                       ASSIGN crabfdc.cdbandep = 756
-                              crabfdc.cdagedep = crapcop.cdagebcb.
-
                END.
           ELSE
                /* BANCO DO BRASIL - SEM DIGITO */
