@@ -4909,10 +4909,6 @@ END pc_comprovantes_recebidos;
         vr_dsdlinha := vr_dsdlinha || '<identificador>' || vr_tab_campos(UPPER('identificador')) || '</identificador>';
       END IF;
       
-      IF vr_tab_campos.exists(UPPER('identificador')) THEN
-        vr_dsdlinha := vr_dsdlinha || '<identificador>' || vr_tab_campos(UPPER('identificador')) || '</identificador>';
-      END IF;
-      
       vr_dsdlinha := vr_dsdlinha ||'<vldocmto>' || to_char(vr_protocolo(vr_ind).vldocmto,'FM9G999G999G999G990D00','NLS_NUMERIC_CHARACTERS=,.')                        || '</vldocmto>';
       
       IF vr_tab_campos.exists(UPPER('dsdpagto')) THEN
