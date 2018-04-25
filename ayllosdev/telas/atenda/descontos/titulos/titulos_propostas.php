@@ -98,7 +98,6 @@ $xmlObjLimites = getObjectXML($xmlResult);
 	$limites   = $xmlObjLimites->roottag->tags[0]->tags;
 	$qtLimites = count($limites);
 
-
 	
 	// Fun&ccedil;&atilde;o para exibir erros na tela atrav&eacute;s de javascript
 	function exibeErro($msgErro) { 
@@ -139,16 +138,22 @@ $xmlObjLimites = getObjectXML($xmlResult);
 						$pr_dssitest = getByTagName($limites[$i]->tags,"dssitest");//6
 						$pr_dssitapr = getByTagName($limites[$i]->tags,"dssitapr");//7
 						$pr_nrctrmnt = getByTagName($limites[$i]->tags,"nrctrmnt");//8
+						
+						$pr_inctrmnt = getByTagName($limites[$i]->tags,"inctrmnt");//9
+						$pr_insitlim = getByTagName($limites[$i]->tags,"insitlim");//9
 
 						$mtdClick = "selecionaLimiteTitulosProposta('"
 							.($i + 1)."', '"
 							.$qtLimites."', '"
 							.$pr_nrctrlim."', '"
+							.$pr_insitlim."', '"
 							.$pr_dssitlim."', '"
 							.$pr_dssitest."', '"
 							.$pr_dssitapr."', '"
 							.$pr_vllimite."', '"
-							.$pr_nrctrmnt."');";				
+							.$pr_nrctrmnt."', '"
+							.$pr_inctrmnt."');";
+
 				?>
 					<tr id="trLimite<? echo $i + 1; ?>" onFocus="<? echo $mtdClick; ?>" onClick="<? echo $mtdClick; ?>">
 

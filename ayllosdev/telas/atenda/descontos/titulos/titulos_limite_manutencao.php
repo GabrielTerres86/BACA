@@ -41,6 +41,7 @@
 	$nrdconta = $_POST["nrdconta"];
 	$nrctrlim = $_POST["nrctrlim"];
 
+
 	// Verifica se o número da conta é um inteiro válido
 	if (!validaInteiro($nrdconta)) {
 		exibeErro("Conta/dv inv&aacute;lida.");
@@ -51,12 +52,26 @@
 		exibeErro("N&uacute;mero do contrato inv&aacute;lido.");
 	}
 
+
+	$inctrmnt = (isset($_POST['inctrmnt'])) ? $_POST['inctrmnt'] : 0;
+
 	// Monta o xml de requisição
 	$xmlGetDados = "";
 	$xmlGetDados .= "<Root>";
 	$xmlGetDados .= "	<Cabecalho>";
 	$xmlGetDados .= "		<Bo>b1wgen0030.p</Bo>";
-	$xmlGetDados .= "		<Proc>busca_dados_limite_manutencao</Proc>";
+
+
+	if( isset($inctrmnt) && $inctrmnt == 1 ){
+
+		$xmlGetDados .= "		<Proc>busca_dados_proposta_manuten</Proc>";
+
+	} else {
+
+		$xmlGetDados .= "		<Proc>busca_dados_limite_manutencao</Proc>";
+	}
+
+
 	$xmlGetDados .= "	</Cabecalho>";
 	$xmlGetDados .= "	<Dados>";
 	$xmlGetDados .= "		<cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
@@ -72,9 +87,10 @@
 	$xmlGetDados .= "	</Dados>";
 	$xmlGetDados .= "</Root>";
 		
+
 	// Executa script para envio do XML
 	$xmlResult = getDataXML($xmlGetDados);
-	
+
 	// Cria objeto para classe de tratamento de XML
 	$xmlObjDados = getObjectXML(retiraAcentos(removeCaracteresInvalidos($xmlResult)));
 	
