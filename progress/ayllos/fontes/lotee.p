@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Edson
-   Data    : Outubro/91.                         Ultima atualizacao: 27/06/2016
+   Data    : Outubro/91.                         Ultima atualizacao: 17/04/2018
 
    Dados referentes ao programa:
 
@@ -169,6 +169,29 @@
 			                deletar tipo de lote 26 (Tiago/Elton SD438123).
 
                28/07/2016 - Permitido exclusao a todos operadores (Tiago/Elton).
+               
+               16/08/2016 - Corrigir problema na exclusao do lote, pois nao pode ser 
+                            alterado o INLIQUID quando o lote é excluído.
+                          + Controlar o preenchimento da data de pagamento do prejuízo,
+                            voltando o prejuizo antes da liquidaçao. (Renato Darosci - M176)
+                          
+               23/09/2016 - Inclusao de validacao de contratos de acordos, Prj. 302 (Jean Michel).             
+                          
+               05/12/2016 - Alterado campo dsdepart para cddepart.
+                            PRJ341 - BANCENJUD (Odirlei-AMcom) 
+               
+               07/02/2017 - Incluir LEAVE TRANS_E para a critica 650 da leitura crablem pois mesmo 
+                            com critica estava atualizando o lote (Lucas Ranghetti #570922)
+                          
+               14/02/2017 - Alteracao para chamar pc_verifica_situacao_acordo. 
+                            (Jaison/James - PRJ302)
+			   
+			   26/10/2017 - Remocao do IF que nao permitia passar o inliquid para 0 dos contratos
+							removidos de prejuizo através da tela LOTE, conforme solicitado no
+							chamado 745969. (Kelvin) 
+
+             17/04/2018 - P410 - Melhorias/Ajustes IOF (Marcos-Envolti) 
+             
 ............................................................................. */
 
 DEF BUFFER crabseg FOR crapseg.
@@ -199,7 +222,11 @@ DEF    VAR aux_sldmulta AS DEC                                          NO-UNDO.
 DEF    VAR aux_sldjmora AS DEC                                          NO-UNDO.
 DEF    VAR aux_vlrpagos AS DECIMAL                                      NO-UNDO.
 
+DEF    VAR aux_flgretativo   AS INTEGER                                 NO-UNDO.
+DEF    VAR aux_flgretquitado AS INTEGER                                 NO-UNDO.
+
 { includes/var_online.i } 
+{ sistema/generico/includes/var_oracle.i }
 { sistema/generico/includes/var_internet.i }
 { includes/var_lote.i }
 
@@ -278,7 +305,7 @@ IF  (tel_nrdolote >  9010   AND     /*  Folha de pagamento  */
     (tel_nrdolote >  5010   AND     /*  Emprestimos  */
      tel_nrdolote <= 5999)  THEN
      DO:
-         IF   glb_dsdepart = "TI" THEN
+         IF   glb_cddepart = 20 /* TI */  THEN
               DO:
                   aux_confirma = "N".
                   BELL.
@@ -385,7 +412,6 @@ DO TRANSACTION ON ERROR UNDO TRANS_E, NEXT:
 
    IF   tel_tplotmov = 26   THEN                     /*  Desconto de cheques  */
         DO:
-
             FIND crapbdc WHERE crapbdc.cdcooper = glb_cdcooper AND
                                crapbdc.nrborder = craplot.cdhistor 
                                NO-LOCK NO-ERROR.
@@ -864,6 +890,62 @@ DO TRANSACTION ON ERROR UNDO TRANS_E, NEXT:
                         glb_cdcritic = 0.
                         LEAVE.
                     END.
+                    
+               { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} } 
+               /* Efetuar a chamada a rotina Oracle */
+               RUN STORED-PROCEDURE pc_exclui_iof
+               aux_handproc = PROC-HANDLE NO-ERROR (INPUT glb_cdcooper        /* Cooperativa              */ 
+                                                   ,INPUT crapepr.nrdconta    /* Numero da Conta Corrente */
+                                                   ,INPUT crapepr.nrctremp    /* Numero do Bordero        */
+                                                   ,OUTPUT 0                  /* Codigo da Critica        */
+                                                   ,OUTPUT "").               /* Descriçao da crítica     */
+                                                   
+               /* Fechar o procedimento para buscarmos o resultado */ 
+               CLOSE STORED-PROC pc_exclui_iof
+                 aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+               { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
+               ASSIGN glb_cdcritic = 0
+                      glb_dscritic = ""
+                      glb_cdcritic = pc_exclui_iof.pr_cdcritic
+                                     WHEN pc_exclui_iof.pr_cdcritic <> ?
+                      glb_dscritic = pc_exclui_iof.pr_dscritic
+                                     WHEN pc_exclui_iof.pr_dscritic <> ?.
+               /* Se retornou erro */
+               IF glb_cdcritic > 0 OR glb_dscritic <> "" THEN 
+                  DO:
+                      BELL.
+                      MESSAGE glb_cdcritic "-" glb_dscritic.
+                      glb_cdcritic = 0.
+                      LEAVE.
+                  END.
+                  
+               { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} } 
+               /* Efetuar a chamada a rotina Oracle */
+               RUN STORED-PROCEDURE pc_exclui_calculo_CET
+               aux_handproc = PROC-HANDLE NO-ERROR (INPUT glb_cdcooper        /* Cooperativa              */ 
+                                                   ,INPUT crapepr.nrdconta    /* Numero da Conta Corrente */
+                                                   ,INPUT crapepr.nrctremp    /* Numero do Bordero        */
+                                                   ,OUTPUT 0                  /* Codigo da Critica        */
+                                                   ,OUTPUT "").               /* Descriçao da crítica     */
+                                                   
+               /* Fechar o procedimento para buscarmos o resultado */ 
+               CLOSE STORED-PROC pc_exclui_calculo_CET
+                 aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+               { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
+               ASSIGN glb_cdcritic = 0
+                      glb_dscritic = ""
+                      glb_cdcritic = pc_exclui_calculo_CET.pr_cdcritic
+                                     WHEN pc_exclui_calculo_CET.pr_cdcritic <> ?
+                      glb_dscritic = pc_exclui_calculo_CET.pr_dscritic
+                                     WHEN pc_exclui_calculo_CET.pr_dscritic <> ?.
+               /* Se retornou erro */
+               IF glb_cdcritic > 0 OR glb_dscritic <> "" THEN 
+                  DO:
+                      BELL.
+                      MESSAGE glb_cdcritic "-" glb_dscritic.
+                      glb_cdcritic = 0.
+                      LEAVE.
+                  END.
 
                ASSIGN aux_contador = 0
                       par_qtexclln = par_qtexclln + 1
@@ -975,6 +1057,60 @@ DO TRANSACTION ON ERROR UNDO TRANS_E, NEXT:
                             par_situacao = FALSE.
                             LEAVE.
                         END.
+                  
+                   /* Verifica se ha contratos de acordo */            
+                  { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+                  
+                  RUN STORED-PROCEDURE pc_verifica_situacao_acordo
+                    aux_handproc = PROC-HANDLE NO-ERROR (INPUT glb_cdcooper    
+                                                        ,INPUT crapepr.nrdconta
+                                                        ,INPUT crapepr.nrctremp
+														,INPUT 3
+                                                        ,0 /* pr_flgretativo */
+                                                        ,0 /* pr_flgretquitado */
+                                                        ,0 /* pr_flgretcancelado */
+                                                        ,0
+                                                        ,"").
+
+                  CLOSE STORED-PROC pc_verifica_situacao_acordo
+                            aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+                  { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+                  ASSIGN glb_cdcritic      = 0
+                         glb_dscritic      = ""
+                         glb_cdcritic      = pc_verifica_situacao_acordo.pr_cdcritic WHEN pc_verifica_situacao_acordo.pr_cdcritic <> ?
+                         glb_dscritic      = pc_verifica_situacao_acordo.pr_dscritic WHEN pc_verifica_situacao_acordo.pr_dscritic <> ?
+                         aux_flgretativo   = INT(pc_verifica_situacao_acordo.pr_flgretativo)
+                         aux_flgretquitado = INT(pc_verifica_situacao_acordo.pr_flgretquitado).
+                  
+                  IF glb_cdcritic > 0 THEN
+                    DO:
+						RUN fontes/critic.p.
+                        BELL.
+                        MESSAGE glb_dscritic.
+                        ASSIGN glb_cdcritic = 0
+                            par_situacao = FALSE.
+                            LEAVE.
+                        END.
+                  ELSE IF glb_dscritic <> ? AND glb_dscritic <> "" THEN
+                    DO:
+					  MESSAGE glb_dscritic.
+                      ASSIGN glb_cdcritic = 0
+                            par_situacao = FALSE.
+                            LEAVE.
+                        END.
+                    
+                  /* Se estiver ATIVO ou QUITADO */
+                  IF aux_flgretativo = 1 OR aux_flgretquitado = 1 THEN
+                    DO:
+					  ASSIGN par_situacao = FALSE.
+                      MESSAGE "Nao e possivel excluir o lote, contem lancamentos de emprestimo em acordo.".
+                      PAUSE 3 NO-MESSAGE.
+                      LEAVE.
+                    END.            
+
+                  /* Fim verifica se ha contratos de acordo */   
 
                    FIND crapass WHERE crapass.cdcooper = glb_cdcooper       AND
                                       crapass.nrdconta = crapepr.nrdconta
@@ -1103,25 +1239,38 @@ DO TRANSACTION ON ERROR UNDO TRANS_E, NEXT:
 
                    { includes/lelem.i }  /* Rotina para calc do sld.devedor */
 
-                   IF   craphis.indebcre = "D"   THEN
+                   IF   craphis.indebcre = "D"   THEN DO:
                         ASSIGN par_qtexclln = par_qtexclln + 1
                                par_vlexcldb = par_vlexcldb + crablem.vllanmto
-                               aux_contador = 0
+                               aux_contador = 0.
 
+                        /*Renato Darosci - Inclusao do IF - 16/08/2016 
+                          26/10/2017 - Remocao do IF (Kelvin/Ademir SD 745969)   
+						  IF crapepr.inprejuz = 0 THEN */
                                crapepr.inliquid = IF (aux_vlsdeved -
                                                       crablem.vllanmto) > 0
                                                       THEN 0
                                                       ELSE 1.
+                                                      
+                      END.
                    ELSE
-                   IF   craphis.indebcre = "C"   THEN
+                   IF   craphis.indebcre = "C"   THEN DO:
                         ASSIGN par_qtexclln = par_qtexclln + 1
                                par_vlexclcr = par_vlexclcr + crablem.vllanmto
-                               aux_contador = 0
+                               aux_contador = 0.
 
+                        /*Renato Darosci - Inclusao do IF - 16/08/2016 */
+                        /*26/10/2017 - Remocao do IF (Kelvin/Ademir SD 745969)   
+						  IF crapepr.inprejuz = 0 THEN*/
                                crapepr.inliquid = IF (aux_vlsdeved +
                                                       crablem.vllanmto) > 0
                                                       THEN 0
                                                       ELSE 1.
+                      END.
+                   
+                   /* Voltar a situaçao antes de ter pago o prejuizo - Renato Darosci - 16/08/2016 */
+                   IF crapepr.dtliqprj <> ? THEN
+                      ASSIGN crapepr.dtliqprj = ?.
 
                    IF   crablem.cdhistor = 349   THEN 
                         ASSIGN crapepr.vlprejuz = crapepr.vlprejuz - 
@@ -1327,7 +1476,7 @@ DO TRANSACTION ON ERROR UNDO TRANS_E, NEXT:
                         BELL.
                         MESSAGE glb_dscritic.
                         glb_cdcritic = 0.
-                        LEAVE.
+                        LEAVE TRANS_E.
                     END.
             END.
         END.
