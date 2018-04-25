@@ -235,7 +235,11 @@
                              PRJ366 (Lombardi).
 
                 22/03/2018 - Substituidas verificacoes onde o tipo de conta (cdtipcta) estava fixo. 
-                             PRJ366 (Lombardi).
+                             PRJ366 (Lombardi).							 
+
+                24/04/2018 - Gravar historico de exclusao de titular.
+                           - Gravar historico de alteracao dos campos cdtipcta, 
+                             cdsitdct e cdcatego. PRJ366 (Lombardi).
                              
 .............................................................................*/
 
@@ -3162,6 +3166,10 @@ PROCEDURE Grava_Dados_Altera:
     DEF VAR aux_returnvl AS CHAR                                    NO-UNDO.
   	DEF VAR aux_ctdpoder AS INTE                                    NO-UNDO.
 
+    DEF VAR aux_cdtipcta_ant AS INTE                                NO-UNDO.
+    DEF VAR aux_cdsitdct_ant AS INTE                                NO-UNDO.
+    DEF VAR aux_cdcatego_ant AS INTE                                NO-UNDO.
+    
     DEF BUFFER crabttl FOR crapttl.
     DEF BUFFER brapttl FOR crapttl.
     DEF BUFFER crabreq FOR crapreq.
@@ -3186,6 +3194,10 @@ PROCEDURE Grava_Dados_Altera:
               LEAVE GravaAltera.
            END.
 
+        ASSIGN aux_cdtipcta_ant = crabass.cdtipcta
+               aux_cdsitdct_ant = crabass.cdsitdct
+               aux_cdcatego_ant = crabass.cdcatego.
+        
         { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
 
         RUN STORED-PROCEDURE pc_busca_modalidade_tipo
@@ -4430,6 +4442,109 @@ PROCEDURE Grava_Dados_Altera:
               END.
 
            END.
+        
+        /* Historico */
+        IF  aux_cdtipcta_ant <> crabass.cdtipcta THEN
+            DO:
+                { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+                
+                RUN STORED-PROCEDURE pc_grava_dados_hist 
+                    aux_handproc = PROC-HANDLE NO-ERROR
+                                     (INPUT "CRAPASS"                /* pr_nmtabela */
+                                     ,INPUT "CDTIPCTA"               /* pr_nmdcampo */
+                                     ,INPUT par_cdcooper             /* pr_cdcooper */  
+                                     ,INPUT par_nrdconta             /* pr_nrdconta */  
+                                     ,INPUT 0                        /* pr_inpessoa */  
+                                     ,INPUT 0                        /* pr_idseqttl */  
+                                     ,INPUT 0                        /* pr_cdtipcta */  
+                                     ,INPUT 0                        /* pr_cdsituac */  
+                                     ,INPUT 0                        /* pr_cdprodut */  
+                                     ,INPUT 2                        /* pr_tpoperac */  
+                                     ,INPUT STRING(aux_cdtipcta_ant) /* pr_dsvalant */
+                                     ,INPUT STRING(crabass.cdtipcta) /* pr_dsvalnov */  
+                                     ,INPUT par_cdoperad             /* pr_cdoperad */  
+                                    ,OUTPUT "").
+                
+                CLOSE STORED-PROC pc_grava_dados_hist 
+                      aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+                
+                { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+                
+                ASSIGN aux_dscritic = ""                         
+                       aux_dscritic = pc_grava_dados_hist.pr_dscritic 
+                                      WHEN pc_grava_dados_hist.pr_dscritic <> ?.
+                
+                IF  aux_dscritic <> "" THEN
+                    UNDO GravaAltera, LEAVE GravaAltera.
+            END.
+            
+        IF  aux_cdsitdct_ant <> crabass.cdsitdct THEN
+            DO:
+                { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+                
+                RUN STORED-PROCEDURE pc_grava_dados_hist 
+                    aux_handproc = PROC-HANDLE NO-ERROR
+                                     (INPUT "CRAPASS"                /* pr_nmtabela */
+                                     ,INPUT "CDSITDCT"               /* pr_nmdcampo */
+                                     ,INPUT par_cdcooper             /* pr_cdcooper */  
+                                     ,INPUT par_nrdconta             /* pr_nrdconta */  
+                                     ,INPUT 0                        /* pr_inpessoa */  
+                                     ,INPUT 0                        /* pr_idseqttl */  
+                                     ,INPUT 0                        /* pr_cdtipcta */  
+                                     ,INPUT 0                        /* pr_cdsituac */  
+                                     ,INPUT 0                        /* pr_cdprodut */  
+                                     ,INPUT 2                        /* pr_tpoperac */  
+                                     ,INPUT STRING(aux_cdsitdct_ant) /* pr_dsvalant */
+                                     ,INPUT STRING(crabass.cdsitdct) /* pr_dsvalnov */  
+                                     ,INPUT par_cdoperad             /* pr_cdoperad */  
+                                    ,OUTPUT "").
+                
+                CLOSE STORED-PROC pc_grava_dados_hist 
+                      aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+                
+                { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+                
+                ASSIGN aux_dscritic = ""                         
+                       aux_dscritic = pc_grava_dados_hist.pr_dscritic 
+                                      WHEN pc_grava_dados_hist.pr_dscritic <> ?.
+                
+                IF  aux_dscritic <> "" THEN
+                    UNDO GravaAltera, LEAVE GravaAltera.
+            END.
+            
+        IF  aux_cdcatego_ant <> crabass.cdcatego THEN
+            DO:
+                { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+                
+                RUN STORED-PROCEDURE pc_grava_dados_hist 
+                    aux_handproc = PROC-HANDLE NO-ERROR
+                                     (INPUT "CRAPASS"                /* pr_nmtabela */
+                                     ,INPUT "CDCATEGO"               /* pr_nmdcampo */
+                                     ,INPUT par_cdcooper             /* pr_cdcooper */  
+                                     ,INPUT par_nrdconta             /* pr_nrdconta */  
+                                     ,INPUT 0                        /* pr_inpessoa */  
+                                     ,INPUT 0                        /* pr_idseqttl */  
+                                     ,INPUT 0                        /* pr_cdtipcta */  
+                                     ,INPUT 0                        /* pr_cdsituac */  
+                                     ,INPUT 0                        /* pr_cdprodut */  
+                                     ,INPUT 2                        /* pr_tpoperac */  
+                                     ,INPUT STRING(aux_cdcatego_ant) /* pr_dsvalant */
+                                     ,INPUT STRING(crabass.cdcatego) /* pr_dsvalnov */  
+                                     ,INPUT par_cdoperad             /* pr_cdoperad */  
+                                    ,OUTPUT "").
+                
+                CLOSE STORED-PROC pc_grava_dados_hist 
+                      aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+                
+                { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+                
+                ASSIGN aux_dscritic = ""                         
+                       aux_dscritic = pc_grava_dados_hist.pr_dscritic 
+                                      WHEN pc_grava_dados_hist.pr_dscritic <> ?.
+                
+                IF  aux_dscritic <> "" THEN
+                    UNDO GravaAltera, LEAVE GravaAltera.
+            END.
 
         ASSIGN aux_returnvl = "OK"
                par_cdcritic = 0
@@ -5186,6 +5301,69 @@ PROCEDURE Grava_Dados_Exclui:
             END. /* ContadorTtl */
 
             IF  par_cdcritic <> 0 THEN
+                UNDO GravaExclui, LEAVE GravaExclui.
+
+            /* Historico */
+            { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+            
+            RUN STORED-PROCEDURE pc_grava_dados_hist 
+                aux_handproc = PROC-HANDLE NO-ERROR
+                                 (INPUT "CRAPTTL"                /* pr_nmtabela */
+                                 ,INPUT "NRCPFCGC"               /* pr_nmdcampo */
+                                 ,INPUT par_cdcooper             /* pr_cdcooper */  
+                                 ,INPUT par_nrdconta             /* pr_nrdconta */  
+                                 ,INPUT 0                        /* pr_inpessoa */  
+                                 ,INPUT crabttl.idseqttl         /* pr_idseqttl */  
+                                 ,INPUT 0                        /* pr_cdtipcta */  
+                                 ,INPUT 0                        /* pr_cdsituac */  
+                                 ,INPUT 0                        /* pr_cdprodut */  
+                                 ,INPUT 3                        /* pr_tpoperac */
+                                 ,INPUT STRING(crabttl.nrcpfcgc) /* pr_dsvalant */  
+                                 ,INPUT ?                        /* pr_dsvalnov */  
+                                 ,INPUT par_cdoperad             /* pr_cdoperad */  
+                                ,OUTPUT "").
+            
+            CLOSE STORED-PROC pc_grava_dados_hist 
+                  aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+            
+            { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+            
+            ASSIGN aux_dscritic = ""                         
+                   aux_dscritic = pc_grava_dados_hist.pr_dscritic 
+                                  WHEN pc_grava_dados_hist.pr_dscritic <> ?.
+            
+            IF  aux_dscritic <> "" THEN
+                UNDO GravaExclui, LEAVE GravaExclui.
+                
+            { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+            
+            RUN STORED-PROCEDURE pc_grava_dados_hist 
+                aux_handproc = PROC-HANDLE NO-ERROR
+                                 (INPUT "CRAPTTL"        /* pr_nmtabela */
+                                 ,INPUT "NMEXTTTL"       /* pr_nmdcampo */
+                                 ,INPUT par_cdcooper     /* pr_cdcooper */  
+                                 ,INPUT par_nrdconta     /* pr_nrdconta */  
+                                 ,INPUT ?                /* pr_inpessoa */  
+                                 ,INPUT crabttl.idseqttl /* pr_idseqttl */  
+                                 ,INPUT ?                /* pr_cdtipcta */  
+                                 ,INPUT ?                /* pr_cdsituac */  
+                                 ,INPUT ?                /* pr_cdprodut */  
+                                 ,INPUT 3                /* pr_tpoperac */
+                                 ,INPUT crabttl.nmextttl /* pr_dsvalant */
+                                 ,INPUT ?                /* pr_dsvalnov */  
+                                 ,INPUT par_cdoperad     /* pr_cdoperad */  
+                                ,OUTPUT "").
+            
+            CLOSE STORED-PROC pc_grava_dados_hist 
+                  aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+            
+            { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+            
+            ASSIGN aux_dscritic = ""                         
+                   aux_dscritic = pc_grava_dados_hist.pr_dscritic 
+                                  WHEN pc_grava_dados_hist.pr_dscritic <> ?.
+            
+            IF  aux_dscritic <> "" THEN
                 UNDO GravaExclui, LEAVE GravaExclui.
 
             DELETE brapttl.

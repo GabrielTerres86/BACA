@@ -175,7 +175,11 @@
                              que nao estao na tela. PRJ339 - CRM (Odirlei-AMcom)
 
                 12/03/2018 - Alterado de forma que o tipo de conta nao seja mais fixo e sim 
-                             parametrizado através da tela CADPAR. PRJ366 (Lombardi).
+                             parametrizado através da tela CADPAR. PRJ366 (Lombardi).							 
+
+                24/04/2018 - Gravar historico de inclusao dos campos cdtipcta, 
+                             cdsitdct e cdcatego. PRJ366 (Lombardi).
+
 .............................................................................*/
                                                      
 
@@ -4426,6 +4430,100 @@ PROCEDURE Inclui PRIVATE :
                        END.
 
                    VALIDATE crabass.
+                   
+                   /* Historico */
+                   { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+                   
+                   RUN STORED-PROCEDURE pc_grava_dados_hist 
+                       aux_handproc = PROC-HANDLE NO-ERROR
+                                        (INPUT "CRAPASS"                /* pr_nmtabela */
+                                        ,INPUT "CDTIPCTA"               /* pr_nmdcampo */
+                                        ,INPUT par_cdcooper             /* pr_cdcooper */  
+                                        ,INPUT par_nrdconta             /* pr_nrdconta */  
+                                        ,INPUT 0                        /* pr_inpessoa */  
+                                        ,INPUT 0                        /* pr_idseqttl */  
+                                        ,INPUT 0                        /* pr_cdtipcta */  
+                                        ,INPUT 0                        /* pr_cdsituac */  
+                                        ,INPUT 0                        /* pr_cdprodut */  
+                                        ,INPUT 1                        /* pr_tpoperac */  
+                                        ,INPUT ?                        /* pr_dsvalant */
+                                        ,INPUT STRING(crabass.cdtipcta) /* pr_dsvalnov */  
+                                        ,INPUT par_cdoperad             /* pr_cdoperad */  
+                                       ,OUTPUT "").
+                   
+                   CLOSE STORED-PROC pc_grava_dados_hist 
+                         aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+                   
+                   { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+                   
+                   ASSIGN aux_dscritic = ""                         
+                          aux_dscritic = pc_grava_dados_hist.pr_dscritic 
+                                         WHEN pc_grava_dados_hist.pr_dscritic <> ?.
+                   
+                   IF  aux_dscritic <> "" THEN
+                       LEAVE ContadorAss.
+                   
+                   { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+                   
+                   RUN STORED-PROCEDURE pc_grava_dados_hist 
+                       aux_handproc = PROC-HANDLE NO-ERROR
+                                        (INPUT "CRAPASS"                /* pr_nmtabela */
+                                        ,INPUT "CDSITDCT"               /* pr_nmdcampo */
+                                        ,INPUT par_cdcooper             /* pr_cdcooper */  
+                                        ,INPUT par_nrdconta             /* pr_nrdconta */  
+                                        ,INPUT 0                        /* pr_inpessoa */  
+                                        ,INPUT 0                        /* pr_idseqttl */  
+                                        ,INPUT 0                        /* pr_cdtipcta */  
+                                        ,INPUT 0                        /* pr_cdsituac */  
+                                        ,INPUT 0                        /* pr_cdprodut */  
+                                        ,INPUT 1                        /* pr_tpoperac */  
+                                        ,INPUT ?                        /* pr_dsvalant */
+                                        ,INPUT STRING(crabass.cdsitdct) /* pr_dsvalnov */  
+                                        ,INPUT par_cdoperad             /* pr_cdoperad */  
+                                       ,OUTPUT "").
+                   
+                   CLOSE STORED-PROC pc_grava_dados_hist 
+                         aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+                   
+                   { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+                   
+                   ASSIGN aux_dscritic = ""                         
+                          aux_dscritic = pc_grava_dados_hist.pr_dscritic 
+                                         WHEN pc_grava_dados_hist.pr_dscritic <> ?.
+                   
+                   IF  aux_dscritic <> "" THEN
+                       LEAVE ContadorAss.
+                   
+                   { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+                   
+                   RUN STORED-PROCEDURE pc_grava_dados_hist 
+                       aux_handproc = PROC-HANDLE NO-ERROR
+                                        (INPUT "CRAPASS"                /* pr_nmtabela */
+                                        ,INPUT "CDCATEGO"               /* pr_nmdcampo */
+                                        ,INPUT par_cdcooper             /* pr_cdcooper */  
+                                        ,INPUT par_nrdconta             /* pr_nrdconta */  
+                                        ,INPUT 0                        /* pr_inpessoa */  
+                                        ,INPUT 0                        /* pr_idseqttl */  
+                                        ,INPUT 0                        /* pr_cdtipcta */  
+                                        ,INPUT 0                        /* pr_cdsituac */  
+                                        ,INPUT 0                        /* pr_cdprodut */  
+                                        ,INPUT 1                        /* pr_tpoperac */  
+                                        ,INPUT ?                        /* pr_dsvalant */
+                                        ,INPUT STRING(crabass.cdcatego) /* pr_dsvalnov */  
+                                        ,INPUT par_cdoperad             /* pr_cdoperad */  
+                                       ,OUTPUT "").
+                   
+                   CLOSE STORED-PROC pc_grava_dados_hist 
+                         aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+                   
+                   { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+                   
+                   ASSIGN aux_dscritic = ""                         
+                          aux_dscritic = pc_grava_dados_hist.pr_dscritic 
+                                         WHEN pc_grava_dados_hist.pr_dscritic <> ?.
+                   
+                   IF  aux_dscritic <> "" THEN
+                       LEAVE ContadorAss.
                    
                    LEAVE ContadorAss.
                 END.
