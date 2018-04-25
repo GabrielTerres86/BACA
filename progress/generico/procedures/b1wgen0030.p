@@ -546,7 +546,8 @@
                24/04/2018 - Copiado a validação de verificação de proposta em estudo existente na rotina b1wgen0030.p > realizar_manutencao_contrato para a 
                             rotina b1wgen0030.p > busca_dados_limite_manutencao.
                             Adicionado a procedure busca_dados_proposta_manutencao. (Paulo Penteado GFT)
-
+               
+               25/04/2018 - Correções na busca_parametros_dsctit para buscar as regras de registrados (Luis Fernando GFT)
 ..............................................................................*/
 
 { sistema/generico/includes/b1wgen0001tt.i }
@@ -3594,7 +3595,7 @@ PROCEDURE busca_dados_limite_incluir:
                                  INPUT par_cdoperad,
                                  INPUT par_dtmvtolt,
                                  INPUT par_idorigem,
-                                 INPUT FALSE,
+                                 INPUT TRUE,
                                  INPUT crapass.inpessoa, /* GGS: Novo: Tipo Pessoa = crapass.inpessoa */
                                 OUTPUT TABLE tt-erro,
                                 OUTPUT TABLE tt-dados_dsctit,
@@ -3949,7 +3950,7 @@ PROCEDURE busca_dados_limite:
                                  INPUT par_cdoperad,
                                  INPUT par_dtmvtolt,
                                  INPUT par_idorigem,
-                                 INPUT FALSE,
+                                 INPUT TRUE,
                                  INPUT crapass.inpessoa, /* GGS: Novo: Tipo Pessoa = crapass.inpessoa */
                                  OUTPUT TABLE tt-erro,
                                  OUTPUT TABLE tt-dados_dsctit,
@@ -4202,7 +4203,7 @@ PROCEDURE busca_dados_proposta:
                                  INPUT par_cdoperad,
                                  INPUT par_dtmvtolt,
                                  INPUT par_idorigem,
-                                 INPUT FALSE,
+                                 INPUT TRUE,
                                  INPUT crapass.inpessoa, /* GGS: Novo: Tipo Pessoa = crapass.inpessoa */
                                  OUTPUT TABLE tt-erro,
                                  OUTPUT TABLE tt-dados_dsctit,
@@ -4500,7 +4501,7 @@ PROCEDURE valida_proposta_dados:
                                 INPUT par_cdoperad,
                                 INPUT par_dtmvtolt,
                                 INPUT par_idorigem,
-                                INPUT FALSE,
+                                INPUT TRUE,
                                 INPUT crapass.inpessoa, /* GGS: Novo: Tipo Pessoa = crapass.inpessoa */
                                 OUTPUT TABLE tt-erro,
                                 OUTPUT TABLE tt-dados_dsctit,
@@ -5000,7 +5001,7 @@ PROCEDURE efetua_inclusao_limite:
                                  INPUT par_cdoperad,
                                  INPUT par_dtmvtolt,
                                  INPUT par_idorigem,
-                                 INPUT FALSE,
+                                 INPUT TRUE,
                                  INPUT crapass.inpessoa, /* GGS: Novo: Tipo Pessoa = crapass.inpessoa */
                                  OUTPUT TABLE tt-erro,
                                  OUTPUT TABLE tt-dados_dsctit,
@@ -18787,7 +18788,7 @@ PROCEDURE realizar_manutencao_contrato:
                                                   ,INPUT par_cdagenci
                                                   ,INPUT par_nrdcaixa
                                                   ,INPUT par_idorigem
-                                                  ,INPUT ?
+                                                  ,INPUT 3
                                                   ,OUTPUT 0
                                                   ,OUTPUT "").
           
