@@ -7,7 +7,8 @@
  *
  * Alterações   : 
  *
- * 001: [16/03/2018] Leonardo Oliveira (GFT): Considerar o parâmetro 'cddlinha' na operação
+ * 001: [16/03/2018] Leonardo Oliveira (GFT): Considerar o parâmetro 'cddlinha' na operação.
+ * 002: [25/04/2018] Leonardo Oliveira (GFT): Correção da mensagem de erro.
  *
  **************************************************************************************/
 
@@ -39,8 +40,6 @@
 	$xmlRenovaLimite .= "   </Dados>";
 	$xmlRenovaLimite .= "</Root>";
   
-
-
 	// Executa script para envio do XML	
 	$xmlResult = mensageria(
 		$xmlRenovaLimite, 
@@ -62,10 +61,10 @@
 			$msgErro = $xmlObjRenovaLimite->roottag->tags[0]->cdata;
 		}
 		exibirErro(
-			'error',
+			"error",
 			htmlentities($msgErro),
-			'Alerta - Ayllos',
-			"blockBackground(parseInt($('#divUsoGenerico').css('z-index')))",
+			"Alerta - Ayllos",
+			"fecharRotinaGenerico('TITULOS');",
 			false);
 	}
 	
@@ -73,6 +72,5 @@
 			\"inform\",
 			\"Opera&ccedil;&atilde;o efetuada com sucesso!\",
 			\"Alerta - Ayllos\",
-			\"fecharRotinaGenerico('TITULOS');\");";
-	
+			\"fecharRotinaGenerico('TITULOS');\");";	
 ?>
