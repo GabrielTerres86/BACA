@@ -52,7 +52,6 @@
 		exibeErro("N&uacute;mero do contrato inv&aacute;lido.");
 	}
 
-
 	$inctrmnt = (isset($_POST['inctrmnt'])) ? $_POST['inctrmnt'] : 0;
 
 	// Monta o xml de requisição
@@ -173,18 +172,45 @@
 
 <div id="divBotoes">
 	
-	<a 
-		href="#"
-		type="button"
-		class="botao"
-		name="btnVoltar"
-		id="btnVoltar"
-		onClick="
-			voltaDiv(2,1,4,'DESCONTO DE T&Iacute;TULOS','DSC TITS');
-			carregaTitulos();
-			return false;">
-			Voltar
-	</a>
+
+
+<?php
+
+	if( isset($inctrmnt) && $inctrmnt != 1 ){
+
+
+		echo "
+		<a 
+		href='#'
+		type='button'
+		class='botao'
+		name='btnVoltar' 
+		id='btnVoltar'
+		onClick=\"
+		voltaDiv(2,1,4,'DESCONTO DE T&Iacute;TULOS','DSC TITS'); carregaTitulos(); return false;
+		\"
+		 >
+		Voltar
+		</a>";
+
+		} else { 
+
+		echo "
+		<a 
+		href='#'
+		type='button'
+		class='botao'
+		name='btnVoltar' 
+		id='btnVoltar'
+		onClick=\"
+		carregaLimitesTitulosPropostas(); return false;
+		\"
+		 >
+		Voltar
+		</a>";
+	}
+?>
+
 	<a 
 		href="#"
 		type="button"
