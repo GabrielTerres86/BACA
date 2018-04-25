@@ -154,6 +154,7 @@
 		
 	</fieldset>
 </form>
+
 <div id="divBotoes" >
 
 	<a
@@ -170,20 +171,24 @@
 		type="image" 
 		name="btnbordero" 
 		id="btnbordero"
-		<?php if (!in_array("DSC TITS - BORDERO",$rotinasTela)) { echo 'style="cursor: default;display:none;" onClick="return false;"'; } 
-		else { echo 'onClick="carregaBorderosTitulos();return false;"'; } ?> >
-			Border&ocirc;s
+	 	<?php 
+			if (!in_array("DSC TITS - BORDERO",$rotinasTela)) { echo 'style="cursor: default;display:none;" onClick="return false;"'; } 
+			else { echo 'onClick="carregaBorderosTitulos();return false;"'; } ?> 
+	>
+		Border&ocirc;s
 	</a>
 
+
 	<a
-		href="#"
-		class="botao"
-		type="image"
-		name="btnlimite"
-		id="btnlimite"
-	 	<?php if (!in_array("DSC TITS - LIMITE",$rotinasTela)) { echo 'style="cursor: default;display:none;" onClick="return false;"'; } 
-		else { echo 'onClick="carregaLimitesTitulos();return false;"'; } ?> >
-			Contratos
+	href="#"
+	class="botao"
+	type="image"
+	name="btnlimite"
+	id="btnlimite"
+	 <?php if (!in_array("DSC TITS - LIMITE",$rotinasTela)) { echo 'style="cursor: default;display:none;" onClick="return false;"'; } 
+		else { echo 'onClick="carregaLimitesTitulos();return false;"'; } ?> 
+	>
+		Contratos
 	</a>
 
 	<a
@@ -192,8 +197,10 @@
 		type="image" 
 		name="btnpropostas" 
 		id="btnpropostas"
-		<?php if (!in_array("DSC TITS - LIMITE",$rotinasTela)) { echo 'style="cursor: default;display:block;" onClick="carregaLimitesTitulosPropostas() return false;"'; } 
-		else { echo 'onClick="carregaLimitesTitulosPropostas();return false;"'; } ?> >
+
+	 <?php if (!in_array("DSC TITS - LIMITE",$rotinasTela)) { echo 'style="cursor: default;display:none;" onClick="return false;"'; } 
+		else { echo 'onClick="carregaLimitesTitulosPropostas();return false;"'; } ?> 
+	>
 			Propostas
 	</a>
 
@@ -201,15 +208,18 @@
 		href="#" 
 		class="botao"
 		id="btnrenovacao"
-		name="btnrenovacao">
+		name="btnrenovacao"
+		<?php if (!in_array("DSC TITS - LIMITE",$rotinasTela)) { echo 'style="cursor: default;display:none;" onClick="return false;"'; } ?> 
+	>
 		Renovar
 	</a>
 
-		<a 
-		href='#' 
-		class='botao'
-		id='btnManutencao'
-		name='btnManutencao' >
+	<a 
+		href="#" 
+		class="botao"
+		id="btnManutencao"
+		name="tnManutencao" 
+		<?php if (!in_array("DSC TITS - LIMITE",$rotinasTela)) { echo 'style="cursor: default;display:none;" onClick="return false;"'; } ?> >
 		Manuten&ccedil;&atilde;o
 	</a>
 
@@ -218,9 +228,9 @@
 		class="botao"
 		id="btnResgatar"
 		name="btnResgatar"
-		style="margin-top: 8px; margin-bottom: 8px;" 
-		<?php if (!in_array("DSC TITS - BORDERO",$rotinasTela)) { echo 'style="cursor: default;display:none;" onClick="return false;"'; } 
-		else { echo 'onClick="carregaResgatarTitulos();return false;"'; } ?> >
+		<?php if (!in_array("DSC TITS - BORDERO",$rotinasTela)) { echo 'style="cursor: default; display:none;" onClick="return false;"'; } 
+			else { echo 'style=" margin-top: 8px; margin-bottom: 8px;" onClick="carregaResgatarTitulos();return false;"'; } ?> 
+	>
 		Resgatar T&iacute;tulos
 	</a>
 </div>
