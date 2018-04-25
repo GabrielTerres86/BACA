@@ -3,7 +3,7 @@
    Programa: siscaixa/web/crap022c.w
    Sistema : Caixa On-Line
    Autor   : Andre Santos - Supero
-   Data    : Junho/2014                      Ultima atualizacao: 27/06/2017
+   Data    : Junho/2014                      Ultima atualizacao: 19/04/2018
 
    Dados referentes ao programa:
 
@@ -15,6 +15,8 @@
                
                27/06/2017 - Retiradas conticoes que tratam a praça do cheque e os números DE 
                            documento 3,4 e 5. PRJ367 - Compe Sessao Unica (Lombardi)
+                           
+               19/04/2018 - Ajuste para apresentar erro corretament (Adriano - INC0012922).
                            
 -----------------------------------------------------------------------------*/
 
@@ -820,8 +822,6 @@ PROCEDURE process-web-request :
                     
                     ASSIGN l-houve-erro = NO.
 
-MESSAGE "chw ENTROU " VIEW-AS ALERT-BOX INFO BUTTONS OK.
-
                     DO  WHILE TRUE:
                          
                          FIND FIRST crapass NO-LOCK WHERE
@@ -857,8 +857,6 @@ MESSAGE "chw ENTROU " VIEW-AS ALERT-BOX INFO BUTTONS OK.
 
                             IF  NOT v_flg-cta-migrada  THEN DO:
 
-MESSAGE "chw ENTROU - CONTA NAO MIGRADA" VIEW-AS ALERT-BOX INFO BUTTONS OK.
-
                                 RUN realiza-deposito-cheque IN h-b1crap22 (INPUT v_coop,                
                                                                            INPUT INT(v_pac),
                                                                            INPUT INT(v_caixa),
@@ -876,7 +874,6 @@ MESSAGE "chw ENTROU - CONTA NAO MIGRADA" VIEW-AS ALERT-BOX INFO BUTTONS OK.
                             ELSE DO:
                                 IF  NOT v_flg-coop-host  THEN
                                 DO: 
-                                    MESSAGE "chw ENTROU - CONTA NAO coop host" VIEW-AS ALERT-BOX INFO BUTTONS OK.
                                     RUN realiza-deposito-cheque-migrado IN h-b1crap22 (INPUT v_coop,                
                                                                                        INPUT v_coop-migrada,
                                                                                        INPUT INT(v_pac),
@@ -913,6 +910,30 @@ MESSAGE "chw ENTROU - CONTA NAO MIGRADA" VIEW-AS ALERT-BOX INFO BUTTONS OK.
                             
                             DELETE PROCEDURE h-b1crap22.
                             
+							/* Em caso de erro alimenta temp-table para gerar erro apos acertar dados da crapmdw */
+                            IF RETURN-VALUE <> "OK" THEN 
+                                DO:
+									ASSIGN l-houve-erro = YES.
+                                                    
+									EMPTY TEMP-TABLE w-craperr.
+                                                    
+									FOR EACH craperr WHERE craperr.cdcooper =  crapcop.cdcooper AND
+															craperr.cdagenci =  INT(v_pac)       AND
+															craperr.nrdcaixa =  INT(v_caixa)  
+															NO-LOCK:
+                   
+										CREATE w-craperr.
+                   
+										ASSIGN w-craperr.cdagenci   = craperr.cdagenc
+												w-craperr.nrdcaixa   = craperr.nrdcaixa
+												w-craperr.nrsequen   = craperr.nrsequen
+												w-craperr.cdcritic   = craperr.cdcritic
+												w-craperr.dscritic   = craperr.dscritic
+												w-craperr.erro       = craperr.erro.
+                                                    
+									END.
+								END.
+
                         END. /* Final da Transacao*/
 
                         IF  l-houve-erro = YES  THEN DO:
@@ -958,8 +979,7 @@ MESSAGE "chw ENTROU - CONTA NAO MIGRADA" VIEW-AS ALERT-BOX INFO BUTTONS OK.
                                        craperr.cdagenci = INT(v_pac)   and
                                        craperr.nrdcaixa = INT(v_caixa) no-error.
                         
-                            IF  AVAIL craperr  THEN
-                                {&OUT} "<script language='JavaScript'>window.open='mensagem.p','werro','height=220,width=400,scrollbars=yes,alwaysRaised=true'</script>".
+							{include/i-erro.i}
                                    
                         END. /* Final do IF erro YES */
                         ELSE DO: 
@@ -1171,3 +1191,4 @@ END PROCEDURE.
 
 /* _UIB-CODE-BLOCK-END */
 &ANALYZE-RESUME
+

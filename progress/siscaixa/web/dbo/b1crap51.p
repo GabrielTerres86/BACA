@@ -172,6 +172,9 @@
                21/06/2017 - Substituidos os históricos 3 e 4 pelo histórico 2433-DEPOSITO BLOQ. 
                             PRJ367 - Compe Sessao Unica (Lombardi)
                
+                      
+               16/03/2018 - Substituida verificacao "cdtipcta entre 8 e 11" pela
+                            modalidade do tipo de conta igual a 3. PRJ366 (Lombardi).
 ............................................................................. */
 
 /*--------------------------------------------------------------------------*/
@@ -1811,7 +1814,7 @@ PROCEDURE valida-deposito-com-captura:
               
               /* antiga separaçao: 3-Menor Praca,4-Maior Praca,5-Menor Fora Praca,6-Maior Fora Praca */
               IF crapmdw.cdhistor = 2433 THEN
-                 ASSIGN crapmdw.nrdocmto = 6.
+                           ASSIGN crapmdw.nrdocmto = 6.
 
               RELEASE crapmdw.
 
@@ -2688,7 +2691,7 @@ PROCEDURE valida-deposito-com-captura-migrado-host:
               
               /* antiga separaçao: 3-Menor Praca,4-Maior Praca,5-Menor Fora Praca,6-Maior Fora Praca */
               IF crapmdw.cdhistor = 2433 THEN
-                 ASSIGN crapmdw.nrdocmto = 6.
+                           ASSIGN crapmdw.nrdocmto = 6.
 
               RELEASE crapmdw.
 
@@ -3670,7 +3673,7 @@ PROCEDURE valida-deposito-com-captura-migrado:
                           crapmdw.nrposchq = i_posicao.
               /* antiga separaçao: 3-Menor Praca,4-Maior Praca,5-Menor Fora Praca,6-Maior Fora Praca */
               IF crapmdw.cdhistor = 2433 THEN
-                 ASSIGN crapmdw.nrdocmto = 6.
+                           ASSIGN crapmdw.nrdocmto = 6.
 
               RELEASE crapmdw.
 
@@ -4147,13 +4150,13 @@ PROCEDURE atualiza-deposito-com-captura:
             ASSIGN  aux_tpdmovto = 2.
         ELSE
             ASSIGN  aux_tpdmovto = 1.                
-
+        
         IF crapmdw.cdhistor = 2433 THEN
             ASSIGN tt-cheques.nrdocmto = 6
                    tt-cheques.dtlibera = crapmdw.dtlibcom
                    tt-cheques.vlcompel = tt-cheques.vlcompel + crapmdw.vlcompel
                    de-valor = de-valor + crapmdw.vlcompel.
-          
+        
         FIND CURRENT tt-cheques NO-LOCK.
         
     END.    
@@ -4457,17 +4460,17 @@ PROCEDURE atualiza-deposito-com-captura:
                crapdpb.nrdconta = aux_nrdconta
                crapdpb.dtliblan = tt-cheques.dtlibera
               crapdpb.cdhistor = 2433
-              crapdpb.nrdocmto = INT(c-docto)
-              crapdpb.dtmvtolt = crapdat.dtmvtolt
-              crapdpb.cdagenci = p-cod-agencia
-              crapdpb.cdbccxlt = 11
-              crapdpb.nrdolote = i-nro-lote
-              crapdpb.vllanmto = tt-cheques.vlcompel
-              crapdpb.inlibera = 1.
-       VALIDATE crapdpb.
-
-    END.
-    
+               crapdpb.nrdocmto = INT(c-docto)
+               crapdpb.dtmvtolt = crapdat.dtmvtolt
+               crapdpb.cdagenci = p-cod-agencia
+               crapdpb.cdbccxlt = 11
+               crapdpb.nrdolote = i-nro-lote
+               crapdpb.vllanmto = tt-cheques.vlcompel
+               crapdpb.inlibera = 1.
+        VALIDATE crapdpb.
+                
+             END.
+       
     FOR EACH crapmdw WHERE crapmdw.cdcooper = crapcop.cdcooper  AND
                            crapmdw.cdagenci = p-cod-agencia     AND
                            crapmdw.nrdcaixa = p-nro-caixa       NO-LOCK:
@@ -4655,7 +4658,7 @@ PROCEDURE atualiza-deposito-com-captura:
         /* Atualiza os campos de acordo com o tipo da conta do associado que
            recebe o cheque */
            
-        
+        /*
         IF  crapass.cdtipcta >= 8    AND
             crapass.cdtipcta <= 11   THEN
             DO:
@@ -4663,17 +4666,17 @@ PROCEDURE atualiza-deposito-com-captura:
                 IF  crapass.cdbcochq = 756 THEN
                     ASSIGN crabfdc.cdbandep = 756
                            crabfdc.cdagedep = crapcop.cdagebcb.
-                ELSE
+                ELSE*/
                     ASSIGN crabfdc.cdbandep = crapcop.cdbcoctl
                            crabfdc.cdagedep = crapcop.cdagectl.
-            END.
+/*            END.
         ELSE
         /* BANCO DO BRASIL - SEM DIGITO */
              ASSIGN crabfdc.cdbandep = 1
                     crabfdc.cdagedep = INT(SUBSTRING(
                                            STRING(crapcop.cdagedbb),1,
                                            LENGTH(STRING(crapcop.cdagedbb))
-                                           - 1)).
+                                           - 1)).*/
 
         IF   crabfdc.tpcheque = 1   THEN
              ASSIGN crablcm.cdhistor = 21.
@@ -4814,7 +4817,7 @@ PROCEDURE atualiza-deposito-com-captura:
                             " " +
                                 STRING(tt-cheques.dtlibera,"99/99/9999"),
                                 "x(48)").
-    END.
+        END.
 
     ASSIGN c-literal[30] = centraliza("SAC - " + STRING(crapcop.nrtelsac),48)
            c-literal[31] = centraliza("Atendimento todos os dias das " + REPLACE(REPLACE(STRING(crapcop.hrinisac,"HH:MM"),':','h'),'h00','h') + " as " + REPLACE(REPLACE(STRING(crapcop.hrfimsac,"HH:MM"),':','h'),'h00','h'),48)
@@ -4926,8 +4929,10 @@ PROCEDURE atualiza-deposito-com-captura-migrado:
     DEF BUFFER crabass FOR crapass.
 
     DEF VAR aux_contalot AS INTE NO-UNDO.
+    DEF VAR aux_cdmodali AS INTE NO-UNDO.
+    DEF VAR aux_des_erro AS CHAR NO-UNDO.
+    DEF VAR aux_dscritic AS CHAR NO-UNDO.
     
-
     /* cooperativa nova */
     FIND crapcop WHERE crapcop.nmrescop = p-cooper NO-LOCK NO-ERROR.
 
@@ -5510,13 +5515,13 @@ PROCEDURE atualiza-deposito-com-captura-migrado:
                craplcm.nrdctitg = glb_dsdctitg
                
                /* Guarda o sequencial usado no lancamento */
-               tt-cheques.nrseqlcm = craplcm.nrseqdig.       
+               tt-cheques.nrseqlcm = craplcm.nrseqdig.
         VALIDATE craplcm.
 
         ASSIGN craplot.nrseqdig  = craplot.nrseqdig + 1
                craplot.qtcompln  = craplot.qtcompln + 1
                craplot.qtinfoln  = craplot.qtinfoln + 1
-               craplot.vlcompcr  = craplot.vlcompcr + 
+               craplot.vlcompcr  = craplot.vlcompcr +  
                                    tt-cheques.vlcompel
                craplot.vlinfocr  = craplot.vlinfocr +  
                                    tt-cheques.vlcompel.
@@ -5525,18 +5530,18 @@ PROCEDURE atualiza-deposito-com-captura-migrado:
                crapdpb.nrdconta = aux_nrdconta
                crapdpb.dtliblan = tt-cheques.dtlibera
               crapdpb.cdhistor = 2433
-              crapdpb.nrdocmto = INT(c-docto)
-              crapdpb.dtmvtolt = crapdat.dtmvtolt
-              crapdpb.cdagenci = p-cod-agencia
-              crapdpb.cdbccxlt = 11
-              crapdpb.nrdolote = i-nro-lote
-              crapdpb.vllanmto = tt-cheques.vlcompel
-              crapdpb.inlibera = 1.
-       VALIDATE crapdpb.
+               crapdpb.nrdocmto = INT(c-docto)
+               crapdpb.dtmvtolt = crapdat.dtmvtolt
+               crapdpb.cdagenci = p-cod-agencia
+               crapdpb.cdbccxlt = 11
+               crapdpb.nrdolote = i-nro-lote
+               crapdpb.vllanmto = tt-cheques.vlcompel
+               crapdpb.inlibera = 1.
+        VALIDATE crapdpb.
+       
+             END.
+        
 
-    END.
-    
-    
     FOR EACH crapmdw WHERE crapmdw.cdcooper = crapcop.cdcooper  AND
                            crapmdw.cdagenci = p-cod-agencia     AND
                            crapmdw.nrdcaixa = p-nro-caixa       NO-LOCK:
@@ -5717,8 +5722,44 @@ PROCEDURE atualiza-deposito-com-captura-migrado:
              /* Atualiza os campos de acordo com o tipo da conta do associado que
                 recebe o cheque */
 
-             IF  crapass.cdtipcta >= 8    AND
-                 crapass.cdtipcta <= 11   THEN
+             { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+             RUN STORED-PROCEDURE pc_busca_modalidade_tipo
+             aux_handproc = PROC-HANDLE NO-ERROR (INPUT crapass.inpessoa, /* Tipo de pessoa */
+                                                  INPUT crapass.cdtipcta, /* Tipo de conta */
+                                                 OUTPUT 0,                /* Modalidade */
+                                                 OUTPUT "",               /* Flag Erro */
+                                                 OUTPUT "").              /* Descriçao da crítica */
+
+             CLOSE STORED-PROC pc_busca_modalidade_tipo
+                   aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+             { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+             ASSIGN aux_cdmodali = 0
+                    aux_des_erro = ""
+                    aux_dscritic = ""
+                    aux_cdmodali = pc_busca_modalidade_tipo.pr_cdmodalidade_tipo 
+                                   WHEN pc_busca_modalidade_tipo.pr_cdmodalidade_tipo <> ?
+                    aux_des_erro = pc_busca_modalidade_tipo.pr_des_erro 
+                                   WHEN pc_busca_modalidade_tipo.pr_des_erro <> ?
+                    aux_dscritic = pc_busca_modalidade_tipo.pr_dscritic
+                                   WHEN pc_busca_modalidade_tipo.pr_dscritic <> ?.
+             
+             IF aux_des_erro = "NOK"  THEN
+                 DO:
+                     ASSIGN i-cod-erro  = 0
+                            c-desc-erro = aux_dscritic.
+                     RUN cria-erro (INPUT p-cooper,
+                                    INPUT p-cod-agencia,
+                                    INPUT p-nro-caixa,
+                                    INPUT i-cod-erro,
+                                    INPUT c-desc-erro,
+                                    INPUT YES).
+                     RETURN "NOK".
+                 END.
+             
+             IF  aux_cdmodali = 3 THEN
                  DO:
                      /* BANCOOB */
                      IF  crapass.cdbcochq = 756 THEN
@@ -5966,7 +6007,7 @@ PROCEDURE atualiza-deposito-com-captura-migrado:
                             " " +
                                 STRING(tt-cheques.dtlibera,"99/99/9999"),
                                 "x(48)").
-    END.
+        END.
 
 
     ASSIGN c-literal[30] = centraliza("SAC - " + STRING(crapcop.nrtelsac),48)
@@ -6676,17 +6717,17 @@ PROCEDURE atualiza-deposito-com-captura-migrado-host:
                crapdpb.nrdconta = aux_nrdconta
                crapdpb.dtliblan = tt-cheques.dtlibera
               crapdpb.cdhistor = 2433
-              crapdpb.nrdocmto = INT(c-docto)
-              crapdpb.dtmvtolt = crapdat.dtmvtolt
-              crapdpb.cdagenci = p-cod-agencia
-              crapdpb.cdbccxlt = 11
-              crapdpb.nrdolote = i-nro-lote
-              crapdpb.vllanmto = tt-cheques.vlcompel
-              crapdpb.inlibera = 1.
-       VALIDATE crapdpb.
-    END.
-    
-    
+               crapdpb.nrdocmto = INT(c-docto)
+               crapdpb.dtmvtolt = crapdat.dtmvtolt
+               crapdpb.cdagenci = p-cod-agencia
+               crapdpb.cdbccxlt = 11
+               crapdpb.nrdolote = i-nro-lote
+               crapdpb.vllanmto = tt-cheques.vlcompel
+               crapdpb.inlibera = 1.
+        VALIDATE crapdpb.
+             END.
+       
+
     FOR EACH crapmdw WHERE crapmdw.cdcooper = crapcop.cdcooper  AND
                            crapmdw.cdagenci = p-cod-agencia     AND
                            crapmdw.nrdcaixa = p-nro-caixa       NO-LOCK:
@@ -7192,7 +7233,7 @@ PROCEDURE atualiza-deposito-com-captura-migrado-host:
                             " " +
                                 STRING(tt-cheques.dtlibera,"99/99/9999"),
                                 "x(48)").
-    END.
+        END.
 
     ASSIGN c-literal[30] = centraliza("SAC - " + STRING(crapcop.nrtelsac),48)
            c-literal[31] = centraliza("Atendimento todos os dias das " + REPLACE(REPLACE(STRING(crapcop.hrinisac,"HH:MM"),':','h'),'h00','h') + " as " + REPLACE(REPLACE(STRING(crapcop.hrfimsac,"HH:MM"),':','h'),'h00','h'),48)

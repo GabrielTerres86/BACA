@@ -22,7 +22,7 @@ CREATE OR REPLACE TRIGGER CECRED.TRG_CRAPTTL_ATLZ
       Frequencia: Sempre que for chamado
       Objetivo  : Trigger para registrar que informação foi alterada
     
-     Alteração :
+     Alteração : 12/04/2018 - Alterando tpcadastro ao excluir o titular. (INC0010388 - Kelvin)
     
     
   ............................................................................*/
@@ -57,6 +57,7 @@ BEGIN
     vr_cdcooper := :old.cdcooper;
     vr_nrdconta := :old.nrdconta;
     vr_idseqttl := :old.idseqttl;
+    vr_dschave  := :old.nrcpfcgc; 
   ELSE
     vr_cdcooper := :new.cdcooper;
     vr_nrdconta := :new.nrdconta;

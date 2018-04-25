@@ -1997,12 +1997,29 @@ PROCEDURE Criticas_Alteracao PRIVATE :
                    END.
 
 
-               /* fontes/le_motivo_demissao.p  */
-               DYNAMIC-FUNCTION("BuscaMotivoDemi" IN h-b1wgen0060,
-                                INPUT par_cdcooper,
-                                INPUT par_cdmotdem,
-                                OUTPUT aux_dsmotdem,
-                                OUTPUT par_dscritic).
+               /* buscar motivo demissão  */
+               { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+                            
+                /* Efetuar a chamada a rotina Oracle */ 
+                RUN STORED-PROCEDURE prc_busca_motivo_demissao
+                aux_handproc = PROC-HANDLE NO-ERROR 
+                  ( INPUT par_cdcooper      /* pr_cdcooper --> Codigo da cooperativa */
+                   ,INPUT par_cdmotdem      /* pr_cdmotdem --> Código Motivo Demissao */
+                   /* --------- OUT --------- */
+                   ,OUTPUT ""           /* pr_dsmotdem --> Descriçao Motivo Demissao */
+                   ,OUTPUT 0            /* pr_cdcritic --> Codigo da critica)   */
+                   ,OUTPUT "" ).        /* pr_des_erro --> Descriçao da critica).  */
+                                        
+                /* Fechar o procedimento para buscarmos o resultado */ 
+                CLOSE STORED-PROC prc_busca_motivo_demissao
+                aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+                            
+                { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+                ASSIGN aux_dsmotdem = prc_busca_motivo_demissao.pr_dsmotdem
+                                 WHEN prc_busca_motivo_demissao.pr_dsmotdem <> ?.   
+                ASSIGN par_dscritic = prc_busca_motivo_demissao.pr_des_erro
+                                 WHEN prc_busca_motivo_demissao.pr_des_erro <> ?.  
 
                IF  par_dscritic <> "" THEN
                    DO:

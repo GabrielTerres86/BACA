@@ -4278,33 +4278,30 @@ function formataTelaDesligamento(){
         motivoLink.addClass('lupa').css('cursor', 'auto').unbind('click').bind('click', function () { return false; });
     } else {
         motivoLink.css('cursor', 'pointer').unbind('click').bind('click', function () {
-            procedure = 'busca_motivo_demissao';
-            titulo = 'Motivo de saída';
-            qtReg = '30';
-            filtrosPesq = 'Cód. Motivo saída;cdmotdem;30px;S;0;;codigo|Motivo de saída;dsmotdem;200px;S;;;descricao';
-            colunas = 'Código;cdmotdem;20%;right|Motivo de saída;dsmotdem;80%;left';
-            mostraPesquisa(bo, procedure, titulo, qtReg, filtrosPesq, colunas,$('#divRotina'));
-            return false;	
-        });
+          var filtrosPesq = "Código;cdmotdem;100px;S;0|Descrição;dsmotdem;200px;S;";
+          var colunas = 'Código;cdmotdem;25%;right|Descrição;dsmotdem;75%;left';
+          mostraPesquisa("ZOOM0001", "BUSCAMOTIVODEM", "Motivos de saída", "30", filtrosPesq, colunas);
+          return false;	
+    });
         
-		motivoLink.prev().unbind('change').bind('change', function () {
-            procedure = 'busca_motivo_demissao';
+    motivoLink.prev().unbind('change').bind('change', function () {
+        procedure = 'BUSCAMOTIVODEM';
+        titulo = 'Motivo de saída';
+        filtrosDesc = '';
+        buscaDescricao("ZOOM0001", procedure, titulo, $(this).attr('name'), 'dsmotdem', $(this).val(), 'dsmotdem', filtrosDesc, 'divMotivoDesligamento','blockBackground(parseInt($("#divRotina").css("z-index")))');
+        return false;
+    });
+    motivoLink.prev().unbind('blur').bind('blur', function () {
+        $(this).unbind('change').bind('change', function () {
+            procedure = 'BUSCAMOTIVODEM';
             titulo = 'Motivo de saída';
-			filtrosDesc = '';
-            buscaDescricao(bo, procedure, titulo, $(this).attr('name'), 'dsmotdem', $(this).val(), 'dsmotdem', filtrosDesc, 'divMotivoDesligamento','blockBackground(parseInt($("#divRotina").css("z-index")))');
-			return false;
-		});
-        motivoLink.prev().unbind('blur').bind('blur', function () {
-            $(this).unbind('change').bind('change', function () {
-                procedure = 'busca_motivo_demissao';
-                titulo = 'Motivo de saída';
-				filtrosDesc = '';
-                buscaDescricao(bo, procedure, titulo, $(this).attr('name'), 'dsmotdem', $(this).val(), 'dsmotdem', filtrosDesc, 'divMotivoDesligamento','blockBackground(parseInt($("#divRotina").css("z-index")))');
-				return false;
-			});		
-		});
+            filtrosDesc = '';
+            buscaDescricao("ZOOM0001", procedure, titulo, $(this).attr('name'), 'dsmotdem', $(this).val(), 'dsmotdem', filtrosDesc, 'divMotivoDesligamento','blockBackground(parseInt($("#divRotina").css("z-index")))');
+            return false;
+        });		
+    });
 		
-    }
+}
 	
     $('#divMotivoDesligamento').css('display', 'block');
     $('#divDesligamento').css('display', 'none');

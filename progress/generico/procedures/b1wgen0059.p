@@ -3,11 +3,11 @@
                            ATENCAO!    CONVERSAO PROGRESS - ORACLE
             ESTE FONTE ESTA ENVOLVIDO NA MIGRACAO PROGRESS->ORACLE!
   +-------------------------------------+----------------------------------------+
-  | Rotina Progress                     | Rotina Oracle PLSQL                  |
+  | Rotina Progress                     | Rotina Oracle PLSQL                    |
   +-------------------------------------+----------------------------------------+
-  | busca-crapope			            | ZOOM0001.pc_busca_operadores         |
-  | busca-crapban					    | ZOOM0001.pc_busca_bancos             |
-  | busca-historico                     | ZOOM0001.pc_busca_historico          |
+  | busca-crapope			            | ZOOM0001.pc_busca_operadores           |
+  | busca-crapban					    | ZOOM0001.pc_busca_bancos               |
+  | busca-historico                     | ZOOM0001.pc_busca_historico            |
   | busca-craplrt					    | ZOOM0001.pc_busca_craplrt			     | 
   | busca-craplcr                       | ZOOM0001.pc_busca_craplcr              | 
   | busca-crapfin						| ZOOM0001.pc_busca_finalidades_empr_web |
@@ -206,6 +206,9 @@
 				15/07/2017 - Nova procedure. busca-crapass para listar os associados. (Mauro).
 
                 31/10/2017 - Passagem do tpctrato. (Jaison/Marcos Martini - PRJ404)
+
+        13/03/2018 - Removida procedure "busca-craptip" pois nao e mais usada.
+                     PRJ366 (Lombardi).
 
 .............................................................................*/
 
@@ -1773,66 +1776,6 @@ PROCEDURE busca-crapdes:
                                tt-crapdes.cdsecext = crapdes.cdsecext
                                tt-crapdes.dssecext = crapdes.nmsecext
                                tt-crapdes.indespac = crapdes.indespac.
-                        END.
-                END.
-
-             ASSIGN aux_nrregist = aux_nrregist - 1.
-        END.
-
-        LEAVE.
-    END.
-
-    RETURN "OK".
-
-END PROCEDURE.
-
-
-PROCEDURE busca-craptip:
-    /* Pesquisa para TIPO DA CONTA */
-                                              
-    DEF  INPUT PARAM par_cdcooper AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_cdtipcta AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_dstipcta AS CHAR                           NO-UNDO.
-    DEF  INPUT PARAM par_nrregist AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_nriniseq AS INTE                           NO-UNDO.
-    
-    DEF OUTPUT PARAM par_qtregist AS INTE                           NO-UNDO.
-    DEF OUTPUT PARAM TABLE FOR tt-craptip.
-
-    ASSIGN aux_nrregist = par_nrregist.
-
-    DO ON ERROR UNDO, LEAVE:
-        EMPTY TEMP-TABLE tt-crapagb.
-
-        ASSIGN par_dstipcta = TRIM(par_dstipcta).
-
-        FOR EACH craptip WHERE 
-                         craptip.cdcooper = par_cdcooper AND
-                         (IF par_cdtipcta <> 0 THEN
-                          craptip.cdtipcta = par_cdtipcta ELSE TRUE) AND
-                         craptip.dstipcta MATCHES("*" + par_dstipcta + "*") 
-                         NO-LOCK:
-
-            /* DESPREZAR TIPOS DE CONTA BB QUE UTILIZAM CHEQUE - GUILHERME */
-            IF  craptip.cdtipcta >= 12  AND
-                craptip.cdtipcta <= 15  THEN
-                NEXT.
-                          
-            ASSIGN par_qtregist = par_qtregist + 1.
-
-            /* controles da paginaçao */
-            IF  (par_qtregist < par_nriniseq) OR
-                (par_qtregist > (par_nriniseq + par_nrregist)) THEN
-                NEXT.
-
-            IF  aux_nrregist > 0 THEN
-                DO:
-                   FIND FIRST tt-craptip OF craptip NO-ERROR.
-    
-                   IF   NOT AVAILABLE tt-craptip THEN
-                        DO:
-                           CREATE tt-craptip.
-                           BUFFER-COPY craptip TO tt-craptip.
                         END.
                 END.
 

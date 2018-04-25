@@ -86,14 +86,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADMAT AS
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Lucas Reinert
-    Data    : Setembro/2017                       Ultima atualizacao: 
+    Data    : Setembro/2017                       Ultima atualizacao: 12/04/2018
     
     Dados referentes ao programa:
     
     Frequencia: Sempre que for chamado
     Objetivo  : Rotina para buscar os dados da conta do cooperado
     
-    Alteracoes: 
+    Alteracoes: 12/04/2018 - Alterado cursor cr_crapass da procedure pc_busca_dados_conta
     ............................................................................. */
   
       -- Variaveis de log
@@ -124,12 +124,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADMAT AS
 							 WHERE dom.nmdominio = 'CRAPASS.ININCTVA'
 							   AND dom.cddominio = ass.ininctva) dsinctva
             ,ass.cdmotdem
-						,tabe0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
-						                           ,pr_nmsistem => 'CRED'
-																			 ,pr_tptabela => 'GENERI'
-																			 ,pr_cdempres => 0
-																			 ,pr_cdacesso => 'MOTIVODEMI'
-																			 ,pr_tpregist => ass.cdmotdem) dsmotdem
+						,dsl.dsmotivo dsmotdem 
 		        ,age.nmresage
 						,ass.nrcpfcgc	
 						,ass.nmprimtl
@@ -139,6 +134,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADMAT AS
 				    ,crapage age
 						,crapttl ttl
 						,crapemp emp
+						,tbcotas_motivo_desligamento dsl
 			 WHERE ass.cdcooper = pr_cdcooper
 			   AND ass.nrdconta = pr_nrdconta
 				 AND age.cdcooper = ass.cdcooper
@@ -146,7 +142,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADMAT AS
 				 AND ttl.cdcooper (+) = ass.cdcooper
 				 AND ttl.nrdconta (+) = ass.nrdconta
 				 AND emp.cdcooper (+) = ttl.cdcooper
-				 AND emp.cdempres (+) = ttl.cdempres;
+				 AND emp.cdempres (+) = ttl.cdempres
+				 AND ass.cdmotdem = dsl.cdmotivo (+);
     rw_crapass cr_crapass%ROWTYPE;
 		
     vr_cdcritic crapcri.cdcritic%TYPE;

@@ -24,6 +24,9 @@
 
                 05/12/2016 - Incorporacao Transulcred (Guilherme/SUPERO)
 
+                15/03/2018 - Substituida verificacao "cdtipcta = 3,6,10,11,..." pela 
+                             modalidade do tipo de conta = 2 ou 3. PRJ366 (Lombardi).
+
 .............................................................................*/
 
 { sistema/generico/includes/var_internet.i }
@@ -939,8 +942,7 @@ PROCEDURE importar_icf614:
                         DO:
                             /* Tipo de Conta Pesquisada - Pessoa Fisica   */
                             IF   crapass.inpessoa = 1 THEN
-                                 IF   CAN-DO("3,6,10,11,14,15,17",
-                                      STRING(crapass.cdtipcta)) THEN
+                      IF  CAN-DO("2,3", STRING(crapass.cdcatego)) THEN
                                       aux_cdtipcta = 5. /* Pessoa PF Conjunta */
                                  ELSE
                                       aux_cdtipcta = 3. /* Pessoa PF Normal   */

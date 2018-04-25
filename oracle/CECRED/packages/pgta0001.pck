@@ -631,6 +631,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
 --                          para proc_message (Carlos)
 --
 --             18/12/2017 - Efetuado alteração para controle de lock (Jonata - Mouts).
+--
+--             26/02/2018 - Alterado cursor cr_crapass da procedure pc_busca_termo_servico, 
+--                          substituindo o acesso à tabela CRAPTIP, pela tabela TBCC_TIPO_CONTA.
+--                          PRJ366 (Lombardi).
+--
 ---------------------------------------------------------------------------------------------------------------
 
 
@@ -939,7 +944,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
              ,gene0002.fn_mask_cpf_cnpj(crapass.nrcpfcgc,crapass.inpessoa) nrcpfcgc
              ,crapass.nmprimtl
              ,crapass.inpessoa
-             ,craptip.dstipcta
+             ,tpcta.dstipo_conta
              ,INITCAP(crapenc.dsendere)||', '||crapenc.nrendere||DECODE(crapenc.complend,' ','',', '||crapenc.complend) dsendere
              ,crapenc.nmcidade
              ,crapenc.cdufende
@@ -947,10 +952,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
              ,gene0002.fn_mask(crapass.cdbcochq,'9999') cdbcoctl
              ,gene0002.fn_mask(crapass.cdagenci,'9999') cdagectl
          FROM crapass crapass
-             ,craptip craptip
+             ,tbcc_tipo_conta tpcta
              ,crapenc crapenc
-        WHERE crapass.cdcooper = craptip.cdcooper
-          AND crapass.cdtipcta = craptip.cdtipcta
+        WHERE crapass.inpessoa = tpcta.inpessoa
+          AND crapass.cdtipcta = tpcta.cdtipo_conta
           AND crapass.cdcooper = crapenc.cdcooper
           AND crapass.nrdconta = crapenc.nrdconta
           AND crapass.cdcooper = pr_cdcooper
@@ -1448,7 +1453,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
           vr_dstextab := REPLACE(vr_dstextab,'#NRCEP#',rw_crapass.nrcepend);
           vr_dstextab := REPLACE(vr_dstextab,'#CDBCOCTL#',rw_crapcop.cdbcoctl);
           vr_dstextab := REPLACE(vr_dstextab,'#CDAGECTL#',rw_crapcop.cdagectl);
-          vr_dstextab := REPLACE(vr_dstextab,'#DSTIPCTA#',rw_crapass.dstipcta);
+          vr_dstextab := REPLACE(vr_dstextab,'#DSTIPCTA#',rw_crapass.dstipo_conta);
 
           -- Variaveis do Termo - Detalhes do Registro do Termo
           vr_dsregis  := REPLACE(vr_dsregis,'#ordm#','&ordm');
@@ -2661,7 +2666,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
            IF TRIM(vr_des_linha) IS NULL THEN
              CONTINUE;
            END IF;
-
+           
            -- Tamanho da linha fora do padrão
            IF LENGTH(vr_des_linha) <> 241 THEN
              vr_des_erro := 'Tamanho da linha divergente do padrao CNAB240! Linha: ' || vr_idlinha;
@@ -3312,8 +3317,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
 
        -- Se o arquivo estiver aberto
        IF  utl_file.IS_OPEN(vr_ind_arquivo) THEN
-       -- Fechar o arquivo
-       GENE0001.pc_fecha_arquivo(pr_utlfileh => vr_ind_arquivo); --> Handle do arquivo aberto;
+         -- Fechar o arquivo
+         GENE0001.pc_fecha_arquivo(pr_utlfileh => vr_ind_arquivo); --> Handle do arquivo aberto;
        END  IF;
 
        -- Caso não tenha Detalhe Rejeita Arquivo
@@ -3336,9 +3341,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
        
        -- Verificar se houve erro nas validações do arquivo
        IF vr_tab_err_arq.COUNT > 0 THEN
-           RAISE vr_exc_saida;
+         RAISE vr_exc_saida;
        END IF;
-
+       
        -- Rotina para mover o arquivo processado para a pasta
        -- <cooperativa>/salvar
 
@@ -3874,7 +3879,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
                  END IF;
               ELSE
                 
-                 CASE nvl(vr_dscritic,' ')
+                  CASE nvl(vr_dscritic,' ')
                    WHEN 'Data do agendamento deve ser um dia util.'     THEN vr_cdocorre := '0B';
                    WHEN 'Titulo vencido.'                               THEN vr_cdocorre := '0C';
                    WHEN 'Agendamento nao permitido apos vencimento.'    THEN vr_cdocorre := '0D';
@@ -3889,7 +3894,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
                    WHEN 'Valor nao permitido para agendamento.'         THEN vr_cdocorre := '0J'; /* VR Boleto */
                    WHEN '592 - Bloqueto nao encontrado.'                THEN vr_cdocorre := '0K'; /* bloqueto não encontrado */
                    WHEN '594 - Bloqueto ja processado.'                 THEN vr_cdocorre := '0L'; /* bloqueto já pago */
-                    WHEN 'Dados incompativeis. Pagamento nao realizado!' THEN vr_cdocorre := '0M'; /* codigo de barras fraudulento */
+                   WHEN 'Dados incompativeis. Pagamento nao realizado!' THEN vr_cdocorre := '0M'; /* codigo de barras fraudulento */
                    ELSE vr_cdocorre := '99';
                  END CASE;
                  
@@ -3998,7 +4003,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
                   vr_dscritic := 'Erro ao inserir crapdpt: '||SQLERRM;
                   RAISE vr_exc_critico;
             END;
-
+            
             -- Atualizar crapdpt original com o mesmo IDLANCTO
             BEGIN
               UPDATE crapdpt dpt
@@ -4380,7 +4385,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
             END;
  
              ELSE
-               CLOSE cr_craplot;
+         CLOSE cr_craplot;
          END IF;
              -- se não deu erro, sair do loop
              EXIT;
@@ -5081,7 +5086,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
           --Levantar Excecao
           RAISE vr_exc_erro;
         END IF;
-        END IF;
+      END IF;
       --Fechar Cursor
       IF cr_email%ISOPEN THEN
         CLOSE cr_email;
@@ -5656,7 +5661,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
 
       -- Escrever Erro Apresentado no Arquivo
       GENE0001.pc_escr_linha_arquivo(vr_ind_arquivo,vr_setlinha);
-
+      
       -- Gerar o LOG de arquivo processado com sucesso
       PGTA0001.pc_gera_log_arq_pgto(pr_cdcooper => pr_cdcooper
                                    ,pr_nrdconta => pr_nrdconta
@@ -6316,13 +6321,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
         IF vr_typ_saida = 'ERR' THEN
           vr_dscritic:= 'Nao foi possivel executar comando unix. '||vr_comando;
           RAISE vr_exc_erro;
-    END IF;
-
+        END IF;
+        
         pr_dsinform := gene0007.fn_caract_acento('O arquivo de retorno foi disponibilizado no FTP.');
         
         -- Gerar o LOG do erro que aconteceu durante o processamento
         PGTA0001.pc_gera_log_arq_pgto(pr_cdcooper => pr_cdcooper
-                                 ,pr_nrdconta => pr_nrdconta
+                                     ,pr_nrdconta => pr_nrdconta
                                      ,pr_nrconven => pr_nrconven
                                      ,pr_tpmovimento => 2 -- Movimento de RETORNO
                                      ,pr_nrremret => pr_nrremret -- Numero da Remessa do Cooperado
@@ -10438,20 +10443,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
     dbms_lob.freetemporary(vr_des_xml);
   
     IF pr_iddspscp = 0 THEN -- Manter cópia do arquivo via scp para o servidor destino
-      CASE gene0001.vr_vet_des_origens(pr_idorigem)
-        WHEN 'AYLLOS WEB' THEN
-          gene0002.pc_efetua_copia_pdf(pr_cdcooper => pr_cdcooper
-                                      ,pr_cdagenci => pr_cdagenci
-                                      ,pr_nrdcaixa => pr_nrdcaixa
-                                      ,pr_nmarqpdf => vr_nom_diretorio||'/'||vr_nom_arquivo
-                                      ,pr_des_reto => vr_des_erro
-                                      ,pr_tab_erro => vr_tab_erro);
-        WHEN 'INTERNET' THEN
-          gene0002.pc_efetua_copia_arq_ib(pr_cdcooper => pr_cdcooper 
-                                         ,pr_nmarqpdf => vr_nom_diretorio||'/'||vr_nom_arquivo
-                                         ,pr_des_erro => vr_des_erro);
-        ELSE NULL;        
-      END CASE;
+    CASE gene0001.vr_vet_des_origens(pr_idorigem)
+      WHEN 'AYLLOS WEB' THEN
+        gene0002.pc_efetua_copia_pdf(pr_cdcooper => pr_cdcooper
+                                    ,pr_cdagenci => pr_cdagenci
+                                    ,pr_nrdcaixa => pr_nrdcaixa
+                                    ,pr_nmarqpdf => vr_nom_diretorio||'/'||vr_nom_arquivo
+                                    ,pr_des_reto => vr_des_erro
+                                    ,pr_tab_erro => vr_tab_erro);
+      WHEN 'INTERNET' THEN
+        gene0002.pc_efetua_copia_arq_ib(pr_cdcooper => pr_cdcooper 
+                                       ,pr_nmarqpdf => vr_nom_diretorio||'/'||vr_nom_arquivo
+                                       ,pr_des_erro => vr_des_erro);
+      ELSE NULL;        
+    END CASE;
     ELSE     
       gene0002.pc_copia_arq_para_download(pr_cdcooper => pr_cdcooper
                                          ,pr_dsdirecp => vr_nom_diretorio||'/'
@@ -10503,7 +10508,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
                                   ,pr_dtfimper IN DATE                  --> Data fim do periodo
                                   ,pr_nmbenefi IN VARCHAR2              --> Nome beneficiario
                                   ,pr_dscodbar IN VARCHAR2              --> Codigo barras
-                                  ,pr_cdsittit IN VARCHAR2              --> Situacao do titulo  
+                                  ,pr_cdsittit IN VARCHAR2              --> Situacao do titulo                                   
                                   ,pr_iddspscp IN INTEGER               --> Parametro criado para permitir a geracao do relatorio para o IB atual e para o IB novo                                                                   
                                   ,pr_tab_agend_rel  IN typ_tab_rel_arq --> PLTABLE com os dados
                                   ,pr_tab_liqui_rel  IN typ_tab_rel_arq --> PLTABLE com os dados
@@ -10702,34 +10707,34 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
     dbms_lob.freetemporary(vr_des_xml);             
 
     IF pr_iddspscp = 0 THEN -- Manter cópia do arquivo via scp para o servidor destino
-      CASE gene0001.vr_vet_des_origens(pr_idorigem)
-        WHEN 'AYLLOS WEB' THEN
-          --Enviar arquivo para Web
-          gene0002.pc_efetua_copia_pdf (pr_cdcooper => pr_cdcooper     --> Cooperativa conectada
-                                       ,pr_cdagenci => pr_cdagenci     --> Codigo da agencia para erros
-                                       ,pr_nrdcaixa => pr_nrdcaixa     --> Codigo do caixa para erros
-                                       ,pr_nmarqpdf => vr_nom_diretorio||'/'||vr_nom_arquivo --> Arquivo PDF  a ser gerado
-                                       ,pr_des_reto => vr_des_reto     --> Saída com erro
-                                       ,pr_tab_erro => vr_tab_erro);
+    CASE gene0001.vr_vet_des_origens(pr_idorigem)
+      WHEN 'AYLLOS WEB' THEN
+        --Enviar arquivo para Web
+        gene0002.pc_efetua_copia_pdf (pr_cdcooper => pr_cdcooper     --> Cooperativa conectada
+                                     ,pr_cdagenci => pr_cdagenci     --> Codigo da agencia para erros
+                                     ,pr_nrdcaixa => pr_nrdcaixa     --> Codigo do caixa para erros
+                                     ,pr_nmarqpdf => vr_nom_diretorio||'/'||vr_nom_arquivo --> Arquivo PDF  a ser gerado
+                                     ,pr_des_reto => vr_des_reto     --> Saída com erro
+                                     ,pr_tab_erro => vr_tab_erro);
+      
+        --Se ocorreu erro
+        IF vr_des_reto <> 'OK' THEN
+          --Se tem erro na tabela 
+          IF vr_tab_erro.COUNT > 0 THEN
+             vr_dscritic:= vr_tab_erro(vr_tab_erro.FIRST).dscritic;
+          ELSE
+             vr_dscritic:= 'Erro ao enviar arquivo para web.';  
+          END IF;  
+          --Sair 
+          RAISE vr_exc_saida;
+        END IF;
         
-          --Se ocorreu erro
-          IF vr_des_reto <> 'OK' THEN
-            --Se tem erro na tabela 
-            IF vr_tab_erro.COUNT > 0 THEN
-               vr_dscritic:= vr_tab_erro(vr_tab_erro.FIRST).dscritic;
-            ELSE
-               vr_dscritic:= 'Erro ao enviar arquivo para web.';  
-            END IF;  
-            --Sair 
-            RAISE vr_exc_saida;
-          END IF;
-          
-        WHEN 'INTERNET' THEN
-          gene0002.pc_efetua_copia_arq_ib(pr_cdcooper => pr_cdcooper 
-                                         ,pr_nmarqpdf => vr_nom_diretorio||'/'||vr_nom_arquivo
-                                         ,pr_des_erro => vr_des_erro);
-        ELSE NULL;        
-      END CASE;
+      WHEN 'INTERNET' THEN
+        gene0002.pc_efetua_copia_arq_ib(pr_cdcooper => pr_cdcooper 
+                                       ,pr_nmarqpdf => vr_nom_diretorio||'/'||vr_nom_arquivo
+                                       ,pr_des_erro => vr_des_erro);
+      ELSE NULL;        
+    END CASE;
     ELSE
       gene0002.pc_copia_arq_para_download(pr_cdcooper => pr_cdcooper
                                          ,pr_dsdirecp => vr_nom_diretorio||'/'
@@ -10738,7 +10743,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
                                          ,pr_dssrvarq => pr_dssrvarq
                                          ,pr_dsdirarq => pr_dsdirarq
                                          ,pr_des_erro => vr_dscritic);
-        
+                                         
       IF vr_dscritic IS NOT NULL AND TRIM(vr_dscritic) <> ' ' THEN
         RAISE vr_exc_saida;
       END IF;

@@ -87,6 +87,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps466 (pr_cdcooper IN crapcop.cdcooper%T
                    
                    01/08/2017 - Retirada gravação de log para mensagem de erro de data
                                 (Ana - Envolti)                   
+                   
+                   06/03/2018 - Substituida verificacao "cdtipcta > 11" por tipo de conta possuir o indicador 
+                                de conta corrente integração como Sim (tbcc_tipo_conta.indconta_itg = 1). 
+                                PRJ366 (Lombardi).
     ............................................................................ */
 
     DECLARE
@@ -254,12 +258,18 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps466 (pr_cdcooper IN crapcop.cdcooper%T
 
       CURSOR cr_crapreq(pr_nrdconta IN crapass.nrdconta%TYPE) IS
         SELECT COUNT('*') --busca requisicao de talonarios
-        FROM  crapreq
-        WHERE crapreq.cdcooper  = pr_cdcooper
-        AND   crapreq.nrdconta  = pr_nrdconta
-        AND   crapreq.insitreq  IN (1,4,5)
-        AND   crapreq.cdtipcta > 11
-        AND   crapreq.qtreqtal > 0
+        FROM  crapreq         req
+            , tbcc_tipo_conta tip
+            , crapass         ass
+        WHERE req.cdcooper  = pr_cdcooper
+        AND   req.nrdconta  = pr_nrdconta
+        AND   req.insitreq  IN (1,4,5)
+        AND   req.cdtipcta = tip.cdtipo_conta
+        AND   tip.indconta_itg = 1 -- Tipos de Conta com ITG habilitada
+        AND   tip.inpessoa = ass.inpessoa
+        AND   ass.cdcooper = req.cdcooper
+        AND   ass.nrdconta = req.nrdconta
+        AND   req.qtreqtal > 0
         HAVING COUNT('*') >0;
 
       CURSOR cr_crapage(p_cdagenci IN NUMBER) IS -- busca dados do PA

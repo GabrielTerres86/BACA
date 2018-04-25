@@ -11,12 +11,16 @@
                              senha de tele-atendimento/URA. (Reinert)
                              
                 05/03/2014 - Incluso VALIDATE (Daniel).
+                             
+                14/03/2018 - Alterar a validaçao por tipo de conta pela 
+                             modalidade. PRJ366 (Lombardi).
 .............................................................................*/
 
 /*............................. DEFINICOES ..................................*/
 { sistema/generico/includes/b1wgen0064tt.i }
 { sistema/generico/includes/b1wgen0059tt.i }
 { sistema/generico/includes/var_internet.i }
+{ sistema/generico/includes/var_oracle.i } 
 { sistema/generico/includes/gera_log.i }
 { sistema/generico/includes/gera_erro.i }
 
@@ -209,6 +213,8 @@ PROCEDURE Busca_Relatorios:
 
     DEF VAR aux_dstransa AS CHAR                                    NO-UNDO.
     DEF VAR aux_qtregist AS INTE                                    NO-UNDO.
+    DEF VAR aux_cdmodali AS INTE                                    NO-UNDO.
+    DEF VAR aux_des_erro AS CHAR                                    NO-UNDO.
     DEF VAR h-b1wgen0059 AS HANDLE                                  NO-UNDO.
 
     ASSIGN
@@ -223,13 +229,39 @@ PROCEDURE Busca_Relatorios:
 
         IF  par_cdprogra = 217  AND par_cdrelato = 171  THEN
             DO:
-               FOR FIRST crapass FIELDS(cdtipcta)
+               FOR FIRST crapass FIELDS(inpessoa cdtipcta)
                                  WHERE crapass.cdcooper = par_cdcooper AND
                                        crapass.nrdconta = par_nrdconta NO-LOCK:
 
-                   IF  crapass.cdtipcta = 5  OR crapass.cdtipcta = 6  OR
-                       crapass.cdtipcta = 7  OR crapass.cdtipcta = 17 OR
-                       crapass.cdtipcta = 18 THEN
+                   { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+                   RUN STORED-PROCEDURE pc_busca_modalidade_tipo
+                   aux_handproc = PROC-HANDLE NO-ERROR (INPUT crapass.inpessoa, /* Tipo de pessoa */
+                                                        INPUT crapass.cdtipcta, /* Tipo de conta */
+                                                       OUTPUT 0,                /* Modalidade */
+                                                       OUTPUT "",               /* Flag Erro */
+                                                       OUTPUT "").              /* Descriçao da crítica */
+
+                   CLOSE STORED-PROC pc_busca_modalidade_tipo
+                         aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+                   { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+                   ASSIGN aux_cdmodali = 0
+                          aux_des_erro = ""
+                          aux_dscritic = ""
+                          aux_cdmodali = pc_busca_modalidade_tipo.pr_cdmodalidade_tipo 
+                                         WHEN pc_busca_modalidade_tipo.pr_cdmodalidade_tipo <> ?
+                          aux_des_erro = pc_busca_modalidade_tipo.pr_des_erro 
+                                         WHEN pc_busca_modalidade_tipo.pr_des_erro <> ?
+                          aux_dscritic = pc_busca_modalidade_tipo.pr_dscritic
+                                         WHEN pc_busca_modalidade_tipo.pr_dscritic <> ?.
+
+                   IF aux_des_erro = "NOK"  THEN
+                       LEAVE Busca.
+                   
+                   IF  aux_cdmodali = 2 OR
+                       aux_cdmodali = 3 THEN
                        DO:
                           ASSIGN aux_dscritic = "Este tipo de conta nao "    +
                                                 "permite o Envio de Extrato" +

@@ -4710,6 +4710,13 @@ PROCEDURE proc_qualif_operacao:
           END.
         END.
 
+		/* Se contrato a liquidar já é um refinanciamento, força 
+		    qualificação mínima como "Renegociação" 
+		        Reginaldo (AMcom) - Mar/2018 
+		*/
+		IF crabepr.idquaprc > 1 THEN
+			ASSIGN aux_qtd_dias_atraso = MAXIMUM(aux_qtd_dias_atraso, 5).
+
 		IF aux_dias_atraso < aux_qtd_dias_atraso THEN
 		   aux_dias_atraso = aux_qtd_dias_atraso.
 

@@ -160,8 +160,10 @@ CREATE OR REPLACE PROCEDURE CECRED.
                                 (Carlos)
                    
 				   05/06/2017 - Ajuste para retirar o uso de campos removidos da tabela
-			                    crapass, crapttl, crapjur 
-							    (Adriano - P339).
+			                          crapass, crapttl, crapjur (Adriano - P339).
+                   
+				           06/03/2018 - Substituída verificacao do tipo de conta "NOT IN (5,6,7,17,18)" para a 
+                                modalidade do tipo de conta diferente de "2" e "3". PRJ366 (Lombardi).
                    
     ............................................................................ */
 
@@ -329,6 +331,13 @@ CREATE OR REPLACE PROCEDURE CECRED.
         AND    crapenc.idseqttl = 1
         AND    crapenc.cdseqinc = 1;       
         
+      -- Cursor para busca dos tipos de conta
+      CURSOR cr_tipcta IS
+        SELECT inpessoa
+              ,cdtipo_conta cdtipcta
+              ,cdmodalidade_tipo cdmodali
+          FROM tbcc_tipo_conta;
+          
       ---------------------------- ESTRUTURAS DE REGISTRO ---------------------
       TYPE typ_dsintern IS VARRAY(23) OF VARCHAR2(80);
 
@@ -472,6 +481,13 @@ CREATE OR REPLACE PROCEDURE CECRED.
       --tabela temporaria para armazenar as informacoes de enderecos
       vr_tab_crapenc typ_tab_crapenc; 
 
+      -- Definicao do tipo de tabela para os tipos de conta
+      TYPE typ_reg_tipcta   IS RECORD(cdmodali tbcc_tipo_conta.cdmodalidade_tipo%TYPE);        
+      TYPE typ_tab_tipcta_2 IS TABLE OF typ_reg_tipcta   INDEX BY PLS_INTEGER;        
+      TYPE typ_tab_tipcta   IS TABLE OF typ_tab_tipcta_2 INDEX BY PLS_INTEGER;          
+      -- Vetor para armazenar os dados para o processo definitivo
+      vr_tab_tipcta typ_tab_tipcta;
+      
       ------------------------------- VARIAVEIS -------------------------------
       vr_dtmvtolt VARCHAR2(100);
       vr_deschist VARCHAR2(100);       
@@ -870,6 +886,12 @@ CREATE OR REPLACE PROCEDURE CECRED.
 
       --------------- REGRA DE NEGOCIO DO PROGRAMA -----------------
       
+      vr_tab_tipcta.delete;
+      /*  Carrega tabela de tipos de conta  */
+      FOR rw_tipcta IN cr_tipcta LOOP
+        vr_tab_tipcta(rw_tipcta.inpessoa)(rw_tipcta.cdtipcta).cdmodali := rw_tipcta.cdmodali;
+      END LOOP; /*  Fim do LOOP -- Carga da tabela de tipos de conta  */
+            
       --limpa a tabela de historicos
       vr_tab_craphis.delete;
       --carrega a tabela de historicos
@@ -1140,7 +1162,8 @@ CREATE OR REPLACE PROCEDURE CECRED.
                                    
             --verifica o tipo de conta do associado
             IF vr_tpdaviso = 1 AND vr_cdempres = 6 AND 
-              vr_tab_crapass(rw_crapavs.nrdconta).cdtipcta NOT IN (5,6,7,17,18) THEN
+               vr_tab_tipcta(vr_tab_crapass(rw_crapavs.nrdconta).inpessoa)
+                            (vr_tab_crapass(rw_crapavs.nrdconta).cdtipcta).cdmodali NOT IN (2,3) THEN
               vr_dstipcta := 'C/C';
             ELSE
               vr_dstipcta := NULL;
