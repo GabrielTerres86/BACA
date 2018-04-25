@@ -40,6 +40,8 @@ declare
 begin
   -- Liberar acessos ATVPRB - todas permissões
 
+  update craptel x set CDOPPTEL='@,A,I,E,C' where x.nmdatela='ATACOR';
+
   for a in 1 .. 6 loop--*********************************
   
     vr_cdoperad := vr_vet_operad_credito(a);
@@ -150,4 +152,5 @@ begin
       end if;
     end if;
   end loop;
+  commit;
 end;
