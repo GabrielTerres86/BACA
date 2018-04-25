@@ -218,7 +218,7 @@
 		name="btnConcluir"
 		id="btnConcluir"
 		onClick="
-			executarRealizarManutencaoDeLimite();
+			executarRealizarManutencaoDeLimite(); 
 			return false;">
 			Concluir
 	</a>
@@ -242,8 +242,13 @@
 	blockBackground(parseInt($("#divRotina").css("z-index")));
 
 	function executarRealizarManutencaoDeLimite(){
+
 		var flgstlcr = $('#flgstlcr','#frmTitLimiteManutencao').val();
 		realizarManutencaoDeLimite(2,flgstlcr);
+
+        blockBackground(parseInt($('#divRotina').css('z-index')));
+
+
 	}
 
 	<?php 
