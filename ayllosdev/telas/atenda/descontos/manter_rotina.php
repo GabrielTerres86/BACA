@@ -9,6 +9,7 @@
  *				  15/04/2018 - Inclusão da rotina 'BUSCAR_ACIONAMENTOS_PROPOSTA'. (Leonardo Oliveira - GFT)
  *				  19/04/2018 - Correção das funções para voltar para a tela anterior, utilizando a função 'fecharRotinaGenerico'que verifica se é um contrato ou proposta em questão. (Leonardo Oliveira - GFT)
  *				  24/04/2018 - Mensagem de retorno da análise. (Leonardo Oliveira - GFT)
+ *				  25/04/2018 - Adicionada variável $inctrmnt em REALIZAR_MANUTENCAO_LIMITE. (Andre Avila - GFT)
  * --------------
 
  */
@@ -32,7 +33,6 @@
 	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"@")) <> "") {
 		exibeErro($msgError);		
 	}	
-
 
 		switch ($_POST['operacao']){
 
@@ -86,6 +86,13 @@
 	$form 	  = (isset($_POST['frmOpcao'])) ? $_POST['frmOpcao'] : '' ;
 	$nrborder = (isset($_POST['nrborder'])) ? $_POST['nrborder'] : '' ;
 	$tipo = (isset($_POST['tipo'])) ? $_POST['tipo'] : 'CONTRATO' ;
+
+	$inctrmnt = (isset($_POST['inctrmnt'])) ? $_POST['inctrmnt'] : 0;
+
+
+
+
+
 
 	if ($operacao == 'ENVIAR_ANALISE' ) {
 		
@@ -392,55 +399,87 @@
 			
 	}else if ($operacao == 'REALIZAR_MANUTENCAO_LIMITE'){
 
-		// Monta o xml de requisição
-		$xmlGetDados = "";
-		$xmlGetDados .= "<Root>";
-		$xmlGetDados .= "	<Cabecalho>";
-		$xmlGetDados .= "		<Bo>b1wgen0030.p</Bo>";
-		$xmlGetDados .= "		<Proc>realizar_manutencao_contrato</Proc>";
-		$xmlGetDados .= "	</Cabecalho>";
-		$xmlGetDados .= "	<Dados>";
-		$xmlGetDados .= "		<cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
-		$xmlGetDados .= "		<cdagenci>".$glbvars["cdagenci"]."</cdagenci>";
-		$xmlGetDados .= "		<nrdcaixa>".$glbvars["nrdcaixa"]."</nrdcaixa>";
-		$xmlGetDados .= "		<cdoperad>".$glbvars["cdoperad"]."</cdoperad>";
-		$xmlGetDados .= "		<dtmvtolt>".$glbvars["dtmvtolt"]."</dtmvtolt>";
-		$xmlGetDados .= "		<idorigem>".$glbvars["idorigem"]."</idorigem>";	
-		$xmlGetDados .= "		<nrdconta>".$nrdconta."</nrdconta>";
-		$xmlGetDados .= "		<idseqttl>1</idseqttl>";
-		$xmlGetDados .= "		<nmdatela>".$glbvars["nmdatela"]."</nmdatela>";
-		$xmlGetDados .= "		<nrctrlim>".$nrctrlim."</nrctrlim>";
-		$xmlGetDados .= "		<vllimite>".$vllimite."</vllimite>";
-		$xmlGetDados .= "		<cddlinha>".$cddlinha."</cddlinha>";
-		$xmlGetDados .= "	</Dados>";
-		$xmlGetDados .= "</Root>";
+		// Verifica se a proposta é maior ou menor que o contrato vigente.
+		if( isset($inctrmnt) && $inctrmnt != 1 ){
 
-		// Executa script para envio do XML
-		$xmlResult = getDataXML($xmlGetDados);
+			// Monta o xml de requisição
+			$xmlGetDados = "";
+			$xmlGetDados .= "<Root>";
+			$xmlGetDados .= "	<Cabecalho>";
+			$xmlGetDados .= "		<Bo>b1wgen0030.p</Bo>";
+			$xmlGetDados .= "		<Proc>realizar_manutencao_contrato</Proc>";
+			$xmlGetDados .= "	</Cabecalho>";
+			$xmlGetDados .= "	<Dados>";
+			$xmlGetDados .= "		<cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
+			$xmlGetDados .= "		<cdagenci>".$glbvars["cdagenci"]."</cdagenci>";
+			$xmlGetDados .= "		<nrdcaixa>".$glbvars["nrdcaixa"]."</nrdcaixa>";
+			$xmlGetDados .= "		<cdoperad>".$glbvars["cdoperad"]."</cdoperad>";
+			$xmlGetDados .= "		<dtmvtolt>".$glbvars["dtmvtolt"]."</dtmvtolt>";
+			$xmlGetDados .= "		<idorigem>".$glbvars["idorigem"]."</idorigem>";	
+			$xmlGetDados .= "		<nrdconta>".$nrdconta."</nrdconta>";
+			$xmlGetDados .= "		<idseqttl>1</idseqttl>";
+			$xmlGetDados .= "		<nmdatela>".$glbvars["nmdatela"]."</nmdatela>";
+			$xmlGetDados .= "		<nrctrlim>".$nrctrlim."</nrctrlim>";
+			$xmlGetDados .= "		<vllimite>".$vllimite."</vllimite>";
+			$xmlGetDados .= "		<cddlinha>".$cddlinha."</cddlinha>";
+			$xmlGetDados .= "	</Dados>";
+			$xmlGetDados .= "</Root>";
 
-		// Cria objeto para classe de tratamento de XML
-		$xmlObjDados = getObjectXML(retiraAcentos(removeCaracteresInvalidos($xmlResult)));
-		
-	    // Se ocorrer um erro, mostra mensagem
-		if (strtoupper($xmlObjDados->roottag->tags[0]->name) == 'ERRO') {
-	       echo 'showError("error","'.$xmlObjDados->roottag->tags[0]->tags[0]->tags[4]->cdata.'","Alerta - Ayllos","mostrarBorderoResumo();hideMsgAguardo();bloqueiaFundo(divRotina);");';
-			exit;
-		}
-		$dados = $xmlObjDados->roottag->tags[0]->tags[0]->tags;
+			// Executa script para envio do XML
+			$xmlResult = getDataXML($xmlGetDados);
 
-		$per_vllimite = number_format(str_replace(",",".",$dados[15]->cdata),2,",","");
-		$per_cddlinha = formataNumericos('zz9',$dados[17]->cdata,'.');
+			// Cria objeto para classe de tratamento de XML
+			$xmlObjDados = getObjectXML(retiraAcentos(removeCaracteresInvalidos($xmlResult)));
+			
+		    // Se ocorrer um erro, mostra mensagem
+			if (strtoupper($xmlObjDados->roottag->tags[0]->name) == 'ERRO') {
+		       echo 'showError("error","'.$xmlObjDados->roottag->tags[0]->tags[0]->tags[4]->cdata.'","Alerta - Ayllos","mostrarBorderoResumo();hideMsgAguardo();bloqueiaFundo(divRotina);");';
+				exit;
+			}
+			$dados = $xmlObjDados->roottag->tags[0]->tags[0]->tags;
 
-		if($vllimite > $per_vllimite){
-			echo 'showError("inform","Proposta de majora&ccedil;&atilde;o criada com sucesso","Alerta - Ayllos","'
-	    	.'voltaDiv(2,1,4,\'DESCONTO DE T&Iacute;TULOS\',\'DSC TITS\');'
-	    	.'carregaTitulos();");';
+			$per_vllimite = number_format(str_replace(",",".",$dados[15]->cdata),2,",","");
+			$per_cddlinha = formataNumericos('zz9',$dados[17]->cdata,'.');
+
+			if($vllimite > $per_vllimite){
+				echo 'showError("inform","Proposta de majora&ccedil;&atilde;o criada com sucesso","Alerta - Ayllos","'
+		    	.'voltaDiv(2,1,4,\'DESCONTO DE T&Iacute;TULOS\',\'DSC TITS\');'
+		    	.'carregaTitulos();");';
+			} else {
+				echo 'showError("inform","Manuten&ccedil;&atilde;o do contrato realizada com sucesso","Alerta - Ayllos","'
+		    	.'voltaDiv(2,1,4,\'DESCONTO DE T&Iacute;TULOS\',\'DSC TITS\');'
+		    	.'carregaTitulos();");';
+			}
+
+
 		} else {
-			echo 'showError("inform","Manuten&ccedil;&atilde;o do contrato realizada com sucesso","Alerta - Ayllos","'
-	    	.'voltaDiv(2,1,4,\'DESCONTO DE T&Iacute;TULOS\',\'DSC TITS\');'
-	    	.'carregaTitulos();");';
+
+			$xml = "<Root>";
+		    $xml .= " <Dados>";
+		    $xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
+	   	    $xml .= "	<nrctrlim>".$nrctrlim."</nrctrlim>";
+	   	    $xml .= "   <tpctrlim>3</tpctrlim>";
+		    $xml .= "   <vllimite>".converteFloat($vllimite)."</vllimite>";
+			$xml .= "	<cddlinha>".$cddlinha."</cddlinha>";
+		    $xml .= " </Dados>";
+		    $xml .= "</Root>";
+
+		    $xmlResult = mensageria($xml,"TELA_ATENDA_DESCTO","ALTERAR_PROPOSTA_MANUTENCAO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+
+		    $xmlObj = getObjectXML($xmlResult);
+
+		    // Se ocorrer um erro, mostra mensagem
+			if (strtoupper($xmlObj->roottag->tags[0]->name) == 'ERRO') {
+		       echo 'showError("error","'.$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata.'","Alerta - Ayllos","hideMsgAguardo();bloqueiaFundo(divRotina);");';
+				exit;
+
+			} else {
+
+		    	echo 'showError("inform","'.$xmlObj->roottag->tags[0]->cdata.'","Alerta - Ayllos","carregaLimitesTitulosPropostas(); return false;");';
+			}
 		}
 	}
+
 	else if($operacao =='ALTERAR_BORDERO'){
 
 		$selecionados = isset($_POST["selecionados"]) ? $_POST["selecionados"] : array();
