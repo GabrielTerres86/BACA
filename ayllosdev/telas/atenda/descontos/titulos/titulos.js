@@ -2730,7 +2730,8 @@ function concluirManutencaoDeLimite(){
     var per_cddlinha = $('#per_cddlinha','#frmTitLimiteManutencao').val();
     if(vllimite == per_vllimite &&
         cddlinha == per_cddlinha){
-        showError('error','Nenhum valor foi alterado.','Alerta - Ayllos','');
+        showError('error','Nenhum valor foi alterado.','Alerta - Ayllos',"blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");
+        hideMsgAguardo();
         return;
     }
 
@@ -2743,6 +2744,7 @@ function concluirManutencaoDeLimite(){
                         nrctrlim: nrctrlim,
                         vllimite: vllimite,
                         cddlinha: cddlinha,
+                        inctrmnt: sitinctrmnt,
                         operacao: 'REALIZAR_MANUTENCAO_LIMITE',
                         redirect: 'script_ajax'
 
