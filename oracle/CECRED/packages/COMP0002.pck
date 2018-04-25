@@ -3322,7 +3322,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
 																		'<dsnomfon>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(6, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</dsnomfon>' ||
 																		'<cdbarras>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(7, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</cdbarras>' ||
 																		'<dslinhad>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(8, vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</dslinhad>' ||
-																		'<dtvencto>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(10,vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</dtvencto>' ||
+																		'<dtvencto>' || TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(9,vr_protocolo(vr_ind).dsinform##3, '#')), ':')) || '</dtvencto>' ||
 																		'<nrdocdar></nrdocdar>'                                                                                                            ||
 																		'<vldocmto>' || to_char(vr_protocolo(vr_ind).vldocmto,'FM9G999G999G999G990D00','NLS_NUMERIC_CHARACTERS=,.')                        || '</vldocmto>' ||
 																		'<dsdpagto>' || CASE vr_cdempcon 
