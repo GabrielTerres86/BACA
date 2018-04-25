@@ -175,7 +175,7 @@ $xmlObjLimites = getObjectXML($xmlResult);
 						
 						<td><? echo $pr_dssitlim; ?></td>
 						
-						<td width="120px"><? echo $pr_dssitest; ?></td>
+						<td width="110px"><? echo $pr_dssitest; ?></td>
 
 						<td><? echo $pr_dssitapr; ?></td>
 
