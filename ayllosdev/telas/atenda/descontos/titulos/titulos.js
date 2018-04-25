@@ -2475,6 +2475,9 @@ function removerTituloResumo(){
             removeTituloBordero(td);
         }
         bloqueiaFundo(divRotina);
+        
+        //Remove a seleção do titulo
+        tituloSelecionadoResumo = null;
     }
     else{
         showError("error","Selecione um t&iacute;tulo para remover","Alerta - Ayllos","");
