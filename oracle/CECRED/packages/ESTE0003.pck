@@ -1552,10 +1552,10 @@ BEGIN
         -->  Se nao encontrou mensagem
         if  vr_dsmensag is null then 
             --> Usar mensagem padrao
-            vr_dsmensag := '<br>Obs: Clique no botao \"Detalhes Proposta\" para visualizaçao de mais detalhes';
+            vr_dsmensag := '<br>Obs: Clique no botão <b>[Detalhes Proposta]</b> para visualização de mais detalhes';
         else
             --> Gerar texto padrao 
-            vr_dsmensag := '<br>Detalhes da decisao: <br>'|| vr_dsmensag;
+            vr_dsmensag := '<br>Detalhes da decisão:<br>###'|| vr_dsmensag;
         end if;
 
         pr_dsmensag := pr_dsmensag ||vr_dsmensag;
@@ -2375,9 +2375,6 @@ PROCEDURE pc_efetivar_limite_esteira(pr_cdcooper  in crawlim.cdcooper%type
          ,lim.cdoperad
          ,ope.nmoperad nmoperad_efet
          ,lim.cdagenci cdagenci_efet
-         ,case when nvl(lim.nrctrmnt,0) = 0 then 'LM'
-               else                              'MJ'
-          end tpproduto
    from   crapope ope
          ,crapldc ldc
          ,crawlim lim
@@ -2471,12 +2468,8 @@ BEGIN
    vr_obj_efetivar.put('dataHora'               , este0001.fn_datatempo_ibra(sysdate)) ;
    vr_obj_efetivar.put('contratoNumero'         , pr_nrctrlim);
    vr_obj_efetivar.put('valor'                  , rw_crawlim.vllimite);
-   vr_obj_efetivar.put('parcelaQuantidade'      , rw_crawlim.qtpreemp);
-   vr_obj_efetivar.put('parcelaPrimeiroVencimento', este0001.fn_data_ibra( rw_crawlim.dtfimvig));
-   vr_obj_efetivar.put('parcelaValor'           , este0001.fn_decimal_ibra(rw_crawlim.vllimite));
 
-   vr_obj_efetivar.put('produtoCreditoSegmentoCodigo'    , 5);
-   vr_obj_efetivar.put('produtoCreditoSegmentoDescricao' , 'Desconto Titulo – Limite');
+   vr_obj_efetivar.put('produtoCreditoSegmentoCodigo', 5);
 
    --  Se o DEBUG estiver habilitado
    if  vr_flgdebug = 'S' then
@@ -2637,9 +2630,10 @@ BEGIN
                                    ,pr_cdcritic => vr_cdcritic
                                    ,pr_dscritic => vr_dscritic );
 
+         /*  Como é um JOB, por hora não vamos mostrar os erros, verificar pelos acionamentos
          if  nvl(vr_cdcritic,0) > 0 or trim(vr_dscritic) is not null then
              raise vr_exc_erro;        
-         end if;
+         end if;*/
    end   loop;
    close cr_crawlim; 
     

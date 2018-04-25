@@ -181,7 +181,8 @@ type typ_reg_dados_proposta is record
      ,nrctrmnt       crawlim.nrctrmnt%type
      ,dssitlim       varchar2(100)
      ,dssitest       varchar2(100)
-     ,dssitapr       varchar2(100) );
+     ,dssitapr       varchar2(100)
+     ,inctrmnt       number);
 
 type typ_tab_dados_proposta is table of typ_reg_dados_proposta index by pls_integer;
 
@@ -303,7 +304,20 @@ PROCEDURE pc_renovar_lim_desc_titulo(pr_nrdconta  IN crapass.nrdconta%TYPE --> N
                                       ,pr_retxml    IN OUT NOCOPY xmltype    --> Arquivo de retorno do XML
                                       ,pr_nmdcampo OUT VARCHAR2              --> Nome do campo com erro
                                       ,pr_des_erro OUT VARCHAR2);            --> Erros do processo
-                                      
+
+PROCEDURE pc_alterar_proposta_manute_web(pr_nrdconta    in crapass.nrdconta%type --> Número da Conta
+                                        ,pr_nrctrlim    in crawlim.nrctrlim%type --> Contrato
+                                        ,pr_tpctrlim    in crawlim.tpctrlim%type --> Tipo de contrato de Limite
+                                        ,pr_vllimite    in crawlim.vllimite%type --> Valor da manutencao
+                                        ,pr_cddlinha    in crawlim.cddlinha%type --> Codigo da linha de desconto
+                                        ,pr_xmllog   in varchar2              --> XML com informações de LOG
+                                         -- OUT
+                                        ,pr_cdcritic out pls_integer          --> Codigo da critica
+                                        ,pr_dscritic out varchar2             --> Descric?o da critica
+                                        ,pr_retxml   in out nocopy xmltype    --> Arquivo de retorno do XML
+                                        ,pr_nmdcampo out varchar2             --> Nome do campo com erro
+                                        ,pr_des_erro out varchar2);           --> Erros do processo
+
 PROCEDURE pc_obtem_dados_proposta_web(pr_nrdconta in crapass.nrdconta%type --> Conta do associado
                                      ,pr_xmllog   in varchar2              --> XML com informações de LOG
                                       -- OUT
@@ -2343,13 +2357,10 @@ BEGIN
        raise vr_exc_saida;
    end if;
 
-
-   vr_dsmensag := replace(replace(vr_dsmensag, '<b>', '\"'), '</b>', '\"');
-   vr_dsmensag := replace(replace(vr_dsmensag, '<br>', ' '), '<BR>', ' ');
+   --dbms_output.put_line(vr_dsmensag);
    pr_retxml   := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
-                                    '<Root><dsmensag>' || vr_dsmensag || '</dsmensag></Root>');
-   dbms_output.put_line(vr_dsmensag);
-
+                                    '<Root><dsmensag>'||htf.escape_sc(vr_dsmensag)||'</dsmensag></Root>');
+   
    COMMIT;
 
 EXCEPTION
@@ -2625,6 +2636,266 @@ PROCEDURE pc_renovar_lim_desc_titulo(pr_nrdconta  IN crapass.nrdconta%TYPE --> N
     END;
 
   END pc_renovar_lim_desc_titulo;
+  
+PROCEDURE pc_alterar_proposta_manutencao(pr_cdcooper    in crapcop.cdcooper%type --> Código da Cooperativa
+                                        ,pr_nrdconta    in crapass.nrdconta%type --> Número da Conta
+                                        ,pr_nrctrlim    in crawlim.nrctrlim%type --> Contrato
+                                        ,pr_tpctrlim    in crawlim.tpctrlim%type --> Tipo de contrato de Limite
+                                        ,pr_vllimite    in crawlim.vllimite%type --> Valor da manutencao
+                                        ,pr_cddlinha    in crawlim.cddlinha%type --> Codigo da linha de desconto
+                                        ,pr_cdoperad    in crapope.cdoperad%type --> Código do Operador
+                                        ,pr_cdagenci    in crapass.cdagenci%type --> Codigo da agencia
+                                        ,pr_nrdcaixa    in craperr.nrdcaixa%type --> Numero Caixa
+                                        ,pr_idorigem    in integer               --> Identificador Origem Chamada
+                                        ,pr_dsmensag    out varchar2             --> Mensagem enviada para tela
+                                        ,pr_cdcritic    out pls_integer          --> Codigo da critica
+                                        ,pr_dscritic    out varchar2             --> Descricao da critica
+                                        ) is
+  /*---------------------------------------------------------------------------------------------------------------------
+    Programa : pc_alterar_proposta_manutencao
+    Sistema  : Ayllos
+    Sigla    : TELA_ATENDA_DSCTO_TIT
+    Autor    : Paulo Penteado (GFT)
+    Data     : Abril/2018
+
+    Objetivo  : Procedure para alterar as informações de uma proposta de manutenção do contrato de limite
+
+    Alteração : 25/04/2018 - Criação (Paulo Penteado (GFT))
+
+  ---------------------------------------------------------------------------------------------------------------------*/
+
+   -- Variável de críticas
+   vr_cdcritic crapcri.cdcritic%type;
+   vr_dscritic varchar2(10000);
+
+   -- Tratamento de erros
+   vr_exc_saida exception;
+
+   -- Variaveis auxiliares
+   vr_rowid_log    rowid;
+   
+   cursor cr_crapldc is
+   select nvl(ldc.flgstlcr,0) flgstlcr
+   from   crapldc ldc 
+   where  ldc.cdcooper = pr_cdcooper   
+   AND    ldc.cddlinha = pr_cddlinha   
+   AND    ldc.tpdescto = 3;
+   rw_crapldc cr_crapldc%rowtype;
+   
+   cursor cr_craplim is
+   select lim.vllimite
+   from   craplim lim
+         ,crawlim pro
+   where  lim.cdcooper = pr_cdcooper
+   and    lim.nrdconta = pr_nrdconta
+   and    lim.nrctrlim = pro.nrctrmnt
+   and    lim.tpctrlim = pr_tpctrlim
+   and    pro.cdcooper = pr_cdcooper
+   and    pro.nrdconta = pr_nrdconta
+   and    pro.nrctrlim = pr_nrctrlim
+   and    pro.tpctrlim = pr_tpctrlim;
+   rw_craplim cr_craplim%rowtype;
+
+BEGIN
+   open  cr_crapldc;
+   fetch cr_crapldc into rw_crapldc;
+   if    cr_crapldc%notfound then
+         close cr_crapldc;
+         vr_dscritic := 'Linha de desconto de título não cadastrada.';
+         raise vr_exc_saida;
+   else
+         --  Verifica se a linha de credito esta liberada
+         if  rw_crapldc.flgstlcr = 0 then
+             vr_dscritic := 'Operação não permitida, linha de desconto '||pr_cddlinha||' bloqueada.';
+             raise vr_exc_saida;
+         end if;
+   end   if;
+   close cr_crapldc;
+
+   open  cr_craplim;
+   fetch cr_craplim into rw_craplim;
+   close cr_craplim; 
+   
+   begin
+      update crawlim lim
+      set    vllimite = pr_vllimite
+            ,cddlinha = pr_cddlinha
+            ,insitest = 1
+            ,dtenvest = null
+            ,hrenvest = 0
+            ,cdopeste = ' '
+            ,insitapr = 0
+            ,dtaprova = null
+            ,hraprova = 0
+            ,cdopeapr = null
+      where  lim.cdcooper = pr_cdcooper
+      and    lim.nrdconta = pr_nrdconta
+      and    lim.nrctrlim = pr_nrctrlim
+      and    lim.tpctrlim = pr_tpctrlim;
+      
+      pr_dsmensag := 'Proposta de majoração alterada com sucesso.';
+   exception
+      when others then
+           vr_dscritic := 'Erro na alteração da proposta de manutenção do limite de desconto de título. ' || sqlerrm;
+           raise vr_exc_saida;
+   end;
+   
+   --  se o valor do limite informado na alteração for menor que o valor do contrato ativo, então deve-se efetivar a proposta
+   if  pr_vllimite < rw_craplim.vllimite then
+       pc_efetivar_proposta(pr_cdcooper => pr_cdcooper
+                           ,pr_nrdconta => pr_nrdconta
+                           ,pr_nrctrlim => pr_nrctrlim
+                           ,pr_tpctrlim => pr_tpctrlim
+                           ,pr_cdoperad => pr_cdoperad
+                           ,pr_cdagenci => pr_cdagenci
+                           ,pr_nrdcaixa => pr_nrdcaixa
+                           ,pr_idorigem => pr_idorigem
+                           ,pr_insitapr => null
+                           ,pr_cdcritic => vr_cdcritic
+                           ,pr_dscritic => vr_dscritic );
+
+       if  vr_cdcritic > 0  or vr_dscritic is not null then
+           raise vr_exc_saida;
+       end if;
+       
+       pr_dsmensag := 'Proposta de majoração alterada e efetivada com sucesso.';
+   end if;
+
+   -- Efetua os inserts para apresentacao na tela VERLOG
+   gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper
+                       ,pr_cdoperad => pr_cdoperad
+                       ,pr_dscritic => ' '
+                       ,pr_dsorigem => gene0001.vr_vet_des_origens(pr_idorigem)
+                       ,pr_dstransa => 'Alteração da Proposta de Manutenção de Limite de Desconto de Títulos.'
+                       ,pr_dttransa => trunc(sysdate)
+                       ,pr_flgtrans => 1
+                       ,pr_hrtransa => to_char(sysdate,'SSSSS')
+                       ,pr_idseqttl => 1
+                       ,pr_nmdatela => 'ATENDA'
+                       ,pr_nrdconta => pr_nrdconta
+                       ,pr_nrdrowid => vr_rowid_log);
+
+EXCEPTION
+   when vr_exc_saida then
+        if  vr_cdcritic <> 0 and trim(vr_dscritic) is null then
+            vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+        end if;
+
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+
+   when others then
+        pr_cdcritic := nvl(vr_cdcritic,0);
+        pr_dscritic := 'Erro nao tratado na TELA_ATENDA_DSCTO_TIT.pc_alterar_proposta_manutencao: ' || sqlerrm;
+
+END pc_alterar_proposta_manutencao;
+
+PROCEDURE pc_alterar_proposta_manute_web(pr_nrdconta    in crapass.nrdconta%type --> Número da Conta
+                                        ,pr_nrctrlim    in crawlim.nrctrlim%type --> Contrato
+                                        ,pr_tpctrlim    in crawlim.tpctrlim%type --> Tipo de contrato de Limite
+                                        ,pr_vllimite    in crawlim.vllimite%type --> Valor da manutencao
+                                        ,pr_cddlinha    in crawlim.cddlinha%type --> Codigo da linha de desconto
+                                        ,pr_xmllog   in varchar2              --> XML com informações de LOG
+                                         -- OUT
+                                        ,pr_cdcritic out pls_integer          --> Codigo da critica
+                                        ,pr_dscritic out varchar2             --> Descric?o da critica
+                                        ,pr_retxml   in out nocopy xmltype    --> Arquivo de retorno do XML
+                                        ,pr_nmdcampo out varchar2             --> Nome do campo com erro
+                                        ,pr_des_erro out varchar2             --> Erros do processo
+                                        ) is
+  /*---------------------------------------------------------------------------------------------------------------------
+    Programa : pc_alterar_proposta_manutencao
+    Sistema  : Ayllos
+    Sigla    : TELA_ATENDA_DSCTO_TIT
+    Autor    : Paulo Penteado (GFT)
+    Data     : Abril/2018
+
+    Objetivo  : Procedure para alterar as informações de uma proposta de manutenção do contrato de limite
+
+    Alteração : 25/04/2018 - Criação (Paulo Penteado (GFT))
+
+  ---------------------------------------------------------------------------------------------------------------------*/
+   -- Variável de críticas
+   vr_cdcritic crapcri.cdcritic%type;
+   vr_dscritic varchar2(10000);
+
+   -- Tratamento de erros
+   vr_exc_saida exception;
+
+   -- Variaveis de entrada vindas no xml
+   vr_cdcooper integer;
+   vr_cdoperad varchar2(100);
+   vr_nmdatela varchar2(100);
+   vr_nmeacao  varchar2(100);
+   vr_cdagenci varchar2(100);
+   vr_nrdcaixa varchar2(100);
+   vr_idorigem varchar2(100);
+
+   vr_dsmensag varchar2(10000);
+
+BEGIN
+   pr_des_erro := 'OK';
+   pr_nmdcampo := null;
+   
+   gene0004.pc_extrai_dados(pr_xml      => pr_retxml
+                           ,pr_cdcooper => vr_cdcooper
+                           ,pr_nmdatela => vr_nmdatela
+                           ,pr_nmeacao  => vr_nmeacao
+                           ,pr_cdagenci => vr_cdagenci
+                           ,pr_nrdcaixa => vr_nrdcaixa
+                           ,pr_idorigem => vr_idorigem
+                           ,pr_cdoperad => vr_cdoperad
+                           ,pr_dscritic => vr_dscritic);
+                           
+   pc_alterar_proposta_manutencao(pr_cdcooper => vr_cdcooper
+                                 ,pr_nrdconta => pr_nrdconta
+                                 ,pr_nrctrlim => pr_nrctrlim
+                                 ,pr_tpctrlim => pr_tpctrlim
+                                 ,pr_vllimite => pr_vllimite
+                                 ,pr_cddlinha => pr_cddlinha
+                                 ,pr_cdoperad => vr_cdoperad
+                                 ,pr_cdagenci => vr_cdagenci
+                                 ,pr_nrdcaixa => vr_nrdcaixa
+                                 ,pr_idorigem => vr_idorigem
+                                 ,pr_dsmensag => vr_dsmensag
+                                 ,pr_cdcritic => vr_cdcritic
+                                 ,pr_dscritic => vr_dscritic );
+
+   if  vr_cdcritic > 0  or vr_dscritic is not null then
+       raise vr_exc_saida;
+   end if;
+   
+   pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                  '<Root><dsmensag>'||vr_dsmensag||'</dsmensag></Root>');
+   
+   COMMIT;
+
+EXCEPTION
+  when vr_exc_saida then
+       -- Se possui código de crítica e não foi informado a descrição
+       if  vr_cdcritic <> 0 and trim(vr_dscritic) is null then
+           -- Busca descrição da crítica
+           vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+       end if;
+
+       -- Atribui exceção para os parametros de crítica
+       pr_cdcritic := vr_cdcritic;
+       pr_dscritic := vr_dscritic;
+       pr_retxml   := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                        '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+                                        
+       ROLLBACK;
+
+  when others then
+       -- Atribui exceção para os parametros de crítica
+       pr_cdcritic := vr_cdcritic;
+       pr_dscritic := 'Erro nao tratado na TELA_ATENDA_DSCTO_TIT.pc_alterar_proposta_manute_web: ' || sqlerrm;
+       pr_retxml   := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                        '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+                                        
+       ROLLBACK;
+
+END pc_alterar_proposta_manute_web;
       
 
 PROCEDURE pc_obtem_dados_proposta(pr_cdcooper           in crapcop.cdcooper%type   --> Cooperativa conectada
@@ -2661,7 +2932,7 @@ PROCEDURE pc_obtem_dados_proposta(pr_cdcooper           in crapcop.cdcooper%type
 
    cursor cr_crawlim is
    select lim.dtpropos
-         ,case when lim.nrctrmnt > 0 then lim.nrctrmnt
+         ,case when nvl(lim.nrctrmnt,0) > 0 then lim.nrctrmnt
                else ctr.nrctrlim
           end nrctrmnt
          ,lim.nrctrlim
@@ -2696,6 +2967,9 @@ PROCEDURE pc_obtem_dados_proposta(pr_cdcooper           in crapcop.cdcooper%type
                             when 8 then 'REFAZER'
                             else        'DIFERENTE'
           end dssitapr
+         ,case when nvl(lim.nrctrmnt,0) > 0 then 1
+               else 0
+          end inctrmnt
    from   crawlim lim
      left outer join craplim ctr on (ctr.nrctrlim = lim.nrctrlim and
                                      ctr.tpctrlim = lim.tpctrlim and
@@ -2766,6 +3040,8 @@ BEGIN
          pr_tab_dados_proposta(vr_idxdados).dssitest := rw_crawlim.dssitest;
          pr_tab_dados_proposta(vr_idxdados).dssitapr := rw_crawlim.dssitapr;
          pr_tab_dados_proposta(vr_idxdados).nrctrmnt := rw_crawlim.nrctrmnt;
+         pr_tab_dados_proposta(vr_idxdados).inctrmnt := rw_crawlim.inctrmnt;
+         pr_tab_dados_proposta(vr_idxdados).insitlim := rw_crawlim.insitlim;
 
          pr_qtregist := nvl(pr_qtregist,0) + 1;
    end   loop;
@@ -2874,6 +3150,8 @@ BEGIN
                            '<dssitest>'|| vr_tab_dados_proposta(vr_index).dssitest ||'</dssitest>'||
                            '<dssitapr>'|| vr_tab_dados_proposta(vr_index).dssitapr ||'</dssitapr>'||
                            '<nrctrmnt>'|| nullif(vr_tab_dados_proposta(vr_index).nrctrmnt,0) ||'</nrctrmnt>'||
+                           '<inctrmnt>'|| vr_tab_dados_proposta(vr_index).inctrmnt ||'</inctrmnt>'||
+                           '<insitlim>'|| vr_tab_dados_proposta(vr_index).insitlim ||'</insitlim>'||
                         '</inf>');
 
        vr_index := vr_tab_dados_proposta.next(vr_index);
