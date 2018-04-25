@@ -38,10 +38,11 @@
                27/06/2016 - Criacao dos parametros inconfi6, cdopcoan e cdopcolb na
                             efetua_liber_anali_bordero. (Jaison/James)
 
-        
-
 			   11/12/2017 - P404 - Inclusao de Garantia de Cobertura das Operaçoes de Crédito (Augusto / Marcos (Supero))               
+
 			   12/02/2018 -Exposição das procedures 'busca_dados_limite_manutencao' e 'realizar_manutencao_contrato' (Leonardo Oliveira - GFT)
+
+               24/04/2018 - Adicionado a procedure busca_dados_proposta_manuten (Paulo Penteado GFT)
 ............................................................................ */
 
 { sistema/generico/includes/b1wgen0138tt.i }
@@ -1372,6 +1373,51 @@ PROCEDURE busca_dados_proposta_consulta:
                              INPUT "Dados_Limite").
             RUN piXmlExport (INPUT TEMP-TABLE tt-dados-avais:HANDLE,
                              INPUT "Avais").
+            RUN piXmlExport (INPUT TEMP-TABLE tt-dados_dsctit:HANDLE,
+                             INPUT "Dados_Desconto").
+            RUN piXmlSave.
+        END.
+        
+END PROCEDURE.
+
+/***************************************************************************
+    Buscar dados de uma marjoração para manutenção pelo botão alterar
+***************************************************************************/
+PROCEDURE busca_dados_proposta_manuten:
+
+    RUN busca_dados_proposta_manuten IN hBO (INPUT aux_cdcooper,
+                                             INPUT aux_cdagenci,
+                                             INPUT aux_nrdcaixa,
+                                             INPUT aux_cdoperad,
+                                             INPUT aux_dtmvtolt,
+                                             INPUT aux_idorigem,
+                                             INPUT aux_nrdconta,
+                                             INPUT aux_idseqttl,
+                                             INPUT aux_nmdatela,
+                                             INPUT aux_nrctrlim,
+                                            OUTPUT TABLE tt-erro,
+                                            OUTPUT TABLE tt-dsctit_dados_limite,
+                                            OUTPUT TABLE tt-dados_dsctit).
+
+    IF  RETURN-VALUE = "NOK"  THEN
+        DO:
+            FIND FIRST tt-erro NO-LOCK NO-ERROR.
+      
+            IF  NOT AVAILABLE tt-erro  THEN
+                DO:
+                    CREATE tt-erro.
+                    ASSIGN tt-erro.dscritic = "Nao foi possivel concluir a " +
+                                              "operacao.".
+                END.
+                
+            RUN piXmlSaida (INPUT TEMP-TABLE tt-erro:HANDLE,
+                            INPUT "Erro").
+        END.
+    ELSE 
+        DO:
+            RUN piXmlNew.
+            RUN piXmlExport (INPUT TEMP-TABLE tt-dsctit_dados_limite:HANDLE,
+                             INPUT "Dados_Limite").
             RUN piXmlExport (INPUT TEMP-TABLE tt-dados_dsctit:HANDLE,
                              INPUT "Dados_Desconto").
             RUN piXmlSave.

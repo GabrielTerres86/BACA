@@ -1460,7 +1460,7 @@ BEGIN
                    continue;
              end   if;
              close cr_crapcyb;
-             
+
              /* Calculo da Liquidez:
                 Valor Total descontado pago com atraso de até x dias e não pagos, 
                 dividido pelo Valor Total Descontado com vencimento dentro do período,
@@ -1731,7 +1731,7 @@ PROCEDURE pc_crps517(pr_xmllog   IN VARCHAR2              --> XML com informaçõe
             ,rowid
       from   craplim lim
       where((lim.insitlim        = 2  /** Ativo **/
-      and   (lim.dtfimvig between (lim.dtfimvig - 15) and rw_crapdat.dtmvtolt)
+      and   (lim.dtfimvig between (rw_crapdat.dtmvtolt - 15) and rw_crapdat.dtmvtolt)
             ) or lim.insitlim    = 4) /** Vigente **/
       and    lim.tpctrlim        = 3
       and    lim.cdcooper        = vr_cdcooper

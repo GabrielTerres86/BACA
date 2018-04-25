@@ -3821,7 +3821,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
     
     -- Verificar a quantidade maxima que pode renovar
     IF ((nvl(rw_craprli.qtmaxren,0) > 0) AND (nvl(rw_craplim.qtrenova,0) >= nvl(rw_craprli.qtmaxren,0))) THEN
-      vr_dscritic := 'Nao e possivel realizar a renovacao do limite. Incluir novo contrato';
+      vr_dscritic := 'Não é possível realizar a renovação do limite. A quantidade de renovações do limite '||
+                     ' excedeu a quantidade máxima permitida. Incluir novo contrato';
       RAISE vr_exc_saida;
     END IF;    
     
