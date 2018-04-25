@@ -244,6 +244,9 @@
 	function executarRealizarManutencaoDeLimite(){
 		var flgstlcr = $('#flgstlcr','#frmTitLimiteManutencao').val();
 		realizarManutencaoDeLimite(2,flgstlcr);
+        blockBackground(parseInt($('#divRotina').css('z-index')));
+
+
 	}
 
 	<?php 
