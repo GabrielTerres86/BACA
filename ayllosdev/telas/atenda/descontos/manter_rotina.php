@@ -38,7 +38,7 @@
 
 		case 'ACEITAR_REJEICAO_LIMITE': 
 
-			if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"R")) <> "") {
+			if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"X")) <> "") {
 
 				exibeErro($msgError);		
 			}	
