@@ -5485,7 +5485,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
 
       ............................................................................. */
 
-      vr_cdproduto  INTEGER; --> codigo so servico
+      vr_cdproduto        tbcc_produtos_coop.cdproduto%TYPE; --> codigo so servico
+      vr_vlminimo_adesao  tbcc_produtos_coop.vlminimo_adesao%TYPE; --> valor minimo de adesao
+      vr_vlmaximo_adesao  tbcc_produtos_coop.vlmaximo_adesao%TYPE; --> valor maximo de adesao
+      vr_tpoperac         INTEGER; --> tipo de operacao de historico
       vr_contador   INTEGER; --> contador para armazenar ordem de exibicao na tela cadsoa
 
       vr_texto_completo VARCHAR2(32600);           --> Variável para armazenar os dados do XML antes de incluir no CLOB
@@ -5499,10 +5502,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
       vr_cdcritic   PLS_INTEGER;
       vr_dscritic   VARCHAR2(4000);
 
+      -- Variaveis de log
+      vr_cdcooper NUMBER;
+      vr_nmdatela VARCHAR2(100);
+      vr_nmeacao  VARCHAR2(100);
+      vr_cdagenci VARCHAR2(100);
+      vr_nrdcaixa VARCHAR2(100);
+      vr_idorigem VARCHAR2(100);
+      vr_cdoperad VARCHAR2(100);
+      
       CURSOR cr_tipo_conta (pr_cdcooper IN tbcc_tipo_conta_coop.cdcooper%TYPE
                            ,pr_inpessoa IN tbcc_tipo_conta_coop.inpessoa%TYPE
                            ,pr_tpconta  IN tbcc_tipo_conta_coop.cdtipo_conta%TYPE) IS
-        SELECT 1
+        SELECT tca.vlminimo_capital
           FROM tbcc_tipo_conta_coop tca
          WHERE tca.cdcooper     = pr_cdcooper
            AND tca.inpessoa     = pr_inpessoa
@@ -5521,7 +5533,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
                              ,pr_tpconta   IN tbcc_produtos_coop.tpconta%TYPE
                              ,pr_inpessoa  IN tbcc_produtos_coop.inpessoa%TYPE
                              ,pr_cdproduto IN tbcc_produtos_coop.cdproduto%TYPE) IS
-        SELECT *
+        SELECT tpc.dtvigencia
+              ,tpc.tpproduto
+              ,tpc.vlminimo_adesao
+              ,tpc.vlmaximo_adesao
+              ,tpc.nrordem_exibicao
+              ,tpc.cdproduto
           FROM tbcc_produtos_coop tpc
          WHERE tpc.cdcooper  = pr_cdcooper
            AND tpc.tpconta   = pr_tpconta
@@ -5529,21 +5546,67 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
            AND tpc.cdproduto = pr_cdproduto;
       rw_produtos_coop cr_produtos_coop%ROWTYPE;
       
+      -- Buscar todos os grupos selecionados
+      CURSOR cr_cdprodutos(pr_cdcooper IN tbcc_produtos_coop.cdcooper%TYPE
+                          ,pr_tpconta  IN tbcc_produtos_coop.tpconta%TYPE
+                          ,pr_inpessoa IN tbcc_produtos_coop.inpessoa%TYPE) IS
+        SELECT tpc.cdproduto
+              ,tpc.vlminimo_adesao  
+              ,tpc.vlmaximo_adesao  
+          FROM tbcc_produtos_coop tpc
+         WHERE tpc.cdcooper   = pr_cdcooper
+           AND tpc.tpconta    = pr_tpconta
+           AND tpc.inpessoa   = pr_inpessoa
+           AND tpc.dtvigencia IS NULL;
+      
+      -- Tabela de memória
+      TYPE typ_reg_produto IS
+      RECORD (vlminimo_adesao  tbcc_produtos_coop.vlminimo_adesao%TYPE
+             ,vlmaximo_adesao  tbcc_produtos_coop.vlmaximo_adesao%TYPE);
+      
+      TYPE tp_reg_produtos IS TABLE OF typ_reg_produto INDEX BY BINARY_INTEGER;
+      vr_tab_produto_old  tp_reg_produtos;
+      vr_tab_produto_new  tp_reg_produtos;
+      
     BEGIN
+      
+      gene0004.pc_extrai_dados(pr_xml      => pr_retxml
+                              ,pr_cdcooper => vr_cdcooper
+                              ,pr_nmdatela => vr_nmdatela
+                              ,pr_nmeacao  => vr_nmeacao
+                              ,pr_cdagenci => vr_cdagenci
+                              ,pr_nrdcaixa => vr_nrdcaixa
+                              ,pr_idorigem => vr_idorigem
+                              ,pr_cdoperad => vr_cdoperad
+                              ,pr_dscritic => vr_dscritic);
+
+      -- Verifica se houve erro recuperando informacoes de log
+      IF vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_saida;
+      END IF;
 
       IF pr_vlmincapi < 0 THEN
           vr_dscritic := 'Valor Mínimo de Capital inválido.';
           RAISE vr_exc_saida;
       END IF;
 
+      -- Buscar e guardar todos os produtos selecionados atualmente
+      FOR rw_cdprodutos IN cr_cdprodutos(pr_cdcooper => pr_cdcooper
+                                        ,pr_tpconta  => pr_tpconta
+                                        ,pr_inpessoa => pr_inpessoa) LOOP
+        -- Adiciona o registro 
+        vr_tab_produto_old(rw_cdprodutos.cdproduto).vlminimo_adesao  := rw_cdprodutos.vlminimo_adesao;
+        vr_tab_produto_old(rw_cdprodutos.cdproduto).vlmaximo_adesao  := rw_cdprodutos.vlmaximo_adesao;
+      END LOOP;
+      
       -- Primeiro coloca data de vigencia para excluir no outro dia
       BEGIN
         UPDATE tbcc_produtos_coop
            SET tbcc_produtos_coop.dtvigencia = trunc(SYSDATE)
         WHERE tbcc_produtos_coop.cdcooper  = pr_cdcooper
-        AND   tbcc_produtos_coop.tpconta   = pr_tpconta
-           AND tbcc_produtos_coop.tpproduto = pr_tpproduto
-           AND tbcc_produtos_coop.inpessoa  = pr_inpessoa;
+          AND tbcc_produtos_coop.tpconta   = pr_tpconta
+          AND tbcc_produtos_coop.tpproduto = pr_tpproduto
+          AND tbcc_produtos_coop.inpessoa  = pr_inpessoa;
       EXCEPTION
         WHEN OTHERS THEN
           vr_dscritic := 'pc_inclui_servicos - Erro ao excluir dados.' || SQLERRM;
@@ -5569,6 +5632,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
             vr_dscritic := 'Erro ao atualizar valor mínimo do capital. '||SQLERRM;
             RAISE vr_exc_saida;
         END;
+        
+        -- Gravar Histórico
+        cada0006.pc_grava_dados_hist(pr_nmtabela => 'TBCC_TIPO_CONTA_COOP'
+                                    ,pr_nmdcampo => 'VLMINIMO_CAPITAL'
+                                    ,pr_cdcooper => pr_cdcooper
+                                    ,pr_inpessoa => pr_inpessoa
+                                    ,pr_cdtipcta => pr_tpconta
+                                    ,pr_tpoperac => 2
+                                    ,pr_dsvalant => rw_tipo_conta.vlminimo_capital
+                                    ,pr_dsvalnov => pr_vlmincapi
+                                    ,pr_cdoperad => vr_cdoperad
+                                    ,pr_dscritic => vr_dscritic);
+        -- Se ocorrer erro 
+        IF vr_dscritic IS NOT NULL THEN
+          RAISE vr_exc_saida;
+        END IF;
+        
       ELSE
         -- Atualiza o valor minimo do capital
         BEGIN
@@ -5591,123 +5671,253 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
             vr_dscritic := 'Erro ao gravar tipo de conta. ' || SQLERRM;
             RAISE vr_exc_saida;
         END;
+        
+        -- Gravar Histórico
+        cada0006.pc_grava_dados_hist(pr_nmtabela => 'TBCC_TIPO_CONTA_COOP'
+                                    ,pr_nmdcampo => 'VLMINIMO_CAPITAL'
+                                    ,pr_cdcooper => pr_cdcooper
+                                    ,pr_inpessoa => pr_inpessoa
+                                    ,pr_cdtipcta => pr_tpconta
+                                    ,pr_tpoperac => 1
+                                    ,pr_dsvalant => NULL
+                                    ,pr_dsvalnov => pr_vlmincapi
+                                    ,pr_cdoperad => vr_cdoperad
+                                    ,pr_dscritic => vr_dscritic);
+        -- Se ocorrer erro 
+        IF vr_dscritic IS NOT NULL THEN
+          RAISE vr_exc_saida;
+        END IF;
+        
       END IF;
       
       IF pr_servicos IS NOT NULL THEN
         
-      -- Faz o split dos produtos
-      vr_servicos := GENE0002.fn_quebra_string(pr_string => pr_servicos
-                                              ,pr_delimit => ';');
-      
-      -- Loop pelos produtos
-      FOR vr_indice IN vr_servicos.FIRST()..vr_servicos.LAST() LOOP
-        -- Separa os campos
-        vr_servico := GENE0002.fn_quebra_string(pr_string => vr_servicos(vr_indice)
-                                               ,pr_delimit => '|');
-        -- Valida se ja existe o mesmo produto cadastrado para outro tipo de produto
-        pc_valida_consistencia(pr_cdcooper  => pr_cdcooper
-                              ,pr_tpproduto => pr_tpproduto
-                              ,pr_tpconta   => pr_tpconta
-                              ,pr_inpessoa  => pr_inpessoa
-                              ,pr_servico   => vr_servico(1)
-                              ,pr_xmllog    => pr_xmllog
-                              ,pr_cdcritic  => vr_cdcritic
-                              ,pr_dscritic  => vr_dscritic
-                              ,pr_retxml    => pr_retxml
-                              ,pr_nmdcampo  => pr_nmdcampo
-                              ,pr_des_erro  => pr_des_erro);
-        -- Se retornar alguma crítica
-        IF vr_dscritic  IS NOT NULL THEN
-            RAISE vr_exc_saida;
-        END IF;
+        -- Faz o split dos produtos
+        vr_servicos := GENE0002.fn_quebra_string(pr_string => pr_servicos
+                                                ,pr_delimit => ';');
         
-        -- Busca as informações do produto
-        OPEN cr_produto(pr_cdproduto => vr_servico(1));
-        FETCH cr_produto INTO rw_produto;
-        
-          IF cr_produto%NOTFOUND THEN
-          vr_dscritic := 'Produto não encontrado.';
-          RAISE vr_exc_saida;
-        END IF;
-        -- Fecha o cursor
-        CLOSE cr_produto;
-        
-        -- Se tiver faixa de valor
-        IF rw_produto.idfaixa_valor = 1 THEN
-          -- Se valor máximo for 0
-          IF vr_servico(3) = 0 THEN
-            vr_dscritic := 'Produto ' || rw_produto.dsproduto || ' possui faixa de valor para contratação.';
-            RAISE vr_exc_saida;
-          END IF;
-          -- Se valor minimo for maior que valor máximo
-          IF to_number(vr_servico(2)) > to_number(vr_servico(3)) THEN
-            vr_dscritic := 'Produto ' || rw_produto.dsproduto || ' possui valores para contratação inválidos. ' ||
-                             'Valor máximo deve ser maior ou igual ao valor mínimo.';
-            RAISE vr_exc_saida;
-          END IF;
-        END IF;
-        
-        -- Verifica se ja existe o produto cadastrado
-        OPEN cr_produtos_coop(pr_cdcooper  => pr_cdcooper
-                             ,pr_tpconta   => pr_tpconta
-                             ,pr_inpessoa  => pr_inpessoa
-                             ,pr_cdproduto => vr_servico(1));
-        FETCH cr_produtos_coop INTO rw_produtos_coop;
-        -- Se encontrar o registro
-        IF cr_produtos_coop%FOUND THEN
-          -- Atualiza os cadastros que continuam
-          BEGIN
-            UPDATE tbcc_produtos_coop tpc
-               SET tpc.dtvigencia = NULL -- Volta a data vigencia para null
-                  ,tpc.tpproduto = pr_tpproduto
-                  ,tpc.vlminimo_adesao = vr_servico(2)
-                  ,tpc.vlmaximo_adesao = vr_servico(3)
-                  ,tpc.nrordem_exibicao = vr_servico(4)
-             WHERE tpc.cdcooper  = pr_cdcooper
-               AND tpc.tpconta   = pr_tpconta
-               AND tpc.tpproduto = pr_tpproduto
-               AND tpc.inpessoa  = pr_inpessoa
-               AND tpc.cdproduto = vr_servico(1);
-          EXCEPTION
-            WHEN OTHERS THEN
-              vr_dscritic := 'Erro ao realizar inclusao. '||SQLERRM;
+        -- Loop pelos produtos
+        FOR vr_indice IN vr_servicos.FIRST()..vr_servicos.LAST() LOOP
+          -- Separa os campos
+          vr_servico := GENE0002.fn_quebra_string(pr_string => vr_servicos(vr_indice)
+                                                 ,pr_delimit => '|');
+          -- Valida se ja existe o mesmo produto cadastrado para outro tipo de produto
+          pc_valida_consistencia(pr_cdcooper  => pr_cdcooper
+                                ,pr_tpproduto => pr_tpproduto
+                                ,pr_tpconta   => pr_tpconta
+                                ,pr_inpessoa  => pr_inpessoa
+                                ,pr_servico   => vr_servico(1)
+                                ,pr_xmllog    => pr_xmllog
+                                ,pr_cdcritic  => vr_cdcritic
+                                ,pr_dscritic  => vr_dscritic
+                                ,pr_retxml    => pr_retxml
+                                ,pr_nmdcampo  => pr_nmdcampo
+                                ,pr_des_erro  => pr_des_erro);
+          -- Se retornar alguma crítica
+          IF vr_dscritic  IS NOT NULL THEN
               RAISE vr_exc_saida;
-          END;
-        ELSE
-          -- insere novo cadastro de produtos aderidos
-        BEGIN
-          INSERT INTO tbcc_produtos_coop
-          (
-           cdcooper
-          ,tpconta
-            ,inpessoa
-          ,cdproduto
-          ,nrordem_exibicao
-          ,tpproduto
-            ,vlminimo_adesao
-            ,vlmaximo_adesao
-          )
-          VALUES
-          (
-           pr_cdcooper
-          ,pr_tpconta
-            ,pr_inpessoa
-            ,vr_servico(1)
-            ,vr_servico(4)
-          ,pr_tpproduto
-            ,vr_servico(2)
-            ,vr_servico(3)
-          );
-        EXCEPTION
-          WHEN OTHERS THEN
-            vr_dscritic := 'Erro ao realizar inclusao. '||SQLERRM;
+          END IF;
+          
+          -- Busca as informações do produto
+          OPEN cr_produto(pr_cdproduto => vr_servico(1));
+          FETCH cr_produto INTO rw_produto;
+          
+          IF cr_produto%NOTFOUND THEN
+            vr_dscritic := 'Produto não encontrado.';
             RAISE vr_exc_saida;
-        END;
-        END IF;
-        -- Fechar o cursor
-        CLOSE cr_produtos_coop;
+          END IF;
+          -- Fecha o cursor
+          CLOSE cr_produto;
         
-      END LOOP;
+          -- Se tiver faixa de valor
+          IF rw_produto.idfaixa_valor = 1 THEN
+            -- Se valor máximo for 0
+            IF vr_servico(3) = 0 THEN
+              vr_dscritic := 'Produto ' || rw_produto.dsproduto || ' possui faixa de valor para contratação.';
+              RAISE vr_exc_saida;
+            END IF;
+            -- Se valor minimo for maior que valor máximo
+            IF to_number(vr_servico(2)) > to_number(vr_servico(3)) THEN
+              vr_dscritic := 'Produto ' || rw_produto.dsproduto || ' possui valores para contratação inválidos. ' ||
+                               'Valor máximo deve ser maior ou igual ao valor mínimo.';
+              RAISE vr_exc_saida;
+            END IF;
+          END IF;
+        
+          -- Verifica se ja existe o produto cadastrado
+          OPEN cr_produtos_coop(pr_cdcooper  => pr_cdcooper
+                               ,pr_tpconta   => pr_tpconta
+                               ,pr_inpessoa  => pr_inpessoa
+                               ,pr_cdproduto => vr_servico(1));
+          FETCH cr_produtos_coop INTO rw_produtos_coop;
+          -- Se encontrar o registro
+          IF cr_produtos_coop%FOUND THEN
+            -- Atualiza os cadastros que continuam
+            BEGIN
+              UPDATE tbcc_produtos_coop tpc
+                 SET tpc.dtvigencia = NULL -- Volta a data vigencia para null
+                    ,tpc.vlminimo_adesao = vr_servico(2)
+                    ,tpc.vlmaximo_adesao = vr_servico(3)
+                    ,tpc.nrordem_exibicao = vr_servico(4)
+               WHERE tpc.cdcooper  = pr_cdcooper
+                 AND tpc.tpconta   = pr_tpconta
+                 AND tpc.tpproduto = pr_tpproduto
+                 AND tpc.inpessoa  = pr_inpessoa
+                 AND tpc.cdproduto = vr_servico(1);
+            EXCEPTION
+              WHEN OTHERS THEN
+                vr_dscritic := 'Erro ao realizar inclusao. '||SQLERRM;
+                RAISE vr_exc_saida;
+            END;
+            
+            -- Insere o os dados no registro de memória
+            vr_tab_produto_new(rw_produtos_coop.cdproduto).vlminimo_adesao  := rw_produtos_coop.vlminimo_adesao;
+            vr_tab_produto_new(rw_produtos_coop.cdproduto).vlmaximo_adesao  := rw_produtos_coop.vlmaximo_adesao;
+            
+          ELSE
+            -- insere novo cadastro de produtos aderidos
+            BEGIN
+              INSERT INTO tbcc_produtos_coop
+              (
+               cdcooper
+              ,tpconta
+              ,inpessoa
+              ,cdproduto
+              ,nrordem_exibicao
+              ,tpproduto
+              ,vlminimo_adesao
+              ,vlmaximo_adesao
+              )
+              VALUES
+              (
+               pr_cdcooper
+              ,pr_tpconta
+              ,pr_inpessoa
+              ,vr_servico(1)
+              ,vr_servico(4)
+              ,pr_tpproduto
+              ,vr_servico(2)
+              ,vr_servico(3)
+              )
+              RETURNING cdproduto
+                INTO vr_cdproduto;
+            EXCEPTION
+              WHEN OTHERS THEN
+                vr_dscritic := 'Erro ao realizar inclusao. '||SQLERRM;
+                RAISE vr_exc_saida;
+            END;
+            
+            -- Insere o os dados no registro de memória
+            vr_tab_produto_new(vr_cdproduto).vlminimo_adesao  := vr_servico(2);
+            vr_tab_produto_new(vr_cdproduto).vlmaximo_adesao  := vr_servico(3);
+            
+          END IF;
+          -- Fechar o cursor
+          CLOSE cr_produtos_coop;
+        END LOOP;
+      END IF;
+      
+      /********** HISTORICOS **********/
+      
+      -- Se tem registros antigos
+      IF vr_tab_produto_old.count() > 0 THEN
+        -- Percorrer os produtos para gerar os históricos
+        vr_cdproduto := vr_tab_produto_old.FIRST();
+        
+        LOOP
+          -- Verifica se o produto foi REMOVIDO
+          IF NOT vr_tab_produto_new.EXISTS(vr_cdproduto) THEN
+            
+            -- Gravar Histórico
+            cada0006.pc_grava_dados_hist(pr_nmtabela => 'TBCC_PRODUTOS_COOP'
+                                        ,pr_nmdcampo => 'DTVIGENCIA'
+                                        ,pr_cdcooper => pr_cdcooper
+                                        ,pr_inpessoa => pr_inpessoa
+                                        ,pr_cdtipcta => pr_tpconta
+                                        ,pr_tpoperac => 2
+                                        ,pr_dsvalant => NULL
+                                        ,pr_dsvalnov => to_char(SYSDATE,'DD/MM/RRRR')
+                                        ,pr_cdoperad => vr_cdoperad
+                                        ,pr_dscritic => vr_dscritic);
+            -- Se ocorrer erro 
+            IF vr_dscritic IS NOT NULL THEN
+              RAISE vr_exc_saida;
+            END IF;
+          END IF;
+                
+          EXIT WHEN vr_cdproduto = vr_tab_produto_old.LAST();
+          vr_cdproduto := vr_tab_produto_old.NEXT(vr_cdproduto);
+        END LOOP;
+      END IF;
+      
+      -- Se tem registros novos
+      IF vr_tab_produto_new.count() > 0 THEN
+        -- Percorrer os produtos para gerar os históricos
+        vr_cdproduto := vr_tab_produto_new.FIRST();
+        
+        LOOP
+          -- Verifica se o produto foi incluido
+          IF vr_tab_produto_old.EXISTS(vr_cdproduto) THEN
+            vr_vlminimo_adesao  := vr_tab_produto_old(vr_cdproduto).vlminimo_adesao;
+            vr_vlmaximo_adesao  := vr_tab_produto_old(vr_cdproduto).vlmaximo_adesao;
+            vr_tpoperac         := 2; -- Alteracao
+          ELSE
+            vr_vlminimo_adesao  := NULL;
+            vr_vlmaximo_adesao  := NULL;
+            vr_tpoperac         := 1; -- Inclusao
+            
+            cada0006.pc_grava_dados_hist(pr_nmtabela => 'TBCC_PRODUTOS_COOP'
+                                        ,pr_nmdcampo => 'CDPRODUTO'
+                                        ,pr_cdcooper => pr_cdcooper
+                                        ,pr_inpessoa => pr_inpessoa
+                                        ,pr_cdtipcta => pr_tpconta
+                                        ,pr_tpoperac => vr_tpoperac
+                                        ,pr_dsvalant => NULL
+                                        ,pr_dsvalnov => vr_cdproduto
+                                        ,pr_cdoperad => vr_cdoperad
+                                        ,pr_dscritic => vr_dscritic);
+            -- Se ocorrer erro 
+            IF vr_dscritic IS NOT NULL THEN
+              RAISE vr_exc_saida;
+            END IF;
+            
+          END IF;
+          
+          cada0006.pc_grava_dados_hist(pr_nmtabela => 'TBCC_PRODUTOS_COOP'
+                                      ,pr_nmdcampo => 'VLMINIMO_ADESAO'
+                                      ,pr_cdcooper => pr_cdcooper
+                                      ,pr_inpessoa => pr_inpessoa
+                                      ,pr_cdtipcta => pr_tpconta
+                                      ,pr_cdprodut => vr_cdproduto
+                                      ,pr_tpoperac => vr_tpoperac
+                                      ,pr_dsvalant => vr_vlminimo_adesao
+                                      ,pr_dsvalnov =>  vr_tab_produto_new(vr_cdproduto).vlminimo_adesao
+                                      ,pr_cdoperad => vr_cdoperad
+                                      ,pr_dscritic => vr_dscritic);
+          -- Se ocorrer erro 
+          IF vr_dscritic IS NOT NULL THEN
+            RAISE vr_exc_saida;
+          END IF;
+          
+          cada0006.pc_grava_dados_hist(pr_nmtabela => 'TBCC_PRODUTOS_COOP'
+                                      ,pr_nmdcampo => 'VLMAXIMO_ADESAO'
+                                      ,pr_cdcooper => pr_cdcooper
+                                      ,pr_inpessoa => pr_inpessoa
+                                      ,pr_cdtipcta => pr_tpconta
+                                      ,pr_cdprodut => vr_cdproduto
+                                      ,pr_tpoperac => vr_tpoperac
+                                      ,pr_dsvalant => vr_vlmaximo_adesao
+                                      ,pr_dsvalnov => vr_tab_produto_new(vr_cdproduto).vlmaximo_adesao
+                                      ,pr_cdoperad => vr_cdoperad
+                                      ,pr_dscritic => vr_dscritic);
+          -- Se ocorrer erro 
+          IF vr_dscritic IS NOT NULL THEN
+            RAISE vr_exc_saida;
+          END IF;
+          
+          EXIT WHEN vr_cdproduto = vr_tab_produto_new.LAST();
+          vr_cdproduto := vr_tab_produto_new.NEXT(vr_cdproduto);
+        END LOOP;
       END IF;
       
       -- salva informacoes inseridas
