@@ -38,6 +38,7 @@
 		exibeErro("Conta/dv inv&aacute;lida.");
 		exit;
 	}
+	
 	$selecionados = isset($_POST["selecionados"]) ? $_POST["selecionados"] : array();
 	if(count($selecionados)==0){
 		exibeErro("Selecione ao menos um t&iacute;tulo");
@@ -51,15 +52,13 @@
     $xml .= "   <chave>".$selecionados."</chave>";
     $xml .= " </Dados>";
     $xml .= "</Root>";
-
+    
  	// CONSULTA DA IBRATAN	
     $xmlResult = mensageria($xml,"TELA_ATENDA_DESCTO","SOLICITA_BIRO_BORDERO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
     $xmlObj = getClassXML($xmlResult);
+    $root = $xmlObj->roottag;
 	if ($root->erro){
-		echo '<script>';
 		exibeErro(htmlentities($root->erro->registro->dscritic));
-		echo '</script>';
-		exit;
 	}
 	// LISTA TODOS OS TITULOS SELECIONADOS COM AS CRITICAS E RETORNO DA IBRATAN
 	$xml = "<Root>";
@@ -78,12 +77,17 @@
 
     // Se ocorrer um erro, mostra mensagem
 	if ($root->erro){
-		echo '<script>';
 		exibeErro(htmlentities($root->erro->registro->dscritic));
-		echo '</script>';
 		exit;
 	}
 
+	// Função para exibir erros na tela através de javascript
+	function exibeErro($msgErro) { 
+		echo '<script type="text/javascript">';
+		echo 'hideMsgAguardo();';
+		echo 'showError("error","'.$msgErro.'","Alerta - Ayllos","");';
+		echo '</script>';
+	}
 	
 ?>
 
