@@ -177,7 +177,8 @@
                 12/03/2018 - Alterado de forma que o tipo de conta nao seja mais fixo e sim 
                              parametrizado através da tela CADPAR. PRJ366 (Lombardi).							 
 
-                24/04/2018 - Gravar historico de inclusao dos campos cdtipcta, 
+                24/04/2018 - Adicionado campo cdcatego na inclusao de nova conta.
+                           - Gravar historico de inclusao dos campos cdtipcta,
                              cdsitdct e cdcatego. PRJ366 (Lombardi).
 
 .............................................................................*/
@@ -4414,7 +4415,8 @@ PROCEDURE Inclui PRIVATE :
                        crabass.cdageori = par_cdagenci
                        crabass.dtinsori = TODAY
                        /* Fim - Alteracoes referentes a M181 - Rafael Maciel (RKAM) */
-                       crabass.cdbcochq = 85 NO-ERROR.  
+                       crabass.cdbcochq = 85
+                       crabass.cdcatego = 1 NO-ERROR.  
 
                        /* Para esta tela deve gravar essas informaçoes como padrao */
                        IF par_nmdatela = 'CADMAT' THEN
