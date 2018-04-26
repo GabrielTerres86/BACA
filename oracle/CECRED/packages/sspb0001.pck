@@ -377,7 +377,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
   --  Sistema  : Procedimentos e funcoes da BO b1wgen0046.p
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Julho/2013.                   Ultima atualizacao: 19/10/2017
+  --  Data     : Julho/2013.                   Ultima atualizacao: 18/04/2018
   --
   -- Dados referentes ao programa:
   --
@@ -411,6 +411,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
   --                          ORA-01722: invalid number), dentro da pc_gera_xml (Oscar).
   --
   --             19/10/207 - Complementar o log o executa comando oracle chamado 706261 (Oscar).
+  --
+  --             18/04/2018 - Ajuste para truncar o nome do banco ao criar a crapban (Adriano ).
   ---------------------------------------------------------------------------------------------------------------
 
   /* Busca dos dados da cooperativa */
@@ -5548,9 +5550,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
       vr_dscritic VARCHAR2(4000);
       vr_exc_erro EXCEPTION;
       vr_lista_ispb VARCHAR2(4000) := ';';
-      vr_nmarqlog VARCHAR2(1000) := gene0002.fn_busca_entrada(pr_postext => 6
-                                                             ,pr_dstext => pr_nmarqlog
-                                                             ,pr_delimitador => '/');
                                 
       -- Verificar se banco está ativo no ispb
       CURSOR cr_crapban (pr_nrispbif IN crapban.nrispbif%TYPE) IS
@@ -5653,7 +5652,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
         pr_des_erro := 'NOK';
         -- Grava erro em log
         btch0001.pc_gera_log_batch(pr_cdcooper     => 3,
-                                   pr_nmarqlog     => vr_nmarqlog,
+                                   pr_nmarqlog     => pr_nmarqlog,
                                    pr_ind_tipo_log => 1, -- Normal
                                    pr_des_log      => TO_CHAR(SYSDATE,'DD/MM/RRRR - HH24:MI:SS')||' - ' ||
                                                       pr_cdprogra || ' - PAG0101            --> ' ||
@@ -5688,9 +5687,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
 		  -- Tabela de memória para alimentar os registros
       vr_tab_situa_if typ_tab_situacao_if;
       
-      vr_nmarqlog VARCHAR2(1000) := gene0002.fn_busca_entrada(pr_postext => 6
-																														 ,pr_dstext => pr_nmarqlog
-																														 ,pr_delimitador => '/');
       
 			-- Cursor para destrinchar o xml
 		  CURSOR cr_situacao_if IS
@@ -5721,7 +5717,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
 				pr_des_erro := 'NOK';
 				-- Grava erro em log
 				btch0001.pc_gera_log_batch(pr_cdcooper     => 3,
-																	 pr_nmarqlog     => vr_nmarqlog,
+																	 pr_nmarqlog     => pr_nmarqlog,
 																	 pr_ind_tipo_log => 1, -- Normal
 																	 pr_des_log      => TO_CHAR(SYSDATE,'DD/MM/RRRR - HH24:MI:SS')||' - ' ||
 																											pr_cdprogra || ' - PAG0101            --> ' ||
@@ -5749,7 +5745,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
     --  Sistema  : Cred
     --  Sigla    : SSPB0001
     --  Autor    : Lucas Reinert
-    --  Data     : Agosto/2016.                   Ultima atualizacao: 25/09/2017
+    --  Data     : Agosto/2016.                   Ultima atualizacao: 18/04/2018
     --
     --  Dados referentes ao programa:
     --
@@ -5759,13 +5755,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
     --  Alterações : 25/09/2017 - Quando receber uma exclução de Banco, vamos gerar um e-mail
     --                            alertando ao financeiro as contas que recebem salário
     --                            no banco que foi inativado (Douglas - Chamado 647346)
+	  --
+	  --               18/04/2018 - Ajuste para truncar o nome do banco ao criar a crapban (Adriano ).
     ------------------------------------------------------------------------------	
 		DECLARE	
 		
-      vr_nmarqlog VARCHAR2(1000) := gene0002.fn_busca_entrada(pr_postext     => 6,
-                                                              pr_dstext      => pr_nmarqlog,
-                                                              pr_delimitador => '/');
-		  vr_dsdemail VARCHAR2(1000);
+      vr_dsdemail VARCHAR2(1000);
 			vr_dscritic VARCHAR2(4000);
 			vr_exc_erro EXCEPTION;
 		
@@ -5777,21 +5772,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
       -- Dados do Arquivo
       vr_nom_arquivo  VARCHAR2(100);
       vr_nom_direto   VARCHAR2(400);
+      vr_dtinispb     DATE;
   
 		  -- Busca o banco pelo código e número ispb
 		  CURSOR cr_crapban IS
-        SELECT CASE
-                 WHEN pr_cddbanco > 0 THEN
-								 (SELECT ROWID
-										FROM crapban ban
-                    WHERE ban.cdbccxlt = pr_cddbanco
-                      AND ban.nrispbif = pr_nrispbif)
-							ELSE 
-								 (SELECT ROWID
-									  FROM crapban ban
-                    WHERE ban.nrispbif = pr_nrispbif)
-               END AS rowid_ban
-					FROM dual;
+      SELECT CASE
+               WHEN pr_cddbanco > 0 THEN
+               (SELECT ROWID
+                  FROM crapban ban
+                  WHERE ban.cdbccxlt = pr_cddbanco
+                    AND ban.nrispbif = pr_nrispbif)
+            ELSE 
+               (SELECT ROWID
+                  FROM crapban ban
+                  WHERE ban.nrispbif = pr_nrispbif)
+             END AS rowid_ban
+        FROM dual;
 			rw_crapban cr_crapban%ROWTYPE;
 		
       CURSOR cr_contas (pr_cdbantrf IN INTEGER) IS
@@ -5809,65 +5805,79 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
          ORDER BY ccs.cdcooper, ccs.nrdconta, ccs.nmfuncio;
     
     BEGIN
+      
+      BEGIN
+      
+        vr_dtinispb:= to_date(pr_dtinispb,'DD/MM/RRRR');
+        
+      EXCEPTION
+        WHEN OTHERS THEN
+          NULL;
+      END;
+      
 			-- Tratar mensagem STR0019 - Inclusão IF STR
 		  IF (pr_cdmensag = 'STR0019') THEN
 				 -- Busca banco pelo código do banco e número ispb
 				 OPEN cr_crapban;
-				 FETCH cr_crapban 
-					INTO rw_crapban;
+				 FETCH cr_crapban INTO rw_crapban;
 				 
 				 -- Se encontrou banco
 				 IF cr_crapban%FOUND AND rw_crapban.rowid_ban IS NOT NULL THEN
-					  -- Fecha cursor
-						CLOSE cr_crapban;
-						
-						-- Atualiza IF
-						UPDATE crapban ban
-             SET ban.dtaltstr = CASE
-                                  WHEN ban.flgdispb <> 1 THEN
-                                   trunc(SYSDATE)
-                                  ELSE
-                                   ban.dtaltstr
-                                END,
-                 ban.flgdispb = 1,
-                 ban.nmresbcc = pr_nmdbanco,
-                 ban.nmextbcc = pr_nmdbanco,
-                 ban.dtinispb = to_date(pr_dtinispb, 'DD/MM/RRRR')
-						 WHERE ban.rowid = rw_crapban.rowid_ban;
+           -- Fecha cursor
+           CLOSE cr_crapban;
+          						
+           -- Atualiza IF
+           UPDATE crapban ban
+              SET ban.dtaltstr = CASE
+                                   WHEN ban.flgdispb <> 1 THEN
+                                     trunc(SYSDATE)
+                                   ELSE
+                                     ban.dtaltstr
+                                 END,
+                  ban.flgdispb = 1,
+                  ban.nmresbcc = substr(pr_nmdbanco,1,50),
+                  ban.nmextbcc = substr(pr_nmdbanco,1,50),
+                  ban.dtinispb = vr_dtinispb
+            WHERE ban.rowid = rw_crapban.rowid_ban;
 					ELSE
+            
+            -- Fecha cursor
+						CLOSE cr_crapban;
+            
 						 -- Cria nova IF
 						 INSERT INTO crapban 
-            (cdoperad,
-             dtmvtolt,
-             cdbccxlt,
-             nmresbcc,
-             nmextbcc,
-             nrispbif,
-             flgdispb,
-             dtinispb,
-             dtaltstr)
-          VALUES
-            ('1',
-             trunc(SYSDATE),
-             pr_cddbanco,
-             pr_nmdbanco,
-             pr_nmdbanco,
-             pr_nrispbif,
-             1,
-             to_date(pr_dtinispb, 'DD/MM/RRRR'),
-             trunc(SYSDATE));
+                        (cdoperad,
+                         dtmvtolt,
+                         cdbccxlt,
+                         nmresbcc,
+                         nmextbcc,
+                         nrispbif,
+                         flgdispb,
+                         dtinispb,
+                         dtaltstr)
+                  VALUES('1',
+                         trunc(SYSDATE),
+                         pr_cddbanco,
+                         substr(pr_nmdbanco,1,50),
+                         substr(pr_nmdbanco,1,50),
+                         pr_nrispbif,
+                         1,
+                         vr_dtinispb,
+                         trunc(SYSDATE));
+                         
 					END IF;
+          
       ELSE
         -- Tratar mensagem STR0018 - Exclusão IF STR
 				 -- Busca banco pelo código do banco e número ispb
 				 OPEN cr_crapban;
-				 FETCH cr_crapban 
-				 INTO rw_crapban;
+				 FETCH cr_crapban INTO rw_crapban;
 				 
 				 -- Se encontrou banco
 				IF cr_crapban%FOUND AND rw_crapban.rowid_ban IS NOT NULL THEN
 					-- Fecha cursor
 					CLOSE cr_crapban;
+          
 					-- Atualiza IF
 					UPDATE crapban ban
              SET ban.dtaltstr = CASE
@@ -5888,7 +5898,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
           
           -- Gerar um e-mail com a lista de 
           FOR rw_contas IN cr_contas(pr_cdbantrf => vr_cddbanco) LOOP
+            
             vr_flexists := TRUE;
+            
             -- Verificar se já abrimos o arquivo 
             IF NOT utl_file.IS_OPEN(vr_input_file) THEN
               -- Tenta abrir o arquivo de dados em modo gravacao
@@ -5965,6 +5977,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
           END IF;
           
 				ELSE
+          -- Fecha cursor
+					CLOSE cr_crapban;
+          
           vr_dsdemail := 'Nao foi possivel excluir registro de participante no STR: ' ||
                          'Instituicao Financeira nao encontrada: ISPB: ' ||
 												 to_char(pr_nrispbif, '00000000');
@@ -5984,14 +5999,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
 						--Levantar Excecao
 						RAISE vr_exc_erro;
 					END IF;
+          
 					-- Retorno NOK
           pr_des_erro := 'NOK';
 					RETURN;
+          
 				END IF;
+        
 			END IF;
 			
 			-- Retorno OK
 			pr_des_erro := 'OK';
+      
 			-- Efetua commit
 			COMMIT;
 			
@@ -6001,7 +6020,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
           pr_des_erro := 'NOK';
 				-- Grava erro em log
 				btch0001.pc_gera_log_batch(pr_cdcooper     => 3,
-																	 pr_nmarqlog     => vr_nmarqlog,
+																	 pr_nmarqlog     => pr_nmarqlog,
 																	 pr_ind_tipo_log => 1, -- Normal
                                    pr_des_log      => TO_CHAR(SYSDATE,
                                                               'DD/MM/RRRR - HH24:MI:SS') ||
@@ -6017,7 +6036,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
 				pr_des_erro := 'NOK';
 				-- Grava erro em log
 				btch0001.pc_gera_log_batch(pr_cdcooper     => 3,
-																	 pr_nmarqlog     => vr_nmarqlog,
+																	 pr_nmarqlog     => pr_nmarqlog,
 																	 pr_ind_tipo_log => 1, -- Normal
                                    pr_des_log      => TO_CHAR(SYSDATE,
                                                               'DD/MM/RRRR - HH24:MI:SS') ||
