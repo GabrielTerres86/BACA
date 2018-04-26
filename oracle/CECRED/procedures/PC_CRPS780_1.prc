@@ -190,13 +190,13 @@ BEGIN
                (sum(case when c.cdhistor in (2473) then c.vllanmto else 0 end) -
                sum(case when c.cdhistor in (2474) then c.vllanmto else 0 end) )sum_vllanmto_jr60,
                sum(case when c.cdhistor in (381,2409) then c.vllanmto else 0 end) - 
-               (sum(case when c.cdhistor in (2389) then c.vllanmto else 0 end) -
+               (sum(case when c.cdhistor in (2389,391) then c.vllanmto else 0 end) -
                sum(case when c.cdhistor in (2393) then c.vllanmto else 0 end) )sum_vllanmto_jratlz
           FROM craplem c
          WHERE c.cdcooper = prc_cdcooper
            AND c.nrdconta = prc_nrdconta
            AND c.nrctremp = prc_nrctremp
-           AND c.cdhistor in (2402,2406,2382,2397,2473,2474,381,2409,2389,2393); 
+           AND c.cdhistor in (2402,2406,2382,2397,2473,2474,381,391,2409,2389,2393); 
               
       vr_qtdjuros60 NUMBER;
   
@@ -444,7 +444,7 @@ BEGIN
           */
           -- Validar contrato em acordo
            /* Verificacao de contrato de acordo */
-        RECP0001.pc_verifica_acordo_ativo (pr_cdcooper => pr_cdcooper
+/*        RECP0001.pc_verifica_acordo_ativo (pr_cdcooper => pr_cdcooper
                                           ,pr_nrdconta => pr_nrdconta
                                           ,pr_nrctremp => pr_nrctremp
                                           ,pr_cdorigem => 3
@@ -460,7 +460,7 @@ BEGIN
           vr_cdcritic := 0;
           vr_dscritic := 'Pagamento nao permitido, emprestimo em acordo';
           RAISE vr_exc_erro;                 
-        END IF;
+        END IF;*/
       
       /*  \* Verificar se possui acordo na CRAPCYC *\
         OPEN c_crapcyc(pr_cdcooper, pr_nrdconta, pr_nrctremp);
@@ -988,7 +988,7 @@ BEGIN
               --IF vr_juros_atualizado >= (rw_crapepr.vlsdprej - vr_vlPrincAbono) THEN -- Valor nao cobriu o juros Atualizado
                 vr_vljratlz := vr_juros_atualizado - (rw_crapepr.vlsdprej - vr_vlPrincAbono) ; -- Atualizar a craplem com valor parcial
                 rw_crapepr.vlsdprej := rw_crapepr.vlsdprej - vr_vlPrincAbono;
-                --vr_vlPrincAbono := 0; -- quitar o saldo de pag+abono
+                vr_vlPrincAbono := vr_vlPrincAbono - vr_vljratlz; -- quitar o saldo de pag+abono
               --END IF;
             ELSE 
               --vr_vljratlz     := vr_juros_atualizado; -- Atualizar a craplem com o valor total

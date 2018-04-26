@@ -7147,9 +7147,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         -- Acumular o saldo devedor calculado
         pr_vlsdeved := pr_vlsdeved + nvl(vr_vlsdeved,0);
         -- M324
-        IF rw_crapepr.inprejuz > 0 THEN
+        /*IF rw_crapepr.inprejuz > 0 THEN
           pr_vlsdeved := 0;
-        END IF;
+        END IF;*/
       END LOOP; -- Fim leitura dos empréstimos
     
       -- Se foi solicitado o envio de LOG

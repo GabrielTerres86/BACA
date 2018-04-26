@@ -104,13 +104,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0002 AS
    Sistema : Cred
    Sigla   : CRED
    Autor   : Jean Calão - Mout´S
-   Data    : Maio/2017                      Ultima atualizacao: 28/05/2017
+   Data    : Maio/2017                      Ultima atualizacao: 24/04/2018
 
    Dados referentes ao programa:
 
    Frequencia: Diária (sempre que chamada)
    Objetivo  : Centralizar os procedimentos e funcoes referente aos processos de 
-               transferência para prejuízo
+               pagamento de prejuízo
 
       /** ---------------- LEGENDA -----------------------
       Historicos
@@ -147,7 +147,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0002 AS
    CURSOR C_CRAPEPR(pr_cdcooper in number
                    ,pr_nrdconta in number
                    ,pr_nrctremp in number) IS
-               SELECT * FROM crapepr
+     SELECT * 
+       FROM crapepr
                WHERE crapepr.cdcooper = pr_cdcooper
                  AND crapepr.nrdconta = pr_nrdconta
                  AND crapepr.nrctremp = pr_nrctremp;
@@ -164,6 +165,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0002 AS
                                   ,pr_idtipo in varchar2
                                   ,pr_des_reto OUT VARCHAR --> Retorno OK / NOK
                                   ,pr_tab_erro OUT gene0001.typ_tab_erro) IS
+ /* .............................................................................
+
+  Programa: pc_estorno_pagamento
+  Sistema : AyllosWeb
+  Sigla   : PREJ
+  Autor   : Jean Calão - Mout´S
+  Data    : Agosto/2017.                  Ultima atualizacao: 24/04/2018
+
+  Dados referentes ao programa:
+
+  Frequencia: Sempre que for chamado
+
+  Objetivo  : Efetua o estorno de pagamento de prejuizos de contratos PP e TR 
+  Observacao: Rotina chamada pela tela ESTPRJ
+
+  Alteracoes: 24/04/2018 - Nova Regra para bloqueio de estorno realizado pela tela ESTPRJ
+              (Rafael Monteiro - Mouts)
+
+  ..............................................................................*/                              
 
        -- Cursor principal da rotina de estorno
        CURSOR c_craplem (prc_cdcooper craplem.cdcooper%TYPE
@@ -266,6 +286,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0002 AS
       vr_nrdolote number;
       vr_nrdrowid rowid;
       dt_gerarlcm DATE;
+    vr_dsctajud    crapprm.dsvlrprm%TYPE;         --> Parametro de contas que nao podem debitar os emprestimos
+    vr_dsctactrjud crapprm.dsvlrprm%TYPE := null; --> Parametro de contas e contratos específicos que nao podem debitar os emprestimos SD#618307    
+
       --
       BEGIN
 
@@ -299,11 +322,34 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0002 AS
         --
         dt_gerarlcm := NULL; 
         --
+    IF c_crapepr%ISOPEN THEN
+      CLOSE c_crapepr;
+    END IF;      
+    -- Lista de contas que nao podem debitar na conta corrente, devido a acao judicial
+    vr_dsctajud := gene0001.fn_param_sistema(pr_nmsistem => 'CRED',
+                                             pr_cdcooper => pr_cdcooper,
+                                             pr_cdacesso => 'CONTAS_ACAO_JUDICIAL');
+     -- Lista de contas e contratos específicos que nao podem debitar os emprestimos (formato="(cta,ctr)") SD#618307
+    vr_dsctactrjud := gene0001.fn_param_sistema(pr_nmsistem => 'CRED'
+                                               ,pr_cdcooper => pr_cdcooper
+                                               ,pr_cdacesso => 'CTA_CTR_ACAO_JUDICIAL');  
+
+    -- Condicao para verificar se permite incluir as linhas parametrizadas
+    IF INSTR(',' || vr_dsctajud || ',',',' || pr_nrdconta || ',') > 0 THEN
+      vr_dscritic := 'Atenção! Estorno não permitido. Verifique situação da conta.';
+      RAISE vr_erro;    
+    END IF;
+
+    -- Condicao para verificar se permite incluir as linhas parametrizadas SD#618307
+    IF INSTR(replace(vr_dsctactrjud,' '),'('||trim(to_char(pr_nrdconta))||','||trim(to_char(pr_nrctremp))||')') > 0 THEN
+      vr_dscritic := 'Atenção! Estorno não permitido. Verifique situação da conta.';
+      RAISE vr_erro;    
+    END IF; 
 
         RECP0001.pc_verifica_acordo_ativo (pr_cdcooper => pr_cdcooper
                                           ,pr_nrdconta => pr_nrdconta
                                           ,pr_nrctremp => pr_nrctremp
-                                          ,pr_cdorigem => 0
+                                      ,pr_cdorigem => 3
                                           ,pr_flgativo => vr_flgativo
                                           ,pr_cdcritic => vr_cdcritic
                                           ,pr_dscritic => vr_dscritic);
@@ -320,7 +366,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0002 AS
         END IF;
         
         /* Verificar se possui acordo na CRAPCYC */
-        open c_crapcyc(pr_cdcooper, pr_nrdconta, pr_nrctremp);
+   /* open c_crapcyc(pr_cdcooper, pr_nrdconta, pr_nrctremp);
         fetch c_crapcyc into vr_flgativo;
         close c_crapcyc;
         
@@ -329,7 +375,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0002 AS
             vr_dscritic := 'Estorno nao permitido, emprestimo em acordo';
             pr_des_reto := 'NOK';
             RAISE vr_erro;             
-         END IF;
+     END IF;*/
                  
         FOR r_craplem in c_craplem(prc_cdcooper => pr_cdcooper
                                   ,prc_nrdconta => pr_nrdconta
@@ -873,7 +919,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0002 AS
                                ,pr_nrdrowid => vr_nrdrowid);
           -- Commit do LOG
           COMMIT;
-    end pc_estorno_pagamento;
+END pc_estorno_pagamento;
     
     
 PROCEDURE pc_pagamento_prejuizo_web (pr_nrdconta   IN VARCHAR2  -- Conta corrente
@@ -889,7 +935,7 @@ PROCEDURE pc_pagamento_prejuizo_web (pr_nrdconta   IN VARCHAR2  -- Conta corrent
 
  /* .............................................................................
 
-  Programa: pc_transfere_prejuizo_web
+  Programa: pc_pagamento_prejuizo_web
   Sistema : AyllosWeb
   Sigla   : PREJ
   Autor   : Jean Calão - Mout´S
@@ -902,7 +948,8 @@ PROCEDURE pc_pagamento_prejuizo_web (pr_nrdconta   IN VARCHAR2  -- Conta corrent
   Objetivo  : Efetua o pagamento de prejuizos de contratos PP e TR (força o pagamento envio)
   Observacao: Rotina chamada pela tela PAGPRJ opçao "Forçar pagamento prejuizo emprestimo"
 
-  Alteracoes:
+  Alteracoes: 24/04/2018 - Nova Regra para bloqueio de pagamento realizado pela tela chamadora
+              (Rafael Monteiro - Mouts)
 
   ..............................................................................*/
   -- Variáveis
@@ -926,7 +973,9 @@ PROCEDURE pc_pagamento_prejuizo_web (pr_nrdconta   IN VARCHAR2  -- Conta corrent
   vr_vlsdprej    NUMBER;
   vr_vlsomato    NUMBER;
   vr_tab_saldos  EXTR0001.typ_tab_saldos;
-     
+  vr_dsctajud    crapprm.dsvlrprm%TYPE;         --> Parametro de contas que nao podem debitar os emprestimos
+  vr_dsctactrjud crapprm.dsvlrprm%TYPE := null; --> Parametro de contas e contratos específicos que nao podem debitar os emprestimos SD#618307
+  vr_flgativo    INTEGER;   
   -- Excessões
   vr_exc_erro         EXCEPTION;
   --   
@@ -994,7 +1043,7 @@ BEGIN
       pr_cdcritic := 36;
       --pr_des_erro := gene0001.fn_busca_critica(pr_cdcritic => pr_cdcritic)||' Operador não possui privilégio para inserir abono';
       pr_des_erro := 'Pagamento de abono não autorizado, operador não possui permissão para conceder abono.';
-      raise vr_exc_erro;
+      RAISE vr_exc_erro;
     ELSE
       CLOSE cr_crapace; 
     END IF;
@@ -1023,6 +1072,50 @@ BEGIN
   FETCH cr_crapass INTO rw_crapass;
   CLOSE cr_crapass;
 
+  -- Lista de contas que nao podem debitar na conta corrente, devido a acao judicial
+  vr_dsctajud := gene0001.fn_param_sistema(pr_nmsistem => 'CRED',
+                                           pr_cdcooper => vr_cdcooper,
+                                           pr_cdacesso => 'CONTAS_ACAO_JUDICIAL');
+   -- Lista de contas e contratos específicos que nao podem debitar os emprestimos (formato="(cta,ctr)") SD#618307
+  vr_dsctactrjud := gene0001.fn_param_sistema(pr_nmsistem => 'CRED'
+                                             ,pr_cdcooper => vr_cdcooper
+                                             ,pr_cdacesso => 'CTA_CTR_ACAO_JUDICIAL');  
+
+  -- Condicao para verificar se permite incluir as linhas parametrizadas
+  IF INSTR(',' || vr_dsctajud || ',',',' || pr_nrdconta || ',') > 0 THEN
+    pr_des_erro := 'Atenção! Pagamento não permitido. Verifique situação da conta.';
+    RAISE vr_exc_erro;    
+  END IF;
+
+  -- Condicao para verificar se permite incluir as linhas parametrizadas SD#618307
+  IF INSTR(replace(vr_dsctactrjud,' '),'('||trim(to_char(pr_nrdconta))||','||trim(to_char(pr_nrctremp))||')') > 0 THEN
+    pr_des_erro := 'Atenção! Pagamento não permitido. Verifique situação da conta.';
+    RAISE vr_exc_erro;    
+  END IF; 
+  --
+  IF c_crapepr%ISOPEN THEN
+    CLOSE c_crapepr;
+  END IF;
+  --
+  -- Acordo com modulo.
+  RECP0001.pc_verifica_acordo_ativo (pr_cdcooper => vr_cdcooper
+                                    ,pr_nrdconta => pr_nrdconta
+                                    ,pr_nrctremp => pr_nrctremp
+                                    ,pr_cdorigem => 3
+                                    ,pr_flgativo => vr_flgativo
+                                    ,pr_cdcritic => vr_cdcritic
+                                    ,pr_dscritic => vr_dscritic);
+  IF vr_cdcritic > 0
+    OR vr_dscritic IS NOT NULL THEN
+    RAISE vr_exc_erro;
+  END IF;
+
+  IF vr_flgativo = 1 THEN
+    vr_cdcritic := 0;
+    pr_des_erro := 'Pagamento nao permitido, emprestimo em acordo';
+    RAISE vr_exc_erro;                 
+  END IF;                                              
+  --
   --Limpar tabela saldos
   vr_tab_saldos.DELETE;  
   --Obter Saldo do Dia
