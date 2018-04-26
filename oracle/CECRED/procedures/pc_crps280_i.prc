@@ -14,7 +14,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Evandro
-     Data    : Fevereiro/2006                  Ultima atualizacao: 16/04/2018
+     Data    : Fevereiro/2006                  Ultima atualizacao: 19/01/2018
 
      Dados referentes ao programa:
 
@@ -347,10 +347,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
 
                  16/01/2018 - Somente chamar a rotina de atualizacao dos dados financeiros para o Cyber
                               caso a cooperativa conectada seja uma singular. (Chamado 831629) - (Fabricio)
+                              
 
                  19/01/2017 - Regra (IF pr_cdprogra = 'CRPS280' THEN) comentada para o projeto Contratação de Crédito 
-                              Close Product Backlog Item 4403:Alteração regra no Risco da Melhora - 6 meses
-                              (Daniel Junior - AMcom)
+		                      Close Product Backlog Item 4403:Alteração regra no Risco da Melhora - 6 meses
+							  (Daniel Junior - AMcom)
 
                  01/03/2018 - Alterado a Data do Risco e Quantidade de Dias Risco para considerar a diária
                               nos relatórios 354 e 227. (Diego Simas - AMcom)
@@ -3213,42 +3214,42 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
          vr_dtdrisco := NULL;
          vr_qtdiaris := 0;
 
-         -- Busca o ultimo lançamento de risco para a conta com
-         -- valor superior ao valor de arrasto e desta vez com a data igual
-         -- a data de referência passada para buscarmos as informações do risco atual
+         -- Buscar o ultimo lançamento de risco para a conta com
+         -- valor superior ao valor de arrasto e data igual ao final do mês
          vr_nivrisco     := NULL;
          rw_crapris_last := NULL;
 
          FOR rw_crapris_last IN cr_crapris_last(pr_nrdconta => vr_tab_crapris(vr_des_chave_crapris).nrdconta
-                                                ,pr_dtrefere => pr_dtrefere) LOOP  --> Data passada
-           IF rw_crapris_last.vldivida > vr_vlarrast THEN
-             vr_nivrisco := vr_tab_risco_aux(rw_crapris_last.innivris).dsdrisco;
-             vr_dtdrisco := rw_crapris_last.dtdrisco;
-             EXIT;              
-           ELSE
-             -- atribui na primeira vez e guarda o maior risco
-             IF rw_crapris_last.innivris = 10 THEN   
-               vr_nivrisco := vr_tab_risco_aux(rw_crapris_last.innivris).dsdrisco;
-
-               -- atribui com data do primeiro registro
-               IF vr_dtdrisco IS NULL THEN
-                 vr_dtdrisco := rw_crapris_last.dtdrisco;
-                 EXIT;
-               END IF;                  
-             END IF;
-           END IF;
+                                                ,pr_dtrefere => pr_rw_crapdat.dtultdma) LOOP  --> Final do mês anterior
+             IF rw_crapris_last.vldivida > vr_vlarrast THEN
+            vr_nivrisco := vr_tab_risco_aux(rw_crapris_last.innivris).dsdrisco;
+                vr_dtdrisco := rw_crapris_last.dtdrisco;
+                EXIT;              
+         ELSE
+               -- atribui na primeira vez e guarda o maior risco
+               IF rw_crapris_last.innivris = 10 THEN   
+              vr_nivrisco := vr_tab_risco_aux(rw_crapris_last.innivris).dsdrisco;
+            
+                  -- atribui com data do primeiro registro
+                  IF vr_dtdrisco IS NULL THEN
+            vr_dtdrisco := rw_crapris_last.dtdrisco;
+                      EXIT;
+                   END IF;                  
+            END IF;
+         END IF;
          END LOOP;
 
-         -- Buscar novamente o ultimo lançamento de risco para a conta com
-         -- valor superior ao valor de arrasto e data igual ao final do mês         
+         -- Novamente busca o ultimo lançamento de risco para a conta com
+         -- valor superior ao valor de arrasto e desta vez com a data igual
+         -- a data de referência passada para buscarmos as informações do risco atual
          vr_dsnivris     := 'A';
          rw_crapris_last := NULL;
 
          FOR rw_crapris_last IN cr_crapris_last(pr_nrdconta => vr_tab_crapris(vr_des_chave_crapris).nrdconta
-                                               ,pr_dtrefere => pr_rw_crapdat.dtultdma) LOOP  --> Final do mês anterior
-           IF vr_dtdrisco IS NULL THEN
-             vr_dtdrisco := rw_crapris_last.dtdrisco;
-           END IF;
+                                                ,pr_dtrefere => pr_dtrefere) LOOP  --> Data passada
+             --IF vr_dtdrisco IS NULL THEN
+                vr_dtdrisco := rw_crapris_last.dtdrisco;
+             --END IF;
              
              IF rw_crapris_last.vldivida > vr_vlarrast THEN
             vr_dsnivris := vr_tab_risco_aux(rw_crapris_last.innivris).dsdrisco;
@@ -3584,7 +3585,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
                   IF pr_dscritic IS NOT NULL  THEN
                      RAISE vr_exc_erro;
                   END IF;                
-               END IF;
+                  END IF;                
                END IF;
 
                -- Enviar a linha arquivo arquivo 354.txt
@@ -4125,7 +4126,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
                                 ,pr_vlreprec_pf      => vr_tab_microcredito(vr_chave_microcredito).vlpesfis
                                 ,pr_vlreprec_pj      => vr_tab_microcredito(vr_chave_microcredito).vlpesjur
                                 ,pr_vlate59d         => vr_tab_microcredito(vr_chave_microcredito).vlate59d
-                                ,pr_vlaci59d          => vr_tab_microcredito(vr_chave_microcredito).vlaci59d);     
+                                ,pr_vlaci59d      	  => vr_tab_microcredito(vr_chave_microcredito).vlaci59d);     
            
            END IF;
            vr_chave_microcredito := vr_tab_microcredito.next(vr_chave_microcredito); 
@@ -4425,3 +4426,4 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS280_I(pr_cdcooper   IN crapcop.cdcoope
          pr_dscritic := 'Erro não tratado na rotina PC_CRPS280_I. Detalhes: '||SQLERRM;
    END;
 END PC_CRPS280_I;
+/
