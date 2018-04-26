@@ -68,20 +68,13 @@ PROCEDURE pc_altera_debitador_horarios(pr_idhora_processamento IN INTEGER       
 ----------------------- FIM HORARIOS ------------------------
 
 ------------------- INICIO PRIORIDADES -----------------------
-PROCEDURE pc_busca_debitador_priori_res(pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
-                                       , pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
-                                       , pr_dscritic OUT VARCHAR2             --> Descrição da crítica
-                                       , pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
-                                       , pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
-                                       , pr_des_erro OUT VARCHAR2);
-																			 
-PROCEDURE pc_busca_debitador_priori_erro(pr_cdcooper IN NUMBER
-	                                     , pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
-                                       , pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
-                                       , pr_dscritic OUT VARCHAR2             --> Descrição da crítica
-                                       , pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
-                                       , pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
-                                       , pr_des_erro OUT VARCHAR2);																			 
+PROCEDURE pc_busca_debitador_priori_res(pr_cdcooper IN NUMBER
+	                                    , pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
+                                      , pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
+                                      , pr_dscritic OUT VARCHAR2             --> Descrição da crítica
+                                      , pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+                                      , pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
+                                      , pr_des_erro OUT VARCHAR2);
 																			 
 PROCEDURE pc_busca_debitador_priori_comp(pr_idhora_processamento tbgen_debitador_horario.idhora_processamento%TYPE
 	                                     , pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
@@ -1135,7 +1128,7 @@ DECLARE
         pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                            '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
 			WHEN vr_exc_foreignkey THEN
-        pr_dscritic := 'Erro na rotina da tela TELA_DEBITADOR_UNICO - pc_exclui_debitador_horarios: ' || chr(38) || 'lt;br' || chr(38) || 'gt;Há agendamentos de processos vinculados ao horário.';
+        pr_dscritic := 'Erro na rotina da tela TELA_DEBITADOR_UNICO - pc_exclui_debitador_horarios: '|| chr(38) || 'lt;br' || chr(38) || 'gt;Há agendamentos de processos vinculados ao horário.';
         -- Carregar XML padrao para variavel de retorno
         pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                            '<Root><Erro>' || pr_dscritic || '</Erro></Root>');																					 
@@ -1157,7 +1150,8 @@ END pc_exclui_debitador_horarios;
 
 
 ----------------------- INICIO PRIORIDADES -----------------------
-PROCEDURE pc_busca_debitador_priori_res(pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
+PROCEDURE pc_busca_debitador_priori_res(pr_cdcooper IN NUMBER
+	                                    , pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
                                       , pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
                                       , pr_dscritic OUT VARCHAR2             --> Descrição da crítica
                                       , pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
@@ -1203,6 +1197,14 @@ DECLARE
     -- Variáveis gerais da procedure
     vr_contcont INTEGER := 0; -- Contador para inserção dos dados no XML
     vr_contador INTEGER := 0;
+	
+    vr_nrprioridade tbgen_debitador_param.nrprioridade%TYPE;
+		vr_dsprocesso   tbgen_debitador_param.dsprocesso%TYPE;
+		vr_cd_prg_erro  tbgen_debitador_param.cdprocesso%TYPE;
+		vr_dh_erro      DATE;
+		
+		vr_cd_erro crapcri.cdcritic%TYPE;             
+    vr_ds_erro crapcri.dscritic%TYPE;
 
     ----------->>> CURSORES <<<--------
 
@@ -1218,6 +1220,14 @@ DECLARE
 		 WHERE p.nrprioridade IS NOT NULL
      ORDER BY p.nrprioridade;
     rw_dados_prioridades cr_dados_prioridades%ROWTYPE;
+		
+		-- Dados das prioridades (processos)
+    CURSOR cr_processo(pr_nrprioridade tbgen_debitador_param.nrprioridade%TYPE) IS
+    SELECT p.cdprocesso
+		     , p.dsprocesso
+      FROM tbgen_debitador_param p
+		 WHERE p.nrprioridade = pr_nrprioridade;
+		rw_processo cr_processo%ROWTYPE;
 
 
 BEGIN
@@ -1249,68 +1259,150 @@ BEGIN
                            pr_tag_nova => 'Prioridades',
                            pr_tag_cont => NULL,
                            pr_des_erro => vr_dscritic);
+													 
+		gen_debitador_unico.pc_valida_exec_emergencial(pr_cdcooper           => pr_cdcooper
+                                                  ,pr_tpexec_emergencial => 'E'
+																									,pr_cd_prg_erro        => vr_cd_prg_erro
+                                                  ,pr_dh_erro            => vr_dh_erro
+                                                  ,pr_nrprioridade       => vr_nrprioridade
+                                                  ,pr_cd_erro            => vr_cd_erro
+                                                  ,pr_ds_erro            => vr_ds_erro);
+															
+		IF vr_ds_erro <> '' THEN
+			vr_dscritic := vr_ds_erro;
+			RAISE vr_exc_saida;
+		END IF;
 
-    -- Percorre os horários
-    FOR rw_dados_prioridades
-      IN cr_dados_prioridades LOOP
-        gene0007.pc_insere_tag(pr_xml      => pr_retxml,
-                               pr_tag_pai  => 'Prioridades',
-                               pr_posicao  => 0,
-                               pr_tag_nova => 'Prioridade',
-                               pr_tag_cont => NULL,
-                               pr_des_erro => pr_dscritic);
+    IF vr_nrprioridade IS NOT NULL THEN		
+			OPEN cr_processo(vr_nrprioridade);
+			FETCH cr_processo INTO rw_processo;
+			CLOSE cr_processo;
+			
+			gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+														 pr_tag_pai  => 'Prioridades',
+														 pr_posicao  => 0,
+														 pr_tag_nova => 'Prioridade',
+														 pr_tag_cont => NULL,
+														 pr_des_erro => pr_dscritic);
+			
+			gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+														 pr_tag_pai  => 'Prioridade',
+														 pr_posicao  => 0,
+														 pr_tag_nova => 'nrprioridade',
+														 pr_tag_cont => vr_nrprioridade,
+														 pr_des_erro => pr_dscritic);
+														 
+			gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+														 pr_tag_pai  => 'Prioridade',
+														 pr_posicao  => 0,
+														 pr_tag_nova => 'cdprocesso',
+														 pr_tag_cont => rw_processo.cdprocesso,
+														 pr_des_erro => pr_dscritic);                           													 
 
-        -- Prioridade (Processo) - cdprocesso
-        gene0007.pc_insere_tag(pr_xml      => pr_retxml,
-                               pr_tag_pai  => 'Prioridade',
-                               pr_posicao  => vr_contador,
-                               pr_tag_nova => 'cdprocesso',
-                               pr_tag_cont => rw_dados_prioridades.cdprocesso,
-                               pr_des_erro => pr_dscritic);
+			gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+														 pr_tag_pai  => 'Prioridade',
+														 pr_posicao  => 0,
+														 pr_tag_nova => 'dsprocesso',
+														 pr_tag_cont => rw_processo.dsprocesso,
+														 pr_des_erro => pr_dscritic);
+														 
+			gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+														 pr_tag_pai  => 'Prioridade',
+														 pr_posicao  => 0,
+														 pr_tag_nova => 'dherro',
+														 pr_tag_cont => to_char(vr_dh_erro, 'DD/MM/YYYY HH24:MI'),
+														 pr_des_erro => pr_dscritic);											 
+														 
+			gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+														 pr_tag_pai  => 'Root',
+														 pr_posicao  => 0,
+														 pr_tag_nova => 'Dados',
+														 pr_tag_cont => NULL,
+														 pr_des_erro => pr_dscritic);
+														 
+			gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+														 pr_tag_pai  => 'Dados',
+														 pr_posicao  => 0,
+														 pr_tag_nova => 'tipoexecucao',
+														 pr_tag_cont => 'E',
+														 pr_des_erro => pr_dscritic);
+		ELSE
+			-- Percorre os horários
+			FOR rw_dados_prioridades
+				IN cr_dados_prioridades LOOP
+					gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+																 pr_tag_pai  => 'Prioridades',
+																 pr_posicao  => 0,
+																 pr_tag_nova => 'Prioridade',
+																 pr_tag_cont => NULL,
+																 pr_des_erro => pr_dscritic);
 
-        -- Prioridade (Processo) - dsprocesso
-        gene0007.pc_insere_tag(pr_xml      => pr_retxml,
-                               pr_tag_pai  => 'Prioridade',
-                               pr_posicao  => vr_contador,
-                               pr_tag_nova => 'dsprocesso',
-                               pr_tag_cont => rw_dados_prioridades.dsprocesso,
-                               pr_des_erro => pr_dscritic);
+					-- Prioridade (Processo) - cdprocesso
+					gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+																 pr_tag_pai  => 'Prioridade',
+																 pr_posicao  => vr_contador,
+																 pr_tag_nova => 'cdprocesso',
+																 pr_tag_cont => rw_dados_prioridades.cdprocesso,
+																 pr_des_erro => pr_dscritic);
 
-        -- Prioridade (Processo) - indeb_sem_saldo
-        gene0007.pc_insere_tag(pr_xml      => pr_retxml,
-                               pr_tag_pai  => 'Prioridade',
-                               pr_posicao  => vr_contador,
-                               pr_tag_nova => 'indeb_sem_saldo',
-                               pr_tag_cont => rw_dados_prioridades.indeb_sem_saldo,
-                               pr_des_erro => pr_dscritic);
+					-- Prioridade (Processo) - dsprocesso
+					gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+																 pr_tag_pai  => 'Prioridade',
+																 pr_posicao  => vr_contador,
+																 pr_tag_nova => 'dsprocesso',
+																 pr_tag_cont => rw_dados_prioridades.dsprocesso,
+																 pr_des_erro => pr_dscritic);
 
-        -- Prioridade (Processo) - indeb_parcial
-        gene0007.pc_insere_tag(pr_xml      => pr_retxml,
-                               pr_tag_pai  => 'Prioridade',
-                               pr_posicao  => vr_contador,
-                               pr_tag_nova => 'indeb_parcial',
-                               pr_tag_cont => rw_dados_prioridades.indeb_parcial,
-                               pr_des_erro => pr_dscritic);
+					-- Prioridade (Processo) - indeb_sem_saldo
+					gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+																 pr_tag_pai  => 'Prioridade',
+																 pr_posicao  => vr_contador,
+																 pr_tag_nova => 'indeb_sem_saldo',
+																 pr_tag_cont => rw_dados_prioridades.indeb_sem_saldo,
+																 pr_des_erro => pr_dscritic);
 
-        -- Prioridade (Processo) - qtdias_repescagem
-        gene0007.pc_insere_tag(pr_xml      => pr_retxml,
-                               pr_tag_pai  => 'Prioridade',
-                               pr_posicao  => vr_contador,
-                               pr_tag_nova => 'qtdias_repescagem',
-                               pr_tag_cont => rw_dados_prioridades.qtdias_repescagem,
-                               pr_des_erro => pr_dscritic);
+					-- Prioridade (Processo) - indeb_parcial
+					gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+																 pr_tag_pai  => 'Prioridade',
+																 pr_posicao  => vr_contador,
+																 pr_tag_nova => 'indeb_parcial',
+																 pr_tag_cont => rw_dados_prioridades.indeb_parcial,
+																 pr_des_erro => pr_dscritic);
 
-        -- Prioridade (Processo) - nrprioridade
-        gene0007.pc_insere_tag(pr_xml      => pr_retxml,
-                               pr_tag_pai  => 'Prioridade',
-                               pr_posicao  => vr_contador,
-                               pr_tag_nova => 'nrprioridade',
-                               pr_tag_cont => rw_dados_prioridades.nrprioridade,
-                               pr_des_erro => pr_dscritic);
+					-- Prioridade (Processo) - qtdias_repescagem
+					gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+																 pr_tag_pai  => 'Prioridade',
+																 pr_posicao  => vr_contador,
+																 pr_tag_nova => 'qtdias_repescagem',
+																 pr_tag_cont => rw_dados_prioridades.qtdias_repescagem,
+																 pr_des_erro => pr_dscritic);
+
+					-- Prioridade (Processo) - nrprioridade
+					gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+																 pr_tag_pai  => 'Prioridade',
+																 pr_posicao  => vr_contador,
+																 pr_tag_nova => 'nrprioridade',
+																 pr_tag_cont => rw_dados_prioridades.nrprioridade,
+																 pr_des_erro => pr_dscritic);
 
 
-        vr_contador := vr_contador + 1;
-    END LOOP;
+					vr_contador := vr_contador + 1;
+			END LOOP;
+			
+			gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+														 pr_tag_pai  => 'Root',
+														 pr_posicao  => 0,
+														 pr_tag_nova => 'Dados',
+														 pr_tag_cont => NULL,
+														 pr_des_erro => pr_dscritic);
+														 
+			gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+														 pr_tag_pai  => 'Dados',
+														 pr_posicao  => 0,
+														 pr_tag_nova => 'tipoexecucao',
+														 pr_tag_cont => 'P',
+														 pr_des_erro => pr_dscritic);
+		END IF;
 
     EXCEPTION
       WHEN vr_exc_saida THEN
@@ -1325,171 +1417,6 @@ BEGIN
                                            '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
     END;
 END pc_busca_debitador_priori_res;
-
-PROCEDURE pc_busca_debitador_priori_erro(pr_cdcooper IN NUMBER
-	                                     , pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
-                                       , pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
-                                       , pr_dscritic OUT VARCHAR2             --> Descrição da crítica
-                                       , pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
-                                       , pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
-                                       , pr_des_erro OUT VARCHAR2) IS
-
-BEGIN
-
-    /* ............................................................................
-        Programa: pc_busca_debitador_priori_erro
-        Sistema : CECRED
-        Sigla   : DEB
-        Autor   : Reginaldo Rubens da Silva
-        Data    : Abril/2018                 Ultima atualizacao:
-
-        Dados referentes ao programa:
-        Frequencia: Sempre que for chamado
-        Objetivo  : Rotina para buscar dados do processo que ocasionou erro no Debitador
-        Observacao: -----
-        Alteracoes:
-    ..............................................................................*/
-
-DECLARE
-
-    ----------->>> VARIAVEIS <<<--------
-
-    -- Variável de críticas
-    vr_cdcritic crapcri.cdcritic%TYPE; --> Cód. Erro
-    vr_dscritic VARCHAR2(1000);        --> Desc. Erro
-
-    -- Tratamento de erros
-    vr_exc_saida EXCEPTION;
-
-    -- Variáveis retornadas da gene0004.pc_extrai_dados
-    vr_cdcooper INTEGER;
-    vr_cdoperad VARCHAR2(100);
-    vr_nmdatela VARCHAR2(100);
-    vr_nmeacao  VARCHAR2(100);
-    vr_cdagenci VARCHAR2(100);
-    vr_nrdcaixa VARCHAR2(100);
-    vr_idorigem VARCHAR2(100);
-		
-		vr_nrprioridade tbgen_debitador_param.nrprioridade%TYPE;
-		vr_dsprocesso   tbgen_debitador_param.dsprocesso%TYPE;
-		vr_cd_prg_erro  tbgen_debitador_param.cdprocesso%TYPE;
-		vr_dh_erro      DATE;
-		
-		vr_cd_erro crapcri.cdcritic%TYPE;             
-    vr_ds_erro crapcri.dscritic%TYPE;
-
-    ----------->>> CURSORES <<<--------
-
-    -- Dados das prioridades (processos)
-    CURSOR cr_processo(pr_nrprioridade tbgen_debitador_param.nrprioridade%TYPE) IS
-    SELECT p.cdprocesso
-		     , p.dsprocesso
-      FROM tbgen_debitador_param p
-		 WHERE p.nrprioridade = pr_nrprioridade;
-		rw_processo cr_processo%ROWTYPE;
-
-BEGIN
-
-    pr_des_erro := 'OK';
-
-    -- Extrai dados do xml
-    gene0004.pc_extrai_dados(pr_xml      => pr_retxml,
-                             pr_cdcooper => vr_cdcooper,
-                             pr_nmdatela => vr_nmdatela,
-                             pr_nmeacao  => vr_nmeacao,
-                             pr_cdagenci => vr_cdagenci,
-                             pr_nrdcaixa => vr_nrdcaixa,
-                             pr_idorigem => vr_idorigem,
-                             pr_cdoperad => vr_cdoperad,
-                             pr_dscritic => vr_dscritic);
-
-    -- Se retornou alguma crítica
-    IF TRIM(vr_dscritic) IS NOT NULL THEN
-        -- Levanta exceção
-        RAISE vr_exc_saida;
-    END IF;
-
-    -- Criar cabeçalho do XML de retorno
-    pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
-    gene0007.pc_insere_tag(pr_xml      => pr_retxml,
-                           pr_tag_pai  => 'Root',
-                           pr_posicao  => 0,
-                           pr_tag_nova => 'Prioridades',
-                           pr_tag_cont => NULL,
-                           pr_des_erro => vr_dscritic);
-													 
-		
-		gen_debitador_unico.pc_valida_exec_emergencial(pr_cdcooper           => pr_cdcooper
-                                                  ,pr_tpexec_emergencial => 'E'
-																									,pr_cd_prg_erro        => vr_cd_prg_erro
-                                                  ,pr_dh_erro            => vr_dh_erro
-                                                  ,pr_nrprioridade       => vr_nrprioridade
-                                                  ,pr_cd_erro            => vr_cd_erro
-                                                  ,pr_ds_erro            => vr_ds_erro);
-															
-		IF vr_ds_erro <> '' THEN
-			vr_dscritic := vr_ds_erro;
-			RAISE vr_exc_saida;
-		END IF;
-		
-		IF vr_nrprioridade IS NULL THEN
-			vr_dscritic := 'Nenhum programa encontrado.';
-			RAISE vr_exc_saida;
-		END IF;
-		
-		OPEN cr_processo(vr_nrprioridade);
-		FETCH cr_processo INTO rw_processo;
-		CLOSE cr_processo;
-		
-		gene0007.pc_insere_tag(pr_xml      => pr_retxml,
-                           pr_tag_pai  => 'Prioridades',
-                           pr_posicao  => 0,
-                           pr_tag_nova => 'Prioridade',
-                           pr_tag_cont => NULL,
-                           pr_des_erro => pr_dscritic);
-		
-    gene0007.pc_insere_tag(pr_xml      => pr_retxml,
-                           pr_tag_pai  => 'Prioridade',
-                           pr_posicao  => 0,
-                           pr_tag_nova => 'nrprioridade',
-                           pr_tag_cont => vr_nrprioridade,
-                           pr_des_erro => pr_dscritic);
-													 
-    gene0007.pc_insere_tag(pr_xml      => pr_retxml,
-                           pr_tag_pai  => 'Prioridade',
-                           pr_posicao  => 0,
-                           pr_tag_nova => 'cdprocesso',
-                           pr_tag_cont => rw_processo.cdprocesso,
-                           pr_des_erro => pr_dscritic);                           													 
-
-    gene0007.pc_insere_tag(pr_xml      => pr_retxml,
-                           pr_tag_pai  => 'Prioridade',
-                           pr_posicao  => 0,
-                           pr_tag_nova => 'dsprocesso',
-                           pr_tag_cont => rw_processo.dsprocesso,
-                           pr_des_erro => pr_dscritic);
-													 
-		gene0007.pc_insere_tag(pr_xml      => pr_retxml,
-                           pr_tag_pai  => 'Dados',
-                           pr_posicao  => 0,
-                           pr_tag_nova => 'dherro',
-                           pr_tag_cont => to_char(vr_dh_erro, 'DD/MM/YYYY HH24:MI'),
-                           pr_des_erro => pr_dscritic);
-
-    EXCEPTION
-      WHEN vr_exc_saida THEN
-        pr_dscritic := 'Erro geral na rotina da tela TELA_DEBITADOR_UNICO - pc_busca_debitador_priori_erro: ' || vr_dscritic;
-        -- Carregar XML padrao para variavel de retorno
-        pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
-                                           '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
-      WHEN OTHERS THEN
-        pr_dscritic := 'Erro não tratado na rotina da tela TELA_DEBITADOR_UNICO - pc_busca_debitador_priori_res: ' || SQLERRM;
-        -- Carregar XML padrão para variavel de retorno
-        pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
-                                           '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
-    END;
-END pc_busca_debitador_priori_erro;
-
 
 PROCEDURE pc_busca_debitador_priori_comp(pr_idhora_processamento tbgen_debitador_horario.idhora_processamento%TYPE
 	                                     , pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
