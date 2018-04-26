@@ -8115,6 +8115,9 @@ END pc_gera_titulos_iptu_prog;
       vr_cdcritic crapcri.cdcritic%TYPE;
       vr_dscritic VARCHAR2(4000);
 
+	  vr_cdcritic_aux crapcri.cdcritic%TYPE;
+      vr_dscritic_aux VARCHAR2(4000);
+
       --Variaveis de Excecao
       vr_exc_erro EXCEPTION;
     BEGIN
