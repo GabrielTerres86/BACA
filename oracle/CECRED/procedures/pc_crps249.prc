@@ -606,7 +606,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249 (pr_cdcooper  IN craptab.cdcooper%
                20/02/2018 - Ajuste de condição no loop:
                              Liberacao de cheques descontados do dia -- envio para a COMPE
                              incluido em pc_grava_crapopc_bulk
-                            (Belli - Envolti - Chamado 841064)
+                            (Belli - Envolti - Chamado 841064)	
+
+       03/01/2018 - Conciliação Cooperadores/Singulares/Central - projeto 407 - Alexandre Borgmann (Mouts)
+
                                                       
 			   03/04/2018 - M324 Ajustes para considerar novos históricos de Prejuizo
                             Rafael Monteiro (Mouts)
@@ -8346,6 +8349,65 @@ BEGIN
     gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
   end if;
   --
+
+  -- Alexandre Borgmann (Mouts)
+  -- Validação Singulares/Central
+/*
+  vr_vllanmto_sing := 0;
+  vr_vllanmto_central := 0;
+  vr_cdhistor := null;
+  vr_cdestrut := '99';
+
+  if pr_cdcooper=3 then
+
+     -- Singulares total
+     select nvl(sum(c.vllanmto),0)
+       into vr_vllanmto_sing
+       from craplcm c
+      where c.dtmvtolt=vr_dtmvtolt and
+            c.cdhistor=2441;
+
+     -- Central
+     select nvl(sum(t.vllancamento*decode(t.cdmsg,'LDL0022',-1, 'LTR0004',-1,1)),0)
+       into vr_vllanmto_central
+       from tbdomic_liqtrans_msg_ltrstr t
+      where  t.cdmsg in ('LDL0020R2','LDL0022','LTR0005R2','LTR0004') and
+             t.dtmovimento=vr_dtmvtolt;
+
+     if vr_vllanmto_sing>vr_vllanmto_central then
+        vr_nrctacrd:=1443;
+        vr_nrctadeb:=1704;
+        vr_complinhadet := '"VALOR REF. RECURSOS DE VENDAS COM CARTÕES REPASSADOS A MENOR PELA CIP - A REGULARIZAR"';
+        vr_vllanmto:=abs(vr_vllanmto_sing-vr_vllanmto_central);
+
+        vr_linhadet := trim(vr_cdestrut)||
+                   trim(vr_dtmvtolt_yymmdd)||','||
+                   trim(to_char(vr_dtmvtolt,'ddmmyy'))||','||
+                   trim(to_char(vr_nrctadeb))||','||
+                   trim(to_char(vr_nrctacrd))||','||
+                   trim(to_char(vr_vllanmto, '9999999999990.00'))||','||
+                   trim(to_char(vr_cdhistor))||','||
+                   vr_complinhadet;
+        gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
+     end if;
+     if vr_vllanmto_sing<vr_vllanmto_central then
+        vr_nrctacrd:=4861;
+        vr_nrctadeb:=1443;
+        vr_complinhadet := '"VALOR REF. RECURSOS DE VENDAS COM CARTÕES REPASSADOS A MAIOR PELA CIP - A REGULARIZAR"';
+        vr_vllanmto:=abs(vr_vllanmto_sing-vr_vllanmto_central);
+
+        vr_linhadet := trim(vr_cdestrut)||
+                   trim(vr_dtmvtolt_yymmdd)||','||
+                   trim(to_char(vr_dtmvtolt,'ddmmyy'))||','||
+                   trim(to_char(vr_nrctadeb))||','||
+                   trim(to_char(vr_nrctacrd))||','||
+                   trim(to_char(vr_vllanmto, '9999999999990.00'))||','||
+                   trim(to_char(vr_cdhistor))||','||
+                   vr_complinhadet;
+        gene0001.pc_escr_linha_arquivo(vr_arquivo_txt, vr_linhadet);
+     end if;
+  end if;
+*/
   vr_cdestrut := '55';
   -- Tratar quantidade de lancamentos para tarifa
   for rw_craprej2 in cr_craprej2 (pr_cdcooper,
