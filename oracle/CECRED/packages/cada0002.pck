@@ -3730,8 +3730,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
               
       IF pr_nrdconta = TO_NUMBER(pr_nrctatrf) AND 
          pr_cdageban = rw_crapcop.cdagectl   THEN
-        vr_cdcritic := 0;
-        vr_dscritic := 'Conta invalida.';
+        vr_cdcritic := 564;
+        vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
         pr_nmdcampo := 'nrctatrf';
         RAISE vr_exc_saida;
       END IF;
@@ -3741,8 +3741,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
       FETCH cr_crapcop_2 INTO rw_crapcop_2;
 
       IF cr_crapcop_2%NOTFOUND THEN
-        vr_cdcritic := 0;
-        vr_dscritic := 'Registro de cooperativa nao encontrado.';
+        vr_cdcritic := 1070;
+        vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
         pr_nmdcampo := 'nmrescop';
         CLOSE cr_crapcop_2;
         RAISE vr_exc_saida;
@@ -3751,8 +3751,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
       CLOSE cr_crapcop_2;
 
       IF rw_crapcop_2.cdcooper = 3 THEN -- CECRED
-        vr_cdcritic := 0;
-        vr_dscritic := 'Cooperativa CECRED nao permitida para transferencias.';
+        vr_cdcritic := 1214;
+        vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
         RAISE vr_exc_saida;
       END IF;
       
@@ -3765,7 +3765,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
       IF cr_crapass%NOTFOUND THEN
         pr_nmdcampo := 'nrctatrf';
         vr_cdcritic := 9;
-        vr_dscritic := '';
+        vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
         RAISE vr_exc_saida;
       END IF;
       
@@ -3966,8 +3966,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
       END IF;
 
     IF pr_insitcta < 1  OR
-       pr_insitcta > 3  THEN      
-      vr_dscritic := 'Situacao da conta invalida.';
+       pr_insitcta > 3  THEN   
+      vr_cdcritic := 018;   
+      vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
       pr_nmdcampo := 'nrctatrf';
       RAISE vr_exc_saida;
     END IF;
