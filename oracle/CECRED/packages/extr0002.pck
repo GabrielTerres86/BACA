@@ -126,7 +126,8 @@ CREATE OR REPLACE PACKAGE CECRED.EXTR0002 AS
       ,nranomes INTEGER
       ,cdorigem VARCHAR2(100)
       ,qtdiacal craplem.qtdiacal%TYPE
-      ,vltaxprd craplem.vltaxprd%TYPE);
+      ,vltaxprd craplem.vltaxprd%TYPE
+      ,dthrtran craplem.dthrtran%TYPE);
     TYPE typ_tab_extrato_epr IS TABLE OF typ_reg_extrato_epr INDEX BY PLS_INTEGER;
     
     --Tipo de Registro para Extrato de Emprestimo Auxiliar (b1wgen0112tt.i/tt-extrato_epr_aux) 
@@ -3003,6 +3004,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
               ,craplem.nrseqava
               ,craplem.qtdiacal
               ,craplem.vltaxprd
+              ,craplem.dthrtran
             --  ,DECODE(craplem.cdorigem,1,'Ayllos',2,'Caixa',3,'Internet',4,'Cash',5,'Ayllos WEB',6,'URA',7,'Batch',8,'Mensageria',' ') cdorigem
               ,DECODE(craplem.cdorigem,1,'Debito CC',2,'Caixa',3,'Internet',4,'Cash',5,'Debito CC',6,'URA',7,'Debito CC',8,'Mensageria',' ') cdorigem
               ,count(*) over (partition by  craplem.cdcooper,craplem.nrdconta,craplem.dtmvtolt) nrtotdat
@@ -3139,6 +3141,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
         
         --Criar Extrato
         vr_index:= pr_extrato_epr.count + 1;
+        --
+        pr_extrato_epr(vr_index).dthrtran := rw_craplem.dthrtran;
         --Se existe valor emprestimo 
         IF rw_craplem.vlpreemp > 0 THEN
           pr_extrato_epr(vr_index).qtpresta:= apli0001.fn_round(rw_craplem.vllanmto / rw_craplem.vlpreemp,4);
@@ -14359,13 +14363,23 @@ END pc_consulta_ir_pj_trim;
               vr_tab_extrato_epr_novo.DELETE;
               vr_index_extrato:= vr_tab_extrato_epr.FIRST;
               WHILE vr_index_extrato IS NOT NULL LOOP
+                IF vr_tab_extrato_epr(vr_index_extrato).dthrtran IS NOT NULL THEN
                 --Montar novo indice conforme break-by
+                  vr_index_novo:= LPAD(vr_tab_extrato_epr(vr_index_extrato).nrdconta,10,'0')||
+                                  vr_tab_extrato_epr(vr_index_extrato).nranomes||
+                                  TO_CHAR(vr_tab_extrato_epr(vr_index_extrato).dthrtran,'YYYYMMDD hhmiss')|| 
+                                  LPAD(vr_tab_extrato_epr(vr_index_extrato).cdhistor,10,'0')||
+                                  LPAD(vr_tab_extrato_epr(vr_index_extrato).nrdocmto,10,'0')||
+                                  LPAD(vr_tab_extrato_epr(vr_index_extrato).nrdolote,10,'0');  
+                ELSE
+                  --Montar novo indice conforme break-by
                 vr_index_novo:= LPAD(vr_tab_extrato_epr(vr_index_extrato).nrdconta,10,'0')||
                                 vr_tab_extrato_epr(vr_index_extrato).nranomes||
                                 TO_CHAR(vr_tab_extrato_epr(vr_index_extrato).dtmvtolt,'YYYYMMDD')|| 
                                 LPAD(vr_tab_extrato_epr(vr_index_extrato).cdhistor,10,'0')||
                                 LPAD(vr_tab_extrato_epr(vr_index_extrato).nrdocmto,10,'0')||
                                 LPAD(vr_tab_extrato_epr(vr_index_extrato).nrdolote,10,'0');  
+                END IF;
                  
                 --Copiar de uma tabela para outra
                 vr_tab_extrato_epr_novo(vr_index_novo):= vr_tab_extrato_epr(vr_index_extrato);
@@ -14426,7 +14440,7 @@ END pc_consulta_ir_pj_trim;
                       vr_vlsaldod:= nvl(vr_vlsaldod,0) + vr_tab_extrato_epr_novo(vr_index_novo).vllanmto;
                     END IF;    
                   ELSIF vr_tab_extrato_epr_novo(vr_index_novo).indebcre = 'C' AND
-                        vr_tab_extrato_epr_novo(vr_index_novo).cdhistor not in (349/*, 2381, 2396, 2401, 2408, 2405, 2385, 2400, 2412*/) THEN --<> 349 THEN
+                        vr_tab_extrato_epr_novo(vr_index_novo).cdhistor not in (349,2391,2401,2402,2403,2404,2405,2406,2407) THEN --<> 349 THEN
                     --Se Possui Saldo
                     IF vr_tab_extrato_epr_novo(vr_index_novo).flgsaldo THEN
                       --Saldo Devedor
