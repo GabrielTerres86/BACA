@@ -71,7 +71,7 @@ begin
                  VALUES('DEBITADOR_HR_CONSULTAR',
                         'TELA_DEBITADOR_UNICO',
                         'pc_busca_debitador_horarios',
-                        '',
+                        'pr_idhora_processamento',
                         rw_craprdr.nrseqrdr);
                              
     dbms_output.put_line('Insere CRAPACA -> DEBITADOR_HR_CONSULTAR -> TELA_DEBITADOR_UNICO.pc_busca_debitador_horarios');
