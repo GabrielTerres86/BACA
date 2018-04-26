@@ -40,7 +40,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_CENTRALRISCO_OCR(pr_cdcooper in crapco
       SELECT distinct max(t.dtrefere) dtrefere
         FROM TBRISCO_CENTRAL_OCR t
        WHERE t.cdcooper = pr_cdcooper;
-    rw_tbrisco_centralocr cr_tbrisco_centralocr%ROWTYPE;       
+    rw_tbrisco_centralocr cr_tbrisco_centralocr%ROWTYPE;
 
     /******************************/
     --> LOG de execucao
@@ -98,19 +98,19 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_CENTRALRISCO_OCR(pr_cdcooper in crapco
         OPEN cr_tbrisco_centralocr(pr_cdcooper => rw_crapcop.cdcooper);
        FETCH cr_tbrisco_centralocr
         INTO rw_tbrisco_centralocr;
-       CLOSE cr_tbrisco_centralocr;        
-        
+       CLOSE cr_tbrisco_centralocr;
+
        IF  rw_crapdat.inproces = 1
        AND rw_crapdat.dtmvtoan > nvl(rw_tbrisco_centralocr.dtrefere,to_date('01/01/1900','DD/MM/YYYY')) then
           -- Criar o nome para o job
           vr_jobname := 'JOB_CENTRALRISCO_OCR'||LPAD(rw_crapcop.cdcooper,2,'0')||'_$';
-  
+
           vr_dsplsql := 'begin cecred.PC_JOB_CENTRALRISCO_OCR(pr_cdcooper => '||rw_crapcop.cdcooper ||'); end;';
-  
-  
+
+
           vr_minuto := 0;
-  
-          
+
+
           -- Faz a chamada ao programa paralelo atraves de JOB
           gene0001.pc_submit_job(pr_cdcooper  => rw_crapcop.cdcooper  --> Código da cooperativa
                                 ,pr_cdprogra  => vr_cdprogra          --> Código do programa
@@ -150,26 +150,37 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_CENTRALRISCO_OCR(pr_cdcooper in crapco
 
 
       -- Log de inicio de execucao
-      pc_gera_log_execucao(pr_dsexecut  => 'Inicio execucao - Periodo <= '
-                                           || to_char(add_months(rw_crapdat.dtmvtolt, -2))
+      pc_gera_log_execucao(pr_dsexecut  => 'Inicio execucao '
                           ,pr_cdcooper  => pr_cdcooper
                           ,pr_dtmvtolt  => rw_crapdat.dtmvtolt);
 
-
       BEGIN
-        RISC0003.pc_risco_central_ocr(pr_cdcooper  => pr_cdcooper
-                                     ,pr_cdcritic => vr_cdcritic
-                                     ,pr_dscritic => vr_dscritic);
+        pc_gera_log_execucao(pr_dsexecut  => ' Chama RISC0003 - Central Risco'
+                            ,pr_cdcooper  => pr_cdcooper
+                            ,pr_dtmvtolt  => rw_crapdat.dtmvtolt);
+
+        CECRED.RISC0003.pc_risco_central_ocr(pr_cdcooper => pr_cdcooper
+                                            ,pr_cdcritic => vr_cdcritic
+                                            ,pr_dscritic => vr_dscritic);
+
+        pc_gera_log_execucao(pr_dsexecut  => ' Retorna  RISC0003 - Central Risco'
+                            ,pr_cdcooper  => pr_cdcooper
+                            ,pr_dtmvtolt  => rw_crapdat.dtmvtolt);
+
+        IF TRIM(vr_dscritic) IS NOT NULL THEN
+          pc_gera_log_execucao(pr_dsexecut  => 'Erro na RISC0003.pc_risco_central_ocr: ' || vr_dscritic
+                              ,pr_cdcooper  => pr_cdcooper
+                              ,pr_dtmvtolt  => rw_crapdat.dtmvtolt);
+          -- Levanta exceção
+          RAISE vr_exc_erro;
+        END IF;
+
       EXCEPTION
         WHEN OTHERS THEN
           vr_dscritic := 'Job PC_JOB_CENTRALRISCO_OCR.prc nao foi executado pois ocorreu erro '||
-                         'ao excluir craplgp: '||SQLERRM;
+                         'no processamento: '||SQLERRM;
           RAISE vr_exc_erro;
       END;
-
-      pc_gera_log_execucao(pr_dsexecut  => ' => QTDE Registros: ' || to_char(SQL%ROWCOUNT)
-                          ,pr_cdcooper  => pr_cdcooper
-                          ,pr_dtmvtolt  => rw_crapdat.dtmvtolt);
 
 
       -- Log de Termino de execucao
@@ -178,7 +189,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_CENTRALRISCO_OCR(pr_cdcooper in crapco
                           ,pr_dtmvtolt  => rw_crapdat.dtmvtolt);
 
 
-    END IF; -- FIM IF COOP = 3
+    END IF; -- FIM IF COOP <> 3
 
     -- Efetivar os dados
     COMMIT;
@@ -203,4 +214,3 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_CENTRALRISCO_OCR(pr_cdcooper in crapco
                           ,pr_cdcooper  => pr_cdcooper
                           ,pr_dtmvtolt  => TRUNC(SYSDATE));
  END PC_JOB_CENTRALRISCO_OCR;
-/
