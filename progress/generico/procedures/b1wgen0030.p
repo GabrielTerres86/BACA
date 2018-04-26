@@ -6010,7 +6010,7 @@ PROCEDURE efetua_alteracao_limite:
                crawlim.nrperger    = par_nrperger
                old_vltotsfn        = crawlim.vltotsfn
                crawlim.vltotsfn    = par_vltotsfn
-               crawlim.insitest    = 1
+               crawlim.insitest    = 0
                crawlim.dtenvest    = ?
                crawlim.hrenvest    = 0
                crawlim.cdopeste    = ""
