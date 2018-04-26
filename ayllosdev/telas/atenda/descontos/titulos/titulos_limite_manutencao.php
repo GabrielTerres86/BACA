@@ -231,7 +231,7 @@
 	if (sitinctrmnt == 1){
 		dscShowHideDiv("divOpcoesDaOpcao3","divOpcoesDaOpcao2;");	
 	}else{
-		dscShowHideDiv("divOpcoesDaOpcao2","divOpcoesDaOpcao2;");	
+		dscShowHideDiv("divOpcoesDaOpcao2","divOpcoesDaOpcao1;");	
 	}
 	
 	// Muda o título da tela
