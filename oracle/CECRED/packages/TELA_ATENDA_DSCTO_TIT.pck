@@ -21,7 +21,8 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ATENDA_DSCTO_TIT IS
                 26/03/2018 - Inclusão da Procedure pc_busca_dados_limite e pc_busca_dados_limite_web (Luis Fernando (GFT))
                 26/03/2018 - Inclusão da procedure pc_obtem_dados_proposta_web (Paulo Penteado (GFT))
                 02/04/2018 - Inclusão do record 'typ_rec_tit_bordero' e das procedures 'pc_buscar_tit_bordero' e 'pc_buscar_tit_bordero_web' para listar e buscar detalhes e restrições dos titulos do borderô (Leonardo Oliveira (GFT))
-                04/04/2018 - Ajuste no retorno das críticas na operação 'pc_detalhes_tit_bordero' (Leonardo Oliveira (GFT)) 
+                04/04/2018 - Ajuste no retorno das críticas na operação 'pc_detalhes_tit_bordero' (Leonardo Oliveira (GFT))
+				26/04/2018 - Ajuste no retorno das propostas 'pc_obtem_dados_proposta_web' (Leonardo Oliveira (GFT))
   ---------------------------------------------------------------------------------------------------------------------*/
 
   /*Tabela de retorno dos titulos do bordero*/
@@ -215,9 +216,6 @@ TYPE typ_reg_dados_critica IS RECORD(
 );
 
 TYPE typ_tab_dados_critica IS TABLE OF typ_reg_dados_critica INDEX BY BINARY_INTEGER;  
-
-
-
 
 --> Função que retorna se o Serviço IBRATAN está em Contigência ou Não.
 FUNCTION fn_em_contingencia_ibratan (pr_cdcooper IN crapcop.cdcooper%TYPE) RETURN BOOLEAN;
@@ -3042,12 +3040,17 @@ BEGIN
          pr_tab_dados_proposta(vr_idxdados).vllimite := rw_crawlim.vllimite;
          pr_tab_dados_proposta(vr_idxdados).qtdiavig := rw_crawlim.qtdiavig;
          pr_tab_dados_proposta(vr_idxdados).cddlinha := rw_crawlim.cddlinha;
+         pr_tab_dados_proposta(vr_idxdados).nrctrmnt := rw_crawlim.nrctrmnt;
+         
          pr_tab_dados_proposta(vr_idxdados).dssitlim := rw_crawlim.dssitlim;
          pr_tab_dados_proposta(vr_idxdados).dssitest := rw_crawlim.dssitest;
          pr_tab_dados_proposta(vr_idxdados).dssitapr := rw_crawlim.dssitapr;
-         pr_tab_dados_proposta(vr_idxdados).nrctrmnt := rw_crawlim.nrctrmnt;
-         pr_tab_dados_proposta(vr_idxdados).inctrmnt := rw_crawlim.inctrmnt;
+         
          pr_tab_dados_proposta(vr_idxdados).insitlim := rw_crawlim.insitlim;
+         pr_tab_dados_proposta(vr_idxdados).insitest := rw_crawlim.insitest;
+         pr_tab_dados_proposta(vr_idxdados).insitapr := rw_crawlim.insitapr;
+         
+         pr_tab_dados_proposta(vr_idxdados).inctrmnt := rw_crawlim.inctrmnt;
 
          pr_qtregist := nvl(pr_qtregist,0) + 1;
    end   loop;
@@ -3152,12 +3155,14 @@ BEGIN
                            '<vllimite>'|| to_char(vr_tab_dados_proposta(vr_index).vllimite, 'FM999G999G999G990D00') ||'</vllimite>'||
                            '<qtdiavig>'|| vr_tab_dados_proposta(vr_index).qtdiavig ||'</qtdiavig>'||
                            '<cddlinha>'|| vr_tab_dados_proposta(vr_index).cddlinha ||'</cddlinha>'||
+                           '<nrctrmnt>'|| nullif(vr_tab_dados_proposta(vr_index).nrctrmnt,0) ||'</nrctrmnt>'||
                            '<dssitlim>'|| vr_tab_dados_proposta(vr_index).dssitlim ||'</dssitlim>'||
                            '<dssitest>'|| vr_tab_dados_proposta(vr_index).dssitest ||'</dssitest>'||
                            '<dssitapr>'|| vr_tab_dados_proposta(vr_index).dssitapr ||'</dssitapr>'||
-                           '<nrctrmnt>'|| nullif(vr_tab_dados_proposta(vr_index).nrctrmnt,0) ||'</nrctrmnt>'||
-                           '<inctrmnt>'|| vr_tab_dados_proposta(vr_index).inctrmnt ||'</inctrmnt>'||
                            '<insitlim>'|| vr_tab_dados_proposta(vr_index).insitlim ||'</insitlim>'||
+                           '<insitest>'|| vr_tab_dados_proposta(vr_index).insitest ||'</insitest>'||
+                           '<insitapr>'|| vr_tab_dados_proposta(vr_index).insitapr ||'</insitapr>'||
+                           '<inctrmnt>'|| vr_tab_dados_proposta(vr_index).inctrmnt ||'</inctrmnt>'||
                         '</inf>');
 
        vr_index := vr_tab_dados_proposta.next(vr_index);
