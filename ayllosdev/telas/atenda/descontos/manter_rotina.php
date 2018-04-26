@@ -475,7 +475,7 @@
 
 			} else {
 
-		    	echo 'showError("inform","'.$xmlObj->roottag->tags[0]->cdata.'","Alerta - Ayllos","carregaLimitesTitulosPropostas(); return false;");';
+		    	echo 'showError("inform","'.$xmlObj->roottag->tags[0]->cdata.'","Alerta - Ayllos","bloqueiaFundo(divRotina); fecharRotinaGenerico(\'PROPOSTA\');");';
 			}
 		}
 	}
