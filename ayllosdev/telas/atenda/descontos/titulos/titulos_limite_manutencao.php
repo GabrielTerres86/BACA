@@ -242,13 +242,15 @@
 	blockBackground(parseInt($("#divRotina").css("z-index")));
 
 	function executarRealizarManutencaoDeLimite(){
-
 		var flgstlcr = $('#flgstlcr','#frmTitLimiteManutencao').val();
-		realizarManutencaoDeLimite(2,flgstlcr);
-
-        blockBackground(parseInt($('#divRotina').css('z-index')));
-
-
+		showConfirmacao(
+			"Deseja alterar a proposta de majora&ccedil;&atilde;o?",
+			"Confirma&ccedil;&atilde;o - Ayllos",
+			"realizarManutencaoDeLimite(2, "+flgstlcr+");",
+			"blockBackground(parseInt($('#divRotina').css('z-index'))",
+			"sim.gif",
+			"nao.gif"
+		);
 	}
 
 	<?php 
