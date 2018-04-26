@@ -1432,6 +1432,11 @@ BEGIN
 			RAISE vr_exc_saida;
 		END IF;
 		
+		IF vr_nrprioridade IS NULL THEN
+			vr_dscritic := 'Nenhum programa encontrado.';
+			RAISE vr_exc_saida;
+		END IF;
+		
 		OPEN cr_processo(vr_nrprioridade);
 		FETCH cr_processo INTO rw_processo;
 		CLOSE cr_processo;
