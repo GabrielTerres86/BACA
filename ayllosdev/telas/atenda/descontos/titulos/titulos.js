@@ -1957,7 +1957,7 @@ function abrirTelaGAROPC(cddopcao) {
             });
             }
 
-function calcEndividRiscoGrupo(nrdgrupo) {
+function calcEndividRiscoGrupo(nrdgrupo, tipo) {
 
     showMsgAguardo("Aguarde, calculando endividamento e risco do grupo econ&ocirc;mico...");
 
