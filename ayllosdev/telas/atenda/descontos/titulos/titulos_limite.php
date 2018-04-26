@@ -117,7 +117,7 @@
 				</tr>			
 			</thead>
 			<tbody>
-
+				
 				<?  for ($i = 0; $i < $qtLimites; $i++) {
    
 					    $pr_dtpropos = getByTagName($limites[$i]->tags,"dtpropos");//0
@@ -170,7 +170,7 @@
 						<td><? echo $pr_qtdiavig; ?></td>
 						<td><? echo $pr_cddlinha; ?></td>
 						<td><? echo $pr_dssitlim; ?></td>
-						
+				
 												
 					</tr>
 				<?} // Fim do for ?>			
@@ -178,14 +178,6 @@
 		</table>
 	</div>
 </div>
-
-<?php
-	$dispA = (!in_array("A",$glbvars["opcoesTela"])) ? 'display:none;' : '';
-	$dispX = (!in_array("X",$glbvars["opcoesTela"])) ? 'display:none;' : '';
-	$dispC = (!in_array("C",$glbvars["opcoesTela"])) ? 'display:none;' : '';
-	$dispE = (!in_array("E",$glbvars["opcoesTela"])) ? 'display:none;' : '';
-	$dispM = (!in_array("M",$glbvars["opcoesTela"])) ? 'display:none;' : '';
-?>
 
 <div id="divBotoesTitulosLimite" style="margin-bottom:10px; margin-top: 10px;">
 	
@@ -204,7 +196,7 @@
 		class="botao"
 		value="Cancelar"
 		<?php if ($qtLimites == 0) {
-			echo 'style="cursor: default;'.$dispX.'" onClick="return false;"';
+			echo 'onClick="return false;';
 		} else {
 			echo 'style="'.$dispX.'" onClick="showConfirmacao(\'Deseja cancelar o Contrato?\',\'Confirma&ccedil;&atilde;o - Ayllos\',\'cancelaLimiteDscTit()\',\'metodoBlock()\',\'sim.gif\',\'nao.gif\');return false;"';
 		} ?>  />
@@ -214,9 +206,9 @@
 		class="botao"
 		value="Consultar"
 		<?php if ($qtLimites == 0) {
-				echo 'style="cursor: default;'.$dispC.'" onClick="return false;"'; 
+			echo 'onClick="return false;';
 			} else {
-				echo 'style="'.$dispC.'" onClick="carregaDadosConsultaLimiteDscTit();return false;"'; 
+				echo 'onClick="carregaDadosConsultaLimiteDscTit();return false;"'; 
 		} ?> />
 	
 	<input 
@@ -224,9 +216,9 @@
 		class="botao"
 		value="Imprimir"
 		<?php if ($qtLimites == 0) { 
-			echo 'style="cursor: default;'.$dispM.'" onClick="return false;"';
+			echo 'onClick="return false;';
 		} else {
-			echo 'style="'.$dispM.'" onClick="mostraImprimirLimite(\'CONTRATO\');return false;"';
+			echo 'onClick="mostraImprimirLimite(\'CONTRATO\');return false;"';
 		} ?> />
 
 	<input 
@@ -235,7 +227,7 @@
 		value="Detalhes da Proposta"  
 		id="btnDetalhesProposta" name="btnDetalhesProposta" 
 		<?php if ($qtLimites == 0) { 
-			echo 'style="cursor: default;" onClick="return false;"'; 
+			echo 'onClick="return false;';
 		} else { 
 			echo 'onClick="carregaDadosDetalhesProposta(\'CONTRATO\', nrcontrato, 0);return false;"'; 
 		} ?> />

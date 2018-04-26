@@ -34,11 +34,22 @@
 	// Classe para leitura do xml de retorno
 	require_once("../../../../class/xmlfile.php");
 	
-	$tipo = (isset($_POST['tipo'])) ? $_POST['tipo'] : "CONTRATO";
-	// Verifica permissão
-	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"M")) <> "") {
+	require_once("../../../../includes/carrega_permissoes.php");
+
+	setVarSession("opcoesTela",$opcoesTela);
+
+
+
+	if(!in_array("M", $opcoesTela)){
+
+		$msgError = "Operador nao possui permissao de acesso.";
 		exibeErro($msgError);		
 	}			
+	
+
+	$tipo = (isset($_POST['tipo'])) ? $_POST['tipo'] : "CONTRATO";
+
+
 	
 	// Função para exibir erros na tela através de javascript
 	function exibeErro($msgErro) { 

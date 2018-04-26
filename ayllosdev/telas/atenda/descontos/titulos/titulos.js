@@ -52,6 +52,8 @@ var diaratin   = 0;  // Dia do rating da tabela tt-risco (é alimentada no titul
 var vlrrisco   = 0;  // Valor do risco (é alimentada no titulos_limite_incluir.php)
 
 var botaoLiberar   = '';  // Botão Liberar borderô habilitado se analise confirmada. - GFT (André Ávila).
+var sitinctrmnt  = "";  // Variável de parametro para identificar se a proposta é de manutenção. 0 = Não, 1 = Sim. - GFT (André Ávila).
+
 
 // ALTERAÇÃO 001: Criação de variáveis globais 
 var nomeForm        = 'frmDadosLimiteDscTit';   // Variável para guardar o nome do formulário corrente
@@ -603,6 +605,13 @@ function carregaResgatarTitulos() {
 // Carregar os dados para consulta de propostas de limite de desconto de títulos
 function carregaDadosAlteraLimiteDscTitPropostas() {
 
+    if (sitinctrmnt == 1){
+
+        realizarManutencaoDeLimite(1,1);
+        return false;
+
+    } else {
+
     // Mostra mensagem de aguardo
     showMsgAguardo("Aguarde, carregando dados da Proposta de limites de desconto de t&iacute;tulos ...");
     
@@ -625,6 +634,8 @@ function carregaDadosAlteraLimiteDscTitPropostas() {
             controlaLupas(nrdconta);
         }               
     });     
+}
+
 }
 
 
@@ -810,7 +821,6 @@ function selecionaLimiteTitulos(id,qtLimites,limite,insitlim,dssitlim, dssitest,
             // Armazena número do limite selecionado
             nrcontrato = limite;
             idLinhaL = id;
-            cd_situacao_lim = insitlim;
             situacao_limite = dssitlim;
 
         }
@@ -818,7 +828,8 @@ function selecionaLimiteTitulos(id,qtLimites,limite,insitlim,dssitlim, dssitest,
     return false;
 }
 
-function selecionaLimiteTitulosProposta(id,qtLimites,limite,insitlim,dssitlim, dssitest, insitapr, vlLimite, nrctrmnt) {
+function selecionaLimiteTitulosProposta(id,qtLimites,limite,insitlim,dssitlim, dssitest, insitapr, vlLimite, nrctrmnt,inctrmnt) {
+
 
     situacao_analise = dssitest;
     decisao = insitapr;
@@ -850,6 +861,8 @@ function selecionaLimiteTitulosProposta(id,qtLimites,limite,insitlim,dssitlim, d
             idLinhaL = id;
             cd_situacao_lim = insitlim;
             situacao_limite = dssitlim;
+            sitinctrmnt = inctrmnt;
+
 
         }
     }
@@ -2685,6 +2698,11 @@ function realizarManutencaoDeLimite(operacao, flgstlcr) {
     // operacao = 0 (mostrar dialogo confirmacao), operacao = 1 (carregar tela), operacao = 3 (executar operacao)
     showMsgAguardo("Aguarde, carregando dados do contrato...");
     var nrctrlim = normalizaNumero($("#nrctrlim","#frmTitulos").val());
+
+    if(sitinctrmnt == 1){       
+        nrctrlim = nrcontrato;
+    }
+
     if(!operacao){operacao = 0;}
 
     var callback = "realizarManutencaoDeLimite(1,"+flgstlcr+" );";
@@ -2730,6 +2748,7 @@ function realizarManutencaoDeLimite(operacao, flgstlcr) {
         data: {
             nrdconta: nrdconta,
             nrctrlim: nrctrlim,
+            inctrmnt: sitinctrmnt,
             redirect: "html_ajax"
         },
         error: function (objAjax, responseError, objExcept) {
@@ -2737,7 +2756,17 @@ function realizarManutencaoDeLimite(operacao, flgstlcr) {
             showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
         },
         success: function (response) {
-             $("#divOpcoesDaOpcao2").html(response);
+             
+
+            if(sitinctrmnt == 1){       
+
+                $("#divOpcoesDaOpcao3").html(response);
+             
+            } else {
+
+                $("#divOpcoesDaOpcao2").html(response);
+            }
+
              formataManutencaoDeLimite();
              hideMsgAguardo();
              blockBackground(parseInt($('#divRotina').css('z-index')));
@@ -2766,7 +2795,8 @@ function concluirManutencaoDeLimite(){
     var per_cddlinha = $('#per_cddlinha','#frmTitLimiteManutencao').val();
     if(vllimite == per_vllimite &&
         cddlinha == per_cddlinha){
-        showError('error','Nenhum valor foi alterado.','Alerta - Ayllos','');
+        showError('error','Nenhum valor foi alterado.','Alerta - Ayllos',"blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");
+        hideMsgAguardo();
         return;
     }
 
@@ -2779,6 +2809,7 @@ function concluirManutencaoDeLimite(){
                         nrctrlim: nrctrlim,
                         vllimite: vllimite,
                         cddlinha: cddlinha,
+                        inctrmnt: sitinctrmnt,
                         operacao: 'REALIZAR_MANUTENCAO_LIMITE',
                         redirect: 'script_ajax'
 

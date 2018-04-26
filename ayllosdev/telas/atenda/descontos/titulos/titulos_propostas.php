@@ -51,9 +51,13 @@
 	setVarSession("nmrotina","DSC TITS - LIMITE");
 
 	// Carrega permissões do operador
-	include("../../../../includes/carrega_permissoes.php");	
+	require_once("../../../../includes/carrega_permissoes.php");	
 	
 	setVarSession("opcoesTela",$opcoesTela);
+
+	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"@")) <> "") {
+		exibeErro($msgError);		
+	}
 	
 	// Verifica se o número da conta foi informado
 	if (!isset($_POST["nrdconta"])) {
@@ -93,7 +97,6 @@ $xmlObjLimites = getObjectXML($xmlResult);
 	
 	$limites   = $xmlObjLimites->roottag->tags[0]->tags;
 	$qtLimites = count($limites);
-
 
 	
 	// Fun&ccedil;&atilde;o para exibir erros na tela atrav&eacute;s de javascript
@@ -135,16 +138,22 @@ $xmlObjLimites = getObjectXML($xmlResult);
 						$pr_dssitest = getByTagName($limites[$i]->tags,"dssitest");//6
 						$pr_dssitapr = getByTagName($limites[$i]->tags,"dssitapr");//7
 						$pr_nrctrmnt = getByTagName($limites[$i]->tags,"nrctrmnt");//8
+						
+						$pr_inctrmnt = getByTagName($limites[$i]->tags,"inctrmnt");//9
+						$pr_insitlim = getByTagName($limites[$i]->tags,"insitlim");//9
 
 						$mtdClick = "selecionaLimiteTitulosProposta('"
 							.($i + 1)."', '"
 							.$qtLimites."', '"
 							.$pr_nrctrlim."', '"
+							.$pr_insitlim."', '"
 							.$pr_dssitlim."', '"
 							.$pr_dssitest."', '"
 							.$pr_dssitapr."', '"
 							.$pr_vllimite."', '"
-							.$pr_nrctrmnt."');";				
+							.$pr_nrctrmnt."', '"
+							.$pr_inctrmnt."');";
+
 				?>
 					<tr id="trLimite<? echo $i + 1; ?>" onFocus="<? echo $mtdClick; ?>" onClick="<? echo $mtdClick; ?>">
 
@@ -186,14 +195,6 @@ $xmlObjLimites = getObjectXML($xmlResult);
 	</div>
 </div>
 
-<?php
-	$dispA = (!in_array("A",$glbvars["opcoesTela"])) ? 'display:none;' : '';
-	$dispX = (!in_array("X",$glbvars["opcoesTela"])) ? 'display:none;' : '';
-	$dispC = (!in_array("C",$glbvars["opcoesTela"])) ? 'display:none;' : '';
-	$dispE = (!in_array("E",$glbvars["opcoesTela"])) ? 'display:none;' : '';
-	$dispM = (!in_array("M",$glbvars["opcoesTela"])) ? 'display:none;' : '';
-?>
-
 <div id="divBotoesTitulosLimite" style="margin-bottom:10px;	margin-top: 10px;">
 	
 	<input 
@@ -208,9 +209,9 @@ $xmlObjLimites = getObjectXML($xmlResult);
 		class="botao"
 		value="Alterar"
 		<?php if ($qtLimites == 0){
-			echo 'style="cursor: default;'.$dispA.'" onClick="return false;"';
+			echo 'onClick="return false;';
 		} else {
-			echo 'style="'.$dispA.'" onClick="carregaDadosAlteraLimiteDscTitPropostas();return false;"';
+			echo 'onClick="carregaDadosAlteraLimiteDscTitPropostas();return false;"';
 		} ?> />
 	
 
@@ -221,7 +222,7 @@ $xmlObjLimites = getObjectXML($xmlResult);
 		id="btnAceitarRejeicao"
 		name="btnAceitarRejeicao"
 		<?php if ($qtLimites == 0) {
-			echo 'style="cursor: default;" onClick="return false;"';
+			echo 'onClick="return false;';
 		} else {
 			echo 'onClick="aceitarRejeicao(0, \'PROPOSTA\');"';
 		} ?>/>	
@@ -231,7 +232,7 @@ $xmlObjLimites = getObjectXML($xmlResult);
 		class="botao"
 		value="Consultar"
 		<?php if ($qtLimites == 0) {
-			echo 'style="cursor: default;'.$dispC.'" onClick="return false;"';
+			echo 'onClick="return false;';
 		} else {
 			echo 'style="'.$dispC.'" onClick="carregaDadosConsultaPropostaDscTit();return false;"';
 		} ?> />
@@ -243,11 +244,8 @@ $xmlObjLimites = getObjectXML($xmlResult);
 		value="Incluir"
 		id="btnIncluirLimite"
 		name="btnIncluirLimite"
-	 	<?php if (!in_array("I",$glbvars["opcoesTela"])) { 
-	 		echo 'style="cursor: default;display:none;" onClick="return false;"';
-	  	} else { 
-	  		echo 'onClick="carregaDadosInclusaoLimiteDscTit(1, \'PROPOSTA\');return false;"'; 
-	  	} ?> />
+	  	onClick="carregaDadosInclusaoLimiteDscTit(1,'PROPOSTA');return false;"; 
+ 		/>
 
 
 
@@ -256,9 +254,9 @@ $xmlObjLimites = getObjectXML($xmlResult);
 		class="botao"
 		value="Imprimir"
 		<?php if ($qtLimites == 0) {
-			echo 'style="cursor: default;'.$dispM.'" onClick="return false;"';
+			echo 'onClick="return false;';
 		} else {
-			echo 'style="'.$dispM.'" onClick="mostraImprimirLimite(\'PROPOSTA\');return false;"';
+			echo '" onClick="mostraImprimirLimite(\'PROPOSTA\');return false;"';
 		} ?> />
 	
 
@@ -270,7 +268,7 @@ $xmlObjLimites = getObjectXML($xmlResult);
 		id="btnAnalisarLimite"
 		name="btnAnalisarLimite"
 		<?php if ($qtLimites == 0) {
-			echo 'style="cursor: default;" onClick="return false;"';
+			echo 'onClick="return false;';
 		} else {
 			echo 'onClick="confirmaEnvioAnalise();return false;"'; 
 		} ?>/>
@@ -284,7 +282,7 @@ $xmlObjLimites = getObjectXML($xmlResult);
 		id="btnDetalhesProposta"
 		name="btnDetalhesProposta" 
 		<?php if ($qtLimites == 0) {
-			echo 'style="cursor: default;" onClick="return false;"'; 
+			echo 'onClick="return false;';
 		} else { 
 			echo 'onClick="carregaDadosDetalhesProposta(\'PROPOSTA\', nrcontrato, nrproposta);return false;"'; 
 		} ?>/>
@@ -297,7 +295,7 @@ $xmlObjLimites = getObjectXML($xmlResult);
 		id="btnEfetivarLimite"
 		name="btnEfetivarLimite"
 		<?php if ($qtLimites == 0) {
-			echo 'style="cursor: default;" onClick="return false;"';
+			echo 'onClick="return false;';
 		} else {
 			echo 'onClick="efetuarNovoLimite();"';
 		} ?>/>
