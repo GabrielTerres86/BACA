@@ -4452,8 +4452,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
     END IF;  
    
     -- Busca quantidade de dias da carencia
-    IF rw_crawepr.tpeprest = 2 AND nvl(rw_dados.idcarenc,0) > 0 THEN
-      EMPR0011.pc_busca_qtd_dias_carencia(pr_idcarencia => rw_dados.idcarenc
+    IF rw_crawepr.tpemprst = 2 AND nvl(rw_crawepr.idcarenc,0) > 0 THEN
+      EMPR0011.pc_busca_qtd_dias_carencia(pr_idcarencia => rw_crawepr.idcarenc
                                          ,pr_qtddias    => vr_qtdias_carencia
                                          ,pr_cdcritic   => vr_cdcritic
                                          ,pr_dscritic   => vr_dscritic); 
