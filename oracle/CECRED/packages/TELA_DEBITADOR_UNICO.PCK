@@ -1135,7 +1135,7 @@ DECLARE
         pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                            '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
 			WHEN vr_exc_foreignkey THEN
-        pr_dscritic := 'Erro na rotina da tela TELA_DEBITADOR_UNICO - pc_exclui_debitador_horarios: &lt;br&gt;Há agendamentos de processos vinculados ao horário.';
+        pr_dscritic := 'Erro na rotina da tela TELA_DEBITADOR_UNICO - pc_exclui_debitador_horarios: ' || chr(38) || 'lt;br' || chr(38) || 'gt;Há agendamentos de processos vinculados ao horário.';
         -- Carregar XML padrao para variavel de retorno
         pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                            '<Root><Erro>' || pr_dscritic || '</Erro></Root>');																					 
