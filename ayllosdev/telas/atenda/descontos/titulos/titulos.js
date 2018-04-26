@@ -37,7 +37,8 @@
  * 021: [06/04/2018] Luis Fernando (GFT): Mudanças de layot na inclusão de borderos
  * 022: [12/04/2018] Leonardo Oliveira (GFT): Criação dos métodos 'realizarManutencaoDeLimite', 'concluirManutencaoDeLimite' e 'formataManutencaoDeLimite' para a tela de manutenção de limite.
  * 023: [15/04/2018] Leonardo Oliveira (GFT): Criação dos métodos 'formatarTelaAcionamentosDaProposta', 'carregarAcionamentosDaProposta' e 'carregaDadosDetalhesProposta' para a tela de acionamentos/detalhes da proposta, correção dos códicos sobreescritos.
- * 024: [19/04/2018] Leonardo Oliveira (GFT): Criação do método 'selecionaLimiteTitulosProposta', novo parâmetro 'nrctrmnt'/ numero da proposta, ao selecionar uma proposta   
+ * 024: [19/04/2018] Leonardo Oliveira (GFT): Criação do método 'selecionaLimiteTitulosProposta', novo parâmetro 'nrctrmnt'/ numero da proposta, ao selecionar uma proposta.
+ * 025: [26/04/2018] Leonardo Oliveira (GFT): Ajuste nos valores retornados ao buscar propostas.
  */
 
 var contWin    = 0;  // Variável para contagem do número de janelas abertas para impressos
@@ -51,7 +52,7 @@ var dtrating   = 0;  // Data rating (é calculada e alimentada no titulos_limite
 var diaratin   = 0;  // Dia do rating da tabela tt-risco (é alimentada no titulos_limite_incluir.php)
 var vlrrisco   = 0;  // Valor do risco (é alimentada no titulos_limite_incluir.php)
 
-var botaoLiberar   = '';  // Botão Liberar borderô habilitado se analise confirmada. - GFT (André Ávila).
+var botaoLiberar = '';  // Botão Liberar borderô habilitado se analise confirmada. - GFT (André Ávila).
 var sitinctrmnt  = "";  // Variável de parametro para identificar se a proposta é de manutenção. 0 = Não, 1 = Sim. - GFT (André Ávila).
 
 
@@ -611,30 +612,29 @@ function carregaDadosAlteraLimiteDscTitPropostas() {
         return false;
 
     } else {
+        // Mostra mensagem de aguardo
+        showMsgAguardo("Aguarde, carregando dados da Proposta de limites de desconto de t&iacute;tulos ...");
 
-    // Mostra mensagem de aguardo
-    showMsgAguardo("Aguarde, carregando dados da Proposta de limites de desconto de t&iacute;tulos ...");
-    
-    // Carrega conteúdo da opção através de ajax
-    $.ajax({        
-        type: "POST", 
-        url: UrlSite + "telas/atenda/descontos/titulos/titulos_limite_alterar_propostas.php",
-        dataType: "html",
-        data: {
-            nrdconta: nrdconta,
-            nrctrlim: nrcontrato,
-            redirect: "html_ajax"
-        },      
-        error: function(objAjax,responseError,objExcept) {
-            hideMsgAguardo();
-            showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
-        },
-        success: function(response) {
-            $("#divOpcoesDaOpcao3").html(response);
-            controlaLupas(nrdconta);
-        }               
-    });     
-}
+        // Carrega conteúdo da opção através de ajax
+        $.ajax({
+            type: "POST",
+            url: UrlSite + "telas/atenda/descontos/titulos/titulos_limite_alterar_propostas.php",
+            dataType: "html",
+            data: {
+                nrdconta: nrdconta,
+                nrctrlim: nrctrlim,
+                redirect: "html_ajax"
+            },
+            error: function(objAjax,responseError,objExcept) {
+                hideMsgAguardo();
+                showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+            },
+            success: function(response) {
+                $("#divOpcoesDaOpcao3").html(response);
+                controlaLupas(nrdconta);
+            }
+        });
+    }
 
 }
 
@@ -828,17 +828,21 @@ function selecionaLimiteTitulos(id,qtLimites,limite,insitlim,dssitlim, dssitest,
     return false;
 }
 
-function selecionaLimiteTitulosProposta(id,qtLimites,limite,insitlim,dssitlim, dssitest, insitapr, vlLimite, nrctrmnt,inctrmnt) {
+function selecionaLimiteTitulosProposta(pr_id, pr_qtlimites, pr_nrctrlim, pr_vllimite, pr_nrctrmnt, pr_dssitlim, pr_dssitest, pr_dssitapr, pr_insitlim, pr_insitest, pr_insitapr, pr_inctrmnt) {
 
-
-    situacao_analise = dssitest;
-    decisao = insitapr;
-    valor_limite = vlLimite;
-    nrproposta = nrctrmnt;
-
-    nrcontrato = null;
-    idLinhaL = null;
-    situacao_limite = null;
+    idLinhaL = pr_id; // id linha
+    qtLimites = pr_qtlimites; // qtd de propostas
+    nrctrlim = pr_nrctrlim; // limite
+    vllimite = pr_vllimite; // valor do limite
+    nrctrmnt = pr_nrctrmnt; // contrato
+    dssitlim = pr_dssitlim; // desc situação da proposta
+    dssitest = pr_dssitest; // desc situação da analise
+    dssitapr = pr_dssitapr; // desc decisão
+    insitlim = pr_insitlim; // cod situação da proposta
+    insitest = pr_insitest; // cod situação da analise
+    insitapr = pr_insitapr; // cod decisão
+    inctrmnt = pr_inctrmnt; // indica se é contrato de manutenção
+    sitinctrmnt = pr_inctrmnt;
 
     var cor = "";
     
@@ -853,17 +857,9 @@ function selecionaLimiteTitulosProposta(id,qtLimites,limite,insitlim,dssitlim, d
         // Formata cor da linha
         $("#trLimite" + i).css("background-color",cor);
         
-        if (i == id) {
+        if (i == pr_id) {
             // Atribui cor de destaque para limite selecionado
-            $("#trLimite" + id).css("background-color","#FFB9AB");
-            // Armazena número do limite selecionado
-            nrcontrato = limite;
-            idLinhaL = id;
-            cd_situacao_lim = insitlim;
-            situacao_limite = dssitlim;
-            sitinctrmnt = inctrmnt;
-
-
+            $("#trLimite" + idLinhaL).css("background-color","#FFB9AB");
         }
     }
     return false;
@@ -995,7 +991,7 @@ function carregaDadosConsultaLimiteDscTit() {
 function carregaDadosConsultaPropostaDscTit() {
     // Mostra mensagem de aguardo
     showMsgAguardo("Aguarde, carregando dados de desconto de t&iacute;tulos ...");
-    
+
     // Carrega conteúdo da opção através de ajax
     $.ajax({        
         type: "POST", 
@@ -1003,7 +999,7 @@ function carregaDadosConsultaPropostaDscTit() {
         dataType: "html",
         data: {
             nrdconta: nrdconta,
-            nrctrlim: nrcontrato,
+            nrctrlim: nrctrlim,
             redirect: "html_ajax"
         },      
         error: function(objAjax,responseError,objExcept) {
@@ -1021,9 +1017,7 @@ function carregaDadosConsultaPropostaDscTit() {
 // OPÇÃO INCLUIR
 // Carregar os dados para inclusãoo de limite de títulos
 function carregaDadosInclusaoLimiteDscTit(inconfir, tipo) {
-
     showMsgAguardo("Aguarde, carregando dados de desconto de t&iacute;tulos ...");
-
 
     // Carrega conteúdo da opção através de ajax
     $.ajax({        
@@ -1061,11 +1055,11 @@ function mostraTelaAltera() {
         return false;
     }
 
-	hideMsgAguardo();
-	fechaRotinaAltera();
-	carregaDadosAlteraLimiteDscTit();
-	return false;
-/*
+    hideMsgAguardo();
+    fechaRotinaAltera();
+    carregaDadosAlteraLimiteDscTit();
+    return false;
+    /*
     limpaDivGenerica();
 
     $.ajax({
@@ -1093,18 +1087,29 @@ function mostraTelaAltera() {
 }
 
 function confirmaEnvioAnalise(){
-    showConfirmacao('Confirma envio da Proposta para An&aacute;lise de Cr&eacute;dito?', 'Confirma&ccedil;&atilde;o - Ayllos', 'validaAnaliseTitulo();', "blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))", 'sim.gif', 'nao.gif');
+    showConfirmacao(
+        "Confirma envio da Proposta para An&aacute;lise de Cr&eacute;dito?",
+        "Confirma&ccedil;&atilde;o - Ayllos",
+        "validaAnaliseTitulo();",
+        "blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))",
+        "sim.gif",
+        "nao.gif");
+    return false;
 }
 
 //OPÇÂO ANALISAR
 //Avaliar se é possível executar a ação de analisar
 function validaAnaliseTitulo(){
-
-    // pega os valores conforme o status que está na tabela (descomentar quando não estiver usando o mock)
-    var insitapr = decisao;
-    var dssitest = situacao_analise;
-    if (dssitest == 'ANALISE FINALIZADA' && insitapr == 'REJEITADO AUTOMATICAMENTE'){
-        showConfirmacao('Confirma envio da Proposta para An&aacute;lise de Cr&eacute;dito? <br> Observa&ccedil;&atildeo: Ser&aacute; necess&aacute;ria aprova&ccedil;&atilde;o de seu Coordenador pois a mesma foi reprovada automaticamente!', 'Confirma&ccedil;&atilde;o - Ayllos', 'pedeSenhaCoordenador(2,\'enviarPropostaAnaliseComLIberacaoCordenador()\',\'divRotina\');', 'controlaOperacao(\'\');', 'sim.gif', 'nao.gif');
+    if (
+        insitest == 3 &&        // insitest (cod situação da analise) ==  3 (ANALISE FINALIZADA)
+        insitapr == 5 ){        // insitapr (cod decisão) == 5 (REJEITADO AUTOMATICAMENTE)
+        showConfirmacao(
+            "Confirma envio da Proposta para An&aacute;lise de Cr&eacute;dito? <br> Observa&ccedil;&atildeo: Ser&aacute; necess&aacute;ria aprova&ccedil;&atilde;o de seu Coordenador pois a mesma foi reprovada automaticamente!",
+            "Confirma&ccedil;&atilde;o - Ayllos",
+            "pedeSenhaCoordenador(2,\'enviarPropostaAnaliseComLIberacaoCordenador();\',\'divRotina\');",
+            "controlaOperacao(\'\');",
+            "sim.gif",
+            "nao.gif");
     }else{
         enviarPropostaAnalise();
     }
@@ -1124,8 +1129,7 @@ function enviarPropostaAnaliseComLIberacaoCordenador(){
         data: {
             operacao: operacao,
             nrdconta: nrdconta,
-            nrctrlim: nrcontrato,
-
+            nrctrlim: nrctrlim,
             redirect: "html_ajax"
         },
         success: function(response) {
@@ -1155,7 +1159,6 @@ function enviarPropostaAnalise() {
     showMsgAguardo("Aguarde, enviando proposta para an&aacute;lise ...");
 
     var operacao = "ENVIAR_ANALISE";
-
     
     $.ajax({        
         type: "POST", 
@@ -1164,7 +1167,7 @@ function enviarPropostaAnalise() {
         data: {
             operacao: operacao,
             nrdconta: nrdconta,
-            nrctrlim: nrcontrato,
+            nrctrlim: nrctrlim,
             redirect: "html_ajax"
         },      
         error: function(objAjax,responseError,objExcept) {
@@ -1197,8 +1200,8 @@ function efetuarNovoLimite(){
 
 function confirmaNovoLimite(cddopera) {
     showMsgAguardo("Aguarde, efetivando limite ...");
-    
     var operacao = "CONFIMAR_NOVO_LIMITE";
+
     $.ajax({        
         type: "POST", 
         url: UrlSite + "telas/atenda/descontos/manter_rotina.php",
@@ -1206,8 +1209,8 @@ function confirmaNovoLimite(cddopera) {
         data: {
             operacao: operacao,
             nrdconta: nrdconta,
-            nrctrlim: nrcontrato,
-            vllimite: valor_limite,
+            nrctrlim: nrctrlim,
+            vllimite: vllimite,
             cddopera: cddopera,
             redirect: "html_ajax"
         },      
@@ -1217,11 +1220,11 @@ function confirmaNovoLimite(cddopera) {
         },
         success: function(response) {
             try {
-                  eval(response);
-                    hideMsgAguardo();
+                eval(response);
+                hideMsgAguardo();
               } catch (error) {
-                  hideMsgAguardo();
-                  showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
+                hideMsgAguardo();
+                showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
               }
         }           
     });
@@ -1229,7 +1232,7 @@ function confirmaNovoLimite(cddopera) {
 }
 
 function verificaMensagens(mensagem_01,mensagem_02,mensagem_03,mensagem_04,mensagem_05,qtctarel,grupo,vlutiliz,vlexcedi) {
-
+    
     if (mensagem_01 != ''){
 
         showConfirmacao(mensagem_01
@@ -1258,12 +1261,12 @@ function verificaMensagens(mensagem_01,mensagem_02,mensagem_03,mensagem_04,mensa
             dataType: 'html',
             url: UrlSite + 'telas/atenda/descontos/titulos/titulos_tabela_grupo.php',
             data: {
-             mensagem_03: mensagem_03,
-             mensagem_04: mensagem_04,
-             mensagem_05: mensagem_05,
+                mensagem_03: mensagem_03,
+                mensagem_04: mensagem_04,
+                mensagem_05: mensagem_05,
                 nrdconta: nrdconta,
                 qtctarel: qtctarel,
-                   grupo: grupo,
+                grupo: grupo,
                 vlutiliz: vlutiliz,
                 vlexcedi: vlexcedi,
                 redirect: 'html_ajax'
@@ -1282,12 +1285,12 @@ function verificaMensagens(mensagem_01,mensagem_02,mensagem_03,mensagem_04,mensa
         });
     }
     else if (mensagem_04 != ''){
-        showError("inform",mensagem_04,"Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')));verificaMensagens('','','','','"+ mensagem_05 +"','','','','');");
+        showError("inform",mensagem_04,"Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')));verificaMensagens('','','','','"+ mensagem_05 + "','" + qtctarel + "','" + grupo + "','" + vlutiliz + "','" + vlexcedi + "');");
     }
     else if(mensagem_05 != ''){
         showConfirmacao('<center>' + mensagem_05 + '</center>'
                        ,"Confirma&ccedil;&atilde;o - Ayllos"
-                       ,"verificaMensagens('','','','', '','','','','');"
+                       ,"verificaMensagens('','','','', '','" + qtctarel + "','" + grupo + "','" + vlutiliz + "','" + vlexcedi + "');"
                        ,"telaOperacaoNaoEfetuada();"
                        ,"sim.gif","nao.gif");
     }
@@ -1355,7 +1358,7 @@ function aceitarRejeicao(confirm, tipo) {
             showMsgAguardo("Aguarde, confirmando cancelamento da proposta...");
 
             var operacao = "ACEITAR_REJEICAO_LIMITE";
-            
+
             $.ajax({        
                 type: "POST", 
                 url: UrlSite + "telas/atenda/descontos/manter_rotina.php",
@@ -1364,10 +1367,8 @@ function aceitarRejeicao(confirm, tipo) {
                     tipo: tipo,
                     operacao: operacao,
                     nrdconta: nrdconta,
-                    nrctrlim: nrcontrato,
-                    vllimite: valor_limite,
-                    //cddopera: cddopera,
-
+                    nrctrlim: nrctrlim,
+                    vllimite: vllimite,
                     redirect: "html_ajax"
                 },      
                 error: function(objAjax,responseError,objExcept) {
@@ -1594,7 +1595,7 @@ function gravaLimiteDscTit(cddopcao, tipo) {
             complen2: $("#complen2","#frmDadosLimiteDscTit").val(),
             nrcxaps2: normalizaNumero($("#nrcxaps2","#frmDadosLimiteDscTit").val()),
             idcobope: normalizaNumero($('#idcobert', '#frmDadosLimiteDscTit').val()),
-            
+
             // Variáveis globais alimentadas na função validaDadosRating em rating.js 
             nrgarope: nrgarope,
             nrinfcad: nrinfcad,
@@ -1911,50 +1912,50 @@ function abrirTelaGAROPC(cddopcao) {
     var idcobert = normalizaNumero($('#idcobert','#'+nomeForm).val());
     var codlinha = normalizaNumero($('#cddlinha','#'+nomeForm).val());
     var vlropera = $('#vllimite','#'+nomeForm).val();
-    
-    var nrctrlim = '';
-    // Se estamos consultando e está em estudo ou se iremos incluir ou se iremos alterar o limite enviaremos o codigo do contrato ativo
-    if ( (cddopcao == 'C' && cd_situacao_lim == 1) || cddopcao == 'I' || cddopcao == 'A') {
-      nrctrlim = normalizaNumero($('#nrcontratoativo').val());
-    }
-  
-    // Se estivermos alterando, porém não houver cobertura é por que estamos alterando algo antigo (devemos criar um novo para estes casos)
-    if (cddopcao == 'A' && idcobert == '') {
-      cddopcao = 'I';
-    }
 
-    // Carrega conteúdo da opção através do Ajax
-    $.ajax({
-        type: 'POST',
-        dataType: 'html',
-        url: UrlSite + 'telas/garopc/garopc.php',
-        data: {
-            tipaber      : cddopcao,
-            idcobert     : idcobert,
-            nrdconta     : nrdconta,
-            tpctrato     : 3,
-            dsctrliq     : nrctrlim,
-            codlinha     : codlinha,
-            vlropera     : vlropera
+    var nrctrlim = '';
+        // Se estamos consultando e está em estudo ou se iremos incluir ou se iremos alterar o limite enviaremos o codigo do contrato ativo
+        if ( (cddopcao == 'C' && cd_situacao_lim == 1) || cddopcao == 'I' || cddopcao == 'A') {
+          nrctrlim = normalizaNumero($('#nrcontratoativo').val());
+        }
+
+        // Se estivermos alterando, porém não houver cobertura é por que estamos alterando algo antigo (devemos criar um novo para estes casos)
+    if (cddopcao == 'A' && idcobert == '') {
+          cddopcao = 'I';
+          }
+
+              // Carrega conteúdo da opção através do Ajax
+              $.ajax({
+                  type: 'POST',
+                  dataType: 'html',
+                  url: UrlSite + 'telas/garopc/garopc.php',
+                  data: {
+                        tipaber     : cddopcao,
+                        idcobert    : idcobert,
+                        nrdconta    : nrdconta,
+                        tpctrato    : 3,
+                        dsctrliq    : nrctrlim,
+                        codlinha    : codlinha,
+                        vlropera    : vlropera
         },
-        error: function (objAjax, responseError, objExcept) {
-            hideMsgAguardo();
-            showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
+            error: function (objAjax, responseError, objExcept) {
+        hideMsgAguardo();
+        showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
         },
-        success: function (response) {
-            hideMsgAguardo();
-            // Criaremos uma div oculta para conter toda a estrutura da tela GAROPC
-            $('#divUsoGAROPC').html(response).hide();
+    success: function (response) {
+        hideMsgAguardo();
+        // Criaremos uma div oculta para conter toda a estrutura da tela GAROPC
+        $('#divUsoGAROPC').html(response).hide();
             // Iremos incluir o conteúdo do form da div oculta dentro da div principal de descontos
             $("#frmGAROPC", "#divUsoGAROPC").appendTo('#divFormGAROPC');
-            // Iremos remover os botões originais da GAROPC e usar os proprios da tela
+                // Iremos remover os botões originais da GAROPC e usar os proprios da tela
             $("#divBotoes","#frmGAROPC").detach();
             dscShowHideDiv("divFormGAROPC;divBotoesGAROPC","divDscTit_Limite;divBotoesLimite");
             bloqueiaFundo($('#divFormGAROPC'));
             $("#frmDadosLimiteDscTit").css("width", 540);
-        }
-    });
-}
+            }
+            });
+            }
 
 function calcEndividRiscoGrupo(nrdgrupo) {
 
@@ -2699,7 +2700,7 @@ function realizarManutencaoDeLimite(operacao, flgstlcr) {
     showMsgAguardo("Aguarde, carregando dados do contrato...");
     var nrctrlim = normalizaNumero($("#nrctrlim","#frmTitulos").val());
 
-    if(sitinctrmnt == 1){       
+    if(sitinctrmnt == 1){
         nrctrlim = nrcontrato;
     }
 
@@ -2733,7 +2734,8 @@ function realizarManutencaoDeLimite(operacao, flgstlcr) {
     // operação 0 mostra a janela de confirmação
     if(operacao === 0){
         showConfirmacao("Deseja realizar a manuten&ccedil;&atilde;o do contrato?",
-            "Confirma&ccedil;&atilde;o - Ayllos", callback,
+            "Confirma&ccedil;&atilde;o - Ayllos",
+            callback,
             "hideMsgAguardo();blockBackground(parseInt($('#divRotina').css('z-index')));",
             "sim.gif",
             "nao.gif");
@@ -2741,6 +2743,7 @@ function realizarManutencaoDeLimite(operacao, flgstlcr) {
     }
 
     if(operacao === 1){
+
     $.ajax({
         type: "POST",
         url: UrlSite + "telas/atenda/descontos/titulos/titulos_limite_manutencao.php",
@@ -2756,12 +2759,11 @@ function realizarManutencaoDeLimite(operacao, flgstlcr) {
             showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
         },
         success: function (response) {
-             
 
-            if(sitinctrmnt == 1){       
+            if(sitinctrmnt == 1){
 
                 $("#divOpcoesDaOpcao3").html(response);
-             
+
             } else {
 
                 $("#divOpcoesDaOpcao2").html(response);
@@ -2974,7 +2976,7 @@ function formataManutencaoDeLimite(){
 
 function carregaDadosDetalhesProposta(tipo, nrctrlim, nrctrmnt){
     showMsgAguardo("Aguarde, carregando detalhes da proposta ...");
-    
+
     exibeRotina($('#divOpcoesDaOpcao2'));
 
     if(!nrctrlim){

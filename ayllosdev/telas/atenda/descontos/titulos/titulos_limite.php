@@ -28,6 +28,7 @@
 
 				 15/04/2018 - Alteração no botão 'Detalhes da Proposta' (Leonardo Oliveira - GFT).
 
+				 26/04/2018 - Ajuste no botão de voltar, uso da função generica (Leonardo Oliveira - GFT).
 	************************************************************************/
 	 
 	session_start();
@@ -179,11 +180,7 @@
 		type="button" 
 		class="botao" 
 		value="Voltar"  
-		onClick="
-			voltaDiv(2,1,4,'DESCONTO DE T&Iacute;TULOS','DSC TITS');
-			carregaTitulos();
-			return false;" 
-		/>
+		onClick="fecharRotinaGenerico('TITULOS');return false;" />
 
 	<input 
 		type="button"

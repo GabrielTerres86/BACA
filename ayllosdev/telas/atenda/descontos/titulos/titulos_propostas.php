@@ -32,7 +32,8 @@
 
 				 19/04/2018 - Adição do parâmetro 'nrctrmnt' ao ser selecionado uma proposta.  (Leonardo Oliveira - GFT).
 
-				 
+				 26/04/2018 - Ajuste nos valores retornados ao buscar propostas (Leonardo Oliveira - GFT).
+
 	************************************************************************/
 	
 	session_start();
@@ -78,15 +79,23 @@
 	$xmlGetLimites .= "		<nrdconta>".$nrdconta."</nrdconta>";
 	$xmlGetLimites .= "	</Dados>";
 	$xmlGetLimites .= "</Root>";
-		
-$procedure_acao = 'OBTEM_DADOS_PROPOSTA';
-$pakage = 'TELA_ATENDA_DESCTO';
-$glbvars['rotinasTela'][8] = 'PROPOSTAS';
+			
+	$procedure_acao = 'OBTEM_DADOS_PROPOSTA';
+	$pakage = 'TELA_ATENDA_DESCTO';
+	$glbvars['rotinasTela'][8] = 'PROPOSTAS';
 
+	$xmlResult = mensageria(
+		$xmlGetLimites,
+		$pakage,
+		$procedure_acao,
+		$glbvars["cdcooper"],
+		$glbvars["cdagenci"],
+		$glbvars["nrdcaixa"],
+		$glbvars["idorigem"],
+		$glbvars["cdoperad"],
+		"</Root>");
 
-$xmlResult = mensageria($xmlGetLimites, $pakage, $procedure_acao,  $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
-
-$xmlObjLimites = getObjectXML($xmlResult);
+	$xmlObjLimites = getObjectXML($xmlResult);
 
 
 	// Se ocorrer um erro, mostra crítica
@@ -129,31 +138,37 @@ $xmlObjLimites = getObjectXML($xmlResult);
 				
 				<?  for ($i = 0; $i < $qtLimites; $i++) {
 
-						$pr_dtpropos = getByTagName($limites[$i]->tags,"dtpropos");//0
-						$pr_nrctrlim = getByTagName($limites[$i]->tags,"nrctrlim");//1
-						$pr_vllimite = getByTagName($limites[$i]->tags,"vllimite");//2
-						$pr_qtdiavig = getByTagName($limites[$i]->tags,"qtdiavig");//3
-						$pr_cddlinha = getByTagName($limites[$i]->tags,"cddlinha");//4
-						$pr_dssitlim = getByTagName($limites[$i]->tags,"dssitlim");//5
-						$pr_dssitest = getByTagName($limites[$i]->tags,"dssitest");//6
-						$pr_dssitapr = getByTagName($limites[$i]->tags,"dssitapr");//7
-						$pr_nrctrmnt = getByTagName($limites[$i]->tags,"nrctrmnt");//8
+						$pr_dtpropos = getByTagName($limites[$i]->tags,"dtpropos");//0  data da proposta
+						$pr_nrctrlim = getByTagName($limites[$i]->tags,"nrctrlim");//1  contrato
+						$pr_vllimite = getByTagName($limites[$i]->tags,"vllimite");//2  valor do limite
+						$pr_qtdiavig = getByTagName($limites[$i]->tags,"qtdiavig");//3  quantidade de dias de vigência
+						$pr_cddlinha = getByTagName($limites[$i]->tags,"cddlinha");//4  codigo da linha de desconto
+						$pr_nrctrmnt = getByTagName($limites[$i]->tags,"nrctrmnt");//5  contrato
 						
-						$pr_inctrmnt = getByTagName($limites[$i]->tags,"inctrmnt");//9
-						$pr_insitlim = getByTagName($limites[$i]->tags,"insitlim");//9
+						$pr_dssitlim = getByTagName($limites[$i]->tags,"dssitlim");//6  desc situação da proposta
+						$pr_dssitest = getByTagName($limites[$i]->tags,"dssitest");//7  desc situação da analise
+						$pr_dssitapr = getByTagName($limites[$i]->tags,"dssitapr");//8  desc decisão
+
+						$pr_insitlim = getByTagName($limites[$i]->tags,"insitlim");//9  cod situação da proposta
+						$pr_insitest = getByTagName($limites[$i]->tags,"insitest");//10 cod situação da analise
+						$pr_insitapr = getByTagName($limites[$i]->tags,"insitapr");//11 cod decisão
+
+						$pr_inctrmnt = getByTagName($limites[$i]->tags,"inctrmnt");//12
 
 						$mtdClick = "selecionaLimiteTitulosProposta('"
-							.($i + 1)."', '"
-							.$qtLimites."', '"
-							.$pr_nrctrlim."', '"
-							.$pr_insitlim."', '"
-							.$pr_dssitlim."', '"
-							.$pr_dssitest."', '"
-							.$pr_dssitapr."', '"
-							.$pr_vllimite."', '"
-							.$pr_nrctrmnt."', '"
-							.$pr_inctrmnt."');";
-
+							.($i + 1)."', '" 		// id linha
+							.$qtLimites."', '" 		// qtd de propostas
+							.$pr_nrctrlim."', '" 	// limite
+							.$pr_vllimite."', '"	// valor do limite
+							.$pr_nrctrmnt."', '"	// contrato
+							.$pr_dssitlim."', '" 	// desc situação da proposta
+							.$pr_dssitest."', '"	//desc situação da analise
+							.$pr_dssitapr."', '"	// desc decisão
+							.$pr_insitlim."', '" 	// cod situação da proposta
+							.$pr_insitest."', '" 	// cod situação da analise
+							.$pr_insitapr."', '"
+							.$pr_inctrmnt."');";	// cod decisão
+			
 				?>
 					<tr id="trLimite<? echo $i + 1; ?>" onFocus="<? echo $mtdClick; ?>" onClick="<? echo $mtdClick; ?>">
 
@@ -201,7 +216,7 @@ $xmlObjLimites = getObjectXML($xmlResult);
 		type="button"
 		class="botao"
 		value="Voltar"
-		onClick="voltaDiv(2,1,4,'DESCONTO DE T&Iacute;TULOS','DSC TITS');carregaTitulos();return false;" />
+		onClick="fecharRotinaGenerico('TITULOS');return false;" />
 	
 	
 	<input 
