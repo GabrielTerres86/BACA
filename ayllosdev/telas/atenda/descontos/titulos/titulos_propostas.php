@@ -209,9 +209,9 @@ $xmlObjLimites = getObjectXML($xmlResult);
 		class="botao"
 		value="Alterar"
 		<?php if ($qtLimites == 0){
-			echo 'style="cursor: default;'.$dispA.'" onClick="return false;"';
+			echo 'onClick="return false;';
 		} else {
-			echo 'style="'.$dispA.'" onClick="carregaDadosAlteraLimiteDscTitPropostas();return false;"';
+			echo 'onClick="carregaDadosAlteraLimiteDscTitPropostas();return false;"';
 		} ?> />
 	
 
@@ -222,7 +222,7 @@ $xmlObjLimites = getObjectXML($xmlResult);
 		id="btnAceitarRejeicao"
 		name="btnAceitarRejeicao"
 		<?php if ($qtLimites == 0) {
-			echo 'style="cursor: default;" onClick="return false;"';
+			echo 'onClick="return false;';
 		} else {
 			echo 'onClick="aceitarRejeicao(0, \'PROPOSTA\');"';
 		} ?>/>	
@@ -232,7 +232,7 @@ $xmlObjLimites = getObjectXML($xmlResult);
 		class="botao"
 		value="Consultar"
 		<?php if ($qtLimites == 0) {
-			echo 'style="cursor: default;'.$dispC.'" onClick="return false;"';
+			echo 'onClick="return false;';
 		} else {
 			echo 'style="'.$dispC.'" onClick="carregaDadosConsultaPropostaDscTit();return false;"';
 		} ?> />
@@ -244,11 +244,8 @@ $xmlObjLimites = getObjectXML($xmlResult);
 		value="Incluir"
 		id="btnIncluirLimite"
 		name="btnIncluirLimite"
-	 	<?php if (!in_array("I",$glbvars["opcoesTela"])) { 
-	 		echo 'style="cursor: default;display:none;" onClick="return false;"';
-	  	} else { 
-	  		echo 'onClick="carregaDadosInclusaoLimiteDscTit(1, \'PROPOSTA\');return false;"'; 
-	  	} ?> />
+	  	onClick="carregaDadosInclusaoLimiteDscTit(1,'PROPOSTA');return false;"; 
+ 		/>
 
 
 
@@ -257,9 +254,9 @@ $xmlObjLimites = getObjectXML($xmlResult);
 		class="botao"
 		value="Imprimir"
 		<?php if ($qtLimites == 0) {
-			echo 'style="cursor: default;'.$dispM.'" onClick="return false;"';
+			echo 'onClick="return false;';
 		} else {
-			echo 'style="'.$dispM.'" onClick="mostraImprimirLimite(\'PROPOSTA\');return false;"';
+			echo '" onClick="mostraImprimirLimite(\'PROPOSTA\');return false;"';
 		} ?> />
 	
 
@@ -271,7 +268,7 @@ $xmlObjLimites = getObjectXML($xmlResult);
 		id="btnAnalisarLimite"
 		name="btnAnalisarLimite"
 		<?php if ($qtLimites == 0) {
-			echo 'style="cursor: default;" onClick="return false;"';
+			echo 'onClick="return false;';
 		} else {
 			echo 'onClick="confirmaEnvioAnalise();return false;"'; 
 		} ?>/>
@@ -285,7 +282,7 @@ $xmlObjLimites = getObjectXML($xmlResult);
 		id="btnDetalhesProposta"
 		name="btnDetalhesProposta" 
 		<?php if ($qtLimites == 0) {
-			echo 'style="cursor: default;" onClick="return false;"'; 
+			echo 'onClick="return false;';
 		} else { 
 			echo 'onClick="carregaDadosDetalhesProposta(\'PROPOSTA\', nrcontrato, nrproposta);return false;"'; 
 		} ?>/>
@@ -298,7 +295,7 @@ $xmlObjLimites = getObjectXML($xmlResult);
 		id="btnEfetivarLimite"
 		name="btnEfetivarLimite"
 		<?php if ($qtLimites == 0) {
-			echo 'style="cursor: default;" onClick="return false;"';
+			echo 'onClick="return false;';
 		} else {
 			echo 'onClick="efetuarNovoLimite();"';
 		} ?>/>
