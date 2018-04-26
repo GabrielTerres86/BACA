@@ -299,7 +299,7 @@
 		<?php if ($qtLimites == 0) {
 			echo 'onClick="return false;';
 		} else { 
-			echo 'onClick="carregaDadosDetalhesProposta(\'PROPOSTA\', nrcontrato, nrproposta);return false;"'; 
+			echo 'onClick="carregaDadosDetalhesProposta(\'PROPOSTA\', nrctrlim, nrctrmnt); return false;"'; 
 		} ?>/>
 	
 
