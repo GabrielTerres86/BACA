@@ -34,6 +34,8 @@
 
 				 26/04/2018 - Ajuste nos valores retornados ao buscar propostas (Leonardo Oliveira - GFT).
 
+				 26/04/2018 - Ajuste na funcao de chamada da proposta e manutencao (Vitor Shimada Assanuma - GFT)
+
 	************************************************************************/
 	
 	session_start();
@@ -224,7 +226,7 @@
 		class="botao"
 		value="Alterar"
 		<?php if ($qtLimites == 0){
-			echo 'onClick="return false;';
+			echo 'onClick="return false;"';
 		} else {
 			echo 'onClick="carregaDadosAlteraLimiteDscTitPropostas(); return false;"';
 		} ?> />
@@ -237,7 +239,7 @@
 		id="btnAceitarRejeicao"
 		name="btnAceitarRejeicao"
 		<?php if ($qtLimites == 0) {
-			echo 'onClick="return false;';
+			echo 'onClick="return false;"';
 		} else {
 			echo 'onClick="aceitarRejeicao(0, \'PROPOSTA\');"';
 		} ?>/>	
@@ -247,7 +249,7 @@
 		class="botao"
 		value="Consultar"
 		<?php if ($qtLimites == 0) {
-			echo 'onClick="return false;';
+			echo 'onClick="return false;"';
 		} else {
 			echo 'style="'.$dispC.'"';
 			echo 'onClick="carregaDadosConsultaPropostaDscTit(); return false;" ';
@@ -269,7 +271,7 @@
 		class="botao"
 		value="Imprimir"
 		<?php if ($qtLimites == 0) {
-			echo 'onClick="return false; ';
+			echo 'onClick="return false;"';
 		} else {
 			echo 'onClick="mostraImprimirLimite(\'PROPOSTA\'); return false;"';
 		} ?> />
@@ -283,7 +285,7 @@
 		id="btnAnalisarLimite"
 		name="btnAnalisarLimite"
 		<?php if ($qtLimites == 0) {
-			echo 'onClick="return false;';
+			echo 'onClick="return false;"';
 		} else {
 			echo 'onClick="confirmaEnvioAnalise(); return false;"'; 
 		} ?>/>
@@ -297,7 +299,7 @@
 		id="btnDetalhesProposta"
 		name="btnDetalhesProposta" 
 		<?php if ($qtLimites == 0) {
-			echo 'onClick="return false;';
+			echo 'onClick="return false;"';
 		} else { 
 			echo 'onClick="carregaDadosDetalhesProposta(\'PROPOSTA\', nrctrlim, nrctrmnt); return false;"'; 
 		} ?>/>
@@ -310,7 +312,7 @@
 		id="btnEfetivarLimite"
 		name="btnEfetivarLimite"
 		<?php if ($qtLimites == 0) {
-			echo 'onClick="return false;';
+			echo 'onClick="return false;"';
 		} else {
 			echo 'onClick="efetuarNovoLimite();" ';
 		} ?>/>

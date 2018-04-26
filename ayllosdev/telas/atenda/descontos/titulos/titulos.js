@@ -39,6 +39,7 @@
  * 023: [15/04/2018] Leonardo Oliveira (GFT): Criação dos métodos 'formatarTelaAcionamentosDaProposta', 'carregarAcionamentosDaProposta' e 'carregaDadosDetalhesProposta' para a tela de acionamentos/detalhes da proposta, correção dos códicos sobreescritos.
  * 024: [19/04/2018] Leonardo Oliveira (GFT): Criação do método 'selecionaLimiteTitulosProposta', novo parâmetro 'nrctrmnt'/ numero da proposta, ao selecionar uma proposta.
  * 025: [26/04/2018] Leonardo Oliveira (GFT): Ajuste nos valores retornados ao buscar propostas.
+ * 026: [26/04/2018] Vitor Shimada Assanuma (GFT): Ajuste na funcao de chamada da proposta e manutencao
  */
 
  // variaveis propostas
@@ -617,9 +618,7 @@ function carregaResgatarTitulos() {
 
 // Carregar os dados para consulta de propostas de limite de desconto de títulos
 function carregaDadosAlteraLimiteDscTitPropostas() {
-
     if (sitinctrmnt == 1){
-
         realizarManutencaoDeLimite(1,1);
         return false;
 
@@ -2653,20 +2652,19 @@ function visualizarTituloDeBordero() {
 }
 
 function realizarManutencaoDeLimite(operacao, flgstlcr) {
-
     // operacao = 0 (mostrar dialogo confirmacao), operacao = 1 (carregar tela), operacao = 3 (executar operacao)
     showMsgAguardo("Aguarde, carregando dados do contrato...");
-    var nrctrlim = normalizaNumero($("#nrctrlim","#frmTitulos").val());
+    var var_nrctrlim = normalizaNumero($("#nrctrlim","#frmTitulos").val());
 
     if(sitinctrmnt == 1){
-        nrctrlim = nrcontrato;
+        var_nrctrlim = nrctrlim;
     }
 
     if(!operacao){operacao = 0;}
 
     var callback = "realizarManutencaoDeLimite(1,"+flgstlcr+" );";
 
-    if(nrctrlim == 0){
+    if(var_nrctrlim == 0){
         showError(
                 "inform",
                 "Não existe contrato ativo.",
@@ -2701,14 +2699,13 @@ function realizarManutencaoDeLimite(operacao, flgstlcr) {
     }
 
     if(operacao === 1){
-
     $.ajax({
         type: "POST",
         url: UrlSite + "telas/atenda/descontos/titulos/titulos_limite_manutencao.php",
         dataType: "html",
         data: {
             nrdconta: nrdconta,
-            nrctrlim: nrctrlim,
+            nrctrlim: var_nrctrlim,
             inctrmnt: sitinctrmnt,
             redirect: "html_ajax"
         },
@@ -2717,13 +2714,9 @@ function realizarManutencaoDeLimite(operacao, flgstlcr) {
             showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
         },
         success: function (response) {
-
             if(sitinctrmnt == 1){
-
                 $("#divOpcoesDaOpcao3").html(response);
-
             } else {
-
                 $("#divOpcoesDaOpcao2").html(response);
             }
 
