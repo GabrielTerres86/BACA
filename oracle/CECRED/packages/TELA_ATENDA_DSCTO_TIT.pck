@@ -616,6 +616,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_DSCTO_TIT IS
                    Alterado as procedures pc_confirmar_novo_limite e pc_negar_proposta. Alterações necessárias para adaptação 
                    do processo de criação de proposta de limite de desconto de títulos (Paulo Penteado (GFT) KE00726701-304)
       13/04/2018 - Criadas funcionalidades de inclusão, alteração e resgate de borderôes (Luis Fernando (GFT)
+      23/04/2018 - Alteração para que quando seja adicionado um titulo ao bordero, alterar o status do bordero para 'Em estudo' (Vitor (GFT))
+      25/04/2018 - Alterado o calculo das porcentagens da Liquidez (Vitor (GFT))
   ---------------------------------------------------------------------------------------------------------------------*/
 
 
@@ -890,13 +892,13 @@ BEGIN
    end   if;
    close cr_crawlim;
 
-   if  rw_crawlim.insitlim not in (1,5) then
-       vr_dscritic := 'Para esta operação, a situação da proposta deve ser "Em estudo" ou "Aprovada".';
+   if  rw_crawlim.insitapr not in (1,2) then
+       vr_dscritic := 'Para esta operação, a Decisão deve ser "Aprovada Automaticamente" ou "Aprovada Manual".';
        raise vr_exc_saida;
    end if;
 
-   if  rw_crawlim.insitapr not in (1,2) then
-       vr_dscritic := 'Para esta operação, a Decisão deve ser "Aprovada Automaticamente" ou "Aprovada Manual".';
+   if  rw_crawlim.insitlim not in (1,5) then
+       vr_dscritic := 'Para esta operação, a situação da proposta deve ser "Em estudo" ou "Aprovada".';
        raise vr_exc_saida;
    end if;
 
@@ -2723,7 +2725,8 @@ BEGIN
       update crawlim lim
       set    vllimite = pr_vllimite
             ,cddlinha = pr_cddlinha
-            ,insitest = 1
+            ,insitlim = 1
+            ,insitest = 0
             ,dtenvest = null
             ,hrenvest = 0
             ,cdopeste = ' '
