@@ -312,7 +312,7 @@ CREATE OR REPLACE PACKAGE cecred.paga0003 IS
                                        ,pr_dscritic OUT VARCHAR2                         -- Descrição do erro retornado
                                        );
   -- Rotina para retornar os convênios de acordo com os parâmetros informados
-  PROCEDURE pc_busca_convenios(pr_cdcooper IN crapcop.cdcooper%TYPE            -- Código da cooperativa
+  PROCEDURE pc_busca_convenios_bcb(pr_cdcooper IN crapcop.cdcooper%TYPE            -- Código da cooperativa
                               ,pr_cdempres IN tbconv_arrecadacao.cdempres%TYPE -- Código do convênio
                               ,pr_des_erro OUT VARCHAR2             	         -- Saida OK/NOK
                               ,pr_clob_ret OUT CLOB                            -- Tabela Historico
@@ -8366,7 +8366,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
     END pc_gera_arrecadacao_bancoob;
     
     -- Rotina para retornar os convênios de acordo com os parâmetros informados
-    PROCEDURE pc_busca_convenios(pr_cdcooper IN crapcop.cdcooper%TYPE            -- Código da cooperativa
+    PROCEDURE pc_busca_convenios_bcb(pr_cdcooper IN crapcop.cdcooper%TYPE            -- Código da cooperativa
                                 ,pr_cdempres IN tbconv_arrecadacao.cdempres%TYPE -- Código do convênio
                                 ,pr_des_erro OUT VARCHAR2             	         -- Saida OK/NOK
                                 ,pr_clob_ret OUT CLOB                            -- Tabela Historico
@@ -8375,7 +8375,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
                                 ) IS
       /* .............................................................................
        
-       Programa: pc_busca_convenios
+       Programa: pc_busca_convenios_bcb
        Autor   : Supero
        Data    : Janeiro/2018.                    Ultima atualizacao: 
 
@@ -8472,8 +8472,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
         pr_cdcritic:= 0;
         
         -- Chamar rotina de gravação de erro
-        pr_dscritic:= 'Erro na paga0003.pc_busca_convenios --> '|| SQLERRM;
-    END pc_busca_convenios;
+        pr_dscritic:= 'Erro na paga0003.pc_busca_convenios_bcb --> '|| SQLERRM;
+    END pc_busca_convenios_bcb;
     -- Fim -- PRJ406
   
 END paga0003;
