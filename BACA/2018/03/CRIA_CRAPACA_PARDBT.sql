@@ -216,7 +216,7 @@ begin
                  VALUES('DEBITADOR_PR_RES_CONSULTAR',
                         'TELA_DEBITADOR_UNICO',
                         'pc_busca_debitador_priori_res',
-                        '',
+                        'pr_cdcooper',
                         rw_craprdr.nrseqrdr);
                              
     dbms_output.put_line('Insere CRAPACA -> DEBITADOR_PR_RES_CONSULTAR -> TELA_DEBITADOR_UNICO.pc_busca_debitador_priori_res');
@@ -482,35 +482,6 @@ begin
                         rw_craprdr.nrseqrdr);
                              
     dbms_output.put_line('Insere CRAPACA -> DEBITADOR_COOP_BUSCAR -> TELA_DEBITADOR_UNICO.pc_busca_debitador_coop');
-    
-  END IF;
-  
-  CLOSE cr_crapaca;
-  
-     -- TELA_PARDBT - ACAO BUSCA HORÁRIOS NÃO CADASTRADOS PARA UM PROCESSO
-  OPEN cr_crapaca(pr_nmdeacao => 'DEBITADOR_PR_BUSCA_ERRO'
-                 ,pr_nmpackag => 'TELA_DEBITADOR_UNICO'
-                 ,pr_nmproced => 'pc_busca_debitador_priori_erro'
-                 ,pr_nrseqrdr => rw_craprdr.nrseqrdr);
-                   
-  FETCH cr_crapaca INTO rw_crapaca;
-    
-  -- Verifica se existe a ação tela do ayllos web
-  IF cr_crapaca%NOTFOUND THEN
-    
-    -- Insere ação da tela do ayllos web
-    INSERT INTO crapaca(nmdeacao, 
-                        nmpackag, 
-                        nmproced, 
-                        lstparam, 
-                        nrseqrdr) 
-                 VALUES('DEBITADOR_PR_BUSCA_ERRO',
-                        'TELA_DEBITADOR_UNICO',
-                        'pc_busca_debitador_priori_erro',
-                        'pr_cdcooper',
-                        rw_craprdr.nrseqrdr);
-                             
-    dbms_output.put_line('Insere CRAPACA -> DEBITADOR_PR_BUSCA_ERRO -> TELA_DEBITADOR_UNICO.pc_busca_debitador_priori_erro');
     
   END IF;
   
