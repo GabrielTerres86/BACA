@@ -1205,6 +1205,8 @@ DECLARE
 		
 		vr_cd_erro crapcri.cdcritic%TYPE;             
     vr_ds_erro crapcri.dscritic%TYPE;
+		
+		vr_qtd_prog_erro NUMBER;
 
     ----------->>> CURSORES <<<--------
 
@@ -1260,20 +1262,27 @@ BEGIN
                            pr_tag_cont => NULL,
                            pr_des_erro => vr_dscritic);
 													 
-		gen_debitador_unico.pc_valida_exec_emergencial(pr_cdcooper           => pr_cdcooper
+		SELECT COUNT(1)
+		  INTO vr_qtd_prog_erro
+      FROM crapprm
+     WHERE cdacesso = 'CTRL_ERRO_PRG_DEBITADOR'
+       AND cdcooper = pr_cdcooper 
+       AND substr(dsvlrprm,1,10) = to_char(SYSDATE,'dd/mm/rrrr');													
+
+    IF vr_qtd_prog_erro > 0 THEN		
+		  gen_debitador_unico.pc_valida_exec_emergencial(pr_cdcooper         => pr_cdcooper
                                                   ,pr_tpexec_emergencial => 'E'
 																									,pr_cd_prg_erro        => vr_cd_prg_erro
                                                   ,pr_dh_erro            => vr_dh_erro
                                                   ,pr_nrprioridade       => vr_nrprioridade
                                                   ,pr_cd_erro            => vr_cd_erro
                                                   ,pr_ds_erro            => vr_ds_erro);
-															
-		IF vr_ds_erro <> '' THEN
-			vr_dscritic := vr_ds_erro;
-			RAISE vr_exc_saida;
-		END IF;
-
-    IF vr_nrprioridade IS NOT NULL THEN		
+																									
+			IF vr_ds_erro IS NOT NULL THEN
+				vr_dscritic := vr_ds_erro;
+				RAISE vr_exc_saida;
+			END IF; 	
+		
 			OPEN cr_processo(vr_nrprioridade);
 			FETCH cr_processo INTO rw_processo;
 			CLOSE cr_processo;
@@ -3360,6 +3369,7 @@ DECLARE
 		     , cop.nmrescop
 		  FROM crapcop cop
 		 WHERE cop.flgativo = 1
+		   AND cop.cdcooper = 3
 		 ORDER BY nmrescop;
 		rw_crapcop cr_crapcop%ROWTYPE;
 
