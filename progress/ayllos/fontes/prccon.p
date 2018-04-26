@@ -598,7 +598,7 @@ PROCEDURE pi-busca-convenio:
   { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
 
   /* Efetuar a chamada da rotina Oracle */ 
-  RUN STORED-PROCEDURE pc_busca_convenios-1
+  RUN STORED-PROCEDURE pc_busca_convenios_bcb
       aux_handproc = PROC-HANDLE NO-ERROR(INPUT par_cdcooper, /*Cooperativa*/
                                           INPUT par_cdempres, /*Convenio   */
                                          OUTPUT "",           /*Saida OK/NOK */
@@ -607,7 +607,7 @@ PROCEDURE pi-busca-convenio:
                                          OUTPUT "").          /*Desc. critica*/
 
   /* Fechar o procedimento para buscarmos o resultado */ 
-  CLOSE STORED-PROC pc_busca_convenios-1
+  CLOSE STORED-PROC pc_busca_convenios_bcb
          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
 
   { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }HIDE MESSAGE NO-PAUSE.
@@ -615,10 +615,10 @@ PROCEDURE pi-busca-convenio:
   /* Busca possíveis erros */ 
   ASSIGN aux_cdcritic = 0
          aux_dscritic = ""
-         aux_cdcritic = pc_busca_convenios-1.pr_cdcritic 
-                        WHEN pc_busca_convenios-1.pr_cdcritic <> ?
-         aux_dscritic = pc_busca_convenios-1.pr_dscritic 
-                        WHEN pc_busca_convenios-1.pr_dscritic <> ?.
+         aux_cdcritic = pc_busca_convenios_bcb.pr_cdcritic 
+                        WHEN pc_busca_convenios_bcb.pr_cdcritic <> ?
+         aux_dscritic = pc_busca_convenios_bcb.pr_dscritic 
+                        WHEN pc_busca_convenios_bcb.pr_dscritic <> ?.
 
   /* Apresenta a critica */
   IF  aux_cdcritic <> 0 OR aux_dscritic <> "" THEN
@@ -636,7 +636,7 @@ PROCEDURE pi-busca-convenio:
       END.
 
   /* Buscar o XML na tabela de retorno da procedure Oracle */ 
-  ASSIGN xml_req = pc_busca_convenios-1.pr_clob_ret.
+  ASSIGN xml_req = pc_busca_convenios_bcb.pr_clob_ret.
 
   /* Ler o XML de retorno da proc e criar os registros na tt-historico
      para visualizacao dos registros na tela */
