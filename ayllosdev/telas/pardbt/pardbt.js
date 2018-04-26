@@ -285,7 +285,7 @@ function carregarHistorico(tporigem) {
 		},
 		error   : function(objAjax,responseError,objExcept) {
 			hideMsgAguardo();
-			showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','estadoInicialCab();');
+			showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','estadoInicial();');
 		},
 		success : function(response) { 
 			if ( response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1 ) {
@@ -326,10 +326,9 @@ function carregarFormConfigEm() {
 		},
 		error: function (objAjax, responseError, objExcept) {
 			hideMsgAguardo();
-			showError('error', 'N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'estadoInicialCab();');
+			showError('error', 'N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'estadoInicial();');
 		},
 		success: function (response) {
-			console.log(response);
 			if (response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1) {
 				try {
 					$('#divConteudoOpcao')
@@ -366,20 +365,24 @@ function carregarProcessos() {
 		dataType: 'html',
 		url: UrlSite + 'telas/pardbt/' + subFolder + '/carrega_processos.php',
 		data: {
+			cdcooper: $('#cdcooper', '#frmDet').val(),
 			redirect: 'script_ajax'
 		},
 		error: function (objAjax, responseError, objExcept) {
 			hideMsgAguardo();
-			showError('error', 'N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'estadoInicialCab();');
+			showError('error', 'N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'estadoInicial();');
 		},
 		success: function (response) {
+			console.log(response);
 			if (response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1) {
 				try {
 					$('#divProgramas')
 					 	.empty()
-						.html(response);
+						.html(response)
+						.css({'display':'block'});
 					
 					formataProcessos();
+					formataFormularioConfigurar();
 					trocaBotao('Executar');
 
 					hideMsgAguardo();
@@ -413,7 +416,7 @@ function carregarProcessoErro() {
 		},
 		error: function (objAjax, responseError, objExcept) {
 			hideMsgAguardo();
-			showError('error', 'N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'estadoInicialCab();');
+			showError('error', 'N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'estadoInicial();');
 		},
 		success: function (response) {
 			if (response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1) {
@@ -637,7 +640,6 @@ function formataFormularioConfigurar() {
 	});
 
 	$('label[for="cdcooper"]', '#frmDet').addClass('rotulo').css('width', '130px');
-	$('label[for="tipoExecucao"]', '#frmDet').addClass('rotulo').css('width', '130px');
 
 	$('#cdcooper', '#frmDet').focus();
 }
@@ -718,32 +720,12 @@ function formataHorariosExluir() {
 }
 
 function trocaCooperativa() {
-	$('#tipoExecucao', '#frmDet').val('');
-	$('#divProgramas').empty();
-	trocaBotao('');
-}
-
-function processaExecucaoEmerg() {
-	var tipoExecucao = $('#tipoExecucao', '#frmDet').val();
-
-	if (tipoExecucao == '') {
+	if ($('#cdcooper', '#frmDet').val() == '') {
+		$('#divProgramas').empty();
 		return false;
 	}
 
-	if ($('#cdcooper', '#frmDet').val() == '') {
-		showError("inform", "A cooperativa deve ser informada. " ,
-			"Alerta - Ayllos", "$('#cdcooper', '#frmDet').focus();");
-	}
-
-	$('#divProgramas').empty();
-	trocaBotao('');
-
-	if (tipoExecucao == 'P') { // Programas específicos
-		carregarProcessos();
-	}
-	else {
-		carregarProcessoErro();
-	}
+	carregarProcessos();
 }
 
 function carregaDetalhamentoHorarios(){	
@@ -762,7 +744,7 @@ function carregaDetalhamentoHorarios(){
 		},
 		error   : function(objAjax,responseError,objExcept) {
 			hideMsgAguardo();
-			showError('error','N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','estadoInicialCab();');
+			showError('error','N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','estadoInicial();');
 		},
 		success : function(response) { 
 			if ( response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1 ) {
@@ -820,7 +802,7 @@ function carregarPrioridadesProcessos(nrprioridade) {
 		},
 		error: function (objAjax, responseError, objExcept) {
 			hideMsgAguardo();
-			showError('error', 'N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'estadoInicialCab();');
+			showError('error', 'N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'estadoInicial();');
 		},
 		success: function (response) {
 			if (response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1) {

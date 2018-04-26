@@ -27,16 +27,22 @@
 
 	isPostMethod();		
 
+	$cdcooper = $_POST['cdcooper'];
+
+	if (empty($cdcooper)) {
+		exibirErro('error','Cooperativa não informada.','Alerta - Ayllos',"$('#cdcooper', '#frmDet').val()",false);
+	}
+
     // Monta o xml de requisição
 	$xml = "<Root>";
     $xml .= " <Dados>";
+	$xml .= "   <cdcooper>" . $cdcooper . "</cdcooper>";
     $xml .= " </Dados>";
     $xml .= "</Root>";
 
     $xmlResult = mensageria($xml, "DEBITADOR_UNICO", "DEBITADOR_PR_RES_CONSULTAR", 
 		$glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], 
-		$glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");    
-
+		$glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");  
 
 	$xmlObjeto = getObjectXML($xmlResult);
 
@@ -49,9 +55,10 @@
 	}
 	
 	$processos = $xmlObjeto->roottag->tags[0]->tags;
+	$tipoExecucao = getByTagName($xmlObjeto->roottag->tags[1]->tags, 'tipoexecucao');
 
-    
-    echo '<p style="text-align: center; color: grey; padding:7px;">Selecione os processos que deseja executar emergencialmente.</p>';
+	echo '<input type="hidden" id="tipoExecucao" value="' . $tipoExecucao . '">';
+    echo '<p style="text-align: center; color: grey; padding:7px;">Selecione os processos que deseja executar emergencialmente (' . ($tipoExecucao == 'E' ? 'Programa que ocasionou erro' : utf8ToHtml('Programas específicos')) . ').</p>';
     
 	echo '	<div class="divRegistros">';
 	echo '		<table>';
