@@ -1260,25 +1260,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
     rw_crapass     cr_crapass%rowtype;
     rw_crapass_log cr_crapass%rowtype;
       
-    /*cursor cr_crapfin(pr_cdcooper in crapfin.cdcooper%type
-                       ,pr_cdfinemp in crapfin.cdfinemp%type) is
-        select crapfin.tpfinali
-          from crapfin
-         where crapfin.cdcooper = pr_cdcooper
-           and crapfin.cdfinemp = pr_cdfinemp;
-      rw_crapfin cr_crapfin%rowtype;*/
-      
-     /* -- Busca dos dados do contrato
-      cursor cr_crapepr (pr_cdcooper in crapepr.cdcooper%type,
-                         pr_nrdconta in crapepr.nrdconta%type,
-                         pr_nrctremp in crapepr.nrctremp%type) is
-        select 1
-          from crapepr
-         where crapepr.cdcooper = pr_cdcooper
-           and crapepr.nrdconta = pr_nrdconta
-           and crapepr.nrctremp = pr_nrctremp;
-      vr_flgexepr pls_integer := 0;*/
-      
     vr_nrdrowid      rowid;
     vr_exc_saida     exception;
     vr_exc_erro_500  exception;
@@ -1424,31 +1405,42 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
         -- Atualiza os dados da proposta
         begin
            update crawlim lim
-           set    insitapr = case when pr_insitapr = 0 then 0 -- [erro]     nao analisado
-                                  when pr_insitapr = 1 then 1 -- [aprovar]  aprovado automaticamente
-                                  when pr_insitapr = 2 then 5 -- [reprovar] rejeitado automaticamente
-                                  when pr_insitapr = 3 then 0 -- [derivar]  nao analisado
-                                  else 0 -- nao analisado
-                             end
-                 ,cdopeapr = decode(pr_tpretest,'M','MOTOR','ESTEIRA')
-                 ,dtaprova = pr_rw_crapdat.dtmvtolt
-                 ,hraprova = gene0002.fn_busca_time
-                 ,insitest = case when pr_insitapr = 0 then 0 -- [erro]     nao enviado
-                                  when pr_insitapr = 1 then 3 -- [aprovar]  analise finalizada
-                                  when pr_insitapr = 2 then 3 -- [reprovar] analise finalizada
-                                  when pr_insitapr = 3 then 2 -- [derivar]  enviada analise manual
-                                  else 0 -- nao enviado
-                             end
-                 ,dsobscmt = decode(pr_tpretest, 'E', substr(pr_dsobscmt,1,678), lim.dsobscmt) -- Aprovaçao via Motor
-                 ,dsnivris = decode(pr_tpretest, 'M', nvl(pr_indrisco, lim.dsnivris), lim.dsnivris)
-                 ,dtdscore = nvl(pr_dtdscore, nvl(lim.dtdscore,trunc(sysdate)))
-                 ,dsdscore = nvl(pr_dsdscore, lim.dsdscore)
-                 ,insitlim = case when pr_insitapr = 0 then 1 -- [erro]     em estudo
+           set    insitlim = case when pr_insitapr = 0 then 1 -- [erro]     em estudo
                                   when pr_insitapr = 1 then 5 -- [aprovar]  aprovado
                                   when pr_insitapr = 2 then 6 -- [reprovar] nao aprovado
                                   when pr_insitapr = 3 then 1 -- [derivar]  em estudo
                                   else 1 -- em estudo
                              end
+                 ,insitest = case when pr_insitapr = 0 then 0 -- [erro]     nao enviado
+                                  when pr_insitapr = 1 then 3 -- [aprovar]  analise finalizada
+                                  when pr_insitapr = 2 then 3 -- [reprovar] analise finalizada
+                                  when pr_insitapr = 3 then 2 -- [derivar ou com restricao]  enviada analise manual
+                                  when pr_insitapr = 4 then 3 -- [refazer]  analise finalizada
+                                  else 0 -- nao enviado
+                             end
+                 ,insitapr = case when pr_tpretest = 'M' then
+                                       case when pr_insitapr = 0 then 0 -- [erro]     nao analisado
+                                  when pr_insitapr = 1 then 1 -- [aprovar]  aprovado automaticamente
+                                  when pr_insitapr = 2 then 5 -- [reprovar] rejeitado automaticamente
+                                  when pr_insitapr = 3 then 0 -- [derivar]  nao analisado
+                                  else 0 -- nao analisado
+                             end
+                                  else
+                                       case when pr_insitapr = 0 then 0 -- [nao analisado] nao analisado
+                                            when pr_insitapr = 1 then 2 -- [aprovado]      aprovado manual
+                                            when pr_insitapr = 2 then 4 -- [nao aprovado]  rejeitado manual
+                                            when pr_insitapr = 4 then 8 -- [refazer]       refazer
+                                            when pr_insitapr = 3 then 4 -- [com restricao] rejeitado manual
+                                            else 0 -- nao analisado
+                                       end
+                             end
+                 ,cdopeapr = decode(pr_tpretest,'M','MOTOR','ESTEIRA')
+                 ,dtaprova = pr_rw_crapdat.dtmvtolt
+                 ,hraprova = gene0002.fn_busca_time
+                 ,dsobscmt = decode(pr_tpretest, 'E', substr(pr_dsobscmt,1,678), lim.dsobscmt) -- Aprovaçao via Motor
+                 ,dsnivris = decode(pr_tpretest, 'M', nvl(pr_indrisco, lim.dsnivris), lim.dsnivris)
+                 ,dtdscore = nvl(pr_dtdscore, nvl(lim.dtdscore,trunc(sysdate)))
+                 ,dsdscore = nvl(pr_dsdscore, lim.dsdscore)
            where  lim.cdcooper = pr_cdcooper
            and    lim.nrdconta = pr_nrdconta
            and    lim.nrctrlim = pr_nrctrlim
@@ -1683,14 +1675,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
        RETURN;
      END IF;
 
+     -- 1 – Empréstimos/Financiamento 
+     -- 2 – Desconto Cheques - Limite
+     -- 3 – Desconto Títulos - Limite
+     -- 4 – Cartão de Crédito
+     -- 5 – Limite de Crédito
+     -- 6 – Desconto Cheque – Borderô
+     -- 7 – Desconto de Título – Borderô 
+
      if    pr_tpprodut = 1 then -- Proposta de Emprestimo
            vr_tpproduto := 0;
-     elsif pr_tpprodut = 2 then -- Limite Desconto Titulo
+     elsif pr_tpprodut = 3 then -- Limite Desconto Titulo
            vr_tpproduto := 3;
      end   if;
-     --vr_tpproduto := 3;-- popd  adicionado temporariamente para forçar o retorno da ibratan cair nas rotinas de limite de desconto de titulo
 
-     if    vr_tpproduto = 0 then -- Proposta de Emprestimo
            select case pr_insitapr when  0 then 'NAO ANALISADO'
                                    when  1 then 'APROVADO'
                                    when  2 then 'NAO APROVADO'
@@ -1702,22 +1700,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
            into   vr_dssitapr
            from   dual;
            
-     elsif vr_tpproduto = 3 then -- Limite Desconto Titulo
-           select case pr_insitapr when 0 then 'Nao Analisado'
-                                   when 1 then 'Aprovado Automaticamente'
-                                   when 2 then 'Aprovado Manual'
-                                   when 3 then 'Aprovada Contengencia'
-                                   when 4 then 'Rejeitado Manual'
-                                   when 5 then 'Rejeitado Automaticamente'
-                                   when 6 then 'Rejeitado Contingencia'
-                                   when 7 then 'Nao Analisado'
-                                   when 8 then 'Refazer'
-                                   else 'Sit Aprov Desconhecida'
-                  end ||pr_insitapr
-           into   vr_dssitapr
-           from   dual;
-     end   if;
-
       -- Para cada requisicao sera criado um numero de transacao
       ESTE0001.pc_grava_acionamento( pr_cdcooper                 => pr_cdcooper,
                                      pr_cdagenci                 => 1,
@@ -1793,7 +1775,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
       END IF;
 
       -- Proposta de Emprestimo
-     IF    vr_tpproduto = 1 THEN
+     IF    pr_tpprodut = 1 THEN
         -- Atualiza os dados da proposta do servico 01
         pc_atualiza_prop_srv_emprestim(pr_cdcooper    => pr_cdcooper    --> Codigo da cooperativa
                                       ,pr_nrdconta    => pr_nrdconta    --> Numero da conta
@@ -1812,7 +1794,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
         RAISE vr_exc_saida;
         
      --    Limite Desconto Titulos   
-     elsif vr_tpproduto = 3 then
+     elsif pr_tpprodut = 3 then
            pc_atualiza_prop_srv_limdesct(pr_cdcooper    => pr_cdcooper    --> Codigo da cooperativa
                                         ,pr_nrdconta    => pr_nrdconta    --> Numero da conta
                                         ,pr_nrctrlim    => pr_nrctremp
@@ -1828,6 +1810,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
                                         ,pr_dscritic    => vr_dscritic    --> Descricao da critica
                                         ,pr_msg_detalhe => vr_msg_detalhe --> Detalhe da mensagem
                                         ,pr_des_reto    => vr_des_reto);  --> Erros do processo);
+        RAISE vr_exc_saida;
 
       ELSE
         vr_status      := 202;
@@ -2742,7 +2725,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
      vr_dssitret     varchar2(100);        --> Situaçao de retorno
      vr_nrtransacao  number(25) := 0;      --> Numero da transacao	
      vr_inpessoa     pls_integer := 0;     --> 1 - PF/ 2 - PJ		
-     vr_insitana     crawlim.insitapr%type; --> Situacao Aprovacao(0-Em estudo/1-Aprovado/2-Nao aprovado/3-Restricao/4-Refazer)
+     vr_insitapr     crawlim.insitapr%type; --> Situacao Aprovacao(0-Em estudo/1-Aprovado/2-Nao aprovado/3-Restricao/4-Refazer)
   			
      -- Acionamento 
      cursor cr_aciona is
@@ -3082,13 +3065,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
   			
      --  Tratar status
      if    lower(pr_dsresana) = 'aprovar' then
-           vr_insitana := 1;
+           vr_insitapr := 1;
      elsif lower(pr_dsresana) = 'reprovar' then
-           vr_insitana := 2;
+           vr_insitapr := 2;
      elsif lower(pr_dsresana) = 'derivar' then
-           vr_insitana := 3;
+           vr_insitapr := 3;
      else
-           vr_insitana := 0;
+           vr_insitapr := 0;
      end if;
           
      -- Atualizar proposta
@@ -3099,7 +3082,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
                   ,pr_tpctrlim    => rw_crawlim.tpctrlim
                   ,pr_tpretest    => 'M'                             --> Retorno Motor
                   ,pr_rw_crapdat  => rw_crapdat
-                  ,pr_insitapr    => vr_insitana
+                  ,pr_insitapr    => vr_insitapr
                   ,pr_dsdscore    => vr_desscore                     --> Descriçao Score Boa Vista
                   ,pr_dtdscore    => to_date(vr_datscore,'RRRRMMDD') --> Data Score Boa Vista
                   ,pr_indrisco    => vr_indrisco                     --> Nível do Risco calculado na Analise 

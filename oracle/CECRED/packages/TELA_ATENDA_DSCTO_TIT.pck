@@ -614,6 +614,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_DSCTO_TIT IS
                    Alterado as procedures pc_confirmar_novo_limite e pc_negar_proposta. Alterações necessárias para adaptação 
                    do processo de criação de proposta de limite de desconto de títulos (Paulo Penteado (GFT) KE00726701-304)
       13/04/2018 - Criadas funcionalidades de inclusão, alteração e resgate de borderôes (Luis Fernando (GFT)
+      23/04/2018 - Alteração para que quando seja adicionado um titulo ao bordero, alterar o status do bordero para 'Em estudo' (Vitor (GFT))
+      25/04/2018 - Alterado o calculo das porcentagens da Liquidez (Vitor (GFT))
   ---------------------------------------------------------------------------------------------------------------------*/
 
 
@@ -621,6 +623,45 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_DSCTO_TIT IS
   vr_des_xml         clob;
   vr_texto_completo  varchar2(32600);
   vr_index           pls_integer;
+
+   -- Variaveis para verificação de contigencia de esteira e motor
+   vr_flctgest boolean;
+   vr_flctgmot boolean;
+  
+
+FUNCTION fn_contigencia_motor_esteira(pr_cdcooper IN crapcop.cdcooper%TYPE
+                                     ) RETURN BOOLEAN IS
+  /*---------------------------------------------------------------------------------------------------------------------
+    Programa : fn_contigencia_motor_esteira
+    Sistema  : Ayllos
+    Sigla    : TELA_ATENDA_DSCTO_TIT
+    Autor    : Paulo Penteado (GFT)
+    Data     : Abril/2018
+
+    Objetivo  : Procedure para verificar e tanto o motor quanto a esteira estão em contingência
+
+    Alteração : 26/04/2018 - Criação (Paulo Penteado (GFT))
+
+  ---------------------------------------------------------------------------------------------------------------------*/
+  vr_dscritic varchar2(10000);
+  vr_dsmensag varchar2(10000);
+BEGIN
+   este0003.pc_verifica_contigenc_motor(pr_cdcooper => pr_cdcooper
+                                       ,pr_flctgmot => vr_flctgmot
+                                       ,pr_dsmensag => vr_dsmensag
+                                       ,pr_dscritic => vr_dscritic);
+
+   este0003.pc_verifica_contigenc_esteira(pr_cdcooper => pr_cdcooper
+                                         ,pr_flctgest => vr_flctgest
+                                         ,pr_dsmensag => vr_dsmensag
+                                         ,pr_dscritic => vr_dscritic);
+
+   if  (vr_flctgest and vr_flctgmot) then
+       return true;
+   else
+       return false;
+   end if;
+END fn_contigencia_motor_esteira;
 
 
 FUNCTION fn_em_contingencia_ibratan (pr_cdcooper IN crapcop.cdcooper%TYPE) RETURN BOOLEAN IS
@@ -888,13 +929,14 @@ BEGIN
    end   if;
    close cr_crawlim;
 
-   if  rw_crawlim.insitlim not in (1,5) then
-       vr_dscritic := 'Para esta operação, a situação da proposta deve ser "Em estudo" ou "Aprovada".';
+   if  not fn_contigencia_motor_esteira(pr_cdcooper => pr_cdcooper) then
+       if  rw_crawlim.insitapr not in (1,2) then
+           vr_dscritic := 'Para esta operação, a Decisão deve ser "Aprovada Automaticamente" ou "Aprovada Manual".';
        raise vr_exc_saida;
    end if;
 
-   if  rw_crawlim.insitapr not in (1,2) then
-       vr_dscritic := 'Para esta operação, a Decisão deve ser "Aprovada Automaticamente" ou "Aprovada Manual".';
+   if  rw_crawlim.insitlim not in (1,5) then
+       vr_dscritic := 'Para esta operação, a situação da proposta deve ser "Em estudo" ou "Aprovada".';
        raise vr_exc_saida;
    end if;
 
@@ -1605,8 +1647,6 @@ PROCEDURE pc_efetivar_proposta_web(pr_nrdconta  IN crapass.nrdconta%TYPE --> Núm
    vr_vlutilizado  varchar2(100) := '';
    vr_vlexcedido   varchar2(100) := '';
    vr_em_contingencia_ibratan boolean;
-   vr_flctgest     boolean;
-   vr_flctgmot     boolean;
 
    cursor cr_crapcop is
    select vlmaxleg
@@ -1810,17 +1850,7 @@ BEGIN
 
        --  Verificar se o tanto o motor quanto a esteria estão em contingencia para mostrar a mensagem de alerta, sou seja, mostrar
        --  mensagem de alerta somente se o motor E a esteira estiverem em contingencia.
-       este0003.pc_verifica_contigenc_motor(pr_cdcooper => vr_cdcooper
-                                           ,pr_flctgmot => vr_flctgmot
-                                           ,pr_dsmensag => vr_mensagem_05 -- somente representativo para out
-                                           ,pr_dscritic => vr_dscritic);
-
-       este0003.pc_verifica_contigenc_esteira(pr_cdcooper => vr_cdcooper
-                                             ,pr_flctgest => vr_flctgest
-                                             ,pr_dsmensag => vr_mensagem_05 -- somente representativo para out
-                                             ,pr_dscritic => vr_dscritic);
-
-       if (vr_flctgest and vr_flctgmot) or (rw_crawlim.insitlim = 1) then
+       if fn_contigencia_motor_esteira(pr_cdcooper => vr_cdcooper) or (rw_crawlim.insitlim = 1) then
            vr_mensagem_05 := 'Atenção: Para efetivar é necessário ter efetuado a análise manual do limite! Confirma análise do limite?';
        end if;
 
@@ -2721,7 +2751,8 @@ BEGIN
       update crawlim lim
       set    vllimite = pr_vllimite
             ,cddlinha = pr_cddlinha
-            ,insitest = 1
+            ,insitlim = 1
+            ,insitest = 0
             ,dtenvest = null
             ,hrenvest = 0
             ,cdopeste = ' '
@@ -4369,6 +4400,7 @@ PROCEDURE pc_solicita_biro_bordero(pr_nrdconta in crapass.nrdconta%type --> Cont
    vr_cdagenci varchar2(100);
    vr_nrdcaixa varchar2(100);
    vr_idorigem varchar2(100);
+   fl_erro_biro boolean;
 
    
    cursor cr_analise_pagador(pr_nrinssac crapcob.nrinssac%type) is
@@ -4403,6 +4435,7 @@ BEGIN
    end if;
 
    vr_index := vr_tab_dados_titulos.first;
+   fl_erro_biro := false;
    while vr_index is not null loop
    
          open  cr_analise_pagador(vr_tab_dados_titulos(vr_index).nrinssac);
@@ -4434,13 +4467,19 @@ BEGIN
                                                ,pr_cdcritic => vr_cdcritic
                                                ,pr_dscritic => vr_dscritic);
 
+          --Caso não consiga conexao ou der erro no biro, nao parar a execucao, tratar somente depois do loop
          if  vr_cdcritic > 0  or vr_dscritic is not null then
-             raise vr_exc_saida;
+             fl_erro_biro := true;
          end if;
 
          vr_index := vr_tab_dados_titulos.next(vr_index);
    end   loop;
 
+   --Caso tenha algum erro durante o BIRO levanta a exception
+   if fl_erro_biro then
+      raise vr_exc_saida;
+   end if;
+   
    pr_retxml   := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                     '<Root><dsmensag>Ok</dsmensag></Root>');
 
@@ -5220,6 +5259,7 @@ END pc_solicita_biro_bordero;
       open cr_crapcob;
       fetch cr_crapcob into rw_crapcob;
       vr_nrinssac := rw_crapcob.nrinssac;
+      vr_cdtpinsc := rw_crapcob.cdtpinsc;
       
       open cr_crapsab;
       fetch cr_crapsab into rw_crapsab;
@@ -5283,7 +5323,7 @@ END pc_solicita_biro_bordero;
           fetch cr_craptdb_npag_geral into rw_craptdb_npag_geral;
           close cr_craptdb_npag_geral;
 
-          vr_vlliquidez := (rw_craptdb_npag_geral.vltitulo / rw_craptdb_npag_geral.vltitulo) * 100;
+          vr_vlliquidez := (rw_craptdb_npag_geral.vltitulo / rw_craptdb_desc_geral.vltitulo) * 100;
       end if;
 
       pr_tab_dados_detalhe(0).liqgeral := vr_vlliquidez;
@@ -6331,6 +6371,7 @@ PROCEDURE pc_buscar_tit_bordero_web (
       vr_cdagenci varchar2(100);
       vr_nrdcaixa varchar2(100);
       vr_idorigem varchar2(100);
+      vr_inseriu boolean;
       
       vr_rowid_log    ROWID;
       vr_dslog        VARCHAR2(4000);
@@ -6613,6 +6654,7 @@ PROCEDURE pc_buscar_tit_bordero_web (
         
         /*INSERE OS TITULOS DO PONTEIRO vr_tab_dados_titulos*/
         vr_index:= vr_tab_dados_titulos.first;
+        vr_inseriu := false;
         WHILE vr_index IS NOT NULL LOOP
             INSERT INTO 
                    craptdb
@@ -6669,7 +6711,20 @@ PROCEDURE pc_buscar_tit_bordero_web (
                                            vr_tab_dados_titulos(vr_index).nrcnvcob || ' ' || 
                                            vr_tab_dados_titulos(vr_index).nrdocmto || ' ';
             vr_index  := vr_tab_dados_titulos.next(vr_index);
+            vr_inseriu := true;
         END   LOOP;
+        
+        IF vr_inseriu THEN
+           UPDATE
+              crapbdt
+           SET
+              insitbdt = 1 --Em Estudo
+           WHERE
+              crapbdt.nrborder = pr_nrborder
+              AND crapbdt.cdcooper = vr_cdcooper
+              AND crapbdt.nrdconta = pr_nrdconta
+           ;
+        END IF;
 
         btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper
                                   ,pr_ind_tipo_log => 1 -- Erro tratato
