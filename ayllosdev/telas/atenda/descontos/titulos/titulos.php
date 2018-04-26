@@ -212,9 +212,7 @@
 		id="btnrenovacao"
 		name="btnrenovacao"
 		<?php 
-			if ( (in_array("DSC TITS - LIMITE",$rotinasTela)) && (!in_array("V",$opcoesTela)) ) { 
-				echo 'style="cursor: default; display:none; "onClick="return false;"'; 
-			} elseif ( (!in_array("DSC TITS - LIMITE",$rotinasTela)) && ($glbvars['nmrotina'] == "DSC TITS") && (in_array("@", $glbvars['opcoesTela'])) ) {
+			if ( (in_array("DSC TITS - LIMITE",$rotinasTela)) || (!in_array("DSC TITS - LIMITE",$rotinasTela)) && ($glbvars['nmrotina'] == "DSC TITS") && (in_array("@", $glbvars['opcoesTela'])) ) {
 				if (($msgError = validaPermissao($glbvars["nmdatela"],"DSC TITS - LIMITE","V","")) <> "") {
 					echo 'style="cursor: default; display:none; "onClick="return false;"'; 
 				}	
@@ -224,16 +222,13 @@
 		Renovar
 	</a>
 
-
 	<a 
 		href="#" 
 		class="botao"
 		id="btnManutencao"
 		name="tnManutencao" 
 		<?php 
-			if ( (in_array("DSC TITS - LIMITE",$rotinasTela)) && (!in_array("V",$opcoesTela)) ) { 
-				echo 'style="cursor: default; display:none; "onClick="return false;"'; 
-			} elseif ( (!in_array("DSC TITS - LIMITE",$rotinasTela)) && ($glbvars['nmrotina'] == "DSC TITS") && (in_array("@", $glbvars['opcoesTela'])) ) {
+			if ( (in_array("DSC TITS - LIMITE",$rotinasTela)) || (!in_array("DSC TITS - LIMITE",$rotinasTela)) && ($glbvars['nmrotina'] == "DSC TITS") && (in_array("@", $glbvars['opcoesTela'])) ) {
 				if (($msgError = validaPermissao($glbvars["nmdatela"],"DSC TITS - LIMITE","U","")) <> "") {
 					echo 'style="cursor: default; display:none; "onClick="return false;"'; 
 				}	
