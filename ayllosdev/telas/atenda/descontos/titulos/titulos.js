@@ -2737,7 +2737,17 @@ function realizarManutencaoDeLimite(operacao, flgstlcr) {
             showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
         },
         success: function (response) {
-             $("#divOpcoesDaOpcao2").html(response);
+             
+
+            if(sitinctrmnt == 1){       
+
+                $("#divOpcoesDaOpcao3").html(response);
+             
+            } else {
+
+                $("#divOpcoesDaOpcao2").html(response);
+            }
+
              formataManutencaoDeLimite();
              hideMsgAguardo();
              blockBackground(parseInt($('#divRotina').css('z-index')));
