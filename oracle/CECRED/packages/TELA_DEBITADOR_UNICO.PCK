@@ -75,6 +75,14 @@ PROCEDURE pc_busca_debitador_priori_res(pr_xmllog   IN VARCHAR2              -->
                                        , pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
                                        , pr_des_erro OUT VARCHAR2);
 																			 
+PROCEDURE pc_busca_debitador_priori_erro(pr_cdcooper IN NUMBER
+	                                     , pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
+                                       , pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
+                                       , pr_dscritic OUT VARCHAR2             --> Descrição da crítica
+                                       , pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+                                       , pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
+                                       , pr_des_erro OUT VARCHAR2);																			 
+																			 
 PROCEDURE pc_busca_debitador_priori_comp(pr_idhora_processamento tbgen_debitador_horario.idhora_processamento%TYPE
 	                                     , pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
                                        , pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
@@ -166,15 +174,24 @@ PROCEDURE pc_exclui_debitador_hr_proces(pr_cdprocesso           IN TBGEN_DEBITAD
 
 ----------------------- INÍCIO EXECUÇÃO EMERGENCIAL ------------------------
 
-PROCEDURE pc_executar_debitador_emergen(pr_processos IN VARCHAR2         --> Lista de processos a executar (separada por ";")
-                                      , pr_xmllog    IN VARCHAR2                     --> XML com informações de LOG
-                                      , pr_cdcritic  OUT PLS_INTEGER                 --> Código da crítica
-                                      , pr_dscritic  OUT VARCHAR2                    --> Descrição da crítica
-                                      , pr_retxml    IN OUT NOCOPY XMLType           --> Arquivo de retorno do XML
-                                      , pr_nmdcampo  OUT VARCHAR2                    --> Nome do campo com erro
-                                      , pr_des_erro  OUT VARCHAR2);
+PROCEDURE pc_executar_debitador_emergen(pr_cdcooper     IN NUMBER
+	                                    , pr_processos    IN VARCHAR2         --> Lista de processos a executar (separada por ";")
+																			, pr_tipoexecucao IN VARCHAR2         --> Tipo de execução ("P" -> Programas específicos / "E" -> Programa que ocasionouo erro) 
+                                      , pr_xmllog       IN VARCHAR2                     --> XML com informações de LOG
+                                      , pr_cdcritic     OUT PLS_INTEGER                 --> Código da crítica
+                                      , pr_dscritic     OUT VARCHAR2                    --> Descrição da crítica
+                                      , pr_retxml       IN OUT NOCOPY XMLType           --> Arquivo de retorno do XML
+                                      , pr_nmdcampo     OUT VARCHAR2                    --> Nome do campo com erro
+                                      , pr_des_erro     OUT VARCHAR2);
 
 ----------------------- FIM EXECUÇÃO EMERGENCIAL ------------------------
+
+PROCEDURE pc_busca_debitador_coop(pr_xmllog   IN VARCHAR2                     --> XML com informações de LOG
+                                    , pr_cdcritic OUT PLS_INTEGER                 --> Código da crítica
+                                    , pr_dscritic OUT VARCHAR2                    --> Descrição da crítica
+                                    , pr_retxml   IN OUT NOCOPY XMLType           --> Arquivo de retorno do XML
+                                    , pr_nmdcampo OUT VARCHAR2                    --> Nome do campo com erro
+                                    , pr_des_erro OUT VARCHAR2);
 
 END TELA_DEBITADOR_UNICO;
 /
@@ -744,6 +761,8 @@ DECLARE
         IF vr_dscritic IS NOT NULL THEN
           RAISE vr_exc_historico;
         END IF;
+				
+				gen_debitador_unico.pc_job_debitador_unico(vr_idhora_processamento, 'I');
 
         COMMIT;
 
@@ -767,14 +786,14 @@ DECLARE
                                  pr_tag_pai  => 'Dados',
                                  pr_posicao  => 0,
                                  pr_tag_nova => 'mensagem',
-                                 pr_tag_cont => 'Horário incluído. Agendamento criado para o dia seguinte. Horário informado menor que hora atual do sistema.',
+                                 pr_tag_cont => 'Horário incluído. O novo horário terá efeito no Debitador Único no próximo dia ' || to_char(vr_data_agendamento, 'DD/MM/YYYY') || ' ' || pr_dhprocessamento || ' devido a ser um horário passado. Data atual: ' || to_char(SYSDATE, 'DD/MM/YYYY HH24:MI:SS'),
                                  pr_des_erro => pr_dscritic);
 				ELSE
 					gene0007.pc_insere_tag(pr_xml      => pr_retxml,
                                  pr_tag_pai  => 'Dados',
                                  pr_posicao  => 0,
                                  pr_tag_nova => 'mensagem',
-                                 pr_tag_cont => 'Horário incluído. JOB agendado com sucesso.',
+                                 pr_tag_cont => 'Horário incluído.',
                                  pr_des_erro => pr_dscritic);
 				END IF;
 				
@@ -1091,6 +1110,8 @@ DECLARE
 				IF vr_dscritic IS NOT NULL THEN
 					RAISE vr_exc_historico;
 				END IF;
+				
+				gen_debitador_unico.pc_job_debitador_unico(pr_idhora_processamento, 'E');
 
 				COMMIT;
 
@@ -1146,7 +1167,7 @@ PROCEDURE pc_busca_debitador_priori_res(pr_xmllog   IN VARCHAR2              -->
 BEGIN
 
     /* ............................................................................
-        Programa: pc_busca_debitador_prioridades
+        Programa: pc_busca_debitador_priori_res
         Sistema : CECRED
         Sigla   : DEB
         Autor   : Fabio Adriano
@@ -1304,6 +1325,165 @@ BEGIN
                                            '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
     END;
 END pc_busca_debitador_priori_res;
+
+PROCEDURE pc_busca_debitador_priori_erro(pr_cdcooper IN NUMBER
+	                                     , pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
+                                       , pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
+                                       , pr_dscritic OUT VARCHAR2             --> Descrição da crítica
+                                       , pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+                                       , pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
+                                       , pr_des_erro OUT VARCHAR2) IS
+
+BEGIN
+
+    /* ............................................................................
+        Programa: pc_busca_debitador_priori_erro
+        Sistema : CECRED
+        Sigla   : DEB
+        Autor   : Reginaldo Rubens da Silva
+        Data    : Abril/2018                 Ultima atualizacao:
+
+        Dados referentes ao programa:
+        Frequencia: Sempre que for chamado
+        Objetivo  : Rotina para buscar dados do processo que ocasionou erro no Debitador
+        Observacao: -----
+        Alteracoes:
+    ..............................................................................*/
+
+DECLARE
+
+    ----------->>> VARIAVEIS <<<--------
+
+    -- Variável de críticas
+    vr_cdcritic crapcri.cdcritic%TYPE; --> Cód. Erro
+    vr_dscritic VARCHAR2(1000);        --> Desc. Erro
+
+    -- Tratamento de erros
+    vr_exc_saida EXCEPTION;
+
+    -- Variáveis retornadas da gene0004.pc_extrai_dados
+    vr_cdcooper INTEGER;
+    vr_cdoperad VARCHAR2(100);
+    vr_nmdatela VARCHAR2(100);
+    vr_nmeacao  VARCHAR2(100);
+    vr_cdagenci VARCHAR2(100);
+    vr_nrdcaixa VARCHAR2(100);
+    vr_idorigem VARCHAR2(100);
+		
+		vr_nrprioridade tbgen_debitador_param.nrprioridade%TYPE;
+		vr_dsprocesso   tbgen_debitador_param.dsprocesso%TYPE;
+		vr_cd_prg_erro  tbgen_debitador_param.cdprocesso%TYPE;
+		vr_dh_erro      DATE;
+		
+		vr_cd_erro crapcri.cdcritic%TYPE;             
+    vr_ds_erro crapcri.dscritic%TYPE;
+
+    ----------->>> CURSORES <<<--------
+
+    -- Dados das prioridades (processos)
+    CURSOR cr_processo(pr_nrprioridade tbgen_debitador_param.nrprioridade%TYPE) IS
+    SELECT p.cdprocesso
+		     , p.dsprocesso
+      FROM tbgen_debitador_param p
+		 WHERE p.nrprioridade = pr_nrprioridade;
+		rw_processo cr_processo%ROWTYPE;
+
+BEGIN
+
+    pr_des_erro := 'OK';
+
+    -- Extrai dados do xml
+    gene0004.pc_extrai_dados(pr_xml      => pr_retxml,
+                             pr_cdcooper => vr_cdcooper,
+                             pr_nmdatela => vr_nmdatela,
+                             pr_nmeacao  => vr_nmeacao,
+                             pr_cdagenci => vr_cdagenci,
+                             pr_nrdcaixa => vr_nrdcaixa,
+                             pr_idorigem => vr_idorigem,
+                             pr_cdoperad => vr_cdoperad,
+                             pr_dscritic => vr_dscritic);
+
+    -- Se retornou alguma crítica
+    IF TRIM(vr_dscritic) IS NOT NULL THEN
+        -- Levanta exceção
+        RAISE vr_exc_saida;
+    END IF;
+
+    -- Criar cabeçalho do XML de retorno
+    pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
+    gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                           pr_tag_pai  => 'Root',
+                           pr_posicao  => 0,
+                           pr_tag_nova => 'Prioridades',
+                           pr_tag_cont => NULL,
+                           pr_des_erro => vr_dscritic);
+													 
+		
+		gen_debitador_unico.pc_valida_exec_emergencial(pr_cdcooper           => pr_cdcooper
+                                                  ,pr_tpexec_emergencial => 'E'
+																									,pr_cd_prg_erro        => vr_cd_prg_erro
+                                                  ,pr_dh_erro            => vr_dh_erro
+                                                  ,pr_nrprioridade       => vr_nrprioridade
+                                                  ,pr_cd_erro            => vr_cd_erro
+                                                  ,pr_ds_erro            => vr_ds_erro);
+															
+		IF vr_ds_erro <> '' THEN
+			vr_dscritic := vr_ds_erro;
+			RAISE vr_exc_saida;
+		END IF;
+		
+		OPEN cr_processo(vr_nrprioridade);
+		FETCH cr_processo INTO rw_processo;
+		CLOSE cr_processo;
+		
+		gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                           pr_tag_pai  => 'Prioridades',
+                           pr_posicao  => 0,
+                           pr_tag_nova => 'Prioridade',
+                           pr_tag_cont => NULL,
+                           pr_des_erro => pr_dscritic);
+		
+    gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                           pr_tag_pai  => 'Prioridade',
+                           pr_posicao  => 0,
+                           pr_tag_nova => 'nrprioridade',
+                           pr_tag_cont => vr_nrprioridade,
+                           pr_des_erro => pr_dscritic);
+													 
+    gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                           pr_tag_pai  => 'Prioridade',
+                           pr_posicao  => 0,
+                           pr_tag_nova => 'cdprocesso',
+                           pr_tag_cont => rw_processo.cdprocesso,
+                           pr_des_erro => pr_dscritic);                           													 
+
+    gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                           pr_tag_pai  => 'Prioridade',
+                           pr_posicao  => 0,
+                           pr_tag_nova => 'dsprocesso',
+                           pr_tag_cont => rw_processo.dsprocesso,
+                           pr_des_erro => pr_dscritic);
+													 
+		gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                           pr_tag_pai  => 'Dados',
+                           pr_posicao  => 0,
+                           pr_tag_nova => 'dherro',
+                           pr_tag_cont => to_char(vr_dh_erro, 'DD/MM/YYYY HH24:MI'),
+                           pr_des_erro => pr_dscritic);
+
+    EXCEPTION
+      WHEN vr_exc_saida THEN
+        pr_dscritic := 'Erro geral na rotina da tela TELA_DEBITADOR_UNICO - pc_busca_debitador_priori_erro: ' || vr_dscritic;
+        -- Carregar XML padrao para variavel de retorno
+        pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                           '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+      WHEN OTHERS THEN
+        pr_dscritic := 'Erro não tratado na rotina da tela TELA_DEBITADOR_UNICO - pc_busca_debitador_priori_res: ' || SQLERRM;
+        -- Carregar XML padrão para variavel de retorno
+        pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                           '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+    END;
+END pc_busca_debitador_priori_erro;
 
 
 PROCEDURE pc_busca_debitador_priori_comp(pr_idhora_processamento tbgen_debitador_horario.idhora_processamento%TYPE
@@ -3020,13 +3200,15 @@ END pc_exclui_debitador_hr_proces;
 
 ----------------------- INÍCIO EXECUÇÃO EMERGENCIAL ------------------------
 
-PROCEDURE pc_executar_debitador_emergen(pr_processos IN VARCHAR2         --> Lista de processos a executar (separada por ";")
-                                      , pr_xmllog    IN VARCHAR2                     --> XML com informações de LOG
-                                      , pr_cdcritic  OUT PLS_INTEGER                 --> Código da crítica
-                                      , pr_dscritic  OUT VARCHAR2                    --> Descrição da crítica
-                                      , pr_retxml    IN OUT NOCOPY XMLType           --> Arquivo de retorno do XML
-                                      , pr_nmdcampo  OUT VARCHAR2                    --> Nome do campo com erro
-                                      , pr_des_erro  OUT VARCHAR2) IS
+PROCEDURE pc_executar_debitador_emergen(pr_cdcooper     IN NUMBER
+	                                    , pr_processos    IN VARCHAR2         --> Lista de processos a executar (separada por ";")
+																			, pr_tipoexecucao IN VARCHAR2         --> Tipo de execução ("P" -> Programas específicos / "E" -> Programa que ocasionouo erro) 
+                                      , pr_xmllog       IN VARCHAR2                     --> XML com informações de LOG
+                                      , pr_cdcritic     OUT PLS_INTEGER                 --> Código da crítica
+                                      , pr_dscritic     OUT VARCHAR2                    --> Descrição da crítica
+                                      , pr_retxml       IN OUT NOCOPY XMLType           --> Arquivo de retorno do XML
+                                      , pr_nmdcampo     OUT VARCHAR2                    --> Nome do campo com erro
+                                      , pr_des_erro     OUT VARCHAR2) IS
 
     /* ............................................................................
         Programa: pc_executar_debitador_emergen
@@ -3066,9 +3248,17 @@ DECLARE
     vr_idorigem VARCHAR2(100);
 
 		vr_dhprocessamento_ant VARCHAR2(10);  --> Valor anterior do campo para o histórico
+		vr_nrprioridade tbgen_debitador_param.nrprioridade%TYPE; --> Prioridade para chamada da procedure pc_executar_debitador_unico
 		
 		l_count binary_integer;
     l_array dbms_utility.lname_array;
+		
+		----->>> CURSORES <<<-----
+		
+		CURSOR cr_prioridade IS 
+		SELECT par.nrprioridade
+		  FROM tbgen_debitador_param par
+		 WHERE par.cdprocesso = pr_processos;
 
    BEGIN
 			pr_des_erro := 'OK';
@@ -3098,6 +3288,13 @@ DECLARE
 															pr_tag_nova => 'Dados',
 															pr_tag_cont => NULL,
 															pr_des_erro => vr_dscritic);
+															
+			IF pr_tipoexecucao = 'P' THEN
+				
+			 gen_debitador_unico.pc_executa_debitador_unico(pr_cdcooper => pr_cdcooper
+			                                              , pr_idhora_processamento => NULL
+																										, pr_ds_cdprocesso => pr_processos || ','
+																										, pr_nrprioridade_prg_erro => NULL);
 
        dbms_utility.comma_to_table(list   => pr_processos
                                  , tablen => l_count
@@ -3122,8 +3319,31 @@ DECLARE
 				IF vr_dscritic IS NOT NULL THEN
 					RAISE vr_exc_historico;
 				END IF;
+			ELSE 
+				OPEN cr_prioridade;
+				FETCH cr_prioridade INTO vr_nrprioridade;
+				CLOSE cr_prioridade;
+				
+			  gen_debitador_unico.pc_executa_debitador_unico(pr_cdcooper => pr_cdcooper
+				                                             , pr_idhora_processamento => NULL
+																										 , pr_ds_cdprocesso => NULL
+																										 , pr_nrprioridade_prg_erro => vr_nrprioridade);	
+			
+			  pc_grava_historico(pr_cdoperador => vr_cdoperad
+                             , pr_dscampo_alterado => 'exec_emergencial'
+											     	 , pr_dsvalor_anterior => NULL
+											    	 , pr_dsvalor_novo => NULL
+											    	 , pr_cdprocesso => pr_processos -- Processo
+											     	 , pr_tpoperacao => 4
+											    	 , pr_tporigem => 3
+	                           , pr_dscritic => vr_dscritic);
+														 
+				IF vr_dscritic IS NOT NULL THEN
+					RAISE vr_exc_historico;
+				END IF;
+			END IF;
 
-				COMMIT;
+			COMMIT;
 
 				-- Inclui dados no XML de retorno
 				gene0007.pc_insere_tag(pr_xml      => pr_retxml,
@@ -3152,6 +3372,136 @@ DECLARE
                                            '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
 	 END;
 END pc_executar_debitador_emergen;
+
+PROCEDURE pc_busca_debitador_coop(pr_xmllog   IN VARCHAR2                     --> XML com informações de LOG
+                                    , pr_cdcritic OUT PLS_INTEGER                 --> Código da crítica
+                                    , pr_dscritic OUT VARCHAR2                    --> Descrição da crítica
+                                    , pr_retxml   IN OUT NOCOPY XMLType           --> Arquivo de retorno do XML
+                                    , pr_nmdcampo OUT VARCHAR2                    --> Nome do campo com erro
+                                    , pr_des_erro OUT VARCHAR2) IS
+
+BEGIN
+
+    /* ............................................................................
+        Programa: pc_busca_debitador_coop
+        Sistema : CECRED
+        Sigla   : DEB
+        Autor   : Reginaldo (AMcom)
+        Data    : Abrik/2018                 Ultima atualizacao:
+
+        Dados referentes ao programa:
+        Frequencia: Sempre que for chamado
+        Objetivo  : Rotina para buscar dados das cooperativas ativas no sistema
+        Observacao: -----
+        Alteracoes:
+    ..............................................................................*/
+
+DECLARE
+
+    ----------->>> VARIAVEIS <<<--------
+
+    -- Variável de críticas
+    vr_cdcritic crapcri.cdcritic%TYPE; --> Cód. Erro
+    vr_dscritic VARCHAR2(1000);        --> Desc. Erro
+
+    -- Tratamento de erros
+    vr_exc_saida EXCEPTION;
+
+    -- Variáveis retornadas da gene0004.pc_extrai_dados
+    vr_cdcooper INTEGER;
+    vr_cdoperad VARCHAR2(100);
+    vr_nmdatela VARCHAR2(100);
+    vr_nmeacao  VARCHAR2(100);
+    vr_cdagenci VARCHAR2(100);
+    vr_nrdcaixa VARCHAR2(100);
+    vr_idorigem VARCHAR2(100);
+
+    -- Variáveis gerais da procedure
+    vr_contcont INTEGER := 0; -- Contador para inserção dos dados no XML
+    vr_contador INTEGER := 0;
+
+    ----------->>> CURSORES <<<--------
+
+    -- Dados das cooperativas
+		CURSOR cr_crapcop IS
+		SELECT cop.cdcooper
+		     , cop.nmrescop
+		  FROM crapcop cop
+		 WHERE cop.flgativo = 1
+		 ORDER BY nmrescop;
+		rw_crapcop cr_crapcop%ROWTYPE;
+
+BEGIN
+    pr_des_erro := 'OK';
+
+    -- Extrai dados do xml
+    gene0004.pc_extrai_dados(pr_xml      => pr_retxml,
+                             pr_cdcooper => vr_cdcooper,
+                             pr_nmdatela => vr_nmdatela,
+                             pr_nmeacao  => vr_nmeacao,
+                             pr_cdagenci => vr_cdagenci,
+                             pr_nrdcaixa => vr_nrdcaixa,
+                             pr_idorigem => vr_idorigem,
+                             pr_cdoperad => vr_cdoperad,
+                             pr_dscritic => vr_dscritic);
+
+    -- Se retornou alguma crítica
+    IF TRIM(vr_dscritic) IS NOT NULL THEN
+        -- Levanta exceção
+        RAISE vr_exc_saida;
+    END IF;
+
+    -- Criar cabeçalho do XML de retorno
+    pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
+    gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                           pr_tag_pai  => 'Root',
+                           pr_posicao  => 0,
+                           pr_tag_nova => 'Cooperativas',
+                           pr_tag_cont => NULL,
+                           pr_des_erro => vr_dscritic);
+
+    -- Percorre as cooperativas
+    FOR rw_crapcop
+      IN cr_crapcop LOOP
+        gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                               pr_tag_pai  => 'Cooperativas',
+                               pr_posicao  => 0,
+                               pr_tag_nova => 'Cooperativa',
+                               pr_tag_cont => NULL,
+                               pr_des_erro => pr_dscritic);
+
+        -- Código
+        gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                               pr_tag_pai  => 'Cooperativa',
+                               pr_posicao  => vr_contador,
+                               pr_tag_nova => 'cdcooper',
+                               pr_tag_cont => rw_crapcop.cdcooper,
+                               pr_des_erro => pr_dscritic);
+
+        -- Nome (Sigla)
+        gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                               pr_tag_pai  => 'Cooperativa',
+                               pr_posicao  => vr_contador,
+                               pr_tag_nova => 'nmrescop',
+                               pr_tag_cont => rw_crapcop.nmrescop,
+                               pr_des_erro => pr_dscritic);
+
+        vr_contador := vr_contador + 1;
+    END LOOP;
+
+    EXCEPTION
+      WHEN vr_exc_saida THEN
+        pr_dscritic := 'Erro geral na rotina da tela TELA_DEBITADOR_UNICO - pc_busca_debitador_coop: ' ||vr_dscritic;
+        -- Carregar XML padrao para variavel de retorno
+        pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                           '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+      WHEN OTHERS THEN
+        pr_dscritic := 'Erro não tratado na rotina da tela TELA_DEBITADOR_UNICO - pc_busca_debitador_coop: ' || SQLERRM;
+        -- Carregar XML padrão para variavel de retorno
+        pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                           '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+    END;
+END pc_busca_debitador_coop;
 
 ----------------------- FIM EXECUÇÃO EMERGENCIAL ------------------------
 
