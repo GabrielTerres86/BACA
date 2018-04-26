@@ -41,6 +41,18 @@
  * 025: [26/04/2018] Leonardo Oliveira (GFT): Ajuste nos valores retornados ao buscar propostas.
  */
 
+ // variaveis propostas
+var nrctrlim = 0; // limite
+var vllimite = 0; // valor do limite
+var nrctrmnt = 0; // contrato
+var dssitlim = ''; // desc situação da proposta
+var dssitest = ''; // desc situação da analise
+var dssitapr = ''; // desc decisão
+var insitlim = 0; // cod situação da proposta
+var insitest = 0; // cod situação da analise
+var insitapr = 0; // cod decisão
+var inctrmnt = 0; // indica se é contrato de manutenção
+
 var contWin    = 0;  // Variável para contagem do número de janelas abertas para impressos
 var nrcontrato = ""; // Variável para armazenar número do contrato de descto selecionado
 var nrbordero = ""; // Variável para armazenar número do bordero de descto selecionado
@@ -829,7 +841,7 @@ function selecionaLimiteTitulos(id, qtLimites, limite, dssitlim, dssitest, insit
 }
 
 function selecionaLimiteTitulosProposta(pr_id, pr_qtlimites, pr_nrctrlim, pr_vllimite, pr_nrctrmnt, pr_dssitlim, pr_dssitest, pr_dssitapr, pr_insitlim, pr_insitest, pr_insitapr, pr_inctrmnt) {
-
+        
     idLinhaL = pr_id; // id linha
     qtLimites = pr_qtlimites; // qtd de propostas
     nrctrlim = pr_nrctrlim; // limite
