@@ -1,18 +1,21 @@
 CREATE OR REPLACE PACKAGE CECRED.DATAUTILS IS
 
+-- Altera a data atual da cooperativa para uma data especificada
 PROCEDURE pc_mudar_data(pr_cdcooper IN  NUMBER
                              , pr_dtmvtolt IN  DATE
                              , pr_dscritic OUT VARCHAR2);
-														 
+
 -- Avança a data da cooperativa uma quantidade de dias
 PROCEDURE pc_avancar_data(pr_cdcooper IN  NUMBER
                         , pr_qtdiasav IN  INTEGER DEFAULT 1  -- quantidade de dias a avançar
+												, pr_avautom  IN  BOOLEAN DEFAULT TRUE -- Avançar automaticamente pra o próximo dia útil
                         , pr_dscritic OUT VARCHAR2);
-												
+
 -- Retrocede a data da cooperativa uma quantidade de dias
 PROCEDURE pc_retroceder_data(pr_cdcooper IN  NUMBER
                            , pr_qtdiasrt IN  INTEGER DEFAULT 1 -- quantidade de dias a retroceder
-                           , pr_dscritic OUT VARCHAR2);																										
+													 , pr_retautom IN  BOOLEAN DEFAULT TRUE -- Retroceder automaticamente para o dia útil anterior
+                           , pr_dscritic OUT VARCHAR2);
 
 END DATAUTILS;
 /
@@ -50,6 +53,12 @@ DECLARE
   vr_dtmvtopr crapdat.dtmvtopr%TYPE;
 BEGIN
     pr_dscritic := NULL;
+		
+		IF pr_cdcooper IS NULL 
+    OR pr_cdcooper = 0 THEN
+			pr_dscritic := 'Erro. A cooperativa não pode ser nula.';
+			RETURN;
+		END IF;
 
     IF to_char(pr_dtmvtolt, 'D') = 7 THEN
       pr_dscritic := 'Erro. A nova data é um sábado.';
@@ -108,6 +117,7 @@ BEGIN
 				 , dat.dtmvtocd = pr_dtmvtolt
 				 , dat.dtultdia = last_day(pr_dtmvtolt)
 				 , dat.dtultdma = last_day(add_months(pr_dtmvtolt, -1))
+				 , dat.inproces = 1
 		 WHERE dat.cdcooper = pr_cdcooper;
 
 		COMMIT;
@@ -120,64 +130,64 @@ END pc_mudar_data;
 -- Avança a data da cooperativa uma quantidade de dias
 PROCEDURE pc_avancar_data(pr_cdcooper IN  NUMBER
                         , pr_qtdiasav IN  INTEGER DEFAULT 1  -- quantidade de dias a avançar
+												, pr_avautom  IN  BOOLEAN DEFAULT TRUE -- Avançar automaticamente pra o próximo dia útil
                         , pr_dscritic OUT VARCHAR2) IS
-BEGIN
-
-DECLARE
-
-  CURSOR cr_crapdat IS 
+												
+  CURSOR cr_crapdat IS
 	SELECT dat.dtmvtolt
-	  FROM crapdat dat                       
+	  FROM crapdat dat
 	 WHERE dat.cdcooper = pr_cdcooper;
-		
-	vr_dtmvtolt crapdat.dtmvtolt%TYPE; 
+
+	vr_dtmvtolt crapdat.dtmvtolt%TYPE;												
+												
 BEGIN
   pr_dscritic := NULL;
-	
+
 	OPEN cr_crapdat;
 	FETCH cr_crapdat INTO vr_dtmvtolt;
 	CLOSE cr_crapdat;
-	
+
 	vr_dtmvtolt := vr_dtmvtolt + pr_qtdiasav;
 	
-	pc_mudar_data(pr_cdcooper, vr_dtmvtolt, pr_dscritic);
-
-	EXCEPTION
-		WHEN OTHERS THEN
-			pr_dscritic := 'Erro não tratado - pc_avancar_data: ' || SQLERRM; 	
-	END;
-END pc_avancar_data;                       												
+	LOOP
+	  pc_mudar_data(pr_cdcooper, vr_dtmvtolt, pr_dscritic);
+		
+		EXIT WHEN pr_dscritic IS NULL OR NOT pr_avautom;
+		
+		vr_dtmvtolt := vr_dtmvtolt + 1; -- Avançar caso a data não seja dia útil
+	END LOOP;
+END pc_avancar_data;
 
 -- Retrocede a data da cooperativa uma quantidade de dias
 PROCEDURE pc_retroceder_data(pr_cdcooper IN  NUMBER
                            , pr_qtdiasrt IN  INTEGER DEFAULT 1 -- quantidade de dias a retroceder
+													 , pr_retautom IN  BOOLEAN DEFAULT TRUE -- Retroceder automaticamente para o dia útil anterior
                            , pr_dscritic OUT VARCHAR2) IS
-BEGIN
-
-DECLARE
-
-  CURSOR cr_crapdat IS 
+													 
+  CURSOR cr_crapdat IS
 	SELECT dat.dtmvtolt
-	  FROM crapdat dat                       
+	  FROM crapdat dat
 	 WHERE dat.cdcooper = pr_cdcooper;
-		
-	vr_dtmvtolt crapdat.dtmvtolt%TYPE; 
+
+	vr_dtmvtolt crapdat.dtmvtolt%TYPE;
+  
 BEGIN
   pr_dscritic := NULL;
-	
+
 	OPEN cr_crapdat;
 	FETCH cr_crapdat INTO vr_dtmvtolt;
 	CLOSE cr_crapdat;
-	
+
 	vr_dtmvtolt := vr_dtmvtolt - pr_qtdiasrt;
 	
-	pc_mudar_data(pr_cdcooper, vr_dtmvtolt, pr_dscritic);
-
-	EXCEPTION
-		WHEN OTHERS THEN
-			pr_dscritic := 'Erro não tratado - pc_avancar_data: ' || SQLERRM; 	
-	END;
-END pc_retroceder_data;  
+	LOOP
+	  pc_mudar_data(pr_cdcooper, vr_dtmvtolt, pr_dscritic);
+		
+		EXIT WHEN pr_dscritic IS NULL OR NOT pr_retautom;
+		
+		vr_dtmvtolt := vr_dtmvtolt - 1; -- Retrocede caso a data não seja dia útil
+	END LOOP;
+END pc_retroceder_data;
 
 END DATAUTILS;
 /
