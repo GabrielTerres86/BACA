@@ -168,7 +168,7 @@ function efetivaDesativacaoProcesso(cdprocesso) {
 }
 
 function executarEmergencial() {
-	if ($('.checkboxExecutar:checked', '#divConteudoOpcao').length == 0) {
+	if ($('.checkboxExecutar:checked', '#divProgramas').length == 0) {
 		showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. <br>Nenhum processo marcado para execu&ccedil;&atilde;o.",
 			"Alerta - Ayllos", "");
 
@@ -177,7 +177,7 @@ function executarEmergencial() {
 
 	var listaProcessos = '';
 
-	$('.checkboxExecutar:checked', '#divConteudoOpcao').each(function(i, elem) {
+	$('.checkboxExecutar:checked', '#divProgramas').each(function (i, elem) {
 		listaProcessos += $(elem).parent().find('input[type="hidden"').first().val() + ',';
 	});
 
@@ -191,6 +191,8 @@ function executarEmergencial() {
 		data: {
 			processos: listaProcessos,
 			operacao: 'EXECUTAR_EMERGENCIAL',
+			tipoExecucao: $('#tipoExecucao', '#frmDet').val(),
+			cdcooper: $('#cdcooper', '#frmDet').val(),
 			redirect: "script_ajax"
 		},
 		error: function (objAjax, responseError, objExcept) {
@@ -311,6 +313,50 @@ function carregarHistorico(tporigem) {
 	});
 }
 
+function carregarFormConfigEm() {
+	showMsgAguardo("Aguarde, carregando formul&aacute;rio de configura&ccedil;&atilde;o da Exec. Emergencial...");
+
+	// Carrega dados parametro através de ajax
+	$.ajax({
+		type: 'POST',
+		dataType: 'html',
+		url: UrlSite + 'telas/pardbt/' + subFolder + '/form_configurar.php',
+		data: {
+			redirect: 'script_ajax'
+		},
+		error: function (objAjax, responseError, objExcept) {
+			hideMsgAguardo();
+			showError('error', 'N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'estadoInicialCab();');
+		},
+		success: function (response) {
+			console.log(response);
+			if (response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1) {
+				try {
+					$('#divConteudoOpcao')
+						.empty()
+						.html(response)
+						.css({'display':'block'});
+
+					formataFormularioConfigurar();
+					//trocaBotao('Executar');
+
+					hideMsgAguardo();
+				} catch (error) {
+					hideMsgAguardo();
+					showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'unblockBackground()');
+				}
+			} else {
+				try {
+					eval(response);
+				} catch (error) {
+					hideMsgAguardo();
+					showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'unblockBackground()');
+				}
+			}
+		}
+	});
+}
+
 function carregarProcessos() {
 	showMsgAguardo("Aguarde, buscando dados dos processos...");
 
@@ -329,13 +375,53 @@ function carregarProcessos() {
 		success: function (response) {
 			if (response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1) {
 				try {
-					$('#divConteudoOpcao')
-						.html(response)
-						.css({
-							'display': 'block'
-						});
-
+					$('#divProgramas')
+					 	.empty()
+						.html(response);
 					
+					formataProcessos();
+					trocaBotao('Executar');
+
+					hideMsgAguardo();
+				} catch (error) {
+					hideMsgAguardo();
+					showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'unblockBackground()');
+				}
+			} else {
+				try {
+					eval(response);
+				} catch (error) {
+					hideMsgAguardo();
+					showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'unblockBackground()');
+				}
+			}
+		}
+	});
+}
+
+function carregarProcessoErro() {
+	showMsgAguardo("Aguarde, buscando dados dos processos...");
+
+	// Carrega dados parametro através de ajax
+	$.ajax({
+		type: 'POST',
+		dataType: 'html',
+		url: UrlSite + 'telas/pardbt/' + subFolder + '/carrega_processo_erro.php',
+		data: {
+			cdcooper: $('#cdcooper', '#frmDet').val(),
+			redirect: 'script_ajax'
+		},
+		error: function (objAjax, responseError, objExcept) {
+			hideMsgAguardo();
+			showError('error', 'N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'estadoInicialCab();');
+		},
+		success: function (response) {
+			if (response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1) {
+				try {
+					$('#divProgramas')
+						.empty()
+						.html(response);
+
 					formataProcessos();
 					trocaBotao('Executar');
 
@@ -540,7 +626,7 @@ function redefinirPrioridade(cdprocesso, nrprioridade) {
 	});
 }
 
-function formataFormularioHorarios() {
+function formataFormularioConfigurar() {
 	$('#frmDet').css({
 		'display': 'block'
 	});
@@ -548,6 +634,21 @@ function formataFormularioHorarios() {
 	$('fieldset', '#frmDet').css({
 		'padding': '15px',
 		'margin-top': '20px'
+	});
+
+	$('label[for="cdcooper"]', '#frmDet').addClass('rotulo').css('width', '130px');
+	$('label[for="tipoExecucao"]', '#frmDet').addClass('rotulo').css('width', '130px');
+
+	$('#cdcooper', '#frmDet').focus();
+}
+
+function formataFormularioHorarios() {
+	$('#frmDet').css({
+		'display': 'block'
+	});
+
+	$('fieldset', '#frmDet').css({
+		'padding': '15px'
 	});
 
 	$('label[for="hh"]', '#frmDet').addClass('rotulo-linha').css('width', '51px');
@@ -614,6 +715,35 @@ function formataHorariosExluir() {
 	var metodoTabela = '';
 
 	tabela.formataTabela(ordemInicial, arrayLargura, arrayAlinha, metodoTabela);
+}
+
+function trocaCooperativa() {
+	$('#tipoExecucao', '#frmDet').val('');
+	$('#divProgramas').empty();
+	trocaBotao('');
+}
+
+function processaExecucaoEmerg() {
+	var tipoExecucao = $('#tipoExecucao', '#frmDet').val();
+
+	if (tipoExecucao == '') {
+		return false;
+	}
+
+	if ($('#cdcooper', '#frmDet').val() == '') {
+		showError("inform", "A cooperativa deve ser informada. " ,
+			"Alerta - Ayllos", "$('#cdcooper', '#frmDet').focus();");
+	}
+
+	$('#divProgramas').empty();
+	trocaBotao('');
+
+	if (tipoExecucao == 'P') { // Programas específicos
+		carregarProcessos();
+	}
+	else {
+		carregarProcessoErro();
+	}
 }
 
 function carregaDetalhamentoHorarios(){	
@@ -951,7 +1081,7 @@ function formataProcessos() {
 	var linha = $('table > tbody > tr', divRegistro);
 
 	divRegistro.css({
-		'height': '250px',
+		'height': '200px',
 		'width': '100%'
 	});
 
@@ -1234,7 +1364,8 @@ function acessaOpcaoAba(aba) {
 			subFolder = 'emergencial';
 			
 			if (cCddopcao.val() == 'I') {
-				carregarProcessos();
+				//carregarProcessos();
+				carregarFormConfigEm();
 			}
 			break;
 		case 3: // 

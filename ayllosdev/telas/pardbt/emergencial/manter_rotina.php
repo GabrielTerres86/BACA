@@ -20,11 +20,29 @@
 	// Classe para leitura do xml de retorno
 	require_once("../../../class/xmlfile.php");
 
+	//----------------------------------------------------------------------------------------------------------------------------------	
+	// Controle de Erros
+	//----------------------------------------------------------------------------------------------------------------------------------
+	if ( $glbvars['cddepart'] <> 20 && $cddopcao <> 'C' ) {
+		$msgErro	= "Acesso n&atilde;o permitido.";
+		exibirErro('error', $msgErro, 'Alerta - Ayllos','',false);
+	}
+
 	// Verifica se tela foi chamada pelo mжtodo POST
 	isPostMethod();	
 
     $processos = $_POST['processos'];
     $operacao = $_POST['operacao'];
+	$cdcooper = $_POST['cdcooper'];
+	$tipoExecucao = $_POST['tipoExecucao'];
+
+	if (empty($cdcooper)) {
+		exibirErro('error', 'Cooperativa não informada.', 'Alerta - Ayllos', 'unblockBackground(); $(\'#cdcooper\', \'#frmDet\').focus();', false);
+	}
+
+	if (empty($tipoExecucao)) {
+		exibirErro('error', 'Tipo de execução não selecionado.', 'Alerta - Ayllos', 'unblockBackground(); $(\'#tipoExecucao\', \'#frmDet\').focus();', false);
+	}
 
 	if ($operacao == 'EXECUTAR_EMERGENCIAL') {
 		if (empty($processos)) {
@@ -34,6 +52,8 @@
 		$xml = "<Root>";
 		$xml .= "  <Dados>";			
 		$xml .= "    <processos>" . $processos . "</processos>";
+		$xml .= "    <cdcooper>" . $cdcooper . "</cdcooper>";
+		$xml .= "    <tipoexecucao>" . $tipoExecucao . "</tipoexecucao>";
 		$xml .= "  </Dados>";
 		$xml .= "</Root>";
 

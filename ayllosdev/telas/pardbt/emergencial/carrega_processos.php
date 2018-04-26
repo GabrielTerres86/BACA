@@ -17,6 +17,14 @@
 	require_once('../../../includes/controla_secao.php');
 	require_once('../../../class/xmlfile.php');
 
+	//----------------------------------------------------------------------------------------------------------------------------------	
+	// Controle de Erros
+	//----------------------------------------------------------------------------------------------------------------------------------
+	if ( $glbvars['cddepart'] <> 20 && $cddopcao <> 'C' ) {
+		$msgErro	= "Acesso n&atilde;o permitido.";
+		exibirErro('error', $msgErro, 'Alerta - Ayllos','',false);
+	}
+
 	isPostMethod();		
 
     // Monta o xml de requisição
@@ -37,7 +45,7 @@
 	//----------------------------------------------------------------------------------------------------------------------------------
 	if ( strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO" ) {
 		$msgErro	= $xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata;
-		exibirErro('error',$msgErro,'Alerta - Ayllos',$retornoAposErro,false);
+		exibirErro('error',$msgErro,'Alerta - Ayllos','',false);
 	}
 	
 	$processos = $xmlObjeto->roottag->tags[0]->tags;
@@ -45,8 +53,6 @@
     
     echo '<p style="text-align: center; color: grey; padding:7px;">Selecione os processos que deseja executar emergencialmente.</p>';
     
-	echo '<fieldset style="clear: both; border: 1px solid rgb(119, 119, 119); margin: 3px 0px; padding: 10px 3px 5px;">';
-	echo '  <legend style="font-size: 11px; color: rgb(119, 119, 119); margin-left: 5px; padding: 0px 2px;">'.utf8ToHtml('Processos').'</legend>';
 	echo '	<div class="divRegistros">';
 	echo '		<table>';
 	echo '			<thead>';
@@ -69,5 +75,4 @@
 	echo '			</tbody>';
 	echo '		</table>';
 	echo '	</div>';
-	echo '</fieldset>';
 ?>

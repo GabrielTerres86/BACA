@@ -18,6 +18,14 @@
  require_once('../../../includes/controla_secao.php');
  require_once('../../../class/xmlfile.php');
 
+ //----------------------------------------------------------------------------------------------------------------------------------	
+// Controle de Erros
+//----------------------------------------------------------------------------------------------------------------------------------
+if ( $glbvars['cddepart'] <> 20 && $cddopcao <> 'C' ) {
+    $msgErro	= "Acesso n&atilde;o permitido.";
+    exibirErro('error', $msgErro, 'Alerta - Ayllos','',false);
+}
+
  isPostMethod();	
 
  $cdprocesso = $_POST['cdprocesso'];
