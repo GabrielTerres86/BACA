@@ -216,7 +216,7 @@
 		type="button"
 		class="botao"
 		value="Voltar"
-		onClick="fecharRotinaGenerico('TITULOS');return false;" />
+		onClick="fecharRotinaGenerico('TITULOS'); return false;" />
 	
 	
 	<input 
@@ -226,7 +226,7 @@
 		<?php if ($qtLimites == 0){
 			echo 'onClick="return false;';
 		} else {
-			echo 'onClick="carregaDadosAlteraLimiteDscTitPropostas();return false;"';
+			echo 'onClick="carregaDadosAlteraLimiteDscTitPropostas(); return false;"';
 		} ?> />
 	
 
@@ -249,7 +249,8 @@
 		<?php if ($qtLimites == 0) {
 			echo 'onClick="return false;';
 		} else {
-			echo 'style="'.$dispC.'" onClick="carregaDadosConsultaPropostaDscTit();return false;"';
+			echo 'style="'.$dispC.'"';
+			echo 'onClick="carregaDadosConsultaPropostaDscTit(); return false;" ';
 		} ?> />
 
 
@@ -259,8 +260,7 @@
 		value="Incluir"
 		id="btnIncluirLimite"
 		name="btnIncluirLimite"
-	  	onClick="carregaDadosInclusaoLimiteDscTit(1,'PROPOSTA');return false;"; 
- 		/>
+	  	onClick="carregaDadosInclusaoLimiteDscTit(1,'PROPOSTA'); return false;" />
 
 
 
@@ -269,9 +269,9 @@
 		class="botao"
 		value="Imprimir"
 		<?php if ($qtLimites == 0) {
-			echo 'onClick="return false;';
+			echo 'onClick="return false; ';
 		} else {
-			echo '" onClick="mostraImprimirLimite(\'PROPOSTA\');return false;"';
+			echo 'onClick="mostraImprimirLimite(\'PROPOSTA\'); return false;"';
 		} ?> />
 	
 
@@ -285,7 +285,7 @@
 		<?php if ($qtLimites == 0) {
 			echo 'onClick="return false;';
 		} else {
-			echo 'onClick="confirmaEnvioAnalise();return false;"'; 
+			echo 'onClick="confirmaEnvioAnalise(); return false;"'; 
 		} ?>/>
 	
 
@@ -312,13 +312,13 @@
 		<?php if ($qtLimites == 0) {
 			echo 'onClick="return false;';
 		} else {
-			echo 'onClick="efetuarNovoLimite();"';
+			echo 'onClick="efetuarNovoLimite();" ';
 		} ?>/>
 	
 
 </div>
 
-<script type="text/javascript">
+<script type="text/javascript"> 
 
 	dscShowHideDiv("divOpcoesDaOpcao2","divOpcoesDaOpcao1;divOpcoesDaOpcao3");
 
