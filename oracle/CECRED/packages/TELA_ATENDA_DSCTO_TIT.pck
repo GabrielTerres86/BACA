@@ -21,7 +21,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ATENDA_DSCTO_TIT IS
                 26/03/2018 - Inclusão da Procedure pc_busca_dados_limite e pc_busca_dados_limite_web (Luis Fernando (GFT))
                 26/03/2018 - Inclusão da procedure pc_obtem_dados_proposta_web (Paulo Penteado (GFT))
                 02/04/2018 - Inclusão do record 'typ_rec_tit_bordero' e das procedures 'pc_buscar_tit_bordero' e 'pc_buscar_tit_bordero_web' para listar e buscar detalhes e restrições dos titulos do borderô (Leonardo Oliveira (GFT))
-                04/04/2018 - Ajuste no retorno das críticas na operação 'pc_detalhes_tit_bordero' (Leonardo Oliveira (GFT))
+                04/04/2018 - Ajuste no retorno das críticas na operação 'pc_detalhes_tit_bordero' (Leonardo Oliveira (GFT)) 
 				26/04/2018 - Ajuste no retorno das propostas 'pc_obtem_dados_proposta_web' (Leonardo Oliveira (GFT))
   ---------------------------------------------------------------------------------------------------------------------*/
 
@@ -624,6 +624,45 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_DSCTO_TIT IS
   vr_texto_completo  varchar2(32600);
   vr_index           pls_integer;
 
+   -- Variaveis para verificação de contigencia de esteira e motor
+   vr_flctgest boolean;
+   vr_flctgmot boolean;
+  
+
+FUNCTION fn_contigencia_motor_esteira(pr_cdcooper IN crapcop.cdcooper%TYPE
+                                     ) RETURN BOOLEAN IS
+  /*---------------------------------------------------------------------------------------------------------------------
+    Programa : fn_contigencia_motor_esteira
+    Sistema  : Ayllos
+    Sigla    : TELA_ATENDA_DSCTO_TIT
+    Autor    : Paulo Penteado (GFT)
+    Data     : Abril/2018
+
+    Objetivo  : Procedure para verificar e tanto o motor quanto a esteira estão em contingência
+
+    Alteração : 26/04/2018 - Criação (Paulo Penteado (GFT))
+
+  ---------------------------------------------------------------------------------------------------------------------*/
+  vr_dscritic varchar2(10000);
+  vr_dsmensag varchar2(10000);
+BEGIN
+   este0003.pc_verifica_contigenc_motor(pr_cdcooper => pr_cdcooper
+                                       ,pr_flctgmot => vr_flctgmot
+                                       ,pr_dsmensag => vr_dsmensag
+                                       ,pr_dscritic => vr_dscritic);
+
+   este0003.pc_verifica_contigenc_esteira(pr_cdcooper => pr_cdcooper
+                                         ,pr_flctgest => vr_flctgest
+                                         ,pr_dsmensag => vr_dsmensag
+                                         ,pr_dscritic => vr_dscritic);
+
+   if  (vr_flctgest and vr_flctgmot) then
+       return true;
+   else
+       return false;
+   end if;
+END fn_contigencia_motor_esteira;
+
 
 FUNCTION fn_em_contingencia_ibratan (pr_cdcooper IN crapcop.cdcooper%TYPE) RETURN BOOLEAN IS
 
@@ -890,8 +929,9 @@ BEGIN
    end   if;
    close cr_crawlim;
 
-   if  rw_crawlim.insitapr not in (1,2) then
-       vr_dscritic := 'Para esta operação, a Decisão deve ser "Aprovada Automaticamente" ou "Aprovada Manual".';
+   if  not fn_contigencia_motor_esteira(pr_cdcooper => pr_cdcooper) then
+       if  rw_crawlim.insitapr not in (1,2) then
+           vr_dscritic := 'Para esta operação, a Decisão deve ser "Aprovada Automaticamente" ou "Aprovada Manual".';
        raise vr_exc_saida;
    end if;
 
@@ -1607,8 +1647,6 @@ PROCEDURE pc_efetivar_proposta_web(pr_nrdconta  IN crapass.nrdconta%TYPE --> Núm
    vr_vlutilizado  varchar2(100) := '';
    vr_vlexcedido   varchar2(100) := '';
    vr_em_contingencia_ibratan boolean;
-   vr_flctgest     boolean;
-   vr_flctgmot     boolean;
 
    cursor cr_crapcop is
    select vlmaxleg
@@ -1812,17 +1850,7 @@ BEGIN
 
        --  Verificar se o tanto o motor quanto a esteria estão em contingencia para mostrar a mensagem de alerta, sou seja, mostrar
        --  mensagem de alerta somente se o motor E a esteira estiverem em contingencia.
-       este0003.pc_verifica_contigenc_motor(pr_cdcooper => vr_cdcooper
-                                           ,pr_flctgmot => vr_flctgmot
-                                           ,pr_dsmensag => vr_mensagem_05 -- somente representativo para out
-                                           ,pr_dscritic => vr_dscritic);
-
-       este0003.pc_verifica_contigenc_esteira(pr_cdcooper => vr_cdcooper
-                                             ,pr_flctgest => vr_flctgest
-                                             ,pr_dsmensag => vr_mensagem_05 -- somente representativo para out
-                                             ,pr_dscritic => vr_dscritic);
-
-       if (vr_flctgest and vr_flctgmot) or (rw_crawlim.insitlim = 1) then
+       if fn_contigencia_motor_esteira(pr_cdcooper => vr_cdcooper) or (rw_crawlim.insitlim = 1) then
            vr_mensagem_05 := 'Atenção: Para efetivar é necessário ter efetuado a análise manual do limite! Confirma análise do limite?';
        end if;
 

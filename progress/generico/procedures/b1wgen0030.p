@@ -6428,7 +6428,7 @@ PROCEDURE efetua_cancelamento_limite:
         IF  craplim.insitlim <> 2  THEN
             DO:
                 ASSIGN aux_cdcritic = 0
-                       aux_dscritic = "O contrato DEVE estar ATIVO.".
+                       aux_dscritic = "O contrato deve estar ATIVO.".
                           
                 UNDO TRANS_CANCELAMENTO, LEAVE TRANS_CANCELAMENTO.
             END.
