@@ -47,7 +47,13 @@ function exibeErroNew($msgErro) {
 		<option value="A"><? echo utf8ToHtml(' A - Alterar Parâmetros da Esteira') ?></option>
     </select>
 		
-	  <label for="tlcooper"><? echo utf8ToHtml('Cooperativa:') ?></label>
+	<label for="tpprodut" class="rotulo-60"><? echo utf8ToHtml('Produto:') ?></label>
+	<select id="tpprodut" name="tpprodut">
+		<option value="0"><? echo utf8ToHtml('Empréstimo e Financiamento') ?></option>
+		<option value="1"><? echo utf8ToHtml('Desconto de Títulos') ?></option>
+	</select>
+	
+	<label for="tlcooper"><? echo utf8ToHtml('Cooperativa:') ?></label>
     <select id="tlcooper" name="tlcooper">
 		<option value="0"><? echo utf8ToHtml(' Todas') ?></option> 
 		<?php
@@ -62,7 +68,7 @@ function exibeErroNew($msgErro) {
 		}
 		?>
     </select>
-	
+
 	<a href="#" class="botao" id="btnOK" name="btnOK" onClick="controlaOperacao();
             return false;" style = "text-align:right;">OK</a>
 

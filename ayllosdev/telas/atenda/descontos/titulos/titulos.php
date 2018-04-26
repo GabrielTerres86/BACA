@@ -16,9 +16,19 @@
                               registro (Lucas).
 
                  26/06/2017 - Ajuste para rotina ser chamada através da tela ATENDA > Produtos (Jonata - RKAM / P364).
+                 
+                 07/03/2018 - Novo campo 'Data Renovação' (Leonardo Oliveira - GFT)
+
+                 13/03/2018 - Ajuste nos botões da tela, novo campo 'Renovação' e novo input perrenov do tipo hidden. (Leonardo Oliveira - GFT)
+
+				 16/03/2018 - Novos campos flgstlcr e cddlinha, ambos do tipo hidden. (Leonardo Oliveira - GFT)
+
+				 28/03/2018 - Novos botões Contratos e Propostas. (Andre Avila - GFT)
+
+				 12/04/2018 - Criação do botão manutenção e ajuste no tamanho da tela. (Leonardo Oliveira - GFT)
 
 	***************************************************************************/
-	
+	 
 	session_start();
 	
 	// Includes para controle da session, variáveis globais de controle, e biblioteca de funções	
@@ -77,7 +87,8 @@
 	} 
 	
 	$dados = $xmlObjDscTit->roottag->tags[0]->tags[0]->tags;
-		
+
+	
 	// Função para exibir erros na tela através de javascript
 	function exibeErro($msgErro) { 
 		echo '<script type="text/javascript">';
@@ -93,6 +104,10 @@
 	<fieldset>
 		<legend><? echo utf8ToHtml('Títulos') ?></legend>
 		
+		<input type="hidden" name="hd_perrenov" id="hd_perrenov" value="<?php echo $dados[14]->cdata; ?>" />
+		<input type="hidden" name="flgstlcr" id="flgstlcr" value="<?php echo $dados[15]->cdata; ?>" />
+		<input type="hidden" name="cddlinha" id="cddlinha" value="<?php echo $dados[16]->cdata; ?>" />
+
 		<label for="nrctrlim"><? echo utf8ToHtml('Contrato:') ?></label>
 		<input type="text" name="nrctrlim" id="nrctrlim" value="<?php echo formataNumericos('zzz.zzz.zz9',$dados[0]->cdata,'.'); ?>" />
 		
@@ -121,43 +136,132 @@
 		<label for="vlutilsr"><? echo utf8ToHtml('Valor utilizado (Sem Registro):') ?></label>
 		<input type="text" name="vlutilsr" id="vlutilsr" value="<?php echo number_format(str_replace(",",".",$dados[12]->cdata),2,",",".") . " (". $dados[11]->cdata; if ($dados[11]->cdata > 1) { echo " t&iacute;tulos)"; } else { echo " t&iacute;tulos)"; } ?>" />
 		<br />
-		
+
+		<label for="dtrenova"><? echo utf8ToHtml('Data Renovação: ') ?></label>
+		<input type="text" name="dtrenova" id="dtrenova" value="<?php echo $dados[13]->cdata ?>"/>
+		<br />
+
+		<label for="dtultmnt"><? echo utf8ToHtml('Data Manutenção: ') ?></label>
+		<input 
+			type="text"
+			name="dtultmnt"
+			id="dtultmnt"
+			value="
+			<?php
+				echo getByTagName($dados,"dtultmnt");
+			?>"/>
+		<br />
 		
 	</fieldset>
 </form>
+
 <div id="divBotoes" >
 
-	<input type="image" src="<?php echo $UrlImagens; ?>botoes/voltar.gif" onClick="voltaDiv(1,0,4,'DESCONTOS','DESCONTOS');return false;" />
-	<input type="image" name="btnbordero" id="btnbordero" src="<?php echo $UrlImagens; ?>botoes/borderos.gif" <?php if (!in_array("DSC TITS - BORDERO",$rotinasTela)) { echo 'style="cursor: default;display:none;" onClick="return false;"'; } else { echo 'onClick="carregaBorderosTitulos();return false;"'; } ?> />
-	<input type="image" name="btnlimite" id="btnlimite" src="<?php echo $UrlImagens; ?>botoes/limite.gif" <?php if (!in_array("DSC TITS - LIMITE",$rotinasTela)) { echo 'style="cursor: default;display:none;" onClick="return false;"'; } else { echo 'onClick="carregaLimitesTitulos();return false;"'; } ?> />
+	<a
+		href="#"
+		class="botao" 
+		name="btnvoltar"
+		id="btnvoltar"
+		onClick="voltaDiv(1,0,4,'DESCONTOS','DESCONTOS');return false;" >
+			Voltar
+	</a>
+	<a
+		href="#"
+		class="botao" 
+		type="image" 
+		name="btnbordero" 
+		id="btnbordero"
+	 	<?php 
+			if (!in_array("DSC TITS - BORDERO",$rotinasTela)) { echo 'style="cursor: default;display:none;" onClick="return false;"'; } 
+			else { echo 'onClick="carregaBorderosTitulos();return false;"'; } ?> 
+	>
+		Border&ocirc;s
+	</a>
+
+
+	<a
+	href="#"
+	class="botao"
+	type="image"
+	name="btnlimite"
+	id="btnlimite"
+	 <?php if (!in_array("DSC TITS - LIMITE",$rotinasTela)) { echo 'style="cursor: default;display:none;" onClick="return false;"'; } 
+		else { echo 'onClick="carregaLimitesTitulos();return false;"'; } ?> 
+	>
+		Contratos
+	</a>
+
+	<a
+		href="#"
+		class="botao" 
+		type="image" 
+		name="btnpropostas" 
+		id="btnpropostas"
+
+	 <?php if (!in_array("DSC TITS - LIMITE",$rotinasTela)) { echo 'style="cursor: default;display:none;" onClick="return false;"'; } 
+		else { echo 'onClick="carregaLimitesTitulosPropostas();return false;"'; } ?> 
+	>
+			Propostas
+	</a>
+
+	<a 
+		href="#" 
+		class="botao"
+		id="btnrenovacao"
+		name="btnrenovacao"
+		<?php if (!in_array("DSC TITS - LIMITE",$rotinasTela)) { echo 'style="cursor: default;display:none;" onClick="return false;"'; } ?> 
+	>
+		Renovar
+	</a>
+
+	<a 
+		href="#" 
+		class="botao"
+		id="btnManutencao"
+		name="tnManutencao" 
+		<?php if (!in_array("DSC TITS - LIMITE",$rotinasTela)) { echo 'style="cursor: default;display:none;" onClick="return false;"'; } ?> >
+		Manuten&ccedil;&atilde;o
+	</a>
+
+	<a 
+		href="#" 
+		class="botao"
+		id="btnResgatar"
+		name="btnResgatar"
+		<?php if (!in_array("DSC TITS - BORDERO",$rotinasTela)) { echo 'style="cursor: default; display:none;" onClick="return false;"'; } 
+			else { echo 'style=" margin-top: 8px; margin-bottom: 8px;" onClick="carregaResgatarTitulos();return false;"'; } ?> 
+	>
+		Resgatar T&iacute;tulos
+	</a>
 </div>
 
+
+
 <script type="text/javascript">
+	dscShowHideDiv("divOpcoesDaOpcao1","divConteudoOpcao");
 
-dscShowHideDiv("divOpcoesDaOpcao1","divConteudoOpcao");
+	// Muda o título da tela
+	$("#tdTitRotina").html("DESCONTO DE T&Iacute;TULOS");
 
-// Muda o título da tela
-$("#tdTitRotina").html("DESCONTO DE T&Iacute;TULOS");
+	formataLayout('frmTitulos');
 
-formataLayout('frmTitulos');
+	// Esconde mensagem de aguardo
+	hideMsgAguardo();
 
-// Esconde mensagem de aguardo
-hideMsgAguardo();
-
-// Bloqueia conteúdo que está átras do div da rotina
-blockBackground(parseInt($("#divRotina").css("z-index")));
-	
-	//Se esta tela foi chamada através da rotina "Produtos" então acessa a opção conforme definido pelos responsáveis do projeto P364
-	if (executandoProdutos == true) {
-	
-       //Bordero	
-	  if (cdproduto == 35 ) {
-		$('#btnbordero','#divBotoes').click();
+	// Bloqueia conteúdo que está átras do div da rotina
+	blockBackground(parseInt($("#divRotina").css("z-index")));
 		
-	  //Limite
-	  }else if (cdproduto == 37 ) {
-		$('#btnlimite','#divBotoes').click();
-	  }
-	}
-	
+		//Se esta tela foi chamada através da rotina "Produtos" então acessa a opção conforme definido pelos responsáveis do projeto P364
+		if (executandoProdutos == true) {
+		
+	       //Bordero	
+		  if (cdproduto == 35 ) {
+			$('#btnbordero','#divBotoes').click();
+			
+		  //Limite
+		  }else if (cdproduto == 37 ) {
+			$('#btnlimite','#divBotoes').click();
+		  } 
+		}
+	 
 </script>

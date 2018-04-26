@@ -122,6 +122,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_CONPRO IS
 
   PROCEDURE pc_consulta_acionamento_web(pr_nrdconta IN crawepr.nrdconta%TYPE --> Nr. da Conta
                                        ,pr_nrctremp IN crawepr.nrctremp%TYPE --> Nr. Contrato   
+                                       ,pr_tpproduto IN tbgen_webservice_aciona.tpproduto%TYPE DEFAULT 0--> Tipo de produto   
                                        ,pr_dtinicio IN VARCHAR2 -->
                                        ,pr_dtafinal IN VARCHAR2 -->
                                        ,pr_xmllog   IN VARCHAR2 --> XML com informações de LOG
@@ -133,6 +134,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_CONPRO IS
 
   PROCEDURE pc_consulta_acionamento(pr_cdcooper    IN crapcop.cdcooper%TYPE --> Cooperativa
                                    ,pr_nrctremp    IN crawepr.nrctremp%TYPE DEFAULT 0 --> Nr. do Contrato
+                                   ,pr_tpproduto   IN tbgen_webservice_aciona.tpproduto%TYPE DEFAULT 0--> Tipo de produto   
                                    ,pr_nrdconta    IN crapass.nrdconta%TYPE DEFAULT 0 --> Nr. da Conta
                                    ,pr_dtinicio    IN DATE DEFAULT NULL
                                    ,pr_dtafinal    IN DATE DEFAULT NULL
@@ -141,7 +143,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_CONPRO IS
                                    ,pr_dscritic    OUT crapcri.dscritic%TYPE --> Descrição da crítica
                                    ,pr_tab_crawepr OUT typ_tab_crawepr);
 
-  PROCEDURE pc_gera_arq_detalhe(pr_dsprotocolo IN tbepr_acionamento.dsprotocolo%TYPE -- Protocolo da Analise Automatica na Esteira
+  PROCEDURE pc_gera_arq_detalhe(pr_dsprotocolo IN tbgen_webservice_aciona.dsprotocolo%TYPE -- Protocolo da Analise Automatica na Esteira
                                ,pr_xmllog      IN VARCHAR2                           -- XML com informacoes de LOG
                                ,pr_cdcritic   OUT PLS_INTEGER                        -- Codigo da critica
                                ,pr_dscritic   OUT VARCHAR2                           -- Descricao da critica
@@ -1299,6 +1301,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONPRO IS
 
   PROCEDURE pc_consulta_acionamento_web(pr_nrdconta IN crawepr.nrdconta%TYPE --> Nr. da Conta
                                        ,pr_nrctremp IN crawepr.nrctremp%TYPE --> Nr. Contrato   
+                                       ,pr_tpproduto IN tbgen_webservice_aciona.tpproduto%TYPE DEFAULT 0--> Tipo de produto   
                                        ,pr_dtinicio IN VARCHAR2 -->
                                        ,pr_dtafinal IN VARCHAR2 -->
                                        ,pr_xmllog   IN VARCHAR2 --> XML com informações de LOG
@@ -1378,6 +1381,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONPRO IS
     
       TELA_CONPRO.pc_consulta_acionamento(pr_cdcooper    => vr_cdcooper,
                                           pr_nrctremp    => pr_nrctremp,
+                                          pr_tpproduto   => pr_tpproduto,
                                           pr_nrdconta    => pr_nrdconta,
                                           pr_dtinicio    => vr_dtinicio,
                                           pr_dtafinal    => vr_dtafinal,
@@ -1502,7 +1506,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONPRO IS
       ELSE
         -- Atribui crítica
         vr_cdcritic := 0;
-        vr_dscritic := 'Dados nao encontrados!';
+        vr_dscritic := 'Nenhum regitro de acionamento encontrado.';
         -- Levanta exceção
         RAISE vr_exc_saida;
       END IF;
@@ -1539,6 +1543,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONPRO IS
 
   PROCEDURE pc_consulta_acionamento(pr_cdcooper    IN crapcop.cdcooper%TYPE --> Cooperativa
                                    ,pr_nrctremp    IN crawepr.nrctremp%TYPE DEFAULT 0 --> Nr. do Contrato
+                                   ,pr_tpproduto   IN tbgen_webservice_aciona.tpproduto%TYPE DEFAULT 0 --> Tipo de produto   
                                    ,pr_nrdconta    IN crapass.nrdconta%TYPE DEFAULT 0 --> Nr. da Conta
                                    ,pr_dtinicio    IN DATE DEFAULT NULL
                                    ,pr_dtafinal    IN DATE DEFAULT NULL
@@ -1599,7 +1604,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONPRO IS
                a.tpacionamento,
                decode(a.tpacionamento,2,a.dsprotocolo,NULL) dsprotocolo
         
-          FROM tbepr_acionamento a
+          FROM tbgen_webservice_aciona a
         
           LEFT JOIN crapope o
             ON o.cdcooper = a.cdcooper
@@ -1619,6 +1624,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONPRO IS
            AND trunc(a.DHACIONAMENTO) >= pr_dtinicio
            AND trunc(a.DHACIONAMENTO) <= pr_dtafinal
            AND a.tpacionamento IN(1,2)
+           AND a.tpproduto = pr_tpproduto
 		 ORDER BY a.DHACIONAMENTO DESC;
       rw_crawepr cr_cratbepr%ROWTYPE;
       
@@ -1749,7 +1755,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONPRO IS
     END;
   END pc_consulta_acionamento;
 
-  PROCEDURE pc_gera_arq_detalhe(pr_dsprotocolo IN tbepr_acionamento.dsprotocolo%TYPE -- Protocolo da Analise Automatica na Esteira
+  PROCEDURE pc_gera_arq_detalhe(pr_dsprotocolo IN tbgen_webservice_aciona.dsprotocolo%TYPE -- Protocolo da Analise Automatica na Esteira
                                ,pr_xmllog      IN VARCHAR2                           -- XML com informacoes de LOG
                                ,pr_cdcritic   OUT PLS_INTEGER                        -- Codigo da critica
                                ,pr_dscritic   OUT VARCHAR2                           -- Descricao da critica

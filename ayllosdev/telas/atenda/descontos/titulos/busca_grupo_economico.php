@@ -27,7 +27,7 @@
 	if (!isset($_POST["nrdconta"])){
 		exibeErro("Par&acirc;metros incorretos.");
 	}
-
+	$tipo = (isset($_POST['tipo'])) ? $_POST['tipo'] : "CONTRATO";
 	$nrdconta = $_POST["nrdconta"];
 	
 	// Verifica se o número da conta é um inteiro válido
@@ -69,9 +69,9 @@
 		echo 'hideMsgAguardo();';
 		
 		if($pertgrup == "yes" ){
-			echo 'showError("inform","'.$gergrupo.'","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));calcEndividRiscoGrupo(\''.$nrdgrupo.'\');");';
+			echo 'showError("inform","'.$gergrupo.'","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));calcEndividRiscoGrupo(\''.$nrdgrupo.'\', \''.$tipo.'\');");';
 		}else{
-			echo 'showError("inform","'.$gergrupo.'","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));validarAvalistas();");';
+			echo 'showError("inform","'.$gergrupo.'","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));validarAvalistas(\''.$tipo.'\');");';
 		}
 						
 	}else{
@@ -79,9 +79,9 @@
 		echo 'hideMsgAguardo();';
 		
 		if($pertgrup == "yes"){
-			echo 'calcEndividRiscoGrupo(\''.$nrdgrupo.'\');';
+			echo 'calcEndividRiscoGrupo(\''.$nrdgrupo.'\',\''.$tipo.'\');';
 		}else{
-			echo 'validarAvalistas();';
+			echo 'validarAvalistas(\''.$tipo.'\');';
 		}
 
 	}

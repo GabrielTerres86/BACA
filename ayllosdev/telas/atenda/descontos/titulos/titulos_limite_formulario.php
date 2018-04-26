@@ -24,9 +24,14 @@
  * 010: [27/06/2016] Jaison/James (CECRED) : Inicializacao da aux_inconfi6.
  * 010: [10/10/2016] Lucas Ranghetti (CECRED): Remover verificacao de digitalizaco para o botao de consultar imagem(#510032)
  * 011: [26/06/2017] Jonata (RKAM): Ajuste para rotina ser chamada através da tela ATENDA > Produtos (P364).
- */
+ * 012: [11/12/2017] P404 - Inclusão de Garantia de Cobertura das Operações de Crédito (Augusto / Marcos (Supero)) 
+ * 013: [22/03/2013] Daniel (Cecred) : Ajustes referente a geracao automatica do numero do contrato. 
+ * 014: [13/04/2018] Leonardo Oliveira (GFT): Campo 'nrctrlim' escondido quando for uma inclusão, cddopcao = 'I'.
+  */
 ?>
 <form action="" name="frmDadosLimiteDscTit" id="frmDadosLimiteDscTit" onSubmit="return false;">
+
+  <input type="hidden" id="idcobert" value="<?php echo $dados[30]->cdata; ?>" />
 
 	<div id="divDscTit_Limite">
 	
@@ -34,12 +39,20 @@
 		
 			<legend>Dados do Limite</legend>
 			
-			<label for="nrctrlim"><? echo utf8ToHtml('Contrato:') ?></label>
-			<input type="text" name="nrctrlim" id="nrctrlim" value="0" class="campo">
-			<br />
+			<? if ($cddopcao == "I") { ?>
 			
-			<label></label>
-			<br />
+				<input type="hidden" name="nrctrlim" id="nrctrlim" value="0" class="campo" disabled>
+			
+			<? }else { ?> 
+				
+				<label for="nrctrlim"><? echo utf8ToHtml('Contrato:') ?></label>
+				<input type="text" name="nrctrlim" id="nrctrlim" value="0" class="campo" disabled>
+				<br />
+			
+				<label></label>
+				<br />
+
+			<? } ?>
 			
 			<label for="vllimite"><? echo utf8ToHtml('Valor do Limite:') ?></label>
 			<input type="text" name="vllimite" id="vllimite" value="0,00" class="campo">
@@ -76,6 +89,10 @@
 		</fieldset>
 		
 	</div>
+	
+  <div id="divUsoGAROPC"></div>
+  
+  <div id="divFormGAROPC"></div>
 	
 	<div id="divDscTit_Renda">
 	
@@ -132,10 +149,10 @@
 				<legend>Contrato</legend>
 				<label for="antnrctr" class="rotulo" style="width:250px;">Confirme o n&uacute;mero do contrato:</label>
 				<input type="text" name="antnrctr" id="antnrctr" value="" style="width: 80px; text-align: right;" class="campo">
-				
+		
 			</fieldset>
 			
-		</div>									
+	</div>
 		
 	</div>
 		
@@ -152,6 +169,13 @@
 	   
 	<input type="image" id="btnContinuarLimite" name="btnContinuarLimite" src="<? echo $UrlImagens; ?>botoes/continuar.gif" />		
 	
+</div>
+
+<div id="divBotoesGAROPC">
+
+  <input type="image" id="btnVoltarGAROPC" name="btnVoltarGAROPC" src="<? echo $UrlImagens; ?>botoes/voltar.gif" />
+	<input type="image" id="btnContinuarGAROPC" name="btnContinuarGAROPC" src="<? echo $UrlImagens; ?>botoes/continuar.gif" />
+
 </div>
 
 <div id="divBotoesRenda">
@@ -245,7 +269,7 @@
 	// Para demais operações, configurar máscaras para campos do formulário
 	} else {
 	
-		if (operacao == 'A') {
+		if (operacao == 'A' || operacao == 'I' ) {
 			$("#nrctrlim",'#'+nomeForm).prop("disabled",true).attr("class","campoTelaSemBorda");
 		} 
 	
@@ -283,7 +307,12 @@
 	
 	$('#btnContinuarLimite','#divBotoesLimite').unbind('click').bind('click',function() {
 		if (operacao == 'C') {
+      <? if ($dados[30]->cdata > 0) { ?>
+			abrirTelaGAROPC("C");
+      blockBackground(parseInt($("#divRotina").css("z-index")));
+      <? } else { ?>
 			dscShowHideDiv('divDscTit_Renda;divBotoesRenda','divDscTit_Limite;divBotoesLimite');
+      <? } ?>
 		} else {
 			aux_inconfir = 1; 
 			aux_inconfi2 = 11; 
@@ -294,23 +323,46 @@
 			validaLimiteDscTit(operacao,1,11,30);
 		}
 		return false;
+  $("#btnVoltarGAROPC","#divBotoesGAROPC").unbind("click").bind("click",function() {
+    $("#divUsoGAROPC").empty();
+    $("#divFormGAROPC").empty();
+    $("#frmDadosLimiteDscTit").css("width", 515);
+    dscShowHideDiv("divDscTit_Limite;divBotoesLimite", "divFormGAROPC;divBotoesGAROPC");
+		return false;
+	});
+	
+  $("#btnContinuarGAROPC","#divBotoesGAROPC").unbind("click").bind("click",function() {
+    gravarGAROPC('idcobert','frmDadosLimiteDscTit','dscShowHideDiv("divDscTit_Renda;divBotoesRenda","divFormGAROPC;divBotoesGAROPC", "");$("#frmDadosLimiteDscTit").css("width", 515);bloqueiaFundo($("#divDscTit_Renda"));');
+    return false;
 	});
 	
 	$('#btnVoltarRendas','#divBotoesRenda').unbind('click').bind('click',function() {
+    <? if ($cddopcao == "C") { ?>
+      <? if ($dados[30]->cdata > 0) { ?>
+        dscShowHideDiv('divFormGAROPC;divBotoesGAROPC','divDscTit_Renda;divBotoesRenda');
+        $("#frmDadosLimiteDscTit").css("width", 540);
+      <? } else { ?>
 		dscShowHideDiv('divDscTit_Limite;divBotoesLimite','divDscTit_Renda;divBotoesRenda');
+      <? } ?>      
+    <? } else if ($cddopcao == "A" || $cddopcao == "I") { ?>
+      dscShowHideDiv('divFormGAROPC;divBotoesGAROPC','divDscTit_Renda;divBotoesRenda');
+      $("#frmDadosLimiteDscTit").css("width", 540);
+    <? } else { ?>
+		dscShowHideDiv('divDscTit_Limite;divBotoesLimite','divDscTit_Renda;divBotoesRenda');
+    <? } ?>
 		return false;
 	});
 	
 	$('#btnContinuarRendas','#divBotoesRenda').unbind('click').bind('click',function() {
 		if (operacao == 'A') {
 			$('#divBotoesRenda').css('display','none');
-			informarRating('divDscTit_Renda',"dscShowHideDiv('divDscTit_Observacao;divBotoesObs','divDadosRating;divBotoesRenda')","dscShowHideDiv('divDscTit_Renda;divBotoesRenda','divDadosRating');","carregaLimitesTitulos()");
+			informarRating('divDscTit_Renda',"dscShowHideDiv('divDscTit_Observacao;divBotoesObs','divDadosRating;divBotoesRenda')","dscShowHideDiv('divDscTit_Renda;divBotoesRenda','divDadosRating');","fecharRotinaGenerico('<? echo $tipo ?>');");
 		} else if (operacao == 'C') {
 			$('#divBotoesRenda').css('display','none');
-			informarRating('divDscTit_Renda',"dscShowHideDiv('divDscTit_Observacao;divBotoesObs','divDadosRating;divBotoesRenda')","dscShowHideDiv('divDscTit_Renda;divBotoesRenda','divDadosRating');","carregaLimitesTitulos()");
+			informarRating('divDscTit_Renda',"dscShowHideDiv('divDscTit_Observacao;divBotoesObs','divDadosRating;divBotoesRenda')","dscShowHideDiv('divDscTit_Renda;divBotoesRenda','divDadosRating');","fecharRotinaGenerico('<? echo $tipo ?>');");
 		} else {
 			$('#divBotoesRenda').css('display','none');
-			informarRating('divDscTit_Renda',"dscShowHideDiv('divDscTit_Observacao;divBotoesObs','divDadosRating;divBotoesRenda')","dscShowHideDiv('divDscTit_Renda;divBotoesRenda','divDadosRating');","mostraImprimirLimite()");
+			informarRating('divDscTit_Renda',"dscShowHideDiv('divDscTit_Observacao;divBotoesObs','divDadosRating;divBotoesRenda')","dscShowHideDiv('divDscTit_Renda;divBotoesRenda','divDadosRating');","mostraImprimirLimite('<? echo $tipo ?>');");
 		}
 		return false;
 	});
@@ -321,6 +373,7 @@
 	});
 	
 	$('#btnContinuarObservacao','#divBotoesObs').unbind('click').bind('click',function() {
+    $("#frmDadosLimiteDscTit").css("width", 525);
 		dscShowHideDiv('divDscTit_Avalistas;divBotoesAval','divDscTit_Observacao;divBotoesObs');
 		return false;
 	});
@@ -341,7 +394,7 @@
 		if (operacao == 'C') {
 			voltaDiv(3,2,4,'DESCONTO DE T&Iacute;TULOS - LIMITE');
 		} else {
-			buscaGrupoEconomico();
+			buscaGrupoEconomico('<? echo $tipo ?>');
 		}
 		return false;
 	});

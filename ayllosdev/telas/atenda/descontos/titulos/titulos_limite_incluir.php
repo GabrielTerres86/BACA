@@ -27,6 +27,7 @@
 	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"I")) <> "") {
 		exibirErro('error',$msgError,'Alerta - Ayllos','bloqueiaFundo(divRotina)');
 	}	
+	$tipo = (isset($_POST['tipo'])) ? $_POST['tipo'] : "CONTRATO";
 	
 	// Verifica se o número da conta foi informado
 	if (!isset($_POST["nrdconta"])||

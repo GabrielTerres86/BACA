@@ -1,40 +1,37 @@
-<? 
-/*!
- * FONTE        : titulos_limite_alterar.php
- * CRIAÇÃO      : Guilherme
- * DATA CRIAÇÃO : Novembro/2008
- * OBJETIVO     : Carregar dados para alterar um limite existente	             		        				   
- * --------------
- * ALTERAÇÕES   :
- * --------------
- * 000: [08/06/2010] David           	(CECRED) : Adaptação para RATING
- * 001: [06/05/2011] Rogerius Militao	(DB1)    : Adaptação no formulário de avalista genérico
- * 002: [20/08/2015] Kelvin 			(CECRED) : Ajuste feito para não inserir caracters 
- *												   especiais na observação, conforme solicitado
- *	   										       no chamado 315453.
- */
-?>
-
 <?php 
+
+	/************************************************************************
+	 Fonte: titulos_limite_consultar_proposta.php                          
+	 Autor: Douglas Mario (GFT)                                                 
+	 Data : Abril/2018                Ãšltima AlteraÃ§Ã£o: 09/04/2018
+	                                                                  
+	 Objetivo  : Carregar dados de uma proposta
+	                                                                  	 
+	
+	************************************************************************/
+	
 	session_start();
 	
-	// Includes para controle da session, variáveis globais de controle, e biblioteca de funções	
+	// Includes para controle da session, variÃ¡veis globais de controle, e biblioteca de funÃ§Ãµes	
 	require_once("../../../../includes/config.php");
 	require_once("../../../../includes/funcoes.php");
 	require_once("../../../../includes/controla_secao.php");
 
-	// Verifica se tela foi chamada pelo método POST
+	// Verifica se tela foi chamada pelo mÃ©todo POST
 	isPostMethod();	
 		
 	// Classe para leitura do xml de retorno
 	require_once("../../../../class/xmlfile.php");
+
+	require_once("../../../../includes/carrega_permissoes.php");
+
+	setVarSession("opcoesTela",$opcoesTela);
 	
-	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"A")) <> "") {
+	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"C")) <> "") {
 		exibeErro($msgError);		
 	}	
-	$tipo = (isset($_POST['tipo'])) ? $_POST['tipo'] : "CONTRATO";
 	
-	// Verifica se o número da conta foi informado
+	// Verifica se o nÃºmero da conta foi informado
 	if (!isset($_POST["nrdconta"]) ||
 		!isset($_POST["nrctrlim"])) {
 		exibeErro("Par&acirc;metros incorretos.");
@@ -43,22 +40,21 @@
 	$nrdconta = $_POST["nrdconta"];
 	$nrctrlim = $_POST["nrctrlim"];
 
-	// Verifica se o número da conta é um inteiro válido
+	// Verifica se o nÃºmero da conta Ã© um inteiro vÃ¡lido
 	if (!validaInteiro($nrdconta)) {
 		exibeErro("Conta/dv inv&aacute;lida.");
 	}
 	
-	// Verifica se o número do contrato é um inteiro válido
+	// Verifica se o nÃºmero do contrato Ã© um inteiro vÃ¡lido
 	if (!validaInteiro($nrctrlim)) {
 		exibeErro("N&uacute;mero do contrato inv&aacute;lido.");
 	}	
-	
-	// Monta o xml de requisição
+	// Monta o xml de requisiÃ§Ã£o
 	$xmlGetDados = "";
 	$xmlGetDados .= "<Root>";
 	$xmlGetDados .= "	<Cabecalho>";
 	$xmlGetDados .= "		<Bo>b1wgen0030.p</Bo>";
-	$xmlGetDados .= "		<Proc>busca_dados_limite_altera</Proc>";
+	$xmlGetDados .= "		<Proc>busca_dados_proposta_consulta</Proc>";
 	$xmlGetDados .= "	</Cabecalho>";
 	$xmlGetDados .= "	<Dados>";
 	$xmlGetDados .= "		<cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
@@ -80,39 +76,25 @@
 	// Cria objeto para classe de tratamento de XML
 	$xmlObjDados = getObjectXML(retiraAcentos(removeCaracteresInvalidos($xmlResult)));
 	
-	// Se ocorrer um erro, mostra cr&iacute;tica
+	// Se ocorrer um erro, mostra crÃ­tica
 	if (strtoupper($xmlObjDados->roottag->tags[0]->name) == "ERRO") {
-		exibeErro($xmlObjDados->roottag->tags[0]->tags[0]->tags[4]->cdata);
+		exibeErro(str_replace('"',"'",$xmlObjDados->roottag->tags[0]->tags[0]->tags[4]->cdata));
 	} 
 	
 	$dados = $xmlObjDados->roottag->tags[0]->tags[0]->tags;
 	$avais = $xmlObjDados->roottag->tags[1]->tags;
-	$risco = $xmlObjDados->roottag->tags[2]->tags;
 	$registros = $avais;
 	
 	$flgAval01 = count($avais) == 1 || count($avais) == 2 ? true : false;
 	$flgAval02 = count($avais) == 2 ? true : false;
 	
-	// Alimentar data rating
-	for ($i = 0; $i < count($risco); $i++) { 								
-		if ($risco[$i]->tags[4]->cdata <> 0) {
-			?>
-			<script type="text/javascript">
-			dtrating = '<?php echo subDiasNaData($glbvars["dtmvtolt"],$risco[$i]->tags[4]->cdata); ?>';
-			diaratin = '<?php echo $risco[$i]->tags[4]->cdata; ?>';
-			vlrrisco = '<?php echo $risco[$i]->tags[3]->cdata; ?>';
-			</script>
-			<?php
-		}
-	}
+	// VariÃ¡vel que armazena cÃ³digo da opÃ§Ã£o para utilizaÃ§Ã£o na include titulos_limite_formulario.php
+	$cddopcao = "C";
 	
-	// Variável que armazena código da opção para utilização na include titulos_limite_formulario.php
-	$cddopcao = "A";
+	// Include para carregar formulÃ¡rio para gerenciamento de dados do limite
+include("titulos_limite_formulario_propostas.php");
 	
-	// Include para carregar formulário para gerenciamento de dados do limite
-	include("titulos_limite_formulario.php");
-	
-	// Função para exibir erros na tela através de javascript
+	// FunÃ§Ã£o para exibir erros na tela atravÃ©s de javascript
 	function exibeErro($msgErro) { 
 		echo '<script type="text/javascript">';
 		echo 'hideMsgAguardo();';
@@ -122,8 +104,3 @@
 	}
 	
 ?>
-
-<script type="text/javascript">
-	var operacao = '<? echo $cddopcao ?>';
-	habilitaAvalista(true, operacao);
-</script>

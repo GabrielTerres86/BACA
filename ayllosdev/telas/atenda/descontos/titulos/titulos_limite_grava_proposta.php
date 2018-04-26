@@ -17,6 +17,8 @@
          17/06/2016 - M181 - Alterar o CDAGENCI para          
                       passar o CDPACTRA (Rafael Maciel - RKAM)					  
 		 28/07/2017 - Desenvolvimento da melhoria 364 - Grupo Economico Novo. (Mauro)
+		 
+		 22/03/2018 - Incluso tratativa para retornar numero de contrato gerado automaticamente. (Daniel - projeto 403)
  */
 ?>
 
@@ -35,6 +37,8 @@
 		
 	// Classe para leitura do xml de retorno
 	require_once("../../../../class/xmlfile.php");
+
+	$tipo = (isset($_POST['tipo'])) ? $_POST['tipo'] : "CONTRATO";
 	
 	// Verifica se os parâmetros necessários foram informados
 	$params = array("nrdconta","nrctrlim","cddlinha","vllimite","dsramati","vlmedtit","vlfatura","vloutras","vlsalari","vlsalcon","dsdbens1","dsdbens2","dsobserv",
@@ -113,6 +117,7 @@
 	$nrperger = $_POST["nrperger"];	
 	$vltotsfn = $_POST["vltotsfn"];	
 	$perfatcl = $_POST["perfatcl"];
+    $idcobope = $_POST["idcobope"];
 
 	$cddopcao = $_POST["cddopcao"];
 	
@@ -290,6 +295,7 @@
 	$xmlSetGravarLimite .= "		<nrperger>".$nrperger."</nrperger>";	
 	$xmlSetGravarLimite .= "		<vltotsfn>".$vltotsfn."</vltotsfn>";
 	$xmlSetGravarLimite .= "		<perfatcl>".$perfatcl."</perfatcl>";
+    $xmlSetGravarLimite .= "		<idcobope>".$idcobope."</idcobope>";
 	$xmlSetGravarLimite .= "	</Dados>";
 	$xmlSetGravarLimite .= "</Root>";
 	
@@ -307,6 +313,8 @@
 	if ($cddopcao == "A"){
 		$opermail = "Alterar Limite de Desconto de Titulos";
 	}else{  if ($cddopcao == "I"){
+                // Buscar numero do contrato gerado 
+                $nrctrlim = $xmlObjLimite->roottag->tags[0]->attributes["NRCTRLIM"];	
 				$opermail = "Novo Limite de Desconto de Titulos";
 			}
 	}
@@ -329,7 +337,7 @@
 	// Mensagens de alerta
 	$msg = Array();
 	foreach( $mensagens as $mensagem ) {
-		$msg[] = getByTagName($mensagem->tags,'dsmensag');
+		$msg[] = str_replace('|@|','<br>',getByTagName($mensagem->tags,'dsmensag'));
 	}
 	$stringArrayMsg = implode( "|", $msg);
 	echo 'exibirMensagens("'.$stringArrayMsg.'","atualizaDadosRating(\"divOpcoesDaOpcao3\");");';

@@ -30,14 +30,49 @@
              26/06/2017 - Ajuste para rotina ser chamada através da tela ATENDA > Produtos (Jonata - RKAM / P364).
 			 
 			 21/07/2017 - Ajuste no cadastro de emitentes. Projeto 300. (Lombardi)
-			 
+
 			 19/01/2018 - Chamado 743079 - Problema da tela ficar travada quando CMLC7 inválido (Andrei-Mouts)
+             
+             07/03/2018 - Formatação do novo campo 'Data Renovação' para o formulário de titulos (Leonardo Oliveira - GFT)
 			 
+             13/03/2018 - Formatação do botão Renovação para  o formulário de titulos. (Leonardo Oliveira - GFT)
+
+             28/03/2018 - Formatação dos layouts dos formulários de Contratos e Propostas. (Andre Avila - GFT)
+			 
+			 02/04/2018 - Formatação da tela para listar borderôs. (Leonardo Oliveira - GFT)
+
+			 04/04/2018 - Ajustes na formatação da tela 'divDetalheBordero'. (Leonardo Oliveira - GFT)
+
+			 12/04/2018 - Formatação do layout 'frmTitLimiteManutencao' e inclusão do botão manutenção no layout 'frmTitulos'. (Leonardo Oliveira - GFT)
+			 
+             15/04/2018 - Correção de sobreescrita.
+
+			 18/04/2018 - Alteração da coluna 'contrato' para 'prospota', inclusão da coluna 'contrato' (Leonardo Oliveira - GFT).
+
 ************************************************************************/
 
 // Carrega biblioteca javascript referente ao RATING
 $.getScript(UrlSite + 'includes/rating/rating.js');
 
+/*Largura e alinhamento das tabelas da inclusao do bordero*/
+var arrayLarguraInclusaoBordero = new Array();
+arrayLarguraInclusaoBordero[0] = '70px';
+arrayLarguraInclusaoBordero[1] = '70px';
+arrayLarguraInclusaoBordero[2] = '370px';
+arrayLarguraInclusaoBordero[3] = '80px';
+arrayLarguraInclusaoBordero[4] = '100px';
+arrayLarguraInclusaoBordero[5] = '70px';
+arrayLarguraInclusaoBordero[6] = '70px';
+
+var arrayAlinhaInclusaoBordero = new Array();
+arrayAlinhaInclusaoBordero[0] = 'center';
+arrayAlinhaInclusaoBordero[1] = 'right';
+arrayAlinhaInclusaoBordero[2] = 'left';
+arrayAlinhaInclusaoBordero[3] = 'right';
+arrayAlinhaInclusaoBordero[4] = 'right';
+arrayAlinhaInclusaoBordero[5] = 'center';
+arrayAlinhaInclusaoBordero[6] = 'center';
+				
 // Função para voltar para o div anterior conforme parâmetros
 function voltaDiv(esconder,mostrar,qtdade,titulo,rotina,novotam,novalar) {	
 
@@ -282,24 +317,25 @@ function formataLayout(nomeForm){
 		var ordemInicial = new Array();
 				
 		var arrayLargura = new Array();
-		arrayLargura[0] = '65px';
+		arrayLargura[0] = '60px';
 		arrayLargura[1] = '60px';
 		arrayLargura[2] = '60px';
-		arrayLargura[3] = '55px';
-		arrayLargura[4] = '100px';
-		arrayLargura[5] = '55px';
-		arrayLargura[6] = '100px';
-		arrayLargura[7] = '90px';
+		arrayLargura[3] = '60px';
+		arrayLargura[4] = '80px';
+		arrayLargura[5] = '60px';
+		arrayLargura[6] = '80px';
+		arrayLargura[7] = '120px';
+		
 				
 		var arrayAlinha = new Array();
 		arrayAlinha[0] = 'center';
-		arrayAlinha[1] = 'right';
-		arrayAlinha[2] = 'right';
-		arrayAlinha[3] = 'right';
+		arrayAlinha[1] = 'center';
+		arrayAlinha[2] = 'center';
+		arrayAlinha[3] = 'center';
 		arrayAlinha[4] = 'right';
-		arrayAlinha[5] = 'right';
+		arrayAlinha[5] = 'center';
 		arrayAlinha[6] = 'right';
-		arrayAlinha[7] = 'left';
+		arrayAlinha[7] = 'center';
 		arrayAlinha[8] = 'center';
 						
 		tabela.formataTabela( ordemInicial, arrayLargura, arrayAlinha, '' );
@@ -313,6 +349,44 @@ function formataLayout(nomeForm){
 		ajustarCentralizacao();
 	
 	}else if( nomeForm == 'frmBordero' ){
+	
+	    cNrinssac.unbind('keypress').unbind('change').bind('change keypress', function(e) {
+	        if ((e.keyCode == 9 || e.keyCode == 13 || e.type ==='change')) {
+	            if(cNrinssac.val()!=''){
+	                buscaPagador(cNrdconta.val(),cNrinssac.val(),nomeForm);
+	            }
+	            else{
+	            	cNmdsacad.val('');
+	            }
+	            return false;
+	        }
+	    });
+
+	    cDtvencto.unbind('keypress').bind('keypress', function(e) {
+	        if ((e.keyCode == 9 || e.keyCode == 13)) {
+	            cVltitulo.focus();
+	            return false;
+	        }
+	    });
+
+	    cVltitulo.unbind('keypress').bind('keypress', function(e) {
+	        if ((e.keyCode == 9 || e.keyCode == 13)) {
+	            cNrnosnum.focus();
+	            return false;
+	        }
+	    });
+
+	    cNrnosnum.unbind('keypress').bind('keypress', function(e) {
+	        if ((e.keyCode == 9 || e.keyCode == 13)) {
+	            buscarTitulosBordero();
+	            return false;
+	        }
+	    });
+
+		layoutPadrao();
+		ajustarCentralizacao();
+	
+	}else if ( nomeForm == 'frmBordero' ){
 	
 		var Ldspesqui = $('label[for="dspesqui"]','#'+nomeForm);
 		var Lnrborder = $('label[for="nrborder"]','#'+nomeForm);
@@ -381,10 +455,98 @@ function formataLayout(nomeForm){
 		Ctxdiaria.desabilitaCampo();
 		Cdsopelib.desabilitaCampo();
 		Ctxjurmor.desabilitaCampo();
+
+	}else if ( nomeForm == 'divPropostas' ){
+
 			
-	}else if( nomeForm == 'divLimites' ){
+		$('#'+nomeForm).css('width','860px');
+	
+		var divRegistro = $('div.divRegistros','#'+nomeForm);		
+		var tabela      = $('table', divRegistro );	
+						
+		divRegistro.css('height','135px');
+		
+		var ordemInicial = new Array();
 				
+		var arrayLargura = new Array();
+
+		arrayLargura[0] = '80px';
+		arrayLargura[1] = '60px';
+		arrayLargura[2] = '60px';
+		arrayLargura[3] = '80px';
+		arrayLargura[4] = '60px';
+		arrayLargura[5] = '60px';
+		arrayLargura[6] = '100px';
+		arrayLargura[7] = '110px';
+		//arrayLargura[8] = '120px';	//não descomentar essa linha pois desalinha as colunas
+				
+		var arrayAlinha = new Array();
+		
+		arrayAlinha[0] = 'center';
+		arrayAlinha[1] = 'center';
+		arrayAlinha[2] = 'center';
+		arrayAlinha[3] = 'right';
+		arrayAlinha[4] = 'right';
+		arrayAlinha[5] = 'center';
+		arrayAlinha[6] = 'center';
+		arrayAlinha[7] = 'center';
+		arrayAlinha[8] = 'center';
+						
+		tabela.formataTabela( ordemInicial, arrayLargura, arrayAlinha, '' );
+		
+		$('tbody > tr',tabela).each( function() {
+			if ( $(this).hasClass('corSelecao') ) {
+				$(this).focus();		
+			}
+		});
+	
+		ajustarCentralizacao();
+
+	}else if ( nomeForm == 'divContratos' ){
+
+		$('#'+nomeForm).css('width','800px');
+	
+		var divRegistro = $('div.divRegistros','#'+nomeForm);		
+		var tabela      = $('table', divRegistro );
+						
+		divRegistro.css('height','135px');
+		
+		var ordemInicial = new Array();
+			
+		var arrayLargura = new Array();
 		$('#'+nomeForm).css('width','533px');
+				
+
+		arrayLargura[0] = '80px';
+		arrayLargura[1] = '60px';
+		arrayLargura[2] = '60px';
+		arrayLargura[3] = '60px';
+		arrayLargura[4] = '60px';
+		arrayLargura[5] = '120px';
+				
+		var arrayAlinha = new Array();
+		
+		arrayAlinha[0] = 'center';
+		arrayAlinha[1] = 'center';
+		arrayAlinha[2] = 'right';
+		arrayAlinha[3] = 'right';
+		arrayAlinha[4] = 'center';
+		arrayAlinha[5] = 'center';
+		arrayAlinha[6] = 'center';
+						
+		tabela.formataTabela( ordemInicial, arrayLargura, arrayAlinha, '' );
+		
+		$('tbody > tr',tabela).each( function() {
+			if ( $(this).hasClass('corSelecao') ) {
+				$(this).focus();		
+			}
+		});
+	
+		ajustarCentralizacao();
+
+	}else if ( nomeForm == 'divLimites' ){
+				
+		$('#'+nomeForm).css('width','800px');
 	
 		var divRegistro = $('div.divRegistros','#'+nomeForm);		
 		var tabela      = $('table', divRegistro );
@@ -398,18 +560,18 @@ function formataLayout(nomeForm){
 		arrayLargura[1] = '60px';
 		arrayLargura[2] = '60px';
 		arrayLargura[3] = '80px';
-		arrayLargura[4] = '30px';
-		arrayLargura[5] = '25px';
-		arrayLargura[6] = '65px';
+		arrayLargura[4] = '60px';
+		arrayLargura[5] = '60px';
+		arrayLargura[6] = '120px';
 				
 		var arrayAlinha = new Array();
 		arrayAlinha[0] = 'center';
 		arrayAlinha[1] = 'center';
-		arrayAlinha[2] = 'right';
+		arrayAlinha[2] = 'center';
 		arrayAlinha[3] = 'right';
 		arrayAlinha[4] = 'center';
-		arrayAlinha[5] = 'right';
-		arrayAlinha[6] = 'left';
+		arrayAlinha[5] = 'center';
+		arrayAlinha[6] = 'center';
 		arrayAlinha[7] = 'center';
 						
 		tabela.formataTabela( ordemInicial, arrayLargura, arrayAlinha, '' );
@@ -422,8 +584,7 @@ function formataLayout(nomeForm){
 	
 		ajustarCentralizacao();
 		
-	}else if(  nomeForm == 'frmDadosLimiteDscChq' ||
-			   nomeForm == 'frmDadosLimiteDscTit'){
+	}else if ( nomeForm == 'frmDadosLimiteDscChq' || nomeForm == 'frmDadosLimiteDscTit'){
 	
 		var Lnrctrlim = $('label[for="nrctrlim"]','#'+nomeForm);
 		var Lvllimite = $('label[for="vllimite"]','#'+nomeForm);
@@ -512,96 +673,62 @@ function formataLayout(nomeForm){
 		
 		
 		Cnrctrlim.unbind('keypress').bind('keypress', function(e){
-		
 			/*Se foi pressionado a telca ENTER*/
 			if(e.keyCode == 13){
-			
 				Cvllimite.focus();
-			
 			}
-		
 		});
 		
 		Cvllimite.unbind('keypress').bind('keypress', function(e){
-		
 			/*Se foi pressionado a telca ENTER*/
 			if(e.keyCode == 13){
-			
 				Ccddlinha.focus();
-			
 			}
-		
 		});
 		
 		Cdsramati.unbind('keypress').bind('keypress', function(e){
-		
 			/*Se foi pressionado a telca ENTER*/
 			if(e.keyCode == 13){
-			
 				Cvlmedtit.focus();
-			
 			}
-		
 		});
 		
 		Cvlmedtit.unbind('keypress').bind('keypress', function(e){
-		
 			/*Se foi pressionado a telca ENTER*/
 			if(e.keyCode == 13){
-			
 				Cvlfatura.focus();
-			
 			}
-		
 		});
 		
 		Cvlsalari.unbind('keypress').bind('keypress', function(e){
-		
 			/*Se foi pressionado a telca ENTER*/
 			if(e.keyCode == 13){
-			
 				Cvlsalcon.focus();
-			
 			}
-		
 		});
 		
 		Cvlsalcon.unbind('keypress').bind('keypress', function(e){
-		
 			/*Se foi pressionado a telca ENTER*/
 			if(e.keyCode == 13){
-			
 				Cvloutras.focus();
-			
 			}
-		
 		});
 		
 		Cvloutras.unbind('keypress').bind('keypress', function(e){
-		
 			/*Se foi pressionado a telca ENTER*/
 			if(e.keyCode == 13){
-			
 					Cdsdbens1.focus();
-			
 			}
-		
 		});
 		
 		Cdsdbens1.unbind('keypress').bind('keypress', function(e){
-		
 			/*Se foi pressionado a telca ENTER*/
 			if(e.keyCode == 13){
-			
 					Cdsdbens2.focus();
-			
 			}
-		
 		});
 		
-		
-		
-	}else if( nomeForm == 'frmTitulos' ){
+	}else if ( nomeForm == 'frmTitulos' ){
 	
 		var Lnrctrlim = $('label[for="nrctrlim"]','#'+nomeForm);
 		var Ldtinivig = $('label[for="dtinivig"]','#'+nomeForm);
@@ -611,6 +738,8 @@ function formataLayout(nomeForm){
 		var Ldsdlinha = $('label[for="dsdlinha"]','#'+nomeForm);
 		var Lvlutilcr = $('label[for="vlutilcr"]','#'+nomeForm);
 		var Lvlutilsr = $('label[for="vlutilsr"]','#'+nomeForm);
+		var Ldtrenova = $('label[for="dtrenova"]','#'+nomeForm);
+		var Ldtultmnt = $('label[for="dtultmnt"]','#'+nomeForm);
 		
 		var Cnrctrlim = $('#nrctrlim','#'+nomeForm);
 		var Cdtinivig = $('#dtinivig','#'+nomeForm);
@@ -620,6 +749,11 @@ function formataLayout(nomeForm){
 		var Cdsdlinha = $('#dsdlinha','#'+nomeForm);
 		var Cvlutilcr = $('#vlutilcr','#'+nomeForm);
 		var Cvlutilsr = $('#vlutilsr','#'+nomeForm);
+		var Cdtrenova = $('#dtrenova','#'+nomeForm);
+		var Cdtultmnt = $('#dtultmnt','#'+nomeForm);
+		var Cperrenov = $('#hd_perrenov','#'+nomeForm);
+
+		$('#'+nomeForm).css('width','530px');
 		
 		$('#'+nomeForm).css('width','430px');
 		
@@ -631,7 +765,8 @@ function formataLayout(nomeForm){
 		Ldsdlinha.addClass('rotulo').css('width','155px');
 		Lvlutilcr.addClass('rotulo').css('width','200px');
 		Lvlutilsr.addClass('rotulo').css('width','200px');
-		
+		Ldtrenova.addClass('rotulo').css('width','200px');
+		Ldtultmnt.addClass('rotulo').css('width','200px');
 		
 		Cnrctrlim.css({'width':'60px','text-align':'right'});
 		Cdtinivig.css({'width':'65px','text-align':'center'});
@@ -641,6 +776,8 @@ function formataLayout(nomeForm){
 		Cdsdlinha.css({'width':'200px'});
 		Cvlutilcr.css({'width':'150px','text-align':'right'});
 		Cvlutilsr.css({'width':'150px','text-align':'right'});
+		Cdtrenova.css({'width':'150px','text-align':'right'});
+		Cdtultmnt.css({'width':'150px','text-align':'right'});
 		
 		Cnrctrlim.desabilitaCampo();
 		Cdtinivig.desabilitaCampo();
@@ -650,6 +787,31 @@ function formataLayout(nomeForm){
 		Cdsdlinha.desabilitaCampo();
 		Cvlutilcr.desabilitaCampo();
 		Cvlutilsr.desabilitaCampo();
+		Cdtrenova.desabilitaCampo();
+		Cdtultmnt.desabilitaCampo();
+
+		if (Cperrenov.val() != 1) {
+			$('#btnrenovacao').css({'color':'gray'});
+			$('#btnrenovacao').css({'cursor':'default'});
+			$('#btnrenovacao').css({'pointer-events':'none'});
+		}
+
+
+		$('#btnrenovacao').unbind('click').bind('click', function(){
+			if (Cperrenov.val() != 1) {return false}
+			renovarLimiteTitulo();
+			return false;
+		});
+
+
+		$('#btnManutencao').unbind('click').bind('click', function(){
+			var val_flgstlcr = 0;
+			if($('#flgstlcr','#'+nomeForm).val() == "yes"){
+				val_flgstlcr = 1;
+			}
+			realizarManutencaoDeLimite(0, val_flgstlcr);
+			return false;
+		});
 
 	}else if ( nomeForm == 'divRestricoes' ){
 	
@@ -840,8 +1002,8 @@ function formataLayout(nomeForm){
 			// Se é a tecla TAB ou ENTER, 
 			if (e.keyCode == 9 || e.keyCode == 13 ) {
 				cDtdcaptu.focus();
-	return false;
-}
+				return false;
+		}
 		});
 		cDtdcaptu.unbind('keydown').bind('keydown', function(e) {
 			// Se é a tecla TAB ou ENTER, 
@@ -1095,7 +1257,7 @@ function formataLayout(nomeForm){
 		tabela.formataTabela(ordemInicial, arrayLargura, arrayAlinha, '');
 		ajustarCentralizacao();			
 	}
-	
+
 	return false;
 }
 

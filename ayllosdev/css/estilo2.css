@@ -158,6 +158,7 @@ div .divFinanc label{display:block;float:left;text-align:right;height:25px;verti
 div .divFinanc input {margin:3px 0px 3px 3px;float:left;}
 
 /* FORM CABE�ALHO */
+#frmCab{display: flex}
 #frmCabContas {padding-top:3px;border-bottom:1px solid #777;padding-bottom:2px;margin-bottom:4px;border-top:1px solid #777;}
 #frmCabMatric {padding:3px 0px 2px 0px;margin-bottom:4px;border-top:1px solid #777;border-bottom:1px solid #777;}
 #frmCabAnota   {padding:3px 0px 2px 0px;margin-bottom:4px;border-top:1px solid #777;border-bottom:1px solid #777;}
