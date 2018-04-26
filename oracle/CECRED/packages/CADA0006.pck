@@ -103,7 +103,7 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0006 is
                                     ,pr_cdmodalidade_tipo OUT INTEGER --> descricao do tipo de conta
                                     ,pr_des_erro          OUT VARCHAR2 --> Código da crítica
                                     ,pr_dscritic          OUT VARCHAR2); --> Descrição da crítica
-                                    
+                                   
   PROCEDURE pc_valida_tipo_conta_coop(pr_cdcooper      IN tbcc_tipo_conta_coop.cdcooper%TYPE --> Codigo da cooperativa
                                      ,pr_inpessoa      IN tbcc_tipo_conta_coop.inpessoa%TYPE --> tipo de pessoa
                                      ,pr_cdtipo_conta  IN tbcc_tipo_conta_coop.cdtipo_conta%TYPE --> codigo do tipo de conta
@@ -176,7 +176,7 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0006 is
                                   ,pr_solcoord OUT INTEGER               --> Solicita senha coordenador
                                   ,pr_cdcritic OUT crapcri.cdcritic%TYPE --> Codigo Erro
                                   ,pr_dscritic OUT crapcri.dscritic%TYPE); --> Descricao Erro
-                                  
+  
   PROCEDURE pc_valida_valor_de_adesao(pr_cdcooper  IN crapass.cdcooper%TYPE --> Cooperativa
                                      ,pr_nrdconta  IN crapass.nrdconta%TYPE --> Situacao
                                      ,pr_cdprodut  IN tbcc_produto.cdproduto%TYPE --> Codigo do operador
@@ -196,7 +196,7 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0006 is
                                        ,pr_retxml IN OUT NOCOPY XMLType --> Arquivo de retorno do XML
                                        ,pr_nmdcampo  OUT VARCHAR2 --> Nome do campo com erro
                                        ,pr_des_erro  OUT VARCHAR2); --> Erros do processo
-                                       
+                                        
   PROCEDURE pc_valida_valor_adesao_web(pr_nrdconta   IN crapass.nrdconta%TYPE --> Situacao
                                       ,pr_cdprodut   IN tbcc_produto.cdproduto%TYPE --> Codigo do operador
                                       ,pr_vlcontra   IN DECIMAL               --> Valor contratado
@@ -213,10 +213,10 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0006 is
   /*****************************************************************************/
   PROCEDURE pc_grava_dados_hist(pr_nmtabela    IN tbcc_campo_historico.nmtabela_oracle%TYPE  --> Nome da tela                              
                                ,pr_nmdcampo    IN tbcc_campo_historico.nmcampo%TYPE          --> Nome do campo
-                               ,pr_cdcooper    IN tbcc_conta_historico.cdcooper%TYPE DEFAULT 0 --> Cooperativa
-                               ,pr_nrdconta    IN tbcc_conta_historico.nrdconta%TYPE DEFAULT 0 --> Número da conta
-                               ,pr_inpessoa    IN tbcc_conta_historico.inpessoa%TYPE DEFAULT 0 --> Tipo de pessoa
-                               ,pr_idseqttl    IN tbcc_conta_historico.idseqttl%TYPE DEFAULT 0 --> Sequencia do titular
+                               ,pr_cdcooper    IN tbcc_conta_historico.cdcooper%TYPE     DEFAULT 0 --> Cooperativa
+                               ,pr_nrdconta    IN tbcc_conta_historico.nrdconta%TYPE     DEFAULT 0 --> Número da conta
+                               ,pr_inpessoa    IN tbcc_conta_historico.inpessoa%TYPE     DEFAULT 0 --> Tipo de pessoa
+                               ,pr_idseqttl    IN tbcc_conta_historico.idseqttl%TYPE     DEFAULT 0 --> Sequencia do titular
                                ,pr_cdtipcta    IN tbcc_conta_historico.cdtipo_conta%TYPE DEFAULT NULL --> Código do tipo de conta
                                ,pr_cdsituac    IN tbcc_conta_historico.cdsituacao%TYPE   DEFAULT NULL --> Código da situação
                                ,pr_cdprodut    IN tbcc_produtos_coop.cdproduto%TYPE      DEFAULT NULL --> Código do produto
@@ -714,7 +714,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0006 IS
       FOR idx IN vr_tab_cdprodut.first..vr_tab_cdprodut.last LOOP
         
         pc_permite_produto_tipo(pr_cdprodut => to_number(vr_tab_cdprodut(idx))
-                               ,pr_cdtipcta => pr_cdtipcta
+                               ,pr_cdtipcta => pr_cdtipcta	
                                ,pr_cdcooper => pr_cdcooper
                                ,pr_inpessoa => pr_inpessoa
                                ,pr_possuipr => vr_possuipr
@@ -842,7 +842,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0006 IS
           FROM crapcot t
          WHERE t.cdcooper = pr_cdcooper
            AND t.nrdconta = pr_nrdconta;
-           
+      
       -- Cursor sobre a tabela de associados
       CURSOR cr_crapass (pr_cdcooper IN crapcop.cdcooper%TYPE
                         ,pr_nrdconta IN crapass.nrdconta%TYPE) IS
@@ -883,7 +883,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0006 IS
          WHERE cdcooper = pr_cdcooper
            AND nrdconta = pr_nrdconta
            AND cdsitpla = 1;
-           
+      
       -- buscar o valor das parcelas de poupança programada contratadas
       CURSOR cr_craprpp (pr_cdcooper IN crapcop.cdcooper%TYPE
                         ,pr_nrdconta IN crapass.nrdconta%TYPE
@@ -959,7 +959,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0006 IS
            AND craplim.nrdconta = pr_nrdconta
            AND craplim.tpctrlim = 3  -- TITULOS
            AND craplim.insitlim = 2; -- Ativo
-           
+      
       -- Buscar empréstimos não liquidados
       CURSOR cr_crapepr (pr_cdcooper IN crapass.cdcooper%TYPE
                         ,pr_nrdconta IN crapass.nrdconta%TYPE) IS
@@ -990,13 +990,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0006 IS
         CLOSE cr_crawcrd_bb;
         
       ELSIF pr_cdprodut = 12 THEN -- Integralização de capital
-        
+      
         -- buscar valor referente a integralização de capital
-        OPEN cr_crapcot(pr_cdcooper => pr_cdcooper
-                       ,pr_nrdconta => pr_nrdconta);
+        OPEN  cr_crapcot(pr_cdcooper => pr_cdcooper
+                        ,pr_nrdconta => pr_nrdconta);
         FETCH cr_crapcot INTO pr_vlcontra;
         CLOSE cr_crapcot;
-        
+      
       ELSIF pr_cdprodut = 13 THEN -- Limite de crédito
         -- Abre a tabela de associados
         OPEN  cr_crapass(pr_cdcooper => pr_cdcooper
@@ -1014,11 +1014,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0006 IS
       
       ELSIF pr_cdprodut = 15 THEN -- Planos de Cotas
         -- buscar o valor de Planos de cotas contratados
-        OPEN cr_crappla(pr_cdcooper => pr_cdcooper
-                       ,pr_nrdconta => pr_nrdconta);
+        OPEN  cr_crappla(pr_cdcooper => pr_cdcooper
+                        ,pr_nrdconta => pr_nrdconta);
         FETCH cr_crappla INTO pr_vlcontra;
         CLOSE cr_crappla;
-
+      
       ELSIF pr_cdprodut = 16 THEN -- Poupança Programada
         -- buscar o valor das parcelas de poupança programada contratadas
         OPEN cr_craprpp(pr_cdcooper => pr_cdcooper
@@ -1033,7 +1033,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0006 IS
                        ,pr_nrdconta => pr_nrdconta);
         FETCH cr_crawcrd INTO pr_vlcontra;
         CLOSE cr_crawcrd;
-        
+      
       ELSIF pr_cdprodut = 31 THEN -- Empréstimo e Financiamento
         
         -- Buscar registros da DAT
@@ -3046,7 +3046,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0006 IS
         RETURN;
       END IF;
       
-      IF pr_cdprodut <> 15 THEN -- Plano de Cotas
+      -- Verifica produtos que não necessitam que seja buscado o valor anterior
+      IF pr_cdprodut NOT IN (12,13,14,15) THEN 
         -- Busca valor já contratado
         pc_busca_valor_contratado(pr_cdcooper => pr_cdcooper
                                  ,pr_nrdconta => pr_nrdconta
@@ -3071,7 +3072,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0006 IS
          vr_vlcontra <= rw_produto.vlmaximo_adesao THEN 
         RETURN;
       ELSE -- Se nao gera critica
-        IF pr_idorigem NOT IN(1,5) THEN
+        IF pr_idorigem NOT IN(1,5) THEN 
            vr_dscritic := 'Valor contratado deve estar entre ' || to_char(rw_produto.vlminimo_adesao,'FM999G999G990D00') || 
                                                          ' e ' || to_char(rw_produto.vlmaximo_adesao,'FM999G999G990D00') || '.';
         ELSE
@@ -3582,10 +3583,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0006 IS
   /*****************************************************************************/
   PROCEDURE pc_grava_dados_hist(pr_nmtabela    IN tbcc_campo_historico.nmtabela_oracle%TYPE  --> Nome da tela                              
                                ,pr_nmdcampo    IN tbcc_campo_historico.nmcampo%TYPE          --> Nome do campo
-                               ,pr_cdcooper    IN tbcc_conta_historico.cdcooper%TYPE DEFAULT 0 --> Cooperativa
-                               ,pr_nrdconta    IN tbcc_conta_historico.nrdconta%TYPE DEFAULT 0 --> Número da conta
-                               ,pr_inpessoa    IN tbcc_conta_historico.inpessoa%TYPE DEFAULT 0 --> Tipo de pessoa
-                               ,pr_idseqttl    IN tbcc_conta_historico.idseqttl%TYPE DEFAULT 0 --> Sequencia do titular
+                               ,pr_cdcooper    IN tbcc_conta_historico.cdcooper%TYPE     DEFAULT 0 --> Cooperativa
+                               ,pr_nrdconta    IN tbcc_conta_historico.nrdconta%TYPE     DEFAULT 0 --> Número da conta
+                               ,pr_inpessoa    IN tbcc_conta_historico.inpessoa%TYPE     DEFAULT 0 --> Tipo de pessoa
+                               ,pr_idseqttl    IN tbcc_conta_historico.idseqttl%TYPE     DEFAULT 0 --> Sequencia do titular
                                ,pr_cdtipcta    IN tbcc_conta_historico.cdtipo_conta%TYPE DEFAULT NULL --> Código do tipo de conta
                                ,pr_cdsituac    IN tbcc_conta_historico.cdsituacao%TYPE   DEFAULT NULL --> Código da situação
                                ,pr_cdprodut    IN tbcc_produtos_coop.cdproduto%TYPE      DEFAULT NULL --> Código do produto
