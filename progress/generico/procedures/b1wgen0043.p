@@ -244,13 +244,14 @@
 
               11/10/2017 - Liberacao da melhoria 442 (Heitor - Mouts)
 
-              26/01/2018 - PRGJ450 - Criada funcao verificaQualificacao para posicionar o contrato para 
-						   pegar a Qualificacao da Operacao (Controle). (Diego Simas - AMcom)
+              27/03/2018 - Alterado as procedures criticas_rating_fis e criticas_rating_jur para considerar a tabela
+                           de proposta de limite de desconto de titulos crawlim na geração da critica 484 (Paulo Penteado GFT)
                
-			  16/03/2018 - Alterado proc calcula_rating_fisica, caso as variaveis aux_vlsalari e rat_vlsalcje sejam nulas, atribuir 0 a elas. Chamado 830113 Alcemir (Mouts).
+              12/04/2018 - Alterado as procedures calcula_rating_fisica e calcula_rating_juridica para considerar a tabela
+                           de proposta de limite de desconto de titulos crawlim na geração da critica 484 (Paulo Penteado GFT)
               
-              16/03/2018 - Ajuste para ignorar validacao valida-item-rating quando for cessao de credito (crps714).
-                           Chamado 858710 (Mateus Z / Mouts).
+              15/04/2018 - Alterado a procedure verifica_rating para considerar a tabela
+                           de proposta de limite de desconto de titulos crawlim na geração da critica 484 (Paulo Penteado GFT)
 .............................................................................*/
   
   
@@ -3378,7 +3379,18 @@ PROCEDURE verifica_rating:
                        aux_nrperger = crapprp.nrperger. 
 
             END.
-       ELSE             /* Descontos / Cheque especial */
+       ELSE
+             DO:
+                  /* Para limite desconto de titulo */
+                  IF   par_tpctrrat = 3   THEN
+                       DO:
+                           FIND crawlim WHERE crawlim.cdcooper = par_cdcooper   AND
+                                              crawlim.nrdconta = par_nrdconta   AND
+                                              crawlim.tpctrlim = par_tpctrrat   AND
+                                              crawlim.nrctrlim = par_nrctrrat 
+                                              NO-LOCK NO-ERROR.
+                     
+                           IF   NOT AVAILABLE crawlim   THEN
             DO:                
                 FIND craplim WHERE craplim.cdcooper = par_cdcooper   AND
                                    craplim.nrdconta = par_nrdconta   AND
@@ -3397,7 +3409,34 @@ PROCEDURE verifica_rating:
                        aux_nrliquid = craplim.nrliquid
                        aux_nrpatlvr = craplim.nrpatlvr
                        aux_nrperger = craplim.nrperger.
+                                END.
 
+                           ASSIGN aux_nrgarope = crawlim.nrgarope
+                                  aux_nrinfcad = crawlim.nrinfcad
+                                  aux_nrliquid = crawlim.nrliquid
+                                  aux_nrpatlvr = crawlim.nrpatlvr
+                                  aux_nrperger = crawlim.nrperger.
+                       END.
+                  ELSE     /* Demais operacoes */
+                       DO:
+                           FIND craplim WHERE craplim.cdcooper = par_cdcooper   AND
+                                              craplim.nrdconta = par_nrdconta   AND
+                                              craplim.tpctrlim = par_tpctrrat   AND
+                                              craplim.nrctrlim = par_nrctrrat
+                                              NO-LOCK NO-ERROR.
+
+                           IF   NOT AVAILABLE craplim   THEN
+                                DO:
+                                    aux_cdcritic = 484.
+                                    LEAVE.
+                                END.
+
+                           ASSIGN aux_nrgarope = craplim.nrgarope
+                                  aux_nrinfcad = craplim.nrinfcad
+                                  aux_nrliquid = craplim.nrliquid
+                                  aux_nrpatlvr = craplim.nrpatlvr
+                                  aux_nrperger = craplim.nrperger.
+                       END.
             END.
 
        RUN valida-itens-rating (INPUT par_cdcooper,
@@ -4936,11 +4975,32 @@ PROCEDURE calcula_rating_fisica:
              END.
         ELSE
              DO:
+                  /* Para limite desconto de titulo */
+                  IF   par_tpctrato = 3   THEN
+                       DO:
+                           FIND crawlim WHERE crawlim.cdcooper = par_cdcooper   AND
+                                              crawlim.nrdconta = par_nrdconta   AND
+                                              crawlim.tpctrlim = par_tpctrato   AND
+                                              crawlim.nrctrlim = par_nrctrato 
+                                              NO-LOCK NO-ERROR.
+                     
+                           IF   NOT AVAILABLE crawlim   THEN
+                                DO:
                  FIND craplim WHERE craplim.cdcooper = par_cdcooper   AND
                                     craplim.nrdconta = par_nrdconta   AND
                                     craplim.tpctrlim = par_tpctrato   AND
                                     craplim.nrctrlim = par_nrctrato   
                                     NO-LOCK NO-ERROR.
+             END.
+    END.
+                  ELSE     /* Demais operacoes */
+                       DO:
+                           FIND craplim WHERE craplim.cdcooper = par_cdcooper   AND
+                                              craplim.nrdconta = par_nrdconta   AND
+                                              craplim.tpctrlim = par_tpctrato   AND
+                                              craplim.nrctrlim = par_nrctrato   
+                                              NO-LOCK NO-ERROR.
+                       END.
              END.
     END.
 
@@ -5102,11 +5162,23 @@ PROCEDURE calcula_rating_fisica:
                       IF  AVAIL crapprp  THEN
                       aux_nrseqite = crapprp.nrinfcad.        
                   END.
-             ELSE                          /* Cheque especial / Descontos */ 
+             ELSE
+                  DO:
+                       /* Para limite desconto de titulo */
+                       IF   par_tpctrato = 3   THEN
+                            DO:
+                                IF   AVAIL crawlim   THEN
+                                     aux_nrseqite = crawlim.nrinfcad.
+                                ELSE
+                                IF   AVAIL craplim   THEN
+                                     aux_nrseqite = craplim.nrinfcad.
+                            END.
+                       ELSE     /* Demais operacoes */
                   DO:
                       IF  AVAIL craplim  THEN
                       aux_nrseqite = craplim.nrinfcad.
                   END. 
+         END.   
          END.   
   
     RUN grava_item_rating (INPUT  par_cdcooper,
@@ -5206,6 +5278,15 @@ PROCEDURE calcula_rating_fisica:
              ELSE /* Operacao BNDES */ 
                  IF   AVAIL crapprp THEN
                       ASSIGN aux_vlpresta = crapprp.vlctrbnd / crapprp.qtparbnd.
+         END.
+    ELSE
+    IF   par_tpctrato = 3   THEN
+         DO:
+             IF   AVAIL crawlim   THEN
+                  aux_vlpresta = crawlim.vllimite.
+             ELSE
+             IF   AVAIL craplim   THEN
+                  aux_vlpresta = craplim.vllimite.
          END.
     ELSE
     IF  par_tpctrato <> 0  THEN
@@ -5318,6 +5399,15 @@ PROCEDURE calcula_rating_fisica:
              IF   par_tpctrato = 90   THEN
                   DO:
                       ASSIGN aux_nrseqite = crapprp.nrpatlvr.
+                  END.
+             ELSE
+             IF   par_tpctrato = 3   THEN
+                  DO:
+                      IF   AVAIL crawlim   THEN
+                           aux_nrseqite = crawlim.nrpatlvr.
+                      ELSE
+                      IF   AVAIL craplim   THEN
+                           aux_nrseqite = craplim.nrpatlvr.
                   END.
              ELSE
              IF  par_tpctrato <> 0  THEN
@@ -5640,8 +5730,16 @@ PROCEDURE calcula_rating_fisica:
 
     IF   par_tpctrato = 90   THEN /* Emprestimo / Financiamento */
          DO:
-             ASSIGN aux_nrseqite = crapprp.nrgarope
-                    rat_flgcjeco = IF crapprp.flgdocje = YES THEN 1 ELSE 0.
+             aux_nrseqite = crapprp.nrgarope.   
+         END.
+    ELSE
+    IF   par_tpctrato = 3   THEN
+         DO:
+             IF   AVAIL crawlim   THEN
+                  aux_nrseqite = crawlim.nrgarope.
+             ELSE
+             IF   AVAIL craplim   THEN
+                  aux_nrseqite = craplim.nrgarope.
          END.
     ELSE                         /* Cheque especial / Desconto */   
          DO:
@@ -5670,6 +5768,15 @@ PROCEDURE calcula_rating_fisica:
     IF   par_tpctrato = 90    THEN  /* Emprestimo / Financiamento */
          DO:
              ASSIGN aux_nrseqite = crapprp.nrliquid.
+         END.
+    ELSE
+    IF   par_tpctrato = 3   THEN
+         DO:
+             IF   AVAIL crawlim   THEN
+                  aux_nrseqite = crawlim.nrliquid.
+             ELSE
+             IF   AVAIL craplim   THEN
+                  aux_nrseqite = craplim.nrliquid.
          END.
     ELSE                           /* Cheque especial / Desconto */   
          DO:
@@ -5701,8 +5808,16 @@ PROCEDURE calcula_rating_fisica:
                  ASSIGN aux_qtdiapra = crawepr.qtpreemp * 30 /* Sempre vezes 30 */
                         rat_qtpreope = crawepr.qtpreemp.
              ELSE /* BNDES */
-                 ASSIGN aux_qtdiapra = crapprp.qtparbnd * 30 /* Sempre vezes 30 */
-                        rat_qtpreope = crapprp.qtparbnd.
+                 aux_qtdiapra = crapprp.qtparbnd * 30. /* Sempre vezes 30 */
+         END.
+    ELSE
+    IF   par_tpctrato = 3   THEN
+         DO:
+             IF   AVAIL crawlim   THEN
+                  aux_nrseqite = crawlim.qtdiavig.
+             ELSE
+             IF   AVAIL craplim   THEN
+                  aux_nrseqite = craplim.qtdiavig.
          END.
     ELSE                          /* Cheque especial / Desconto */  
          DO:
@@ -6942,6 +7057,38 @@ PROCEDURE criticas_rating_fis:
                              ASSIGN aux_flgcescr = TRUE.
                       END.                   
              END.
+        ELSE
+             DO:
+                  /* Para limite desconto de titulo */
+                  IF   par_tpctrrat = 3   THEN
+                       DO:
+                           FIND crawlim WHERE crawlim.cdcooper = par_cdcooper   AND
+                                              crawlim.nrdconta = par_nrdconta   AND
+                                              crawlim.tpctrlim = par_tpctrrat   AND
+                                              crawlim.nrctrlim = par_nrctrrat 
+                                              NO-LOCK NO-ERROR.
+                     
+                           IF   NOT AVAILABLE crawlim   THEN
+                                DO:
+                                    FIND craplim WHERE craplim.cdcooper = par_cdcooper   AND
+                                                       craplim.nrdconta = par_nrdconta   AND
+                                                       craplim.tpctrlim = par_tpctrrat   AND
+                                                       craplim.nrctrlim = par_nrctrrat   
+                                                       NO-LOCK NO-ERROR.
+                     
+                                    IF   NOT AVAILABLE craplim   THEN
+                                    DO:
+                                         aux_nrsequen = aux_nrsequen + 1.
+              
+                                         RUN gera_erro (INPUT par_cdcooper,
+                                                        INPUT par_cdagenci,
+                                                        INPUT par_nrdcaixa,
+                                                        INPUT aux_nrsequen,
+                                                        INPUT 484,
+                                                        INPUT-OUTPUT aux_dscritic).
+                                         END.
+                                END.
+                       END.
         ELSE     /* Demais operacoes */
              DO:
                  FIND craplim WHERE craplim.cdcooper = par_cdcooper   AND
@@ -6962,6 +7109,7 @@ PROCEDURE criticas_rating_fis:
                                          INPUT-OUTPUT aux_dscritic).
          END.
              END.
+    END.
     END.
 
 	  /* Nao validaremos os itens a seguir em caso de cessao de credito */
@@ -7158,7 +7306,39 @@ PROCEDURE criticas_rating_jur:
                       END.                   
              END.
         ELSE
-             DO:                       /* Descontos / Limite rotativo */   
+             DO:
+                  /* Para limite desconto de titulo */
+                  IF   par_tpctrrat = 3   THEN
+                       DO:
+                           FIND crawlim WHERE crawlim.cdcooper = par_cdcooper   AND
+                                              crawlim.nrdconta = par_nrdconta   AND
+                                              crawlim.tpctrlim = par_tpctrrat   AND
+                                              crawlim.nrctrlim = par_nrctrrat 
+                                              NO-LOCK NO-ERROR.
+                     
+                           IF   NOT AVAILABLE crawlim   THEN
+                                DO:
+                                    FIND craplim WHERE craplim.cdcooper = par_cdcooper   AND
+                                                       craplim.nrdconta = par_nrdconta   AND
+                                                       craplim.tpctrlim = par_tpctrrat   AND
+                                                       craplim.nrctrlim = par_nrctrrat   
+                                                       NO-LOCK NO-ERROR.
+                     
+                                    IF   NOT AVAILABLE craplim   THEN
+                                    DO:
+                                         aux_nrsequen = aux_nrsequen + 1.
+              
+                                         RUN gera_erro (INPUT par_cdcooper,
+                                                        INPUT par_cdagenci,
+                                                        INPUT par_nrdcaixa,
+                                                        INPUT aux_nrsequen,
+                                                        INPUT 484,
+                                                        INPUT-OUTPUT aux_dscritic).
+                                         END.
+                                END.
+                       END.
+                  ELSE     /* Demais operacoes */
+                       DO:
                  FIND craplim WHERE craplim.cdcooper = par_cdcooper   AND
                                     craplim.nrdconta = par_nrdconta   AND
                                     craplim.tpctrlim = par_tpctrrat   AND
@@ -7177,6 +7357,7 @@ PROCEDURE criticas_rating_jur:
                                          INPUT-OUTPUT aux_dscritic).
                       END.                    
              END.
+    END.
     END.
 
 	  /* Nao validaremos os itens a seguir em caso de cessao de credito */
