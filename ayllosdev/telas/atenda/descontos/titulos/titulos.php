@@ -27,6 +27,9 @@
 
 				 12/04/2018 - Criação do botão manutenção e ajuste no tamanho da tela. (Leonardo Oliveira - GFT)
 
+ 				 25/04/2018 - Alterado o comportamento dos botões na <div id="divBotoes" >, por definicção do cliente os mesmos devem ser ocultados caso o usuário não possua permissão. (Andre Avila - GFT)
+
+
 	***************************************************************************/
 	 
 	session_start();
@@ -209,7 +212,13 @@
 		class="botao"
 		id="btnrenovacao"
 		name="btnrenovacao"
-		<?php if (!in_array("DSC TITS - LIMITE",$rotinasTela)) { echo 'style="cursor: default;display:none;" onClick="return false;"'; } ?> 
+		<?php 
+			if ( (in_array("DSC TITS - LIMITE",$rotinasTela)) || (!in_array("DSC TITS - LIMITE",$rotinasTela)) && ($glbvars['nmrotina'] == "DSC TITS") && (in_array("@", $glbvars['opcoesTela'])) ) {
+				if (($msgError = validaPermissao($glbvars["nmdatela"],"DSC TITS - LIMITE","V","")) <> "") {
+					echo 'style="cursor: default; display:none; "onClick="return false;"'; 
+				}	
+			}
+		?> 
 	>
 		Renovar
 	</a>
@@ -219,7 +228,14 @@
 		class="botao"
 		id="btnManutencao"
 		name="tnManutencao" 
-		<?php if (!in_array("DSC TITS - LIMITE",$rotinasTela)) { echo 'style="cursor: default;display:none;" onClick="return false;"'; } ?> >
+		<?php 
+			if ( (in_array("DSC TITS - LIMITE",$rotinasTela)) || (!in_array("DSC TITS - LIMITE",$rotinasTela)) && ($glbvars['nmrotina'] == "DSC TITS") && (in_array("@", $glbvars['opcoesTela'])) ) {
+				if (($msgError = validaPermissao($glbvars["nmdatela"],"DSC TITS - LIMITE","U","")) <> "") {
+					echo 'style="cursor: default; display:none; "onClick="return false;"'; 
+				}	
+			}
+		?> 
+		>
 		Manuten&ccedil;&atilde;o
 	</a>
 

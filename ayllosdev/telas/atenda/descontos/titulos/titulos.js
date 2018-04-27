@@ -831,6 +831,7 @@ function selecionaLimiteTitulos(id, qtLimites, limite, dssitlim, dssitest, insit
             $("#trLimite" + id).css("background-color","#FFB9AB");
             // Armazena número do limite selecionado
             nrcontrato = limite;
+			nrctrlim = limite;
             idLinhaL = id;
             situacao_limite = dssitlim;
 

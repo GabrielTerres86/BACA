@@ -18,10 +18,12 @@
 	require_once('../../../../includes/funcoes.php');
 	require_once('../../../../class/xmlfile.php');
 	
+
 	setVarSession("nmrotina","DSC TITS - LIMITE");
 	
 	require_once("../../../../includes/carrega_permissoes.php");
 	
+
 	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"V")) <> "") {
 		exibirErro('error',htmlentities($msgError),'Alerta - Ayllos',"blockBackground(parseInt($('#divUsoGenerico').css('z-index')))",false);
 	}
