@@ -396,6 +396,7 @@ function buscarTitulosBordero() {
     }); 
 }
 
+
 // FUNCAO QUE REMOVE OS TITULOS DO BORDERO
 function removeTituloBordero(td){
     var selecionados = $(".divRegistrosTitulosSelecionados table","#divIncluirBordero");
@@ -602,42 +603,6 @@ function gerarImpressao(idimpres,limorbor,flgemail,fnfinish) {
     return false;
 }
 
-// OPÇÃO ANALISAR
-// Analisar bordero de desconto de títulos
-function analisarBorderoDscTit() {
-
-    // Mostra mensagem de aguardo
-    showMsgAguardo("Aguarde, analisando o border&ocirc; ...");
-
-    // Carrega conteúdo da opção através de ajax
-    $.ajax({
-        type: "POST",
-        //url: UrlSite + "telas/atenda/descontos/titulos/titulos_bordero_liberaranalisar.php",
-        url: UrlSite + "telas/atenda/descontos/titulos/titulos_bordero_analisar.php",
-        data: {
-            nrdconta: nrdconta,
-            nrborder: nrbordero,
-            redirect: "script_ajax"
-        },
-        error: function (objAjax, responseError, objExcept) {
-            hideMsgAguardo();
-            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
-        },
-        success: function (response) {
-            try {
-                hideMsgAguardo();
-                eval(response);
-                //botaoLiberar = 'S';
-
-            } catch (error) {
-                hideMsgAguardo();
-                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
-            }
-        }
-    });
-    return false;
-}
-
 // OPÇÃO LIBERAR
 // Liberar/Analisar bordero de desconto de títulos
 function liberaAnalisaBorderoDscTit(opcao, idconfir, idconfi2, idconfi3, idconfi4, idconfi5, idconfi6, indentra, indrestr) {
@@ -666,7 +631,7 @@ function liberaAnalisaBorderoDscTit(opcao, idconfir, idconfi2, idconfi3, idconfi
     // Carrega conteúdo da opção através de ajax
     $.ajax({
         type: "POST",
-        url: UrlSite + "telas/atenda/descontos/titulos/titulos_bordero_analisar.php",
+        url: UrlSite + "telas/atenda/descontos/titulos/titulos_bordero_liberaranalisar.php",
         data: {
             nrdconta: nrdconta,
             nrborder: nrbordero,
@@ -756,7 +721,7 @@ function selecionaLimiteTitulos(id, qtLimites, limite, dssitlim, dssitest, insit
             $("#trLimite" + id).css("background-color","#FFB9AB");
             // Armazena número do limite selecionado
             nrcontrato = limite;
-			nrctrlim = limite;
+            nrctrlim = limite;
             idLinhaL = id;
             situacao_limite = dssitlim;
 
@@ -2320,6 +2285,7 @@ function mostrarBorderoResumoAlterar() {
     return false;
 }
 
+
 function mostrarDetalhesPagador() {
     if(tituloSelecionadoResumo){
     showMsgAguardo("Aguarde, carregando dados do pagador ...");
@@ -2457,7 +2423,6 @@ function confirmarAlteracao(){
     
     return false;
 }
-
 
 function selecionarTituloDeBordero(id, qtd, pr_nossonum) {
     var cor = "";

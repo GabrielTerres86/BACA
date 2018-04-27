@@ -196,7 +196,7 @@
 		class="botao"
 		value="Cancelar"
 		<?php if ($qtLimites == 0) {
-			echo 'onClick="return false;';
+			echo 'onClick="return false;"';
 		} else {
 			echo 'style="'.$dispX.'" onClick="showConfirmacao(\'Deseja cancelar o Contrato?\',\'Confirma&ccedil;&atilde;o - Ayllos\',\'cancelaLimiteDscTit()\',\'metodoBlock()\',\'sim.gif\',\'nao.gif\');return false;"';
 		} ?>  />
@@ -206,7 +206,7 @@
 		class="botao"
 		value="Consultar"
 		<?php if ($qtLimites == 0) {
-			echo 'onClick="return false;';
+			echo 'onClick="return false;"';
 			} else {
 				echo 'onClick="carregaDadosConsultaLimiteDscTit();return false;"'; 
 		} ?> />
@@ -216,7 +216,7 @@
 		class="botao"
 		value="Imprimir"
 		<?php if ($qtLimites == 0) { 
-			echo 'onClick="return false;';
+			echo 'onClick="return false;"';
 		} else {
 			echo 'onClick="mostraImprimirLimite(\'CONTRATO\');return false;"';
 		} ?> />
@@ -227,7 +227,7 @@
 		value="Detalhes da Proposta"  
 		id="btnDetalhesProposta" name="btnDetalhesProposta" 
 		<?php if ($qtLimites == 0) { 
-			echo 'onClick="return false;';
+			echo 'onClick="return false;"';
 		} else { 
 			echo 'onClick="carregaDadosDetalhesProposta(\'CONTRATO\', nrcontrato, 0);return false;"'; 
 		} ?> />
@@ -235,8 +235,6 @@
 </div>
 
 <script type="text/javascript">
-dscShowHideDiv("divOpcoesDaOpcao2","divOpcoesDaOpcao1;divOpcoesDaOpcao3");
-
 	dscShowHideDiv("divOpcoesDaOpcao2","divOpcoesDaOpcao1;divOpcoesDaOpcao3");
 
 	// Muda o título da tela
