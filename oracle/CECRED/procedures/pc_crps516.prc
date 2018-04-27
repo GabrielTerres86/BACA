@@ -1,7 +1,7 @@
 CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS516" ( pr_cdcooper IN crapcop.cdcooper%TYPE  --> Coop conectada
-                                          ,pr_flgresta  IN PLS_INTEGER           --> Indicador para utilizaÁ„o de restart
-                                          ,pr_stprogra OUT PLS_INTEGER           --> SaÌda de termino da execuÁ„o
-                                          ,pr_infimsol OUT PLS_INTEGER           --> SaÌda de termino da solicitaÁ„o
+                                          ,pr_flgresta  IN PLS_INTEGER           --> Indicador para utiliza√ß√£o de restart
+                                          ,pr_stprogra OUT PLS_INTEGER           --> Sa√≠da de termino da execu√ß√£o
+                                          ,pr_infimsol OUT PLS_INTEGER           --> Sa√≠da de termino da solicita√ß√£o
                                           ,pr_cdcritic OUT crapcri.cdcritic%TYPE --> Critica encontrada
                                           ,pr_dscritic OUT VARCHAR2) IS          --> Texto de erro/critica encontrada
   BEGIN
@@ -11,7 +11,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS516" ( pr_cdcooper IN crapcop.cdcoope
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Gabriel
-     Data    : Setembro/2008                   Ultima Atualizacao: 25/06/2014
+     Data    : Setembro/2008                   Ultima Atualizacao: 20/02/2018
 
      Dados referentes ao programa:
 
@@ -46,22 +46,28 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS516" ( pr_cdcooper IN crapcop.cdcoope
                  22/04/2013 - Incluido os campos qtdiaatr, cdorigem na criacao
                               da temp-table w-crapris (Adriano).
 
-                 11/06/2013 - Convers„o Progress >> Oracle PL-Sql (Marcos-Supero)
+                 11/06/2013 - Convers√£o Progress >> Oracle PL-Sql (Marcos-Supero)
                  
-                 26/08/2013 - Passagem do diretÛrio da cooperativa para 
+                 26/08/2013 - Passagem do diret√≥rio da cooperativa para 
                               a pc_crps280_i (Marcos-Supero)
 							  
-				 25/06/2014 - Alterado processo de exclus„o da crapris e crapvri.
- 				              SoftDesk 137892 (Daniel)	  
+                 25/06/2014 - Alterado processo de exclus√£o da crapris e crapvri.
+                              SoftDesk 137892 (Daniel)	  
 
+                 20/02/2018 - Paralelismo - Projeto Ligeirinho (Fabiano B. Dias - AMcom)											
   ............................................................................. */
 
     DECLARE
-      -- CÛdigo do programa
+      -- C√≥digo do programa
       vr_cdprogra crapprg.cdprogra%TYPE := 'CRPS516';
       -- Tratamento de erros
       vr_exc_erro exception;
-      ---------------- Cursores genÈricos ----------------
+			
+      -- Paralelismo - Projeto Ligeirinho
+      vr_stprogra   PLS_INTEGER; --> Sa√≠da de termino da execu√ß√£o
+      vr_infimsol   PLS_INTEGER; --> Sa√≠da de termino da solicita√ß√£o, 
+			
+      ---------------- Cursores gen√©ricos ----------------
 
       -- Busca dos dados da cooperativa
       CURSOR cr_crapcop(pr_cdcooper IN craptab.cdcooper%TYPE) IS
@@ -72,7 +78,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS516" ( pr_cdcooper IN crapcop.cdcoope
          WHERE cop.cdcooper = pr_cdcooper;
       rw_crapcop cr_crapcop%ROWTYPE;
 
-      -- Cursor genÈrico de calend·rio
+      -- Cursor gen√©rico de calend√°rio
       rw_crapdat btch0001.cr_crapdat%ROWTYPE;
 
       -- Teste de existencia de risco calculado para a data atual
@@ -85,23 +91,23 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS516" ( pr_cdcooper IN crapcop.cdcoope
       vr_ind_exis_risco CHAR(1) := 'N';
 
       -- Valores para retorno da crps280.i
-      vr_vltotprv NUMBER(14,2); --> Total acumulado de provis„o
-      vr_vltotdiv NUMBER(14,2); --> Total acumulado de dÌvida
+      vr_vltotprv NUMBER(14,2); --> Total acumulado de provis√£o
+      vr_vltotdiv NUMBER(14,2); --> Total acumulado de d√≠vida
       
       vr_datautil DATE;
       vr_delete   BOOLEAN;
       vr_dtmvtolt DATE;
 
     BEGIN
-      -- Incluir nome do mÛdulo logado
+      -- Incluir nome do m√≥dulo logado
       GENE0001.pc_informa_acesso(pr_module => 'PC_'||vr_cdprogra);
       -- Verifica se a cooperativa esta cadastrada
       OPEN cr_crapcop(pr_cdcooper => pr_cdcooper);
       FETCH cr_crapcop
        INTO rw_crapcop;
-      -- Se n„o encontrar
+      -- Se n√£o encontrar
       IF cr_crapcop%NOTFOUND THEN
-        -- Fechar o cursor pois haver· raise
+        -- Fechar o cursor pois haver√° raise
         CLOSE cr_crapcop;
         -- Montar mensagem de critica
         pr_cdcritic := 651;
@@ -111,11 +117,11 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS516" ( pr_cdcooper IN crapcop.cdcoope
         -- Apenas fechar o cursor
         CLOSE cr_crapcop;
       END IF;
-      -- Leitura do calend·rio da cooperativa
+      -- Leitura do calend√°rio da cooperativa
       OPEN btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
       FETCH btch0001.cr_crapdat
        INTO rw_crapdat;
-      -- Se n„o encontrar
+      -- Se n√£o encontrar
       IF btch0001.cr_crapdat%NOTFOUND THEN
         -- Fechar o cursor pois efetuaremos raise
         CLOSE btch0001.cr_crapdat;
@@ -128,35 +134,35 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS516" ( pr_cdcooper IN crapcop.cdcoope
         CLOSE btch0001.cr_crapdat;
       END IF;
 
-      -- ValidaÁıes iniciais do programa
+      -- Valida√ß√µes iniciais do programa
       BTCH0001.pc_valida_iniprg(pr_cdcooper => pr_cdcooper
                                ,pr_flgbatch => 1
                                ,pr_cdprogra => vr_cdprogra
                                ,pr_infimsol => pr_infimsol
                                ,pr_cdcritic => pr_cdcritic);
-      -- Se a variavel de erro È <> 0
+      -- Se a variavel de erro √© <> 0
       IF pr_cdcritic <> 0 THEN
-        -- Buscar descriÁ„o da crÌtica
+        -- Buscar descri√ß√£o da cr√≠tica
         pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => pr_cdcritic);
         -- Envio centralizado de log de erro
         RAISE vr_exc_erro;
       END IF;
       
-      -- Variavel de controle se registros crapris e crapvri ser„o deletados
+      -- Variavel de controle se registros crapris e crapvri ser√£o deletados
       vr_delete   := TRUE;
         
       -- Variavel auxiliar para ser utilizada na bisca data util anterior.
       vr_dtmvtolt := rw_crapdat.dtmvtolt - 1;
         
-      -- FunÁ„o para retornar dia ˙til anterior a data base
+      -- Fun√ß√£o para retornar dia √∫til anterior a data base
       vr_datautil  := gene0005.fn_valida_dia_util(pr_cdcooper  => pr_cdcooper,         -- Cooperativa
                                                   pr_dtmvtolt  => vr_dtmvtolt,         -- Data de referencia
-                                                  pr_tipo      => 'A',                 -- Se n„o for dia ˙til, retorna primeiro dia ˙til anterior
+                                                  pr_tipo      => 'A',                 -- Se n√£o for dia √∫til, retorna primeiro dia √∫til anterior
                                                   pr_feriado   => TRUE,                -- Considerar feriados,
                                                   pr_excultdia => TRUE);               -- Considerar 31/12
 
-      -- Caso mes da data util for diferente do mes da data de movimento entao È primeiro
-      -- movimento do mes, nao exclui registro (que s„o os registros criados na mensal).                                               
+      -- Caso mes da data util for diferente do mes da data de movimento entao √© primeiro
+      -- movimento do mes, nao exclui registro (que s√£o os registros criados na mensal).                                               
       IF to_char(vr_datautil,'MM') <> to_char(rw_crapdat.dtmvtolt,'MM') THEN  
         vr_delete := FALSE;
       END IF;
@@ -176,7 +182,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS516" ( pr_cdcooper IN crapcop.cdcoope
             pr_dscritic := 'Erro ao efetuar a limpeza do registro semanal. Tabela de Vencimentos (CRAPVRI). Detalhes: '||sqlerrm;
             RAISE vr_exc_erro;
         END;
-        --- ApÛs eliminar os riscos em si ---
+        --- Ap√≥s eliminar os riscos em si ---
         BEGIN
           DELETE
             FROM crapris
@@ -196,24 +202,31 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS516" ( pr_cdcooper IN crapcop.cdcoope
       FETCH cr_crapris
        INTO vr_ind_exis_risco;
       CLOSE cr_crapris;
-      -- Somente continuar se existe risco para a data atual e n„o estivermos no fechamento mensal
+      -- Somente continuar se existe risco para a data atual e n√£o estivermos no fechamento mensal
       IF vr_ind_exis_risco = 'S' AND trunc(rw_crapdat.dtmvtolt,'mm') = trunc(rw_crapdat.dtmvtopr,'mm') THEN
         -- Chamar a rotina crps280_i (Antiga includes/crps280.i)
         pc_crps280_i(pr_cdcooper   => pr_cdcooper         --> Coop. conectada
-                    ,pr_rw_crapdat => rw_crapdat          --> Vetor com calend·rio
+                    ,pr_rw_crapdat => rw_crapdat          --> Vetor com calend√°rio
                     ,pr_dtrefere   => rw_crapdat.dtmvtolt --> Data corrente
                     ,pr_cdprogra   => vr_cdprogra         --> Codigo programa conectado
-                    ,pr_dsdircop   => rw_crapcop.dsdircop --> DiretÛrio base da cooperativa
-                    ,pr_vltotprv   => vr_vltotprv         --> Total acumulado de provis„o
-                    ,pr_vltotdiv   => vr_vltotdiv         --> Total acumulado de dÌvida
-                    ,pr_cdcritic   => pr_cdcritic         --> CÛdigo de erro encontrado
-                    ,pr_dscritic   => pr_dscritic);       --> DescriÁ„o de erro encontrado
+                    ,pr_dsdircop   => rw_crapcop.dsdircop --> Diret√≥rio base da cooperativa
+										----
+										,pr_cdagenci  => 0                    --> C√≥digo da ag√™ncia, utilizado no paralelismo
+										,pr_idparale  => 0                    --> Identificador do job executando em paralelo.
+                    ,pr_flgresta  => pr_flgresta          --> Flag padr√£o para utiliza√ß√£o de restart
+                    ,pr_stprogra  => vr_stprogra          --> Sa√≠da de termino da execu√ß√£o
+                    ,pr_infimsol  => vr_infimsol          --> Sa√≠da de termino da solicita√ß√£o,                                               
+										----
+                    ,pr_vltotprv   => vr_vltotprv         --> Total acumulado de provis√£o
+                    ,pr_vltotdiv   => vr_vltotdiv         --> Total acumulado de d√≠vida
+                    ,pr_cdcritic   => pr_cdcritic         --> C√≥digo de erro encontrado
+                    ,pr_dscritic   => pr_dscritic);       --> Descri√ß√£o de erro encontrado
         
-        -- Retornar nome do mÛdulo original, para que tire o action gerado pelo programa chamado acima
+        -- Retornar nome do m√≥dulo original, para que tire o action gerado pelo programa chamado acima
         GENE0001.pc_informa_acesso(pr_module => 'PC_'||vr_cdprogra
                                   ,pr_action => NULL); 
         
-        -- Testar saÌda de erro
+        -- Testar sa√≠da de erro
         IF pr_dscritic IS NOT NULL OR pr_cdcritic IS NOT NULL THEN
           RAISE vr_exc_erro;
         END IF;
@@ -230,15 +243,15 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS516" ( pr_cdcooper IN crapcop.cdcoope
       COMMIT;
     EXCEPTION
       WHEN vr_exc_erro THEN
-        -- Se foi retornado apenas cÛdigo
+        -- Se foi retornado apenas c√≥digo
         IF pr_cdcritic > 0 AND pr_dscritic IS NULL THEN
-          -- Buscar a descriÁ„o
+          -- Buscar a descri√ß√£o
           pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic);
         END IF;
         -- Efetuar rollback
         ROLLBACK;
       WHEN OTHERS THEN
-        -- Efetuar retorno do erro n„o tratado
+        -- Efetuar retorno do erro n√£o tratado
         pr_cdcritic := 0;
         pr_dscritic := sqlerrm;
         -- Efetuar rollback
@@ -246,4 +259,3 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS516" ( pr_cdcooper IN crapcop.cdcoope
     END;
   END pc_crps516;
 /
-
