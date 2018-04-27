@@ -2996,6 +2996,18 @@ create or replace package body cecred.CCET0001 is
       FETCH cr_dados INTO rw_dados;
       CLOSE cr_dados;
       
+      --Concatena as liquidacoes
+      pc_concatena_liquid(rw_dados.nrctrliq##1);
+      pc_concatena_liquid(rw_dados.nrctrliq##2);
+      pc_concatena_liquid(rw_dados.nrctrliq##3);
+      pc_concatena_liquid(rw_dados.nrctrliq##4);
+      pc_concatena_liquid(rw_dados.nrctrliq##5);
+      pc_concatena_liquid(rw_dados.nrctrliq##6);
+      pc_concatena_liquid(rw_dados.nrctrliq##7);
+      pc_concatena_liquid(rw_dados.nrctrliq##8);
+      pc_concatena_liquid(rw_dados.nrctrliq##9);
+      pc_concatena_liquid(rw_dados.nrctrliq##10);
+      
       -- Busca quantidade de dias da carencia
       EMPR0011.pc_busca_qtd_dias_carencia(pr_idcarencia => rw_dados.idcarenc
                                          ,pr_qtddias    => vr_qtdias_carencia
