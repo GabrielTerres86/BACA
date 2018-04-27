@@ -2692,6 +2692,8 @@ PROCEDURE pc_alterar_proposta_manutencao(pr_cdcooper    in crapcop.cdcooper%type
     Alteração : 25/04/2018 - Criação (Paulo Penteado (GFT))
 
   ---------------------------------------------------------------------------------------------------------------------*/
+   -- Informações de data do sistema
+   rw_crapdat  btch0001.rw_crapdat%TYPE;
 
    -- Variável de críticas
    vr_cdcritic crapcri.cdcritic%type;
@@ -2702,6 +2704,9 @@ PROCEDURE pc_alterar_proposta_manutencao(pr_cdcooper    in crapcop.cdcooper%type
 
    -- Variaveis auxiliares
    vr_rowid_log    rowid;
+   
+   vr_tab_dados_dsctit cecred.dsct0002.typ_tab_dados_dsctit; -- retorno da TAB052 para Cooperativa e Cobrança Registrada
+   vr_tab_cecred_dsctit cecred.dsct0002.typ_tab_cecred_dsctit; -- retorno da TAB052 para CECRED
    
    cursor cr_crapldc is
    select nvl(ldc.flgstlcr,0) flgstlcr
@@ -2725,6 +2730,14 @@ PROCEDURE pc_alterar_proposta_manutencao(pr_cdcooper    in crapcop.cdcooper%type
    and    pro.tpctrlim = pr_tpctrlim;
    rw_craplim cr_craplim%rowtype;
 
+   -- Verifica Conta (Cadastro de associados)
+   cursor cr_crapass is
+   select inpessoa
+   from   crapass
+   where  crapass.cdcooper = pr_cdcooper
+   and    crapass.nrdconta = pr_nrdconta;
+   rw_crapass cr_crapass%rowtype;
+   
 BEGIN
    open  cr_crapldc;
    fetch cr_crapldc into rw_crapldc;
@@ -2744,6 +2757,48 @@ BEGIN
    open  cr_craplim;
    fetch cr_craplim into rw_craplim;
    close cr_craplim; 
+   
+    --    Verifica se a data esta cadastrada
+   open  btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
+   fetch btch0001.cr_crapdat into rw_crapdat;
+   if    btch0001.cr_crapdat%notfound then
+         close btch0001.cr_crapdat;
+         vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => 1);
+         raise vr_exc_saida;
+   end   if;
+   close btch0001.cr_crapdat;
+   
+    --    Puxa o tipo de pessoa
+   open  cr_crapass;
+   fetch cr_crapass into rw_crapass;
+   if    cr_crapass%notfound then
+         close cr_crapass;
+         vr_cdcritic := 9;
+         raise vr_exc_saida;
+   end   if;
+   close cr_crapass;
+   
+    cecred.dsct0002.pc_busca_parametros_dsctit(pr_cdcooper, --pr_cdcooper,
+                                                 pr_cdagenci, --Agencia de operação
+                                                 pr_nrdcaixa, --Número do caixa
+                                                 pr_cdoperad, --Operador
+                                                 rw_crapdat.dtmvtolt, -- Data da Movimentação
+                                                 pr_idorigem, --Identificação de origem
+                                                 1, --pr_tpcobran: 1-REGISTRADA / 0-NÃO REGISTRADA
+                                                 rw_crapass.inpessoa, --1-PESSOA FÍSICA / 2-PESSOA JURÍDICA
+                                                 vr_tab_dados_dsctit,
+                                                 vr_tab_cecred_dsctit,
+                                                 vr_cdcritic,
+                                                 vr_dscritic);
+     if  vr_cdcritic > 0  or vr_dscritic is not null then
+        raise vr_exc_saida;
+     end if;                                            
+    
+    /*LIMITE MAXIMO EXCEDIDO*/
+    if pr_vllimite > vr_tab_dados_dsctit(1).vllimite then
+        vr_dscritic := 'Limite máximo excedido.';
+        raise vr_exc_saida;
+    end if;                     
    
    begin
       update crawlim lim

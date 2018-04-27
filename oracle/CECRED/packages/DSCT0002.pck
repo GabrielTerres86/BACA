@@ -5129,21 +5129,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
     ELSE
       CLOSE cr_crapass;
     END IF;
-
-    
+                       
+    --> Buscar Contrato de limite
+    OPEN cr_craplim;
+    FETCH cr_craplim INTO rw_craplim;
+    IF cr_craplim%NOTFOUND THEN
+      CLOSE cr_craplim;
+      vr_flgcriti := TRUE;
+    ELSE
+      CLOSE cr_craplim;
+    END IF;    
 
     IF pr_idimpres IN( 1,      --> COMPLETA 
                        2 )THEN --> CONTRATO 
-                       
-    --> Buscar Contrato de limite
-      OPEN cr_craplim;
-      FETCH cr_craplim INTO rw_craplim;
-      IF cr_craplim%NOTFOUND THEN
-        CLOSE cr_craplim;
-        vr_flgcriti := TRUE;
-      ELSE
-        CLOSE cr_craplim;
-      END IF;
 
       --> Se for Cheque e igual ou superior a data do novo contrato
       IF (pr_tpctrlim = 2 OR pr_tpctrlim = 3) AND 

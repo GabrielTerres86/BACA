@@ -1577,15 +1577,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0004 IS
      --vr_obj_proposta.put('finalidadeDescricao'   ,rw_crawlim.dsfinemp);      
 
      vr_obj_proposta.put('tipoProduto'           ,rw_crawlim.tpproduto);
-     vr_obj_proposta.put('tipoGarantiaCodigo'    ,rw_crawlim.tpctrato );
 
-     --> Buscar desciçao do tipo de garantia
-     vr_dstpgara  := tabe0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
-                                               ,pr_nmsistem => 'CRED'
-                                               ,pr_tptabela => 'GENERI'
-                                               ,pr_cdempres => 0
-                                               ,pr_cdacesso => 'CTRATOEMPR'
-                                               ,pr_tpregist => rw_crawlim.tpctrato);
+     /* Paulo Penteado (GFT): 02/03/2018 - Por hora iremos considerar as tags 
+        tipoGarantiaCodigo e tipoGarantiaDescricao como sendo 1 e 'LIMITE DESC TITUL0' até a liberaçao 
+        a alteraçao 404 ser liberada. Pois na 404 será criado o campo crapldc.tpctrato */
+     vr_obj_proposta.put('tipoGarantiaCodigo'    ,rw_crawlim.tpctrato );
+     --> Buscar descriçao do tipo de garantia
+     vr_dstpgara  := 'LIMITE DESC TITUL0';
+                    /*tabe0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper,
+                                               pr_nmsistem => 'CRED',
+                                               pr_tptabela => 'GENERI', 
+                                               pr_cdempres => 0, 
+                                               pr_cdacesso => 'CTRATOEMPR', 
+                                               pr_tpregist => rw_crawlim.tpctrato);*/
      vr_obj_proposta.put('tipoGarantiaDescricao'    ,trim(vr_dstpgara) );
 
      --    Buscar dados do operador
