@@ -33,7 +33,8 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ATVPRB AS
                                   ,pr_nmdcampo OUT VARCHAR2             --Nome do Campo
                                   ,pr_des_erro OUT VARCHAR2);
 
-   PROCEDURE pc_consulta ( pr_cdcooper  IN tbcadast_ativo_probl.cdcooper%TYPE   --Cooperativa
+   PROCEDURE pc_consulta (  pr_idativo  IN tbcadast_ativo_probl.idativo%TYPE   -- 1-Ativo / 0 Inativo   
+                          ,pr_cdcooper IN tbcadast_ativo_probl.cdcooper%TYPE   --Cooperativa
                           ,pr_nrdconta IN tbcadast_ativo_probl.nrdconta%TYPE  --Conta
                           ,pr_nrctremp IN tbcadast_ativo_probl.nrctremp%TYPE  --Contrato Emprestimo
                           ,pr_cdmotivo IN tbcadast_ativo_probl.cdmotivo%TYPE  --Codigo do moitvo
@@ -45,8 +46,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ATVPRB AS
                           ,pr_dscritic OUT VARCHAR2             --Descrição da crítica
                           ,pr_retxml   IN OUT NOCOPY XMLType    --Arquivo de retorno do XML
                           ,pr_nmdcampo OUT VARCHAR2             --Nome do Campo
-                          ,pr_des_erro OUT VARCHAR2);          --Saida OK/NOK
-
+                          ,pr_des_erro OUT VARCHAR2);            --OK/NOK
 
 
    PROCEDURE pc_consulta_historico ( pr_cdcooper IN tbhist_ativo_probl.cdcooper%TYPE --Cooperativa
@@ -391,6 +391,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
 
 
   END pc_alteracao;
+  
 
   PROCEDURE pc_exclusao (pr_cdcooper  IN crapepr.cdcooper%TYPE --Codigo Cooperativa
                         ,pr_nrdconta  IN crapepr.nrdconta%TYPE --Numero da Conta
@@ -496,14 +497,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
     END IF;
 
     BEGIN
-
-      UPDATE tbcadast_ativo_probl tbap
-      SET    tbap.dtexclus = rw_crapdat.dtmvtolt,
-             tbap.idativo  = 0
-      WHERE  tbap.cdcooper = pr_cdcooper
-      AND    tbap.nrdconta = pr_nrdconta
-      AND    tbap.nrctremp = pr_nrctremp
-      AND    tbap.cdmotivo = pr_cdmotivo;
+      -- Se não for informado contrato, inativar todos os contratos ativos
+      -- disponiveis na conta do associado na cooperativa 
+      IF nvl(pr_nrctremp,0) = 0 THEN  
+        UPDATE tbcadast_ativo_probl tbap
+        SET    tbap.dtexclus = rw_crapdat.dtmvtolt,
+               tbap.idativo  = 0
+        WHERE  tbap.cdcooper = pr_cdcooper
+        AND    tbap.nrdconta = pr_nrdconta
+        AND    tbap.dtexclus IS NULL 
+        AND    tbap.nrctremp = DECODE(pr_nrctremp, 0, tbap.nrctremp, pr_nrctremp);
+      ELSE
+        UPDATE tbcadast_ativo_probl tbap
+        SET    tbap.dtexclus = rw_crapdat.dtmvtolt,
+               tbap.idativo  = 0
+        WHERE  tbap.cdcooper = pr_cdcooper
+        AND    tbap.nrdconta = pr_nrdconta
+        AND    tbap.nrctremp = pr_nrctremp
+        AND    tbap.cdmotivo = pr_cdmotivo;          
+      END IF;  
 
     EXCEPTION
         WHEN OTHERS THEN
@@ -604,18 +616,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
     vr_exc_erro EXCEPTION;
     vr_cdcritic INTEGER;
     vr_dscritic VARCHAR2(1000);
+    vr_datahora VARCHAR2(20);
+    
+    vr_retxml XMLType;
+    vr_xmllog VARCHAR2(100);
+
 
     -- Variável genérica de calendário com base no cursor da btch0001
     rw_crapdat btch0001.cr_crapdat%ROWTYPE;
 
-
+    
 
   BEGIN
-
-   -- Incluir nome do módulo logado
-    GENE0001.pc_informa_acesso(pr_module => 'ATVPRB'
-                              ,pr_action => null);
-
 
      -- Leitura do calendário da cooperativa
       OPEN btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
@@ -635,23 +647,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
         -- Apenas fechar o cursor
         CLOSE btch0001.cr_crapdat;
       END IF;
-
-  -- Recupera dados de log para consulta posterior
-    /*gene0004.pc_extrai_dados(pr_xml      => pr_retxml
-                            ,pr_cdcooper => vr_cdcooper
-                            ,pr_nmdatela => vr_nmdatela
-                            ,pr_nmeacao  => vr_nmeacao
-                            ,pr_cdagenci => vr_cdagenci
-                            ,pr_nrdcaixa => vr_nrdcaixa
-                            ,pr_idorigem => vr_idorigem
-                            ,pr_cdoperad => vr_cdoperad
-                            ,pr_dscritic => vr_dscritic);*/
-
-
-   -- Verifica se houve erro recuperando informacoes de log
-     TELA_ATVPRB.pc_valida_informacoes(pr_cdcooper   => pr_cdcooper --Cooperativa
+      
+     vr_datahora := to_char(rw_crapdat.dtmvtolt,'dd/mm/yyyy') ||' '|| to_char(sysdate,'hh24:mi:ss');
+      
+   
+    -- Verifica se houve erro recuperando informacoes de log
+     TELA_ATVPRB.pc_valida_informacoes(pr_cdcooper  => pr_cdcooper --Cooperativa
                                       ,pr_nrdconta  => pr_nrdconta --Conta
-                                      ,pr_nrctremp  => pr_nrctremp --Contrato Emprestimo
+                                      ,pr_nrctremp  => nvl(pr_nrctremp,0) --Contrato Emprestimo
                                       ,pr_cdcritic => vr_cdcritic --Cõdigo da critica
                                       ,pr_dscritic => vr_dscritic --Descrção da critica
                                       ,pr_nmdcampo => vr_nmdcampo --Nome do campo de retorno
@@ -664,6 +667,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
       RAISE vr_exc_erro;
 
     END IF;
+    -- se não busca todos os contratos da conta e marca como excluido
 
     -- Verifica se o registro já existe
     BEGIN
@@ -688,7 +692,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
 
      --Incluir registro de operações ativo problematico
      BEGIN
-
+     IF  nvl(pr_nrctremp,0) = 0 THEN 
+       
+        TELA_ATVPRB.pc_exclusao (pr_cdcooper =>pr_cdcooper --Codigo Cooperativa
+                                ,pr_nrdconta =>pr_nrdconta             --Numero da Conta
+                                ,pr_nrctremp =>pr_nrctremp             --Conta base
+                                ,pr_cdmotivo =>pr_cdmotivo             -- Codigo do Motivo
+                                ,pr_xmllog   =>vr_xmllog               --XML com informações de LOG
+                                ,pr_cdcritic =>vr_cdcritic             --Código da crítica
+                                ,pr_dscritic =>vr_dscritic             --Descrição da crítica
+                                ,pr_retxml   =>vr_retxml               --Arquivo de retorno do XML
+                                ,pr_nmdcampo =>vr_nmdcampo             --Nome do Campo
+                                ,pr_des_erro =>vr_des_erro);
+     
+                               
+     END IF;    
+     
+    
+  
      INSERT INTO tbcadast_ativo_probl(cdcooper,
                                       nrdconta,
                                       nrctremp,
@@ -698,7 +719,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
       VALUES(pr_cdcooper,
              pr_nrdconta,
              pr_nrctremp,
-             rw_crapdat.dtmvtolt,
+             to_date(vr_datahora,'dd/mm/yyyy hh24:mi:ss'),
              pr_cdmotivo,
              pr_dsobserv
              );
@@ -842,7 +863,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
 
   PROCEDURE pc_valida_informacoes(pr_cdcooper IN crapepr.cdcooper%TYPE --Cooperativa
                                   ,pr_nrdconta IN crapepr.nrdconta%TYPE --Conta
-                                  ,pr_nrctremp IN crapepr.nrctremp%TYPE --Contrato Emprestimo
+                                  ,pr_nrctremp IN crapepr.nrctremp%TYPE  --Contrato Emprestimo
                                   ,pr_cdcritic OUT PLS_INTEGER          --Código da crítica
                                   ,pr_dscritic OUT VARCHAR2             --Descrição da crítica
                                   ,pr_nmdcampo OUT VARCHAR2             --Nome do Campo
@@ -878,12 +899,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
                      ,pr_nrctremp IN crapepr.nrctremp%TYPE)IS
     SELECT epr.cdcooper
       FROM crapepr epr
-     WHERE epr.cdcooper = pr_cdcooper
-       AND epr.nrdconta = pr_nrdconta
-       AND epr.nrctremp = pr_nrctremp;
+     WHERE epr.cdcooper   = pr_cdcooper
+     AND   epr.nrdconta   = pr_nrdconta
+     AND   epr.nrctremp   = pr_nrctremp;
+       
+
 
     rw_crapepr cr_crapepr%ROWTYPE;
+    
+    --Cursor para encontrar a conta do associado
+    CURSOR cr_crapass(pr_cdcooper IN crapepr.cdcooper%TYPE
+                     ,pr_nrdconta IN crapepr.nrdconta%TYPE)IS
+     SELECT cras.cdcooper
+      FROM  crapass cras
+     WHERE cras.cdcooper = pr_cdcooper
+     AND cras.nrdconta   = pr_nrdconta;
 
+    rw_crapass cr_crapass%ROWTYPE;
+    
+    
+
+    --Se passar o nr do contrato valida conforme hoje
+    --Se não grava sem o numero do contrato e marca todos os registros ativos como excluidos 
+    -- Somente na inclusao 
 
     --Variaveis de Criticas
     vr_cdcritic INTEGER;
@@ -893,7 +931,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
     vr_exc_erro  EXCEPTION;
 
   BEGIN
-
+    
+     --Valida a cooperativa  informada
     OPEN cr_crapcop(pr_cdcooper => pr_cdcooper);
 
     FETCH cr_crapcop INTO rw_crapcop;
@@ -914,7 +953,35 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
         CLOSE cr_crapcop;
 
       END IF;
+  
 
+  
+     --Valida a conta informada
+    OPEN cr_crapass(pr_cdcooper => pr_cdcooper,
+                    pr_nrdconta => pr_nrdconta);
+
+    FETCH cr_crapass INTO rw_crapass;
+
+    IF cr_crapass%NOTFOUND THEN
+
+        --Fecha o cursor
+        CLOSE cr_crapass;
+
+        -- Montar mensagem de critica
+        vr_cdcritic := 485;
+
+        -- Busca critica
+        vr_dscritic :='Conta nao encontrada.'; --gene0001.fn_busca_critica(vr_cdcritic);
+        RAISE vr_exc_erro;
+
+      ELSE
+        CLOSE cr_crapass;
+
+      END IF;
+    
+    
+    IF  nvl(pr_nrctremp,0) <> 0 THEN
+     --Valida o contrato de emprestimo informado para determinada conta
      OPEN cr_crapepr(pr_cdcooper => pr_cdcooper
                     ,pr_nrdconta => pr_nrdconta
                     ,pr_nrctremp => pr_nrctremp);
@@ -930,12 +997,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
         vr_cdcritic := 484;
 
         -- Busca critica
-        vr_dscritic :='Conta ou contrato nao encontrados.';--gene0001.fn_busca_critica(vr_cdcritic);
+        vr_dscritic :='Contrato nao encontrado.';--gene0001.fn_busca_critica(vr_cdcritic);
         RAISE vr_exc_erro;
 
       ELSE
         CLOSE cr_crapepr;
       END IF;
+    END IF;  
 
     pr_des_erro := 'OK';
 
@@ -959,7 +1027,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
   END pc_valida_informacoes;
 
 
-  PROCEDURE pc_consulta ( pr_cdcooper  IN tbcadast_ativo_probl.cdcooper%TYPE   --Cooperativa
+  PROCEDURE pc_consulta (  pr_idativo  IN tbcadast_ativo_probl.idativo%TYPE   -- 1-Ativo / 0 Inativo   
+                          ,pr_cdcooper IN tbcadast_ativo_probl.cdcooper%TYPE   --Cooperativa
                           ,pr_nrdconta IN tbcadast_ativo_probl.nrdconta%TYPE  --Conta
                           ,pr_nrctremp IN tbcadast_ativo_probl.nrctremp%TYPE  --Contrato Emprestimo
                           ,pr_cdmotivo IN tbcadast_ativo_probl.cdmotivo%TYPE  --Codigo do moitvo
@@ -971,7 +1040,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
                           ,pr_dscritic OUT VARCHAR2             --Descrição da crítica
                           ,pr_retxml   IN OUT NOCOPY XMLType    --Arquivo de retorno do XML
                           ,pr_nmdcampo OUT VARCHAR2             --Nome do Campo
-                          ,pr_des_erro OUT VARCHAR2)IS          --Saida OK/NOK
+                          ,pr_des_erro OUT VARCHAR2) IS         --Saida OK/NOK
+
 
      /* .............................................................................
       Programa: pc_consulta
@@ -995,27 +1065,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
                        ,pr_regini   NUMBER
                        ,pr_regfim   NUMBER) IS
 
-        SELECT * FROM (
-         SELECT  tcap.cdcooper,
-                 tcap.nrdconta,
-                 tcap.nrctremp,
-                 to_char(tcap.dtinclus,'dd/mm/yyyy') dtinclus,
-                 to_char(tcap.dtexclus,'dd/mm/yyyy') dtexclus,
-                 tcap.cdmotivo,
-                 tbmtv.dsmotivo,
-                 tcap.dsobserv,
-                 tcap.idativo,
-                 ROW_NUMBER() OVER (ORDER BY dtinclus) Row_Num
-          FROM tbcadast_ativo_probl tcap,
-               tbgen_motivo tbmtv
-          WHERE tcap.cdcooper  = pr_cdcooper
-          AND   tbmtv.idmotivo = tcap.cdmotivo
-          AND   tbmtv.cdproduto = 42
-          AND tcap.nrdconta = DECODE(pr_nrdconta, 0, tcap.nrdconta, pr_nrdconta)
-          AND tcap.nrctremp = DECODE(pr_nrctremp, 0, tcap.nrctremp, pr_nrctremp)
-          AND tcap.cdmotivo = DECODE(pr_cdmotivo, 0, tcap.cdmotivo, pr_cdmotivo)
-          AND tcap.dtinclus BETWEEN to_date(pr_datainic,'DD/MM/YYYY') AND to_date(pr_datafina,'DD/MM/YYYY'))
-          WHERE Row_Num BETWEEN pr_regini AND pr_regfim;
+        SELECT * FROM ( SELECT   tcap.cdcooper,
+                                 tcap.nrdconta,
+                                 tcap.nrctremp,
+                                 to_char(tcap.dtinclus,'dd/mm/yyyy') dtinclus,
+                                 to_char(tcap.dtexclus,'dd/mm/yyyy') dtexclus,
+                                 tcap.cdmotivo,
+                                 tbmtv.dsmotivo,
+                                 tcap.dsobserv,
+                                 tcap.idativo,
+                                 ROW_NUMBER() OVER (ORDER BY dtinclus) Row_Num
+                          FROM tbcadast_ativo_probl tcap,
+                               tbgen_motivo tbmtv
+                          WHERE tcap.cdcooper  = pr_cdcooper
+                          AND   tbmtv.idmotivo = tcap.cdmotivo
+                          AND   tbmtv.cdproduto = 42
+                          AND tcap.nrdconta = DECODE(pr_nrdconta, 0, tcap.nrdconta, pr_nrdconta)
+                          AND tcap.nrctremp = DECODE(pr_nrctremp, 0, tcap.nrctremp, pr_nrctremp)
+                          AND tcap.cdmotivo = DECODE(pr_cdmotivo, 0, tcap.cdmotivo, pr_cdmotivo)
+                          AND tcap.idativo = DECODE(pr_idativo, 0, tcap.idativo, 1)
+                          AND tcap.dtinclus BETWEEN to_date(pr_datainic,'DD/MM/YYYY') AND to_date(pr_datafina,'DD/MM/YYYY'))
+        WHERE Row_Num BETWEEN pr_regini AND pr_regfim;
 
         rw_tcap cr_tcap%ROWTYPE;
 
@@ -1030,6 +1100,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
         vr_nrlinhas  INTEGER :=8;
         vr_auxinicial  INTEGER :=0;
         vr_auxfinal    INTEGER :=0 ;
+        vr_testes   varchar2(3600);
 
 
 
@@ -1049,8 +1120,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
           AND tcap.nrdconta = DECODE(pr_nrdconta, 0, tcap.nrdconta, pr_nrdconta)
           AND tcap.nrctremp = DECODE(pr_nrctremp, 0, tcap.nrctremp, pr_nrctremp)
           AND tcap.cdmotivo = DECODE(pr_cdmotivo, 0, tcap.cdmotivo, pr_cdmotivo)
+          AND tcap.idativo  = DECODE(pr_idativo, 0, tcap.idativo, 1)
           AND tcap.dtinclus BETWEEN to_date(pr_datainic,'DD/MM/YYYY') AND to_date(pr_datafina,'DD/MM/YYYY');
 
+       
 
           -- Incluir nome
          GENE0001.pc_informa_acesso(pr_module => 'ATVPRB'
@@ -1068,12 +1141,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
                                  ,pr_tag_cont => NULL
                                  ,pr_des_erro => vr_dscritic);
 
-
          FOR rw_tcap IN cr_tcap (pr_cdcooper => pr_cdcooper,
                                  pr_nrdconta => pr_nrdconta,
                                  pr_nrctremp => pr_nrctremp,
                                  pr_regini   => vr_auxinicial,
-                                 pr_regfim   => vr_auxfinal
+                                 pr_regfim   => vr_auxfinal                                 
                                  ) LOOP
 
           -- Consulta as informações
@@ -1260,8 +1332,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
              AND thap.cdmotivo = decode(pr_cdmotivo, 0, thap.cdmotivo, pr_cdmotivo)
              AND thap.dthistreg BETWEEN to_date(pr_datainic,'DD/MM/YYYY') AND to_date(pr_datafina,'DD/MM/YYYY'))
              WHERE Row_Num BETWEEN pr_regini AND pr_regfim;
-
-
 
         rw_thap cr_thap%ROWTYPE;
 
