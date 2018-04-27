@@ -12,6 +12,7 @@ var frmCab = 'frmCab';
 var frmCad = 'frmCad';
 var frmFiltro = 'frmFiltro';
 var fsListagem = 'fsListagem';
+var cadValidado =  false; // indica se a inclusão foi aprovada pelo operador. Quando o operador fizer a inclusão de um registro sem numero de contrato
 
 $(document).ready(function() {
 	estadoInicial();
@@ -211,6 +212,7 @@ function manterRotina(dados) {
 	hideMsgAguardo();
 
 	var mensagem = "";
+	var idativo = (dados.idativo || 0);
 
 	switch( dados.operacao ) {
 		case 'Historico_Dados':	mensagem = 'Aguarde, listando historico ...';	break;
@@ -227,6 +229,7 @@ function manterRotina(dados) {
 			type  : 'POST',
 			url   : UrlSite + 'telas/atvprb/manter_rotina.php',
 			data: {
+				idativo: idativo,
 				cddopcao: cddopcao,
 				operacao: dados.operacao,
 				nrdconta: retiraCaracteres(dados.nrdconta, "0123456789", true),
@@ -241,20 +244,25 @@ function manterRotina(dados) {
 			error: function(objAjax,responseError,objExcept) {
 				hideMsgAguardo();
 				showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','estadoInicial();');
+				cadValidado = false;
 			},
 			success: function(response) {
 				try {
 					hideMsgAguardo();
 
-					if ((dados.operacao == 'Valida_Dados' || dados.operacao == 'Historico_Dados')&& response.indexOf("error") == -1) {
+					if (((dados.operacao == 'Valida_Dados' && idativo == 0) || dados.operacao == 'Historico_Dados')&& response.indexOf("error") == -1) {
 						carregaListagem(response);
 					} else {
 						eval(response);
 					}
+
+					cadValidado = false;
 					return false;
 				} catch(error) {
 					hideMsgAguardo();
 					showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','estadoInicial();');
+					
+					cadValidado = false;
 				}
 			}
 		});
@@ -404,6 +412,8 @@ function abreIncluir() {
 function exibeFormCadastro(dados) {
     exibeRotina($('#divUsoGenerico'));
 
+		cadValidado = false; // sinaliza que o usuário ainda não confirmou nenhuma alteração.
+
     $.ajax({
         type: 'POST',
         dataType: 'html',
@@ -508,9 +518,24 @@ function salvarCadastro(operacao) {
 
 	if (dados.flmotivo == 65 && dados.dsobserv == "") { // se cod motivo = outros, precisa preencher observacao
 		showError('error','Favor preencher o campo de observa&ccedil;&otilde;es','Alerta - Ayllos');
-	} else {
+	} else if (operacao == 'Inclui_Dados' && dados.nrctremp.length == 0 && cadValidado == false) {
+		validaOutrosRegistrosESalva(dados);
+	}	else {
 		manterRotina(dados);
 	}
+}
+
+function validaOutrosRegistrosESalva(dados) {
+	dados = {
+		operacao: 'Valida_Dados',
+		idativo: 1,
+		nrdconta: (dados.nrdconta.length > 0 ? dados.nrdconta : '9999999'),
+		datainic: '01/01/1980',
+		datafina: '31/12/2099',
+		nrctremp: ''
+	};
+
+	manterRotina(dados);
 }
 
 function trocaPagina(salto) {

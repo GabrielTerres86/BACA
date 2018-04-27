@@ -22,15 +22,17 @@
 	$nrdconta		= (!empty($_POST['nrdconta'])) ? $_POST['nrdconta']  : '0';
   $nrctrato		= (!empty($_POST['nrctrato'])) ? $_POST['nrctrato']  : '0';
   $cdmotivo		= (!empty($_POST['flmotivo'])) ? $_POST['flmotivo']  : '0';
-  $datainic		= (!empty($_POST['datainic'])) ? $_POST['datainic']  : '01/01/1980';
+  $datainic		= (!empty($_POST['datainic'])) ? $_POST['datainic']  : '01/01/2099';
   $datafina		= (!empty($_POST['datafina'])) ? $_POST['datafina']  : '01/01/1980';
   $dsobserv		= (!empty($_POST['dsobserv'])) ? $_POST['dsobserv']  : '';
   $nrpagina		= (!empty($_POST['nrpagina'])) ? $_POST['nrpagina']  : '1';
+  $idativo		= (!empty($_POST['idativo'])) ? $_POST['idativo']  : '0';
 
   // Montar o xml de Requisicao com os dados da operação
 	$xml = "";
 	$xml .= "<Root>";
 	$xml .= " <Dados>";
+  $xml .= "		<idativo>".$idativo."</idativo>";
 	$xml .= "		<nrdconta>".$nrdconta."</nrdconta>";
 	$xml .= "		<cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
 	$xml .= "		<nrctremp>".$nrctrato."</nrctremp>";
@@ -69,7 +71,16 @@
       $msgErro	= $xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata;
       exibirErro('error', (empty($msgErro) ? "Erro Indefinido" : $msgErro), 'Alerta - Ayllos', '', false);
     } else if ($operacao =='Valida_Dados') {
-      include "lista_consulta.php";
+      if ($idativo == "1"){
+        if ($totRegistros > 0) {
+          echo "showConfirmacao('Outros registros estao ativos! Continuar?', 'Atencao - Ayllos', 'cadValidado = true; salvarCadastro(\"Inclui_Dados\");', '', 'sim.gif', 'nao.gif');";
+        } else {
+          echo "cadValidado = true;";
+          echo "salvarCadastro(\"Inclui_Dados\");";
+        }
+      } else {
+        include "lista_consulta.php";
+      }
     } else if ($operacao =='Historico_Dados') {
       include "lista_historico.php";
     } else if ($operacao =='Exclui_Dados' || $operacao =='Altera_Dados') {

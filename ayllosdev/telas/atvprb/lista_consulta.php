@@ -31,7 +31,7 @@
 				<?php foreach( $retornoRotina as $registro ): ?>
 					<tr>
             <td data-campo="nrdconta"><?= getByTagName($registro->tags,'nrdconta'); ?></td>
-            <td data-campo="nrctremp"><?= getByTagName($registro->tags,'nrctremp'); ?></td>
+            <td data-campo="nrctremp"><?= (getByTagName($registro->tags,'nrctremp') == "0" ? "" : getByTagName($registro->tags,'nrctremp')); ?></td>
             <td data-campo="dsmotivo"><?= getByTagName($registro->tags,'dsmotivo'); ?></td>
             <td data-campo="dtinclus"><?= getByTagName($registro->tags,'dtinclus'); ?></td>
             <td data-campo="dtexclus"><?= getByTagName($registro->tags,'dtexclus'); ?></td>

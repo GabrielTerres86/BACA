@@ -12,8 +12,6 @@ require_once('../../includes/funcoes.php');
 require_once('../../includes/controla_secao.php');
 require_once('../../class/xmlfile.php');
 
-// $nrdconta		= (isset($_POST['nrdconta'])) ? $_POST['nrdconta']  : '0';
-// $nrctrato		= (isset($_POST['nrctrato'])) ? $_POST['nrctrato']  : '0';
 $nrdconta		= (isset($_POST['nrdconta'])) ? $_POST['nrdconta']  : '';
 $nrctremp		= (isset($_POST['nrctremp'])) ? $_POST['nrctremp']  : '';
 $cdmotivo		= (isset($_POST['cdmotivo'])) ? $_POST['cdmotivo']  : '';
