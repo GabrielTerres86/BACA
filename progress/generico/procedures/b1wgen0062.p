@@ -2,7 +2,7 @@
 
     Programa: b1wgen0062.p
     Autor   : Jose Luis (DB1)
-    Data    : Marco/2010                   Ultima atualizacao: 14/03/2018
+    Data    : Marco/2010                   Ultima atualizacao: 25/04/2018
 
     Objetivo  : Tranformacao BO tela CONTAS - IMPRESSAO FICHA CADASTRAL
 
@@ -69,7 +69,9 @@
 
                 17/07/2017 - Alteraçao CDOEDTTL pelo campo IDORGEXP.
                              PRJ339 - CRM (Odirlei-AMcom)                              
+                             
                 11/10/2017 - Ajuste referente ao projeto 339. (Kelvin)
+                
                 03/10/2017 - Correcao para carregar campo DSNACION.
                              (Jaison/Andrino - PRJ339)	 
 
@@ -80,7 +82,9 @@
 				14/03/2018 - Ajuste realizado para que a chamada da procedure 
 							 busca_org_expedidor não esteja com mais inputs que
 						     outputs. (Kelvin)
-				 
+
+                25/04/2018 - P410 - Melhorias IOF (Marcos-Envolti)  
+                             
 .............................................................................*/
 
 /*............................. DEFINICOES ..................................*/
@@ -429,9 +433,10 @@ PROCEDURE Busca_Impressao:
                 ContadorDoc55: DO aux_contador = 1 TO 10:
                   FIND FIRST crapdoc WHERE crapdoc.cdcooper = par_cdcooper AND
                                      crapdoc.nrdconta = par_nrdconta AND
-                                     crapdoc.tpdocmto = 55            AND
+                                     crapdoc.tpdocmto = 55            AND /* Simples Nac */
                                      crapdoc.dtmvtolt = par_dtmvtolt AND
-                                     crapdoc.idseqttl = 1
+                                     crapdoc.idseqttl = 1 AND
+                                     crapdoc.nrcpfcgc = crapass.nrcpfcgc
                                      EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
                   IF NOT AVAILABLE crapdoc THEN
                       DO:
@@ -455,8 +460,9 @@ PROCEDURE Busca_Impressao:
                                          crapdoc.nrdconta = par_nrdconta
                                          crapdoc.flgdigit = FALSE
                                          crapdoc.dtmvtolt = par_dtmvtolt
-                                         crapdoc.tpdocmto = 55
-                                         crapdoc.idseqttl = 1.
+                                         crapdoc.tpdocmto = 55 /* Simples Nac */
+                                         crapdoc.idseqttl = 1
+                                         crapdoc.nrcpfcgc = crapass.nrcpfcgc.
                                   VALIDATE crapdoc.
                                   LEAVE ContadorDoc55.
                               END.
