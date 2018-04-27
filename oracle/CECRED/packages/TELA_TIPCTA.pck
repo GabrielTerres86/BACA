@@ -353,6 +353,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TIPCTA IS
         -- INPESSOA
         CADA0006.pc_grava_dados_hist(pr_nmtabela => vr_nmtabela
                                     ,pr_nmdcampo => 'INPESSOA'
+                                    ,pr_inpessoa => pr_inpessoa
                                     ,pr_cdtipcta => vr_cdtipo_conta
                                     ,pr_tpoperac => 1 -- Inclusão
                                     ,pr_dsvalant => NULL 
@@ -368,6 +369,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TIPCTA IS
         -- CDTIPO_CONTA
         CADA0006.pc_grava_dados_hist(pr_nmtabela => vr_nmtabela
                                     ,pr_nmdcampo => 'CDTIPO_CONTA'
+                                    ,pr_inpessoa => pr_inpessoa
                                     ,pr_cdtipcta => vr_cdtipo_conta
                                     ,pr_tpoperac => 1 -- Inclusão
                                     ,pr_dsvalant => NULL 
@@ -383,6 +385,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TIPCTA IS
         -- DSTIPO_CONTA
         CADA0006.pc_grava_dados_hist(pr_nmtabela => vr_nmtabela
                                     ,pr_nmdcampo => 'DSTIPO_CONTA'
+                                    ,pr_inpessoa => pr_inpessoa
                                     ,pr_cdtipcta => vr_cdtipo_conta
                                     ,pr_tpoperac => 1 -- Inclusão
                                     ,pr_dsvalant => NULL 
@@ -398,6 +401,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TIPCTA IS
         -- IDINDIVIDUAL
         CADA0006.pc_grava_dados_hist(pr_nmtabela => vr_nmtabela
                                     ,pr_nmdcampo => 'IDINDIVIDUAL'
+                                    ,pr_inpessoa => pr_inpessoa
                                     ,pr_cdtipcta => vr_cdtipo_conta
                                     ,pr_tpoperac => 1 -- Inclusão
                                     ,pr_dsvalant => NULL 
@@ -413,6 +417,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TIPCTA IS
         -- IDCONJUNTA_SOLIDARIA
         CADA0006.pc_grava_dados_hist(pr_nmtabela => vr_nmtabela
                                     ,pr_nmdcampo => 'IDCONJUNTA_SOLIDARIA'
+                                    ,pr_inpessoa => pr_inpessoa
                                     ,pr_cdtipcta => vr_cdtipo_conta
                                     ,pr_tpoperac => 1 -- Inclusão
                                     ,pr_dsvalant => NULL 
@@ -428,6 +433,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TIPCTA IS
         -- IDCONJUNTA_NAO_SOLIDARIA
         CADA0006.pc_grava_dados_hist(pr_nmtabela => vr_nmtabela
                                     ,pr_nmdcampo => 'IDCONJUNTA_NAO_SOLIDARIA'
+                                    ,pr_inpessoa => pr_inpessoa
                                     ,pr_cdtipcta => vr_cdtipo_conta
                                     ,pr_tpoperac => 1 -- Inclusão
                                     ,pr_dsvalant => NULL 
@@ -443,6 +449,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TIPCTA IS
         -- IDTIPO_CADASTRO
         CADA0006.pc_grava_dados_hist(pr_nmtabela => vr_nmtabela
                                     ,pr_nmdcampo => 'IDTIPO_CADASTRO'
+                                    ,pr_inpessoa => pr_inpessoa
                                     ,pr_cdtipcta => vr_cdtipo_conta
                                     ,pr_tpoperac => 1 -- Inclusão
                                     ,pr_dsvalant => NULL 
@@ -458,6 +465,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TIPCTA IS
         -- CDMODALIDADE_TIPO
         CADA0006.pc_grava_dados_hist(pr_nmtabela => vr_nmtabela
                                     ,pr_nmdcampo => 'CDMODALIDADE_TIPO'
+                                    ,pr_inpessoa => pr_inpessoa
                                     ,pr_cdtipcta => vr_cdtipo_conta
                                     ,pr_tpoperac => 1 -- Inclusão
                                     ,pr_dsvalant => NULL 
@@ -473,6 +481,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TIPCTA IS
         -- INDCONTA_ITG
         CADA0006.pc_grava_dados_hist(pr_nmtabela => vr_nmtabela
                                     ,pr_nmdcampo => 'INDCONTA_ITG'
+                                    ,pr_inpessoa => pr_inpessoa
                                     ,pr_cdtipcta => vr_cdtipo_conta
                                     ,pr_tpoperac => 1 -- Inclusão
                                     ,pr_dsvalant => NULL 
@@ -745,6 +754,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TIPCTA IS
         -- DSTIPO_CONTA
         CADA0006.pc_grava_dados_hist(pr_nmtabela => vr_nmtabela
                                     ,pr_nmdcampo => 'DSTIPO_CONTA'
+                                    ,pr_inpessoa => pr_inpessoa
                                     ,pr_cdtipcta => pr_cdtipo_conta
                                     ,pr_tpoperac => 2 -- Alteração
                                     ,pr_dsvalant => rw_ult_tipo_conta.dstipo_conta 
@@ -760,6 +770,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TIPCTA IS
         -- IDINDIVIDUAL
         CADA0006.pc_grava_dados_hist(pr_nmtabela => vr_nmtabela
                                     ,pr_nmdcampo => 'IDINDIVIDUAL'
+                                    ,pr_inpessoa => pr_inpessoa
                                     ,pr_cdtipcta => pr_cdtipo_conta
                                     ,pr_tpoperac => 2 -- Alteração
                                     ,pr_dsvalant => rw_ult_tipo_conta.idindividual
@@ -775,6 +786,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TIPCTA IS
         -- IDCONJUNTA_SOLIDARIA
         CADA0006.pc_grava_dados_hist(pr_nmtabela => vr_nmtabela
                                     ,pr_nmdcampo => 'IDCONJUNTA_SOLIDARIA'
+                                    ,pr_inpessoa => pr_inpessoa
                                     ,pr_cdtipcta => pr_cdtipo_conta
                                     ,pr_tpoperac => 2 -- Alteração
                                     ,pr_dsvalant => rw_ult_tipo_conta.idconjunta_solidaria
@@ -790,6 +802,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TIPCTA IS
         -- IDCONJUNTA_NAO_SOLIDARIA
         CADA0006.pc_grava_dados_hist(pr_nmtabela => vr_nmtabela
                                     ,pr_nmdcampo => 'IDCONJUNTA_NAO_SOLIDARIA'
+                                    ,pr_inpessoa => pr_inpessoa
                                     ,pr_cdtipcta => pr_cdtipo_conta
                                     ,pr_tpoperac => 2 -- Alteração
                                     ,pr_dsvalant => rw_ult_tipo_conta.idconjunta_nao_solidaria
@@ -805,6 +818,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TIPCTA IS
         -- IDTIPO_CADASTRO
         CADA0006.pc_grava_dados_hist(pr_nmtabela => vr_nmtabela
                                     ,pr_nmdcampo => 'IDTIPO_CADASTRO'
+                                    ,pr_inpessoa => pr_inpessoa
                                     ,pr_cdtipcta => pr_cdtipo_conta
                                     ,pr_tpoperac => 2 -- Alteração
                                     ,pr_dsvalant => rw_ult_tipo_conta.idtipo_cadastro
@@ -820,6 +834,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TIPCTA IS
         -- CDMODALIDADE_TIPO
         CADA0006.pc_grava_dados_hist(pr_nmtabela => vr_nmtabela
                                     ,pr_nmdcampo => 'CDMODALIDADE_TIPO'
+                                    ,pr_inpessoa => pr_inpessoa
                                     ,pr_cdtipcta => pr_cdtipo_conta
                                     ,pr_tpoperac => 2 -- Alteração
                                     ,pr_dsvalant => rw_ult_tipo_conta.cdmodalidade_tipo
@@ -835,6 +850,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TIPCTA IS
         -- INDCONTA_ITG
         CADA0006.pc_grava_dados_hist(pr_nmtabela => vr_nmtabela
                                     ,pr_nmdcampo => 'INDCONTA_ITG'
+                                    ,pr_inpessoa => pr_inpessoa
                                     ,pr_cdtipcta => pr_cdtipo_conta
                                     ,pr_tpoperac => 2 -- Alteração
                                     ,pr_dsvalant => rw_ult_tipo_conta.indconta_itg
@@ -1048,6 +1064,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TIPCTA IS
         -- INPESSOA
         CADA0006.pc_grava_dados_hist(pr_nmtabela => vr_nmtabela
                                     ,pr_nmdcampo => 'INPESSOA'
+                                    ,pr_inpessoa => pr_inpessoa
                                     ,pr_cdtipcta => pr_cdtipo_conta
                                     ,pr_tpoperac => 3 -- Exclusão
                                     ,pr_dsvalant => pr_inpessoa
@@ -1063,6 +1080,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TIPCTA IS
         -- CDTIPO_CONTA
         CADA0006.pc_grava_dados_hist(pr_nmtabela => vr_nmtabela
                                     ,pr_nmdcampo => 'CDTIPO_CONTA'
+                                    ,pr_inpessoa => pr_inpessoa
                                     ,pr_cdtipcta => pr_cdtipo_conta
                                     ,pr_tpoperac => 3 -- Exclusão
                                     ,pr_dsvalant => pr_cdtipo_conta 
@@ -1078,6 +1096,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TIPCTA IS
         -- DSTIPO_CONTA
         CADA0006.pc_grava_dados_hist(pr_nmtabela => vr_nmtabela
                                     ,pr_nmdcampo => 'DSTIPO_CONTA'
+                                    ,pr_inpessoa => pr_inpessoa
                                     ,pr_cdtipcta => pr_cdtipo_conta
                                     ,pr_tpoperac => 3 -- Exclusão
                                     ,pr_dsvalant => rw_ult_tipo_conta.dstipo_conta 
@@ -1093,6 +1112,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TIPCTA IS
         -- IDINDIVIDUAL
         CADA0006.pc_grava_dados_hist(pr_nmtabela => vr_nmtabela
                                     ,pr_nmdcampo => 'IDINDIVIDUAL'
+                                    ,pr_inpessoa => pr_inpessoa
                                     ,pr_cdtipcta => pr_cdtipo_conta
                                     ,pr_tpoperac => 3 -- Exclusão
                                     ,pr_dsvalant => rw_ult_tipo_conta.idindividual
@@ -1108,6 +1128,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TIPCTA IS
         -- IDCONJUNTA_SOLIDARIA
         CADA0006.pc_grava_dados_hist(pr_nmtabela => vr_nmtabela
                                     ,pr_nmdcampo => 'IDCONJUNTA_SOLIDARIA'
+                                    ,pr_inpessoa => pr_inpessoa
                                     ,pr_cdtipcta => pr_cdtipo_conta
                                     ,pr_tpoperac => 3 -- Exclusão
                                     ,pr_dsvalant => rw_ult_tipo_conta.idconjunta_solidaria
@@ -1123,6 +1144,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TIPCTA IS
         -- IDCONJUNTA_NAO_SOLIDARIA
         CADA0006.pc_grava_dados_hist(pr_nmtabela => vr_nmtabela
                                     ,pr_nmdcampo => 'IDCONJUNTA_NAO_SOLIDARIA'
+                                    ,pr_inpessoa => pr_inpessoa
                                     ,pr_cdtipcta => pr_cdtipo_conta
                                     ,pr_tpoperac => 3 -- Exclusão
                                     ,pr_dsvalant => rw_ult_tipo_conta.idconjunta_nao_solidaria
@@ -1138,6 +1160,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TIPCTA IS
         -- IDTIPO_CADASTRO
         CADA0006.pc_grava_dados_hist(pr_nmtabela => vr_nmtabela
                                     ,pr_nmdcampo => 'IDTIPO_CADASTRO'
+                                    ,pr_inpessoa => pr_inpessoa
                                     ,pr_cdtipcta => pr_cdtipo_conta
                                     ,pr_tpoperac => 3 -- Exclusão
                                     ,pr_dsvalant => rw_ult_tipo_conta.idtipo_cadastro
@@ -1153,6 +1176,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TIPCTA IS
         -- CDMODALIDADE_TIPO
         CADA0006.pc_grava_dados_hist(pr_nmtabela => vr_nmtabela
                                     ,pr_nmdcampo => 'CDMODALIDADE_TIPO'
+                                    ,pr_inpessoa => pr_inpessoa
                                     ,pr_cdtipcta => pr_cdtipo_conta
                                     ,pr_tpoperac => 3 -- Exclusão
                                     ,pr_dsvalant => rw_ult_tipo_conta.cdmodalidade_tipo
@@ -1168,6 +1192,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TIPCTA IS
         -- INDCONTA_ITG
         CADA0006.pc_grava_dados_hist(pr_nmtabela => vr_nmtabela
                                     ,pr_nmdcampo => 'INDCONTA_ITG'
+                                    ,pr_inpessoa => pr_inpessoa
                                     ,pr_cdtipcta => pr_cdtipo_conta
                                     ,pr_tpoperac => 3 -- Exclusão
                                     ,pr_dsvalant => rw_ult_tipo_conta.indconta_itg
