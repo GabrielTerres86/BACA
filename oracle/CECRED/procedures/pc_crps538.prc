@@ -373,7 +373,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                             que apresentaram critica no loop de processamento das linhas
                             do arquivo. (SD#726081-AJFink)
 
-
                01/09/2017 - SD737676 - Para evitar duplicidade devido o Matera mudar
                             o nome do arquivo apos processamento, iremos gerar o arquivo
                             _Criticas com o sufixo do crrl gerado por este (Marcos-Supero)
@@ -393,7 +392,15 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                04/01/2018 - #824283 Verificação de parâmetro para saber se o programa aborta o
                             processo caso não encontre arquivos de retorno (Carlos)
 
-               27/02/2018 - Inclusão de controle de paralelismo por Agencia (PA) quando solicitado.
+               26/01/2018 - Adicionar validação para carregar a data em que boleto pode ser pago
+                            (Douglas - Chamado 824706)
+
+               14/02/2018 - Retirar regra de devolução do título pelo motivo 63
+                            (código de barras em desacordo com as especificacoes).
+                            CIP alterou as regras e o fator de vencimento e valor não
+                            fazem mais parte dos campos validados. (SD#847687 - AJFink)
+
+               22/02/2018 - Inclusão de controle de paralelismo por Agencia (PA) quando solicitado.
                           - Visando performance, Roda somente no processo Noturno
                           - Ajuste no tramamento do arquivo do ABBC - Projeto Ligeirinho (AMcom-Mario)
                 - Funcinalidade:
@@ -412,7 +419,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
 
                03/04/2018 - ajuste no tratamento de restart do paralelismo;
                             ajuste no tratamento de erro na exception others (AMcom-Mario)
-                            
+
+               27/04/2018 - ao chamar DSCT0001 informar a agencia do PA do Associado referente ao paralelismo (AMcom-Mario).
+                           
    .............................................................................*/
 
      DECLARE
@@ -789,7 +798,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
          AND   crapcob.dtdpagto = pr_dtmvtolt
          AND   crapcob.cdbanpag = pr_cdbcoctl
          AND   crapcob.flgcbdda = 1;*/
-
 
        --Selecionar informacoes convenios ativos
        CURSOR cr_crapcco_ativo (pr_cdcooper IN crapcco.cdcooper%type
@@ -1257,6 +1265,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
        vr_dscritic     VARCHAR2(4000);
        vr_cdcritic2    INTEGER:= 0;
        vr_dscritic2    VARCHAR2(4000);
+       vr_des_erro2    VARCHAR2(4000);
 
        --Variaveis de Excecao
        vr_exc_final    EXCEPTION;
@@ -1567,8 +1576,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                 RAISE vr_exc_erro;
             END IF;
 
-            -- vencto
-            vr_proxutil:= pr_dtboleto;
+            -- busca a maxima data em que o boleto pode ser pago sem ser considerado vencido
+            -- considerando somente feriados nacionais e último dia útil do ano (SD#824706)
+            vr_proxutil := npcb0001.fn_titulo_vencimento_pagamento(pr_cdcooper => pr_cdcooper
+                                                                  ,pr_dtvencto => pr_dtboleto);
+
             --Flag vencida
             pr_flgvenci:= FALSE;
 
@@ -4717,14 +4729,12 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                    /* Gerar LOG 085 */
                    IF nvl(rw_crapcob.flgregis,0) = 1 THEN
                      --Criar log Cobranca
-
                      PAGA0001.pc_cria_log_cobranca(pr_idtabcob => rw_crapcob.rowid               --ROWID da Cobranca
                                                   ,pr_cdoperad => vr_cdoperad                    --Operador
                                                   ,pr_dtmvtolt => rw_crapdat.dtmvtolt            --Data movimento
                                                   ,pr_dsmensag => 'Liquidacao de boleto pago'    --Descricao Mensagem
                                                   ,pr_des_erro => vr_des_erro                    --Indicador erro
                                                   ,pr_dscritic => vr_dscritic);                  --Descricao erro
-
                      --Se ocorreu erro
                      IF vr_des_erro = 'NOK' THEN
                        --Levantar Excecao
@@ -4830,7 +4840,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                            ELSE
                              vr_dtmvtaux:= rw_crapdat.dtmvtopr;
                            END IF;
-                                                      
                            /* Sustar a baixa */
                            COBR0007.pc_inst_sustar_baixar (pr_cdcooper => rw_crabcob.cdcooper    --Codigo Cooperativa
                                                           ,pr_nrdconta => rw_crabcob.nrdconta    --Numero da Conta
@@ -5530,7 +5539,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                                                    ,pr_dscritic     => vr_dscritic            --Descricao Critica
                                                    ,pr_tab_lcm_consolidada => vr_tab_lcm_consolidada --Tabela lancamentos consolidada
                                                    ,pr_tab_descontar       => vr_tab_descontar);     --Tabela de titulos
-
                  ELSE
                    
                    IF rw_crapcob.inemiten = 3 THEN
@@ -5806,17 +5814,27 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
 
                --Efetuar a baixa do titulo
                DSCT0001.pc_efetua_baixa_titulo (pr_cdcooper    => pr_cdcooper         --Codigo Cooperativa
-                                               ,pr_cdagenci    => 0                   --Codigo Agencia
+                                               ,pr_cdagenci    => pr_cdagenci         --Codigo Agencia   -- Ligeirinho alderado de 0 p/ Agencia do PA
                                                ,pr_nrdcaixa    => 0                   --Numero Caixa
                                                ,pr_cdoperad    => 0                   --Codigo operador
                                                ,pr_dtmvtolt    => rw_crapdat.dtmvtolt --Data Movimento
                                                ,pr_idorigem    => 1  --AYLLOS--       --Identificador Origem pagamento
                                                ,pr_nrdconta    => vr_tab_descontar(vr_index_desc).nrdconta         --Numero da conta
-                                               ,pr_indbaixa    => 1                   --Indicador Baixa -- 1-Pagamento 2- Vencimento --
+                                               ,pr_indbaixa    => 1                   --Indicador Baixa /* 1-Pagamento 2- Vencimento */
+                                               ,pr_dtintegr    => vr_dtmvtaux         -- Data de integração do pagamento
                                                ,pr_tab_titulos => vr_tab_titulos      --Titulos a serem baixados
                                                ,pr_cdcritic    => vr_cdcritic         --Codigo Critica
                                                ,pr_dscritic    => vr_dscritic         --Descricao Critica
                                                ,pr_tab_erro    => vr_tab_erro2);      --Tabela erros
+
+               IF TRIM(vr_dscritic) IS NOT NULL THEN
+                 btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                   ,pr_ind_tipo_log => 2 -- Erro tratato
+                                   ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE')
+                                   ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
+                                                       || vr_cdprogra || ' --> Erro DSCRITIC na DSTC0001: '||vr_dscritic
+                                                       || 'Conta:'||vr_tab_descontar(vr_index_desc).nrdconta);
+               END IF;
 
                --Se ocorreu erro
                IF vr_tab_erro2.Count > 0 THEN
@@ -5830,7 +5848,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                                      ,pr_ind_tipo_log => 2 -- Erro tratato
                                      ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE')
                                      ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                         || vr_cdprogra || ' --> Erro retorno na DSTC0001: '||vr_tab_erro2(idx).dscritic);
+                                                         || vr_cdprogra || ' --> Erro DSCRITIC na DSTC0001: '||vr_dscritic
+                                                         || ' Conta:' || vr_tab_descontar(vr_index_desc).nrdconta
+                                                         || ' Docmto:'|| vr_tab_descontar(vr_index_desc).nrdocmto
+                                                         || ' Border:'|| vr_tab_descontar(vr_index_desc).nrborder);														 														 
 
                  END LOOP;
                END IF;
@@ -5943,7 +5964,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
              -- Incluido controle de Log - Chamado 714566 - 11/08/2017 
              pc_controla_log_batch(1, vr_dscritic || ' - Arquivo: integra/'||vr_tab_nmarqtel(idx));
            END IF;
-
          END LOOP; --Contador arquivos
 
          /**************************************************************/
@@ -6198,7 +6218,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                IF SUBSTR(vr_setlinha,1,15) = '999999999999999' THEN
                  EXIT;
                END IF;
-               
                --Verificar compensacao titulos central
                OPEN cr_gncptit (pr_cdcooper => pr_cdcooper
                                ,pr_dtmvtolt => vr_dtarquiv
@@ -6847,7 +6866,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
        vr_caminho_puro:= gene0001.fn_diretorio(pr_tpdireto => 'C' --> Usr/Coop
                                               ,pr_cdcooper => pr_cdcooper
                                               ,pr_nmsubdir => NULL);
-
        vr_caminho_integra:= vr_caminho_puro||'/integra';
 
        -- Buscar o diretorio padrao da cooperativa conectada

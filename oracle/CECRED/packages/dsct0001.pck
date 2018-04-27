@@ -191,6 +191,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                
                14/02/2018 - Projeto Ligeirinho. Alterado para gravar na tabela de lotes (craplot) somente no final
                             da execução do CRPS509 => INTERNET E TAA. (Fabiano Girardi AMcom)                            
+
+               27/04/2018 - Projeto Ligeirinho. Alterado para gravar o PA do associado na tabela de lotes (craplot)
+			                quando chamado pelo CRPS538. (Mário- AMcom)
     
   ---------------------------------------------------------------------------------------------------------------*/
   /* Tipos de Tabelas da Package */
@@ -712,18 +715,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
              AND lcm.nrdolote = 10301;
              
         rw_craplcm_seq  cr_craplcm_seq%ROWTYPE; 
-
       BEGIN
-         OPEN cr_craplcm_seq(pr_cdcooper => pr_cdcooper
+        OPEN cr_craplcm_seq(pr_cdcooper => pr_cdcooper
                              ,pr_dtmvtolt => pr_dtmvtolt);
-          FETCH cr_craplcm_seq INTO rw_craplcm_seq;
-          
-          IF cr_craplcm_seq%NOTFOUND THEN
-             CLOSE cr_craplcm_seq;
-             RETURN 0;
-          END IF;
+        FETCH cr_craplcm_seq INTO rw_craplcm_seq;
+        
+        IF cr_craplcm_seq%NOTFOUND THEN
+           CLOSE cr_craplcm_seq;
+           RETURN 0;
+        END IF;
           CLOSE cr_craplcm_seq;
-       
         RETURN rw_craplcm_seq.nrseqdig;
       END;                          
       
@@ -856,8 +857,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
        if paga0001.fn_exec_paralelo then
           vr_nrseqdig:= PAGA0001.fn_seq_parale_craplcm; 
        else
-          vr_nrseqdig := fn_busca_nrseqdig(pr_cdcooper => pr_cdcooper
-                                          ,pr_dtmvtolt => pr_dtmvtolt) + 1;
+      vr_nrseqdig := fn_busca_nrseqdig(pr_cdcooper => pr_cdcooper
+                                      ,pr_dtmvtolt => pr_dtmvtolt) + 1;
        end if;
                                       
       --Selecionar a data do movimento
@@ -1054,7 +1055,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
         EXCEPTION
           WHEN OTHERS THEN
             vr_cdcritic:= 0;
-            vr_dscritic:= 'Erro ao inserir na tabela de lancamentos. '||sqlerrm;
+            vr_dscritic:= 'Erro ao inserir na tabela de lancamentos(1). '||sqlerrm;
             RAISE vr_exc_erro;
         END;
         
@@ -1168,7 +1169,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
           EXCEPTION
             WHEN OTHERS THEN
               vr_cdcritic:= 0;
-              vr_dscritic:= 'Erro ao inserir na tabela de lancamentos. '||sqlerrm;
+              vr_dscritic:= 'Erro ao inserir na tabela de lancamentos(2). '||sqlerrm;
               RAISE vr_exc_erro;
           END;
           -- Projeto Ligeirinho -  paralelismo
@@ -1176,7 +1177,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
           if paga0001.fn_exec_paralelo then
              vr_nrseqdig:= PAGA0001.fn_seq_parale_craplcm; 
           else
-             vr_nrseqdig := vr_nrseqdig + 1; --Proxima sequencia
+          vr_nrseqdig := vr_nrseqdig + 1; --Proxima sequencia
           end if;
         END IF;
         
@@ -1894,6 +1895,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
       vr_nrdolote_lcm craplcm.nrdolote%TYPE;
       vr_nrseqdig_lcm craplcm.nrseqdig%TYPE;
       vr_vltaxa_iof_principal NUMBER := 0;
+      vr_cdagenci     crapass.cdagenci%TYPE;
 
       --Variaveis de erro
       vr_des_erro     VARCHAR2(4000);
@@ -1920,6 +1922,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
 
       vr_dscritic:= NULL;
       vr_cdcritic:= 0;
+
+      --Corrige o codigo do PA
+      if nvl(pr_cdagenci,0) = 0 then
+         vr_cdagenci := 1;
+      else
+         vr_cdagenci := pr_cdagenci;
+      end if;
 
       --Limpar tabela contas
       vr_tab_conta.DELETE;
@@ -2077,7 +2086,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                 /* Leitura do lote */
                 OPEN cr_craplot (pr_cdcooper => pr_cdcooper
                                 ,pr_dtmvtolt => pr_dtmvtolt
-                                ,pr_cdagenci => 1
+                                ,pr_cdagenci => vr_cdagenci   --1 --Substituido (1) para Agencia do Parâmetro  --Paralelismo --AMcom
                                 ,pr_cdbccxlt => 100
                                 ,pr_nrdolote => 10300);
                 --Posicionar no proximo registro
@@ -2100,7 +2109,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                     VALUES
                       (pr_cdcooper
                       ,pr_dtmvtolt
-                      ,1
+                      ,vr_cdagenci  --1 --Substituido (1) para Agencia do Parâmetro  --Paralelismo --AMcom
                       ,100
                       ,10300
                       ,pr_cdoperad
@@ -2190,7 +2199,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
               EXCEPTION
                 WHEN OTHERS THEN
                   vr_cdcritic:= 0;
-                  vr_dscritic:= 'Erro ao inserir na tabela de lancamentos. '||sqlerrm;
+                  vr_dscritic:= 'Erro ao inserir na tabela de lancamentos(3). '||sqlerrm;
                   RAISE vr_exc_erro;
               END;
               /*[PROJETO LIGEIRINHO] Esta função retorna verdadeiro, quando o processo foi iniciado pela rotina:
@@ -2238,7 +2247,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                 /* Leitura do lote */
                 OPEN cr_craplot (pr_cdcooper => pr_cdcooper
                                 ,pr_dtmvtolt => pr_dtmvtolt
-                                ,pr_cdagenci => 1
+                                ,pr_cdagenci => vr_cdagenci  --1  --Substituido (1) para Agencia do Parâmetro --AMcom
                                 ,pr_cdbccxlt => 100
                                 ,pr_nrdolote => 10300);
                 --Posicionar no proximo registro
@@ -2261,7 +2270,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                     VALUES
                       (pr_cdcooper
                       ,pr_dtmvtolt
-                      ,1
+                      ,vr_cdagenci  --1  --Substituido (1) para Agencia do Parâmetro  --AMcom
                       ,100
                       ,10300
                       ,pr_cdoperad
@@ -2352,7 +2361,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
               EXCEPTION
                 WHEN OTHERS THEN
                   vr_cdcritic:= 0;
-                  vr_dscritic:= 'Erro ao inserir na tabela de lancamentos. '||sqlerrm;
+                  vr_dscritic:= 'Erro ao inserir na tabela de lancamentos(4). '||sqlerrm;
                   RAISE vr_exc_erro;
               END;
               /*[PROJETO LIGEIRINHO] Esta função retorna verdadeiro, quando o processo foi iniciado pela rotina:
@@ -2486,7 +2495,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                   /* Leitura do lote */
                   OPEN cr_craplot (pr_cdcooper => pr_cdcooper
                                   ,pr_dtmvtolt => vr_dtmvtolt
-                                  ,pr_cdagenci => 1
+                                  ,pr_cdagenci => vr_cdagenci  --1  --Substituido (1) para Agencia do Parâmetro  --AMcom
                                   ,pr_cdbccxlt => 100
                                   ,pr_nrdolote => 10300);
                   --Posicionar no proximo registro
@@ -2495,6 +2504,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                   IF cr_craplot%NOTFOUND THEN
                     --Fechar Cursor                 --
                     CLOSE cr_craplot;
+
                     --Criar lote
                     BEGIN
                       INSERT INTO craplot
@@ -2509,11 +2519,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                       VALUES
                         (pr_cdcooper
                         ,pr_dtmvtolt
-                        ,1
+                        ,vr_cdagenci --1  --Substituido (1) para Agencia do Parâmetro --AMcom
                         ,100
                         ,10300
                         ,pr_cdoperad
-                        ,1
+                        ,01
                         ,2321)
                       RETURNING ROWID
                           ,craplot.dtmvtolt
@@ -2607,7 +2617,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                 EXCEPTION
                   WHEN OTHERS THEN
                     vr_cdcritic:= 0;
-                    vr_dscritic:= 'Erro ao inserir na tabela de lancamentos. '||sqlerrm;
+                    vr_dscritic:= 'Erro ao inserir na tabela de lancamentos(5). '||sqlerrm;
                     RAISE vr_exc_erro;
                 END;
 
@@ -2685,7 +2695,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
               /* Leitura do lote */
               OPEN cr_craplot (pr_cdcooper => pr_cdcooper
                               ,pr_dtmvtolt => pr_dtmvtolt
-                              ,pr_cdagenci => 1
+                              ,pr_cdagenci => vr_cdagenci --1  --Substituido (1) para Agencia do Parâmetro  --AMcom
                               ,pr_cdbccxlt => 100
                               ,pr_nrdolote => 10300);
               --Posicionar no proximo registro
@@ -2708,7 +2718,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                   VALUES
                       (pr_cdcooper
                       ,pr_dtmvtolt
-                      ,1
+                      ,vr_cdagenci --1  --Substituido (1) para Agencia do Parâmetro  --AMcom
                       ,100
                       ,10300
                       ,pr_cdoperad
@@ -2800,7 +2810,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
             EXCEPTION
               WHEN OTHERS THEN
                 vr_cdcritic:= 0;
-                vr_dscritic:= 'Erro ao inserir na tabela de lancamentos. '||sqlerrm;
+                vr_dscritic:= 'Erro ao inserir na tabela de lancamentos(6). '||sqlerrm;
                 RAISE vr_exc_erro;
             END;
             
@@ -3081,7 +3091,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
               /* Leitura do lote */
               OPEN cr_craplot (pr_cdcooper => pr_cdcooper
                               ,pr_dtmvtolt => pr_dtmvtolt
-                              ,pr_cdagenci => 1
+                              ,pr_cdagenci => vr_cdagenci  --1  --Substituido (1) para Agencia do Parâmetro  --AMcom
                               ,pr_cdbccxlt => 100
                               ,pr_nrdolote => 10300);
               --Posicionar no proximo registro
@@ -3104,7 +3114,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                   VALUES
                       (pr_cdcooper
                       ,pr_dtmvtolt
-                      ,1
+                      ,vr_cdagenci  --1  --Substituido (1) para Agencia do Parâmetro  --AMcom
                       ,100
                       ,10300
                       ,pr_cdoperad
@@ -3195,7 +3205,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
             EXCEPTION
               WHEN OTHERS THEN
                 vr_cdcritic:= 0;
-                vr_dscritic:= 'Erro ao inserir na tabela de lancamentos. '||sqlerrm;
+                vr_dscritic:= 'Erro ao inserir na tabela de lancamentos(7). '||sqlerrm;
                 RAISE vr_exc_erro;
             END;
             
@@ -3226,7 +3236,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
 
           /* Verifica se deve liquidar o bordero caso sim Liquida */
           DSCT0001.pc_efetua_liquidacao_bordero (pr_cdcooper => pr_cdcooper  --Codigo Cooperativa
-                                                ,pr_cdagenci => pr_cdagenci  --Codigo Agencia
+                                                ,pr_cdagenci => vr_cdagenci  --Codigo Agencia
                                                 ,pr_nrdcaixa => pr_nrdcaixa  --Numero do Caixa
                                                 ,pr_cdoperad => pr_cdoperad  --Codigo Operador
                                                 ,pr_dtmvtolt => pr_dtmvtolt  --Data Movimento
@@ -3351,7 +3361,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                                                ,pr_vllanaut => ((vr_vlttitcr * vr_tottitul_cr) +
                                                                 (vr_vlttitsr * vr_tottitul_sr))  --Valor lancamento automatico
                                                ,pr_cdoperad => pr_cdoperad          --Codigo Operador
-                                               ,pr_cdagenci => 1                    --Codigo Agencia
+                                               ,pr_cdagenci => vr_cdagenci --1      --Codigo Agencia   --Substituido Paralelismo
                                                ,pr_cdbccxlt => 100                  --Codigo banco caixa
                                                ,pr_nrdolote => 8452                 --Numero do lote
                                                ,pr_tpdolote => 1                    --Tipo do lote
