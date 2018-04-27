@@ -17,7 +17,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Deborah/Margarete
-     Data    : Maio/2001                       Ultima atualizacao: 16/04/2018
+     Data    : Maio/2001                       Ultima atualizacao: 23/04/2018
      
      Dados referentes ao programa:
 
@@ -302,6 +302,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                  05/04/2018 - Incluída procedure pc_busca_dias_acelerados, que retorna os dias da faixa inicial do contrato anterior para composição dos dias de atraso. - Daniel(AMcom)
 
                  16/04/2018 - Incluída gravação do risco acelerado(INRISCO_REFIN) - Daniel(AMcom)
+                 
+                 23/04/2018 - P450 - Juros + 60 c/c relatório 227 e 354 (para a conta corrente) (Rangel Decker/AMCom)
   ............................................................................ */
 
     DECLARE
@@ -1504,6 +1506,120 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
           END IF;
         END IF;
       END;
+
+      --Retorna Juros+60 de conta corrente inadimplente (Rangel Decker AMcom)
+     FUNCTION fn_juros60cc (pr_nrdconta IN crapris.nrdconta%TYPE) RETURN NUMBER IS
+
+        vr_dtmvtolt     DATE;   --Data apos 60 dias
+        vr_dtmvtolt_aux DATE;  
+        vr_dtcorte_prm  DATE;   --Data de corte
+
+
+        -- Verifica se a conta esta inadimplente e atrasada 60 ou mais dias
+        CURSOR cr_crapris_ccjuros60(pr_dtrefere IN crapris.dtrefere%TYPE) IS
+          SELECT ris.dtinictr
+          FROM   crapass ass
+                ,crapris ris
+          WHERE ris.cdcooper  = ass.cdcooper
+          AND ris.nrdconta    = ass.nrdconta
+          AND ris.cdcooper    = pr_cdcooper
+          AND ris.nrdconta    = pr_nrdconta--77135
+          AND ris.dtrefere    = pr_dtrefere
+          AND ris.vldivida  > 0
+          AND ris.cdmodali  =101
+          AND ris.qtdiaatr  >=60;
+
+          rw_crapris_ccjuros60 cr_crapris_ccjuros60%ROWTYPE;
+
+          CURSOR cr_craplcm_ccjuros60 (pr_dtmvtolt_ini IN craplcm.dtmvtolt%TYPE,
+                                       pr_dtmvtolt_fim IN craplcm.dtmvtolt%TYPE   ) IS
+           SELECT  nvl(sum(lcm.vllanmto),0) vl_juros60
+           FROM craplcm lcm
+               ,craphis his
+            WHERE lcm.cdcooper = his.cdcooper
+            AND lcm.cdhistor   = his.cdhistor
+            AND lcm.cdcooper   = pr_cdcooper
+            AND lcm.nrdconta   = pr_nrdconta--77135
+            AND lcm.dtmvtolt   BETWEEN TO_DATE(pr_dtmvtolt_ini,'dd/mm/yyyy') AND TO_DATE(pr_dtmvtolt_fim,'dd/mm/yyyy')
+            AND his.indebcre   ='D'
+            AND his.cdhistor in(38,37,57);
+
+            rw_craplcm_ccjuros60 cr_craplcm_ccjuros60%ROWTYPE;
+
+
+      BEGIN
+       --Verificar data
+       IF to_char(pr_rw_crapdat.dtmvtoan, 'MM') <> to_char(pr_rw_crapdat.dtmvtolt, 'MM') THEN
+          -- Utilizar o final do mês como data
+          vr_dtrefere_aux := pr_rw_crapdat.dtultdma;
+       ELSE
+          -- Utilizar a data atual
+          vr_dtrefere_aux := pr_rw_crapdat.dtmvtoan;
+       END IF;
+
+       --Buscar a data de corte
+       vr_dtcorte_prm := TO_DATE(GENE0001.fn_param_sistema (pr_cdcooper => 0
+                                                           ,pr_nmsistem => 'CRED'
+                                                           ,pr_cdacesso => 'DT_CORTE_REGCRE')
+                                                           ,'DD/MM/RRRR');
+
+
+
+
+       OPEN cr_crapris_ccjuros60(vr_dtrefere_aux);
+       FETCH cr_crapris_ccjuros60 INTO rw_crapris_ccjuros60;
+
+       --Conta nao esta inadimplente
+       IF cr_crapris_ccjuros60%NOTFOUND THEN
+          CLOSE cr_crapris_ccjuros60;
+          RETURN 0;
+       END IF;
+
+        --Conta esta inadimplente
+       IF cr_crapris_ccjuros60%FOUND   THEN
+          CLOSE cr_crapris_ccjuros60;
+
+          --Data de corte menor que data da conta inadimplente
+          IF  rw_crapris_ccjuros60.dtinictr  <  vr_dtcorte_prm THEN
+              -- Dias úteis
+             EXECUTE IMMEDIATE 'ALTER SESSION SET NLS_DATE_FORMAT = ''DD/MM/YYYY''';
+              
+             vr_dtmvtolt:=cecred.tela_atenda_deposvis.fn_soma_dias_uteis_data(pr_cdcooper => pr_cdcooper,
+                                                                              pr_dtmvtolt => rw_crapris_ccjuros60.dtinictr,
+                                                                              pr_qtddias  => 60); 
+             
+           ELSE
+             --Dias corridos
+             vr_dtmvtolt := TO_DATE(TO_CHAR(rw_crapris_ccjuros60.dtinictr),'DD/MM/YYYY') +60;
+          END IF;
+          
+         
+          OPEN cr_craplcm_ccjuros60(vr_dtmvtolt,vr_dtrefere_aux);
+          FETCH cr_craplcm_ccjuros60 INTO rw_craplcm_ccjuros60;
+
+          IF cr_craplcm_ccjuros60%NOTFOUND THEN
+             CLOSE cr_craplcm_ccjuros60;
+             RETURN 0;
+          END IF;
+
+          IF cr_craplcm_ccjuros60%FOUND THEN
+             CLOSE cr_craplcm_ccjuros60;
+          END IF;
+       END IF;
+        GENE0001.pc_informa_acesso(pr_module => pr_cdprogra
+                                  ,pr_action => 'PC_CRPS310_I');
+                                 
+        RETURN rw_craplcm_ccjuros60.vl_juros60;                                 
+       
+       
+       EXCEPTION
+        WHEN OTHERS THEN BEGIN
+          GENE0001.pc_informa_acesso(pr_module => pr_cdprogra
+                                    ,pr_action => 'PC_CRPS310_I');
+         RETURN 0;
+        END; 
+      END;
+      
 
       -- Gravar temptable da crapris para posteriormente realizar o insert na tabela fisica
       PROCEDURE pc_grava_crapris( pr_nrdconta crapris.nrdconta%TYPE,    --> numero da conta/dv do associado.
@@ -5328,7 +5444,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                                 ,pr_dtdrisco => NULL                     
                                 ,pr_qtdriclq => ABS(vr_qtdiaatr) --> valor absoluto                      
                                 ,pr_nrdgrupo => 0                                      
-                                ,pr_vljura60 => 0                                      
+                                ,pr_vljura60 => fn_juros60cc(rw_crapass.nrdconta)-- Rangel Decker AMcom 0                                      
                                 ,pr_inindris => vr_risco_aux
                                 ,pr_cdinfadi => ' '                                    
                                 ,pr_nrctrnov => 0                                      
