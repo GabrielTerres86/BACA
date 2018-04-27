@@ -1070,15 +1070,8 @@ BEGIN
              ,/*48*/ cdageori
              ,/*49*/ dtinsori
              ,/*50*/ insitblq
-             ,/*51*/ cdagenci
-             ,/*52*/ hrinclus
-             ,/*53*/ dtdscore
-             ,/*54*/ dsdscore
-             ,/*55*/ flgaprvc
-             ,/*56*/ dtenefes
-             ,/*57*/ dsprotoc
-             ,/*58*/ dtmanute
-             ,/*59*/ ininadim )
+             ,/*51*/ dtmanute
+             ,/*52*/ ininadim )
       values (/*01*/ rw_crawlim.nrdconta
              ,/*02*/ 2 --Ativo
              ,/*03*/ pr_dtmvtolt
@@ -1129,15 +1122,8 @@ BEGIN
              ,/*48*/ rw_crawlim.cdageori
              ,/*49*/ trunc(sysdate)
              ,/*50*/ rw_crawlim.insitblq
-             ,/*51*/ rw_crawlim.cdagenci
-             ,/*52*/ to_char(sysdate,'SSSSS')
-             ,/*53*/ rw_crawlim.dtdscore
-             ,/*54*/ rw_crawlim.dsdscore
-             ,/*55*/ rw_crawlim.flgaprvc
-             ,/*56*/ rw_crawlim.dtenefes
-             ,/*57*/ rw_crawlim.dsprotoc
-             ,/*58*/ trunc(sysdate)
-             ,/*59*/ rw_crawlim.ininadim );
+             ,/*51*/ trunc(sysdate)
+             ,/*52*/ rw_crawlim.ininadim );
    exception
       when others then
            vr_dscritic := 'Erro ao inserir o contrato de limite de desconto de título: '||sqlerrm;
@@ -1548,7 +1534,7 @@ BEGIN
            vr_dscritic := 'Erro ao atualizar a proposta de limite de desconto de título. ' || sqlerrm;
            raise vr_exc_saida;
    end;
-
+   
    COMMIT;
 
 EXCEPTION
@@ -2694,7 +2680,7 @@ PROCEDURE pc_alterar_proposta_manutencao(pr_cdcooper    in crapcop.cdcooper%type
   ---------------------------------------------------------------------------------------------------------------------*/
    -- Informações de data do sistema
    rw_crapdat  btch0001.rw_crapdat%TYPE;
-
+   
    -- Variável de críticas
    vr_cdcritic crapcri.cdcritic%type;
    vr_dscritic varchar2(10000);
@@ -2867,8 +2853,7 @@ EXCEPTION
         end if;
 
         pr_cdcritic := vr_cdcritic;
-        pr_dscritic := vr_dscritic;
-
+        pr_dscritic := vr_dscritic;        
    when others then
         pr_cdcritic := nvl(vr_cdcritic,0);
         pr_dscritic := 'Erro nao tratado na TELA_ATENDA_DSCTO_TIT.pc_alterar_proposta_manutencao: ' || sqlerrm;
@@ -5312,7 +5297,7 @@ END pc_solicita_biro_bordero;
       open cr_crapcob;
       fetch cr_crapcob into rw_crapcob;
       vr_nrinssac := rw_crapcob.nrinssac;
-      
+      vr_cdtpinsc := rw_crapcob.cdtpinsc;
       open cr_crapsab;
       fetch cr_crapsab into rw_crapsab;
       pr_nrinssac:=rw_crapsab.nrinssac;
