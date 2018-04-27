@@ -27,7 +27,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps692 (pr_cdcooper  IN crapcop.cdcooper%
 
                    01/12/2016 - Fazer tratamento para incorporação. (Oscar)
 
-				   16/03/2018 - Chama rotina limi0002.pc_cancela_limite60 de cancelamento de limite - Daniel(AMcom)      
+				   27/04/2018 - Chama rotina LIMI0002.PC_CANCELA_LIMITE_CREDITO de cancelamento de limite - Daniel(AMcom)      
     ............................................................................ */
 
     DECLARE
@@ -849,9 +849,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps692 (pr_cdcooper  IN crapcop.cdcooper%
       END LOOP; /* END LOOP FOR rw_craprli */
 
       -- Chama rotina de cancelamento de limite - Daniel(AMcom)
-      limi0002.pc_cancela_limite60(pr_cdcooper => pr_cdcooper   -- Cooperativa
-                                  ,pr_cdcritic => vr_cdcritic   -- Código do erro
-                                  ,pr_dscritic => vr_dscritic); -- Descrição do erro
+      LIMI0002.PC_CANCELA_LIMITE_CREDITO(pr_cdcooper => pr_cdcooper   -- Cooperativa
+                                        ,pr_cdcritic => vr_cdcritic   -- Código do erro
+                                        ,pr_dscritic => vr_dscritic); -- Descrição do erro
         -- Verifica erro
         IF vr_cdcritic = 0 THEN
           RAISE vr_exc_saida;
