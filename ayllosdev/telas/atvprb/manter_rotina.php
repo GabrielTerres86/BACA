@@ -73,7 +73,7 @@
     } else if ($operacao =='Valida_Dados') {
       if ($idativo == "1"){
         if ($totRegistros > 0) {
-          echo "showConfirmacao('Outros registros estao ativos! Continuar?', 'Atencao - Ayllos', 'cadValidado = true; salvarCadastro(\"Inclui_Dados\");', '', 'sim.gif', 'nao.gif');";
+          echo "showConfirmacao('ATEN&Ccedil;&Atilde;O!<br />Voc&ecirc; n&atilde;o informou um n&uacute;mero de contrato.<br /><br />Existem outros registros ativos nesta conta e ser&atilde;o exclu&iacute;dos automaticamente!<br /><br /> Continuar mesmo assim?', 'Atencao - Ayllos', 'cadValidado = true; salvarCadastro(\"Inclui_Dados\");', '', 'sim.gif', 'nao.gif');";
         } else {
           echo "cadValidado = true;";
           echo "salvarCadastro(\"Inclui_Dados\");";
