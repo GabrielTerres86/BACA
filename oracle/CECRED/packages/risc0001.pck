@@ -510,6 +510,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
     contador             INTEGER := 0;
     vr_fleprces          INTEGER := 0;
     
+    vr_dtmvtolt          DATE;
+    vr_dtcorte_prm       DATE;
+
     
     --Busca conta corrente em ADP saldo negativo e se houver limite estourado (Rangel Decker AMcom)
     CURSOR cr_conta_negativa (pr_cdcooper IN crapris.cdcooper%TYPE) IS
