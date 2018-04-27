@@ -5835,11 +5835,10 @@ PROCEDURE aprova_trans_pend:
                                                                                           INPUT par_nmdatela,
                                                                                           INPUT par_nrdconta,
                                                                                          OUTPUT aux_nrdrowid).
-                                    END.
+                                                                  END.
+                                                              RETURN "NOK".                                                                  
                                                           END.
-                                
-                                RETURN "NOK".
-                            END.
+                                                  END.
                                            END.
                                     END.  
                             END.
