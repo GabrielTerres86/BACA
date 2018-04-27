@@ -12,7 +12,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Deborah/Edson
-   Data    : Novembro/91.                    Ultima atualizacao: 28/12/2017
+   Data    : Novembro/91.                    Ultima atualizacao: 27/04/2018
 
    Dados referentes ao programa:
 
@@ -229,7 +229,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
                08/04/2018 - Considerar apenas o valor do estouro de conta para realizar o resgate
                             automático (Renato - Supero)
 
-               10/04/2018 - Consistencia para considerar dias úteis ou corridos na atualização do saldo - Daniel(AMcom)
+               10/04/2018 - P450 - Consistencia para considerar dias úteis ou corridos na atualização do saldo - Daniel(AMcom)
+               
+               27/04/2018 - P450 - Novo tratamento para IOF a Debitar (Guilherme/AMcom)
      ............................................................................. */
 
      DECLARE
@@ -667,6 +669,23 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
          WHERE tbcc.idlautom = pr_idlancto;
         rw_tbcc_lautom_controle cr_tbcc_lautom_controle%ROWTYPE;
 
+
+       --Selecionar informacoes da Central de Risco referente a ADP
+       CURSOR cr_ris_adp (pr_nrdconta IN crapris.nrdconta%TYPE
+                         ,pr_dtrefere IN crapris.dtrefere%TYPE) IS
+         SELECT r.dtinictr -- Data em que entrou em ADP
+               ,r.qtdriclq
+           FROM crapris r
+          WHERE r.cdcooper = pr_cdcooper
+            AND r.nrdconta = pr_nrdconta
+            AND r.dtrefere = pr_dtrefere
+            AND r.nrctremp = pr_nrdconta -- Contrato ADP = NrdConta
+            AND r.cdmodali = 101; -- ADP
+       rw_ris_adp      cr_ris_adp%ROWTYPE;
+
+
+
+
        /* Variaveis Locais da pc_crps001 */
 
        --Variaveis dos Indices
@@ -715,6 +734,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
 
        vr_dtrisclq_aux DATE;
 	   vr_dtcorte_prm  DATE;
+       vr_dtrefere  DATE;
 
        vr_qtddsdev_aux  NUMBER:= 0;
 
@@ -770,6 +790,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
        vr_dsctajud crapprm.dsvlrprm%TYPE;
 
        vr_vlblqaco crapsda.vlblqaco%TYPE := 0;
+       vr_qtiasadp  PLS_INTEGER;  -- Quantidade de dias em ADP
+       vr_inddebit  PLS_INTEGER;      -- 1-Debita IOF / 2 - Agenda IOF / 3 - Nao Debita
+       
 
        --Procedure para limpar os dados das tabelas de memoria
        PROCEDURE pc_limpa_tabela IS
@@ -1105,6 +1128,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
                     ELSE
                       vr_dscritic:= NULL;
                     END IF;
+
                     --Verificar o saldo retornado
                     IF vr_tab_saldo.Count = 0 THEN
                       --Montar mensagem erro
@@ -1117,110 +1141,78 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
                                      nvl(vr_tab_saldo(vr_tab_saldo.FIRST).vllimcre,0);
                     END IF; 
 
-                   -- Se saldo do cooperado não suprir o lançamento e a qtd dias corridos for > 0 
-                   -- vamos agendar o lançamento na LAUTOM
-                   IF round(rw_crapsld.vliofmes,2) > vr_vlsddisp AND vr_qtdiacor > 0 THEN                   
-                      
-                     vr_nrseqdig:= fn_sequence('CRAPLAU','NRSEQDIG',''||pr_cdcooper||';'||TO_CHAR(vr_dtmvtolt,'DD/MM/RRRR')||'');
-                     
-                     BEGIN
-                      INSERT INTO craplau
-                                  (craplau.cdcooper
-                                  ,craplau.dtmvtopg
-                                  ,craplau.cdagenci
-                                  ,craplau.cdbccxlt
-                                  ,craplau.cdhistor
-                                  ,craplau.dtmvtolt
-                                  ,craplau.insitlau
-                                  ,craplau.nrdconta
-                                  ,craplau.nrdctabb
-                                  ,craplau.nrdolote
-                                  ,craplau.nrseqdig
-                                  ,craplau.tpdvalor
-                                  ,craplau.vllanaut
-                                  ,craplau.nrdocmto
-                                  ,craplau.dttransa
-                                  ,craplau.hrtransa
-                                  ,craplau.dsorigem)
-                           VALUES (pr_cdcooper            -- craplau.cdcooper
-                                  ,vr_dtmvtolt            -- craplau.dtmvtopg
-                                  ,1                      -- craplau.cdagenci
-                                  ,100                    -- craplau.cdbccxlt
-                                  ,2323                   -- craplau.cdhistor
-                                  ,vr_dtmvtolt            -- craplau.dtmvtolt
-                                  ,1                      -- craplau.insitlau
-                                  ,rw_crapsld.nrdconta    -- craplau.nrdconta
-                                  ,rw_crapsld.nrdconta    -- craplau.nrdctabb
-                                  ,8450                   -- craplau.nrdolote
-                                  ,nvl(vr_nrseqdig,0) + 1 -- craplau.nrseqdig
-                                  ,1                      -- craplau.tpdvalor
-                                  ,round(rw_crapsld.vliofmes,2)  -- craplau.vllanaut
-                                  ,99999323               -- craplau.nrdocmto
-                                  ,vr_dtmvtolt            -- craplau.dttransa
-                                  ,gene0002.fn_busca_time -- craplau.hrtransa
-                                  ,'ADIOFJUROS')          -- craplau.dsorigem
-                        RETURNING idlancto 
-                             INTO vr_idlancto; 
-                      EXCEPTION
-                        WHEN OTHERS THEN
-                          vr_dscritic := 'Erro ao inserir craplau: '||SQLERRM;
-                          RAISE vr_exc_saida;
-                      END;
-                       
-                     -- Para cada craplau vamos criar um registro de controle
-                     OPEN cr_tbcc_lautom_controle(pr_idlancto => vr_idlancto);
-                     FETCH cr_tbcc_lautom_controle INTO rw_tbcc_lautom_controle;
-                       
-                     IF cr_tbcc_lautom_controle%NOTFOUND THEN
-                       CLOSE cr_tbcc_lautom_controle;
-                         
-                       BEGIN
-                         INSERT INTO tbcc_lautom_controle(cdcooper, 
-                                                          nrdconta, 
-                                                          dtmvtolt, 
-                                                          vloriginal, 
-                                                          idlautom, 
-                                                          insit_lancto, 
-                                                          cdhistor) 
-                                                   VALUES(pr_cdcooper
-                                                         ,rw_crapsld.nrdconta
-                                                         ,vr_dtmvtolt
-                                                         ,round(rw_crapsld.vliofmes,2)
-                                                         ,vr_idlancto
-                                                         ,1
-                                                         ,323);
-                         EXCEPTION  
-                           WHEN OTHERS THEN
-                            vr_dscritic := 'Erro ao inserir cr_tbcc_lautom_controle: '||SQLERRM;
-                            RAISE vr_exc_saida;
-                        END;                       
+
+                 -- BACKLOG ITEM 6761:DÉBITO IOF RENDAS A APROPRIAR
+                 -- NOVAS REGRAS
+                 -- Débito de IOF sobre Limite de Crédito e Conta Corrente
+
+                 -- No primeiro mês (primeiros 30 dias) deverá ser debitado o valor de IOF
+                 -- independente de possuir saldo disponível (saldo total) em conta corrente.
+
+                 -- Após o primeiro mês o Sistema deverá verificar o saldo em conta corrente:
+                 
+                 -- Se houver saldo disponível para o débito de IOF (valor em conta corrente ou
+                 -- dentro do limite de crédito), então o débito deverá ser efetuado. 
+                 -- Se não houver saldo disponível, não será efetuado o débito. O valor deverá
+                 -- permanecer na Lautom e lançado no campo IOF a debitar.
+                 -- Não será estourada a conta para efetuar o débito de IOF.
+
+                 -- Observação: Essa provisão ocorre somente se o cooperado permanecer no ADP por
+                 -- dois meses consecutivos. Se durante o segundo mês o cooperado cobrir a conta
+                 -- e entrar novamente no ADP a contagem de dias inicia-se novamente.
+
+                 -- VERIFICAR SE TEM ADP DA CENTRAL DE RISCO (CURSOR)
+                 OPEN cr_ris_adp (pr_nrdconta => rw_crapsld.nrdconta
+                                 ,pr_dtrefere => rw_crapdat.dtultdma); -- DtUltDma => pois só entra no 1ºdia mes
+                 FETCH cr_ris_adp INTO rw_ris_adp;
+
+                 vr_qtiasadp := 0;
+                 vr_inddebit := 0;
+
+                 IF cr_ris_adp%FOUND THEN -- ESTÁ EM ADP
+                   CLOSE cr_ris_adp;
+
+                   -- QUANTOS DIAS ESTÁ NO ADP
+                   vr_qtiasadp := vr_dtmvtolt - rw_ris_adp.dtinictr; -- DIAS CORRIDOS
+                   IF vr_qtiasadp <= 30 THEN
+                     -- SE MENOS QUE 30, DEBITA IOF
+                     IF  round(rw_crapsld.vliofmes,2) > vr_vlsddisp
+                     AND vr_qtdiacor > 0 THEN
+                       vr_inddebit := 2;
                      ELSE
-                       CLOSE cr_tbcc_lautom_controle;
+                       vr_inddebit := 1;
                      END IF;
                      
-                     --------------------------------------------------------------------------------------------------
-                     -- Atualizar os dados do IOF
-                     --------------------------------------------------------------------------------------------------
-                     TIOF0001.pc_altera_iof(pr_cdcooper   => pr_cdcooper
-                                           ,pr_nrdconta   => rw_crapsld.nrdconta
-                                           ,pr_dtmvtolt   => vr_dtmvtolt
-                                           ,pr_tpproduto  => 5
-                                           ,pr_nrcontrato => 0
-                                           ,pr_idlautom   => vr_idlancto
-                                           ,pr_cdcritic   => vr_cdcritic
-                                           ,pr_dscritic   => vr_dscritic);
-                                
-                     -- Condicao para verificar se houve critica                             
-                     IF vr_dscritic IS NOT NULL THEN
-                       RAISE vr_exc_saida;
+                   ELSE -- SE MAIS QUE 30, VALIDAR SALDO
+
+                     IF  round(rw_crapsld.vliofmes,2) > vr_vlsddisp THEN
+                       -- SE IOF MAIOR QUE SALDO, NAO ESTOURA A CONTA, NAO DEBITA
+                       vr_inddebit := 3; -- NAO DEBITA
+                     ELSE
+                       -- DEBITA, POREM, EFETUA VALIDAÇÃO QUE JA FAZIA
+                       IF  round(rw_crapsld.vliofmes,2) > vr_vlsddisp
+                       AND vr_qtdiacor > 0 THEN
+                         vr_inddebit := 2;
+                       ELSE
+                         vr_inddebit := 1;
                      END IF;
-             
-                     --Zerar valor iof no mes
-                     rw_crapsld.vliofmes:= 0;
-                     --Zerar valor base iof
-                     rw_crapsld.vlbasiof:= 0;
-                     
-                   ELSE -- Caso contrario segue criando registro na conta corrente
+                     END IF;
+                   END IF;
+
+                 ELSE -- TEVE DEBITO IOF ANTES, MAS NAO ESTÁ MAIS EM ADP
+                   CLOSE cr_ris_adp;
+                   -- FAZ O QUE JA FAZIA
+                   IF  round(rw_crapsld.vliofmes,2) > vr_vlsddisp
+                   AND vr_qtdiacor > 0 THEN
+                     vr_inddebit := 2;
+                   ELSE
+                     vr_inddebit := 1;
+                   END IF;
+                 END IF;
+                 -- Criado tratamento para vr_inddebit decorrente da nova regra debito IOF
+                 CASE vr_inddebit
+                   WHEN 1 THEN
+                     -- segue criando registro na conta corrente
                    --Verificar se o lote existe
                    OPEN cr_craplot (pr_cdcooper => pr_cdcooper
                                    ,pr_dtmvtolt => vr_dtmvtolt
@@ -1360,10 +1352,119 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
                    rw_crapsld.vliofmes:= 0;
                    --Zerar valor base iof
                    rw_crapsld.vlbasiof:= 0;
-                 END IF;
+
+                   WHEN 2 THEN
+                     -- Se saldo do cooperado não suprir o lançamento e a qtd dias corridos for > 0
+                     -- vamos agendar o lançamento na LAUTOM
+                     vr_nrseqdig:= fn_sequence('CRAPLAU','NRSEQDIG',''||pr_cdcooper||';'||TO_CHAR(vr_dtmvtolt,'DD/MM/RRRR')||'');
+
+                     BEGIN
+                       INSERT INTO craplau
+                                    (craplau.cdcooper
+                                    ,craplau.dtmvtopg
+                                    ,craplau.cdagenci
+                                    ,craplau.cdbccxlt
+                                    ,craplau.cdhistor
+                                    ,craplau.dtmvtolt
+                                    ,craplau.insitlau
+                                    ,craplau.nrdconta
+                                    ,craplau.nrdctabb
+                                    ,craplau.nrdolote
+                                    ,craplau.nrseqdig
+                                    ,craplau.tpdvalor
+                                    ,craplau.vllanaut
+                                    ,craplau.nrdocmto
+                                    ,craplau.dttransa
+                                    ,craplau.hrtransa
+                                    ,craplau.dsorigem)
+                             VALUES (pr_cdcooper            -- craplau.cdcooper
+                                    ,vr_dtmvtolt            -- craplau.dtmvtopg
+                                    ,1                      -- craplau.cdagenci
+                                    ,100                    -- craplau.cdbccxlt
+                                    ,2323                   -- craplau.cdhistor
+                                    ,vr_dtmvtolt            -- craplau.dtmvtolt
+                                    ,1                      -- craplau.insitlau
+                                    ,rw_crapsld.nrdconta    -- craplau.nrdconta
+                                    ,rw_crapsld.nrdconta    -- craplau.nrdctabb
+                                    ,8450                   -- craplau.nrdolote
+                                    ,nvl(vr_nrseqdig,0) + 1 -- craplau.nrseqdig
+                                    ,1                      -- craplau.tpdvalor
+                                    ,round(rw_crapsld.vliofmes,2)  -- craplau.vllanaut
+                                    ,99999323               -- craplau.nrdocmto
+                                    ,vr_dtmvtolt            -- craplau.dttransa
+                                    ,gene0002.fn_busca_time -- craplau.hrtransa
+                                    ,'ADIOFJUROS')          -- craplau.dsorigem
+                          RETURNING idlancto
+                               INTO vr_idlancto;
+                     EXCEPTION
+                       WHEN OTHERS THEN
+                         vr_dscritic := 'Erro ao inserir craplau: '||SQLERRM;
+                         RAISE vr_exc_saida;
+                     END;
+
+                     -- Para cada craplau vamos criar um registro de controle
+                     OPEN cr_tbcc_lautom_controle(pr_idlancto => vr_idlancto);
+                     FETCH cr_tbcc_lautom_controle INTO rw_tbcc_lautom_controle;
+
+                     IF cr_tbcc_lautom_controle%NOTFOUND THEN
+                       CLOSE cr_tbcc_lautom_controle;
+
+                       BEGIN
+                         INSERT INTO tbcc_lautom_controle(cdcooper,
+                                                          nrdconta,
+                                                          dtmvtolt,
+                                                          vloriginal,
+                                                          idlautom,
+                                                          insit_lancto,
+                                                          cdhistor)
+                                                   VALUES(pr_cdcooper
+                                                         ,rw_crapsld.nrdconta
+                                                         ,vr_dtmvtolt
+                                                         ,round(rw_crapsld.vliofmes,2)
+                                                         ,vr_idlancto
+                                                         ,1
+                                                         ,323);
+                       EXCEPTION
+                         WHEN OTHERS THEN
+                           vr_dscritic := 'Erro ao inserir cr_tbcc_lautom_controle: '||SQLERRM;
+                           RAISE vr_exc_saida;
+                       END;
+                     ELSE
+                       CLOSE cr_tbcc_lautom_controle;
                  END IF;
 
-             END IF;
+                     --------------------------------------------------------------------------------------------------
+                     -- Atualizar os dados do IOF
+                     --------------------------------------------------------------------------------------------------
+                     TIOF0001.pc_altera_iof(pr_cdcooper   => pr_cdcooper
+                                           ,pr_nrdconta   => rw_crapsld.nrdconta
+                                           ,pr_dtmvtolt   => vr_dtmvtolt
+                                           ,pr_tpproduto  => 5
+                                           ,pr_nrcontrato => 0
+                                           ,pr_idlautom   => vr_idlancto
+                                           ,pr_cdcritic   => vr_cdcritic
+                                           ,pr_dscritic   => vr_dscritic);
+
+                     -- Condicao para verificar se houve critica
+                     IF vr_dscritic IS NOT NULL THEN
+                       RAISE vr_exc_saida;
+                 END IF;
+
+                     --Zerar valor iof no mes
+                     rw_crapsld.vliofmes:= 0;
+                     --Zerar valor base iof
+                     rw_crapsld.vlbasiof:= 0;
+                   
+                   ELSE
+                     -- Se 3 ou qualquer outro, nao faz nada
+                     -- Deixa o IOF pendente
+                     NULL;
+                   
+                 END CASE;
+
+               END IF; -- FIM => é PF ou PJ
+
+             END IF; -- FIM  vliofmes > 0
 
              --Se o juros do cheque especial for maior zero
              IF rw_crapsld.vljuresp > 0 THEN
@@ -1697,7 +1798,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
 
              END IF;
 
-           END IF;
+           END IF; -- FIM bloco ==> Se for primeiro dia util e tiver IOF a cobrar
 
            --linha 477
            --Valor anterior utilizado recebe:
@@ -2130,7 +2231,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps001 (pr_cdcooper IN crapcop.cdcooper%T
                    
                    ---------------------------------------------------------
                    -- Decrementar do saldo negativo o valor resgatado
-					   			 rw_crapsld.vlsddisp := rw_crapsld.vlsddisp + vr_vlresgat;
+                   rw_crapsld.vlsddisp := rw_crapsld.vlsddisp + vr_vlresgat;
                    ---------------------------------------------------------
 
                  END IF;
