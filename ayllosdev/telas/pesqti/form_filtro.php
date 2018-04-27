@@ -1,11 +1,11 @@
 <?
 /*****************************************************************
   Fonte        : form_filtro.php
-  Criação      : Adriano
-  Data criação : Junho/2015
-  Objetivo     : Form responsável por apresentar as opções de filtro para consulta
+  CriaÃ§Ã£o      : Adriano
+  Data criaÃ§Ã£o : Junho/2015
+  Objetivo     : Form responsÃ¡vel por apresentar as opÃ§Ãµes de filtro para consulta
   --------------
-  Alterações   : 12/01/2018 - Alterações refrente ao PJ406.
+  AlteraÃ§Ãµes   : 12/01/2018 - AlteraÃ§Ãµes refrente ao PJ406.
   --------------
  ****************************************************************/
 
@@ -62,7 +62,7 @@
 		<div id="divFiltroFaturaSicredi" style="display:none">
 
       <!-- Incluido PJ406 -->
-      <label for="dtipagto"><? echo utf8ToHtml('Período:') ?></label>
+      <label for="dtipagto"><? echo utf8ToHtml('PerÃ­odo:') ?></label>
       <input name='dtipagto' type='text' class='campo' id='dtipagto'>
 
       <label for="dtfpagto"><? echo utf8ToHtml('a') ?></label>
@@ -89,7 +89,7 @@
 			<input name="vldpagto" type="text" class="campo" id="vldpagto" value="0">
 
       <!-- Incluido PJ406 -->
-      <label for="nrautdoc"><? echo utf8ToHtml('Autenticação:') ?></label>
+      <label for="nrautdoc"><? echo utf8ToHtml('AutenticaÃ§Ã£o:') ?></label>
 			<input name="nrautdoc" type="text" class="campo" id="nrautdoc" value="0">
       <!-- Incluido PJ406 -->
 
