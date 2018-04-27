@@ -3993,12 +3993,6 @@ BEGIN
         vr_dtdrisco := NULL;
         vr_qtdiaris := 0;
 
-         -- Busca o ultimo lançamento de risco para a conta com
-         -- valor superior ao valor de arrasto e desta vez com a data igual
-         -- a data de referência passada para buscarmos as informações do risco atual
-        vr_nivrisco     := NULL;
-        rw_crapris_last := NULL;
-
         -- Buscar o ultimo lançamento de risco para a conta com
         -- valor superior ao valor de arrasto e data igual ao final do mês
         vr_nivrisco     := NULL;
