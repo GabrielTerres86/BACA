@@ -68,7 +68,7 @@ $nmrotina = $_POST["nmrotina"];
                                                 
                                                     <tr height="25px">
                                                         <td width="150px" align="right" class="txtNormalBold">Data quitação da dívida:</td>
-                                                        <td><input name="dtcatanu" id="dtcatanu" type="date" class="campo" style="width:150px;"/></td>			
+                                                        <td><input name="dtcatanu" id="dtcatanu" type="text" class="campo data" style="width:150px;"/></td>			
                                                     </tr>
                                                                 
                                                 </table>	
