@@ -858,6 +858,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
                        ,pr_chave_aplica  => pr_chave_aplica
                        ,pr_dscritic      => pr_dscritic );
 
+    IF vr_dscritic  IS NOT NULL THEN
+      RAISE vr_exc_erro;
+    END IF;
+
   EXCEPTION
     WHEN vr_exc_erro THEN
       --> Buscar critica

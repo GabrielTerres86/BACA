@@ -484,13 +484,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
       --Registro de memoria do tipo lancamento
       rw_craplcm craplcm%ROWTYPE;
 
-  --  vr_cardbtit     INTEGER; --> Parametro de dias carencia cobranca s/ registro
-  --  vr_cardbtitcr   INTEGER; --> Parametro de dias carencia cobranca c/ registro
-
-      vr_cardbtitcrpf INTEGER; --> Parametro de dias carencia cobranca c/ registro, pessoa fisica
-      vr_cardbtitcrpj INTEGER; --> Parametro de dias carencia cobranca c/ registro, pessoa juridica
-      vr_cardbtitpf   INTEGER; --> Parametro de dias carencia cobranca s/ registro, pessoa fisica
-      vr_cardbtitpj   INTEGER; --> Parametro de dias carencia cobranca s/ registro, pessoa juridica
+      vr_cardbtit     INTEGER; --> Parametro de dias carencia cobranca s/ registro
+      vr_cardbtitcr   INTEGER; --> Parametro de dias carencia cobranca c/ registro
 
       vr_diascare     INTEGER; --> Qtd de dias de carencia
       vr_dtrefere     DATE;    --> Data de referencia para buscar os titulos que vao ser debitados
@@ -509,6 +504,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
       vr_vlttcrpj     NUMBER;
 
       vr_dstextab     VARCHAR2(400);
+      vr_dstextabcr   VARCHAR2(400);
       vr_dsctajud     crapprm.dsvlrprm%TYPE;
       vr_natjurid     crapjur.natjurid%TYPE;
       vr_tpregtrb     crapjur.tpregtrb%TYPE;
@@ -824,78 +820,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
       --que devem ser tarifados por conta
       vr_tab_tar.delete; 
       
-      --Cobranca com registro
-      vr_dstextab:= TABE0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
-                                              ,pr_nmsistem => 'CRED'
-                                              ,pr_tptabela => 'USUARI'
-                                              ,pr_cdempres => 11
-                                              ,pr_cdacesso => 'LIMDESCTITCRPF'
-                                              ,pr_tpregist => 0);
-      --Se nao encontrou
-      IF vr_dstextab IS NULL THEN
-          vr_cdcritic:= 0;
-          vr_dscritic:= 'Carencia para desconto de titulo nao encontrada.';
-          --Levantar Excecao
-          RAISE vr_exc_erro;
-      ELSE
-        vr_cardbtitcrpf := TO_NUMBER(gene0002.fn_busca_entrada(pr_postext => 32, pr_dstext => vr_dstextab, pr_delimitador => ';'));
-      END IF;
-      --
-
-      -- Cobrança com Registro - Pessoa Jurídica
-      vr_dstextab:= TABE0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
-                                              ,pr_nmsistem => 'CRED'
-                                              ,pr_tptabela => 'USUARI'
-                                              ,pr_cdempres => 11
-                                              ,pr_cdacesso => 'LIMDESCTITCRPJ'
-                                              ,pr_tpregist => 0);
-      --Se nao encontrou
-      IF vr_dstextab IS NULL THEN
-          vr_cdcritic:= 0;
-          vr_dscritic:= 'Carencia para desconto de titulo nao encontrada.';
-          --Levantar Excecao
-          RAISE vr_exc_erro;
-      ELSE
-        vr_cardbtitcrpj := TO_NUMBER(gene0002.fn_busca_entrada(pr_postext => 32, pr_dstext => vr_dstextab, pr_delimitador => ';'));
-      END IF;
-      --
-
-      -- Cobrança sem Registro - Pessoa Física
-      vr_dstextab:= TABE0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
-                                              ,pr_nmsistem => 'CRED'
-                                              ,pr_tptabela => 'USUARI'
-                                              ,pr_cdempres => 11
-                                              ,pr_cdacesso => 'LIMDESCTITPF'
-                                              ,pr_tpregist => 0);
-      --Se nao encontrou
-      IF vr_dstextab IS NULL THEN
-          vr_cdcritic:= 0;
-          vr_dscritic:= 'Carencia para desconto de titulo nao encontrada.';
-          --Levantar Excecao
-          RAISE vr_exc_erro;
-      ELSE
-        vr_cardbtitpf := TO_NUMBER(gene0002.fn_busca_entrada(pr_postext => 32, pr_dstext => vr_dstextab, pr_delimitador => ';'));
-      END IF;
-      --
-
-      -- Cobrança sem Registro - Pessoa Jurídica
-      vr_dstextab:= TABE0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
-                                              ,pr_nmsistem => 'CRED'
-                                              ,pr_tptabela => 'USUARI'
-                                              ,pr_cdempres => 11
-                                              ,pr_cdacesso => 'LIMDESCTITPJ'
-                                              ,pr_tpregist => 0);
-      --Se nao encontrou
-      IF vr_dstextab IS NULL THEN
-          vr_cdcritic:= 0;
-          vr_dscritic:= 'Carencia para desconto de titulo nao encontrada.';
-          --Levantar Excecao
-          RAISE vr_exc_erro;
-      ELSE
-        vr_cardbtitpj := TO_NUMBER(gene0002.fn_busca_entrada(pr_postext => 32, pr_dstext => vr_dstextab, pr_delimitador => ';'));
-      END IF;
-      --
-
       --Pega data de referencia que deve buscar os titulos para processamento
       vr_dtrefere := fn_dtrefere_carencia(pr_cdcooper => pr_cdcooper
                                          ,pr_dtmvtolt => pr_dtmvtolt
@@ -1015,8 +939,55 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
 
          -- se ainda nao acabou a carencia deve verificar saldo
          -- contar a partir do primeiro dia util qdo a data de vencimento cair no final de semana ou feriado
+         --
+        if    rw_crapass.inpessoa = 1 then -- Pessoa Física
+              vr_dstextab   := 'LIMDESCTITPF';
+              vr_dstextabcr := 'LIMDESCTITCRPF';
+              
+        elsif rw_crapass.inpessoa = 2 then -- Pessoa Jurídica
+              vr_dstextab   := 'LIMDESCTITPJ';
+              vr_dstextabcr := 'LIMDESCTITCRPJ';
+        end   if;
+         
+        -- Cobrança sem Registro
+        vr_dstextab := tabe0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
+                                                 ,pr_nmsistem => 'CRED'
+                                                 ,pr_tptabela => 'USUARI'
+                                                 ,pr_cdempres => 11
+                                                 ,pr_cdacesso => vr_dstextab
+                                                 ,pr_tpregist => 0);
+        if  vr_dstextab is null then
+            vr_cdcritic:= 0;
+            vr_dscritic:= 'Carencia para desconto de titulo nao encontrada.';
+            raise vr_exc_erro;
+        else
+            vr_cardbtit := to_number(gene0002.fn_busca_entrada(pr_postext     => 32
+                                                              ,pr_dstext      => vr_dstextab
+                                                              ,pr_delimitador => ';'));
+        end if;
 
-           EXTR0001.pc_obtem_saldo_dia (pr_cdcooper   => pr_cdcooper
+        -- Cobrança com Registro
+        vr_dstextabcr := tabe0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
+                                                   ,pr_nmsistem => 'CRED'
+                                                   ,pr_tptabela => 'USUARI'
+                                                   ,pr_cdempres => 11
+                                                   ,pr_cdacesso => vr_dstextabcr
+                                                   ,pr_tpregist => 0);
+        if  vr_dstextabcr is null then
+            vr_cdcritic:= 0;
+            vr_dscritic:= 'Carencia para desconto de titulo nao encontrada.';
+            raise vr_exc_erro;
+        else
+            vr_cardbtitcr := to_number(gene0002.fn_busca_entrada(pr_postext     => 32
+                                                                ,pr_dstext      => vr_dstextabcr
+                                                                ,pr_delimitador => ';'));
+        end if;
+
+        --  Cobrança sem Registro
+        if  (gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper
+                                        ,pr_dtmvtolt => rw_craptdb.dtvencto) + vr_cardbtit) > pr_dtmvtolt then
+
+            extr0001.pc_obtem_saldo_dia(pr_cdcooper   => pr_cdcooper
                                        ,pr_rw_crapdat => rw_crapdat
                                        ,pr_cdagenci   => pr_cdagenci
                                        ,pr_nrdcaixa   => pr_nrdcaixa
@@ -1024,53 +995,46 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                                        ,pr_nrdconta   => rw_crapass.nrdconta
                                        ,pr_vllimcre   => rw_crapass.vllimcre
                                        ,pr_tipo_busca => 'A' --> tipo de busca(A-dtmvtoan)
-                                       ,pr_flgcrass   => FALSE
+                                       ,pr_flgcrass   => false
                                        ,pr_dtrefere   => pr_dtmvtolt
                                        ,pr_des_reto   => vr_dscritic
                                        ,pr_tab_sald   => vr_tab_saldo
                                        ,pr_tab_erro   => vr_tab_erro);
-           --Se ocorreu erro
-           IF vr_dscritic = 'NOK' THEN
-             -- Tenta buscar o erro no vetor de erro
-             IF vr_tab_erro.COUNT > 0 THEN
-               vr_cdcritic:= vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
-               vr_dscritic:= vr_tab_erro(vr_tab_erro.FIRST).dscritic|| ' Conta: '||rw_craptdb.nrdconta;
-             ELSE
-               vr_cdcritic:= 0;
-               vr_dscritic:= 'Retorno "NOK" na extr0001.pc_obtem_saldo_dia e sem informação na pr_tab_erro, Conta: '||rw_crapass.nrdconta;
-             END IF;
+            --  Se ocorreu erro
+            if  vr_dscritic = 'NOK' then
+                --  Tenta buscar o erro no vetor de erro
+                if  vr_tab_erro.count > 0 then
+                    vr_cdcritic:= vr_tab_erro(vr_tab_erro.first).cdcritic;
+                    vr_dscritic:= vr_tab_erro(vr_tab_erro.first).dscritic|| ' Conta: '||rw_craptdb.nrdconta;
+                else
+                    vr_cdcritic:= 0;
+                    vr_dscritic:= 'Retorno "NOK" na extr0001.pc_obtem_saldo_dia e sem informação na pr_tab_erro, Conta: '||rw_crapass.nrdconta;
+                end if;
 
-             --continue;
-             --Levantar Excecao
-             RAISE vr_exc_erro;
-           ELSE
-             vr_dscritic:= NULL;
-           END IF;
-           --Verificar o saldo retornado
+                raise vr_exc_erro;
+            else
+                vr_dscritic:= null;
+            end if;
+            
+            --  Verificar o saldo retornado
+            if  vr_tab_saldo.count = 0 then
+                vr_cdcritic:= 0;
+                vr_dscritic:= 'Nao foi possivel consultar o saldo para a operacao.';
+                raise vr_exc_erro;
+            end if;
 
-           IF vr_tab_saldo.Count = 0 THEN
-             --Montar mensagem erro
-             vr_cdcritic:= 0;
-             vr_dscritic:= 'Nao foi possivel consultar o saldo para a operacao.';
-             --Levantar Excecao
-             RAISE vr_exc_erro;
-           END IF;
+            --  Se o saldo nao for suficiente
+            if  rw_craptdb.vltitulo > (nvl(vr_tab_saldo(vr_tab_saldo.first).vlsddisp,0) +
+                                       nvl(vr_tab_saldo(vr_tab_saldo.first).vllimcre,0)) then
+                continue;
+            end if;
+        end if;
 
-           --Se o saldo nao for suficiente
-           IF rw_craptdb.vltitulo > (nvl(vr_tab_saldo(vr_tab_saldo.FIRST).vlsddisp,0) +
-                                     nvl(vr_tab_saldo(vr_tab_saldo.FIRST).vllimcre,0)) THEN
-              CONTINUE;
-           END IF;
+        --  Cobrança com Registro
+        if  (gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper
+                                        ,pr_dtmvtolt => rw_craptdb.dtvencto) + vr_cardbtitcr) > pr_dtmvtolt then
 
-         END IF;
-         --
-
-         -- Com Registro, Pessoa Jurídica
-         IF (gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper,
-                                         pr_dtmvtolt => rw_craptdb.dtvencto) + vr_cardbtit) > pr_dtmvtolt THEN  -- verificar cobr reg e sem reg
-
-
-           EXTR0001.pc_obtem_saldo_dia (pr_cdcooper   => pr_cdcooper
+            extr0001.pc_obtem_saldo_dia(pr_cdcooper   => pr_cdcooper
                                        ,pr_rw_crapdat => rw_crapdat
                                        ,pr_cdagenci   => pr_cdagenci
                                        ,pr_nrdcaixa   => pr_nrdcaixa
@@ -1078,154 +1042,40 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                                        ,pr_nrdconta   => rw_crapass.nrdconta
                                        ,pr_vllimcre   => rw_crapass.vllimcre
                                        ,pr_tipo_busca => 'A' --> tipo de busca(A-dtmvtoan)
-                                       ,pr_flgcrass   => FALSE
+                                       ,pr_flgcrass   => false
                                        ,pr_dtrefere   => pr_dtmvtolt
                                        ,pr_des_reto   => vr_dscritic
                                        ,pr_tab_sald   => vr_tab_saldo
                                        ,pr_tab_erro   => vr_tab_erro);
-           --Se ocorreu erro
-           IF vr_dscritic = 'NOK' THEN
-             -- Tenta buscar o erro no vetor de erro
-             IF vr_tab_erro.COUNT > 0 THEN
-               vr_cdcritic:= vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
-               vr_dscritic:= vr_tab_erro(vr_tab_erro.FIRST).dscritic|| ' Conta: '||rw_craptdb.nrdconta;
-             ELSE
-               vr_cdcritic:= 0;
-               vr_dscritic:= 'Retorno "NOK" na extr0001.pc_obtem_saldo_dia e sem informação na pr_tab_erro, Conta: '||rw_crapass.nrdconta;
-             END IF;
+            --  Se ocorreu erro
+            if  vr_dscritic = 'NOK' then
+                --  Tenta buscar o erro no vetor de erro
+                if  vr_tab_erro.count > 0 then
+                    vr_cdcritic:= vr_tab_erro(vr_tab_erro.first).cdcritic;
+                    vr_dscritic:= vr_tab_erro(vr_tab_erro.first).dscritic|| ' Conta: '||rw_craptdb.nrdconta;
+                else
+                    vr_cdcritic:= 0;
+                    vr_dscritic:= 'Retorno "NOK" na extr0001.pc_obtem_saldo_dia e sem informação na pr_tab_erro, Conta: '||rw_crapass.nrdconta;
+                end if;
 
-             --continue;
-             --Levantar Excecao
-             RAISE vr_exc_erro;
-           ELSE
-             vr_dscritic:= NULL;
-           END IF;
-           --Verificar o saldo retornado
+                raise vr_exc_erro;
+            else
+                vr_dscritic:= null;
+            end if;
+            
+            --  Verificar o saldo retornado
+            if  vr_tab_saldo.count = 0 then
+                vr_cdcritic:= 0;
+                vr_dscritic:= 'Nao foi possivel consultar o saldo para a operacao.';
+                raise vr_exc_erro;
+            end if;
 
-           IF vr_tab_saldo.Count = 0 THEN
-             --Montar mensagem erro
-             vr_cdcritic:= 0;
-             vr_dscritic:= 'Nao foi possivel consultar o saldo para a operacao.';
-             --Levantar Excecao
-             RAISE vr_exc_erro;
-           END IF;
-
-           --Se o saldo nao for suficiente
-           IF rw_craptdb.vltitulo > (nvl(vr_tab_saldo(vr_tab_saldo.FIRST).vlsddisp,0) +
-                                     nvl(vr_tab_saldo(vr_tab_saldo.FIRST).vllimcre,0)) THEN
-              CONTINUE;
-         END IF;
-
-         END IF;
-         --
-
-         -- Sem Registro, Pessoa Física
-         IF (gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper,
-                                         pr_dtmvtolt => rw_craptdb.dtvencto) + vr_cardbtitpf) > pr_dtmvtolt THEN
-
-
-           EXTR0001.pc_obtem_saldo_dia (pr_cdcooper   => pr_cdcooper
-                                       ,pr_rw_crapdat => rw_crapdat
-                                       ,pr_cdagenci   => pr_cdagenci
-                                       ,pr_nrdcaixa   => pr_nrdcaixa
-                                       ,pr_cdoperad   => pr_cdoperad
-                                       ,pr_nrdconta   => rw_crapass.nrdconta
-                                       ,pr_vllimcre   => rw_crapass.vllimcre
-                                       ,pr_tipo_busca => 'A' --> tipo de busca(A-dtmvtoan)
-                                       ,pr_flgcrass   => FALSE
-                                       ,pr_dtrefere   => pr_dtmvtolt
-                                       ,pr_des_reto   => vr_dscritic
-                                       ,pr_tab_sald   => vr_tab_saldo
-                                       ,pr_tab_erro   => vr_tab_erro);
-           --Se ocorreu erro
-           IF vr_dscritic = 'NOK' THEN
-             -- Tenta buscar o erro no vetor de erro
-             IF vr_tab_erro.COUNT > 0 THEN
-               vr_cdcritic:= vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
-               vr_dscritic:= vr_tab_erro(vr_tab_erro.FIRST).dscritic|| ' Conta: '||rw_craptdb.nrdconta;
-             ELSE
-               vr_cdcritic:= 0;
-               vr_dscritic:= 'Retorno "NOK" na extr0001.pc_obtem_saldo_dia e sem informação na pr_tab_erro, Conta: '||rw_crapass.nrdconta;
-             END IF;
-
-             --continue;
-             --Levantar Excecao
-             RAISE vr_exc_erro;
-           ELSE
-             vr_dscritic:= NULL;
-           END IF;
-           --Verificar o saldo retornado
-
-           IF vr_tab_saldo.Count = 0 THEN
-             --Montar mensagem erro
-             vr_cdcritic:= 0;
-             vr_dscritic:= 'Nao foi possivel consultar o saldo para a operacao.';
-             --Levantar Excecao
-             RAISE vr_exc_erro;
-           END IF;
-
-           --Se o saldo nao for suficiente
-           IF rw_craptdb.vltitulo > (nvl(vr_tab_saldo(vr_tab_saldo.FIRST).vlsddisp,0) +
-                                     nvl(vr_tab_saldo(vr_tab_saldo.FIRST).vllimcre,0)) THEN
-              CONTINUE;
-           END IF;
-
-         END IF;
-         --
-
-         -- Sem Registro, Pessoa Jurídica
-         IF (gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper,
-                                         pr_dtmvtolt => rw_craptdb.dtvencto) + vr_cardbtitpj) > pr_dtmvtolt THEN
-
-
-           EXTR0001.pc_obtem_saldo_dia (pr_cdcooper   => pr_cdcooper
-                                       ,pr_rw_crapdat => rw_crapdat
-                                       ,pr_cdagenci   => pr_cdagenci
-                                       ,pr_nrdcaixa   => pr_nrdcaixa
-                                       ,pr_cdoperad   => pr_cdoperad
-                                       ,pr_nrdconta   => rw_crapass.nrdconta
-                                       ,pr_vllimcre   => rw_crapass.vllimcre
-                                       ,pr_tipo_busca => 'A' --> tipo de busca(A-dtmvtoan)
-                                       ,pr_flgcrass   => FALSE
-                                       ,pr_dtrefere   => pr_dtmvtolt
-                                       ,pr_des_reto   => vr_dscritic
-                                       ,pr_tab_sald   => vr_tab_saldo
-                                       ,pr_tab_erro   => vr_tab_erro);
-           --Se ocorreu erro
-           IF vr_dscritic = 'NOK' THEN
-             -- Tenta buscar o erro no vetor de erro
-             IF vr_tab_erro.COUNT > 0 THEN
-               vr_cdcritic:= vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
-               vr_dscritic:= vr_tab_erro(vr_tab_erro.FIRST).dscritic|| ' Conta: '||rw_craptdb.nrdconta;
-             ELSE
-               vr_cdcritic:= 0;
-               vr_dscritic:= 'Retorno "NOK" na extr0001.pc_obtem_saldo_dia e sem informação na pr_tab_erro, Conta: '||rw_crapass.nrdconta;
-             END IF;
-
-             --continue;
-             --Levantar Excecao
-             RAISE vr_exc_erro;
-           ELSE
-             vr_dscritic:= NULL;
-           END IF;
-           --Verificar o saldo retornado
-
-           IF vr_tab_saldo.Count = 0 THEN
-             --Montar mensagem erro
-             vr_cdcritic:= 0;
-             vr_dscritic:= 'Nao foi possivel consultar o saldo para a operacao.';
-             --Levantar Excecao
-             RAISE vr_exc_erro;
-           END IF;
-
-           --Se o saldo nao for suficiente
-           IF rw_craptdb.vltitulo > (nvl(vr_tab_saldo(vr_tab_saldo.FIRST).vlsddisp,0) +
-                                     nvl(vr_tab_saldo(vr_tab_saldo.FIRST).vllimcre,0)) THEN
-              CONTINUE;
-           END IF;
-
-         END IF;
-         --
+            --  Se o saldo nao for suficiente
+            if  rw_craptdb.vltitulo > (nvl(vr_tab_saldo(vr_tab_saldo.first).vlsddisp,0) +
+                                       nvl(vr_tab_saldo(vr_tab_saldo.first).vllimcre,0)) then
+                continue;
+            end if;
+        end if;
         /*###################################FIM REGRAS####################################################*/
 
         --Gravar lancamento
@@ -2843,22 +2693,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                       RAISE vr_exc_erro;
                   END;
                 END IF;
-
-                /* Atualiza o lote na craplot */
-                BEGIN
-                  UPDATE craplot SET craplot.qtinfoln = Nvl(craplot.qtinfoln,0) + 1
-                                    ,craplot.qtcompln = Nvl(craplot.qtcompln,0) + 1
-                                    ,craplot.nrseqdig = Nvl(vr_nrseqdig_lcm,0)
-                                    ,craplot.vlinfocr = Nvl(craplot.vlinfocr,0) + rw_craplcm.vllanmto
-                                    ,craplot.vlcompcr = Nvl(craplot.vlcompcr,0) + rw_craplcm.vllanmto
-                  WHERE craplot.ROWID = rw_craplot.ROWID;
-                EXCEPTION
-                  WHEN OTHERS THEN
-                    vr_cdcritic:= 0;
-                    vr_dscritic:= 'Erro ao atualizar tabela craplot. '||SQLERRM;
-                    --Levantar Excecao
-                    RAISE vr_exc_erro;
-                END;
 
               END IF;
 
@@ -4715,26 +4549,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
     --> Busca saldo e limite de desconto de cheques
     CURSOR cr_craplim(pr_tpctrlim craplim.tpctrlim%TYPE) IS
     select /*+index_asc (craplim CRAPLIM##CRAPLIM1)*/
-           lim.nrdconta
-          ,lim.vllimite
-    from   craplim lim
-    where  lim.insitlim = 2
-    and    lim.cdcooper = pr_cdcooper
-    and    lim.nrdconta = pr_nrdconta
-    and    lim.tpctrlim = pr_tpctrlim
-    and    pr_tpctrlim <> 3
-    
-    union  all
-    
-    select /*+index_asc (crawlim CRAWLIM##CRAWLIM1)*/
-           lim.nrdconta
-          ,lim.vllimite
-    from   crawlim lim
-    where  lim.insitlim = 2
-    and    lim.cdcooper = pr_cdcooper
-    and    lim.nrdconta = pr_nrdconta
-    and    lim.tpctrlim = pr_tpctrlim
-    and    pr_tpctrlim  = 3;
+             craplim.nrdconta ,
+             craplim.vllimite
+        FROM craplim craplim
+       WHERE craplim.cdcooper = pr_cdcooper
+         AND craplim.nrdconta = pr_nrdconta
+         AND craplim.tpctrlim = pr_tpctrlim
+         AND craplim.insitlim = 2;
     rw_craplim cr_craplim%ROWTYPE;
 
     --> Busca Cheques contidos do Bordero de desconto de cheques

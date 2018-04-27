@@ -1030,20 +1030,31 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
             END IF;
         END IF;
         -------------------------------------------------
-        IF rw_crapass.inpessoa = 1 THEN -- Pessoa Física
-          IF rw_crapcob.flgregis = 1 THEN -- Cobrança Com Registro
-            vr_cdacesso := 'LIMDESCTITCRPF';
-          ELSIF rw_crapcob.flgregis = 0 THEN -- Cobrança Sem Registro
-            vr_cdacesso := 'LIMDESCTITPF';
-        END IF;
 
-        ELSIF rw_crapass.inpessoa = 2 THEN -- Pessoa Jurídica
-          IF rw_crapcob.flgregis = 1 THEN -- Cobrança Com Registro
-            vr_cdacesso := 'LIMDESCTITCRPJ';
-          ELSIF rw_crapcob.flgregis = 0 THEN -- Cobrança Sem Registro
-            vr_cdacesso := 'LIMDESCTITPJ';
-          END IF;
-        END IF;
+        open  cr_crapass(pr_cdcooper => rw_crapcob.cdcooper
+                        ,pr_nrdconta => rw_crapcob.nrdconta);
+        fetch cr_crapass into rw_crapass;
+        if    cr_crapass%notfound then
+              vr_cdcritic:= 0;
+              vr_dscritic:= 'Associado nao cadastrado.';
+              close cr_crapass;
+              raise vr_exc_erro;
+        end   if;
+        close cr_crapass;
+      
+        if    rw_crapass.inpessoa = 1 then -- Pessoa Física
+              if    rw_crapcob.flgregis = 1 then -- Cobrança Com Registro
+                    vr_cdacesso := 'LIMDESCTITCRPF';
+              elsif rw_crapcob.flgregis = 0 then -- Cobrança Sem Registro
+                    vr_cdacesso := 'LIMDESCTITPF';
+              end if;
+        elsif rw_crapass.inpessoa = 2 then -- Pessoa Jurídica
+              if    rw_crapcob.flgregis = 1 then -- Cobrança Com Registro
+                    vr_cdacesso := 'LIMDESCTITCRPJ';
+              elsif rw_crapcob.flgregis = 0 then -- Cobrança Sem Registro
+                    vr_cdacesso := 'LIMDESCTITPJ';
+              end if;
+        end   if;
 
         open cr_craptab(rw_crapcob.cdcooper,vr_cdacesso);
         fetch cr_craptab into vr_qtdiacar;

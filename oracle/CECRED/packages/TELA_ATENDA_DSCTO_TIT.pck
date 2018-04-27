@@ -1521,7 +1521,7 @@ BEGIN
       update crawlim lim
       set    insitlim = 2
             ,insitest = 3
-            ,insitapr = nvl(pr_insitapr, insitapr) -- Decisão (Depende do Retorno da Análise...)
+            ,insitapr = nvl(pr_insitapr, case when rw_crawlim.insitapr = 0 then 3 else insitapr end)
             ,qtrenova = 0
             ,dtinivig = rw_crapdat.dtmvtolt
             ,dtfimvig = (rw_crapdat.dtmvtolt + lim.qtdiavig)

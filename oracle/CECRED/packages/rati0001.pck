@@ -571,6 +571,15 @@ CREATE OR REPLACE PACKAGE CECRED.rati0001 is
                                     ,pr_inusatab     IN BOOLEAN               --> Indicador de utilização da tabela de juros
                                     ,pr_vltotpre    OUT NUMBER                --> Valor calculado da prestação
                                     ,pr_dscritic    OUT VARCHAR2);            --> Descrição de erro
+                                    
+  PROCEDURE pc_historico_cooperado(pr_cdcooper IN crapcop.cdcooper%TYPE --> Codigo Cooperativa
+                                  ,pr_cdoperad IN crapnrc.cdoperad%TYPE --> Codigo Operador
+                                  ,pr_dtmvtolt IN DATE                  --> Data do movimento
+                                  ,pr_nrdconta IN crapass.nrdconta%TYPE --> Numero da Conta
+                                  ,pr_idorigem IN INTEGER               --> Identificador Origem
+                                  ,pr_idseqttl IN crapttl.idseqttl%TYPE --> Sequencial do Titular
+                                  ,pr_nrseqite OUT NUMBER        --> sequencial do item do risco
+                                  ,pr_dscritic OUT VARCHAR2);
 
   /*****************************************************************************
                   Gravar dados do rating do cooperado
@@ -5029,9 +5038,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
       rw_crapprp2 cr_crapprp%ROWTYPE;
       rw_craplcr1 cr_craplcr%rowtype;
       rw_craplim2 cr_craplim%ROWTYPE;
-      rw_crawlim2 cr_craplim%ROWTYPE;
       rw_crapfin  cr_crapfin%ROWTYPE;
-      rw_craplim5 cr_craplim%ROWTYPE;
 
     BEGIN
 
@@ -5116,7 +5123,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
                               ,pr_nrdconta => pr_nrdconta
                               ,pr_tpctrato => pr_tpctrrat
                               ,pr_nrctrato => pr_nrctrrat);
-              fetch cr_crawlim into rw_crawlim2;
+              fetch cr_crawlim into rw_craplim2;
               if    cr_crawlim%notfound then
 
                     open  cr_craplim(pr_cdcooper => pr_cdcooper
@@ -5148,7 +5155,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
                        ,pr_nrdconta => pr_nrdconta
                        ,pr_tpctrato => pr_tpctrrat
                        ,pr_nrctrato => pr_nrctrrat);
-        FETCH cr_craplim INTO rw_craplim5;
+        FETCH cr_craplim INTO rw_craplim2;
 
         -- se não localizou
         IF cr_craplim%NOTFOUND THEN
@@ -6594,13 +6601,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
     vr_notacoop NUMBER;
     vr_clascoop VARCHAR2(10);
 
+    vr_idqualif NUMBER;
+
     rw_crawepr5 cr_crawepr%ROWTYPE;
     rw_crapprp4 cr_crapprp%ROWTYPE;
     rw_craplcr3 cr_craplcr%ROWTYPE;
     rw_craplim4 cr_craplim%ROWTYPE;
-    rw_crawlim  cr_crawlim%rowtype;
-    rw_craplim  cr_craplim%ROWTYPE;
-	vr_idqualif NUMBER;
 
   BEGIN
 
@@ -6646,14 +6652,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
                             ,pr_nrdconta => pr_nrdconta
                             ,pr_tpctrato => pr_tpctrato
                             ,pr_nrctrato => pr_tpctrato);
-            fetch cr_crawlim into rw_crawlim;
+            fetch cr_crawlim into rw_craplim4;
             if    cr_crawlim%notfound then
 
                   open  cr_craplim(pr_cdcooper => pr_cdcooper
                                   ,pr_nrdconta => pr_nrdconta
                                   ,pr_tpctrato => pr_tpctrato
                                   ,pr_nrctrato => pr_tpctrato);
-                  fetch cr_craplim  into rw_craplim;
+                  fetch cr_craplim  into rw_craplim4;
                   close cr_craplim;
             end   if;
             close cr_crawlim;
@@ -6872,8 +6878,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
          vr_qtdiapra := rw_crapprp4.qtparbnd * 30; -- Sempre vezes 30
          rat_qtpreope := rw_crapprp4.qtparbnd;
       END IF;
-    elsif pr_tpctrato = 3   THEN
-          vr_qtdiapra := nvl(rw_crawlim.qtdiavig, rw_craplim.qtdiavig);
     -- Descontos / Limite rotativo
     ELSE
       -- Usar dias de vigencia do limite
@@ -7446,9 +7450,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
     rw_craplcr4 cr_craplcr%ROWTYPE;
     rw_craplim5 cr_craplim%ROWTYPE;
     rw_crapfin  cr_crapfin%ROWTYPE;
-    rw_crawlim5 cr_craplim%ROWTYPE;
-    rw_crawlim2 cr_crawlim%ROWTYPE;
-    rw_craplim2 cr_craplim%ROWTYPE;
 
   BEGIN
 
@@ -7601,25 +7602,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
                               ,pr_nrdconta => pr_nrdconta
                               ,pr_tpctrato => pr_tpctrrat
                               ,pr_nrctrato => pr_nrctrrat);
-              fetch cr_crawlim into rw_crawlim2;
+              fetch cr_crawlim into rw_craplim5;
               if    cr_crawlim%notfound then
 
                     open  cr_craplim(pr_cdcooper => pr_cdcooper
                                     ,pr_nrdconta => pr_nrdconta
                                     ,pr_tpctrato => pr_tpctrrat
                                     ,pr_nrctrato => pr_nrctrrat);
-                    fetch cr_craplim  into rw_craplim2;
+                    fetch cr_craplim  into rw_craplim5;
                     if    cr_craplim%notfound then
 
                           -- Gerar erro 484
                           vr_nrsequen := vr_nrsequen + 1;
-                          vr_dscritic := null;
+                          vr_dscritic := 484 /* Contrato nao encontrado. */;
                           
                           gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
                                                ,pr_cdagenci => pr_cdagenci
                                                ,pr_nrdcaixa => pr_nrdcaixa
                                                ,pr_nrsequen => vr_nrsequen
-                                               ,pr_cdcritic => 484
+                                               ,pr_cdcritic => vr_dscritic
                                                ,pr_dscritic => vr_dscritic
                                                ,pr_tab_erro => pr_tab_erro);
                     end   if;
@@ -7636,7 +7637,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
         FETCH cr_craplim INTO rw_craplim5;
             -- se não localizou o contrato gera a critica para contrato
         IF cr_craplim%NOTFOUND THEN
-      vr_dscritic := null;
+      vr_dscritic := 484 /* Contrato nao encontrado. */;
 
       vr_nrsequen := vr_nrsequen + 1;
       -- gerar erro na temptable
@@ -7644,7 +7645,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
                            ,pr_cdagenci => pr_cdagenci
                            ,pr_nrdcaixa => pr_nrdcaixa
                            ,pr_nrsequen => vr_nrsequen
-                           ,pr_cdcritic => 484 /* Contrato nao encontrado. */
+                           ,pr_cdcritic => vr_cdcritic
                            ,pr_dscritic => vr_dscritic
                            ,pr_tab_erro => pr_tab_erro);
         END IF;
@@ -8968,8 +8969,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
   rw_crapprp7 cr_crapprp%ROWTYPE;
   rw_craplcr6 cr_craplcr%ROWTYPE;
   rw_craplim7 cr_craplim%ROWTYPE;
-  rw_crawlim  cr_crawlim%rowtype;
-  rw_craplim  cr_craplim%ROWTYPE;
 
   BEGIN
 
@@ -9013,14 +9012,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
                             ,pr_nrdconta => pr_nrdconta
                             ,pr_tpctrato => pr_tpctrato
                             ,pr_nrctrato => pr_tpctrato);
-            fetch cr_crawlim into rw_crawlim;
+            fetch cr_crawlim into rw_craplim7;
             if    cr_crawlim%notfound then
 
                   open  cr_craplim(pr_cdcooper => pr_cdcooper
                                   ,pr_nrdconta => pr_nrdconta
                                   ,pr_tpctrato => pr_tpctrato
                                   ,pr_nrctrato => pr_tpctrato);
-                  fetch cr_craplim  into rw_craplim;
+                  fetch cr_craplim  into rw_craplim7;
                   close cr_craplim;
             end   if;
             close cr_crawlim;
@@ -9184,8 +9183,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
     IF    pr_tpctrato = 90   THEN /* Emprestimo / Financiamento */
           vr_nrseqite  := rw_crapprp7.nrgarope;
 		  rat_flgcjeco := rw_crapprp7.flgdocje;
-    elsif pr_tpctrato = 3   THEN
-          vr_nrseqite := nvl(rw_crawlim.nrgarope, rw_craplim.nrgarope);
     ELSE                         /* Cheque especial / Desconto */
       vr_nrseqite := rw_craplim7.nrgarope;
     END IF;
@@ -9219,8 +9216,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
     ********************************************************************/
     IF    pr_tpctrato = 90    THEN  /* Emprestimo / Financiamento */
           vr_nrseqite := rw_crapprp7.nrliquid;
-    elsif pr_tpctrato = 3   THEN
-          vr_nrseqite := nvl(rw_crawlim.nrliquid, rw_craplim.nrliquid);
     ELSE                           /* Cheque especial / Desconto */
       vr_nrseqite := rw_craplim7.nrliquid;
     END IF;
@@ -9260,8 +9255,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
               vr_qtdiapra  := rw_crapprp7.qtparbnd * 30; /* Sempre vezes 30 */
 			  rat_qtpreope := rw_crapprp7.qtparbnd;
           END IF;
-    elsif pr_tpctrato = 3   THEN
-          vr_qtdiapra := nvl(rw_crawlim.qtdiavig, rw_craplim.qtdiavig);
     ELSE                          /* Cheque especial / Desconto */
       vr_qtdiapra := rw_craplim7.qtdiavig;
       rat_qtpreope := rw_craplim7.qtdiavig / 30;
