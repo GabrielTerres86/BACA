@@ -50,6 +50,8 @@
 						<input type="hidden" id="flgpgdda" name="flgpgdda" value="<? echo getByTagName($result->tags,'flgpgdda') ?>" />								  
 						<input type="hidden" id="cdbandst" name="cdbandst" value="<? echo getByTagName($result->tags,'cdbandst')." - ".getByTagName($result->tags,'nmextbcc') ?>" />								  
 						<input type="hidden" id="nrdconta" name="nrdconta" value="<? echo formataNumericos('zzzz.zzz-9',getByTagName($result->tags,'nrdconta'),'.-') ?>" />								  
+						<input type="hidden" id="nmresage" name="nmresage" value="<? echo getByTagName($result->tags,'nmresage') ?>" />
+                        <input type="hidden" id="nmarrecd" name="nmarrecd" value="<? echo getByTagName($result->tags,'nmarrecd') ?>" />                        
 						<input type="hidden" id="dscodbar" name="dscodbar" value="<? echo getByTagName($result->tags,'dscodbar') ?>" />
 						<input type="hidden" id="dslindig" name="dslindig" value="<? echo getByTagName($result->tags,'dslindig') ?>" />
 						<input type="hidden" id="nmextbcc" name="nmextbcc" value="<? echo getByTagName($result->tags,'nmextbcc') ?>" />								  															  						
@@ -112,7 +114,6 @@
 </fieldset>
 
 <script type="text/javascript">
-
 	//Se for opcao de Alteração, exibe botão ALTERAR
 	if ('<?echo $cddopcao;?>' == 'A'){
 		$('#btAlterar','#divBotoes').css('display','inline');
@@ -122,7 +123,6 @@
 		$('#btAlterar','#divBotoes').css('display','none');
 		$('#btConsultar','#divBotoes').css('display','none');
 	}
-	
 	$('#btVoltar','#divBotoes').css('display','inline');
 	
 	if ($("#cdhiscxa","#frmFiltroPesqti").hasClass("campoErro")){
@@ -131,18 +131,16 @@
 		$('#btAlterar','#divBotoes').css('display','none');
 		
 	}
-	
 	$('a.paginacaoAnt').unbind('click').bind('click', function() {
 
-		obtemConsulta(<? echo ($nriniseq - $nrregist)?>,<?php echo $nrregist?>);
+		obtemConsulta(<? echo ($nriniseq - $nrregist);?>,<?php echo $nrregist;?>);
 
 	});
 	$('a.paginacaoProx').unbind('click').bind('click', function() {
 		
-		obtemConsulta(<? echo ($nriniseq + $nrregist)?>,<?php echo $nrregist?>);
+		obtemConsulta(<? echo ($nriniseq + $nrregist);?>,<?php echo $nrregist;?>);
 		
 	});		
-	
 	$('#divPesquisaRodape','#divConsulta').formataRodapePesquisa();
 
 	formataFormularios();
