@@ -659,14 +659,14 @@ function verificaEnvioEmail(idimpres,limorbor) {
 function gerarImpressao(idimpres,limorbor,flgemail,fnfinish) {
     
     if (idimpres == 8) {
-        imprimirRating(false,3,nrcontrato,"divOpcoesDaOpcao3",fnfinish);
+        imprimirRating(false,3,nrctrlim,"divOpcoesDaOpcao3",fnfinish);
         return false;       
     }
     
     $("#nrdconta","#frmImprimirDscTit").val(nrdconta);
     $("#idimpres","#frmImprimirDscTit").val(idimpres);
     $("#flgemail","#frmImprimirDscTit").val(flgemail);
-    $("#nrctrlim","#frmImprimirDscTit").val(nrcontrato);
+    $("#nrctrlim","#frmImprimirDscTit").val(nrctrlim);
     $("#nrborder","#frmImprimirDscTit").val(nrbordero);     
     $("#limorbor","#frmImprimirDscTit").val(limorbor);
     
