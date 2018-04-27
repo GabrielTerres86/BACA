@@ -674,6 +674,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
       pr_dscritic := 'Não foi possivel verificar regras da Análise de Crédito: '||SQLERRM;
   END pc_verifica_regras_esteira;
   
+  PROCEDURE pc_busca_param_ibra(pr_cdcooper       in crapcop.cdcooper%type  -- Codigo da cooperativa
+                               ,pr_tpenvest       in varchar2 default null  --> Tipo de envio C - Consultar(Get)
+                               ,pr_host_esteira  out varchar2               -- Host da esteira
+                               ,pr_recurso_este  out varchar2               -- URI da esteira
+                               ,pr_dsdirlog      out varchar2               -- Diretorio de log dos arquivos
+                               ,pr_autori_este   out varchar2               -- Chave de acesso
+                               ,pr_chave_aplica  out varchar2               -- App Key
+                               ,pr_dscritic      out varchar2 ) is
+  /* ..........................................................................
+  
 
     Programa : pc_busca_param_ibra
     Sistema  : Conta-Corrente - Cooperativa de Credito

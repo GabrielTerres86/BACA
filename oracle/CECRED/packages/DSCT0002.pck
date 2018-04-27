@@ -41,7 +41,7 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0002 AS
   --
   --    13/04/2018 - Remoção do campo 'pctitemi' Percentual de títulos por pagador da procedure 
   --                 'pc_busca_parametros_dsctit'  (Leonardo Oliveira - GFT). 
-  --------------------------------------------------------------------------------------------------------------
+  --------------------------------------------------------------------------------------------------------------*/
 
   -- Registro para armazenar parametros para desconto de titulo
   TYPE typ_rec_dados_dsctit
@@ -503,6 +503,15 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0002 AS
                                         ,pr_cdcritic          OUT PLS_INTEGER           --> Código da crítica
                                         ,pr_dscritic          OUT VARCHAR2             --> Descrição da crítica
                                         );
+                                        
+  PROCEDURE pc_busca_titulos_bordero (pr_cdcooper IN crapcop.cdcooper%TYPE  --> Código da Cooperativa
+                                     ,pr_nrborder IN crapbdt.nrborder%TYPE  --> numero do bordero
+                                     ,pr_nrdconta IN crapass.nrdconta%TYPE  --> Número da Conta
+                                     --------> OUT <--------
+                                     ,pr_tab_tit_bordero        OUT typ_tab_tit_bordero --> retorna titulos do bordero
+                                     ,pr_tab_tit_bordero_restri OUT typ_tab_bordero_restri --> retorna restrições do titulos do bordero
+                                     ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
+                                     ,pr_dscritic OUT VARCHAR2);
 
 END  DSCT0002;
 /
