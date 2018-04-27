@@ -18,7 +18,12 @@
 	require_once('../../../../includes/funcoes.php');
 	require_once('../../../../class/xmlfile.php');
 	
-	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"R")) <> "") {
+	// Carrega permissões do operador
+	require_once("../../../../includes/carrega_permissoes.php");	
+	
+	setVarSession("opcoesTela",$opcoesTela);
+	
+	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"V")) <> "") {
 		exibirErro('error',htmlentities($msgError),'Alerta - Ayllos',"blockBackground(parseInt($('#divUsoGenerico').css('z-index')))",false);
 	}
 	
