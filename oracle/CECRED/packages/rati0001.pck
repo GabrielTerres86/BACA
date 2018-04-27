@@ -6600,6 +6600,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
     rw_craplim4 cr_craplim%ROWTYPE;
     rw_crawlim  cr_crawlim%rowtype;
     rw_craplim  cr_craplim%ROWTYPE;
+	vr_idqualif NUMBER;
 
   BEGIN
 

@@ -39,6 +39,7 @@
  * 023: [15/04/2018] Leonardo Oliveira (GFT): Criação dos métodos 'formatarTelaAcionamentosDaProposta', 'carregarAcionamentosDaProposta' e 'carregaDadosDetalhesProposta' para a tela de acionamentos/detalhes da proposta, correção dos códicos sobreescritos.
  * 024: [19/04/2018] Leonardo Oliveira (GFT): Criação do método 'selecionaLimiteTitulosProposta', novo parâmetro 'nrctrmnt'/ numero da proposta, ao selecionar uma proposta.
  * 025: [26/04/2018] Leonardo Oliveira (GFT): Ajuste nos valores retornados ao buscar propostas.
+ * 026: [26/04/2018] Vitor Shimada Assanuma (GFT): Ajuste na funcao de chamada da proposta e manutencao
  */
 
  // variaveis propostas
@@ -617,9 +618,7 @@ function carregaResgatarTitulos() {
 
 // Carregar os dados para consulta de propostas de limite de desconto de títulos
 function carregaDadosAlteraLimiteDscTitPropostas() {
-
     if (sitinctrmnt == 1){
-
         realizarManutencaoDeLimite(1,1);
         return false;
 
@@ -804,7 +803,7 @@ function carregaLimitesTitulos() {
 
 // Função para seleção do limite
 
-function selecionaLimiteTitulos(id,qtLimites,limite,insitlim,dssitlim, dssitest, insitapr, vlLimite) {
+function selecionaLimiteTitulos(id, qtLimites, limite, dssitlim, dssitest, insitapr, vlLimite) {
 
     situacao_analise = dssitest;
     decisao = insitapr;
@@ -841,7 +840,7 @@ function selecionaLimiteTitulos(id,qtLimites,limite,insitlim,dssitlim, dssitest,
 }
 
 function selecionaLimiteTitulosProposta(pr_id, pr_qtlimites, pr_nrctrlim, pr_vllimite, pr_nrctrmnt, pr_dssitlim, pr_dssitest, pr_dssitapr, pr_insitlim, pr_insitest, pr_insitapr, pr_inctrmnt) {
-
+        
     idLinhaL = pr_id; // id linha
     qtLimites = pr_qtlimites; // qtd de propostas
     nrctrlim = pr_nrctrlim; // limite
@@ -1067,11 +1066,7 @@ function mostraTelaAltera() {
         return false;
     }
 
-    hideMsgAguardo();
-    fechaRotinaAltera();
-    carregaDadosAlteraLimiteDscTit();
-    return false;
-    /*
+
     limpaDivGenerica();
 
     $.ajax({
@@ -1095,7 +1090,6 @@ function mostraTelaAltera() {
 
     $('#todaProp', '#frmAltera').focus();
     return false;
-	*/
 }
 
 function confirmaEnvioAnalise(){
@@ -1606,7 +1600,7 @@ function gravaLimiteDscTit(cddopcao, tipo) {
             nrender2: normalizaNumero($("#nrender2","#frmDadosLimiteDscTit").val()),
             complen2: $("#complen2","#frmDadosLimiteDscTit").val(),
             nrcxaps2: normalizaNumero($("#nrcxaps2","#frmDadosLimiteDscTit").val()),
-            idcobope: normalizaNumero($('#idcobert', '#frmDadosLimiteDscTit').val()),
+            
 
             // Variáveis globais alimentadas na função validaDadosRating em rating.js 
             nrgarope: nrgarope,
@@ -1916,58 +1910,6 @@ function buscaGrupoEconomico(tipo) {
     return false;
     
 }
-
-function abrirTelaGAROPC(cddopcao) {
-
-    showMsgAguardo('Aguarde, carregando ...');
-
-    var idcobert = normalizaNumero($('#idcobert','#'+nomeForm).val());
-    var codlinha = normalizaNumero($('#cddlinha','#'+nomeForm).val());
-    var vlropera = $('#vllimite','#'+nomeForm).val();
-
-    var nrctrlim = '';
-        // Se estamos consultando e está em estudo ou se iremos incluir ou se iremos alterar o limite enviaremos o codigo do contrato ativo
-        if ( (cddopcao == 'C' && cd_situacao_lim == 1) || cddopcao == 'I' || cddopcao == 'A') {
-          nrctrlim = normalizaNumero($('#nrcontratoativo').val());
-        }
-
-        // Se estivermos alterando, porém não houver cobertura é por que estamos alterando algo antigo (devemos criar um novo para estes casos)
-    if (cddopcao == 'A' && idcobert == '') {
-          cddopcao = 'I';
-          }
-
-              // Carrega conteúdo da opção através do Ajax
-              $.ajax({
-                  type: 'POST',
-                  dataType: 'html',
-                  url: UrlSite + 'telas/garopc/garopc.php',
-                  data: {
-                        tipaber     : cddopcao,
-                        idcobert    : idcobert,
-                        nrdconta    : nrdconta,
-                        tpctrato    : 3,
-                        dsctrliq    : nrctrlim,
-                        codlinha    : codlinha,
-                        vlropera    : vlropera
-        },
-            error: function (objAjax, responseError, objExcept) {
-        hideMsgAguardo();
-        showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
-        },
-    success: function (response) {
-        hideMsgAguardo();
-        // Criaremos uma div oculta para conter toda a estrutura da tela GAROPC
-        $('#divUsoGAROPC').html(response).hide();
-            // Iremos incluir o conteúdo do form da div oculta dentro da div principal de descontos
-            $("#frmGAROPC", "#divUsoGAROPC").appendTo('#divFormGAROPC');
-                // Iremos remover os botões originais da GAROPC e usar os proprios da tela
-            $("#divBotoes","#frmGAROPC").detach();
-            dscShowHideDiv("divFormGAROPC;divBotoesGAROPC","divDscTit_Limite;divBotoesLimite");
-            bloqueiaFundo($('#divFormGAROPC'));
-            $("#frmDadosLimiteDscTit").css("width", 540);
-            }
-            });
-            }
 
 function calcEndividRiscoGrupo(nrdgrupo, tipo) {
 
@@ -2546,6 +2488,9 @@ function removerTituloResumo(){
             removeTituloBordero(td);
         }
         bloqueiaFundo(divRotina);
+
+        //Remove a seleção do titulo
+        tituloSelecionadoResumo = null;
     }
     else{
         showError("error","Selecione um t&iacute;tulo para remover","Alerta - Ayllos","");
@@ -2707,20 +2652,19 @@ function visualizarTituloDeBordero() {
 }
 
 function realizarManutencaoDeLimite(operacao, flgstlcr) {
-
     // operacao = 0 (mostrar dialogo confirmacao), operacao = 1 (carregar tela), operacao = 3 (executar operacao)
     showMsgAguardo("Aguarde, carregando dados do contrato...");
-    var nrctrlim = normalizaNumero($("#nrctrlim","#frmTitulos").val());
+    var var_nrctrlim = normalizaNumero($("#nrctrlim","#frmTitulos").val());
 
     if(sitinctrmnt == 1){
-        nrctrlim = nrcontrato;
+        var_nrctrlim = nrctrlim;
     }
 
     if(!operacao){operacao = 0;}
 
     var callback = "realizarManutencaoDeLimite(1,"+flgstlcr+" );";
 
-    if(nrctrlim == 0){
+    if(var_nrctrlim == 0){
         showError(
                 "inform",
                 "Não existe contrato ativo.",
@@ -2755,14 +2699,13 @@ function realizarManutencaoDeLimite(operacao, flgstlcr) {
     }
 
     if(operacao === 1){
-
     $.ajax({
         type: "POST",
         url: UrlSite + "telas/atenda/descontos/titulos/titulos_limite_manutencao.php",
         dataType: "html",
         data: {
             nrdconta: nrdconta,
-            nrctrlim: nrctrlim,
+            nrctrlim: var_nrctrlim,
             inctrmnt: sitinctrmnt,
             redirect: "html_ajax"
         },
@@ -2771,13 +2714,9 @@ function realizarManutencaoDeLimite(operacao, flgstlcr) {
             showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
         },
         success: function (response) {
-
             if(sitinctrmnt == 1){
-
                 $("#divOpcoesDaOpcao3").html(response);
-
             } else {
-
                 $("#divOpcoesDaOpcao2").html(response);
             }
 
@@ -3023,7 +2962,7 @@ function carregaDadosDetalhesProposta(tipo, nrctrlim, nrctrmnt){
             return false;
         }               
     });
-	return false;
+    return false;
 }
 
 function carregarAcionamentosDaProposta(tipo, nrctrlim, nrctrmnt, body){
@@ -3062,7 +3001,7 @@ function carregarAcionamentosDaProposta(tipo, nrctrlim, nrctrmnt, body){
                 formatarTabelaAcionamentosDaProposta();
             }
     });
-	return false;
+    return false;
 }
 function formatarTelaAcionamentosDaProposta(){
 
@@ -3109,7 +3048,7 @@ function formatarTelaAcionamentosDaProposta(){
     $('fieldset').css({'clear': 'both', 'border': '1px solid #777', 'margin': '3px 0px', 'padding': '10px 3px 5px 3px'});
     $('fieldset > legend').css({'font-size': '11px', 'color': '#777', 'margin-left': '5px', 'padding': '0px 2px'});
 
-	return false;
+    return false;
 }
 
 function formatarTabelaAcionamentosDaProposta(){

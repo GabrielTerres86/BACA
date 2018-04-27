@@ -616,10 +616,49 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_DSCTO_TIT IS
   ---------------------------------------------------------------------------------------------------------------------*/
 
 
-  -- Variáveis para armazenar as informações em XML
-  vr_des_xml         clob;
-  vr_texto_completo  varchar2(32600);
-  vr_index           pls_integer;
+   -- Variáveis para armazenar as informações em XML
+   vr_des_xml         clob;
+   vr_texto_completo  varchar2(32600);
+   vr_index           pls_integer;
+
+   -- Variaveis para verificação de contigencia de esteira e motor
+   vr_flctgest boolean;
+   vr_flctgmot boolean;
+  
+
+FUNCTION fn_contigencia_motor_esteira(pr_cdcooper IN crapcop.cdcooper%TYPE
+                                     ) RETURN BOOLEAN IS
+  /*---------------------------------------------------------------------------------------------------------------------
+    Programa : fn_contigencia_motor_esteira
+    Sistema  : Ayllos
+    Sigla    : TELA_ATENDA_DSCTO_TIT
+    Autor    : Paulo Penteado (GFT)
+    Data     : Abril/2018
+
+    Objetivo  : Procedure para verificar e tanto o motor quanto a esteira estão em contingência
+
+    Alteração : 26/04/2018 - Criação (Paulo Penteado (GFT))
+
+  ---------------------------------------------------------------------------------------------------------------------*/
+  vr_dscritic varchar2(10000);
+  vr_dsmensag varchar2(10000);
+BEGIN
+   este0003.pc_verifica_contigenc_motor(pr_cdcooper => pr_cdcooper
+                                       ,pr_flctgmot => vr_flctgmot
+                                       ,pr_dsmensag => vr_dsmensag
+                                       ,pr_dscritic => vr_dscritic);
+
+   este0003.pc_verifica_contigenc_esteira(pr_cdcooper => pr_cdcooper
+                                         ,pr_flctgest => vr_flctgest
+                                         ,pr_dsmensag => vr_dsmensag
+                                         ,pr_dscritic => vr_dscritic);
+
+   if  (vr_flctgest and vr_flctgmot) then
+       return true;
+   else
+       return false;
+   end if;
+END fn_contigencia_motor_esteira;
 
 
 FUNCTION fn_em_contingencia_ibratan (pr_cdcooper IN crapcop.cdcooper%TYPE) RETURN BOOLEAN IS
@@ -887,13 +926,15 @@ BEGIN
    end   if;
    close cr_crawlim;
 
-   if  rw_crawlim.insitlim not in (1,5) then
-       vr_dscritic := 'Para esta operação, a situação da proposta deve ser "Em estudo" ou "Aprovada".';
-       raise vr_exc_saida;
+   if  not fn_contigencia_motor_esteira(pr_cdcooper => pr_cdcooper) then
+       if  rw_crawlim.insitapr not in (1,2) then
+           vr_dscritic := 'Para esta operação, a Decisão deve ser "Aprovada Automaticamente" ou "Aprovada Manual".';
+           raise vr_exc_saida;
+       end if;
    end if;
 
-   if  rw_crawlim.insitapr not in (1,2) then
-       vr_dscritic := 'Para esta operação, a Decisão deve ser "Aprovada Automaticamente" ou "Aprovada Manual".';
+   if  rw_crawlim.insitlim not in (1,5) then
+       vr_dscritic := 'Para esta operação, a situação da proposta deve ser "Em estudo" ou "Aprovada".';
        raise vr_exc_saida;
    end if;
 
@@ -1604,8 +1645,6 @@ PROCEDURE pc_efetivar_proposta_web(pr_nrdconta  IN crapass.nrdconta%TYPE --> Núm
    vr_vlutilizado  varchar2(100) := '';
    vr_vlexcedido   varchar2(100) := '';
    vr_em_contingencia_ibratan boolean;
-   vr_flctgest     boolean;
-   vr_flctgmot     boolean;
 
    cursor cr_crapcop is
    select vlmaxleg
@@ -1809,17 +1848,7 @@ BEGIN
 
        --  Verificar se o tanto o motor quanto a esteria estão em contingencia para mostrar a mensagem de alerta, sou seja, mostrar
        --  mensagem de alerta somente se o motor E a esteira estiverem em contingencia.
-       este0003.pc_verifica_contigenc_motor(pr_cdcooper => vr_cdcooper
-                                           ,pr_flctgmot => vr_flctgmot
-                                           ,pr_dsmensag => vr_mensagem_05 -- somente representativo para out
-                                           ,pr_dscritic => vr_dscritic);
-
-       este0003.pc_verifica_contigenc_esteira(pr_cdcooper => vr_cdcooper
-                                             ,pr_flctgest => vr_flctgest
-                                             ,pr_dsmensag => vr_mensagem_05 -- somente representativo para out
-                                             ,pr_dscritic => vr_dscritic);
-
-       if (vr_flctgest and vr_flctgmot) or (rw_crawlim.insitlim = 1) then
+       if fn_contigencia_motor_esteira(pr_cdcooper => vr_cdcooper) or (rw_crawlim.insitlim = 1) then
            vr_mensagem_05 := 'Atenção: Para efetivar é necessário ter efetuado a análise manual do limite! Confirma análise do limite?';
        end if;
 
@@ -2360,7 +2389,7 @@ BEGIN
    --dbms_output.put_line(vr_dsmensag);
    pr_retxml   := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                     '<Root><dsmensag>'||htf.escape_sc(vr_dsmensag)||'</dsmensag></Root>');
-   
+
    COMMIT;
 
 EXCEPTION
@@ -2720,7 +2749,8 @@ BEGIN
       update crawlim lim
       set    vllimite = pr_vllimite
             ,cddlinha = pr_cddlinha
-            ,insitest = 1
+            ,insitlim = 1
+            ,insitest = 0
             ,dtenvest = null
             ,hrenvest = 0
             ,cdopeste = ' '
@@ -3036,12 +3066,17 @@ BEGIN
          pr_tab_dados_proposta(vr_idxdados).vllimite := rw_crawlim.vllimite;
          pr_tab_dados_proposta(vr_idxdados).qtdiavig := rw_crawlim.qtdiavig;
          pr_tab_dados_proposta(vr_idxdados).cddlinha := rw_crawlim.cddlinha;
+         pr_tab_dados_proposta(vr_idxdados).nrctrmnt := rw_crawlim.nrctrmnt;
+         
          pr_tab_dados_proposta(vr_idxdados).dssitlim := rw_crawlim.dssitlim;
          pr_tab_dados_proposta(vr_idxdados).dssitest := rw_crawlim.dssitest;
          pr_tab_dados_proposta(vr_idxdados).dssitapr := rw_crawlim.dssitapr;
-         pr_tab_dados_proposta(vr_idxdados).nrctrmnt := rw_crawlim.nrctrmnt;
-         pr_tab_dados_proposta(vr_idxdados).inctrmnt := rw_crawlim.inctrmnt;
+         
          pr_tab_dados_proposta(vr_idxdados).insitlim := rw_crawlim.insitlim;
+         pr_tab_dados_proposta(vr_idxdados).insitest := rw_crawlim.insitest;
+         pr_tab_dados_proposta(vr_idxdados).insitapr := rw_crawlim.insitapr;
+         
+         pr_tab_dados_proposta(vr_idxdados).inctrmnt := rw_crawlim.inctrmnt;
 
          pr_qtregist := nvl(pr_qtregist,0) + 1;
    end   loop;
@@ -3146,12 +3181,14 @@ BEGIN
                            '<vllimite>'|| to_char(vr_tab_dados_proposta(vr_index).vllimite, 'FM999G999G999G990D00') ||'</vllimite>'||
                            '<qtdiavig>'|| vr_tab_dados_proposta(vr_index).qtdiavig ||'</qtdiavig>'||
                            '<cddlinha>'|| vr_tab_dados_proposta(vr_index).cddlinha ||'</cddlinha>'||
+                           '<nrctrmnt>'|| nullif(vr_tab_dados_proposta(vr_index).nrctrmnt,0) ||'</nrctrmnt>'||
                            '<dssitlim>'|| vr_tab_dados_proposta(vr_index).dssitlim ||'</dssitlim>'||
                            '<dssitest>'|| vr_tab_dados_proposta(vr_index).dssitest ||'</dssitest>'||
                            '<dssitapr>'|| vr_tab_dados_proposta(vr_index).dssitapr ||'</dssitapr>'||
-                           '<nrctrmnt>'|| nullif(vr_tab_dados_proposta(vr_index).nrctrmnt,0) ||'</nrctrmnt>'||
-                           '<inctrmnt>'|| vr_tab_dados_proposta(vr_index).inctrmnt ||'</inctrmnt>'||
                            '<insitlim>'|| vr_tab_dados_proposta(vr_index).insitlim ||'</insitlim>'||
+                           '<insitest>'|| vr_tab_dados_proposta(vr_index).insitest ||'</insitest>'||
+                           '<insitapr>'|| vr_tab_dados_proposta(vr_index).insitapr ||'</insitapr>'||
+                           '<inctrmnt>'|| vr_tab_dados_proposta(vr_index).inctrmnt ||'</inctrmnt>'||
                         '</inf>');
 
        vr_index := vr_tab_dados_proposta.next(vr_index);
@@ -4361,6 +4398,7 @@ PROCEDURE pc_solicita_biro_bordero(pr_nrdconta in crapass.nrdconta%type --> Cont
    vr_cdagenci varchar2(100);
    vr_nrdcaixa varchar2(100);
    vr_idorigem varchar2(100);
+   fl_erro_biro boolean;
 
    
    cursor cr_analise_pagador(pr_nrinssac crapcob.nrinssac%type) is
@@ -4395,6 +4433,7 @@ BEGIN
    end if;
 
    vr_index := vr_tab_dados_titulos.first;
+   fl_erro_biro := false;
    while vr_index is not null loop
    
          open  cr_analise_pagador(vr_tab_dados_titulos(vr_index).nrinssac);
@@ -4426,13 +4465,19 @@ BEGIN
                                                ,pr_cdcritic => vr_cdcritic
                                                ,pr_dscritic => vr_dscritic);
 
+         --Caso não consiga conexao ou der erro no biro, nao parar a execucao, tratar somente depois do loop
          if  vr_cdcritic > 0  or vr_dscritic is not null then
-             raise vr_exc_saida;
+             fl_erro_biro := true;
          end if;
 
          vr_index := vr_tab_dados_titulos.next(vr_index);
    end   loop;
-
+   
+   --Caso tenha algum erro durante o BIRO levanta a exception
+   if fl_erro_biro then
+      raise vr_exc_saida;
+   end if;
+   
    pr_retxml   := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                     '<Root><dsmensag>Ok</dsmensag></Root>');
 
@@ -5606,7 +5651,7 @@ PROCEDURE pc_buscar_tit_bordero(pr_cdcooper IN crapcop.cdcooper%TYPE  --> Código
     
      --carregando os dados de prazo limite da TAB052 
      -- BUSCAR O PRAZO PARA PESSOA FISICA
-     cecred.dsct0002.pc_busca_titulos_bordero (
+     dsct0002.pc_busca_titulos_bordero (
                                      pr_cdcooper                => pr_cdcooper
                                      ,pr_nrborder               => pr_nrborder
                                      ,pr_nrdconta               => pr_nrdconta   

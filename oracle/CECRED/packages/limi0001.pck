@@ -1974,6 +1974,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
   END pc_obtem_dados_contrato;
   
   -- Rotina para geração do contrato de limite de credito
+  PROCEDURE pc_impres_contrato_limite_v1(pr_cdcooper IN crapcop.cdcooper%TYPE  --> Código da Cooperativa
                                      ,pr_cdagecxa IN crapage.cdagenci%TYPE  --> Código da agencia
                                      ,pr_nrdcaixa IN crapbcx.nrdcaixa%TYPE  --> Numero do caixa do operador
                                      ,pr_cdopecxa IN crapope.cdoperad%TYPE  --> Código do Operador
@@ -1991,11 +1992,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
                                      ,pr_flgimpnp IN INTEGER                --> indica se deve gerar nota promissoria(0-nao 1-sim)
                                      ,pr_flgemail IN INTEGER                --> Indicador de envia por email (0-nao, 1-sim)
                                      ,pr_flgerlog IN INTEGER                --> Indicador se deve gerar log(0-nao, 1-sim)
-
+                                        ,pr_tab_dados_ctr  IN typ_tab_dados_ctr  --> Dados do contrato 
+                                        ,pr_tab_avais_ctr  IN typ_tab_avais_ctr  --> Dados do avalista
+                                        ,pr_tab_repres_ctr IN typ_tab_repres_ctr --> Dados do representantes/socios       
                                      --------> OUT <--------
                                      ,pr_nmarqpdf  OUT VARCHAR2              --> Retornar quantidad de registros                           
                                      ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
-                                     ,pr_dscritic OUT VARCHAR2) IS          --> Descrição da crítica
+                                       ,pr_dscritic OUT VARCHAR2 ) IS          --> Descrição da crítica
     /* .............................................................................
 
      Programa: pc_impres_contrato_limite_v1 (antiga:pc_impres_contrato_limite)   (antiga: b1wgen0019.p/gera-impressao-limite(parte contrato))
