@@ -16321,26 +16321,6 @@ PROCEDURE valida-titulo-bordero:
     FIND tt-titulos WHERE tt-titulos.nrcnvcob = par_nrcnvcob AND
                           tt-titulos.nrdocmto = par_nrdocmto NO-LOCK.
 
-    IF  (tt-titulos.vltitulo > tt-dados_dsctit.vlmaxsac    AND tt-titulos.flgregis = FALSE) OR
-        (tt-titulos.vltitulo > tt-dados_dsctit_cr.vlmaxsac AND tt-titulos.flgregis = TRUE ) THEN
-        DO:
-            ASSIGN aux_cdcritic = 0
-                   aux_dscritic = "Valor maximo do titulo excedido. Titulos inferiores a R$ " +
-                                   IF tt-titulos.flgregis = TRUE THEN 
-                                       STRING(tt-dados_dsctit_cr.vlmaxsac,"zzz,zz9.99")
-                                   ELSE 
-                                       STRING(tt-dados_dsctit.vlmaxsac,"zzz,zz9.99").
-
-            RUN gera_erro (INPUT par_cdcooper,
-                           INPUT par_cdagenci,
-                           INPUT par_nrdcaixa,
-                           INPUT 1,            /** Sequencia **/
-                           INPUT aux_cdcritic,
-                           INPUT-OUTPUT aux_dscritic).
-            
-            RETURN "NOK".
-        END.
-
     IF  (tt-titulos.vltitulo < tt-dados_dsctit.vlminsac     AND tt-titulos.flgregis = FALSE) OR
         (tt-titulos.vltitulo < tt-dados_dsctit_cr.vlminsac  AND tt-titulos.flgregis = TRUE ) THEN 
         DO:

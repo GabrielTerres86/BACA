@@ -239,16 +239,6 @@
 		Manuten&ccedil;&atilde;o
 	</a>
 
-	<a 
-		href="#" 
-		class="botao"
-		id="btnResgatar"
-		name="btnResgatar"
-		<?php if (!in_array("DSC TITS - BORDERO",$rotinasTela)) { echo 'style="cursor: default; display:none;" onClick="return false;"'; } 
-			else { echo 'style=" margin-top: 8px; margin-bottom: 8px;" onClick="carregaResgatarTitulos();return false;"'; } ?> 
-	>
-		Resgatar T&iacute;tulos
-	</a>
 </div>
 
 
