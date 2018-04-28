@@ -25,3 +25,8 @@
 		</div>
 	</fieldset>
 </form>
+<script>
+	$(document).ready(function(){
+		buscarBorderos();
+	})
+</script>

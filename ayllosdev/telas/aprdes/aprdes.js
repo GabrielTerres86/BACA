@@ -388,7 +388,9 @@ function limpaFormulario(){
 
 function encerraRotina(){
     divRotina.html('');
+    buscarBorderos();
     fechaRotina(divRotina);
+    bloqueiaFundo(divRotina);
 }
 
 function concluirChecagem(){
