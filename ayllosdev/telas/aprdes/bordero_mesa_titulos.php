@@ -128,37 +128,12 @@
 												<div id="divTitulos" class="formulario">
 													<fieldset>
 														<legend>Border&ocirc;</legend>
-														<?/*
-														<table class="tituloRegistros" style="text-align:center;">
-															<thead>
-																<tr>
-																	<th class="">N&uacute;mero</th>
-																	<th class="">Conta</th>
-																	<th class="">Situa&ccedil;&atilde;o</th>
-																	<th class="">Decis&atilde;o</th>
-																	<th class="">Data Checagem</th>
-																	<th>
-																	</th>
-																</tr>
-															</thead>
-															<tbody>
-																<tr class="even corImpar ">
-																	<td><?=$bordero->nrborder?></td>
-																	<td><?=$bordero->nrdconta?></td>
-																	<td><?=$bordero->dsinsbdt?></td>
-																	<td><?=$bordero->dsinsapr?></td>
-																	<td><?=$border->dtenvmch?></td>
-																	<td>*/?>
-																		<? if ($checagem) {?>
-																			<h3>Esse border&ocirc; est&aacute; sendo analisado por: <?=$bordero->nmoperad?>.</h3>
-																		<? }
-																		else{ ?>
-																			<h3>O processo de checagem desse border&ocirc; foi conclu&iacute;do e s&oacute; pode ser visualizado.</h3>
-																		<? } ?>
-																<?/*	</td>
-																</tr>
-															</tbody>
-														</table>*/?>
+															<? if ($checagem) {?>
+																<h3>Esse border&ocirc; est&aacute; sendo analisado por: <?=$bordero->nmoperad?>.</h3>
+															<? }
+															else{ ?>
+																<h3>O processo de checagem desse border&ocirc; foi conclu&iacute;do e s&oacute; pode ser visualizado.</h3>
+															<? } ?>
 													</fieldset>
 													<fieldset>
 														<legend>Aprovar T&iacute;tulos</legend>
@@ -190,7 +165,15 @@
 																			<td><? echo $t->dtvencto; ?></td>
 																			<td><? echo formataMoeda($t->nrliqpag)."%"; ?></td>
 																			<td><? echo formataMoeda($t->nrconcen)."%"; ?></td>
-																			<td><? echo $t->flgcritdb; ?></td>
+															                <?if($b->flgcritdb=='S'){ ?>
+															                	<td>Sim</td>
+															                <? } 
+															                else if($b->flgcritdb=='N'){ ?>
+															                	<td>N&atilde;o</td>
+															                <? }
+															                else{ ?>
+															                	<td>N&atilde;o Analisado</td>
+															                <? } ?>
 																			<td style="text-align:center;">
 																				<select name="insitmch" style="float:none;" <?=$checagem?"":" disabled "?>>
 																					<option value=""></option>
@@ -233,5 +216,5 @@
 
 	// Bloqueia conteúdo que está átras do div da rotina
 	blockBackground(parseInt($("#divRotina").css("z-index")));
-	 
+	
 </script>

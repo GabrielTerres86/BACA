@@ -112,7 +112,6 @@ switch ($operacao){
         exit;
     break;
 
-
     case "GRAVA_PARECER":
         $xml = "<Root>";
         $xml .= " <Dados>";
@@ -142,7 +141,6 @@ switch ($operacao){
         echo json_encode($json);
         
     break;
-
 
     
     case "CONCLUI_CHECAGEM":

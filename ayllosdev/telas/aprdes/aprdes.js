@@ -302,7 +302,7 @@ function formataLayoutTitulos(){
     arrayLargura[4] = '80px';
     arrayLargura[5] = '80px';
     arrayLargura[6] = '95px';
-    arrayLargura[7] = '70px';
+    arrayLargura[7] = '95px';
     arrayLargura[8] = '70px';
     
     var arrayAlinha = new Array();
@@ -367,6 +367,102 @@ function formataLayoutTabela(){
 		}
 	});
 	controlaPesquisas();
+}
+
+function formataLayoutDetalhes(){
+    //restrições    
+    var divRestricoes                   = $('div.divRestricoes','#formParecer');
+    var tabelaRestricoes                = $('table', divRestricoes );
+    
+    var ordemInicial = new Array();
+
+    var arrayLargura = new Array();
+    arrayLargura[0] = '24%';
+    arrayLargura[1] = '25%';
+    arrayLargura[2] = '24%';
+    arrayLargura[3] = '25%';
+    
+
+    var arrayAlinha = new Array();
+    arrayAlinha[0] = 'center';
+    arrayAlinha[1] = 'center';
+    arrayAlinha[2] = 'center';
+    arrayAlinha[3] = 'center';
+
+    divRestricoes.css({'height': '210px', 'padding-bottom': '1px'});
+
+    tabelaRestricoes.formataTabela( ordemInicial, arrayLargura, arrayAlinha, '' );
+
+    //parecer    
+    var divParecer                   = $('div.divRegistrosPareceres','#formParecer');
+    var tabelaParecer                = $('table', divParecer );
+    
+    var ordemInicial = new Array();
+
+    var arrayLargura = new Array();
+    arrayLargura[0] = '80px';
+    arrayLargura[1] = '200px';
+    arrayLargura[2] = '';
+    
+
+    var arrayAlinha = new Array();
+    arrayAlinha[0] = 'center';
+    arrayAlinha[1] = 'left';
+    arrayAlinha[2] = 'left';
+
+    divParecer.css({'height': '70px', 'padding-bottom': '1px'});
+
+    tabelaParecer.formataTabela( ordemInicial, arrayLargura, arrayAlinha, '' );
+
+
+    // campos
+    var cNmdsacad = $("#nmdsacad", "#formParecer");
+    cNmdsacad.css({'width': '450px'});
+
+    var camposFiltros = $("input[type='text'],select",'#formParecer');
+    camposFiltros.desabilitaCampo();
+
+    //criticas
+    var divRegistrosTitulos             = $('div.divRegistrosTitulos','#formParecer');        
+    var divRegistrosTitulosSelecionados = $('div.divRegistrosTitulosSelecionados','#formParecer');        
+    var tabelaTitulos                   = $('table', divRegistrosTitulos );
+    var tabelaTitulosSelecionados       = $('table', divRegistrosTitulosSelecionados );
+
+
+
+    var ordemInicial = new Array();
+            
+    var arrayLargura = new Array();
+    arrayLargura[0] = '48%';
+    arrayLargura[1] = '50%';
+    
+
+    var arrayAlinha = new Array();
+    arrayAlinha[0] = 'center';
+    arrayAlinha[1] = 'center';
+    
+                    
+    $('#formParecer').css({'margin-top': '5px'});
+    divRegistrosTitulos.css({'height': '150', 'padding-bottom': '2px'});
+    divRegistrosTitulosSelecionados.css({'height': '150', 'padding-bottom': '2px'});
+
+    tabelaTitulos.formataTabela( ordemInicial, arrayLargura, arrayAlinha, '' );
+    tabelaTitulosSelecionados.formataTabela( ordemInicial, arrayLargura, arrayAlinha, '' );
+    
+    $('tbody > tr',tabelaTitulos).each( function() {
+        if ( $(this).hasClass('corSelecao') ) {
+            $(this).focus();        
+        }
+    });
+    $('tbody > tr',tabelaTitulosSelecionados).each( function() {
+        if ( $(this).hasClass('corSelecao') ) {
+            $(this).focus();        
+        }
+    });
+
+
+    layoutPadrao();
+    ajustarCentralizacao();
 }
 
 function selecionaBordero(nrdconta,nrborder){

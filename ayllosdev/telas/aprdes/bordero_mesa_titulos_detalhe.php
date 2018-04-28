@@ -31,24 +31,23 @@
 	$nrdconta = $_POST["nrdconta"];
 	$nrborder = $_POST["nrborder"];
 	$chave = $_POST["chave"];
-/*
+
 	$xml = "<Root>";
     $xml .= " <Dados>";
     $xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
-    $xml .= "   <nrnosnum>".$nrnosnum."</nrnosnum>";
+    $xml .= "   <nrborder>".$nrborder."</nrborder>";
+    $xml .= "   <chave>".$chave."</chave>";
     $xml .= " </Dados>";
     $xml .= "</Root>";
 
     // FAZER O INSERT CRAPRDR e CRAPACA
-    $xmlResult = mensageria($xml,"TELA_ATENDA_DESCTO","LISTAR_DETALHE_TITULO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
-    $xmlObj = getObjectXML($xmlResult);
-
-   
-	$dados = $xmlObj->roottag->tags[0];
-	$pagador = $dados->tags[0];
-	$biros = $dados->tags[1];
-	$detalhe = $dados->tags[2];
-	$criticas = $dados->tags[3];*/
+    $xmlResult = mensageria($xml,"TELA_APRDES","VISUALIZAR_DETALHES_TITULO_MESA", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+    $xmlObj = getClassXML($xmlResult);
+    $root = $xmlObj->roottag;
+    if ($root->erro){
+		exibeErro($root->erro->registro->dscritic);
+    }
+    $dados = $root->dados;
 
 	// Fun&ccedil;&atilde;o para exibir erros na tela atrav&eacute;s de javascript
 	function exibeErro($msgErro) { 
@@ -72,7 +71,7 @@
 			<legend>Detalhes do Pagador</legend>
 			
 		    <label for="nmdsacad">Nome Pagador</label>
-		    <input type="text" id="nmdsacad" name="nmdsacad" value="<?php echo getByTagName($pagador->tags,'nmdsacad'); ?>" />
+		    <input type="text" id="nmdsacad" name="nmdsacad" value="<?php echo $dados->pagador->nmdsacad ?>" />
 
 		    <div class="divRestricoes divRegistros">
 			    <table id="tblDetalhe1" class="tituloRegistros">
@@ -85,14 +84,14 @@
 						</tr>
 					</thead>
 					<tbody>
-						<?php if(count($biros->tags)>0){ ?>
-							<?php foreach($biros->tags AS $t) {?>
+						<?php if($dados->biro->find("craprpf") && count($dados->biro->find("craprpf"))>0){ ?>
+							<?php foreach($dados->biro->find("craprpf") AS $t) {?>
 								<tr>
-									<td><? echo getByTagName($t->tags,'dsnegati');  ?></td>
-									<?php if(getByTagName($t->tags,'qtnegati')>0) { ?>
-										<td><? echo (formataMoeda(getByTagName($t->tags,'vlnegati'))); ?></td>
-										<td><? echo getByTagName($t->tags,'qtnegati'); ?></td>
-										<td><? echo getByTagName($t->tags,'dtultneg'); ?></td>
+									<td><? echo $t->dsnegati;  ?></td>
+									<?php if($t->qtnegati>0) { ?>
+										<td><? echo (formataMoeda($t->vlnegati)); ?></td>
+										<td><? echo $t->qtnegati; ?></td>
+										<td><? echo $t->dtultneg; ?></td>
 										<?php }
 										else { ?>
 											<td>Nada Consta</td>
@@ -130,9 +129,9 @@
 					</td>									
 				</tr>
 				<tr>
-					<td><? echo formataMoeda(getByTagName($detalhe->tags,'concpaga'));?></td><!--style="vertical-align: bottom;"-->
-					<td><? echo formataMoeda(getByTagName($detalhe->tags,'liqpagcd'));?></td>
-					<td><? echo formataMoeda(getByTagName($detalhe->tags,'liqgeral'));?></td>
+					<td><? echo formataMoeda($dados->detalhe->concpaga);?></td><!--style="vertical-align: bottom;"-->
+					<td><? echo formataMoeda($dados->detalhe->liqpagcd);?></td>
+					<td><? echo formataMoeda($dados->detalhe->liqgeral);?></td>
 				</tr>
 			</table>
 
@@ -151,16 +150,16 @@
 						</tr>
 					</thead>
 					<tbody>
-						<?php foreach($criticas->tags AS $c) {?>
+						<?php foreach($dados->criticas->find("critica") AS $c) {?>
 							<tr>
-								<td><? echo getByTagName($c->tags,'dsc'); ?></td>
+								<td><? echo $c->dsc; ?></td>
 								<td>
 									<?php 
-									 	$varint = getByTagName($c->tags,'int'); 
+									 	$varint = $c->int; 
 									 	if($varint > 0){
 									 		echo $varint;
 									 	} else {
-									 		echo (getByTagName($c->tags,'per') * 100.00).'%';
+									 		echo ($c->per * 100.00).'%';
 									 	}
 									?>
 								</td>
@@ -179,13 +178,17 @@
 				<table class="tituloRegistros">
 					<thead>
 						<tr>
+							<th>Data</th>
 							<th>Operador</th>
 							<th>Parecer</th>
 						</tr>
 					</thead>
 					<tbody>
-						<?php foreach($criticas->tags AS $c) {?>
+						<?php foreach($dados->pareceres->find("parecer") AS $c) {?>
 							<tr>
+								<td><?=$c->dtparecer?></td>
+								<td><?=$c->nmoperad?></td>
+								<td><?=$c->dsparecer?></td>
 							</tr>
 						<?} // Fim do foreach ?>
 					</tbody>
@@ -203,6 +206,7 @@
 
 <script type="text/javascript">
 	hideMsgAguardo();
+	formataLayoutDetalhes();
 	// // Bloqueia conteúdo que está átras do div da rotina
 	blockBackground(parseInt($("#divRotina").css("z-index")));
 
