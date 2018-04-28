@@ -1,4 +1,4 @@
-CREATE OR REPLACE PACKAGE CECRED.rati0001 is
+CREATE OR REPLACE PACKAGE CECRED.RATI0001 is
   ---------------------------------------------------------------------------------------------------------------
   --
   --  Programa : RATI0001                     Antiga: sistema/generico/procedures/b1wgen0043.p
@@ -5119,24 +5119,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
           END IF;
           
         ELSIF pr_tpctrrat = 3 THEN
-              open  cr_crawlim(pr_cdcooper => pr_cdcooper
+              OPEN  cr_crawlim(pr_cdcooper => pr_cdcooper
                               ,pr_nrdconta => pr_nrdconta
                               ,pr_tpctrato => pr_tpctrrat
                               ,pr_nrctrato => pr_nrctrrat);
-              fetch cr_crawlim into rw_craplim2;
-              if    cr_crawlim%notfound then
-
-                    open  cr_craplim(pr_cdcooper => pr_cdcooper
+              FETCH cr_crawlim INTO rw_craplim2;
+              IF    cr_crawlim%NOTFOUND THEN
+                    CLOSE cr_crawlim;
+                    OPEN  cr_craplim(pr_cdcooper => pr_cdcooper
                                     ,pr_nrdconta => pr_nrdconta
                                     ,pr_tpctrato => pr_tpctrrat
                                     ,pr_nrctrato => pr_nrctrrat);
-                    fetch cr_craplim  into rw_craplim2;
-                    if    cr_craplim%notfound then
-
-                          -- Gerar erro 484
+                    FETCH cr_craplim INTO rw_craplim2;
+                    IF    cr_craplim%NOTFOUND THEN
+                          CLOSE cr_craplim;
                           vr_nrsequen := vr_nrsequen + 1;
-                          vr_dscritic := null;
-                          
+                          vr_dscritic := NULL;
+
                           gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
                                                ,pr_cdagenci => pr_cdagenci
                                                ,pr_nrdcaixa => pr_nrdcaixa
@@ -5144,11 +5143,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
                                                ,pr_cdcritic => 484
                                                ,pr_dscritic => vr_dscritic
                                                ,pr_tab_erro => pr_tab_erro);
-                    end   if;
-                    close cr_craplim;
-              end   if;
-              close cr_crawlim;
-
+                    ELSE
+                          CLOSE cr_craplim;
+                    END   IF;
+              ELSE
+                    CLOSE cr_crawlim;
+              END   IF;
       ELSE /* Demais operacoes */
         -- Ler Contratos de Limite de credito
         OPEN cr_craplim(pr_cdcooper => pr_cdcooper
@@ -6648,21 +6648,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
 
         -- Ler Contratos de Limite de credito
       ELSIF pr_tpctrato = 3 THEN
-            open  cr_crawlim(pr_cdcooper => pr_cdcooper
+            OPEN  cr_crawlim(pr_cdcooper => pr_cdcooper
                             ,pr_nrdconta => pr_nrdconta
                             ,pr_tpctrato => pr_tpctrato
                             ,pr_nrctrato => pr_tpctrato);
-            fetch cr_crawlim into rw_craplim4;
-            if    cr_crawlim%notfound then
-
-                  open  cr_craplim(pr_cdcooper => pr_cdcooper
+            FETCH cr_crawlim INTO rw_craplim4;
+            IF    cr_crawlim%NOTFOUND THEN
+                  CLOSE cr_crawlim;
+                  OPEN  cr_craplim(pr_cdcooper => pr_cdcooper
                                   ,pr_nrdconta => pr_nrdconta
                                   ,pr_tpctrato => pr_tpctrato
                                   ,pr_nrctrato => pr_tpctrato);
-                  fetch cr_craplim  into rw_craplim4;
-                  close cr_craplim;
-            end   if;
-            close cr_crawlim;
+                  FETCH cr_craplim  INTO rw_craplim4;
+                  CLOSE cr_craplim;
+            ELSE
+                  CLOSE cr_crawlim;
+            END   IF;
 
       ELSE
         OPEN cr_craplim(pr_cdcooper => pr_cdcooper
@@ -7598,35 +7599,37 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
         CLOSE cr_crawepr;
 
         ELSIF pr_tpctrrat = 3 THEN
-              open  cr_crawlim(pr_cdcooper => pr_cdcooper
+              OPEN  cr_crawlim(pr_cdcooper => pr_cdcooper
                               ,pr_nrdconta => pr_nrdconta
                               ,pr_tpctrato => pr_tpctrrat
                               ,pr_nrctrato => pr_nrctrrat);
-              fetch cr_crawlim into rw_craplim5;
-              if    cr_crawlim%notfound then
-
-                    open  cr_craplim(pr_cdcooper => pr_cdcooper
+              FETCH cr_crawlim INTO rw_craplim5;
+              IF    cr_crawlim%NOTFOUND THEN
+                    CLOSE cr_crawlim;
+                    OPEN  cr_craplim(pr_cdcooper => pr_cdcooper
                                     ,pr_nrdconta => pr_nrdconta
                                     ,pr_tpctrato => pr_tpctrrat
                                     ,pr_nrctrato => pr_nrctrrat);
-                    fetch cr_craplim  into rw_craplim5;
-                    if    cr_craplim%notfound then
-
-                          -- Gerar erro 484
+                    FETCH cr_craplim INTO rw_craplim5;
+                    IF    cr_craplim%NOTFOUND THEN
+                          CLOSE cr_craplim;
                           vr_nrsequen := vr_nrsequen + 1;
-                          vr_dscritic := 484 /* Contrato nao encontrado. */;
+                          vr_dscritic := null;
+                          vr_cdcritic := 484; /* Contrato nao encontrado. */
                           
                           gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
                                                ,pr_cdagenci => pr_cdagenci
                                                ,pr_nrdcaixa => pr_nrdcaixa
                                                ,pr_nrsequen => vr_nrsequen
-                                               ,pr_cdcritic => vr_dscritic
+                                               ,pr_cdcritic => vr_cdcritic
                                                ,pr_dscritic => vr_dscritic
                                                ,pr_tab_erro => pr_tab_erro);
-                    end   if;
-                    close cr_craplim;
-              end   if;
-              close cr_crawlim;
+                    ELSE
+                          CLOSE cr_craplim;
+                    END   IF;
+              ELSE
+                    CLOSE cr_crawlim;
+              END   IF;
 
       ELSE /* Demais operacoes */
         -- Ler Contratos de Limite de credito
@@ -7637,7 +7640,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
         FETCH cr_craplim INTO rw_craplim5;
             -- se não localizou o contrato gera a critica para contrato
         IF cr_craplim%NOTFOUND THEN
-      vr_dscritic := 484 /* Contrato nao encontrado. */;
+      vr_dscritic := null;
+          vr_cdcritic := 484; /* Contrato nao encontrado. */
 
       vr_nrsequen := vr_nrsequen + 1;
       -- gerar erro na temptable
@@ -9008,21 +9012,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
 
         -- Ler Contratos de Limite de credito
       ELSIF pr_tpctrato = 3 THEN
-            open  cr_crawlim(pr_cdcooper => pr_cdcooper
+            OPEN  cr_crawlim(pr_cdcooper => pr_cdcooper
                             ,pr_nrdconta => pr_nrdconta
                             ,pr_tpctrato => pr_tpctrato
                             ,pr_nrctrato => pr_tpctrato);
-            fetch cr_crawlim into rw_craplim7;
-            if    cr_crawlim%notfound then
-
-                  open  cr_craplim(pr_cdcooper => pr_cdcooper
+            FETCH cr_crawlim INTO rw_craplim7;
+            IF    cr_crawlim%NOTFOUND THEN
+                  CLOSE cr_crawlim;
+                  OPEN  cr_craplim(pr_cdcooper => pr_cdcooper
                                   ,pr_nrdconta => pr_nrdconta
                                   ,pr_tpctrato => pr_tpctrato
                                   ,pr_nrctrato => pr_tpctrato);
-                  fetch cr_craplim  into rw_craplim7;
-                  close cr_craplim;
-            end   if;
-            close cr_crawlim;
+                  FETCH cr_craplim INTO rw_craplim7;
+                  CLOSE cr_craplim;
+            ELSE
+                  CLOSE cr_crawlim;
+            END   IF;
 
       ELSE
         -- Ler Contratos de Limite de credito

@@ -2034,7 +2034,7 @@ PROCEDURE pc_crps517(pr_xmllog   IN VARCHAR2              --> XML com informaçõe
         vr_flgregis := TRUE;
     
         /** Se nao atingiu limite de renovacoes, renovar limites ativos **/
-        IF  /*rw_craplim.qtrenova < rw_craplim.qtrenctr AND*/ rw_craplim.insitlim = 2  THEN
+        IF  rw_craplim.qtrenova < rw_craplim.qtrenctr AND rw_craplim.insitlim = 2  THEN
         
           pc_renova_limdesctit(pr_cdcooper => vr_cdcooper
                               ,pr_nrdconta => rw_craplim.nrdconta

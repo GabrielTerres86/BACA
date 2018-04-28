@@ -1239,6 +1239,7 @@ DECLARE
    select nvl(lim.nrctrmnt,0) nrctrmnt
          ,lim.vllimite
          ,lim.cddlinha
+         ,lim.insitapr
    from   crawlim lim
    where  lim.cdcooper = pr_cdcooper
    and    lim.nrdconta = pr_nrdconta
@@ -1535,6 +1536,21 @@ BEGIN
            raise vr_exc_saida;
    end;
    
+   IF  NOT fn_contigencia_motor_esteira(pr_cdcooper => pr_cdcooper) THEN
+       -- Enviar a efetivação da proposta para o Ibratan
+       este0003.pc_crps703(pr_cdcooper => pr_cdcooper
+                          ,pr_nrdconta => pr_nrdconta
+                          ,pr_nrctrlim => pr_nrctrlim
+                          ,pr_tpctrlim => pr_tpctrlim
+                          ,pr_cdcritic => vr_cdcritic
+                          ,pr_dscritic => vr_dscritic);
+
+       IF  vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
+           vr_dscritic := 'Erro ao enviar a efetivação da proposta para o Ibratan: '||vr_dscritic;
+           RAISE vr_exc_saida;
+       END IF;
+   END IF;
+
    COMMIT;
 
 EXCEPTION
