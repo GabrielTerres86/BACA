@@ -146,6 +146,7 @@
 	$dispE = (!in_array("E",$glbvars["opcoesTela"])) ? 'display:none;' : '';
 	$dispM = (!in_array("M",$glbvars["opcoesTela"])) ? 'display:none;' : '';
 	$dispL = (!in_array("L",$glbvars["opcoesTela"])) ? 'display:none;' : '';
+	//$dispR = (!in_array("R",$glbvars["opcoesTela"])) ? 'display:none;' : '';
 ?>
 
 <div id="divBotoes">
@@ -167,8 +168,8 @@
 	<input type="button" class="botao" value="Liberar"  <?php if ($qtBorderos == 0) { echo 'style="cursor: default;'.$dispL.'" onClick="return false;"'; } else { echo 'style="'.$dispL.'" onClick="mostrarBorderoLiberar();return false;"'; } ?> />
 		
 	
-	<input type="button" class="botao" value="Rejeitar" onClick="alert('Implementação em desenvolvimento.');return false;"/>
-		
+	<input type="button" class="botao" value="Rejeitar"  <?php if ($qtBorderos == 0) { echo 'style="cursor: default;'.$dispR.'" onClick="return false;"'; } else { echo 'style="'.$dispR.'" onClick="mostrarBorderoRejeitar();return false;"'; } ?> />
+
 </div>
 
 <script type="text/javascript">
