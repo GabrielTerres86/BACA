@@ -165,10 +165,10 @@
 																			<td><? echo $t->dtvencto; ?></td>
 																			<td><? echo formataMoeda($t->nrliqpag)."%"; ?></td>
 																			<td><? echo formataMoeda($t->nrconcen)."%"; ?></td>
-															                <?if($b->flgcritdb=='S'){ ?>
+															                <?if($t->flgcritdb=='S'){ ?>
 															                	<td>Sim</td>
 															                <? } 
-															                else if($b->flgcritdb=='N'){ ?>
+															                else if($t->flgcritdb=='N'){ ?>
 															                	<td>N&atilde;o</td>
 															                <? }
 															                else{ ?>
