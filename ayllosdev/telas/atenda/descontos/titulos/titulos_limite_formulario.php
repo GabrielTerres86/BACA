@@ -323,6 +323,7 @@
 			validaLimiteDscTit(operacao,1,11,30);
 		}
 		return false;
+	});
   $("#btnVoltarGAROPC","#divBotoesGAROPC").unbind("click").bind("click",function() {
     $("#divUsoGAROPC").empty();
     $("#divFormGAROPC").empty();
