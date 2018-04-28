@@ -505,7 +505,7 @@ function gravaParecer(){
         showMsgAguardo('Aguarde, buscando dados ...');
         $.ajax({
             type: 'POST',
-            url: UrlSite + 'telas/aprdes/manter_rotina.php.php',
+            url: UrlSite + 'telas/aprdes/manter_rotina.php',
             data: {
                 operacao:operacao,
                 nrdconta: nrdconta,
@@ -520,10 +520,13 @@ function gravaParecer(){
             },
             success: function(response) {
                 try {
-                    // $("#divDetalheTitulo #divTitulosChecagem").hide();
-                    // $("#divDetalheTitulo #divDetalheTitulo").html(response).show();
-                    // formataLayoutTitulos();
-                    // exibeRotina(divRotina);
+                    hideMsgAguardo();
+                    var r = $.parseJSON(response);
+                    if(r.status=='erro'){
+                        showError("error", r.mensagem, 'Alerta - Ayllos','bloqueiaFundo(divRotina);');
+                    }else{
+                        showError("inform",r.mensagem,'Alerta - Ayllos','voltarDetalhe();bloqueiaFundo(divRotina);');
+                    }
                     ajustarCentralizacao();
                     return false;
                 } catch (error) {

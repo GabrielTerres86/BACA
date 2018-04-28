@@ -24,6 +24,10 @@ $nrborder = $_POST["nrborder"] ? $_POST["nrborder"] : '';
 $dtborini = $_POST["dtborini"] ? $_POST["dtborini"] : '';
 $dtborfim = $_POST["dtborfim"] ? $_POST["dtborfim"] : '';
 
+$chave =  $_POST["chave"] ? $_POST["chave"] : '';
+$dsparecer =  $_POST["dsparecer"] ? $_POST["dsparecer"] : '';
+
+
 if (!isset($operacao) || $operacao=='') {
     exibeErro(htmlentities('Opera&ccedil;&atilde;o n&atilde;o encontrada'));
 }
@@ -107,6 +111,40 @@ switch ($operacao){
         echo json_encode($json);
         exit;
     break;
+
+
+    case "GRAVA_PARECER":
+        $xml = "<Root>";
+        $xml .= " <Dados>";
+        $xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
+        $xml .= "   <nrborder>".$nrborder."</nrborder>";
+        $xml .= "   <titulos>".$chave."</titulos>";
+        $xml .= "   <dsparecer>".$dsparecer."</dsparecer>";
+       
+        $xml .= " </Dados>";
+        $xml .= "</Root>";
+
+        $xmlResult = mensageria($xml,"TELA_APRDES","INSERIR_PARECER", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+        $xmlObj = getClassXML($xmlResult);
+        $root = $xmlObj->roottag;
+
+        // Se ocorrer um erro, mostra crítica
+        $json = array();
+        if ($root->erro){
+            $json['status'] = 'erro';
+            $json['mensagem'] = utf8_encode($root->erro->registro->dscritic);
+        }
+        else{
+            $dados = $root->dados;
+            $json['status'] = 'sucesso';
+            $json["mensagem"] = utf8_encode($dados);
+        }        
+        echo json_encode($json);
+        
+    break;
+
+
+    
     case "CONCLUI_CHECAGEM":
         $titulos = isset($_POST["titulos"]) ? $_POST["titulos"] : array();
         if(count($titulos)==0){

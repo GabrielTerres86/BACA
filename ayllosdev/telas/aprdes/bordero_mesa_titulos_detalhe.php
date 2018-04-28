@@ -27,8 +27,9 @@
 		exibeErro("Par&acirc;metros incorretos.");
 	}
 
-	$nrnosnum = $_POST["nrnosnum"];
+
 	$nrdconta = $_POST["nrdconta"];
+	$nrborder = $_POST["nrborder"];
 	$chave = $_POST["chave"];
 /*
 	$xml = "<Root>";
