@@ -7544,16 +7544,24 @@ PROCEDURE pc_buscar_tit_bordero_web (
        BDT.NRBORDER,
        BDT.CDCOOPER,
        BDT.INSITAPR,
+       
        CASE BDT.INSITBDT WHEN 1 THEN 'EM ESTUDO'
                          WHEN 2 THEN 'ANALISADO'
                          WHEN 3 THEN 'LIBERADO'
                          WHEN 4 THEN 'LIQUIDADO'
+                         WHEN 5 THEN 'REJEITADO'
                          ELSE        'PROBLEMA'
        END DSSITBDT,
        COUNT(1) over() qtregistro,
+       --  0-Aguardando Análise, 1-Aguardando Checagem, 2-Checagem, 3-Aprovado Automaticamente, 4-Aprovado, 5-Não aprovado, 6-Enviado Esteira, 7-Prazo expirado';
        CASE BDT.INSITAPR WHEN 0 THEN 'AGUARDANDO ANALISE'
-                         WHEN 1 THEN 'APROVADO'
-                         WHEN 2 THEN 'REPROVADO'
+                         WHEN 1 THEN 'AGUARDANDO CHEGAGEM'
+                         WHEN 2 THEN 'CHECAGEM'
+                         WHEN 3 THEN 'APROVADO AUTOMATICAMENTE'
+                         WHEN 4 THEN 'APROVADO'
+                         WHEN 5 THEN 'NAO APROVADO'
+                         WHEN 6 THEN 'ENVIADO ESTEIRA'
+                         WHEN 7 THEN 'PRAZO EXPIRADO'
                          ELSE        'PROBLEMA'
        END DSINSITAPR
        FROM CRAPBDT BDT
