@@ -4513,6 +4513,224 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0003 AS
              pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                              '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
    END pc_buscar_associado_web;
+
+
+   PROCEDURE pc_rejeitar_bordero_web(pr_nrdconta  IN crapbdt.nrdconta%TYPE  --> Conta
+                               		   ,pr_nrborder  IN crapbdt.nrborder%TYPE  --> Bordero
+
+														         ,pr_xmllog    IN VARCHAR2               --> XML com informacoes de LOG
+														         ,pr_cdcritic  OUT PLS_INTEGER           --> Codigo da critica
+														         ,pr_dscritic  OUT VARCHAR2              --> Descricao da critica
+														         ,pr_retxml IN OUT NOCOPY xmltype        --> Arquivo de retorno do XML
+														         ,pr_nmdcampo  OUT VARCHAR2              --> Nome do campo com erro
+														         ,pr_des_erro  OUT VARCHAR2) IS          --> Erros do processo
+  /* .............................................................................
+    Programa: pc_rejeitar_bordero_web
+    Sistema : AyllosWeb
+    Sigla   : CRED
+    Autor   : Andre Avila
+    Data    : 27/04/2018                        Ultima atualizacao: --/--/----
+
+    Dados referentes ao programa:
+
+    Frequencia: Sempre que for chamado
+    Objetivo  : Rotina para rejeitar bordero de desconto de titulos
+
+    Alteracoes: 28/04/2018 - Ajuste para gerar xml. (Andre Avila) 
+                                                     
+  ............................................................................. */
+
+    -- Variavel de criticas
+    vr_cdcritic crapcri.cdcritic%TYPE;
+    vr_dscritic VARCHAR2(10000);
+	
+    -- Tratamento de erros
+    vr_exc_erro  EXCEPTION;
+
    
+   -- Variaveis de log
+    vr_cdcooper INTEGER;
+    vr_cdoperad VARCHAR2(100);
+    vr_nmdatela VARCHAR2(100);
+    vr_nmeacao  VARCHAR2(100);
+    vr_cdagenci VARCHAR2(100);
+    vr_nrdcaixa VARCHAR2(100);
+    vr_idorigem VARCHAR2(100);
+    vr_rowid_log ROWID;
+    
+    -- Busca dados do bordero
+      CURSOR cr_crapbdt (pr_cdcooper IN crapbdt.cdcooper%TYPE
+                        ,pr_nrborder IN crapbdt.nrborder%TYPE) IS
+        SELECT 
+        crapbdt.cdcooper
+        ,crapbdt.nrborder
+        ,crapbdt.nrdconta
+        ,crapbdt.rowid
+        ,crapbdt.insitbdt
+        ,crapbdt.insitapr
+        FROM crapbdt
+        WHERE crapbdt.cdcooper = pr_cdcooper
+        AND   crapbdt.nrborder = pr_nrborder
+        AND   crapbdt.nrdconta = pr_nrdconta;
+
+      rw_crapbdt cr_crapbdt%ROWTYPE;
+
+
+      -- Busca Títulos do Borderô
+      CURSOR cr_craptdb (pr_cdcooper IN craptdb.cdcooper%TYPE
+                      ,pr_nrborder IN craptdb.nrborder%TYPE
+                      ,pr_nrdconta IN craptdb.nrdconta%TYPE) IS
+
+      SELECT craptdb.cdcooper,
+             craptdb.nrdconta,
+             craptdb.nrborder,
+             craptdb.insittit,
+             craptdb.insitapr
+      FROM craptdb
+      WHERE craptdb.cdcooper = pr_cdcooper
+      AND   craptdb.nrborder = pr_nrborder
+      AND   craptdb.nrdconta = pr_nrdconta;
+
+      rw_craptdb cr_craptdb%ROWTYPE;
+
+      -- Cursor genérico de calendário
+      rw_crapdat btch0001.cr_crapdat%ROWTYPE;
+
+  BEGIN		
+    -- Incluir nome do modulo logado
+    GENE0001.pc_informa_acesso(pr_module => 'TELA_ATENDA_DESCTO'
+                              ,pr_action => NULL);	
+	  
+		gene0004.pc_extrai_dados(pr_xml      => pr_retxml
+														,pr_cdcooper => vr_cdcooper
+														,pr_nmdatela => vr_nmdatela
+														,pr_nmeacao  => vr_nmeacao
+														,pr_cdagenci => vr_cdagenci
+														,pr_nrdcaixa => vr_nrdcaixa
+														,pr_idorigem => vr_idorigem
+														,pr_cdoperad => vr_cdoperad
+														,pr_dscritic => vr_dscritic);	  
+    
+    IF vr_dscritic IS NOT NULL THEN
+      RAISE vr_exc_erro;
+    END IF;
+
+	  -- Busca a data do sistema
+		OPEN  BTCH0001.cr_crapdat(vr_cdcooper);
+		FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
+		CLOSE BTCH0001.cr_crapdat;
+
+ 		OPEN   cr_crapbdt (vr_cdcooper,pr_nrborder);
+		FETCH cr_crapbdt INTO rw_crapbdt;
+		
+
+    IF cr_crapbdt%NOTFOUND THEN
+      CLOSE cr_crapbdt;
+      vr_dscritic := 'Erro Borderô nao encontrado.';
+      RAISE vr_exc_erro;
+    END IF;
+
+
+
+    IF rw_crapbdt.insitbdt = 5 THEN
+      CLOSE cr_crapbdt;
+      vr_dscritic := 'Bordero ja esta Rejeitado.';
+      RAISE vr_exc_erro;
+
+      ELSE
+      
+      IF ( rw_crapbdt.INSITBDT <> 0 ) AND ( rw_crapbdt.insitapr <> 0 OR rw_crapbdt.insitapr <> 5 ) THEN
+         vr_dscritic := 'Bordero so pode ser rejeitado quando: EM ESTUDO e NAO APROVADO.';
+         RAISE vr_exc_erro; 
+      END IF;
+
+    pc_altera_status_bordero(pr_cdcooper => vr_cdcooper
+                            ,pr_nrborder => pr_nrborder 
+                            ,pr_nrdconta => pr_nrdconta
+                            ,pr_status   => 5                          -- estou considerando 5 como rejeitado
+                            ,pr_cdoperej => vr_cdoperad                -- cdoperad que efetuou a rejeição
+                            ,pr_dtrejeit => rw_crapdat.dtmvtolt        -- data de rejeição
+                            ,pr_hrrejeit => to_char(sysdate,'SSSSS')   -- hora de rejeião
+	                          ,pr_dscritic => vr_dscritic                --se houver registro de crítica
+                            );
+                                
+        IF vr_dscritic IS NOT NULL THEN
+          RAISE vr_exc_erro;
+        END IF;
+
+
+    -- DESCOMENTAR ESTE BLOCO: Caso seja necessário alterar o status dos Titulos do Bordero
+    /*
+
+    -- Altera o status dos titulos do bordero rejeitado
+ 		OPEN   cr_craptdb (vr_cdcooper,pr_nrborder,pr_nrdconta);
+		FETCH cr_craptdb INTO rw_craptdb;
+
+    IF cr_craptdb%NOTFOUND THEN
+      CLOSE cr_craptdb;
+      vr_dscritic := 'ERRO: NENHUM Titulo foi encontrado neste Bordero.';
+      RAISE vr_exc_erro;
+
+    ELSE
+
+        UPDATE craptdb
+        SET    craptdb.insittit = 0,
+               craptdb.insitapr = 2
+        WHERE  craptdb.nrborder = pr_nrborder 
+        AND craptdb.nrdconta = pr_nrdconta 
+        AND craptdb.cdcooper = vr_cdcooper;
+
+    END IF;
+    */
+    -- Fim do bloco
+
+    END IF;
+
+  CLOSE cr_crapbdt;
+	
+    -- Efetua os inserts para apresentacao na tela VERLOG
+    gene0001.pc_gera_log(pr_cdcooper => vr_cdcooper
+                        ,pr_cdoperad => vr_cdoperad
+                        ,pr_dscritic => ' '
+                        ,pr_dsorigem => gene0001.vr_vet_des_origens(vr_idorigem)
+                        ,pr_dstransa => 'Rejeicao do bordero de Nro.: ' || pr_nrborder
+                        ,pr_dttransa => trunc(SYSDATE)
+                        ,pr_flgtrans => 1
+                        ,pr_hrtransa => to_char(SYSDATE,'SSSSS')
+                        ,pr_idseqttl => 1
+                        ,pr_nmdatela => 'ATENDA'
+                        ,pr_nrdconta => pr_nrdconta
+                        ,pr_nrdrowid => vr_rowid_log);
+    
+		-- Efetuar commit
+		COMMIT;
+
+   pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                  '<Root><dsmensag>Bordero rejeitado com sucesso.</dsmensag></Root>');
+
+	EXCEPTION
+    WHEN vr_exc_erro THEN
+      IF vr_cdcritic <> 0 AND trim(vr_dscritic) IS NULL THEN
+        vr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+      END IF;
+
+      vr_dscritic := '<![CDATA['||vr_dscritic||']]>';
+      pr_dscritic := REPLACE(REPLACE(REPLACE(vr_dscritic,chr(13),' '),chr(10),' '),'''','´');
+
+      -- Carregar XML padrao para variavel de retorno
+      pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+    WHEN OTHERS THEN
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := 'Erro geral na rotina da tela pc_efetuar_rejeicao: ' || SQLERRM;
+      pr_dscritic := '<![CDATA['||pr_dscritic||']]>';
+      pr_dscritic := REPLACE(REPLACE(REPLACE(pr_dscritic,chr(13),' '),chr(10),' '),'''','´');
+      
+      -- Carregar XML padrao para variavel de retorno
+      pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+
+  END pc_rejeitar_bordero_web;
+     
 END DSCT0003;
 /
