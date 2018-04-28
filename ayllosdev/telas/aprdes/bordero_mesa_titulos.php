@@ -12,7 +12,7 @@
 	
 	// Includes para controle da session, variáveis globais de controle, e biblioteca de funções	
 	require_once("../../includes/config.php");
-	require_once("../../includes/funcoes.php");
+	require_once("../../includes/funcoes.php"); 
 	require_once("../../includes/controla_secao.php");
 
 	// Verifica se tela foi chamada pelo método POST
@@ -57,7 +57,7 @@
     }
     else{
     	/*Verifica se algum operador já assumiu essa checagem, se não atribui ao operador que abriu a tela*/
-	    if(!$bordero->cdoperad || $bordero->cdoperad==''){
+	    if($bordero->insitapr=='1'){
 		    $xml = "<Root>";
 		    $xml .= " <Dados>";
 		    $xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
