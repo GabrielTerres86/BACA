@@ -2341,6 +2341,7 @@ PROCEDURE pc_efetivar_limite_esteira(pr_cdcooper  IN crawlim.cdcooper%TYPE --> C
 
    -- Auxiliares
    vr_dsprotocolo  varchar2(1000);
+   vr_cdagenci     crapage.cdagenci%TYPE;
 
    -- Variaveis para DEBUG
    vr_flgdebug varchar2(100) := gene0001.fn_param_sistema('CRED',pr_cdcooper,'DEBUG_MOTOR_IBRA');
@@ -2394,11 +2395,22 @@ PROCEDURE pc_efetivar_limite_esteira(pr_cdcooper  IN crawlim.cdcooper%TYPE --> C
    rw_crawlim cr_crawlim%rowtype;
 
 BEGIN
+   open  cr_crapass;
+   fetch cr_crapass into rw_crapass;
+   if    cr_crapass%notfound then
+         close cr_crapass;
+         vr_cdcritic := 9;
+         raise vr_exc_erro;
+   end   if;
+   close cr_crapass;
+   
+   vr_cdagenci := nvl(nullif(pr_cdagenci,0), rw_crapass.cdagenci);
+
    --  Se o DEBUG estiver habilitado
    if  vr_flgdebug = 'S' then
        -- Gravar dados log acionamento
        este0001.pc_grava_acionamento(pr_cdcooper              => pr_cdcooper
-                                    ,pr_cdagenci              => pr_cdagenci
+                                    ,pr_cdagenci              => vr_cdagenci
                                     ,pr_cdoperad              => pr_cdoperad
                                     ,pr_cdorigem              => pr_cdorigem
                                     ,pr_nrctrprp              => pr_nrctrlim
@@ -2414,15 +2426,6 @@ BEGIN
                                     ,pr_idacionamento         => vr_idaciona
                                     ,pr_dscritic              => vr_dscritic);
    end if;
-
-   open  cr_crapass;
-   fetch cr_crapass into rw_crapass;
-   if    cr_crapass%notfound then
-         close cr_crapass;
-         vr_cdcritic := 9;
-         raise vr_exc_erro;
-   end   if;
-   close cr_crapass;
 
    open  cr_crawlim;
    fetch cr_crawlim into rw_crawlim;
@@ -2479,7 +2482,7 @@ BEGIN
    if  vr_flgdebug = 'S' then
        -- Gravar dados log acionamento
        este0001.pc_grava_acionamento(pr_cdcooper              => pr_cdcooper
-                                    ,pr_cdagenci              => pr_cdagenci
+                                    ,pr_cdagenci              => vr_cdagenci
                                     ,pr_cdoperad              => pr_cdoperad
                                     ,pr_cdorigem              => pr_cdorigem
                                     ,pr_nrctrprp              => pr_nrctrlim
@@ -2498,7 +2501,7 @@ BEGIN
 
    -- Enviar dados para Esteira
    pc_enviar_analise(pr_cdcooper    => pr_cdcooper               --> Codigo da cooperativa
-                    ,pr_cdagenci    => pr_cdagenci               --> Codigo da agencia
+                    ,pr_cdagenci    => vr_cdagenci               --> Codigo da agencia
                     ,pr_cdoperad    => pr_cdoperad               --> codigo do operador
                     ,pr_cdorigem    => pr_cdorigem               --> Origem da operacao
                     ,pr_nrdconta    => pr_nrdconta               --> Numero da conta do cooperado
@@ -2533,7 +2536,7 @@ BEGIN
    if  vr_flgdebug = 'S' then
        -- Gravar dados log acionamento
        este0001.pc_grava_acionamento(pr_cdcooper              => pr_cdcooper
-                                    ,pr_cdagenci              => pr_cdagenci
+                                    ,pr_cdagenci              => vr_cdagenci
                                     ,pr_cdoperad              => pr_cdoperad
                                     ,pr_cdorigem              => pr_cdorigem
                                     ,pr_nrctrprp              => pr_nrctrlim
@@ -2598,6 +2601,8 @@ PROCEDURE pc_solicitar_limite_efetivacao(pr_cdcooper  IN crawlim.cdcooper%TYPE -
 
    --     buscar as propostas que já foram analisada e efetivadas no Ayllos
    CURSOR cr_crawlim IS
+   --     buscar todas as propostas ativas e que não foram enviadas, isso somente
+   --     quando passas zero para os parametros.
    SELECT pro.cdcooper
          ,pro.nrdconta
          ,pro.nrctrlim
@@ -2617,9 +2622,25 @@ PROCEDURE pc_solicitar_limite_efetivacao(pr_cdcooper  IN crawlim.cdcooper%TYPE -
    AND    pro.dtenvest          IS NOT NULL
    AND    pro.insitlim          = 2
    AND    pro.tpctrlim          = pr_tpctrlim
-   AND    pro.nrctrlim          = decode(pr_nrctrlim, 0, pro.nrctrlim, pr_nrctrlim)
-   AND    pro.nrdconta          = decode(pr_nrdconta, 0, pro.nrdconta, pr_nrdconta)
-   AND    pro.cdcooper          = pr_cdcooper;
+   AND    pro.cdcooper          = pr_cdcooper
+   AND    pr_nrdconta           = 0
+   AND    pr_nrctrlim           = 0
+   
+   UNION  ALL
+   
+   --     Buscar somente uma unica proposta
+   SELECT pro.cdcooper
+         ,pro.nrdconta
+         ,pro.nrctrlim
+         ,pro.tpctrlim
+         ,pro.cdagenci
+         ,pro.cdoperad
+         ,pro.dtenefes
+   FROM   crawlim pro
+   WHERE  pro.tpctrlim = pr_tpctrlim
+   AND    pro.nrctrlim = pr_nrctrlim
+   AND    pro.nrdconta = pr_nrdconta
+   AND    pro.cdcooper = pr_cdcooper;
    rw_crawlim cr_crawlim%ROWTYPE;
 
 BEGIN
@@ -2644,7 +2665,7 @@ BEGIN
          END IF;
    END   LOOP;
    CLOSE cr_crawlim; 
-    
+
 EXCEPTION
    WHEN vr_exc_erro THEN
         IF  cr_crawlim%ISOPEN THEN
