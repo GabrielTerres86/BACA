@@ -175,7 +175,7 @@
 								<th>Pagador</th>
 								<th>Vencimento</th>
 								<th>Valor</th>
-								<th>Situa&ccedil;&atilde;o</th>
+								<th>Cr&iacute;ticas</th>
 								<th>Remover</th>
 							</tr>
 						</thead>
@@ -194,13 +194,13 @@
 						    			<?
 							    			$sit = $t->dssituac;
 								    		if ($sit=="N") { ?>
-									    		<td><img src='../../imagens/icones/sit_ok.png'/></td>
+									    		<td>N&atilde;o</td>
 								    		<? }
 								    		elseif ($sit=="S") { ?>
-									    		<td><img src='../../imagens/icones/sit_er.png'/></td>
+									    		<td>Sim</td>
 								    		<? }
 								    		else{ ?>
-									    		<td></td>
+									    		<td>N&atilde;o Analisado</td>
 								    		<? }
 								    	?>
 								    	<td class='botaoSelecionar' onclick='removeTituloBordero($(this));'><button type='button' class='botao'>Remover</button></td>
