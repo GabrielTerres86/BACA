@@ -3,27 +3,27 @@
 	/************************************************************************
 	 Fonte: titulos_limite_consultar.php                          
 	 Autor: Guilherme                                                 
-	 Data : Novembro/2008                Ãšltima AlteraÃ§Ã£o: 20/08/2015
+	 Data : Novembro/2008                Última Alteração: 20/08/2015
 	                                                                  
 	 Objetivo  : Carregar dados para consulta de um limite existente
 	                                                                  	 
-	 AlteraÃ§Ãµes: 09/06/2010 - AdaptaÃ§Ã£o para RATING (David).
+	 Alterações: 09/06/2010 - Adaptação para RATING (David).
 	 
 	             03/07/2012 - Adicioando str_replace mara msgm erro. (Jorge)
 				 
-				 20/08/2015 - Ajuste feito para nÃ£o inserir caracters 
-						      especiais na observaÃ§Ã£o, conforme solicitado
+				 20/08/2015 - Ajuste feito para não inserir caracters 
+						      especiais na observação, conforme solicitado
 							  no chamado 315453 (Kelvin).
 	************************************************************************/
 	
 	session_start();
 	
-	// Includes para controle da session, variÃ¡veis globais de controle, e biblioteca de funÃ§Ãµes	
+	// Includes para controle da session, variáveis globais de controle, e biblioteca de funções	
 	require_once("../../../../includes/config.php");
 	require_once("../../../../includes/funcoes.php");
 	require_once("../../../../includes/controla_secao.php");
 
-	// Verifica se tela foi chamada pelo mÃ©todo POST
+	// Verifica se tela foi chamada pelo método POST
 	isPostMethod();	
 		
 	// Classe para leitura do xml de retorno
@@ -37,7 +37,7 @@
 		exibeErro($msgError);		
 	}
 	
-	// Verifica se o nÃºmero da conta foi informado
+	// Verifica se o número da conta foi informado
 	if (!isset($_POST["nrdconta"]) ||
 		!isset($_POST["nrctrlim"])) {
 		exibeErro("Par&acirc;metros incorretos.");
@@ -46,17 +46,17 @@
 	$nrdconta = $_POST["nrdconta"];
 	$nrctrlim = $_POST["nrctrlim"];
 
-	// Verifica se o nÃºmero da conta Ã© um inteiro vÃ¡lido
+	// Verifica se o número da conta é um inteiro válido
 	if (!validaInteiro($nrdconta)) {
 		exibeErro("Conta/dv inv&aacute;lida.");
 	}
 	
-	// Verifica se o nÃºmero do contrato Ã© um inteiro vÃ¡lido
+	// Verifica se o número do contrato é um inteiro válido
 	if (!validaInteiro($nrctrlim)) {
 		exibeErro("N&uacute;mero do contrato inv&aacute;lido.");
 	}	
 	
-	// Monta o xml de requisiÃ§Ã£o
+	// Monta o xml de requisição
 	$xmlGetDados = "";
 	$xmlGetDados .= "<Root>";
 	$xmlGetDados .= "	<Cabecalho>";
@@ -83,7 +83,7 @@
 	// Cria objeto para classe de tratamento de XML
 	$xmlObjDados = getObjectXML(retiraAcentos(removeCaracteresInvalidos($xmlResult)));
 	
-	// Se ocorrer um erro, mostra crÃ­tica
+	// Se ocorrer um erro, mostra crítica
 	if (strtoupper($xmlObjDados->roottag->tags[0]->name) == "ERRO") {
 		exibeErro(str_replace('"',"'",$xmlObjDados->roottag->tags[0]->tags[0]->tags[4]->cdata));
 	} 
@@ -95,13 +95,13 @@
 	$flgAval01 = count($avais) == 1 || count($avais) == 2 ? true : false;
 	$flgAval02 = count($avais) == 2 ? true : false;
 	
-	// VariÃ¡vel que armazena cÃ³digo da opÃ§Ã£o para utilizaÃ§Ã£o na include titulos_limite_formulario.php
+	// Variável que armazena código da opção para utilização na include titulos_limite_formulario.php
 	$cddopcao = "C";
 	
-	// Include para carregar formulÃ¡rio para gerenciamento de dados do limite
+	// Include para carregar formulário para gerenciamento de dados do limite
 include("titulos_limite_formulario.php");
 	
-	// FunÃ§Ã£o para exibir erros na tela atravÃ©s de javascript
+	// Função para exibir erros na tela através de javascript
 	function exibeErro($msgErro) { 
 		echo '<script type="text/javascript">';
 		echo 'hideMsgAguardo();';
