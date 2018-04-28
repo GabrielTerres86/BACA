@@ -19,6 +19,8 @@
 
 				 17/04/2018 - Ajustes nos processos de análise e liberação de borderô (Lucas Lazari - GFT)
 
+				 28/04/2018 - Inclusão de novas colunas na grid de borderô e migrado chamada de progress para oracle (Alex Sandro  - GFT)
+
 	************************************************************************/
 	
 	session_start();
@@ -54,25 +56,16 @@
 		exibeErro("Conta/dv inv&aacute;lida.");
 	}
 	
-	// Monta o xml de requisição
-	$xmlGetBorderos  = "";
-	$xmlGetBorderos .= "<Root>";
-	$xmlGetBorderos .= "	<Cabecalho>";
-	$xmlGetBorderos .= "		<Bo>b1wgen0030.p</Bo>";
-	$xmlGetBorderos .= "		<Proc>busca_borderos</Proc>";
-	$xmlGetBorderos .= "	</Cabecalho>";
-	$xmlGetBorderos .= "	<Dados>";
-	$xmlGetBorderos .= "		<cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
-	$xmlGetBorderos .= "		<nrdconta>".$nrdconta."</nrdconta>";
-	$xmlGetBorderos .= "		<dtmvtolt>".$glbvars["dtmvtolt"]."</dtmvtolt>";
-	$xmlGetBorderos .= "	</Dados>";
-	$xmlGetBorderos .= "</Root>";
-		
-	// Executa script para envio do XML
-	$xmlResult = getDataXML($xmlGetBorderos);
-	
-	// Cria objeto para classe de tratamento de XML
-	$xmlObjBorderos = getObjectXML($xmlResult);
+
+	$xml = "<Root>";
+    $xml .= " <Dados>";
+    $xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
+	$xml .= "	<dtmvtolt>".$glbvars["dtmvtolt"]."</dtmvtolt>";
+    $xml .= " </Dados>";
+    $xml .= "</Root>";
+
+    $xmlResult = mensageria($xml,"TELA_ATENDA_DESCTO","BUSCA_BORDEROS", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+    $xmlObjBorderos = getClassXML($xmlResult);
 	
 	// Se ocorrer um erro, mostra crítica
 	if (strtoupper($xmlObjBorderos->roottag->tags[0]->name) == "ERRO") {
@@ -103,6 +96,8 @@
 					<th>Contrato</th>
 					<th>Qt.Tits</th>
 					<th>Valor</th>
+					<th>Qtd. Apr.</th>
+					<th>Valor Apr.</th>
 					<th>Situa&ccedil;&atilde;o do Border&ocirc;</th>
 					<th>Decis&atilde;o da An&aacute;lise</th>
 					<th>Data Libera&ccedil;&atilde;o</th>
@@ -129,10 +124,14 @@
 						
 						<td><span><? echo $borderos[$i]->tags[4]->cdata ?></span>
 							<? echo number_format(str_replace(",",".",$borderos[$i]->tags[4]->cdata),2,",","."); ?></td>
-						
+
 						<td><? echo $borderos[$i]->tags[5]->cdata; ?></td>
-						<td><? echo $borderos[$i]->tags[6]->cdata; ?></td>
+						<td><span><? echo $borderos[$i]->tags[6]->cdata ?></span>
+							<? echo number_format(str_replace(",",".",$borderos[$i]->tags[6]->cdata),2,",","."); ?></td>
+						
 						<td><? echo $borderos[$i]->tags[7]->cdata; ?></td>
+						<td><? echo $borderos[$i]->tags[8]->cdata; ?></td>
+						<td><? echo $borderos[$i]->tags[9]->cdata; ?></td>
 					</tr>							
 				<?} // Fim do for ?>			
 			</tbody>
