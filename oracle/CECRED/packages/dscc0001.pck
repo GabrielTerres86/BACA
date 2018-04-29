@@ -273,8 +273,11 @@ CREATE OR REPLACE PACKAGE CECRED.DSCC0001 AS
                                      ,pr_flgemail IN INTEGER                --> Indicador de envia por email (0-nao, 1-sim)
                                      ,pr_flgerlog IN INTEGER                --> Indicador se deve gerar log(0-nao, 1-sim)
                                      ,pr_flgrestr IN INTEGER DEFAULT 1      --> Indicador se deve imprimir restricoes(0-nao, 1-sim)
+                                     ,pr_iddspscp IN INTEGER                --> Parametro criado para permitir a geracao do relatorio para o IB atual e para o IB novo
                                      --------> OUT <--------                                   
                                      ,pr_nmarqpdf OUT VARCHAR2              --> Retornar nome do relatorio PDF
+                                     ,pr_dssrvarq OUT VARCHAR2              --> Nome do servidor para download do arquivo
+                                     ,pr_dsdirarq OUT VARCHAR2              --> Nome do diretório para download do arquivo                                                                                                                                   
                                      ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
                                      ,pr_dscritic OUT VARCHAR2);            --> Descrição da crítica
 
@@ -1835,8 +1838,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
                                      ,pr_flgemail IN INTEGER                --> Indicador de envia por email (0-nao, 1-sim)
                                      ,pr_flgerlog IN INTEGER                --> Indicador se deve gerar log(0-nao, 1-sim)
                                      ,pr_flgrestr IN INTEGER DEFAULT 1      --> Indicador se deve imprimir restricoes(0-nao, 1-sim)
+                                     ,pr_iddspscp IN INTEGER                --> Parametro criado para permitir a geracao do relatorio para o IB atual e para o IB novo
                                      --------> OUT <--------                                   
                                      ,pr_nmarqpdf OUT VARCHAR2              --> Retornar nome do relatorio PDF
+                                     ,pr_dssrvarq OUT VARCHAR2              --> Nome do servidor para download do arquivo
+                                     ,pr_dsdirarq OUT VARCHAR2              --> Nome do diretório para download do arquivo                                                                                                                                   
                                      ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
                                      ,pr_dscritic OUT VARCHAR2) IS          --> Descrição da crítica
     /* .........................................................................
@@ -2361,9 +2367,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
           vr_qtdiaiof := vr_tab_chq_bordero(idx).dtlibera - vr_dtlibiof;
 
                      
-                     
 
 
+          
           TIOF0001.pc_calcula_valor_iof(pr_tpproduto  => 3                              --> Tipo do Produto (1-> Emprestimo, 2-> Desconto Titulo, 3-> Desconto Cheque, 4-> Limite de Credito, 5-> Adiantamento Depositante)
                                        ,pr_tpoperacao => 1                                  --> Tipo da Operacao (1-> Calculo IOF/Atraso, 2-> Calculo Pagamento em Atraso)
                                        ,pr_cdcooper   => pr_cdcooper                        --> Código da cooperativa
@@ -2382,7 +2388,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
                                        ,pr_dscritic   => vr_dscritic
                                        ,pr_flgimune   => vr_flgimune);                                   
         IF vr_flgimune <= 0 THEN
-          vr_vltotiof := NVL(vr_vltotiof,0) + NVL(vr_vliofpri,0) + NVL(vr_vliofadi,0);
+      vr_vltotiof := NVL(vr_vltotiof,0) + NVL(vr_vliofpri,0) + NVL(vr_vliofadi,0);
         END IF;
         -- Seta os totais
         vr_qttotchq := NVL(vr_qttotchq,0) + 1;
@@ -2548,6 +2554,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 
       ELSIF pr_idorigem = 3 THEN
         
+        IF pr_iddspscp = 0 THEN -- Manter cópia do arquivo via scp para o servidor destino
         GENE0002.pc_efetua_copia_arq_ib(pr_cdcooper => pr_cdcooper
                                        ,pr_nmarqpdf => vr_dsdireto ||'/'|| pr_nmarqpdf
                                        ,pr_des_erro => vr_dscritic);
@@ -2568,7 +2575,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
           vr_cdcritic := 0;
           RAISE vr_exc_erro;
         END IF;
+        ELSE
+          gene0002.pc_copia_arq_para_download(pr_cdcooper => pr_cdcooper
+                                             ,pr_dsdirecp => vr_dsdireto||'/'
+                                             ,pr_nmarqucp => pr_nmarqpdf
+                                             ,pr_flgcopia => 0
+                                             ,pr_dssrvarq => pr_dssrvarq
+                                             ,pr_dsdirarq => pr_dsdirarq
+                                             ,pr_des_erro => vr_dscritic);
 
+          IF TRIM(vr_dscritic) <> '' THEN
+            vr_cdcritic := 0;
+            RAISE vr_exc_erro;
+          END IF;
+        END IF;
       END IF; -- pr_idorigem
 
     END IF; -- pr_idimpres = 7
@@ -2687,6 +2707,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 
       -- Variaveis gerais
       vr_nmarqpdf VARCHAR2(1000);
+      vr_dssrvarq VARCHAR2(200);
+      vr_dsdirarq VARCHAR2(200);
 
     BEGIN
       -- Incluir nome do modulo logado
@@ -2733,7 +2755,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
                                              pr_flgemail => pr_flgemail,
                                              pr_flgerlog => pr_flgerlog,
                                              pr_flgrestr => pr_flgrestr,
+                                             pr_iddspscp => 0,
                                              pr_nmarqpdf => vr_nmarqpdf,
+                                             pr_dssrvarq => vr_dssrvarq,
+                                             pr_dsdirarq => vr_dsdirarq,                                           
                                              pr_cdcritic => vr_cdcritic,
                                              pr_dscritic => vr_dscritic);
         -- Se for titulo
@@ -5003,7 +5028,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
     Objetivo  : Rotina para analisar cheques do bordero
 
     Alteracoes: 23/08/2017 - Ajuste para gravar o cpf/cnpj na tabela crapabc. (Lombardi)
-    
+
                 20/12/2017 - Ajuste para considerar a data de liberação do bordero no cursor cr_crapcdb_dsc
                              (Adriano - SD 791712).                           
                              
@@ -7849,7 +7874,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
                                    ,pr_dscritic   => vr_dscritic
                                    ,pr_flgimune   => vr_flgimune);                                   
       
-        vr_vltotiof := NVL(vr_vltotiof,0) + NVL(vr_vliofpri,0) + NVL(vr_vliofadi,0);
+      vr_vltotiof := NVL(vr_vltotiof,0) + NVL(vr_vliofpri,0) + NVL(vr_vliofadi,0);
       --Soma os totais de IOF para lançamento na tabela de IOF
       vr_vltotiofpri := NVL(vr_vltotiofpri,0) + NVL(vr_vliofpri,0);
       vr_vltotiofadi := NVL(vr_vltotiofadi,0) + NVL(vr_vliofadi,0);
@@ -8045,13 +8070,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
       
       
 
+             
 
 
              
 
 
-
-
+      
 		END LOOP;
 		
 		-- Tira vinculo da dcc e cst com o borderô
@@ -8238,8 +8263,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 		END IF;
 		
 
-
-		
+												 
+												 
 		
 		-- Se for imune de tributação
 		IF vr_vltotiof > 0 THEN
@@ -8439,7 +8464,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 					RAISE vr_exc_erro;				
 			END;
 		END IF;
-    END IF;
+		END IF;
     
     OPEN cr_crapcop(pr_cdcooper);
     FETCH cr_crapcop INTO rw_crapcop;
