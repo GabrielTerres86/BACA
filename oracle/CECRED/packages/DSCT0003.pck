@@ -216,6 +216,18 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0003 AS
                                    ,pr_nmdcampo OUT VARCHAR2          --> Nome do campo com erro
                                    ,pr_des_erro OUT VARCHAR2      --> Erros do processo
                                    );
+
+ -- Procedure para rejeitar um determinado bordero
+  PROCEDURE pc_rejeitar_bordero_web (pr_nrdconta  IN crapbdt.nrdconta%TYPE  --> Conta
+                                    ,pr_nrborder  IN crapbdt.nrborder%TYPE  --> Bordero
+
+														        ,pr_xmllog    IN VARCHAR2               --> XML com informacoes de LOG
+														        ,pr_cdcritic  OUT PLS_INTEGER           --> Codigo da critica
+														        ,pr_dscritic  OUT VARCHAR2              --> Descricao da critica
+														        ,pr_retxml IN OUT NOCOPY xmltype        --> Arquivo de retorno do XML
+														        ,pr_nmdcampo  OUT VARCHAR2              --> Nome do campo com erro
+														        ,pr_des_erro  OUT VARCHAR2);            --> Erros do processo
+
 END  DSCT0003;
 /
 
@@ -249,7 +261,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0003 AS
   -- Variáveis para armazenar as informações em XML
   vr_des_xml         clob;
   vr_texto_completo  varchar2(32600);
-  vr_index           pls_integer;
 
   -- Busca dos dados do associado
   CURSOR cr_crapass(pr_cdcooper IN crapass.cdcooper%TYPE
@@ -357,6 +368,38 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0003 AS
        AND (abt.nrseqdig = decode(pr_nrseqdig,-1,abt.nrseqdig,pr_nrseqdig) AND
             abt.nrseqdig <> decode(pr_nrseqdig,59,-1,59));
     rw_craptdb_restri cr_craptdb_restri%ROWTYPE;
+    
+    
+FUNCTION fn_contigencia_esteira(pr_cdcooper IN crapcop.cdcooper%TYPE
+                               ) RETURN BOOLEAN IS
+  /*---------------------------------------------------------------------------------------------------------------------
+    Programa : fn_contigencia_esteira
+    Sistema  : Ayllos
+    Sigla    : DSCT0003
+    Autor    : Paulo Penteado (GFT)
+    Data     : Abril/2018
+
+    Objetivo  : Procedure para verificar se a esteira está em contingência
+
+    Alteração : 28/04/2018 - Criação (Paulo Penteado (GFT))
+
+  ---------------------------------------------------------------------------------------------------------------------*/
+   vr_flctgest BOOLEAN;
+   vr_dscritic VARCHAR2(10000);
+   vr_dsmensag VARCHAR2(10000);
+BEGIN
+   este0003.pc_verifica_contigenc_esteira(pr_cdcooper => pr_cdcooper
+                                         ,pr_flctgest => vr_flctgest
+                                         ,pr_dsmensag => vr_dsmensag
+                                         ,pr_dscritic => vr_dscritic);
+
+   if  vr_flctgest then
+       return true;
+   else
+       return false;
+   end if;
+END fn_contigencia_esteira;
+    
 
   -- Rotina para escrever texto na variável CLOB do XML
   PROCEDURE pc_escreve_xml( pr_des_dados in varchar2
@@ -387,53 +430,79 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0003 AS
     Objetivo  : Procedure que realiza validações básicas do borderô para as rotinas de análise e liberação do borderô
   ---------------------------------------------------------------------------------------------------------------------*/
 
-    vr_exc_erro exception;
-    vr_dscritic VARCHAR2(10000);
+   vr_exc_erro exception;
+   vr_dscritic VARCHAR2(10000);
           
-    --============== CURSORES ==================
-    CURSOR cr_crapbdt (pr_cdcooper IN crapbdt.cdcooper%TYPE
-                      ,pr_nrborder IN crapbdt.nrborder%TYPE) IS
-      SELECT crapbdt.cdcooper
-            ,crapbdt.nrborder
-            ,crapbdt.nrdconta
-            ,crapbdt.insitbdt
-            ,crapbdt.rowid
-      FROM crapbdt
-      WHERE crapbdt.cdcooper = pr_cdcooper
-      AND   crapbdt.nrborder = pr_nrborder;
-    rw_crapbdt cr_crapbdt%ROWTYPE;                           
+   --     Selecionar bordero titulo
+   CURSOR cr_crapbdt IS
+   SELECT crapbdt.cdcooper
+         ,crapbdt.nrborder
+         ,crapbdt.nrdconta
+         ,crapbdt.insitbdt
+         ,crapbdt.insitapr
+   FROM   crapbdt
+   WHERE  crapbdt.cdcooper = pr_cdcooper
+   AND    crapbdt.nrborder = pr_nrborder;
+   rw_crapbdt cr_crapbdt%ROWTYPE;                           
+
   BEGIN
-       
-    --Selecionar bordero titulo
-    OPEN cr_crapbdt (pr_cdcooper => pr_cdcooper
-                    ,pr_nrborder => pr_nrborder);
-    --Posicionar no proximo registro
-    FETCH cr_crapbdt INTO rw_crapbdt;
-    --Se não encontrar
-    IF cr_crapbdt%NOTFOUND THEN
-      CLOSE cr_crapbdt;
-      vr_dscritic:= 'Registro de Borderô Não Encontrado.';
-      RAISE vr_exc_erro;
-    ELSE
-      -- Verifica situação do Bordero
-      if rw_crapbdt.insitbdt <> 2 AND pr_cddeacao = 'LIBERAR' THEN
-        vr_dscritic := 'O Borderô deve estar na situação APROVADO ou APROVADO AUTOMATICAMENTE.';
-        CLOSE cr_crapbdt;
-        raise vr_exc_erro;
-      ELSIF rw_crapbdt.insitbdt > 2 AND pr_cddeacao = 'ANALISAR' THEN
-        vr_dscritic := 'O Borderô deve estar na situação EM ESTUDO ou ANALISADO.';
-        CLOSE cr_crapbdt;
-        raise vr_exc_erro;
-      ELSE 
-        vr_dscritic := NULL;
-        CLOSE cr_crapbdt;
-        END IF;
-      END IF;	
-      
-    EXCEPTION
-      WHEN vr_exc_erro THEN
-        pr_dscritic := vr_dscritic;
-      
+     OPEN  cr_crapbdt;
+     FETCH cr_crapbdt INTO rw_crapbdt;
+     IF    cr_crapbdt%NOTFOUND THEN
+           CLOSE cr_crapbdt;
+           vr_dscritic:= 'Registro de Borderô Não Encontrado.';
+           RAISE vr_exc_erro;
+     ELSE
+           /* Situacao do Borderô (insitbdt):
+                 1-Em Estudo, 2-Analisado, 3-Liberado, 4-Liquidado, 5-Rejeitado'
+              Situação da Decisão/Aprovação (insitapr):
+                 0-Aguardando Análise, 1-Aguardando Checagem, 2-Checagem, 3-Aprovado Automaticamente, 
+                 4-Aprovado, 5-Não aprovado, 6-Enviado Esteira, 7-Prazo expirado' */
+     
+           IF    pr_cddeacao = 'LIBERAR'  THEN
+                 --  verifica se a esteira está em contingencia
+                 IF  fn_contigencia_esteira(pr_cdcooper) THEN
+                     IF  rw_crapbdt.insitbdt <> 1 AND rw_crapbdt.insitapr <> 0 THEN
+                         vr_dscritic := 'Liberação não permitida. O Borderô deve estar na situação EM ESTUDO e decisão AGUARDANDO ANÁLISE.';
+                         CLOSE cr_crapbdt;
+                         RAISE vr_exc_erro;
+                     END IF;
+                 ELSE
+                     IF  rw_crapbdt.insitbdt <> 2 AND (rw_crapbdt.insitapr NOT IN (3,4)) THEN
+                         vr_dscritic := 'Liberação não permitida. O Borderô deve estar na situação ANALIDADO e decisão APROVADO AUTOMATICAMENTO OU APROVADO.';
+                         CLOSE cr_crapbdt;
+                         RAISE vr_exc_erro;
+                     END IF;
+                 END IF;
+
+           ELSIF pr_cddeacao = 'ANALISAR' THEN
+                 IF  rw_crapbdt.insitbdt > 2 THEN
+                     vr_dscritic := 'Análise não permitida. O Borderô deve estar na situação EM ESTUDO ou ANALISADO.';
+                     CLOSE cr_crapbdt;
+                     RAISE vr_exc_erro;
+                 END IF;
+
+           ELSIF pr_cddeacao = 'REJEITAR' THEN
+                 IF  rw_crapbdt.insitbdt <> 1 AND rw_crapbdt.insitapr <> 5 THEN
+                     vr_dscritic := 'Rejeição não permitida. O Borderô deve estar na situação EM ESTUDO e decisão NÃO APROVADO.';
+                     CLOSE cr_crapbdt;
+                     RAISE vr_exc_erro;
+                 END IF;
+
+           ELSE
+                 vr_dscritic := 'Opção inválida informada para o parâmetro pr_cddeacao da dsct0003.pc_valida_bordero';
+                 CLOSE cr_crapbdt;
+                 raise vr_exc_erro;
+           END   IF;
+     END   IF;
+     CLOSE cr_crapbdt;
+  EXCEPTION
+     WHEN vr_exc_erro then
+          pr_dscritic := vr_dscritic;
+
+     WHEN OTHERS THEN
+         pr_dscritic := 'Erro dsct0003.pc_valida_bordero: '||SQLERRM;
+
   END pc_valida_bordero;
   
   
@@ -469,7 +538,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0003 AS
     vr_dia        integer;
     vr_vldjuros  number;
     vr_vltotliq number;
-    vr_vlliq number;
     vr_vltotbrt number;
     vr_dtmvtolt DATE;
     
@@ -577,7 +645,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0003 AS
       vr_txmensal := rw_crapbdt.txmensal;
       
       vr_vltotliq := 0;
-      vr_vlliq    := 0;
       vr_vltotbrt := 0;
       FOR rw_base_calculo IN
         cr_base_calculo (pr_cdcooper => pr_cdcooper
@@ -713,7 +780,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0003 AS
     vr_vltotiofadi              NUMBER;
     vr_vltotiofcpl              NUMBER;
     
-    vr_flgimune PLS_INTEGER;
       
     --============== CURSORES ==================
     CURSOR cr_craptdb (pr_cdcooper IN craptdb.cdcooper%TYPE
@@ -840,7 +906,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0003 AS
     vr_flgimune                  INTEGER;
     vr_cdcritic                  PLS_INTEGER;          
     vr_exc_erro                  EXCEPTION;
-    vr_flg_criou_lot             BOOLEAN;
     
     
     -- Cursor para buscar lote
@@ -1190,6 +1255,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0003 AS
                                     ,pr_dtaprova IN crapbdt.dtaprova%TYPE DEFAULT NULL -- data de aprovação
                                     ,pr_hraprova IN crapbdt.hraprova%TYPE DEFAULT NULL -- hora de aprovação
                                     ,pr_dtenvmch IN crapbdt.dtaprova%TYPE DEFAULT NULL -- data de envio para mesa de checagem
+                                    ,pr_cdoperej IN crapbdt.cdoperej%TYPE DEFAULT NULL -- cdoperad que efetuou a rejeição
+                                    ,pr_dtrejeit IN crapbdt.dtrejeit%TYPE DEFAULT NULL -- data de rejeição
+                                    ,pr_hrrejeit IN crapbdt.hrrejeit%TYPE DEFAULT NULL -- hora de rejeião
                                     ,pr_dscritic OUT PLS_INTEGER          --> Descricao Critica
                                     ) IS
   BEGIN
@@ -1201,6 +1269,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0003 AS
             ,crapbdt.dtaprova = nvl(pr_dtaprova,crapbdt.dtaprova)
             ,crapbdt.hraprova = nvl(pr_hraprova,crapbdt.hraprova)
             ,crapbdt.dtenvmch = nvl(pr_dtenvmch,crapbdt.dtenvmch)
+            ,crapbdt.cdoperej = nvl(pr_cdoperej,crapbdt.cdoperej)
+            ,crapbdt.dtrejeit = nvl(pr_dtrejeit,crapbdt.dtrejeit)
+            ,crapbdt.hrrejeit = nvl(pr_hrrejeit,crapbdt.hrrejeit)
        WHERE crapbdt.cdcooper = pr_cdcooper
          AND crapbdt.nrborder = pr_nrborder
          AND crapbdt.nrdconta = pr_nrdconta;
@@ -1236,8 +1307,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0003 AS
     DECLARE
       vr_query VARCHAR2(4000);
     BEGIN
-      vr_query := '';
-
       vr_query := 'SELECT COUNT(1) AS QTDE '||CHR(13)||
                   '  FROM cecred.crapcco cco '||CHR(13)||
                   ' INNER JOIN cecred.crapceb ceb '||CHR(13)||
@@ -2018,35 +2087,35 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0003 AS
         OPEN cr_cnae(pr_cdcooper => pr_cdcooper
                     ,pr_nrdconta => pr_nrdconta
                     ,pr_nrborder => pr_nrborder);
-
+        LOOP
         FETCH cr_cnae INTO rw_cnae;
-        IF cr_cnae%FOUND THEN
+          EXIT WHEN cr_cnae%NOTFOUND;
             vr_dsrestri := 'Valor Máximo Permitido por CNAE excedido';
             vr_nrseqdig := 59;
             -- Se existem restrições, grava na tabela de Críticas/Restrições do Borderô
-          IF vr_dsrestri IS NOT NULL AND vr_nrseqdig > 0 then
-            pc_grava_restricao_bordero (pr_nrborder => pr_nrborder
-                                       ,pr_cdoperad => pr_cdoperad
-                                       ,pr_nrdconta => pr_nrdconta
-                                       ,pr_dsrestri => vr_dsrestri
-                                       ,pr_nrseqdig => vr_nrseqdig
-                                       ,pr_cdcooper => pr_cdcooper
-                                       ,pr_cdbandoc => rw_cnae.cdbandoc
-                                       ,pr_nrdctabb => rw_cnae.nrdctabb
-                                       ,pr_nrcnvcob => rw_cnae.nrcnvcob
-                                       ,pr_nrdocmto => rw_cnae.nrdocmto
-                                       ,pr_flaprcoo => 0
-                                       ,pr_dsdetres => ' '
-                                       ,pr_dscritic => vr_dscritic);
-            CLOSE cr_cnae; 
-            vr_flgtrans := FALSE;
-            vr_nrseqdig := 0;
-            vr_dsrestri := '';
-            IF  TRIM(vr_dscritic) IS NOT NULL THEN
-              RAISE vr_exc_erro;
+            IF vr_dsrestri IS NOT NULL AND vr_nrseqdig > 0 then
+              pc_grava_restricao_bordero (pr_nrborder => pr_nrborder
+                                         ,pr_cdoperad => pr_cdoperad
+                                         ,pr_nrdconta => pr_nrdconta
+                                         ,pr_dsrestri => vr_dsrestri
+                                         ,pr_nrseqdig => vr_nrseqdig
+                                         ,pr_cdcooper => pr_cdcooper
+                                         ,pr_cdbandoc => rw_cnae.cdbandoc
+                                         ,pr_nrdctabb => rw_cnae.nrdctabb
+                                         ,pr_nrcnvcob => rw_cnae.nrcnvcob
+                                         ,pr_nrdocmto => rw_cnae.nrdocmto
+                                         ,pr_flaprcoo => 0
+                                         ,pr_dsdetres => ' '
+                                         ,pr_dscritic => vr_dscritic);
+              vr_flgtrans := FALSE;
+              vr_nrseqdig := 0;
+              vr_dsrestri := '';
+              IF  TRIM(vr_dscritic) IS NOT NULL THEN
+                RAISE vr_exc_erro;
+              END IF;
             END IF;
-          END IF;
-        END IF;
+        END LOOP;
+        CLOSE cr_cnae; 
       END IF;
 
       -- Gerando as Restrições no Borderô por Status do Pagamento de Cobração para Tìtulo desse Borderô, se houver.
@@ -2335,7 +2404,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0003 AS
          END IF; --Fim das Validações Esclusivas para Títulos com Cobrança Registrada
 
          /* Gera Erro e Grava Log */
-         IF nvl(vr_cdcritic,0) > 0 OR vr_dscritic <> '' THEN
+         IF nvl(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
            --Gerar Erro
            GENE0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
                                 ,pr_cdagenci => pr_cdagenci
@@ -2617,8 +2686,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0003 AS
                                            ,pr_dsdetres => vr_dsdetres
                                            ,pr_dscritic => vr_dscritic);
                 vr_flgtrans := FALSE;
-                vr_nrseqdig := 0;
-                vr_dsrestri := '';
 
                 vr_dscritic := '';
                 vr_cdcritic := 79;
@@ -2725,8 +2792,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0003 AS
                                            ,pr_dsdetres => vr_dsdetres
                                            ,pr_dscritic => vr_dscritic);
                 vr_flgtrans := FALSE;
-                vr_nrseqdig := 0;
-                vr_dsrestri := '';
 
                 vr_dscritic := '';
                 vr_cdcritic := 79;
@@ -2901,11 +2966,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0003 AS
       vr_dscritic VARCHAR2(10000);
       
       vr_datacorte crapprm.dsvlrprm%TYPE;
-      vr_titulosAnteriores PLS_INTEGER;
-
+      
       vr_em_contingencia_ibratan boolean;
       
-      vr_dsmensag varchar2(32767);
       
       --============== CURSORES ==================
       -- Cursor para o Loop Principal em Títulos do borderô e Dados de Cobrança Para validações Restritivas
@@ -2932,23 +2995,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0003 AS
            AND cob.nrcnvcob = tdb.nrcnvcob
            AND cob.nrdconta = tdb.nrdconta
            AND cob.nrdocmto = tdb.nrdocmto
-         WHERE tdb.cdcooper = pr_cdcooper -- 14
-           AND tdb.nrborder = pr_nrborder -- 22719 -- 23175
-           AND tdb.nrdconta = pr_nrdconta -- 7528  --7250
+         WHERE tdb.cdcooper = pr_cdcooper
+           AND tdb.nrborder = pr_nrborder
+           AND tdb.nrdconta = pr_nrdconta
          ORDER BY tdb.nrseqdig;
       rw_craptdbcob cr_craptdbcob%ROWTYPE;
-      
-      CURSOR cr_crapbdt (pr_cdcooper IN crapbdt.cdcooper%TYPE
-                        ,pr_nrborder IN crapbdt.nrborder%TYPE) IS
-        SELECT crapbdt.cdcooper
-              ,crapbdt.nrborder
-              ,crapbdt.nrdconta
-              ,crapbdt.insitbdt
-              ,crapbdt.rowid
-        FROM crapbdt
-        WHERE crapbdt.cdcooper = pr_cdcooper
-        AND   crapbdt.nrborder = pr_nrborder;
-      rw_crapbdt cr_crapbdt%ROWTYPE;
 
       CURSOR cr_crapprm (pr_cdcooper IN crapprm.cdcooper%TYPE) IS
       SELECT c.dsvlrprm
@@ -3128,32 +3179,32 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0003 AS
 
       -- INÍCIO DA GERAÇÃO DE RESTRIÇÕES
       IF pr_inrotina = 1 THEN -- (EXECUTAR APENAS QUANDO FOR: 0-APENAS IMPEDITIVOS / 1-IMPEDITIVOS+RESTRIÇÕES COM APROVAÇÃO DE ANÁLISE)
-      -- pc_restricoes_tit_bordero
-      -- Gera as Restrições do Borderô (CRAPABT)
-      pc_restricoes_tit_bordero(pr_cdcooper => pr_cdcooper
-                               ,pr_cdagenci =>  pr_cdagenci
-                               ,pr_nrdcaixa =>  pr_nrdcaixa
-                               ,pr_cdoperad =>  pr_cdoperad
-                               ,pr_nmdatela =>  pr_nmdatela
-                               ,pr_idorigem =>  pr_idorigem
-                               ,pr_dtmvtolt =>  pr_dtmvtolt
-                               ,pr_nrdconta =>  pr_nrdconta
-                               ,pr_idseqttl =>  pr_idseqttl
-                               ,pr_nrborder =>  pr_nrborder
-                               ,pr_flgerlog =>  pr_flgerlog
-                               ,pr_indrestr =>  vr_indrestr
-                               ,pr_flsnhcoo =>  vr_flsnhcoo
-                               ,pr_tab_erro =>  pr_tab_erro
-                               ,pr_des_reto =>  vr_des_reto
-                               ,pr_cdcritic =>  vr_cdcritic
-                               ,pr_dscritic =>  vr_dscritic);
-                               
-       IF (vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL) THEN
-         raise vr_exc_erro;
-       END IF;
-
-       pr_indrestr := vr_indrestr;
-
+        -- pc_restricoes_tit_bordero
+        -- Gera as Restrições do Borderô (CRAPABT)
+        pc_restricoes_tit_bordero(pr_cdcooper => pr_cdcooper
+                                 ,pr_cdagenci =>  pr_cdagenci
+                                 ,pr_nrdcaixa =>  pr_nrdcaixa
+                                 ,pr_cdoperad =>  pr_cdoperad
+                                 ,pr_nmdatela =>  pr_nmdatela
+                                 ,pr_idorigem =>  pr_idorigem
+                                 ,pr_dtmvtolt =>  pr_dtmvtolt
+                                 ,pr_nrdconta =>  pr_nrdconta
+                                 ,pr_idseqttl =>  pr_idseqttl
+                                 ,pr_nrborder =>  pr_nrborder
+                                 ,pr_flgerlog =>  pr_flgerlog
+                                 ,pr_indrestr =>  vr_indrestr
+                                 ,pr_flsnhcoo =>  vr_flsnhcoo
+                                 ,pr_tab_erro =>  pr_tab_erro
+                                 ,pr_des_reto =>  vr_des_reto
+                                 ,pr_cdcritic =>  vr_cdcritic
+                                 ,pr_dscritic =>  vr_dscritic);
+                                 
+        IF (vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL) THEN
+          raise vr_exc_erro;
+        END IF;
+   
+        pr_indrestr := vr_indrestr;
+          
         pr_tab_retorno_analise(0).cdcooper := pr_cdcooper;
         pr_tab_retorno_analise(0).nrborder := pr_nrborder;
         pr_tab_retorno_analise(0).nrdconta := pr_nrdconta;
@@ -3161,27 +3212,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0003 AS
         IF vr_indrestr = 0 AND pr_ind_inpeditivo = 0 THEN -- SEM RESTRIÇÃO E SEM IMPEDITIVOS, APROVADO AUTOMATICAMENTE.
           --Verificando se Ocorreram Restrições, para Gerar Crítica se Foi "Aprovado Automaticamente"
           --ou se deve verificar se vai para esteira ou mesa de checagem.
-         pc_grava_restricao_bordero (pr_nrborder => pr_nrborder
-                                    ,pr_cdoperad => pr_cdoperad
-                                    ,pr_nrdconta => pr_nrdconta
-                                    ,pr_dsrestri => 'Borderô Aprovado Automaticamente.'
-                                    ,pr_nrseqdig => 88
-                                    ,pr_cdcooper => pr_cdcooper
-                                    ,pr_flaprcoo => 1
-                                    ,pr_dsdetres => ('Bordero' || pr_nrborder ||' Analisado Sem Restrições.')
-                                    ,pr_dscritic => vr_dscritic);
-         pr_tab_retorno_analise(0).dssitres := 'Borderô Aprovado Automaticamente.';
+          pc_grava_restricao_bordero (pr_nrborder => pr_nrborder
+                                     ,pr_cdoperad => pr_cdoperad
+                                     ,pr_nrdconta => pr_nrdconta
+                                     ,pr_dsrestri => 'Borderô Aprovado Automaticamente.'
+                                     ,pr_nrseqdig => 88
+                                     ,pr_cdcooper => pr_cdcooper
+                                     ,pr_flaprcoo => 1
+                                     ,pr_dsdetres => ('Bordero' || pr_nrborder ||' Analisado Sem Restrições.')
+                                     ,pr_dscritic => vr_dscritic);
+          pr_tab_retorno_analise(0).dssitres := 'Borderô Aprovado Automaticamente.';
           -- ALTERO STATUS DO BORDERÔ PARA APROVADO AUTOMATICAMENTE.
-         pc_altera_status_bordero(pr_cdcooper => pr_cdcooper
-                                 ,pr_nrborder => pr_nrborder
-                                 ,pr_nrdconta => pr_nrdconta
+          pc_altera_status_bordero(pr_cdcooper => pr_cdcooper
+                                  ,pr_nrborder => pr_nrborder
+                                  ,pr_nrdconta => pr_nrdconta
                                   ,pr_status   => 2 -- estou considerando 2 como aprovado automaticamente (aprovação de análise).
-                                 ,pr_dscritic => vr_dscritic
-                                 );
-         IF vr_dscritic IS NOT NULL THEN
-           pr_tab_retorno_analise.DELETE;
-           RAISE vr_exc_erro;
-         END IF;
+                                  ,pr_dscritic => vr_dscritic
+                                  );
+          IF vr_dscritic IS NOT NULL THEN
+            pr_tab_retorno_analise.DELETE;
+            RAISE vr_exc_erro;
+          END IF;
  
         ELSIF vr_indrestr > 0 THEN -- SE POSSUI RESTRIÇÃO, AVALIA SE DEVE MANDAR PARA ESTEIRA OU MESA DE CHECAGEM.
           -- Verifica se Possui Restrição de CNAE (nrseqdig=59)
@@ -3223,7 +3274,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0003 AS
               pr_tab_retorno_analise.DELETE;
               CLOSE cr_crapabt_qtde;
               RAISE vr_exc_erro;
-       END IF;
+            END IF;
           ELSE -- SE EXISTEM RESTRIÇÕES E NENHUMA É DE CNAE (59), ENVIAR PARA A ESTEIRA, CASO A ESTEIRA NÃO ESTEJA EM CONTINGÊNCIA.
             CLOSE cr_crapabt_qtde;
             rw_crapabt_qtde := null;
@@ -3605,7 +3656,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0003 AS
      Alteracoes: 16/04/2018 - Criação (Andrew Albuquerque (GFT))
    ----------------------------------------------------------------------------------------------------------*/
     DECLARE
-      vr_vltitulo NUMBER;
       vr_vltarifa NUMBER;
       vr_cdfvlcop NUMBER;
       vr_cdhistor craphis.cdhistor%TYPE;
@@ -3682,7 +3732,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0003 AS
           
           -- Criar lançamento automático da tarifa
           tari0001.pc_cria_lan_auto_tarifa(pr_cdcooper => pr_cdcooper           --> Codigo Cooperativa
-                                         	,pr_nrdconta => pr_nrdconta           --> Numero da Conta
+                                           ,pr_nrdconta => pr_nrdconta           --> Numero da Conta
                                           ,pr_dtmvtolt => pr_dtmvtolt           --> Data Lancamento
                                           ,pr_cdhistor => vr_cdhistor           --> Codigo Historico
                                           ,pr_vllanaut => vr_vltarifa           --> Valor lancamento automatico
@@ -3710,11 +3760,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0003 AS
           
           
           if  vr_cdcritic > 0 or trim(vr_dscritic) is not null then
-             if  vr_tab_erro.count() > 0 then
-                 vr_cdcritic:= vr_tab_erro(vr_tab_erro.first).cdcritic;
+             if  vr_tab_erro.count() > 0 THEN
                  vr_dscritic:= vr_tab_erro(vr_tab_erro.first).dscritic;
-             else
-                 vr_cdcritic:= 0;
+             ELSE
                  vr_dscritic:= 'Erro no Lançamento da Tarifa de Borderô de Desconto de Título';
              end if;
              raise vr_exc_erro;
@@ -3758,7 +3806,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0003 AS
     vr_nrdolote craplot.nrdolote%TYPE;
       
     -- Variável de críticas
-    vr_cdcritic crapcri.cdcritic%TYPE;
     vr_dscritic VARCHAR2(10000);
       
     vr_exc_erro exception;
@@ -3862,7 +3909,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0003 AS
          EXCEPTION
            WHEN OTHERS THEN
              -- Monta critica
-             vr_cdcritic := NULL;
              vr_dscritic := 'Erro ao inserir na tabela craplot: ' || SQLERRM;
              -- Gera exceção
              RAISE vr_exc_erro;
@@ -3921,7 +3967,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0003 AS
       EXCEPTION
         WHEN OTHERS THEN
           -- Monta critica
-          vr_cdcritic := NULL;
           vr_dscritic := 'Erro ao inserir na tabela craplcm: ' || SQLERRM;
           -- Gera exceção
           RAISE vr_exc_erro;
@@ -3958,7 +4003,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0003 AS
       EXCEPTION
         WHEN OTHERS THEN
           -- Monta critica
-          vr_cdcritic := 0;
           vr_dscritic := 'Erro ao atualizar o Lote!';
 
           -- Gera exceção
@@ -3967,7 +4011,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0003 AS
     
     EXCEPTION
       WHEN OTHERS THEN
-        pr_dscritic := 'Erro ao Realizar Lançamento de Crédito de Desconto de Títulos: '|| sqlerrm;
+        pr_dscritic := 'Erro ao Realizar Lançamento de Crédito de Desconto de Títulos: '||' '||vr_dscritic||' '||sqlerrm;
     END;
   END pc_lanca_credito_bordero;
     
@@ -4006,18 +4050,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0003 AS
     -- Variáveis de Uso Local
     vr_dsorigem VARCHAR2(40)  DEFAULT NULL; --> Descrição da Origem
     vr_dstransa VARCHAR2(100) DEFAULT NULL; --> Descrição da trasaçao para log
-    vr_dtiniiof DATE;
-    vr_dtfimiof DATE;
-    vr_txccdiof NUMBER;
-    vr_dsoperac VARCHAR2(1000);
-
-    vr_flsnhcoo BOOLEAN;
-
-    vr_indrestr PLS_INTEGER;
 
     -- Tratamento de erros
-    vr_exc_erro exception;
-    vr_des_reto VARCHAR2(3) DEFAULT 'OK';
+    vr_exc_erro EXCEPTION;
 
     --Tabela erro
     vr_tab_erro GENE0001.typ_tab_erro;
@@ -4029,9 +4064,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0003 AS
     vr_cdcritic crapcri.cdcritic%TYPE;
     vr_dscritic VARCHAR2(10000);
           
-    vr_vltarifa NUMBER;
-    vr_cdfvlcop NUMBER;
-    vr_cdhistor NUMBER;
     vr_vltotbrt NUMBER; 
     vr_vltxiofatra NUMBER;            --> Valor total IOF Atraso
                              
@@ -4222,7 +4254,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0003 AS
     vr_cdagenci varchar2(100);
     vr_nrdcaixa varchar2(100);
     vr_idorigem varchar2(100);
-    vr_msgcontingencia varchar2(100);
+    --vr_msgcontingencia varchar2(100);
     vr_msgretorno varchar2(1000);
     
     -- Variável de críticas
@@ -4230,7 +4262,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0003 AS
     vr_dscritic varchar2(1000);        --> Desc. Erro
 
     vr_tab_retorno_analise typ_tab_retorno_analise;
-    vr_tab_msg_confirma typ_reg_msg_confirma;
 
     -- variaveis de data
     vr_dtmvtopr crapdat.dtmvtolt%TYPE;
@@ -4239,7 +4270,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0003 AS
     -- Cursor genérico de calendário
     rw_crapdat btch0001.cr_crapdat%ROWTYPE;
 
-    vr_em_contingencia_ibratan boolean;
+--    vr_em_contingencia_ibratan boolean;
     
     BEGIN
       gene0004.pc_extrai_dados( pr_xml      => pr_retxml
@@ -4265,7 +4296,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0003 AS
       CLOSE BTCH0001.cr_crapdat;
       
       -- Inicia Variável de msg de contingência.
-      vr_msgcontingencia := '';
+      --vr_msgcontingencia := '';
       vr_msgretorno := '';
       
       -- Valida se a situação do borderô permite liberação
@@ -4428,8 +4459,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0003 AS
      vr_nmeacao  varchar2(100);
      vr_cdagenci varchar2(100);
      vr_nrdcaixa varchar2(100);
-     vr_idorigem varchar2(100);
-     vr_msgcontingencia varchar2(100);                              
+     vr_idorigem varchar2(100);                          
      -- Checagem das entradas
      vr_nrdconta crapass.nrdconta%TYPE;
      vr_nrcpfcgc crapass.nrcpfcgc%TYPE;
@@ -4513,8 +4543,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0003 AS
              pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                              '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
    END pc_buscar_associado_web;
-
-
+   
+   
+   
    PROCEDURE pc_rejeitar_bordero_web(pr_nrdconta  IN crapbdt.nrdconta%TYPE  --> Conta
                                		   ,pr_nrborder  IN crapbdt.nrborder%TYPE  --> Bordero
 
@@ -4575,24 +4606,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0003 AS
 
       rw_crapbdt cr_crapbdt%ROWTYPE;
 
-
-      -- Busca Títulos do Borderô
-      CURSOR cr_craptdb (pr_cdcooper IN craptdb.cdcooper%TYPE
-                      ,pr_nrborder IN craptdb.nrborder%TYPE
-                      ,pr_nrdconta IN craptdb.nrdconta%TYPE) IS
-
-      SELECT craptdb.cdcooper,
-             craptdb.nrdconta,
-             craptdb.nrborder,
-             craptdb.insittit,
-             craptdb.insitapr
-      FROM craptdb
-      WHERE craptdb.cdcooper = pr_cdcooper
-      AND   craptdb.nrborder = pr_nrborder
-      AND   craptdb.nrdconta = pr_nrdconta;
-
-      rw_craptdb cr_craptdb%ROWTYPE;
-
       -- Cursor genérico de calendário
       rw_crapdat btch0001.cr_crapdat%ROWTYPE;
 
@@ -4630,19 +4643,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0003 AS
       RAISE vr_exc_erro;
     END IF;
 
+  CLOSE cr_crapbdt;
 
+	   pc_valida_bordero(pr_cdcooper => vr_cdcooper
+                     ,pr_nrborder => rw_crapbdt.nrborder
+                     ,pr_cddeacao => 'REJEITAR'
+                     ,pr_dscritic => vr_dscritic );
+                                
+    IF  vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_erro;
+    END IF;
 
-    IF rw_crapbdt.insitbdt = 5 THEN
-      CLOSE cr_crapbdt;
-      vr_dscritic := 'Bordero ja esta Rejeitado.';
-      RAISE vr_exc_erro;
-
-      ELSE
-      
-      IF ( rw_crapbdt.INSITBDT <> 0 ) AND ( rw_crapbdt.insitapr <> 0 OR rw_crapbdt.insitapr <> 5 ) THEN
-         vr_dscritic := 'Bordero so pode ser rejeitado quando: EM ESTUDO e NAO APROVADO.';
-         RAISE vr_exc_erro; 
-      END IF;
 
     pc_altera_status_bordero(pr_cdcooper => vr_cdcooper
                             ,pr_nrborder => pr_nrborder 
@@ -4654,39 +4665,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0003 AS
 	                          ,pr_dscritic => vr_dscritic                --se houver registro de crítica
                             );
                                 
-        IF vr_dscritic IS NOT NULL THEN
-          RAISE vr_exc_erro;
-        END IF;
-
-
-    -- DESCOMENTAR ESTE BLOCO: Caso seja necessário alterar o status dos Titulos do Bordero
-    /*
-
-    -- Altera o status dos titulos do bordero rejeitado
- 		OPEN   cr_craptdb (vr_cdcooper,pr_nrborder,pr_nrdconta);
-		FETCH cr_craptdb INTO rw_craptdb;
-
-    IF cr_craptdb%NOTFOUND THEN
-      CLOSE cr_craptdb;
-      vr_dscritic := 'ERRO: NENHUM Titulo foi encontrado neste Bordero.';
-      RAISE vr_exc_erro;
-
-    ELSE
-
-        UPDATE craptdb
-        SET    craptdb.insittit = 0,
-               craptdb.insitapr = 2
-        WHERE  craptdb.nrborder = pr_nrborder 
-        AND craptdb.nrdconta = pr_nrdconta 
-        AND craptdb.cdcooper = vr_cdcooper;
-
+    IF  vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_erro;
     END IF;
-    */
-    -- Fim do bloco
-
-    END IF;
-
-  CLOSE cr_crapbdt;
 	
     -- Efetua os inserts para apresentacao na tela VERLOG
     gene0001.pc_gera_log(pr_cdcooper => vr_cdcooper
@@ -4731,6 +4712,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0003 AS
                                      '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
 
   END pc_rejeitar_bordero_web;
-     
+   
 END DSCT0003;
 /
