@@ -3813,6 +3813,7 @@ PROCEDURE ver-valores-bloqueados-poup:
                            INPUT par_cdprogra,
                            INPUT par_vlresgat,
                            INPUT IF par_flgerlog THEN 1 ELSE 0 ,
+                           INPUT 1,
                            OUTPUT 0,
                            OUTPUT "").
 
