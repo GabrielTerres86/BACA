@@ -22,6 +22,8 @@
 				 03/12/2014 - Incluido verificacao de novos produtos de captacao
 				              (Jean Michel).
 							  
+				 17/04/2018 - Incluida verificacao de adesao do produto pelo tipo de conta. PRJ366 (Lombardi)
+				 
 	************************************************************************/
 	
 	session_start();
@@ -55,6 +57,25 @@
 	if (!validaInteiro($nrdconta)) {
 		exibeErro("Conta/dv inv&aacute;lida.");
 	}	
+	
+	// Monta o xml de requisição
+	$xml  = "";
+	$xml .= "<Root>";
+	$xml .= "	<Dados>";
+	$xml .= "		<nrdconta>".$nrdconta."</nrdconta>";
+	$xml .= "		<cdprodut>".   41    ."</cdprodut>";
+	$xml .= "	</Dados>";
+	$xml .= "</Root>";
+	
+	// Executa script para envio do XML
+	$xmlResult = mensageria($xml, "CADA0006", "VALIDA_ADESAO_PRODUTO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	$xmlObj = getObjectXML($xmlResult);
+	
+	// Se ocorrer um erro, mostra crítica
+	if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
+		$msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
+		exibeErro(utf8_encode($msgErro));
+	}
 	
 	// Verifica se o n&uacute;mero da aplica&ccedil;&atilde;o &eacute; um inteiro v&aacute;lido
 	if (!validaInteiro($nraplica)) {
@@ -159,7 +180,7 @@
 		strHTML += '</form>';		
 		strHTML += '<div id="divBotoes" style="margin-top:5px; margin-bottom :10px; text-align: center;">';
 		strHTML += '	<a href="#" class="botao" id="btCancelar" onClick="voltarDivResgate();return false;" >Cancelar</a>';
-		strHTML += '	<a href="#" class="botao" id="btConcluir" onClick="cadastrarResgate(\'yes\');return false;" >Concluir</a>';
+		strHTML += '	<a href="#" class="botao" id="btConcluir" onClick="validaValorProdutoResgate(\'cadastrarResgate(\\\'yes\\\');\',\'vlresgat\',\'frmResgate\');return false;" >Concluir</a>';
 		strHTML += '</div>';
 		
 		$("#divOpcoes").html(strHTML);

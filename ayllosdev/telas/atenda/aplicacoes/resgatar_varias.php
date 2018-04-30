@@ -20,6 +20,9 @@
 			                                					         
 				 27/07/2016 - Corrigi a recuperacao de dados do post e do retorno XML. SD 479874 (Carlos R.)
 			                                					         
+				 17/04/2018 - Incluida verificacao de adesao do produto pelo 
+                              tipo de conta. PRJ366 (Lombardi)
+			                                					         
 	**************************************************************************/
 	
 	session_start();
@@ -52,6 +55,25 @@
 	if (!validaInteiro($nrdconta)) {
 		exibeErro("Conta/dv inv&aacute;lida.");
 	}	
+	
+	// Monta o xml de requisição
+	$xml  = "";
+	$xml .= "<Root>";
+	$xml .= "	<Dados>";
+	$xml .= "		<nrdconta>".$nrdconta."</nrdconta>";
+	$xml .= "		<cdprodut>".   41    ."</cdprodut>";
+	$xml .= "	</Dados>";
+	$xml .= "</Root>";
+	
+	// Executa script para envio do XML
+	$xmlResult = mensageria($xml, "CADA0006", "VALIDA_ADESAO_PRODUTO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	$xmlObj = getObjectXML($xmlResult);
+	
+	// Se ocorrer um erro, mostra crítica
+	if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
+		$msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
+		exibeErro(utf8_encode($msgErro));
+	}
 	
 	// Verifica se flag de opcao resgate e valida
 	if ($flcadrgt <> "yes" && $flcadrgt <> "no") {
@@ -172,12 +194,12 @@
 			<?php 
 			if ($flgauto == 1) { 
 			?>
-				strHTML += '	<a href="#" class="botao" id="btProsseguir" onClick="listarResgatesAuto(<?php echo dataParaTimestamp($glbvars["dtmvtolt"]); ?>);return false;" >Prosseguir</a>';
+				strHTML += '	<a href="#" class="botao" id="btProsseguir" onClick="validaValorProdutoResgate(\'listarResgatesAuto(<?php echo dataParaTimestamp($glbvars["dtmvtolt"]); ?>);\',\'vlresgat\',\'frmResgateVarias\');return false;" >Prosseguir</a>';
 									
 			<?php 
 			} else {
 			?>
-				strHTML += '	<a href="#" class="botao" id="btProsseguir" onClick="listarResgatesManual(<?php echo dataParaTimestamp($glbvars["dtmvtolt"]); ?>);return false;" >Prosseguir</a>';
+				strHTML += '	<a href="#" class="botao" id="btProsseguir" onClick="validaValorProdutoResgate(\'listarResgatesManual(<?php echo dataParaTimestamp($glbvars["dtmvtolt"]); ?>);\',\'vlresgat\',\'frmResgateVarias\');return false;" >Prosseguir</a>';
 									
 			<?php
 			}

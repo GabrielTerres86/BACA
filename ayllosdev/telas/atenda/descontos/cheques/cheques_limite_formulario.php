@@ -28,6 +28,7 @@
  * 012: [26/05/2017] Odirlei Busana (AMcom)  : Desabilitar campo de numero do contrato, será gerado automaticamente. PRJ300 - desconto de cheque
  * 013: [26/06/2017] Jonata            (RKAM): Ajuste para rotina ser chamada através da tela ATENDA > Produtos ( P364)
  * 014: [11/12/2017] P404 - Inclusão de Garantia de Cobertura das Operações de Crédito (Augusto / Marcos (Supero))
+ * 015: [13/04/2018] Lombardi     (CECRED) : Incluida chamada da function validaValorProduto. PRJ366
  */
 ?>
 
@@ -139,7 +140,7 @@
 			// ALTERAÇÃO 001: Substituido formulário antigo pelo include				
 			include('../../../../includes/avalistas/form_avalista.php'); 
 		?>	
-
+		
 	</div>
 	
 </form>
@@ -311,7 +312,7 @@
 			aux_inconfi4 = 71; 
 			aux_inconfi5 = 30;
 			aux_inconfi6 = 51;
-			validaLimiteDscChq("<? echo $cddopcao; ?>",1,11,30);
+			validaValorProduto(nrdconta, 36, $("#vllimite","#frmDadosLimiteDscChq").val().replace('.','').replace(',','.'),"validaLimiteDscChq(\"<? echo $cddopcao; ?>\",1,11,30);","divRotina");
 		<? } ?>
 		return false;
 	});
@@ -341,7 +342,7 @@
       dscShowHideDiv('divFormGAROPC;divBotoesGAROPC','divDscChq_Renda;divBotoesRenda');
       $("#frmDadosLimiteDscChq").css("width", 540);
     <? } else { ?>
-        dscShowHideDiv('divDscChq_Limite;divBotoesLimite','divDscChq_Renda;divBotoesRenda');
+		dscShowHideDiv('divDscChq_Limite;divBotoesLimite','divDscChq_Renda;divBotoesRenda');
     <? } ?>
 		return false;
 	});

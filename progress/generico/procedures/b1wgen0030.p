@@ -497,7 +497,7 @@
                08/08/2017 - Inserido Valor do bordero no cálculo das tarifas - Everton/Mouts/M150
                
                04/10/2017 - Chamar a verificacao de revisao cadastral apenas para inclusao
-                            de novo limite. (Chamado 768648) - (Fabricio)
+                            de novo limite. (Chamado 768648) - (Fabricio) 
 
 			   16/10/2017 - Inserido valor liquido do Bordero para cálculo de tarifas - Everton/Mouts/M150
 
@@ -511,6 +511,11 @@
                             (Diogo - MoutS - Projeto 410 - RF 43 a 46)
 
                11/12/2017 - P404 - Inclusao de Garantia de Cobertura das Operaçoes de Crédito (Augusto / Marcos (Supero))
+               
+               17/04/2017 - Chamada para rotina pc_valida_adesao_produto.
+                          - Inlusao das procedures valida_inclusao_bordero,
+                            valida_alteracao_bordero e valida_exclusao_tit_bordero.
+                            Projeto 366 (Lombardi).
 ..............................................................................*/
 
 { sistema/generico/includes/b1wgen0001tt.i }
@@ -906,7 +911,7 @@ PROCEDURE efetua_liber_anali_bordero:
     DEFINE VARIABLE aux_vltotiof AS DECIMAL NO-UNDO.
     DEFINE VARIABLE aux_inpessoa AS INTEGER NO-UNDO.
     DEFINE VARIABLE aux_vltotaliofsn AS DECIMAL NO-UNDO.
-
+    
     DEFINE VARIABLE aux_natjurid AS INTEGER NO-UNDO.
     DEFINE VARIABLE aux_tpregtrb AS INTEGER NO-UNDO.
     DEFINE VARIABLE aux_vltotiofpri AS DECIMAL NO-UNDO.
@@ -1096,7 +1101,7 @@ PROCEDURE efetua_liber_anali_bordero:
                                    INPUT par_dtmvtolt,
                                    OUTPUT TABLE tt-erro,
                                    OUTPUT TABLE tt-iof).
-                               
+
     RUN busca_iof_simples_nacional IN h-b1wgen9999 (INPUT par_cdcooper,
                                       INPUT 0, /* agenci */
                                       INPUT 0, /* caixa  */
@@ -2109,7 +2114,7 @@ PROCEDURE efetua_liber_anali_bordero:
                                    NO-LOCK:
               ASSIGN aux_vltotoperac = aux_vltotoperac + crabtdb.vlliquid.
             END.
-                           
+            
             ASSIGN aux_vltotiof = 0
                    aux_vltotiofpri = 0
                    aux_vltotiofadi = 0
@@ -2245,7 +2250,7 @@ PROCEDURE efetua_liber_anali_bordero:
                 IF pc_calcula_valor_iof_prg.pr_vltaxa_iof_principal <> "" THEN
                   DO:
                     ASSIGN aux_vltxiofatraso = DECI(pc_calcula_valor_iof_prg.pr_vltaxa_iof_principal).
-                  END.                  
+                  END.
                 IF pc_calcula_valor_iof_prg.pr_flgimune <> ? THEN
                   DO:
                     ASSIGN aux_flgimune = pc_calcula_valor_iof_prg.pr_flgimune.
@@ -8073,6 +8078,41 @@ PROCEDURE valida_dados_inclusao:
             
         END.
                
+    /* buscar quantidade maxima de digitos aceitos para o convenio */
+    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
+                  
+    RUN STORED-PROCEDURE pc_valida_adesao_produto
+        aux_handproc = PROC-HANDLE NO-ERROR
+                                (INPUT par_cdcooper,
+                                 INPUT par_nrdconta,
+                                 INPUT 35, /* Desconto de Titulo */
+                                 OUTPUT 0,   /* pr_cdcritic */
+                                 OUTPUT ""). /* pr_dscritic */
+                
+    CLOSE STORED-PROC pc_valida_adesao_produto
+          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+    
+    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+    
+    ASSIGN aux_cdcritic = 0
+           aux_dscritic = ""
+           aux_cdcritic = pc_valida_adesao_produto.pr_cdcritic
+                              WHEN pc_valida_adesao_produto.pr_cdcritic <> ?
+           aux_dscritic = pc_valida_adesao_produto.pr_dscritic
+                              WHEN pc_valida_adesao_produto.pr_dscritic <> ?.
+    
+    IF  aux_cdcritic <> 0 OR aux_dscritic <> "" THEN
+        DO:
+            RUN gera_erro (INPUT par_cdcooper,
+                           INPUT par_cdagenci,
+                           INPUT par_nrdcaixa,
+                           INPUT 1,            /** Sequencia **/
+                           INPUT aux_cdcritic,
+                           INPUT-OUTPUT aux_dscritic).
+                
+            RETURN "NOK".
+        END.
+    
     IF  CAN-DO("5,6,7,8",STRING(crapass.cdsitdtl))   THEN
         DO:
             ASSIGN aux_cdcritic = 695.
@@ -8538,6 +8578,203 @@ END PROCEDURE.
 
 
 /*****************************************************************************/
+/*                  Valida inclusao de titulos no bordero                    */
+/*****************************************************************************/
+PROCEDURE valida_inclusao_bordero:
+
+    DEF  INPUT PARAM par_cdcooper AS INTE                    NO-UNDO.
+    DEF  INPUT PARAM par_cdagenci AS INTE                    NO-UNDO.
+    DEF  INPUT PARAM par_nrdcaixa AS INTE                    NO-UNDO.
+    DEF  INPUT PARAM par_cdoperad AS CHAR                    NO-UNDO.
+    DEF  INPUT PARAM par_dtmvtolt AS DATE                    NO-UNDO.
+    DEF  INPUT PARAM par_idorigem AS INTE                    NO-UNDO.
+    DEF  INPUT PARAM par_nrdconta AS INTE                    NO-UNDO.
+    DEF  INPUT PARAM par_cdbccxlt AS INTE                    NO-UNDO.
+    DEF  INPUT PARAM par_nrdolote AS INTE                    NO-UNDO.
+    DEF  INPUT PARAM par_qttottit AS INTE                    NO-UNDO.
+    DEF  INPUT PARAM par_vltottit AS DECI                    NO-UNDO.
+       
+    DEF  INPUT PARAM TABLE FOR tt-titulos.
+         
+    DEF OUTPUT PARAM par_solcoord AS INTE                   NO-UNDO.
+    DEF OUTPUT PARAM TABLE FOR tt-erro.
+    
+    DEF VAR aux_contador AS INTE NO-UNDO.
+    DEF VAR aux_nrborder AS INTE NO-UNDO.
+    DEF VAR aux_ponteiro AS INTE NO-UNDO.
+    DEF VAR aux_flgtrans AS LOGI NO-UNDO.
+    DEF VAR aux_flgsenha AS LOGI NO-UNDO.
+    DEF VAR aux_cdoperad AS CHAR NO-UNDO.
+
+
+    EMPTY TEMP-TABLE tt-erro.
+
+    ASSIGN aux_nrborder = 0
+           aux_cdcritic = 0
+           aux_dscritic = ""
+           aux_flgtrans = FALSE.
+
+        /* Validaçao de PAC afim de evitar registro do Bordero com PAC ZERO */
+    IF  par_cdagenci <= 0 THEN
+        DO:
+            ASSIGN aux_dscritic = "Cod. do PA nao pode ser igual a zero.".
+            
+            RUN gera_erro (INPUT par_cdcooper,
+                           INPUT par_cdagenci,
+                           INPUT par_nrdcaixa,
+                           INPUT 1,            /** Sequencia **/
+                           INPUT aux_cdcritic,
+                           INPUT-OUTPUT aux_dscritic).    
+
+            RETURN "NOK".
+        END.
+		
+	RUN valida_titulos_bordero(INPUT par_cdcooper,
+							   INPUT par_cdagenci,
+							   INPUT par_nrdcaixa,
+							   INPUT par_cdoperad,
+							   INPUT par_dtmvtolt,
+							   INPUT par_idorigem,
+							   INPUT par_nrdconta,
+							   INPUT 0, /*nrborder*/
+							   INPUT 2, /*tpvalida*/
+							   INPUT TABLE tt-titulos,
+							   OUTPUT TABLE tt-erro).
+
+    IF RETURN-VALUE <> "OK" THEN
+	   DO:
+	      FIND FIRST tt-erro NO-LOCK NO-ERROR.
+
+		  IF NOT AVAIL tt-erro THEN
+		     DO:
+		        ASSIGN aux_dscritic = "Nao foi possivel validar o bordero.".
+            
+            RUN gera_erro (INPUT par_cdcooper,
+                           INPUT par_cdagenci,
+                           INPUT par_nrdcaixa,
+                           INPUT 1,            /** Sequencia **/
+                           INPUT aux_cdcritic,
+                           INPUT-OUTPUT aux_dscritic).    
+
+            END.
+
+            RETURN "NOK".
+
+        END.
+
+    INCLUIR:
+    DO TRANSACTION ON ERROR UNDO INCLUIR, LEAVE INCLUIR:
+         
+        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+        /* Busca a proxima sequencia do campo crapldt.nrsequen */
+        RUN STORED-PROCEDURE pc_sequence_progress
+        aux_handproc = PROC-HANDLE NO-ERROR (INPUT "CRAPBDT"
+                                            ,INPUT "NRBORDER"
+                                            ,STRING(par_cdcooper)
+                                            ,INPUT "N"
+                                            ,"").
+
+        CLOSE STORED-PROC pc_sequence_progress
+        aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+        ASSIGN aux_nrborder = INTE(pc_sequence_progress.pr_sequence)
+                              WHEN pc_sequence_progress.pr_sequence <> ?.
+
+        FIND FIRST craplim WHERE craplim.cdcooper = par_cdcooper AND
+                                 craplim.nrdconta = par_nrdconta AND
+                                 craplim.tpctrlim = 3            AND
+                                 craplim.insitlim = 2
+                                 NO-LOCK NO-ERROR.
+         
+        IF  NOT AVAILABLE craplim   THEN 
+            DO:
+                ASSIGN aux_cdcritic = 0
+                       aux_dscritic = "Limite de desconto de titulo nao " +
+                                      "encontrado.".
+                UNDO INCLUIR, LEAVE INCLUIR.
+            END.
+        
+        FIND crapldc WHERE crapldc.cdcooper = par_cdcooper       AND
+                           crapldc.cddlinha = craplim.cddlinha   AND
+                           crapldc.tpdescto = 3 
+                           NO-LOCK NO-ERROR.
+
+        IF  NOT AVAILABLE crapldc  THEN 
+            DO:
+                ASSIGN aux_cdcritic = 0.
+                       aux_dscritic = "Regisro de linha " +
+                                      "de desconto nao encontrada.".
+                UNDO INCLUIR, LEAVE INCLUIR.
+            END.        
+
+        IF  CAN-FIND(FIRST tt-titulos WHERE tt-titulos.flgstats = 1   AND 
+                                            tt-titulos.vltitulo = 0)  THEN
+            DO:
+                ASSIGN aux_cdcritic = 0.
+                       aux_dscritic = "Titulo com valor zerado. Operacao " +
+                                      "cancelada.".
+                UNDO INCLUIR, LEAVE INCLUIR.
+            END.
+        
+        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+        
+        RUN STORED-PROCEDURE pc_valida_valor_adesao
+        aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper, /* Cooperativa */
+                                             INPUT par_nrdconta, /* Numero da conta */
+                                             INPUT 35,           /* Desconto de Titulo */
+                                             INPUT par_vltottit, /* Valor contratado */
+                                             INPUT par_idorigem, /* Codigo do produto */
+                                            OUTPUT 0,            /* Solicita senha coordenador */
+                                            OUTPUT 0,            /* Codigo da crítica */
+                                            OUTPUT "").          /* Descriçao da crítica */
+        
+        CLOSE STORED-PROC pc_valida_valor_adesao
+              aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+        
+        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+        
+        ASSIGN par_solcoord = 0
+               aux_cdcritic = 0
+               aux_dscritic = ""
+               par_solcoord = pc_valida_valor_adesao.pr_solcoord 
+                              WHEN pc_valida_valor_adesao.pr_solcoord <> ?
+               aux_cdcritic = pc_valida_valor_adesao.pr_cdcritic 
+                              WHEN pc_valida_valor_adesao.pr_cdcritic <> ?
+               aux_dscritic = pc_valida_valor_adesao.pr_dscritic
+                              WHEN pc_valida_valor_adesao.pr_dscritic <> ?.
+        
+        IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
+             DO:
+                UNDO INCLUIR, LEAVE INCLUIR.
+             END.
+        
+        ASSIGN aux_flgtrans = TRUE.
+
+    END.  /*  Fim da transacao  */
+
+    IF  NOT aux_flgtrans  THEN
+        DO:
+            IF  aux_cdcritic = 0 AND aux_dscritic = ""  THEN
+                ASSIGN aux_dscritic = "Nao foi possivel concluir a operacao.".
+            
+            RUN gera_erro (INPUT par_cdcooper,
+                           INPUT par_cdagenci,
+                           INPUT par_nrdcaixa,
+                           INPUT 1,            /** Sequencia **/
+                           INPUT aux_cdcritic,
+                           INPUT-OUTPUT aux_dscritic).    
+
+            RETURN "NOK".
+        END.
+    
+    RETURN "OK".
+
+END PROCEDURE.
+
+/*****************************************************************************/
 /*                  Efetua inclusao de titulos no bordero                    */
 /*****************************************************************************/
 PROCEDURE efetua_inclusao_bordero:
@@ -8562,7 +8799,6 @@ PROCEDURE efetua_inclusao_bordero:
     DEF VAR aux_nrborder AS INTE NO-UNDO.
     DEF VAR aux_ponteiro AS INTE NO-UNDO.
     DEF VAR aux_flgtrans AS LOGI NO-UNDO.
-
 
     EMPTY TEMP-TABLE tt-erro.
 
@@ -8737,6 +8973,208 @@ PROCEDURE efetua_inclusao_bordero:
 
         END. /* Final do FOR EACH */
 
+        ASSIGN aux_flgtrans = TRUE.
+
+    END.  /*  Fim da transacao  */
+
+    IF  NOT aux_flgtrans  THEN
+        DO:
+            IF  aux_cdcritic = 0 AND aux_dscritic = ""  THEN
+                ASSIGN aux_dscritic = "Nao foi possivel concluir a operacao.".
+            
+            RUN gera_erro (INPUT par_cdcooper,
+                           INPUT par_cdagenci,
+                           INPUT par_nrdcaixa,
+                           INPUT 1,            /** Sequencia **/
+                           INPUT aux_cdcritic,
+                           INPUT-OUTPUT aux_dscritic).    
+
+            RETURN "NOK".
+        END.
+    
+    RETURN "OK".
+
+END PROCEDURE.
+
+/*****************************************************************************/
+/*   Efetuar alteracao de titulos no bordero - incluindo novos titulos nele  */
+/*****************************************************************************/
+PROCEDURE valida_alteracao_bordero:
+
+    DEF  INPUT PARAM par_cdcooper AS INTE                    NO-UNDO.
+    DEF  INPUT PARAM par_cdagenci AS INTE                    NO-UNDO.
+    DEF  INPUT PARAM par_nrdcaixa AS INTE                    NO-UNDO.
+    DEF  INPUT PARAM par_cdoperad AS CHAR                    NO-UNDO.
+    DEF  INPUT PARAM par_dtmvtolt AS DATE                    NO-UNDO.
+    DEF  INPUT PARAM par_idorigem AS INTE                    NO-UNDO.
+    DEF  INPUT PARAM par_nrdconta AS INTE                    NO-UNDO.
+    DEF  INPUT PARAM par_nrborder AS INTE                    NO-UNDO.
+    DEF  INPUT PARAM par_qttottit AS INTE                    NO-UNDO.
+    DEF  INPUT PARAM par_vltottit AS DECI                    NO-UNDO.
+        
+    DEF  INPUT PARAM TABLE FOR tt-titulos.
+          
+    DEF OUTPUT PARAM par_solcoord AS INTE                    NO-UNDO.
+    DEF OUTPUT PARAM TABLE FOR tt-erro.
+    
+    DEF VAR aux_contador AS INTE   NO-UNDO.
+    DEF VAR aux_nrborder AS INTE   NO-UNDO.
+    DEF VAR aux_flgtrans AS LOGI   NO-UNDO.
+
+
+    EMPTY TEMP-TABLE tt-erro.
+
+    ASSIGN aux_nrborder = 0
+           aux_cdcritic = 0
+           aux_dscritic = ""
+           aux_flgtrans = FALSE.
+
+    FIND crapcop WHERE crapcop.cdcooper = par_cdcooper NO-LOCK NO-ERROR.
+
+    ALTERAR:
+    DO  TRANSACTION ON ERROR UNDO ALTERAR, LEAVE ALTERAR:
+         
+        DO  aux_contador = 1 TO 10:
+                                 
+            FIND crapbdt WHERE crapbdt.cdcooper = par_cdcooper AND
+                               crapbdt.nrborder = par_nrborder 
+                               EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+      
+            IF  NOT AVAILABLE crapbdt   THEN
+                DO:
+                    IF  LOCKED crapbdt   THEN
+                        DO:
+                            aux_dscritic = "Registro de bordero esta em uso. " +
+                                           "Tente novamente.".
+                            PAUSE 1 NO-MESSAGE.
+                            NEXT.
+                        END.
+                    ELSE
+                        DO:
+                            aux_dscritic = "Registro de bordero nao " +
+                                           "encontrado".
+                            LEAVE.
+                        END.    
+                END.       
+            ELSE
+                DO:
+                    IF  crapbdt.insitbdt <> 1 AND crapbdt.insitbdt <> 2  THEN
+                        DO:
+                            aux_dscritic = "Bordero deve estar em ESTUDO ou " +
+                                           "ANALISADO.".
+                            LEAVE.
+                        END.
+                END.
+                
+            aux_dscritic = "".
+            LEAVE.
+                                  
+        END.  /*  Fim do DO .. TO  */
+            
+        IF  aux_dscritic <> ""  THEN
+            UNDO ALTERAR, LEAVE ALTERAR.
+        
+        IF  crapbdt.insitbdt = 3   THEN                    /*  Liberado  */
+            DO:
+                ASSIGN aux_cdcritic = 0
+                       aux_dscritic = "Bordero ja LIBERADO.".
+                UNDO ALTERAR, LEAVE ALTERAR.
+            END.
+            
+        IF  crapbdt.insitbdt = 4   THEN                    /*  Liquidado  */
+            DO:
+                ASSIGN aux_cdcritic = 0
+                       aux_dscritic = "Bordero ja LIQUIDADO.".
+                UNDO ALTERAR, LEAVE ALTERAR.
+            END.
+                    
+        DO  aux_contador = 1 TO 10:
+
+            FIND craplot WHERE craplot.cdcooper = crapbdt.cdcooper AND 
+                               craplot.dtmvtolt = crapbdt.dtmvtolt AND
+                               craplot.cdagenci = crapbdt.cdagenci AND
+                               craplot.cdbccxlt = crapbdt.cdbccxlt AND
+                               craplot.nrdolote = crapbdt.nrdolote
+                               EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+      
+                IF  NOT AVAILABLE craplot   THEN
+                    IF  LOCKED craplot   THEN
+                        DO:
+                            aux_dscritic = "341 - Registro sendo alterado " +
+                                           "em outro terminal.".
+                            PAUSE 1 NO-MESSAGE.
+                            NEXT.
+                        END.
+                    ELSE
+                        DO:
+                            ASSIGN aux_dscritic = "060 - Lote inexistente.".
+                            LEAVE.
+                        END.
+                ELSE
+                    DO:   
+                        IF  craplot.tplotmov <> 34   THEN
+                            ASSIGN aux_dscritic = "100 - Tipo de lote nao " +
+                                            "corresponde a esse lancamento.".
+                        ELSE
+                        IF  craplot.cdoperad <> par_cdoperad  THEN
+                            ASSIGN aux_dscritic = "Operador deve ser o " +
+                                                  "mesmo que criou o bordero." +
+                                                  " Operador: " +
+                                                  STRING(craplot.cdoperad).
+                            
+                        LEAVE.
+                    END.
+                    
+                aux_dscritic = "".
+                LEAVE.
+            
+        END.   /*  Fim do DO .. TO  */
+            
+        IF  aux_dscritic <> ""   THEN
+            UNDO ALTERAR, LEAVE ALTERAR.
+
+        IF  CAN-FIND(FIRST tt-titulos WHERE tt-titulos.flgstats = 1   AND 
+                                            tt-titulos.vltitulo = 0)  THEN
+            DO:
+                ASSIGN aux_cdcritic = 0.
+                       aux_dscritic = "Titulo com valor zerado. Operacao " +
+                                      "cancelada.".
+                UNDO ALTERAR, LEAVE ALTERAR.
+            END.
+        
+        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+        
+        RUN STORED-PROCEDURE pc_valida_valor_adesao
+        aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper, /* Cooperativa */
+                                             INPUT par_nrdconta, /* Numero da conta */
+                                             INPUT 35,           /* Desconto de Titulo */
+                                             INPUT par_vltottit, /* Valor contratado */
+                                             INPUT par_idorigem, /* Codigo do produto */
+                                            OUTPUT 0,            /* Solicita senha coordenador */
+                                            OUTPUT 0,            /* Codigo da crítica */
+                                            OUTPUT "").          /* Descriçao da crítica */
+        
+        CLOSE STORED-PROC pc_valida_valor_adesao
+              aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+        
+        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+        
+        ASSIGN par_solcoord = 0
+               aux_cdcritic = 0
+               aux_dscritic = ""
+               par_solcoord = pc_valida_valor_adesao.pr_solcoord 
+                              WHEN pc_valida_valor_adesao.pr_solcoord <> ?
+               aux_cdcritic = pc_valida_valor_adesao.pr_cdcritic 
+                              WHEN pc_valida_valor_adesao.pr_cdcritic <> ?
+               aux_dscritic = pc_valida_valor_adesao.pr_dscritic
+                              WHEN pc_valida_valor_adesao.pr_dscritic <> ?.
+        
+        IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
+             DO:
+                UNDO ALTERAR, LEAVE ALTERAR.
+                
+             END.
+        
         ASSIGN aux_flgtrans = TRUE.
 
     END.  /*  Fim da transacao  */
@@ -8976,6 +9414,170 @@ PROCEDURE efetua_alteracao_bordero:
             RETURN "NOK".
         END.
 
+    RETURN "OK".
+
+END PROCEDURE.
+
+/*****************************************************************************/
+/*           Efetua exclusao de titulos de um determinado bordero            */
+/*****************************************************************************/
+PROCEDURE valida_exclusao_tit_bordero:
+
+    DEF  INPUT PARAM par_cdcooper AS INTE                    NO-UNDO.
+    DEF  INPUT PARAM par_cdagenci AS INTE                    NO-UNDO.
+    DEF  INPUT PARAM par_nrdcaixa AS INTE                    NO-UNDO.
+    DEF  INPUT PARAM par_cdoperad AS CHAR                    NO-UNDO.
+    DEF  INPUT PARAM par_dtmvtolt AS DATE                    NO-UNDO.
+    DEF  INPUT PARAM par_idorigem AS INTE                    NO-UNDO.
+    DEF  INPUT PARAM par_nrdconta AS INTE                    NO-UNDO.
+    DEF  INPUT PARAM par_cdbccxlt AS INTE                    NO-UNDO.
+    DEF  INPUT PARAM par_nrdolote AS INTE                    NO-UNDO.
+    DEF  INPUT PARAM par_dtsistem AS DATE                    NO-UNDO.
+    DEF  INPUT PARAM par_vltottit AS DECI                    NO-UNDO.
+        
+    DEF  INPUT PARAM TABLE FOR tt-titulos.
+          
+    DEF OUTPUT PARAM par_solcoord AS INTE                    NO-UNDO.
+    DEF OUTPUT PARAM TABLE FOR tt-erro.
+    
+    DEF VAR aux_contador AS INTE NO-UNDO.
+    DEF VAR aux_vltottit AS INTE NO-UNDO.
+    
+    EMPTY TEMP-TABLE tt-erro.
+
+    ASSIGN aux_cdcritic = 0
+           aux_dscritic = "".    
+
+    FIND crapcop WHERE crapcop.cdcooper = par_cdcooper NO-LOCK NO-ERROR.
+
+    EXCLUIR:
+    DO  TRANSACTION ON ERROR UNDO EXCLUIR, RETURN "NOK":
+         
+        DO  aux_contador = 1 TO 10:
+
+            FIND craplot WHERE craplot.cdcooper = par_cdcooper AND 
+                               craplot.dtmvtolt = par_dtmvtolt AND
+                               craplot.cdagenci = par_cdagenci AND
+                               craplot.cdbccxlt = par_cdbccxlt AND
+                               craplot.nrdolote = par_nrdolote
+                               EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+      
+                IF  NOT AVAILABLE craplot   THEN
+                    IF  LOCKED craplot   THEN
+                        DO:
+                            aux_cdcritic = 341.
+                            PAUSE 1 NO-MESSAGE.
+                            NEXT.
+                        END.
+                    ELSE
+                        DO:
+                            ASSIGN aux_cdcritic = 60.
+                            LEAVE.
+                        END.
+                ELSE
+                    DO:   
+                        IF  craplot.tplotmov <> 34   THEN
+                            DO:
+                                ASSIGN aux_cdcritic = 100.
+                                LEAVE.
+                            END.
+                    END.
+                    
+                aux_cdcritic = 0.
+                LEAVE.
+            
+        END.   /*  Fim do DO .. TO  */
+            
+        IF  aux_cdcritic > 0   THEN
+            DO:
+                ASSIGN aux_dscritic = "".
+            
+                RUN gera_erro (INPUT par_cdcooper,
+                               INPUT par_cdagenci,
+                               INPUT par_nrdcaixa,
+                               INPUT 1,            /** Sequencia **/
+                               INPUT aux_cdcritic,
+                               INPUT-OUTPUT aux_dscritic).
+                    
+                UNDO EXCLUIR, RETURN "NOK".
+            END.
+
+        DO  WHILE TRUE:
+                                 
+            FIND crapbdt WHERE crapbdt.cdcooper = par_cdcooper AND 
+                               crapbdt.nrborder = craplot.cdhistor
+                               EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+      
+            IF  NOT AVAILABLE crapbdt   THEN
+                IF  LOCKED crapbdt   THEN
+                    DO:
+                        PAUSE 1 NO-MESSAGE.
+                        NEXT.
+                    END.
+                ELSE
+                    UNDO EXCLUIR, RETURN "NOK".
+               
+            LEAVE.
+                                  
+        END.  /*  Fim do DO WHILE TRUE  */
+
+        IF  crapbdt.insitbdt = 3   THEN                    /*  Liberado  */
+            DO:
+                ASSIGN aux_cdcritic = 0
+                       aux_dscritic = "Bordero ja LIBERADO".
+                
+                RUN gera_erro (INPUT par_cdcooper,
+                               INPUT par_cdagenci,
+                               INPUT par_nrdcaixa,
+                               INPUT 1,            /** Sequencia **/
+                               INPUT aux_cdcritic,
+                               INPUT-OUTPUT aux_dscritic).
+                 
+                UNDO EXCLUIR, RETURN "NOK".
+            END.
+            
+         
+        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+        
+        RUN STORED-PROCEDURE pc_valida_valor_adesao
+        aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper, /* Cooperativa */
+                                             INPUT par_nrdconta, /* Numero da conta */
+                                             INPUT 35,           /* Desconto de Titulo */
+                                             INPUT par_vltottit, /* Valor contratado */
+                                             INPUT par_idorigem, /* Codigo do produto */
+                                            OUTPUT 0,            /* Solicita senha coordenador */
+                                            OUTPUT 0,            /* Codigo da crítica */
+                                            OUTPUT "").          /* Descriçao da crítica */
+        
+        CLOSE STORED-PROC pc_valida_valor_adesao
+              aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+        
+        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+        
+        ASSIGN par_solcoord = 0
+               aux_cdcritic = 0
+               aux_dscritic = ""
+               par_solcoord = pc_valida_valor_adesao.pr_solcoord 
+                              WHEN pc_valida_valor_adesao.pr_solcoord <> ?
+               aux_cdcritic = pc_valida_valor_adesao.pr_cdcritic 
+                              WHEN pc_valida_valor_adesao.pr_cdcritic <> ?
+               aux_dscritic = pc_valida_valor_adesao.pr_dscritic
+                              WHEN pc_valida_valor_adesao.pr_dscritic <> ?.
+        
+        IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
+             DO:
+                RUN gera_erro (INPUT par_cdcooper,
+                               INPUT par_cdagenci,
+                               INPUT par_nrdcaixa,
+                               INPUT 1,            /** Sequencia **/
+                               INPUT aux_cdcritic,
+                               INPUT-OUTPUT aux_dscritic).
+                 
+                UNDO EXCLUIR, RETURN "NOK".
+             END.
+        
+    END.  /*  Fim da transacao  */
+    
     RETURN "OK".
 
 END PROCEDURE.
@@ -15551,6 +16153,7 @@ END PROCEDURE.
 PROCEDURE valida-titulo-bordero:
 
     DEF INPUT  PARAM par_cdcooper AS INTE                    NO-UNDO.
+    DEF INPUT  PARAM par_nrdconta AS INTE                    NO-UNDO.
     DEF INPUT  PARAM par_cdagenci AS INTE                    NO-UNDO.
     DEF INPUT  PARAM par_nrdcaixa AS INTE                    NO-UNDO.
     DEF INPUT  PARAM par_cdoperad AS CHAR                    NO-UNDO.
@@ -15571,6 +16174,41 @@ PROCEDURE valida-titulo-bordero:
     ASSIGN aux_cdcritic = 0
            aux_dscritic = "".
 
+    /* buscar quantidade maxima de digitos aceitos para o convenio */
+    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
+    
+    RUN STORED-PROCEDURE pc_valida_adesao_produto
+        aux_handproc = PROC-HANDLE NO-ERROR
+                                (INPUT par_cdcooper,
+                                 INPUT par_nrdconta,
+                                 INPUT 35, /* Desconto de Titulo */
+                                 OUTPUT 0,   /* pr_cdcritic */
+                                 OUTPUT ""). /* pr_dscritic */
+                
+    CLOSE STORED-PROC pc_valida_adesao_produto
+          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+    
+    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+    
+    ASSIGN aux_cdcritic = 0
+           aux_dscritic = ""
+           aux_cdcritic = pc_valida_adesao_produto.pr_cdcritic
+                              WHEN pc_valida_adesao_produto.pr_cdcritic <> ?
+           aux_dscritic = pc_valida_adesao_produto.pr_dscritic
+                              WHEN pc_valida_adesao_produto.pr_dscritic <> ?.
+    
+    IF  aux_cdcritic <> 0 OR aux_dscritic <> "" THEN
+        DO:
+            RUN gera_erro (INPUT par_cdcooper,
+                           INPUT par_cdagenci,
+                           INPUT par_nrdcaixa,
+                           INPUT 1,            /** Sequencia **/
+                           INPUT aux_cdcritic,
+                           INPUT-OUTPUT aux_dscritic).
+                
+            RETURN "NOK".
+        END.
+    
     FIND FIRST tt-dados_dsctit_cr NO-LOCK NO-ERROR.   
     FIND FIRST tt-dados_dsctit    NO-LOCK NO-ERROR.   
 

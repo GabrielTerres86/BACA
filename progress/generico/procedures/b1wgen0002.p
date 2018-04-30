@@ -715,7 +715,7 @@
               27/07/2017 - Alterado para nao validar associado demitido e nem menor de idade para emprestimos
                            de cessao da fatura do cartao de credito (Anderson).
 
-			  29/07/2017 - Desenvolvimento da melhoria 364 - Grupo Economico Novo. (Mauro)
+			  29/07/2017 - Desenvolvimento da melhoria 364 - Grupo Economico Novo. (Mauro)	   
 
 			  29/09/2017 - P337 - SMII - Ajustes no processo de perca de aprovação quando 
 			               Alterar Somente Avalista (Marcos-Supero)
@@ -761,6 +761,9 @@
 
               21/03/2018 - Alterado para permitir alteracao do nr. de contrato para 
                            tipo de linha 4 - Aplicacao. (PRJ404 - Reinert)
+
+              13/04/2018 - Ajuste na procedure valida-dados-gerais para verificar se o tipo de conta
+                           do cooperado permite adesao do produto 31 - Emprestimo. PRJ366 (Lombardi)
 
  ..............................................................................*/
 
@@ -1523,7 +1526,7 @@ PROCEDURE valida-liquidacao-emprestimos:
                                         STRING(par_dtmvtolt,"99/99/9999") + "~n".
                        LEAVE Valida.
                     END.
-            END.                                 
+            END.
 
         /* Validar a quantidade de linhas selecionadas */
         IF  par_qtlinsel >= 10 THEN
@@ -2408,7 +2411,7 @@ PROCEDURE obtem-propostas-emprestimo:
                   END.
                ELSE
                   ASSIGN tt-proposta-epr.vlfinanc = crawepr.vlemprst.
-               
+                           
 				CASE crawepr.insitest:
 					WHEN 0 THEN ASSIGN tt-proposta-epr.dssitest = "Nao Enviada".
 					WHEN 1 THEN ASSIGN tt-proposta-epr.dssitest = "Enviada p/ Analise Aut.".
@@ -2994,7 +2997,7 @@ PROCEDURE obtem-dados-proposta-emprestimo:
                           ASSIGN aux_dscatbem = aux_dscatbem + "|" + crapbpr.dscatbem.
                   END.
                   END.
-                    
+
                 CASE crawepr.idquapro:
                   WHEN 1 THEN ASSIGN tt-proposta-epr.dsquapro = "Operacao Normal".
                   WHEN 2 THEN ASSIGN tt-proposta-epr.dsquapro =
@@ -3018,7 +3021,7 @@ PROCEDURE obtem-dados-proposta-emprestimo:
                              TRIM(STRING(crawepr.nrctrliq[i],
                                          "z,zzz,zz9"))).
                        END.
-                END. /** Fim do DO ... TO **/	
+                END. /** Fim do DO ... TO **/
 
                 /* Trazer também o LIMITE/ADP */
                 IF crawepr.nrliquid > 0 THEN
@@ -3701,7 +3704,8 @@ PROCEDURE valida-dados-gerais:
     DEF   VAR        aux_vlemprst AS DECIMAL                        NO-UNDO.
     DEF   VAR        aux_vlrtarif AS DECIMAL                        NO-UNDO.
     DEF   VAR        aux_dscatbem AS CHAR                           NO-UNDO.
-
+    DEF   VAR        aux_valida_adesao AS LOGICAL                   NO-UNDO.
+		
     DEF   VAR        aux_flgcescr AS LOG INIT FALSE                 NO-UNDO.
 		
     ASSIGN aux_cdcritic = 0
@@ -3813,6 +3817,69 @@ PROCEDURE valida-dados-gerais:
     
     DO WHILE TRUE:
 
+        IF  NOT CAN-DO("0,58,59", STRING(par_cdfinemp)) THEN /* CDC */
+            DO:
+                aux_valida_adesao = TRUE.
+                IF par_cddopcao = "A" THEN
+                    DO:
+                        FIND crawepr WHERE crawepr.cdcooper = par_cdcooper   AND
+                                           crawepr.nrdconta = par_nrdconta   AND
+                                           crawepr.nrctremp = par_nrctremp
+                                           NO-LOCK NO-ERROR.
+                        
+                        /* Se mudou finalidade de contrato  ... */
+                        /* Verifica se valida */
+                        IF  AVAIL crawepr   THEN
+                            DO:
+                                IF  CAN-DO("0,58,59", STRING(crawepr.cdfinemp)) THEN
+                                    aux_valida_adesao = TRUE.
+                                ELSE 
+                                    aux_valida_adesao = FALSE.
+                             END.
+                        
+                    END.
+                IF  aux_valida_adesao = TRUE THEN
+                    DO:
+                        /* buscar quantidade maxima de digitos aceitos para o convenio */
+                        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
+                        
+                        RUN STORED-PROCEDURE pc_valida_adesao_produto
+                            aux_handproc = PROC-HANDLE NO-ERROR
+                                                    (INPUT par_cdcooper,
+                                                     INPUT par_nrdconta,
+                                                     INPUT 31,   /* Emprestimos */
+                                                     OUTPUT 0,   /* pr_cdcritic */
+                                                     OUTPUT ""). /* pr_dscritic */
+
+                        CLOSE STORED-PROC pc_valida_adesao_produto
+                              aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+                        
+                        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+                        
+                        ASSIGN aux_cdcritic = 0
+                               aux_dscritic = ""
+                               aux_cdcritic = pc_valida_adesao_produto.pr_cdcritic                          
+                                                  WHEN pc_valida_adesao_produto.pr_cdcritic <> ?
+                               aux_dscritic = pc_valida_adesao_produto.pr_dscritic
+                                                  WHEN pc_valida_adesao_produto.pr_dscritic <> ?.
+                        
+                        IF  aux_cdcritic <> 0 OR aux_dscritic <> "" THEN
+                            DO:
+                                IF aux_dscritic = "" THEN
+                                   DO:
+                                      FIND crapcri WHERE crapcri.cdcritic = aux_cdcritic 
+                                                         NO-LOCK NO-ERROR.
+                                      
+                                      IF AVAIL crapcri THEN
+                                         ASSIGN aux_dscritic = crapcri.dscritic.
+                                      ELSE
+                                         ASSIGN aux_dscritic =  "Nao foi possivel validar a adesao do produto.".
+                                   END.
+                                LEAVE.
+                            END.
+                    END.
+            END.
+        
         IF  NOT CAN-DO("0,", par_cdmodali) AND 
             NOT CAN-FIND(craplcr WHERE
                          craplcr.cdcooper = par_cdcooper AND
@@ -13566,7 +13633,7 @@ PROCEDURE recalcular_emprestimo:
                                         INPUT crawepr.nrdconta,
                                         INPUT crawepr.nrctremp,
                                         OUTPUT aux_dsctrliq).
-                    
+
        /* Calclar o cet automaticamente */
        RUN calcula_cet_novo(INPUT par_cdcooper,
                             INPUT par_cdagenci,
@@ -14088,7 +14155,7 @@ PROCEDURE atualiza_dados_avalista_proposta:
                /* Para Alterar Somente Avalista e Proposta já aprovada */
                IF par_dsdopcao = "ASA" AND crawepr.insitapr = 1 THEN 
                   DO:
-                  
+
                      VALIDATE crawepr.
                
                      { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
@@ -14129,7 +14196,7 @@ PROCEDURE atualiza_dados_avalista_proposta:
                          aux_cdcritic = 9.
                          LEAVE.
                      END.
-                     
+
                /* Verificar se a Esteira esta em contigencia para a cooperativa*/
                { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
                RUN STORED-PROCEDURE pc_param_sistema aux_handproc = PROC-HANDLE
@@ -14157,7 +14224,7 @@ PROCEDURE atualiza_dados_avalista_proposta:
                                                     OUTPUT "",           /* Obrigaçao de análise automática (S/N) */
                                                     OUTPUT 0,            /* Código da crítica */
                                                     OUTPUT "").          /* Descrição da crítica */
-               
+
                /* Fechar o procedimento para buscarmos o resultado */ 
                CLOSE STORED-PROC pc_obrigacao_analise_automatic
                    aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
@@ -14174,7 +14241,7 @@ PROCEDURE atualiza_dados_avalista_proposta:
                IF aux_cdcritic > 0 OR 
                   aux_dscritic <> '' THEN
                   LEAVE.
-               
+
                /* Incluir checagem para perca da aprovacao devido 
                   mudanca nos avalistas, somente se analise auto obrigatoria */
                  IF aux_avlalter AND aux_inobriga = "S" THEN
@@ -14184,7 +14251,7 @@ PROCEDURE atualiza_dados_avalista_proposta:
                            aux_dtaprova = crawepr.dtaprova
                            aux_hraprova = crawepr.hraprova
                            aux_insitest = crawepr.insitest.            
-                       
+
                    FOR crappre FIELDS(cdfinemp) 
                       WHERE crappre.cdcooper = par_cdcooper     
                         AND crappre.inpessoa = crapass.inpessoa  NO-LOCK: END.

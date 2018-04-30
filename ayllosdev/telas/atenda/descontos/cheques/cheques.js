@@ -32,9 +32,10 @@
  *                                        Desabilitado o campo nrctrlim na inclusao de limite. - PRJ300 - Desconto de cheque
  * 017: [31/05/2017] Odirlei   (AMcom)  : Ajuste para verificar se possui cheque custodiado no dia de hoje. - PRJ300 - Desconto de cheque 
  * 018: [26/06/2017] Jonata     (RKAM)  : Ajuste para rotina ser chamada através da tela ATENDA > Produtos - P364. 
- * 019: [21/07/2017] Lombardi  (CECRED) : Ajuste no cadastro de emitentes. - PRJ300 - Desconto de cheque  
+ * 019: [21/07/2017] Lombardi  (CECRED) : Ajuste no cadastro de emitentes. - PRJ300 - Desconto de cheque 
  * 020: [11/12/2017] Augusto / Marcos (Supero) : P404 - Inclusão de Garantia de Cobertura das Operações de Crédito
  * 021: [06/02/2018] Mateus Z  (Mouts)  : Alterações referentes ao projeto 454.1 - Resgate de cheque em custodia.
+ * 022: [16/04/2018] Lombardi  (CECRED) : Adicionado parametro vlcompcr no ajax da function verificarEmitentes. PRJ366
  */
 
 var contWin    = 0;  // Variável para contagem do número de janelas abertas para impressos
@@ -2346,6 +2347,8 @@ function verificarEmitentes(){
 
 	});
 
+	var vlcompcr = $('#vlcompcr', '#frmBorderosIA').val().replace('.','').replace(',','.');
+	
 	if( dscheque == "" ){
 		hideMsgAguardo();
 		showError('error','Nenhum cheque foi informado para o border&ocirc;.','Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));');
@@ -2359,6 +2362,7 @@ function verificarEmitentes(){
 			data: {
 				nrdconta: nrdconta,
 				dscheque: dscheque,
+				vlcompcr: vlcompcr,
 				redirect: 'html_ajax'
 				},
 			error: function(objAjax,responseError,objExcept) {
@@ -3440,11 +3444,11 @@ function mostraAutorizaResgate(){
         success: function(response) {
             $("#divOpcoesDaOpcao2").html(response);
             formataAutorizarRegaste();
-        }               
+        }
     });
-    
-    return false;
-    
+	
+	return false;
+	
 }
 
 function formataAutorizarRegaste(){
