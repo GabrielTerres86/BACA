@@ -66,7 +66,7 @@
 			<tr class="cmpsLimCred">
 				<td class="cancelautoinad">
 					<label for="qtdiatin">Quantidade de Dias de Atraso:</label>
-					<input name="qtdiatin" type="text"  id="qtdiatin" /> <label> &nbsp;Dias</label>
+					<input name="qtdiatin" type="text"  id="qtdiatin" onblur="validaDiasAtraso()" /> <label> &nbsp;Dias</label>
 				</td>
 			</tr>
 			<tr>

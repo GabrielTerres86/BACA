@@ -1,14 +1,16 @@
 /*!
  * FONTE        : cadlim.js
- * CRIAÇÃO      : James Prust Junior
- * DATA CRIAÇÃO : 15/12/2014
- * OBJETIVO     : Biblioteca de funções da tela CADLIM
+ * CRIAÃ‡ÃƒO      : James Prust Junior
+ * DATA CRIAÃ‡ÃƒO : 15/12/2014
+ * OBJETIVO     : Biblioteca de funÃ§Ãµes da tela CADLIM
  * --------------
- * ALTERAÇÕES   : 21/09/2016 - Inclusão do filtro "Tipo de Limite" no cabecalho. Inclusão dos campos
+ * ALTERAÃ‡Ã•ES   : 21/09/2016 - InclusÃ£o do filtro "Tipo de Limite" no cabecalho. InclusÃ£o dos campos
  *                             "pcliqdez" e "qtdialiq" no formulario de regras. Projeto 300. (Lombardi)
  *
- *                16/03/2018 - Inclusão de novo campo (Quantidade de Meses do novo limite após o cancelamento)
+ *                16/03/2018 - InclusÃ£o de novo campo (Quantidade de Meses do novo limite apÃ³s o cancelamento)
  *                             Diego Simas (AMcom)
+ *                27/04/2018 - Campos para identificar e data de cancelamento por inadimplencia
+ *                             Marcel (AMcom)
  *
  * --------------
  */
@@ -123,7 +125,7 @@ function formataCabecalho() {
 	cTplimite = $('#tplimite','#frmCab');
 	cInpessoa = $('#inpessoa','#frmCab');
 
-	//Rótulos
+	//RÃ³tulos
 	rCddopcao.css('width','44px');
 	rTplimite.addClass('rotulo-linha').css('width','102px');
 	rInpessoa.addClass('rotulo-linha').css('width','102px');
@@ -553,7 +555,7 @@ function controlaCampos(op, tplimite) {
             $('#pcliqdez', '#frmRegra').habilitaCampo();
             $('#qtdialiq', '#frmRegra').habilitaCampo();
             $('#vlmaxren', '#frmRegra').focus();
-            trocaBotao('showConfirmacao(\'Confirma a operação?\',\'Confirma&ccedil;&atilde;o - Ayllos\',\'alteraRegra();\',\'btnVoltar();\',\'sim.gif\',\'nao.gif\')', 'btnVoltar()');
+            trocaBotao('showConfirmacao(\'Confirma a operaÃ§Ã£o?\',\'Confirma&ccedil;&atilde;o - Ayllos\',\'alteraRegra();\',\'btnVoltar();\',\'sim.gif\',\'nao.gif\')', 'btnVoltar()');
             break;
 
         default:
@@ -614,7 +616,7 @@ function buscaRegra(op) {
 	$('#tplimite','#frmCab').removeClass('campoErro');
 	$('#inpessoa','#frmCab').removeClass('campoErro');
 
-	// Executa script de bloqueio através de ajax
+	// Executa script de bloqueio atravï¿½s de ajax
 	$.ajax({
 		type: "POST",
 		url: UrlSite + "telas/cadlim/busca_regra.php",
@@ -684,7 +686,7 @@ function alteraRegra() {
         vlriscop = vlriscop + (vlriscop == '' ? '' : ';') + $(this).val();
     });
 
-	// Executa script de bloqueio através de ajax
+	// Executa script de bloqueio atravÃ©s de ajax
 	$.ajax({
 		type: "POST",
 		url: UrlSite + "telas/cadlim/manter_rotina.php",
@@ -728,6 +730,17 @@ function defineCamposCancAuto() {
 	if ($('#frmRegra #cnauinad').val() == '1'){
 		$("#frmRegra .cancelautoinad").show();
 	} else {
+		$("#frmRegra .cancelautoinad").hide();
+	}
+}
+
+function validaDiasAtraso() {
+	var qtdiatin = $('#frmRegra #qtdiatin').val();
+
+	if (parseInt(qtdiatin) <= 0 || qtdiatin.length == 0){
+		showError('error','Quantidade de dias N&atilde;o pode ser zero','Alerta - Ayllos','unblockBackground();');
+
+		$('#frmRegra #cnauinad').val('0');
 		$("#frmRegra .cancelautoinad").hide();
 	}
 }
