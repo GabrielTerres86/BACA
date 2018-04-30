@@ -23,6 +23,7 @@ CREATE OR REPLACE PACKAGE CECRED.LIMI0002 AS
   --             09/03/2018 - Adicionado o procedimento pc_renova_autom_limdesctit (Paulo Penteado GFT)
   --
   --             09/04/2018 - PC_CANCELA_LIMITE60 - Cancelar limites de crédito para contas com atraso igual ou maior que 60 dias - Daniel(AMcom)
+  --             27/04/2018 - PC_CANCELA_LIMITE_CREDITO - Alteração de nome da funcao (Antes era PC_CANCELA_LIMITE60) e de parâmetros para consulta do limite, agora baseado nos campos da craprli (regras de limite de credito) - Marcel(AMCom)
   ---------------------------------------------------------------------------------------------------------------
 
   ------------------------------- TIPOS DE REGISTROS -----------------------
@@ -71,10 +72,9 @@ CREATE OR REPLACE PACKAGE CECRED.LIMI0002 AS
                       ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
                       ,pr_des_erro OUT VARCHAR2);           --> Erros do processo
 
-  PROCEDURE PC_CANCELA_LIMITE60(pr_cdcooper  IN crapcop.cdcooper%TYPE  --> Cooperativa
-                               ,pr_cdcritic OUT crapcri.cdcritic%TYPE  --> Critica encontrada
-                               ,pr_dscritic OUT VARCHAR2);             --> Texto de erro/critica encontrada
-
+  PROCEDURE PC_CANCELA_LIMITE_CREDITO(pr_cdcooper  IN crapcop.cdcooper%TYPE  --> Cooperativa
+                                     ,pr_cdcritic OUT crapcri.cdcritic%TYPE  --> Critica encontrada
+                                     ,pr_dscritic OUT VARCHAR2);             --> Texto de erro/critica encontrada
 END LIMI0002;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0002 AS
@@ -115,8 +115,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0002 AS
                  04/04/2018 - Comentado a utilização da pc_apaga_estudo_limdesctit. Devido a criação da estrutura
                               de proposta do limite de desconto de titulos tabela (crawlim) não vai mais precisar
                               desse processo de apagar os titulos em estudo (Paulo Penteado (GFT))
-                  
+
                  09/04/2018 - PC_CANCELA_LIMITE60 - Cancelar limites de crédito para contas com atraso igual ou maior que 60 dias - Daniel(AMcom)
+                 27/04/2018 - PC_CANCELA_LIMITE_CREDITO - Alteração de nome da funcao (Antes era PC_CANCELA_LIMITE60) e de parâmetros para consulta do limite, agora baseado nos campos da craprli (regras de limite de credito) - Marcel(AMCom)
   */
   ---------------------------------------------------------------------------------------------------------------
 
@@ -2480,12 +2481,12 @@ PROCEDURE pc_crps517(pr_xmllog   IN VARCHAR2              --> XML com informaçõe
 
   END pc_crps517;
 
-  PROCEDURE PC_CANCELA_LIMITE60(pr_cdcooper  IN crapcop.cdcooper%TYPE  --> Cooperativa
+  PROCEDURE PC_CANCELA_LIMITE_CREDITO(pr_cdcooper  IN crapcop.cdcooper%TYPE  --> Cooperativa
                                ,pr_cdcritic OUT crapcri.cdcritic%TYPE  --> Critica encontrada
                                ,pr_dscritic OUT VARCHAR2) IS           --> Texto de erro/critica encontrada
   BEGIN
     /* ............................................................................
-     Programa: PC_CANCELA_LIMITE60
+     Programa: PC_CANCELA_LIMITE_CREDITO
      Sistema : Atenda - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Daniel Silva(AMcom)
@@ -2537,7 +2538,7 @@ PROCEDURE pc_crps517(pr_xmllog   IN VARCHAR2              --> XML com informaçõe
          , (SELECT r.cdcooper, r.nrdconta, r.nrctremp, r.dtrefere
               FROM crapris r
              WHERE r.cdcooper = pr_cdcooper
-               AND r.dtrefere = rw_dat.dtmvtoan -- Buscar Central Atual **Antes de Rodar a Central de Risco               
+               AND r.dtrefere = rw_dat.dtmvtoan -- Buscar Central Atual **Antes de Rodar a Central de Risco
                AND r.cdmodali = 201) rlim -- Limite de crédito
      WHERE rlim.cdcooper = ris.cdcooper
        AND rlim.nrdconta = ris.nrdconta
@@ -2545,7 +2546,13 @@ PROCEDURE pc_crps517(pr_xmllog   IN VARCHAR2              --> XML com informaçõe
        AND ris.cdcooper  = ass.cdcooper
        AND ris.nrdconta  = ass.nrdconta
        AND ass.flcnaulc  = 1 -- Cancelamento automatico do Limite de Crédito igual 'Sim'
-       AND ris.qtdiaatr >= 60
+       AND ris.qtdiaatr >= nvl((select distinct rli.qtdiatin -- qtde de dias de atraso
+                              from craprli rli
+                             where rli.cdcooper = pr_cdcooper
+                               and rli.tplimite = 1 -- Limite de crédito
+                               and rli.inpessoa = ass.inpessoa
+                               and rli.cnauinad = 1 -- indicador de cancelamento
+                               ), 999999)
        AND ris.cdmodali  = 101 -- ADP
        AND ris.cdorigem  = 1   -- Conta corrente
        AND ris.dtrefere  = rw_dat.dtmvtoan -- Buscar Central Atual **Antes de Rodar a Central de Risco
@@ -2633,7 +2640,7 @@ PROCEDURE pc_crps517(pr_xmllog   IN VARCHAR2              --> XML com informaçõe
                         WHERE lim.cdcooper = mcr.cdcooper
                           AND lim.nrdconta = mcr.nrdconta
                           AND lim.nrctrlim = mcr.nrcontra
-                          AND lim.dtinivig >= '04/01/2003');
+                          AND lim.dtinivig >= TO_DATE('04/01/2003', 'dd/mm/yyyy'));
          --
        EXCEPTION
          WHEN OTHERS THEN
@@ -2692,10 +2699,10 @@ PROCEDURE pc_crps517(pr_xmllog   IN VARCHAR2              --> XML com informaçõe
          -- Apenas fechar o cursor
         CLOSE BTCH0001.cr_crapdat;
       END IF;
-      
+
     --************************--
     --  INICIO PROCESSAMENTO  --
-    --************************--      
+    --************************--
       BEGIN
         FOR rw_conta IN cr_conta(pr_cdcooper) LOOP
 
@@ -2743,26 +2750,26 @@ PROCEDURE pc_crps517(pr_xmllog   IN VARCHAR2              --> XML com informaçõe
                                      ,pr_idseqttl   => 1                    -- Sequencia de titularidade da conta
                                      ,pr_idorigem   => 1                    -- Indicador da origem da chamada
                                      ,pr_inusatab   => vr_inusatab          -- Indicador de utilização da tabela de juros
-                                     ,pr_nmdatela   => 'PC_CANCELA_LIMITE60'-- Nome datela conectada
+                                     ,pr_nmdatela   => 'PC_CANCELA_LIMITE_CREDITO'-- Nome datela conectada
                                      ,pr_flgerlog   => 'N'                  -- Gerar log S/N
                                      ,pr_des_reto   => vr_des_reto          -- Retorno OK / NOK
                                      ,pr_tab_erro   => vr_tab_erro);       --> Tabela com possíves erros
            -- Verifica erro
            IF vr_des_reto = 'NOK' THEN
-             --Se tem erro na tabela 
+             --Se tem erro na tabela
              IF vr_tab_erro.COUNT = 0 THEN
                vr_cdcritic:= 0;
                vr_dscritic:= 'Erro na rati0001.pc_desativa_rating';
              ELSE
                vr_cdcritic:= vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
                vr_dscritic:= vr_tab_erro(vr_tab_erro.FIRST).dscritic;
-             END IF;    
+             END IF;
              --Levantar Excecao
              RAISE vr_exc_saida;
            END IF;
            --
         END LOOP;
-        -- 
+        --
         COMMIT;
         --
       END;
@@ -2772,17 +2779,17 @@ PROCEDURE pc_crps517(pr_xmllog   IN VARCHAR2              --> XML com informaçõe
         vr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
       END IF;
         pr_cdcritic := vr_cdcritic;
-        pr_dscritic := 'Erro PC_CANCELA_LIMITE60. Detalhes: '||vr_dscritic;
+        pr_dscritic := 'Erro PC_CANCELA_LIMITE_CREDITO. Detalhes: '||vr_dscritic;
         -- Efetuar rollback
         ROLLBACK;
       WHEN OTHERS THEN
         -- Retornar o erro não tratado
         pr_cdcritic := 0;
-        pr_dscritic := 'Erro não tratado na rotina PC_CANCELA_LIMITE60. Detalhes: '||sqlerrm;
+        pr_dscritic := 'Erro não tratado na rotina PC_CANCELA_LIMITE_CREDITO. Detalhes: '||sqlerrm;
         -- Efetuar rollback
         ROLLBACK;
     END;
-  END PC_CANCELA_LIMITE60;
+  END PC_CANCELA_LIMITE_CREDITO;
 
 end limi0002;
 /
