@@ -145,8 +145,8 @@
                             do primeiro debito.  (Anderson).
                
                04/04/2018 - Adicionadas chamadas das proc's pc_valida_adesao_produto  e 
-                            pc_valida_valor_adesao para verificar se tipo de conta permite 
-                            o produto 15 - Plano de Cotas. PRJ366 (Lombardi).
+                            pc_valida_valor_de_adesao para verificar se tipo de conta 
+                            permite o produto 15 - Plano de Cotas. PRJ366 (Lombardi).
                
 ..............................................................................*/
 
@@ -958,49 +958,50 @@ PROCEDURE valida-dados-plano:
         IF  aux_cdcritic <> 0 OR aux_dscritic <> "" THEN
             DO:
                 LEAVE.
-             END.
-
-        /* buscar quantidade maxima de digitos aceitos para o convenio */
-        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
-                      
-        RUN STORED-PROCEDURE pc_valida_valor_adesao
-            aux_handproc = PROC-HANDLE NO-ERROR
-                                    (INPUT par_cdcooper,
-                                     INPUT par_nrdconta,
-                                     INPUT 15, /* Plano de Cotas */
-                                     INPUT par_vlprepla,
-                                     INPUT par_idorigem,
-                                     OUTPUT 0,   /* pr_solcoord */
-                                     OUTPUT 0,   /* pr_cdcritic */
-                                     OUTPUT ""). /* pr_dscritic */
-                    
-        CLOSE STORED-PROC pc_valida_valor_adesao
-              aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
-
-        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
-
-        ASSIGN aux_cdcritic = 0
-               aux_dscritic = ""
-               aux_cdcritic = pc_valida_valor_adesao.pr_cdcritic                          
-                                  WHEN pc_valida_valor_adesao.pr_cdcritic <> ?
-               aux_dscritic = pc_valida_valor_adesao.pr_dscritic
-                                  WHEN pc_valida_valor_adesao.pr_dscritic <> ?.
-        
-        IF  aux_cdcritic <> 0 OR aux_dscritic <> "" THEN
-            DO:
-                LEAVE.
             END.
         
-        FIND crapemp WHERE crapemp.cdcooper = par_cdcooper     AND
-                           crapemp.cdempres = aux_cdempres NO-LOCK NO-ERROR.
+                /* buscar quantidade maxima de digitos aceitos para o convenio */
+                { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
+                              
+                RUN STORED-PROCEDURE pc_valida_valor_de_adesao
+                    aux_handproc = PROC-HANDLE NO-ERROR
+                                            (INPUT par_cdcooper,
+                                             INPUT par_nrdconta,
+                                             INPUT 15, /* Plano de Cotas */
+                                             INPUT par_vlprepla,
+                                             INPUT par_idorigem,
+                                             INPUT 0,   /* pr_cddchave */
+                                             OUTPUT 0,   /* pr_solcoord */
+                                             OUTPUT 0,   /* pr_cdcritic */
+                                             OUTPUT ""). /* pr_dscritic */
+                            
+                CLOSE STORED-PROC pc_valida_valor_de_adesao
+                      aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
 
-        IF  NOT AVAILABLE crapemp  THEN
-            DO:
-                ASSIGN aux_cdcritic = 40
-                       aux_dscritic = "".
-                    
-                LEAVE.
-            END. 
+                { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+                ASSIGN aux_cdcritic = 0
+                       aux_dscritic = ""
+                       aux_cdcritic = pc_valida_valor_de_adesao.pr_cdcritic                          
+                                          WHEN pc_valida_valor_de_adesao.pr_cdcritic <> ?
+                       aux_dscritic = pc_valida_valor_de_adesao.pr_dscritic
+                                          WHEN pc_valida_valor_de_adesao.pr_dscritic <> ?.
+                
+                IF  aux_cdcritic <> 0 OR aux_dscritic <> "" THEN
+                    DO:
+                        LEAVE.
+                    END.
+                
+                FIND crapemp WHERE crapemp.cdcooper = par_cdcooper     AND
+                                   crapemp.cdempres = aux_cdempres NO-LOCK NO-ERROR.
+
+                IF  NOT AVAILABLE crapemp  THEN
+                    DO:
+                        ASSIGN aux_cdcritic = 40
+                               aux_dscritic = "".
+                            
+                        LEAVE.
+                    END. 
     
         /** Validar horario e valor minimo quando origem for "Internet" **/
         IF  par_idorigem = 3  THEN /** Internet **/  
@@ -1283,48 +1284,49 @@ PROCEDURE valida-dados-alteracao-plano:
                 LEAVE.
             END.
 
-        /* buscar quantidade maxima de digitos aceitos para o convenio */
-        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
-                      
-        RUN STORED-PROCEDURE pc_valida_valor_adesao
-            aux_handproc = PROC-HANDLE NO-ERROR
-                                    (INPUT par_cdcooper,
-                                     INPUT par_nrdconta,
-                                     INPUT 15, /* Plano de Cotas */
-                                     INPUT par_vlprepla,
-                                     INPUT par_idorigem,
-                                     OUTPUT 0,   /* pr_solcoord */
-                                     OUTPUT 0,   /* pr_cdcritic */
-                                     OUTPUT ""). /* pr_dscritic */
-                    
-        CLOSE STORED-PROC pc_valida_valor_adesao
-              aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+                /* buscar quantidade maxima de digitos aceitos para o convenio */
+                { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
+                              
+                RUN STORED-PROCEDURE pc_valida_valor_de_adesao
+                    aux_handproc = PROC-HANDLE NO-ERROR
+                                            (INPUT par_cdcooper,
+                                             INPUT par_nrdconta,
+                                             INPUT 15, /* Plano de Cotas */
+                                             INPUT par_vlprepla,
+                                             INPUT par_idorigem,
+                                             INPUT 0,   /* pr_cddchave */
+                                             OUTPUT 0,   /* pr_solcoord */
+                                             OUTPUT 0,   /* pr_cdcritic */
+                                             OUTPUT ""). /* pr_dscritic */
+                            
+                CLOSE STORED-PROC pc_valida_valor_de_adesao
+                      aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
 
-        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+                { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
 
-        ASSIGN aux_cdcritic = 0
-               aux_dscritic = ""
-               aux_cdcritic = pc_valida_valor_adesao.pr_cdcritic                          
-                                  WHEN pc_valida_valor_adesao.pr_cdcritic <> ?
-               aux_dscritic = pc_valida_valor_adesao.pr_dscritic
-                                  WHEN pc_valida_valor_adesao.pr_dscritic <> ?.
-        
-        IF  aux_cdcritic <> 0 OR aux_dscritic <> "" THEN
-            DO:
-                LEAVE.
-             END.
+                ASSIGN aux_cdcritic = 0
+                       aux_dscritic = ""
+                       aux_cdcritic = pc_valida_valor_de_adesao.pr_cdcritic                          
+                                          WHEN pc_valida_valor_de_adesao.pr_cdcritic <> ?
+                       aux_dscritic = pc_valida_valor_de_adesao.pr_dscritic
+                                          WHEN pc_valida_valor_de_adesao.pr_dscritic <> ?.
+                
+                IF  aux_cdcritic <> 0 OR aux_dscritic <> "" THEN
+                    DO:
+                        LEAVE.
+                    END.
+                
+                FIND crapemp WHERE crapemp.cdcooper = par_cdcooper     AND
+                                   crapemp.cdempres = aux_cdempres NO-LOCK NO-ERROR.
 
-        FIND crapemp WHERE crapemp.cdcooper = par_cdcooper     AND
-                           crapemp.cdempres = aux_cdempres NO-LOCK NO-ERROR.
-
-        IF  NOT AVAILABLE crapemp  THEN
-            DO:
-                ASSIGN aux_cdcritic = 40
-                       aux_dscritic = "".
-                    
-                LEAVE.
-            END. 
-    
+                IF  NOT AVAILABLE crapemp  THEN
+                    DO:
+                        ASSIGN aux_cdcritic = 40
+                               aux_dscritic = "".
+                            
+                        LEAVE.
+                    END. 
+            
         /** Validar horario e valor minimo quando origem for "Internet" **/
         IF  par_idorigem = 3  THEN /** Internet **/  
             DO:

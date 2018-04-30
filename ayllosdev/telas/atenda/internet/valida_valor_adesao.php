@@ -34,6 +34,7 @@
 	$xml .= "		<nrdconta>".$nrdconta."</nrdconta>";
 	$xml .= "		<cdprodut>".   14    ."</cdprodut>";
 	$xml .= "		<vlcontra>".$vlrmenor."</vlcontra>";
+	$xml .= "       <cddchave>".    0    ."</cddchave>";
 	$xml .= "	</Dados>";
 	$xml .= "</Root>";
 	
@@ -62,6 +63,7 @@
 		$xml .= "		<nrdconta>".$nrdconta."</nrdconta>";
 		$xml .= "		<cdprodut>".   14    ."</cdprodut>";
 		$xml .= "		<vlcontra>".$vlrmaior."</vlcontra>";
+		$xml .= "       <cddchave>".    0    ."</cddchave>";
 		$xml .= "	</Dados>";
 		$xml .= "</Root>";
 		

@@ -692,8 +692,8 @@
                  13/10/2017 - Criação da variável aux_cdcanal - (Pablao)
                               
                  25/10/2017 -  Ajustes diversos para projeto de DDA Mobile
-                               PRJ356.4 - DDA (Ricardo Linhares)
-
+                               PRJ356.4 - DDA (Ricardo Linhares)	 
+                 
                  21/08/2017 - Inclusao dos campos qtdiacal e vlrdtaxa na
                               proc_operacao14. (Jaison/James - PRJ298)
 
@@ -1298,6 +1298,9 @@ DEF VAR aux_cdtipmod AS INTE               NO-UNDO.
 DEF VAR aux_dsorigem AS CHAR               NO-UNDO.
 DEF VAR aux_dttransa AS DATE               NO-UNDO.
 DEF VAR aux_idlancto LIKE craplau.idlancto NO-UNDO.
+DEF VAR aux_vlcontra AS DECI                         NO-UNDO.
+DEF VAR aux_cddchave AS INTE                         NO-UNDO.
+
 /* _UIB-CODE-BLOCK-END */
 &ANALYZE-RESUME
 
@@ -2388,7 +2391,7 @@ PROCEDURE process-web-request :
         ELSE
             IF  aux_operacao = 214 THEN /* Obter quantidade de notificações não visualizadas do cooperado */
                 RUN proc_operacao214.
-		ELSE
+        ELSE
             IF  aux_operacao = 215 THEN /* Obter banners para o carrossel do mobile */
                 RUN proc_operacao215.
         ELSE
@@ -9348,18 +9351,20 @@ PROCEDURE proc_operacao214:
 
 END PROCEDURE.
 
-/* Obter quantidade de notificações não visualizadas do cooperado */
+/* Verificar validacao de adesao de produto */
 PROCEDURE proc_operacao216:
     
     ASSIGN aux_cdproduto =  INT(GET-VALUE("aux_cdproduto"))
            aux_vlcontra  = DECI(GET-VALUE("aux_vlcontra"))
-           aux_operacao  =  INT(GET-VALUE("aux_operacao")).
+           aux_operacao  =  INT(GET-VALUE("aux_operacao"))
+           aux_cddchave =   INT(GET-VALUE("aux_cddchave")).
     
     RUN sistema/internet/fontes/InternetBank216.p (INPUT aux_cdcooper,
                                                    INPUT aux_nrdconta,
                                                    INPUT aux_cdproduto,
                                                    INPUT aux_vlcontra,
                                                    INPUT aux_operacao,
+                                                   INPUT aux_cddchave,
                                                   OUTPUT aux_dsmsgerr,
                                                   OUTPUT TABLE xml_operacao).
     
@@ -9385,7 +9390,7 @@ PROCEDURE proc_operacao215:
 
     FOR EACH xml_operacao NO-LOCK:
         {&out} xml_operacao.dslinxml.
-    END.
+        END.
     
     {&out} aux_tgfimprg.
 

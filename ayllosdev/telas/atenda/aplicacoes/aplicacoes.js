@@ -3299,7 +3299,7 @@ function ativaCampo() {
 
 function validaValorProdutoResgate (executa, campo, form) {
 	var vlresgat = $("#"+campo, "#"+form).val().replace(/\./g, "").replace(",", ".");
-	validaValorProduto(nrdconta, 41, vlresgat, executa, 'divRotina');
+	validaValorProduto(nrdconta, 41, vlresgat, executa, 'divRotina', 0);
 }
 
 function senhaCoordenador(executaDepois) {

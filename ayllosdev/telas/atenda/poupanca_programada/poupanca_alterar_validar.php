@@ -9,7 +9,7 @@
 	                                                                  
 	 Alterações: 04/04/2018 - Chamada da rotina para verificar o range permitido para 
 				              contratação do produto. PRJ366 (Lombardi).
-	
+				 
 	***************************************************************************/
 	session_start();
 	
@@ -83,8 +83,8 @@
 	if (strtoupper($xmlObjAlterar->roottag->tags[0]->name) == "ERRO") {
 		exibeErro($xmlObjAlterar->roottag->tags[0]->tags[0]->tags[4]->cdata);
 	} 
-		
-	$vlprerpp = str_replace(',','.',str_replace('.','',$vlprerpp));
+	
+	$vlcontra = str_replace(',','.',str_replace('.','',$vlprerpp));
 	
 	// Montar o xml de Requisicao
 	$xml  = "";
@@ -92,7 +92,8 @@
 	$xml .= " <Dados>";	
 	$xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
 	$xml .= "   <cdprodut>".    16   ."</cdprodut>"; //Poupança Programada
-	$xml .= "   <vlcontra>".$vlprerpp."</vlcontra>";
+	$xml .= "   <vlcontra>".$vlcontra."</vlcontra>";
+	$xml .= "   <cddchave>".$nrctrrpp."</cddchave>";
 	$xml .= " </Dados>";
 	$xml .= "</Root>";
 	

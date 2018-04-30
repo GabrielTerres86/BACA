@@ -51,7 +51,7 @@
 	if (isset($xmlObjAgendamento->roottag->tags[0]->name) && strtoupper($xmlObjAgendamento->roottag->tags[0]->name) == "ERRO") {
 		exibeErro(str_replace("#","<br>",$xmlObjAgendamento->roottag->tags[0]->tags[0]->tags[4]->cdata));
 	} 
-		
+	
 	// Montar o xml de Requisicao
 	$xml  = "";
 	$xml .= "<Root>";
@@ -59,6 +59,7 @@
 	$xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
 	$xml .= "   <cdprodut>".    3    ."</cdprodut>"; //Poupança Programada
 	$xml .= "   <vlcontra>".$vllanmto."</vlcontra>";
+	$xml .= "   <cddchave>".    0    ."</cddchave>";
 	$xml .= " </Dados>";
 	$xml .= "</Root>";
 	

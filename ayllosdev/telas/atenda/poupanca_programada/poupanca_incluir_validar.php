@@ -131,7 +131,7 @@
 	if (isset($xmlObjIncluir->roottag->tags[0]->name) && strtoupper($xmlObjIncluir->roottag->tags[0]->name) == "ERRO") {
 		exibeErro($xmlObjIncluir->roottag->tags[0]->tags[0]->tags[4]->cdata, $nmcampos);
 	} 
-		
+	
 	$vlcontra = str_replace(',','.',str_replace('.','',$vlprerpp));
 	
 	// Montar o xml de Requisicao

@@ -17,8 +17,8 @@
 							  (Jean Michel).
 
 				 17/06/2016 - M181 - Alterar o CDAGENCI para          
-                      passar o CDPACTRA (Rafael Maciel - RKAM) 
-
+							  passar o CDPACTRA (Rafael Maciel - RKAM) 
+				
 				 26/07/2016 - Corrigi uso incorreto de variaveis dentro de funcoes
 							  e tratei o retorno de erro XML. SD 479874 (Carlos.R.)
 
@@ -189,31 +189,31 @@
 	} 
 	
 	if ($flgvalid == "true") {
+		
+		$vllanmto = str_replace(',','.',str_replace('.','',$vllanmto));
 	
-	$vllanmto = str_replace(',','.',str_replace('.','',$vllanmto));
-	
-	// Montar o xml de Requisicao
-	$xml  = "";
-	$xml .= "<Root>";
-	$xml .= " <Dados>";	
-	$xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
-	$xml .= "   <cdprodut>".    3    ."</cdprodut>"; //Poupança Programada
-	$xml .= "   <vlcontra>".$vllanmto."</vlcontra>";
+		// Montar o xml de Requisicao
+		$xml  = "";
+		$xml .= "<Root>";
+		$xml .= " <Dados>";	
+		$xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
+		$xml .= "   <cdprodut>".    3    ."</cdprodut>"; //Poupança Programada
+		$xml .= "   <vlcontra>".$vllanmto."</vlcontra>";
 		$xml .= "   <cddchave>".    0    ."</cddchave>";
-	$xml .= " </Dados>";
-	$xml .= "</Root>";
+		$xml .= " </Dados>";
+		$xml .= "</Root>";
 
-	$xmlResult = mensageria($xml, "CADA0006", "VALIDA_VALOR_ADESAO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
-	$xmlObject = getObjectXML($xmlResult);
+		$xmlResult = mensageria($xml, "CADA0006", "VALIDA_VALOR_ADESAO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+		$xmlObject = getObjectXML($xmlResult);
 
-	// Se ocorrer um erro, mostra crítica
-	if (strtoupper($xmlObject->roottag->tags[0]->name) == "ERRO") {
-		$msgErro = $xmlObject->roottag->tags[0]->tags[0]->tags[4]->cdata;
-		exibeErro(utf8_encode($msgErro));
-	}
-	
-	$solcoord = $xmlObject->roottag->tags[0]->cdata;
-	$mensagem = $xmlObject->roottag->tags[1]->cdata;
+		// Se ocorrer um erro, mostra crítica
+		if (strtoupper($xmlObject->roottag->tags[0]->name) == "ERRO") {
+			$msgErro = $xmlObject->roottag->tags[0]->tags[0]->tags[4]->cdata;
+			exibeErro(utf8_encode($msgErro));
+		}
+		
+		$solcoord = $xmlObject->roottag->tags[0]->cdata;
+		$mensagem = $xmlObject->roottag->tags[1]->cdata;
 	} else {
 		$solcoord = 0;
 		$mensagem = "";
@@ -255,10 +255,10 @@
 		$executar = str_replace("\"","\\\"", str_replace("\\", "\\\\", $executar));
 		
 		exibirErro("error",$mensagem,"Alerta - Ayllos", ($solcoord == 1 ? "senhaCoordenador(\\\"".$executar."\\\");" : ""),false);
-	} else {		
+	} else {
 		echo $executar;
 	}
-
+	
 	// Função para exibir erros na tela através de javascript
 	function exibeErro($msgErro) { 
 		global $cddopcao;

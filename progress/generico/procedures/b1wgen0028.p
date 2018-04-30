@@ -498,14 +498,14 @@
                 
                 17/06/2016 - Inclusão de campos de controle de vendas - M181 ( Rafael Maciel - RKAM)
 
-				07/12/2016 - P341-Automatização BACENJUD - Alterar o uso da descrição do
+                07/12/2016 - P341-Automatização BACENJUD - Alterar o uso da descrição do
                              departamento passando a considerar o código (Renato Darosci)
 							 
-				23/03/2017 - Removendo a possibilidade de solicitar novo cartão com vencimento para o dia	
-						     27, conforme solicitado no chamado 636445. (Kelvin)
+                23/03/2017 - Removendo a possibilidade de solicitar novo cartão com vencimento para o dia	
+                             27, conforme solicitado no chamado 636445. (Kelvin)
 							 
-				06/04/2017 - Ajuste realizado para resolver o problema de estouro de sequence, conforme
-							 solicitado no chamado 645013. (Kelvin)
+                06/04/2017 - Ajuste realizado para resolver o problema de estouro de sequence, conforme
+                             solicitado no chamado 645013. (Kelvin)
                 
                 12/05/2017 - Passagem de 0 para a nacionalidade. (Jaison/Andrino)
                 
@@ -513,26 +513,26 @@
                              entre conta x conta cartao (Anderson).
 
                 19/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
-			                 crapass, crapttl, crapjur 
-							(Adriano - P339).
+                             crapass, crapttl, crapjur 
+                             (Adriano - P339).
 
                 13/09/2017 - Tratamento para nao permitir solicitacao de novos Cartoes BB.
                              (Jaison/Elton - M459)
 
-				19/09/2017 - Ajuste na procedure cadastra_novo_cartao para nao permitir que a cooperativa 
-							 solicite cartao CECRED para ela mesma. Por exemplo: Viacredi acessa sua própria 
-							 onta no Ayllos Web e tenta solicitar um cartao Cecred para si mesma. 
-							 (Chamado 712927) (Kelvin/Douglas)
+                19/09/2017 - Ajuste na procedure cadastra_novo_cartao para nao permitir que a cooperativa 
+                             solicite cartao CECRED para ela mesma. Por exemplo: Viacredi acessa sua própria 
+                             onta no Ayllos Web e tenta solicitar um cartao Cecred para si mesma. 
+                             (Chamado 712927) (Kelvin/Douglas)
 
                 16/10/2017 - Remocao de Tratamento para nao permitir solicitacao de novos Cartoes BB.
                              (Jaison/Elton - M459)
 
-				27/11/2017 - Ajuste na rotina exclui_cartao na verificacao de existencia de cartao Cecred adicional.
-							 (Chamado 788309) - (Fabricio)
+                27/11/2017 - Ajuste na rotina exclui_cartao na verificacao de existencia de cartao Cecred adicional.
+                             (Chamado 788309) - (Fabricio)
 
                 22/03/2018 - Substituidas verificacoes onde o tipo de conta (cdtipcta) estava fixo. 
-                           - Chamar rotina pc_valida_adesao_produto e pc_valida_valor_adesao na proc
-                             valida_nova_proposta. PRJ366 (Lombardi).
+                           - Chamar rotina pc_valida_adesao_produto e pc_valida_valor_de_adesao na 
+                             proc valida_nova_proposta. PRJ366 (Lombardi).
                 
 ..............................................................................*/
 
@@ -1314,8 +1314,8 @@ PROCEDURE carrega_dados_inclusao:
                            INPUT-OUTPUT aux_dscritic).
                           
             RETURN "NOK".
-        END.
-
+         END.
+    
     IF   SUBSTRING(aux_possuipr,1,1) = "N" AND  /* Cartao de Crédito */
          SUBSTRING(aux_possuipr,3,1) = "N" AND  /* Cartao Crédito CECRED */
          SUBSTRING(aux_possuipr,5,1) = "N" THEN /* Cartao Crédito Empresarial */
@@ -1888,7 +1888,7 @@ PROCEDURE valida_nova_proposta:
     DEF  VAR aux_dsdidade AS CHAR   NO-UNDO.
     DEF  VAR aux_dsoperac AS CHAR   NO-UNDO.
     DEF  VAR aux_nmbandei AS CHAR   NO-UNDO.
-	DEF  VAR aux_inhabmen LIKE crapttl.inhabmen NO-UNDO.
+    DEF  VAR aux_inhabmen LIKE crapttl.inhabmen NO-UNDO.
     DEF  VAR aux_cdprodut AS INTE   NO-UNDO.
     
     DEF  VAR aux_inctaitg AS INTE   NO-UNDO.
@@ -2812,8 +2812,8 @@ PROCEDURE valida_nova_proposta:
                            INPUT-OUTPUT aux_dscritic).
                
             RETURN "NOK".
-    END.
-
+         END.
+      
     /* Se for administradora de cartao conta integracao, faz validacao */
     /*IF   f_verifica_adm(craptlc.cdadmcrd) = 1 AND*/
       IF   f_verifica_adm(crapadc.cdadmcrd) = 1 AND
@@ -3123,21 +3123,22 @@ PROCEDURE valida_nova_proposta:
                            INPUT-OUTPUT aux_dscritic).
                
             RETURN "NOK".
-            END.
-
+         END.
+    
     { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
     
-    RUN STORED-PROCEDURE pc_valida_valor_adesao
+    RUN STORED-PROCEDURE pc_valida_valor_de_adesao
     aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper, /* Cooperativa */
                                          INPUT par_nrdconta, /* Numero da conta */
                                          INPUT aux_cdprodut, /* Codigo do produto */
                                          INPUT par_vllimpro, /* Valor contratado */
                                          INPUT par_idorigem, /* Codigo do produto */
+                                         INPUT 0,            /* Codigo da chave */
                                         OUTPUT 0,            /* Solicita senha coordenador */
                                         OUTPUT 0,            /* Codigo da crítica */
                                         OUTPUT "").          /* Descriçao da crítica */
     
-    CLOSE STORED-PROC pc_valida_valor_adesao
+    CLOSE STORED-PROC pc_valida_valor_de_adesao
           aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
     
     { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
@@ -3145,12 +3146,12 @@ PROCEDURE valida_nova_proposta:
     ASSIGN par_solcoord = 0
            aux_cdcritic = 0
            aux_dscritic = ""
-           par_solcoord = pc_valida_valor_adesao.pr_solcoord 
-                          WHEN pc_valida_valor_adesao.pr_solcoord <> ?
-           aux_cdcritic = pc_valida_valor_adesao.pr_cdcritic 
-                          WHEN pc_valida_valor_adesao.pr_cdcritic <> ?
-           aux_dscritic = pc_valida_valor_adesao.pr_dscritic
-                          WHEN pc_valida_valor_adesao.pr_dscritic <> ?.
+           par_solcoord = pc_valida_valor_de_adesao.pr_solcoord 
+                          WHEN pc_valida_valor_de_adesao.pr_solcoord <> ?
+           aux_cdcritic = pc_valida_valor_de_adesao.pr_cdcritic 
+                          WHEN pc_valida_valor_de_adesao.pr_cdcritic <> ?
+           aux_dscritic = pc_valida_valor_de_adesao.pr_dscritic
+                          WHEN pc_valida_valor_de_adesao.pr_dscritic <> ?.
     
     IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
          DO:
@@ -3163,7 +3164,7 @@ PROCEDURE valida_nova_proposta:
                            INPUT-OUTPUT aux_dscritic).
             IF par_solcoord = 0 THEN
               RETURN "NOK".
-        END.
+         END.
 
     RETURN "OK".
          

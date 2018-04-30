@@ -3008,7 +3008,7 @@ function validaAdesaoProduto (nrdconta, cdprodut, executa_depois) {
 	});	
 }
 
-function validaValorProduto(nrdconta, cdprodut, vlcontra, executar, nmdivfnc) {
+function validaValorProduto(nrdconta, cdprodut, vlcontra, executar, nmdivfnc, cddchave) {
 	
 	$.ajax({
 		type: 'POST',
@@ -3020,6 +3020,7 @@ function validaValorProduto(nrdconta, cdprodut, vlcontra, executar, nmdivfnc) {
 			vlcontra: vlcontra,
 			executar: executar,
 			nmdivfnc: nmdivfnc,
+			cddchave: cddchave,
 			redirect: 'script_ajax'
 		}, 
 		error: function (objAjax, responseError, objExcept) {

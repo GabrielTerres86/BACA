@@ -165,10 +165,10 @@
                             ou arquivo de remessa enviado 
                             (Douglas - M271.3 Upload de Arquivo de Pagamento)
 
-               06/10/2017 - Criar a procedure obtem-acesso-anterior (David)
-               
-               04/04/2018 - Adicionada chamada pc_valida_adesao_produto para verificar se o 
-                            tipo de conta permite a contrataçao do produto. PRJ366 (Lombardi).
+               06/10/2017 - Criar a procedure obtem-acesso-anterior (David)	 
+                           
+               04/04/2018 - Adicionada chamada pc_permite_lista_prod_tipo para verificar se o 
+                            tipo de conta permite a contrataçao dos produtos. PRJ366 (Lombardi).
                
 ..............................................................................*/
 
@@ -3123,6 +3123,7 @@ PROCEDURE permissoes-menu-mobile:
     DEF VAR aux_flgdebau AS LOGI                                    NO-UNDO.
     DEF VAR aux_flgsitrc AS LOGI                                    NO-UNDO.
     DEF VAR aux_flgaplic AS LOGI                                    NO-UNDO.
+    DEF VAR aux_flgresga AS LOGI                                    NO-UNDO.
     DEF VAR h-b1wgen0188 AS HANDLE                                  NO-UNDO.
     DEF VAR h-b1wgen0018 AS HANDLE                                  NO-UNDO.
     DEF VAR aux_possuipr AS CHAR NO-UNDO.
@@ -3203,7 +3204,7 @@ PROCEDURE permissoes-menu-mobile:
     
     RUN STORED-PROCEDURE pc_permite_lista_prod_tipo
         aux_handproc = PROC-HANDLE NO-ERROR
-                                (INPUT "29,3", /* DEBITO AUTOMATICO, APLICACAO */
+                                (INPUT "29,3,41", /* DEBITO AUTOMATICO, INCLUIR APLICACAO, RESGATAR APLICACAO */
                                  INPUT crapass.cdtipcta,
                                  INPUT par_cdcooper,
                                  INPUT crapass.inpessoa,
@@ -3248,6 +3249,11 @@ PROCEDURE permissoes-menu-mobile:
     ELSE
       aux_flgaplic = FALSE.
     
+    IF SUBSTRING(aux_possuipr,5,1) = "S" THEN
+      aux_flgresga = TRUE.
+    ELSE
+      aux_flgresga = FALSE.
+    
     CREATE tt-itens-menu-mobile.
     ASSIGN tt-itens-menu-mobile.cditemmn = 204. /*TRANSAÇOES PENDENTES*/
            tt-itens-menu-mobile.flcreate = aux_flgsittp.
@@ -3275,6 +3281,10 @@ PROCEDURE permissoes-menu-mobile:
     CREATE tt-itens-menu-mobile.
     ASSIGN tt-itens-menu-mobile.cditemmn = 602. /*APLICACAO*/
            tt-itens-menu-mobile.flcreate = aux_flgaplic.  
+    
+    CREATE tt-itens-menu-mobile.
+    ASSIGN tt-itens-menu-mobile.cditemmn = 603. /* RESGATE APLICACAO*/
+           tt-itens-menu-mobile.flcreate = aux_flgresga.  
     
     FIND FIRST crapopi WHERE crapopi.cdcooper = par_cdcooper AND
 							 crapopi.nrdconta = par_nrdconta NO-LOCK NO-ERROR. 
