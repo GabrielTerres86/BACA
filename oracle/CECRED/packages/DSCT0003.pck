@@ -230,7 +230,6 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0003 AS
 
 END  DSCT0003;
 /
-
 CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0003 AS
 
   /*---------------------------------------------------------------------------------------------------------------
@@ -2481,7 +2480,7 @@ END fn_contigencia_esteira;
 
         /* Valida Quantidade de Titulos protestados (carteira cooperado) */
         IF vr_qtprotes_cr > vr_tab_dados_dsctit_cr(1).qtprotes THEN
-          vr_dsrestri := 'Cooperado com titulos protestados acima do permitido.';
+          vr_dsrestri := 'Coop com titulos protestados acima do permitido.';
           vr_nrseqdig := 12;
           pr_indrestr := 1;
           pr_flsnhcoo := TRUE;
@@ -2536,7 +2535,7 @@ END fn_contigencia_esteira;
         /* Valida Perc. de Titulos não Pago Beneficiario */
         IF vr_pcnaopag_cr > vr_tab_dados_dsctit_cr(1).pcnaopag OR
            vr_qtnaopag_sr > vr_tab_dados_dsctit_sr(1).pcnaopag THEN
-          vr_dsrestri := 'Cooperado com titulos não pagos acima do permitido.';
+          vr_dsrestri := 'Coop com titulos não pagos acima do permitido.';
           vr_dsdetres := 'Com Registro: ' || vr_pcnaopag_cr || '. Sem Registro: ' || vr_pcnaopag_sr;
           vr_nrseqdig := 11;
           pr_indrestr := 1;

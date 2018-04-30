@@ -8,6 +8,7 @@
 	 Objetivo  : Detalhes do título do borderô
 
 	 Alterações: 04/04/2018 - Ajuste nas tabelas de críticas e restrições (Leonardo Oliveira - GFT).
+	 			 30/04/2018 - Retirado a multiplicacao por 100 das porcentagens da critica (Vitor Shimada Assanuma - GFT)
 	
 	************************************************************************/
 	
@@ -168,7 +169,7 @@
 										 	if($varint > 0){
 										 		echo $varint;
 										 	} else {
-										 		echo (getByTagName($c->tags,'per') * 100.00).'%';
+										 		echo formataMoeda(getByTagName($c->tags,'per')).'%';
 										 	}
 										?>
 									</td>
