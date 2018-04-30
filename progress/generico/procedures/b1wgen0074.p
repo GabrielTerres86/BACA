@@ -112,8 +112,8 @@
                                 18/06/2014 - Exclusao do uso da tabela crapcar
                             (Tiago Castro - Tiago RKAM)
 
-                10/07/2014 - Alterações para criticar propostas de cart. cred. 
-                             em aberto durante exclusão de titulares
+                10/07/2014 - Alteraçoes para criticar propostas de cart. cred. 
+                             em aberto durante exclusao de titulares
                              (Lucas Lunelli - Projeto Bancoob).
                                                      
                 28/08/2014 - Incluir tt-conta-corr.dscadpos - Projeto Cadastro 
@@ -130,7 +130,7 @@
                              de beneficiarios com conta migrada - 
                              SD 228692 (Adriano).
                              
-                21/01/2015 - Conversão da fn_sequence para procedure para não
+                21/01/2015 - Conversao da fn_sequence para procedure para nao
                             gerar cursores abertos no Oracle. (Dionathan)
                             
                 23/03/2015 - Ajuste na rotina Grava_Dados para utilizar as
@@ -157,7 +157,7 @@
                              
                 07/12/2015 - Ajuste para deixar alterar normalmente o PA de
                              cooperados que possuem beneficios com status
-                             de "Aguardando atualização."
+                             de "Aguardando atualizaçao."
                              (Adriano).     
                 
                 17/12/2015 - Remocao da pendencia do documento de ficha cadastral
@@ -167,10 +167,10 @@
                 22/12/2015 - Ajuste na data de abertura da conta
                              Chamado 373200 (Heitor - RKAM)
 
-				01/04/2016 - Retiradas consistências para exclusão de ITG na
+				01/04/2016 - Retiradas consistencias para exclusao de ITG na
 							 Credimilsul - SD 417127 (Rodrigo)
 
-                12/01/2016 - Remoção da manutenção do campo flgcrdpa e cdoplcpa
+                12/01/2016 - Remoçao da manutençao do campo flgcrdpa e cdoplcpa
                              (Anderson).
 
                 13/04/2016 - Ajustado a validacao das informacoes de cooperativa e
@@ -202,7 +202,7 @@
 							(Adriano - P339).
 
                 19/06/2017 - Ajuste para inclusao do novo tipo de situacao da conta
-  				             "Desligamento por determinação do BACEN" 
+  				             "Desligamento por determinaçao do BACEN" 
 							( Jonata - RKAM P364).			
 
                 21/07/2017 - Alteraçao CDOEDTTL pelo campo IDORGEXP.
@@ -221,15 +221,20 @@
 
 				14/11/2017 - Ajuste para nao permitir alterar situacao da conta quando 
 				             ja estiver com situacao = 4
-							( Jonata - RKAM P364).		
+							( Jonata - RKAM P364).		  									   
 
                 14/11/2017 - Incluido campo  tt-conta-corr.dtadmiss. PRJ339-CRM(Odirlei-AMcom)
 
                 24/01/2018 - Adicionar validacao para verificar se cooperado teve lancamento
                              de INSS nos ultimos 3 meses ao mudar de PA (Lucas Ranghetti #835169)
-
+                             
                 06/02/2018 - Adicionado campo cdcatego e flblqtal na tabela crapass. PRJ366 (Lombardi)
 
+                14/03/2018 - Alterado para passar "inpessoa" ao inves de "cdcooper" na 
+                             procedure que busca pela descricao do tipo de conta.
+                             PRJ366 (Lombardi).
+                30/04/2018 - Incluido validaçao do departamento para alteraçao da situaçao da conta para 8
+                             PRJ364 (Paulo Martins - Mouts)
 .............................................................................*/
 
 /*............................. DEFINICOES ..................................*/
@@ -542,7 +547,7 @@ PROCEDURE Busca_Dados:
 
         /* Tipo da Conta */
         DYNAMIC-FUNCTION("BuscaTipoConta" IN h-b1wgen0060,
-                         INPUT par_cdcooper,
+                         INPUT tt-conta-corr.inpessoa,
                          INPUT tt-conta-corr.cdtipcta,
                         OUTPUT tt-conta-corr.dstipcta,
                         OUTPUT aux_dscritic).
@@ -674,7 +679,7 @@ PROCEDURE Verifica_Exclusao_Titulares:
         NOT CAN-DO("3,4,6,10,11,14,15,17",STRING(par_cdtipcta))  AND
         CAN-DO("3,4,6,10,11,14,15,17",STRING(crapass.cdtipcta))  THEN
         DO:
-            /* Procura propostas de Cartão de Crédito ativas dos Titulares */
+            /* Procura propostas de Cartao de Crédito ativas dos Titulares */
             FOR EACH crapttl WHERE crapttl.cdcooper = crapass.cdcooper 
                                AND crapttl.nrdconta = crapass.nrdconta
                                AND crapttl.idseqttl > 1 NO-LOCK,
@@ -971,6 +976,7 @@ PROCEDURE Valida_Dados_Altera:
     DEF VAR aux_qtseqttl AS INTE                                    NO-UNDO.
     DEF VAR aux_nrdeanos AS INTE                                    NO-UNDO.
     DEF VAR aux_flacesso AS INTE                                    NO-UNDO.
+    DEF VAR aux_cddepart AS INTE                                    NO-UNDO.
     
     DEF BUFFER crabass FOR crapass.
 
@@ -1039,8 +1045,8 @@ PROCEDURE Valida_Dados_Altera:
                       END.
                    END.
             END.
-
-        IF crapass.cdtipcta <> par_cdtipcta THEN
+        
+        /*IF crapass.cdtipcta <> par_cdtipcta THEN
             DO:
                 { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} } 
                 
@@ -1070,8 +1076,9 @@ PROCEDURE Valida_Dados_Altera:
                 
                 IF par_cdcritic <> 0 OR par_dscritic <> "" THEN
                     LEAVE ValidaAltera.
-            END.
+            END.*/
         
+        /* Esta funcionalidade nao será tratada nesta primeira liberaçao
         IF crapass.cdsitdct <> par_cdsitdct THEN
             DO:
                 { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} } 
@@ -1104,7 +1111,7 @@ PROCEDURE Valida_Dados_Altera:
                 
                 IF par_cdcritic <> 0 OR par_dscritic <> "" THEN
                     LEAVE ValidaAltera.
-            END.
+            END.	  */
         
         IF  NOT VALID-HANDLE(h-b1wgen0060) THEN
             RUN sistema/generico/procedures/b1wgen0060.p
@@ -1175,7 +1182,7 @@ PROCEDURE Valida_Dados_Altera:
         IF  par_cdtipcta <> crapass.cdtipcta  THEN
             DO:
                DYNAMIC-FUNCTION("BuscaTipoConta" IN h-b1wgen0060,
-                                INPUT par_cdcooper,
+                                INPUT crapass.inpessoa,
                                 INPUT par_cdtipcta,
                                OUTPUT aux_dsresult,
                                OUTPUT par_dscritic).
@@ -1207,10 +1214,40 @@ PROCEDURE Valida_Dados_Altera:
 				   
 				/*Se for demissao BACEN, deve informar que nao ha reversao ao prosseguir 
 				  com a alteracao da situacao para 8 (Processo demissa BACEN)*/
+        /*Incluido Validaçao Departamento crapprm*/  
 				IF par_cdsitdct = 8 THEN 
-				   ASSIGN par_tipconfi = 3 
-                          par_msgconfi = "Esta alteração será irreversível.".
-				
+           DO:
+            /*Busca departamento do operador*/
+            FOR FIRST crapope FIELDS(cddepart)
+              WHERE crapope.cdoperad = par_cdoperad NO-LOCK:
+            END.
+            
+            IF AVAIL crapope THEN
+            ASSIGN aux_cddepart = crapope.cddepart.
+            ELSE
+             DO:
+              ASSIGN par_dscritic = "Operador nao encontrado."
+              par_nmdcampo = "cdsitdct".
+              LEAVE ValidaAltera.
+             END.
+
+            /*aux_cddepart) THEN*/
+            /*Valida se departamento possui permissao para alteraçao*/
+            IF NOT CAN-FIND (FIRST crapprm 
+                             WHERE crapprm.cdcooper = 0 AND
+                                   crapprm.nmsistem = "CRED"       AND
+                                   crapprm.cdacesso = "DEPTO_LIB_CDSITDCT_8" AND 
+                                   crapprm.dsvlrprm = STRING(aux_cddepart)) THEN
+            DO:
+              ASSIGN par_dscritic = "Seu departamento nao possui permissao para esta alteraçao."
+              par_nmdcampo = "cdsitdct".
+              LEAVE ValidaAltera.
+            END.
+            
+            /*Departamento permitido*/
+            ASSIGN par_tipconfi = 3
+            par_msgconfi = "Esta alteraçaoo será irreversível.".
+           END.				
 				IF crapass.cdsitdct = 8 THEN
 				   DO:
 				      ASSIGN par_dscritic = "Conta em processo de demissao BACEN."
@@ -2577,7 +2614,7 @@ PROCEDURE Grava_Dados:
                                                                           OUTPUT "", /*nmarqimp*/
                                                                           OUTPUT "", /*nmarqpdf*/
                                                                           OUTPUT 0, /*Código da crítica*/
-                                                                          OUTPUT "", /*Descrição da crítica*/
+                                                                          OUTPUT "", /*Descriçao da crítica*/
                                                                           OUTPUT "", /*Nome do Campo*/
                                                                           OUTPUT ""). /*Saida OK/NOK*/
                            
@@ -2819,7 +2856,7 @@ PROCEDURE Grava_Dados_Altera:
         IF par_cdtipcta <> crabass.cdtipcta   OR
            crabass.dtinsori = par_dtmvtolt    THEN
            DO:  
-                /* Removido a criação da doc conforme solicitado no chamado 372880*/
+                /* Removido a criaçao da doc conforme solicitado no chamado 372880*/
                 /*ContadorDoc7: DO aux_contador = 1 TO 10:
                 
                    FIND crapdoc WHERE crapdoc.cdcooper = par_cdcooper AND
@@ -3178,7 +3215,7 @@ PROCEDURE Grava_Dados_Altera:
 																  INPUT par_nmdatela,
 																  INPUT par_cdagenci,
 																  OUTPUT 0, /*Código da crítica*/
-																  OUTPUT "", /*Descrição da crítica*/
+																  OUTPUT "", /*Descriçao da crítica*/
 																  OUTPUT "", /*Nome do Campo*/
 																  OUTPUT ""). /*Saida OK/NOK*/
 				   				   
@@ -5355,9 +5392,9 @@ PROCEDURE Critica_Cadastro_Pf:
 
             END.            
 
-            /* Por hora, somente a Viacredi não irá exigir o contato. A area de canais 
+            /* Por hora, somente a Viacredi nao irá exigir o contato. A area de canais 
                está verificando com as demais cooperativas. Por este motivo está 
-               fixo Viacredi, e não fizemos um parametro */
+               fixo Viacredi, e nao fizemos um parametro */
             IF  NOT aux_flgnrcto  AND
                 par_cdcooper <> 1 THEN
                 RUN Trata_Critica
