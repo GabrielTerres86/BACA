@@ -213,10 +213,10 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0006 is
   /*****************************************************************************/
   PROCEDURE pc_grava_dados_hist(pr_nmtabela    IN tbcc_campo_historico.nmtabela_oracle%TYPE  --> Nome da tela                              
                                ,pr_nmdcampo    IN tbcc_campo_historico.nmcampo%TYPE          --> Nome do campo
-                               ,pr_cdcooper    IN tbcc_conta_historico.cdcooper%TYPE DEFAULT 0 --> Cooperativa
-                               ,pr_nrdconta    IN tbcc_conta_historico.nrdconta%TYPE DEFAULT 0 --> Número da conta
-                               ,pr_inpessoa    IN tbcc_conta_historico.inpessoa%TYPE DEFAULT 0 --> Tipo de pessoa
-                               ,pr_idseqttl    IN tbcc_conta_historico.idseqttl%TYPE DEFAULT 0 --> Sequencia do titular
+                               ,pr_cdcooper    IN tbcc_conta_historico.cdcooper%TYPE     DEFAULT 0 --> Cooperativa
+                               ,pr_nrdconta    IN tbcc_conta_historico.nrdconta%TYPE     DEFAULT 0 --> Número da conta
+                               ,pr_inpessoa    IN tbcc_conta_historico.inpessoa%TYPE     DEFAULT 0 --> Tipo de pessoa
+                               ,pr_idseqttl    IN tbcc_conta_historico.idseqttl%TYPE     DEFAULT 0 --> Sequencia do titular
                                ,pr_cdtipcta    IN tbcc_conta_historico.cdtipo_conta%TYPE DEFAULT NULL --> Código do tipo de conta
                                ,pr_cdsituac    IN tbcc_conta_historico.cdsituacao%TYPE   DEFAULT NULL --> Código da situação
                                ,pr_cdprodut    IN tbcc_produtos_coop.cdproduto%TYPE      DEFAULT NULL --> Código do produto
@@ -992,7 +992,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0006 IS
       ELSIF pr_cdprodut = 12 THEN -- Integralização de capital
         
         -- buscar valor referente a integralização de capital
-        OPEN cr_crapcot(pr_cdcooper => pr_cdcooper
+        OPEN  cr_crapcot(pr_cdcooper => pr_cdcooper
                        ,pr_nrdconta => pr_nrdconta);
         FETCH cr_crapcot INTO pr_vlcontra;
         CLOSE cr_crapcot;
@@ -1014,7 +1014,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0006 IS
       
       ELSIF pr_cdprodut = 15 THEN -- Planos de Cotas
         -- buscar o valor de Planos de cotas contratados
-        OPEN cr_crappla(pr_cdcooper => pr_cdcooper
+        OPEN  cr_crappla(pr_cdcooper => pr_cdcooper
                        ,pr_nrdconta => pr_nrdconta);
         FETCH cr_crappla INTO pr_vlcontra;
         CLOSE cr_crappla;
@@ -1089,7 +1089,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0006 IS
           vr_vlcontra := NVL(vr_vlcontra,0) + NVL(vr_vlsdeved,0);
           
         END LOOP;
-      
+        
         -- Retornar o Saldo
         pr_vlcontra := NVL(vr_vlcontra,0);
       
@@ -3046,7 +3046,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0006 IS
         RETURN;
       END IF;
       
-      IF pr_cdprodut <> 15 THEN -- Plano de Cotas
+      -- Verifica produtos que não necessitam que seja buscado o valor anterior
+      IF pr_cdprodut NOT IN (12,13,14,15) THEN 
         -- Busca valor já contratado
         pc_busca_valor_contratado(pr_cdcooper => pr_cdcooper
                                  ,pr_nrdconta => pr_nrdconta
@@ -3582,10 +3583,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0006 IS
   /*****************************************************************************/
   PROCEDURE pc_grava_dados_hist(pr_nmtabela    IN tbcc_campo_historico.nmtabela_oracle%TYPE  --> Nome da tela                              
                                ,pr_nmdcampo    IN tbcc_campo_historico.nmcampo%TYPE          --> Nome do campo
-                               ,pr_cdcooper    IN tbcc_conta_historico.cdcooper%TYPE DEFAULT 0 --> Cooperativa
-                               ,pr_nrdconta    IN tbcc_conta_historico.nrdconta%TYPE DEFAULT 0 --> Número da conta
-                               ,pr_inpessoa    IN tbcc_conta_historico.inpessoa%TYPE DEFAULT 0 --> Tipo de pessoa
-                               ,pr_idseqttl    IN tbcc_conta_historico.idseqttl%TYPE DEFAULT 0 --> Sequencia do titular
+                               ,pr_cdcooper    IN tbcc_conta_historico.cdcooper%TYPE     DEFAULT 0 --> Cooperativa
+                               ,pr_nrdconta    IN tbcc_conta_historico.nrdconta%TYPE     DEFAULT 0 --> Número da conta
+                               ,pr_inpessoa    IN tbcc_conta_historico.inpessoa%TYPE     DEFAULT 0 --> Tipo de pessoa
+                               ,pr_idseqttl    IN tbcc_conta_historico.idseqttl%TYPE     DEFAULT 0 --> Sequencia do titular
                                ,pr_cdtipcta    IN tbcc_conta_historico.cdtipo_conta%TYPE DEFAULT NULL --> Código do tipo de conta
                                ,pr_cdsituac    IN tbcc_conta_historico.cdsituacao%TYPE   DEFAULT NULL --> Código da situação
                                ,pr_cdprodut    IN tbcc_produtos_coop.cdproduto%TYPE      DEFAULT NULL --> Código do produto
