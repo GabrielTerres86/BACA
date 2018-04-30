@@ -161,7 +161,7 @@
 		        
                 09/10/2017 - Incluido rotina para ao cadastrar cooperado carregar dados
                              da pessoa do cadastro unificado, para completar o cadastro com dados
-                             que nao estao na tela. PRJ339 - CRM (Odirlei-AMcom)
+                             que nao estao na tela. PRJ339 - CRM (Odirlei-AMcom)							 
 
                 26/02/2017 - Permitir alterar o nome do talao do segundo titular (Andrino - MoutS)							 
 							 
@@ -171,6 +171,8 @@
 
                 13/03/2018 - Substituir verificacao "cdtipcta = 6,7,17,18"  pela verificacao 
                              da modalidade do tipo de conta. PRJ366 (Lombardi).
+
+                24/04/2018 - Gravar historico de inclusao e alteracao de titular. PRJ366 (Lombardi).
 .............................................................................*/
 
 
@@ -1682,11 +1684,6 @@ PROCEDURE Grava_Dados:
                           IF par_vlsalari = 0 THEN   
                              ASSIGN par_vlsalari = crapttl.vlsalari. 
                              
-                             
-                             
-                             
-                             
-                             
                           LEAVE ContadorTtl.
                        END.
                 END.
@@ -1963,6 +1960,73 @@ PROCEDURE Grava_Dados:
 
         VALIDATE crapttl.
 
+        /* Historico */
+        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+        
+        RUN STORED-PROCEDURE pc_grava_dados_hist 
+            aux_handproc = PROC-HANDLE NO-ERROR
+                             (INPUT "CRAPTTL"                  /* pr_nmtabela */
+                             ,INPUT "NRCPFCGC"                 /* pr_nmdcampo */
+                             ,INPUT par_cdcooper               /* pr_cdcooper */  
+                             ,INPUT par_nrdconta               /* pr_nrdconta */  
+                             ,INPUT 0                          /* pr_inpessoa */  
+                             ,INPUT par_idseqttl               /* pr_idseqttl */  
+                             ,INPUT 0                          /* pr_cdtipcta */  
+                             ,INPUT 0                          /* pr_cdsituac */  
+                             ,INPUT 0                          /* pr_cdprodut */  
+                             ,INPUT IF par_cddopcao = "I" THEN 1 /* pr_tpoperac */  
+                                    ELSE 2
+                             ,INPUT IF par_cddopcao = "I" THEN ? /* pr_dsvalant */  
+                                    ELSE STRING(tt-dados-fis-ant.nrcpfcgc)
+                             ,INPUT STRING(crapttl.nrcpfcgc)   /* pr_dsvalnov */  
+                             ,INPUT par_cdoperad               /* pr_cdoperad */  
+                            ,OUTPUT "").
+        
+        CLOSE STORED-PROC pc_grava_dados_hist 
+              aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+        
+        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+        
+        ASSIGN aux_dscritic = ""                         
+               aux_dscritic = pc_grava_dados_hist.pr_dscritic 
+                              WHEN pc_grava_dados_hist.pr_dscritic <> ?.
+        
+        IF  aux_dscritic <> "" THEN
+            UNDO Grava, LEAVE Grava.
+            
+        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+        
+        RUN STORED-PROCEDURE pc_grava_dados_hist 
+            aux_handproc = PROC-HANDLE NO-ERROR
+                             (INPUT "CRAPTTL"        /* pr_nmtabela */
+                             ,INPUT "NMEXTTTL"       /* pr_nmdcampo */
+                             ,INPUT par_cdcooper     /* pr_cdcooper */  
+                             ,INPUT par_nrdconta     /* pr_nrdconta */  
+                             ,INPUT ?                /* pr_inpessoa */  
+                             ,INPUT par_idseqttl     /* pr_idseqttl */  
+                             ,INPUT ?                /* pr_cdtipcta */  
+                             ,INPUT ?                /* pr_cdsituac */  
+                             ,INPUT ?                /* pr_cdprodut */  
+                             ,INPUT IF par_cddopcao = "I" THEN 1 /* pr_tpoperac */  
+                                    ELSE 2
+                             ,INPUT IF par_cddopcao = "I" THEN ? /* pr_dsvalant */  
+                                    ELSE tt-dados-fis-ant.nmextttl
+                             ,INPUT crapttl.nmextttl /* pr_dsvalnov */  
+                             ,INPUT par_cdoperad     /* pr_cdoperad */  
+                            ,OUTPUT "").
+        
+        CLOSE STORED-PROC pc_grava_dados_hist 
+              aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+        
+        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+        
+        ASSIGN aux_dscritic = ""                         
+               aux_dscritic = pc_grava_dados_hist.pr_dscritic 
+                              WHEN pc_grava_dados_hist.pr_dscritic <> ?.
+        
+        IF  aux_dscritic <> "" THEN
+            UNDO Grava, LEAVE Grava.
+        
         /* ----- Inicio das verificacoes extraidas do contas_dados.p ------- */
         CASE par_cddopcao:
             WHEN "I" THEN DO:

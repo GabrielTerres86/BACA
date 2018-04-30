@@ -175,7 +175,7 @@
                              que nao estao na tela. PRJ339 - CRM (Odirlei-AMcom)
 
                 12/03/2018 - Alterado de forma que o tipo de conta nao seja mais fixo e sim 
-                             parametrizado através da tela CADPAR. PRJ366 (Lombardi).							 
+                             parametrizado através da tela CADPAR. PRJ366 (Lombardi).
 
                 24/04/2018 - Adicionado campo cdcatego na inclusao de nova conta.
                            - Gravar historico de inclusao dos campos cdtipcta,

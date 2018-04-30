@@ -152,8 +152,8 @@
                              correspondente a tela CONTAS, OPCAO Conta Corrente                             
                              (Projeto 218 - Melhorias Tarifas (Carlos Rafael Tanholi)
                   
-				27/10/2015 - Inclusao de novo campo para a tela CONTAS,
-							 crapass.idastcjt (Jean Michel) 
+                27/10/2015 - Inclusao de novo campo para a tela CONTAS,
+                             crapass.idastcjt (Jean Michel) 
                              
                 07/12/2015 - Ajuste para deixar alterar normalmente o PA de
                              cooperados que possuem beneficios com status
@@ -167,8 +167,8 @@
                 22/12/2015 - Ajuste na data de abertura da conta
                              Chamado 373200 (Heitor - RKAM)
 
-				01/04/2016 - Retiradas consistências para exclusão de ITG na
-							 Credimilsul - SD 417127 (Rodrigo)
+                01/04/2016 - Retiradas consistências para exclusão de ITG na
+							               Credimilsul - SD 417127 (Rodrigo)
 
                 12/01/2016 - Remoção da manutenção do campo flgcrdpa e cdoplcpa
                              (Anderson).
@@ -183,26 +183,26 @@
                              PRJ207 - Esteira (Odirlei/AMcom)    
 
 
-	            01/08/2016 - Nao deixar alterar PA caso o processo do BI ainda
-				             estiver em execucao (Andrino - Chamado 495821)
+                01/08/2016 - Nao deixar alterar PA caso o processo do BI ainda
+                             estiver em execucao (Andrino - Chamado 495821)
                      
                 11/11/2016 - #511290 Correcao de como o sistema verifica se eh
                              abertura de conta ou mudanca do tipo da mesma, 
                              para solicitar talao de cheque para o cooperado 
                              (Carlos)
 				       
-				02/12/2016 - Tratamento bloqueio solicitacao conta ITG
-				             (Incorporacao Transposul). (Fabricio)
+                02/12/2016 - Tratamento bloqueio solicitacao conta ITG
+                             (Incorporacao Transposul). (Fabricio)
 
-               19/04/2017 - Alteraçao DSNACION pelo campo CDNACION.
-                            PRJ339 - CRM (Odirlei-AMcom)  
+                19/04/2017 - Alteraçao DSNACION pelo campo CDNACION.
+                             PRJ339 - CRM (Odirlei-AMcom)  
                              
-				20/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
-			                 crapass, crapttl, crapjur 
-							(Adriano - P339).
+                20/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+                             crapass, crapttl, crapjur 
+                             (Adriano - P339).
 
                 19/06/2017 - Ajuste para inclusao do novo tipo de situacao da conta
-  				             "Desligamento por determinação do BACEN" 
+                             "Desligamento por determinação do BACEN" 
                              (Jonata - RKAM P364).			
 
                 21/07/2017 - Alteraçao CDOEDTTL pelo campo IDORGEXP.
@@ -219,8 +219,8 @@
                              ou encerramento de conta ITG devido a migracao do BB.
                              (Jaison/Elton - M459)
 
-				14/11/2017 - Ajuste para nao permitir alterar situacao da conta quando 
-				             ja estiver com situacao = 4
+                14/11/2017 - Ajuste para nao permitir alterar situacao da conta quando 
+                             ja estiver com situacao = 4
                              (Jonata - RKAM P364).			   
 
                 14/11/2017 - Incluido campo  tt-conta-corr.dtadmiss. PRJ339-CRM(Odirlei-AMcom)
@@ -236,6 +236,10 @@
 
                 22/03/2018 - Substituidas verificacoes onde o tipo de conta (cdtipcta) estava fixo. 
                              PRJ366 (Lombardi).
+                             
+                24/04/2018 - Gravar historico de exclusao de titular.
+                           - Gravar historico de alteracao dos campos cdtipcta, 
+                             cdsitdct e cdcatego. PRJ366 (Lombardi).
                              
 .............................................................................*/
 
@@ -1311,8 +1315,8 @@ PROCEDURE Valida_Dados_Altera:
                               par_nmdcampo = "cdtipcta".
 
                        LEAVE ValidaAltera.
-               END.
-
+                    END.
+               
                IF  aux_exitpcta = 0  THEN
                    DO:
                       ASSIGN par_cdcritic = 17
@@ -1348,7 +1352,7 @@ PROCEDURE Valida_Dados_Altera:
                      aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
 
                { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
-
+               
                ASSIGN aux_inctaitg = 0
                       aux_des_erro = ""
                       aux_dscritic = ""
@@ -1358,14 +1362,14 @@ PROCEDURE Valida_Dados_Altera:
                                      WHEN pc_busca_tipo_conta_itg.pr_des_erro <> ?
                       aux_dscritic = pc_busca_tipo_conta_itg.pr_dscritic
                                      WHEN pc_busca_tipo_conta_itg.pr_dscritic <> ?.
-
+               
                IF aux_des_erro = "NOK"  THEN
-                   DO:
+                    DO:
                        ASSIGN par_dscritic = aux_dscritic
-                             par_nmdcampo = "cdtipcta".
+                              par_nmdcampo = "cdtipcta".
                       
                       LEAVE ValidaAltera.
-                   END.
+                    END.
 
                /* Mudando para Conta Integracao */
                IF  aux_inctaitg = 1  THEN
@@ -1477,7 +1481,7 @@ PROCEDURE Valida_Dados_Altera:
 
                           END.
                    END.
-
+               
                IF  par_cdsitdct = 1 AND   /* NORMAL - COM TALAO */
                   (par_cdtipcta = 1 OR par_cdtipcta = 2 OR
                    par_cdtipcta = 3 OR par_cdtipcta = 4) THEN
@@ -1489,7 +1493,7 @@ PROCEDURE Valida_Dados_Altera:
 
                    END.
                */
-
+               
                { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
                
                RUN STORED-PROCEDURE pc_permite_produto_tipo
@@ -1517,13 +1521,13 @@ PROCEDURE Valida_Dados_Altera:
                                      WHEN pc_permite_produto_tipo.pr_dscritic <> ?.
                
                IF aux_cdcritic > 0 OR aux_dscritic <> ""  THEN
-                   DO:
+                    DO:
                         ASSIGN par_cdcritic = aux_cdcritic
                                par_dscritic = aux_dscritic
-                                    par_nmdcampo = "cdtipcta".
-
-                             LEAVE ValidaAltera.
-                   END.
+                               par_nmdcampo = "cdtipcta".
+                                     
+                        LEAVE ValidaAltera.
+                    END.
                IF aux_possuipr = "N" THEN
                    IF  crapass.vllimcre > 0 THEN
                        DO:
@@ -1583,8 +1587,8 @@ PROCEDURE Valida_Dados_Altera:
                        LEAVE ValidaAltera.
 
                     END.
-        END.
-
+            END.
+        
         /*  Mudou a situacao da conta  */
         IF  par_cdsitdct <> crapass.cdsitdct   THEN
             DO:
@@ -1653,8 +1657,8 @@ PROCEDURE Valida_Dados_Altera:
                        par_nmdcampo = "cdtipcta".
                 
                 LEAVE ValidaAltera.
-            END.
-
+             END.
+        
         IF  par_cdbcochq <> crapcop.cdbcoctl  AND
             aux_inctaitg = 1                  THEN
             DO:
@@ -1964,7 +1968,7 @@ PROCEDURE Valida_Dados_Encerra:
     DEF VAR aux_tpsconta  AS LONGCHAR                               NO-UNDO.
     
     DEF BUFFER crabass FOR crapass.
-
+    
     ASSIGN 
         par_dscritic = "Erro ao validar os dados (ENCERRA ITG)".
         aux_returnvl = "NOK".
@@ -2013,11 +2017,11 @@ PROCEDURE Valida_Dados_Encerra:
                               WHEN pc_busca_tipo_conta_itg.pr_dscritic <> ?.
         
         IF aux_des_erro = "NOK"  THEN
-            DO:
+             DO:
                ASSIGN par_dscritic = aux_dscritic.
                LEAVE ValidaEncerra.
-            END.
-
+             END.
+        
         IF  aux_inctaitg = 0 THEN
             DO:
                ASSIGN par_dscritic = "TIPO DE CONTA ERRADO - SOMENTE TIPO DE CONTA INTEGRAÇAO ".
@@ -2167,11 +2171,11 @@ PROCEDURE Valida_Dados_Encerra:
             IF  CAN-FIND(FIRST tt_tipos_conta WHERE /*Req.Conta ITG*/
                                        tt_tipos_conta.inpessoa = crabass.inpessoa  AND
                                        tt_tipos_conta.cdtipcta = crapreq.cdtipcta) THEN
-            DO: 
-               par_dscritic = "EXISTEM REQUISICOES DE CHEQUES - IMPOSSIVEL " + 
-                              "ENCERRAR".
-               LEAVE ValidaEncerra.
-            END.
+                DO: 
+                   par_dscritic = "EXISTEM REQUISICOES DE CHEQUES - IMPOSSIVEL " + 
+                                  "ENCERRAR".
+                   LEAVE ValidaEncerra.
+                END.
 
         /* Verifica se existe Cartao BB */ 
         FIND FIRST crawcrd WHERE   crawcrd.cdcooper = crabass.cdcooper AND
@@ -3132,44 +3136,48 @@ PROCEDURE Grava_Dados_Altera:
     DEF  INPUT PARAM par_cdagenci AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_cdoperad AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_dtmvtolt AS DATE                           NO-UNDO.
-	DEF  INPUT PARAM par_idorigem AS INTE                           NO-UNDO.
-	DEF  INPUT PARAM par_nrdcaixa AS INTE                           NO-UNDO.
+  	DEF  INPUT PARAM par_idorigem AS INTE                           NO-UNDO.
+  	DEF  INPUT PARAM par_nrdcaixa AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_nmdatela AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_tpaltera AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_cdtipcta AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_cdsitdct AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_cdsecext AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_tpextcta AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_cdagepac AS INTE                           NO-UNDO.
+  	DEF  INPUT PARAM par_tpextcta AS INTE                           NO-UNDO.
+  	DEF  INPUT PARAM par_cdagepac AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_cdbcochq AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_flgiddep AS LOG                            NO-UNDO.
     DEF  INPUT PARAM par_tpavsdeb AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_dtcnsscr AS DATE                           NO-UNDO.
     DEF  INPUT PARAM par_dtcnsspc AS DATE                           NO-UNDO.
-    DEF  INPUT PARAM par_dtdsdspc AS DATE                           NO-UNDO.
-    DEF  INPUT PARAM par_inadimpl AS INTE                           NO-UNDO.
+  	DEF  INPUT PARAM par_dtdsdspc AS DATE                           NO-UNDO.
+  	DEF  INPUT PARAM par_inadimpl AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_inlbacen AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_flgrestr AS LOG                            NO-UNDO.
     DEF  INPUT PARAM par_indserma AS LOG                            NO-UNDO.
     DEF  INPUT PARAM par_idastcjt AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_cdcatego AS INTE							NO-UNDO.
 	
-    DEF PARAM BUFFER crabass FOR crapass.
+  	DEF PARAM BUFFER crabass FOR crapass.
 
     DEF OUTPUT PARAM par_cdcritic AS INTE                           NO-UNDO.
     DEF OUTPUT PARAM par_dscritic AS CHAR                           NO-UNDO.
 
     DEF VAR aux_nrseqdig AS INTE                                    NO-UNDO.
     DEF VAR aux_returnvl AS CHAR                                    NO-UNDO.
-    DEF VAR aux_ctdpoder AS INTE                                    NO-UNDO.
+  	DEF VAR aux_ctdpoder AS INTE                                    NO-UNDO.
 
+    DEF VAR aux_cdtipcta_ant AS INTE                                NO-UNDO.
+    DEF VAR aux_cdsitdct_ant AS INTE                                NO-UNDO.
+    DEF VAR aux_cdcatego_ant AS INTE                                NO-UNDO.
+    
     DEF BUFFER crabttl FOR crapttl.
     DEF BUFFER brapttl FOR crapttl.
     DEF BUFFER crabreq FOR crapreq.
     DEF BUFFER crabavs FOR crapavs.
     DEF BUFFER crabrda FOR craprda.
-    DEF BUFFER crabrpp FOR craprpp.
-    DEF BUFFER crabext FOR crapext.
+  	DEF BUFFER crabrpp FOR craprpp.
+  	DEF BUFFER crabext FOR crapext.
     
     ASSIGN aux_returnvl = "NOK".
     
@@ -3187,6 +3195,10 @@ PROCEDURE Grava_Dados_Altera:
               LEAVE GravaAltera.
            END.
 
+        ASSIGN aux_cdtipcta_ant = crabass.cdtipcta
+               aux_cdsitdct_ant = crabass.cdsitdct
+               aux_cdcatego_ant = crabass.cdcatego.
+        
         { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
 
         RUN STORED-PROCEDURE pc_busca_modalidade_tipo
@@ -3218,7 +3230,7 @@ PROCEDURE Grava_Dados_Altera:
 
             END.
         
-         /* Chamado 373200 */
+        /* Chamado 373200 */
         IF aux_cdmodali <> 2    AND 
            crabass.dtabtcct = ? THEN
             ASSIGN crabass.dtabtcct = par_dtmvtolt.
@@ -3393,7 +3405,7 @@ PROCEDURE Grava_Dados_Altera:
                            UNDO GravaAltera, LEAVE GravaAltera.
                        END.
                   
-
+                  
                   IF aux_inctaitg = 1 AND crabass.nrdctitg = "" THEN
                      DELETE crabreq.
                   ELSE
@@ -3431,9 +3443,9 @@ PROCEDURE Grava_Dados_Altera:
                                   UNDO GravaAltera, LEAVE GravaAltera.
                               END.
                          
-                     /* So atualiza o tipo se forem contas com talao */
+                         /* So atualiza o tipo se forem contas com talao */
                          IF  aux_possuipr = "S" THEN
-                         ASSIGN crabreq.cdtipcta = par_cdtipcta.
+                             ASSIGN crabreq.cdtipcta = par_cdtipcta.
                      END.
 
               END. /*  Fim do FOR EACH  */
@@ -4431,6 +4443,109 @@ PROCEDURE Grava_Dados_Altera:
               END.
 
            END.
+        
+        /* Historico */
+        IF  aux_cdtipcta_ant <> crabass.cdtipcta THEN
+            DO:
+                { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+                
+                RUN STORED-PROCEDURE pc_grava_dados_hist 
+                    aux_handproc = PROC-HANDLE NO-ERROR
+                                     (INPUT "CRAPASS"                /* pr_nmtabela */
+                                     ,INPUT "CDTIPCTA"               /* pr_nmdcampo */
+                                     ,INPUT par_cdcooper             /* pr_cdcooper */  
+                                     ,INPUT par_nrdconta             /* pr_nrdconta */  
+                                     ,INPUT 0                        /* pr_inpessoa */  
+                                     ,INPUT 0                        /* pr_idseqttl */  
+                                     ,INPUT 0                        /* pr_cdtipcta */  
+                                     ,INPUT 0                        /* pr_cdsituac */  
+                                     ,INPUT 0                        /* pr_cdprodut */  
+                                     ,INPUT 2                        /* pr_tpoperac */  
+                                     ,INPUT STRING(aux_cdtipcta_ant) /* pr_dsvalant */
+                                     ,INPUT STRING(crabass.cdtipcta) /* pr_dsvalnov */  
+                                     ,INPUT par_cdoperad             /* pr_cdoperad */  
+                                    ,OUTPUT "").
+                
+                CLOSE STORED-PROC pc_grava_dados_hist 
+                      aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+                
+                { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+                
+                ASSIGN aux_dscritic = ""                         
+                       aux_dscritic = pc_grava_dados_hist.pr_dscritic 
+                                      WHEN pc_grava_dados_hist.pr_dscritic <> ?.
+                
+                IF  aux_dscritic <> "" THEN
+                    UNDO GravaAltera, LEAVE GravaAltera.
+            END.
+            
+        IF  aux_cdsitdct_ant <> crabass.cdsitdct THEN
+            DO:
+                { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+                
+                RUN STORED-PROCEDURE pc_grava_dados_hist 
+                    aux_handproc = PROC-HANDLE NO-ERROR
+                                     (INPUT "CRAPASS"                /* pr_nmtabela */
+                                     ,INPUT "CDSITDCT"               /* pr_nmdcampo */
+                                     ,INPUT par_cdcooper             /* pr_cdcooper */  
+                                     ,INPUT par_nrdconta             /* pr_nrdconta */  
+                                     ,INPUT 0                        /* pr_inpessoa */  
+                                     ,INPUT 0                        /* pr_idseqttl */  
+                                     ,INPUT 0                        /* pr_cdtipcta */  
+                                     ,INPUT 0                        /* pr_cdsituac */  
+                                     ,INPUT 0                        /* pr_cdprodut */  
+                                     ,INPUT 2                        /* pr_tpoperac */  
+                                     ,INPUT STRING(aux_cdsitdct_ant) /* pr_dsvalant */
+                                     ,INPUT STRING(crabass.cdsitdct) /* pr_dsvalnov */  
+                                     ,INPUT par_cdoperad             /* pr_cdoperad */  
+                                    ,OUTPUT "").
+                
+                CLOSE STORED-PROC pc_grava_dados_hist 
+                      aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+                
+                { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+                
+                ASSIGN aux_dscritic = ""                         
+                       aux_dscritic = pc_grava_dados_hist.pr_dscritic 
+                                      WHEN pc_grava_dados_hist.pr_dscritic <> ?.
+                
+                IF  aux_dscritic <> "" THEN
+                    UNDO GravaAltera, LEAVE GravaAltera.
+            END.
+            
+        IF  aux_cdcatego_ant <> crabass.cdcatego THEN
+            DO:
+                { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+                
+                RUN STORED-PROCEDURE pc_grava_dados_hist 
+                    aux_handproc = PROC-HANDLE NO-ERROR
+                                     (INPUT "CRAPASS"                /* pr_nmtabela */
+                                     ,INPUT "CDCATEGO"               /* pr_nmdcampo */
+                                     ,INPUT par_cdcooper             /* pr_cdcooper */  
+                                     ,INPUT par_nrdconta             /* pr_nrdconta */  
+                                     ,INPUT 0                        /* pr_inpessoa */  
+                                     ,INPUT 0                        /* pr_idseqttl */  
+                                     ,INPUT 0                        /* pr_cdtipcta */  
+                                     ,INPUT 0                        /* pr_cdsituac */  
+                                     ,INPUT 0                        /* pr_cdprodut */  
+                                     ,INPUT 2                        /* pr_tpoperac */  
+                                     ,INPUT STRING(aux_cdcatego_ant) /* pr_dsvalant */
+                                     ,INPUT STRING(crabass.cdcatego) /* pr_dsvalnov */  
+                                     ,INPUT par_cdoperad             /* pr_cdoperad */  
+                                    ,OUTPUT "").
+                
+                CLOSE STORED-PROC pc_grava_dados_hist 
+                      aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+                
+                { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+                
+                ASSIGN aux_dscritic = ""                         
+                       aux_dscritic = pc_grava_dados_hist.pr_dscritic 
+                                      WHEN pc_grava_dados_hist.pr_dscritic <> ?.
+                
+                IF  aux_dscritic <> "" THEN
+                    UNDO GravaAltera, LEAVE GravaAltera.
+           END.
 
         ASSIGN aux_returnvl = "OK"
                par_cdcritic = 0
@@ -5189,6 +5304,69 @@ PROCEDURE Grava_Dados_Exclui:
             IF  par_cdcritic <> 0 THEN
                 UNDO GravaExclui, LEAVE GravaExclui.
 
+            /* Historico */
+            { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+            
+            RUN STORED-PROCEDURE pc_grava_dados_hist 
+                aux_handproc = PROC-HANDLE NO-ERROR
+                                 (INPUT "CRAPTTL"                /* pr_nmtabela */
+                                 ,INPUT "NRCPFCGC"               /* pr_nmdcampo */
+                                 ,INPUT par_cdcooper             /* pr_cdcooper */  
+                                 ,INPUT par_nrdconta             /* pr_nrdconta */  
+                                 ,INPUT 0                        /* pr_inpessoa */  
+                                 ,INPUT crabttl.idseqttl         /* pr_idseqttl */  
+                                 ,INPUT 0                        /* pr_cdtipcta */  
+                                 ,INPUT 0                        /* pr_cdsituac */  
+                                 ,INPUT 0                        /* pr_cdprodut */  
+                                 ,INPUT 3                        /* pr_tpoperac */
+                                 ,INPUT STRING(crabttl.nrcpfcgc) /* pr_dsvalant */  
+                                 ,INPUT ?                        /* pr_dsvalnov */  
+                                 ,INPUT par_cdoperad             /* pr_cdoperad */  
+                                ,OUTPUT "").
+            
+            CLOSE STORED-PROC pc_grava_dados_hist 
+                  aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+            
+            { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+            
+            ASSIGN aux_dscritic = ""                         
+                   aux_dscritic = pc_grava_dados_hist.pr_dscritic 
+                                  WHEN pc_grava_dados_hist.pr_dscritic <> ?.
+            
+            IF  aux_dscritic <> "" THEN
+                UNDO GravaExclui, LEAVE GravaExclui.
+                
+            { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+            
+            RUN STORED-PROCEDURE pc_grava_dados_hist 
+                aux_handproc = PROC-HANDLE NO-ERROR
+                                 (INPUT "CRAPTTL"        /* pr_nmtabela */
+                                 ,INPUT "NMEXTTTL"       /* pr_nmdcampo */
+                                 ,INPUT par_cdcooper     /* pr_cdcooper */  
+                                 ,INPUT par_nrdconta     /* pr_nrdconta */  
+                                 ,INPUT ?                /* pr_inpessoa */  
+                                 ,INPUT crabttl.idseqttl /* pr_idseqttl */  
+                                 ,INPUT ?                /* pr_cdtipcta */  
+                                 ,INPUT ?                /* pr_cdsituac */  
+                                 ,INPUT ?                /* pr_cdprodut */  
+                                 ,INPUT 3                /* pr_tpoperac */
+                                 ,INPUT crabttl.nmextttl /* pr_dsvalant */
+                                 ,INPUT ?                /* pr_dsvalnov */  
+                                 ,INPUT par_cdoperad     /* pr_cdoperad */  
+                                ,OUTPUT "").
+            
+            CLOSE STORED-PROC pc_grava_dados_hist 
+                  aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+            
+            { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+            
+            ASSIGN aux_dscritic = ""                         
+                   aux_dscritic = pc_grava_dados_hist.pr_dscritic 
+                                  WHEN pc_grava_dados_hist.pr_dscritic <> ?.
+            
+            IF  aux_dscritic <> "" THEN
+                UNDO GravaExclui, LEAVE GravaExclui.
+
             DELETE brapttl.
 
             RUN proc_gerar_log (INPUT par_cdcooper,
@@ -5345,7 +5523,7 @@ PROCEDURE Grava_Dados_Encerra:
         
         IF  crabass.cdsitdct <> 4 AND aux_inctaitg = 1 THEN
             ASSIGN crapass.cdsitdct = 6.
-        
+               
         ASSIGN crabass.flgctitg = 3.
         
         UNIX SILENT VALUE
