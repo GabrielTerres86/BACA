@@ -115,9 +115,6 @@ CREATE OR REPLACE PACKAGE CECRED.LIMI0001 AS
                                   ,pr_nrrevcad IN craprli.nrrevcad%TYPE --> Numero de meses da revisao cadastral
                                   ,pr_qtmincta IN craprli.qtmincta%TYPE --> Tempo Minimo de conta
                                   ,pr_qtdiaren IN craprli.qtdiaren%TYPE --> Periodo Maximo de dias para renovacao
-                                  ,pr_qtmeslic IN craprli.qtmeslic%TYPE --> Quantidade de Meses do novo limite após o cancelamento
-                                  ,pr_cnauinad IN craprli.cnauinad%TYPE --> indicador de cancelamento automatico por inadimplencia
-                                  ,pr_qtdiatin IN craprli.qtdiatin%TYPE --> Quantidade de dias de atraso para cancelamento por ina
                                   ,pr_qtmaxren IN craprli.qtmaxren%TYPE --> Quantidade maxima de renovacao
                                   ,pr_qtdiaatr IN craprli.qtdiaatr%TYPE --> Quantidade de dias de atraso de emprestimo
                                   ,pr_qtatracc IN craprli.qtatracc%TYPE --> Quantidade de dias de atraso em conta corrente
@@ -127,6 +124,9 @@ CREATE OR REPLACE PACKAGE CECRED.LIMI0001 AS
                                   ,pr_pcliqdez IN craprli.pcliqdez%TYPE --> Percentual mínimo de liquidez
                                   ,pr_qtdialiq IN craprli.qtdialiq%TYPE --> Quantidade de dias para calculo do percentual liquidez
                                   ,pr_idgerlog IN INTEGER               --> Identificador de Log (Fixo no código, 0 – Não / 1 - Sim)
+                                  ,pr_qtmeslic IN craprli.qtmeslic%TYPE --> Quantidade de Meses do novo limite após o cancelamento
+                                  ,pr_cnauinad IN craprli.cnauinad%TYPE --> indicador de cancelamento automatico por inadimplencia
+                                  ,pr_qtdiatin IN craprli.qtdiatin%TYPE --> Quantidade de dias de atraso para cancelamento por ina
                                   ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
                                   ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
                                   ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
@@ -456,9 +456,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
                                   ,pr_nrrevcad IN craprli.nrrevcad%TYPE --> Numero de meses da revisao cadastral
                                   ,pr_qtmincta IN craprli.qtmincta%TYPE --> Tempo Minimo de conta
                                   ,pr_qtdiaren IN craprli.qtdiaren%TYPE --> Periodo Maximo de dias para renovacao
-                                  ,pr_qtmeslic IN craprli.qtmeslic%TYPE --> Quantidade de Meses do novo limite após o cancelamento
-                                  ,pr_cnauinad IN craprli.cnauinad%TYPE --> indicador de cancelamento automatico por inadimplencia
-                                  ,pr_qtdiatin IN craprli.qtdiatin%TYPE --> Quantidade de dias de atraso para cancelamento por inadimplencia
                                   ,pr_qtmaxren IN craprli.qtmaxren%TYPE --> Quantidade maxima de renovacao
                                   ,pr_qtdiaatr IN craprli.qtdiaatr%TYPE --> Quantidade de dias de atraso de emprestimo
                                   ,pr_qtatracc IN craprli.qtatracc%TYPE --> Quantidade de dias de atraso em conta corrente
@@ -468,6 +465,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
                                   ,pr_pcliqdez IN craprli.pcliqdez%TYPE --> Percentual mínimo de liquidez
                                   ,pr_qtdialiq IN craprli.qtdialiq%TYPE --> Quantidade de dias para calculo do percentual liquidez
                                   ,pr_idgerlog IN INTEGER               --> Identificador de Log (Fixo no código, 0 – Não / 1 - Sim)
+                                  ,pr_qtmeslic IN craprli.qtmeslic%TYPE --> Quantidade de Meses do novo limite após o cancelamento
+                                  ,pr_cnauinad IN craprli.cnauinad%TYPE --> indicador de cancelamento automatico por inadimplencia
+                                  ,pr_qtdiatin IN craprli.qtdiatin%TYPE --> Quantidade de dias de atraso para cancelamento por inadimplencia
                                   ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
                                   ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
                                   ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
