@@ -70,6 +70,18 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS770(pr_cdcooper IN crapcop.cdcooper%TY
        ORDER BY epr.nrdconta, sequencia
        ;        
   --
+  CURSOR c_crapcyc(pr_cdcooper IN NUMBER
+                  ,pr_nrdconta IN NUMBER
+                  ,pr_nrctremp IN NUMBER) IS          
+    SELECT 1
+      FROM crapcyc 
+     WHERE cdcooper = pr_cdcooper
+       AND nrdconta = pr_nrdconta
+       AND nrctremp = pr_nrctremp
+       AND flgehvip = 1
+       AND cdmotcin IN (1,2,7)
+       AND cdorigem = 3; 
+  --
   vr_cdcritic    NUMBER;
   vr_dscritic    VARCHAR2(1000);
   vr_tab_erro    gene0001.typ_tab_erro;
@@ -78,6 +90,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS770(pr_cdcooper IN crapcop.cdcooper%TY
   vr_nomdojob    VARCHAR2(40) := 'JBP_PAG_PREJUIZO'; 
   vr_flgerlog    BOOLEAN := FALSE;
   vr_exc_erro    EXCEPTION;
+  vr_flgativo  INTEGER;  
   --
   TYPE typ_reg_crapsld IS
   RECORD(vlsdblfp crapsld.vlsdblfp%TYPE
@@ -98,6 +111,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS770(pr_cdcooper IN crapcop.cdcooper%TY
   --
   vr_dsvlrgar  VARCHAR2(32000) := '';
   vr_tipsplit  gene0002.typ_split;   
+  vr_dsctajud    crapprm.dsvlrprm%TYPE;         --> Parametro de contas que nao podem debitar os emprestimos
+  vr_dsctactrjud crapprm.dsvlrprm%TYPE := null; --> Parametro de contas e contratos específicos que nao podem debitar os emprestimos SD#618307  
   
   PROCEDURE pc_controla_log_batch(pr_dstiplog IN VARCHAR2, -- 'I' início; 'F' fim; 'E' erro
                                   pr_dscritic IN VARCHAR2 DEFAULT NULL) IS
@@ -129,7 +144,118 @@ BEGIN
   CLOSE btch0001.cr_crapdat;
   -- Primeiro com os sem garantias
   FOR r01 IN c01 LOOP
-    
+    vr_flgativo := 0;
+    -- Lista de contas que nao podem debitar na conta corrente, devido a acao judicial
+    vr_dsctajud := gene0001.fn_param_sistema(pr_nmsistem => 'CRED',
+                                             pr_cdcooper => pr_cdcooper,
+                                             pr_cdacesso => 'CONTAS_ACAO_JUDICIAL');
+     -- Lista de contas e contratos específicos que nao podem debitar os emprestimos (formato="(cta,ctr)") SD#618307
+    vr_dsctactrjud := gene0001.fn_param_sistema(pr_nmsistem => 'CRED'
+                                               ,pr_cdcooper => pr_cdcooper
+                                               ,pr_cdacesso => 'CTA_CTR_ACAO_JUDICIAL');  
+
+    -- Condicao para verificar se permite incluir as linhas parametrizadas
+    IF INSTR(',' || vr_dsctajud || ',',',' || r01.nrdconta || ',') > 0 THEN
+      -- Gerar LOG
+      gene0001.pc_gera_log(pr_cdcooper => r01.cdcooper
+                          ,pr_cdoperad => '1'
+                          ,pr_dscritic => vr_dscritic
+                          ,pr_dsorigem => 'AYLLOS'
+                          ,pr_dstransa => '(1) Atencao - Pagamento nao permitido. Verifique situacao da conta'
+                          ,pr_dttransa => TRUNC(SYSDATE)
+                          ,pr_flgtrans => 1
+                          ,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'HH24MISS'))
+                          ,pr_idseqttl => 1
+                          ,pr_nmdatela => 'CRPS770'
+                          ,pr_nrdconta => r01.nrdconta
+                          ,pr_nrdrowid => vr_nrdrowid);
+      CONTINUE; -- Proximo registro do Loop  
+    END IF;
+
+    -- Condicao para verificar se permite incluir as linhas parametrizadas SD#618307
+    IF INSTR(replace(vr_dsctactrjud,' '),'('||trim(to_char(r01.nrdconta))||','||trim(to_char(r01.nrctremp))||')') > 0 THEN
+      -- Gerar LOG
+      gene0001.pc_gera_log(pr_cdcooper => r01.cdcooper
+                          ,pr_cdoperad => '1'
+                          ,pr_dscritic => vr_dscritic
+                          ,pr_dsorigem => 'AYLLOS'
+                          ,pr_dstransa => '(2) Atencao - Pagamento nao permitido. Verifique situacao da conta'
+                          ,pr_dttransa => TRUNC(SYSDATE)
+                          ,pr_flgtrans => 1
+                          ,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'HH24MISS'))
+                          ,pr_idseqttl => 1
+                          ,pr_nmdatela => 'CRPS770'
+                          ,pr_nrdconta => r01.nrdconta
+                          ,pr_nrdrowid => vr_nrdrowid);
+      CONTINUE; -- Proximo registro do Loop
+    END IF;    
+  
+    OPEN c_crapcyc(r01.cdcooper, 
+                   r01.nrdconta, 
+                   r01.nrctremp);
+    FETCH c_crapcyc INTO vr_flgativo;
+    CLOSE c_crapcyc;
+          
+    IF nvl(vr_flgativo,0) = 1 THEN
+      -- Gerar LOG
+      gene0001.pc_gera_log(pr_cdcooper => r01.cdcooper
+                          ,pr_cdoperad => '1'
+                          ,pr_dscritic => vr_dscritic
+                          ,pr_dsorigem => 'AYLLOS'
+                          ,pr_dstransa => '(3) Pagamento nao permitido, conta possui motivo 1,2,7 e VIP'
+                          ,pr_dttransa => TRUNC(SYSDATE)
+                          ,pr_flgtrans => 1
+                          ,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'HH24MISS'))
+                          ,pr_idseqttl => 1
+                          ,pr_nmdatela => 'CRPS770'
+                          ,pr_nrdconta => r01.nrdconta
+                          ,pr_nrdrowid => vr_nrdrowid);
+      CONTINUE; -- Proximo registro do Loop
+    END IF;
+    --  
+    -- Acordo com modulo.
+    RECP0001.pc_verifica_acordo_ativo (pr_cdcooper => r01.cdcooper
+                                      ,pr_nrdconta => r01.nrdconta
+                                      ,pr_nrctremp => r01.nrctremp
+                                      ,pr_cdorigem => 3
+                                      ,pr_flgativo => vr_flgativo
+                                      ,pr_cdcritic => vr_cdcritic
+                                      ,pr_dscritic => vr_dscritic);
+    IF vr_cdcritic > 0
+      OR vr_dscritic IS NOT NULL THEN
+      -- Gerar LOG
+      gene0001.pc_gera_log(pr_cdcooper => r01.cdcooper
+                          ,pr_cdoperad => '1'
+                          ,pr_dscritic => vr_dscritic
+                          ,pr_dsorigem => 'AYLLOS'
+                          ,pr_dstransa => 'Erro ao buscar se existe acordo com modulo - RECP0001'
+                          ,pr_dttransa => TRUNC(SYSDATE)
+                          ,pr_flgtrans => 1
+                          ,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'HH24MISS'))
+                          ,pr_idseqttl => 1
+                          ,pr_nmdatela => 'CRPS770'
+                          ,pr_nrdconta => r01.nrdconta
+                          ,pr_nrdrowid => vr_nrdrowid);
+      CONTINUE; -- Proximo registro do Loop
+    END IF;
+
+    IF NVL(vr_flgativo,0) = 1 THEN
+      -- Gerar LOG
+      gene0001.pc_gera_log(pr_cdcooper => r01.cdcooper
+                          ,pr_cdoperad => '1'
+                          ,pr_dscritic => vr_dscritic
+                          ,pr_dsorigem => 'AYLLOS'
+                          ,pr_dstransa => 'Pagamento nao permitido, emprestimo em acordo - Modulo'
+                          ,pr_dttransa => TRUNC(SYSDATE)
+                          ,pr_flgtrans => 1
+                          ,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'HH24MISS'))
+                          ,pr_idseqttl => 1
+                          ,pr_nmdatela => 'CRPS770'
+                          ,pr_nrdconta => r01.nrdconta
+                          ,pr_nrdrowid => vr_nrdrowid);
+      CONTINUE; -- Proximo registro do Loop                    
+    END IF;
+    --    
     EXTR0001.PC_OBTEM_SALDO_DIA(pr_cdcooper   => r01.cdcooper,
                                 pr_rw_crapdat => rw_crapdat,
                                 pr_cdagenci => 0,
@@ -192,8 +318,121 @@ BEGIN
       END IF;
     END IF;
   END LOOP;
+  --
+  /* ------------------------------------------------------------------------------------------ */
   -- Com Garantia
   FOR r02 IN c02 LOOP
+    vr_flgativo := 0;
+    -- Lista de contas que nao podem debitar na conta corrente, devido a acao judicial
+    vr_dsctajud := gene0001.fn_param_sistema(pr_nmsistem => 'CRED',
+                                             pr_cdcooper => pr_cdcooper,
+                                             pr_cdacesso => 'CONTAS_ACAO_JUDICIAL');
+     -- Lista de contas e contratos específicos que nao podem debitar os emprestimos (formato="(cta,ctr)") SD#618307
+    vr_dsctactrjud := gene0001.fn_param_sistema(pr_nmsistem => 'CRED'
+                                               ,pr_cdcooper => pr_cdcooper
+                                               ,pr_cdacesso => 'CTA_CTR_ACAO_JUDICIAL');  
+
+    -- Condicao para verificar se permite incluir as linhas parametrizadas
+    IF INSTR(',' || vr_dsctajud || ',',',' || r02.nrdconta || ',') > 0 THEN
+      -- Gerar LOG
+      gene0001.pc_gera_log(pr_cdcooper => r02.cdcooper
+                          ,pr_cdoperad => '1'
+                          ,pr_dscritic => vr_dscritic
+                          ,pr_dsorigem => 'AYLLOS'
+                          ,pr_dstransa => '(3) Atencao - Pagamento nao permitido. Verifique situacao da conta'
+                          ,pr_dttransa => TRUNC(SYSDATE)
+                          ,pr_flgtrans => 1
+                          ,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'HH24MISS'))
+                          ,pr_idseqttl => 1
+                          ,pr_nmdatela => 'CRPS770'
+                          ,pr_nrdconta => r02.nrdconta
+                          ,pr_nrdrowid => vr_nrdrowid);
+      CONTINUE; -- Proximo registro do Loop  
+    END IF;
+
+    -- Condicao para verificar se permite incluir as linhas parametrizadas SD#618307
+    IF INSTR(replace(vr_dsctactrjud,' '),'('||trim(to_char(r02.nrdconta))||','||trim(to_char(r02.nrctremp))||')') > 0 THEN
+      -- Gerar LOG
+      gene0001.pc_gera_log(pr_cdcooper => r02.cdcooper
+                          ,pr_cdoperad => '1'
+                          ,pr_dscritic => vr_dscritic
+                          ,pr_dsorigem => 'AYLLOS'
+                          ,pr_dstransa => '(4) Atencao - Pagamento nao permitido. Verifique situacao da conta'
+                          ,pr_dttransa => TRUNC(SYSDATE)
+                          ,pr_flgtrans => 1
+                          ,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'HH24MISS'))
+                          ,pr_idseqttl => 1
+                          ,pr_nmdatela => 'CRPS770'
+                          ,pr_nrdconta => r02.nrdconta
+                          ,pr_nrdrowid => vr_nrdrowid);
+      CONTINUE; -- Proximo registro do Loop
+    END IF;    
+  
+    OPEN c_crapcyc(r02.cdcooper, 
+                   r02.nrdconta, 
+                   r02.nrctremp);
+    FETCH c_crapcyc INTO vr_flgativo;
+    CLOSE c_crapcyc;
+          
+    IF nvl(vr_flgativo,0) = 1 THEN
+      -- Gerar LOG
+      gene0001.pc_gera_log(pr_cdcooper => r02.cdcooper
+                          ,pr_cdoperad => '1'
+                          ,pr_dscritic => vr_dscritic
+                          ,pr_dsorigem => 'AYLLOS'
+                          ,pr_dstransa => '(5) Pagamento nao permitido, conta possui motivo 1,2,7 e VIP'
+                          ,pr_dttransa => TRUNC(SYSDATE)
+                          ,pr_flgtrans => 1
+                          ,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'HH24MISS'))
+                          ,pr_idseqttl => 1
+                          ,pr_nmdatela => 'CRPS770'
+                          ,pr_nrdconta => r02.nrdconta
+                          ,pr_nrdrowid => vr_nrdrowid);
+      CONTINUE; -- Proximo registro do Loop
+    END IF; 
+    --
+    -- Acordo com modulo.
+    RECP0001.pc_verifica_acordo_ativo (pr_cdcooper => r02.cdcooper
+                                      ,pr_nrdconta => r02.nrdconta
+                                      ,pr_nrctremp => r02.nrctremp
+                                      ,pr_cdorigem => 3
+                                      ,pr_flgativo => vr_flgativo
+                                      ,pr_cdcritic => vr_cdcritic
+                                      ,pr_dscritic => vr_dscritic);
+    IF vr_cdcritic > 0
+      OR vr_dscritic IS NOT NULL THEN
+      -- Gerar LOG
+      gene0001.pc_gera_log(pr_cdcooper => r02.cdcooper
+                          ,pr_cdoperad => '1'
+                          ,pr_dscritic => vr_dscritic
+                          ,pr_dsorigem => 'AYLLOS'
+                          ,pr_dstransa => 'Erro ao buscar se existe acordo com modulo - RECP0001'
+                          ,pr_dttransa => TRUNC(SYSDATE)
+                          ,pr_flgtrans => 1
+                          ,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'HH24MISS'))
+                          ,pr_idseqttl => 1
+                          ,pr_nmdatela => 'CRPS770'
+                          ,pr_nrdconta => r02.nrdconta
+                          ,pr_nrdrowid => vr_nrdrowid);
+      CONTINUE; -- Proximo registro do Loop
+    END IF;
+
+    IF NVL(vr_flgativo,0) = 1 THEN
+      -- Gerar LOG
+      gene0001.pc_gera_log(pr_cdcooper => r02.cdcooper
+                          ,pr_cdoperad => '1'
+                          ,pr_dscritic => vr_dscritic
+                          ,pr_dsorigem => 'AYLLOS'
+                          ,pr_dstransa => '(2) Pagamento nao permitido, emprestimo em acordo - Modulo'
+                          ,pr_dttransa => TRUNC(SYSDATE)
+                          ,pr_flgtrans => 1
+                          ,pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE,'HH24MISS'))
+                          ,pr_idseqttl => 1
+                          ,pr_nmdatela => 'CRPS770'
+                          ,pr_nrdconta => r02.nrdconta
+                          ,pr_nrdrowid => vr_nrdrowid);
+      CONTINUE; -- Proximo registro do Loop                    
+    END IF;       
     -- Buscar o saldo atual da conta
     EXTR0001.PC_OBTEM_SALDO_DIA(pr_cdcooper   => r02.cdcooper,
                                 pr_rw_crapdat => rw_crapdat,
