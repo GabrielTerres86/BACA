@@ -7425,6 +7425,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
       vr_nrrefere craplft.nrrefere%TYPE;
       vr_cdagebcb crapcop.cdagebcb%TYPE;
       vr_cdagebcb2 crapcop.cdagebcb%TYPE;
+			vr_cdagenci crapass.cdagenci%TYPE;
       vr_trocaarq BOOLEAN;
       vr_procearq BOOLEAN;
       vr_linha    VARCHAR2(400);
@@ -7703,6 +7704,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
                                ,pr_cdageaut IN  crapcop.cdagebcb%TYPE
                                ,pr_nrautdoc IN  craplft.nrautdoc%TYPE
                                ,pr_nrrefere IN  craplft.nrrefere%TYPE
+															 ,pr_cdagenci IN  craplft.cdagenci%TYPE
                                ,pr_detalhe  OUT VARCHAR2
                                ,pr_dscritic OUT VARCHAR2
                                ) IS
@@ -7734,7 +7736,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
         -- Número de autenticação caixa ou código de transação
         vr_dsautdoc := to_char(pr_cdageaut,'fm0000') ||
                        --> quando liberar pagamento BANCOOB no TAA e CX.Online, deverá gravar PA do terminal e número do terminal
-                       '00'     || --> Fixo "00"
+                       to_char(pr_cdagenci, 'fm00')  || --> Enviaremos PA com 2 digitos momentâneamente. Será revisto após liberação 
+											                                  --  do projeto 406 para a Viacredi
                        '0000'   || --> Terminal fixo "0000"
                         to_char(pr_nrautdoc,'fm000000');
                         
@@ -8215,6 +8218,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
                   vr_cdagebcb := rw_cooper.cdagebcb;
                   --
                 --END IF;
+								-- Buscar PA do cooperado
+								vr_cdagenci := fn_busca_agencia(pr_cdcooper => rw_cooper.cdcooper
+                                               ,pr_nrdconta => rw_conven.nrdconta);
+											
+								-- Limitar PA em 2 digitos (Precisa ser revisto ao liberar projeto 406 para a cooperativa Viacredi)												 
+                IF length(vr_cdagenci) > 2 THEN
+									-- Se PA possuir mais de 2 digitos enviaremos registro zerado
+									vr_cdagenci := 0;
+								END IF;
                 -- Gera a linha de detalhe
                 pc_gera_detalhe(pr_dtvencto => rw_conven.dtvencto -- IN
                                ,pr_cdbarras => rw_conven.cdbarras -- IN
@@ -8224,6 +8236,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
                                ,pr_cdageaut => rw_cooper.cdagebcb -- IN
                                ,pr_nrautdoc => rw_conven.nrautdoc -- IN
                                ,pr_nrrefere => vr_nrrefere        -- IN
+															 ,pr_cdagenci => vr_cdagenci        -- IN
                                ,pr_detalhe  => vr_linha           -- OUT
                                ,pr_dscritic => vr_dscritic        -- OUT
                                );
