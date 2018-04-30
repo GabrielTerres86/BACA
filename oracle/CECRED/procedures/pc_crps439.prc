@@ -10,7 +10,7 @@ create or replace procedure cecred.pc_crps439(pr_cdcooper  in craptab.cdcooper%t
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Julio
-   Data    : Marco/2005                       Ultima atualizacao: 04/07/2017
+   Data    : Marco/2005                       Ultima atualizacao: 27/04/2018
 
    Dados referentes ao programa:
 
@@ -152,19 +152,19 @@ create or replace procedure cecred.pc_crps439(pr_cdcooper  in craptab.cdcooper%t
 
                12/03/2015 - Ajuste na inicalização dos campos de endereço do seguro, para que não apresente
                             falha ao montar o layout do arquivo enviado a seguradora (Odirlei-AMcom)
-               
-               13/04/2015 - Ajuste na validação de daa limite do cancelamento, para que não seja debitado 
-                            se o cancelamento ocorrer no mesmo dia da criação do seguro SD-275054 (Odirlei-AMcom)             
-                            
-               12/06/2017 - Ajuste devido ao aumento do formato para os campos crapass.nrdocptl, crapttl.nrdocttl, 
+
+               13/04/2015 - Ajuste na validação de daa limite do cancelamento, para que não seja debitado
+                            se o cancelamento ocorrer no mesmo dia da criação do seguro SD-275054 (Odirlei-AMcom)
+
+               12/06/2017 - Ajuste devido ao aumento do formato para os campos crapass.nrdocptl, crapttl.nrdocttl,
 			                crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava
 							(Adriano - P339).
 
                04/07/2017 - Ajustes para antecipar o debito dos seguros que caem no fim do mes e que esta
-                            data nao é um dia util (Tiago/Thiago #680197)                         
-                            
+                            data nao é um dia util (Tiago/Thiago #680197)
+
                24/07/2017 - Alterar cdoedptl para idorgexp.
-                            PRJ339-CRM  (Odirlei-AMcom)                            
+                            PRJ339-CRM  (Odirlei-AMcom)
 
                ............................................................................. */
   -- Buscar os dados da cooperativa
@@ -181,7 +181,7 @@ create or replace procedure cecred.pc_crps439(pr_cdcooper  in craptab.cdcooper%t
   CURSOR cr_crapseg (pr_cdcooper in crapseg.cdcooper%TYPE,
                      pr_nrctares in crapseg.nrdconta%TYPE,
                      pr_dtmvtolt in crapseg.dtmvtolt%TYPE,
-                     pr_dtprdebi in crapseg.dtmvtolt%TYPE) IS 
+                     pr_dtprdebi in crapseg.dtmvtolt%TYPE) IS
     select crapseg.cdsegura,
            crapseg.tpplaseg,
            crapseg.cdsitseg,
@@ -402,6 +402,7 @@ create or replace procedure cecred.pc_crps439(pr_cdcooper  in craptab.cdcooper%t
   vr_indebito      crapseg.indebito%type;
   vr_dtdebito      crapseg.dtdebito%type;
   vr_dtprdebi      crapseg.dtdebito%type;
+  vr_dsseguro      varchar2(50);
   -- PL/Table para armazenar os dados do seguro
   type typ_cratseg is record (tpregist  number(1),
                               nrdconta  crapass.nrdconta%type,
@@ -477,6 +478,7 @@ create or replace procedure cecred.pc_crps439(pr_cdcooper  in craptab.cdcooper%t
   vr_nrtelefo      varchar2(28);
   vr_dsdemail      crapcem.dsdemail%type;
   vr_flgclabe      varchar2(1);
+  podeDebitar     BOOLEAN;
 
   -- Procedimento para gerar avisos de débito em conta corrente
   procedure gera_avs (pr_cdcooper in crapavs.cdcooper%type,
@@ -652,34 +654,17 @@ begin
   if cr_craplot%notfound then
     close cr_craplot;
     --
-    begin
-      insert into craplot
-            (dtmvtolt,
-             cdagenci,
-             cdbccxlt,
-             nrdolote,
-             tplotmov,
-             cdcooper,
-             nrseqdig)
-      values(vr_dtmvtolt,
-             1,
-             100,
-             4151,
-             1,
-             pr_cdcooper,
-             0)
-      returning rowid,
-                dtmvtolt,
-                cdagenci,
-                cdbccxlt,
-                nrdolote,
-                nrseqdig
-           into rw_craplot.rowid,
-                rw_craplot.dtmvtolt,
-                rw_craplot.cdagenci,
-                rw_craplot.cdbccxlt,
-                rw_craplot.nrdolote,
-                rw_craplot.nrseqdig;
+  BEGIN
+    LANC0001.pc_incluir_lote(pr_dtmvtolt => vr_dtmvtolt
+                                     , pr_cdagenci => 1
+                                     , pr_cdbccxlt => 100
+                                     , pr_nrdolote => 4151
+                                     , pr_tplotmov => 1
+                                     , pr_cdcooper => pr_cdcooper
+                                     , pr_nrseqdig => 0
+                                     , pr_rw_craplot => rw_craplot
+                                     , pr_cdcritic => vr_cdcritic
+                                     , pr_dscritic => vr_dscritic);
     exception
       when others then
         vr_cdcritic := 0;
@@ -701,7 +686,7 @@ begin
                                ,pr_nrctares => vr_nrctares
                                ,pr_dtmvtolt => vr_dtmvtolt
                                ,pr_dtprdebi => vr_dtprdebi) LOOP
-    
+
     -- Busca informações da seguradora
     open cr_crapcsg (pr_cdcooper,
                      rw_crapseg.cdsegura);
@@ -745,13 +730,55 @@ begin
          (rw_crapseg.dtcancel <= to_date(lpad(rw_craptsg.ddcancel,2,'0')||to_char(vr_dtmvtolt, 'mmyyyy'), 'ddmmyyyy')
           OR
           -- ou se foi cancelado no mesmo dia da criação, nestes casos não precisa debitar
-          rw_crapseg.dtcancel = rw_crapseg.dtmvtolt  
+          rw_crapseg.dtcancel = rw_crapseg.dtmvtolt
          ) then
         -- Fecha o cursor e passa ao próximo registro do loop
         close cr_craptsg;
         continue;
       end if;
     close cr_craptsg;
+    /* valida se historico pode debitar */
+    podeDebitar := LANC0001.fn_pode_debitar(pr_cdcooper => pr_cdcooper,
+                                                      pr_nrdconta => rw_crapseg.nrdconta,
+                                                      pr_cdhistor => rw_crapcsg.cdhstcas##2);
+
+    /* se nao puder debitar historico, entao cancela o contrato e avisa cooperado */
+    IF podeDebitar = false THEN
+       -- marca contrato como cancelado
+       update crapseg
+           set crapseg.dtfimvig = vr_dtmvtolt, -- Data de fim de vigencia do seguro
+               crapseg.dtcancel = vr_dtmvtolt, -- Data de cancelamento
+               crapseg.cdsitseg = 2 -- Situacao do seguro: 1 - Ativo 2 - Cancelado
+         where crapseg.rowid = rw_crapseg.rowid;
+
+         CASE rw_crapseg.tpseguro
+            WHEN 1 THEN vr_dsseguro := 'Residencial';
+            WHEN 11 THEN vr_dsseguro:= 'Residencial';
+            WHEN 2 THEN vr_dsseguro := 'Auto';
+            WHEN 3 THEN vr_dsseguro := 'de Vida';
+            WHEN 4 THEN vr_dsseguro := 'Prestamista';
+            ELSE vr_dsseguro := '';
+          END CASE;
+
+       -- gera mensagem de aviso para o cooperado
+        GENE0003.pc_gerar_mensagem
+                   (pr_cdcooper => pr_cdcooper
+                   ,pr_nrdconta => rw_crapseg.nrdconta
+                   ,pr_idseqttl => 1          -- Primeiro titular da conta
+                   ,pr_cdprogra => 'CRPS439'  -- Programa
+                   ,pr_inpriori => 0          -- prioridade
+                   ,pr_dsdmensg => 'Cooperado, seu seguro '||vr_dsseguro||' foi cancelado por falta de pagamento. Dúvidas consulte seu posto de atendimento' -- corpo da mensagem
+                   ,pr_dsdassun => 'Aviso sobre seu seguro'         -- Assunto
+                   ,pr_dsdremet => rw_crapcop.nmrescop --nome cooperativa remetente
+                   ,pr_dsdplchv => 'emprestimo'
+                   ,pr_cdoperad => 1
+                   ,pr_cdcadmsg => 0
+                   ,pr_dscritic => vr_dscritic);
+
+       commit;
+       -- proximo registro
+       continue;
+    END IF;
     -- Busca informações do associado
     open cr_crapass (pr_cdcooper,
                      rw_crapseg.nrdconta);
@@ -827,42 +854,28 @@ begin
     end if;
 
     -- Gera lançamento em depósito a vista
-    begin
-      insert into craplcm
-             (cdagenci,
-              cdbccxlt,
-              cdhistor,
-              dtmvtolt,
-              cdpesqbb,
-              nrdconta,
-              nrdctabb,
-              nrdctitg,
-              nrdocmto,
-              nrdolote,
-              nrseqdig,
-              cdcooper,
-              vllanmto)
-      values (rw_craplot.cdagenci,
-              rw_craplot.cdbccxlt,
-              rw_crapcsg.cdhstcas##2, -- Historico para debito
-              vr_dtmvtolt,
-              to_char(rw_crapseg.cdsegura),
-              rw_crapseg.nrdconta,
-              rw_crapseg.nrdconta,
-              gene0002.fn_mask(rw_crapseg.nrdconta, '99999999'),
-              rw_crapseg.nrctrseg,
-              rw_craplot.nrdolote,
-              nvl(rw_craplot.nrseqdig,0) + 1,
-              pr_cdcooper,
-              vr_vlpreseg)
-      returning cdhistor,
-                nrdocmto,
-                nrseqdig,
-                vllanmto
-           into vr_lcm_cdhistor,
-                vr_lcm_nrdocmto,
-                vr_lcm_nrseqdig,
-                vr_lcm_vllanmto;
+  BEGIN
+    vr_lcm_cdhistor := rw_crapcsg.cdhstcas##2;
+    vr_lcm_nrdocmto := rw_crapseg.nrctrseg;
+    vr_lcm_nrseqdig := nvl(rw_craplot.nrseqdig,0) + 1;
+    vr_lcm_vllanmto := vr_vlpreseg;
+
+    LANC0001.pc_incluir_lcto_lcm(pr_cdagenci => rw_craplot.cdagenci
+                                          , pr_cdbccxlt => rw_craplot.cdbccxlt
+                                          , pr_cdhistor => rw_crapcsg.cdhstcas##2 -- Historico para debito
+                                          , pr_dtmvtolt => vr_dtmvtolt
+                                          , pr_cdpesqbb => to_char(rw_crapseg.cdsegura)
+                                          , pr_nrdconta => rw_crapseg.nrdconta
+                                          , pr_nrdctabb => rw_crapseg.nrdconta
+                                          , pr_nrdctitg => gene0002.fn_mask(rw_crapseg.nrdconta, '99999999')
+                                          , pr_nrdocmto => rw_crapseg.nrctrseg
+                                          , pr_nrdolote => rw_craplot.nrdolote
+                                          , pr_nrseqdig => nvl(rw_craplot.nrseqdig,0) + 1
+                                          , pr_cdcooper => pr_cdcooper
+                                          , pr_vllanmto => vr_vlpreseg
+                                          , pr_cdcritic => vr_cdcritic
+                                          , pr_dscritic => vr_dscritic);
+
     exception
       when others then
         vr_cdcritic := 0;
@@ -1588,4 +1601,3 @@ exception
     rollback;
 end;
 /
-

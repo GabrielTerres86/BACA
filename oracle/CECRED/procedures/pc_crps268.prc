@@ -146,6 +146,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps268(pr_cdcooper IN crapcop.cdcooper%TY
       vr_dtdeb28      DATE;              --> Data do Débito dia 28
       podeDebitar     BOOLEAN;           --> Pode debitar o histórico
 			vr_rw_craplot   craplot%ROWTYPE;
+      vr_dsseguro     VARCHAR2(50);
 
     BEGIN
 
@@ -335,12 +336,48 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps268(pr_cdcooper IN crapcop.cdcooper%TY
             vr_cdcritic := 581;
             RAISE vr_exc_saida;
           END IF;
-          
+
           podeDebitar := lanc0001.fn_pode_debitar(pr_cdcooper => pr_cdcooper,
                                                   pr_nrdconta => rw_crapseg.nrdconta,
                                                   pr_cdhistor => vr_cdhistor);
 
-          IF podeDebitar THEN             
+          /* se nao puder debitar historico, entao cancela o contrato e avisa cooperado */
+          IF podeDebitar = false THEN
+             -- marca contrato como cancelado
+             update crapseg
+                 set crapseg.dtfimvig = rw_crapdat.dtmvtolt, -- Data de fim de vigencia do seguro
+                     crapseg.dtcancel = rw_crapdat.dtmvtolt, -- Data de cancelamento
+                     crapseg.cdsitseg = 2 -- Situacao do seguro: 1 - Ativo 2 - Cancelado
+               where crapseg.rowid = rw_crapseg.rowid;
+
+               CASE rw_crapseg.tpseguro
+                  WHEN 1 THEN vr_dsseguro := 'Residencial';
+                  WHEN 11 THEN vr_dsseguro:= 'Residencial';
+                  WHEN 2 THEN vr_dsseguro := 'Auto';
+                  WHEN 3 THEN vr_dsseguro := 'de Vida';
+                  WHEN 4 THEN vr_dsseguro := 'Prestamista';
+                  ELSE vr_dsseguro := '';
+                END CASE;
+
+             -- gera mensagem de aviso para o cooperado
+              GENE0003.pc_gerar_mensagem
+                         (pr_cdcooper => pr_cdcooper
+                         ,pr_nrdconta => rw_crapseg.nrdconta
+                         ,pr_idseqttl => 1          -- Primeiro titular da conta
+                         ,pr_cdprogra => 'CRPS439'  -- Programa
+                         ,pr_inpriori => 0          -- prioridade
+                         ,pr_dsdmensg => 'Cooperado, seu seguro '||vr_dsseguro||' foi cancelado por falta de pagamento. DЩvidas consulte seu posto de atendimento' -- corpo da mensagem
+                         ,pr_dsdassun => 'Aviso sobre seu seguro'         -- Assunto
+                         ,pr_dsdremet => rw_crapcop.nmrescop --nome cooperativa remetente
+                         ,pr_dsdplchv => 'emprestimo'
+                         ,pr_cdoperad => 1
+                         ,pr_cdcadmsg => 0
+                         ,pr_dscritic => vr_dscritic);
+
+             commit;
+             -- proximo registro
+             continue;
+          ELSE
             -- Insere o lançamento de débito no valor do seguro
             -- Início
             -- Verifica se há capas de lote formado
@@ -351,7 +388,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps268(pr_cdcooper IN crapcop.cdcooper%TY
                             pr_nrdolote => 4154);
             FETCH cr_craplot
             INTO rw_craplot;
-            
+
             IF cr_craplot%NOTFOUND THEN
               -- Fechar o cursor
               CLOSE cr_craplot;
@@ -361,7 +398,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps268(pr_cdcooper IN crapcop.cdcooper%TY
                                                   , pr_cdagenci => 1    -- cdagenci
                                                   , pr_cdbccxlt => 100  -- cdbccxlt
                                                   , pr_nrdolote => 4154 -- nrdolote
-                                                  , pr_tplotmov => 1    -- tplotmov 
+                                                  , pr_tplotmov => 1    -- tplotmov
                                                   , pr_nrseqdig => 0    -- nrseqdig
                                                   , pr_vlcompcr => 0    -- vlcompcr
                                                   , pr_vlinfocr => 0    -- vlinfocr
@@ -369,25 +406,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps268(pr_cdcooper IN crapcop.cdcooper%TY
 																									, pr_cdcritic => vr_cdcritic
 																									, pr_dscritic => vr_dscritic
 																									, pr_rw_craplot => vr_rw_craplot);
-							
-              /*  INSERT INTO craplot(craplot.dtmvtolt,
-                                    craplot.cdagenci,
-                                    craplot.cdbccxlt,
-                                    craplot.nrdolote,
-                                    craplot.tplotmov,
-                                    craplot.nrseqdig,
-                                    craplot.vlcompcr,
-                                    craplot.vlinfocr,
-                                    craplot.cdcooper)
-                    VALUES(rw_crapdat.dtmvtolt, -- dtmvtolt
-                            1,    -- cdagenci
-                           100,  -- cdbccxlt
-                           4154, -- nrdolote
-                           1,    -- tplotmov
-                           0,    -- nrseqdig
-                           0,    -- vlcompcr
-                           0,    -- vlinfocr
-                           pr_cdcooper); */
+
               EXCEPTION
                 WHEN OTHERS THEN
                   vr_dscritic := 'Erro ao  inserir  na tabela  craplot.'||SQLERRM;
@@ -436,38 +455,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps268(pr_cdcooper IN crapcop.cdcooper%TY
                                                     , pr_cdcooper => pr_cdcooper
                                                     , pr_cdcritic => vr_cdcritic
                                                     , pr_dscritic => vr_dscritic);
-                                                    
-                                                    
-               IF pr_cdcritic = 1139 THEN -- Bloqueio do débito por inadimplência
-					        NULL; -- Incluir tratamento para o bloqueio do débito
-				       END IF;                                                     
-                                                    
-         /*     INSERT INTO craplcm(craplcm.cdagenci,
-                                  craplcm.cdbccxlt,
-                                  craplcm.cdhistor,
-                                  craplcm.dtmvtolt,
-                                  craplcm.cdpesqbb,
-                                  craplcm.nrdconta,
-                                  craplcm.nrdctabb,
-                                  craplcm.nrdctitg,
-                                  craplcm.nrdocmto,
-                                  craplcm.nrdolote,
-                                  craplcm.nrseqdig,
-                                  craplcm.vllanmto,
-                                  craplcm.cdcooper)
-                   VALUES(rw_craplot.cdagenci,
-                          rw_craplot.cdbccxlt,
-                          vr_cdhistor,
-                          rw_crapdat.dtmvtolt,
-                          to_char(rw_crapseg.cdsegura),
-                          rw_crapseg.nrdconta,
-                          rw_crapseg.nrdconta,
-                          to_char(rw_crapseg.nrdconta),
-                          rw_crapseg.nrctrseg,
-                          rw_craplot.nrdolote,
-                          rw_craplot.nrseqdig + 1,
-                          rw_crapseg.vlpreseg,
-                          pr_cdcooper); */
             EXCEPTION
               WHEN OTHERS THEN
                 vr_dscritic := 'Erro ao  inserir  na tabela  craplcm.'||SQLERRM;
