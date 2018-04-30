@@ -20,6 +20,9 @@
 				  26/07/2016 - Corrigi tratamentos incorretos para variaveis, o uso 
 							   da funcao utf8tohtml desnecessariamente. SD 479874 (Carlos R.)		   
 
+
+				  04/04/2018 - Chamada da rotina para verificar se o tipo de conta permite produto 
+				               16 - Poupança Programada. PRJ366 (Lombardi).
 	***************************************************************************/
 	
 	session_start();
@@ -52,6 +55,24 @@
 	if (!validaInteiro($nrdconta)) {
 		exibeErro("Conta/dv inv&aacute;lida.");
 	}			
+	
+	// Montar o xml de Requisicao
+	$xml  = "";
+	$xml .= "<Root>";
+	$xml .= " <Dados>";	
+	$xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
+	$xml .= "   <cdprodut>". 16 ."</cdprodut>"; //Poupança Programada
+	$xml .= " </Dados>";
+	$xml .= "</Root>";
+	
+	$xmlResult = mensageria($xml, "CADA0006", "VALIDA_ADESAO_PRODUTO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	$xmlObject = getObjectXML($xmlResult);
+	
+	// Se ocorrer um erro, mostra crítica
+	if (strtoupper($xmlObject->roottag->tags[0]->name) == "ERRO") {
+		$msgErro = $xmlObject->roottag->tags[0]->tags[0]->tags[4]->cdata;
+		exibeErro(utf8_encode($msgErro));
+	}
 	
 	// Monta o xml de requisição
 	$xmlIncluir  = "";

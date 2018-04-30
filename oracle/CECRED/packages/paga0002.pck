@@ -3159,7 +3159,7 @@ create or replace package body cecred.PAGA0002 is
       -- Gerar mensagem de erro para não permitir o pagamento
       vr_dscritic := 'Valor não permitido para pagamento.';
       RAISE vr_exc_erro;
-    END IF;
+    END IF;      
 
     -- Definir descrição da transação
     SELECT DECODE(NVL(pr_idagenda,0),1,'Pagamento','Agendamento para pagamento')||
@@ -6012,6 +6012,10 @@ create or replace package body cecred.PAGA0002 is
     --              05/08/2016 - Incluido tratamento para verificacao de transacoes duplicadas,
     --                           SD 494025 (Jean Michel).
     --
+    --              04/04/2018 - Adicionada chamada para a proc pc_permite_produto_tipo
+    --                           para verificar se o tipo de conta permite a contratação 
+    --                           do produto. PRJ366 (Lombardi).
+    --
     ...........................................................................*/
 
     ---------------> CURSORES <-----------------
@@ -6020,7 +6024,9 @@ create or replace package body cecred.PAGA0002 is
                        pr_nrdconta  crapass.nrdconta%TYPE) IS
       SELECT crapass.nrdconta,
              crapass.nmprimtl,
-             crapass.idastcjt
+             crapass.idastcjt,
+             crapass.cdtipcta,
+             crapass.inpessoa
         FROM crapass
        WHERE crapass.cdcooper = pr_cdcooper
          AND crapass.nrdconta = pr_nrdconta;
@@ -6229,6 +6235,8 @@ create or replace package body cecred.PAGA0002 is
 
     vr_idorigem INTEGER;
     vr_idanalise_fraude tbgen_analise_fraude.idanalise_fraude%TYPE;
+    vr_cdprodut INTEGER;
+    vr_possuipr VARCHAR2(1);
 
   BEGIN
 
@@ -6344,10 +6352,30 @@ create or replace package body cecred.PAGA0002 is
           vr_tpdvalor := 1;
         END IF;
 
+          IF pr_dsorigem LIKE '%AYLLOS%' THEN
+            vr_cdprodut := 10; -- Débito automático
+          ELSE
+            vr_cdprodut := 29; -- Débito Automático Fácil
+          END IF;
+          
+          -- Verifica se o tipo de conta permite a contratação do produto
+          CADA0006.pc_permite_produto_tipo(pr_cdprodut => vr_cdprodut
+                                          ,pr_cdtipcta => rw_crapass.cdtipcta
+                                          ,pr_cdcooper => pr_cdcooper
+                                          ,pr_inpessoa => rw_crapass.inpessoa
+                                          ,pr_possuipr => vr_possuipr
+                                          ,pr_cdcritic => vr_cdcritic
+                                          ,pr_dscritic => vr_dscritic);
+          -- Se ocorrer erro
+          IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
+            RAISE vr_exc_erro;
+          END IF;
+
           OPEN cr_crapcop2 (pr_cdcooper => pr_cdcooper);
           FETCH cr_crapcop2 INTO rw_crapcop2;
 
-          IF rw_crapcop2.flgofatr = 1 THEN
+          IF rw_crapcop2.flgofatr = 1 AND
+             vr_possuipr = 'S'        THEN
 
             IF  rw_crapcon.flgcnvsi = 0 THEN
               OPEN cr_gnconve(pr_cdhistor => rw_crapcon.cdhistor);
@@ -7633,8 +7661,8 @@ create or replace package body cecred.PAGA0002 is
                 lcm.nrdolote = pr_nrdolote AND
                 lcm.nrdctabb = pr_nrdctabb AND
                 lcm.nrdocmto = pr_nrdocmto;
-     rw_craplcm cr_craplcm%ROWTYPE;
-
+     rw_craplcm cr_craplcm%ROWTYPE;     
+     
      rw_craplot lote0001.cr_craplot%ROWTYPE;
     ---------------> VARIAVEIS <-----------------
     --Variaveis de erro
@@ -7867,7 +7895,7 @@ create or replace package body cecred.PAGA0002 is
         rw_craplot.vlinfodb := rw_craplot.vlinfodb + rw_craplcm.vllanmto;
 
         pr_rw_craplot := rw_craplot;
-
+         
         CXON0022.pc_gera_log (pr_cdcooper          --Codigo Cooperativa
                              ,rw_crapccs.cdagenci  --Codigo Agencia
                              ,pr_nrdcaixa          --Numero do caixa
@@ -9250,7 +9278,7 @@ create or replace package body cecred.PAGA0002 is
         -- Se for GPS
         IF rw_craplau.nrseqagp > 0 THEN
 
-		  vr_dstiptra := 'GPS';
+          vr_dstiptra := 'GPS';
                   
           OPEN cr_gps(pr_cdcooper => rw_craplau.cdcooper
                      ,pr_nrdconta => rw_craplau.nrdconta

@@ -222,6 +222,10 @@
               26/03/2018 - Incluir tratamento no cancelamento e recadastramento, para 
                            quando nao for o ultimo dia util do ano, grave a data como 
                            dia atual (Lucas Ranghetti #860768)
+                           
+              03/04/2018 - Adicionada chamada pc_valida_adesao_produto para verificar se o tipo de conta 
+                           permite a contrataçao do produto. PRJ366 (Lombardi).
+                           
 .............................................................................*/
 
 /*............................... DEFINICOES ................................*/
@@ -1117,6 +1121,7 @@ PROCEDURE valida-dados:
     DEF VAR aux_nrdigito AS INTE                                    NO-UNDO.
     DEF VAR aux_nrrefere AS CHAR                                    NO-UNDO.
     DEF VAR aux_qtdigito AS INTE                                    NO-UNDO.
+    DEF VAR aux_cdprodut AS INTE                                    NO-UNDO.
 
     EMPTY TEMP-TABLE tt-erro.
 
@@ -1138,7 +1143,7 @@ PROCEDURE valida-dados:
             END.
 
         IF  par_cddopcao = "I"  THEN
-            DO:   
+            DO:                                 
                               
                 IF  par_cdrefere = 0 THEN              
                     DO:
@@ -1147,6 +1152,39 @@ PROCEDURE valida-dados:
                         LEAVE Valida.
                     END.
                               
+                IF CAN-DO("1,5",TRIM(STRING(par_idorigem))) THEN
+                    aux_cdprodut = 10. /* Débito Automático */
+                ELSE
+                    aux_cdprodut = 29. /* Débito Automático Fácil */
+                    
+                /* buscar quantidade maxima de digitos aceitos para o convenio */
+                { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
+                              
+                RUN STORED-PROCEDURE pc_valida_adesao_produto
+                    aux_handproc = PROC-HANDLE NO-ERROR
+                                            (INPUT par_cdcooper,
+                                             INPUT par_nrdconta,
+                                             INPUT aux_cdprodut,
+                                             OUTPUT 0,   /* pr_cdcritic */
+                                             OUTPUT ""). /* pr_dscritic */
+                            
+                CLOSE STORED-PROC pc_valida_adesao_produto
+                      aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+                { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+                ASSIGN aux_cdcritic = 0
+                       aux_dscritic = ""
+                       aux_cdcritic = pc_valida_adesao_produto.pr_cdcritic                          
+                                          WHEN pc_valida_adesao_produto.pr_cdcritic <> ?
+                       aux_dscritic = pc_valida_adesao_produto.pr_dscritic
+                                          WHEN pc_valida_adesao_produto.pr_dscritic <> ?.
+                
+                IF  aux_cdcritic <> 0 OR aux_dscritic <> "" THEN
+                  DO:
+                      LEAVE Valida.
+                  END.
+                
                 /* buscar quantidade maxima de digitos aceitos para o convenio */
                 { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
                               
@@ -1500,7 +1538,7 @@ PROCEDURE valida-dados:
                             par_cdhistor = 554   OR   /* AGUAS JOINVILLE */
                             par_cdhistor = 961   OR   /* FOZ DO BRASIL */
                             par_cdhistor = 962   OR   /* AGUAS DE MASSARANDUBA */ 
-                            par_cdhistor = 1130  THEN /* AGUAS DE ITAPOCOROY */
+                            par_cdhistor = 1130  THEN /* AGUAS DE ITAPOCOROY */                           
                             DO:        
                                 IF  par_cdrefere > 99999999 THEN /* 8 Dig.*/
                                     DO:
@@ -2356,7 +2394,7 @@ PROCEDURE grava-dados:
                                 ASSIGN aux_dscritic = "Exclusao permitida somente no proximo dia util.".
                                 UNDO Grava, LEAVE Grava.
                              END.
-                             
+                        
                          /* Inicio - Alteracoes referentes a M181 - Rafael Maciel (RKAM) */
                         IF par_cdagenci = 0 THEN
                           ASSIGN par_cdagenci = glb_cdagenci.
@@ -2490,7 +2528,7 @@ PROCEDURE busca_convenios_codbarras:
                       ASSIGN aux_nmempcon = crapscn.dsnomcnv.
             END.
         ELSE
-            DO:                
+            DO:      
                 /* Iremos buscar tambem o convenio aguas de schroeder(87) pois possui dois codigos e a 
                    busca anterior nao funciona */
                 /*Incluido AGUAS DE GUARAMIRIM cdconven: 108 , cdempcon: 1085*/
@@ -2511,7 +2549,7 @@ PROCEDURE busca_convenios_codbarras:
                            crapcon.cdempcon = 1085)                           
                            NO-LOCK NO-ERROR.
                            
-
+                                         
                 IF  NOT AVAILABLE gnconve THEN
                     NEXT.
                 ELSE 
@@ -4074,7 +4112,7 @@ PROCEDURE busca_lancamentos:
                                      (crapscn.cddmoden = 'A'                       OR
                                       crapscn.cddmoden = 'C') 
                                       NO-LOCK NO-ERROR NO-WAIT.
-                                      
+
         IF  NOT AVAIL gnconve  AND
             NOT AVAIL crapscn  THEN
             NEXT.
@@ -4141,7 +4179,7 @@ PROCEDURE busca_lancamentos:
                                              (crapscn.cddmoden = 'A'                       OR
                                               crapscn.cddmoden = 'C') 
                                               NO-LOCK NO-ERROR NO-WAIT.
-                          
+        
                 IF  NOT AVAIL gnconve  AND
                     NOT AVAIL crapscn  THEN
                     NEXT.
@@ -6548,19 +6586,19 @@ PROCEDURE busca_convenio_nome:
     DEF INPUT PARAM par_cdcooper AS INTE NO-UNDO.
     DEF INPUT PARAM par_cdempcon AS INTE NO-UNDO.
     DEF INPUT PARAM par_cdsegmto AS INTE NO-UNDO.
-   
+
     DEF OUTPUT PARAM pr_nmempcon AS CHAR NO-UNDO.
-   
+        
     FIND FIRST crapcon WHERE crapcon.cdcooper = par_cdcooper AND
                              crapcon.cdempcon = par_cdempcon AND
                              crapcon.cdsegmto = par_cdsegmto NO-LOCK.    
-   
+             
     IF AVAILABLE crapcon THEN    
       DO:
       ASSIGN pr_nmempcon = crapcon.nmextcon.
       END.
-   
+
     RELEASE crapcon.
   
   RETURN "OK".
-END PROCEDURE.
+END PROCEDURE.    

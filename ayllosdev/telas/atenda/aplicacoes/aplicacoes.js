@@ -93,6 +93,9 @@
 
              18/12/2017 - P404 - Inclusão de Garantia de Cobertura das Operações de Crédito (Augusto / Marcos (Supero))
 
+			 04/04/2018 - Ajuste para chamar a rotina de senha do coordenador. 
+						  PRJ366 (Lombardi).
+
 ***************************************************************************/
 
 var nraplica = 0;     // Variável para armazenar número da aplicação selecionada
@@ -3292,4 +3295,8 @@ function ativaCampo() {
     $("#vllanmto", "#frmDadosAplicacaoPos").bind("keyup", function (e) {
         return $(this).setMaskOnKeyUp("DECIMAL", "zz.zzz.zz9,99", "", e);
     });
+}
+
+function senhaCoordenador(executaDepois) {
+	pedeSenhaCoordenador(2,executaDepois,'divRotina');
 }
