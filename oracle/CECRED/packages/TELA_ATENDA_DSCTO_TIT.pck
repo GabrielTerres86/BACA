@@ -1538,12 +1538,16 @@ BEGIN
    
    IF  NOT fn_contigencia_motor_esteira(pr_cdcooper => pr_cdcooper) THEN
        -- Enviar a efetivação da proposta para o Ibratan
-       este0003.pc_crps703(pr_cdcooper => pr_cdcooper
-                          ,pr_nrdconta => pr_nrdconta
-                          ,pr_nrctrlim => pr_nrctrlim
-                          ,pr_tpctrlim => pr_tpctrlim
-                          ,pr_cdcritic => vr_cdcritic
-                          ,pr_dscritic => vr_dscritic);
+       este0003.pc_efetivar_limite_esteira(pr_cdcooper => pr_cdcooper
+                                          ,pr_nrdconta => pr_nrdconta
+                                          ,pr_nrctrlim => pr_nrctrlim
+                                          ,pr_tpctrlim => pr_tpctrlim
+                                          ,pr_cdagenci => pr_cdagenci
+                                          ,pr_cdoperad => pr_cdoperad
+                                          ,pr_cdorigem => 9 /*Esteira */
+                                          ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                          ,pr_cdcritic => vr_cdcritic
+                                          ,pr_dscritic => vr_dscritic);
 
        IF  vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
            vr_dscritic := 'Erro ao enviar a efetivação da proposta para o Ibratan: '||vr_dscritic;

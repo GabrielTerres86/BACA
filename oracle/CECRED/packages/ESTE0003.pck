@@ -145,14 +145,24 @@ procedure pc_enviar_analise_manual(pr_cdcooper    in crawlim.cdcooper%type  --> 
                                    ,pr_dscritic OUT VARCHAR2              --> Descricao da critica 
                                    ,pr_des_erro out varchar2              --> Erros do processo OK ou NOK
                                    );
+   
+
+PROCEDURE pc_efetivar_limite_esteira(pr_cdcooper  IN crawlim.cdcooper%TYPE --> Codigo da cooperativa
+                                    ,pr_nrdconta  IN crawlim.nrdconta%TYPE --> Numero da conta do cooperado
+                                    ,pr_nrctrlim  IN crawlim.nrctrlim%TYPE --> Numero da proposta
+                                    ,pr_tpctrlim  IN crawlim.tpctrlim%TYPE --> Tipo da proposta
+                                    ,pr_cdagenci  IN crapage.cdagenci%TYPE --> Codigo da agencia
+                                    ,pr_cdoperad  IN crapope.cdoperad%TYPE --> Codigo do operador
+                                    ,pr_cdorigem  IN INTEGER               --> Codigo da Origem
+                                    ,pr_dtmvtolt  IN crapdat.dtmvtolt%TYPE --> Data do movimento
+                                    ---- OUT ----
+                                    ,pr_cdcritic OUT NUMBER                --> Codigo da Critica
+                                    ,pr_dscritic OUT VARCHAR2              --> Descriçao da Critica
+                                    );
 
 
-PROCEDURE pc_crps703(pr_cdcooper  IN crawlim.cdcooper%TYPE --> Codigo da cooperativa
-                    ,pr_nrdconta  IN crawlim.nrdconta%TYPE --> Numero da conta do cooperado
-                    ,pr_nrctrlim  IN crawlim.nrctrlim%TYPE --> Numero da proposta
-                    ,pr_tpctrlim  IN crawlim.tpctrlim%TYPE --> Tipo da proposta
-                    ,pr_cdcritic OUT NUMBER                --> Codigo da Critica
-                    ,pr_dscritic OUT VARCHAR2              --> Descriçao da Critica
+PROCEDURE pc_crps703(pr_cdcritic OUT NUMBER   --> Codigo da Critica
+                    ,pr_dscritic OUT VARCHAR2 --> Descriçao da Critica
                     );
 
 end ESTE0003;
@@ -2570,8 +2580,6 @@ END pc_efetivar_limite_esteira;
    
 
 PROCEDURE pc_solicitar_limite_efetivacao(pr_cdcooper  IN crawlim.cdcooper%TYPE --> Codigo da cooperativa
-                                        ,pr_nrdconta  IN crawlim.nrdconta%TYPE --> Numero da conta do cooperado
-                                        ,pr_nrctrlim  IN crawlim.nrctrlim%TYPE --> Numero da proposta
                                         ,pr_tpctrlim  IN crawlim.tpctrlim%TYPE --> Tipo da proposta
                                         ,pr_dtmvtolt  IN crapdat.dtmvtolt%TYPE --> Data do movimento
                                         ,pr_cdcritic OUT NUMBER                --> Codigo da Critica
@@ -2601,8 +2609,6 @@ PROCEDURE pc_solicitar_limite_efetivacao(pr_cdcooper  IN crawlim.cdcooper%TYPE -
 
    --     buscar as propostas que já foram analisada e efetivadas no Ayllos
    CURSOR cr_crawlim IS
-   --     buscar todas as propostas ativas e que não foram enviadas, isso somente
-   --     quando passas zero para os parametros.
    SELECT pro.cdcooper
          ,pro.nrdconta
          ,pro.nrctrlim
@@ -2622,25 +2628,7 @@ PROCEDURE pc_solicitar_limite_efetivacao(pr_cdcooper  IN crawlim.cdcooper%TYPE -
    AND    pro.dtenvest          IS NOT NULL
    AND    pro.insitlim          = 2
    AND    pro.tpctrlim          = pr_tpctrlim
-   AND    pro.cdcooper          = pr_cdcooper
-   AND    pr_nrdconta           = 0
-   AND    pr_nrctrlim           = 0
-   
-   UNION  ALL
-   
-   --     Buscar somente uma unica proposta
-   SELECT pro.cdcooper
-         ,pro.nrdconta
-         ,pro.nrctrlim
-         ,pro.tpctrlim
-         ,pro.cdagenci
-         ,pro.cdoperad
-         ,pro.dtenefes
-   FROM   crawlim pro
-   WHERE  pro.tpctrlim = pr_tpctrlim
-   AND    pro.nrctrlim = pr_nrctrlim
-   AND    pro.nrdconta = pr_nrdconta
-   AND    pro.cdcooper = pr_cdcooper;
+   AND    pro.cdcooper          = pr_cdcooper;
    rw_crawlim cr_crawlim%ROWTYPE;
 
 BEGIN
@@ -2690,12 +2678,8 @@ EXCEPTION
 END pc_solicitar_limite_efetivacao;
 
 
-PROCEDURE pc_crps703(pr_cdcooper  IN crawlim.cdcooper%TYPE --> Codigo da cooperativa
-                    ,pr_nrdconta  IN crawlim.nrdconta%TYPE --> Numero da conta do cooperado
-                    ,pr_nrctrlim  IN crawlim.nrctrlim%TYPE --> Numero da proposta
-                    ,pr_tpctrlim  IN crawlim.tpctrlim%TYPE --> Tipo da proposta
-                    ,pr_cdcritic OUT NUMBER                --> Codigo da Critica
-                    ,pr_dscritic OUT VARCHAR2              --> Descriçao da Critica
+PROCEDURE pc_crps703(pr_cdcritic OUT NUMBER   --> Codigo da Critica
+                    ,pr_dscritic OUT VARCHAR2 --> Descriçao da Critica
                     ) IS
    /* ...........................................................................
   
@@ -2710,11 +2694,6 @@ PROCEDURE pc_crps703(pr_cdcooper  IN crawlim.cdcooper%TYPE --> Codigo da coopera
     Objetivo  : Enviar a proposta de limite de desconto de títulos e Borderos ao Ibratan
                 após a análise e efetivação de ambor, para confirmar ao Ibratan que forão
                 efetivados no sistema Ayllos
-                
-                Os parametros pr_cdcooper, pr_nrdconta e pr_nrctrlim são utilizados
-                para a chamada da procedure no processo de efetivação da proposta no sistema
-                Ayllos enviando para o Ibratan a confirmação somente daquela proposta que está sendo
-                efetivada no Ayllos. Pazando zero para esses parametros, irá buscar todas propostas.
 
     Alteraçao : 14/04/2018 - Criação Paulo Penteado (GFT) 
                 
@@ -2733,8 +2712,7 @@ PROCEDURE pc_crps703(pr_cdcooper  IN crawlim.cdcooper%TYPE --> Codigo da coopera
          ,crapcop cop
    WHERE  dat.inproces  = 1 -- online
    AND    dat.cdcooper  = cop.cdcooper
-   AND    cop.flgativo  = 1 -- ativas
-   AND    cop.cdcooper  = decode(pr_cdcooper, 0, cop.cdcooper, pr_cdcooper);
+   AND    cop.flgativo  = 1; -- ativas
    rw_copdat cr_copdat%ROWTYPE;
 
 BEGIN
@@ -2758,9 +2736,7 @@ BEGIN
          END IF;
          
          pc_solicitar_limite_efetivacao(pr_cdcooper => rw_copdat.cdcooper
-                                       ,pr_nrdconta => pr_nrdconta
-                                       ,pr_nrctrlim => pr_nrctrlim
-                                       ,pr_tpctrlim => pr_tpctrlim
+                                       ,pr_tpctrlim => 3
                                        ,pr_dtmvtolt => rw_copdat.dtmvtolt
                                        ,pr_cdcritic => vr_cdcritic
                                        ,pr_dscritic => vr_dscritic );
