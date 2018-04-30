@@ -34,8 +34,8 @@
  * 018: [17/12/2015] Lunelli   (CECRED)  : Edição de número do contrato de limite (Lucas Lunelli - SD 360072 [M175])
  * 019: [15/07/2016] Andrei    (RKAM)    : Ajuste para utilizar rotina convertida a buscar as linhas de limite de credito.
  * 020:	[25/07/2016] Evandro     (RKAM)  : Alterado função controlaFoco.
- * 021: [01/12/2017] Jonata      (RKAM)  : Não permitir acesso a opção de incluir quando conta demitida.
- * 022: [08/08/2017] Heitor    (MOUTS)   : Implementacao da melhoria 438.
+ * 021: [08/08/2017] Heitor    (MOUTS)   : Implementacao da melhoria 438. 
+ * 022: [01/12/2017] Jonata      (RKAM)  : Não permitir acesso a opção de incluir quando conta demitida.
  * 023: [15/03/2018] Diego Simas (AMcom) : Alterado para exibir tratativas quando o limite de crédito foi
  *                                         cancelado de forma automática pelo Ayllos.
  * 024: [22/03/2018] Diego Simas (AMcom) : Implementado nova situação para considerar Cancelamento Automático de Limite
@@ -64,6 +64,7 @@ var aux_inconfi2 = ""; /*Variável usada para controlar validações que serão 
 
 var idSocio = 0; 	   // Indicador do socio para as consultas automatizadas
 var ant_inconcje = 0;
+
 
 // Variável que armazena o nome da rotina conforme tipo de pessoa (1 - Física / 2 - Jurídica)
 var strTitRotinaLC = inpessoa == 1 ? "Limite de Cr&eacute;dito" : "Limite Empresarial";
@@ -758,7 +759,6 @@ function formataPrincipal() {
     rDsencfi2 = $('label[for="dsencfi2"]', '#frmDadosLimiteCredito');
     rDsencfi3 = $('label[for="dsencfi3"]', '#frmDadosLimiteCredito');
     rDssitlli = $('label[for="dssitlli"]', '#frmDadosLimiteCredito');
-    rDtultmaj = $('label[for="dtultmaj"]', '#frmDadosLimiteCredito');
     rDtcanlim = $('label[for="dtcanlim"]', '#frmDadosLimiteCredito');
     rNmoperad = $('label[for="nmoperad"]', '#frmDadosLimiteCredito');
     rNmopelib = $('label[for="nmopelib"]', '#frmDadosLimiteCredito');
@@ -766,6 +766,7 @@ function formataPrincipal() {
     rDstprenv = $('label[for="dstprenv"]', '#frmDadosLimiteCredito');
     rQtrenova = $('label[for="qtrenova"]', '#frmDadosLimiteCredito');
     rDtrenova = $('label[for="dtrenova"]', '#frmDadosLimiteCredito');
+	rDtultmaj = $('label[for="dtultmaj"]', '#frmDadosLimiteCredito');
 
     rVllimite.addClass('rotulo').css({ 'width': '126px' });
     rDtmvtolt.addClass('rotulo-linha').css({ 'width': '110px' });
@@ -777,7 +778,6 @@ function formataPrincipal() {
     rDsencfi2.addClass('rotulo').css({ 'width': '126px' });
     rDsencfi3.addClass('rotulo').css({ 'width': '126px' });
     rDssitlli.addClass('rotulo').css({ 'width': '126px' });
-    rDtultmaj.addClass('rotulo').css({ 'width': '126px' });
     rDtcanlim.addClass('rotulo-linha').css({ 'width': '250px' });
     rNmoperad.addClass('rotulo').css({ 'width': '126px' });
     rNmopelib.addClass('rotulo').css({ 'width': '126px' });
@@ -785,6 +785,7 @@ function formataPrincipal() {
     rDstprenv.addClass('rotulo').css({ 'width': '126px' });
     rQtrenova.addClass('rotulo-linha').css({ 'width': '83px' });
     rDtrenova.addClass('rotulo-linha').css({ 'width': '91px' });
+	rDtultmaj.addClass('rotulo-linha').css({ 'width': '80px' });
 
     // campos
     cVllimite = $('#vllimite', '#frmDadosLimiteCredito');
@@ -797,7 +798,6 @@ function formataPrincipal() {
     cDsencfi2 = $('#dsencfi2', '#frmDadosLimiteCredito');
     cDsencfi3 = $('#dsencfi3', '#frmDadosLimiteCredito');
     cDssitlli = $('#dssitlli', '#frmDadosLimiteCredito');
-    cDtultmaj = $('#dtultmaj', '#frmDadosLimiteCredito');
     cDtcanlim = $('#dtcanlim', '#frmDadosLimiteCredito');
     cNmoperad = $('#nmoperad', '#frmDadosLimiteCredito');
     cNmopelib = $('#nmopelib', '#frmDadosLimiteCredito');
@@ -805,6 +805,7 @@ function formataPrincipal() {
     cDstprenv = $('#dstprenv', '#frmDadosLimiteCredito');
     cQtrenova = $('#qtrenova', '#frmDadosLimiteCredito');
     cDtrenova = $('#dtrenova', '#frmDadosLimiteCredito');
+	cDtultmaj = $('#dtultmaj', '#frmDadosLimiteCredito');
 
     cVllimite.css({ 'width': '220px' });
     cDtmvtolt.css({ 'width': '70px' });
