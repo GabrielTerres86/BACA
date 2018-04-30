@@ -1,0 +1,84 @@
+<?php
+
+/*!
+	 * FONTE        : buscar_limites.php
+	 * CRIAÇÃO      : Amasonas Borges Vieira Jr (Supero)
+	 * DATA CRIAÇÃO : 19/02/2018
+	 * OBJETIVO     : Arquivo para consultas em relação aos limites
+	 * --------------
+	 * ALTERAÇÕES   : 
+	 * --------------      
+	 */
+
+session_cache_limiter("private");
+session_start();
+
+require_once("../../includes/config.php");
+require_once("../../includes/funcoes.php");
+require_once("../../includes/controla_secao.php");
+require_once("../../class/xmlfile.php");
+isPostMethod();
+
+if ($_POST["action"] == "C") {
+    $nr_page = isset($_POST["page"]) ? $_POST["page"] : 0;
+    if (!is_numeric($nr_page))
+        $nr_page = 3;
+
+    $nr_page = 1;
+    $endCount = $nr_page + 50;
+    $admcrd = $_POST['admcrd'];
+    /*		$where = " where c.cdcooper = ".$glbvars['cdcooper'] ;// and ROWNUM > $nr_page and ROWNUM <= $endCount
+            
+    
+            $query = "select c.*, d.NMADMCRD, ROW_NUMBER()OVER (ORDER BY  c.INSITTAB desc, c.CDCOOPER, c.CDADMCRD, c.TPCARTAO, c.CDLIMCRD)AS ROW_NUMBER from CRAPTLC c inner "
+            ." join crapadc d on (c.CDADMCRD = d.CDADMCRD) $where order by  c.INSITTAB desc, c.CDCOOPER, c.CDADMCRD, c.TPCARTAO, c.CDLIMCRD ";
+            $parent_query = "select * from ( $query  ) WHERE ROW_NUMBER >$nr_page AND ROW_NUMBER  < $endCount ";
+            /*print_r($parent_query);echo("<br>");
+            return;*/
+    //$result = dbSelect($parent_query);
+    // Montar o xml de Requisicao
+
+    $xml .= "<Root>";
+    $xml .= " <Dados>";
+    $xml .= "   <cdcooper>" . $glbvars["cdcooper"] . "</cdcooper>";
+    $xml .= "   <cdadmcrd>" . $admcrd . "</cdadmcrd>";
+    $xml .= "   <only_cecred></only_cecred>";
+    $xml .= "   <pagesize>50</pagesize>";
+    $xml .= "   <pagenumber>" . $nr_page . "</pagenumber>";
+    $xml .= " </Dados>";
+    $xml .= "</Root>";
+
+    //echo $xml;
+    $xmlResult = mensageria($xml, "TELA_LIMCRD", "BUSCA_LIMCRD", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+    $xmlObj = simplexml_load_string($xmlResult);
+    $totalResult = $xmlObj->Dados->totalregistros;
+    $totalPage = count($xmlObj->Dados->limite);
+
+    $data = array();
+    array_push($data, array("totalregistros" => strval($totalResult)));
+    for ($i = 0; $i < $totalPage; $i++) {
+        $obj = $xmlObj->Dados->limite[$i];
+        $cdadmcrd = strval($obj->cdadmcrd[0]);
+        $vllimite_minimo = strval($obj->vllimite_minimo);
+        $vllimite_maximo = strval($obj->vllimite_maximo);
+        $dsdias_debito = strval($obj->dsdias_debito);
+        $cdlimcrd = strval($obj->cdlimcrd);
+        $nrctamae = strval($obj->nrctamae);
+
+        array_push($data, array("CDADMCRD" => $cdadmcrd, "vllimite_minimo" => $vllimite_minimo, "vllimite_maximo" => $vllimite_maximo, "dsdias_debito" => $dsdias_debito, "cdlimcrd" => $cdlimcrd, "nrctamae" => $nrctamae));
+    }
+
+    header('Content-Type: application/json');
+    if ($nr_page == 0) {
+
+    }
+    echo json_encode($data);
+    //echo $data;
+    //rint_r($data);
+
+} else {
+    print_r($glbvars);
+}
+
+
+?>
