@@ -29,6 +29,10 @@ CREATE OR REPLACE PACKAGE CECRED.ZOOM0001 AS
   
 			   09/02/2018 - Inclusão de rotina pc_consultar_limite_adp - Daniel(AMcom).			   
 
+               20/03/2018 - Inclusão de rotina pc_consultar_ccl_limite - Daniel(AMcom).
+			   
+			   20/03/2018 - Inclusão de rotina pc_consiste_limite - Daniel(AMcom).
+
 			   12/04/2018 - Inclusão da rotina pc_busca_motivo_demissao	   
 
   ---------------------------------------------------------------------------------------------------------------*/
@@ -514,6 +518,25 @@ PROCEDURE pc_consultar_limite_adp(pr_cdcooper IN NUMBER             --> Cooperat
                                  ,pr_saldo    OUT NUMBER            --> Saldo à liquidar
                                  ,pr_cdcritic OUT PLS_INTEGER       --> Código da crítica
                                  ,pr_dscritic OUT VARCHAR2);      --> Erros do processo
+
+  PROCEDURE pc_consultar_ccl_limite(pr_cdcooper IN NUMBER             --> Cooperativa
+                                   ,pr_nrdconta IN NUMBER             --> Conta
+                                   ,pr_nrctrlim IN NUMBER             --> Contrato de limite de crédito
+                                   ,pr_xmllog   IN VARCHAR2           --> XML com informações de LOG
+                                   ,pr_cdcritic OUT PLS_INTEGER       --> Código da crítica
+                                   ,pr_dscritic OUT VARCHAR2          --> Descrição da crítica
+                                   ,pr_retxml   IN OUT NOCOPY XMLType --> Arquivo de retorno do XML
+                                   ,pr_nmdcampo OUT VARCHAR2          --> Nome do campo com erro
+                                   ,pr_des_erro OUT VARCHAR2);        --> Erros do processo
+
+  PROCEDURE pc_consiste_novo_limite(pr_cdcooper IN NUMBER             --> Cooperativa
+                                   ,pr_nrdconta IN NUMBER             --> Conta
+                                   ,pr_xmllog   IN VARCHAR2           --> XML com informações de LOG
+                                   ,pr_cdcritic OUT PLS_INTEGER       --> Código da crítica
+                                   ,pr_dscritic OUT VARCHAR2          --> Descrição da crítica
+                                   ,pr_retxml   IN OUT NOCOPY XMLType --> Arquivo de retorno do XML
+                                   ,pr_nmdcampo OUT VARCHAR2          --> Nome do campo com erro
+                                   ,pr_des_erro OUT VARCHAR2);        --> Erros do processo
 
   PROCEDURE pc_busca_operadoras(pr_cdopetfn IN NUMBER            -- Codigo da operadora
                                ,pr_nmopetfn IN VARCHAR2          -- Descricao da operadora
@@ -7373,5 +7396,290 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ZOOM0001 AS
 
   END pc_busca_motivo_demissao;                            
   
+
+   PROCEDURE pc_consultar_ccl_limite(pr_cdcooper IN NUMBER             --> Cooperativa
+                                    ,pr_nrdconta IN NUMBER             --> Conta
+                                    ,pr_nrctrlim IN NUMBER             --> Contrato de limite de crédito
+                                    ,pr_xmllog   IN VARCHAR2           --> XML com informações de LOG
+                                    ,pr_cdcritic OUT PLS_INTEGER       --> Código da crítica
+                                    ,pr_dscritic OUT VARCHAR2          --> Descrição da crítica
+                                    ,pr_retxml   IN OUT NOCOPY XMLType --> Arquivo de retorno do XML
+                                    ,pr_nmdcampo OUT VARCHAR2          --> Nome do campo com erro
+                                    ,pr_des_erro OUT VARCHAR2) IS      --> Erros do processo
+    /* .............................................................................
+
+        Programa: pc_consultar_ccl_limite
+        Sistema : CECRED
+        Sigla   : EMPR
+        Autor   : Daniel/AMcom
+        Data    : Março/2018                 Ultima atualizacao:
+
+        Dados referentes ao programa:
+        Frequencia: Sempre que for chamado
+        Objetivo  : Rotina para consultar informações de cancelamento automatico de limite de crédito
+        Observacao: -----
+        Alteracoes:
+      ..............................................................................*/
+----------->>> VARIAVEIS <<<--------
+      -- Variável de críticas
+      vr_cdcritic crapcri.cdcritic%TYPE; --> Cód. Erro
+      vr_dscritic VARCHAR2(1000);        --> Desc. Erro
+      -- Tratamento de erros
+      vr_exc_saida EXCEPTION;
+      vr_auxconta INTEGER := 0; -- Contador auxiliar p/ posicao no XML
+      -- Variaveis retornadas da gene0004.pc_extrai_dados
+      vr_cdcooper INTEGER;
+      vr_cdoperad VARCHAR2(100);
+      vr_nmdatela VARCHAR2(100);
+      vr_nmeacao  VARCHAR2(100);
+      vr_cdagenci VARCHAR2(100);
+      vr_nrdcaixa VARCHAR2(100);
+      vr_idorigem VARCHAR2(100);      
+      ---------->> CURSORES <<--------
+      CURSOR cr_consulta_ccl_limite (pr_cdcooper IN NUMBER
+                                    ,pr_nrdconta IN NUMBER
+                                    ,pr_nrctrlim IN NUMBER) IS
+       SELECT lim.ininadim tipo -- 1- Inadimplência(Cancelamento Automático)
+            , lim.dtfimvig data -- Data do cancelamento
+         FROM craplim lim
+         WHERE lim.cdcooper = pr_cdcooper
+           AND lim.nrdconta = pr_nrdconta
+           AND lim.nrctrlim = pr_nrctrlim
+           AND lim.insitlim = 3; -- Cancelado
+      rw_consulta_ccl_limite cr_consulta_ccl_limite%ROWTYPE;
+
+    BEGIN
+      pr_des_erro := 'OK';
+      -- Extrai dados do xml
+      gene0004.pc_extrai_dados(pr_xml      => pr_retxml,
+                               pr_cdcooper => vr_cdcooper,
+                               pr_nmdatela => vr_nmdatela,
+                               pr_nmeacao  => vr_nmeacao,
+                               pr_cdagenci => vr_cdagenci,
+                               pr_nrdcaixa => vr_nrdcaixa,
+                               pr_idorigem => vr_idorigem,
+                               pr_cdoperad => vr_cdoperad,
+                               pr_dscritic => vr_dscritic);
+
+      -- Se retornou alguma crítica
+      IF TRIM(vr_dscritic) IS NOT NULL THEN
+        -- Levanta exceção
+        RAISE vr_exc_saida;
+      END IF;
+
+      -- PASSA OS DADOS PARA O XML RETORNO
+      -- Criar cabeçalho do XML
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
+      gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                             pr_tag_pai  => 'Root',
+                             pr_posicao  => 0,
+                             pr_tag_nova => 'Dados',
+                             pr_tag_cont => NULL,
+                             pr_des_erro => vr_dscritic);
+      -- Insere as tags
+      gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                             pr_tag_pai  => 'Dados',
+                             pr_posicao  => 0,
+                             pr_tag_nova => 'inf',
+                             pr_tag_cont => NULL,
+                             pr_des_erro => vr_dscritic);
+
+      OPEN cr_consulta_ccl_limite(pr_cdcooper => pr_cdcooper
+                                 ,pr_nrdconta => pr_nrdconta
+                                 ,pr_nrctrlim => pr_nrctrlim);
+     FETCH cr_consulta_ccl_limite
+      INTO rw_consulta_ccl_limite;
+     CLOSE cr_consulta_ccl_limite;
+
+    -- CAMPOS
+    -- Busca os dados
+      pr_cdcritic := NULL;
+      pr_dscritic := NULL;
+
+      gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                             pr_tag_pai  => 'inf',
+                             pr_posicao  => vr_auxconta,
+                             pr_tag_nova => 'tipo',
+                             pr_tag_cont => rw_consulta_ccl_limite.tipo,
+                             pr_des_erro => vr_dscritic);
+
+      gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                             pr_tag_pai  => 'inf',
+                             pr_posicao  => vr_auxconta,
+                             pr_tag_nova => 'data',
+                             pr_tag_cont => to_char(rw_consulta_ccl_limite.data,'DD/MM/YYYY'),
+                             pr_des_erro => vr_dscritic);
+
+  EXCEPTION
+    WHEN OTHERS THEN
+      pr_cdcritic := 999;
+      pr_dscritic := 'Erro consulta_ccl_limite: '||SQLERRM;
+      ROLLBACK;
+  END pc_consultar_ccl_limite;
+
+   PROCEDURE pc_consiste_novo_limite(pr_cdcooper IN NUMBER             --> Cooperativa
+                                    ,pr_nrdconta IN NUMBER             --> Conta
+                                    ,pr_xmllog   IN VARCHAR2           --> XML com informações de LOG
+                                    ,pr_cdcritic OUT PLS_INTEGER       --> Código da crítica
+                                    ,pr_dscritic OUT VARCHAR2          --> Descrição da crítica
+                                    ,pr_retxml   IN OUT NOCOPY XMLType --> Arquivo de retorno do XML
+                                    ,pr_nmdcampo OUT VARCHAR2          --> Nome do campo com erro
+                                    ,pr_des_erro OUT VARCHAR2) IS      --> Erros do processo
+    /* .............................................................................
+
+        Programa: pc_consite_novo_limite
+        Sistema : CECRED
+        Sigla   : EMPR
+        Autor   : Daniel/AMcom
+        Data    : Março/2018                 Ultima atualizacao:
+
+        Dados referentes ao programa:
+        Frequencia: Sempre que for chamado
+        Objetivo  : Rotina para consultar permissões para inclusão de novo limite
+        Observacao: -----
+        Alteracoes:
+      ..............................................................................*/
+----------->>> VARIAVEIS <<<--------
+      -- Variável de críticas
+      vr_cdcritic crapcri.cdcritic%TYPE; --> Cód. Erro
+      vr_dscritic VARCHAR2(1000);        --> Desc. Erro
+      vr_tipo     VARCHAR2(10);
+      vr_data     VARCHAR2(100);
+      vr_contrato VARCHAR2(100);
+      vr_saldo    NUMBER;
+      -- Tratamento de erros
+      vr_exc_saida EXCEPTION;
+      vr_auxconta INTEGER := 0; -- Contador auxiliar p/ posicao no XML
+      -- Variaveis retornadas da gene0004.pc_extrai_dados
+      vr_cdcooper INTEGER;
+      vr_cdoperad VARCHAR2(100);
+      vr_nmdatela VARCHAR2(100);
+      vr_nmeacao  VARCHAR2(100);
+      vr_cdagenci VARCHAR2(100);
+      vr_nrdcaixa VARCHAR2(100);
+      vr_idorigem VARCHAR2(100);      
+      ---------->> CURSORES <<--------
+      CURSOR cr_consiste_limite(pr_cdcooper IN NUMBER
+                               ,pr_nrdconta IN NUMBER) IS
+      SELECT 1 autoriza
+        FROM craplim lim
+       WHERE lim.insitlim = 3 -- Cancelado
+         AND lim.ininadim = 1 -- Inadimplência 
+         AND lim.dtfimvig = (SELECT MAX(mlim.dtfimvig)
+                               FROM craplim mlim
+                              WHERE mlim.insitlim = 3 -- Cancelado
+                                AND mlim.ininadim = 1 -- Inadimplência 
+                                AND mlim.cdcooper = pr_cdcooper      
+                                AND mlim.nrdconta = pr_nrdconta)
+         AND lim.cdcooper = pr_cdcooper      
+         AND lim.nrdconta = pr_nrdconta
+         -- Compara dias
+         AND nvl(((SELECT dtmvtolt FROM crapdat WHERE cdcooper = pr_cdcooper) - lim.dtfimvig),0) <
+             -- Parâmetro
+             nvl((SELECT DISTINCT (rli.qtmeslic*30) 
+                    FROM craprli rli 
+                   WHERE rli.cdcooper = pr_cdcooper
+                     AND rli.tplimite = 1 -- Limite de crédito
+                     AND rli.inpessoa = (SELECT DISTINCT inpessoa 
+                                           FROM crapass 
+                                          WHERE cdcooper = pr_cdcooper 
+                                            AND nrdconta = pr_nrdconta)),0);
+      rw_consiste_limite cr_consiste_limite%ROWTYPE;
+
+    BEGIN      
+      pr_des_erro := 'OK';
+      -- Extrai dados do xml
+      gene0004.pc_extrai_dados(pr_xml      => pr_retxml,
+                               pr_cdcooper => vr_cdcooper,
+                               pr_nmdatela => vr_nmdatela,
+                               pr_nmeacao  => vr_nmeacao,
+                               pr_cdagenci => vr_cdagenci,
+                               pr_nrdcaixa => vr_nrdcaixa,
+                               pr_idorigem => vr_idorigem,
+                               pr_cdoperad => vr_cdoperad,
+                               pr_dscritic => vr_dscritic);
+
+      -- Se retornou alguma crítica
+      IF TRIM(vr_dscritic) IS NOT NULL THEN
+        -- Levanta exceção
+        RAISE vr_exc_saida;
+      END IF;
+      
+      -- Busca o saldo
+      pc_consultar_limite_adp(pr_cdcooper => pr_cdcooper
+                                       ,pr_nrdconta => pr_nrdconta
+                                       -- OUT       
+                                       ,pr_tipo     => vr_tipo
+                                       ,pr_data     => vr_data
+                                       ,pr_contrato => vr_contrato
+                                       ,pr_saldo    => vr_saldo
+                                       ,pr_cdcritic => vr_cdcritic
+                                       ,pr_dscritic => vr_dscritic);  
+                                                                                  
+
+      -- Se retornou alguma crítica      
+      IF TRIM(vr_dscritic) IS NOT NULL THEN
+        -- Levanta exceção
+        RAISE vr_exc_saida;
+      ELSE
+        IF vr_saldo IS NULL THEN
+           vr_saldo := 0;
+        END IF;
+      END IF;
+      
+      -- PASSA OS DADOS PARA O XML RETORNO
+      -- Criar cabeçalho do XML
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
+      gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                             pr_tag_pai  => 'Root',
+                             pr_posicao  => 0,
+                             pr_tag_nova => 'Dados',
+                             pr_tag_cont => NULL,
+                             pr_des_erro => vr_dscritic);
+      -- Insere as tags
+      gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                             pr_tag_pai  => 'Dados',
+                             pr_posicao  => 0,
+                             pr_tag_nova => 'inf',
+                             pr_tag_cont => NULL,
+                             pr_des_erro => vr_dscritic);
+      
+      OPEN cr_consiste_limite(pr_cdcooper => pr_cdcooper
+                             ,pr_nrdconta => pr_nrdconta);
+     FETCH cr_consiste_limite
+      INTO rw_consiste_limite;
+     CLOSE cr_consiste_limite;
+     
+      -- CAMPOS                                       
+      -- Busca os dados do cursor
+      -- 0-Autoriza / 1-Não autoriza
+      IF rw_consiste_limite.autoriza IS NULL THEN
+        rw_consiste_limite.autoriza := 0;
+      END IF;
+      --
+      pr_cdcritic := NULL;
+      pr_dscritic := NULL;
+
+      gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                             pr_tag_pai  => 'inf',
+                             pr_posicao  => vr_auxconta,
+                             pr_tag_nova => 'autoriza',
+                             pr_tag_cont => rw_consiste_limite.autoriza,
+                             pr_des_erro => vr_dscritic);
+
+      gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                             pr_tag_pai  => 'inf',
+                             pr_posicao  => vr_auxconta,
+                             pr_tag_nova => 'saldo',
+                             pr_tag_cont => vr_saldo,
+                             pr_des_erro => vr_dscritic);
+
+  EXCEPTION
+    WHEN OTHERS THEN
+      pr_cdcritic := 999;
+      pr_dscritic := 'Erro consite_novo_limite: '||SQLERRM;
+      ROLLBACK;
+  END pc_consiste_novo_limite;
+    
 END ZOOM0001;
 /

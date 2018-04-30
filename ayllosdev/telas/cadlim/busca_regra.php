@@ -7,6 +7,10 @@
  * --------------
  * ALTERAÇÕES   : 21/09/2016 - Inclusão do filtro "Tipo de Limite" no cabecalho. Inclusão dos campos
  *                             "pcliqdez" e "qtdialiq" no formulario de regras. Projeto 300. (Lombardi)
+ *
+ *				  16/03/2018 - Inclusao de novo campo (Quantidade de Meses do novo limite apos o cancelamento)
+ *							   Diego Simas (AMcom)
+ *
  * -------------- 
  */
     session_start();
@@ -61,12 +65,15 @@
     $('#nrrevcad','#frmRegra').val('<?= getByTagName($regra->tags,'nrrevcad'); ?>');
     $('#qtmincta','#frmRegra').val('<?= getByTagName($regra->tags,'qtmincta'); ?>');
     $('#qtdiaren','#frmRegra').val('<?= getByTagName($regra->tags,'qtdiaren'); ?>');
+		$('#qtmeslic','#frmRegra').val('<?= getByTagName($regra->tags,'qtmeslic'); ?>');//Diego Simas (AMcom)
+    $('#cnauinad','#frmRegra').val('<?= getByTagName($regra->tags,'cnauinad'); ?>');
+    $('#qtdiatin','#frmRegra').val('<?= getByTagName($regra->tags,'qtdiatin'); ?>');
     $('#qtmaxren','#frmRegra').val('<?= getByTagName($regra->tags,'qtmaxren'); ?>');
     $('#qtdiaatr','#frmRegra').val('<?= getByTagName($regra->tags,'qtdiaatr'); ?>');
     $('#qtatracc','#frmRegra').val('<?= getByTagName($regra->tags,'qtatracc'); ?>');
     $('#pcliqdez','#frmRegra').val('<?= getByTagName($regra->tags,'pcliqdez'); ?>');
     $('#qtdialiq','#frmRegra').val('<?= getByTagName($regra->tags,'qtdialiq'); ?>');
-	
+    defineCamposCancAuto();
 	<?
 	$aSituacao = explode(";", getByTagName($regra->tags,'dssitdop'));
 	foreach ($aSituacao as $value){

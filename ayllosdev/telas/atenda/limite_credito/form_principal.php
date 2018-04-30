@@ -10,6 +10,8 @@
  *                15/12/2016 - Alterado tag do botão consultar imagem href para Onclick adaptando-se a função controlaFoco() (Evandro Guaranha-Mout's TI #562864)
  *                08/08/2017 - Implementacao da melhoria 438. Heitor (Mouts).
  *				  06/03/2018 - Adicionado campo idcobope. (PRJ404 Reinert)
+ *                22/03/2018 - Implementado nova situação para considerar Cancelamento Automático de Limite
+ *							   por inadimplência e também novo campo onde contém a data do cancelamento automático. (Simas - Amcom)
  *                13/04/2018 - Incluida chamada da function validaAdesaoValorProduto. PRJ366 (Lombardi)
  *
  */	
@@ -49,6 +51,10 @@
 		
 		<label for="dtrenova"><? echo utf8ToHtml('Data Renova&ccedil;&atilde;o:') ?></label>
 		<input id="dtrenova" name="dtrenova" type="text" value="<?= $dtrenova ?>" />
+		<br />
+		
+		<label for="dtcanlim"><? echo utf8ToHtml('Data Cancelamento:') ?></label>	
+		<input id="dtcanlim" name="dtcanlim" type="text" value="<?php echo $dtcanlim; ?>" />
 		<br />
 		
 		<label for="dsencfi1"><? echo utf8ToHtml('Encargos Financeiros:') ?></label>	
