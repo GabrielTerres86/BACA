@@ -1219,7 +1219,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
       
       --> Modelo 3
       ELSIF vr_cdempcon IN (0239,0451) THEN
-        vr_dsinfor3 := vr_dsinfor3 || '#Identificador: '   || substr(pr_nrrefere,3,15);
+        vr_dsinfor3 := vr_dsinfor3 || '#Identificador: '   || pr_nrrefere;
         
       END IF;
       
