@@ -54,12 +54,15 @@
 	//***                                                                  ***//
 	//***             08/08/2017 - Implementacao da melhoria 438.          ***//
 	//***                          Heitor (Mouts).                         ***//
-  //***                                                                  ***//
+    //***                                                                  ***//
+	//***			  06/03/2018 - Adicionado variável idcobope. 		   ***//
+	//***					       (PRJ404 Reinert)						   ***//
+    //***                                                                  ***//
 	//***             22/03/2018 - Verifica situacao do limite,            ***// 
-  //***                          se foi cancelado automaticamente        ***//  
-  //***                          por inadimplencia.                      ***//
+    //***                          se foi cancelado automaticamente        ***//  
+    //***                          por inadimplencia.                      ***//
 	//***                          Diego Simas (AMcom).                    ***//
-  //***                                                                  ***//     
+    //***                                                                  ***//     
 	//************************************************************************//
 	
 	session_start();
@@ -155,6 +158,7 @@
 	$qtrenova = getByTagName($limite,"qtrenova");
 	$flgimpnp = getByTagName($limite,"flgimpnp");
 	$dslimpro = getByTagName($limite,"dslimpro");	
+	$idcobope = getByTagName($limite,"idcobope");	
 	//$dsobserv = removeCaracteresInvalidos($dsobserv);
 	
 	$xml  = "<Root>";
