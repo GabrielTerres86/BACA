@@ -6005,7 +6005,11 @@ PROCEDURE Critica_Cadastro_Pf:
                       INPUT "Falta Cadastrar Telefone", 
                       INPUT {&TT-TELEF} ).
 
-            IF  craxttl.tpcttrab <> 3   THEN
+            /* 
+              Removida validação do telefone comercial.
+              Essa alteração foi solicitada pela Sarah no projeto 366.
+              (Renato Darosci - Supero - 01/05/2018)
+              IF  craxttl.tpcttrab <> 3   THEN
                 DO:
                    IF  NOT CAN-FIND(FIRST crabtfc WHERE 
                                     crabtfc.cdcooper = craxttl.cdcooper AND
@@ -6017,6 +6021,7 @@ PROCEDURE Critica_Cadastro_Pf:
                              INPUT "Falta Cadastrar Telefone Comercial", 
                              INPUT {&TT-TELEF} ).
                 END.
+            */
 
             /* Existem registros de crapcje que pertencem a crapttl que
             tiveram seus estados civis alterados antes da correcao que faz 
