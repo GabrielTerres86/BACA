@@ -182,7 +182,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0004 IS
           ,case when nvl(lim.nrctrmnt,0) = 0 then 'LM'
                 else                              'MJ'
            end tpproduto
-          ,ldc.tpctrato -- Tipo do contrato de Limite Desconto  (0-Generico/ 1-Aplicacao)
+          ,decode(ldc.tpctrato, 1, 4, 0) tpctrato -- Tipo do contrato de Limite Desconto  (0-Generico/ 1-Aplicacao)
+          ,decode(ldc.tpctrato, 1, 'APLICACAO FINANCEIRA', 'SEM GARANTIA') dsctrato
           ,0 cdfinemp -- finalidadeCodigo: Codigo Finalidade da Proposta de Empréstimo
           ,'' dsfinemp -- finalidadeDescricao: Descricao Finalidade da Proposta de Empréstimo
           ,lim.inconcje
@@ -543,7 +544,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0004 IS
     
     IF  rw_crawlim.tpctrato > 0 THEN
         vr_obj_generico.put('tipoGarantiaCodigo'   , rw_crawlim.tpctrato );
-        vr_obj_generico.put('tipoGarantiaDescricao', fn_des_tpctrato(rw_crawlim.tpctrato) );
+        vr_obj_generico.put('tipoGarantiaDescricao', rw_crawlim.dsctrato );
     END IF;
 
     vr_obj_generico.put('debitoEm'    ,rw_crawlim.despagto );
@@ -1394,7 +1395,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0004 IS
         ,lim.hrinclus
         ,ldc.cddlinha cdlcremp
         ,ldc.dsdlinha dslcremp
-        ,ldc.tpctrato -- Tipo do contrato de Limite Desconto (0-Generico/ 1-Aplicacao)
+        ,decode(ldc.tpctrato, 1, 4, 0) tpctrato -- Tipo do contrato de Limite Desconto (0-Generico/ 1-Aplicacao)
+        ,decode(ldc.tpctrato, 1, 'APLICACAO FINANCEIRA', 'SEM GARANTIA') dsctrato
         ,0 cdfinemp -- finalidadeCodigo: Codigo Finalidade da Proposta de Empréstimo
         ,'' dsfinemp -- finalidadeDescricao: Descricao Finalidade da Proposta de Empréstimo Paulo Penteado (GFT)teste pois parece que nao aceita nulo 
         ,lim.cdoperad
@@ -1603,7 +1605,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0004 IS
      
      IF  rw_crawlim.tpctrato > 0 THEN
          vr_obj_proposta.put('tipoGarantiaCodigo'   , rw_crawlim.tpctrato );
-         vr_obj_proposta.put('tipoGarantiaDescricao', fn_des_tpctrato(rw_crawlim.tpctrato) );
+         vr_obj_proposta.put('tipoGarantiaDescricao', rw_crawlim.dsctrato );
      END IF;
 
      --    Buscar dados do operador

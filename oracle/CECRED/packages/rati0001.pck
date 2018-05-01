@@ -3301,6 +3301,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
           -- Usar da proposta
           vr_vloperac := rw_crapprp1.vlctrbnd;
         END IF;
+      ELSIF pr_tpctrato = 3 THEN
+            rw_craplim1 := null;
+            OPEN  cr_crawlim(pr_cdcooper => pr_cdcooper
+                            ,pr_nrdconta => pr_nrdconta
+                            ,pr_tpctrato => pr_tpctrato
+                            ,pr_nrctrato => pr_nrctrato);
+            FETCH cr_crawlim INTO rw_craplim1;
+            IF    cr_crawlim%NOTFOUND THEN
+                  CLOSE cr_crawlim;
+                  OPEN  cr_craplim(pr_cdcooper => pr_cdcooper
+                                  ,pr_nrdconta => pr_nrdconta
+                                  ,pr_tpctrato => pr_tpctrato
+                                  ,pr_nrctrato => pr_nrctrato);
+                  FETCH cr_craplim INTO rw_craplim1;
+                  CLOSE cr_craplim;
+
+                  vr_vloperac := rw_craplim1.vllimite;
+            ELSE
+                  CLOSE cr_crawlim;
+
+                  vr_vloperac := rw_craplim1.vllimite;
+            END   IF;
       ELSE
         -- Busca do valor da tabela de limites
         rw_craplim1 := null;
@@ -4595,12 +4617,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
       -- Verificação de existência do contrato atual
       CURSOR cr_craplim_atual IS
         SELECT vllimite
-          FROM craplim
-         WHERE cdcooper = pr_cdcooper
-           AND nrdconta = pr_nrdconta
-           AND tpctrlim = pr_tpctrato
-           AND nrctrlim = pr_nrctrato
-           AND insitlim <> 2; --> Não Ativo
+        FROM   craplim
+        WHERE  cdcooper     = pr_cdcooper
+        AND    nrdconta     = pr_nrdconta
+        AND    tpctrlim     = pr_tpctrato
+        AND    nrctrlim     = pr_nrctrato
+        AND    insitlim    <> 2 --> Não Ativo
+        AND    pr_tpctrato <> 3
+        
+        UNION  ALL
+        
+        SELECT vllimite
+        FROM   crawlim
+        WHERE  cdcooper    = pr_cdcooper
+        AND    nrdconta    = pr_nrdconta
+        AND    tpctrlim    = pr_tpctrato
+        AND    nrctrlim    = pr_nrctrato
+        AND    insitlim   <> 2 --> Não Ativo
+        AND    pr_tpctrato = 3;
 
     BEGIN
 
@@ -5655,6 +5689,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
          INTO rw_crapprp3;
         vr_fcrapprp := cr_crapprp%found;
         CLOSE cr_crapprp;
+      ELSIF pr_tpctrato = 3 THEN
+            OPEN  cr_crawlim(pr_cdcooper => pr_cdcooper
+                            ,pr_nrdconta => pr_nrdconta
+                            ,pr_tpctrato => pr_tpctrato
+                            ,pr_nrctrato => pr_nrctrato);
+            FETCH cr_crawlim INTO rw_craplim3;
+            IF    cr_crawlim%NOTFOUND THEN
+                  CLOSE cr_crawlim;
+                  OPEN  cr_craplim(pr_cdcooper => pr_cdcooper
+                                  ,pr_nrdconta => pr_nrdconta
+                                  ,pr_tpctrato => pr_tpctrato
+                                  ,pr_nrctrato => pr_nrctrato);
+                  FETCH cr_craplim INTO rw_craplim3;
+                  CLOSE cr_craplim;
+
+                  vr_fcraplim := cr_craplim%found;
+            ELSE
+                  CLOSE cr_crawlim;
+
+                  vr_fcraplim := TRUE;
+            END   IF;
       ELSE
         -- Ler Contratos de Limite de credito
         OPEN cr_craplim(pr_cdcooper => pr_cdcooper
@@ -8046,7 +8101,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
 
         CLOSE cr_crapprp;
 
+      ELSIF pr_tpctrato = 3 THEN
+            OPEN  cr_crawlim(pr_cdcooper => pr_cdcooper
+                            ,pr_nrdconta => pr_nrdconta
+                            ,pr_tpctrato => pr_tpctrato
+                            ,pr_nrctrato => pr_nrctrato);
+            FETCH cr_crawlim INTO rw_craplim6;
+            IF    cr_crawlim%NOTFOUND THEN
+                  CLOSE cr_crawlim;
+                  OPEN  cr_craplim(pr_cdcooper => pr_cdcooper
+                                  ,pr_nrdconta => pr_nrdconta
+                                  ,pr_tpctrato => pr_tpctrato
+                                  ,pr_nrctrato => pr_nrctrato);
+                  FETCH cr_craplim INTO rw_craplim6;
+                  CLOSE cr_craplim;
 
+                  vr_fcraplim := cr_craplim%found;
+            ELSE
+                  CLOSE cr_crawlim;
+
+                  vr_fcraplim := TRUE;
+            END   IF;
       ELSE
         -- Ler Contratos de Limite de credito
         OPEN cr_craplim(pr_cdcooper => pr_cdcooper
@@ -11695,22 +11770,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
        AND prp.nrctrato = pr_nrctrato
        AND prp.nrctrato = pr_nrctrato;
     rw_crapprp cr_crapprp%ROWTYPE;
-
-    --Cursor para buscar o limite
-    CURSOR cr_craplim(pr_cdcooper IN crapcop.cdcooper%TYPE
-                     ,pr_nrdconta IN crapass.nrdconta%TYPE
-                     ,pr_nrctrlim IN craplim.nrctrlim%TYPE
-                     ,pr_tpctrlim IN craplim.tpctrlim%TYPE) IS
-    SELECT lim.nrgarope
-          ,lim.nrinfcad
-          ,lim.nrliquid
-          ,lim.nrpatlvr
-          ,lim.nrperger
-      FROM craplim lim
-     WHERE lim.cdcooper = pr_cdcooper
-       AND lim.nrdconta = pr_nrdconta
-       AND lim.nrctrlim = pr_nrctrlim
-       AND lim.nrctrlim = pr_nrctrlim;
+    
     rw_craplim cr_craplim%ROWTYPE;
 
   --------------- VARIAVEIS ----------------
@@ -11795,14 +11855,45 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
       vr_nrliquid := rw_crapprp.nrliquid;
       vr_nrpatlvr := rw_crapprp.nrpatlvr;
       vr_nrperger := rw_crapprp.nrperger;
+    
+    ELSIF pr_tpctrrat = 3 THEN
+          OPEN  cr_crawlim(pr_cdcooper => pr_cdcooper
+                          ,pr_nrdconta => pr_nrdconta
+                          ,pr_tpctrato => pr_tpctrrat
+                          ,pr_nrctrato => pr_nrctrrat);
+          FETCH cr_crawlim INTO rw_craplim;
+          IF    cr_crawlim%NOTFOUND THEN
+                CLOSE cr_crawlim;
+                OPEN  cr_craplim(pr_cdcooper => pr_cdcooper
+                                ,pr_nrdconta => pr_nrdconta
+                                ,pr_tpctrato => pr_tpctrrat
+                                ,pr_nrctrato => pr_nrctrrat);
+                FETCH cr_craplim INTO rw_craplim;
+                IF    cr_craplim%NOTFOUND THEN
+                      CLOSE cr_craplim;
+                      vr_cdcritic:= 484;
+                      vr_dscritic:= gene0001.fn_busca_critica(pr_cdcritic => vr_dscritic);
+                      RAISE vr_exc_erro;
+                ELSE
+                     CLOSE cr_craplim;
+                END   IF;
+          ELSE
+                CLOSE cr_crawlim;
+          END   IF;
+
+          vr_nrgarope := rw_craplim.nrgarope;
+          vr_nrinfcad := rw_craplim.nrinfcad;
+          vr_nrliquid := rw_craplim.nrliquid;
+          vr_nrpatlvr := rw_craplim.nrpatlvr;
+          vr_nrperger := rw_craplim.nrperger;
 
     --Descontos/ Cheque Especial
     ELSE
 
       OPEN cr_craplim(pr_cdcooper => pr_cdcooper
                      ,pr_nrdconta => pr_nrdconta
-                     ,pr_tpctrlim => pr_tpctrrat
-                     ,pr_nrctrlim => pr_nrctrrat);
+                     ,pr_tpctrato => pr_tpctrrat
+                     ,pr_nrctrato => pr_nrctrrat);
 
       FETCH cr_craplim INTO rw_craplim;
 
