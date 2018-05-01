@@ -152,8 +152,8 @@
                              correspondente a tela CONTAS, OPCAO Conta Corrente                             
                              (Projeto 218 - Melhorias Tarifas (Carlos Rafael Tanholi)
                   
-				27/10/2015 - Inclusao de novo campo para a tela CONTAS,
-							 crapass.idastcjt (Jean Michel) 
+                27/10/2015 - Inclusao de novo campo para a tela CONTAS,
+                             crapass.idastcjt (Jean Michel) 
                              
                 07/12/2015 - Ajuste para deixar alterar normalmente o PA de
                              cooperados que possuem beneficios com status
@@ -168,7 +168,7 @@
                              Chamado 373200 (Heitor - RKAM)
 
 				01/04/2016 - Retiradas consistencias para exclusao de ITG na
-							 Credimilsul - SD 417127 (Rodrigo)
+							               Credimilsul - SD 417127 (Rodrigo)
 
                 12/01/2016 - Remoçao da manutençao do campo flgcrdpa e cdoplcpa
                              (Anderson).
@@ -183,23 +183,23 @@
                              PRJ207 - Esteira (Odirlei/AMcom)    
 
 
-	            01/08/2016 - Nao deixar alterar PA caso o processo do BI ainda
-				             estiver em execucao (Andrino - Chamado 495821)
+                01/08/2016 - Nao deixar alterar PA caso o processo do BI ainda
+                             estiver em execucao (Andrino - Chamado 495821)
                      
                 11/11/2016 - #511290 Correcao de como o sistema verifica se eh
                              abertura de conta ou mudanca do tipo da mesma, 
                              para solicitar talao de cheque para o cooperado 
                              (Carlos)
 				       
-				02/12/2016 - Tratamento bloqueio solicitacao conta ITG
-				             (Incorporacao Transposul). (Fabricio)
+                02/12/2016 - Tratamento bloqueio solicitacao conta ITG
+                             (Incorporacao Transposul). (Fabricio)
 
-               19/04/2017 - Alteraçao DSNACION pelo campo CDNACION.
-                            PRJ339 - CRM (Odirlei-AMcom)  
+                19/04/2017 - Alteraçao DSNACION pelo campo CDNACION.
+                             PRJ339 - CRM (Odirlei-AMcom)  
                              
-				20/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
-			                 crapass, crapttl, crapjur 
-							(Adriano - P339).
+                20/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+                             crapass, crapttl, crapjur 
+                             (Adriano - P339).
 
                 19/06/2017 - Ajuste para inclusao do novo tipo de situacao da conta
   				             "Desligamento por determinaçao do BACEN" 
@@ -219,28 +219,28 @@
                              ou encerramento de conta ITG devido a migracao do BB.
                              (Jaison/Elton - M459)
 
-				14/11/2017 - Ajuste para nao permitir alterar situacao da conta quando 
-				             ja estiver com situacao = 4
+                14/11/2017 - Ajuste para nao permitir alterar situacao da conta quando 
+                             ja estiver com situacao = 4
                              (Jonata - RKAM P364).			   
 
                 14/11/2017 - Incluido campo  tt-conta-corr.dtadmiss. PRJ339-CRM(Odirlei-AMcom)
 
                 24/01/2018 - Adicionar validacao para verificar se cooperado teve lancamento
                              de INSS nos ultimos 3 meses ao mudar de PA (Lucas Ranghetti #835169)
-
-                06/02/2018 - Adicionado campo cdcatego e flblqtal na tabela crapass. PRJ366 (Lombardi)
+                             
+                06/02/2018 - Adicionado campo cdcatego e flblqtal na tabela crapass. PRJ366 (Lombardi)	
 
                 14/03/2018 - Alterado para passar "inpessoa" ao inves de "cdcooper" na 
                              procedure que busca pela descricao do tipo de conta.
                              PRJ366 (Lombardi).
 
                 22/03/2018 - Substituidas verificacoes onde o tipo de conta (cdtipcta) estava fixo. 
-                             PRJ366 (Lombardi).
-                             
+                             PRJ366 (Lombardi).							 
+
                 24/04/2018 - Gravar historico de exclusao de titular.
                            - Gravar historico de alteracao dos campos cdtipcta, 
                              cdsitdct e cdcatego. PRJ366 (Lombardi).
-                                             
+                             
                 30/04/2018 - Incluido validaçao do departamento para alteraçao da situaçao da conta para 8
                              PRJ364 (Paulo Martins - Mouts)
 .............................................................................*/
@@ -1092,7 +1092,7 @@ PROCEDURE Valida_Dados_Altera:
                       END.
                    END.
             END.
-
+        
         /*IF crapass.cdtipcta <> par_cdtipcta THEN
             DO:
                 { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} } 
@@ -1293,7 +1293,7 @@ PROCEDURE Valida_Dados_Altera:
             
             /*Departamento permitido*/
 				   ASSIGN par_tipconfi = 3 
-            par_msgconfi = "Esta alteração será irreversível.".
+                          par_msgconfi = "Esta alteração será irreversível.".
            END.				
 				IF crapass.cdsitdct = 8 THEN
 				   DO:
@@ -1348,8 +1348,8 @@ PROCEDURE Valida_Dados_Altera:
                               par_nmdcampo = "cdtipcta".
 
                        LEAVE ValidaAltera.
-               END.
-
+                    END.
+               
                IF  aux_exitpcta = 0  THEN
                    DO:
                       ASSIGN par_cdcritic = 17
@@ -1373,14 +1373,14 @@ PROCEDURE Valida_Dados_Altera:
                */
                
                { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
-
+               
                RUN STORED-PROCEDURE pc_busca_tipo_conta_itg
                aux_handproc = PROC-HANDLE NO-ERROR (INPUT crapass.inpessoa, /* Tipo de pessoa */
                                                     INPUT par_cdtipcta,     /* Tipo de conta */
                                                    OUTPUT 0,   /* Indicador conta ITG */
                                                    OUTPUT "",  /* Codigo da crítica */
                                                    OUTPUT ""). /* Descriçao da crítica */
-
+               
                CLOSE STORED-PROC pc_busca_tipo_conta_itg
                      aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
 
@@ -1395,14 +1395,14 @@ PROCEDURE Valida_Dados_Altera:
                                      WHEN pc_busca_tipo_conta_itg.pr_des_erro <> ?
                       aux_dscritic = pc_busca_tipo_conta_itg.pr_dscritic
                                      WHEN pc_busca_tipo_conta_itg.pr_dscritic <> ?.
-
+               
                IF aux_des_erro = "NOK"  THEN
-                   DO:
+                    DO:
                        ASSIGN par_dscritic = aux_dscritic
-                             par_nmdcampo = "cdtipcta".
+                              par_nmdcampo = "cdtipcta".
                       
                       LEAVE ValidaAltera.
-                   END.
+                    END.
 
                /* Mudando para Conta Integracao */
                IF  aux_inctaitg = 1  THEN
@@ -1514,7 +1514,7 @@ PROCEDURE Valida_Dados_Altera:
 
                           END.
                    END.
-
+               
                IF  par_cdsitdct = 1 AND   /* NORMAL - COM TALAO */
                   (par_cdtipcta = 1 OR par_cdtipcta = 2 OR
                    par_cdtipcta = 3 OR par_cdtipcta = 4) THEN
@@ -1542,7 +1542,7 @@ PROCEDURE Valida_Dados_Altera:
                      aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
 
                { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
-
+               
                ASSIGN aux_possuipr = ""
                       aux_cdcritic = 0
                       aux_dscritic = ""
@@ -1554,13 +1554,13 @@ PROCEDURE Valida_Dados_Altera:
                                      WHEN pc_permite_produto_tipo.pr_dscritic <> ?.
                
                IF aux_cdcritic > 0 OR aux_dscritic <> ""  THEN
-                   DO:
+                    DO:
                         ASSIGN par_cdcritic = aux_cdcritic
                                par_dscritic = aux_dscritic
-                                    par_nmdcampo = "cdtipcta".
-
-                             LEAVE ValidaAltera.
-                          END.
+                               par_nmdcampo = "cdtipcta".
+                                     
+                        LEAVE ValidaAltera.
+                    END.
                IF aux_possuipr = "N" THEN
                    IF  crapass.vllimcre > 0 THEN
                        DO:
@@ -2001,7 +2001,7 @@ PROCEDURE Valida_Dados_Encerra:
     DEF VAR aux_tpsconta  AS LONGCHAR                               NO-UNDO.
     
     DEF BUFFER crabass FOR crapass.
-
+    
     ASSIGN 
         par_dscritic = "Erro ao validar os dados (ENCERRA ITG)".
         aux_returnvl = "NOK".
@@ -2204,11 +2204,11 @@ PROCEDURE Valida_Dados_Encerra:
             IF  CAN-FIND(FIRST tt_tipos_conta WHERE /*Req.Conta ITG*/
                                        tt_tipos_conta.inpessoa = crabass.inpessoa  AND
                                        tt_tipos_conta.cdtipcta = crapreq.cdtipcta) THEN
-            DO: 
-               par_dscritic = "EXISTEM REQUISICOES DE CHEQUES - IMPOSSIVEL " + 
-                              "ENCERRAR".
-               LEAVE ValidaEncerra.
-            END.
+                DO: 
+                   par_dscritic = "EXISTEM REQUISICOES DE CHEQUES - IMPOSSIVEL " + 
+                                  "ENCERRAR".
+                   LEAVE ValidaEncerra.
+                END.
 
         /* Verifica se existe Cartao BB */ 
         FIND FIRST crawcrd WHERE   crawcrd.cdcooper = crabass.cdcooper AND
@@ -3169,36 +3169,36 @@ PROCEDURE Grava_Dados_Altera:
     DEF  INPUT PARAM par_cdagenci AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_cdoperad AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_dtmvtolt AS DATE                           NO-UNDO.
-	DEF  INPUT PARAM par_idorigem AS INTE                           NO-UNDO.
-	DEF  INPUT PARAM par_nrdcaixa AS INTE                           NO-UNDO.
+  	DEF  INPUT PARAM par_idorigem AS INTE                           NO-UNDO.
+  	DEF  INPUT PARAM par_nrdcaixa AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_nmdatela AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_tpaltera AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_cdtipcta AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_cdsitdct AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_cdsecext AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_tpextcta AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_cdagepac AS INTE                           NO-UNDO.
+  	DEF  INPUT PARAM par_tpextcta AS INTE                           NO-UNDO.
+  	DEF  INPUT PARAM par_cdagepac AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_cdbcochq AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_flgiddep AS LOG                            NO-UNDO.
     DEF  INPUT PARAM par_tpavsdeb AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_dtcnsscr AS DATE                           NO-UNDO.
     DEF  INPUT PARAM par_dtcnsspc AS DATE                           NO-UNDO.
-    DEF  INPUT PARAM par_dtdsdspc AS DATE                           NO-UNDO.
-    DEF  INPUT PARAM par_inadimpl AS INTE                           NO-UNDO.
+  	DEF  INPUT PARAM par_dtdsdspc AS DATE                           NO-UNDO.
+  	DEF  INPUT PARAM par_inadimpl AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_inlbacen AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_flgrestr AS LOG                            NO-UNDO.
     DEF  INPUT PARAM par_indserma AS LOG                            NO-UNDO.
     DEF  INPUT PARAM par_idastcjt AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_cdcatego AS INTE							NO-UNDO.
 	
-    DEF PARAM BUFFER crabass FOR crapass.
+  	DEF PARAM BUFFER crabass FOR crapass.
 
     DEF OUTPUT PARAM par_cdcritic AS INTE                           NO-UNDO.
     DEF OUTPUT PARAM par_dscritic AS CHAR                           NO-UNDO.
 
     DEF VAR aux_nrseqdig AS INTE                                    NO-UNDO.
     DEF VAR aux_returnvl AS CHAR                                    NO-UNDO.
-    DEF VAR aux_ctdpoder AS INTE                                    NO-UNDO.
+  	DEF VAR aux_ctdpoder AS INTE                                    NO-UNDO.
 
     DEF VAR aux_cdtipcta_ant AS INTE                                NO-UNDO.
     DEF VAR aux_cdsitdct_ant AS INTE                                NO-UNDO.
@@ -3209,8 +3209,8 @@ PROCEDURE Grava_Dados_Altera:
     DEF BUFFER crabreq FOR crapreq.
     DEF BUFFER crabavs FOR crapavs.
     DEF BUFFER crabrda FOR craprda.
-    DEF BUFFER crabrpp FOR craprpp.
-    DEF BUFFER crabext FOR crapext.
+  	DEF BUFFER crabrpp FOR craprpp.
+  	DEF BUFFER crabext FOR crapext.
     
     ASSIGN aux_returnvl = "NOK".
     
@@ -3263,7 +3263,7 @@ PROCEDURE Grava_Dados_Altera:
 
             END.
         
-         /* Chamado 373200 */
+        /* Chamado 373200 */
         IF aux_cdmodali <> 2    AND 
            crabass.dtabtcct = ? THEN
             ASSIGN crabass.dtabtcct = par_dtmvtolt.
@@ -3321,7 +3321,7 @@ PROCEDURE Grava_Dados_Altera:
                 END.*/
                  
               { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
-
+              
               RUN STORED-PROCEDURE pc_busca_tipo_conta_itg
               aux_handproc = PROC-HANDLE NO-ERROR (INPUT crapass.inpessoa, /* Tipo de pessoa */
                                                    INPUT par_cdtipcta,     /* Tipo de conta  */
@@ -3476,9 +3476,9 @@ PROCEDURE Grava_Dados_Altera:
                                   UNDO GravaAltera, LEAVE GravaAltera.
                               END.
                          
-                     /* So atualiza o tipo se forem contas com talao */
+                         /* So atualiza o tipo se forem contas com talao */
                          IF  aux_possuipr = "S" THEN
-                         ASSIGN crabreq.cdtipcta = par_cdtipcta.
+                             ASSIGN crabreq.cdtipcta = par_cdtipcta.
                      END.
 
               END. /*  Fim do FOR EACH  */
@@ -4544,8 +4544,8 @@ PROCEDURE Grava_Dados_Altera:
                 
                 IF  aux_dscritic <> "" THEN
                     UNDO GravaAltera, LEAVE GravaAltera.
-              END.
-
+            END.
+            
         IF  aux_cdcatego_ant <> crabass.cdcatego THEN
             DO:
                 { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
@@ -4578,7 +4578,7 @@ PROCEDURE Grava_Dados_Altera:
                 
                 IF  aux_dscritic <> "" THEN
                     UNDO GravaAltera, LEAVE GravaAltera.
-           END.
+            END.
 
         ASSIGN aux_returnvl = "OK"
                par_cdcritic = 0
@@ -5556,7 +5556,7 @@ PROCEDURE Grava_Dados_Encerra:
         
         IF  crabass.cdsitdct <> 4 AND aux_inctaitg = 1 THEN
             ASSIGN crapass.cdsitdct = 6.
-        
+               
         ASSIGN crabass.flgctitg = 3.
         
         UNIX SILENT VALUE
@@ -6039,6 +6039,10 @@ PROCEDURE Critica_Cadastro_Pf:
                       INPUT "Falta Cadastrar Telefone", 
                       INPUT {&TT-TELEF} ).
 
+            /* 
+              Removida validação do telefone comercial.
+              Essa alteração foi solicitada pela Sarah no projeto 366.
+              (Renato Darosci - Supero - 01/05/2018)
             IF  craxttl.tpcttrab <> 3   THEN
                 DO:
                    IF  NOT CAN-FIND(FIRST crabtfc WHERE 
@@ -6051,6 +6055,7 @@ PROCEDURE Critica_Cadastro_Pf:
                              INPUT "Falta Cadastrar Telefone Comercial", 
                              INPUT {&TT-TELEF} ).
                 END.
+            */
 
             /* Existem registros de crapcje que pertencem a crapttl que
             tiveram seus estados civis alterados antes da correcao que faz 
