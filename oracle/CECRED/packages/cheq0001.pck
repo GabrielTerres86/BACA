@@ -915,13 +915,21 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
          FETCH cr_crapdev_union INTO rw_crapdev_union;
          --Se encontrou
          IF cr_crapdev_union%FOUND THEN
+           
+           --Fechar cursor
+           CLOSE cr_crapdev_union;
+         
            pr_cdcritic:= 415;
            --sair da rotina
            RAISE vr_exc_sair;
-         END IF;
-         --Fechar cursor
-         CLOSE cr_crapdev_union;
          
+         ELSE
+           
+           --Fechar cursor
+           CLOSE cr_crapdev_union;
+         
+         END IF;
+                  
          /* Se não for uma das alineas listadas insere devolução historico 46 */
          IF NOT fn_existe_alinea(pr_cdalinea) THEN
 
@@ -974,10 +982,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
                RAISE vr_exc_erro;
            END;
          END IF; --IF NOT fn_existe_alinea(pr_cdalinea) THEN
-         --Fechar Cursor
-         CLOSE cr_crapdev;
-
-
+         
        ELSIF pr_inchqdev = 3  THEN  /* Transferencia */
 
          --Selecionar devolucoes de cheques
