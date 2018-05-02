@@ -209,7 +209,7 @@ FUNCTION fn_obtem_proximo_id
 
   ----->>> CURSORES <<<-----
 	CURSOR cr_proximo_id IS
-	SELECT (MAX(hor.idhora_processamento) + 1) proximo_id
+	SELECT (nvl(MAX(hor.idhora_processamento), 0) + 1) proximo_id
 	  FROM tbgen_debitador_horario hor;
 
 BEGIN
