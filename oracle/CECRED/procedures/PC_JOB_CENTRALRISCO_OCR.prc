@@ -68,6 +68,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_CENTRALRISCO_OCR(pr_cdcooper in crapco
     /******************************/
 
   BEGIN
+    -- Incluir nome do módulo logado
+    gene0001.pc_informa_acesso(pr_module => 'PC_JOB_CENTRALRISCO_OCR');
 
     --> Se for coop 3, deve criar o job para cada coop
     IF pr_cdcooper = 3 THEN
