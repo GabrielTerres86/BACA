@@ -4,7 +4,7 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0001 AS
   --
   --  Programa:  DSCT0001                       Antiga: generico/procedures/b1wgen0153.p
   --  Autor   : Alisson
-  --  Data    : Julho/2013                     Ultima Atualizacao: 15/02/2018
+  --  Data    : Julho/2013                     Ultima Atualizacao: 16/02/2018
   --
   --  Dados referentes ao programa:
   --
@@ -23,6 +23,9 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0001 AS
   --                           - Incluindo codigo e eliminando descrições fixas
   --                           - Gravando as informações de entrada de INSERTS, UPDATE e DELETES quando derem erro
   --                          (Belli - Envolti - Chamado 851591)    
+  --
+  --              16/02/2018 - Ref. História KE00726701-36 - Inclusão de Filtro e Parâmetro por Tipo de Pessoa na TAB052
+  --                          (Gustavo Sene - GFT)
   --
   ---------------------------------------------------------------------------------------------------------------
  
@@ -171,7 +174,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
     Sistema  : Procedimentos envolvendo desconto titulos
     Sigla    : CRED
     Autor    : Alisson C. Berrido - Amcom
-    Data     : Julho/2013.                   Ultima atualizacao: 15/02/2018
+    Data     : Julho/2013.                   Ultima atualizacao: 16/02/2018
   
    Dados referentes ao programa:
   
@@ -216,6 +219,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                             - Incluindo codigo e eliminando descrições fixas
                             - Gravando as informações de entrada de INSERTS, UPDATE e DELETES quando derem erro
                            (Belli - Envolti - Chamado 851591) 
+  
+               16/02/2018 - Ref. História KE00726701-36 - Inclusão de Filtro e Parâmetro por Tipo de Pessoa na TAB052
+                           (Gustavo Sene - GFT)
   
   ---------------------------------------------------------------------------------------------------------------*/
   /* Tipos de Tabelas da Package */
@@ -550,8 +556,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
       --Registro de memoria do tipo lancamento
       rw_craplcm craplcm%ROWTYPE;
       
-      vr_cardbtit     INTEGER;             --> Parametro de dias carencia cobranca s/ registro
-      vr_cardbtitcr   INTEGER;             --> Parametro de dias carencia cobranca c/ registro
+      
+      vr_cardbtit     INTEGER; --> Parametro de dias carencia cobranca c/ registro pessoa fisica ou juridica
+      vr_cardbtitcrpf INTEGER; --> Parametro de dias carencia cobranca c/ registro pessoa fisica
+      vr_cardbtitcrpj INTEGER; --> Parametro de dias carencia cobranca c/ registro pessoa juridica
+
       -- Excluida vr_diascare e vr_diascare não utilizadas - 15/02/2018 - Chamado 851591       
       vr_dtrefere     DATE;                --> Data de referencia para buscar os titulos que vao ser debitados  
       -- Excluida vr_dtvcttdb não utilizadas - 15/02/2018 - Chamado 851591 
@@ -972,7 +981,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                                               ,pr_nmsistem => 'CRED'
                                               ,pr_tptabela => 'USUARI'
                                               ,pr_cdempres => 11
-                                              ,pr_cdacesso => 'LIMDESCTITCR'
+                                              ,pr_cdacesso => 'LIMDESCTITCRPF'
                                               ,pr_tpregist => 0);
       --Se nao encontrou
       IF vr_dstextab IS NULL THEN
@@ -984,7 +993,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
       ELSE
         -- Retorna nome do módulo logado - 15/02/2018 - Chamado 851591
         GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'DSCT0001.pc_efetua_baixa_tit_car');
-        vr_cardbtitcr := TO_NUMBER(gene0002.fn_busca_entrada(pr_postext => 32, pr_dstext => vr_dstextab, pr_delimitador => ';'));
+        vr_cardbtitcrpf := TO_NUMBER(gene0002.fn_busca_entrada(pr_postext => 32, pr_dstext => vr_dstextab, pr_delimitador => ';'));
       END IF;
       
       -- Retorna nome do módulo logado - 15/02/2018 - Chamado 851591
@@ -995,7 +1004,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                                               ,pr_nmsistem => 'CRED'
                                               ,pr_tptabela => 'USUARI'
                                               ,pr_cdempres => 11
-                                              ,pr_cdacesso => 'LIMDESCTIT'
+                                              ,pr_cdacesso => 'LIMDESCTITCRPJ'
                                               ,pr_tpregist => 0);
       --Se nao encontrou
       IF vr_dstextab IS NULL THEN
@@ -1007,7 +1016,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
       ELSE
         -- Retorna nome do módulo logado - 15/02/2018 - Chamado 851591
         GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'DSCT0001.pc_efetua_baixa_tit_car');          
-        vr_cardbtit := TO_NUMBER(gene0002.fn_busca_entrada(pr_postext => 32, pr_dstext => vr_dstextab, pr_delimitador => ';'));
+        vr_cardbtitcrpj := TO_NUMBER(gene0002.fn_busca_entrada(pr_postext => 32, pr_dstext => vr_dstextab, pr_delimitador => ';'));
       END IF;
       
       -- Retorna nome do módulo logado - 15/02/2018 - Chamado 851591
@@ -1142,6 +1151,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
           2 - se o titulo esta  vencido e ainda ha saldo devera pagar.
           3 - caso ainda haja saldo continua debitando os titulos que estao no dia de
           vencimento ou ja estao vencidos*/
+         
+        if    rw_crapass.inpessoa = 1 then -- Pessoa Física
+              vr_cardbtit := vr_cardbtitcrpf;
+              
+        elsif rw_crapass.inpessoa = 2 then -- Pessoa Jurídica
+              vr_cardbtit := vr_cardbtitcrpj;
+        end   if;
          
          -- se ainda nao acabou a carencia deve verificar saldo
          -- contar a partir do primeiro dia util qdo a data de vencimento cair no final de semana ou feriado
