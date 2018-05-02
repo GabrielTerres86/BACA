@@ -1093,7 +1093,7 @@ PROCEDURE Valida_Dados_Altera:
                    END.
             END.
         
-        /*IF crapass.cdtipcta <> par_cdtipcta THEN
+        IF crapass.cdtipcta <> par_cdtipcta THEN
             DO:
                 { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} } 
                 
@@ -1123,7 +1123,7 @@ PROCEDURE Valida_Dados_Altera:
                 
                 IF par_cdcritic <> 0 OR par_dscritic <> "" THEN
                     LEAVE ValidaAltera.
-            END.*/
+            END.
         
         /* Esta funcionalidade nao será tratada nesta primeira liberaçao
         IF crapass.cdsitdct <> par_cdsitdct THEN
