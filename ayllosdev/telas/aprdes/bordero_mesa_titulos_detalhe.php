@@ -159,7 +159,7 @@
 									 	if($varint > 0){
 									 		echo $varint;
 									 	} else {
-									 		echo ($c->per * 100.00).'%';
+									 		echo formataMoeda($c->per).'%';
 									 	}
 									?>
 								</td>
