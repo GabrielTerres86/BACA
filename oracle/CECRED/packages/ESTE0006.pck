@@ -122,7 +122,6 @@ procedure pc_enviar_analise_manual(pr_cdcooper    in crapbdt.cdcooper%type  --> 
                               );
 end ESTE0006;
 /
-
 create or replace package body cecred.ESTE0006 is
 
 vr_dsmensag varchar2(1000);
@@ -1351,7 +1350,7 @@ END pc_incluir_bordero_esteira;
           ,SUM(DECODE(cob.flgregis,1,tdb.vlliquid,0)) over (partition by tdb.cdcooper, tdb.nrdconta, tdb.nrborder) as vl_border_lqd_cr -- Total valor liquido borderô Cobrança Com Registro
           ,SUM(DECODE(cob.flgregis,0,tdb.vlliquid,0)) over (partition by tdb.cdcooper, tdb.nrdconta, tdb.nrborder) as vl_border_lqd_sr -- Total valor liquido borderô Cobrança Sem Registro
           ,count(1) over (partition by tdb.cdcooper, tdb.nrdconta, tdb.nrborder)          as qtde_titulos
-          ,LPAD(tdb.NRDCONTA,10,0) || LPAD(tdb.NRBORDER,10,0) || LPAD(tdb.NRDOCMTO,10,0) as cdchavetbd -- chave para ser enviada a IBRATAN
+          ,tdb.nrseqdig as cdchavetbd -- chave para ser enviada a IBRATAN
           ,cob.flgregis -- 1 - Com Registro / 0 - Sem Registro
       FROM craptdb tdb
      INNER JOIN crapcob cob
