@@ -275,7 +275,7 @@ begin
                  VALUES('DEBITADOR_PR_COMP_CONSULTAR',
                         'TELA_DEBITADOR_UNICO',
                         'pc_busca_debitador_priori_comp',
-                        '',
+                        'pr_idhora_processamento',
                         rw_craprdr.nrseqrdr);
                              
     dbms_output.put_line('Insere CRAPACA -> DEBITADOR_PR_COMP_CONSULTAR -> TELA_DEBITADOR_UNICO.pc_busca_debitador_priori_comp');
