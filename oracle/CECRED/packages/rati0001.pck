@@ -12957,6 +12957,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
          and d.nrdconta = pr_nrdconta
          and d.nrctrlim = pr_nrctrrat
          and d.tpctrlim = pr_tpctrrat;
+
+    cursor cr_restricao_wlim is
+      select nvl(SUM(NVL(c.qtnegati,0)),0) qtnegati
+           , nvl(SUM(NVL(c.vlnegati,0)),0) vlnegati
+           , nvl(SUM(NVL(b.vlprejui,0)),0) vlprejuz
+           , nvl(SUM(NVL(DECODE(c.innegati,3,c.qtnegati,0),0)),0) qtprotest
+           , nvl(SUM(NVL(DECODE(c.innegati,4,c.qtnegati,0),0)),0) qtacaojud
+           , nvl(SUM(NVL(DECODE(c.innegati,5,c.qtnegati,0),0)),0) qtfalenci
+           , nvl(SUM(NVL(DECODE(c.innegati,6,c.qtnegati,0),0)),0) qtchqsemf
+           , nvl(MAX(NVL(c.vlnegati,0)),0) vlmaxneg
+        from craprpf c
+           , crapcbd b
+           , crawlim d
+       where c.nrconbir = b.nrconbir
+         and c.nrseqdet = b.nrseqdet
+         and b.cdcooper = d.cdcooper
+         and b.nrdconta = d.nrdconta
+         and b.nrconbir = d.nrconbir
+         and b.inreterr = 0
+         and d.cdcooper = pr_cdcooper
+         and d.nrdconta = pr_nrdconta
+         and d.nrctrlim = pr_nrctrrat
+         and d.tpctrlim = pr_tpctrrat;
     rw_restricao cr_restricao_epr%rowtype;
     rw_flgresre  number(1);
     --vlbemtit
@@ -13006,6 +13029,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
          and c.nrctremp = pr_nrctrrat;
     --vlbemavt
     cursor cr_vlbemavt_lim is
+      select nvl(sum(x.vlrdobem),0) vlbemavt
+        from crapbem x
+           , craplim c
+       where x.cdcooper = c.cdcooper
+         and x.nrdconta in (c.nrctaav1, c.nrctaav2)
+         and x.idseqttl = 1
+         and c.cdcooper = pr_cdcooper
+         and c.nrdconta = pr_nrdconta
+         and c.nrctrlim = pr_nrctrrat
+         and c.tpctrlim = pr_tpctrrat;
+
+    cursor cr_vlbemavt_wlim is
       select nvl(sum(x.vlrdobem),0) vlbemavt
         from crapbem x
            , craplim c
@@ -13083,6 +13118,30 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
       open cr_vlbemavt_epr;
       fetch cr_vlbemavt_epr into rw_vlbemavt;
       close cr_vlbemavt_epr;
+    ELSIF pr_tpctrrat = 3 THEN
+          OPEN  cr_restricao_wlim;
+          FETCH cr_restricao_wlim INTO rw_restricao;
+          IF    cr_restricao_wlim%NOTFOUND THEN
+                CLOSE cr_restricao_wlim;
+
+                OPEN  cr_restricao_lim;
+                FETCH cr_restricao_lim into rw_restricao;
+                CLOSE cr_restricao_lim;
+          ELSE
+                CLOSE cr_restricao_wlim;
+          END   IF;
+
+          OPEN  cr_vlbemavt_wlim;
+          FETCH cr_vlbemavt_wlim INTO rw_vlbemavt;
+          IF    cr_vlbemavt_wlim%NOTFOUND THEN
+                CLOSE cr_vlbemavt_wlim;
+
+                OPEN  cr_vlbemavt_lim;
+                FETCH cr_vlbemavt_lim into rw_vlbemavt;
+                CLOSE cr_vlbemavt_lim;
+          ELSE
+                CLOSE cr_vlbemavt_wlim;
+          END   IF;
     else
       open cr_restricao_lim;
       fetch cr_restricao_lim into rw_restricao;
