@@ -895,7 +895,7 @@ begin
              vlinfodb = nvl(vlcompdb,0) + vr_lcm_vllanmto,
              vlcompdb = nvl(vlcompdb,0) + vr_lcm_vllanmto,
              nrseqdig = nvl(nrseqdig,0) + 1
-       where rowid = rw_craplot.rowid
+       where progress_recid = rw_craplot.progress_recid
       returning nrseqdig into rw_craplot.nrseqdig;
     exception
       when others then
