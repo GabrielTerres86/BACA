@@ -69,6 +69,10 @@
                             
                29/11/2017 - Inclusao do valor de bloqueio em garantia. 
                             PRJ404 - Garantia.(Odirlei-AMcom)             
+
+               09/04/2018 - Ajuste para retornar o valor total disponível para
+                            resgate através do canal de autoatendimento.
+                            Ou seja, somando apenas RDCPOS (Anderson P285).
 ..............................................................................*/
     
 CREATE WIDGET-POOL.
@@ -97,6 +101,7 @@ DEF VAR aux_vlsldtot AS DECI                                           NO-UNDO.
 DEF VAR aux_vlsldisp AS DECI                                           NO-UNDO.
 DEF VAR aux_vlsldblq AS DECI                                           NO-UNDO.
 DEF VAR aux_vlsldnew AS DECI                                           NO-UNDO.
+DEF VAR aux_vlsldaat AS DECI                                           NO-UNDO.
 DEF VAR aux_hrlimini AS INT                                            NO-UNDO.
 DEF VAR aux_hrlimfim AS INT                                            NO-UNDO.
 DEF VAR aux_flgstapl AS LOGI                                           NO-UNDO.
@@ -147,7 +152,8 @@ DEF VAR xml_req       AS LONGCHAR NO-UNDO.
            aux_vlsldblq = 0
            aux_vlsldnew = 0
            aux_vlblqapl_gar = 0
-           aux_vlblqpou_gar = 0.
+           aux_vlblqpou_gar = 0
+           aux_vlsldaat = 0.
     
     FIND FIRST crapdat WHERE crapdat.cdcooper = par_cdcooper 
                              NO-LOCK NO-ERROR.
@@ -466,6 +472,14 @@ DEF VAR xml_req       AS LONGCHAR NO-UNDO.
           /* Totalizar o saldo de todas as aplicações */
          /* ASSIGN aux_vlsldtot = aux_vlsldtot + tt-saldo-rdca.sldresga.*/
          
+         /* Saldo resgatavel nos canais de autoatendimento
+            Mesma condicao da tag <apli_disp_resg> */
+         IF aux_rsgtdisp                 AND  /* Disponivel para resgate */
+            tt-saldo-rdca.tpaplica = 8   AND  /* Aplicacaoo RDCPOS        */
+            tt-saldo-rdca.idtipapl = 'A' THEN /* Produto Antigo          */
+            ASSIGN aux_vlsldaat = aux_vlsldaat + tt-saldo-rdca.sldresga.
+
+         
       CREATE xml_operacao.
       
       ASSIGN xml_operacao.dslinxml = "<APLICACAO>" + 
@@ -585,6 +599,12 @@ DEF VAR xml_req       AS LONGCHAR NO-UNDO.
                                           "</vlblqpou_gar>"+      
                                      "</SALDOBLOQ_GARANTIA>".
                                      
+      ASSIGN xml_operacao.dslinxml = "<SALDORESGATEAUTOATEND>" + 
+                                          "<vlsldaat>" +  
+                                                 TRIM(STRING(aux_vlsldaat,"zzz,zzz,zz9.99-")) +
+                                          "</vlsldaat>" + 
+                                     "</SALDORESGATEAUTOATEND>".
+
     RUN proc_geracao_log (INPUT TRUE). 
        
     RETURN "OK".

@@ -331,7 +331,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
           WHEN pr_protocolo.cdtippro = 13 THEN -- GPS       
             vr_dsprotoc := TRIM(gene0002.fn_busca_entrada(1, pr_protocolo.dsinform##2, '#'));
           
-          WHEN pr_protocolo.cdtippro in(16, 17, 18, 19) THEN -- DARF / DAS
+          WHEN pr_protocolo.cdtippro in(16, 17) THEN -- DARF / DAS
             
 			vr_dsprotoc := TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(16, pr_protocolo.dsinform##3, '#')), ':'));            
 			
@@ -353,6 +353,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
 
 			*/
             
+          WHEN pr_protocolo.cdtippro in(18, 19) THEN -- Agendamento de DARF / DAS
+            vr_dsprotoc := pr_protocolo.dscedent;
           WHEN pr_protocolo.cdtippro = 20 THEN -- Recarga
             vr_dsprotoc := TRIM(gene0002.fn_busca_entrada(1, pr_protocolo.dsinform##2, '#')) || ' - ' || TRIM(gene0002.fn_busca_entrada(2, pr_protocolo.dsinform##2, '#'));
           ELSE

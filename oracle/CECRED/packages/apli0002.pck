@@ -4856,7 +4856,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
         RAISE vr_exc_erro;
      
       END IF;                             
-                               
+
       vr_nrdolote := 4000 + rw_crapass.cdagenci;                         
       
       --Buscar o lote
@@ -9736,6 +9736,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                 19/12/2017 - adicionada chamada para a procedure pc_ver_val_bloqueio_aplica para 
                              Validar bloqueios para resgate de aplicacao. PRJ404 (Lombardi)
                              
+                04/04/2018 - Ajuste para quando for Resgate, validar se existe saldo disponivel de aplicacao. 
+                            (Anderson P285)
+                
   .......................................................................................*/
   PROCEDURE pc_valida_limite_internet(pr_cdcooper IN crapcop.cdcooper%TYPE    --> Codigo Cooperativa
                                      ,pr_cdagenci IN crapass.cdagenci%TYPE    --> Codigo Agencia
@@ -10016,6 +10019,48 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
           -- Gera exceção
           RAISE vr_exc_erro;
         END IF;
+      ELSIF pr_dstpapli = 'R' THEN -- Se for resgate, vamos validar se existe saldo disponivel.
+
+        -- Leitura do calendário da cooperativa
+        OPEN btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
+        FETCH btch0001.cr_crapdat
+          INTO rw_crapdat;
+        -- Se não encontrar
+        IF btch0001.cr_crapdat%NOTFOUND THEN
+          CLOSE btch0001.cr_crapdat;
+        ELSE
+          CLOSE btch0001.cr_crapdat;
+        END IF;
+      
+        APLI0005.pc_busca_saldo_total_resgate(pr_cdcooper => pr_cdcooper
+                                             ,pr_cdoperad => pr_cdoperad
+                                             ,pr_nmdatela => pr_nmdatela
+                                             ,pr_idorigem => pr_idorigem
+                                             ,pr_nrdcaixa => pr_nrdcaixa
+                                             ,pr_nrdconta => pr_nrdconta
+                                             ,pr_idseqttl => pr_idseqttl
+                                             ,pr_cdagenci => pr_cdagenci
+                                             ,pr_cdprogra => pr_nmdatela
+                                             ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                             ,pr_idconsul => 0             --> Identificador de Consulta (0 – Ativas / 1 – Encerradas / 2 – Todas)
+                                             ,pr_idgerlog => 1             --> Identificador de Log (0 – Não / 1 – Sim)
+                                             ,pr_vlsldisp => vr_sldresga   --> OUT - Valor do saldo disponivel para resgate
+                                             ,pr_cdcritic => vr_cdcritic
+                                             ,pr_dscritic => vr_dscritic);
+        IF vr_cdcritic > 0 OR 
+           TRIM(vr_dscritic) IS NOT NULL THEN
+          vr_cdcritic := 0;
+          vr_dscritic := 'Problemas foram encontrados durante a busca do saldo aplicado.'; 
+          RAISE vr_exc_erro;
+        END if;
+        
+        -- Valida se existe saldo disponivel para resgate
+        IF pr_vlaplica > vr_sldresga THEN
+          vr_cdcritic := 0;
+          vr_dscritic := 'ATENÇÃO: O valor de resgate não pode ser maior que o valor do saldo disponível para resgate.'; 
+          RAISE vr_exc_erro;
+        END IF;
+
       END IF;
       
     EXCEPTION
@@ -10142,19 +10187,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
 
       -- Verifica se o processo ainda esta rodando e valida os horarios limites
       IF pr_tpvalida = 1 THEN
-        
-        IF TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS')) < TO_NUMBER(pr_hrlimini) OR 
+
+        IF TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS')) < TO_NUMBER(pr_hrlimini) OR
            TO_NUMBER(TO_CHAR(SYSDATE,'SSSSS')) > TO_NUMBER(pr_hrlimfim) THEN
-                
+
           -- Monta critica
           vr_cdcritic := 0;
-          vr_dscritic := 'Horario esgotado para acesso as operacoes de aplicacao.'; 
-                
+          vr_dscritic := 'Horario esgotado para acesso as operacoes de aplicacao.';
+
           -- Gera exceção
           RAISE vr_exc_erro;
-              
+          
         END IF;
-              
+        
         -- Verifica se a cooperativa esta cadastrada
         OPEN BTCH0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
         
@@ -17342,7 +17387,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
           pr_des_reto := 'NOK';
     END;
   END pc_ver_val_bloqueio_aplica;
-  
+
   PROCEDURE pc_ver_val_bloqueio_aplica_web( pr_nrdconta IN crapass.nrdconta%TYPE      --> Número da Conta
                                            ,pr_nraplica IN craprda.nraplica%TYPE      --> Número da Aplicação
                                            ,pr_idseqttl IN crapttl.idseqttl%TYPE      --> Sequencia do Titular
@@ -18377,7 +18422,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
            
            /*Soma qtda de dias padrao para obter dara de vencimento
            vr_dtvencto := pr_dtiniaar + 1440; */        
-           
+
            -- Valida a data de vencimento nula executando um recalculo da data caso seja
            -- Executando assim o mesmo procedimento que a tela faz no momento do cadastro de um agendamento
            IF pr_dtvencto IS NULL THEN
@@ -18671,7 +18716,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                 22/09/2016 - Alterar ordem da chamada da procedure pc_ver_valor_blq_judicial
                              pois estava validando o bloqueio judicial antes de validar se
                              o valor a ser resgatado é superior a disponivel (Lucas Ranghetti #492125)
-                
+                             
                 05/12/2017 - Alterei a gravacao do lote pois a tabela CRAPLOT estava ficando alocada
                              por muito tempo durante cada resgate. (SD 799728 - Carlos Rafael Tanholi)             
   .......................................................................................*/
@@ -19325,7 +19370,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                             ,pr_des_reto => vr_des_reto
                             ,pr_cdcritic => vr_cdcritic
                             ,pr_dscritic => vr_dscritic);
-                                     
+      
       IF vr_des_reto = 'NOK' THEN
         RAISE vr_exc_erro;        
         END IF;

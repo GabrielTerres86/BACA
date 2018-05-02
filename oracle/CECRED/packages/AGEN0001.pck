@@ -382,6 +382,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
 
      Alteracoes: 18/10/217 - Inclusão do campo nrcpfpre, Prj. 285 (Jean Michel).
 
+                 25/04/2018 - Alterar comportamento da descricao das agencias de destino
+                              para as TEDs, pois nao devemos colocar a descricao "Nao
+                              cadastrado", pois existem agencias que de fato nao temos a
+                              descricao. (Anderson P285).
+
      ..................................................................................*/     
      
    DECLARE
@@ -417,8 +422,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
             ,NVL2(agb.cdageban, LPAD(agb.cdageban,4,'0') || ' - ' || REPLACE(UPPER(TRIM(agb.nmageban)),'&','e'),'Nao cadastrado') AS dsdagenc
 						,NVL(ban.cdbccxlt, 0) AS cdbandst
 						,NVL2(ban.cdbccxlt, REPLACE(UPPER(TRIM(ban.nmextbcc)),'&','e'),'Nao cadastrado') AS dsbandst						
-						,NVL(agb.cdageban, 0) AS cdagedst
-						,NVL2(agb.cdageban, REPLACE(UPPER(TRIM(agb.nmageban)),'&','e'),'Nao cadastrado') AS dsagedst						
+						,NVL(lau.cdageban, 0) AS cdagedst
+						,NVL2(agb.cdageban, REPLACE(UPPER(TRIM(agb.nmageban)),'&','e'),' ') AS dsagedst						
             ,TRIM(GENE0002.fn_mask_conta(cti.nrctatrf)) || ' - ' || cti.nmtitula AS dstitula
             ,TRIM(GENE0002.fn_mask_conta(cti.nrctatrf)) AS dsctadst
 						,cti.nmtitula AS dstitdst
