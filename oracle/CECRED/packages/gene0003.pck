@@ -2018,6 +2018,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
         -- No caso de erro de programa gravar tabela especifica de log - 06/12/2017 - Ch 788828 
         CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);                                                             
     END;
+	END LOOP;
 
     -- Incluído pc_set_modulo da procedure - Chamado 788828 - 06/12/2017
     GENE0001.pc_set_modulo(pr_module => NULL, pr_action => NULL);
