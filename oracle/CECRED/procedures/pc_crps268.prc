@@ -44,6 +44,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps268(pr_cdcooper IN crapcop.cdcooper%TY
                16/04/2018 - Migrado rotina/fonte progress para oracle.
                             Diego Simas (AMcom)
 
+               30/04/2018 - P450 - Implementação da procedure de controle de débito em contas com atraso por inadimplência;
+                                   Cancelamento automático de seguro para debitos não efetuados;
+                                   Envio de mensagens para cooperados que tiveram seguros cancelados por inadimplência.
+                            Marcel Kohls (AMcom)
+
   ............................................................................... */
 
   DECLARE

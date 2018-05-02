@@ -166,6 +166,11 @@ create or replace procedure cecred.pc_crps439(pr_cdcooper  in craptab.cdcooper%t
                24/07/2017 - Alterar cdoedptl para idorgexp.
                             PRJ339-CRM  (Odirlei-AMcom)
 
+               30/04/2018 - P450 - Implementa??o da procedure de controle de d?bito em contas com atraso por inadimpl?ncia;
+                                   Cancelamento autom?tico de seguro para debitos n?o efetuados;
+                                   Envio de mensagens para cooperados que tiveram seguros cancelados por inadimpl?ncia.
+                            Marcel Kohls (AMcom)
+
                ............................................................................. */
   -- Buscar os dados da cooperativa
   cursor cr_crapcop (pr_cdcooper in craptab.cdcooper%type) is
