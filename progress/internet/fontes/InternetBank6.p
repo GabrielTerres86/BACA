@@ -184,16 +184,18 @@ FOR EACH tt-dados-rpp NO-LOCK:
                                    "</dtvctopp><vlblqjud>" +
                                    TRIM(STRING(aux_vlblqjud,
                                                "zzz,zzz,zzz,zz9.99")) +
-                                   "</vlblqjud>"+
-                                   "<vlblqapl_gar>" +
+								   "</vlblqjud><vlprerpp>" +
+                                   TRIM(STRING(tt-dados-rpp.vlprerpp,
+                                               "zzz,zz9.99")) +
+                                   "</vlprerpp><dsprodut>"  +
+                                    "Poupança Programada" +
+                                   "</dsprodut><vlblqapl_gar>" +
                                    TRIM(STRING(aux_vlblqapl_gar,
                                                "zzz,zzz,zzz,zz9.99")) +
-                                   "</vlblqapl_gar>"+
-                                   "<vlblqpou_gar>" +
+                                   "</vlblqapl_gar><vlblqpou_gar>" +
                                    TRIM(STRING(aux_vlblqpou_gar,
                                                "zzz,zzz,zzz,zz9.99")) +
-                                   "</vlblqpou_gar>"+                                   
-                                   "</POUPANCA>".
+                                   "</vlblqpou_gar></POUPANCA>".
                            
 END. /** Fim do FOR EACH tt-dados-rpp **/
 
