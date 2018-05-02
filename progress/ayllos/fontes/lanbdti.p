@@ -342,6 +342,19 @@ ON "RETURN" OF b_browse IN FRAME f_browse DO:
                                 LEAVE.
                             END.
 
+                        /* GGS - Inicio */      
+                        /* Buscar dados do Associado */
+                        FIND crapass WHERE crapass.cdcooper = glb_cdcooper AND
+                                           crapass.nrdconta = tel_nrcustod 
+                                           NO-LOCK NO-ERROR.
+                                           
+                        IF NOT AVAIL(crapass) THEN
+                            DO:
+                                MESSAGE "Associado nao encontrado.".
+                                RETURN  "NOK".                                
+                            END.
+                        /* GGS - Fim */      
+
                         RUN busca_parametros_dsctit IN h-b1wgen0030 (INPUT glb_cdcooper,
                                                                      INPUT 0,
                                                                      INPUT 0,
@@ -349,6 +362,7 @@ ON "RETURN" OF b_browse IN FRAME f_browse DO:
                                                                      INPUT glb_dtmvtolt,
                                                                      INPUT 0,
                                                                      INPUT TRUE, /* COB.REGISTRADA */
+                                                                     INPUT crapass.inpessoa, /* GGS - Incluido Tipo Pessoa */
                                                                      OUTPUT TABLE tt-erro,
                                                                      OUTPUT TABLE tt-dados_dsctit_cr,
                                                                      OUTPUT TABLE tt-dados_cecred_dsctit).

@@ -38,6 +38,8 @@
 	// Classe para leitura do xml de retorno
 	require_once("../../../../class/xmlfile.php");
 	
+	$tipo = (isset($_POST['tipo'])) ? $_POST['tipo'] : "CONTRATO";
+	
 	// Verifica se os parâmetros necessários foram informados
 	$params = array("nrdconta","nrctrlim","cddlinha","vllimite","dsramati","vlmedtit","vlfatura","vloutras","vlsalari","vlsalcon","dsdbens1","dsdbens2","dsobserv",
                     "nrctaav1","nmdaval1","nrcpfav1","tpdocav1","dsdocav1","nmdcjav1","cpfcjav1","tdccjav1","doccjav1","ende1av1","ende2av1","nrcepav1","nmcidav1","cdufava1","nrfonav1","emailav1",

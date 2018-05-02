@@ -3,7 +3,7 @@
 	/************************************************************************
 	 Fonte: titulos_limite.php                                        
 	 Autor: Guilherme                                                 
-	 Data : Novembro/2008                Última Alteração: 11/12/2017
+	 Data : Novembro/2008                Última Alteração: 15/04/2018
 	                                                                  
 	 Objetivo  : Mostrar opcao Limites de descontos da rotina         
 	             Descontos da tela ATENDA                 		   	  
@@ -25,6 +25,10 @@
 				 26/06/2017 - Ajuste para rotina ser chamada através da tela ATENDA > Produtos (Jonata - RKAM / P364).
 
                  11/12/2017 - P404 - Inclusão de Garantia de Cobertura das Operações de Crédito (Augusto / Marcos (Supero))
+
+				 28/03/2018 - Alteração nos botões para as novas funcionalidades da tela (Andre Avila GFT).
+
+				 15/04/2018 - Alteração no botão 'Detalhes da Proposta' (Leonardo Oliveira - GFT).
 
 	************************************************************************/
 	
@@ -96,56 +100,77 @@
 		echo '</script>';
 		exit();
 	}	
-	
 ?>
 
-<div id="divLimites">
+<div id="divContratos">
 	<div class="divRegistros">
 		<table>
 			<thead>
 				<tr>
-					<th>Proposta</th>
-					<th>Ini.Vig&ecirc;n.</th>
+					<th>Data Efetiva&ccedil;&atilde;o</th>
+					<th>In&iacute;cio Vig&ecirc;ncia</th>
 					<th>Contrato</th>
 					<th>Limite</th>
-					<th>Vig</th>
-					<th>LD</th>
-					<th >Situa&ccedil;&atilde;o</th>
-					<th>Comit&ecirc;</th>
+					<th>Dias de Vig&ecirc;ncia</th>
+					<th>Linha de Desconto</th>
+					<th >Situa&ccedil;&atilde;o do Limite</th>
 				</tr>			
 			</thead>
 			<tbody>
+				
 				<?  for ($i = 0; $i < $qtLimites; $i++) {
 												
-						$mtdClick = "selecionaLimiteTitulos('".($i + 1)."','".$qtLimites."','".($limites[$i]->tags[3]->cdata)."','".($limites[$i]->tags[9]->cdata)."','".($limites[$i]->tags[7]->cdata)."');";
+					    $pr_dtpropos = getByTagName($limites[$i]->tags,"dtpropos");//0
+					    $pr_dtinivig = getByTagName($limites[$i]->tags,"dtinivig");//1
+					    $pr_vllimite = getByTagName($limites[$i]->tags,"vllimite");//2
+						$pr_nrctrlim = getByTagName($limites[$i]->tags,"nrctrlim");//3
+						$pr_qtdiavig = getByTagName($limites[$i]->tags,"qtdiavig");//4
+						$pr_cddlinha = getByTagName($limites[$i]->tags,"cddlinha");//5
+						$pr_tpctrlim = getByTagName($limites[$i]->tags,"tpctrlim");//6
+						$pr_dssitlim = getByTagName($limites[$i]->tags,"dssitlim");//7
+						$pr_dssitest = getByTagName($limites[$i]->tags,"dssitest");//8
+						$pr_dssitapr = getByTagName($limites[$i]->tags,"dssitapr");//9
+						$pr_flgenvio = getByTagName($limites[$i]->tags,"flgenvio");//10
+						$pr_insitlim = getByTagName($limites[$i]->tags,"flgenvio");//11
+						$pr_idcobope = getByTagName($limites[$i]->tags,"idcobope");//12
+						$pr_cdageori = getByTagName($limites[$i]->tags,"cdageori");//13
 									
+						$mtdClick = "selecionaLimiteTitulos('"
+							.($i + 1)."', '"
+							.$qtLimites."', '"
+							.$pr_nrctrlim."', '"
+							.$pr_dssitlim."', '"
+							.$pr_dssitest."', '"
+							.$pr_dssitapr."', '"
+							.$pr_vllimite."');";
 				?>
+
 					<tr id="trLimite<? echo $i + 1; ?>" onFocus="<? echo $mtdClick; ?>" onClick="<? echo $mtdClick; ?>">
 					
-						<td>
-              <?php
-              // Vamos salvar o numero do contrato ativo para usar na tela de garantia
+						<td><?php
+							  // Vamos salvar o numero do contrato ativo para usar na tela de garantia (Merge GFT)
               if ($limites[$i]->tags[9]->cdata == 2) {
-                echo '<input type="hidden" name="nrcontratoativo" id="nrcontratoativo" value="'.$limites[$i]->tags[3]->cdata.'"/>';
+								echo '<input type="hidden" name="nrcontratoativo" id="nrcontratoativo" value="'.$pr_nrctrlim.'"/>';
               }
-              echo $limites[$i]->tags[0]->cdata; ?>
+							  echo $pr_dtpropos; ?>
             </td>
 						
-						<td><? echo $limites[$i]->tags[1]->cdata; ?></td>
+						<td><? echo $pr_dtinivig; ?></td>
 						
-						<td><span><? echo $limites[$i]->tags[3]->cdata; ?></span>
-							<? echo formataNumericos('zzz.zzz.zzz',$limites[$i]->tags[3]->cdata,'.'); ?></td>
+						<td>
+							<span><? echo $pr_nrctrlim ?></span>
+							<? echo formataNumericos('zzz.zzz.zzz',$pr_nrctrlim,'.'); ?>
+						</td>
+
+						<td>
+							<span><? echo $pr_vllimite; ?></span>
+							<? echo number_format(str_replace(",",".",$pr_vllimite),2,",","."); ?>
+						</td>
 						
-						<td><span><? echo $limites[$i]->tags[2]->cdata; ?></span>
-							<? echo number_format(str_replace(",",".",$limites[$i]->tags[2]->cdata),2,",","."); ?></td>
-						
-						<td><? echo $limites[$i]->tags[4]->cdata; ?></td>
-						
-						<td><? echo $limites[$i]->tags[5]->cdata; ?></td>
-						
-						<td><? echo $limites[$i]->tags[7]->cdata; ?></td>
-						
-						<td><? echo $limites[$i]->tags[8]->cdata; ?></td>
+						<td><? echo $pr_qtdiavig; ?></td>
+						<td><? echo $pr_cddlinha; ?></td>
+						<td><? echo $pr_dssitlim; ?></td>
+				
 												
 					</tr>
 				<?} // Fim do for ?>			
@@ -154,22 +179,59 @@
 	</div>
 </div>
 
-<?php
-	$dispA = (!in_array("A",$glbvars["opcoesTela"])) ? 'display:none;' : '';
-	$dispX = (!in_array("X",$glbvars["opcoesTela"])) ? 'display:none;' : '';
-	$dispC = (!in_array("C",$glbvars["opcoesTela"])) ? 'display:none;' : '';
-	$dispE = (!in_array("E",$glbvars["opcoesTela"])) ? 'display:none;' : '';
-	$dispM = (!in_array("M",$glbvars["opcoesTela"])) ? 'display:none;' : '';
-?>
+<div id="divBotoesTitulosLimite" style="margin-bottom:10px; margin-top: 10px;">
+	
+	<input 
+		type="button" 
+		class="botao" 
+		value="Voltar"  
+		onClick="
+			voltaDiv(2,1,4,'DESCONTO DE T&Iacute;TULOS','DSC TITS');
+			carregaTitulos();
+			return false;" 
+		/>
 
-<div id="divBotoesTitulosLimite">
-	<input type="image" src="<?php echo $UrlImagens; ?>botoes/voltar.gif" onClick="voltaDiv(2,1,4,'DESCONTO DE T&Iacute;TULOS','DSC TITS');carregaTitulos();return false;" />
-	<input type="image" src="<?php echo $UrlImagens; ?>botoes/alterar.gif"   <?php if ($qtLimites == 0) { echo 'style="cursor: default;'.$dispA.'" onClick="return false;"'; } else { echo 'style="'.$dispA.'" onClick="mostraTelaAltera();return false;"'; } ?> />
-	<input type="image" src="<?php echo $UrlImagens; ?>botoes/cancelar.gif"  <?php if ($qtLimites == 0) { echo 'style="cursor: default;'.$dispX.'" onClick="return false;"'; } else { echo 'style="'.$dispX.'" onClick="showConfirmacao(\'Deseja cancelar o limite de desconto de t&iacute;tulos?\',\'Confirma&ccedil;&atilde;o - Ayllos\',\'cancelaLimiteDscTit()\',\'metodoBlock()\',\'sim.gif\',\'nao.gif\');return false;"'; } ?> />
-	<input type="image" src="<?php echo $UrlImagens; ?>botoes/consultar.gif" <?php if ($qtLimites == 0) { echo 'style="cursor: default;'.$dispC.'" onClick="return false;"'; } else { echo 'style="'.$dispC.'" onClick="carregaDadosConsultaLimiteDscTit();return false;"'; } ?> />
-	<input type="image" src="<?php echo $UrlImagens; ?>botoes/excluir.gif"   <?php if ($qtLimites == 0) { echo 'style="cursor: default;'.$dispE.'" onClick="return false;"'; } else { echo 'style="'.$dispE.'" onClick="showConfirmacao(\'Deseja excluir o limite de desconto de t&iacute;tulos?\',\'Confirma&ccedil;&atilde;o - Ayllos\',\'excluirLimiteDscTit()\',\'metodoBlock()\',\'sim.gif\',\'nao.gif\');return false;"'; } ?> />
-	<input type="image" id="btnIncluirLimite" name="btnIncluirLimite" src="<?php echo $UrlImagens; ?>botoes/incluir.gif"   <?php if (!in_array("I",$glbvars["opcoesTela"])) { echo 'style="cursor: default;display:none;" onClick="return false;"'; } else { echo 'onClick="carregaDadosInclusaoLimiteDscTit(1);return false;"'; } ?> />
-	<input type="image" src="<?php echo $UrlImagens; ?>botoes/imprimir.gif"  <?php if ($qtLimites == 0) { echo 'style="cursor: default;'.$dispM.'" onClick="return false;"'; } else { echo 'style="'.$dispM.'" onClick="mostraImprimirLimite();return false;"'; } ?> />
+	<input 
+		type="button"
+		class="botao"
+		value="Cancelar"
+		<?php if ($qtLimites == 0) {
+			echo 'onClick="return false;"';
+		} else {
+			echo 'style="'.$dispX.'" onClick="showConfirmacao(\'Deseja cancelar o Contrato?\',\'Confirma&ccedil;&atilde;o - Ayllos\',\'cancelaLimiteDscTit()\',\'metodoBlock()\',\'sim.gif\',\'nao.gif\');return false;"';
+		} ?>  />
+	
+	<input 
+		type="button"
+		class="botao"
+		value="Consultar"
+		<?php if ($qtLimites == 0) {
+			echo 'onClick="return false;"';
+			} else {
+				echo 'onClick="carregaDadosConsultaLimiteDscTit();return false;"'; 
+		} ?> />
+	
+	<input 
+		type="button"
+		class="botao"
+		value="Imprimir"
+		<?php if ($qtLimites == 0) { 
+			echo 'onClick="return false;"';
+		} else {
+			echo 'onClick="mostraImprimirLimite(\'CONTRATO\');return false;"';
+		} ?> />
+
+	<input 
+		type="button" 
+		class="botao" 
+		value="Detalhes da Proposta"  
+		id="btnDetalhesProposta" name="btnDetalhesProposta" 
+		<?php if ($qtLimites == 0) { 
+			echo 'onClick="return false;"';
+		} else { 
+			echo 'onClick="carregaDadosDetalhesProposta(\'CONTRATO\', nrcontrato, 0);return false;"'; 
+		} ?> />
+
 </div>
 
 <script type="text/javascript">
@@ -178,7 +240,7 @@ dscShowHideDiv("divOpcoesDaOpcao2","divOpcoesDaOpcao1;divOpcoesDaOpcao3");
 // Muda o título da tela
 $("#tdTitRotina").html("DESCONTO DE T&Iacute;TULOS - LIMITE");
 
-formataLayout('divLimites');
+	formataLayout('divContratos');
 
 // Esconde mensagem de aguardo
 hideMsgAguardo();

@@ -170,24 +170,28 @@ function formataRegra(){
 		var rNrrevcad = $('label[for="nrrevcad"]');
 		var rPcliqdez = $('label[for="pcliqdez"]');
 		var rQtdialiq = $('label[for="qtdialiq"]');
+		var rQtcarpag = $('label[for="qtcarpag"]');
+		var rQtaltlim = $('label[for="qtaltlim"]');
 
 	    //Diego Simas (AMcom)
-		rVlmaxren.css({width:'270px'});
-		rQtdiaren.css({width:'270px'});
-		rQtmeslic.css({width:'270px'});
-		rCnauinad.css({width:'270px'});
-		rQtdiatin.css({width:'270px'});
-		rQtmaxren.css({width:'270px'});
-		rQtdiaatr.css({width:'270px'});
-		rQtatracc.css({width:'270px'});
-		rDssitdop.css({width:'200px'});
+		rVlmaxren.css({width:'265px'});
+		rQtdiaren.css({width:'265px'});
+		rQtmeslic.css({width:'265px'});
+		rCnauinad.css({width:'265px'});
+		rQtdiatin.css({width:'265px'});
+		rQtmaxren.css({width:'265px'});
+		rQtdiaatr.css({width:'265px'});
+		rQtatracc.css({width:'265px'});
+		rDssitdop.css({width:'265px'});
 		rDssitopt.css({width:'19px'});		
-		rDsriscop.css({width:'200px'});
+		rDsriscop.css({width:'265px'});
 		rDsrisopt.css({width:'19px'});		
-		rQtmincta.css({width:'200px'});
-		rNrrevcad.css({width:'200px'});
-		rPcliqdez.css({width:'200px'});
-		rQtdialiq.css({width:'200px'});
+		rQtmincta.css({width:'265px'});
+		rNrrevcad.css({width:'265px'});
+		rPcliqdez.css({width:'265px'});
+		rQtdialiq.css({width:'265px'});
+		rQtcarpag.css({width:'265px'});
+		rQtaltlim.css({width:'265px'});
 
 		// Campos
 		var cVlmaxren = $('#vlmaxren');	
@@ -205,6 +209,8 @@ function formataRegra(){
 		var cNrrevcad = $('#nrrevcad');	
 		var cPcliqdez = $('#pcliqdez');	
 		var cQtdialiq = $('#qtdialiq');	
+		var cQtcarpag = $('#qtcarpag');	
+		var cQtaltlim = $('#qtaltlim');	
 
 		cVlmaxren.addClass('campo').setMask('DECIMAL','zzz.zzz.zzz.zz9,99','.','');
 		cQtdiaren.addClass('campo').setMask('INTEGER','zzz9');
@@ -222,6 +228,8 @@ function formataRegra(){
 		cNrrevcad.css({width:'70px'});
 		cPcliqdez.css({width:'40px'}).addClass('campo').setMask('INTEGER','zz9');
 		cQtdialiq.css({width:'40px'}).addClass('campo').setMask('INTEGER','zzz9');		
+		cQtcarpag.css({width:'40px'}).addClass('campo').setMask('INTEGER','zzz9');
+		cQtaltlim.css({width:'40px'}).addClass('campo').setMask('INTEGER','zzz9');
 
 		highlightObjFocus($('#frmRegra'));
 		cTodosCampos = $('input[type="text"], select, input[type="checkbox"]','#frmRegra');
@@ -498,7 +506,12 @@ function formataRegra(){
 			if ( divError.css('display') == 'block' ) { return false; }
 
 			if ( e.keyCode == 13 || e.keyCode == 9 ) {	
+				if(cPcliqdez.is(':visible')){
 				cPcliqdez.focus();
+				}
+				else{
+					$('#btSalvar','#divBotoes').click();
+				}
 				return false;
 			}	
 		});
@@ -514,6 +527,30 @@ function formataRegra(){
 		});
 		
 		cQtdialiq.unbind('keypress').bind('keypress', function(e) {
+
+			if ( divError.css('display') == 'block' ) { return false; }
+
+			if ( e.keyCode == 13 || e.keyCode == 9 ) {	
+				if(cQtcarpag.length>0){
+					cQtcarpag.focus();
+				}
+				else{
+				$('#btSalvar','#divBotoes').click();
+				}
+				return false;
+			}	
+		});
+
+		cQtcarpag.unbind('keypress').bind('keypress', function(e) {
+
+			if ( divError.css('display') == 'block' ) { return false; }
+
+			if ( e.keyCode == 13 || e.keyCode == 9 ) {	
+				cQtaltlim.focus();
+				return false;
+			}	
+		});
+		cQtaltlim.unbind('keypress').bind('keypress', function(e) {
 
 			if ( divError.css('display') == 'block' ) { return false; }
 
@@ -552,8 +589,10 @@ function controlaCampos(op, tplimite) {
 			$('#nrrevcad','#frmRegra').habilitaCampo();
 			$('#pcliqdez','#frmRegra').habilitaCampo();
 			$('#qtdialiq','#frmRegra').habilitaCampo();
+			$('#qtcarpag','#frmRegra').habilitaCampo();
+			$('#qtaltlim','#frmRegra').habilitaCampo();
 			$('#vlmaxren','#frmRegra').focus();
-			trocaBotao('showConfirmacao(\'Confirma a operação?\',\'Confirma&ccedil;&atilde;o - Ayllos\',\'alteraRegra();\',\'btnVoltar();\',\'sim.gif\',\'nao.gif\')','btnVoltar()');
+			trocaBotao('showConfirmacao(\'Confirma a opera&ccedil;&atilde;o?\',\'Confirma&ccedil;&atilde;o - Ayllos\',\'alteraRegra();\',\'btnVoltar();\',\'sim.gif\',\'nao.gif\')','btnVoltar()');
 		break;
 		
 		default:
@@ -671,6 +710,8 @@ function alteraRegra() {
 	var nrrevcad = $('#nrrevcad','#frmRegra').val();
 	var pcliqdez = $('#pcliqdez','#frmRegra').val();
 	var qtdialiq = $('#qtdialiq','#frmRegra').val();
+	var qtcarpag = $('#qtcarpag','#frmRegra').val();
+	var qtaltlim = $('#qtaltlim','#frmRegra').val();
 	
 	var dssitdop = $("input[type=checkbox][name='dssitdop']:checked");
     var vlsitdop = '';
@@ -706,6 +747,8 @@ function alteraRegra() {
 			qtdialiq: qtdialiq,
 			vlsitdop: vlsitdop,			
 			vlriscop: vlriscop,
+			qtcarpag: qtcarpag,
+			qtaltlim: qtaltlim,
 			redirect: "script_ajax"
 		},
 		error: function(objAjax,responseError,objExcept) {

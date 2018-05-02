@@ -37,6 +37,8 @@
 	$vlriscop = (isset($_POST['vlriscop'])) ? $_POST['vlriscop'] : '';
 	$pcliqdez = (isset($_POST['pcliqdez'])) ? $_POST['pcliqdez'] : '';	
 	$qtdialiq = (isset($_POST['qtdialiq'])) ? $_POST['qtdialiq'] : '';
+	$qtcarpag = (isset($_POST['qtcarpag'])) ? $_POST['qtcarpag'] : '';
+	$qtaltlim = (isset($_POST['qtaltlim'])) ? $_POST['qtaltlim'] : '';
 
 	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') {
 		exibirErro('error',$msgError,'Alerta - Ayllos','',false);
@@ -52,9 +54,7 @@
 		$xml .= "   <nrrevcad>".$nrrevcad."</nrrevcad>";
 		$xml .= "   <qtmincta>".$qtmincta."</qtmincta>";
 		$xml .= "   <qtdiaren>".$qtdiaren."</qtdiaren>";
-		$xml .= "   <qtmeslic>".$qtmeslic."</qtmeslic>";  //Diego Simas (AMcom)
-        $xml .= "   <cnauinad>".$cnauinad."</cnauinad>";
-        $xml .= "   <qtdiatin>".$qtdiatin."</qtdiatin>";
+		
 		$xml .= "   <qtmaxren>".$qtmaxren."</qtmaxren>";
 		$xml .= "   <qtdiaatr>".$qtdiaatr."</qtdiaatr>";
 		$xml .= "   <qtatracc>".$qtatracc."</qtatracc>";		
@@ -64,6 +64,11 @@
 		$xml .= "   <pcliqdez>".$pcliqdez."</pcliqdez>";
 		$xml .= "   <qtdialiq>".$qtdialiq."</qtdialiq>";
 		$xml .= "   <idgerlog>0</idgerlog>";
+		$xml .= "	<qtcarpag>".$qtcarpag."</qtcarpag>";
+		$xml .= "	<qtaltlim>".$qtaltlim."</qtaltlim>";
+		$xml .= "   <qtmeslic>".$qtmeslic."</qtmeslic>";  //Diego Simas (AMcom)
+        $xml .= "   <cnauinad>".$cnauinad."</cnauinad>";
+        $xml .= "   <qtdiatin>".$qtdiatin."</qtdiatin>";
 		$xml .= " </Dados>";
 		$xml .= "</Root>";
 		

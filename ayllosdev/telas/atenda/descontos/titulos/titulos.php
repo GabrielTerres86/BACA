@@ -3,7 +3,7 @@
 	/***************************************************************************
 	 Fonte: titulos.php
 	 Autor: Guilherme
-	 Data : Novembro/2008                 Última Alteração: 26/06/2017
+	 Data : Novembro/2008                 Última Alteração: 25/04/2018
 
 	 Objetivo  : Mostrar opção Títulos da Rotina de Desconto de Títulos
 
@@ -16,6 +16,19 @@
                               registro (Lucas).
 
                  26/06/2017 - Ajuste para rotina ser chamada através da tela ATENDA > Produtos (Jonata - RKAM / P364).
+
+                 07/03/2018 - Novo campo 'Data Renovação' (Leonardo Oliveira - GFT)
+
+                 13/03/2018 - Ajuste nos botões da tela, novo campo 'Renovação' e novo input perrenov do tipo hidden. (Leonardo Oliveira - GFT)
+
+				 16/03/2018 - Novos campos flgstlcr e cddlinha, ambos do tipo hidden. (Leonardo Oliveira - GFT)
+
+				 28/03/2018 - Novos botões Contratos e Propostas. (Andre Avila - GFT)
+
+				 12/04/2018 - Criação do botão manutenção e ajuste no tamanho da tela. (Leonardo Oliveira - GFT)
+
+ 				 25/04/2018 - Alterado o comportamento dos botões na <div id="divBotoes" >, por definicção do cliente os mesmos devem ser ocultados caso o usuário não possua permissão. (Andre Avila - GFT)
+
 
 	***************************************************************************/
 	
@@ -78,6 +91,7 @@
 	
 	$dados = $xmlObjDscTit->roottag->tags[0]->tags[0]->tags;
 		
+	
 	// Função para exibir erros na tela através de javascript
 	function exibeErro($msgErro) { 
 		echo '<script type="text/javascript">';
@@ -93,6 +107,10 @@
 	<fieldset>
 		<legend><? echo utf8ToHtml('Títulos') ?></legend>
 		
+		<input type="hidden" name="hd_perrenov" id="hd_perrenov" value="<?php echo $dados[14]->cdata; ?>" />
+		<input type="hidden" name="flgstlcr" id="flgstlcr" value="<?php echo $dados[15]->cdata; ?>" />
+		<input type="hidden" name="cddlinha" id="cddlinha" value="<?php echo $dados[16]->cdata; ?>" />
+
 		<label for="nrctrlim"><? echo utf8ToHtml('Contrato:') ?></label>
 		<input type="text" name="nrctrlim" id="nrctrlim" value="<?php echo formataNumericos('zzz.zzz.zz9',$dados[0]->cdata,'.'); ?>" />
 		
@@ -122,18 +140,110 @@
 		<input type="text" name="vlutilsr" id="vlutilsr" value="<?php echo number_format(str_replace(",",".",$dados[12]->cdata),2,",",".") . " (". $dados[11]->cdata; if ($dados[11]->cdata > 1) { echo " t&iacute;tulos)"; } else { echo " t&iacute;tulos)"; } ?>" />
 		<br />
 		
+		<label for="dtrenova"><? echo utf8ToHtml('Data Renovação: ') ?></label>
+		<input type="text" name="dtrenova" id="dtrenova" value="<?php echo $dados[13]->cdata ?>"/>
+		<br />
+
+		<label for="dtultmnt"><? echo utf8ToHtml('Data Manutenção: ') ?></label>
+		<input 
+			type="text"
+			name="dtultmnt"
+			id="dtultmnt"
+			value="
+			<?php
+				echo getByTagName($dados,"dtultmnt");
+			?>"/>
+		<br />
 		
 	</fieldset>
 </form>
+
 <div id="divBotoes" >
 
-	<input type="image" src="<?php echo $UrlImagens; ?>botoes/voltar.gif" onClick="voltaDiv(1,0,4,'DESCONTOS','DESCONTOS');return false;" />
-	<input type="image" name="btnbordero" id="btnbordero" src="<?php echo $UrlImagens; ?>botoes/borderos.gif" <?php if (!in_array("DSC TITS - BORDERO",$rotinasTela)) { echo 'style="cursor: default;display:none;" onClick="return false;"'; } else { echo 'onClick="carregaBorderosTitulos();return false;"'; } ?> />
-	<input type="image" name="btnlimite" id="btnlimite" src="<?php echo $UrlImagens; ?>botoes/limite.gif" <?php if (!in_array("DSC TITS - LIMITE",$rotinasTela)) { echo 'style="cursor: default;display:none;" onClick="return false;"'; } else { echo 'onClick="carregaLimitesTitulos();return false;"'; } ?> />
+	<a
+		href="#"
+		class="botao" 
+		name="btnvoltar"
+		id="btnvoltar"
+		onClick="voltaDiv(1,0,4,'DESCONTOS','DESCONTOS');return false;" >
+			Voltar
+	</a>
+	<a
+		href="#"
+		class="botao" 
+		type="image" 
+		name="btnbordero" 
+		id="btnbordero"
+	 	<?php 
+			if (!in_array("DSC TITS - BORDERO",$rotinasTela)) { echo 'style="cursor: default;display:none;" onClick="return false;"'; } 
+			else { echo 'onClick="carregaBorderosTitulos();return false;"'; } ?> 
+	>
+		Border&ocirc;s
+	</a>
+
+
+	<a
+	href="#"
+	class="botao"
+	type="image"
+	name="btnlimite"
+	id="btnlimite"
+	 <?php if (!in_array("DSC TITS - LIMITE",$rotinasTela)) { echo 'style="cursor: default;display:none;" onClick="return false;"'; } 
+		else { echo 'onClick="carregaLimitesTitulos();return false;"'; } ?> 
+	>
+		Contratos
+	</a>
+
+	<a
+		href="#"
+		class="botao" 
+		type="image" 
+		name="btnpropostas" 
+		id="btnpropostas"
+
+	 <?php if (!in_array("DSC TITS - LIMITE",$rotinasTela)) { echo 'style="cursor: default;display:none;" onClick="return false;"'; } 
+		else { echo 'onClick="carregaLimitesTitulosPropostas();return false;"'; } ?> 
+	>
+			Propostas
+	</a>
+
+	<a 
+		href="#" 
+		class="botao"
+		id="btnrenovacao"
+		name="btnrenovacao"
+		<?php 
+			if ( (in_array("DSC TITS - LIMITE",$rotinasTela)) || (!in_array("DSC TITS - LIMITE",$rotinasTela)) && ($glbvars['nmrotina'] == "DSC TITS") && (in_array("@", $glbvars['opcoesTela'])) ) {
+				if (($msgError = validaPermissao($glbvars["nmdatela"],"DSC TITS - LIMITE","V","")) <> "") {
+					echo 'style="cursor: default; display:none; "onClick="return false;"'; 
+				}	
+			}
+		?> 
+	>
+		Renovar
+	</a>
+
+	<a 
+		href="#" 
+		class="botao"
+		id="btnManutencao"
+		name="tnManutencao" 
+		<?php 
+			if ( (in_array("DSC TITS - LIMITE",$rotinasTela)) || (!in_array("DSC TITS - LIMITE",$rotinasTela)) && ($glbvars['nmrotina'] == "DSC TITS") && (in_array("@", $glbvars['opcoesTela'])) ) {
+				if (($msgError = validaPermissao($glbvars["nmdatela"],"DSC TITS - LIMITE","U","")) <> "") {
+					echo 'style="cursor: default; display:none; "onClick="return false;"'; 
+				}	
+			}
+		?> 
+		>
+		Manuten&ccedil;&atilde;o
+	</a>
+
 </div>
 
-<script type="text/javascript">
 
+
+<script type="text/javascript">
 dscShowHideDiv("divOpcoesDaOpcao1","divConteudoOpcao");
 
 // Muda o título da tela

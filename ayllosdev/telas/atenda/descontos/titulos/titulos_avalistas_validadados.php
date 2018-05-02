@@ -9,6 +9,7 @@
  * --------------
  * 000: [10/06/2010] David          (CECRED) : Adaptação para RATING
  * 001: [04/05/2011] Rodolpho Telmo    (DB1) : Adaptação formulário genérico avalistas e endereço
+ * 002: [28/03/2018] Andre Avila    (GFT) : Alteração de mensagem para opção A [Alteração].
  */
 ?> 
  
@@ -27,7 +28,7 @@
 	foreach ($params as $nomeParam) {
 		if (!in_array($nomeParam,array_keys($_POST))) exibirErro('error','Par&acirc;metros incorretos.','Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
 	}
-	
+	$tipo = (isset($_POST['tipo'])) ? $_POST['tipo'] : "CONTRATO";
 	$nrdconta = $_POST['nrdconta'];
 	$nrctaav1 = $_POST['nrctaav1'];
 	$nmdaval1 = $_POST['nmdaval1'];
@@ -111,8 +112,9 @@
 	echo 'bloqueiaFundo(divRotina);';
 	
 	if ($cddopcao == "I") { // Incluir
-		echo 'validaNrContrato();';
+		echo 'validaNrContrato(\''.$tipo.'\');';
 	}elseif ($cddopcao == "A") { // Alterar
-		echo 'showConfirmacao("Deseja alterar os dados do limite de desconto de t&iacute;tulos?","Confirma&ccedil;&atilde;o - Ayllos","gravaLimiteDscTit(\'A\')","bloqueiaFundo(divRotina);","sim.gif","nao.gif");';
+		//echo 'showConfirmacao("Deseja alterar os dados do limite de desconto de t&iacute;tulos?","Confirma&ccedil;&atilde;o - Ayllos","gravaLimiteDscTit(\'A\')","bloqueiaFundo(divRotina);","sim.gif","nao.gif");';
+		echo 'showConfirmacao("Deseja alterar os dados da Proposta?","Confirma&ccedil;&atilde;o - Ayllos","gravaLimiteDscTit(\'A\', \''.$tipo.'\')","bloqueiaFundo(divRotina);","sim.gif","nao.gif");';
 	}
 ?>

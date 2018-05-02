@@ -65,7 +65,7 @@
     $('#nrrevcad','#frmRegra').val('<?= getByTagName($regra->tags,'nrrevcad'); ?>');
     $('#qtmincta','#frmRegra').val('<?= getByTagName($regra->tags,'qtmincta'); ?>');
     $('#qtdiaren','#frmRegra').val('<?= getByTagName($regra->tags,'qtdiaren'); ?>');
-		$('#qtmeslic','#frmRegra').val('<?= getByTagName($regra->tags,'qtmeslic'); ?>');//Diego Simas (AMcom)
+    $('#qtmeslic','#frmRegra').val('<?= getByTagName($regra->tags,'qtmeslic'); ?>');//Diego Simas (AMcom)
     $('#cnauinad','#frmRegra').val('<?= getByTagName($regra->tags,'cnauinad'); ?>');
     $('#qtdiatin','#frmRegra').val('<?= getByTagName($regra->tags,'qtdiatin'); ?>');
     $('#qtmaxren','#frmRegra').val('<?= getByTagName($regra->tags,'qtmaxren'); ?>');
@@ -73,6 +73,8 @@
     $('#qtatracc','#frmRegra').val('<?= getByTagName($regra->tags,'qtatracc'); ?>');
     $('#pcliqdez','#frmRegra').val('<?= getByTagName($regra->tags,'pcliqdez'); ?>');
     $('#qtdialiq','#frmRegra').val('<?= getByTagName($regra->tags,'qtdialiq'); ?>');
+    $('#qtcarpag','#frmRegra').val('<?= getByTagName($regra->tags,'qtcarpag'); ?>');
+    $('#qtaltlim','#frmRegra').val('<?= getByTagName($regra->tags,'qtaltlim'); ?>');
     defineCamposCancAuto();
 	<?
 	$aSituacao = explode(";", getByTagName($regra->tags,'dssitdop'));

@@ -5,7 +5,7 @@
  * DATA CRIAÇÃO : Junho/2007
  * OBJETIVO     : Carregar formulário de dados para gerenciar limite
  * --------------
- * ALTERAÇÕES   : 11/12/2017
+ * ALTERAÇÕES   : 10/10/2016
  * --------------
  * 001: [04/05/2011] Rodolpho Telmo  (DB1) : Adaptação no formulário de avalista genérico
  * 002: [11/07/2011] Gabriel Capoia  (DB1) : Alterado para layout padrão
@@ -24,15 +24,12 @@
  * 010: [27/06/2016] Jaison/James (CECRED) : Inicializacao da aux_inconfi6.
  * 010: [10/10/2016] Lucas Ranghetti (CECRED): Remover verificacao de digitalizaco para o botao de consultar imagem(#510032)
  * 011: [26/06/2017] Jonata (RKAM): Ajuste para rotina ser chamada através da tela ATENDA > Produtos (P364).
- * 012: [11/12/2017] P404 - Inclusão de Garantia de Cobertura das Operações de Crédito (Augusto / Marcos (Supero)) 
- * 013: [22/03/2018] Daniel (Cecred) : Ajustes referente a geracao automatica do numero do contrato.
- * 014: [13/04/2018] Leonardo Oliveira (GFT): Campo 'nrctrlim' escondido quando for uma inclusão, cddopcao = 'I'.
- * 015: [16/04/2018] Lombardi     (CECRED) : Incluida chamada da function validaValorProduto. PRJ366
+ * 012: [28/03/2018] Andre Avila (GFT):  Alteração da opção retorno dos botões.
  */
+
+
 ?>
 <form action="" name="frmDadosLimiteDscTit" id="frmDadosLimiteDscTit" onSubmit="return false;">
-
-  <input type="hidden" id="idcobert" value="<?php echo $dados[30]->cdata; ?>" />
 
 	<div id="divDscTit_Limite">
 	
@@ -40,20 +37,12 @@
 		
 			<legend>Dados do Limite</legend>
 			
-			<? if ($cddopcao == "I") { ?>
-			
-				<input type="hidden" name="nrctrlim" id="nrctrlim" value="0" class="campo" disabled>
-			
-			<? }else { ?> 
-				
 			<label for="nrctrlim"><? echo utf8ToHtml('Contrato:') ?></label>
 			<input type="text" name="nrctrlim" id="nrctrlim" value="0" class="campo" disabled>
 			<br />
 			
 			<label></label>
 			<br />
-			
-			<? } ?>
 			
 			<label for="vllimite"><? echo utf8ToHtml('Valor do Limite:') ?></label>
 			<input type="text" name="vllimite" id="vllimite" value="0,00" class="campo">
@@ -62,7 +51,7 @@
 			<input type="text" name="qtdiavig" id="qtdiavig" value="0" class="campoTelaSemBorda" disabled>
 			<br />
 			
-			<label for="cddlinha"><? echo utf8ToHtml('Linha de descontos:') ?></label>
+			<label for="cddlinha"><? echo utf8ToHtml('Linha de descontoss:') ?></label>
 			<input type="text" name="cddlinha" id="cddlinha" value="0" class="campo">
 			<a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
 			<input type="text" name="cddlinh2" id="cddlinh2" value="" class="campoTelaSemBorda" disabled>
@@ -90,10 +79,6 @@
 		</fieldset>
 		
 	</div>
-	
-  <div id="divUsoGAROPC"></div>
-  
-  <div id="divFormGAROPC"></div>
 	
 	<div id="divDscTit_Renda">
 	
@@ -141,8 +126,9 @@
 	
 		<? 	// ALTERAÇÃO 001: Substituido formulário antigo pelo include				
 			include('../../../../includes/avalistas/form_avalista.php'); 
-		?>	
-		</div>									
+		?>
+		
+	</div>
 		
 </form>
 
@@ -152,18 +138,18 @@
 	
 	
 	<? if ($cddopcao == "C") { ?> 
-				<a href="http://<?php echo $GEDServidor;?>/smartshare/clientes/viewerexterno.aspx?tpdoc=<?php echo $dados[29]->cdata; ?>&conta=<?php echo formataContaDVsimples($nrdconta); ?>&contrato=<?php echo formataNumericos('z.zzz.zz9',$nrctrlim,'.'); ?>&cooperativa=<?php echo $glbvars["cdcooper"]; ?>" target="_blank"><img src="<? echo $UrlImagens; ?>botoes/consultar_imagem.gif" /></a>
+				<a href="http://<?php 
+
+				echo $GEDServidor;?>/smartshare/clientes/viewerexterno.aspx?tpdoc=<?php 
+				echo $dados[29]->cdata; ?>&conta=<?php 
+				echo formataContaDVsimples($nrdconta); ?>&contrato=<?php 
+				echo formataNumericos('z.zzz.zz9',$nrctrlim,'.'); ?>&cooperativa=<?php 
+				echo $glbvars["cdcooper"]; ?>" target="_blank"><img src="<? 
+				echo $UrlImagens; ?>botoes/consultar_imagem.gif" /></a>
 	<?	} ?>
 	   
 	<input type="image" id="btnContinuarLimite" name="btnContinuarLimite" src="<? echo $UrlImagens; ?>botoes/continuar.gif" />		
 	
-</div>
-
-<div id="divBotoesGAROPC">
-
-  <input type="image" id="btnVoltarGAROPC" name="btnVoltarGAROPC" src="<? echo $UrlImagens; ?>botoes/voltar.gif" />
-	<input type="image" id="btnContinuarGAROPC" name="btnContinuarGAROPC" src="<? echo $UrlImagens; ?>botoes/continuar.gif" />
-
 </div>
 
 <div id="divBotoesRenda">
@@ -214,7 +200,7 @@
 
 	operacao = '<? echo $cddopcao; ?>';
 	
-	dscShowHideDiv("divOpcoesDaOpcao3;divDscTit_Limite;divBotoesLimite","divBotoesGAROPC;divBotoesRenda;divBotoesObs;divBotoesAval;divOpcoesDaOpcao2;divDscTit_Renda;divDscTit_Observacao;divDscTit_Avalistas;divDscTit_Confirma");
+	dscShowHideDiv("divOpcoesDaOpcao3;divDscTit_Limite;divBotoesLimite","divBotoesRenda;divBotoesObs;divBotoesAval;divOpcoesDaOpcao2;divDscTit_Renda;divDscTit_Observacao;divDscTit_Avalistas;divDscTit_Confirma");
 
 	$("#divDscTit_Confirma").css("display","<? if ($cddopcao == "I") { echo "block"; } else { echo "none"; } ?>");
 		
@@ -295,12 +281,7 @@
 	
 	$('#btnContinuarLimite','#divBotoesLimite').unbind('click').bind('click',function() {
 		if (operacao == 'C') {
-      <? if ($dados[30]->cdata > 0) { ?>
-			abrirTelaGAROPC("C");
-      blockBackground(parseInt($("#divRotina").css("z-index")));
-      <? } else { ?>
 			dscShowHideDiv('divDscTit_Renda;divBotoesRenda','divDscTit_Limite;divBotoesLimite');
-      <? } ?>
 		} else {
 			aux_inconfir = 1; 
 			aux_inconfi2 = 11; 
@@ -308,51 +289,26 @@
 			aux_inconfi4 = 71; 
 			aux_inconfi5 = 30;
 			aux_inconfi6 = 51;
-			validaValorProduto(nrdconta, 37, $("#vllimite","#divDscTit_Limite").val().replace('.','').replace(',','.'),"validaLimiteDscTit(\"" + operacao + "\",1,11,30);","divRotina", 0);
+			validaLimiteDscTit(operacao,1,11,30);
 		}
 		return false;
 	});
 	
-  $("#btnVoltarGAROPC","#divBotoesGAROPC").unbind("click").bind("click",function() {
-    $("#divUsoGAROPC").empty();
-    $("#divFormGAROPC").empty();
-    $("#frmDadosLimiteDscTit").css("width", 515);
-    dscShowHideDiv("divDscTit_Limite;divBotoesLimite", "divFormGAROPC;divBotoesGAROPC");
-		return false;
-	});
-	
-  $("#btnContinuarGAROPC","#divBotoesGAROPC").unbind("click").bind("click",function() {
-    gravarGAROPC('idcobert','frmDadosLimiteDscTit','dscShowHideDiv("divDscTit_Renda;divBotoesRenda","divFormGAROPC;divBotoesGAROPC", "");$("#frmDadosLimiteDscTit").css("width", 515);bloqueiaFundo($("#divDscTit_Renda"));');
-    return false;
-	});
-	
 	$('#btnVoltarRendas','#divBotoesRenda').unbind('click').bind('click',function() {
-    <? if ($cddopcao == "C") { ?>
-      <? if ($dados[30]->cdata > 0) { ?>
-        dscShowHideDiv('divFormGAROPC;divBotoesGAROPC','divDscTit_Renda;divBotoesRenda');
-        $("#frmDadosLimiteDscTit").css("width", 540);
-      <? } else { ?>
 		dscShowHideDiv('divDscTit_Limite;divBotoesLimite','divDscTit_Renda;divBotoesRenda');
-      <? } ?>      
-    <? } else if ($cddopcao == "A" || $cddopcao == "I") { ?>
-      dscShowHideDiv('divFormGAROPC;divBotoesGAROPC','divDscTit_Renda;divBotoesRenda');
-      $("#frmDadosLimiteDscTit").css("width", 540);
-    <? } else { ?>
-		dscShowHideDiv('divDscTit_Limite;divBotoesLimite','divDscTit_Renda;divBotoesRenda');
-    <? } ?>
 		return false;
 	});
 	
 	$('#btnContinuarRendas','#divBotoesRenda').unbind('click').bind('click',function() {
 		if (operacao == 'A') {
 			$('#divBotoesRenda').css('display','none');
-			informarRating('divDscTit_Renda',"dscShowHideDiv('divDscTit_Observacao;divBotoesObs','divDadosRating;divBotoesRenda')","dscShowHideDiv('divDscTit_Renda;divBotoesRenda','divDadosRating');","fecharRotinaGenerico('<? echo $tipo ?>');");
+			informarRating('divDscTit_Renda',"dscShowHideDiv('divDscTit_Observacao;divBotoesObs','divDadosRating;divBotoesRenda')","dscShowHideDiv('divDscTit_Renda;divBotoesRenda','divDadosRating');","carregaLimitesTitulosPropostas()");
 		} else if (operacao == 'C') {
 			$('#divBotoesRenda').css('display','none');
-			informarRating('divDscTit_Renda',"dscShowHideDiv('divDscTit_Observacao;divBotoesObs','divDadosRating;divBotoesRenda')","dscShowHideDiv('divDscTit_Renda;divBotoesRenda','divDadosRating');","fecharRotinaGenerico('<? echo $tipo ?>');");
+			informarRating('divDscTit_Renda',"dscShowHideDiv('divDscTit_Observacao;divBotoesObs','divDadosRating;divBotoesRenda')","dscShowHideDiv('divDscTit_Renda;divBotoesRenda','divDadosRating');","carregaLimitesTitulos()");
 		} else {
 			$('#divBotoesRenda').css('display','none');
-			informarRating('divDscTit_Renda',"dscShowHideDiv('divDscTit_Observacao;divBotoesObs','divDadosRating;divBotoesRenda')","dscShowHideDiv('divDscTit_Renda;divBotoesRenda','divDadosRating');","mostraImprimirLimite('<? echo $tipo ?>');");
+			informarRating('divDscTit_Renda',"dscShowHideDiv('divDscTit_Observacao;divBotoesObs','divDadosRating;divBotoesRenda')","dscShowHideDiv('divDscTit_Renda;divBotoesRenda','divDadosRating');","mostraImprimirLimite(\'PROPOSTA\')");
 		}
 		return false;
 	});
@@ -363,7 +319,6 @@
 	});
 	
 	$('#btnContinuarObservacao','#divBotoesObs').unbind('click').bind('click',function() {
-    $("#frmDadosLimiteDscTit").css("width", 525);
 		dscShowHideDiv('divDscTit_Avalistas;divBotoesAval','divDscTit_Observacao;divBotoesObs');
 		return false;
 	});
@@ -384,7 +339,7 @@
 		if (operacao == 'C') {
 			voltaDiv(3,2,4,'DESCONTO DE T&Iacute;TULOS - LIMITE');
 		} else {
-			buscaGrupoEconomico('<? echo $tipo ?>');
+			buscaGrupoEconomico();
 		}
 		return false;
 	});

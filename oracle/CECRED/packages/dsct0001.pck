@@ -4,7 +4,7 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0001 AS
   --
   --  Programa:  DSCT0001                       Antiga: generico/procedures/b1wgen0153.p
   --  Autor   : Alisson
-  --  Data    : Julho/2013                     Ultima Atualizacao: 26/02/2016
+  --  Data    : Julho/2013                     Ultima Atualizacao: 16/02/2018
   --
   --  Dados referentes ao programa:
   --
@@ -16,6 +16,9 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0001 AS
   --              26/02/2016 - Criacao das procedures pc_efetua_baixa_tit_car e
   --                           pc_efetua_baixa_tit_car_job melhoria 116
   --                           (Tiago/Rodrigo).
+  --
+  --              16/02/2018 - Ref. História KE00726701-36 - Inclusão de Filtro e Parâmetro por Tipo de Pessoa na TAB052
+  --                          (Gustavo Sene - GFT)
   ---------------------------------------------------------------------------------------------------------------
  
   --Tipo de Desconto de Títulos
@@ -153,7 +156,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
     Sistema  : Procedimentos envolvendo desconto titulos
     Sigla    : CRED
     Autor    : Alisson C. Berrido - Amcom
-    Data     : Julho/2013.                   Ultima atualizacao: 25/04/2017
+    Data     : Julho/2013.                   Ultima atualizacao: 16/02/2018
   
    Dados referentes ao programa:
   
@@ -192,6 +195,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                14/02/2018 - Projeto Ligeirinho. Alterado para gravar na tabela de lotes (craplot) somente no final
                             da execução do CRPS509 => INTERNET E TAA. (Fabiano Girardi AMcom)                            
     
+
+               16/02/2018 - Ref. História KE00726701-36 - Inclusão de Filtro e Parâmetro por Tipo de Pessoa na TAB052
+                           (Gustavo Sene - GFT)               
   ---------------------------------------------------------------------------------------------------------------*/
   /* Tipos de Tabelas da Package */
 
@@ -478,8 +484,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
       --Registro de memoria do tipo lancamento
       rw_craplcm craplcm%ROWTYPE;
       
-      vr_cardbtit     INTEGER;             --> Parametro de dias carencia cobranca s/ registro
-      vr_cardbtitcr   INTEGER;             --> Parametro de dias carencia cobranca c/ registro
+      vr_cardbtit     INTEGER; --> Parametro de dias carencia cobranca c/ registro pessoa fisica ou juridica
+      vr_cardbtitcrpf INTEGER; --> Parametro de dias carencia cobranca c/ registro pessoa fisica
+      vr_cardbtitcrpj INTEGER; --> Parametro de dias carencia cobranca c/ registro pessoa juridica
+
       vr_diascare     INTEGER;             --> Qtd de dias de carencia
       vr_dtrefere     DATE;                --> Data de referencia para buscar os titulos que vao ser debitados
       vr_dtvcttdb     DATE;                --> Data de vencimento como dia util
@@ -817,7 +825,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                                               ,pr_nmsistem => 'CRED'
                                               ,pr_tptabela => 'USUARI'
                                               ,pr_cdempres => 11
-                                              ,pr_cdacesso => 'LIMDESCTITCR'
+                                              ,pr_cdacesso => 'LIMDESCTITCRPF'
                                               ,pr_tpregist => 0);
       --Se nao encontrou
       IF vr_dstextab IS NULL THEN
@@ -826,7 +834,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
           --Levantar Excecao
           RAISE vr_exc_erro;
       ELSE
-        vr_cardbtitcr := TO_NUMBER(gene0002.fn_busca_entrada(pr_postext => 32, pr_dstext => vr_dstextab, pr_delimitador => ';'));
+        vr_cardbtitcrpf := TO_NUMBER(gene0002.fn_busca_entrada(pr_postext => 32, pr_dstext => vr_dstextab, pr_delimitador => ';'));
       END IF;
 
       --Cobranca sem registro
@@ -834,7 +842,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
                                               ,pr_nmsistem => 'CRED'
                                               ,pr_tptabela => 'USUARI'
                                               ,pr_cdempres => 11
-                                              ,pr_cdacesso => 'LIMDESCTIT'
+                                              ,pr_cdacesso => 'LIMDESCTITCRPJ'
                                               ,pr_tpregist => 0);
       --Se nao encontrou
       IF vr_dstextab IS NULL THEN
@@ -843,7 +851,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
           --Levantar Excecao
           RAISE vr_exc_erro;
       ELSE          
-        vr_cardbtit := TO_NUMBER(gene0002.fn_busca_entrada(pr_postext => 32, pr_dstext => vr_dstextab, pr_delimitador => ';'));
+        vr_cardbtitcrpj := TO_NUMBER(gene0002.fn_busca_entrada(pr_postext => 32, pr_dstext => vr_dstextab, pr_delimitador => ';'));
       END IF;
       
       --Pega data de referencia que deve buscar os titulos para processamento
@@ -963,8 +971,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
           3 - caso ainda haja saldo continua debitando os titulos que estao no dia de
           vencimento ou ja estao vencidos*/
          
+        if    rw_crapass.inpessoa = 1 then -- Pessoa Física
+              vr_cardbtit := vr_cardbtitcrpf;
+              
+        elsif rw_crapass.inpessoa = 2 then -- Pessoa Jurídica
+              vr_cardbtit := vr_cardbtitcrpj;
+        end   if;
+
          -- se ainda nao acabou a carencia deve verificar saldo
          -- contar a partir do primeiro dia util qdo a data de vencimento cair no final de semana ou feriado
+        --  Cobrança com Registro
          IF (gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper,
                                          pr_dtmvtolt => rw_craptdb.dtvencto) + vr_cardbtit) > pr_dtmvtolt THEN  -- verificar cobr reg e sem reg
 

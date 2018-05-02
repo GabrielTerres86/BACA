@@ -12,6 +12,7 @@
  * 002: [20/08/2015] Kelvin 			(CECRED) : Ajuste feito para não inserir caracters 
  *												   especiais na observação, conforme solicitado
  *	   										       no chamado 315453.
+ * 003: [28/03/2018] Andre Avila 		(GFT) 	 : Adaptado para Propostas
  */
 ?>
 
@@ -25,14 +26,18 @@
 
 	// Verifica se tela foi chamada pelo método POST
 	isPostMethod();	
-		
+	 	
 	// Classe para leitura do xml de retorno
 	require_once("../../../../class/xmlfile.php");
+
+
+	require_once("../../../../includes/carrega_permissoes.php");
+
+	setVarSession("opcoesTela",$opcoesTela);
 	
 	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"A")) <> "") {
 		exibeErro($msgError);		
 	}	
-	$tipo = (isset($_POST['tipo'])) ? $_POST['tipo'] : "CONTRATO";
 	
 	// Verifica se o número da conta foi informado
 	if (!isset($_POST["nrdconta"]) ||
@@ -73,26 +78,31 @@
 	$xmlGetDados .= "		<nrctrlim>".$nrctrlim."</nrctrlim>";
 	$xmlGetDados .= "	</Dados>";
 	$xmlGetDados .= "</Root>";
-		
+
+
 	// Executa script para envio do XML
 	$xmlResult = getDataXML($xmlGetDados);
 	
 	// Cria objeto para classe de tratamento de XML
 	$xmlObjDados = getObjectXML(retiraAcentos(removeCaracteresInvalidos($xmlResult)));
-	
+
 	// Se ocorrer um erro, mostra cr&iacute;tica
 	if (strtoupper($xmlObjDados->roottag->tags[0]->name) == "ERRO") {
 		exibeErro($xmlObjDados->roottag->tags[0]->tags[0]->tags[4]->cdata);
 	} 
 	
 	$dados = $xmlObjDados->roottag->tags[0]->tags[0]->tags;
+	
 	$avais = $xmlObjDados->roottag->tags[1]->tags;
+	
 	$risco = $xmlObjDados->roottag->tags[2]->tags;
+	
 	$registros = $avais;
 	
 	$flgAval01 = count($avais) == 1 || count($avais) == 2 ? true : false;
 	$flgAval02 = count($avais) == 2 ? true : false;
 	
+
 	// Alimentar data rating
 	for ($i = 0; $i < count($risco); $i++) { 								
 		if ($risco[$i]->tags[4]->cdata <> 0) {
@@ -109,8 +119,8 @@
 	// Variável que armazena código da opção para utilização na include titulos_limite_formulario.php
 	$cddopcao = "A";
 	
-	// Include para carregar formulário para gerenciamento de dados do limite
-	include("titulos_limite_formulario.php");
+	// Include para carregar formulário para gerenciamento de dados da proposta
+	include("titulos_limite_formulario_propostas.php");
 	
 	// Função para exibir erros na tela através de javascript
 	function exibeErro($msgErro) { 
