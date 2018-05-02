@@ -1,77 +1,9 @@
 <!-----------------------------------------------------------------------------------------------------------
-
-  Alterações:  27/11/2007 - Incluídas verificações sobre Conta e Titularidade na 
-                            função Salvar() (Diego)
-                                                    
-               26/02/2008 - Não permitir inscrições quando o mês da Data Final do
-                            evento já estiver Fechado, E usuário não possuir
-                            permissão de acesso 'U' (Diego).
-                                                    
-               04/06/2008 - Melhoria de performance (Evandro).                                        
-                           
-               11/12/2009 - Nao permitir encerrar eventos cancelados (Diego).          
-                          
-               06/04/2010 - Remover aspas e apostrofo no campo Observacao (Guilherme).
-         
-               14/05/2010 - Esclarecer na mensagem de confirmaçao de encerramento
-                            que as inscriçoes pendentes passam para excedente (Gabriel).
-                      
-               13/06/2011 - Permitir salvar as alterações na confirmação de inscrições 
-                            quando há somente 1 registro (Isara - RKAM).	
-                      
-               15/02/2012 - Caso não haja inscritos desabilitar os botões 
-                            "Salvar" e "Encerrar" na tela de Confirmações.
-                            (Isara - RKAM)
-                
-               19/07/2012 - Não permitir a utilização de aspas no nome do inscrito (Lucas).
-         
-               18/10/2012 - Limitar a 50 posicoes o campo do email e nome do cooperado.
-                            Limitar a 4000 o campo da observacao (Gabriel).
-                
-               22/10/2012 - Alterações para trabalhar com biblioteca de funções e novas
-                            validações de campos (Lucas).
-                            
-               19/11/2013 - Ajustes referentes a Tarefa Softdesk 104385 (Lucas R.) 
-         
-               13/03/2014 - Comentado camada da funcao eCampos(), funcao nao existe
-                            apresentava alerta no navegador (Daniel).
-                            
-               14/03/2014 - Incluido chamada da funcao ArmazenaConfirm() para o botao
-                            SalvarConfirm() (Lucas R.)
-               
-               15/01/2016 - Incluido filtro por nome do inscrito. #386129(Lombardi)
-               
-               26/01/2016 - Incluido filtro por conta do inscrito. (Lombardi #392513)
-         
-               02/02/2016 - Ajustes para Prj. 229. (Jean Michel)
-
-               06/05/2016 - Removi o campo procurar da tela de pre-inscricao conforme 
-                            solicatacao da Daiana. (Carlos Rafael Tanholi).
-
-               19/05/2016 - Correcao de erros de acentuação e na forma de carregamento 
-                            de dados dos eventos pré-inscritos do colaborador. (Carlos Rafael Tanholi).
-                            
-               01/07/2016 - Ajustes Projeto 229 - Melhorias OQS RF6.(Odirlei-AMcom)   
-
-               18/07/2016 - Alterado forma queapresenta botões desabilitados de BasicImage para Alfa             
-                   
-               20/07/2016 - Correção para permitir inscrever socio da conta PJ que não possui
-                            conta na cooperativa. SD487596 (Odirlei-AMCOM)
-                            
-               24/08/2016 - Correção para permitir salvar somente um inscrito(Jean Michel)             
-               
-               16/12/2016 - Melhorias, Prj. 229-5 (Jean Michel)
-               
-               27/03/2017 - Ajustes de cadastro de inscricoes para eventos de mes fechados e
-                            verificacao de contas duplicadas, SD 639085  e SD 637565 (Jean Michel).
-                            
-               30/03/2017 - Ajuste para contabilizar inscritos somente de PA's ativos,
-                            Deixar salvar mais de um registro por conta, aujste na busca
-                            por registros, SD-640648, SD-637565 (Jean Michel). 
-                            
-               05/04/2017 - Melhorias e ajustes decorrentes de erros encontrados em testes
-                            e também erros de regras de negócio. (Jean Michel)
-               
+  Alterações: 28/07/2017 - Criaçao da tela, Prj. 322. (Jean Michel) 
+              08/02/2018 - PJ 322 - SM 8 - Mateus(Mouts)
+   			               Permitir incluir participante mesmo com o evento encerrado (desde que não esteja fechada a conatbilização)  
+              15/02/2018 - PJ 322 - SM 7 - (Mateus) Se só exitir um titular na conta, trazer o mesmo como default
+                           Permitir ordenação por comentários						   
 ----------------------------------------------------------------------------------------------------------->
 
 <html>
@@ -121,15 +53,21 @@
       <input type="hidden" name="aux_nrcpfcgc" value="">
       <input type="hidden" name="aux_nriniseq" id="aux_nriniseq" value="">
       <input type="hidden" name="aux_qtdregis" id="aux_qtdregis" value="">
+			<input type="hidden" name="aux_dsurlphp" value="">
+      <input type="hidden" name="aux_indicdiv" id="aux_indicdiv" value="">
+      <input type="hidden" name="aux_idcookie" id="aux_idcookie" value="">      
+      <input type="hidden" name="aux_cdoperad" id="aux_cdoperad" value="">
+      <input type="hidden" name="aux_indficin" id="aux_indficin" value="">
+			<input type="hidden" name="aux_encerrar" id="aux_encerrar" value="">
             
       <div id="divAguardo"></div>
       
       <script language="JavaScript">
       
-        NomeDoProgramaPrincipal = '/wpgd0009.w';
-        NomeDoProgramaDeListagem = '/wpgd0009ls.w';
-        NomeDoProgramaDeAjuda = '/wpgd0009aj.w';
-        NomeDoProgramaDeZoom = '/zoom/zwpgd0009.w';
+        NomeDoProgramaPrincipal = '/wpgd0061.w';
+        NomeDoProgramaDeListagem = '/wpgd0061ls.w';
+        NomeDoProgramaDeAjuda = '/wpgd0061aj.w';
+        NomeDoProgramaDeZoom = '/zoom/zwpgd0061.w';
                 
         function aguarde(){
           // abre a janela com a mesagem de aguarde
@@ -149,7 +87,7 @@
             <td width="2%"><img src="/cecred/images/geral/guia_esquerda.gif" width="11" height="21"></td>
             <td width="9%"><img src="/cecred/images/geral/spacer.gif" width="10" height="10"></td>
             <td width="48%" height="20" align="left" class="linkGuia">Inscri&ccedil;&otilde;es</td>
-            <td width="39%" height="20" align="right" class="linkGuia">wpgd0009</td>
+            <td width="39%" height="20" align="right" class="linkGuia">wpgd0061</td>
             <td width="2%" align="right" valign="middle" class="linkGuia"><img src="/cecred/images/geral/guia_direita.gif" width="11" height="21"></td>
           </tr>
           <tr valign="top" bgcolor="#FFFFFF">
@@ -166,15 +104,15 @@
                               <td class="NomeCampo">&nbsp;</td>
                               <td align="right" class="NomeCampo"> Agenda: </td>
                               <td class="NomeCampo" align="left">
-                                <input name="aux_dtanoage" type="text" size="5" tabindex="1" onchange=" document.form.submit();">
+                                <input name="aux_dtanoage" id="aux_dtanoage" type="text" size="5" tabindex="1" onchange=" document.form.submit();">
                               </td>
                               <td colspan="2" class="NomeCampo" align="right">Cooperativa: </td>
                               <td colspan="2" class="NomeCampo" align="left">
-                                <select name="aux_cdcooper" tabindex="2" class="Campo" onchange="$('#aux_nriniseq').val(1); document.form.aux_dtanoage.value=''; document.form.aux_cddopcao.value=''; document.form.aux_cdagenci.value=''; document.form.submit();"></select>
+                                <select name="aux_cdcooper" id="aux_cdcooper" tabindex="2" class="Campo" onchange="$('#aux_nriniseq').val(1); document.form.aux_dtanoage.value=''; document.form.aux_cddopcao.value=''; document.form.aux_cdagenci.value=''; document.form.submit();"></select>
                               </td>
                               <td colspan="3" align="center" class="NomeCampo">
                                 &nbsp;PA:
-                                <select name="aux_cdagenci" tabindex="3" class="Campo" onchange="$('#aux_nriniseq').val(1); document.form.cdageins.value = document.form.aux_cdagenci.value; if(document.form.origem.value=='') document.form.nrseqeve.value=''; Habilita(); document.form.submit();"></select>
+                                <select name="aux_cdagenci" id="aux_cdagenci" tabindex="3" class="Campo" onchange="$('#aux_nriniseq').val(1); document.form.cdageins.value = document.form.aux_cdagenci.value; if(document.form.origem.value=='') document.form.nrseqeve.value=''; Habilita(); document.form.submit();"></select>
                               </td>                                             
                               <td>&nbsp;</td>
                             </tr>
@@ -183,9 +121,18 @@
                               <td class="NomeCampo">&nbsp;</td> 
                               <td align="right" class="NomeCampo">&nbsp;Evento:</td>
                               <td colspan="9" align="left" class="NomeCampo">
-                                <select id="aux_nrseqeve" name="aux_nrseqeve" class="NomeCampo" tabindex="4" onchange="aguarde(); $('#aux_nriniseq').val('1'); carregaInscritos(); "></select>
+                                <select id="aux_nrseqeve" name="aux_nrseqeve" class="NomeCampo" tabindex="4" onchange="document.form.aux_nrficpre.value = ''; aguarde(); $('#aux_nriniseq').val('1'); carregaInscritos(); "></select>
                               </td>
                             </tr>  
+                            
+                            <tr>
+                              <td align="right" colspan="2" class="NomeCampo" id="FichaPresencaConfirm">
+                                Ficha de Presen&ccedil;a:
+                              </td>
+                              <td colspan="9" align="left" class="NomeCampo" id="FichaPresencaConfirm">
+                                <input name="aux_nrficpre" name="aux_nrficpre" maxlength="6" type="text" onKeyUp="formataNum(this,event,'');" class="Campo" size="5">                      
+                              </td>
+                            </tr>
                             
                             <tr>
                               <td class="NomeCampo">&nbsp;</td>
@@ -206,7 +153,7 @@
                                 <select class="NomeCampo" tabindex="7" id="aux_pesqorde" name="aux_pesqorde" onchange="$('#aux_nriniseq').val('1'); carregaInscritos();"></select>
                               </td>
                             </tr>
-                            
+                                                        
                             <tr style="text-align: center;">
                               <td colspan="11" id="Procurar">
                                 <img style="cursor:hand" tabindex="8" src="/cecred/images/botoes/btn_procurar.gif" name="imgProcurar" id="imgProcurar" onclick="$('#aux_nriniseq').val('1'); carregaInscritos();">
@@ -214,7 +161,7 @@
                             </tr>
                             
                             <tr>
-                              <td width="10%" align="right" class="NomeCampo">Part.turma:</td>
+                              <td width="10%" align="right" class="NomeCampo">Part. Turma:</td>
                               <td width="10%" class="txtPequeno" align="left">
                                 <span class="NomeCampo">
                                   <input name="aux_qtmaxtur" style=" border-width:0px; " type="text" disabled="true" class="txtPequeno" size="6">
@@ -250,16 +197,10 @@
                               </td>
 															
 															<td colspan="2" width="7%" align="right" class="txtPequeno">
-																<div align="left" id="divFrequenciaLabel" name="divFrequenciaLabel">
-																	<span class="NomeCampo">Frequ&ecirc;ncia Exigida %:</span>
-																</div>
+																&nbsp;
 															</td>
 															<td width="13%" align="left" class="txtPequeno" >
-																<div id="divFrequenciaCampo" name="divFrequenciaCampo">
-																	<span class="NomeCampo" style="padding-left:2px;" >
-																		<input name="aux_prfreque" id="aux_prfreque" style=" border-width:0px;padding-left:1px;" type="text" disabled="false" class="txtPequeno" size="6">
-																	</span>
-																</div>
+																&nbsp;
 															</td> 
 															
                             </tr>
@@ -400,10 +341,10 @@
                         <tr>
                           <td class="NomeCampo" align="right">&nbsp;</td>
                           <td class="NomeCampo" align="right">E-mail:</td>
-													<td class="NomeCampo" colspan="2" width="100%">
-														<input name="dsdemail" maxlength="50" type="text" onkeyup="validaString(this,event,'@.-_',false);" class="Campo" size="45">                                                           
-														<span class="NomeCampo" style="padding-left:20px;" >DDD/Fone:</span><input name="nrdddins" type="text" onkeyup="formataNum(this,event,'');" class="Campo" size="3" maxlength="3">
-														<input name="nrtelins" type="text" onkeyup="formataNum(this,event,'-');" class="Campo" size="10" maxlength="10">
+						  <td class="NomeCampo" colspan="2" width="100%">
+							<input name="dsdemail" maxlength="50" type="text" onkeyup="validaString(this,event,'@.-_',false);" class="Campo" size="45">                                                           
+							<span class="NomeCampo" style="padding-left:20px;" >DDD/Fone:</span><input name="nrdddins" type="text" onkeyup="formataNum(this,event,'');" class="Campo" size="3" maxlength="3">
+							<input name="nrtelins" type="text" onkeyup="formataNum(this,event,'-');" class="Campo" size="10" maxlength="10">
                           </td>
                       </tr>
                       <tr>
@@ -415,7 +356,18 @@
                           <span>
                           <input type="checkbox" name="flgdispe">
                         </td>                                                         
-                      </tr>                                                
+                      </tr>                               
+                      
+                      <tr>
+                        <td class="NomeCampo" align="right">&nbsp;</td>
+                        <td class="NomeCampo" align="right"><div id="fichaPresencaLabel" name="fichaPresencaLabel">Ficha de Presen&ccedil;a:</div></td>
+                        <td class="NomeCampo" colspan="2">
+                          <div id="fichaPresencaCampo" name="fichaPresencaCampo">
+                            <input name="nrficpre" name="nrficpre" maxlength="6" type="text" onKeyUp="formataNum(this,event,'');" class="Campo" size="5">                      
+                          </div>
+                        </td>                        
+                      </tr>                               
+                      
                       </table> 
                       <br/><br/><br/><br/><br/>
                       <table border="0" align="center" cellpadding="1" cellspacing="1">
@@ -443,21 +395,23 @@
                                         <td width="5" background="/cecred/images/menu/fnd_title.jpg"><img src="/cecred/images/geral/div.gif" width="2" height="15"></td>
                                         <td id="tbinscritos_col2" width="55" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos">Conta</td>
                                         <td width="5" background="/cecred/images/menu/fnd_title.jpg"><img src="/cecred/images/geral/div.gif" width="2" height="15"></td>
-                                        <td id="tbinscritos_col4" width="70" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos" id="tbinscritos_col4">Contato</td>
+                                        <td id="tbinscritos_col3" width="70" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos" >Contato</td>
                                         <td width="5" background="/cecred/images/menu/fnd_title.jpg"><img src="/cecred/images/geral/div.gif" width="2" height="15"></td>
-                                        <td id="tbinscritos_col5" width="100" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos">PA</td>
+                                        <td id="tbinscritos_col4" width="100" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos">PA</td>
                                         <td width="5" background="/cecred/images/menu/fnd_title.jpg"><img src="/cecred/images/geral/div.gif" width="2" height="15"></td>
-                                        <td id="tbinscritos_col6" width="100" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos">Coment&aacute;rios</td>
+                                        <td id="tbinscritos_col5" width="100" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos">Coment&aacute;rios</td>
                                         <td width="5" background="/cecred/images/menu/fnd_title.jpg"><img src="/cecred/images/geral/div.gif" width="2" height="15"></td>
-                                        <td id="tbinscritos_col7" width="10" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos" id="tbinscritos_col7">Situa&ccedil;&atilde;o</td>
+                                        <td id="tbinscritos_col6" width="10" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos" >Situa&ccedil;&atilde;o</td>
                                         <td width="5" background="/cecred/images/menu/fnd_title.jpg"><img src="/cecred/images/geral/div.gif" width="2" height="15"></td>
-                                        <td id="tbinscritos_col7_1" width="40" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos" id="tbinscritos_col7_1">Excluir</td>
+                                        <td id="tbinscritos_col7" width="40" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos" >Excluir</td>
                                         <td width="5" background="/cecred/images/menu/fnd_title.jpg"><img src="/cecred/images/geral/div.gif" width="2" height="15"></td>
-                                        <td id="tbinscritos_col8" width="60" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos" id="tbinscritos_col8">Dt.Confirm</td>
+                                        <td id="tbinscritos_col8" width="60" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos" >Dt.Confirm</td>
                                         <td width="5" background="/cecred/images/menu/fnd_title.jpg"><img src="/cecred/images/geral/div.gif" width="2" height="15"></td>
-                                        <td id="tbinscritos_col8_1" width="40" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos" id="tbinscritos_col8_1">Faltas</td>
+                                        <td id="tbinscritos_col9" width="40" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos" >Ficha</td>
                                         <td width="5" background="/cecred/images/menu/fnd_title.jpg"><img src="/cecred/images/geral/div.gif" width="2" height="15"></td>
-                                        <td id="tbinscritos_col10" width="15" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos" id="tbinscritos_col10">Internet&nbsp;&nbsp;&nbsp;</td>
+                                        <td id="tbinscritos_col10" width="40" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos" >Faltas</td>
+                                        <td width="5" background="/cecred/images/menu/fnd_title.jpg"><img src="/cecred/images/geral/div.gif" width="2" height="15"></td>
+                                        <td id="tbinscritos_col11" width="15" background="/cecred/images/menu/fnd_title.jpg" class="txtMenuTitulos" >Internet&nbsp;&nbsp;&nbsp;</td>
                                       </tr>
                                     </table>      
                                   </div>
@@ -473,8 +427,9 @@
                               </tr>  
                               <tr>
                                 <td colspan="3" align="center" valign="bottom" scope="col">
-                                  <img id="salvaconfirm" style="cursor:hand" src="/cecred/images/botoes/btn_salvar.gif" width="60" height="20" onclick="document.form.aux_carregar.value='proximos'; if(minscri.length>0) document.form.aux_regfimls.value=minscri[0].nrdrowid;return SalvarConfirm()">
-                                  <img id="encerrar" style="cursor:hand" src="/cecred/images/botoes/btn_encerrar_insc.gif" height="20" onclick="document.form.aux_carregar.value='proximos'; if(minscri.length>0) document.form.aux_regfimls.value=minscri[0].nrdrowid; return Encerrar()">
+                                  <a href="#" class="botao" id="salvaconfirm" onclick="document.form.aux_carregar.value='proximos'; if(minscri.length>0) document.form.aux_regfimls.value=minscri[0].nrdrowid;return SalvarConfirm()" >Salvar</a>
+                                  <a href="#" class="botao" id="encerrar" onclick="document.form.aux_carregar.value='proximos'; if(minscri.length>0) document.form.aux_regfimls.value=minscri[0].nrdrowid; return Encerrar()" >Encerrar Inscri&ccedil;&otilde;es</a>
+                                  <a href="#" class="botao" id="indficin"  onclick="geraRelatorioFichaNaoLancada()" >Vizualizar Relat&oacute;rio</a>
                                 </td>
                               </tr>
                             </table>
@@ -498,7 +453,8 @@
 
       NomeDoProgramaPrincipal = document.form.aux_dsendurl.value + NomeDoProgramaPrincipal;
       document.form.action = NomeDoProgramaPrincipal;
-
+	  var nomeaba = 'AbaInscrito';
+	  
       function semAspas(obj) {
         var txt = new String(obj.value);
         var res = new String('');
@@ -532,14 +488,9 @@
         }
         
         if (minscri.length <= 0) {
-          
-          document.form.salvaconfirm.style.filter = 'progid:DXImageTransform.Microsoft.Alpha(opacity=20)';
-          document.form.salvaconfirm.style.cursor = 'default';
-          document.form.salvaconfirm.disabled = true;
-             
-          document.form.encerrar.style.filter = 'progid:DXImageTransform.Microsoft.Alpha(opacity=20)';
-          document.form.encerrar.style.cursor = 'default';
-          document.form.encerrar.disabled = true;
+
+          $("#salvaconfirm").hide();
+          $("#encerrar").hide();
           $("#btnAnterior").hide();
           $("#btnProximo").hide();
         }else{
@@ -587,14 +538,8 @@
             cell.height = 26;
             cell.align = 'left';
             cell.width = document.all.tbinscritos_col1.width;
-              
-            // coloca link se tiver termo de compromisso
-            if (document.form.aux_flgcompr.value != ''){
-              linky = '&nbsp;<a href="#." onclick="window.open(' + "'wpgd0009a.htm?aux_nrdrowid=" + minscri[i].nrdrowid + "'" + ');")>' + minscri[i].nminseve + '</a><in' + 'put type="hidden" name="aux_nrseqdig" class="nrseqdig" value="' + minscri[i].nrseqdig + '">';
-            }else{
-              linky = '&nbsp;' + minscri[i].nminseve + '<in' + 'put type="hidden" class="nrseqdig" name="aux_nrseqdig" value="' + minscri[i].nrseqdig + '">';
-            }      
-              
+            linky = '&nbsp;' + minscri[i].nminseve + '<in' + 'put type="hidden" class="nrseqdig" name="aux_nrseqdig" value="' + minscri[i].nrseqdig + '">';
+                          
             cell.innerHTML = linky;
 
             //separador          
@@ -626,7 +571,7 @@
             cell = row.insertCell();
             cell.className = 'txtPequeno';
             cell.align = 'left';
-            cell.width = document.all.tbinscritos_col4.width;
+            cell.width = document.all.tbinscritos_col3.width;
             cell.innerText = '(' + minscri[i].nrdddins + ')' + minscri[i].nrtelins;
 
             cell = row.insertCell();   // Separador
@@ -640,7 +585,7 @@
             cell = row.insertCell();
             cell.className = 'txtPequeno';
             cell.align = 'left';
-            cell.width = document.all.tbinscritos_col5.width;
+            cell.width = document.all.tbinscritos_col4.width;
             cell.innerText = minscri[i].nmresage;
 
             cell = row.insertCell();   // Separador
@@ -654,7 +599,7 @@
             cell = row.insertCell();
             cell.className = 'txtPequeno';
             cell.align = 'left';
-            cell.width = document.all.tbinscritos_col6.width;
+            cell.width = document.all.tbinscritos_col5.width;
             linky = '<in' + 'put type="text" name="dsobsconf" size="15" onKeyUp="validaString(this,event,\'.,\',true);" class="Campo" onChange="document.form.aux_flgalter.value=' + "'yes'" + '" value="' + minscri[i].dsobsins + '">';
             cell.innerHTML = linky;
 
@@ -669,7 +614,7 @@
             cell = row.insertCell();
             cell.className = 'txtPequeno';
             cell.align = 'left';
-            cell.width = document.all.tbinscritos_col7.width;
+            cell.width = document.all.tbinscritos_col6.width;
                      
             linky = '<se' + 'lect name="confirma" class="Campo seleciona" onChange="ValidaAlterSituac(this,' + minscri[i].idstains + ');document.form.aux_flgalter.value=' + "'yes'" + '">';
             for (j = 0; j < mstatus.length; j++) {
@@ -695,7 +640,7 @@
             cell.className = 'txtNormal';
             cell.align = 'center';
             cell.height = 26;         
-            cell.width = document.all.tbinscritos_col7_1.width;
+            cell.width = document.all.tbinscritos_col7.width;
             linky='<a href="#." onClick="ExcluirInscricao(\'' + minscri[i].nrdrowid +'\' , \''+ minscri[i].nminseve +'\');" class="linkGuia"><img src="/cecred/images/botoes/btn_excluir.gif" border="0" title="Excluir"></a>';                    
             cell.innerHTML=linky;                                                                                 
 
@@ -722,9 +667,29 @@
             cell.align = 'left';
             cell.innerText = '';
 
+            // Ficha de Presenca
+            cell = row.insertCell();
+            cell.className = 'txtPequeno';
+            cell.width = document.all.tbinscritos_col9.width;
+            cell.align = 'left'; 
+			if(minscri[i].nrficpre == 0){
+				cell.innerHTML = "";
+			}else{
+				cell.innerHTML = minscri[i].nrficpre;
+			}
+                        
+            // Separador
+            cell = row.insertCell();
+            cell.className = 'txtNormal';
+            cell.width = "5";
+            cell.height = 26;
+            cell.align = 'left';
+            cell.innerText = '';
+
             // Qtde. Faltas
             cell = row.insertCell();
             cell.className = 'txtPequeno';
+            cell.width = document.all.tbinscritos_col10.width;
             cell.align = 'left';                    
             linky = '<in' + 'put type="text" name="qtfaleve" size="2" maxlength="2" style="text-align:right" onblur="ValidaAlterfalta(this,' + minscri[i].qtfaleve + ');" onKeyUp="formataNum(this,event,\'\');" class="Campo"  value="' + minscri[i].qtfaleve + '">';
             cell.innerHTML = linky;
@@ -741,7 +706,7 @@
             cell.className = 'txtPequeno';
             cell.height = 26;
             cell.align = 'center';
-            cell.width = document.all.tbinscritos_col10.width;
+            cell.width = document.all.tbinscritos_col11.width;
             
             if (minscri[i].flginsin == 'Sim'){
               cell.title = "Inscrição efetuada pela Internet em " + minscri[i].dtpreins; 
@@ -760,6 +725,7 @@
             if (i == minscri.length - 1){
               document.form.aux_regfimls.value = minscri[i].nrdrowid;                  
             }
+            
           }
         } // fim do for
                 
@@ -792,7 +758,6 @@
     }
 
     function LimparCampos() {
-
       document.form.nrdconta.value = '0';
       document.form.idseqttl.value = '0';
       document.form.aux_nmcooper.value = '';
@@ -811,7 +776,10 @@
       document.form.aux_nminseve.value = '';
       document.form.dsobsins.value = '';
       document.form.aux_nrcpfcgc_fil.value = '';
-      document.form.aux_nrcpfcgc_fil.disabled = false;            
+      document.form.aux_nrcpfcgc_fil.disabled = false;  
+				
+			//document.form.aux_nrficpre.value = '';
+      document.form.nrficpre.value = '';
     }
 
     function Habilita() {
@@ -825,22 +793,34 @@
     function ValidaDados(form) { 
 
       var msg = "";
-      // verifica se as inscrições já estão encerradas.
-      if (document.form.aux_idstaeve.value == "4") {
-        if (!confirm("Evento com inscrições encerradas. Deseja prosseguir com a pré-inscrição?")) 
-        //alert("Evento com inscrições encerradas e/ou mês do evento fechado para contabilização.")
-          return false; 
-      }
-      
+	  
       if (document.form.aux_fechamen.value == 'Sim') {
           alert("Mês do evento fechado para contabilização.")
           return false;
       }    
-            
+	  
+      // verifica se as inscrições já estão encerradas.
+	  
+	  //Início PJ322 - SM 8
+	    // O código abaixo foi comentado
+	  
+        //if (document.form.aux_idstaeve.value == "4"){
+        //  alert("Evento com inscrições encerradas. Inclusão de novas inscrições não permitida!")
+        //  return false;
+        //}	  
+	  
+	    //E substituído por este
+	  
+        if (document.form.aux_idstaeve.value == "4") {
+          if (!confirm("Evento com inscrições encerradas. Deseja prosseguir com a pré-inscrição?")) 
+            return false; 
+        }      
+	    //Fim PJ322 - SM 8	  
+		
        // já possui inscrição
       if (document.form.aux_flginscr.value == "S") {
-        alert("O cooperado já possui inscrições nesse evento sob sua responsabilidade. São elas : " + document.form.aux_dsinscri.value);
-          return false;
+        alert("O cooperado já possui inscrições nesse evento sob sua responsabilidade. São elas : " + document.form.aux_dsinscri.value + "\nInclusão duplicada não permitida!")
+          return false; 
       }
 
         // Rosangela - Fim  
@@ -913,82 +893,88 @@
 
     function mostraDiv(nomediv) {   
       
-       if (nomediv == 'divConfirma') {
-         document.all.ProcuraNome[0].style.visibility = "visible";
-         document.all.ProcuraNome[1].style.visibility = "visible";
-         document.all.OrdenaConsulta[0].style.visibility = "visible";
-         document.all.OrdenaConsulta[1].style.visibility = "visible";
-         document.all.Procurar.style.visibility = "visible";
-       }
-       else {
-         document.all.ProcuraNome[0].style.visibility = "hidden";
-         document.all.ProcuraNome[1].style.visibility = "hidden";
-         document.all.OrdenaConsulta[0].style.visibility = "hidden";
-         document.all.OrdenaConsulta[1].style.visibility = "hidden";
-         document.all.Procurar.style.visibility = "hidden";
-       }
+      verificaTipoEvento();
+      
+      if (nomediv == 'divConfirma') {
+        $("#aux_indicdiv").val("1");
+        document.all.ProcuraNome[0].style.visibility = "visible";
+        document.all.ProcuraNome[1].style.visibility = "visible";
+        document.all.OrdenaConsulta[0].style.visibility = "visible";
+        document.all.OrdenaConsulta[1].style.visibility = "visible";
+        document.all.Procurar.style.visibility = "visible";
+		if($("#aux_nrseqeve").children(":selected").attr("tpevento") == 7 ||
+           $("#aux_nrseqeve").children(":selected").attr("tpevento") == 12){
+			document.all.FichaPresencaConfirm[0].style.visibility = "visible";
+			document.all.FichaPresencaConfirm[1].style.visibility = "visible";
+		}
+      }else {
+        $("#aux_indicdiv").val("0");
+        document.all.ProcuraNome[0].style.visibility = "hidden";
+        document.all.ProcuraNome[1].style.visibility = "hidden";
+        document.all.OrdenaConsulta[0].style.visibility = "hidden";
+        document.all.OrdenaConsulta[1].style.visibility = "hidden";
+        document.all.Procurar.style.visibility = "hidden";
+        document.all.FichaPresencaConfirm[0].style.visibility = "hidden";
+        document.all.FichaPresencaConfirm[1].style.visibility = "hidden";
+      }
+      
+      if (nomediv == '') { nomediv = 'divInscrito'; }
+      if (nomediv == 'divInscrito') { nomeaba = 'AbaInscrito'; }
+      if (nomediv == 'divConfirma') { nomeaba = 'AbaConfirma'; }
        
-       var nomeaba = '';
+      document.form.pagina.value = nomediv;
+      document.all.divInscrito.style.display = 'none';
+      document.all.divConfirma.style.display = 'none';   
 
-                if (nomediv == '') { nomediv = 'divInscrito'; }
+      document.all.AbaInscrito.rows[0].cells[0].background = "/cecred/images/menu/mnu_nle.gif";
+      document.all.AbaInscrito.rows[0].cells[1].background = "/cecred/images/menu/mnu_nlc.gif";
+      document.all.AbaInscrito.rows[0].cells[2].background = "/cecred/images/menu/mnu_nld.gif";
+      document.all.AbaInscrito.rows[0].cells[1].className = "txtTituloHid";
 
-                if (nomediv == 'divInscrito') { nomeaba = 'AbaInscrito'; }
-                if (nomediv == 'divConfirma') { nomeaba = 'AbaConfirma'; }
-       
-                document.form.pagina.value = nomediv;
-       document.all.divInscrito.style.display = 'none';
-       document.all.divConfirma.style.display = 'none';   
+      document.all.AbaConfirma.rows[0].cells[0].background = "/cecred/images/menu/mnu_nle.gif";
+      document.all.AbaConfirma.rows[0].cells[1].background = "/cecred/images/menu/mnu_nlc.gif";
+      document.all.AbaConfirma.rows[0].cells[2].background = "/cecred/images/menu/mnu_nld.gif";
+      document.all.AbaConfirma.rows[0].cells[1].className = "txtTituloHid";
 
-                document.all.AbaInscrito.rows[0].cells[0].background = "/cecred/images/menu/mnu_nle.gif";
-                document.all.AbaInscrito.rows[0].cells[1].background = "/cecred/images/menu/mnu_nlc.gif";
-                document.all.AbaInscrito.rows[0].cells[2].background = "/cecred/images/menu/mnu_nld.gif";
-                document.all.AbaInscrito.rows[0].cells[1].className = "txtTituloHid";
-       
-                document.all.AbaConfirma.rows[0].cells[0].background = "/cecred/images/menu/mnu_nle.gif";
-                document.all.AbaConfirma.rows[0].cells[1].background = "/cecred/images/menu/mnu_nlc.gif";
-                document.all.AbaConfirma.rows[0].cells[2].background = "/cecred/images/menu/mnu_nld.gif";
-                document.all.AbaConfirma.rows[0].cells[1].className = "txtTituloHid";
+      document.all[nomeaba].rows[0].cells[0].background = "/cecred/images/menu/mnu_sle.gif";
+      document.all[nomeaba].rows[0].cells[1].background = "/cecred/images/menu/mnu_slc.gif";
+      document.all[nomeaba].rows[0].cells[2].background = "/cecred/images/menu/mnu_sld.gif";
+      document.all[nomeaba].rows[0].cells[1].className = "txtTituloVis";
 
-                document.all[nomeaba].rows[0].cells[0].background = "/cecred/images/menu/mnu_sle.gif";
-                document.all[nomeaba].rows[0].cells[1].background = "/cecred/images/menu/mnu_slc.gif";
-                document.all[nomeaba].rows[0].cells[2].background = "/cecred/images/menu/mnu_sld.gif";
-                document.all[nomeaba].rows[0].cells[1].className = "txtTituloVis";
-
-       document.all[nomediv].style.display = 'block';   
+      document.all[nomediv].style.display = 'block';   
+      
     }
 
     function MostraPACs() {
-                for (var i = document.all.aux_cdagenci.options.length; i >= 0; i--)
-            document.all.aux_cdagenci.remove(i); 
+      for (var i = document.all.aux_cdagenci.options.length; i >= 0; i--){
+        document.all.aux_cdagenci.remove(i); 
+      }
 
-       var oOption;
+      var oOption;
        
-                for (i = 0; i < mpac.length; i++) {
-          if (mpac[i].cdcooper == document.form.aux_cdcooper.value) {
-              oOption = document.createElement("OPTION");
-              document.all.aux_cdagenci.options.add(oOption);
-              oOption.innerText = mpac[i].nmresage.substring(0, 15);
-              oOption.value = mpac[i].cdagenci;
-          }
-       }
-
-       document.form.aux_cdagenci.value = '';
+      for (i = 0; i < mpac.length; i++) {
+        if (mpac[i].cdcooper == document.form.aux_cdcooper.value) {
+          oOption = document.createElement("OPTION");
+          document.all.aux_cdagenci.options.add(oOption);
+          oOption.innerText = mpac[i].nmresage.substring(0, 15);
+          oOption.value = mpac[i].cdagenci;
+        }
+      }
+      document.form.aux_cdagenci.value = '';
     }
 
-    function PosicionaPAC() {   
-
-       MostraPACs();
-       document.form.aux_cdagenci.value = document.form.cdageins.value;
-       
+    function PosicionaPAC(){
+      MostraPACs();
+      document.form.aux_cdagenci.value = document.form.cdageins.value;       
     }
 
     function MostraEventos() {   
         
-       /* Mensagem quando não há eventos */
-				if ((mevento.length == 0) && (document.form.aux_cdagenci.value != '')) {
-           alert('Não há eventos agendados para fazer inscrições!');
-           return false;
-       } 
+      /* Mensagem quando não há eventos */
+      if ((mevento.length == 0) && (document.form.aux_cdagenci.value != '')) {
+        alert('Não há eventos agendados para fazer inscrições!');
+        return false;
+      } 
         
 			for (var i = document.all.aux_nrseqeve.options.length; i >= 0; i--){
 				document.all.aux_nrseqeve.remove(i);  
@@ -996,43 +982,43 @@
 			
 			var oOption;
        
-                for (i = 0; i < mevento.length; i++) {
+      for (i = 0; i < mevento.length; i++) {
                
-                    if ((mevento[i].cdcooper == document.form.aux_cdcooper.value) &&
-              (mevento[i].cdagenci == document.form.aux_cdagenci.value)) {
+        if ((mevento[i].cdcooper == document.form.aux_cdcooper.value) &&
+            (mevento[i].cdagenci == document.form.aux_cdagenci.value)) {
               
-               oOption = document.createElement("OPTION");
-               document.all.aux_nrseqeve.options.add(oOption);
-               oOption.innerText = mevento[i].nmevento;
-                
-               oOption.value = mevento[i].nrseqeve;
-               
-          }
+          oOption = document.createElement("OPTION");
+          document.all.aux_nrseqeve.options.add(oOption);
+          oOption.innerText = mevento[i].nmevento;
+          oOption.value = mevento[i].nrseqeve;
+          oOption.tpevento = mevento[i].tpevento;
+        }
 
-          // ASSMEBLEIA
-                    if ((mevento[i].cdcooper == document.form.aux_cdcooper.value) &&
-              (mevento[i].cdagenci == 0)) {
+        // ASSMEBLEIA
+        if ((mevento[i].cdcooper == document.form.aux_cdcooper.value) &&
+            (mevento[i].cdagenci == 0)){
 
-               oOption = document.createElement("OPTION");
-               document.all.aux_nrseqeve.options.add(oOption);
-               oOption.innerText = mevento[i].nmevento;
-               oOption.value = mevento[i].nrseqeve;
-          }
-       }
+          oOption = document.createElement("OPTION");
+          document.all.aux_nrseqeve.options.add(oOption);
+          oOption.innerText = mevento[i].nmevento;
+          oOption.tpevento = mevento[i].tpevento;
+          oOption.value = mevento[i].nrseqeve;
+        }
+      }
 
-       document.form.aux_nrseqeve.value = '';
+      document.form.aux_nrseqeve.value = '';
 
-       if (document.form.aux_cdagenci.value == '') {
+      if (document.form.aux_cdagenci.value == '') {
 
-           oOption = document.createElement("OPTION");
-           document.all.aux_nrseqeve.options.add(oOption);
-           oOption.innerText = "-Selecione PA-";
-           oOption.value = '0';
-           document.form.aux_nrseqeve.value = '0';
-       }
+        oOption = document.createElement("OPTION");
+        document.all.aux_nrseqeve.options.add(oOption);
+        oOption.innerText = "-Selecione PA-";
+        oOption.value = '0';
+        document.form.aux_nrseqeve.value = '0';
+      }
 
-       document.form.aux_nrseqeve.value = '';
-       MostraPartic();
+      document.form.aux_nrseqeve.value = '';
+      MostraPartic();
        
     }
 
@@ -1083,7 +1069,6 @@
                document.form.aux_nrinscri.value = mevento[i].nrinscri;
                document.form.aux_nrconfir.value = mevento[i].nrconfir;
                document.form.aux_nrcompar.value = mevento[i].nrcompar;
-               document.form.aux_prfreque.value = mevento[i].prfreque;
                document.form.aux_idademin.value = mevento[i].idademin;
                document.form.cdcooper.value = document.form.aux_cdcooper.value;
                document.form.cdageins.value = document.form.aux_cdagenci.value;
@@ -1124,8 +1109,11 @@
 			}
     }
 
-		function Salvar() {
-            
+		function Salvar(){
+         
+			var vaux = document.form.aux_lspermis.value; 
+      document.form.aux_cddopcao.value = "";
+			
       /* Se preencher Conta ou Titularidade, preencher obrigatoriamente os dois campos */ 
       if ((document.form.nrdconta.value == '0' || document.form.nrdconta.value == '') && (document.form.idseqttl.value != '') ||
           (document.form.nrdconta.value != '0' && document.form.nrdconta.value != '') && (document.form.idseqttl.value == '') ||
@@ -1138,32 +1126,34 @@
       }
        
       /* Se for conta inválida */ 
-                if (document.form.nrdconta.value != '0' && document.form.nrdconta.value != '' && document.form.aux_nmcooper.value == '') {
+      if (document.form.nrdconta.value != '0' && document.form.nrdconta.value != '' && document.form.aux_nmcooper.value == '') {
           document.form.submit(); 
           return false; 
       }
-             
-      var vaux = document.form.aux_lspermis.value; 
-      
-                if ((vaux.substring(1, 2) == 'A') || (document.form.aux_stdopcao.value == 'i')) {
-                    if (document.form.aux_cddopcao.value != 'sa') {
-
-                        if (ValidaDados(document.forms[0])) {
-                Habilita();
-                            document.form.aux_cddopcao.value = 'sa';
-                status = 'Salvando. Por favor, aguarde ...';  
-                document.form.submit(); 
-             
-                return true;
-                        } else {
-               return false;
-             }
-
-          } 
-
-                } else {
-                    MostraResultado('1', 'Desculpe, mas você não tem permissão para executar esta função.');
+       
+      if(((document.form.nrficpre.value == '0' || document.form.nrficpre.value == '') && $("#aux_indicdiv").val() == 0 && document.getElementById("flgdispe").checked)){
+        if($("#aux_nrseqeve").children(":selected").attr("tpevento") == 7 ||
+           $("#aux_nrseqeve").children(":selected").attr("tpevento") == 12){
+          alert('Número da Ficha de Presença deve ser informado.');
           return false;
+        }
+      }
+					
+      if ((vaux.substring(1, 2) == 'A') || (document.form.aux_stdopcao.value == 'i')) {
+        if (document.form.aux_cddopcao.value != 'sa') {
+          if (ValidaDados(document.forms[0])) {
+            Habilita();
+            document.form.aux_cddopcao.value = 'sa';
+            status = 'Salvando. Por favor, aguarde ...';  
+            document.form.submit(); 
+            return true;
+          } else {
+            return false;
+          }
+        } 
+      } else {
+        MostraResultado('1', 'Desculpe, mas você não tem permissão para executar esta função.');
+        return false;
       }
       
       LimparCampos(); 
@@ -1171,30 +1161,7 @@
       mostraDiv(document.form.pagina.value);
     }
 
-            function Excluir() {
-      ZeraModoExclusao();  
-      var vaux = document.form.aux_lspermis.value;
-       
-                if (vaux.substring(2, 3) == 'E') {
-
-                    if (document.form.aux_stdopcao.value == 'i') {
-                        MostraResultado('1', 'Você esta no modo de inclusão.Selecione o registro apropriado e então selecione a opção exclusão.');
-            return false
-                    } else {
-                        if (!confirm('Confirma Exclusão do Inscrito?')) {
-                return false;
-                        } else {
-                document.form.aux_cddopcao.value = "ex";
-                document.form.submit();
-             }
-         } 
-                } else {
-                    MostraResultado('1', 'Desculpe, mas você não tem permissão para executar esta função.');
-          return false
-      }
-    }
-
-            function AbreZoom(ProgramaDeZoom, ProgramaPrincipal, NomeDoCampo, TipoDeZoom, ValorCampo, ValorCampo2, ValorCampo3, ValorCampo4, ValorCampo5, ValorCampo6) {
+    function AbreZoom(ProgramaDeZoom, ProgramaPrincipal, NomeDoCampo, TipoDeZoom, ValorCampo, ValorCampo2, ValorCampo3, ValorCampo4, ValorCampo5, ValorCampo6) {
 
           status = 'Processando pesquisa. Por favor, aguarde ...'; 
                 if (ValorCampo == null) ValorCampo = "";
@@ -1233,9 +1200,8 @@
               document.form.aux_nrseqeve.focus();
               return false; 
             }
-            document.form.aux_cddopcao.value = 'carcop';
+            document.form.aux_cddopcao.value = 'carcop';   //PJ 322 - SM 7 - Mateus
             document.form.aux_cdcooper.disabled = false;
-            //Habilita();
             document.form.submit();
           }
         }
@@ -1276,32 +1242,31 @@
 
     function SalvarConfirm() {
 
-       // Verifica se o usuário tem permissão de salvar
-                if (document.form.aux_lspermis.value.substring(1, 2) != 'A') {
-          alert('Desculpe, mas você não tem permissão para executar esta função.'); 
-          return false;
-       }
+			// Verifica se o usuário tem permissão de salvar
+			if (document.form.aux_lspermis.value.substring(1, 2) != 'A') {
+				alert('Desculpe, mas você não tem permissão para executar esta função.'); 
+				return false;
+			}
 
-       if (document.form.aux_idstaeve.value == "4") {
-           if (!confirm("Evento com inscrições encerradas. Deseja prosseguir com as alterações?")) 
-                return false; 
-       }
+			if (document.form.aux_idstaeve.value == "4") {
+				if (!confirm("Evento com inscrições encerradas. Deseja prosseguir com as alterações?")) 
+					return false; 
+			}
 
-       if (document.form.aux_idstaeve.value == "5") {
-             if (!confirm("Evento já realizado. Deseja prosseguir com as alterações?"))
-                  return false; 
-       }
-     
-       
-                document.form.aux_cddopcao.value = 'conf';
-                document.form.aux_stdopcao.value = '';
+			if (document.form.aux_idstaeve.value == "5") {
+				if (!confirm("Evento já realizado. Deseja prosseguir com as alterações?"))
+					return false; 
+			}
 
-       ArmazenaConfirm(); //nao tirar esta chamada deste lugar se nao da pau
-       document.form.submit();
-       Habilita();
-       LimparCampos();                              
-     
-    }
+
+			document.form.aux_cddopcao.value = 'conf';
+			document.form.aux_stdopcao.value = '';
+
+			ArmazenaConfirm(); //nao tirar esta chamada deste lugar se nao da pau
+			document.form.submit();
+			Habilita();
+			LimparCampos();
+		}
 
     function ArmazenaConfirm() {
        
@@ -1378,7 +1343,7 @@
        return true;
     }
 
-    // Funcao: VE(Valida Elemento)
+		// Funcao: VE(Valida Elemento)
     // Objetivo: verificar se um elemento(componente) está no formato adequado (caracter, inteiro, data, decimal)
     // Parametros de entrada:
     //    tc = tipo do componente. "ca":caracter, "da":data, "de":decimal, "in":inteiro
@@ -1389,184 +1354,182 @@
     //    ma = valor máximo do componente
     // Parametros de saída:
     //    msg = Mensagem de Erro da validação
-            function VE(tc, nc, lc, pn, mi, ma) {
-      var msg = "";
-      var p = "xx";
-      var z = 1;
-      var x = 0; 
-      var cv = 0;
-      var dia = 0;
-      var mes = 0;
-      var ano = 0;
-      var aux = "";
-      var aux2 = nc.value;
-      pn.toLowerCase();
-      tc.toLowerCase();
+		function VE(tc, nc, lc, pn, mi, ma) {
+			var msg = "";
+			var p = "xx";
+			var z = 1;
+			var x = 0; 
+			var cv = 0;
+			var dia = 0;
+			var mes = 0;
+			var ano = 0;
+			var aux = "";
+			var aux2 = nc.value;
+			pn.toLowerCase();
+			tc.toLowerCase();
 
-      if (tc == "de") {
-        for (var x = 0; x < aux2.length; x++) {
-                        if (aux2.substring(x, x + 1) != " ")
-                            aux = aux + aux2.substring(x, x + 1);
-        } 
-        nc.value = aux;
-      }
-      if (tc == "ca") {
-        if (pn == "sim")
-                    { }
-        else {
-          if (nc.value == "")
-            msg = lc + " não pode ser nulo.";
-        }
-                    if (nc.value.substring(0, 1) == " ")
-          msg = msg + lc + " não pode começar com branco.";
-      }
-      else
-      if (tc == "in") {
-        p = "0123456789";
-        if (pn == "sim") {  
-          if (nc.value == "")
-            nc.value = "0";
-          else {
-                                for (var x = 0; x < nc.value.length; x++) {
-                                    if (p.indexOf(nc.value.substring(x, x + 1)) == -1)
-                z = 0;
-            } 
-            if (z == 0)
-              msg = msg + lc + " possui caracteres que não são validos.";  
-            if (msg == "") {
-              if (nc.value < mi)
-                msg = msg + lc + " deve ser maior que " + mi.toString() + ".";
-              if (nc.value > ma)
-                msg = msg + lc + " deve ser menor que " + ma.toString() + ".";
-            }
-          }
-        }
-        else {
-          if (nc.value == "")
-            msg = msg + lc + " não pode ser nulo.";
-            for (var x = 0; x < nc.value.length; x++) {
-                                if (p.indexOf(nc.value.substring(x, x + 1)) == -1)
-                          z = 0;
-                   } 
-                   if (z == 0)
-                      msg = msg + lc + " possui caracteres que não são validos.";  
-                   if (msg == "") {
-                      if (nc.value < mi)
-                         msg = msg + lc + " deve ser maior que " + mi.toString() + ".";
-                      if (nc.value > ma)
-                         msg = msg + lc + " deve ser menor que " + ma.toString() + ".";
-                   }
-             }
-          }
-          else
-          if (tc == "de") {
-             p = ",0123456789";
-             if (pn == "sim") {  
-                if (nc.value == "")
-                   nc.value = "0";
-                else {
-                     for (var x = 0; x < nc.value.length; x++) {
-                                        if (p.indexOf(nc.value.substring(x, x + 1)) == -1 & nc.value.substring(x, x + 1) != ".") {
-                            z = 0;
-                         }
-                                        if (nc.value.substring(x, x + 1) == ".")
-                            cv = cv + 1;
-                     } 
-                     if (cv > 1)
-                        z = 0;
-                     if (z == 0) {
-                        msg = msg + lc + " possui caracteres que não são validos.";  
-                     }
-                     if (msg == "") {
-                        if (nc.value < mi) 
-                           msg = msg + lc + " deve ser maior que " + mi.toString() + ".";  
-                        if (nc.value > ma)
-                           msg = msg + lc + " deve ser menor que " + ma.toString() + ".";
-                     }
-                }
-             }
-             else {
-                  if (nc.value == "")
-                     msg = msg + lc + " não pode ser nulo.";
-                  for (var x = 0; x < nc.value.length; x++) {
-                                    if (p.indexOf(nc.value.substring(x, x + 1)) == -1 & nc.value.substring(x, x + 1) != ".")
-                         z = 0;
-                                    if (nc.value.substring(x, x + 1) == ".")
-                         cv = cv + 1;
-                  } 
-                  if (cv > 1)
-                     z = 0;
-                  if (z == 0) {
-                     msg = msg + lc + " possui caracteres que não são validos.";  
-                  }
-                  if (msg == "") {
-                     if (nc.value < mi)
-                        msg = msg + lc + " deve ser maior que " + mi.toString() + ".";
-                     if (nc.value > ma)
-                        msg = msg + lc + " deve ser menor que " + ma.toString() + ".";
-                  }
-             }
-          }
-          else
-          if (tc == "da") {
-             p = "0123456789/";
-             if (pn == "sim") {  
-                if (nc.value == "")
-                                    { }
-                else {
-                     for (var x = 0; x < nc.value.length; x++) {
-                                            if (p.indexOf(nc.value.substring(x, x + 1)) == -1)
-                            z = 0;
-                                            if (nc.value.substring(x, x + 1) == "/")
-                            cv = cv + 1;
-                     } 
-                     if (cv != 2)
-                        z = 0;
-                     if (z == 0)
-                        msg = msg + lc + " possui caracteres que não são validos.";  
-                     if (msg == "") {
-                                            p1 = nc.value.indexOf("/");
-                                            p2 = nc.value.lastIndexOf("/");
-                                            if ((p2 == (p1 + 1)) || (nc.value.substring(0, p1).length == 0) || (nc.value.substring(p1 + 1, p2).length == 0) || (nc.value.substring(p2 + 1, nc.value.length).length == 0))
-                           msg = msg + lc + " possui os separadores fora de lugar.";
-                        else {
-                                                dia = parseInt(nc.value.substring(0, p1), 10);
-                                                mes = parseInt(nc.value.substring(p1 + 1, p2), 10);
-                                                ano = parseInt(nc.value.substring(p2 + 1, nc.value.length), 10);
-                              if ((mes < 1) || (mes > 12))
-                                 msg = msg + lc + " deve possuir o mês entre 1 e 12.";
-                                                if ((mes == 1) || (mes == 3) || (mes == 5) || (mes == 7) || (mes == 8) || (mes == 10) || (mes == 12)) {
-                                 if ((dia < 1) || (dia > 31))
-                                    msg = msg + lc + " deve possuir o dia entre 1 e 31.";
-                                 }
-                                 else {        
-                                                    if (mes != 2) {
-                                         if ((dia < 1) || (dia > 30))
-                                            msg = msg + lc + " deve possuir o dia entre 1 e 30.";
-                                      }
-                                      else {
-                                                        if (mes == 2) {
-                                              if ((ano % 4) == 0) { 
-                                                 if ((dia < 1) || (dia > 29))
-                                                    msg = msg + lc + " deve possuir o dia entre 1 e 29.";
-                                              }
-                                                            else {
-                                                    if ((dia < 1) || (dia > 28))
-                                                    msg = msg + lc + " deve possuir o dia entre 1 e 28.";
-                                              }
-                                           }
-                                      }
-                                 }
-                             }
-                         }
-                     }
-                  }
-              }
-              else
-                msg = "Validação não pode ser realizada.<br> Tipo de dado do campo não identificado.";                                
-              return msg;
-       }
-
+			if (tc == "de") {
+				for (var x = 0; x < aux2.length; x++) {
+					if (aux2.substring(x, x + 1) != " "){
+						aux = aux + aux2.substring(x, x + 1);
+					}
+				} 
+				nc.value = aux;
+			}
+			
+			if (tc == "ca") {
+				if (pn == "sim"){ }
+				else {
+					if (nc.value == "")
+						msg = lc + " não pode ser nulo.";
+				}
+				
+				if (nc.value.substring(0, 1) == " ")
+					msg = msg + lc + " não pode começar com branco.";
+			}else
+				if (tc == "in") {
+					p = "0123456789";
+					if (pn == "sim") {  
+						if (nc.value == "")
+							nc.value = "0";
+						else {
+							for (var x = 0; x < nc.value.length; x++) {
+								if (p.indexOf(nc.value.substring(x, x + 1)) == -1)
+									z = 0;
+							} 
+							if (z == 0)
+								msg = msg + lc + " possui caracteres que não são validos.";  
+							if (msg == "") {
+								if (nc.value < mi)
+									msg = msg + lc + " deve ser maior que " + mi.toString() + ".";
+								if (nc.value > ma)
+									msg = msg + lc + " deve ser menor que " + ma.toString() + ".";
+							}
+						}
+					}else {
+						if (nc.value == "")
+						msg = msg + lc + " não pode ser nulo.";
+						for (var x = 0; x < nc.value.length; x++) {
+																if (p.indexOf(nc.value.substring(x, x + 1)) == -1)
+													z = 0;
+									 } 
+									 if (z == 0)
+											msg = msg + lc + " possui caracteres que não são validos.";  
+									 if (msg == "") {
+											if (nc.value < mi)
+												 msg = msg + lc + " deve ser maior que " + mi.toString() + ".";
+											if (nc.value > ma)
+												 msg = msg + lc + " deve ser menor que " + ma.toString() + ".";
+									 }
+					}
+				}else
+					if (tc == "de") {
+					 p = ",0123456789";
+					 if (pn == "sim") {  
+							if (nc.value == "")
+								 nc.value = "0";
+							else {
+									 for (var x = 0; x < nc.value.length; x++) {
+																			if (p.indexOf(nc.value.substring(x, x + 1)) == -1 & nc.value.substring(x, x + 1) != ".") {
+													z = 0;
+											 }
+																			if (nc.value.substring(x, x + 1) == ".")
+													cv = cv + 1;
+									 } 
+									 if (cv > 1)
+											z = 0;
+									 if (z == 0) {
+											msg = msg + lc + " possui caracteres que não são validos.";  
+									 }
+									 if (msg == "") {
+											if (nc.value < mi) 
+												 msg = msg + lc + " deve ser maior que " + mi.toString() + ".";  
+											if (nc.value > ma)
+												 msg = msg + lc + " deve ser menor que " + ma.toString() + ".";
+									 }
+							}
+					 }
+					 else {
+								if (nc.value == "")
+									 msg = msg + lc + " não pode ser nulo.";
+								for (var x = 0; x < nc.value.length; x++) {
+																	if (p.indexOf(nc.value.substring(x, x + 1)) == -1 & nc.value.substring(x, x + 1) != ".")
+											 z = 0;
+																	if (nc.value.substring(x, x + 1) == ".")
+											 cv = cv + 1;
+								} 
+								if (cv > 1)
+									 z = 0;
+								if (z == 0) {
+									 msg = msg + lc + " possui caracteres que não são validos.";  
+								}
+								if (msg == "") {
+									 if (nc.value < mi)
+											msg = msg + lc + " deve ser maior que " + mi.toString() + ".";
+									 if (nc.value > ma)
+											msg = msg + lc + " deve ser menor que " + ma.toString() + ".";
+								}
+					 }
+					}else
+						if (tc == "da") {
+						 p = "0123456789/";
+						 if (pn == "sim") {  
+								if (nc.value == "")
+																		{ }
+								else {
+										 for (var x = 0; x < nc.value.length; x++) {
+																						if (p.indexOf(nc.value.substring(x, x + 1)) == -1)
+														z = 0;
+																						if (nc.value.substring(x, x + 1) == "/")
+														cv = cv + 1;
+										 } 
+										 if (cv != 2)
+												z = 0;
+										 if (z == 0)
+												msg = msg + lc + " possui caracteres que não são validos.";  
+										 if (msg == "") {
+																						p1 = nc.value.indexOf("/");
+																						p2 = nc.value.lastIndexOf("/");
+																						if ((p2 == (p1 + 1)) || (nc.value.substring(0, p1).length == 0) || (nc.value.substring(p1 + 1, p2).length == 0) || (nc.value.substring(p2 + 1, nc.value.length).length == 0))
+													 msg = msg + lc + " possui os separadores fora de lugar.";
+												else {
+																								dia = parseInt(nc.value.substring(0, p1), 10);
+																								mes = parseInt(nc.value.substring(p1 + 1, p2), 10);
+																								ano = parseInt(nc.value.substring(p2 + 1, nc.value.length), 10);
+															if ((mes < 1) || (mes > 12))
+																 msg = msg + lc + " deve possuir o mês entre 1 e 12.";
+																								if ((mes == 1) || (mes == 3) || (mes == 5) || (mes == 7) || (mes == 8) || (mes == 10) || (mes == 12)) {
+																 if ((dia < 1) || (dia > 31))
+																		msg = msg + lc + " deve possuir o dia entre 1 e 31.";
+																 }
+																 else {        
+																										if (mes != 2) {
+																				 if ((dia < 1) || (dia > 30))
+																						msg = msg + lc + " deve possuir o dia entre 1 e 30.";
+																			}
+																			else {
+																												if (mes == 2) {
+																							if ((ano % 4) == 0) { 
+																								 if ((dia < 1) || (dia > 29))
+																										msg = msg + lc + " deve possuir o dia entre 1 e 29.";
+																							}
+																														else {
+																										if ((dia < 1) || (dia > 28))
+																										msg = msg + lc + " deve possuir o dia entre 1 e 28.";
+																							}
+																					 }
+																			}
+																 }
+														 }
+												 }
+										 }
+									}
+						}else{
+							msg = "Validação não pode ser realizada.<br> Tipo de dado do campo não identificado.";                                
+						}
+			
+			return msg;
+		}	
     // Trava os campos que vieram de parâmetro
     function TravaTudo() {
 
@@ -1606,35 +1569,39 @@
        }
     }
 
-            function Encerrar() {
+		function Encerrar() {
 
-       // Verifica se o usuário tem permissão de salvar
-                if (document.form.aux_lspermis.value.substring(1, 2) != 'A') {
-          alert('Desculpe, mas você não tem permissão para executar esta função.'); 
-          return false;
-       }   
+			// Verifica se o usuário tem permissão de salvar
+      if (document.form.aux_lspermis.value.substring(1, 2) != 'A') {
+				alert('Desculpe, mas você não tem permissão para executar esta função.'); 
+				return false;
+			}   
 
-                if (document.all.tbinscritos.rows.length < 1)
-          { alert("Não há inscritos"); return false; }
+			if (document.all.tbinscritos.rows.length < 1){
+				alert("Não há inscritos"); return false;
+			}
               
-       if (document.form.aux_idstaeve.value == "2") {
-           alert("Evento está cancelado. Não é permitido encerrar.");
-           return false;
-       } 	
-              
-                if (document.form.aux_flgalter.value == 'yes') {
-          if (confirm("Há alterações nesta página, deseja salvá-las antes de continuar?"))
-              SalvarConfirm();           
-       } 	
+			if (document.form.aux_idstaeve.value == "2") {
+				alert("Evento está cancelado. Não é permitido encerrar.");
+				return false;
+			} 	
+       
+			if (document.form.aux_flgalter.value == 'yes') {
+				if (confirm("Há alterações nesta página, deseja salvá-las antes de continuar?")){
+					SalvarConfirm();           
+				}
+			} 
 
-                if (confirm("As inscrições para esse evento estão sendo encerradas. \nAs inscrições pendentes passarão para excedente\\interessado. Deseja continuar?") == false)
-          return false;  	
-       
-       Habilita();
-                document.form.aux_cddopcao.value = 'enc';
-       
-                if (ArmazenaConfirm())
-          document.form.submit();   
+      if (confirm("As inscrições para esse evento estão sendo encerradas. \nAs inscrições pendentes passarão para excedente\\interessado. Deseja continuar?") == false){
+				return false;  	
+			}
+         
+			Habilita();
+      document.form.aux_cddopcao.value = 'enc';
+
+      if (ArmazenaConfirm()){
+				document.form.submit();
+			}
     }
 
     function TipoInscricao() {
@@ -1679,53 +1646,54 @@
 
         function carregaNome() {
 
-                var aux_idcont;
-                var aux_idseqttl;
-                var aux_prititul = 9999;
+			var aux_idcont;
+			var aux_idseqttl;
+			var aux_prititul = 9999;
 
-                document.getElementById("nmprimtl").innerHTML = "";
+			document.getElementById("nmprimtl").innerHTML = "";
 
-                if (document.form.nrdconta.value != '0' && document.form.nrdconta.value != '') {
-                    if (vetNome.length > 0) {
+			if (document.form.nrdconta.value != '0' && document.form.nrdconta.value != '') {
+				if (vetNome.length > 0) {
 
-                        oOption = document.createElement("OPTION");
-                        document.all.aux_nmcooper.options.add(oOption);
-                        oOption.innerText = "-- SELECIONE --";
-                        oOption.value = 99;
-                        oOption.selected = true;
+					oOption = document.createElement("OPTION");
+					document.all.aux_nmcooper.options.add(oOption);
+					oOption.innerText = "-- SELECIONE --";
+					oOption.value = 99;
+					oOption.selected = true;
 
-                        //for (i in vetNome) {
-                        for (i = 0; i < vetNome.length; i++) { 
-                            
-                            aux_idcont = i;
-                            
-                            if (aux_prititul == 9999) {
-                                aux_prititul = aux_idcont;
-                            }
+					//for (i in vetNome) {
+					for (i = 0; i < vetNome.length; i++) { 
+						
+						aux_idcont = i;
+						
+						if (aux_prititul == 9999) {
+							aux_prititul = aux_idcont;
+						}
 
-                            oOption = document.createElement("OPTION");
-                            document.all.aux_nmcooper.options.add(oOption);
-                            oOption.innerText = vetNome[i].nmextttl;
-                            oOption.value = aux_idcont + 1;
-                            
-                            aux_idseqttl = vetNome[aux_idcont].idseqttl;
-                        }
+						oOption = document.createElement("OPTION");
+						document.all.aux_nmcooper.options.add(oOption);
+						oOption.innerText = vetNome[i].nmextttl;
+						oOption.value = aux_idcont + 1;
+						
+						aux_idseqttl = vetNome[aux_idcont].idseqttl;
+					}
 
-                        document.getElementById("nmprimtl").innerHTML = vetNome[aux_idcont].nmprimtl;
+					document.getElementById("nmprimtl").innerHTML = vetNome[aux_idcont].nmprimtl;
 
-                        if (vetNome.length == 1) {
-                            aux_idcont = aux_idcont + 1;
+					if (vetNome.length == 1) {
+						aux_idcont = aux_idcont + 1;
 
-                            document.all.aux_nmcooper.value = aux_idcont;
-                            dadosInscricao(aux_idcont);
-                        } else {
-                            //document.all.aux_nmcooper.value = 99;
-                            document.all.aux_nmcooper.value = aux_prititul;
-                        }
-                    }
-                }
-
-            }
+						document.all.aux_nmcooper.value = aux_idcont;
+						dadosInscricao(aux_idcont);
+					} else {
+						//document.all.aux_nmcooper.value = 99;
+						document.all.aux_nmcooper.value = aux_prititul;
+					}
+				}
+			}
+				
+			//$("#aux_nmcooper").val(99);	   // Linha comentada PJ 322 - SM 7 - Mateus 
+		}
             
             function carregaContaNrcpccgc(idseq) {            
                 
@@ -1777,7 +1745,9 @@
                 document.all.nminseve.value = "";
                 document.all.dsobsins.value = "";
                 document.all.aux_nrcpfcgc.value = "";
-
+				document.all.aux_nrficpre.value = '';
+				document.all.nrficpre.value = '';
+				
                 if (idseqttl != 99) {
 
                     idseqttl = idseqttl - 1;
@@ -1827,9 +1797,6 @@
             document.form.nrdconta.focus();
           }            
 
-          if (document.form.aux_idevento.value == 2)
-          document.form.encerrar.style.display = 'none';
-
           if ((document.form.aux_nrdrowid.value == '?') &&
           (document.form.aux_stdopcao.value != 'i'))
             LimparCampos();
@@ -1855,218 +1822,312 @@
               document.form.salvaconfirm.style.cursor = 'default';
               document.form.salvaconfirm.disabled = true;
 
-              document.form.encerrar.style.filter = 'progid:DXImageTransform.Microsoft.Alpha(opacity=20)';
-              document.form.encerrar.style.cursor = 'default';
-              document.form.encerrar.disabled = true;
-         
-          alert('Usuário sem permissão para incluir inscrição em eventos já fechados para contabilização.');
+							$("#encerrar").hide();
+                       
+							alert('Usuário sem permissão para incluir inscrição em eventos já fechados para contabilização.');
          
          }
         }
             
-        // Se já esstiver encerrado desabilitar o botão 
-        if (document.form.aux_idstaeve.value == "4"){
-          document.form.encerrar.style.filter = 'progid:DXImageTransform.Microsoft.Alpha(opacity=20)';
-          document.form.encerrar.style.cursor = 'default';
-          document.form.encerrar.disabled = true;
+      // Se já esstiver encerrado desabilitar o botão 
+	  
+      if (document.form.aux_idstaeve.value == "4"){
+        $("#encerrar").hide();
+      }
+
+      //função generica para checked
+      function checked(campo) {
+        campo.checked = true;
+      }
+
+      //função generica para unchecked
+      function unchecked(campo) {
+        campo.checked = false;
+      }
+
+      if (document.form.aux_nmcooper.value != "" && vetNome.length > 0) {
+          dadosInscricao(document.form.aux_nmcooper.value);
+      }
+        
+      function BuscaCooperadoCPFCGC() {
+         
+         if (document.form.aux_nrseqeve.value == "") { 
+           alert("Evento não selecionado"); 
+           document.form.aux_nrseqeve.focus();
+           return false; 
+         }
+         
+         if (document.form.aux_nrcpfcgc_fil.value != "" && document.form.aux_nrcpfcgc_fil.value != 0 ){
+             document.form.aux_cddopcao.value = "bcc";
+             document.form.submit();
+        }else {               
+             document.getElementById("divNrdconta_Cpfcgc").style.display = "none";
+             document.getElementById("divNrdconta").style.display = "block";   
+             document.getElementById("nmprimtl").style.display = "block";               
+        }
+        Cooperado();	
+      }
+            
+      function SelecionaContaCpfcgc(idseq) {            
+
+        if (document.form.aux_nrseqeve.value == "") { 
+           alert("Evento não selecionado"); 
+           document.form.aux_nrseqeve.focus();
+           return false; 
+         }
+          if (idseq != 99) {
+
+              idseq = idseq - 1;                
+              document.all.nrdconta.value = vetCoopCpfCgc[idseq].nrdconta;
+              BuscaCooperadoCPFCGC();
+          }
+      }
+            
+      // validar se pode alterar o campo 
+      function ValidaAlterfalta(qtdfalta,qtfalori) {
+      
+      
+          if (document.form.aux_fechamen.value == 'Sim') {
+              alert("Mês do evento fechado para contabilização. Alteração não permitida.");
+              qtdfalta.value = qtfalori;
+              return false;
+          }    
+      
+          for (i = 0; i < mevento.length; i++) {
+              
+              if (((mevento[i].cdcooper == document.form.aux_cdcooper.value) &&
+                  (mevento[i].cdagenci == document.form.aux_cdagenci.value) &&
+                  (mevento[i].nrseqeve == document.form.aux_nrseqeve.value)) ||
+                 ((mevento[i].cdcooper == document.form.aux_cdcooper.value) &&
+                  (mevento[i].cdagenci == "0") &&
+                  (mevento[i].nrseqeve == document.form.aux_nrseqeve.value))) {
+                  
+                  if (mevento[i].dsfineve == "S" && qtdfalta.value > 0) {
+                    alert("Aguarde o término do evento para lançar as faltas.");
+                    qtdfalta.value = 0;
+                  }								
+              }
+          } 		
+      }
+            
+      function ExcluirInscricao(rowid,nminseve){
+      
+         if (document.form.aux_fechamen.value == 'Sim') {
+              alert("Mês do evento fechado para contabilização. Exclusão não permitida.");
+         }else {
+              if (!confirm("Confirma exclusão da inscrição de " + nminseve + "?"))
+                  return false;
+              
+              document.form.aux_cddopcao.value = 'exi';
+              document.form.aux_excrowid.value = rowid;
+              
+              document.form.aux_carregar.value = 'proximos';
+              
+              if (rowid == minscri[0].nrdrowid ){
+                if(minscri.length > 1) {
+                  document.form.aux_regfimls.value = minscri[1].nrdrowid;
+                }
+              }else{
+                document.form.aux_regfimls.value = minscri[0].nrdrowid;
+              }
+              
+              document.form.submit();
+         
+         }
+      }
+            
+      // validar se pode alterar situacao
+      function ValidaAlterSituac(confirma,confiori) {          
+            
+        if (confirma.value == 4 ) {  
+            alert('Situação não permitida.');  
+            confirma.value = confiori;
+            return false;
         }
 
-        //função generica para checked
-        function checked(campo) {
-          campo.checked = true;
-        }
-
-        //função generica para unchecked
-        function unchecked(campo) {
-          campo.checked = false;
+        if (document.form.aux_idstaeve.value == "4"){ /*encerrado*/
+        
+            if (document.form.aux_fechamen.value == 'Sim' ) { /* mes fechado */   
+                alert("Mês do evento fechado para contabilização. Alteração não permitida.");
+                confirma.value = confiori;
+                return false;
+            }
         }
 
         if (document.form.aux_nmcooper.value != "" && vetNome.length > 0) {
             dadosInscricao(document.form.aux_nmcooper.value);
         }
-        
-        function BuscaCooperadoCPFCGC() {
-           
-           if (document.form.aux_nrseqeve.value == "") { 
-             alert("Evento não selecionado"); 
-             document.form.aux_nrseqeve.focus();
-             return false; 
-           }
-           
-           if (document.form.aux_nrcpfcgc_fil.value != "" && document.form.aux_nrcpfcgc_fil.value != 0 ){
-               document.form.aux_cddopcao.value = "bcc";
-               document.form.submit();
-          }else {               
-               document.getElementById("divNrdconta_Cpfcgc").style.display = "none";
-               document.getElementById("divNrdconta").style.display = "block";   
-               document.getElementById("nmprimtl").style.display = "block";               
-          }
-          Cooperado();	
-        }
-            
-        function SelecionaContaCpfcgc(idseq) {            
-
-          if (document.form.aux_nrseqeve.value == "") { 
-             alert("Evento não selecionado"); 
-             document.form.aux_nrseqeve.focus();
-             return false; 
-           }
-            if (idseq != 99) {
-
-                idseq = idseq - 1;                
-                document.all.nrdconta.value = vetCoopCpfCgc[idseq].nrdconta;
-                BuscaCooperadoCPFCGC();
-            }
-        }
-            
-        // validar se pode alterar o campo 
-        function ValidaAlterfalta(qtdfalta,qtfalori) {
-        
-        
-            if (document.form.aux_fechamen.value == 'Sim') {
-                alert("Mês do evento fechado para contabilização. Alteração não permitida.");
-                qtdfalta.value = qtfalori;
-                return false;
-            }    
-        
-            for (i = 0; i < mevento.length; i++) {
-                
-                if (((mevento[i].cdcooper == document.form.aux_cdcooper.value) &&
-                    (mevento[i].cdagenci == document.form.aux_cdagenci.value) &&
-                    (mevento[i].nrseqeve == document.form.aux_nrseqeve.value)) ||
-                   ((mevento[i].cdcooper == document.form.aux_cdcooper.value) &&
-                    (mevento[i].cdagenci == "0") &&
-                    (mevento[i].nrseqeve == document.form.aux_nrseqeve.value))) {
-                    
-                    if (mevento[i].dsfineve == "S" && qtdfalta.value > 0) {
-                      alert("Aguarde o término do evento para lançar as faltas.");
-                      qtdfalta.value = 0;
-                    }								
-                }
-            } 		
-        }
-            
-        function ExcluirInscricao(rowid,nminseve){
-        
-           if (document.form.aux_fechamen.value == 'Sim') {
-                alert("Mês do evento fechado para contabilização. Exclusão não permitida.");
-           }else {
-                if (!confirm("Confirma exclusão da inscrição de " + nminseve + "?"))
-                    return false;
-                
-                document.form.aux_cddopcao.value = 'exi';
-                document.form.aux_excrowid.value = rowid;
-                
-                document.form.aux_carregar.value = 'proximos';
-                
-                if (rowid == minscri[0].nrdrowid ){
-                  if(minscri.length > 1) {
-                    document.form.aux_regfimls.value = minscri[1].nrdrowid;
-                  }
-                }else{
-                  document.form.aux_regfimls.value = minscri[0].nrdrowid;
-                }
-                
-                document.form.submit();
-           
-           }
-        }
-            
-            // validar se pode alterar situacao
-        function ValidaAlterSituac(confirma,confiori) {          
-              
-                if (confirma.value == 4 ) {  
-                    alert('Situação não permitida.');  
-                    confirma.value = confiori;
-                    return false;
-                }
-
-                if (document.form.aux_idstaeve.value == "4"){ /*encerrado*/
-                
-                    if (document.form.aux_fechamen.value == 'Sim' ) { /* mes fechado */   
-                        alert("Mês do evento fechado para contabilização. Alteração não permitida.");
-                        confirma.value = confiori;
-                        return false;
-                    }/* Removido tratamento a pedido da area de negocio
-                        devido a situações na qual o operador pode incluir inscrições como pendente
-                       else {
-                    
-                        if (!(confiori == 4 && confirma.value == 2)) {
-                            alert('Situação somente pode ser alterada de excedente para confirmado.');
-                            confirma.value = confiori;
-                            return false;
-                        }
-                    } */
-                }
-
-            if (document.form.aux_nmcooper.value != "" && vetNome.length > 0) {
-                dadosInscricao(document.form.aux_nmcooper.value);
-            }
-        }
+      }
           
-        function carregaRegistros(opcao){
-          if(opcao == 'A'){
-            $("#aux_nriniseq").val(parseInt($("#aux_nriniseq").val()) - 100);
-          }else{
-            $("#aux_nriniseq").val(parseInt($("#aux_nriniseq").val()) + 100);
-          }    
+      function carregaRegistros(opcao){
+        if(opcao == 'A'){
+          $("#aux_nriniseq").val(parseInt($("#aux_nriniseq").val()) - 100);
+        }else{
+          $("#aux_nriniseq").val(parseInt($("#aux_nriniseq").val()) + 100);
+        }    
+        carregaInscritos();
+      }
+      
+      function enter(campo,tecla) {
+        if(tecla == 13){
+          if(campo == 0){
+            BuscaCooperadoCPFCGC();
+          }else if(campo == 1){
+            Cooperado();
+          }
+        }
+        return false;
+      }
+          
+      $("#aux_pesqorde").bind({
+        change: function() {
+          carregaInscritos();
+        },
+        blur: function() {
           carregaInscritos();
         }
+      });
+
+      function carregaInscritos(){
+			  document.form.aux_cddopcao.value='i';
+        document.form.nrseqeve.value = document.form.aux_nrseqeve.value;
+        document.form.aux_carregar.value='';
+        document.form.aux_reginils.value='';
+        document.form.aux_regfimls.value='';
+				$("#aux_indficin").val("N");
+				$("#aux_encerrar").val("N");				
+        verificaTipoEvento();
+        document.form.submit();
+      }
+      
+      function validaEmail(emailAddress) {
+        var re = /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+        return re.test(emailAddress);
+      }
         
-        function enter(campo,tecla) {
-          if(tecla == 13){
-            if(campo == 0){
-              BuscaCooperadoCPFCGC();
-            }else if(campo == 1){
-              Cooperado();
-            }
-          }
+      function verificaTipoEvento(){
+        if($("#aux_nrseqeve").children(":selected").attr("tpevento") == 7 ||
+           $("#aux_nrseqeve").children(":selected").attr("tpevento") == 12){
+					$("#aux_encerrar").val("N");
+					$("#fichaPresencaLabel").show();
+					$("#fichaPresencaCampo").show();
+					$("#aux_nrficpre").val('');
+					
+					if(nomeaba == 'AbaConfirma'){
+						document.all.FichaPresencaConfirm[0].style.visibility = "visible";
+						document.all.FichaPresencaConfirm[1].style.visibility = "visible";		  
+					}
+        }else{
+					$("#aux_encerrar").val("S");
+          $("#fichaPresencaLabel").hide();
+          $("#fichaPresencaCampo").hide();
+          document.all.FichaPresencaConfirm[0].style.visibility = "hidden";
+          document.all.FichaPresencaConfirm[1].style.visibility = "hidden";
+        }
+      }  
+      
+      function geraRelatorio(){
+        //gera relatorio de eventos
+        var cdoperad = $("#aux_cdoperad").val();
+        var idevento = $("#aux_idevento").val();
+        var nmdatela = 'wpgd0140';
+        var idcokses = $("#aux_idcookie").val();
+        var arrCaminho = document.form.aux_dsurlphp.value.split('-');
+        var url = "";
+        //campos de tela
+        var dtanoage     = $("#aux_dtanoage").val();
+        //cooperativas
+        var cdcooper_aux = $("#aux_cdcooper  option:selected").val();
+        var nmrescop = $("#aux_cdcooper  option:selected").val() + ' - ' + $("#aux_cdcooper  option:selected").text();
+        //agencias
+        var cdagenci_aux = $("#aux_cdagenci  option:selected").val();
+        var nmextage = $("#aux_cdagenci  option:selected").val() + ' - ' + $("#aux_cdagenci  option:selected").text();
+        //eventos
+        var cdeventos = $("#aux_nrseqeve option:selected").val();
+        var nmeventos = $("#aux_nrseqeve option:selected").val() + ' - ' + $("#aux_nrseqeve option:selected").text();
+
+        if(dtanoage == 0 || dtanoage == ""){
+          alert("Informe o ano de agenda!");
+          $("#aux_dtanoage").focus()
           return false;
         }
-            
-        $("#aux_pesqorde").bind({
-          change: function() {
-            carregaInscritos();
-          },
-          blur: function() {
-            carregaInscritos();
-          }
-        });
 
-        function carregaInscritos(){
-          document.form.aux_cddopcao.value='i';
-          document.form.nrseqeve.value = document.form.aux_nrseqeve.value;
-          document.form.aux_carregar.value='';
-          document.form.aux_reginils.value='';
-          document.form.aux_regfimls.value='';
-          //LimparCampos();
-          document.form.submit();
+        if($("#aux_cdcooper").val() == 0){
+          alert("Selecione uma Cooperativa valida!");
+          $("#aux_cdcooper").focus()
+          return false;
         }
+
+        if($("#aux_cdagenci").val() == 0){
+          alert("Selecione um PA valido, diferente da opcao \"TODOS\"!");
+          $("#aux_cdagenci").focus()
+          return false;
+        }
+
+        if (  cdcooper_aux != '' ) {
       
-        function validaEmail(emailAddress) {
-          var re = /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
-          return re.test(emailAddress);
-        }
+          //Endereco da pagina de relatorio
+          url  = arrCaminho[0] + '/telas/wpgd0140/wpgd0140a.php?dtanoage='+dtanoage+'&cdcooper_aux='+cdcooper_aux+'&nmrescop='+nmrescop; //filtros de tela
+          url += '&cdagenci_aux='+cdagenci_aux+'&nmextage='+nmextage+'&cdevento='+cdeventos+'&nmevento='+nmeventos; //filtros de tela
+          url += '&cdcooper='+cdcooper_aux+'&cdagenci='+cdagenci_aux+'&cdoperad='+cdoperad+'&idevento='+idevento+'&nmdatela='+nmdatela+'&idcokses='+idcokses; //parametros da sessao
           
-        if($("#aux_nriniseq").val() == '' || ($("#aux_nriniseq").val() == 1 && ($("#aux_nrseqeve").val() == undefined || $("#aux_nrseqeve").val() == "" || $("#aux_nrseqeve").val() == 0))){
-          $("#aux_nriniseq").val(1);
-          $("#btnAnterior").hide();
-          $("#btnProximo").hide();
+          window.open(url, '', 'toolbar=no,location=no,diretories=no,status=no,menubar=no,scrollbars=yes,resizable=yes,width=600,height=450,top=10,left=10');
+        } else {
+          alert('Selecione ao menos uma opção do filtro de cooperativa');
         }
+      }
+      
+      function geraRelatorioFichaNaoLancada(){
+        //gera relatorio de eventos
+        var cdoperad = $("#aux_cdoperad").val();
+        var idevento = $("#idevento").val();
+        var nmdatela = 'wpgd0143';
+        var idcokses = $("#aux_idcookie").val();
+        var arrCaminho = document.form.aux_dsurlphp.value.split('-');
+        var url = "";
+        //campos de tela
+        var dtanoage     = $("#aux_dtanoage").val();
+        //cooperativas
+        var cdcooper_aux = $("#aux_cdcooper  option:selected").val();
+        var nmrescop = $("#aux_cdcooper  option:selected").val() + ' - ' + $("#aux_cdcooper  option:selected").text();
+        //agencias
+        var cdagenci_aux = $("#aux_cdagenci  option:selected").val();
+        var nmextage = $("#aux_cdagenci  option:selected").val() + ' - ' + $("#aux_cdagenci  option:selected").text();
+        //eventos
+        var cdeventos = $("#aux_nrseqeve option:selected").val();
+        var nmeventos = $("#aux_nrseqeve option:selected").val() + ' - ' + $("#aux_nrseqeve option:selected").text();
         
-        if($("#nmprimtl").html() == "" || $("#nmprimtl").html() == null || $("#nmprimtl").html() == undefined){
-          LimparCampos();
-        }
-        
-        hideMsgAguardo();
-		
-				if($("#aux_idevento").val() == 1){
-					$("#divFrequenciaLabel").show();
-					$("#divFrequenciaCampo").show();
-				}else{
-					$("#divFrequenciaLabel").hide();
-					$("#divFrequenciaCampo").hide();
-				}
+        //Endereco da pagina de relatorio
+        url  = arrCaminho[0] + '/telas/wpgd0143/wpgd0143a.php?dtanoage='+dtanoage+'&cdcooper_aux='+cdcooper_aux+'&nmrescop='+nmrescop; //filtros de tela
+        url += '&cdagenci_aux='+cdagenci_aux+'&nmextage='+nmextage+'&nrseqdig='+cdeventos+'&nmevento='+nmeventos; //filtros de tela
+        url += '&cdcooper='+cdcooper_aux+'&cdagenci='+cdagenci_aux+'&cdoperad='+cdoperad+'&idevento='+idevento+'&nmdatela='+nmdatela+'&idcokses='+idcokses; //parametros da sessao
+        window.open(url, '', 'toolbar=no,location=no,diretories=no,status=no,menubar=no,scrollbars=yes,resizable=yes,width=800,height=600,top=10,left=10');
+      }
+      
+      if($("#aux_nriniseq").val() == '' || ($("#aux_nriniseq").val() == 1 && ($("#aux_nrseqeve").val() == undefined || $("#aux_nrseqeve").val() == "" || $("#aux_nrseqeve").val() == 0))){
+        $("#aux_nriniseq").val(1);
+        $("#btnAnterior").hide();
+        $("#btnProximo").hide();
+      }
+      
+      if($("#nmprimtl").html() == "" || $("#nmprimtl").html() == null || $("#nmprimtl").html() == undefined){
+				LimparCampos();
+      }
+      
+      verificaTipoEvento();
+			$("#aux_nrficpre").val('');
+			$("#indficin").hide();
+			
+			if($("#aux_indficin").val() == ""){
+			  $("#aux_indficin").val("N");
+			}
+			
+			if($("#aux_encerrar").val() == ""){
+			  $("#aux_encerrar").val("N");
+			}
+			
+      hideMsgAguardo();
+	    
     </script>
   </body>
 </html>
