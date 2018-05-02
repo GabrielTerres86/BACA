@@ -420,6 +420,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                03/04/2018 - ajuste no tratamento de restart do paralelismo;
                             ajuste no tratamento de erro na exception others (AMcom-Mario)
                             
+               27/04/2018 - ao chamar DSCT0001 informar a agencia do PA do Associado referente ao paralelismo (AMcom-Mario).
+                           
    .............................................................................*/
 
      DECLARE
@@ -1256,7 +1258,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
        vr_dsarqrep     VARCHAR2(100);
        vr_dsreproc     VARCHAR2(5);
        vr_qterro        number := 0;
-       
+         
        --Variaveis para retorno de erro
        vr_des_erro     VARCHAR2(3);
        vr_cdcritic     INTEGER:= 0;
@@ -4392,7 +4394,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                  IF cr_crapcob%ISOPEN THEN
                    CLOSE cr_crapcob;
                  END IF;
-                 
+
                  --> Devolução de Pagamento Fraudado
                  IF rw_crapcob.incobran = 2 THEN                   
                  
@@ -5688,7 +5690,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
 
                --Efetuar a baixa do titulo
                DSCT0001.pc_efetua_baixa_titulo (pr_cdcooper    => pr_cdcooper         --Codigo Cooperativa
-                                               ,pr_cdagenci    => 0                   --Codigo Agencia
+                                               ,pr_cdagenci    => pr_cdagenci         --Codigo Agencia   -- Ligeirinho alderado de 0 p/ Agencia do PA
                                                ,pr_nrdcaixa    => 0                   --Numero Caixa
                                                ,pr_cdoperad    => 0                   --Codigo operador
                                                ,pr_dtmvtolt    => rw_crapdat.dtmvtolt --Data Movimento
@@ -5722,8 +5724,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
                                      ,pr_ind_tipo_log => 2 -- Erro tratato
                                      ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE')
                                      ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                         || vr_cdprogra || ' --> Erro retorno na DSCT0001: '||vr_tab_erro2(idx).dscritic
-                                                         || 'Conta:'||vr_tab_descontar(vr_index_desc).nrdconta);
+                                                         || vr_cdprogra || ' --> Erro DSCRITIC na DSTC0001: '||vr_dscritic
+                                                         || ' Conta:' || vr_tab_descontar(vr_index_desc).nrdconta
+                                                         || ' Docmto:'|| vr_tab_descontar(vr_index_desc).nrdocmto
+                                                         || ' Border:'|| vr_tab_descontar(vr_index_desc).nrborder);														 														 
 
                  END LOOP;
                END IF;
@@ -6878,7 +6882,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538(pr_cdcooper IN crapcop.cdcooper%TY
 
          --Gerar o ID para o paralelismo
          vr_idparale := gene0001.fn_gera_ID_paralelo;
-                                                  
+
          -- Verifica se algum job paralelo executou com erro
          vr_qterro := 0;
          vr_qterro := gene0001.fn_ret_qt_erro_paralelo(pr_cdcooper    => pr_cdcooper,
