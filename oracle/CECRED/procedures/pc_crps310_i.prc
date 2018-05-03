@@ -17,7 +17,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Deborah/Margarete
-     Data    : Maio/2001                       Ultima atualizacao: 16/04/2018
+     Data    : Maio/2001                       Ultima atualizacao: 23/04/2018
      
      Dados referentes ao programa:
 
@@ -303,7 +303,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
 
                  16/04/2018 - Incluída gravação do risco acelerado(INRISCO_REFIN) - Daniel(AMcom)
                  
-                 23/04/2018 - Juros + 60 c/c relatório 227 e 354 (para a conta corrente) (Rangel Decker/AMCom)
+                 23/04/2018 - P450 - Juros + 60 c/c relatório 227 e 354 (para a conta corrente) (Rangel Decker/AMCom)
   ............................................................................ */
 
     DECLARE
@@ -727,23 +727,30 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
       --> Buscar ultimo nivel de risco 9 da linha 100
       CURSOR cr_crapris_9_100 (pr_cdcooper IN crapris.cdcooper%TYPE,
                                pr_nrdconta IN crapris.nrdconta%TYPE,
-                               pr_nrctremp IN crapris.nrctremp%TYPE) IS
-        SELECT ris.dtrefere dtrefere, 
-               ris.qtdiaatr qtdiaatr
-          FROM crapris ris,
-               crapepr epr 
-         WHERE ris.cdcooper = epr.cdcooper
-           AND ris.nrdconta = epr.nrdconta
-           --> filtrar emp baseado no filtro
-           AND epr.nrctremp = pr_nrctremp
-           --> buscar o risco referente ao ultimo mês antes de ser transferido para prejuizo
-           AND ris.dtrefere = last_day(add_months( epr.dtmvtolt,-1))
+                               pr_dtmvtolt IN crapepr.dtmvtolt%TYPE) IS
+        
+            SELECT ris.dtrefere, NVL(ris.qtdiaatr, 0) qtdiaatr
+              FROM crapris ris
+             WHERE ris.dtrefere = (SELECT MAX(dtrefere)
+                                     FROM crapris ris2
+                                    WHERE ris2.nrdconta = ris.nrdconta
+                                      AND ris2.cdcooper = ris.cdcooper
+                                      AND ris2.cdorigem = ris.cdorigem
+                                      AND ris2.innivris = ris.innivris
+                                      AND ris2.inddocto = ris.inddocto
+                                      AND ris2.nrctremp = ris.nrctremp
+                                      AND ris2.dtrefere < pr_dtmvtolt)
            AND ris.cdcooper = pr_cdcooper 
-           AND ris.innivris = 9 
+               AND ris.nrdconta = pr_nrdconta
+               AND ((ris.nrctremp = ris.nrdconta) OR
+                   (ris.nrctremp = (SELECT t.nrctaant
+                                       FROM craptco t
+                                      WHERE t.cdcooper = ris.cdcooper
+                                        AND t.nrdconta = ris.nrdconta)))
            AND ris.cdorigem = 1
-           --> buscar risco baseado na conta(estouro de conta)
-           AND ris.nrdconta = pr_nrdconta 
-           AND ris.nrctremp = pr_nrdconta;
+               AND ris.inddocto = 1
+               AND ris.innivris = 9;
+               
       rw_crapris_9_100 cr_crapris_9_100%ROWTYPE;
      
                                                  
@@ -1582,9 +1589,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
           --Data de corte menor que data da conta inadimplente
           IF  rw_crapris_ccjuros60.dtinictr  <  vr_dtcorte_prm THEN
              -- Dias úteis
-            vr_dtmvtolt:=tela_atenda_deposvis.fn_soma_dias_uteis_data(pr_cdcooper => pr_cdcooper,
-                                                                              pr_dtmvtolt => rw_crapris_ccjuros60.dtinictr,
-                                                                              pr_qtddias  => 60); 
+            vr_dtmvtolt := tela_atenda_deposvis.fn_soma_dias_uteis_data(pr_cdcooper => pr_cdcooper,
+                                                                        pr_dtmvtolt => rw_crapris_ccjuros60.dtinictr,
+                                                                        pr_qtddias  => 60); 
              
            ELSE
              --Dias corridos
@@ -2182,7 +2189,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
             --> usar data de referencia a data que gerou o emprestimo de prejuizo
             OPEN cr_crapris_9_100 (pr_cdcooper => pr_cdcooper,
                                    pr_nrdconta => pr_rw_crapepr.nrdconta,
-                                   pr_nrctremp => pr_rw_crapepr.nrctremp);
+                                   pr_dtmvtolt => pr_rw_crapepr.dtmvtolt);
             FETCH cr_crapris_9_100 INTO rw_crapris_9;
             CLOSE cr_crapris_9_100;
             
@@ -2195,7 +2202,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
             CLOSE cr_crapris_9;
           END IF;
           
-          vr_qtdiaatr := (pr_rw_crapdat.dtmvtolt - rw_crapris_9.dtrefere);
+          vr_qtdiaatr := nvl(pr_rw_crapdat.dtmvtolt - rw_crapris_9.dtrefere, 0);
           IF vr_qtdiaatr < 0 THEN
             vr_qtdiaatr := 0;
           END IF;
@@ -2206,7 +2213,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
           --> Caso ainda não tenha calculado a qtd de dias em atraso do prejuizo
           IF vr_qtdiaatr <= 0 THEN
             --> deve calcular conforma a data do ultimo pagamento
-            vr_qtdiaatr := (pr_rw_crapdat.dtmvtolt - pr_rw_crapepr.dtultpag); 
+            vr_qtdiaatr := nvl(pr_rw_crapdat.dtmvtolt - pr_rw_crapepr.dtultpag, 0); 
           END IF;
           
           vr_dias     := vr_qtdiaatr;
@@ -2276,8 +2283,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
           IF vr_tab_risco(vr_dsnivris) > vr_aux_nivel THEN
           vr_aux_nivel := vr_tab_risco(vr_dsnivris);
           END IF;
-        --ELSE
-        --  vr_aux_nivel := 0;
         END IF;
         -- Se houve rating efetuado após o empréstimo
         IF vr_risco_rating <> 0 THEN
@@ -3345,7 +3350,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
           rw_crapris_9_100 := NULL;
           OPEN cr_crapris_9_100 ( pr_cdcooper => pr_cdcooper,
                                   pr_nrdconta => pr_rw_crapepr.nrdconta,
-                                  pr_nrctremp => pr_rw_crapepr.nrctremp);
+                                  pr_dtmvtolt => pr_rw_crapepr.dtmvtolt);
           FETCH cr_crapris_9_100 INTO rw_crapris_9_100;
           CLOSE cr_crapris_9_100;
           
@@ -3353,7 +3358,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
           vr_qtdiaatr := nvl(rw_crapris_9_100.qtdiaatr,0);
           
           --> adicionar os dias até a data do atual
-          vr_qtdiaatr := nvl(vr_qtdiaatr,0) + (pr_rw_crapdat.dtmvtolt - rw_crapris_9_100.dtrefere);
+          vr_qtdiaatr := nvl(vr_qtdiaatr,0) + nvl(pr_rw_crapdat.dtmvtolt - rw_crapris_9_100.dtrefere,0);
         
         END IF;        
         
@@ -3543,6 +3548,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
         vr_vlprxpar      crapris.vlprxpar%TYPE; --> Valor da proxima parcela
         vr_dtprxpar      crapris.dtprxpar%TYPE; --> Data da proxima parcela
         vr_vlju60mo      NUMBER(25,2);
+        vr_dsnivris      VARCHAR2(2);           --> Nivel do risco atual
 
         -- Cursor para juros mora em atraso ha mais de 60 dias
         CURSOR cr_craplem_60_mora(pr_qtdiaatr IN NUMBER) IS
@@ -3657,8 +3663,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
         -- Backup da variavel vr_aux_nivel
         vr_nivel_atraso := vr_aux_nivel;
 
+        vr_dsnivris := NULL;
+        vr_dsnivris := pr_rw_crapepr.dsnivris; --  vt_tab_nivepr(LPAD(pr_rw_crapepr.nrdconta,10,'0')||lpad(pr_rw_crapepr.nrctremp,10,'0'));
+
         -- Verifica se o risco da proposta é pior que o risco acelerado - Daniel(AMcom)
-        IF pr_rw_crapepr.dsnivris > vr_aux_nivel THEN
+        IF vr_tab_risco(vr_dsnivris) > vr_aux_nivel THEN
         -- Vamos verificar qual nivel de risco esta na proposta do emprestimo
         CASE
           WHEN pr_rw_crapepr.dsnivris = ' '  THEN
