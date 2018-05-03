@@ -339,7 +339,7 @@
     showConfirmacao(
         "Deseja cancelar a opera&ccedil;&atilde;o?",
         "Confirma&ccedil;&atilde;o - Ayllos",
-        "voltaDiv(3,2,4,\'DESCONTO DE T&Iacute;TULOS - LIMITE\');",
+		"carregaLimitesTitulosPropostas();",
         "blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))",
         "sim.gif",
         "nao.gif");
