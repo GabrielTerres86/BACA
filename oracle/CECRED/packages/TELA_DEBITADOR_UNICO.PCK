@@ -3301,7 +3301,7 @@ DECLARE
         pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                            '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
 		  WHEN vr_exc_saida THEN
-        pr_dscritic := 'Erro geral na rotina da tela TELA_DEBITADOR_UNICO - pc_executar_debitador_emergen: ' ||vr_dscritic;
+        pr_dscritic := vr_dscritic;
         -- Carregar XML padrao para variavel de retorno
         pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                            '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
