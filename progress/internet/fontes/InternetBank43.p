@@ -14,7 +14,8 @@
    
    Alteracoes: 03/09/2011 - Gerar nova senha do operador (Guilherme).
 
-			   12/04/2018 - Ajuste da mensagem quando não exigir ass. conjunta (Ricardo Linhares).
+   12/04/2018 - Ajuste da mensagem quando não exigir ass. conjunta (Ricardo Linhares).
+ 			  
  
 ..............................................................................*/
  
