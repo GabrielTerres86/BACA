@@ -219,6 +219,11 @@ IF  VALID-HANDLE(h-b1wgen0016)  THEN
         
         FOR EACH tt-dados-agendamento NO-LOCK:
             
+            /* Nao apresentaremos os agendamentos de FGTS e DAE na versao classica do IB */
+            IF tt-dados-agendamento.cdtiptra = 12 OR
+               tt-dados-agendamento.cdtiptra = 13  THEN
+               NEXT.
+            
             CREATE xml_operacao38.
             ASSIGN xml_operacao38.dscabini = "<AGENDAMENTO>"
                    xml_operacao38.tpcaptur = "<tpcaptur>" + STRING(tt-dados-agendamento.tpcaptur)                        + "</tpcaptur>"

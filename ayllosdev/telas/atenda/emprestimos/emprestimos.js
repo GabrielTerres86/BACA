@@ -1,5 +1,5 @@
 /*!
- * FONTE        : emprestimos.js                            Última alteração: 07/02/2018
+ * FONTE        : emprestimos.js                            Última alteração: 20/04/2018
  * CRIAÇÃO      : Gabriel Capoia (DB1)
  * DATA CRIAÇÃO : 08/02/2011
  * OBJETIVO     : Biblioteca de funções na rotina Emprestimos da tela ATENDA
@@ -127,9 +127,10 @@
  * 102: [26/02/2018] Ajuste na tela da simulacao da proposta para filtrar a linha de credito dos produtos TR/PP. (James)
  * 102: [21/12/2017] Alterado para quando a linha de credito for (6901 - Cessao Cartao Credito) a 
  *                   qualificacao da operacao seja (5 - Cessao de Cartao) (Diego Simas - AMcom)
-* 103: [21/02/2018] Alterado para tratar limite/adp na tela de seleção para liquidar (Simas - AMcom)
-* 104: [15/12/2017] Alterações para inserção da nova tela GAROPC. Inserção do campo idcobope. PRJ404 (Lombardi)
-* 105: [05/03/2018] Incluido campo idcobope na parametrizacao do fonte efetiva_proposta. (PRJ404 - Reinert)
+ * 103: [21/02/2018] Alterado para tratar limite/adp na tela de seleção para liquidar (Simas - AMcom)
+ * 104: [15/12/2017] Alterações para inserção da nova tela GAROPC. Inserção do campo idcobope. PRJ404 (Lombardi)
+ * 105: [05/03/2018] Incluido campo idcobope na parametrizacao do fonte efetiva_proposta. (PRJ404 - Reinert)
+ * 106: [20/04/2018] P410 - Não permitir selecionar Financia IOF para Portabilidade (Marcos-Envolti)
  * ##############################################################################
  FONTE SENDO ALTERADO - DUVIDAS FALAR COM DANIEL OU JAMES
  * ##############################################################################
@@ -1406,6 +1407,11 @@ function controlaOperacao(operacao) {
                     arrayProposta['tpemprst'] = 0;
                 }
                 
+                if (possuiPortabilidade == 'S') {
+                    $("#idfiniof").desabilitaCampo();
+                }
+                
+                
             } else {
                 eval(response);
             }
@@ -1840,7 +1846,11 @@ function verificaQtDiaLib() {
             $("#qtdialib").datepicker('disable');
             $('#qtdialib').val('0');
             $('#qtdialib').change();
-            $("#idfiniof").habilitaCampo();
+            if (possuiPortabilidade == 'S') {
+              $("#idfiniof").desabilitaCampo();
+            }else {
+              $("#idfiniof").habilitaCampo();
+            }
             break;
         case '2': // Pos-Fixado
             $('#flgpagto').desabilitaCampo();
@@ -1848,7 +1858,11 @@ function verificaQtDiaLib() {
             $("#qtdialib").datepicker('disable');
             $('#qtdialib').val('0');
             $('#qtdialib').change();
-            $("#idfiniof").habilitaCampo();
+            if (possuiPortabilidade == 'S') {
+              $("#idfiniof").desabilitaCampo();
+            }else {
+              $("#idfiniof").habilitaCampo();
+            }
             break;
     }
     return true;
@@ -2067,7 +2081,6 @@ function controlaLayout(operacao) {
                 } else {
                     // no - Conta   yes - Folha
                     $('#flgpagto', '#frmNovaProp').val(arrayProposta['flgpagto']);
-
                 }
 
                 //Ajusta o tamanho do campo "Imprime proposta" de acordo com o tipo de empréstimo
@@ -2156,6 +2169,8 @@ function controlaLayout(operacao) {
             if (possuiPortabilidade == 'S') {
                 $("#cdfinemp", "#frmNovaProp").desabilitaCampo();
                 $("#tpemprst", "#frmNovaProp").desabilitaCampo();
+                $("#idfiniof", "#frmNovaProp").desabilitaCampo();
+                $("#idfiniof").val(0);
             }
 
 
@@ -6391,8 +6406,6 @@ function fechaSimulacoes(encerrarRotina) {
 }
 
 function validaSimulacao() {
-
-
 
     showMsgAguardo('Aguarde, validando ...');
     // Executa script de confirmação através de ajax

@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Edson
-   Data    : Janeiro/94.                       Ultima atualizacao: 13/03/2012
+   Data    : Janeiro/94.                       Ultima atualizacao: 16/04/2018
 
    Dados referentes ao programa:
 
@@ -29,6 +29,8 @@
 
 			   13/03/2012 - Implementado critica para os novos numeros de
                             lote (Tiago).
+               
+               16/04/2018 - P410 - Melhorias/Ajustes IOF (Marcos-Envolti) 
 ............................................................................. */
 
 { includes/var_online.i }
@@ -129,15 +131,6 @@ DO WHILE TRUE:
             aux_cddopcao = glb_cddopcao.
         END.
 
-   /*  Tabela com a taxa do IOF */
-
-   FIND craptab WHERE craptab.cdcooper = glb_cdcooper       AND 
-                      craptab.nmsistem = "CRED"             AND
-                      craptab.tptabela = "USUARI"           AND
-                      craptab.cdempres = 11                 AND
-                      craptab.cdacesso = "CTRIOFEMPR"       AND
-                      craptab.tpregist = 1 USE-INDEX craptab1 NO-LOCK NO-ERROR.
-
    IF  CAN-DO("I,E,A",glb_cddopcao) THEN
        DO:
        
@@ -164,29 +157,6 @@ DO WHILE TRUE:
                          
                 END.
        END.
-
-   IF   NOT AVAILABLE craptab   THEN
-        DO:
-            glb_cdcritic = 626.
-            RUN fontes/critic.p.
-            BELL.
-            MESSAGE glb_dscritic.
-            glb_cdcritic = 0.
-        END.
-   
-   ASSIGN tab_dtiniiof = DATE(INT(SUBSTRING(craptab.dstextab,4,2)),
-                              INT(SUBSTRING(craptab.dstextab,1,2)),
-                              INT(SUBSTRING(craptab.dstextab,7,4)))
-          tab_dtfimiof = DATE(INT(SUBSTRING(craptab.dstextab,15,2)),
-                              INT(SUBSTRING(craptab.dstextab,12,2)),
-                              INT(SUBSTRING(craptab.dstextab,18,4)))
-          tab_txiofepr = DECIMAL(SUBSTR(craptab.dstextab,23,16)).
-   
-   IF   glb_dtmvtolt >= tab_dtiniiof AND
-        glb_dtmvtolt <= tab_dtfimiof THEN
-        .
-   ELSE
-        tab_txiofepr = 0.
        
    /* Pega o numero da conta para emprestimos com emissao de boletos */
    FIND craptab WHERE craptab.cdcooper = glb_cdcooper AND

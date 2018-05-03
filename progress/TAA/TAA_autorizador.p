@@ -6019,8 +6019,14 @@ PROCEDURE obtem_agendamentos:
     FOR EACH tt-dados-agendamento NO-LOCK BREAK BY tt-dados-agendamento.dtmvtopg
                                                 BY tt-dados-agendamento.nrdocmto:
 
+
         IF  FIRST-OF(tt-dados-agendamento.nrdocmto) THEN
             DO:
+                /* Nao apresentaremos os agendamentos de FGTS e DAE no TAA */
+                IF tt-dados-agendamento.cdtiptra = 12 OR
+                   tt-dados-agendamento.cdtiptra = 13  THEN
+                   NEXT.            
+                   
                 /* CHAVE DO AGENDAMENTO */
                 xDoc:CREATE-NODE(xRoot2,"AGENDAMENTO","ELEMENT").
                 xRoot2:SET-ATTRIBUTE("DTMVTOPG",STRING(tt-dados-agendamento.dtmvtopg)).
@@ -6173,7 +6179,7 @@ PROCEDURE exclui_agendamentos:
                                               INPUT  aux_dtmvtolt,
                                               INPUT  aux_nrdocmto,
                                               INPUT  0, /* Idlancto */
-											  INPUT  "TAA", /*Nome da tela*/
+											                        INPUT  "TAA", /*Nome da tela*/
                                               INPUT  0, /*par_nrcpfope*/
                                               OUTPUT aux_dstransa,
                                               OUTPUT aux_dscritic).

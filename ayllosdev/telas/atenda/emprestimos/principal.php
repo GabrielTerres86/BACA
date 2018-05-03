@@ -43,6 +43,7 @@
  * 032: [17/12/2017] Inserção do campo idcobope. PRJ404 (Lombardi)
  * 033: [26/01/2018] Alteração para exibição do nível de risco original (Reginaldo - AMcom).
  * 034: [05/03/2018] Inclusão do campo idcobope no array arrayStatusApprov. PRJ404 (Reinert)
+ * 035: [12/04/2018] P410 - Melhorias/Ajustes IOF (Marcos-Envolti)
 
  */
 
@@ -882,14 +883,15 @@
 		$xml .= "   <dtmvtolt>".$glbvars["dtmvtolt"]."</dtmvtolt>";
 		$xml .= "   <inpessoa>".$inpessoa."</inpessoa>";
 		$xml .= "   <cdlcremp>".$cdlcremp."</cdlcremp>";
+		$xml .= "   <cdfinemp>".$cdfinemp."</cdfinemp>";    
 		$xml .= "   <qtpreemp>".$qtparepr."</qtpreemp>";
 		$xml .= "   <vlpreemp>".str_replace(',', '.', str_replace('.', '', $vlpreemp))."</vlpreemp>";
 		$xml .= "   <vlemprst>".str_replace(',', '.', str_replace('.', '', $vlempres))."</vlemprst>";
-		$xml .= "	<dtlibera>".$dtlibera."</dtlibera>";
-		$xml .= "	<dtdpagto>".$dtdpagto."</dtdpagto>";
+		$xml .= "	  <dtdpagto>".$dtdpagto."</dtdpagto>";
+		$xml .= "	  <dtlibera>".$dtlibera."</dtlibera>";
 		$xml .= "   <tpemprst>".$tpemprst."</tpemprst>";
 		$xml .= "   <dtcarenc>".$dtcarenc."</dtcarenc>";
-		$xml .= "   <qtdias_carencia>".$idcarenc."</qtdias_carencia>";
+		$xml .= "   <idcarencia>".$idcarenc."</idcarencia>";
 		$xml .= "   <dscatbem>".$dscatbem."</dscatbem>";
 		$xml .= "   <idfiniof>".$idfiniof."</idfiniof>";
 		$xml .= "   <dsctrliq>".$dsctrliq."</dsctrliq>";

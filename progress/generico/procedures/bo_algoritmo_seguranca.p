@@ -308,7 +308,7 @@ PROCEDURE gera_protocolo:
     
     CLOSE STORED-PROC pc_gera_protocolo_car aux_statproc = PROC-STATUS
           WHERE PROC-HANDLE = aux_handproc.
-
+    
     ASSIGN par_dsprotoc = ""
            par_dscritic = ""
            aux_des_erro = ""
@@ -318,11 +318,11 @@ PROCEDURE gera_protocolo:
                           WHEN pc_gera_protocolo_car.pr_dscritic <> ?
            aux_des_erro = pc_gera_protocolo_car.pr_des_erro
                           WHEN pc_gera_protocolo_car.pr_des_erro <> ?.
-    
-    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
-    
-    RETURN aux_des_erro.
 
+    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+                   
+    RETURN aux_des_erro.
+                   
 END PROCEDURE. /* Fim gera_protocolo */
 
 PROCEDURE lista_protocolos:
@@ -419,7 +419,7 @@ PROCEDURE lista_protocolos:
     END.
     ELSE
     FOR EACH crappro WHERE crappro.cdcooper  = par_cdcooper  AND
-                           crappro.nrdconta  = par_nrdconta  AND                           
+                           crappro.nrdconta  = par_nrdconta  AND
                            crappro.dttransa >= par_dtinipro  AND
                            crappro.dttransa <= par_dtfimpro  AND
                           (par_cdtippro      = 0             OR
@@ -497,7 +497,7 @@ PROCEDURE lista_protocolo:
        crabpro.cdtippro = 1 AND
        SUBSTR(crabpro.dsinform[3],1,3) <> "TAA" THEN
            NEXT.
-
+               
         IF par_cdorigem = 3 AND /* InternetBank */
            crabpro.cdtippro = 20 AND
            SUBSTR(crabpro.dsinform[3],1,3) = "TAA" THEN
@@ -546,7 +546,7 @@ PROCEDURE lista_protocolo:
                                                         OR crabpro.cdtippro = 17
                                                         OR crabpro.cdtippro = 18
                                                         OR crabpro.cdtippro = 19
-														OR crabpro.cdtippro = 20
+                                                        OR crabpro.cdtippro = 20
                                                         
                cratpro.cdagectl    = crapcop.cdagectl WHEN (crabpro.cdtippro = 1 AND par_cdorigem = 3)
                                                         OR crabpro.cdtippro = 2
@@ -559,7 +559,7 @@ PROCEDURE lista_protocolo:
                                                         OR crabpro.cdtippro = 17
                                                         OR crabpro.cdtippro = 18
                                                         OR crabpro.cdtippro = 19
-														OR crabpro.cdtippro = 20
+                                                        OR crabpro.cdtippro = 20
                cratpro.cdagesic    = crapcop.cdagesic.
 
         IF   par_cdorigem = 4   THEN /* TAA */
@@ -636,12 +636,28 @@ PROCEDURE estorna_protocolo:
          IF   NOT AVAILABLE crappro   THEN
               RETURN "NOK".
               
-         ASSIGN par_dsprotoc     = crappro.dsprotoc
                                                     
-                crappro.dsprotoc = crappro.dsprotoc                  + " " +
+         ASSIGN par_dsprotoc     = crappro.dsprotoc.
+             
+         IF par_cdtippro = 23 OR    /* DAE */
+            par_cdtippro = 24 THEN  /* FGTS */
+           DO:
+             /* Padrao diferente pois para FGTS e DAE utiliza modelo MD5
+                Gerando protocolo maior, e fazendo que estoure o campo 
+                ao concatenar texto. PRJ406 - FGTS*/
+             ASSIGN crappro.dsprotoc = crappro.dsprotoc                  + " " +
+                                     "**ESTORNADO("                 +
+                                     STRING(par_dtmvtolt,"99/99/99") + "-" +
+                                     STRING(TIME,"HH:MM:SS")         + ")".
+           END. 
+         ELSE
+         DO:
+           ASSIGN crappro.dsprotoc = crappro.dsprotoc                  + " " +
                                    "*** ESTORNADO ("                 +
                                    STRING(par_dtmvtolt,"99/99/9999") + " - " +
                                    STRING(TIME,"HH:MM:SS")           + ")".
+         END.                                    
+
 
       END.
 

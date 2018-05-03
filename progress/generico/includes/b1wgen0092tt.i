@@ -33,6 +33,9 @@
                 07/11/2017 - Incluir campos nas temp-tables tt-lancamentos e
                              tt-autorizacoes-cadastradas (David).
                             
+                23/02/2018 - Ajustado tipo da variavel flgcnvsi.
+                             PRJ406-FGTS(Odirlei-AMcom)
+                            
 .............................................................................*/
 
 DEFINE TEMP-TABLE tt-autori                                             NO-UNDO
@@ -94,7 +97,7 @@ DEF TEMP-TABLE tt-crapscn NO-UNDO
 DEF TEMP-TABLE tt-convenios-codbarras NO-UNDO
     FIELD nmextcon LIKE crapcon.nmextcon
     FIELD nmrescon LIKE crapcon.nmrescon
-    FIELD flgcnvsi LIKE crapcon.flgcnvsi
+    FIELD flgcnvsi AS LOGICAL 
     FIELD cdempcon LIKE crapcon.cdempcon
     FIELD cdsegmto LIKE crapcon.cdsegmto
     FIELD cdhistor LIKE crapcon.cdhistor.

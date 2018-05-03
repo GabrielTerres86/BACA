@@ -22,7 +22,7 @@
 
     Programa  : b1wgen0188.p
     Autor     : James Prust Junior
-    Data      : Julho/2014                Ultima Atualizacao: 13/06/2017
+    Data      : Julho/2014                Ultima Atualizacao: 12/04/2018
     
     Dados referentes ao programa:
 
@@ -106,7 +106,9 @@
 									   
                 21/11/2017 - Incluir campo cdcoploj e nrcntloj na chamada da rotina 
                              grava-proposta-completa. PRJ402 - Integracao CDC
-                             (Reinert)						                  
+                             (Reinert)                                                                  
+                
+                12/04/2018 - P410 - Melhorias/Ajustes IOF (Marcos-Envolti)
                 
 ..............................................................................*/
 
@@ -1277,6 +1279,7 @@ PROCEDURE grava_dados_conta PRIVATE:
     DEF VAR aux_dscatbem AS CHAR                                    NO-UNDO.
     DEF VAR aux_dscritic AS CHAR                                    NO-UNDO.
     DEF VAR aux_vltrfgar AS DECI                                    NO-UNDO.
+    DEF VAR aux_vlpreclc AS DECI                                    NO-UNDO.
     DEF VAR aux_vliofpri AS DECI                                    NO-UNDO.
     DEF VAR aux_vliofadi AS DECI                                    NO-UNDO.
     DEF VAR aux_flgimune AS INTE                                    NO-UNDO.
@@ -1613,8 +1616,9 @@ PROCEDURE grava_dados_conta PRIVATE:
                                                 ,INPUT par_nrdconta
                                                 ,INPUT par_nrctremp
                                                 ,INPUT par_dtmvtolt
-                                                ,INPUT crapass.inpessoa
+                                                ,INPUT crapass.inpessoa                                                
                                                 ,INPUT par_cdlcremp
+                                                ,INPUT crawepr.cdfinemp
                                                 ,INPUT crawepr.qtpreemp
                                                 ,INPUT crawepr.vlpreemp
                                                 ,INPUT par_vlemprst
@@ -1630,6 +1634,7 @@ PROCEDURE grava_dados_conta PRIVATE:
                                                 ,OUTPUT 0
                                                 ,OUTPUT 0
                                                 ,OUTPUT 0
+                                                ,OUTPUT 0
                                                 ,OUTPUT "").
        
            
@@ -1639,11 +1644,13 @@ PROCEDURE grava_dados_conta PRIVATE:
 
          { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
 
-         ASSIGN aux_vliofpri = 0
+         ASSIGN aux_vlpreclc = 0
+                aux_vliofpri = 0
                 aux_vliofadi = 0
                 aux_flgimune = 0
                 par_vltottar = 0
                 par_vltariof = 0
+                aux_vlpreclc = DECI(pc_calcula_iof_epr.pr_vlpreclc) WHEN pc_calcula_iof_epr.pr_vlpreclc <> ?
                 par_vltariof = DECI(pc_calcula_iof_epr.pr_valoriof) WHEN pc_calcula_iof_epr.pr_valoriof <> ?
                 aux_vliofpri = DECI(pc_calcula_iof_epr.pr_vliofpri) WHEN pc_calcula_iof_epr.pr_vliofpri <> ?
                 aux_vliofadi = DECI(pc_calcula_iof_epr.pr_vliofadi) WHEN pc_calcula_iof_epr.pr_vliofadi <> ?
@@ -1694,7 +1701,7 @@ PROCEDURE grava_dados_conta PRIVATE:
                   ASSIGN aux_cdhistor = 2309.
                ELSE
                   ASSIGN aux_cdhistor = 2308.
-                  
+        
         
                CREATE craplcm.
                ASSIGN craplcm.dtmvtolt = craplot.dtmvtolt
@@ -1860,6 +1867,7 @@ PROCEDURE calcula_iof:
     DEF  INPUT PARAM par_idorigem AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_nrdconta AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_nrctremp AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_cdfinemp AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_cdlcremp AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_vlemprst AS DECI                           NO-UNDO.
     DEF  INPUT PARAM par_dtmvtolt AS DATE                           NO-UNDO.
@@ -1932,6 +1940,7 @@ PROCEDURE calcula_iof:
                                                  INPUT par_dtmvtolt,
                                                  INPUT aux_inpessoa,
                                                  INPUT par_cdlcremp,
+                                                 INPUT par_cdfinemp,                                                 
                                                  INPUT par_nrparepr,
                                                  INPUT par_vlpreemp,
                                                  INPUT par_vlemprst,
@@ -1943,6 +1952,7 @@ PROCEDURE calcula_iof:
                                                  INPUT aux_dscatbem,      /* Bens em garantia */
                                                  INPUT (IF AVAILABLE crawepr THEN crawepr.idfiniof ELSE 0),  /* Indicador de financiamento de IOF e tarifa */
                                                  INPUT "0", /* passar assim para nao gerar erro no Oracle */
+                                                OUTPUT 0, 
                                                 OUTPUT 0,
                                                 OUTPUT 0,
                                                 OUTPUT 0,
@@ -2300,6 +2310,7 @@ PROCEDURE calcula_taxa_emprestimo:
                                           INPUT "", /* dscatbem */
                                           INPUT 1, /* idfiniof */
                                           INPUT "", /* dsctrliq */
+                                          INPUT "N",
                                           OUTPUT par_percetop,
                                           OUTPUT aux_txcetmes,
                                           OUTPUT TABLE tt-erro).
@@ -2316,6 +2327,7 @@ PROCEDURE calcula_taxa_emprestimo:
                      INPUT par_idorigem,
                      INPUT par_nrdconta,
                      INPUT 0, /* par_nrctremp */
+                     INPUT 0, /* cdfinemp */
                      INPUT crapcpa.cdlcremp,
                      INPUT par_vlemprst,
                      INPUT par_dtmvtolt,
