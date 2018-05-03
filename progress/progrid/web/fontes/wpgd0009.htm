@@ -71,7 +71,10 @@
                             
                05/04/2017 - Melhorias e ajustes decorrentes de erros encontrados em testes
                             e também erros de regras de negócio. (Jean Michel)
-               
+
+               25/04/2018 - #INC0013170 - Remoção da regra de negócio que obrigava o participante
+			                ter conta na cooperativa. (Wagner/Sustentação).
+							
 ----------------------------------------------------------------------------------------------------------->
 
 <html>
@@ -1127,7 +1130,7 @@
 		function Salvar() {
             
       /* Se preencher Conta ou Titularidade, preencher obrigatoriamente os dois campos */ 
-      if ((document.form.nrdconta.value == '0' || document.form.nrdconta.value == '') && (document.form.idseqttl.value != '') ||
+      /*if ((document.form.nrdconta.value == '0' || document.form.nrdconta.value == '') && (document.form.idseqttl.value != '') ||
           (document.form.nrdconta.value != '0' && document.form.nrdconta.value != '') && (document.form.idseqttl.value == '') ||
           (document.form.nrdconta.value != '0' && document.form.nrdconta.value != '') && (document.form.idseqttl.value == '0')) {
 
@@ -1135,7 +1138,7 @@
           alert('Conta e Titularidade devem ser informadas.');
           return false;
         }
-      }
+      }*/
        
       /* Se for conta inválida */ 
                 if (document.form.nrdconta.value != '0' && document.form.nrdconta.value != '' && document.form.aux_nmcooper.value == '') {
