@@ -486,6 +486,35 @@ begin
   END IF;
   
   CLOSE cr_crapaca;
+
+     -- TELA_PARDBT - ACAO BUSCA HORÁRIOS VINCULADOS A UM PROCESSO PARA EXCLUSÃO
+  OPEN cr_crapaca(pr_nmdeacao => 'DEBITADOR_PR_BUSCA_HOR_EXC'
+                 ,pr_nmpackag => 'TELA_DEBITADOR_UNICO'
+                 ,pr_nmproced => 'pc_busca_debitador_hr_exclus'
+                 ,pr_nrseqrdr => rw_craprdr.nrseqrdr);
+                   
+  FETCH cr_crapaca INTO rw_crapaca;
+    
+  -- Verifica se existe a ação tela do ayllos web
+  IF cr_crapaca%NOTFOUND THEN
+    
+    -- Insere ação da tela do ayllos web
+    INSERT INTO crapaca(nmdeacao, 
+                        nmpackag, 
+                        nmproced, 
+                        lstparam, 
+                        nrseqrdr) 
+                 VALUES('DEBITADOR_PR_BUSCA_HOR_EXC',
+                        'TELA_DEBITADOR_UNICO',
+                        'pc_busca_debitador_hr_exclus',
+                        'pr_cdprocesso',
+                        rw_craprdr.nrseqrdr);
+                             
+    dbms_output.put_line('Insere CRAPACA -> DEBITADOR_PR_BUSCA_HOR_EXC -> TELA_DEBITADOR_UNICO.pc_busca_debitador_hr_exclus');
+    
+  END IF;
+  
+  CLOSE cr_crapaca;
   
   dbms_output.put_line('Fim do programa');
    
