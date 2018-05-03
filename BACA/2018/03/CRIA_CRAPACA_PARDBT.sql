@@ -391,7 +391,7 @@ begin
                  VALUES('DEBITADOR_PR_EXC_HORARIO',
                         'TELA_DEBITADOR_UNICO',
                         'pc_exclui_debitador_hr_proces',
-                        'pr_cdprocesso, pr_idhora_processamento',
+                        'pr_cdprocesso, pr_horarios',
                         rw_craprdr.nrseqrdr);
                              
     dbms_output.put_line('Insere CRAPACA -> DEBITADOR_PR_EXC_HORARIO -> TELA_DEBITADOR_UNICO.pc_exclui_debitador_hr_proces');
