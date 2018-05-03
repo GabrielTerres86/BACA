@@ -15,11 +15,11 @@ $(document).ready(function() {
     $('#divUsoGAROPC').css({'width':'575px','position':'absolute','display':'inline','z-index':'110'});
     $('#divUsoGAROPC').centralizaRotinaH();
 
-    $(this).keyup(function(e){
+    /*$(this).keyup(function(e){
         if (e.which == 27) {
             $('#btVoltar', '#divUsoGAROPC').click();
         }
-    });
+    });*/
 
     return false;
 
