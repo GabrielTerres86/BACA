@@ -19,6 +19,12 @@
                               Cedente por Beneficiário e  Sacado por Pagador 
                               Chamado 229313 (Jean Reddiga - RKAM).    
 
+				25/10/2017 -  Ajustado para especificar adesão de DDA pelo Mobile
+							  PRJ356.4 - DDA (Ricardo Linhares)  							    
+
+				         14/03/2018 -  Ajuste para buscar a descricao do tipo de conta do oracle. 
+                               PRJ366 (Lombardi)
+
 .............................................................................*/
 
 
@@ -28,6 +34,7 @@
 { sistema/generico/includes/b1wgen0078tt.i }
 { sistema/generico/includes/b1wgen0079tt.i }
 { sistema/generico/includes/var_internet.i }
+{ sistema/generico/includes/var_oracle.i }
 { sistema/generico/includes/gera_erro.i }
 { sistema/generico/includes/gera_log.i  }
 
@@ -211,6 +218,7 @@ PROCEDURE consulta-sacado-eletronico:
                       END.
 
                  ASSIGN tt-sacado-eletronico.nmextttl = crapttl.nmextttl
+                        tt-sacado-eletronico.inpessoa = 1
                         tt-sacado-eletronico.dspessoa = "1 - FISICA"
                         tt-sacado-eletronico.nrcpfcgc = crapttl.nrcpfcgc.
                         tt-sacado-eletronico.dscpfcgc =  
@@ -220,6 +228,7 @@ PROCEDURE consulta-sacado-eletronico:
         ELSE
              DO:
                  ASSIGN tt-sacado-eletronico.nmextttl = crapass.nmprimtl
+                        tt-sacado-eletronico.inpessoa = 2
                         tt-sacado-eletronico.dspessoa = "2 - JURIDICA"
                         tt-sacado-eletronico.nrcpfcgc = crapass.nrcpfcgc
                         tt-sacado-eletronico.dscpfcgc = 
@@ -339,6 +348,7 @@ PROCEDURE aderir-sacado:
     DEF  INPUT PARAM par_idseqttl AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_dtmvtolt AS DATE                           NO-UNDO.
     DEF  INPUT PARAM par_flgerlog AS LOGI                           NO-UNDO.
+    DEF  INPUT PARAM par_flmobile AS INTE                           NO-UNDO.
 
     DEF OUTPUT PARAM TABLE FOR tt-erro.                             
 
@@ -408,7 +418,7 @@ PROCEDURE aderir-sacado:
              RETURN "NOK".        
          END.
 
-    IF   par_flgerlog  THEN
+    IF   par_flgerlog  THEN DO:
          RUN proc_gerar_log (INPUT par_cdcooper,
                              INPUT par_cdoperad,
                              INPUT "",
@@ -419,9 +429,71 @@ PROCEDURE aderir-sacado:
                              INPUT par_nmdatela,
                              INPUT par_nrdconta,
                             OUTPUT aux_nrdrowid).
+      END.
+
+	RUN gravar-log-adesao (INPUT par_cdcooper,
+                        INPUT par_nmdatela,
+                        INPUT par_cdoperad,
+                        INPUT par_nrdconta,
+                        INPUT par_idseqttl,
+                        INPUT par_flmobile).
+
+
+
     RETURN "OK".
 
 END PROCEDURE.
+
+PROCEDURE gravar-log-adesao:
+
+    DEF  INPUT PARAM par_cdcooper AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_nmdatela AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_cdoperad AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_nrdconta AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_idseqttl AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_flmobile AS INTE                           NO-UNDO.
+    DEF VAR aux_nrrecid   AS INTE                                   NO-UNDO.
+
+    /* Gerar log(CRAPLGM) - Rotina Oracle */
+      { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+      RUN STORED-PROCEDURE pc_gera_log_prog
+        aux_handproc = PROC-HANDLE NO-ERROR
+        (INPUT par_cdcooper    /* pr_cdcooper */
+        ,INPUT par_cdoperad    /* pr_cdoperad */
+        ,INPUT ""               /* pr_dscritic */
+        ,INPUT "INTERNET"      /* pr_dsorigem */
+        ,INPUT "Efetuar a inclusao do titular no DDA."    /* pr_dstransa */
+        ,INPUT TODAY    /* pr_dttransa */
+        ,INPUT 1        /* Operacao sem sucesso */ /* pr_flgtrans */
+        ,INPUT TIME            /* pr_hrtransa */
+        ,INPUT par_idseqttl    /* pr_idseqttl */
+        ,INPUT "INTERNETBANK"  /* pr_nmdatela */
+        ,INPUT par_nrdconta    /* pr_nrdconta */
+        ,OUTPUT 0 ). /* pr_nrrecid  */
+    
+      CLOSE STORED-PROC pc_gera_log_prog
+          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.     
+
+      { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl}}
+    
+    
+      ASSIGN aux_nrrecid = pc_gera_log_prog.pr_nrrecid
+                              WHEN pc_gera_log_prog.pr_nrrecid <> ?.       
+                              
+      /* Gerar log item (CRAPLGI) - Rotina Oracle */
+      { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+     
+      RUN STORED-PROCEDURE pc_gera_log_item_prog
+               aux_handproc = PROC-HANDLE NO-ERROR
+                  (INPUT aux_nrrecid,
+                   INPUT "Origem",
+                   INPUT "",
+                   INPUT IF par_flmobile = 1 THEN "MOBILE" ELSE "INTERNETBANK").
+
+      CLOSE STORED-PROC pc_gera_log_item_prog
+        aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+END.
 
 
 /******************************************************************************
@@ -553,6 +625,9 @@ PROCEDURE imprime-termo-adesao:
     DEF VAR aux_nmextcop AS CHAR                                    NO-UNDO.
     DEF VAR aux_flgtrans AS LOGI                                    NO-UNDO.
 
+    DEF VAR aux_dstipcta AS CHAR                                    NO-UNDO.
+    DEF VAR aux_des_erro AS CHAR                                    NO-UNDO.
+    
     DEF VAR aux_dsdecoop AS CHAR                                    NO-UNDO.
     DEF VAR aux_cpftest1 AS CHAR                                    NO-UNDO.
     DEF VAR aux_cpftest2 AS CHAR                                    NO-UNDO.
@@ -728,15 +803,32 @@ PROCEDURE imprime-termo-adesao:
                  LEAVE.
              END.
               
-        /* Tipo de conta */
-        FIND craptip WHERE craptip.cdcooper = par_cdcooper     AND
-                           craptip.cdtipcta = crapass.cdtipcta NO-LOCK NO-ERROR.
+        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
+        RUN STORED-PROCEDURE pc_descricao_tipo_conta
+          aux_handproc = PROC-HANDLE NO-ERROR
+                                  (INPUT crapass.inpessoa, /* Tipo de pessoa */
+                                   INPUT crapass.cdtipcta, /* Tipo de conta */
+                                  OUTPUT "",               /* Descriçao do Tipo de conta */
+                                  OUTPUT "",               /* Flag Erro */
+                                  OUTPUT "").              /* Descriçao da crítica */
 
-        IF   NOT AVAIL craptip   THEN
-             DO:
-                 aux_cdcritic = 17.
+        CLOSE STORED-PROC pc_descricao_tipo_conta
+              aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+        
+        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+        
+        ASSIGN aux_dstipcta = ""
+               aux_des_erro = ""
+               aux_dscritic = ""
+               aux_dstipcta = pc_descricao_tipo_conta.pr_dstipo_conta 
+                               WHEN pc_descricao_tipo_conta.pr_dstipo_conta <> ?
+               aux_des_erro = pc_descricao_tipo_conta.pr_des_erro 
+                               WHEN pc_descricao_tipo_conta.pr_des_erro <> ?
+               aux_dscritic = pc_descricao_tipo_conta.pr_dscritic
+                               WHEN pc_descricao_tipo_conta.pr_dscritic <> ?.
+        
+        IF aux_des_erro = "NOK"  THEN
                  LEAVE.
-             END.
 
         RUN busca-coop (INPUT par_cdcooper,
                         INPUT par_cdagenci,
@@ -921,6 +1013,8 @@ PROCEDURE imprime-termo-exclusao:
     DEF VAR aux_cpftest1 AS CHAR                                    NO-UNDO.
     DEF VAR aux_cpftest2 AS CHAR                                    NO-UNDO.
     DEF VAR aux_flgtrans AS LOGI                                    NO-UNDO.
+    DEF VAR aux_dstipcta AS CHAR                                    NO-UNDO.
+    DEF VAR aux_des_erro AS CHAR                                    NO-UNDO.
     DEF VAR h-b1wgen0024 AS HANDLE                                  NO-UNDO.
                                   
 
@@ -1082,15 +1176,32 @@ PROCEDURE imprime-termo-exclusao:
                  LEAVE.
              END.
               
-        /* Tipo de conta */
-        FIND craptip WHERE craptip.cdcooper = par_cdcooper     AND
-                           craptip.cdtipcta = crapass.cdtipcta NO-LOCK NO-ERROR.
+        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
+        RUN STORED-PROCEDURE pc_descricao_tipo_conta
+          aux_handproc = PROC-HANDLE NO-ERROR
+                                  (INPUT crapass.inpessoa, /* Tipo de pessoa */
+                                   INPUT crapass.cdtipcta, /* Tipo de conta */
+                                  OUTPUT "",               /* Descriçao do Tipo de conta */
+                                  OUTPUT "",               /* Flag Erro */
+                                  OUTPUT "").              /* Descriçao da crítica */
+        
+        CLOSE STORED-PROC pc_descricao_tipo_conta
+              aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+        
+        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+        
+        ASSIGN aux_dstipcta = ""
+               aux_des_erro = ""
+               aux_dscritic = ""
+               aux_dstipcta = pc_descricao_tipo_conta.pr_dstipo_conta 
+                               WHEN pc_descricao_tipo_conta.pr_dstipo_conta <> ?
+               aux_des_erro = pc_descricao_tipo_conta.pr_des_erro 
+                               WHEN pc_descricao_tipo_conta.pr_des_erro <> ?
+               aux_dscritic = pc_descricao_tipo_conta.pr_dscritic
+                               WHEN pc_descricao_tipo_conta.pr_dscritic <> ?.
 
-        IF   NOT AVAIL craptip   THEN
-             DO:
-                 aux_cdcritic = 17.
+        IF aux_des_erro = "NOK"  THEN
                  LEAVE.
-             END.
 
         RUN busca-coop (INPUT par_cdcooper,
                         INPUT par_cdagenci,
@@ -1686,7 +1797,7 @@ PROCEDURE busca-coop:
          END.
 
     CREATE tt-crapcop.
-    BUFFER-COPY crapcop TO tt-crapcop.
+    BUFFER-COPY crapcop EXCEPT nrctabcb TO tt-crapcop.
 
     RETURN "OK".
 
