@@ -376,7 +376,7 @@ BEGIN
     vr_aux_tpemprst             PLS_INTEGER := 2;
     vr_aux_qtregist             PLS_INTEGER := 0;
     vr_aux_vlsldliq             PLS_INTEGER := 0;
-    vr_aux_Hist                 VARCHAR2(100);
+    vr_aux_Hist                 VARCHAR2(200);
     vr_aux_FinlddCli            VARCHAR2(100);
     vr_aux_NumCtrlLTR           VARCHAR2(100);
     vr_aux_ISPBLTR              VARCHAR2(100);
@@ -2976,8 +2976,7 @@ BEGIN
          END IF;
       END IF;
     END LOOP;
-    -- Salvar o arquivo
-    pc_salva_arquivo;
+    
     pc_gera_log_SPB('RECEBIDA OK'
                    ,'SLC RECEBIDA');
 
@@ -3124,8 +3123,7 @@ BEGIN
          END LOOP;
       END IF;
     END LOOP;
-    -- Salvar o arquivo
-    pc_salva_arquivo;
+    
     pc_gera_log_SPB('RECEBIDA OK'
                    ,'LDL0024 RECEBIDA');
 
