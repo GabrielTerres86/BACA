@@ -701,11 +701,17 @@
                  
                  09/10/2017 - Ajustes de retorno na operacao 31 (David)
 
+                 03/01/2017 - Incluido tratativas para operacao 199 - FGTS
+                              PRJ406-FGTS (Odirlei-AMcom)
+
 				 05/03/2018 - Incluído o carrossel de banners para o mobile 
 							  (6214  -  Ederson - Supero)
 
                  10/04/2018 - Adicionada opcao 216 para verificar permissao para adesao do produto
                               pelo tipo de conta. PRJ366 (Lombardi) 
+
+				 19/04/2018 - Incluido operacao217 referente ao servico SOA 
+                              ObterDetalheTituloCobranca (PRJ285 - Novo IB)
 
 ------------------------------------------------------------------------------*/
 
@@ -1240,6 +1246,7 @@ DEF VAR aux_dsnomfon AS CHAR                                           NO-UNDO.
 DEF VAR aux_tpcaptur AS INTE                                           NO-UNDO.
 DEF VAR aux_tpleitor AS INTE                                           NO-UNDO.
 DEF VAR aux_nrrefere AS DECI                                           NO-UNDO.
+DEF VAR aux_nrrefere_199 AS CHAR                                       NO-UNDO.
 DEF VAR aux_idrazfan AS INTE										   NO-UNDO.
 DEF VAR aux_nrdcaixa AS INTE										   NO-UNDO.
 DEF VAR aux_titulo1  AS DECI										   NO-UNDO.
@@ -2397,6 +2404,10 @@ PROCEDURE process-web-request :
         ELSE
             IF  aux_operacao = 216 THEN /* Validar adesao do produto por tipo de conta */
                 RUN proc_operacao216.
+        ELSE
+            IF  aux_operacao = 217 THEN /* Obter Detalhe Titulo Cobranca (SOA) */
+                RUN proc_operacao217.
+
     END.
 /*....................................................................*/
     
@@ -9023,16 +9034,16 @@ PROCEDURE proc_operacao199:
     ASSIGN  aux_dtapurac = DATE(GET-VALUE("aux_dtapurac"))
             aux_tpcaptur = INTE(GET-VALUE("aux_tpcaptur"))
             aux_nrcpfdrf = GET-VALUE("aux_nrcpfcgc")
-            aux_nrrefere = DECI(GET-VALUE("aux_nrrefere"))
+            aux_nrrefere_199 = GET-VALUE("aux_nrrefere")
             aux_dtvencto = DATE(GET-VALUE("aux_dtvencto"))
-            aux_cdtribut = GET-VALUE("aux_cdtribut")
+            aux_cdtribut = GET-VALUE("aux_cdtributo")
             aux_vlrecbru = DECI(GET-VALUE("aux_vlrecbru"))
             aux_vlpercen = DECI(GET-VALUE("aux_vlpercen"))
             aux_vlprinci = DECI(GET-VALUE("aux_vlprinci"))
             aux_vlrmulta = DECI(GET-VALUE("aux_vlrmulta"))
             aux_vlrjuros = DECI(GET-VALUE("aux_vlrjuros"))
             aux_vlrtotal = DECI(GET-VALUE("aux_vlrtotal"))
-            aux_dsexthis = GET-VALUE("aux_dsexthis")
+            aux_dsexthis = GET-VALUE("aux_dsidepag")
             aux_idagenda = INTE(GET-VALUE("aux_idagenda"))
             aux_vlapagar = DECI(GET-VALUE("aux_vlapagar"))
             aux_cdbarras = GET-VALUE("aux_cdbarras")
@@ -9075,7 +9086,7 @@ PROCEDURE proc_operacao199:
                                                    INPUT aux_vlapagar,                    
                                                    INPUT aux_versaldo,                    
                                                    INPUT aux_tpleitor,                    
-                                                   INPUT aux_nrrefere,                    
+                                                   INPUT aux_nrrefere_199,                    
                                                   OUTPUT aux_dsmsgerr,                                                   
                                                   OUTPUT TABLE xml_operacao).
                                                   
@@ -9351,6 +9362,22 @@ PROCEDURE proc_operacao214:
 
 END PROCEDURE.
 
+PROCEDURE proc_operacao215:
+    
+    RUN sistema/internet/fontes/InternetBank215.p (INPUT aux_cdcooper,
+                                                   INPUT aux_nrdconta,
+                                                   INPUT aux_idseqttl,
+                                                   INPUT aux_cdcanal,
+                                                   OUTPUT TABLE xml_operacao).
+
+    FOR EACH xml_operacao NO-LOCK:
+        {&out} xml_operacao.dslinxml.
+        END.
+    
+    {&out} aux_tgfimprg.
+
+END PROCEDURE.
+
 /* Verificar validacao de adesao de produto */
 PROCEDURE proc_operacao216:
     
@@ -9380,21 +9407,31 @@ PROCEDURE proc_operacao216:
 
 END PROCEDURE.
 
-PROCEDURE proc_operacao215:
-    
-    RUN sistema/internet/fontes/InternetBank215.p (INPUT aux_cdcooper,
+PROCEDURE proc_operacao217:
+
+    ASSIGN aux_nrdocmto = DECI(GET-VALUE("nrdocmto"))
+           aux_nrcnvcob = DECI(GET-VALUE("nrcnvcob")).
+
+    RUN sistema/internet/fontes/InternetBank217.p (INPUT aux_cdcooper,
                                                    INPUT aux_nrdconta,
                                                    INPUT aux_idseqttl,
-                                                   INPUT aux_cdcanal,
-                                                   OUTPUT TABLE xml_operacao).
+                                                   INPUT aux_nrcnvcob,
+                                                   INPUT aux_nrdocmto,                                                            OUTPUT aux_dsmsgerr,
+                                                  OUTPUT TABLE xml_operacao).
 
-    FOR EACH xml_operacao NO-LOCK:
-        {&out} xml_operacao.dslinxml.
+    IF  RETURN-VALUE = "NOK"  THEN
+        {&out} aux_dsmsgerr. 
+    ELSE
+        FOR EACH xml_operacao NO-LOCK: 
+
+            {&out} xml_operacao.dslinxml.
+            
         END.
     
     {&out} aux_tgfimprg.
 
 END PROCEDURE.
+
 
 
 
