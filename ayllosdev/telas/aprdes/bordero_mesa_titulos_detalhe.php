@@ -152,10 +152,10 @@
 					<tbody>
 						<?php foreach($dados->criticas->find("critica") AS $c) {?>
 							<tr>
-								<td><? echo $c->dsc; ?></td>
+								<td><? echo $c->dsc;?></td>
 								<td>
 									<?php 
-									 	$varint = $c->int; 
+									 	$varint = $c->int->cdata;
 									 	if($varint > 0){
 									 		echo $varint;
 									 	} else {
