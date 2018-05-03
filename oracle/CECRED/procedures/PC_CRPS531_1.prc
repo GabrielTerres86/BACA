@@ -11,7 +11,7 @@ BEGIN
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Diego
-   Data    : Setembro/2009.                     Ultima atualizacao: 14/02/2018
+   Data    : Setembro/2009.                     Ultima atualizacao: 23/04/2018
 
    Dados referentes ao programa: Fonte extraido e adaptado para execucao em
                                  paralelo. Fonte original crps531.p.
@@ -243,6 +243,11 @@ BEGIN
                             SD 805540 - Marcelo Telles Coelho-Mouts
 
                14/03/2018 - Tratar recebimento de TED destinada a contas administradoras de recursos (Rodrigo Heinzle - Supero)
+
+			   16/03/2018 - Ajustado tamanho de variável (Adriano).
+
+			   23/04/2018 - Ajuste para buscar corretamente a cooperativa (Adriano - Homol conversão).
+
                             
              #######################################################
              ATENCAO!!! Ao incluir novas mensagens para recebimento,
@@ -275,10 +280,22 @@ BEGIN
     vr_nmarqlog     VARCHAR2(1000);
 
     /* Busca dos dados da cooperativa */
-    /* Busca dados da Coope por outros filtros */
-    CURSOR cr_crapcop(pr_cdcooper IN crapcop.cdcooper%TYPE DEFAULT NULL
-                     ,pr_cdagectl IN crapcop.cdagectl%TYPE DEFAULT NULL
-                     ,pr_nrctactl IN crapcop.nrctactl%TYPE DEFAULT NULL
+    CURSOR cr_crapcop(pr_cdcooper IN crapcop.cdcooper%TYPE) IS
+      SELECT cop.cdcooper
+            ,cop.nmrescop
+            ,cop.nrtelura
+            ,GENE0001.fn_diretorio(pr_tpdireto => 'C' -- /usr/coop
+                                  ,pr_cdcooper => cop.cdcooper) dsdircop
+            ,cop.cdbcoctl
+            ,cop.cdagectl
+        FROM crapcop cop
+       WHERE cop.cdcooper = pr_cdcooper;
+    rw_crapcop_central cr_crapcop%ROWTYPE;
+    rw_crapcop_mensag cr_crapcop%ROWTYPE;
+    rw_crapcop_portab cr_crapcop%ROWTYPE;
+    
+    /* Busca dos dados da cooperativa */
+    CURSOR cr_busca_coop(pr_cdagectl IN crapcop.cdagectl%TYPE
                      ,pr_flgativo IN crapcop.flgativo%TYPE DEFAULT NULL) IS
       SELECT cop.cdcooper
             ,cop.nmrescop
@@ -288,12 +305,8 @@ BEGIN
             ,cop.cdbcoctl
             ,cop.cdagectl
         FROM crapcop cop
-       WHERE cop.cdagectl = NVL(pr_cdagectl,cop.cdagectl)
-         AND cop.nrctactl = NVL(pr_nrctactl,cop.nrctactl)
+       WHERE cop.cdagectl = pr_cdagectl
          AND cop.flgativo = nvl(pr_flgativo,cop.flgativo);
-    rw_crapcop_central cr_crapcop%ROWTYPE;
-    rw_crapcop_mensag cr_crapcop%ROWTYPE;
-    rw_crapcop_portab cr_crapcop%ROWTYPE;
 
     /* Cursor genérico de calendário */
     rw_crapdat_central btch0001.cr_crapdat%ROWTYPE;
@@ -310,7 +323,7 @@ BEGIN
     /* Variavel para armazenar/remover as mensagens de TED processadas */
     vr_msgspb_mover  PLS_INTEGER;
     /* Variavel para armazenar as mensagens de TED que nao serao copiadas */
-    vr_msgspb_nao_copiar VARCHAR2(100);
+    vr_msgspb_nao_copiar VARCHAR2(4000);
 
     /* Estrutura para Estado de Crise */
     vr_tab_estad_crise sspb0001.typ_tab_estado_crise;
@@ -366,7 +379,7 @@ BEGIN
     vr_aux_tpemprst             PLS_INTEGER := 2;
     vr_aux_qtregist             PLS_INTEGER := 0;
     vr_aux_vlsldliq             PLS_INTEGER := 0;
-    vr_aux_Hist                 VARCHAR2(100);
+    vr_aux_Hist                 VARCHAR2(200);
     vr_aux_FinlddCli            VARCHAR2(100);
     vr_aux_NumCtrlLTR           VARCHAR2(100);
     vr_aux_ISPBLTR              VARCHAR2(100);
@@ -607,7 +620,8 @@ BEGIN
        AND lot.dtmvtolt = pr_dtmvtolt
        AND lot.cdagenci = pr_cdagenci
        AND lot.cdbccxlt = pr_cdbccxlt
-       AND lot.nrdolote = pr_nrdolote;
+       AND lot.nrdolote = pr_nrdolote
+       FOR UPDATE;
     rw_craplot cr_craplot%ROWTYPE;
 
     /* Registro de Lancamento no Dia */
@@ -734,7 +748,7 @@ BEGIN
       vr_val_tpdconta VARCHAR2(10);
       vr_val_nrdctapg VARCHAR2(100);
       -- Buffers locais
-      rw_b_crapcop cr_crapcop%rowtype;
+      rw_b_crapcop cr_busca_coop%rowtype;
       rw_b_crapdat btch0001.cr_crapdat%rowtype;
 
     BEGIN
@@ -775,10 +789,10 @@ BEGIN
         -- Para Incorporação Transulcred
         IF vr_aux_cdageinc > 0 THEN
           -- Identifica cooperativa antiga
-          OPEN cr_crapcop(pr_cdagectl => vr_aux_cdageinc);
-          FETCH cr_crapcop
+          OPEN cr_busca_coop(pr_cdagectl => vr_aux_cdageinc);
+          FETCH cr_busca_coop
            INTO rw_b_crapcop;
-          CLOSE cr_crapcop;
+          CLOSE cr_busca_coop;
           -- Buscar nova conta
           OPEN cr_craptco(pr_cdcooper => vr_val_cdcooper
                          ,pr_cdcopant => rw_b_crapcop.cdcooper
@@ -1405,7 +1419,7 @@ BEGIN
                                    ,pr_cdagenci => 0
                                    ,pr_nrdcaixa => 0
                                    ,pr_cdoperad => '1'
-                                   ,pr_nrispbif => vr_aux_ISPBIFCredtd
+                                   ,pr_nrispbif => vr_aux_ISPBIFDebtd
                                    ,pr_inestcri => vr_aux_inestcri
                                    ,pr_cdcritic => vr_cdcritic
                                    ,pr_dscritic => vr_dscritic);
@@ -1462,7 +1476,7 @@ BEGIN
                                    ,pr_cdagenci => 0
                                    ,pr_nrdcaixa => 0
                                    ,pr_cdoperad => '1'
-                                   ,pr_nrispbif => vr_aux_ISPBIFCredtd
+                                   ,pr_nrispbif => vr_aux_ISPBIFDebtd
                                    ,pr_inestcri => vr_aux_inestcri
                                    ,pr_cdcritic => vr_cdcritic
                                    ,pr_dscritic => vr_dscritic);
@@ -2199,6 +2213,8 @@ BEGIN
             vr_elem_node_grpsit := xmldom.makeElement(vr_item_node);
             -- Faz o get de toda a lista de filhos da GrupoTabErro
             vr_node_list_grpsit := xmldom.getChildrenByTagName(vr_elem_node_grpsit,'*');
+              -- Criar registro na PLTABLE
+              vr_idx_grpsit := vr_tab_situacao_if.COUNT()+1;
             -- Percorrer os elementos
             FOR i IN 0..xmldom.getLength(vr_node_list_grpsit)-1 LOOP
               -- Buscar o item atual
@@ -2209,8 +2225,6 @@ BEGIN
               IF xmldom.getNodeType(vr_item_node_grpsit) <> xmldom.ELEMENT_NODE THEN
                 CONTINUE;
               END IF;
-              -- Criar registro na PLTABLE
-              vr_idx_grpsit := vr_tab_situacao_if.COUNT()+1;
               -- Para o node ISPBIF
               IF vr_node_name_grpsit = 'ISPBIF' THEN
                 -- Buscar valor da TAG
@@ -2965,8 +2979,7 @@ BEGIN
          END IF;
       END IF;
     END LOOP;
-    -- Salvar o arquivo
-    pc_salva_arquivo;
+    
     pc_gera_log_SPB('RECEBIDA OK'
                    ,'SLC RECEBIDA');
 
@@ -3007,6 +3020,7 @@ BEGIN
     vr_elem_node := xmldom.makeElement(pr_node);
     -- Faz o get de toda a lista de filhos
     vr_node_list := xmldom.getChildrenByTagName(vr_elem_node,'*');
+    
     -- Percorrer os elementos
     FOR vr_ind IN 0..xmldom.getLength(vr_node_list)-1 LOOP
       -- Buscar o item atual
@@ -3017,6 +3031,42 @@ BEGIN
       IF xmldom.getNodeType(vr_item_node) <> xmldom.ELEMENT_NODE THEN
          CONTINUE;
       END IF;
+      
+      IF vr_node_name = 'CodProdt' THEN
+        
+        -- Buscar primeiro filho do nó para buscar seu valor em lógica única
+        vr_valu_node := xmldom.getFirstChild(vr_item_node);
+        vr_aux_descrica := xmldom.getNodeValue(vr_valu_node);
+        
+        -- Numero de Controle do Remetente 
+        vr_aux_CodProdt := vr_aux_descrica;
+        
+      ELSIF vr_node_name = 'DtRef' THEN  
+        
+        -- Buscar primeiro filho do nó para buscar seu valor em lógica única
+        vr_valu_node := xmldom.getFirstChild(vr_item_node);
+        vr_aux_descrica := xmldom.getNodeValue(vr_valu_node);
+        
+        vr_aux_DtRef := vr_aux_descrica;
+      
+      END IF;
+    END LOOP;
+    
+    -- Buscar todos os filhos deste nó
+    vr_elem_node := xmldom.makeElement(pr_node);
+    -- Faz o get de toda a lista de filhos
+    vr_node_list := xmldom.getChildrenByTagName(vr_elem_node,'*');
+    -- Percorrer os elementos
+    FOR vr_ind IN 0..xmldom.getLength(vr_node_list)-1 LOOP
+      -- Buscar o item atual
+      vr_item_node := xmldom.item(vr_node_list, vr_ind);
+      -- Captura o nome e tipo do nodo
+      vr_node_name := xmldom.getNodeName(vr_item_node);
+      -- Sair se o nodo não for elemento
+      IF xmldom.getNodeType(vr_item_node) <> xmldom.ELEMENT_NODE THEN
+         CONTINUE;
+      END IF;
+      
       IF vr_node_name = 'Grupo_LDL0024_HrioCamr' THEN
          -- Busca filhos
          vr_elem_node_grpsit := xmldom.makeElement(vr_item_node);
@@ -3043,6 +3093,9 @@ BEGIN
                 vr_valu_node_grpsit := xmldom.getFirstChild(vr_item_node_grpsit);
                 vr_aux_DtHrFcht := xmldom.getNodeValue(vr_valu_node_grpsit);
               ELSIF vr_node_name_grpsit = 'TpHrio' THEN
+                  vr_valu_node_grpsit := xmldom.getFirstChild(vr_item_node_grpsit);
+                  vr_aux_TpHrio := xmldom.getNodeValue(vr_valu_node_grpsit);
+                  
                   IF  vr_aux_CodProdt='SLC' and vr_aux_CodGrdLDL in ('PAG94','PAGE3','PAGD3')  THEN
                       cecred.ccrd0006.pc_insere_horario_grade(vr_aux_codmsg
                                                              ,vr_aux_CodGrdLDL
@@ -3071,21 +3124,9 @@ BEGIN
                   END IF;
               END IF;
          END LOOP;
-      ELSE
-         -- Buscar primeiro filho do nó para buscar seu valor em lógica única
-         vr_valu_node := xmldom.getFirstChild(vr_item_node);
-         vr_aux_descrica := xmldom.getNodeValue(vr_valu_node);
-         -- Copiar para a respectiva variavel conforme nome da tag
-         IF vr_node_name = 'CodProdt' THEN
-            -- Numero de Controle do Remetente
-            vr_aux_CodProdt := vr_aux_descrica;
-         ELSIF vr_node_name = 'DtRef' THEN
-            vr_aux_DtRef := vr_aux_descrica;
          END IF;
-      END IF;
     END LOOP;
-    -- Salvar o arquivo
-    pc_salva_arquivo;
+    
     pc_gera_log_SPB('RECEBIDA OK'
                    ,'LDL0024 RECEBIDA');
 
@@ -3336,10 +3377,10 @@ END;
           END IF;
 
           -- Busca dados da Coope por cdagectl
-          OPEN cr_crapcop(pr_cdagectl => vr_aux_cdagectl_pesq);
-          FETCH cr_crapcop
+          OPEN cr_busca_coop(pr_cdagectl => vr_aux_cdagectl_pesq);
+          FETCH cr_busca_coop
            INTO rw_crapcop_mensag;
-          CLOSE cr_crapcop;
+          CLOSE cr_busca_coop;
 
           -- Verificar se recebemos data na mensagem XML
           IF TRIM(vr_aux_DtMovto) IS NOT NULL AND gene0002.fn_data(vr_aux_DtMovto,'RRRR-MM-DD') THEN
@@ -3464,11 +3505,11 @@ END;
         rw_crapcop_mensag := NULL;
         -- Busca dados da Coope por cdagectl somente se ele for um numero
         IF vr_flgnumer THEN
-          OPEN cr_crapcop(pr_cdagectl => pr_cdagectl
+          OPEN cr_busca_coop(pr_cdagectl => pr_cdagectl
                          ,pr_flgativo => 1);
-          FETCH cr_crapcop
+          FETCH cr_busca_coop
            INTO rw_crapcop_mensag;
-          CLOSE cr_crapcop;
+          CLOSE cr_busca_coop;
         END IF;
         -- Se mensagem nao pertence a nenhuma Coop.
         IF rw_crapcop_mensag.cdcooper IS NULL THEN
@@ -4604,7 +4645,6 @@ END;
       RETURN 0; --> liberado
     END fn_verifica_tab_em_uso;
 
-       
     /* Procedimento geral de tratamento do lançamento */
     PROCEDURE pc_trata_lancamentos(pr_dscritic OUT varchar2) IS
 
@@ -5038,16 +5078,16 @@ END;
         -- Caso contrario gera devolucao(STR0048)
         IF vr_aux_CodMsg = 'STR0047R2' THEN
           -- Identifica a IF Credora Original(Coop. Filiada)
-          OPEN cr_crapcop(pr_cdagectl => vr_aux_CtCredtd); -- C/C filiada na Central
-          FETCH cr_crapcop
+          OPEN cr_busca_coop(pr_cdagectl => vr_aux_CtCredtd); -- C/C filiada na Central
+          FETCH cr_busca_coop
            INTO rw_crapcop_portab;
           -- Se não encontrar
-          IF cr_crapcop%NOTFOUND THEN
-            CLOSE cr_crapcop;
+          IF cr_busca_coop%NOTFOUND THEN
+            CLOSE cr_busca_coop;
             -- Coop nao encontrar
             vr_dscritic := 'Erro de sistema: Registro da cooperativa nao encontrado.';
           ELSE
-            CLOSE cr_crapcop;
+            CLOSE cr_busca_coop;
             -- Busca data na cooperativa onde a conta foi transferida
             OPEN btch0001.cr_crapdat(pr_cdcooper => rw_crapcop_portab.cdcooper);
             FETCH btch0001.cr_crapdat
@@ -5244,6 +5284,76 @@ END;
                                     ,pr_cdprogra        => vr_glb_cdprogra
                                     ,pr_des_destino     => gene0001.fn_param_sistema('CRED',rw_crapcop_mensag.cdcooper,'EMAIL_CARRO_FORTE')
                                     ,pr_des_assunto     => 'Troca de numerarios - CECRED'
+                                    ,pr_des_corpo       => vr_aux_dsdemail
+                                    ,pr_des_anexo       => ''
+                                    ,pr_flg_enviar      => 'S'
+                                    ,pr_flg_log_batch   => 'N' --> Incluir inf. no log
+                                    ,pr_des_erro        => vr_dscritic);
+          -- Se ocorreu erro
+          IF trim(vr_dscritic) IS NOT NULL THEN
+            -- Gerar LOG e continuar o processo normal
+            btch0001.pc_gera_log_batch(pr_cdcooper     => 3 /*Sempre na Central*/
+                                      ,pr_ind_tipo_log => 1
+                                      ,pr_des_log      => vr_dscritic);
+            -- Limpar critica
+            vr_dscritic := null;
+          END IF;
+
+          -- Retornar a execução
+          RETURN;
+        END IF;
+
+        IF vr_aux_CodMsg = 'CIR0020' THEN /* SD 805540 - 14/02/2018 - Marcelo (Mouts) */
+          -- Montar email
+          vr_aux_dsdemail := 'Codigo Mensagem: ' || vr_aux_CodMsg || ' <br>'
+                          || 'Número Controle IF: ' || vr_aux_NumCtrlIF || ' <br>'
+                          || 'ISPB IF: ' || vr_aux_ISPBIF || ' <br>'
+                          || 'Número Controle CIR Original: ' || vr_aux_NumCtrlCIROr || ' <br>'
+                          || 'Valor Lançamento: ' || vr_aux_VlrLanc || ' <br>'
+                          || 'Data Movimento: ' || vr_aux_DtMovto || ' <br><br>';
+
+          -- Enviar Email para o Financeiro
+          gene0003.pc_solicita_email(pr_cdcooper        => rw_crapcop_mensag.cdcooper
+                                    ,pr_cdprogra        => vr_glb_cdprogra
+                                    ,pr_des_destino     => gene0001.fn_param_sistema('CRED',rw_crapcop_mensag.cdcooper,'EMAIL_CARRO_FORTE')
+                                    ,pr_des_assunto     => 'Pagamento de Lançamento Devido MECIR - CECRED'
+                                    ,pr_des_corpo       => vr_aux_dsdemail
+                                    ,pr_des_anexo       => ''
+                                    ,pr_flg_enviar      => 'S'
+                                    ,pr_flg_log_batch   => 'N' --> Incluir inf. no log
+                                    ,pr_des_erro        => vr_dscritic);
+          -- Se ocorreu erro
+          IF trim(vr_dscritic) IS NOT NULL THEN
+            -- Gerar LOG e continuar o processo normal
+            btch0001.pc_gera_log_batch(pr_cdcooper     => 3 /*Sempre na Central*/
+                                      ,pr_ind_tipo_log => 1
+                                      ,pr_des_log      => vr_dscritic);
+            -- Limpar critica
+            vr_dscritic := null;
+          END IF;
+
+          -- Retornar a execução
+          RETURN;
+        END IF;
+
+        IF vr_aux_CodMsg = 'CIR0021' THEN /* SD 805540 - 14/02/2018 - Marcelo (Mouts) */
+          -- Montar email
+          vr_aux_dsdemail := 'Codigo Mensagem: ' || vr_aux_CodMsg || ' <br>'
+                          || 'Número Controle CIR: ' || vr_aux_NumCtrlCIR || ' <br>'
+                          || 'ISPB IF: ' || vr_aux_ISPBIF || ' <br>'
+                          || 'Número Controle STR: ' || vr_aux_NumCtrlSTR || ' <br>'
+                          || 'Número Remessa Original: ' || vr_aux_NumRemessaOr || ' <br>'
+                          || 'Agencia IF: ' || vr_aux_AgIF || ' <br>'
+                          || 'Valor Lançamento: ' || vr_aux_VlrLanc || ' <br>'
+                          || 'Finalidade CIR: ' || vr_aux_FinlddCIR || ' <br>'
+                          || 'Data Hora Bacen: ' || vr_aux_DtHrBC || ' <br>'
+                          || 'Data Movimento: ' || vr_aux_DtMovto || ' <br><br>';
+
+          -- Enviar Email para o Financeiro
+          gene0003.pc_solicita_email(pr_cdcooper        => rw_crapcop_mensag.cdcooper
+                                    ,pr_cdprogra        => vr_glb_cdprogra
+                                    ,pr_des_destino     => gene0001.fn_param_sistema('CRED',rw_crapcop_mensag.cdcooper,'EMAIL_CARRO_FORTE')
+                                    ,pr_des_assunto     => 'Lançamento a Crédito Efetivado do MECIR - CECRED'
                                     ,pr_des_corpo       => vr_aux_dsdemail
                                     ,pr_des_anexo       => ''
                                     ,pr_flg_enviar      => 'S'
@@ -6068,12 +6178,12 @@ END;
         -- enviada pela cooperativa
         IF vr_aux_tagCABInf THEN
           -- Busca cooperativa da destino
-          OPEN cr_crapcop(pr_cdagectl => SUBSTR(vr_aux_NumCtrlIF,8,4));
-          FETCH cr_crapcop
+          OPEN cr_busca_coop(pr_cdagectl => SUBSTR(vr_aux_NumCtrlIF,8,4));
+          FETCH cr_busca_coop
            INTO rw_crapcop_mensag;
           -- Se encontrar
-          IF cr_crapcop%FOUND THEN
-            CLOSE cr_crapcop;
+          IF cr_busca_coop%FOUND THEN
+            CLOSE cr_busca_coop;
             -- Se estamos em estado de crise
             IF vr_aux_flestcri > 0 THEN
               -- Buscar informações da Coop
@@ -6112,7 +6222,7 @@ END;
               RAISE vr_exc_saida;
             END IF;
           ELSE -- Se não encontrou
-            CLOSE cr_crapcop;
+            CLOSE cr_busca_coop;
             -- Verificar processo
             IF NOT fn_verifica_processo THEN
               -- Arquivo será ignorado
@@ -6162,13 +6272,13 @@ END;
           END IF;
 
           -- Mensagem nao tratada pelo sistema CECRED e devemos enviar uma mensagem STR0010 como resposta. SD 553778
-          IF vr_aux_CodMsg IN('STR0006R2','PAG0142R2','STR0034R2','PAG0134R2') THEN
+          IF vr_aux_CodMsg IN('PAG0142R2','STR0034R2','PAG0134R2') THEN
             -- Buscar Coop destino
             rw_crapcop_mensag := NULL;
-            OPEN cr_crapcop(pr_cdagectl => vr_aux_AgCredtd);
-            FETCH cr_crapcop
+            OPEN cr_busca_coop(pr_cdagectl => vr_aux_AgCredtd);
+            FETCH cr_busca_coop
              INTO rw_crapcop_mensag;
-            CLOSE cr_crapcop;
+            CLOSE cr_busca_coop;
             -- Mensagem Invalida para o Tipo de Transacao ou Finalidade
             vr_log_msgderro := 'Mensagem Invalida para o Tipo de Transacao ou Finalidade.';
             -- Gerar XML de erro
@@ -6223,7 +6333,7 @@ END;
                                                       || vr_dscritic
                                     ,pr_nmarqlog      => vr_nmarqlog);
 
-        IF vr_aux_CodMsg = 'STR0006R2' and vr_aux_FinlddCli <> '15' and vr_aux_CNPJ_CPFDeb<>'01027058000191' THEN
+			  IF vr_aux_CodMsg = 'STR0006R2' and vr_aux_FinlddCli <> '15' and (vr_aux_CNPJ_CPFDeb<>'01027058000191' and vr_aux_CNPJ_CPFDeb<>'1027058000191') THEN
 
           /* Mensagem Invalida para o Tipo de Transacao ou Finalidade*/
             vr_aux_codierro := 4;
@@ -6599,7 +6709,7 @@ END;
                                               ,pr_nrdconta    => vr_tab_descontar(vr_idx_descontar).nrdconta -- Numero da conta
                                               ,pr_indbaixa    => 1                   -- Indicador Baixa /* 1-Pagamento 2- Vencimento */
                                               ,pr_tab_titulos => vr_tab_titulosdt    -- Titulos a serem baixados
---                                              ,pr_dtintegr    => vr_aux_dtintegr     -- Data Integração Pagamento
+                                              ,pr_dtintegr    => vr_aux_dtintegr     -- Data Integração Pagamento
                                               ,pr_cdcritic    => vr_cdcritic         -- Codigo Critica
                                               ,pr_dscritic    => vr_dscritic         -- Descricao Critica
                                               ,pr_tab_erro    => vr_tab_erro);       -- Tabela erros
@@ -6715,14 +6825,14 @@ END;
           -- Se não deu erro
           IF NOT vr_aux_flgderro THEN
             -- Busca dados da Coope por cdagectl
-            OPEN cr_crapcop(pr_cdagectl => SUBSTR(vr_aux_NumCtrlIF,8,4));
-            FETCH cr_crapcop
+            OPEN cr_busca_coop(pr_cdagectl => SUBSTR(vr_aux_NumCtrlIF,8,4));
+            FETCH cr_busca_coop
              INTO rw_crapcop_mensag;
             -- Se não encontrou
-            IF cr_crapcop%NOTFOUND THEN
+            IF cr_busca_coop%NOTFOUND THEN
               vr_aux_flgderro := TRUE;
             END IF;
-            CLOSE cr_crapcop;
+            CLOSE cr_busca_coop;
           END IF;
 
           -- Se gerou erro
@@ -6758,20 +6868,20 @@ END;
             CLOSE cr_crapcop;
         ELSIF vr_aux_CodMsg = 'CIR0021' THEN /* SD 805540 - 14/02/2018 - Marcelo (Mouts) */
           -- Tenta converter agencia para numero
-          IF NOT fn_numerico(SUBSTR(vr_aux_AgIF,8,4)) THEN
+          IF NOT fn_numerico(vr_aux_AgIF) THEN
             vr_aux_flgderro := TRUE;
           END IF;
           -- Se não deu erro
           IF NOT vr_aux_flgderro THEN
             -- Busca dados da Coope por cdagectl
-            OPEN cr_crapcop(pr_cdagectl => SUBSTR(vr_aux_AgIF,8,4));
-            FETCH cr_crapcop
+            OPEN cr_busca_coop(pr_cdagectl => vr_aux_AgIF);
+            FETCH cr_busca_coop
              INTO rw_crapcop_mensag;
             -- Se não encontrou
-            IF cr_crapcop%NOTFOUND THEN
+            IF cr_busca_coop%NOTFOUND THEN
               vr_aux_flgderro := TRUE;
             END IF;
-            CLOSE cr_crapcop;
+            CLOSE cr_busca_coop;
           END IF;
         ELSE
           -- Tenta converter agencia para numero
@@ -6781,28 +6891,33 @@ END;
           -- Se não deu erro
           IF NOT vr_aux_flgderro THEN
             -- Busca dados da Coope por cdagectl
-            OPEN cr_crapcop(pr_cdagectl => vr_aux_AgCredtd
+            OPEN cr_busca_coop(pr_cdagectl => vr_aux_AgCredtd
                            ,pr_flgativo => 1);
-            FETCH cr_crapcop
-             INTO rw_crapcop_mensag;
+                              
+            FETCH cr_busca_coop INTO rw_crapcop_mensag;
+            
             -- Se não encontrou
-            IF cr_crapcop%NOTFOUND THEN
-              CLOSE cr_crapcop;
+            IF cr_busca_coop%NOTFOUND THEN
+              
+              CLOSE cr_busca_coop;
+              
               -- Tratamento incorporacao TRANSULCRED
               IF to_number(vr_aux_AgCredtd) = 116 AND trunc(sysdate) < to_date('21/01/2017','dd/mm/rrrr') THEN
                 -- Usar agencia Incorporada
                 vr_aux_cdageinc := to_number(vr_aux_AgCredtd);
                 vr_aux_AgCredtd := '0108';
                 -- Busca cooperativa de destino (nova)
-                OPEN cr_crapcop(pr_cdagectl => vr_aux_AgCredtd);
-                FETCH cr_crapcop
-                 INTO rw_crapcop_mensag;
-                CLOSE cr_crapcop;
+                OPEN cr_busca_coop(pr_cdagectl => vr_aux_AgCredtd);
+                FETCH cr_busca_coop INTO rw_crapcop_mensag;
+                CLOSE cr_busca_coop;
               ELSE
                 vr_aux_flgderro := TRUE;
               END IF;
+              
+            ELSE
+              CLOSE cr_busca_coop;  
             END IF;
-            CLOSE cr_crapcop;
+            
           END IF;
 
           -- Se estamos em estado de crise
@@ -6823,10 +6938,9 @@ END;
                vr_aux_AgCredtd := '0112';
              END IF;
              -- Busca cooperativa de destino
-             OPEN cr_crapcop(pr_cdagectl => vr_aux_AgCredtd);
-             FETCH cr_crapcop
-              INTO rw_crapcop_mensag;
-             CLOSE cr_crapcop;
+             OPEN cr_busca_coop(pr_cdagectl => vr_aux_AgCredtd);
+             FETCH cr_busca_coop INTO rw_crapcop_mensag;
+             CLOSE cr_busca_coop;
           END IF;
 
           -- Se houve erro
@@ -7207,3 +7321,4 @@ END;
       COMMIT;
   END;
 END PC_CRPS531_1;
+/
