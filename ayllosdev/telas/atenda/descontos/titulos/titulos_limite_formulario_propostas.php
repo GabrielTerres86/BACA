@@ -25,7 +25,10 @@
  * 010: [10/10/2016] Lucas Ranghetti (CECRED): Remover verificacao de digitalizaco para o botao de consultar imagem(#510032)
  * 011: [26/06/2017] Jonata (RKAM): Ajuste para rotina ser chamada através da tela ATENDA > Produtos (P364).
  * 012: [28/03/2018] Andre Avila (GFT):  Alteração da opção retorno dos botões.
+ * 013: [03/05/2018] Andre Avila (GFT):  Alteração da opção retorno do botão cancelar.
+
  */
+
 
 
 ?>
