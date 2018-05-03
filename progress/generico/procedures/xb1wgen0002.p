@@ -2,7 +2,7 @@
 
    Programa: xb1wgen0002.p
    Autor   : Murilo/David
-   Data    : Junho/2007                     Ultima atualizacao: 21/02/2018
+   Data    : Junho/2007                     Ultima atualizacao:23/04/2018
 
    Dados referentes ao programa:
 
@@ -138,6 +138,8 @@
 
 			  21/02/2018 - Alterado a rotina obtem-dados-liquidacoes para ao final da listagem 
 						   trazer limite/adp para liquidar.(Diego/AMcom)
+               
+              23/04/2018 - P410 - Melhorias/Ajustes IOF (Marcos-Envolti)  
 
 ..............................................................................*/
 
@@ -2280,6 +2282,7 @@ PROCEDURE calcula_cet_novo:
                                  INPUT aux_dscatbem,
                                  INPUT aux_idfiniof,
                                  INPUT aux_dsctrliq,
+                                 INPUT "N",
                                 OUTPUT aux_txcetano,
                                 OUTPUT aux_txcetmes,
                                 OUTPUT TABLE tt-erro ). 

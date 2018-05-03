@@ -29,7 +29,7 @@
 
    Programa: b1wgen0002.p
    Autora  : Mirtes.
-   Data    : 14/09/2005                        Ultima atualizacao: 21/02/2018
+   Data    : 14/09/2005                        Ultima atualizacao: 12/04/2018
 
    Dados referentes ao programa:
 
@@ -715,7 +715,7 @@
               27/07/2017 - Alterado para nao validar associado demitido e nem menor de idade para emprestimos
                            de cessao da fatura do cartao de credito (Anderson).
 
-			  29/07/2017 - Desenvolvimento da melhoria 364 - Grupo Economico Novo. (Mauro)	   
+			  29/07/2017 - Desenvolvimento da melhoria 364 - Grupo Economico Novo. (Mauro)
 
 			  29/09/2017 - P337 - SMII - Ajustes no processo de perca de aprovação quando 
 			               Alterar Somente Avalista (Marcos-Supero)
@@ -739,7 +739,7 @@
               21/02/2018 - Liberar o produto Pós-Fixado para todas as contas da cooperativa Viacredi. (James)
 
               23/01/2018 - Alterada Regras para retorno da Qualificação da Operação de acordo com dias de atraso. 
-						   (Diego Simas - AMcom) (Projeto Regulatório Crédito).	 
+						   (Diego Simas - AMcom) (Projeto Regulatório Crédito).
 
               23/01/2018 - PRJ450 - Criado a rotina obtem-dados-limite-adp para obter os dados do limite crédito/adp que
                            trará para ser liquidado na tela Atenda - Empréstimos.
@@ -761,7 +761,9 @@
 
               21/03/2018 - Alterado para permitir alteracao do nr. de contrato para 
                            tipo de linha 4 - Aplicacao. (PRJ404 - Reinert)
-
+                           
+              12/04/2018 - P410 - Melhorias/Ajustes IOF (Marcos-Envolti)
+              
               13/04/2018 - Ajuste na procedure valida-dados-gerais para verificar se o tipo de conta
                            do cooperado permite adesao do produto 31 - Emprestimo. PRJ366 (Lombardi)
 
@@ -1504,7 +1506,7 @@ PROCEDURE valida-liquidacao-emprestimos:
                   DO:
                       RUN fontes/critic.p.
                       LEAVE Valida.
-                  END.
+             END.
                 ELSE IF aux_dscritic <> ? AND aux_dscritic <> "" THEN
                   DO:
                     LEAVE Valida.
@@ -1516,17 +1518,17 @@ PROCEDURE valida-liquidacao-emprestimos:
                     LEAVE Valida.
                   END.  
 
-                /* Validar Data do Emprestimo */
-                IF  par_dtmvtoep = par_dtmvtolt  THEN
-                    DO:
-                       ASSIGN 
-                         par_tpdretor = "D" /* Display */
-                         par_msgretor = "~n   Nao e' possivel liquidar emprestimo   " +
-                                        "~n      feito nesta data -"                  +
-                                        STRING(par_dtmvtolt,"99/99/9999") + "~n".
-                       LEAVE Valida.
-                    END.
+        /* Validar Data do Emprestimo */
+        IF  par_dtmvtoep = par_dtmvtolt  THEN
+            DO:
+               ASSIGN
+                 par_tpdretor = "D" /* Display */
+                 par_msgretor = "~n   Nao e' possivel liquidar emprestimo   " +
+                                "~n      feito nesta data -"                  +
+                                STRING(par_dtmvtolt,"99/99/9999") + "~n".
+               LEAVE Valida.
             END.
+            END.                                 
 
         /* Validar a quantidade de linhas selecionadas */
         IF  par_qtlinsel >= 10 THEN
@@ -1555,12 +1557,12 @@ PROCEDURE valida-liquidacao-emprestimos:
                 LEAVE Valida.
             END.
 
-                 LEAVE Valida.
+        LEAVE Valida.
         END. /* par_nrctremp <> 0 */
         ELSE DO:
             ASSIGN par_tpdretor = "C".
             LEAVE Valida.
-        END.
+    END.
     END. /* VALIDA */
 
     IF  aux_dscritic <> "" OR aux_cdcritic <> 0 THEN
@@ -2051,11 +2053,12 @@ PROCEDURE obtem-propostas-emprestimo:
     DEF  VAR         aux_err_efet AS INTE                           NO-UNDO.
     DEF  VAR         aux_dtlibera AS DATE                           NO-UNDO.
 
-    DEF   VAR        aux_inobriga AS CHAR                           NO-UNDO.
+    DEF  VAR        aux_inobriga AS CHAR                           NO-UNDO.
     DEF  VAR        aux_incdccon AS INTE                           NO-UNDO.        
-    DEF  VAR        h-b1wgen0097 AS HANDLE                          NO-UNDO.
-    DEF  VAR         aux_dscatbem AS CHAR                           NO-UNDO.
-    DEF  VAR         i            AS INTE                           NO-UNDO.
+    DEF  VAR        h-b1wgen0097 AS HANDLE                         NO-UNDO.
+    DEF  VAR        aux_dscatbem AS CHAR                           NO-UNDO.
+    DEF  VAR        i            AS INTE                           NO-UNDO.    
+    DEF  VAR        aux_qtdias_carencia AS INTE                    NO-UNDO.
 
     ASSIGN aux_cdcritic = 0
            aux_dscritic = ""
@@ -2372,6 +2375,35 @@ PROCEDURE obtem-propostas-emprestimo:
 
                    END. /** Fim do DO ... TO **/
                                         
+                   ASSIGN aux_qtdias_carencia = 0.
+                   IF crawepr.idcarenc > 0 THEN
+                   DO:
+                   
+                     { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+                     
+                     /* Efetuar a chamada a rotina Oracle  */
+                     RUN STORED-PROCEDURE pc_busca_qtd_dias_carencia
+                         aux_handproc = PROC-HANDLE NO-ERROR (INPUT crawepr.idcarenc,
+                                                             OUTPUT 0,   /* pr_qtddias */
+                                                             OUTPUT 0,   /* pr_cdcritic */
+                                                             OUTPUT ""). /* pr_dscritic */  
+
+                     /* Fechar o procedimento para buscarmos o resultado */ 
+                     CLOSE STORED-PROC pc_busca_qtd_dias_carencia
+                            aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+
+                     { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
+
+                     ASSIGN aux_cdcritic = 0
+                            aux_dscritic = ""
+                            aux_cdcritic = INT(pc_busca_qtd_dias_carencia.pr_cdcritic) 
+                                           WHEN pc_busca_qtd_dias_carencia.pr_cdcritic <> ?
+                            aux_dscritic = pc_busca_qtd_dias_carencia.pr_dscritic
+                                           WHEN pc_busca_qtd_dias_carencia.pr_dscritic <> ?
+                            aux_qtdias_carencia = INT(pc_busca_qtd_dias_carencia.pr_qtddias) 
+                                                  WHEN pc_busca_qtd_dias_carencia.pr_qtddias <> ?.
+                    END.
+                                        
                { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
                     RUN STORED-PROCEDURE pc_calcula_iof_epr
                     aux_handproc = PROC-HANDLE NO-ERROR(INPUT crawepr.cdcooper
@@ -2380,17 +2412,19 @@ PROCEDURE obtem-propostas-emprestimo:
                                                        ,INPUT crawepr.dtmvtolt
                                                        ,INPUT crapass.inpessoa
                                                        ,INPUT crawepr.cdlcremp
+                                                       ,INPUT crawepr.cdfinemp                                                       
                                                        ,INPUT crawepr.qtpreemp
                                                        ,INPUT crawepr.vlpreemp
                                                        ,INPUT crawepr.vlemprst
                                                        ,INPUT crawepr.dtdpagto
                                                        ,INPUT aux_dtlibera
                                                        ,INPUT crawepr.tpemprst
-                                                       ,INPUT crawepr.dtcarenc
-                                                       ,INPUT 0 /* dias de carencia */
+                                                       ,INPUT crawepr.dtcarenc /* Data de carencia */
+                                                       ,INPUT aux_qtdias_carencia /* dias de carencia */
                                                        ,INPUT aux_dscatbem     /* Bens em garantia */
                                                        ,INPUT crawepr.idfiniof /* Indicador de financiamento de iof e tarifa */
                                                        ,INPUT tt-proposta-epr.dsctrliq /* pr_dsctrliq */
+                                                       ,OUTPUT 0 /* Valor calculado da Parcel */
                                                        ,OUTPUT 0 /* Valor calculado com o iof (principal + adicional) */
                                                        ,OUTPUT 0 /* Valor calculado do iof principal */
                                                        ,OUTPUT 0 /* Valor calculado do iof adicional */
@@ -2411,7 +2445,7 @@ PROCEDURE obtem-propostas-emprestimo:
                   END.
                ELSE
                   ASSIGN tt-proposta-epr.vlfinanc = crawepr.vlemprst.
-                           
+               
 				CASE crawepr.insitest:
 					WHEN 0 THEN ASSIGN tt-proposta-epr.dssitest = "Nao Enviada".
 					WHEN 1 THEN ASSIGN tt-proposta-epr.dssitest = "Enviada p/ Analise Aut.".
@@ -2567,7 +2601,8 @@ PROCEDURE obtem-dados-proposta-emprestimo:
     DEF VAR aux_flgtrans AS LOGI                                    NO-UNDO.
     DEF VAR aux_vlrtarif AS DECI                                    NO-UNDO.
     DEF VAR aux_dscatbem AS CHAR                                    NO-UNDO.
-    DEF VAR aux_concontr AS INTE                                    NO-UNDO.
+    DEF VAR aux_concontr AS INTE                                    NO-UNDO.        
+    DEF VAR aux_qtdias_carencia AS INTE                             NO-UNDO.
 
     EMPTY TEMP-TABLE tt-erro.
     EMPTY TEMP-TABLE tt-dados-coope.
@@ -2978,7 +3013,15 @@ PROCEDURE obtem-dados-proposta-emprestimo:
                        tt-proposta-epr.idcobope = crawepr.idcobope
                        tt-proposta-epr.vlrtarif = aux_vlrtarif
                        tt-proposta-epr.vliofepr = 0
-					   tt-proposta-epr.idfiniof = crawepr.idfiniof.     
+					   tt-proposta-epr.idfiniof = crawepr.idfiniof.
+
+					   DO i = 1 TO 10:
+						IF  crawepr.nrctrliq[i] > 0  THEN
+							tt-proposta-epr.dsctrliq = tt-proposta-epr.dsctrliq + 
+														(IF tt-proposta-epr.dsctrliq = "" THEN TRIM(STRING(crawepr.nrctrliq[i], "z,zzz,zz9"))
+														ELSE
+															", " + TRIM(STRING(crawepr.nrctrliq[i], "z,zzz,zz9"))).
+						END. /** Fim do DO ... TO **/
                        
 				IF  AVAIL crapepr THEN
                   DO:
@@ -2997,7 +3040,7 @@ PROCEDURE obtem-dados-proposta-emprestimo:
                           ASSIGN aux_dscatbem = aux_dscatbem + "|" + crapbpr.dscatbem.
                   END.
                   END.
-
+                    
                 CASE crawepr.idquapro:
                   WHEN 1 THEN ASSIGN tt-proposta-epr.dsquapro = "Operacao Normal".
                   WHEN 2 THEN ASSIGN tt-proposta-epr.dsquapro =
@@ -3008,7 +3051,7 @@ PROCEDURE obtem-dados-proposta-emprestimo:
                 END CASE.
 
                 DO i = 1 TO 10:
-
+                
                    IF  crawepr.nrctrliq[i] > 0  THEN
                        DO:
                            aux_concontr = aux_concontr + 1.
@@ -3021,7 +3064,7 @@ PROCEDURE obtem-dados-proposta-emprestimo:
                              TRIM(STRING(crawepr.nrctrliq[i],
                                          "z,zzz,zz9"))).
                        END.
-                END. /** Fim do DO ... TO **/
+                END. /** Fim do DO ... TO **/	
 
                 /* Trazer também o LIMITE/ADP */
                 IF crawepr.nrliquid > 0 THEN
@@ -3038,8 +3081,36 @@ PROCEDURE obtem-dados-proposta-emprestimo:
                                 TRIM(STRING(crawepr.nrliquid, "z,zzz,zz9")).
                         END.
                 END.
+                      
+                     ASSIGN aux_qtdias_carencia = 0.
+                     IF crawepr.idcarenc > 0 THEN
+                     DO:
+                     
+                      { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+                       
+                       /* Efetuar a chamada a rotina Oracle  */
+                       RUN STORED-PROCEDURE pc_busca_qtd_dias_carencia
+                           aux_handproc = PROC-HANDLE NO-ERROR (INPUT crawepr.idcarenc,
+                                                               OUTPUT 0,   /* pr_qtddias */
+                                                               OUTPUT 0,   /* pr_cdcritic */
+                                                               OUTPUT ""). /* pr_dscritic */  
 
-                
+                       /* Fechar o procedimento para buscarmos o resultado */ 
+                       CLOSE STORED-PROC pc_busca_qtd_dias_carencia
+                              aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+
+                       { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
+
+                       ASSIGN aux_cdcritic = 0
+                              aux_dscritic = ""
+                              aux_cdcritic = INT(pc_busca_qtd_dias_carencia.pr_cdcritic) 
+                                             WHEN pc_busca_qtd_dias_carencia.pr_cdcritic <> ?
+                              aux_dscritic = pc_busca_qtd_dias_carencia.pr_dscritic
+                                             WHEN pc_busca_qtd_dias_carencia.pr_dscritic <> ?
+                              aux_qtdias_carencia = INT(pc_busca_qtd_dias_carencia.pr_qtddias) 
+                                                    WHEN pc_busca_qtd_dias_carencia.pr_qtddias <> ?.
+                      END.
+                      
                       { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
                       RUN STORED-PROCEDURE pc_calcula_iof_epr
                           aux_handproc = PROC-HANDLE NO-ERROR
@@ -3049,6 +3120,7 @@ PROCEDURE obtem-dados-proposta-emprestimo:
                                             ,INPUT crawepr.dtmvtolt
                                             ,INPUT crapass.inpessoa
                                             ,INPUT crawepr.cdlcremp
+                                            ,INPUT crawepr.cdfinemp                                            
                                             ,INPUT crawepr.qtpreemp
                                             ,INPUT crawepr.vlpreemp
                                             ,INPUT crawepr.vlemprst
@@ -3056,10 +3128,11 @@ PROCEDURE obtem-dados-proposta-emprestimo:
                                             ,INPUT aux_dtlibera
                                             ,INPUT crawepr.tpemprst
                                             ,INPUT crawepr.dtcarenc
-                                            ,INPUT 0 /* dias de carencia */
+                                            ,INPUT aux_qtdias_carencia  /* dias de carencia */
                                             ,INPUT aux_dscatbem         /* Bens em garantia */
                                             ,INPUT crawepr.idfiniof     /* Indicador de financiamento de IOF e tarifa */
                                             ,INPUT tt-proposta-epr.dsctrliq /* pr_dsctrliq */
+                                            ,OUTPUT 0 /* Valor calculado da Parcela */
                                             ,OUTPUT 0 /* Valor calculado com o iof (principal + adicional) */
                                             ,OUTPUT 0 /* Valor calculado do iof principal */
                                             ,OUTPUT 0 /* Valor calculado do iof adicional */
@@ -3705,7 +3778,7 @@ PROCEDURE valida-dados-gerais:
     DEF   VAR        aux_vlrtarif AS DECIMAL                        NO-UNDO.
     DEF   VAR        aux_dscatbem AS CHAR                           NO-UNDO.
     DEF   VAR        aux_valida_adesao AS LOGICAL                   NO-UNDO.
-		
+
     DEF   VAR        aux_flgcescr AS LOG INIT FALSE                 NO-UNDO.
 		
     ASSIGN aux_cdcritic = 0
@@ -4001,7 +4074,13 @@ PROCEDURE valida-dados-gerais:
             END.
         ELSE IF par_tpemprst = 2 THEN
             DO:
-                				 
+                /* Trava para testes em producao */
+                IF par_cdcooper <> 1 THEN
+                   DO:
+                      ASSIGN aux_dscritic = "Produto nao liberado.".
+                      LEAVE.
+                   END.
+				 
         { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
 
                 /* Efetuar a chamada a rotina Oracle  */
@@ -4429,17 +4508,19 @@ PROCEDURE valida-dados-gerais:
                                                            ,INPUT par_dtmvtolt
                                                            ,INPUT crapass.inpessoa
                                                            ,INPUT par_cdlcremp
+                                                           ,INPUT par_cdfinemp
                                                            ,INPUT par_qtpreemp
                                                            ,INPUT par_vlpreemp
                                                            ,INPUT par_vlemprst
                                                            ,INPUT par_dtdpagto
                                                            ,INPUT par_dtmvtolt
                                                            ,INPUT par_tpemprst
-                                                           ,INPUT par_dtmvtolt
-                                                           ,INPUT 0 /* dias de carencia */
+                                                           ,INPUT par_dtcarenc /* Data carencia */
+                                                           ,INPUT aux_qtdias_carencia /* dias de carencia */
                                                            ,INPUT aux_dscatbem     /* Bens em garantia */
                                                            ,INPUT par_idfiniof /* Indicador de financiamento de iof e tarifa */
                                                            ,INPUT "" /* pr_dsctrliq */
+                                                           ,OUTPUT 0 /* Valor calculado da Parcela */
                                                            ,OUTPUT 0 /* Valor calculado com o iof (principal + adicional) */
                                                            ,OUTPUT 0 /* Valor calculado do iof principal */
                                                            ,OUTPUT 0 /* Valor calculado do iof adicional */
@@ -4765,7 +4846,7 @@ PROCEDURE proc_qualif_operacao:
                    NO-LOCK NO-ERROR.
 
         IF  AVAIL crabepr THEN DO:
-		  FOR FIRST crapris FIELDS(qtdiaatr) 
+		FOR FIRST crapris FIELDS(qtdiaatr) 
             WHERE crapris.cdcooper = par_cdcooper 
 			  AND crapris.nrdconta = par_nrdconta
 			  AND crapris.cdorigem = 3
@@ -4774,7 +4855,7 @@ PROCEDURE proc_qualif_operacao:
 			  AND crapris.dtrefere = par_dtmvtoan
               NO-LOCK: 
 				  ASSIGN aux_qtd_dias_atraso = crapris.qtdiaatr.
-          END.
+         END.
         END.
 
 		/* Se contrato a liquidar já é um refinanciamento, força 
@@ -4787,7 +4868,7 @@ PROCEDURE proc_qualif_operacao:
 		IF aux_dias_atraso < aux_qtd_dias_atraso THEN
 		   aux_dias_atraso = aux_qtd_dias_atraso.
 
-    END.
+             END.
 
 	/* De 0 a 4 dias de atraso - Renovação de Crédito		         	    */ 
     IF  aux_dias_atraso < 5 THEN
@@ -7247,7 +7328,7 @@ PROCEDURE grava-proposta-completa:
                     aux_contaemp = aux_contaemp + 1.
                     ASSIGN crawepr.nrctrliq[aux_contaemp] =
                       INTE(ENTRY(aux_contador,par_dsctrliq)) NO-ERROR.
-                END.
+        END.
             ELSE
                 DO:
                     ASSIGN crawepr.nrliquid =
@@ -8325,6 +8406,7 @@ PROCEDURE altera-valor-proposta:
                              INPUT par_dscatbem,
                              INPUT par_idfiniof,
                              INPUT aux_dsctrliq,
+                             INPUT "N",
                             OUTPUT aux_percetop, /* taxa cet ano */
                             OUTPUT aux_txcetmes, /* taxa cet mes */
                             OUTPUT TABLE tt-erro). 
@@ -12669,6 +12751,7 @@ PROCEDURE calcula_cet_novo:
     DEF INPUT PARAM par_dscatbem AS CHAR                               NO-UNDO.
     DEF INPUT PARAM par_idfiniof AS INTE                               NO-UNDO.
     DEF INPUT PARAM par_dsctrliq AS CHAR                               NO-UNDO.
+    DEF INPUT PARAM par_idgravar AS CHAR                               NO-UNDO.
 
     DEF OUTPUT PARAM par_txcetano AS DECI                              NO-UNDO. 
     DEF OUTPUT PARAM par_txcetmes AS DECI                              NO-UNDO. 
@@ -12703,6 +12786,7 @@ PROCEDURE calcula_cet_novo:
                           INPUT par_dscatbem,
                           INPUT par_idfiniof,
                           INPUT par_dsctrliq,
+                          INPUT par_idgravar,
                          OUTPUT 0,
                          OUTPUT 0,
                          OUTPUT 0,
@@ -13633,7 +13717,7 @@ PROCEDURE recalcular_emprestimo:
                                         INPUT crawepr.nrdconta,
                                         INPUT crawepr.nrctremp,
                                         OUTPUT aux_dsctrliq).
-
+                    
        /* Calclar o cet automaticamente */
        RUN calcula_cet_novo(INPUT par_cdcooper,
                             INPUT par_cdagenci,
@@ -13657,6 +13741,7 @@ PROCEDURE recalcular_emprestimo:
                             INPUT aux_dscatbem,
                             INPUT crawepr.idfiniof,
                             INPUT aux_dsctrliq,
+                            INPUT "N",
                            OUTPUT aux_percetop, /* taxa cet ano */
                            OUTPUT aux_txcetmes, /* taxa cet mes */
                            OUTPUT TABLE tt-erro). 
@@ -14155,7 +14240,7 @@ PROCEDURE atualiza_dados_avalista_proposta:
                /* Para Alterar Somente Avalista e Proposta já aprovada */
                IF par_dsdopcao = "ASA" AND crawepr.insitapr = 1 THEN 
                   DO:
-
+                  
                      VALIDATE crawepr.
                
                      { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
@@ -14196,7 +14281,7 @@ PROCEDURE atualiza_dados_avalista_proposta:
                          aux_cdcritic = 9.
                          LEAVE.
                      END.
-
+                     
                /* Verificar se a Esteira esta em contigencia para a cooperativa*/
                { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
                RUN STORED-PROCEDURE pc_param_sistema aux_handproc = PROC-HANDLE
@@ -14224,7 +14309,7 @@ PROCEDURE atualiza_dados_avalista_proposta:
                                                     OUTPUT "",           /* Obrigaçao de análise automática (S/N) */
                                                     OUTPUT 0,            /* Código da crítica */
                                                     OUTPUT "").          /* Descrição da crítica */
-
+               
                /* Fechar o procedimento para buscarmos o resultado */ 
                CLOSE STORED-PROC pc_obrigacao_analise_automatic
                    aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
@@ -14241,7 +14326,7 @@ PROCEDURE atualiza_dados_avalista_proposta:
                IF aux_cdcritic > 0 OR 
                   aux_dscritic <> '' THEN
                   LEAVE.
-
+               
                /* Incluir checagem para perca da aprovacao devido 
                   mudanca nos avalistas, somente se analise auto obrigatoria */
                  IF aux_avlalter AND aux_inobriga = "S" THEN
@@ -14251,7 +14336,7 @@ PROCEDURE atualiza_dados_avalista_proposta:
                            aux_dtaprova = crawepr.dtaprova
                            aux_hraprova = crawepr.hraprova
                            aux_insitest = crawepr.insitest.            
-
+                       
                    FOR crappre FIELDS(cdfinemp) 
                       WHERE crappre.cdcooper = par_cdcooper     
                         AND crappre.inpessoa = crapass.inpessoa  NO-LOCK: END.

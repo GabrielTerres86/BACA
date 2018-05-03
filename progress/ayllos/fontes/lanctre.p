@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Edson
-   Data    : Janeiro/94.                         Ultima atualizacao: 30/04/2015
+   Data    : Janeiro/94.                         Ultima atualizacao: 17/04/2018
 
    Dados referentes ao programa:
 
@@ -34,10 +34,14 @@
                           b1wgen0134.p (Tiago).      
                           
              30/04/2015 - Criar a crapavl ja na proposta. Aqui nao e' mais
-                          necessario deletar a mesma (Gabriel-RKAM).                    
+                          necessario deletar a mesma (Gabriel-RKAM).    
+
+             17/04/2018 - P410 - Melhorias/Ajustes IOF (Marcos-Envolti) 
+             
 ............................................................................. */
 
 { includes/var_online.i }
+{ sistema/generico/includes/var_oracle.i }
 { includes/var_lanctr.i }
 { sistema/generico/includes/var_internet.i }
 
@@ -399,7 +403,61 @@ DO WHILE TRUE:
              tel_qtdifeln = craplot.qtcompln - craplot.qtinfoln
              tel_vldifedb = craplot.vlcompdb - craplot.vlinfodb
              tel_vldifecr = craplot.vlcompcr - craplot.vlinfocr.
-
+      
+      { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} } 
+      /* Efetuar a chamada a rotina Oracle */
+      RUN STORED-PROCEDURE pc_exclui_iof
+      aux_handproc = PROC-HANDLE NO-ERROR (INPUT glb_cdcooper   /* Cooperativa              */ 
+                                          ,INPUT tel_nrdconta   /* Numero da Conta Corrente */
+                                          ,INPUT tel_nrctremp   /* Numero do Bordero        */
+                                          ,OUTPUT 0             /* Codigo da Critica        */
+                                          ,OUTPUT "").          /* Descriçao da crítica     */
+                                          
+      /* Fechar o procedimento para buscarmos o resultado */ 
+      CLOSE STORED-PROC pc_exclui_iof
+        aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+      { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
+      ASSIGN glb_cdcritic = 0
+             glb_dscritic = ""
+             glb_cdcritic = pc_exclui_iof.pr_cdcritic
+                            WHEN pc_exclui_iof.pr_cdcritic <> ?
+             glb_dscritic = pc_exclui_iof.pr_dscritic
+                            WHEN pc_exclui_iof.pr_dscritic <> ?.
+      /* Se retornou erro */
+      IF glb_cdcritic > 0 OR glb_dscritic <> "" THEN 
+         DO:
+             MESSAGE glb_cdcritic "-" glb_dscritic.
+             PAUSE 3 NO-MESSAGE.
+             UNDO, RETURN.
+         END.
+      
+      { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} } 
+      /* Efetuar a chamada a rotina Oracle */
+      RUN STORED-PROCEDURE pc_exclui_calculo_CET
+      aux_handproc = PROC-HANDLE NO-ERROR (INPUT glb_cdcooper   /* Cooperativa              */ 
+                                          ,INPUT tel_nrdconta   /* Numero da Conta Corrente */
+                                          ,INPUT tel_nrctremp   /* Numero do Bordero        */
+                                          ,OUTPUT 0             /* Codigo da Critica        */
+                                          ,OUTPUT "").          /* Descriçao da crítica     */
+                                          
+      /* Fechar o procedimento para buscarmos o resultado */ 
+      CLOSE STORED-PROC pc_exclui_calculo_CET
+        aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+      { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
+      ASSIGN glb_cdcritic = 0
+             glb_dscritic = ""
+             glb_cdcritic = pc_exclui_calculo_CET.pr_cdcritic
+                            WHEN pc_exclui_calculo_CET.pr_cdcritic <> ?
+             glb_dscritic = pc_exclui_calculo_CET.pr_dscritic
+                            WHEN pc_exclui_calculo_CET.pr_dscritic <> ?.
+      /* Se retornou erro */
+      IF glb_cdcritic > 0 OR glb_dscritic <> "" THEN 
+         DO:
+             MESSAGE glb_cdcritic "-" glb_dscritic.
+             PAUSE 3 NO-MESSAGE.
+             UNDO, RETURN.
+         END.
+      
       DELETE crapepr.
       DELETE craplem.
 

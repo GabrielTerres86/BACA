@@ -1,5 +1,5 @@
 /*!
- * FONTE        : emprestimos.js                            Última alteração: 07/02/2018
+ * FONTE        : emprestimos.js                            Última alteração: 20/04/2018
  * CRIAÇÃO      : Gabriel Capoia (DB1)
  * DATA CRIAÇÃO : 08/02/2011
  * OBJETIVO     : Biblioteca de funções na rotina Emprestimos da tela ATENDA
@@ -127,10 +127,11 @@
  * 102: [26/02/2018] Ajuste na tela da simulacao da proposta para filtrar a linha de credito dos produtos TR/PP. (James)
  * 102: [21/12/2017] Alterado para quando a linha de credito for (6901 - Cessao Cartao Credito) a 
  *                   qualificacao da operacao seja (5 - Cessao de Cartao) (Diego Simas - AMcom)
-* 103: [21/02/2018] Alterado para tratar limite/adp na tela de seleção para liquidar (Simas - AMcom)
+ * 103: [21/02/2018] Alterado para tratar limite/adp na tela de seleção para liquidar (Simas - AMcom)
 * 104: [15/12/2017] Alterações para inserção da nova tela GAROPC. Inserção do campo idcobope. PRJ404 (Lombardi)
 * 105: [05/03/2018] Incluido campo idcobope na parametrizacao do fonte efetiva_proposta. (PRJ404 - Reinert)
 * 106: [13/04/2018] Adicionadas funcoes validaValorAdesaoProdutoEmp e senhaCoordenador para validar valor do produto pelo tipo de conta. PRJ366 (Lombardi)
+* 107: [20/04/2018] P410 - Não permitir selecionar Financia IOF para Portabilidade (Marcos-Envolti)
  * ##############################################################################
  FONTE SENDO ALTERADO - DUVIDAS FALAR COM DANIEL OU JAMES
  * ##############################################################################
@@ -1311,7 +1312,7 @@ function controlaOperacao(operacao) {
     }
 */
     mensagem = (mensagem == "") ? 'carregando...' : mensagem;
-
+	
     showMsgAguardo('Aguarde, ' + mensagem);
 
     // Executa script de através de ajax
@@ -1411,6 +1412,11 @@ function controlaOperacao(operacao) {
                     arrayProposta['tpemprst'] = 0;
                 }
                 
+                if (possuiPortabilidade == 'S') {
+                    $("#idfiniof").desabilitaCampo();
+                }
+                
+                
             } else {
                 eval(response);
             }
@@ -1468,138 +1474,137 @@ function manterRotina(operacao) {
 
     if (operacao != 'ENV_ESTEIRA' ){
         
-    var aux_nrctaav0 = 0;
-    var aux_nrctaav1 = 0;
+			var aux_nrctaav0 = 0;
+			var aux_nrctaav1 = 0;
 
-    for (i in arrayAvalistas) {
-        eval('aux_nrctaav' + i + ' = arrayAvalistas[' + i + '][\'nrctaava\'];')
-    }
+			for (i in arrayAvalistas) {
+				eval('aux_nrctaav' + i + ' = arrayAvalistas[' + i + '][\'nrctaava\'];')
+			}
 
-    geraRegsDinamicos();
-
+			geraRegsDinamicos();
+			
     
-    var flgcmtlc = (typeof arrayCooperativa['flgcmtlc'] == 'undefined') ? '' : arrayCooperativa['flgcmtlc'];
-    var vllimapv = (typeof arrayCooperativa['vllimapv'] == 'undefined') ? '' : arrayCooperativa['vllimapv'];
+			var flgcmtlc = (typeof arrayCooperativa['flgcmtlc'] == 'undefined') ? '' : arrayCooperativa['flgcmtlc'];
+			var vllimapv = (typeof arrayCooperativa['vllimapv'] == 'undefined') ? '' : arrayCooperativa['vllimapv'];
 
-    var vlemprst = (typeof arrayProposta['vlemprst'] == 'undefined') ? '' : arrayProposta['vlemprst'];
-    var vlpreemp = (typeof arrayProposta['vlpreemp'] == 'undefined') ? '' : arrayProposta['vlpreemp'];
-    var tpemprst = (typeof arrayProposta['tpemprst'] == 'undefined') ? '' : arrayProposta['tpemprst'];
-    var qtpreemp = (typeof arrayProposta['qtpreemp'] == 'undefined') ? '' : arrayProposta['qtpreemp'];
-    var dsnivris = (typeof arrayProposta['nivrisco'] == 'undefined') ? '' : arrayProposta['nivrisco'];
-    var cdlcremp = (typeof arrayProposta['cdlcremp'] == 'undefined') ? '' : arrayProposta['cdlcremp'];
-    var cdfinemp = (typeof arrayProposta['cdfinemp'] == 'undefined') ? '' : arrayProposta['cdfinemp'];
-    var qtdialib = (typeof arrayProposta['qtdialib'] == 'undefined') ? '' : arrayProposta['qtdialib'];
-    var flgimppr = (typeof arrayProposta['flgimppr'] == 'undefined') ? '' : arrayProposta['flgimppr'];
-    var flgimpnp = (typeof arrayProposta['flgimpnp'] == 'undefined') ? '' : arrayProposta['flgimpnp'];
-    var percetop = (typeof arrayProposta['percetop'] == 'undefined') ? '' : arrayProposta['percetop'];
-    var idquapro = (typeof arrayProposta['idquapro'] == 'undefined') ? '' : arrayProposta['idquapro'];
-    var dtdpagto = (typeof arrayProposta['dtdpagto'] == 'undefined') ? '' : arrayProposta['dtdpagto'];
-    var qtpromia = (typeof arrayProposta['qtpromis'] == 'undefined') ? '' : arrayProposta['qtpromis'];
-    var flgpagto = (typeof arrayProposta['flgpagto'] == 'undefined') ? '' : arrayProposta['flgpagto'];
-    var dsctrliq = (typeof arrayProposta['dsctrliq'] == 'undefined') ? '' : arrayProposta['dsctrliq'];
-    var dtlibera = (typeof arrayProposta['dtlibera'] == 'undefined') ? '' : arrayProposta['dtlibera'];
-    var dsobserv = (typeof arrayProposta['dsobserv'] == 'undefined') ? '' : arrayProposta['dsobserv'];
-    var idcobope = (typeof arrayProposta['idcobope'] == 'undefined') ? '' : arrayProposta['idcobope'];
-    var idfiniof = (typeof arrayProposta['idfiniof'] == 'undefined') ? '' : arrayProposta['idfiniof'];
-    var vliofepr = (typeof arrayProposta['vliofepr'] == 'undefined') ? '' : arrayProposta['vliofepr'];
-    var vlrtarif = (typeof arrayProposta['vlrtarif'] == 'undefined') ? '' : arrayProposta['vlrtarif'];
-    var vlrtotal = (typeof arrayProposta['vlrtotal'] == 'undefined') ? '' : arrayProposta['vlrtotal'];
-    var vlfinanc = (typeof arrayProposta['vlfinanc'] == 'undefined') ? '' : arrayProposta['vlfinanc'];
+			var vlemprst = (typeof arrayProposta['vlemprst'] == 'undefined') ? '' : arrayProposta['vlemprst'];
+			var vlpreemp = (typeof arrayProposta['vlpreemp'] == 'undefined') ? '' : arrayProposta['vlpreemp'];
+			var tpemprst = (typeof arrayProposta['tpemprst'] == 'undefined') ? '' : arrayProposta['tpemprst'];
+			var qtpreemp = (typeof arrayProposta['qtpreemp'] == 'undefined') ? '' : arrayProposta['qtpreemp'];
+			var dsnivris = (typeof arrayProposta['nivrisco'] == 'undefined') ? '' : arrayProposta['nivrisco'];
+			var cdlcremp = (typeof arrayProposta['cdlcremp'] == 'undefined') ? '' : arrayProposta['cdlcremp'];
+			var cdfinemp = (typeof arrayProposta['cdfinemp'] == 'undefined') ? '' : arrayProposta['cdfinemp'];
+			var qtdialib = (typeof arrayProposta['qtdialib'] == 'undefined') ? '' : arrayProposta['qtdialib'];
+			var flgimppr = (typeof arrayProposta['flgimppr'] == 'undefined') ? '' : arrayProposta['flgimppr'];
+			var flgimpnp = (typeof arrayProposta['flgimpnp'] == 'undefined') ? '' : arrayProposta['flgimpnp'];
+			var percetop = (typeof arrayProposta['percetop'] == 'undefined') ? '' : arrayProposta['percetop'];
+			var idquapro = (typeof arrayProposta['idquapro'] == 'undefined') ? '' : arrayProposta['idquapro'];
+			var dtdpagto = (typeof arrayProposta['dtdpagto'] == 'undefined') ? '' : arrayProposta['dtdpagto'];
+			var qtpromia = (typeof arrayProposta['qtpromis'] == 'undefined') ? '' : arrayProposta['qtpromis'];
+			var flgpagto = (typeof arrayProposta['flgpagto'] == 'undefined') ? '' : arrayProposta['flgpagto'];
+			var dsctrliq = (typeof arrayProposta['dsctrliq'] == 'undefined') ? '' : arrayProposta['dsctrliq'];
+			var dtlibera = (typeof arrayProposta['dtlibera'] == 'undefined') ? '' : arrayProposta['dtlibera'];
+			var dsobserv = (typeof arrayProposta['dsobserv'] == 'undefined') ? '' : arrayProposta['dsobserv'];
+			var idfiniof = (typeof arrayProposta['idfiniof'] == 'undefined') ? '' : arrayProposta['idfiniof'];
+			var vliofepr = (typeof arrayProposta['vliofepr'] == 'undefined') ? '' : arrayProposta['vliofepr'];
+			var vlrtarif = (typeof arrayProposta['vlrtarif'] == 'undefined') ? '' : arrayProposta['vlrtarif'];
+			var vlrtotal = (typeof arrayProposta['vlrtotal'] == 'undefined') ? '' : arrayProposta['vlrtotal'];
+			var vlfinanc = (typeof arrayProposta['vlfinanc'] == 'undefined') ? '' : arrayProposta['vlfinanc'];
 
-    var nrctaava = (typeof aux_nrctaav0 == 'undefined') ? '' : aux_nrctaav0;
-    var nrctaav2 = (typeof aux_nrctaav1 == 'undefined') ? '' : aux_nrctaav1;
-    var idcarenc = (typeof arrayProposta['idcarenc'] == 'undefined') ? '' : arrayProposta['idcarenc'];
-    var dtcarenc = (typeof arrayProposta['dtcarenc'] == 'undefined') ? '' : arrayProposta['dtcarenc'];
+			var nrctaava = (typeof aux_nrctaav0 == 'undefined') ? '' : aux_nrctaav0;
+			var nrctaav2 = (typeof aux_nrctaav1 == 'undefined') ? '' : aux_nrctaav1;
+			var idcarenc = (typeof arrayProposta['idcarenc'] == 'undefined') ? '' : arrayProposta['idcarenc'];
+			var dtcarenc = (typeof arrayProposta['dtcarenc'] == 'undefined') ? '' : arrayProposta['dtcarenc'];
 
-    var nrgarope = (typeof arrayProtCred['nrgarope'] == 'undefined') ? '' : arrayProtCred['nrgarope'];
-    var nrperger = (typeof arrayProtCred['nrperger'] == 'undefined') ? '' : arrayProtCred['nrperger'];
-    var dtcnsspc = (typeof arrayProtCred['dtcnsspc'] == 'undefined') ? '' : arrayProtCred['dtcnsspc'];
-    var nrinfcad = (typeof arrayProtCred['nrinfcad'] == 'undefined') ? '' : arrayProtCred['nrinfcad'];
-    var dtdrisco = (typeof arrayProtCred['dtdrisco'] == 'undefined') ? '' : arrayProtCred['dtdrisco'];
-    var vltotsfn = (typeof arrayProtCred['vltotsfn'] == 'undefined') ? '' : arrayProtCred['vltotsfn'];
-    var qtopescr = (typeof arrayProtCred['qtopescr'] == 'undefined') ? '' : arrayProtCred['qtopescr'];
-    var qtifoper = (typeof arrayProtCred['qtifoper'] == 'undefined') ? '' : arrayProtCred['qtifoper'];
-    var nrliquid = (typeof arrayProtCred['nrliquid'] == 'undefined') ? '' : arrayProtCred['nrliquid'];
-    var vlopescr = (typeof arrayProtCred['vlopescr'] == 'undefined') ? '' : arrayProtCred['vlopescr'];
-    var vlrpreju = (typeof arrayProtCred['vlrpreju'] == 'undefined') ? '' : arrayProtCred['vlrpreju'];
-    var nrpatlvr = (typeof arrayProtCred['nrpatlvr'] == 'undefined') ? '' : arrayProtCred['nrpatlvr'];
-    var dtoutspc = (typeof arrayProtCred['dtoutspc'] == 'undefined') ? '' : arrayProtCred['dtoutspc'];
-    var dtoutris = (typeof arrayProtCred['dtoutris'] == 'undefined') ? '' : arrayProtCred['dtoutris'];
-    var vlsfnout = (typeof arrayProtCred['vlsfnout'] == 'undefined') ? '' : arrayProtCred['vlsfnout'];
+			var nrgarope = (typeof arrayProtCred['nrgarope'] == 'undefined') ? '' : arrayProtCred['nrgarope'];
+			var nrperger = (typeof arrayProtCred['nrperger'] == 'undefined') ? '' : arrayProtCred['nrperger'];
+			var dtcnsspc = (typeof arrayProtCred['dtcnsspc'] == 'undefined') ? '' : arrayProtCred['dtcnsspc'];
+			var nrinfcad = (typeof arrayProtCred['nrinfcad'] == 'undefined') ? '' : arrayProtCred['nrinfcad'];
+			var dtdrisco = (typeof arrayProtCred['dtdrisco'] == 'undefined') ? '' : arrayProtCred['dtdrisco'];
+			var vltotsfn = (typeof arrayProtCred['vltotsfn'] == 'undefined') ? '' : arrayProtCred['vltotsfn'];
+			var qtopescr = (typeof arrayProtCred['qtopescr'] == 'undefined') ? '' : arrayProtCred['qtopescr'];
+			var qtifoper = (typeof arrayProtCred['qtifoper'] == 'undefined') ? '' : arrayProtCred['qtifoper'];
+			var nrliquid = (typeof arrayProtCred['nrliquid'] == 'undefined') ? '' : arrayProtCred['nrliquid'];
+			var vlopescr = (typeof arrayProtCred['vlopescr'] == 'undefined') ? '' : arrayProtCred['vlopescr'];
+			var vlrpreju = (typeof arrayProtCred['vlrpreju'] == 'undefined') ? '' : arrayProtCred['vlrpreju'];
+			var nrpatlvr = (typeof arrayProtCred['nrpatlvr'] == 'undefined') ? '' : arrayProtCred['nrpatlvr'];
+			var dtoutspc = (typeof arrayProtCred['dtoutspc'] == 'undefined') ? '' : arrayProtCred['dtoutspc'];
+			var dtoutris = (typeof arrayProtCred['dtoutris'] == 'undefined') ? '' : arrayProtCred['dtoutris'];
+			var vlsfnout = (typeof arrayProtCred['vlsfnout'] == 'undefined') ? '' : arrayProtCred['vlsfnout'];
 
-    var vlsalari = (typeof arrayRendimento['vlsalari'] == 'undefined') ? '' : arrayRendimento['vlsalari'];
-    var vloutras = (typeof arrayRendimento['vloutras'] == 'undefined') ? '' : arrayRendimento['vloutras'];
-    var vlalugue = (typeof arrayRendimento['vlalugue'] == 'undefined') ? '' : arrayRendimento['vlalugue'];
-    var inconcje = (typeof arrayRendimento['inconcje'] == 'undefined') ? '' : arrayRendimento['inconcje'];
-    var vlsalcon = (typeof arrayRendimento['vlsalcon'] == 'undefined') ? '' : arrayRendimento['vlsalcon'];
-    var nmempcje = (typeof arrayRendimento['nmextemp'] == 'undefined') ? '' : arrayRendimento['nmextemp'];
-    var flgdocje = (typeof arrayRendimento['flgdocje'] == 'undefined') ? '' : arrayRendimento['flgdocje'];
+			var vlsalari = (typeof arrayRendimento['vlsalari'] == 'undefined') ? '' : arrayRendimento['vlsalari'];
+			var vloutras = (typeof arrayRendimento['vloutras'] == 'undefined') ? '' : arrayRendimento['vloutras'];
+			var vlalugue = (typeof arrayRendimento['vlalugue'] == 'undefined') ? '' : arrayRendimento['vlalugue'];
+			var inconcje = (typeof arrayRendimento['inconcje'] == 'undefined') ? '' : arrayRendimento['inconcje'];
+			var vlsalcon = (typeof arrayRendimento['vlsalcon'] == 'undefined') ? '' : arrayRendimento['vlsalcon'];
+			var nmempcje = (typeof arrayRendimento['nmextemp'] == 'undefined') ? '' : arrayRendimento['nmextemp'];
+			var flgdocje = (typeof arrayRendimento['flgdocje'] == 'undefined') ? '' : arrayRendimento['flgdocje'];
 
-    if (flgdocje == 'no') {
-        var nrctacje = 0;
-        var nrcpfcjg = 0;
-    } else {
-        var nrctacje = (typeof arrayAssociado['nrctacje'] == 'undefined') ? '' : arrayAssociado['nrctacje'];
-        var nrcpfcjg = (typeof arrayAssociado['nrcpfcjg'] == 'undefined') ? '' : arrayAssociado['nrcpfcjg'];
-    }
+			if (flgdocje == 'no') {
+					var nrctacje = 0;
+					var nrcpfcjg = 0;
+			} else {
+					var nrctacje = (typeof arrayAssociado['nrctacje'] == 'undefined') ? '' : arrayAssociado['nrctacje'];
+					var nrcpfcjg = (typeof arrayAssociado['nrcpfcjg'] == 'undefined') ? '' : arrayAssociado['nrcpfcjg'];
+			}
 
-    var perfatcl = (typeof arrayRendimento['perfatcl'] == 'undefined') ? '' : arrayRendimento['perfatcl'];
-    var vlmedfat = (typeof arrayRendimento['vlmedfat'] == 'undefined') ? '' : arrayRendimento['vlmedfat'];
-    var dsjusren = (typeof arrayRendimento['dsjusren'] == 'undefined') ? '' : arrayRendimento['dsjusren'];
+			var perfatcl = (typeof arrayRendimento['perfatcl'] == 'undefined') ? '' : arrayRendimento['perfatcl'];
+			var vlmedfat = (typeof arrayRendimento['vlmedfat'] == 'undefined') ? '' : arrayRendimento['vlmedfat'];
+			var dsjusren = (typeof arrayRendimento['dsjusren'] == 'undefined') ? '' : arrayRendimento['dsjusren'];
 
-    var dsdfinan = (typeof aux_dsdfinan == 'undefined') ? '' : aux_dsdfinan;
-    var dsdrendi = (typeof aux_dsdrendi == 'undefined') ? '' : aux_dsdrendi;
-    var dsdebens = (typeof aux_dsdebens == 'undefined') ? '' : aux_dsdebens;
-    var dsdalien = (typeof aux_dsdalien == 'undefined') ? '' : aux_dsdalien;
-    var dsinterv = (typeof par_dsinterv == 'undefined') ? '' : par_dsinterv;
+			var dsdfinan = (typeof aux_dsdfinan == 'undefined') ? '' : aux_dsdfinan;
+			var dsdrendi = (typeof aux_dsdrendi == 'undefined') ? '' : aux_dsdrendi;
+			var dsdebens = (typeof aux_dsdebens == 'undefined') ? '' : aux_dsdebens;
+			var dsdalien = (typeof aux_dsdalien == 'undefined') ? '' : aux_dsdalien;
+			var dsinterv = (typeof par_dsinterv == 'undefined') ? '' : par_dsinterv;
 
-    var nmdaval1 = (typeof aux_nmdaval0 == 'undefined') ? '' : aux_nmdaval0;
-    var nrcpfav1 = (typeof aux_nrcpfav0 == 'undefined') ? '' : aux_nrcpfav0;
-    var tpdocav1 = (typeof aux_tpdocav0 == 'undefined') ? '' : aux_tpdocav0;
-    var dsdocav1 = (typeof aux_dsdocav0 == 'undefined') ? '' : aux_dsdocav0;
-    var nmdcjav1 = (typeof aux_nmdcjav0 == 'undefined') ? '' : aux_nmdcjav0;
-    var cpfcjav1 = (typeof aux_cpfcjav0 == 'undefined') ? '' : aux_cpfcjav0;
-    var tdccjav1 = (typeof aux_tdccjav0 == 'undefined') ? '' : aux_tdccjav0;
-    var doccjav1 = (typeof aux_doccjav0 == 'undefined') ? '' : aux_doccjav0;
-    var ende1av1 = (typeof aux_ende1av0 == 'undefined') ? '' : aux_ende1av0;
-    var ende2av1 = (typeof aux_ende2av0 == 'undefined') ? '' : aux_ende2av0;
-    var nrfonav1 = (typeof aux_nrfonav0 == 'undefined') ? '' : aux_nrfonav0;
-    var emailav1 = (typeof aux_emailav0 == 'undefined') ? '' : aux_emailav0;
-    var nmcidav1 = (typeof aux_nmcidav0 == 'undefined') ? '' : aux_nmcidav0;
-    var cdufava1 = (typeof aux_cdufava0 == 'undefined') ? '' : aux_cdufava0;
-    var nrcepav1 = (typeof aux_nrcepav0 == 'undefined') ? '' : aux_nrcepav0;
-    var cdnacio1 = (typeof aux_cdnacio0 == 'undefined') ? '' : aux_cdnacio0;
-    var vledvmt1 = (typeof aux_vledvmt0 == 'undefined') ? '' : aux_vledvmt0;
-    var vlrenme1 = (typeof aux_vlrenme0 == 'undefined') ? '' : aux_vlrenme0;
-    var nrender1 = (typeof aux_nrender0 == 'undefined') ? '' : aux_nrender0;
-    var complen1 = (typeof aux_complen0 == 'undefined') ? '' : aux_complen0;
-    var nrcxaps1 = (typeof aux_nrcxaps0 == 'undefined') ? '' : aux_nrcxaps0;
+			var nmdaval1 = (typeof aux_nmdaval0 == 'undefined') ? '' : aux_nmdaval0;
+			var nrcpfav1 = (typeof aux_nrcpfav0 == 'undefined') ? '' : aux_nrcpfav0;
+			var tpdocav1 = (typeof aux_tpdocav0 == 'undefined') ? '' : aux_tpdocav0;
+			var dsdocav1 = (typeof aux_dsdocav0 == 'undefined') ? '' : aux_dsdocav0;
+			var nmdcjav1 = (typeof aux_nmdcjav0 == 'undefined') ? '' : aux_nmdcjav0;
+			var cpfcjav1 = (typeof aux_cpfcjav0 == 'undefined') ? '' : aux_cpfcjav0;
+			var tdccjav1 = (typeof aux_tdccjav0 == 'undefined') ? '' : aux_tdccjav0;
+			var doccjav1 = (typeof aux_doccjav0 == 'undefined') ? '' : aux_doccjav0;
+			var ende1av1 = (typeof aux_ende1av0 == 'undefined') ? '' : aux_ende1av0;
+			var ende2av1 = (typeof aux_ende2av0 == 'undefined') ? '' : aux_ende2av0;
+			var nrfonav1 = (typeof aux_nrfonav0 == 'undefined') ? '' : aux_nrfonav0;
+			var emailav1 = (typeof aux_emailav0 == 'undefined') ? '' : aux_emailav0;
+			var nmcidav1 = (typeof aux_nmcidav0 == 'undefined') ? '' : aux_nmcidav0;
+			var cdufava1 = (typeof aux_cdufava0 == 'undefined') ? '' : aux_cdufava0;
+			var nrcepav1 = (typeof aux_nrcepav0 == 'undefined') ? '' : aux_nrcepav0;
+			var cdnacio1 = (typeof aux_cdnacio0 == 'undefined') ? '' : aux_cdnacio0;
+			var vledvmt1 = (typeof aux_vledvmt0 == 'undefined') ? '' : aux_vledvmt0;
+			var vlrenme1 = (typeof aux_vlrenme0 == 'undefined') ? '' : aux_vlrenme0;
+			var nrender1 = (typeof aux_nrender0 == 'undefined') ? '' : aux_nrender0;
+			var complen1 = (typeof aux_complen0 == 'undefined') ? '' : aux_complen0;
+			var nrcxaps1 = (typeof aux_nrcxaps0 == 'undefined') ? '' : aux_nrcxaps0;
 
-    // Daniel
-    var inpesso1 = (typeof aux_inpesso0 == 'undefined') ? '' : aux_inpesso0;
-    var dtnasct1 = (typeof aux_dtnasct0 == 'undefined') ? '' : aux_dtnasct0;
+			// Daniel
+			var inpesso1 = (typeof aux_inpesso0 == 'undefined') ? '' : aux_inpesso0;
+			var dtnasct1 = (typeof aux_dtnasct0 == 'undefined') ? '' : aux_dtnasct0;
 
-    var nmdaval2 = (typeof aux_nmdaval1 == 'undefined') ? '' : aux_nmdaval1;
-    var nrcpfav2 = (typeof aux_nrcpfav1 == 'undefined') ? '' : aux_nrcpfav1;
-    var tpdocav2 = (typeof aux_tpdocav1 == 'undefined') ? '' : aux_tpdocav1;
-    var dsdocav2 = (typeof aux_dsdocav1 == 'undefined') ? '' : aux_dsdocav1;
-    var nmdcjav2 = (typeof aux_nmdcjav1 == 'undefined') ? '' : aux_nmdcjav1;
-    var cpfcjav2 = (typeof aux_cpfcjav1 == 'undefined') ? '' : aux_cpfcjav1;
-    var tdccjav2 = (typeof aux_tdccjav1 == 'undefined') ? '' : aux_tdccjav1;
-    var doccjav2 = (typeof aux_doccjav1 == 'undefined') ? '' : aux_doccjav1;
-    var ende1av2 = (typeof aux_ende1av1 == 'undefined') ? '' : aux_ende1av1;
-    var ende2av2 = (typeof aux_ende2av1 == 'undefined') ? '' : aux_ende2av1;
-    var nrfonav2 = (typeof aux_nrfonav1 == 'undefined') ? '' : aux_nrfonav1;
-    var emailav2 = (typeof aux_emailav1 == 'undefined') ? '' : aux_emailav1;
-    var nmcidav2 = (typeof aux_nmcidav1 == 'undefined') ? '' : aux_nmcidav1;
-    var cdufava2 = (typeof aux_cdufava1 == 'undefined') ? '' : aux_cdufava1;
-    var nrcepav2 = (typeof aux_nrcepav1 == 'undefined') ? '' : aux_nrcepav1;
-    var cdnacio2 = (typeof aux_cdnacio1 == 'undefined') ? '' : aux_cdnacio1;
-    var vledvmt2 = (typeof aux_vledvmt1 == 'undefined') ? '' : aux_vledvmt1;
-    var vlrenme2 = (typeof aux_vlrenme1 == 'undefined') ? '' : aux_vlrenme1;
-    var nrender2 = (typeof aux_nrender1 == 'undefined') ? '' : aux_nrender1;
-    var complen2 = (typeof aux_complen1 == 'undefined') ? '' : aux_complen1;
-    var nrcxaps2 = (typeof aux_nrcxaps1 == 'undefined') ? '' : aux_nrcxaps1;
+			var nmdaval2 = (typeof aux_nmdaval1 == 'undefined') ? '' : aux_nmdaval1;
+			var nrcpfav2 = (typeof aux_nrcpfav1 == 'undefined') ? '' : aux_nrcpfav1;
+			var tpdocav2 = (typeof aux_tpdocav1 == 'undefined') ? '' : aux_tpdocav1;
+			var dsdocav2 = (typeof aux_dsdocav1 == 'undefined') ? '' : aux_dsdocav1;
+			var nmdcjav2 = (typeof aux_nmdcjav1 == 'undefined') ? '' : aux_nmdcjav1;
+			var cpfcjav2 = (typeof aux_cpfcjav1 == 'undefined') ? '' : aux_cpfcjav1;
+			var tdccjav2 = (typeof aux_tdccjav1 == 'undefined') ? '' : aux_tdccjav1;
+			var doccjav2 = (typeof aux_doccjav1 == 'undefined') ? '' : aux_doccjav1;
+			var ende1av2 = (typeof aux_ende1av1 == 'undefined') ? '' : aux_ende1av1;
+			var ende2av2 = (typeof aux_ende2av1 == 'undefined') ? '' : aux_ende2av1;
+			var nrfonav2 = (typeof aux_nrfonav1 == 'undefined') ? '' : aux_nrfonav1;
+			var emailav2 = (typeof aux_emailav1 == 'undefined') ? '' : aux_emailav1;
+			var nmcidav2 = (typeof aux_nmcidav1 == 'undefined') ? '' : aux_nmcidav1;
+			var cdufava2 = (typeof aux_cdufava1 == 'undefined') ? '' : aux_cdufava1;
+			var nrcepav2 = (typeof aux_nrcepav1 == 'undefined') ? '' : aux_nrcepav1;
+			var cdnacio2 = (typeof aux_cdnacio1 == 'undefined') ? '' : aux_cdnacio1;
+			var vledvmt2 = (typeof aux_vledvmt1 == 'undefined') ? '' : aux_vledvmt1;
+			var vlrenme2 = (typeof aux_vlrenme1 == 'undefined') ? '' : aux_vlrenme1;
+			var nrender2 = (typeof aux_nrender1 == 'undefined') ? '' : aux_nrender1;
+			var complen2 = (typeof aux_complen1 == 'undefined') ? '' : aux_complen1;
+			var nrcxaps2 = (typeof aux_nrcxaps1 == 'undefined') ? '' : aux_nrcxaps1;
     } 
     // Daniel
     var inpesso2 = (typeof aux_inpesso1 == 'undefined') ? '' : aux_inpesso1;
@@ -1845,7 +1850,11 @@ function verificaQtDiaLib() {
             $("#qtdialib").datepicker('disable');
             $('#qtdialib').val('0');
             $('#qtdialib').change();
-            $("#idfiniof").habilitaCampo();
+            if (possuiPortabilidade == 'S') {
+              $("#idfiniof").desabilitaCampo();
+            }else {
+              $("#idfiniof").habilitaCampo();
+            }
             break;
         case '2': // Pos-Fixado
             $('#flgpagto').desabilitaCampo();
@@ -1853,7 +1862,11 @@ function verificaQtDiaLib() {
             $("#qtdialib").datepicker('disable');
             $('#qtdialib').val('0');
             $('#qtdialib').change();
-            $("#idfiniof").habilitaCampo();
+            if (possuiPortabilidade == 'S') {
+              $("#idfiniof").desabilitaCampo();
+            }else {
+              $("#idfiniof").habilitaCampo();
+            }
             break;
     }
     return true;
@@ -2072,7 +2085,6 @@ function controlaLayout(operacao) {
                 } else {
                     // no - Conta   yes - Folha
                     $('#flgpagto', '#frmNovaProp').val(arrayProposta['flgpagto']);
-
                 }
 
                 //Ajusta o tamanho do campo "Imprime proposta" de acordo com o tipo de empréstimo
@@ -2161,6 +2173,8 @@ function controlaLayout(operacao) {
             if (possuiPortabilidade == 'S') {
                 $("#cdfinemp", "#frmNovaProp").desabilitaCampo();
                 $("#tpemprst", "#frmNovaProp").desabilitaCampo();
+                $("#idfiniof", "#frmNovaProp").desabilitaCampo();
+                $("#idfiniof").val(0);
             }
 
 
@@ -7199,7 +7213,7 @@ function fechaFaturamentos() {
 //***************************************************
 
 function mostraTelaAltera(operacao) {
-    showMsgAguardo('Aguarde, abrindo altera&ccedil;&atilde;o...');
+		showMsgAguardo('Aguarde, abrindo altera&ccedil;&atilde;o...');
 
     exibeRotina($('#divUsoGenerico'));
 
