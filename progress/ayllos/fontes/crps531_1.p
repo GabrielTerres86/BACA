@@ -591,7 +591,6 @@ IF   NOT AVAIL crapdat THEN
          UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") +
                            " - " + glb_cdprogra + "' --> '"  + 
                            glb_dscritic + " >> log/proc_batch.log").
-
          RUN finaliza_paralelo.
          QUIT.
      END. 
@@ -863,7 +862,7 @@ FOR EACH crawarq NO-LOCK BY crawarq.nrsequen:
 
                          /*Mensagem nao tratada pelo sistema CECRED e devemos enviar uma mensagem
                            STR0010 como resposta. SD 553778 */          
-			 IF CAN-DO("PAG0142R2,STR0034R2,PAG0134R2",aux_CodMsg) THEN
+			 IF CAN-DO("STR0006R2,PAG0142R2,STR0034R2,PAG0134R2",aux_CodMsg) THEN
                             DO:
                                         /* Busca cooperativa de destino */ 
                     FIND crabcop WHERE crabcop.cdagectl = INT(aux_AgCredtd)
@@ -2219,14 +2218,6 @@ PROCEDURE importa_xml.
       IF  hNode:NAME = "STR0003R2" THEN
           RUN trata_numerario.
       ELSE		  
-/* Inclusão tratamento mensagem SLC0001 - Mauricio - 03/11/2017 */
-      IF  hNode:NAME = "SLC0001" THEN
-          RUN trata_arquivo_slc.
-      ELSE
-           /* Inclusão tratamento mensagem LDL0024 - Alexandre (Mouts) - 12/12/2017 */
-      IF  hNode:NAME = "LDL0024" THEN
-          RUN trata_arquivo_ldl.  
-      ELSE
       IF  hNode:NAME = "CIR0020" THEN /* SD 805540 - 14/02/2018 - Marcelo (Mouts) */
           RUN trata_numerario_cir0020.
       ELSE
@@ -2284,7 +2275,6 @@ PROCEDURE importa_xml.
                                                    ENTRY(1, aux_DtMovto, "-")), /* Data da mensagem */ 
                                         INPUT aux_CodMsg,                       /* Evento */ 
                                         INPUT aux_msgspb_xml).                    /* XML da mensagem */ 
- 
             END.
             ELSE
                 DO:
@@ -6872,7 +6862,6 @@ PROCEDURE grava_mensagem_ted.
      
    DEF VAR aux_cderro AS INTE                                     NO-UNDO.
    DEF VAR aux_dserro AS CHAR                                     NO-UNDO.
-   
    
    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
 
