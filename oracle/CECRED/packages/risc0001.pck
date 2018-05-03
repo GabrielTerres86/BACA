@@ -867,11 +867,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
           --Data de corte menor que data da conta inadimplente
           IF  rw_conta_negativa.dtinictr  <  vr_dtcorte_prm THEN
               -- Dias úteis
-             EXECUTE IMMEDIATE 'ALTER SESSION SET NLS_DATE_FORMAT = ''DD/MM/YYYY''';
-
-             vr_dtmvtolt:=cecred.tela_atenda_deposvis.fn_soma_dias_uteis_data(pr_cdcooper => par_cdcooper,
+             
+              vr_dtmvtolt:=TO_DATE(cecred.tela_atenda_deposvis.fn_soma_dias_uteis_data(pr_cdcooper => par_cdcooper,
                                                                               pr_dtmvtolt => rw_conta_negativa.dtinictr,
-                                                                              pr_qtddias  => 60);
+                                                                              pr_qtddias  => 60),'DD/MM/RRRR');
            ELSE
              --Dias corridos
              vr_dtmvtolt := TO_DATE(TO_CHAR(rw_conta_negativa.dtinictr),'DD/MM/YYYY') +60;
