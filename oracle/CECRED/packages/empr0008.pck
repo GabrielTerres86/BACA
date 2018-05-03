@@ -144,7 +144,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0008 IS
   --  Sistema  : Rotinas referentes a Portabilidade de Credito
   --  Sigla    : EMPR
   --  Autor    : James Prust Junior
-  --  Data     : Julho - 2015.                   Ultima atualizacao: 
+  --  Data     : Julho - 2015.                   Ultima atualizacao: 31/01/2018
   --
   -- Dados referentes ao programa:
   --
@@ -152,7 +152,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0008 IS
   -- Objetivo  : Centralizar rotinas relacionadas ao Estorno de Parcelas do PP
   --
   -- Alteracoes:
-  --
+  /*
+  31/01/2018 - #826621 Conforme posicionamento da área, os contratos de portabilidade também poderão 
+               ser estornados. Regra retirada do sistema. (Carlos)
+               
+  03/05/2018 - P404 - Inclusão do novo tipo de contrato 4, para permitir estornos e não lançar a crítica
+               linha de crédito não permitida (Lucas Skroch - Supero)
+  */
   ---------------------------------------------------------------------------  
   PROCEDURE pc_tela_busca_lancto_estorno(pr_nrdconta IN crapepr.nrdconta%TYPE --> Numero da Conta
                                         ,pr_nrctremp IN crapepr.nrctremp%TYPE --> Numero do Contrato
@@ -838,7 +844,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0008 IS
      Sistema : Rotinas referentes ao limite de credito
      Sigla   : LIMI
      Autor   : James Prust Junior
-     Data    : Setembro/15.                    Ultima atualizacao:
+     Data    : Setembro/15.                    Ultima atualizacao: 14/02/2017
 
      Dados referentes ao programa:
 
@@ -847,7 +853,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0008 IS
      Objetivo  : Validacao para efetuar o estorno
 
      Observacao: -----
-     Alteracoes:
+
+     Alteracoes: 14/02/2017 - Nao permitir estorno para situacao Ativo ou Quitado. (Jaison/James - PRJ302)
+
      ..............................................................................*/
     DECLARE
       vr_tab_erro                  GENE0001.typ_tab_erro;
@@ -857,7 +865,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0008 IS
       vr_cdcritic      crapcri.cdcritic%TYPE;
       vr_dscritic      VARCHAR2(10000);
       vr_des_reto      VARCHAR2(3);
-      vr_typ_saida     VARCHAR2(3);
       
       -- Tratamento de erros
       vr_exc_saida     EXCEPTION;
@@ -873,6 +880,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0008 IS
       vr_dstextab        craptab.dstextab%TYPE;
       vr_vlmaxest        NUMBER(15,2) := 0;
       vr_vltotest        NUMBER(15,2) := 0;
+      vr_flgretativo     INTEGER := 0;
+      vr_flgretquitado   INTEGER := 0;
+      vr_flgretcancelado INTEGER := 0;
           
     BEGIN
       vr_tab_erro.DELETE;
@@ -900,7 +910,32 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0008 IS
       ELSIF NVL(LENGTH(TRIM(pr_dsjustificativa)),0) > 250 THEN
         vr_dscritic := 'O tamanho do texto do campo Justificativa excedeu o tamanho maximo';
         RAISE vr_exc_saida;
-      
+      END IF;                        
+
+      RECP0001.pc_verifica_situacao_acordo(pr_cdcooper        => vr_cdcooper
+                                          ,pr_nrdconta        => pr_nrdconta
+                                          ,pr_nrctremp        => pr_nrctremp
+                                          ,pr_cdorigem        => 3
+                                          ,pr_flgretativo     => vr_flgretativo    
+                                          ,pr_flgretquitado   => vr_flgretquitado  
+                                         	,pr_flgretcancelado => vr_flgretcancelado
+                                          ,pr_cdcritic        => vr_cdcritic
+                                          ,pr_dscritic        => vr_dscritic);
+
+      IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_saida;
+      END IF;
+
+      -- Se estiver ATIVO
+      IF vr_flgretativo = 1 THEN
+        vr_dscritic := 'Estorno nao permitido, emprestimo em acordo.';
+        RAISE vr_exc_saida;
+      END IF;
+                 
+      -- Se estiver QUITADO
+      IF vr_flgretquitado = 1 THEN
+        vr_dscritic := 'Lancamento nao permitido, contrato liquidado atraves de acordo.';
+        RAISE vr_exc_saida;
       END IF;                        
                               
       vr_vlmaxest := 0;
@@ -2375,7 +2410,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0008 IS
                crapepr.cdlcremp,
                crapepr.inliquid,
                crapepr.cdfinemp,
-               crawepr.dtvencto
+               crawepr.dtvencto,
+               crawepr.idquapro,
+               crawepr.dtlibera
 				  FROM crapepr
           
           JOIN crawepr ON crawepr.cdcooper = crapepr.cdcooper
@@ -2552,8 +2589,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0008 IS
         CLOSE cr_craplcr;
       END IF;
       
-      -- Emprestimo/Financiamento, Alienacao de Veiculo, Hipoteca de Imoveis
-      IF rw_craplcr.tpctrato NOT IN (1,2,3) THEN
+      -- Emprestimo/Financiamento, Alienacao de Veiculo, Hipoteca de Imoveis, Aplicacao
+      IF rw_craplcr.tpctrato NOT IN (1,2,3,4) THEN
         vr_dscritic := 'Tipo de contrato da linha de credito nao permitida';
         RAISE vr_exc_saida;
       END IF;
@@ -2573,10 +2610,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0008 IS
       END IF;
       
       -- Emprestimo/Financiamento nao pode ser do tipo Portabilidade
+      /* 31/01/2018 #826621 - Conforme posicionamento da área, os contratos de portabilidade também
+         poderão ser estornados. Regra retirada do sistema.
       IF rw_crapfin.tpfinali = 2 THEN
         vr_dscritic := 'Nao e permitido efetuar o estorno, contrato de portabilidade';
         RAISE vr_exc_saida;
-      END IF;
+      END IF; */
      
       -- Caso o contrato de emprestimo estiver liquidado, precisamos fazer algumas validacoes  
       IF rw_crapepr.inliquid = 1 THEN
@@ -2648,7 +2687,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0008 IS
       que no dia do vencimento não ocorreu nenhum pagamento, irá gerar residuo
       no contrato será avaliada uma solução definitiva posteriormente */  
       IF  (rw_crapdat.dtmvtolt > vr_dtvenmes)
-      AND (rw_crapepr.dtultpag < vr_dtvenmes) THEN 
+      AND (rw_crapepr.dtultpag < vr_dtvenmes) 
+      -- garantir que irá permitir estorno dentro da carencia - Rafael Maciel (RKAM)
+      AND ( (rw_crapepr.dtvencto < rw_crapdat.dtmvtolt) 
+          AND (rw_crapepr.tpemprst = 1)
+          AND (rw_crapepr.idquapro = 0)
+          AND (rw_crapepr.dtlibera > rw_crapdat.dtmvtolt)
+      ) THEN
           vr_dscritic := 'Contrato nao pode ser estornado.';
           RAISE vr_exc_saida;
       END IF; 
