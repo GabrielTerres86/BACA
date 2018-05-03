@@ -5114,6 +5114,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
          AND (tbcc_produtos_coop.dtvigencia IS NULL OR
               tbcc_produtos_coop.dtvigencia >= TRUNC(SYSDATE))
          AND tbcc_produto.cdproduto      = tbcc_produtos_coop.cdproduto
+         -- Produtos que não devem ser exibidos
+         AND tbcc_produto.cdproduto NOT IN (25)
        ORDER BY tbcc_produtos_coop.tpproduto,
                 tbcc_produtos_coop.nrordem_exibicao;
 
@@ -5680,6 +5682,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
                tbcc_produto.dsproduto,
                tbcc_produto.idfaixa_valor
         FROM   tbcc_produto
+		WHERE  tbcc_produto.flgitem_soa = 1  /* Somente os produtos cuja flag "item ofertado na tela atenda" esteja marcada */
         ORDER BY tbcc_produto.dsproduto;
 
       CURSOR cr_tipo_conta_coop IS
