@@ -22,7 +22,7 @@ PROCEDURE pc_grava_historico(pr_cdoperador        IN  tbgen_debitador_historico.
                            , pr_tpoperacao        IN  tbgen_debitador_historico.tpoperacao%TYPE        --> Tipo de operação
                            , pr_tporigem          IN  tbgen_debitador_historico.tporigem%TYPE          --> Origem da operação
                            , pr_dscritic          OUT VARCHAR2);                                       --> Descrição da crítica
-													 
+
 PROCEDURE pc_busca_debitador_hist(pr_tporigem  IN tbgen_debitador_historico.tporigem%TYPE  --> Origem (0 ==> Todas, 1 ==> Cad. Horários, 2 ==> Cad. Prioridades, 3 ==> Exec. Emergenc.)
                                 , pr_xmllog    IN VARCHAR2                                 --> XML com informações de LOG
                                 , pr_cdcritic  OUT PLS_INTEGER                             --> Código da crítica
@@ -75,14 +75,14 @@ PROCEDURE pc_busca_debitador_priori_res(pr_cdcooper IN NUMBER
                                       , pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
                                       , pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
                                       , pr_des_erro OUT VARCHAR2);
-																			 
+
 PROCEDURE pc_busca_debitador_priori_comp(pr_idhora_processamento tbgen_debitador_horario.idhora_processamento%TYPE
 	                                     , pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
                                        , pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
                                        , pr_dscritic OUT VARCHAR2             --> Descrição da crítica
                                        , pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
                                        , pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
-                                       , pr_des_erro OUT VARCHAR2);																			 
+                                       , pr_des_erro OUT VARCHAR2);
 
 PROCEDURE pc_busca_debitador_processo(pr_nrprioridade IN TBGEN_DEBITADOR_PARAM.nrprioridade%TYPE -->Identificador unico da prioridade do processamento
                                     , pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
@@ -91,7 +91,7 @@ PROCEDURE pc_busca_debitador_processo(pr_nrprioridade IN TBGEN_DEBITADOR_PARAM.n
                                     , pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
                                     , pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
                                     , pr_des_erro OUT VARCHAR2);
-																		
+
 PROCEDURE pc_ativa_debitador_processo(pr_cdprocesso IN tbgen_debitador_param.cdprocesso%TYPE   --> Código do processo a ativar
 	                                  , pr_horarios IN VARCHAR2                                  --> Lista de horários a agendar para o processo
                                     , pr_xmllog    IN VARCHAR2                                 --> XML com informações de LOG
@@ -108,14 +108,14 @@ PROCEDURE pc_exclui_debitador_prioridade(pr_nrprioridade IN TBGEN_DEBITADOR_PARA
                                         , pr_retxml   IN OUT NOCOPY XMLType           --> Arquivo de retorno do XML
                                         , pr_nmdcampo OUT VARCHAR2                    --> Nome do campo com erro
                                         , pr_des_erro OUT VARCHAR2);
-																				
+
 PROCEDURE pc_desativa_debitador_processo(pr_cdprocesso IN tbgen_debitador_param.cdprocesso%TYPE   --> Código do processo a ativar
                                        , pr_xmllog    IN VARCHAR2                                 --> XML com informações de LOG
                                        , pr_cdcritic  OUT PLS_INTEGER                             --> Código da crítica
                                        , pr_dscritic  OUT VARCHAR2                                --> Descrição da crítica
                                        , pr_retxml    IN OUT NOCOPY XMLType                       --> Arquivo de retorno do XML
                                        , pr_nmdcampo  OUT VARCHAR2                                --> Nome do campo com erro
-                                       , pr_des_erro  OUT VARCHAR2);																				
+                                       , pr_des_erro  OUT VARCHAR2);
 
 PROCEDURE pc_redefine_debitador_priori(pr_nrprioridade IN TBGEN_DEBITADOR_PARAM.nrprioridade%TYPE -->Identificador unico da prioridade do processamento
                                      , pr_cdprocesso   IN TBGEN_DEBITADOR_PARAM.cdprocesso%TYPE -->Identificador unico do código do processo
@@ -136,7 +136,7 @@ PROCEDURE pc_busca_debitador_hr_proces( pr_cdprocesso tbgen_debitador_param.cdpr
                                       , pr_retxml   IN OUT NOCOPY XMLType                    --> Arquivo de retorno do XML
                                       , pr_nmdcampo OUT VARCHAR2                             --> Nome do campo com erro
                                       , pr_des_erro OUT VARCHAR2);
-																			
+
 PROCEDURE pc_busca_debitador_hr_exclus( pr_cdprocesso tbgen_debitador_param.cdprocesso%TYPE  --> Código do processo
 	                                    , pr_xmllog   IN VARCHAR2                              --> XML com informações de LOG
                                       , pr_cdcritic OUT PLS_INTEGER                          --> Código da crítica
@@ -169,7 +169,7 @@ PROCEDURE pc_exclui_debitador_hr_proces(pr_cdprocesso           IN TBGEN_DEBITAD
 
 PROCEDURE pc_executar_debitador_emergen(pr_cdcooper     IN NUMBER
 	                                    , pr_processos    IN VARCHAR2         --> Lista de processos a executar (separada por ";")
-																			, pr_tipoexecucao IN VARCHAR2         --> Tipo de execução ("P" -> Programas específicos / "E" -> Programa que ocasionouo erro) 
+																			, pr_tipoexecucao IN VARCHAR2         --> Tipo de execução ("P" -> Programas específicos / "E" -> Programa que ocasionouo erro)
                                       , pr_xmllog       IN VARCHAR2                     --> XML com informações de LOG
                                       , pr_cdcritic     OUT PLS_INTEGER                 --> Código da crítica
                                       , pr_dscritic     OUT VARCHAR2                    --> Descrição da crítica
@@ -416,7 +416,7 @@ BEGIN
                                pr_tag_nova => 'cdoperador',
                                pr_tag_cont => rw_historicos.cdoperador,
                                pr_des_erro => pr_dscritic);
-                               
+
         -- Nome do operador
         gene0007.pc_insere_tag(pr_xml      => pr_retxml,
                                pr_tag_pai  => 'Historico',
@@ -424,7 +424,7 @@ BEGIN
                                pr_tag_nova => 'nmoperad',
                                pr_tag_cont => rw_historicos.nmoperad,
                                pr_des_erro => pr_dscritic);
-                               
+
         -- Campo alterado
         gene0007.pc_insere_tag(pr_xml      => pr_retxml,
                                pr_tag_pai  => 'Historico',
@@ -432,7 +432,7 @@ BEGIN
                                pr_tag_nova => 'dscampo_alterado',
                                pr_tag_cont => rw_historicos.dscampo_alterado,
                                pr_des_erro => pr_dscritic);
-															 
+
 				-- Valor anterior
         gene0007.pc_insere_tag(pr_xml      => pr_retxml,
                                pr_tag_pai  => 'Historico',
@@ -440,7 +440,7 @@ BEGIN
                                pr_tag_nova => 'dsvalor_anterior',
                                pr_tag_cont => rw_historicos.dsvalor_anterior,
                                pr_des_erro => pr_dscritic);
-															 
+
 				-- Novo valor
         gene0007.pc_insere_tag(pr_xml      => pr_retxml,
                                pr_tag_pai  => 'Historico',
@@ -448,7 +448,7 @@ BEGIN
                                pr_tag_nova => 'dsvalor_novo',
                                pr_tag_cont => rw_historicos.dsvalor_novo,
                                pr_des_erro => pr_dscritic);
-															 
+
 				-- Processo
         gene0007.pc_insere_tag(pr_xml      => pr_retxml,
                                pr_tag_pai  => 'Historico',
@@ -456,7 +456,7 @@ BEGIN
                                pr_tag_nova => 'cdprocesso',
                                pr_tag_cont => rw_historicos.cdprocesso,
                                pr_des_erro => pr_dscritic);
-															 
+
 				-- Descrição do Processo
         gene0007.pc_insere_tag(pr_xml      => pr_retxml,
                                pr_tag_pai  => 'Historico',
@@ -464,7 +464,7 @@ BEGIN
                                pr_tag_nova => 'dsprocesso',
                                pr_tag_cont => rw_historicos.dsprocesso,
                                pr_des_erro => pr_dscritic);
-														
+
 			  -- Tipo de operação (Inclusão, Alteração, Exclusão, Exec. Emergencial)
         gene0007.pc_insere_tag(pr_xml      => pr_retxml,
                                pr_tag_pai  => 'Historico',
@@ -472,7 +472,7 @@ BEGIN
                                pr_tag_nova => 'tpoperacao',
                                pr_tag_cont => rw_historicos.tpoperacao,
                                pr_des_erro => pr_dscritic);
-															 
+
 				-- Tipo de operação (Inclusão, Alteração, Exclusão, Exec. Emergencial)
         gene0007.pc_insere_tag(pr_xml      => pr_retxml,
                                pr_tag_pai  => 'Historico',
@@ -480,14 +480,14 @@ BEGIN
                                pr_tag_nova => 'tipooperacao',
                                pr_tag_cont => rw_historicos.tipooperacao,
                                pr_des_erro => pr_dscritic);
-															 
+
 				-- Origem (Cad. Horários, Cad. Prioridades, Exec. Emergencial)
         gene0007.pc_insere_tag(pr_xml      => pr_retxml,
                                pr_tag_pai  => 'Historico',
                                pr_posicao  => vr_contador,
                                pr_tag_nova => 'tporigem',
                                pr_tag_cont => rw_historicos.tporigem,
-                               pr_des_erro => pr_dscritic);	
+                               pr_des_erro => pr_dscritic);
 
         vr_contador := vr_contador + 1;
     END LOOP;
@@ -710,8 +710,8 @@ DECLARE
       IF TRIM(vr_dscritic) IS NOT NULL THEN
           -- Levanta exceção
           RAISE vr_exc_saida;
-      END IF; 
-
+      END IF;
+		
       -- Criar cabeçalho do XML de retorno
       pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
       gene0007.pc_insere_tag(pr_xml      => pr_retxml,
@@ -719,13 +719,13 @@ DECLARE
                               pr_posicao  => 0,
                               pr_tag_nova => 'Dados',
                               pr_tag_cont => NULL,
-                              pr_des_erro => vr_dscritic); 
+                              pr_des_erro => vr_dscritic);
 
       -- Obtém o próximo ID para inserir na tabela
       vr_idhora_processamento := fn_obtem_proximo_id;
-			
+
 			vr_data_agendamento := trunc(SYSDATE);
-			
+
 			IF to_date(to_char(vr_data_agendamento, 'DD/MM/YYYY') || ' ' || pr_dhprocessamento, 'DD/MM/YYYY HH24:MI') < SYSDATE THEN
 				vr_data_agendamento := trunc(SYSDATE+1);
 				vr_agendado_dia_seguinte := TRUE;
@@ -754,7 +754,7 @@ DECLARE
         IF vr_dscritic IS NOT NULL THEN
           RAISE vr_exc_historico;
         END IF;
-				
+
 				gen_debitador_unico.pc_job_debitador_unico(vr_idhora_processamento, 'I');
 
         COMMIT;
@@ -773,7 +773,7 @@ DECLARE
                                pr_tag_nova => 'idhora_processamento',
                                pr_tag_cont => vr_idhora_processamento,
                                pr_des_erro => pr_dscritic);
-															 
+
 				IF vr_agendado_dia_seguinte THEN
 					gene0007.pc_insere_tag(pr_xml      => pr_retxml,
                                  pr_tag_pai  => 'Dados',
@@ -789,7 +789,7 @@ DECLARE
                                  pr_tag_cont => 'Horário incluído.',
                                  pr_des_erro => pr_dscritic);
 				END IF;
-				
+
 
    EXCEPTION
      WHEN DUP_VAL_ON_INDEX THEN
@@ -799,18 +799,18 @@ DECLARE
         pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                            '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
      WHEN vr_exc_historico THEN
-        pr_dscritic := 'Erro de gravação de histórico na rotina da tela TELA_PARDBT - pc_insere_horario: ' ||vr_dscritic;
+        pr_dscritic := 'Erro de gravação de histórico na rotina da tela TELA_PARDBT - pc_inclui_debitador_horarios: ' ||vr_dscritic;
         -- Carregar XML padrao para variavel de retorno
         pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                            '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
      WHEN vr_exc_saida THEN
-        pr_dscritic := 'Erro geral na rotina da tela TELA_PARDBT - pc_insere_horario: ' ||vr_dscritic;
+        pr_dscritic := 'Erro geral na rotina da tela TELA_PARDBT - pc_inclui_debitador_horarios: ' ||vr_dscritic;
         -- Carregar XML padrao para variavel de retorno
         pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                            '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
       WHEN OTHERS THEN
         ROLLBACK;
-        pr_dscritic := 'Erro não tratado na rotina da tela THEN - pc_insere_horario: ' || SQLERRM;
+        pr_dscritic := 'Erro não tratado na rotina da tela THEN - pc_inclui_debitador_horarios: ' || SQLERRM;
         -- Carregar XML padrão para variavel de retorno
         pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                            '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
@@ -1020,16 +1020,16 @@ DECLARE
     vr_idorigem VARCHAR2(100);
 
 		vr_dhprocessamento_ant VARCHAR2(10);  --> Valor anterior do campo para o histórico
-		vr_dependentes         INTEGER;  --> Quantidade de registros dependentes  
+		vr_dependentes         INTEGER;  --> Quantidade de registros dependentes
 
 		----->>> CURSORES <<<-----
-		
+
 		-- Verificar se há registros dependentes
     CURSOR cr_agendamentos IS
 		SELECT COUNT(1)
 		  FROM tbgen_debitador_horario_proc hor
 		 WHERE hor.idhora_processamento = pr_idhora_processamento;
-		 
+
 		-- Verificar se o id está cadastrado
 		CURSOR cr_horarios IS
 		SELECT to_char(hor.dhprocessamento, 'HH24:MI') dhprocessamento
@@ -1075,7 +1075,7 @@ DECLARE
 			END IF;
 
 			CLOSE cr_horarios;
-			
+
 			OPEN cr_agendamentos;
 			FETCH cr_agendamentos INTO vr_dependentes;
 
@@ -1103,7 +1103,7 @@ DECLARE
 				IF vr_dscritic IS NOT NULL THEN
 					RAISE vr_exc_historico;
 				END IF;
-				
+
 				gen_debitador_unico.pc_job_debitador_unico(pr_idhora_processamento, 'E');
 
 				COMMIT;
@@ -1131,7 +1131,7 @@ DECLARE
         pr_dscritic := 'Erro na rotina da tela TELA_DEBITADOR_UNICO - pc_exclui_debitador_horarios: '|| chr(38) || 'lt;br' || chr(38) || 'gt;Há agendamentos de processos vinculados ao horário.';
         -- Carregar XML padrao para variavel de retorno
         pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
-                                           '<Root><Erro>' || pr_dscritic || '</Erro></Root>');																					 
+                                           '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
 		  WHEN vr_exc_saida THEN
         pr_dscritic := 'Erro geral na rotina da tela TELA_DEBITADOR_UNICO - pc_exclui_debitador_horarios: ' ||vr_dscritic;
         -- Carregar XML padrao para variavel de retorno
@@ -1197,15 +1197,10 @@ DECLARE
     -- Variáveis gerais da procedure
     vr_contcont INTEGER := 0; -- Contador para inserção dos dados no XML
     vr_contador INTEGER := 0;
-	
-    vr_nrprioridade tbgen_debitador_param.nrprioridade%TYPE;
+
+    vr_cdprocesso   tbgen_debitador_param.cdprocesso%TYPE;
 		vr_dsprocesso   tbgen_debitador_param.dsprocesso%TYPE;
-		vr_cd_prg_erro  tbgen_debitador_param.cdprocesso%TYPE;
-		vr_dh_erro      DATE;
-		
-		vr_cd_erro crapcri.cdcritic%TYPE;             
-    vr_ds_erro crapcri.dscritic%TYPE;
-		
+
 		vr_qtd_prog_erro NUMBER;
 
     ----------->>> CURSORES <<<--------
@@ -1222,13 +1217,13 @@ DECLARE
 		 WHERE p.nrprioridade IS NOT NULL
      ORDER BY p.nrprioridade;
     rw_dados_prioridades cr_dados_prioridades%ROWTYPE;
-		
+
 		-- Dados das prioridades (processos)
-    CURSOR cr_processo(pr_nrprioridade tbgen_debitador_param.nrprioridade%TYPE) IS
-    SELECT p.cdprocesso
+    CURSOR cr_processo(pr_cdprocesso tbgen_debitador_param.cdprocesso%TYPE) IS
+    SELECT p.nrprioridade
 		     , p.dsprocesso
       FROM tbgen_debitador_param p
-		 WHERE p.nrprioridade = pr_nrprioridade;
+		 WHERE p.cdprocesso = pr_cdprocesso;
 		rw_processo cr_processo%ROWTYPE;
 
 
@@ -1261,52 +1256,45 @@ BEGIN
                            pr_tag_nova => 'Prioridades',
                            pr_tag_cont => NULL,
                            pr_des_erro => vr_dscritic);
-													 
+
 		SELECT COUNT(1)
 		  INTO vr_qtd_prog_erro
       FROM crapprm
      WHERE cdacesso = 'CTRL_ERRO_PRG_DEBITADOR'
-       AND cdcooper = pr_cdcooper 
-       AND substr(dsvlrprm,1,10) = to_char(SYSDATE,'dd/mm/rrrr');													
+       AND cdcooper = pr_cdcooper
+       AND substr(dsvlrprm,1,10) = to_char(SYSDATE,'dd/mm/rrrr');
 
-    IF vr_qtd_prog_erro > 0 THEN		
-		  gen_debitador_unico.pc_valida_exec_emergencial(pr_cdcooper         => pr_cdcooper
-                                                  ,pr_tpexec_emergencial => 'E'
-																									,pr_cd_prg_erro        => vr_cd_prg_erro
-                                                  ,pr_dh_erro            => vr_dh_erro
-                                                  ,pr_nrprioridade       => vr_nrprioridade
-                                                  ,pr_cd_erro            => vr_cd_erro
-                                                  ,pr_ds_erro            => vr_ds_erro);
-																									
-			IF vr_ds_erro IS NOT NULL THEN
-				vr_dscritic := vr_ds_erro;
-				RAISE vr_exc_saida;
-			END IF; 	
-		
-			OPEN cr_processo(vr_nrprioridade);
+    IF vr_qtd_prog_erro > 0 THEN
+			SELECT substr(dsvlrprm,18)
+			  INTO vr_cdprocesso
+				FROM crapprm
+			 WHERE cdacesso = 'CTRL_ERRO_PRG_DEBITADOR'
+         AND cdcooper = pr_cdcooper;
+
+			OPEN cr_processo(vr_cdprocesso);
 			FETCH cr_processo INTO rw_processo;
 			CLOSE cr_processo;
-			
+
 			gene0007.pc_insere_tag(pr_xml      => pr_retxml,
 														 pr_tag_pai  => 'Prioridades',
 														 pr_posicao  => 0,
 														 pr_tag_nova => 'Prioridade',
 														 pr_tag_cont => NULL,
 														 pr_des_erro => pr_dscritic);
-			
+
 			gene0007.pc_insere_tag(pr_xml      => pr_retxml,
 														 pr_tag_pai  => 'Prioridade',
 														 pr_posicao  => 0,
 														 pr_tag_nova => 'nrprioridade',
-														 pr_tag_cont => vr_nrprioridade,
+														 pr_tag_cont => rw_processo.nrprioridade,
 														 pr_des_erro => pr_dscritic);
-														 
+
 			gene0007.pc_insere_tag(pr_xml      => pr_retxml,
 														 pr_tag_pai  => 'Prioridade',
 														 pr_posicao  => 0,
 														 pr_tag_nova => 'cdprocesso',
-														 pr_tag_cont => rw_processo.cdprocesso,
-														 pr_des_erro => pr_dscritic);                           													 
+														 pr_tag_cont => vr_cdprocesso,
+														 pr_des_erro => pr_dscritic);
 
 			gene0007.pc_insere_tag(pr_xml      => pr_retxml,
 														 pr_tag_pai  => 'Prioridade',
@@ -1314,21 +1302,14 @@ BEGIN
 														 pr_tag_nova => 'dsprocesso',
 														 pr_tag_cont => rw_processo.dsprocesso,
 														 pr_des_erro => pr_dscritic);
-														 
-			gene0007.pc_insere_tag(pr_xml      => pr_retxml,
-														 pr_tag_pai  => 'Prioridade',
-														 pr_posicao  => 0,
-														 pr_tag_nova => 'dherro',
-														 pr_tag_cont => to_char(vr_dh_erro, 'DD/MM/YYYY HH24:MI'),
-														 pr_des_erro => pr_dscritic);											 
-														 
+
 			gene0007.pc_insere_tag(pr_xml      => pr_retxml,
 														 pr_tag_pai  => 'Root',
 														 pr_posicao  => 0,
 														 pr_tag_nova => 'Dados',
 														 pr_tag_cont => NULL,
 														 pr_des_erro => pr_dscritic);
-														 
+
 			gene0007.pc_insere_tag(pr_xml      => pr_retxml,
 														 pr_tag_pai  => 'Dados',
 														 pr_posicao  => 0,
@@ -1397,14 +1378,14 @@ BEGIN
 
 					vr_contador := vr_contador + 1;
 			END LOOP;
-			
+
 			gene0007.pc_insere_tag(pr_xml      => pr_retxml,
 														 pr_tag_pai  => 'Root',
 														 pr_posicao  => 0,
 														 pr_tag_nova => 'Dados',
 														 pr_tag_cont => NULL,
 														 pr_des_erro => pr_dscritic);
-														 
+
 			gene0007.pc_insere_tag(pr_xml      => pr_retxml,
 														 pr_tag_pai  => 'Dados',
 														 pr_posicao  => 0,
@@ -1446,7 +1427,7 @@ BEGIN
 
         Dados referentes ao programa:
         Frequencia: Sempre que for chamado
-        Objetivo  : Rotina para buscar dados das prioridades (processos) incluindo 
+        Objetivo  : Rotina para buscar dados das prioridades (processos) incluindo
 				            horários de execução
         Observacao: -----
         Alteracoes:
@@ -1474,8 +1455,8 @@ DECLARE
 
     -- Variáveis gerais da procedure
     vr_contador_pr    INTEGER := 0;    -- Para inserção dos dados de prioridades no XML
-		vr_contador_hr    INTEGER := 0;    -- Para inserção dos dados de horários de execução no XML  
-		vr_max_prioridade NUMBER(3);       -- Maior valor de prioridade definido na tabela  
+		vr_contador_hr    INTEGER := 0;    -- Para inserção dos dados de horários de execução no XML
+		vr_max_prioridade NUMBER(3);       -- Maior valor de prioridade definido na tabela
 
     ----------->>> CURSORES <<<--------
 
@@ -1492,11 +1473,11 @@ DECLARE
 		   OR p.cdprocesso IN (
 			        SELECT cdprocesso
 							  FROM tbgen_debitador_horario_proc h
-							 WHERE h.idhora_processamento = pr_idhora_processamento	
+							 WHERE h.idhora_processamento = pr_idhora_processamento
 			    )
     ORDER BY nvl(p.nrprioridade, 999); -- Força os inativos (sem prioridade definida) a ficar no final da lista
     rw_dados_prioridades cr_dados_prioridades%ROWTYPE;
-		
+
 		CURSOR cr_horarios_proc(pr_cdprocesso tbgen_debitador_horario_proc.cdprocesso%TYPE) IS
 		SELECT hp.idhora_processamento
 		     , to_char(hr.dhprocessamento, 'HH24:MI') dhprocessamento
@@ -1507,11 +1488,11 @@ DECLARE
 			 AND (pr_idhora_processamento = 0 OR hr.idhora_processamento = pr_idhora_processamento)
 		 ORDER BY hr.dhprocessamento;
 		rw_horarios_proc cr_horarios_proc%ROWTYPE;
-		
+
 		-- Recupera o maior valor definido para prioridade na tabela
 		CURSOR cr_max_prioridade IS
 		SELECT MAX(nrprioridade) max_prioridade
-		  FROM tbgen_debitador_param;	
+		  FROM tbgen_debitador_param;
 
 BEGIN
 
@@ -1600,7 +1581,7 @@ BEGIN
                                pr_tag_nova => 'nrprioridade',
                                pr_tag_cont => rw_dados_prioridades.nrprioridade,
                                pr_des_erro => pr_dscritic);
-															 
+
         -- Prioridade (Processo) - nrprioridade
         gene0007.pc_insere_tag(pr_xml      => pr_retxml,
                                pr_tag_pai  => 'Prioridade',
@@ -1608,10 +1589,10 @@ BEGIN
                                pr_tag_nova => 'horarios',
                                pr_tag_cont => NULL,
                                pr_des_erro => pr_dscritic);
-															 
-				FOR rw_horarios_proc 
+
+				FOR rw_horarios_proc
 					IN cr_horarios_proc(rw_dados_prioridades.cdprocesso) LOOP
-					
+
 					-- Horário de processamento
           gene0007.pc_insere_tag(pr_xml      => pr_retxml,
                                  pr_tag_pai  => 'horarios',
@@ -1619,7 +1600,7 @@ BEGIN
                                  pr_tag_nova => 'horario',
                                  pr_tag_cont => NULL,
                                  pr_des_erro => pr_dscritic);
-																 
+
 					-- ID do horário
           gene0007.pc_insere_tag(pr_xml      => pr_retxml,
                                  pr_tag_pai  => 'horario',
@@ -1627,7 +1608,7 @@ BEGIN
                                  pr_tag_nova => 'idhora_processamento',
                                  pr_tag_cont => rw_horarios_proc.idhora_processamento,
                                  pr_des_erro => pr_dscritic);
-																 
+
 					-- Horário
           gene0007.pc_insere_tag(pr_xml      => pr_retxml,
                                  pr_tag_pai  => 'horario',
@@ -1635,17 +1616,17 @@ BEGIN
                                  pr_tag_nova => 'dhprocessamento',
                                  pr_tag_cont => rw_horarios_proc.dhprocessamento,
                                  pr_des_erro => pr_dscritic);
-					
+
 					vr_contador_hr := vr_contador_hr + 1;
 				END LOOP;
 
         vr_contador_pr := vr_contador_pr + 1;
     END LOOP;
-		
+
 		OPEN cr_max_prioridade;
 		FETCH cr_max_prioridade INTO vr_max_prioridade;
 		CLOSE cr_max_prioridade;
-		
+
 		-- Horário de processamento
           gene0007.pc_insere_tag(pr_xml      => pr_retxml,
                                  pr_tag_pai  => 'Root',
@@ -1862,19 +1843,19 @@ PROCEDURE pc_ativa_debitador_processo(pr_cdprocesso IN tbgen_debitador_param.cdp
     ..............................................................................*/
 
 BEGIN
-	
+
 DECLARE
     ----->>> CURSORES <<<-----
-		
+
 		CURSOR cr_max_prioridade IS
-		SELECT MAX(nrprioridade) max_prioridade
+		SELECT nvl(MAX(nrprioridade), 0) max_prioridade
 		  FROM tbgen_debitador_param;
-			
+
 		CURSOR cr_horario(pr_idhora_processamento NUMBER) IS
 		SELECT to_char(hor.dhprocessamento, 'HH24:MI') dhprocessamento
 		  FROM tbgen_debitador_horario hor
 		 WHERE hor.idhora_processamento = pr_idhora_processamento;
-			
+
     ----->>> VARIÁVEIS <<<-----
 
 	  -- Variável de críticas
@@ -1898,7 +1879,7 @@ DECLARE
 		vr_idhora_processamento  tbgen_debitador_horario.idhora_processamento%TYPE ;  --> Id do horário a inserir na tabela tbgen_debitador_horario_proc
 		vr_max_prioridade        NUMBER(3);                                           --> Maior prioridade atribuída para processos na tabela
 		vr_dhprocessamento       VARCHAR(5);                                          --> Horário para inclusão na tabela tbgen_debitador_historico
-		
+
 		l_count binary_integer;
     l_array dbms_utility.lname_array;
 
@@ -1921,7 +1902,7 @@ DECLARE
 					-- Levanta exceção
 					RAISE vr_exc_saida;
 			END IF;
-			
+
 			-- Criar cabeçalho do XML de retorno
 			pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
 			gene0007.pc_insere_tag(pr_xml      => pr_retxml,
@@ -1930,16 +1911,16 @@ DECLARE
 															pr_tag_nova => 'Dados',
 															pr_tag_cont => NULL,
 															pr_des_erro => vr_dscritic);
-			
+
 			OPEN cr_max_prioridade;
 			FETCH cr_max_prioridade INTO vr_max_prioridade;
 			CLOSE cr_max_prioridade;
-			
+
 			UPDATE tbgen_debitador_param
 			   SET nrprioridade = vr_max_prioridade + 1
 			 WHERE cdprocesso = pr_cdprocesso;
-			 
-			 
+
+
 			pc_grava_historico(pr_cdoperador => vr_cdoperad
                        , pr_dscampo_alterado => 'nrprioridade'
 											 , pr_dsvalor_anterior => NULL
@@ -1947,16 +1928,16 @@ DECLARE
 											 , pr_cdprocesso => pr_cdprocesso
 											 , pr_tpoperacao => 2
 											 , pr_tporigem => 1
-	                     , pr_dscritic => vr_dscritic);	 
+	                     , pr_dscritic => vr_dscritic);
 
        dbms_utility.comma_to_table(list   => pr_horarios
                                  , tablen => l_count
                                  , tab    => l_array);
-																 
+
 				FOR i IN 1 .. l_count
 				LOOP
-				    vr_idhora_processamento := to_number(substr(l_array(i), 2, length(l_array(i))-1));	
-				
+				    vr_idhora_processamento := to_number(substr(l_array(i), 2, length(l_array(i))-1));
+
 					  INSERT INTO tbgen_debitador_horario_proc hp (
 						    cdprocesso
 						  ,	idhora_processamento
@@ -1965,11 +1946,11 @@ DECLARE
 						    pr_cdprocesso
 						  , vr_idhora_processamento
 						);
-						
+
 						OPEN cr_horario(vr_idhora_processamento);
 						FETCH cr_horario INTO vr_dhprocessamento;
 						CLOSE cr_horario;
-						
+
 				    pc_grava_historico(pr_cdoperador => vr_cdoperad
                              , pr_dscampo_alterado => 'idhora_processamento'
 											     	 , pr_dsvalor_anterior => NULL
@@ -1977,13 +1958,13 @@ DECLARE
 											    	 , pr_cdprocesso => pr_cdprocesso
 											     	 , pr_tpoperacao => 1
 											    	 , pr_tporigem => 1
-	                           , pr_dscritic => vr_dscritic);	
-				    
-						
+	                           , pr_dscritic => vr_dscritic);
+
+
 						IF vr_dscritic IS NOT NULL THEN
 							RAISE vr_exc_historico;
 						END IF;
-				END LOOP;						
+				END LOOP;
 
 				COMMIT;
 
@@ -1994,7 +1975,7 @@ DECLARE
                                pr_tag_nova => 'processado',
                                pr_tag_cont => 'S',
                                pr_des_erro => pr_dscritic);
-															 
+
 				-- Inclui dados no XML de retorno
 				gene0007.pc_insere_tag(pr_xml      => pr_retxml,
                                pr_tag_pai  => 'Dados',
@@ -2046,15 +2027,15 @@ PROCEDURE pc_desativa_debitador_processo(pr_cdprocesso IN tbgen_debitador_param.
     ..............................................................................*/
 
 BEGIN
-	
-DECLARE	
+
+DECLARE
     ----->>> CURSORES <<<-----
 
     CURSOR cr_prioridade IS
 		SELECT nrprioridade
 		  FROM tbgen_debitador_param
 		 WHERE cdprocesso = pr_cdprocesso;
-		 	
+
     ----->>> VARIÁVEIS <<<-----
 
 	  -- Variável de críticas
@@ -2076,7 +2057,7 @@ DECLARE
     vr_idorigem VARCHAR2(100);
 
 		vr_prioridade_ant        NUMBER(3);                                           --> Prioridade anterior do processo que vai ser desativado
-		
+
 		l_count binary_integer;
     l_array dbms_utility.lname_array;
 
@@ -2099,7 +2080,7 @@ DECLARE
 					-- Levanta exceção
 					RAISE vr_exc_saida;
 			END IF;
-			
+
 			-- Criar cabeçalho do XML de retorno
 			pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
 			gene0007.pc_insere_tag(pr_xml      => pr_retxml,
@@ -2108,24 +2089,24 @@ DECLARE
 															pr_tag_nova => 'Dados',
 															pr_tag_cont => NULL,
 															pr_des_erro => vr_dscritic);
-			
+
 			OPEN cr_prioridade;
 			FETCH cr_prioridade INTO vr_prioridade_ant;
 			CLOSE cr_prioridade;
-			
+
 			UPDATE tbgen_debitador_param
 			   SET nrprioridade = NULL
 			 WHERE cdprocesso = pr_cdprocesso;
-			 
-			-- Reorganiza as prioridades 
+
+			-- Reorganiza as prioridades
 			UPDATE tbgen_debitador_param
 			   SET nrprioridade = nrprioridade - 1
-			 WHERE nrprioridade > vr_prioridade_ant;	 
-			 
+			 WHERE nrprioridade > vr_prioridade_ant;
+
 			DELETE FROM tbgen_debitador_horario_proc
-			 WHERE cdprocesso = pr_cdprocesso; 	 
-			 
-			 
+			 WHERE cdprocesso = pr_cdprocesso;
+
+
 			pc_grava_historico(pr_cdoperador => vr_cdoperad
                        , pr_dscampo_alterado => 'nrprioridade'
 											 , pr_dsvalor_anterior => vr_prioridade_ant
@@ -2133,7 +2114,7 @@ DECLARE
 											 , pr_cdprocesso => pr_cdprocesso
 											 , pr_tpoperacao => 2
 											 , pr_tporigem => 1
-	                     , pr_dscritic => vr_dscritic);	 			
+	                     , pr_dscritic => vr_dscritic);
 
 				COMMIT;
 
@@ -2342,7 +2323,7 @@ PROCEDURE pc_redefine_debitador_priori(pr_nrprioridade IN TBGEN_DEBITADOR_PARAM.
         Frequencia: Sempre que for chamado
         Objetivo  : Rotina para redefinir a prioridade de um processo na tabela TBGEN_DEBITADOR_PARAM
         Observacao: -----
-        Alteracoes: 
+        Alteracoes:
     ..............................................................................*/
 
 BEGIN
@@ -2377,7 +2358,7 @@ DECLARE
     SELECT p.cdprocesso
     FROM CECRED.TBGEN_DEBITADOR_PARAM p
     where p.nrprioridade = pr_nrprioridade;
-		
+
 		-- Identifica a prioridade atual do processo passado como parâmetro
     CURSOR cr_prioridade IS
     SELECT p.nrprioridade
@@ -2416,16 +2397,16 @@ DECLARE
       OPEN cr_processo;
 			FETCH cr_processo INTO vr_processo;
 			CLOSE cr_processo;
-			
+
 			OPEN cr_prioridade;
 			FETCH cr_prioridade INTO vr_prioridade;
 			CLOSE cr_prioridade;
-			
+
 			-- Redefine prioridade temporário para processo que fará a troca (para evitar violação da UNIQUE KEY)
-			UPDATE tbgen_debitador_param 
+			UPDATE tbgen_debitador_param
 			   SET nrprioridade = 999
   		 WHERE cdprocesso = vr_processo;
-			 
+
 			-- Redefine a prioridade para o processo passado como parâmetro
 			UPDATE tbgen_debitador_param
 			   SET nrprioridade = pr_nrprioridade
@@ -2435,11 +2416,11 @@ DECLARE
       UPDATE tbgen_debitador_param
          SET nrprioridade = pr_nrprioridade
        WHERE cdprocesso = pr_cdprocesso;
-			 
-			-- Concluir a troca 
+
+			-- Concluir a troca
 			UPDATE tbgen_debitador_param
 			   SET nrprioridade = vr_prioridade
-			 WHERE cdprocesso = vr_processo;			
+			 WHERE cdprocesso = vr_processo;
 
         pc_grava_historico(pr_cdoperador => vr_cdoperad
                          , pr_dscampo_alterado => 'nrprioridade'
@@ -2449,7 +2430,7 @@ DECLARE
                          , pr_tpoperacao => 2
                          , pr_tporigem => 1
                          , pr_dscritic => vr_dscritic);
-												 
+
 			  pc_grava_historico(pr_cdoperador => vr_cdoperad
                          , pr_dscampo_alterado => 'nrprioridade'
                          , pr_dsvalor_anterior => pr_nrprioridade
@@ -2559,7 +2540,7 @@ DECLARE
 		 WHERE h.idhora_processamento NOT IN (
 		          SELECT idhora_processamento
 							  FROM tbgen_debitador_horario_proc
-							 WHERE cdprocesso = pr_cdprocesso	
+							 WHERE cdprocesso = pr_cdprocesso
 		       )
      ORDER BY to_char(h.dhprocessamento, 'HH24:MI');
     rw_dados_horarios_proc cr_dados_horarios_proc%ROWTYPE;
@@ -2694,7 +2675,7 @@ DECLARE
 		 WHERE h.idhora_processamento IN (
 		          SELECT idhora_processamento
 							  FROM tbgen_debitador_horario_proc
-							 WHERE cdprocesso = pr_cdprocesso	
+							 WHERE cdprocesso = pr_cdprocesso
 		       )
      ORDER BY to_char(h.dhprocessamento, 'HH24:MI');
     rw_dados_horarios_proc cr_dados_horarios_proc%ROWTYPE;
@@ -2802,19 +2783,19 @@ BEGIN
 
 DECLARE
     ----->>> CURSORES <<<-----
-		
+
 		-- Busca horário para incluir no histórico
 		CURSOR cr_horario IS
 		SELECT to_char(hor.dhprocessamento, 'HH24:MI') dhprocessamento
 		  FROM tbgen_debitador_horario hor
 	   WHERE hor.idhora_processamento = pr_idhora_processamento;
-		  
+
 		-- Busca a prioridade do processo para reposicionamento em tela
 		CURSOR cr_prioridade IS
 		SELECT prc.nrprioridade
 		  FROM tbgen_debitador_param prc
 		 WHERE prc.cdprocesso = pr_cdprocesso;
-		
+
     ----->>> VARIÁVEIS <<<-----
 
     -- Variável de críticas
@@ -2833,7 +2814,7 @@ DECLARE
     vr_cdagenci VARCHAR2(100);
     vr_nrdcaixa VARCHAR2(100);
     vr_idorigem VARCHAR2(100);
-		
+
 		vr_dhprocessamento  VARCHAR2(5);  -- Horário para inclusão no histórico
 		vr_nrprioridade     NUMBER(3);    -- Prioridade do processo para reposicionamento em tela
 
@@ -2865,11 +2846,11 @@ DECLARE
                               pr_tag_nova => 'Dados',
                               pr_tag_cont => NULL,
                               pr_des_erro => vr_dscritic);
-															
+
 			OPEN cr_horario;
 			FETCH cr_horario INTO vr_dhprocessamento;
 			CLOSE cr_horario;
-			
+
 			OPEN cr_prioridade;
 			FETCH cr_prioridade INTO vr_nrprioridade;
 			CLOSE cr_prioridade;
@@ -2921,7 +2902,7 @@ DECLARE
                                pr_tag_nova => 'idhora_processamento',
                                pr_tag_cont => pr_idhora_processamento,
                                pr_des_erro => pr_dscritic);
-															 
+
 				gene0007.pc_insere_tag(pr_xml      => pr_retxml,
                                pr_tag_pai  => 'Dados',
                                pr_posicao  => 0,
@@ -2984,19 +2965,19 @@ BEGIN
 
 DECLARE
     ----->>> CURSORES <<<-----
-		
+
     -- Busca horário para incluir no histórico
 		CURSOR cr_horario(pr_idhora_processamento tbgen_debitador_horario.idhora_processamento%TYPE) IS
 		SELECT to_char(hor.dhprocessamento, 'HH24:MI') dhprocessamento
 		  FROM tbgen_debitador_horario hor
 	   WHERE hor.idhora_processamento = pr_idhora_processamento;
-		 
+
 		-- Busca a prioridade do processo para reposicionamento em tela
 		CURSOR cr_prioridade IS
 		SELECT prc.nrprioridade
 		  FROM tbgen_debitador_param prc
-		 WHERE prc.cdprocesso = pr_cdprocesso;	
-		 
+		 WHERE prc.cdprocesso = pr_cdprocesso;
+
     ----->>> VARIÁVEIS <<<-----
 
 	  -- Variável de críticas
@@ -3016,11 +2997,11 @@ DECLARE
     vr_cdagenci VARCHAR2(100);
     vr_nrdcaixa VARCHAR2(100);
     vr_idorigem VARCHAR2(100);
-		
+
 		vr_dhprocessamento VARCHAR2(5);  --> Horário para inclusão no histórico
 		vr_idhora_processamento tbgen_debitador_horario.idhora_processamento%TYPE;
 		vr_nrprioridade      NUMBER(3);    --> Prioridade do processo para reposicionamento em tela
-		
+
 		l_count binary_integer;
     l_array dbms_utility.lname_array;
 
@@ -3052,7 +3033,7 @@ DECLARE
 															pr_tag_nova => 'Dados',
 															pr_tag_cont => NULL,
 															pr_des_erro => vr_dscritic);
-			
+
 			OPEN cr_prioridade;
 			FETCH cr_prioridade INTO vr_nrprioridade;
 			CLOSE cr_prioridade;
@@ -3060,23 +3041,23 @@ DECLARE
 			dbms_utility.comma_to_table(list   => pr_horarios
                                  , tablen => l_count
                                  , tab    => l_array);
-																 
+
 				FOR i IN 1 .. l_count
 				LOOP
-				    vr_idhora_processamento := to_number(substr(l_array(i), 2, length(l_array(i))-1));	
-						
+				    vr_idhora_processamento := to_number(substr(l_array(i), 2, length(l_array(i))-1));
+
 						OPEN cr_horario(vr_idhora_processamento);
 					  FETCH cr_horario INTO vr_dhprocessamento;
-					  CLOSE cr_horario;      
-				
+					  CLOSE cr_horario;
+
 					  DELETE FROM tbgen_debitador_horario_proc
 						 WHERE cdprocesso = pr_cdprocesso
 						   AND idhora_processamento = vr_idhora_processamento;
-						
+
 						OPEN cr_horario(vr_idhora_processamento);
 						FETCH cr_horario INTO vr_dhprocessamento;
 						CLOSE cr_horario;
-						
+
 				    pc_grava_historico(pr_cdoperador => vr_cdoperad
                              , pr_dscampo_alterado => 'idhora_processamento'
 											     	 , pr_dsvalor_anterior => NULL
@@ -3084,9 +3065,9 @@ DECLARE
 											    	 , pr_cdprocesso => pr_cdprocesso
 											     	 , pr_tpoperacao => 3
 											    	 , pr_tporigem => 1
-	                           , pr_dscritic => vr_dscritic);	
-				    
-						
+	                           , pr_dscritic => vr_dscritic);
+
+
 						IF vr_dscritic IS NOT NULL THEN
 							RAISE vr_exc_historico;
 						END IF;
@@ -3101,7 +3082,7 @@ DECLARE
                                pr_tag_nova => 'excluido',
                                pr_tag_cont => 'S',
                                pr_des_erro => pr_dscritic);
-															 
+
 				-- Inclui dados no XML de retorno
 				gene0007.pc_insere_tag(pr_xml      => pr_retxml,
                                pr_tag_pai  => 'Dados',
@@ -3109,7 +3090,7 @@ DECLARE
                                pr_tag_nova => 'nrprioridade',
                                pr_tag_cont => vr_nrprioridade,
                                pr_des_erro => pr_dscritic);
-				
+
 
 	 EXCEPTION
 		  WHEN vr_exc_historico THEN
@@ -3143,7 +3124,7 @@ END pc_exclui_debitador_hr_proces;
 
 PROCEDURE pc_executar_debitador_emergen(pr_cdcooper     IN NUMBER
 	                                    , pr_processos    IN VARCHAR2         --> Lista de processos a executar (separada por ";")
-																			, pr_tipoexecucao IN VARCHAR2         --> Tipo de execução ("P" -> Programas específicos / "E" -> Programa que ocasionouo erro) 
+																			, pr_tipoexecucao IN VARCHAR2         --> Tipo de execução ("P" -> Programas específicos / "E" -> Programa que ocasionouo erro)
                                       , pr_xmllog       IN VARCHAR2                     --> XML com informações de LOG
                                       , pr_cdcritic     OUT PLS_INTEGER                 --> Código da crítica
                                       , pr_dscritic     OUT VARCHAR2                    --> Descrição da crítica
@@ -3166,7 +3147,7 @@ PROCEDURE pc_executar_debitador_emergen(pr_cdcooper     IN NUMBER
     ..............................................................................*/
 
 BEGIN
-	
+
 DECLARE
     ----->>> VARIÁVEIS <<<-----
 
@@ -3190,13 +3171,19 @@ DECLARE
 
 		vr_dhprocessamento_ant VARCHAR2(10);  --> Valor anterior do campo para o histórico
 		vr_nrprioridade tbgen_debitador_param.nrprioridade%TYPE; --> Prioridade para chamada da procedure pc_executar_debitador_unico
-		
+
+		vr_cd_prg_erro  tbgen_debitador_param.cdprocesso%TYPE;
+		vr_dh_erro      DATE;
+
+		vr_cd_erro crapcri.cdcritic%TYPE;
+    vr_ds_erro crapcri.dscritic%TYPE;
+
 		l_count binary_integer;
     l_array dbms_utility.lname_array;
-		
+
 		----->>> CURSORES <<<-----
-		
-		CURSOR cr_prioridade IS 
+
+		CURSOR cr_prioridade IS
 		SELECT par.nrprioridade
 		  FROM tbgen_debitador_param par
 		 WHERE par.cdprocesso = pr_processos;
@@ -3229,9 +3216,9 @@ DECLARE
 															pr_tag_nova => 'Dados',
 															pr_tag_cont => NULL,
 															pr_des_erro => vr_dscritic);
-															
+
 			IF pr_tipoexecucao = 'P' THEN
-				
+
 			 gen_debitador_unico.pc_executa_debitador_unico(pr_cdcooper => pr_cdcooper
 			                                              , pr_idhora_processamento => NULL
 																										, pr_ds_cdprocesso => pr_processos || ','
@@ -3240,11 +3227,11 @@ DECLARE
        dbms_utility.comma_to_table(list   => pr_processos
                                  , tablen => l_count
                                  , tab    => l_array);
-																 
+
 				FOR i IN 1 .. l_count
 				LOOP
 					  /* INCLUIR CHAMADA DA CRIAÇÃO DO JOB PARA A EXECUÇÃO EMERGENCIAL DO PROCESSO */
-						
+
 				    pc_grava_historico(pr_cdoperador => vr_cdoperad
                              , pr_dscampo_alterado => 'exec_emergencial'
 											     	 , pr_dsvalor_anterior => NULL
@@ -3252,24 +3239,37 @@ DECLARE
 											    	 , pr_cdprocesso => l_array(i) -- Processo
 											     	 , pr_tpoperacao => 4
 											    	 , pr_tporigem => 3
-	                           , pr_dscritic => vr_dscritic);	
-				
-					
-				END LOOP;		
+	                           , pr_dscritic => vr_dscritic);
+
+
+				END LOOP;
 
 				IF vr_dscritic IS NOT NULL THEN
 					RAISE vr_exc_historico;
 				END IF;
-			ELSE 
+			ELSE
+				gen_debitador_unico.pc_valida_exec_emergencial(pr_cdcooper         => pr_cdcooper
+                                                  ,pr_tpexec_emergencial => 'E'
+																									,pr_cd_prg_erro        => vr_cd_prg_erro
+                                                  ,pr_dh_erro            => vr_dh_erro
+                                                  ,pr_nrprioridade       => vr_nrprioridade
+                                                  ,pr_cd_erro            => vr_cd_erro
+                                                  ,pr_ds_erro            => vr_ds_erro);
+
+				IF vr_ds_erro IS NOT NULL THEN
+					vr_dscritic := vr_ds_erro;
+					RAISE vr_exc_saida;
+				END IF;
+
 				OPEN cr_prioridade;
 				FETCH cr_prioridade INTO vr_nrprioridade;
 				CLOSE cr_prioridade;
-				
+
 			  gen_debitador_unico.pc_executa_debitador_unico(pr_cdcooper => pr_cdcooper
 				                                             , pr_idhora_processamento => NULL
 																										 , pr_ds_cdprocesso => NULL
-																										 , pr_nrprioridade_prg_erro => vr_nrprioridade);	
-			
+																										 , pr_nrprioridade_prg_erro => vr_nrprioridade);
+
 			  pc_grava_historico(pr_cdoperador => vr_cdoperad
                              , pr_dscampo_alterado => 'exec_emergencial'
 											     	 , pr_dsvalor_anterior => NULL
@@ -3278,7 +3278,7 @@ DECLARE
 											     	 , pr_tpoperacao => 4
 											    	 , pr_tporigem => 3
 	                           , pr_dscritic => vr_dscritic);
-														 
+
 				IF vr_dscritic IS NOT NULL THEN
 					RAISE vr_exc_historico;
 				END IF;
@@ -3369,7 +3369,7 @@ DECLARE
 		     , cop.nmrescop
 		  FROM crapcop cop
 		 WHERE cop.flgativo = 1
-		   AND cop.cdcooper = 3
+		   AND cop.cdcooper <> 3
 		 ORDER BY nmrescop;
 		rw_crapcop cr_crapcop%ROWTYPE;
 
