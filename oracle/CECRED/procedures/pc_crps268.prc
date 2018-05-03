@@ -1,4 +1,4 @@
-CREATE OR REPLACE PROCEDURE CECRED.pc_crps268(pr_cdcooper IN crapcop.cdcooper%TYPE
+﻿CREATE OR REPLACE PROCEDURE CECRED.pc_crps268(pr_cdcooper IN crapcop.cdcooper%TYPE
                                              ,pr_flgresta IN PLS_INTEGER
                                              ,pr_stprogra OUT PLS_INTEGER
                                              ,pr_infimsol OUT PLS_INTEGER
@@ -59,7 +59,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps268(pr_cdcooper IN crapcop.cdcooper%TY
       vr_exc_saida exception;
       -- Erro sem parar a cadeia
       vr_exc_fimprg exception;
-
       ---------------- Cursores genéricos ----------------
 
       -- Busca dados da cooperativa --
@@ -151,8 +150,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps268(pr_cdcooper IN crapcop.cdcooper%TY
       vr_dtdeb28      DATE;              --> Data do Débito dia 28
       podeDebitar     BOOLEAN;           --> Pode debitar o histórico
 			vr_rw_craplot   craplot%ROWTYPE;
+      
       vr_dsseguro     VARCHAR2(50);
-
+      vr_rowid_log     rowid;
     BEGIN
 
       -- Código do programa
@@ -378,7 +378,21 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps268(pr_cdcooper IN crapcop.cdcooper%TY
                          ,pr_cdoperad => 1
                          ,pr_cdcadmsg => 0
                          ,pr_dscritic => vr_dscritic);
-
+                         
+        -- gera log do envio da mensagem
+        GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper
+                            ,pr_cdoperad => '1'
+                            ,pr_dscritic => vr_dscritic
+                            ,pr_dsorigem => 'AYLLOS'
+                            ,pr_dstransa => 'Envio de mensagem de cancelamento de seguro por inadimplencia'
+                            ,pr_dttransa => trunc(SYSDATE)
+                            ,pr_flgtrans => 0
+                            ,pr_hrtransa => GENE0002.fn_busca_time
+                            ,pr_idseqttl => 1
+                            ,pr_nmdatela => 'crps268'
+                            ,pr_nrdconta => rw_crapseg.nrdconta
+                            ,pr_nrdrowid => vr_rowid_log
+                            );                         
              commit;
              -- proximo registro
              continue;
@@ -394,55 +408,53 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps268(pr_cdcooper IN crapcop.cdcooper%TY
             FETCH cr_craplot
             INTO rw_craplot;
 
+            -- Inserir capa de lote caso não haja
             IF cr_craplot%NOTFOUND THEN
-              -- Fechar o cursor
-              CLOSE cr_craplot;
-              -- Inserir capa de lote caso não haja
               BEGIN
-							   LANC0001.pc_incluir_lote(pr_dtmvtolt => rw_crapdat.dtmvtolt -- dtmvtolt
-                                                  , pr_cdagenci => 1    -- cdagenci
-                                                  , pr_cdbccxlt => 100  -- cdbccxlt
-                                                  , pr_nrdolote => 4154 -- nrdolote
-                                                  , pr_tplotmov => 1    -- tplotmov
-                                                  , pr_nrseqdig => 0    -- nrseqdig
-                                                  , pr_vlcompcr => 0    -- vlcompcr
-                                                  , pr_vlinfocr => 0    -- vlinfocr
-                                                  , pr_cdcooper => pr_cdcooper
-																									, pr_cdcritic => vr_cdcritic
-																									, pr_dscritic => vr_dscritic
-																									, pr_rw_craplot => vr_rw_craplot);
+                 -- Fechar o antigo cursor do lote
+                 CLOSE cr_craplot;
 
+							   LANC0001.pc_incluir_lote(pr_dtmvtolt => rw_crapdat.dtmvtolt -- dtmvtolt
+                                          , pr_cdagenci => 1    -- cdagenci
+                                          , pr_cdbccxlt => 100  -- cdbccxlt
+                                          , pr_nrdolote => 4154 -- nrdolote
+                                          , pr_tplotmov => 1    -- tplotmov
+                                          , pr_nrseqdig => 0    -- nrseqdig
+                                          , pr_vlcompcr => 0    -- vlcompcr
+                                          , pr_vlinfocr => 0    -- vlinfocr
+                                          , pr_cdcooper => pr_cdcooper
+                                          , pr_cdcritic => vr_cdcritic
+                                          , pr_dscritic => vr_dscritic
+                                          , pr_rw_craplot => vr_rw_craplot);
+
+                -- Posiciona a capa de lote
+                OPEN cr_craplot(pr_cdcooper => pr_cdcooper,
+                                pr_dtmvtolt => rw_crapdat.dtmvtolt,
+                                pr_cdagenci => 1,
+                                pr_cdbccxlt => 100,
+                                pr_nrdolote => 4154);
+                FETCH cr_craplot
+                INTO rw_craplot;
+                
+                IF cr_craplot%NOTFOUND THEN
+                  -- Fechar o cursor pois haverá raise
+                  CLOSE cr_craplot;
+                  -- Montar mensagem de crítica
+                  -- 1172 - Registro de lote não encontrado.
+                  vr_cdcritic := 1172;
+                  RAISE vr_exc_saida;
+                END IF;
+                
               EXCEPTION
                 WHEN OTHERS THEN
                   vr_dscritic := 'Erro ao  inserir  na tabela  craplot.'||SQLERRM;
                   --Levantar Exceção
                   RAISE vr_exc_saida;
               END;
-						ELSE
-							CLOSE cr_craplot;
             END IF;
-
-            -- Posiciona a capa de lote
-            OPEN cr_craplot(pr_cdcooper => pr_cdcooper,
-                            pr_dtmvtolt => rw_crapdat.dtmvtolt,
-                            pr_cdagenci => 1,
-                            pr_cdbccxlt => 100,
-                            pr_nrdolote => 4154);
-            FETCH cr_craplot
-            INTO rw_craplot;
-
-            IF cr_craplot%NOTFOUND THEN
-              -- Fechar o cursor pois haverá raise
-              CLOSE cr_craplot;
-              -- Montar mensagem de crítica
-              -- 1172 - Registro de lote não encontrado.
-              vr_cdcritic := 1172;
-              RAISE vr_exc_saida;
-            ELSE
-              -- Apenas fechar o cursor
-              CLOSE cr_craplot;
-            END IF;
-
+            
+            CLOSE cr_craplot;
+            
             -- Efetua o lançamento do débito
             BEGIN
                LANC0001.pc_incluir_lcto_lcm(pr_cdagenci => rw_craplot.cdagenci
@@ -677,3 +689,4 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps268(pr_cdcooper IN crapcop.cdcooper%TY
    END;
 
 END pc_crps268;
+/
