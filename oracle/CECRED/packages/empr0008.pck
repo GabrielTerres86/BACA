@@ -155,6 +155,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0008 IS
   /*
   31/01/2018 - #826621 Conforme posicionamento da área, os contratos de portabilidade também poderão 
                ser estornados. Regra retirada do sistema. (Carlos)
+               
+  03/05/2018 - P404 - Inclusão do novo tipo de contrato 4, para permitir estornos e não lançar a crítica
+               linha de crédito não permitida (Lucas Skroch - Supero)
   */
   ---------------------------------------------------------------------------  
   PROCEDURE pc_tela_busca_lancto_estorno(pr_nrdconta IN crapepr.nrdconta%TYPE --> Numero da Conta
@@ -2586,8 +2589,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0008 IS
         CLOSE cr_craplcr;
       END IF;
       
-      -- Emprestimo/Financiamento, Alienacao de Veiculo, Hipoteca de Imoveis
-      IF rw_craplcr.tpctrato NOT IN (1,2,3) THEN
+      -- Emprestimo/Financiamento, Alienacao de Veiculo, Hipoteca de Imoveis, Aplicacao
+      IF rw_craplcr.tpctrato NOT IN (1,2,3,4) THEN
         vr_dscritic := 'Tipo de contrato da linha de credito nao permitida';
         RAISE vr_exc_saida;
       END IF;
