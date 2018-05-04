@@ -2957,6 +2957,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
   --                           que foi esquecido na migração para o Oracle. (Oscar)
   --
   --              15/08/2017 - Inclusao do campo qtdiacal e historicos do Pos-Fixado. (Jaison/James - PRJ298) 
+  --
+  --              03/04/2018 - M324 ajuste na configuração de extrato para emprestimo (Rafael Monteiro - Mouts)
   ---------------------------------------------------------------------------------------------------------------
   DECLARE
       --Tabela de Memoria primeira parcela
@@ -3778,6 +3780,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
   --                           registro deve ser igonardo. Será exibido somente no cursor cr_crapret
   --                           (SD793999 e SD795994 - AJFink)
   -- 
+  --              23/01/2017 - Ajustes para arrecadacao de FGTS/DAE. PRJ406 - FGTS
+  --                           (Odirlei-AMcom)
   ---------------------------------------------------------------------------------------------------------------
   DECLARE
       -- Busca dos dados do associado
@@ -4389,6 +4393,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
               ,t.flgbaixa_efetiva;
       rw_cred_npc cr_cred_npc%ROWTYPE;          
            
+      --Busca dados de agendamento de tributos
+      CURSOR cr_agen_trib(pr_idlancto craplau.idlancto%TYPE) IS
+      SELECT trib.tppagamento
+            ,NVL(trib.dsidenti_pagto, 
+                          DECODE(trib.tppagamento,3,'FGTS',4,'DAE','')) dsidentif_pagto
+        FROM cecred.tbpagto_agend_tributos trib
+       WHERE trib.idlancto = pr_idlancto;
+      rw_agen_trib cr_agen_trib%ROWTYPE;
+      
       --Variaveis Locais
       vr_cdhistaa INTEGER;
       vr_cdhsetaa INTEGER;
@@ -4838,7 +4851,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
         END IF;
         
         pr_tab_lancamento_futuro(vr_index).idlstdom := vr_idlstdom;
-        pr_tab_lancamento_futuro(vr_index).incancel := 1;
+        pr_tab_lancamento_futuro(vr_index).incancel := 0;
         
         /* Pagtos INTERNET */  
         IF rw_craplau.cdhistor = 508 THEN
@@ -4854,6 +4867,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
             CLOSE cr_darf_das;
             
             vr_dscedent := rw_darf_das.dsidentif_pagto;
+            
+          ELSIF rw_craplau.cdtiptra IN (12,13) THEN --FGTS, DAE
+            OPEN cr_agen_trib(pr_idlancto => rw_craplau.idlancto);
+            FETCH cr_agen_trib INTO rw_agen_trib;
+            CLOSE cr_agen_trib;
+
+            vr_dscedent := rw_agen_trib.dsidentif_pagto;          
           END IF;
           
           --Chamado 376432
@@ -6268,7 +6288,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
         pr_tab_lancamento_futuro(vr_index).cdtiptra:= 20;
         pr_tab_lancamento_futuro(vr_index).idlancto:= rw_recarga.idoperacao;
         pr_tab_lancamento_futuro(vr_index).idlstdom:= 20;
-        pr_tab_lancamento_futuro(vr_index).incancel:= 1;
+        pr_tab_lancamento_futuro(vr_index).incancel:= 0;
         --Acumular valor automatico
         vr_vllautom:= nvl(vr_vllautom,0) - rw_recarga.vlrecarga;
         --Acumular valor Credito
@@ -14420,7 +14440,6 @@ END pc_consulta_ir_pj_trim;
                       vr_vlsaldod:= nvl(vr_vlsaldod,0) + vr_tab_extrato_epr_novo(vr_index_novo).vllanmto;
                     END IF;    
                   ELSIF vr_tab_extrato_epr_novo(vr_index_novo).indebcre = 'C' AND
-                        -- vr_tab_extrato_epr_novo(vr_index_novo).cdhistor not in (349/*, 2381, 2396, 2401, 2408, 2405, 2385, 2400, 2412*/) THEN --<> 349 THEN
                         vr_tab_extrato_epr_novo(vr_index_novo).cdhistor not in (349,2391,2401,2402,2403,2404,2405,2406,2407) THEN --<> 349 THEN
                     --Se Possui Saldo
                     IF vr_tab_extrato_epr_novo(vr_index_novo).flgsaldo THEN

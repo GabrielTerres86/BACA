@@ -23,6 +23,7 @@
 
                     26/03/2018 - Alterado para permitir acesso a tela pelo CRM. (Reinert)
 
+					02/01/2018 - Inclusão protocolos 24 - FGTS e 23 - DAE (PRJ406).
  *********************************************************************************************/
 ?>
 <form id="frmCab" name="frmCab" class="formulario cabecalho" onSubmit="return false;" style="display:none" >
@@ -62,6 +63,8 @@
     <option value="19" <?php echo $cdtippro == '19' ? 'selected' : '' ?>>19 - Agendamento DAS</option>
     <option value="20" <?php echo $cdtippro == '20' ? 'selected' : '' ?>>20 - Recarga de celular</option>
 	<option value="21" <?php echo $cdtippro == '21' ? 'selected' : '' ?>>21 - Operador</option>
+    <option value="23" <?php echo $cdtippro == '23' ? 'selected' : '' ?>>23 - DAE</option>
+    <option value="24" <?php echo $cdtippro == '24' ? 'selected' : '' ?>>24 - FGTS</option>
     </select>
 
     <br />

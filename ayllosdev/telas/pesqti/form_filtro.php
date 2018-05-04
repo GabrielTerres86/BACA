@@ -5,7 +5,7 @@
   Data criação : Junho/2015
   Objetivo     : Form responsável por apresentar as opções de filtro para consulta
   --------------
-  Alterações   :
+  Alterações   : 12/01/2018 - Alterações refrente ao PJ406.
   --------------
  ****************************************************************/ 
 
@@ -15,11 +15,8 @@
 	require_once('../../includes/controla_secao.php');	
 	require_once('../../class/xmlfile.php');
 	isPostMethod();	
-	
 ?>
-
 <form id="frmFiltroPesqti" name="frmFiltroPesqti" class="formulario" style="display:none;">	
-		
 	<fieldset id="fsetTipoPagto" name="fsetTipoPagto" style="padding:0px; margin:0px; padding-bottom:10px;">
 	
 		<legend> Tipo de pagamento </legend>
@@ -30,12 +27,6 @@
 			<select name="tpdpagto" id="tpdpagto" class="campo">
 				<option value="yes">T - Titulos</option>
 				<option value="no" selected> F - Faturas</option> 
-			</select>
-			
-			<label for="flgcnvsi" ><? echo utf8ToHtml('Sicredi:') ?></label>
-			<select name="flgcnvsi" id="flgcnvsi" class="campo" >
-				<option value="yes">Sim</option>
-				<option value="no" selected>N&atilde;o</option> 		
 			</select>
 			
 			<br style="clear:both" />	
@@ -70,12 +61,13 @@
 		
 		<div id="divFiltroFaturaSicredi" style="display:none">
 		
-			<label for="dtdpagto"><? echo utf8ToHtml('Data:') ?></label>
-			<input name='dtdpagto' type='text' class='campo' id='dtdpagto'>
+      <!-- Incluido PJ406 -->
+      <label for="dtipagto"><? echo utf8ToHtml('Período:') ?></label>
+      <input name='dtipagto' type='text' class='campo' id='dtipagto'>
 			
-			<label for="cdagenci"><? echo utf8ToHtml('PA:') ?></label>
-			<input name="cdagenci" type="text" class="campo" id="cdagenci" value="0">
-			<a style="margin-top:5px"><img id="lupaPAt" name = "lupaPAt" src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
+      <label for="dtfpagto"><? echo utf8ToHtml('a') ?></label>
+      <input name='dtfpagto' type='text' class='campo' id='dtfpagto'>
+      <!-- Incluido PJ406 -->
 			
 			<label for="cdempcon"><? echo utf8ToHtml('Empresa:') ?></label>
 			<input name="cdempcon" type="text" class="campo" id="cdempcon" value="0">
@@ -84,8 +76,22 @@
 			<label for="cdsegmto"><? echo utf8ToHtml('Segmento.:') ?></label>
 			<input name="cdsegmto" type="text" class="campo" id="cdsegmto" value="0">
 				
+			<label for="cdagenci"><? echo utf8ToHtml('PA:') ?></label>
+			<input name="cdagenci" type="text" class="campo" id="cdagenci" value="0">
+			<a style="margin-top:5px"><img id="lupaPAt" name = "lupaPAt" src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
+
+      <!-- Incluido PJ406 -->
+      <label for="nrdconta">Conta/dv:</label>
+      <input name="nrdconta" type="text" class="campo" id="nrdconta" value="0">
+      <!-- Incluido PJ406 -->
+
 			<label for="vldpagto"><? echo utf8ToHtml('Valor:') ?></label>
 			<input name="vldpagto" type="text" class="campo" id="vldpagto" value="0">
+
+      <!-- Incluido PJ406 -->
+      <label for="nrautdoc"><? echo utf8ToHtml('Autenticação:') ?></label>
+			<input name="nrautdoc" type="text" class="campo" id="nrautdoc" value="0">
+      <!-- Incluido PJ406 -->
 				
 			<br style="clear:both" />	
 			

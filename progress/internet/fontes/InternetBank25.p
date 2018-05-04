@@ -104,6 +104,11 @@ IF  VALID-HANDLE(h-bo_algoritmo_seguranca)  THEN
         
         FOR EACH cratpro NO-LOCK:
             
+            /* Nao apresentaremos os comprovantes de FGTS e DAE na versao classica do IB */
+            IF cratpro.cdtippro = 23 OR
+               cratpro.cdtippro = 24 THEN
+               NEXT.
+               
             CREATE xml_operacao25.
             ASSIGN xml_operacao25.dscabini = "<DADOS>"
                    xml_operacao25.cdtippro = "<cdtippro>" +

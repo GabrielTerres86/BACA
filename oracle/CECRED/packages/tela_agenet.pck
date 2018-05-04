@@ -128,7 +128,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_AGENET AS
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Jonathan
-    Data    : Novembro/2015                       Ultima atualizacao: 31/01/2016
+    Data    : Novembro/2015                       Ultima atualizacao: 23/01/2018
 
     Dados referentes ao programa:
 
@@ -148,6 +148,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_AGENET AS
                 31/01/2017 - Exibir agendamentos cancelados por fraude.
                              PRJ335 - Analise de fraude (Odirlei-AMcom)
                                 
+                23/01/2018 - Ajustado rotina devido a arrecadação de FGTS/DAE.
+                             PRJ-406 - FGTS(Odirlei-AMcom)                
     ............................................................................. */
     
       --Curosor para pegar os agendamentos  
@@ -688,6 +690,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_AGENET AS
             vr_dstransa := '(' || rw_craplau.nrddd || ') ' || 
                            TRIM(TO_CHAR(TRIM(gene0002.fn_mask(rw_craplau.nrcelular,'zzzzz-zzzz')))) || ' - ' || 
                            rw_craplau.nmoperadora;
+          
+          ELSIF rw_craplau.cdtiptra = 12 THEN --Pagamentos FGTS
+            
+            vr_dstiptra := 'PAGAMENTO-FGTS';                                 
+            vr_dstransa := rw_craplau.dslindig;
+            
+          ELSIF rw_craplau.cdtiptra = 13 THEN --Pagamentos DAE
+            
+            vr_dstiptra := 'PAGAMENTO-DAE';                                 
+            vr_dstransa := rw_craplau.dslindig;
+            
+
           END IF;
                   
           IF rw_craplau.dsorigem = 'TAA' THEN

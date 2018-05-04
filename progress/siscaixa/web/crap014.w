@@ -16,8 +16,9 @@
            procedures da b1crap14 e b1crap00 na maioria das vezes que tem o parametro
            p_coop esta se referindo a nmrescop e nao a cdcooper, verificar as chamadas
            pois dentro desta procedure e feito find dentro da tabela crapcop
-           buscando por nmrescop =/ . */
+           buscando por nmrescop =/ . 
 
+*/
 /*..............................................................................
 
 Programa: siscaixa/web/crap014.w
@@ -120,6 +121,9 @@ Alteracoes: 22/08/2007 - Alterado os parametros nas chamadas para as
            04/10/2017 - Ajustar chamada do autentica.html no processa-fatura e também retirar 
                         a limpeza das variaves v_codbarras e v_fmtcodbar para titulos
                         (Lucas Ranghetti #760721)
+
+           12/12/2017 - Alterar campo flgcnvsi por tparrecd.
+                        PRJ406-FGTS (Odirlei-AMcom)             
 
 ..............................................................................*/
 
@@ -1662,7 +1666,7 @@ PROCEDURE processa-fatura:
                              
         IF  AVAILABLE crapcon THEN           
             DO:                
-                IF  crapcon.flgcnvsi = TRUE THEN
+                IF  crapcon.tparrecd = 1 THEN
                     DO:                    
                         /* Verificar se convênio possui debito automatico */
                         FIND FIRST crapscn WHERE (crapscn.cdempcon = crapcon.cdempcon          AND
