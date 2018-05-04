@@ -5599,7 +5599,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
            AND c.nrdconta = pr_nrdconta
            AND c.nrctremp = prc_nrctremp
            AND c.cdhistor in (382,2388,2473,2389,2391, 2392,2474,2393,2395);
-       --
+       --           
 
       --nova M324
       CURSOR cr_craplem4(prc_nrctremp craplem.nrctremp%TYPE) IS
@@ -7237,6 +7237,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       vr_tab_pgto_parcel  empr0001.typ_tab_pgto_parcel; --> Tabela com registros de pagamentos
       vr_tab_calculado    empr0001.typ_tab_calculado; --> Tabela com totais calculados
       vr_exc_erro_sem_log EXCEPTION;
+      vr_vlpreapg        NUMBER;
+      vr_vlprvenc        NUMBER;
+      vr_vlpraven        NUMBER;
+      vr_vlmtapar        NUMBER;
+      vr_vlmrapar        NUMBER;
+      vr_vliofcpl        NUMBER;      
+
     BEGIN
       -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
       GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_calc_saldo_epr');
@@ -8681,200 +8688,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
 
 
 
-
-
-
-
-
-
-
-
-
-
---
-  /* Criar o lancamento na Conta Corrente  */
-  PROCEDURE pc_cria_lancamento_cc_chave(pr_cdcooper IN crapcop.cdcooper%TYPE --> Cooperativa conectada
-                                 ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE --> Movimento atual
-                                 ,pr_cdagenci IN crapass.cdagenci%TYPE --> Código da agência
-                                 ,pr_cdbccxlt IN craperr.nrdcaixa%TYPE --> Número do caixa
-                                 ,pr_cdoperad IN crapdev.cdoperad%TYPE --> Código do Operador
-                                 ,pr_cdpactra IN INTEGER --> P.A. da transação
-                                 ,pr_nrdolote IN craplot.nrdolote%TYPE --> Numero do Lote
-                                 ,pr_nrdconta IN crapepr.nrdconta%TYPE --> Número da conta
-                                 ,pr_cdhistor IN craphis.cdhistor%TYPE --> Codigo historico
-                                 ,pr_vllanmto IN NUMBER --> Valor da parcela emprestimo
-                                 ,pr_nrparepr IN INTEGER --> Número parcelas empréstimo
-                                 ,pr_nrctremp IN crapepr.nrctremp%TYPE --> Número do contrato de empréstimo
-                                 ,pr_nrseqava IN NUMBER DEFAULT 0 --> Pagamento: Sequencia do avalista
-                                 ,pr_idlautom IN NUMBER DEFAULT 0 --> sequencia criada pela craplau
-                                 ,pr_nrseqdig OUT INTEGER  --> Número sequencia
-                                 ,pr_des_reto OUT VARCHAR --> Retorno OK / NOK
-                                 ,pr_tab_erro OUT gene0001.typ_tab_erro) IS --> Tabela com possíves erros
-  BEGIN
-    /* .............................................................................
-    
-       Programa: pc_cria_lancamento_cc_chave                 Antigo: b1wgen0084a.p/cria_lancamento_cc
-       Sistema : Conta-Corrente - Cooperativa de Credito
-       Sigla   : CRED
-       Autor   : Alisson
-       Data    : Fevereiro/2014                        Ultima atualizacao: 30/01/2018
-    
-       Dados referentes ao programa:
-    
-       Frequencia: Diaria - Sempre que for chamada
-       Objetivo  : Mesma regra da antiga pc_cria_lancamento_cc, mas retorna a chave nrseqdig
-                   
-                   05/05/2017 - Ajuste para gravar o idlautom (Lucas Ranghetti M338.1)
-    ............................................................................. */
   
-    DECLARE
-      --Variaveis Erro
-      vr_cdcritic INTEGER;
-      vr_des_erro VARCHAR2(3);
-      vr_dscritic VARCHAR2(4000);
     
-      --Variaveis Excecao
-      vr_exc_erro  EXCEPTION;
-      vr_exc_saida EXCEPTION;
-      vr_idgerlog  VARCHAR2(1) := 'S';
     
-    BEGIN
-      -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_cria_lancamento_cc');
 
-      --Inicializar variavel erro
-      pr_des_reto := 'OK';
     
-      --Valor Lancamento maior zero
-      IF ROUND(pr_vllanmto, 2) > 0 THEN
-        /* Atualizar o lote da C/C */
-        pc_inclui_altera_lote(pr_cdcooper => pr_cdcooper --Codigo Cooperativa
-                             ,pr_dtmvtolt => pr_dtmvtolt --Data Emprestimo
-                             ,pr_cdagenci => pr_cdpactra --Codigo Agencia
-                             ,pr_cdbccxlt => pr_cdbccxlt --Codigo Caixa
-                             ,pr_nrdolote => pr_nrdolote --Numero Lote
-                             ,pr_tplotmov => 1 --Tipo movimento
-                             ,pr_cdoperad => pr_cdoperad --Operador
-                             ,pr_cdhistor => pr_cdhistor --Codigo Historico
-                             ,pr_dtmvtopg => pr_dtmvtolt --Data Pagamento Emprestimo
-                             ,pr_vllanmto => pr_vllanmto --Valor Lancamento
-                             ,pr_flgincre => TRUE --Indicador Credito
-                             ,pr_flgcredi => TRUE --Credito
-                             ,pr_nrseqdig => pr_nrseqdig --Numero Sequencia
-                             ,pr_cdcritic => vr_cdcritic --Codigo Erro
-                             ,pr_dscritic => vr_dscritic); --Descricao Erro
-        --Se ocorreu erro
-        IF vr_cdcritic IS NOT NULL
-           OR vr_dscritic IS NOT NULL THEN
-          vr_idgerlog := 'N';
-          RAISE vr_exc_erro;
-        END IF;
-        -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-        GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_cria_lancamento_cc');
       
-        --Inserir Lancamento
-        BEGIN
-          INSERT INTO craplcm
-            (craplcm.dtmvtolt
-            ,craplcm.cdagenci
-            ,craplcm.cdbccxlt
-            ,craplcm.nrdolote
-            ,craplcm.nrdconta
-            ,craplcm.nrdctabb
-            ,craplcm.nrdctitg
-            ,craplcm.nrdocmto
-            ,craplcm.cdhistor
-            ,craplcm.nrseqdig
-            ,craplcm.vllanmto
-            ,craplcm.cdcooper
-            ,craplcm.nrparepr
-            ,craplcm.cdpesqbb
-            ,craplcm.nrseqava
-            ,craplcm.cdoperad
-            ,craplcm.hrtransa
-            ,craplcm.idlautom)
-          VALUES
-            (pr_dtmvtolt
-            ,pr_cdpactra
-            ,pr_cdbccxlt
-            ,pr_nrdolote
-            ,pr_nrdconta
-            ,pr_nrdconta
-            ,gene0002.fn_mask(pr_nrdconta, '99999999')
-            ,pr_nrseqdig
-            ,pr_cdhistor
-            ,pr_nrseqdig
-            ,pr_vllanmto
-            ,pr_cdcooper
-            ,pr_nrparepr
-            ,gene0002.fn_mask(pr_nrctremp, 'zz.zzz.zz9')
-            ,pr_nrseqava
-            ,pr_cdoperad
-            ,gene0002.fn_busca_time
-            ,pr_idlautom);
-        EXCEPTION
-          WHEN OTHERS THEN
-            vr_cdcritic := 1034;
-            vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'craplcm: '||
-                           'dtmvtolt:'  ||pr_dtmvtolt||
-                           ', cdagenci:'||pr_cdpactra||
-                           ', cdbccxlt:'||pr_cdbccxlt||
-                           ', nrdolote:'||pr_nrdolote||
-                           ', nrdconta:'||pr_nrdconta||
-                           ', nrdctabb:'||pr_nrdconta|| 
-                           ', nrdctitg:'||pr_nrdconta||
-                           ', nrdocmto:'||vr_nrseqdig||
-                           ', cdhistor:'||pr_cdhistor||
-                           ', nrseqdig:'||vr_nrseqdig||
-                           ', vllanmto:'||pr_vllanmto||
-                           ', cdcooper:'||pr_cdcooper||
-                           ', nrparepr:'||pr_nrparepr||
-                           ', cdpesqbb:'||pr_nrctremp||
-                           ', nrseqava:'||pr_nrseqava||
-                           ', cdoperad:'||pr_cdoperad||
-                           ', hrtransa:'||gene0002.fn_busca_time||
-                           ', idlautom:'||pr_idlautom||
-                           '. '||sqlerrm;
 
-            -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-            GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_cria_lancamento_cc');
 
-            --Gravar tabela especifica de log - 30/01/2018 - Ch 788828
-            CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
-            --Levantar Excecao
-            RAISE vr_exc_erro;
-        END;
-      END IF;
     
-    EXCEPTION
-      WHEN vr_exc_erro THEN
-        -- Retorno não OK
-        pr_des_reto := 'NOK';
-        -- Gerar rotina de gravação de erro avisando sobre o erro não tratavo
-        gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
-                             ,pr_cdagenci => pr_cdagenci
-                             ,pr_nrdcaixa => pr_cdbccxlt
-                             ,pr_nrsequen => 1 --> Fixo
-                             ,pr_cdcritic => vr_cdcritic
-                             ,pr_dscritic => vr_dscritic
-                             ,pr_tab_erro => pr_tab_erro);
       
-      WHEN OTHERS THEN
-        -- Retorno não OK
-        pr_des_reto := 'NOK';
-        -- Montar descrição de erro não tratado
-        vr_dscritic := 'Erro não tratado na EMPR0001.pc_cria_lancamento_cc ' ||
-                       sqlerrm;
-        -- Gerar rotina de gravação de erro avisando sobre o erro não tratavo
-        gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
-                             ,pr_cdagenci => pr_cdagenci
-                             ,pr_nrdcaixa => pr_cdbccxlt
-                             ,pr_nrsequen => 1 --> Fixo
-                             ,pr_cdcritic => 0
-                             ,pr_dscritic => vr_dscritic
-                             ,pr_tab_erro => pr_tab_erro);
-    END;
-  END pc_cria_lancamento_cc_chave;
 
   /* Criar o lancamento na Conta Corrente  */
   PROCEDURE pc_cria_lancamento_cc(pr_cdcooper IN crapcop.cdcooper%TYPE --> Cooperativa conectada
@@ -8919,6 +8742,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
     DECLARE
       --Variaveis Erro
       vr_nrseqdig INTEGER;
+      vr_idgerlog VARCHAR(1);
     
       --Variaveis Excecao
       vr_exc_erro  EXCEPTION;
@@ -9271,7 +9095,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           --Levantar Excecao
           RAISE vr_exc_erro;
       END;
-        
+      END IF;
+
       -- Retira nome do modulo logado - 30/01/2018 - Ch 788828
       GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
     EXCEPTION
@@ -9307,7 +9132,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                     pr_ind_tipo_log  => 2);
 
     END;
-  END pc_cria_lancamento_lem;
+  END pc_cria_lancamento_lem_chave;
 
   --Procedure para Lancar Juros no Contrato
   PROCEDURE pc_lanca_juro_contrato(pr_cdcooper    IN crapcop.cdcooper%TYPE --Codigo Cooperativa
@@ -9922,7 +9747,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                    06/04/2018 - Alterar o tratamento relacionado as chamadas de resgate de aplicação,
                                 para que não ocorram problemas com o fluxo atual em caso de ocorrencia
                                 de erros. (Renato - Supero)
-                                
+                   
                    07/04/2018 - Ajustar o calculo do valor a ser resgatado (Renato - Supero)
     ............................................................................. */
   
@@ -17481,7 +17306,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
          Objetivo  : Possui a mesma funcionalidade da rotina pc_valida_pagamentos_geral,
                      para chamadas diretamente atraves de rotinas progress
 
-        Alteração : 07/12/2017 - Passagem do crawepr.idcobope. (Jaison/Marcos Martini - PRJ404)
+         Alteração : 07/12/2017 - Passagem do crawepr.idcobope. (Jaison/Marcos Martini - PRJ404)
 
          Alteração : 30/01/2018 - Padronização mensagens (crapcri, pc_gera_log (tbgen))
                                 - Padronização erros comandos DDL
@@ -18806,7 +18631,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
 
       -- Tratamento de erros
       vr_exc_saida EXCEPTION;
-
+  
       vr_vlpreclc NUMBER;
       vr_valoriof NUMBER;
       vr_vliofpri NUMBER;
@@ -18932,7 +18757,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
      Sigla   : CRED
      Autor   : James Prust Junior
      Data    : Abril/2017                        Ultima atualizacao: 12/04/2018
-    
+     
      Dados referentes ao programa:
   
      Frequencia: Sempre que for chamada
@@ -19813,7 +19638,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
     END IF;
     pr_flgimune := NVL(pr_flgimune, 0);
 
-	-- Retira nome do modulo logado - 30/01/2018 - Ch 788828
+    -- Retira nome do modulo logado - 30/01/2018 - Ch 788828
     GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
   EXCEPTION
     WHEN vr_exc_erro THEN
