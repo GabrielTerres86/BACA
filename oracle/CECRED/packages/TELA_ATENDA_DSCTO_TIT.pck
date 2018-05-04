@@ -4461,14 +4461,6 @@ PROCEDURE pc_solicita_biro_bordero(pr_nrdconta in crapass.nrdconta%type --> Cont
    fl_erro_biro boolean;
 
    
-   cursor cr_analise_pagador(pr_nrinssac crapcob.nrinssac%type) is
-   select 1
-   from   tbdsct_analise_pagador tap 
-   where  tap.cdcooper = vr_cdcooper
-   and    tap.nrdconta = pr_nrdconta
-   and    tap.nrinssac = pr_nrinssac;
-   rw_analise_pagador cr_analise_pagador%rowtype;
-
 BEGIN
    gene0004.pc_extrai_dados(pr_xml      => pr_retxml
                            ,pr_cdcooper => vr_cdcooper
@@ -4496,23 +4488,6 @@ BEGIN
    fl_erro_biro := false;
    while vr_index is not null loop
    
-         open  cr_analise_pagador(vr_tab_dados_titulos(vr_index).nrinssac);
-         fetch cr_analise_pagador into rw_analise_pagador;
-         if    cr_analise_pagador%notfound then
-
-               dsct0002.pc_efetua_analise_pagador(pr_cdcooper => vr_cdcooper
-                                                 ,pr_nrdconta => pr_nrdconta
-                                                 ,pr_nrinssac => vr_tab_dados_titulos(vr_index).nrinssac
-                                                 ,pr_cdcritic => vr_cdcritic
-                                                 ,pr_dscritic => vr_dscritic);
-
-               if  vr_cdcritic > 0  or vr_dscritic is not null then
-                   raise vr_exc_saida;
-               end if;
-               
-         end   if;
-         close cr_analise_pagador;
-         
          sspc0001.
                   pc_solicita_cons_bordero_biro(pr_cdcooper => vr_cdcooper
                                                ,pr_nrdconta => pr_nrdconta
