@@ -4618,7 +4618,7 @@ PROCEDURE pc_risco_central_ocr(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Coopera
           RAISE vr_exc_saida;
         END IF;
       --
-      COMMIT;
+      --COMMIT;
       --
       -- Ajustar Risco CPF por Grupo Econômico
       -- Chama processo de ajuste CPF
@@ -4633,7 +4633,7 @@ PROCEDURE pc_risco_central_ocr(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Coopera
       --  
       
       -- Efetuar COMMIT FINAL!
-      COMMIT;
+      --COMMIT;
       --
       -- Atualiza Controle BI      
       pc_atualiza_controle(pr_cdcooper => pr_cdcooper  -- Cooperativa
@@ -4644,6 +4644,7 @@ PROCEDURE pc_risco_central_ocr(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Coopera
         IF vr_cdcritic = 0 THEN
           RAISE vr_exc_saida;
         ELSE
+		  -- Efetuar COMMIT FINAL!
           COMMIT;
         END IF;    
    EXCEPTION

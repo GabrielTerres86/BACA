@@ -42,6 +42,13 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_CENTRALRISCO_OCR(pr_cdcooper in crapco
        WHERE t.cdcooper = pr_cdcooper;
     rw_tbrisco_centralocr cr_tbrisco_centralocr%ROWTYPE;
 
+    CURSOR cr_crapris(pr_cdcooper number) IS
+      SELECT distinct max(r.dtrefere) dtrefere
+        FROM CRAPRIS r
+       WHERE r.cdcooper = pr_cdcooper;
+    rw_crapris cr_crapris%ROWTYPE;
+
+
     /******************************/
     --> LOG de execucao
     PROCEDURE pc_gera_log_execucao(pr_dsexecut  IN VARCHAR2,
@@ -102,8 +109,14 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_CENTRALRISCO_OCR(pr_cdcooper in crapco
         INTO rw_tbrisco_centralocr;
        CLOSE cr_tbrisco_centralocr;
 
+        -- Verifica CRAPRIS
+        OPEN cr_crapris(pr_cdcooper => rw_crapcop.cdcooper);
+       FETCH cr_crapris
+        INTO rw_crapris;
+       CLOSE cr_crapris;
+
        IF  rw_crapdat.inproces = 1
-       AND rw_crapdat.dtmvtoan > nvl(rw_tbrisco_centralocr.dtrefere,to_date('01/01/1900','DD/MM/YYYY')) then
+       AND rw_crapris.dtrefere > nvl(rw_tbrisco_centralocr.dtrefere,to_date('01/01/1900','DD/MM/YYYY')) then
           -- Criar o nome para o job
           vr_jobname := 'JOB_CENTRALRISCO_OCR'||LPAD(rw_crapcop.cdcooper,2,'0')||'_$';
 
@@ -216,3 +229,4 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_CENTRALRISCO_OCR(pr_cdcooper in crapco
                           ,pr_cdcooper  => pr_cdcooper
                           ,pr_dtmvtolt  => TRUNC(SYSDATE));
  END PC_JOB_CENTRALRISCO_OCR;
+ /
