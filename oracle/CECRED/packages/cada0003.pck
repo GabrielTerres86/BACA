@@ -5746,8 +5746,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
                                         '  <produto>'  ||tbcc_produtos_coop.dsproduto||'</produto>'||
                                         '  <exibicao>'  ||tbcc_produtos_coop.nrordem_exibicao||'</exibicao>'||
                                         '  <inpessoa>'  ||tbcc_produtos_coop.inpessoa ||'</inpessoa>'||
-                                        '  <vlminimo>'  ||to_char(tbcc_produtos_coop.vlminimo_adesao,'FM999G999G990D00') ||'</vlminimo>'||
-                                        '  <vlmaximo>'  ||to_char(tbcc_produtos_coop.vlmaximo_adesao,'FM999G999G990D00') ||'</vlmaximo>'||
+                                        '  <vlminimo>'  ||to_char(tbcc_produtos_coop.vlminimo_adesao,'FM999G999G999G990D00') ||'</vlminimo>'||
+                                        '  <vlmaximo>'  ||to_char(tbcc_produtos_coop.vlmaximo_adesao,'FM999G999G999G990D00') ||'</vlmaximo>'||
                                         '</aderidos>');
       END LOOP;
       -- fecha tag servicos
