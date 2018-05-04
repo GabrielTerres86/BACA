@@ -2141,6 +2141,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                 02/02/2018 - Ajuste para quando recebemos uma transacao de credito aprovada onde nao
                              houve estorno na conta do cooperado de forma online precisamos lancar
                              o credito em conta. (Chamado 836129) - (Fabricio)
+                             
+                04/05/2018 - P450 - Aplicação das procedures de cancelamento de débito por inadimplência 
+                             na craplcm e craplot
     ....................................................................................................*/
     DECLARE
       ------------------------- VARIAVEIS PRINCIPAIS ------------------------------
@@ -2245,6 +2248,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
       vr_nom_direto  VARCHAR2(100);
       -- variavel para controlar se retorna o erro
       vr_flgerro     BOOLEAN := FALSE;
+      -- controle de permissao de debito em craplcm
+      podeDebitar    BOOLEAN;
+      vr_rw_craplot   craplot%ROWTYPE;
       ---------------------------- ESTRUTURAS DE REGISTRO ----------------------
       -- Definicao do tipo de arquivo para processamento
       TYPE typ_tab_nmarquiv IS
@@ -3444,6 +3450,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                 -- CÓDIGO DA TRANSAÇÃO
                 vr_cdtrnbcb := gene0002.fn_char_para_number(nvl(trim(substr(vr_des_text,28,3)),0));
                                
+                /* identifica o limite de credito do cooperado */
+                IF substr(vr_des_text,214,2)  = '00' THEN -- apenas se for do tipo débito
+                  podeDebitar := LANC0001.fn_pode_debitar(pr_cdcooper => rw_crapcop_cdagebcb.cdcooper,
+                                                        pr_nrdconta => vr_nrdconta,
+                                                        pr_cdhistor => vr_cdhistor_off);
+	                 /* se nao puder debitar historico */
+                   IF podeDebitar = false THEN
+                     continue;
+                   END IF;                                  
+                END IF;
+                              
                 /*******************************/
                 -- verifica se deve debitar C/C
                 IF vr_flgdebcc = 1 THEN
@@ -4265,72 +4282,60 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                 -- Se nao existir vai criar a capa de lote
                 IF cr_craplot%NOTFOUND THEN
                     BEGIN
-                      INSERT INTO craplot
-                        (dtmvtolt,
-                         cdagenci,
-                         cdbccxlt,
-                         nrdolote,
-                         nrseqdig,
-                         tplotmov,
-                         tpdmoeda,
-                         cdoperad,
-                         cdcooper)
-                      VALUES
-                        (vr_tab_craplcm(vr_idxlcm).dtmvtolt,
-                         vr_tab_craplcm(vr_idxlcm).cdagenci,
-                         vr_tab_craplcm(vr_idxlcm).cdbccxlt,
-                         vr_tab_craplcm(vr_idxlcm).nrdolote,
-                         vr_tab_craplcm(vr_idxlcm).nrseqdig,
-                         17,
-                         1,
-                         '1',
-                         vr_tab_craplcm(vr_idxlcm).cdcooper)
-                       RETURNING craplot.ROWID INTO rw_craplot.rowid;
+                       CLOSE cr_craplot;
+                       
+                       LANC0001.pc_incluir_lote( pr_dtmvtolt => vr_tab_craplcm(vr_idxlcm).dtmvtolt
+                                               , pr_cdagenci => vr_tab_craplcm(vr_idxlcm).cdagenci
+                                               , pr_cdbccxlt => vr_tab_craplcm(vr_idxlcm).cdbccxlt
+                                               , pr_nrdolote => vr_tab_craplcm(vr_idxlcm).nrdolote
+                                               , pr_tplotmov => 17
+                                               , pr_cdcooper => vr_tab_craplcm(vr_idxlcm).cdcooper
+                                               , pr_nrseqdig => vr_tab_craplcm(vr_idxlcm).nrseqdig
+                                               , pr_rw_craplot => vr_rw_craplot
+                                               , pr_cdcritic => vr_cdcritic
+                                               , pr_dscritic => vr_dscritic
+                                               ); 
+                                               
+                        -- Posiciona a capa de lote
+                        OPEN cr_craplot(pr_cdcooper => vr_tab_craplcm(vr_idxlcm).cdcooper,
+                                        pr_dtmvtolt => vr_tab_craplcm(vr_idxlcm).dtmvtolt,
+                                        pr_cdagenci => vr_tab_craplcm(vr_idxlcm).cdagenci);
+                        FETCH cr_craplot INTO rw_craplot;
+                          
+                        IF cr_craplot%NOTFOUND THEN
+                          -- Fechar o cursor pois haverá raise
+                          CLOSE cr_craplot;
+                          -- 1172 - Registro de lote não encontrado.
+                          vr_cdcritic := 1172;
+                          RAISE vr_exc_saida;
+                        END IF;
+                                       
                     EXCEPTION
                       WHEN OTHERS THEN
                         vr_dscritic := 'Erro ao inserir craplot: '||SQLERRM;
                         RAISE vr_exc_saida;
                     END;
-
                 END IF;
 
                 -- fecha cursor de lote
                 CLOSE cr_craplot;
 
                 BEGIN
-
-                  INSERT INTO craplcm
-                      (cdcooper,
-                       dtmvtolt,
-                       cdagenci,
-                       cdbccxlt,
-                       nrdolote,
-                       nrdctabb,
-                       nrdocmto,
-                       dtrefere,
-                       hrtransa,
-                       vllanmto,
-                       nrdconta,
-                       cdhistor,
-                       nrseqdig,
-                       cdpesqbb,
-                       cdorigem)
-                  VALUES
-                      (vr_tab_craplcm(vr_idxlcm).cdcooper,
-                       vr_tab_craplcm(vr_idxlcm).dtmvtolt,
-                       vr_tab_craplcm(vr_idxlcm).cdagenci,
-                       vr_tab_craplcm(vr_idxlcm).cdbccxlt,
-                       vr_tab_craplcm(vr_idxlcm).nrdolote,
-                       vr_tab_craplcm(vr_idxlcm).nrdctabb,
-                       vr_tab_craplcm(vr_idxlcm).nrdocmto,
-                       vr_tab_craplcm(vr_idxlcm).dtrefere,
-                       vr_tab_craplcm(vr_idxlcm).hrtransa,
-                       vr_tab_craplcm(vr_idxlcm).vllanmto,
-                       vr_tab_craplcm(vr_idxlcm).nrdconta,
-                       vr_tab_craplcm(vr_idxlcm).cdhistor,
-                       vr_tab_craplcm(vr_idxlcm).nrseqdig,
-                       vr_tab_craplcm(vr_idxlcm).cdpesqbb,
-                       vr_tab_craplcm(vr_idxlcm).cdorigem);
+                  LANC0001.pc_incluir_lcto_lcm( pr_cdagenci => vr_tab_craplcm(vr_idxlcm).cdcooper
+                                              , pr_cdbccxlt => vr_tab_craplcm(vr_idxlcm).cdbccxlt
+                                              , pr_cdhistor => vr_tab_craplcm(vr_idxlcm).cdhistor
+                                              , pr_dtmvtolt => vr_tab_craplcm(vr_idxlcm).dtmvtolt
+                                              , pr_cdpesqbb => vr_tab_craplcm(vr_idxlcm).cdpesqbb
+                                              , pr_nrdconta => vr_tab_craplcm(vr_idxlcm).nrdconta
+                                              , pr_nrdctabb => vr_tab_craplcm(vr_idxlcm).nrdctabb
+                                              , pr_nrdctitg => vr_tab_craplcm(vr_idxlcm).nrseqdig
+                                              , pr_nrdocmto => vr_tab_craplcm(vr_idxlcm).nrdocmto
+                                              , pr_nrdolote => vr_tab_craplcm(vr_idxlcm).nrdolote
+                                              , pr_nrseqdig => vr_tab_craplcm(vr_idxlcm).nrseqdig
+                                              , pr_cdcooper => vr_tab_craplcm(vr_idxlcm).cdcooper
+                                              , pr_vllanmto => vr_tab_craplcm(vr_idxlcm).vllanmto
+                                              , pr_cdcritic => vr_cdcritic
+                                              , pr_dscritic => vr_dscritic);
 
                 EXCEPTION
                   WHEN OTHERS THEN
@@ -4361,14 +4366,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
 
               -- Atualiza a capa do lote
                 BEGIN
-                  UPDATE craplot
-                                    -- se o numero for maior que o ja existente atualiza
+                  UPDATE craplot -- se o numero for maior que o ja existente atualiza
                      SET nrseqdig = greatest(nrseqdig,rw_craplot.nrseqdig),
                          qtcompln = qtcompln + 1,
                          qtinfoln = qtinfoln + 1,
                          vlcompdb = vlcompdb + vr_tab_craplcm(vr_idxlcm).vllanmto,
                          vlinfodb = vlcompdb + vr_tab_craplcm(vr_idxlcm).vllanmto
-                   WHERE ROWID = rw_craplot.rowid;
+                   WHERE craplot.rowid = rw_craplot.rowid;
                 EXCEPTION
                   WHEN OTHERS THEN
                     vr_dscritic := 'Erro ao atualizar craplot: '||SQLERRM;
@@ -6753,7 +6757,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Lucas Lunelli
-       Data    : Abril/2014.                     Ultima atualizacao: 23/02/2018
+       Data    : Abril/2014.                     Ultima atualizacao: 21/09/2017
 
        Dados referentes ao programa:
 
@@ -10593,6 +10597,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
    26/05/2017 - Tratado para pegar uma data de referencia que sirva para todas as situações de
                 vencimento de fatura contando que os dias de repique agora são dias uteis
                 (Tiago/Fabricio #677702)
+                
+    04/05/2018 - P450 - Aplicação das procedures de cancelamento de débito por inadimplência 
+                 na craplcm e craplot                
   .......................................................................................*/
   PROCEDURE pc_debita_fatura(pr_cdcooper  IN crapcop.cdcooper%TYPE
                             ,pr_cdprogra  IN crapprg.cdprogra%TYPE
@@ -10671,6 +10678,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
       
       ct_hispgfat CONSTANT INTEGER := 1545;
       
+      -- controle de permissao de debito em craplcm
+      podeDebitar    BOOLEAN;
+
+      -- controle execuções programa
+      vr_flultexe     INTEGER;
+      vr_qtdexec      INTEGER;
       
       FUNCTION fn_inicia_exec(pr_cdcooper IN crapcop.cdcooper%TYPE) RETURN ROWID IS
       BEGIN
@@ -10978,6 +10991,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
 					CONTINUE;
 				END IF;																		
 									
+        -- verifica se pode debitar
+        podeDebitar := LANC0001.fn_pode_debitar(pr_cdcooper => pr_cdcooper,
+                                      pr_nrdconta => rw_tbcrd_fatura.nrdconta,
+                                      pr_cdhistor => ct_hispgfat);
+        /* se nao puder debitar historico */
+        IF podeDebitar = false THEN
+          continue;
+        END IF;                                  
+
+									
 				-- alimenta indice da temp-table				
 				vr_ind_sald := vr_tab_sald.last;
         
@@ -11158,7 +11181,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
           
           -- cria registro na tabela de lançamentos
           BEGIN
-            INSERT INTO craplcm
+            LANC0001.pc_incluir_lcto_lcm( pr_cdagenci => pr_cdcooper
+                                        , pr_cdbccxlt => 100
+                                        , pr_cdhistor => ct_hispgfat
+                                        , pr_dtmvtolt => pr_dtmvtolt
+                                        , pr_cdpesqbb => rw_crawcrd.nrcrcard
+                                        , pr_nrdconta => rw_tbcrd_fatura.nrdconta
+                                        , pr_nrdctabb => rw_crapass.nrdconta
+                                        , pr_nrdocmto => rw_tbcrd_fatura.dsdocumento || TO_CHAR(SYSDATE, 'hh24mmss')
+                                        , pr_nrdolote => 0 -- Lote nao sera usado
+                                        , pr_nrseqdig => vr_idpagamento_fatura -- Alterado por Renato devido a erro no processo noturno 
+                                        , pr_cdcooper => pr_cdcooper
+                                        , pr_vllanmto => vr_vlpagmto -- Valor Total ou definido pelo logica de repique
+                                        , pr_cdcritic => vr_cdcritic
+                                        , pr_dscritic => vr_dscritic);
+
+/*            INSERT INTO craplcm
                 (cdcooper,
                  dtmvtolt,
                  cdagenci,
@@ -11187,7 +11225,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                  vr_idpagamento_fatura, -- Alterado por Renato devido a erro no processo noturno 
                  rw_crawcrd.nrcrcard, -- Num cartao
                  trunc(SYSDATE), -- Data referencia
-                 gene0002.fn_busca_time); -- Hora transacao 
+                 gene0002.fn_busca_time); -- Hora transacao */
           EXCEPTION
             WHEN OTHERS THEN
               vr_dscritic := 'Erro ao inserir craplcm: '||SQLERRM;
