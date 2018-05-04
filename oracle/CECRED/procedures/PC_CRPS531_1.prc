@@ -4655,6 +4655,9 @@ END;
       vr_aux_dsdemail  VARCHAR2(4000);
       vr_tipolog       VARCHAR2(100);
 
+      --Bacenjud - SM 1
+      vr_dsincons      tbgen_inconsist.dsinconsist%TYPE;
+
       /* Registro de TEC Salário */
       CURSOR cr_craplcs_lct(pr_cdcooper crapcop.cdcooper%TYPE
                            ,pr_dtmvtolt crapdat.dtmvtolt%TYPE
@@ -4710,6 +4713,18 @@ END;
            AND epr.nrctremp = pr_nrctremp;
       rw_crapepr cr_crapepr%ROWTYPE;
 
+      --Bacenjud - SM 1
+      --Buscar maior sequencia inserida na tbblqj_erro_ted para comparar com o parametro de reenvios
+      CURSOR cr_tbblqj_erro_ted(pr_cdtransf_bacenjud IN tbblqj_erro_ted.cdtransf_bacenjud%TYPE
+                               ,pr_cdcooper          IN tbblqj_erro_ted.cdcooper%TYPE
+                               ,pr_nrdconta          IN tbblqj_erro_ted.nrdconta%TYPE) IS
+        SELECT nvl(MAX(t.nrsequencia),0)
+          FROM tbblqj_erro_ted t
+         WHERE t.cdtransf_bacenjud = pr_cdtransf_bacenjud
+           AND t.cdcooper          = pr_cdcooper
+           AND t.nrdconta          = pr_nrdconta;
+
+      vr_nrsequencia tbblqj_erro_ted.nrsequencia%TYPE;
     BEGIN
       -- Verificar se está rodando o processo
       IF NOT fn_verifica_processo THEN
@@ -5359,6 +5374,46 @@ END;
             RETURN;
           ELSE
             CLOSE cr_craptvl;
+
+            --Bacenjud - SM 1
+            vr_dsincons := 'TED BacenJud: Rejeitada pela cabine';
+
+            --Busca maior sequencia na tbblqj_erro_ted
+            OPEN cr_tbblqj_erro_ted(rw_craptvl.nrcctrcb, rw_crapcop_mensag.cdcooper, rw_craptvl.nrdconta);
+            FETCH cr_tbblqj_erro_ted INTO vr_nrsequencia;
+            CLOSE cr_tbblqj_erro_ted;
+
+            --Se for menor que o parametro, insere para reenvio no proximo dia util
+            IF vr_nrsequencia < gene0001.fn_param_sistema(pr_nmsistem => 'CRED'
+                                                         ,pr_cdcooper => rw_crapcop_mensag.cdcooper
+                                                         ,pr_cdacesso => 'QTD_REENVIO_TED_BACENJUD') THEN
+              --Inclusao de ted na tabela TBBLQJ_ERRO_TED
+              BEGIN
+                INSERT INTO tbblqj_erro_ted(cdtransf_bacenjud,
+                                            cdcooper,
+                                            nrdconta,
+                                            nrsequencia,
+                                            vlordem,
+                                            dtinclusao,
+                                            dtenvio,
+                                            tpmotivo) VALUES (rw_craptvl.nrcctrcb
+                                                             ,rw_crapcop_mensag.cdcooper
+                                                             ,rw_craptvl.nrdconta
+                                                             ,(vr_nrsequencia + 1)
+                                                             ,rw_craptvl.vldocrcb
+                                                             ,rw_crapdat_mensag.dtmvtolt
+                                                             ,NULL
+                                                             ,2);
+
+                vr_dsincons := 'TED BacenJud: Rejeitada pela cabine. Sera efetuada nova tentativa de envio no proximo dia util.';
+              EXCEPTION
+                WHEN OTHERS THEN
+                  vr_dscritic := '1 - Erro ao inserir na tabela tbblqj_erro_ted - '||SQLERRM;
+                  RAISE vr_exc_saida;
+              END;
+            END IF;
+            --Fim Bacenjud - SM 1
+
             -- Gera log de estorno na cobine
             gene0005.pc_gera_inconsistencia(pr_cdcooper => rw_crapcop_mensag.cdcooper
                                            ,pr_iddgrupo => 2
@@ -5367,10 +5422,15 @@ END;
                                                         || '   Conta Origem: ' || rw_craptvl.nrdconta
                                                         || '   Valor: ' || to_char(rw_craptvl.vldocrcb,'99g999g990d00')
                                                         || '   Identificacao Dep.: ' || rw_craptvl.nrcctrcb
-                                           ,pr_dsincons => 'TED BacenJud: Rejeitada pela cabine'
+                                           ,pr_dsincons => vr_dsincons
                                            ,pr_flg_enviar => 1
                                            ,pr_des_erro => vr_des_reto
                                            ,pr_dscritic => vr_dscritic);
+
+            --Bacenjud - SM 1
+            --Geracao log SPB
+            pc_gera_log_SPB(pr_tipodlog  => 'ENVIADA NAO OK'
+                           ,pr_msgderro  => 'REJEITADA BACENJUD');
 
             -- Retornar a execução
             RETURN;
@@ -5473,6 +5533,45 @@ END;
 
         -- Se for bloqueio Judicial deve-se gerar email e encerrar o processo nao deve creditar a conta
         IF rw_craptvl.nrdconta IS NOT NULL AND rw_craptvl.tpdctacr = 9 THEN
+          --Bacenjud - SM 1
+          vr_dsincons := 'TED BacenJud: Devolvida';
+
+          --Busca maior sequencia na tbblqj_erro_ted
+          OPEN cr_tbblqj_erro_ted(rw_craptvl.nrcctrcb, rw_crapcop_mensag.cdcooper, rw_craptvl.nrdconta);
+          FETCH cr_tbblqj_erro_ted INTO vr_nrsequencia;
+          CLOSE cr_tbblqj_erro_ted;
+
+          --Se for menor que o parametro, insere para reenvio no proximo dia util
+          IF vr_nrsequencia < gene0001.fn_param_sistema(pr_nmsistem => 'CRED'
+                                                       ,pr_cdcooper => rw_crapcop_mensag.cdcooper
+                                                       ,pr_cdacesso => 'QTD_REENVIO_TED_BACENJUD') THEN
+            --Inclusao de ted na tabela TBBLQJ_ERRO_TED
+            BEGIN
+              INSERT INTO tbblqj_erro_ted(cdtransf_bacenjud,
+                                          cdcooper,
+                                          nrdconta,
+                                          nrsequencia,
+                                          vlordem,
+                                          dtinclusao,
+                                          dtenvio,
+                                          tpmotivo) VALUES (rw_craptvl.nrcctrcb
+                                                           ,rw_crapcop_mensag.cdcooper
+                                                           ,rw_craptvl.nrdconta
+                                                           ,(vr_nrsequencia + 1)
+                                                           ,rw_craptvl.vldocrcb
+                                                           ,rw_crapdat_mensag.dtmvtolt
+                                                           ,NULL
+                                                           ,1);
+
+              vr_dsincons := 'TED BacenJud: Devolvida. Sera efetuada nova tentativa de envio no proximo dia util.';
+            EXCEPTION
+              WHEN OTHERS THEN
+                vr_dscritic := '2 - Erro ao inserir na tabela tbblqj_erro_ted - '||SQLERRM;
+                RAISE vr_exc_saida;
+            END;
+          END IF;
+          --Fim Bacenjud - SM 1
+
           -- Gera log de estorno na cobine
           gene0005.pc_gera_inconsistencia(pr_cdcooper => rw_crapcop_mensag.cdcooper
                                          ,pr_iddgrupo => 2
@@ -5481,7 +5580,7 @@ END;
                                                       || '   Conta Origem: ' || rw_craptvl.nrdconta
                                                       || '   Valor: ' || to_char(vr_aux_VlrLanc,'99g999g990d00')
                                                       || '   Identificacao Dep.: ' || rw_craptvl.nrcctrcb
-                                         ,pr_dsincons => 'TED BacenJud: Devolvida'
+                                         ,pr_dsincons => vr_dsincons
                                          ,pr_flg_enviar => 1
                                          ,pr_des_erro => vr_des_reto
                                          ,pr_dscritic => vr_dscritic);
