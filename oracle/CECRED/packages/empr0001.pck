@@ -16905,8 +16905,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           
     vr_retiof := 0;
                        
-    IF trim(pr_dsctrliq) is not null
-    and lower(pr_dsctrliq) NOT IN('0','sem liquidacoes') then
+    IF (trim(pr_dsctrliq) is not null
+    and lower(pr_dsctrliq) NOT IN('0','sem liquidacoes')) OR nvl(pr_nrctremp,0) > 0 THEN
       -- Calcular enquadramento do IOF levando em conta contratos refinanciados  
       PC_CALCULO_EPR_IOF_REFIN(pr_cdcooper => pr_cdcooper
                               ,pr_nrdconta => pr_nrdconta
@@ -16945,9 +16945,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
     CLOSE cr_craplcr;
     
     -- Linha Isenta de IOF
-    IF vr_flgtaiof = 0 THEN
+    /*IF vr_flgtaiof = 0 THEN
       RETURN;
-    END IF;
+    END IF;*/
     
     
     -- Portabilidade não cobra IOF
