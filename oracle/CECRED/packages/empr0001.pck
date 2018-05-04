@@ -979,7 +979,7 @@ CREATE OR REPLACE PACKAGE CECRED.empr0001 AS
                                   ,pr_retxml   IN OUT NOCOPY XMLType --> Arquivo de retorno do XML
                                   ,pr_nmdcampo OUT VARCHAR2 --> Nome do campo com erro
                                   ,pr_des_erro OUT VARCHAR2); --> Erros do processo
-                                      
+
   /* Efetuar calculo do IOF de Empréstimo */                                     
   PROCEDURE pc_calcula_iof_epr(pr_cdcooper  IN crapepr.cdcooper%TYPE --> Cooperativa conectada
                               ,pr_nrdconta  IN crapepr.nrdconta%TYPE --> Conta do associado
@@ -5599,7 +5599,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
            AND c.nrdconta = pr_nrdconta
            AND c.nrctremp = prc_nrctremp
            AND c.cdhistor in (382,2388,2473,2389,2391, 2392,2474,2393,2395);
-       --           
+       --
 
       --nova M324
       CURSOR cr_craplem4(prc_nrctremp craplem.nrctremp%TYPE) IS
@@ -9096,7 +9096,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           RAISE vr_exc_erro;
       END;
       END IF;
-
+        
       -- Retira nome do modulo logado - 30/01/2018 - Ch 788828
       GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
     EXCEPTION
@@ -9747,7 +9747,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                    06/04/2018 - Alterar o tratamento relacionado as chamadas de resgate de aplicação,
                                 para que não ocorram problemas com o fluxo atual em caso de ocorrencia
                                 de erros. (Renato - Supero)
-                   
+                                
                    07/04/2018 - Ajustar o calculo do valor a ser resgatado (Renato - Supero)
     ............................................................................. */
   
@@ -17306,7 +17306,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
          Objetivo  : Possui a mesma funcionalidade da rotina pc_valida_pagamentos_geral,
                      para chamadas diretamente atraves de rotinas progress
 
-         Alteração : 07/12/2017 - Passagem do crawepr.idcobope. (Jaison/Marcos Martini - PRJ404)
+        Alteração : 07/12/2017 - Passagem do crawepr.idcobope. (Jaison/Marcos Martini - PRJ404)
 
          Alteração : 30/01/2018 - Padronização mensagens (crapcri, pc_gera_log (tbgen))
                                 - Padronização erros comandos DDL
@@ -18170,7 +18170,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
   END pc_valida_imoveis_epr;
   
   /* Procedure para verificar IOF de Refinanciamento */
-      PROCEDURE PC_CALCULO_EPR_IOF_REFIN (pr_cdcooper in crapepr.cdcooper%type
+  PROCEDURE PC_CALCULO_EPR_IOF_REFIN (pr_cdcooper in crapepr.cdcooper%type
       ,pr_nrdconta in crapepr.nrdconta%type
       ,pr_nrctremp in crapepr.nrctremp%type
       ,pr_dsctrliq in varchar2
@@ -18577,10 +18577,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
              end if;
              pr_retiof := 4;  
          end if;     */
-
+         
 
     end PC_CALCULO_EPR_IOF_REFIN;
-
+  
   /* Interface para chamada via AyllosWeb da pc_calcula_iof_epr */
   PROCEDURE pc_calcula_iof_epr_web(pr_cdcooper        IN crapepr.cdcooper%TYPE --> Cooperativa conectada
                                   ,pr_nrdconta        IN crapepr.nrdconta%TYPE --> Conta do associado
@@ -18631,7 +18631,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
 
       -- Tratamento de erros
       vr_exc_saida EXCEPTION;
-  
+
       vr_vlpreclc NUMBER;
       vr_valoriof NUMBER;
       vr_vliofpri NUMBER;
@@ -18757,15 +18757,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
      Sigla   : CRED
      Autor   : James Prust Junior
      Data    : Abril/2017                        Ultima atualizacao: 12/04/2018
-     
+    
      Dados referentes ao programa:
-  
+    
      Frequencia: Sempre que for chamada
      Objetivo  : Calcular IOF para emprestimo/financiamento
-     
+    
      Alteracoes: 07/04/2017 - Implementar tratamento e calculo para empréstimos do
                               tipo PP. ( Renato Darosci )
-  
+
                  09/05/2017 - Inclusao do produto Pos-Fixado. (Jaison/James - PRJ298)
                  
                  12/04/2018 - P410 - Melhorias/Ajustes IOF (Marcos-Envolti)
@@ -18918,23 +18918,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           
     vr_retiof := 0;
                        
-    IF trim(pr_dsctrliq) is not null
-    and lower(pr_dsctrliq) NOT IN('0','sem liquidacoes') then
+    IF (trim(pr_dsctrliq) is not null
+    and lower(pr_dsctrliq) NOT IN('0','sem liquidacoes')) OR nvl(pr_nrctremp,0) > 0 THEN
       -- Calcular enquadramento do IOF levando em conta contratos refinanciados  
-       PC_CALCULO_EPR_IOF_REFIN(pr_cdcooper => pr_cdcooper
+      PC_CALCULO_EPR_IOF_REFIN(pr_cdcooper => pr_cdcooper
                               ,pr_nrdconta => pr_nrdconta
                               ,pr_nrctremp => pr_nrctremp
                               ,pr_dsctrliq => pr_dsctrliq
                               ,pr_vlemprst => pr_vlemprst
                               ,pr_vlbasiof => vr_vlbaseiof
                               ,pr_retiof   => vr_retiof  /* 1 - Cobra somente IOF adicional sobre saldo;
-                                                               2 - Não cobra IOF 
-                                                                3 - cobra integral sobre saldo 
-                                                                4 - cobra somente IOF adicional*/
+                                                            2 - Não cobra IOF 
+                                                            3 - cobra integral sobre saldo 
+                                                            4 - cobra somente IOF adicional*/
                               ,pr_vllanmto => vr_vllanmto /* lancamento IOF anterior */
                               ,pr_dscritic => vr_dscritic);
     end if;
-    
+
     -- Nova regra vale somente a partir de 25/01/2017
     IF vr_dtmvtolt < to_date('25/01/2017','DD/MM/RRRR') THEN
       RETURN;
@@ -18942,7 +18942,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
     
     -- Refinanciamento referente a contratos anteriores a 31/03/2018, cobra só adicional
     IF vr_retiof = 1 and pr_idfiniof = 0 then 
-        return;
+      return;
     end if;
     
     -- Buscar dados da linha de crédito e sua a taxa de juros
@@ -18956,12 +18956,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       vr_flgtaiof := rw_craplcr.flgtaiof;
     END IF; 
     CLOSE cr_craplcr;
-      
+    
     -- Linha Isenta de IOF
-    IF vr_flgtaiof = 0 THEN
+    /*IF vr_flgtaiof = 0 THEN
       RETURN;
-    END IF;
-      
+    END IF;*/
+    
     
     -- Portabilidade não cobra IOF
     IF empr0001.fn_tipo_finalidade(pr_cdcooper,pr_cdfinemp) = 2 THEN 
@@ -18988,7 +18988,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
     ------------------------------------------------------------------------------------------------        
     -- Se o empréstimo for do tipo PP 
     IF pr_tpemprst = 1 THEN
-    -- Condicao Pessoa Fisica
+      -- Condicao Pessoa Fisica      
       pr_valoriof := 0;
     
       vr_diafinal := to_char(pr_dtdpagto, 'dd');
@@ -19009,7 +19009,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
 
       if nvl(pr_idfiniof,0) = 1 then
         
-          TARI0001.pc_calcula_tarifa(pr_cdcooper => pr_cdcooper
+        TARI0001.pc_calcula_tarifa(pr_cdcooper => pr_cdcooper
                                   ,pr_nrdconta => pr_nrdconta
                                   ,pr_cdlcremp => pr_cdlcremp
                                   ,pr_vlemprst => pr_vlemprst
@@ -19027,12 +19027,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                                   ,pr_cdfvlgar => vr_cdfvlgar
                                   ,pr_cdcritic => vr_cdcritic
                                   ,pr_dscritic => vr_dscritic);
-              if nvl(vr_cdcritic,0) > 0
-              or vr_dscritic is not null then
-                 raise vr_exc_erro;
-              end if;
-              
-              vr_vltarifaN := vr_vltarifa + vr_vltarifaES + vr_vltarifaGT;
+        if nvl(vr_cdcritic,0) > 0
+        or vr_dscritic is not null then
+          raise vr_exc_erro;
+        end if;
+            
+        vr_vltarifaN := vr_vltarifa + vr_vltarifaES + vr_vltarifaGT;
               
       end if;
 
@@ -19041,44 +19041,44 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
 
       if nvl(pr_idfiniof,0) = 1
       and vr_vlbaseiof > 0 then
-          -- recalcula prestacao do emprestimo
-          vr_vlpreemp := vr_saldo_devedor * (vr_txmensal / 100) / (1 - POWER((1 + (VR_TXMENSAL / 100)), - pr_qtpreemp));
-          vr_vliofaditt := (vr_vlbaseiof /*pr_vlemprst*/ + nvl(vr_vltarifaN,0)) * vr_taxaiof;
-          vr_vliofaditt_aux := vr_vliofaditt;
+        -- recalcula prestacao do emprestimo
+        vr_vlpreemp := vr_saldo_devedor * (vr_txmensal / 100) / (1 - POWER((1 + (VR_TXMENSAL / 100)), - pr_qtpreemp));
+        vr_vliofaditt := (vr_vlbaseiof /*pr_vlemprst*/ + nvl(vr_vltarifaN,0)) * vr_taxaiof;
+        vr_vliofaditt_aux := vr_vliofaditt;
       end if;
     
-    FOR vr_ind IN 1..pr_qtpreemp LOOP
-      IF vr_ind = 1 THEN
+      FOR vr_ind IN 1..pr_qtpreemp LOOP
+        IF vr_ind = 1 THEN
           vr_saldo_devedor := ROUND((vr_vlbaseiof + nvl(vr_vltarifaN,0)) * (POWER((1 + vr_txdiaria),((vr_qtdedias) - 30))),2);
-      ELSE
-        vr_saldo_devedor := vr_tab_parcela(vr_ind - 1).vlsaldodevedor;
-      END IF;
-      
-      -- Data de Vencimento da Parcela
-      vr_dtvencto := ADD_MONTHS(pr_dtdpagto,vr_ind - 1);  
-      
-      -- Somente eh permitido calcular o IOF para 365 dias
+        ELSE
+          vr_saldo_devedor := vr_tab_parcela(vr_ind - 1).vlsaldodevedor;
+        END IF;
+        
+        -- Data de Vencimento da Parcela
+        vr_dtvencto := ADD_MONTHS(pr_dtdpagto,vr_ind - 1);  
+        
+        -- Somente eh permitido calcular o IOF para 365 dias
         vr_qtdias   := vr_dtvencto - vr_dtmvtolt;
-        
+          
         if vr_qtdias < 0 then
-           vr_qtdias := abs(vr_qtdias);
+          vr_qtdias := abs(vr_qtdias);
         end if;
-        
-      IF vr_qtdias > 365 THEN
-        vr_qtdias := 365;
-      END IF;
-    
-      -- Valor do Juros
-      vr_tab_parcela(vr_ind).vljuros        := (vr_txmensal / 100) * vr_saldo_devedor;
-      -- Valor Amortizacao/Principal
+          
+        IF vr_qtdias > 365 THEN
+          vr_qtdias := 365;
+        END IF;
+      
+        -- Valor do Juros
+        vr_tab_parcela(vr_ind).vljuros        := (vr_txmensal / 100) * vr_saldo_devedor;
+        -- Valor Amortizacao/Principal
         if vr_vlbaseiof = 0 then
-           vr_tab_parcela(vr_ind).vlprincipal    := 0;
+          vr_tab_parcela(vr_ind).vlprincipal    := 0;
         else
-        vr_tab_parcela(vr_ind).vlprincipal    := vr_vlpreemp - vr_tab_parcela(vr_ind).vljuros;
+          vr_tab_parcela(vr_ind).vlprincipal    := vr_vlpreemp - vr_tab_parcela(vr_ind).vljuros;
         end if;
-      -- Valor Saldo Devedor
-      vr_tab_parcela(vr_ind).vlsaldodevedor := vr_saldo_devedor - vr_tab_parcela(vr_ind).vlprincipal;
-
+        -- Valor Saldo Devedor
+        vr_tab_parcela(vr_ind).vlsaldodevedor := vr_saldo_devedor - vr_tab_parcela(vr_ind).vlprincipal;
+        
         -- Calculo do valor do IOF de acordo com as novas regras
         tiof0001 .pc_calcula_valor_iof_epr(pr_cdcooper => pr_cdcooper
                                         , pr_nrdconta => pr_nrdconta
@@ -19095,109 +19095,109 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                                         , pr_vltaxa_iof_principal => vr_taxaiof
                                         , pr_flgimune => pr_flgimune
                                         , pr_dscritic => vr_dscritic );
-         if vr_dscritic is null  then
-            vr_vliofpritt := nvl(vr_vliofpritt,0) + NVL(vr_vliofpri,0);
+        if vr_dscritic is null  then
+          vr_vliofpritt := nvl(vr_vliofpritt,0) + NVL(vr_vliofpri,0);
 
-            -- no caso de imunidade, não cobra IOF
-            if nvl(pr_flgimune ,0) = 1 then
-               vr_vliofpri := 0 ;
-               vr_vliofadi := 0;
-            end if;
-            
-            if vr_retiof = 1 then
-               vr_vliofpri := 0 ;
-               vr_vliofadi := 0;
-            end if;
-            
-            pr_valoriof := abs(pr_valoriof + NVL(vr_vliofpri,0)); -- + NVL(vr_vliofadi,0);
-         end if;
-    END LOOP;
+          -- no caso de imunidade, não cobra IOF
+          if nvl(pr_flgimune ,0) = 1 then
+            vr_vliofpri := 0 ;
+            vr_vliofadi := 0;
+          end if;
+              
+          if vr_retiof = 1 then
+            vr_vliofpri := 0 ;
+            vr_vliofadi := 0;
+          end if;
+              
+          pr_valoriof := abs(pr_valoriof + NVL(vr_vliofpri,0)); -- + NVL(vr_vliofadi,0);
+        end if;
+      END LOOP;
 
 
       --IF pr_inpessoa = 1 AND (cr_crapbpr_moto%FOUND OR INSTR(pr_dscatbem,'MOTO', 1, 1) > 0)  THEN
       IF pr_inpessoa = 1 AND (INSTR(pr_dscatbem,'MOTO', 1, 1) > 0)  THEN
-         if nvl(pr_idfiniof,0) = 1 then
-            pr_valoriof := pr_valoriof + NVL(vr_vliofaditt, 0);
-         else
-            pr_valoriof := NVL(vr_vliofaditt, 0);
-         end if;
+        if nvl(pr_idfiniof,0) = 1 then
+          pr_valoriof := pr_valoriof + NVL(vr_vliofaditt, 0);
+        else
+          pr_valoriof := NVL(vr_vliofaditt, 0);
+        end if;
       ELSE
-          IF vr_vliofadi > 0 AND (pr_valoriof > 0 or vr_vliofaditt > 0) THEN
-            --Adicionado "OR" pois não estava calculando IOF em casos onde somente
-            --calcula o adicional (ex. natjurid = 2143 - Cooperativas)
-            pr_valoriof := pr_valoriof + vr_vliofaditt;
-          END IF;
+        IF vr_vliofadi > 0 AND (pr_valoriof > 0 or vr_vliofaditt > 0) THEN
+          --Adicionado "OR" pois não estava calculando IOF em casos onde somente
+          --calcula o adicional (ex. natjurid = 2143 - Cooperativas)
+          pr_valoriof := pr_valoriof + vr_vliofaditt;
+        END IF;
       END IF;
 
       if vr_retiof in ( 1, 4) then
-         pr_valoriof := pr_valoriof + vr_vliofaditt;
+        pr_valoriof := pr_valoriof + vr_vliofaditt;
       end if;
       
       if nvl(pr_idfiniof,0) = 1 then -- refazer o calculo de IOF com base no financiamento Tarifa e IOF
-         --ARRED(vlr base ante/((vlr base ante - vliof apurado)/vl base ante);2)
-      if nvl(vr_vllanmto,0) > 0 
-      and vr_retiof in (1,3) then
-         if pr_valoriof >= vr_vllanmto then
+        --ARRED(vlr base ante/((vlr base ante - vliof apurado)/vl base ante);2)
+        if nvl(vr_vllanmto,0) > 0 
+        and vr_retiof in (1,3) then
+          if pr_valoriof >= vr_vllanmto then
             pr_valoriof := pr_valoriof - vr_vllanmto;
-         else 
+          else 
             pr_valoriof := 0;
-         end if;
-      end if;
+          end if;
+        end if;
 
-         if nvl(pr_flgimune ,0) = 1 then
-           pr_valoriof := nvl(vr_vliofpritt,0) + nvl(vr_vliofaditt,0);
-         end if;
+        if nvl(pr_flgimune ,0) = 1 then
+          pr_valoriof := nvl(vr_vliofpritt,0) + nvl(vr_vliofaditt,0);
+        end if;
          
-         if pr_valoriof > 0 then
-           vr_vliofpritt := 0;
+        if pr_valoriof > 0 then
+          vr_vliofpritt := 0;
 
-           FOR vr_ind IN 1..pr_qtpreemp LOOP
-              IF vr_ind = 1 THEN
-                 -- calcula saldo devedor com base no emprestimo + tarifa e incide o IOF já calculado
-                 vr_saldo_devedor := round(vr_vlbaseiof /*pr_vlemprst*/ + vr_vltarifaN,2);
-                 vr_saldo_devedor := ROUND(vr_saldo_devedor / ((vr_saldo_devedor - pr_valoriof) / vr_saldo_devedor),2);
-                 vr_taxaiof := GENE0002.fn_char_para_number(SUBSTR(vr_dstextab,23,14));
-                 vr_vliofaditt := ROUND(vr_saldo_devedor * vr_taxaiof,2);
-                 vr_vliofaditt_aux := vr_vliofaditt;
+          FOR vr_ind IN 1..pr_qtpreemp LOOP
+            IF vr_ind = 1 THEN
+              -- calcula saldo devedor com base no emprestimo + tarifa e incide o IOF já calculado
+              vr_saldo_devedor := round(vr_vlbaseiof /*pr_vlemprst*/ + vr_vltarifaN,2);
+              vr_saldo_devedor := ROUND(vr_saldo_devedor / ((vr_saldo_devedor - pr_valoriof) / vr_saldo_devedor),2);
+              vr_taxaiof := GENE0002.fn_char_para_number(SUBSTR(vr_dstextab,23,14));
+              vr_vliofaditt := ROUND(vr_saldo_devedor * vr_taxaiof,2);
+              vr_vliofaditt_aux := vr_vliofaditt;
 
-                 -- Acha o VP (valor presente do saldo devedor)
-                 vr_saldo_devedor := ROUND(vr_saldo_devedor * (POWER((1 + vr_txdiaria),((vr_qtdedias) - 30))),2);
-                 if vr_vlbaseiof > 0  then            
-                 vr_vlpreemp := vr_saldo_devedor * (vr_txmensal / 100) / (1 - POWER((1 + (VR_TXMENSAL / 100)), - pr_qtpreemp));
-                 end if;
-                 -- Calculo para achar a prestação quando é refinanciamento (e possuir saldo entre os contratos)
-                 if vr_retiof in (1, 2, 4) then
-                     vr_saldo_devedorRF := round(pr_vlemprst + vr_vltarifaN,2);
-                     vr_saldo_devedorRF := ROUND(vr_saldo_devedorRF / ((vr_saldo_devedorRF - pr_valoriof) / vr_saldo_devedorRF),2);
-                     -- Acha o VP (valor presente do saldo devedor)
-                     vr_saldo_devedorRF := ROUND(vr_saldo_devedorRF * (POWER((1 + vr_txdiaria),((vr_qtdedias) - 30))),2);
-                     vr_vlpreemp := vr_saldo_devedorRF * (vr_txmensal / 100) / (1 - POWER((1 + (VR_TXMENSAL / 100)), - pr_qtpreemp));                    
-                 end if;
+              -- Acha o VP (valor presente do saldo devedor)
+              vr_saldo_devedor := ROUND(vr_saldo_devedor * (POWER((1 + vr_txdiaria),((vr_qtdedias) - 30))),2);
+              if vr_vlbaseiof > 0  then            
+                vr_vlpreemp := vr_saldo_devedor * (vr_txmensal / 100) / (1 - POWER((1 + (VR_TXMENSAL / 100)), - pr_qtpreemp));
+              end if;
+              -- Calculo para achar a prestação quando é refinanciamento (e possuir saldo entre os contratos)
+              if vr_retiof in (1, 2, 4) then
+                vr_saldo_devedorRF := round(pr_vlemprst + vr_vltarifaN,2);
+                vr_saldo_devedorRF := ROUND(vr_saldo_devedorRF / ((vr_saldo_devedorRF - pr_valoriof) / vr_saldo_devedorRF),2);
+                -- Acha o VP (valor presente do saldo devedor)
+                vr_saldo_devedorRF := ROUND(vr_saldo_devedorRF * (POWER((1 + vr_txdiaria),((vr_qtdedias) - 30))),2);
+                vr_vlpreemp := vr_saldo_devedorRF * (vr_txmensal / 100) / (1 - POWER((1 + (VR_TXMENSAL / 100)), - pr_qtpreemp));                    
+              end if;
                  
               pr_vlpreclc := vr_vlpreemp;
-                 pr_valoriof := 0;
-              ELSE
-                vr_saldo_devedor := vr_tab_parcela(vr_ind - 1).vlsaldodevedor;
-              END IF;
+              pr_valoriof := 0;
+            ELSE
+              vr_saldo_devedor := vr_tab_parcela(vr_ind - 1).vlsaldodevedor;
+            END IF;
 
-              -- Data de Vencimento da Parcela
-              vr_dtvencto := ADD_MONTHS(pr_dtdpagto,vr_ind - 1);
+            -- Data de Vencimento da Parcela
+            vr_dtvencto := ADD_MONTHS(pr_dtdpagto,vr_ind - 1);
 
-              -- Somente eh permitido calcular o IOF para 365 dias
+            -- Somente eh permitido calcular o IOF para 365 dias
             vr_qtdias   := vr_dtvencto - vr_dtmvtolt;
-              IF vr_qtdias > 365 THEN
-                vr_qtdias := 365;
-              END IF;
+            IF vr_qtdias > 365 THEN
+              vr_qtdias := 365;
+            END IF;
 
-              -- Valor do Juros
-              vr_tab_parcela(vr_ind).vljuros        := (vr_txmensal / 100) * vr_saldo_devedor;
-              -- Valor Amortizacao/Principal
-              vr_tab_parcela(vr_ind).vlprincipal    := vr_vlpreemp - vr_tab_parcela(vr_ind).vljuros;
-              -- Valor Saldo Devedor
-              vr_tab_parcela(vr_ind).vlsaldodevedor := vr_saldo_devedor - vr_tab_parcela(vr_ind).vlprincipal;
+            -- Valor do Juros
+            vr_tab_parcela(vr_ind).vljuros        := (vr_txmensal / 100) * vr_saldo_devedor;
+            -- Valor Amortizacao/Principal
+            vr_tab_parcela(vr_ind).vlprincipal    := vr_vlpreemp - vr_tab_parcela(vr_ind).vljuros;
+            -- Valor Saldo Devedor
+            vr_tab_parcela(vr_ind).vlsaldodevedor := vr_saldo_devedor - vr_tab_parcela(vr_ind).vlprincipal;
 
-              -- Calculo do valor do IOF de acordo com as novas regras
-              tiof0001.pc_calcula_valor_iof_epr(pr_cdcooper => pr_cdcooper
+            -- Calculo do valor do IOF de acordo com as novas regras
+            tiof0001.pc_calcula_valor_iof_epr(pr_cdcooper => pr_cdcooper
                                              ,pr_nrdconta => pr_nrdconta
                                              ,pr_nrctremp => pr_nrctremp
                                              ,pr_vlemprst => vr_tab_parcela(vr_ind).vlprincipal
@@ -19212,61 +19212,61 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                                              ,pr_vltaxa_iof_principal => vr_taxaiof
                                              ,pr_flgimune => pr_flgimune
                                              ,pr_dscritic => vr_dscritic );
-               if vr_dscritic is null  then
-                 vr_vliofpritt := nvl(vr_vliofpritt,0) + NVL(vr_vliofpri,0);
+            if vr_dscritic is null  then
+              vr_vliofpritt := nvl(vr_vliofpritt,0) + NVL(vr_vliofpri,0);
 
-                  -- no caso de imunidade, não cobra IOF
-                  if nvl(pr_flgimune ,0) = 1 then
-                     vr_vliofpri := 0 ;
-                     vr_vliofadi := 0;
-                  end if;
+              -- no caso de imunidade, não cobra IOF
+              if nvl(pr_flgimune ,0) = 1 then
+                vr_vliofpri := 0 ;
+                vr_vliofadi := 0;
+              end if;
                   
-                  if vr_retiof = 1 then
-                     vr_vliofpri := 0 ;
-                  end if;
+              if vr_retiof = 1 then
+                vr_vliofpri := 0 ;
+              end if;
                   
-                  -- possui isencao
-                  IF nvl(vr_vliofadi,0) = 0 then 
-                     vr_vliofaditt := 0;
-                  end if;
-                  pr_valoriof := pr_valoriof + NVL(vr_vliofpri,0); -- + NVL(vr_vliofadi,0);
-               end if;
-    END LOOP;
+              -- possui isencao
+              IF nvl(vr_vliofadi,0) = 0 then 
+                vr_vliofaditt := 0;
+              end if;
+              pr_valoriof := pr_valoriof + NVL(vr_vliofpri,0); -- + NVL(vr_vliofadi,0);
+            end if;
+          END LOOP;
       
-             IF pr_valoriof > 0
-             or vr_vliofaditt > 0 THEN
-                pr_valoriof := pr_valoriof + vr_vliofaditt;
-             END IF;
+          IF pr_valoriof > 0
+          or vr_vliofaditt > 0 THEN
+            pr_valoriof := pr_valoriof + vr_vliofaditt;
+          END IF;
 
-         end if;
+        end if;
       end if;
 
       if nvl(vr_vllanmto,0) > 0 and vr_retiof in ( 1, 3) then
-                if pr_valoriof > vr_vllanmto then
-            --IOF total calculado
-            vr_calc_iof_aux := pr_valoriof;
-            --desconta o que já foi pago
-                   pr_valoriof := pr_valoriof - vr_vllanmto;
-                else 
-                   pr_valoriof := 0;
-                end if;
-             end if;
+        if pr_valoriof > vr_vllanmto then
+          --IOF total calculado
+          vr_calc_iof_aux := pr_valoriof;
+          --desconta o que já foi pago
+          pr_valoriof := pr_valoriof - vr_vllanmto;
+        else 
+          pr_valoriof := 0;
+        end if;
+      end if;
             
       if vr_retiof = 4 then
-         if vr_vlbaseiof >= pr_vlemprst then         
-           pr_valoriof := vr_vliofaditt;  
-         end if;
+        if vr_vlbaseiof >= pr_vlemprst then         
+          pr_valoriof := vr_vliofaditt;  
+        end if;
       end if;
       
       -- Calculo para achar a prestação quando é refinanciamento (e possuir saldo entre os contratos)
-                 if vr_retiof in (1, 2, 4) then
-                     vr_saldo_devedorRF := round(pr_vlemprst + vr_vltarifaN,2);
-                     vr_saldo_devedorRF := ROUND(vr_saldo_devedorRF / ((vr_saldo_devedorRF - pr_valoriof) / vr_saldo_devedorRF),2);
-                     -- Acha o VP (valor presente do saldo devedor)
-                     vr_saldo_devedorRF := ROUND(vr_saldo_devedorRF * (POWER((1 + vr_txdiaria),((vr_qtdedias) - 30))),2);
-                     vr_vlpreemp := vr_saldo_devedorRF * (vr_txmensal / 100) / (1 - POWER((1 + (VR_TXMENSAL / 100)), - pr_qtpreemp));                    
-                 end if;
-                 
+      if vr_retiof in (1, 2, 4) then
+        vr_saldo_devedorRF := round(pr_vlemprst + vr_vltarifaN,2);
+        vr_saldo_devedorRF := ROUND(vr_saldo_devedorRF / ((vr_saldo_devedorRF - pr_valoriof) / vr_saldo_devedorRF),2);
+        -- Acha o VP (valor presente do saldo devedor)
+        vr_saldo_devedorRF := ROUND(vr_saldo_devedorRF * (POWER((1 + vr_txdiaria),((vr_qtdedias) - 30))),2);
+        vr_vlpreemp := vr_saldo_devedorRF * (vr_txmensal / 100) / (1 - POWER((1 + (VR_TXMENSAL / 100)), - pr_qtpreemp));                    
+      end if;
+      
       pr_vlpreclc := vr_vlpreemp;
                  
     ELSIF pr_tpemprst = 0 THEN  -- Se o tipo do empréstimo for TR
@@ -19293,7 +19293,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                                          ,pr_flgimune => Vr_flgimune
                                          ,pr_dsreturn => vr_dsreturn
                                          ,pr_tab_erro => vr_tab_erro);
-      
+         
       -- Condicao para verificar se houve erro
       IF vr_dsreturn <> 'OK' THEN
         -- Se possui erro no vetor
@@ -19308,26 +19308,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       -- No caso de imunidade, nao cobra IOF
       IF vr_flgimune then
         pr_flgimune := 1;
-              pr_valoriof := 0;
-            END IF;
-            
+        pr_valoriof := 0;
+      END IF;
+      
       -- Checar refin      
-             if nvl(vr_vllanmto,0) > 0  and vr_retiof in ( 1, 3) then
-                if pr_valoriof > vr_vllanmto then
-                   --IOF total calculado
-                   vr_calc_iof_aux := pr_valoriof;
+      if nvl(vr_vllanmto,0) > 0  and vr_retiof in ( 1, 3) then
+        if pr_valoriof > vr_vllanmto then
+          --IOF total calculado
+          vr_calc_iof_aux := pr_valoriof;
           -- Desconta o que já foi pago de IOF
-                   pr_valoriof := pr_valoriof - vr_vllanmto;
-                else 
-                   pr_valoriof := 0;
-          end if;
-             end if;
-               if vr_retiof = 4 then
-                   if vr_vlbaseiof >= pr_vlemprst then                   
-                     pr_valoriof := vr_vliofaditt;  
-                   end if;
+          pr_valoriof := pr_valoriof - vr_vllanmto;
+        else 
+          pr_valoriof := 0;
+        end if;
+      end if;             
+      if vr_retiof = 4 then
+        if vr_vlbaseiof >= pr_vlemprst then                   
+          pr_valoriof := vr_vliofaditt;  
+        end if;
       end IF;
-    
+      
     ELSIF pr_tpemprst = 2 THEN  -- Se o emprestimo for Pos-Fixado
 
       tiof0001.pc_busca_taxa_iof(pr_cdcooper => pr_cdcooper
@@ -19343,7 +19343,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                                 ,pr_dscritic => vr_dscritic);
 
       if vr_dscritic is not null then
-         raise vr_exc_erro;
+        raise vr_exc_erro;
       end if;
 
       pr_valoriof := 0;
@@ -19365,10 +19365,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       vr_vlpreemp := pr_vlpreemp;
 
       if nvl(pr_idfiniof,0) = 1 then
-         TARI0001.pc_calcula_tarifa(pr_cdcooper => pr_cdcooper
+        TARI0001.pc_calcula_tarifa(pr_cdcooper => pr_cdcooper
                                   ,pr_nrdconta => pr_nrdconta
-                                        ,pr_cdlcremp        => pr_cdlcremp
-                                        ,pr_vlemprst        => pr_vlemprst
+                                  ,pr_cdlcremp        => pr_cdlcremp
+                                  ,pr_vlemprst        => pr_vlemprst
                                   ,pr_cdusolcr => rw_craplcr.cdusolcr
                                   ,pr_tpctrato => rw_craplcr.tpctrato
                                   ,pr_dsbemgar => pr_dscatbem
@@ -19381,18 +19381,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                                   ,pr_cdfvlcop => vr_cdfvlcop
                                   ,pr_cdhisgar => vr_cdhisgar
                                   ,pr_cdfvlgar => vr_cdfvlgar
-                                        ,pr_cdcritic        => vr_cdcritic
-                                        ,pr_dscritic        => vr_dscritic);
-         if nvl(vr_cdcritic,0) > 0 or vr_dscritic is not null then
-            raise vr_exc_erro;
-         end if;
+                                  ,pr_cdcritic        => vr_cdcritic
+                                  ,pr_dscritic        => vr_dscritic);
+        if nvl(vr_cdcritic,0) > 0 or vr_dscritic is not null then
+          raise vr_exc_erro;
+        end if;
               
-         vr_vltarifaN := vr_vltarifa + vr_vltarifaES + vr_vltarifaGT;
+        vr_vltarifaN := vr_vltarifa + vr_vltarifaES + vr_vltarifaGT;
               
-         -- vr_saldo_devedor := ROUND((pr_vlemprst + nvl(vr_vltarifaN,0)) * (POWER((1 + vr_txdiaria),((vr_qtdedias) - 30))),2);
-         vr_saldo_devedor := vr_vlbaseiof /*pr_vlemprst*/ + nvl(vr_vltarifaN,0);
+        -- vr_saldo_devedor := ROUND((pr_vlemprst + nvl(vr_vltarifaN,0)) * (POWER((1 + vr_txdiaria),((vr_qtdedias) - 30))),2);
+        vr_saldo_devedor := vr_vlbaseiof /*pr_vlemprst*/ + nvl(vr_vltarifaN,0);
       else
-         vr_saldo_devedor := vr_vlbaseiof /*pr_vlemprst*/;
+        vr_saldo_devedor := vr_vlbaseiof /*pr_vlemprst*/;
       end if;
 
       IF vr_vlbaseiof > 0 THEN
@@ -19414,7 +19414,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                                           ,pr_dscritic        => vr_dscritic);
         -- Se retornou erro
         IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
-         RAISE vr_exc_erro;
+          RAISE vr_exc_erro;
         END IF;
 
 
@@ -19428,12 +19428,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           OPEN cr_crapepr(pr_cdcooper => pr_cdcooper
                          ,pr_nrdconta => pr_nrdconta
                          ,pr_nrctremp => pr_nrctremp);
-           FETCH cr_crapepr INTO rw_crapepr;
-           IF cr_crapepr%FOUND THEN
-              vr_existe_epr := TRUE;
-              --vr_vltaxa_iof_atraso := rw_crapepr.vlaqiofc;
-           END IF;
-           CLOSE cr_crapepr;  
+          FETCH cr_crapepr INTO rw_crapepr;
+          IF cr_crapepr%FOUND THEN
+            vr_existe_epr := TRUE;
+            --vr_vltaxa_iof_atraso := rw_crapepr.vlaqiofc;
+          END IF;
+          CLOSE cr_crapepr;  
         END IF;
       
         -- Calcula IOF Adicional com base no saldo devedor inicial
@@ -19450,54 +19450,54 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                                            ,pr_vliofadi => vr_vliofaditt --> Valor do IOF adicional
                                            ,pr_vliofcpl => vr_vliofcpl --> Valor do IOF complementar
                                            ,pr_dscritic => vr_dscritic); --> Descrição da crítica
-         END IF;
+        END IF;
       END IF;     
       if vr_retiof = 1 then
-         vr_vltariof := 0;
+        vr_vltariof := 0;
       end if;
       
       if pr_idfiniof = 1 then
-         -- recalcula valor devedor, chama novamente o calculo de iof pós-fixado
-         vr_saldo_devedor := round(vr_vlbaseiof /*pr_vlemprst*/ + nvl(vr_vltarifaN,0),2);
-         --Se já tiver sido pago IOF anteriormente, desconta da base
-         if nvl(vr_vllanmto,0) > 0 and vr_retiof in (3) THEN
-            vr_vltariof := vr_vltariof - vr_vllanmto;
+        -- recalcula valor devedor, chama novamente o calculo de iof pós-fixado
+        vr_saldo_devedor := round(vr_vlbaseiof /*pr_vlemprst*/ + nvl(vr_vltarifaN,0),2);
+        --Se já tiver sido pago IOF anteriormente, desconta da base
+        if nvl(vr_vllanmto,0) > 0 and vr_retiof in (3) THEN
+          vr_vltariof := vr_vltariof - vr_vllanmto;
             
-            --> Caso valor negativo, zerar valor             
-            IF vr_vltariof < 0 THEN
-              --> diminuir saldo
-              vr_vliofaditt := vr_vliofaditt + vr_vltariof;
-              -- se continuar negativo, zerar
-              IF vr_vliofaditt < 0 THEN
-                vr_vliofaditt := 0; 
-              END IF;
-              
-              vr_vltariof   := 0;
-              
+          --> Caso valor negativo, zerar valor             
+          IF vr_vltariof < 0 THEN
+            --> diminuir saldo
+            vr_vliofaditt := vr_vliofaditt + vr_vltariof;
+            -- se continuar negativo, zerar
+            IF vr_vliofaditt < 0 THEN
+              vr_vliofaditt := 0; 
             END IF;
+             
+            vr_vltariof   := 0;
+             
+          END IF;
             
-         end if;
+        end if;
         
-         IF vr_saldo_devedor > 0 THEN
-           vr_saldo_devedor := ROUND(vr_saldo_devedor / ((vr_saldo_devedor - vr_vltariof - vr_vliofaditt) / vr_saldo_devedor),2);
-         END IF;
+        IF vr_saldo_devedor > 0 THEN
+          vr_saldo_devedor := ROUND(vr_saldo_devedor / ((vr_saldo_devedor - vr_vltariof - vr_vliofaditt) / vr_saldo_devedor),2);
+        END IF;
 
-         --Recalcula o valor do IOF adicional
-         vr_vliofaditt := ROUND(vr_saldo_devedor * vr_txiofadc,2);
-         vr_vliofaditt_aux := vr_vliofaditt;
+        --Recalcula o valor do IOF adicional
+        vr_vliofaditt := ROUND(vr_saldo_devedor * vr_txiofadc,2);
+        vr_vliofaditt_aux := vr_vliofaditt;
          
-         -- Acha o VP (valor presente do saldo devedor)
-         -- vr_saldo_devedor := ROUND(vr_saldo_devedor * (POWER((1 + vr_txdiaria),((vr_qtdedias) - 30))),2);
+        -- Acha o VP (valor presente do saldo devedor)
+        -- vr_saldo_devedor := ROUND(vr_saldo_devedor * (POWER((1 + vr_txdiaria),((vr_qtdedias) - 30))),2);
          
-         -- Recalcula Parcela
-         vr_vlpreemp := round(vr_saldo_devedor * (vr_txmensal / 100) / (1 - POWER((1 + (VR_TXMENSAL / 100)), -1 * pr_qtpreemp)),2);
+        -- Recalcula Parcela
+        vr_vlpreemp := round(vr_saldo_devedor * (vr_txmensal / 100) / (1 - POWER((1 + (VR_TXMENSAL / 100)), -1 * pr_qtpreemp)),2);
          
-      -- Chama o calculo de IOF para Pos-Fixado
-          if vr_retiof  in (1, 2, 4) then
-             vr_saldo_devedorRF := round(pr_vlemprst + nvl(vr_vltarifaN,0),2);
-             vr_saldo_devedorRF := ROUND(vr_saldo_devedorRF / ((vr_saldo_devedorRF - nvl(vr_vltariof,0) - nvl(vr_vliofaditt,0)) / vr_saldo_devedorRF),2);
-             vr_saldo_devedor := vr_saldo_devedorRF;             
-          end if;
+        -- Chama o calculo de IOF para Pos-Fixado
+        if vr_retiof  in (1, 2, 4) then
+          vr_saldo_devedorRF := round(pr_vlemprst + nvl(vr_vltarifaN,0),2);
+          vr_saldo_devedorRF := ROUND(vr_saldo_devedorRF / ((vr_saldo_devedorRF - nvl(vr_vltariof,0) - nvl(vr_vliofaditt,0)) / vr_saldo_devedorRF),2);
+          vr_saldo_devedor := vr_saldo_devedorRF;             
+        end if;
           
         IF vr_vlbaseiof > 0 THEN
           EMPR0011.pc_calcula_iof_pos_fixado(pr_cdcooper        => pr_cdcooper
@@ -19520,22 +19520,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
             RAISE vr_exc_erro;
           END IF;
 
-            vr_vliofpritt := nvl(vr_vliofpritt,0) + NVL(vr_vltariof,0);
-          END IF;
+          vr_vliofpritt := nvl(vr_vliofpritt,0) + NVL(vr_vltariof,0);
+        END IF;
           
-          -- Retorna parcela calculada
-          empr0011.pc_calcula_parcelas_pos_fixado(pr_cdcooper => pr_cdcooper,
-                                                  pr_flgbatch => FALSE,
+        -- Retorna parcela calculada
+        empr0011.pc_calcula_parcelas_pos_fixado(pr_cdcooper => pr_cdcooper,
+                                                pr_flgbatch => FALSE,
                                                 pr_dtcalcul => vr_dtmvtolt,
-                                                  pr_cdlcremp => pr_cdlcremp,
-                                                  pr_dtcarenc => pr_dtcarenc,
-                                                  pr_qtdias_carencia => pr_qtdias_carencia,
-                                                  pr_dtdpagto => pr_dtdpagto,
-                                                  pr_qtpreemp => pr_qtpreemp,
-                                                  pr_vlemprst => vr_saldo_devedor,
-                                                  pr_tab_parcelas => pr_tab_parcelas,
-                                                  pr_cdcritic => vr_cdcritic,
-                                                  pr_dscritic => vr_dscritic);
+                                                pr_cdlcremp => pr_cdlcremp,
+                                                pr_dtcarenc => pr_dtcarenc,
+                                                pr_qtdias_carencia => pr_qtdias_carencia,
+                                                pr_dtdpagto => pr_dtdpagto,
+                                                pr_qtpreemp => pr_qtpreemp,
+                                                pr_vlemprst => vr_saldo_devedor,
+                                                pr_tab_parcelas => pr_tab_parcelas,
+                                                pr_cdcritic => vr_cdcritic,
+                                                pr_dscritic => vr_dscritic);
                                                  
         pr_vlpreclc := pr_tab_parcelas(1).vlparepr;
           
@@ -19556,14 +19556,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
 
 
       if vr_flgimuneB then
-         pr_valoriof := 0;
-         vr_vliofaditt := 0;
+        pr_valoriof := 0;
+        vr_vliofaditt := 0;
       else
-         if vr_retiof = 1 then
-             vr_vltariof := 0;
-         end if;
+        if vr_retiof = 1 then
+          vr_vltariof := 0;
+        end if;
          
-         pr_valoriof := NVL(pr_valoriof,0) + NVL(vr_vltariof,0);
+        pr_valoriof := NVL(pr_valoriof,0) + NVL(vr_vltariof,0);
       end if;
 
       tiof0001.pc_verifica_isencao_iof(pr_cdcooper => pr_cdcooper
@@ -19575,38 +19575,38 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                                       ,pr_vliofcpl => vr_vliofcpl
                                       ,pr_dscritic => vr_dscritic);
       if  vr_vliofpri = 0 and vr_vliofaditt = 0 then
-         pr_valoriof := 0;
+        pr_valoriof := 0;
       else
-         --IF pr_inpessoa = 1 AND (cr_crapbpr_moto%FOUND OR INSTR(pr_dscatbem,'MOTO', 1, 1) > 0)  THEN
-         IF pr_inpessoa = 1 AND (INSTR(pr_dscatbem,'MOTO', 1, 1) > 0)  THEN
-              pr_valoriof := NVL(vr_vliofaditt, 0);
-         ELSE
-            if vr_retiof = 1 then
-               vr_vliofpri := 0;
-             end if;
-             if vr_retiof = 2 then
-                vr_vliofpri := 0;
-                vr_vliofaditt := 0;
-             end if;
-             pr_valoriof := NVL(pr_valoriof, 0) + NVL(vr_vliofpri, 0) + NVL(vr_vliofaditt, 0);
-    END IF;
-         
-          if nvl(vr_vllanmto,0) > 0  and vr_retiof in ( 1, 3) then
-                if pr_valoriof > vr_vllanmto then
-                   --IOF total calculado
-                   vr_calc_iof_aux := pr_valoriof;
-                   --desconta o que já foi pago de IOF
-                   pr_valoriof := pr_valoriof - vr_vllanmto;
-                else 
-                   pr_valoriof := 0;
-                end if;
+        --IF pr_inpessoa = 1 AND (cr_crapbpr_moto%FOUND OR INSTR(pr_dscatbem,'MOTO', 1, 1) > 0)  THEN
+        IF pr_inpessoa = 1 AND (INSTR(pr_dscatbem,'MOTO', 1, 1) > 0)  THEN
+          pr_valoriof := NVL(vr_vliofaditt, 0);
+        ELSE
+          if vr_retiof = 1 then
+            vr_vliofpri := 0;
           end if;
+          if vr_retiof = 2 then
+            vr_vliofpri := 0;
+            vr_vliofaditt := 0;
+          end if;
+          pr_valoriof := NVL(pr_valoriof, 0) + NVL(vr_vliofpri, 0) + NVL(vr_vliofaditt, 0);
+        END IF;
+         
+        if nvl(vr_vllanmto,0) > 0  and vr_retiof in ( 1, 3) then
+          if pr_valoriof > vr_vllanmto then
+            --IOF total calculado
+            vr_calc_iof_aux := pr_valoriof;
+            --desconta o que já foi pago de IOF
+            pr_valoriof := pr_valoriof - vr_vllanmto;
+          else 
+            pr_valoriof := 0;
+          end if;
+        end if;
              
-           if vr_retiof = 4 then
-             if vr_vlbaseiof >= pr_vlemprst then            
-                pr_valoriof := vr_vliofaditt;  
-             end if;
-           end if;
+        if vr_retiof = 4 then
+          if vr_vlbaseiof >= pr_vlemprst then            
+            pr_valoriof := vr_vliofaditt;  
+          end if;
+        end if;
          
       end if;
 
@@ -19628,16 +19628,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
              IOF adicional (calculado):  300,85 * 30,57% => 91,96
     */
     IF vr_calc_iof_aux > 0 THEN
-       --Entra aqui se descontou IOF já pago anteriormente
-       vr_perc_aux := vr_vliofpritt / vr_calc_iof_aux;
-       pr_vliofpri := ROUND(pr_valoriof * vr_perc_aux, 2);
-       pr_vliofadi := ROUND(pr_valoriof * (1 - vr_perc_aux), 2);
+      --Entra aqui se descontou IOF já pago anteriormente
+      vr_perc_aux := vr_vliofpritt / vr_calc_iof_aux;
+      pr_vliofpri := ROUND(pr_valoriof * vr_perc_aux, 2);
+      pr_vliofadi := ROUND(pr_valoriof * (1 - vr_perc_aux), 2);
     ELSE
-    pr_vliofpri := vr_vliofpritt;
-    pr_vliofadi := vr_vliofaditt_aux;
+      pr_vliofpri := vr_vliofpritt;
+      pr_vliofadi := vr_vliofaditt_aux;
     END IF;
     pr_flgimune := NVL(pr_flgimune, 0);
-
+      
     -- Retira nome do modulo logado - 30/01/2018 - Ch 788828
     GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
   EXCEPTION
@@ -19715,7 +19715,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
 
       -- Tratamento de erros
       vr_exc_saida EXCEPTION;
-
+      
       vr_vlpreclc NUMBER;
       vr_valoriof NUMBER;
       vr_vliofpri NUMBER;
