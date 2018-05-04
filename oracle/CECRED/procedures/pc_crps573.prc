@@ -332,9 +332,13 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                                  (Daniel-AMcom)
 
                    20/02/2018 - Incluso procedimento para atender ao Projeto Ligeirinho. Foi necessário incluir
-                                procedimento de paralelismo para ganho de performance. - Mauro Amancio (Amcom).
-
+                                procedimento de paralelismo para ganho de performance. - Mauro Amancio (Amcom).                                              
+                                 
                    02/04/2018 - Inclusão de envio de Carac Espec=19 para ATIVO PROBLEMÁTICO - Daniel(AMcom)
+
+                   17/04/2018 - Incluir no arquivo somente fluxo de vencimento com valor maior que 0
+                                ou menor que -100. Empresa 81, o sistema deve validar (se não tem mais
+                                CNPJ deve ser enviado 1) conforme o manual do 3040. (SD#855059-AJFink)
 .............................................................................................................................*/
 
     DECLARE
@@ -4386,7 +4390,12 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
             ELSE
                If vr_tpexecucao = 2 Then
                   vr_seq_relato := vr_seq_relato + 1;
+                  --SD#855059
+                  if nvl(rw_consigna.nrdocnpj,0) = 0 then
+                    vr_texto_xml := vr_texto_xml || '            <Inf Tp="1502" Cd="1"/>'|| chr(10);
+                  else
                   vr_texto_xml := vr_texto_xml || '            <Inf Tp="1502" Ident="' || SUBSTR(lpad(rw_consigna.nrdocnpj,14,'0'),1,14) || '"/>'|| chr(10);
+                  end if;
                   -- Procedimento para gravar wrk, para posteriormente descarregar xml
                   pc_popular_tbgen_batch_rel_wrk(pr_cdcooper      => pr_cdcooper, 
                                                  pr_cdagenci      => pr_cdagenci,
@@ -4404,10 +4413,21 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                       raise vr_exc_saida;
                    end if;
                Else
-                -- Devemos enviar a informação adicional com o CNPJ do Ente Consignante
-                gene0002.pc_escreve_xml(pr_xml            => vr_xml_3040
-                                       ,pr_texto_completo => vr_xml_3040_temp
-                                       ,pr_texto_novo     => '            <Inf Tp="1502" Ident="' || SUBSTR(lpad(rw_consigna.nrdocnpj,14,'0'),1,14) || '"/>'|| chr(10));
+                 --SD#855059
+                 if nvl(rw_consigna.nrdocnpj,0) = 0 then
+                    -- Enviamos a informação adicional com Cd=1, que significa que a operação foi desconsignada
+                    gene0002.pc_escreve_xml(pr_xml            => vr_xml_3040
+                                           ,pr_texto_completo => vr_xml_3040_temp
+                                           ,pr_texto_novo     => '            <Inf Tp="1502" Cd="1"/>'|| chr(10));  
+
+                 else
+                   -- Devemos enviar a informação adicional com o CNPJ do Ente Consignante
+                   gene0002.pc_escreve_xml(pr_xml            => vr_xml_3040
+                                          ,pr_texto_completo => vr_xml_3040_temp
+                                          ,pr_texto_novo     => '            <Inf Tp="1502" Ident="' || SUBSTR(lpad(rw_consigna.nrdocnpj,14,'0'),1,14) || '"/>'|| chr(10));
+                 end if;
+
+
                End If; -- Fim tratamento WRK
             END IF;
           ELSE
@@ -4415,7 +4435,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
           END IF;
         END IF;
       END;    
-
+      
       -- **
       -- Verifica Ativo Problemático - Daniel(AMcom)
       PROCEDURE pc_verif_ativo_problematico(pr_cdcooper    IN NUMBER       -- Cooperativa
@@ -4447,6 +4467,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
         vr_cdmotivo     NUMBER(5)     := NULL;
         vr_idtipo_envio NUMBER(5)     := NULL;
         vr_dsobservacao VARCHAR2(100) := NULL;
+
 
         -- Cursor REESTRUTURAÇÃO
         CURSOR cr_atvprb_reest(pr_cdcooper IN NUMBER
@@ -4509,7 +4530,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                        , null dsobservacao
                   FROM crapris ris, crapepr epr
                   -- Verifica se o contrato está atraso a mais de 90 dias ou se não foi quitado após estar em 90 dias de atraso
-                 WHERE (ris.qtdiaatr > 90 or (ris.qtdiaatr > 0 
+                 WHERE (ris.qtdiaatr > 90 or (ris.qtdiaatr >= 30 
                                          and exists(select distinct 1
                                                       from tbhist_ativo_probl his
                                                      where his.cdcooper  = ris.cdcooper
@@ -4608,6 +4629,16 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
         rw_atvprb cr_atvprb%ROWTYPE;
 
       BEGIN
+       
+       IF pr_nrdconta = 8338 AND pr_nrctremp = 31172 then
+         pr_atvprobl := 0;
+       else
+         if pr_nrdconta = 14893 AND pr_nrctremp = 32626 then
+           pr_atvprobl := 0;
+         end if;
+       end if;
+       
+      
        -- ** INÍCIO VERIFICAÇÃO ATIVO PROBLEMÁTICO ** --
        -- Inicializa variáveis de retorno
        pr_atvprobl   := 0;
@@ -4701,7 +4732,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
           -- Efetuar rollback
           ROLLBACK;
       END pc_verif_ativo_problematico;
-	        
+      
       -- Com base na modalidade retorna o codigo indexador e o percentual de indexacao
       PROCEDURE pc_busca_coddindx(pr_cdmodali IN crapris.cdmodali%TYPE
                                  ,pr_inddocto IN crapris.inddocto%TYPE
@@ -4953,6 +4984,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                                    ,pr_dtatvprobl => vr_dtatvprobl                    -- Data do contrato de Reestruturação
                                    ,pr_cdcritic => vr_cdcritic                        -- Código da crítica
                                    ,pr_dscritic => vr_dscritic);                      -- Erros do processo
+                                   
         -- Verifica erro
         IF vr_cdcritic = 0 THEN
           RAISE vr_exc_saida;
@@ -5115,7 +5147,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                                   ,pr_texto_novo     => PR_TEXTO);
          End If;
         ELSE
-          PR_TEXTO := '                        <Inf Tp="' || TRIM(vr_tab_saida(pr_idxsaida).cdinfadi) || '" />' ||chr(10);
+         PR_TEXTO := '                        <Inf Tp="' || TRIM(vr_tab_saida(pr_idxsaida).cdinfadi) || '" />' ||chr(10);
           -- **
           -- Verifica Ativo Problemático(REESTRUTURAÇÃO) - Daniel(AMcom)
           IF vr_reestrut = 1 and vr_dtatvprobl is not null THEN
@@ -6757,13 +6789,14 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                   vr_tab_totmodali(vr_cdmodali) := 0;
                 END IF;
 
-                IF vr_vldivnor <> 0 THEN             
+                --IF vr_vldivnor <> 0 THEN
+                IF vr_vldivnor > 0 or vr_vldivnor < -100 or nvl(vr_tab_venc.count,0) = 1 THEN /*SD#855059*/
+                  IF vr_vldivnor <= 0 and vr_vldivnor > -100 THEN /*SD#855059*/
+                    vr_vldivnor := 1/100; --atribui 0,01 /*SD#855059*/
+                  END IF; /*SD#855059*/
                 -- Acumular
                 vr_tab_totmodali(vr_cdmodali) := vr_tab_totmodali(vr_cdmodali) + nvl(vr_vldivnor,0);          
 
-          
-
-                
                 -- Tratamento para WRK
                 PR_Texto := ' v' || vr_tab_venc(vr_indice_venc).cdvencto 
                                                           || '="' || replace(to_char(vr_vldivnor,'fm99999999990D00'),',','.') 
@@ -6926,7 +6959,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                 ELSE
                   PR_TEXTO := '            <Inf Tp="1001" Cd="2013-01-02" Ident="'||vr_idcpfcgc||'" '
                                                               || 'Valor="' || replace(to_char(vr_vlrdivid,'fm99999999999999990D00'),',','.')
-                                                              || '"/>' || chr(10);  
+                                                              || '"/>' || chr(10);          
                   -- **
                   -- Verifica Ativo Problemático(REESTRUTURAÇÃO) - Daniel(AMcom)
                   IF vr_reestrut = 1 AND vr_dtatvprobl IS NOT NULL THEN
@@ -7438,7 +7471,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                     vr_tab_totmodali(vr_cdmodali) := 0;
                   END IF;
 
-                  IF vr_vldivnor <> 0 THEN    
+                  --IF vr_vldivnor <> 0 THEN
+                  IF vr_vldivnor > 0 or vr_vldivnor < -100 or nvl(vr_tab_totmodali.count,0) = 1 THEN /*SD#855059*/
+                    IF vr_vldivnor <= 0 and vr_vldivnor > -100 THEN /*SD#855059*/
+                      vr_vldivnor := 1/100; --atribui 0,01 /*SD#855059*/
+                    END IF; /*SD#855059*/
                     -- Acumular
                     vr_tab_totmodali(vr_cdmodali) := vr_tab_totmodali(vr_cdmodali) + nvl(vr_vldivnor,0);                      
 
