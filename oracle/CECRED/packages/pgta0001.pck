@@ -630,6 +630,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
 --             27/10/2017 - #781654 Na rotina pc_processar_arq_pgto, alterado o arquivo de log de null (proc_batch)
 --                          para proc_message (Carlos)
 --
+--             11/12/2017 - Alterar campo flgcnvsi por tparrecd.
+--                          PRJ406-FGTS (Odirlei-AMcom)  
+--
 --             18/12/2017 - Efetuado alteração para controle de lock (Jonata - Mouts).  
 --
 --             26/02/2018 - Alterado cursor cr_crapass da procedure pc_busca_termo_servico, 
@@ -4182,7 +4185,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
        WHERE crapcon.cdcooper = pr_cdcooper
          AND crapcon.cdempcon = pr_cdempcon
          AND crapcon.cdsegmto = pr_cdsegmto
-         AND crapcon.flgcnvsi = 0; -- True
+         AND crapcon.tparrecd <> 1; -- Diferente Sicredi
 
       -- Buscas dados da capa de lote
       CURSOR cr_craplot(pr_cdcooper craplot.cdcooper%TYPE,
