@@ -5896,15 +5896,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
           vr_tab_pagamento(vr_idx_pagto).dthordeb := '';
           vr_tab_pagamento(vr_idx_pagto).dthorcre := '';
           vr_tab_pagamento(vr_idx_pagto).dthortar := '';
-          vr_tab_pagamento(vr_idx_pagto).dthrdebi := '';          
-          vr_tab_pagamento(vr_idx_pagto).dthrcred := '';                    
           vr_tab_pagamento(vr_idx_pagto).dthrtari := '';          
           vr_tab_pagamento(vr_idx_pagto).dscomprv := '';
           vr_tab_pagamento(vr_idx_pagto).cdempres := rw_registros.cdempres;
           vr_tab_pagamento(vr_idx_pagto).idtppagt := rw_registros.idtppagt;
           vr_tab_pagamento(vr_idx_pagto).dstpapgt := CASE WHEN rw_registros.idtppagt = 'A' THEN 'Arquivo' ELSE 'Convencional' END;
           vr_tab_pagamento(vr_idx_pagto).idsitapr := rw_registros.idsitapr;
-          vr_tab_pagamento(vr_idx_pagto).nrseqpag := rw_registros.nrseqpag;
+          vr_tab_pagamento(vr_idx_pagto).nrseqpag := rw_registros.nrseqpag;          
+          vr_tab_pagamento(vr_idx_pagto).dthrdebi := TO_CHAR(rw_registros.dtdebito,'DD/MM/RRRR') || ' 00:00';
+          vr_tab_pagamento(vr_idx_pagto).dthrcred := TO_CHAR(rw_registros.dtcredit,'DD/MM/RRRR') || ' 00:00';          
           
           vr_idx_pagto := vr_idx_pagto + 1;
           vr_flgpende := 1;
@@ -5912,26 +5912,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
         ELSE
           --Adicionado linha em branco para gerar separação na grid
           /*IF vr_tab_pagamento.COUNT()> 0 AND vr_flgprime = 0 AND vr_flgpende = 1 THEN
-          -- Popula a tabela
-          vr_tab_pagamento(vr_idx_pagto).indrowid := NULL;
-          vr_tab_pagamento(vr_idx_pagto).dtmvtolt := NULL;
-          vr_tab_pagamento(vr_idx_pagto).dssitpgt := NULL;
+            -- Popula a tabela
+            vr_tab_pagamento(vr_idx_pagto).indrowid := NULL;
+            vr_tab_pagamento(vr_idx_pagto).dtmvtolt := NULL;
+            vr_tab_pagamento(vr_idx_pagto).dssitpgt := NULL;
             vr_tab_pagamento(vr_idx_pagto).idsitpgt := NULL;
-          vr_tab_pagamento(vr_idx_pagto).qtlctpag := NULL;
-          vr_tab_pagamento(vr_idx_pagto).vllctpag := NULL;
-          vr_tab_pagamento(vr_idx_pagto).vltarifa := NULL;
-          vr_tab_pagamento(vr_idx_pagto).dtdebito := NULL;
-          vr_tab_pagamento(vr_idx_pagto).imgdebto := NULL;
-          vr_tab_pagamento(vr_idx_pagto).hintdebt := NULL;
+            vr_tab_pagamento(vr_idx_pagto).qtlctpag := NULL;
+            vr_tab_pagamento(vr_idx_pagto).vllctpag := NULL;
+            vr_tab_pagamento(vr_idx_pagto).vltarifa := NULL;
+            vr_tab_pagamento(vr_idx_pagto).dtdebito := NULL;
+            vr_tab_pagamento(vr_idx_pagto).imgdebto := NULL;
+            vr_tab_pagamento(vr_idx_pagto).hintdebt := NULL;
             vr_tab_pagamento(vr_idx_pagto).idsitdeb := NULL;
-          vr_tab_pagamento(vr_idx_pagto).dtcredit := NULL;
-          vr_tab_pagamento(vr_idx_pagto).imgcredt := NULL;
-          vr_tab_pagamento(vr_idx_pagto).hintcred := NULL;
+            vr_tab_pagamento(vr_idx_pagto).dtcredit := NULL;
+            vr_tab_pagamento(vr_idx_pagto).imgcredt := NULL;
+            vr_tab_pagamento(vr_idx_pagto).hintcred := NULL;
             vr_tab_pagamento(vr_idx_pagto).idsitcre := NULL;
-          vr_tab_pagamento(vr_idx_pagto).dscomprv := NULL;
-          vr_tab_pagamento(vr_idx_pagto).idtppagt := NULL;
+            vr_tab_pagamento(vr_idx_pagto).dscomprv := NULL;
+            vr_tab_pagamento(vr_idx_pagto).idtppagt := NULL;
             vr_tab_pagamento(vr_idx_pagto).dstpapgt := NULL;
-          vr_idx_pagto := vr_idx_pagto + 1;
+            vr_idx_pagto := vr_idx_pagto + 1;
             vr_flgprime := 1;
           END IF; */
 
