@@ -1514,7 +1514,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
         END IF;
       END;
       
-      --Retorna Juros+60 de conta corrente inadimplente (Rangel Decker AMcom)
+            --Retorna Juros+60 de conta corrente inadimplente (Rangel Decker AMcom)
      FUNCTION fn_juros60cc (pr_nrdconta IN crapris.nrdconta%TYPE) RETURN NUMBER IS
 
         vr_dtmvtolt     DATE;   --Data apos 60 dias
@@ -1547,7 +1547,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
             AND lcm.cdhistor   = his.cdhistor
             AND lcm.cdcooper   = pr_cdcooper
             AND lcm.nrdconta   = pr_nrdconta--77135
-            AND lcm.dtmvtolt   BETWEEN TO_DATE(pr_dtmvtolt_ini,'dd/mm/yyyy') AND TO_DATE(pr_dtmvtolt_fim,'dd/mm/yyyy')
+            AND lcm.dtmvtolt   BETWEEN pr_dtmvtolt_ini AND pr_dtmvtolt_fim
             AND his.indebcre   ='D'
             AND his.cdhistor in(38,37,57);
 
@@ -1595,7 +1595,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
              
            ELSE
              --Dias corridos
-             vr_dtmvtolt := TO_DATE(TO_CHAR(rw_crapris_ccjuros60.dtinictr),'DD/MM/YYYY') +60;
+             vr_dtmvtolt := rw_crapris_ccjuros60.dtinictr+60;
           END IF;
           
          
@@ -1611,16 +1611,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
              CLOSE cr_craplcm_ccjuros60;
           END IF;
        END IF;
-        GENE0001.pc_informa_acesso(pr_module => pr_cdprogra
-                                  ,pr_action => 'PC_CRPS310_I');
                                  
-        RETURN rw_craplcm_ccjuros60.vl_juros60;                                 
-       
+       RETURN rw_craplcm_ccjuros60.vl_juros60;                                 
        
        EXCEPTION
         WHEN OTHERS THEN BEGIN
-          GENE0001.pc_informa_acesso(pr_module => pr_cdprogra
-                                    ,pr_action => 'PC_CRPS310_I');
          RETURN 0;
         END; 
       END;
