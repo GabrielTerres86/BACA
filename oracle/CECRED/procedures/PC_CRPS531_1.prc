@@ -242,13 +242,10 @@ BEGIN
                14/02/2018 - Tratar mensagens CIR0020 e CIR0021, incluir o tratamento junto com a mensagem STR0003R2
                             SD 805540 - Marcelo Telles Coelho-Mouts
 
-               14/03/2018 - Tratar recebimento de TED destinada a contas administradoras de recursos (Rodrigo Heinzle - Supero)
-
 			   16/03/2018 - Ajustado tamanho de variável (Adriano).
 
 			   23/04/2018 - Ajuste para buscar corretamente a cooperativa (Adriano - Homol conversão).
 
-                            
              #######################################################
              ATENCAO!!! Ao incluir novas mensagens para recebimento,
              lembrar de tratar a procedure gera_erro_xml.
@@ -4657,10 +4654,6 @@ END;
       vr_aux_flgenvio  NUMBER;
       vr_aux_dsdemail  VARCHAR2(4000);
       vr_tipolog       VARCHAR2(100);
-      vr_aux_flgreccon BOOLEAN := FALSE;
-      vr_aux_flgrecsal BOOLEAN := FALSE;
-      vr_aux_sal_ant   NUMBER(25,2) := 0;
-      vr_aux_nrseqdig	 NUMBER;
 
       /* Registro de TEC Salário */
       CURSOR cr_craplcs_lct(pr_cdcooper crapcop.cdcooper%TYPE
@@ -4716,46 +4709,6 @@ END;
            AND epr.nrdconta = pr_nrdconta
            AND epr.nrctremp = pr_nrctremp;
       rw_crapepr cr_crapepr%ROWTYPE;
-
-      -- Buscar informações das contas administradoras de recursos
-      CURSOR cr_tbfin_rec_con(pr_cdcooper tbfin_recursos_conta.cdcooper%TYPE
-                             ,pr_nrdconta tbfin_recursos_conta.nrdconta%TYPE
-                             ,pr_cdagenci tbfin_recursos_conta.cdagenci%TYPE) IS
-        SELECT rc.cdcooper
-              ,rc.nrdconta
-              ,rc.cdagenci
-              ,rc.flgativo
-          FROM tbfin_recursos_conta rc
-         WHERE rc.cdcooper = pr_cdcooper
-           AND rc.nrdconta = pr_nrdconta
-           AND rc.cdagenci = pr_cdagenci
-           AND rc.flgativo = 1;
-      rw_tbfin_rec_con cr_tbfin_rec_con%ROWTYPE;
-
-      -- Buscar registro de saldo do dia atual das contas administradoras de recursos
-      CURSOR cr_tbfin_rec_sal(pr_cdcooper tbfin_recursos_saldo.cdcooper%TYPE
-                             ,pr_nrdconta tbfin_recursos_saldo.nrdconta%TYPE
-                             ,pr_dtmvtolt tbfin_recursos_saldo.dtmvtolt%TYPE) IS
-        SELECT rs.dtmvtolt
-              ,rs.vlsaldo_inicial
-              ,rs.vlsaldo_final
-          FROM tbfin_recursos_saldo rs
-         WHERE rs.cdcooper = pr_cdcooper
-           AND rs.nrdconta = pr_nrdconta
-           AND dtmvtolt = pr_dtmvtolt;
-      rw_tbfin_rec_sal cr_tbfin_rec_sal%ROWTYPE;
-
-
-       -- Buscar registro saldo do dia anterior das contas administradoras de recursos
-      CURSOR cr_tbfin_rec_sal_ant(pr_cdcooper tbfin_recursos_saldo.cdcooper%TYPE
-                             ,pr_nrdconta tbfin_recursos_saldo.nrdconta%TYPE
-                             ,pr_dtmvtolt tbfin_recursos_saldo.dtmvtolt%TYPE) IS
-        SELECT rs.vlsaldo_final
-          FROM tbfin_recursos_saldo rs
-         WHERE rs.cdcooper = pr_cdcooper
-           AND rs.nrdconta = pr_nrdconta
-           AND dtmvtolt = (pr_dtmvtolt - 1);
-      rw_tbfin_rec_sal_ant cr_tbfin_rec_sal_ant%ROWTYPE;
 
     BEGIN
       -- Verificar se está rodando o processo
@@ -5634,22 +5587,7 @@ END;
               /* Credito TED */
               vr_aux_cdhistor := 578;
               vr_aux_cdpesqbb := vr_aux_dadosdeb;
-
-              /* Verifica se a TED é destinada a uma conta administradora de recursos */
-              OPEN cr_tbfin_rec_con(pr_cdcooper => rw_crapcop_mensag.cdcooper
-                                    ,pr_nrdconta => vr_aux_nrctacre
-                                    ,pr_cdagenci => rw_craplot.cdagenci);
-              FETCH cr_tbfin_rec_con
-              INTO rw_tbfin_rec_con;
-              -- Se encontrar
-              IF cr_tbfin_rec_con%FOUND THEN
-                vr_aux_flgreccon := TRUE; 
               END IF;
-              CLOSE cr_tbfin_rec_con;
-            END IF;
-
-            IF NOT vr_aux_flgreccon THEN
-
               -- Gerar lançamento em conta
               BEGIN
                 INSERT INTO craplcm
@@ -5669,7 +5607,7 @@ END;
                    ,hrtransa)
                 VALUES
                    (rw_crapcop_mensag.cdcooper
-                   ,rw_crapdat_mensag.dtmvtolt
+                   ,rw_craplot.dtmvtolt
                    ,rw_craplot.cdagenci
                    ,rw_craplot.cdbccxlt
                    ,rw_craplot.nrdolote
@@ -5717,116 +5655,6 @@ END;
                              ,pr_dscritic => vr_dscritic);
               IF vr_dscritic IS NOT NULL THEN
                 raise vr_exc_saida;
-              END IF;
-
-            ELSE
-                   
-              vr_aux_nrseqdig := fn_sequence('tbfin_recursos_movimento',
-                             'nrseqdig',''||rw_crapcop_mensag.cdcooper
-                             ||';'||vr_aux_nrctacre||';'||to_char(vr_aux_dtmvtolt,'dd/mm/yyyy')||'');
-                                                            
-              -- Gerar lançamento em conta
-              BEGIN
-                INSERT INTO tbfin_recursos_movimento
-                    (cdcooper
-                    ,nrdconta
-                    ,dtmvtolt
-                    ,nrdocmto
-                    ,nrseqdig
-                    ,cdhistor
-                    ,dsdebcre
-                    ,vllanmto
-                    ,nmif_debitada
-                    ,nrcnpj_debitada
-                    ,nmtitular_debitada
-                    ,tpconta_debitada
-                    ,cdagenci_debitada
-                    ,dsconta_debitada
-                    ,hrtransa
-                    ,cdoperad)
-                VALUES
-                   (rw_crapcop_mensag.cdcooper
-                   ,vr_aux_nrctacre
-                   ,vr_aux_dtmvtolt
-                   ,vr_aux_nrdocmto
-                   ,vr_aux_nrseqdig
-                   ,vr_aux_cdhistor
-                   ,'C'
-                   ,vr_aux_VlrLanc
-                   ,vr_aux_BancoDeb
-                   ,vr_aux_CNPJ_CPFDeb
-                   ,vr_aux_NomCliDebtd
-                   ,vr_aux_TpCtDebtd
-                   ,vr_aux_AgDebtd
-                   ,vr_aux_CtDebtd
-                   ,to_char(sysdate,'sssss')
-                   ,'1');
-              EXCEPTION
-                WHEN OTHERS THEN
-                  vr_dscritic := 'Erro ao inserir na tabela tbfin_recursos_movimento --> ' || SQLERRM;
-                 -- Sair da rotina
-                 RAISE vr_exc_saida;
-              END;
-
-              OPEN cr_tbfin_rec_sal(pr_cdcooper => rw_crapcop_mensag.cdcooper
-                                    ,pr_nrdconta => vr_aux_nrctacre
-                                    ,pr_dtmvtolt => rw_crapdat_mensag.dtmvtolt);
-              FETCH cr_tbfin_rec_sal
-              INTO rw_tbfin_rec_sal;
-              -- Se encontrar
-              IF cr_tbfin_rec_sal%FOUND THEN
-                vr_aux_flgrecsal := TRUE;
-              END IF;
-              CLOSE cr_tbfin_rec_sal;
-
-              -- Alterar saldo
-              IF vr_aux_flgrecsal THEN
-
-                BEGIN
-                  UPDATE tbfin_recursos_saldo
-                  SET vlsaldo_final = vlsaldo_final + vr_aux_VlrLanc
-                  WHERE cdcooper = rw_crapcop_mensag.cdcooper
-                  AND nrdconta = vr_aux_nrctacre;
-                EXCEPTION
-                  WHEN OTHERS THEN
-                    vr_dscritic := 'Erro ao editar a tabela tbfin_recursos_saldo --> ' || SQLERRM;
-                   -- Sair da rotina
-                   RAISE vr_exc_saida;
-                END;
-
-              ELSE
-
-                OPEN cr_tbfin_rec_sal_ant(pr_cdcooper => rw_crapcop_mensag.cdcooper
-                                        ,pr_nrdconta => vr_aux_nrctacre
-                                        ,pr_dtmvtolt => rw_crapdat_mensag.dtmvtolt);
-                FETCH cr_tbfin_rec_sal_ant
-                INTO rw_tbfin_rec_sal_ant;
-                -- Se encontrar
-                IF cr_tbfin_rec_sal_ant%FOUND THEN
-                  vr_aux_sal_ant := rw_tbfin_rec_sal_ant.vlsaldo_final;
-                END IF;
-                CLOSE cr_tbfin_rec_sal_ant;
-
-                BEGIN
-                  INSERT INTO tbfin_recursos_saldo
-                     (cdcooper
-                      ,nrdconta
-                      ,dtmvtolt
-                      ,vlsaldo_inicial
-                      ,vlsaldo_final)
-                  VALUES
-                     (rw_crapcop_mensag.cdcooper
-                     ,vr_aux_nrctacre
-                     ,rw_crapdat_mensag.dtmvtolt
-                     ,vr_aux_sal_ant
-                     ,(vr_aux_sal_ant + vr_aux_VlrLanc));
-                EXCEPTION
-                  WHEN OTHERS THEN
-                    vr_dscritic := 'Erro ao inserir na tabela tbfin_recursos_saldo --> ' || SQLERRM;
-                   -- Sair da rotina
-                   RAISE vr_exc_saida;
-                END;
-              END IF;
             END IF;
           END IF;
         END IF;
