@@ -10599,7 +10599,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                 (Tiago/Fabricio #677702)
                 
     04/05/2018 - P450 - Aplicação das procedures de cancelamento de débito por inadimplência 
-                 na craplcm e craplot                
+                 na craplcm e craplot (Marcel / AMCom)
   .......................................................................................*/
   PROCEDURE pc_debita_fatura(pr_cdcooper  IN crapcop.cdcooper%TYPE
                             ,pr_cdprogra  IN crapprg.cdprogra%TYPE

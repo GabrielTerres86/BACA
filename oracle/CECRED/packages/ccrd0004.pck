@@ -37,6 +37,9 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0004 AS
   --       29/11/2017 - Ajustar o total de registro na pc_lista_arquivos que estava devolvendo o total de 
   --                    registros que serão exibidos em tela (vr_contador) ao invés da quantidade de registros
   --                    para o filtro informado em tela (vr_posreg) (Douglas - Chamado 803588)
+  --
+  --       04/05/2018 - P450 - Aplicação das procedures de cancelamento de débito por inadimplência 
+  --                    na craplcm e craplot (Marcel / AMCom)
   ---------------------------------------------------------------------------------------------------------------
   
   -- Rotina para o processamento do arquivo oriundo do Sicoob
@@ -1093,6 +1096,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0004 AS
     
     vr_coopdest      crapcop.cdcooper%TYPE; --> coop destino (incorporacao/migracao)
     vr_nrdconta      crapass.nrdconta%TYPE; 
+
+    -- controle de permissao de debito em craplcm
+    podeDebitar    BOOLEAN; 
+    vr_rw_craplot   craplot%ROWTYPE;
   BEGIN
     -- Busca a data do sistema
     OPEN btch0001.cr_crapdat(3); -- Utiliza a cooperativa da Cecred
@@ -1249,6 +1256,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0004 AS
         vr_nrdolote := 8510;
       END IF;
 
+      /* identifica se pode debitar na conta do cooperado */
+      podeDebitar := LANC0001.fn_pode_debitar(pr_cdcooper => vr_cdcooper,
+                                              pr_nrdconta => vr_nrdconta,
+                                              pr_cdhistor => vr_cdhistor);
+      /* se nao puder debitar historico */
+      IF podeDebitar = false THEN
+        continue;
+      END IF;                                  
 
       -- Se nao existir erro, insere o lancamento
       IF vr_dserro IS NULL AND
@@ -1268,20 +1283,54 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0004 AS
                           pr_cdbccxlt => 100,
                           pr_nrdolote => vr_nrdolote);
           FETCH cr_craplot INTO rw_craplot;
+          
           IF cr_craplot%NOTFOUND THEN -- Se nao existir insere a capa de lote
             BEGIN
-              INSERT INTO craplot
-                (dtmvtolt,
-                 dtmvtopg,
-                 cdagenci,
-                 cdbccxlt,
-                 cdoperad,
-                 nrdolote,
-                 tplotmov,
-                 tpdmoeda,
-                 cdhistor,
-                 cdcooper,
-                 nrseqdig)
+               CLOSE cr_craplot;
+              
+               LANC0001.pc_incluir_lote( pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                       , pr_dtmvtopg => rw_crapdat.dtmvtolt
+                                       , pr_cdagenci => 1
+                                       , pr_cdbccxlt => 100
+                                       , pr_nrdolote => vr_nrdolote
+                                       , pr_tplotmov => 9
+                                       , pr_cdcooper => vr_cdcooper
+                                       , pr_nrseqdig => 0
+                                       , pr_rw_craplot => vr_rw_craplot
+                                       , pr_cdoperad => '1'
+                                       , pr_tpdmoeda => 1
+                                       , pr_cdhistor => vr_cdhistor
+                                       , pr_cdcritic => vr_cdcritic
+                                       , pr_dscritic => vr_dscritic
+                                       ); 
+                         
+              OPEN cr_craplot(pr_cdcooper => vr_cdcooper,
+                              pr_dtmvtolt => rw_crapdat.dtmvtolt,
+                              pr_cdagenci => 1,
+                              pr_cdbccxlt => 100,
+                              pr_nrdolote => vr_nrdolote);
+              FETCH cr_craplot INTO rw_craplot;
+              
+              IF cr_craplot%NOTFOUND THEN
+                -- Fechar o cursor pois haverá raise
+                CLOSE cr_craplot;
+                -- 1172 - Registro de lote não encontrado.
+                vr_cdcritic := 1172;
+                RAISE vr_exc_saida;
+              END IF;
+
+/*              INSERT INTO craplot
+                (dtmvtolt, ok
+                 dtmvtopg, ok
+                 cdagenci, ok
+                 cdbccxlt, ok
+                 cdoperad, ok
+                 nrdolote, ok
+                 tplotmov, ok
+                 tpdmoeda, ok
+                 cdhistor, ok
+                 cdcooper, ok
+                 nrseqdig) ok
               VALUES
                 (rw_crapdat.dtmvtolt,
                  rw_crapdat.dtmvtolt,
@@ -1295,13 +1344,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0004 AS
                  vr_cdcooper,
                  0)
                RETURNING ROWID, nrseqdig, cdcooper, nrdolote
-                    INTO rw_craplot.rowid, rw_craplot.nrseqdig, rw_craplot.cdcooper, rw_craplot.nrdolote;
+                    INTO rw_craplot.rowid, rw_craplot.nrseqdig, rw_craplot.cdcooper, rw_craplot.nrdolote; */
             EXCEPTION
               WHEN OTHERS THEN
                 vr_dscritic := 'Erro ao inserir CRAPLOT: ' ||SQLERRM;
                 RAISE vr_exc_saida;
             END;
           END IF;
+          
           CLOSE cr_craplot;
         END IF;
 
@@ -1324,7 +1374,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0004 AS
 
         -- insere o registro na tabela de lancamentos
         BEGIN
-          INSERT INTO craplcm
+          LANC0001.pc_incluir_lcto_lcm( pr_cdagenci => 1
+                                      , pr_cdbccxlt => 100
+                                      , pr_cdhistor => vr_cdhistor
+                                      , pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                      , pr_dtrefere => rw_crapdat.dtmvtolt
+                                      , pr_nrdconta => vr_nrdconta
+                                      , pr_nrdctabb => vr_nrdconta
+                                      , pr_nrdctitg => gene0002.fn_mask(vr_nrdconta,'99999999')
+                                      , pr_nrdocmto => rw_craplot.nrseqdig
+                                      , pr_nrdolote => vr_nrdolote
+                                      , pr_nrseqdig => rw_craplot.nrseqdig
+                                      , pr_cdcooper => vr_cdcooper
+                                      , pr_vllanmto => rw_tabela.vllancamento
+                                      , pr_cdoperad => '1'
+                                      , pr_cdcritic => vr_cdcritic
+                                      , pr_dscritic => vr_dscritic
+                                      );
+/*          INSERT INTO craplcm
             (dtmvtolt,
              cdagenci,
              cdbccxlt,
@@ -1353,7 +1420,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0004 AS
              gene0002.fn_mask(vr_nrdconta,'99999999'),   --nrdctitg
              vr_cdcooper,                                       --cdcooper
              rw_crapdat.dtmvtolt,                               --dtrefere
-             '1');                                              --cdoperad
+             '1');                                              --cdoperad */
         EXCEPTION
           WHEN OTHERS THEN
             vr_dscritic := 'Erro ao inserir CRAPLCM: '||SQLERRM;
