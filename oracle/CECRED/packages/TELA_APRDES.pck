@@ -787,6 +787,17 @@ create or replace package body cecred.TELA_APRDES is
      LOOP
        	FETCH cr_craptdb INTO rw_craptdb;
         EXIT WHEN cr_craptdb%NOTFOUND;
+          -- Caso nao tenha criticas, verifica  se existe critica de CNAE
+          IF rw_craptdb.flgcritdb = 'N' THEN 
+             IF DSCT0003.fn_calcula_cnae(pr_cdcooper 
+                                     ,rw_craptdb.nrdconta
+                                     ,rw_craptdb.nrdocmto
+                                     ,rw_craptdb.nrcnvcob
+                                     ,rw_craptdb.nrdctabb
+                                     ,rw_craptdb.cdbandoc) THEN
+                rw_craptdb.flgcritdb := 'S';
+             END IF;
+          END IF;
           pr_qtregist := pr_qtregist + 1;
           vr_index := pr_tab_dados_titulos.count + 1;
           pr_tab_dados_titulos(vr_index).nmdsacad := rw_craptdb.nmdsacad;
@@ -1642,7 +1653,11 @@ create or replace package body cecred.TELA_APRDES is
            cob.nrinssac,
            cob.nrnosnum,
            cob.cdtpinsc, -- Tipo Pesso do Pagador (0-Nenhum/1-CPF/2-CNPJ)
-           sab.nmdsacad
+           sab.nmdsacad,
+           cob.nrdocmto,
+           cob.nrcnvcob,
+           cob.nrdctabb,
+           cob.cdbandoc
     FROM   crapcob cob
            INNER JOIN crapsab sab ON sab.nrinssac=cob.nrinssac AND sab.cdtpinsc=cob.cdtpinsc
     WHERE  cob.cdcooper = pr_cdcooper -- Cooperativa
@@ -1902,14 +1917,18 @@ create or replace package body cecred.TELA_APRDES is
            pr_tab_dados_critica(vr_idtabcritica).varper := 0;
            vr_idtabcritica := vr_idtabcritica + 1;
         END IF;
-              
-        -- invalormax_cnae -> Crítica: Valor Máximo Permitido por CNAE excedido (0 = Não / 1 = Sim). (Ref. TAB052: vlmxprat).
-        IF rw_analise_pagador.invalormax_cnae > 0 THEN
+      END IF;
+      -- invalormax_cnae -> Crítica: Valor Máximo Permitido por CNAE excedido (0 = Não / 1 = Sim). (Ref. TAB052: vlmxprat).
+      IF DSCT0003.fn_calcula_cnae(rw_crapcob.cdcooper 
+                                   ,rw_crapcob.nrdconta
+                                   ,rw_crapcob.nrdocmto
+                                   ,rw_crapcob.nrcnvcob
+                                   ,rw_crapcob.nrdctabb
+                                   ,rw_crapcob.cdbandoc) THEN
            pr_tab_dados_critica(vr_idtabcritica).dsc := 'Valor Máximo Permitido por CNAE excedido.';
-           pr_tab_dados_critica(vr_idtabcritica).varint := rw_analise_pagador.invalormax_cnae; 
+           pr_tab_dados_critica(vr_idtabcritica).varint := 1; 
            pr_tab_dados_critica(vr_idtabcritica).varper := 0;
            vr_idtabcritica := vr_idtabcritica + 1;
-        END IF;
       END IF;
 
  END pc_detalhes_titulo;

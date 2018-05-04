@@ -973,6 +973,7 @@ BEGIN
    if  not fn_contigencia_motor_esteira(pr_cdcooper => pr_cdcooper) then
        if  rw_crawlim.insitapr not in (1,2) then
            vr_dscritic := 'Para esta operação, a Decisão deve ser "Aprovada Automaticamente" ou "Aprovada Manual".';
+       END IF;
        raise vr_exc_saida;
    end if;
 
@@ -2549,7 +2550,7 @@ BEGIN
    vr_dsmensag := replace(replace(vr_dsmensag, '<br>', ' '), '<BR>', ' ');
    pr_retxml   := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                     '<Root><dsmensag>' || vr_dsmensag || '</dsmensag></Root>');
-   dbms_output.put_line(vr_dsmensag);
+   --dbms_output.put_line(vr_dsmensag);
    
    COMMIT;
 
@@ -3668,6 +3669,16 @@ END pc_obtem_proposta_aciona_web;
       LOOP
         FETCH cr_crapcob INTO rw_crapcob;
         EXIT WHEN cr_crapcob%NOTFOUND;
+        IF rw_crapcob.dssituac = 'N' THEN 
+           IF DSCT0003.fn_calcula_cnae(rw_crapcob.cdcooper 
+                                   ,rw_crapcob.nrdconta
+                                   ,rw_crapcob.nrdocmto
+                                   ,rw_crapcob.nrcnvcob
+                                   ,rw_crapcob.nrdctabb
+                                   ,rw_crapcob.cdbandoc) THEN
+              rw_crapcob.dssituac := 'S';
+           END IF;
+        END IF;
         /*verifica se já nao está em outro bordero*/
        open cr_craptdb (pr_nrdocmto=>rw_crapcob.nrdocmto, pr_nrdctabb => rw_crapcob.nrdctabb, pr_nrcnvcob => rw_crapcob.nrcnvcob);
          fetch cr_craptdb into rw_craptdb;
@@ -4284,6 +4295,7 @@ PROCEDURE pc_listar_titulos_resumo(pr_cdcooper          in crapcop.cdcooper%type
      vr_dsbircon crapbir.dsbircon%TYPE;
      vr_cdmodbir crapmbr.cdmodbir%TYPE;
      vr_dsmodbir crapmbr.dsmodbir%TYPE;
+     restricao_cnae BOOLEAN;
 
     CURSOR cr_crapcbd IS
       SELECT crapcbd.nrconbir,
@@ -4329,14 +4341,25 @@ PROCEDURE pc_listar_titulos_resumo(pr_cdcooper          in crapcop.cdcooper%type
                        
         -- ler os registros de titulos e incluir no xml
         vr_index := vr_tab_dados_titulos.first;
-        while vr_index is not null loop
-              SELECT (nvl((SELECT 
+        while vr_index is not null LOOP
+              --Testa se o titulo possui restricao de CNAE
+              restricao_cnae := DSCT0003.fn_calcula_cnae(vr_tab_dados_titulos(vr_index).cdcooper 
+                                                     ,vr_tab_dados_titulos(vr_index).nrdconta
+                                                     ,vr_tab_dados_titulos(vr_index).nrdocmto
+                                                     ,vr_tab_dados_titulos(vr_index).nrcnvcob
+                                                     ,vr_tab_dados_titulos(vr_index).nrdctabb
+                                                     ,vr_tab_dados_titulos(vr_index).cdbandoc);
+              vr_situacao := CASE WHEN restricao_cnae THEN 'S' ELSE 'N' END;
+              
+              --Caso já tenha restricao do CNAE nao precisa verificar as outras para colocar a flag
+              IF NOT restricao_cnae THEN
+                 SELECT (nvl((SELECT 
                               decode(inpossui_criticas,1,'S','N')
                               FROM 
                                tbdsct_analise_pagador tap 
                             WHERE tap.cdcooper=vr_cdcooper AND tap.nrdconta=pr_nrdconta AND tap.nrinssac=vr_tab_dados_titulos(vr_index).nrinssac
                          ),'A')) INTO vr_situacao FROM DUAL ; -- Situacao do pagador com critica ou nao
-              
+              END IF;
               vr_nrinssac := vr_tab_dados_titulos(vr_index).nrinssac;
               
               open cr_crapcbd;
@@ -4442,6 +4465,7 @@ PROCEDURE pc_solicita_biro_bordero(pr_nrdconta in crapass.nrdconta%type --> Cont
    vr_nrdcaixa varchar2(100);
    vr_idorigem varchar2(100);
    fl_erro_biro boolean;
+   result_test BOOLEAN;
 
    
    cursor cr_analise_pagador(pr_nrinssac crapcob.nrinssac%type) is
@@ -4452,7 +4476,7 @@ PROCEDURE pc_solicita_biro_bordero(pr_nrdconta in crapass.nrdconta%type --> Cont
    and    tap.nrinssac = pr_nrinssac;
    rw_analise_pagador cr_analise_pagador%rowtype;
 
-BEGIN
+BEGIN   
    gene0004.pc_extrai_dados(pr_xml      => pr_retxml
                            ,pr_cdcooper => vr_cdcooper
                            ,pr_nmdatela => vr_nmdatela
@@ -5014,7 +5038,7 @@ END pc_solicita_biro_bordero;
     --
     -- Histórico de Alterações:
     --  29/03/2018 - Versão inicial
-    --
+    --  03/05/2018 - Vitor Shimada Assanuma - Alterado a regra de CNAE, adicionado funcao DSCT0003.fn_calcula_cnae()
     --
     ---------------------------------------------------------------------------------------------------------------------
    
@@ -5055,7 +5079,11 @@ END pc_solicita_biro_bordero;
            cob.nrdconta,
            cob.nrinssac,
            cob.nrnosnum,
-           cob.cdtpinsc -- Tipo Pesso do Pagador (0-Nenhum/1-CPF/2-CNPJ)
+           cob.cdtpinsc, -- Tipo Pesso do Pagador (0-Nenhum/1-CPF/2-CNPJ)
+           cob.nrdocmto,
+           cob.nrcnvcob,
+           cob.nrdctabb,
+           cob.cdbandoc
     from   crapcob cob
     where  cob.cdcooper = pr_cdcooper -- Cooperativa
     and    cob.nrdconta = pr_nrdconta -- Conta
@@ -5440,16 +5468,21 @@ END pc_solicita_biro_bordero;
            pr_tab_dados_critica(vr_idtabcritica).varper := 0;
            vr_idtabcritica := vr_idtabcritica + 1;
         end if;
+      end if;  
               
-        -- invalormax_cnae -> Crítica: Valor Máximo Permitido por CNAE excedido (0 = Não / 1 = Sim). (Ref. TAB052: vlmxprat).
-        if rw_analise_pagador.invalormax_cnae > 0 then
+        -- Crítica: Valor Máximo Permitido por CNAE excedido (0 = Não / 1 = Sim). (Ref. TAB052: vlmxprat).
+        IF DSCT0003.fn_calcula_cnae(rw_crapcob.cdcooper 
+                                   ,rw_crapcob.nrdconta
+                                   ,rw_crapcob.nrdocmto
+                                   ,rw_crapcob.nrcnvcob
+                                   ,rw_crapcob.nrdctabb
+                                   ,rw_crapcob.cdbandoc) THEN
            pr_tab_dados_critica(vr_idtabcritica).dsc := 'Valor Máximo Permitido por CNAE excedido.';
-           pr_tab_dados_critica(vr_idtabcritica).varint := rw_analise_pagador.invalormax_cnae; 
+           pr_tab_dados_critica(vr_idtabcritica).varint := 1; 
            pr_tab_dados_critica(vr_idtabcritica).varper := 0;
            vr_idtabcritica := vr_idtabcritica + 1;
         end if;
               
-      end if;  
 
   end pc_detalhes_tit_bordero;
       
@@ -5587,6 +5620,7 @@ END pc_solicita_biro_bordero;
             /* buscar proximo */
             vr_index_critica := vr_tab_dados_critica.next(vr_index_critica);
       end loop;
+          
       pc_escreve_xml('</criticas>');
           
       pc_escreve_xml ('</dados></root>',true);
@@ -6755,17 +6789,29 @@ PROCEDURE pc_buscar_tit_bordero_web (
             vr_inseriu := true;
         END   LOOP;
         
-        IF vr_inseriu THEN
+ --       IF vr_inseriu  THEN
            UPDATE
               crapbdt
            SET
-              insitbdt = 1 --Em Estudo
+              crapbdt.insitbdt = 1, --Em Estudo
+              crapbdt.insitapr = 0,
+              crapbdt.dtenvmch = NULL
            WHERE
               crapbdt.nrborder = pr_nrborder
               AND crapbdt.cdcooper = vr_cdcooper
               AND crapbdt.nrdconta = pr_nrdconta
            ;
-        END IF;
+/*        ELSE
+           UPDATE
+              crapbdt
+           SET
+              insitbdt = 1, --Em Estudo
+              insitapr = 0 
+           WHERE
+              crapbdt.nrborder = pr_nrborder
+              AND crapbdt.cdcooper = vr_cdcooper
+              AND crapbdt.nrdconta = pr_nrdconta
+        END IF;*/
 
         btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper
                                   ,pr_ind_tipo_log => 1 -- Erro tratato

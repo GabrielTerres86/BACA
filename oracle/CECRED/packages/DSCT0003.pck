@@ -227,7 +227,15 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0003 AS
 														        ,pr_retxml IN OUT NOCOPY xmltype        --> Arquivo de retorno do XML
 														        ,pr_nmdcampo  OUT VARCHAR2              --> Nome do campo com erro
 														        ,pr_des_erro  OUT VARCHAR2);            --> Erros do processo
-
+  
+ -- Funcao de calculo de restricao do CNAE                                  
+  FUNCTION fn_calcula_cnae(pr_cdcooper IN crapcop.cdcooper%TYPE   --> Cooperativa conectada
+                           ,pr_nrdconta IN crapass.nrdconta%TYPE   --> Conta do associado
+                           ,pr_nrdocmto IN crapcob.nrdocmto%TYPE   --> Numero do documento(Boleto)
+                           ,pr_nrcnvcob IN crapcob.nrcnvcob%TYPE   --> Numero do convenio de cobranca.
+                           ,pr_nrdctabb IN crapcob.nrdctabb%TYPE   --> Numero da conta base no banco.
+                           ,pr_cdbandoc IN crapcob.cdbandoc%TYPE   --> Codigo do banco/caixa.
+         )RETURN BOOLEAN;
 END  DSCT0003;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0003 AS
@@ -468,7 +476,7 @@ END fn_contigencia_esteira;
                      END IF;
                  ELSE
                      IF  rw_crapbdt.insitbdt <> 2 AND (rw_crapbdt.insitapr NOT IN (3,4)) THEN
-                         vr_dscritic := 'Liberação não permitida. O Borderô deve estar na situação ANALIDADO e decisão APROVADO AUTOMATICAMENTO OU APROVADO.';
+                         vr_dscritic := 'Liberação não permitida. O Borderô deve estar na situação ANALISADO e decisão APROVADO AUTOMATICAMENTO OU APROVADO.';
                          CLOSE cr_crapbdt;
                          RAISE vr_exc_erro;
                      END IF;
@@ -1689,9 +1697,14 @@ END fn_contigencia_esteira;
            AND tdbold.nrdconta =  tdban.nrdconta
            AND tdbold.nrborder <> tdban.nrborder
            AND tdbold.nrdocmto =  tdban.nrdocmto
+         INNER JOIN cecred.crapbdt bdtold
+           ON bdtold.nrborder = tdbold.nrborder
+           AND bdtold.cdcooper = tdbold.cdcooper
+           AND bdtold.nrdconta = tdbold.nrdconta
          WHERE tdban.cdcooper = pr_cdcooper
            AND tdban.nrborder = pr_nrborder
-           AND tdbold.insittit in (0,2,4);
+           AND tdbold.insittit in (0,2,4)
+           AND bdtold.insitbdt<>5; -- diferente de reiejtado
 
       rw_verifica_bordero cr_verifica_bordero%ROWTYPE;
 
@@ -2088,30 +2101,44 @@ END fn_contigencia_esteira;
                     ,pr_nrborder => pr_nrborder);
         LOOP
         FETCH cr_cnae INTO rw_cnae;
-          EXIT WHEN cr_cnae%NOTFOUND;
-            vr_dsrestri := 'Valor Máximo Permitido por CNAE excedido';
-            vr_nrseqdig := 59;
-            -- Se existem restrições, grava na tabela de Críticas/Restrições do Borderô
-            IF vr_dsrestri IS NOT NULL AND vr_nrseqdig > 0 then
-              pc_grava_restricao_bordero (pr_nrborder => pr_nrborder
-                                         ,pr_cdoperad => pr_cdoperad
-                                         ,pr_nrdconta => pr_nrdconta
-                                         ,pr_dsrestri => vr_dsrestri
-                                         ,pr_nrseqdig => vr_nrseqdig
-                                         ,pr_cdcooper => pr_cdcooper
-                                         ,pr_cdbandoc => rw_cnae.cdbandoc
-                                         ,pr_nrdctabb => rw_cnae.nrdctabb
-                                         ,pr_nrcnvcob => rw_cnae.nrcnvcob
-                                         ,pr_nrdocmto => rw_cnae.nrdocmto
-                                         ,pr_flaprcoo => 0
-                                         ,pr_dsdetres => ' '
-                                         ,pr_dscritic => vr_dscritic);
-              vr_flgtrans := FALSE;
-              vr_nrseqdig := 0;
-              vr_dsrestri := '';
-              IF  TRIM(vr_dscritic) IS NOT NULL THEN
-                RAISE vr_exc_erro;
+            -- Caso não ache um proximo registro, da EXIT
+            IF cr_cnae%FOUND THEN
+              -- Caso nao tenha restricoes sai do loop
+              IF NOT fn_calcula_cnae(pr_cdcooper
+                                ,pr_nrdconta
+                                ,rw_cnae.nrdocmto
+                                ,rw_cnae.nrcnvcob   
+                                ,rw_cnae.nrdctabb
+                                ,rw_cnae.cdbandoc
+                 )THEN EXIT;
+              ELSE
+                vr_dsrestri := 'Valor Máximo Permitido por CNAE excedido';
+                vr_nrseqdig := 59;
+                -- Se existem restrições, grava na tabela de Críticas/Restrições do Borderô
+                IF vr_dsrestri IS NOT NULL AND vr_nrseqdig > 0 then
+                  pc_grava_restricao_bordero (pr_nrborder => pr_nrborder
+                                             ,pr_cdoperad => pr_cdoperad
+                                             ,pr_nrdconta => pr_nrdconta
+                                             ,pr_dsrestri => vr_dsrestri
+                                             ,pr_nrseqdig => vr_nrseqdig
+                                             ,pr_cdcooper => pr_cdcooper
+                                             ,pr_cdbandoc => rw_cnae.cdbandoc
+                                             ,pr_nrdctabb => rw_cnae.nrdctabb
+                                             ,pr_nrcnvcob => rw_cnae.nrcnvcob
+                                             ,pr_nrdocmto => rw_cnae.nrdocmto
+                                             ,pr_flaprcoo => 0
+                                             ,pr_dsdetres => ' '
+                                             ,pr_dscritic => vr_dscritic);
+                  vr_flgtrans := FALSE;
+                  vr_nrseqdig := 0;
+                  vr_dsrestri := '';
+                END IF;
+                IF  TRIM(vr_dscritic) IS NOT NULL THEN
+                  RAISE vr_exc_erro;
+                END IF;
               END IF;
+            ELSE
+              EXIT;
             END IF;
         END LOOP;
         CLOSE cr_cnae; 
@@ -2211,7 +2238,7 @@ END fn_contigencia_esteira;
 
          -- Verificando Restrição de "Percentual de Titulo do Pagador Excedido no Borderô.
          IF ((vr_vltotsac_cr / vr_vltotbdt_cr) *100) > vr_tab_dados_dsctit_cr(1).pcmxctip OR
-            ((vr_vltotsac_sr / vr_vltotbdt_sr) *100) > vr_tab_dados_dsctit_sr(1).pcmxctip THEN -- era pctitemi
+            (vr_vltotsac_sr > 0 AND ((vr_vltotsac_sr / vr_vltotbdt_sr) *100) > vr_tab_dados_dsctit_sr(1).pcmxctip) THEN -- era pctitemi
            vr_dsrestri := 'Percentual de titulo do pagador excedido no Borderô.';
            IF rw_craptdb_cob.flgregis = 1 THEN
              vr_nrseqdig := 52;
@@ -4711,6 +4738,91 @@ END fn_contigencia_esteira;
                                      '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
 
   END pc_rejeitar_bordero_web;
+  
+FUNCTION fn_calcula_cnae(pr_cdcooper IN crapcop.cdcooper%TYPE   --> Cooperativa conectada
+                        ,pr_nrdconta IN crapass.nrdconta%TYPE   --> Conta do associado
+                        ,pr_nrdocmto IN crapcob.nrdocmto%TYPE   --> Numero do documento(Boleto)
+                        ,pr_nrcnvcob IN crapcob.nrcnvcob%TYPE   --> Numero do convenio de cobranca.
+                        ,pr_nrdctabb IN crapcob.nrdctabb%TYPE   --> Numero da conta base no banco.
+                        ,pr_cdbandoc IN crapcob.cdbandoc%TYPE   --> Codigo do banco/caixa.
+         )RETURN BOOLEAN IS           --> Retonar True ou False se tem ou nao restrição CNAE
+  /* .............................................................................
+    Programa: fn_calcula_cnae
+    Sistema : AyllosWeb
+    Sigla   : CRED
+    Autor   : Vitor Shimada Assanuma
+    Data    : 03/05/2018                        Ultima atualizacao: --/--/----
+
+    Dados referentes ao programa:
+
+    Frequencia: Sempre que for chamado
+    Objetivo  : Calculo de verificação do CNAE por titulo
+                                                 
+  ............................................................................. */
+   -- Cursor do titulo
+   CURSOR cr_crapcob IS
+        SELECT cob.vltitulo 
+        FROM crapcob cob 
+        WHERE  
+          cob.flgregis > 0 
+          AND cob.incobran = 0 
+          AND cob.nrdconta = pr_nrdconta
+          AND cob.cdcooper = pr_cdcooper
+          AND cob.nrcnvcob = pr_nrcnvcob
+          AND cob.cdbandoc = pr_cdbandoc
+          AND cob.nrdctabb = pr_nrdctabb
+          AND cob.nrdocmto = pr_nrdocmto
+   ;rw_crapcob cr_crapcob%rowtype;
+         
+   -- Cursor para retornar o valor do CNAE
+   CURSOR cr_crapass IS
+          SELECT vlmaximo
+          FROM crapass ass
+          INNER JOIN
+                tbdsct_cdnae cnae 
+                ON cnae.cdcooper = ass.cdcooper 
+                AND cnae.cdcnae = ass.cdclcnae
+          WHERE 
+                cnae.vlmaximo > 0
+                AND ass.cdcooper = pr_cdcooper
+                AND ass.nrdconta = pr_nrdconta
+   ;rw_crapass cr_crapass%rowtype;
    
+   BEGIN
+     --Abertura da conta
+     OPEN cr_crapcob;
+     FETCH cr_crapcob INTO rw_crapcob;
+     
+     --Abertura do CNAE
+     OPEN cr_crapass;
+     FETCH cr_crapass INTO rw_crapass;
+     
+     --Caso nao consiga abrir um dos dois retorna FALSE
+     IF cr_crapcob%NOTFOUND OR cr_crapass%NOTFOUND THEN
+       CLOSE cr_crapcob;
+       CLOSE cr_crapass;
+       RETURN FALSE;
+     END IF;
+     
+     --Caso o valor do titulo seja maior que o valor maximo do CNAE retorna TRUE
+     IF rw_crapcob.vltitulo > rw_crapass.vlmaximo THEN
+       RETURN TRUE;
+     END IF;
+     
+     --Retorna FALSE no caso de passar reto
+     RETURN FALSE;
+END fn_calcula_cnae;
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
 END DSCT0003;
 /

@@ -156,7 +156,6 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0002 AS
                    complend crapenc.complend%TYPE,
                    nrcxapst crapenc.nrcxapst%TYPE,
                    inpessoa crapass.inpessoa%TYPE,
-                   xxx_dsnacion crapavt.xxx_dsnacion%TYPE,
                    cdestcvl crapavt.cdestcvl%TYPE);
   TYPE typ_tab_dados_avais IS TABLE OF typ_rec_dados_avais
        INDEX BY PLS_INTEGER;
@@ -705,9 +704,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
              avt.complend,
              avt.nrcxapst,
              avt.inpessoa,
-             avt.cdestcvl,
-             avt.xxx_dsnacion
-
+             avt.cdestcvl
         FROM crapavt avt
        WHERE avt.cdcooper = pr_cdcooper
          AND avt.tpctrato = pr_tpctrato
@@ -1822,10 +1819,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
 
     --> Titulo
     ELSIF pr_tpctrlim = 3 THEN
-      
-      -- GGS: Teste Gustavo
-      -- Raise_Application_Error (-20001, 'Teste Gustavo: DSCT0002.pc_busca_parametros_dsctit');
-    
       --> Buscar parametros gerais de desconto de titulo - TAB052
       pc_busca_parametros_dsctit ( pr_cdcooper => pr_cdcooper   --> Código da Cooperativa
                                   ,pr_cdagenci => pr_cdagenci   --> Código da agencia
@@ -1833,8 +1826,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
                                   ,pr_cdoperad => pr_cdoperad   --> Código do Operador
                                   ,pr_dtmvtolt => pr_dtmvtolt   --> data do movimento
                                   ,pr_idorigem => pr_idorigem   --> Identificador de Origem
-                                  ,pr_tpcobran => 0             --> Tipo de cobrança(1-Sim 0-nao)
-                                  ,pr_inpessoa => 0             --> Indicador de tipo de pessoa
+                                  ,pr_tpcobran => 1             --> Tipo de cobrança(1-Sim 0-nao)
+                                  ,pr_inpessoa => pr_inpessoa   --> Indicador de tipo de pessoa
                                    --------> OUT <--------
                                   ,pr_tab_dados_dsctit  => vr_tab_dados_dsctit  --> tabela contendo os parametros da cooperativa
                                   ,pr_tab_cecred_dsctit => vr_tab_cecred_dsctit --> Tabela contendo os parametros da cecred
@@ -5106,21 +5099,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
     ELSE
       CLOSE cr_crapass;
     END IF;
-
-    
+                       
+    --> Buscar Contrato de limite
+    OPEN cr_craplim;
+    FETCH cr_craplim INTO rw_craplim;
+    IF cr_craplim%NOTFOUND THEN
+      CLOSE cr_craplim;
+      vr_flgcriti := TRUE;
+    ELSE
+      CLOSE cr_craplim;
+    END IF;    
 
     IF pr_idimpres IN( 1,      --> COMPLETA 
                        2 )THEN --> CONTRATO 
-                       
-    --> Buscar Contrato de limite
-      OPEN cr_craplim;
-      FETCH cr_craplim INTO rw_craplim;
-      IF cr_craplim%NOTFOUND THEN
-        CLOSE cr_craplim;
-        vr_flgcriti := TRUE;
-      ELSE
-        CLOSE cr_craplim;
-      END IF;
 
       --> Se for Cheque e igual ou superior a data do novo contrato
       IF (pr_tpctrlim = 2 OR pr_tpctrlim = 3) AND 
@@ -6541,7 +6532,7 @@ PROCEDURE pc_efetua_analise_pagador  ( pr_cdcooper IN crapsab.cdcooper%TYPE  -->
     --
     --   Histórico de Alterações:
     --    13/03/2018 - Versão Inicial (Criação) - Gustavo Guedes de Sene (GFT)
-    --
+    --    03/05/2018 - Remocao do campo invalormax_cnae, alterado o calculado para uma funcao em DSCT0003.fn_calcula_cnae()
     -------------------------------------------------------------------------------------------------
 
     ----------------------> VARIAVEIS <----------------------
@@ -6576,31 +6567,30 @@ PROCEDURE pc_efetua_analise_pagador  ( pr_cdcooper IN crapsab.cdcooper%TYPE  -->
     --
     -- [PAGADORES] - Obter dados dos Pagadores a serem analisados
     CURSOR cr_crapsab IS
-      SELECT pag.cdcooper
-            ,pag.nrdconta
-            ,pag.nrinssac
-            ,pag.cdtpinsc -- 1 - Pessoa Física / 2 - Pessoa Jurídica
-        FROM craplim lim,
-             crapsab pag,
-             crapcop cop
-       WHERE lim.cdcooper = cop.cdcooper
-         AND lim.tpctrlim = 3 -- Tipo do Produto: Título      
-         AND lim.insitlim = 2 -- Situação do Limite: Ativo
-         AND pag.nrinssac = nvl(pr_nrinssac, pag.nrinssac)
-         and pag.cdtpinsc in (1,2) -- Codigo do tipo da inscricao do sacado (0-Nenhum/1-CPF/2-CNPJ)
-         AND lim.cdcooper = pag.cdcooper
-         AND lim.nrdconta = pag.nrdconta
-         AND cop.flgativo = 1      -- Cooperativas Ativas 
-         AND cop.cdcooper = pr_cdcooper
-         and pag.nrdconta = nvl(pr_nrdconta, pag.nrdconta)
-         AND EXISTS (SELECT 1
-                       FROM crapcob cob -- Boletos de Cobrança
-                      WHERE cob.cdcooper = pag.cdcooper
-                        AND cob.nrinssac = pag.nrinssac
-                        AND cob.nrdconta = pag.nrdconta
-                        AND cob.dtdpagto IS NULL -- Não consta data de pagamento
-                        AND cob.incobran = 0     -- Cobrança em aberto
-                        AND cob.cdcooper = pr_cdcooper);
+    select pag.cdcooper
+          ,pag.nrdconta
+          ,pag.nrinssac
+          ,pag.cdtpinsc
+    from   craplim lim
+          ,crapsab pag
+          ,crapcop cop
+    where  lim.insitlim = 2 -- Situação do Limite: Ativo
+    and    lim.tpctrlim = 3 -- Tipo do Produto: Título      
+    and    lim.nrdconta = pag.nrdconta
+    and    lim.cdcooper = pr_cdcooper
+    and    pag.cdtpinsc in (1,2) -- Codigo do tipo da inscricao do sacado (0-Nenhum/1-CPF/2-CNPJ)
+    and    pag.nrinssac = nvl(pr_nrinssac, pag.nrinssac)
+    and    pag.nrdconta = nvl(pr_nrdconta, pag.nrdconta)
+    and    pag.cdcooper = pr_cdcooper
+    and    cop.flgativo = 1 -- Cooperativas Ativas 
+    and    cop.cdcooper = pr_cdcooper
+    and    exists( select 1
+                   from   crapcob cob -- Boletos de Cobrança
+                   where  cob.dtdpagto is null -- Não consta data de pagamento
+                   and    cob.incobran = 0     -- Cobrança em aberto
+                   and    cob.nrinssac = pag.nrinssac
+                   and    cob.nrdconta = pag.nrdconta
+                   and    cob.cdcooper = pr_cdcooper);
     rw_crapsab cr_crapsab%rowtype;
    
 
@@ -6875,7 +6865,7 @@ PROCEDURE pc_efetua_analise_pagador  ( pr_cdcooper IN crapsab.cdcooper%TYPE  -->
        vr_tab_analise_pagador(1).peconcentr_maxtit  := 0;
        vr_tab_analise_pagador(1).inemitente_conjsoc := 0;
        vr_tab_analise_pagador(1).inpossui_titdesc   := 0;
-       vr_tab_analise_pagador(1).invalormax_cnae    := 0;
+       --vr_tab_analise_pagador(1).invalormax_cnae    := 0;
        
        vr_inpossui_criticas := 0;
        
@@ -6905,7 +6895,7 @@ PROCEDURE pc_efetua_analise_pagador  ( pr_cdcooper IN crapsab.cdcooper%TYPE  -->
               ,peconcentr_maxtit
               ,inemitente_conjsoc
               ,inpossui_titdesc
-              ,invalormax_cnae
+              --,invalormax_cnae
               ,inpossui_criticas)
        values (pr_cdcooper
               ,pr_nrdconta
@@ -6920,7 +6910,7 @@ PROCEDURE pc_efetua_analise_pagador  ( pr_cdcooper IN crapsab.cdcooper%TYPE  -->
               ,vr_tab_analise_pagador(1).peconcentr_maxtit
               ,vr_tab_analise_pagador(1).inemitente_conjsoc
               ,vr_tab_analise_pagador(1).inpossui_titdesc
-              ,vr_tab_analise_pagador(1).invalormax_cnae
+              --,vr_tab_analise_pagador(1).invalormax_cnae
               ,vr_inpossui_criticas);
 
 
@@ -6937,7 +6927,7 @@ PROCEDURE pc_efetua_analise_pagador  ( pr_cdcooper IN crapsab.cdcooper%TYPE  -->
               ,peconcentr_maxtit  = vr_tab_analise_pagador(1).peconcentr_maxtit
               ,inemitente_conjsoc = vr_tab_analise_pagador(1).inemitente_conjsoc
               ,inpossui_titdesc   = vr_tab_analise_pagador(1).inpossui_titdesc
-              ,invalormax_cnae    = vr_tab_analise_pagador(1).invalormax_cnae
+              --,invalormax_cnae    = vr_tab_analise_pagador(1).invalormax_cnae
               ,inpossui_criticas  = vr_inpossui_criticas
         where  cdcooper = pr_cdcooper 
           and  nrdconta = pr_nrdconta
@@ -7107,7 +7097,7 @@ PROCEDURE pc_efetua_analise_pagador  ( pr_cdcooper IN crapsab.cdcooper%TYPE  -->
          end if;  
 
          --  INVALORMAX_CNAE    : Valor Máximo Permitido por CNAE excedido (0 = Não / 1 = Sim). (Ref. TAB052: vlmxprat)
-         if  vr_tab_dados_dsctit(1).vlmxprat = 1 then
+         /*if  vr_tab_dados_dsctit(1).vlmxprat = 1 then
              open  cr_cnae;
              fetch cr_cnae into rw_cnae;
              if    cr_cnae%found then
@@ -7115,7 +7105,7 @@ PROCEDURE pc_efetua_analise_pagador  ( pr_cdcooper IN crapsab.cdcooper%TYPE  -->
                vr_inpossui_criticas := 1;
              end if;
              close cr_cnae;
-         end if;
+         end if;*/
          
          pc_inserir_analise(pr_cdcooper => rw_crapsab.cdcooper
                            ,pr_nrdconta => rw_crapsab.nrdconta
