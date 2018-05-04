@@ -806,6 +806,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps156 (pr_cdcooper IN crapcop.cdcooper%T
                                           pr_cdprogra => 'CRPS156',
                                           pr_vlresgat => vr_vlresgat,
                                           pr_flgerlog => 0,
+                                          pr_flgrespr => 0,
                                           pr_cdcritic => vr_cdcritic,
                                           pr_dscritic => vr_dscritic);
         
