@@ -29,7 +29,7 @@
 
 	setVarSession("opcoesTela",$opcoesTela);
 	
-	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"U")) <> "") {
+	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"A")) <> "") {
 		exibeErro($msgError);		
 	}	
 	

@@ -51,13 +51,13 @@
 	// Classe para leitura do xml de retorno
 	require_once("../../../../class/xmlfile.php");
 	
-	setVarSession("nmrotina","DSC TITS - LIMITE");
+	setVarSession("nmrotina","DSC TITS - PROPOSTA");
 
 	// Carrega permissões do operador
 	require_once("../../../../includes/carrega_permissoes.php");	
 	
 	setVarSession("opcoesTela",$opcoesTela);
-
+	
 	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"@")) <> "") {
 		exibeErro($msgError);		
 	}
