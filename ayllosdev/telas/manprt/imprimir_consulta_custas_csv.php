@@ -31,26 +31,16 @@
 	// Recebe o POST
 	$inidtpro 			= $_POST['inidtpro'] ;
 	$fimdtpro 			= $_POST['fimdtpro'];
-    $cdcooper 			= (isset($_POST['cdcooper'])) ? $_POST['cdcooper'] : 0;
-    $nrdconta 			= $_POST["nrdconta"] !== "" ? $_POST["nrdconta"] : 0;
-	$cduflogr 			= (isset($_POST['cduflogr'])) ? $_POST['cduflogr'] : null;
-    $dscartor 			= (isset($_POST['dscartor'])) ? $_POST['dscartor'] : null;
-
-	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') {		
-		exibirErro('error',$msgError,'Alerta - Ayllos','',false);
-	}
-
-	// Verifica se o número da conta é um inteiro válido
-	if (!validaInteiro($nrdconta)) {
-		?><script language="javascript">alert('Conta/dv inv&aacute;lida.');</script><?php
-		exit();
-	}
+    $cdcooper 			= (isset($_POST['cdcooper']))  ? $_POST['cdcooper'] : null;
+    $nrdconta 			= (!empty($_POST["nrdconta"])) ? $_POST["nrdconta"] : null;
+	$cduflogr 			= (isset($_POST['cduflogr']))  ? $_POST['cduflogr'] : null;
+    $dscartor 			= (isset($_POST['dscartor']))  ? $_POST['dscartor'] : null;
 
 	$xml  = "";
 	$xml .= "<Root>";
 	$xml .= " <Dados>";
     $xml .= "   <cdcooper_usr>".$glbvars["cdcooper"]."</cdcooper_usr>";
-	$xml .= "   <cdcooper>".(int) $cdcooper."</cdcooper>";
+	$xml .= "   <cdcooper>".$cdcooper."</cdcooper>";
     $xml .= "   <nrdconta>".$nrdconta."</nrdconta>";	
     $xml .= "   <dtinicial>".$inidtpro."</dtinicial>";
 	$xml .= "   <dtfinal>".$fimdtpro."</dtfinal>";

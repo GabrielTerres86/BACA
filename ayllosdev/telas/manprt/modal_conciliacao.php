@@ -62,10 +62,10 @@ $cartorio = (!empty($_POST['cartorio'])) ? $_POST['cartorio'] : null;
                                   <input type="checkbox" id="vlrfinal" name="vlrfinal" value="<? echo $vlrfinal; ?>" onchange="filtraConciliacao(this)" checked/>
                                   <label for="vlrfinal"><? echo number_format($vlrfinal,2,',','.'); ?></label>
                                 </td>
-                                <td style="padding-bottom: 20px;" align="left">
+                                <!--<td style="padding-bottom: 20px;" align="left">
                                   <input type="checkbox" id="cartorio" name="cartorio" value="JERIQUAQUARA" onchange="filtraConciliacao(this)" checked/>
                                   <label for="cartorio">JERIQUAQUARA</label>
-                                </td>
+                                </td>-->
                               </tr>
                             </tbody>
                           </table>

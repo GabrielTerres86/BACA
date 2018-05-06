@@ -1,8 +1,8 @@
 <? 
 /*!
  * FONTE        : form_opcao_i.php
- * CRIAÇÃO      : Helinton Steffens - (Supero)
- * DATA CRIAÇÃO : 13/03/2018 
+ * CRIAï¿½ï¿½O      : Helinton Steffens - (Supero)
+ * DATA CRIAï¿½ï¿½O : 13/03/2018 
  * OBJETIVO     : Formulario para conciliar uma ted.
  */
  
@@ -16,7 +16,7 @@
 	require_once('../../class/xmlfile.php');
 	isPostMethod();
 	
-	include('form_cabecalho.php');
+	//include('form_cabecalho.php');
 ?>
 
 <form id="frmOpcao" class="formulario" onSubmit="return false;">
@@ -35,7 +35,7 @@
 			<label for="fimvlpro"><? echo utf8ToHtml('Valor fim:');  ?></label>
 			<input type="text" id="fimvlpro" name="fimvlpro" value="<?php echo $fimvlpro ?>" />
 			<br style="clear:both" /> 
-			<label for="indconci">Status da concilia&ccedil&atildeo:</label>
+			<!--<label for="indconci">Status da concilia&ccedil&atildeo:</label>
 			<select id="indconci" name="indconci" onchange="tipoOptionT();">
 				<option value="pedente"<?php echo $indconci == 'pedente' ? 'selected' : '' ?> ><? echo utf8ToHtml('Pendente') ?></option>
 				<option value="conciliado" <?php echo $indconci == 'conciliado'  ? 'selected' : '' ?> ><? echo utf8ToHtml('Conciliado') ?></option>
@@ -43,7 +43,7 @@
 			<label for="dscartor"><? echo utf8ToHtml('Cart&oacuterio de origem');  ?>:</label>
             <input type="text" id="dscartor" name="dscartor" value="dscartor"/>
             <a id="lupaConta" style="padding: 3px 0 0 3px;" href="#" onClick="controlaPesquisaCartorio();return false;">
-            <img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif" /></a>
+            <img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif" /></a>-->
 		</div>
 	</div>		
 </form>

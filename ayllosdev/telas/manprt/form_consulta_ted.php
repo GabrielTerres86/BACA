@@ -1,8 +1,8 @@
 <? 
 /*!
  * FONTE        : form_consulta_ted.php
- * CRIAÇÃO      : Helinton Steffens - (Supero)
- * DATA CRIAÇÃO : 14/03/2018 
+ * CRIAï¿½ï¿½O      : Helinton Steffens - (Supero)
+ * DATA CRIAï¿½ï¿½O : 14/03/2018 
  * OBJETIVO     : Tabela que apresenta as TED recebidas
  */	
 ?>
@@ -27,6 +27,7 @@
 						
 						<td><span><? echo getByTagName($registro[$x]->tags,'nmremetente') ?></span>
 							      <? echo getByTagName($registro[$x]->tags,'nmremetente') ?>
+								  <input type="hidden" id="idlancto" name="idlancto" value="<? echo getByTagName($registro[$x]->tags,'idlancto') ?>" />
 								  <input type="hidden" id="nmcartorio" name="nmcartorio" value="<? echo getByTagName($registro[$x]->tags,'nmcartorio') ?>" />
 								  <input type="hidden" id="nmremetente" name="nmremetente" value="<? echo getByTagName($registro[$x]->tags,'nmremetente') ?>" />
 								  <input type="hidden" id="cnpj_cpf" name="cnpj_cpf" value="<? echo getByTagName($registro[$x]->tags,'cnpj_cpf') ?>" />
@@ -72,7 +73,7 @@
 						//
 						if (isset($qtregist) and $qtregist == 0) $nriniseq = 0;
 						
-						// Se a paginação não está na primeira, exibe botão voltar
+						// Se a paginaï¿½ï¿½o nï¿½o estï¿½ na primeira, exibe botï¿½o voltar
 						if ($nriniseq > 1) { 
 							?> <a class='paginacaoAnt'><<< Anterior</a> <? 
 						} else {
@@ -89,7 +90,7 @@
 				</td>
 				<td>
 					<?
-						// Se a paginação não está na última página, exibe botão proximo
+						// Se a paginaï¿½ï¿½o nï¿½o estï¿½ na ï¿½ltima pï¿½gina, exibe botï¿½o proximo
 						if ($qtregist > ($nriniseq + $nrregist - 1)) {
 							?> <a class='paginacaoProx'>Pr&oacute;ximo >>></a> <?
 						} else {
@@ -99,6 +100,9 @@
 				</td>
 			</tr>
 		</table>
+	</div>
+	<div class="complemento">
+		<input type="hidden" id="idlancto" value=""/>
 	</div>
 	<div id="linha1">
 	<ul class="complemento">

@@ -50,7 +50,7 @@ $registros 	= $xmlObjeto->roottag->tags[0]->tags;
     <tbody>
         <? foreach( $registros as $result ) { ?>
             <tr>
-                <td><input type="checkbox" class="clsCheckbox" onclick="verificaCheckbox(this, <? echo getByTagName($result->tags,'vltitulo'); ?>);"
+                <td><input name="idsTitulo" type="checkbox" class="clsCheckbox" onclick="verificaCheckbox(this, <? echo getByTagName($result->tags,'vltitulo'); ?>);"
                         value="<? echo getByTagName($result->tags,'idretorno'); ?>" /></td>
                 <td width="210">
                     <? echo getByTagName($result->tags,'nmcartorio'); ?>

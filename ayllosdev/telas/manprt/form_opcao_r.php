@@ -6,9 +6,6 @@
  * OBJETIVO     : Formulario para conciliar uma ted.
  */
  
-?>
-
-<?php
  	session_start();
 	require_once('../../includes/config.php');
 	require_once('../../includes/funcoes.php');
@@ -16,43 +13,50 @@
 	require_once('../../class/xmlfile.php');
 	isPostMethod();
 	
-	include('form_cabecalho.php');
+	//include('form_cabecalho.php');
 
-    // Buscar nome das cooperativas
-    $xml = "<Root>";
-    $xml .= " <Dados>";
-    //Apenas carregar todas se for coop 3 - cecred
-    if ($glbvars["cdcooper"] == 3){
-        $xml .= "   <cdcooper>0</cdcooper>";
-    }else{
-        $xml .= '   <cdcooper>'.$glbvars["cdcooper"].'</cdcooper>';
-    }
-    $xml .= "   <flgativo>1</flgativo>";
-    $xml .= " </Dados>";
-    $xml .= "</Root>";
+    // Monta o xml de requisi��o
+	$xml  = '';
+	$xml .= '<Root>';
+	$xml .= '	<Cabecalho>';
+	$xml .= '		<Bo>b1wgen0111.p</Bo>';
+	$xml .= '		<Proc>Busca_Cooperativas</Proc>';
+	$xml .= '	</Cabecalho>';
+	$xml .= '	<Dados>';
+	$xml .= '       <cdcooper>'.$glbvars['cdcooper'].'</cdcooper>';
+	$xml .= '		<cdagenci>'.$glbvars['cdagenci'].'</cdagenci>';
+	$xml .= '		<nrdcaixa>'.$glbvars['nrdcaixa'].'</nrdcaixa>';
+	$xml .= '		<cdoperad>'.$glbvars['cdoperad'].'</cdoperad>';
+	$xml .= '		<nmdatela>'.$glbvars['nmdatela'].'</nmdatela>';	
+	$xml .= '		<idorigem>'.$glbvars['idorigem'].'</idorigem>';	
+	$xml .= '		<nmrescop>'.$glbvars['nmrescop'].'</nmrescop>';	
+	$xml .= '	</Dados>';
+	$xml .= '</Root>';
 
-    $xmlResult = mensageria($xml, "CADA0001", "LISTA_COOPERATIVAS", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
-    $xmlObj = getObjectXML($xmlResult);
+	
+	// Executa script para envio do XML e cria objeto para classe de tratamento de XML
+	$xmlResult 		= getDataXML($xml);
+	$xmlObjeto 		= getObjectXML($xmlResult);
 
-    if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
-        $msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
-        if ($msgErro == "") {
-            $msgErro = $xmlObj->roottag->tags[0]->cdata;
-        }
-
-        exibeErroNew($msgErro);
-        exit();
-    }
-
-    $registros = $xmlObj->roottag->tags[0]->tags;
-    
-    function exibeErroNew($msgErro) {
-        echo 'hideMsgAguardo();';
-        echo 'showError("error","' . $msgErro . '","Alerta - Ayllos","desbloqueia()");';
-        exit();
-    }
+    // Recebe as cooperativas
+	$nmcooper		= $xmlObjeto->roottag->tags[0]->attributes['NMCOOPER'];
+		
+	// Faz o tratamento para criar o select
+	$nmcooperArray	= explode(',', $nmcooper);
+	$qtcooper		= count($nmcooperArray);
+	$slcooper		= '<option value="">TODAS</option>';
+	    
+	for ( $j = 0; $j < $qtcooper; $j +=2 ) {
+		if($j > 0) {
+			$slcooper .= '<option '. (($nmcooperArray[$j+1] == $cdcooper) ? 'selected' : '') .' value="'.$nmcooperArray[$j+1].'">'.$nmcooperArray[$j].'</option>';
+		}
+	}
 ?>
+<script>
 
+	var slcooper = '<?php echo $slcooper ?>';
+
+</script>
 <form id="frmOpcao" class="formulario" onSubmit="return false;">
 
 	<div id="divFiltro">
@@ -66,18 +70,7 @@
 			<div id="divCooper">
                 <label for="nmrescop"><? echo utf8ToHtml('Cooperativa:') ?></label>
                 <select id="nmrescop" name="nmrescop">
-                                
-                <?php
-                foreach ($registros as $r) {
-                    
-                    if ( getByTagName($r->tags, 'cdcooper') <> '' ) {
-                ?>
-                    <option value="<?= getByTagName($r->tags, 'cdcooper');?>"><?= getByTagName($r->tags, 'nmrescop'); ?></option> 
-                    
-                    <?php
-                    }
-                }
-                ?>
+                 
                 </select>
             </div>
 			<br style="clear:both" />
@@ -90,19 +83,20 @@
             <input id="cduflogr" name="cduflogr" alt="Sigla do estado.">
 
 
-            <label for="dscartor"><? echo utf8ToHtml('Cart&oacuterio de origem');  ?>:</label>
+            <!--<label for="dscartor"><? echo utf8ToHtml('Cart&oacuterio de origem');  ?>:</label>
             <input type="text" id="dscartor" name="dscartor" value="dscartor"/>
             <a id="lupaConta" style="padding: 3px 0 0 3px;" href="#" onClick="controlaPesquisaCartorio();return false;">
-            <img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif" /></a>
+            <img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif" /></a>-->
 		</div>
 	</div>		
 </form>
 
 
 <div id="divBotoes" style="padding-bottom:10px">
+    <a href="#" class="botao" onclick="btnContinuar(); return false;" ><? echo utf8ToHtml('Avan&ccedilar'); ?></a>
 	<a href="#" class="botao" id="btVoltar" onclick="btnVoltar(); return false;">Voltar</a>
-	<a href="#" class="botao" onclick="exportarConsultaPDF(); return false;" ><? echo utf8ToHtml('Exportar PDF'); ?></a>
-    <a href="#" class="botao" onclick="exportarConsultaCSV(); return false;" ><? echo utf8ToHtml('Exportar CSV'); ?></a>
+	<!--<a href="#" class="botao" onclick="exportarConsultaPDF(); return false;" ><? echo utf8ToHtml('Exportar PDF'); ?></a>
+    <a href="#" class="botao" onclick="exportarConsultaCSV(); return false;" ><? echo utf8ToHtml('Exportar CSV'); ?></a>-->
 </div>
 
 <form action="<?php echo $UrlSite;?>telas/manprt/imprimir_consulta_custas_csv.php" method="post" id="frmExportarCSV" name="frmExportarCSV">

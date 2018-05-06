@@ -1,8 +1,8 @@
 <? 
 /*!
  * FONTE        : form_opcao_c.php
- * CRIAÇÃO      : Helinton Steffens - (Supero)
- * DATA CRIAÇÃO : 13/03/2018 
+ * CRIAï¿½ï¿½O      : Helinton Steffens - (Supero)
+ * DATA CRIAï¿½ï¿½O : 13/03/2018 
  * OBJETIVO     : Formulario para filtrar as conciliacoes.
  */
  
@@ -16,7 +16,7 @@
 	require_once('../../class/xmlfile.php');
 	isPostMethod();
 	
-	include('form_cabecalho.php');
+	//include('form_cabecalho.php');
 
     // Buscar nome das cooperativas
     $xml = "<Root>";
