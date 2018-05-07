@@ -50,6 +50,10 @@
 		exibeErro(str_replace("#","<br>",$xmlObjAgendamento->roottag->tags[0]->tags[0]->tags[4]->cdata));
 	} 
 	
+	$vllanmto = str_replace(',','.',str_replace('.','',$vlparaar));
+	
+	$vllanmto = $qtmesaar * $vlparaar;
+	
 	// Montar o xml de Requisicao
 	$xml  = "";
 	$xml .= "<Root>";
