@@ -38,6 +38,9 @@
                
                18/06/2014 - Exclusao do uso da tabela craplli.
                             (Tiago Castro - Tiago RKAM)
+               
+               30/04/2018 - Alteracao nos codigos do campo cdsitdct. 
+                            PRJ366 (Lombardi).
 ............................................................................. */
 
 DEF BUFFER crabtab FOR craptab.
@@ -197,8 +200,7 @@ TRANS_1:
 FOR EACH crapass WHERE crapass.cdcooper = glb_cdcooper                  AND
                        crapass.nrdconta > glb_nrctares                  AND
                        crapass.vllimcre > 0                             AND
-                      (crapass.cdsitdct = 1                             OR 
-                       crapass.cdsitdct = 6)                            AND
+                       crapass.cdsitdct = 1                             AND
                    NOT CAN-DO("2,4,5,6,7,8",STRING(crapass.cdsitdtl))
                        TRANSACTION ON ERROR UNDO TRANS_1, RETRY:
 

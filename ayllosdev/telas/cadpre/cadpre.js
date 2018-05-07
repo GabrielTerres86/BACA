@@ -7,7 +7,10 @@
  * ALTERAÇÕES   : 11/07/2016 - Adicionados novos campos para a fase 3 do projeto de Pre aprovado. (Lombardi)
  *
  *                03/08/2016 - Auste para utilizar a rotina convertida para encontrar as finalidades de empréstimos
-                               (Andrei - RKAM).
+ *                             (Andrei - RKAM).	  
+ *
+ *                27/04/2018 - Alteração  da situação de "1,2,3,4,5,6,8,9" para "1,3,4,5,7,8". 
+ *                             Projeto 366. (Lombardi)
  *				  
  *				  
  * --------------
@@ -148,7 +151,7 @@ function formataRegra() {
 		var rCdlcremp = $('label[for="cdlcremp"]');
 		var rNrmcotas = $('label[for="nrmcotas"]');
 		var rDssitdop = $('label[for="dssitdop"]');
-		var rDssitopt = $('label[for="sit0"], label[for="sit1"], label[for="sit2"], label[for="sit3"], label[for="sit4"], label[for="sit5"], label[for="sit6"], label[for="sit7"]');
+		var rDssitopt = $('label[for="sit1"], label[for="sit3"], label[for="sit4"], label[for="sit5"], label[for="sit7"], label[for="sit8"]');
         var rQtmescta = $('label[for="qtmescta"]');
         var rQtmesadm = $('label[for="qtmesadm"]');
         var rQtmesemp = $('label[for="qtmesemp"]');
@@ -212,7 +215,7 @@ function formataRegra() {
 		var cCdlcremp = $('#cdlcremp');
 		var cDslcremp = $('#dslcremp');
 		var cNrmcotas = $('#nrmcotas');
-		var cDssitopt = $('#sit0, #sit1, #sit2, #sit3, #sit4, #sit5, #sit6, #sit7');
+		var cDssitopt = $('#sit1, #sit3, #sit4, #sit5, #sit7, #sit8');
         var cQtmescta = $('#qtmescta');
         var cQtmesadm = $('#qtmesadm');
         var cQtmesemp = $('#qtmesemp');
@@ -295,28 +298,12 @@ function formataRegra() {
 		$('#nrmcotas','#frmRegra').unbind('keypress').bind('keypress', function(e) {
 			if ( divError.css('display') == 'block' ) { return false; }
 			if ( e.keyCode == 13 || e.keyCode == 9 ) {
-				$('#sit0','#frmRegra').focus();
-				return false;
-			}
-		});
-
-		$('#sit0','#frmRegra').unbind('keypress').bind('keypress', function(e) {
-			if ( divError.css('display') == 'block' ) { return false; }
-			if ( e.keyCode == 13 || e.keyCode == 9 ) {
 				$('#sit1','#frmRegra').focus();
 				return false;
 			}
 		});
 
 		$('#sit1','#frmRegra').unbind('keypress').bind('keypress', function(e) {
-			if ( divError.css('display') == 'block' ) { return false; }
-			if ( e.keyCode == 13 || e.keyCode == 9 ) {
-				$('#sit2','#frmRegra').focus();
-				return false;
-			}
-		});
-
-		$('#sit2','#frmRegra').unbind('keypress').bind('keypress', function(e) {
 			if ( divError.css('display') == 'block' ) { return false; }
 			if ( e.keyCode == 13 || e.keyCode == 9 ) {
 				$('#sit3','#frmRegra').focus();
@@ -343,20 +330,20 @@ function formataRegra() {
 		$('#sit5','#frmRegra').unbind('keypress').bind('keypress', function(e) {
 			if ( divError.css('display') == 'block' ) { return false; }
 			if ( e.keyCode == 13 || e.keyCode == 9 ) {
-				$('#sit6','#frmRegra').focus();
-				return false;
-			}
-		});
-
-		$('#sit6','#frmRegra').unbind('keypress').bind('keypress', function(e) {
-			if ( divError.css('display') == 'block' ) { return false; }
-			if ( e.keyCode == 13 || e.keyCode == 9 ) {
 				$('#sit7','#frmRegra').focus();
 				return false;
 			}
 		});
 
 		$('#sit7','#frmRegra').unbind('keypress').bind('keypress', function(e) {
+			if ( divError.css('display') == 'block' ) { return false; }
+			if ( e.keyCode == 13 || e.keyCode == 9 ) {
+				$('#sit8','#frmRegra').focus();
+				return false;
+			}
+		});
+
+		$('#sit8','#frmRegra').unbind('keypress').bind('keypress', function(e) {
 			if ( divError.css('display') == 'block' ) { return false; }
 			if ( e.keyCode == 13 || e.keyCode == 9 ) {
                 $('#qtmescta','#frmRegra').focus();
@@ -756,7 +743,7 @@ function controlaCampos(op) {
 			$('#cdfinemp','#frmRegra').habilitaCampo().addClass('pesquisa');
 			$('#cdlcremp','#frmRegra').habilitaCampo().addClass('pesquisa');
 			$('#nrmcotas','#frmRegra').habilitaCampo();
-			$('#sit0, #sit1, #sit2, #sit3, #sit4, #sit5, #sit6, #sit7','#frmRegra').habilitaCampo();
+			$('#sit1, #sit3, #sit4, #sit5, #sit7, #sit8','#frmRegra').habilitaCampo();
             $('#qtmescta','#frmRegra').habilitaCampo();
             $('#qtmesadm','#frmRegra').habilitaCampo();
             $('#qtmesemp','#frmRegra').habilitaCampo();

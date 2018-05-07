@@ -533,6 +533,9 @@
                 22/03/2018 - Substituidas verificacoes onde o tipo de conta (cdtipcta) estava fixo. 
                            - Chamar rotina pc_valida_adesao_produto e pc_valida_valor_de_adesao na 
                              proc valida_nova_proposta. PRJ366 (Lombardi).
+
+               04/05/2018 - Alteracao nos codigos da situacao de conta (cdsitdct).
+                            PRJ366 (Lombardi).
                 
 ..............................................................................*/
 
@@ -1334,10 +1337,9 @@ PROCEDURE carrega_dados_inclusao:
          END.
     ELSE
     IF   crapass.cdsitdct <> 1   AND
-         crapass.cdsitdct <> 6   AND
-         ((crapass.cdsitdct <> 5   AND
-          par_idorigem <> 1)    OR
-         (crapass.cdsitdct = 5    AND 
+       ((crapass.cdsitdct <> 5   AND
+          par_idorigem <> 1)     OR
+        (crapass.cdsitdct = 5    AND 
           par_idorigem = 1))   /** Deve permitir inserir cartão, mas apenas se for PURO DÉBITO **/
           THEN
          DO:

@@ -188,6 +188,9 @@
                            
               17/07/2017 - Alteraçao CDOEDTTL pelo campo IDORGEXP.
                            PRJ339 - CRM (Odirlei-AMcom)                
+                           
+              02/05/2018 - Alteracao nos codigos da situacao de conta (cdsitdct).
+                           PRJ366 (Lombardi).
 
 ..............................................................................*/
 
@@ -645,7 +648,7 @@ PROCEDURE Busca_Dados:
       IF   aux_tppessoa = "NOK"   THEN
            RETURN "NOK".
       
-      IF   aux_cdsitdct <> 1 AND aux_cdsitdct <> 6   THEN
+      IF   aux_cdsitdct <> 1   THEN
       DO:
            CREATE tt-crawcri.
            BUFFER-COPY crawcrd USING {&Campos-2VIA} dtsol2vi nmextttl TO tt-crawcri.
@@ -971,7 +974,7 @@ PROCEDURE Busca_Dados:
       IF   aux_tppessoa = "NOK"   THEN
            RETURN "NOK".
 
-      IF   aux_cdsitdct <> 1 AND aux_cdsitdct <> 6   THEN
+      IF   aux_cdsitdct <> 1   THEN
       DO:
            CREATE tt-crawcri.
            BUFFER-COPY crawcrd USING {&Campos-Solic} nmextttl TO tt-crawcri.
@@ -1885,7 +1888,7 @@ PROCEDURE Atualiza_Sit_Cred:
            END.
 
       /*nao gerar mais critica no log
-      IF (crapass.cdsitdct <> 1 AND crapass.cdsitdct <> 6)  THEN
+      IF (crapass.cdsitdct <> 1)  THEN
       DO:
         RUN Gera_Critica(018,"  CONTA = " +
             STRING(crawcrd.nrdconta,"zzzz,zz9,9")).
@@ -1894,7 +1897,7 @@ PROCEDURE Atualiza_Sit_Cred:
 
       /* Nao mexer no 'insitcrd' se for administradora da conta integracao */
       IF   NOT CAN-DO("83,84,85,86,87,88",STRING(crawcrd.cdadmcrd))   AND
-          (crapass.cdsitdct = 1   OR   crapass.cdsitdct = 6)          THEN
+          (crapass.cdsitdct = 1)  THEN
 
            ASSIGN crawcrd.insitcrd = 3 /* atualizar p/ Liberado */
                   crawcrd.dtsolici = glb_dtmvtolt.

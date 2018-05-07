@@ -181,6 +181,9 @@
                            - Gravar historico de inclusao dos campos cdtipcta,
                              cdsitdct e cdcatego. PRJ366 (Lombardi).
 
+                04/05/2018 - Alteracao nos codigos da situacao de conta (cdsitdct). 
+                             PRJ366 (Lombardi).		
+
 .............................................................................*/
                                                      
 
@@ -4440,7 +4443,7 @@ PROCEDURE Inclui PRIVATE :
                        crabass.nmttlrfb = SUBSTR(par_nmttlrfb,1,200) 
                        crabass.inconrfb = par_inconrfb 
                        crabass.hrinicad = par_hrinicad 
-                       crabass.cdsitdct = 6  /* Normal S/Talao */
+                       crabass.cdsitdct = 1  /* Em uso */
                        crabass.cdtipcta = INT(crappco.dsconteu)  /* Normal Convenio */
                        /* Inicio - Alteracoes referentes a M181 - Rafael Maciel (RKAM) */
                        crabass.cdopeori = par_cdoperad

@@ -160,6 +160,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
                                Ajustar estouro dos campos de endereco no arquivo de cadastro, para procuradores
                                e representantes (Anderson SD 832274).
                                
+                  30/04/2018 - Alterados codigos de situacao "pr_cdsitdct". PRJ366 (Lombardi).
+                               
   ---------------------------------------------------------------------------------------------------------------*/  
   --> Function para formatar o cpf/cnpj conforme padrao da easyway
   FUNCTION fn_nrcpfcgc_easy (pr_nrcpfcgc IN crapass.nrcpfcgc%TYPE,
@@ -750,15 +752,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
         RAISE vr_prox_reg;
       END IF;
         
-      IF pr_cdsitdct IN (1, -- normal 
-                                 3, -- contas que não podem ter movimento de produtos
-                                 5, -- cooperado com restrição
-                                 6  -- Normal sem talão
-                                 )THEN
+      IF pr_cdsitdct IN (1, -- Em uso 
+                         3, -- Em prejuízo
+                         5  -- Em uso impeditivo
+                         )THEN
         vr_idsitcnt := 'A';
-      ELSIF pr_cdsitdct IN (4, -- encerrada
-                                    2,
-                                    9) THEN  -- encerrada por outros motivos
+      ELSIF pr_cdsitdct = 4 THEN -- Encerrada por demissão
         vr_idsitcnt := 'I';        
       END IF;
       

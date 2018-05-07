@@ -48,12 +48,15 @@
                06/12/2016 - Alterado campo dsdepart para cddepart.
                             PRJ341 - BANCENJUD (Odirlei-AMcom)
                             
-			   27/01/2017 - Criacao do novo vinvulo (AC - Ass. Comercial de Chapeco). 
-							SD 561203 - (Carlos Rafael Tanholi)
+               27/01/2017 - Criacao do novo vinvulo (AC - Ass. Comercial de Chapeco). 
+                            SD 561203 - (Carlos Rafael Tanholi)
 
                24/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
-			                crapass, crapttl, crapjur 
-							(Adriano - P339).
+                            crapass, crapttl, crapjur 
+                            (Adriano - P339).
+                            
+               02/05/2018 - Alteracao nos codigos da situacao de conta (cdsitdct).
+                            PRJ366 (Lombardi).
 ............................................................................. */
 
 { includes/var_online.i }
@@ -286,8 +289,7 @@ DO WHILE TRUE:
                        END.
                   /*** Magui, tarefa 38.488
                   ELSE
-                       IF  (crapass.cdsitdct <> 1 AND   
-                            crapass.cdsitdct <> 6)   AND
+                       IF   crapass.cdsitdct <> 1    AND
                             TRIM(tel_tpvincul) <> "" THEN
                        DO:
                             glb_cdcritic = 64.
@@ -449,9 +451,9 @@ DO WHILE TRUE:
                                        "- Cheque Administrativo"
                                   ELSE " ".
 
-                   FIND w-vinculos WHERE w-vinculos.sigla = crapass.tpvincul.
+            FIND w-vinculos WHERE w-vinculos.sigla = crapass.tpvincul.
            
-                        tel_dsvincul = "- " + w-vinculos.descr.
+		    tel_dsvincul = "- " + w-vinculos.descr.
                    
 			IF crapass.inpessoa = 1 THEN
 			   DO:

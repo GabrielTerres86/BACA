@@ -68,7 +68,8 @@ A PARTIR DE 10/MAI/2013, FAVOR ENTRAR EM CONTATO COM AS SEGUINTES PESSOAS:
  * 046: [12/04/2017] Reinert				: Ajustado funcao RemoveCaracteresInvalidos para ignorar caractere "#".
  * 047:	[28/08/2017] Carlos Rafael Tanholi	: Ajuste nas rotinas xmlFilho, dataParaTimestamp, validaPermissao, mensageria. SD 743183. 	
  * 048: [28/09/2017] Jean Michel (CECRED)   : Adicionado função get_http_response_code para retornar o status code de arquivo ou domínio
- * 049:	[28/08/2017] Lombardi				: Criada nova rotina buscaDominios. Projeto 366 - Reestruturação dos tipos e situações de conta.
+ * 049:	[28/08/2017] Lombardi (CECRED)		: Criada nova rotina buscaDominios. Projeto 366 - Reestruturação dos tipos e situações de conta.
+ * 050:	[26/04/2018] Lombardi (CECRED)		: Criada nova rotina buscaSituacoesConta. Projeto 366 - Reestruturação dos tipos e situações de conta.
   */
 
 // Função para requisição de dados através de XML 
@@ -1762,6 +1763,32 @@ function buscaDominios($nmmodulo, $nmdomini) {
 	$xml .= "</Root>";
 	
 	$xmlResult = mensageria($xml, "GENE0010", "RETORNA_DOMINIOS", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	$xmlObj = getObjectXML($xmlResult);	
+	
+	//-----------------------------------------------------------------------------------------------
+	// Controle de Erros
+	//-----------------------------------------------------------------------------------------------
+	if(strtoupper($xmlObj->roottag->tags[0]->name == 'ERRO')){	
+		$msgErro = $xmlObj->roottag->tags[0]->cdata;
+		if($msgErro == null || $msgErro == ''){
+			$msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
+		}
+		exibirErro('error',$msgErro,'Alerta - Ayllos','estadoInicial();',false);
+	}
+	
+	return $xmlObj->roottag->tags[0]->tags;
+}
+
+function buscaSituacoesConta() {
+	global $glbvars;
+	
+	// Montar o xml de Requisicao
+	$xml .= "<Root>";
+	$xml .= "  <Dados>";
+	$xml .= "  </Dados>";
+	$xml .= "</Root>";
+	
+	$xmlResult = mensageria($xml, "CADA0006", "LISTA_SITUACOES_CONTA", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 	$xmlObj = getObjectXML($xmlResult);	
 	
 	//-----------------------------------------------------------------------------------------------

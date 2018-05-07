@@ -6,6 +6,9 @@
      * OBJETIVO     : Formulario de Regras.
      * --------------
      * ALTERAÇÕES   : 11/07/2016 - Adicionados novos campos para a fase 3 do projeto de Pre aprovado. (Lombardi)
+     *
+     *                27/04/2018 - Alteração  da situação de "1,2,3,4,5,6,8,9" para "1,3,4,5,7,8". 
+     *                             Projeto 366. (Lombardi)
      * --------------
      */
 
@@ -107,10 +110,10 @@
                                                     <td>
                                                         <label for="dssitdop">Situa&ccedil;&atilde;o das Contas:</label>
                                                         <?php
-                                                            $arrsitua = array('1','2','3','4','5','6','8','9');
-                                                            foreach ($arrsitua as $codsitua => $flgsitua) {
-                                                                echo '<label for="sit' . $codsitua . '">' . $flgsitua . '</label>';
-                                                                echo '<input type="checkbox" name="dssitdop" id="sit' . $codsitua . '" value="' . $flgsitua . '"/>';
+                                                            $arrsitua = array('1','3','4','5','7','8');
+                                                            foreach ($arrsitua as $flgsitua) {
+                                                                echo '<label for="sit' . $flgsitua . '">' . $flgsitua . '</label>';
+                                                                echo '<input type="checkbox" name="dssitdop" id="sit' . $flgsitua . '" value="' . $flgsitua . '"/>';
                                                             }
                                                         ?>
                                                     </td>

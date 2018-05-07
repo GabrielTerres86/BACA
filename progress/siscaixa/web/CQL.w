@@ -23,6 +23,9 @@
 
                06/12/2016 - Incorporacao Transulcred (Guilherme/SUPERO)
 
+               04/05/2018 - Alteracao nos codigos da situacao de conta 
+                            (cdsitdct). PRJ366 (Lombardi).
+
 ------------------------------------------------------------------------*/
 /*           This .W file was created with AppBuilder.                  */
 /*----------------------------------------------------------------------*/
@@ -417,7 +420,7 @@ PROCEDURE process-web-request :
                                                      /* Cheque nao pertencente
                                                         ao emitente - Ant. 4 */
                                                ELSE
-                                               IF   CAN-DO("2,3,4",
+                                               IF   CAN-DO("3,4",
                                                     STRING(crapass.cdsitdct))
                                                     THEN
                                                     ASSIGN aux_dssitcon = "2"

@@ -61,12 +61,17 @@
                             
                25/01/2016 - Melhoria para alterar proc_batch pelo proc_message
                             na critica 532 e 356. (Jaison/Diego - SD: 365668)
+               
+               30/04/2018 - Alteracao nos codigos do campo cdsitdct. Ajuste para 
+                            buscar a descricao da situacao de conta do oracle.
+                            PRJ366 (Lombardi).
 
 ............................................................................. */
 
 DEF STREAM str_1.     /*  Para listagem dos demitidos no mes  */
 
 { includes/var_batch.i "NEW" }
+{ sistema/generico/includes/var_oracle.i }
 
 DEF        VAR rel_nmrelato AS CHAR    FORMAT "x(40)" EXTENT 5   NO-UNDO.
 DEF        VAR rel_nmempres AS CHAR    FORMAT "x(15)"            NO-UNDO.
@@ -94,6 +99,10 @@ DEF        VAR aux_flgfirst AS LOGI                                  NO-UNDO.
 DEF        VAR aux_vlmindev AS DECIMAL FORMAT "zzz,zzz,zz9.99"       NO-UNDO.
 DEF        VAR aux_qtdvezes AS INT     FORMAT "999"                  NO-UNDO.
 DEF        VAR aux_crtmagne AS INT                                   NO-UNDO.
+
+DEF        VAR aux_dssituacao AS CHAR                                NO-UNDO.
+DEF        VAR aux_des_erro   AS CHAR                                NO-UNDO.
+DEF        VAR aux_dscritic   AS CHAR                                NO-UNDO.
 
 glb_cdprogra = "crps095".
 RUN fontes/iniprg.p.
@@ -144,8 +153,7 @@ FIND craptab WHERE craptab.cdcooper = glb_cdcooper   AND
           END.
  
 FOR EACH crapass WHERE crapass.cdcooper  = glb_cdcooper AND
-                       crapass.cdsitdct <> 1            AND
-                       crapass.cdsitdct <> 6 
+                       crapass.cdsitdct <> 1
                        USE-INDEX crapass2 NO-LOCK
                        BREAK BY crapass.cdagenci
                                 BY crapass.nrdconta :
@@ -265,20 +273,35 @@ FOR EACH crapass WHERE crapass.cdcooper  = glb_cdcooper AND
     ASSIGN tot_qtdconta = tot_qtdconta + 1
            tot_vllimcre = tot_vllimcre + crapass.vllimcre
            tot_vllimcrd = tot_vllimcrd + rel_vllimcrd.
+    
+    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
+    RUN STORED-PROCEDURE pc_descricao_situacao_conta
+      aux_handproc = PROC-HANDLE NO-ERROR
+                              (INPUT crapass.cdsitdct, /* pr_cdsituacao */
+                              OUTPUT "",               /* pr_dssituacao */
+                              OUTPUT "",               /* pr_des_erro   */
+                              OUTPUT "").              /* pr_dscritic   */
+    
+    CLOSE STORED-PROC pc_descricao_situacao_conta
+          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+    
+    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
 
-    rel_dssitdct =  IF    crapass.cdsitdct = 2  THEN
-                          "ENCERRADA PELO ASSOCIADO"
-                    ELSE
-                    IF    crapass.cdsitdct = 3  THEN
-                          "ENCERRADA PELA COOP"
-                    ELSE
-                    IF    crapass.cdsitdct = 4  THEN
-                          "ENCERRADA PELA DEMISSAO"
-                    ELSE
-                    IF    crapass.cdsitdct = 5  THEN
-                          "NAO APROVADA"
-                    ELSE
-                          "ENCERRADA P/OUTRO MOTIVO".
+    ASSIGN aux_dssituacao = ""
+           aux_des_erro = ""
+           aux_dscritic = ""
+           aux_dssituacao = pc_descricao_situacao_conta.pr_dssituacao 
+                           WHEN pc_descricao_situacao_conta.pr_dssituacao <> ?
+           aux_des_erro = pc_descricao_situacao_conta.pr_des_erro
+                           WHEN pc_descricao_situacao_conta.pr_des_erro <> ?
+           aux_dscritic = pc_descricao_situacao_conta.pr_dscritic
+                           WHEN pc_descricao_situacao_conta.pr_dscritic <> ?.
+    
+    IF  aux_des_erro = "NOK"  THEN
+        rel_dssitdct = UPPER(aux_dscritic).
+    ELSE
+        rel_dssitdct = UPPER(aux_dssituacao).
+    
     FOR EACH crapcrm WHERE crapcrm.cdcooper = glb_cdcooper     AND
                            crapcrm.nrdconta = crapass.nrdconta AND
                            crapcrm.cdsitcar = 2 NO-LOCK.

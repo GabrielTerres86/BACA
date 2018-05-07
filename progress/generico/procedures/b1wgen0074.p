@@ -239,7 +239,10 @@
 
                 24/04/2018 - Gravar historico de exclusao de titular.
                            - Gravar historico de alteracao dos campos cdtipcta, 
-                             cdsitdct e cdcatego. PRJ366 (Lombardi).
+                             cdsitdct e cdcatego. PRJ366 (Lombardi).	 
+
+               03/05/2018 - Alteracao nos codigos da situacao de conta (cdsitdct).
+                            PRJ366 (Lombardi).
                              
 .............................................................................*/
 
@@ -1741,7 +1744,7 @@ PROCEDURE Valida_Dados_Altera:
 
         /* O associado esta no SPC ou no CCF, exige situacao da conta <> 1 */
         IF (par_inadimpl = 1 OR par_inlbacen = 1) AND
-           (par_cdsitdct = 1 OR par_cdsitdct = 6) THEN
+           (par_cdsitdct = 1) THEN
             DO:
                ASSIGN par_dscritic = "Situacao invalida. Cooperado no SPC/CCF."
                       par_nmdcampo = "cdsitdct".
@@ -5521,7 +5524,7 @@ PROCEDURE Grava_Dados_Encerra:
              END.
         
         IF  crabass.cdsitdct <> 4 AND aux_inctaitg = 1 THEN
-            ASSIGN crapass.cdsitdct = 6.
+            ASSIGN crapass.cdsitdct = 1.
                
         ASSIGN crabass.flgctitg = 3.
         

@@ -59,6 +59,9 @@
                08/03/2018 - Declaraçao das variáveis "shr_cdtipcta" e "shr_dstipcta" 
                             alteradas para nao referenciarem mais a tabela CRAPTIP.
                             PRJ366 (Lombardi).
+
+               03/05/2018 - Alteracao nos codigos da situacao de conta (cdsitdct).
+                            PRJ366 (Lombardi).
 .............................................................................*/
 
 DEF {1} SHARED VAR shr_nrdconta LIKE crapttl.nrdconta                NO-UNDO.
@@ -163,7 +166,7 @@ FORM SKIP(1)
                             HELP "Entre com o tipo de conta ou F7 para listar"
      tel_dstipcta           NO-LABEL
      crapass.cdsitdct AT 30 LABEL "Sit."
-        HELP "1-Nor,2-Enc.Ass,3-Enc.COOP,4-Enc.Dem,5-Nao aprov,6-S/Tal,9-Outros"
+        HELP "1-Em Uso,3-Em Prej.,4-Enc.Dem,5-Uso Imped.,7-Proc.Dem,8-Proc.Dem.Bacen"
      tel_dssitdct           NO-LABEL
      crapass.nrdctitg AT 57 LABEL "Conta/ITG"
      SKIP(2)

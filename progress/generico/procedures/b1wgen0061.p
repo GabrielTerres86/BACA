@@ -28,6 +28,9 @@
 							(Adriano - P339).
 
                 13/04/2017 - Alterado atribuicao do campo cdmotdem da tabela CRAPSFN
+
+                04/05/2018 - Ajuste para buscar a descricao da situacao de conta do 
+                             oracle. PRJ366 (Lombardi).
 			   
 .............................................................................*/
 
@@ -37,6 +40,7 @@
 { sistema/generico/includes/var_internet.i}
 { sistema/generico/includes/gera_log.i}
 { sistema/generico/includes/gera_erro.i}
+{ sistema/generico/includes/var_oracle.i }
 
 DEF VAR aux_cdcritic AS INTE                                           NO-UNDO.
 DEF VAR aux_dscritic AS CHAR                                           NO-UNDO.
@@ -1154,7 +1158,10 @@ PROCEDURE Busca_Impressao:
     DEF VAR aux_dsmesref AS CHAR                                    NO-UNDO.
     DEF VAR aux_qtpalavr AS INTE                                    NO-UNDO.
     DEF VAR aux_contapal AS INTE                                    NO-UNDO.
-
+    
+    DEF VAR aux_dssitdct AS CHAR                                    NO-UNDO.
+    DEF VAR aux_des_erro AS CHAR                                    NO-UNDO.
+    
     ASSIGN
         aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
         aux_dstransa = "Busca dados do Cliente Financeiro para impressao "
@@ -1281,17 +1288,31 @@ PROCEDURE Busca_Impressao:
                                        THEN "" ELSE " ") + 
                                       ENTRY(aux_contapal,crapcop.nmextcop," ").
         END.  /*  Fim DO .. TO  */ 
-
-        CASE crapass.cdsitdct:
-            WHEN 1 THEN tt-fichacad.dssitdct = "NORMAL".
-            WHEN 2 THEN tt-fichacad.dssitdct = "ENCERRADA PELO ASSOCIADO".
-            WHEN 3 THEN tt-fichacad.dssitdct = "ENCERRADA PELA COOP".
-            WHEN 4 THEN tt-fichacad.dssitdct = "ENCERRADA PELA DEMISSAO".
-            WHEN 5 THEN tt-fichacad.dssitdct = "NAO APROVADA".
-            WHEN 6 THEN tt-fichacad.dssitdct = "NORMAL - SEM TALAO".
-            WHEN 9 THEN tt-fichacad.dssitdct = "ENCERRADA P/ OUTRO MOTIVO".
-            OTHERWISE tt-fichacad.dssitdct = "".
-        END CASE.
+        
+        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+        
+        RUN STORED-PROCEDURE pc_descricao_situacao_conta
+        aux_handproc = PROC-HANDLE NO-ERROR (INPUT crapass.cdsitdct, /* pr_cdsituacao */
+                                            OUTPUT "",               /* pr_dssituacao */
+                                            OUTPUT "",               /* pr_des_erro   */
+                                            OUTPUT "").              /* pr_dscritic   */
+        
+        CLOSE STORED-PROC pc_descricao_situacao_conta
+              aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+        
+        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+        
+        ASSIGN aux_dssitdct = ""
+               aux_des_erro = ""
+               aux_dssitdct = UPPER(pc_descricao_situacao_conta.pr_dssituacao)
+                              WHEN pc_descricao_situacao_conta.pr_dssituacao <> ?
+               aux_des_erro = pc_descricao_situacao_conta.pr_des_erro 
+                              WHEN pc_descricao_situacao_conta.pr_des_erro <> ?.
+        
+        IF aux_des_erro = "NOK" THEN 
+            ASSIGN aux_dssitdct = "".
+        
+        ASSIGN tt-fichacad.dssitdct = aux_dssitdct.
 
         CASE crapass.inpessoa:
            WHEN 1 THEN DO:

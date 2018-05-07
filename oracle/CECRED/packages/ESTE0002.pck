@@ -55,6 +55,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
                   12/12/2017 - Projeto 410 - Incluir o tratamento para o IOF por atraso - (Jean / MOut´S)
                   
                   20/03/2018 - #INC0010628 Não considerar contratos que foram para prejuízo (Carlos)
+                  
+                  27/04/2018 - Removida funcao fn_des_cdsitdct. PRJ366 (Lombardi)
   ---------------------------------------------------------------------------------------------------------------*/
   
   --> Funcao para CPF/CNPJ
@@ -522,51 +524,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
     WHEN OTHERS THEN
       RETURN NULL;
   END fn_des_cdtipcta;
-  
-  --> Rotina para retornar descrição de situacao da conta
-  FUNCTION fn_des_cdsitdct (pr_cdsitdct  IN NUMBER) --> Codigo de situacao da conta
-                            RETURN VARCHAR2 IS 
-  /* ..........................................................................
-    
-      Programa : fn_des_cdsitdct        
-      Sistema  : Conta-Corrente - Cooperativa de Credito
-      Sigla    : CRED
-      Autor    : Odirlei Busana(Amcom)
-      Data     : Maio/2017.                   Ultima atualizacao: 04/05/2017
-    
-      Dados referentes ao programa:
-    
-      Frequencia: Sempre que for chamado
-      Objetivo  : Rotina para retornar descrição de situacao da conta
-    
-      Alteração : 
-        
-    ..........................................................................*/
-    -----------> CURSORES <-----------    
-    
-    -----------> VARIAVEIS <-----------   
-    vr_dssitcta VARCHAR2(100) := NULL;
-    
-  BEGIN
-    
-    SELECT CASE pr_cdsitdct 
-             WHEN  1 THEN 'Nor'
-             WHEN  2 THEN 'Enc.Ass'
-             WHEN  3 THEN 'Enc.COOP'
-             WHEN  4 THEN 'Enc.Dem'
-             WHEN  5 THEN 'Nao aprov'
-             WHEN  6 THEN 'S/Tal'
-             WHEN  9 THEN 'Outr'
-             ELSE NULL
-           END CASE  
-      INTO vr_dssitcta FROM dual;         
-      
-      RETURN vr_dssitcta;
-        
-  EXCEPTION
-    WHEN OTHERS THEN
-      RETURN NULL;
-  END fn_des_cdsitdct;
   
   --> Rotina para retornar descrição de indicador
   FUNCTION fn_des_incasprp (pr_incasprp  IN NUMBER) --> Codigo indicador

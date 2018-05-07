@@ -6,6 +6,8 @@
  * OBJETIVO     : Tabela que apresenta as versoes da PARRAC
  * --------------
  * ALTERAÇÕES   : 12/11/2015 - Alterado a descricao dos riscos (Tiago/Rodrigo SD356389)
+ *                
+ *                26/04/2018 - Buscar situacoes da tabela. PRJ366 (Lombardi).
  */
  
 ?>
@@ -51,26 +53,22 @@
 	
 		$tipo_conta = "";
 		$arr_conta  = explode(";",$pr_conta);
-							
+		
+		$situacoes = buscaSituacoesConta();
+		
+		
 		for ($k = 0; $k < count($arr_conta); $k++) {
 			
 			$conta = '';
 			
-			switch ($arr_conta[$k]) {
-			
-				case 1: $conta = "Normal";         	          break;
-				case 2: $conta = "Enc. p/assoc.";             break;
-				case 3: $conta = "Enc. p/coop";               break;
-				case 4: $conta = "Enc. p/demissao";           break;
-				case 5: $conta = "Nao aprovada";              break;
-				case 6: $conta = 'Normal - Sem talao';        break;
-			    case 8: $conta = 'Outros motivos';            break;
-			    case 9: $conta = 'Encerrada p/ outro motivo'; break;
-							
+			foreach ($situacoes as $situacao) {
+				$cdsituacao = getByTagName($situacao->tags,'cdsituacao');
+				$dssituacao = getByTagName($situacao->tags,'dssituacao');
+				if ($arr_conta[$k] == $cdsituacao) {
+					$conta = $dssituacao;
+				}
 			}
-				
 			$tipo_conta .= ($tipo_conta == '') ? $conta : ';' . $conta;
-			
 		}
 		
 		return $tipo_conta;

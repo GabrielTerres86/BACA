@@ -419,6 +419,8 @@
 
                 12/03/2018 - Alterado para buscar descricao do tipo de conta do oracle. PRJ366 (Lombardi).
 
+                03/05/2018 - Alterado para buscar descricao da situacao de conta do oracle. PRJ366 (Lombardi).
+
 ..............................................................................*/
 
 { sistema/generico/includes/b1wgen0001tt.i }
@@ -6447,15 +6449,37 @@ FUNCTION fgetdstipcta RETURNS CHARACTER (INPUT p-cdcooper AS INTEGER):
 END FUNCTION.
 
 FUNCTION fgetdssitdct RETURNS CHARACTER:
-DEFINE VARIABLE dsSitDct AS CHARACTER  NO-UNDO.
+DEFINE VARIABLE aux_dssitcta AS CHARACTER  NO-UNDO.
+DEFINE VARIABLE aux_des_erro AS CHARACTER  NO-UNDO.
+DEFINE VARIABLE aux_dscritic AS CHARACTER  NO-UNDO.
 
-    ASSIGN dsSitDct = "NORMAL,ENCERRADA P/ASSOCIADO,ENCERRADA P/COOP,ENCERRADA ~P/DEMISSAO,NAO APROVADA,NORMAL - SEM TALAO,,,ENCERRADA P/OUTRO MOTIVO".
-
-    RETURN STRING(crapass.cdsitdct,"9") + " " + 
-           IF   crapass.cdsitdct > 0 
-           AND  crapass.cdsitdct <= NUM-ENTRIES(dsSitDct) 
-           THEN  ENTRY(crapass.cdsitdct,dsSitDct)
-           ELSE "".
+    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+    
+    RUN STORED-PROCEDURE pc_descricao_situacao_conta
+    aux_handproc = PROC-HANDLE NO-ERROR (INPUT crapass.cdsitdct, /* pr_cdsituacao */
+                                        OUTPUT "",               /* pr_dssituacao */
+                                        OUTPUT "",               /* pr_des_erro   */
+                                        OUTPUT "").              /* pr_dscritic   */
+    
+    CLOSE STORED-PROC pc_descricao_situacao_conta
+          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+    
+    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+    
+    ASSIGN aux_dssitcta = ""
+           aux_des_erro = ""
+           aux_dscritic = ""
+           aux_dssitcta = pc_descricao_situacao_conta.pr_dssituacao 
+                          WHEN pc_descricao_situacao_conta.pr_dssituacao <> ?
+           aux_des_erro = pc_descricao_situacao_conta.pr_des_erro 
+                          WHEN pc_descricao_situacao_conta.pr_des_erro <> ?
+           aux_dscritic = pc_descricao_situacao_conta.pr_dscritic
+                          WHEN pc_descricao_situacao_conta.pr_dscritic <> ?.
+    
+    IF aux_des_erro = "NOK" THEN 
+        aux_dssitcta = "".
+    
+    RETURN STRING(crapass.cdsitdct,"9") + " " + UPPER(aux_dssitcta).
 
 END FUNCTION.
 

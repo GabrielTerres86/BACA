@@ -173,8 +173,8 @@ BEGIN
                             - Retornado parametro flgbatch para 1 no valida_iniprg.
                               (Chamados 243623/243848) - (Fabricio)
 															
-								 10/02/2015 - Criação de mensagem de notificação no internetbank ao gerar
-								              crítica de insuficiência de saldo para débito (Lunelli - SD. 229251)
+                 10/02/2015 - Criação de mensagem de notificação no internetbank ao gerar
+                              crítica de insuficiência de saldo para débito (Lunelli - SD. 229251)
                               
                  13/02/2015 - Adicionado cursor cr_gnconve. 
                               (Chamado 229249 # PRJ Melhoria) - (Fabricio)
@@ -203,9 +203,9 @@ BEGIN
                  29/04/2015 - Passado para a procedure pc_solicita_relato o nome do formulario
                               do relatorio 101. (Fabricio)
 															
-								 04/05/2015 - Alterada regra para apenas atualizar a data do último débito
-								              na tabela de autorizações (crapatr) quando houver sido criada craplcm
-								              (Lucas Lunelli - SD 256257)
+                 04/05/2015 - Alterada regra para apenas atualizar a data do último débito
+                              na tabela de autorizações (crapatr) quando houver sido criada craplcm
+                              (Lucas Lunelli - SD 256257)
                  
                  28/09/2015 - incluido nas consultas da craplau
                               craplau.dsorigem <> "CAIXA" (Lombardi).
@@ -241,6 +241,8 @@ BEGIN
 
                  16/11/2017 - Incluída condição para não buscar registros com origem DOMICILIO na craplau
 							  (Mauricio - Mouts)
+                              
+                 30/04/2018 - Alterados codigos de situacao "rw_crapass.cdsitdct". PRJ366 (Lombardi).
 
   ............................................................................................*/
   
@@ -289,7 +291,7 @@ BEGIN
 
     vr_dsparame crapsol.dsparame%type;
     vr_dsdctitg craprej.nrdctitg%TYPE;
-	  vr_gerandb NUMBER := 1; -- Gera crapndb
+    vr_gerandb NUMBER := 1; -- Gera crapndb
 
     vr_dsctajud crapprm.dsvlrprm%TYPE;
 
@@ -346,8 +348,8 @@ BEGIN
              lau.cdhistor,
              lau.nrcrcard,
              lau.nrdocmto,
-						 lau.dscodbar,
-						 lau.dtmvtopg,
+             lau.dscodbar,
+             lau.dtmvtopg,
              lau.vllanaut,
              lau.cdseqtel,
              lau.nrdctabb,
@@ -523,44 +525,44 @@ BEGIN
 
     rw_crapepr cr_crapepr%ROWTYPE;
 		
-		--Selecionar titulares com senhas ativas 
-		CURSOR cr_crapsnh (pr_cdcooper IN crapsnh.cdcooper%type
-										  ,pr_nrdconta IN crapsnh.nrdconta%TYPE
-											,pr_cdsitsnh IN crapsnh.cdsitsnh%TYPE
-											,pr_tpdsenha IN crapsnh.tpdsenha%TYPE) IS
-			SELECT crapsnh.nrcpfcgc
-						,crapsnh.cdcooper
-						,crapsnh.nrdconta
-						,crapsnh.idseqttl
-			FROM crapsnh
-			WHERE crapsnh.cdcooper = pr_cdcooper
-			AND   crapsnh.nrdconta = pr_nrdconta
-			AND   crapsnh.cdsitsnh = pr_cdsitsnh
-			AND   crapsnh.tpdsenha = pr_tpdsenha;
-		rw_crapsnh cr_crapsnh%ROWTYPE;
-		
-		--Selecionar informacoes do titular
-		CURSOR cr_crapttl (pr_cdcooper IN crapttl.cdcooper%type
-											,pr_nrdconta IN crapttl.nrdconta%type
-											,pr_idseqttl IN crapttl.idseqttl%type) IS
-			SELECT crapttl.nmextttl
-						,crapttl.nrcpfcgc
-			FROM crapttl
-			WHERE crapttl.cdcooper = pr_cdcooper
-			AND   crapttl.nrdconta = pr_nrdconta
-			AND   crapttl.idseqttl = pr_idseqttl;
-		rw_crapttl cr_crapttl%ROWTYPE;
-	
-		--Selecionar Informacoes Convenios
-		CURSOR cr_crapcon (pr_cdcooper IN crapcon.cdcooper%type
-											,pr_cdempcon IN crapcon.cdempcon%type
-											,pr_cdsegmto IN crapcon.cdsegmto%type) IS
-			SELECT crapcon.nmextcon
-			FROM crapcon
-			WHERE crapcon.cdcooper = pr_cdcooper
-			AND   crapcon.cdempcon = pr_cdempcon
-			AND   crapcon.cdsegmto = pr_cdsegmto;
-		rw_crapcon cr_crapcon%ROWTYPE;	
+    --Selecionar titulares com senhas ativas 
+    CURSOR cr_crapsnh (pr_cdcooper IN crapsnh.cdcooper%type
+                      ,pr_nrdconta IN crapsnh.nrdconta%TYPE
+                      ,pr_cdsitsnh IN crapsnh.cdsitsnh%TYPE
+                      ,pr_tpdsenha IN crapsnh.tpdsenha%TYPE) IS
+      SELECT crapsnh.nrcpfcgc
+            ,crapsnh.cdcooper
+            ,crapsnh.nrdconta
+            ,crapsnh.idseqttl
+      FROM crapsnh
+      WHERE crapsnh.cdcooper = pr_cdcooper
+      AND   crapsnh.nrdconta = pr_nrdconta
+      AND   crapsnh.cdsitsnh = pr_cdsitsnh
+      AND   crapsnh.tpdsenha = pr_tpdsenha;
+    rw_crapsnh cr_crapsnh%ROWTYPE;
+    
+    --Selecionar informacoes do titular
+    CURSOR cr_crapttl (pr_cdcooper IN crapttl.cdcooper%type
+                      ,pr_nrdconta IN crapttl.nrdconta%type
+                      ,pr_idseqttl IN crapttl.idseqttl%type) IS
+      SELECT crapttl.nmextttl
+            ,crapttl.nrcpfcgc
+      FROM crapttl
+      WHERE crapttl.cdcooper = pr_cdcooper
+      AND   crapttl.nrdconta = pr_nrdconta
+      AND   crapttl.idseqttl = pr_idseqttl;
+    rw_crapttl cr_crapttl%ROWTYPE;
+  
+    --Selecionar Informacoes Convenios
+    CURSOR cr_crapcon (pr_cdcooper IN crapcon.cdcooper%type
+                      ,pr_cdempcon IN crapcon.cdempcon%type
+                      ,pr_cdsegmto IN crapcon.cdsegmto%type) IS
+      SELECT crapcon.nmextcon
+      FROM crapcon
+      WHERE crapcon.cdcooper = pr_cdcooper
+      AND   crapcon.cdempcon = pr_cdempcon
+      AND   crapcon.cdsegmto = pr_cdsegmto;
+    rw_crapcon cr_crapcon%ROWTYPE;  
 
     -- BUSCA DADOS DE CADASTROS REJEITADOS NA INTEGRAÇÃO
     CURSOR cr_craprej(pr_cdcooper IN crapcop.cdcooper%TYPE,
@@ -1248,8 +1250,8 @@ BEGIN
 	  -- Condicao para verificar se permite incluir as linhas parametrizadas
       IF INSTR(',' || vr_dsctajud || ',',',' || vr_nrdconta || ',') > 0 THEN
         IF rw_craplau.cdhistor = 38 THEN
-		      CONTINUE;        
-		    END IF;
+          CONTINUE;        
+        END IF;
       END IF; 
 
       -- VERIFICA CODIGO DO BANCO / CAIXA
@@ -1624,7 +1626,7 @@ BEGIN
       END IF;
 
       -- VERIFICA SE CRITICA NÃO EXISTE E SITUACAO DA CONTA
-      IF vr_cdcritic = 0 AND rw_crapass.cdsitdct IN (2,3,9) THEN
+      IF vr_cdcritic = 0 AND rw_crapass.cdsitdct IN (3,4) THEN
 
         vr_cdcritic := 723;                                                   -- CONTA ENCERRADA
         vr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic); -- BUSCA DESCRICAO DA CRITICA
@@ -1987,8 +1989,8 @@ BEGIN
       END IF;
 
       IF vr_flagatr  = 1 AND  -- Se encontrar Autorização de Débito
-				 vr_flgentra = 1 AND  -- e se condição de criação da craplcm for atingida
-				 vr_gerandb  = 1 THEN -- então atualiza data do último débito.
+         vr_flgentra = 1 AND  -- e se condição de criação da craplcm for atingida
+         vr_gerandb  = 1 THEN -- então atualiza data do último débito.
         -- VERIFICA DATA DO ULTIMO DEBITO
         IF NVL(to_char(rw_crapatr.dtultdeb,'MMYYYY'),'0') <> to_char(rw_crapdat.dtmvtopr,'MMYYYY') THEN
 

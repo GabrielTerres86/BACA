@@ -46,6 +46,8 @@ CREATE OR REPLACE PROCEDURE CECRED.
                    22/11/2013 - Correção na chamada a vr_exc_fimprg, a mesma só deve
                                 ser acionada em caso de saída para continuação da cadeia,
                                 e não em caso de problemas na execução (Marcos-Supero)
+                                
+                   30/04/2018 - Alterados codigos de situacao "ass.cdsitdct". PRJ366 (Lombardi).
 
     ............................................................................ */
 
@@ -141,7 +143,7 @@ CREATE OR REPLACE PROCEDURE CECRED.
            AND ass.cdagenci = pr_cdagenci
            AND ass.cdsecext = DECODE(pr_cdsecext,0,ass.cdsecext,pr_cdsecext) --> Se não foi passado então compara com o próprio campo
            AND ass.dtdemiss IS NULL
-           AND ass.cdsitdct IN(1,6)
+           AND ass.cdsitdct = 1
          ORDER BY ass.cdagenci
                  ,NVL(ass.cdsecext,0)
                  ,ass.nrdconta;

@@ -89,6 +89,8 @@ BEGIN
                  20/03/2018 - Alterados cursores para retornar apenas contas com tipos de conta que 
                               tenham o produto "25 – CREDITO PRE-APROVADO". PRJ366 (Lombardi).
 
+                 30/04/2018 - Alterados codigos de situacao "ass.cdsitdct". PRJ366 (Lombardi).
+                              
   ............................................................................ */
 
   DECLARE
@@ -595,7 +597,7 @@ BEGIN
             ,ass.dtmvtolt
         from crapass ass
        where ass.nrcpfcgc = pr_nrcpfcgc
-         and ass.cdsitdct in (1,3,5,6,9);
+         and ass.cdsitdct in (1,3,4,5);
 
     -- Verifica se pre aprovado esta liberado
     CURSOR cr_param_conta (pr_cdcooper crapneg.cdcooper%TYPE

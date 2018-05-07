@@ -42,13 +42,13 @@
                      no Oracle(pc_valida_lancto_folha) quando for banco 085
                      (Guilherme/SUPERO)
 
-		29/08/2016 - Ajuste na procedure Gera_Impressao: aumento do format
-		             do campo rel_nrctatrf, pois nao estava imprimindo o 
-					 dv do numero da conta. (Chamado 499004) - (Fabricio)
+        29/08/2016 - Ajuste na procedure Gera_Impressao: aumento do format
+                     do campo rel_nrctatrf, pois nao estava imprimindo o 
+                     dv do numero da conta. (Chamado 499004) - (Fabricio)
 
-		13/01/2017 - Ajustado o campo nrctatrf para DECIMAL pois 
- 					 esta estourando o format pois deixa digitar 
-					 maior que INTE na tela (Tiago/Thiago 581315).
+        13/01/2017 - Ajustado o campo nrctatrf para DECIMAL pois 
+                     esta estourando o format pois deixa digitar 
+                     maior que INTE na tela (Tiago/Thiago 581315).
         
         25/04/2017 - Adicionar conta na menssage da verificacao da conta salario
                      para mais de um cpf (Lucas Ranghetti #654576)
@@ -57,8 +57,11 @@
                      automaticamente da mesma forma que a matrci faz 
                      (Tiago/Thiago #689996)
 					 
-		07/08/2017 - Ajuste realizado para gerar numero de conta automaticamente na
-				     inclusao, conforme solicitado no chamado 689996. (Kelvin)
+        07/08/2017 - Ajuste realizado para gerar numero de conta automaticamente na
+                     inclusao, conforme solicitado no chamado 689996. (Kelvin)
+
+        03/05/2018 - Alteracao nos codigos da situacao de conta (cdsitdct).
+                     PRJ366 (Lombardi).
 ............................................................................*/
 
 /*............................. DEFINICOES .................................*/
@@ -413,11 +416,9 @@ CPF diferente ou para outra cooperativa.” */
                                    NO-LOCK NO-ERROR.
 
                 IF  AVAIL crapass AND
-                          (crapass.cdsitdct = 2 OR
-                           crapass.cdsitdct = 3 OR
+                          (crapass.cdsitdct = 3 OR
                            crapass.cdsitdct = 4 OR
-                           crapass.cdsitdct = 5 OR
-                           crapass.cdsitdct = 9) THEN
+                           crapass.cdsitdct = 5) THEN
                     DO:
                         ASSIGN aux_cdcritic = 0
                                aux_dscritic = "Conta para transferencia esta encerrada."
