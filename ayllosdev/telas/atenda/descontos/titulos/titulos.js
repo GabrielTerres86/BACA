@@ -1227,7 +1227,6 @@ function confirmaNovoLimite(cddopera) {
         success: function(response) {
             try {
                 eval(response);
-                hideMsgAguardo();
               } catch (error) {
                 hideMsgAguardo();
                 showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
