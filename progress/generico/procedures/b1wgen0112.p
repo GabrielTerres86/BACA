@@ -16,8 +16,9 @@
   | gera-impexttar                        | EXTR0002.pc_gera_impexttar                |
   | gera-impextapl                        | EXTR0002.pc_gera_impextapl                |
   | consulta-imposto-renda                | EXTR0002.pc_consulta_imposto_renda        |
-  | imprime_extrato                       | EXTR0002.pc_imprime_extrato     
-  +------------------------------------------+----------------------------------------+
+  | imprime_extrato                       | EXTR0002.pc_imprime_extrato               |
+  | extrato_pos_fixado                    | EXTR0002.pc_extrato_pos_fixado            |
+  +---------------------------------------+-------------------------------------------+
   
   TODA E QUALQUER ALTERACAO EFETUADA NESSE FONTE A PARTIR DE 20/NOV/2012 DEVERA
   SER REPASSADA PARA ESTA MESMA ROTINA NO ORACLE, CONFORME DADOS ACIMA.
@@ -33,7 +34,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0112.p
     Autor   : Gabriel Capoia dos Santos (DB1)
-    Data    : Agosto/2011                        Ultima atualizacao: 06/04/2016
+    Data    : Agosto/2011                        Ultima atualizacao: 02/03/2018
 
     Objetivo  : Tranformacao BO tela IMPRES
 
@@ -211,6 +212,27 @@
                 06/04/2016 - Incluida a procedure pc_verifica_pacote_tarifas para o 
                              Prj. Tarifas 218/2, na procedure Grava_Dados (Jean Michel).
                                                       
+                02/08/2016 - Nao tratar parametro de isencao de extrato na cooperativa
+                             quando cooperado possuir servico de extrato no pacote de 
+                             tarifas (Diego).
+
+                11/07/2016 - M325 - Informe de Rendimentos - Novos parametros
+                             para Gera_Impressao (Guilherme/SUPERO)            
+                                                      
+				20/04/2017 - Ajuste para remover a rotina consulta-imposto-renda, 
+				             pois nao esta mais sendo utilizada
+							(Adriano - P339).       
+
+                21/08/2017 - Inclusao do produto Pos-Fixado. (Jaison/James - PRJ298)
+
+                27/11/2017 - Inclusao do valor de bloqueio em garantia nos relatorios. 
+                             PRJ404 - Garantia Empr.(Odirlei-AMcom)  
+
+                02/03/2018 - Lucas Skroch (Supero TI) - Ajustes nos saldos de cobertura, judicial, total geral e total resgate
+
+    29/01/2018 - #770327 Chamada da rotina pc_lista_aplicacoes_car alterada para 
+                 pc_lista_demons_apli, rotina Gera_Impressao_Aplicacao (Carlos)
+
 ............................................................................*/
 
 /*............................. DEFINICOES .................................*/
@@ -246,6 +268,7 @@ DEF VAR h-b1wgen0024 AS HANDLE                                      NO-UNDO.
 DEF VAR h-b1wgen9999 AS HANDLE                                      NO-UNDO.
 DEF VAR h-b1wgen0084 AS HANDLE                                      NO-UNDO.
 DEF VAR h-b1wgen0002 AS HANDLE                                      NO-UNDO.
+DEF VAR h-b1wgen0003 AS HANDLE                                      NO-UNDO.
 DEF VAR h-b1wgen0081 AS HANDLE                                      NO-UNDO.
 DEF VAR h-b1wgen9998 AS HANDLE                                      NO-UNDO.
 DEF VAR h-b1wgen0001 AS HANDLE                                      NO-UNDO.
@@ -259,6 +282,10 @@ DEF VAR rel_nmresage AS CHAR    FORMAT "x(15)"                      NO-UNDO.
 
 DEF VAR aux_vlblqjud AS DECI                                        NO-UNDO.
 DEF VAR aux_vlresblq AS DECI                                        NO-UNDO.
+DEF VAR aux_vlblqapl_gar AS DECI                                    NO-UNDO.
+DEF VAR aux_vlblqpou_gar AS DECI                                    NO-UNDO.
+DEF VAR aux_vltot_resgat AS DECI                                    NO-UNDO.
+
 
 DEF STREAM str_1.
 
@@ -1152,6 +1179,7 @@ PROCEDURE Grava_Dados:
     DEF VAR aux_inisenta AS INTE                                    NO-UNDO.
     DEF VAR aux_qtopdisp AS INTE                                    NO-UNDO.
     DEF VAR aux_tpservic AS INTE                                    NO-UNDO.
+    DEF VAR aux_flservic AS INTEGER                                 NO-UNDO.
 
     DEF BUFFER crabass FOR crapass.
     
@@ -1293,11 +1321,18 @@ PROCEDURE Grava_Dados:
                          RETURN "NOK".
                      END.
                                                            
-                ASSIGN aux_qtopdisp = pc_verifica_pacote_tarifas.pr_qtopdisp.
+                ASSIGN /* retorna qtd. de extratos isentos que ainda possui disponivel no pacote de tarifas */
+                       aux_qtopdisp = pc_verifica_pacote_tarifas.pr_qtopdisp
+                       /* retorna pr_flservic = 1 quando existir o servico "extrato" no pacote */
+                       aux_flservic = pc_verifica_pacote_tarifas.pr_flservic.
             
                 IF aux_qtopdisp > 0 THEN 
                   ASSIGN aux_inisenta = 1.
                 ELSE
+                    /* Quando o cooperado NAO possuir o servico "extrato" contemplado no pacote de tarifas,
+                    devera validar a qtd. de extratos isentos oferecidos pela cooperativa(parametro). 
+                    Caso contrario, o cooperado tera direito apenas a qtd. disponibilizada no pacote */
+                    IF   aux_flservic = 0 THEN
                     DO:
                         RUN sistema/generico/procedures/b1wgen0001.p
                             PERSISTENT SET h-b1wgen0001.
@@ -1395,1013 +1430,6 @@ PROCEDURE Grava_Dados:
     RETURN aux_returnvl.
 
 END PROCEDURE. /* Grava_Dados */
-
-PROCEDURE consulta-imposto-renda:
-
-    DEF  INPUT PARAM par_cdcooper AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_cdagenci AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_nrdcaixa AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_cdoperad AS CHAR                           NO-UNDO.
-    DEF  INPUT PARAM par_nmdatela AS CHAR                           NO-UNDO.
-    DEF  INPUT PARAM par_idorigem AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_dtmvtolt AS DATE                           NO-UNDO.
-    DEF  INPUT PARAM par_nrdconta AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_nranoref AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_tpextrat AS INTE                           NO-UNDO.
-    
-    DEF OUTPUT PARAM TABLE FOR tt-extrato_ir.
-    DEF OUTPUT PARAM TABLE FOR tt-retencao_ir.
-    DEF OUTPUT PARAM TABLE FOR tt-erro.
-
-    DEF VAR aux_flgemiss AS LOGI                                    NO-UNDO.
-    DEF VAR aux_inrelext AS INTE                                    NO-UNDO.
-    DEF VAR aux_dsextrat AS CHAR                                    NO-UNDO.
-    DEF        VAR rel_dsagenci     AS CHAR    FORMAT "x(21)"            NO-UNDO.
-    DEF        VAR rel_nmresemp     AS CHAR    FORMAT "x(15)"            NO-UNDO.
-    DEF        VAR rel_qtjaicmf     AS DECIMAL                           NO-UNDO.
-    DEF        VAR rel_qtjaicm1     AS DECIMAL                           NO-UNDO.
-    DEF        VAR rel_vlrenapl     AS DECIMAL                           NO-UNDO.
-    DEF        VAR rel_vlrenap1     AS DECIMAL                           NO-UNDO.
-    DEF        VAR rel_vldjuros     AS DECIMAL                           NO-UNDO.
-    
-    DEF        VAR rel_nmrelato     AS CHAR    FORMAT "x(40)" EXTENT 5   NO-UNDO.
-    
-    DEF        VAR rel_nrmodulo AS INT     FORMAT "9"                    NO-UNDO.
-    DEF        VAR rel_nmmodulo AS CHAR    FORMAT "x(15)" EXTENT 5
-                                   INIT ["DEP. A VISTA   ","CAPITAL        ",
-                                         "EMPRESTIMOS    ","DIGITACAO      ",
-                                         "GENERICO       "]              NO-UNDO.
-    
-    DEF        VAR rel_nmmesano AS CHAR    FORMAT "x(09)"                NO-UNDO.
-    DEF        VAR rel_ddmesano AS INT     FORMAT "99"                   NO-UNDO.
-    DEF        VAR rel_aamesano AS INT     FORMAT "9999"                 NO-UNDO.
-    
-    DEF        VAR rel_dscooper AS CHAR                                  NO-UNDO.
-    DEF        VAR rel_dsendcop AS CHAR                                  NO-UNDO.
-    DEF        VAR rel_dstelcop AS CHAR                                  NO-UNDO.
-    
-    DEF        VAR mfx_vlsddvem AS DECIMAL                               NO-UNDO.
-    DEF        VAR mfx_vlsdccdp AS DECIMAL                               NO-UNDO.
-    DEF        VAR mfx_vlsdapli AS DECIMAL                               NO-UNDO.
-    DEF        VAR mfx_vlttccap AS DECIMAL                               NO-UNDO.
-    DEF        VAR mfx_dtmvtolt AS DATE    FORMAT "99/99/9999"           NO-UNDO.
-    
-    DEF        VAR mfx_vlsddve1 AS DECIMAL                               NO-UNDO.
-    DEF        VAR mfx_vlsdccd1 AS DECIMAL                               NO-UNDO.
-    DEF        VAR mfx_vlsdapl1 AS DECIMAL                               NO-UNDO.
-    DEF        VAR mfx_vlttcca1 AS DECIMAL                               NO-UNDO.
-    DEF        VAR mfx_dtmvtol1 AS DATE    FORMAT "99/99/9999"           NO-UNDO.
-    DEF        VAR aux_nmmesano AS CHAR    EXTENT 12 INIT
-                                           ["JANEIRO  ","FEVEREIRO",
-                                            "MARCO    ","ABRIL    ",
-                                            "MAIO     ","JUNHO    ",
-                                            "JULHO    ","AGOSTO   ",
-                                            "SETEMBRO ","OUTUBRO  ",
-                                            "NOVEMBRO ","DEZEMBRO "]     NO-UNDO.
-    
-    DEF        VAR aux_contador AS INT                                   NO-UNDO.
-    
-    DEF        VAR aux_regexis1 AS LOGICAL                               NO-UNDO.
-    DEF        VAR aux_flgescra AS LOGICAL                               NO-UNDO.
-    DEF        VAR aux_regexist AS LOGICAL                               NO-UNDO.
-    
-    DEF        VAR aux_cdacesso AS CHAR                                  NO-UNDO.
-    DEF        VAR aux_nmendter AS CHAR    FORMAT "x(20)"                NO-UNDO.
-    DEF        VAR aux_nmarqimp AS CHAR                                  NO-UNDO.
-    DEF        VAR aux_dscomand AS CHAR                                  NO-UNDO.
-    
-    DEF        VAR aux_dtmvtolt AS DATE    FORMAT "99/99/9999"           NO-UNDO.
-    
-    DEF        VAR aux_vlmoefix AS DECIMAL DECIMALS 8                    NO-UNDO.
-    DEF        VAR aux_vlmoefi1 AS DECIMAL DECIMALS 8                    NO-UNDO.
-    DEF        VAR aux_nmcidade AS CHAR                                  NO-UNDO.
-
-    DEF        VAR rel_vlrencot AS DECIMAL FORMAT "zzz,zzz,zz9.99-"      NO-UNDO.
-    DEF        VAR rel_vlirfcot AS DECIMAL FORMAT "zzzzz,zzz,zz9.99-"    NO-UNDO.
-    DEF        VAR ant_vlirfcot AS DECIMAL FORMAT "zzzzz,zzz,zz9.99-"    NO-UNDO.
-    DEF        VAR rel_vlrendim AS DECIMAL FORMAT "zzz,zzz,zz9.99-"      NO-UNDO.
-    DEF        VAR rel_vlcpmfpg AS DECIMAL FORMAT "zzzzz,zzz,zz9.99-"    NO-UNDO.
-    DEF        VAR rel_vldoirrf AS DECIMAL FORMAT "zzzzz,zzz,zz9.99-"    NO-UNDO.
-    
-    DEF        VAR rel_dscpmfpg AS CHAR    FORMAT "x(16)"                NO-UNDO.
-    
-    DEF        VAR rel_nrcpfcgc AS CHAR    FORMAT "x(18)"                NO-UNDO.
-    
-    DEF        VAR rel_aarefere AS INT     FORMAT "9999"                 NO-UNDO.
-    
-    DEF        VAR rel_nrdocnpj AS CHAR                                  NO-UNDO.
-    
-    DEF        VAR rel_nmmesref AS CHAR    FORMAT "x(3)" EXTENT 12
-                   INIT ["JAN","FEV","MAR","ABR","MAI","JUN",
-                         "JUL","AGO","SET","OUT","NOV","DEZ"]           NO-UNDO.
-               
-    DEF        VAR ant_dtrefere AS DATE    FORMAT "99/99/9999" EXTENT 3  NO-UNDO.
-    DEF        VAR sol_dtrefere AS DATE    FORMAT "99/99/9999" EXTENT 3  NO-UNDO.
-    
-    DEF        VAR ant_vlsdapli AS DECIMAL FORMAT "z,zzz,zzz,zz9.99-"    NO-UNDO.
-    DEF        VAR sol_vlsdapli AS DECIMAL FORMAT "z,zzz,zzz,zz9.99-"    NO-UNDO.
-    
-    DEF        VAR ant_vlpoupan AS DECIMAL FORMAT "zzz,zzz,zzz,zz9.99-"  NO-UNDO.
-    DEF        VAR sol_vlpoupan AS DECIMAL FORMAT "zzz,zzz,zzz,zz9.99-"  NO-UNDO.
-    
-    DEF        VAR ant_vlfundos AS DECIMAL FORMAT "zzz,zzz,zzz,zz9.99-"  NO-UNDO.
-    DEF        VAR sol_vlfundos AS DECIMAL FORMAT "zzz,zzz,zzz,zz9.99-"  NO-UNDO.
-    
-    DEF        VAR ant_vlrenfix AS DECIMAL                               NO-UNDO.
-    DEF        VAR sol_vlrenfix AS DECIMAL                               NO-UNDO.
-    
-    DEF        VAR ant_vlsdccdp AS DECIMAL FORMAT "zzzzz,zzz,zz9.99-"    NO-UNDO.
-    DEF        VAR sol_vlsdccdp AS DECIMAL FORMAT "zzzzz,zzz,zz9.99-"    NO-UNDO.
-    
-    DEF        VAR ant_vlsddvem AS DECIMAL FORMAT "zzzzz,zzz,zz9.99-"    NO-UNDO.
-    DEF        VAR sol_vlsddvem AS DECIMAL FORMAT "zzzzz,zzz,zz9.99-"    NO-UNDO.
-    
-    DEF        VAR ant_vlttccap AS DECIMAL FORMAT "zzzzz,zzz,zz9.99-"    NO-UNDO.
-    DEF        VAR sol_vlttccap AS DECIMAL FORMAT "zzzzz,zzz,zz9.99-"    NO-UNDO.
-    
-    DEF        VAR ren_vlpoupan AS DECIMAL FORMAT "zzzzz,zz9.99-"        NO-UNDO.
-    DEF        VAR ren_vlfundos AS DECIMAL FORMAT "zzzzz,zz9.99-"        NO-UNDO.
-    
-    DEF        VAR tot_vlrendim AS DECIMAL FORMAT "zzz,zzz,zz9.99-"      NO-UNDO.
-    
-    DEF        VAR lit_dsanoant AS CHAR    FORMAT "x(8)" EXTENT 3        NO-UNDO.
-    
-    DEF        VAR aux_flganter AS LOGICAL                               NO-UNDO.
-    
-    DEF        VAR aux_dtemissa AS DATE                                  NO-UNDO.
-    
-    DEF        VAR aux_vlrentot AS DECIMAL FORMAT "zzz,zzz,zzz,zz9.99-"  NO-UNDO.
-    DEF        VAR aux_vlirfont AS DECIMAL FORMAT "zzz,zzz,zzz,zz9.99-"  NO-UNDO.
-    DEF        VAR aux_nmmesref AS CHAR    FORMAT "x(3)"                 NO-UNDO.
-    DEF        VAR aux_nrmesref AS INT                                   NO-UNDO.
-    
-    DEF        VAR aux_cdretenc AS INTE    FORMAT "zzz9"                 NO-UNDO.
-    DEF        VAR aux_dsretenc AS CHAR    FORMAT "x(41)"                NO-UNDO.
-    DEF        VAR aux_vlrdrtrt AS DECI                                  NO-UNDO.
-    DEF        VAR aux_vlrrtirf AS DECI                                  NO-UNDO.
-    DEF        VAR aux_flghames as LOGI                                  NO-UNDO.
-
-    DEF        VAR aux_nrdconta AS CHAR   FORMAT "x(20)"                 NO-UNDO.
-    DEF        VAR aux_cdagectl AS CHAR   FORMAT "x(15)"                 NO-UNDO.
-
-    DEF        VAR aux_dsre3426 AS CHAR                                  NO-UNDO.
-    DEF        VAR aux_dsre5706 AS CHAR                                  NO-UNDO.
-    
-    DEF BUFFER crabass FOR crapass.
-    DEF BUFFER crabext FOR crapext.
-    
-    
-    ASSIGN
-        aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
-        aux_dscritic = ""
-        aux_cdcritic = 0
-        aux_returnvl = "NOK".
-    
-    Busca: DO ON ERROR UNDO Busca, LEAVE Busca:
-        EMPTY TEMP-TABLE tt-extrato_ir.
-        EMPTY TEMP-TABLE tt-retencao_ir.
-        EMPTY TEMP-TABLE tt-erro.
-
-        FIND crapcop WHERE crapcop.cdcooper = par_cdcooper NO-LOCK NO-ERROR.
-
-        IF   NOT AVAILABLE crapcop THEN
-             DO:
-                 ASSIGN aux_cdcritic = 651.
-                 LEAVE Busca.
-             END.
-
-         FIND crapass WHERE crapass.cdcooper = par_cdcooper AND
-                            crapass.nrdconta = par_nrdconta NO-LOCK NO-ERROR.
-
-         IF   NOT AVAILABLE crapass THEN
-              DO:
-                 ASSIGN aux_cdcritic = 251.
-                 LEAVE Busca.
-              END.
-
-        FIND crapage WHERE crapage.cdcooper = par_cdcooper AND
-                   crapage.cdagenci = crapass.cdagenci NO-LOCK NO-ERROR.
-
-        IF  par_nranoref > 1994 THEN
-            DO:
-                
-                ASSIGN ant_vlsdapli = 0
-                       ant_vlsdccdp = 0
-                       ant_vlsddvem = 0
-                       ant_vlttccap = 0
-                
-                       sol_vlsdapli = 0
-                       sol_vlsdccdp = 0
-                       sol_vlsddvem = 0
-                       sol_vlttccap = 0
-                
-                       rel_vlrendim = 0
-                       rel_vldjuros = 0
-                
-                       rel_aarefere = par_nranoref
-                
-                       
-                       lit_dsanoant = "SALDO EM"
-                       rel_dscpmfpg = "CPMF PAGO NO ANO"
-                       
-                       aux_regexis1 = FALSE.
-                
-                IF   crapass.inpessoa = 1 THEN
-                     ASSIGN rel_nrcpfcgc = 
-                                     STRING(crapass.nrcpfcgc,"99999999999")
-                            rel_nrcpfcgc = 
-                                     STRING(rel_nrcpfcgc,"xxx.xxx.xxx-xx    ").
-                ELSE
-                     ASSIGN rel_nrcpfcgc = 
-                                     STRING(crapass.nrcpfcgc,"99999999999999")
-                            rel_nrcpfcgc = 
-                                     STRING(rel_nrcpfcgc,"xx.xxx.xxx/xxxx-xx").
-
-                /* se for extrato para pessoa fisica */
-                IF  par_tpextrat = 2 THEN
-                    DO:
-                        FIND FIRST crapdir WHERE 
-                            crapdir.cdcooper = par_cdcooper       AND
-                            crapdir.nrdconta = crapass.nrdconta   AND
-                            YEAR(crapdir.dtmvtolt) = par_nranoref
-                            USE-INDEX crapdir1 NO-LOCK NO-ERROR.
-
-                        IF  NOT AVAILABLE crapdir THEN
-                            DO:
-                                ASSIGN aux_dscritic = "Conta/dv: "            +
-                                                      STRING(par_nrdconta)    +
-                                                      " - Nao ha dados para " +
-                                                      "imposto de renda de "  +
-                                                      STRING(par_nranoref) + ".".
-                                LEAVE Busca.
-                            END.
-
-                         ASSIGN sol_dtrefere = DATE(12,31,YEAR(crapdir.dtmvtolt))
-                                sol_vlsdapli = crapdir.vlsdapli + 
-                                               crapdir.vlsdrdpp
-                                sol_vlsdccdp = crapdir.vlsdccdp
-                                sol_vlsddvem = crapdir.vlsddvem
-                                sol_vlttccap = crapdir.vlttccap
-                                aux_cdacesso = "IRENDA" + 
-                                         STRING(YEAR(crapdir.dtmvtolt),"9999")
-                                rel_vlrencot = crapdir.vlrencot
-                                rel_vlirfcot = crapdir.vlirfcot.
-
-                        FIND FIRST crapsli WHERE 
-                                        crapsli.cdcooper = par_cdcooper     AND
-                                        crapsli.nrdconta = crapass.nrdconta AND
-                                        crapsli.dtrefere = 
-                                                       DATE(12,31,par_nranoref)
-                                        NO-LOCK NO-ERROR.
-
-                        IF   AVAILABLE crapsli THEN
-                              ASSIGN sol_vlsdccdp = 
-                                     sol_vlsdccdp + crapsli.vlsddisp.
-                         ELSE
-                              .
-
-                        FIND craptab WHERE 
-                             craptab.cdcooper = par_cdcooper AND
-                             craptab.nmsistem = "CRED"       AND
-                             craptab.tptabela = "GENERI"     AND
-                             craptab.cdempres = 0            AND
-                             craptab.cdacesso = aux_cdacesso AND
-                             craptab.tpregist = 1            NO-LOCK NO-ERROR.
-
-                        IF  NOT AVAILABLE craptab THEN
-                            DO:
-                                ASSIGN aux_cdcritic = 457.
-                                LEAVE Busca.
-                            END.
-
-                        ASSIGN aux_vlmoefix = DECIMAL(STRING(SUBSTRING(craptab.dstextab,22,15),
-                                               "999999,99999999"))
-
-                rel_vlrendim = crapdir.vlrenrda[01] + crapdir.vlrenrda[02] +
-                               crapdir.vlrenrda[03] + crapdir.vlrenrda[04] +
-                               crapdir.vlrenrda[05] + crapdir.vlrenrda[06] +
-                               crapdir.vlrenrda[07] + crapdir.vlrenrda[08] +
-                               crapdir.vlrenrda[09] + crapdir.vlrenrda[10] +
-                               crapdir.vlrenrda[11] + crapdir.vlrenrda[12] +
-                              
-                               crapdir.vlrenrdc[01] + crapdir.vlrenrdc[02] +
-                               crapdir.vlrenrdc[03] + crapdir.vlrenrdc[04] +
-                               crapdir.vlrenrdc[05] + crapdir.vlrenrdc[06] +
-                               crapdir.vlrenrdc[07] + crapdir.vlrenrdc[08] +
-                               crapdir.vlrenrdc[09] + crapdir.vlrenrdc[10] +
-                               crapdir.vlrenrdc[11] + crapdir.vlrenrdc[12] +
-                               
-                               crapdir.vlrenrpp + crapdir.vlabonpp + crapdir.vlabonrd +
-                               crapdir.vlabiopp + crapdir.vlabiord - 
-                               
-                               crapdir.vlirabap[1]  - crapdir.vlirabap[2] -
-                               crapdir.vlirabap[3]  - crapdir.vlirabap[4] -
-                               crapdir.vlirabap[5]  - crapdir.vlirabap[6] -
-                               crapdir.vlirabap[7]  - crapdir.vlirabap[8] -
-                               crapdir.vlirabap[9]  - crapdir.vlirabap[10] -
-                               crapdir.vlirabap[11] - crapdir.vlirabap[12] -
-                               
-                               crapdir.vlirrdca[1]  - crapdir.vlirrdca[2] -
-                               crapdir.vlirrdca[3]  - crapdir.vlirrdca[4] -
-                               crapdir.vlirrdca[5]  - crapdir.vlirrdca[6] -
-                               crapdir.vlirrdca[7]  - crapdir.vlirrdca[8] -
-                               crapdir.vlirrdca[9]  - crapdir.vlirrdca[10] -
-                               crapdir.vlirrdca[11] - crapdir.vlirrdca[12] -
-                               
-                               crapdir.vlirfrdc[01] - crapdir.vlirfrdc[02] -
-                               crapdir.vlirfrdc[03] - crapdir.vlirfrdc[04] -
-                               crapdir.vlirfrdc[05] - crapdir.vlirfrdc[06] -
-                               crapdir.vlirfrdc[07] - crapdir.vlirfrdc[08] -
-                               crapdir.vlirfrdc[09] - crapdir.vlirfrdc[10] -
-                               crapdir.vlirfrdc[11] - crapdir.vlirfrdc[12] -
-                               
-                               crapdir.vlrirrpp[1]  - crapdir.vlrirrpp[2] -
-                               crapdir.vlrirrpp[3]  - crapdir.vlrirrpp[4] -
-                               crapdir.vlrirrpp[5]  - crapdir.vlrirrpp[6] -
-                               crapdir.vlrirrpp[7]  - crapdir.vlrirrpp[8] -
-                               crapdir.vlrirrpp[9]  - crapdir.vlrirrpp[10] -
-                               crapdir.vlrirrpp[11] - crapdir.vlrirrpp[12] -
-                            
-                               crapdir.vlirajus[1]  - crapdir.vlirajus[2] -
-                               crapdir.vlirajus[3]  - crapdir.vlirajus[4] -
-                               crapdir.vlirajus[5]  - crapdir.vlirajus[6] -
-                               crapdir.vlirajus[7]  - crapdir.vlirajus[8] -
-                               crapdir.vlirajus[9]  - crapdir.vlirajus[10] -
-                               crapdir.vlirajus[11] - crapdir.vlirajus[12]
-                  
-                         rel_vldoirrf = crapdir.vlirabap[1]  + crapdir.vlirabap[2] +
-                                  crapdir.vlirabap[3]  + crapdir.vlirabap[4] +
-                                  crapdir.vlirabap[5]  + crapdir.vlirabap[6] +
-                                  crapdir.vlirabap[7]  + crapdir.vlirabap[8] +
-                                  crapdir.vlirabap[9]  + crapdir.vlirabap[10] +
-                                  crapdir.vlirabap[11] + crapdir.vlirabap[12] +
-                               
-                                  crapdir.vlirrdca[1]  + crapdir.vlirrdca[2] +
-                                  crapdir.vlirrdca[3]  + crapdir.vlirrdca[4] +
-                                  crapdir.vlirrdca[5]  + crapdir.vlirrdca[6] +
-                                  crapdir.vlirrdca[7]  + crapdir.vlirrdca[8] +
-                                  crapdir.vlirrdca[9]  + crapdir.vlirrdca[10] +
-                                  crapdir.vlirrdca[11] + crapdir.vlirrdca[12] +
-                                  
-                                  crapdir.vlirfrdc[01] + crapdir.vlirfrdc[02] +
-                                  crapdir.vlirfrdc[03] + crapdir.vlirfrdc[04] +
-                                  crapdir.vlirfrdc[05] + crapdir.vlirfrdc[06] +
-                                  crapdir.vlirfrdc[07] + crapdir.vlirfrdc[08] +
-                                  crapdir.vlirfrdc[09] + crapdir.vlirfrdc[10] +
-                                  crapdir.vlirfrdc[11] + crapdir.vlirfrdc[12] +
-                                  
-                                  crapdir.vlrirrpp[1]  + crapdir.vlrirrpp[2] +
-                                  crapdir.vlrirrpp[3]  + crapdir.vlrirrpp[4] +
-                                  crapdir.vlrirrpp[5]  + crapdir.vlrirrpp[6] +
-                                  crapdir.vlrirrpp[7]  + crapdir.vlrirrpp[8] +
-                                  crapdir.vlrirrpp[9]  + crapdir.vlrirrpp[10] +
-                                  crapdir.vlrirrpp[11] + crapdir.vlrirrpp[12] +
-                                  
-                                  crapdir.vlirajus[1]  + crapdir.vlirajus[2] +
-                                  crapdir.vlirajus[3]  + crapdir.vlirajus[4] +
-                                  crapdir.vlirajus[5]  + crapdir.vlirajus[6] +
-                                  crapdir.vlirajus[7]  + crapdir.vlirajus[8] +
-                                  crapdir.vlirajus[9]  + crapdir.vlirajus[10] +
-                                  crapdir.vlirajus[11] + crapdir.vlirajus[12]
-                  
-                         rel_vldjuros = ROUND(crapdir.qtjaicmf * aux_vlmoefix,2)
-                         rel_vlcpmfpg = crapdir.vlcpmfpg
-                         
-                         tot_vlrendim = rel_vlrendim
-                  
-                         aux_regexist = TRUE.
-
-                        IF  crapcop.cdcooper = 6 THEN
-                             ASSIGN rel_vlcpmfpg = 0
-                                    rel_dscpmfpg = "".
-
-                        FOR EACH craplct WHERE 
-                                 craplct.cdcooper = par_cdcooper       AND
-                                 craplct.nrdconta = crapdir.nrdconta   AND
-                                 craplct.cdhistor = 421 NO-LOCK:
-                                                
-                             ASSIGN rel_vldjuros = 
-                                       rel_vldjuros - ROUND(craplct.qtlanmfx *
-                                                               aux_vlmoefix,2).
-                             
-                        END.  /*  Fim do FOR EACH -- craplct  */
-
-                        IF  rel_vldjuros < 0   THEN
-                            rel_vldjuros = 0.
-
-                        IF  aux_regexist THEN
-                            DO:
-                                FIND FIRST crapdir WHERE 
-                                           crapdir.cdcooper = par_cdcooper      AND
-                                           crapdir.nrdconta = crapass.nrdconta  AND
-                                           YEAR(crapdir.dtmvtolt) = par_nranoref - 1
-                                           USE-INDEX crapdir1 NO-LOCK NO-ERROR.
-
-                                IF  AVAILABLE crapdir THEN
-                                    ASSIGN ant_dtrefere = crapdir.dtmvtolt
-                                           ant_vlsdapli = crapdir.vlsdapli + 
-                                                          crapdir.vlsdrdpp
-                                           ant_vlsdccdp = crapdir.vlsdccdp
-                                           ant_vlsddvem = crapdir.vlsddvem
-                                           ant_vlttccap = crapdir.vlttccap
-                                           ant_vlirfcot = crapdir.vlirfcot
-                                           aux_flganter = TRUE.
-                                ELSE
-                                    ASSIGN aux_flganter = FALSE.
-
-                                FIND FIRST crapsli WHERE
-                                           crapsli.cdcooper = par_cdcooper     AND
-                                           crapsli.nrdconta = crapass.nrdconta AND
-                                           crapsli.dtrefere = DATE(12,31,par_nranoref - 1)
-                                           NO-LOCK NO-ERROR.
-
-                                IF  AVAILABLE crapsli THEN
-                                    ASSIGN ant_vlsdccdp = ant_vlsdccdp + 
-                                                          crapsli.vlsddisp.
-                                ELSE
-                                    .
-                                    
-                            END.
-
-                        IF  rel_vlrendim <= 0   THEN
-                             ASSIGN rel_vlrendim = 0
-                                    rel_vldoirrf = 0.
-
-                        CREATE tt-extrato_ir.
-                        ASSIGN tt-extrato_ir.nrcpfcgc = rel_nrcpfcgc
-                               tt-extrato_ir.nrdconta = crapass.nrdconta
-                               tt-extrato_ir.nmprimtl = crapass.nmprimtl
-                               tt-extrato_ir.cdagenci = crapass.cdagenci
-                               tt-extrato_ir.nmsegntl = crapass.nmsegntl
-                               tt-extrato_ir.dsanoant = lit_dsanoant[1]
-                               tt-extrato_ir.dtrefer1 = ant_dtrefere[1]
-                               tt-extrato_ir.vlsdapl1 = ant_vlsdapli
-                               tt-extrato_ir.vlsdccd1 = ant_vlsdccdp
-                               tt-extrato_ir.vlsddve1 = ant_vlsddvem
-                               tt-extrato_ir.vlttcca1 = ant_vlttccap
-                               tt-extrato_ir.dtrefer2 = sol_dtrefere[1]
-                               tt-extrato_ir.vlsdapl2 = sol_vlsdapli
-                               tt-extrato_ir.vlsdccd2 = sol_vlsdccdp
-                               tt-extrato_ir.vlsddve2 = sol_vlsddvem
-                               tt-extrato_ir.vlttcca2 = sol_vlttccap
-                               tt-extrato_ir.vlrendim = rel_vlrendim
-                               tt-extrato_ir.nmextcop = crapcop.nmextcop
-                               tt-extrato_ir.nrdocnpj = rel_nrdocnpj
-                               tt-extrato_ir.dsendcop = rel_dsendcop
-                               tt-extrato_ir.dscpmfpg = rel_dscpmfpg
-                               tt-extrato_ir.vlcpmfpg = rel_vlcpmfpg
-                               tt-extrato_ir.vldoirrf = rel_vldoirrf
-                               tt-extrato_ir.cdagectl = crapcop.cdagectl
-                               tt-extrato_ir.flganter = aux_flganter
-                               tt-extrato_ir.vlrencot = rel_vlrencot
-                               tt-extrato_ir.vlirfcot = rel_vlirfcot
-                               tt-extrato_ir.anirfcot = ant_vlirfcot.
-                        
-                    END. /* IF  par_tpextrat = 2 */
-                ELSE    
-                    DO: 
-                        CREATE tt-extrato_ir.
-                        ASSIGN tt-extrato_ir.nmextcop = crapcop.nmextcop
-                               tt-extrato_ir.nrdocnpj = rel_nrdocnpj
-                               tt-extrato_ir.dsendcop = rel_dsendcop
-                               tt-extrato_ir.nrcpfcgc = rel_nrcpfcgc
-                               tt-extrato_ir.nmprimtl = crapass.nmprimtl
-                               tt-extrato_ir.cdagenci = crapass.cdagenci
-                               tt-extrato_ir.nrdconta = crapass.nrdconta
-                               tt-extrato_ir.nmsegntl = crapass.nmsegntl.
-                        
-                        /* pegar descricao do codigo retencao 3426 */
-                        FIND FIRST gnrdirf WHERE gnrdirf.cdretenc = 3426 
-                        NO-ERROR.
-                        
-                        IF  NOT AVAILABLE gnrdirf THEN
-                            DO:
-                               ASSIGN aux_dscritic = "Problema na consulta da " +
-                                                     "descricao de retencao. "  +
-                                                     "Comunique seu PA.".
-                               LEAVE Busca.
-                            END.
-                        ASSIGN aux_dsre3426 = gnrdirf.dsretenc.
-                    
-                        /* pegar descricao do codigo retencao 5706 */
-                        FIND FIRST gnrdirf WHERE gnrdirf.cdretenc = 5706 
-                        NO-ERROR.
-                        
-                        IF  NOT AVAILABLE gnrdirf THEN
-                            DO:
-                               ASSIGN aux_dscritic = "Problema na consulta da " +
-                                                     "descricao de retencao. "  +
-                                                     "Comunique seu PA.".
-                               LEAVE Busca.
-                            END.
-                        ASSIGN aux_dsre5706 = gnrdirf.dsretenc.
-                        
-                        ASSIGN ant_dtrefere = DATE(12,31,(par_nranoref - 1))
-                               sol_dtrefere = DATE(12,31,par_nranoref).
-                               
-                        
-                        /* se for ano vigente */
-                        IF  par_nranoref = YEAR(par_dtmvtolt)  THEN
-                            DO:
-                                ASSIGN aux_nrmesref = 
-                                       MONTH(par_dtmvtolt - DAY(par_dtmvtolt)).
-
-                               FIND crapcot WHERE crapcot.cdcooper = 
-                                                  par_cdcooper 
-                                                  AND
-                                                  crapcot.nrdconta = 
-                                                  crapass.nrdconta
-                                                  NO-LOCK NO-ERROR.
-                
-                               IF NOT AVAILABLE crapcot THEN
-                                  DO:
-                                     ASSIGN aux_dscritic = 
-                                            "Conta/dv: " + STRING(par_nrdconta) +
-                                            "- Nao ha dados para imposto "      +
-                                            "de renda de " + STRING(par_nranoref).
-                
-                                     LEAVE Busca.
-                                  END.
-
-                               DO aux_contador = 1 TO aux_nrmesref:
-
-                                  ASSIGN aux_nmmesref = 
-                                         rel_nmmesref[aux_contador]
-                                         aux_cdretenc = 3426
-                                         aux_dsretenc = aux_dsre3426
-                                         aux_vlrentot = 
-                                         crapcot.vlrentot[aux_contador]
-                                         aux_vlirfont = 
-                                         crapcot.vlirrdca[aux_contador] +
-                                         crapcot.vlrirrpp[aux_contador] +
-                                         crapcot.vlirabap[aux_contador] +
-                                         crapcot.vlirajus[aux_contador] +
-                                         crapcot.vlirfrdc[aux_contador].
-
-                                  IF aux_vlirfont > 0 THEN
-                                     DO:
-                                        CREATE tt-retencao_ir.
-                                          ASSIGN tt-retencao_ir.nmmesref =
-                                                 aux_nmmesref
-                                                 tt-retencao_ir.cdretenc =
-                                                 STRING(aux_cdretenc)
-                                                 tt-retencao_ir.dsretenc = 
-                                                 aux_dsretenc
-                                                 tt-retencao_ir.vlrentot = 
-                                                 aux_vlrentot.
-                                        
-                                          IF par_nranoref >= 2004   THEN
-                                             ASSIGN tt-retencao_ir.vlirfont =
-                                                    aux_vlirfont.
-                                     END.
-                
-                                  ASSIGN aux_vlirfont = 0.
-
-                                  FOR EACH craplct WHERE
-                                      craplct.cdcooper = par_cdcooper        AND
-                                      craplct.nrdconta = crapass.nrdconta    AND
-                                      YEAR(craplct.dtmvtolt)  = par_nranoref AND
-                                      MONTH(craplct.dtmvtolt) = aux_contador AND
-                                      CAN-DO("0922,0926",
-                                             STRING(craplct.cdhistor,"9999"))
-                                      NO-LOCK:
-            
-                                      IF  craplct.cdhistor = 926 THEN
-                                          ASSIGN aux_vlrentot = craplct.vllanmto.
-                                      ELSE
-                                          ASSIGN aux_vlirfont = craplct.vllanmto.
-            
-                                  END. /* FOR EACH */
-
-                                  IF aux_vlirfont > 0 THEN
-                                     DO:
-                                        ASSIGN aux_cdretenc = 5706
-                                               aux_dsretenc = aux_dsre5706.
-                
-                                        CREATE tt-retencao_ir.
-                                          ASSIGN tt-retencao_ir.nmmesref =
-                                                 aux_nmmesref
-                                                 tt-retencao_ir.cdretenc =
-                                                 STRING(aux_cdretenc)
-                                                 tt-retencao_ir.dsretenc = 
-                                                 aux_dsretenc
-                                                 tt-retencao_ir.vlrentot = 
-                                                 aux_vlrentot.
-                                        
-                                          IF par_nranoref >= 2004   THEN
-                                             ASSIGN tt-retencao_ir.vlirfont =
-                                                    aux_vlirfont.
-                
-                                     END.
-
-                               END. /* FIM DO TO */
-
-                            END. /* se for ano vigente */
-                        ELSE
-                            DO: /* senao for ano vigente */
-                                ASSIGN aux_nrmesref = 12.
-
-                                FIND FIRST crapdir WHERE
-                                     crapdir.cdcooper = par_cdcooper AND
-                                     crapdir.nrdconta = crapass.nrdconta  AND
-                                     YEAR(crapdir.dtmvtolt) = par_nranoref
-                                     USE-INDEX crapdir1 NO-LOCK NO-ERROR.
-                    
-                                IF NOT AVAILABLE crapdir THEN
-                                   DO:
-                                       ASSIGN aux_dscritic = 
-                                           "Conta/dv: " + STRING(par_nrdconta) +
-                                           " - Nao ha dados para imposto de "  +
-                                           "renda de " + STRING(par_nranoref).
-                                       LEAVE Busca.   
-                                    
-                                   END.
-
-                                rel_vlrendim = 
-                                   crapdir.vlrenrda[01] + crapdir.vlrenrda[02] +
-                                   crapdir.vlrenrda[03] + crapdir.vlrenrda[04] +
-                                   crapdir.vlrenrda[05] + crapdir.vlrenrda[06] +
-                                   crapdir.vlrenrda[07] + crapdir.vlrenrda[08] +
-                                   crapdir.vlrenrda[09] + crapdir.vlrenrda[10] +
-                                   crapdir.vlrenrda[11] + crapdir.vlrenrda[12] +
-                              
-                                   crapdir.vlrenrdc[01] + crapdir.vlrenrdc[02] +
-                                   crapdir.vlrenrdc[03] + crapdir.vlrenrdc[04] +
-                                   crapdir.vlrenrdc[05] + crapdir.vlrenrdc[06] +
-                                   crapdir.vlrenrdc[07] + crapdir.vlrenrdc[08] +
-                                   crapdir.vlrenrdc[09] + crapdir.vlrenrdc[10] +
-                                   crapdir.vlrenrdc[11] + crapdir.vlrenrdc[12] +
-                                   
-                                   crapdir.vlrenrpp + crapdir.vlabonpp + crapdir.vlabonrd +
-                                   crapdir.vlabiopp + crapdir.vlabiord - 
-                                   
-                                   crapdir.vlirabap[1]  - crapdir.vlirabap[2] -
-                                   crapdir.vlirabap[3]  - crapdir.vlirabap[4] -
-                                   crapdir.vlirabap[5]  - crapdir.vlirabap[6] -
-                                   crapdir.vlirabap[7]  - crapdir.vlirabap[8] -
-                                   crapdir.vlirabap[9]  - crapdir.vlirabap[10] -
-                                   crapdir.vlirabap[11] - crapdir.vlirabap[12] -
-                                   
-                                   crapdir.vlirrdca[1]  - crapdir.vlirrdca[2] -
-                                   crapdir.vlirrdca[3]  - crapdir.vlirrdca[4] -
-                                   crapdir.vlirrdca[5]  - crapdir.vlirrdca[6] -
-                                   crapdir.vlirrdca[7]  - crapdir.vlirrdca[8] -
-                                   crapdir.vlirrdca[9]  - crapdir.vlirrdca[10] -
-                                   crapdir.vlirrdca[11] - crapdir.vlirrdca[12] -
-                                   
-                                   crapdir.vlirfrdc[01] - crapdir.vlirfrdc[02] -
-                                   crapdir.vlirfrdc[03] - crapdir.vlirfrdc[04] -
-                                   crapdir.vlirfrdc[05] - crapdir.vlirfrdc[06] -
-                                   crapdir.vlirfrdc[07] - crapdir.vlirfrdc[08] -
-                                   crapdir.vlirfrdc[09] - crapdir.vlirfrdc[10] -
-                                   crapdir.vlirfrdc[11] - crapdir.vlirfrdc[12] -
-                                   
-                                   crapdir.vlrirrpp[1]  - crapdir.vlrirrpp[2] -
-                                   crapdir.vlrirrpp[3]  - crapdir.vlrirrpp[4] -
-                                   crapdir.vlrirrpp[5]  - crapdir.vlrirrpp[6] -
-                                   crapdir.vlrirrpp[7]  - crapdir.vlrirrpp[8] -
-                                   crapdir.vlrirrpp[9]  - crapdir.vlrirrpp[10] -
-                                   crapdir.vlrirrpp[11] - crapdir.vlrirrpp[12] -
-                            
-                                   crapdir.vlirajus[1]  - crapdir.vlirajus[2] -
-                                   crapdir.vlirajus[3]  - crapdir.vlirajus[4] -
-                                   crapdir.vlirajus[5]  - crapdir.vlirajus[6] -
-                                   crapdir.vlirajus[7]  - crapdir.vlirajus[8] -
-                                   crapdir.vlirajus[9]  - crapdir.vlirajus[10] -
-                                   crapdir.vlirajus[11] - crapdir.vlirajus[12].
-    
-                                DO  aux_contador = 1 TO aux_nrmesref:
-
-                                    ASSIGN aux_nmmesref = 
-                                           rel_nmmesref[aux_contador]
-                                           aux_cdretenc = 3426
-                                           aux_dsretenc = aux_dsre3426
-                                           aux_vlrentot = 
-                                           crapdir.vlrentot[aux_contador]
-                                           aux_vlirfont = 
-                                           crapdir.vlirrdca[aux_contador] +
-                                           crapdir.vlrirrpp[aux_contador] +
-                                           crapdir.vlirabap[aux_contador] +
-                                           crapdir.vlirajus[aux_contador] +
-                                           crapdir.vlirfrdc[aux_contador].
-
-                                    IF aux_vlirfont > 0 THEN
-                                       DO:
-                                          CREATE tt-retencao_ir.
-                                          ASSIGN tt-retencao_ir.nmmesref =
-                                                 aux_nmmesref
-                                                 tt-retencao_ir.cdretenc =
-                                                 STRING(aux_cdretenc)
-                                                 tt-retencao_ir.dsretenc = 
-                                                 aux_dsretenc
-                                                 tt-retencao_ir.vlrentot = 
-                                                 aux_vlrentot.
-                                        
-                                          IF par_nranoref >= 2004   THEN
-                                             ASSIGN tt-retencao_ir.vlirfont =
-                                                    aux_vlirfont.
-                                        
-                                       END.
-
-                                    ASSIGN aux_vlirfont = 0.
-
-                                    FOR EACH craplct WHERE
-                                        craplct.cdcooper = par_cdcooper 
-                                        AND
-                                        craplct.nrdconta = crapass.nrdconta 
-                                        AND
-                                        YEAR(craplct.dtmvtolt)  = par_nranoref 
-                                        AND
-                                        MONTH(craplct.dtmvtolt) = aux_contador
-                                        AND
-                                        CAN-DO("0922,0926",
-                                               STRING(craplct.cdhistor,"9999"))
-                                        NO-LOCK:
-                
-                                        IF  craplct.cdhistor = 926 THEN
-                                            ASSIGN aux_vlrentot = 
-                                                   craplct.vllanmto.
-                                        ELSE
-                                            ASSIGN aux_vlirfont = 
-                                                   craplct.vllanmto.
-                
-                                    END. /* FOR EACH */
-
-                                    IF aux_vlirfont > 0 THEN
-                                       DO:
-                                          ASSIGN aux_cdretenc = 5706
-                                                 aux_dsretenc = aux_dsre5706.
-                
-                                          CREATE tt-retencao_ir.
-                                          ASSIGN tt-retencao_ir.nmmesref =
-                                                 aux_nmmesref
-                                                 tt-retencao_ir.cdretenc =
-                                                 STRING(aux_cdretenc)
-                                                 tt-retencao_ir.dsretenc = 
-                                                 aux_dsretenc
-                                                 tt-retencao_ir.vlrentot = 
-                                                 aux_vlrentot.
-                                        
-                                          IF par_nranoref >= 2004   THEN
-                                             ASSIGN tt-retencao_ir.vlirfont =
-                                                    aux_vlirfont.
-                                       END.
-
-                                END. /* DO TO */
-
-                                ASSIGN sol_dtrefere = 
-                                       DATE(12,31,YEAR(crapdir.dtmvtolt))
-                                       sol_vlsdccdp = crapdir.vlsdccdp
-                                       sol_vlsddvem = crapdir.vlsddvem
-                                       sol_vlttccap = crapdir.vlttccap
-                                       sol_vlsdapli = crapdir.vlsdapli + 
-                                                      crapdir.vlsdrdpp
-                                       aux_cdacesso = "IRENDA" +
-                                       STRING(YEAR(crapdir.dtmvtolt),"9999")
-                                       rel_vlrencot = crapdir.vlrencot
-                                       rel_vlirfcot = crapdir.vlirfcot.
-                
-                                FIND FIRST crapsli WHERE
-                                     crapsli.cdcooper = par_cdcooper     AND
-                                     crapsli.nrdconta = crapass.nrdconta AND
-                                     crapsli.dtrefere = DATE(12,31,par_nranoref)
-                                     NO-LOCK NO-ERROR.
-
-                                IF   AVAILABLE crapsli THEN
-                                     ASSIGN sol_vlsdccdp = 
-                                     sol_vlsdccdp + crapsli.vlsddisp.
-                              
-                                ASSIGN tt-extrato_ir.vlsdccd2 = sol_vlsdccdp
-                                       tt-extrato_ir.vlttcca2 = sol_vlttccap
-                                       tt-extrato_ir.vlsddve2 = sol_vlsddvem
-                                       tt-extrato_ir.vlsdapl2 = sol_vlsdapli
-                                       tt-extrato_ir.vlrencot = rel_vlrencot
-                                       tt-extrato_ir.vlirfcot = rel_vlirfcot.
-
-                            END. /* else senao for ano vigente */
-                        
-                        ASSIGN tt-extrato_ir.dtrefer2 = sol_dtrefere[1]
-                               tt-extrato_ir.dtrefer1 = ant_dtrefere[1]
-                               tt-extrato_ir.dsanoant = lit_dsanoant[1]
-                               tt-extrato_ir.vlrendim = rel_vlrendim.
-
-
-                        FIND FIRST crapdir WHERE
-                                   crapdir.cdcooper = par_cdcooper      AND
-                                   crapdir.nrdconta = crapass.nrdconta  AND
-                                   YEAR(crapdir.dtmvtolt) = (par_nranoref - 1)
-                                   USE-INDEX crapdir1 NO-LOCK NO-ERROR.
-                        
-                        IF AVAILABLE crapdir THEN
-                           DO:
-                              ASSIGN ant_vlsdccdp = crapdir.vlsdccdp
-                                     ant_vlsddvem = crapdir.vlsddvem
-                                     ant_vlttccap = crapdir.vlttccap
-                                     ant_vlsdapli = crapdir.vlsdapli + 
-                                                    crapdir.vlsdrdpp
-                                     aux_flganter = TRUE.
-                           END.
-
-                        FIND FIRST crapsli WHERE
-                             crapsli.cdcooper = par_cdcooper     AND
-                             crapsli.nrdconta = crapass.nrdconta AND
-                             crapsli.dtrefere = DATE(12,31,(par_nranoref - 1))
-                             NO-LOCK NO-ERROR.
-                
-                        IF  AVAILABLE crapsli THEN
-                            ASSIGN ant_vlsdccdp = 
-                                   ant_vlsdccdp + crapsli.vlsddisp.
-
-                        IF  aux_flganter THEN
-                            DO:
-                               ASSIGN tt-extrato_ir.flganter = aux_flganter
-                                      tt-extrato_ir.vlsdccd1 = ant_vlsdccdp
-                                      tt-extrato_ir.vlsddve1 = ant_vlsddvem
-                                      tt-extrato_ir.vlttcca1 = ant_vlttccap
-                                      tt-extrato_ir.vlsdapl1 = ant_vlsdapli.
-                            END.
-
-                    END. /* ELSE */
-               
-            END. /* IF  par_nranoref > 1994  */
-            ELSE
-            DO:
-                ASSIGN aux_nmcidade = TRIM(crapcop.nmcidade)
-                       rel_dscooper = crapcop.nmextcop + " - " +
-                                      STRING(STRING(crapcop.nrdocnpj,
-                                                    "99999999999999"),
-                                                    "xx.xxx.xxx/xxxx-xx")
-                
-                       rel_dsendcop = crapcop.dsendcop + ", " + 
-                                      STRING(crapcop.nrendcop,"zz,zz9") + 
-                                      " - CEP " + STRING(crapcop.nrcepend,
-                                                          "99,999,999") +
-                                      " - " + aux_nmcidade + " - " +
-                                      crapcop.cdufdcop
-                                      
-                       rel_dstelcop = "TELEFONE: " + crapcop.nrtelvoz + " - " +
-                                      "FAX: " + crapcop.nrtelfax.
-
-                IF  NOT AVAILABLE crapage   THEN
-                    ASSIGN rel_dsagenci = STRING(crapass.cdagenci) + 
-                                                " - Nao cadastrada!".
-                ELSE
-                    ASSIGN rel_dsagenci = crapage.nmresage.
-
-                ASSIGN  mfx_vlsddvem = 0
-                        mfx_vlsdccdp = 0
-                        mfx_vlsdapli = 0
-                        mfx_vlttccap = 0
-                        rel_qtjaicmf = 0
-                        rel_vlrenapl = 0
-                        aux_regexis1 = FALSE.
-
-                FIND FIRST crapdir WHERE 
-                           crapdir.cdcooper = par_cdcooper      AND
-                           crapdir.nrdconta = crapass.nrdconta  AND
-                           YEAR(crapdir.dtmvtolt) = par_nranoref
-                           USE-INDEX crapdir1 NO-LOCK NO-ERROR.
-
-                IF  NOT AVAILABLE crapdir THEN
-                    DO:
-                        ASSIGN aux_dscritic = "Conta/dv: " +
-                                                      STRING(par_nrdconta) +
-                                                      " - Nao ha dados para " +
-                                                      "imposto de renda de " +
-                                                      STRING(par_nranoref) + "." .
-                        LEAVE Busca. 
-                    END.
-
-                ASSIGN aux_cdacesso = "IRENDA" + 
-                                      STRING(YEAR(crapdir.dtmvtolt),"9999").
-
-                FIND craptab WHERE craptab.cdcooper = par_cdcooper AND
-                                   craptab.nmsistem = "CRED"       AND
-                                   craptab.tptabela = "GENERI"     AND
-                                   craptab.cdempres = 0            AND
-                                   craptab.cdacesso = aux_cdacesso AND
-                                   craptab.tpregist = 1            
-                                   NO-LOCK NO-ERROR.
-
-                IF  NOT AVAILABLE craptab THEN
-                    DO:
-                        ASSIGN aux_cdcritic = 457.
-                        LEAVE Busca.
-                    END.
-
-                ASSIGN aux_vlmoefi1 = DECIMAL(STRING(SUBSTRING(craptab.dstextab,22,15),
-                                               "999999,99999999"))
-                       rel_vldjuros = DECIMAL(STRING(SUBSTRING(craptab.dstextab,38,15),
-                                                               "999999,99999999"))
-                       mfx_vlsddve1 = crapdir.vlsddvem / aux_vlmoefi1
-                       mfx_vlsdccd1 = crapdir.vlsdccdp / aux_vlmoefi1
-                       mfx_vlsdapl1 = crapdir.vlsdapli / aux_vlmoefi1
-                       mfx_vlttcca1 = crapdir.vlttccap / aux_vlmoefi1
-                
-                       rel_vldjuros = crapdir.qtjaicmf * rel_vldjuros
-                
-                       rel_vlrenap1 = crapdir.qtreamfx
-                
-                       rel_qtjaicm1 = rel_vldjuros / aux_vlmoefi1
-                
-                       mfx_dtmvtol1 = crapdir.dtmvtolt
-                
-                       aux_regexist = TRUE.
-
-                IF  aux_regexist THEN
-                    DO:
-                        FIND FIRST crapdir WHERE 
-                                   crapdir.cdcooper = par_cdcooper      AND
-                                   crapdir.nrdconta = crapass.nrdconta  AND
-                                   YEAR(crapdir.dtmvtolt) = par_nranoref - 1
-                                   USE-INDEX crapdir1 NO-LOCK NO-ERROR.
-
-                        IF  AVAILABLE crapdir THEN
-                            DO:
-                                ASSIGN aux_cdacesso = "IRENDA" + 
-                                         STRING(YEAR(crapdir.dtmvtolt),"9999").
-            
-                                FIND craptab WHERE 
-                                     craptab.cdcooper = par_cdcooper      AND
-                                     craptab.nmsistem = "CRED"            AND
-                                     craptab.tptabela = "GENERI"          AND
-                                     craptab.cdempres = 0                 AND
-                                     craptab.cdacesso = aux_cdacesso      AND
-                                     craptab.tpregist = 1 NO-LOCK NO-ERROR.
-            
-                                IF  AVAILABLE craptab THEN
-                                    DO:
-                                        ASSIGN aux_vlmoefix = DECIMAL(STRING(SUBSTRING(
-                                                        craptab.dstextab,22,15),
-                                                        "999999,99999999"))
-                                                rel_vldjuros = DECIMAL(STRING(SUBSTRING(
-                                                                    craptab.dstextab,38,15),
-                                                                    "999999,99999999"))
-                                                mfx_vlsddvem = crapdir.vlsddvem / aux_vlmoefix
-                                                mfx_vlsdccdp = crapdir.vlsdccdp~  / aux_vlmoefix
-                                                mfx_vlsdapli = crapdir.vlsdapli / aux_vlmoefix
-                                                mfx_vlttccap = crapdir.vlttccap / aux_vlmoefix
-                                              
-                                                rel_vldjuros = crapdir.qtjaicmf * rel_vldjuros
-                                              
-                                                rel_vlrenapl = crapdir.qtreamfx
-                                              
-                                                rel_qtjaicmf = rel_vldjuros / aux_vlmoefix
-                                              
-                                                mfx_dtmvtolt = crapdir.dtmvtolt
-                                              
-                                                aux_regexis1 = TRUE.
-                                    END.
-
-                            END.
-
-                        CREATE tt-extrato_ir.
-                        ASSIGN tt-extrato_ir.nmcidade = aux_nmcidade
-                               tt-extrato_ir.nrdconta = crapass.nrdconta
-                               tt-extrato_ir.nmprimtl = crapass.nmprimtl
-                               tt-extrato_ir.regexis1 = aux_regexis1
-                               tt-extrato_ir.dsagenci = rel_dsagenci
-                               tt-extrato_ir.dtmvtolt = mfx_dtmvtolt
-                               tt-extrato_ir.dtmvtol1 = mfx_dtmvtol1
-                               tt-extrato_ir.vlsddvem = mfx_vlsddvem
-                               tt-extrato_ir.vlsddve1 = mfx_vlsddve1
-                               tt-extrato_ir.vlsdccdp = mfx_vlsdccdp
-                               tt-extrato_ir.vlsdccd1 = mfx_vlsdccd1
-                               tt-extrato_ir.vlsdapli = mfx_vlsdapli
-                               tt-extrato_ir.vlsdapl1 = mfx_vlsdapl1
-                               tt-extrato_ir.vlttccap = mfx_vlttccap
-                               tt-extrato_ir.vlttcca1 = mfx_vlttcca1
-                               tt-extrato_ir.qtjaicmf = rel_qtjaicmf
-                               tt-extrato_ir.qtjaicm1 = rel_qtjaicm1
-                               tt-extrato_ir.vlrenap1 = rel_vlrenap1
-                               tt-extrato_ir.vlmoefix = aux_vlmoefix
-                               tt-extrato_ir.vlmoefi1 = aux_vlmoefi1
-                               tt-extrato_ir.dscooper = rel_dscooper
-                               tt-extrato_ir.dsendcop = rel_dsendcop
-                               tt-extrato_ir.dstelcop = rel_dstelcop
-                               tt-extrato_ir.vlrenapl = rel_vlrenapl.
-
-                    END. /* IF  aux_regexist */
-                
-            END.
-
-        ASSIGN aux_returnvl = "OK".
-
-        LEAVE Busca.
-
-    END. /* Busca */
-
-    IF  aux_dscritic <> "" OR aux_cdcritic <> 0 THEN
-        RUN gera_erro (INPUT par_cdcooper,
-                       INPUT par_cdagenci,
-                       INPUT par_nrdcaixa,
-                       INPUT 1,
-                       INPUT aux_cdcritic,
-                       INPUT-OUTPUT aux_dscritic).
-    
-    RETURN aux_returnvl.
-
-END PROCEDURE. /* consulta-imposto-renda */
 
                                   
 
@@ -3124,6 +2152,8 @@ PROCEDURE Gera_Impressao:
     DEF  INPUT PARAM par_nranoref AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_flgerlog AS LOGICAL                        NO-UNDO.
     DEF  INPUT PARAM par_intpextr AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_tpinform AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_nrperiod AS INTE                           NO-UNDO.
     DEF  OUTPUT PARAM aux_nmarqimp AS CHAR                          NO-UNDO.
     DEF  OUTPUT PARAM aux_nmarqpdf AS CHAR                          NO-UNDO.    
     DEF  OUTPUT PARAM TABLE FOR tt-erro.
@@ -3188,6 +2218,7 @@ PROCEDURE Gera_Impressao:
 
     { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} } 
 
+
     /* Efetuar a chamada a rotina Oracle */ 
     RUN STORED-PROCEDURE pc_gera_impressao_car
         aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper, /* Código da Cooperativa */
@@ -3215,6 +2246,8 @@ PROCEDURE Gera_Impressao:
                                              INPUT par_nranoref, /* Ano de Referencia */
                                              INPUT 1,            /* Escreve erro Log */ 
                                              INPUT par_intpextr, /* Tipo de extrato (1=Simplificado, 2=Detalhado) */ 
+                                             INPUT par_tpinform, /* Tipo do Informe PJ => 0-Anual / 1-Trimestral */
+                                             INPUT par_nrperiod, /* Trimestre PJ 1-Jan-Mar / 2-Abr-Jun / 3-Jul-Set / 4-Out-Dez */
                                              OUTPUT "",          /* pr_nmarqimp */
                                              OUTPUT "",          /* pr_nmarqpdf */
                                              OUTPUT "").         /* pr_des_reto */
@@ -3363,7 +2396,7 @@ PROCEDURE Gera_Impressao_Aplicacao:
          { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} } 
          
          /* Efetuar a chamada a rotina Oracle */ 
-         RUN STORED-PROCEDURE pc_lista_aplicacoes_car
+         RUN STORED-PROCEDURE pc_lista_demons_apli
              aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper, /* Código da Cooperativa */
                                                   INPUT par_cdoperad, /* Código do Operador */
                                                   INPUT par_nmdatela, /* Nome da Tela */
@@ -3378,12 +2411,14 @@ PROCEDURE Gera_Impressao_Aplicacao:
                                                   INPUT par_dtmvtolt, /* Data de Movimento */
                                                   INPUT 5,            /* Identificador de Consulta (0 – Ativas / 1 – Encerradas / 2 – Todas) */
                                                   INPUT 1,            /* Identificador de Log (0 – Não / 1 – Sim) */                                                                                                                                  
+                                                  INPUT aux_dtiniper,
+                                                  INPUT aux_dtfimper,
                                                  OUTPUT ?,            /* XML com informações de LOG */
                                                  OUTPUT 0,            /* Código da crítica */
                                                  OUTPUT "").          /* Descrição da crítica */
         
          /* Fechar o procedimento para buscarmos o resultado */ 
-         CLOSE STORED-PROC pc_lista_aplicacoes_car
+         CLOSE STORED-PROC pc_lista_demons_apli
                 aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
         
          { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
@@ -3391,10 +2426,10 @@ PROCEDURE Gera_Impressao_Aplicacao:
          /* Busca possíveis erros */ 
          ASSIGN aux_cdcritic = 0
                 aux_dscritic = ""
-                aux_cdcritic = pc_lista_aplicacoes_car.pr_cdcritic 
-                               WHEN pc_lista_aplicacoes_car.pr_cdcritic <> ?
-                aux_dscritic = pc_lista_aplicacoes_car.pr_dscritic 
-                               WHEN pc_lista_aplicacoes_car.pr_dscritic <> ?.
+                aux_cdcritic = pc_lista_demons_apli.pr_cdcritic 
+                               WHEN pc_lista_demons_apli.pr_cdcritic <> ?
+                aux_dscritic = pc_lista_demons_apli.pr_dscritic 
+                               WHEN pc_lista_demons_apli.pr_dscritic <> ?.
     
     
          IF aux_cdcritic <> 0 OR aux_dscritic <> "" THEN
@@ -3410,7 +2445,7 @@ PROCEDURE Gera_Impressao_Aplicacao:
          EMPTY TEMP-TABLE tt-saldo-rdca.
         
          /* Buscar o XML na tabela de retorno da procedure Progress */ 
-         ASSIGN xml_req = pc_lista_aplicacoes_car.pr_clobxmlc. 
+         ASSIGN xml_req = pc_lista_demons_apli.pr_clobxmlc. 
         
          /* Efetuar a leitura do XML*/ 
          SET-SIZE(ponteiro_xml) = LENGTH(xml_req) + 1. 
@@ -3779,6 +2814,8 @@ PROCEDURE Gera_Impressao_Aplicacao:
                                                  INPUT 0,            /* Ano de Referencia */
                                                  INPUT 1,            /* Escreve erro Log */
                                                  INPUT aux_intpextr, /* Tipo de extrato (1=Simplificado, 2=Detalhado) */ 
+                                                 INPUT 0,            /* Tipo do Informe PJ => 0-Anual / 1-Trimestral */
+                                                 INPUT 1,            /* Trimestre PJ 1-Jan-Mar / 2-Abr-Jun / 3-Jul-Set / 4-Out-Dez */
                                                  OUTPUT "",          /* pr_nmarqimp */
                                                  OUTPUT "",          /* pr_nmarqpdf */
                                                  OUTPUT "").         /* pr_des_reto */
@@ -3880,12 +2917,15 @@ PROCEDURE gera_impressao_sintetico:
             FRAME f_dados_relat_sintetico.
 
     FORM SKIP(2)
-         "Saldo disponivel para resgate:"                 AT  01
-         tot_sldresga  FORMAT "z,zzz,zz9.99"              AT  46
+         "SALDO DISPONIVEL R$:"                 AT  01
+         tot_sldresga  FORMAT "zz,zzz,zzz,zzz,zzz,zzz,zz9.99"              AT  40
          WITH NO-BOX NO-ATTR-SPACE DOWN NO-LABEL WIDTH 80 FRAME f_footer_total.
 
     ASSIGN aux_vlblqjud = 0
-           aux_vlresblq = 0.
+           aux_vlresblq = 0
+           aux_vlblqapl_gar = 0
+           aux_vlblqpou_gar = 0
+           aux_vltot_resgat = 0.
 
     /*** Busca Saldo Bloqueado Judicial ***/
     IF  NOT VALID-HANDLE(h-b1wgen0155) THEN
@@ -3903,6 +2943,24 @@ PROCEDURE gera_impressao_sintetico:
     
     IF  VALID-HANDLE(h-b1wgen0155) THEN
         DELETE PROCEDURE h-b1wgen0155.
+
+    /* PRJ404 - Retornar valor bloqueado de garantia */
+    RUN calcula_bloq_garantia (INPUT par_cdcooper,
+                               INPUT par_nrdconta,                                             
+                               OUTPUT aux_vlblqapl_gar,
+                               OUTPUT aux_vlblqpou_gar,
+                               OUTPUT aux_dscritic).
+
+    IF aux_dscritic <> "" THEN
+      DO:
+           RUN gera_erro (INPUT par_cdcooper,
+                          INPUT 1,
+                          INPUT 1,
+                          INPUT 1,          /** Sequencia **/
+                          INPUT 0,
+                          INPUT-OUTPUT aux_dscritic).
+            RETURN "NOK".
+      END.
 
     FIND crapass WHERE crapass.cdcooper = par_cdcooper
                    AND crapass.nrdconta = par_nrdconta 
@@ -3989,13 +3047,27 @@ PROCEDURE gera_impressao_sintetico:
     DISPLAY STREAM str_1 
             tot_sldresga WITH FRAME f_footer_total.
 
-    IF  aux_vlblqjud > 0 THEN
-        DO: 
             PUT STREAM str_1
-                "Valor Bloqueado Judicialmente e de R$: "
-                aux_vlblqjud FORMAT "zzz,zzz,zzz,zz9.99"
+                "VALOR BLOQUEADO JUDICIALMENTE R$:      "
+                aux_vlblqjud FORMAT "zz,zzz,zzz,zzz,zzz,zzz,zz9.99"
                 SKIP.
+        
+            PUT STREAM str_1
+                "VALOR BLOQUEADO COBERTURA GARANTIA R$: "
+                aux_vlblqapl_gar FORMAT "zz,zzz,zzz,zzz,zzz,zzz,zz9.99"                
+                SKIP.
+			
+			aux_vltot_resgat = tot_sldresga - (aux_vlblqjud + aux_vlblqapl_gar).
+
+			IF aux_vltot_resgat < 0 THEN DO:
+			   aux_vltot_resgat = 0.
         END.
+
+            PUT STREAM str_1
+                "SALDO DISPONIVEL PARA RESGATE R$:      "
+                aux_vltot_resgat FORMAT "zz,zzz,zzz,zzz,zzz,zzz,zz9.99"
+                SKIP.
+     
 
     OUTPUT STREAM str_1 CLOSE.
 
@@ -4125,7 +3197,10 @@ PROCEDURE gera_impressao_demonstrativo:
        WITH NO-BOX NO-ATTR-SPACE DOWN NO-LABEL WIDTH 234 FRAME f_dados_colunas.
 
     ASSIGN aux_vlblqjud = 0
-           aux_vlresblq = 0.
+           aux_vlresblq = 0
+           aux_vlblqapl_gar = 0
+           aux_vlblqpou_gar = 0
+           aux_vltot_resgat = 0.
 
     /*** Busca Saldo Bloqueado Judicial ***/
     IF  NOT VALID-HANDLE(h-b1wgen0155) THEN
@@ -4143,6 +3218,25 @@ PROCEDURE gera_impressao_demonstrativo:
     
     IF  VALID-HANDLE(h-b1wgen0155) THEN
         DELETE PROCEDURE h-b1wgen0155.
+        
+      
+    /* PRJ404 - Retornar valor bloqueado de garantia */
+    RUN calcula_bloq_garantia (INPUT par_cdcooper,
+                               INPUT par_nrdconta,                                             
+                               OUTPUT aux_vlblqapl_gar,
+                               OUTPUT aux_vlblqpou_gar,
+                               OUTPUT aux_dscritic).
+
+    IF aux_dscritic <> "" THEN
+      DO:
+           RUN gera_erro (INPUT par_cdcooper,
+                          INPUT 1,
+                          INPUT 1,
+                          INPUT 1,          /** Sequencia **/
+                          INPUT 0,
+                          INPUT-OUTPUT aux_dscritic).
+            RETURN "NOK".
+      END.
 
     FIND crapass WHERE crapass.cdcooper = par_cdcooper
                    AND crapass.nrdconta = par_nrdconta 
@@ -4378,14 +3472,30 @@ PROCEDURE gera_impressao_demonstrativo:
 
     END.
 
-    IF  aux_vlblqjud > 0 THEN
-        DO: 
             PUT STREAM str_1
                 SKIP(1)
-                "Valor Bloqueado Judicialmente e de R$: "
-                aux_vlblqjud FORMAT "zzz,zzz,zzz,zz9.99"
+                "VALOR BLOQUEADO JUDICIALMENTE R$:      "
+                aux_vlblqjud FORMAT "z,zzz,zzz,zzz,zzz,zzz,zz9.99"
                 SKIP.
+
+
+            PUT STREAM str_1
+                SKIP(1)
+                "VALOR BLOQUEADO COBERTURA GARANTIA R$: "
+                aux_vlblqapl_gar FORMAT "z,zzz,zzz,zzz,zzz,zzz,zz9.99"
+                SKIP.
+
+            aux_vltot_resgat = tot_sldresga - (aux_vlblqjud + aux_vlblqapl_gar).
+
+            IF aux_vltot_resgat < 0 THEN DO:
+			   aux_vltot_resgat = 0.
         END.
+
+            PUT STREAM str_1
+                SKIP(1)
+                "SALDO DISPONIVEL PARA RESGATE R$:     "
+                aux_vltot_resgat FORMAT "zz,zzz,zzz,zzz,zzz,zzz,zz9.99"
+                SKIP.
 
     /** FIM Processamento do Extrato **/       
 
@@ -4670,9 +3780,11 @@ PROCEDURE pi_monta_demonstrativo:
                    AND tt-demonstrativo.dstplanc = "SALDO" 
                 EXCLUSIVE-LOCK NO-ERROR.
 
-            ASSIGN tt-demonstrativo.vlcolu14 = "SALDO RESGATE"
+
+            ASSIGN tt-demonstrativo.vlcolu14 = "SALDO"
                    tt-demonstrativo.vlcolu15 = 
                       STRING(tot_sldresga,"zz,zzz,zz9.99").
+      
         END.
                     
         /** Processamento dos dados do extrato **/
@@ -5268,6 +4380,242 @@ PROCEDURE busca_extrato_aplicacao:
      DELETE OBJECT xRoot2. 
      DELETE OBJECT xField. 
      DELETE OBJECT xText.
+
+END PROCEDURE.
+
+
+PROCEDURE extrato_pos_fixado:
+
+    DEF  INPUT PARAM par_cdcooper AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_cdagenci AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_nrdcaixa AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_cdoperad AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_nmdatela AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_idorigem AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_nrdconta AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_idseqttl AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_nrctremp AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_flgerlog AS LOGI                           NO-UNDO.
+    /*  extrato    */
+    DEF  INPUT PARAM par_dtiniper AS DATE                           NO-UNDO.
+    DEF  INPUT PARAM par_dtfimper AS DATE                           NO-UNDO.
+
+    DEF OUTPUT PARAM TABLE FOR tt-erro.
+    DEF OUTPUT PARAM TABLE FOR tt-extrato_epr_aux.
+
+    EMPTY TEMP-TABLE tt-erro.
+    EMPTY TEMP-TABLE tt-extrato_epr_aux.
+
+    DEF VAR aux_vlsaldo1 AS DECI                                    NO-UNDO.
+    DEF VAR aux_cdcritic AS INTE                                    NO-UNDO.
+    DEF VAR aux_dscritic AS CHAR                                    NO-UNDO.
+    DEF VAR aux_dtmvtoan AS DATE                                    NO-UNDO.
+
+    ASSIGN aux_cdcritic = 0
+           aux_dscritic = "".
+
+    IF NOT VALID-HANDLE(h-b1wgen0002) THEN
+       RUN sistema/generico/procedures/b1wgen0002.p 
+           PERSISTENT SET h-b1wgen0002.          
+    
+    RUN obtem-extrato-emprestimo IN h-b1wgen0002 ( 
+                                    INPUT  par_cdcooper,
+                                    INPUT  par_cdagenci,
+                                    INPUT  par_nrdcaixa,
+                                    INPUT  par_cdoperad,
+                                    INPUT  par_nmdatela,
+                                    INPUT  par_idorigem,
+                                    INPUT  par_nrdconta,
+                                    INPUT  par_idseqttl,
+                                    INPUT  par_nrctremp,
+                                    INPUT  par_dtiniper,
+                                    INPUT  par_dtfimper,
+                                    INPUT  par_flgerlog,
+                                    OUTPUT TABLE tt-erro,
+                                    OUTPUT TABLE tt-extrato_epr).
+
+    IF VALID-HANDLE(h-b1wgen0002) THEN
+       DELETE PROCEDURE h-b1wgen0002.
+
+    IF RETURN-VALUE <> "OK" THEN 
+       RETURN "NOK".
+
+    IF NOT VALID-HANDLE(h-b1wgen0003) THEN
+       RUN sistema/generico/procedures/b1wgen0003.p 
+           PERSISTENT SET h-b1wgen0003.
+
+    FOR EACH tt-extrato_epr BREAK BY tt-extrato_epr.dtmvtolt
+                                     BY tt-extrato_epr.nrparepr
+                                        BY tt-extrato_epr.dsextrat
+                                           BY tt-extrato_epr.flglista:
+                    
+        CREATE tt-extrato_epr_aux.
+
+        BUFFER-COPY tt-extrato_epr TO tt-extrato_epr_aux.
+
+        ASSIGN tt-extrato_epr_aux.vlrdtaxa = 0.
+        
+        /* Lancamento de Juros de Correcao */
+        IF CAN-DO("2344,2345",STRING(tt-extrato_epr.cdhistor)) THEN
+           DO:
+                FOR crappep FIELDS(vltaxatu) WHERE crappep.cdcooper = par_cdcooper            AND
+                                                   crappep.nrdconta = par_nrdconta            AND
+                                                   crappep.nrctremp = par_nrctremp            AND
+                                                   crappep.nrparepr = INTE(tt-extrato_epr.nrparepr)
+                                                   NO-LOCK:
+                  ASSIGN tt-extrato_epr_aux.vlrdtaxa = crappep.vltaxatu.
+                END.
+           END.
+           
+        IF FIRST (tt-extrato_epr.dtmvtolt) THEN
+           DO:
+               /* Saldo Inicial */
+               ASSIGN tt-extrato_epr_aux.vlsaldo  = tt-extrato_epr.vllanmto
+                      tt-extrato_epr_aux.vldebito = tt-extrato_epr.vllanmto
+                      aux_vlsaldo1 = tt-extrato_epr.vllanmto.
+
+               NEXT.
+
+           END.
+   
+        CASE tt-extrato_epr_aux.indebcre:
+            WHEN "C" THEN
+            DO: 
+                ASSIGN tt-extrato_epr_aux.vlcredit = tt-extrato_epr.vllanmto.
+
+                IF tt-extrato_epr.flgsaldo THEN
+                   ASSIGN aux_vlsaldo1 = aux_vlsaldo1 - tt-extrato_epr.vllanmto 
+                          tt-extrato_epr_aux.vlsaldo = aux_vlsaldo1.
+                ELSE
+                   ASSIGN tt-extrato_epr_aux.vlsaldo = aux_vlsaldo1.
+
+            END.
+            WHEN "D" THEN
+            DO: 
+               ASSIGN tt-extrato_epr_aux.vldebito = tt-extrato_epr.vllanmto.
+                        
+               IF tt-extrato_epr.flgsaldo THEN
+                   ASSIGN aux_vlsaldo1 = aux_vlsaldo1 + tt-extrato_epr.vllanmto
+                          tt-extrato_epr_aux.vlsaldo = aux_vlsaldo1.
+                ELSE
+                   ASSIGN tt-extrato_epr_aux.vlsaldo = aux_vlsaldo1.
+
+            END.
+        END CASE.
+    
+    END. /* FOR EACH tt-extrato_epr */
+
+    IF VALID-HANDLE(h-b1wgen0003) THEN
+       DELETE PROCEDURE h-b1wgen0003.
+        
+    RETURN "OK".
+
+END PROCEDURE. /*   extrato pos-fixado   */
+
+/***********************************************************************/
+PROCEDURE calcula_bloq_garantia_avancado:
+    
+    /* parametros de entrada */ 
+    DEF INPUT PARAM par_cdcooper LIKE crapcop.cdcooper NO-UNDO.       
+    DEF INPUT PARAM par_nrdconta LIKE crapcop.nrdconta NO-UNDO.       
+    DEF INPUT PARAM par_tpctrato AS INTEGER            NO-UNDO.       
+    DEF INPUT PARAM par_nrctaliq AS CHAR               NO-UNDO.           
+    DEF INPUT PARAM par_dsctrliq AS CHAR               NO-UNDO.                  
+    DEF INPUT PARAM par_vlsldapl AS DEC                NO-UNDO.             
+    DEF INPUT PARAM par_vlblqapl AS DEC                NO-UNDO.                    
+    DEF INPUT PARAM par_vlsldpou AS DEC                NO-UNDO.                    
+    DEF INPUT PARAM par_vlblqpou AS DEC                NO-UNDO.                    
+    /* parametros de retorno */
+    DEF OUTPUT PARAM par_vlblqapl_gar AS DEC           NO-UNDO.
+    DEF OUTPUT PARAM par_vlblqpou_gar AS DEC           NO-UNDO.
+    DEF OUTPUT PARAM par_dscritic AS CHAR              NO-UNDO.
+
+
+
+    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} } 
+
+     /* Efetuar a chamada a rotina Oracle */
+     RUN STORED-PROCEDURE pc_calc_bloqueio_garantia
+     aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper /* pr_cdcooper   */    
+                                         ,INPUT par_nrdconta /* pr_nrdconta   */       
+                                         ,INPUT par_tpctrato /* pr_tpctrato   */       
+                                         ,INPUT par_nrctaliq /* pr_nrctaliq   */       
+                                         ,INPUT par_dsctrliq /* pr_dsctrliq   */       
+                                         ,INPUT par_vlsldapl /* pr_vlsldapl   */       
+                                         ,INPUT par_vlblqapl /* pr_vlblqapl   */        
+                                         ,INPUT par_vlsldpou /* pr_vlsldpou   */       
+                                         ,INPUT par_vlblqpou /* pr_vlblqpou   */                                                
+                                         ,OUTPUT 0           /* pr_vlbloque_aplica  */
+                                         ,OUTPUT 0           /* pr_vlbloque_poupa   */  
+                                         ,OUTPUT "").        /* pr_dscritic         */  
+
+     /* Fechar o procedimento para buscarmos o resultado */ 
+     CLOSE STORED-PROC pc_calc_bloqueio_garantia
+           aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+
+     
+     { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
+
+     /* Busca possíveis erros */ 
+     ASSIGN aux_dscritic = ""
+            aux_dscritic = pc_calc_bloqueio_garantia.pr_dscritic 
+                           WHEN pc_calc_bloqueio_garantia.pr_dscritic <> ?.
+
+
+     IF aux_dscritic <> "" THEN
+     DO:
+         ASSIGN par_dscritic = aux_dscritic.
+
+         RETURN "NOK".
+     END.
+
+     /* Buscar valores */ 
+     ASSIGN par_vlblqapl_gar = pc_calc_bloqueio_garantia.pr_vlbloque_aplica 
+                           WHEN pc_calc_bloqueio_garantia.pr_vlbloque_aplica <> ?
+            par_vlblqpou_gar = pc_calc_bloqueio_garantia.pr_vlbloque_poupa 
+                           WHEN pc_calc_bloqueio_garantia.pr_vlbloque_poupa <> ?                .
+
+
+     RETURN "OK".
+
+END PROCEDURE.
+
+/***********************************************************************/
+PROCEDURE calcula_bloq_garantia:
+    
+    /* parametros de entrada */ 
+    DEF INPUT PARAM par_cdcooper LIKE crapcop.cdcooper NO-UNDO.       
+    DEF INPUT PARAM par_nrdconta LIKE crapcop.nrdconta NO-UNDO.       
+    /* parametros de retorno */
+    DEF OUTPUT PARAM par_vlblqapl_gar AS DEC           NO-UNDO.
+    DEF OUTPUT PARAM par_vlblqpou_gar AS DEC           NO-UNDO.
+    DEF OUTPUT PARAM par_dscritic AS CHAR              NO-UNDO.
+    
+
+     /* Efetuar a chamada a rotina Oracle */
+     RUN calcula_bloq_garantia_avancado
+            (INPUT par_cdcooper /* pr_cdcooper   */    
+            ,INPUT par_nrdconta /* pr_nrdconta   */       
+            ,INPUT 0  /* pr_tpctrato   */       
+            ,INPUT "" /* pr_nrctaliq   */       
+            ,INPUT "" /* pr_dsctrliq   */       
+            ,INPUT 0  /* pr_vlsldapl   */       
+            ,INPUT 0  /* pr_vlblqapl   */        
+            ,INPUT 0  /* pr_vlsldpou   */       
+            ,INPUT 0  /* pr_vlblqpou   */                                                
+            ,OUTPUT par_vlblqapl_gar      /* pr_vlbloque_aplica  */
+            ,OUTPUT par_vlblqpou_gar      /* pr_vlbloque_poupa   */  
+            ,OUTPUT aux_dscritic).        /* pr_dscritic         */  
+
+     IF aux_dscritic <> "" THEN
+     DO:
+         ASSIGN par_dscritic = aux_dscritic.
+
+         RETURN "NOK".
+     END.
+
+    
+     RETURN "OK".
 
 END PROCEDURE.
 
