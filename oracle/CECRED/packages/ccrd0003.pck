@@ -6893,6 +6893,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                                 
                    23/02/2018 - Criar no relatorio 676 a critica Representante nao encontrado
                                 (Lucas Ranghetti #847282)
+                                
+                   07/05/2018 - Ajuste realizado para que a criação do lote seja separado
+                                por cooperativa para solucionar o problema do incidente
+                                INC0013534. (Kelvin)
     ............................................................................ */
 
     DECLARE
@@ -6988,12 +6992,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
       -- Vetor para armazenar os arquivos para processamento
       vr_vet_nmarquiv typ_tab_nmarquiv;
 
-       -- Definicao do vetor com os códigos e os nomes das solicitações
-        TYPE typ_vet_nmtipsol IS
-          TABLE OF VARCHAR2(150)
-          INDEX BY BINARY_INTEGER;
+      -- Definicao do vetor com os códigos e os nomes das solicitações
+      TYPE typ_vet_nmtipsol IS
+       TABLE OF VARCHAR2(150)
+       INDEX BY BINARY_INTEGER;
         
-        vr_vet_nmtipsol  typ_vet_nmtipsol;
+      vr_vet_nmtipsol  typ_vet_nmtipsol;
+      
+      -- Definicao do vetor com os códigos de lote de SMS criado por cooperativa
+      TYPE typ_tab_nrdlote IS
+       TABLE OF NUMBER(10)
+       INDEX BY BINARY_INTEGER;
+
+      -- Vetor para armazenar os códigos de lote de SMS criado por cooperativa
+      vr_vet_nrdlote typ_tab_nrdlote;
       
       -- Armazena o indicador de envio de SMS para o produto, por cooperativa
       TYPE typ_tab_enviasms IS TABLE OF NUMBER INDEX BY BINARY_INTEGER;
@@ -7649,8 +7661,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                                                               ,pr_sms               => 1  -- Indicador de SMS 
                                                               ,pr_valores_dinamicos => vr_dsvlrmsg);
                     
-                    -- Se não há lote de SMS criado
-                    IF vr_idlotsms IS NULL THEN
+                    -- Se não há lote de SMS criado na cooperativa
+                    IF NOT vr_vet_nrdlote.EXISTS(pr_cdcooper) THEN
                       -- Cria o lote de sms
                       esms0001.pc_cria_lote_sms(pr_cdproduto     => 21 -- CARTAO CREDITO CECRED
                                                ,pr_idtpreme      => 'SMSCRDBCB'
@@ -7663,10 +7675,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                         RAISE vr_exc_erro;
                       END IF;
                       
+                      vr_vet_nrdlote(pr_cdcooper) := vr_idlotsms;
+                      
                     END IF; -- vr_idlotsms IS NULL
                     
                     -- Gerar registro do SMS a ser enviado
-                    esms0001.pc_escreve_sms(pr_idlote_sms => vr_idlotsms
+                    esms0001.pc_escreve_sms(pr_idlote_sms => vr_vet_nrdlote(pr_cdcooper)
                                            ,pr_cdcooper   => pr_cdcooper
                                            ,pr_nrdconta   => pr_nrdconta
                                            ,pr_idseqttl   => 1
@@ -7688,7 +7702,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                   -- Fechar o cursor
                   CLOSE cr_craptfc;
                   
-                vr_idlotaux := vr_idlotsms; -- Carrega o id do lote na var auxiliar
+                vr_idlotaux := vr_vet_nrdlote(pr_cdcooper); -- Carrega o id do lote na var auxiliar
               ELSE
                 vr_idlotaux := null;        -- Esvazia o id do lote na var auxiliar
                 END IF;  -- NVL(vr_enviasms,0) = 1 -- Se envia SMS
@@ -10318,10 +10332,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
       END LOOP;
       
       -- Após processar os arquivos, deve verificar se foi gerado lote de envio de SMS
-      IF vr_idlotsms IS NOT NULL THEN
+      IF vr_vet_nrdlote.EXISTS(vr_cdcooper_ori) THEN
         --> Enviar lote de SMS para o Aymaru
         pc_enviar_lote_SMS(pr_cdcooper => vr_cdcooper_ori
-                          ,pr_idlotsms => vr_idlotsms
+                          ,pr_idlotsms => vr_vet_nrdlote(vr_cdcooper_ori)
                           ,pr_dscritic => vr_dscritic
                           ,pr_cdcritic => vr_cdcritic);
                     
