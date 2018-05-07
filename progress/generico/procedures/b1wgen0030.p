@@ -18772,7 +18772,7 @@ PROCEDURE realizar_manutencao_contrato:
           ASSIGN aux_cdcritic  = INT(pc_efetivar_proposta.pr_cdcritic) WHEN pc_efetivar_proposta.pr_cdcritic <> ?
                  aux_dscritic  = pc_efetivar_proposta.pr_dscritic WHEN pc_efetivar_proposta.pr_dscritic <> ?.
           
-          IF aux_cdcritic > 0 THEN
+          IF aux_cdcritic <> 0 OR aux_dscritic <> "" THEN
              DO:
                RUN gera_erro (INPUT par_cdcooper,
                               INPUT par_cdagenci,
