@@ -4293,6 +4293,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
                  SET ope.cdsitope = 2
                WHERE ope.cdcooper = rw_crapope.cdcooper
                  AND UPPER(ope.cdoperad) = UPPER(rw_crapope.cdoperad);
+                 
+               -- Log de sucesso.
+              CECRED.pc_log_programa(pr_dstiplog => 'O'
+                                   , pr_cdprograma => 'JBOPE_BLOQUEIA_OPERADORES' 
+                                   , pr_cdcooper => rw_crapope.cdcooper
+                                   , pr_tpexecucao => 0
+                                   , pr_tpocorrencia => 4 
+                                   , pr_dsmensagem => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || 
+                                                      ' - CADA0002 --> Operador inativado com sucesso na rotina pc_bloqueia_operadores. Detalhes: Operador - ' ||
+                                                      rw_crapope.cdoperad || ' Cooperativa - ' || rw_crapope.cdcooper
+                                   , pr_idprglog => vr_idprglog);   
             EXCEPTION
               WHEN OTHERS THEN
                 RAISE vr_exc_error;
@@ -4300,29 +4311,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
           --E CECRED
           ELSE
             CLOSE cr_valida_cecred;  
-            --Inativa operador
+            --Ativa operador
             BEGIN 
               UPDATE crapope ope
                  SET ope.cdsitope = 1
                WHERE UPPER(ope.cdoperad) = UPPER(rw_crapope.cdoperad);
+               
             EXCEPTION
               WHEN OTHERS THEN
                 RAISE vr_exc_error;
             END;
           END IF;
-          
-          -- Log de sucesso.
-          CECRED.pc_log_programa(pr_dstiplog => 'O'
-                               , pr_cdprograma => 'JBOPE_BLOQUEIA_OPERADORES' 
-                               , pr_cdcooper => rw_crapope.cdcooper
-                               , pr_tpexecucao => 0
-                               , pr_tpocorrencia => 4 
-                               , pr_dsmensagem => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || 
-                                                  ' - CADA0002 --> Operador inativado com sucesso na rotina pc_bloqueia_operadores. Detalhes: Operador - ' ||
-                                                  rw_crapope.cdoperad || ' Cooperativa - ' || rw_crapope.cdcooper
-                               , pr_idprglog => vr_idprglog);                      
-
-        
+         
         ELSE
           CLOSE cr_tbcadast_colaborador;
         END IF;
