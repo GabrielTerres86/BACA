@@ -198,6 +198,8 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0002 is
                                       ,pr_cdcritic OUT crapcri.cdcritic%TYPE
                                       ,pr_dscritic OUT crapcri.dscritic%TYPE);
                                                                           
+  PROCEDURE pc_bloqueia_operadores(pr_dscritic OUT crapcri.dscritic%TYPE);
+
 END CADA0002;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
@@ -286,7 +288,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
                             ,dtmvtolx   DATE
                             ,dsprotoc   VARCHAR2(100)
                             ,cdbarras   VARCHAR2(100)
-                            ,lndigita   VARCHAR2(100)
+                            ,lndigita   VARCHAR2(400)
                             ,label      VARCHAR2(100)
                             ,label2     VARCHAR2(100)
                             ,valor      NUMBER
@@ -337,7 +339,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
 														,dtrecarga    DATE
 														,hrrecarga    VARCHAR2(100)
 														,dtdebito     DATE
-														,nsuopera     VARCHAR2(100));
+														,nsuopera     VARCHAR2(100)
+                            --FGTS/DAE
+                            ,cdconven     VARCHAR2(100)
+                            ,dtvalida     DATE
+                            ,cdcompet     VARCHAR2(100)
+                            ,nrdocpes     VARCHAR2(100)
+                            ,cdidenti     VARCHAR2(100)
+                            ,nrdocmto_dae VARCHAR2(100)
+                            );
     
   
   -- REGISTROS
@@ -1748,6 +1758,178 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
 
   END pc_impressao_darf_das;   
   
+  -- Rotina para impressão de FGTS/DAE
+  PROCEDURE pc_impressao_fgts_dae(pr_xmldata  IN typ_xmldata
+                                 ,pr_nmrescop IN VARCHAR2
+                                 ,pr_cdbcoctl IN NUMBER
+                                 ,pr_cdagectl IN NUMBER) IS
+    -- ..........................................................................
+    --
+    --  Programa : 
+    --  Sistema  : Rotinas para impressão de dados
+    --  Sigla    : VERPRO
+    --  Autor    : 
+    --  Data     : Janeiro/2018.                   Ultima atualizacao: --/--/----
+    --
+    --  Dados referentes ao programa:
+    --
+    --   Frequencia: Sempre que for chamado
+    --   Objetivo  : Agrupa os dados e monta o layout para impressão de dados de pagamentos de FGTS/DAE
+    --
+    --   Alteracoes:
+    --
+    -- .............................................................................
+    
+    -- Variáveis
+    vr_nrdlinha     NUMBER := 0;  
+    vr_dsbanco      VARCHAR2(50);
+		vr_dsdcabec     VARCHAR2(50);
+		                          
+  BEGIN
+		
+	  IF    pr_xmldata.cdtippro = 24 THEN
+			vr_dsdcabec := 'Pagamento FGTS';
+		ELSIF pr_xmldata.cdtippro = 23 THEN
+			vr_dsdcabec := 'Pagamento DAE';
+		END IF;
+
+    -- IMPRIMIR O CABEÇALHO
+    pc_escreve_xml('--------------------------------------------------------------------------------'    ,1);
+    pc_escreve_xml('     '||pr_nmrescop||' - Comprovante '|| vr_dsdcabec || ' - '||
+                   'Emissao: '||to_char(SYSDATE,'DD/MM/YY')||' as '||to_char(SYSDATE,'HH24:MI:SS')||' Hr',2); 
+    pc_escreve_xml('               Banco: '||to_char(pr_cdbcoctl) ,4);
+    pc_escreve_xml('             Agencia: '||to_char(pr_cdagectl) ,5);
+    pc_escreve_xml('            Conta/DV: '||to_char(pr_xmldata.nrdconta)||' - '||pr_xmldata.nmprimtl,6);
+    pc_escreve_xml('--------------------------------------------------------------------------------'    ,7);
+    -- IMPRIMIR O CONTEÚDO
+    -- Contador de linha - Iniciando na sexta linha do XML
+    vr_nrdlinha := 8;
+		
+		-- Se tem Preposto
+    IF TRIM(pr_xmldata.nmprepos) IS NOT NULL THEN
+      pc_escreve_xml('            Preposto: '||pr_xmldata.nmprepos,vr_nrdlinha);
+      vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
+    END IF;
+    
+    -- Se tem Tipo de Docmto		
+		IF TRIM(pr_xmldata.tpdocmto) IS NOT NULL THEN
+      pc_escreve_xml('   Tipo de Documento: '||pr_xmldata.tpdocmto,vr_nrdlinha);
+      vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
+    END IF;
+		
+		-- Se tem Agente arrecadador
+		IF TRIM(pr_xmldata.dsagtare) IS NOT NULL THEN
+      pc_escreve_xml('  Agente Arrecadador: '||pr_xmldata.dsagtare,vr_nrdlinha);
+      vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
+    END IF;
+		
+		-- Se tem informação de código de barras
+    IF TRIM(pr_xmldata.cdbarras) IS NOT NULL THEN
+      pc_escreve_xml('    Codigo de Barras: '||pr_xmldata.cdbarras,vr_nrdlinha);
+      vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
+    END IF;
+		
+    -- Se tem informação de linha digitável
+    IF  TRIM(pr_xmldata.lndigita) IS NOT NULL THEN
+      pc_escreve_xml('     Linha Digitavel: '||pr_xmldata.lndigita,vr_nrdlinha);
+      vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha    
+	  END IF;
+    
+    -- Se tem documento pessoa
+    IF TRIM(pr_xmldata.cdcompet) IS NOT NULL THEN
+      -- Modelo 01
+      IF pr_xmldata.cdconven IN(179,180,181) THEN
+        pc_escreve_xml('CNPJ/CEI Empresa/CPF: '||pr_xmldata.nrdocpes,vr_nrdlinha);
+        vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
+      -- Modelo 02
+      ELSIF pr_xmldata.cdconven IN(178,240) THEN
+        pc_escreve_xml('    CNPJ/CEI Empresa: '||pr_xmldata.nrdocpes,vr_nrdlinha);
+        vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
+      END IF;
+    END IF;
+    
+    IF TRIM(pr_xmldata.cdtippro) IS NOT NULL THEN
+      -- FGTS
+      IF pr_xmldata.cdtippro = 24 THEN
+        -- Se tem Convênio
+        IF TRIM(pr_xmldata.cdconven) IS NOT NULL THEN
+          pc_escreve_xml('       Cod. Convênio: '||pr_xmldata.cdconven,vr_nrdlinha);
+          vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
+        END IF;
+        -- Se tem Data da Validade
+        IF TRIM(pr_xmldata.dtvalida) IS NOT NULL THEN
+          pc_escreve_xml('    Data da Validade: '||to_char(pr_xmldata.dtvalida,'dd/mm/yy'),vr_nrdlinha);
+          vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
+        END IF;
+        -- Modelos 01 e 02
+        IF pr_xmldata.cdconven IN(179,180,181,178,240) THEN
+          -- Se tem Competência
+          IF TRIM(pr_xmldata.cdcompet) IS NOT NULL THEN
+            pc_escreve_xml('         Competência: '||pr_xmldata.cdcompet,vr_nrdlinha);
+            vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
+          END IF;
+        -- Modelo 03
+        ELSIF pr_xmldata.cdconven IN(239,451) THEN
+          -- Se tem Identificador
+          IF TRIM(pr_xmldata.cdidenti) IS NOT NULL THEN
+            pc_escreve_xml('       Identificador: '||pr_xmldata.cdidenti,vr_nrdlinha);
+            vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
+          END IF;
+        END IF;
+      -- DAE
+      ELSIF pr_xmldata.cdtippro = 23 THEN
+        -- Se tem Nr. Docmto. (DAE)
+        IF TRIM(pr_xmldata.nrdocmto_dae) IS NOT NULL THEN
+          pc_escreve_xml('   Nr. Docmto. (DAE): '||pr_xmldata.nrdocmto_dae,vr_nrdlinha);
+          vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
+        END IF;
+      END IF;
+    END IF;
+  		
+    -- Se tem informação de valor total
+    IF TRIM(pr_xmldata.vltotfat) IS NOT NULL THEN
+      pc_escreve_xml('         Valor Total: '||to_char(pr_xmldata.vltotfat,'FM9G999G999G999G990D00','NLS_NUMERIC_CHARACTERS=,.'),vr_nrdlinha);
+      vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha    
+    END IF;
+		
+		-- Se tem Descricao
+    IF TRIM(pr_xmldata.dsidepag) IS NOT NULL THEN
+      pc_escreve_xml('  Descricao do Pagto: '||pr_xmldata.dsidepag,vr_nrdlinha);
+      vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
+    END IF;
+  
+    -- Se tem Data Pagamento
+    IF TRIM(pr_xmldata.dtmvtdrf) IS NOT NULL THEN
+      pc_escreve_xml('      Data Pagamento: '||to_char(pr_xmldata.dtmvtdrf,'dd/mm/yy') ,vr_nrdlinha);
+      vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
+    END IF;
+
+    -- Se tem Hora Pagamento
+    IF TRIM(pr_xmldata.hrautdrf) IS NOT NULL THEN
+      pc_escreve_xml('      Hora Pagamento: '|| pr_xmldata.hrautdrf ,vr_nrdlinha);
+      vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha      		
+    END IF;
+		            
+    -- Imprimir documento e sequencia de autenticação
+    pc_escreve_xml('       Nr. Documento: '||pr_xmldata.nrdocmto,vr_nrdlinha);
+    vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
+        
+    pc_escreve_xml('   Seq. Autenticacao: '||pr_xmldata.nrseqaut,vr_nrdlinha);
+    vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
+		
+		-- Protocolo
+		pc_escreve_xml('           Protocolo: '||pr_xmldata.dsprotoc,vr_nrdlinha);
+		vr_nrdlinha := vr_nrdlinha + 1; -- Próxima linha
+    
+    -- Se vai escrever a linha 20... ou mais
+    IF vr_nrdlinha >= 20 THEN
+      pc_escreve_xml('--------------------------------------------------------------------------------',vr_nrdlinha);
+    ELSE 
+      pc_escreve_xml('--------------------------------------------------------------------------------',20);
+    END IF;
+
+  END pc_impressao_fgts_dae;
+  
   -- Rotina para impressão de comprovante de pagamento do deb automatico
   PROCEDURE pc_impressao_debaut(pr_xmldata  IN typ_xmldata
                                ,pr_nmrescop IN VARCHAR2) IS
@@ -1930,6 +2112,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
     --
     --               22/07/2014 - Migrar a procedure para a package CADA0002 e ajustar 
     --                            a mesma. ( Renato - Supero )
+    --               03/01/2018 - Incluir tratamento para os tipos 24-FGTS e 23-DAE
     -- .............................................................................
     
     /* Busca dados de planos de capitalização */
@@ -2121,6 +2304,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
 				vr_tab_dados(vr_index)('cdbarras') := TRIM(gene0002.fn_busca_entrada(2,(gene0002.fn_busca_entrada(7, vr_cratpro(vr_ind).dsinform##3, '#')), ':'));
             	vr_tab_dados(vr_index)('lndigita') := TRIM(gene0002.fn_busca_entrada(2,(gene0002.fn_busca_entrada(8, vr_cratpro(vr_ind).dsinform##3, '#')), ':'));
 			END IF;
+        -- FGTS
+        ELSIF vr_cratpro(vr_ind).cdtippro = 24 THEN
+          vr_tab_dados(vr_index)('cdbarras') := TRIM(gene0002.fn_busca_entrada(2,gene0002.fn_busca_entrada(3, vr_cratpro(vr_ind).dsinform##3, '#'), ':'));
+          vr_tab_dados(vr_index)('lndigita') := TRIM(gene0002.fn_busca_entrada(2,gene0002.fn_busca_entrada(4, vr_cratpro(vr_ind).dsinform##3, '#'), ':'));
+          --
+        -- DAE
+        ELSIF vr_cratpro(vr_ind).cdtippro = 23 THEN
+          vr_tab_dados(vr_index)('cdbarras') := TRIM(gene0002.fn_busca_entrada(2,gene0002.fn_busca_entrada(3, vr_cratpro(vr_ind).dsinform##3, '#'), ':'));
+          vr_tab_dados(vr_index)('lndigita') := TRIM(gene0002.fn_busca_entrada(2,gene0002.fn_busca_entrada(4, vr_cratpro(vr_ind).dsinform##3, '#'), ':'));
         ELSE
           vr_tab_dados(vr_index)('cdbarras') := '';
           vr_tab_dados(vr_index)('lndigita') := '';
@@ -2491,6 +2683,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
                              
                  09/03/2017 - Ajuste para incluir informações referentes a comprovante
                               de pagamento em debito automatico (Aline).                      
+							                      
+                 09/01/2018 - Incluido tratamento para FGTS e DAE - PRJ406.
     ..............................................................................*/ 
     -- CURSORES
     -- Buscar as informações da cooperativa
@@ -2657,6 +2851,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
 		rw_xmldata.hrrecarga := fn_extract('/Root/Dados/hrrecarga/text()');		
 		rw_xmldata.dtdebito := to_date(fn_extract('/Root/Dados/dtdebito/text()'),'dd/mm/rrrr');		
 		rw_xmldata.nsuopera := fn_extract('/Root/Dados/nsuopera/text()');						
+    --FGTS/DAE
+    rw_xmldata.cdconven := fn_extract('/Root/Dados/cdconven/text()');
+    rw_xmldata.dtvalida := to_date(fn_extract('/Root/Dados/dtvalida/text()'),'dd/mm/rrrr');
+    rw_xmldata.cdcompet := fn_extract('/Root/Dados/cdcompet/text()');
+    rw_xmldata.nrdocpes := fn_extract('/Root/Dados/nrdocpes/text()');
+    rw_xmldata.cdidenti := fn_extract('/Root/Dados/cdidenti/text()');
+    rw_xmldata.nrdocmto_dae := fn_extract('/Root/Dados/nrdocmto_dae/text()');
     
     -- Inicializar o CLOB do XML
     vr_dsxmlrel := null;
@@ -2788,6 +2989,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
                            ,pr_nmrescop => rw_crapcop.nmrescop
                            ,pr_cdbcoctl => rw_crapcop.cdbcoctl
                            ,pr_cdagectl => rw_crapcop.cdagectl);      
+													 
+    ELSIF rw_xmldata.cdtippro IN (24,23) THEN --FGTS/DAE
+      -- Guardar o nome da rotina chamada para exibir em caso de erro
+      vr_nmrotina := 'PC_IMPRESSAO_FGTSDAE';
+    
+      -- Imprimir pagamento
+      pc_impressao_fgts_dae(pr_xmldata  => rw_xmldata
+                           ,pr_nmrescop => rw_crapcop.nmrescop
+                           ,pr_cdbcoctl => rw_crapcop.cdbcoctl
+                           ,pr_cdagectl => rw_crapcop.cdagectl);
 													 
     ELSIF rw_xmldata.cdtippro = 20 THEN
       
@@ -3437,7 +3648,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
       Sistema  : Rotinas para validacao de inclusao de contas para transferencia
       Sigla    : CRED
       Autor    : Jean Michel
-      Data     : Fevereiro/2016.                   Ultima atualizacao: 24/04/2018
+      Data     : Fevereiro/2016.                   Ultima atualizacao: 08/06/2017
     
       Dados referentes ao programa:
     
@@ -3998,5 +4209,155 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
 
   END pc_val_inclui_conta_transf; 
 
+  PROCEDURE pc_bloqueia_operadores(pr_dscritic OUT crapcri.dscritic%TYPE) IS  
+  /* .............................................................................
+
+     Programa: pc_bloqueia_operadores
+     Sistema : Rotina acessada através de job
+     Autor   : Kelvin Ott       
+     Data    : Novembro/2017.                  Ultima atualizacao: 
+
+     Dados referentes ao programa:
+
+     Frequencia: Sempre que for chamado
+
+     Objetivo  : Rotina chamada por job para bloquiar os operadores na tabela crapope que nao 
+                 constam na tabela tbcadast_colaborador
+
+     Alteracoes:                 
+    ..............................................................................*/ 
+    CURSOR cr_crapope IS        
+      SELECT cdoperad
+            ,cdcooper
+        FROM crapope ope
+       WHERE (TRIM(upper(ope.cdoperad)) LIKE UPPER('e%')
+          OR TRIM(upper(ope.cdoperad)) LIKE UPPER('f%'))
+         AND length(ope.cdoperad) = 8          
+         AND ope.cdsitope = 1;
+         
+    CURSOR cr_tbcadast_colaborador(pr_cdcooper crapcop.cdcooper%TYPE
+                                  ,pr_cdoperad crapope.cdoperad%TYPE) IS
+      SELECT 1 retorno
+        FROM tbcadast_colaborador col
+       WHERE col.cdcooper = pr_cdcooper
+         AND UPPER(col.cdusured) = UPPER(pr_cdoperad)
+         AND col.flgativo = 'A'; --Ativo         
+    rw_tbcadast_colaborador cr_tbcadast_colaborador%ROWTYPE;
+    
+    CURSOR cr_valida_cecred(pr_cdoperad crapope.cdoperad%TYPE) IS
+      SELECT 1 retorno
+        FROM tbcadast_colaborador col
+       WHERE upper(col.cdusured) = upper(pr_cdoperad)
+         AND col.cdcooper = 3
+         AND col.flgativo = 'A';
+    
+    rw_valida_cecred cr_valida_cecred%ROWTYPE;
+    
+    --Variaveis auxiliares
+    vr_idprglog NUMBER;
+    
+    --Variaveis de excecoes
+    vr_exc_error EXCEPTION;
+    
+  BEGIN
+    
+    CECRED.pc_log_programa(pr_dstiplog => 'I'
+                         , pr_cdprograma => 'JBOPE_BLOQUEIA_OPERADORES'                                
+                         , pr_idprglog => vr_idprglog);
+  
+    --Busca todos os operadores ativos
+    FOR rw_crapope IN cr_crapope LOOP
+        
+      --Verifica se o operador esta na tbcadast_colaborador
+      OPEN cr_tbcadast_colaborador(pr_cdcooper => rw_crapope.cdcooper
+                                  ,pr_cdoperad => rw_crapope.cdoperad);
+        FETCH cr_tbcadast_colaborador
+          INTO rw_tbcadast_colaborador;
+        
+        --Caso esse operador nao esteja na tabela TBCADAST_COLABORADOR devera ser inativado
+        IF cr_tbcadast_colaborador%NOTFOUND THEN 
+          CLOSE cr_tbcadast_colaborador;         
+          
+          /*Valida se o operador é da cecred pois caso for deverá manter o operador ativo
+          em outras cooperativas*/          
+          OPEN cr_valida_cecred(pr_cdoperad => rw_crapope.cdoperad);
+            FETCH cr_valida_cecred
+              INTO rw_valida_cecred;
+
+          --Nao e CECRED ou está inativo
+          IF cr_valida_cecred%NOTFOUND THEN
+            CLOSE cr_valida_cecred;                       
+            --Inativa operador
+            BEGIN 
+              UPDATE crapope ope
+                 SET ope.cdsitope = 2
+               WHERE ope.cdcooper = rw_crapope.cdcooper
+                 AND UPPER(ope.cdoperad) = UPPER(rw_crapope.cdoperad);
+            EXCEPTION
+              WHEN OTHERS THEN
+                RAISE vr_exc_error;
+            END;
+          --E CECRED
+          ELSE
+            CLOSE cr_valida_cecred;  
+            --Inativa operador
+            BEGIN 
+              UPDATE crapope ope
+                 SET ope.cdsitope = 1
+               WHERE UPPER(ope.cdoperad) = UPPER(rw_crapope.cdoperad);
+            EXCEPTION
+              WHEN OTHERS THEN
+                RAISE vr_exc_error;
+            END;
+          END IF;
+          
+          -- Log de sucesso.
+          CECRED.pc_log_programa(pr_dstiplog => 'O'
+                               , pr_cdprograma => 'JBOPE_BLOQUEIA_OPERADORES' 
+                               , pr_cdcooper => rw_crapope.cdcooper
+                               , pr_tpexecucao => 0
+                               , pr_tpocorrencia => 4 
+                               , pr_dsmensagem => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || 
+                                                  ' - CADA0002 --> Operador inativado com sucesso na rotina pc_bloqueia_operadores. Detalhes: Operador - ' ||
+                                                  rw_crapope.cdoperad || ' Cooperativa - ' || rw_crapope.cdcooper
+                               , pr_idprglog => vr_idprglog);                      
+
+        
+        ELSE
+          CLOSE cr_tbcadast_colaborador;
+        END IF;
+     
+                
+      
+    END LOOP;
+    
+    CECRED.pc_log_programa(pr_dstiplog => 'F'
+                         , pr_cdprograma => 'JBOPE_BLOQUEIA_OPERADORES'                                
+                         , pr_idprglog => vr_idprglog);
+    
+    COMMIT;
+    
+  EXCEPTION
+    WHEN vr_exc_error THEN
+      
+      pr_dscritic := TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - CADA0002 --> Erro ao atualzar a tabela crapope na rotina pc_bloqueia_operadores. Detalhes: ' || SQLERRM;
+
+      CECRED.pc_log_programa(pr_dstiplog => 'O'
+                           , pr_cdprograma => 'JBOPE_BLOQUEIA_OPERADORES' 
+                           , pr_cdcooper => 0
+                           , pr_tpexecucao => 0
+                           , pr_tpocorrencia => 2
+                           , pr_dsmensagem => pr_dscritic                                                
+                           , pr_idprglog => vr_idprglog);  
+                           
+      ROLLBACK;
+    WHEN OTHERS THEN      
+      --Gera log
+      cecred.pc_internal_exception(pr_cdcooper => 0);
+      
+      pr_dscritic := 'Erro nao tratado na CADA0002.pc_bloqueia_operadores: ' || SQLERRM;
+          
+      ROLLBACK;
+  END pc_bloqueia_operadores;
 END CADA0002;
 /
