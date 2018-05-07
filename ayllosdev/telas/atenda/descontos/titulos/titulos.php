@@ -187,7 +187,7 @@
 	type="image"
 	name="btnlimite"
 	id="btnlimite"
-	 <?php if (!in_array("DSC TITS - LIMITE",$rotinasTela)) { echo 'style="cursor: default;display:none;" onClick="return false;"'; } 
+	 <?php if (!in_array("DSC TITS - CONTRATO",$rotinasTela)) { echo 'style="cursor: default;display:none;" onClick="return false;"'; } 
 		else { echo 'onClick="carregaLimitesTitulos();return false;"'; } ?> 
 	>
 		Contratos
@@ -200,7 +200,7 @@
 		name="btnpropostas" 
 		id="btnpropostas"
 
-	 <?php if (!in_array("DSC TITS - LIMITE",$rotinasTela)) { echo 'style="cursor: default;display:none;" onClick="return false;"'; } 
+	 <?php if (!in_array("DSC TITS - PROPOSTA",$rotinasTela)) { echo 'style="cursor: default;display:none;" onClick="return false;"'; } 
 		else { echo 'onClick="carregaLimitesTitulosPropostas();return false;"'; } ?> 
 	>
 			Propostas
