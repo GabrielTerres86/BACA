@@ -14,7 +14,7 @@ CREATE OR REPLACE PACKAGE CECRED.NOTI0001 IS
   TYPE typ_destinatarios_notif IS TABLE OF typ_destinatario_notif INDEX BY BINARY_INTEGER;
 
   -- Tabela para comportar os registros de variáveis de uma notificação
-  TYPE typ_variaveis_notif IS TABLE OF VARCHAR2(100) INDEX BY VARCHAR2(1000);
+  TYPE typ_variaveis_notif IS TABLE OF VARCHAR2(32000) INDEX BY VARCHAR2(32000);
 
   -- Obtem o texto da mensagem, substituindo as variáveis (Versão para VARCHAR)
   FUNCTION fn_substitui_variaveis(pr_cdcooper  IN tbgen_notificacao.cdcooper%TYPE
