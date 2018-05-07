@@ -1,4 +1,4 @@
-CREATE OR REPLACE PACKAGE CECRED.CADA0006 is
+CREATE OR REPLACE PACKAGE CADA0006 is
  /* ---------------------------------------------------------------------------------------------------------------
   
     Programa : CADA0004
@@ -171,7 +171,7 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0006 is
   PROCEDURE pc_valida_valor_adesao(pr_cdcooper  IN crapass.cdcooper%TYPE --> Cooperativa
                                   ,pr_nrdconta  IN crapass.nrdconta%TYPE --> Situacao
                                   ,pr_cdprodut  IN tbcc_produto.cdproduto%TYPE --> Codigo do operador
-                                  ,pr_vlcontra  IN DECIMAL               --> Valor contratado
+                                  ,pr_vlcontra  IN VARCHAR2               --> Valor contratado
                                   ,pr_idorigem  IN INTEGER               --> ID origem
                                   ,pr_solcoord OUT INTEGER               --> Solicita senha coordenador
                                   ,pr_cdcritic OUT crapcri.cdcritic%TYPE --> Codigo Erro
@@ -180,7 +180,7 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0006 is
   PROCEDURE pc_valida_valor_de_adesao(pr_cdcooper  IN crapass.cdcooper%TYPE --> Cooperativa
                                      ,pr_nrdconta  IN crapass.nrdconta%TYPE --> Situacao
                                      ,pr_cdprodut  IN tbcc_produto.cdproduto%TYPE --> Codigo do operador
-                                     ,pr_vlcontra  IN DECIMAL               --> Valor contratado
+                                     ,pr_vlcontra  IN VARCHAR2               --> Valor contratado
                                      ,pr_idorigem  IN INTEGER               --> ID origem
                                      ,pr_cddchave  IN INTEGER               --> Cod. chave
                                      ,pr_solcoord OUT INTEGER               --> Solicita senha coordenador
@@ -188,7 +188,7 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0006 is
                                      ,pr_dscritic OUT crapcri.dscritic%TYPE); --> Descricao Erro
                                      
   PROCEDURE pc_valida_valor_adesao_empr(pr_nrdconta  IN crapass.nrdconta%TYPE --> Situacao
-                                       ,pr_vlcontra  IN DECIMAL               --> Valor contratado
+                                       ,pr_vlcontra  IN VARCHAR2               --> Valor contratado
                                        ,pr_dsctrliq  IN VARCHAR2              --> Contratos liquidados
                                        ,pr_xmllog    IN VARCHAR2 --> XML com informações de LOG
                                        ,pr_cdcritic  OUT PLS_INTEGER --> Código da crítica
@@ -199,7 +199,7 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0006 is
                                        
   PROCEDURE pc_valida_valor_adesao_web(pr_nrdconta   IN crapass.nrdconta%TYPE --> Situacao
                                       ,pr_cdprodut   IN tbcc_produto.cdproduto%TYPE --> Codigo do operador
-                                      ,pr_vlcontra   IN DECIMAL               --> Valor contratado
+                                      ,pr_vlcontra   IN VARCHAR2               --> Valor contratado
                                       ,pr_cddchave   IN INTEGER               --> Cod. chave
                                       ,pr_xmllog     IN VARCHAR2 --> XML com informações de LOG
                                       ,pr_cdcritic  OUT PLS_INTEGER --> Código da crítica
@@ -229,7 +229,7 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0006 is
 
 END CADA0006;
 /
-CREATE OR REPLACE PACKAGE BODY CECRED.CADA0006 IS
+CREATE OR REPLACE PACKAGE BODY CADA0006 IS
   ---------------------------------------------------------------------------------------------------------------
   --
   --  Programa : CADA0006
@@ -2898,7 +2898,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0006 IS
   PROCEDURE pc_valida_valor_adesao(pr_cdcooper  IN crapass.cdcooper%TYPE --> Cooperativa
                                   ,pr_nrdconta  IN crapass.nrdconta%TYPE --> Situacao
                                   ,pr_cdprodut  IN tbcc_produto.cdproduto%TYPE --> Codigo do operador
-                                  ,pr_vlcontra  IN DECIMAL               --> Valor contratado
+                                  ,pr_vlcontra  IN VARCHAR2              --> Valor contratado
                                   ,pr_idorigem  IN INTEGER               --> ID origem
                                   ,pr_solcoord OUT INTEGER               --> Solicita senha coordenador
                                   ,pr_cdcritic OUT crapcri.cdcritic%TYPE --> Codigo Erro
@@ -2926,6 +2926,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0006 IS
       
     BEGIN
       
+      -- Incluir nome do módulo logado
+      GENE0001.pc_informa_acesso(pr_module => 'CADA0006'
+                                ,pr_action => null);
+    
       pc_valida_valor_de_adesao(pr_cdcooper => pr_cdcooper
                                ,pr_nrdconta => pr_nrdconta
                                ,pr_cdprodut => pr_cdprodut
@@ -2947,7 +2951,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0006 IS
   PROCEDURE pc_valida_valor_de_adesao(pr_cdcooper  IN crapass.cdcooper%TYPE --> Cooperativa
                                      ,pr_nrdconta  IN crapass.nrdconta%TYPE --> Situacao
                                      ,pr_cdprodut  IN tbcc_produto.cdproduto%TYPE --> Codigo do operador
-                                     ,pr_vlcontra  IN DECIMAL               --> Valor contratado
+                                     ,pr_vlcontra  IN VARCHAR2              --> Valor contratado
                                      ,pr_idorigem  IN INTEGER               --> ID origem
                                      ,pr_cddchave  IN INTEGER               --> Cod. chave
                                      ,pr_solcoord OUT INTEGER               --> Solicita senha coordenador
@@ -3014,6 +3018,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0006 IS
       
     BEGIN
       
+      -- Incluir nome do módulo logado
+      GENE0001.pc_informa_acesso(pr_module => 'CADA0006'
+                                ,pr_action => null);
+      
       pr_solcoord := 0;
       
       -- Buscar dados da conta
@@ -3061,9 +3069,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0006 IS
           RAISE vr_exc_saida;
         END IF;
         -- Soma valor já contratado ao novo valor que está sendo contratado
-        vr_vlcontra := vr_vlcontra + pr_vlcontra;
+        vr_vlcontra := vr_vlcontra + GENE0002.fn_char_para_number(pr_vlcontra);
       ELSE
-        vr_vlcontra := pr_vlcontra;
+        vr_vlcontra := GENE0002.fn_char_para_number(pr_vlcontra);
       END IF;
       
       -- Verifica se soma do valor contratado está 
@@ -3104,7 +3112,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0006 IS
   END pc_valida_valor_de_adesao;
   
   PROCEDURE pc_valida_valor_adesao_empr(pr_nrdconta  IN crapass.nrdconta%TYPE --> Situacao
-                                       ,pr_vlcontra  IN DECIMAL               --> Valor contratado
+                                       ,pr_vlcontra  IN VARCHAR2              --> Valor contratado
                                        ,pr_dsctrliq  IN VARCHAR2              --> Contratos liquidados
                                        ,pr_xmllog    IN VARCHAR2 --> XML com informações de LOG
                                        ,pr_cdcritic  OUT PLS_INTEGER --> Código da crítica
@@ -3256,13 +3264,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0006 IS
       END LOOP;
       
       -- Somar o valor do emprestimo com o saldo devedor
-      vr_vlcontra := vr_vlcontra + pr_vlcontra;
+      vr_vlcontra := vr_vlcontra + GENE0002.fn_char_para_number(pr_vlcontra);
       
       -- Chamar a rotina para validar valor de adesao do produto
       pc_valida_valor_de_adesao(pr_cdcooper => vr_cdcooper
                                ,pr_nrdconta => pr_nrdconta
                                ,pr_cdprodut => 31
-                               ,pr_vlcontra => vr_vlcontra
+                               ,pr_vlcontra => TO_CHAR(vr_vlcontra)
                                ,pr_idorigem => vr_idorigem
                                ,pr_cddchave => 0
                                ,pr_solcoord => vr_solcoord
@@ -3324,7 +3332,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0006 IS
   
   PROCEDURE pc_valida_valor_adesao_web(pr_nrdconta   IN crapass.nrdconta%TYPE --> Situacao
                                       ,pr_cdprodut   IN tbcc_produto.cdproduto%TYPE --> Codigo do operador
-                                      ,pr_vlcontra   IN DECIMAL               --> Valor contratado
+                                      ,pr_vlcontra   IN VARCHAR2              --> Valor contratado
                                       ,pr_cddchave   IN INTEGER               --> Cod. chave
                                       ,pr_xmllog     IN VARCHAR2 --> XML com informações de LOG
                                       ,pr_cdcritic  OUT PLS_INTEGER --> Código da crítica
