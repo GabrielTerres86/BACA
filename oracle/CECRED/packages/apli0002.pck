@@ -9807,6 +9807,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
       
       -- Indice onde buscar a informação na craptab
       vr_ind INTEGER;
+	  vr_sldresga craprda.vlsdrdca%TYPE;
       
       -- Identificação do tipo para mensagem de erro.
       vr_dsmsgerr VARCHAR2(50);
