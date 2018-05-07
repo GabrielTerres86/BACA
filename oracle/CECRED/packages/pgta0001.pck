@@ -366,6 +366,7 @@ CREATE OR REPLACE PACKAGE CECRED.PGTA0001 IS
     PROCEDURE pc_verifica_conv_pgto(pr_cdcooper  IN crapcop.cdcooper%TYPE  -- Código da cooperativa
                                    ,pr_nrdconta  IN crapass.nrdconta%TYPE  -- Numero Conta do cooperado
                                    ,pr_nrconven OUT INTEGER                -- Numero do Convenio
+                                   ,pr_dtadesao OUT DATE                   -- Data de adesao
                                    ,pr_flghomol OUT INTEGER                -- Convenio esta homologado
                                    ,pr_idretorn OUT INTEGER                -- Retorno para o Cooperado (1-Internet/2-FTP)
                                    ,pr_fluppgto OUT INTEGER                -- Flag possui convenio habilitado
@@ -628,6 +629,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
 --
 --             27/10/2017 - #781654 Na rotina pc_processar_arq_pgto, alterado o arquivo de log de null (proc_batch)
 --                          para proc_message (Carlos)
+--
+--             11/12/2017 - Alterar campo flgcnvsi por tparrecd.
+--                          PRJ406-FGTS (Odirlei-AMcom)  
 --
 --             18/12/2017 - Efetuado alteração para controle de lock (Jonata - Mouts).  
 --
@@ -4181,7 +4185,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
        WHERE crapcon.cdcooper = pr_cdcooper
          AND crapcon.cdempcon = pr_cdempcon
          AND crapcon.cdsegmto = pr_cdsegmto
-         AND crapcon.flgcnvsi = 0; -- True
+         AND crapcon.tparrecd <> 1; -- Diferente Sicredi
 
       -- Buscas dados da capa de lote
       CURSOR cr_craplot(pr_cdcooper craplot.cdcooper%TYPE,
@@ -6095,7 +6099,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
           GENE0002.fn_mask(rw_crapdpt.nrdocmto,'9999999999999999999999999')                                              || -- 10.4J99 - Número do Documento
           NVL(to_char(rw_crapdpt.dtmvtolt,'DDMMRRRR'),to_char(trunc(SYSDATE),'DDMMRRRR'))                                || -- 11.4J99 - Data do Pagamento
           GENE0002.fn_mask(rw_crapdpt.hrautent,'999999')                                                                 || -- 12.4J99 - Hora do Pagamento
-          RPAD(rw_crapdpt.dsprotoc,70,' ')                                                                                 || -- 12.4J99 - Hora do Pagamento
+          RPAD(rw_crapdpt.dsprotoc,70,' ')                                                                               || -- 12.4J99 - Hora do Pagamento
           LPAD(' ',102,' ');                                                                                                -- 13.4J99 - CNAB Uso Exclusivo Cecred
           
           -- Escreve Linha do Trailer de Lote CNAB240 - Item 1.5
@@ -8301,6 +8305,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
   PROCEDURE pc_verifica_conv_pgto(pr_cdcooper  IN crapcop.cdcooper%TYPE  -- Código da cooperativa
                                  ,pr_nrdconta  IN crapass.nrdconta%TYPE  -- Numero Conta do cooperado
                                  ,pr_nrconven OUT INTEGER                -- Numero do Convenio
+                                 ,pr_dtadesao OUT DATE                   -- Data de adesao
                                  ,pr_flghomol OUT INTEGER                -- Convenio esta homologado
                                  ,pr_idretorn OUT INTEGER                -- Retorno para o Cooperado (1-Internet/2-FTP)
                                  ,pr_fluppgto OUT INTEGER                -- Flag possui convenio habilitado
@@ -8335,6 +8340,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
       SELECT cpt.cdcooper
             ,cpt.nrdconta
             ,cpt.nrconven
+            ,cpt.dtdadesa
             ,cpt.flghomol
             ,cpt.idretorn
         FROM crapcpt cpt
@@ -8356,6 +8362,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
   BEGIN
     -- Inicializar os retornos
     pr_nrconven := 0; -- Convenio
+    pr_dtadesao := NULL;
     pr_flghomol := 0; -- Nao Homologado
     pr_idretorn := 0;
     pr_fluppgto := 0;
@@ -8371,6 +8378,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
       pr_fluppgto := 1;
       -- Se o convenio esta homologado devolver os dados
       pr_nrconven := rw_convenio.nrconven;
+      pr_dtadesao := rw_convenio.dtdadesa;
       pr_flghomol := rw_convenio.flghomol;
       pr_idretorn := rw_convenio.idretorn;
     END IF;
@@ -10475,7 +10483,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
                                          ,pr_dsdirarq => pr_dsdirarq
                                          ,pr_des_erro => vr_dscritic);
                                          
-      IF TRIM(vr_des_erro) <> '' THEN
+      IF vr_dscritic IS NOT NULL AND TRIM(vr_dscritic) <> ' ' THEN
         RAISE vr_exc_saida;
       END IF;
     END IF;
@@ -10753,7 +10761,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
                                          ,pr_dsdirarq => pr_dsdirarq
                                          ,pr_des_erro => vr_dscritic);
                                          
-      IF TRIM(vr_des_erro) <> '' THEN
+      IF vr_dscritic IS NOT NULL AND TRIM(vr_dscritic) <> ' ' THEN
         RAISE vr_exc_saida;
       END IF;
     END IF;
