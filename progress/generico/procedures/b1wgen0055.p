@@ -3352,8 +3352,8 @@ PROCEDURE Grava_Alteracao:
                { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
 
                RUN STORED-PROCEDURE pc_busca_modalidade_tipo
-               aux_handproc = PROC-HANDLE NO-ERROR (INPUT crabass.inpessoa, /* Tipo de pessoa */
-                                                    INPUT crabass.cdtipcta, /* Tipo de conta */
+               aux_handproc = PROC-HANDLE NO-ERROR (INPUT brapass.inpessoa, /* Tipo de pessoa */
+                                                    INPUT brapass.cdtipcta, /* Tipo de conta */
                                                    OUTPUT 0,                /* Modalidade */
                                                    OUTPUT "",               /* Flag Erro */
                                                    OUTPUT "").              /* Descriçao da crítica */
