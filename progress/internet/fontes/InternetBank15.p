@@ -598,7 +598,8 @@ DEF VAR xml_req       AS LONGCHAR NO-UNDO.
                                                        "zzz,zzz,zzz,zz9.99")) +
                                           "</vlblqpou_gar>"+      
                                      "</SALDOBLOQ_GARANTIA>".
-                                     
+      
+	  CREATE xml_operacao.                               
       ASSIGN xml_operacao.dslinxml = "<SALDORESGATEAUTOATEND>" + 
                                           "<vlsldaat>" +  
                                                  TRIM(STRING(aux_vlsldaat,"zzz,zzz,zz9.99-")) +
