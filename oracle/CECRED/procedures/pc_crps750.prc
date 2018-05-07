@@ -14,7 +14,7 @@ BEGIN
   Sistema : Conta-Corrente - Cooperativa de Credito
   Sigla   : CRED
   Autor   : Jean
-  Data    : Abril/2017                      Ultima atualizacao: 07/08/2017
+  Data    : Abril/2017                      Ultima atualizacao: 09/08/2017
 
   Dados referentes ao programa:
 
@@ -26,6 +26,9 @@ BEGIN
 
               07/08/2017 - Correção da execução do relatório 135, que não estava sendo
                            gerado na execução em paralelo.
+
+              09/08/2017 - Inclusao do filtro para produto PP. (Jaison/James - PRJ298)
+
     ............................................................................. */
 
   DECLARE
@@ -71,6 +74,7 @@ BEGIN
          and crapepr.cdcooper = crappep.cdcooper
          and crapepr.nrdconta = crappep.nrdconta
          and crapepr.nrctremp = crappep.nrctremp
+         and crapepr.tpemprst = 1 -- Price Pre Fixado
          and crapepr.inliquid = 0
          and crapepr.inprejuz = 0
          AND crappep.cdcooper = pr_cdcooper
@@ -111,7 +115,7 @@ BEGIN
            AND epr.inliquid = 0                    --> Somente não liquidados
            AND epr.indpagto = 0                    --> Nao pago no mês ainda
            AND epr.flgpagto = 0                    --> Débito em conta
-           AND epr.tpemprst = 0                    --> Price
+           AND epr.tpemprst = 0                    --> Price TR
            AND epr.dtdpagto <= pr_dtmvtolt --> data corrente
            and prc.flgacordo <> 1
            and prc.flgprocessa = 1
