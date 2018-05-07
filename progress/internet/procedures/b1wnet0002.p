@@ -1022,6 +1022,48 @@ PROCEDURE gerenciar-operador.
                            
                     UNDO TRANSACAO, LEAVE TRANSACAO.       
                 END.
+                
+            IF  par_geraflux = 1 THEN
+                DO:
+                    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+                    
+                    RUN STORED-PROCEDURE pc_valida_limite_operador aux_handproc = PROC-HANDLE NO-ERROR
+                                 (INPUT par_cdcooper,
+                                  INPUT par_nrdconta,
+                                  INPUT par_nrcpfope,
+                                  INPUT par_idseqttl,
+                                  INPUT par_vllbolet,
+                                  INPUT par_vllimtrf,
+                                  INPUT par_vllimted,
+                                  INPUT par_vllimvrb,
+                                  INPUT par_vllimflp,
+                                  OUTPUT ?,
+                                  OUTPUT 0).
+
+                    CLOSE STORED-PROC pc_valida_limite_operador aux_statproc = PROC-STATUS
+                        WHERE PROC-HANDLE = aux_handproc.
+                        
+                    ASSIGN aux_dscritic = pc_valida_limite_operador.pr_dscritic
+                                                    WHEN pc_valida_limite_operador.pr_dscritic <> ?
+                           aux_cdcritic = pc_valida_limite_operador.pr_cdcritic
+                                                    WHEN pc_valida_limite_operador.pr_cdcritic <> ?.
+
+                    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+                    IF  aux_cdcritic > 0 THEN
+                        DO:
+                            FIND crapcri WHERE crapcri.cdcritic = aux_cdcritic
+                                               NO-LOCK NO-ERROR.
+
+                            IF  AVAIL crapcri  THEN    
+                                DO:
+                                    ASSIGN aux_cdcritic = 0
+                                           aux_dscritic = crapcri.dscritic.                          
+                                           
+                                    UNDO TRANSACAO, LEAVE TRANSACAO. 
+                                END.
+                        END. 
+                END.
                         
             IF  par_desdacao = "ALTERAR"  THEN
                 DO:
@@ -1254,6 +1296,38 @@ PROCEDURE gerenciar-operador.
                 VALIDATE crapaci.
             
             END. /** Fim do FOR EACH tt-itens-menu **/
+            
+            IF  par_geraflux = 1 THEN
+                DO:      
+                    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+                    
+                    RUN STORED-PROCEDURE pc_gera_msg_preposto aux_handproc = PROC-HANDLE NO-ERROR
+                                 (INPUT par_cdcooper,
+                                  INPUT par_nrdconta,
+                                  INPUT par_nrcpfope,
+                                  INPUT par_idseqttl,
+                                  INPUT par_vllbolet,
+                                  INPUT par_vllimtrf,
+                                  INPUT par_vllimted,
+                                  INPUT par_vllimvrb,
+                                  INPUT par_vllimflp,
+                                 OUTPUT ?).
+
+                    CLOSE STORED-PROC pc_gera_msg_preposto aux_statproc = PROC-STATUS
+                        WHERE PROC-HANDLE = aux_handproc.
+
+                    ASSIGN aux_dscritic = pc_gera_msg_preposto.pr_dscritic
+                              WHEN pc_gera_msg_preposto.pr_dscritic <> ?.
+                                
+                    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+                    
+                    IF  aux_dscritic <> "" THEN
+                        DO:
+                            ASSIGN aux_cdcritic = 0.
+                            
+                            UNDO TRANSACAO, LEAVE TRANSACAO.
+                        END.                        
+                END.
 
             IF  aux_dsdsenha <> ""  THEN
                 DO:
@@ -1292,84 +1366,9 @@ PROCEDURE gerenciar-operador.
                 END.
         END.
         
-        ASSIGN aux_flgtrans = FALSE.
+        ASSIGN aux_flgtrans = TRUE.
         
-    END. /** Fim do DO TRANSACTION - TRANSACAO **/
-    
-	TRANSACAO:
-    DO TRANSACTION ON ERROR UNDO TRANSACAO, LEAVE TRANSACAO:
-	
-		IF par_geraflux = 1 THEN
-		DO:
-	{ includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
-	RUN STORED-PROCEDURE pc_valida_limite_operador aux_handproc = PROC-HANDLE NO-ERROR
-							 (INPUT par_cdcooper,
-							  INPUT par_nrdconta,
-							  INPUT par_nrcpfope,
-							  INPUT par_idseqttl,
-							  INPUT par_vllbolet,
-							  INPUT par_vllimtrf,
-							  INPUT par_vllimted,
-							  INPUT par_vllimvrb,
-							  INPUT par_vllimflp,
-							  OUTPUT ?,
-							  OUTPUT 0).
-
-		CLOSE STORED-PROC pc_valida_limite_operador aux_statproc = PROC-STATUS
-			  WHERE PROC-HANDLE = aux_handproc.
-			  
-		ASSIGN aux_dscritic = pc_valida_limite_operador.pr_dscritic
-                                    WHEN pc_valida_limite_operador.pr_dscritic <> ?
-			   aux_cdcritic = pc_valida_limite_operador.pr_cdcritic
-                                    WHEN pc_valida_limite_operador.pr_cdcritic <> ?.
-
-		{ includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
-
-			IF  aux_cdcritic > 0 THEN
-				DO:
-					FIND crapcri WHERE crapcri.cdcritic = aux_cdcritic
-                                       NO-LOCK NO-ERROR.
-
-					IF AVAIL crapcri THEN
-					DO:
-						ASSIGN aux_dscritic = crapcri.dscritic.
-					END.
-				END.
-			ELSE
-				DO:
-					{ includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
-					 RUN STORED-PROCEDURE pc_gera_msg_preposto aux_handproc = PROC-HANDLE NO-ERROR
-											 (INPUT par_cdcooper,
-											  INPUT par_nrdconta,
-											  INPUT par_nrcpfope,
-											  INPUT par_idseqttl,
-											  INPUT par_vllbolet,
-											  INPUT par_vllimtrf,
-											  INPUT par_vllimted,
-											  INPUT par_vllimvrb,
-											  INPUT par_vllimflp,
-													  OUTPUT ?).
-
-						CLOSE STORED-PROC pc_gera_msg_preposto aux_statproc = PROC-STATUS
-							  WHERE PROC-HANDLE = aux_handproc.
-
-							ASSIGN aux_dscritic = pc_gera_msg_preposto.pr_dscritic
-											WHEN pc_gera_msg_preposto.pr_dscritic <> ?.
-											
-					{ includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
-					
-							IF aux_dscritic = "" THEN
-								DO:
-					ASSIGN aux_flgtrans = TRUE.
-								END.
-			
-						END.
-		END.
-		ELSE
-			DO:
-				ASSIGN aux_flgtrans = TRUE.
-				END.
-	END.
+    END. /** Fim do DO TRANSACTION - TRANSACAO **/    
 
     IF  NOT aux_flgtrans  THEN
         DO:
