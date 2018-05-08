@@ -1190,6 +1190,7 @@ DECLARE
    -- Variaveis auxiliares
    vr_nrdolote     craplot.nrdolote%type;
    vr_rowid_log    rowid;
+   vr_flcraplim    BOOLEAN;
 
    -- Variáveis incluídas
    vr_des_erro      varchar2(3);                           -- 'OK' / 'NOK'
@@ -1252,6 +1253,7 @@ DECLARE
          ,lim.nrdconta
          ,lim.nrctrlim
          ,lim.tpctrlim
+         ,lim.vllimite
    from   craplim lim
    where  lim.cdcooper = pr_cdcooper
    and    lim.nrdconta = pr_nrdconta
@@ -1282,6 +1284,11 @@ BEGIN
          raise vr_exc_saida;
    end   if;
    close cr_crawlim;
+   
+   open  cr_craplim;
+   fetch cr_craplim into rw_craplim;
+   vr_flcraplim := cr_craplim%FOUND;
+   close cr_craplim;
    
    --  Quando o campo nrctrmnt for zero, significa que a proposta é a principal de criação do contrato do limite. Neste momento deve-se
    --  inserir o contrato do limite.
@@ -1493,14 +1500,10 @@ BEGIN
                            ,pr_nrdrowid => vr_rowid_log);
 
    else
-       open  cr_craplim;
-       fetch cr_craplim into rw_craplim;
-       if    cr_craplim%notfound then
-             close cr_craplim;
+       if  NOT vr_flcraplim then
              vr_dscritic := 'Não foi encontrado um contrato de limite de desconto de título associado a proposta. Conta ' || pr_nrdconta || ' proposta ' || pr_nrctrlim;
              raise vr_exc_saida;
        end   if;
-       close cr_craplim;
        
        begin
           update craplim lim
@@ -1536,15 +1539,17 @@ BEGIN
            raise vr_exc_saida;
    end;
    
-   IF  NOT fn_contigencia_motor_esteira(pr_cdcooper => pr_cdcooper) THEN
-       -- Enviar a efetivação da proposta para o Ibratan
+   --  Caso seja uma proposta de majoração, ou seja, se o valor da proposta for maior que o do contrato, E caso a 
+   --  esteira não esteja em contingencia, então deve enviar a efetivação da proposta para o Ibratan
+   IF  rw_crawlim.vllimite > rw_craplim.vllimite AND
+       NOT fn_contigencia_motor_esteira(pr_cdcooper => pr_cdcooper) THEN
        este0003.pc_efetivar_limite_esteira(pr_cdcooper => pr_cdcooper
                                           ,pr_nrdconta => pr_nrdconta
                                           ,pr_nrctrlim => pr_nrctrlim
                                           ,pr_tpctrlim => pr_tpctrlim
                                           ,pr_cdagenci => pr_cdagenci
                                           ,pr_cdoperad => pr_cdoperad
-                                          ,pr_cdorigem => 9 /*Esteira */
+                                          ,pr_cdorigem => 9 --Esteira
                                           ,pr_dtmvtolt => rw_crapdat.dtmvtolt
                                           ,pr_cdcritic => vr_cdcritic
                                           ,pr_dscritic => vr_dscritic);
