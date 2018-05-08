@@ -1,6 +1,6 @@
 <?php
 /*!
- * FONTE        : manter_lrotat.php                        Última alteração: 11/10/2017
+ * FONTE        : manter_lrotat.php                        Última alteração: 08/05/2018
  * CRIAÇÃO      : Otto - RKAM
  * DATA CRIAÇÃO : 06/07/2016
  * OBJETIVO     : Responsável por realizar a inclusão/alteração da linha de crédito rotativo
@@ -9,6 +9,9 @@
  *                             (Andrei - RKAM) 
  *
  *				  11/10/2017 - Inclusao dos campos Modelo e % Mínimo Garantia. (Lombardi - PRJ404)
+ *
+ *				  08/05/2018 - Ajuste no validacao da critica 529 para o tipo de 
+ *               			   contrato 0 (que eh o correto a passar por padrao) - Lucas Skroch (Supero TI)
  * --------------
  */
 
@@ -136,7 +139,7 @@
             exibirErro('error','Dias de vig&ecirc;ncia do contrato inv&aacute;lido.','Alerta - Ayllos','formataFormularioLrotat();focaCampoErro(\'qtdiavig\',\'frmLrotat\');',false);
         }
 		
-		IF($GLOBALS["tpctrato"] != 1 && $GLOBALS["tpctrato"] != 4){ 
+		IF($GLOBALS["tpctrato"] != 0 && $GLOBALS["tpctrato"] != 4){ 
 			exibirErro('error','Modelo de contrato inv&aacute;lido.','Alerta - Ayllos','formataFormularioConsulta();focaCampoErro(\'tpctrato\',\'frmLrotat\');',false);
 		}
 		

@@ -1566,7 +1566,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LROTAT IS
         Sistema : CECRED
         Sigla   : LROTAT
         Autor   : Rafael Scolari Maciel
-        Data    : Julho - 2016.                    Ultima atualizacao: --/--/----
+        Data    : Julho - 2016.                    Ultima atualizacao: 08/05/2018
     
         Dados referentes ao programa:
     
@@ -1576,7 +1576,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LROTAT IS
     
         Observacao: -----
     
-        Alteracoes:
+        Alteracoes: 08/05/2018 - Ajuste no validacao da critica 529 para o tipo de 
+                    contrato 0 (que eh o correto a passar por padrao) - Lucas Skroch (Supero TI)
     ..............................................................................*/
   BEGIN
     DECLARE
@@ -1702,7 +1703,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LROTAT IS
       
       END IF;
       
-      IF pr_tpctrato NOT IN (1,4) THEN
+      IF pr_tpctrato NOT IN (0,4) THEN
         
         vr_cdcritic := 529;
           
