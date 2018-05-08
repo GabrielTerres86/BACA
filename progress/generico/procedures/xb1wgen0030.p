@@ -792,12 +792,12 @@ PROCEDURE efetua_inclusao_limite:
                                        INPUT aux_nrperger,
                                        INPUT aux_vltotsfn,
                                        INPUT aux_perfatcl,
-                                       INPUT aux_idcobope, 
 									   INPUT aux_nrctrmnt,
-                                      OUTPUT aux_nrctrlim, 
+                                       INPUT aux_idcobope, 
+									  OUTPUT aux_nrctrlim,
                                       OUTPUT TABLE tt-erro,
                                       OUTPUT TABLE tt-msg-confirma).
-
+                                    
     IF  RETURN-VALUE = "NOK"  THEN
         DO:
             FIND FIRST tt-erro NO-LOCK NO-ERROR.
