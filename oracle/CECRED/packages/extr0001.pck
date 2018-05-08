@@ -3383,8 +3383,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
               vr_cdtippro := 23; -- DAE         
               vr_idlstdom := 11; -- DAE
             ELSE
-              vr_cdtippro := 2;  -- Demais Convênios
-              vr_idlstdom := 15; -- Demais Convênios
+              vr_cdtippro := 2; -- Demais Convênios
+              vr_idlstdom := 2; -- Demais Convênios
             END IF;
           ELSE
             vr_cdtippro := 0; 
