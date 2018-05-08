@@ -3533,7 +3533,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0006 IS
                                    FROM dual
                             CONNECT BY LEVEL <= regexp_count(TRIM(pr_dsctrliq), '[^,]+')));
       
-		  -- Cursor da data
+      -- Cursor da data
       rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;
       
     BEGIN
@@ -4073,7 +4073,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0006 IS
     CURSOR cr_situacao IS
       SELECT cdsituacao
             ,dssituacao
-        FROM tbcc_situacao_conta;
+        FROM tbcc_situacao_conta
+       ORDER BY cdsituacao;
 
     -----------------> VARIAVEIS <-----------------
     
