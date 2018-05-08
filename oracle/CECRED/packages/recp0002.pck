@@ -132,6 +132,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
   -- Formato de retorno para data no xml
   vr_frmtdata   VARCHAR2(20) := 'DD/MM/RRRR';
   
+  ---------------> CURSORES <-------------
+  --> Buscar saldo do associado
+  CURSOR cr_crapsld(pr_cdcooper  crapsld.cdcooper%TYPE,
+                    pr_nrdconta  crapsld.nrdconta%TYPE) IS
+    SELECT crapsld.vlsddisp
+          ,crapsld.vliofmes
+          ,crapsld.vlbasiof
+      FROM crapsld
+     WHERE crapsld.cdcooper = pr_cdcooper
+       AND crapsld.nrdconta = pr_nrdconta;
+  rw_crapsld cr_crapsld%ROWTYPE;
+  
   PROCEDURE pc_quebra_desc_contrat(pr_nrcontrato  IN VARCHAR2,
                                    pr_cdcooper   OUT NUMBER,
                                    pr_cdorigem   OUT NUMBER,
@@ -178,7 +190,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
    Observacao: -----
    Alteracoes: 19/09/2016 - Alterado soma de saldo acumulado, Prj. 302 (Jean Michel).
 
+               08/05/2018 - Inclusao dos valores de IOF provisionado ao acordo.
+                            PRJ450 (Odirlei-AMcom) 
    ..............................................................................*/                                    
+    ---------------> CURSORES <-------------
+    
     ---------------> VARIAVEIS <------------
     -- Tratamento de erros
     vr_cdcritic    INTEGER;
@@ -239,6 +255,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
         vr_vlsomato := ROUND( nvl(vr_tab_saldos(vr_index_saldo).vlsddisp, 0),2);
       END IF;
       
+      --> Buscar saldo do associado
+      OPEN cr_crapsld(pr_cdcooper  => pr_cdcooper,
+                      pr_nrdconta  => pr_nrdconta);
+      FETCH cr_crapsld INTO rw_crapsld;
+      CLOSE cr_crapsld;
+      
+      --> Incrementar valor iof Calculado até o dia atual
+      IF rw_crapsld.vliofmes > 0 THEN
+        vr_vlsomato := nvl(vr_vlsomato,0) - ROUND( nvl(rw_crapsld.vliofmes, 0),2);
+      END IF;
+                              
       IF vr_vlsomato < 0 THEN
         -- Saldo Devedor
         pr_vlsdeved := ABS(vr_vlsomato);
@@ -775,6 +802,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
 
    Observacao: -----
    Alteracoes: 30/01/2017 - Nao permitir gerar boleto para Pos-Fixado. (Jaison/James - PRJ298)
+
+               08/05/2018 - Inclusao dos valores de IOF provisionado ao acordo.
+                            PRJ450 (Odirlei-AMcom)
+ 
    ..............................................................................*/                                    
    
     ---------------> CURSORES <-------------
@@ -828,6 +859,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
     vr_dscritic   VARCHAR2(10000);
     vr_cdcritic   INTEGER;
     vr_exc_erro   EXCEPTION;
+    vr_vliofdev   NUMBER;
+    vr_vlbasiof   NUMBER;
     
   BEGIN
   
@@ -877,17 +910,70 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
     END IF;
     CLOSE cr_tbrecup_contrato;
    
+    vr_vliofdev := 0;
+    vr_vlbasiof := 0;
+    -- Se a origem estiver indicando ESTOURO DE CONTA
+    IF pr_cdorigem = 1 THEN
+    
+      --> Buscar saldo do associado
+      OPEN cr_crapsld(pr_cdcooper  => pr_cdcooper,
+                      pr_nrdconta  => pr_nrdconta);
+      FETCH cr_crapsld INTO rw_crapsld;
+      CLOSE cr_crapsld;
+      
+      --------------------------------------------------------------------------------------------------
+      -- Atualizar os dados do IOF
+      --------------------------------------------------------------------------------------------------
+      TIOF0001.pc_altera_iof(pr_cdcooper   => pr_cdcooper
+                            ,pr_nrdconta   => pr_nrdconta
+                            ,pr_dtmvtolt   => NULL
+                            ,pr_tpproduto  => 5
+                            ,pr_nrcontrato => 0
+                            ,pr_nracordo   => pr_nracordo
+                            ,pr_cdcritic   => vr_cdcritic
+                            ,pr_dscritic   => vr_dscritic);
+                                
+      -- Condicao para verificar se houve critica                             
+      IF vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_erro;
+      END IF;
+      
+      --> Buscar valor iof Calculado até o dia atual
+      vr_vliofdev := rw_crapsld.vliofmes;
+      vr_vlbasiof := rw_crapsld.vlbasiof;
+      
+      --> Atualizar crapsld
+      BEGIN
+        UPDATE crapsld sld
+           SET sld.vliofmes = 0,
+               sld.vlbasiof = 0 
+         WHERE sld.cdcooper = pr_cdcooper
+           AND sld.nrdconta = pr_nrdconta;
+      EXCEPTION
+        WHEN OTHERS THEN
+          vr_dscritic := 'Erro ao atualizar valor do IOF na crapsld: '||SQLERRM;
+          --Sair do programa
+          RAISE vr_exc_erro; 
+      END;
+      
+    END IF;
+    
     --> Gravar contrato
     BEGIN
       INSERT INTO tbrecup_acordo_contrato
                    (nracordo, 
                     nrgrupo, 
                     cdorigem, 
-                    nrctremp)
+                    nrctremp,
+                    vliofdev,
+                    vlbasiof)
              VALUES(pr_nracordo, --> nracordo
                     pr_nrdgrupo, --> nrgrupo  
                     pr_cdorigem, --> cdorigem 
-                    pr_nrctremp);--> nrctrem 
+                    pr_nrctremp, --> nrctrem 
+                    vr_vliofdev, --> vliofdev
+                    vr_vlbasiof);--> vlbasiof
+                    
     EXCEPTION
       WHEN OTHERS THEN
         vr_cdcritic := 0;
@@ -1642,10 +1728,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0002 IS
                   30/11/2017 - Ajuste para fixar o número de parcelar como 0 - zero ao chamar
                                a rotina que efetua o lançamento
                                (Adriano - SD 804308).
-
-                  17/04/2018 - Implementado codigo de erro para acordos ativos no Cyber
-				               e inexistentes no Ayllos.
-                               (GSaquetta - Chamado 848110).
 
     ..............................................................................*/                                    
     

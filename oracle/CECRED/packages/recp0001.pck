@@ -27,6 +27,23 @@ CREATE OR REPLACE PACKAGE CECRED.RECP0001 IS
                                   ,pr_cdcritic OUT INTEGER                         -- Código de críticia
                                   ,pr_dscritic OUT VARCHAR2);                      -- Descrição da crítica
     
+  -- Realizar pagamento do IOF de estouro de conta do acordo
+  PROCEDURE pc_pagar_IOF_contrato_conta(pr_cdcooper  IN crapepr.cdcooper%TYPE        -- Código da Cooperativa
+                                       ,pr_nrdconta  IN crapass.nrdconta%TYPE        -- Número da Conta
+                                       ,pr_cdagenci  IN crapass.cdagenci%TYPE        -- Código da agencia
+                                       ,pr_crapdat   IN btch0001.cr_crapdat%ROWTYPE  -- Datas da cooperativa
+                                       ,pr_cdoperad  IN VARCHAR2                     -- Código do cooperado
+                                       ,pr_nracordo  IN tbrecup_acordo.nracordo%TYPE -- Número do acordo                                       
+                                       ,pr_vlparcel  IN NUMBER                       -- Valor pago do boleto do acordo
+                                       ,pr_vliofdev  IN tbrecup_acordo_contrato.vliofdev%TYPE -- Valor IOF Devedor
+                                       ,pr_vlbasiof  IN tbrecup_acordo_contrato.vlbasiof%TYPE -- Valor Base IOF
+                                       ,pr_vliofpag  IN tbrecup_acordo_contrato.vliofpag%TYPE -- Valor IOF pago
+                                       ,pr_rowid_ctr IN ROWID                        -- Rowid do acordo contrato
+                                       ,pr_flgabono  IN INTEGER DEFAULT 0            -- Indicador de abono de IOF
+                                       ,pr_vltotpag OUT NUMBER                       -- Retorno do valor pago
+                                       ,pr_cdcritic OUT NUMBER                       -- Código de críticia
+                                       ,pr_dscritic OUT VARCHAR2 );                  -- Descrição da crítica
+                                       
   -- Efetuar o calculo do lançamento a ser creditado na conta corrente
   PROCEDURE pc_pagar_contrato_conta(pr_cdcooper  IN crapepr.cdcooper%TYPE        -- Código da Cooperativa
                                    ,pr_nrdconta  IN crapass.nrdconta%TYPE        -- Número da Conta
@@ -508,6 +525,366 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
       pr_cdcritic := 0;
       pr_dscritic := 'Erro na RECP0001.PC_RET_VLR_BLOQ_ACORDO: ' || SQLERRM;
   END pc_ret_vlr_bloq_acordo;
+  
+  
+  -- Realizar pagamento do IOF de estouro de conta do acordo
+  PROCEDURE pc_pagar_IOF_contrato_conta(pr_cdcooper  IN crapepr.cdcooper%TYPE        -- Código da Cooperativa
+                                       ,pr_nrdconta  IN crapass.nrdconta%TYPE        -- Número da Conta
+                                       ,pr_cdagenci  IN crapass.cdagenci%TYPE        -- Código da agencia
+                                       ,pr_crapdat   IN btch0001.cr_crapdat%ROWTYPE  -- Datas da cooperativa
+                                       ,pr_cdoperad  IN VARCHAR2                     -- Código do cooperado
+                                       ,pr_nracordo  IN tbrecup_acordo.nracordo%TYPE -- Número do acordo                                       
+                                       ,pr_vlparcel  IN NUMBER                       -- Valor pago do boleto do acordo
+                                       ,pr_vliofdev  IN tbrecup_acordo_contrato.vliofdev%TYPE -- Valor IOF Devedor
+                                       ,pr_vlbasiof  IN tbrecup_acordo_contrato.vlbasiof%TYPE -- Valor Base IOF
+                                       ,pr_vliofpag  IN tbrecup_acordo_contrato.vliofpag%TYPE -- Valor IOF pago
+                                       ,pr_rowid_ctr IN ROWID                        -- Rowid do acordo contrato
+                                       ,pr_flgabono  IN INTEGER DEFAULT 0            -- Indicador de abono de IOF
+                                       ,pr_vltotpag OUT NUMBER                       -- Retorno do valor pago
+                                       ,pr_cdcritic OUT NUMBER                       -- Código de críticia
+                                       ,pr_dscritic OUT VARCHAR2 ) IS                -- Descrição da crítica
+    
+  ---------------------------------------------------------------------------------------------------------------
+  --
+  --  Programa : pc_pagar_IOF_contrato_conta
+  --  Sigla    : RECP
+  --  Autor    : Odirlei Busana - AMcom
+  --  Data     : Setembro/2016.                   Ultima atualizacao: 04/05/2018
+  --
+  -- Dados referentes ao programa:
+  --
+  -- Frequencia: -----
+  -- Objetivo  : Realizar pagamento do IOF de estouro de conta do acordo
+  --
+  -- Alteração : 04/05/2018- Inclusão do debito do IOF acordo. PRJ450 (Odirlei-AMcom)
+  --  
+  ---------------------------------------------------------------------------------------------------------------
+    
+    ---------------> CURSORES <-------------    
+    --Selecionar informacoes dos lotes
+    CURSOR cr_craplot ( pr_cdcooper IN craplot.cdcooper%TYPE
+                       ,pr_dtmvtolt IN craplot.dtmvtolt%TYPE
+                       ,pr_cdagenci IN craplot.cdagenci%TYPE
+                       ,pr_cdbccxlt IN craplot.cdbccxlt%TYPE
+                       ,pr_nrdolote IN craplot.nrdolote%TYPE)  IS
+      SELECT  craplot.dtmvtolt
+             ,craplot.cdagenci
+             ,craplot.cdbccxlt
+             ,craplot.nrdolote
+             ,craplot.nrseqdig
+             ,craplot.cdcooper
+             ,craplot.tplotmov
+             ,craplot.vlinfodb
+             ,craplot.vlcompdb
+             ,craplot.qtinfoln
+             ,craplot.qtcompln
+             ,craplot.rowid
+        FROM craplot craplot
+       WHERE craplot.cdcooper = pr_cdcooper
+         AND craplot.dtmvtolt = pr_dtmvtolt
+         AND craplot.cdagenci = pr_cdagenci
+         AND craplot.cdbccxlt = pr_cdbccxlt
+         AND craplot.nrdolote = pr_nrdolote
+         FOR UPDATE;
+    rw_craplot cr_craplot%ROWTYPE;
+    
+    --> Verificar se ja existe lcm
+    CURSOR cr_craplcm  ( pr_cdcooper craplcm.cdcooper%TYPE,
+                         pr_dtmvtolt craplcm.dtmvtolt%TYPE,
+                         pr_cdagenci craplcm.cdagenci%TYPE,
+                         pr_cdbccxlt craplcm.cdbccxlt%TYPE,
+                         pr_nrdolote craplcm.nrdolote%TYPE,
+                         pr_nrdctabb craplcm.nrdctabb%TYPE,
+                         pr_nrdocmto craplcm.nrdocmto%TYPE) IS
+      SELECT lcm.nrdocmto
+        FROM craplcm lcm
+       WHERE lcm.cdcooper = pr_cdcooper
+         AND lcm.dtmvtolt = pr_dtmvtolt
+         AND lcm.cdagenci = pr_cdagenci
+         AND lcm.cdbccxlt = pr_cdbccxlt
+         AND lcm.nrdolote = pr_nrdolote
+         AND lcm.nrdctabb = pr_nrdctabb
+         AND lcm.nrdocmto = pr_nrdocmto;
+    rw_craplcm_1 cr_craplcm%ROWTYPE; 
+    
+    --> buscar valores de IOF
+    CURSOR cr_ioflanc IS
+      SELECT iof.rowid,
+             iof.vliof
+        FROM tbgen_iof_lancamento iof
+       WHERE iof.cdcooper   = pr_cdcooper
+         AND iof.nrdconta   = pr_nrdconta
+         AND iof.nrcontrato = 0
+         AND iof.tpproduto  = 5
+         AND iof.idlautom     IS NULL
+         AND iof.dtmvtolt_lcm IS NULL
+         AND iof.cdagenci_lcm IS NULL
+         AND iof.cdbccxlt_lcm IS NULL
+         AND iof.nrdolote_lcm IS NULL
+         AND iof.nrseqdig_lcm IS NULL
+         AND iof.nracordo = pr_nracordo
+       ORDER BY iof.dtmvtolt,iof.idlancto;
+    
+    rw_craplcm craplcm%ROWTYPE;
+       
+    -- VARIÁVEIS
+    vr_vlioflan       NUMBER;
+    vr_vliofpen       NUMBER := 0;
+    vr_vlparcel       NUMBER := 0;
+    vr_nrdocmto       NUMBER := 0;
+    vr_des_reto       VARCHAR2(10);
+    vr_tab_erro       GENE0001.typ_tab_erro;
+    
+    TYPE typ_tab_rowid_iof IS TABLE OF ROWID
+         INDEX BY PLS_INTEGER;
+    vr_tab_rowid_iof typ_tab_rowid_iof;
+    
+    -- EXCEPTION
+    vr_exc_erro       EXCEPTION;
+    vr_cdcritic     NUMBER;
+    vr_dscritic     VARCHAR2(1000);
+    
+    
+  BEGIN
+  
+    vr_vlparcel := pr_vlparcel;
+  
+    --> Calcular valor de IOF pendente
+    vr_vliofpen := pr_vliofdev - pr_vliofpag;
+    
+    -- Verificar se aind a possui valor IOF a regularizar
+    IF vr_vliofpen <= 0 THEN
+      pr_vltotpag := 0; -- Indica que nenhum valor foi pago na conta
+      RETURN;
+    END IF;
+    
+    /** SAVEPOINT PARA CONTROLE DA TRANSAÇÃO **/
+    SAVEPOINT SAVE_IOF_CONTRATO_CONTA;
+    /******************************************/
+    
+    --> Se possui valor d IOF a regularizar e valor de parcela
+    IF vr_vliofpen > 0  AND vr_vlparcel > 0 THEN
+    
+      vr_vlioflan := 0;   
+      vr_tab_rowid_iof.delete;   
+      --> buscar valores de IOF
+      FOR rw_ioflanc IN cr_ioflanc LOOP
+      
+        --> Somar valor até o valor total pendente
+        IF (rw_ioflanc.vliof + vr_vlioflan) <= vr_vliofpen AND
+           -- e valor ainda for menor que o valor da parcela
+           (rw_ioflanc.vliof + vr_vlioflan) <= vr_vlparcel THEN
+        
+          vr_tab_rowid_iof(vr_tab_rowid_iof.count) := rw_ioflanc.rowid; 
+          vr_vlioflan := vr_vlioflan + rw_ioflanc.vliof;   
+        ELSE 
+          --> Nao possui valor suficiente para atualizar
+          EXIT;
+        END IF;
+      
+      END LOOP;
+      
+      -- Verificar se possui valor para gerar o lancamento
+      IF vr_vlioflan <= 0 THEN
+        pr_vltotpag := 0; -- Indica que nenhum valor foi pago na conta
+        RETURN;
+      END IF;
+    
+      --Verificar se o lote existe
+      OPEN cr_craplot ( pr_cdcooper => pr_cdcooper
+                       ,pr_dtmvtolt => pr_crapdat.dtmvtolt
+                       ,pr_cdagenci => 1
+                       ,pr_cdbccxlt => 100
+                       ,pr_nrdolote => 8450);
+      FETCH cr_craplot INTO rw_craplot;
+      IF cr_craplot%NOTFOUND THEN
+       --Criar lote
+       BEGIN
+         --Inserir a capa do lote retornando informacoes para uso posterior
+         INSERT INTO craplot (cdcooper
+                             ,dtmvtolt
+                             ,cdagenci
+                             ,cdbccxlt
+                             ,nrdolote
+                             ,tplotmov)
+                     VALUES  (pr_cdcooper
+                             ,pr_crapdat.dtmvtolt
+                             ,1
+                             ,100
+                             ,8450
+                             ,1)
+                     RETURNING cdcooper
+                              ,dtmvtolt
+                              ,cdagenci
+                              ,cdbccxlt
+                              ,nrdolote
+                              ,tplotmov
+                              ,ROWID
+                     INTO  rw_craplot.cdcooper
+                          ,rw_craplot.dtmvtolt
+                          ,rw_craplot.cdagenci
+                          ,rw_craplot.cdbccxlt
+                          ,rw_craplot.nrdolote
+                          ,rw_craplot.tplotmov
+                          ,rw_craplot.rowid;
+       EXCEPTION
+         WHEN OTHERS THEN
+           vr_dscritic := 'Erro ao inserir na tabela craplot. '||SQLERRM;
+           --Sair do programa
+           RAISE vr_exc_erro;
+       END;
+      END IF;
+      --Fechar Cursor
+      CLOSE cr_craplot;
+      
+      vr_nrdocmto := 99999323;
+      
+      --> Verificar se ja existe lcm
+      LOOP
+        OPEN cr_craplcm (pr_cdcooper => pr_cdcooper,
+                         pr_dtmvtolt => rw_craplot.dtmvtolt,
+                         pr_cdagenci => rw_craplot.cdagenci,
+                         pr_cdbccxlt => rw_craplot.cdbccxlt,
+                         pr_nrdolote => rw_craplot.nrdolote,
+                         pr_nrdctabb => pr_nrdconta,
+                         pr_nrdocmto => vr_nrdocmto);
+        FETCH cr_craplcm INTO rw_craplcm_1;
+        IF cr_craplcm%NOTFOUND THEN
+          CLOSE cr_craplcm;
+          --> Sair do loop, pois o numero nao é utilizado 
+          EXIT;
+        ELSE
+          vr_nrdocmto := vr_nrdocmto + 1;
+          CLOSE cr_craplcm;
+        END IF;
+                                     
+      END LOOP;                               
+      --Inserir lancamento retornando o valor do rowid e do lançamento para uso posterior
+      BEGIN
+       INSERT INTO craplcm (cdcooper
+                           ,dtmvtolt
+                           ,cdagenci
+                           ,cdbccxlt
+                           ,nrdolote
+                           ,nrdconta
+                           ,nrdctabb
+                           ,nrdctitg
+                           ,nrdocmto
+                           ,cdhistor
+                           ,nrseqdig
+                           ,vllanmto
+                           ,cdpesqbb
+                           ,vldoipmf
+                           ,cdorigem)
+                   VALUES  (pr_cdcooper
+                           ,rw_craplot.dtmvtolt
+                           ,rw_craplot.cdagenci
+                           ,rw_craplot.cdbccxlt
+                           ,rw_craplot.nrdolote
+                           ,pr_nrdconta
+                           ,pr_nrdconta
+                           ,to_char(pr_nrdconta,'fm00000000')
+                           ,vr_nrdocmto
+                           ,2323
+                           ,Nvl(rw_craplot.nrseqdig,0) + 1
+                           ,round(vr_vlioflan,2)
+                           ,to_char(pr_vlbasiof,'fm000g000g000d00')
+                           ,0
+                           ,11)-- ACORDO
+                 RETURNING dtmvtolt,
+                           cdagenci,
+                           cdbccxlt,
+                           nrdolote,
+                           nrseqdig,
+                           vllanmto
+                      INTO rw_craplcm.dtmvtolt,
+                           rw_craplcm.cdagenci,
+                           rw_craplcm.cdbccxlt,
+                           rw_craplcm.nrdolote, 
+                           rw_craplcm.nrseqdig,
+                           rw_craplcm.vllanmto;
+
+      EXCEPTION
+       WHEN OTHERS THEN
+         vr_dscritic := 'Erro ao inserir na tabela craplcm. '|| SQLERRM;
+         --Sair do programa
+         RAISE vr_exc_erro;
+      END;
+
+      --Atualizar capa do Lote
+      BEGIN
+       UPDATE craplot SET craplot.vlinfodb = Nvl(craplot.vlinfodb,0) + round(rw_craplcm.vllanmto,2)
+                         ,craplot.vlcompdb = Nvl(craplot.vlcompdb,0) + round(rw_craplcm.vllanmto,2)
+                         ,craplot.qtinfoln = Nvl(craplot.qtinfoln,0) + 1
+                         ,craplot.qtcompln = Nvl(craplot.qtcompln,0) + 1
+                         ,craplot.nrseqdig = Nvl(craplot.nrseqdig,0) + 1
+       WHERE craplot.ROWID = rw_craplot.ROWID;
+      EXCEPTION
+       WHEN OTHERS THEN
+         vr_dscritic := 'Erro ao atualizar tabela craplot. '||SQLERRM;
+         --Sair do programa
+         RAISE vr_exc_erro;
+      END;
+        
+      --> Atualizar IOFs debitados
+      FOR idx IN vr_tab_rowid_iof.first..vr_tab_rowid_iof.last LOOP
+      
+        BEGIN
+          UPDATE tbgen_iof_lancamento lan
+             SET lan.dtmvtolt_lcm = rw_craplcm.dtmvtolt
+                ,lan.cdagenci_lcm = rw_craplcm.cdagenci
+                ,lan.cdbccxlt_lcm = rw_craplcm.cdbccxlt
+                ,lan.nrdolote_lcm = rw_craplcm.nrdolote
+                ,lan.nrseqdig_lcm = rw_craplcm.nrseqdig
+           WHERE lan.rowid = vr_tab_rowid_iof(idx);
+        EXCEPTION 
+          WHEN OTHERS THEN
+            vr_dscritic := 'Erro ao atualizar tabela tbgen_iof_lancamento. '||SQLERRM;
+            --Sair do programa
+            RAISE vr_exc_erro;
+        END;
+        
+      END LOOP;
+      
+      --> Atualizar apenas se nao for abono
+      IF pr_flgabono = 0 THEN
+        --> Atualizar valor total ja pago
+        BEGIN
+          UPDATE tbrecup_acordo_contrato acd
+             SET acd.vliofpag = nvl(acd.vliofpag,0) + vr_vlioflan
+           WHERE acd.rowid = pr_rowid_ctr;
+        EXCEPTION  
+          WHEN OTHERS THEN
+            vr_dscritic := 'Erro ao atualizar vliofpag: '||SQLERRM;
+            --Sair do programa
+            RAISE vr_exc_erro;
+        END;
+      END IF;
+            
+      pr_vltotpag := nvl(pr_vltotpag,0) + rw_craplcm.vllanmto;  
+      
+    END IF;
+    
+        
+  EXCEPTION
+    WHEN  vr_exc_erro THEN
+      pr_vltotpag := 0; -- retornar zero
+      
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := vr_dscritic;
+      
+      /** DESFAZER A TRANSAÇÃO **/
+      ROLLBACK TO SAVE_IOF_CONTRATO_CONTA;
+      /**************************/
+    WHEN OTHERS THEN
+      pr_vltotpag := 0; -- retornar zero
+      pr_cdcritic := 0;
+      pr_dscritic := 'Erro na PC_PAGAR_IOF_CONTRATO_CONTA: '||SQLERRM;
+      
+      /** DESFAZER A TRANSAÇÃO **/
+      ROLLBACK TO SAVE_IOF_CONTRATO_CONTA;
+      /**************************/
+  END pc_pagar_IOF_contrato_conta;
   
   
   -- Efetuar o calculo do lançamento a ser creditado na conta corrente
@@ -2391,7 +2768,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
 				      , a.nrdconta
 							, c.nrctremp
 							, c.cdorigem
-							, c.indpagar
+							, c.indpagar	   
+                      , c.vliofdev
+                      , c.vlbasiof
+                      , c.vliofpag
+                      , c.rowid
 				   FROM tbrecup_acordo a
 					    , tbrecup_acordo_contrato c
 				 WHERE a.nracordo = pr_nracordo
@@ -2401,6 +2782,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
            , acc.nrdconta
            , acc.cdorigem 
            , acc.nrctremp
+           , acc.vliofdev
+           , acc.vlbasiof
+           , acc.vliofpag
+           , acc.rowid
         FROM crapass                  ass
            , crapcyb                  cyb
            , contratos_acordo acc
@@ -2682,6 +3067,55 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
       -- Se a origem estiver indicando ESTOURO DE CONTA
       IF rw_acordo_contrato.cdorigem = 1 THEN
                 
+        --IOF
+        BEGIN
+          -- Regularizar valor do IOF de estouro de conta do acordo
+          pc_pagar_IOF_contrato_conta(pr_cdcooper => rw_acordo_contrato.cdcooper
+                                     ,pr_nrdconta => rw_acordo_contrato.nrdconta
+                                     ,pr_cdagenci => rw_crapass.cdagenci
+                                     ,pr_crapdat  => BTCH0001.rw_crapdat
+                                     ,pr_cdoperad => pr_cdoperad
+                                     ,pr_nracordo => pr_nracordo
+                                     ,pr_vlparcel => vr_vlparcel
+                                     ,pr_vliofdev => rw_acordo_contrato.vliofdev -- Valor IOF Devedor
+                                     ,pr_vlbasiof => rw_acordo_contrato.vlbasiof -- Valor Base IOF
+                                     ,pr_vliofpag => rw_acordo_contrato.vliofpag -- Valor IOF pago
+                                     ,pr_rowid_ctr=> rw_acordo_contrato.rowid    -- Rowid do acordo contrato
+
+                                     ,pr_vltotpag => vr_vltotpag                               
+                                     ,pr_cdcritic => vr_cdcritic
+                                     ,pr_dscritic => vr_dscritic);
+           
+          -- Verifica ocorrencia de erro                   
+          IF vr_dscritic IS NOT NULL OR NVL(vr_cdcritic,0) > 0 THEN
+          
+            -- Indicar que houve crítica ao processar o pagamento de estouro de conta
+            vr_flagerro := TRUE;
+            
+            -- Em caso de erro será gerado o log e prosseguirá ao próximo pagamento
+            pc_gera_log_mail(pr_cdcooper => rw_acordo_contrato.cdcooper
+                            ,pr_nrdconta => rw_acordo_contrato.nrdconta
+                            ,pr_nracordo => pr_nracordo
+                            ,pr_nrctremp => rw_acordo_contrato.nrctremp
+                            ,pr_dscritic => vr_dscritic
+                            ,pr_dsmodule => 'PC_PAGAR_IOF_CONTRATO_CONTA');
+            
+            -- Voltar ao Loop para processar o próximo pagamento
+            CONTINUE;
+            
+          END IF;                     
+          
+          -- Diminuir o valor pago do boleto com o lançamento efetuado na conta corrente
+          vr_vlparcel := vr_vlparcel - NVL(vr_vltotpag,0);
+          -----------------------------------------------------------------------------------------------
+          
+          -- Somar o valor pago ao montante total de pagamentos
+          pr_vltotpag := NVL(pr_vltotpag,0) + NVL(vr_vltotpag,0);
+          -----------------------------------------------------------------------------------------------
+        END;
+        --FIM IOF
+      
+                
         -- Chamar procedure para regularizar o valor do estouro de conta
         pc_pagar_contrato_conta(pr_cdcooper => rw_acordo_contrato.cdcooper
                                ,pr_nrdconta => rw_acordo_contrato.nrdconta
@@ -2691,6 +3125,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
                                ,pr_nracordo => pr_nracordo
                                ,pr_vlsddisp => vr_vlsddisp
                                ,pr_vlparcel => vr_vlparcel
+                               
                                ,pr_vltotpag => vr_vltotpag
                                ,pr_cdcritic => vr_cdcritic
                                ,pr_dscritic => vr_dscritic);
