@@ -6959,6 +6959,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
       vr_conarqui   NUMBER:= 0;                                        
       vr_listarq    VARCHAR2(2000);                                    
       vr_split      gene0002.typ_split := gene0002.typ_split(); 
+      vr_indice     NUMBER;
     
       -- Tratamento de erros
       vr_exc_saida     EXCEPTION;
@@ -8216,16 +8217,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
           vr_dscritic := NULL;
         END IF;
         
-        -- Atualizar os registros de majoração
-        UPDATE integradados.sasf_majoracaocartao@sasp maj
-	         SET maj.cdmajorado        = vr_cdmajora
-             , maj.dtmajoracaocartao = SYSTIMESTAMP
-	           , maj.dsexclusao        = vr_dscritic
-	       WHERE maj.cdcooper          = pr_cdcooper
-	         AND maj.nrdconta          = pr_nrdconta
-	         AND maj.nrcontacartao     = pr_nrctacrd
-	         AND maj.cdmajorado        = 4; -- Pendente
-
+        
+        IF gene0001.fn_database_name = gene0001.fn_param_sistema('CRED',pr_cdcooper,'DB_NAME_PRODUC') THEN --> Produção
+    
+          -- Atualizar os registros de majoração
+          UPDATE integradados.sasf_majoracaocartao@sasp maj
+             SET maj.cdmajorado        = vr_cdmajora
+               , maj.dtmajoracaocartao = SYSTIMESTAMP
+               , maj.dsexclusao        = vr_dscritic
+           WHERE maj.cdcooper          = pr_cdcooper
+             AND maj.nrdconta          = pr_nrdconta
+             AND maj.nrcontacartao     = pr_nrctacrd
+             AND maj.cdmajorado        = 4; -- Pendente
+        END IF;
+        
       EXCEPTION
         WHEN OTHERS THEN
           pr_des_erro := 'Erro ao atualizar majoracao: '||SQLERRM;
@@ -10331,42 +10336,49 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
 
       END LOOP;
       
-      -- Após processar os arquivos, deve verificar se foi gerado lote de envio de SMS
-      IF vr_vet_nrdlote.EXISTS(vr_cdcooper_ori) THEN
-        --> Enviar lote de SMS para o Aymaru
-        pc_enviar_lote_SMS(pr_cdcooper => vr_cdcooper_ori
-                          ,pr_idlotsms => vr_vet_nrdlote(vr_cdcooper_ori)
-                          ,pr_dscritic => vr_dscritic
-                          ,pr_cdcritic => vr_cdcritic);
-                    
-        -- Se houve retorno de algum erro      
-        IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
-          -- Em caso de erro deve setar o lote como FALHA
-         /* BEGIN
-            UPDATE tbgen_sms_lote lot
-               SET lot.idsituacao = 'F' -- Falha
-             WHERE lot.idlote_sms = vr_idlotsms;
-          EXCEPTION 
-            WHEN OTHERS THEN
-              -- Não irá alterar a mensagem de erro, para que mostre a mensagem de retorno do AYMARU
-              RAISE vr_exc_saida;
-          END;  */
+      IF  vr_vet_nrdlote.COUNT > 0 THEN
         
-          pc_log_message;
-        END IF;
+        vr_indice := vr_vet_nrdlote.FIRST;
         
-        -- Fechar a situação do lote
-       /* ESMS0001.pc_conclui_lote_sms(pr_idlote_sms  => vr_idlotsms
-                                     ,pr_dscritic   => vr_dscritic);
-        
-        -- Se houve retorno de algum erro      
-        IF vr_dscritic IS NOT NULL THEN
-          RAISE vr_exc_saida;
-        END IF;*/
-        
+        LOOP        
+          -- Após processar os arquivos, deve verificar se foi gerado lote de envio de SMS
+          --> Enviar lote de SMS para o Aymaru
+          pc_enviar_lote_SMS(pr_cdcooper => vr_cdcooper_ori
+                            ,pr_idlotsms => vr_vet_nrdlote(vr_indice)
+                            ,pr_dscritic => vr_dscritic
+                            ,pr_cdcritic => vr_cdcritic);
+                        
+          -- Se houve retorno de algum erro      
+          IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+            -- Em caso de erro deve setar o lote como FALHA
+           /* BEGIN
+              UPDATE tbgen_sms_lote lot
+                 SET lot.idsituacao = 'F' -- Falha
+               WHERE lot.idlote_sms = vr_idlotsms;
+            EXCEPTION 
+              WHEN OTHERS THEN
+                -- Não irá alterar a mensagem de erro, para que mostre a mensagem de retorno do AYMARU
+                RAISE vr_exc_saida;
+            END;  */
+            
+            pc_log_message;
+          END IF;
+
+          
+          -- Fechar a situação do lote
+         /* ESMS0001.pc_conclui_lote_sms(pr_idlote_sms  => vr_idlotsms
+                                       ,pr_dscritic   => vr_dscritic);
+            
+          -- Se houve retorno de algum erro      
+          IF vr_dscritic IS NOT NULL THEN
+            RAISE vr_exc_saida;
+          END IF;*/
+          EXIT WHEN vr_vet_nrdlote.LAST = vr_indice;
+
+          vr_indice := vr_vet_nrdlote.NEXT(vr_indice);
+          
+        END LOOP;   
       END IF;
-      
-      
       -- Adiciona a linha ao XML
       pc_escreve_xml(vr_xml_lim_cartao,'</crrl707>');
 
