@@ -1596,16 +1596,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
        
        25/10/2017 - Alterar o armazenamento da pr_dscritic quando encontrar erros
                     para utilizar a vr_dscritic pois no raise utilizamos o vr_dscritic
-                    para gravar no pr_dscritic (Lucas Ranghetti / Fabricio)
+                    para gravar no pr_dscritic (Lucas Ranghetti / Fabricio)               
                     
-       07/12/2017 - Melhoria 458, incluir parametro tppagmto nas chamadas da pc_gera_titulos_iptu - Antonio R. Jr (mouts)  
-	   
+	   07/12/2017 - Melhoria 458, incluir parametro tppagmto nas chamadas da pc_gera_titulos_iptu - Antonio R. Jr (mouts)                         
+               
 	   11/12/2017 - Alterar campo flgcnvsi por tparrecd.
                     PRJ406-FGTS (Odirlei-AMcom)                       
        
        12/12/2017 - Passar como texto o campo nrcartao na chamada da procedure 
                     pc_gera_log_ope_cartao (Lucas Ranghetti #810576)         
-  
+       
        14/02/2018 - Projeto Ligeirinho. Alterado para gravar na tabela de lotes (craplot) somente no final
                             da execução do CRPS509 => INTERNET E TAA. (Fabiano Girardi AMcom)        
   ---------------------------------------------------------------------------------------------------------------*/
@@ -1654,6 +1654,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PAGA0001 AS
           ,crapass.nrctacns
           ,crapass.dtdemiss
 					,crapass.idastcjt
+          ,crapass.cdtipcta
     FROM crapass
     WHERE crapass.cdcooper = pr_cdcooper
     AND   crapass.nrdconta = pr_nrdconta;
@@ -2139,7 +2140,7 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
                               ,pr_nmrotina in varchar2) is
     
     vr_campos  tbgen_batch_relatorio_wrk.dscritic%type;
-
+    
   begin 
     vr_campos :=   CODIGO_SEPARADOR_STRING||
                    pr_cdbccxlt||CODIGO_SEPARADOR_STRING||
@@ -3654,7 +3655,7 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
     --   Alteração : 23/06/2015 - Ajuste ao definir variavel de agendameno para rotina de protocolo
     --                            (Odirlei-AMcom)
     --
-	--    			     28/03/2016 - Adicionados parâmetros para geraçao de LOG
+  --               28/03/2016 - Adicionados parâmetros para geraçao de LOG
     --                            (Lucas Lunelli - PROJ290 Cartao CECRED no CaixaOnline)
     --
     -- ..........................................................................
@@ -4294,8 +4295,8 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
     --               04/02/2016 - Aumento no tempo de verificacao de Transferencia duplicada. 
     --                            De 30 seg. para 10 min. (Jorge/David) - SD 397867 
 	--
-	  --    			     28/03/2016 - Adicionados parâmetros para geraçao de LOG
-    --                           (Lucas Lunelli - PROJ290 Cartao CECRED no CaixaOnline)
+    --               28/03/2016 - Adicionados parâmetros para geraçao de LOG
+    --                          (Lucas Lunelli - PROJ290 Cartao CECRED no CaixaOnline)
 	--
     --               12/12/2017 - Passar como texto o campo nrcartao na chamada da procedure 
     --                            pc_gera_log_ope_cartao (Lucas Ranghetti #810576)
@@ -4628,7 +4629,7 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
                             pr_cdhistor => 0,
                             pr_cdbccxpg => null,
                             pr_nmrotina => 'PC_EXECUTA_TRANSFERENCIA');
-                            
+
         rw_craplot.cdcooper := pr_cdcooper;                   
         rw_craplot.dtmvtolt := pr_dtmvtocd;                  
         rw_craplot.cdagenci := pr_cdagenci;                   
@@ -5490,17 +5491,17 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
 			
 		-- Geracao de log para operacoes que podem utilizar o cartao ORIGEM	
 		CADA0004.pc_gera_log_ope_cartao(pr_cdcooper       => pr_cdcooper    -- Codigo da cooperativa
-									                 ,pr_nrdconta 	    => pr_nrdconta    -- Numero da conta
-									                 ,pr_indoperacao 		=> 4              -- Operacao realizada no log (1-Saque/2-Doc/3-Ted/4-Transferencia/5-Talao de cheque) Alterar Andrino
-									                 ,pr_cdorigem 	    => vr_cdorigem    -- Origem do lancamento (1-Ayllos/2-Caixa/3-Internet/4-Cash/5-Ayllos WEB/6-URA/7-Batch/8-Mensageria)
+                                   ,pr_nrdconta       => pr_nrdconta    -- Numero da conta
+                                   ,pr_indoperacao    => 4              -- Operacao realizada no log (1-Saque/2-Doc/3-Ted/4-Transferencia/5-Talao de cheque) Alterar Andrino
+                                   ,pr_cdorigem       => vr_cdorigem    -- Origem do lancamento (1-Ayllos/2-Caixa/3-Internet/4-Cash/5-Ayllos WEB/6-URA/7-Batch/8-Mensageria)
 									                 ,pr_indtipo_cartao => pr_idtipcar    -- Tipo de cartao utilizado. (0-Sem cartao/1-Magnetico/2-Cartao Cecred) Alterar Andrino
-									                 ,pr_nrdocmto 	    => pr_nrdocdeb    -- Numero do documento utilizado no lancamento
-									                 ,pr_cdhistor 	    => pr_cdhisdeb    -- Codigo do historico utilizado no lancamento
-									                 ,pr_nrcartao 	    => to_char(pr_nrcartao) -- Numero do cartao utilizado. Zeros quando nao existe cartao
-									                 ,pr_vllanmto 	    => pr_vllanmto    -- Valor do lancamento
-									                 ,pr_cdoperad 	    => pr_cdoperad    -- Codigo do operador
-									                 ,pr_cdbccrcb 	    => 0              -- Codigo do banco de destino para os casos de TED e DOC
-									                 ,pr_cdfinrcb 	    => 0              -- Codigo da finalidade para operacoes de TED e DOC
+                                   ,pr_nrdocmto       => pr_nrdocdeb    -- Numero do documento utilizado no lancamento
+                                   ,pr_cdhistor       => pr_cdhisdeb    -- Codigo do historico utilizado no lancamento
+                                   ,pr_nrcartao       => to_char(pr_nrcartao) -- Numero do cartao utilizado. Zeros quando nao existe cartao
+                                   ,pr_vllanmto       => pr_vllanmto    -- Valor do lancamento
+                                   ,pr_cdoperad       => pr_cdoperad    -- Codigo do operador
+                                   ,pr_cdbccrcb       => 0              -- Codigo do banco de destino para os casos de TED e DOC
+                                   ,pr_cdfinrcb       => 0              -- Codigo da finalidade para operacoes de TED e DOC
 																	 ,pr_cdpatrab       => pr_cdagenci 
                                    ,pr_nrseqems       => 0 
                                    ,pr_nmreceptor     => ''
@@ -7091,6 +7092,11 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
     --
     --                   11/11/2015 - Incluido calculo de modulo 11 para geracao
     --                                de comprovante/protocolo. (Tiago/Fabricio) SD - 334427
+    --
+    --                   04/04/2018 - Adicionada chamada para a proc pc_permite_produto_tipo
+    --                                para verificar se o tipo de conta permite a contratação 
+    --                                do produto. PRJ366 (Lombardi).
+    --
     -- .........................................................................................................................
 
   BEGIN
@@ -7151,6 +7157,8 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
       vr_des_assunto VARCHAR2(100);
       vr_email_dest  VARCHAR2(100);
       vr_agendame VARCHAR2(100);
+      vr_cdprodut INTEGER;
+      vr_possuipr VARCHAR2(1);
 
       /* Validar se o convenio pode ser ofertado comoo debito automatico*/
       CURSOR cr_gnconve (pr_cdhistor gnconve.cdhiscxa%TYPE) IS
@@ -7170,12 +7178,12 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
 			 ,crapscn.cddmoden
          FROM crapscn
      WHERE crapscn.cdempcon = pr_cdempcon 		AND
-		       crapscn.cdsegmto = pr_cdsegmto 	AND
+           crapscn.cdsegmto = pr_cdsegmto   AND
 					 crapscn.dsoparre = 'E'     AND
 					(crapscn.cddmoden = 'A'     OR
 					 crapscn.cddmoden = 'C');
      rw_crapscn cr_crapscn%ROWTYPE;
-      
+
       CURSOR cr_tbarrecd (pr_cdempcon IN crapscn.cdempcon%TYPE
                          ,pr_cdsegmto IN crapscn.cdsegmto%TYPE) IS
        SELECT arr.cdsegmto
@@ -7688,13 +7696,33 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
       --Fechar Cursor
       CLOSE cr_crapcon;
 
-      --Verifica se deve ofertar a inclusao para debito automatico da fatura
-      IF rw_crapcop.flgofatr = 1 THEN
+      IF pr_idorigem IN(1,5) THEN
+        vr_cdprodut := 10; -- Débito automático
+      ELSE
+        vr_cdprodut := 29; -- Débito Automático Fácil
+      END IF;
       
+      -- Verifica se o tipo de conta permite a contratação do produto
+      CADA0006.pc_permite_produto_tipo(pr_cdprodut => vr_cdprodut
+                                      ,pr_cdtipcta => rw_crapass.cdtipcta
+                                      ,pr_cdcooper => pr_cdcooper
+                                      ,pr_inpessoa => rw_crapass.inpessoa
+                                      ,pr_possuipr => vr_possuipr
+                                      ,pr_cdcritic => vr_cdcritic
+                                      ,pr_dscritic => vr_dscritic);
+      -- Se ocorrer erro
+      IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_erro;
+      END IF;
+      
+      --Verifica se deve ofertar a inclusao para debito automatico da fatura
+      IF rw_crapcop.flgofatr = 1 AND 
+         vr_possuipr = 'S'       THEN
+
         --> Convenio Cecred
 			  IF  rw_crapcon.tparrecd = 3 THEN					
-          OPEN cr_gnconve(pr_cdhistor => rw_crapcon.cdhistor);
-          FETCH cr_gnconve INTO rw_gnconve;
+        OPEN cr_gnconve(pr_cdhistor => rw_crapcon.cdhistor);
+        FETCH cr_gnconve INTO rw_gnconve;
 					vr_flgachou := cr_gnconve%FOUND;					
         --> Sicredi  
 				ELSIF  rw_crapcon.tparrecd = 1 THEN					
@@ -7733,7 +7761,7 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
 			  IF cr_crapscn%ISOPEN THEN
 					CLOSE cr_crapscn;
 				END IF;
-        
+
         IF cr_tbarrecd%ISOPEN THEN
 					CLOSE cr_tbarrecd;
 				END IF; 
@@ -7837,7 +7865,7 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
                             pr_cdhistor => 0,
                             pr_cdbccxpg => null,
                             pr_nmrotina => 'PC_PAGA_CONVENIO');
-
+         
          rw_craplot.cdcooper := rw_crapaut.cdcooper;                   
          rw_craplot.dtmvtolt := rw_crapaut.dtmvtolt;                  
          rw_craplot.cdagenci := rw_crapaut.cdagenci;                   
@@ -10381,7 +10409,7 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
           RAISE vr_exc_erro;
       END;
       end if;
-
+      
       IF vr_cdagenci = 90 THEN --> INTERNET
 
        /*[PROJETO LIGEIRINHO] Esta função retorna verdadeiro, quando o processo foi iniciado pela rotina:
@@ -10893,7 +10921,7 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
                 vr_dscritic := 'GPS deve ser paga na opção ''Transações - GPS'' do menu de serviços.';
               END IF;
               RAISE vr_exc_erro;
-            END IF;
+              END IF;						
             
             --> validar se esta pagando tributo na opcao correta. 
             PAGA0003.pc_valid_pag_menu_trib 
@@ -10904,7 +10932,7 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
                                     
             IF vr_dscritic IS NOT NULL THEN
               RAISE vr_exc_erro;
-            END IF;
+              END IF;						
           
           END IF;
         END IF;
@@ -11356,8 +11384,8 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
                   
                   03/08/2017 - Incluir tratamento para atualizar a situação do lancamento para
                                4 caso a fatura ja tenha sido arrecadada  e não for no ultimo 
-                               processo (Lucas Ranghetti #711123)  
-                               
+                               processo (Lucas Ranghetti #711123)       
+
                   21/12/2017 - Ajuste na chamada da procedure pc_verifica_titulo  para que o 
                                codigo de controle de consulta na CIP (craplau.cdctrlcs)
                                seja passado como parametro, dessa forma o titulo é validado 
@@ -11859,7 +11887,7 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
                                        ,pr_idagenda => 1 -- Indicador de agendamento (1-Nesta Data/2-Agendamento)
                                        ,pr_dtagenda => rw_craplau.dtmvtopg -- Data de agendamento
                                        ,pr_indvalid => 2 -- Indicador de controle de validações (1-Operação Online/2-Operação Batch)
-									                     ,pr_flmobile => 0 --Indicador Mobile
+									   ,pr_flmobile => 0 --Indicador Mobile
                                        ,pr_cdseqfat => vr_cdseqfat -- Código sequencial da guia
                                        ,pr_vldocmto => vr_vlrdocum -- Valor da guia
                                        ,pr_nrdigfat => vr_nrdigfat -- Digito do faturamento
@@ -11923,7 +11951,7 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
                              ,pr_dtagenda => rw_craplau.dtmvtopg   --Data agendamento
                              ,pr_idorigem => pr_idorigem           --Indicador de origem
                              ,pr_indvalid => 1                     --nao validar
-							               ,pr_flmobile => 0                     --Indicador Mobile
+							 ,pr_flmobile => 0                     --Indicador Mobile
                              ,pr_cdctrlcs => rw_craplau.cdctrlcs   -- Numero de controle da consulta na CIP
                              ,pr_nmextbcc => vr_nmconban           --Nome do banco
                              ,pr_vlfatura => vr_vlrdocum           --Valor fatura
@@ -13096,7 +13124,7 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
 	    SELECT *
 	      FROM   tbpagto_darf_das_trans_pend
 	     WHERE  tbpagto_darf_das_trans_pend.cdtransacao_pendente = pr_cdtrapen;
-	    rw_tbpagto_darf_das_trans_pend cr_tbpagto_darf_das_trans_pend%ROWTYPE;
+	  rw_tbpagto_darf_das_trans_pend cr_tbpagto_darf_das_trans_pend%ROWTYPE;
     
       --Tabela Pagamento Tributos(FGTS/DAE) pend. (14-FGTS, 15-DAE)
       CURSOR cr_tbtrib_trans_pend (pr_cdtrapen IN tbpagto_tributos_trans_pend.cdtransacao_pendente%TYPE) IS
@@ -13322,7 +13350,7 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
         -- 15 - DARF/DAS
         -- 16 - Contrato SMS Cobrança
         -- 17 - Cancelamento Contrato SMS Cobrança
-        -- 18 - Resgate Cheque -- SM 454.1
+        -- 18 - Resgate Cheque -- SM 454.1        
         -- 21 - Pagamento FGTS
         -- 22 - Pagamento DAE
         
@@ -13434,7 +13462,7 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
            ELSIF vr_tptransa = 15 THEN
              vr_hrlimite := TO_CHAR(TO_DATE(pr_tab_limite_pend(21).hrfimpag,'hh24:mi'),'sssss');
            END IF;
-           
+
         ELSE /* Transferencias */
            vr_hrlimite := TO_CHAR(TO_DATE(pr_tab_limite_pend(1).hrfimpag,'hh24:mi'),'sssss'); 
         END IF;
@@ -17376,13 +17404,13 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
                                        ,pr_dtmvtolt => pr_dtmvtolt  --Data Movimentacao
                                        ,pr_cdoperad => pr_cdoperad  --Codigo Operador
                                        ,pr_cdcritic => vr_cdcritic  --Codigo Critica
-                                       ,pr_dscritic => vr_dscritic); --Descricao Critica
+                                          ,pr_dscritic => vr_dscritic); --Descricao Critica
       --Se ocorreu erro
       IF NVL(vr_cdcritic,0) <> 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
         --Levantar Excecao
         RAISE vr_exc_erro;
-      END IF;
-
+      END IF;      
+      
       /* Alterar situacao do Titulo */
       IF rw_crapcob.incobran <> 5 THEN
         BEGIN
@@ -19714,7 +19742,7 @@ exception
                               ,pr_des_log      => to_char(sysdate,''hh24:mi:ss'') || '' - '' ||
                                                   ''JBCOBRAN_ARQ_RET.pc_gera_arq_cooperado'' || '' --> ATENCAO !! '' ||
                                                   ''Erro: '' || SQLERRM);
-
+                        
     rollback;
 end;';
     

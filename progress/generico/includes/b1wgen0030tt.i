@@ -67,8 +67,19 @@
                23/09/2016 - Correçao nas TEMP-TABLES colocar NO-UNDO, tt-dados_cecred_dsctit (Oscar).
                             Correçao nas TEMP-TABLES colocar NO-UNDO, tt-dados_dsctit_cr (Oscar).
                
+			   07/02/2018 - Adicionados novos campos na tt-limite_tit (Luis Fernando - GFT)               
+
                11/12/2017 - P404 - Inclusao de Garantia de Cobertura das Operaçoes de Crédito (Augusto / Marcos (Supero))
                
+			   07/03/2018 - Inclusão do novo campo 'dtrenova' na TEMP-TABLE 'tt-desconto_titulos' (Leonardo Oliveira - GFT)
+
+               13/03/2018 - Inclusão do novo campo 'perrenov' na TEMP-TABLE 'tt-desconto_titulos' (Leonardo Oliveira - GFT)
+
+			   14/03/2018 - Alteração da ordem dos campos na temp-table 'tt-limite_tit' (Leonardo Oliveira - GFT)
+
+               16/03/2018 - Inclusão dos novos campos 'flgstlcr' e 'cddlinha' na TEMP-TABLE 'tt-desconto_titulos' (Leonardo Oliveira - GFT)
+
+               20/04/2018 - Incluido o campo 'dtultmnt' na TEMP-TABLE tt-desconto_titulos (Paulo Penteado GFT)
 
 ..............................................................................*/
     
@@ -145,8 +156,12 @@ DEF TEMP-TABLE tt-limite_tit NO-UNDO
     FIELD cddlinha LIKE craplim.cddlinha
     FIELD tpctrlim LIKE craplim.tpctrlim
     FIELD dssitlim AS CHAR
+    FIELD dssitest AS CHAR
+    FIELD dssitapr AS CHAR
     FIELD flgenvio AS CHAR
-    FIELD insitlim AS INTE.
+    FIELD insitlim AS INTE
+    FIELD idcobope AS INTE /*LIKE craplim.idcobope*/
+    FIELD cdageori LIKE craplim.cdageori.
 
 DEF TEMP-TABLE tt-dsctit_dados_limite NO-UNDO
     FIELD txdmulta AS DECI
@@ -194,8 +209,12 @@ DEF TEMP-TABLE tt-desconto_titulos NO-UNDO
     FIELD qtutilcr AS INTE
     FIELD vlutilcr AS DECI
     FIELD qtutilsr AS INTE
-    FIELD vlutilsr AS DECI.
-           
+    FIELD vlutilsr AS DECI
+    FIELD dtrenova AS DATE
+    FIELD perrenov AS INTE
+    FIELD flgstlcr LIKE crapldc.flgstlcr
+    FIELD cddlinha LIKE crapldc.cddlinha
+    FIELD dtultmnt LIKE craplim.dtpropos.
 
 DEF TEMP-TABLE tt-tot_descontos NO-UNDO
     FIELD vldscchq AS DECI
@@ -220,7 +239,7 @@ DEF TEMP-TABLE tt-dados_dsctit NO-UNDO
     FIELD qtprzmin AS INTE FORMAT " zz9"
     FIELD qtprzmax AS INTE FORMAT " zz9"
     FIELD qtminfil AS INTE FORMAT " zz9"
-    FIELD pctitemi AS DECI FORMAT "zz9"
+    FIELD pcmxctip AS DECI FORMAT "zzz9"
     FIELD pctolera AS DECI FORMAT "zz9"
     FIELD pcdmulta AS DECI FORMAT "zz9.999999"
     FIELD flgregis AS LOG  FORMAT "Registrada/Sem Registro"
@@ -229,6 +248,7 @@ DEF TEMP-TABLE tt-dados_dsctit NO-UNDO
     FIELD cardbtit AS INTE FORMAT "zz9"
     FIELD pcnaopag AS DECI FORMAT "zz9"
     FIELD qtnaopag AS INTE FORMAT "zzz9"
+    /*FIELD pctitemi AS DECI FORMAT "zz9"*/
     FIELD qtprotes AS INTE FORMAT "zzz9".
 
 DEF TEMP-TABLE tt-dados_cecred_dsctit NO-UNDO LIKE tt-dados_dsctit.  

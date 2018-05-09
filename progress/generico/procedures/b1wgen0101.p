@@ -296,7 +296,7 @@ PROCEDURE consulta_faturas:
                 END.
         END.
 
-    FOR EACH craplft WHERE craplft.cdcooper =  par_cdcooper    AND
+    FOR EACH craplft WHERE craplft.cdcooper = par_cdcooper    AND
                            craplft.dtmvtolt >= par_dtipagto    AND
                            craplft.dtmvtolt <= par_dtfpagto    AND
                           (IF par_cdagenci > 0 THEN           
@@ -375,13 +375,13 @@ PROCEDURE consulta_faturas:
                         ELSE
                             tt-dados-pesqti.dscptdoc = "".
                     END.
-                    
+
                 /* Agente arrecadador */
                 IF craplft.cdhistor = 2515 THEN
                 DO:
                   /* Convenios BANCOOB */
                   ASSIGN tt-dados-pesqti.nmarrecd = 'BANCOOB'.
-                END. 
+                END.
                 /* Convenios SICREDI */
                 ELSE IF craplft.cdhistor = 1154 THEN 
                 DO:                  
@@ -389,7 +389,7 @@ PROCEDURE consulta_faturas:
                     
                 END.
                 /* Convenios CECRED */ 
-                ELSE                     
+                ELSE
                 DO: 
                     ASSIGN tt-dados-pesqti.nmarrecd = 'CECRED'.
                 END.    
@@ -794,27 +794,30 @@ PROCEDURE grava-dados-fatura:
                           crapcon.cdempcon = craplft.cdempcon
                           NO-LOCK NO-ERROR.
        
-       IF crapcon.tparrecd = 2 THEN /* BANCOOB */
-         DO:
-           FIND FIRST craptab WHERE craptab.cdcooper = par_cdcooper  AND
-                                    craptab.nmsistem = 'CRED'        AND
-                                    craptab.tptabela = 'GENERI'      AND
-                                    craptab.cdempres = 0             AND
-                                    craptab.cdacesso = 'HRPGBANCOOB' AND
-                                    craptab.tpregist = craplft.cdagenci
-                                    NO-LOCK NO-ERROR.
-          
-           IF TIME < INT(ENTRY(1, craptab.dstextab, " ")) OR /* hora inicial */
-              TIME > INT(ENTRY(2, craptab.dstextab, " "))    /* hora final */ THEN
-             ASSIGN aux_dscritic = "Horario p/ inclusao BANCOOB esta " + 
-                                   "fora do estabelecido na tela CADPAC".
-
-           IF (aux_dscritic <> "") THEN
+       IF AVAILABLE crapcon THEN
+          DO:
+           IF crapcon.tparrecd = 2 THEN /* BANCOOB */
              DO:
-               
-               UNDO TRANS_FAT, LEAVE TRANS_FAT.
+               FIND FIRST craptab WHERE craptab.cdcooper = par_cdcooper  AND
+                                        craptab.nmsistem = 'CRED'        AND
+                                        craptab.tptabela = 'GENERI'      AND
+                                        craptab.cdempres = 0             AND
+                                        craptab.cdacesso = 'HRPGBANCOOB' AND
+                                        craptab.tpregist = craplft.cdagenci
+                                        NO-LOCK NO-ERROR.
+              
+               IF TIME < INT(ENTRY(1, craptab.dstextab, " ")) OR /* hora inicial */
+                  TIME > INT(ENTRY(2, craptab.dstextab, " "))    /* hora final */ THEN
+                 ASSIGN aux_dscritic = "Horario p/ inclusao BANCOOB esta " + 
+                                       "fora do estabelecido na tela CADPAC".
+
+               IF (aux_dscritic <> "") THEN
+                 DO:
+                   
+                   UNDO TRANS_FAT, LEAVE TRANS_FAT.
+                 END.
              END.
-         END.
+          END.
 
        IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
           UNDO TRANS_FAT, LEAVE TRANS_FAT.

@@ -6,6 +6,7 @@
  * OBJETIVO     : Mostrar opcao conta corrente da rotina de Liberar/Bloquear da tela ATENDA
  * --------------
  * ALTERAÇÕES   : 08/08/2017 - Implementacao da melhoria 438. Heitor (Mouts).
+ *								15/03/2018 - Adicionada opção para sinalizar cancelamento automático de conta corrente
  * --------------
  */	
 ?>
@@ -64,6 +65,7 @@
 <script type='text/javascript'>
 	$('#flgrenli','#frmContaCorrente').val('<? echo (getByTagName($xmlObjeto->roottag->tags[0]->tags,'flgrenli') == 0) ? "no" : "yes" ?>');
 	$('#flmajora','#frmContaCorrente').val('<? echo (getByTagName($xmlObjeto->roottag->tags[0]->tags,'flmajora') == 0) ? "no" : "yes" ?>');
+	$('#flcnaulc','#frmContaCorrente').val('<? echo (getByTagName($xmlObjeto->roottag->tags[0]->tags,'flcnaulc') == 0) ? "no" : "yes" ?>');
 	$('#motivo_bloqueio_maj','#frmContaCorrente').val('<? echo (getByTagName($xmlObjeto->roottag->tags[0]->tags,'dsmotmaj'))?>');
 	$('#cdopemaj','#frmContaCorrente').val('<? echo (getByTagName($xmlObjeto->roottag->tags[0]->tags,'cdopemaj'))?>');
 	$('#nmopemaj','#frmContaCorrente').val('<? echo (getByTagName($xmlObjeto->roottag->tags[0]->tags,'nmopemaj'))?>');

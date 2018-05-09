@@ -85,10 +85,14 @@
                             
                18/05/2017 - Ajustar tela para a nova opcao "P" (Lucas Ranghetti #646559)
                             
+               20/03/2018 - Adicionadas variaveis para serem utilidas nas includes
+                            "lanrqea.i" e "lanrqei.i". PRJ366 (Lombardi).
+                            
 ............................................................................. */
 
 { includes/var_online.i }
 { sistema/generico/includes/var_internet.i }
+{ sistema/generico/includes/var_oracle.i }
 
 DEF        VAR tel_qtinforq AS INT     FORMAT "z,zz9"                NO-UNDO.
 DEF        VAR tel_qtcomprq AS INT     FORMAT "z,zz9"                NO-UNDO.
@@ -133,6 +137,13 @@ DEF        VAR aux_flopabbc AS LOG                                   NO-UNDO.
 DEF        VAR aux_dsoperac AS CHAR                                  NO-UNDO.
 
 DEF        VAR h-b1wgen0110 AS HANDLE                                NO-UNDO.
+
+DEF        VAR aux_cdmodali AS INTE                                  NO-UNDO.
+DEF        VAR aux_indctitg AS INTE                                  NO-UNDO.
+DEF        VAR aux_possuipr AS CHAR                                  NO-UNDO.
+DEF        VAR aux_des_erro AS CHAR                                  NO-UNDO.
+DEF        VAR aux_cdcritic AS INTE                                  NO-UNDO.
+DEF        VAR aux_dscritic AS CHAR                                  NO-UNDO.
 
 DEF BUFFER crabreq FOR crapreq.
 

@@ -19,7 +19,7 @@
 
 <form id="frmCabPesqti" name="frmCabPesqti" class="formulario cabecalho" style="display:none;">	
 			
-	<label for="cddopcao"><? echo utf8ToHtml('Opção:') ?></label>
+	<label for="cddopcao">Op&ccedil;&atilde;o</label>
 	<select name="cddopcao" id="cddopcao">
 		<option value="C"> C - Consultar Titulos e Faturas</option>
 		<option value="A"> A - Alterar Faturas</option> 

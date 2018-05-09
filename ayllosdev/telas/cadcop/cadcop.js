@@ -322,17 +322,17 @@ function formataFormularioConsulta() {
     $('label[for="dsemascr"]', "#frmConsulta5").addClass("rotulo").css({ "width": "150px" });
     $('label[for="dstelscr"]', "#frmConsulta5").addClass("rotulo").css({ "width": "150px" });
 
-    $('label[for="cdagesic"]', "#frmConsulta5").addClass("rotulo").css({ "width": "200px" });
+    $('label[for="cdagesic"]', "#frmConsulta5").addClass("rotulo").css({ "width": "210px" });
     $('label[for="nrctasic"]', "#frmConsulta5").addClass("rotulo-linha").css({ "width": "150px" });
-    $('label[for="cdcrdins"]', "#frmConsulta5").addClass("rotulo").css({ "width": "200px" });
+    $('label[for="cdcrdins"]', "#frmConsulta5").addClass("rotulo").css({ "width": "210px" });
     $('label[for="vltarsic"]', "#frmConsulta5").addClass("rotulo-linha").css({ "width": "150px" });
-    $('label[for="vltardrf"]', "#frmConsulta5").addClass("rotulo").css({ "width": "200px" });
-    $('label[for="vltfcxsb"]', "#frmConsulta5").addClass("rotulo").css({ "width": "200px" });
+    $('label[for="vltardrf"]', "#frmConsulta5").addClass("rotulo").css({ "width": "210px" });
+    $('label[for="vltfcxsb"]', "#frmConsulta5").addClass("rotulo").css({ "width": "210px" });
     $('label[for="vltfcxcb"]', "#frmConsulta5").addClass("rotulo-linha").css({ "width": "200px" });
-    $('label[for="vlrtrfib"]', "#frmConsulta5").addClass("rotulo").css({ "width": "200px" });
+    $('label[for="vlrtrfib"]', "#frmConsulta5").addClass("rotulo").css({ "width": "210px" });
     $('label[for="hrinigps"]', "#frmConsulta5").addClass("rotulo-linha").css({ "width": "150px" });
     $('label[for="hrfimgps"]', "#frmConsulta5").addClass("rotulo-linha").css({ "width": "35px" });
-    $('label[for="hrlimsic"]', "#frmConsulta5").addClass("rotulo").css({ "width": "200px" });
+    $('label[for="hrlimsic"]', "#frmConsulta5").addClass("rotulo").css({ "width": "210px" });
 
     //Bancoob  
     $('label[for="nrctabcb"]', "#frmConsulta5").addClass("rotulo").css({ "width": "200px" }); 
@@ -341,7 +341,7 @@ function formataFormularioConsulta() {
     $('label[for="nrouvbcb"]', "#frmConsulta5").addClass("rotulo-linha").css({ "width": "150px" }); 
     $('label[for="nrsacbcb"]', "#frmConsulta5").addClass("rotulo-linha").css({ "width": "190px" }); 
     
-    
+
     $('label[for="qttmpsgr"]', "#frmConsulta5").addClass("rotulo").css({ "width": "150px" });
     $('label[for="flgkitbv"]', "#frmConsulta5").addClass("rotulo-linha").css({ "width": "180px" });
 
@@ -2636,7 +2636,7 @@ function formataFormularioConsulta() {
             if ($("#cdcooper", "#frmConsulta").val() == 3) {
               $("#vlgarbcb", "#frmConsulta5").focus();
             }else{
-              $("#qttmpsgr", "#frmConsulta5").focus();
+            $("#qttmpsgr", "#frmConsulta5").focus();
             }
 
             return false;

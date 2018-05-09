@@ -7,7 +7,7 @@
 	                                                                  
 	 Objetivo  : Validar número do contrato e confirma a inclusão
 	                                                                  	 
-	 Alterações: 10/06/2010 - Adaptação para RATNG (David).        
+	 Alterações: 10/06/2010 - Adaptação para RATNG (David).                                                     
 				 22/03/2013 - Ajustes referente a geracao automatica do numero do contrato. Daniel (Cecred) : 
 	************************************************************************/
 	
@@ -26,6 +26,8 @@
 	
 	// Verifica se os parâmetros necessários foram informados
 	$params = array("nrdconta","nrctrlim","nrctaav1","nrctaav2","redirect");
+
+	$tipo = (isset($_POST['tipo'])) ? $_POST['tipo'] : "CONTRATO";
 
 	foreach ($params as $nomeParam) {
 		if (!in_array($nomeParam,array_keys($_POST))) {			
@@ -46,7 +48,7 @@
 	// Verifica se o do contrato é um inteiro válido
 	if (!validaInteiro($nrctrlim)) {
 		exibeErro("N&uacute;mero do contrato inv&aacute;lido.");
-	}	
+	}
 	
 	// Verifica se número da conta do 1° avalista é um inteiro válido
 	if (!validaInteiro($nrctaav1)) {
@@ -87,7 +89,7 @@
 		exibeErro($xmlObjDadosLimIncluir->roottag->tags[0]->tags[0]->tags[4]->cdata);
 	} 
 	echo 'hideMsgAguardo();';
-	echo 'showConfirmacao("Deseja incluir o limite de desconto de t&iacute;tulos?","Confirma&ccedil;&atilde;o - Ayllos","gravaLimiteDscTit(\'I\');","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))","sim.gif","nao.gif");';
+	echo 'showConfirmacao("Deseja incluir o limite de desconto de t&iacute;tulos?","Confirma&ccedil;&atilde;o - Ayllos","gravaLimiteDscTit(\'I\', \''.$tipo.'\');","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))","sim.gif","nao.gif");';
 	
 	// Função para exibir erros na tela através de javascript
 	function exibeErro($msgErro) { 

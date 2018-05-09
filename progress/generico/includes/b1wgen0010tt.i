@@ -102,12 +102,13 @@
 			                de cobrança, adicionado campo flprotes na temptable
 							tt-consulta-blt (Tiago/Ademir SD573538).  
 
-               31/08/2017 - Adicionado novos campos na temp-table tt-consulta-blt
-                            devido ao projeto do novo IB. (PRJ285 - Rafael).  
-
                07/12/2017 - Adicionado os campos para a data de vencimento e 
                             identificar se o boleto está vencido 
                             (Douglas - Chamado 805008)
+
+               31/01/2018 - Adicionado novos campos na temp-table tt-consulta-blt
+                            devido ao projeto do novo IB. (PRJ285 - Rafael).  
+
 .............................................................................*/
 
 DEF TEMP-TABLE tt-consulta-blt
@@ -211,6 +212,7 @@ DEF TEMP-TABLE tt-consulta-blt
     FIELD dsemiten AS CHAR
     FIELD dsemitnt AS CHAR
     FIELD flgcarne AS LOGI
+    FIELD cdserasa LIKE crapcob.inserasa
     FIELD inserasa AS CHAR
     FIELD dsserasa AS CHAR
     FIELD flserasa AS LOGI
@@ -246,6 +248,7 @@ DEF TEMP-TABLE tt-consulta-blt
     FIELD dscredit AS CHAR
     FIELD dsorigem_proc AS CHAR
     FIELD dsbcoage AS CHAR
+    FIELD dtbloqueio AS DATE
     .
 
 DEF TEMP-TABLE tt-arq-cobranca  

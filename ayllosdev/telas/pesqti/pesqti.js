@@ -33,7 +33,7 @@
 						  
 			 19/09/2016 - Alteraçoes pagamento/agendamento de DARF/DAS 
 						  pelo InternetBanking (Projeto 338 - Lucas Lunelli)
-        
+							  
         12/01/2018 - Alteracoes refrente ao PJ406.
 							  
 ****************************************************************************/
@@ -54,7 +54,7 @@ $(document).ready(function() {
   //showMsgAguardo("Aguarde, carregando configura&ccedil;&otilde;es da tela ...");
     
 	estadoInicial();
-  
+			
   // Evento onKeyUp no campo "nrdconta"
   $("#nrdconta", "#divFiltroFaturaSicredi").bind("keyup", function (e) {
       // Seta máscara ao campo
@@ -191,8 +191,8 @@ function alteraExibicaoCampos(){
 		
 	//Faturas
 	if ($('#tpdpagto','#divTipoPagto').val() == "no") { 	
-
-		//Formata os labels
+	
+			//Formata os labels
       
 		//PJ406
 		$('label[for="dtipagto"]','#divFiltroFaturaSicredi').addClass('rotulo').css('width','55px');
@@ -202,7 +202,7 @@ function alteraExibicaoCampos(){
 		$('label[for="cdsegmto"]','#divFiltroFaturaSicredi').addClass('rotulo-linha').css({'width':'128px','display':'block'});
 		$('label[for="cdagenci"]','#divFiltroFaturaSicredi').addClass('rotulo').css('width','55px');
 		$('label[for="nrdconta"]','#divFiltroFaturaSicredi').addClass('rotulo-linha').css('width','55px');
-		$('label[for="vldpagto"]','#divFiltroFaturaSicredi').addClass('rotulo-linha').css('width','40px');
+			$('label[for="vldpagto"]','#divFiltroFaturaSicredi').addClass('rotulo-linha').css('width','40px');
 		$('label[for="nrautdoc"]','#divFiltroFaturaSicredi').addClass('rotulo-linha').css({'width':'85px','display':'block'});
       
 		//PJ406
@@ -211,84 +211,84 @@ function alteraExibicaoCampos(){
       
 		$('#cdempcon','#divFiltroFaturaSicredi').css({'width':'60px','text-align':'right'}).attr('maxlength','6');
 		$('#cdsegmto','#divFiltroFaturaSicredi').css({'width':'60px','text-align':'right'}).attr('maxlength','6');
-		$('#cdagenci','#divFiltroFaturaSicredi').addClass('pesquisa codigo').css({'width':'35px','text-align':'right'});
+			$('#cdagenci','#divFiltroFaturaSicredi').addClass('pesquisa codigo').css({'width':'35px','text-align':'right'});
 		$('#nrdconta','#divFiltroFaturaSicredi').addClass('conta pesquisa').css({'width':'75px','text-align':'right'});
-		$('#vldpagto','#divFiltroFaturaSicredi').css({'width':'120px','text-align':'right'}).attr('maxlength','16');
-		$('#vldpagto','#divFiltroFaturaSicredi').setMask('DECIMAL','z.zzz.zzz.zz9,99','.','');
+			$('#vldpagto','#divFiltroFaturaSicredi').css({'width':'120px','text-align':'right'}).attr('maxlength','16');
+			$('#vldpagto','#divFiltroFaturaSicredi').setMask('DECIMAL','z.zzz.zzz.zz9,99','.','');
 		$('#nrautdoc','#divFiltroFaturaSicredi').css({'width':'120px','text-align':'right'}).attr('maxlength','6');
-      
+				
 		//PJ406
 		$('#dtipagto','#divFiltroFaturaSicredi').val(dtmvtolt);
 		$('#dtfpagto','#divFiltroFaturaSicredi').val(dtmvtolt);
 			
-		$('#fsetFiltro').css('display','block');
-		$('#divFiltroFaturaSicredi').css('display','block');
+			$('#fsetFiltro').css('display','block');
+			$('#divFiltroFaturaSicredi').css('display','block');
 			
-		// Se pressionar cdagenci
-		$('#cdagenci','#divFiltroFaturaSicredi').unbind('keypress').bind('keypress', function(e) { 	
+			// Se pressionar cdagenci
+			$('#cdagenci','#divFiltroFaturaSicredi').unbind('keypress').bind('keypress', function(e) { 	
 			
-			if ( divError.css('display') == 'block' ) { return false; }		
+				if ( divError.css('display') == 'block' ) { return false; }		
+								
+				// Se é a tecla ENTER, F1 ou TAB 
+				if ( e.keyCode == 13 || e.keyCode == 112 || e.keyCode == 9 ) {
+					
+					if($(this).val() == ''){
+						$(this).val('0');				
+					}
+					
+					$('#cdempcon','#divFiltroFaturaSicredi').focus();
 									
-			// Se é a tecla ENTER, F1 ou TAB 
-			if ( e.keyCode == 13 || e.keyCode == 112 || e.keyCode == 9 ) {
-						
-				if($(this).val() == ''){
-					$(this).val('0');				
+					return false;		
 				}
-						
-				$('#cdempcon','#divFiltroFaturaSicredi').focus();
-										
-				return false;		
-			}
 				
-		});	
+			});	
 			
-		// Se pressionar cdempcon
-		$('#cdempcon','#divFiltroFaturaSicredi').unbind('keypress').bind('keypress', function(e) { 
+			// Se pressionar cdempcon
+			$('#cdempcon','#divFiltroFaturaSicredi').unbind('keypress').bind('keypress', function(e) { 
 			
-			if ( divError.css('display') == 'block' ) { return false; }		
+				if ( divError.css('display') == 'block' ) { return false; }		
 					
-			// Se é a tecla ENTER, F1 ou TAB 
-			if ( e.keyCode == 13 || e.keyCode == 112 || e.keyCode == 9 ) {
-				$('#cdsegmto','#divFiltroFaturaSicredi').focus();		
-				return false;
-			}
+				// Se é a tecla ENTER, F1 ou TAB 
+				if ( e.keyCode == 13 || e.keyCode == 112 || e.keyCode == 9 ) {
+					$('#cdsegmto','#divFiltroFaturaSicredi').focus();		
+					return false;
+				}
 				
-		});	
+			});	
 			
-		// Se pressionar cdsegmto
-		$('#cdsegmto','#divFiltroFaturaSicredi').unbind('keypress').bind('keypress', function(e) { 	
+			// Se pressionar cdsegmto
+			$('#cdsegmto','#divFiltroFaturaSicredi').unbind('keypress').bind('keypress', function(e) { 	
 			
-			if ( divError.css('display') == 'block' ) { return false; }		
+				if ( divError.css('display') == 'block' ) { return false; }		
 					
-			// Se é a tecla ENTER, F1 ou TAB 
-			if ( e.keyCode == 13 || e.keyCode == 112 || e.keyCode == 9 ) {
-				$('#vldpagto','#divFiltroFaturaSicredi').focus();		
-				return false;
-			}
+				// Se é a tecla ENTER, F1 ou TAB 
+				if ( e.keyCode == 13 || e.keyCode == 112 || e.keyCode == 9 ) {
+					$('#vldpagto','#divFiltroFaturaSicredi').focus();		
+					return false;
+				}
 				
-		});	
+			});	
 
-		// Se pressionar vldpagto
-		$('#vldpagto','#divFiltroFaturaSicredi').unbind('keypress').bind('keypress', function(e) { 			
+			// Se pressionar vldpagto
+			$('#vldpagto','#divFiltroFaturaSicredi').unbind('keypress').bind('keypress', function(e) { 			
 			
-			if ( divError.css('display') == 'block' ) { return false; }		
+				if ( divError.css('display') == 'block' ) { return false; }		
 					
-			// Se é a tecla ENTER, F1 ou TAB 
-			if ( e.keyCode == 13 || e.keyCode == 112 || e.keyCode == 9 ) {
+				// Se é a tecla ENTER, F1 ou TAB 
+				if ( e.keyCode == 13 || e.keyCode == 112 || e.keyCode == 9 ) {
 					
-				if($('#cddopcao','#frmCabPesqti').val() == 'C'){
-					showConfirmacao('Deseja efetuar a consulta?','Confirma&ccedil;&atilde;o - Ayllos','obtemConsulta(1,50)','$("#tpdpagto","#fsetTipoPagto").focus()','sim.gif','nao.gif');
-				}else{
+					if($('#cddopcao','#frmCabPesqti').val() == 'C'){
+						showConfirmacao('Deseja efetuar a consulta?','Confirma&ccedil;&atilde;o - Ayllos','obtemConsulta(1,50)','$("#tpdpagto","#fsetTipoPagto").focus()','sim.gif','nao.gif');
+					}else{
 					showConfirmacao('Deseja efetuar a consulta?','Confirma&ccedil;&atilde;o - Ayllos','obtemConsulta(1,50)','$("#dtipagto","#divFiltroFaturaSicredi").focus()','sim.gif','nao.gif');
-				}
+					}
 					
-				return false;
-			}
+					return false;
+				}
 				
-		});	
+			});	
 			
-		controlaPesquisas('divFiltroFaturaSicredi');
+			controlaPesquisas('divFiltroFaturaSicredi');
 			
 		
 	}else{//Titulos
@@ -409,7 +409,7 @@ function formataFiltro() {
 			
 			$(this).triggerHandler('blur');
 			alteraExibicaoCampos();
-				
+			
 				$('#dtdpagto','#divFiltroTitulos').focus();
 			
 			return false;			
@@ -451,7 +451,7 @@ function formataFiltro() {
 	// Se clicar no btConsulta
 	$('#btConsultar','#divBotoes').unbind('click').bind('click', function() { 		
 		
-		if($('#cddopcao','#frmCabPesqti').val() == 'C'){            
+		if($('#cddopcao','#frmCabPesqti').val() == 'C'){
 			showConfirmacao('Deseja efetuar a consulta?','Confirma&ccedil;&atilde;o - Ayllos','obtemConsulta(1,50)',' $("#tpdpagto","#frmFiltroPesqti").focus()','sim.gif','nao.gif');
 		}else{
 			showConfirmacao('Deseja efetuar a consulta?','Confirma&ccedil;&atilde;o - Ayllos','obtemConsulta(1,50)','$("#dtdpagto","#frmFiltroPesqti").focus()','sim.gif','nao.gif');
@@ -550,8 +550,8 @@ function obtemConsulta( nriniseq , nrregist ) {
 	var cdagenci = $("#cdagenci","#"+nomeDoForm+"").val();	
 	var cdhiscxa = $("#cdhiscxa","#"+nomeDoForm+"").val();	
 	var cdempcon = $("#cdempcon","#"+nomeDoForm+"").val();	
-	var cdsegmto = $("#cdsegmto","#"+nomeDoForm+"").val();
-
+	var cdsegmto = $("#cdsegmto","#"+nomeDoForm+"").val();	
+	
   //PJ406
   var dtipagto = $("#dtipagto","#"+nomeDoForm+"").val();
   var dtfpagto = $("#dtfpagto","#"+nomeDoForm+"").val();
@@ -848,7 +848,7 @@ function controlaLayout(operacao) {
 function formataFormularios() {
 	
 	var cddopcao = $("#cddopcao","#frmCabPesqti").val();
-
+	
 	//Limpa formularios
 	$('#'+frmTitulos).limpaFormulario();
 	$('#'+frmFaturas).limpaFormulario();
@@ -890,7 +890,7 @@ function formataFormularios() {
 	cNrautdoc.css({'width':'120px'}).desabilitaCampo();
 	cNrdocmto.css({'width':'114px'}).desabilitaCampo();
 	cCdbandst.css({'width':'320px'}).desabilitaCampo();
-
+			
 	if($.browser.msie){
 		cFlgpgdda.css({'width':'100px'}).desabilitaCampo();
 		cNrdconta.css({'width':'82px'}).desabilitaCampo();
@@ -905,7 +905,7 @@ function formataFormularios() {
 		cDslindig.css({'width':'475px'}).desabilitaCampo();
 		cDscptdoc.css({'width':'475px'}).desabilitaCampo();
 	}
-  
+	
 	//form faturas - label
 	rDspactaa  	= $('label[for="dspactaa"]', '#'+frmFaturas);
 	rVlconfoz  	= $('label[for="vlconfoz"]', '#'+frmFaturas);
@@ -914,21 +914,21 @@ function formataFormularios() {
 	rCdbandst  	= $('label[for="cdbandst"]', '#'+frmFaturas);
 	rNmempres  	= $('label[for="nmempres"]', '#'+frmFaturas);
 	rNrdconta  	= $('label[for="nrdconta"]', '#'+frmFaturas);
-	rDscodbar  	= $('label[for="dscodbar"]', '#'+frmFaturas); 
+	rDscodbar  	= $('label[for="dscodbar"]', '#'+frmFaturas);    
     rNmarrecd   = $('label[for="nmarrecd"]', '#'+frmFaturas);
-  rDslindig  	= $('label[for="dslindig"]', '#'+frmFaturas);    
+    rDslindig  	= $('label[for="dslindig"]', '#'+frmFaturas);    
 	rDscptdoc  	= $('label[for="dscptdoc"]', '#'+frmFaturas);    
 	rInsitfat  	= $('label[for="insitfat"]', '#'+frmFaturas);
 	rDsnomfon  	= $('label[for="dsnomfon"]', '#'+frmFaturas);    
-
+	
 	rDspactaa.addClass('rotulo').css({'width':'145px'});
 	rNrautdoc.addClass('rotulo').css({'width':'95px'});
 	rCdbandst.addClass('rotulo').css({'width':'105px'});
 	rDscodbar.addClass('rotulo').css({'width':'95px'});
   rNmarrecd.addClass('rotulo').css({'width':'95px'});
-  rDslindig.addClass('rotulo').css({'width':'95px'});
+    rDslindig.addClass('rotulo').css({'width':'95px'});
 	rDscptdoc.addClass('rotulo').css({'width':'95px'});
-  rNmempres.addClass('rotulo').css({'width':'95px'});
+    rNmempres.addClass('rotulo').css({'width':'95px'});
 	rDsnomfon.addClass('rotulo').css({'width':'95px'});
 
 	if ($.browser.msie){
@@ -942,7 +942,7 @@ function formataFormularios() {
 		rNrdocmto.addClass('rotulo-linha').css({'width':'70px'});
 		rNrdconta.addClass('rotulo-linha').css({'width':'60px'});
 	}
-  
+		
 	//form faturas - campos
 	cVlconfoz  	= $('#vlconfoz', '#'+frmFaturas);
 	cInsitfat  	= $('#insitfat', '#'+frmFaturas);
@@ -955,7 +955,7 @@ function formataFormularios() {
     cNmarrecd  	= $('#nmarrecd', '#'+frmFaturas);
 	cDslindig   = $('#dslindig', '#'+frmFaturas);
 	cDscptdoc  	= $('#dscptdoc', '#'+frmFaturas);
-  cNmempres  	= $('#nmempres', '#'+frmFaturas);
+    cNmempres  	= $('#nmempres', '#'+frmFaturas);
 	cDsnomfon  	= $('#dsnomfon', '#'+frmFaturas);
 
 	cVlconfoz.css({'width':'80px'}).desabilitaCampo();
@@ -965,18 +965,18 @@ function formataFormularios() {
 	cNrdocmto.css({'width':'320px'}).desabilitaCampo();
 	cCdbandst.css({'width':'320px'}).desabilitaCampo();
 	cNrdconta.css({'width':'90px'}).desabilitaCampo();
-	cDscodbar.setMask("STRING","44",charPermitido(),"");
+	cDscodbar.setMask("STRING","44",charPermitido(),"");	
   cNmarrecd.css({'width':'320px'}).desabilitaCampo();
-  cNmempres.css({'width':'320px'}).desabilitaCampo();
+    cNmempres.css({'width':'320px'}).desabilitaCampo();
 	cDsnomfon.css({'width':'381px'}).desabilitaCampo();
-
+	
 	if($.browser.msie){
 		cDscodbar.css({'width':'354px'}).desabilitaCampo();
-    cDslindig.css({'width':'381px'}).desabilitaCampo();
+        cDslindig.css({'width':'381px'}).desabilitaCampo();
 		cDscptdoc.css({'width':'381px'}).desabilitaCampo();
 	}else{
 		cDscodbar.css({'width':'350px'}).desabilitaCampo();
-    cDslindig.css({'width':'477px'}).desabilitaCampo();
+        cDslindig.css({'width':'477px'}).desabilitaCampo();
 		cDscptdoc.css({'width':'477px'}).desabilitaCampo();
 	}
 	
@@ -1147,7 +1147,7 @@ function selecionaTitulos(tr){
 	$('#cdbandst','#'+frmTitulos).val( $('#cdbandst', tr ).val() );
 	$('#nrdconta','#'+frmTitulos).val( $('#nrdconta', tr ).val() );
 	$('#dscodbar','#'+frmTitulos).val( $('#dscodbar', tr ).val() );
-  $('#dslindig','#'+frmTitulos).val( $('#dslindig', tr ).val() );
+    $('#dslindig','#'+frmTitulos).val( $('#dslindig', tr ).val() );
 	$('#dscptdoc','#'+frmTitulos).val( $('#dscptdoc', tr ).val() );
 	
 	if (dspactaa == "") {
@@ -1182,6 +1182,9 @@ function selecionaTitulos(tr){
 	
 function selecionaFaturas(tr){
 
+	var dspactaa = $('#dspactaa', tr ).val();
+	var cdhiscxa = $('#cdhiscxa', tr ).val();
+		
 	$('#insitfat','#'+frmFaturas).val( $('#insitfat', tr ).val() );
 	$('#vlconfoz','#'+frmFaturas).val( $('#vlconfoz', tr ).val() );
 	$('#nrautdoc','#'+frmFaturas).val( $('#nrautdoc', tr ).val() );
@@ -1194,12 +1197,25 @@ function selecionaFaturas(tr){
 	$('#dscptdoc','#'+frmFaturas).val( $('#dscptdoc', tr ).val() );
 	$('#dsnomfon','#'+frmFaturas).val( $('#dsnomfon', tr ).val() );
 	
+	if (dspactaa == "") {
+		
+		$('#dspactaa','#'+frmFaturas).css('display','none');
+		$('label[for="dspactaa"]','#'+frmFaturas).css('display','none');
+		
+	}else{
+		
+		$('#dspactaa','#'+frmFaturas).val( $('#dspactaa', tr ).val() );
+		$('#dspactaa','#'+frmFaturas).css('display','block');
+		$('label[for="dspactaa"]','#'+frmFaturas).css('display','block');
+		
+	}
+	
 	$('#cdagenci','#'+frmFaturas).val( $('#cdagenci', tr ).val() );
 	$('#nrdolote','#'+frmFaturas).val( $('#nrdolote', tr ).val() );
 	$('#dtdpagto','#'+frmFaturas).val( $('#dtdpagto', tr ).val() );
 	$('#cdbccxlt','#'+frmFaturas).val( $('#cdbccxlt', tr ).val() );
 	$('#nmempres','#'+frmFaturas).val( $('#nmempres', tr ).val() );
-		
+			
 	/* Exibe o campo Vl.FOZ de o Historico for 963 */
 	if (cdhiscxa == 963){ /* FOZ DO BRASIL */
 	

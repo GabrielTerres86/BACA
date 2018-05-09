@@ -32,9 +32,18 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0002 AS
   --    01/02/2018 - Inclusão de Parâmetro de entrada por Tipo de Pessoa (Física / Jurídica)
   --                 na procedure "pc_busca_parametros_dsctit"
   --                (Gustavo Sene - GFT)  
+  --
+  --    13/03/2018 - Inclusão da Procedure "pc_efetua_analise_pagador", referente à rotina (JOB)
+  --                 de validação diária dos Pagadores (Borderô). (Gustavo Sene - GFT)
+  --
+  --    12/04/2018 - Adicionado novo parametro na chamada da procedure pc_gera_impressao_bordero
+  --                referente ao indicador se deve imprimir restricoes. (Alex Sandro - GFT)
+  --
+  --    13/04/2018 - Remoção do campo 'pctitemi' Percentual de títulos por pagador da procedure 
+  --                 'pc_busca_parametros_dsctit'  (Leonardo Oliveira - GFT). 
   --------------------------------------------------------------------------------------------------------------*/
  
-  -- Tabela para armazenar parametros para desconto de titulo(antigo b1wgen0030tt.i/tt-dsctit.)
+  -- Registro para armazenar parametros para desconto de titulo
   TYPE typ_rec_dados_dsctit 
        IS RECORD (vllimite  NUMBER, 
                   vlconsul  NUMBER,
@@ -48,18 +57,39 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0002 AS
                   qtprzmax  INTEGER,
                   qtminfil  INTEGER,
                   nrmespsq  INTEGER,
-                  pctitemi  NUMBER,
                   pctolera  NUMBER,
                   pcdmulta  NUMBER,
                   cardbtit  NUMBER,
                   pcnaopag  NUMBER,
                   qtnaopag  INTEGER,
-                  qtprotes  INTEGER);
+                  qtprotes  INTEGER,
+                  ---- NOVOS CAMPOS ----
+                  vlmxassi  NUMBER,   -- Valor Máximo Dispensa Assinatura
+                  flemipar  INTEGER,  -- Verificar se Emitente é Cônjugue do Cooperado (no caso de Pessoa Física) / Verificar se Emitente é Sócio do Cooperado (no caso de Pessoa Jurídica)
+                  flpjzemi  INTEGER,  -- Verificar Prejuízo do Emitente
+                  flpdctcp  INTEGER,  -- Verificar Cooperado Possui Titulos Descontatos na Conta do Pagador
+                  qttliqcp  INTEGER,  -- Mínimo de Liquidez do Cedente x Pagador (Qtd. de Titulos)
+                  vltliqcp  INTEGER,  -- Mínimo de Liquidez do Cedente x Pagador (Valor dos Titulos)
+                  qtmintgc  INTEGER,  -- Mínimo de Liquidez de Titulos Geral do Cedente (Qtd de Titulos)
+                  vlmintgc  INTEGER,  -- Mínimo de Liquidez de Titulos Geral do Cedente (Valor dos Titulos)
+                  qtmesliq  INTEGER,  -- Qtd. Meses Cálculo Percentual de Liquidez
+                  vlmxprat  INTEGER,  -- Valor máximo permitido por ramo de atividade
+                  pcmxctip  INTEGER,  -- Concentração máxima de títulos por pagador
+                  flcocpfp  INTEGER,  -- Consulta de CPF/CNPJ do pagador --> Excluir
+                  qtmxdene  INTEGER,  -- Quantidade máxima de dias para envio para Esteira
+                  qtdiexbo  INTEGER,  -- Dias para expirar borderô
+                  qtmxtbib  INTEGER,  -- Quantidade máxima de títulos por borderô IB
+                  qtmxtbay  INTEGER,  -- Quantidade máxima de títulos por borderô Ayllos
+                  qtmitdcl  INTEGER,  -- Quantidade mínima de títulos descontados para cálculo da liquidez
+                  vlmintcl  NUMBER,  -- Valor mínimo para cálculo liquidez
+                  pctitpag  INTEGER   -- Percentual de títulos por pagador
+                  );
   
+  -- Tabela para armazenar parametros para desconto de titulo (antigo b1wgen0030tt.i/tt-dsctit.)
   TYPE typ_tab_dados_dsctit IS TABLE OF typ_rec_dados_dsctit 
        INDEX BY PLS_INTEGER;
        
-  -- Tabela para armazenar parametros para desconto de titulo - Cecred (antigo b1wgen0030tt.i/tt-dados_cecred_dsctit)    
+  -- Tabela para armazenar parametros para desconto de titulo - CECRED (antigo b1wgen0030tt.i/tt-dados_cecred_dsctit)
   TYPE typ_tab_cecred_dsctit IS TABLE OF typ_rec_dados_dsctit 
        INDEX BY PLS_INTEGER;
   
@@ -171,8 +201,8 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0002 AS
                   vltitulo craptdb.vltitulo%TYPE,
                   vlliquid craptdb.vlliquid%TYPE,
                   nmsacado crapsab.nmdsacad%TYPE,
-                  insittit craptdb.insittit%TYPE,
-                  flgregis crapcob.flgregis%TYPE);
+                  flgregis crapcob.flgregis%TYPE,
+                  insittit craptdb.insittit%TYPE);
 
   TYPE typ_tab_tit_bordero IS TABLE OF typ_rec_tit_bordero
        INDEX BY VARCHAR2(50);
@@ -332,6 +362,22 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0002 AS
   TYPE typ_tab_restri_apr_coo IS TABLE OF VARCHAR2(100)
        INDEX BY VARCHAR2(100);
                  
+
+  type tpy_rec_analise_pagador is record (
+       qtremessa_cartorio tbdsct_analise_pagador.qtremessa_cartorio%type,
+       qttit_protestados  tbdsct_analise_pagador.qttit_protestados%type,
+       qttit_naopagos     tbdsct_analise_pagador.qttit_naopagos%type,
+       pemin_liquidez_qt  tbdsct_analise_pagador.pemin_liquidez_qt%type,
+       pemin_liquidez_vl  tbdsct_analise_pagador.pemin_liquidez_vl%type,
+       peconcentr_maxtit  tbdsct_analise_pagador.peconcentr_maxtit%type,
+       inemitente_conjsoc tbdsct_analise_pagador.inemitente_conjsoc%type,
+       inpossui_titdesc   tbdsct_analise_pagador.inpossui_titdesc%type,
+       invalormax_cnae    tbdsct_analise_pagador.invalormax_cnae%type,
+       inpossui_criticas  tbdsct_analise_pagador.inpossui_criticas%type );
+       
+  type tpy_tab_analise_pagador is table of tpy_rec_analise_pagador
+       index by pls_integer;  
+
   --> listar avalistas de contratos
   PROCEDURE pc_lista_avalistas ( pr_cdcooper IN crapcop.cdcooper%TYPE  --> Código da Cooperativa
                                 ,pr_cdagenci IN crapage.cdagenci%TYPE  --> Código da agencia
@@ -439,13 +485,24 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0002 AS
                                         ,pr_cdoperad IN crapope.cdoperad%TYPE  --> Código do Operador
                                         ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE  --> data do movimento
                                         ,pr_idorigem IN INTEGER                --> Identificador de Origem
-                                        ,pr_tpcobran IN INTEGER                 --> Tipo de Cobrança: 0 = Sem Registro / 1 = Com Registro
+                                        ,pr_tpcobran IN NUMBER                 --> Tipo de Cobrança: 0 = Sem Registro / 1 = Com Registro
+                                        ,pr_inpessoa IN crapass.inpessoa%TYPE  --> Tipo de Pessoa:   1 = Física / 2 = Jurídica
+
                                          --------> OUT <--------
                                         ,pr_tab_dados_dsctit  OUT typ_tab_dados_dsctit  --> tabela contendo os parametros da cooperativa
                                         ,pr_tab_cecred_dsctit OUT typ_tab_cecred_dsctit --> Tabela contendo os parametros da cecred
                                         ,pr_cdcritic          OUT PLS_INTEGER           --> Código da crítica
                                         ,pr_dscritic          OUT VARCHAR2);            --> Descrição da crítica
 
+                                        
+  PROCEDURE pc_busca_titulos_bordero (pr_cdcooper IN crapcop.cdcooper%TYPE  --> Código da Cooperativa
+                                     ,pr_nrborder IN crapbdt.nrborder%TYPE  --> numero do bordero
+                                     ,pr_nrdconta IN crapass.nrdconta%TYPE  --> Número da Conta
+                                     --------> OUT <--------
+                                     ,pr_tab_tit_bordero        OUT typ_tab_tit_bordero --> retorna titulos do bordero
+                                     ,pr_tab_tit_bordero_restri OUT typ_tab_bordero_restri --> retorna restrições do titulos do bordero
+                                     ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
+                                     ,pr_dscritic OUT VARCHAR2);
 
 END  DSCT0002;
 /
@@ -462,7 +519,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
   --  Objetivo  : Package para rotinas envolvendo desconto titulos
   --              titulos.
   --
-  --  Alteracoes: 05/08/2016 - Conversao Progress para oracle (Odirlei - AMcom)
+  --  Alteracoes: 
+  --    05/08/2016 - Conversao Progress para oracle (Odirlei - AMcom)
   --              
   --              22/12/2016 - Incluidos novos campos para os tipos typ_rec_contrato_limite
   --                           e typ_rec_chq_bordero. Projeto 300 (Lombardi)
@@ -476,9 +534,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
   --                          Junior (Mouts) - Chamado 767055
   --
   --             25/01/2018 - Inclusão da Procedure "pc_busca_parametros_dsctit", referente à 
-  --                          migração de Progress para Oracle. (Gustavo Sene - GFT)
+  --                 conversão de Progress para Oracle da tela "TAB052".
+  --                (Gustavo Sene - GFT)
   --
   --             08/03/2018 - Chamado 847579 - Correção da impressão de estado incorreto na impressao do contrato de limite
+  --
+  --    01/02/2018 - Inclusão de Parâmetro de entrada por Tipo de Pessoa (Física / Jurídica)
+  --                 na procedure "pc_busca_parametros_dsctit"
+  --                (Gustavo Sene - GFT)
+  --
+  --    13/03/2018 - Inclusão da Procedure "pc_efetua_analise_pagador", referente à rotina (JOB)
+  --                 de validação diária dos Pagadores (Borderô). (Gustavo Sene - GFT)
+  --
+  --    11/04/2018 - Adicionado a utilização da tabela crawlim Paulo Penteado (GFT) 
+  --
+  --   12/04/2018 - Adicionado novo parametro na chamada da procedure pc_gera_impressao_bordero
+  --                referente ao indicador se deve imprimir restricoes. (Alex Sandro - GFT)
+  --
+  --   13/04/2018 - Remoção do campo 'pctitemi' Percentual de títulos por pagador da procedure 
+  --               'pc_busca_parametros_dsctit'  (Leonardo Oliveira - GFT).
   -------------------------------------------------------------------------------------------------------------
   --> Buscar dados do avalista
   PROCEDURE pc_busca_dados_avalista (pr_cdcooper IN crapcop.cdcooper%TYPE           --> Código da Cooperativa
@@ -922,14 +996,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
                            pr_nrdconta crapavt.nrdconta%TYPE,
                            pr_nrctrlim craplim.nrctrlim%TYPE,
                            pr_tpctrato craplim.tpctrlim%TYPE) IS
-      SELECT MAX nrdconta
-        FROM craplim 
+    select max nrdconta
+    from   craplim
          --> Converter as duas colunas em linha para o for
-         UNPIVOT ( MAX FOR conta IN (nrctaav1, nrctaav2) )
-       WHERE cdcooper = pr_cdcooper
-         AND nrdconta = pr_nrdconta
-         AND nrctrlim = pr_nrctrlim
-         AND tpctrlim = pr_tpctrato;
+           unpivot ( max for conta in (nrctaav1, nrctaav2) )
+    where  cdcooper    = pr_cdcooper
+    and    nrdconta    = pr_nrdconta
+    and    nrctrlim    = pr_nrctrlim
+    and    tpctrlim    = pr_tpctrato
+    and    pr_tpctrato <> 3
+
+    union  all
+
+    select max nrdconta
+    from   crawlim
+           --> Converter as duas colunas em linha para o for
+           unpivot ( max for conta in (nrctaav1, nrctaav2) )
+    where  cdcooper    = pr_cdcooper
+    and    nrdconta    = pr_nrdconta
+    and    nrctrlim    = pr_nrctrlim
+    and    tpctrlim    = pr_tpctrato
+    and    pr_tpctrato = 3;
          
     --> Avalistas de emprestimo que possuem conta na cooperativa
     CURSOR cr_crawepr_ava (pr_cdcooper crawepr.cdcooper%TYPE,
@@ -1302,13 +1389,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
                                         ,pr_cdoperad IN crapope.cdoperad%TYPE  --> Código do Operador
                                         ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE  --> data do movimento 
                                         ,pr_idorigem IN INTEGER                --> Identificador de Origem
-                                        ,pr_tpcobran IN INTEGER                --> Tipo de cobrança(1-Sim 0-nao)                                    
+                                        ,pr_tpcobran IN NUMBER                 --> Tipo de Cobrança: 0 = Sem Registro / 1 = Com Registro
+                                        ,pr_inpessoa IN crapass.inpessoa%TYPE  --> Tipo de Pessoa:   1 = Física / 2 = Jurídica
                                          --------> OUT <--------                                   
-                                        ,pr_tab_dados_dsctit        OUT typ_tab_dados_dsctit        --> tabela contendo os parametros da cooperativa
+                                        ,pr_tab_dados_dsctit  OUT typ_tab_dados_dsctit  --> Tabela contendo os parametros da cooperativa
                                         ,pr_tab_cecred_dsctit OUT typ_tab_cecred_dsctit --> Tabela contendo os parametros da cecred
                                         ,pr_cdcritic          OUT PLS_INTEGER           --> Código da crítica
                                         ,pr_dscritic          OUT VARCHAR2) IS          --> Descrição da crítica
-    /* .........................................................................
+    ----------------------------------------------------------------------------
     --
     --  Programa : pc_busca_parametros_dsctit           Antigo: b1wgen0030.p/busca_parametros_dsctit
     --  Sistema  : Cred
@@ -1326,11 +1414,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
     --
     --    01/02/2018 - Inclusão de Parâmetro de entrada por Tipo de Pessoa (Física / Jurídica)
     --                (Gustavo Sene - GFT)      
-    ----------------------------------------------------------------------------*/
+    ----------------------------------------------------------------------------
     
-    ---------->> CURSORES <<--------  
     --------->> VARIAVEIS <<--------
-    -- Variável de críticas
+    -- Variáveis de críticas
     vr_cdcritic        crapcri.cdcritic%TYPE; --> Cód. Erro
     vr_dscritic        VARCHAR2(1000);        --> Desc. Erro        
     -- Tratamento de erros
@@ -1341,15 +1428,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
     vr_tab_dstextab      gene0002.typ_split;
     vr_tab_dados_dsctit  typ_tab_dados_dsctit;
     vr_tab_cecred_dsctit typ_tab_cecred_dsctit;
---    vr_idxdscti          PLS_INTEGER;
-    
-    
+
+    ---------->> CURSORES <<--------
     
   BEGIN
-    IF pr_tpcobran = 1 THEN
-      vr_cdacesso := 'LIMDESCTITCR';
-    ELSE
-      vr_cdacesso := 'LIMDESCTIT';
+
+    IF pr_inpessoa = 1 THEN -- Pessoa Física
+      IF pr_tpcobran = 1 THEN    -- Cobrança Registrada
+        vr_cdacesso := 'LIMDESCTITCRPF';
+      ELSIF pr_tpcobran = 0 THEN -- Cobrança Sem Registro
+        vr_cdacesso := 'LIMDESCTITPF';
+    END IF;
+
+    ELSIF pr_inpessoa = 2 THEN -- Pessoa Jurídica
+      IF  pr_tpcobran = 1 THEN   -- Cobrança Registrada
+        vr_cdacesso := 'LIMDESCTITCRPJ';
+      ELSIF pr_tpcobran = 0 THEN -- Cobrança Sem Registro
+        vr_cdacesso := 'LIMDESCTITPJ';
+      END IF;
     END IF;
     
     --> Buscar valores do parametro
@@ -1360,57 +1456,94 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
                                               pr_cdacesso => vr_cdacesso, 
                                               pr_tpregist => 0);
     
+
     vr_tab_dstextab := gene0002.fn_quebra_string(pr_string => vr_dstextab, 
                                                  pr_delimit => ';');
     
-    
     IF vr_tab_dstextab.count() > 0 THEN
      
---      vr_idxdscti := vr_tab_dados_dsctit.count() + 1;
+      ----------- OPERACIONAL ------------
+      vr_tab_dados_dsctit(1).vllimite := to_number(vr_tab_dstextab(01),'999999990d00','NLS_NUMERIC_CHARACTERS='',.''');
+      vr_tab_dados_dsctit(1).vlconsul := to_number(vr_tab_dstextab(02),'999999990d00','NLS_NUMERIC_CHARACTERS='',.''');
+      vr_tab_dados_dsctit(1).vlmaxsac := to_number(vr_tab_dstextab(03),'999999990d00','NLS_NUMERIC_CHARACTERS='',.''');
+      vr_tab_dados_dsctit(1).vlminsac := to_number(vr_tab_dstextab(04),'999999990d00','NLS_NUMERIC_CHARACTERS='',.''');
+      vr_tab_dados_dsctit(1).qtremcrt := vr_tab_dstextab(05);
+      vr_tab_dados_dsctit(1).qttitprt := vr_tab_dstextab(06);
+      vr_tab_dados_dsctit(1).qtrenova := vr_tab_dstextab(07);
+      vr_tab_dados_dsctit(1).qtdiavig := vr_tab_dstextab(08);
+      vr_tab_dados_dsctit(1).qtprzmin := vr_tab_dstextab(09);
+      vr_tab_dados_dsctit(1).qtprzmax := vr_tab_dstextab(10);
+      vr_tab_dados_dsctit(1).qtminfil := vr_tab_dstextab(11);
+      vr_tab_dados_dsctit(1).nrmespsq := vr_tab_dstextab(12);
 
-      vr_tab_dados_dsctit(pr_tpcobran).vllimite := to_number(vr_tab_dstextab(01),'999999990d00','NLS_NUMERIC_CHARACTERS='',.''');
-      vr_tab_dados_dsctit(pr_tpcobran).vlconsul := to_number(vr_tab_dstextab(02),'999999990d00','NLS_NUMERIC_CHARACTERS='',.''');
-      vr_tab_dados_dsctit(pr_tpcobran).vlmaxsac := to_number(vr_tab_dstextab(03),'999999990d00','NLS_NUMERIC_CHARACTERS='',.''');
-      vr_tab_dados_dsctit(pr_tpcobran).vlminsac := to_number(vr_tab_dstextab(04),'999999990d00','NLS_NUMERIC_CHARACTERS='',.''');
-      vr_tab_dados_dsctit(pr_tpcobran).qtremcrt := vr_tab_dstextab(05);
-      vr_tab_dados_dsctit(pr_tpcobran).qttitprt := vr_tab_dstextab(06);
-      vr_tab_dados_dsctit(pr_tpcobran).qtrenova := vr_tab_dstextab(07);
-      vr_tab_dados_dsctit(pr_tpcobran).qtdiavig := vr_tab_dstextab(08);
-      vr_tab_dados_dsctit(pr_tpcobran).qtprzmin := vr_tab_dstextab(09);
-      vr_tab_dados_dsctit(pr_tpcobran).qtprzmax := vr_tab_dstextab(10);
-      vr_tab_dados_dsctit(pr_tpcobran).qtminfil := vr_tab_dstextab(11);
-      vr_tab_dados_dsctit(pr_tpcobran).nrmespsq := vr_tab_dstextab(12);
-      vr_tab_dados_dsctit(pr_tpcobran).pctitemi := vr_tab_dstextab(13);
-      vr_tab_dados_dsctit(pr_tpcobran).pctolera := vr_tab_dstextab(14);
-      vr_tab_dados_dsctit(pr_tpcobran).pcdmulta := to_number(vr_tab_dstextab(15),'000d000000','NLS_NUMERIC_CHARACTERS='',.''');
-      vr_tab_dados_dsctit(pr_tpcobran).cardbtit := vr_tab_dstextab(31);
-      vr_tab_dados_dsctit(pr_tpcobran).pcnaopag := vr_tab_dstextab(33);
-      vr_tab_dados_dsctit(pr_tpcobran).qtnaopag := vr_tab_dstextab(34);
-      vr_tab_dados_dsctit(pr_tpcobran).qtprotes := vr_tab_dstextab(35);
+      vr_tab_dados_dsctit(1).pctolera := vr_tab_dstextab(14);
+      vr_tab_dados_dsctit(1).pcdmulta := to_number(vr_tab_dstextab(15),'000d000000','NLS_NUMERIC_CHARACTERS='',.''');
+      vr_tab_dados_dsctit(1).cardbtit := vr_tab_dstextab(31);
+      vr_tab_dados_dsctit(1).pcnaopag := vr_tab_dstextab(33);
+      vr_tab_dados_dsctit(1).qtnaopag := vr_tab_dstextab(34);
+      vr_tab_dados_dsctit(1).qtprotes := vr_tab_dstextab(35);
+      ---- NOVOS CAMPOS - OPERACIONAL ----
+      vr_tab_dados_dsctit(1).vlmxassi := to_number(vr_tab_dstextab(39),'999999990d00','NLS_NUMERIC_CHARACTERS='',.''');
+      vr_tab_dados_dsctit(1).flemipar := vr_tab_dstextab(40);
+      vr_tab_dados_dsctit(1).flpjzemi := vr_tab_dstextab(41);
+      vr_tab_dados_dsctit(1).flpdctcp := vr_tab_dstextab(42);
+      vr_tab_dados_dsctit(1).qttliqcp := vr_tab_dstextab(43);
+      vr_tab_dados_dsctit(1).vltliqcp := vr_tab_dstextab(44);
+      vr_tab_dados_dsctit(1).qtmintgc := vr_tab_dstextab(45);
+      vr_tab_dados_dsctit(1).vlmintgc := vr_tab_dstextab(46);
+      vr_tab_dados_dsctit(1).qtmesliq := vr_tab_dstextab(47);
+      vr_tab_dados_dsctit(1).vlmxprat := vr_tab_dstextab(48);
+      vr_tab_dados_dsctit(1).pcmxctip := vr_tab_dstextab(49);
+      vr_tab_dados_dsctit(1).flcocpfp := vr_tab_dstextab(50);
+      vr_tab_dados_dsctit(1).qtmxdene := vr_tab_dstextab(51);
+      vr_tab_dados_dsctit(1).qtdiexbo := vr_tab_dstextab(52);
+      vr_tab_dados_dsctit(1).qtmxtbib := vr_tab_dstextab(53);
+      vr_tab_dados_dsctit(1).qtmxtbay := vr_tab_dstextab(54);
+      vr_tab_dados_dsctit(1).qtmitdcl := vr_tab_dstextab(71);
+      vr_tab_dados_dsctit(1).vlmintcl := to_number(vr_tab_dstextab(72),'999999990d00','NLS_NUMERIC_CHARACTERS='',.''');
+      vr_tab_dados_dsctit(1).pctitpag := vr_tab_dstextab(73);
+      -------------- CECRED --------------
+      vr_tab_cecred_dsctit(1).vllimite := to_number(vr_tab_dstextab(16),'999999990d00','NLS_NUMERIC_CHARACTERS='',.''');
+      vr_tab_cecred_dsctit(1).vlconsul := to_number(vr_tab_dstextab(17),'999999990d00','NLS_NUMERIC_CHARACTERS='',.''');
+      vr_tab_cecred_dsctit(1).vlmaxsac := to_number(vr_tab_dstextab(18),'999999990d00','NLS_NUMERIC_CHARACTERS='',.''');
+      vr_tab_cecred_dsctit(1).vlminsac := to_number(vr_tab_dstextab(19),'999999990d00','NLS_NUMERIC_CHARACTERS='',.''');
+      vr_tab_cecred_dsctit(1).qtremcrt := vr_tab_dstextab(20);
+      vr_tab_cecred_dsctit(1).qttitprt := vr_tab_dstextab(21);
+      vr_tab_cecred_dsctit(1).qtrenova := vr_tab_dstextab(22);
+      vr_tab_cecred_dsctit(1).qtdiavig := vr_tab_dstextab(23);
+      vr_tab_cecred_dsctit(1).qtprzmin := vr_tab_dstextab(24);
+      vr_tab_cecred_dsctit(1).qtprzmax := vr_tab_dstextab(25);
+      vr_tab_cecred_dsctit(1).qtminfil := vr_tab_dstextab(26);
+      vr_tab_cecred_dsctit(1).nrmespsq := vr_tab_dstextab(27);
 
+      vr_tab_cecred_dsctit(1).pctolera := vr_tab_dstextab(29);
+      vr_tab_cecred_dsctit(1).pcdmulta := to_number(vr_tab_dstextab(30),'000d000000','NLS_NUMERIC_CHARACTERS='',.''');
+      vr_tab_cecred_dsctit(1).cardbtit := vr_tab_dstextab(32);
+      vr_tab_cecred_dsctit(1).pcnaopag := vr_tab_dstextab(36);
+      vr_tab_cecred_dsctit(1).qtnaopag := vr_tab_dstextab(37);
+      vr_tab_cecred_dsctit(1).qtprotes := vr_tab_dstextab(38);
+      ------ NOVOS CAMPOS - CECRED -------
+      vr_tab_cecred_dsctit(1).vlmxassi := to_number(vr_tab_dstextab(55),'999999990d00','NLS_NUMERIC_CHARACTERS='',.''');
+      vr_tab_cecred_dsctit(1).flemipar := vr_tab_dstextab(56);
+      vr_tab_cecred_dsctit(1).flpjzemi := vr_tab_dstextab(57);
+      vr_tab_cecred_dsctit(1).flpdctcp := vr_tab_dstextab(58);
+      vr_tab_cecred_dsctit(1).qttliqcp := vr_tab_dstextab(59);
+      vr_tab_cecred_dsctit(1).vltliqcp := vr_tab_dstextab(60);
+      vr_tab_cecred_dsctit(1).qtmintgc := vr_tab_dstextab(61);
+      vr_tab_cecred_dsctit(1).vlmintgc := vr_tab_dstextab(62);
+      vr_tab_cecred_dsctit(1).qtmesliq := vr_tab_dstextab(63);
+      vr_tab_cecred_dsctit(1).vlmxprat := vr_tab_dstextab(64);
+      vr_tab_cecred_dsctit(1).pcmxctip := vr_tab_dstextab(65);
+      vr_tab_cecred_dsctit(1).flcocpfp := vr_tab_dstextab(66);
+      vr_tab_cecred_dsctit(1).qtmxdene := vr_tab_dstextab(67);
+      vr_tab_cecred_dsctit(1).qtdiexbo := vr_tab_dstextab(68);
+      vr_tab_cecred_dsctit(1).qtmxtbib := vr_tab_dstextab(69);
+      vr_tab_cecred_dsctit(1).qtmxtbay := vr_tab_dstextab(70);
+      vr_tab_cecred_dsctit(1).qtmitdcl := vr_tab_dstextab(74);
+      vr_tab_cecred_dsctit(1).vlmintcl := to_number(vr_tab_dstextab(75),'999999990d00','NLS_NUMERIC_CHARACTERS='',.''');
+      vr_tab_cecred_dsctit(1).pctitpag := vr_tab_dstextab(76);
+      ------------------------------------
 
-  --    vr_idxdscti := vr_tab_cecred_dsctit.count() + 1;
-
-      vr_tab_cecred_dsctit(pr_tpcobran).vllimite := to_number(vr_tab_dstextab(16),'999999990d00','NLS_NUMERIC_CHARACTERS='',.''');
-      vr_tab_cecred_dsctit(pr_tpcobran).vlconsul := to_number(vr_tab_dstextab(17),'999999990d00','NLS_NUMERIC_CHARACTERS='',.''');
-      vr_tab_cecred_dsctit(pr_tpcobran).vlmaxsac := to_number(vr_tab_dstextab(18),'999999990d00','NLS_NUMERIC_CHARACTERS='',.''');
-      vr_tab_cecred_dsctit(pr_tpcobran).vlminsac := to_number(vr_tab_dstextab(19),'999999990d00','NLS_NUMERIC_CHARACTERS='',.''');
-      vr_tab_cecred_dsctit(pr_tpcobran).qtremcrt := vr_tab_dstextab(20);
-      vr_tab_cecred_dsctit(pr_tpcobran).qttitprt := vr_tab_dstextab(21);
-      vr_tab_cecred_dsctit(pr_tpcobran).qtrenova := vr_tab_dstextab(22);
-      vr_tab_cecred_dsctit(pr_tpcobran).qtdiavig := vr_tab_dstextab(23);
-      vr_tab_cecred_dsctit(pr_tpcobran).qtprzmin := vr_tab_dstextab(24);
-      vr_tab_cecred_dsctit(pr_tpcobran).qtprzmax := vr_tab_dstextab(25);
-      vr_tab_cecred_dsctit(pr_tpcobran).qtminfil := vr_tab_dstextab(26);
-      vr_tab_cecred_dsctit(pr_tpcobran).nrmespsq := vr_tab_dstextab(27);
-      vr_tab_cecred_dsctit(pr_tpcobran).pctitemi := vr_tab_dstextab(28);
-      vr_tab_cecred_dsctit(pr_tpcobran).pctolera := vr_tab_dstextab(29);
-      vr_tab_cecred_dsctit(pr_tpcobran).pcdmulta := to_number(vr_tab_dstextab(30),'000d000000','NLS_NUMERIC_CHARACTERS='',.''');
-      vr_tab_cecred_dsctit(pr_tpcobran).cardbtit := vr_tab_dstextab(32);
-      vr_tab_cecred_dsctit(pr_tpcobran).pcnaopag := vr_tab_dstextab(36);
-      vr_tab_cecred_dsctit(pr_tpcobran).qtnaopag := vr_tab_dstextab(37);
-      vr_tab_cecred_dsctit(pr_tpcobran).qtprotes := vr_tab_dstextab(38);
-    
     ELSE
       vr_cdcritic := 0;
       vr_dscritic := 'Registro de parametros de desconto de titulos nao encontrado.';
@@ -1439,7 +1572,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
   
   
   --> Buscar dados de um determinado limite de desconto de titulos
-  
   PROCEDURE pc_busca_dados_limite ( pr_cdcooper IN crapcop.cdcooper%TYPE  --> Código da Cooperativa
                                    ,pr_cdagenci IN crapage.cdagenci%TYPE  --> Código da agencia
                                    ,pr_nrdcaixa IN crapbcx.nrdcaixa%TYPE  --> Numero do caixa do operador
@@ -1478,34 +1610,67 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
     ---------->> CURSORES <<--------   
     --> Buscar Contrato de limite
     CURSOR cr_craplim IS
-      SELECT lim.nrdconta,
-             lim.vllimite,
-             lim.cddlinha,
-             lim.nrctrlim,
-             lim.dtrenova,
-             lim.dtinivig,
-             lim.qtdiavig,
-             lim.dtfimvig,
-             lim.dsencfin##1,
-             lim.dsencfin##2,
-             lim.dsencfin##3,
-             lim.nrgarope,
-             lim.nrinfcad,
-             lim.nrliquid,
-             lim.nrpatlvr,
-             lim.vltotsfn,
-             lim.nrctaav1,
-             lim.nrctaav2,
-             lim.insitlim,
-             lim.dtcancel,
-             lim.flgdigit,
-             lim.nrperger,
-             lim.idcobope
-        FROM craplim lim
-       WHERE lim.cdcooper = pr_cdcooper
-         AND lim.nrdconta = pr_nrdconta
-         AND lim.nrctrlim = pr_nrctrlim
-         AND lim.tpctrlim = pr_tpctrlim;
+    select lim.nrdconta
+          ,lim.vllimite
+          ,lim.cddlinha
+          ,lim.nrctrlim
+          ,lim.dtrenova
+          ,lim.dtinivig
+          ,lim.qtdiavig
+          ,lim.dtfimvig
+          ,lim.dsencfin##1
+          ,lim.dsencfin##2
+          ,lim.dsencfin##3
+          ,lim.nrgarope
+          ,lim.nrinfcad
+          ,lim.nrliquid
+          ,lim.nrpatlvr
+          ,lim.vltotsfn
+          ,lim.nrctaav1
+          ,lim.nrctaav2
+          ,lim.insitlim
+          ,lim.dtcancel
+          ,lim.flgdigit
+          ,lim.nrperger
+		  ,lim.idcobope
+    from   craplim lim
+    where  lim.cdcooper = pr_cdcooper
+    and    lim.nrdconta = pr_nrdconta
+    and    lim.nrctrlim = pr_nrctrlim
+    and    lim.tpctrlim = pr_tpctrlim
+    and    pr_tpctrlim <> 3
+    
+    union  all
+
+    select lim.nrdconta
+          ,lim.vllimite
+          ,lim.cddlinha
+          ,lim.nrctrlim
+          ,lim.dtrenova
+          ,lim.dtinivig
+          ,lim.qtdiavig
+          ,lim.dtfimvig
+          ,lim.dsencfin##1
+          ,lim.dsencfin##2
+          ,lim.dsencfin##3
+          ,lim.nrgarope
+          ,lim.nrinfcad
+          ,lim.nrliquid
+          ,lim.nrpatlvr
+          ,lim.vltotsfn
+          ,lim.nrctaav1
+          ,lim.nrctaav2
+          ,lim.insitlim
+          ,lim.dtcancel
+          ,lim.flgdigit
+          ,lim.nrperger
+		  ,lim.idcobope
+    from   crawlim lim
+    where  lim.cdcooper = pr_cdcooper
+    and    lim.nrdconta = pr_nrdconta
+    and    lim.nrctrlim = pr_nrctrlim
+    and    lim.tpctrlim = pr_tpctrlim
+    and    pr_tpctrlim  = 3;
     rw_craplim cr_craplim%ROWTYPE; 
     
     --> Buscar proposta de Contrato de limite
@@ -1654,7 +1819,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
                                   ,pr_cdoperad => pr_cdoperad   --> Código do Operador
                                   ,pr_dtmvtolt => pr_dtmvtolt   --> data do movimento 
                                   ,pr_idorigem => pr_idorigem   --> Identificador de Origem
-                                  ,pr_tpcobran => 0             --> Tipo de cobrança(1-Sim 0-nao)                                    
+                                  ,pr_tpcobran => 1             --> Tipo de cobrança(1-Sim 0-nao)
+                                  ,pr_inpessoa => pr_inpessoa   --> Indicador de tipo de pessoa
                                    --------> OUT <--------          
                                   ,pr_tab_dados_dsctit  => vr_tab_dados_dsctit        --> tabela contendo os parametros da cooperativa
                                   ,pr_tab_cecred_dsctit => vr_tab_cecred_dsctit --> Tabela contendo os parametros da cecred
@@ -3206,7 +3372,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
                                        ,pr_tab_sacado_nao_pagou       OUT DSCT0002.typ_tab_sacado_nao_pagou
                                        ,pr_cdcritic                   OUT PLS_INTEGER           --> Código da crítica
                                        ,pr_dscritic                   OUT VARCHAR2) IS          --> Descrição da crítica
-    /* .........................................................................
+    ------------------------------------------------------------------------------
     --
     --  Programa : pc_busca_dados_imp_dsctit           Antigo: b1wgen0030.p/busca_dados_impressao_dsctit
     --  Sistema  : Cred
@@ -3238,7 +3404,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
     -- 
     --    01/02/2018 - Inclusão de Parâmetro de entrada por tipo de pessoa: Física / Jurídica
     --                (Gustavo Sene - GFT)    
-    -- .........................................................................*/
+    ------------------------------------------------------------------------------
+
     
     ---------->> CURSORES <<--------   
     --> Buscar dados associado
@@ -4676,18 +4843,63 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
     
     --> Buscar Contrato de limite
     CURSOR cr_craplim IS
-      SELECT lim.nrdconta,
-             lim.cdageori,
-             lim.vllimite,
-             lim.cddlinha,
-             lim.dtinivig,
-             lim.idcobope,
-			 lim.dtpropos
-        FROM craplim lim
-       WHERE lim.cdcooper = pr_cdcooper
-         AND lim.nrdconta = pr_nrdconta
-         AND lim.nrctrlim = pr_nrctrlim
-         AND lim.tpctrlim = pr_tpctrlim;
+    --     descontos de titulos
+    select lim.nrdconta
+          ,lim.cdageori
+          ,lim.vllimite
+          ,lim.cddlinha
+          ,lim.dtinivig
+		  ,lim.idcobope
+		  ,lim.dtpropos
+          ,lim.nrctrlim
+    from   craplim lim
+    where  lim.cdcooper = pr_cdcooper
+    and    lim.nrdconta = pr_nrdconta
+    and    lim.nrctrlim = pr_nrctrlim
+    and    lim.tpctrlim = pr_tpctrlim
+    and    pr_tpctrlim <> 3
+    
+    union  all
+
+    --     proposta principal do limites de desconto de titulo
+    select lim.nrdconta
+          ,lim.cdageori
+          ,lim.vllimite
+          ,lim.cddlinha
+          ,lim.dtinivig
+			,lim.idcobope
+		  	,lim.dtpropos
+          ,lim.nrctrlim
+    from   crawlim lim
+    where  lim.cdcooper = pr_cdcooper
+    and    lim.nrdconta = pr_nrdconta
+    and    lim.nrctrlim = pr_nrctrlim
+    and    lim.tpctrlim = pr_tpctrlim
+    and    lim.nrctrmnt = 0
+    and    pr_tpctrlim  = 3
+    
+    union  all
+    
+    --     proposta de manutenção de limites de desconto de titulo
+    select mnt.nrdconta
+          ,mnt.cdageori
+          ,mnt.vllimite
+          ,mnt.cddlinha
+          ,mnt.dtinivig
+		  ,mnt.idcobope
+		  ,mnt.dtpropos
+          ,mnt.nrctrlim
+    from   crawlim mnt
+          ,crawlim lim
+    where  mnt.cdcooper = lim.cdcooper
+    and    mnt.nrdconta = lim.nrdconta
+    and    mnt.nrctrlim = lim.nrctrmnt
+    and    mnt.tpctrlim = lim.tpctrlim
+    and    lim.cdcooper = lim.cdcooper
+    and    lim.nrdconta = pr_nrdconta
+    and    lim.nrctrlim = pr_nrctrlim
+    and    lim.tpctrlim = pr_tpctrlim
+    and    pr_tpctrlim  = 3;
     rw_craplim cr_craplim%ROWTYPE; 
     
     --> Buscar dados de Linhas de Desconto
@@ -4882,11 +5094,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
       CLOSE cr_crapass;
     END IF; 
 
-    
-
-    IF pr_idimpres IN( 1,      --> COMPLETA 
-                       2 )THEN --> CONTRATO 
-                       
       --> Buscar Contrato de limite
       OPEN cr_craplim;
       FETCH cr_craplim INTO rw_craplim;
@@ -4896,6 +5103,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
       ELSE
         CLOSE cr_craplim;
       END IF;
+
+    IF pr_idimpres IN( 1,      --> COMPLETA 
+                       2 )THEN --> CONTRATO 
 
       --> Se for Cheque e igual ou superior a data do novo contrato
       IF (pr_tpctrlim = 2 OR pr_tpctrlim = 3) AND 
@@ -4920,7 +5130,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
                                ,pr_dtmvtopr => pr_dtmvtopr  --> Data do proximo Movimento
                                ,pr_inproces => pr_inproces  --> Indicador do processo 
                                ,pr_idimpres => pr_idimpres  --> Indicador de impresao
-                               ,pr_nrctrlim => pr_nrctrlim  --> Contrato
+                               ,pr_nrctrlim => rw_craplim.nrctrlim  --> Contrato
                                ,pr_nrborder => 0            --> Numero do bordero
                                ,pr_flgerlog => 0            --> Indicador se deve gerar log(0-nao, 1-sim)
                                ,pr_limorbor => 1            --> Indicador do tipo de dado( 1 - LIMITE DSCTIT 2 - BORDERO DSCTIT )                                     
@@ -5030,7 +5240,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
       RAISE vr_exc_erro;
     ELSE
       CLOSE cr_crapage;
-    END IF;
+      END IF;
 
     IF pr_idimpres IN( 1,      --> COMPLETA 
                        2 )THEN --> CONTRATO 
@@ -5043,16 +5253,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
         vr_cdcritic := 0;
         vr_dscritic := 'Nao foi possivel gerar a impressao.';
         RAISE vr_exc_erro;
-      END IF;
-      
-      --> Buscar Contrato de limite
-      OPEN cr_craplim;
-      FETCH cr_craplim INTO rw_craplim;
-      IF cr_craplim%NOTFOUND THEN
-        CLOSE cr_craplim;
-        vr_flgcriti := TRUE;
-      ELSE
-        CLOSE cr_craplim;
       END IF;
       
       --> Buscar dados de Linhas de Desconto
@@ -5081,7 +5281,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
                                       ,pr_cdusolcr  => 1                   -- Codigo de uso da linha de credito
                                       ,pr_cdlcremp  => rw_craplim.cddlinha -- Linha de credio
                                       ,pr_tpctrlim  => 3                   --> Tipo da operacao (1-Chq Esp./ 2-Desc Chq./ 3-Desc Tit)
-                                      ,pr_nrctrlim  => pr_nrctrlim         -- Contrato
+                                      ,pr_nrctrlim  => rw_craplim.nrctrlim         -- Contrato
                                       ,pr_dtinivig  => nvl(rw_craplim.dtinivig,pr_dtmvtolt)         -- Data liberacao
                                       ,pr_qtdiavig  => vr_tab_contrato_limite(vr_idxctlim).qtdiavig -- Dias de vigencia                                                          
                                       ,pr_vlemprst  => vr_tab_contrato_limite(vr_idxctlim).vllimite -- Valor emprestado
@@ -5140,7 +5340,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
                    vr_cdageqrc ||'_'||
                    TRIM(gene0002.fn_mask_conta(pr_nrdconta)) ||'_'||
                    0           ||'_'||
-                   TRIM(gene0002.fn_mask_contrato(pr_nrctrlim)) ||'_'||
+                   TRIM(gene0002.fn_mask_contrato(rw_craplim.nrctrlim)) ||'_'||
                    0           ||'_'||
                    vr_cdtipdoc;
       
@@ -5171,7 +5371,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
                          '<dsqrcode>'|| vr_qrcode                                    ||'</dsqrcode>'|| 
                          '<dstitulo>'|| vr_dstitulo                                  ||'</dstitulo>'||
                          '<tpctrlim>'|| pr_tpctrlim                                  ||'</tpctrlim>'||
-                         '<nrctrlim>'|| TRIM(gene0002.fn_mask_contrato(pr_nrctrlim)) ||'</nrctrlim>'||
+                         '<nrctrlim>'|| TRIM(gene0002.fn_mask_contrato(rw_craplim.nrctrlim)) ||'</nrctrlim>'||
                          '<nrdconta>'|| gene0002.fn_mask_conta(pr_nrdconta)          ||'</nrdconta>'||
                          '<nmextcop>'|| vr_tab_contrato_limite(vr_idxctlim).nmextcop ||'</nmextcop>'|| 
                          '<cdagenci>'|| vr_tab_contrato_limite(vr_idxctlim).cdagenci ||'</cdagenci>'||
@@ -5202,7 +5402,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
                          '<dsavali1>'|| vr_dsavali1                                  ||'</dsavali1>'||
                          '<dsavali2>'|| vr_dsavali2                                  ||'</dsavali2>');
       
+                       
+
       IF pr_tpctrlim = 2 THEN
+
         vr_ind_dev_sol := 0;
 				vr_ind_interv := 0;
 
@@ -5211,7 +5414,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
            TRIM(vr_tab_contrato_limite(vr_idxctlim).nmdaval2) IS NOT NULL THEN
            vr_ind_dev_sol := 1;
         END IF;
-
       pc_escreve_xml('<avalistas>'||
                          '<aval1>'||
                            '<nrsequen>1</nrsequen>'||
@@ -5409,7 +5611,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
                                       ,pr_cdusolcr  => 1                           -- Codigo de uso da linha de credito
                                       ,pr_cdlcremp  => rw_craplim.cddlinha         -- Linha de credio
                                       ,pr_tpctrlim  => pr_tpctrlim                 -- Tipo da operacao (1-Chq Esp./ 2-Desc Chq./ 3-Desc Tit)
-                                      ,pr_nrctrlim  => pr_nrctrlim                 -- Contrato
+                                      ,pr_nrctrlim  => rw_craplim.nrctrlim                 -- Contrato
                                       ,pr_dtinivig  => nvl(rw_craplim.dtinivig,pr_dtmvtolt)         -- Data liberacao
                                       ,pr_qtdiavig  => vr_tab_contrato_limite(vr_idxctlim).qtdiavig -- Dias de vigencia                                      
                                       ,pr_vlemprst  => vr_tab_contrato_limite(vr_idxctlim).vllimite -- Valor emprestado
@@ -5589,7 +5791,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
       vr_dsxmlnode := '/raiz';
     
     END IF;
-
     --> Solicita geracao do PDF
     gene0002.pc_solicita_relato(pr_cdcooper   => pr_cdcooper
                                , pr_cdprogra  => 'ATENDA'
@@ -5678,7 +5879,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
         gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid, 
                                   pr_nmdcampo => 'nrctrlim', 
                                   pr_dsdadant => NULL, 
-                                  pr_dsdadatu => pr_nrctrlim);
+                                  pr_dsdadatu => rw_craplim.nrctrlim);
       END IF;
       
       
@@ -5704,7 +5905,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
         gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid, 
                                   pr_nmdcampo => 'nrctrlim', 
                                   pr_dsdadant => NULL, 
-                                  pr_dsdadatu => pr_nrctrlim);
+                                  pr_dsdadatu => rw_craplim.nrctrlim);
       END IF;   
   END pc_gera_impressao_limite;  
   
@@ -6294,6 +6495,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
                              pr_nrdrowid => vr_nrdrowid);
       END IF; 
   END pc_gera_impressao_bordero; 
+
   
 END DSCT0002;
 /

@@ -28,7 +28,7 @@ CREATE OR REPLACE PACKAGE CECRED.ESTE0001 is
   --> Funcao que retorna o ultimo Protocolo de Análise Automática do Motor
   FUNCTION fn_protocolo_analise_auto (pr_cdcooper IN NUMBER
                                      ,pr_nrdconta IN NUMBER
-                                     ,pr_nrctremp IN NUMBER) RETURN tbepr_acionamento.dsprotocolo%TYPE;
+                                     ,pr_nrctremp IN NUMBER) RETURN tbgen_webservice_aciona.dsprotocolo%TYPE;
   
   --> Funcao que retorna o ultimo Protocolo de Análise Automática do Motor via Web
   PROCEDURE pr_protocolo_analise_auto_web (pr_nrdconta IN NUMBER
@@ -72,6 +72,15 @@ CREATE OR REPLACE PACKAGE CECRED.ESTE0001 is
                                           ,pr_nmdcampo OUT VARCHAR2              -- Nome do campo com erro
                                           ,pr_des_erro OUT VARCHAR2);            -- Erros do processo
                                           
+  PROCEDURE pc_busca_param_ibra(pr_cdcooper       in crapcop.cdcooper%type  -- Codigo da cooperativa
+                               ,pr_tpenvest       in varchar2 default null  --> Tipo de envio C - Consultar(Get)
+                               ,pr_host_esteira  out varchar2               -- Host da esteira
+                               ,pr_recurso_este  out varchar2               -- URI da esteira
+                               ,pr_dsdirlog      out varchar2               -- Diretorio de log dos arquivos
+                               ,pr_autori_este   out varchar2               -- Chave de acesso
+                               ,pr_chave_aplica  out varchar2               -- App Key
+                               ,pr_dscritic      out varchar2 ); 
+                                          
   PROCEDURE pc_verifica_regras_esteira (pr_cdcooper  IN crawepr.cdcooper%TYPE,  --> Codigo da cooperativa                                        
                                         pr_nrdconta  IN crawepr.nrdconta%TYPE,  --> Numero da conta do cooperado
                                         pr_nrctremp  IN crawepr.nrctremp%TYPE,  --> Numero da proposta de emprestimo                                        
@@ -88,27 +97,35 @@ CREATE OR REPLACE PACKAGE CECRED.ESTE0001 is
                                       pr_dtmvtolt  IN crapdat.dtmvtolt%TYPE,  --> Data do movimento                                      
                                       ---- OUT ----                           
                                       pr_dscritic OUT VARCHAR2);              --> Descricao da critica
+
+  --> Rotina para converter arquivo(pdf) para CLOB em base64 para ser enviado via JSON                                    
+  PROCEDURE pc_arq_para_clob_base64(pr_nmarquiv     IN VARCHAR2,
+                                    pr_json_value_arq OUT json_value,
+                                    pr_dscritic    OUT VARCHAR2);
                                       
   --> Extrair a descricao de critica do jsson de retorno
   FUNCTION fn_retorna_critica (pr_jsonreto IN VARCHAR2) RETURN VARCHAR2;
    
   --> Rotina responsavel por gravar registro de log de acionamento
-  PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbepr_acionamento.cdcooper%TYPE, 
-                                 pr_cdagenci                 IN tbepr_acionamento.cdagenci_acionamento%TYPE,
-                                 pr_cdoperad                 IN tbepr_acionamento.cdoperad%TYPE, 
-                                 pr_cdorigem                 IN tbepr_acionamento.cdorigem%TYPE, 
-                                 pr_nrctrprp                 IN tbepr_acionamento.nrctrprp%TYPE, 
-                                 pr_nrdconta                 IN tbepr_acionamento.nrdconta%TYPE, 
-                                 pr_tpacionamento            IN tbepr_acionamento.tpacionamento%TYPE, 
-                                 pr_dsoperacao               IN tbepr_acionamento.dsoperacao%TYPE, 
-                                 pr_dsuriservico             IN tbepr_acionamento.dsuriservico%TYPE, 
-                                 pr_dtmvtolt                 IN tbepr_acionamento.dtmvtolt%TYPE, 
-                                 pr_dhacionamento            IN tbepr_acionamento.dhacionamento%TYPE DEFAULT SYSTIMESTAMP,
-                                 pr_cdstatus_http            IN tbepr_acionamento.cdstatus_http%TYPE, 
-                                 pr_dsconteudo_requisicao    IN tbepr_acionamento.dsconteudo_requisicao%TYPE,
-                                 pr_dsresposta_requisicao    IN tbepr_acionamento.dsresposta_requisicao%TYPE,
-                                 pr_dsprotocolo              IN tbepr_acionamento.dsprotocolo%TYPE DEFAULT NULL, -- Protocolo do Acionamento
-                                 pr_idacionamento           OUT tbepr_acionamento.idacionamento%TYPE,
+  PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_aciona.cdcooper%TYPE, 
+                                 pr_cdagenci                 IN tbgen_webservice_aciona.cdagenci_acionamento%TYPE,
+                                 pr_cdoperad                 IN tbgen_webservice_aciona.cdoperad%TYPE, 
+                                 pr_cdorigem                 IN tbgen_webservice_aciona.cdorigem%TYPE, 
+                                 pr_nrctrprp                 IN tbgen_webservice_aciona.nrctrprp%TYPE, 
+                                 pr_nrdconta                 IN tbgen_webservice_aciona.nrdconta%TYPE, 
+                                 pr_tpacionamento            IN tbgen_webservice_aciona.tpacionamento%TYPE, 
+                                 pr_dsoperacao               IN tbgen_webservice_aciona.dsoperacao%TYPE, 
+                                 pr_dsuriservico             IN tbgen_webservice_aciona.dsuriservico%TYPE, 
+                                 pr_dtmvtolt                 IN tbgen_webservice_aciona.dtmvtolt%TYPE, 
+                                 pr_dhacionamento            IN tbgen_webservice_aciona.dhacionamento%TYPE DEFAULT SYSTIMESTAMP,
+                                 pr_cdstatus_http            IN tbgen_webservice_aciona.cdstatus_http%TYPE, 
+                                 pr_dsconteudo_requisicao    IN tbgen_webservice_aciona.dsconteudo_requisicao%TYPE,
+                                 pr_dsresposta_requisicao    IN tbgen_webservice_aciona.dsresposta_requisicao%TYPE,
+                                 pr_dsprotocolo              IN tbgen_webservice_aciona.dsprotocolo%TYPE DEFAULT NULL, -- Protocolo do Acionamento
+                                 pr_dsmetodo                 IN varchar2 /*tbgen_webservice_aciona.dsmetodo%TYPE*/ DEFAULT NULL,
+                                 pr_tpconteudo               IN number /*tbgen_webservice_aciona.tpconteudo%TYPE*/ DEFAULT NULL,  --tipo de retorno json/xml
+                                 pr_tpproduto                IN number /*tbgen_webservice_aciona.tpproduto%TYPE*/ DEFAULT 0,  --Tipo de produto (0-Emprestimo|Financiamento / 1-Limite Credito / 2-Limite Desconto Cheque / 3-Limite Desconto Titulo)
+                                 pr_idacionamento           OUT tbgen_webservice_aciona.idacionamento%TYPE,
                                  pr_dscritic                OUT VARCHAR2);
                                                                  
   --> Rotina responsavel por gerar a inclusao da proposta para a esteira
@@ -250,7 +267,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
       Sistema  : Rotinas referentes a comunicação com a ESTEIRA de CREDITO da IBRATAN
       Sigla    : CADA
       Autor    : Odirlei Busana - AMcom
-      Data     : Março/2016.                   Ultima atualizacao: 08/03/2016
+      Data     : Março/2016.                   Ultima atualizacao: 02/04/2018
 
       Dados referentes ao programa:
 
@@ -258,6 +275,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
       Objetivo  : Rotinas referentes a comunicação com a ESTEIRA de CREDITO da IBRATAN
 
       Alteracoes: 03/05/2017 - Alterações referentes ao Projeto 337. (Reinert)
+                  01/03/2018 - Substituir utilização da tabela tbepr_acionamento pela tbgen_webservice_aciona
 
   ---------------------------------------------------------------------------------------------------------------*/
   --> Funcao para formatar o numero em decimal conforme padrao da IBRATAN
@@ -284,22 +302,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
     --> Funcao que retorna o ultimo Protocolo de Análise Automática do Motor
     FUNCTION fn_protocolo_analise_auto (pr_cdcooper IN NUMBER
                                        ,pr_nrdconta IN NUMBER
-                                       ,pr_nrctremp IN NUMBER) RETURN tbepr_acionamento.dsprotocolo%TYPE IS
+                                       ,pr_nrctremp IN NUMBER) RETURN tbgen_webservice_aciona.dsprotocolo%TYPE IS
                                        
-      CURSOR cr_tbepr_acionamento IS
+      CURSOR cr_tbgen_webservice_aciona IS
         SELECT aci.dsprotocolo dsprotocolo
-          FROM tbepr_acionamento aci
+          FROM tbgen_webservice_aciona aci
          WHERE aci.cdcooper = pr_cdcooper
            AND aci.nrdconta = pr_nrdconta
            AND aci.nrctrprp = pr_nrctremp
            AND aci.tpacionamento = 2 /* Retorno */
            AND aci.dsprotocolo IS NOT NULL
          ORDER BY aci.dhacionamento DESC;
-       rw_tbepr_acionamento cr_tbepr_acionamento%ROWTYPE;
+       rw_tbgen_webservice_aciona cr_tbgen_webservice_aciona%ROWTYPE;
     BEGIN
-      OPEN cr_tbepr_acionamento;
-      FETCH cr_tbepr_acionamento INTO rw_tbepr_acionamento;
-      RETURN rw_tbepr_acionamento.dsprotocolo;
+      OPEN cr_tbgen_webservice_aciona;
+      FETCH cr_tbgen_webservice_aciona INTO rw_tbgen_webservice_aciona;
+      RETURN rw_tbgen_webservice_aciona.dsprotocolo;
     END fn_protocolo_analise_auto;
     
     --> Funcao que retorna o ultimo Protocolo de Análise Automática do Motor via Web
@@ -344,7 +362,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
       vr_nrdcaixa VARCHAR2(100);
       vr_idorigem VARCHAR2(100);
       
-      vr_dsprotocolo tbepr_acionamento.dsprotocolo%TYPE;
+      vr_dsprotocolo tbgen_webservice_aciona.dsprotocolo%TYPE;
       
 		BEGIN
 			-- Recupera dados de log para consulta posterior
@@ -656,6 +674,133 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
       pr_dscritic := 'Não foi possivel verificar regras da Análise de Crédito: '||SQLERRM;
   END pc_verifica_regras_esteira;
   
+  PROCEDURE pc_busca_param_ibra(pr_cdcooper       in crapcop.cdcooper%type  -- Codigo da cooperativa
+                               ,pr_tpenvest       in varchar2 default null  --> Tipo de envio C - Consultar(Get)
+                               ,pr_host_esteira  out varchar2               -- Host da esteira
+                               ,pr_recurso_este  out varchar2               -- URI da esteira
+                               ,pr_dsdirlog      out varchar2               -- Diretorio de log dos arquivos
+                               ,pr_autori_este   out varchar2               -- Chave de acesso
+                               ,pr_chave_aplica  out varchar2               -- App Key
+                               ,pr_dscritic      out varchar2 ) is
+  /* ..........................................................................
+  
+
+    Programa : pc_busca_param_ibra
+    Sistema  : Conta-Corrente - Cooperativa de Credito
+    Sigla    : CRED
+    Autor    : Paulo Penteado (GFT) 
+    Data     : Abril/2018.
+
+    Dados referentes ao programa:
+
+    Frequencia: Sempre que for chamado
+    Objetivo  : Buscar parametros para uso na comunicacao com a esteira, removido
+                da procedure pc_carrega_param_ibrapara pode utilizar sem a validação
+                da pc_verifica_regras_esteira
+
+    Alteração : 12/04/2018 Criação
+
+  ..........................................................................*/
+    vr_exc_erro exception;
+    vr_dscritic varchar2(4000);
+    vr_cdcritic number;
+
+  BEGIN
+
+     if  pr_tpenvest = 'M' then
+         --> Buscar hots so webservice do motor
+         pr_host_esteira := gene0001.fn_param_sistema(pr_nmsistem => 'CRED'
+                                                     ,pr_cdcooper => pr_cdcooper
+                                                     ,pr_cdacesso => 'HOST_WEBSRV_MOTOR_IBRA');
+         if  pr_host_esteira is null then
+             vr_dscritic := 'Parametro HOST_WEBSRV_MOTOR_IBRA não encontrado.';
+             raise vr_exc_erro;
+         end if;
+
+         --> Buscar recurso uri do motor
+         pr_recurso_este := gene0001.fn_param_sistema(pr_nmsistem => 'CRED'
+                                                     ,pr_cdcooper => pr_cdcooper
+                                                     ,pr_cdacesso => 'URI_WEBSRV_MOTOR_IBRA');
+
+         if  pr_recurso_este is null then
+             vr_dscritic := 'Parametro URI_WEBSRV_MOTOR_IBRA não encontrado.';
+             raise vr_exc_erro;
+         end if;
+
+         --> Buscar chave de acesso do motor (Autorization é igual ao Consultas Automatizadas)
+         pr_autori_este := gene0001.fn_param_sistema(pr_nmsistem => 'CRED'
+                                                    ,pr_cdcooper =>  pr_cdcooper
+                                                    ,pr_cdacesso => 'AUTORIZACAO_IBRATAN');
+         if  pr_autori_este is null then
+             vr_dscritic := 'Parametro AUTORIZACAO_IBRATAN não encontrado.';
+             raise vr_exc_erro;
+         end if;
+
+         -- Concatenar o Prefixo
+         pr_autori_este := 'CECRED'||lpad(pr_cdcooper,2,'0')||':'||pr_autori_este;
+
+         -- Gerar Base 64
+         pr_autori_este := 'Ibratan '||sspc0001.pc_encode_base64(pr_autori_este);
+
+         --> Buscar chave de aplicação do motor
+         pr_chave_aplica := gene0001.fn_param_sistema(pr_nmsistem => 'CRED'
+                                                     ,pr_cdcooper => pr_cdcooper
+                                                     ,pr_cdacesso => 'KEY_WEBSRV_MOTOR_IBRA');
+
+         if  pr_chave_aplica is null then
+             vr_dscritic := 'Parametro KEY_WEBSRV_MOTOR_IBRA não encontrado.';
+             raise vr_exc_erro;
+         end if;
+
+     else
+         --> Buscar hots so webservice da esteira
+         pr_host_esteira := gene0001.fn_param_sistema(pr_nmsistem => 'CRED'
+                                                     ,pr_cdcooper => pr_cdcooper
+                                                     ,pr_cdacesso => 'HOSWEBSRVCE_ESTEIRA_IBRA');
+         if  pr_host_esteira is null then
+             vr_dscritic := 'Parametro HOSWEBSRVCE_ESTEIRA_IBRA não encontrado.';
+             raise vr_exc_erro;
+         end if;
+
+         --> Buscar recurso uri da esteira
+         pr_recurso_este := gene0001.fn_param_sistema(pr_nmsistem => 'CRED'
+                                                     ,pr_cdcooper => pr_cdcooper
+                                                     ,pr_cdacesso => 'URIWEBSRVCE_RECURSO_IBRA');
+
+         if  pr_recurso_este is null then
+             vr_dscritic := 'Parametro URIWEBSRVCE_RECURSO_IBRA não encontrado.';
+             raise vr_exc_erro;
+         end if;
+
+         --> Buscar chave de acesso da esteira
+         pr_autori_este := gene0001.fn_param_sistema(pr_nmsistem => 'CRED'
+                                                    ,pr_cdcooper => pr_cdcooper
+                                                    ,pr_cdacesso => 'KEYWEBSRVCE_ESTEIRA_IBRA');
+
+         if  pr_autori_este is null then
+             vr_dscritic := 'Parametro KEYWEBSRVCE_ESTEIRA_IBRA não encontrado.';
+             raise vr_exc_erro;
+         end if;
+     end if;
+
+     --> Buscar diretorio do log
+     pr_dsdirlog := gene0001.fn_diretorio(pr_tpdireto => 'C'
+                                         ,pr_cdcooper => 3
+                                         ,pr_nmsubdir => '/log/webservices' );
+
+  EXCEPTION
+     when vr_exc_erro then
+          if  nvl(vr_cdcritic,0) > 0 and trim(vr_dscritic) is null then
+              vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+          end if;
+
+          pr_dscritic := vr_dscritic;
+
+    when others then
+         pr_dscritic := 'Não foi possivel buscar parametros da estira: '||sqlerrm;
+  END;
+
+
   PROCEDURE pc_carrega_param_ibra(pr_cdcooper       IN crapcop.cdcooper%TYPE,  -- Codigo da cooperativa
                                   pr_nrdconta       IN crawepr.nrdconta%TYPE,  --> Numero da conta do cooperado
                                   pr_nrctremp       IN crawepr.nrctremp%TYPE,  --> Numero da proposta de emprestimo                                        
@@ -681,7 +826,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
     Frequencia: Sempre que for chamado
     Objetivo  : Carregar parametros para uso na comunicacao com a esteira
     
-    Alteração : 
+    Alteração : 12/04/2018 Adicionado a procdure pc_busca_param_ibra (Paulo Penteado GFT)
         
   ..........................................................................*/  
     vr_exc_erro EXCEPTION;
@@ -704,87 +849,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
       RAISE vr_exc_erro;
     END IF; 
   
-	  IF pr_tpenvest = 'M' THEN
-			--> Buscar hots so webservice do motor
-			pr_host_esteira := gene0001.fn_param_sistema (pr_nmsistem => 'CRED', 
-																										pr_cdcooper => pr_cdcooper, 
-																										pr_cdacesso => 'HOST_WEBSRV_MOTOR_IBRA');
-			IF pr_host_esteira IS NULL THEN      
-				vr_dscritic := 'Parametro HOST_WEBSRV_MOTOR_IBRA não encontrado.';
+    pc_busca_param_ibra(pr_cdcooper      => pr_cdcooper
+                       ,pr_tpenvest      => pr_tpenvest
+                       ,pr_host_esteira  => pr_host_esteira
+                       ,pr_recurso_este  => pr_recurso_este
+                       ,pr_dsdirlog      => pr_dsdirlog
+                       ,pr_autori_este   => pr_autori_este
+                       ,pr_chave_aplica  => pr_chave_aplica
+                       ,pr_dscritic      => pr_dscritic );
+
+    IF vr_dscritic  IS NOT NULL THEN
 				RAISE vr_exc_erro;      
 			END IF;
-	                                                  
-			--> Buscar recurso uri do motor
-			pr_recurso_este := gene0001.fn_param_sistema (pr_nmsistem => 'CRED', 
-																										pr_cdcooper => pr_cdcooper, 
-																										pr_cdacesso => 'URI_WEBSRV_MOTOR_IBRA');
-	  
-			IF pr_recurso_este IS NULL THEN      
-				vr_dscritic := 'Parametro URI_WEBSRV_MOTOR_IBRA não encontrado.';
-				RAISE vr_exc_erro;      
-			END IF;  
-	    
-			--> Buscar chave de acesso do motor (Autorization é igual ao Consultas Automatizadas)
-			pr_autori_este := gene0001.fn_param_sistema(pr_nmsistem => 'CRED',
-                                                  pr_cdcooper =>  pr_cdcooper,
-                                                  pr_cdacesso => 'AUTORIZACAO_IBRATAN');
-      IF pr_autori_este IS NULL THEN      
-				vr_dscritic := 'Parametro AUTORIZACAO_IBRATAN não encontrado.';
-				RAISE vr_exc_erro;      
-			END IF;  
-      
-      -- Concatenar o Prefixo
-      pr_autori_este := 'CECRED'||lpad(pr_cdcooper,2,'0')||':'||pr_autori_este;
-      
-      -- Gerar Base 64
-      pr_autori_este := 'Ibratan '||sspc0001.pc_encode_base64(pr_autori_este);
-      
-			--> Buscar chave de aplicação do motor
-			pr_chave_aplica := gene0001.fn_param_sistema (pr_nmsistem => 'CRED', 
-																									pr_cdcooper => pr_cdcooper, 
-																									pr_cdacesso => 'KEY_WEBSRV_MOTOR_IBRA');
-	  
-			IF pr_chave_aplica IS NULL THEN      
-				vr_dscritic := 'Parametro KEY_WEBSRV_MOTOR_IBRA não encontrado.';
-				RAISE vr_exc_erro;      
-			END IF;         
-			
-		ELSE
-			--> Buscar hots so webservice da esteira
-			pr_host_esteira := gene0001.fn_param_sistema (pr_nmsistem => 'CRED', 
-																										pr_cdcooper => pr_cdcooper, 
-																										pr_cdacesso => 'HOSWEBSRVCE_ESTEIRA_IBRA');
-			IF pr_host_esteira IS NULL THEN      
-				vr_dscritic := 'Parametro HOSWEBSRVCE_ESTEIRA_IBRA não encontrado.';
-				RAISE vr_exc_erro;      
-			END IF;
-	                                                  
-			--> Buscar recurso uri da esteira
-			pr_recurso_este := gene0001.fn_param_sistema (pr_nmsistem => 'CRED', 
-																										pr_cdcooper => pr_cdcooper, 
-																										pr_cdacesso => 'URIWEBSRVCE_RECURSO_IBRA');                                             
-	  
-			IF pr_recurso_este IS NULL THEN      
-				vr_dscritic := 'Parametro URIWEBSRVCE_RECURSO_IBRA não encontrado.';
-				RAISE vr_exc_erro;      
-			END IF;  
-	    
-			--> Buscar chave de acesso da esteira
-			pr_autori_este := gene0001.fn_param_sistema (pr_nmsistem => 'CRED', 
-																								 	pr_cdcooper => pr_cdcooper, 
-																								 	pr_cdacesso => 'KEYWEBSRVCE_ESTEIRA_IBRA');                                             
-	  
-			IF pr_autori_este IS NULL THEN      
-				vr_dscritic := 'Parametro KEYWEBSRVCE_ESTEIRA_IBRA não encontrado.';
-				RAISE vr_exc_erro;      
-			END IF;  
-			 			
-    END IF;
-    --> Buscar diretorio do log
-    pr_dsdirlog := gene0001.fn_diretorio(pr_tpdireto => 'C', 
-                                         pr_cdcooper => 3, 
-                                         pr_nmsubdir => '/log/webservices' ); 
-  
   
   EXCEPTION
     WHEN vr_exc_erro THEN     
@@ -883,22 +959,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
   END;
   
   --> Rotina responsavel por gravar registro de log de acionamento
-  PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbepr_acionamento.cdcooper%TYPE, 
-                                 pr_cdagenci                 IN tbepr_acionamento.cdagenci_acionamento%TYPE,
-                                 pr_cdoperad                 IN tbepr_acionamento.cdoperad%TYPE, 
-                                 pr_cdorigem                 IN tbepr_acionamento.cdorigem%TYPE, 
-                                 pr_nrctrprp                 IN tbepr_acionamento.nrctrprp%TYPE, 
-                                 pr_nrdconta                 IN tbepr_acionamento.nrdconta%TYPE, 
-                                 pr_tpacionamento            IN tbepr_acionamento.tpacionamento%TYPE, 
-                                 pr_dsoperacao               IN tbepr_acionamento.dsoperacao%TYPE, 
-                                 pr_dsuriservico             IN tbepr_acionamento.dsuriservico%TYPE, 
-                                 pr_dtmvtolt                 IN tbepr_acionamento.dtmvtolt%TYPE, 
-                                 pr_dhacionamento            IN tbepr_acionamento.dhacionamento%TYPE DEFAULT SYSTIMESTAMP,
-                                 pr_cdstatus_http            IN tbepr_acionamento.cdstatus_http%TYPE, 
-                                 pr_dsconteudo_requisicao    IN tbepr_acionamento.dsconteudo_requisicao%TYPE,
-                                 pr_dsresposta_requisicao    IN tbepr_acionamento.dsresposta_requisicao%TYPE,
-                                 pr_dsprotocolo              IN tbepr_acionamento.dsprotocolo%TYPE DEFAULT NULL, -- Protocolo do Acionamento
-                                 pr_idacionamento           OUT tbepr_acionamento.idacionamento%TYPE,
+PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_aciona.cdcooper%TYPE, 
+                               pr_cdagenci                 IN tbgen_webservice_aciona.cdagenci_acionamento%TYPE,
+                               pr_cdoperad                 IN tbgen_webservice_aciona.cdoperad%TYPE, 
+                               pr_cdorigem                 IN tbgen_webservice_aciona.cdorigem%TYPE, 
+                               pr_nrctrprp                 IN tbgen_webservice_aciona.nrctrprp%TYPE, 
+                               pr_nrdconta                 IN tbgen_webservice_aciona.nrdconta%TYPE, 
+                               pr_tpacionamento            IN tbgen_webservice_aciona.tpacionamento%TYPE, 
+                               pr_dsoperacao               IN tbgen_webservice_aciona.dsoperacao%TYPE, 
+                               pr_dsuriservico             IN tbgen_webservice_aciona.dsuriservico%TYPE, 
+                               pr_dtmvtolt                 IN tbgen_webservice_aciona.dtmvtolt%TYPE, 
+                               pr_dhacionamento            IN tbgen_webservice_aciona.dhacionamento%TYPE DEFAULT SYSTIMESTAMP,
+                               pr_cdstatus_http            IN tbgen_webservice_aciona.cdstatus_http%TYPE, 
+                               pr_dsconteudo_requisicao    IN tbgen_webservice_aciona.dsconteudo_requisicao%TYPE,
+                               pr_dsresposta_requisicao    IN tbgen_webservice_aciona.dsresposta_requisicao%TYPE,
+                               pr_dsprotocolo              IN tbgen_webservice_aciona.dsprotocolo%TYPE DEFAULT NULL, -- Protocolo do Acionamento
+                               pr_dsmetodo                 IN varchar2 /*tbgen_webservice_aciona.dsmetodo%TYPE*/ DEFAULT NULL,
+                               pr_tpconteudo               IN number /*tbgen_webservice_aciona.tpconteudo%TYPE*/ DEFAULT NULL,  --tipo de retorno json/xml
+                               pr_tpproduto                IN number /*tbgen_webservice_aciona.tpproduto%TYPE*/ DEFAULT 0,  --Tipo de produto (0-Emprestimo|Financiamento / 1-Limite Credito / 2-Limite Desconto Cheque / 3-Limite Desconto Titulo)
+                               pr_idacionamento           OUT tbgen_webservice_aciona.idacionamento%TYPE,
                                  pr_dscritic                OUT VARCHAR2) IS
                                  
   /* ..........................................................................
@@ -906,8 +985,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
     Programa : pc_grava_acionamento        
     Sistema  : Conta-Corrente - Cooperativa de Credito
     Sigla    : CRED
-    Autor    : Odirlei Busana(Amcom)
-    Data     : Março/2016.                   Ultima atualizacao: 08/03/2016
+  Autor    : Luis Fernando - GFT
+  Data     : Fevereiro/2018.                   Ultima atualizacao: 
     
     Dados referentes ao programa:
     
@@ -919,7 +998,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
   ..........................................................................*/
     PRAGMA AUTONOMOUS_TRANSACTION;
   BEGIN
-    INSERT INTO tbepr_acionamento 
+  INSERT INTO tbgen_webservice_aciona
                 ( cdcooper, 
                   cdagenci_acionamento, 
                   cdoperad, 
@@ -934,6 +1013,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
                   cdstatus_http, 
                   dsconteudo_requisicao,
                   dsresposta_requisicao,
+                --dsmetodo,
+                --tpconteudo,
+                tpproduto,
 									dsprotocolo)  
           VALUES( pr_cdcooper,        --cdcooper
                   pr_cdagenci,        -- cdagenci_acionamento, 
@@ -949,14 +1031,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
                   pr_cdstatus_http,   -- cdstatus_http
                   pr_dsconteudo_requisicao,
                   pr_dsresposta_requisicao, --dsresposta_requisicao       
-									pr_dsprotocolo)     -- protocolo
-           RETURNING tbepr_acionamento.idacionamento INTO pr_idacionamento;
+				  --pr_dsmetodo,
+				  --pr_tpconteudo,
+                  pr_tpproduto,
+                  pr_dsprotocolo)     -- protocolo
+           RETURNING tbgen_webservice_aciona.idacionamento INTO pr_idacionamento;
    
     --> Commit para garantir que guarde as informações do log de acionamento
     COMMIT;
   EXCEPTION
     WHEN OTHERS THEN
-      pr_dscritic := 'Erro ao inserir tbepr_acionamento: '||SQLERRM;
+    pr_dscritic := 'Erro ao inserir tbgen_webservice_aciona: '||SQLERRM;
       ROLLBACK;
   END pc_grava_acionamento;
   
@@ -986,7 +1071,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
     -----------> CURSORES <-----------
   BEGIN
   
-    UPDATE tbepr_acionamento aci
+    UPDATE tbgen_webservice_aciona aci
        SET aci.nrctrprp = pr_nrctremp_novo
      WHERE aci.cdcooper = pr_cdcooper
        AND aci.nrdconta = pr_nrdconta
@@ -1092,7 +1177,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
     vr_request  json0001.typ_http_request;
     vr_response json0001.typ_http_response;
     
-    vr_idacionamento  tbepr_acionamento.idacionamento%TYPE;
+    vr_idacionamento  tbgen_webservice_aciona.idacionamento%TYPE;
 		
     vr_tab_split     gene0002.typ_split;
     vr_idx_split     VARCHAR2(1000);
@@ -1232,7 +1317,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
         -- Se conseguiu encontrar Protocolo
         IF pr_dsprotocolo IS NOT NULL THEN 
   				-- Atualizar acionamento																										 
-	  			UPDATE tbepr_acionamento
+          UPDATE tbgen_webservice_aciona
 		  			 SET dsprotocolo = pr_dsprotocolo
 			  	 WHERE idacionamento = vr_idacionamento;
         ELSE    
@@ -1478,7 +1563,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
     vr_vllimdis     NUMBER;
     vr_nmarquiv     varchar2(1000);
     vr_dsiduser     varchar2(100);
-        vr_dsprotoc  tbepr_acionamento.dsprotocolo%TYPE;
+        vr_dsprotoc  tbgen_webservice_aciona.dsprotocolo%TYPE;
         vr_dsdirarq  VARCHAR2(1000);
         vr_dscomando VARCHAR2(1000);
       
@@ -1980,13 +2065,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
     -- Acionamentos de retorno
     CURSOR cr_aciona_retorno(pr_dsprotocolo VARCHAR2) IS
       SELECT ac.dsconteudo_requisicao
-        FROM tbepr_acionamento ac
+        FROM tbgen_webservice_aciona ac
        WHERE ac.cdcooper = pr_cdcooper
          AND ac.nrdconta = pr_nrdconta
          AND ac.nrctrprp = pr_nrctremp
          AND ac.dsprotocolo = pr_dsprotocolo
          AND ac.tpacionamento = 2; -- Somente Retorno
-    vr_dsconteudo_requisicao tbepr_acionamento.dsconteudo_requisicao%TYPE;
+    vr_dsconteudo_requisicao tbgen_webservice_aciona.dsconteudo_requisicao%TYPE;
     
     -- Hora de Envio
     vr_hrenvest crawepr.hrenvest%TYPE;
@@ -2007,7 +2092,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
     
     -- Variaveis para DEBUG
     vr_flgdebug VARCHAR2(100) := gene0001.fn_param_sistema('CRED',pr_cdcooper,'DEBUG_MOTOR_IBRA');
-    vr_idaciona tbepr_acionamento.idacionamento%TYPE;
+    vr_idaciona tbgen_webservice_aciona.idacionamento%TYPE;
     
   BEGIN    
     
@@ -2513,7 +2598,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
     
     -- Variaveis para DEBUG
     vr_flgdebug VARCHAR2(100) := gene0001.fn_param_sistema('CRED',pr_cdcooper,'DEBUG_MOTOR_IBRA');
-    vr_idaciona tbepr_acionamento.idacionamento%TYPE;    
+    vr_idaciona tbgen_webservice_aciona.idacionamento%TYPE;
     
   BEGIN                  
     
@@ -2803,7 +2888,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
     
     -- Variaveis para DEBUG
     vr_flgdebug VARCHAR2(100) := gene0001.fn_param_sistema('CRED',pr_cdcooper,'DEBUG_MOTOR_IBRA');
-    vr_idaciona tbepr_acionamento.idacionamento%TYPE;
+    vr_idaciona tbgen_webservice_aciona.idacionamento%TYPE;
     
     
   BEGIN      
@@ -3044,7 +3129,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
     
     -- Variaveis para DEBUG
     vr_flgdebug VARCHAR2(100) := gene0001.fn_param_sistema('CRED',pr_cdcooper,'DEBUG_MOTOR_IBRA');
-    vr_idaciona tbepr_acionamento.idacionamento%TYPE;
+    vr_idaciona tbgen_webservice_aciona.idacionamento%TYPE;
     
   BEGIN    
     
@@ -3266,7 +3351,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
     
     -- Variaveis para DEBUG
     vr_flgdebug VARCHAR2(100) := gene0001.fn_param_sistema('CRED',pr_cdcooper,'DEBUG_MOTOR_IBRA');
-    vr_idaciona tbepr_acionamento.idacionamento%TYPE;
+    vr_idaciona tbgen_webservice_aciona.idacionamento%TYPE;
     
     
   BEGIN
@@ -3556,7 +3641,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
     
     -- Variaveis para DEBUG
     vr_flgdebug VARCHAR2(100) := gene0001.fn_param_sistema('CRED',pr_cdcooper,'DEBUG_MOTOR_IBRA');
-    vr_idaciona tbepr_acionamento.idacionamento%TYPE;
+    vr_idaciona tbgen_webservice_aciona.idacionamento%TYPE;
     
     
   BEGIN
@@ -3874,7 +3959,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
     
     -- Variaveis para DEBUG
     vr_flgdebug VARCHAR2(100) := gene0001.fn_param_sistema('CRED',pr_cdcooper,'DEBUG_MOTOR_IBRA');
-    vr_idaciona tbepr_acionamento.idacionamento%TYPE;
+    vr_idaciona tbgen_webservice_aciona.idacionamento%TYPE;
     
   BEGIN
     
@@ -4192,11 +4277,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
     vr_cdtpprod_ret  VARCHAR2(100);
     vr_nrctremp_ret  crawepr.nrctremp%TYPE;
     vr_nrctremp_ret2 crawepr.nrctremp%TYPE;
-    vr_idacionamento tbepr_acionamento.idacionamento%TYPE;    
+    vr_idacionamento tbgen_webservice_aciona.idacionamento%TYPE;
     
     -- Variaveis para DEBUG
     vr_flgdebug VARCHAR2(100) := gene0001.fn_param_sistema('CRED',pr_cdcooper,'DEBUG_MOTOR_IBRA');
-    vr_idaciona tbepr_acionamento.idacionamento%TYPE;    
+    vr_idaciona tbgen_webservice_aciona.idacionamento%TYPE;
     
   BEGIN
     
@@ -4654,7 +4739,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
     vr_dsdirlog      VARCHAR2(500);
     vr_chave_aplica  VARCHAR2(500);
     vr_autori_este   VARCHAR2(500);
-		vr_idacionamento tbepr_acionamento.idacionamento%TYPE;
+    vr_idacionamento tbgen_webservice_aciona.idacionamento%TYPE;
 	  vr_nrdrowid ROWID;
 		vr_dsresana VARCHAR2(100);
     vr_dssitret VARCHAR2(100);
@@ -4715,7 +4800,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
 
     -- Variaveis para DEBUG
     vr_flgdebug VARCHAR2(100);
-    vr_idaciona tbepr_acionamento.idacionamento%TYPE;
+    vr_idaciona tbgen_webservice_aciona.idacionamento%TYPE;
               
 	BEGIN
     

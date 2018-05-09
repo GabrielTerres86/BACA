@@ -739,7 +739,7 @@
               21/02/2018 - Liberar o produto Pós-Fixado para todas as contas da cooperativa Viacredi. (James)
 
               23/01/2018 - Alterada Regras para retorno da Qualificação da Operação de acordo com dias de atraso. 
-						   (Diego Simas - AMcom) (Projeto Regulatório Crédito).	 
+						   (Diego Simas - AMcom) (Projeto Regulatório Crédito).
 
               23/01/2018 - PRJ450 - Criado a rotina obtem-dados-limite-adp para obter os dados do limite crédito/adp que
                            trará para ser liquidado na tela Atenda - Empréstimos.
@@ -764,6 +764,9 @@
                            
               12/04/2018 - P410 - Melhorias/Ajustes IOF (Marcos-Envolti)
               
+              13/04/2018 - Ajuste na procedure valida-dados-gerais para verificar se o tipo de conta
+                           do cooperado permite adesao do produto 31 - Emprestimo. PRJ366 (Lombardi)
+
  ..............................................................................*/
 
 /*................................ DEFINICOES ................................*/
@@ -1503,7 +1506,7 @@ PROCEDURE valida-liquidacao-emprestimos:
                   DO:
                       RUN fontes/critic.p.
                       LEAVE Valida.
-                  END.
+             END.
                 ELSE IF aux_dscritic <> ? AND aux_dscritic <> "" THEN
                   DO:
                     LEAVE Valida.
@@ -1515,16 +1518,16 @@ PROCEDURE valida-liquidacao-emprestimos:
                     LEAVE Valida.
                   END.  
 
-                /* Validar Data do Emprestimo */
-                IF  par_dtmvtoep = par_dtmvtolt  THEN
-                    DO:
-                       ASSIGN 
-                         par_tpdretor = "D" /* Display */
-                         par_msgretor = "~n   Nao e' possivel liquidar emprestimo   " +
-                                        "~n      feito nesta data -"                  +
-                                        STRING(par_dtmvtolt,"99/99/9999") + "~n".
-                       LEAVE Valida.
-                    END.
+        /* Validar Data do Emprestimo */
+        IF  par_dtmvtoep = par_dtmvtolt  THEN
+            DO:
+               ASSIGN
+                 par_tpdretor = "D" /* Display */
+                 par_msgretor = "~n   Nao e' possivel liquidar emprestimo   " +
+                                "~n      feito nesta data -"                  +
+                                STRING(par_dtmvtolt,"99/99/9999") + "~n".
+               LEAVE Valida.
+            END.
             END.                                 
 
         /* Validar a quantidade de linhas selecionadas */
@@ -1554,12 +1557,12 @@ PROCEDURE valida-liquidacao-emprestimos:
                 LEAVE Valida.
             END.
 
-                 LEAVE Valida.
+        LEAVE Valida.
         END. /* par_nrctremp <> 0 */
         ELSE DO:
             ASSIGN par_tpdretor = "C".
             LEAVE Valida.
-        END.
+    END.
     END. /* VALIDA */
 
     IF  aux_dscritic <> "" OR aux_cdcritic <> 0 THEN
@@ -2371,7 +2374,7 @@ PROCEDURE obtem-propostas-emprestimo:
                                            "z,zzz,zz9"))).
 
                    END. /** Fim do DO ... TO **/
-                   
+                                        
                    ASSIGN aux_qtdias_carencia = 0.
                    IF crawepr.idcarenc > 0 THEN
                    DO:
@@ -3010,7 +3013,15 @@ PROCEDURE obtem-dados-proposta-emprestimo:
                        tt-proposta-epr.idcobope = crawepr.idcobope
                        tt-proposta-epr.vlrtarif = aux_vlrtarif
                        tt-proposta-epr.vliofepr = 0
-					   tt-proposta-epr.idfiniof = crawepr.idfiniof.     
+					   tt-proposta-epr.idfiniof = crawepr.idfiniof.
+
+					   DO i = 1 TO 10:
+						IF  crawepr.nrctrliq[i] > 0  THEN
+							tt-proposta-epr.dsctrliq = tt-proposta-epr.dsctrliq + 
+														(IF tt-proposta-epr.dsctrliq = "" THEN TRIM(STRING(crawepr.nrctrliq[i], "z,zzz,zz9"))
+														ELSE
+															", " + TRIM(STRING(crawepr.nrctrliq[i], "z,zzz,zz9"))).
+						END. /** Fim do DO ... TO **/
                        
 				IF  AVAIL crapepr THEN
                   DO:
@@ -3040,7 +3051,7 @@ PROCEDURE obtem-dados-proposta-emprestimo:
                 END CASE.
 
                 DO i = 1 TO 10:
-
+                
                    IF  crawepr.nrctrliq[i] > 0  THEN
                        DO:
                            aux_concontr = aux_concontr + 1.
@@ -3075,7 +3086,7 @@ PROCEDURE obtem-dados-proposta-emprestimo:
                      IF crawepr.idcarenc > 0 THEN
                      DO:
                      
-                       { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+                      { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
                        
                        /* Efetuar a chamada a rotina Oracle  */
                        RUN STORED-PROCEDURE pc_busca_qtd_dias_carencia
@@ -3766,6 +3777,7 @@ PROCEDURE valida-dados-gerais:
     DEF   VAR        aux_vlemprst AS DECIMAL                        NO-UNDO.
     DEF   VAR        aux_vlrtarif AS DECIMAL                        NO-UNDO.
     DEF   VAR        aux_dscatbem AS CHAR                           NO-UNDO.
+    DEF   VAR        aux_valida_adesao AS LOGICAL                   NO-UNDO.
 
     DEF   VAR        aux_flgcescr AS LOG INIT FALSE                 NO-UNDO.
 		
@@ -3878,6 +3890,69 @@ PROCEDURE valida-dados-gerais:
     
     DO WHILE TRUE:
 
+        IF  NOT CAN-DO("0,58,59", STRING(par_cdfinemp)) THEN /* CDC */
+            DO:
+                aux_valida_adesao = TRUE.
+                IF par_cddopcao = "A" THEN
+                    DO:
+                        FIND crawepr WHERE crawepr.cdcooper = par_cdcooper   AND
+                                           crawepr.nrdconta = par_nrdconta   AND
+                                           crawepr.nrctremp = par_nrctremp
+                                           NO-LOCK NO-ERROR.
+                        
+                        /* Se mudou finalidade de contrato  ... */
+                        /* Verifica se valida */
+                        IF  AVAIL crawepr   THEN
+                            DO:
+                                IF  CAN-DO("0,58,59", STRING(crawepr.cdfinemp)) THEN
+                                    aux_valida_adesao = TRUE.
+                                ELSE 
+                                    aux_valida_adesao = FALSE.
+                             END.
+                        
+                    END.
+                IF  aux_valida_adesao = TRUE THEN
+                    DO:
+                        /* buscar quantidade maxima de digitos aceitos para o convenio */
+                        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
+                        
+                        RUN STORED-PROCEDURE pc_valida_adesao_produto
+                            aux_handproc = PROC-HANDLE NO-ERROR
+                                                    (INPUT par_cdcooper,
+                                                     INPUT par_nrdconta,
+                                                     INPUT 31,   /* Emprestimos */
+                                                     OUTPUT 0,   /* pr_cdcritic */
+                                                     OUTPUT ""). /* pr_dscritic */
+
+                        CLOSE STORED-PROC pc_valida_adesao_produto
+                              aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+                        
+                        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+                        
+                        ASSIGN aux_cdcritic = 0
+                               aux_dscritic = ""
+                               aux_cdcritic = pc_valida_adesao_produto.pr_cdcritic                          
+                                                  WHEN pc_valida_adesao_produto.pr_cdcritic <> ?
+                               aux_dscritic = pc_valida_adesao_produto.pr_dscritic
+                                                  WHEN pc_valida_adesao_produto.pr_dscritic <> ?.
+                        
+                        IF  aux_cdcritic <> 0 OR aux_dscritic <> "" THEN
+                            DO:
+                                IF aux_dscritic = "" THEN
+                                   DO:
+                                      FIND crapcri WHERE crapcri.cdcritic = aux_cdcritic 
+                                                         NO-LOCK NO-ERROR.
+                                      
+                                      IF AVAIL crapcri THEN
+                                         ASSIGN aux_dscritic = crapcri.dscritic.
+                                      ELSE
+                                         ASSIGN aux_dscritic =  "Nao foi possivel validar a adesao do produto.".
+                                   END.
+                                LEAVE.
+                            END.
+                    END.
+            END.
+        
         IF  NOT CAN-DO("0,", par_cdmodali) AND 
             NOT CAN-FIND(craplcr WHERE
                          craplcr.cdcooper = par_cdcooper AND
@@ -3999,7 +4074,13 @@ PROCEDURE valida-dados-gerais:
             END.
         ELSE IF par_tpemprst = 2 THEN
             DO:
-                				 
+                /* Trava para testes em producao */
+                IF par_cdcooper <> 1 THEN
+                   DO:
+                      ASSIGN aux_dscritic = "Produto nao liberado.".
+                      LEAVE.
+                   END.
+				 
         { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
 
                 /* Efetuar a chamada a rotina Oracle  */
@@ -4425,7 +4506,7 @@ PROCEDURE valida-dados-gerais:
                                                            ,INPUT par_nrdconta
                                                            ,INPUT par_nrctremp
                                                            ,INPUT par_dtmvtolt
-                                                           ,INPUT crapass.inpessoa                                                           
+                                                           ,INPUT crapass.inpessoa
                                                            ,INPUT par_cdlcremp
                                                            ,INPUT par_cdfinemp
                                                            ,INPUT par_qtpreemp
@@ -4765,7 +4846,7 @@ PROCEDURE proc_qualif_operacao:
                    NO-LOCK NO-ERROR.
 
         IF  AVAIL crabepr THEN DO:
-		  FOR FIRST crapris FIELDS(qtdiaatr) 
+		FOR FIRST crapris FIELDS(qtdiaatr) 
             WHERE crapris.cdcooper = par_cdcooper 
 			  AND crapris.nrdconta = par_nrdconta
 			  AND crapris.cdorigem = 3
@@ -4774,7 +4855,7 @@ PROCEDURE proc_qualif_operacao:
 			  AND crapris.dtrefere = par_dtmvtoan
               NO-LOCK: 
 				  ASSIGN aux_qtd_dias_atraso = crapris.qtdiaatr.
-          END.
+         END.
         END.
 
 		/* Se contrato a liquidar já é um refinanciamento, força 
@@ -4787,7 +4868,7 @@ PROCEDURE proc_qualif_operacao:
 		IF aux_dias_atraso < aux_qtd_dias_atraso THEN
 		   aux_dias_atraso = aux_qtd_dias_atraso.
 
-    END.
+             END.
 
 	/* De 0 a 4 dias de atraso - Renovação de Crédito		         	    */ 
     IF  aux_dias_atraso < 5 THEN
@@ -7247,7 +7328,7 @@ PROCEDURE grava-proposta-completa:
                     aux_contaemp = aux_contaemp + 1.
                     ASSIGN crawepr.nrctrliq[aux_contaemp] =
                       INTE(ENTRY(aux_contador,par_dsctrliq)) NO-ERROR.
-                END.
+        END.
             ELSE
                 DO:
                     ASSIGN crawepr.nrliquid =

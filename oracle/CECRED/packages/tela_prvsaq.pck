@@ -1222,7 +1222,7 @@ PROCEDURE pc_incluir_provisao(pr_cdcooper        IN tbcc_provisao_especie.cdcoop
         Sistema : CECRED
         Sigla   : PRVSAQ
         Autor   : Antonio Remualdo Junior
-        Data    : Novembro/2017.                    Ultima atualizacao: --/--/----
+        Data    : Novembro/2017.                    Ultima atualizacao: 23/04/2018
     
         Dados referentes ao programa:
     
@@ -1232,7 +1232,8 @@ PROCEDURE pc_incluir_provisao(pr_cdcooper        IN tbcc_provisao_especie.cdcoop
     
         Observacao: -----
     
-        Alteracoes:
+        Alteracoes: 23/04/2018 - Alterado para não exigir a informação dos cheques quando o cadastro for 
+                                 realizado através do IB, por solicitação do negócio. (Anderson P285).
     ..............................................................................*/
       ----------->>> VARIAVEIS <<<--------   
       -- Variável de críticas
@@ -1275,6 +1276,7 @@ PROCEDURE pc_incluir_provisao(pr_cdcooper        IN tbcc_provisao_especie.cdcoop
       vr_tot_saq tbcc_provisao_especie.vlsaque%TYPE;
       vr_tot_pagto tbcc_provisao_especie.vlpagamento%TYPE;
       vr_provisao_email tbcc_monitoramento_parametro.vlprovisao_email%TYPE;
+	  vr_lim_prov_saq tbcc_monitoramento_parametro.vlprovisao_saque%type;
       vr_nrcpfcgc tbcc_provisao_especie.nrcpfcgc%TYPE;
       vr_nmtitular VARCHAR2(255);
       vr_corpoemail VARCHAR2(32000);
@@ -1446,8 +1448,49 @@ PROCEDURE pc_incluir_provisao(pr_cdcooper        IN tbcc_provisao_especie.cdcoop
     
       -- Fechar o cursor
       CLOSE cr_crapope;
+
+
+	  --REGRA DHSAQUE
+      -- PARAMETROS MONITORAMENTO
+      --Adicionado uma trava para que não seja possivel o provisionamento de valores abaixo ao parametrizado
+      SELECT m.vllimite_saque,
+             m.vllimite_pagamento,
+             m.hrlimite_provisao,
+             m.qtdias_provisao,
+             m.inverifica_saldo,
+             m.vlprovisao_email,
+             m.inlibera_provisao_saque,
+             m.vlprovisao_saque INTO vr_lim_saq,
+                                     vr_lim_pagto,
+                                     vr_lim_hora,
+                                     vr_lim_qtdiasprov,
+                                     vr_verifica_saldo,
+                                     vr_provisao_email,
+                                     vr_lib_prov_saque,
+                                     vr_lim_prov_saq
+      FROM tbcc_monitoramento_parametro m
+      WHERE m.cdcooper = vr_cdcooper;
       
-      IF(pr_selsaqcheq = 1)THEN
+      
+      if (vr_idorigem = 3 ) and (pr_vlsaqpagto < vr_lim_prov_saq) then
+          vr_cdcritic := 0;
+          
+          vr_dscritic := 'A provisão de saque pela Conta Online é apenas para valores iguais ou superiores a R$ ' ||           to_char(trunc(vr_lim_prov_saq), 'FM99G999D00'/*'999999.99'*/) || '.';
+
+          RAISE vr_exc_saida;
+      end if ;
+
+
+
+
+
+
+
+      
+      IF(pr_selsaqcheq = 1 and 
+         ((vr_idorigem <> 3) or  -- Ou nao é pelo Canal IB
+         ((vr_idorigem =  3) and ((pr_nrcheque > 0) or (pr_nrcontcheq > 0)))) -- Ou se for pelo IB, o cheque ou a conta devem estar preenchidos.
+         ) THEN
         --> Buscar cheque
         OPEN cr_cheque(pr_cdcooper => vr_cdcooper    
                        ,pr_nrbanco => pr_nrbanco    
@@ -1570,7 +1613,7 @@ PROCEDURE pc_incluir_provisao(pr_cdcooper        IN tbcc_provisao_especie.cdcoop
       
       --REGRA DHSAQUE
       -- PARAMETROS MONITORAMENTO
-      SELECT m.vllimite_saque,
+    /*  SELECT m.vllimite_saque,
              m.vllimite_pagamento,
              m.hrlimite_provisao,
              m.qtdias_provisao,
@@ -1584,7 +1627,7 @@ PROCEDURE pc_incluir_provisao(pr_cdcooper        IN tbcc_provisao_especie.cdcoop
                                      vr_provisao_email,
                                      vr_lib_prov_saque
       FROM tbcc_monitoramento_parametro m
-      WHERE m.cdcooper = vr_cdcooper;
+      WHERE m.cdcooper = vr_cdcooper; */
       
       --VALIDA SALDO
       IF(vr_verifica_saldo = 1)THEN

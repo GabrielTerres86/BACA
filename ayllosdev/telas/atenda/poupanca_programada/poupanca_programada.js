@@ -24,15 +24,19 @@
 //***						   impressao em imprimirAutorizacao() (Jorge).*//
 //***    																***//
 //***			  04/06/2013 - Incluido var complemento no controlaLayout**//
-//***						   (Lucas R.)                               ***//  
+//***						   (Lucas R.)                               ***// 
 //***                                                                   ***//
 //***             01/12/2017 - Não permitir acesso a opção de incluir   ***//
 //***                          quando conta demitida                    ***//
 //***                         (Jonata - RKAM P364).                     ***//
 //***                                                                   ***//
-//***            21/02/2018 - Correção do login enviado para a tela     ***//
-//***                         poupanca_resgate_valida.php               ***//
-//***                         (Antonio R Jr)-Chamado 852162             ***//
+//***             21/02/2018 - Correção do login enviado para a tela    ***//
+//***                          poupanca_resgate_valida.php              ***//
+//***                          (Antonio R Jr)-Chamado 852162            ***//
+//***                                                                   ***//
+//***             04/04/2018 - Ajuste para chamar a rotina de senha     ***//
+//***                          do coordenador. PRJ366 (Lombardi)        ***//
+//***                                                                   ***//
 //*************************************************************************//
 
 var nrctrrpp = 0;        // Variável para armazenar número da poupança selecionada
@@ -1243,4 +1247,8 @@ function controlaLayout(nomeForm) {
 	}
 
 	return false;
+}
+
+function senhaCoordenador(executaDepois) {
+	pedeSenhaCoordenador(2,executaDepois,'divRotina');
 }

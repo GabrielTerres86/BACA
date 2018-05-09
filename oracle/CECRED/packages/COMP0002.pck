@@ -348,7 +348,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
           WHEN pr_protocolo.cdtippro = 13 THEN -- GPS       
             vr_dsprotoc := TRIM(gene0002.fn_busca_entrada(1, pr_protocolo.dsinform##2, '#'));
           
-          WHEN pr_protocolo.cdtippro in(16, 17, 18, 19) THEN -- DARF / DAS
+          WHEN pr_protocolo.cdtippro in(16, 17) THEN -- DARF / DAS
             
 			vr_dsprotoc := TRIM(gene0002.fn_busca_entrada(2, TRIM(gene0002.fn_busca_entrada(16, pr_protocolo.dsinform##3, '#')), ':'));            
 			
@@ -367,9 +367,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
             END IF;
             
             vr_dsprotoc := vr_desc;
-
+            
 			*/
             
+          WHEN pr_protocolo.cdtippro in(18, 19) THEN -- Agendamento de DARF / DAS
+            vr_dsprotoc := pr_protocolo.dscedent;
           WHEN pr_protocolo.cdtippro = 20 THEN -- Recarga
             vr_dsprotoc := TRIM(gene0002.fn_busca_entrada(1, pr_protocolo.dsinform##2, '#')) || ' - ' || TRIM(gene0002.fn_busca_entrada(2, pr_protocolo.dsinform##2, '#'));
           WHEN pr_protocolo.cdtippro IN (23,24) THEN -- DAE/FGTS
@@ -1385,7 +1387,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
       vr_cdsegmto  VARCHAR2(40);
       vr_dsdlinha  VARCHAR2(30000); 
       vr_dsdcanal  VARCHAR2(100);
-      
+    
       --> Buscar dados do conbenio
       CURSOR cr_crapcon (pr_cdcooper IN crapcon.cdcooper%type
                         ,pr_cdempcon IN crapcon.cdempcon%type
@@ -3927,9 +3929,9 @@ PROCEDURE pc_detalhe_comprovante(pr_cdcooper IN crappro.cdcooper%TYPE  --> Códig
                                   ,pr_cdorigem => pr_cdorigem
                                   ,pr_retxml =>   vr_retxml
                                   ,pr_dsretorn => pr_dsretorn);                                  
-                                  
-          pr_retxml := vr_retxml.getclobval();                                  
                                            
+          pr_retxml := vr_retxml.getclobval();                                  
+      
         WHEN pr_cdtippro = 24 THEN
           pc_detalhe_compr_pag_fgts(pr_cdcooper => pr_cdcooper
                                   ,pr_nrdconta => pr_nrdconta

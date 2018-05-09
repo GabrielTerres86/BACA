@@ -8,12 +8,32 @@
 	 Objetivo  : Tela Principal da rotina para incluir agendamento de
 	             resgate das aplicações
 	                                                                  	 
-	 Alterações: 
+	 Alterações: 17/04/2018 - Incluida verificacao de adesao do produto 
+                              pelo tipo de conta. PRJ366 (Lombardi)
 
 	************************************************************************/
 
 	include("agendamento.php");
 
+	// Monta o xml de requisição
+	$xml  = "";
+	$xml .= "<Root>";
+	$xml .= "	<Dados>";
+	$xml .= "		<nrdconta>".$nrdconta."</nrdconta>";
+	$xml .= "		<cdprodut>".   41    ."</cdprodut>";
+	$xml .= "	</Dados>";
+	$xml .= "</Root>";
+	
+	// Executa script para envio do XML
+	$xmlResult = mensageria($xml, "CADA0006", "VALIDA_ADESAO_PRODUTO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	$xmlObj = getObjectXML($xmlResult);
+	
+	// Se ocorrer um erro, mostra crítica
+	if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
+		$msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
+		exibeErro(utf8_encode($msgErro));
+	}
+	
 ?>
 var strHTML = "";
 strHTML += '<form id="frmAgendamentoResgate">';
