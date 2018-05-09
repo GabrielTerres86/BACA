@@ -4074,12 +4074,12 @@ PROCEDURE valida-dados-gerais:
             END.
         ELSE IF par_tpemprst = 2 THEN
             DO:
-                /* Trava para testes em producao */
+                /* Trava para testes em producao 
                 IF par_cdcooper <> 1 THEN
                    DO:
                       ASSIGN aux_dscritic = "Produto nao liberado.".
                       LEAVE.
-                   END.
+                   END. */
 				 
         { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
 
