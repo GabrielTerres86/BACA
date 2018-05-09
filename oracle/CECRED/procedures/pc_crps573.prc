@@ -4615,7 +4615,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                   FROM TBCADAST_ATIVO_PROBL AP
                  WHERE ap.cdcooper = pr_cdcooper
                    AND ap.nrdconta = pr_nrdconta
-                   AND ap.nrctremp = decode(ap.nrctremp, NULL, ap.nrctremp, pr_nrctremp)
+                   AND ap.nrctremp = decode(ap.nrctremp, 0, ap.nrctremp, pr_nrctremp)
                    AND ap.dtexclus is null
                    AND ap.cdmotivo IN( 60  -- SOCIO FALECIDO MANUAL
                                      , 62  -- COOPERADO PRESO
@@ -4629,16 +4629,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
         rw_atvprb cr_atvprb%ROWTYPE;
 
       BEGIN
-       
-       IF pr_nrdconta = 8338 AND pr_nrctremp = 31172 then
-         pr_atvprobl := 0;
-       else
-         if pr_nrdconta = 14893 AND pr_nrctremp = 32626 then
-           pr_atvprobl := 0;
-         end if;
-       end if;
-       
-      
+           
        -- ** INÍCIO VERIFICAÇÃO ATIVO PROBLEMÁTICO ** --
        -- Inicializa variáveis de retorno
        pr_atvprobl   := 0;
