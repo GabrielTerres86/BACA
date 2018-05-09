@@ -119,7 +119,6 @@
  * 095: [27/11/2017] Desbloquear opcao de Simulacao de emprestimo (function validaSimulacao) conforme solicitado no tramite acima. (Chamado 800969) - (Fabricio)
  * 096: [01/12/2017] Não permitir acesso a opção de incluir quando conta demitida (Jonata - RKAM P364).
  * 097: [14/12/2017] Incluão de novas regras de alteração, registro de gravamos e análise, Prj. 402 (Jean Michel).
- * 099: [15/12/2017] Alterações para inserção da nova tela GAROPC. Inserção do campo idcobope. PRJ404 (Lombardi)
  * 098: [21/12/2017] Alterado para nao permitir alterar nome do local de trabalho do conjuge. PRJ339 CRM (Odirlei-AMcom)  
  * 099: [24/10/2017] Ajustes ao carregar dados do avalista e controle de alteração. PRJ339 CRM (Odirlei-AMcom)                                            
  * 100: [29/11/2017] Retirar caracteres especiais do campo Nome da tela Portabilidade - SD 779305 - Marcelo Telles Coelho - Mouts
@@ -129,9 +128,10 @@
  * 102: [21/12/2017] Alterado para quando a linha de credito for (6901 - Cessao Cartao Credito) a 
  *                   qualificacao da operacao seja (5 - Cessao de Cartao) (Diego Simas - AMcom)
  * 103: [21/02/2018] Alterado para tratar limite/adp na tela de seleção para liquidar (Simas - AMcom)
- * 104: [15/12/2017] Alterações para inserção da nova tela GAROPC. Inserção do campo idcobope. PRJ404 (Lombardi)
- * 105: [05/03/2018] Incluido campo idcobope na parametrizacao do fonte efetiva_proposta. (PRJ404 - Reinert)
- * 106: [20/04/2018] P410 - Não permitir selecionar Financia IOF para Portabilidade (Marcos-Envolti)
+* 104: [15/12/2017] Alterações para inserção da nova tela GAROPC. Inserção do campo idcobope. PRJ404 (Lombardi)
+* 105: [05/03/2018] Incluido campo idcobope na parametrizacao do fonte efetiva_proposta. (PRJ404 - Reinert)
+* 106: [13/04/2018] Adicionadas funcoes validaValorAdesaoProdutoEmp e senhaCoordenador para validar valor do produto pelo tipo de conta. PRJ366 (Lombardi)
+* 107: [20/04/2018] P410 - Não permitir selecionar Financia IOF para Portabilidade (Marcos-Envolti)
  * ##############################################################################
  FONTE SENDO ALTERADO - DUVIDAS FALAR COM DANIEL OU JAMES
  * ##############################################################################
@@ -342,6 +342,10 @@ var inobriga = '';
 
 //emprestimo
 var booPrimeiroBen = false; //809763
+
+// PRJ366
+var vlemprst_antigo = 0;
+var dsctrliq_antigo = '';
 
 $.getScript(UrlSite + "telas/atenda/emprestimos/impressao.js");
 $.getScript(UrlSite + "telas/atenda/emprestimos/simulacao/simulacao.js");
@@ -1501,17 +1505,16 @@ function manterRotina(operacao) {
 			var dsctrliq = (typeof arrayProposta['dsctrliq'] == 'undefined') ? '' : arrayProposta['dsctrliq'];
 			var dtlibera = (typeof arrayProposta['dtlibera'] == 'undefined') ? '' : arrayProposta['dtlibera'];
 			var dsobserv = (typeof arrayProposta['dsobserv'] == 'undefined') ? '' : arrayProposta['dsobserv'];
-            var idcobope = (typeof arrayProposta['idcobope'] == 'undefined') ? '' : arrayProposta['idcobope'];
 			var idfiniof = (typeof arrayProposta['idfiniof'] == 'undefined') ? '' : arrayProposta['idfiniof'];
 			var vliofepr = (typeof arrayProposta['vliofepr'] == 'undefined') ? '' : arrayProposta['vliofepr'];
 			var vlrtarif = (typeof arrayProposta['vlrtarif'] == 'undefined') ? '' : arrayProposta['vlrtarif'];
 			var vlrtotal = (typeof arrayProposta['vlrtotal'] == 'undefined') ? '' : arrayProposta['vlrtotal'];
-    var vlfinanc = (typeof arrayProposta['vlfinanc'] == 'undefined') ? '' : arrayProposta['vlfinanc'];
+			var vlfinanc = (typeof arrayProposta['vlfinanc'] == 'undefined') ? '' : arrayProposta['vlfinanc'];
 
 			var nrctaava = (typeof aux_nrctaav0 == 'undefined') ? '' : aux_nrctaav0;
 			var nrctaav2 = (typeof aux_nrctaav1 == 'undefined') ? '' : aux_nrctaav1;
-    var idcarenc = (typeof arrayProposta['idcarenc'] == 'undefined') ? '' : arrayProposta['idcarenc'];
-    var dtcarenc = (typeof arrayProposta['dtcarenc'] == 'undefined') ? '' : arrayProposta['dtcarenc'];
+			var idcarenc = (typeof arrayProposta['idcarenc'] == 'undefined') ? '' : arrayProposta['idcarenc'];
+			var dtcarenc = (typeof arrayProposta['dtcarenc'] == 'undefined') ? '' : arrayProposta['dtcarenc'];
 
 			var nrgarope = (typeof arrayProtCred['nrgarope'] == 'undefined') ? '' : arrayProtCred['nrgarope'];
 			var nrperger = (typeof arrayProtCred['nrperger'] == 'undefined') ? '' : arrayProtCred['nrperger'];
@@ -3988,9 +3991,12 @@ function verificaObs(operacao) {
 }
 
 function atualizaArray(novaOp, cdcooper) {
-
+	if (novaOp == 'I_DADOS_AVAL' || novaOp == 'A_DADOS_AVAL' || novaOp == 'V_VALOR')
+		validaValorAdesaoProdutoEmp(novaOp, cdcooper);
+    else {
     showMsgAguardo('Aguarde, validando dados ...');
     setTimeout('attArray(\'' + novaOp + '\',\'' + cdcooper + '\')', 400);
+	}
     return false;
 }
 
@@ -4365,6 +4371,9 @@ function atualizaTela() {
         $('#dtcarenc', '#frmNovaProp').val(arrayProposta['dtcarenc']);
 		$('#vlfinanc', '#frmNovaProp').val(arrayProposta['vlfinanc']);        
 
+        vlemprst_antigo = arrayProposta['vlemprst'];
+        dsctrliq_antigo = arrayProposta['dsctrliq'];
+		
         if (operacao == 'TI') {
 
             // Quando Price Pre-Fixado e Debitar em Folha alterar para Debitar em  Conta
@@ -6407,6 +6416,8 @@ function fechaSimulacoes(encerrarRotina) {
 }
 
 function validaSimulacao() {
+
+
 
     showMsgAguardo('Aguarde, validando ...');
     // Executa script de confirmação através de ajax
@@ -9832,4 +9843,44 @@ function telefone(fone){
 	fone = fone.replace(/^(\d\d)(\d)/g,"($1) $2"); //Coloca parênteses em volta dos dois primeiros dígitos
 	fone = fone.replace(/(\d{4})(\d)/,"$1-$2");    //Coloca hífen entre o quarto e o quinto dígitos
 	return fone;
+}
+
+function validaValorAdesaoProdutoEmp(operacao,cdcooper) {
+	
+    var dsctrliq = $('#dsctrliq', '#frmNovaProp').val();
+    var vlemprst = $('#vlemprst', '#frmNovaProp').val();
+    var cdfinemp = $('#cdfinemp', '#frmNovaProp').val();
+	
+	$.ajax({
+		type: 'POST',
+		dataType: 'html',
+		url: UrlSite + 'telas/atenda/emprestimos/valida_valor_adesao_produto.php', 
+		data: {
+			nrdconta: nrdconta,
+			cdfinemp: cdfinemp,
+			vlemprst: vlemprst,
+			dsctrliq: dsctrliq,
+			operacao: operacao,
+			cdcooper: cdcooper,
+			vlemprst_antigo: vlemprst_antigo,
+			dsctrliq_antigo: dsctrliq_antigo,
+			redirect: 'script_ajax'
+		}, 
+		error: function (objAjax, responseError, objExcept) {
+			hideMsgAguardo();
+			showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
+		},
+		success: function (response) {
+			hideMsgAguardo();
+            try {
+				eval(response);
+			} catch (error) {
+				showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'unblockBackground();');
+			}
+		}				
+	});	
+}
+
+function senhaCoordenador(executaDepois) {
+	pedeSenhaCoordenador(2,executaDepois,'divRotina');
 }
