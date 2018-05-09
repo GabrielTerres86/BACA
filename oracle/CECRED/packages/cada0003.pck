@@ -2097,7 +2097,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
     --  Sistema  : Rotinas acessadas pelas telas de cadastros Web
     --  Sigla    : CADA
     --  Autor    : 
-    --  Data     :                      Ultima atualizacao: 16/10/2017
+    --  Data     :                      Ultima atualizacao: 14/11/2017
     --
     --  Dados referentes ao programa:
     --
@@ -2196,7 +2196,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
       vr_cdestcvl INTEGER;
       vr_criestcv BOOLEAN;
       vr_idseqttl INTEGER;
-      
+
 
       -- Variaveis para a duplicacao da conta
       vr_numero VARCHAR2(10);
@@ -4642,7 +4642,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
       END IF;
         CLOSE cr_crapseg_prest;
         RETURN 'S'; -- Retorna como produto aderido
-        
+
       END IF;
 
       RETURN NULL;
@@ -5569,7 +5569,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
       vr_tab_produto_new  tp_reg_produtos;
       
     BEGIN
-      
+
       gene0004.pc_extrai_dados(pr_xml      => pr_retxml
                               ,pr_cdcooper => vr_cdcooper
                               ,pr_nmdatela => vr_nmdatela
@@ -5605,8 +5605,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
            SET tbcc_produtos_coop.dtvigencia = trunc(SYSDATE)
         WHERE tbcc_produtos_coop.cdcooper  = pr_cdcooper
           AND tbcc_produtos_coop.tpconta   = pr_tpconta
-          AND tbcc_produtos_coop.tpproduto = pr_tpproduto
-          AND tbcc_produtos_coop.inpessoa  = pr_inpessoa;
+           AND tbcc_produtos_coop.tpproduto = pr_tpproduto
+           AND tbcc_produtos_coop.inpessoa  = pr_inpessoa;
       EXCEPTION
         WHEN OTHERS THEN
           vr_dscritic := 'pc_inclui_servicos - Erro ao excluir dados.' || SQLERRM;
@@ -5692,128 +5692,128 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
       
       IF pr_servicos IS NOT NULL THEN
         
-        -- Faz o split dos produtos
-        vr_servicos := GENE0002.fn_quebra_string(pr_string => pr_servicos
-                                                ,pr_delimit => ';');
+      -- Faz o split dos produtos
+      vr_servicos := GENE0002.fn_quebra_string(pr_string => pr_servicos
+                                              ,pr_delimit => ';');
+      
+      -- Loop pelos produtos
+      FOR vr_indice IN vr_servicos.FIRST()..vr_servicos.LAST() LOOP
+        -- Separa os campos
+        vr_servico := GENE0002.fn_quebra_string(pr_string => vr_servicos(vr_indice)
+                                               ,pr_delimit => '|');
+        -- Valida se ja existe o mesmo produto cadastrado para outro tipo de produto
+        pc_valida_consistencia(pr_cdcooper  => pr_cdcooper
+                              ,pr_tpproduto => pr_tpproduto
+                              ,pr_tpconta   => pr_tpconta
+                              ,pr_inpessoa  => pr_inpessoa
+                              ,pr_servico   => vr_servico(1)
+                              ,pr_xmllog    => pr_xmllog
+                              ,pr_cdcritic  => vr_cdcritic
+                              ,pr_dscritic  => vr_dscritic
+                              ,pr_retxml    => pr_retxml
+                              ,pr_nmdcampo  => pr_nmdcampo
+                              ,pr_des_erro  => pr_des_erro);
+        -- Se retornar alguma crítica
+        IF vr_dscritic  IS NOT NULL THEN
+            RAISE vr_exc_saida;
+        END IF;
         
-        -- Loop pelos produtos
-        FOR vr_indice IN vr_servicos.FIRST()..vr_servicos.LAST() LOOP
-          -- Separa os campos
-          vr_servico := GENE0002.fn_quebra_string(pr_string => vr_servicos(vr_indice)
-                                                 ,pr_delimit => '|');
-          -- Valida se ja existe o mesmo produto cadastrado para outro tipo de produto
-          pc_valida_consistencia(pr_cdcooper  => pr_cdcooper
-                                ,pr_tpproduto => pr_tpproduto
-                                ,pr_tpconta   => pr_tpconta
-                                ,pr_inpessoa  => pr_inpessoa
-                                ,pr_servico   => vr_servico(1)
-                                ,pr_xmllog    => pr_xmllog
-                                ,pr_cdcritic  => vr_cdcritic
-                                ,pr_dscritic  => vr_dscritic
-                                ,pr_retxml    => pr_retxml
-                                ,pr_nmdcampo  => pr_nmdcampo
-                                ,pr_des_erro  => pr_des_erro);
-          -- Se retornar alguma crítica
-          IF vr_dscritic  IS NOT NULL THEN
-              RAISE vr_exc_saida;
-          END IF;
-          
-          -- Busca as informações do produto
-          OPEN cr_produto(pr_cdproduto => vr_servico(1));
-          FETCH cr_produto INTO rw_produto;
-          
+        -- Busca as informações do produto
+        OPEN cr_produto(pr_cdproduto => vr_servico(1));
+        FETCH cr_produto INTO rw_produto;
+        
           IF cr_produto%NOTFOUND THEN
-            vr_dscritic := 'Produto não encontrado.';
+          vr_dscritic := 'Produto não encontrado.';
+          RAISE vr_exc_saida;
+        END IF;
+        -- Fecha o cursor
+        CLOSE cr_produto;
+        
+        -- Se tiver faixa de valor
+        IF rw_produto.idfaixa_valor = 1 THEN
+          -- Se valor máximo for 0
+          IF vr_servico(3) = 0 THEN
+            vr_dscritic := 'Produto ' || rw_produto.dsproduto || ' possui faixa de valor para contratação.';
             RAISE vr_exc_saida;
           END IF;
-          -- Fecha o cursor
-          CLOSE cr_produto;
-        
-          -- Se tiver faixa de valor
-          IF rw_produto.idfaixa_valor = 1 THEN
-            -- Se valor máximo for 0
-            IF vr_servico(3) = 0 THEN
-              vr_dscritic := 'Produto ' || rw_produto.dsproduto || ' possui faixa de valor para contratação.';
-              RAISE vr_exc_saida;
-            END IF;
-            -- Se valor minimo for maior que valor máximo
-            IF to_number(vr_servico(2)) > to_number(vr_servico(3)) THEN
-              vr_dscritic := 'Produto ' || rw_produto.dsproduto || ' possui valores para contratação inválidos. ' ||
-                               'Valor máximo deve ser maior ou igual ao valor mínimo.';
-              RAISE vr_exc_saida;
-            END IF;
+          -- Se valor minimo for maior que valor máximo
+          IF to_number(vr_servico(2)) > to_number(vr_servico(3)) THEN
+            vr_dscritic := 'Produto ' || rw_produto.dsproduto || ' possui valores para contratação inválidos. ' ||
+                             'Valor máximo deve ser maior ou igual ao valor mínimo.';
+            RAISE vr_exc_saida;
           END IF;
+        END IF;
         
-          -- Verifica se ja existe o produto cadastrado
-          OPEN cr_produtos_coop(pr_cdcooper  => pr_cdcooper
-                               ,pr_tpconta   => pr_tpconta
-                               ,pr_inpessoa  => pr_inpessoa
-                               ,pr_cdproduto => vr_servico(1));
-          FETCH cr_produtos_coop INTO rw_produtos_coop;
-          -- Se encontrar o registro
-          IF cr_produtos_coop%FOUND THEN
-            -- Atualiza os cadastros que continuam
-            BEGIN
-              UPDATE tbcc_produtos_coop tpc
-                 SET tpc.dtvigencia = NULL -- Volta a data vigencia para null
-                    ,tpc.vlminimo_adesao = vr_servico(2)
-                    ,tpc.vlmaximo_adesao = vr_servico(3)
-                    ,tpc.nrordem_exibicao = vr_servico(4)
-               WHERE tpc.cdcooper  = pr_cdcooper
-                 AND tpc.tpconta   = pr_tpconta
-                 AND tpc.tpproduto = pr_tpproduto
-                 AND tpc.inpessoa  = pr_inpessoa
-                 AND tpc.cdproduto = vr_servico(1);
-            EXCEPTION
-              WHEN OTHERS THEN
-                vr_dscritic := 'Erro ao realizar inclusao. '||SQLERRM;
-                RAISE vr_exc_saida;
-            END;
+        -- Verifica se ja existe o produto cadastrado
+        OPEN cr_produtos_coop(pr_cdcooper  => pr_cdcooper
+                             ,pr_tpconta   => pr_tpconta
+                             ,pr_inpessoa  => pr_inpessoa
+                             ,pr_cdproduto => vr_servico(1));
+        FETCH cr_produtos_coop INTO rw_produtos_coop;
+        -- Se encontrar o registro
+        IF cr_produtos_coop%FOUND THEN
+          -- Atualiza os cadastros que continuam
+          BEGIN
+            UPDATE tbcc_produtos_coop tpc
+               SET tpc.dtvigencia = NULL -- Volta a data vigencia para null
+                  ,tpc.vlminimo_adesao = vr_servico(2)
+                  ,tpc.vlmaximo_adesao = vr_servico(3)
+                  ,tpc.nrordem_exibicao = vr_servico(4)
+             WHERE tpc.cdcooper  = pr_cdcooper
+               AND tpc.tpconta   = pr_tpconta
+               AND tpc.tpproduto = pr_tpproduto
+               AND tpc.inpessoa  = pr_inpessoa
+               AND tpc.cdproduto = vr_servico(1);
+          EXCEPTION
+            WHEN OTHERS THEN
+              vr_dscritic := 'Erro ao realizar inclusao. '||SQLERRM;
+              RAISE vr_exc_saida;
+          END;
             
             -- Insere o os dados no registro de memória
             vr_tab_produto_new(rw_produtos_coop.cdproduto).vlminimo_adesao  := rw_produtos_coop.vlminimo_adesao;
             vr_tab_produto_new(rw_produtos_coop.cdproduto).vlmaximo_adesao  := rw_produtos_coop.vlmaximo_adesao;
             
-          ELSE
-            -- insere novo cadastro de produtos aderidos
-            BEGIN
-              INSERT INTO tbcc_produtos_coop
-              (
-               cdcooper
-              ,tpconta
-              ,inpessoa
-              ,cdproduto
-              ,nrordem_exibicao
-              ,tpproduto
-              ,vlminimo_adesao
-              ,vlmaximo_adesao
-              )
-              VALUES
-              (
-               pr_cdcooper
-              ,pr_tpconta
-              ,pr_inpessoa
-              ,vr_servico(1)
-              ,vr_servico(4)
-              ,pr_tpproduto
-              ,vr_servico(2)
-              ,vr_servico(3)
+        ELSE
+          -- insere novo cadastro de produtos aderidos
+        BEGIN
+          INSERT INTO tbcc_produtos_coop
+          (
+           cdcooper
+          ,tpconta
+            ,inpessoa
+          ,cdproduto
+          ,nrordem_exibicao
+          ,tpproduto
+            ,vlminimo_adesao
+            ,vlmaximo_adesao
+          )
+          VALUES
+          (
+           pr_cdcooper
+          ,pr_tpconta
+            ,pr_inpessoa
+            ,vr_servico(1)
+            ,vr_servico(4)
+          ,pr_tpproduto
+            ,vr_servico(2)
+            ,vr_servico(3)
               )
               RETURNING cdproduto
                 INTO vr_cdproduto;
-            EXCEPTION
-              WHEN OTHERS THEN
-                vr_dscritic := 'Erro ao realizar inclusao. '||SQLERRM;
-                RAISE vr_exc_saida;
-            END;
+        EXCEPTION
+          WHEN OTHERS THEN
+            vr_dscritic := 'Erro ao realizar inclusao. '||SQLERRM;
+            RAISE vr_exc_saida;
+        END;
             
             -- Insere o os dados no registro de memória
             vr_tab_produto_new(vr_cdproduto).vlminimo_adesao  := vr_servico(2);
             vr_tab_produto_new(vr_cdproduto).vlmaximo_adesao  := vr_servico(3);
             
-          END IF;
-          -- Fechar o cursor
-          CLOSE cr_produtos_coop;
+        END IF;
+        -- Fechar o cursor
+        CLOSE cr_produtos_coop;
         END LOOP;
       END IF;
       
@@ -5914,10 +5914,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
           IF vr_dscritic IS NOT NULL THEN
             RAISE vr_exc_saida;
           END IF;
-          
+        
           EXIT WHEN vr_cdproduto = vr_tab_produto_new.LAST();
           vr_cdproduto := vr_tab_produto_new.NEXT(vr_cdproduto);
-        END LOOP;
+      END LOOP;
       END IF;
       
       -- salva informacoes inseridas
@@ -8893,7 +8893,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
                           ,pr_cdtipcta => rw_craptab.tpdconta);
     
         FETCH cr_tipo_conta INTO rw_tipconta_ant;
-        
+    
         -- fechar o cursor
         CLOSE cr_tipo_conta;
         

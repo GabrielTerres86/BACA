@@ -319,6 +319,12 @@
                 11/12/2017 - Ajuste lentidao no programa crps620, CRM - 339 digidoc (Oscar).    
 				
 				19/02/2018 - Ajuste para geração de pendência no DIGIDOC para termos de adesão e cancelamento de protesto. (Marcus Kaefer - Supero)                         
+                
+                07/04/2018 - Incluir novos documentos para batime1nto de digitalizaçao.
+                             Incluir nova rotina para criaçao de pendencia de digitalizaçao.
+                             PRJ366(Odirlei-AMcom)
+                     
+
                      
 .............................................................................*/
 
@@ -901,7 +907,8 @@ PROCEDURE efetua_batimento_ged_matricula:
                                crapdoc.cdcooper = par_cdcooper AND
                                crapdoc.dtmvtolt = aux_data     AND
                                crapdoc.tpdocmto = 8            AND
-                               crapdoc.flgdigit = FALSE
+                               crapdoc.flgdigit = FALSE        AND
+                               crapdoc.tpbxapen = 0
                               USE-INDEX crapdoc3 NO-LOCK:
 
            FIND crapass WHERE crapass.cdcooper = crapdoc.cdcooper AND
@@ -1287,7 +1294,7 @@ PROCEDURE efetua_batimento_ged_cadastro:
                            craptab.cdacesso = "DIGITALIZA"
                            NO-LOCK:
 
-        IF CAN-DO("90,91,92,93,94,95,96,97,98,99,100,101,103,131,145,146,147,148,149,150,151,152", ENTRY(3,craptab.dstextab,";")) THEN
+        IF CAN-DO("90,91,92,93,94,95,96,97,98,99,100,101,103,107,131,145,146,147,148,149,150,151,152,171,172", ENTRY(3,craptab.dstextab,";")) THEN
             DO:
                 CREATE tt-documentos.
                 ASSIGN tt-documentos.vldparam = DECI(ENTRY(2,craptab.dstextab,";"))
@@ -1356,7 +1363,7 @@ PROCEDURE efetua_batimento_ged_cadastro:
             
             /* ZERAR VARIAVEIS DE CONTROLE DE PARAMETROS */ 
             
-            DO aux_contdocs = 1 TO 52:
+            DO aux_contdocs = 1 TO 59:
                 
                 ASSIGN aux_tpdocmto = 0.
     
@@ -1387,6 +1394,8 @@ PROCEDURE efetua_batimento_ged_cadastro:
                         ASSIGN aux_conttabs = 17. /*DEMONSTRATIVO FINANCEIRO*/
                     WHEN 22 THEN
                         ASSIGN aux_conttabs = 22. /*DOCUMENTO CÔNJUGE*/
+                    WHEN 26 THEN
+                        ASSIGN aux_conttabs = 26. /*DECLARACAO DE IMUNIDADE TRIBUTARIA*/
                     WHEN 40 THEN 
                         ASSIGN aux_conttabs = 40. /*LICENCAS SOCIO AMBIENTAIS*/
                     WHEN 45 THEN
@@ -1405,6 +1414,11 @@ PROCEDURE efetua_batimento_ged_cadastro:
                         ASSIGN aux_conttabs = 51. /*DOCUMENTOS RESPONSAVEL LEGAL*/
                     WHEN 52 THEN
                         ASSIGN aux_conttabs = 52. /*DOCUMENTO SÓCIOS/ADMINISTRADORES*/
+                    WHEN 58 THEN
+                        ASSIGN aux_conttabs = 58. /*TERMO DE ALTERACAO DE TITULARIDADE*/
+                    WHEN 59 THEN
+                        ASSIGN aux_conttabs = 59. /*DOCUMENTO DE EMANCIPACAO*/
+                    
                     OTHERWISE
                         NEXT.
                 END CASE.
@@ -1423,7 +1437,8 @@ PROCEDURE efetua_batimento_ged_cadastro:
                                  WHERE crapdoc.cdcooper = crapcop.cdcooper AND
                                        crapdoc.dtmvtolt = aux_data         AND
                                        crapdoc.tpdocmto = aux_contdocs     AND
-                                       crapdoc.flgdigit = FALSE 
+                                       crapdoc.flgdigit = FALSE            AND
+                                       crapdoc.tpbxapen = 0
                                        USE-INDEX crapdoc3 NO-LOCK:
 
                     /* Se cooperado estiver demitidos nao gera no relatorio */
@@ -1507,13 +1522,18 @@ PROCEDURE efetua_batimento_ged_cadastro:
                     /* Caso encontrar o contrato digitalizado, altera flag e vai para o proximo */
                     IF  AVAIL tt-documento-digitalizado  THEN
                         DO: 
+                        
                             /*Verifica se documento foi digitalizado*/
                             FIND FIRST b-crapdoc WHERE RECID(b-crapdoc) = RECID(crapdoc) EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
                             
                             /*Caso encontre o arquivo digitalizado, altera flag do registro no banco*/
                             IF  AVAIL(b-crapdoc)  THEN
                             DO:
-                                ASSIGN b-crapdoc.flgdigit = TRUE.
+                                ASSIGN b-crapdoc.flgdigit = TRUE
+                                       b-crapdoc.tpbxapen = 4 /* Baixa por digitalizaçao */
+                                       b-crapdoc.dtbxapen = TODAY 
+                                       b-crapdoc.cdopebxa = "1".
+                                       
                                 RELEASE b-crapdoc NO-ERROR.
                             END.
 
@@ -3287,9 +3307,10 @@ PROCEDURE efetua_batimento_ged_termos:
     DO  aux_data = par_datainic TO par_datafina:
 
     FOR EACH crapdoc WHERE crapdoc.cdcooper = par_cdcooper AND
-                               crapdoc.dtmvtolt = aux_data     AND
+                           crapdoc.dtmvtolt = aux_data     AND
                            crapdoc.tpdocmto = aux_conttabs AND
-                           crapdoc.flgdigit = FALSE
+                           crapdoc.flgdigit = FALSE        AND
+                           crapdoc.tpbxapen = 0
                            NO-LOCK:
                                
         /* Se cooperado estiver demitido nao gera no relatorio */
@@ -3348,7 +3369,11 @@ PROCEDURE efetua_batimento_ged_termos:
 
             /*Caso encontre o arquivo digitalizado, altera flag do registro no banco*/
             IF  AVAIL b-crapdoc THEN
-                ASSIGN b-crapdoc.flgdigit = TRUE.
+                ASSIGN b-crapdoc.flgdigit = TRUE
+                       b-crapdoc.tpbxapen = 4 /* Baixa por digitalizaçao */
+                       b-crapdoc.dtbxapen = TODAY 
+                       b-crapdoc.cdopebxa = "1".
+                       
 
             NEXT.
 
@@ -3397,9 +3422,10 @@ PROCEDURE efetua_batimento_ged_termos:
         ASSIGN aux_tpdocmto = tt-documentos.tpdocmto.
     DO  aux_data = par_datainic TO par_datafina:
     FOR EACH crapdoc WHERE crapdoc.cdcooper = par_cdcooper AND
-                               crapdoc.dtmvtolt = aux_data     AND
+                           crapdoc.dtmvtolt = aux_data     AND
                            crapdoc.tpdocmto = aux_conttabs AND
-                           crapdoc.flgdigit = FALSE
+                           crapdoc.flgdigit = FALSE        AND
+                           crapdoc.tpbxapen = 0
                            NO-LOCK:
         /* Se cooperado estiver demitido nao gera no relatorio */
         FIND FIRST crapass WHERE 
@@ -3428,7 +3454,11 @@ PROCEDURE efetua_batimento_ged_termos:
              EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
             /*Caso encontre o arquivo digitalizado, altera flag do registro no banco*/
             IF  AVAIL b-crapdoc THEN
-                ASSIGN b-crapdoc.flgdigit = TRUE.
+                ASSIGN b-crapdoc.flgdigit = TRUE
+                       b-crapdoc.tpbxapen = 4 /* Baixa por digitalizaçao */
+                       b-crapdoc.dtbxapen = TODAY 
+                       b-crapdoc.cdopebxa = "1".
+                       
             NEXT.
         END.
         ELSE DO:
@@ -3470,9 +3500,10 @@ PROCEDURE efetua_batimento_ged_termos:
         ASSIGN aux_tpdocmto = tt-documentos.tpdocmto.
     DO  aux_data = par_datainic TO par_datafina:
     FOR EACH crapdoc WHERE crapdoc.cdcooper = par_cdcooper AND
-                               crapdoc.dtmvtolt = aux_data     AND
+                           crapdoc.dtmvtolt = aux_data     AND
                            crapdoc.tpdocmto = aux_conttabs AND
-                           crapdoc.flgdigit = FALSE
+                           crapdoc.flgdigit = FALSE        AND
+                           crapdoc.tpbxapen = 0
                            NO-LOCK:
         /* Se cooperado estiver demitido nao gera no relatorio */
         FIND FIRST crapass WHERE 
@@ -3501,7 +3532,11 @@ PROCEDURE efetua_batimento_ged_termos:
              EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
             /*Caso encontre o arquivo digitalizado, altera flag do registro no banco*/
             IF  AVAIL b-crapdoc THEN
-                ASSIGN b-crapdoc.flgdigit = TRUE.
+                ASSIGN b-crapdoc.flgdigit = TRUE
+                       b-crapdoc.tpbxapen = 4 /* Baixa por digitalizaçao */
+                       b-crapdoc.dtbxapen = TODAY 
+                       b-crapdoc.cdopebxa = "1".
+                       
             NEXT.
         END.
         ELSE DO:
@@ -5945,6 +5980,89 @@ PROCEDURE requisicao-lista-documentos PRIVATE:
     
     ASSIGN aux_dsreturn = "OK".
     RETURN "OK".
+
+END PROCEDURE.
+
+PROCEDURE  gera_pend_digitalizacao:
+  DEF INPUT PARAM par_cdcooper AS INTE                           NO-UNDO.
+  DEF INPUT PARAM par_nrdconta AS INTE                           NO-UNDO.
+  DEF INPUT PARAM par_idseqttl AS INTE                           NO-UNDO.
+  DEF INPUT PARAM par_nrcpfcgc AS DEC                            NO-UNDO.
+  DEF INPUT PARAM par_dtmvtolt AS DATE                           NO-UNDO.
+  DEF INPUT PARAM par_lstpdoct AS CHAR                           NO-UNDO.
+  DEF INPUT PARAM par_cdoperad AS CHAR                           NO-UNDO.
+  DEF OUTPUT PARAM par_cdcritic AS INTE                           NO-UNDO.
+  DEF OUTPUT PARAM par_dscritic AS CHAR                           NO-UNDO.
+
+    RUN gera_pend_digitalizacao_seqdoc
+                      ( INPUT par_cdcooper,
+                        INPUT par_nrdconta,
+                        INPUT par_idseqttl,
+                        INPUT par_nrcpfcgc,
+                        INPUT par_dtmvtolt,
+                        INPUT par_lstpdoct,
+                        INPUT par_cdoperad,
+                        INPUT 0, /* par_nrseqdoc */
+                       OUTPUT par_cdcritic,
+                       OUTPUT par_cdcritic).
+
+   IF par_cdcritic <> 0 OR
+      par_dscritic <> "" THEN
+   DO:
+     RETURN "NOK".   
+   END.
+      
+
+END PROCEDURE. 
+
+PROCEDURE  gera_pend_digitalizacao_seqdoc:
+  DEF INPUT PARAM par_cdcooper AS INTE                           NO-UNDO.
+  DEF INPUT PARAM par_nrdconta AS INTE                           NO-UNDO.
+  DEF INPUT PARAM par_idseqttl AS INTE                           NO-UNDO.
+  DEF INPUT PARAM par_nrcpfcgc AS DEC                            NO-UNDO.
+  DEF INPUT PARAM par_dtmvtolt AS DATE                           NO-UNDO.
+  DEF INPUT PARAM par_lstpdoct AS CHAR                           NO-UNDO.
+  DEF INPUT PARAM par_cdoperad AS CHAR                           NO-UNDO.
+  DEF INPUT PARAM par_nrseqdoc AS INTE                           NO-UNDO.
+  
+  DEF OUTPUT PARAM par_cdcritic AS INTE                           NO-UNDO.
+  DEF OUTPUT PARAM par_dscritic AS CHAR                           NO-UNDO.
+
+    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} } 
+
+    /* Efetuar a chamada a rotina Oracle  */
+    RUN STORED-PROCEDURE pc_gera_pend_digitalizacao
+        aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper,   /* pr_cdcooper */
+                                             INPUT par_nrdconta,   /* pr_nrdconta */
+                                             INPUT par_idseqttl,   /* pr_idseqttl */
+                                             INPUT par_nrcpfcgc,   /* pr_nrcpfcgc */
+                                             INPUT par_dtmvtolt,   /* pr_dtmvtolt */
+                                             INPUT par_lstpdoct,   /* pr_lstpdoct lista de Tipo do documento separados por ; */
+                                             INPUT par_cdoperad,   /* pr_cdoperad */            
+                                             INPUT par_nrseqdoc,   /* pr_nrseqdoc */
+                                            OUTPUT 0,              /* Código da crítica */
+                                            OUTPUT "").            /* Descriçao da crítica */
+
+    /* Fechar o procedimento para buscarmos o resultado */ 
+    CLOSE STORED-PROC pc_gera_pend_digitalizacao
+           aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+
+    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
+    
+    /* Busca possíveis erros */ 
+    ASSIGN par_cdcritic = 0
+           par_dscritic = ""
+           par_cdcritic = pc_gera_pend_digitalizacao.pr_cdcritic 
+                          WHEN pc_gera_pend_digitalizacao.pr_cdcritic <> ?
+           par_dscritic = pc_gera_pend_digitalizacao.pr_dscritic 
+                          WHEN pc_gera_pend_digitalizacao.pr_dscritic <> ?.
+
+   IF par_cdcritic <> 0 OR
+      par_dscritic <> "" THEN
+   DO:
+     RETURN "NOK".   
+   END.
+      
 
 END PROCEDURE.
 

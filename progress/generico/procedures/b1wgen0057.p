@@ -51,6 +51,10 @@
          
                  31/01/2018 - Ajustar busca da descricao do Perfil do conjuge, caso valor 
                               venha nulo vamos considerar zero (Lucas Ranghetti #836600)
+
+                 13/02/2018 - Ajustes na geraçao de pendencia de digitalizaçao.
+                             PRJ366 - tipo de conta (Odirlei-AMcom)
+
 .............................................................................*/
 
 /*............................. DEFINICOES ..................................*/
@@ -1115,6 +1119,8 @@ PROCEDURE Grava_Dados:
 
     DEF VAR h-b1wgen0077 AS HANDLE                                  NO-UNDO.
     DEF VAR h-b1wgen0168 AS HANDLE                                  NO-UNDO.
+    DEF VAR h-b1wgen0137 AS HANDLE                                  NO-UNDO.
+        
     DEF VAR aux_idorgexp AS INT                                     NO-UNDO.
     DEF VAR aux_nmconjug AS CHAR                                    NO-UNDO.
     DEF VAR aux_nrcpfcjg AS DECIMAL                                 NO-UNDO.
@@ -1271,52 +1277,25 @@ PROCEDURE Grava_Dados:
            aux_nrcpfcjg <> par_nrcpfcjg        THEN 
             DO:
               
-              ContadorDoc22: DO aux_contador = 1 TO 10:
-          
-                  FIND FIRST crapdoc WHERE 
-                                     crapdoc.cdcooper = par_cdcooper AND
-                                     crapdoc.nrdconta = par_nrdconta AND
-                                     crapdoc.tpdocmto = 22            AND
-                                     crapdoc.dtmvtolt = par_dtmvtolt AND
-                                     crapdoc.idseqttl = par_idseqttl AND
-                                     crapdoc.nrcpfcgc = crapttl.nrcpfcgc
-                                     EXCLUSIVE NO-ERROR.
+              IF NOT VALID-HANDLE(h-b1wgen0137) THEN
+                  RUN sistema/generico/procedures/b1wgen0137.p 
+                  PERSISTENT SET h-b1wgen0137.
+                
+              RUN gera_pend_digitalizacao IN h-b1wgen0137                    
+                        ( INPUT par_cdcooper,
+                          INPUT par_nrdconta,
+                          INPUT par_idseqttl,
+                          INPUT crapttl.nrcpfcgc,
+                          INPUT par_dtmvtolt,
+                          INPUT "22", /* Documento do conjuge */
+                          INPUT par_cdoperad,
+                         OUTPUT aux_cdcritic,
+                         OUTPUT aux_dscritic).
 
-                  IF NOT AVAILABLE crapdoc THEN
-                      DO:
-                          IF LOCKED(crapdoc) THEN
-                              DO:
-                                  IF aux_contador = 10 THEN
-                                      DO:
-                                          ASSIGN aux_cdcritic = 341.
-                                          LEAVE ContadorDoc22.
-                                      END.
-                                  ELSE 
-                                      DO: 
-                                          PAUSE 1 NO-MESSAGE.
-                                          NEXT ContadorDoc22.
-                                      END.
-                              END.
-                          ELSE        
-                              DO:
-                                  CREATE crapdoc.
-                                  ASSIGN crapdoc.cdcooper = par_cdcooper
-                                         crapdoc.nrdconta = par_nrdconta
-                                         crapdoc.flgdigit = FALSE
-                                         crapdoc.dtmvtolt = par_dtmvtolt
-                                         crapdoc.tpdocmto = 22
-                                         crapdoc.idseqttl = par_idseqttl
-                                         crapdoc.nrcpfcgc = crapttl.nrcpfcgc.
-                                  VALIDATE crapdoc.
-                              END.
-                      END.
-                  ELSE
-                      DO:
-                          ASSIGN crapdoc.flgdigit = FALSE.
-          
-                          LEAVE ContadorDoc22.
-                      END.
-              END.
+              IF  VALID-HANDLE(h-b1wgen0137) THEN
+                DELETE OBJECT h-b1wgen0137.       
+                
+              
             
         END.
 

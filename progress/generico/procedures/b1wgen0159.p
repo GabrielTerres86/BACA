@@ -56,6 +56,9 @@
                              totalização por entidade para rel666 e 
                              rel665 (SD. 167168 - Lunelli)
                 
+                01/03/2018 - Incluido geraçao de pendencia de digitalizaçao
+                             26 decl. imunidade tributaria.
+                             PRJ366 - tipo de conta (Odirlei-AMcom)             
 ..............................................................................*/
 DEF STREAM str_1.  /*  Para relatorio de entidade  */
 
@@ -520,6 +523,7 @@ PROCEDURE altera-imunidade:
    DEF OUTPUT PARAM TABLE FOR tt-erro.
 
    DEF VAR aux_dssitcad AS CHAR                                        NO-UNDO. 
+   DEF VAR h-b1wgen0137 AS HANDLE                                      NO-UNDO.
 
    EMPTY TEMP-TABLE tt-erro.
    
@@ -705,6 +709,33 @@ PROCEDURE altera-imunidade:
        END.
    END.
    ELSE DO:
+        /* Se houver alteracao e a nova for aprovacao */ 
+        IF par_cdsitcad <> crapimt.cdsitcad AND 
+           par_cdsitcad = 1 THEN DO:
+           
+           /* Gerar digitalizaçao */
+           IF NOT VALID-HANDLE(h-b1wgen0137) THEN
+              RUN sistema/generico/procedures/b1wgen0137.p 
+                  PERSISTENT SET h-b1wgen0137.
+                
+              RUN gera_pend_digitalizacao IN h-b1wgen0137                    
+                        ( INPUT par_cdcooper,
+                          INPUT crapass.nrdconta,
+                          INPUT 0,
+                          INPUT crapass.nrcpfcgc,
+                          INPUT par_dtmvtolt,
+                          INPUT "26", /* declaracao de Imunidade tributaria */
+                          INPUT par_cdopecad,
+                         OUTPUT aux_cdcritic,
+                         OUTPUT aux_dscritic).
+
+              IF  VALID-HANDLE(h-b1wgen0137) THEN
+                DELETE OBJECT h-b1wgen0137.
+           
+        END.   
+           
+   
+   
         IF  par_cdsitcad = 0 THEN DO: /* 0 - Pendente */
             
             ASSIGN aux_cdcritic = 0
@@ -1126,6 +1157,8 @@ PROCEDURE gravar-imunidade:
 
    END.
    ELSE DO:
+   
+        
         IF  par_cddentid <> crapimt.cddentid THEN 
 
             ASSIGN crapimt.dscancel = ""
