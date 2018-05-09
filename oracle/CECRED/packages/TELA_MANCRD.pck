@@ -301,7 +301,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANCRD AS
     Programa: pc_atualiza_cartao
     Sistema : Ayllos Web
     Autor   : Kelvin Souza Ott
-    Data    : Junho/2017                       Ultima atualizacao: 27/10/2017
+    Data    : Junho/2017                       Ultima atualizacao: 09/05/2018
     
     Dados referentes ao programa:
     
@@ -309,6 +309,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANCRD AS
     Objetivo  : Atualiza as informações do cartao
                     
     Alteracoes: 27/10/2017 - Efetuar ajustes e melhorias na tela (Lucas Ranghetti #742880)
+               
+                09/05/2018 - Ajuste realizado para nao mostrar critica indevidamente
+                             conforme solicitado no ticket PRB0040037. (Kelvin)
     ............................................................................. */
   
    -- Variaveis de log
@@ -410,6 +413,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANCRD AS
     EXCEPTION
       WHEN OTHERS THEN
            vr_dsderror := 'TELA_MANCRD.PC_ATUALIZA_CARTAO: Erro ao atualizar a tabela crawcrd ' || SQLERRM;
+           RAISE vr_exc_erro;
+    END;
+    
+    BEGIN
+      UPDATE crapcrd crd
+         SET crd.nrcpftit = pr_nrcpftit
+            ,crd.cdadmcrd = pr_cdadmcrd
+            ,crd.flgdebit = pr_flgdebit
+            ,crd.nmtitcrd = upper(pr_nmtitcrd)
+       WHERE crd.nrdconta = pr_nrdconta
+         AND crd.nrcrcard = pr_nrcrcard
+         AND crd.cdcooper = vr_cdcooper;    
+    EXCEPTION
+      WHEN OTHERS THEN
+           vr_dsderror := 'TELA_MANCRD.PC_ATUALIZA_CARTAO: Erro ao atualizar a tabela crapcrd ' || SQLERRM;
            RAISE vr_exc_erro;
     END;
     
