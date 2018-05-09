@@ -147,7 +147,7 @@
 								<th>Pagador</th>
 								<th>Vencimento</th>
 								<th>Valor</th>
-								<th>Situa&ccedil;&atilde;o</th>
+								<th>Cr&iacute;ticas</th>
 								<th>Selecionar</th>
 							</tr>			
 						</thead>
@@ -167,7 +167,7 @@
 								<th>Pagador</th>
 								<th>Vencimento</th>
 								<th>Valor</th>
-								<th>Situa&ccedil;&atilde;o</th>
+								<th>Cr&iacute;ticas</th>
 								<th>Remover</th>
 							</tr>
 						</thead>

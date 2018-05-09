@@ -169,7 +169,7 @@
 										 	if($varint > 0){
 										 		echo $varint;
 										 	} else {
-										 		echo (getByTagName($c->tags,'per') * 100.00).'%';
+										 		echo formataMoeda(getByTagName($c->tags,'per')).'%';
 										 	}
 										?>
 									</td>

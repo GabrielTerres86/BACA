@@ -47,6 +47,8 @@
 
 			 18/04/2018 - Alteração da coluna 'contrato' para 'prospota', inclusão da coluna 'contrato' (Leonardo Oliveira - GFT).
 
+			 28/04/2018 - Inclusão de novas colunas na grid de borderô (Alex Sandro  - GFT)
+
 ************************************************************************/
 
 // Carrega biblioteca javascript referente ao RATING
@@ -348,7 +350,7 @@ function formataLayout(nomeForm){
 	
 	}else if ( nomeForm == 'divBorderosTitulos' ){
 	
-		$('#'+nomeForm).css('width','785px');
+		$('#'+nomeForm).css('width','945px');
 	
 		var divRegistro = $('div.divRegistros','#'+nomeForm);		
 		var tabela      = $('table', divRegistro );
@@ -362,9 +364,11 @@ function formataLayout(nomeForm){
 		arrayLargura[1] = '60px';
 		arrayLargura[2] = '60px';
 		arrayLargura[3] = '60px';
-		arrayLargura[4] = '80px';
-		arrayLargura[5] = '120px';
+		arrayLargura[4] = '60px';
+		arrayLargura[5] = '60px';
 		arrayLargura[6] = '80px';
+		arrayLargura[7] = '120px';
+		arrayLargura[8] = '160px';
 		
 				
 		var arrayAlinha = new Array();
@@ -376,6 +380,8 @@ function formataLayout(nomeForm){
 		arrayAlinha[5] = 'center';
 		arrayAlinha[6] = 'right';
 		arrayAlinha[7] = 'center';
+		arrayAlinha[8] = 'center';
+		arrayAlinha[9] = 'center';
 						
 		tabela.formataTabela( ordemInicial, arrayLargura, arrayAlinha, '' );
 		

@@ -182,18 +182,7 @@
 						    			<td><? echo $t->nrinssac.' - '.$t->nmsacado;?></td>
 						    			<td><? echo $t->dtvencto;?></td>
 						    			<td><span><? echo converteFloat($t->vltitulo);?></span><? echo formataMoeda($t->vltitulo);?></td>
-						    			<?
-							    			$sit = $t->dssituac;
-								    		if ($sit=="N") { ?>
-									    		<td><img src='../../imagens/icones/sit_ok.png'/></td>
-								    		<? }
-								    		elseif ($sit=="S") { ?>
-									    		<td><img src='../../imagens/icones/sit_er.png'/></td>
-								    		<? }
-								    		else{ ?>
-									    		<td></td>
-								    		<? }
-								    	?>
+						    			<td><? echo $t->nrborder; ?></td>
 								    	<td class='botaoSelecionar' onclick='removeTituloBordero($(this));'><button type='button' class='botao'>Remover</button></td>
 						    		</tr>
 						    	<? }

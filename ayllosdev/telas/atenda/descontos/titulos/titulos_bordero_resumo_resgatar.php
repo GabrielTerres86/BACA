@@ -122,7 +122,6 @@
 
 <div id="divBotoesTitulosLimite" style="margin-bottom:10px;">
 	<input type="button" class="botao" value="Voltar"  onClick="voltaDiv(4,2,5,'DESCONTO DE T&Iacute;TULOS - BORDEROS');return false; " />
-	<input type="button" class="botao" value="Remover T&iacute;tulo"  onClick="showConfirmacao('Deseja excluir o t&iacute;tulo do border&ocirc;?','Confirma&ccedil;&atilde;o - Ayllos','removerTituloResumo();','bloqueiaFundo(divRotina);','sim.gif','nao.gif');"/>
 	<input type="button" class="botao" value="Confirmar Resgate" onClick="showConfirmacao('Confirma resgate dos t&iacute;tulos selecionados?','Confirma&ccedil;&atilde;o - Ayllos','confirmarResgate();','bloqueiaFundo(divRotina);','sim.gif','nao.gif');" />
 </div>
 <script type="text/javascript">

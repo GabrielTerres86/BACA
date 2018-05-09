@@ -6,6 +6,7 @@
  * OBJETIVO     : Tela para manutenção do limite de contrato	             		        				   
  * --------------
  * ALTERAÇÕES   :
+ * 001: [26/04/2018] Vitor Shimada Assanuma (GFT): Ajuste na chamada do botao de Alterar da Proposta
  * --------------
  */
 ?>
@@ -23,6 +24,8 @@
 		
 	// Classe para leitura do xml de retorno
 	require_once("../../../../class/xmlfile.php");
+
+	setVarSession("nmrotina","DSC TITS - LIMITE");
 
 	require_once("../../../../includes/carrega_permissoes.php");
 
@@ -227,8 +230,11 @@
 
 
 <script type="text/javascript">
-
+	if (sitinctrmnt == 1){
+		dscShowHideDiv("divOpcoesDaOpcao3","divOpcoesDaOpcao2;");	
+	}else{
 	dscShowHideDiv("divOpcoesDaOpcao2","divOpcoesDaOpcao1;");
+	}
 
 	// Muda o título da tela
 	$("#tdTitRotina").html("DESCONTO DE T&Iacute;TULOS - TITULOS - MANUTEN&Ccedil;&Atilde;o");
@@ -243,10 +249,11 @@
 
 	function executarRealizarManutencaoDeLimite(){
 		var flgstlcr = $('#flgstlcr','#frmTitLimiteManutencao').val();
+
 		showConfirmacao(
 			"Deseja alterar a proposta de majora&ccedil;&atilde;o?",
 			"Confirma&ccedil;&atilde;o - Ayllos",
-			"realizarManutencaoDeLimite(2, "+flgstlcr+");",
+			"realizarManutencaoDeLimite(2, '"+flgstlcr+"');",
 			"blockBackground(parseInt($('#divRotina').css('z-index'))",
 			"sim.gif",
 			"nao.gif"

@@ -107,7 +107,7 @@
 								<th>Nome Pagador</th>
 								<th>Data Vencimento</th>
 								<th>Valor do T&iacute;tulo</th>
-								<th>Situa&ccedil;&atilde;o</th>
+								<th>Cr&iacute;ticas</th>
 								<th>Restri&ccedil;&atilde;o</th>
 							</tr>			
 						</thead>
@@ -123,25 +123,25 @@
 						    			<?
 							    			$sit = getByTagName($t->tags,'dssituac');
 								    		if ($sit=="N") { ?>
-									    		<td><img src='../../imagens/icones/sit_ok.png'/></td>
+									    		<td>N&atilde;o</td>
 								    		<? }
 								    		elseif ($sit=="S") { ?>
-									    		<td><img src='../../imagens/icones/sit_er.png'/></td>
+									    		<td>Sim</td>
 								    		<? }
 								    		else{ ?>
-									    		<td></td>
+									    		<td>N&atilde;o Analisado</td>
 								    		<? }
 								    	?>
 						    			<?
 							    			$sit = getByTagName($t->tags,'sitibrat');
 								    		if ($sit=="N") { ?>
-									    		<td><img src='../../imagens/icones/sit_ok.png'/></td>
+									    		<td>N&atilde;o</td>
 								    		<? }
 								    		elseif ($sit=="S") { ?>
-									    		<td><img src='../../imagens/icones/sit_er.png'/></td>
+									    		<td>Sim</td>
 								    		<? }
 								    		else{ ?>
-									    		<td></td>
+									    		<td>N&atilde;o Analisado</td>
 								    		<? }
 								    	?>
 						    		</tr>

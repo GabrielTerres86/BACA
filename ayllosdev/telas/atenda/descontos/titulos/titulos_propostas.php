@@ -33,6 +33,8 @@
 				 19/04/2018 - Adição do parâmetro 'nrctrmnt' ao ser selecionado uma proposta.  (Leonardo Oliveira - GFT).
 
 				 26/04/2018 - Ajuste nos valores retornados ao buscar propostas (Leonardo Oliveira - GFT).
+				 
+				 26/04/2018 - Ajuste na funcao de chamada da proposta e manutencao (Vitor Shimada Assanuma - GFT)
 
 	************************************************************************/
 	
@@ -49,7 +51,7 @@
 	// Classe para leitura do xml de retorno
 	require_once("../../../../class/xmlfile.php");
 	
-	setVarSession("nmrotina","DSC TITS - LIMITE");
+	setVarSession("nmrotina","DSC TITS - PROPOSTA");
 
 	// Carrega permissões do operador
 	require_once("../../../../includes/carrega_permissoes.php");	
@@ -79,10 +81,10 @@
 	$xmlGetLimites .= "		<nrdconta>".$nrdconta."</nrdconta>";
 	$xmlGetLimites .= "	</Dados>";
 	$xmlGetLimites .= "</Root>";
-			
-	$procedure_acao = 'OBTEM_DADOS_PROPOSTA';
-	$pakage = 'TELA_ATENDA_DESCTO';
-	$glbvars['rotinasTela'][8] = 'PROPOSTAS';
+		
+$procedure_acao = 'OBTEM_DADOS_PROPOSTA';
+$pakage = 'TELA_ATENDA_DESCTO';
+$glbvars['rotinasTela'][8] = 'PROPOSTAS';
 
 	$xmlResult = mensageria(
 		$xmlGetLimites,
@@ -95,7 +97,7 @@
 		$glbvars["cdoperad"],
 		"</Root>");
 
-	$xmlObjLimites = getObjectXML($xmlResult);
+$xmlObjLimites = getObjectXML($xmlResult);
 
 
 	// Se ocorrer um erro, mostra crítica
@@ -168,7 +170,7 @@
 							.$pr_insitest."', '" 	// cod situação da analise
 							.$pr_insitapr."', '"
 							.$pr_inctrmnt."');";	// cod decisão
-			
+
 				?>
 					<tr id="trLimite<? echo $i + 1; ?>" onFocus="<? echo $mtdClick; ?>" onClick="<? echo $mtdClick; ?>">
 
@@ -224,7 +226,7 @@
 		class="botao"
 		value="Alterar"
 		<?php if ($qtLimites == 0){
-			echo 'onClick="return false;';
+			echo 'onClick="return false;"';
 		} else {
 			echo 'onClick="carregaDadosAlteraLimiteDscTitPropostas(); return false;"';
 		} ?> />
@@ -237,7 +239,7 @@
 		id="btnAceitarRejeicao"
 		name="btnAceitarRejeicao"
 		<?php if ($qtLimites == 0) {
-			echo 'onClick="return false;';
+			echo 'onClick="return false;"';
 		} else {
 			echo 'onClick="aceitarRejeicao(0, \'PROPOSTA\');"';
 		} ?>/>	
@@ -247,7 +249,7 @@
 		class="botao"
 		value="Consultar"
 		<?php if ($qtLimites == 0) {
-			echo 'onClick="return false;';
+			echo 'onClick="return false;"';
 		} else {
 			echo 'style="'.$dispC.'"';
 			echo 'onClick="carregaDadosConsultaPropostaDscTit(); return false;" ';
@@ -269,7 +271,7 @@
 		class="botao"
 		value="Imprimir"
 		<?php if ($qtLimites == 0) {
-			echo 'onClick="return false; ';
+			echo 'onClick="return false;"';
 		} else {
 			echo 'onClick="mostraImprimirLimite(\'PROPOSTA\'); return false;"';
 		} ?> />
@@ -283,7 +285,7 @@
 		id="btnAnalisarLimite"
 		name="btnAnalisarLimite"
 		<?php if ($qtLimites == 0) {
-			echo 'onClick="return false;';
+			echo 'onClick="return false;"';
 		} else {
 			echo 'onClick="confirmaEnvioAnalise(); return false;"'; 
 		} ?>/>
@@ -297,7 +299,7 @@
 		id="btnDetalhesProposta"
 		name="btnDetalhesProposta" 
 		<?php if ($qtLimites == 0) {
-			echo 'onClick="return false;';
+			echo 'onClick="return false;"';
 		} else { 
 			echo 'onClick="carregaDadosDetalhesProposta(\'PROPOSTA\', nrctrlim, nrctrmnt); return false;"'; 
 		} ?>/>
@@ -310,7 +312,7 @@
 		id="btnEfetivarLimite"
 		name="btnEfetivarLimite"
 		<?php if ($qtLimites == 0) {
-			echo 'onClick="return false;';
+			echo 'onClick="return false;"';
 		} else {
 			echo 'onClick="efetuarNovoLimite();" ';
 		} ?>/>
@@ -318,7 +320,7 @@
 
 </div>
 
-<script type="text/javascript"> 
+<script type="text/javascript">
 
 	dscShowHideDiv("divOpcoesDaOpcao2","divOpcoesDaOpcao1;divOpcoesDaOpcao3");
 

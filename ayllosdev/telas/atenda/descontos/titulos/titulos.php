@@ -47,7 +47,7 @@
 	
 	setVarSession("nmrotina","DSC TITS");
 	
-	include("../../../../includes/carrega_permissoes.php");
+	require_once("../../../../includes/carrega_permissoes.php");
 
 	setVarSession("opcoesTela",$opcoesTela);
 	
@@ -100,7 +100,6 @@
 		echo '</script>';
 		exit();
 	}
-	//$xmlObjLiberacao->roottag->tags[1]->attributes["INDENTRA"]
 ?>
 
 <form id="frmTitulos">
@@ -188,7 +187,7 @@
 	type="image"
 	name="btnlimite"
 	id="btnlimite"
-	 <?php if (!in_array("DSC TITS - LIMITE",$rotinasTela)) { echo 'style="cursor: default;display:none;" onClick="return false;"'; } 
+	 <?php if (!in_array("DSC TITS - CONTRATO",$rotinasTela)) { echo 'style="cursor: default;display:none;" onClick="return false;"'; } 
 		else { echo 'onClick="carregaLimitesTitulos();return false;"'; } ?> 
 	>
 		Contratos
@@ -201,7 +200,7 @@
 		name="btnpropostas" 
 		id="btnpropostas"
 
-	 <?php if (!in_array("DSC TITS - LIMITE",$rotinasTela)) { echo 'style="cursor: default;display:none;" onClick="return false;"'; } 
+	 <?php if (!in_array("DSC TITS - PROPOSTA",$rotinasTela)) { echo 'style="cursor: default;display:none;" onClick="return false;"'; } 
 		else { echo 'onClick="carregaLimitesTitulosPropostas();return false;"'; } ?> 
 	>
 			Propostas
