@@ -339,6 +339,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                    17/04/2018 - Incluir no arquivo somente fluxo de vencimento com valor maior que 0
                                 ou menor que -100. Empresa 81, o sistema deve validar (se não tem mais
                                 CNPJ deve ser enviado 1) conforme o manual do 3040. (SD#855059-AJFink)
+								
+				   09/05/2018 - Correção para considerar apenas os contratos com cobertura de operação ativa (Lucas Skroch - Supero)
+				   
 .............................................................................................................................*/
 
     DECLARE
@@ -3842,7 +3845,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
            WHERE cdcooper = pr_cdcooper
              AND nrdconta = pr_nrdconta
              AND tpcontrato = pr_tpcontrato
-             AND nrcontrato = pr_nrcontrato;
+             AND nrcontrato = pr_nrcontrato
+             AND insituacao = 1;
            
         BEGIN
           IF vr_tab_individ(vr_idx_individ).cdmodali IN(0299,0499) THEN
@@ -3863,7 +3867,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                           ,pr_nrcontrato => vr_tab_individ(vr_idx_individ).nrctremp);
          FETCH cr_cobertura INTO vr_idcobertura;
          
-         IF vr_idcobertura > 0 THEN
+         IF nvl(vr_idcobertura,0) > 0 THEN
            bloq0001.pc_bloqueio_garantia_atualizad(pr_idcobert            => vr_idcobertura
                                                   ,pr_vlroriginal         => vr_vlroriginal
                                                   ,pr_vlratualizado       => vr_vlratualizado
