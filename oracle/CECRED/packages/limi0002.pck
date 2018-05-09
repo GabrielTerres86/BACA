@@ -2592,7 +2592,7 @@ PROCEDURE pc_crps517(pr_xmllog   IN VARCHAR2              --> XML com informaçõe
            pr_cdcritic := 0;
            pr_dscritic := 'Erro PC_CANCELA_LIMITE: '||SQLERRM;
            -- Efetuar rollback
-           ROLLBACK;
+           -- ROLLBACK;
     END pc_cancela_limite;
 
     -- Cancela limite de crédito Conta
@@ -2615,7 +2615,7 @@ PROCEDURE pc_crps517(pr_xmllog   IN VARCHAR2              --> XML com informaçõe
            pr_cdcritic := 0;
            pr_dscritic := 'Erro PC_CANCELA_LIMITE_CTA: '||SQLERRM;
            -- Efetuar rollback
-           ROLLBACK;
+           -- ROLLBACK;
     END pc_cancela_limite_cta;
 
     -- Cancela Microfilmagem
@@ -2647,7 +2647,7 @@ PROCEDURE pc_crps517(pr_xmllog   IN VARCHAR2              --> XML com informaçõe
            pr_cdcritic := 0;
            pr_dscritic := 'Erro PC_CANCELA_MICROFILMAGEM: '||SQLERRM;
            -- Efetuar rollback
-           ROLLBACK;
+           -- ROLLBACK;
     END pc_cancela_microfilmagem;
 
     --************************--
@@ -2770,7 +2770,7 @@ PROCEDURE pc_crps517(pr_xmllog   IN VARCHAR2              --> XML com informaçõe
            --
         END LOOP;
         --
-        COMMIT;
+        --COMMIT;
         --
       END;
     EXCEPTION
@@ -2781,13 +2781,13 @@ PROCEDURE pc_crps517(pr_xmllog   IN VARCHAR2              --> XML com informaçõe
         pr_cdcritic := vr_cdcritic;
         pr_dscritic := 'Erro PC_CANCELA_LIMITE_CREDITO. Detalhes: '||vr_dscritic;
         -- Efetuar rollback
-        ROLLBACK;
+        -- ROLLBACK;
       WHEN OTHERS THEN
         -- Retornar o erro não tratado
         pr_cdcritic := 0;
         pr_dscritic := 'Erro não tratado na rotina PC_CANCELA_LIMITE_CREDITO. Detalhes: '||sqlerrm;
         -- Efetuar rollback
-        ROLLBACK;
+        -- ROLLBACK;
     END;
   END PC_CANCELA_LIMITE_CREDITO;
 
