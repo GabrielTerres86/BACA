@@ -959,9 +959,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.esms0001 AS
 
                 vr_cdcritic := 1035;
                 pr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||' tbgen_sms_controle. '||
-                               'cdretorno:'||to_number(vr_tab_string(5))||
+                               'cdretorno:'||vr_tab_string(5)||
                                ' com idlote_sms:'||rw_lote.idlote_sms||
-                               ', idsms:'||to_number(vr_tab_string(3))||'. '||SQLERRM;
+                               ', idsms:'||vr_tab_string(3)||'. '||SQLERRM;
 
                 --Grava tabela de log mas não pára execução do programa - Ch 788828
                 pc_gera_log(pr_cdcooper      => 3,
