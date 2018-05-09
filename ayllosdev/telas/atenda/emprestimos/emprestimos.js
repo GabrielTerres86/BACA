@@ -119,6 +119,7 @@
  * 095: [27/11/2017] Desbloquear opcao de Simulacao de emprestimo (function validaSimulacao) conforme solicitado no tramite acima. (Chamado 800969) - (Fabricio)
  * 096: [01/12/2017] Não permitir acesso a opção de incluir quando conta demitida (Jonata - RKAM P364).
  * 097: [14/12/2017] Incluão de novas regras de alteração, registro de gravamos e análise, Prj. 402 (Jean Michel).
+ * 099: [15/12/2017] Alterações para inserção da nova tela GAROPC. Inserção do campo idcobope. PRJ404 (Lombardi)
  * 098: [21/12/2017] Alterado para nao permitir alterar nome do local de trabalho do conjuge. PRJ339 CRM (Odirlei-AMcom)  
  * 099: [24/10/2017] Ajustes ao carregar dados do avalista e controle de alteração. PRJ339 CRM (Odirlei-AMcom)                                            
  * 100: [29/11/2017] Retirar caracteres especiais do campo Nome da tela Portabilidade - SD 779305 - Marcelo Telles Coelho - Mouts
@@ -1500,7 +1501,7 @@ function manterRotina(operacao) {
 			var dsctrliq = (typeof arrayProposta['dsctrliq'] == 'undefined') ? '' : arrayProposta['dsctrliq'];
 			var dtlibera = (typeof arrayProposta['dtlibera'] == 'undefined') ? '' : arrayProposta['dtlibera'];
 			var dsobserv = (typeof arrayProposta['dsobserv'] == 'undefined') ? '' : arrayProposta['dsobserv'];
-    var idcobope = (typeof arrayProposta['idcobope'] == 'undefined') ? '' : arrayProposta['idcobope'];
+            var idcobope = (typeof arrayProposta['idcobope'] == 'undefined') ? '' : arrayProposta['idcobope'];
 			var idfiniof = (typeof arrayProposta['idfiniof'] == 'undefined') ? '' : arrayProposta['idfiniof'];
 			var vliofepr = (typeof arrayProposta['vliofepr'] == 'undefined') ? '' : arrayProposta['vliofepr'];
 			var vlrtarif = (typeof arrayProposta['vlrtarif'] == 'undefined') ? '' : arrayProposta['vlrtarif'];
