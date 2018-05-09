@@ -295,7 +295,7 @@
                24/10/2017 - Alterado rotina consulta-avalista para chamar rotina pc_ret_dados_pessoa_prog
                             para buscar os dados quando informado CPF/CNPJ, para busca no Cadastro unificado.
                             PRJ339-CRM (Odirlei-AMcom)             
-                
+                            
 			   28/03/2018 - Alterado a procedure lista_avalistas para ler a tabela de proposta de limite de desconto 
                       de titulos CRAWLIM para pegar os avalista caso ainda não exista o contrato CRAPLIM (Paulo Penteado GFT)
            

@@ -574,10 +574,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_1(pr_cdcooper    IN crapcop.cdcoop
              vr_dtmvtolt:= rw_crapdat.dtmvtolt;
            END IF;
 
-           -- Liberando a memória alocada pro CLOB
-           dbms_lob.close(vr_clobcri);
-           dbms_lob.freetemporary(vr_clobcri);
-
            -- Verifica se ocorreram erros na geracao do TXT
            IF vr_des_erro2 IS NOT NULL THEN
              -- Incluido controle de Log - Chamado 714566 - 11/08/2017 
@@ -924,6 +920,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_1(pr_cdcooper    IN crapcop.cdcoop
                                             ,pr_dspathcop => vr_dircon
                                             ,pr_fldoscop  => 'S'
                                             ,pr_des_erro  => vr_des_erro2);            --> Saída com erro
+			-- Liberando a memória alocada pro CLOB
+           dbms_lob.close(vr_clobcri);
+           dbms_lob.freetemporary(vr_clobcri);
 
          END IF;
          

@@ -1,18 +1,22 @@
 <?php 
 
-	//************************************************************************//
-	//*** Fonte: poupanca_incluir_validar.php                              ***//
-	//*** Autor: David                                                     ***//
-	//*** Data : Março/2010                   Última Alteração: 07/05/2010 ***//
-	//***                                                                  ***//
-	//*** Objetivo  : Validar dados para incluir poupança programada       ***//	
-	//***                                                                  ***//	 
-	//*** Alterações: 07/05/2010 - Incluir o campo Tipo de impressao do    ***//
-	//***						   extrato (Gabriel)					   ***//
-	//***																   ***//
-	//*** 			  03/01/2012 - Alteração na função 'exibeErro' para    ***//
-	//***						   focar no campo (Lucas)   			   ***//
-	//************************************************************************//
+	/***************************************************************************
+	 Fonte: poupanca_incluir_validar.php                             
+	 Autor: David                                                     
+	 Data : Março/2010                   Última Alteração: 04/04/2018
+	                                                                  
+	 Objetivo  : Validar dados para incluir poupança programada     
+	                                                                  
+	 Alterações: 07/05/2010 - Incluir o campo Tipo de impressao do extrato (Gabriel)
+	 
+				 03/01/2012 - Alteração na função 'exibeErro' para focar no campo (Lucas)
+	 
+	             26/07/2016 - Tratei o retorno XML de erro. SD 479874 (Carlos R.)
+
+				 04/04/2018 - Chamada da rotina para verificar o range permitido para 
+				              contratação do produto. PRJ366 (Lombardi).
+				 
+	***************************************************************************/
 	
 	session_start();
 	
@@ -120,20 +124,57 @@
 	$xmlObjIncluir = getObjectXML($xmlResult);
 	
 	
-	$nmcampos = $xmlObjIncluir->roottag->tags[0]->attributes["NMCAMPOS"];
+	$nmcampos = ( isset($xmlObjIncluir->roottag->tags[0]->attributes["NMCAMPOS"]) ) ? $xmlObjIncluir->roottag->tags[0]->attributes["NMCAMPOS"] : '';
 		
 	
 	// Se ocorrer um erro, mostra crítica
-	if (strtoupper($xmlObjIncluir->roottag->tags[0]->name) == "ERRO") {
+	if (isset($xmlObjIncluir->roottag->tags[0]->name) && strtoupper($xmlObjIncluir->roottag->tags[0]->name) == "ERRO") {
 		exibeErro($xmlObjIncluir->roottag->tags[0]->tags[0]->tags[4]->cdata, $nmcampos);
-		
 	} 
-		
+	
+	$vlcontra = str_replace(',','.',str_replace('.','',$vlprerpp));
+	
+	// Montar o xml de Requisicao
+	$xml  = "";
+	$xml .= "<Root>";
+	$xml .= " <Dados>";	
+	$xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
+	$xml .= "   <cdprodut>".    16   ."</cdprodut>"; //Poupança Programada
+	$xml .= "   <vlcontra>".$vlcontra."</vlcontra>";
+	$xml .= "   <cddchave>".    0    ."</cddchave>";
+	$xml .= " </Dados>";
+	$xml .= "</Root>";
+
+	$xmlResult = mensageria($xml, "CADA0006", "VALIDA_VALOR_ADESAO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	$xmlObject = getObjectXML($xmlResult);
+
+	// Se ocorrer um erro, mostra crítica
+	if (strtoupper($xmlObject->roottag->tags[0]->name) == "ERRO") {
+		$msgErro = $xmlObject->roottag->tags[0]->tags[0]->tags[4]->cdata;
+		exibirErro('error',utf8_encode($msgErro),'Alerta - Ayllos','',false);
+	}
+	
+	$solcoord = $xmlObject->roottag->tags[0]->cdata;
+	$mensagem = $xmlObject->roottag->tags[1]->cdata;
+	
+	$executar = "";
+	
 	// Esconde mensagem de aguardo
-	echo 'hideMsgAguardo();';	
+	$executar .= "hideMsgAguardo();";	
 	
 	// Confirma operação
-	echo 'showConfirmacao("Deseja incluir a poupan&ccedil;a programada?","Confirma&ccedil;&atilde;o - Ayllos","incluirPoupanca(\''.$dtinirpp.'\',\''.$diadtvct.'\',\''.$mesdtvct.'\',\''.$anodtvct.'\',\''.$vlprerpp.'\' ,\''.$tpemiext.'\')","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))","sim.gif","nao.gif");';	
+	$executar .= "showConfirmacao(\"Deseja incluir a poupan&ccedil;a programada?\",\"Confirma&ccedil;&atilde;o - Ayllos\",\"incluirPoupanca(\\\"".$dtinirpp."\\\",\\\"".$diadtvct."\\\",\\\"".$mesdtvct."\\\",\\\"".$anodtvct."\\\",\\\"".$vlprerpp."\\\" ,\\\"".$tpemiext."\\\")\",\"blockBackground(parseInt($(\\\"#divRotina\\\").css(\\\"z-index\\\")))\",\"sim.gif\",\"nao.gif\");";
+	
+	// Se ocorrer um erro, mostra crítica
+	if ($mensagem != "") {
+		$executar = str_replace("\"","\\\"", str_replace("\\", "\\\\", $executar));
+		$executar = str_replace("\"","\\\"", str_replace("\\", "\\\\", $executar));
+		$executar = str_replace("\"","\\\"", str_replace("\\", "\\\\", $executar));
+		
+		exibirErro("error",$mensagem,"Alerta - Ayllos", ($solcoord == 1 ? "senhaCoordenador(\\\"".$executar."\\\");" : ""),false);
+	} else {
+		echo $executar;
+	}
 	
 	// Função para exibir erros na tela através de javascript
 	function exibeErro($msgErro, $campo) { 

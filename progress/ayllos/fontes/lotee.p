@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Edson
-   Data    : Outubro/91.                         Ultima atualizacao: 26/10/2017
+   Data    : Outubro/91.                         Ultima atualizacao: 17/04/2018
 
    Dados referentes ao programa:
 
@@ -188,7 +188,10 @@
 			   
 			   26/10/2017 - Remocao do IF que nao permitia passar o inliquid para 0 dos contratos
 							removidos de prejuizo através da tela LOTE, conforme solicitado no
-							chamado 745969. (Kelvin)
+							chamado 745969. (Kelvin) 
+
+             17/04/2018 - P410 - Melhorias/Ajustes IOF (Marcos-Envolti) 
+             
 ............................................................................. */
 
 DEF BUFFER crabseg FOR crapseg.
@@ -887,6 +890,62 @@ DO TRANSACTION ON ERROR UNDO TRANS_E, NEXT:
                         glb_cdcritic = 0.
                         LEAVE.
                     END.
+                    
+               { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} } 
+               /* Efetuar a chamada a rotina Oracle */
+               RUN STORED-PROCEDURE pc_exclui_iof
+               aux_handproc = PROC-HANDLE NO-ERROR (INPUT glb_cdcooper        /* Cooperativa              */ 
+                                                   ,INPUT crapepr.nrdconta    /* Numero da Conta Corrente */
+                                                   ,INPUT crapepr.nrctremp    /* Numero do Bordero        */
+                                                   ,OUTPUT 0                  /* Codigo da Critica        */
+                                                   ,OUTPUT "").               /* Descriçao da crítica     */
+                                                   
+               /* Fechar o procedimento para buscarmos o resultado */ 
+               CLOSE STORED-PROC pc_exclui_iof
+                 aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+               { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
+               ASSIGN glb_cdcritic = 0
+                      glb_dscritic = ""
+                      glb_cdcritic = pc_exclui_iof.pr_cdcritic
+                                     WHEN pc_exclui_iof.pr_cdcritic <> ?
+                      glb_dscritic = pc_exclui_iof.pr_dscritic
+                                     WHEN pc_exclui_iof.pr_dscritic <> ?.
+               /* Se retornou erro */
+               IF glb_cdcritic > 0 OR glb_dscritic <> "" THEN 
+                  DO:
+                      BELL.
+                      MESSAGE glb_cdcritic "-" glb_dscritic.
+                      glb_cdcritic = 0.
+                      LEAVE.
+                  END.
+                  
+               { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} } 
+               /* Efetuar a chamada a rotina Oracle */
+               RUN STORED-PROCEDURE pc_exclui_calculo_CET
+               aux_handproc = PROC-HANDLE NO-ERROR (INPUT glb_cdcooper        /* Cooperativa              */ 
+                                                   ,INPUT crapepr.nrdconta    /* Numero da Conta Corrente */
+                                                   ,INPUT crapepr.nrctremp    /* Numero do Bordero        */
+                                                   ,OUTPUT 0                  /* Codigo da Critica        */
+                                                   ,OUTPUT "").               /* Descriçao da crítica     */
+                                                   
+               /* Fechar o procedimento para buscarmos o resultado */ 
+               CLOSE STORED-PROC pc_exclui_calculo_CET
+                 aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+               { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
+               ASSIGN glb_cdcritic = 0
+                      glb_dscritic = ""
+                      glb_cdcritic = pc_exclui_calculo_CET.pr_cdcritic
+                                     WHEN pc_exclui_calculo_CET.pr_cdcritic <> ?
+                      glb_dscritic = pc_exclui_calculo_CET.pr_dscritic
+                                     WHEN pc_exclui_calculo_CET.pr_dscritic <> ?.
+               /* Se retornou erro */
+               IF glb_cdcritic > 0 OR glb_dscritic <> "" THEN 
+                  DO:
+                      BELL.
+                      MESSAGE glb_cdcritic "-" glb_dscritic.
+                      glb_cdcritic = 0.
+                      LEAVE.
+                  END.
 
                ASSIGN aux_contador = 0
                       par_qtexclln = par_qtexclln + 1

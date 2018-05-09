@@ -747,7 +747,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
   --  Sistema  : Procedimentos para o debito de agendamentos feitos na Internet
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Junho/2013.                   Ultima atualizacao: 25/10/2016
+  --  Data     : Junho/2013.                   Ultima atualizacao: 26/12/2017
   --
   -- Dados referentes ao programa:
   --
@@ -761,9 +761,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
   --                          (Jorge/David) Proj. 131 - Assinatura Multipla.
   --
   --             18/07/2016 - Incluido pr_tpoperac = 10 -> DARF, Prj. 338 (Jean Michel).
+  --
   --			 21/09/2016 - Ajuste na validacao do horario para envio de TED (Diego).	  
   --             
   --             25/10/2016 - Novo ajuste na validacao do horario, solicitado pelo financeiro (Diego).         
+  --
+  --             26/12/2017 - Incluido validacao de horario FGTS/DAE. PRJ406 - FGTS (Odirlei-AMcom)   
   ---------------------------------------------------------------------------------------------------------------
   BEGIN
     DECLARE
@@ -787,6 +790,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
       vr_exc_erro EXCEPTION;
       --Variaveis de Indice
       vr_index_limite INTEGER;
+      vr_index_limite_aux INTEGER;
       -- Tipo de pessoa para buscar o horario limite
       vr_inpessoa INTEGER;
       vr_inestcri INTEGER;
@@ -1355,6 +1359,90 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
 
         END IF;
       END IF;
+      
+      --Se o tipo de operacao for FGTS/DAE
+      IF pr_tpoperac IN (0,12,13)  THEN
+      
+        --Determinar tipo pessoa para busca limite
+        IF pr_inpessoa > 1 THEN
+          vr_inpessoa:= 2;
+        ELSE
+          vr_inpessoa:= pr_inpessoa;
+        END IF;   
+
+        --Selecionar Horarios Limites Internet
+        vr_dstextab:= TABE0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
+                                                ,pr_nmsistem => 'CRED'
+                                                ,pr_tptabela => 'GENERI'
+                                                ,pr_cdempres => 0
+                                                ,pr_cdacesso => 'HRPGBANCOOB'
+                                                ,pr_tpregist => pr_cdagenci);
+
+        --Se nao encontrou
+        IF vr_dstextab IS NULL THEN
+          vr_cdcritic:= 0;
+          vr_dscritic := 'Tabela (HRPGBANCOOB) nao cadastrada.';
+          --Levantar Excecao
+          RAISE vr_exc_erro;
+        ELSE
+          --Hora de inicio
+          vr_hrinipag:= GENE0002.fn_busca_entrada(1,vr_dstextab,' ');
+          --Hora Fim
+          vr_hrfimpag:= GENE0002.fn_busca_entrada(2,vr_dstextab,' ');
+        END IF;
+
+        --Determinar a hora atual
+        vr_hratual:= GENE0002.fn_busca_time;
+
+        --Verificar se estourou o limite
+        IF vr_hratual < vr_hrinipag OR vr_hratual > vr_hrfimpag THEN
+          --Estourou limite
+          vr_idesthor:= 1;
+        ELSE 
+          --Dentro do Horario limite
+          vr_idesthor:= 2;
+        END IF;
+
+        --Se for feriado ou final semana
+        IF Trunc(vr_datdodia) <> Trunc(SYSDATE) THEN
+          --Nao eh dia util
+          vr_iddiauti:= 2;
+        ELSE
+          vr_iddiauti:= 1;
+        END IF;
+
+        
+        --Criar registro para tabela limite horarios
+        vr_index_limite:= pr_tab_limite.Count+1;
+        pr_tab_limite(vr_index_limite).hrinipag:= GENE0002.fn_converte_time_data(vr_hrinipag);
+        pr_tab_limite(vr_index_limite).hrfimpag:= GENE0002.fn_converte_time_data(vr_hrfimpag);
+        pr_tab_limite(vr_index_limite).nrhorini:= vr_hrinipag;
+        pr_tab_limite(vr_index_limite).nrhorfim:= vr_hrfimpag;
+        pr_tab_limite(vr_index_limite).idesthor:= vr_idesthor;
+        pr_tab_limite(vr_index_limite).iddiauti:= vr_iddiauti;
+        pr_tab_limite(vr_index_limite).flsgproc:= vr_flsgproc;
+        pr_tab_limite(vr_index_limite).qtmesagd:= vr_qtmesagd;
+        
+        --> Caso for todos, replicar dados para ambos
+        IF pr_tpoperac = 0 THEN
+          pr_tab_limite(vr_index_limite).idtpdpag:= 20; --FGTS
+          
+          vr_index_limite_aux := pr_tab_limite.Count+1;
+          pr_tab_limite(vr_index_limite_aux) := pr_tab_limite(vr_index_limite);
+          pr_tab_limite(vr_index_limite_aux).idtpdpag:= 21; --DAE
+          
+        -- senao apenas atribuir identificador relativo ao tipo de ope
+        ELSE
+
+          pr_tab_limite(vr_index_limite).idtpdpag:= CASE pr_tpoperac 
+                                                         WHEN 12 THEN 20 -- FGTS
+                                                         WHEN 13 THEN 21 -- DAE
+                                                         ELSE NULL
+                                                       END;
+        
+        END IF;        
+      END IF; 
+      
       
     EXCEPTION
        WHEN vr_exc_erro THEN
@@ -3890,11 +3978,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
               03/01/2018 - Corrigido para verificar saldo da conta mesmo quando for o operador realizando
                            alguma transação (Tiago/Adriano).
               
+              05/01/2018 - Incluido validacoes FGTS/DAE. PRJ406 - FGTS (Odirlei-AMcom)                     
+             
               05/01/2018 - Corrigdo acentuação na frase de critica agendamento e pagamento (Tiago #818723)
               
               22/01/2018 - Ajuste para qdo a conta do preposto estiver sem saldo e for um operador fazendo uma 
                            transação alem da sua alçada enviar para aprovação do preposto (Tiago/Fabricio)
-                           
+
               04/04/2018 - Ajustar para aparecer a critica 'Não é possível agendar para a data de hoje. 
                            Utilize a opção "Nesta Data".' somente quando não for aprovação de transação
                            pendente (Lucas Ranghetti #INC0011082)
@@ -4069,6 +4159,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
         vr_tp_transa := 'VR Boletos ';
         pr_dstransa:= pr_dstransa || 'Pagamento de VR-Boletos ';
         vr_dsdmensa:= 'esse pagamento';
+      ELSIF pr_tpoperac IN (12,13) THEN  --> FGTS, DAE
+        vr_tp_transa := 'Pagamento ';
+        pr_dstransa:= pr_dstransa || 'Pagamento de tributos ';
+        vr_dsdmensa:= 'esse pagamento';  
       END IF;
 
       -- Verifica se a cooperativa esta cadastrada
@@ -4346,8 +4440,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
           --Limite da operacao na cooperativa
           vr_vllimcop:= pr_tab_internet(vr_idseqttl).vlwebcop;
         ELSIF rw_crapass.inpessoa > 1 THEN /* Pessoa Juridica */
-          --Pagamento / DARF/DAS
-          IF pr_tpoperac = 2 OR pr_tpoperac = 10 THEN
+          --Pagamento / DARF/DAS/FGTS/DAE
+          IF pr_tpoperac IN(2,10,12,13) THEN
             --Saldo primeiro titular
             vr_vldspptl:= pr_tab_internet(vr_idseqttl).vldsppgo;
             --Saldo todos titulares
@@ -4439,8 +4533,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
           --Saldo primeiro titular
           vr_vldspptl_conta:= tab_limite_conta(vr_idseqttl).vldspweb;
         ELSIF rw_crapass.inpessoa > 1 THEN /* Pessoa Juridica */
-          --Pagamento / DARF/DAS
-          IF pr_tpoperac = 2 OR pr_tpoperac = 10 THEN
+          --Pagamento, DARF/DAS, FGTS, DAE
+          IF pr_tpoperac IN (2,10,12,13) THEN
             --Saldo primeiro titular
             vr_vldspptl_conta:= tab_limite_conta(vr_idseqttl).vldsppgo;
           ELSE  /* Transferencia */
@@ -4473,8 +4567,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
             --Limite diario
             vr_vllimptl:= pr_tab_internet(vr_idseqttl).vllimweb;
           ELSIF rw_crapass.inpessoa > 1 THEN /* Pessoa Juridica */
-            --Pagamento / DARF/DAS
-            IF pr_tpoperac = 2 OR pr_tpoperac = 10 THEN
+            --Pagamento, DARF/DAS, FGTS, DAE
+            IF pr_tpoperac IN (2,10,12,13) THEN
               --Saldo primeiro titular
               vr_vldspptl:= pr_tab_internet(vr_idseqttl).vldsppgo;
               --Limite diario
@@ -4497,7 +4591,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
         RAISE vr_exc_erro;
       END IF;
 
-			IF pr_tpoperac = 10 AND -- DARF/DAS 
+			IF pr_tpoperac IN (10,12,13) AND -- DARF/DAS,FGTS,DAE 
 				 pr_tab_limite(pr_tab_limite.FIRST).iddiauti = 2 THEN
 				 	pr_tab_limite(pr_tab_limite.FIRST).idesthor := 1;
 			END IF;
@@ -4757,9 +4851,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
 
         END IF;
       ELSE
-        IF pr_tpoperac = 2 OR pr_tpoperac = 10 THEN  /** Pagamento - DARF/DAS **/
+        IF pr_tpoperac IN (2,10,12,13) THEN  /** Pagamento, DARF/DAS, FGTS, DAE **/
 
-          IF pr_tpoperac = 10 AND pr_idagenda = 1 AND 
+          IF pr_tpoperac IN (10,12,13) AND pr_idagenda = 1 AND 
              pr_tab_limite(pr_tab_limite.FIRST).iddiauti = 2 THEN
            
             vr_cdcritic := 0;
@@ -5023,9 +5117,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.inet0001 AS
         vr_cdcritic := NULL;
         vr_dscritic := NULL;
         -- Verifica se data de agendamento e uma data futura
-        IF pr_tpoperac = 10 THEN --DARF/DAS    
+        IF pr_tpoperac IN (10,12,13) THEN --DARF/DAS, FGTS, DAE   
           
-          IF  pr_dtmvtopg <= Trunc(vr_datdodia) THEN 
+        IF  pr_dtmvtopg <= Trunc(vr_datdodia) THEN 
             --Montar mensagem erro
             vr_cdcritic:= 0;            
             --Data mínima obtida de dtmvtocd se não for dia útil

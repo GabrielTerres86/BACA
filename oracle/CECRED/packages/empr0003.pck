@@ -1011,14 +1011,15 @@ BEGIN
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Jaison Fernando
-       Data    : Junho/2017                         Ultima atualizacao: 
+       Data    : Junho/2017                         Ultima atualizacao: 12/04/2018
 
        Dados referentes ao programa:
 
        Frequencia: Sempre que for chamado.
        Objetivo  : Gerar XML do contrato de emprestimo PP e TR
 
-       Alteracoes: 
+       Alteracoes: 12/04/2018 - P410 - Melhorias/Ajustes IOF (Marcos-Envolti)
+
     ............................................................................. */
 
       -- Cursor sobre as informacoes de emprestimo
@@ -1250,6 +1251,7 @@ BEGIN
       vr_vlrtarif       number;
       vr_vlrtares       number;
       vr_vltarbem       number;
+      vr_vlpreclc       NUMBER := 0;                -- Parcela calcula
       vr_vliofpri       number;
       vr_vliofadi       number;
       vr_flgimune PLS_INTEGER;
@@ -1903,6 +1905,7 @@ BEGIN
                                          ,pr_nrctremp => pr_nrctremp
                                          ,pr_dtmvtolt => rw_crawepr.dtmvtolt
                                          ,pr_inpessoa => rw_crawepr.inpessoa
+                                         ,pr_cdfinemp => rw_crawepr.cdfinemp
                                          ,pr_cdlcremp => rw_crawepr.cdlcremp
                                          ,pr_qtpreemp => rw_crawepr.qtpreemp
                                          ,pr_vlpreemp => rw_crawepr.vlpreemp
@@ -1916,6 +1919,7 @@ BEGIN
                                          ,pr_dscatbem => vr_dscatbem
                                          ,pr_idfiniof => rw_crawepr.idfiniof
                                          ,pr_dsctrliq => rw_crawepr.dsctrliq
+                                         ,pr_vlpreclc => vr_vlpreclc
                                          ,pr_vliofpri => vr_vliofpri
                                          ,pr_vliofadi => vr_vliofadi
                                          ,pr_flgimune => vr_flgimune
@@ -2074,7 +2078,7 @@ BEGIN
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Jaison Fernando
-       Data    : Junho/2017                         Ultima atualizacao: 01/02/2018
+       Data    : Junho/2017                         Ultima atualizacao: 12/04/2018
 
        Dados referentes ao programa:
 
@@ -2082,7 +2086,9 @@ BEGIN
        Objetivo  : Gerar XML do contrato de emprestimo POS-FIXADO
 
        Alteracoes: 01/02/2018 - Ajustes na geração do XML de contratos. (Jaison/James - PRJ298)
-
+                  
+                  12/04/2018 - P410 - Melhorias/Ajustes IOF (Marcos-Envolti)
+                  
     ............................................................................. */
 
       -- Cursor sobre as informacoes de emprestimo
@@ -2097,7 +2103,8 @@ BEGIN
       rw_crapepr cr_crapepr%ROWTYPE;
 
       CURSOR cr_crawepr IS
-        SELECT crawepr.cdlcremp,
+        SELECT crawepr.cdfinemp,
+               crawepr.cdlcremp,
                crawepr.dtmvtolt,
                crawepr.dtdpagto,
                crawepr.vlemprst,
@@ -2323,6 +2330,7 @@ BEGIN
 	  vr_nrcpfcjg       VARCHAR2(50);                 --> CPF do conjuge
 
       -- Projeto 410 - 14/03/2018 - SM - Verificar informaçoes de IOF e tarifa
+      vr_vlpreclc       NUMBER := 0;                -- Parcela calcula
       vr_dscatbem       varchar2(1000);
       vr_vlemprst       number;
       vr_vlrdoiof       number;
@@ -2669,6 +2677,7 @@ BEGIN
                                          ,pr_nrctremp => pr_nrctremp
                                          ,pr_dtmvtolt => rw_crawepr.dtmvtolt
                                          ,pr_inpessoa => rw_crawepr.inpessoa
+                                         ,pr_cdfinemp => rw_crawepr.cdfinemp
                                          ,pr_cdlcremp => rw_crawepr.cdlcremp
                                          ,pr_qtpreemp => rw_crawepr.qtpreemp
                                          ,pr_vlpreemp => rw_crawepr.vlpreemp
@@ -2682,6 +2691,7 @@ BEGIN
                                          ,pr_dscatbem => vr_dscatbem
                                          ,pr_idfiniof => rw_crawepr.idfiniof
                                          ,pr_dsctrliq => rw_crawepr.dsctrliq
+                                         ,pr_vlpreclc => vr_vlpreclc
                                          ,pr_vliofpri => vr_vliofpri
                                          ,pr_vliofadi => vr_vliofadi
                                          ,pr_flgimune => vr_flgimune
@@ -3194,30 +3204,30 @@ BEGIN
       vr_vlemprst := rw_crawepr.vlemprst;
 
       -- Chama rotina de CET
-          ccet0001.pc_imprime_emprestimos_cet(pr_cdcooper => pr_cdcooper
-                                            , pr_dtmvtolt => rw_crapdat.dtmvtolt
-                                            , pr_cdprogra => vr_cdprogra
-                                            , pr_nrdconta => pr_nrdconta
-                                            , pr_inpessoa => rw_crawepr.inpessoa
-                                            , pr_cdusolcr => 0 -- Segundo o Lucas, deve ser passado zero
-                                            , pr_cdlcremp => rw_crawepr.cdlcremp
-                                            , pr_tpemprst => rw_crawepr.tpemprst
-                                            , pr_nrctremp => pr_nrctremp
-                                            , pr_dtlibera => vr_dtlibera
-                                            , pr_dtultpag => trunc(SYSDATE)
+      ccet0001.pc_imprime_emprestimos_cet(pr_cdcooper => pr_cdcooper
+                                        , pr_dtmvtolt => nvl(rw_crapepr.dtmvtolt,rw_crapdat.dtmvtolt)
+                                        , pr_cdprogra => vr_cdprogra
+                                        , pr_nrdconta => pr_nrdconta
+                                        , pr_inpessoa => rw_crawepr.inpessoa
+                                        , pr_cdusolcr => 0 -- Segundo o Lucas, deve ser passado zero
+                                        , pr_cdlcremp => rw_crawepr.cdlcremp
+                                        , pr_tpemprst => rw_crawepr.tpemprst
+                                        , pr_nrctremp => pr_nrctremp
+                                        , pr_dtlibera => vr_dtlibera
+                                        , pr_dtultpag => trunc(SYSDATE)
                                             , pr_vlemprst => vr_vlemprst
-                                            , pr_txmensal => rw_crawepr.txmensal
-                                            , pr_vlpreemp => rw_crawepr.vlpreemp
-                                            , pr_qtpreemp => rw_crawepr.qtpreemp
-                                            , pr_dtdpagto => rw_crawepr.dtdpagto
+                                        , pr_txmensal => rw_crawepr.txmensal
+                                        , pr_vlpreemp => rw_crawepr.vlpreemp
+                                        , pr_qtpreemp => rw_crawepr.qtpreemp
+                                        , pr_dtdpagto => rw_crawepr.dtdpagto
                                         , pr_nmarqimp => vr_nmarqcet
-                                            , pr_des_xml  => vr_des_xml2
-                                            , pr_cdcritic => vr_cdcritic
-                                            , pr_dscritic => vr_dscritic
-                                            );
-          IF nvl(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
-            RAISE vr_exc_saida;
-          END IF;
+                                        , pr_des_xml  => vr_des_xml2
+                                        , pr_cdcritic => vr_cdcritic
+                                        , pr_dscritic => vr_dscritic
+                                        );
+      IF nvl(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_saida;
+      END IF;
 
       gene0002.pc_escreve_xml(vr_des_xml, vr_texto_completo, ' ', TRUE);
 

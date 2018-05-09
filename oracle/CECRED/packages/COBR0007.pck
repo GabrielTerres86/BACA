@@ -12,7 +12,7 @@ CREATE OR REPLACE PACKAGE CECRED.COBR0007 IS
   -- Frequencia: -----
   -- Objetivo  : Rotinas para instruçoes bancárias - Cob. Registrada 
   --
-  --  Alteracoes: 
+  --  Alteracoes:
   --
   --    16/02/2018 - Ref. História KE00726701-36 - Inclusão de Filtro e Parâmetro por Tipo de Pessoa na TAB052
   --                (Gustavo Sene - GFT)    
@@ -280,7 +280,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
   --              23/06/2017 - Na rotina pc_inst_alt_dados_arq_rem_085 foi alterado para fechar o cursor correto
   --                           pois estava ocasionando erro (Tiago/Rodrigo #698180)
   ---------------------------------------------------------------------------------------------------------------
-
+  
   04/10/2017 - #751605 Alteradas as rotinas "pc_inst_canc_sms" e "pc_inst_envio_sms". Na de cancelamento, 
                removida a chamada da rotina de validação "pc_efetua_val_recusa_padrao" pois não faz sentido 
                validar a situação do boleto para este caso. Na rotina que habilita o envio, removida a rotina de 
@@ -773,7 +773,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
       rw_crapcob COBR0007.cr_crapcob%ROWTYPE;
       --Dados do Associado
       rw_crapass COBR0007.cr_crapass%ROWTYPE;      
-
+      
       --Selecionar informacoes dos titulos do bordero
       CURSOR cr_craptdb (pr_cdcooper IN craptdb.cdcooper%type
                         ,pr_nrdconta IN craptdb.nrdconta%type
@@ -2465,7 +2465,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
         RAISE vr_exc_erro;
       END IF;
       ------ VALIDACOES PARA RECUSAR ------
-      
+
       --- Verificar se possui SERASA --- 
       IF rw_crapcob_ret.flserasa = 1    AND
          (rw_crapcob_ret.qtdianeg <> 0  OR
@@ -3619,7 +3619,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
             END IF;
             -- Inclui nome do modulo logado - 21/02/2018 - Ch 839539
             GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'COBR0007.pc_inst_pedido_baixa');
-
+      		
           ELSE
             -- Preparar Lote de Retorno Cooperado
             COBR0006.pc_prep_retorno_cooper_90 (pr_idregcob => rw_crapcob_ret.rowid --ROWID da cobranca
@@ -9040,7 +9040,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
       END IF;
     END IF;
     END IF;
-    
+
     --Se tem remesssa dda na tabela
     IF vr_tab_remessa_dda.COUNT > 0 THEN
       rw_crapcob.idopeleg:= vr_tab_remessa_dda(vr_tab_remessa_dda.LAST).idopeleg;
@@ -9249,7 +9249,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
       END IF;
     END IF;
     END IF;
-    
+
   EXCEPTION
     WHEN vr_exc_erro THEN
       pr_cdcritic := vr_cdcritic;

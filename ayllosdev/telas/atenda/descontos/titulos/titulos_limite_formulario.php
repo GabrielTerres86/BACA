@@ -5,7 +5,7 @@
  * DATA CRIAÇÃO : Junho/2007
  * OBJETIVO     : Carregar formulário de dados para gerenciar limite
  * --------------
- * ALTERAÇÕES   : 10/10/2016
+ * ALTERAÇÕES   : 11/12/2017
  * --------------
  * 001: [04/05/2011] Rodolpho Telmo  (DB1) : Adaptação no formulário de avalista genérico
  * 002: [11/07/2011] Gabriel Capoia  (DB1) : Alterado para layout padrão
@@ -27,7 +27,7 @@
  * 012: [11/12/2017] P404 - Inclusão de Garantia de Cobertura das Operações de Crédito (Augusto / Marcos (Supero)) 
  * 013: [22/03/2013] Daniel (Cecred) : Ajustes referente a geracao automatica do numero do contrato. 
  * 014: [13/04/2018] Leonardo Oliveira (GFT): Campo 'nrctrlim' escondido quando for uma inclusão, cddopcao = 'I'.
-  */
+ */
 ?>
 <form action="" name="frmDadosLimiteDscTit" id="frmDadosLimiteDscTit" onSubmit="return false;">
 
@@ -45,13 +45,13 @@
 			
 			<? }else { ?> 
 				
-				<label for="nrctrlim"><? echo utf8ToHtml('Contrato:') ?></label>
-				<input type="text" name="nrctrlim" id="nrctrlim" value="0" class="campo" disabled>
-				<br />
+			<label for="nrctrlim"><? echo utf8ToHtml('Contrato:') ?></label>
+			<input type="text" name="nrctrlim" id="nrctrlim" value="0" class="campo" disabled>
+			<br />
 			
-				<label></label>
-				<br />
-
+			<label></label>
+			<br />
+			
 			<? } ?>
 			
 			<label for="vllimite"><? echo utf8ToHtml('Valor do Limite:') ?></label>
@@ -141,20 +141,7 @@
 		<? 	// ALTERAÇÃO 001: Substituido formulário antigo pelo include				
 			include('../../../../includes/avalistas/form_avalista.php'); 
 		?>	
-		
-		<div id="divDscChq_Confirma">					
-		
-			<fieldset>
-			
-				<legend>Contrato</legend>
-				<label for="antnrctr" class="rotulo" style="width:250px;">Confirme o n&uacute;mero do contrato:</label>
-				<input type="text" name="antnrctr" id="antnrctr" value="" style="width: 80px; text-align: right;" class="campo">
-		
-			</fieldset>
-			
-	</div>
-		
-	</div>
+		</div>									
 		
 </form>
 
@@ -226,7 +213,7 @@
 
 	operacao = '<? echo $cddopcao; ?>';
 	
-	dscShowHideDiv("divOpcoesDaOpcao3;divDscTit_Limite;divBotoesLimite","divBotoesRenda;divBotoesObs;divBotoesAval;divOpcoesDaOpcao2;divDscTit_Renda;divDscTit_Observacao;divDscTit_Avalistas;divDscTit_Confirma");
+	dscShowHideDiv("divOpcoesDaOpcao3;divDscTit_Limite;divBotoesLimite","divBotoesGAROPC;divBotoesRenda;divBotoesObs;divBotoesAval;divOpcoesDaOpcao2;divDscTit_Renda;divDscTit_Observacao;divDscTit_Avalistas;divDscTit_Confirma");
 
 	$("#divDscTit_Confirma").css("display","<? if ($cddopcao == "I") { echo "block"; } else { echo "none"; } ?>");
 		
@@ -324,6 +311,14 @@
 		}
 		return false;
 	});
+  $("#btnVoltarGAROPC","#divBotoesGAROPC").unbind("click").bind("click",function() {
+    $("#divUsoGAROPC").empty();
+    $("#divFormGAROPC").empty();
+    $("#frmDadosLimiteDscTit").css("width", 515);
+    dscShowHideDiv("divDscTit_Limite;divBotoesLimite", "divFormGAROPC;divBotoesGAROPC");
+		return false;
+	});
+	
   $("#btnVoltarGAROPC","#divBotoesGAROPC").unbind("click").bind("click",function() {
     $("#divUsoGAROPC").empty();
     $("#divFormGAROPC").empty();

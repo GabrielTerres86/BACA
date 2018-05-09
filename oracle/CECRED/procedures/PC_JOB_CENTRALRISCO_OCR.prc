@@ -100,7 +100,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_CENTRALRISCO_OCR(pr_cdcooper in crapco
         INTO rw_tbrisco_centralocr;
        CLOSE cr_tbrisco_centralocr;        
         
-        IF rw_crapdat.inproces = 1 and rw_crapdat.dtmvtoan > nvl(rw_tbrisco_centralocr.dtrefere,'01/01/1900') then
+       IF  rw_crapdat.inproces = 1
+       AND rw_crapdat.dtmvtoan > nvl(rw_tbrisco_centralocr.dtrefere,to_date('01/01/1900','DD/MM/YYYY')) then
           -- Criar o nome para o job
           vr_jobname := 'JOB_CENTRALRISCO_OCR'||LPAD(rw_crapcop.cdcooper,2,'0')||'_$';
   

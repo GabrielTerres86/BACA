@@ -5645,7 +5645,7 @@ PROCEDURE efetua-validacao-recusa-padrao:
       			DO:
       			  IF (bcrapcob.flgregis) THEN /* Cobrança com Regisro */
       				aux_cdacesso = "LIMDESCTITCRPF".
-      			  ELSE 
+            ELSE
       				aux_cdacesso = "LIMDESCTITPF".		  	
       			END.
             ELSE
@@ -5654,7 +5654,7 @@ PROCEDURE efetua-validacao-recusa-padrao:
       			  DO: 	
       				IF (bcrapcob.flgregis) THEN /* Cobrança com Regisro */
       				  aux_cdacesso = "LIMDESCTITCRPJ".
-      				ELSE 
+            ELSE
       				  aux_cdacesso = "LIMDESCTITPJ".
       			  END.		
       			END.

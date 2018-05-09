@@ -2,7 +2,7 @@
 
    Programa: b1wgen0196.p
    Autora  : Odirlei Busana - AMcom.
-   Data    : 21/03/2017                        Ultima atualizacao: 24/01/2018
+   Data    : 21/03/2017                        Ultima atualizacao: 12/04/2018
 
    Dados referentes ao programa:
 
@@ -23,6 +23,8 @@
                             (Reinert)						                  
 							  
                24/01/2018 - Passagem de parametros nulos. (Jaison/James - PRJ298)
+               
+               12/04/2018 - P410 - Melhorias/Ajustes IOF (Marcos-Envolti)
 
  ..............................................................................*/
 
@@ -486,6 +488,7 @@ PROCEDURE grava_dados:
                                            INPUT "", /* dscatbem */
                                            INPUT 0,  /* idfiniof */
                                            INPUT "", /* dsctrliq */
+                                           INPUT "N",
                                            OUTPUT aux_percetop,
                                            OUTPUT aux_txcetmes,
                                            OUTPUT TABLE tt-erro).
@@ -759,6 +762,7 @@ END PROCEDURE. /* END grava_dados */
     DEF VAR aux_datatual AS DATE                                    NO-UNDO.
     DEF VAR aux_dscritic AS CHAR                                    NO-UNDO.
     DEF VAR aux_vltrfgar AS DECI                                    NO-UNDO.
+    DEF VAR aux_vlpreclc AS DECI                                    NO-UNDO.
     DEF VAR aux_vliofpri AS DECI                                    NO-UNDO.
     DEF VAR aux_vliofadi AS DECI                                    NO-UNDO.
     DEF VAR aux_flgimune AS INTE                                    NO-UNDO.
@@ -946,6 +950,7 @@ END PROCEDURE. /* END grava_dados */
                                                 ,INPUT par_dtmvtolt
                                                 ,INPUT crapass.inpessoa
                                                 ,INPUT par_cdlcremp
+                                                ,INPUT crawepr.cdfinemp
                                                 ,INPUT crawepr.qtpreemp
                                                 ,INPUT crawepr.vlpreemp
                                                 ,INPUT par_vlemprst
@@ -961,6 +966,7 @@ END PROCEDURE. /* END grava_dados */
                                                 ,OUTPUT 0
                                                 ,OUTPUT 0
                                                 ,OUTPUT 0
+                                                ,OUTPUT 0
                                                 ,OUTPUT "").
        
            
@@ -970,12 +976,14 @@ END PROCEDURE. /* END grava_dados */
 
          { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
 
-         ASSIGN aux_vliofpri = 0
+         ASSIGN aux_vlpreclc = 0
+                aux_vliofpri = 0
                 aux_vliofadi = 0
                 aux_flgimune = 0
                 par_vltottar = 0
                 par_vltariof = 0
                 par_vltariof = DECI(pc_calcula_iof_epr.pr_valoriof) WHEN pc_calcula_iof_epr.pr_valoriof <> ?
+                aux_vlpreclc = DECI(pc_calcula_iof_epr.pr_vlpreclc) WHEN pc_calcula_iof_epr.pr_vlpreclc <> ?
                 aux_vliofpri = DECI(pc_calcula_iof_epr.pr_vliofpri) WHEN pc_calcula_iof_epr.pr_vliofpri <> ?
                 aux_vliofadi = DECI(pc_calcula_iof_epr.pr_vliofadi) WHEN pc_calcula_iof_epr.pr_vliofadi <> ?
                 aux_dscritic = pc_calcula_iof_epr.pr_dscritic WHEN pc_calcula_iof_epr.pr_dscritic <> ?

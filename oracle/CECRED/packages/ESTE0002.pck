@@ -61,7 +61,8 @@ CREATE OR REPLACE PACKAGE CECRED.ESTE0002 IS
                             RETURN VARCHAR2;
   
   --> Rotina para retornar descrição do tipo de conta
-  FUNCTION fn_des_cdtipcta (pr_cdtipcta  IN NUMBER) --> Codigo do tipo de conta
+  FUNCTION fn_des_cdtipcta (pr_inpessoa IN tbcc_tipo_conta.inpessoa%TYPE,  --> Tipo de pessoa
+                            pr_cdtipcta IN tbcc_tipo_conta.cdtipo_conta%TYPE)  --> Tipo de conta
                             RETURN VARCHAR2;
   
   --> Rotina para retornar descrição de situacao da conta
@@ -3958,7 +3959,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
       Sistema  : Conta-Corrente - Cooperativa de Credito
       Sigla    : CRED
       Autor    : Odirlei Busana(AMcom)
-      Data     : Maio/2017.                   Ultima atualizacao: 23/11/2017
+      Data     : Maio/2017.                   Ultima atualizacao: 12/04/2018
     
       Dados referentes ao programa:
     
@@ -3966,6 +3967,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
       Objetivo  : Rotina responsavel por montar o objeto json para analise.
     
       Alteração : 19/10/2017 - Enviar um novo campo "valorPrestLiquidacao". (Lombardi)
+        
+                  23/11/2017 - Alterações para o projeto 404. (Lombardi)
         
                   23/11/2017 - Alterações para o projeto 404. (Lombardi)
         
@@ -4039,6 +4042,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
              ,wpr.dtlibera
              ,wpr.dtcarenc
              ,wpr.percetop
+             ,wpr.idcarenc
         FROM crawepr wpr
             ,craplcr lcr
             ,crapfin fin      
@@ -4304,6 +4308,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
     vr_flgcolab      BOOLEAN;
     vr_cddcargo      tbcadast_colaborador.cdcooper%TYPE;
 		vr_qtdiarpv      INTEGER;
+    vr_vlpreclc      NUMBER := 0;                -- Parcela calcula
     vr_valoriof      NUMBER;
     vr_vliofpri      NUMBER;
     vr_vliofadi      NUMBER;
@@ -4314,6 +4319,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
     vr_sum_vlpreemp  crapepr.vlpreemp%TYPE := 0;
     vr_vlpreemp      crapepr.vlpreemp%TYPE;
     vr_percenminimo  tbgar_cobertura_operacao.perminimo%TYPE;
+    vr_qtdias_carencia tbepr_posfix_param_carencia.qtddias%TYPE := 0;
       
   BEGIN
   
@@ -4551,11 +4557,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
       END IF;
     END IF;  
 
+    -- Busca quantidade de dias da carencia
+    IF rw_crawepr.tpemprst = 2 AND nvl(rw_crawepr.idcarenc,0) > 0 THEN
+      EMPR0011.pc_busca_qtd_dias_carencia(pr_idcarencia => rw_crawepr.idcarenc
+                                         ,pr_qtddias    => vr_qtdias_carencia
+                                         ,pr_cdcritic   => vr_cdcritic
+                                         ,pr_dscritic   => vr_dscritic); 
+      -- Testar possíveis erros na rotina:
+      IF vr_cdcritic > 0 OR trim(vr_dscritic) IS NOT NULL THEN 
+        RAISE vr_exc_erro;
+      END IF;                                          
+    END IF;
+    
     -- Buscar IOF
     EMPR0001.pc_calcula_iof_epr(pr_cdcooper => pr_cdcooper
                                ,pr_nrdconta => pr_nrdconta
                                ,pr_dtmvtolt => rw_crapdat.dtmvtolt
                                ,pr_inpessoa => rw_crawepr.inpessoa
+                               ,pr_cdfinemp => rw_crawepr.cdfinemp
                                ,pr_cdlcremp => rw_crawepr.cdlcremp
                                ,pr_qtpreemp => rw_crawepr.qtpreemp
                                ,pr_vlpreemp => rw_crawepr.vlpreemp
@@ -4564,12 +4583,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
                                ,pr_dtlibera => rw_crawepr.dtlibera
                                ,pr_tpemprst => rw_crawepr.tpemprst
                                ,pr_dtcarenc => rw_crawepr.dtcarenc
-                               ,pr_qtdias_carencia => 0
+                               ,pr_qtdias_carencia => vr_qtdias_carencia
+                               ,pr_vlpreclc => vr_vlpreclc
                                ,pr_valoriof => vr_valoriof
                                ,pr_vliofpri => vr_vliofpri
                                ,pr_vliofadi => vr_vliofadi
                                ,pr_flgimune => vr_flgimune
                                ,pr_dscritic => vr_dscritic);
+    -- Testar possíveis erros na rotina:
+    IF trim(vr_dscritic) IS NOT NULL THEN 
+      RAISE vr_exc_erro;
+    END IF;    
+       
 
     vr_obj_generico.put('operacao', rw_crawepr.dsoperac); 
     vr_obj_generico.put('CETValor', este0001.fn_decimal_ibra(nvl(rw_crawepr.percetop,0)));

@@ -8895,13 +8895,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0006 AS
         
       -- Consulta credenciadoras
       CURSOR cr_busca_credenciadoras IS
-          SELECT upper(slc.nmcliente_debitado) AS credenciadora
-               , SUBSTR(LPAD(slc.nrcnpj_nliquidante_debitado, 14, '0'), 1, 8) AS ispb
-            FROM CECRED.TBDOMIC_LIQTRANS_MENSAGEM_SLC slc
-           WHERE slc.cdispb_if_debitada IS NOT NULL
-        GROUP BY slc.nmcliente_debitado
-               , slc.nrcnpj_nliquidante_debitado
-        ORDER BY slc.nmcliente_debitado;
+             SELECT DISTINCT upper(lct.nmcredenciador) AS credenciadora
+                  , SUBSTR(LPAD(lct.nrcnpj_credenciador, 14, '0'), 1, 8) AS ispb
+               FROM CECRED.TBDOMIC_LIQTRANS_LANCTO lct;
+         
              
       -- Consulta bancos liquidantes    
       CURSOR cr_busca_liquidante IS
@@ -9182,7 +9179,7 @@ from  (
         END IF;
 
         -- Deve-se sair se o total de registros superar o total solicitado
-        EXIT WHEN vr_contador >= nvl(pr_nrregist,99999);
+        --EXIT WHEN vr_contador >= nvl(pr_nrregist,99999);
 
         -- Incremente os totalizadores
         vr_qt_tot_processados := vr_qt_tot_processados + rw_tabela.qtprocessados;
@@ -9201,7 +9198,6 @@ from  (
       GENE0002.pc_escreve_xml(pr_xml            => vr_clob
                              ,pr_texto_completo => vr_xml_temp
                              ,pr_texto_novo     => '</servico>'||
-                                                   --'<qtregist>'       ||vr_contador ||'</qtregist>'||
                                                    '<qtregist>'         || vt_qt_tot_reg         ||'</qtregist>'||
                                                    '<tot_processados>'  || vr_qt_tot_processados ||'</tot_processados>'||
                                                    '<tot_integrados>'   || vr_qt_tot_integrados  ||'</tot_integrados>'||
@@ -9428,8 +9424,8 @@ from  (
                  vr_linha_csv := vr_linha_csv || rw_conta.nmpdv || ';';
                  vr_linha_csv := vr_linha_csv || GENE0002.fn_mask_cpf_cnpj(rw_conta.nrcnpjcpf, rw_conta.tppessoa) || ';';
                  vr_linha_csv := vr_linha_csv || rw_conta.tplancamento || ';';
-                 vr_linha_csv := vr_linha_csv || rw_conta.dhinclusao || ';';
-                 vr_linha_csv := vr_linha_csv || rw_conta.dhprocessamento || ';';
+                 vr_linha_csv := vr_linha_csv || to_char(to_date(rw_conta.dhinclusao, 'MM/DD/YYYY'), 'DD/MM/YYYY') || ';';
+                 vr_linha_csv := vr_linha_csv || to_char(to_date(rw_conta.dhprocessamento, 'MM/DD/YYYY'), 'DD/MM/YYYY') || ';';
                  vr_linha_csv := vr_linha_csv || rw_conta.vllancamento || ';';
                  vr_linha_csv := vr_linha_csv || rw_conta.dssituacao || ';';
                  vr_linha_csv := vr_linha_csv || rw_conta.dserro || chr(10);
@@ -10053,11 +10049,11 @@ from  (
                          AND pdv.dtpagamento = to_char(to_date(pr_dtlcto, 'DD/MM/YYYY'), 'YYYY-MM-DD')
                          AND pdv.cdocorrencia = 0
                       ) cred
-                     , (SELECT count(1) AS qdepagamentos
-                             , sum(str.vllancamento) vlpagamentos
-                          FROM cecred.tbdomic_liqtrans_msg_ltrstr str
-                         WHERE str.cdmsg = 'STR0006R2'
-                           AND str.dhexecucao = to_date(pr_dtlcto, 'dd/mm/yyyy')) rece;                              
+                   , (SELECT count(1) AS qdepagamentos
+                           , sum(str.vllancamento) vlpagamentos
+                        FROM cecred.tbdomic_liqtrans_msg_ltrstr str
+                       WHERE str.cdmsg = 'STR0006R2'
+                         AND str.dhexecucao = to_date(pr_dtlcto, 'dd/mm/yyyy')) rece;                              
 
                            
   BEGIN

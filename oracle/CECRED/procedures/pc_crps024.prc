@@ -71,6 +71,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS024(pr_cdcooper  in crapcop.cdcooper%t
            05/03/2018 - Alterada a verificação para identificar contas individuais ou conjuntas 
                         atraves do campo CRAPASS.CDCATEGO. PRJ366 (Lombardi)
            
+		   25/04/2018 - Ajustado para incluir montagem de indice antes do continue, pois estava com erro e causando
+			            estouro nos contadores. (Renato Darosci - Supero)
 ............................................................................. */
   ds_character_separador constant varchar2(1) := '#';
 
@@ -578,6 +580,10 @@ begin
           -- Alimentar para não entrar em loop
           vr_nrdconta := r_crapfdc(idx).nrdconta; 
           idx:= r_crapfdc.next(idx);
+
+		  -- Monta o índice utilizado para identificar a conta
+          vr_ind_associado := lpad(vr_intipcta, 2, '0')||lpad(r_crapfdc(idx).nrdconta, 10, '0');
+
           continue;
         end if;
         -- Monta o índice utilizado para identificar a conta

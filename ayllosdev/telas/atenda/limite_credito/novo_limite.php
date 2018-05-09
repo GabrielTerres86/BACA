@@ -22,6 +22,8 @@
 *												menores nao emancipados. (Reinert)
  * 008: [25/07/2016] Carlos R.		 (CECRED) : Corrigi a forma de recuperacao de dados do XML de retorno. SD 479874.
 * 009: [05/12/2017] Lombardi         (CECRED) : Gravação do campo idcobope. Projeto 404
+ * 010: [15/03/2018] Diego Simas	 (AMcom)  : Alterado para exibir tratativas quando o limite de crédito foi 
+ *                                              cancelado de forma automática pelo Ayllos.  
  */	  
 ?>
 
@@ -80,7 +82,6 @@
 	// Cria objeto para classe de tratamento de XML
 	$xmlObjLimite = getObjectXML($xmlResult);
 	
-	
 	// Se ocorrer um erro, mostra crítica
 	if (isset($xmlObjLimite->roottag->tags[0]->name) && strtoupper($xmlObjLimite->roottag->tags[0]->name) == "ERRO") 
 		exibirErro('error',$xmlObjLimite->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos','');
@@ -99,6 +100,53 @@
 	
 	$limite = $xmlObjLimite->roottag->tags[0]->tags[0]->tags;
 	
+	if($cddopcao == 'N'){
+		//Verifica se pode ser incluído novo limite
+		$xml  = "";
+		$xml .= "<Root>";
+		$xml .= "  <Dados>";
+		$xml .= "    <cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
+		$xml .= "    <nrdconta>".$nrdconta."</nrdconta>";
+		$xml .= "  </Dados>";
+		$xml .= "</Root>";
+
+		$xmlResult = mensageria($xml, "ZOOM0001", "CONSISTE_NOVO_LIMITE", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");		
+		$xmlObjeto = getObjectXML($xmlResult);	
+		
+		$param = $xmlObjeto->roottag->tags[0]->tags[0];
+
+		$autnovlim = getByTagName($param->tags,'autoriza');	
+		$saldo = getByTagName($param->tags,'saldo');	
+		
+		if (strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO") {
+			exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos',"controlaOperacao('');",false); 
+		}	
+
+		if($autnovlim == 1){
+			if($saldo > 0){
+				// MENSAGEM DE INADIMPLÊNCIA
+				$travaCamposLimite = 'S';
+				echo '<script type="text/javascript">';
+				echo 'hideMsgAguardo();';
+				echo 'showError("error","Limite de Cr&eacute;dito cancelado por motivo de inadimpl&ecirc;ncia, n&atilde;o &eacute; poss&iacute;vel realizar a opera&ccedil;&atilde;o!","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
+				echo '</script>';				
+			}else{			
+				$travaCamposLimite = 'S';
+				// MENSAGEM DE INADIMPLÊNCIA
+				echo '<script type="text/javascript">';
+				echo 'hideMsgAguardo();';
+				echo 'showError("error","Limite de Cr&eacute;dito cancelado por motivo de inadimpl&ecirc;ncia, &eacute; necess&aacute;rio senha do coordenador!","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
+				echo '</script>';				
+				// PEDE SENHA COORDENADOR
+				echo '<script type="text/javascript">';
+				echo 'bloqueiaFundo(divRotina);';
+				echo 'hideMsgAguardo();';
+				echo 'pedeSenhaCoordenador(2,"continuaLimite();","");';
+				echo '</script>';	
+			}
+		}	
+	}		
+
 	$nrctrlim = getByTagName($limite,"nrctrpro");
 	$vllimite = str_replace(",",".",getByTagName($limite,"vllimpro"));
 	$flgimpnp = getByTagName($limite,"flgimpnp");
@@ -281,8 +329,30 @@
 	
 	controlaLayout('<? echo $cddopcao; ?>');
 
+	<? if($travaCamposLimite == 'S'){ ?>
+		travaCamposLimite();
+	<? } ?>
+
 	hideMsgAguardo();
 	bloqueiaFundo(divRotina);
 	
 </script>												
 
+<script>
+	function continuaLimite(){
+		$("#divDadosRenda").css("display","none");
+		$("#divDadosObservacoes").css("display","none");
+		$("#divDadosAvalistas").css("display","none");
+
+		$("#tdTitDivDadosLimite").html("DADOS DO " + strTitRotinaUC);
+		$("#divDadosLimite").css("display","block");	
+
+		// Se for inclusao/alteracao, habilitar avalista
+		habilitaAvalista(<? echo ($cddopcao == 'N') ?>);
+		
+		controlaLayout('<? echo $cddopcao; ?>');
+		
+		hideMsgAguardo();
+		bloqueiaFundo(divRotina);		
+	}	
+</script>

@@ -149,8 +149,8 @@
                 15/07/2016 - Incluir chamada da procedure pc_grava_tbchq_param_conta - Melhoria 69
                              (Lucas Ranghetti #484923)
 				
-                01/12/2016 - Definir a não obrigatoriedade do PEP (Tiago/Thiago SD532690)				
-				
+                01/12/2016 - Definir a não obrigatoriedade do PEP (Tiago/Thiago SD532690)
+
 				19/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
 			                 crapass, crapttl, crapjur 
 							(Adriano - P339).
@@ -158,12 +158,12 @@
                 25/04/2017 - Buscar a nacionalidade com CDNACION. (Jaison/Andrino)
 
                 17/07/2017 - Alteraçao CDOEDTTL pelo campo IDORGEXP.
-                             PRJ339 - CRM (Odirlei-AMcom)  
-                			
-				11/08/2017 - Incluído o número do cpf ou cnpj na tabela crapdoc.
-                             Projeto 339 - CRM. (Lombardi)			
+                             PRJ339 - CRM (Odirlei-AMcom)  	
 
-                             
+                11/08/2017 - Incluído o número do cpf ou cnpj na tabela crapdoc.
+                             Projeto 339 - CRM. (Lombardi)	
+
+
                 22/09/2017 - Adicionar tratamento para caso o inpessoa for juridico gravar 
                              o idseqttl como zero (Luacas Ranghetti #756813)
 
@@ -176,6 +176,11 @@
 
                 12/03/2018 - Alterado de forma que o tipo de conta nao seja mais fixo e sim 
                              parametrizado através da tela CADPAR. PRJ366 (Lombardi).
+
+                24/04/2018 - Adicionado campo cdcatego na inclusao de nova conta.
+                           - Gravar historico de inclusao dos campos cdtipcta,
+                             cdsitdct e cdcatego. PRJ366 (Lombardi).
+
 .............................................................................*/
                                                      
 
@@ -288,7 +293,7 @@ PROCEDURE Grava_Dados :
 
     DEF  INPUT PARAM par_idorigee AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_nrlicamb AS DECI                           NO-UNDO.
-
+	
     DEF OUTPUT PARAM par_msgretor AS CHAR                           NO-UNDO.
     DEF OUTPUT PARAM par_cdcritic AS INTE                           NO-UNDO.
     DEF OUTPUT PARAM par_dscritic AS CHAR                           NO-UNDO.
@@ -888,7 +893,7 @@ PROCEDURE Altera PRIVATE :
             (par_cdmotdem <> crabass.cdmotdem) THEN
             /* busca motivo demissão */
               { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
-                            
+
                 /* Efetuar a chamada a rotina Oracle */ 
                 RUN STORED-PROCEDURE prc_busca_motivo_demissao
                 aux_handproc = PROC-HANDLE NO-ERROR 
@@ -898,7 +903,7 @@ PROCEDURE Altera PRIVATE :
                    ,OUTPUT ""           /* pr_dsmotdem --> Descriçao Motivo Demissao */
                    ,OUTPUT 0            /* pr_cdcritic --> Codigo da critica)   */
                    ,OUTPUT "" ).        /* pr_dscritic --> Descriçao da critica).  */
-                                        
+
                 /* Fechar o procedimento para buscarmos o resultado */ 
                 CLOSE STORED-PROC prc_busca_motivo_demissao
                 aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
@@ -1049,7 +1054,7 @@ PROCEDURE Altera PRIVATE :
                       INPUT par_cdoperad, 
                       INPUT par_dtmvtolt,
                       INPUT par_inhabmen,
-                      INPUT par_dthabmen,
+                      INPUT par_dthabmen,					  
                      OUTPUT par_cdcritic, 
                      OUTPUT par_dscritic ) NO-ERROR.
                 
@@ -1225,7 +1230,7 @@ PROCEDURE Altera PRIVATE :
               INPUT UPPER(par_complend),
               INPUT UPPER(par_nmbairro),
               INPUT UPPER(par_nmcidade),
-              INPUT UPPER(par_cdufende),
+              INPUT UPPER(par_cdufende),			  
               INPUT par_nrcxapst,
               INPUT par_idorigee,
              OUTPUT par_dscritic ) NO-ERROR.
@@ -3498,7 +3503,7 @@ PROCEDURE Atualiza_End PRIVATE:
               INPUT 0, /* Atualizados somente via tela CONTAS */ 
               INPUT 0,
               INPUT NO,
-              INPUT par_idorigee,
+              INPUT par_idorigee,	
              OUTPUT aux_msgalert,
              OUTPUT aux_tpatlcad,
              OUTPUT aux_msgatcad,
@@ -3526,7 +3531,7 @@ PROCEDURE Atualiza_End PRIVATE:
 
             UNDO Endereco, LEAVE Endereco.
         END.
-
+		
         ASSIGN aux_returnvl = "OK".
 
         LEAVE Endereco.
@@ -4442,7 +4447,8 @@ PROCEDURE Inclui PRIVATE :
                        crabass.cdageori = par_cdagenci
                        crabass.dtinsori = TODAY
                        /* Fim - Alteracoes referentes a M181 - Rafael Maciel (RKAM) */
-                       crabass.cdbcochq = 85 NO-ERROR.  
+                       crabass.cdbcochq = 85
+                       crabass.cdcatego = 1 NO-ERROR.  
 
                        /* Para esta tela deve gravar essas informaçoes como padrao */
                        IF par_nmdatela = 'CADMAT' THEN
@@ -4458,6 +4464,100 @@ PROCEDURE Inclui PRIVATE :
                        END.
 
                    VALIDATE crabass.
+                   
+                   /* Historico */
+                   { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+                   
+                   RUN STORED-PROCEDURE pc_grava_dados_hist 
+                       aux_handproc = PROC-HANDLE NO-ERROR
+                                        (INPUT "CRAPASS"                /* pr_nmtabela */
+                                        ,INPUT "CDTIPCTA"               /* pr_nmdcampo */
+                                        ,INPUT par_cdcooper             /* pr_cdcooper */  
+                                        ,INPUT par_nrdconta             /* pr_nrdconta */  
+                                        ,INPUT 0                        /* pr_inpessoa */  
+                                        ,INPUT 0                        /* pr_idseqttl */  
+                                        ,INPUT 0                        /* pr_cdtipcta */  
+                                        ,INPUT 0                        /* pr_cdsituac */  
+                                        ,INPUT 0                        /* pr_cdprodut */  
+                                        ,INPUT 1                        /* pr_tpoperac */  
+                                        ,INPUT ?                        /* pr_dsvalant */
+                                        ,INPUT STRING(crabass.cdtipcta) /* pr_dsvalnov */  
+                                        ,INPUT par_cdoperad             /* pr_cdoperad */  
+                                       ,OUTPUT "").
+                   
+                   CLOSE STORED-PROC pc_grava_dados_hist 
+                         aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+                   
+                   { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+                   
+                   ASSIGN aux_dscritic = ""                         
+                          aux_dscritic = pc_grava_dados_hist.pr_dscritic 
+                                         WHEN pc_grava_dados_hist.pr_dscritic <> ?.
+                   
+                   IF  aux_dscritic <> "" THEN
+                       LEAVE ContadorAss.
+                   
+                   { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+                   
+                   RUN STORED-PROCEDURE pc_grava_dados_hist 
+                       aux_handproc = PROC-HANDLE NO-ERROR
+                                        (INPUT "CRAPASS"                /* pr_nmtabela */
+                                        ,INPUT "CDSITDCT"               /* pr_nmdcampo */
+                                        ,INPUT par_cdcooper             /* pr_cdcooper */  
+                                        ,INPUT par_nrdconta             /* pr_nrdconta */  
+                                        ,INPUT 0                        /* pr_inpessoa */  
+                                        ,INPUT 0                        /* pr_idseqttl */  
+                                        ,INPUT 0                        /* pr_cdtipcta */  
+                                        ,INPUT 0                        /* pr_cdsituac */  
+                                        ,INPUT 0                        /* pr_cdprodut */  
+                                        ,INPUT 1                        /* pr_tpoperac */  
+                                        ,INPUT ?                        /* pr_dsvalant */
+                                        ,INPUT STRING(crabass.cdsitdct) /* pr_dsvalnov */  
+                                        ,INPUT par_cdoperad             /* pr_cdoperad */  
+                                       ,OUTPUT "").
+                   
+                   CLOSE STORED-PROC pc_grava_dados_hist 
+                         aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+                   
+                   { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+                   
+                   ASSIGN aux_dscritic = ""                         
+                          aux_dscritic = pc_grava_dados_hist.pr_dscritic 
+                                         WHEN pc_grava_dados_hist.pr_dscritic <> ?.
+                   
+                   IF  aux_dscritic <> "" THEN
+                       LEAVE ContadorAss.
+                   
+                   { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+                   
+                   RUN STORED-PROCEDURE pc_grava_dados_hist 
+                       aux_handproc = PROC-HANDLE NO-ERROR
+                                        (INPUT "CRAPASS"                /* pr_nmtabela */
+                                        ,INPUT "CDCATEGO"               /* pr_nmdcampo */
+                                        ,INPUT par_cdcooper             /* pr_cdcooper */  
+                                        ,INPUT par_nrdconta             /* pr_nrdconta */  
+                                        ,INPUT 0                        /* pr_inpessoa */  
+                                        ,INPUT 0                        /* pr_idseqttl */  
+                                        ,INPUT 0                        /* pr_cdtipcta */  
+                                        ,INPUT 0                        /* pr_cdsituac */  
+                                        ,INPUT 0                        /* pr_cdprodut */  
+                                        ,INPUT 1                        /* pr_tpoperac */  
+                                        ,INPUT ?                        /* pr_dsvalant */
+                                        ,INPUT STRING(crabass.cdcatego) /* pr_dsvalnov */  
+                                        ,INPUT par_cdoperad             /* pr_cdoperad */  
+                                       ,OUTPUT "").
+                   
+                   CLOSE STORED-PROC pc_grava_dados_hist 
+                         aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+                   
+                   { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+                   
+                   ASSIGN aux_dscritic = ""                         
+                          aux_dscritic = pc_grava_dados_hist.pr_dscritic 
+                                         WHEN pc_grava_dados_hist.pr_dscritic <> ?.
+                   
+                   IF  aux_dscritic <> "" THEN
+                       LEAVE ContadorAss.
                    
                    LEAVE ContadorAss.
                 END.
@@ -4626,7 +4726,7 @@ PROCEDURE Inclui PRIVATE :
               INPUT UPPER(par_complend),
               INPUT UPPER(par_nmbairro),
               INPUT UPPER(par_nmcidade),
-              INPUT UPPER(par_cdufende),
+              INPUT UPPER(par_cdufende),			  		
               INPUT par_nrcxapst,
               INPUT par_idorigee,
              OUTPUT par_dscritic ) NO-ERROR.

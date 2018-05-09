@@ -545,7 +545,7 @@ PROCEDURE  obtem-dados-adesao:
                                      "99999999999999"),"xx.xxx.xxx/xxxx-xx").
            
            CREATE tt-crapcop.
-           BUFFER-COPY crapcop TO tt-crapcop.
+           BUFFER-COPY crapcop EXCEPT nrctabcb TO tt-crapcop.
 
            CREATE tt-dados-adesao-net.        
            ASSIGN tt-dados-adesao-net.nrdocnpj = STRING(STRING(crapcop.nrdocnpj,

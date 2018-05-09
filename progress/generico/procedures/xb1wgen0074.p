@@ -225,6 +225,7 @@ PROCEDURE Verifica_Exclusao_Titulares:
                                             INPUT aux_nrdconta,
                                             INPUT aux_idseqttl,
                                             INPUT aux_cdtipcta,
+                                            INPUT aux_cdcatego,
                                             INPUT TRUE,
                                            OUTPUT aux_tipconfi,
                                            OUTPUT aux_msgconfi,

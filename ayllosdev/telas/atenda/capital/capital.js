@@ -35,6 +35,10 @@
  					
 			  16/01/2018 - Aumentado tamanho do campo de senha para 30 caracteres. (PRJ339 - Reinert)						   
 
+			  04/04/2018 - Chamada da rotina para verificar se o tipo de conta permite produto 
+                           15 - Plano de Cotas. Ajuste para chamar a rotina de senha do coordenador. 
+						   PRJ366 (Lombardi).
+ 					
 *************************************************************************/
 
 var callafterCapital = '';
@@ -301,6 +305,9 @@ function validaNovoPlano(altera) {
 		return false;
 	}
 	
+	// Verifica se tipo de conta permite produto 15 – Plano de Cotas
+	validaAdesaoProduto(nrdconta, 15, '');
+	
 	// Executa script de valida&ccedil;&atilde;o do plano atrav&eacute;s de ajax
 	$.ajax({		
 		type: "POST", 
@@ -554,7 +561,7 @@ function controlaLayout(operacao) {
         cData.addClass('data').css('width', '195px');
         cSenha.css('width', '30px');
         cAutorizacao.css('width', '30px');
-
+		
         rRotulos.addClass('rotulo').css('width', '160px');
 		
         cSenha.click();
@@ -913,4 +920,8 @@ function controlaBotoes(tipo) {
     }
 
     
+}
+    
+function senhaCoordenador(executaDepois) {
+	pedeSenhaCoordenador(2,executaDepois,'divRotina');
 }

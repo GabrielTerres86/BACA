@@ -226,6 +226,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
                             o contrato pelo campo CDPESQBB.
                             Ajustes no envio de pagamentos de conta corrente.
                             Heitor (Mouts)
+
+			   26/04/2018 - Enviar registro da LCM do historico 2386 - Recuperacao de prejuizo, pois na tabela CRAPLEM ele se divide
+                            entre alguns historicos que nao devem ser enviados.
+							Heitor (Mouts) - Prj 324.
      ............................................................................. */
 
      DECLARE
@@ -605,6 +609,24 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS652 (pr_cdcooper IN crapcop.cdcooper%T
             AND craplcm.dtmvtolt = pr_dtmvtolt
             --Multa e juros de mora
             AND craphis.cdhistor in (2084,2085,2087,2088,2090,2091,2093,2094)
+         GROUP BY craplcm.cdhistor,craphis.dshistor
+		 UNION
+         SELECT /*+ index(craplcm CRAPLCM##CRAPLCM2) */
+               SUM(craplcm.vllanmto) vllanmto
+               ,craplcm.cdhistor
+               ,craphis.dshistor
+           FROM craplcm, craphis, crapepr
+          WHERE crapepr.cdcooper = craplcm.cdcooper
+            AND crapepr.nrdconta = craplcm.nrdconta
+            AND craphis.cdcooper = craplcm.cdcooper
+            AND craphis.cdhistor = craplcm.cdhistor
+            AND trim(replace(craplcm.cdpesqbb,'.')) = pr_nrctremp
+            AND craplcm.cdcooper = pr_cdcooper
+            AND craplcm.nrdconta = pr_nrdconta
+            AND crapepr.nrctremp = pr_nrctremp
+            AND craplcm.dtmvtolt = pr_dtmvtolt
+            --Pagamento de Prejuizo
+            AND craphis.cdhistor in (2386)
          GROUP BY craplcm.cdhistor,craphis.dshistor;
        --Registro do tipo calendario
        rw_crapdat  BTCH0001.cr_crapdat%ROWTYPE;

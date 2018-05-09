@@ -1284,7 +1284,7 @@ BEGIN
          raise vr_exc_saida;
    end   if;
    close cr_crawlim;
-
+   
    open  cr_craplim;
    fetch cr_craplim into rw_craplim;
    vr_flcraplim := cr_craplim%FOUND;
@@ -1501,9 +1501,9 @@ BEGIN
 
    else
        if  NOT vr_flcraplim then
-           vr_dscritic := 'Não foi encontrado um contrato de limite de desconto de título associado a proposta. Conta ' || pr_nrdconta || ' proposta ' || pr_nrctrlim;
-           raise vr_exc_saida;
-       end if;
+             vr_dscritic := 'Não foi encontrado um contrato de limite de desconto de título associado a proposta. Conta ' || pr_nrdconta || ' proposta ' || pr_nrctrlim;
+             raise vr_exc_saida;
+       end   if;
        
        begin
           update craplim lim
@@ -4466,6 +4466,14 @@ PROCEDURE pc_solicita_biro_bordero(pr_nrdconta in crapass.nrdconta%type --> Cont
    fl_erro_biro boolean;
 
    
+   cursor cr_analise_pagador(pr_nrinssac crapcob.nrinssac%type) is
+   select 1
+   from   tbdsct_analise_pagador tap 
+   where  tap.cdcooper = vr_cdcooper
+   and    tap.nrdconta = pr_nrdconta
+   and    tap.nrinssac = pr_nrinssac;
+   rw_analise_pagador cr_analise_pagador%rowtype;
+
 BEGIN
    gene0004.pc_extrai_dados(pr_xml      => pr_retxml
                            ,pr_cdcooper => vr_cdcooper
@@ -4493,6 +4501,25 @@ BEGIN
    fl_erro_biro := false;
    while vr_index is not null loop
    
+         open  cr_analise_pagador(vr_tab_dados_titulos(vr_index).nrinssac);
+         fetch cr_analise_pagador into rw_analise_pagador;
+         if    cr_analise_pagador%notfound then
+			   /*	
+               dsct0002.pc_efetua_analise_pagador(pr_cdcooper => vr_cdcooper
+                                                 ,pr_nrdconta => pr_nrdconta
+                                                 ,pr_nrinssac => vr_tab_dados_titulos(vr_index).nrinssac
+                                                 ,pr_cdcritic => vr_cdcritic
+                                                 ,pr_dscritic => vr_dscritic);
+
+               if  vr_cdcritic > 0  or vr_dscritic is not null then
+                   raise vr_exc_saida;
+               end if;
+			   */
+			   NULL;
+               
+         end   if;
+         close cr_analise_pagador;
+         
          sspc0001.
                   pc_solicita_cons_bordero_biro(pr_cdcooper => vr_cdcooper
                                                ,pr_nrdconta => pr_nrdconta

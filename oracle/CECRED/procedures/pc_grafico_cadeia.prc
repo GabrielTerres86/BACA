@@ -61,7 +61,7 @@ DECLARE
      WHERE prl.cdcooper = pr_cdcooper
        AND trunc(prl.dhinicio) = trunc(pr_dia)
        AND prl.cdprograma = pr_cdprograma 
-     ORDER BY prl.dhinicio;
+     ORDER BY prl.nrexecucao DESC;
      
   rw_prglog cr_prglog%ROWTYPE;
 
@@ -178,15 +178,6 @@ DECLARE
                         vr_label || ';';
       END LOOP;
 
-/*
-      IF  NVL(pr_mensal,0) = 0 THEN
-        vr_nomearq := 'proc_graf_'|| to_char(SYSDATE,'ddmmrrrr') ||'_d.csv'; -- diarias sem mensal
-      ELSIF NVL(pr_mensal,0) = 1 THEN
-        vr_nomearq := 'proc_graf_'|| to_char(SYSDATE,'ddmmrrrr') ||'_c.csv'; -- completa com mensal
-      ELSE
-        vr_nomearq := 'proc_graf_'|| to_char(SYSDATE,'ddmmrrrr') ||'_m.csv'; -- apenas mensal
-      END IF;
-*/      
       -- Nome da planilha: proc_graft_nomedoarquivo_ddmmrrrr.csv
       vr_nomearq := 'proc_graf_' || vr_arr_arquivos(nrarq) || to_char(SYSDATE,'_ddmmrrrr') ||'.csv';
       
@@ -236,7 +227,8 @@ DECLARE
             END IF;
             
             vr_flgachou := TRUE;
-            vr_linha := vr_linha || rw_prglog.Inicio ||';'|| rw_prglog.Termino ||';';          
+            vr_linha := vr_linha || rw_prglog.Inicio ||';'|| rw_prglog.Termino ||';';
+            EXIT;
           END LOOP;
           
           IF vr_flgachou = FALSE THEN
