@@ -4539,12 +4539,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 						          craplau.dtmvtolt,
 											craplau.hrtransa,
 											craplau.nrdocmto,
-											craplau.vllanaut
+											craplau.vllanaut,
+											craplau.cdtiptra
 						     INTO rw_craplau.idlancto,
                       rw_craplau.dtmvtolt,
                       rw_craplau.hrtransa,
                       rw_craplau.nrdocmto,
-											rw_craplau.vllanaut;
+											rw_craplau.vllanaut,
+											rw_craplau.cdtiptra;
       EXCEPTION
         WHEN OTHERS THEN
           vr_dscritic := 'Erro ao inserir lançamento automatico DARF/DAS: '||SQLERRM;
@@ -4552,7 +4554,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
       END;
 			
       --> se Sicredi
-      IF rw_crapcon.tparrecd = 1 THEN
+      IF rw_craplau.cdtiptra = 10 THEN
 
 			-- inserção dados detalhados DARF/DAS
 			BEGIN
@@ -4605,7 +4607,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
       END;
 			
       --> se Bancoob
-      ELSIF rw_crapcon.tparrecd = 2 THEN
+      ELSIF rw_craplau.cdtiptra IN (12,13) THEN
         -- Inserção dados do tributo
         BEGIN
           INSERT INTO  tbpagto_agend_tributos
