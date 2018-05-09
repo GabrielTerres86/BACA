@@ -30,13 +30,22 @@
 	
 	// Se for PF
 	if ($inpessoa == 1) {
-
-
-	$vlrmaior = ($vllimweb > $vllimted ? $vllimweb : $vllimted);	
-	$vlrmaior = ($vlrmaior > $vllimvrb ? $vlrmaior : $vllimvrb);
+		$vlrmaior = ($vllimweb > $vllimted ? $vllimweb : $vllimted);	
+		$vlrmaior = ($vlrmaior > $vllimvrb ? $vlrmaior : $vllimvrb);
 	
-	$vlrmenor = ($vllimweb < $vllimted ? $vllimweb : $vllimted);	
-	$vlrmenor = ($vlrmenor < $vllimvrb ? $vlrmenor : $vllimvrb);
+		$vlrmenor = ($vllimweb < $vllimted ? $vllimweb : $vllimted);	
+		$vlrmenor = ($vlrmenor < $vllimvrb ? $vlrmenor : $vllimvrb);
+	
+	// Se for PJ
+	} else {
+		$vlrmaior = ($vllimtrf > $vllimpgo ? $vllimtrf : $vllimpgo);	
+		$vlrmaior = ($vlrmaior > $vllimted ? $vlrmaior : $vllimted);
+		$vlrmaior = ($vlrmaior > $vllimvrb ? $vlrmaior : $vllimvrb);
+	
+		$vlrmenor = ($vllimtrf < $vllimpgo ? $vllimtrf : $vllimpgo);	
+		$vlrmenor = ($vlrmenor < $vllimted ? $vlrmenor : $vllimted);
+		$vlrmenor = ($vlrmenor < $vllimvrb ? $vlrmenor : $vllimvrb);
+	}
 	
 	// Monta o xml de requisição
 	$xml  = "";
