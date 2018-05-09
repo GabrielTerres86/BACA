@@ -754,7 +754,7 @@ PROCEDURE pc_validar_data_proposta(pr_cdcooper IN crapcop.cdcooper%TYPE  --> Cód
    cursor cr_crawlim is
    select 1
    from   crawlim lim
-   where  lim.dtpropos < vr_dtviglim
+   where  lim.dtpropos <= vr_dtviglim
    and    lim.cdcooper = pr_cdcooper
    and    lim.nrdconta = pr_nrdconta
    and    lim.nrctrlim = pr_nrctrlim
@@ -1284,7 +1284,7 @@ BEGIN
          raise vr_exc_saida;
    end   if;
    close cr_crawlim;
-   
+
    open  cr_craplim;
    fetch cr_craplim into rw_craplim;
    vr_flcraplim := cr_craplim%FOUND;
@@ -1501,9 +1501,9 @@ BEGIN
 
    else
        if  NOT vr_flcraplim then
-             vr_dscritic := 'Não foi encontrado um contrato de limite de desconto de título associado a proposta. Conta ' || pr_nrdconta || ' proposta ' || pr_nrctrlim;
-             raise vr_exc_saida;
-       end   if;
+           vr_dscritic := 'Não foi encontrado um contrato de limite de desconto de título associado a proposta. Conta ' || pr_nrdconta || ' proposta ' || pr_nrctrlim;
+           raise vr_exc_saida;
+       end if;
        
        begin
           update craplim lim
@@ -1519,7 +1519,7 @@ BEGIN
                raise vr_exc_saida;
        end;
    end if;
-
+   
    -- Atualiza a Proposta de Limite de Desconto de Título
    begin
       update crawlim lim
@@ -3070,8 +3070,8 @@ PROCEDURE pc_obtem_dados_proposta(pr_cdcooper           in crapcop.cdcooper%type
                                      ctr.tpctrlim = lim.tpctrlim and
                                      ctr.nrdconta = lim.nrdconta and
                                      ctr.cdcooper = lim.cdcooper)
-   where  case --   mostrar propostas em situações de analise (em estudo) dentro de x dias
-               when lim.insitlim in (1,5,6) and lim.dtpropos >= vr_dtpropos then 1
+   where  case --   mostrar propostas em situações de analise (em estudo) ou canceladas dentro de x dias
+               when lim.insitlim in (1,3,5,6) and lim.dtpropos >= vr_dtpropos then 1
                --   mostrar somente a última proposta ativa
                when lim.insitlim = 2 and
                     lim.nrctrlim = (select max(lim_ativo.nrctrlim)
@@ -3086,8 +3086,6 @@ PROCEDURE pc_obtem_dados_proposta(pr_cdcooper           in crapcop.cdcooper%type
                                                                  and    lim_ativo.tpctrlim = pr_tpctrlim
                                                                  and    lim_ativo.nrdconta = pr_nrdconta
                                                                  and    lim_ativo.cdcooper = pr_cdcooper)) then 1
-               --   não mostrar as propostas canceladas
-               when lim.insitlim = 3 then 0
                --   mostrar todas as demais
                when lim.insitlim in (4,7) then 1
                else 0
