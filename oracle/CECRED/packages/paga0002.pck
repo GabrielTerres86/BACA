@@ -4,7 +4,7 @@ create or replace package cecred.PAGA0002 is
 
    Programa: PAGA0002                          Antiga: b1wgen0089.p
    Autor   : Guilherme/Supero
-   Data    : 13/04/2011                        Ultima atualizacao: 17/04/2017
+   Data    : 13/04/2011                        Ultima atualizacao: 09/05/2018
 
    Dados referentes ao programa:
 
@@ -994,14 +994,14 @@ create or replace package body cecred.PAGA0002 is
 
                   12/04/2016 - Remocao Aprovacao Favorecido. (Jaison/Marcos - SUPERO)
 
-          19/05/2016 - Ajuste na mensagem de retorno para agendamentos
+                  19/05/2016 - Ajuste na mensagem de retorno para agendamentos
                    (Adriano - M117.)
 
                   03/06/2016 - Ajuste para chamar a rotina de monitoramento somente quando
                                operação de TED
                                (Adriano).
 
-          06/09/2016 - Ajuste para apresentar o horario limite para debito de ted's agendadas
+                  06/09/2016 - Ajuste para apresentar o horario limite para debito de ted's agendadas
                                (Adriano - SD509480).
 
                   21/11/2016 - Inclusao de parametros na chamada da rotina pc_executa_envio_ted.
@@ -1015,6 +1015,9 @@ create or replace package body cecred.PAGA0002 is
                                
                   10/07/2017 - Buscar ultimo horario da DEBNET para exibir o horario quando efetuado 
                                um agendamento de Transferencia (Lucas Ranghetti #676219)
+
+				  09/05/2018 - Alterada mascara do numero da conta, da tela de agendamentos da TED no IB
+								 (Fernando de Lima #INC0011550)
     .................................................................................*/
     ----------------> TEMPTABLE  <---------------
 
@@ -9298,7 +9301,8 @@ create or replace package body cecred.PAGA0002 is
           IF cr_crapcti%FOUND THEN
             -- Fecha cursor
             CLOSE cr_crapcti;
-            vr_nrctadst := TRIM(GENE0002.fn_mask_conta(rw_crapcti.nrctatrf));
+            --vr_nrctadst := TRIM(GENE0002.fn_mask_conta(rw_crapcti.nrctatrf));
+			vr_nrctadst := TRIM(GENE0002.fn_mask(rw_crapcti.nrctatrf,'zzzzzzzzzz.zzz.z'));
             vr_nrctadst := vr_nrctadst || ' - ' || rw_crapcti.nmtitula;
           ELSE
             -- Fecha cursor
