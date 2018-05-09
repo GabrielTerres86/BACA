@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.empr0001 AS
   --  Sistema  : Rotinas gen¿ricas focando nas funcionalidades de empréstimos
   --  Sigla    : EMPR
   --  Autor    : Marcos Ernani Martini
-  --  Data     : Fevereiro/2013.                   Ultima atualizacao: 30/01/2018
+  --  Data     : Fevereiro/2013.                   Ultima atualizacao: 26/09/2016
   --
   -- Dados referentes ao programa:
   --
@@ -745,7 +745,7 @@ CREATE OR REPLACE PACKAGE CECRED.empr0001 AS
                                        ,pr_nrctremp    IN crapepr.nrctremp%TYPE --> Número do contrato de empréstimo
                                        ,pr_nrparepr    IN INTEGER --> Número parcelas empréstimo
                                        ,pr_vlpagpar    IN NUMBER --> Valor a pagar parcela
-                                       ,pr_tab_crawepr IN empr0001.typ_tab_crawepr --Tabela com Contas e Contratos
+                                       ,pr_tab_crawepr IN EMPR0001.typ_tab_crawepr --Tabela com Contas e Contratos
                                        ,pr_nrseqava    IN NUMBER DEFAULT 0 --> Pagamento: Sequencia do avalista
                                        ,pr_des_reto    OUT VARCHAR --> Retorno OK / NOK
                                        ,pr_tab_erro    OUT gene0001.typ_tab_erro); --> Tabela com possíves erros
@@ -774,7 +774,7 @@ CREATE OR REPLACE PACKAGE CECRED.empr0001 AS
                                     ,pr_nrctremp    IN crapepr.nrctremp%TYPE --> Número do contrato de empréstimo
                                     ,pr_nrparepr    IN INTEGER --> Número parcelas empréstimo
                                     ,pr_vlparepr    IN NUMBER --> Valor da parcela emprestimo
-                                    ,pr_tab_crawepr IN empr0001.typ_tab_crawepr --Tabela com Contas e Contratos
+                                    ,pr_tab_crawepr IN EMPR0001.typ_tab_crawepr --Tabela com Contas e Contratos
                                     ,pr_nrseqava    IN NUMBER DEFAULT 0 --> Pagamento: Sequencia do avalista
                                     ,pr_des_reto    OUT VARCHAR --> Retorno OK / NOK
                                     ,pr_tab_erro    OUT gene0001.typ_tab_erro); --> Tabela com possíves erros
@@ -831,8 +831,8 @@ CREATE OR REPLACE PACKAGE CECRED.empr0001 AS
                                      ,pr_nrctremp    IN crapepr.nrctremp%TYPE --> Número do contrato de empréstimo
                                      ,pr_dtmvtoan    IN DATE     --> Data Movimento Anterior
                                      ,pr_ehprcbat    IN VARCHAR2 --> Indicador Processo Batch (S/N)
-                                     ,pr_tab_pgto_parcel IN OUT empr0001.typ_tab_pgto_parcel --Tabela com Pagamentos de Parcelas
-                                     ,pr_tab_crawepr IN empr0001.typ_tab_crawepr --Tabela com Contas e Contratos
+                                     ,pr_tab_pgto_parcel IN OUT EMPR0001.typ_tab_pgto_parcel --Tabela com Pagamentos de Parcelas
+                                     ,pr_tab_crawepr IN EMPR0001.typ_tab_crawepr --Tabela com Contas e Contratos
                                      ,pr_nrseqava    IN NUMBER DEFAULT 0 --> Pagamento: Sequencia do avalista
                                      ,pr_des_erro    OUT VARCHAR --> Retorno OK / NOK
                                      ,pr_tab_erro    OUT gene0001.typ_tab_erro); --> Tabela com possíves erros
@@ -1053,7 +1053,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
   --  Sistema  : Rotinas genéricas focando nas funcionalidades de empréstimos
   --  Sigla    : EMPR
   --  Autor    : Marcos Ernani Martini
-  --  Data     : Fevereiro/2013.                   Ultima atualizacao: 30/01/2018
+  --  Data     : Fevereiro/2013.                   Ultima atualizacao: 31/10/2017
   --
   -- Dados referentes ao programa:
   --
@@ -1114,15 +1114,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
   --             12/09/2017 - #749442 Alterado o tipo da variável e parametro qtprepag das
   --                          rotinas empr0001.pc_leitura_lem e pc_leitura_lem_car para 
   --                          crapepr.qtprecal para suportar a quantidade de parcelas (Carlos)
-  --
+
   --             31/10/2017 - #778578 Na rotina pc_valida_pagto_atr_parcel, ao criticar
   --                          "Valor informado para pagamento maior que valor da parcela" informar
   --                          cdcritic 1033 para o job crps750 não logar a mensagem. (Carlos)
   --             19/10/2017 - adicionado campo vliofcpl no xml de retorno da pc_obtem_dados_empresti
   --                          (Diogo - MoutS - Proj 410 - RF 41 / 42)
-  --
-  --             30/01/2018 - Padronização
-  --                         (Ana - Envolti - Ch 788828)
   ---------------------------------------------------------------------------------------------------------------
 
   /* Tratamento de erro */
@@ -1136,8 +1133,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
   /* Erro em chamadas da pc_gera_erro */
   vr_des_reto VARCHAR2(3);
   vr_tab_erro GENE0001.typ_tab_erro;
-  --Ch 788828
-  vr_cdprogra      tbgen_prglog.cdprograma%type := 'EMPR0001';
 
   /* Tipo que compreende o registro de configuração DIADOPAGTO */
   TYPE typ_reg_diadopagto IS RECORD(
@@ -1246,50 +1241,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
            AND craplot.nrdolote = pr_nrdolote;
   rw_craplot cr_craplot%ROWTYPE;
 
-  --> Grava informações para resolver erro de programa/ sistema
-  PROCEDURE pc_gera_log(pr_cdcooper      IN PLS_INTEGER           --> Cooperativa
-                       ,pr_dstiplog      IN VARCHAR2              --> Tipo Log
-                       ,pr_dscritic      IN VARCHAR2 DEFAULT NULL --> Descricao da critica
-                       ,pr_cdcriticidade IN tbgen_prglog_ocorrencia.cdcriticidade%type DEFAULT 0
-                       ,pr_cdmensagem    IN tbgen_prglog_ocorrencia.cdmensagem%type DEFAULT 0
-                       ,pr_ind_tipo_log  IN tbgen_prglog_ocorrencia.tpocorrencia%type DEFAULT 2
-                       ,pr_nmarqlog      IN tbgen_prglog.nmarqlog%type DEFAULT NULL) IS
-    -----------------------------------------------------------------------------------------------------------
-    --
-    --  Programa : pc_gera_log
-    --  Sistema  : Rotina para gravar logs em tabelas
-    --  Sigla    : CRED
-    --  Autor    : Ana Lúcia E. Volles - Envolti
-    --  Data     : Janeiro/2018           Ultima atualizacao: 30/01/2018
-    --  Chamado  : 788828
-    --
-    -- Dados referentes ao programa:
-    -- Frequencia: Rotina executada em qualquer frequencia.
-    -- Objetivo  : Controla gravação de log em tabelas.
-    --
-    -- Alteracoes:  
-    --             
-    ------------------------------------------------------------------------------------------------------------   
-    vr_idprglog           tbgen_prglog.idprglog%TYPE := 0;
-    --
-  BEGIN         
-    --> Controlar geração de log de execução dos jobs                                
-    CECRED.pc_log_programa(pr_dstiplog      => NVL(pr_dstiplog,'E'), 
-                           pr_cdcooper      => pr_cdcooper, 
-                           pr_tpocorrencia  => pr_ind_tipo_log, 
-                           pr_cdprograma    => vr_cdprogra, 
-                           pr_tpexecucao    => 2, --job
-                           pr_cdcriticidade => pr_cdcriticidade,
-                           pr_cdmensagem    => pr_cdmensagem,    
-                           pr_dsmensagem    => pr_dscritic,               
-                           pr_idprglog      => vr_idprglog,
-                           pr_nmarqlog      => pr_nmarqlog);
-  EXCEPTION
-    WHEN OTHERS THEN
-      CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
-  END pc_gera_log;
---
-
   /* Processar a rotina de leitura de pagamentos do emprestimo. */
   PROCEDURE pc_leitura_lem(pr_cdcooper   IN crapcop.cdcooper%TYPE --> Cooperativa
                           ,pr_cdprogra   IN crapprg.cdprogra%TYPE --> Código do programa corrente
@@ -1316,7 +1267,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
     --   Sistema : Conta-Corrente - Cooperativa de Credito
     --   Sigla   : CRED
     --   Autor   : Deborah/Edson
-    --   Data    : Agosto/93.                          Ultima atualizacao: 30/01/2018
+    --   Data    : Agosto/93.                          Ultima atualizacao: 13/11/2012
     --
     --   Dados referentes ao programa:
     --   Frequencia: Sempre que for chamada.
@@ -1380,12 +1331,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
     --               18/06/2012 - Alteracao na leitura da craptco (David Kruger).
     --
     --               13/11/2012 - Conversão Progress --> Oracle PLSQL (Marcos - Supero)
-    --
-    --               30/01/2018 - Padronização mensagens (crapcri, pc_gera_log (tbgen))
-    --                          - Padronização erros comandos DDL
-    --                          - Pc_set_modulo, cecred.pc_internal_exception
-    --                          - Tratamento erros others
-    --                            (Ana - Envolti - Chamado 788828)
     -- .............................................................................
     DECLARE
       -- Cursor para busca dos dados de empréstimo
@@ -1477,9 +1422,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                  ,lem.cdhistor;
       rw_craplem cr_craplem%ROWTYPE;
     BEGIN
-      -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_leitura_lem');
-
       -- Busca dos detalhes do empréstimo
       OPEN cr_crapepr(pr_cdcooper => pr_cdcooper
                      ,pr_nrdconta => pr_nrdconta
@@ -1492,13 +1434,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         CLOSE cr_crapepr;
         -- Gerar erro com critica 356
         pr_cdcritic := 356;
-        vr_des_erro := gene0001.fn_busca_critica(pr_cdcritic);
+        vr_des_erro := gene0001.fn_busca_critica(356);
         RAISE vr_exc_erro;
       ELSE
         -- Apenas fechar o cursor para continuar o processo
         CLOSE cr_crapepr;
       END IF;
-
       -- Busca flag de debito em conta da empresa
        OPEN cr_crapemp;
       FETCH cr_crapemp
@@ -1516,7 +1457,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         -- Desconsiderar o dia enviado
         pr_diapagto := 0;
       END IF;
-
       -- Inciando variaveis auxiliares ao calculo --
       -- Data do processo inicia com a data enviada
       vr_dtmvtolt := pr_rw_crapdat.dtmvtolt;
@@ -1532,7 +1472,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         -- Não há dias em atraso
         vr_nrdiacal := 0;
       END IF;
-
       -- ???
       vr_inhst093 := FALSE;
       -- Zerar juros calculados, qtdes e valor pago no mês
@@ -1958,7 +1897,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       pr_vlsdeved := pr_vlsdeved + vr_vljurmes;
       -- Se houver indicação de liquidação do empréstimo
       -- E ainda existe saldo devedor
-
       IF pr_vlsdeved > 0
          AND rw_crapepr.inliquid > 0 THEN
         -- Se estiver rodando o processo batch no programa crps078
@@ -1973,12 +1911,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
             pr_vlsdeved := 0;
           ELSE
             -- Gerar crítica
-            pr_cdcritic := 1223; --Nao foi possivel zerar o saldo
-            vr_des_erro := gene0001.fn_busca_critica(pr_cdcritic)||
-                           ' Conta:'||gene0002.fn_mask_conta(rw_crapepr.nrdconta) ||
-                           ', Contrato:' ||gene0002.fn_mask_contrato(rw_crapepr.nrctremp) ||
-                           ', Saldo:' ||TO_CHAR(pr_vlsdeved, 'B999g990d00');
-
+            vr_des_erro := 'ATENCAO: NAO FOI POSSIVEL ZERAR O SALDO - ' ||
+                           ' CONTA = ' ||
+                           gene0002.fn_mask_conta(rw_crapepr.nrdconta) ||
+                           ' CONTRATO = ' ||
+                           gene0002.fn_mask_contrato(rw_crapepr.nrctremp) ||
+                           ' SALDO = ' ||
+                           TO_CHAR(pr_vlsdeved, 'B999g990d00');
             RAISE vr_exc_erro;
           END IF;
         ELSE
@@ -1991,41 +1930,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       END IF;
       -- Copiar para a saída os juros calculados
       pr_vljurmes := vr_vljurmes;
-
-      -- Retira nome do modulo logado - 30/01/2018 - Ch 788828
-      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
     EXCEPTION
       WHEN vr_exc_erro THEN
         -- Apenas retornar a variável de saida
         pr_cdcritic := NVL(pr_cdcritic, 0);
         pr_des_erro := vr_des_erro;
-
-        --Grava tabela de log - Ch 788828
-        pc_gera_log(pr_cdcooper      => pr_cdcooper,
-                    pr_dstiplog      => 'E',
-                    pr_dscritic      => pr_des_erro,
-                    pr_cdcriticidade => 1,
-                    pr_cdmensagem    => nvl(pr_cdcritic,0),
-                    pr_ind_tipo_log  => 1);
       WHEN OTHERS THEN
-        --Gravar tabela especifica de log - 30/01/2018 - Ch 788828
-        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
-
         -- Montar mensagem com o sqlerrm pois ocorreu um erro crítico
-        pr_cdcritic := 9999;
-        pr_des_erro := gene0001.fn_busca_critica(pr_cdcritic)||'EMPR0001.pc_leitura_lem. '||sqlerrm;
-
-        --Grava tabela de log - Ch 788828
-        pc_gera_log(pr_cdcooper      => pr_cdcooper,
-                    pr_dstiplog      => 'E',
-                    pr_dscritic      => pr_des_erro,
-                    pr_cdcriticidade => 2,
-                    pr_cdmensagem    => nvl(pr_cdcritic,0),
-                    pr_ind_tipo_log  => 2);
+        pr_cdcritic := NVL(pr_cdcritic, 0);
+        pr_des_erro := 'Problemas no procedimento empr0001.pc_leitura_lem. Erro: ' ||
+                       sqlerrm;
     END;
   END pc_leitura_lem;
 
---
   /* Processar a rotina de leitura de pagamentos do emprestimo. */
   PROCEDURE pc_leitura_lem_car(pr_cdcooper   IN crapcop.cdcooper%TYPE --> Cooperativa
                               ,pr_cdprogra   IN crapprg.cdprogra%TYPE --> Código do programa corrente
@@ -2053,20 +1970,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
     --   Sistema : Conta-Corrente - Cooperativa de Credito
     --   Sigla   : CRED
     --   Autor   : Jaison Fernando
-    --   Data    : Maio/2016.                          Ultima atualizacao: 30/01/2018
+    --   Data    : Maio/2016.                          Ultima atualizacao: 
     --
     --   Dados referentes ao programa:
     --   Frequencia: Sempre que for chamada.
     --   Objetivo  : Apenas fazer overload do procedimento acima e trazer novos campos.
     --
-    --   Alteracoes: 30/01/2018 - Padronização mensagens (crapcri, pc_gera_log (tbgen))
-    --                          - Padronização erros comandos DDL
-    --                          - Pc_set_modulo, cecred.pc_internal_exception
-    --                          - Tratamento erros others
-    --                          - Criada exception vr_exc_erro_sem_log para retornar o erro
-    --                            mas não gerar log (evitar duplicidade de log)
-    --                          - Retiradas variáveis não utilizadas: vr_vlpreapg e vr_flgprepg
-    --                            (Ana - Envolti - Chamado 788828)
+    --   Alteracoes: 
+    --
     -- .............................................................................
     DECLARE
       -- Cursor para busca dos dados de empréstimo
@@ -2105,19 +2016,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;
 
       -- Tratamento de erros
-      vr_exc_erro          EXCEPTION; --exception para retornar os parâmetros gerando log
-      vr_exc_erro_sem_log  EXCEPTION; --exception para retornar os parâmetros porém sem gerar log
-      vr_cdcritic          PLS_INTEGER;
-      vr_dscritic          VARCHAR2(4000);
+      vr_exc_erro  EXCEPTION;
+      vr_cdcritic  PLS_INTEGER;
+      vr_dscritic  VARCHAR2(4000);
 
       -- Variaveis
       vr_qtmesdec crapepr.qtmesdec%TYPE := 0;
+      vr_vlpreapg crapepr.vlpreemp%TYPE := 0;
+      vr_flgprepg BOOLEAN := FALSE;
       vr_blnfound BOOLEAN;
 
     BEGIN
-      -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_leitura_lem_car');
-
       -- Verifica se a data esta cadastrada
       OPEN  BTCH0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
       FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
@@ -2128,11 +2037,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       -- Se NAO encontrar
       IF NOT vr_blnfound THEN
         vr_cdcritic := 1;
-        RAISE vr_exc_erro; --Gera log 
+        RAISE vr_exc_erro;
       END IF;
 
       -- Leitura de pagamentos de empréstimos { includes/lelem.i } 
-      empr0001.pc_leitura_lem(pr_cdcooper   => pr_cdcooper
+      EMPR0001.pc_leitura_lem(pr_cdcooper   => pr_cdcooper
                              ,pr_cdprogra   => pr_cdprogra
                              ,pr_rw_crapdat => rw_crapdat
                              ,pr_nrdconta   => pr_nrdconta
@@ -2152,10 +2061,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       -- Se a rotina retornou com erro
       IF vr_dscritic IS NOT NULL OR vr_cdcritic IS NOT NULL THEN
         -- Gerar exceção
-        RAISE vr_exc_erro_sem_log;  --Não gera log Ch 788828
+        RAISE vr_exc_erro;
       END IF;
-      -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_leitura_lem_car');
 
       -- Busca dos detalhes do empréstimo
       OPEN cr_crapepr(pr_cdcooper => pr_cdcooper
@@ -2262,9 +2169,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
 
       -- Retorna valores
       pr_qtmesdec := vr_qtmesdec;
-
-      -- Retira nome do modulo logado - 30/01/2018 - Ch 788828
-      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
     EXCEPTION
       WHEN vr_exc_erro THEN
         -- Se foi retornado apenas código
@@ -2275,46 +2179,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         -- Devolvemos código e critica encontradas
         pr_cdcritic := NVL(vr_cdcritic,0);
         pr_dscritic := vr_dscritic;
-
-        --Grava tabela de log - Ch 788828
-        pc_gera_log(pr_cdcooper      => pr_cdcooper,
-                    pr_dstiplog      => 'E',
-                    pr_dscritic      => pr_dscritic,
-                    pr_cdcriticidade => 1,
-                    pr_cdmensagem    => nvl(pr_cdcritic,0),
-                    pr_ind_tipo_log  => 1);
-
-      WHEN vr_exc_erro_sem_log THEN
-        --Ch 788828 - Essa exception não gera log porque tal log foi gerado
-        --dentro das rotinas chamadas
-        --Apenas retorna o erro no parâmetro        
-        IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
-          -- Buscar a descrição
-          vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
-        END IF;
-        -- Devolvemos código e critica encontradas
-        pr_cdcritic := NVL(vr_cdcritic,0);
-        pr_dscritic := vr_dscritic;
-
       WHEN OTHERS THEN
-        --Gravar tabela especifica de log - 30/01/2018 - Ch 788828
-        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
-
         -- Montar mensagem com o sqlerrm pois ocorreu um erro crítico
-        pr_cdcritic := 9999;
-        pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic)||'EMPR0001.pc_leitura_lem_car. '||sqlerrm;
-
-        --Grava tabela de log - Ch 788828
-        pc_gera_log(pr_cdcooper      => pr_cdcooper,
-                    pr_dstiplog      => 'E',
-                    pr_dscritic      => pr_dscritic,
-                    pr_cdcriticidade => 2,
-                    pr_cdmensagem    => nvl(pr_cdcritic,0),
-                    pr_ind_tipo_log  => 2);
-
+        pr_cdcritic := NVL(vr_cdcritic, 0);
+        pr_dscritic := 'Problemas no procedimento empr0001.pc_leitura_lem_car. Erro: ' ||
+                       sqlerrm;
     END;
   END pc_leitura_lem_car;
-  --
 
   /* Calculo de dias para pagamento de empréstimo e juros */
   PROCEDURE pc_calc_dias360(pr_ehmensal IN BOOLEAN -- Indica se juros esta rodando na mensal
@@ -2333,7 +2204,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Marcos (Supero)
-       Data    : Fevereiro/2013.                         Ultima atualizacao: 30/01/2018
+       Data    : Fevereiro/2013.                         Ultima atualizacao: 05/02/2013
     
        Dados referentes ao programa:
     
@@ -2342,12 +2213,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                    uma data de vencimento e uma data do ultimo pagamento
     
        Alteracoes: 05/02/2013 - Conversão Progress >> PLSQL (Marcos-Supero)
-
-                   30/01/2018 - Padronização mensagens (crapcri, pc_gera_log (tbgen))
-                              - Padronização erros comandos DDL
-                              - Pc_set_modulo, cecred.pc_internal_exception
-                              - Tratamento erros others
-                                (Ana - Envolti - Chamado 788828)
     ............................................................................. */
     DECLARE
       -- Variaveis auxiliares ao calculo
@@ -2357,11 +2222,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       vr_ano_dtinicio INTEGER;
       vr_mes_dtinicio INTEGER;
       vr_dia_dtinicio INTEGER;
-
     BEGIN
-      -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_calc_dias360');
-
       -- Copiar informações provenientes dos
       -- parâmetros para as variaveis locais
       /* final */
@@ -2414,31 +2275,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       pr_diafinal := vr_dia_datfinal;
       pr_mesfinal := vr_mes_datfinal;
       pr_anofinal := vr_ano_datfinal;
-
-      -- Retira nome do modulo logado - 30/01/2018 - Ch 788828
-      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
     EXCEPTION
       WHEN OTHERS THEN
-        --Gravar tabela especifica de log - 30/01/2018 - Ch 788828
-        CECRED.pc_internal_exception;
-
         pr_qtdedias := NULL;
-
-        -- Montar mensagem com o sqlerrm pois ocorreu um erro crítico
-        vr_cdcritic := 9999;
-        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'EMPR0001.pc_calc_dias360. '||sqlerrm;
-
-        --Grava tabela de log - Ch 788828
-        pc_gera_log(pr_cdcooper      => 3,
-                    pr_dstiplog      => 'E',
-                    pr_dscritic      => vr_dscritic,
-                    pr_cdcriticidade => 2,
-                    pr_cdmensagem    => nvl(vr_cdcritic,0),
-                    pr_ind_tipo_log  => 2);
-
     END;
   END pc_calc_dias360;
-  --
 
   /* Calculo de juros normais */
   PROCEDURE pc_calc_juros_normais_total(pr_vlpagpar IN NUMBER -- Valor a pagar originalmente
@@ -2452,7 +2293,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Marcos (Supero)
-       Data    : Fevereiro/2013.                         Ultima atualizacao: 30/01/2018
+       Data    : Fevereiro/2013.                         Ultima atualizacao: 28/01/2014
     
        Dados referentes ao programa:
     
@@ -2464,17 +2305,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                    28/01/2014 - Inclusão da função fn_round para utilizar somente
                                 10 casas decimais nos cálculos, da mesma forma que
                                 o progress trabalha
-
-                   30/01/2018 - Padronização mensagens (crapcri, pc_gera_log (tbgen))
-                              - Padronização erros comandos DDL
-                              - Pc_set_modulo, cecred.pc_internal_exception
-                              - Tratamento erros others
-                                (Ana - Envolti - Chamado 788828)
     ............................................................................. */
     BEGIN
-      -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_calc_juros_normais_total');
-
       -- Aplicar sobre o valor original = EXP ((1+taxa/100),(dias_juros/30))
       pr_vljinpar := apli0001.fn_round(pr_vlpagpar *
                                        apli0001.fn_round(POWER((1 +
@@ -2484,18 +2316,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                                       ,10);
       -- Retornar apenas os juros
       pr_vljinpar := pr_vljinpar - pr_vlpagpar;
-
-      -- Retira nome do modulo logado - 30/01/2018 - Ch 788828
-      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
     EXCEPTION
       WHEN OTHERS THEN
-        --Gravar tabela especifica de log - 30/01/2018 - Ch 788828
-        CECRED.pc_internal_exception;
-
         pr_vljinpar := 0;
     END;
   END pc_calc_juros_normais_total;
-  --
 
   /* Procedure para calcular valor antecipado de parcelas de empréstimo */
   PROCEDURE pc_calc_antecipa_parcela(pr_cdcooper IN crapcop.cdcooper%TYPE --> Cooperativa conectada
@@ -2517,7 +2342,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Marcos (Supero)
-       Data    : Fevereiro/2013.                         Ultima atualizacao: 30/01/2018
+       Data    : Fevereiro/2013.                         Ultima atualizacao: 05/02/2013
     
        Dados referentes ao programa:
     
@@ -2525,12 +2350,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
        Objetivo  : Calcular o valor de uma parcela paga antecipadamente
     
        Alteracoes:  05/02/2013 - Conversão Progress >> Oracle PLSQL (Marcos-Supero)
-
-                    30/01/2018 - Padronização mensagens (crapcri, pc_gera_log (tbgen))
-                               - Padronização erros comandos DDL
-                               - Pc_set_modulo, cecred.pc_internal_exception
-                               - Tratamento erros others
-                                 (Ana - Envolti - Chamado 788828)
     ............................................................................. */
     DECLARE
       -- variaveis auxiliares ao calculo
@@ -2539,14 +2358,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       vr_mesvenct INTEGER; --> Mes de vencimento
       vr_anovenct INTEGER; --> Ano de vencimento
     BEGIN
-      -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_calc_antecipa_parcela');
-
       -- Guardar dia, mes e ano separamente do vencimento
       vr_diavenct := to_char(pr_dtvencto, 'dd');
       vr_mesvenct := to_char(pr_dtvencto, 'mm');
       vr_anovenct := to_char(pr_dtvencto, 'yyyy');
-
       -- Chamar rotina para calcular a diferença de dias
       -- entre a data que deveria ter sido paga e a data paga
       empr0001.pc_calc_dias360(pr_ehmensal => FALSE -- Indica se juros esta rodando na mensal
@@ -2558,10 +2373,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                               ,pr_mesfinal => vr_mesvenct -- Mes data final
                               ,pr_anofinal => vr_anovenct -- Ano data final
                               ,pr_qtdedias => vr_ndiasant); -- Quantidade de dias calculada
-
-      -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_calc_antecipa_parcela');
-
       -- Valor atual é encontrado com a fórmula:
       -- ROUND(VALOR_PARCELA * (  EXP(1+(TAXA_MENSAL*100) , - DIAS_ADIANTAMENTO /30),2)
       pr_vlatupar := ROUND(pr_vlsdvpar *
@@ -2573,27 +2384,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
     
       -- Retorno OK
       pr_des_reto := 'OK';
-
-      -- Retira nome do modulo logado - 30/01/2018 - Ch 788828
-      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
     EXCEPTION
       WHEN OTHERS THEN
-        --Gravar tabela especifica de log - 30/01/2018 - Ch 788828
-        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
-
         -- Retorno não OK
         pr_des_reto := 'NOK';
-        vr_cdcritic := 9999;
-        vr_dscritic := gene0001.fn_busca_critica(9999)||'EMPR0001.pc_calc_antecipa_parcela. '||sqlerrm;
-
-        --Grava tabela de log - Ch 788828
-        pc_gera_log(pr_cdcooper      => pr_cdcooper,
-                    pr_dstiplog      => 'E',
-                    pr_dscritic      => vr_dscritic,
-                    pr_cdcriticidade => 2,
-                    pr_cdmensagem    => nvl(vr_cdcritic,0),
-                    pr_ind_tipo_log  => 2);
-
+        -- Montar descrição de erro não tratado
+        vr_dscritic := 'Erro não tratado na EMPR0001.pc_calc_antecipa_parcela> ' ||
+                       sqlerrm;
         -- Gerar rotina de gravação de erro avisando sobre o erro não tratavo
         gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
                              ,pr_cdagenci => pr_cdagenci
@@ -2603,9 +2400,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                              ,pr_dscritic => vr_dscritic
                              ,pr_tab_erro => pr_tab_erro);
     END;
-  END pc_calc_antecipa_parcela;
+  END;
 
---
   /* Procedure para calcular valor antecipado parcial de parcelas de empréstimo */
   PROCEDURE pc_calc_antec_parcel_parci(pr_cdcooper IN crapcop.cdcooper%TYPE --> Cooperativa conectada
                                       ,pr_dtvencto IN crappep.dtvencto%TYPE --> Data do vencimento
@@ -2623,7 +2419,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Alisson (AMcom)
-       Data    : Marco/2015.                         Ultima atualizacao: 30/01/2018
+       Data    : Marco/2015.                         Ultima atualizacao: 25/03/2015
     
        Dados referentes ao programa:
     
@@ -2631,12 +2427,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
        Objetivo  : Calcular o valor de uma parcela paga antecipadamente
     
        Alteracoes:  25/03/2015 - Conversão Progress >> Oracle PLSQL (Alisson-AMcom)
-
-                    30/01/2018 - Padronização mensagens (crapcri, pc_gera_log (tbgen))
-                               - Padronização erros comandos DDL
-                               - Pc_set_modulo, cecred.pc_internal_exception
-                               - Tratamento erros others
-                                 (Ana - Envolti - Chamado 788828)
     ............................................................................. */
     DECLARE
       -- variaveis auxiliares ao calculo
@@ -2646,9 +2436,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       vr_mesvenct INTEGER; --> Mes de vencimento
       vr_anovenct INTEGER; --> Ano de vencimento
     BEGIN
-      -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_calc_antecipa_parcel_parci');
-
       -- Guardar dia, mes e ano separamente do vencimento
       vr_diavenct := to_char(pr_dtvencto, 'dd');
       vr_mesvenct := to_char(pr_dtvencto, 'mm');
@@ -2664,10 +2451,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                               ,pr_mesfinal => vr_mesvenct -- Mes data final
                               ,pr_anofinal => vr_anovenct -- Ano data final
                               ,pr_qtdedias => vr_ndiasant); -- Quantidade de dias calculada
-
-      -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_calc_antecipa_parcel_parci');
-
       -- Valor presente é encontrado com a fórmula:
       -- ROUND(VALOR_PARCELA * (  EXP(1+(TAXA_MENSAL*100) , - DIAS_ADIANTAMENTO /30),2)
       vr_vlpresen := ROUND(pr_vlpagpar *
@@ -2678,28 +2461,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
     
       -- Retorno OK
       pr_des_reto := 'OK';
-
-      -- Retira nome do modulo logado - 30/01/2018 - Ch 788828
-      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
     EXCEPTION
       WHEN OTHERS THEN
-        --Gravar tabela especifica de log - 30/01/2018 - Ch 788828
-        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
-
         -- Retorno não OK
         pr_des_reto := 'NOK';
         -- Montar descrição de erro não tratado
-        vr_cdcritic := 9999;
-        vr_dscritic := gene0001.fn_busca_critica(9999)||'EMPR0001.pc_calc_antec_parcel_parci. '||sqlerrm;
-
-        --Grava tabela de log - Ch 788828
-        pc_gera_log(pr_cdcooper      => pr_cdcooper,
-                    pr_dstiplog      => 'E',
-                    pr_dscritic      => vr_dscritic,
-                    pr_cdcriticidade => 2,
-                    pr_cdmensagem    => nvl(vr_cdcritic,0),
-                    pr_ind_tipo_log  => 2);
-
+        vr_dscritic := 'Erro não tratado na EMPR0001.pc_calc_antec_parcel_parci. ' ||sqlerrm;
         -- Gerar rotina de gravação de erro avisando sobre o erro não tratavo
         gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
                              ,pr_cdagenci => 0
@@ -2711,7 +2478,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
     END;
   END pc_calc_antec_parcel_parci;
 
---
   /* Calculo de valor atualizado de parcelas de empréstimo em atraso */
   PROCEDURE pc_calc_atraso_parcela(pr_cdcooper IN crapcop.cdcooper%TYPE --> Cooperativa conectada
                                   ,pr_cdagenci IN crapass.cdagenci%TYPE --> Código da agência
@@ -2743,7 +2509,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Marcos (Supero)
-       Data    : Fevereiro/2013.                         Ultima atualizacao: 30/01/2018
+       Data    : Fevereiro/2013.                         Ultima atualizacao: 21/10/2016
     
        Dados referentes ao programa:
     
@@ -2767,12 +2533,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                    21/05/2015 - Ajuste para verificar se Cobra Multa. (James)
 
 				   21/10/2016 - Ajuste para utilização do cursor padrão da craptab. (Rodrigo)
-
-                   30/01/2018 - Padronização mensagens (crapcri, pc_gera_log (tbgen))
-                              - Padronização erros comandos DDL
-                              - Pc_set_modulo, cecred.pc_internal_exception
-                              - Tratamento erros others
-                                (Ana - Envolti - Chamado 788828)
     ............................................................................. */
     DECLARE
       -- Saida com erro opção 2
@@ -2849,9 +2609,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       vr_qtdiaiof NUMBER;
     
     BEGIN
-      -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_calc_atraso_parcela');
-
       -- Criar um bloco para faciliar o tratamento de erro
       BEGIN
         -- Busca dos dados do empréstimo
@@ -2864,7 +2621,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           CLOSE cr_crapepr;
           -- Gerar erro com critica 356
           vr_cdcritic := 356;
-          vr_des_erro := gene0001.fn_busca_critica(vr_cdcritic);
+          vr_des_erro := gene0001.fn_busca_critica(356);
           RAISE vr_exc_erro;
         ELSE
           -- Apenas fechar o cursor e continuar
@@ -2881,7 +2638,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           CLOSE cr_craplcr;
           -- Gerar erro
           vr_cdcritic := 55;
-          vr_des_erro := gene0001.fn_busca_critica(vr_cdcritic);
           RAISE vr_exc_erro;
         ELSE
           -- Fechar o cursor
@@ -2900,7 +2656,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           IF vr_dstextab IS NULL THEN
             -- Gerar erro com critica 55
             vr_cdcritic := 55;
-            vr_des_erro := gene0001.fn_busca_critica(vr_cdcritic);
+            vr_des_erro := gene0001.fn_busca_critica(55);
             RAISE vr_exc_erro;
           END IF;
           -- Utilizar como % de multa, as 6 primeiras posições encontradas
@@ -2908,8 +2664,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         ELSE
           vr_percmult := 0;
         END IF;       
-        -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-        GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_calc_atraso_parcela');
         
         -- Prazo para tolerancia da multa está nas três primeiras posições do campo
         vr_nrdiamta := rw_crapepr.qttolatr;
@@ -2926,14 +2680,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           -- Fechar o cursor e gerar erro
           CLOSE cr_crappep;
           -- MOntar descrição de erro
-          vr_cdcritic := 1146;  --Parcela nao encontrada
-          vr_des_erro := gene0001.fn_busca_critica(vr_cdcritic);
+          vr_dscritic := 'Parcela nao encontrada.';
           RAISE vr_exc_erro;
         ELSE
           -- Apenas fechar o cursor e continuar
           CLOSE cr_crappep;
         END IF; 
-
         -- Se ainda nao pagou nada da parcela
         IF rw_crappep.dtultpag IS NULL
            OR rw_crappep.dtultpag < rw_crappep.dtvencto THEN
@@ -2951,7 +2703,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         vr_diavtolt := to_char(pr_dtmvtolt, 'dd');
         vr_mesvtolt := to_char(pr_dtmvtolt, 'mm');
         vr_anovtolt := to_char(pr_dtmvtolt, 'yyyy');
-
         -- Calcular quantidade de dias para o saldo devedor
         empr0001.pc_calc_dias360(pr_ehmensal => FALSE -- Indica se juros esta rodando na mensal
                                 ,pr_dtdpagto => to_char(rw_crapepr.dtdpagto
@@ -2963,13 +2714,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                                 ,pr_mesfinal => vr_mesvtolt -- Mes data final
                                 ,pr_anofinal => vr_anovtolt -- Ano data final
                                 ,pr_qtdedias => vr_qtdiasld); -- Quantidade de dias calculada
-        -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-        GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_calc_atraso_parcela');
-
         -- Calcula quantos dias passaram do vencimento até o parametro par_dtmvtolt
         -- Obs: Será usado para comparar se a quantidade de dias que passou está dentro da tolerância
         vr_qtdianor := pr_dtmvtolt - rw_crappep.dtvencto;
-
         -- Se já houve pagamento
         IF rw_crappep.dtultpag IS NOT NULL OR rw_crappep.vlpagmra > 0 THEN
           /* Obter ultimo lancamento de juro do contrato */
@@ -2981,9 +2728,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
             IF rw_craplem.dtmvtolt > vr_dtmvtolt OR vr_dtmvtolt IS NULL THEN
               vr_dtmvtolt := rw_craplem.dtmvtolt;
             END IF;
+            
           END LOOP; /* END FOR rw_craplem */
+          
         END IF;
-
         -- Calcular quantidade de dias para o juros de mora desde
         -- o ultima ocorrência de juros de mora/vencimento até o par_dtmvtolt
         vr_qtdiamor := pr_dtmvtolt - vr_dtmvtolt;
@@ -3026,9 +2774,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                                               ,pr_qtdiajur => vr_qtdiasld         -- Quantidade de dias de aplicação de juros
                                               ,pr_vljinpar => pr_vljinp59);       -- Valor com os juros aplicados
         END IF;*/
-        -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-        GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_calc_atraso_parcela');
-
         -- Atualizar o valor da parcela
         pr_vlatupar := rw_crappep.vlsdvpar + pr_vljinpar;
       
@@ -3087,14 +2832,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         WHEN vr_exc_erro THEN
           -- Retorno não OK
           pr_des_reto := 'NOK';
-          --Grava tabela de log - Ch 788828
-          pc_gera_log(pr_cdcooper      => pr_cdcooper,
-                      pr_dstiplog      => 'E',
-                      pr_dscritic      => vr_des_erro,
-                      pr_cdcriticidade => 1,
-                      pr_cdmensagem    => nvl(vr_cdcritic,0),
-                      pr_ind_tipo_log  => 1);
-
           -- Gerar rotina de gravação de erro
           gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
                                ,pr_cdagenci => pr_cdagenci
@@ -3119,34 +2856,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                             ,pr_dstransa => 'Calcula atraso de parcela'
                             ,pr_dttransa => pr_dtmvtolt
                             ,pr_flgtrans => 1 --> TRUE
-                            ,pr_hrtransa => TO_NUMBER(TO_CHAR(sysdate,'SSSSS'))
+                            ,pr_hrtransa => TO_NUMBER(TO_CHAR(sysdate
+                                                             ,'SSSSS'))
                             ,pr_idseqttl => pr_idseqttl
                             ,pr_nmdatela => pr_nmdatela
                             ,pr_nrdconta => pr_nrdconta
                             ,pr_nrdrowid => vr_nrdrowid);
       END IF;
-
-      -- Retira nome do modulo logado - 30/01/2018 - Ch 788828
-      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
     EXCEPTION
       WHEN OTHERS THEN
-        --Gravar tabela especifica de log - 30/01/2018 - Ch 788828
-        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
-
         -- Retorno não OK
         pr_des_reto := 'NOK';
         -- Montar descrição de erro não tratado
-        vr_cdcritic := 9999;
-        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'EMPR0001.pc_calc_atraso_parcela. '||sqlerrm;
-
-        --Grava tabela de log - Ch 788828
-        pc_gera_log(pr_cdcooper      => pr_cdcooper,
-                    pr_dstiplog      => 'E',
-                    pr_dscritic      => vr_dscritic,
-                    pr_cdcriticidade => 2,
-                    pr_cdmensagem    => nvl(vr_cdcritic,0),
-                    pr_ind_tipo_log  => 2);
-
+        vr_dscritic := 'Erro não tratado na EMPR0001.pc_calc_atraso_parcela> ' ||
+                       sqlerrm;
         -- Gerar rotina de gravação de erro avisando sobre o erro não tratavo
         gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
                              ,pr_cdagenci => pr_cdagenci
@@ -3158,7 +2881,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
     END;
   END pc_calc_atraso_parcela;
 
---
   /* Busca dos pagamentos das parcelas de empréstimo prefixados*/
   PROCEDURE pc_busca_pgto_parcelas_prefix(pr_cdcooper      IN crapcop.cdcooper%TYPE --> Cooperativa conectada
                                          ,pr_cdagenci      IN crapass.cdagenci%TYPE --> Código da agência
@@ -3183,7 +2905,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Tiago.
-       Data    : 06/03/2012                         Ultima atualizacao: 30/01/2018
+       Data    : 06/03/2012                         Ultima atualizacao: 11/07/2017
     
        Dados referentes ao programa:
     
@@ -3222,12 +2944,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                                   emprestimo nao liberado, usada rw_crapepr e 
                                   nao rw_crawepr (Marcos-Supero)
 
-                    30/01/2018 - Padronização mensagens (crapcri, pc_gera_log (tbgen))
-                               - Padronização erros comandos DDL
-                               - Pc_set_modulo, cecred.pc_internal_exception
-                               - Tratamento erros others
-                               - Retiradas variáveis não utilizadas: vr_dtdfinal, vr_vlsdeved e vr_vlatupar
-                                 (Ana - Envolti - Chamado 788828)
     ............................................................................. */
   
     -------------------> CURSOR <--------------------
@@ -3323,6 +3039,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
              
     --------------> VARIAVEIS <----------------
     vr_exec_BUSCA exception;
+    --vr_vlatupar   NUMBER(11,2) := 0;
     vr_vlatupar NUMBER := 0;
     vr_vlsderel NUMBER := 0;
     vr_qtdianor NUMBER := 0;
@@ -3336,6 +3053,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
     vr_vlsdeved NUMBER := 0;
     vr_vlprepag NUMBER := 0;
     vr_dtmvtolt DATE;
+    vr_dtdfinal DATE;
     vr_diafinal VARCHAR2(2); -- Dia data final
     vr_mesfinal VARCHAR2(2); -- Mes data final
     vr_anofinal VARCHAR2(4); -- Ano data final
@@ -3357,8 +3075,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
   BEGIN
 
     BEGIN
-      -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_busca_pagto_parc_prefix');
       -- Busca Cadastro de Linhas de Credito
       OPEN cr_craplcr(pr_cdcooper => pr_cdcooper
                      ,pr_cdlcremp => pr_cdlcremp);
@@ -3367,7 +3083,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
     
       IF cr_craplcr%notfound THEN
         vr_cdcritic := 363;
-        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
         CLOSE cr_craplcr;
         raise vr_exec_BUSCA;
       END IF;
@@ -3386,11 +3101,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         IF vr_dstextab IS NULL THEN
           -- Gerar erro com critica 55
           vr_cdcritic := 55;
-          vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+          vr_des_erro := gene0001.fn_busca_critica(55);
           RAISE vr_exc_erro;
         END IF;
-        -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-        GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_busca_pagto_parc_prefix');
         
         -- Utilizar como % de multa, as 6 primeiras posições encontradas
         vr_percmult := gene0002.fn_char_para_number(SUBSTR(vr_dstextab,1,6));
@@ -3412,7 +3125,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       -- Se não encotrou, incluir critica e sair do controle
       IF cr_crawepr%NOTFOUND THEN
         vr_cdcritic := 535;
-        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
         close cr_crawepr;
         raise vr_exec_BUSCA;
       END IF;
@@ -3463,9 +3175,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                                   ,pr_anofinal => vr_anofinal -- Ano data final
                                   ,pr_qtdedias => vr_qtdedias); -- Quantidade de
         
-          -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-          GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_busca_pagto_parc_prefix');
-        
           /* Calcula quantos dias passaram do vencimento até o parametro par_dtmvtolt será usado para comparar se a quantidade de
           dias que passou está dentro da tolerância */
           vr_qtdianor := pr_dtmvtolt - rw_crappep.dtvencto;
@@ -3510,9 +3219,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           vr_vlpreapg := apli0001.fn_round(nvl(vr_vlpreapg, 0) +
                                            nvl(vr_vlatupar, 0)
                                           ,2);
-          -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-          GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_busca_pagto_parc_prefix');
-         
          
          /* Projeto 410 - valor base para IOF:
              Valor da Parcela /((1+ tx mensal)^(qt parcelas - parcela atual))) */             
@@ -3537,8 +3243,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                            (nvl(rw_crappep.vlsdvsji, 0) *
                            nvl(vr_txdiaria, 0) * nvl(vr_qtdiamor, 0));
                            
-            -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-            GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_busca_pagto_parc_prefix');
           END IF;
         
              TIOF0001.pc_calcula_valor_iof_epr(pr_cdcooper => pr_cdcooper
@@ -3578,9 +3282,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                                   ,pr_anofinal => vr_anofinal -- Ano data final
                                   ,pr_qtdedias => vr_qtdedias); -- Quantidade de
         
-          -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-          GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_busca_pagto_parc_prefix');
-
           -- acrescentar as taxas conforme a qtd de meses
           vr_vlatupar := apli0001.fn_round(rw_crappep.vlsdvpar *
                                            POWER((1 +
@@ -3588,9 +3289,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                                                 ,(nvl(vr_qtdedias, 0) / 30) * -1)
                                           ,2);
         
-          -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-          GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_busca_pagto_parc_prefix');
-
           /* Valor a vencer dentro do mes */
           IF ((to_char(rw_crappep.dtvencto, 'MM') =
              to_char(pr_dtmvtolt, 'MM')) AND
@@ -3610,9 +3308,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       
       END LOOP; /* Fim loop crappep */
     
-      -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_busca_pagto_parc_prefix');
-
       /* Total pago no mes */
       FOR rw_craplem IN cr_craplem(pr_cdcooper => pr_cdcooper
                                   ,pr_nrdconta => pr_nrdconta
@@ -3640,13 +3335,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       vr_flgtrans := TRUE;
     EXCEPTION
       WHEN vr_exec_busca THEN
-        --Grava tabela de log - Ch 788828
-        pc_gera_log(pr_cdcooper      => pr_cdcooper,
-                    pr_dstiplog      => 'E',
-                    pr_dscritic      => vr_dscritic,
-                    pr_cdcriticidade => 1,
-                    pr_cdmensagem    => nvl(vr_cdcritic,0),
-                    pr_ind_tipo_log  => 1);
+        NULL;
     END; /* END BUSCA */
   
     IF NOT vr_flgtrans THEN
@@ -3675,36 +3364,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
     pr_tab_calculado(1).vlprvenc := vr_vlprvenc;
     pr_tab_calculado(1).vlpraven := vr_vlpraven;
   
-    -- Retira nome do modulo logado - 30/01/2018 - Ch 788828
-    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
   EXCEPTION
+  
     WHEN OTHERS THEN
-      --Gravar tabela especifica de log - 30/01/2018 - Ch 788828
-      CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
-
       -- Retorno não OK
       pr_des_reto := 'NOK';
-      vr_cdcritic := 9999;
-      vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'EMPR0001.pc_busca_pgto_parcelas_prefix. '||sqlerrm;
-
-      --Grava tabela de log - Ch 788828
-      pc_gera_log(pr_cdcooper      => pr_cdcooper,
-                  pr_dstiplog      => 'E',
-                  pr_dscritic      => vr_dscritic,
-                  pr_cdcriticidade => 2,
-                  pr_cdmensagem    => nvl(vr_cdcritic,0),
-                  pr_ind_tipo_log  => 2);
-
+      -- Montar descrição de erro não tratado
+      vr_dscritic := 'Erro não tratado na EMPR0001.pc_busca_pgto_parcelas_prefix> ' ||
+                     sqlerrm;
       -- Gerar rotina de gravação de erro avisando sobre o erro não tratavo
       gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
                            ,pr_cdagenci => pr_cdagenci
                            ,pr_nrdcaixa => pr_nrdcaixa
                            ,pr_nrsequen => 1 --> Fixo
-                           ,pr_cdcritic => vr_cdcritic
+                           ,pr_cdcritic => 0
                            ,pr_dscritic => vr_dscritic
                            ,pr_tab_erro => pr_tab_erro);
   END pc_busca_pgto_parcelas_prefix;
---
+
   /* Busca dos pagamentos das parcelas de empréstimo */
   PROCEDURE pc_busca_pgto_parcelas(pr_cdcooper        IN crapcop.cdcooper%TYPE --> Cooperativa conectada
                                   ,pr_cdagenci        IN crapass.cdagenci%TYPE --> Código da agência
@@ -3730,7 +3407,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Edson
-       Data    : Junho/2004.                         Ultima atualizacao: 30/01/2018
+       Data    : Junho/2004.                         Ultima atualizacao: 08/10/2015
     
        Dados referentes ao programa:
     
@@ -3752,12 +3429,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                     08/04/2015 - Ajuste para verificar os historicos de emprestimo e financiamento.(James)
                     
                     08/10/2015 - Diminuir o valor estorno no mes do valor pago no mes. (Oscar)
-
-                    30/01/2018 - Padronização mensagens (crapcri, pc_gera_log (tbgen))
-                               - Padronização erros comandos DDL
-                               - Pc_set_modulo, cecred.pc_internal_exception
-                               - Tratamento erros others
-                                 (Ana - Envolti - Chamado 788828)
     ............................................................................. */
     DECLARE
       -- Saida com erro opção 2
@@ -3861,9 +3532,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       rw_craplem cr_craplem%ROWTYPE;
       
     BEGIN
-      -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_busca_pagto_parcelas');
-
       --Limpar Tabelas Memoria
       pr_tab_erro.DELETE;
       pr_tab_pgto_parcel.DELETE;
@@ -3878,14 +3546,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         IF cr_crapepr%NOTFOUND THEN
           -- Fechar o cursor e gerar critica
           CLOSE cr_crapepr;
-          vr_cdcritic := 356; --contrato de emprestimo nao encontrado
-          vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+          vr_cdcritic := 356;
           RAISE vr_exc_erro;
         ELSE
           -- fechar o cursor e continuar o processo
           CLOSE cr_crapepr;
         END IF;
-
         -- Busca dados complementares do empréstimo
         OPEN cr_crawepr;
         FETCH cr_crawepr
@@ -3894,8 +3560,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         IF cr_crawepr%NOTFOUND THEN
           -- Fechar o cursor e gerar critica
           CLOSE cr_crawepr;
-          vr_cdcritic := 535; --Proposta nao encontrada
-          vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+          vr_cdcritic := 535;
           RAISE vr_exc_erro;
         ELSE
           -- fechar o cursor e continuar o processo
@@ -3905,7 +3570,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         -- Buscar todas as parcelas de pagamento
         -- do empréstimo e seus valores
         FOR rw_crappep IN cr_crappep LOOP
-
           -- Criar um novo indice para a temp-table
           vr_ind_pag := pr_tab_pgto_parcel.COUNT() + 1;
           -- Copiar as informações da tabela para a temp-table
@@ -3988,10 +3652,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
               -- Levantar exceção 2, onde já temos o erro na vr_tab_erro
               RAISE vr_exc_erro_2;
             END IF;
-
-            -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-            GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_busca_pagto_parcelas');
-
             -- Acumular o valor a regularizar
             vr_vlpreapg := vr_vlpreapg + pr_tab_pgto_parcel(vr_ind_pag)
                           .vlatupar;
@@ -4021,10 +3681,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
               -- Levantar exceção 2, onde já temos o erro na vr_tab_erro
               RAISE vr_exc_erro_2;
             END IF;
-
-            -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-            GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_busca_pagto_parcelas');
-
             -- Iniciar valor da flag
             pr_tab_pgto_parcel(vr_ind_pag).flgantec := TRUE;
             -- Guardar quantidades calculadas
@@ -4035,7 +3691,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
             /* Se liberado */
             -- Saldo devedor
             pr_tab_pgto_parcel(vr_ind_pag).vlsdvpar := rw_crappep.vlsdvpar;
-            -- Valor atual da parcela mais multa mais juros de mora
+           
             pr_tab_pgto_parcel(vr_ind_pag).vlatrpag := NVL(pr_tab_pgto_parcel(vr_ind_pag)
                                                            .vlatupar
                                                           ,0) +
@@ -4113,15 +3769,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         WHEN vr_exc_erro THEN
           -- Retorno não OK
           pr_des_reto := 'NOK';
-
-          --Grava tabela de log - Ch 788828
-          pc_gera_log(pr_cdcooper      => pr_cdcooper,
-                      pr_dstiplog      => 'E',
-                      pr_dscritic      => vr_dscritic,
-                      pr_cdcriticidade => 1,
-                      pr_cdmensagem    => nvl(vr_cdcritic,0),
-                      pr_ind_tipo_log  => 1);
-
           -- Gerar rotina de gravação de erro
           gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
                                ,pr_cdagenci => pr_cdagenci
@@ -4136,7 +3783,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           -- Copiar tabela de erro temporária para saída da rotina
           pr_tab_erro := vr_tab_erro;
       END;
-
       -- Se foi solicitado o envio de LOG
       IF pr_flgerlog = 'S' THEN
         -- Gerar LOG de envio do e-mail
@@ -4154,28 +3800,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                             ,pr_nrdconta => pr_nrdconta
                             ,pr_nrdrowid => vr_nrdrowid);
       END IF;
-
-      -- Retira nome do modulo logado - 30/01/2018 - Ch 788828
-      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
     EXCEPTION
       WHEN OTHERS THEN
-        --Gravar tabela especifica de log - 30/01/2018 - Ch 788828
-        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
-
         -- Retorno não OK
         pr_des_reto := 'NOK';
-        vr_cdcritic := 9999;
-        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'EMPR0001.pc_busca_pgto_parcelas. '||sqlerrm;
-
-        --Grava tabela de log - Ch 788828
-        pc_gera_log(pr_cdcooper      => pr_cdcooper,
-                    pr_dstiplog      => 'E',
-                    pr_dscritic      => vr_dscritic,
-                    pr_cdcriticidade => 2,
-                    pr_cdmensagem    => nvl(vr_cdcritic,0),
-                    pr_ind_tipo_log  => 2);
-
-
+        -- Montar descrição de erro não tratado
+        vr_dscritic := 'Erro não tratado na EMPR0001.pc_busca_pgto_parcelas> ' ||
+                       sqlerrm;
         -- Gerar rotina de gravação de erro avisando sobre o erro não tratavo
         gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
                              ,pr_cdagenci => pr_cdagenci
@@ -4186,7 +3817,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                              ,pr_tab_erro => pr_tab_erro);
     END;
   END pc_busca_pgto_parcelas;
---
+
   /* Buscar a configuração de empréstimo cfme a empresa da conta */
   PROCEDURE pc_config_empresti_empresa(pr_cdcooper IN crapcop.cdcooper%TYPE --> Código da Cooperativa
                                       ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE --> Data corrente
@@ -4205,7 +3836,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Marcos (Supero)
-       Data    : Fevereiro/2013.                    Ultima atualizacao: 30/01/2018
+       Data    : Fevereiro/2013.                    Ultima atualizacao: 21/10/2016
     
        Dados referentes ao programa:
     
@@ -4230,12 +3861,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
 
 				   21/10/2016 - Ajuste para utilização do cursor padrão da craptab e
                                 carga da temp-table completa apenas no batch. (Rodrigo)
-
-                   30/01/2018 - Padronização mensagens (crapcri, pc_gera_log (tbgen))
-                              - Padronização erros comandos DDL
-                              - Pc_set_modulo, cecred.pc_internal_exception
-                              - Tratamento erros others
-                                (Ana - Envolti - Chamado 788828)
     ............................................................................. */
     DECLARE
       -- Busca dos dados do associado
@@ -4267,9 +3892,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       -- Cursor generico de calendario
       rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;
     BEGIN 
-      -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_config_empresti_empresa');
-
       -- Busca dos dados do associado
       OPEN cr_crapass;
       FETCH cr_crapass
@@ -4280,7 +3902,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         CLOSE cr_crapass;
         -- Gerar erro com critica 9
         pr_cdcritic := 9;
-        vr_des_erro := gene0001.fn_busca_critica(pr_cdcritic);
+        vr_des_erro := gene0001.fn_busca_critica(9);
         RAISE vr_exc_erro;
       ELSE
         -- Fechar o cursor para continuar os testes
@@ -4364,7 +3986,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       IF NOT vr_tab_diadopagto.EXISTS(vr_nrindice) THEN
         -- Gerar erro com critica 55
         pr_cdcritic := 55;
-        vr_des_erro := gene0001.fn_busca_critica(pr_cdcritic);
+        vr_des_erro := gene0001.fn_busca_critica(55);
         RAISE vr_exc_erro;
       END IF;
       
@@ -4373,13 +3995,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
          vr_tab_diadopagto(vr_nrindice).diapgtom = 0 OR
          vr_tab_diadopagto(vr_nrindice).ddmesnov = 0 THEN
          -- Gerar erro com critica
-         pr_cdcritic := 1159; --Fata de dados no cadastro da empresa
-         vr_des_erro := gene0001.fn_busca_critica(pr_cdcritic)||
-                         to_char(vr_cdempres) ||
-                         ', Conta: ' || to_char(pr_nrdconta) || '. ' ||
-                         '(Dia Pagamento -> Horista:' || vr_tab_diadopagto(vr_nrindice).diapgtoh ||
-                          ', Mensalista:' || vr_tab_diadopagto(vr_nrindice).diapgtom ||
-                          ', Mês Novo:' || vr_tab_diadopagto(vr_nrindice).ddmesnov || ')';
+         pr_cdcritic := 0;
+         vr_des_erro := 'Falta de dados no cadastro da empresa ' || 
+                         to_char(vr_cdempres) || '.' ||
+                         ' Conta: ' || to_char(pr_nrdconta) || '. ' ||
+                         '(' || vr_tab_diadopagto(vr_nrindice).diapgtoh || ','
+                             || vr_tab_diadopagto(vr_nrindice).diapgtom || ','
+                             || vr_tab_diadopagto(vr_nrindice).ddmesnov || ')';
          RAISE vr_exc_erro;
       END IF; 
       
@@ -4400,7 +4022,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         -- Não é descontado em folha
         pr_flgfolha := FALSE;
       END IF;
-
       -- Retornar indicador de configuração para mês novo
       pr_ddmesnov := vr_tab_diadopagto(vr_nrindice).ddmesnov;
       -- Montar a data de pagamento cfme o dia encontrado e o mês e ano correntes
@@ -4411,41 +4032,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       pr_dtcalcul := gene0005.fn_valida_dia_util(pr_cdcooper, pr_dtcalcul);
       -- Guardar agora o dia util do pagamento
       pr_diapagto := to_char(pr_dtcalcul, 'dd');
-
-      -- Retira nome do modulo logado - 30/01/2018 - Ch 788828
-      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
     EXCEPTION
       WHEN vr_exc_erro THEN
         -- Apenas retornar a variável de saida
         pr_cdcritic := NVL(pr_cdcritic, 0);
         pr_des_erro := vr_des_erro;
-
-        --Grava tabela de log - Ch 788828
-        pc_gera_log(pr_cdcooper      => pr_cdcooper,
-                    pr_dstiplog      => 'E',
-                    pr_dscritic      => pr_des_erro,
-                    pr_cdcriticidade => 1,
-                    pr_cdmensagem    => nvl(pr_cdcritic,0),
-                    pr_ind_tipo_log  => 1);
-
       WHEN OTHERS THEN
-        --Gravar tabela especifica de log - 30/01/2018 - Ch 788828
-        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
-
         -- Montar mensagem com o sqlerrm pois ocorreu um erro crítico
-        pr_cdcritic := 9999;
-        pr_des_erro := gene0001.fn_busca_critica(pr_cdcritic)||'EMPR0001.pc_config_empresti_empresa. '||sqlerrm;
-
-        --Grava tabela de log - Ch 788828
-        pc_gera_log(pr_cdcooper      => pr_cdcooper,
-                    pr_dstiplog      => 'E',
-                    pr_dscritic      => pr_des_erro,
-                    pr_cdcriticidade => 2,
-                    pr_cdmensagem    => nvl(pr_cdcritic,0),
-                    pr_ind_tipo_log  => 2);
+        pr_cdcritic := NVL(pr_cdcritic, 0);
+        pr_des_erro := 'Erro na rotina empr0001.pc_config_empresti_empresa --> Detalhes: ' ||
+                       sqlerrm;
     END;
   END pc_config_empresti_empresa;
---
+
   /* Calculo de saldo devedor em emprestimos baseado na includes/lelem.i. */
   PROCEDURE pc_calc_saldo_deved_epr_lem(pr_cdcooper   IN crapcop.cdcooper%TYPE --> Cooperativa conectada
                                        ,pr_cdprogra   IN crapprg.cdprogra%TYPE --> Código do programa corrente
@@ -4479,7 +4078,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
     /* .............................................................................
        Programa: pc_calc_saldo_deved_epr_lem (antigo sistema/generico/includes/b1wgen0002.i )
        Autora  : Mirtes.
-       Data    : 14/09/2005                        Ultima atualizacao: 30/01/2018
+       Data    : 14/09/2005                        Ultima atualizacao: 26/07/2017
     
        Dados referentes ao programa:
     
@@ -4517,11 +4116,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
 
                    26/07/2017 - Inclusao do produto Pos-Fixado. (Jaison/James - PRJ298)
 
-                   30/01/2018 - Padronização mensagens (crapcri, pc_gera_log (tbgen))
-                              - Padronização erros comandos DDL
-                              - Pc_set_modulo, cecred.pc_internal_exception
-                              - Tratamento erros others
-                                (Ana - Envolti - Chamado 788828)
     ............................................................................. */
     DECLARE
       -- Busca dados específicos do empréstimo para a rotina
@@ -4659,9 +4253,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       vr_nrdiaprx INTEGER; --> Número de dias para o cálculo no próximo mês
       vr_exc_erro2 EXCEPTION; --> Exception especifica quando já existe erro na tab_erro
     BEGIN
-      -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_calc_saldo_deved_epr_lem');
-
       -- Busca dados específicos do empréstimo para a rotina
       OPEN cr_crapepr;
       FETCH cr_crapepr
@@ -4672,7 +4263,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         CLOSE cr_crapepr;
         -- Gerar erro com critica 356
         vr_cdcritic := 356;
-        vr_des_erro := gene0001.fn_busca_critica(vr_cdcritic);
+        vr_des_erro := gene0001.fn_busca_critica(356);
         RAISE vr_exc_erro;
       ELSE
         -- Apenas fechar o cursor para continuar o processo
@@ -4682,7 +4273,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       IF rw_crapepr.tpemprst = 1 THEN
       
         /* Busca dos pagamentos das parcelas de empréstimo pre-fixados*/
-        empr0001.pc_busca_pgto_parcelas_prefix(pr_cdcooper      => pr_cdcooper --> Cooperativa conectada
+        EMPR0001.pc_busca_pgto_parcelas_prefix(pr_cdcooper      => pr_cdcooper --> Cooperativa conectada
                                               ,pr_cdagenci      => pr_cdagenci --> Código da agência
                                               ,pr_nrdcaixa      => pr_nrdcaixa --> Número do caixa
                                               ,pr_nrdconta      => pr_nrdconta --> Número da conta
@@ -4704,7 +4295,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           -- Gerar exceção
           RAISE vr_exc_erro2;
         END IF;
-        
         -- Copiar os valores da rotina para as variaveis de saída
         pr_vlsdeved := vr_tab_calculado(vr_tab_calculado.FIRST).vlsdeved;
         pr_qtprecal := vr_tab_calculado(vr_tab_calculado.FIRST).qtprecal;
@@ -5217,11 +4807,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
               pr_vlsdeved := 0;
             ELSE
               -- Gerar crítica
-              vr_cdcritic := 1223;
-              vr_des_erro := gene0001.fn_busca_critica(vr_cdcritic) ||
-                             ' Conta:' ||gene0002.fn_mask_conta(pr_nrdconta) ||
-                             ', Contrato:' ||gene0002.fn_mask_contrato(pr_nrctremp) ||
-                             ', Saldo:' ||TO_CHAR(pr_vlsdeved, 'B999g990d00');
+              vr_dscritic := 'ATENCAO: NAO FOI POSSIVEL ZERAR O SALDO - ' ||
+                             ' CONTA = ' ||
+                             gene0002.fn_mask_conta(pr_nrdconta) ||
+                             ' CONTRATO = ' ||
+                             gene0002.fn_mask_contrato(pr_nrctremp) ||
+                             ' SALDO = ' ||
+                             TO_CHAR(pr_vlsdeved, 'B999g990d00');
               RAISE vr_exc_erro;
             END IF;
           ELSE
@@ -5237,29 +4829,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       END IF;
       -- Retorno OK
       pr_des_reto := 'OK';
-
-      -- Retira nome do modulo logado - 30/01/2018 - Ch 788828
-      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
     EXCEPTION
       WHEN vr_exc_erro THEN
         -- Retorno não OK
         pr_des_reto := 'NOK';
-
-        --Grava tabela de log - Ch 788828
-        pc_gera_log(pr_cdcooper      => pr_cdcooper,
-                    pr_dstiplog      => 'E',
-                    pr_dscritic      => vr_des_erro,
-                    pr_cdcriticidade => 1,
-                    pr_cdmensagem    => nvl(vr_cdcritic,0),
-                    pr_ind_tipo_log  => 1);
-
         -- Gerar rotina de gravação de erro
         gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
                              ,pr_cdagenci => pr_cdagenci
                              ,pr_nrdcaixa => pr_nrdcaixa
                              ,pr_nrsequen => 1 --> Fixo
                              ,pr_cdcritic => vr_cdcritic
-                             ,pr_dscritic => vr_des_erro
+                             ,pr_dscritic => vr_dscritic
                              ,pr_tab_erro => pr_tab_erro);
       WHEN vr_exc_erro2 THEN
         -- Retorno não OK
@@ -5267,23 +4847,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         -- Copiar o erro já existente na variavel para
         pr_tab_erro := vr_tab_erro;
       WHEN OTHERS THEN
-        --Gravar tabela especifica de log - 30/01/2018 - Ch 788828
-        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
-
         -- Retorno não OK
         pr_des_reto := 'NOK';
         -- Montar descrição de erro não tratado
-        vr_cdcritic := 9999;
-        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'EMPR0001.pc_calc_saldo_deved_epr_lem. '||sqlerrm;
-
-        --Grava tabela de log - Ch 788828
-        pc_gera_log(pr_cdcooper      => pr_cdcooper,
-                    pr_dstiplog      => 'E',
-                    pr_dscritic      => vr_dscritic,
-                    pr_cdcriticidade => 2,
-                    pr_cdmensagem    => nvl(vr_cdcritic,0),
-                    pr_ind_tipo_log  => 2);
-
+        vr_dscritic := 'Erro não tratado na EMPR0001.pc_calc_saldo_deved_epr_lem> ' ||
+                       sqlerrm;
         -- Gerar rotina de gravação de erro avisando sobre o erro não tratavo
         gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
                              ,pr_cdagenci => pr_cdagenci
@@ -5294,7 +4862,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                              ,pr_tab_erro => pr_tab_erro);
     END;
   END pc_calc_saldo_deved_epr_lem;
---
+
   /* Procedure para obter dados de emprestimos do associado */
   PROCEDURE pc_obtem_dados_empresti(pr_cdcooper       IN crapcop.cdcooper%TYPE --> Cooperativa conectada
                                    ,pr_cdagenci       IN crapass.cdagenci%TYPE --> Código da agência
@@ -5328,7 +4896,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Marcos (Supero)
-       Data    : Abril/2013.                         Ultima atualizacao: 30/01/2018
+       Data    : Abril/2013.                         Ultima atualizacao: 21/12/2017
     
        Dados referentes ao programa:
     
@@ -5398,11 +4966,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                                  é adicionado na tabela de memória são concatenados três caracteres
                                  (" - ") que acabam estourando o tamanho do campo.
                                  (Douglas - Chamado 819534)
-                    30/01/2018 - Padronização mensagens (crapcri, pc_gera_log (tbgen))
-                               - Padronização erros comandos DDL
-                               - Pc_set_modulo, cecred.pc_internal_exception
-                               - Tratamento erros others
-                                 (Ana - Envolti - Chamado 788828)
     ............................................................................. */
     DECLARE
       -- Busca do nome do associado
@@ -5754,10 +5317,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       vr_err_efet PLS_INTEGER;    
       vr_portabilidade VARCHAR2(500);
       
+    
     BEGIN
-      -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_obtem_dados_empresti');
-
       -- Buscar a configuração de empréstimo cfme a empresa da conta
       pc_config_empresti_empresa(pr_cdcooper => pr_cdcooper --> Código da Cooperativa
                                 ,pr_dtmvtolt => pr_rw_crapdat.dtmvtolt --> Data atual
@@ -5806,8 +5367,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       -- Se encontrar
       IF vr_dstextab IS NULL THEN
         -- Gerar erro
-        vr_cdcritic := 1160; --Informacoes nao encontradas
-        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+        vr_cdcritic := 0;
+        vr_dscritic := 'Informacoes nao encontradas.';
       END IF;
     
       vr_nrregist := pr_nrregist;
@@ -5815,6 +5376,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       -- Busca dos dados do emprestimo passado ou de todos os emprestimos da conta quando nrctremp = 0
       FOR rw_crapepr IN cr_crapepr LOOP
         BEGIN
+          
+          
           -- Buscar descrição da linha de crédito
           OPEN cr_craplcr(pr_cdlcremp => rw_crapepr.cdlcremp);
           FETCH cr_craplcr
@@ -5824,7 +5387,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
             -- Fechar o cursor e gerar erro
             CLOSE cr_craplcr;
             vr_cdcritic := 363;
-            vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
             RAISE vr_exc_erro;
           ELSE
             -- Apenas fechar o cursor e continuar
@@ -6152,6 +5714,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           
           END IF;
           
+          
+          
           -- Apenas para origem web e que venha com parametros de paginacao
           IF pr_idorigem = 5
              AND pr_nriniseq <> 0
@@ -6234,10 +5798,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           pr_tab_dados_epr(vr_indadepr).dtcarenc := rw_crawepr.dtcarenc;
           pr_tab_dados_epr(vr_indadepr).nrdiacar := rw_crawepr.dtdpagto - rw_crapepr.dtmvtolt;
           pr_tab_dados_epr(vr_indadepr).qttolatr := rw_crapepr.qttolatr;
-          pr_tab_dados_epr(vr_indadepr).vlttmupr := nvl(rw_crapepr.vlttmupr,0);
-          pr_tab_dados_epr(vr_indadepr).vlttjmpr := nvl(rw_crapepr.vlttjmpr,0);
-          pr_tab_dados_epr(vr_indadepr).vlpgmupr := nvl(rw_crapepr.vlpgmupr,0);
-          pr_tab_dados_epr(vr_indadepr).vlpgjmpr := nvl(rw_crapepr.vlpgjmpr,0);
+
+          pr_tab_dados_epr(vr_indadepr).vlttmupr := nvl(rw_crapepr.vlttmupr
+                                                       ,0);
+          pr_tab_dados_epr(vr_indadepr).vlttjmpr := nvl(rw_crapepr.vlttjmpr
+                                                       ,0);
+          pr_tab_dados_epr(vr_indadepr).vlpgmupr := nvl(rw_crapepr.vlpgmupr
+                                                       ,0);
+          pr_tab_dados_epr(vr_indadepr).vlpgjmpr := nvl(rw_crapepr.vlpgjmpr
+                                                       ,0);
 
           -- Para Pre-Fixada
           IF rw_crapepr.tpemprst = 1 THEN
@@ -6637,9 +6206,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       END IF;
       -- Retorno OK
       pr_des_reto := 'OK';
-
-      -- Retira nome do modulo logado - 30/01/2018 - Ch 788828
-      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
     EXCEPTION
       WHEN vr_exc_erro THEN
         -- Retorno não OK
@@ -6680,7 +6246,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           -- Gerar LOG
           gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper
                               ,pr_cdoperad => pr_cdoperad
-                              ,pr_dscritic => vr_tab_erro(vr_tab_erro.FIRST).dscritic
+                              ,pr_dscritic => vr_tab_erro(vr_tab_erro.FIRST)
+                                              .dscritic
                               ,pr_dsorigem => gene0001.vr_vet_des_origens(pr_idorigem) --> Origem enviada
                               ,pr_dstransa => 'Obter dados dos emprestimos do associado'
                               ,pr_dttransa => pr_rw_crapdat.dtmvtolt
@@ -6693,9 +6260,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         
         END IF;
       WHEN OTHERS THEN
-        --Gravar tabela especifica de log - 30/01/2018 - Ch 788828
-        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
-
         -- Retorno não OK
         pr_des_reto := 'NOK';
         
@@ -6708,17 +6272,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         END IF;  
 
         -- Montar descrição de erro não tratado
-        vr_cdcritic := 9999;
-        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'EMPR0001.pc_obtem_dados_empresti. '||sqlerrm;
+        vr_dscritic := 'Erro não tratado na EMPR0001.pc_obtem_dados_empresti --> ' ||
+                       vr_dscritic || ' -- SQLERRM: ' || SQLERRM;
                        
-        --Grava tabela de log - Ch 788828
-        pc_gera_log(pr_cdcooper      => pr_cdcooper,
-                    pr_dstiplog      => 'E',
-                    pr_dscritic      => vr_dscritic,
-                    pr_cdcriticidade => 2,
-                    pr_cdmensagem    => nvl(vr_cdcritic,0),
-                    pr_ind_tipo_log  => 2);
+        -- Remover as ASPAS que quebram o texto
+        vr_dscritic:= replace(vr_dscritic,'"', '');
+        vr_dscritic:= replace(vr_dscritic,'''','');
+        -- Remover as quebras de linha
+        vr_dscritic:= replace(vr_dscritic,chr(10),'');
+        vr_dscritic:= replace(vr_dscritic,chr(13),'');
       
+        
         -- Gerar rotina de gravação de erro avisando sobre o erro não tratavo
         gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
                              ,pr_cdagenci => pr_cdagenci
@@ -6746,7 +6310,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         END IF;
     END;
   END pc_obtem_dados_empresti;
---  
+  
   /* Procedure para obter dados de emprestimos do associado - Chamada AyllosWeb */
   PROCEDURE pc_obtem_dados_empresti_web(  pr_nrdconta       IN crapass.nrdconta%TYPE    --> Conta do associado
                                          ,pr_idseqttl       IN crapttl.idseqttl%TYPE    --> Sequencia de titularidade da conta
@@ -6771,7 +6335,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Odirlei Busana (AMcom)
-       Data    : Agosto/2015.                         Ultima atualizacao: 30/01/2018
+       Data    : Agosto/2015.                         Ultima atualizacao: 23/06/2017
 
        Dados referentes ao programa:
 
@@ -6784,11 +6348,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
 
                    23/06/2017 - Inclusao dos campos do produto Pos-Fixado. (Jaison/James - PRJ298)
 
-                   30/01/2018 - Padronização mensagens (crapcri, pc_gera_log (tbgen))
-                              - Padronização erros comandos DDL
-                              - Pc_set_modulo, cecred.pc_internal_exception
-                              - Tratamento erros others
-                                (Ana - Envolti - Chamado 788828)
     ............................................................................. */
 
     -------------------------- VARIAVEIS ----------------------
@@ -6839,8 +6398,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
     END;
 
   BEGIN
-    -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_obtem_dados_empresti_web');
 
     gene0004.pc_extrai_dados(pr_xml      => pr_retxml
                             ,pr_cdcooper => vr_cdcooper
@@ -6951,11 +6508,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         vr_dscritic := vr_tab_erro(vr_tab_erro.first).dscritic;
         vr_cdcritic := vr_tab_erro(vr_tab_erro.first).cdcritic;
       ELSE
-        vr_cdcritic := 1161; --Não foi possivel obter dados de emprestimos
+        vr_dscritic := 'Não foi possivel obter dados de emprestimos.';
       END IF;
       RAISE vr_exc_erro;
       
     END IF;
+
 
     -- Inicializar o CLOB
     vr_des_xml := NULL;
@@ -7091,8 +6649,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
     dbms_lob.close(vr_des_xml);
     dbms_lob.freetemporary(vr_des_xml);
 
-    -- Retira nome do modulo logado - 30/01/2018 - Ch 788828
-    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
   EXCEPTION
     WHEN vr_exc_erro THEN
       -- Se foi retornado apenas código
@@ -7103,34 +6659,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       --Variavel de erro recebe erro ocorrido
       pr_cdcritic := nvl(vr_cdcritic,0);
       pr_dscritic := vr_dscritic;
-
-      --Grava tabela de log - Ch 788828
-      pc_gera_log(pr_cdcooper      => 3,
-                  pr_dstiplog      => 'E',
-                  pr_dscritic      => pr_dscritic,
-                  pr_cdcriticidade => 1,
-                  pr_cdmensagem    => pr_cdcritic,
-                  pr_ind_tipo_log  => 1);
-
     WHEN OTHERS THEN
-      --Gravar tabela especifica de log - 30/01/2018 - Ch 788828
-      CECRED.pc_internal_exception;
 
       -- Montar descrição de erro não tratado
-      pr_cdcritic := 9999;
-      pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic)||'EMPR0001.pc_obtem_dados_empresti_web. '||sqlerrm;
-  
-      --Grava tabela de log - Ch 788828
-      pc_gera_log(pr_cdcooper      => 3,
-                  pr_dstiplog      => 'E',
-                  pr_dscritic      => pr_dscritic,
-                  pr_cdcriticidade => 2,
-                  pr_cdmensagem    => pr_cdcritic,
-                  pr_ind_tipo_log  => 2);
-  
+      pr_dscritic := 'Erro não tratado na EMPR0001.pc_obtem_dados_empresti_web ' ||
+                     SQLERRM;
   END pc_obtem_dados_empresti_web;
   
---  
+  
   /* Calcular o saldo devedor do emprestimo */
   PROCEDURE pc_calc_saldo_epr(pr_cdcooper   IN crapcop.cdcooper%TYPE --> Código da Cooperativa
                              ,pr_rw_crapdat IN btch0001.rw_crapdat%TYPE --> Vetor com dados de parâmetro (CRAPDAT)
@@ -7149,7 +6685,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Edson
-       Data    : Junho/2004.                         Ultima atualizacao: 30/01/2018
+       Data    : Junho/2004.                         Ultima atualizacao: 08/08/2017
     
        Dados referentes ao programa:
     
@@ -7175,12 +6711,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
 
                     08/08/2017 - Inclusao do produto Pos-Fixado. (Jaison/James - PRJ298)
 
-
-                    30/01/2018 - Padronização mensagens (crapcri, pc_gera_log (tbgen))
-                               - Padronização erros comandos DDL
-                               - Pc_set_modulo, cecred.pc_internal_exception
-                               - Tratamento erros others
-                                 (Ana - Envolti - Chamado 788828)
     ............................................................................. */
     DECLARE
       -- Dia e data de pagamento de empréstimo
@@ -7222,32 +6752,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                AND lcr.cdlcremp = pr_cdlcremp;
       rw_craplcr cr_craplcr%ROWTYPE;
       -- Variáveis para passagem a rotina pc_calcula_lelem e pc_busca_pgto_parcelas
-      vr_diapagto        INTEGER;
-      vr_qtprepag        crapepr.qtprepag%TYPE;
-      vr_qtprecal_lem    crapepr.qtprecal%TYPE;
-      vr_vlprepag        craplem.vllanmto%TYPE;
+      vr_diapagto     INTEGER;
+      vr_qtprepag     crapepr.qtprepag%TYPE;
+      vr_qtprecal_lem crapepr.qtprecal%TYPE;
+      vr_vlprepag     craplem.vllanmto%TYPE;
       --vr_vljuracu     crapepr.vljuracu%TYPE;
       --vr_vljurmes     crapepr.vljurmes%TYPE;
       --vr_vlsdeved     crapepr.vlsdeved%TYPE;
-      vr_vljuracu         NUMBER;
-      vr_vljurmes         NUMBER;
-      vr_vlsdeved         NUMBER;
-      vr_dtultpag         crapepr.dtultpag%TYPE;
-      vr_txdjuros         crapepr.txjuremp%TYPE;
-      vr_tab_pgto_parcel  empr0001.typ_tab_pgto_parcel; --> Tabela com registros de pagamentos
-      vr_tab_calculado    empr0001.typ_tab_calculado; --> Tabela com totais calculados
-      vr_exc_erro_sem_log EXCEPTION;
+      vr_vljuracu        NUMBER;
+      vr_vljurmes        NUMBER;
+      vr_vlsdeved        NUMBER;
+      vr_dtultpag        crapepr.dtultpag%TYPE;
+      vr_txdjuros        crapepr.txjuremp%TYPE;
+      vr_tab_pgto_parcel empr0001.typ_tab_pgto_parcel; --> Tabela com registros de pagamentos
+      vr_tab_calculado   empr0001.typ_tab_calculado; --> Tabela com totais calculados
       vr_vlpreapg        NUMBER;
       vr_vlprvenc        NUMBER;
       vr_vlpraven        NUMBER;
       vr_vlmtapar        NUMBER;
       vr_vlmrapar        NUMBER;
       vr_vliofcpl        NUMBER;      
-
     BEGIN
-      -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_calc_saldo_epr');
-
       -- Buscar a configuração de empréstimo cfme a empresa da conta
       pc_config_empresti_empresa(pr_cdcooper => pr_cdcooper --> Código da Cooperativa
                                 ,pr_dtmvtolt => pr_rw_crapdat.dtmvtolt --> Data atual
@@ -7258,12 +6783,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                                 ,pr_ddmesnov => vr_tab_ddmesnov --> Configuração para mês novo
                                 ,pr_cdcritic => pr_cdcritic --> Código do erro
                                 ,pr_des_erro => vr_des_erro); --> Retorno de Erro
-
       -- Se houve erro na rotina
       IF vr_des_erro IS NOT NULL
          OR pr_cdcritic IS NOT NULL THEN
         -- Levantar exce¿¿o
-        RAISE vr_exc_erro_sem_log;
+        RAISE vr_exc_erro;
       END IF;
       -- Busca dos detalhes do empréstimo
       OPEN cr_crapepr(pr_cdcooper => pr_cdcooper
@@ -7277,7 +6801,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         CLOSE cr_crapepr;
         -- Gerar erro com critica 356
         pr_cdcritic := 356;
-        vr_des_erro := gene0001.fn_busca_critica(pr_cdcritic);
+        vr_des_erro := gene0001.fn_busca_critica(356);
         RAISE vr_exc_erro;
       ELSE
         -- Apenas fechar o cursor para continuar o processo
@@ -7297,7 +6821,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           CLOSE cr_craplcr;
           -- Gerar erro
           pr_cdcritic := 363;
-          vr_des_erro := gene0001.fn_busca_critica(pr_cdcritic);
+          vr_des_erro := gene0001.fn_busca_critica(363);
           RAISE vr_exc_erro;
         ELSE
           -- Fechar o cursor
@@ -7309,7 +6833,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         -- Usar taxa cadastrada no empréstimo
         vr_txdjuros := rw_crapepr.txjuremp;
       END IF;
-
       -- Para empréstimo atual
       IF rw_crapepr.tpemprst = 0 THEN
         -- Povoar Variáveis para o calculo com os valores do empréstimo
@@ -7320,7 +6843,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         vr_vljuracu := NVL(rw_crapepr.vljuracu, 0);
         vr_vljurmes := 0;
         vr_dtultpag := LAST_DAY(pr_rw_crapdat.dtmvtolt);
-        -- Chamar rotina de cálculo externa - grava log na mesma
+        -- Chamar rotina de cálculo externa
         empr0001.pc_leitura_lem(pr_cdcooper   => pr_cdcooper
                                ,pr_cdprogra   => pr_cdprogra
                                ,pr_rw_crapdat => pr_rw_crapdat
@@ -7342,7 +6865,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         IF vr_des_erro IS NOT NULL
            OR pr_cdcritic IS NOT NULL THEN
           -- Gerar excecao
-          RAISE vr_exc_erro_sem_log;
+          RAISE vr_exc_erro;
         END IF;
         -- Copiar os valores da rotina para as variaveis de sa¿da
         pr_vlsdeved := vr_vlsdeved;
@@ -7352,7 +6875,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       ELSIF rw_crapepr.tpemprst = 1 THEN
       
         /* Busca dos pagamentos das parcelas de empréstimo prefixados*/
-        empr0001.pc_busca_pgto_parcelas_prefix(pr_cdcooper      => pr_cdcooper --> Cooperativa conectada
+        EMPR0001.pc_busca_pgto_parcelas_prefix(pr_cdcooper      => pr_cdcooper --> Cooperativa conectada
                                               ,pr_cdagenci      => 1 --> Código da agência
                                               ,pr_nrdcaixa      => 999 --> Número do caixa
                                               ,pr_nrdconta      => pr_nrdconta --> Número da conta
@@ -7375,7 +6898,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           pr_cdcritic := vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
           vr_des_erro := vr_tab_erro(vr_tab_erro.FIRST).dscritic;
           -- Gerar exce¿¿o
-          RAISE vr_exc_erro_sem_log;
+          RAISE vr_exc_erro;
         END IF;
         -- Copiar os valores da rotina para as variaveis de sa¿da
         pr_vlsdeved := vr_tab_calculado(vr_tab_calculado.FIRST).vlsderel;
@@ -7410,46 +6933,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         pr_qtprecal := rw_crapepr.qtprecal;
 
       END IF;
-
-      -- Retira nome do modulo logado - 30/01/2018 - Ch 788828
-      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
     EXCEPTION
       WHEN vr_exc_erro THEN
         -- Apenas retornar a vari¿vel de saida
         pr_cdcritic := nvl(pr_cdcritic, 0);
         pr_des_erro := vr_des_erro;
-
-        --Grava tabela de log - Ch 788828
-        pc_gera_log(pr_cdcooper      => pr_cdcooper,
-                    pr_dstiplog      => 'E',
-                    pr_dscritic      => pr_des_erro,
-                    pr_cdcriticidade => 1,
-                    pr_cdmensagem    => nvl(pr_cdcritic,0),
-                    pr_ind_tipo_log  => 1);
-
-      WHEN vr_exc_erro_sem_log THEN
-        -- Apenas retornar a vari¿vel de saida
-        pr_cdcritic := nvl(pr_cdcritic, 0);
-        pr_des_erro := vr_des_erro;
-
       WHEN OTHERS THEN
-        --Gravar tabela especifica de log - 30/01/2018 - Ch 788828
-        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
-
         -- Montar mensagem com o sqlerrm pois ocorreu um erro cr¿tico
-        pr_cdcritic := 9999;
-        pr_des_erro := gene0001.fn_busca_critica(pr_cdcritic)||'EMPR0001.pc_calc_saldo_epr. '||sqlerrm;
-
-        --Grava tabela de log - Ch 788828
-        pc_gera_log(pr_cdcooper      => pr_cdcooper,
-                    pr_dstiplog      => 'E',
-                    pr_dscritic      => pr_des_erro,
-                    pr_cdcriticidade => 2,
-                    pr_cdmensagem    => nvl(pr_cdcritic,0),
-                    pr_ind_tipo_log  => 2);
+        pr_cdcritic := nvl(pr_cdcritic, 0);
+        pr_des_erro := 'Problemas no procedimento empr0001.pc_calc_saldo_epr. Erro: ' ||
+                       sqlerrm;
     END;
   END pc_calc_saldo_epr;
---
+
   /* Procedure para calcular saldo devedor de emprestimos */
   PROCEDURE pc_saldo_devedor_epr(pr_cdcooper   IN crapcop.cdcooper%TYPE --> Cooperativa conectada
                                 ,pr_cdagenci   IN crapass.cdagenci%TYPE --> Código da agência
@@ -7476,7 +6972,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Marcos (Supero)
-       Data    : Junho/2013.                         Ultima atualizacao: 30/01/2018
+       Data    : Junho/2013.                         Ultima atualizacao: 03/09/2014
     
        Dados referentes ao programa:
     
@@ -7489,16 +6985,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                                  fosse igual a zero, ele não tratava o retorno de
                                  todos os empréstimos (Marcos-Supero)
     
-                    30/01/2018 - Padronização mensagens (crapcri, pc_gera_log (tbgen))
-                               - Padronização erros comandos DDL
-                               - Pc_set_modulo, cecred.pc_internal_exception
-                               - Tratamento erros others
-                                 (Ana - Envolti - Chamado 788828)
     ............................................................................. */
     DECLARE
       -- Saida com erro alternativa
-      vr_exc_erro2         exception;
-      vr_exc_erro_sem_log  exception;
+      vr_exc_erro2 exception;
     
       -- Dia e data de pagamento de empréstimo
       vr_tab_diapagto NUMBER;
@@ -7558,9 +7048,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       rw_craplcr cr_craplcr%ROWTYPE;
     
     BEGIN
-      -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_saldo_devedor_epr');
-
       -- Buscar a configuração de empréstimo cfme a empresa da conta
       pc_config_empresti_empresa(pr_cdcooper => pr_cdcooper --> Código da Cooperativa
                                 ,pr_dtmvtolt => pr_rw_crapdat.dtmvtolt --> Data atual
@@ -7575,7 +7062,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       IF vr_dscritic IS NOT NULL
          OR vr_cdcritic IS NOT NULL THEN
         -- Levantar exce¿¿o
-        RAISE vr_exc_erro_sem_log;
+        RAISE vr_exc_erro;
       END IF;
     
       -- Busca dos dados do emprestimo passado como parametro
@@ -7592,7 +7079,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
             -- Fechar o cursor e gerar erro
             CLOSE cr_craplcr;
             vr_cdcritic := 363;
-            vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
             RAISE vr_exc_erro;
           ELSE
             -- Fechar o cursor
@@ -7678,7 +7164,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                             ,pr_dstransa => 'Obter saldo devedor do associado em emprestimos'
                             ,pr_dttransa => pr_rw_crapdat.dtmvtolt
                             ,pr_flgtrans => 1 --> TRUE
-                            ,pr_hrtransa => TO_NUMBER(TO_CHAR(sysdate,'SSSSS'))
+                            ,pr_hrtransa => TO_NUMBER(TO_CHAR(sysdate
+                                                             ,'SSSSS'))
                             ,pr_idseqttl => pr_idseqttl
                             ,pr_nmdatela => pr_nmdatela
                             ,pr_nrdconta => pr_nrdconta
@@ -7686,9 +7173,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       END IF;
       -- Retorno OK
       pr_des_reto := 'OK';
-
-      -- Retira nome do modulo logado - 30/01/2018 - Ch 788828
-      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
     EXCEPTION
       WHEN vr_exc_erro THEN
         -- Retorno não OK
@@ -7701,46 +7185,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                              ,pr_cdcritic => NVL(vr_cdcritic, 0)
                              ,pr_dscritic => vr_dscritic
                              ,pr_tab_erro => pr_tab_erro);
-
-        --Grava tabela de log - Ch 788828
-        pc_gera_log(pr_cdcooper      => pr_cdcooper,
-                    pr_dstiplog      => 'E',
-                    pr_dscritic      => vr_dscritic,
-                    pr_cdcriticidade => 1,
-                    pr_cdmensagem    => nvl(vr_cdcritic,0),
-                    pr_ind_tipo_log  => 1);
-
-
-        -- Se foi solicitado log
-        IF pr_flgerlog = 'S' THEN
-          -- Gerar LOG
-          gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper
-                              ,pr_cdoperad => pr_cdoperad
-                              ,pr_dscritic => vr_dscritic
-                              ,pr_dsorigem => gene0001.vr_vet_des_origens(pr_idorigem) --> Origem enviada
-                              ,pr_dstransa => 'Obter saldo devedor do associado em emprestimos'
-                              ,pr_dttransa => pr_rw_crapdat.dtmvtolt
-                              ,pr_flgtrans => 0 --> FALSE
-                              ,pr_hrtransa => TO_NUMBER(TO_CHAR(sysdate
-                                                               ,'SSSSS'))
-                              ,pr_idseqttl => pr_idseqttl
-                              ,pr_nmdatela => pr_nmdatela
-                              ,pr_nrdconta => pr_nrdconta
-                              ,pr_nrdrowid => vr_nrdrowid);
-        
-        END IF;
-      WHEN vr_exc_erro_sem_log THEN
-        -- Retorno não OK
-        pr_des_reto := 'NOK';
-        -- Gerar rotina de gravação de erro
-        gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
-                             ,pr_cdagenci => pr_cdagenci
-                             ,pr_nrdcaixa => pr_nrdcaixa
-                             ,pr_nrsequen => 1 --> Fixo
-                             ,pr_cdcritic => NVL(vr_cdcritic, 0)
-                             ,pr_dscritic => vr_dscritic
-                             ,pr_tab_erro => pr_tab_erro);
-
         -- Se foi solicitado log
         IF pr_flgerlog = 'S' THEN
           -- Gerar LOG
@@ -7784,23 +7228,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         
         END IF;
       WHEN OTHERS THEN
-        --Gravar tabela especifica de log - 30/01/2018 - Ch 788828
-        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
-
         -- Retorno não OK
         pr_des_reto := 'NOK';
         -- Montar descrição de erro não tratado
-        vr_cdcritic := 9999;
-        vr_dscritic := gene0001.fn_busca_critica(9999)||'EMPR0001.pc_saldo_devedor_epr. '||sqlerrm;
-
-        --Grava tabela de log - Ch 788828
-        pc_gera_log(pr_cdcooper      => pr_cdcooper,
-                    pr_dstiplog      => 'E',
-                    pr_dscritic      => vr_dscritic,
-                    pr_cdcriticidade => 2,
-                    pr_cdmensagem    => nvl(vr_cdcritic,0),
-                    pr_ind_tipo_log  => 2);
-
+        vr_dscritic := 'Erro não tratado na EMPR0001.pc_obtem_dados_empresti --> ' ||
+                       sqlerrm;
         -- Gerar rotina de gravação de erro avisando sobre o erro não tratavo
         gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
                              ,pr_cdagenci => pr_cdagenci
@@ -7829,7 +7261,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         END IF;
     END;
   END pc_saldo_devedor_epr;
---
+
   /* Calcular a quantidade de dias que o emprestimo está em atraso */
   FUNCTION fn_busca_dias_atraso_epr(pr_cdcooper IN crappep.cdcooper%TYPE --> Código da Cooperativa
                                    ,pr_nrdconta IN crappep.nrdconta%TYPE --> Numero da Conta do empréstimo
@@ -7844,7 +7276,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Guilherme
-       Data    : Outubro/2007                        Ultima atualizacao: 30/01/2018
+       Data    : Outubro/2007                        Ultima atualizacao: 13/12/2012
     
        Dados referentes ao programa:
     
@@ -7853,11 +7285,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
     
        Alteracoes: 11/02/2013 - Conversão Progress para Oracle (Alisson - AMcom)
     
-                   30/01/2018 - Padronização mensagens (crapcri, pc_gera_log (tbgen))
-                              - Padronização erros comandos DDL
-                              - Pc_set_modulo, cecred.pc_internal_exception
-                              - Tratamento erros others
-                                (Ana - Envolti - Chamado 788828)
     ............................................................................. */
     DECLARE
     
@@ -7881,9 +7308,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       vr_qtdedias INTEGER := 0;
     
     BEGIN
-      -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.fn_busca_dias_atraso_epr');
-
       --Selecionar informacoes das parcelas
       OPEN cr_crappep(pr_cdcooper => pr_cdcooper
                      ,pr_nrdconta => pr_nrdconta
@@ -7907,30 +7331,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       vr_qtdedias := pr_dtmvtolt - rw_crappep.dtvencto;
       --Retornar valor
       RETURN(vr_qtdedias);
-
-      -- Retira nome do modulo logado - 30/01/2018 - Ch 788828
-      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
     EXCEPTION
       WHEN OTHERS THEN
-        --Gravar tabela especifica de log - 30/01/2018 - Ch 788828
-        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
-
-        vr_cdcritic := 9999;
-        vr_dscritic := gene0001.fn_busca_critica(9999)||'EMPR0001.fn_busca_dias_atraso_epr. '||sqlerrm;
-
-        --Grava tabela de log - Ch 788828
-        pc_gera_log(pr_cdcooper      => pr_cdcooper,
-                    pr_dstiplog      => 'E',
-                    pr_dscritic      => vr_dscritic,
-                    pr_cdcriticidade => 2,
-                    pr_cdmensagem    => nvl(vr_cdcritic,0),
-                    pr_ind_tipo_log  => 2);
-
         --Retornar zero
         RETURN(0);
     END;
-  END fn_busca_dias_atraso_epr;
---
+  END;
+
   /* Rotina de calculo de dias do ultimo pagamento de emprestimos em atraso*/
   PROCEDURE pc_calc_dias_atraso(pr_cdcooper   IN crapepr.cdcooper%TYPE --> Código da cooperativa
                                ,pr_cdprogra   IN VARCHAR2 --> Nome do programa que está executando
@@ -7950,7 +7357,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Guilherme
-       Data    : Outubro/2007                        Ultima atualizacao: 30/01/2018
+       Data    : Outubro/2007                        Ultima atualizacao: 30/01/2014
     
        Dados referentes ao programa:
     
@@ -7967,11 +7374,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
     
                    30/01/2014 - Remover a chamada da procedure "saldo_epr.p". (James)
     
-                   30/01/2018 - Padronização mensagens (crapcri, pc_gera_log (tbgen))
-                              - Padronização erros comandos DDL
-                              - Pc_set_modulo, cecred.pc_internal_exception
-                              - Tratamento erros others
-                                (Ana - Envolti - Chamado 788828)
     ............................................................................. */
     DECLARE
     
@@ -8012,9 +7414,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       vr_des_erro VARCHAR2(4000);
     
     BEGIN
-      -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_calc_dias_atraso');
-
       --Inicializar variavel de erro
       pr_des_erro := NULL;
       --Zerar variaveis de retorno
@@ -8033,8 +7432,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       IF cr_crapepr%NOTFOUND THEN
         CLOSE cr_crapepr;
         --Montar mensagem de erro
-        pr_cdcritic := 356; --Contrato de Emprestimo não encontrado
-        vr_des_erro := gene0001.fn_busca_critica(pr_cdcritic);
+        pr_cdcritic := 356;
+        vr_des_erro := 'Contrato de Emprestimo não encontrado.';
         --Levantar Exce¿¿o
         RAISE vr_exc_erro;
       END IF;
@@ -8062,37 +7461,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       
         --Se estiver em dia
         IF vr_qtdias < 0 THEN
-          vr_cdcritic := 1162; --Quantidade de dias menor que zero
-          vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
           --Levantar Exce¿¿o
           RAISE vr_exc_saida;
         END IF;
       
-        --Se quantidade dias for negativa e a data de pagamento nao for nula 
-        --e nao tiver pago e data pagamento maior data movimento
+        --Se quantidade dias for negativa e a data de pagamento nao for nula e nao tiver pago e data pagamento maior data movimento
         IF vr_qtdias <= 0
            AND rw_crapepr.dtdpagto IS NOT NULL
            AND rw_crapepr.flgpagto = 0
            AND /* Conta Corrente */
            rw_crapepr.dtdpagto >= pr_rw_crapdat.dtmvtolt THEN
-            vr_cdcritic := 1163; --Quantidade de dias menor que zero, com data de pagamento mas não pago
-            vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
           --Levantar excecao
           RAISE vr_exc_saida;
         END IF;
       ELSE
         --Buscar a quantidade de dias em atraso
-        vr_qtdias := empr0001.fn_busca_dias_atraso_epr(pr_cdcooper => pr_cdcooper
+        vr_qtdias := EMPR0001.fn_busca_dias_atraso_epr(pr_cdcooper => pr_cdcooper
                                                       ,pr_nrdconta => rw_crapepr.nrdconta
                                                       ,pr_nrctremp => rw_crapepr.nrctremp
                                                       ,pr_dtmvtolt => pr_rw_crapdat.dtmvtolt
                                                       ,pr_dtmvtoan => pr_rw_crapdat.dtmvtoan);
-        -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-        GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_calc_dias_atraso');
         --Se a quantidade de dias for inferior ou igual a zero
         IF vr_qtdias <= 0 THEN
-          vr_cdcritic := 1162; --Quantidade de dias menor que zero
-          vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
           --Levantar Excecao
           RAISE vr_exc_saida;
         END IF;
@@ -8124,8 +7514,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       --Se for o programa crps398 e o saldo devedor for negativo
       IF upper(pr_cdprogra) = 'CRPS398'
          AND vr_vlsdeved <= 0 THEN
-        vr_cdcritic := 1152; --Contrato com Saldo Devedor Zerado
-        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
         --Levantar Excecao
         RAISE vr_exc_saida;
       END IF;
@@ -8139,8 +7527,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       
         --Se a quantidade de dias for menor zero
         IF vr_qtdias < 0 THEN
-          vr_cdcritic := 1162; --Quantidade de dias menor que zero
-          vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
           --Levantar Excecao
           RAISE vr_exc_saida;
         END IF;
@@ -8150,8 +7536,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
            AND rw_crapepr.flgpagto = 0
            AND /* Conta Corrente */
            rw_crapepr.dtdpagto >= pr_rw_crapdat.dtmvtolt THEN
-          vr_cdcritic := 1163; --Quantidade de dias menor que zero, com data de pagamento mas não pago
-          vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
           --Levantar excecao
           RAISE vr_exc_saida;
         END IF;
@@ -8171,20 +7555,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       --Retornar quantidade parcelas
       pr_qtprecal := vr_qtprecal;
     
-      -- Retira nome do modulo logado - 30/01/2018 - Ch 788828
-      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
     EXCEPTION
       WHEN vr_exc_erro THEN
         pr_cdcritic := nvl(pr_cdcritic, 0);
         pr_des_erro := vr_des_erro;
-
-        --Grava tabela de log - Ch 788828
-        pc_gera_log(pr_cdcooper      => pr_cdcooper,
-                    pr_dstiplog      => 'E',
-                    pr_dscritic      => pr_des_erro,
-                    pr_cdcriticidade => 1,
-                    pr_cdmensagem    => nvl(pr_cdcritic,0),
-                    pr_ind_tipo_log  => 1);
       WHEN vr_exc_saida THEN
         --Retornar dias em atraso
         pr_qtdiaatr := vr_qtdias;
@@ -8192,31 +7566,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         pr_vlsdeved := vr_vlsdeved;
         --Retornar quantidade parcelas
         pr_qtprecal := vr_qtprecal;
-
-        --Grava tabela de log - Ch 788828 - Apenas Acompanhamento
-        pc_gera_log(pr_cdcooper      => pr_cdcooper,
-                    pr_dstiplog      => 'E',
-                    pr_dscritic      => vr_dscritic,
-                    pr_cdcriticidade => 0,
-                    pr_cdmensagem    => nvl(vr_cdcritic,0),
-                    pr_ind_tipo_log  => 3);
       WHEN OTHERS THEN
-        --Gravar tabela especifica de log - 30/01/2018 - Ch 788828
-        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
-
-        pr_cdcritic := 9999;
-        pr_des_erro := gene0001.fn_busca_critica(pr_cdcritic)||'EMPR0001.pc_calc_dias_atraso. '||sqlerrm;
-
-        --Grava tabela de log - Ch 788828
-        pc_gera_log(pr_cdcooper      => pr_cdcooper,
-                    pr_dstiplog      => 'E',
-                    pr_dscritic      => pr_des_erro,
-                    pr_cdcriticidade => 2,
-                    pr_cdmensagem    => nvl(pr_cdcritic,0),
-                    pr_ind_tipo_log  => 2);
+        pr_cdcritic := nvl(pr_cdcritic, 0);
+        pr_des_erro := 'Erro na rotina EMPR0001.pc_calc_dias_atraso. ' ||
+                       sqlerrm;
+    END;
   END;
-  END pc_calc_dias_atraso;
---
+
   --Procedure para Incluir ou atualizar o lote
   PROCEDURE pc_inclui_altera_lote(pr_cdcooper IN crapcop.cdcooper%TYPE --Codigo Cooperativa
                                  ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE --Data Emprestimo
@@ -8240,7 +7596,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Alisson
-       Data    : Fevereiro/2014                        Ultima atualizacao: 30/01/2018
+       Data    : Fevereiro/2014                        Ultima atualizacao: 25/02/2014
     
        Dados referentes ao programa:
     
@@ -8249,11 +7605,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
     
        Alteracoes: 25/02/2014 - Conversão Progress para Oracle (Alisson - AMcom)
     
-                   30/01/2018 - Padronização mensagens (crapcri, pc_gera_log (tbgen))
-                              - Padronização erros comandos DDL
-                              - Pc_set_modulo, cecred.pc_internal_exception
-                              - Tratamento erros others
-                                (Ana - Envolti - Chamado 788828)
     ............................................................................. */
   
     DECLARE
@@ -8270,8 +7621,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       vr_exc_erro EXCEPTION;
     
     BEGIN
-      -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_inclui_altera_lote');
     
       --Inicializar variavel erro
       pr_cdcritic := NULL;
@@ -8359,32 +7708,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           RETURNING craplot.nrseqdig, ROWID INTO pr_nrseqdig, rw_craplot.rowid;
         EXCEPTION
           WHEN Dup_Val_On_Index THEN
-            vr_cdcritic := 59; --Lote ja existe
-            vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+            vr_cdcritic := 0;
+            vr_dscritic := 'Lote ja cadastrado.';
             RAISE vr_exc_erro;
           WHEN OTHERS THEN
-            vr_cdcritic := 1034;
-            vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'craplot: '||
-                           'cdcooper:'  ||pr_cdcooper||
-                           ', dtmvtolt:'||pr_dtmvtolt||
-                           ', cdagenci:'||pr_cdagenci||
-                           ', cdbccxlt:'||pr_cdbccxlt||
-                           ', nrdolote:'||pr_nrdolote||
-                           ', tplotmov:'||pr_tplotmov||
-                           ', cdoperad:'||pr_cdoperad||
-                           ', cdhistor:'||pr_cdhistor||
-                           ', dtmvtopg:'||pr_dtmvtopg||
-                           ', nrseqdig:1'||
-                           ', qtcompln:'||vr_nrincrem||
-                           ', qtinfoln:'||vr_nrincrem||
-                           ', vlcompcr:'||rw_craplot.vlcompcr||
-                           ', vlinfocr:'||rw_craplot.vlinfocr||
-                           ', vlcompdb:'||rw_craplot.vlcompdb||
-                           ', vlinfodb:'||rw_craplot.vlinfodb||
-                           '. '||sqlerrm;
-
-            --Gravar tabela especifica de log - 30/01/2018 - Ch 788828
-            CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
+            vr_cdcritic := 0;
+            vr_dscritic := 'Erro ao inserir na tabela de lotes. ' ||
+                           sqlerrm;
             RAISE vr_exc_erro;
         END;
       ELSE
@@ -8427,19 +7757,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           RETURNING rw_craplot.nrseqdig INTO pr_nrseqdig;
         EXCEPTION
           WHEN OTHERS THEN
-            vr_cdcritic := 1035;
-            vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'craplot: '||
-                           'nrseqdig:'||rw_craplot.nrseqdig||
-                           ', qtcompln:'||rw_craplot.qtcompln||
-                           ', qtinfoln:'||rw_craplot.qtinfoln||
-                           ', vlcompcr:'||rw_craplot.vlcompcr||
-                           ', vlinfocr:'||rw_craplot.vlinfocr||
-                           ', vlcompdb:'||rw_craplot.vlcompdb||
-                           ', vlinfodb:'||rw_craplot.vlinfodb||
-                           ' com rowid:'||rw_craplot.rowid||
-                           '. '||sqlerrm;
-            --Gravar tabela especifica de log - 30/01/2018 - Ch 788828
-            CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
+            vr_cdcritic := 0;
+            vr_dscritic := 'Erro ao atualizar lote. ' || SQLERRM;
             RAISE vr_exc_erro;
         END;
       END IF;
@@ -8448,39 +7767,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         CLOSE cr_craplot;
       END IF;
     
-      -- Retira nome do modulo logado - 30/01/2018 - Ch 788828
-      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
     EXCEPTION
       WHEN vr_exc_erro THEN
         --Variavel de erro recebe erro ocorrido
         pr_cdcritic := vr_cdcritic;
         pr_dscritic := vr_dscritic;
-
-        --Grava tabela de log - Ch 788828
-        pc_gera_log(pr_cdcooper      => pr_cdcooper,
-                    pr_dstiplog      => 'E',
-                    pr_dscritic      => pr_dscritic,
-                    pr_cdcriticidade => 1,
-                    pr_cdmensagem    => nvl(pr_cdcritic,0),
-                    pr_ind_tipo_log  => 1);
       WHEN OTHERS THEN
-        --Gravar tabela especifica de log - 30/01/2018 - Ch 788828
-        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
-
         --Variavel de erro recebe erro ocorrido
-        pr_cdcritic := 9999;
-        pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic)||'EMPR0001.pc_inclui_altera_lote. '||sqlerrm;
-
-        --Grava tabela de log - Ch 788828
-        pc_gera_log(pr_cdcooper      => pr_cdcooper,
-                    pr_dstiplog      => 'E',
-                    pr_dscritic      => pr_dscritic,
-                    pr_cdcriticidade => 2,
-                    pr_cdmensagem    => nvl(pr_cdcritic,0),
-                    pr_ind_tipo_log  => 2);
+        pr_cdcritic := 0;
+        pr_dscritic := 'Erro na rotina EMPR0001.pc_inclui_altera_lote. ' ||
+                       sqlerrm;
     END;
   END pc_inclui_altera_lote;
-
 
   /* Criar o lancamento na Conta Corrente  */
   PROCEDURE pc_cria_lancamento_cc_chave(pr_cdcooper IN crapcop.cdcooper%TYPE --> Cooperativa conectada
@@ -8634,71 +7932,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
     END;
   END pc_cria_lancamento_cc_chave;
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  
-    
-    
-
-    
-      
-
-
-    
-      
-
   /* Criar o lancamento na Conta Corrente  */
   PROCEDURE pc_cria_lancamento_cc(pr_cdcooper IN crapcop.cdcooper%TYPE --> Cooperativa conectada
                                  ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE --> Movimento atual
@@ -8742,7 +7975,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
     DECLARE
       --Variaveis Erro
       vr_nrseqdig INTEGER;
-      vr_idgerlog VARCHAR(1);
     
       --Variaveis Excecao
       vr_exc_erro  EXCEPTION;
@@ -8772,8 +8004,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           RAISE vr_exc_erro;
         END IF;
           
-      -- Retira nome do modulo logado - 30/01/2018 - Ch 788828
-      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
     EXCEPTION
       WHEN vr_exc_erro THEN
         -- Retorno não OK
@@ -8787,32 +8017,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                              ,pr_dscritic => vr_dscritic
                              ,pr_tab_erro => pr_tab_erro);
       
-       IF vr_idgerlog = 'S' THEN
-          --Grava tabela de log - Ch 788828
-          pc_gera_log(pr_cdcooper      => pr_cdcooper,
-                      pr_dstiplog      => 'E',
-                      pr_dscritic      => vr_dscritic,
-                      pr_cdcriticidade => 1,
-                      pr_cdmensagem    => nvl(vr_cdcritic,0),
-                      pr_ind_tipo_log  => 1);
-        END IF;
       WHEN OTHERS THEN
-        --Gravar tabela especifica de log - 30/01/2018 - Ch 788828
-        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
-
         -- Retorno não OK
         pr_des_reto := 'NOK';
-        vr_cdcritic := 9999;
-        vr_dscritic := gene0001.fn_busca_critica(9999)||'EMPR0001.pc_cria_lancamento_cc. '||sqlerrm;
-
-        --Grava tabela de log - Ch 788828
-        pc_gera_log(pr_cdcooper      => pr_cdcooper,
-                    pr_dstiplog      => 'E',
-                    pr_dscritic      => vr_dscritic,
-                    pr_cdcriticidade => 2,
-                    pr_cdmensagem    => nvl(vr_cdcritic,0),
-                    pr_ind_tipo_log  => 2);
-
+        -- Montar descrição de erro não tratado
+        vr_dscritic := 'Erro não tratado na EMPR0001.pc_cria_lancamento_cc ' ||
+                       sqlerrm;
         -- Gerar rotina de gravação de erro avisando sobre o erro não tratavo
         gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
                              ,pr_cdagenci => pr_cdagenci
@@ -8823,7 +8033,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                              ,pr_tab_erro => pr_tab_erro);
     END;
   END pc_cria_lancamento_cc;
---
+
   --Procedure para Criar lancamento e atualiza o lote
   PROCEDURE pc_cria_lancamento_lem(pr_cdcooper IN crapcop.cdcooper%TYPE --Codigo Cooperativa
                                   ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE --Data Emprestimo
@@ -8967,12 +8177,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
 
                    15/08/2017 - Inclusao do campo qtdiacal. (Jaison/James - PRJ298)
                    
-                   30/01/2018 - Padronização mensagens (crapcri, pc_gera_log (tbgen))
-                              - Padronização erros comandos DDL
-                              - Pc_set_modulo, cecred.pc_internal_exception
-                              - Tratamento erros others
-                                (Ana - Envolti - Chamado 788828)
-
                    01/02/2018 - Inclusao do campo vltaxprd. (James)
     ............................................................................. */
   
@@ -8986,12 +8190,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
     
       --Variaveis Excecao
       vr_exc_erro EXCEPTION;
-      vr_idgerlog  VARCHAR2(1) := 'S';
     
     BEGIN
-      -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_cria_lancamento_lem');
-
       --Inicializar variavel erro
       pr_cdcritic := NULL;
       pr_dscritic := NULL;
@@ -9016,11 +8216,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       --Se ocorreu erro
       IF vr_cdcritic IS NOT NULL
          OR vr_dscritic IS NOT NULL THEN
-        vr_idgerlog := 'N';
         RAISE vr_exc_erro;
       END IF;
-      -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_cria_lancamento_lem');
     
       --Inserir Lancamento
       BEGIN
@@ -9068,69 +8265,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           ,pr_vltaxprd);
       EXCEPTION
         WHEN OTHERS THEN
-          vr_cdcritic := 1034;
-          vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'craplem: '||
-                         'dtmvtolt:'  ||pr_dtmvtolt||
-                         ', cdagenci:'||pr_cdpactra||
-                         ', cdbccxlt:'||pr_cdbccxlt||
-                         ', nrdolote:'||pr_nrdolote||
-                         ', nrdconta:'||pr_nrdconta||
-                         ', nrdocmto:'||vr_nrseqdig||
-                         ', cdhistor:'||pr_cdhistor||
-                         ', nrseqdig:'||vr_nrseqdig||
-                         ', nrctremp:'||pr_nrctremp||
-                         ', vllanmto:'||pr_vllanmto||
-                         ', dtpagemp:'||pr_dtpagemp||
-                         ', txjurepr:'||pr_txjurepr||
-                         ', vlpreemp:'||pr_vlpreemp||
-                         ', nrsequni:'||pr_nrsequni||
-                         ', cdcooper:'||pr_cdcooper||
-                         ', nrparepr:'||pr_nrparepr||
-                         ', nrseqava:'||pr_nrseqava||
-                         ', cdorigem:'||pr_cdorigem||
-                         '. '||sqlerrm;
-
-          --Gravar tabela especifica de log - 30/01/2018 - Ch 788828
-          CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
+          vr_cdcritic := 0;
+          vr_dscritic := 'Erro ao inserir na craplem. ' || SQLERRM;
           --Levantar Excecao
           RAISE vr_exc_erro;
       END;
       END IF;
         
-      -- Retira nome do modulo logado - 30/01/2018 - Ch 788828
-      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
     EXCEPTION
       WHEN vr_exc_erro THEN
         --Variavel de erro recebe erro ocorrido
         pr_cdcritic := vr_cdcritic;
         pr_dscritic := vr_dscritic;
-
-        IF vr_idgerlog = 'S' THEN
-          --Grava tabela de log - Ch 788828
-          pc_gera_log(pr_cdcooper      => pr_cdcooper,
-                      pr_dstiplog      => 'E',
-                      pr_dscritic      => pr_dscritic,
-                      pr_cdcriticidade => 1,
-                      pr_cdmensagem    => nvl(pr_cdcritic,0),
-                      pr_ind_tipo_log  => 1);
-        END IF;
-
       WHEN OTHERS THEN
-        --Gravar tabela especifica de log - 30/01/2018 - Ch 788828
-        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
-
         --Variavel de erro recebe erro ocorrido
-        pr_cdcritic := 9999;
-        vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic)||'EMPR0001.pc_cria_lancamento_lem. '||sqlerrm;
-
-        --Grava tabela de log - Ch 788828
-        pc_gera_log(pr_cdcooper      => pr_cdcooper,
-                    pr_dstiplog      => 'E',
-                    pr_dscritic      => vr_dscritic,
-                    pr_cdcriticidade => 2,
-                    pr_cdmensagem    => nvl(pr_cdcritic,0),
-                    pr_ind_tipo_log  => 2);
-
+        pr_cdcritic := 0;
+        pr_dscritic := 'Erro na rotina EMPR0001.pc_cria_lancamento_lem. ' ||
+                       sqlerrm;
     END;
   END pc_cria_lancamento_lem_chave;
 
@@ -9162,7 +8313,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Alisson
-       Data    : Fevereiro/2014                        Ultima atualizacao: 30/01/2018
+       Data    : Fevereiro/2014                        Ultima atualizacao: 01/04/2015
     
        Dados referentes ao programa:
     
@@ -9176,11 +8327,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                                 
                    01/04/2015 - Retornar NOK quando existir Critica. (Alisson - AMcom)
                                 
-                   30/01/2018 - Padronização mensagens (crapcri, pc_gera_log (tbgen))
-                              - Padronização erros comandos DDL
-                              - Pc_set_modulo, cecred.pc_internal_exception
-                              - Tratamento erros others
-                                (Ana - Envolti - Chamado 788828)
     ............................................................................. */
   
     DECLARE
@@ -9211,9 +8357,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       vr_exc_saida EXCEPTION;
     
     BEGIN
-      -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_lanca_juro_contrato');
-
       --Inicializar variavel erro
       pr_des_reto := 'OK';
     
@@ -9314,7 +8457,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         /* Se ainda nao foi liberado o emprestimo , volta */
         /* Modificar operador para ">" solicitado pelo Irlan */
         IF rw_crawepr.dtlibera > pr_dtmvtolt THEN
-          vr_cdcritic := 1164;
           --Sair
           RAISE vr_exc_saida;
         END IF;
@@ -9345,7 +8487,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         IF pr_vljurmes <= 0 THEN
           --zerar Valor
           pr_vljurmes := 0;
-          vr_cdcritic := 1225;
           --Sair
           RAISE vr_exc_saida;
         END IF;
@@ -9382,16 +8523,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       
       EXCEPTION
         WHEN vr_exc_saida THEN
-          vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
-          
-          --Grava tabela de log - Ch 788828
-          pc_gera_log(pr_cdcooper      => pr_cdcooper,
-                      pr_dstiplog      => 'E',
-                      pr_dscritic      => vr_dscritic,
-                      pr_cdcriticidade => 0,
-                      pr_cdmensagem    => nvl(vr_cdcritic,0),
-                      pr_ind_tipo_log  => 4);
-
+          NULL;
         WHEN vr_exc_erro THEN
           RAISE vr_exc_erro;
       END;
@@ -9409,9 +8541,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         -- Retorno não OK
         pr_des_reto := 'NOK';                              
       END IF;
-
-      -- Retira nome do modulo logado - 30/01/2018 - Ch 788828
-      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
     EXCEPTION
       WHEN vr_exc_erro THEN
         -- Retorno não OK
@@ -9425,22 +8554,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                              ,pr_dscritic => vr_dscritic
                              ,pr_tab_erro => pr_tab_erro);
       WHEN OTHERS THEN
-        --Gravar tabela especifica de log - 30/01/2018 - Ch 788828
-        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
-
         -- Retorno não OK
         pr_des_reto := 'NOK';
-        vr_cdcritic := 9999;
-        vr_dscritic := gene0001.fn_busca_critica(9999)||'EMPR0001.pc_lanca_juro_contrato. '||sqlerrm;
-
-        --Grava tabela de log - Ch 788828
-        pc_gera_log(pr_cdcooper      => pr_cdcooper,
-                    pr_dstiplog      => 'E',
-                    pr_dscritic      => vr_dscritic,
-                    pr_cdcriticidade => 2,
-                    pr_cdmensagem    => nvl(vr_cdcritic,0),
-                    pr_ind_tipo_log  => 2);
-
+        -- Montar descrição de erro não tratado
+        vr_dscritic := 'Erro não tratado na EMPR0001.pc_lanca_juro_contrato. ' ||
+                       sqlerrm;
         -- Gerar rotina de gravação de erro avisando sobre o erro não tratavo
         gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
                              ,pr_cdagenci => pr_cdagenci
@@ -9469,7 +8587,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Alisson
-       Data    : Marco/2014                        Ultima atualizacao: 30/01/2018
+       Data    : Marco/2014                        Ultima atualizacao: 03/03/2014
     
        Dados referentes ao programa:
     
@@ -9478,11 +8596,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
     
        Alteracoes: 03/03/2014 - Conversão Progress para Oracle (Alisson - AMcom)
     
-                   30/01/2018 - Padronização mensagens (crapcri, pc_gera_log (tbgen))
-                              - Padronização erros comandos DDL
-                              - Pc_set_modulo, cecred.pc_internal_exception
-                              - Tratamento erros others
-                                (Ana - Envolti - Chamado 788828)
     ............................................................................. */
   
     DECLARE
@@ -9510,9 +8623,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       vr_exc_erro  EXCEPTION;
       vr_exc_saida EXCEPTION;
     BEGIN
-      -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_verifica_liquidacao_empr');
-
       --Inicializar variavel erro
       pr_des_reto := 'OK';
       vr_flgtrans := FALSE;
@@ -9534,7 +8644,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           CLOSE cr_crapepr;
           -- Gerar erro com critica 356
           vr_cdcritic := 356;
-          vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+          vr_dscritic := gene0001.fn_busca_critica(356);
           --Sair
           RAISE vr_exc_saida;
         ELSE
@@ -9542,8 +8652,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           CLOSE cr_crapepr;
           /* Se ja foi liquidado ,  desconsidera */
           IF rw_crapepr.inliquid <> 0 THEN
-            vr_cdcritic := 358;
-            vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
             --Sair
             RAISE vr_exc_saida;
           END IF;
@@ -9559,8 +8667,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       
         /* vr_inliquid > 0 indica que tem parcelas em aberto */
         IF vr_inliquid > 0 THEN
-          vr_cdcritic := 1226;
-          vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
           --Sair pois tem parcelas em aberto
           RAISE vr_exc_saida;
         END IF;
@@ -9575,7 +8681,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           --Fechar Cursor
           CLOSE cr_craplcr;
           vr_cdcritic := 363;
-          vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
           --Sair
           RAISE vr_exc_saida;
         ELSE
@@ -9592,13 +8697,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       
       EXCEPTION
         WHEN vr_exc_saida THEN
-          --Grava tabela de log - Ch 788828 - Apenas Acompanhamento
-          pc_gera_log(pr_cdcooper      => pr_cdcooper,
-                      pr_dstiplog      => 'E',
-                      pr_dscritic      => vr_dscritic,
-                      pr_cdcriticidade => 1,
-                      pr_cdmensagem    => nvl(vr_cdcritic,0),
-                      pr_ind_tipo_log  => 1);
+          NULL;
       END;
     
       --Se nao ocorreu a transacao
@@ -9618,9 +8717,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                                ,pr_tab_erro => pr_tab_erro);
         END IF;
       END IF;
-
-      -- Retira nome do modulo logado - 30/01/2018 - Ch 788828
-      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
     EXCEPTION
       WHEN vr_exc_erro THEN
         -- Retorno não OK
@@ -9634,32 +8730,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                              ,pr_dscritic => vr_dscritic
                              ,pr_tab_erro => pr_tab_erro);
       
-        --Grava tabela de log - Ch 788828
-        pc_gera_log(pr_cdcooper      => pr_cdcooper,
-                    pr_dstiplog      => 'E',
-                    pr_dscritic      => vr_dscritic,
-                    pr_cdcriticidade => 1,
-                    pr_cdmensagem    => nvl(vr_cdcritic,0),
-                    pr_ind_tipo_log  => 1);
-      
       WHEN OTHERS THEN
-        --Gravar tabela especifica de log - 30/01/2018 - Ch 788828
-        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
-
         -- Retorno não OK
         pr_des_reto := 'NOK';
         -- Montar descrição de erro não tratado
-        vr_cdcritic := 9999;
-        vr_dscritic := gene0001.fn_busca_critica(9999)||'EMPR0001.pc_verifica_liquidacao_empr. '||sqlerrm;
-
-        --Grava tabela de log - Ch 788828
-        pc_gera_log(pr_cdcooper      => pr_cdcooper,
-                    pr_dstiplog      => 'E',
-                    pr_dscritic      => vr_dscritic,
-                    pr_cdcriticidade => 2,
-                    pr_cdmensagem    => nvl(vr_cdcritic,0),
-                    pr_ind_tipo_log  => 2);
-
+        vr_dscritic := 'Erro não tratado na EMPR0001.pc_verifica_liquidacao_empr ' ||
+                       sqlerrm;
         -- Gerar rotina de gravação de erro avisando sobre o erro não tratavo
         gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
                              ,pr_cdagenci => pr_cdagenci
@@ -9671,7 +8747,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
     END;
   END pc_verifica_liquidacao_empr;
 
-  --
   --Procedure para Validar Pagamentos
   PROCEDURE pc_valida_pagamentos_geral(pr_cdcooper         IN crapcop.cdcooper%TYPE --Codigo Cooperativa
                                       ,pr_cdagenci         IN crapass.cdagenci%TYPE --Codigo Agencia
@@ -9701,7 +8776,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Alisson
-       Data    : Fevereiro/2014                        Ultima atualizacao: 16/03/2017
+       Data    : Fevereiro/2014                        Ultima atualizacao: 08/02/2018
     
        Dados referentes ao programa:
     
@@ -9731,12 +8806,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                    07/12/2017 - Ajustar validacao de saldo em pagamento de emprestimo PP 
                                 para quando nao houver saldo para debito verificar aplicacoes
                                 em garantia e resgata-las. (Jaison/Marcos Martini - PRJ404)
-
-                   30/01/2018 - Padronização mensagens (crapcri, pc_gera_log (tbgen))
-                              - Padronização erros comandos DDL
-                              - Pc_set_modulo, cecred.pc_internal_exception
-                              - Tratamento erros others
-                                (Ana - Envolti - Chamado 788828)
 
                    08/02/2018 - Incluir novamente o número 3 fixo no parâmetro pr_cdorigem
                                 na chamada da procedure recp0001.pc_verifica_acordo_ativo.
@@ -9819,9 +8888,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       vr_flgativo INTEGER := 0;
 
     BEGIN
-      -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_valida_pagamentos_geral');
-
       --Inicializar variavel erro
       pr_des_reto := 'OK';
     
@@ -10086,27 +9152,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       
       END IF;
     
-      -- Retira nome do modulo logado - 30/01/2018 - Ch 788828
-      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
     EXCEPTION
       WHEN OTHERS THEN
-        --Gravar tabela especifica de log - 30/01/2018 - Ch 788828
-        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
-
         -- Retorno não OK
         pr_des_reto := 'NOK';
         -- Montar descrição de erro não tratado
-        vr_cdcritic := 9999;
-        vr_dscritic := gene0001.fn_busca_critica(9999)||'EMPR0001.pc_valida_pagamentos_geral. '||sqlerrm;
-
-        --Grava tabela de log - Ch 788828
-        pc_gera_log(pr_cdcooper      => pr_cdcooper,
-                    pr_dstiplog      => 'E',
-                    pr_dscritic      => vr_dscritic,
-                    pr_cdcriticidade => 2,
-                    pr_cdmensagem    => nvl(vr_cdcritic,0),
-                    pr_ind_tipo_log  => 2);
-
+        vr_dscritic := 'Erro não tratado na EMPR0001.pc_valida_pagamentos_geral ' ||
+                       sqlerrm;
         -- Gerar rotina de gravação de erro avisando sobre o erro não tratavo
         gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
                              ,pr_cdagenci => pr_cdagenci
@@ -10117,7 +9169,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                              ,pr_tab_erro => pr_tab_erro);
     END;
   END pc_valida_pagamentos_geral;
---
+
   /* Validar pagamento Atrasado das parcelas de empréstimo */
   PROCEDURE pc_valida_pagto_atr_parcel(pr_cdcooper IN crapcop.cdcooper%TYPE --> Cooperativa conectada
                                       ,pr_cdagenci IN crapass.cdagenci%TYPE --> Código da agência
@@ -10147,7 +9199,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Alisson
-       Data    : Marco/2014                        Ultima atualizacao: 30/01/2018
+       Data    : Marco/2014                        Ultima atualizacao: 26/11/2015
     
        Dados referentes ao programa:
     
@@ -10161,12 +9213,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                                 
                    26/11/2015 - Ajuste na mensagem de critica do valor minimo da
                                 parcela. (Rafael)
-
-                   30/01/2018 - Padronização mensagens (crapcri, pc_gera_log (tbgen))
-                              - Padronização erros comandos DDL
-                              - Pc_set_modulo, cecred.pc_internal_exception
-                              - Tratamento erros others
-                                (Ana - Envolti - Chamado 788828)
     ............................................................................. */
   
     DECLARE
@@ -10181,7 +9227,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       vr_dsorigem VARCHAR2(100);
       vr_nrdrowid ROWID;
       vr_dstextab craptab.dstextab%TYPE;
-      vr_idgerlog VARCHAR2(1) := 'S';
     
       --Variaveis Erro
       vr_cdcritic INTEGER;
@@ -10192,9 +9237,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       vr_exc_saida EXCEPTION;
     
     BEGIN
-      -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_valida_pagto_atr_parcel');
-
       --Inicializar variavel erro
       pr_des_reto := 'OK';
       --Nao ocorreu transacao
@@ -10213,14 +9255,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
     
       --Valor Zerado
       IF nvl(pr_vlpagpar, 0) = 0 THEN
-        vr_cdcritic := 1158;  --Valor de pagamento deve ser informado
-        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+        vr_cdcritic := 0;
+        vr_dscritic := 'Valor de pagamento nao informado.';
         RAISE vr_exc_saida;
       END IF;
     
       BEGIN
         --Calcular Atraso na parcela
-        empr0001.pc_calc_atraso_parcela(pr_cdcooper => pr_cdcooper --> Cooperativa conectada
+        EMPR0001.pc_calc_atraso_parcela(pr_cdcooper => pr_cdcooper --> Cooperativa conectada
                                        ,pr_cdagenci => pr_cdagenci --> Código da agência
                                        ,pr_nrdcaixa => pr_nrdcaixa --> Número do caixa
                                        ,pr_cdoperad => pr_cdoperad --> Código do Operador
@@ -10245,13 +9287,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                                        ,pr_tab_erro => pr_tab_erro); --> Tabela com possíves erros
         --Se Retornou erro
         IF vr_des_erro <> 'OK' THEN
-          vr_idgerlog := 'N';
           --Sair
           RAISE vr_exc_saida;
         END IF;
-        -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-        GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_valida_pagto_atr_parcel');
-
         --Consultar parametros Emprestimo
         vr_dstextab := tabe0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
                                                  ,pr_nmsistem => 'CRED'
@@ -10262,16 +9300,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         -- Se nao encontrar
         IF trim(vr_dstextab) IS NULL THEN
           vr_cdcritic := 55;
-          vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+          vr_dscritic := NULL;
           --Sair
           RAISE vr_exc_saida;
         ELSE
           --Pagamento Minimo
           vr_vlpagmin := GENE0002.fn_char_para_number(SUBSTR(vr_dstextab, 22, 12));
         END IF;
-      
-        -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-        GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_valida_pagto_atr_parcel');
       
         IF pr_idorigem = 1 THEN
           /* Pagamento via processo batch */
@@ -10313,11 +9348,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           -- QUE O PAGAMENTO DO ACORDO, TRATE A NOVA CRITICA DA MESMA FORMA.
           -- EM CASO DE DÚVIDAS VERIFIQUE -> RECP0001
           ----------------------------------------------------------------------------------
-          -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-          GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_valida_pagto_atr_parcel');
-
           vr_cdcritic := 995;
-          vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||' '||
+          vr_dscritic := 'Valor a pagar deve ser maior ou igual que R$ ' ||
                          to_char(vr_valormin,'fm999g999g990d00','NLS_NUMERIC_CHARACTERS = '',.''') || '.';
                
           --Sair
@@ -10327,11 +9359,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         IF nvl(apli0001.fn_round(pr_vlpagpar, 2), 0) >
            (nvl(apli0001.fn_round(pr_vlatupar, 2), 0) +
             nvl(apli0001.fn_round(pr_vlmtapar, 2), 0) +
-            nvl(apli0001.fn_round(pr_vlmrapar, 2), 0)) THEN
-          -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-          GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_valida_pagto_atr_parcel');
-          vr_cdcritic := 1033; --Valor informado para pagamento maior que valor da parcela
-          vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+            nvl(apli0001.fn_round(pr_vlmrapar, 2), 0) +
+            nvl(apli0001.fn_round(pr_vliofcpl, 2), 0) ) THEN
+          vr_cdcritic := 1033; -- Retorna 1033 para o job não logar a mensagem.
+          vr_dscritic := 'Valor informado para pagamento maior que valor da parcela';
           --Sair
           RAISE vr_exc_saida;
         END IF;
@@ -10340,15 +9371,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         vr_flgtrans := TRUE;
       EXCEPTION
         WHEN vr_exc_saida THEN
-          IF vr_idgerlog = 'S' THEN
-            --Grava tabela de log - Ch 788828 - Acmopanhamento
-            pc_gera_log(pr_cdcooper      => pr_cdcooper,
-                        pr_dstiplog      => 'E',
-                        pr_dscritic      => vr_dscritic,
-                        pr_cdcriticidade => 1,
-                        pr_cdmensagem    => nvl(vr_cdcritic,0),
-                        pr_ind_tipo_log  => 1);
-        END IF;
+          NULL;
       END;
     
       --Se nao ocorreu a transacao
@@ -10385,39 +9408,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         pr_des_reto := 'OK';
       END IF;
     
-      -- Retira nome do modulo logado - 30/01/2018 - Ch 788828
-      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
     EXCEPTION
-      WHEN vr_exc_saida THEN
-        IF vr_idgerlog = 'S' THEN
-          --Grava tabela de log - Ch 788828 - Acmopanhamento
-          --Aqui naõ foi setador pr_des_erro = NOK porque a rotina, antes das melhorias,
-          --não parava a execução. Foi mantido assim, apenas logando para acompanhamento.
-          pc_gera_log(pr_cdcooper      => pr_cdcooper,
-                      pr_dstiplog      => 'E',
-                      pr_dscritic      => vr_dscritic,
-                      pr_cdcriticidade => 1,
-                      pr_cdmensagem    => nvl(vr_cdcritic,0),
-                      pr_ind_tipo_log  => 1);
-        END IF;
       WHEN OTHERS THEN
-        --Gravar tabela especifica de log - 30/01/2018 - Ch 788828
-        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
-
         -- Retorno não OK
         pr_des_reto := 'NOK';
         -- Montar descrição de erro não tratado
-        vr_cdcritic := 9999;
-        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'EMPR0001.pc_valida_pagto_atr_parcel. '||sqlerrm;
-
-        --Grava tabela de log - Ch 788828
-        pc_gera_log(pr_cdcooper      => pr_cdcooper,
-                    pr_dstiplog      => 'E',
-                    pr_dscritic      => vr_dscritic,
-                    pr_cdcriticidade => 2,
-                    pr_cdmensagem    => nvl(vr_cdcritic,0),
-                    pr_ind_tipo_log  => 2);
-
+        vr_dscritic := 'Erro não tratado na EMPR0001.pc_valida_pagto_atr_parcel ' ||
+                       sqlerrm;
         -- Gerar rotina de gravação de erro avisando sobre o erro não tratavo
         gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
                              ,pr_cdagenci => pr_cdagenci
@@ -10428,7 +9425,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                              ,pr_tab_erro => pr_tab_erro);
     END;
   END pc_valida_pagto_atr_parcel;
---
+
   /* Validar pagamento Antecipado das parcelas de empréstimo */
   PROCEDURE pc_valida_pagto_antec_parc(pr_cdcooper IN crapcop.cdcooper%TYPE --> Cooperativa conectada
                                       ,pr_cdagenci IN crapass.cdagenci%TYPE --> Código da agência
@@ -10454,7 +9451,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Alisson
-       Data    : Marco/2015                        Ultima atualizacao: 30/01/2018
+       Data    : Marco/2015                        Ultima atualizacao: 25/03/2015
     
        Dados referentes ao programa:
     
@@ -10463,11 +9460,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
     
        Alteracoes: 25/03/2015 - Conversão Progress para Oracle (Alisson - AMcom)
     
-                   30/01/2018 - Padronização mensagens (crapcri, pc_gera_log (tbgen))
-                              - Padronização erros comandos DDL
-                              - Pc_set_modulo, cecred.pc_internal_exception
-                              - Tratamento erros others
-                                (Ana - Envolti - Chamado 788828)
     ............................................................................. */
   
     DECLARE
@@ -10485,9 +9477,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       vr_exc_erro  EXCEPTION;
     
     BEGIN
-      -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_valida_pagto_antec_parc');
-
       --Inicializar variavel erro
       pr_des_reto := 'OK';
     
@@ -10513,8 +9502,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         --Fechar Cursor
         CLOSE cr_crappep;
         --Mensagem Erro
-        vr_cdcritic := 1148;  --Parcela nao encontrada
-        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+        vr_dscritic:= 'Parcela nao encontrada.';
         --Sair
         RAISE vr_exc_erro;                
       ELSE
@@ -10525,8 +9513,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       --Validar Valor Pagamento
       IF nvl(pr_vlpagpar,0) = 0 THEN
         --Mensagem Erro
-        vr_cdcritic := 1142;  --Valor de pagamento deve ser informado
-        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+        vr_dscritic:= 'Valor de pagamento nao informado.';
         --Sair
         RAISE vr_exc_erro;    
       END IF;
@@ -10541,8 +9528,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         --Fechar Cursor
         CLOSE cr_crapepr;
         --Mensagem Erro
-        vr_cdcritic := 484;  --Contrato não encontrado
-        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+        vr_dscritic:= 'Contrato não encontrado.';
         --Sair
         RAISE vr_exc_erro;
       ELSE
@@ -10572,8 +9558,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       --Verificar Valor Informado e Valor da Parcela
       IF nvl(pr_vlpagpar,0) > nvl(pr_vlatupar,0) THEN
         --Mensagem Erro
-        vr_cdcritic := 1033; --Valor informado para pagamento maior que valor da parcela
-        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+        vr_dscritic:= 'Valor informado para pagamento maior que valor da parcela.';
         --Sair
         RAISE vr_exc_erro;
       END IF;
@@ -10598,21 +9583,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       -- Retorno OK
       pr_des_reto := 'OK';
     
-      -- Retira nome do modulo logado - 30/01/2018 - Ch 788828
-      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
     EXCEPTION
       WHEN vr_exc_erro THEN
         -- Retorno não OK
         pr_des_reto := 'NOK';
-
-        --Grava tabela de log - Ch 788828
-        pc_gera_log(pr_cdcooper      => pr_cdcooper,
-                    pr_dstiplog      => 'E',
-                    pr_dscritic      => vr_dscritic,
-                    pr_cdcriticidade => 1,
-                    pr_cdmensagem    => nvl(vr_cdcritic,0),
-                    pr_ind_tipo_log  => 1);
-
         -- Gerar rotina de gravação de erro avisando sobre o erro não tratavo
         gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
                              ,pr_cdagenci => pr_cdagenci
@@ -10622,23 +9596,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                              ,pr_dscritic => vr_dscritic
                              ,pr_tab_erro => pr_tab_erro);        
       WHEN OTHERS THEN
-        --Gravar tabela especifica de log - 30/01/2018 - Ch 788828
-        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
-
         -- Retorno não OK
         pr_des_reto := 'NOK';
         -- Montar descrição de erro não tratado
-        vr_cdcritic := 9999;
-        vr_dscritic := gene0001.fn_busca_critica(9999)||'EMPR0001.pc_valida_pagto_antec_parc. '||sqlerrm;
-
-        --Grava tabela de log - Ch 788828
-        pc_gera_log(pr_cdcooper      => pr_cdcooper,
-                    pr_dstiplog      => 'E',
-                    pr_dscritic      => vr_dscritic,
-                    pr_cdcriticidade => 2,
-                    pr_cdmensagem    => nvl(vr_cdcritic,0),
-                    pr_ind_tipo_log  => 2);
-
+        vr_dscritic := 'Erro não tratado na EMPR0001.pc_valida_pagto_antec_parc ' ||
+                       sqlerrm;
         -- Gerar rotina de gravação de erro avisando sobre o erro não tratavo
         gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
                              ,pr_cdagenci => pr_cdagenci
@@ -10649,7 +9611,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                              ,pr_tab_erro => pr_tab_erro);
     END;
   END pc_valida_pagto_antec_parc;
-  --
+  
   /* Gravar a Liquidacao do Emprestimo  */
   PROCEDURE pc_grava_liquidacao_empr(pr_cdcooper IN crapcop.cdcooper%TYPE --> Cooperativa conectada
                                     ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE --> Movimento atual
@@ -10695,12 +9657,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                    20/12/2017 - Inclusão de novos históricos: 2013 e 2014, Prj.402
                                 (Jean Michel).
     
-                   30/01/2018 - Padronização mensagens (crapcri, pc_gera_log (tbgen))
-                              - Padronização erros comandos DDL
-                              - Pc_set_modulo, cecred.pc_internal_exception
-                              - Tratamento erros others
-                              - Retiradas variáveis não utilizadas: vr_inliquid e vr_contador
-                                (Ana - Envolti - Chamado 788828)
     ............................................................................. */
   
     DECLARE
@@ -10815,6 +9771,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       rw_craplem_estorno cr_craplem_estorno%ROWTYPE;
     
       --Variaveis Locais
+      vr_inliquid INTEGER;
+      vr_contador INTEGER;
       vr_flgopera BOOLEAN;
       vr_vllancre NUMBER;
       vr_vllandeb NUMBER;
@@ -10836,15 +9794,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       vr_exc_erro  EXCEPTION;
       vr_exc_saida EXCEPTION;
     BEGIN
-      -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_grava_liquidacao_empr');
-
       --Inicializar variavel erro
       pr_des_reto := 'OK';
       --Marcar que nao realizou transacao
       vr_flgtrans := FALSE;
     
       BEGIN
+      
         --Criar savepoint para desfazer transacao
         SAVEPOINT savtrans_grava_liquidacao_empr;
       
@@ -10879,8 +9835,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           --sair
           RAISE vr_exc_saida;
         END IF;
-        -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-        GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_grava_liquidacao_empr');
         --Se nao estiver Liquidado
         IF NOT vr_flgliqui THEN
           --Marcar que realizou transacao
@@ -10901,7 +9855,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           CLOSE cr_crapepr;
           -- Gerar erro com critica 356
           vr_cdcritic := 356;
-          vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+          vr_dscritic := gene0001.fn_busca_critica(356);
           RAISE vr_exc_saida;
         ELSE
           -- Apenas fechar o cursor para continuar o processo
@@ -11016,8 +9970,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
              OR vr_dscritic IS NOT NULL THEN
             RAISE vr_exc_erro;
           END IF;
-          -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-          GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_grava_liquidacao_empr');
         END IF;
       
         IF nvl(rw_crapepr.vlsdeved, 0) <> 0 THEN          
@@ -11036,18 +9988,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                WHERE crapepr.rowid = rw_crapepr.rowid;
             EXCEPTION
               WHEN OTHERS THEN
-                --Gravar tabela especifica de log - 30/01/2018 - Ch 788828
-                CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
-
                 --Fechar Cursor
                 CLOSE cr_craplem_estorno;
-
-                vr_cdcritic := 1035;
-                vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'crapepr: '||
-                               'vlajsdev:'||rw_crapepr.vlsdeved||
-                               ', vlsdeved:0'||
-                               ' com rowid:'||rw_crapepr.rowid||
-                               '. '||sqlerrm;
+                vr_cdcritic := 0;
+                vr_dscritic := 'Erro ao atualizar crapepr. ' || SQLERRM;
                 RAISE vr_exc_erro;
             END;
           END IF;
@@ -11062,15 +10006,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
            WHERE crapepr.rowid = rw_crapepr.rowid;
         EXCEPTION
           WHEN OTHERS THEN
-            vr_cdcritic := 1035;
-            vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'crapepr: '||
-                           'inliquid:1'||
-                           ', dtliquid:'||pr_dtmvtolt||
-                           ' com rowid:'||rw_crapepr.rowid||
-                           '. '||sqlerrm;
-
-            --Gravar tabela especifica de log - 30/01/2018 - Ch 788828
-            CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
+            vr_cdcritic := 0;
+            vr_dscritic := 'Erro ao atualizar crapepr. ' || SQLERRM;
             RAISE vr_exc_erro;
         END;
       
@@ -11081,8 +10018,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                                                  ,pr_cdempres => 11
                                                  ,pr_cdacesso => 'TAXATABELA'
                                                  ,pr_tpregist => 0);
-        -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-        GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_grava_liquidacao_empr');
         --Se nao encontrou parametro
         IF trim(vr_dstextab) IS NULL THEN
           vr_inusatab := FALSE;
@@ -11116,8 +10051,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         --IF vr_des_erro <> 'OK' THEN
         --  RAISE vr_exc_saida;
         --END IF;
-        -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-        GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_grava_liquidacao_empr');
       
         /** GRAVAMES **/
         GRVM0001.pc_solicita_baixa_automatica(pr_cdcooper => pr_cdcooper -- Cooperativa
@@ -11154,14 +10087,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         WHEN vr_exc_saida THEN
           --Desfaz transacoes
           ROLLBACK TO SAVEPOINT savtrans_grava_liquidacao_empr;
-
-          --Grava tabela de log - Ch 788828
-          pc_gera_log(pr_cdcooper      => pr_cdcooper,
-                      pr_dstiplog      => 'E',
-                      pr_dscritic      => vr_dscritic,
-                      pr_cdcriticidade => 1,
-                      pr_cdmensagem    => nvl(vr_cdcritic,0),
-                      pr_ind_tipo_log  => 1);
       END;
     
       --Se nao ocorreu a transacao
@@ -11180,22 +10105,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                                ,pr_tab_erro => pr_tab_erro);
         END IF;
       END IF;
-
-      -- Retira nome do modulo logado - 30/01/2018 - Ch 788828
-      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
     EXCEPTION
       WHEN vr_exc_erro THEN
         -- Retorno não OK
         pr_des_reto := 'NOK';
-
-        --Grava tabela de log - Ch 788828
-        pc_gera_log(pr_cdcooper      => pr_cdcooper,
-                    pr_dstiplog      => 'E',
-                    pr_dscritic      => vr_dscritic,
-                    pr_cdcriticidade => 1,
-                    pr_cdmensagem    => nvl(vr_cdcritic,0),
-                    pr_ind_tipo_log  => 1);
-                    
         -- Gerar rotina de gravação de erro avisando sobre o erro não tratavo
         gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
                              ,pr_cdagenci => pr_cdagenci
@@ -11206,23 +10119,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                              ,pr_tab_erro => pr_tab_erro);
       
       WHEN OTHERS THEN
-        --Gravar tabela especifica de log - 30/01/2018 - Ch 788828
-        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
-
         -- Retorno não OK
         pr_des_reto := 'NOK';
         -- Montar descrição de erro não tratado
-        vr_cdcritic := 9999;
-        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'EMPR0001.pc_grava_liquidacao_empr. '||sqlerrm;
-
-        --Grava tabela de log - Ch 788828
-        pc_gera_log(pr_cdcooper      => pr_cdcooper,
-                    pr_dstiplog      => 'E',
-                    pr_dscritic      => vr_dscritic,
-                    pr_cdcriticidade => 2,
-                    pr_cdmensagem    => nvl(vr_cdcritic,0),
-                    pr_ind_tipo_log  => 2);
-                    
+        vr_dscritic := 'Erro não tratado na EMPR0001.pc_grava_liquidacao_empr ' ||
+                       sqlerrm;
         -- Gerar rotina de gravação de erro avisando sobre o erro não tratavo
         gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
                              ,pr_cdagenci => pr_cdagenci
@@ -11233,7 +10134,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                              ,pr_tab_erro => pr_tab_erro);
     END;
   END pc_grava_liquidacao_empr;
---
+
   /* Efetivar o pagamento da parcela na craplem  */
   PROCEDURE pc_efetiva_pag_atr_parcel_lem(pr_cdcooper    IN crapcop.cdcooper%TYPE --> Cooperativa conectada
                                          ,pr_cdagenci    IN crapass.cdagenci%TYPE --> Código da agência
@@ -11249,7 +10150,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                                          ,pr_nrctremp    IN crapepr.nrctremp%TYPE --> Número do contrato de empréstimo
                                          ,pr_nrparepr    IN INTEGER --> Número parcelas empréstimo
                                          ,pr_vlpagpar    IN NUMBER --> Valor da parcela emprestimo
-                                         ,pr_tab_crawepr IN empr0001.typ_tab_crawepr --Tabela com Contas e Contratos
+                                         ,pr_tab_crawepr IN EMPR0001.typ_tab_crawepr --Tabela com Contas e Contratos
                                          ,pr_nrseqava    IN NUMBER DEFAULT 0 --> Pagamento: Sequencia do avalista
                                          ,pr_vlpagsld    OUT NUMBER --> Valor Pago Saldo
                                          ,pr_vlrmulta    OUT NUMBER --> Valor Multa
@@ -11272,7 +10173,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Alisson
-       Data    : Marco/2014                        Ultima atualizacao: 30/01/2018
+       Data    : Marco/2014                        Ultima atualizacao: 17/03/2016
     
        Dados referentes ao programa:
     
@@ -11291,11 +10192,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                    31/10/2016 - Validação dentro para identificar
                                 parcelas ja liquidadas (AJFink - SD#545719)
 
-                   30/01/2018 - Padronização mensagens (crapcri, pc_gera_log (tbgen))
-                              - Padronização erros comandos DDL
-                              - Pc_set_modulo, cecred.pc_internal_exception
-                              - Tratamento erros others
-                                (Ana - Envolti - Chamado 788828)
     ............................................................................. */
   
     DECLARE
@@ -11328,16 +10224,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       --Variaveis Erro
       vr_cdcritic INTEGER;
       vr_dscritic VARCHAR2(4000);
-      vr_idgerlog VARCHAR2(1) := 'S';
     
       --Variaveis Excecao
       vr_exc_erro  EXCEPTION;
       vr_exc_saida EXCEPTION;
       vr_exc_desvio EXCEPTION;
     BEGIN
-      -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_efetiva_pag_atr_parcel_lem');
-
       --Inicializar variavel erro
       pr_des_reto := 'OK';
       --Inicializar transacao
@@ -11382,8 +10274,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         --Sair
         RETURN;
       END IF;
-      -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_efetiva_pag_atr_parcel_lem');
     
       BEGIN
         --Criar savepoint para desfazer transacao
@@ -11401,7 +10291,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           --Fechar Cursor
           CLOSE cr_crappep;
           vr_cdcritic := 55;
-          vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
           RAISE vr_exc_saida;
         END IF;
         --Fechar Cursor
@@ -11410,8 +10299,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         --SD#545719 inicio
         IF rw_crappep.inliquid = 1 THEN
           -- Atribui críticas
-          vr_cdcritic := 1149;  --Parcela ja liquidada
-          vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+          vr_cdcritic := 0;
+          vr_dscritic := 'Parcela ja liquidada.';
           -- Gera exceção
           RAISE vr_exc_saida;
         END IF;
@@ -11428,7 +10317,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           --Fechar Cursor
           CLOSE cr_crapepr;
           vr_cdcritic := 55;
-          vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
           RAISE vr_exc_saida;
         END IF;
         --Fechar Cursor
@@ -11444,7 +10332,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           --Fechar Cursor
           CLOSE cr_craplcr;
           vr_cdcritic := 363;
-          vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
           --Sair
           RAISE vr_exc_saida;
         ELSE
@@ -11460,7 +10347,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         vr_txdiaria := rw_crapepr.txjuremp;
       
         --Lancar Juros Contrato
-        empr0001.pc_lanca_juro_contrato(pr_cdcooper    => pr_cdcooper --Codigo Cooperativa
+        EMPR0001.pc_lanca_juro_contrato(pr_cdcooper    => pr_cdcooper --Codigo Cooperativa
                                        ,pr_cdagenci    => pr_cdagenci --Codigo Agencia
                                        ,pr_nrdcaixa    => pr_nrdcaixa --Codigo Caixa
                                        ,pr_nrdconta    => pr_nrdconta --Numero da Conta
@@ -11485,15 +10372,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         IF vr_des_erro <> 'OK' THEN
           -- Se tem erro
           IF pr_tab_erro.count > 0 THEN
-            vr_cdcritic := pr_tab_erro(pr_tab_erro.FIRST).cdcritic;
+            vr_cdcritic := 0;
             vr_dscritic := pr_tab_erro(pr_tab_erro.FIRST).dscritic;
           END IF;
-          vr_idgerlog := 'N';
           --Sair
           RAISE vr_exc_saida;
         END IF;
-        -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-        GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_efetiva_pag_atr_parcel_lem');
       
         /* Valor da multa */
         IF nvl(vr_vlmtapar, 0) > 0 THEN
@@ -11547,11 +10431,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           --Se ocorreu erro
           IF vr_cdcritic IS NOT NULL
              OR vr_dscritic IS NOT NULL THEN
-            vr_idgerlog := 'N';
             RAISE vr_exc_erro;
           END IF;
-          -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-          GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_efetiva_pag_atr_parcel_lem');
         
           IF vr_floperac THEN
             /* Financiamento */
@@ -11594,14 +10475,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
              WHERE crappep.rowid = rw_crappep.rowid;
           EXCEPTION
             WHEN OTHERS THEN
-              vr_cdcritic := 1035;
-              vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'crapepp: '||
-                             'vlpagmta:vlpagmta + '||nvl(vr_vlmtapar, 0)||
-                             ' com rowid:'||rw_crappep.rowid||
-                             '. '||sqlerrm;
-
-              --Gravar tabela especifica de log - 30/01/2018 - Ch 788828
-              CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
+              vr_cdcritic := 0;
+              vr_dscritic := 'Erro ao atualizar crappep. ' || SQLERRM;
               RAISE vr_exc_erro;
           END;
         END IF;
@@ -11663,11 +10538,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           --Se ocorreu erro
           IF vr_cdcritic IS NOT NULL
              OR vr_dscritic IS NOT NULL THEN
-            vr_idgerlog := 'N';
             RAISE vr_exc_erro;
           END IF;
-          -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-          GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_efetiva_pag_atr_parcel_lem');
         
           IF vr_floperac THEN
             /* Financiamento */
@@ -11711,14 +10583,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
              WHERE crappep.rowid = rw_crappep.rowid;
           EXCEPTION
             WHEN OTHERS THEN
-              vr_cdcritic := 1035;
-              vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'crapepp: '||
-                             'vlpagmra:vlpagmra + '||nvl(vr_vlmrapar, 0)||
-                             ' com rowid:'||rw_crapepr.rowid||
-                             '. '||sqlerrm;
-
-              --Gravar tabela especifica de log - 30/01/2018 - Ch 788828
-              CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
+              vr_cdcritic := 0;
+              vr_dscritic := 'Erro ao atualizar crappep. ' || SQLERRM;
               RAISE vr_exc_erro;
           END;
         END IF;
@@ -11761,11 +10627,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           --Se ocorreu erro
           IF vr_cdcritic IS NOT NULL
              OR vr_dscritic IS NOT NULL THEN
-            vr_idgerlog := 'N';
             RAISE vr_exc_erro;
           END IF;
-          -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-          GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_efetiva_pag_atr_parcel_lem');
         
           /* Atualizar o valor pago dos juros normais na parcela */
           BEGIN
@@ -11775,14 +10638,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
              WHERE crappep.rowid = rw_crappep.rowid;
           EXCEPTION
             WHEN OTHERS THEN
-              vr_cdcritic := 1035;
-              vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'crapepp: '||
-                             'vlpagjin:v + '||nvl(vr_vljinpar, 0)||
-                             ' com rowid:'||rw_crappep.rowid||
-                             '. '||sqlerrm;
-
-              --Gravar tabela especifica de log - 30/01/2018 - Ch 788828
-              CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
+              vr_cdcritic := 0;
+              vr_dscritic := 'Erro ao atualizar crappep. ' || SQLERRM;
               RAISE vr_exc_erro;
           END;
         END IF;
@@ -11947,11 +10804,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           --Se ocorreu erro
           IF vr_cdcritic IS NOT NULL
              OR vr_dscritic IS NOT NULL THEN
-            vr_idgerlog := 'N';
             RAISE vr_exc_erro;
           END IF;
-          -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-          GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_efetiva_pag_atr_parcel_lem');
         
           IF vr_floperac THEN
             /* Financiamento */
@@ -12013,24 +10867,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
             RETURNING crappep.inliquid INTO rw_crappep.inliquid;
           EXCEPTION
             WHEN OTHERS THEN
-              vr_cdcritic := 1035;
-              vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'crapepp: '||
-                             'dtultpag:'  ||pr_dtmvtolt||
-                             ', vlpagpar:vlpagpar + '||nvl(vr_vlpagpar, 0)||
-                             ', vlsdvpar:'||apli0001.fn_round(vr_vlatupar, 2) -
-                                            apli0001.fn_round(vr_vlpagpar, 2)||
-                             ', inliquid:'||vr_inliquid||
-                             ', vlsdvsji: se inliquid = 1 ->'||rw_crappep.vlsdvsji ||
-                             ' ou crappep.vlsdvsji -'||
-                                             (apli0001.fn_round(pr_vlpagpar, 2) -
-                                               apli0001.fn_round(vr_vlmuljur, 2))||
-                             ', vlsdvatu:'||rw_crappep.vlsdvatu||
-                             ', vljura60:'||rw_crappep.vljura60||
-                             ' com rowid:'||rw_crappep.rowid||
-                             '. '||sqlerrm;
-
-              --Gravar tabela especifica de log - 30/01/2018 - Ch 788828
-              CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
+              vr_cdcritic := 0;
+              vr_dscritic := 'Erro ao atualizar crappep. ' || SQLERRM;
               RAISE vr_exc_erro;
           END;
         END IF;
@@ -12079,35 +10917,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           RETURNING crapepr.vlsdeved INTO rw_crapepr.vlsdeved;
         EXCEPTION
           WHEN OTHERS THEN
-            vr_cdcritic := 1035;
-            vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'crapepr: '||
-                           'diarefju:'||rw_crapepr.diarefju||
-                           ', mesrefju:'||rw_crapepr.mesrefju||
-                           ', anorefju:'||rw_crapepr.anorefju||
-                           ', dtultpag:'||pr_dtmvtolt||
-                           ', qtprepag:'||vr_qtprepag||
-                           ', vlsdeved: vlsdeved - '||
-                                          apli0001.fn_round(nvl(vr_vlpagpar, 0)
-                                                           ,10) +
-                                          apli0001.fn_round(nvl(vr_vljurmes, 0)
-                                                           ,10)||
-                           ', vljuratu: vljuratu +'||
-                                          apli0001.fn_round(nvl(vr_vljurmes, 0)
-                                                           ,10)||
-                           ', vljuracu: vljuracu +'||
-                                          apli0001.fn_round(nvl(vr_vljurmes, 0)
-                                                           ,10)|| 
-                           ', qtprecal:'||vr_qtprecal||
-                           ' com rowid:'||rw_crapepr.rowid||
-                           '. '||sqlerrm;
-
-            --Gravar tabela especifica de log - 30/01/2018 - Ch 788828
-            CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
+            vr_cdcritic := 0;
+            vr_dscritic := 'Erro ao atualizar crapepr. ' || SQLERRM;
             RAISE vr_exc_erro;
         END;
       
         --Gravar Liquidacao do Emprestimo
-        empr0001.pc_grava_liquidacao_empr(pr_cdcooper => pr_cdcooper --Codigo Cooperativa
+        EMPR0001.pc_grava_liquidacao_empr(pr_cdcooper => pr_cdcooper --Codigo Cooperativa
                                          ,pr_dtmvtolt => pr_dtmvtolt --Data Emprestimo
                                          ,pr_cdagenci => pr_cdagenci --Codigo Agencia
                                          ,pr_cdbccxlt => 100 --banco/Caixa
@@ -12122,14 +10938,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                                          ,pr_des_reto => vr_des_erro); --Descricao OK/NOK
         --Se ocorreu erro
         IF vr_des_erro <> 'OK' THEN
-          vr_idgerlog := 'N';
           --Sair
           RAISE vr_exc_saida;
         END IF;
-
-        -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-        GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_efetiva_pag_atr_parcel_lem');
-
         --Marcar que realizou transacao
         vr_flgtrans := TRUE;
       
@@ -12137,16 +10948,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         WHEN vr_exc_saida THEN
           --Desfaz transacoes
           ROLLBACK TO SAVEPOINT sav_efetiva_pag_atr_parcel_lem;
-
-          IF vr_idgerlog = 'S' THEN
-            --Grava tabela de log - Ch 788828
-            pc_gera_log(pr_cdcooper      => pr_cdcooper,
-                        pr_dstiplog      => 'E',
-                        pr_dscritic      => vr_dscritic,
-                        pr_cdcriticidade => 1,
-                        pr_cdmensagem    => nvl(vr_cdcritic,0),
-                        pr_ind_tipo_log  => 1);
-          END IF;
       END;
     
       --Se nao ocorreu a transacao
@@ -12188,24 +10989,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       -- Retorno OK
       pr_des_reto := 'OK';
     
-      -- Retira nome do modulo logado - 30/01/2018 - Ch 788828
-      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
     EXCEPTION
       WHEN vr_exc_desvio THEN
         NULL;
-      WHEN vr_exc_saida THEN
-        --Desfaz transacoes
-        ROLLBACK TO SAVEPOINT sav_efetiva_pag_atr_parcel_lem;
-
-        IF vr_idgerlog = 'S' THEN
-          --Grava tabela de log - Ch 788828
-          pc_gera_log(pr_cdcooper      => pr_cdcooper,
-                      pr_dstiplog      => 'E',
-                      pr_dscritic      => vr_dscritic,
-                      pr_cdcriticidade => 1,
-                      pr_cdmensagem    => nvl(vr_cdcritic,0),
-                      pr_ind_tipo_log  => 1);
-        END IF;
       WHEN vr_exc_erro THEN
         -- Retorno não OK
         pr_des_reto := 'NOK';
@@ -12218,35 +11004,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                              ,pr_dscritic => vr_dscritic
                              ,pr_tab_erro => pr_tab_erro);
       
-        IF vr_idgerlog = 'S' THEN
-          --Grava tabela de log - Ch 788828
-          pc_gera_log(pr_cdcooper      => pr_cdcooper,
-                      pr_dstiplog      => 'E',
-                      pr_dscritic      => vr_dscritic,
-                      pr_cdcriticidade => 1,
-                      pr_cdmensagem    => nvl(vr_cdcritic,0),
-                      pr_ind_tipo_log  => 1);
-        END IF;
-   
-
       WHEN OTHERS THEN
-        --Gravar tabela especifica de log - 30/01/2018 - Ch 788828
-        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
-
         -- Retorno não OK
         pr_des_reto := 'NOK';
         -- Montar descrição de erro não tratado
-        vr_cdcritic := 9999;
-        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'EMPR0001.pc_efetiva_pag_atr_parcel_lem. '||sqlerrm;
-
-        --Grava tabela de log - Ch 788828
-        pc_gera_log(pr_cdcooper      => pr_cdcooper,
-                    pr_dstiplog      => 'E',
-                    pr_dscritic      => vr_dscritic,
-                    pr_cdcriticidade => 2,
-                    pr_cdmensagem    => nvl(vr_cdcritic,0),
-                    pr_ind_tipo_log  => 2);
-
+        vr_dscritic := 'Erro não tratado na EMPR0001.pc_efetiva_pag_atr_parcel_lem ' ||
+                       sqlerrm;
         -- Gerar rotina de gravação de erro avisando sobre o erro não tratavo
         gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
                              ,pr_cdagenci => pr_cdagenci
@@ -12257,7 +11020,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                              ,pr_tab_erro => pr_tab_erro);
     END;
   END pc_efetiva_pag_atr_parcel_lem;
---
+
   /* Busca dos pagamentos das parcelas de empréstimo */
   PROCEDURE pc_efetiva_pagto_atr_parcel(pr_cdcooper    IN crapcop.cdcooper%TYPE --> Cooperativa conectada
                                        ,pr_cdagenci    IN crapass.cdagenci%TYPE --> Código da agência
@@ -12273,7 +11036,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                                        ,pr_nrctremp    IN crapepr.nrctremp%TYPE --> Número do contrato de empréstimo
                                        ,pr_nrparepr    IN INTEGER --> Número parcelas empréstimo
                                        ,pr_vlpagpar    IN NUMBER --> Valor a pagar parcela
-                                       ,pr_tab_crawepr IN empr0001.typ_tab_crawepr --Tabela com Contas e Contratos
+                                       ,pr_tab_crawepr IN EMPR0001.typ_tab_crawepr --Tabela com Contas e Contratos
                                        ,pr_nrseqava    IN NUMBER DEFAULT 0 --> Pagamento: Sequencia do avalista
                                        ,pr_des_reto    OUT VARCHAR --> Retorno OK / NOK
                                        ,pr_tab_erro    OUT gene0001.typ_tab_erro) IS --> Tabela com possíves erros
@@ -12284,7 +11047,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Alisson
-       Data    : Fevereiro/2014                        Ultima atualizacao: 30/01/2018
+       Data    : Fevereiro/2014                        Ultima atualizacao: 28/02/2014
     
        Dados referentes ao programa:
     
@@ -12293,11 +11056,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
     
        Alteracoes: 28/02/2014 - Conversão Progress para Oracle (Alisson - AMcom)
     
-                   30/01/2018 - Padronização mensagens (crapcri, pc_gera_log (tbgen))
-                              - Padronização erros comandos DDL
-                              - Pc_set_modulo, cecred.pc_internal_exception
-                              - Tratamento erros others
-                                (Ana - Envolti - Chamado 788828)
     ............................................................................. */
   
     DECLARE
@@ -12332,9 +11090,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       
       
     BEGIN
-      -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_efetiva_pagto_atr_parcel');
-
       --Inicializar variavel erro
       pr_des_reto := 'OK';
     
@@ -12357,7 +11112,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         SAVEPOINT sav_efetiva_pagto_atr_parcel;
       
         --Efetivar Pagamento Normal parcela na craplem
-        empr0001.pc_efetiva_pag_atr_parcel_lem(pr_cdcooper    => pr_cdcooper --> Cooperativa conectada
+        EMPR0001.pc_efetiva_pag_atr_parcel_lem(pr_cdcooper    => pr_cdcooper --> Cooperativa conectada
                                               ,pr_cdagenci    => pr_cdagenci --> Código da agência
                                               ,pr_nrdcaixa    => pr_nrdcaixa --> Número do caixa
                                               ,pr_cdoperad    => pr_cdoperad --> Código do Operador
@@ -12387,18 +11142,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                                               ,pr_loteiof     => vr_loteiof  --> Lote IOF complementar
                                               ,pr_des_reto    => vr_des_erro --> Retorno OK / NOK
                                               ,pr_tab_erro    => pr_tab_erro); --> Tabela com possíves erros
+      
         --Se Retornou erro
         IF vr_des_erro <> 'OK' THEN
           --Sair
           RAISE vr_exc_saida;
         END IF;
-        -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-        GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_efetiva_pagto_atr_parcel');
       
         /* Valor da multa */
         IF nvl(vr_vlrmulta, 0) > 0 THEN
           /* Lanca em C/C e atualiza o lote */
-          empr0001.pc_cria_lancamento_cc(pr_cdcooper => pr_cdcooper --> Cooperativa conectada
+          EMPR0001.pc_cria_lancamento_cc(pr_cdcooper => pr_cdcooper --> Cooperativa conectada
                                         ,pr_dtmvtolt => pr_dtmvtolt --> Movimento atual
                                         ,pr_cdagenci => pr_cdagenci --> Código da agência
                                         ,pr_cdbccxlt => 100 --> Número do caixa
@@ -12418,15 +11172,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
             --Sair
             RAISE vr_exc_ok;
           END IF;
-          -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-          GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_efetiva_pagto_atr_parcel');
         END IF;
       
         /* Pagamento de juros de mora */
         IF nvl(vr_vlatraso, 0) > 0
            AND nvl(vr_vlpagsld, 0) >= 0 THEN
           /* Debita o pagamento da parcela da C/C */
-          empr0001.pc_cria_lancamento_cc(pr_cdcooper => pr_cdcooper --> Cooperativa conectada
+          EMPR0001.pc_cria_lancamento_cc(pr_cdcooper => pr_cdcooper --> Cooperativa conectada
                                         ,pr_dtmvtolt => pr_dtmvtolt --> Movimento atual
                                         ,pr_cdagenci => pr_cdagenci --> Código da agência
                                         ,pr_cdbccxlt => 100 --> Número do caixa
@@ -12474,14 +11226,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
             --Sair
             RAISE vr_exc_ok;
           END IF;
-          -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-          GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_efetiva_pagto_atr_parcel');
+          
         END IF;
       
         /* Lancamento de Valor Pago da Parcela */
         IF nvl(vr_vlpagsld, 0) > 0 THEN
           /* Debita o pagamento da parcela da C/C */
-          empr0001.pc_cria_lancamento_cc(pr_cdcooper => pr_cdcooper --> Cooperativa conectada
+          EMPR0001.pc_cria_lancamento_cc(pr_cdcooper => pr_cdcooper --> Cooperativa conectada
                                         ,pr_dtmvtolt => pr_dtmvtolt --> Movimento atual
                                         ,pr_cdagenci => pr_cdagenci --> Código da agência
                                         ,pr_cdbccxlt => 100 --> Número do caixa
@@ -12501,8 +11252,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
             --Sair
             RAISE vr_exc_ok;
           END IF;
-          -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-          GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_efetiva_pagto_atr_parcel');
           --Marcar transacao como realizada
           vr_flgtrans := TRUE;
         END IF;
@@ -12549,27 +11298,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         pr_des_reto := 'OK';
       END IF;
     
-      -- Retira nome do modulo logado - 30/01/2018 - Ch 788828
-      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
     EXCEPTION
       WHEN OTHERS THEN
-        --Gravar tabela especifica de log - 30/01/2018 - Ch 788828
-        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
-
         -- Retorno não OK
         pr_des_reto := 'NOK';
         -- Montar descrição de erro não tratado
-        vr_cdcritic := 9999;
-        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'EMPR0001.pc_efetiva_pagto_atr_parcel. '||sqlerrm;
-
-        --Grava tabela de log - Ch 788828
-        pc_gera_log(pr_cdcooper      => pr_cdcooper,
-                    pr_dstiplog      => 'E',
-                    pr_dscritic      => vr_dscritic,
-                    pr_cdcriticidade => 2,
-                    pr_cdmensagem    => nvl(vr_cdcritic,0),
-                    pr_ind_tipo_log  => 2);
-
+        vr_dscritic := 'Erro não tratado na EMPR0001.pc_efetiva_pagto_atr_parcel ' ||
+                       sqlerrm;
         -- Gerar rotina de gravação de erro avisando sobre o erro não tratavo
         gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
                              ,pr_cdagenci => pr_cdagenci
@@ -12596,7 +11331,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                                        ,pr_nrctremp    IN crapepr.nrctremp%TYPE --> Número do contrato de empréstimo
                                        ,pr_nrparepr    IN INTEGER               --> Número parcelas empréstimo
                                        ,pr_vlpagpar    IN NUMBER                --> Valor a pagar parcela
-                                       ,pr_tab_crawepr IN empr0001.typ_tab_crawepr --Tabela com Contas e Contratos
+                                       ,pr_tab_crawepr IN EMPR0001.typ_tab_crawepr --Tabela com Contas e Contratos
                                        ,pr_nrseqava    IN NUMBER DEFAULT 0       --> Pagamento: Sequencia do avalista
                                        ,pr_cdhistor    OUT craphis.cdhistor%TYPE --> Historico Pagamento
                                        ,pr_nrdolote    OUT craplot.nrdolote%TYPE --> Numero Lote Pagamento
@@ -12609,7 +11344,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Alisson
-       Data    : Marco/2014                        Ultima atualizacao: 30/01/2018
+       Data    : Marco/2014                        Ultima atualizacao: 16/10/2015
     
        Dados referentes ao programa:
     
@@ -12625,11 +11360,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                    31/10/2016 - Validação dentro para identificar
                                 parcelas ja liquidadas (AJFink - SD#545719)
 
-                   30/01/2018 - Padronização mensagens (crapcri, pc_gera_log (tbgen))
-                              - Padronização erros comandos DDL
-                              - Pc_set_modulo, cecred.pc_internal_exception
-                              - Tratamento erros others
-                                (Ana - Envolti - Chamado 788828)
     ............................................................................. */
   
     DECLARE
@@ -12664,9 +11394,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       vr_exc_saida EXCEPTION;
       vr_exc_ok    EXCEPTION;
     BEGIN
-      -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_efetiva_pagto_antec_lem');
-
       --Inicializar variavel erro
       pr_des_reto := 'OK';
     
@@ -12684,8 +11411,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         vr_dstransa := 'Efetiva pagamento antecipado de parcela craplem';
       END IF;
     
-      --Validar pagamento antecipado da parcela - gera log na rotina chamada
-      empr0001.pc_valida_pagto_antec_parc   (pr_cdcooper => pr_cdcooper --> Cooperativa conectada
+      --Validar pagamento antecipado da parcela
+      EMPR0001.pc_valida_pagto_antec_parc   (pr_cdcooper => pr_cdcooper --> Cooperativa conectada
                                             ,pr_cdagenci => pr_cdagenci --> Código da agência
                                             ,pr_nrdcaixa => pr_nrdcaixa --> Número do caixa
                                             ,pr_cdoperad => pr_cdoperad --> Código do Operador
@@ -12707,8 +11434,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         --Sair
         RAISE vr_exc_saida;
       END IF;
-      -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_efetiva_pagto_antec_lem');
 
       BEGIN
         --Criar savepoint para desfazer transacao
@@ -12725,8 +11450,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           --Fechar Cursor
           CLOSE cr_crappep;
           --Mensagem Erro
-          vr_cdcritic := 1146;  --Parcela nao encontrada
-          vr_des_erro := gene0001.fn_busca_critica(vr_cdcritic);
+          vr_dscritic:= 'Parcela nao encontrada.';
           --Sair
           RAISE vr_exc_erro;                
         ELSE
@@ -12737,8 +11461,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         --SD#545719 inicio
         IF rw_crappep.inliquid = 1 THEN
           -- Atribui críticas
-          vr_cdcritic := 1149;  --Parcela ja liquidada
-          vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+          vr_cdcritic := 0;
+          vr_dscritic := 'Parcela ja liquidada..';
           -- Gera exceção
           RAISE vr_exc_saida;
         END IF;
@@ -12754,8 +11478,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           --Fechar Cursor
           CLOSE cr_crapepr;
           --Mensagem Erro
-          vr_cdcritic := 484;  --Contrato não encontrado
-          vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+          vr_dscritic:= 'Contrato não encontrado.';
           --Sair
           RAISE vr_exc_erro;
         ELSE
@@ -12772,8 +11495,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           --Fechar Cursor
           CLOSE cr_craplcr;
           --Mensagem Erro
-          vr_cdcritic := 1178;  --Linha de Credito não encontrada
-          vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+          vr_dscritic:= 'Linha Credito não encontrada.';
           --Sair
           RAISE vr_exc_erro;
         ELSE
@@ -12807,7 +11529,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         END IF;
         
         --Lancar Juros do Contrato 
-        empr0001.pc_lanca_juro_contrato(pr_cdcooper    => pr_cdcooper --Codigo Cooperativa
+        EMPR0001.pc_lanca_juro_contrato(pr_cdcooper    => pr_cdcooper --Codigo Cooperativa
                                        ,pr_cdagenci    => pr_cdagenci --Codigo Agencia
                                        ,pr_nrdcaixa    => pr_nrdcaixa --Codigo Caixa
                                        ,pr_nrdconta    => pr_nrdconta --Numero da Conta
@@ -12835,11 +11557,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
             vr_cdcritic := pr_tab_erro(pr_tab_erro.FIRST).cdcritic;
             vr_dscritic := pr_tab_erro(pr_tab_erro.FIRST).dscritic;
           ELSE  
-            vr_cdcritic := 9999;
-            vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'EMPR0001.pc_lanca_juro_contrato. '||sqlerrm;
+            vr_dscritic := 'Erro na rotina empr0001.pc_lanca_juro_contrato.';  
           END IF;
-          -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-          GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_efetiva_pagto_antec_lem');
           --Sair
           RAISE vr_exc_saida;
         END IF;
@@ -12863,14 +11582,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
               vr_cdcritic := pr_tab_erro(pr_tab_erro.FIRST).cdcritic;
               vr_dscritic := pr_tab_erro(pr_tab_erro.FIRST).dscritic;
             ELSE  
-              vr_cdcritic := 9999;
-              vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'EMPR0001.pc_calc_antec_parcel_parci. '||sqlerrm;
+              vr_dscritic := 'Erro na rotina empr0001.pc_calc_antec_parcel_parci.';
             END IF;
             --Sair
             RAISE vr_exc_saida;
           END IF;
-          -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-          GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_efetiva_pagto_antec_lem');
         END IF;     
         
         /* Lancamento de Desconto da Parcela e atualiza o seu lote */
@@ -12901,8 +11617,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         IF nvl(vr_cdcritic,0) <> 0 OR vr_dscritic IS NOT NULL THEN
           RAISE vr_exc_erro;
         END IF;
-        -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-        GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_efetiva_pagto_antec_lem');
         
         /* Lancamento de Valor Pago da Parcela e atualiza o seu lote */
         pc_cria_lancamento_lem(pr_cdcooper => pr_cdcooper --Codigo Cooperativa
@@ -12932,8 +11646,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         IF nvl(vr_cdcritic,0) <> 0 OR vr_dscritic IS NOT NULL THEN
           RAISE vr_exc_erro;
         END IF;
-        -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-        GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_efetiva_pagto_antec_lem');
         
         /* Verificar valor saldo devedor parcela */
         vr_vlsdvpar:= nvl(rw_crappep.vlsdvpar,0) - (nvl(pr_vlpagpar,0) + nvl(vr_vldespar,0));
@@ -12968,24 +11680,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           RETURNING crappep.inliquid INTO rw_crappep.inliquid;    
         EXCEPTION
           WHEN OTHERS THEN
-            vr_cdcritic := 1035;
-            vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'crapepp: '||
-                           'vldespar:vldespar + '||nvl(vr_vldespar,0)||
-                           ', dtultpag:'||pr_dtmvtolt||
-                           ', vlpagpar:vlpagpar + '||nvl(pr_vlpagpar,0)||
-                           ', vlsdvpar:'||vr_vlsdvpar||
-                           ', vlsdvsji: se inliquid = 1 ->'||rw_crappep.vlsdvsji ||
-                           ' ou crappep.vlsdvsji -'||
-                                           (nvl(pr_vlpagpar,0) -
-                                             nvl(vr_vldespar,0))||
-                           ', inliquid:'||vr_inliquid||
-                           ', vlsdvatu:'||rw_crappep.vlsdvatu||
-                           ', vljura60:'||rw_crappep.vljura60||
-                           ' com rowid:'||rw_crappep.rowid||
-                           '. '||sqlerrm;
-            --Gravar tabela especifica de log - 30/01/2018 - Ch 788828
-            CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
-
+            vr_dscritic := 'Erro ao atualizar crappep.'||sqlerrm;
             --Sair
             RAISE vr_exc_saida;  
         END;      
@@ -13012,22 +11707,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           WHERE crapepr.ROWID = rw_crapepr.ROWID;                  
         EXCEPTION
           WHEN OTHERS THEN
-            vr_cdcritic := 1035;
-            vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'crapepr: '||
-                           'dtultpag:'||pr_dtmvtolt||
-                           ', qtprepag:qtprepag + '||nvl(rw_crappep.inliquid,0)||
-                           ', qtprecal:qtprecal + '||nvl(rw_crappep.inliquid,0)||
-                           ', vlsdeved:vlsdeved + '||nvl(vr_vljurmes,0) - nvl(pr_vlpagpar,0)||
-                           ', vljuratu:vljuratu + '||nvl(vr_vljurmes,0)||
-                           ', vljuracu:vljuracu + '||nvl(vr_vljurmes,0)||
-                           ', diarefju:'||rw_crapepr.diarefju||
-                           ', mesrefju:'||rw_crapepr.mesrefju||
-                           ', anorefju:'||rw_crapepr.anorefju||
-                           ' com rowid:'||rw_crapepr.rowid||
-                           '. '||sqlerrm;
-
-            --Gravar tabela especifica de log - 30/01/2018 - Ch 788828
-            CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
+            vr_dscritic := 'Erro ao atualizar crapepr.'||sqlerrm;
             --Sair
             RAISE vr_exc_saida;  
         END;      
@@ -13044,23 +11724,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           AND   crapavs.nrparepr = pr_nrparepr;  
         EXCEPTION
           WHEN OTHERS THEN
-            vr_cdcritic := 1037;
-            vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'crapavs: '||
-                           'com cdcooper:'||pr_cdcooper||
-                           ', nrdconta:'||pr_nrdconta||
-                           ', nrdocmto:'||pr_nrctremp||
-                           ', nrparepr:'||pr_nrparepr||
-                           '. '||sqlerrm;
-
-            --Gravar tabela especifica de log - 30/01/2018 - Ch 788828
-            CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
+            vr_dscritic := 'Erro ao excluir crapavs.'||sqlerrm;
             --Sair
             RAISE vr_exc_saida;  
         END;      
         
         /* Verifica e efetua se necessario a liquidacao */
         --Gravar Liquidacao do Emprestimo
-        empr0001.pc_grava_liquidacao_empr(pr_cdcooper => pr_cdcooper --Codigo Cooperativa
+        EMPR0001.pc_grava_liquidacao_empr(pr_cdcooper => pr_cdcooper --Codigo Cooperativa
                                          ,pr_dtmvtolt => pr_dtmvtolt --Data Emprestimo
                                          ,pr_cdagenci => pr_cdagenci --Codigo Agencia
                                          ,pr_cdbccxlt => 100         --banco/Caixa
@@ -13078,8 +11749,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           --Sair
           RAISE vr_exc_saida;
         END IF;
-        -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-        GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_efetiva_pagto_antec_lem');
         
         --Marcar Transacao
         vr_flgtrans:= TRUE;   
@@ -13087,14 +11756,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         WHEN vr_exc_saida THEN
           --Desfaz transacoes
           ROLLBACK TO SAVEPOINT sav_efetiva_pagto_antec_lem;
-
-          --Grava tabela de log - Ch 788828
-          pc_gera_log(pr_cdcooper      => pr_cdcooper,
-                      pr_dstiplog      => 'E',
-                      pr_dscritic      => vr_dscritic,
-                      pr_cdcriticidade => 1,
-                      pr_cdmensagem    => nvl(vr_cdcritic,0),
-                      pr_ind_tipo_log  => 1);
       END;
     
       --Se nao ocorreu a transacao
@@ -13137,29 +11798,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       -- Retorno OK
       pr_des_reto := 'OK';
     
-      -- Retira nome do modulo logado - 30/01/2018 - Ch 788828
-      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
     EXCEPTION
       WHEN vr_exc_ok THEN
         NULL;
       WHEN OTHERS THEN
-        --Gravar tabela especifica de log - 30/01/2018 - Ch 788828
-        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
-
         -- Retorno não OK
         pr_des_reto := 'NOK';
         -- Montar descrição de erro não tratado
-        vr_cdcritic := 9999;
-        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'EMPR0001.pc_efetiva_pagto_antec_lem. '||sqlerrm;
-
-        --Grava tabela de log - Ch 788828
-        pc_gera_log(pr_cdcooper      => pr_cdcooper,
-                    pr_dstiplog      => 'E',
-                    pr_dscritic      => vr_dscritic,
-                    pr_cdcriticidade => 2,
-                    pr_cdmensagem    => nvl(vr_cdcritic,0),
-                    pr_ind_tipo_log  => 2);
-
+        vr_dscritic := 'Erro não tratado na EMPR0001.pc_efetiva_pagto_antec_lem ' ||
+                       sqlerrm;
         -- Gerar rotina de gravação de erro avisando sobre o erro não tratavo
         gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
                              ,pr_cdagenci => pr_cdagenci
@@ -13186,7 +11833,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Alisson
-       Data    : Fevereiro/2014                        Ultima atualizacao: 30/01/2018
+       Data    : Fevereiro/2014                        Ultima atualizacao: 27/02/2014
     
        Dados referentes ao programa:
     
@@ -13195,11 +11842,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
     
        Alteracoes: 27/02/2014 - Conversão Progress para Oracle (Alisson - AMcom)
     
-                   30/01/2018 - Padronização mensagens (crapcri, pc_gera_log (tbgen))
-                              - Padronização erros comandos DDL
-                              - Pc_set_modulo, cecred.pc_internal_exception
-                              - Tratamento erros others
-                                (Ana - Envolti - Chamado 788828)
     ............................................................................. */
   
     DECLARE
@@ -13229,9 +11871,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       vr_exc_saida EXCEPTION;
     
     BEGIN
-      -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_verifica_parcel_anteriores');
-
       --Inicializar variavel erro
       pr_des_reto := 'OK';
       pr_dscritic := NULL;
@@ -13248,33 +11887,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       --Se encontrou
       IF cr_crappep%FOUND THEN
         --Retornar Mensagem erro
-        pr_dscritic := gene0001.fn_busca_critica(1147); --'Efetuar primeiro o pagamento da parcela em atraso';
+        pr_dscritic := 'Efetuar primeiro o pagamento da parcela em atraso';
         --Retornar Erro
         pr_des_reto := 'NOK';
       END IF;
       --Fechar Cursor
       CLOSE cr_crappep;
     
-      -- Retira nome do modulo logado - 30/01/2018 - Ch 788828
-      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
     EXCEPTION
       WHEN OTHERS THEN
-        --Gravar tabela especifica de log - 30/01/2018 - Ch 788828
-        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
-
         -- Retorno não OK
         pr_des_reto := 'NOK';
         -- Montar descrição de erro não tratado
-        vr_cdcritic := 9999;
-        pr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'EMPR0001.pc_verifica_parcel_anteriores. '||sqlerrm;
-
-        --Grava tabela de log - Ch 788828
-        pc_gera_log(pr_cdcooper      => pr_cdcooper,
-                    pr_dstiplog      => 'E',
-                    pr_dscritic      => pr_dscritic,
-                    pr_cdcriticidade => 2,
-                    pr_cdmensagem    => nvl(vr_cdcritic,0),
-                    pr_ind_tipo_log  => 2);
+        pr_dscritic := 'Erro não tratado na EMPR0001.pc_verifica_parcel_anteriores ' ||
+                       sqlerrm;
     END;
   END pc_verifica_parcel_anteriores;
 
@@ -13301,7 +11927,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : James Prust Junior
-     Data    : Maio/2014                        Ultima atualizacao: 30/01/2018
+     Data    : Maio/2014                        Ultima atualizacao: 13/05/2014
     
      Dados referentes ao programa:
     
@@ -13309,12 +11935,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
      Objetivo  : Rotina para validar o pagamento da parcela normal
     
      Alteracoes: 13/05/2014 - Conversão Progress para Oracle (James)
-
-                 30/01/2018 - Padronização mensagens (crapcri, pc_gera_log (tbgen))
-                            - Padronização erros comandos DDL
-                            - Pc_set_modulo, cecred.pc_internal_exception
-                            - Tratamento erros others
-                              (Ana - Envolti - Chamado 788828)
     ............................................................................. */
     DECLARE
       CURSOR cr_crappep(pr_cdcooper IN crappep.cdcooper%TYPE
@@ -13342,9 +11962,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       vr_nrdrowid ROWID;
     
     BEGIN
-      -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_valida_pagto_normal_parcela');
-
       vr_flgtrans := FALSE;
       pr_des_reto := 'OK';
     
@@ -13372,8 +11989,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           -- Fechar o cursor e gerar erro
           CLOSE cr_crappep;
           -- MOntar descrição de erro
-          vr_cdcritic := 1148; --'Parcela nao encontrada.'
-          vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+          vr_cdcritic := 0;
+          vr_dscritic := 'Parcela nao encontrada.';
           RAISE vr_exc_saida;
         ELSE
           -- Apenas fechar o cursor e continuar
@@ -13382,14 +11999,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       
         -- Valida se o valor de pagamento eh maior que 0.
         IF nvl(pr_vlpagpar, 0) = 0 THEN
-          vr_cdcritic := 1142;  --Valor de pagamento deve ser informado
-          vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+          vr_cdcritic := 0;
+          vr_dscritic := 'Valor de pagamento nao informado.';
           RAISE vr_exc_saida;
         END IF;
+      
         -- Verifica se o valor informado para pagamento eh maior que o valor da parcela
         IF pr_vlpagpar > rw_crappep.vlsdvpar THEN
-          vr_cdcritic := 1033; --Valor informado para pagamento maior que valor da parcela
-          vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+          vr_cdcritic := 0;
+          vr_dscritic := 'Valor informado para pagamento maior que valor da parcela';
           RAISE vr_exc_saida;
         END IF;
       
@@ -13408,8 +12026,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                                  ,pr_tab_erro => pr_tab_erro);
           END IF;
       END;
-      -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_valida_pagto_normal_parcela');
     
       --Se nao ocorreu a transacao
       IF vr_flgtrans
@@ -13429,26 +12045,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                             ,pr_nrdrowid => vr_nrdrowid);
       END IF;
     
-      -- Retira nome do modulo logado - 30/01/2018 - Ch 788828
-       GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
     EXCEPTION
       WHEN OTHERS THEN
-        --Gravar tabela especifica de log - 30/01/2018 - Ch 788828
-        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
-
         pr_des_reto := 'NOK';
         -- Montar descrição de erro não tratado
-        vr_cdcritic := 9999;
-        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'EMPR0001.pc_valida_pagamento_normal_parcela. '||sqlerrm;
-
-        --Grava tabela de log - Ch 788828
-        pc_gera_log(pr_cdcooper      => pr_cdcooper,
-                    pr_dstiplog      => 'E',
-                    pr_dscritic      => vr_dscritic,
-                    pr_cdcriticidade => 2,
-                    pr_cdmensagem    => nvl(vr_cdcritic,0),
-                    pr_ind_tipo_log  => 2);
-
+        vr_dscritic := 'Erro não tratado na EMPR0001.pc_valida_pagamento_normal_parcela ' ||
+                       sqlerrm;
         -- Gerar rotina de gravação de erro avisando sobre o erro não tratavo
         gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
                              ,pr_cdagenci => pr_cdagenci
@@ -13460,7 +12062,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
     END;
   
   END pc_valida_pagto_normal_parcela;
---
+
   /* Efetivar o pagamento da parcela na craplem  */
   PROCEDURE pc_efetiva_pagto_parc_lem(pr_cdcooper    IN crapcop.cdcooper%TYPE --> Cooperativa conectada
                                      ,pr_cdagenci    IN crapass.cdagenci%TYPE --> Código da agência
@@ -13476,8 +12078,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                                      ,pr_nrctremp    IN crapepr.nrctremp%TYPE --> Número do contrato de empréstimo
                                      ,pr_nrparepr    IN INTEGER --> Número parcelas empréstimo
                                      ,pr_vlparepr    IN NUMBER --> Valor da parcela emprestimo
-                                     ,pr_tab_crawepr IN empr0001.typ_tab_crawepr --Tabela com Contas e Contratos
-                                     ,pr_nrseqava    IN NUMBER DEFAULT 250 --> Pagamento: Sequencia do avalista
+                                     ,pr_tab_crawepr IN EMPR0001.typ_tab_crawepr --Tabela com Contas e Contratos
+                                     ,pr_nrseqava    IN NUMBER DEFAULT 0 --> Pagamento: Sequencia do avalista
                                      ,pr_cdhistor    OUT craphis.cdhistor%TYPE --> Codigo historico
                                      ,pr_nrdolote    OUT craplot.nrdolote%TYPE --> Numero do Lote
                                      ,pr_des_reto    OUT VARCHAR --> Retorno OK / NOK
@@ -13489,7 +12091,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Alisson
-       Data    : Fevereiro/2014                        Ultima atualizacao: 30/01/2018
+       Data    : Fevereiro/2014                        Ultima atualizacao: 16/10/2015
     
        Dados referentes ao programa:
     
@@ -13506,17 +12108,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                    31/10/2016 - Validação dentro para identificar
                                 parcelas ja liquidadas (AJFink - SD#545719)
 
+
                    25/04/2017 - na rotina pc_efetiva_pagto_parc_lem retornar valor pro 
                                 rowtype da crapepr na hora do update qdo cai na validacao 
                                 do vr_ehmensal pois qdo ia atualizar o valor novamente 
                                 a crapepr estava ficando com valor incorreto 
                                 (Tiago/Thiago SD644598).
-
-                   30/01/2018 - Padronização mensagens (crapcri, pc_gera_log (tbgen))
-                              - Padronização erros comandos DDL
-                              - Pc_set_modulo, cecred.pc_internal_exception
-                              - Tratamento erros others
-                                (Ana - Envolti - Chamado 788828)
     ............................................................................. */
   
     DECLARE
@@ -13548,9 +12145,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       vr_exc_saida EXCEPTION;
     
     BEGIN
-      -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_efetiva_pagto_parc_lem');
-
       --Inicializar variavel erro
       pr_des_reto := 'OK';
       --Marcar que nao ocorreu transacao
@@ -13569,10 +12163,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         --Criar savepoint para desfazer transacao
         SAVEPOINT sav_efetiva_pagto_parc_lem;
       
-        -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-        GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_efetiva_pagto_parc_lem');
         -- Procedure para validar se a parcela esta OK.
-        empr0001.pc_valida_pagto_normal_parcela(pr_cdcooper => pr_cdcooper -- Codigo Cooperativa
+        EMPR0001.pc_valida_pagto_normal_parcela(pr_cdcooper => pr_cdcooper -- Codigo Cooperativa
                                                ,pr_cdagenci => pr_cdagenci -- Codigo Agencia
                                                ,pr_nrdcaixa => pr_nrdcaixa -- Codigo Caixa
                                                ,pr_cdoperad => pr_cdoperad -- Operador
@@ -13594,9 +12186,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           RAISE vr_exc_saida;
         END IF;
       
-        -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-        GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_efetiva_pagto_parc_lem');
-
         --Buscar registro da parcela
         OPEN cr_crappep(pr_cdcooper => pr_cdcooper --> Cooperativa
                        ,pr_nrdconta => pr_nrdconta --> Numero da Conta
@@ -13609,7 +12198,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           --Fechar Cursor
           CLOSE cr_crappep;
           vr_cdcritic := 55;
-          vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
           RAISE vr_exc_saida;
         END IF;
         --Fechar Cursor
@@ -13618,8 +12206,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         --SD#545719 inicio
         IF rw_crappep.inliquid = 1 THEN
           -- Atribui críticas
-          vr_cdcritic := 1149; --'Parcela ja liquidada...'
-          vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+          vr_cdcritic := 0;
+          vr_dscritic := 'Parcela ja liquidada...';
           -- Gera exceção
           RAISE vr_exc_saida;
         END IF;
@@ -13636,7 +12224,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           --Fechar Cursor
           CLOSE cr_crapepr;
           vr_cdcritic := 55;
-          vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
           RAISE vr_exc_saida;
         END IF;
         --Fechar Cursor
@@ -13652,7 +12239,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           --Fechar Cursor
           CLOSE cr_craplcr;
           vr_cdcritic := 363;
-          vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
           --Sair
           RAISE vr_exc_saida;
         ELSE
@@ -13705,20 +12291,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           EXCEPTION
             WHEN OTHERS THEN
               --Mensagem erro
-              vr_cdcritic := 1035;
-              vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'crapepr: '||
-                             'vlsdeved: vlsdeved - '||pr_vlparepr||
-                             ' com rowid:'||rw_crapepr.rowid||
-                             '. '||sqlerrm;
-
-              --Gravar tabela especifica de log - 30/01/2018 - Ch 788828
-              CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
+              vr_dscritic := 'Erro ao atualizar crapepr. ' || SQLERRM;
               RAISE vr_exc_erro;
           END;
         END IF;
       
         --Lancar Juro Contrato
-        empr0001.pc_lanca_juro_contrato(pr_cdcooper    => pr_cdcooper --Codigo Cooperativa
+        EMPR0001.pc_lanca_juro_contrato(pr_cdcooper    => pr_cdcooper --Codigo Cooperativa
                                        ,pr_cdagenci    => pr_cdagenci --Codigo Agencia
                                        ,pr_nrdcaixa    => pr_nrdcaixa --Codigo Caixa
                                        ,pr_nrdconta    => pr_nrdconta --Numero da Conta
@@ -13744,8 +12323,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           --Sair
           RAISE vr_exc_saida;
         END IF;
-        -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-        GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_efetiva_pagto_parc_lem');
       
         /* Cria lancamento craplem e atualiza o seu lote */
         pc_cria_lancamento_lem(pr_cdcooper => pr_cdcooper --Codigo Cooperativa
@@ -13776,8 +12353,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
            OR vr_dscritic IS NOT NULL THEN
           RAISE vr_exc_erro;
         END IF;
-        -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-        GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_efetiva_pagto_parc_lem');
       
         --Atualizar valores para Update
         rw_crappep.dtultpag := pr_dtmvtolt;
@@ -13813,20 +12388,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         EXCEPTION
           WHEN OTHERS THEN
             --Mensagem erro
-            vr_cdcritic := 1035;
-            vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'crapepp: '||
-                           'dtultpag:'||rw_crappep.dtultpag||
-                           ', vlpagpar:'||rw_crappep.vlpagpar||
-                           ', vlsdvpar:'||rw_crappep.vlsdvpar||
-                           ', vlsdvsji:'||rw_crappep.vlsdvsji||
-                           ', inliquid:'||rw_crappep.inliquid||
-                           ', vlsdvatu:'||rw_crappep.vlsdvatu||
-                           ', vljura60:'||rw_crappep.vljura60||
-                           ' com rowid:'||rw_crappep.rowid||
-                           '. '||sqlerrm;
-
-            --Gravar tabela especifica de log - 30/01/2018 - Ch 788828
-            CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
+            vr_dscritic := 'Erro ao atualizar crappep. ' || SQLERRM;
             RAISE vr_exc_erro;
         END;
       
@@ -13876,22 +12438,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         EXCEPTION
           WHEN OTHERS THEN
             --Mensagem erro
-            vr_cdcritic := 1035;
-            vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'crapepr: '||
-                           'diarefju:'||rw_crapepr.diarefju||
-                           ', mesrefju:'||rw_crapepr.mesrefju||
-                           ', anorefju:'||rw_crapepr.anorefju||
-                           ', dtultpag:'||pr_dtmvtolt||
-                           ', qtprepag:'||rw_crapepr.qtprepag||
-                           ', vlsdeved:'||rw_crapepr.vlsdeved||
-                           ', vljuratu:'||rw_crapepr.vljuratu||
-                           ', vljuracu:'||rw_crapepr.vljuracu||
-                           ', qtprecal:'||rw_crapepr.qtprecal||
-                           ' com rowid:'||rw_crapepr.rowid||
-                           '. '||sqlerrm;
-
-            --Gravar tabela especifica de log - 30/01/2018 - Ch 788828
-            CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
+            vr_dscritic := 'Erro ao atualizar crapepr. ' || SQLERRM;
             RAISE vr_exc_erro;
         END;
       
@@ -13912,7 +12459,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         END IF;
       
         /* Verifica e efetua se necessario a liquidacao */
-        empr0001.pc_grava_liquidacao_empr(pr_cdcooper => pr_cdcooper --Codigo Cooperativa
+        EMPR0001.pc_grava_liquidacao_empr(pr_cdcooper => pr_cdcooper --Codigo Cooperativa
                                          ,pr_dtmvtolt => pr_dtmvtolt --Data Emprestimo
                                          ,pr_cdagenci => pr_cdagenci --Codigo Agencia
                                          ,pr_cdbccxlt => 100 	--banco/Caixa
@@ -13930,8 +12477,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           --Sair
           RAISE vr_exc_saida;
         END IF;
-        -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-        GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_efetiva_pagto_parc_lem');
       
         --Marcar que ocorreu transacao
         vr_flgtrans := TRUE;
@@ -13974,9 +12519,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         -- Retorno OK
         pr_des_reto := 'OK';
       END IF;
-
-      -- Retira nome do modulo logado - 30/01/2018 - Ch 788828
-      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
     EXCEPTION
       WHEN vr_exc_erro THEN
         -- Retorno não OK
@@ -13986,39 +12528,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                              ,pr_cdagenci => pr_cdagenci
                              ,pr_nrdcaixa => pr_nrdcaixa
                              ,pr_nrsequen => 1 --> Fixo
-                             ,pr_cdcritic => vr_cdcritic
+                             ,pr_cdcritic => 0
                              ,pr_dscritic => vr_dscritic
                              ,pr_tab_erro => pr_tab_erro);
       
       WHEN OTHERS THEN
-        --Gravar tabela especifica de log - 30/01/2018 - Ch 788828
-        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
-
         -- Retorno não OK
         pr_des_reto := 'NOK';
         -- Montar descrição de erro não tratado
-        vr_cdcritic := 9999;
-        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'EMPR0001.pc_efetiva_pagto_parc_lem. '||sqlerrm;
-
-        --Grava tabela de log - Ch 788828
-        pc_gera_log(pr_cdcooper      => pr_cdcooper,
-                    pr_dstiplog      => 'E',
-                    pr_dscritic      => vr_dscritic,
-                    pr_cdcriticidade => 2,
-                    pr_cdmensagem    => nvl(vr_cdcritic,0),
-                    pr_ind_tipo_log  => 2);
-
+        vr_dscritic := 'Erro não tratado na EMPR0001.pc_efetiva_pagto_parc_lem ' ||
+                       sqlerrm;
         -- Gerar rotina de gravação de erro avisando sobre o erro não tratavo
         gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
                              ,pr_cdagenci => pr_cdagenci
                              ,pr_nrdcaixa => pr_nrdcaixa
                              ,pr_nrsequen => 1 --> Fixo
-                             ,pr_cdcritic => vr_cdcritic
+                             ,pr_cdcritic => 0
                              ,pr_dscritic => vr_dscritic
                              ,pr_tab_erro => pr_tab_erro);
     END;
   END pc_efetiva_pagto_parc_lem;
---
+
   /* Efetivar o pagamento da parcela  */
   PROCEDURE pc_efetiva_pagto_parcela(pr_cdcooper    IN crapcop.cdcooper%TYPE --> Cooperativa conectada
                                     ,pr_cdagenci    IN crapass.cdagenci%TYPE --> Código da agência
@@ -14034,7 +12564,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                                     ,pr_nrctremp    IN crapepr.nrctremp%TYPE --> Número do contrato de empréstimo
                                     ,pr_nrparepr    IN INTEGER --> Número parcelas empréstimo
                                     ,pr_vlparepr    IN NUMBER --> Valor da parcela emprestimo
-                                    ,pr_tab_crawepr IN empr0001.typ_tab_crawepr --Tabela com Contas e Contratos
+                                    ,pr_tab_crawepr IN EMPR0001.typ_tab_crawepr --Tabela com Contas e Contratos
                                     ,pr_nrseqava    IN NUMBER DEFAULT 0 --> Pagamento: Sequencia do avalista
                                     ,pr_des_reto    OUT VARCHAR --> Retorno OK / NOK
                                     ,pr_tab_erro    OUT gene0001.typ_tab_erro) IS --> Tabela com possíves erros
@@ -14045,7 +12575,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Alisson
-       Data    : Fevereiro/2014                        Ultima atualizacao: 30/01/2018
+       Data    : Fevereiro/2014                        Ultima atualizacao: 27/02/2014
     
        Dados referentes ao programa:
     
@@ -14054,11 +12584,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
     
        Alteracoes: 28/02/2014 - Conversão Progress para Oracle (Alisson - AMcom)
     
-                   30/01/2018 - Padronização mensagens (crapcri, pc_gera_log (tbgen))
-                              - Padronização erros comandos DDL
-                              - Pc_set_modulo, cecred.pc_internal_exception
-                              - Tratamento erros others
-                                (Ana - Envolti - Chamado 788828)
     ............................................................................. */
   
     DECLARE
@@ -14101,7 +12626,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         --Criar savepoint para desfazer transacao
         SAVEPOINT savtrans_efetiva_pagto_parcela;
         --Efetivar Pagamento Normal parcela na craplem
-        empr0001.pc_efetiva_pagto_parc_lem(pr_cdcooper    => pr_cdcooper --> Cooperativa conectada
+        EMPR0001.pc_efetiva_pagto_parc_lem(pr_cdcooper    => pr_cdcooper --> Cooperativa conectada
                                           ,pr_cdagenci    => pr_cdagenci --> Código da agência
                                           ,pr_nrdcaixa    => pr_nrdcaixa --> Número do caixa
                                           ,pr_cdoperad    => pr_cdoperad --> Código do Operador
@@ -14128,7 +12653,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         END IF;
       
         /* Lanca em C/C e atualiza o lote */
-        empr0001.pc_cria_lancamento_cc(pr_cdcooper => pr_cdcooper --> Cooperativa conectada
+        EMPR0001.pc_cria_lancamento_cc(pr_cdcooper => pr_cdcooper --> Cooperativa conectada
                                       ,pr_dtmvtolt => pr_dtmvtolt --> Movimento atual
                                       ,pr_cdagenci => pr_cdagenci --> Código da agência
                                       ,pr_cdbccxlt => 100 --> Número do caixa
@@ -14156,14 +12681,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         WHEN vr_exc_saida THEN
           --Desfaz transacoes
           ROLLBACK TO SAVEPOINT savtrans_efetiva_pagto_parcela;
-
-          --Grava tabela de log - Ch 788828
-          pc_gera_log(pr_cdcooper      => pr_cdcooper,
-                      pr_dstiplog      => 'E',
-                      pr_dscritic      => vr_dscritic,
-                      pr_cdcriticidade => 1,
-                      pr_cdmensagem    => nvl(vr_cdcritic,0),
-                      pr_ind_tipo_log  => 1);
       END;
     
       --Se nao ocorreu a transacao
@@ -14200,38 +12717,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         pr_des_reto := 'OK';
       END IF;
     
-      -- Retira nome do modulo logado - 30/01/2018 - Ch 788828
-      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
     EXCEPTION
       WHEN OTHERS THEN
-        --Gravar tabela especifica de log - 30/01/2018 - Ch 788828
-        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
-
         -- Retorno não OK
         pr_des_reto := 'NOK';
         -- Montar descrição de erro não tratado
-        vr_cdcritic := 9999;
-        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'EMPR0001.pc_efetiva_pagto_parcela. '||sqlerrm;
-
-        --Grava tabela de log - Ch 788828
-        pc_gera_log(pr_cdcooper      => pr_cdcooper,
-                    pr_dstiplog      => 'E',
-                    pr_dscritic      => vr_dscritic,
-                    pr_cdcriticidade => 2,
-                    pr_cdmensagem    => nvl(vr_cdcritic,0),
-                    pr_ind_tipo_log  => 2);
-
+        vr_dscritic := 'Erro não tratado na EMPR0001.pc_efetiva_pagto_parcela ' ||
+                       sqlerrm;
         -- Gerar rotina de gravação de erro avisando sobre o erro não tratavo
         gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
                              ,pr_cdagenci => pr_cdagenci
                              ,pr_nrdcaixa => pr_nrdcaixa
                              ,pr_nrsequen => 1 --> Fixo
-                             ,pr_cdcritic => vr_cdcritic
+                             ,pr_cdcritic => 0
                              ,pr_dscritic => vr_dscritic
                              ,pr_tab_erro => pr_tab_erro);
     END;
   END pc_efetiva_pagto_parcela;
---
+
   -- Rotina para consultar antecipação parcelas emprestimo
   PROCEDURE pc_consulta_antecipacao(pr_nrdconta IN crapass.nrdconta%TYPE --> Codigo do Produto
                                    ,pr_nrctremp IN crapepr.nrctremp%TYPE --> Codigo do Produto
@@ -14249,7 +12752,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
     Sistema :
     Sigla   :
     Autor   : Daniel Zimmermann
-    Data    : Junho/14.                    Ultima atualizacao: 30/01/2018
+    Data    : Junho/14.                    Ultima atualizacao: 27/06/2014
     
     Dados referentes ao programa:
     
@@ -14258,11 +12761,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
     Objetivo  : Rotina para consultar antecipação parcelas emprestimo.
     Observacao: -----
     
-    Alteracoes: 30/01/2018 - Padronização mensagens (crapcri, pc_gera_log (tbgen))
-                           - Padronização erros comandos DDL
-                           - Pc_set_modulo, cecred.pc_internal_exception
-                           - Tratamento erros others
-                             (Ana - Envolti - Chamado 788828)
+    Alteracoes: -----
     ..............................................................................*/
     DECLARE
     
@@ -14315,8 +12814,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       vr_idorigem VARCHAR2(100);
     
     BEGIN
-      -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_consulta_antecipacao');
     
       -- Extrair informações do xml recebido por parametro
       gene0004.pc_extrai_dados(pr_xml      => pr_retxml
@@ -14328,9 +12825,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                               ,pr_idorigem => vr_idorigem
                               ,pr_cdoperad => vr_cdoperad
                               ,pr_dscritic => vr_dscritic);
-    
-      -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_consulta_antecipacao');
     
       -- Criar cabeçalho do XML
       pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Dados/>');
@@ -14372,47 +12866,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                               ,pr_tag_cont => to_char(rw_craplem.dtpagemp
                                                      ,'DD/MM/RRRR')
                               ,pr_des_erro => vr_dscritic);
-        -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-        GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_consulta_antecipacao');
         vr_contador := vr_contador + 1;
       
       END LOOP;
     
-      -- Retira nome do modulo logado - 30/01/2018 - Ch 788828
-      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
     EXCEPTION
       WHEN vr_exc_saida THEN
         pr_cdcritic := vr_cdcritic;
         pr_dscritic := vr_dscritic;
       
-        --Grava tabela de log - Ch 788828
-        pc_gera_log(pr_cdcooper      => 3,
-                    pr_dstiplog      => 'E',
-                    pr_dscritic      => pr_dscritic,
-                    pr_cdcriticidade => 1,
-                    pr_cdmensagem    => nvl(pr_cdcritic,0),
-                    pr_ind_tipo_log  => 1);
-      
-
         -- Carregar XML padrão para variável de retorno não utilizada.
         -- Existe para satisfazer exigência da interface.
         pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root><Erro>' ||
                                        pr_dscritic || '</Erro></Root>');
         ROLLBACK;
       WHEN OTHERS THEN
-        --Gravar tabela especifica de log - 30/01/2018 - Ch 788828
-        CECRED.pc_internal_exception;
-      
-        pr_cdcritic := 9999;
-        pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic)||'EMPR0001.pc_consulta_antecipacao. '||sqlerrm;
-
-        --Grava tabela de log - Ch 788828
-        pc_gera_log(pr_cdcooper      => 3,
-                    pr_dstiplog      => 'E',
-                    pr_dscritic      => pr_dscritic,
-                    pr_cdcriticidade => 2,
-                    pr_cdmensagem    => nvl(pr_cdcritic,0),
-                    pr_ind_tipo_log  => 2);
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := 'Erro geral em Consulta de Produtos: ' || SQLERRM;
       
         -- Carregar XML padrão para variável de retorno não utilizada.
         -- Existe para satisfazer exigência da interface.
@@ -14440,11 +12910,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
   BEGIN
   
     /* .............................................................................
+    
     Programa: pc_imprimir_antecipacao
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Daniel Zimmermann
-    Data    : Maio/14.                    Ultima atualizacao: 30/01/2018
+    Data    : Maio/14.                    Ultima atualizacao: 13/08/2015
     
     Dados referentes ao programa:
     
@@ -14455,12 +12926,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
     
     Alteracoes: 13/08/2015 - Incluida validação para os históricos 100,800,900 e 850. 
 		                        (Reinert)
-
-                30/01/2018 - Padronização mensagens (crapcri, pc_gera_log (tbgen))
-                           - Padronização erros comandos DDL
-                           - Pc_set_modulo, cecred.pc_internal_exception
-                           - Tratamento erros others
-                             (Ana - Envolti - Chamado 788828)
     ..............................................................................*/
     DECLARE
     
@@ -14526,8 +12991,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       vr_exc_saida EXCEPTION;
     
     BEGIN
-      -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_imprimir_antecipacao');
     
       vr_auxqtd := 0;
       -- extrair informações do xml
@@ -14664,6 +13127,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
     
       -- Somente se o CLOB contiver informações
       IF dbms_lob.getlength(vr_xml) > 0 THEN
+      
         -- Busca do diretório base da cooperativa para PDF
         vr_nom_direto := gene0001.fn_diretorio(pr_tpdireto => 'C' -- /usr/coop
                                               ,pr_cdcooper => vr_cdcooper
@@ -14725,8 +13189,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         IF vr_typ_saida = 'ERR'
            OR vr_dscritic IS NOT null THEN
           -- Concatena o erro que veio
-          vr_cdcritic := 1156; --Erro ao remover o arquivo
-          vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||' '||vr_dscritic;
+          vr_dscritic := 'Erro ao remover arquivo: ' || vr_dscritic;
           RAISE vr_exc_saida;
         END IF;
       
@@ -14740,20 +13203,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><nmarqpdf>' ||
                                      vr_nmarqimp || '</nmarqpdf>');
     
-      -- Retira nome do modulo logado - 30/01/2018 - Ch 788828
-      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
     EXCEPTION
       WHEN vr_exc_saida THEN
         pr_cdcritic := vr_cdcritic;
         pr_dscritic := vr_dscritic;
-      
-        --Grava tabela de log - Ch 788828
-        pc_gera_log(pr_cdcooper      => 3,
-                    pr_dstiplog      => 'E',
-                    pr_dscritic      => pr_dscritic,
-                    pr_cdcriticidade => 1,
-                    pr_cdmensagem    => nvl(pr_cdcritic,0),
-                    pr_ind_tipo_log  => 1);
       
         -- Carregar XML padrão para variável de retorno não utilizada.
         -- Existe para satisfazer exigência da interface.
@@ -14761,19 +13214,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                                        pr_dscritic || '</Erro></Root>');
         ROLLBACK;
       WHEN OTHERS THEN
-        --Gravar tabela especifica de log - 30/01/2018 - Ch 788828
-        CECRED.pc_internal_exception;
-      
-        pr_cdcritic := 9999;
-        pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic)||'EMPR0001.pc_imprimir_antecipacao. '||sqlerrm;
-
-        --Grava tabela de log - Ch 788828
-        pc_gera_log(pr_cdcooper      => 3,
-                    pr_dstiplog      => 'E',
-                    pr_dscritic      => pr_dscritic,
-                    pr_cdcriticidade => 2,
-                    pr_cdmensagem    => nvl(pr_cdcritic,0),
-                    pr_ind_tipo_log  => 2);
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := 'Erro geral em Consulta de Produtos: ' || SQLERRM;
       
         -- Carregar XML padrão para variável de retorno não utilizada.
         -- Existe para satisfazer exigência da interface.
@@ -14781,8 +13223,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                                        pr_dscritic || '</Erro></Root>');
         ROLLBACK;
     END;
+  
   END pc_imprimir_antecipacao;  
-  --
+  
   PROCEDURE pc_valida_inclusao_tr(pr_cdcooper IN craplcr.cdcooper%TYPE --> Código da cooperativa
                                  ,pr_cdlcremp IN craplcr.cdlcremp%TYPE --> Codigo da linha de credito
                                  ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE --> Data de inclusao
@@ -14793,27 +13236,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                                  ,pr_cdoperad IN crapope.cdoperad%TYPE --> Operador
                                  ,pr_cdcritic OUT PLS_INTEGER --> Código da crítica
                                  ,pr_dscritic OUT VARCHAR2) IS --> Descrição da crítica   
-
-    /* .............................................................................
-    Programa: pc_valida_inclusao_tr
-    Sistema : Conta-Corrente - Cooperativa de Credito
-    Sigla   : CRED
-    Autor   : 
-    Data    :                             Ultima atualizacao: 30/01/2018
-    
-    Dados referentes ao programa:
-    
-    Frequencia: Sempre que for chamado
-    
-    Objetivo  : 
-    Observacao: -----
-    
-    Alteracoes: 30/01/2018 - Padronização mensagens (crapcri, pc_gera_log (tbgen))
-                           - Padronização erros comandos DDL
-                           - Pc_set_modulo, cecred.pc_internal_exception
-                           - Tratamento erros others
-                             (Ana - Envolti - Chamado 788828)
-    ..............................................................................*/
 
     -- Busca a origem da linha de credito
     CURSOR cr_craplcr(pr_cdcooper IN craplcr.cdcooper%TYPE
@@ -14852,8 +13274,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
     -- Variaveis gerais
     vr_dslcremp VARCHAR2(2000); --> Contem as linhas de microcredito que sao permitidos para o produto TR
   BEGIN   
-    -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_valida_inclusao_tr');
     
     -- Buscar informações da linha de crédito
     OPEN cr_crapfin(pr_cdcooper => pr_cdcooper
@@ -14874,8 +13294,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
     /* Caso a Finalidade for Cessao de Credito, nao podera permitir incluir */
     IF (rw_crapfin.tpfinali = 1) THEN
       vr_cdcritic := 946;
-      vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
       RAISE vr_exc_erro;
+      
     END IF;
     
     -- Buscar informações da linha de crédito
@@ -14889,7 +13309,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       CLOSE cr_craplcr;
       -- Gerar erro
       vr_cdcritic := 55;
-      vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
       RAISE vr_exc_erro;
     ELSE
       -- Fechar o cursor
@@ -14900,8 +13319,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
 				(rw_craplcr.cdlcremp = 100 OR rw_craplcr.cdlcremp = 800 OR rw_craplcr.cdlcremp = 900))OR
 			 (pr_cdcooper = 2  AND
 			  (rw_craplcr.cdlcremp = 100 OR rw_craplcr.cdlcremp = 850 OR rw_craplcr.cdlcremp = 900))THEN
-			vr_cdcritic := 1150;  --Linha nao permitida para esse produto
-		  vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+		  vr_dscritic := 'Linha nao permitida para esse produto.';
+			vr_cdcritic := 0;
 			RAISE vr_exc_erro;
 		END IF;
       
@@ -14917,8 +13336,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         
         /* Tipo do debito do emprestimo */
         IF pr_flgpagto = 1 THEN
-          vr_cdcritic := 1151;  --Tipo de debito folha bloqueado para todas as operacoes
-          vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+          vr_dscritic := 'Tipo de debito folha bloqueado para todas as operacoes';
           RAISE vr_exc_erro;
         END IF;
         
@@ -14930,7 +13348,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         IF cr_crapope%NOTFOUND THEN
           CLOSE cr_crapope;
           vr_cdcritic := 67;
-          vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
           RAISE vr_exc_erro;
         ELSE
           -- Apenas Fecha o Cursor
@@ -14942,8 +13359,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           RAISE vr_exc_saida;
         END IF;
         
-        vr_cdcritic := 1222; --Operacao nao permitida no produto Price TR
-        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+        vr_dscritic := 'Atencao! Para as condicoes informadas utilize o produto Price Pre-Fixado. ' ||
+                       'Operacao nao permitida no produto Price TR.';
         RAISE vr_exc_erro;
 		END IF;
       
@@ -14971,7 +13388,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         IF cr_crapope%NOTFOUND THEN
           CLOSE cr_crapope;
           vr_cdcritic := 67;
-          vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
           RAISE vr_exc_erro;
         ELSE
           -- Apenas Fecha o Cursor
@@ -14983,8 +13399,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           RAISE vr_exc_saida;
         END IF;  
       
-        vr_cdcritic := 1222; --Operacao nao permitida no produto Price TR
-        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+        vr_dscritic := 'Atencao! Para as condicoes informadas utilize o produto Price Pre-Fixado. ' ||
+                       'Operacao nao permitida no produto Price TR.';
         RAISE vr_exc_erro;
       END IF;
       
@@ -15045,15 +13461,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       
       /* Quantidade de prestacoes */
       IF pr_qtpreemp <= 60 THEN
-        vr_cdcritic := 1222; --Operacao nao permitida no produto Price TR
-        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+        vr_dscritic := 'Atencao! Para as condicoes informadas utilize o produto Price Pre-Fixado. Operacao nao permitida no produto Price TR.';
         RAISE vr_exc_erro;
       END IF;
       
     END IF; /* END IF pr_dtmvtolt >= TO_DATE('04/14/2015') THEN */
     
-      -- Retira nome do modulo logado - 30/01/2018 - Ch 788828
-      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
   EXCEPTION
     WHEN vr_exc_saida THEN
       NULL;
@@ -15066,33 +13479,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       -- Devolvemos código e critica encontradas das variaveis locais
       pr_cdcritic := NVL(vr_cdcritic, 0);
       pr_dscritic := vr_dscritic;
-
-      --Grava tabela de log - Ch 788828
-      pc_gera_log(pr_cdcooper      => 3,
-                  pr_dstiplog      => 'E',
-                  pr_dscritic      => pr_dscritic,
-                  pr_cdcriticidade => 1,
-                  pr_cdmensagem    => nvl(pr_cdcritic,0),
-                  pr_ind_tipo_log  => 1);
-      
-
     WHEN OTHERS THEN
-      --Gravar tabela especifica de log - 30/01/2018 - Ch 788828
-      CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
+      pr_dscritic := 'Erro geral em EMPR0001.pc_valida_inclusao_tr: ' ||SQLERRM;
+  END;
   
-      pr_cdcritic := 9999;
-      pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic)||'EMPR0001.pc_valida_inclusao_tr. '||sqlerrm;
-
-      --Grava tabela de log - Ch 788828
-      pc_gera_log(pr_cdcooper      => pr_cdcooper,
-                  pr_dstiplog      => 'E',
-                  pr_dscritic      => pr_dscritic,
-                  pr_cdcriticidade => 2,
-                  pr_cdmensagem    => nvl(pr_cdcritic,0),
-                  pr_ind_tipo_log  => 2);
-  
-  END pc_valida_inclusao_tr;
---  
   /* Criar e Atualizar Tabela Temporaria Lancamento Conta  */
   PROCEDURE pc_cria_atualiza_ttlanconta(pr_cdcooper    IN crapcop.cdcooper%TYPE --> Cooperativa conectada
                                        ,pr_nrctremp    IN crapepr.nrctremp%TYPE --> Número do contrato de empréstimo
@@ -15114,7 +13504,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Alisson
-       Data    : Março/2015                        Ultima atualizacao: 30/01/2018
+       Data    : Março/2015                        Ultima atualizacao: 24/03/2015
     
        Dados referentes ao programa:
     
@@ -15123,11 +13513,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
     
        Alteracoes: 24/03/2015 - Conversão Progress para Oracle (Alisson - AMcom)
     
-                   30/01/2018 - Padronização mensagens (crapcri, pc_gera_log (tbgen))
-                              - Padronização erros comandos DDL
-                              - Pc_set_modulo, cecred.pc_internal_exception
-                              - Tratamento erros others
-                                (Ana - Envolti - Chamado 788828)
     ............................................................................. */
   
     DECLARE
@@ -15141,8 +13526,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       vr_exc_saida EXCEPTION;
     
     BEGIN  
-      -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_cria_atualiza_ttlanconta');
       
       --Inicializar Variaveis Saida
       pr_dscritic:= NULL;
@@ -15157,7 +13540,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                  lpad('100',10,'0')||
                  lpad(pr_nrdolote,10,'0')||
                  lpad(pr_nrdconta,10,'0');
-
       --Se nao encontrou
       IF pr_tab_lancconta.EXISTS(vr_index) THEN
         --Atualizar Lancamento
@@ -15178,33 +13560,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         pr_tab_lancconta(vr_index).nrseqava:= pr_nrseqava;
       END IF;
           
-      -- Retira nome do modulo logado - 30/01/2018 - Ch 788828
-      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
     EXCEPTION
       WHEN vr_exc_saida THEN
         pr_des_erro:= 'NOK';
         -- Devolvemos a critica encontradas das variaveis locais
         pr_dscritic := vr_dscritic;
       WHEN OTHERS THEN
-        --Gravar tabela especifica de log - 30/01/2018 - Ch 788828
-        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
-
         pr_des_erro:= 'NOK';
         -- Devolvemos a critica encontradas das variaveis locais        
-        vr_cdcritic := 9999;
-        pr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'EMPR0001.pc_cria_atualiza_ttlanconta. '||sqlerrm;
-
-        --Grava tabela de log - Ch 788828
-        pc_gera_log(pr_cdcooper      => pr_cdcooper,
-                    pr_dstiplog      => 'E',
-                    pr_dscritic      => pr_dscritic,
-                    pr_cdcriticidade => 2,
-                    pr_cdmensagem    => nvl(vr_cdcritic,0),
-                    pr_ind_tipo_log  => 2);
+        pr_dscritic := 'Erro geral em empr0001.pc_cria_atualiza_ttlanconta: ' ||SQLERRM;
     END;
   END pc_cria_atualiza_ttlanconta;  
 
-  --
   /* Efetuar a Liquidacao do Emprestimo  */
   PROCEDURE pc_efetua_liquidacao_empr(pr_cdcooper    IN crapcop.cdcooper%TYPE --> Cooperativa conectada
                                      ,pr_cdagenci    IN crapass.cdagenci%TYPE --> Código da agência
@@ -15220,8 +13587,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                                      ,pr_nrctremp    IN crapepr.nrctremp%TYPE --> Número do contrato de empréstimo
                                      ,pr_dtmvtoan    IN DATE     --> Data Movimento Anterior
                                      ,pr_ehprcbat    IN VARCHAR2 --> Indicador Processo Batch (S/N)
-                                     ,pr_tab_pgto_parcel IN OUT empr0001.typ_tab_pgto_parcel --Tabela com Pagamentos de Parcelas
-                                     ,pr_tab_crawepr IN empr0001.typ_tab_crawepr --Tabela com Contas e Contratos
+                                     ,pr_tab_pgto_parcel IN OUT EMPR0001.typ_tab_pgto_parcel --Tabela com Pagamentos de Parcelas
+                                     ,pr_tab_crawepr IN EMPR0001.typ_tab_crawepr --Tabela com Contas e Contratos
                                      ,pr_nrseqava    IN NUMBER DEFAULT 0 --> Pagamento: Sequencia do avalista
                                      ,pr_des_erro    OUT VARCHAR --> Retorno OK / NOK
                                      ,pr_tab_erro    OUT gene0001.typ_tab_erro) IS --> Tabela com possíves erros
@@ -15232,7 +13599,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Alisson
-       Data    : Março/2015                        Ultima atualizacao: 30/01/2018
+       Data    : Março/2015                        Ultima atualizacao: 27/09/2016
     
        Dados referentes ao programa:
     
@@ -15244,11 +13611,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                    27/09/2016 - Tornar o parametro PR_TAB_PGTO_PARCEL um parametro 
                                 "IN OUT" (Renato/Supero - P.302 - Acordos)
     
-                   30/01/2018 - Padronização mensagens (crapcri, pc_gera_log (tbgen))
-                              - Padronização erros comandos DDL
-                              - Pc_set_modulo, cecred.pc_internal_exception
-                              - Tratamento erros others
-                                (Ana - Envolti - Chamado 788828)
     ............................................................................. */
   
     DECLARE
@@ -15293,7 +13655,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       vr_ehimune PLS_INTEGER := 0;
       
       --Tabela de lancamentos na conta
-      vr_tab_lanc empr0001.typ_tab_lancconta;
+      vr_tab_lanc EMPR0001.typ_tab_lancconta;
       
       --Tipo de Tabela
       TYPE typ_pgto_char IS TABLE OF empr0001.typ_reg_pgto_parcel INDEX BY VARCHAR2(40);
@@ -15334,14 +13696,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       vr_dscritic VARCHAR2(4000);
     
       --Variaveis Excecao
-      vr_exc_erro           EXCEPTION;
-      vr_exc_saida_sem_log  EXCEPTION;
-      vr_exc_saida          EXCEPTION;
+      vr_exc_erro  EXCEPTION;
+      vr_exc_saida EXCEPTION;
     
     BEGIN
-      -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_efetua_liquidacao_empr');
-
       --Inicializar variavel erro
       pr_des_erro:= 'OK';
     
@@ -15360,7 +13718,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
     
       --Popular nova tabela mudando indice para facilitar consulta
       vr_index_pgto:= pr_tab_pgto_parcel.FIRST;
-
       WHILE vr_index_pgto IS NOT NULL LOOP
         vr_index_char:= lpad(pr_tab_pgto_parcel(vr_index_pgto).cdcooper,10,'0')||
                         lpad(pr_tab_pgto_parcel(vr_index_pgto).nrdconta,10,'0')||
@@ -15393,8 +13750,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           --Verificar se a parcela existe
           IF NOT vr_tab_pgto.EXISTS(vr_index_char) THEN                         
             --Erro
-            vr_cdcritic:= 1148;
-            vr_dscritic:= gene0001.fn_busca_critica(vr_cdcritic);
+            vr_cdcritic:= 0;
+            vr_dscritic:= 'Parcela nao encontrada.';
             --Levantar Excecao
             RAISE vr_exc_saida;
           END IF;
@@ -15402,7 +13759,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           /* Parcela em dia */ 
           IF rw_crappep.dtvencto > pr_dtmvtoan AND rw_crappep.dtvencto <= pr_dtmvtolt THEN
             --Efetivar Pagamento Normal parcela na craplem
-            empr0001.pc_efetiva_pagto_parc_lem (pr_cdcooper    => pr_cdcooper --> Cooperativa conectada
+            EMPR0001.pc_efetiva_pagto_parc_lem (pr_cdcooper    => pr_cdcooper --> Cooperativa conectada
                                                ,pr_cdagenci    => pr_cdagenci --> Código da agência
                                                ,pr_nrdcaixa    => pr_nrdcaixa --> Número do caixa
                                                ,pr_cdoperad    => pr_cdoperad --> Código do Operador
@@ -15425,12 +13782,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
             --Se Retornou erro
             IF vr_des_erro <> 'OK' THEN
               --Sair
-              vr_cdcritic := pr_tab_erro(pr_tab_erro.FIRST).cdcritic;
-              vr_dscritic := pr_tab_erro(pr_tab_erro.FIRST).dscritic;
               RAISE vr_exc_saida;
             END IF; 
-            -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-            GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_efetua_liquidacao_empr');
             
             --Se nao for batch
             IF nvl(pr_ehprcbat,'X') = 'N' THEN
@@ -15448,23 +13801,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                                           ,pr_tab_lancconta => vr_tab_lanc    --> Tabela Lancamentos Conta                                                                              
                                           ,pr_des_erro => vr_des_erro   --> Retorno OK / NOK
                                           ,pr_dscritic => vr_dscritic); --> descricao do erro
-
               --Se Retornou erro
               IF vr_des_erro <> 'OK' THEN
                 --Sair
-                RAISE vr_exc_saida_sem_log;
+                RAISE vr_exc_saida;
               END IF;                            
-              -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-              GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_efetua_liquidacao_empr');
-
             END IF; --pr_ehprcbat
+            
             -- Renato Darosci - Informa que a parcela foi processada
             vr_tab_pgto(vr_index_char).inpagmto := 1;
             
           ELSIF rw_crappep.dtvencto < pr_dtmvtolt THEN /* Parcela Vencida */
             
             --Efetivar Pagamento Atrasado parcela na craplem
-            empr0001.pc_efetiva_pag_atr_parcel_lem (pr_cdcooper    => pr_cdcooper --> Cooperativa conectada
+            EMPR0001.pc_efetiva_pag_atr_parcel_lem (pr_cdcooper    => pr_cdcooper --> Cooperativa conectada
                                                    ,pr_cdagenci    => pr_cdagenci --> Código da agência
                                                    ,pr_nrdcaixa    => pr_nrdcaixa --> Número do caixa
                                                    ,pr_cdoperad    => pr_cdoperad --> Código do Operador
@@ -15498,8 +13848,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
             --Se Retornou erro
             IF vr_des_erro <> 'OK' THEN
               --Sair
-              vr_cdcritic := pr_tab_erro(pr_tab_erro.FIRST).cdcritic;
-              vr_dscritic := pr_tab_erro(pr_tab_erro.FIRST).dscritic;
               RAISE vr_exc_saida;
             END IF;
             /* projeto 410 - lança IOF complementar de atraso */
@@ -15542,10 +13890,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
             --Se Retornou erro
             IF vr_des_erro <> 'OK' THEN
               --Sair
-              RAISE vr_exc_saida_sem_log;
+              RAISE vr_exc_saida;
             END IF;                            
-            -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-            GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_efetua_liquidacao_empr');
             
             /* juros de inadinplencia */
             pc_cria_atualiza_ttlanconta (pr_cdcooper => pr_cdcooper   --> Cooperativa conectada
@@ -15564,11 +13910,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
             --Se Retornou erro
             IF vr_des_erro <> 'OK' THEN
               --Sair
-              RAISE vr_exc_saida_sem_log;
+              RAISE vr_exc_saida;
             END IF;                            
-            -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-            GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_efetua_liquidacao_empr');
-
             --Se nao for batch
             IF nvl(pr_ehprcbat,'X') = 'N' THEN
               /* pagamento */
@@ -15588,11 +13931,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
               --Se Retornou erro
               IF vr_des_erro <> 'OK' THEN
                 --Sair
-                RAISE vr_exc_saida_sem_log;
+                RAISE vr_exc_saida;
               END IF;                            
-              -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-              GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_efetua_liquidacao_empr');
-
             END IF; --pr_ehprcbat
             
             -- Renato Darosci - Informa que a parcela foi processada
@@ -15601,7 +13941,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           ELSIF rw_crappep.dtvencto > pr_dtmvtolt   THEN /* Parcela a Vencer */ 
              
             --Efetivar Pagamento Antecipado parcela na craplem
-            empr0001.pc_efetiva_pagto_antec_lem (pr_cdcooper    => pr_cdcooper --> Cooperativa conectada
+            EMPR0001.pc_efetiva_pagto_antec_lem (pr_cdcooper    => pr_cdcooper --> Cooperativa conectada
                                                 ,pr_cdagenci    => pr_cdagenci --> Código da agência
                                                 ,pr_nrdcaixa    => pr_nrdcaixa --> Número do caixa
                                                 ,pr_cdoperad    => pr_cdoperad --> Código do Operador
@@ -15621,15 +13961,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                                                 ,pr_nrdolote    => vr_lotepaga --> Lote Pagamento
                                                 ,pr_des_reto    => vr_des_erro --> Retorno OK / NOK
                                                 ,pr_tab_erro    => pr_tab_erro); --> Tabela com possíves erros
+           
             --Se Retornou erro
             IF vr_des_erro <> 'OK' THEN
               --Sair
-              vr_cdcritic := pr_tab_erro(pr_tab_erro.FIRST).cdcritic;
-              vr_dscritic := pr_tab_erro(pr_tab_erro.FIRST).dscritic;
               RAISE vr_exc_saida;
             END IF;
-            -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-            GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_efetua_liquidacao_empr');
             
             IF nvl(pr_ehprcbat,'X') = 'N' THEN
               /* pagamento */
@@ -15649,11 +13986,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
               --Se Retornou erro
               IF vr_des_erro <> 'OK' THEN
                 --Sair
-                RAISE vr_exc_saida_sem_log;
+                RAISE vr_exc_saida;
               END IF; 
-              -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-              GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_efetua_liquidacao_empr');
-
             END IF;  
             
             -- Renato Darosci - Informa que a parcela foi processada
@@ -15686,10 +14020,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           --Se Retornou erro
           IF vr_des_erro <> 'OK' THEN
             --Sair
-            RAISE vr_exc_saida_sem_log;
+            RAISE vr_exc_saida;
           END IF;
-          -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-          GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_efetua_liquidacao_empr');
           
           --Marcar que transacao ocorreu
           vr_flgtrans:= TRUE;
@@ -15699,17 +14031,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           
       EXCEPTION
         WHEN vr_exc_saida THEN
-          --Desfaz transacoes
-          ROLLBACK TO SAVEPOINT save_efetua_liquidacao_empr;
-          --Grava tabela de log - Ch 788828
-          pc_gera_log(pr_cdcooper      => pr_cdcooper,
-                      pr_dstiplog      => 'E',
-                      pr_dscritic      => vr_dscritic,
-                      pr_cdcriticidade => 1,
-                      pr_cdmensagem    => nvl(vr_cdcritic,0),
-                      pr_ind_tipo_log  => 1);
-
-        WHEN vr_exc_saida_sem_log THEN
           --Desfaz transacoes
           ROLLBACK TO SAVEPOINT save_efetua_liquidacao_empr;
       END;
@@ -15765,38 +14086,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                             ,pr_nrdrowid => vr_nrdrowid);
       END IF;
     
-      -- Retira nome do modulo logado - 30/01/2018 - Ch 788828
-      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
     EXCEPTION
       WHEN OTHERS THEN
-        --Gravar tabela especifica de log - 30/01/2018 - Ch 788828
-        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
-
         -- Retorno não OK
         pr_des_erro := 'NOK';
         -- Montar descrição de erro não tratado
-        vr_cdcritic := 9999;
-        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'EMPR0001.pc_efetua_liquidacao_empr. '||sqlerrm;
-
-        --Grava tabela de log - Ch 788828
-        pc_gera_log(pr_cdcooper      => pr_cdcooper,
-                    pr_dstiplog      => 'E',
-                    pr_dscritic      => vr_dscritic,
-                    pr_cdcriticidade => 2,
-                    pr_cdmensagem    => nvl(vr_cdcritic,0),
-                    pr_ind_tipo_log  => 2);
-
+        vr_dscritic := 'Erro não tratado na EMPR0001.pc_efetua_liquidacao_empr. '||sqlerrm;
         -- Gerar rotina de gravação de erro avisando sobre o erro não tratavo
         gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
                              ,pr_cdagenci => pr_cdagenci
                              ,pr_nrdcaixa => pr_nrdcaixa
                              ,pr_nrsequen => 1 --> Fixo
-                             ,pr_cdcritic => vr_cdcritic
+                             ,pr_cdcritic => 0
                              ,pr_dscritic => vr_dscritic
                              ,pr_tab_erro => pr_tab_erro);
     END;
   END pc_efetua_liquidacao_empr;
-  --
+  
   /* Efetivar o pagamento da parcela  */
   PROCEDURE pc_liquida_mesmo_dia(pr_cdcooper    IN crapcop.cdcooper%TYPE --> Cooperativa conectada
                                 ,pr_cdagenci    IN crapass.cdagenci%TYPE --> Código da agência
@@ -15822,7 +14128,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Daniel
-       Data    : Maio/2015                        Ultima atualizacao: 30/01/2018
+       Data    : Maio/2015                        Ultima atualizacao: 14/01/2016
     
        Dados referentes ao programa:
     
@@ -15834,11 +14140,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                    14/01/2016 - Retirar campo vlsdvsji duplicado no update da crappep e ajustado 
                                 retorno de criticas SD381067 (Odirlei-AMcom)
     
-                   30/01/2018 - Padronização mensagens (crapcri, pc_gera_log (tbgen))
-                              - Padronização erros comandos DDL
-                              - Pc_set_modulo, cecred.pc_internal_exception
-                              - Tratamento erros others
-                                (Ana - Envolti - Chamado 788828)
     ............................................................................. */
   
     DECLARE
@@ -15879,9 +14180,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       rw_crapepr cr_crapepr%ROWTYPE;
     
     BEGIN
-      -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_liquida_mesmo_dia');
-
       --Inicializar variavel erro
       pr_des_reto := 'OK';
     
@@ -15924,21 +14222,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         --Fechar CURSOR
         CLOSE cr_crapepr;
         vr_cdcritic := 55;
-        vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
         RAISE vr_exc_saida;
       END IF;
       --Fechar Cursor
       CLOSE cr_crapepr;
         
       IF rw_crapepr.inliquid = 1 THEN
-        vr_cdcritic := 358; --Contrato já liquidado
-        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||' Operacao Cancelada!';
+        vr_cdcritic := 0;
+        vr_dscritic := 'Contrato ja liquidado. Operacao Cancelada!';
         RAISE vr_exc_saida;
       END IF;
       
       IF rw_crapepr.vlsdeved <= 0 THEN
-        vr_cdcritic := 1152; --Contrato com Saldo Devedor Zerado
-        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||' Operacao Cancelada!';
+        vr_cdcritic := 0;
+        vr_dscritic := 'Contrato com Saldo Devedor Zerado. Operacao Cancelada!';
         RAISE vr_exc_saida;
       END IF;
         
@@ -15951,8 +14248,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       IF cr_craplcr%NOTFOUND THEN
         --Fechar Cursor
         CLOSE cr_craplcr;
-        vr_cdcritic := 363; -- Linha nao cadastrada
-        vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+        vr_cdcritic := 363;
         --Sair
         RAISE vr_exc_saida;
       ELSE
@@ -15976,6 +14272,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         vr_cdhistor := 1044;
       END IF;
         
+      
       -- Cria lancamento craplem e atualiza o seu lote
       pc_cria_lancamento_lem(pr_cdcooper => pr_cdcooper --Codigo Cooperativa
                             ,pr_dtmvtolt => pr_dtmvtolt --Data Emprestimo
@@ -16006,9 +14303,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         RAISE vr_exc_saida;
       END IF;      
         
-      -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_liquida_mesmo_dia');
-
       --Se for Financiamento
       IF vr_floperac THEN
         vr_nrdolote := 600015;
@@ -16038,17 +14332,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       IF vr_des_erro = 'NOK' THEN
         --Se tem erro na tabela 
         IF vr_tab_erro.count > 0 THEN
-          vr_cdcritic := vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
-          vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;
+          vr_cdcritic:= vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
+          vr_dscritic:= vr_tab_erro(vr_tab_erro.FIRST).dscritic;
         ELSE
-          vr_cdcritic := 9999;
-          vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'EMPR0001.pc_cria_lancamento_cc. '||sqlerrm;
+          vr_cdcritic:= 0;
+          vr_dscritic:= 'Erro ao executar EMPR0001.pc_liquida_mesmo_dia.';  
         END IF;  
         --Levantar Excecao
         RAISE vr_exc_saida;
       END IF;  
-      -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_liquida_mesmo_dia');
         
       --Atualizar Emprestimo
        BEGIN
@@ -16065,21 +14357,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
        EXCEPTION
          WHEN OTHERS THEN
            --Mensagem erro
-           vr_cdcritic := 1035;
-           vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'crapepr: '||
-                          'dtultpag:'||pr_dtmvtolt||
-                          ', qtprepag:'||rw_crapepr.qtpreemp||
-                          ', vlsdeved:0'||', vljuratu:0'||
-                          ', vljuracu:0'||', inliquid:1'||
-                          ', qtprecal:'||rw_crapepr.qtpreemp||
-                          ', dtliquid:'||pr_dtmvtolt||
-                          ' com rowid:'||rw_crapepr.rowid||
-                          '. '||sqlerrm;
-
-           --Gravar tabela especifica de log - 30/01/2018 - Ch 788828
-           CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
+           vr_cdcritic := 0;
+           vr_dscritic := 'Erro ao atualizar crapepr. ' || SQLERRM;
            RAISE vr_exc_saida;
        END;
+         
          
       --Atualizar parcela Emprestimo
       BEGIN 
@@ -16097,20 +14379,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       EXCEPTION
         WHEN OTHERS THEN
           --Mensagem erro
-            vr_cdcritic := 1035;
-            vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'crapepp: '||
-                           'dtultpag:'||pr_dtmvtolt||
-                           ', vlpagpar:'||rw_crapepr.vlpreemp||
-                           ', vlsdvpar:0'||', vlsdvsji:0'||
-                           ', inliquid:1'||', vlsdvatu:0'||
-                           ', vljura60:0'||
-                           ' com cdcooper:'||rw_crapepr.cdcooper||
-                           ', nrdconta:'||rw_crapepr.nrdconta||
-                           ', nrctremp:'||rw_crapepr.nrctremp||
-                           '. '||sqlerrm;
-
-          --Gravar tabela especifica de log - 30/01/2018 - Ch 788828
-          CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
+          vr_cdcritic := 0;
+          vr_dscritic := 'Erro ao atualizar crappep. ' || SQLERRM;
           RAISE vr_exc_saida;
       END;
         
@@ -16131,8 +14401,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           vr_inusatab := TRUE;
         END IF;
       END IF;
-      -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_liquida_mesmo_dia');
         
       --Desativar Rating
       rati0001.pc_desativa_rating(pr_cdcooper   => pr_cdcooper -- Cooperativa
@@ -16155,17 +14423,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
        IF vr_des_erro = 'NOK' THEN
         --Se tem erro na tabela 
         IF vr_tab_erro.count > 0 THEN
-          vr_cdcritic := vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
-          vr_dscritic := vr_tab_erro(vr_tab_erro.FIRST).dscritic;
+          vr_cdcritic:= vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
+          vr_dscritic:= vr_tab_erro(vr_tab_erro.FIRST).dscritic;
         ELSE
-          vr_cdcritic := 9999;
-          vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'rati0001.pc_desativa_rating. '||sqlerrm;
+          vr_cdcritic:= 0;
+          vr_dscritic:= 'Erro ao executar EMPR0001.pc_liquida_mesmo_dia.';  
         END IF;  
         --Levantar Excecao
         RAISE vr_exc_saida;
       END IF; 
-      -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_liquida_mesmo_dia');
           
       -- Se foi solicitado o envio de LOG 
       IF pr_flgerlog = 'S' THEN
@@ -16189,12 +14455,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       
       COMMIT;
     
-      -- Retira nome do modulo logado - 30/01/2018 - Ch 788828
-      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
     EXCEPTION
       WHEN vr_exc_saida THEN
         IF vr_cdcritic <> 0 THEN
           pr_cdcritic := vr_cdcritic;
+          pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
         ELSE
           pr_cdcritic := vr_cdcritic;
           pr_dscritic := vr_dscritic;
@@ -16214,48 +14479,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         -- Existe para satisfazer exigência da interface.
         pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                        '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
-
-        --Grava tabela de log - Ch 788828
-        pc_gera_log(pr_cdcooper      => pr_cdcooper,
-                    pr_dstiplog      => 'E',
-                    pr_dscritic      => vr_dscritic,
-                    pr_cdcriticidade => 1,
-                    pr_cdmensagem    => nvl(vr_cdcritic,0),
-                    pr_ind_tipo_log  => 1);
-
         ROLLBACK;
       WHEN OTHERS THEN
-        --Gravar tabela especifica de log - 30/01/2018 - Ch 788828
-        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
-
         -- Retorno não OK
         pr_des_reto := 'NOK';
         -- Montar descrição de erro não tratado
-        vr_cdcritic := 9999;
-        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'EMPR0001.pc_liquida_mesmo_dia. '||sqlerrm;
-
-        --Grava tabela de log - Ch 788828
-        pc_gera_log(pr_cdcooper      => pr_cdcooper,
-                    pr_dstiplog      => 'E',
-                    pr_dscritic      => vr_dscritic,
-                    pr_cdcriticidade => 2,
-                    pr_cdmensagem    => nvl(vr_cdcritic,0),
-                    pr_ind_tipo_log  => 2);
-
+        vr_dscritic := 'Erro não tratado na EMPR0001.pc_liquida_mesmo_dia ' ||
+                       sqlerrm;
         ROLLBACK;
         -- Gerar rotina de gravação de erro avisando sobre o erro não tratavo
         gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
                              ,pr_cdagenci => pr_cdagenci
                              ,pr_nrdcaixa => pr_nrdcaixa
                              ,pr_nrsequen => 1 --> Fixo
-                             ,pr_cdcritic => vr_cdcritic
+                             ,pr_cdcritic => 0
                              ,pr_dscritic => vr_dscritic
                              ,pr_tab_erro => pr_tab_erro);
                              
     END;
   END pc_liquida_mesmo_dia;
   
---
+  
   /* Efetivar o pagamento da parcela  */
   PROCEDURE pc_liq_mesmo_dia_web(pr_nrdconta    IN crapepr.nrdconta%TYPE --> Número da conta
                                 ,pr_idseqttl    IN crapttl.idseqttl%TYPE --> Seq titula
@@ -16271,11 +14515,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
   BEGIN
     /* .............................................................................
     
-       Programa: pc_liq_mesmo_dia_web
+       Programa: pc_liquida_mesmo_dia                
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Daniel
-       Data    : Maio/2015                        Ultima atualizacao: 30/01/2018
+       Data    : Maio/2015                        Ultima atualizacao: 
     
        Dados referentes ao programa:
     
@@ -16284,11 +14528,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
     
        Alteracoes: 14/01/2016 - Ajustado tratamento de criticas SD381067 (Odirlei-AMcom)
     
-                   30/01/2018 - Padronização mensagens (crapcri, pc_gera_log (tbgen))
-                              - Padronização erros comandos DDL
-                              - Pc_set_modulo, cecred.pc_internal_exception
-                              - Tratamento erros others
-                                (Ana - Envolti - Chamado 788828)
     ............................................................................. */
   
     DECLARE
@@ -16302,6 +14541,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       vr_nrdcaixa VARCHAR2(100);
       vr_idorigem VARCHAR2(100);
       
+    
       --Variaveis Erro
       vr_cdcritic INTEGER;
       vr_des_erro VARCHAR2(3);
@@ -16313,8 +14553,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       vr_exc_saida EXCEPTION;
       
     BEGIN
-      -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_liq_mesmo_dia_web');
       
       gene0004.pc_extrai_dados(pr_xml      => pr_retxml
                               ,pr_cdcooper => vr_cdcooper
@@ -16325,18 +14563,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                               ,pr_idorigem => vr_idorigem
                               ,pr_cdoperad => vr_cdoperad
                               ,pr_dscritic => vr_dscritic);
-      IF vr_dscritic IS NOT NULL THEN
-        --Grava tabela de log - Ch 788828
-        --Aqui não gravava erro, se ocorresse, por isso ficou como Acompanhamento
-        pc_gera_log(pr_cdcooper      => 3,
-                    pr_dstiplog      => 'E',
-                    pr_dscritic      => vr_dscritic,
-                    pr_cdcriticidade => 0,
-                    pr_cdmensagem    => 0,
-                    pr_ind_tipo_log  => 0);
-      END IF;
-      -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_liq_mesmo_dia_web');
+      
       
       pc_liquida_mesmo_dia(pr_cdcooper => vr_cdcooper
                           ,pr_cdagenci => vr_cdagenci
@@ -16364,38 +14591,34 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           vr_dscritic := vr_tab_erro(vr_tab_erro.first).dscritic;
           vr_cdcritic := vr_tab_erro(vr_tab_erro.first).cdcritic;
         ELSE
-          vr_cdcritic := 1153; --Não foi possivel liquidar emprestimo.
-          vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+          vr_dscritic := 'Não foi possivel liquidar emprestimo.';
         END IF;        
         
         RAISE vr_exc_erro;
       END IF;                    
       
-      -- Retira nome do modulo logado - 30/01/2018 - Ch 788828
-      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
+    
     EXCEPTION
       WHEN vr_exc_erro THEN
         --Variavel de erro recebe erro ocorrido
         pr_cdcritic := vr_cdcritic;
         pr_dscritic := vr_dscritic;
       WHEN OTHERS THEN
-        --Gravar tabela especifica de log - 30/01/2018 - Ch 788828
-        CECRED.pc_internal_exception;
 
         -- Montar descrição de erro não tratado
-        pr_cdcritic := 9999;
-        pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic)||'EMPR0001.pc_liq_mesmo_dia_web. '||sqlerrm;
-
-        --Grava tabela de log - Ch 788828
-        pc_gera_log(pr_cdcooper      => 3,
-                    pr_dstiplog      => 'E',
-                    pr_dscritic      => pr_dscritic,
-                    pr_cdcriticidade => 2,
-                    pr_cdmensagem    => nvl(pr_cdcritic,0),
-                    pr_ind_tipo_log  => 2);
+        pr_dscritic := 'Erro não tratado na EMPR0001.pc_liquida_mesmo_dia ' ||
+                       SQLERRM; /*
+        -- Gerar rotina de gravação de erro avisando sobre o erro não tratavo
+        gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
+                             ,pr_cdagenci => pr_cdagenci
+                             ,pr_nrdcaixa => pr_nrdcaixa
+                             ,pr_nrsequen => 1 --> Fixo
+                             ,pr_cdcritic => 0
+                             ,pr_dscritic => vr_dscritic
+                             ,pr_tab_erro => pr_tab_erro); */
     END;
   END pc_liq_mesmo_dia_web;
-  --
+  
   -- Procedure para pagamento antecipado da parcela
   PROCEDURE pr_efetiva_pagto_antec_parcela (pr_cdcooper    IN crapcop.cdcooper%TYPE --> Cooperativa conectada
                                            ,pr_cdagenci    IN crapass.cdagenci%TYPE --> Código da agência
@@ -16424,25 +14647,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Renato Darosci
-       Data    : Setembro/2016.                         Ultima atualizacao: 30/01/2018
+       Data    : Setembro/2016.                         Ultima atualizacao: 29/09/2016
       
        Dados referentes ao programa:
       
        Frequencia: Sempre que for chamado.
        Objetivo  : 
       
-       Alteracoes: 30/01/2018 - Padronização mensagens (crapcri, pc_gera_log (tbgen))
-                              - Padronização erros comandos DDL
-                              - Pc_set_modulo, cecred.pc_internal_exception
-                              - Tratamento erros others
-                                (Ana - Envolti - Chamado 788828)
+       Alteracoes:
+                    
     ............................................................................. */
   
     vr_exc_erro  EXCEPTION;
   
   BEGIN 
-    -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_efetiva_pagto_antec_parcela');
     
     pr_des_reto := 'NOK';
   
@@ -16472,8 +14690,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
     IF vr_des_reto <> 'OK' THEN
       RAISE vr_exc_erro;
     END IF;
-    -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_efetiva_pagto_antec_parcela');
     
     /* Lanca em C/C e atualiza o lote */
     empr0001.pc_cria_lancamento_cc(pr_cdcooper => pr_cdcooper --> Cooperativa conectada
@@ -16496,28 +14712,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       --Sair
       RAISE vr_exc_erro;
     END IF;
-    -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_efetiva_pagto_antec_parcela');
     
     -- Retornar ok para as transações
     pr_des_reto := 'OK';
     
-    -- Retira nome do modulo logado - 30/01/2018 - Ch 788828
-    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
   EXCEPTION
     WHEN vr_exc_erro THEN
       pr_des_reto := vr_des_reto;
       pr_tab_erro := vr_tab_erro;
     WHEN OTHERS THEN
-      --Gravar tabela especifica de log - 30/01/2018 - Ch 788828
-      CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
-
       pr_des_reto := 'NOK';
-      pr_tab_erro(pr_tab_erro.FIRST).dscritic := gene0001.fn_busca_critica(9999)
-                                              ||'EMPR0001.pr_efetiva_pagto_antec_parcela. '||sqlerrm;
+      pr_tab_erro(pr_tab_erro.FIRST).dscritic := 'Erro PR_EFETIVA_PAGTO_ANTEC_PARCELA: '||SQLERRM;
   END pr_efetiva_pagto_antec_parcela;
   
-  --
+  
   --Procedure de pagamentos de parcelas
   PROCEDURE pc_gera_pagamentos_parcelas(pr_cdcooper IN crapcop.cdcooper%TYPE --> Código da Cooperativa
                                         ,pr_cdagenci IN crapass.cdagenci%TYPE --> Código da agência
@@ -16545,7 +14753,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Carlos Rafael Tanholi
-       Data    : Agosto/2015.                         Ultima atualizacao: 30/01/2018
+       Data    : Agosto/2015.                         Ultima atualizacao: 27/11/2015
       
        Dados referentes ao programa:
       
@@ -16564,18 +14772,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                     regras da b1wgen0084a.p->gera_pagamentos_parcelas, conforme 
                     projeto 302 - Sistema de acordos ( Renato Darosci - Supero )
        
-       30/01/2018 - Padronização mensagens (crapcri, pc_gera_log (tbgen))
-                  - Padronização erros comandos DDL
-                  - Pc_set_modulo, cecred.pc_internal_exception
-                  - Tratamento erros others
-                    (Ana - Envolti - Chamado 788828)
     ............................................................................. */
     DECLARE
        
 	    -- Tratamento de erro 			
-			vr_exc_erro  EXCEPTION;
+			vr_exc_erro EXCEPTION;
 		  vr_exc_erro2 EXCEPTION;
-      vr_exc_erro_com_log EXCEPTION;
 			-- Descrição e código da critica 
 			vr_cdcritic crapcri.cdcritic%TYPE;
 			vr_dscritic VARCHAR2(4000);
@@ -16691,8 +14893,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       rw_ret cr_ret%ROWTYPE; 
     
     BEGIN 
-      -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_gera_pagamentos_parcela');
   			 
 			 IF UPPER(pr_flgerlog) = 'S' THEN
 				 vr_dsorigem := GENE0001.vr_vet_des_origens(pr_idorigem);
@@ -16701,10 +14901,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
     
 		   IF pr_tab_pgto_parcel.count() = 0 THEN
 				 -- Atribui crítica
-				 vr_cdcritic := 1154; --Para efetuar o pagamento selecione a(s) parcela(s).
-         vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+				 vr_cdcritic := 0;
+				 vr_dscritic := 'Para efetuar o pagamento selecione a(s) parcela(s).';
 				 -- Gera exceção
-				 RAISE vr_exc_erro_com_log;
+				 RAISE vr_exc_erro;
 			 END IF;
 			 
        -- Parametro de bloqueio de resgate de valores em c/c
@@ -16725,10 +14925,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
        -- Se houve retorno de erro
        IF vr_dscritic IS NOT NULL THEN
 				 -- Gera exceção
-				 RAISE vr_exc_erro_com_log;
+				 RAISE vr_exc_erro;
 			 END IF;
-       -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-       GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_gera_pagamentos_parcela');
 												  
        /* verificar se existe boleto de contrato em aberto e se pode lancar juros remuneratorios no contrato */
        /* 1º) verificar se o parametro está bloqueado para realizar busca de boleto em aberto */		   
@@ -16749,12 +14947,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           /* 3º se existir boleto de contrato em aberto, criticar */
           IF nvl(rw_cde.nrdocmto,0) > 0 THEN           
              -- Atribui crítica
-             vr_cdcritic := 1176;
-             vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)|| ' Contrato:'||to_char(pr_nrctremp)||
-				  		              ', Vencto:' || to_char(rw_cde.dtvencto, 'DD/MM/RRRR') ||
-							              ', R$:'     || to_char(rw_cde.vltitulo,'fm999g999g990d00','NLS_NUMERIC_CHARACTERS = '',.''') || '.';    
+             vr_cdcritic := 0;
+             vr_dscritic := 'Boleto do contrato ' || to_char(pr_nrctremp) || ' em aberto.' ||
+				  		              ' Vencto ' || to_char(rw_cde.dtvencto, 'DD/MM/RRRR') ||
+							              ' R$ ' || to_char(rw_cde.vltitulo,'fm999g999g990d00','NLS_NUMERIC_CHARACTERS = '',.''') || '.';    
              -- Gera exceção
-             RAISE vr_exc_erro_com_log;
+             RAISE vr_exc_erro;
             
           ELSE              
              /* 4º cursor para verificar se existe boleto pago pendente de processamento */
@@ -16768,12 +14966,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
              /* 6º se existir boleto de contrato pago pendente de processamento, lancar juros */
              IF nvl(rw_ret.nrdocmto,0) > 0 THEN           
                 -- Atribui crítica
-                vr_cdcritic := 1177;               
-                vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)|| ' Contrato:'||to_char(pr_nrctremp)||
-  				  		               ', Vencto:' || to_char(rw_ret.dtvencto, 'DD/MM/RRRR') ||
-							                 ', R$:'     || to_char(rw_ret.vltitulo,'fm999g999g990d00','NLS_NUMERIC_CHARACTERS = '',.''') || '.';
+                vr_cdcritic := 0;               
+                vr_dscritic := 'Boleto do contrato ' || to_char(pr_nrctremp) ||
+                               ' esta pago pendente de processamento.' ||
+  				  		               ' Vencto ' || to_char(rw_ret.dtvencto, 'DD/MM/RRRR') ||
+							                 ' R$ ' || to_char(rw_ret.vltitulo,'fm999g999g990d00','NLS_NUMERIC_CHARACTERS = '',.''') || '.';
                 -- Gera exceção
-                RAISE vr_exc_erro_com_log;				
+                RAISE vr_exc_erro;				
              END IF;
 
           END IF; -- nvl(rw_cde.nrdocmto,0) > 0
@@ -16795,7 +14994,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
     
        IF pr_totatual = pr_totpagto THEN -- Liquida Emprestimo
            -- Trazer todas as parcelas
-           empr0001.pc_busca_pgto_parcelas(pr_cdcooper => pr_cdcooper
+           EMPR0001.pc_busca_pgto_parcelas(pr_cdcooper => pr_cdcooper
            	                              ,pr_cdagenci => pr_cdagenci
                                           ,pr_nrdcaixa => pr_nrdcaixa
                                           ,pr_cdoperad => pr_cdoperad
@@ -16818,8 +15017,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
 						 -- Gera exceção
 						 RAISE vr_exc_erro2;
 					 END IF;
-           -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-           GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_gera_pagamentos_parcela');
 
            -- Efetua liquidação do emprestimo
            pc_efetua_liquidacao_empr(pr_cdcooper => pr_cdcooper
@@ -16846,8 +15043,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
            IF vr_des_reto <> 'OK' THEN
               RAISE vr_exc_erro;
            END IF;
-           -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-           GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_gera_pagamentos_parcela');
            
        ELSE
          
@@ -16859,10 +15054,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
          IF rw_crappep_menor.nrparepr = 0 THEN
             CLOSE cr_crappep_menor;
             -- Atribui críticas
-            vr_cdcritic := 1157;  --'Erro ao Localizar Parcela'
-            vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'rati0001.pc_desativa_rating. '||sqlerrm;
+            vr_cdcritic := 0;
+            vr_dscritic := 'Erro ao Localizar Parcela';
             -- Gera exceção
-            RAISE vr_exc_erro_com_log;
+            RAISE vr_exc_erro;
          ELSE
             CLOSE cr_crappep_menor;
          END IF;
@@ -16901,10 +15096,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
            IF cr_crappep%NOTFOUND THEN
               CLOSE cr_crappep;
               -- Atribui críticas
-              vr_cdcritic := 1148; --Parcela nao encontrada
-              vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+              vr_cdcritic := 0;
+              vr_dscritic := 'Parcela nao encontrada';
               -- Gera exceção
-              RAISE vr_exc_erro_com_log;
+              RAISE vr_exc_erro;
            ELSE
               CLOSE cr_crappep;
            END IF;
@@ -16923,8 +15118,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
              -- Gera exceção
              RAISE vr_exc_erro;
            END IF;
-           -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-           GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_gera_pagamentos_parcela');
   				 
            pc_verifica_parcelas_antecipa(pr_cdcooper => pr_cdcooper
                                         ,pr_nrdconta => pr_nrdconta
@@ -16937,15 +15130,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
            -- Se retornou diferente de OK																	 
            IF vr_des_reto <> 'OK' THEN
              -- Gera exceção
-             RAISE vr_exc_erro; --Grava log na rotina chamada
+             RAISE vr_exc_erro;
            END IF;
-           -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-           GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_gera_pagamentos_parcela');
 
            IF rw_crappep.inliquid = 1 THEN
              -- Atribui críticas
-             vr_cdcritic := 1149; --Parcela ja liquidada
-             vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+             vr_cdcritic := 0;
+             vr_dscritic := 'Parcela ja liquidada';
              -- Gera exceção
              RAISE vr_exc_erro;					 
            END IF;
@@ -16976,8 +15167,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
               IF vr_des_reto <> 'OK' THEN
                 RAISE vr_exc_erro2;
               END IF;
-              -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-              GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_gera_pagamentos_parcela');
   						
            ELSIF rw_crappep.dtvencto < pr_dtmvtolt THEN -- Parcela vencida
   																			
@@ -17003,8 +15192,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
              IF vr_des_reto <> 'OK' THEN
                RAISE vr_exc_erro2;
              END IF;
-             -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-             GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_gera_pagamentos_parcela');
   				 
            ELSIF rw_crappep.dtvencto > pr_dtmvtolt   THEN /* Parcela a Vencer */ 
              
@@ -17033,8 +15220,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
              IF vr_des_reto <> 'OK' THEN
                RAISE vr_exc_erro2;
              END IF;
-             -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-             GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_gera_pagamentos_parcela');
   																				 
            END IF;
            
@@ -17068,8 +15253,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
 			 -- Retorno OK
 			 pr_des_reto := 'OK';
 	
-       -- Retira nome do modulo logado - 30/01/2018 - Ch 788828
-       GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
 	     EXCEPTION
 	       WHEN vr_exc_erro THEN
            -- atualizar tabela no parametro de retorno
@@ -17085,29 +15268,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
 																,pr_cdcritic => vr_cdcritic
 																,pr_dscritic => vr_dscritic
 																,pr_tab_erro => pr_tab_erro);
-
-       WHEN vr_exc_erro_com_log THEN
-         -- atualizar tabela no parametro de retorno
-         pr_tab_pgto_parcel := vr_tab_pgto_parcel;  
-         
-         -- Retorno não OK
-         pr_des_reto := 'NOK';
-         -- Gerar rotina de gravação de erro
-         gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
-                              ,pr_cdagenci => pr_cdagenci
-                              ,pr_nrdcaixa => pr_nrdcaixa
-                              ,pr_nrsequen => 1 --> Fixo
-                              ,pr_cdcritic => vr_cdcritic
-                              ,pr_dscritic => vr_dscritic
-                              ,pr_tab_erro => pr_tab_erro);
-																
-        --Grava tabela de log - Ch 788828
-        pc_gera_log(pr_cdcooper      => pr_cdcooper,
-                    pr_dstiplog      => 'E',
-                    pr_dscritic      => vr_dscritic,
-                    pr_cdcriticidade => 1,
-                    pr_cdmensagem    => nvl(vr_cdcritic,0),
-                    pr_ind_tipo_log  => 1);
 																
          WHEN vr_exc_erro2 THEN
            -- atualizar tabela no parametro de retorno
@@ -17119,9 +15279,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
 					 pr_tab_erro := vr_tab_erro;
 	
     END;
+
   END pc_gera_pagamentos_parcelas;  
 
- --
   PROCEDURE pc_verifica_parcelas_antecipa(pr_cdcooper IN crapcop.cdcooper%TYPE  --> Cooperativa
 																				 ,pr_nrdconta IN crapepr.nrdconta%TYPE  --> Conta
 																				 ,pr_nrctremp IN crapepr.nrctremp%TYPE  --> Contrato
@@ -17136,20 +15296,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
 		 Sistema : Conta-Corrente - Cooperativa de Credito
 		 Sigla   : CRED
 		 Autor   : Lucas Reinert
-		 Data    : Setembro/2015.                      Ultima atualizacao: 30/01/2018
+		 Data    : Setembro/2015.                      Ultima atualizacao: 11/09/2015
       
 		 Dados referentes ao programa:
       
 		 Frequencia: Sempre que for chamado.
 		 Objetivo  : 
       
-		 Alteracoes: 30/01/2018 - Padronização mensagens (crapcri, pc_gera_log (tbgen))
-                            - Padronização erros comandos DDL
-                            - Pc_set_modulo, cecred.pc_internal_exception
-                            - Tratamento erros others
-                            - Alterado: estava testando 2x o cursor rw_crappep_2, e deve ser 1 vez
-                              o cursor rw_crappep_2 e 1 vez o rw_crappep_3
-                              (Ana - Envolti - Chamado 788828)
+		 Alteracoes:
 	............................................................................. */
 		DECLARE
 		
@@ -17158,7 +15312,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
 
 			/* Descrição e código da critica */
 			vr_dscritic VARCHAR2(4000);
-		  vr_cdcritic NUMBER;
 				
       -- Verifica se tem uma parcela anterior nao liquida e ja vencida 
 		  CURSOR cr_crappep_1 IS
@@ -17194,16 +15347,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
 					 AND pep.inliquid = 0;
 			rw_crappep_3 cr_crappep_3%ROWTYPE;
       
+							 
 		BEGIN
-      -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_verifica_parcelas_antecipa');
-
       -- Verifica se tem uma parcela anterior nao liquida e ja vencida 			
 		  OPEN cr_crappep_1;
 			FETCH cr_crappep_1 INTO rw_crappep_1;
+			
 			IF cr_crappep_1%FOUND THEN
-				vr_cdcritic := 1147;  --Efetuar primeiro o pagamento da parcela em atraso
-        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+				vr_dscritic := 'Efetuar primeiro o pagamento da parcela em atraso';
 				RAISE vr_exc_saida;
 			END IF;
 
@@ -17213,13 +15364,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
 
 			-- Verifica se as parcelas informadas estão em ordem
 			OPEN cr_crappep_3;
-			FETCH cr_crappep_3 INTO rw_crappep_3;
+			FETCH cr_crappep_3 INTO rw_crappep_2;      
 
  			IF cr_crappep_2%FOUND AND
          cr_crappep_3%FOUND THEN
-				 vr_cdcritic := 1155; --Efetuar o pagamento das parcelas na sequencia crescente ou decrescente
-         vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
-
+				vr_dscritic := 'Efetuar o pagamento das parcelas na sequencia crescente ou decrescente';
 				RAISE vr_exc_saida;
 			END IF;
       
@@ -17228,8 +15377,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       
 			pr_des_reto := 'OK';
 		
-      -- Retira nome do modulo logado - 30/01/2018 - Ch 788828
-      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
 		EXCEPTION
       WHEN vr_exc_saida THEN
         
@@ -17238,38 +15385,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
               
 				pr_dscritic := vr_dscritic;
 				pr_des_reto := 'NOK';
-
-        --Grava tabela de log - Ch 788828
-        pc_gera_log(pr_cdcooper      => 3,
-                    pr_dstiplog      => 'E',
-                    pr_dscritic      => pr_dscritic,
-                    pr_cdcriticidade => 2,
-                    pr_cdmensagem    => nvl(vr_cdcritic,0),
-                    pr_ind_tipo_log  => 2);
-
 			WHEN OTHERS THEN
-        --Gravar tabela especifica de log - 30/01/2018 - Ch 788828
-        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
 				
         IF cr_crappep_2%ISOPEN THEN CLOSE cr_crappep_2; END IF;
         IF cr_crappep_3%ISOPEN THEN CLOSE cr_crappep_3; END IF;     
               
-        vr_cdcritic := 9999;
-				pr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'EMPR0001.pc_verifica_parcelas_antecipa. '||sqlerrm;
+				pr_dscritic := 'Erro nao tratado na procedure EMPR0001.pc_verifica_parcelas_antecipa -> ' || SQLERRM;
 				pr_des_reto := 'NOK';
 			  
-        --Grava tabela de log - Ch 788828
-        pc_gera_log(pr_cdcooper      => pr_cdcooper,
-                    pr_dstiplog      => 'E',
-                    pr_dscritic      => pr_dscritic,
-                    pr_cdcriticidade => 2,
-                    pr_cdmensagem    => nvl(vr_cdcritic,0),
-                    pr_ind_tipo_log  => 2);
-
 		END;
 	END pc_verifica_parcelas_antecipa;
 
---
   /* Possui a mesma funcionalidade da rotina pc_valida_pagamentos_geral,
      para chamadas diretamente atraves de rotinas progress */
   PROCEDURE pc_valida_pagto_geral_prog (pr_cdcooper  IN crapcop.cdcooper%TYPE --Codigo Cooperativa
@@ -17307,12 +15433,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                      para chamadas diretamente atraves de rotinas progress
 
         Alteração : 07/12/2017 - Passagem do crawepr.idcobope. (Jaison/Marcos Martini - PRJ404)
-
-         Alteração : 30/01/2018 - Padronização mensagens (crapcri, pc_gera_log (tbgen))
-                                - Padronização erros comandos DDL
-                                - Pc_set_modulo, cecred.pc_internal_exception
-                                - Tratamento erros others
-                                  (Ana - Envolti - Chamado 788828)
     ..........................................................................*/
 
     -- Flag gerar log
@@ -17331,9 +15451,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
     vr_exc_erro  EXCEPTION;
     
     -- Tabelas utilizadas na procedure 
-    vr_tab_crawepr      empr0001.typ_tab_crawepr;
+    vr_tab_crawepr      EMPR0001.typ_tab_crawepr;
     vr_tab_erro         GENE0001.typ_tab_erro;
-    vr_tab_msg_confirma empr0001.typ_tab_msg_confirma;
+    vr_tab_msg_confirma EMPR0001.typ_tab_msg_confirma;
 
     vr_vlresgat  NUMBER;
 
@@ -17354,8 +15474,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
      rw_crawepr cr_crawepr%ROWTYPE;
 
   BEGIN
-    -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_valida_pagto_geral_prog');
     
     vr_flgerlog := sys.diutil.int_to_bool(pr_flgerlog);
     
@@ -17372,7 +15490,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       vr_tab_crawepr(vr_index_crawepr).idcobope:= rw_crawepr.idcobope;
     END LOOP;
     
-    empr0001.pc_valida_pagamentos_geral(pr_cdcooper    => pr_cdcooper,
+    EMPR0001.pc_valida_pagamentos_geral(pr_cdcooper    => pr_cdcooper,
                                         pr_cdagenci    => pr_cdagenci,
                                         pr_nrdcaixa    => pr_nrdcaixa,
                                         pr_cdoperad    => pr_cdoperad,
@@ -17400,8 +15518,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         RAISE vr_exc_erro;
       END IF;
     END IF;
-    -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_valida_pagto_geral_prog');
 
     vr_index_confirma := vr_tab_msg_confirma.FIRST;
     IF vr_index_confirma IS NOT NULL THEN
@@ -17409,31 +15525,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       pr_dsmensag := vr_tab_msg_confirma(vr_index_confirma).dsmensag;
     END IF;
 
-    -- Retira nome do modulo logado - 30/01/2018 - Ch 788828
-    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
   EXCEPTION
     WHEN vr_exc_erro THEN
       pr_cdcritic := vr_cdcritic;
       pr_dscritic := vr_dscritic;
 
     WHEN OTHERS THEN
-      --Gravar tabela especifica de log - 30/01/2018 - Ch 788828
-      CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
-
-      pr_cdcritic := 9999;
-  		pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic)||'EMPR0001.pc_valida_pagto_geral_prog. '||sqlerrm;
-
-      --Grava tabela de log - Ch 788828
-      pc_gera_log(pr_cdcooper      => pr_cdcooper,
-                  pr_dstiplog      => 'E',
-                  pr_dscritic      => pr_dscritic,
-                  pr_cdcriticidade => 2,
-                  pr_cdmensagem    => nvl(pr_cdcritic,0),
-                  pr_ind_tipo_log  => 2);
+      pr_cdcritic := 0;
+      pr_dscritic := 'Erro geral(EMPR0001.pc_valida_pagto_geral_prog): '|| SQLERRM;
 
   END pc_valida_pagto_geral_prog;
   
---
   PROCEDURE pc_verifica_msg_garantia(pr_cdcooper IN crapbpr.cdcooper%TYPE --> Código da cooperativa
                                     ,pr_dscatbem IN crapbpr.dscatbem%TYPE --> Descricao da categoria do bem
 								                    ,pr_vlmerbem IN crapbpr.vlmerbem%TYPE --> Valor de mercado do bem
@@ -17448,25 +15550,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : James Prust Junior
-       Data    : Janeiro/2016                        Ultima atualizacao: 30/01/2018
+       Data    : Janeiro/2016                        Ultima atualizacao: 
     
        Dados referentes ao programa:
     
        Frequencia: Diaria - Sempre que for chamada
        Objetivo  : Rotina para verificar se apresenta mensagem de garantia
     
-       Alteracoes: 30/01/2018 - Padronização mensagens (crapcri, pc_gera_log (tbgen))
-                              - Padronização erros comandos DDL
-                              - Pc_set_modulo, cecred.pc_internal_exception
-                              - Tratamento erros others
-                                (Ana - Envolti - Chamado 788828)
+       Alteracoes:     
     ............................................................................. */
     vr_tipsplit  gene0002.typ_split;
     vr_dsvlrgar  VARCHAR2(4000);
   BEGIN
-    -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_verifica_msg_garantia');
-
     pr_flgsenha := 0;
     
     -- Caso o valor do bem for igual a 0, nao vamos exibir a mensagem
@@ -17503,27 +15598,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       pr_flgsenha := 1;
     END IF;
     
-    -- Retira nome do modulo logado - 30/01/2018 - Ch 788828
-    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
   EXCEPTION
     WHEN OTHERS THEN
-      --Gravar tabela especifica de log - 30/01/2018 - Ch 788828
-      CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
-
-      pr_cdcritic := 9999;
-  		pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic)||'EMPR0001.pc_verifica_msg_garantia. '||sqlerrm;
-
-      --Grava tabela de log - Ch 788828
-      pc_gera_log(pr_cdcooper      => pr_cdcooper,
-                  pr_dstiplog      => 'E',
-                  pr_dscritic      => pr_dscritic,
-                  pr_cdcriticidade => 2,
-                  pr_cdmensagem    => nvl(pr_cdcritic,0),
-                  pr_ind_tipo_log  => 2);
+      pr_dscritic := 'Erro geral em EMPR0005.pc_verifica_msg_garantia: ' || SQLERRM;
                                     
   END pc_verifica_msg_garantia;
   
---
   PROCEDURE pc_valida_alt_valor_prop(pr_cdcooper IN crapcop.cdcooper%TYPE --> Cooperativa conectada
                                     ,pr_cdagenci IN crapass.cdagenci%TYPE --> Codigo da ag¿ncia
                                     ,pr_nrdcaixa IN craperr.nrdcaixa%TYPE --> Numero do caixa
@@ -17546,18 +15626,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : James Prust Junior
-       Data    : Janeiro/2016                        Ultima atualizacao: 30/01/2018
+       Data    : Janeiro/2016                        Ultima atualizacao: 
     
        Dados referentes ao programa:
     
        Frequencia: Diaria - Sempre que for chamada
        Objetivo  : Rotina "Alterar somente o valor da proposta" para validar os dados
     
-       Alteracoes: 30/01/2018 - Padronização mensagens (crapcri, pc_gera_log (tbgen))
-                              - Padronização erros comandos DDL
-                              - Pc_set_modulo, cecred.pc_internal_exception
-                              - Tratamento erros others
-                                (Ana - Envolti - Chamado 788828)
+       Alteracoes:     
     ............................................................................. */
   
     DECLARE
@@ -17583,9 +15659,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       vr_exc_erro  EXCEPTION;
       
     BEGIN
-      -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_valida_alt_valor_prop');
-
       -- Percorre todos os bens, para verificar se apresenta o valor aviso em tela
       FOR rw_crapbpr IN cr_crapbpr(pr_cdcooper => pr_cdcooper
                                   ,pr_nrdconta => pr_nrdconta
@@ -17604,8 +15677,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
           RAISE vr_exc_erro;
         END IF;
-        -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-        GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_valida_alt_valor_prop');
         
         -- Verifica se apresenta o aviso na tela ou solicita senha de coordenador
         IF pr_flgsenha = 1 OR pr_dsmensag IS NOT NULL THEN
@@ -17614,8 +15685,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
        
       END LOOP;
       
-      -- Retira nome do modulo logado - 30/01/2018 - Ch 788828
-      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
     EXCEPTION
       WHEN vr_exc_erro THEN
         --Variavel de erro recebe erro ocorrido
@@ -17627,25 +15696,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         pr_cdcritic := nvl(vr_cdcritic,0);
         pr_dscritic := vr_dscritic;
       WHEN OTHERS THEN
-        --Gravar tabela especifica de log - 30/01/2018 - Ch 788828
-        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
-
         -- Montar descrição de erro não tratado
-        pr_cdcritic := 9999;
-        pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic)||'EMPR0001.pc_valida_alt_valor_prop. '||sqlerrm;
-
-        --Grava tabela de log - Ch 788828
-        pc_gera_log(pr_cdcooper      => pr_cdcooper,
-                    pr_dstiplog      => 'E',
-                    pr_dscritic      => pr_dscritic,
-                    pr_cdcriticidade => 2,
-                    pr_cdmensagem    => nvl(pr_cdcritic,0),
-                    pr_ind_tipo_log  => 2);
+        pr_dscritic := 'Erro não tratado na EMPR0001.pc_valida_alt_valor_prop --> ' || sqlerrm;
     END;
     
   END pc_valida_alt_valor_prop;
   
---
   PROCEDURE pc_valida_alt_valor_prop_web(pr_nrdconta IN crapepr.nrdconta%TYPE --> Número da conta
                                         ,pr_nrctremp IN crapepr.nrctremp%TYPE --> Número do contrato de empréstimo
                                         ,pr_vlemprst IN crapepr.vlemprst%TYPE --> Valor do emprestimo
@@ -17664,19 +15720,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : James Prust Junior
-       Data    : Janeiro/2016                        Ultima atualizacao: 30/01/2018
+       Data    : Janeiro/2016                        Ultima atualizacao: 
     
        Dados referentes ao programa:
     
        Frequencia: Diaria - Sempre que for chamada
        Objetivo  : Rotina "Alterar somente o valor da proposta" para validar os dados
     
-       Alteracoes: 30/01/2018 - Padronização mensagens (crapcri, pc_gera_log (tbgen))
-                              - Padronização erros comandos DDL
-                              - Pc_set_modulo, cecred.pc_internal_exception
-                              - Tratamento erros others
-                              - Retiradas variáveis não utilizadas: vr_des_reto e vr_tab_erro
-                                (Ana - Envolti - Chamado 788828)
+       Alteracoes:     
     ............................................................................. */
   
     DECLARE
@@ -17695,14 +15746,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       --Variaveis Erro
       vr_cdcritic INTEGER;
       vr_dscritic VARCHAR2(4000);
+      vr_des_reto VARCHAR2(3);
+      vr_tab_erro GENE0001.typ_tab_erro;
     
       --Variaveis Excecao
       vr_exc_erro  EXCEPTION;      
       
     BEGIN
-      -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_valida_alt_valor_prop_web');
-
       gene0004.pc_extrai_dados(pr_xml      => pr_retxml
                               ,pr_cdcooper => vr_cdcooper
                               ,pr_nmdatela => vr_nmdatela
@@ -17712,9 +15762,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                               ,pr_idorigem => vr_idorigem
                               ,pr_cdoperad => vr_cdoperad
                               ,pr_dscritic => vr_dscritic);
-      
-      -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_valida_alt_valor_prop_web');
       
       -- Valida os dados do valor da proposta
       pc_valida_alt_valor_prop(pr_cdcooper => vr_cdcooper
@@ -17737,17 +15784,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         -- Gerar exceção
         RAISE vr_exc_erro;
       END IF;
-      -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_valida_alt_valor_prop_web');
     
       -- Gera o retorno para o Progress  
       pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Dados/>');
       gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Dados', pr_posicao => 0, pr_tag_nova => 'inf', pr_tag_cont => NULL, pr_des_erro => vr_dscritic);
       gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => 0, pr_tag_nova => 'flgsenha', pr_tag_cont => vr_flgsenha, pr_des_erro => vr_dscritic);
       gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => 0, pr_tag_nova => 'dsmensag', pr_tag_cont => vr_dsmensag, pr_des_erro => vr_dscritic);
-
-      -- Retira nome do modulo logado - 30/01/2018 - Ch 788828
-      GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
     EXCEPTION
       WHEN vr_exc_erro THEN
         --Variavel de erro recebe erro ocorrido
@@ -17759,25 +15801,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         pr_cdcritic := nvl(vr_cdcritic,0);
         pr_dscritic := vr_dscritic;
       WHEN OTHERS THEN
-        --Gravar tabela especifica de log - 30/01/2018 - Ch 788828
-        CECRED.pc_internal_exception;
-
         -- Montar descrição de erro não tratado
-        pr_cdcritic := 9999;
-        pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic)||'EMPR0001.pc_valida_alt_valor_prop_web. '||sqlerrm;
-
-        --Grava tabela de log - Ch 788828
-        pc_gera_log(pr_cdcooper      => 3,
-                    pr_dstiplog      => 'E',
-                    pr_dscritic      => pr_dscritic,
-                    pr_cdcriticidade => 2,
-                    pr_cdmensagem    => nvl(pr_cdcritic,0),
-                    pr_ind_tipo_log  => 2);
-
+        pr_dscritic := 'Erro não tratado na EMPR0001.pc_valida_alt_valor_prop_web ' ||SQLERRM;
     END;
+    
   END pc_valida_alt_valor_prop_web;  
   
---
   PROCEDURE pc_gera_arq_saldo_devedor(pr_arquivo_ent in varchar2
                                      ,pr_arquivo_sai in varchar2
                                      ,pr_xmllog   IN VARCHAR2              --> XML com informac?es de LOG
@@ -17791,14 +15820,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
        Data:   03/03/2017
        Objetivo: gerar o arquivo de exportação de saldo devedor, com base nas contas importadas via CSV
        
-       Alterações: 30/01/2018 - Padronização mensagens (crapcri, pc_gera_log (tbgen))
-                              - Padronização erros comandos DDL
-                              - Pc_set_modulo, cecred.pc_internal_exception
-                              - Tratamento erros others
-                              - Retiradas variáveis não utilizadas: vr_des_reto, vr_tab_erro, vr_cdcritic e vr_qtdprecal
-                                (Ana - Envolti - Chamado 788828)
+    
     */
-
     vr_nm_arquivo varchar2(2000);
     vr_nm_arqsai  varchar2(2000);
     vr_nm_arqlog  varchar2(2000);  
@@ -17809,6 +15832,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
      
     vr_linha_arq     varchar2(2000);
     vr_linha_arq_sai varchar2(2000);
+    vr_linha_arq_log varchar2(2000);
   
     vr_nrlinha   number;
     vr_nrdconta  number;
@@ -17820,7 +15844,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
     vr_indice    number;
     vr_indiceant number;
     vr_vlsdeved  number;
+    vr_cdcritic  number;
     vr_des_erro  varchar2(2000);
+    vr_qtdprecal number;      
     
     vr_rw_crapdat btch0001.rw_crapdat%type;
     vr_qtregist   number;
@@ -17829,8 +15855,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
     vr_tab_erro gene0001.typ_tab_erro;
     vr_endarqui varchar2(100);
   BEGIN
-    -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_gera_arq_saldo_devedor');
     
      vr_endarqui:= gene0001.fn_diretorio(pr_tpdireto => 'M' -- /micros/coop
                                           ,pr_cdcooper => 3
@@ -17852,14 +15876,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
     fetch btch0001.cr_crapdat into vr_rw_crapdat;
     close btch0001.cr_crapdat;  
    
+    
    -- vr_nm_arqlog  := pr_arquivo_sai || '_log';
     vr_nm_arqlog  := vr_endarqui || '/relsaida_log';
   
     /* verificar se o arquivo existe */
     if not gene0001.fn_exis_arquivo(pr_caminho => vr_nm_arquivo) then
-      -- Montar descrição de erro não tratado
-      pr_cdcritic := 182;
-      pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic);
+      vr_des_erro := 'Erro rotina pc_gera_arq_saldo_devedor: Arquivo inexistente!' ||
+                     sqlerrm;
+            pr_cdcritic := 3;
       raise vr_exc_erro;
     end if;
   
@@ -17870,8 +15895,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                             ,pr_des_erro => vr_des_erro);
   
     if vr_des_erro is not null then
-      pr_cdcritic := 1038; --Erro ao abrir o arquivo
-      vr_des_erro := gene0001.fn_busca_critica(pr_cdcritic)||' Importaçao! '||sqlerrm;
+      vr_des_erro := 'Rotina pc_gera_arq_saldo_devedor: Erro abertura arquivo importaçao!' ||
+                     sqlerrm;
+      pr_cdcritic := 4;
       raise vr_exc_erro;
     end if;
   
@@ -17882,8 +15908,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                             ,pr_des_erro => vr_des_erro);
   
     if vr_des_erro is not null then
-       pr_cdcritic := 1038;  --Erro ao abrir o arquivo
-       vr_des_erro := gene0001.fn_busca_critica(pr_cdcritic)||' Saida!' || sqlerrm;
+       vr_des_erro := 'Rotina pc_gera_arq_saldo_devedor: Erro abertura arquivo saida!' || sqlerrm;
+       pr_cdcritic := 5;
        raise vr_exc_erro;
     end if;
     
@@ -17894,8 +15920,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                             ,pr_des_erro => vr_des_erro);
   
     if vr_des_erro is not null then
-       pr_cdcritic := 1038;  --Erro ao abrir o arquivo
-       vr_des_erro := gene0001.fn_busca_critica(pr_cdcritic)||' LOG!' || sqlerrm;
+       vr_des_erro := 'Rotina pc_gera_arq_saldo_devedor: Erro abertura arquivo LOG!' || sqlerrm;
+       pr_cdcritic := 6;
        raise vr_exc_erro;
     end if;    
   
@@ -17929,7 +15955,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
           
             --busca conta
             vr_indice    := instr(vr_linha_arq, ';', vr_indice + 1);
-            vr_nrdcontax := substr(vr_linha_arq,
+            vr_nrdcontax  := substr(vr_linha_arq,
                                    vr_indiceant + 1,
                                    vr_indice - vr_indiceant - 1);
             vr_indiceant := vr_indice;
@@ -17949,28 +15975,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
             vr_nrctremp := to_number(rtrim(vr_nrctrempx));
             
             if vr_nrctremp is null then
-              pr_cdcritic := 1145; --Contrato deve ser informado
-              vr_des_erro := gene0001.fn_busca_critica(pr_cdcritic);
+              vr_des_erro := 'Erro no arquivo, campo número do contrato não está preenchido!';
+              pr_cdcritic := 7;
               raise vr_exc_erro;
             end if;
             
             -- valida campos do arquivo de importaçao
           
             if vr_cdcooper is null then
-              pr_cdcritic := 1143; --Cooperativa não informada
-              vr_des_erro := gene0001.fn_busca_critica(pr_cdcritic);
+              vr_des_erro := 'cooperativa não informada!';
+              pr_cdcritic := 8;
               raise vr_exc_erro;
             end if;
           
             if vr_nrdconta is null then
-              pr_cdcritic := 1144; --Conta não informada
-              vr_des_erro := gene0001.fn_busca_critica(pr_cdcritic);
+              vr_des_erro := 'Conta não informada!';
+              pr_cdcritic := 9;
               raise vr_exc_erro;
             end if;
           
             if vr_nrctremp is null then
-              pr_cdcritic := 1145; --Contrato não informado
-              vr_des_erro := gene0001.fn_busca_critica(pr_cdcritic);
+              vr_des_erro := 'Contrato não informado!';
+              pr_cdcritic := 10;
               raise vr_exc_erro;
             end if;
           
@@ -17978,37 +16004,35 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
 
             -- busca saldo devedor atualizado
             pc_obtem_dados_empresti(pr_cdcooper       => vr_cdcooper --> Cooperativa conectada
-                                   ,pr_cdagenci       => 0 --> Código da agência
-                                   ,pr_nrdcaixa       => 0 --> Número do caixa
-                                   ,pr_cdoperad       => 1 --> Código do operador
-                                   ,pr_nmdatela       => 'RELSDV'--> Nome datela conectada
-                                   ,pr_idorigem       => 5       --> Indicador da origem da chamada
-                                   ,pr_nrdconta       => vr_nrdconta --> Conta do associado
-                                   ,pr_idseqttl       => 1 --> Sequencia de titularidade da conta
-                                   ,pr_rw_crapdat     => vr_rw_crapdat --> Vetor com dados de parâmetro (CRAPDAT)
-                                   ,pr_dtcalcul       => vr_rw_crapdat.dtmvtolt --> Data solicitada do calculo
-                                   ,pr_nrctremp       => vr_nrctremp  --> Número contrato empréstimo
-                                   ,pr_cdprogra       => 'EMPR0001'   --> Programa conectado
-                                   ,pr_inusatab       => false        --> Indicador de utilização da tabela
-                                   ,pr_flgerlog       => 'N'          --> Gerar log S/N
-                                   ,pr_flgcondc       => true         --> Mostrar emprestimos liquidados sem prejuizo
-                                   ,pr_nmprimtl       => ''           --> Nome Primeiro Titular
-                                   ,pr_tab_parempctl  => ''           --> Dados tabela parametro
-                                   ,pr_tab_digitaliza => ''           --> Dados tabela parametro
-                                   ,pr_nriniseq       => 0            --> Numero inicial da paginacao
-                                   ,pr_nrregist       => 0            --> Numero de registros por pagina
-                                   ,pr_qtregist       => vr_qtregist  --> Qtde total de registros
-                                   ,pr_tab_dados_epr  => vr_tab_dados_epr --> Saida com os dados do empréstimo
-                                   ,pr_des_reto       => vr_des_reto  --> Retorno OK / NOK
-                                   ,pr_tab_erro       => vr_tab_erro);  --> Tabela com possíves erros
+                                   ,pr_cdagenci       				=> 0 --> Código da agência
+                                   ,pr_nrdcaixa       				=> 0 --> Número do caixa
+                                   ,pr_cdoperad       				=> 1 --> Código do operador
+                                   ,pr_nmdatela       				=> 'RELSDV'--> Nome datela conectada
+                                   ,pr_idorigem       				=> 5       --> Indicador da origem da chamada
+                                   ,pr_nrdconta       				=> vr_nrdconta --> Conta do associado
+                                   ,pr_idseqttl       				=> 1 --> Sequencia de titularidade da conta
+                                   ,pr_rw_crapdat     			=> vr_rw_crapdat --> Vetor com dados de parâmetro (CRAPDAT)
+                                   ,pr_dtcalcul       				=> vr_rw_crapdat.dtmvtolt --> Data solicitada do calculo
+                                   ,pr_nrctremp       				=> vr_nrctremp  --> Número contrato empréstimo
+                                   ,pr_cdprogra       				=> 'EMPR0001'   --> Programa conectado
+                                   ,pr_inusatab       				=> false        --> Indicador de utilização da tabela
+                                   ,pr_flgerlog       				=> 'N'          --> Gerar log S/N
+                                   ,pr_flgcondc       				=> true         --> Mostrar emprestimos liquidados sem prejuizo
+                                   ,pr_nmprimtl       				=> ''           --> Nome Primeiro Titular
+                                   ,pr_tab_parempctl  			=> ''           --> Dados tabela parametro
+                                   ,pr_tab_digitaliza 				=> ''           --> Dados tabela parametro
+                                   ,pr_nriniseq       				=> 0            --> Numero inicial da paginacao
+                                   ,pr_nrregist       				=> 0            --> Numero de registros por pagina
+                                   ,pr_qtregist       				=> vr_qtregist  --> Qtde total de registros
+                                   ,pr_tab_dados_epr  			=> vr_tab_dados_epr --> Saida com os dados do empréstimo
+                                   ,pr_des_reto       				=> vr_des_reto  --> Retorno OK / NOK
+                                   ,pr_tab_erro       				=> vr_tab_erro);  --> Tabela com possíves erros
   
             if vr_des_reto = 'NOK' then
-               pr_cdcritic := 9999;
-               vr_des_erro := gene0001.fn_busca_critica(pr_cdcritic)||'pc_obtem_dados_empresti. '||sqlerrm;
+               vr_des_erro := 'Erro na rotina pc_obtem_dados_empresti';
+               pr_cdcritic := 11;
                raise vr_exc_erro;
             end if;
-            -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-            GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_gera_arq_saldo_devedor');
             
             vr_index := vr_tab_dados_epr.first;
             vr_vlsdeved := 0;
@@ -18044,34 +16068,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
     gene0001.pc_fecha_arquivo(pr_utlfileh => vr_handle_sai);
     --gene0001.pc_fecha_arquivo(pr_utlfileh => vr_handle_log);  
     commit;
-
-    -- Retira nome do modulo logado - 30/01/2018 - Ch 788828
-    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
   EXCEPTION
+  
     WHEN vr_exc_erro THEN
         pr_des_erro := vr_des_erro;
         pr_dscritic := pr_cdcritic || '-Erro na empr0001: ' || PR_DES_ERRO ;
         
         pr_retxml := XMLType.createXML('<?xml version="1.0"  encoding="ISO-8859-1" ?> ' ||
                                      '<Root><Erro>' || pr_dscritic || '</Erro></Root>');        
+    
     WHEN OTHERS THEN
-      --Gravar tabela especifica de log - 30/01/2018 - Ch 788828
-      CECRED.pc_internal_exception;
-
-      pr_cdcritic := 9999;
-      pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic)||'pc_gera_arq_saldo_devedor. '||sqlerrm;
+      raise_application_error(-20150,
+                              'erro na rotina pc_gera_arq_saldo_devedor: ' ||
+                              sqlerrm);
     
-      --Grava tabela de log - Ch 788828
-      pc_gera_log(pr_cdcooper      => 3,
-                  pr_dstiplog      => 'E',
-                  pr_dscritic      => pr_dscritic,
-                  pr_cdcriticidade => 2,
-                  pr_cdmensagem    => nvl(pr_cdcritic,0),
-                  pr_ind_tipo_log  => 2);
-    
-  END pc_gera_arq_saldo_devedor;
+  END;
 
---
   PROCEDURE pc_valida_imoveis_epr(pr_cdcooper  IN crapepr.cdcooper%TYPE --> Cooperativa conectada
                                  ,pr_nrdconta  IN crapepr.nrdconta%TYPE --> Conta do associado
                                  ,pr_nrctremp  IN crapepr.nrctremp%TYPE --> Numero Contrato
@@ -18085,7 +16097,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Renato Darosci
-     Data    : Dezembro/2016                        Ultima atualizacao: 30/01/2018
+     Data    : Dezembro/2016                        Ultima atualizacao: 
     
      Dados referentes ao programa:
     
@@ -18095,11 +16107,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
                  estas informações são os empréstimos de tipo de contrato da linha 
                  de crédito igual a 3.
     
-     Alteracoes: 30/01/2018 - Padronização mensagens (crapcri, pc_gera_log (tbgen))
-                            - Padronização erros comandos DDL
-                            - Pc_set_modulo, cecred.pc_internal_exception
-                            - Tratamento erros others
-                              (Ana - Envolti - Chamado 788828)
+     Alteracoes:     
   ............................................................................. */
 
     CURSOR cr_crapepr IS 
@@ -18129,8 +16137,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
     vr_inregist   NUMBER;
         
   BEGIN
-    -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_valida_imoveis_epr');
       
     -- Setar a flag para zero indicando que não há pendencia
     pr_flimovel := 0;
@@ -18148,25 +16154,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
     -- Fechar o cursor
     CLOSE cr_crapepr;
       
-    -- Retira nome do modulo logado - 30/01/2018 - Ch 788828
-    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
   EXCEPTION
     WHEN OTHERS THEN
-      --Gravar tabela especifica de log - 30/01/2018 - Ch 788828
-      CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
-
       -- Montar descrição de erro não tratado
-      pr_cdcritic := 9999;
-      pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic)||'EMPR0001.pc_valida_imoveis_epr. '||sqlerrm;
-
-      --Grava tabela de log - Ch 788828
-      pc_gera_log(pr_cdcooper      => pr_cdcooper,
-                  pr_dstiplog      => 'E',
-                  pr_dscritic      => pr_dscritic,
-                  pr_cdcriticidade => 2,
-                  pr_cdmensagem    => nvl(pr_cdcritic,0),
-                  pr_ind_tipo_log  => 2);
-
+      pr_dscritic := 'Erro não tratado na EMPR0001.pc_valida_imoveis_epr --> ' || SQLERRM;
   END pc_valida_imoveis_epr;
   
   /* Procedure para verificar IOF de Refinanciamento */
@@ -18878,9 +16869,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
 
   
   BEGIN
-    -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_calcula_iof_epr');
-
+    -- Inicializar variáveis
     vr_tab_parcela.DELETE;
     vr_taxaiof      := 0;
     pr_vlpreclc     := pr_vlpreemp;
@@ -18913,8 +16902,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
         vr_taxaiof := GENE0002.fn_char_para_number(SUBSTR(vr_dstextab,23,14));
       END IF;
     END IF;
-    -- Inclui nome do modulo logado - 30/01/2018 - Ch 788828
-    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'EMPR0001.pc_calcula_iof_epr');
           
     vr_retiof := 0;
                        
@@ -19638,8 +17625,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
     END IF;
     pr_flgimune := NVL(pr_flgimune, 0);
       
-    -- Retira nome do modulo logado - 30/01/2018 - Ch 788828
-    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
   EXCEPTION
     WHEN vr_exc_erro THEN
       -- Se foi retornado apenas código
@@ -19651,21 +17636,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
       --pr_cdcritic := NVL(vr_cdcritic,0);
       pr_dscritic := vr_dscritic;
     WHEN OTHERS THEN
-      --Gravar tabela especifica de log - 30/01/2018 - Ch 788828
-      CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
-
       -- Montar descrição de erro não tratado
-      vr_cdcritic := 9999;  --Não foi possivel atualizar SMS
-      pr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'EMPR0001.pc_calcula_iof_epr. '||sqlerrm;
-
-      --Grava tabela de log - Ch 788828
-      pc_gera_log(pr_cdcooper      => pr_cdcooper,
-                  pr_dstiplog      => 'E',
-                  pr_dscritic      => pr_dscritic,
-                  pr_cdcriticidade => 2,
-                  pr_cdmensagem    => nvl(vr_cdcritic,0),
-                  pr_ind_tipo_log  => 2);
-
+      pr_dscritic := 'Erro não tratado na EMPR0001.pc_calcula_iof_epr --> ' || SQLERRM;
   END pc_calcula_iof_epr;
 
   
