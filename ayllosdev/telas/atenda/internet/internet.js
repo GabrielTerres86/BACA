@@ -1,7 +1,7 @@
 /*************************************************************************
  Fonte: internet.js                                               
  Autor: David                                                     
- Data : Junho/2008                   Última Alteração: 12/04/2016
+ Data : Junho/2008                   Última Alteração: 13/12/2017
                                                                   
  Objetivo  : Biblioteca de funções da rotina de Internet da tela  
              ATENDA                                               
@@ -12,15 +12,12 @@
 																  
 			 10/01/2011 - Retirar a parte de Cobranca (Gabriel)  
                                                                   
-             08/07/2011 - Tratado na funcao                       
-                          selecionaTitularInternet, a habilitacao 
-						  do botao Liberacao (Fabricio)          
+             08/07/2011 - Tratado na funcao selecionaTitularInternet,
+						  a habilitacao do botao Liberacao (Fabricio)          
 						                                          
-			 13/07/2011 - Alterado para layout padrão            
-			  			  (Gabriel - DB1)						  
+			 13/07/2011 - Alterado para layout padrão (Gabriel - DB1)
 						                                          
 			 17/05/2012 - Projeto TED Internet	(Lucas)           
-						                                          
 						                                          
 			 27/06/2012 - Alterado funcao carregarContrato(),    
 						  novo esquema para impressao.(Jorge)    
@@ -60,6 +57,25 @@
 
              12/04/2016 - Remocao Aprovacao Favorecido. (Jaison/Marcos - SUPERO)
 
+		     30/08/2016 - Adição dos campos de data e hora de acesso ao Mobile e
+                          formatação da tela (Dionathan).
+						  
+             07/09/2016 - Adicionado função controlaFoco.(Evandro - RKAM).
+
+             26/08/2016 - Alteracao da function validaResponsaveis, SD 510426 (Jean Michel)
+
+             13/06/2017 - Ajuste devido ao aumento do formato para os campos crapass.nrdocptl, crapttl.nrdocttl, 
+	                      crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava
+						  (Adriano - P339).	
+             05/09/2017 - Alteração referente ao Projeto Assinatura conjunta (Proj 397)
+
+             04/09/2017 - Inclusão de novas functions, Prj. 354 (Jean Michel)
+			 
+			 13/12/2017 - Chamado 793407 - Ajustar teste para esconder botões em caso 
+			              de operadores (Andrei-MOUTs)
+
+			 06/04/2018 - Inclusao das function validaValorAdesao e senhaCoordenador. PRJ366 (Lombardi).
+
 *********************************************************************************/
 
 var callafterInternet = '';
@@ -80,6 +96,8 @@ var idastcjt;
 var qtdTitular;
 var confPJ = false;
 var exibePJ = false;
+
+var idmobile;
 
 // Função para acessar opções da rotina
 function acessaOpcaoAba(nrOpcoes,id,opcao) { 
@@ -108,24 +126,97 @@ function acessaOpcaoAba(nrOpcoes,id,opcao) {
 		},
 		success: function(response) {
 			$("#divConteudoOpcao").html(response);
+            controlaFoco();
 		}				
 	});
 }
 
+//Função para controle de navegação
+function controlaFoco() {
+    $('#divConteudoOpcao #divInternetPrincipal').each(function () {
+        $(this).find("#divBotoes > :input[type=image]").addClass("FluxoNavega");
+        $(this).find("#divBotoes > :input[type=image]").first().addClass("FirstInputModal").focus();
+        $(this).find("#divBotoes > :input[type=image]").last().addClass("LastInputModal");
+        if ($('.LastInputModal').attr('disabled')) {//Se LastInputModal for disabled
+            $('#divConteudoOpcao #divInternetPrincipal #liberacao').addClass("LastInputModal");
+            $('#divConteudoOpcao #divInternetPrincipal').find("#divBotoes > :input[type=image]").last().removeClass("LastInputModal");
+        }
+    });
+
+    $('#divConteudoOpcao #frmLiberarSenha').each(function () {
+        $(this).find(":input[type=password]").first().addClass("FirstInputModal").focus();
+        $(this).find(":input[type=image]").addClass("FluxoNavega");
+        $(this).find(":input[type=image]").last().addClass("LastInputModal");
+    });
+
+    //Se estiver com foco na classe FluxoNavega
+    $(".FluxoNavega").focus(function () {
+        $(this).bind('keydown', function (e) {
+            if (e.keyCode == 27) {
+                e.stopPropagation();
+                e.preventDefault();
+                encerraRotina().click();
+            }
+        });
+    });
+
+    $(".LastInputModal").focus(function () {
+        var pressedShift = false;
+
+        $(this).bind('keyup', function (e) {
+            if (e.keyCode == 16) {
+                pressedShift = false;//Quando tecla shift for solta passa valor false 
+            }
+        })
+
+        $(this).bind('keydown', function (e) {
+            e.stopPropagation();
+            e.preventDefault();
+            if (e.keyCode == 13) {
+                $(this).click();
+            }
+            if (e.keyCode == 16) {
+                pressedShift = true;//Quando tecla shift for pressionada passa valor true 
+            }
+            if ((e.keyCode == 9) && pressedShift == true) {
+                return setFocusCampo($(target), e, false, 0);
+            }
+            else if (e.keyCode == 9) {
+                $(".FirstInputModal").focus();
+            }
+        });
+
+    });
+
+    $(".FirstInputModal").focus();
+}
+
 // Função para seleção de titular para consulta e alteração de dados
-function selecionaTitularInternet(id,qtTitulares,cpf,idastcjt,titularidade) {
+function selecionaTitularInternet(id,qtTitulares,cpf,idastcjt,titularidade,sqttl,cpfcgc) {
 	
-		
 	// Formata cor da linha da tabela que lista titulares e esconde div com dados do mesmo
 	for (var i = 1; i <= qtTitulares; i++) {		
 				
 		// Esconde div com dados do titular
+		$("#divTitInternetOpe" + i).css("display","none");
 		$("#divTitInternet" + i).css("display","none");
 	}
 		
 	// Mostra div com os dados do titular selecionado
+	$("#divTitInternetOpe" + id).css("display","block");
+	if(sqttl == "999"){
+      id = 1;
+    }
 	$("#divTitInternet" + id).css("display","block");
 	
+		if (sqttl == "999"){
+			$('#divBotoes').hide();
+			$('#preoroper').html('OPERADOR');
+	}else{
+			$('#preoroper').html('PREPOSTO');
+			$('#divBotoes').show();
+		}
+		
 	if(idastcjt == "1"){
 		// Mostra CPF do titular no título da área de dados
 		$("#spanSeqTitular").html(cpf);
@@ -165,6 +256,8 @@ function selecionaTitularInternet(id,qtTitulares,cpf,idastcjt,titularidade) {
 	
 	// Armazena sequencial do titular selecionado
 	idseqttl = titularidade;
+	nrcpfcgc = cpfcgc;
+	idastcjt = idastcjt;
 }
 
 // Função para bloquear senha de acesso ao InternetBank
@@ -233,7 +326,6 @@ function mostraOpcaoPrincipal() {
 	if(executandoProdutos == true){
 		encerraRotina(true);
 		return false;
-	
 	}
 	
 	$("#divInternetPrincipal").css("display","block");
@@ -524,6 +616,8 @@ function carregaHabilitacao() {
 		data: {
 			nrdconta: nrdconta,
 			idseqttl: idseqttl,
+			nrcpfcgc: nrcpfcgc,
+			idastcjt: idastcjt,
 			redirect: "html_ajax"
 		},		
 		error: function(objAjax,responseError,objExcept) {
@@ -1414,6 +1508,44 @@ function obtemDadosLimites() {
 }
 
 // Função para mostrar a opção Habilitação
+function obtemDadosLimitesprep() {
+	// Mostra mensagem de aguardo
+	showMsgAguardo("Aguarde, carregando dados dos limites ...");
+		
+	// Carrega conteúdo da opção através de ajax
+	$.ajax({		
+		type: "POST", 
+		url: UrlSite + "telas/atenda/internet/limites_preposto.php",
+		dataType: "html",
+		data: {
+			nrdconta: nrdconta,
+			idseqttl: idseqttl,
+			nrcpfcgc: nrcpfcgc,
+			redirect: "html_ajax"
+		},		
+		error: function(objAjax,responseError,objExcept) {
+			hideMsgAguardo();
+			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+		},
+		success: function(response) {
+			$("#divConteudoOpcao").html(response);
+			
+			$('#vllimtrf','#frmAlterarLimites').focus(); 
+			
+			controlaFocoEnter("frmAlterarLimites");
+			
+			$('#vllimvrb','#frmAlterarLimites').keypress( function(e) {
+				if ( e.keyCode == 13 ) { 
+					$('#btAlterar','#divBotoes').focus(); 
+					return false; 
+				}		
+			});
+			
+		}				
+	});
+}
+
+// Função para mostrar a opção Habilitação
 function validaDadosLimites(inpessoa) {
 	// Mostra mensagem de aguardo
 	showMsgAguardo("Aguarde, validando dados de habilita&ccedil;&atilde;o ...");
@@ -1472,13 +1604,112 @@ function validaDadosLimites(inpessoa) {
 	});
 }
 
+// Função para mostrar a opção Habilitação
+function validaDadosLimitesprep(inpessoa) {
+	// Mostra mensagem de aguardo
+	showMsgAguardo("Aguarde, validando dados de habilita&ccedil;&atilde;o ...");
+	
+	if (inpessoa == 1) {
+		// Valida valor do limite diário
+		if ($("#vllimweb","#frmAlterarLimites").val() == "" || !validaNumero($("#vllimweb","#frmAlterarLimites").val(),false,0,0)) {
+			hideMsgAguardo();
+			showError("error","Valor do limite di&aacute;rio inv&aacute;lido.","Alerta - Ayllos","$('#vllimweb','#frmAlterarLimites').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
+			return false;
+		}
+	} else {
+		// Valida valor do limite diário transferência
+		if ($("#vllimtrf","#frmAlterarLimites").val() == "" || !validaNumero($("#vllimtrf","#frmAlterarLimites").val(),false,0,0)) {
+			hideMsgAguardo();
+			showError("error","Valor do limite di&aacute;rio para transfer&ecirc;ncia inv&aacute;lido.","Alerta - Ayllos","$('#vllimtrf','#frmAlterarLimites').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
+			return false;
+		}		
+
+		// Valida valor do limite diário pagamento
+		if ($("#vllimpgo","#frmAlterarLimites").val() == "" || !validaNumero($("#vllimpgo","#frmAlterarLimites").val(),false,0,0)) {
+			hideMsgAguardo();
+			showError("error","Valor do limite di&aacute;rio para pagamento inv&aacute;lido.","Alerta - Ayllos","$('#vllimpgo','#frmAlterarLimites').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
+			return false;
+		}		
+	}
+	// Valida valor do limite diário pagamento
+	if ($("#vllimted","#frmAlterarLimites").val() == "" || !validaNumero($("#vllimted","#frmAlterarLimites").val(),false,0,0)) {
+		hideMsgAguardo();
+		showError("error","Valor do limite di&aacute;rio para pagamento inv&aacute;lido.","Alerta - Ayllos","$('#vllimted','#frmAlterarLimites').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
+		return false;
+	}
+	
+	// Valida valor do limite diário pagamento
+	if ($("#vllimflp","#frmAlterarLimites").val() == "" || !validaNumero($("#vllimflp","#frmAlterarLimites").val(),false,0,0)) {
+		hideMsgAguardo();
+		showError("error","Valor do limite di&aacute;rio para folha de pagamento inv&aacute;lido.","Alerta - Ayllos","$('#vllimflp','#frmAlterarLimites').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
+		return false;
+	}	
+	
+	// Carrega conteúdo da opção através de ajax
+	$.ajax({		
+		type: "POST", 
+		url: UrlSite + "telas/atenda/internet/limites_validar_prep.php",
+		dataType: "html",
+		data: {
+			nrdconta: nrdconta,
+			idseqttl: idseqttl,
+			nrcpfcgc: nrcpfcgc,
+			vllimweb: $("#vllimweb","#frmAlterarLimites").val().replace(/\./g,""),
+			vllimtrf: $("#vllimtrf","#frmAlterarLimites").val().replace(/\./g,""),
+			vllimpgo: $("#vllimpgo","#frmAlterarLimites").val().replace(/\./g,""),
+			vllimted: $("#vllimted","#frmAlterarLimites").val().replace(/\./g,""),
+			vllimvrb: $("#vllimvrb", "#frmAlterarLimites").val().replace(/\./g, ""),
+			vllimflp: $("#vllimflp", "#frmAlterarLimites").val().replace(/\./g, ""),
+			redirect: "html_ajax"
+		},		
+		error: function(objAjax,responseError,objExcept) {
+			hideMsgAguardo();
+			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+		},
+		success: function(response) {
+			$("#divHabilitacaoInternet02").html(response);
+		}				
+	});
+}
+
+function validaValorAdesao(inpessoa) {
+	
+	$.ajax({
+		type: 'POST',
+		dataType: 'html',
+		url: UrlSite + 'telas/atenda/internet/valida_valor_adesao.php', 
+		data: {
+			nrdconta: nrdconta,
+			inpessoa: inpessoa,
+			vllimweb: $("#vllimweb", "#frmAlterarLimites").val().replace(/\./g, "").replace(",", "."),
+			vllimtrf: $("#vllimtrf", "#frmAlterarLimites").val().replace(/\./g, "").replace(",", "."),
+			vllimpgo: $("#vllimpgo", "#frmAlterarLimites").val().replace(/\./g, "").replace(",", "."),
+			vllimted: $("#vllimted", "#frmAlterarLimites").val().replace(/\./g, "").replace(",", "."),
+			vllimvrb: $("#vllimvrb", "#frmAlterarLimites").val().replace(/\./g, "").replace(",", "."),
+			redirect: 'script_ajax'
+		}, 
+		error: function (objAjax, responseError, objExcept) {
+			hideMsgAguardo();
+			showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
+		},
+		success: function (response) {
+			hideMsgAguardo();
+            try {
+				eval(response);
+			} catch (error) {
+				showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'unblockBackground();');
+			}
+		}				
+	});	
+}
+
 // Função para esconder divtacaoInternet02
 function escondeDivHabilitacao02() {
 	$("#divHabilitacaoInternet01").css("display","block");
 	$("#divHabilitacaoInternet02").css("display","none");
 	
 	// Aumenta tamanho do div onde o conteúdo da opção será visualizado
-	$("#divConteudoOpcao").css("height","160px");
+	$("#divConteudoOpcao").css("height","290px!important");
 }
 
 // Função para mostrar divHabilitacaoInternet02
@@ -1546,6 +1777,15 @@ function confirmaAlteracaoLimites() {
 	showConfirmacao("Confirma altera&ccedil;&otilde;es de habilita&ccedil;&atilde;o?","Confirma&ccedil;&atilde;o - Ayllos","alterarDadosLimites()","blockBackground(parseInt($('#divRotina').css('z-index')))","sim.gif","nao.gif");
 }
 
+// Função para confirmar alteração dos limites de habilitação
+function confirmaAlteracaoLimites2() {
+	// Escoder div de preposto e mostrar div com limites
+	escondeDivHabilitacao02();
+
+	// Confirma alteração dos dados da habilitação	
+	showConfirmacao("Confirma altera&ccedil;&otilde;es de habilita&ccedil;&atilde;o?","Confirma&ccedil;&atilde;o - Ayllos","alterarDadosLimites2()","blockBackground(parseInt($('#divRotina').css('z-index')))","sim.gif","nao.gif");
+}
+
 // Função para alterar limites
 function alterarDadosLimites() {
 	// Mostra mensagem de aguardo
@@ -1582,6 +1822,43 @@ function alterarDadosLimites() {
 	});				
 }
 
+// Função para alterar limites
+function alterarDadosLimites2() {
+	// Mostra mensagem de aguardo
+	showMsgAguardo("Aguarde, atualizando dados de habilita&ccedil;&atilde;o ...");
+		
+	// Executa script de bloqueio através de ajax
+	$.ajax({		
+		type: "POST",
+		url: UrlSite + "telas/atenda/internet/limites_alterar_prep.php", 
+		data: {
+			nrdconta: nrdconta,
+			idseqttl: idseqttl,
+			nrcpfcgc: nrcpfcgc,
+			vllimweb: $("#vllimweb","#frmAlterarLimites").val().replace(/\./g,""),
+			vllimtrf: $("#vllimtrf","#frmAlterarLimites").val().replace(/\./g,""),
+			vllimpgo: $("#vllimpgo","#frmAlterarLimites").val().replace(/\./g,""),
+			vllimted: $("#vllimted","#frmAlterarLimites").val().replace(/\./g,""),
+			vllimvrb: $("#vllimvrb", "#frmAlterarLimites").val().replace(/\./g, ""),
+			vllimflp: $("#vllimflp", "#frmAlterarLimites").val().replace(/\./g, ""),
+			idastcjt: idastcjt,
+			executandoProdutos: executandoProdutos,
+			redirect: "script_ajax"
+		}, 
+		error: function(objAjax,responseError,objExcept) {
+			hideMsgAguardo();
+			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+		},
+		success: function(response) {
+			try {
+				eval(response);
+			} catch(error) {
+				hideMsgAguardo();
+				showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message,"Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+			}
+		}				
+	});				
+}
 
 function controlaLayout( nomeForm ){
 
@@ -1596,12 +1873,14 @@ function controlaLayout( nomeForm ){
 		var Lvllimpgo = $('label[for="vllimpgo"]','#'+nomeForm);
 		var Lvllimted = $('label[for="vllimted"]','#'+nomeForm);
 		var Lvllimvrb = $('label[for="vllimvrb"]','#'+nomeForm); 
+		var Lvllimflp = $('label[for="vllimflp"]', '#' + nomeForm);
 				
 		var Cvllimweb = $('#vllimweb','#'+nomeForm);
 		var Cvllimtrf = $('#vllimtrf','#'+nomeForm);
 		var Cvllimpgo = $('#vllimpgo','#'+nomeForm);
 		var Cvllimted = $('#vllimted','#'+nomeForm);
 		var Cvllimvrb = $('#vllimvrb','#'+nomeForm); 
+		var Cvllimflp = $('#vllimflp', '#' + nomeForm);
 		
 		$('#'+nomeForm).addClass('formulario');
 		
@@ -1610,13 +1889,15 @@ function controlaLayout( nomeForm ){
 		Lvllimpgo.addClass('rotulo').css('width','170px');
 		Lvllimted.addClass('rotulo').css('width','170px');
 		Lvllimvrb.addClass('rotulo').css('width','170px'); 
+		Lvllimflp.addClass('rotulo').css('width', '170px');
 		
 		Cvllimweb.css({'width':'120px','text-align':'right'});
 		Cvllimtrf.css({'width':'120px','text-align':'right'});
 		Cvllimpgo.css({'width':'120px','text-align':'right'});
 		Cvllimted.css({'width':'120px','text-align':'right'});
 		Cvllimvrb.css({'width':'120px','text-align':'right'}); 
-		
+		Cvllimflp.css({ 'width': '120px', 'text-align': 'right' });
+		$("#divConteudoOpcao").css("height", "290px");
 	}else if( nomeForm == 'divInternetPrincipal' ){
 		$("#divInternetPrincipal").show();
 		var divRegistro = $('div.divRegistros','#'+nomeForm);		
@@ -1649,21 +1930,21 @@ function controlaLayout( nomeForm ){
 		$('#'+nomeForm).css('width','560px');
 		$('#'+nomeForm).addClass('formulario');
 		
-		var Ldssitsnh = $('#dssitsnh','#'+nomeForm);
-		var Lvllimweb = $('label[for="vllimweb"]','#'+nomeForm);
-		var Lnmprepos = $('label[for="nmprepos"]','#'+nomeForm);
-		var Lnmoperad = $('label[for="nmoperad"]','#'+nomeForm);
-		var Lvllimtrf = $('label[for="vllimtrf"]','#'+nomeForm);
-		var Lvllimpgo = $('label[for="vllimpgo"]','#'+nomeForm);
-		var Lvllimted = $('label[for="vllimted"]','#'+nomeForm);
-		var Lvllimvrb = $('label[for="vllimvrb"]','#'+nomeForm); 
-		var Ldtlibera = $('label[for="dtlibera"]','#'+nomeForm);
-		var Lhrlibera = $('label[for="hrlibera"]','#'+nomeForm);
-		var Ldtaltsit = $('label[for="dtaltsit"]','#'+nomeForm);
-		var Ldtaltsnh = $('label[for="dtaltsnh"]','#'+nomeForm);
-		var Ldtblutsh = $('label[for="dtblutsh"]','#'+nomeForm);
-		var Ldtultace = $('label[for="dtultace"]','#'+nomeForm);
-		var Lhrultace = $('label[for="hrultace"]','#'+nomeForm);
+        var Ldssitsnh = $('#dssitsnh', '#' + nomeForm);
+        var Lvllimweb = $('label[for="vllimweb"]', '#' + nomeForm);
+        var Lnmprepos = $('label[for="nmprepos"]', '#' + nomeForm);
+        var Lnmoperad = $('label[for="nmoperad"]', '#' + nomeForm);
+        var Lvllimtrf = $('label[for="vllimtrf"]', '#' + nomeForm);
+        var Lvllimpgo = $('label[for="vllimpgo"]', '#' + nomeForm);
+        var Lvllimted = $('label[for="vllimted"]', '#' + nomeForm);
+        var Lvllimvrb = $('label[for="vllimvrb"]', '#' + nomeForm);
+        var Lvllimflp = $('label[for="vllimflp"]', '#' + nomeForm);
+        var Ldtlibera = $('label[for="dtlibera"]', '#' + nomeForm);
+        var Ldtaltsit = $('label[for="dtaltsit"]', '#' + nomeForm);
+        var Ldtaltsnh = $('label[for="dtaltsnh"]', '#' + nomeForm);
+        var Ldtblutsh = $('label[for="dtblutsh"]', '#' + nomeForm);
+        var Ldtultace = $('label[for="dtultace"]', '#' + nomeForm);
+        var Ldtacemob = $('label[for="dtacemob"]', '#' + nomeForm);
 		
 		var Ldtlimweb = $('label[for="dtlimweb"]','#'+nomeForm);
 		var Ldtlimted = $('label[for="dtlimted"]','#'+nomeForm);
@@ -1671,21 +1952,21 @@ function controlaLayout( nomeForm ){
 		var Ldtlimpgo = $('label[for="dtlimpgo"]','#'+nomeForm);
 		var Ldtlimtrf = $('label[for="dtlimtrf"]','#'+nomeForm);
 		
-		var Cdssitsnh = $('input[name="dssitsnh"]','#'+nomeForm);
-		var Cvllimweb = $('#vllimweb','#'+nomeForm);
-		var Cnmprepos = $('#nmprepos','#'+nomeForm);
-		var Cnmoperad = $('#nmoperad','#'+nomeForm);
-		var Cvllimtrf = $('#vllimtrf','#'+nomeForm);
-		var Cvllimpgo = $('#vllimpgo','#'+nomeForm);
-		var Cvllimted = $('#vllimted','#'+nomeForm);
-		var Cvllimvrb = $('#vllimvrb','#'+nomeForm); 
-		var Cdtlibera = $('#dtlibera','#'+nomeForm);
-		var Chrlibera = $('#hrlibera','#'+nomeForm);
-		var Cdtaltsit = $('#dtaltsit','#'+nomeForm);
-		var Cdtaltsnh = $('#dtaltsnh','#'+nomeForm);
-		var Cdtblutsh = $('#dtblutsh','#'+nomeForm);
-		var Cdtultace = $('#dtultace','#'+nomeForm);
-		var Chrultace = $('#hrultace','#'+nomeForm);
+        var Cdssitsnh = $('input[name="dssitsnh"]', '#' + nomeForm);
+        var Cvllimweb = $('#vllimweb', '#' + nomeForm);
+        var Cnmprepos = $('#nmprepos', '#' + nomeForm);
+        var Cnmoperad = $('#nmoperad', '#' + nomeForm);
+        var Cvllimtrf = $('#vllimtrf', '#' + nomeForm);
+        var Cvllimpgo = $('#vllimpgo', '#' + nomeForm);
+        var Cvllimted = $('#vllimted', '#' + nomeForm);
+        var Cvllimvrb = $('#vllimvrb', '#' + nomeForm);
+        var Cvllimflp = $('#vllimflp', '#' + nomeForm);
+        var Cdtlibera = $('#dtlibera', '#' + nomeForm);
+        var Cdtaltsit = $('#dtaltsit', '#' + nomeForm);
+        var Cdtaltsnh = $('#dtaltsnh', '#' + nomeForm);
+        var Cdtblutsh = $('#dtblutsh', '#' + nomeForm);
+        var Cdtultace = $('#dtultace', '#' + nomeForm);
+        var Cdtacemob = $('#dtacemob', '#' + nomeForm);
 		
 		var Cdtlimweb = $('#dtlimweb','#'+nomeForm);
 		var Cdtlimted = $('#dtlimted','#'+nomeForm);
@@ -1693,22 +1974,23 @@ function controlaLayout( nomeForm ){
 		var Cdtlimpgo = $('#dtlimpgo','#'+nomeForm);
 		var Cdtlimtrf = $('#dtlimtrf','#'+nomeForm);
 		
-	    Ldssitsnh.addClass('rotulo').css('width','133px');
-		Lvllimweb.addClass('rotulo').css('width','133px');
-		Lnmprepos.addClass('rotulo').css('width','86px');
-		Lnmoperad.addClass('rotulo').css('width','75px');
+        Ldssitsnh.addClass('rotulo').css('width', '133px');
+        Lvllimweb.addClass('rotulo').css('width', '133px');
+        Lnmprepos.addClass('rotulo').css('width', '133px');
+        Lnmoperad.addClass('rotulo').css('width', '133px');
+
+        Lvllimtrf.css('width', '133px');
+        Lvllimpgo.css('width', '133px');
+        Lvllimted.css('width', '133px');
+        Lvllimvrb.css('width', '133px');
+        Lvllimflp.css('width', '133px');
+        Ldtlibera.css('width', '133px');
+        Ldtblutsh.css('width', '160px');
+        Ldtaltsit.css('width', '133px');
+        Ldtaltsnh.css('width', '160px');
 		
-		Lvllimtrf.addClass('rotulo').css('width','133px');
-		Lvllimpgo.css('width','133px');
-		Lvllimted.css('width','133px');
-		Lvllimvrb.css('width','133px'); 
-		Ldtlibera.addClass('rotulo').css('width','133px');
-		Lhrlibera.css('width','160px');
-		Ldtaltsit.addClass('rotulo').css('width','133px');
-		Ldtaltsnh.css('width','160px');
-		Ldtblutsh.css({'width':'160px','margin-left':'206px'});
-		Ldtultace.addClass('rotulo').css('width','133px');
-		Lhrultace.css('width','160px');
+        Ldtultace.css('width', '126px');
+        Ldtacemob.css('width', '160px');
 		
 		Ldtlimweb.css('width','160px');
 		Ldtlimted.css('width','160px');
@@ -1716,27 +1998,27 @@ function controlaLayout( nomeForm ){
 		Ldtlimpgo.css('width','160px');
 		Ldtlimtrf.css('width','160px');
 		
-		Cdssitsnh.css({'width':'116px'});
-		Cvllimweb.css({'width':'70px'});
-		Cnmprepos.css({'width':'335px'});
-		Cnmoperad.css({'width':'335px'});
-		Cvllimtrf.css({'width':'70px'});
-		Cvllimpgo.css({'width':'70px'});
-		Cvllimted.css({'width':'70px'});
-		Cvllimvrb.css({'width':'70px'}); 
-		Cdtlibera.css({'width':'70px'});
-		Chrlibera.css({'width':'70px'});
-		Cdtaltsit.css({'width':'70px'});
-		Cdtaltsnh.css({'width':'70px'});
-		Cdtblutsh.css({'width':'70px'});
-		Cdtultace.css({'width':'70px'});
-		Chrultace.css({'width':'70px'});
+        Cdssitsnh.css({ 'width': '383px' });
+        Cvllimweb.css({ 'width': '110px' });
+        Cnmprepos.css({ 'width': '383px' });
+        Cnmoperad.css({ 'width': '383px' });
+        Cvllimtrf.css({ 'width': '110px' });
+        Cvllimpgo.css({ 'width': '110px' });
+        Cvllimted.css({ 'width': '110px' });
+        Cvllimvrb.css({ 'width': '110px' });
+        Cvllimflp.css({ 'width': '110px' });
+        Cdtlibera.css({ 'width': '110px' });
+        Cdtaltsit.css({ 'width': '110px' });
+        Cdtaltsnh.css({ 'width': '110px' });
+        Cdtblutsh.css({ 'width': '110px' });
+        Cdtultace.css({ 'width': '110px' });
+        Cdtacemob.css({ 'width': '110px' });
 		
-		Cdtlimweb.css({'width':'70px'});
-		Cdtlimted.css({'width':'70px'});
-		Cdtlimvrb.css({'width':'70px'}); 
-		Cdtlimpgo.css({'width':'70px'});
-		Cdtlimtrf.css({'width':'70px'});
+        Cdtlimweb.css({ 'width': '110px' });
+        Cdtlimted.css({ 'width': '110px' });
+        Cdtlimvrb.css({ 'width': '110px' });
+        Cdtlimpgo.css({ 'width': '110px' });
+        Cdtlimtrf.css({ 'width': '110px' });
 		
 		Cdssitsnh.desabilitaCampo();
 		Cvllimweb.desabilitaCampo();
@@ -1746,13 +2028,13 @@ function controlaLayout( nomeForm ){
 		Cvllimpgo.desabilitaCampo();
 		Cvllimted.desabilitaCampo();
 		Cvllimvrb.desabilitaCampo(); 
+		Cvllimflp.desabilitaCampo();
 		Cdtlibera.desabilitaCampo();
-		Chrlibera.desabilitaCampo();
 		Cdtaltsit.desabilitaCampo();
 		Cdtaltsnh.desabilitaCampo();
 		Cdtblutsh.desabilitaCampo();
 		Cdtultace.desabilitaCampo();
-		Chrultace.desabilitaCampo();
+        Cdtacemob.desabilitaCampo();
 		
 		Cdtlimweb.desabilitaCampo();
 		Cdtlimted.desabilitaCampo();
@@ -1884,6 +2166,49 @@ function controlaLayout( nomeForm ){
 		$("#frmDadosTitInternet").hide();
 		$("#divInternetPrincipal").hide();
 		$("#divResponsaveisAss").hide();
+	}else if( nomeForm == 'frmOpDesativaPush'){
+		
+		$("#divDispositivos").show();	
+		$("#divPrincipalPJ").hide();
+		$("#divBotoes").hide();
+		$("#frmDadosTitInternet").hide();
+		$("#divInternetPrincipal").hide();
+		$("#divResponsaveisAss").hide();
+		
+		ajustarCentralizacao();
+		
+		var divRegistro = $('div.divRegistros','#divDispositivos');		
+		var tabela      = $('table', divRegistro );
+		var linha       = $('table > tbody > tr', divRegistro );
+		
+		divRegistro.css({'height':'50%','width':'100%'});
+		
+		if($("#qtdDispositivos").val() > 0){
+			var ordemInicial = new Array();
+			ordemInicial = [[2,0]];
+			
+			var arrayLargura = new Array();
+			arrayLargura[0] = '100px';
+			arrayLargura[1] = '200px';
+			
+			var arrayAlinha = new Array();
+			arrayAlinha[0] = 'right';
+			arrayAlinha[1] = 'right';
+			arrayAlinha[2] = 'right';
+		}else{
+			$("#btnDesativar").hide();
+			$("#btnvoltar").css({'margin-left':'260px'});
+		}
+		
+		tabela.formataTabela( ordemInicial, arrayLargura, arrayAlinha, '' );
+		
+		$('.divDispositivos > table > thead').remove();
+				
+		$('table', tabela).removeClass();
+		$('th', tabela).unbind('click');
+		$('.headerSort', tabela).removeClass();
+		$('#frmOpDesativaPush').addClass('formulario');
+		$("#divConteudoOpcao").css("width","100%");
 	}else if( nomeForm == 'divResponsaveisAss' ){
 				
 		$("#divResponsaveisAss").show();
@@ -1900,7 +2225,7 @@ function controlaLayout( nomeForm ){
 		var tabela      = $('table', divRegistro );
 		var linha       = $('table > tbody > tr', divRegistro );
 		
-		divRegistro.css({'height':'200px','width':'100%'});
+		divRegistro.css({'height':'170px','width':'100%'});
 		
 		var ordemInicial = new Array();
 		ordemInicial = [[2,0]];
@@ -1939,7 +2264,7 @@ function controlaLayout( nomeForm ){
 		$('#'+nomeForm).addClass('formulario');
 		
 		nomeForm = 'frmOpContas';
-		$('#'+nomeForm).addClass('formulario');
+        $('#' + nomeForm).addClass('formulario');
 		
 		nomeForm = 'frmInclCoop';
 		$('#'+nomeForm).addClass('formulario');
@@ -2145,7 +2470,6 @@ function carregaCdbanco(cdispbif){
 				$("#cdispbif").prop('disabled', true);
 				$("#cddbanco").prop('disabled', false);
 				habilitaCampos();
-				
 		  }
 		}
 						
@@ -2156,11 +2480,15 @@ function carregaCdbanco(cdispbif){
 function validaResponsaveis(){
 	
 	var dscpfcgc = "";	
+	var flgconju = "yes";
+	var qtminast = $("#qtminast").val();
 	
-	$('input[type=checkbox]').each(function () {
-		if($(this).val() != "on"){
-			dscpfcgc += "#" + $(this).val();
-		}
+	$("input:checkbox[name='chkRespAssConj']").each(function () {
+	    if ($(this).val() != "on") {
+	        if ($(this).prop('checked')) {
+	            dscpfcgc += "#" + $(this).val();
+	        }
+	    }
 	});
 		
 	dscpfcgc = dscpfcgc.substring(1,dscpfcgc.length);
@@ -2174,6 +2502,8 @@ function validaResponsaveis(){
 		data: {
 			nrdconta: nrdconta,
 			dscpfcgc: dscpfcgc,
+			flgconju: flgconju,
+			qtminast: qtminast,
 			redirect: "script_ajax"
 		},		
 		error: function(objAjax,responseError,objExcept) {
@@ -2191,8 +2521,9 @@ function validaResponsaveis(){
 function salvarRepresentantes(){
 	
 	var responsa = "";	
+	var qtminast = $("#qtminast").val();
 	
-	$('input[type=checkbox]').each(function () {
+	$("input:checkbox[name='chkRespAssConj']").each(function () {
 		if($(this).val() != "on"){
 			if(this.checked){
 				responsa += "#" + $("#nrdctato" + $(this).val()).val() + "," + $(this).val() + ",yes,no";
@@ -2213,6 +2544,7 @@ function salvarRepresentantes(){
 		data: {
 			nrdconta: nrdconta,
 			responsa: responsa,
+			qtminast: qtminast,
 			redirect: "script_ajax"
 		},		
 		error: function(objAjax,responseError,objExcept) {
@@ -2236,11 +2568,139 @@ function selecionarTodos(){
 		aux_checkado = 0;
 	}
 	
-	$(':checkbox').each(function() {
+	$("input:checkbox[name='chkRespAssConj']").each(function() {
 		if(aux_checkado == 1){
 			$(this).prop('checked',true);
 		}else{
 			$(this).prop('checked',false);
 		}
 	});
+}
+
+function validaRespAssConj(nrconta, cpf){
+	if ($("#chkRespAssConj"+cpf).prop('checked')) {
+		aux_checkado = 1;
+	}else{
+		aux_checkado = 0;
+	}
+	
+	if(aux_checkado == 0){
+		if($("#chkMasterAssConj"+cpf).prop('checked')){
+			alterarPrepostoMaster(nrconta, cpf);
+			$("#chkRespAssConj"+cpf).prop('checked', false);
+			$("#chkMasterAssConj"+cpf).prop('checked',false);
+		}
+	}
+}
+
+function validaPrepostoMaster(nrconta,nome,cpf){
+	aux_checkado = 0;
+	chkcount = 0;
+
+	if ($("#chkMasterAssConj"+cpf).prop('checked')) {
+		aux_checkado = 1;
+		$(".chkMasterAssConj").each(function(){	
+			if($(this).prop('checked')){
+				chkcount = chkcount+1;
+			}
+		})
+	}else{
+		aux_checkado = 0;
+	}
+ 
+	if(chkcount > 1 && aux_checkado == 1){
+		$("#chkMasterAssConj"+cpf).prop('checked',false);
+		showError("error","Est&aacute conta j&aacute possui um PREPOSTO MASTER cadastrado.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+	} else {
+		showConfirmacao('Deseja alterar o status de preposto master para '+nome+'?','Confirma&ccedil;&atilde;o - Ayllos','alterarPrepostoMaster(' + nrdconta + ', "' + cpf + '")','alteraChkBoxPrepostoMaster("'+cpf+'", '+aux_checkado+')','sim.gif','nao.gif');
+	}
+}
+
+function alteraChkBoxPrepostoMaster(cpf, aux_checkado){
+	if(aux_checkado == 1){
+		$("#chkMasterAssConj"+cpf).prop('checked',false);
+	}else{
+		$("#chkMasterAssConj"+cpf).prop('checked',true);
+	}
+}
+
+function alterarPrepostoMaster(nrdconta, cpf){
+	if($("#chkRespAssConj"+cpf).prop('checked') == false && $("#chkMasterAssConj"+cpf).prop('checked')){
+		$("#chkRespAssConj"+cpf).prop('checked',true);
+	}
+	
+	showMsgAguardo("Aguarde, atualizando status do preposto master...");
+	
+	$.ajax({		
+		type: "POST", 
+		dataType: "html",
+		url: UrlSite + "telas/atenda/internet/altera_preposto_master.php",
+		data: {
+			nrdconta: nrdconta,
+			nrcpfcgc: cpf,
+			redirect: "script_ajax"
+		},		
+		error: function(objAjax,responseError,objExcept) {
+			hideMsgAguardo();
+			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+		},
+		success: function(response) {
+			hideMsgAguardo();
+			eval(response);
+		}
+	});
+}
+
+function desativarPush(){
+	// Mostra mensagem de aguardo
+	showMsgAguardo("Aguarde, carregando listagem de dispositivos...");
+	
+	// Carrega conteúdo da opção através de ajax
+	$.ajax({		
+		type: "POST", 
+		url: UrlSite + "telas/atenda/internet/listagem_push.php",
+		dataType: "html",
+		data: {
+			nrdconta: nrdconta,
+			idseqttl: idseqttl,
+			redirect: "html_ajax"
+		},		
+		error: function(objAjax,responseError,objExcept) {
+			hideMsgAguardo();
+			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+		},
+		success: function(response) {
+			$("#divConteudoOpcao").html(response);
+		}				
+	});
+}
+
+function selecionaMobile(id){
+	idmobile = id;
+}
+function desativarEnvioPush(){
+	// Mostra mensagem de aguardo
+	showMsgAguardo("Aguarde, carregando listagem de dispositivos...");
+	
+	// Carrega conteúdo da opção através de ajax
+	$.ajax({		
+		type: "POST", 
+		url: UrlSite + "telas/atenda/internet/desativa_push.php",
+		data: {
+			idmobile: idmobile,
+			redirect: "script_ajax"
+		},		
+		error: function(objAjax,responseError,objExcept) {
+			hideMsgAguardo();
+			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
+		},
+		success: function(response) {
+			hideMsgAguardo();
+			eval(response);
+		}
+	});
+}
+
+function senhaCoordenador(executaDepois) {
+	pedeSenhaCoordenador(2,executaDepois,'divRotina');
 }
