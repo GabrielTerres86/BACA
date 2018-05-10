@@ -13,6 +13,8 @@
  *
  *                11/04/2017 - Permitir acessar o Ayllos mesmo vindo do CRM. (Jaison/Andrino)
  *
+ *                24/04/2018 - #853017 Permitir realizar o Refaz Regularização para qualquer situação
+ *                             diferente de 0 (ainda não enviado). (Wagner/Sustenção).
  * --------------
  */
 var nometela;
@@ -134,7 +136,7 @@ function formataCabecalho() {
 /* Alterna a situação do botão de refazer regularização conforme a situação do cheque */
 function clicouCheque(flgctitg) {	
 
-	if (flgctitg != 1) {
+	if (flgctitg == 0) {
 		$('#btRefazer').trocaClass('botao','botaoDesativado');
 		$('#btRefazer').removeAttr('onclick');
 	} else {
