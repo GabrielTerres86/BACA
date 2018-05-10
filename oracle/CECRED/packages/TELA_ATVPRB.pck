@@ -121,10 +121,12 @@ END TELA_ATVPRB;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
 
+CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
+
 /*---------------------------------------------------------------------------------------------------------------
-   Programa: TELA_ATVPRB                          
+   Programa: TELA_ATVPRB
    Sistema : Cadastro - Tela Ativo Problematico
-   Sigla   : ATVPRB 
+   Sigla   : ATVPRB
 
    Autor   : Rangel Decker - AMcom
    Data    : Marco/2018                       Ultima atualizacao:
@@ -151,7 +153,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
 
   /*---------------------------------------------------------------------------------------------------------------
 
-    Programa : pc_gera_log                            
+    Programa : pc_gera_log
     Sistema  : Cadastro - Tela Ativo Problematico
     Sigla    : ATVPRB
     Autor    : Rangel Decker - AMcom
@@ -238,7 +240,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
 
   /*---------------------------------------------------------------------------------------------------------------
 
-    Programa : pc_alteracao                           
+    Programa : pc_alteracao
     Sistema  : Cadastro - Tela Ativo Problematico
     Sigla    : ATVPRB
     Autor    : Rangel Decker -AMcom
@@ -391,7 +393,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
 
 
   END pc_alteracao;
-  
+
 
   PROCEDURE pc_exclusao (pr_cdcooper  IN crapepr.cdcooper%TYPE --Codigo Cooperativa
                         ,pr_nrdconta  IN crapepr.nrdconta%TYPE --Numero da Conta
@@ -406,7 +408,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
 
   /*---------------------------------------------------------------------------------------------------------------
 
-    Programa : pc_exclusao                            
+    Programa : pc_exclusao
     Sistema  : Cadastro - Tela Ativo Problematico
     Sigla    : ATVPRB
     Autor    : Rangel Decker AMcom
@@ -498,14 +500,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
 
     BEGIN
       -- Se não for informado contrato, inativar todos os contratos ativos
-      -- disponiveis na conta do associado na cooperativa 
-      IF nvl(pr_nrctremp,0) = 0 THEN  
+      -- disponiveis na conta do associado na cooperativa
+      IF nvl(pr_nrctremp,0) = 0 THEN
         UPDATE tbcadast_ativo_probl tbap
         SET    tbap.dtexclus = rw_crapdat.dtmvtolt,
                tbap.idativo  = 0
         WHERE  tbap.cdcooper = pr_cdcooper
         AND    tbap.nrdconta = pr_nrdconta
-        AND    tbap.dtexclus IS NULL 
+        AND    tbap.dtexclus IS NULL
         AND    tbap.nrctremp = DECODE(pr_nrctremp, 0, tbap.nrctremp, pr_nrctremp);
       ELSE
         UPDATE tbcadast_ativo_probl tbap
@@ -514,8 +516,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
         WHERE  tbap.cdcooper = pr_cdcooper
         AND    tbap.nrdconta = pr_nrdconta
         AND    tbap.nrctremp = pr_nrctremp
-        AND    tbap.cdmotivo = pr_cdmotivo;          
-      END IF;  
+        AND    tbap.cdmotivo = pr_cdmotivo;
+      END IF;
 
     EXCEPTION
         WHEN OTHERS THEN
@@ -589,7 +591,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
                         ,pr_des_erro  OUT VARCHAR2) IS          --Saida OK/NOK
    /*---------------------------------------------------------------------------------------------------------------
 
-    Programa : pc_inclusao                            
+    Programa : pc_inclusao
     Sistema  : Cadastro - Tela Ativo Problematico
     Sigla    : ATVPRB
     Autor    : Rangel Decker - AMcom
@@ -617,7 +619,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
     vr_cdcritic INTEGER;
     vr_dscritic VARCHAR2(1000);
     vr_datahora VARCHAR2(20);
-    
+
     vr_retxml XMLType;
     vr_xmllog VARCHAR2(100);
 
@@ -625,7 +627,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
     -- Variável genérica de calendário com base no cursor da btch0001
     rw_crapdat btch0001.cr_crapdat%ROWTYPE;
 
-    
+
 
   BEGIN
 
@@ -647,10 +649,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
         -- Apenas fechar o cursor
         CLOSE btch0001.cr_crapdat;
       END IF;
-      
+
      vr_datahora := to_char(rw_crapdat.dtmvtolt,'dd/mm/yyyy') ||' '|| to_char(sysdate,'hh24:mi:ss');
-      
-   
+
+
     -- Verifica se houve erro recuperando informacoes de log
      TELA_ATVPRB.pc_valida_informacoes(pr_cdcooper  => pr_cdcooper --Cooperativa
                                       ,pr_nrdconta  => pr_nrdconta --Conta
@@ -692,8 +694,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
 
      --Incluir registro de operações ativo problematico
      BEGIN
-     IF  nvl(pr_nrctremp,0) = 0 THEN 
-       
+     IF  nvl(pr_nrctremp,0) = 0 THEN
+
         TELA_ATVPRB.pc_exclusao (pr_cdcooper =>pr_cdcooper --Codigo Cooperativa
                                 ,pr_nrdconta =>pr_nrdconta             --Numero da Conta
                                 ,pr_nrctremp =>pr_nrctremp             --Conta base
@@ -704,12 +706,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
                                 ,pr_retxml   =>vr_retxml               --Arquivo de retorno do XML
                                 ,pr_nmdcampo =>vr_nmdcampo             --Nome do Campo
                                 ,pr_des_erro =>vr_des_erro);
-     
-                               
-     END IF;    
-     
-    
-  
+
+
+     END IF;
+
+
+
      INSERT INTO tbcadast_ativo_probl(cdcooper,
                                       nrdconta,
                                       nrctremp,
@@ -833,7 +835,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
 
   /*---------------------------------------------------------------------------------------------------------------
 
-    Programa : pc_gera_log_arquivo                            
+    Programa : pc_gera_log_arquivo
     Sistema  : Cadastro - Tela Ativo Problematico
     Sigla    : ATVPRB
     Autor    : Rangel Decker AMcom
@@ -842,7 +844,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
     Dados referentes ao programa:
 
     Frequencia: Sempre que for chamado
-    Objetivo   :Procedure para gerar log 
+    Objetivo   :Procedure para gerar log
 
     Alterações :
     -------------------------------------------------------------------------------------------------------------*/
@@ -871,7 +873,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
 
   /*---------------------------------------------------------------------------------------------------------------
 
-    Programa : pc_valida_informacoes                            
+    Programa : pc_valida_informacoes
     Sistema  : Cadastro - Tela Ativo Problematico
     Sigla    : ATVPRB
     Autor    : Rangel Decker - AMCom
@@ -902,11 +904,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
      WHERE epr.cdcooper   = pr_cdcooper
      AND   epr.nrdconta   = pr_nrdconta
      AND   epr.nrctremp   = pr_nrctremp;
-       
+
 
 
     rw_crapepr cr_crapepr%ROWTYPE;
-    
+
     --Cursor para encontrar a conta do associado
     CURSOR cr_crapass(pr_cdcooper IN crapepr.cdcooper%TYPE
                      ,pr_nrdconta IN crapepr.nrdconta%TYPE)IS
@@ -916,12 +918,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
      AND cras.nrdconta   = pr_nrdconta;
 
     rw_crapass cr_crapass%ROWTYPE;
-    
-    
+
+
 
     --Se passar o nr do contrato valida conforme hoje
-    --Se não grava sem o numero do contrato e marca todos os registros ativos como excluidos 
-    -- Somente na inclusao 
+    --Se não grava sem o numero do contrato e marca todos os registros ativos como excluidos
+    -- Somente na inclusao
 
     --Variaveis de Criticas
     vr_cdcritic INTEGER;
@@ -931,7 +933,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
     vr_exc_erro  EXCEPTION;
 
   BEGIN
-    
+
      --Valida a cooperativa  informada
     OPEN cr_crapcop(pr_cdcooper => pr_cdcooper);
 
@@ -953,9 +955,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
         CLOSE cr_crapcop;
 
       END IF;
-  
 
-  
+
+
      --Valida a conta informada
     OPEN cr_crapass(pr_cdcooper => pr_cdcooper,
                     pr_nrdconta => pr_nrdconta);
@@ -978,8 +980,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
         CLOSE cr_crapass;
 
       END IF;
-    
-    
+
+
     IF  nvl(pr_nrctremp,0) <> 0 THEN
      --Valida o contrato de emprestimo informado para determinada conta
      OPEN cr_crapepr(pr_cdcooper => pr_cdcooper
@@ -1003,7 +1005,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
       ELSE
         CLOSE cr_crapepr;
       END IF;
-    END IF;  
+    END IF;
 
     pr_des_erro := 'OK';
 
@@ -1027,7 +1029,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
   END pc_valida_informacoes;
 
 
-  PROCEDURE pc_consulta (  pr_idativo  IN tbcadast_ativo_probl.idativo%TYPE   -- 1-Ativo / 0 Inativo   
+  PROCEDURE pc_consulta (  pr_idativo  IN tbcadast_ativo_probl.idativo%TYPE   -- 1-Ativo / 0 Inativo
                           ,pr_cdcooper IN tbcadast_ativo_probl.cdcooper%TYPE   --Cooperativa
                           ,pr_nrdconta IN tbcadast_ativo_probl.nrdconta%TYPE  --Conta
                           ,pr_nrctremp IN tbcadast_ativo_probl.nrctremp%TYPE  --Contrato Emprestimo
@@ -1084,7 +1086,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
                           AND tcap.nrctremp = DECODE(pr_nrctremp, 0, tcap.nrctremp, pr_nrctremp)
                           AND tcap.cdmotivo = DECODE(pr_cdmotivo, 0, tcap.cdmotivo, pr_cdmotivo)
                           AND tcap.idativo = DECODE(pr_idativo, 0, tcap.idativo, 1)
-                          AND tcap.dtinclus BETWEEN to_date(pr_datainic,'DD/MM/YYYY') AND to_date(pr_datafina,'DD/MM/YYYY'))
+                          AND trunc(tcap.dtinclus) BETWEEN to_date(pr_datainic,'DD/MM/YYYY') AND to_date(pr_datafina,'DD/MM/YYYY'))
         WHERE Row_Num BETWEEN pr_regini AND pr_regfim;
 
         rw_tcap cr_tcap%ROWTYPE;
@@ -1123,7 +1125,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
           AND tcap.idativo  = DECODE(pr_idativo, 0, tcap.idativo, 1)
           AND tcap.dtinclus BETWEEN to_date(pr_datainic,'DD/MM/YYYY') AND to_date(pr_datafina,'DD/MM/YYYY');
 
-       
+
 
           -- Incluir nome
          GENE0001.pc_informa_acesso(pr_module => 'ATVPRB'
@@ -1145,7 +1147,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
                                  pr_nrdconta => pr_nrdconta,
                                  pr_nrctremp => pr_nrctremp,
                                  pr_regini   => vr_auxinicial,
-                                 pr_regfim   => vr_auxfinal                                 
+                                 pr_regfim   => vr_auxfinal
                                  ) LOOP
 
           -- Consulta as informações
@@ -1288,7 +1290,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
    /* .............................................................................
     Programa: pc_consulta_historico
     Sistema : Cadastro - Tela Ativo Problematico
-    Sigla   : ATVPRB 
+    Sigla   : ATVPRB
     Autor   : Diego Simas
     Data    : Marco/2018                       Ultima atualizacao:
 
@@ -1330,7 +1332,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
              AND thap.nrdconta = decode(pr_nrdconta, 0, thap.nrdconta, pr_nrdconta)
              AND thap.nrctremp = decode(pr_nrctremp, 0, thap.nrctremp, pr_nrctremp)
              AND thap.cdmotivo = decode(pr_cdmotivo, 0, thap.cdmotivo, pr_cdmotivo)
-             AND thap.dthistreg BETWEEN to_date(pr_datainic,'DD/MM/YYYY') AND to_date(pr_datafina,'DD/MM/YYYY'))
+             AND trunc(thap.dthistreg) BETWEEN to_date(pr_datainic,'DD/MM/YYYY') AND to_date(pr_datafina,'DD/MM/YYYY'))
              WHERE Row_Num BETWEEN pr_regini AND pr_regfim;
 
         rw_thap cr_thap%ROWTYPE;
@@ -1538,7 +1540,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
 
   /*---------------------------------------------------------------------------------------------------------------
 
-   Programa : pc_busca_motivos_probl                           
+   Programa : pc_busca_motivos_probl
     Sistema  : Ativos Problematicos
     Sigla    : ATVPRB
     Autor    : Rangel Decker
