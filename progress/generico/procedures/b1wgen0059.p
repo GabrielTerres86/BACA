@@ -210,6 +210,9 @@
         13/03/2018 - Removida procedure "busca-craptip" pois nao e mais usada.
                      PRJ366 (Lombardi).
 
+				10/05/2018 - P404 - Inclusao do tipo 4 aplicacao na descricao na da garantia 
+				             na procedure busca-craplcr (Lucas Skroch - Supero)
+
 .............................................................................*/
 
 
@@ -3182,6 +3185,7 @@ PROCEDURE busca-craplcr:
                                        WHEN 1 THEN ASSIGN tt-craplcr.dsgarant = "AVAL".
                                        WHEN 2 THEN ASSIGN tt-craplcr.dsgarant = "VEICULOS".
                                        WHEN 3 THEN ASSIGN tt-craplcr.dsgarant = "IMOVEIS".
+									   WHEN 4 THEN ASSIGN tt-craplcr.dsgarant = "APLICACAO".
                                        OTHERWISE ASSIGN tt-craplcr.dsgarant = "NAO CADASTRADO".
                                    END CASE.                                   
 
