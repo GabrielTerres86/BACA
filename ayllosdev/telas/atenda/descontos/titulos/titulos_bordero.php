@@ -202,7 +202,6 @@
 		<input type="button" class="botao" value="Rejeitar"  <?php if ($qtBorderos == 0) { echo 'style="cursor: default;'.$dispR.'" onClick="return false;"'; } else { echo 'style="'.$dispR.'" onClick="mostrarBorderoRejeitar();return false;"'; } ?> />
 		<input type="button" class="botao" value="Alterar"  onClick="mostrarBorderoAlterar();return false;" />
 		<input type="button" class="botao" value="Analisar" <?php if ($qtBorderos == 0) { echo 'style="cursor: default;'.$dispN.'" onClick="return false;"'; } else { echo 'style="'.$dispN.'" onClick="mostrarBorderoAnalisar();return false;"'; } ?> />
-		<input type="button" class="botao" value="Excluir"  <?php if ($qtBorderos == 0) { echo 'style="cursor: default;'.$dispE.'" onClick="return false;"'; } else { echo 'style="'.$dispE.'" onClick="mostraDadosBorderoDscTit(\'E\');return false;"'; } ?> />
 		<input type="button" class="botao" value="Imprimir" <?php if ($qtBorderos == 0) { echo 'style="cursor: default;'.$dispM.'" onClick="return false;"'; } else { echo 'style="'.$dispM.'" onClick="mostraImprimirBordero();return false;"'; } ?> />
 		<input type="button" class="botao" value="Liberar"  <?php if ($qtBorderos == 0) { echo 'style="cursor: default;'.$dispL.'" onClick="return false;"'; } else { echo 'style="'.$dispL.'" onClick="mostrarBorderoLiberar();return false;"'; } ?> />
 
