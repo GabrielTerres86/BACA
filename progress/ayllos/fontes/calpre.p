@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Deborah/Edson
-   Data    : Marco/94.                       Ultima atualizacao: 09/11/2015
+   Data    : Marco/94.                       Ultima atualizacao: 10/05/2018
 
    Dados referentes ao programa:
 
@@ -57,6 +57,8 @@
                             posicoes (Tiago/Gielow SD137074).
                             
                09/11/2015 - Aumentado format do campo de GRUPO (Lunelli SD 353723)
+
+			   10/05/2018 - Ajuste no campo de GRUPO para 4 posicoes (Andrey Formigari - Mouts)
 ............................................................................. */
 
 DEF BUFFER crabtab FOR craptab.
@@ -69,7 +71,7 @@ DEF STREAM str_1.
 
 { includes/var_online.i }
 
-DEF        VAR tel_nrgrplcr AS INT     FORMAT "zz9"               NO-UNDO.
+DEF        VAR tel_nrgrplcr AS INT     FORMAT "zzz9"               NO-UNDO.
 DEF        VAR tel_cdlcrimp AS INT     EXTENT 40                  NO-UNDO.
 
 DEF        VAR tel_txbaspre AS DECIMAL FORMAT "zz9.99"            NO-UNDO.
