@@ -29,6 +29,8 @@
 
 				 25/04/2018 - Alterado o comportamento dos botões na <div id="divBotoes" >, por definicção do cliente os mesmos devem ser ocultados caso o usuário não possua permissão. (Andre Avila - GFT)
 
+				 07/05/2018 - Adicionada verificação para definir se o bordero vai seguir o fluxo novo ou o antigo (Luis Fernando - GFT)
+
 	***************************************************************************/
 	 
 	session_start();
@@ -89,8 +91,23 @@
 	} 
 	
 	$dados = $xmlObjDscTit->roottag->tags[0]->tags[0]->tags;
-
 	
+
+	/*Verifica se o borderô deve ser utilizado no sistema novo ou no antigo*/
+	$xml = "<Root>";
+	$xml .= " <Dados>";
+	$xml .= " </Dados>";
+	$xml .= "</Root>";
+	$xmlResult = mensageria($xml,"TELA_ATENDA_DESCTO","VIRADA_BORDERO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	$xmlObj = getClassXML($xmlResult);
+	$root = $xmlObj->roottag;
+	// Se ocorrer um erro, mostra crítica
+	if ($root->erro){
+		exibeErro(htmlentities($root->erro->registro->dscritic));
+		exit;
+	}
+	$flgverbor = $root->dados->flgverbor->cdata;
+
 	// Função para exibir erros na tela através de javascript
 	function exibeErro($msgErro) { 
 		echo '<script type="text/javascript">';
@@ -237,7 +254,7 @@
 		>
 		Manuten&ccedil;&atilde;o
 	</a>
-
+	<?if($flgverbor){?>
 	<a 
 		href="#" 
 		class="botao"
@@ -248,6 +265,7 @@
 	>
 		Resgatar T&iacute;tulos
 	</a>
+	<?}?>
 </div>
 
 
@@ -278,5 +296,5 @@
 			$('#btnlimite','#divBotoes').click();
 		  } 
 		}
-	 
+	flgverbor = <?=isset($flgverbor)?$flgverbor:0?>;
 </script>

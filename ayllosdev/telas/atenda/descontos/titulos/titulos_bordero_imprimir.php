@@ -35,6 +35,21 @@
 		exibeErro($msgError);		
 	}			
 	
+	/*Verifica se o borderô deve ser utilizado no sistema novo ou no antigo*/
+	$xml = "<Root>";
+	$xml .= " <Dados>";
+	$xml .= " </Dados>";
+	$xml .= "</Root>";
+	$xmlResult = mensageria($xml,"TELA_ATENDA_DESCTO","VIRADA_BORDERO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	$xmlObj = getClassXML($xmlResult);
+	$root = $xmlObj->roottag;
+	// Se ocorrer um erro, mostra crítica
+	if ($root->erro){
+		exibeErro(htmlentities($root->erro->registro->dscritic));
+		exit;
+	}
+	$flgverbor = $root->dados->flgverbor->cdata;
+
 	// Função para exibir erros na tela através de javascript
 	function exibeErro($msgErro) { 
 		echo '<script type="text/javascript">';
@@ -45,20 +60,36 @@
 	}
 	
 ?>
-<!--<div id="divBotoes">-->
-<div id="divBotoes" style="width: 500px;">
-	<form class="formulario">
-		<fieldset>
-			<legend><? echo utf8ToHtml('Impressão') ?></legend>
-			<input type="button" class="botao" value="Voltar"  onClick="carregaBorderosTitulos();return false;" />
-			<input type="button" class="botao" value="T&iacute;tulo"  onClick="gerarImpressao(7,2,'no');return false;" />
-			<input type="button" class="botao" value="Border&ocirc; Cooperado"  onClick="gerarImpressao(7,2,'no','',1);return false;" />
-			<input type="button" class="botao" value="Proposta"  onClick="gerarImpressao(6,2,'no');return false;" />
-		</fieldset>
-	</form>
-</div>
 
-<?php 
+<?if($flgverbor){?>
+	<div id="divBotoes" style="width: 500px;">
+		<form class="formulario">
+			<fieldset>
+				<legend><? echo utf8ToHtml('Impressão') ?></legend>
+				<input type="button" class="botao" value="Voltar"  onClick="carregaBorderosTitulos();return false;" />
+				<input type="button" class="botao" value="T&iacute;tulo"  onClick="gerarImpressao(7,2,'no');return false;" />
+				<input type="button" class="botao" value="Border&ocirc; Cooperado"  onClick="gerarImpressao(7,2,'no','',1);return false;" />
+				<input type="button" class="botao" value="Proposta"  onClick="gerarImpressao(6,2,'no');return false;" />
+			</fieldset>
+		</form>
+	</div>
+<?}
+else{?>
+	<div id="divBotoes">
+		<form class="formulario">
+			<fieldset>
+				<legend><? echo utf8ToHtml('Impressão') ?></legend>
+				
+				<input type="image" src="<?php echo $UrlImagens; ?>botoes/voltar.gif" onClick="carregaBorderosTitulos();return false;" />
+				<input type="image" src="<?php echo $UrlImagens; ?>botoes/titulos.gif" onClick="gerarImpressao(7,2,'no');return false;" />
+				<input type="image" src="<?php echo $UrlImagens; ?>botoes/proposta.gif" onClick="gerarImpressao(6,2,'no');return false;" />
+				
+			</fieldset>
+		</form>
+	</div>
+
+<? }
+
 //Form com os dados para fazer a chamada da geração de PDF	
 include("impressao_form.php"); 
 ?>
