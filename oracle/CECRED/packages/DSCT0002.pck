@@ -41,6 +41,9 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0002 AS
   --
   --    13/04/2018 - Remoção do campo 'pctitemi' Percentual de títulos por pagador da procedure 
   --                 'pc_busca_parametros_dsctit'  (Leonardo Oliveira - GFT). 
+  --
+  --	10/05/2018 - Ajuste para considerar os novos contratos do PJ404 a com a data da proposta
+  --				 para contratos de desconto de título e cheque (Lucas Skroch - Supero)
   --------------------------------------------------------------------------------------------------------------*/
  
   -- Registro para armazenar parametros para desconto de titulo
@@ -5109,7 +5112,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
 
       --> Se for Cheque e igual ou superior a data do novo contrato
       IF (pr_tpctrlim = 2 OR pr_tpctrlim = 3) AND 
-         nvl(rw_craplim.dtinivig, rw_craplim.dtpropos) >= TO_DATE(GENE0001.fn_param_sistema(pr_nmsistem => 'CRED'
+         rw_craplim.dtpropos >= TO_DATE(GENE0001.fn_param_sistema(pr_nmsistem => 'CRED'
                                                                  ,pr_cdacesso => 'DT_VIG_IMP_CTR_V2'),'DD/MM/RRRR') THEN
         vr_nrvrsctr := 2;
       END IF;
