@@ -43,7 +43,8 @@
  * 032: [17/12/2017] Inserção do campo idcobope. PRJ404 (Lombardi)
  * 033: [26/01/2018] Alteração para exibição do nível de risco original (Reginaldo - AMcom).
  * 034: [05/03/2018] Inclusão do campo idcobope no array arrayStatusApprov. PRJ404 (Reinert)
- * 035: [12/04/2018] P410 - Melhorias/Ajustes IOF (Marcos-Envolti)
+ * 035: [13/04/2018] Adicionada verificacao se Tipo de Conta permite empréstimo. PRJ366 (Lombardi).
+ * 036: [12/04/2018] P410 - Melhorias/Ajustes IOF (Marcos-Envolti)
 
  */
 
@@ -143,7 +144,27 @@
             
 			exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos',$mtdErro,false);
 		}
-
+		
+		if ($operacao == "TI") {
+			// Monta o xml de requisição
+			$xml  = "";
+			$xml .= "<Root>";
+			$xml .= "	<Dados>";
+			$xml .= "		<nrdconta>".$nrdconta."</nrdconta>";
+			$xml .= "		<cdprodut>".   31    ."</cdprodut>";
+			$xml .= "	</Dados>";
+			$xml .= "</Root>";
+			
+			// Executa script para envio do XML
+			$xmlResult = mensageria($xml, "CADA0006", "VALIDA_ADESAO_PRODUTO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+			$xmlObj = getObjectXML($xmlResult);
+			
+			// Se ocorrer um erro, mostra crítica
+			if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") { 
+				exibirErro('inform','Tipo de Conta n&atilde;o permite empr&eacute;stimo. Ser&aacute; permitido apenas inclus&atilde;o de propostas de CDC.','Alerta - Ayllos',"bloqueiaFundo(divRotina);",true);
+			}
+		}
+		
 		if (in_array($operacao,array(''))){
 
 			$registros = $xmlObjeto->roottag->tags[0]->tags;
@@ -286,7 +307,7 @@
 			arrayProposta['tpfinali'] = '<? echo getByTagName($proposta,'tpfinali'); ?>';
 
 
-			vleprori 	 = arrayProposta['vlemprst'];
+      vleprori 	 = arrayProposta['vlemprst'];
 			bkp_vlpreemp = arrayProposta["vlpreemp"];
 			bkp_dslcremp = arrayProposta["dslcremp"];
 			bkp_dsfinemp = arrayProposta["dsfinemp"];
@@ -887,8 +908,8 @@
 		$xml .= "   <qtpreemp>".$qtparepr."</qtpreemp>";
 		$xml .= "   <vlpreemp>".str_replace(',', '.', str_replace('.', '', $vlpreemp))."</vlpreemp>";
 		$xml .= "   <vlemprst>".str_replace(',', '.', str_replace('.', '', $vlempres))."</vlemprst>";
-		$xml .= "	  <dtdpagto>".$dtdpagto."</dtdpagto>";
-		$xml .= "	  <dtlibera>".$dtlibera."</dtlibera>";
+		$xml .= "   <dtdpagto>".$dtdpagto."</dtdpagto>";
+		$xml .= "   <dtlibera>".$dtlibera."</dtlibera>";
 		$xml .= "   <tpemprst>".$tpemprst."</tpemprst>";
 		$xml .= "   <dtcarenc>".$dtcarenc."</dtcarenc>";
 		$xml .= "   <idcarencia>".$idcarenc."</idcarencia>";
