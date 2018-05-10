@@ -3070,8 +3070,8 @@ PROCEDURE pc_obtem_dados_proposta(pr_cdcooper           in crapcop.cdcooper%type
                                      ctr.tpctrlim = lim.tpctrlim and
                                      ctr.nrdconta = lim.nrdconta and
                                      ctr.cdcooper = lim.cdcooper)
-   where  case --   mostrar propostas em situações de analise (em estudo) dentro de x dias
-               when lim.insitlim in (1,5,6) and lim.dtpropos >= vr_dtpropos then 1
+   where  case --   mostrar propostas em situações de analise (em estudo) ou canceladas dentro de x dias
+               when lim.insitlim in (1,3,5,6) and lim.dtpropos >= vr_dtpropos then 1
                --   mostrar somente a última proposta ativa
                when lim.insitlim = 2 and
                     lim.nrctrlim = (select max(lim_ativo.nrctrlim)
@@ -3086,8 +3086,6 @@ PROCEDURE pc_obtem_dados_proposta(pr_cdcooper           in crapcop.cdcooper%type
                                                                  and    lim_ativo.tpctrlim = pr_tpctrlim
                                                                  and    lim_ativo.nrdconta = pr_nrdconta
                                                                  and    lim_ativo.cdcooper = pr_cdcooper)) then 1
-               --   não mostrar as propostas canceladas
-               when lim.insitlim = 3 then 0
                --   mostrar todas as demais
                when lim.insitlim in (4,7) then 1
                else 0
