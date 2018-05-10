@@ -1,8 +1,8 @@
 <?php
 /*
  * FONTE        : lista_motivos.php
- * CRIAﾃ�ﾃグ      : Marcel Kohls (AMCom)
- * DATA CRIAﾃ�ﾃグ : 05/04/2018
+ * CRIAﾃ?ﾃグ      : Marcel Kohls (AMCom)
+ * DATA CRIAﾃ?ﾃグ : 05/04/2018
  * OBJETIVO     : carrega motivos do banco e monta a lista em html
  */
 
@@ -21,7 +21,7 @@ require_once('../../class/xmlfile.php');
   $xml .= " </Dados>";
   $xml .= "</Root>";
 
-  $xmlResult = mensageria($xml, "TELA_ATVPRB", "ATVPRB_LISTA_MOTIVOS", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+  $xmlResult = mensageria($xml, "TELA_ATIVPB", "ATIVPB_LISTA_MOTIVOS", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
   $xmlObjeto = getObjectXML($xmlResult);
   $motivos = $xmlObjeto->roottag->tags[0]->tags;
 ?>

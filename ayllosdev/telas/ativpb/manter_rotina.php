@@ -3,7 +3,7 @@
  * FONTE        : manter_rotina.php
  * CRIAÇÃO      : Marcel Kohls (AMCom)
  * DATA CRIAÇÃO : 23/03/2018
- * OBJETIVO     : Rotina para manter as operações da tela ATVPRB
+ * OBJETIVO     : Rotina para manter as operações da tela ATIVPB
  * --------------
  * ALTERAÇÕES   :
  * --------------
@@ -45,15 +45,15 @@
 	$xml .= "</Root>";
 
   $msgSucesso = "";
-  $nomesAcao  = array("Valida_Dados"=>"ATVPRB_CONSULTA",
-                      "Inclui_Dados"=>"ATVPRB_INCLUSAO",
-                      "Altera_Dados"=>"ATVPRB_ALTERACAO",
-                      "Exclui_Dados"=>"ATVPRB_EXCLUSAO",
+  $nomesAcao  = array("Valida_Dados"=>"ATIVPB_CONSULTA",
+                      "Inclui_Dados"=>"ATIVPB_INCLUSAO",
+                      "Altera_Dados"=>"ATIVPB_ALTERACAO",
+                      "Exclui_Dados"=>"ATIVPB_EXCLUSAO",
                       "Historico_Dados"=>"CONSULTA_HIS_ATIVO_PROB");
   $nomeAcao   = $nomesAcao[$operacao];
 
   if (!empty($nomeAcao)) {
-    $xmlResult = mensageria($xml, "TELA_ATVPRB", $nomeAcao, $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+    $xmlResult = mensageria($xml, "TELA_ATIVPB", $nomeAcao, $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
     $xmlObjeto = getObjectXML($xmlResult);
     $retornoRotina = $xmlObjeto->roottag->tags[0]->tags;
 

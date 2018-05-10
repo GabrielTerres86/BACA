@@ -1,8 +1,8 @@
 /*!
- * FONTE        : atvprb.js
+ * FONTE        : ativpb.js
  * CRIAÇÃO      : Marcel Kohls / AMCom
  * DATA CRIAÇÃO : 19/03/2018
- * OBJETIVO     : Biblioteca de funções da tela ATVPRB
+ * OBJETIVO     : Biblioteca de funções da tela ATIVPB
  */
 
 var cCddopcao, btnOK, cTodosCabecalho;
@@ -227,7 +227,7 @@ function manterRotina(dados) {
 
 	$.ajax({
 			type  : 'POST',
-			url   : UrlSite + 'telas/atvprb/manter_rotina.php',
+			url   : UrlSite + 'telas/ativpb/manter_rotina.php',
 			data: {
 				idativo: idativo,
 				cddopcao: cddopcao,
@@ -417,7 +417,7 @@ function exibeFormCadastro(dados) {
     $.ajax({
         type: 'POST',
         dataType: 'html',
-        url: UrlSite + 'telas/atvprb/form_cadastro.php',
+		url: UrlSite + 'telas/ativpb/form_cadastro.php',
         data: {
 						nrdconta:	dados.nrdconta,
 						nrctremp: dados.nrctremp,
