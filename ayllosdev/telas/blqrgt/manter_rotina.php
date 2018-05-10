@@ -6,6 +6,7 @@
  * OBJETIVO     : Rotina para manter as operações da tela BLQRGT
  * --------------
  * ALTERAÇÕES   : 28/10/2014 - Inclusão do parametro idtipapl (Jean Michel).
+ *				  16/11/2017 - Tela remodelada para o projeto 404 (Lombardi).
  * -------------- 
  */
 ?> 
@@ -102,7 +103,7 @@
 	}
 	
 	if ($cddopcao == "L"){
-		echo 'showError("inform","Aplica&ccedil;&atilde;o Liberada com sucesso.","Notifica&ccedil;&atilde;o - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));estadoInicial();");';		
+		echo 'showError("inform","Aplica&ccedil;&atilde;o Liberada com sucesso.","Notifica&ccedil;&atilde;o - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));btnContinuar();");';		
 	}
 	
 	if ($cddopcao == "V"){

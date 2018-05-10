@@ -29,6 +29,8 @@
     $qtvias = (isset($_POST["qtvias"])) ? str_replace(',','.',$_POST["qtvias"]) : '';
     $taxamensal = (isset($_POST["taxamensal"])) ? str_replace(',','.',$_POST["taxamensal"]) : '';
     $tarifa = (isset($_POST["tarifa"])) ? str_replace(',','.',$_POST["tarifa"]) : '';
+    $tpctrato = (isset($_POST["tpctrato"])) ? $_POST["tpctrato"] : '';
+    $permingr = (isset($_POST["permingr"])) ? str_replace(',','.',$_POST["permingr"]) : '';
 
     if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') {     
     
@@ -55,6 +57,10 @@
     $xml       .= "     <txjurmor>".$taxamora."</txjurmor>";
     $xml       .= "     <nrdevias>".$qtvias."</nrdevias>";
     $xml       .= "     <flgtarif>".$tarifa."</flgtarif>";
+	if ($cddopcao == "I") {
+    $xml       .= "     <tpctrato>".$tpctrato."</tpctrato>";
+	}
+    $xml       .= "     <permingr>".$permingr."</permingr>";
     $xml       .= " </Dados>";
     $xml       .= "</Root>";
     
@@ -88,6 +94,14 @@
 
         if ($GLOBALS["qtvias"] == 0 || $GLOBALS["qtvias"] == ''){ 
             exibirErro('error','Informe a quantidade de vias.','Alerta - Ayllos','$(\'#qtvias\',\'#frmLdesco\').focus();',false);
+        }
+    
+		IF($GLOBALS["tpctrato"] != 0 && $GLOBALS["tpctrato"] != 4){ 
+			exibirErro('error','Modelo de contrato inv&aacute;lido.','Alerta - Ayllos','formataFormularioConsulta();focaCampoErro(\'tpctrato\',\'frmLdesco\');',false);
+		}
+		
+		IF(($GLOBALS["permingr"] < 0.01 && $GLOBALS["tpctrato"] == 4) || $GLOBALS["permingr"] > 300){ 
+			exibirErro('error','Percentual minimo da cobertura da garantia de aplicacao inv&aacute;lido. Deve ser entre \"0.01\" e \"300\".','Alerta - Ayllos','formataFormularioConsulta();focaCampoErro(\'permingr\',\'frmLdesco\');',false);
         }
     
     }
