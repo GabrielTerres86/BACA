@@ -1510,7 +1510,7 @@ BEGIN
              ,rw_crabepr.nrdconta
              ,rw_crabepr.nrdconta
              ,GENE0002.fn_mask(rw_crabepr.nrdconta,'99999999')
-             ,rw_crabepr.nrctremp
+             ,GENE0002.fn_mask(rw_crabepr.nrctremp || TO_CHAR(sysdate,'SSSSS') || (nvl(rw_craplot.nrseqdig,0) + 1),'999999999999999') -- rw_crabepr.nrctremp
              ,15 -- CR.EMPRESTIMO
              ,nvl(rw_craplot.nrseqdig,0) + 1
              ,GENE0002.fn_mask(rw_crabepr.nrctremp,'99999999')
@@ -2067,7 +2067,7 @@ BEGIN
              ,rw_crapepr.nrdconta
              ,rw_crapepr.nrdconta
              ,GENE0002.fn_mask(rw_crapepr.nrdconta,'99999999')
-             ,GENE0002.fn_mask(rw_crapepr.nrctremp,'99999999')
+             ,GENE0002.fn_mask(rw_crapepr.nrctremp || TO_CHAR(sysdate,'SSSSS') || (nvl(rw_craplot.nrseqdig,0) + 1),'999999999999999') --GENE0002.fn_mask(rw_crapepr.nrctremp,'99999999')
              ,282 -- DB.EMPRESTIMO
              ,nvl(rw_craplot.nrseqdig,0) + 1
              ,GENE0002.fn_mask(rw_crabepr.nrctremp,'99999999')
@@ -2790,7 +2790,7 @@ BEGIN
                ,rw_crabepr.nrdconta
                ,rw_crabepr.nrdconta
                ,GENE0002.FN_MASK(rw_crabepr.nrdconta,'99999999')
-               ,rw_crabepr.nrctremp
+               ,GENE0002.fn_mask(rw_crabepr.nrctremp || TO_CHAR(sysdate,'SSSSS') || (nvl(rw_craplot.nrseqdig,0) + 1),'999999999999999') --, rw_crabepr.nrctremp
                ,vr_cdhistor --322 -- IOF Sobre Emprestimo.
                ,nvl(rw_craplot.nrseqdig,0) + 1
                 -- controlar para que mantenha 14 posicoes para cada valor devido a 
