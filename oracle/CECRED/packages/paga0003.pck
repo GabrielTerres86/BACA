@@ -374,8 +374,8 @@ END paga0003;
    Alteracoes: 
 	             
 		   22/02/2017 - Alteraçoes para composiçao de comprovante DARF/DAS Modelo Sicredi
-					        - Ajustes para correçao de crítica de pagamento DARF/DAS (P.349.2) (Lucas Lunelli)
-                  
+					  - Ajustes para correçao de crítica de pagamento DARF/DAS (P.349.2) (Lucas Lunelli)
+							 								   
        08/05/2017 - Validar tributo através da tabela crapstb (Lucas Ranghetti #654763)
 							 								   
        25/05/2017 - Se DEBSIC ja rodou, nao aceitamos mais agendamento para agendamentos em que o 
@@ -386,19 +386,19 @@ END paga0003;
                     (Lucas Ranghetti #705465)
                     
        14/09/2017 - Adicionar no campo nrrefere como varchar2 (Lucas Ranghetti #756034)
-       
+
        11/12/2017 - Alterar campo flgcnvsi por tparrecd.
                             PRJ406-FGTS (Odirlei-AMcom)    	 
-                      
+
        01/11/2017 - Validar corretamente o horario da debsic em caso de agendamentos
                     e também validar data do pagamento menor que o dia atual (Lucas Ranghetti #775900)
 
 	   05/01/2018 - Inclusão da rotina pc_gera_arrecadacao_bancoob
                     PRJ406-FGTS.
-                    
+
        14/02/2018 - Projeto Ligeirinho. Alterado para gravar na tabela de lotes (craplot) somente no final
                             da execução do CRPS509 => INTERNET E TAA. (Fabiano Girardi AMcom)
-                    
+  
        19/02/2018 - Tratamento para validacao do pagamento de darf/das em caso que 
                     for através do processo JOB(Lucas Ranghetti #843167)
 ..............................................................................*/
@@ -474,7 +474,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
     WHERE crapcon.cdcooper = pr_cdcooper
     AND   crapcon.cdempcon = pr_cdempcon
     AND   crapcon.cdsegmto = pr_cdsegmto;
-    
+  
     --Selecionar Cadastro Convenios Sicredi
     CURSOR cr_crapstb (pr_cdtribut IN crapstb.cdtribut%type) IS
       SELECT crapstb.cdtribut
@@ -977,8 +977,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
                                         ,pr_vlrecbru IN NUMBER                 -- Valor da receita bruta acumulada da guia
                                         ,pr_vlpercen IN NUMBER                 -- Valor do percentual da guia
                                         ,pr_flgagend IN BOOLEAN                -- Indicador de agendamento (TRUE – Agendamento / FALSE – Nesta Data)
-					                    ,pr_cdtransa IN VARCHAR2               -- Código da transação por meio de arrecadação do SICREDI
-					                    ,pr_dssigemp IN VARCHAR2               -- Descrição resumida de convênio DARF para autenticação modelo SICREDI
+                                        ,pr_cdtransa IN VARCHAR2               -- Código da transação por meio de arrecadação do SICREDI
+                                        ,pr_dssigemp IN VARCHAR2               -- Descrição resumida de convênio DARF para autenticação modelo SICREDI
                                         ,pr_dtagenda IN DATE DEFAULT NULL      -- Data do agendamento
                                         ,pr_dsprotoc OUT crappro.dsprotoc%TYPE -- Descrição do protocolo do comprovante
                                         ,pr_cdcritic OUT INTEGER               -- Código do erro
@@ -1543,9 +1543,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
      --                       Transações - GPS do menu de serviços. (Rafael Monteiro - Mouts)     
        
                  14/09/2017 - Adicionar no campo nrrefere como varchar2 (Lucas Ranghetti #756034)
-
+  
 	 --          02/10/2017 - Alteração da mensagem de validação de pagamento GPS (prj 356.2 - Ricardo Linhares)
-   
+
 				 28/12/2017 - Renomeado rotina de .pc_verifica_darf_das  para pc_verifica_tributos,
                               e realizado ajuste para validação depagamento de FGTS/DAE.
                               PRJ406-FGTS (Odirlei-AMcom)
@@ -1939,7 +1939,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
     
       IF vr_dscritic IS NOT NULL THEN
         RAISE vr_exc_erro;
-      	END IF;
+        END IF;
     
       
       /* DARF PRETO EUROPA */
@@ -2566,7 +2566,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
       vr_dscritic:= 'Registro da autenticacao nao encontrado.';
       RAISE vr_exc_erro;
     END IF;
-   
+    
     
        /*[PROJETO LIGEIRINHO] Esta função retorna verdadeiro, quando o processo foi iniciado pela rotina:
        PAGA0001.pc_efetua_debitos_paralelo, que é chamada na rotina PC_CRPS509. Tem por finalidade definir
@@ -2574,19 +2574,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
        da PC_CRPS509, para evitar o erro de lock da tabela, pois esta gravando a agencia 90,91 ou 1 ao inves de gravar
        a agencia do cooperado*/
     if not paga0001.fn_exec_paralelo then 
-      -- Procedimento para inserir o lote e não deixar tabela lockada
-      lote0001.pc_insere_lote(pr_cdcooper => rw_crapaut.cdcooper
-                             ,pr_dtmvtolt => rw_crapaut.dtmvtolt
-                             ,pr_cdagenci => rw_crapaut.cdagenci
-                             ,pr_cdbccxlt => 11
-                             ,pr_nrdolote => 11900
-                             ,pr_cdoperad => vr_cdoperad
-                             ,pr_nrdcaixa => rw_crapaut.nrdcaixa
-                             ,pr_tplotmov => 1
-                             ,pr_cdhistor => 0
-                             ,pr_craplot  => rw_craplot
-                             ,pr_dscritic => vr_dscritic);
-                           
+    -- Procedimento para inserir o lote e não deixar tabela lockada
+    lote0001.pc_insere_lote(pr_cdcooper => rw_crapaut.cdcooper
+                           ,pr_dtmvtolt => rw_crapaut.dtmvtolt
+                           ,pr_cdagenci => rw_crapaut.cdagenci
+                           ,pr_cdbccxlt => 11
+                           ,pr_nrdolote => 11900
+                           ,pr_cdoperad => vr_cdoperad
+                           ,pr_nrdcaixa => rw_crapaut.nrdcaixa
+                           ,pr_tplotmov => 1
+                           ,pr_cdhistor => 0
+                           ,pr_craplot  => rw_craplot
+                           ,pr_dscritic => vr_dscritic);
+
     else
       paga0001.pc_insere_lote_wrk (pr_cdcooper => rw_crapaut.cdcooper,
                                    pr_dtmvtolt => rw_crapaut.dtmvtolt,
@@ -2617,7 +2617,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
       --Levantar Excecao
       RAISE vr_exc_erro;
     END IF;
-    
+   
     -- tipo de guia
 		IF pr_tpdaguia = 1 THEN
 			
@@ -3067,56 +3067,56 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
        PAGA0001.pc_efetua_debitos_paralelo, que é chamada na rotina PC_CRPS509.*/
     IF not PAGA0001.fn_exec_paralelo then
       
-      /* Tratamento para buscar registro de lote se o mesmo estiver em lock, tenta por 10 seg. */
-      FOR i IN 1..100 LOOP
-        BEGIN
-          -- Leitura do lote
-          OPEN lote0001.cr_craplot_rowid(pr_rowid  => rw_craplot.rowid);
-          FETCH lote0001.cr_craplot_rowid INTO rw_craplot_rowid;
-          CLOSE lote0001.cr_craplot_rowid;
-          vr_dscritic := NULL;
-          EXIT;
-        EXCEPTION
-          WHEN OTHERS THEN
-             IF lote0001.cr_craplot_rowid%ISOPEN THEN
-               CLOSE lote0001.cr_craplot_rowid;
-             END IF;
-             -- setar critica caso for o ultimo
-             IF i = 100 THEN
-               vr_dscritic:= 'Registro de lote '||rw_craplot.nrdolote||' em uso. Tente novamente.';
-             END IF;
-             -- aguardar 0,5 seg. antes de tentar novamente
-             sys.dbms_lock.sleep(0.1);
-        END;
-      END LOOP;
-        
-      -- se encontrou erro ao buscar lote, abortar programa
-      IF vr_dscritic IS NOT NULL THEN
-        RAISE vr_exc_erro;
-      END IF;
-    
+    /* Tratamento para buscar registro de lote se o mesmo estiver em lock, tenta por 10 seg. */
+    FOR i IN 1..100 LOOP
+      BEGIN
+        -- Leitura do lote
+        OPEN lote0001.cr_craplot_rowid(pr_rowid  => rw_craplot.rowid);
+        FETCH lote0001.cr_craplot_rowid INTO rw_craplot_rowid;
+        CLOSE lote0001.cr_craplot_rowid;
+        vr_dscritic := NULL;
+        EXIT;
+  EXCEPTION
+        WHEN OTHERS THEN
+           IF lote0001.cr_craplot_rowid%ISOPEN THEN
+             CLOSE lote0001.cr_craplot_rowid;
+           END IF;
+           -- setar critica caso for o ultimo
+           IF i = 100 THEN
+             vr_dscritic:= 'Registro de lote '||rw_craplot.nrdolote||' em uso. Tente novamente.';
+           END IF;
+           -- aguardar 0,5 seg. antes de tentar novamente
+           sys.dbms_lock.sleep(0.1);
+      END;
+    END LOOP;
+      
+    -- se encontrou erro ao buscar lote, abortar programa
+    IF vr_dscritic IS NOT NULL THEN
+      RAISE vr_exc_erro;
+    END IF;
+      
     end if;
       
     /*PAGA0001.pc_efetua_debitos_paralelo, que é chamada na rotina PC_CRPS509. Tem por finalidade definir se este update
        deve ser feito agora ou somente no final. da execução da PC_CRPS509 (chamada da paga0001.pc_atualiz_lote)*/  
     IF not PAGA0001.fn_exec_paralelo then
       
-      -- Atualiza o lote na craplot
-      BEGIN
-        UPDATE craplot SET craplot.qtinfoln = Nvl(craplot.qtinfoln,0) + 1
-                          ,craplot.qtcompln = Nvl(craplot.qtcompln,0) + 1
-                          ,craplot.vlinfodb = Nvl(craplot.vlinfodb,0) + nvl(rw_crapaut.vldocmto,0)
-                          ,craplot.vlcompdb = Nvl(craplot.vlcompdb,0) + nvl(rw_crapaut.vldocmto,0)
-        WHERE craplot.ROWID = rw_craplot.ROWID
-        RETURNING craplot.nrseqdig INTO rw_craplot.nrseqdig;
+    -- Atualiza o lote na craplot
+    BEGIN
+      UPDATE craplot SET craplot.qtinfoln = Nvl(craplot.qtinfoln,0) + 1
+                        ,craplot.qtcompln = Nvl(craplot.qtcompln,0) + 1
+                        ,craplot.vlinfodb = Nvl(craplot.vlinfodb,0) + nvl(rw_crapaut.vldocmto,0)
+                        ,craplot.vlcompdb = Nvl(craplot.vlcompdb,0) + nvl(rw_crapaut.vldocmto,0)
+      WHERE craplot.ROWID = rw_craplot.ROWID
+      RETURNING craplot.nrseqdig INTO rw_craplot.nrseqdig;
 
-      EXCEPTION
-        WHEN OTHERS THEN
-          vr_cdcritic:= 0;
-          vr_dscritic := 'Erro ao atualizar tabela craplot. (lote:'||rw_craplot.nrdolote||')'||SQLERRM;
-          --Levantar Excecao
-          RAISE vr_exc_erro;
-      END;
+    EXCEPTION
+      WHEN OTHERS THEN
+        vr_cdcritic:= 0;
+        vr_dscritic := 'Erro ao atualizar tabela craplot. (lote:'||rw_craplot.nrdolote||')'||SQLERRM;
+        --Levantar Excecao
+        RAISE vr_exc_erro;
+    END;
       
     END IF;
      
@@ -3124,59 +3124,59 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
        PAGA0001.pc_efetua_debitos_paralelo, que é chamada na rotina PC_CRPS509. Tem por finalidade definir se este update
        deve ser feito agora ou somente no final. da execução da PC_CRPS509 (chamada da paga0001.pc_atualiz_lote)*/  
     IF not PAGA0001.fn_exec_paralelo then 
-      -- se for pagemento pela INTERNET deve atualizar o lote referente a
-      -- criação do titulo, estrategia utilizada para diminuir o tempo de lock do lote
-      IF vr_cdagenci = 90 THEN --> INTERNET
-        rw_craplot := NULL;
-        /* Tratamento para buscar registro de lote se o mesmo estiver em lock, tenta por 10 seg. */
-        FOR i IN 1..100 LOOP
-          BEGIN
-            -- Leitura do lote
-            OPEN lote0001.cr_craplot(pr_cdcooper  => pr_cdcooper,
-                                     pr_dtmvtolt  => rw_crapdat.dtmvtocd,
-                                     pr_cdagenci  => vr_cdagenci,
-                                     pr_cdbccxlt  => 11,
-                                     pr_nrdolote  => 15900); --> Lote fixo, pois na chamada da CXON0014 as informações estao fixas
-            FETCH lote0001.cr_craplot INTO rw_craplot;
-            CLOSE lote0001.cr_craplot;
-            vr_dscritic := NULL;
-            EXIT;
-          EXCEPTION
-            WHEN OTHERS THEN
-              IF lote0001.cr_craplot%ISOPEN THEN
-                CLOSE lote0001.cr_craplot;
-              END IF;
-              -- setar critica caso for o ultimo
-              IF i = 100 THEN
-                vr_dscritic:= 'Registro de lote '||rw_craplot.nrdolote||' em uso. Tente novamente.';
-              END IF;
-              -- aguardar 0,5 seg. antes de tentar novamente
-              sys.dbms_lock.sleep(0.1);
-          END;
-        END LOOP;
-          
-        -- se encontrou erro ao buscar lote, abortar programa
-        IF vr_dscritic IS NOT NULL THEN
-          RAISE vr_exc_erro;
-        END IF;
-
-        -- Atualizar lote de criação da Tit, deixado por ultimo para diminuir tempo de lock
+    -- se for pagemento pela INTERNET deve atualizar o lote referente a
+    -- criação do titulo, estrategia utilizada para diminuir o tempo de lock do lote
+    IF vr_cdagenci = 90 THEN --> INTERNET
+      rw_craplot := NULL;
+      /* Tratamento para buscar registro de lote se o mesmo estiver em lock, tenta por 10 seg. */
+      FOR i IN 1..100 LOOP
         BEGIN
-          UPDATE craplot SET craplot.qtcompln = Nvl(craplot.qtcompln,0) + 1
-                            ,craplot.qtinfoln = Nvl(craplot.qtinfoln,0) + 1
-                            ,craplot.vlinfocr = Nvl(craplot.vlinfocr,0) + pr_vlrtotal
-                            ,craplot.vlcompcr = Nvl(craplot.vlcompcr,0) + pr_vlrtotal
-          WHERE craplot.ROWID = rw_craplot.ROWID
-          RETURNING craplot.nrseqdig INTO rw_craplot.nrseqdig;
-
+          -- Leitura do lote
+          OPEN lote0001.cr_craplot(pr_cdcooper  => pr_cdcooper,
+                                   pr_dtmvtolt  => rw_crapdat.dtmvtocd,
+                                   pr_cdagenci  => vr_cdagenci,
+                                   pr_cdbccxlt  => 11,
+                                   pr_nrdolote  => 15900); --> Lote fixo, pois na chamada da CXON0014 as informações estao fixas
+          FETCH lote0001.cr_craplot INTO rw_craplot;
+          CLOSE lote0001.cr_craplot;
+          vr_dscritic := NULL;
+          EXIT;
         EXCEPTION
           WHEN OTHERS THEN
-            vr_cdcritic:= 0;
-            vr_dscritic:= 'Erro ao atualizar tabela craplot. '||SQLERRM;
-            --Levantar Excecao
-            RAISE vr_exc_erro;
+            IF lote0001.cr_craplot%ISOPEN THEN
+              CLOSE lote0001.cr_craplot;
+            END IF;
+            -- setar critica caso for o ultimo
+            IF i = 100 THEN
+              vr_dscritic:= 'Registro de lote '||rw_craplot.nrdolote||' em uso. Tente novamente.';
+            END IF;
+            -- aguardar 0,5 seg. antes de tentar novamente
+            sys.dbms_lock.sleep(0.1);
         END;
-      END IF; -- IF vr_cdagenci = 90 --INTERNET
+      END LOOP;
+        
+      -- se encontrou erro ao buscar lote, abortar programa
+      IF vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_erro;
+      END IF;
+
+      -- Atualizar lote de criação da Tit, deixado por ultimo para diminuir tempo de lock
+      BEGIN
+        UPDATE craplot SET craplot.qtcompln = Nvl(craplot.qtcompln,0) + 1
+                          ,craplot.qtinfoln = Nvl(craplot.qtinfoln,0) + 1
+                          ,craplot.vlinfocr = Nvl(craplot.vlinfocr,0) + pr_vlrtotal
+                          ,craplot.vlcompcr = Nvl(craplot.vlcompcr,0) + pr_vlrtotal
+        WHERE craplot.ROWID = rw_craplot.ROWID
+        RETURNING craplot.nrseqdig INTO rw_craplot.nrseqdig;
+
+      EXCEPTION
+        WHEN OTHERS THEN
+          vr_cdcritic:= 0;
+          vr_dscritic:= 'Erro ao atualizar tabela craplot. '||SQLERRM;
+          --Levantar Excecao
+          RAISE vr_exc_erro;
+      END;
+    END IF; -- IF vr_cdagenci = 90 --INTERNET
     
     end if;
     
@@ -3806,7 +3806,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 																	 pr_idseqttl => pr_idseqttl,
 																	 pr_nrcpfope => pr_nrcpfope,
 																	 pr_idorigem => pr_idorigem,
-                                   									 pr_tpdaguia => pr_tpdaguia,
+                                   pr_tpdaguia => pr_tpdaguia,
 																	 pr_tpcaptur => pr_tpcaptur,
 																	 pr_cdseqfat => vr_cdseqfat,
 																	 pr_nrdigfat => vr_nrdigfat,
@@ -4024,9 +4024,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
   PROCEDURE pc_cria_agend_tributos(pr_cdcooper IN crapcop.cdcooper%TYPE -- Código da cooperativa
                                   ,pr_nrdconta IN crapass.nrdconta%TYPE -- Número da conta
                                   ,pr_idseqttl IN crapttl.idseqttl%TYPE -- Sequencial de titularidade
-								  ,pr_cdagenci IN INTEGER               -- PA
-								  ,pr_nrdcaixa IN NUMBER                -- Numero do Caixa
-								  ,pr_cdoperad IN VARCHAR2              -- Cd Operador
+                                  ,pr_cdagenci IN INTEGER               -- PA
+                                  ,pr_nrdcaixa IN NUMBER                -- Numero do Caixa
+                                  ,pr_cdoperad IN VARCHAR2              -- Cd Operador
                                   ,pr_nrcpfope IN NUMBER -- CPF do operador PJ
                                   ,pr_idorigem IN INTEGER -- Canal de origem da operação
                                   ,pr_tpdaguia IN INTEGER -- Tipo da guia (1 – DARF, 2 – DAS, 3-FGTS, 4-DAE)
@@ -4052,8 +4052,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
                                   ,pr_vlpercen IN NUMBER -- Valor do percentual da guia
                                   ,pr_dtagenda IN DATE -- Data de agendamento
                                   ,pr_cdtrapen IN NUMBER -- Código de sequencial da transação pendente
-								  ,pr_tpleitor IN INTEGER               -- Indicador de captura através de leitora de código de barras (1 – Leitora / 2 – Manual)
-								,pr_dsprotoc OUT VARCHAR2 -- Protocolo
+                                  ,pr_tpleitor IN INTEGER               -- Indicador de captura através de leitora de código de barras (1 – Leitora / 2 – Manual)
+                                  ,pr_dsprotoc OUT VARCHAR2 -- Protocolo
                                   ,pr_cdcritic OUT INTEGER -- Código do erro
                                   ,pr_dscritic OUT VARCHAR2) IS -- Descriçao do erro                                   
 		/* .............................................................................
@@ -4354,34 +4354,34 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
        a agencia do cooperado*/
     
     if not PAGA0001.fn_exec_paralelo then 
-      -- criação lote 
-      LOTE0001.pc_insere_lote(pr_cdcooper => pr_cdcooper
-                             ,pr_dtmvtolt => rw_crapdat.dtmvtocd
-                             ,pr_cdagenci => pr_cdagenci
-                             ,pr_cdbccxlt => 100
-                             ,pr_nrdolote => vr_nrdolote
-                             ,pr_cdoperad => pr_cdoperad
-                             ,pr_nrdcaixa => pr_nrdcaixa
-                             ,pr_tplotmov => 12
-                             ,pr_cdhistor => 0
-                             ,pr_craplot  => rw_craplot
-                             ,pr_dscritic => vr_dscritic);
-  			
-        -- Atualizar informações no lote
-        BEGIN
-          UPDATE craplot
-             SET craplot.qtinfoln = nvl(craplot.qtinfoln,0) + 1,
-                 craplot.qtcompln = nvl(craplot.qtcompln,0) + 1,
-                 /* DEBITO */
-                 craplot.vlinfodb = nvl(craplot.vlinfodb,0) + pr_vlrtotal,
-                 craplot.vlcompdb = nvl(craplot.vlcompdb,0) + pr_vlrtotal
-           WHERE craplot.rowid = rw_craplot.rowid
-           RETURNING craplot.nrseqdig INTO rw_craplot.nrseqdig; 
-        EXCEPTION
-          WHEN OTHERS THEN
-            vr_dscritic := 'Erro ao atualizar o craplot: '||SQLERRM;
-            RAISE vr_exc_erro;  
-        END;
+		-- criação lote 
+		LOTE0001.pc_insere_lote(pr_cdcooper => pr_cdcooper
+                           ,pr_dtmvtolt => rw_crapdat.dtmvtocd
+                           ,pr_cdagenci => pr_cdagenci
+                           ,pr_cdbccxlt => 100
+                           ,pr_nrdolote => vr_nrdolote
+                           ,pr_cdoperad => pr_cdoperad
+                           ,pr_nrdcaixa => pr_nrdcaixa
+                           ,pr_tplotmov => 12
+                           ,pr_cdhistor => 0
+                           ,pr_craplot  => rw_craplot
+                           ,pr_dscritic => vr_dscritic);
+			
+			-- Atualizar informações no lote
+      BEGIN
+        UPDATE craplot
+           SET craplot.qtinfoln = nvl(craplot.qtinfoln,0) + 1,
+               craplot.qtcompln = nvl(craplot.qtcompln,0) + 1,
+               /* DEBITO */
+               craplot.vlinfodb = nvl(craplot.vlinfodb,0) + pr_vlrtotal,
+               craplot.vlcompdb = nvl(craplot.vlcompdb,0) + pr_vlrtotal
+         WHERE craplot.rowid = rw_craplot.rowid
+         RETURNING craplot.nrseqdig INTO rw_craplot.nrseqdig; 
+      EXCEPTION
+        WHEN OTHERS THEN
+          vr_dscritic := 'Erro ao atualizar o craplot: '||SQLERRM;
+          RAISE vr_exc_erro;  
+      END;
 			
       ELSE
         paga0001.pc_insere_lote_wrk (pr_cdcooper => pr_cdcooper,
@@ -4539,12 +4539,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 						          craplau.dtmvtolt,
 											craplau.hrtransa,
 											craplau.nrdocmto,
-											craplau.vllanaut
+											craplau.vllanaut,
+											craplau.cdtiptra
 						     INTO rw_craplau.idlancto,
                       rw_craplau.dtmvtolt,
                       rw_craplau.hrtransa,
                       rw_craplau.nrdocmto,
-											rw_craplau.vllanaut;
+											rw_craplau.vllanaut,
+											rw_craplau.cdtiptra;
       EXCEPTION
         WHEN OTHERS THEN
           vr_dscritic := 'Erro ao inserir lançamento automatico DARF/DAS: '||SQLERRM;
@@ -4552,8 +4554,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
       END;
 			
       --> se Sicredi
-      IF rw_crapcon.tparrecd = 1 THEN
-			
+      IF rw_craplau.cdtiptra = 10 THEN
+
 			-- inserção dados detalhados DARF/DAS
 			BEGIN
         INSERT INTO tbpagto_agend_darf_das
@@ -4605,7 +4607,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
       END;
 			
       --> se Bancoob
-      ELSIF rw_crapcon.tparrecd = 2 THEN
+      ELSIF rw_craplau.cdtiptra IN (12,13) THEN
         -- Inserção dados do tributo
         BEGIN
           INSERT INTO  tbpagto_agend_tributos
@@ -4692,46 +4694,46 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
 	      --Obtem flag de agendamento
 	      vr_flgagend := TRUE;
 			
-			-- Gera um protocolo para o pagamento
+        -- Gera um protocolo para o pagamento
         paga0003.pc_cria_comprovante_tributos(pr_cdcooper => rw_crapass.cdcooper -- Código da cooperativa
-																					 ,pr_nrdconta => rw_crapass.nrdconta -- Número da conta
-																					 ,pr_nmextttl => rw_crapass.nmextttl -- Nome do Titular
-																					 ,pr_nrcpfope => pr_nrcpfope         -- CPF do operador PJ
-																					 ,pr_nrcpfpre => vr_nrcpfpre         -- Número pré operação
-                                           ,pr_nmprepos => nvl(vr_nmprepos,' ')-- Nome Preposto
-																					 ,pr_tpcaptur => pr_tpcaptur         -- Tipo de captura da guia (1 – Código Barras / 2 – Manual)
-																					 ,pr_cdtippro => vr_cdtippro         -- Código do tipo do comprovante
-																					 ,pr_dtmvtolt => rw_craplau.dtmvtolt -- Data de movimento da autenticação
-																					 ,pr_hrautent => rw_craplau.hrtransa -- Horário da autenticação
-																					 ,pr_nrdocmto => rw_craplau.nrdocmto -- Número do documento
-																					 ,pr_nrseqaut => rw_craplau.idlancto -- Sequencial da autenticação
-																					 ,pr_nrdcaixa => pr_nrdcaixa         -- Número do caixa da autenticação
+                                             ,pr_nrdconta => rw_crapass.nrdconta -- Número da conta
+                                             ,pr_nmextttl => rw_crapass.nmextttl -- Nome do Titular
+                                             ,pr_nrcpfope => pr_nrcpfope         -- CPF do operador PJ
+                                             ,pr_nrcpfpre => vr_nrcpfpre         -- Número pré operação
+                                             ,pr_nmprepos => nvl(vr_nmprepos,' ')-- Nome Preposto
+                                             ,pr_tpcaptur => pr_tpcaptur         -- Tipo de captura da guia (1 – Código Barras / 2 – Manual)
+                                             ,pr_cdtippro => vr_cdtippro         -- Código do tipo do comprovante
+                                             ,pr_dtmvtolt => rw_craplau.dtmvtolt -- Data de movimento da autenticação
+                                             ,pr_hrautent => rw_craplau.hrtransa -- Horário da autenticação
+                                             ,pr_nrdocmto => rw_craplau.nrdocmto -- Número do documento
+                                             ,pr_nrseqaut => rw_craplau.idlancto -- Sequencial da autenticação
+                                             ,pr_nrdcaixa => pr_nrdcaixa         -- Número do caixa da autenticação
                                              ,pr_idorigem => pr_idorigem         -- Indicador de canal de origem  da transação
-																					 ,pr_nmconven => vr_dsnomcnv         -- Nome do convênio da guia
-																					 ,pr_lindigi1 => pr_lindigi1         -- Primeiro campo da linha digitável da guia
-																					 ,pr_lindigi2 => pr_lindigi2         -- Segundo campo da linha digitável da guia
-																					 ,pr_lindigi3 => pr_lindigi3         -- Terceiro campo da linha digitável da guia
-																					 ,pr_lindigi4 => pr_lindigi4         -- Quarto campo da linha digitável da guia
-																					 ,pr_cdbarras => pr_cdbarras         -- Código de barras da guia
-																					 ,pr_dsidepag => vr_dsidepag         -- Descrição da identificação do pagamento
-																					 ,pr_vlrtotal => rw_craplau.vllanaut -- Valor total do pagamento da guia
-																					 ,pr_dsnomfon => pr_dsnomfon         -- Nome e telefone da guia
-																					 ,pr_dtapurac => pr_dtapurac         -- Período de apuração da guia
-																					 ,pr_nrcpfcgc => pr_nrcpfcgc         -- CPF/CNPJ da guia
-																					 ,pr_cdtribut => pr_cdtribut         -- Código de tributação da guia
-																					 ,pr_nrrefere => pr_nrrefere         -- Número de referência da guia
-																					 ,pr_dtvencto => vr_dtvencto         -- Data de vencimento da guia
-																					 ,pr_vlrprinc => pr_vlrprinc         -- Valor principal da guia
-																					 ,pr_vlrmulta => pr_vlrmulta         -- Valor da multa da guia
-																					 ,pr_vlrjuros => pr_vlrjuros         -- Valor dos juros da guia
-																					 ,pr_vlrecbru => pr_vlrecbru         -- Valor da receita bruta acumulada da guia
-																					 ,pr_vlpercen => pr_vlpercen         -- Valor do percentual da guia
-																					 ,pr_flgagend => vr_flgagend         -- Indicador de agendamento (TRUE – Agendamento / FALSE – Nesta Data)
-																					 ,pr_cdtransa => vr_cdtransa         -- Código da transação por meio de arrecadação do SICREDI
-																					 ,pr_dssigemp => vr_dssigemp         -- Descrição resumida de convênio DARF para autenticação modelo SICREDI
+                                             ,pr_nmconven => vr_dsnomcnv         -- Nome do convênio da guia
+                                             ,pr_lindigi1 => pr_lindigi1         -- Primeiro campo da linha digitável da guia
+                                             ,pr_lindigi2 => pr_lindigi2         -- Segundo campo da linha digitável da guia
+                                             ,pr_lindigi3 => pr_lindigi3         -- Terceiro campo da linha digitável da guia
+                                             ,pr_lindigi4 => pr_lindigi4         -- Quarto campo da linha digitável da guia
+                                             ,pr_cdbarras => pr_cdbarras         -- Código de barras da guia
+                                             ,pr_dsidepag => vr_dsidepag         -- Descrição da identificação do pagamento
+                                             ,pr_vlrtotal => rw_craplau.vllanaut -- Valor total do pagamento da guia
+                                             ,pr_dsnomfon => pr_dsnomfon         -- Nome e telefone da guia
+                                             ,pr_dtapurac => pr_dtapurac         -- Período de apuração da guia
+                                             ,pr_nrcpfcgc => pr_nrcpfcgc         -- CPF/CNPJ da guia
+                                             ,pr_cdtribut => pr_cdtribut         -- Código de tributação da guia
+                                             ,pr_nrrefere => pr_nrrefere         -- Número de referência da guia
+                                             ,pr_dtvencto => vr_dtvencto         -- Data de vencimento da guia
+                                             ,pr_vlrprinc => pr_vlrprinc         -- Valor principal da guia
+                                             ,pr_vlrmulta => pr_vlrmulta         -- Valor da multa da guia
+                                             ,pr_vlrjuros => pr_vlrjuros         -- Valor dos juros da guia
+                                             ,pr_vlrecbru => pr_vlrecbru         -- Valor da receita bruta acumulada da guia
+                                             ,pr_vlpercen => pr_vlpercen         -- Valor do percentual da guia
+                                             ,pr_flgagend => vr_flgagend         -- Indicador de agendamento (TRUE – Agendamento / FALSE – Nesta Data)
+                                             ,pr_cdtransa => vr_cdtransa         -- Código da transação por meio de arrecadação do SICREDI
+                                             ,pr_dssigemp => vr_dssigemp         -- Descrição resumida de convênio DARF para autenticação modelo SICREDI
                                              ,pr_dtagenda => pr_dtagenda         -- Data do Agendamento
-																					 ,pr_dsprotoc => vr_dsprotoc         -- Descrição do protocolo do comprovante
-																					 ,pr_cdcritic => vr_cdcritic         -- Código do erro
+                                             ,pr_dsprotoc => vr_dsprotoc         -- Descrição do protocolo do comprovante
+                                             ,pr_cdcritic => vr_cdcritic         -- Código do erro
                                              ,pr_dscritic => vr_dscritic);       -- Descriçao do erro
 																					 	    
 			--Se ocorreu erro
@@ -4836,7 +4838,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.paga0003 IS
     
     IF INSTR(vr_tab_limite, '</limite>') > 0 THEN
       vr_tab_limite := REPLACE(vr_tab_limite,'</limite></raiz>',vr_tpdaguia||'</limite></raiz>');
-	  END IF;
+    END IF;
     
     pr_xml_operacao187 := vr_tab_limite;
     pr_dsretorn := 'OK';
