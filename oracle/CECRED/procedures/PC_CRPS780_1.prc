@@ -346,6 +346,7 @@ BEGIN
       --
       -- Busca do Empréstimo
       FOR rw_crapepr IN cr_crapepr LOOP
+        vr_vldpagto := 0;
         --
         IF NOT vr_tab_crapsld.EXISTS(rw_crapepr.nrdconta) THEN
           -- Gerar critica 10
@@ -353,6 +354,7 @@ BEGIN
           vr_dscritic := gene0001.fn_busca_critica(10) || ' Cta: ' || gene0002.fn_mask_conta(rw_crapepr.nrdconta);
           RAISE vr_exc_erro;
         END IF;
+        
         -- Se o valor vier preenchido por parâmetro, considerar o valor do parâmetro, ou seja
         IF  nvl(pr_vlpagmto,0) = 0 AND nvl(pr_vldabono,0) = 0 THEN
            -- Saldo online da conta.
@@ -365,7 +367,6 @@ BEGIN
         --
         -- Gerar lançamento do historico de Abono  
         IF nvl(vr_vldabono,0) > 0 THEN
-          
           empr0001.pc_cria_lancamento_lem(pr_cdcooper => pr_cdcooper
                                          ,pr_dtmvtolt => rw_crapdat.dtmvtolt
                                          ,pr_cdagenci => pr_cdagenci
@@ -423,7 +424,7 @@ BEGIN
                                          , pr_nrdconta => rw_crapepr.nrdconta
                                          , pr_cdhistor => 2386
                                          , pr_vllanmto => vr_vldpagto
-                                         , pr_nrparepr => 1
+                                         , pr_nrparepr => 0
                                          , pr_nrctremp => rw_crapepr.nrctremp
                                          , pr_nrseqava => 0
                                          , pr_idlautom => 0 
