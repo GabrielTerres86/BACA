@@ -40,6 +40,7 @@
     $dstelefone         = (isset($_POST['dstelefone']))         ? $_POST['dstelefone']         : '';
     $dsemail            = (isset($_POST['dsemail']))            ? $_POST['dsemail']            : '';
     $dslink_google_maps = (isset($_POST['dslink_google_maps'])) ? $_POST['dslink_google_maps'] : '';
+	$idcomissao         = (isset($_POST['idcomissao']))         ? $_POST['idcomissao']         : '';
 
 	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],$cddopcao)) <> "") {
 	   exibirErro('error',$msgError,'Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
@@ -66,6 +67,7 @@
 	$xml .= "		<dstelefone>".$dstelefone."</dstelefone>";
 	$xml .= "		<dsemail>".$dsemail."</dsemail>";
 	$xml .= "		<dslink_google_maps><![CDATA[".$dslink_google_maps."]]></dslink_google_maps>";
+	$xml .= "		<idcomissao>".$idcomissao."</idcomissao>";
 	$xml .= "	</Dados>";
 	$xml .= "</Root>";
 

@@ -25,6 +25,7 @@
 						<th>Subsegmento</th>
 						<th>Parcela Máx.</th>
 						<th>Valor Máx.</th>
+						<th>Carência</th>
 					</tr>
 				</thead>
 				<tbody>
@@ -38,6 +39,7 @@
 							echo "<td>".$subsegmento->tags[3]->cdata."</td>";
 							echo "<td>".$subsegmento->tags[4]->cdata."</td>";
 							echo "<td>".$subsegmento->tags[5]->cdata."</td>";
+							echo "<td>".$subsegmento->tags[7]->cdata."</td>";
 							echo "</tr>";
 						}
 					?>
