@@ -22,6 +22,14 @@
     $cddopcao = $_POST['cddopcao'];
 
 
+	//----------------------------------------------------------------------------------------------------------------------------------	
+	// Controle de Erros
+	//----------------------------------------------------------------------------------------------------------------------------------
+	if ( $glbvars['cddepart'] <> 20 && $cddopcao <> 'C' ) {
+		$msgErro	= "Acesso n&atilde;o permitido.";
+		exibirErro('error', $msgErro, 'Alerta - Ayllos','',false);
+	}	
+
     // Monta o xml de requisição
 	$xml = "<Root>";
     $xml .= " <Dados>";

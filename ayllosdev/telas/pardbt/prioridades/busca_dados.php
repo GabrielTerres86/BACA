@@ -23,6 +23,10 @@
     $cddopcao = $_POST['cddopcao'];
 	$idhora_processamento = $_POST['idhora_processamento'];
 
+	if (empty($idhora_processamento)) {
+		$idhora_processamento = 0;
+	}
+
     // Monta o xml de requisição
 	$xml = "<Root>";
     $xml .= " <Dados>";

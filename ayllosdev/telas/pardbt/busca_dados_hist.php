@@ -17,10 +17,6 @@
 	require_once('../../class/xmlfile.php');
 
 	isPostMethod();		
-		
-	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') {		
-		exibirErro('error',$msgError,'Alerta - Ayllos','',false);
-	}
 
     $origens = array(
         0 => 'Geral',

@@ -191,7 +191,7 @@ function executarEmergencial() {
 		data: {
 			processos: listaProcessos,
 			operacao: 'EXECUTAR_EMERGENCIAL',
-			tipoExecucao: $('#tipoExecucao', '#frmDet').val(),
+			tipoExecucao: $('#tipoExecucao', '#divProgramas').val(),
 			cdcooper: $('#cdcooper', '#frmDet').val(),
 			redirect: "script_ajax"
 		},
@@ -747,6 +747,7 @@ function carregaDetalhamentoHorarios(){
 			showError('error','N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','estadoInicial();');
 		},
 		success : function(response) { 
+			console.log(response);
 			if ( response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1 ) {
 				try {	
 					$('#divConteudoOpcao')
@@ -805,6 +806,7 @@ function carregarPrioridadesProcessos(nrprioridade) {
 			showError('error', 'N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'estadoInicial();');
 		},
 		success: function (response) {
+			console.log(response);
 			if (response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1) {
 				try {
 					$('#divConteudoOpcao')
