@@ -124,7 +124,7 @@ RUN STORED-PROCEDURE pc_valida_valor_de_adesao
 aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper, /* Cooperativa */
                                      INPUT par_nrdconta, /* Numero da conta */
                                      INPUT 3,            /* Aplicaçao */
-                                     INPUT STRING(par_vlparaar), /* Valor contratado */
+                                     INPUT par_vlparaar, /* Valor contratado */
                                      INPUT par_idorigem, /* Codigo do produto */
                                      INPUT 0,            /* Codigo da chave */
                                     OUTPUT 0,            /* Solicita senha coordenador */

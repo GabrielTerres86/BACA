@@ -74,6 +74,8 @@
 			 13/12/2017 - Chamado 793407 - Ajustar teste para esconder botões em caso 
 			              de operadores (Andrei-MOUTs)
 
+			 06/04/2018 - Inclusao das function validaValorAdesao e senhaCoordenador. PRJ366 (Lombardi).
+
 *********************************************************************************/
 
 var callafterInternet = '';
@@ -1642,7 +1644,7 @@ function validaDadosLimitesprep(inpessoa) {
 		showError("error","Valor do limite di&aacute;rio para folha de pagamento inv&aacute;lido.","Alerta - Ayllos","$('#vllimflp','#frmAlterarLimites').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
 		return false;
 	}	
-
+	
 	// Carrega conteúdo da opção através de ajax
 	$.ajax({		
 		type: "POST", 
@@ -1668,6 +1670,35 @@ function validaDadosLimitesprep(inpessoa) {
 			$("#divHabilitacaoInternet02").html(response);
 		}				
 	});
+}
+
+function validaValorAdesao(inpessoa) {
+	
+	$.ajax({
+		type: 'POST',
+		dataType: 'html',
+		url: UrlSite + 'telas/atenda/internet/valida_valor_adesao.php', 
+		data: {
+			nrdconta: nrdconta,
+			inpessoa: inpessoa,
+			vllimweb: $("#vllimweb","#frmAlterarLimites").val().replace(/\./g,"").replace(",","."),
+			vllimted: $("#vllimted","#frmAlterarLimites").val().replace(/\./g,"").replace(",","."),
+			vllimvrb: $("#vllimvrb","#frmAlterarLimites").val().replace(/\./g,"").replace(",","."),
+			redirect: 'script_ajax'
+		}, 
+		error: function (objAjax, responseError, objExcept) {
+			hideMsgAguardo();
+			showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
+		},
+		success: function (response) {
+			hideMsgAguardo();
+            try {
+				eval(response);
+			} catch (error) {
+				showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'unblockBackground();');
+			}
+		}				
+	});	
 }
 
 // Função para esconder divtacaoInternet02
@@ -2666,4 +2697,8 @@ function desativarEnvioPush(){
 			eval(response);
 		}
 	});
+}
+
+function senhaCoordenador(executaDepois) {
+	pedeSenhaCoordenador(2,executaDepois,'divRotina');
 }

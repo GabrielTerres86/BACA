@@ -3131,7 +3131,7 @@ PROCEDURE valida_nova_proposta:
     aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper, /* Cooperativa */
                                          INPUT par_nrdconta, /* Numero da conta */
                                          INPUT aux_cdprodut, /* Codigo do produto */
-                                         INPUT STRING(par_vllimpro), /* Valor contratado */
+                                         INPUT par_vllimpro, /* Valor contratado */
                                          INPUT par_idorigem, /* Codigo do produto */
                                          INPUT 0,            /* Codigo da chave */
                                         OUTPUT 0,            /* Solicita senha coordenador */

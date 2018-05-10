@@ -90,7 +90,7 @@ ELSE IF par_operacao = 2 THEN
       aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper, /* Cooperativa */
                                            INPUT par_nrdconta, /* Numero da conta */
                                            INPUT par_cdprodut, /* Codigo Produto */
-                                           INPUT STRING(par_vlcontra), /* Valor contratado */
+                                           INPUT par_vlcontra, /* Valor contratado */
                                            INPUT 3,            /* Id Origem */
                                            INPUT par_cddchave, /* Codigo da chave */
                                           OUTPUT 0,            /* Solicita senha coordenador */

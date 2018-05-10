@@ -25,7 +25,9 @@
  * 010: [10/10/2016] Lucas Ranghetti (CECRED): Remover verificacao de digitalizaco para o botao de consultar imagem(#510032)
  * 011: [26/06/2017] Jonata (RKAM): Ajuste para rotina ser chamada através da tela ATENDA > Produtos (P364).
  * 012: [11/12/2017] P404 - Inclusão de Garantia de Cobertura das Operações de Crédito (Augusto / Marcos (Supero)) 
- * 013: [22/03/2013] Daniel (Cecred) : Ajustes referente a geracao automatica do numero do contrato.
+ * 013: [22/03/2018] Daniel (Cecred) : Ajustes referente a geracao automatica do numero do contrato.
+ * 014: [13/04/2018] Leonardo Oliveira (GFT): Campo 'nrctrlim' escondido quando for uma inclusão, cddopcao = 'I'.
+ * 015: [16/04/2018] Lombardi     (CECRED) : Incluida chamada da function validaValorProduto. PRJ366
  */
 ?>
 <form action="" name="frmDadosLimiteDscTit" id="frmDadosLimiteDscTit" onSubmit="return false;">
@@ -38,12 +40,20 @@
 		
 			<legend>Dados do Limite</legend>
 			
+			<? if ($cddopcao == "I") { ?>
+			
+				<input type="hidden" name="nrctrlim" id="nrctrlim" value="0" class="campo" disabled>
+			
+			<? }else { ?> 
+				
 			<label for="nrctrlim"><? echo utf8ToHtml('Contrato:') ?></label>
 			<input type="text" name="nrctrlim" id="nrctrlim" value="0" class="campo" disabled>
 			<br />
 			
 			<label></label>
 			<br />
+			
+			<? } ?>
 			
 			<label for="vllimite"><? echo utf8ToHtml('Valor do Limite:') ?></label>
 			<input type="text" name="vllimite" id="vllimite" value="0,00" class="campo">
@@ -132,7 +142,7 @@
 		<? 	// ALTERAÇÃO 001: Substituido formulário antigo pelo include				
 			include('../../../../includes/avalistas/form_avalista.php'); 
 		?>	
-	</div>
+		</div>									
 		
 </form>
 
@@ -298,7 +308,7 @@
 			aux_inconfi4 = 71; 
 			aux_inconfi5 = 30;
 			aux_inconfi6 = 51;
-			validaLimiteDscTit(operacao,1,11,30);
+			validaValorProduto(nrdconta, 37, $("#vllimite","#divDscTit_Limite").val().replace('.','').replace(',','.'),"validaLimiteDscTit(\"" + operacao + "\",1,11,30);","divRotina", 0);
 		}
 		return false;
 	});
@@ -328,7 +338,7 @@
       dscShowHideDiv('divFormGAROPC;divBotoesGAROPC','divDscTit_Renda;divBotoesRenda');
       $("#frmDadosLimiteDscTit").css("width", 540);
     <? } else { ?>
-        dscShowHideDiv('divDscTit_Limite;divBotoesLimite','divDscTit_Renda;divBotoesRenda');
+		dscShowHideDiv('divDscTit_Limite;divBotoesLimite','divDscTit_Renda;divBotoesRenda');
     <? } ?>
 		return false;
 	});
@@ -336,13 +346,13 @@
 	$('#btnContinuarRendas','#divBotoesRenda').unbind('click').bind('click',function() {
 		if (operacao == 'A') {
 			$('#divBotoesRenda').css('display','none');
-			informarRating('divDscTit_Renda',"dscShowHideDiv('divDscTit_Observacao;divBotoesObs','divDadosRating;divBotoesRenda')","dscShowHideDiv('divDscTit_Renda;divBotoesRenda','divDadosRating');","carregaLimitesTitulos()");
+			informarRating('divDscTit_Renda',"dscShowHideDiv('divDscTit_Observacao;divBotoesObs','divDadosRating;divBotoesRenda')","dscShowHideDiv('divDscTit_Renda;divBotoesRenda','divDadosRating');","fecharRotinaGenerico('<? echo $tipo ?>');");
 		} else if (operacao == 'C') {
 			$('#divBotoesRenda').css('display','none');
-			informarRating('divDscTit_Renda',"dscShowHideDiv('divDscTit_Observacao;divBotoesObs','divDadosRating;divBotoesRenda')","dscShowHideDiv('divDscTit_Renda;divBotoesRenda','divDadosRating');","carregaLimitesTitulos()");
+			informarRating('divDscTit_Renda',"dscShowHideDiv('divDscTit_Observacao;divBotoesObs','divDadosRating;divBotoesRenda')","dscShowHideDiv('divDscTit_Renda;divBotoesRenda','divDadosRating');","fecharRotinaGenerico('<? echo $tipo ?>');");
 		} else {
 			$('#divBotoesRenda').css('display','none');
-			informarRating('divDscTit_Renda',"dscShowHideDiv('divDscTit_Observacao;divBotoesObs','divDadosRating;divBotoesRenda')","dscShowHideDiv('divDscTit_Renda;divBotoesRenda','divDadosRating');","mostraImprimirLimite()");
+			informarRating('divDscTit_Renda',"dscShowHideDiv('divDscTit_Observacao;divBotoesObs','divDadosRating;divBotoesRenda')","dscShowHideDiv('divDscTit_Renda;divBotoesRenda','divDadosRating');","mostraImprimirLimite('<? echo $tipo ?>');");
 		}
 		return false;
 	});
@@ -374,7 +384,7 @@
 		if (operacao == 'C') {
 			voltaDiv(3,2,4,'DESCONTO DE T&Iacute;TULOS - LIMITE');
 		} else {
-			buscaGrupoEconomico();
+			buscaGrupoEconomico('<? echo $tipo ?>');
 		}
 		return false;
 	});

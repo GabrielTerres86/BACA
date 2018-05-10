@@ -5,7 +5,7 @@
 	 * DATA CRIAÇÃO : 16/11/2016
 	 * OBJETIVO     : Rotina para verificar emitentes dos cheques informados no borderô
 	 * --------------
-	 * ALTERAÇÕES   : 
+	 * ALTERAÇÕES   : 16/04/2018 - Incluida chamada para a rotina validaValorProduto. PRJ366 (Lombardi)
 	 * -------------- 
 	 */		
 
@@ -24,6 +24,7 @@
 	
 	$nrdconta = !isset($_POST["nrdconta"]) ? 0  : $_POST["nrdconta"];
 	$dscheque = !isset($_POST["dscheque"]) ? "" : $_POST["dscheque"];
+	$vlcompcr = !isset($_POST["vlcompcr"]) ? 0  : $_POST["vlcompcr"];
 	
 	// Verifica se os parâmetros necessários foram informados
 	if (!validaInteiro($nrdconta)) exibirErro('error','Conta inv&aacute;lida.','Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));',false);
@@ -71,7 +72,7 @@
 			exit();
 		}else{
 		// Emitentes já cadastrados, finalizar custodia
-		echo "prosseguirManterBordero();";
+		echo "validaValorProduto(".$nrdconta.", 34, ".$vlcompcr.",\"prosseguirManterBordero();\",\"divRotina\", 0);";
 		}
 	}	
 ?>

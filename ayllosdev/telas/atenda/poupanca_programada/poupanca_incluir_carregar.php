@@ -3,7 +3,7 @@
 	/***************************************************************************
 	 Fonte: poupanca_incluir_carregar.php                             
 	 Autor: David                                                     
-	 Data : Março/2010                   Última Alteração: 05/10/2015
+	 Data : Março/2010                   Última Alteração: 26/07/2016
 	                                                                  
 	 Objetivo  : Mostrar opção para incluir Poupança Programada       
 	                                                                  
@@ -16,6 +16,13 @@
 							   para cálculo de prazo de venc. máx. (Lucas).
 							   
 				  05/10/2015 - Reformulacao cadastral (Gabriel-RKAM).			   
+				  
+				  26/07/2016 - Corrigi tratamentos incorretos para variaveis, o uso 
+							   da funcao utf8tohtml desnecessariamente. SD 479874 (Carlos R.)		   
+
+
+				  04/04/2018 - Chamada da rotina para verificar se o tipo de conta permite produto 
+				               16 - Poupança Programada. PRJ366 (Lombardi).
 	***************************************************************************/
 	
 	session_start();
@@ -41,12 +48,31 @@
 	}	
 	
 	$nrdconta = $_POST["nrdconta"];	
-	$aux_dtinirpp = $_POST["dtinirpp"];	
+	$aux_dtinirpp = ( isset($_POST["dtinirpp"]) ) ? $_POST["dtinirpp"] : '';	
+	$aux_dtmaxvct = ( isset($aux_dtmaxvct) ) ? $aux_dtmaxvct : '';
 		
 	// Verifica se número da conta é um inteiro válido
 	if (!validaInteiro($nrdconta)) {
 		exibeErro("Conta/dv inv&aacute;lida.");
 	}			
+	
+	// Montar o xml de Requisicao
+	$xml  = "";
+	$xml .= "<Root>";
+	$xml .= " <Dados>";	
+	$xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
+	$xml .= "   <cdprodut>". 16 ."</cdprodut>"; //Poupança Programada
+	$xml .= " </Dados>";
+	$xml .= "</Root>";
+	
+	$xmlResult = mensageria($xml, "CADA0006", "VALIDA_ADESAO_PRODUTO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	$xmlObject = getObjectXML($xmlResult);
+	
+	// Se ocorrer um erro, mostra crítica
+	if (strtoupper($xmlObject->roottag->tags[0]->name) == "ERRO") {
+		$msgErro = $xmlObject->roottag->tags[0]->tags[0]->tags[4]->cdata;
+		exibeErro(utf8_encode($msgErro));
+	}
 	
 	// Monta o xml de requisição
 	$xmlIncluir  = "";
@@ -79,14 +105,18 @@
 	$xmlObjIncluir = getObjectXML($xmlResult);
 	
 	// Se ocorrer um erro, mostra crítica
-	if (strtoupper($xmlObjIncluir->roottag->tags[0]->name) == "ERRO") {
+	if (isset($xmlObjIncluir->roottag->tags[0]->name) && strtoupper($xmlObjIncluir->roottag->tags[0]->name) == "ERRO") {
 		exibeErro($xmlObjIncluir->roottag->tags[0]->tags[0]->tags[4]->cdata);
 	} 
 	
-	$aux_dtinirpp = $xmlObjIncluir->roottag->tags[0]->attributes["DTINIRPP"];
+	$dia = $mes = $ano = '';
+
+	$aux_dtinirpp = ( isset($xmlObjIncluir->roottag->tags[0]->attributes["DTINIRPP"]) ) ? $xmlObjIncluir->roottag->tags[0]->attributes["DTINIRPP"] : '';
 	//Faz o explode da Data Máxima de Vencimentos para exibição na Tela.
-	$aux_dtmaxvct = $xmlObjIncluir->roottag->tags[0]->attributes["DTMAXVCT"];
-	$aux_dtmaxvct = explode ("/", $aux_dtmaxvct);	
+	$aux_dtmaxvct = ( isset($xmlObjIncluir->roottag->tags[0]->attributes["DTMAXVCT"]) ) ? $xmlObjIncluir->roottag->tags[0]->attributes["DTMAXVCT"] : '';
+	if ( $aux_dtmaxvct != '' ) {
+		list($dia,$mes,$ano) = explode ("/", $aux_dtmaxvct);	
+	}	
 		
 		//echo "<script>alert('$aux_dtinirpp');</script>";
 	// Função para exibir erros na tela através de javascript
@@ -101,32 +131,32 @@
 <?/**/?>
 <form action="" method="post" name="frmDadosPoupanca" id="frmDadosPoupanca">
 	<fieldset>
-		<legend><? echo utf8ToHtml('Poupança Programada - Incluir') ?></legend>
+		<legend>Poupan&ccedil;a Programada - Incluir</legend>
 		
-		<label for="dtinirpp"><? echo utf8ToHtml('Dia do Aniversário/Mês e Ano do Início:') ?></label>
+		<label for="dtinirpp">Dia do Anivers&aacute;rio/M&ecirc;s e Ano do In&iacute;cio:</label>
 		
-		<input name="dtinirpp" type="text" class="campo" id="dtinirpp" value = "<?php echo $aux_dtinirpp ?>"/>
+		<input name="dtinirpp" type="text" class="campo" id="dtinirpp" value = "<?php echo $aux_dtinirpp; ?>"/>
 		<br />
 		
-		<label for="diadtvct"><? echo utf8ToHtml('Dia/Mês/Ano Vencimento:') ?></label>
-		<input name="diadtvct" type="text" class="campo" id="diadtvct" value = "<?php echo $aux_dtmaxvct[0] ?>" />
+		<label for="diadtvct">Dia/M&ecirc;s/Ano Vencimento:</label>
+		<input name="diadtvct" type="text" class="campo" id="diadtvct" value = "<?php echo $dia; ?>" />
 		
-		<label for="mesdtvct"><? echo utf8ToHtml('/') ?></label>
-		<input name="mesdtvct" type="text" class="campo" id="mesdtvct" value = "<?php echo $aux_dtmaxvct[1] ?>" />
+		<label for="mesdtvct">/</label>
+		<input name="mesdtvct" type="text" class="campo" id="mesdtvct" value = "<?php echo $mes; ?>" />
 		
-		<label for="anodtvct"><? echo utf8ToHtml('/') ?></label>
-		<input name="anodtvct" type="text" class="campo" id="anodtvct" value = "<?php echo $aux_dtmaxvct[2] ?>" />
+		<label for="anodtvct">/</label>
+		<input name="anodtvct" type="text" class="campo" id="anodtvct" value = "<?php echo $ano; ?>" />
 		<br />
 		
-		<label for="vlprerpp"><? echo utf8ToHtml('Valor da Prestação:') ?></label>
+		<label for="vlprerpp">Valor da Presta&ccedil;&atilde;o:</label>
 		<input name="vlprerpp" type="text" class="campo" id="vlprerpp" value="0,00" />
 		<br />
 		
-		<label for="tpemiext"><? echo utf8ToHtml('Tipo de impressão do extrato:') ?></label>
+		<label for="tpemiext">Tipo de impress&atilde;o do extrato:</label>
 		<select name="tpemiext" id="tpemiext" class="campo">
-			<option value="1">Individual        </option>
-			<option value="2"> 		   Todas             </option>
-			<option value="3" selected>         N&atilde;o emite  </option>			
+			<option value="1">Individual</option>
+			<option value="2">Todas</option>
+			<option value="3" selected>N&atilde;o emite</option>			
 		</select>					
 		
 	</fieldset>
