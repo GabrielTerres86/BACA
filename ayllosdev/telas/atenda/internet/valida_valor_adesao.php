@@ -5,7 +5,7 @@
  * DATA CRIAÇÃO : 02/04/2018
  * OBJETIVO     : Verificar se o valor contratado é permitido pelo tipo de conta.
  * 
- *    Alterações:
+ *    Alterações: 
  */
 
 	session_start();
@@ -17,15 +17,35 @@
 	
 	$nrdconta = (isset($_POST['nrdconta'])) ? $_POST['nrdconta'] : 0;
 	$inpessoa = (isset($_POST['inpessoa'])) ? $_POST['inpessoa'] : 0;
+    
+	// valor pessoa fisica
 	$vllimweb = (isset($_POST['vllimweb'])) ? $_POST['vllimweb'] : 0;
+	
+	// valores pessoa juridica
+	$vllimtrf = (isset($_POST['vllimtrf'])) ? $_POST['vllimtrf'] : 0;
+	$vllimpgo = (isset($_POST['vllimpgo'])) ? $_POST['vllimpgo'] : 0;
+			
 	$vllimted = (isset($_POST['vllimted'])) ? $_POST['vllimted'] : 0;
 	$vllimvrb = (isset($_POST['vllimvrb'])) ? $_POST['vllimvrb'] : 0;
 	
-	$vlrmaior = ($vllimweb > $vllimted ? $vllimweb : $vllimted);	
-	$vlrmaior = ($vlrmaior > $vllimvrb ? $vlrmaior : $vllimvrb);
+	// Se for PF
+	if ($inpessoa == 1) {
+		$vlrmaior = ($vllimweb > $vllimted ? $vllimweb : $vllimted);	
+		$vlrmaior = ($vlrmaior > $vllimvrb ? $vlrmaior : $vllimvrb);
 	
-	$vlrmenor = ($vllimweb < $vllimted ? $vllimweb : $vllimted);	
-	$vlrmenor = ($vlrmenor < $vllimvrb ? $vlrmenor : $vllimvrb);
+		$vlrmenor = ($vllimweb < $vllimted ? $vllimweb : $vllimted);	
+		$vlrmenor = ($vlrmenor < $vllimvrb ? $vlrmenor : $vllimvrb);
+	
+	// Se for PJ
+	} else {
+		$vlrmaior = ($vllimtrf > $vllimpgo ? $vllimtrf : $vllimpgo);	
+		$vlrmaior = ($vlrmaior > $vllimted ? $vlrmaior : $vllimted);
+		$vlrmaior = ($vlrmaior > $vllimvrb ? $vlrmaior : $vllimvrb);
+	
+		$vlrmenor = ($vllimtrf < $vllimpgo ? $vllimtrf : $vllimpgo);	
+		$vlrmenor = ($vlrmenor < $vllimted ? $vlrmenor : $vllimted);
+		$vlrmenor = ($vlrmenor < $vllimvrb ? $vlrmenor : $vllimvrb);
+	}
 	
 	// Monta o xml de requisição
 	$xml  = "";

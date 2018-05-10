@@ -1681,9 +1681,11 @@ function validaValorAdesao(inpessoa) {
 		data: {
 			nrdconta: nrdconta,
 			inpessoa: inpessoa,
-			vllimweb: $("#vllimweb","#frmAlterarLimites").val().replace(/\./g,"").replace(",","."),
-			vllimted: $("#vllimted","#frmAlterarLimites").val().replace(/\./g,"").replace(",","."),
-			vllimvrb: $("#vllimvrb","#frmAlterarLimites").val().replace(/\./g,"").replace(",","."),
+			vllimweb: $("#vllimweb", "#frmAlterarLimites").val().replace(/\./g, "").replace(",", "."),
+			vllimtrf: $("#vllimtrf", "#frmAlterarLimites").val().replace(/\./g, "").replace(",", "."),
+			vllimpgo: $("#vllimpgo", "#frmAlterarLimites").val().replace(/\./g, "").replace(",", "."),
+			vllimted: $("#vllimted", "#frmAlterarLimites").val().replace(/\./g, "").replace(",", "."),
+			vllimvrb: $("#vllimvrb", "#frmAlterarLimites").val().replace(/\./g, "").replace(",", "."),
 			redirect: 'script_ajax'
 		}, 
 		error: function (objAjax, responseError, objExcept) {
