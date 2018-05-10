@@ -1434,7 +1434,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0004 IS
   and    dtelimin is null;
 
   -->    Buscar valor de propostas pendentes
-  cursor cr_crawepr_pend is
+  cursor cr_crawepr_pend(pr_cdcooper crawepr.cdcooper%TYPE
+                        ,pr_nrdconta crawepr.nrdconta%TYPE) is
   select nvl(sum(w.vlemprst),0) vlemprst
   from   crawepr w
     join craplcr l on l.cdlcremp = w.cdlcremp and 
@@ -1678,7 +1679,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0004 IS
          for rw_crapass_cpfcgc in cr_crapass_cpfcgc(pr_nrcpfcgc => rw_crapass.nrcpfcgc) 
          loop
              rw_crawepr_pend := null;
-             open  cr_crawepr_pend;
+             open  cr_crawepr_pend(pr_cdcooper => rw_crapass_cpfcgc.cdcooper
+                                  ,pr_nrdconta => rw_crapass_cpfcgc.nrdconta);
              fetch cr_crawepr_pend into rw_crawepr_pend;
              close cr_crawepr_pend;
 

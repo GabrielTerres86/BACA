@@ -578,7 +578,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0001 AS
       
       -- Excluida vr_vlttsrpf, vr_vlttsrpj, vr_vlttcrpf e vr_vlttcrpj não utilizadas - 15/02/2018 - Chamado 851591 
       
-      vr_dstextab     VARCHAR2(400);     
+      vr_dstextab     craptab.dstextab%TYPE;     
       vr_dsctajud     crapprm.dsvlrprm%TYPE;
       vr_natjurid     crapjur.natjurid%TYPE;
       vr_tpregtrb     crapjur.tpregtrb%TYPE;
