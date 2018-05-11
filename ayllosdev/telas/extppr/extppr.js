@@ -10,6 +10,8 @@
  *				  05/06/2013 - Incluir rVlbloque, cVlbloque	para controle de layout
  *							   (Lucas R.)
  *						 
+ *                27/11/2017 - Inclusao do valor de bloqueio em garantia.
+ *                             PRJ404 - Garantia Empr.(Odirlei-AMcom)  
  */
 
 // Definição de algumas variáveis globais 
@@ -25,8 +27,8 @@ var tabDados		= 'tabExtppr';
 var rNrdconta, rNraplica, rDtiniper, rDtfimper, 
 	cNrdconta, cNraplica, cDtiniper, cDtfimper, cTodosCabecalho, btnOK;
 
-var rNmprimtl, rDtvctopp, rDddebito, rVlrdcapp, rVlbloque,
-	cNmprimtl, cDtvctopp, cDddebito, cVlrdcapp, cVlbloque, cTodosDados;
+var rNmprimtl, rDtvctopp, rDddebito, rVlrdcapp, rVlbloque, rVlblqpou,
+	cNmprimtl, cDtvctopp, cDddebito, cVlrdcapp, cVlbloque, cVlblqpou, cTodosDados;
 
 
 $(document).ready(function() {
@@ -99,12 +101,15 @@ function atualizaSeletor(){
 	rDddebito			= $('label[for="dddebito"]','#'+frmDados);
 	rVlbloque			= $('label[for="vlbloque"]','#'+frmDados);
 	rVlrdcapp			= $('label[for="vlrdcapp"]','#'+frmDados);
+    rVlblqpou			= $('label[for="vlblqpou"]','#'+frmDados);
+    
 
 	cNmprimtl			= $('#nmprimtl','#'+frmDados); 
 	cDtvctopp			= $('#dtvctopp','#'+frmDados);
 	cDddebito			= $('#dddebito','#'+frmDados);
 	cVlbloque    		= $('#vlbloque','#'+frmDados);
 	cVlrdcapp			= $('#vlrdcapp','#'+frmDados);
+    cVlblqpou           = $('#vlblqpou','#'+frmDados);
 	cTodosDados			= $('input[type="text"],select','#'+frmDados);
 
 	return false;
@@ -334,17 +339,20 @@ function formataCabecalho() {
 
 function formataDados() {
 
-	rNmprimtl.addClass('rotulo').css({'width':'90px'});
-	rDtvctopp.addClass('rotulo').css({'width':'90px'});
-	rVlbloque.addClass('rotulo').css({'width':'px'});
+	rNmprimtl.addClass('rotulo').css({'width':'100px'});
+	rDtvctopp.addClass('rotulo').css({'width':'100px'});
+	rVlbloque.addClass('rotulo').css({'width':'100px'});
+	rVlblqpou.addClass('rotulo-linha').css({'width':'235px'});
 	rDddebito.addClass('rotulo-linha').css({'width':'284px'});
-	rVlrdcapp.addClass('rotulo-linha').css({'width':'235px'});
+    rVlrdcapp.addClass('rotulo').css({'width':'100px'});
+    
 
 	cNmprimtl.addClass('alphanum').css({'width':'482px'}).attr('maxlength','48');
 	cDtvctopp.addClass('data').css({'width':'72px'});
 	cDddebito.addClass('inteiro').css({'width':'65px'}).attr('maxlength','2');
 	cVlbloque.addClass('moeda').css({'width':'120px'});
 	cVlrdcapp.addClass('moeda').css({'width':'120px'});	
+    cVlblqpou.addClass('moeda').css({'width':'120px'});
 
 	if ( $.browser.msie ) {
 		rDddebito.css({'width':'287px'});

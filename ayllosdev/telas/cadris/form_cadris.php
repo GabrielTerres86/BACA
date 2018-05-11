@@ -6,6 +6,11 @@
  * OBJETIVO     : Formulario do cadastro.
  * --------------
  * ALTERAÇÕES   : 
+ 
+    14/02/2018 - #822034 Alterada a forma como é criado o xml para ganhar performance;
+                 inclusão de filtro de contas e ordenação por conta;
+                 tela não carrega mais todas as contas ao entrar nas opções (Carlos)
+
  * --------------
  */	
 ?>
@@ -21,6 +26,18 @@
             }
         ?>
         </select>
+        <!-- Campos aparecem apenas nas ops C e E -->
+        <label for="ctaini" class="clsConta"><?php echo 'Da conta:' ?></label>        
+        <input type="text" id="ctaini" name="ctaini" class="clsConta" />
+
+        <label for="ctafim" class="clsConta"><?php echo ' a '; ?></label>        
+        <input type="text" id="ctafim" name="ctafim" class="clsConta" />
+        
+        <button class="botao" id="btnOK2" name="btnOK2" style="text-align:right; margin:2px" 
+                onclick="listaContas(); return false;">OK</button>
+        
+        <!-- Fim Campos aparecem apenas nas ops C e E -->
+        
         <label for="nrdconta" class="clsContaJustif"><?php echo utf8ToHtml('Conta/DV:') ?></label>
         <input type="text" id="nrdconta" name="nrdconta" class="conta clsContaJustif" />
         <a class="clsContaJustif"><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>

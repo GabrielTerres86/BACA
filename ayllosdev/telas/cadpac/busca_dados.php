@@ -8,6 +8,8 @@
  * ALTERAÇÕES   : 08/08/2017 - Adicionado busca de novo campo flgutcrm da tela. (Reinert - Projeto 339)
  * --------------
  *				  08/08/2017 - Implementacao da melhoria 438. Heitor (Mouts).
+ *
+ *                03/01/2018 - M307 Solicitação de senha e limite para pagamento (Diogo / MoutS)
  */
 
     session_start();
@@ -112,6 +114,7 @@
         echo "$('#vlminsgr', '#frmCadpac').val('".getByTagName($registros->tags,'VLMINSGR')."');";
         echo "$('#vlmaxsgr', '#frmCadpac').val('".getByTagName($registros->tags,'VLMAXSGR')."');";
 		echo "$('#flmajora', '#frmCadpac').val('".getByTagName($registros->tags,'FLMAJORA')."');";
+        echo "$('#vllimpag', '#frmCadpac').val('".getByTagName($registros->tags,'VLLIMPAG')."');";
     }
 
     if ($cddopcao == 'C') {
@@ -169,7 +172,11 @@
          echo "$('#nmpasite', '#frmCadpac').val('".getByTagName($registros->tags,'NMPASITE')."');";
          echo "$('#dstelsit', '#frmCadpac').val('".getByTagName($registros->tags,'DSTELSIT')."');";
          echo "$('#dsemasit', '#frmCadpac').val('".getByTagName($registros->tags,'DSEMASIT')."');";
-         echo "$('#dshorsit', '#frmCadpac').val('".preg_replace('/\r\n|\r|\n/','\n',getByTagName($registros->tags,'DSHORSIT'))."');";
+		 echo "$('#hrinipaa', '#frmCadpac').val('".getByTagName($registros->tags,'HRINIPAA')."');";
+		 echo "$('#hrfimpaa', '#frmCadpac').val('".getByTagName($registros->tags,'HRFIMPAA')."');";
+		 echo "$('#dssitpaa', '#frmCadpac').val('".getByTagName($registros->tags,'DSSITPAA')."');";		 
+		 echo "$('#indspcxa', '#frmCadpac').val('".getByTagName($registros->tags,'INDSPCXA')."');";
+		 echo "$('#indsptaa', '#frmCadpac').val('".getByTagName($registros->tags,'INDSPTAA')."');";
          echo "$('#nrlatitu', '#frmCadpac').val('".getByTagName($registros->tags,'NRLATITU')."');";
          echo "$('#nrlongit', '#frmCadpac').val('".getByTagName($registros->tags,'NRLONGIT')."');";
          echo "$('#cdagenci', '#frmCadpac').desabilitaCampo();";

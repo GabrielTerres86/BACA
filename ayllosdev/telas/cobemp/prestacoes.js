@@ -349,6 +349,11 @@ function controlaLayout(operacao) {
             valorTotAtual += retiraMascara(this.value);
         });
 
+        $("input[type=hidden][name='vliofcpl[]']").each(function() {
+            // Valor total a atual
+            valorTotAtual += parseFloat(this.value.replace(",", "."));
+        });
+
         $('#totatual', '#frmVlParc').val(valorTotAtual.toFixed(2).replace(".", ","));
         $('#totpagto', '#frmVlParc').val('0,00');
         $('#vldifpar', '#frmVlParc').val('0,00');
@@ -407,8 +412,9 @@ function habilitaDesabilitaCampo(object, flgRecalcula, nrParcela)
         valorAtual = retiraMascara($('#vlatupar_' + nrParcela, tabela).val());
         valorMulta = retiraMascara($('#vlmtapar_' + nrParcela, tabela).val());
         valorMora = retiraMascara($('#vlmrapar_' + nrParcela, tabela).val());
+        valorIOF = retiraMascara($('#vliofcpl_' + nrParcela, tabela).val());
 
-        valorAtual += valorMulta + valorMora;
+        valorAtual += valorMulta + valorMora + valorIOF;
 
         $('#vlpagpar_' + nrParcela, tabela).val(valorAtual.toFixed(2).replace(".", ","));
 

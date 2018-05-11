@@ -3,7 +3,7 @@
 	/************************************************************************
 	 Fonte: confirma_novo_limite.php                                  
 	 Autor: David                                                     
-	 Data : Março/2008                   Última Alteração: 26/03/2013 
+	 Data : Março/2008                   Última Alteração: 06/03/2018
 	                                                                  
 	 Objetivo  : Confirma Novo Limite de Crédito (rotina de Limite de 
 	             Crédito da tela ATENDA)                              
@@ -22,6 +22,9 @@
 				  26/03/2013 - Retirado a chamada da procedure alerta_fraude
 							  (Adriano).
 								   
+				  06/03/2018 - Adicionado parametro idcobope e validação de 
+							   garantia bloqueada ao efetivar novo limite. 
+							   (PRJ404 Reinert)
 	************************************************************************/
 
 	
@@ -52,6 +55,7 @@
 	$nrcpfcgc = $_POST["nrcpfcgc"];
 	$nrctrrat = $_POST["nrctrrat"];
 	$flgratok = $_POST["flgratok"];
+	$idcobope = $_POST["idcobope"];
 	
 	
 	// Verifica se número da conta éum inteiro válido
@@ -76,7 +80,34 @@
 		$tpctrrat = 1;
 		include("../../../includes/rating/rating_busca_dados_singulares.php");
 	} else {
-	
+		if ($idcobope > 0){
+		// Monta o xml dinâmico de acordo com a operação 
+		$xml  = '';
+		$xml .= '<Root>';
+		$xml .= '	<Dados>';
+		$xml .= '       <nmdatela>ATENDA</nmdatela>';
+		$xml .= '       <idcobert>'.$idcobope.'</idcobert>';
+		$xml .= '	</Dados>';
+		$xml .= '</Root>';
+
+		$xmlResult = mensageria($xml, "BLOQ0001", "REVALIDA_BLOQ_GARANTIA", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+		$xmlObjeto = getObjectXML($xmlResult);
+
+		//----------------------------------------------------------------------------------------------------------------------------------	
+		// Controle de Erros
+		//----------------------------------------------------------------------------------------------------------------------------------
+		if ( strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO" ) {
+			// Procura indíce da opção "N"
+			$idAlteraLim = array_search("N",$glbvars["opcoesTela"]);
+			
+			if ($idAlteraLim == false) {
+				$idAlteraLim = 1;
+			}
+			
+			echo "showConfirmacao('Garantia de aplica&ccedil;&atilde;o resgatada/bloqueada. Deseja alterar o limite proposto?', 'Confirma&ccedil;&atilde;o - Ayllos', 'acessaOpcaoAba(".count($glbvars["opcoesTela"]).",".$idAlteraLim.",\'".$glbvars["opcoesTela"][$idAlteraLim]."\');', 'hideMsgAguardo(); bloqueiaFundo($(\'#divRotina\'))', 'sim.gif', 'nao.gif');";
+			exit();
+			}
+		}
 			
 		// Monta o xml de requisição
 		$xmlSetLimite  = "";

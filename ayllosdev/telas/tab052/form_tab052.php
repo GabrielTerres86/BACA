@@ -47,6 +47,7 @@
 			</tr><!-- vl -->
 
 
+
 			<tr class="registerRow">
 				<!-- qtremcrt -->
 				<td width="300px"><label for="qtremcrt" class='labelPri'><?php echo utf8ToHtml('Qtd. Remessa em Cartório:') ?></label></td>
@@ -99,7 +100,7 @@
 					<label><?php echo utf8ToHtml('&nbsp;dia(s)') ?></label></td>
 			</tr>
 
-		
+
 			<tr>
 				<!-- qtminfil -->
 				<td width="300px"><label for="qtminfil" class='labelPri'><?php echo utf8ToHtml('Tempo Mínimo de Filiação:') ?></label></td>
@@ -108,7 +109,6 @@
 				<td width="170px"><input type="text" id="qtminfil_c" name="qtminfil_c" value="<?php echo $qtminfil_c == 0 ? '' : $qtminfil_c ?>" maxlength="3" style="text-align:right;"/>
 					<label><?php echo utf8ToHtml('&nbsp;dia(s)') ?></label></td>
 			</tr>
-
 
 			<tr>
 				<!-- cardbtit -->

@@ -15,6 +15,7 @@
  * 008: 05/07/2016 - Odirlei (AMcom) : Exibir protocolo 15 - pagamento debaut - PRJ320 - Oferta Debaut
  * 009: 19/09/2016 - Alteraçoes pagamento/agendamento de DARF/DAS pelo InternetBanking (Projeto 338 - Lucas Lunelli)
  * 010: 23/03/2017 - Alterações referente a recarga de celular. (PRJ321 - Reinert)
+ * 011: 26/03/2018 - Alterado para permitir acesso a tela pelo CRM. (Reinert)
  * --------------
  */
 
@@ -87,6 +88,12 @@ function estadoInicial() {
     $('#divBotoes').css({'display': 'block'});
 
     cNrdconta.focus();
+
+	// Seta os valores caso tenha vindo do CRM
+    if ($("#crm_inacesso","#frmCab").val() == 1) {
+        $("#nrdconta","#frmCab").val($("#crm_nrdconta","#frmCab").val());
+		btnOK.click();
+    }
 
 }
 
@@ -568,7 +575,7 @@ function formataVerpro() {
     rCarencia.addClass('rotulo').css({'width': '130px'});
     rDtcarenc.addClass('rotulo').css({'width': '130px'});
     rTxperiod.addClass('rotulo').css({'width': '115px'});
-	
+
 	//DARF/DAS
 	rDsagtare.addClass('rotulo').css({'width': '130px'});
 	rDsagenci.addClass('rotulo').css({'width': '130px'});
@@ -638,7 +645,7 @@ function formataVerpro() {
     cCarencia = $('#carencia', '#' + frmDados);
     cDtcarenc = $('#dtcarenc', '#' + frmDados);
     cTxperiod = $('#txperiod', '#' + frmDados);
-	
+
 	//DARF/DAS
 	cDsagtare = $('#dsagtare', '#' + frmDados);
 	cDsagenci = $('#dsagenci', '#' + frmDados);
@@ -707,7 +714,7 @@ function formataVerpro() {
     cCarencia.css({'width': '400px'});
     cDtcarenc.css({'width': '400px'});
     cTxperiod.css({'width': '400px'});
-	
+
 	//DARF/DAS
 	cDsagtare.css({'width': '400px'});
 	cDsagenci.css({'width': '400px'});
@@ -852,7 +859,7 @@ function formataVerpro() {
     cCarencia.css({'display': 'none'});
     cDtcarenc.css({'display': 'none'});
     cTxperiod.css({'display': 'none'});
-	
+
 	//DARF/DAS
 	rDsagtare.css({'display': 'none'});
 	rDsagenci.css({'display': 'none'});
@@ -1296,16 +1303,16 @@ function formataVerpro() {
 		rDtmvtdrf.css({'display': 'block'});
 	    cDtmvtdrf.css({'display': 'block'});
        
-		rNrdocmto.css({'display': 'block'});
-		cNrdocmto.css({'display': 'block'});
-		rNrdocmto.html('Nr. Documento:');
+       rNrdocmto.css({'display': 'block'});
+       cNrdocmto.css({'display': 'block'});
+       rNrdocmto.html('Nr. Documento:');
        
-		rNrseqaut.css({'display': 'block'});
-		cNrseqaut.css({'display': 'block'});
-		rNrseqaut.html('Seq. Autentica&ccedil;&atilde;o:');
+       rNrseqaut.css({'display': 'block'});
+       cNrseqaut.css({'display': 'block'});
+       rNrseqaut.html('Seq. Autentica&ccedil;&atilde;o:');
        
-		rDsprotoc.css({'display': 'block'});
-		cDsprotoc.css({'display': 'block'});
+       rDsprotoc.css({'display': 'block'});
+       cDsprotoc.css({'display': 'block'});
 	// Recarga de celular			
     } else if (cdtippro == '20'){
 		// Esconder Labels

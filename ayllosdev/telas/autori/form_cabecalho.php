@@ -9,10 +9,14 @@
  * --------------
  * 				  19/05/2014 - Ajustes referentes ao Projeto debito Automatico
  *							   Softdesk 148330 (Lucas R.)
+ *                26/03/2018 - Alterado para permitir acesso a tela pelo CRM. (Reinert)
  */ 
 ?>
 
 <form id="frmCabAutori" name="frmCabAutori" class="formulario">
+
+    <input type="hidden" name="crm_inacesso" id="crm_inacesso" value="<?php echo $_SESSION["glbvars"][$glbvars["sidlogin"]]['CRM_INACESSO']; ?>" />
+    <input type="hidden" name="crm_nrdconta" id="crm_nrdconta" value="<?php echo $_SESSION["glbvars"][$glbvars["sidlogin"]]['CRM_NRDCONTA']; ?>" />
 
 	<label for="opcao"><? echo utf8ToHtml('Opção:') ?></label>
 	<select id="opcao" name="opcao" alt="Informe a opcao desejada (A, C, D, E ou S).">

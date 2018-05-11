@@ -12,8 +12,10 @@
 							 10 Digitos - Campos usados apenas para visualização
 					         8 Digitos - Campos usados para alterar ou incluir novos contratos
 					   	     (Kelvin - SD 233714)
-	-----------
-	
+
+                04/08/2017 - Nao permitir acessar tipo de emprestimo do Pos-Fixado. 
+                             (Jaison/James - PRJ298)
+
 	********************************************************************************************/
 	
 	session_start();
@@ -70,6 +72,7 @@
 	$xmlSetPesquisa .= "        <inproces>".$glbvars["inproces"]."</inproces>";
 	$xmlSetPesquisa .= "        <flgerlog>".$glbvars["flgerlog"]."</flgerlog>";
 	$xmlSetPesquisa .= "        <flgcondc>".$glbvars["flgcondc"]."</flgcondc>";
+	$xmlSetPesquisa .= "        <flgempt0>YES</flgempt0>"; /* listar apenas tpemprst 0 */
 	$xmlSetPesquisa .= "        <nrdconta>".$nrdconta."</nrdconta>";
 	$xmlSetPesquisa .= "        <dtcalcul>".$dtcalcul."</dtcalcul>";
 	$xmlSetPesquisa .= "        <nrctremp>".$nrctremp."</nrctremp>";

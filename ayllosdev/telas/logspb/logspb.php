@@ -37,6 +37,9 @@
     //***                          durante a homologação da área		   ***//
 	//***                          (Adriano - M211)				           ***//
 	//***														           ***//
+    //***             11/04/2017 - Permitir acessar o Ayllos mesmo vindo   ***//
+    //***                          do CRM. (Jaison/Andrino)				   ***//
+	//***														           ***//
     //***             27/01/2016 - Permitir exibir TEDs Extornadas         ***//
     //***                          PRJ335 - Analise de Fraude(Odirlei-AMcom) ***//
 	//***                                                                 ***//
@@ -127,6 +130,8 @@
 																			<tr>
 																				<td>
 																					<form name="frmLogSPB" id="frmLogSPB" class="formulario cabecalho">
+                                                                                        <input type="hidden" name="crm_inacesso" id="crm_inacesso" value="<?php echo $_SESSION["glbvars"][$glbvars["sidlogin"]]['CRM_INACESSO']; ?>" />
+                                                                                        <input type="hidden" name="crm_nrdconta" id="crm_nrdconta" value="<?php echo $_SESSION["glbvars"][$glbvars["sidlogin"]]['CRM_NRDCONTA']; ?>" />
 																					    <input type="hidden" name="sidlogin" id="sidlogin" value="<?php echo $glbvars["sidlogin"]; ?>">
 																						<label for="cddopcao" class="txtNormalBold"><? echo utf8ToHtml('Op&ccedil;&atilde;o:') ?></label>
                                             

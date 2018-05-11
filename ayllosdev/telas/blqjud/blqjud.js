@@ -1,5 +1,5 @@
 /*!
- * FONTE        : blqjud.js                     Última alteração: 29/07/2016
+ * FONTE        : blqjud.js                     Última alteração: 14/03/2018
  * CRIAÇÃO      : Guilherme / SUPERO
  * DATA CRIAÇÃO : 23/04/2013
  * OBJETIVO     : Biblioteca de funções da tela BLQJUD
@@ -22,6 +22,14 @@
                                (Adriano - SD 492902).
 
                   29/09/2017 - Melhoria 460 - (Andrey Formigari - Mouts)
+				  
+				  16/01/2018 - Aumentado tamanho do campo de senha para 30 caracteres. (PRJ339 - Reinert)
+
+                  02/01/2018 - Melhoria 460 - (Diogo - Mouts) - Ajuste no valor de desbloqueio, pois sem a validação, 
+                               sempre desbloqueava o valor total
+				  
+				  14/03/2018 - Adicionado parametro que faltava na chamada da procedure
+				     		   consulta-bloqueio-jud. (Kelvin)
  * --------------
  */
  
@@ -144,6 +152,7 @@ function controlaLayout() {
 	cDsjuides           = $('#dsjuides' ,'#frmDesbloqueio');
     cDtenvdes           = $('#dtenvdes' ,'#frmDesbloqueio');
     cDsinfdes           = $('#dsinfdes' ,'#frmDesbloqueio');
+    cVldesblo           = $('#vldesblo' ,'#frmDesbloqueio');
     cFldestrf			= $('input[id="#fldestrf"]' ,'#frmDesbloqueio');	
 
     // CAMPOS frmConsulta
@@ -200,7 +209,7 @@ function controlaLayout() {
 			rDsinfadc.addClass('rotulo').css({'width':'170px'});
             rVlbloque.addClass('rotulo').css({'width':'170px'});
             rVlsaldo.addClass('rotulo-linha').css({ 'width': '180px' });
-
+			
             rVlbloque.show();
             rVlbloque.next().show();
 			
@@ -237,7 +246,7 @@ function controlaLayout() {
             rNrctacon.addClass('rotulo-linha').css({'width':'125px'});
             cNroficon.addClass('rotulo').css({'width':'200px'});
             cNrctacon.addClass('rotulo-linha').css({ 'width': '110px' }).setMask('INTEGER', 'zzzzzzzzzzzzz9', '', '');
-
+			
             rVlbloque.hide();
             rVlbloque.next().hide();
 			
@@ -819,26 +828,26 @@ function atualizaSaldo(chk) {
 function layoutConsulta() {
 	
     altura = '195px';
-    largura = '425px';
+	largura = '425px';
 
-    // Configurações da tabela
-    var divRegistro = $('div.divRegistros');
+	// Configurações da tabela
+	var divRegistro = $('div.divRegistros');		
     var divRegistroOficio = $('div.divRegistrosOficios');
     var tabela = $('table', divRegistro);
     var tabelaOficio = $('table', divRegistroOficio);
     var linha = $('table > tbody > tr', divRegistro);
-
+		
     divRegistro.css('height', '90px');
     divRegistroOficio.css('height', '90px');
-
-    var ordemInicial = new Array();
+		
+	var ordemInicial = new Array();
     ordemInicial = [[0, 0]];
-
+		
     var ordemInicialOficio = new Array();
     ordemInicialOficio = [[0, 0]];
 
-    var arrayLargura = new Array();
-        arrayLargura[0] = '79px';
+		var arrayLargura = new Array();
+		arrayLargura[0] = '79px';
         arrayLargura[1] = '115px';
         arrayLargura[2] = '124px';
         arrayLargura[3] = '60px';
@@ -849,28 +858,28 @@ function layoutConsulta() {
         arrayLarguraOficio[0] = '170px';
         arrayLarguraOficio[1] = '170px';
         arrayLarguraOficio[2] = '125px';
-
-    var arrayAlinha = new Array();
-        arrayAlinha[0] = 'right';
-        arrayAlinha[1] = 'center';
-        arrayAlinha[2] = 'right';
-        arrayAlinha[3] = 'right';
-        arrayAlinha[4] = 'center';
+		
+	var arrayAlinha = new Array();
+		arrayAlinha[0] = 'right';
+		arrayAlinha[1] = 'center';
+		arrayAlinha[2] = 'right';
+		arrayAlinha[3] = 'right';
+		arrayAlinha[4] = 'center';
         arrayAlinha[5] = 'center';
 
     var arrayAlinhaOficio = new Array();
         arrayAlinhaOficio[0] = 'center';
         arrayAlinhaOficio[1] = 'center';
         arrayAlinhaOficio[2] = 'center';
-
+	
     tabela.formataTabela(ordemInicial, arrayLargura, arrayAlinha, '');
     tabelaOficio.formataTabela(ordemInicialOficio, arrayLarguraOficio, arrayAlinhaOficio, '');
-
+			
     divRotina.css('width', largura);
     $('#divRotina').css({ 'height': altura, 'width': largura });
-
-    layoutPadrao();
-    removeOpacidade('#divRegistros');
+	
+	layoutPadrao();
+	removeOpacidade('#divRegistros');
 
     $('form#frmConsultaDadosOficio .divRegistrosOficios table tbody tr:first').click();
     $('form#frmConsultaDados .divRegistros table tbody tr:first').click();
@@ -1194,9 +1203,13 @@ function btnImprimir() {
 	
 	nroficon = cNroficon.val();
 	nrctacon = cNrctacon.val();
+	operacao = cCdoperac.val();
+	cddopcao = cCddopcao.val();	
 	
 	$('#nroficon','#frmImpressao').val( nroficon );
 	$('#nrctacon','#frmImpressao').val( nrctacon );
+	$('#operacao','#frmImpressao').val( operacao );
+	$('#cddopcao','#frmImpressao').val( cddopcao );
 	
 	var action    = UrlSite + 'telas/blqjud/imprime_bloqueio.php';	
 	var callafter = "bloqueiaFundo(divRotina);hideMsgAguardo();";
@@ -1309,10 +1322,11 @@ function efetuaDesbloqueio() {
 	var dtenvdes = $("#dtenvdes","#frmDesbloqueio").val();
 	var dsinfdes = $("#dsinfdes", "#frmDesbloqueio").val();
 	var vldesblo = converteMoedaFloat($("#vldesblo", "#frmDesbloqueio").val());
+	var vltmpbloque = converteMoedaFloat($("#vltmpbloque", "#frmDesbloqueio").val());
 
     // cpf pode ter mais de uma conta, por isso, pegar a conta selecionada
 	nrdconta = normalizaNumero($('#frmConsultaDados .divRegistros tr.corSelecao td:first span').text());
-	
+
 	var fldestrf = 0;
 
 	if (flgradio == 'true') {
@@ -1340,6 +1354,17 @@ function efetuaDesbloqueio() {
 	}
 	cDsinfdes.removeClass('campoErro');
 		
+	if (vldesblo == '' || vldesblo == '0' || vldesblo == '0.00' || vldesblo == '0,00' || vldesblo <= 0) {
+		showError('error','Valor do Desbloqueio não informado.','Alerta - BLQJUD','focaCampoErro(\'vldesblo\',\'frmDesbloqueio\');');
+		return false;
+	}
+	
+	if (vldesblo > vltmpbloque) {
+		showError('error','Valor do Desbloqueio está limitado ao valor bloqueado ('+$("#vltmpbloque", "#frmDesbloqueio").val()+').','Alerta - BLQJUD','focaCampoErro(\'vldesblo\',\'frmDesbloqueio\');');
+		return false;
+	}
+	cVldesblo.removeClass('campoErro');
+
 	showMsgAguardo("Aguarde, efetuando opera&ccedil;&atilde;o ...");
 	
 	// Executa script de consulta através de ajax
@@ -1372,8 +1397,8 @@ function efetuaDesbloqueio() {
 			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
 		},
 		success: function(response) {
-				eval(response);
 				$('#btnDesbloqueio','#divBotoes').hide();		
+				eval(response);
 			}
 		
 	});
@@ -1539,7 +1564,7 @@ function formataSenha() {
 	cSenha		= $('#codsenha', '#frmSenha');
 	
 	cOperador.addClass('campo').css({'width':'100px'}).attr('maxlength','10');		
-    cSenha.addClass('campo').css({'width':'100px'}).attr('maxlength','10');		
+    cSenha.addClass('campo').css({'width':'100px'}).attr('maxlength','30');		
 	
 	$('#divConteudoSenha').css({'width':'400px', 'height':'120px'});	
 
@@ -1786,13 +1811,17 @@ function selecionaBloqueio(seq, cdmodali) {
     } else {
         $('#flgnao', '#frmDesbloqueio').prop('checked', 'true');
         $('legend', '#frmDesbloqueio').html("Dados Judiciais - Ofício Desbloqueio");
-    }
+	}
 	
 	if(cCddopcao.val() == "T"){
 		$('#divDesbloqueio').css({'display':'none'});
 	}else if (arrbloqueios[seq]['dtblqfim'] != "" || cCdoperac.val() == "A" || cCdoperac.val() == "C" || cCdoperac.val() == "D") {
+		$('#vldesblo','#frmDesbloqueio').val('');//valor bloqueio, preencho o máximo
+		$('#vltmpbloque','#frmDesbloqueio').val(''); //campo para controle e validação do valor
 		if((($('#div_tabblqjud').css('display') == "block") && (arrbloqueios[seq]['dtblqfim'] != "" || cCdoperac.val() == "D"))){
 			$('#divDesbloqueio').css({'display':'block'});
+			$('#vldesblo','#frmDesbloqueio').val(arrbloqueios[seq]['vlbloque']);//valor bloqueio, preencho o máximo
+			$('#vltmpbloque','#frmDesbloqueio').val(arrbloqueios[seq]['vlbloque']); //campo para controle e validação do valor
 		}
 	}
 	

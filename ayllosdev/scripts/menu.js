@@ -20,6 +20,9 @@
 			  
 			  30/11/2015 - Evitar erros na chamada da AUTORI (Gabriel-RKAM)
 
+			  07/04/2017 - Permitir acessar o Ayllos mesmo vindo do CRM. (Jaison/Andrino)
+
+
               26/06/2017 - Ajustes para entender a inclusão de novos produtos
                            na tela ATENDA -> Produtos
                            (Jonata - RKAM P364.)
@@ -119,11 +122,11 @@ $(document).ready(function() {
 		if ($('#flgdsenh','#frmAcesso').val() == "yes" && $('#telatual','#frmAcesso').val() == "") {	
 			if (existeTela("mudsen")) {
 				direcionaTela("mudsen",false);		
-			} else if ($('#inproces','#frmAcesso').val() == "1" && existeTela("atenda")) {
-				direcionaTela("atenda",false);		
+			} else if ($('#inproces','#frmAcesso').val() == "1" && existeTela(glb_nmdatela)) {
+				direcionaTela(glb_nmdatela,false);		
 			}
-		} else if ($('#inproces','#frmAcesso').val() == "1" && $('#telatual','#frmAcesso').val() == "" && existeTela("atenda")) {
-			direcionaTela("atenda",false);
+		} else if ($('#inproces','#frmAcesso').val() == "1" && $('#telatual','#frmAcesso').val() == "" && existeTela(glb_nmdatela)) {
+			direcionaTela(glb_nmdatela,false);
 		}
 	}
 	

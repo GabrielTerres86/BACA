@@ -4,8 +4,10 @@
  * DATA CRIAÇÃO : 15/04/2016
  * OBJETIVO     : Biblioteca de funções da tela PARHPG
  * --------------
- * ALTERAÇÕES   : 
- *
+ * ALTERAÇÕES   : 19/06/2017 - Removida a linha com informações da Devolução VLB.
+				               PRJ367 - Compe Sessao Unica (Lombardi)
+
+                  08/03/2018 - #PRJ367 Aumentadas as larguras dos labels "devolução diurna" e "devolução fraude/imp" (Carlos)
  * --------------
  */
 
@@ -240,28 +242,15 @@ function formataCadastro(){
 	$('#hrtaacan','#frmHorarios').setMask('STRING','99:99',':','');
 
 	// LABEL - DEVOLUCAO DE CHEQUE
-	$('label[for="hrdevvlb"]','#frmHorarios').addClass('rotulo').css({'width':'130px'});
-	$('label[for="hrvlbini"]','#frmHorarios').addClass('rotulo-linha').css({'width':'50px'});
-	$('label[for="hrvlbfim"]','#frmHorarios').addClass('rotulo-linha').css({'width':'30px'});
-	$('label[for="hrdevdiu"]','#frmHorarios').addClass('rotulo').css({'width':'130px'});
+	$('label[for="hrdevdiu"]','#frmHorarios').addClass('rotulo').css({'width':'140px'});
 	$('label[for="hrdiuini"]','#frmHorarios').addClass('rotulo-linha').css({'width':'50px'});
 	$('label[for="hrdiufim"]','#frmHorarios').addClass('rotulo-linha').css({'width':'30px'});
-	$('label[for="hrdevnot"]','#frmHorarios').addClass('rotulo').css({'width':'130px'});
+	$('label[for="hrdevnot"]','#frmHorarios').addClass('rotulo').css({'width':'140px'});
 	$('label[for="hrnotini"]','#frmHorarios').addClass('rotulo-linha').css({'width':'50px'});
 	$('label[for="hrnotfim"]','#frmHorarios').addClass('rotulo-linha').css({'width':'30px'});
 	
 	// CAMPOS - DEVOLUCAO DE CHEQUE
-	// Atualizar Devolucao VLB
-	$('#hrvlbatu','#frmHorarios').css({'width':'120px'});
-	// Horario Inicio Devolucao VLB
-	$('#hrvlbini','#frmHorarios').css({'width':'70px'}).attr('maxlength','5');
-	$('#hrvlbini','#frmHorarios').mask('00:00');
-	$('#hrvlbini','#frmHorarios').setMask('STRING','99:99',':','');
-	// Horario Fim Devolucao VLB
-	$('#hrvlbfim','#frmHorarios').css({'width':'70px'}).attr('maxlength','5');
-	$('#hrvlbfim','#frmHorarios').mask('00:00');
-	$('#hrvlbfim','#frmHorarios').setMask('STRING','99:99',':','');
-	
+
 	// Atualizar Devolucao Diurna
 	$('#hrdiuatu','#frmHorarios').css({'width':'120px'});
 	// Horario Inicio Devolucao Diurna
@@ -701,7 +690,7 @@ function controlaCamposCadastro() {
 				// Desabilitar os campos de horario Inicial e Final de Cancelamento de Pagamento TAA
 				$("#hrtaacan","#frmHorarios").desabilitaCampo();
 				// Setar o foco no proximo campo de atualizar
-				$("#hrvlbatu","#frmHorarios").focus();
+				$("#hrdiuatu","#frmHorarios").focus();
 			}
 			return false;
 		}
@@ -717,66 +706,12 @@ function controlaCamposCadastro() {
 			// Sem erros
 			} else {
 				$(this).removeClass('campoErro');
-				$("#hrvlbatu","#frmHorarios").focus();
-			}
-			return false;
-		}
-    });
-	
-	//Define ação para ENTER e TAB no campo ATUALIZAR HORARIO DE DEVOLUCAO VLB
-	$("#hrvlbatu","#frmHorarios").unbind('keypress').bind('keypress', function(e) {
-		if (e.keyCode == 9 || e.keyCode == 13) {
-			if ( $(this).val() == "S" ){
-				// Habilitar os campos de horario Inicial e Final de DEVOLUCAO VLB
-				$("#hrvlbini","#frmHorarios").habilitaCampo().focus();
-				$("#hrvlbfim","#frmHorarios").habilitaCampo();
-			} else {
-				// Desabilitar os campos de horario Inicial e Final de DEVOLUCAO VLB
-				$("#hrvlbini","#frmHorarios").desabilitaCampo();
-				$("#hrvlbfim","#frmHorarios").desabilitaCampo();
-				// Setar o foco no proximo campo de atualizar
 				$("#hrdiuatu","#frmHorarios").focus();
 			}
 			return false;
 		}
     });
 	
-	//Define ação para ENTER e TAB no campo HORARIO INICIAL DE DEVOLUCAO DIURNA
-	$("#hrvlbini","#frmHorarios").unbind('keydown').bind('keydown', function(e) {
-		if (e.keyCode == 9 || e.keyCode == 13) {
-			// Horario Invalido
-			if ( !validaHorarioDigitado($(this).val()) ) {
-				showError("error","Hora de in&iacute;cio da DEVOLUCAO VLB inv&aacute;lida.","Alerta - Ayllos","focaCampoErro(\'hrvlbini\', \'frmHorarios\');",false);
-
-			// Sem erros
-			} else {
-				$(this).removeClass('campoErro');
-				$("#hrvlbfim","#frmHorarios").focus();
-			}
-			return false;
-		}
-    });
-
-	//Define ação para ENTER e TAB no campo HORARIO FINAL DE DEVOLUCAO VLB
-	$("#hrvlbfim","#frmHorarios").unbind('keydown').bind('keydown', function(e) {
-		if (e.keyCode == 9 || e.keyCode == 13) {
-			// Horario Invalido
-			if ( !validaHorarioDigitado($(this).val()) ) {
-				showError("error","Hora de fim da DEVOLUCAO VLB inv&aacute;lida.","Alerta - Ayllos","focaCampoErro(\'hrvlbfim\', \'frmHorarios\');",false);
-
-			// Hora Inicial Maior que Hora Final
-			} else if( compararHora($("#hrvlbini","#frmHorarios").val(), $(this).val()) ){
-				showError("error","Hora de fim da DEVOLUCAO VLB n&atilde;o pode ser menor que a hora de in&iacute;cio.","Alerta - Ayllos","focaCampoErro(\'hrvlbfim\', \'frmHorarios\');",false);
-
-			// Sem erros
-			} else {
-				$(this).removeClass('campoErro');
-				$("#hrdiuatu","#frmHorarios").focus();
-			}
-			return false;
-		}
-    });
-
 	//Define ação para ENTER e TAB no campo ATUALIZAR HORARIO DE DEVOLUCAO DIURNA
 	$("#hrdiuatu","#frmHorarios").unbind('keypress').bind('keypress', function(e) {
 		if (e.keyCode == 9 || e.keyCode == 13) {
@@ -1055,9 +990,6 @@ function manterRotina(){
 	var hrnetcan  = $('#hrnetcan','#frmHorarios').val();
 	var hrtaacau  = $('#hrtaacau','#frmHorarios').val();
 	var hrtaacan  = $('#hrtaacan','#frmHorarios').val();
-	var hrvlbatu  = $('#hrvlbatu','#frmHorarios').val();
-	var hrvlbini  = $('#hrvlbini','#frmHorarios').val();
-	var hrvlbfim  = $('#hrvlbfim','#frmHorarios').val();
 	var hrdiuatu  = $('#hrdiuatu','#frmHorarios').val();
 	var hrdiuini  = $('#hrdiuini','#frmHorarios').val();
 	var hrdiufim  = $('#hrdiufim','#frmHorarios').val();
@@ -1096,9 +1028,6 @@ function manterRotina(){
 				  hrnetcan : hrnetcan,  // Horario de Cancelamento de Pagamento INTERNET/MOBILE
 				  hrtaacau : hrtaacau,  // Atualizar Horario Cancelamento do Pagamento TAA "S/N"
 				  hrtaacan : hrtaacan,  // Horario de Cancelamento de Pagamento TAA
-				  hrvlbatu : hrvlbatu,  // Atualizar Horario DEVOLUCAO VLB "S/N"
-				  hrvlbini : hrvlbini,  // Horario de Pagamento DEVOLUCAO VLB - Inicial
-				  hrvlbfim : hrvlbfim,  // Horario de Pagamento DEVOLUCAO VLB - Final
 				  hrdiuatu : hrdiuatu,  // Atualizar Horario DEVOLUCAO DIURNA "S/N"
 				  hrdiuini : hrdiuini,  // Horario de Pagamento DEVOLUCAO DIURNA - Inicial
 				  hrdiufim : hrdiufim,  // Horario de Pagamento DEVOLUCAO DIURNA - Final
@@ -1140,7 +1069,6 @@ function liberaCamposAtualizar(){
 	$('#hrtitcau','#frmHorarios').val("N").habilitaCampo();
 	$('#hrnetcau','#frmHorarios').val("N").habilitaCampo();
 	$('#hrtaacau','#frmHorarios').val("N").habilitaCampo();
-	$('#hrvlbatu','#frmHorarios').val("N").habilitaCampo();
 	$('#hrdiuatu','#frmHorarios').val("N").habilitaCampo();
 	$('#hrnotatu','#frmHorarios').val("N").habilitaCampo();
 }

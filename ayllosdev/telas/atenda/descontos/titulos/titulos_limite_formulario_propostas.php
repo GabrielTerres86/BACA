@@ -25,10 +25,7 @@
  * 010: [10/10/2016] Lucas Ranghetti (CECRED): Remover verificacao de digitalizaco para o botao de consultar imagem(#510032)
  * 011: [26/06/2017] Jonata (RKAM): Ajuste para rotina ser chamada através da tela ATENDA > Produtos (P364).
  * 012: [28/03/2018] Andre Avila (GFT):  Alteração da opção retorno dos botões.
- * 013: [03/05/2018] Andre Avila (GFT):  Alteração da opção retorno do botão cancelar.
-
  */
-
 
 
 ?>
@@ -54,7 +51,7 @@
 			<input type="text" name="qtdiavig" id="qtdiavig" value="0" class="campoTelaSemBorda" disabled>
 			<br />
 			
-			<label for="cddlinha"><? echo utf8ToHtml('Linha de descontos:') ?></label>
+			<label for="cddlinha"><? echo utf8ToHtml('Linha de descontoss:') ?></label>
 			<input type="text" name="cddlinha" id="cddlinha" value="0" class="campo">
 			<a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
 			<input type="text" name="cddlinh2" id="cddlinh2" value="" class="campoTelaSemBorda" disabled>
@@ -172,13 +169,9 @@
 <div id="divBotoesAval">						
 		
 	<input type="image" id="btnVoltarAvalistas" name="btnVoltarAvalistas" src="<? echo $UrlImagens; ?>botoes/voltar.gif" />
-	
-
 	<? if ($cddopcao <> "C") { ?>
 		   <input type="image" id="btnCancelarLimite" name="btnCancelarLimite" src="<? echo $UrlImagens; ?>botoes/cancelar.gif" />
 	<? } ?>
-	
-
 	<input type="image" id="btnConcluirLimite" name="btnConcluirLimite" src="<? echo $UrlImagens; ?>botoes/concluir.gif" />
 			
 </div>	
@@ -337,15 +330,8 @@
 	
 	if (operacao != 'C') {
 		$('#btnCancelarLimite','#divBotoesAval').unbind('click').bind('click',function() {
-
-
-    showConfirmacao(
-        "Deseja cancelar a opera&ccedil;&atilde;o?",
-        "Confirma&ccedil;&atilde;o - Ayllos",
-		"carregaLimitesTitulosPropostas();",
-        "blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))",
-        "sim.gif",
-        "nao.gif");
+			voltaDiv(3,2,4,'DESCONTO DE T&Iacute;TULOS - LIMITE');
+			return false;
 		});
 	}
 	

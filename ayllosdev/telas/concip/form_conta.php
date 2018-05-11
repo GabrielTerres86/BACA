@@ -5,9 +5,6 @@
  * DATA CRIAÇÃO : 17/08/2015
  * OBJETIVO     : Tela do formulario de Contas
  */
-?>
-
-<?php
 session_start();
 require_once('../../includes/config.php');
 require_once('../../includes/funcoes.php');
@@ -72,6 +69,15 @@ isPostMethod();
        <option value="2">Erro</option> 
     </select>
 
+    
+    <!-- Forma transferencia -->
+    <label for="formtran" style="padding-left: 10px;">Forma Transf:</label>
+    <select id="formtran" name="formtran">
+       <option value="0">Todas</option>
+       <option value="3"><?php echo utf8ToHtml('LDL/LTR – 3'); ?></option>
+       <option value="5"><?php echo utf8ToHtml('STR – 5'); ?></option>
+    </select>
+
     <br style="clear:both" />
 
 </form>
@@ -81,7 +87,7 @@ isPostMethod();
 
 <div id="divBotoesConta" style="display:none; margin-bottom: 15px; text-align:center; margin-top: 15px;" >
     <a href="#" class="botao" id="btVoltar"  	onClick="btnVoltar(); return false;">Voltar</a>
-    <a href="#" class="botao" id="btVoltarArq"  	onClick="chamaRotinaArquivo(); return false;">Voltar</a>
+    <a href="#" class="botao" id="btVoltarArq"  onClick="chamaRotinaArquivo(); return false;">Voltar</a>
     <a href="#" class="botao" id="btConsultar"  onClick="controlaOperacao('C'); return false;">Consultar</a>
     <a href="#" class="botao" id="btExportar"  	onClick="exportaContas(); return false;">Exportar</a>
 </div>

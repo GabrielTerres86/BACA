@@ -12,6 +12,8 @@
  *			      30/12/2015 - Alterações Referente Projeto Negativação Serasa (Daniel)	
  *
  *                09/05/2016 - Controlar o foco dos campos de acordo com a pesquisa (Douglas - Chamado 441759)
+ * 
+ *                26/12/2017 - Ajustar o controle de critica para exibir corretamente as mensagens de erro devolvidas pelo Oracle (Douglas - Chamado 820998)
  * -------------- 
  */
 ?> 
@@ -161,7 +163,11 @@
 		$msgErro	= $xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata;
 		$nmdcampo	= $xmlObjeto->roottag->tags[0]->attributes['NMDCAMPO'];
 		if (!empty($nmdcampo)) { $retornoAposErro = $retornoAposErro . " focaCampoErro('".$nmdcampo."','frmOpcao');"; }
-		exibirErro('error',$msgErro,'Alerta - Ayllos',$retornoAposErro,false);
+		
+		echo 'hideMsgAguardo();';
+		echo 'showError("error", "' . $msgErro . '", "Alerta - Ayllos", "' . $retornoAposErro . '");';
+		
+		exit();
 	}
 	
 	// Associado

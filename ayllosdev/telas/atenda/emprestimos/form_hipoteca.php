@@ -46,7 +46,7 @@
 		<a href="#" class="botao" id="btSalvar" onClick="validaHipoteca('atualizaArray(\'A_HIPOTECA\');','A_HIPOTECA'); return false;">Continuar</a>
 	<? } else if ($operacao == 'AI_HIPOTECA') { ?>
 		<a href="#" class="botao" id="btVoltar" onClick="controlaOperacao('A_INICIO'); return false;">Voltar</a>
-		<a href="#" class="botao" id="btSalvar" onClick="validaHipoteca('insereHipoteca(\'A_HIPOTECA\',\'A_FINALIZA\');','A_HIPOTECA'); return false;">Continuar</a>
+		<a href="#" class="botao" id="btSalvar" onClick="validaHipoteca('insereHipoteca(\'A_HIPOTECA\',\'A_DEMONSTRATIVO_EMPRESTIMO\');','A_HIPOTECA'); return false;">Continuar</a>
 	<? } else if ($operacao == 'C_HIPOTECA') { ?>
 		<a href="#" class="botao" id="btVoltar" onClick="controlaOperacao(''); return false;">Voltar</a>
 		<a href="#" class="botao" id="btSalvar" onClick="controlaOperacao('C_HIPOTECA'); return false;">Continuar</a>
@@ -54,7 +54,7 @@
 		<a href="#" class="botao" id="btVoltar" onClick="controlaOperacao(''); return false;">Voltar</a>
 	<? } else if ($operacao == 'I_HIPOTECA') { ?>
 		<a href="#" class="botao" id="btVoltar" onClick="controlaOperacao('I_INICIO'); return false;">Voltar</a>
-		<a href="#" class="botao" id="btSalvar" onClick="validaHipoteca('insereHipoteca(\'I_HIPOTECA\',\'I_FINALIZA\');','I_HIPOTECA'); return false;">Continuar</a>
+		<a href="#" class="botao" id="btSalvar" onClick="validaHipoteca('insereHipoteca(\'I_HIPOTECA\',\'I_DEMONSTRATIVO_EMPRESTIMO\');','I_HIPOTECA'); return false;">Continuar</a>
 	<? } else if ( $operacao == 'IA_HIPOTECA' ) { ?>
 		<a href="#" class="botao" id="btVoltar" onClick="controlaOperacao('I_INICIO'); return false;">Voltar</a>
 		<a href="#" class="botao" id="btSalvar" onClick="validaHipoteca('atualizaArray(\'I_HIPOTECA\');','I_HIPOTECA'); return false;">Continuar</a>

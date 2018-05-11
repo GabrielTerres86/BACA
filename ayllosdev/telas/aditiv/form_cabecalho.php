@@ -12,12 +12,15 @@
  *					           10 Digitos - Campos usados apenas para visualização
  *				 	 		   8 Digitos - Campos usados para alterar ou incluir novos contratos
  *					 		   (Kelvin - SD 233714)
+ *                11/04/2017 - Permitir acessar o Ayllos mesmo vindo do CRM. (Jaison/Andrino)
  * --------------
  */
 
 ?>
 
 <form id="frmCab" name="frmCab" class="formulario cabecalho" onSubmit="return false;" style="display:none">
+	<input type="hidden" name="crm_inacesso" id="crm_inacesso" value="<?php echo $_SESSION["glbvars"][$glbvars["sidlogin"]]['CRM_INACESSO']; ?>" />
+	<input type="hidden" name="crm_nrdconta" id="crm_nrdconta" value="<?php echo $_SESSION["glbvars"][$glbvars["sidlogin"]]['CRM_NRDCONTA']; ?>" />
 	
 	<input name="idseqbem" id="idseqbem" type="hidden" value="" />
 	

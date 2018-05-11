@@ -674,8 +674,10 @@ function formataContratos() {
     arrayLargura[6] = '90px';
     arrayLargura[7] = '60px';
     arrayLargura[8] = '70px';
-    arrayLargura[9] = '90px';
+    arrayLargura[9] = '70px';
     arrayLargura[10] = '90px';
+    arrayLargura[11] = '90px';
+    arrayLargura[12] = '90px';
 
     var arrayAlinha = new Array();
     arrayAlinha[0] = 'center';
@@ -690,6 +692,7 @@ function formataContratos() {
     arrayAlinha[9] = 'right';
     arrayAlinha[10] = 'right';
     arrayAlinha[11] = 'right';
+    arrayAlinha[12] = 'right';
 
     var metodoTabela = '';
 
@@ -2245,6 +2248,11 @@ function formataParcelasPP() {
         valorAtraso += retiraMascara(this.value);
     });
 
+    $("input[type=hidden][name='vliofcpl[]']").each(function() {
+        // Valor total a atual
+        valorAtraso += retiraMascara(this.value);
+    });
+
     var rTotAtras = $('label[for="totatras"]', '#frmVlParc');
     var cTotAtras = $('#totatras', '#frmVlParc');
 
@@ -2465,7 +2473,13 @@ function efetuaGeracaoBoleto(tpemprst) {
             totalPagar = $('#vlrpgto2', '#frmGerarBoletoTR').val();
 			tpparepr = 3; // 3 = Parcial do atraso
 			
-			if (parseFloat($('#vlrpgto2', '#frmGerarBoletoTR').val()) >= parseFloat($('#vlrpgto1', '#frmGerarBoletoTR').val())) {
+			var valoraux1 = $('#vlrpgto1', '#frmGerarBoletoTR').val().replace('.','').replace(',','.').replace(/\s*/g,'')
+			var valoraux2 = $('#vlrpgto2', '#frmGerarBoletoTR').val().replace('.','').replace(',','.').replace(/\s*/g,'');
+			
+			valoraux1 = parseFloat(valoraux1);
+			valoraux2 = parseFloat(valoraux2);
+	
+			if ( valoraux2 >= valoraux1 ) {
 				showError("error", "Valor Parcial do Atraso deve ser menor que o Valor do Atraso.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
 				return false;
 			}

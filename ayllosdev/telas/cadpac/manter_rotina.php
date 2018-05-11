@@ -11,6 +11,8 @@
  *                08/08/2017 - Implementacao da melhoria 438. Heitor (Mouts).
  *  
  *				  08/08/2017 - Adicionado novo parametro flgutcrm para a ação CADPAC_GRAVA. (Reinert - Projeto 339)
+ *
+ *                03/01/2018 - M307 Solicitação de senha e limite para pagamento (Diogo / MoutS)
  */
     session_start();
 	require_once('../../includes/config.php');
@@ -99,6 +101,7 @@
     $nrlatitu = (isset($_POST['nrlatitu'])) ? $_POST['nrlatitu'] : '';
     $nrlongit = (isset($_POST['nrlongit'])) ? $_POST['nrlongit'] : '';
 	$flmajora = (isset($_POST['flmajora'])) ? $_POST['flmajora'] : '';
+    $vllimpag = (isset($_POST['vllimpag'])) ? converteFloat($_POST['vllimpag']) : '';
 
 	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') {
         exibirErro('error',$msgError,'Alerta - Ayllos','',false);
@@ -187,6 +190,7 @@
 	$xml .= "   <indspcxa>".$indspcxa."</indspcxa>";
     $xml .= "   <nrlatitu>".$nrlatitu."</nrlatitu>";
     $xml .= "   <nrlongit>".$nrlongit."</nrlongit>";
+    $xml .= "   <vllimpag>".$vllimpag."</vllimpag>";
 
 	if ($cddopcao == 'B') { // Cadastramento de Caixa
         $nmdeacao = 'CADPAC_CAIXA';

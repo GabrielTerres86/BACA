@@ -8,6 +8,7 @@
  * ALTERAÇÕES   : 
  * -------------- 
  * 000: [06/10/2011] Exibe extrato de acordo com o tipo de empréstimo -  Marcelo L. Pereira (GATI)
+ * 001: [10/08/2017] Inclusao do produto Pos-Fixado. (Jaison/James - PRJ298)
  * -------------- 
  */
 ?> 
@@ -95,7 +96,7 @@
 		$emprestimo = $xmlObjeto->roottag->tags[1]->tags;
 		preencheArray( $emprestimo );
 		echo "montarTabela( 0, 30 );";
-	}else if($tpemprst == 1){
+	}else if($tpemprst == 1 || $tpemprst == 2){
 		echo 'verificaTipoRelatorio();';
 	}
 

@@ -9,6 +9,9 @@
  *							 22/07/2010 - Adicionado a opção de poderes (Jean Michel). 
  *                           03/09/2015 - Reformulacao cadastral (Gabriel-RKAM).
  * 					         13/07/2016 - Correcao da forma de recuperacao das variaveis do array $_POST.SD 479874. Carlos R.
+ *							 15/02/2018 - Ajustado problema que não deixava a tela de poderes abrir pois
+ *										  havia um FIND retorando mais de um registro. Para solucionar
+ *  						              fiz o filtro com a chave correta. (SD 841137 - Kelvin).
  *
  */
 
@@ -118,7 +121,22 @@
 		// Se ocorrer um erro, mostra crítica
 		if (strtoupper($xmlObjetoBens->roottag->tags[0]->name) == 'ERRO') exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos','bloqueiaFundo(divRotina);controlaOperacaoProcuradores()',false);	
 		
-		?><script type="text/javascript">
+		$controle = true;
+	}
+	
+	// Se estiver alterando, chamar o formulario de alteracao
+	if ( $operacao != 'CT' && $operacao != 'P') {
+		include('formulario_procuradores.php');
+	// Se estiver consultando, chamar a tabela que exibe os Representantes/ Procuradores
+	} else if ( $operacao == 'CT' ) {
+		include('tabela_procuradores.php');
+	}else if ( $operacao == 'P' ) {
+		include('../../../includes/procuradores/poderes.php');
+	}	
+
+	if($controle){ ?>
+
+		<script type="text/javascript">
 		
 		arrayBens = new Array();
 				
@@ -133,29 +151,14 @@
 			arrayBem<? echo $i; ?>['vlrdobem'] = '<? echo getByTagName($regBens[$i]->tags,'vlrdobem'); ?>';
 			arrayBens[<? echo $i; ?>] = arrayBem<? echo $i; ?>;
 			<?
-		}
-		?></script><?
-	}
-?>
- 
-<script type="text/javascript">
-	$('#divConteudoOpcao').css({'-moz-opacity':'0','filter':'alpha(opacity=0)','opacity':'0'});
+				}?>
 </script>  
  
-<?
-	
-	// Se estiver alterando, chamar o formulario de alteracao
-	if ( $operacao != 'CT' && $operacao != 'P') {
-		include('formulario_procuradores.php');
-	// Se estiver consultando, chamar a tabela que exibe os Representantes/ Procuradores
-	} else if ( $operacao == 'CT' ) {
-		include('tabela_procuradores.php');
-	}else if ( $operacao == 'P' ) {
-		include('../../../includes/procuradores/poderes.php');
-	}	
-		
-?>	
+	<?}?>
+
 <script type="text/javascript">
+	
+	$('#divConteudoOpcao').css({'-moz-opacity':'0','filter':'alpha(opacity=0)','opacity':'0'});
 	
 	var operacao 	= '<? echo $operacao;    ?>';
 	var estadoCivil = '<? echo $estadoCivil; ?>';

@@ -36,6 +36,7 @@
  * 040: [06/02/2017] Lucas Ranghetti  (CECRED): Alterado funcao buscaCEP apra keydown e adicionado a funcao do tab.  #562253
  * 041: [06/06/2017] Jonata            (Mouts): Ajuste para inclusão da busca de dominios - P408.
  * 042: [13/08/2017] Jonata            (Mouts): Ajuste para incluir a passagem de novo parâmetro na rotina buscaDescricao - P364.
+ * 043: [24/10/2017] Odirlei Busana    (AMcom): Incluido onchage na buscaCPF. PRJ339 - CRM.
  
  */
 
@@ -1672,6 +1673,14 @@ $.fn.extend({
 				eval(fncPesquisa);
 				return false;
 			}	
+		});
+        
+         // Odirlei PRJ339
+        $(this).unbind('change').bind('change', function(e) {
+            
+			if ( divError.css('display') == 'block' ) { return false; }		
+				eval(fncPesquisa);
+				return false;	
 		});
 	}
 	

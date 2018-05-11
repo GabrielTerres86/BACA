@@ -6,10 +6,14 @@
  * OBJETIVO     : Cabeçalho para a tela MANTAL
  * --------------
  * ALTERAÇÕES   : 04/11/2017 - Ajuste para tela ser chamada atraves da tela CONTAS > IMPEDIMENTOS (Jonata - RKAM P364)
+ *                10/04/2017 - Permitir acessar o Ayllos mesmo vindo do CRM. (Jaison/Andrino)
  * --------------
  */ 
 ?>
-
+<form id="frmCRM" name="frmCRM" onsubmit="return false;">
+	<input type="hidden" name="crm_inacesso" id="crm_inacesso" value="<?php echo $_SESSION["glbvars"][$glbvars["sidlogin"]]['CRM_INACESSO']; ?>" />
+	<input type="hidden" name="crm_nrdconta" id="crm_nrdconta" value="<?php echo $_SESSION["glbvars"][$glbvars["sidlogin"]]['CRM_NRDCONTA']; ?>" />
+</form>
 <form id="frmCab" name="frmCab" class="formulario cabecalho" onsubmit="return false;">
 		
 	<label for="cddopcao"><? echo utf8ToHtml('Opção:') ?></label>

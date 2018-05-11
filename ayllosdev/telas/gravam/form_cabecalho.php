@@ -2,13 +2,11 @@
 	/*********************************************************************
 	 Fonte: form_cabecalho.php                                                 
 	 Autor: Andrei - RKAM                                                     
-	 Data : Maio/2016                Última Alteração: 
+	 Data : Maio/2016                Última Alteração: 11/04/2017
 	                                                                  
 	 Objetivo  : Mostrar o form do cabecalho da GRAVAM.                                  
 	                                                                  
-	 Alterações: 
-	 
-	 
+	 Alterações: 11/04/2017 - Permitir acessar o Ayllos mesmo vindo do CRM. (Jaison/Andrino)
 	
 	**********************************************************************/
   
@@ -21,6 +19,8 @@
 ?>
 
 <form name="frmCab" id="frmCab" class="formulario cabecalho" style= "display:none;">
+	<input type="hidden" name="crm_inacesso" id="crm_inacesso" value="<?php echo $_SESSION["glbvars"][$glbvars["sidlogin"]]['CRM_INACESSO']; ?>" />
+	<input type="hidden" name="crm_nrdconta" id="crm_nrdconta" value="<?php echo $_SESSION["glbvars"][$glbvars["sidlogin"]]['CRM_NRDCONTA']; ?>" />
 		
 	<label for="cddopcao"><? echo utf8ToHtml('Opcao:') ?></label>
 	<select id="cddopcao" name="cddopcao">

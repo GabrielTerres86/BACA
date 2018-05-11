@@ -11,6 +11,7 @@
  *                03/11/2014 - Adicionar campos e o link para o cartão assinatura (Douglas - Chamado 177877)
  *                12/05/2015 - Trocado funcao do botao Gerar PDF. (Jorge/Elton) - SD 283911
  *                15/03/2016 - Projeto 316 - Novo botão para Salvar Imagem (Guilherme/SUPERO)
+ *                10/04/2017 - Permitir acessar o Ayllos mesmo vindo do CRM. (Jaison/Andrino)
  * --------------
  */
 
@@ -49,6 +50,8 @@
 
 <div id="divConsultaImagem">
 <form id="frmConsultaImagem" name="frmConsultaImagem" class="formulario">
+	<input type="hidden" name="crm_inacesso" id="crm_inacesso" value="<?php echo $_SESSION["glbvars"][$glbvars["sidlogin"]]['CRM_INACESSO']; ?>" />
+	<input type="hidden" name="crm_nrdconta" id="crm_nrdconta" value="<?php echo $_SESSION["glbvars"][$glbvars["sidlogin"]]['CRM_NRDCONTA']; ?>" />
 
     <hr style="background-color:#666; height:1px;" />
 

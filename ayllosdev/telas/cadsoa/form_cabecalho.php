@@ -15,21 +15,20 @@
 
 <form name="frmCabCadsoa" id="frmCabCadsoa" class="formulario cabecalho" style= "height: 50px">
 		
-	<label for="tpServico" id= "servico"><b> Tipo de Servi&ccedil;o: </b></label>
-	<input name="tpServico" id="tpObrigatorio" type="radio" class="radio" value="1" />	
-	<label for="tpObrigatorio" class="radio"><b>Essencial<b></label>
-	<input name="tpServico" id="tpOpcional" type="radio" class="radio" value="2" />	
-	<label for="tpOpcional" class="radio"><b>Adicional<b></label>	
-	<br>
+	<label for="inpessoa" id= "servico"> Tipo de Pessoa: </label>
 	
-	<label for="tpconta"><b>Tipo Conta:<b></label>
+	<input name="inpessoa" id="inpessoa_1" type="radio" class="radio" value="1" />	
+	<label for="inpessoa_1" class="radio">F&iacute;sica</label>
+	
+	<input name="inpessoa" id="inpessoa_2" type="radio" class="radio" value="2" />	
+	<label for="inpessoa_2" class="radio">Jur&iacute;dica</label>	
+	
+	<input name="inpessoa" id="inpessoa_3" type="radio" class="radio" value="3" <? echo (validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],'P',false) <> '') ? 'style="display: none;"' : '';?> />	
+	<label for="inpessoa_3" class="radio" <? echo (validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],'P',false) <> '') ? 'style="display: none;"' : '';?> >Jur&iacute;dica – Cooperativa</label>	
+	
+	<label for="tpconta">Tipo de Conta:</label>
 	<select name="tpconta" id="tpconta" class="campo" style="width: 73px;">
 		<option value=""> Selecione o tipo</option> 
-		<option value="1"> Conta PF</option> 
-		<option value="2"> Conta Salário</option>
-		<option value="3"> Conta Menor</option>
-		<option value="4"> Conta Aplicação</option>
-		<option value="5"> Conta PJ</option>
 	</select>			
 	<a href="#" id="btConsulta" class="botao">Consultar</a>
 </form>	

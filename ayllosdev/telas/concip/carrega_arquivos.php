@@ -1,5 +1,4 @@
 <?php
-
 /*
  * FONTE        : carrega_arquivos.php
  * CRIAÇÃO      : Daniel Zimmermann
@@ -31,14 +30,21 @@ $nrregist = (isset($_POST['nrregist'])) ? $_POST['nrregist'] : 0;
 $nriniseq = (isset($_POST['nriniseq'])) ? $_POST['nriniseq'] : 0;
 $dtinicio = (isset($_POST['dtinicio'])) ? $_POST['dtinicio'] : '';
 $dtafinal = (isset($_POST['dtafinal'])) ? $_POST['dtafinal'] : '';
+$tparquivo = (isset($_POST['tparquivo'])) ? $_POST['tparquivo'] : 0;
+$credenciadora = (isset($_POST['credenciadora'])) ? $_POST['credenciadora'] : 0;
+$bcoliquidante = (isset($_POST['bcoliquidante'])) ? $_POST['bcoliquidante'] : 0;
+$formtran = (isset($_POST['formtran'])) ? $_POST['formtran'] : '0';
 
-
-$xml .= "<Root>";
+$xml  = "<Root>";
 $xml .= " <Dados>";
 $xml .= "   <dtinicio>" . $dtinicio . "</dtinicio>";
 $xml .= "   <dtfinal>" . $dtafinal . "</dtfinal>";
 $xml .= "   <nriniseq>" . $nriniseq . "</nriniseq>";
 $xml .= "   <nrregist>" . $nrregist . "</nrregist>";
+$xml .= "   <tparquivo>" . $tparquivo . "</tparquivo>";
+$xml .= "   <credenciadora>" . $credenciadora . "</credenciadora>";
+$xml .= "   <bcoliquidante>" . $bcoliquidante . "</bcoliquidante>";
+$xml .= "   <formtran>" . $formtran . "</formtran>";
 $xml .= " </Dados>";
 $xml .= "</Root>";
 
@@ -67,5 +73,3 @@ if (strtoupper($xmlObj->roottag->tags[0]->name == 'ERRO')) {
 }
 
 include('tab_arquivos.php');
-
- 

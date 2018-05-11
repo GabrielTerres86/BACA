@@ -5,7 +5,7 @@
 	 * DATA CRIAÇÃO : 08/07/2013 
 	 * OBJETIVO     : Salva dados referente aos poderes de Representantes/Procuradores
 	 *
-	 * ALTERACOES   :  
+	 * ALTERACOES   : 01/02/2018 - Adicionado idseqttl que estva fixo 0. (Lombardi)  
 	 *
 	 */
 	
@@ -19,6 +19,7 @@
 	$nrcpfcgc = (isset($_POST['nrcpfcgc'])) ? $_POST['nrcpfcgc'] : '';
 	$nrdctato = (isset($_POST['nrdctato'])) ? $_POST['nrdctato'] : '';
 	$arrpoder = (isset($_POST['strPoderes'])) ? $_POST['strPoderes'] : '';
+	$idseqttl = (isset($_POST['idseqttl'])) ? $_POST['idseqttl'] : 0;
 	
 	$arrAuxPoderes = explode("/",$arrpoder);
 	
@@ -50,7 +51,7 @@
 	$xmlSalvaPoderes .= '		<nmdatela>'.$glbvars['nmdatela'].'</nmdatela>';
 	$xmlSalvaPoderes .= '		<idorigem>'.$glbvars['idorigem'].'</idorigem>';
 	$xmlSalvaPoderes .= '		<dtmvtolt>'.$glbvars['dtmvtolt'].'</dtmvtolt>';
-	$xmlSalvaPoderes .= '		<idseqttl>0</idseqttl>';
+	$xmlSalvaPoderes .= '		<idseqttl>'.$idseqttl.'</idseqttl>';
 	
 	foreach($arrPoderes as $chave => $valor ){
 		$xmlSalvaPoderes .= "<Poderes>";

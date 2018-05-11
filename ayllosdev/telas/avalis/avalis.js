@@ -5,7 +5,7 @@
  * OBJETIVO     : Biblioteca de funções da tela AVALIS
  * --------------
  * ALTERAÇÕES   : 23/07/2015 - Colocado função para quando for pressionado a tecla ESC - Jéssica (DB1).
- *
+ *                10/04/2017 - Permitir acessar o Ayllos mesmo vindo do CRM. (Jaison/Andrino)
  * --------------
  */
  
@@ -131,6 +131,12 @@ function formataCabecalho() {
 	});
 	
 	cNrdconta.focus();
+
+    // Seta os valores caso tenha vindo do CRM
+    if ($("#crm_inacesso","#frmCRM").val() == 1) {
+        $("#nrdconta","#frmCab").val($("#crm_nrdconta","#frmCRM").val());
+        $("#nrcpfcgc","#frmCab").val($("#crm_nrcpfcgc","#frmCRM").val());
+    }
 		
 	layoutPadrao();
 	controlaPesquisas();

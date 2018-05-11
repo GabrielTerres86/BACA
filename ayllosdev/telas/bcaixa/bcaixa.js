@@ -19,6 +19,7 @@
  * 20/02/2015 - Lucas R.     (CECRED) : Ajustes na opcao "T" da Tela, Incluir opcao TOTAL (#245838)
  * 10/06/2016 - Kelvin       (CECRED) : Liberando letras no campo de operador conforme solicitado no chamado 461538.
  * 15/08/2017 - Lucas Ranghetti (CECRED): Incluir operauto(Operador do coordenado) na chamada do fonte mantar_rotina.php (#665982)
+ * 16/01/2018 - Lucas Reinert (CECRED): Aumentado tamanho do campo de senha para 30 caracteres. (PRJ339) 
  */
 
 //Formulários e Tabela
@@ -976,7 +977,7 @@ function formataSenha() {
 	cSenha		= $('#codsenha', '#frmSenha');
 	
 	cOperador.addClass('campo').css({'width':'100px'}).attr('maxlength','10').focus();		
-    cSenha.addClass('campo').css({'width':'100px'}).attr('maxlength','10');		
+    cSenha.addClass('campo').css({'width':'100px'}).attr('maxlength','30');		
 	
 
 

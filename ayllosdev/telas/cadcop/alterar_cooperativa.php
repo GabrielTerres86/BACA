@@ -7,6 +7,8 @@
  * --------------
  * ALTERAÇÕES   :  17/11/2016 - M172 Atualizacao Telefone - Novo campo (Guilherme/SUPERO)
  *
+ *                 03/01/2018 - M307 Solicitação de senha e limite para pagamento (Diogo / MoutS)
+ *
  */
 ?>
 
@@ -152,6 +154,7 @@
     $cdsinfmg = (isset($_POST["cdsinfmg"])) ? $_POST["cdsinfmg"] : 0;
     $taamaxer = (isset($_POST["taamaxer"])) ? $_POST["taamaxer"] : 0;
     $vllimapv = (isset($_POST["vllimapv"])) ? $_POST["vllimapv"] : 0;
+    $vllimpag = (isset($_POST["vllimpag"])) ? $_POST["vllimpag"] : 0;
 
     validaDados();
 
@@ -285,6 +288,7 @@
     $xml     .="       <cdsinfmg>".$cdsinfmg."</cdsinfmg>";
     $xml     .="       <taamaxer>".$taamaxer."</taamaxer>";
     $xml     .="       <vllimapv>".$vllimapv."</vllimapv>";
+    $xml     .="       <vllimpag>".$vllimpag."</vllimpag>";    
     $xml       .= "  </Dados>";
     $xml       .= "</Root>";
 

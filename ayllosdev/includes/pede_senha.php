@@ -3,7 +3,7 @@
 	//************************************************************************//
 	//*** Fonte: pede_senha.php                                            ***//
 	//*** Autor: David                                                     ***//
-	//*** Data : Outubro/2008                 Última Alteração: 29/07/2014 ***//
+	//*** Data : Outubro/2008                 Última Alteração: 16/01/2018 ***//
 	//***                                                                  ***//
 	//*** Objetivo  : Montar o HTML para pedido de senha (Coordenador ou   ***//
 	//***             Gerente)                                             ***//
@@ -16,6 +16,10 @@
 	//***			  29/07/2014 - Aumentado tamanho do campo cdoperad     ***//
 	//***						   conforme solicitado no chamado 307064   ***//
 	//***						   (Kelvin)                                ***//
+	//***																   ***//
+	//***			  16/01/2018 - Aumentado tamanho do campo de senha 	   ***//
+	//***						   para 30 caracteres. (PRJ339 - Reinert)  ***//
+	//***																   ***//
 	//************************************************************************//
 	
 	session_start();
@@ -81,7 +85,7 @@
 							</tr>
 							<tr>
 								<td class="txtNormalBold" height="23" align="right">Senha:&nbsp;</td>
-								<td class="txtNormal"><input type="password" name="cddsenha" id="cddsenha" style="width: 100px;" class="campo" autocomplete="no" maxlength="10"></td>
+								<td class="txtNormal"><input type="password" name="cddsenha" id="cddsenha" style="width: 100px;" class="campo" autocomplete="no" maxlength="30"></td>
 							</tr>
 						</table>
 						</form>

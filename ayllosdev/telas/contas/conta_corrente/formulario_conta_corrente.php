@@ -45,7 +45,83 @@
 //recupera tag com a conta consorcio
 $vr_nrctacns = getByTagName($registro,'nrctacns');
 
+// Montar o xml de Requisicao
+$xml  = "";
+$xml .= "<Root>";
+$xml .= "  <Dados>";
+$xml .= "    <inpessoa>". getByTagName($registro,'inpessoa') ."</inpessoa>";
+$xml .= "  </Dados>";
+$xml .= "</Root>";
+
+$xmlResult = mensageria($xml, "CADA0006", "BUSCAR_TPCONTA_COOP", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+$xmlObj = getObjectXML($xmlResult);	
+
+//-----------------------------------------------------------------------------------------------
+// Controle de Erros
+//-----------------------------------------------------------------------------------------------
+if(strtoupper($xmlObj->roottag->tags[0]->name == 'ERRO')){	
+	$msgErro = $xmlObj->roottag->tags[0]->cdata;
+	if($msgErro == null || $msgErro == ''){
+		$msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
+	}
+	exibirErro('error',$msgErro,'Alerta - Ayllos','estadoInicial();',false);
+}
+
+$tipos_conta = $xmlObj->roottag->tags[0]->tags;
+
+
+//recupera tag com a conta consorcio
+$vr_nrctacns = getByTagName($registro,'nrctacns');
+
+// Montar o xml de Requisicao
+$xml  = "";
+$xml .= "<Root>";
+$xml .= "  <Dados>";
+$xml .= "  </Dados>";
+$xml .= "</Root>";
+
+$xmlResult = mensageria($xml, "CADA0006", "BUSCAR_SITUACOES_CONTA", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+$xmlObj = getObjectXML($xmlResult);	
+
+//-----------------------------------------------------------------------------------------------
+// Controle de Erros
+//-----------------------------------------------------------------------------------------------
+if(strtoupper($xmlObj->roottag->tags[0]->name == 'ERRO')){	
+	$msgErro = $xmlObj->roottag->tags[0]->cdata;
+	if($msgErro == null || $msgErro == ''){
+		$msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
+	}
+	exibirErro('error',$msgErro,'Alerta - Ayllos','estadoInicial();',false);
+}
+
+$situacoes = $xmlObj->roottag->tags[0]->tags;
+
 ?>
+<script>
+<?
+
+$idindividual = 0;
+$idconjunta_solidaria = 0;
+$idconjunta_nao_solidaria = 0;
+
+foreach($tipos_conta as $tipo_conta) {
+	if (getByTagName($tipo_conta->tags,'cdtipo_conta') == getByTagName($registro,'cdtipcta')) {
+		$idindividual = getByTagName($tipo_conta->tags,'idindividual');
+		$idconjunta_solidaria = getByTagName($tipo_conta->tags,'idconjunta_solidaria');
+		$idconjunta_nao_solidaria = getByTagName($tipo_conta->tags,'idconjunta_nao_solidaria');
+	}
+	?>
+	var tipoConta = {
+		cdtipo_conta: <? echo getByTagName($tipo_conta->tags,'cdtipo_conta');?>,
+		idindividual: <? echo getByTagName($tipo_conta->tags,'idindividual');?>,
+		idconjunta_solidaria: <? echo getByTagName($tipo_conta->tags,'idconjunta_solidaria');?>,
+		idconjunta_nao_solidaria: <? echo getByTagName($tipo_conta->tags,'idconjunta_nao_solidaria');?>,
+	}
+	tiposConta[<?echo getByTagName($tipo_conta->tags,'cdtipo_conta');?>] = tipoConta;
+	<?
+}
+?>
+</script>
 <form name="frmContaCorrente" id="frmContaCorrente" class="formulario">
 	<fieldset>
 		<legend>Principal</legend>
@@ -57,26 +133,42 @@ $vr_nrctacns = getByTagName($registro,'nrctacns');
 		
 		<label for="cdsitdct">Situa&ccedil;&atilde;o</label>
 		<select id="cdsitdct" name="cdsitdct">
-			<option value=""> - </option>
-			<option value="1" <? if (getByTagName($registro,'cdsitdct') == '1' ){ echo ' selected'; } ?>><? echo utf8ToHtml('1 - Normal')               ?></option>
-			<option value="2" <? if (getByTagName($registro,'cdsitdct') == '2' ){ echo ' selected'; } ?>><? echo utf8ToHtml('2 - Encerrada pelo Ass.')  ?></option>
-			<option value="3" <? if (getByTagName($registro,'cdsitdct') == '3' ){ echo ' selected'; } ?>><? echo utf8ToHtml('3 - Encerrada pela Coop.') ?></option>
-			<option value="4" <? if (getByTagName($registro,'cdsitdct') == '4' ){ echo ' selected'; } ?>><? echo utf8ToHtml('4 - Encerrada pela Dem.')  ?></option>
-			<option value="5" <? if (getByTagName($registro,'cdsitdct') == '5' ){ echo ' selected'; } ?>><? echo utf8ToHtml('5 - Não Aprovada')         ?></option>
-			<option value="6" <? if (getByTagName($registro,'cdsitdct') == '6' ){ echo ' selected'; } ?>><? echo utf8ToHtml('6 - Normal s/ Talão')      ?></option>
-			<option value="7" <? if (getByTagName($registro,'cdsitdct') == '7' ){ echo ' selected'; } ?>><? echo utf8ToHtml('7 - Em Proc. Demiss&atilde;o')  ?></option>
-			<option value="8" <? if (getByTagName($registro,'cdsitdct') == '8' ){ echo ' selected'; } ?>><? echo utf8ToHtml('8 - Em Proc. Dem. BACEN')  ?></option>
-			<option value="9" <? if (getByTagName($registro,'cdsitdct') == '9' ){ echo ' selected'; } ?>><? echo utf8ToHtml('9 - Encerrada por Outro')  ?></option>
+			<?
+				foreach($situacoes as $situacao) {
+				?> 
+					<option value="<? echo getByTagName($situacao->tags,'cdsituacao'); ?>" <? if (getByTagName($registro,'cdsitdct') == getByTagName($situacao->tags,'cdsituacao') ){ echo ' selected'; } ?>>
+						<? echo getByTagName($situacao->tags,'cdsituacao') . ' - ' . getByTagName($situacao->tags,'dssituacao'); ?>
+					</option>
+				<?
+				}
+			?>
 		</select>	
 		<br />
 		
 		<label for="cdtipcta">Tipo Conta:</label>
 		<select name="cdtipcta" id="cdtipcta">
-			<option value="" selected> - </option>
+			<?
+				foreach($tipos_conta as $tipo_conta) {
+				?> 
+					<option value="<? echo getByTagName($tipo_conta->tags,'cdtipo_conta'); ?>" <? if (getByTagName($registro,'cdtipcta') == getByTagName($tipo_conta->tags,'cdtipo_conta') ){ echo ' selected'; } ?>>
+						<? echo getByTagName($tipo_conta->tags,'cdtipo_conta') . ' - ' . getByTagName($tipo_conta->tags,'dstipo_conta'); ?>
+					</option>
+				<?
+				}
+			?>
 		</select>
 		
 		<label for="cdbcochq">Banco Emiss&atilde;o do Cheque</label>
 		<input name="cdbcochq" id="cdbcochq" type="text" value="<? echo getByTagName($registro,'cdbcochq') ?>" />
+		<br />
+		
+		<label for="cdcatego" <?php echo getByTagName($registro,'inpessoa') > 1 ? 'style="display: none";' : '' ?>>Categoria</label>
+		<select name="cdcatego" id="cdcatego" <?php echo getByTagName($registro,'inpessoa') > 1 ? 'style="display: none";' : '' ?>>
+			<? if ($idindividual == 1) { ?> <option value="1" <? if (getByTagName($registro,'cdcatego') == 1) echo 'Selected'; ?>>Individual</option> <? } ?>
+			<? if ($idconjunta_solidaria == 1) { ?> <option value="2" <? if (getByTagName($registro,'cdcatego') == 2) echo 'Selected'; ?>>Conjunta</option> <? } ?>
+			<!--< ? if ($idconjunta_solidaria == 1) { ?> <option value="2" < ? if (getByTagName($registro,'cdcatego') == 2) echo 'Selected'; ?>>Conjunta solid&aacute;ria</option> < ? } ?>
+			< ? if ($idconjunta_nao_solidaria == 1) { ?> <option value="3" < ? if (getByTagName($registro,'cdcatego') == 3) echo 'Selected'; ?>>Conjunta n&atilde;o solid&aacute;ria</option> < ? } ?> -->
+		</select>
 		<br />
 		
 		<label for="nrdctitg">Conta/ITG:</label>
@@ -165,6 +257,13 @@ $vr_nrctacns = getByTagName($registro,'nrctacns');
 			<br />
 		<?php } ?>
 		
+		<label class="rotulo" for="flblqtal"><?php echo utf8ToHtml('Blq.Entrega Talão:') ?></label>
+		<input name="flblqtal" id="flblqtalOp1" type="radio" class="radio" value="1" <?php if (getByTagName($registro,'flblqtal') == 'yes') { echo ' checked'; } ?> />
+		<label for="flblqtalOp1" class="radio">Sim</label>		
+		<input name="flblqtal" id="flblqtalOp2" type="radio" class="radio" value="0" <?php if (getByTagName($registro,'flblqtal') == 'no') { echo ' checked'; } ?> />
+		<label for="flblqtalOp2" class="radio"><?php echo utf8ToHtml('Não') ?></label>
+		<br />
+		
 	</fieldset>
 	
 	<fieldset>
@@ -192,14 +291,14 @@ $vr_nrctacns = getByTagName($registro,'nrctacns');
 		<label for="dtabtcoo">Como Cooperado => Abertura:</label>
 		<input name="dtabtcoo" id="dtabtcoo" type="text" value="<? echo getByTagName($registro,'dtabtcoo') ?>" />
 		
-		<label for="dtelimin"><? echo utf8ToHtml('Demissão:') ?></label>
+		<label for="dtelimin">Encerramento:</label>
 		<input name="dtelimin" id="dtelimin" type="text" value="<? echo getByTagName($registro,'dtelimin') ?>" />
 		<br />
 		
 		<label for="dtabtcct">Como Correntista => Abertura:</label>
 		<input name="dtabtcct" id="dtabtcct" type="text" value="<? echo getByTagName($registro,'dtabtcct') ?>" />		
 		
-		<label for="dtdemiss">Encerramento:</label>
+		<label for="dtdemiss">Demiss&atilde;o:</label>
 		<input name="dtdemiss" id="dtdemiss" type="text" value="<? echo getByTagName($registro,'dtdemiss') ?>" />
 	</fieldset>
 	

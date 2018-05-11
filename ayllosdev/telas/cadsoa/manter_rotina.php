@@ -26,8 +26,10 @@
 	// Guardo os parâmetos do POST em variáveis	
 	$tpproduto = (isset($_POST['tpproduto'])) ? $_POST['tpproduto'] : '0';
 	$tpconta   = (isset($_POST['tpconta'])) ? $_POST['tpconta'] : '';
+	$inpessoa  = (isset($_POST['inpessoa'])) ? $_POST['inpessoa'] : '';
 	$operacao = (isset($_POST['operacao'])) ? $_POST['operacao'] : 'CONSULTA';
 	$servicos = (isset($_POST['servicos'])) ? $_POST['servicos'] : '';
+	$vlmincapi = (isset($_POST['vlmincapi'])) ? $_POST['vlmincapi'] : '0';
 	
 	// Verifica Permissão
 	/* if (($msgError = validaPermissao($glbvars["nmdatela"],"",substr($cddopcao,0,1))) <> "") {
@@ -46,6 +48,7 @@
 		$xml .= "    <cdcooper>".$glbvars['cdcooper']."</cdcooper>";
 		$xml .= "    <tpproduto>".$tpproduto."</tpproduto>";
 		$xml .= "    <tpconta>".$tpconta."</tpconta>";	
+		$xml .= "    <inpessoa>".$inpessoa."</inpessoa>";
 		$xml .= " </Dados>";
 		$xml .= "</Root>";		
 		
@@ -61,6 +64,7 @@
 		$xml .= "    <cdcooper>".$glbvars['cdcooper']."</cdcooper>";
 		$xml .= "    <tpproduto>".$tpproduto."</tpproduto>";
 		$xml .= "    <tpconta>".$tpconta."</tpconta>";
+		$xml .= "    <inpessoa>".$inpessoa."</inpessoa>";
 		$xml .= "    <servico>".$servicos."</servico>";		
 		$xml .= " </Dados>";
 		$xml .= "</Root>";		
@@ -78,7 +82,9 @@
 		$xml .= "    <cdcooper>".$glbvars['cdcooper']."</cdcooper>";
 		$xml .= "    <tpproduto>".$tpproduto."</tpproduto>";
 		$xml .= "    <tpconta>".$tpconta."</tpconta>";
+		$xml .= "    <inpessoa>".$inpessoa."</inpessoa>";
 		$xml .= "    <servicos>".$servicos."</servicos>";		
+		$xml .= "    <vlmincapi>".$vlmincapi."</vlmincapi>";		
 		$xml .= " </Dados>";
 		$xml .= "</Root>";		
 		

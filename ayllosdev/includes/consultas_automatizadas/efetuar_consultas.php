@@ -16,6 +16,7 @@
  *                              para verificar se deve verificar se proposta ja esta na esteira de credito.
  *                              PRJ207 - Esteira (Odirlei-AMcom). 
  *
+ *                 30/10/2017 - Alterada rotina ao efetuar inclusão pela tela CADMAT. (PRJ339 - Reinert)
  */
 	session_start();
 	require_once('../config.php');
@@ -32,6 +33,7 @@
 	$inobriga = $_POST['inobriga'];
 	$insolici = $_POST['insolici'];
     $flvalest = $_POST['flvalest']; //validar se ja esta na Esteira de Credito	
+	$nmdatela = $_POST['nmdatela'];
 	
 	if ($insolici == 1) { // Solicitou as consultas
 	
@@ -55,8 +57,9 @@
 		$xmlObj    = simplexml_load_string($xmlResult);
 				   
 		// Se for da tela MATRIC (inprodut == 6), nao bloquear a tela e chamar tela CONTAS. 
+		// Se for inclusão pela tela CADMAT chamar a tela CADCTA
 		// Senao so bloquear TELA
-		$metodo = ($inprodut == 6) ? "setaParametros('CONTAS','','$nrdconta','M'); direcionaTela('CONTAS','no');" : "bloqueiaFundo(divRotina)";
+		$metodo = ($inprodut == 6) ? ($nmdatela == 'CADMAT') ? "setaParametros('CADCTA','','$nrdconta','A'); direcionaTela('CADCTA','no');" : "setaParametros('CONTAS','','$nrdconta','M'); direcionaTela('CONTAS','no');" : "bloqueiaFundo(divRotina)";
 		   
 		// Se retornou erro		   
 		if ($xmlObj->Erro->Registro->dscritic != '') {

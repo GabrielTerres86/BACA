@@ -14,6 +14,10 @@
 	//***                                          						   ***//
 	//***             08/08/2017 - Implementacao da melhoria 438.          ***//
 	//***                          Heitor (Mouts).                         ***//
+	//***                                          						   ***//
+	//***             14/11/2017 - Nova coluna "Operador"                  ***//
+	//***                          Chamado 791852 (Mateus Z - Mouts)	   ***//
+	//***                                          						   ***//
 	//************************************************************************//
 	
 	session_start();
@@ -108,6 +112,7 @@
 				<th><? echo utf8ToHtml('Limite');  ?></th>
 				<th><? echo utf8ToHtml('Situa&ccedil;&atilde;o');  ?></th>
 				<th><? echo utf8ToHtml('Motivo');  ?></th>
+				<th><? echo utf8ToHtml('Operador');  ?></th>
 			</tr>
 		</thead>
 		<tbody>
@@ -133,7 +138,9 @@
 					<td><span><?php echo getByTagName($registro->tags,'dsmotivo'); ?></span>
 							  <?php echo getByTagName($registro->tags,'dsmotivo'); ?>
 					</td>
-
+					<td><span><?php echo getByTagName($registro->tags,'nmoperad'); ?></span>
+							  <?php echo getByTagName($registro->tags,'nmoperad'); ?>
+					</td>
 				</tr>
 		<? } ?>	
 		</tbody>

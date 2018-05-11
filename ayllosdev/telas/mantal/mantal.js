@@ -10,7 +10,7 @@
  * 002: [23/01/2017] Tiago Machado    (CECRED): Validar se deve alterar agencia para o banco 756 tambem (#549323)
  * 003: [04/11/2017] Jonata           (RKAM)  : 04/11/2017 - Ajuste para tela ser chamada atraves da tela CONTAS > IMPEDIMENTOS (P364)
  * 004: [14/11/2017] Jonata           (RKAM)  : Ajuste nas rotinas de controle para sequencia dos impedimetnos (P364)
-                               
+ * 003: [10/04/2017] Permitir acessar o Ayllos mesmo vindo do CRM. (Jaison/Andrino)                              
  * --------------
  */
 
@@ -19,6 +19,7 @@ var operacao 		= ''; // Armazena a operação corrente da tela MANTAL
 var controle		= '';	
 
 var cddopcao		= '';
+var nrdconta 		= 0 ; // Armazena o Número da Conta/dv
 
 var aux_cdagechq	= '';
 var aux_nriniche	= '';
@@ -68,6 +69,11 @@ function estadoInicial() {
 
 	$('input, select','#'+ formCab ).removeClass('campoErro');
 	$('input, select','#'+ formDados ).removeClass('campoErro');
+	
+    // Seta os valores caso tenha vindo do CRM
+    if ($("#crm_inacesso","#frmCRM").val() == 1) {
+        $("#nrdconta","#frmCab").val($("#crm_nrdconta","#frmCRM").val());
+    }
 	
 	cBanco.attr('aux','');
 	cConta.focus();

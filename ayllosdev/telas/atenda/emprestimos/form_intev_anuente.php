@@ -127,7 +127,8 @@
 		<a href="#" class="botao" id="btLimpar"  onClick="limpaForm('frmIntevAnuente'); return false;">Limpar</a>
 	<? } else if ($operacao == 'AI_INTEV_ANU') { ?>
 		<a href="#" class="botao" id="btVoltar"  onClick="controlaOperacao('A_INICIO'); return false;">Voltar</a>
-		<a href="#" class="botao" id="btSalvar"  onClick="exibeAguardo( 'Aguarde, validando dados...' , 'insereIntervente(\'A_INTEV_ANU\',\'A_FINALIZA\');' , 400 ); return false;" >Continuar</a>
+		<a href="#" class="botao" id="btSalvar"  onClick="exibeAguardo( 'Aguarde, validando dados...' , 'insereIntervente(\'A_INTEV_ANU\',\'A_DEMONSTRATIVO_EMPRESTIMO\');' , 400 ); return false;" >Continuar</a>
+		<!-- exibeAguardo( 'Aguarde, validando dados...' , 'insereIntervente(\'A_INTEV_ANU\',\'A_FINALIZA\');' , 400 ); return false; -->
 		<a href="#" class="botao" id="btLimpar"  onClick="limpaForm('frmIntevAnuente'); return false;">Limpar</a>		
 	<? } else if ($operacao == 'C_INTEV_ANU') { ?>
 		<a href="#" class="botao" id="btVoltar"  onClick="controlaOperacao('CF'); return false;">Voltar</a>
@@ -136,7 +137,8 @@
 		<a href="#" class="botao" id="btVoltar"  onClick="controlaOperacao(''); return false;">Voltar</a>
 	<? } else if ($operacao == 'I_INTEV_ANU') { ?>
 		<a href="#" class="botao" id="btVoltar"  onClick="controlaOperacao('I_INICIO'); return false;">Voltar</a>
-		<a href="#" class="botao" id="btSalvar"  onClick="exibeAguardo( 'Aguarde, validando dados...' , 'insereIntervente(\'I_INTEV_ANU\',\'I_FINALIZA\');' , 400 );return false;">Continuar</a>
+		<a href="#" class="botao" id="btSalvar"  onClick="exibeAguardo( 'Aguarde, validando dados...' , 'insereIntervente(\'I_INTEV_ANU\',\'I_DEMONSTRATIVO_EMPRESTIMO\');' , 400 );return false;">Continuar</a>
+		<!-- exibeAguardo( 'Aguarde, validando dados...' , 'insereIntervente(\'I_INTEV_ANU\',\'I_FINALIZA\');' , 400 );return false; -->
 		<a href="#" class="botao" id="btLimpar"  onClick="limpaForm('frmIntevAnuente'); return false;">Limpar</a>		
 	<? } else if ( $operacao == 'IA_INTEV_ANU' ) { ?>
 		<a href="#" class="botao" id="btVoltar"  onClick="controlaOperacao('I_INICIO'); return false;">Voltar</a>

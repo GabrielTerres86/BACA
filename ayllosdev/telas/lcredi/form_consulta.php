@@ -3,7 +3,7 @@
 
   Fonte: form_consulta.php
   Autor: Andrei - RKAM
-  Data : Julho/2016                       Última Alteração: 24/08/2016
+  Data : Julho/2016                       Última Alteração: 27/03/2017
 
   Objetivo  : Mostrar o form com as informaões da linha de crédito.
 
@@ -12,6 +12,9 @@
   
 			  24/08/2016 - Ajuste para alimentar os campos select corretamente
 						  (Adriano)
+
+              27/03/2017 - Inclusao dos campos Produto e Indexador. Ajuste na
+                           label de Taxa variavel. (Jaison/James - PRJ298)
 
  * ********************************************************************* */
 
@@ -30,7 +33,15 @@
 	<fieldset id="fsetConsulta" name="fsetConsulta" style="padding:0px; margin:0px; padding-bottom:10px;">
 		
 		<legend>Informa&ccedil;&otilde;es</legend>
-			
+
+		<label for="tpprodut"><? echo utf8ToHtml("Produto:"); ?></label>
+		<select id="tpprodut" name="tpprodut" onchange="exibeFieldIndexador();">
+			<option value="1" <?php echo (getByTagName($linha->tags,'tpprodut') == 1 ? 'selected' : ''); ?>>Price TR/Price Pr&eacute;-Fixado</option>
+			<option value="2" <?php echo (getByTagName($linha->tags,'tpprodut') == 2 ? 'selected' : ''); ?>>P&oacute;s-Fixado</option>
+		</select>
+
+		<br />
+
 		<label for="dslcremp"><? echo utf8ToHtml("Descri&ccedil;&atilde;o:"); ?></label>
 		<input type="text" id="dslcremp" name="dslcremp" value="<?echo getByTagName($linha->tags,'dslcremp');?>" >
 		
@@ -87,11 +98,7 @@
 		<br />
 		
 		<label for="cdusolcr"><? echo utf8ToHtml("C&oacute;digo de uso:"); ?></label>
-		<select  id="cdusolcr" name="cdusolcr" value="<?echo getByTagName($linha->tags,'cdusolcr'); ?>">
-			<option value="0" <?php if (getByTagName($linha->tags,'cdusolcr') == 0) { ?> selected <?php } ?> >Normal</option>
-			<option value="1" <?php if (getByTagName($linha->tags,'cdusolcr') == 1) { ?> selected <?php } ?> >Micro Cr&eacute;dito</option>
-			<option value="2" <?php if (getByTagName($linha->tags,'cdusolcr') == 2) { ?> selected <?php } ?> >Epr/Boletos</option>
-		</select>
+		<select  id="cdusolcr" name="cdusolcr" val_cdusolcr="<?php echo getByTagName($linha->tags,'cdusolcr'); ?>"></select>
 
 		<label for="flgtarif"><? echo utf8ToHtml("Tarifa normal:"); ?></label>
 		<select  id="flgtarif" name="flgtarif" value="<?echo getByTagName($linha->tags,'flgtarif'); ?>">
@@ -176,13 +183,26 @@
 	<fieldset id="fsetTaxa" name="fsetTaxa" style="padding:0px; margin:0px; padding-bottom:10px;">
 		
 		<legend>Taxa</legend>
-				
+
+		<div id="divIndexador">
+            <label for="cddindex"><? echo utf8ToHtml("Indexador:"); ?></label>
+            <select id="cddindex" name="cddindex">
+            <?php
+                foreach ($xmlIndexa as $reg) {
+                    $cddindex = getByTagName($reg->tags,'CDDINDEX');
+                    $nmdindex = getByTagName($reg->tags,'NMDINDEX');
+                    echo '<option value="'.$cddindex.'" '.(getByTagName($linha->tags,'cddindex') == $cddindex ? 'selected' : '').'>'.$nmdindex.'</option>';
+                }
+            ?>
+            </select>
+		</div>
+
 		<label for="txjurfix"><? echo utf8ToHtml("Taxa Fixa %:"); ?></label>
 		<input  type="text" id="txjurfix" name="txjurfix"value="<?echo getByTagName($linha->tags,'txjurfix'); ?>" > 
 		
 		<label for="txjurvar"><? echo utf8ToHtml("Taxa vari&aacute;vel %:"); ?></label>
 		<input  type="text" id="txjurvar" name="txjurvar"value="<?echo getByTagName($linha->tags,'txjurvar'); ?>" > 
-		<label for="txjurvarDesc"><? echo utf8ToHtml("da TR/UFIR"); ?></label>
+		<label for="txjurvarDesc"><? echo utf8ToHtml("CDI/TR/UFIR"); ?></label>
 		
 		<br />
 

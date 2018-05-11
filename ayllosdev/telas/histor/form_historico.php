@@ -6,6 +6,7 @@
 	* OBJETIVO     : Formulario de alteração e inclusão dos históricos da Tela HISTOR
 	* --------------
 	* ALTERAÇÕES   : 24/02/2017 - Remocao dos caracteres "')?>" dos textos dos campos no form. (Jaison/James)
+	*				 05/12/2017 - Adicionado campo Ind. Monitoramento - Melhoria 458 - Antonio R. Jr (mouts)
 	* --------------
 	*/ 
 
@@ -46,7 +47,7 @@
 				<tr>
 					<td>
 						<label for="indebcre">D&eacute;bito/Cr&eacute;dito:</label>
-						<select name="indebcre" id="indebcre">
+						<select name="indebcre" id="indebcre" onchange="liberaMonitoramento(); return false;">
 							<option value="D">D&eacute;bito</option> 
 							<option value="C">Cr&eacute;dito</option> 
 						</select>
@@ -130,11 +131,18 @@
 					</td>
 				</tr>
 				<tr>
-					<td colspan="2">
+					<td>
 						<label for="incremes">Ind. p/Estat. Cr&eacute;dito do M&ecirc;s:</label>
 						<select id="incremes" name="incremes">
 							<option value="1">Soma na estat&iacute;stica </option>
 							<option value="0">N&atilde;o soma </option>
+						</select>
+					</td>
+					<td>
+						<label for="inmonpld">Ind. Monitoramento:</label>
+						<select id="inmonpld" name="inmonpld">
+							<option value="1">Sim </option>
+							<option value="0">N&atilde;o </option>
 						</select>
 					</td>
 				</tr>
@@ -244,6 +252,23 @@
 			</table>
 		</fieldset>
 
+		<!-- Fieldset para os campos de TARIFAS do historico -->
+		<fieldset id="fsetTarifas" name="fsetTarifas" style="padding-bottom:10px;">
+			
+			<legend>Situa&ccedil;&otilde;es de Conta</legend>
+
+			<table width="100%">
+				<tr>
+					<td>
+						<label for="cdgrupo_historico">Grupo de Hist&oacute;rico:</label>
+						<input name="cdgrupo_historico" id="cdgrupo_historico" type="text"/>
+						<a style="margin-top:0px;" href="#" onClick="controlaPesquisaGrupoHistorico('frmHistorico'); return false;"><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"/></a>
+						<input name="dsgrupo_historico" id="dsgrupo_historico" type="text"/>
+					</td>
+				<tr>
+			</table>
+		</fieldset>
+		
 		<!-- Fieldset para os campos de TARIFAS do historico -->
 		<fieldset id="fsetOutros" name="fsetOutros" style="padding-bottom:10px;">
 			

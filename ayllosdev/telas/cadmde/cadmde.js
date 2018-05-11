@@ -4,7 +4,8 @@
  * DATA CRIAÇÃO : 21/09/2017
  * OBJETIVO     : Biblioteca de funções da tela CADMDE
  * --------------
- * ALTERAÇÕES   : 
+ * ALTERAÇÕES   : 27/12/2017 - Ajustes para não permitir informar acentuação. PRJ2339 - CRM(Odirlei-AMcom)
+ *                22/01/2018 - Retirada obrigatoriedade de infomar Pessoa Física ou Jurídica na alteração
  * --------------
  */
 
@@ -83,6 +84,11 @@ function controlaFoco() {
 			$('#flgpessf','#frmCadmde').focus();
 			return false;
 		}	
+	});
+	
+    $('#dsmotivo','#frmCadmde').unbind('change').bind('change', function(e) {        
+        $('#dsmotivo','#frmCadmde').val( removeCaracteresInvalidos($('#dsmotivo','#frmCadmde').val(),true) );
+		return false;
 	});
 	
 	$('#flgpessf','#frmCadmde').unbind('keydown').bind('keydown', function(e) {
@@ -219,7 +225,7 @@ function formataMotivos() {
 	rTpmotivo.addClass('rotulo').css({'width':'160px'});
 	
 	$('#cdmotivo','#frmCadmde').addClass('campo pesquisa inteiro').css({'width':'80px'}).attr('maxlength', '8'); 
-	$('#dsmotivo','#frmCadmde').addClass('campo').css({'width':'350px'});
+	$('#dsmotivo','#frmCadmde').addClass('campo').addClass('alpha').css({'width':'350px'});
 	$('#flgpessf','#frmCadmde').addClass('campo');
 	$('#flgpessj','#frmCadmde').addClass('campo');
 	$('#tpmotivo','#frmCadmde').addClass('campo').css({'width':'350px'});
@@ -433,13 +439,7 @@ function alteraMotivo(){
 		showError('error','Informe o motivo de desligamento.','Alerta - Ayllos',"unblockBackground(); $('#dsmotivo','#frmCadmde').focus();");
 		return false;
 	}
-	// Se não selecionou PF e PJ
-	if (flgpessf == 0 && flgpessj == 0){
-		hideMsgAguardo();
-		showError('error','Informe o tipo de pessoa.','Alerta - Ayllos',"unblockBackground(); $('#flgpessf','#frmCadmde').focus();");
-		return false;		
-	}
-	
+
 	$.ajax({        
 		type: 'POST',
 		dataType: 'html',

@@ -10,6 +10,7 @@
  *                002: [09/09/2014] Projeto Automatização de Consultas em Propostas de Crédito(Jonata-RKAM).
  *                003: [01/03/2016] PRJ Esteira de Credito. (Jaison/Oscar)
  *                004: [12/05/2017] Buscar a nacionalidade com CDNACION. (Jaison/Andrino)
+ *                005: [24/10/2017] Ajustes ao carregar dados do avalista e controle de alteração. PRJ339 CRM (Odirlei-AMcom)                      
  */	
  ?>
 
@@ -18,20 +19,29 @@
 	<fieldset>
 		<legend></legend>
 	
+	    <input name="crm_inacesso" id="crm_inacesso" type="hidden" value="<? echo $glbvars["CRM_INACESSO"] ?>" />
+        
 		<label for="qtpromis">Quant.:</label>
 		<input name="qtpromis" id="qtpromis" type="text" value="" />
 				
 		<label for="nrctaava">Conta:</label>
 		<input name="nrctaava" id="nrctaava" type="text" value="" />
 		<a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"></a>
-		<br />	
 				
-		<label for="nmdavali">Nome:</label>
-		<input name="nmdavali" id="nmdavali" type="text" value="" />
+        <label for="inpessoa">Tp Nat.:</label>
+		<select name="inpessoa" id="inpessoa" alt="Entre com 1-Fisica 2-Juridica.">
+			<option value=""  > - </option> 
+			<option value="1" >1 - Fisica</option>
+			<option value="2" >2 - Juridica</option>
+		</select>	
 		
+		<br />	
 		
 		<label for="nrcpfcgc">C.P.F.:</label>
 		<input name="nrcpfcgc" id="nrcpfcgc" type="text" value="" />
+                
+		<label for="nmdavali">Nome:</label>
+		<input name="nmdavali" id="nmdavali" type="text" value="" />
 		<br />			
 				
 		<label for="tpdocava">Doc.:</label>
@@ -45,13 +55,6 @@
 		<input name="nrdocava" id="nrdocava" type="text" value="" />
 		<br />	
 		
-        <label for="inpessoa">Tp Nat.:</label>
-		<select name="inpessoa" id="inpessoa" alt="Entre com 1-Fisica 2-Juridica.">
-			<option value=""  > - </option> 
-			<option value="1" >1 - Fisica</option>
-			<option value="2" >2 - Juridica</option>
-		</select>	
-        <br />
         
 		<label for="cdnacion">Nacio.:</label>
         <input name="cdnacion" id="cdnacion" type="text" />

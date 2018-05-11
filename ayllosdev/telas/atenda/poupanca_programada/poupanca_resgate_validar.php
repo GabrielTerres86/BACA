@@ -3,23 +3,30 @@
 	//************************************************************************//
 	//*** Fonte: poupanca_resgate_validar.php                              ***//
 	//*** Autor: David                                                     ***//
-	//*** Data : MarÁo/2010                   ⁄ltima AlteraÁ„o: 22/06/2015 ***//
+	//*** Data : Mar√ßo/2010                   √öltima Altera√ß√£o: 26/07/2016 ***//
 	//***                                                                  ***//
-	//*** Objetivo  : Validar resgate para poupanÁa programada             ***//	
+	//*** Objetivo  : Validar resgate para poupan√ßa programada             ***//	
 	//***                                                                  ***//	 
-	//*** AlteraÁıes: 22/06/2015 - Ajustes para verificar valor de alcada  ***//
+	//*** Altera√ß√µes: 22/06/2015 - Ajustes para verificar valor de alcada  ***//
 	//***                          do operador - projeto melhoria captacao ***//
 	//***                          (Tiago/Gielow).                         ***//
+  //***                                                                  ***//
+	//***			        26/07/2016 - Corrigi o tratamento para retorno de    ***//
+	//***						                erro do XML. SD 479874 (Carlos R.)	   ***//
+  //***                                                                  ***//
+  //***            21/02/2018 - Corre√ß√£o do login enviado para a tela    ***//
+  //***                         poupanca_resgate_valida.php              ***//
+  //***                         (Antonio R Jr) - Chamado 852162          ***//
 	//************************************************************************//
 	
 	session_start();
 	
-	// Includes para controle da session, vari·eis globais de controle, e biblioteca de funÁıes	
+	// Includes para controle da session, vari√°eis globais de controle, e biblioteca de fun√ß√µes	
 	require_once("../../../includes/config.php");
 	require_once("../../../includes/funcoes.php");		
 	require_once("../../../includes/controla_secao.php");
 
-	// Verifica se tela foi chamada pelo mÈtodo POST
+	// Verifica se tela foi chamada pelo m√©todo POST
 	isPostMethod();	
 	
 	// Classe para leitura do xml de retorno
@@ -29,7 +36,7 @@
 		exibeErro($msgError);		
 	}	
 	
-	// Se par‚metros necess·rios n„o foram informados
+	// Se par√¢metros necess√°rios n√£o foram informados
 	if (!isset($_POST["nrdconta"]) || !isset($_POST["nrctrrpp"]) || !isset($_POST["tpresgat"]) || 
 	    !isset($_POST["vlresgat"]) || !isset($_POST["dtresgat"]) || !isset($_POST["flgctain"])) {
 		exibeErro("Par&acirc;metros incorretos.");
@@ -43,41 +50,43 @@
 	$flgctain = $_POST["flgctain"];
 	$cdoperad = (!isset($_POST['cdopera2'])) ? '' : $_POST['cdopera2']; 
 	$cddsenha = (!isset($_POST['cddsenha'])) ? '' : $_POST['cddsenha']; 
+  $fvisivel = $_POST["fvisivel"];
 	$flgsenha = 0;
 	
-	if($cdoperad != ''){
+	if($cdoperad != '' && $fvisivel == 1){
 		$cdoperad = $_POST['cdopera2'];		
 		$flgsenha = 1;
 	}else{
 		$cdoperad = $glbvars["cdoperad"];
+    $flgsenha = 0;
 	}
 	
-	// Verifica se n˙mero da conta È um inteiro v·lido
+	// Verifica se n√∫mero da conta √© um inteiro v√°lido
 	if (!validaInteiro($nrdconta)) {
 		exibeErro("Conta/dv inv&aacute;lida.");
 	}	
 	
-	// Verifica se o contrato da poupanÁa um inteiro v·lido
+	// Verifica se o contrato da poupan√ßa um inteiro v√°lido
 	if (!validaInteiro($nrctrrpp)) {
 		exibeErro("N&uacute;mero de contrato inv&aacute;lido.");
 	}	
 	
-	// Verifica se o valor de resgate È um decimal v·lido
+	// Verifica se o valor de resgate √© um decimal v√°lido
 	if (!validaDecimal($vlresgat)) {
 		exibeErro("Valor de resgate inv&aacute;lido.");
 	}
 	
-	// Verifica se a data de resgate È v·lida
+	// Verifica se a data de resgate √© v√°lida
 	if (!validaData($dtresgat)) {
 		exibeErro("Data de resgate inv&aacute;lida.");
 	}					
 	
-	// Verifica se flag de recebimento em conta investimento È v·lida
+	// Verifica se flag de recebimento em conta investimento √© v√°lida
 	if ($flgctain <> "yes" && $flgctain <> "no") {
 		exibeErro("Identificador de resgate inv&aacute;lido.");
 	}
 	
-	// Monta o xml de requisiÁ„o
+	// Monta o xml de requisi√ß√£o
 	$xmlResgate  = ""; 
 	$xmlResgate .= "<Root>";
 	$xmlResgate .= "	<Cabecalho>";
@@ -111,7 +120,7 @@
 	// Cria objeto para classe de tratamento de XML
 	$xmlObjResgate = getObjectXML($xmlResult);
 	
-	// Se ocorrer um erro, mostra crÌtica
+	// Se ocorrer um erro, mostra cr√≠tica
 	if (strtoupper($xmlObjResgate->roottag->tags[0]->name) == "ERRO") {
 		exibeErro($xmlObjResgate->roottag->tags[0]->tags[0]->tags[4]->cdata);
 	} 
@@ -130,7 +139,7 @@
 		
 	} 
 /* segunda chamada */
-	// Monta o xml de requisiÁ„o
+	// Monta o xml de requisi√ß√£o
 	$xmlResgate  = ""; 
 	$xmlResgate .= "<Root>";
 	$xmlResgate .= "	<Cabecalho>";
@@ -156,8 +165,8 @@
 	// Cria objeto para classe de tratamento de XML
 	$xmlObjResgate = getObjectXML($xmlResult);
 	
-	// Se ocorrer um erro, mostra crÌtica
-	if (strtoupper($xmlObjResgate->roottag->tags[0]->name) == "ERRO") {
+	// Se ocorrer um erro, mostra cr√≠tica
+	if (isset($xmlObjResgate->roottag->tags[0]->name) && strtoupper($xmlObjResgate->roottag->tags[0]->name) == "ERRO") {
 		exibeErro($xmlObjResgate->roottag->tags[0]->tags[0]->tags[4]->cdata);
 	} 
 
@@ -167,10 +176,10 @@
 	// Esconde mensagem de aguardo
 	echo 'hideMsgAguardo();';	
 	
-	// Confirma operaÁ„o
+	// Confirma opera√ß√£o
 	echo 'showConfirmacao("Deseja efetuar o resgate?","Confirma&ccedil;&atilde;o - Ayllos","efetuarResgate(\''.$cdoperad.'\',\''.$tpresgat.'\',\''.$vlresgat.'\',\''.$dtresgat.'\',\''.$flgctain.'\')","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))","sim.gif","nao.gif");';	
 	
-	// FunÁ„o para exibir erros na tela atravÈs de javascript
+	// Fun√ß√£o para exibir erros na tela atrav√©s de javascript
 	function exibeErro($msgErro) { 
 		echo 'hideMsgAguardo();';
 		echo 'showError("error","'.$msgErro.'","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';

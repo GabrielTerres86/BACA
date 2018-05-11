@@ -10,6 +10,7 @@
  * 20/05/2012 - Tiago           (CECRED) : Implementado novas propriedades para o formFluxo.
  * 21/01/2013 - Daniel          (CECRED) : Implantacao novo layout.
  * 14/08/2013 - Carlos          (CECRED) : Alteração da sigla PAC para PA.
+ * 10/04/2017 - Permitir acessar o Ayllos mesmo vindo do CRM. (Jaison/Andrino)
  * --------------
  */
 
@@ -873,6 +874,11 @@ function tipoOpcao() {
 }
 
 function tipoConsulta() { 
+    // Seta os valores caso tenha vindo do CRM
+    if ($("#crm_inacesso","#frmCab").val() == 1) {
+        $("#nrdconta","#frmCab").val($("#crm_nrdconta","#frmCab").val());
+        $("#nrcpfcgc","#frmCab").val($("#crm_nrcpfcgc","#frmCab").val());
+    }
 
 	tpconsul = cTpconsul.val();	
 

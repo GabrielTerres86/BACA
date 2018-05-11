@@ -8,6 +8,7 @@
  * ALTERAÇÕES   :
  * 001: 21/01/2013 - Daniel (CECRED) : Implantacao novo layout.
  * 002: 14/08/2013 - Carlos (CECRED) : Alteração da sigla PAC para PA.
+ * 003: 10/04/2017 - Permitir acessar o Ayllos mesmo vindo do CRM. (Jaison/Andrino)
  * --------------
  */
 
@@ -19,6 +20,9 @@
 	<input type="hidden" name="nrcpfaux" id="nrcpfaux" value="" />
 	<input type="hidden" name="nmprimtl" id="nmprimtl" value="" >
 	<input type="hidden" name="sidlogin" id="sidlogin" value="<?php echo $glbvars["sidlogin"]; ?>">
+	<input type="hidden" name="crm_inacesso" id="crm_inacesso" value="<?php echo $_SESSION["glbvars"][$glbvars["sidlogin"]]['CRM_INACESSO']; ?>" />
+	<input type="hidden" name="crm_nrdconta" id="crm_nrdconta" value="<?php echo $_SESSION["glbvars"][$glbvars["sidlogin"]]['CRM_NRDCONTA']; ?>" />
+	<input type="hidden" name="crm_nrcpfcgc" id="crm_nrcpfcgc" value="<?php echo $_SESSION["glbvars"][$glbvars["sidlogin"]]['CRM_NRCPFCGC']; ?>" />
 
 	<label for="cddopcao"><? echo utf8ToHtml('Opção:') ?></label>
 	<select id="cddopcao" name="cddopcao" alt="<? echo utf8ToHtml('Clique no botão PROSSEGUIR ou  pressione ENTER para continuar.') ?>">

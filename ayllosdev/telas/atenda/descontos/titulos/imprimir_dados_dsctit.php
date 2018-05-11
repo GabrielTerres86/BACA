@@ -24,9 +24,6 @@
           23/11/2016 - Alterado para atribuir variavel $dsiduser ao carregar variavel
                        PRJ314 - Indexacao Centralizada (Odirlei-Amcom)
 
-                  12/04/2018 - Ajustes para adicionar parâmetro para controle da exibição da 
-                  			   restrição no report de borderô de desct. de tít
-
 	************************************************************************/ 
 
 	session_cache_limiter("private");
@@ -126,6 +123,7 @@
         $xml .= "  </Dados>";
         $xml .= "</Root>";
 
+        
         $xmlResult = mensageria($xml, "ATENDA", "DESC_IMPRESSAO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
         $xmlObject = getObjectXML($xmlResult);
 

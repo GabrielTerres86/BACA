@@ -502,7 +502,6 @@ function formataRegra(){
 				return false;
 			}	
 		});
-
 	}
 	
     layoutPadrao();

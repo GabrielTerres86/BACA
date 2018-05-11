@@ -26,7 +26,7 @@ $nrdconta = (isset($_POST['nrdconta'])) ? $_POST['nrdconta'] : '';
 $idseqttl = (isset($_POST['idseqttl'])) ? $_POST['idseqttl'] : '';
 $nrsimula = (isset($_POST['nrsimula'])) ? $_POST['nrsimula'] : '';
 $operacao = (isset($_POST['operacao'])) ? $_POST['operacao'] : '';
-$dtlibera = (isset($_POST['dtlibera'])) ? $_POST['dtlibera'] : '';
+$dtlibera = (isset($_POST['dtlibera'])) ? $_POST['dtlibera'] : ''; 
 // Monta o xml de requisição
 $xml = "";
 $xml.= "<Root>";
@@ -71,8 +71,12 @@ if (strtoupper($xmlObj->roottag->tags[0]->name) == 'ERRO') {
 					$("#cdfinemp","#frmNovaProp").val("' . getByTagName($dados_simulacao[0]->tags, 'cdfinemp') . '");
 					$("#dsfinemp","#frmNovaProp").val("' . getByTagName($dados_simulacao[0]->tags, 'dsfinemp') . '");
 					$("#percetop","#frmNovaProp").val("' . getByTagName($dados_simulacao[0]->tags, 'percetop') . '");
-				    $("#flgpagto","#frmNovaProp").val("no");';
+				  $("#flgpagto","#frmNovaProp").val("no");';
     } else {
+        $idfiniof = getByTagName($dados_simulacao[0]->tags, 'idfiniof');
+        if ($idfiniof == ""){
+            $idfiniof = "1";
+        }
         $retorno = '$("#vlemprst","#frmSimulacao").val("' . getByTagName($dados_simulacao[0]->tags, 'vlemprst') . '");
 					$("#qtparepr","#frmSimulacao").val("' . getByTagName($dados_simulacao[0]->tags, 'qtparepr') . '");
 					$("#cdlcremp","#frmSimulacao").val("' . getByTagName($dados_simulacao[0]->tags, 'cdlcremp') . '");
@@ -81,19 +85,22 @@ if (strtoupper($xmlObj->roottag->tags[0]->name) == 'ERRO') {
 					$("#dslcremp","#frmSimulacao").val("' . getByTagName($dados_simulacao[0]->tags, 'dslcremp') . '");
 					$("#percetop","#frmSimulacao").val("' . getByTagName($dados_simulacao[0]->tags, 'percetop') . '");
 					$("#cdfinemp","#frmSimulacao").val("' . getByTagName($dados_simulacao[0]->tags, 'cdfinemp') . '");
-                    $("#dsfinemp","#frmSimulacao").val("' . getByTagName($dados_simulacao[0]->tags, 'dsfinemp') . '");
-                    $("#frmSimulacao #cdmodali option").each(function() {
-                        if ("' . getByTagName($dados_simulacao[0]->tags, 'cdmodali') . '" == $(this).val()) {
-                            $(this).attr("selected", "selected");
-                        }
-                    });';
+          $("#dsfinemp","#frmSimulacao").val("' . getByTagName($dados_simulacao[0]->tags, 'dsfinemp') . '");
+          $("#vliofepr","#frmSimulacao").val("' . getByTagName($dados_simulacao[0]->tags, 'vliofepr') . '");
+          $("#vlrtarif","#frmSimulacao").val("' . getByTagName($dados_simulacao[0]->tags, 'vlrtarif') . '");
+          $("#vlrtotal","#frmSimulacao").val("' . getByTagName($dados_simulacao[0]->tags, 'vlrtotal') . '");                    
+          $("#idfiniof","#frmSimulacao").val("' . $idfiniof . '");
+          $("#frmSimulacao #cdmodali option").each(function() {
+              if ("' . getByTagName($dados_simulacao[0]->tags, 'cdmodali') . '" == $(this).val()) {
+                  $(this).attr("selected", "selected");
+              }
+          });';
 
 
         if ($operacao == "C_SIMULACAO" || $operacao == "E_SIMULACAO") {
             $parcelas = $xmlObj->roottag->tags[1]->tags;
             $retorno .= "arraySimulacoes.length = 0;";
             foreach ($parcelas as $indice => $parcela) {
-
                 $retorno .= 'var arraySimulacao' . $indice . ' = new Object();
 								 arraySimulacao' . $indice . '[\'nrparepr\'] = "' . getByTagName($parcela->tags, 'nrparepr') . '";
 								 arraySimulacao' . $indice . '[\'vlparepr\'] = "' . getByTagName($parcela->tags, 'vlparepr') . '"; 

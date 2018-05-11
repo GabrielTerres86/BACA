@@ -40,9 +40,9 @@
 			<legend>Dados do Limite</legend>
 			
 			<? if ($cddopcao == "I") { ?>
-				
+			
 				<input type="hidden" name="nrctrlim" id="nrctrlim" value="0" class="campo" disabled>
-
+			
 			<? }else { ?> 
 				
 				<label for="nrctrlim"><? echo utf8ToHtml('Contrato:') ?></label>
@@ -140,7 +140,19 @@
 	
 		<? 	// ALTERAÇÃO 001: Substituido formulário antigo pelo include				
 			include('../../../../includes/avalistas/form_avalista.php'); 
-		?>
+		?>	
+		
+		<div id="divDscChq_Confirma">					
+		
+			<fieldset>
+			
+				<legend>Contrato</legend>
+				<label for="antnrctr" class="rotulo" style="width:250px;">Confirme o n&uacute;mero do contrato:</label>
+				<input type="text" name="antnrctr" id="antnrctr" value="" style="width: 80px; text-align: right;" class="campo">
+		
+			</fieldset>
+			
+	</div>
 		
 	</div>
 		
@@ -214,7 +226,7 @@
 
 	operacao = '<? echo $cddopcao; ?>';
 	
-	dscShowHideDiv("divOpcoesDaOpcao3;divDscTit_Limite;divBotoesLimite","divBotoesGAROPC;divBotoesRenda;divBotoesObs;divBotoesAval;divOpcoesDaOpcao2;divDscTit_Renda;divDscTit_Observacao;divDscTit_Avalistas;divDscTit_Confirma");
+	dscShowHideDiv("divOpcoesDaOpcao3;divDscTit_Limite;divBotoesLimite","divBotoesRenda;divBotoesObs;divBotoesAval;divOpcoesDaOpcao2;divDscTit_Renda;divDscTit_Observacao;divDscTit_Avalistas;divDscTit_Confirma");
 
 	$("#divDscTit_Confirma").css("display","<? if ($cddopcao == "I") { echo "block"; } else { echo "none"; } ?>");
 		
@@ -312,7 +324,6 @@
 		}
 		return false;
 	});
-	
   $("#btnVoltarGAROPC","#divBotoesGAROPC").unbind("click").bind("click",function() {
     $("#divUsoGAROPC").empty();
     $("#divFormGAROPC").empty();

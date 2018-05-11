@@ -25,8 +25,12 @@
  *                                                problemas no oracle ao consultar um nome de operador usando a variavel cdoperad da sessao que
  *                                                estava em maisculo.
  * 014: [21/11/2016] - Guilherme/SUPERO         : P341 - Validacao Departamento - Inclusao da variavel CDDEPART
+ * 015: [23/08/2017] - Lucas Reinert (Cecred)	: Removido campo senha; removido campo Operador nos ambientes que não são produção; alterado para 
+ *												  efetuar login através do usuário do AD. (PRJ339)
+ * 016: [23/02/2018] - Tiago (Cecred)           : Setar o foco no campo PA de Trabalho e carrega o PA assim que entrar na tela #851204
+ * 017: [23/02/2018] - Reinert (Cecred)         : Ajuste de segurança para validar operador informado.
+ * 018: [06/03/2018] - Carlos Weinhold (Cecred) : #856961 Alterados os nomes das cooperativas que trocaram de nome e retiradas as cooperativas inativas.
  */
- 
 ?> 
 <?php	
 	session_start();	
@@ -41,19 +45,29 @@
 	if (isset($_POST["dsmsgerr"]) && trim($_POST["dsmsgerr"]) <> "") {
 		$dsmsgerr = $_POST["dsmsgerr"];
 	}
-	
+	// Buscar variáveis
+	$arr = get_defined_vars();
 	// Parâmetros enviados pela tela de login e seleção do sistema
 	$cdcooper   = isset($_POST["cdcooper"]) ? $_POST["cdcooper"] : 3;
 	$gidnumber  = isset($_POST["gidnumber"]) ? $_POST["gidnumber"] : "";
 	$mtccserver = isset($_POST["mtccserver"]) ? $_POST["mtccserver"] : "";
+	$cdoperad   = isset($_POST["des_login"]) ? $_POST["des_login"] : (isset($_POST["cdoperad"]) ? $_POST["cdoperad"] : "");
+
+	if (isset($_POST["des_login"])){
+		$_SESSION["des_login"] = $_POST["des_login"];
+	}
 	
 	// Se método de requisição for post, encaminha dados para BO
-	if (isset($_POST["cdoperad"]) && isset($_POST["cddsenha"]) && isset($_POST["cdpactra"])) {
-		$cdoperad = $_POST["cdoperad"];
-		$cddsenha = $_POST["cddsenha"];
+	if (isset($_POST["cdoperad"]) && isset($_POST["cdpactra"])) {
+		/* Se ambiente conectado não for produção, utilizar operador informado */
+		if ($arr['DataServer'] != 'pkgprod') {
+			$cdoperad = $_POST["cdoperad"];
+		}
 		$cdpactra = $_POST["cdpactra"];
 		
-		if (trim($cdoperad) == "" || trim($cddsenha) == "" || trim($cdpactra) == "") {
+		if (trim($cdoperad) == "" || trim($cdpactra) == "") {
+			$dsmsgerr = "Dados n&atilde;o informados corretamente.";
+		} elseif ($_SESSION["des_login"] != $cdoperad && $arr['DataServer'] == 'pkgprod'){
 			$dsmsgerr = "Dados n&atilde;o informados corretamente.";
 		} else {		
 			// Monta o xml de requisição
@@ -69,8 +83,8 @@
             $xmlLogin .= "      <nrdcaixa>0</nrdcaixa>";
             $xmlLogin .= "      <cdoperad>".$cdoperad."</cdoperad>";
             $xmlLogin .= "      <idorigem>5</idorigem>";
-            $xmlLogin .= "      <vldsenha>yes</vldsenha>";
-            $xmlLogin .= "      <cddsenha>".$cddsenha."</cddsenha>";
+            $xmlLogin .= "      <vldsenha>no</vldsenha>";
+            $xmlLogin .= "      <cddsenha></cddsenha>";
             $xmlLogin .= "      <cdpactra>".$cdpactra."</cdpactra>";
             $xmlLogin .= "  </Dados>";
 			$xmlLogin .= "</Root>";
@@ -98,7 +112,7 @@
 						break;
 					}
 				}
-				
+	
 				if ($flglogin) {
 					if (($inilogin - $_SESSION["hrdlogin"]) >= 10) {
 						$flglogin = false;
@@ -106,7 +120,7 @@
 						$dsmsgerr = "Sistema ocupado. Um tentativa de login j&aacute; estava sendo efetuada.";
 					}
 				} 
-				
+		
 				if (!$flglogin) {				
 					// Criar SID de login para armazenamento de dados na SESSION
 					$sidlogin = md5(time().uniqid());						
@@ -141,7 +155,7 @@
                     $glbvars["cddepart"] = $xmlObjLogin->roottag->tags[0]->tags[0]->tags[14]->cdata;
 					$glbvars["idparame_reciproci"] = 0;
 					$glbvars["desretorno"] = "NOK";
-					
+			
 					// Armazena os dados globais na session
 					$_SESSION["glbvars"][$sidlogin] = $glbvars;				
 					// Efetuar login através do form para forçar o acesso via POST
@@ -160,9 +174,9 @@
 					<?php				
 					
 					exit();
+					}
 				}
-			} 
-		}
+	}
 	} else {
 		// Verifica permissão para acessar o servidor (pkgdesen, pkgprod, etc ...)
 		if (!is_array($mtccserver) || !in_array($MTCCServers[$DataServer],$mtccserver)) {
@@ -184,10 +198,10 @@
 <script type="text/javascript"> 
 $(document).ready(function () { 
 	<?php if (isset($dsmsgerr)) { ?>
-	showError("error","<?php echo addslashes($dsmsgerr); ?>","Alerta - Ayllos","$('#cdoperad').focus()");
+	showError("error","<?php echo addslashes($dsmsgerr); ?>","Alerta - Ayllos","$('#cdpactra').focus()");
 	<?php } else { ?>
 	// Setar foco no campo Operador
-	$("#cdoperad").focus();	
+	$("#cdpactra").focus();	
 	<?php } ?>
 
 	// Validar dados do formulário de login
@@ -202,11 +216,7 @@ $(document).ready(function () {
 			showError("error","Informe o PA do Operador!","Alerta - Ayllos","$('#cdpactra').focus()");
 			return false;		
 		}
-		// Validar senha do operador
-		if ($("#cddsenha").val() == "") {
-			showError("error","Informe a senha do Operador!","Alerta - Ayllos","$('#cddsenha').focus()");
-			return false;
-		}
+
 		
 		return true;
 	});
@@ -249,6 +259,77 @@ $(document).ready(function () {
 		
 		return true;
 	});
+	
+	<?php if ($arr['DataServer'] == 'pkgprod'){ ?>
+		$("#cdcooper").blur(function () {				
+		
+			var cdcooper = $(this).val();
+			var cdoperad = '<?php echo $cdoperad; ?>';
+			
+			showMsgAguardo("Aguarde, carregando PA de trabalho ...");
+		   
+			// Carrega dados da conta através de ajax
+			$.ajax({		
+				type: "POST",			
+				async : true ,
+				url: UrlSite + "consulta_pac_ope.php", 
+				data: {
+					cdcooper: cdcooper,
+					cdoperad: cdoperad,							
+					redirect: 'script_ajax' // Tipo de retorno do ajax
+				},
+				error: function(objAjax,responseError,objExcept) {
+					hideMsgAguardo();					
+					showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","unblockBackground()");
+				},
+				success: function(response) {				
+					try {				    
+						eval(response);										
+						return false;
+					} catch(error) {
+						hideMsgAguardo();
+						showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','unblockBackground()');
+					}
+				}
+}); 
+			return false;
+		});
+		
+		
+		
+		
+		var cdcooper = $("#cdcooper").val();
+		var cdoperad = '<?php echo $cdoperad; ?>';
+		
+		showMsgAguardo("Aguarde, carregando PA de trabalho ...");
+	   
+		// Carrega dados da conta através de ajax
+		$.ajax({		
+			type: "POST",			
+			async : true ,
+			url: UrlSite + "consulta_pac_ope.php", 
+			data: {
+				cdcooper: cdcooper,
+				cdoperad: cdoperad,							
+				redirect: 'script_ajax' // Tipo de retorno do ajax
+			},
+			error: function(objAjax,responseError,objExcept) {
+				hideMsgAguardo();					
+				showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","unblockBackground()");
+			},
+			success: function(response) {				
+				try {				    
+					eval(response);										
+					return false;
+				} catch(error) {
+					hideMsgAguardo();
+					showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','unblockBackground()');
+				}
+			}
+		});
+	<?php
+	}
+	?>
 }); 
 </script>
 </head>
@@ -301,10 +382,9 @@ $(document).ready(function () {
 														<td>
 															<select name="cdcooper" class="campo" id="cdcooper" style="width:120px;">
 																<option value="1"<?php if ($cdcooper == "1") { echo " selected"; } ?>>Viacredi</option>
-																<option value="2"<?php if ($cdcooper == "2") { echo " selected"; } ?>>Creditextil</option>
+																<option value="2"<?php if ($cdcooper == "2") { echo " selected"; } ?>>Acredicoop</option>
 																<option value="3"<?php if ($cdcooper == "3") { echo " selected"; } ?>>Cecred</option>
-																<option value="4"<?php if ($cdcooper == "4") { echo " selected"; } ?>>Concredi</option>
-																<option value="5"<?php if ($cdcooper == "5") { echo " selected"; } ?>>Cecrisacred</option>
+																<option value="5"<?php if ($cdcooper == "5") { echo " selected"; } ?>>Acentra</option>
 																<option value="6"<?php if ($cdcooper == "6") { echo " selected"; } ?>>Credifiesc</option>
 																<option value="7"<?php if ($cdcooper == "7") { echo " selected"; } ?>>Credcrea</option>
 																<option value="8"<?php if ($cdcooper == "8") { echo " selected"; } ?>>Credelesc</option>
@@ -314,23 +394,20 @@ $(document).ready(function () {
 																<option value="12"<?php if ($cdcooper == "12") { echo " selected"; } ?>>Crevisc</option>
 																<option value="13"<?php if ($cdcooper == "13") { echo " selected"; } ?>>ScrCred</option>
 																<option value="14"<?php if ($cdcooper == "14") { echo " selected"; } ?>>Rodocredito</option>
-																<option value="15"<?php if ($cdcooper == "15") { echo " selected"; } ?>>Credimilsul</option>
 																<option value="16"<?php if ($cdcooper == "16") { echo " selected"; } ?>>Viacredi Alto Vale</option>
-																<option value="17"<?php if ($cdcooper == "17") { echo " selected"; } ?>>Transulcred</option>
 															</select>
 														</td>
 													</tr>
-													<?php } ?>													
+													<?php } 
+													if ($arr['DataServer'] != 'pkgprod') {?>
 													<tr>
 														<td height="25"></td>
 														<td class="txtNormalBold">Operador:</td>
-														<td><input name="cdoperad" id="cdoperad" type="text" class="campo" style="width:120px;" maxlength="10" value="<?php if (isset($cdoperad)) { echo $cdoperad; } ?>"></td>
-													</tr>																										
-													<tr>
-														<td height="25"></td>
-														<td class="txtNormalBold">Senha:</td>
-														<td><input name="cddsenha" id="cddsenha" type="password" class="campo" style="width:120px;" maxlength="20"></td>
+														<td><input name="cdoperad" id="cdoperad" type="text" class="campo" style="width:120px;" maxlength="10"></td>
 													</tr>													
+													<? }else{ ?>
+														<input name="cdoperad" id="cdoperad" type="hidden" class="campo" style="width:120px;" maxlength="10" value="<?php if (isset($cdoperad)) { echo $cdoperad; } ?>">
+													<? } ?>
 													<tr>
 														<td height="25"></td>
 														<td class="txtNormalBold">PA trabalho:</td>

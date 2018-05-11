@@ -176,19 +176,19 @@ function controlaFoco() {
             return false;
         }
     });
-
+	
     $('#tpprodut', '#frmCab').unbind('keypress').bind('keypress', function(e) {
         if (e.keyCode == 9 || e.keyCode == 13) {
             
             if ($('#cddopcao').val() == 'C'){
-                $('#btnOK', '#frmCab').focus();    
+            $('#btnOK', '#frmCab').focus();
             }else{
                 $('#tlcooper', '#frmCab').focus();
             }
             return false;
         }
     });
-	
+
 	$('#tlcooper', '#frmCab').unbind('keypress').bind('keypress', function(e) {
         if (e.keyCode == 9 || e.keyCode == 13) {
             $('#btnOK', '#frmCab').focus();

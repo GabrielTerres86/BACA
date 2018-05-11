@@ -1,7 +1,7 @@
 //************************************************************************//
 //*** Fonte: atenda.js                                                 ***//
 //*** Autor: David                                                     ***//
-//*** Data : Agosto/2007                  Última Alteração: 14/11/2017 ***//
+//*** Data : Agosto/2007                  Última Alteração: 26/03/2018 ***//
 //***                                                                  ***//
 //*** Objetivo  : Biblioteca de funções da tela ATENDA                 ***//
 //***                                                                  ***//	 
@@ -74,13 +74,18 @@
 
 				  20/01/2017 - Adicionar parametro 'produtos', na chamada da function acessaRotina(Lucas Ranghetti #537087)
 
-				  27/03/2017 - Criado function dossieDigdoc. (Projeto 357 - Reinert)		 
+				  27/03/2017 - Criado function dossieDigdoc. (Projeto 357 - Reinert)
 
                   14/07/2017 - Alteração para o cancelamento manual de produtos. Projeto 364 (Reinert)
 
                   14/11/2017 - Não apresentar pop-up de anotações quando impedimentos estiver sendo executado (Jonata - P364).
 
                    21/11/2017 - Ajuste para controle das mensagens de alerta referente a seguro (Jonata - RKAM P364).
+				  
+				  22/02/2018 - Alteracoes referentes ao uso do Ctrl+C Ctrl+V no CPF/CNPJ do cooperado (Lucas Ranghetti #851205)
+
+                  26/03/2018 - Alterado para permitir acesso a tela pelo CRM. (Reinert)
+				   
 ***************************************************************************/
 
 var flgAcessoRotina = false; // Flag para validar acesso as rotinas da tela ATENDA
@@ -96,6 +101,8 @@ var cdproduto = 0; // Identificar que servico foi chamado via rotina Produtos
 var bkp_inpessoa = 0; // Bkp do inpessoa pois, o inpessoa e' queimada em outras rotinas
 
 var sitaucaoDaContaCrm =0 //Recebe a situação da conta para controle de acesso a determinado produtos da tela ATENDA;
+
+var podeCopiar = true;
 
 $(document).ready(function () {
 
@@ -182,6 +189,12 @@ $(document).ready(function () {
         $("#nrdconta", "#frmCabAtenda").focus();
     }
 
+	// Seta os valores caso tenha vindo do CRM
+    if ($("#crm_inacesso","#frmCabAtenda").val() == 1) {
+        $("#nrdconta","#frmCabAtenda").val($("#crm_nrdconta","#frmCabAtenda").val());
+		obtemCabecalho();
+    }	
+	
     hideMsgAguardo();
 });
 
@@ -734,6 +747,8 @@ function formataCabecalho() {
     $('input, select', '#frmCabAtenda').desabilitaCampo();
     cNrdconta.habilitaCampo();
     cNrdctitg.habilitaCampo();
+	$('#nrcpfcgc2','#frmCabAtenda').hide();	
+	$('#nrcpfcgc','#frmCabAtenda').attr("disabled", false); // pra funcionar no IE
 
     layoutPadrao();
 
@@ -819,4 +834,27 @@ function impedSeguros(seguroVida, seguroAuto) {
 function impedConsorcios(){
 	showError('error','Cancelamento dos CONSORCIOS devem ser realizados pelo portal do Sicredi.','Alerta - Ayllos','acessaRotina(\'\',\'CONSORCIO\',\'Cons&oacute;rcios\',\'consorcio\');');
 	return false;
+}
+
+/******************************************************************************** 
+   Funcao para efetuar o Ctrl+C e retirar os caracteres especias antes do Ctrl+V
+   Favor nao alterar está função pois pode nao funcionar mais
+*********************************************************************************/
+function copiarCampo(){	
+	
+	var vlrSemCaracter;
+	
+	vlrSemCaracter = retiraCaracteres($('#nrcpfcgc','#frmCabAtenda').val(), "0123456789", true);
+	$('#nrcpfcgc2','#frmCabAtenda').val(vlrSemCaracter);
+	$('#nrcpfcgc2','#frmCabAtenda').show();
+	$('#nrcpfcgc2','#frmCabAtenda').habilitaCampo();
+	$('#nrcpfcgc2','#frmCabAtenda').select();	
+	
+	document.execCommand("copy");				
+	$('#nrcpfcgc2','#frmCabAtenda').hide();				
+	podeCopiar = false;
+	$('#nrcpfcgc','#frmCabAtenda').habilitaCampo();
+	$('#nrcpfcgc','#frmCabAtenda').select();
+	$('#nrcpfcgc','#frmCabAtenda').desabilitaCampo();	
+	$('#nrcpfcgc','#frmCabAtenda').attr("disabled", false);	// pra funcionar no IE
 }
