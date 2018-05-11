@@ -4,6 +4,11 @@
  * CRIAÇÃO      : Marcel Kohls (AMCom)
  * DATA CRIAÇÃO : 15/03/2018
  * OBJETIVO     : formulário para cadastro de ativos problematicos
+ * ALTERAÇÕES   :
+ *
+ *                Criação de lupa para listas os contratos
+ *                Diego Simas - AMcom
+ *
  */
 
 session_start();
@@ -50,6 +55,7 @@ $acaoSalvar = (empty($cdmotivo) ?  "Inclui_Dados" : "Altera_Dados");
 
 												<label for="nrctremp" class="rotulo">Contrato:</label>
 												<input name="nrctremp" id="nrctremp" type="text"  class="campo" value="<?= $nrctremp ?>" />
+												<a onClick="mostraContrato('#nrctremp','#frmCad',$('#nrdconta', '#frmCad').val()); return false;"><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif" /></a>
 
 												<label for="flmotivo">Motivo:</label>
 												<select id="flmotivo" name="flmotivo">

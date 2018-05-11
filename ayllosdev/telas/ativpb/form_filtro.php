@@ -5,8 +5,12 @@
  * DATA CRIAÇÃO : 20/03/2018
  * OBJETIVO     : Formulario de filtros de ativos problematicos
  * --------------
- * ALTERAÇÕES   :
+ * ALTERAÇÕES   : 
  * --------------
+ *
+ *                Criação de lupa para listar os contratos
+ *                Diego Simas - AMcom
+ *
  */
 	// session_start();
 	// require_once('../../includes/config.php');
@@ -28,6 +32,7 @@
 
     <label for="nrctrato">Contrato:</label>
     <input type="text" id="nrctrato" name="nrctrato" value="<?php echo $nrctrato ?>"/>
+		<a onClick="mostraContrato('#nrctrato','#frmFiltro',$('#nrdconta', '#frmFiltro').val()); return false;"><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif" /></a>
 
 		<label for="flmotivo">Motivo:</label>
 		<select id="flmotivo" name="flmotivo">
