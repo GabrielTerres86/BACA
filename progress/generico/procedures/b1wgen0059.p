@@ -3,11 +3,11 @@
                            ATENCAO!    CONVERSAO PROGRESS - ORACLE
             ESTE FONTE ESTA ENVOLVIDO NA MIGRACAO PROGRESS->ORACLE!
   +-------------------------------------+----------------------------------------+
-  | Rotina Progress                     | Rotina Oracle PLSQL                    |
+  | Rotina Progress                     | Rotina Oracle PLSQL                  |
   +-------------------------------------+----------------------------------------+
-  | busca-crapope			            | ZOOM0001.pc_busca_operadores           |
-  | busca-crapban					    | ZOOM0001.pc_busca_bancos               |
-  | busca-historico                     | ZOOM0001.pc_busca_historico            |
+  | busca-crapope			            | ZOOM0001.pc_busca_operadores         |
+  | busca-crapban					    | ZOOM0001.pc_busca_bancos             |
+  | busca-historico                     | ZOOM0001.pc_busca_historico          |
   | busca-craplrt					    | ZOOM0001.pc_busca_craplrt			     | 
   | busca-craplcr                       | ZOOM0001.pc_busca_craplcr              | 
   | busca-crapfin						| ZOOM0001.pc_busca_finalidades_empr_web |
@@ -207,8 +207,11 @@
 
                 31/10/2017 - Passagem do tpctrato. (Jaison/Marcos Martini - PRJ404)
 
-        13/03/2018 - Removida procedure "busca-craptip" pois nao e mais usada.
-                     PRJ366 (Lombardi).
+                13/03/2018 - Removida procedure "busca-craptip" pois nao e mais usada.
+                             PRJ366 (Lombardi).
+
+				10/05/2018 - P404 - Inclusao do tipo 4 aplicacao na descricao na da garantia 
+				             na procedure busca-craplcr (Lucas Skroch - Supero)
 
 .............................................................................*/
 
@@ -3182,6 +3185,7 @@ PROCEDURE busca-craplcr:
                                        WHEN 1 THEN ASSIGN tt-craplcr.dsgarant = "AVAL".
                                        WHEN 2 THEN ASSIGN tt-craplcr.dsgarant = "VEICULOS".
                                        WHEN 3 THEN ASSIGN tt-craplcr.dsgarant = "IMOVEIS".
+									   WHEN 4 THEN ASSIGN tt-craplcr.dsgarant = "APLICACAO".
                                        OTHERWISE ASSIGN tt-craplcr.dsgarant = "NAO CADASTRADO".
                                    END CASE.                                   
 

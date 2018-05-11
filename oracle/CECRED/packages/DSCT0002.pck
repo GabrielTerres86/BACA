@@ -40,7 +40,10 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0002 AS
   --                referente ao indicador se deve imprimir restricoes. (Alex Sandro - GFT)
   --
   --    13/04/2018 - Remoção do campo 'pctitemi' Percentual de títulos por pagador da procedure 
-  --                 'pc_busca_parametros_dsctit'  (Leonardo Oliveira - GFT). 
+  --                 'pc_busca_parametros_dsctit'  (Leonardo Oliveira - GFT).
+  --
+  --	10/05/2018 - Ajuste para considerar os novos contratos do PJ404 a com a data da proposta
+  --				 para contratos de desconto de título e cheque (Lucas Skroch - Supero)
   --------------------------------------------------------------------------------------------------------------*/
  
   -- Registro para armazenar parametros para desconto de titulo
@@ -1543,7 +1546,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
       vr_tab_cecred_dsctit(1).vlmintcl := to_number(vr_tab_dstextab(75),'999999990d00','NLS_NUMERIC_CHARACTERS='',.''');
       vr_tab_cecred_dsctit(1).pctitpag := vr_tab_dstextab(76);
       ------------------------------------
-
+    
     ELSE
       vr_cdcritic := 0;
       vr_dscritic := 'Registro de parametros de desconto de titulos nao encontrado.';
@@ -3996,7 +3999,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
 							vr_rel_dscpfav1 := gene0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => vr_tab_dados_avais(vr_idxavais).nrcpfcgc,
 																												   pr_inpessoa => vr_inpessoa_av );
 																			 
-						ELSE
+          ELSE
             vr_rel_dscpfav1 := 'C.P.F. '|| gene0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => vr_tab_dados_avais(vr_idxavais).nrcpfcgc,
                                                                      pr_inpessoa => 1 );
           END IF;
@@ -4106,7 +4109,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
 																				 ,vr_inpessoa_av);
 							vr_rel_dscpfav2 := gene0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => vr_tab_dados_avais(vr_idxavais).nrcpfcgc,
 																													 pr_inpessoa => vr_inpessoa_av );							
-						ELSE
+          ELSE
             vr_rel_dscpfav2 := 'C.P.F. '|| gene0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => vr_tab_dados_avais(vr_idxavais).nrcpfcgc,
                                                                      pr_inpessoa => 1 );
           END IF;
@@ -4132,7 +4135,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
 						ELSE
             vr_rel_dscfcav2 := 'C.P.F. '|| gene0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => vr_tab_dados_avais(vr_idxavais).nrcpfcjg,
                                                                      pr_inpessoa => 1 );
-					  END IF;
+          END IF;
           END IF;
           
         ELSIF vr_tab_dados_avais(vr_idxavais).nrdoccjg IS NULL THEN
@@ -5109,7 +5112,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
 
       --> Se for Cheque e igual ou superior a data do novo contrato
       IF (pr_tpctrlim = 2 OR pr_tpctrlim = 3) AND 
-         nvl(rw_craplim.dtinivig, rw_craplim.dtpropos) >= TO_DATE(GENE0001.fn_param_sistema(pr_nmsistem => 'CRED'
+         rw_craplim.dtpropos >= TO_DATE(GENE0001.fn_param_sistema(pr_nmsistem => 'CRED'
                                                                  ,pr_cdacesso => 'DT_VIG_IMP_CTR_V2'),'DD/MM/RRRR') THEN
         vr_nrvrsctr := 2;
       END IF;
@@ -5240,7 +5243,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
       RAISE vr_exc_erro;
     ELSE
       CLOSE cr_crapage;
-      END IF;
+    END IF;
 
     IF pr_idimpres IN( 1,      --> COMPLETA 
                        2 )THEN --> CONTRATO 
@@ -5403,7 +5406,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
                          '<dsavali2>'|| vr_dsavali2                                  ||'</dsavali2>');
       
                        
-
+      
       IF pr_tpctrlim = 2 THEN
 
         vr_ind_dev_sol := 0;
