@@ -72,7 +72,9 @@ arrayAlinhaInclusaoBordero[3] = 'right';
 arrayAlinhaInclusaoBordero[4] = 'right';
 arrayAlinhaInclusaoBordero[5] = 'center';
 arrayAlinhaInclusaoBordero[6] = 'center';
-				
+	
+var flgverbor = 0;
+
 // Função para voltar para o div anterior conforme parâmetros
 function voltaDiv(esconder,mostrar,qtdade,titulo,rotina,novotam,novalar) {	
 
@@ -350,7 +352,6 @@ function formataLayout(nomeForm){
 	
 	}else if ( nomeForm == 'divBorderosTitulos' ){
 	
-		$('#'+nomeForm).css('width','945px');
 	
 		var divRegistro = $('div.divRegistros','#'+nomeForm);		
 		var tabela      = $('table', divRegistro );
@@ -359,29 +360,51 @@ function formataLayout(nomeForm){
 		
 		var ordemInicial = new Array();
 				
-		var arrayLargura = new Array();
-		arrayLargura[0] = '60px';
-		arrayLargura[1] = '60px';
-		arrayLargura[2] = '60px';
-		arrayLargura[3] = '60px';
-		arrayLargura[4] = '60px';
-		arrayLargura[5] = '60px';
-		arrayLargura[6] = '80px';
-		arrayLargura[7] = '120px';
-		arrayLargura[8] = '160px';
-		
-				
-		var arrayAlinha = new Array();
-		arrayAlinha[0] = 'center';
-		arrayAlinha[1] = 'center';
-		arrayAlinha[2] = 'center';
-		arrayAlinha[3] = 'center';
-		arrayAlinha[4] = 'right';
-		arrayAlinha[5] = 'center';
-		arrayAlinha[6] = 'right';
-		arrayAlinha[7] = 'center';
-		arrayAlinha[8] = 'center';
-		arrayAlinha[9] = 'center';
+		if(flgverbor){
+			$('#'+nomeForm).css('width','945px');
+			var arrayLargura = new Array();
+			arrayLargura[0] = '60px';
+			arrayLargura[1] = '60px';
+			arrayLargura[2] = '60px';
+			arrayLargura[3] = '60px';
+			arrayLargura[4] = '60px';
+			arrayLargura[5] = '60px';
+			arrayLargura[6] = '80px';
+			arrayLargura[7] = '120px';
+			arrayLargura[8] = '';
+			arrayLargura[9] = '65px';
+			
+					
+			var arrayAlinha = new Array();
+			arrayAlinha[0] = 'center';
+			arrayAlinha[1] = 'center';
+			arrayAlinha[2] = 'center';
+			arrayAlinha[3] = 'center';
+			arrayAlinha[4] = 'right';
+			arrayAlinha[5] = 'center';
+			arrayAlinha[6] = 'right';
+			arrayAlinha[7] = 'center';
+			arrayAlinha[8] = 'center';
+			arrayAlinha[9] = 'center';
+		}
+		else{
+			$('#'+nomeForm).css('width','745px');
+			var arrayLargura = new Array();
+			arrayLargura[0] = '80px';
+			arrayLargura[1] = '80px';
+			arrayLargura[2] = '80px';
+			arrayLargura[3] = '70px';
+			arrayLargura[4] = '140px';
+			arrayLargura[5] = '';
+					
+			var arrayAlinha = new Array();
+			arrayAlinha[0] = 'center';
+			arrayAlinha[1] = 'right';
+			arrayAlinha[2] = 'right';
+			arrayAlinha[3] = 'right';
+			arrayAlinha[4] = 'right';
+			arrayAlinha[5] = 'center';
+		}
 						
 		tabela.formataTabela( ordemInicial, arrayLargura, arrayAlinha, '' );
 		
