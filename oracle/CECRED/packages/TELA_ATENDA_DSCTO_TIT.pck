@@ -5652,24 +5652,25 @@ PROCEDURE pc_buscar_tit_bordero(pr_cdcooper IN crapcop.cdcooper%TYPE  --> Código
       vr_index := vr_tab_tit_bordero.first;
       -- abrindo cursos de títulos
        WHILE vr_index IS NOT NULL LOOP
-              --Testa se o titulo possui restricao de CNAE
-              restricao_cnae := DSCT0003.fn_calcula_cnae(pr_cdcooper
-                                                     ,vr_tab_tit_bordero(vr_index).nrdconta
-                                                     ,vr_tab_tit_bordero(vr_index).nrdocmto
-                                                     ,vr_tab_tit_bordero(vr_index).nrcnvcob
-                                                     ,vr_tab_tit_bordero(vr_index).nrdctabb
-                                                     ,vr_tab_tit_bordero(vr_index).cdbandoc);
-              vr_situacao := CASE WHEN restricao_cnae THEN 'S' ELSE 'N' END;
-              
-              IF NOT restricao_cnae THEN
-                SELECT (nvl((SELECT 
-                                decode(inpossui_criticas,1,'S','N')
-                                FROM 
-                                 tbdsct_analise_pagador tap 
-                              WHERE tap.cdcooper=pr_cdcooper AND tap.nrdconta=pr_nrdconta AND tap.nrinssac=vr_tab_tit_bordero(vr_index).nrinssac
-                           ),'A')) INTO vr_situacao FROM DUAL ; -- Situacao do pagador com critica ou nao
-              END IF;
+              SELECT (nvl((SELECT 
+                              decode(inpossui_criticas,1,'S','N')
+                              FROM 
+                               tbdsct_analise_pagador tap 
+                            WHERE tap.cdcooper=pr_cdcooper AND tap.nrdconta=pr_nrdconta AND tap.nrinssac=vr_tab_tit_bordero(vr_index).nrinssac
+                         ),'A')) INTO vr_situacao FROM DUAL ; -- Situacao do pagador com critica ou nao
+
               vr_nrinssac := vr_tab_tit_bordero(vr_index).nrinssac;
+              
+              IF vr_situacao = 'N' THEN
+                 --Testa se o titulo possui restricao de CNAE
+                restricao_cnae := DSCT0003.fn_calcula_cnae(pr_cdcooper
+                                                       ,vr_tab_tit_bordero(vr_index).nrdconta
+                                                       ,vr_tab_tit_bordero(vr_index).nrdocmto
+                                                       ,vr_tab_tit_bordero(vr_index).nrcnvcob
+                                                       ,vr_tab_tit_bordero(vr_index).nrdctabb
+                                                       ,vr_tab_tit_bordero(vr_index).cdbandoc);
+                vr_situacao := CASE WHEN restricao_cnae THEN 'S' ELSE 'N' END;
+              END IF;
               
               open cr_crapcbd;
               fetch cr_crapcbd into rw_crapcbd;

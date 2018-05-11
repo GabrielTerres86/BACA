@@ -68,7 +68,6 @@ CREATE OR REPLACE PACKAGE CECRED.LIMI0002 AS
                       ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
                       ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
                       ,pr_des_erro OUT VARCHAR2);           --> Erros do processo
-                      
 END LIMI0002;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0002 AS
@@ -769,61 +768,7 @@ DECLARE
    and    inddocto = pr_inddocto;
    rw_ris_semdiv cr_ris_semdiv%rowtype;
       
-   --     Valor Total Descontado com vencimento dentro do período
-   cursor cr_craptdb_desc(pr_nrdconta     in crapass.nrdconta%type
-                         ,pr_dtmvtolt_de  in crapdat.dtmvtolt%type
-                         ,pr_dtmvtolt_ate in crapdat.dtmvtolt%type) is
-   select nvl(sum(tdb.vltitulo), 0) vltitulo
-   from   craptdb tdb -- Titulos contidos do Bordero de desconto de titulos
-         ,crapbdt dbt -- Cadastro de borderos de descontos de titulos
-   where  tdb.dtresgat is null
-   and    tdb.dtlibbdt is not null -- somente os titulos que realmente foram descontados
-   and    tdb.dtvencto between pr_dtmvtolt_de and pr_dtmvtolt_ate 
-   and    tdb.nrborder = dbt.nrborder
-   and    tdb.nrdconta = dbt.nrdconta
-   and    tdb.cdcooper = dbt.cdcooper
-   and    dbt.nrdconta = pr_nrdconta
-   and    dbt.cdcooper = pr_cdcooper
-   --     Não considerar como título pago, os liquidados em conta corrente do cedente, ou seja, pagos pelo próprio emitente
-   and    not exists( select 1
-                      from   craptit tit
-                      where  tit.cdcooper = tdb.cdcooper
-                      and    tit.dtmvtolt = tdb.dtdpagto
-                      and    tdb.nrdconta = substr(upper(tit.dscodbar), 26, 8)
-                      and    tdb.nrcnvcob = substr(upper(tit.dscodbar), 20, 6)
-                      and    tit.cdbandst = 85
-                      and    tit.cdagenci in (90,91) );
-   rw_craptdb_desc cr_craptdb_desc%rowtype;
-      
-   --     Valor Total descontado pago com atraso de até x dias e não pagos
-   cursor cr_craptdb_npag(pr_nrdconta     in crapass.nrdconta%type
-                         ,pr_dtmvtolt_de  in crapdat.dtmvtolt%type
-                         ,pr_dtmvtolt_ate in crapdat.dtmvtolt%type
-                         ,pr_qtcarpag     in craprli.qtcarpag%type) is
-   select nvl(sum(tdb.vltitulo),0) vltitulo
-   from   craptdb tdb
-         ,crapbdt dbt
-   where  tdb.dtresgat                is null
-   and    tdb.dtlibbdt                is not null
-   and   (tdb.dtvencto + pr_qtcarpag) <= nvl(tdb.dtdpagto, trunc(sysdate))
-   and   (tdb.dtvencto + pr_qtcarpag) between pr_dtmvtolt_de and pr_dtmvtolt_ate
-   and    tdb.nrborder                = dbt.nrborder
-   and    tdb.nrdconta                = dbt.nrdconta
-   and    tdb.cdcooper                = dbt.cdcooper
-   and    dbt.nrdconta                = pr_nrdconta
-   and    dbt.cdcooper                = pr_cdcooper
-   --     Não considerar como título pago, os liquidados em conta corrente do cedente, ou seja, pagos pelo próprio emitente
-   and    not exists( select 1
-                      from   craptit tit
-                      where  tit.cdcooper = tdb.cdcooper
-                      and    tit.dtmvtolt = tdb.dtdpagto
-                      and    tdb.nrdconta = substr(upper(tit.dscodbar), 26, 8)
-                      and    tdb.nrcnvcob = substr(upper(tit.dscodbar), 20, 6)
-                      and    tit.cdbandst = 85
-                      and    tit.cdagenci in (90,91));
-   rw_craptdb_npag cr_craptdb_npag%rowtype;
-
-   --     Linhas de desconto
+     --     Linhas de desconto
    cursor cr_crapldc is
    select crapldc.cddlinha
          ,crapldc.flgstlcr
@@ -1466,29 +1411,12 @@ BEGIN
                 dividido pelo Valor Total Descontado com vencimento dentro do período,
                 vezes 100 = percentual de liquidez.
                (Não considerar como título pago, os liquidados em conta corrente do cedente, ou seja, pagos pelo próprio emitente) */
-
-             --    Valor Total Descontado com vencimento dentro do período
-             open  cr_craptdb_desc(pr_nrdconta     => rw_craplim_crapass.nrdconta
-                                  ,pr_dtmvtolt_de  => rw_crapdat.dtmvtolt - rw_cadlim.qtdialiq
-                                  ,pr_dtmvtolt_ate => rw_crapdat.dtmvtolt);
-             fetch cr_craptdb_desc into rw_craptdb_desc;
-             close cr_craptdb_desc;
-            
-             --  Se não houver desconto, liquidez é 100%
-             if  rw_craptdb_desc.vltitulo = 0 then
-                 vr_liquidez := 100;
-             else 
-                 -- Valor Total descontado pago com atraso de até x dias e não pagos
-                 open  cr_craptdb_npag(pr_nrdconta     => rw_craplim_crapass.nrdconta
-                                      ,pr_dtmvtolt_de  => rw_crapdat.dtmvtolt - rw_cadlim.qtdialiq
-                                      ,pr_dtmvtolt_ate => rw_crapdat.dtmvtolt
-                                      ,pr_qtcarpag     => rw_cadlim.qtcarpag);
-                 fetch cr_craptdb_npag into rw_craptdb_npag;
-                 close cr_craptdb_npag;
-            
-                 vr_liquidez := (rw_craptdb_npag.vltitulo / rw_craptdb_desc.vltitulo) * 100;
-             end if;
-            
+             vr_liquidez := DSCT0003.fn_calcula_liquidez_geral(rw_craplim_crapass.nrdconta
+                                                              ,pr_cdcooper
+                                                              ,rw_crapdat.dtmvtolt - rw_cadlim.qtdialiq
+                                                              ,rw_crapdat.dtmvtolt
+                                                              ,rw_cadlim.qtcarpag);
+                      
              --  Verifica se o cooperado possui liquidez no produto de desconto maior ou igual ao percentual cadastrado 
              if  vr_liquidez < rw_cadlim.pcliqdez then 
                  pc_nao_renovar(pr_craplim_crapass => rw_craplim_crapass
@@ -1667,6 +1595,10 @@ PROCEDURE pc_crps517(pr_xmllog   IN VARCHAR2              --> XML com informaçõe
     DECLARE
 
       ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
+
+      -- Código do programa
+      vr_cdprogra CONSTANT crapprg.cdprogra%TYPE := 'CRPS517';
+
       -- Tratamento de erros
       vr_exc_saida  EXCEPTION;
       vr_exc_fimprg EXCEPTION;
@@ -1676,7 +1608,8 @@ PROCEDURE pc_crps517(pr_xmllog   IN VARCHAR2              --> XML com informaçõe
       -- Chamado 660306 - 10/07/2017
       -- Variaveis de inclusão de log 
       vr_idprglog       tbgen_prglog.idprglog%TYPE := 0;
-      
+      vr_acao           VARCHAR2  (100)            := 'LIMI0002.pc_crps517';
+
       -- Extração dados XML
       vr_cdcooper   NUMBER;
       vr_cdoperad   VARCHAR2(100);
@@ -1856,15 +1789,32 @@ PROCEDURE pc_crps517(pr_xmllog   IN VARCHAR2              --> XML com informaçõe
 
       -- Variaveis gerais
       vr_tt_erro     GENE0001.typ_tab_erro;          --> Registro com o retorno de erros das rotinas chamadas
+      vr_cdhistor    crapfvl.cdhistor%TYPE;          --> Historico do lancamento
+      vr_cdhistor_pf crapfvl.cdhistor%TYPE;          --> Historico do lancamento pessoa fisica
+      vr_cdhistor_pj crapfvl.cdhistor%TYPE;          --> Historico do lancamento pessoa juridica
+      vr_cdhisest    crapfvl.cdhisest%TYPE;          --> Codigo do historico do estouro
+      vr_vltarrnv    crapfco.vltarifa%TYPE;          --> Valor da tarifa
+      vr_vltarifa_pf crapfco.vltarifa%TYPE;          --> Valor da tarifa para pessoa fisica
+      vr_vltarifa_pj crapfco.vltarifa%TYPE;          --> Valor da tarifa para pessoa juridica
+      vr_dtdivulg    DATE;                           --> Data de divulgacao da tarifa
+      vr_dtvigenc    DATE;                           --> Data de vigencia da tarifa
+      vr_cdfvlcop    crapfco.cdfvlcop%TYPE;          --> Codigo da faixa de valor por cooperativa
+      vr_cdfvlcop_pf crapfco.cdfvlcop%TYPE;          --> Codigo da faixa de valor por cooperativa para pessoa fisica
+      vr_cdfvlcop_pj crapfco.cdfvlcop%TYPE;          --> Codigo da faixa de valor por cooperativa para pessoa juridica
       vr_qtborati    PLS_INTEGER;                    --> Quantidade de borderos atvos
       vr_flgregis    BOOLEAN;                        --> Flag que indica se deve criar registro na temp-table vr_tab_limite
+      vr_inpessoa    crapass.inpessoa%TYPE;          --> Indicador de pessoa fisica / juridica
+      vr_rowid_craplat ROWID;                        --> Rowid da tabela craplat
       vr_inusatab    BOOLEAN;                        --> Indicador se existe tabela de taxa de juros
       vr_des_reto    VARCHAR2(10);                   --> Retorno OK ou NOK de rotina
       vr_tab_limite  typ_tab_limite;                 --> Tabela de limite de credito
       vr_ind         VARCHAR2(31);                   --> Indice da pl/table vr_tab_limite (insitlim(05), nrdconta(10), nrctrlim(10), sequencial(6)
       vr_seq         PLS_INTEGER := 0;               --> Sequencial do indice vr_ind
+      vr_dtdiauti    DATE;                           --> Dia util anterior a 31/12
+      vr_dtrefere    DATE;                           --> Data de referencia de vencimento do titulo
       vr_tab_titulos paga0001.typ_tab_titulos;       --> Temp-table dos registros de titulos
       vr_ind_tit     VARCHAR2(20);                   --> Indice da temp-table vr_tab_titulos (nrdconta(10), sequencial(10))
+      vr_seq_tit     PLS_INTEGER := 0;               --> Sequencial do indice vr_ind_tit
       vr_tab_titulos_rel typ_tab_titulos;            --> Temp-table dos registros de titulos utilizada no relatorio com outro ordenador
       vr_ind_rel     VARCHAR2(41);                   --> Indice da pl/table vr_tab_limite (cdagenci(05) nrdconta(10), nrborder(10), nrdocmto(10), sequencial(06))
       vr_seq_rel     PLS_INTEGER := 0;               --> Sequencial do indice vr_ind
@@ -1874,6 +1824,50 @@ PROCEDURE pc_crps517(pr_xmllog   IN VARCHAR2              --> XML com informaçõe
       vr_nrcpfcgc    VARCHAR2(20);                   --> Numero do CPF / CNPJ
       vr_desprazo    VARCHAR2(10);                   --> Descricao da quantidade de dias para o vencimento
       vr_dstipcob    VARCHAR2(10);                   --> Tipo de cobranca
+      vr_email_tarif VARCHAR2(300);                  --> Email da area de taifa.
+      
+      --------------------------- SUBROTINAS INTERNAS --------------------------
+      -- Retorna a data anterior a data de ontem que seja dia util
+      FUNCTION fn_calcula_data RETURN DATE IS
+        vr_dtrefere DATE;
+      BEGIN
+       /* Pega o ultimo dia util antes de ontem */
+       vr_dtrefere := rw_crapdat.dtmvtoan - 1;
+       
+       -- Verifica se a data de antes de ontem eh util
+       vr_dtrefere := gene0005.fn_valida_dia_util(pr_cdcooper => vr_cdcooper,
+                                                  pr_dtmvtolt => vr_dtrefere,
+                                                  pr_tipo => 'A');
+       
+       /* Se teve fim de semana ou feriado antes de ontem */
+       IF rw_crapdat.dtmvtoan - vr_dtrefere > 1   THEN
+         RETURN vr_dtrefere;
+       ELSE
+         RETURN rw_crapdat.dtmvtoan;
+       END IF;
+
+      END;
+
+      /* Rotina para solicitar o envio de email */
+      PROCEDURE pc_email_critica(pr_email_dest  IN VARCHAR2,
+                                 pr_des_assunto IN VARCHAR2,
+                                 pr_des_corpo   IN VARCHAR2) IS
+                                 
+        vr_des_erro VARCHAR2(1000);
+                                 
+      BEGIN
+         /* Envio do arquivo detalhado via e-mail */
+         gene0003.pc_solicita_email(pr_cdcooper        => vr_cdcooper
+                                   ,pr_cdprogra        => vr_cdprogra
+                                   ,pr_des_destino     => pr_email_dest
+                                   ,pr_des_assunto     => pr_des_assunto
+                                   ,pr_des_corpo       => pr_des_corpo
+                                   ,pr_des_anexo       => NULL
+                                   ,pr_flg_remove_anex => 'N' --> Remover os anexos passados
+                                   ,pr_flg_remete_coop => 'N' --> Se o envio será do e-mail da Cooperativa
+                                   ,pr_flg_enviar      => 'N' --> Enviar o e-mail na hora
+                                   ,pr_des_erro        => vr_des_erro);         
+      END;
 
       --------------- VALIDACOES INICIAIS -----------------
     BEGIN
@@ -1969,8 +1963,8 @@ PROCEDURE pc_crps517(pr_xmllog   IN VARCHAR2              --> XML com informaçõe
         vr_flgregis := TRUE;
     
         /** Se nao atingiu limite de renovacoes, renovar limites ativos **/
-        IF  /*rw_craplim.qtrenova < rw_craplim.qtrenctr AND*/ rw_craplim.insitlim = 2  THEN
-          
+        IF  rw_craplim.qtrenova < rw_craplim.qtrenctr AND rw_craplim.insitlim = 2  THEN
+        
           pc_renova_limdesctit(pr_cdcooper => vr_cdcooper
                               ,pr_nrdconta => rw_craplim.nrdconta
                               ,pr_nrctrlim => rw_craplim.nrctrlim
@@ -1979,11 +1973,11 @@ PROCEDURE pc_crps517(pr_xmllog   IN VARCHAR2              --> XML com informaçõe
                               ,pr_nmdatela => vr_nmdatela
                               ,pr_cdcritic => vr_cdcritic
                               ,pr_dscritic => vr_dscritic);
-        
+                            
           if  vr_dscritic is not null then
               raise vr_exc_saida;
           end if;    
-                            
+
         ELSE
            /** Verifica quantidade de borderos pendente **/
           OPEN cr_crapbdt(rw_craplim.nrdconta, rw_craplim.nrctrlim);
@@ -2132,18 +2126,7 @@ PROCEDURE pc_crps517(pr_xmllog   IN VARCHAR2              --> XML com informaçõe
             RAISE vr_exc_saida;
           END; 
       END LOOP;
-      
-      /* 04/04/2018 Paulo Penteado (GFT): Devido a criação da estrutura de proposta do limite de desconto de 
-         titulos tabela (crawlim) não vai mais precisar desse processo de apagar os titulos em estudo 
-      pc_apaga_estudo_limdesctit(pr_cdcooper => vr_cdcooper
-                                  ,pr_cdoperad => vr_cdoperad
-                                  ,pr_idorigem => vr_idorigem
-                                  ,pr_dscritic => vr_dscritic);
-                                  
-      if  vr_dscritic is not null then
-          RAISE vr_exc_saida;
-      end if;*/
-      
+
       ------------------------
       ------------------------ GERACAO DO RELATORIO CRRL492
       ------------------------
@@ -2471,7 +2454,6 @@ PROCEDURE pc_crps517(pr_xmllog   IN VARCHAR2              --> XML com informaçõe
       END;
       
   END pc_crps517;
-                      
-                  
-end limi0002;
+  
+END LIMI0002;
 /
