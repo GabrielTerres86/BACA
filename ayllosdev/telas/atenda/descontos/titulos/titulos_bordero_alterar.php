@@ -200,7 +200,7 @@
 									    		<td>Sim</td>
 								    		<? }
 								    		else{ ?>
-									    		<td>N&atilde;o Analisado</td>
+									    		<td class="titulo-nao-analisado">N&atilde;o Analisado</td>
 								    		<? }
 								    	?>
 								    	<td class='botaoSelecionar' onclick='removeTituloBordero($(this));'><button type='button' class='botao'>Remover</button></td>
