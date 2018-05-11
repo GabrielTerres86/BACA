@@ -342,6 +342,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
 								
 				   09/05/2018 - Correção para considerar apenas os contratos com cobertura de operação ativa (Lucas Skroch - Supero)
 				   
+                   10/05/2018 - Ajuste na proc pc_garantia_cobertura_opera para nao enviar atricuto Ident 
+                                da tag Gar quando tipo for "0104" ou "0105". PRJ366 (Lombardi)
+				   
 .............................................................................................................................*/
 
     DECLARE
@@ -3830,6 +3833,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
         vr_vlroriginal   NUMBER := 0;
         vr_vlratualizado NUMBER := 0;
         vr_nrcpfcnpj     VARCHAR2(20);
+        --vr_nrcpfcnpj_valida NUMBER := 0;
         vr_inpessoa      NUMBER := 0;
         vr_stsnrcal      BOOLEAN := FALSE;
         vr_idcobertura   NUMBER := 0;
@@ -3883,8 +3887,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                                          ,pr_inpessoa => vr_inpessoa);
              IF vr_inpessoa = 1 THEN
                vr_nrcpfcnpj := to_char(vr_nrcpfcnpj,'fm00000000000');
+               --vr_nrcpfcnpj_valida := lpad(vr_nrcpfcnpj,11,'0');
              ELSE
                vr_nrcpfcnpj := to_char(vr_nrcpfcnpj,'fm00000000000000');
+               --vr_nrcpfcnpj_valida := lpad(vr_nrcpfcnpj,8,'0');
              END IF;
              
              -- Se for pós fixado envia como TP105
@@ -3903,14 +3909,16 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                                                        || ' Tp="0104"' 
                                                        || ' VlrOrig="' || replace(to_char(vr_vlroriginal,'fm99999999999990D00'),',','.') || '"');
              END IF;                                          
+             /* Retirado por causa da regra: O preenchimento do atributo 'VlrOrig' é obrigatório e os atributos 'Ident' 
+                                             e 'PercGar' não podem ser preenchidos para 'Tp' diferente de '9'.
               
              -- Enviar o ident quando o CNPJ for diferente do contratante do empréstimo
-             --IF vr_tab_individ(vr_idx_individ).nrcpfcgc <> vr_nrcpfcnpj THEN
+             IF vr_tab_individ(vr_idx_individ).nrcpfcgc <> vr_nrcpfcnpj_valida THEN
                gene0002.pc_escreve_xml(pr_xml            => vr_xml_3040
                                       ,pr_texto_completo => vr_xml_3040_temp
                                       ,pr_texto_novo     => ' Ident="' || vr_nrcpfcnpj || '"');
-             --END IF;
-
+             END IF;
+             */
              IF vr_vlroriginal <> vr_vlratualizado THEN
                gene0002.pc_escreve_xml(pr_xml            => vr_xml_3040
                                       ,pr_texto_completo => vr_xml_3040_temp
