@@ -1,9 +1,9 @@
 <? 
 /*!
  * FONTE        : valida_valor_adesao_produto.php
- * CRIA«√O      : Lombardi
- * DATA CRIA«√O : 12/04/2018
- * OBJETIVO     : Verificar se o valor contratado para o produto 31 - Emprestimo È permitido pelo tipo de conta.
+ * CRIA√á√ÉO      : Lombardi
+ * DATA CRIA√á√ÉO : 12/04/2018
+ * OBJETIVO     : Verificar se o valor contratado para o produto 31 - Emprestimo √© permitido pelo tipo de conta.
  */
 
 	session_start();
@@ -21,6 +21,7 @@
 	$cdcooper =  		(isset($_POST['cdcooper']))  		? $_POST['cdcooper'] 		: '';
 	$vlemprst_antigo =  (isset($_POST['vlemprst_antigo']))  ? $_POST['vlemprst_antigo'] : 0;
 	$dsctrliq_antigo =  (isset($_POST['dsctrliq_antigo']))  ? $_POST['dsctrliq_antigo'] : '';
+	$dsauxliq = '';
 	
 	$executar = "showMsgAguardo(\"Aguarde, validando dados ...\");";
 	$executar = "setTimeout(\"attArray(\\\"".$operacao."\\\",\\\"".$cdcooper."\\\")\", 400);";
@@ -29,7 +30,7 @@
 	/* Desconsidera CDC */
 	if ($cdfinemp <> 0 && $cdfinemp <> 58 && $cdfinemp <> 59) {
 		
-		// Monta o xml de requisiÁ„o
+		// Monta o xml de requisi√ß√£o
 		$xml  = "";
 		$xml .= "<Root>";
 		$xml .= "	<Dados>";
@@ -42,7 +43,7 @@
 		$xmlResult = mensageria($xml, "CADA0006", "VALIDA_ADESAO_PRODUTO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 		$xmlObject = getObjectXML($xmlResult);
 		
-		// Se ocorrer um erro, mostra crÌtica
+		// Se ocorrer um erro, mostra cr√≠tica
 		if (strtoupper($xmlObject->roottag->tags[0]->name) == "ERRO") {
 			$msgErro = $xmlObject->roottag->tags[0]->tags[0]->tags[4]->cdata;
 			exibirErro('error',utf8_encode($msgErro),'Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
@@ -52,13 +53,21 @@
 		$dsctrliq = str_replace('.','',$dsctrliq);
 		$dsctrliq_antigo = str_replace('.','',$dsctrliq_antigo);
 		
-		// Monta o xml de requisiÁ„o
+		// Verificar se est√° sendo enviado a string "Sem liquidacoes"  
+		if (strcasecmp($dsctrliq, 'Sem liquidacoes') == 0) {
+			$dsauxliq = '';
+		} else {
+			$dsauxliq = $dsctrliq;
+		}
+
+
+		// Monta o xml de requisi√ß√£o
 		$xml  = "";
 		$xml .= "<Root>";
 		$xml .= "	<Dados>";
 		$xml .= "		<nrdconta>".$nrdconta."</nrdconta>";
 		$xml .= "		<vlcontra>".$vlemprst."</vlcontra>";
-		$xml .= "		<dsctrliq>".$dsctrliq."</dsctrliq>";
+		$xml .= "		<dsctrliq>".$dsauxliq."</dsctrliq>";
 		$xml .= "	</Dados>";
 		$xml .= "</Root>";
 		
@@ -66,7 +75,7 @@
 		$xmlResult = mensageria($xml, "CADA0006", "VALIDA_VALOR_ADESAO_EMP", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 		$xmlObject = getObjectXML($xmlResult);
 		
-		// Se ocorrer um erro, mostra crÌtica
+		// Se ocorrer um erro, mostra cr√≠tica
 		if (strtoupper($xmlObject->roottag->tags[0]->name) == "ERRO") {
 			$msgErro = $xmlObject->roottag->tags[0]->tags[0]->tags[4]->cdata;
 			exibirErro('error',utf8_encode($msgErro),'Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
@@ -75,7 +84,7 @@
 		$solcoord = $xmlObject->roottag->tags[0]->cdata;
 		$mensagem = $xmlObject->roottag->tags[1]->cdata;
 		
-		// Se ocorrer um erro, mostra crÌtica
+		// Se ocorrer um erro, mostra cr√≠tica
 		if ($solcoord == 1 && ((float) $vlemprst != (float) $vlemprst_antigo || $dsctrliq != $dsctrliq_antigo)) {
 			//Guarda valores para futura consulta
 			$executar .= "vlemprst_antigo = ".$vlemprst.";dsctrliq_antigo = \"".$dsctrliq."\";";
