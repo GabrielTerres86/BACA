@@ -2,7 +2,7 @@
 
     Programa: fontes/crps614.p
     Autor(a): Fabricio
-    Data    : Janeiro/2012                      Ultima atualizacao: 06/04/2015
+    Data    : Janeiro/2012                      Ultima atualizacao: 05/12/2017
   
     Dados referentes ao programa:
   
@@ -25,6 +25,9 @@
                              proc_message.log acrescentando a data na frente
                              do log (SD273423 Tiago/Fabricio).
                              
+               05/12/2017 - Arrumar leitura da crappam para buscarmos da forma
+                            correta na condicao "OR", foi incluido parenteses 
+                            (Lucas Ranghetti #804628)
 .............................................................................*/
 
 DEF STREAM str_1.
@@ -87,10 +90,10 @@ ASSIGN aux_vlmenpam = crapcop.vlmenpam.
     
 FOR EACH crappam WHERE crappam.cdcooper = crapcop.cdcooper    AND
                        crappam.flgpamca = TRUE                AND
-                      (crappam.dddebpam >  DAY(glb_dtmvtoan)  AND   
+                     ((crappam.dddebpam >  DAY(glb_dtmvtoan)  AND   
                        crappam.dddebpam <= DAY(glb_dtmvtolt)) OR    
                       (crappam.dddebpam = 1                   AND   
-                       crappam.dddebpam = DAY(glb_dtmvtolt))  
+                       crappam.dddebpam = DAY(glb_dtmvtolt)))
                        NO-LOCK:
 
     ASSIGN aux_dddebpam = crappam.dddebpam.

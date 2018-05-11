@@ -11,7 +11,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps194 (pr_cdcooper IN crapcop.cdcooper%T
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Odair
-       Data    : Abril/97                           Ultima atualizacao: 22/09/2016
+       Data    : Abril/97                           Ultima atualizacao: 15/12/2017
 
        Dados referentes ao programa:
 
@@ -66,6 +66,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps194 (pr_cdcooper IN crapcop.cdcooper%T
 
                    22/09/2016 - Alterei a gravacao do log 661 do proc_batch para 
                                 o proc_message SD 402979. (Carlos Rafael Tanholi)
+
+                   04/08/2017 - Remocao do tipo de emprestimo na exclusao das parcelas. 
+                                (Jaison/James - PRJ298)
+
+                   15/12/2017 - Remover o vinculo com a cobertura. PRJ404 (Lombardi)
     ............................................................................ */
 
     DECLARE
@@ -115,6 +120,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps194 (pr_cdcooper IN crapcop.cdcooper%T
         SELECT crawepr.nrdconta --Numero da conta/dv do associado
               ,crawepr.nrctremp --Numero do contrato de emprestimo
               ,crawepr.tpemprst --Tipo do emprestimo (0 - atual, 1 - pre-fixada)
+              ,crawepr.idcobope --Cobertura
               ,crawepr.rowid    --id do registro
         FROM  crawepr
         WHERE crawepr.cdcooper = pr_cdcooper
@@ -452,21 +458,29 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps194 (pr_cdcooper IN crapcop.cdcooper%T
             RAISE vr_exc_saida;
         END;
 
-        -- se o tipo do emprestimo for 1 - pre-fixada
-        IF rw_crawepr.tpemprst = 1 THEN
-          /* Limpa as parcelas do contrato de emprestimos e seus respectivos valores */
-          BEGIN
-            DELETE FROM  crappep
-                   WHERE crappep.cdcooper = pr_cdcooper
-                   AND   crappep.nrdconta = rw_crawepr.nrdconta --conta do associado
-                   AND   crappep.nrctremp = rw_crawepr.nrctremp;--numero do contrato
-          EXCEPTION
-            WHEN OTHERS THEN
-              -- gera critica
-              vr_dscritic := 'Erro na exclusao das parcelas da proposta de emprestimo. '||SQLERRM;
-              -- finaliza a execucao
-              RAISE vr_exc_saida;
-          END;
+        /* Limpa as parcelas do contrato de emprestimos e seus respectivos valores */
+        BEGIN
+          DELETE FROM  crappep
+                 WHERE crappep.cdcooper = pr_cdcooper
+                 AND   crappep.nrdconta = rw_crawepr.nrdconta --conta do associado
+                 AND   crappep.nrctremp = rw_crawepr.nrctremp;--numero do contrato
+        EXCEPTION
+          WHEN OTHERS THEN
+            -- gera critica
+            vr_dscritic := 'Erro na exclusao das parcelas da proposta de emprestimo. '||SQLERRM;
+            -- finaliza a execucao
+            RAISE vr_exc_saida;
+        END;
+        
+        -- remover o vinculo da cobertura
+        BLOQ0001.pc_vincula_cobertura_operacao (pr_idcobertura_anterior => rw_crawepr.idcobope 
+                                               ,pr_idcobertura_nova => 0
+                                               ,pr_nrcontrato => 0
+                                               ,pr_dscritic => vr_dscritic);
+        
+        IF vr_dscritic IS NOT NULL THEN
+          -- finaliza a execucao
+          RAISE vr_exc_saida;
         END IF;
 
         -- eliminando as informacoes da proposta de cartoes de credito

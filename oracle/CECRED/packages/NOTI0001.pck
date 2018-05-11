@@ -630,8 +630,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NOTI0001 IS
         vr_sql_destinatarios := vr_sql_destinatarios || CASE WHEN pr_tpfiltro_mobile = 1 THEN 'NOT IN' ELSE 'IN' END;
         vr_sql_destinatarios := vr_sql_destinatarios || '(SELECT dsp.cooperativaid,dsp.numeroconta,dsp.titularid ' ||
                                                            'FROM dispositivomobile dsp ' ||
-                                                          'WHERE dsp.pushhabilitado = 1 ' ||
-                                                            'AND dsp.autorizado = 1 ' ||
+                                                          'WHERE dsp.autorizado = 1 ' ||
                                                             'AND dsp.habilitado = 1 ';
         IF pr_tpfiltro_mobile = 3 THEN
           -- Android

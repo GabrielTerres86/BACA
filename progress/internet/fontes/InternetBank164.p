@@ -51,6 +51,8 @@ DEF OUTPUT PARAM TABLE FOR xml_operacao.
 DEF VAR aux_flgentrv AS LOGI                        NO-UNDO.
 DEF VAR aux_nmarqimp AS CHAR                        NO-UNDO.
 DEF VAR aux_nmarqpdf AS CHAR                        NO-UNDO.
+DEF VAR aux_dsdirarq AS CHAR                        NO-UNDO.
+DEF VAR aux_nmarquiv AS CHAR                        NO-UNDO.
 
 
 IF  VALID-HANDLE(h-b1wgen0002i)  THEN
@@ -112,7 +114,19 @@ IF  RETURN-VALUE = "NOK"  THEN
   END.
 ELSE 
   DO:
+    IF par_cdprogra = "" THEN DO:
     CREATE xml_operacao.
     ASSIGN xml_operacao.dslinxml = "<nmarqpdf>" + aux_nmarqpdf + "</nmarqpdf>".
     RETURN "OK".
+    END.
+    ELSE DO:   
+        ASSIGN aux_nmarquiv = SUBSTR(aux_nmarqpdf,R-INDEX(aux_nmarqpdf,"/") + 1)
+               aux_nmarqpdf = SUBSTR(aux_nmarqpdf,1,R-INDEX(aux_nmarqpdf,"/")).
+        
+        CREATE xml_operacao.
+        ASSIGN xml_operacao.dslinxml = "<nmarqpdf>" + aux_nmarquiv + "</nmarqpdf>" +                                      
+                                       "<dssrvarq>" + aux_nmarqimp + "</dssrvarq>" +
+                                       "<dsdirarq>" + aux_nmarqpdf + "</dsdirarq>".
+        RETURN "OK".    
+  END.
   END.

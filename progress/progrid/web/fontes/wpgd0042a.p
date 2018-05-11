@@ -227,12 +227,14 @@ FUNCTION Relatorio RETURNS LOGICAL ():
 				   
 				   IF crapadp.idevento = 1 THEN
 				     DO:
-                       {&out}  ' <td style="width:77px;padding-left:2px" align="left">Telefone</td>' SKIP
-                               ' <td style="width:77px;padding-left:2px" align="left">Celular</td>' SKIP.
+							{&out}  ' <td style="width:77px;padding-left:2px" align="left">Telefone</td>' SKIP
+                      ' <td style="width:77px;padding-left:2px" align="left">Celular</td>' SKIP
+								  	 IF tipoDeRelatorio <> 6 AND tipoDeRelatorio <> 7 THEN '    <td>E-mail</td>' ELSE '' SKIP.
 				     END.
-				   {&out} 	 
-                   IF tipoDeRelatorio <> 6 AND tipoDeRelatorio <> 7 THEN '    <td>E-mail</td>' ELSE '' SKIP
-                   '    <td align="center">Vínc./Inscr.</td>' SKIP
+					 Else
+						{&out}  '    <td style="width:77px;padding-left:2px">PA</td>' SKIP.
+						
+				   {&out} '    <td align="center">Vínc./Inscr.</td>' SKIP
                    '    <td>Observação</td>' SKIP
                    IF tipoDeRelatorio <> 6 AND tipoDeRelatorio <> 7 THEN '    <td>Uso manual</td>' ELSE '' SKIP
                    '  </tr>' SKIP.

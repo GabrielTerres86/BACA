@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Guilherme
-   Data    : Julho/2011                    Ultima atualizacao: 12/12/2013
+   Data    : Julho/2011                    Ultima atualizacao: 16/01/2018
 
    Dados referentes ao programa: 
                    -Lançamento de cheques (adaptacao da rotina 51 + lanchq)
@@ -25,6 +25,8 @@
                             Inclusao do VALIDATE ( André Euzébio / SUPERO) 
 
                12/09/2016 - Adicionado chamada da função "callBlass(event)" - (Evandro - RKAM). 
+			   
+		  	   16/01/2018 - Aumentado tamanho do campo de senha para 30 caracteres. (PRJ339 - Reinert)
    ......................................................................... -->
 
 <html>
@@ -431,7 +433,7 @@ function doFocus(erro){
         <tr>
           <td class=linhaform align="right">Senha:</td>
           <td><input class=input type="password" name="v_senha" size="12" 
-               maxlength="10"></td>
+               maxlength="30"></td>
         </tr>
       <script language="SpeedScript">
                  END.

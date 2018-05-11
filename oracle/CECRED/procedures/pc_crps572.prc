@@ -76,6 +76,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS572(pr_cdcooper  IN craptab.cdcooper%T
 
                   22/08/2017 - Gravar informações do Header do arquivo 3046 na tabela cecred.tbbi_opf_header
                                (Lucas Ranghetti #549788)
+
+                  08/03/2017 - Inclusão dos campos dtinirlc, qtopemnf, vlopemnf, vlcooacc,
+                               vlrisinv e vlcoorcc na tabela crapopf (SD#865184-AJFink)
+
   ............................................................................. */
 
   -- CURSORES
@@ -154,7 +158,13 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS572(pr_cdcooper  IN craptab.cdcooper%T
                              ,percdocp   NUMBER
                              ,percvolp   NUMBER
                              ,inpessoa   NUMBER
-                             ,idopf_header NUMBER);
+                             ,idopf_header NUMBER
+                             ,dtinirlc   DATE
+                             ,qtopemnf   NUMBER
+                             ,vlopemnf   NUMBER
+                             ,vlcooacc   NUMBER
+                             ,vlrisinv   NUMBER
+                             ,vlcoorcc   NUMBER);
   -- Tabela de memória para as OPs
   TYPE typ_crapopf IS TABLE OF rec_crapopf INDEX BY VARCHAR2(100);
   TYPE typ_crapopfi IS TABLE OF rec_crapopf INDEX BY PLS_INTEGER;
@@ -576,6 +586,14 @@ BEGIN
       vr_xml_qtifssfn    NUMBER;
       vr_xml_qtsbjsfn    NUMBER;
       vr_xml_vlsbjsfn    NUMBER;
+
+      vr_xml_dtinirlc        DATE;
+      vr_xml_qtopemnf        NUMBER(9);
+      vr_xml_vlopemnf        NUMBER(19,2);
+      vr_xml_vlcooacc        NUMBER(19,2);
+      vr_xml_vlrisinv        NUMBER(19,2);
+      vr_xml_vlcoorcc        NUMBER(19,2);
+      
       vr_xml_stcpfcgc    VARCHAR2(20);
       vr_xml_flgpj       BOOLEAN;
       vr_xml_cdmodali    VARCHAR2(10);
@@ -693,6 +711,13 @@ BEGIN
           -- Buscar valor: RespTotJud
           vr_xml_vlsbjsfn := TO_NUMBER(xmldom.getAttribute(xmlDom.MAKEELEMENT(vr_node_cli),'RespTotJud'),'99999999999.99');
 
+          vr_xml_dtinirlc := TO_DATE(xmldom.getAttribute(xmlDom.MAKEELEMENT(vr_node_cli),'IniRelactCli'),'YYYY-MM-DD');
+          vr_xml_qtopemnf := TO_NUMBER(xmldom.getAttribute(xmlDom.MAKEELEMENT(vr_node_cli),'QtdOpManif'));
+          vr_xml_vlopemnf := TO_NUMBER(xmldom.getAttribute(xmlDom.MAKEELEMENT(vr_node_cli),'RespTotManif'),'99999999999.99');
+          vr_xml_vlcooacc := TO_NUMBER(xmldom.getAttribute(xmlDom.MAKEELEMENT(vr_node_cli),'CoobAss'),'99999999999.99');
+          vr_xml_vlrisinv := TO_NUMBER(xmldom.getAttribute(xmlDom.MAKEELEMENT(vr_node_cli),'RiscoIndVendor'),'99999999999.99');
+          vr_xml_vlcoorcc := TO_NUMBER(xmldom.getAttribute(xmlDom.MAKEELEMENT(vr_node_cli),'CoobRec'),'99999999999.99');
+
           -- Seta como lido
           vr_load_cli := FALSE;
         END IF;
@@ -741,6 +766,12 @@ BEGIN
           vr_crapopf(vr_ixOPFv).percvolp := vr_xml_percvolp;
           vr_crapopf(vr_ixOPFv).inpessoa := vr_cpfcgc(indcgc).inpessoa;
           vr_crapopf(vr_ixOPFv).idopf_header := vr_idopf_header;
+          vr_crapopf(vr_ixOPFv).dtinirlc := vr_xml_dtinirlc;
+          vr_crapopf(vr_ixOPFv).qtopemnf := vr_xml_qtopemnf;
+          vr_crapopf(vr_ixOPFv).vlopemnf := vr_xml_vlopemnf;
+          vr_crapopf(vr_ixOPFv).vlcooacc := vr_xml_vlcooacc;
+          vr_crapopf(vr_ixOPFv).vlrisinv := vr_xml_vlrisinv;
+          vr_crapopf(vr_ixOPFv).vlcoorcc := vr_xml_vlcoorcc;
         END LOOP;
 
         -- Se houve o load de um novo NODO: Op
@@ -873,7 +904,13 @@ BEGIN
                              ,percdocp
                              ,percvolp
                              ,inpessoa
-                             ,idopf_header)
+                             ,idopf_header
+                             ,dtinirlc
+                             ,qtopemnf
+                             ,vlopemnf
+                             ,vlcooacc
+                             ,vlrisinv
+                             ,vlcoorcc)
                        VALUES(NVL(vr_crapopfi(vr_ixOPF).nrcpfcgc, 0) 
                              ,vr_crapopfi(vr_ixOPF).dtrefere        
                              ,NVL(vr_crapopfi(vr_ixOPF).qtopesfn, 0) 
@@ -883,7 +920,13 @@ BEGIN
                              ,NVL(vr_crapopfi(vr_ixOPF).percdocp, 0)
                              ,NVL(vr_crapopfi(vr_ixOPF).percvolp, 0)
                              ,NVL(vr_crapopfi(vr_ixOPF).inpessoa, 0)
-                             ,NVL(vr_crapopfi(vr_ixOPF).idopf_header, 0));
+                             ,NVL(vr_crapopfi(vr_ixOPF).idopf_header, 0)
+                             ,vr_crapopfi(vr_ixOPF).dtinirlc
+                             ,NVL(vr_crapopfi(vr_ixOPF).qtopemnf, 0)
+                             ,NVL(vr_crapopfi(vr_ixOPF).vlopemnf, 0)
+                             ,NVL(vr_crapopfi(vr_ixOPF).vlcooacc, 0)
+                             ,NVL(vr_crapopfi(vr_ixOPF).vlrisinv, 0)
+                             ,NVL(vr_crapopfi(vr_ixOPF).vlcoorcc, 0));
       EXCEPTION
         WHEN others THEN
           vr_dscritic := 'Erro ao incluir registro CRAPOPF: ' || SQLERRM(-(SQL%BULK_EXCEPTIONS(1). ERROR_CODE));

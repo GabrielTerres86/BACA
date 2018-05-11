@@ -41,8 +41,11 @@ DEF TEMP-TABLE tt-lancamento_futuro NO-UNDO
     FIELD cdbccxlt LIKE craplau.cdbccxlt     /*11*/
     FIELD nrdolote LIKE craplau.nrdolote     /*12*/
     FIELD nrseqdig LIKE craplau.nrseqdig     /*13*/
-    FIELD dtrefere LIKE craplau.dtmvtolt.    /*14*/
-    
+    FIELD dtrefere LIKE craplau.dtmvtolt     /*14*/
+    FIELD cdtiptra LIKE craplau.cdtiptra
+    FIELD idlancto LIKE craplau.idlancto
+    FIELD idlstdom AS INTEGER
+    FIELD incancel AS INTEGER.
 
 /* Temp-table com os campos que serao listados - cheques pendentes */
 DEF TEMP-TABLE cratfdc NO-UNDO

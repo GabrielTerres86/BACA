@@ -2,7 +2,7 @@
     
    Programa: b1wgen0147.p                  
    Autor(a): Lucas R.
-   Data    : 02/05/2013                         Ultima atualizacao: 30/10/2017
+   Data    : 02/05/2013                         Ultima atualizacao: 19/02/2018
 
    Dados referentes ao programa:
 
@@ -37,6 +37,9 @@
 							CH, RE, PP E CT. (PRJ339 - Reinert)
 
 			   30/10/2017 - Correcao no comando de copia do XML na procedure cria_dados_totvs. (Carlos Rafael Tanholi - SD 778394)
+
+			   19/02/2018 - Ajuste no comando de copia do XML na procedure cria_dados_totvs. (Carlos Rafael Tanholi - SD 840693)
+
 .............................................................................*/
 
 { sistema/generico/includes/b1wgen0147tt.i }
@@ -171,7 +174,7 @@ PROCEDURE cria_dados_totvs:
                     ELSE
                     IF    crapttl.tpdocttl = "CN" THEN
                           ASSIGN aux_tpdocttl = "CN".
-                          
+                    
                     /* Sexo */
                     IF   crapttl.cdsexotl = 1 THEN
                          ASSIGN aux_dssexttl = "M".
@@ -439,7 +442,8 @@ PROCEDURE cria_dados_totvs:
            OUTPUT STREAM str_2 CLOSE.
                
        END. /*fim do juridica*/
-     UNIX VALUE ('/usr/bin/cp ' + aux_nmarquiv + '/usr/local/cecred/bndes/xml/ 2>/dev/null').
+
+	 UNIX VALUE ('/usr/bin/cp ' + aux_nmarquiv + ' /usr/local/cecred/bndes/xml/ 2>/dev/null').
 
      UNIX SILENT VALUE ("rm " + aux_nmarquiv + " 2> /dev/null" ).
       

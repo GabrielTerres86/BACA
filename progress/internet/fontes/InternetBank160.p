@@ -31,6 +31,7 @@ DEF OUTPUT PARAM TABLE FOR xml_operacao.
 DEF VAR aux_dsxmlout  AS CHAR                                           NO-UNDO.
 DEF VAR aux_cdcritic  AS INT                                            NO-UNDO.
 DEF VAR aux_dscritic  AS CHAR                                           NO-UNDO.
+DEF VAR aux_flgbinss  AS INTE                                           NO-UNDO.
 
 /* Variaveis para o XML */
 DEF VAR xDoc          AS HANDLE                                         NO-UNDO.
@@ -41,6 +42,31 @@ DEF VAR xText         AS HANDLE                                         NO-UNDO.
 DEF VAR aux_cont_raiz AS INTEGER                                        NO-UNDO.
 DEF VAR aux_cont_perf AS INTEGER                                        NO-UNDO.
 DEF VAR ponteiro_xml  AS MEMPTR                                         NO-UNDO.
+DEF VAR aux_ponteiro  AS INTE                                           NO-UNDO.
+
+{ includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+RUN STORED-PROCEDURE {&sc2_dboraayl}.send-sql-statement
+                   aux_ponteiro = PROC-HANDLE
+                   ("SELECT DISTINCT 1 FROM tbinss_dcb dcb " +
+                                      "WHERE dcb.cdcooper = " + STRING(par_cdcooper) +
+                                      "  AND dcb.nrdconta = " + STRING(par_nrdconta)).
+
+FOR EACH {&sc2_dboraayl}.proc-text-buffer WHERE PROC-HANDLE = aux_ponteiro:
+   ASSIGN aux_flgbinss = INT(proc-text).
+END.
+
+CLOSE STORED-PROC {&sc2_dboraayl}.send-sql-statement
+   WHERE PROC-HANDLE = aux_ponteiro.
+
+{ includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+/* Verifica se a conta já recebeu algum benefício */
+IF  aux_flgbinss = 0  THEN
+    DO:        
+        ASSIGN xml_dsmsgerr = "<dsmsgerr>Não há benefícios para esta conta. Em caso de dúvidas entre em contato com o SAC.</dsmsgerr>".      
+        RETURN "NOK".
+    END.
 
 { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
 
@@ -70,23 +96,10 @@ ASSIGN aux_dsxmlout = ""
 { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
 
 IF  aux_cdcritic <> 0   OR
-    aux_dscritic <> ""  THEN DO: 
-
-    IF  aux_dscritic = "" THEN DO:
-        FIND crapcri WHERE crapcri.cdcritic = aux_cdcritic 
-                   NO-LOCK NO-ERROR.
-
-        IF  AVAIL crapcri THEN
-            ASSIGN aux_dscritic = crapcri.dscritic.
-        ELSE
-            ASSIGN aux_dscritic =  "Nao foi possivel apresentar o demonstrativo".
-    END.
-
-    ASSIGN xml_dsmsgerr = "<dsmsgerr>" + aux_dscritic +
-                       "</dsmsgerr>".  
-    
+    aux_dscritic <> ""  THEN 
+    DO:
+        ASSIGN xml_dsmsgerr = "<dsmsgerr>Não foi possível gerar o demonstrativo do INSS. Tente novamente mais tarde.</dsmsgerr>".      
     RETURN "NOK".
-    
 END.
 
 CREATE xml_operacao.

@@ -4,7 +4,7 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : David
-   Data    : Agosto/2007.                      Ultima atualizacao: 07/11/2012
+   Data    : Agosto/2007.                      Ultima atualizacao: 09/10/2017
 
    Dados referentes ao programa:
 
@@ -36,6 +36,9 @@
                             
                22/08/2016 - Adicao do parametro par_indlogin
                             PRJ286.5 - Cecred Mobile (Dionathan)
+    
+               09/10/2017 - Executar verifica_acesso quando requisicao também 
+                            for pela Conta Online (David).
     
 ..............................................................................*/
     
@@ -119,8 +122,7 @@ IF  RETURN-VALUE = "NOK"  THEN
         RETURN "NOK".
     END.
 
-IF par_flmobile      AND  /* Requisicao Mobile */
-   par_indlogin <> 0 THEN /* Apenas se for login */
+IF par_indlogin <> 0 THEN /* Apenas se for login */
    DO:
        RUN verifica-acesso IN h-b1wnet0002 (INPUT par_cdcooper,
                                             INPUT 90,
@@ -156,6 +158,7 @@ IF par_flmobile      AND  /* Requisicao Mobile */
               
 	    FIND FIRST tt-titulares WHERE tt-titulares.idseqttl = par_idseqttl NO-LOCK NO-ERROR.
         FIND FIRST tt-acesso NO-LOCK NO-ERROR.
+        
         FOR FIRST crapcop WHERE crapcop.cdcooper = par_cdcooper NO-LOCK. END.
 
         IF  AVAIL crapcop  THEN 
@@ -172,7 +175,10 @@ IF par_flmobile      AND  /* Requisicao Mobile */
                                        "<nmtitula>" + (IF AVAILABLE tt-titulares THEN TRIM(STRING(tt-titulares.nmtitula)) ELSE "") + "</nmtitula>" +
                                        "<nmrazsoc>" + TRIM(STRING(aux_nmprimtl)) + "</nmrazsoc>" +
                                        "<dtacemob>" + (IF AVAILABLE tt-acesso AND tt-acesso.dtultace <> ? THEN TRIM(STRING(tt-acesso.dtultace)) ELSE "") + "</dtacemob>" +
-                                       "<hracemob>" + (IF AVAILABLE tt-acesso THEN TRIM(STRING(tt-acesso.hrultace)) ELSE "") + "</hracemob>".
+                                       "<hracemob>" + (IF AVAILABLE tt-acesso THEN TRIM(STRING(tt-acesso.hrultace)) ELSE "") + "</hracemob>" +
+                                       "<cdblqsnh>" + (IF AVAILABLE tt-acesso THEN TRIM(STRING(tt-acesso.cdblqsnh)) ELSE "") + "</cdblqsnh>" +
+                                       "<qtdiams1>" + (IF AVAILABLE tt-acesso THEN TRIM(STRING(tt-acesso.qtdiams1)) ELSE "") + "</qtdiams1>" +
+                                       "<qtdiams2>" + (IF AVAILABLE tt-acesso THEN TRIM(STRING(tt-acesso.qtdiams2)) ELSE "") + "</qtdiams2>".
    END.
    
 DELETE PROCEDURE h-b1wnet0002.                                              

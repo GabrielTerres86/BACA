@@ -27,7 +27,7 @@
           </table></td>
         </tr>
         <tr>
-          <td height="220" valign="top" bgcolor="#CFD2C0"><table width="100%"  border="0" cellspacing="0" cellpadding="0">
+          <td valign="top" bgcolor="#CFD2C0"><table width="100%"  border="0" cellspacing="0" cellpadding="0">
               <tr class="txtNormal">
                 <td width="10">&nbsp;</td>
                 <td>
@@ -36,15 +36,16 @@
                       <td></td>
                     </tr>
                     <tr>
-                      <td class="txtNormal"><p align="center" class="Titulo style3">&nbsp;</p>
+                      <td class="txtNormal">
                         <p align="center" class="TituloPesquisa">&nbsp;</p>
                         <p align="center" class="Titulo style3"><strong>SISTEMA DE GESTÃO DE EVENTOS</strong></p></td>
                     </tr>
                   </table>
-                  <p>&nbsp;</p></td>
-                <td width="230" align="center"><table width="210" border="0" cellpadding="0" cellspacing="1" bgcolor="#999999">
+                  <p>&nbsp;</p>
+                </td>
+                <td width="230" align="center" valign="top"><table width="210" border="0" cellpadding="0" cellspacing="1" bgcolor="#999999">
                     <tr>
-                      <td bgcolor="#CCCCCC"><table width="100%" border="0" cellspacing="0" cellpadding="0">						
+                      <td bgcolor="#CCCCCC"><table width="100%" border="0" cellspacing="0" cellpadding="0" id="tableLogin">						
 													<tr>
 														<td>&nbsp;</td>
 														<td class="txtNegrito">Cooperativa</td>
@@ -54,37 +55,10 @@
                             <td>&nbsp;</td>
                             <td class="txtNegrito">Operador</td>
                             <td height="30" colspan="2">
-                             <div align="rigth"> <font face="Arial, Helvetica, sans-serif"> 
-              <input name="vusuario" type="text" class="Campo"
-      onfocus="window.status='Informe o nome do usuário.'" onblur="window.status=''" size="12">
-              </font></div>
-                          </tr>
-                          <tr>
-                            <td>&nbsp;</td>
-                            <td height="25" class="txtNegrito">Senha</td>
-                            <td height="25" colspan="2"><font face="Arial, Helvetica, sans-serif">
-                              <input name="senha" type="password" class="Campo"
-      onFocus="window.status='Informe a senha do usu&aacute;rio.';document.FormLogin.senha.select();" onBlur="window.status=''" size="20">
-                            </font></td>
-                          </tr>
-                          <tr>
-                            <td>&nbsp;</td>
-                            <td colspan="3" class="txtNegrito"><table width="100%" border="0" cellspacing="0" cellpadding="0">
-                                <tr>
-                                  <td width="25" align="left" valign="top"><input name="IND_COOKIE" type="checkbox" id="IND_COOKIE" value="1"></td>
-                                  <td class="txtNormal">Armazenar as informa&ccedil;&otilde;es<br>
-                              de login para que na pr&oacute;xima<br>
-                              vez n&atilde;o seja necess&aacute;rio.</td>
-                                  <td>&nbsp;</td>
-                                </tr>
-                            </table></td>
-                          </tr>
-                          <tr>
-                            <td>&nbsp;</td>
-                            <td class="txtNegrito">&nbsp;</td>
-                            <td width="88" height="30" align="right">&nbsp;</td>
-                            <td width="29" align="right">&nbsp;</td>
-                          </tr>
+                            <div align="rigth"> <font face="Arial, Helvetica, sans-serif"> 
+                            <input name="vusuario" type="text" class="Campo" onfocus="window.status='Informe o nome do usuário.'" onblur="window.status=''" size="12">
+                            </font></div>
+                          </tr>                          
                       </table></td>
                     </tr>
                     <tr>
@@ -189,6 +163,16 @@ function mudaServico() {
 	document.FormLogin.action = "/cgi-bin/cgiip.exe/WService=ws_progrid/wpgd0001.htm";
 }
 
+function verificaAmbiente(pkgname, vusuario){
+  
+  if (pkgname == "PKGPROD"){
+    document.getElementById("tableLogin").rows[1].style.display = "none";
+    if (vusuario != '') {    
+      document.FormLogin.vusuario.value = vusuario;
+    }
+  }
+  
+}
 // -->
 </script>
 </body>

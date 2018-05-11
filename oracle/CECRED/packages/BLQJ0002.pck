@@ -180,7 +180,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
     -- Verifica se ja existe bloqueio ativo para este oficio
     OPEN cr_crapblj;
     FETCH cr_crapblj INTO rw_crapblj;
-         
+      
     -- Busca a data do sistema
     OPEN btch0001.cr_crapdat(pr_cdcooper);
     FETCH btch0001.cr_crapdat INTO rw_crapdat;
@@ -276,7 +276,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
     END IF;
 
     -- Busca o numero do oficio que sera utilizado
-    vr_nroficio := pr_nroficio;
+      vr_nroficio := pr_nroficio;
     -- Inclui o bloqueio judicial
     blqj0001.pc_inclui_bloqueio_jud(pr_cdcooper => pr_cdcooper
                                    ,pr_nrdconta => pr_nrdconta
@@ -372,7 +372,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
     END IF;
     CLOSE cr_crapblj;
 
-    
+      
       IF pr_fldestrf = 0 THEN
         vr_fldestrf := FALSE;
         vr_dsinfdes := 'Desbloqueio BACENJUD';

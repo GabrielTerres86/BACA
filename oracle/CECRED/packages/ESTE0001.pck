@@ -71,7 +71,7 @@ CREATE OR REPLACE PACKAGE CECRED.ESTE0001 is
                                           ,pr_retxml   IN  OUT NOCOPY XMLType    -- Arquivo de retorno do XML
                                           ,pr_nmdcampo OUT VARCHAR2              -- Nome do campo com erro
                                           ,pr_des_erro OUT VARCHAR2);            -- Erros do processo
-  
+
   PROCEDURE pc_busca_param_ibra(pr_cdcooper       in crapcop.cdcooper%type  -- Codigo da cooperativa
                                ,pr_tpenvest       in varchar2 default null  --> Tipo de envio C - Consultar(Get)
                                ,pr_host_esteira  out varchar2               -- Host da esteira
@@ -97,7 +97,7 @@ CREATE OR REPLACE PACKAGE CECRED.ESTE0001 is
                                       pr_dtmvtolt  IN crapdat.dtmvtolt%TYPE,  --> Data do movimento                                      
                                       ---- OUT ----                           
                                       pr_dscritic OUT VARCHAR2);              --> Descricao da critica
-  
+
   --> Rotina para converter arquivo(pdf) para CLOB em base64 para ser enviado via JSON                                    
   PROCEDURE pc_arq_para_clob_base64(pr_nmarquiv     IN VARCHAR2,
                                     pr_json_value_arq OUT json_value,
@@ -683,6 +683,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
                                ,pr_chave_aplica  out varchar2               -- App Key
                                ,pr_dscritic      out varchar2 ) is
   /* ..........................................................................
+  
 
     Programa : pc_busca_param_ibra
     Sistema  : Conta-Corrente - Cooperativa de Credito
@@ -974,7 +975,7 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
                                pr_tpproduto                IN number /*tbgen_webservice_aciona.tpproduto%TYPE*/ DEFAULT 0,  --Tipo de produto (0-Emprestimo|Financiamento / 1-Limite Credito / 2-Limite Desconto Cheque / 3-Limite Desconto Titulo)
                                pr_idacionamento           OUT tbgen_webservice_aciona.idacionamento%TYPE,
                                pr_dscritic                OUT VARCHAR2) IS
-                 
+    
 /* ..........................................................................
   
   Programa : pc_grava_acionamento        
@@ -982,7 +983,7 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
   Sigla    : CRED
   Autor    : Luis Fernando - GFT
   Data     : Fevereiro/2018.                   Ultima atualizacao: 
-  
+
   Dados referentes ao programa:
   
   Frequencia: Sempre que for chamado
@@ -1286,7 +1287,7 @@ END pc_grava_acionamento;
 
       ELSE
         pr_dscritic := vr_dscritic_aux;
-      END IF;
+    END IF;
 
     END IF;
 
@@ -1319,7 +1320,7 @@ END pc_grava_acionamento;
           vr_dscritic := 'Nao foi possivel retornar Protocolo da Análise Automática de Crédito!';
           RAISE vr_exc_erro;
         END IF;
-      EXCEPTION
+  EXCEPTION
         WHEN OTHERS THEN
           vr_dscritic := 'Nao foi possivel retornar Protocolo de Análise Automática de Crédito!';
           RAISE vr_exc_erro;

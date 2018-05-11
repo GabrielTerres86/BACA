@@ -207,7 +207,7 @@ CREATE OR REPLACE PACKAGE BODY SOA.SOA_CRED_RECUP IS
       Sistema : Rotinas referentes ao WebService
       Sigla   : WEBS
       Autor   : Odirlei Busana - AMcom
-      Data    : Julho/2016.                    Ultima atualizacao: 19/09/2016
+      Data    : Julho/2016.                    Ultima atualizacao: 08/12/2017
 
       Dados referentes ao programa:
 
@@ -219,6 +219,10 @@ CREATE OR REPLACE PACKAGE BODY SOA.SOA_CRED_RECUP IS
       Alteracoes: 19/09/2016 - Incluido parametro de data de cancelamento na
                                chamada da procedure RECP0002.pc_cancelar_acordo,
                                Prj. 302 (Jean Michel).
+
+                  08/12/2017 - Inclusão de chamada da npcb0002.pc_libera_sessao_sqlserver_npc
+                               (SD#791193 - AJFink)
+
     ..............................................................................*/                                    
   BEGIN
     RECP0002.pc_cancelar_acordo (pr_nracordo => pr_nracordo
@@ -229,12 +233,15 @@ CREATE OR REPLACE PACKAGE BODY SOA.SOA_CRED_RECUP IS
                                 
     IF pr_cdcritic > 0 OR pr_dscritic IS NOT NULL THEN
       ROLLBACK;
+      npcb0002.pc_libera_sessao_sqlserver_npc('SOA_CRED_RECUP_1');
     END IF;
     
     COMMIT;
+    npcb0002.pc_libera_sessao_sqlserver_npc('SOA_CRED_RECUP_2');
   EXCEPTION
     WHEN OTHERS THEN
       ROLLBACK;     
+      npcb0002.pc_libera_sessao_sqlserver_npc('SOA_CRED_RECUP_3');
       pr_cdcritic := 994;
       pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => pr_cdcritic);
       pr_dsdetcri := SQLERRM;            

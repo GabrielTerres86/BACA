@@ -2,7 +2,7 @@
 
     Programa: b1wgen0061.p
     Autor   : Jose Luis (DB1)
-    Data    : Marco/2010                   Ultima atualizacao: 20/04/2017
+    Data    : Marco/2010                   Ultima atualizacao: 13/04/2018
 
     Objetivo  : Tranformacao BO tela CONTAS - CLIENTE FINANCEIRO
 
@@ -27,6 +27,7 @@
 			                 crapass, crapttl, crapjur 
 							(Adriano - P339).
 
+                13/04/2017 - Alterado atribuicao do campo cdmotdem da tabela CRAPSFN
 			   
 .............................................................................*/
 
@@ -564,9 +565,8 @@ PROCEDURE Grava_Dados:
                                aux_dtdemiss = crapass.dtdemiss 
                                aux_insitcta = 2.
 
-                           IF  crapass.cdmotdem = 2 OR  
-                               crapass.cdmotdem = 4 OR
-                               crapass.cdmotdem = 5 THEN
+                           IF  crapass.cdmotdem = 6 OR  
+                               crapass.cdmotdem = 11 THEN
                                ASSIGN aux_cdmotdem = 2. 
                            ELSE
                                ASSIGN aux_cdmotdem = 1.

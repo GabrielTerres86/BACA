@@ -105,8 +105,11 @@
 			              e transforma em positivo se necessario, em alguns casos estava duplicando o valor.
 						  Andrey (Mouts) - Chamado 568416
 
-             16/02/2017 - Alteracao de aux_flgativo para aux_flgretativo. (Jaison/James)
+			 30/01/2017 - Nao permitir efetuar lancamento para o produto Pos-Fixado.
+						  (Jaison/James - PRJ298)
 
+             16/02/2017 - Alteracao de aux_flgativo para aux_flgretativo. (Jaison/James)
+                          
 			 26/12/2017 - Retirado critica de boleto em aberto ou boleto de acordo
 			              quando efetuado transferencia para prejuizo (Daniel)
                           
@@ -205,22 +208,22 @@ DO WHILE TRUE:
 			  IF tel_cdhistor <> 349 THEN
 			  DO:
 
-			      /* verificar se o boleto do contrato está em aberto */ 
-				  FOR FIRST crapcob FIELDS (dtvencto vltitulo)
-					  WHERE crapcob.cdcooper = tbepr_cobranca.cdcooper
-						AND crapcob.nrdconta = tbepr_cobranca.nrdconta_cob
-						AND crapcob.nrcnvcob = tbepr_cobranca.nrcnvcob
-						AND crapcob.nrdocmto = tbepr_cobranca.nrboleto
-						AND crapcob.incobran = 0 NO-LOCK:
+              /* verificar se o boleto do contrato está em aberto */
+              FOR FIRST crapcob FIELDS (dtvencto vltitulo)
+                  WHERE crapcob.cdcooper = tbepr_cobranca.cdcooper
+                    AND crapcob.nrdconta = tbepr_cobranca.nrdconta_cob
+                    AND crapcob.nrcnvcob = tbepr_cobranca.nrcnvcob
+                    AND crapcob.nrdocmto = tbepr_cobranca.nrboleto
+                    AND crapcob.incobran = 0 NO-LOCK:
      
-					  ASSIGN glb_cdcritic = 0
-							 glb_dscritic = "Boleto do contrato " + STRING(tbepr_cobranca.nrctremp) + 
-											" em aberto." +      
-											" Vencto " + STRING(crapcob.dtvencto,"99/99/9999") +      
-											" R$ " + TRIM(STRING(crapcob.vltitulo, "zzz,zzz,zz9.99-")) + ".".    
-					  LEAVE.    
+                  ASSIGN glb_cdcritic = 0
+                         glb_dscritic = "Boleto do contrato " + STRING(tbepr_cobranca.nrctremp) + 
+                                        " em aberto." +      
+                                        " Vencto " + STRING(crapcob.dtvencto,"99/99/9999") +      
+                                        " R$ " + TRIM(STRING(crapcob.vltitulo, "zzz,zzz,zz9.99-")) + ".".    
+                  LEAVE.    
 
-				  END.  
+              END.          
 			  END.    
      
               /* verificar se o boleto do contrato está em pago, pendente de processamento */
@@ -600,6 +603,14 @@ DO WHILE TRUE:
                              aux_indebcre = "C"     THEN
                              DO:
                                  glb_cdcritic = 358.
+                                 NEXT-PROMPT tel_nrctremp WITH FRAME f_lanemp.
+                                 NEXT.
+                             END.
+
+                        /* Nao permite efetuar lancamento para o produto Pos-Fixado */
+						IF   crapepr.tpemprst = 2   THEN
+                             DO:
+                                 glb_cdcritic = 946.
                                  NEXT-PROMPT tel_nrctremp WITH FRAME f_lanemp.
                                  NEXT.
                              END.

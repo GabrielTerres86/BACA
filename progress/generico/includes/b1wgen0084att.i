@@ -46,6 +46,9 @@
                              
                 16/12/2015 - Incluso novo campo nrseqpgo na tt-pagamentos-parcelas
                              (Daniel)
+
+				05/10/2017 - Incluído campo vliofcpl na tt-pagamento-parcelas 
+							(Diogo - MoutS - Projeto 410 - RF 30)
 ..............................................................................*/
 
 DEFINE TEMP-TABLE tt-pagamentos-parcelas  NO-UNDO
@@ -73,7 +76,8 @@ DEFINE TEMP-TABLE tt-pagamentos-parcelas  NO-UNDO
     FIELD vljinp60 AS DECI
     FIELD inliquid AS INTE
     FIELD flgantec AS LOGI
-    FIELD nrseqpgo AS INTE. 
+    FIELD nrseqpgo AS INTE
+    FIELD vliofcpl LIKE crapepr.vliofcpl. 
 
 DEF TEMP-TABLE tt-calculado NO-UNDO
     FIELD vlsdeved AS DECI

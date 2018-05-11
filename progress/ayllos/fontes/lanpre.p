@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Jaison
-   Data    : Maio/2014.                    Ultima atualizacao: 19/01/2016
+   Data    : Maio/2014.                    Ultima atualizacao: 05/03/2018
    
    Dados referentes ao programa:
 
@@ -13,6 +13,9 @@
                Exportar lista de Cooperados para consulta do SPC/Serasa.
    
    Alteracoes: 19/01/2016 - Pre-Aprovado fase II. (Jaison/Anderson)
+
+               05/03/2018 - Adequacao chamada pc_crps682 (Paralelismo).
+			                (Fabrício)
    
 ............................................................................. */
 
@@ -351,6 +354,9 @@ DO WHILE TRUE:
 
         RUN STORED-PROCEDURE pc_crps682 aux_handproc = PROC-HANDLE
            (INPUT INT(tel_cdcooper),
+            INPUT  0,
+            INPUT  0,
+            INPUT  0,
             INPUT INT(STRING(glb_flgresta,"1/0")),
             INPUT  1, /* Gerar arquivo TXT para SPC/Serasa */
             OUTPUT 0,

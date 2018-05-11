@@ -2,7 +2,7 @@
 
    Programa: b1wgen0021tt.i                  
    Autor   : Murilo
-   Data    : Agosto/2007                       Ultima atualizacao: 27/09/2016
+   Data    : Agosto/2007                       Ultima atualizacao: 09/10/2017
 
    Dados referentes ao programa:
 
@@ -39,6 +39,8 @@
                             
                27/09/2016 - Ajuste das Rotinade Integralização/Estorno integralizaçao
                             M169 (Ricardo Linhares)                            
+                            
+               09/10/2017 - Incluir campo dsprotoc na temp-table tt-novo-plano (David)
                             
 ..............................................................................*/
 
@@ -89,7 +91,8 @@ DEF TEMP-TABLE tt-novo-plano NO-UNDO
     FIELD cdtipcor AS INTE
     FIELD dtultcor AS DATE
     FIELD dtprocor AS DATE
-    FIELD vlcorfix AS DECI.
+    FIELD vlcorfix AS DECI
+    FIELD dsprotoc LIKE crappro.dsprotoc.
     
 DEF TEMP-TABLE tt-subscricao NO-UNDO
     FIELD dtdebito AS CHAR

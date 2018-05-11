@@ -12,6 +12,9 @@
     
                 13/04/2017 - Inserido campo nrsequen na tt-estorno #625135
 				             (Tiago/Elton).
+
+				24/01/2018 - Aumentar o campo CRATFIT.BLIDENTI de 40 para 59 posições, pois estava truncando a tag "Final do BL"
+				             SD 812596 - Marcelo Telles Coelho
 .............................................................................*/ 
 DEF TEMP-TABLE tt-boletimcx NO-UNDO
     FIELD cdagenci LIKE crapbcx.cdagenci
@@ -80,7 +83,7 @@ DEF TEMP-TABLE cratfit NO-UNDO
     FIELD nrdocmto AS DECIMAL FORMAT "zz,zzz,zzz,zz9"
     FIELD vllanmto AS DECIMAL FORMAT "zzz,zzz,zz9.99"
     FIELD hrautent AS INT     FORMAT "zz,zz9"
-    FIELD blidenti AS CHAR    FORMAT "x(40)"
+    FIELD blidenti AS CHAR    FORMAT "x(59)"
     FIELD cdhistor AS INT     FORMAT "zzz9"
     FIELD tpoperac AS LOGICAL FORMAT "PG/RC"
     FIELD dsdocmto AS CHAR    FORMAT "x(50)"

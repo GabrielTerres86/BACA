@@ -34,6 +34,9 @@
 
                04/10/2016 - Verificar se existe  registro criado na tabela de controle de 
                             movimentacoes em especie. (Lucas Ranghetti #463572)
+                            
+               08/12/2017 - Melhoria 458, ajustar fonte para receber variavel v_tpdocmto
+                            Antonio R. Jr (mouts)
 ............................................................................. */
 
 &ANALYZE-SUSPEND _VERSION-NUMBER AB_v9r12 GUI adm2
@@ -141,6 +144,8 @@ DEF VAR v_programa  AS CHAR NO-UNDO.
 DEF VAR aux_nrdctabb AS DECI NO-UNDO.
 DEF VAR aux_nrdocmto AS DECI NO-UNDO.
 DEF VAR aux_nmarqlog AS CHAR NO-UNDO.
+DEF VAR v_tpdocmto    AS INTE NO-UNDO.
+DEF VAR v_vlcontresp  AS CHAR NO-UNDO.
 
 DEF VAR p-mensagem         AS CHAR no-undo.
 
@@ -560,7 +565,9 @@ ASSIGN v_vlmincen       = DECIMAL(craptab.dstextab)
        v_nome           = get-value("v_pnome")
        v_poupanca       = get-value("v_ppoup")
        v_valor1   = string(dec(get-value("v_pvalor1")),"zzz,zzz,zzz,zz9.99")
-       v_programa = get-value("v_pprograma").
+       v_programa = get-value("v_pprograma")
+       v_tpdocmto = INTE(get-value("v_ptpdocmto"))
+       v_vlcontresp = STRING(dec(get-value("v_pvlcontresp")),"zzz,zzz,zzz,zz9.99").
        
 IF REQUEST_METHOD = 'POST':U   THEN
    DO:
@@ -604,6 +611,7 @@ IF REQUEST_METHOD = 'POST':U   THEN
             ASSIGN l-houve-erro = NO
                    aux_focoerro = ''.
 
+            IF v_programa <> 'CRAP014' THEN DO: 
             FIND crapass WHERE crapass.cdcooper = crapcop.cdcooper  AND
                                crapass.nrdconta = p-conta-atualiza
                          NO-LOCK NO-ERROR.
@@ -614,6 +622,7 @@ IF REQUEST_METHOD = 'POST':U   THEN
                           vh_foco      = '9'.
                    {include/i-erro.i}
                END.
+            END.
                           
             IF v_nrccdrcb <> ''   THEN DO:
                RUN dbo/bo_controla_depositos.p PERSISTENT SET h-bo-depos.
@@ -706,7 +715,59 @@ IF REQUEST_METHOD = 'POST':U   THEN
                           
                          ASSIGN l-houve-erro = NO.
 
+                         IF v_programa = 'CRAP014' THEN
+                            DO:
                          RUN dbo/bo_controla_depositos.p 
+                                    PERSISTENT SET h-bo-depos.
+                                RUN atualiza-crapcme-pagamento
+                                            IN h-bo-depos(INPUT v_coop,
+                                                          INPUT int(v_pac),
+                                                          INPUT int(v_caixa),
+                                                          INPUT v_operador,
+                                                          INPUT v_vlmincen,
+                                                          INPUT p-ult-sequencia,
+                                                          INPUT INTE(v_nrccdrcb),
+                                                          INPUT v_nmpesrcb,
+                                                          INPUT v_cpfcgrcb,
+                                                          INPUT "Fisica",
+                                                          INPUT v_nridercb,
+                                                          INPUT DATE(v_dtnasrcb),
+                                                          INPUT v_desenrcb,
+                                                          INPUT v_nmcidrcb,
+                                                          INPUT v_cdufdrcb,
+                                                          INPUT INTE(v_nrceprcb),
+                                                          INPUT v_recursos,
+                                                          INPUT "",
+                                                          INPUT flinfdst,
+                                                          INPUT v_tpdocmto).
+                                                          
+                                DELETE PROCEDURE h-bo-depos.
+
+                                IF RETURN-VALUE = 'NOK' THEN
+                                   DO:
+                                     ASSIGN l-houve-erro = YES.
+                                     FOR EACH w-craperr:
+                                           DELETE w-craperr.
+                                     END.
+                                     
+                                     FOR EACH craperr NO-LOCK WHERE
+                                              craperr.cdcooper = crapcop.cdcooper AND
+                                              craperr.cdagenci = INT(v_pac) AND
+                                              craperr.nrdcaixa = INT(v_caixa):
+                                        CREATE w-craperr.
+                                        ASSIGN w-craperr.cdagenci = craperr.cdagenc
+                                               w-craperr.nrdcaixa = craperr.nrdcaixa
+                                               w-craperr.nrsequen = craperr.nrsequen
+                                               w-craperr.cdcritic = craperr.cdcritic
+                                               w-craperr.dscritic = craperr.dscritic
+                                               w-craperr.erro = craperr.erro.
+                                     END.
+                                     UNDO.
+                                   END.
+                            END.
+                        ELSE
+                          DO:                                                                        
+                             RUN dbo/bo_controla_depositos.p 
                              PERSISTENT SET h-bo-depos.
                          RUN atualiza-crapcme
                                    IN  h-bo-depos(INPUT v_coop,
@@ -760,7 +821,7 @@ IF REQUEST_METHOD = 'POST':U   THEN
                                  END.
                                  UNDO.
                              END.
-                             
+                          END.
                              IF  v_programa = "CRAP051" AND
                                  NOT l-houve-erro THEN
                                  DO:
@@ -875,6 +936,12 @@ IF REQUEST_METHOD = 'POST':U   THEN
                                      {&OUT}
                         '<script> window.location = "crap055.w" </script>'.  
                                   END.            
+                             ELSE
+                               IF v_programa = "CRAP014" THEN
+                                 DO:
+                                   {&OUT}
+                                   '<script> window.location = "crap014.w" </script>'.
+                         END.
                          END.
                        END. /* mAGUI ultimo */
                   END.

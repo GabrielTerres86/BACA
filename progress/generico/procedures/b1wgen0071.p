@@ -25,6 +25,10 @@
                  
                  17/01/2017 - Adicionado chamada a procedure de replicacao do 
                               email para o CDC. (Reinert Prj 289)                 
+                              
+                 01/02/2018 - Nao fazer a replicacao por este rotina, pois devera
+                              ser feita apenas pela tabela tbcadast_pessoa_email
+                              (Andrino - CRM)
 .............................................................................*/
 
 
@@ -683,6 +687,7 @@ PROCEDURE gerenciar-email:
         /* Realiza a replicacao dos dados p/as contas relacionadas ao coop. */
         IF  par_idseqttl = 1 AND par_nmdatela = "CONTAS" THEN 
             DO:
+/*      Nao replicar, pois a replicacao sera feito pelas tabelas TBCADAST_PESSOA_EMAIL
                IF  NOT VALID-HANDLE(h-b1wgen0077) THEN
                    RUN sistema/generico/procedures/b1wgen0077.p 
                         PERSISTENT SET h-b1wgen0077.
@@ -708,7 +713,7 @@ PROCEDURE gerenciar-email:
 
                IF  RETURN-VALUE <> "OK" THEN
                    UNDO TRANS_EMAIL, LEAVE TRANS_EMAIL.
-               
+  */             
                FIND FIRST bcrapttl WHERE bcrapttl.cdcooper = par_cdcooper AND
                                          bcrapttl.nrdconta = par_nrdconta AND
                                          bcrapttl.idseqttl = par_idseqttl

@@ -5,7 +5,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS331(pr_cdcritic OUT crapcri.cdcritic%T
   --
   --  Programa: PC_CRPS331
   --  Autor   : Andrino Carlos de Souza Junior (RKAM)
-  --  Data    : Novembro/2015                     Ultima Atualizacao: - 30/03/2017
+  --  Data    : Novembro/2015                     Ultima Atualizacao: - 23/01/2018
   --
   --  Dados referentes ao programa:
   --
@@ -29,6 +29,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS331(pr_cdcritic OUT crapcri.cdcritic%T
   -- 
   --        30/03/2017 - #551229 Job ENVIO_SERASA excluído para a criação dos jobs JBCOBRAN_ENVIO_SERASA e JBCOBRAN_RECEBE_SERASA.
   --                     Log de início, fim e erros na execução dos jobs. (Carlos)
+  --
+  --        23/01/2018 - Ajustar log escrito negatativacao para negativacao (Lucas Ranghetti #832284)
   ---------------------------------------------------------------------------------------------------------------
 
   -- Atualiza a situacao do boleto
@@ -202,7 +204,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS331(pr_cdcritic OUT crapcri.cdcritic%T
                                  -- E se estiver para cancelar nao pode existir outro historico (o sistema bloqueia novas solicitacoes)
         vr_inserasa := 0; -- Coloca como nao negativada
         vr_dtretser := NULL; -- Coloca como nao recebida no Serasa
-        vr_dslog := 'Serasa - Confirmado solicitacao de cancelamento da negatativacao';
+        vr_dslog := 'Serasa - Confirmado solicitacao de cancelamento da negativacao';
       END IF;
 
       -- Se a UF necessitar de AR e for o retorno de uma inclusao, nao deve-se atualizar o boleto

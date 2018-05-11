@@ -1,35 +1,29 @@
-/*
- *
- * Programa wpgd0036a.p - Listagem de orçamento (chamado a partir dos dados de wpgd0036)
- *
- */
 /* .............................................................................
 
-Alterações:  03/11/2008 - Inclusao widget-pool (martin)
+  Programa wpgd0036a.p - Listagem de orçamento (chamado a partir dos dados de wpgd0036)
 
-             10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro).
-                         
-                         05/06/2012 - Adaptação dos fontes para projeto Oracle. Alterado
-                                                  busca na gnapses de CONTAINS para MATCHES (Guilherme Maba).
-            
-             28/11/2012 - Substituir tabela "gncoper" por "crapcop"
-                          (David Kruger).
+  Alterações: 03/11/2008 - Inclusao widget-pool (martin)
+
+              10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro).
                           
-             04/04/2013 - Alteração para receber logo na alto vale,
-                          recebendo nome de viacrediav e buscando com
-                          o respectivo nome (David Kruger).              
-            
-             29/08/2013 - Nova forma de chamar as agências, de PAC agora 
-                            a escrita será PA (André Euzébio - Supero).
+              05/06/2012 - Adaptação dos fontes para projeto Oracle. Alterado
+                           busca na gnapses de CONTAINS para MATCHES (Guilherme Maba).
+              
+              28/11/2012 - Substituir tabela "gncoper" por "crapcop"
+                           (David Kruger).
+                           
+              04/04/2013 - Alteração para receber logo na alto vale,
+                           recebendo nome de viacrediav e buscando com
+                           o respectivo nome (David Kruger).              
+              
+              29/08/2013 - Nova forma de chamar as agências, de PAC agora 
+                           a escrita será PA (André Euzébio - Supero).
+                             
+              29/08/2017 - Inclusao do filtro por Programa,Prj. 322 (Jean Michel).
+             
 ............................................................................. */
 
 create widget-pool.
-
-/*****************************************************************************/
-/*                                                                           */
-/*   Bloco de variaveis                                                      */
-/*                                                                           */
-/*****************************************************************************/
 
 DEFINE TEMP-TABLE ttCrapcdp LIKE Crapcdp
     FIELD NrSeqDig            AS INTEGER
@@ -65,6 +59,7 @@ DEFINE VARIABLE nrSeqEve                     AS INTEGER.
 DEFINE VARIABLE dataInicial                  AS DATE.
 DEFINE VARIABLE dataFinal                    AS DATE.
 DEFINE VARIABLE tipoDeRelatorio              AS INTEGER.
+DEFINE VARIABLE nrseqpgm                     AS INTEGER.
 DEFINE VARIABLE consideraEventosForaDaAgenda AS LOGICAL.
 
 DEFINE VARIABLE imagemDoProgrid              AS CHARACTER.
@@ -775,7 +770,7 @@ IF permiteExecutar = "1" OR permiteExecutar = "2"
                  dataFinal                    = DATE(GET-VALUE("parametro8")) 
                  consideraEventosForaDaAgenda = IF GET-VALUE("parametro9") = "SIM" THEN YES ELSE NO
                  tipoDeRelatorio              = INTEGER(GET-VALUE("parametro10"))
-          NO-ERROR.          
+                 nrseqpgm                     = INTEGER(GET-VALUE("parametro11")) NO-ERROR.          
                   
           /* *** 
              tipoDeRelatorio ->  1 = Analitico
@@ -941,7 +936,13 @@ IF permiteExecutar = "1" OR permiteExecutar = "2"
                              Craptab.TpRegist = 0               NO-LOCK NO-ERROR.
 
           ASSIGN conta = 0.
-          FOR EACH ttCrapcdp:
+          FOR EACH ttCrapcdp, 
+					  FIRST Crapedp WHERE Crapedp.IdEvento = ttCrapcdp.IdEvento  AND
+                                     Crapedp.CdCooper = ttCrapcdp.CdCooper  AND
+                                     Crapedp.DtAnoAge = ttCrapcdp.DtAnoAge  AND
+                                     Crapedp.CdEvento = ttCrapcdp.CdEvento  AND
+                                    (Crapedp.nrseqpgm = nrseqpgm            OR
+                                     nrseqpgm = 0) NO-LOCK:
 
             /* *** Descricao do tipo de custo *** */
             IF ttCrapcdp.TpCusEve = 1 THEN DO:
@@ -985,10 +986,12 @@ IF permiteExecutar = "1" OR permiteExecutar = "2"
                 ASSIGN ttCrapcdp.NomeDoPac = "Agencia " + STRING(ttCrapcdp.CdAgenci,"999").
 
             /* *** Nome do evento *** */
-            FIND FIRST Crapedp WHERE Crapedp.IdEvento = ttCrapcdp.IdEvento  AND
+            /*FIND FIRST Crapedp WHERE Crapedp.IdEvento = ttCrapcdp.IdEvento  AND
                                      Crapedp.CdCooper = ttCrapcdp.CdCooper  AND
                                      Crapedp.DtAnoAge = ttCrapcdp.DtAnoAge  AND
-                                     Crapedp.CdEvento = ttCrapcdp.CdEvento  NO-LOCK NO-ERROR.
+                                     Crapedp.CdEvento = ttCrapcdp.CdEvento  AND
+                                    (Crapedp.nrseqpgm = nrseqpgm            OR
+                                     nrseqpgm = 0) NO-LOCK NO-ERROR.*/
             IF AVAILABLE Crapedp THEN
                 ASSIGN ttCrapcdp.NomeDoEvento = Crapedp.NmEvento.
             ELSE

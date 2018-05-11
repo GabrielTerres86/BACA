@@ -31,11 +31,17 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
                          e EAD Assemblear não sejam apresentados.
                          Projeto 229 - Melhorias OQS (Lombardi)
 						 
-		    03/06/2016 - Retirada a janela de aguade por showMsgAguardo e ajustes (Vanessa)
+						03/06/2016 - Retirada a janela de aguade por showMsgAguardo e ajustes (Vanessa)
 
             06/12/2016 - P341-Automatização BACENJUD - Alterada a validação 
-			             do departamento para que a mesma seja feita através
-						 do código e não da descrição (Renato Darosci)
+												 do departamento para que a mesma seja feita através
+												 do código e não da descrição (Renato Darosci).
+												 
+						01/09/2017 - Inclusão de condição para desconsiderar eventos EAD, SD 729182
+												 (Jean Michel).	
+						
+						25/10/2017 - Inclusão de filtro de programa, Prj. 322 (Jean Michel).						 
+												 
 -------------------------------------------------------------------------------------->
 <html>
   <head>
@@ -321,110 +327,114 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
       DEF VAR aux_rowid        AS CHAR                  NO-UNDO.
       DEF VAR aux_ttrowid      AS CHAR                  NO-UNDO.
       DEF VAR aux_selevento    AS INT                   NO-UNDO.
+			DEF VAR aux_nrseqpgm     AS INT                   NO-UNDO.
       DEF VAR aux_cdcooper     AS INT                   NO-UNDO.
       DEF VAR aux_selected     AS CHAR                  NO-UNDO.
-      DEF VAR aux_zebra        AS CHAR                  NO-UNDO.
-	  DEF VAR aux_idstagen     AS CHAR                  NO-UNDO.
-      
+			DEF VAR aux_zebra        AS CHAR                  NO-UNDO.
+			DEF VAR aux_idstagen     AS CHAR                  NO-UNDO.
+				
 
-    
-      DEF VAR aux_dsdemail      LIKE crapage.dsdemail.
-	  DEF VAR h-b1wgen0011 		AS HANDLE NO-UNDO.
-	  DEF VAR aux_dsconteu 		AS CHAR NO-UNDO.
-	  DEF VAR aux_dscritic 		AS CHAR NO-UNDO.
-  
-      /* Total de Eventos */
-      DEF VAR aux_qttoteve     AS INTEGER                                     NO-UNDO.
-      /* Total de Integracoes */
-      DEF VAR aux_qttotint     AS INTEGER                                     NO-UNDO.
-      /* Total de Eventos + Integracoes */
-      DEF VAR aux_qttotger     AS INTEGER                                     NO-UNDO.
-
-      DEF VAR aux_msgderro     AS CHAR                  NO-UNDO.
-      DEF VAR aux_nrdrowid     AS CHAR                  NO-UNDO.        
-
-      DEF TEMP-TABLE cratedp LIKE crapedp
-      FIELD flgordem       AS LOGICAL   INIT NO.  /* Para poder ordenar por NOME e colocar as INTEGRAÇÔES no fim da lista */
-
-      /* gera agenda*/
-      DEF TEMP-TABLE  tt-eventomes
-      FIELD cdevento LIKE crapeap.cdevento
-      FIELD mes      LIKE crapadp.nrmeseve    
-      FIELD vezes    as int
-      INDEX ch-vezes  cdevento vezes .
-
-      DEF TEMP-TABLE  tt-pacmes
-      FIELD cdagenci LIKE crapeap.cdagenci
-      FIELD mes      LIKE crapadp.nrmeseve    
-      FIELD vezes    as int
-      INDEX ch-mes cdagenci mes
-      INDEX ch-vezes  cdagenci vezes .
-
-      DEF BUFFER b-eventomes FOR tt-eventomes.
-
-      DEF TEMP-TABLE tt-novaagenda
-      FIELD cdevento LIKE crapadp.cdevento
-      FIELD cdagenci LIKE crapeap.cdagenci
-      FIELD mes      LIKE crapadp.nrmeseve
-      FIELD vezes    AS INT
-      FIELD tpevento like crapedp.tpevento 
-      INDEX ch-evemes cdevento mes
-      INDEX ch-agemes cdagenci mes.
-
-      DEF BUFFER b-agenda FOR tt-novaagenda.
-      DEF temp-table wk-mes 
-      FIELD mes LIKE crapadp.nrmeseve.
-      /******/
-
-      DEF TEMP-TABLE tt-evento 
-      FIELD nrmeseve LIKE crapadp.nrmeseve
-      FIELD cdevento LIKE crapadp.cdevento
-      FIELD cdagenci LIKE crapadp.cdagenci
-      FIELD idstaeve LIKE crapadp.idstaeve
-      FIELD auxrowid AS CHAR
-      FIELD idinseve AS LOGICAL FORMAT "yes/no".
-
-      /*** Declaração de BOs ***/
-      DEF VAR h-b1wpgd0029     AS HANDLE                NO-UNDO.
-
-      DEF TEMP-TABLE cratrap
-      FIELD cdagenci LIKE craprap.cdagenci        
-      FIELD cdcooper LIKE craprap.cdcooper
-      FIELD cdevento LIKE craprap.cdevento
-      FIELD cdgruava LIKE craprap.cdgruava
-      FIELD cditeava LIKE craprap.cditeava
-      FIELD dsobserv AS CHAR
-      FIELD dtanoage LIKE craprap.dtanoage
-      FIELD idevento LIKE craprap.idevento
-      FIELD nrseqeve LIKE craprap.nrseqeve
-      FIELD qtavabom LIKE craprap.qtavabom
-      FIELD qtavains LIKE craprap.qtavains
-      FIELD qtavaoti LIKE craprap.qtavaoti
-      FIELD qtavareg LIKE craprap.qtavareg
-      FIELD qtavares LIKE craprap.qtavares.
-
-      DEF BUFFER crabrap FOR craprap.
-
-      ASSIGN aux_selevento = INT(GET-VALUE("aux_selevento")).
-
-      /* Usado FOR EACH para poder utilizar o CONTAINS e WORD-INDEX, alterado para MATCHES */
-      FOR EACH gnapses WHERE gnapses.idsessao MATCHES "*" + get-cookie("cookie-usuario-em-uso") + "*" NO-LOCK:
-        LEAVE.
-      END.
-
-      DEFINE VARIABLE IdentificacaoDaSessao AS CHARACTER FORMAT "x(47)".
-      DEFINE VARIABLE aux_lspermis AS CHARACTER.
-      DEFINE VARIABLE aux_cdcopope AS INTEGER.
-      DEFINE VARIABLE aux_cdoperad AS CHARACTER.
-      DEFINE VARIABLE aux_nrseqdig LIKE crapadp.nrseqdig.
-      
-      RUN PermissaoDeAcesso(INPUT 'wpgd0019', OUTPUT IdentificacaoDaSessao, OUTPUT aux_lspermis).
 			
-	  RUN RodaJavaScript("aguarde();").
+			DEF VAR aux_dsdemail      LIKE crapage.dsdemail.
+			DEF VAR h-b1wgen0011 		AS HANDLE NO-UNDO.
+			DEF VAR aux_dsconteu 		AS CHAR NO-UNDO.
+			DEF VAR aux_dscritic 		AS CHAR NO-UNDO.
+		
+			/* Total de Eventos */
+			DEF VAR aux_qttoteve     AS INTEGER                                     NO-UNDO.
+			/* Total de Integracoes */
+			DEF VAR aux_qttotint     AS INTEGER                                     NO-UNDO.
+			/* Total de Eventos + Integracoes */
+			DEF VAR aux_qttotger     AS INTEGER                                     NO-UNDO.
+
+			DEF VAR aux_msgderro     AS CHAR                  NO-UNDO.
+			DEF VAR aux_nrdrowid     AS CHAR                  NO-UNDO.        
+
+			DEF TEMP-TABLE cratedp LIKE crapedp
+			FIELD flgordem       AS LOGICAL   INIT NO.  /* Para poder ordenar por NOME e colocar as INTEGRAÇÔES no fim da lista */
+
+			/* gera agenda*/
+			DEF TEMP-TABLE  tt-eventomes
+			FIELD cdevento LIKE crapeap.cdevento
+			FIELD mes      LIKE crapadp.nrmeseve    
+			FIELD vezes    as int
+			INDEX ch-vezes  cdevento vezes .
+
+			DEF TEMP-TABLE  tt-pacmes
+			FIELD cdagenci LIKE crapeap.cdagenci
+			FIELD mes      LIKE crapadp.nrmeseve    
+			FIELD vezes    as int
+			INDEX ch-mes cdagenci mes
+			INDEX ch-vezes  cdagenci vezes .
+
+			DEF BUFFER b-eventomes FOR tt-eventomes.
+
+			DEF TEMP-TABLE tt-novaagenda
+			FIELD cdevento LIKE crapadp.cdevento
+			FIELD cdagenci LIKE crapeap.cdagenci
+			FIELD mes      LIKE crapadp.nrmeseve
+			FIELD vezes    AS INT
+			FIELD tpevento like crapedp.tpevento 
+			INDEX ch-evemes cdevento mes
+			INDEX ch-agemes cdagenci mes.
+
+			DEF BUFFER b-agenda FOR tt-novaagenda.
+			DEF temp-table wk-mes 
+			FIELD mes LIKE crapadp.nrmeseve.
+			/******/
+
+			DEF TEMP-TABLE tt-evento 
+			FIELD nrmeseve LIKE crapadp.nrmeseve
+			FIELD cdevento LIKE crapadp.cdevento
+			FIELD cdagenci LIKE crapadp.cdagenci
+			FIELD idstaeve LIKE crapadp.idstaeve
+			FIELD auxrowid AS CHAR
+			FIELD idinseve AS LOGICAL FORMAT "yes/no".
+
+			/*** Declaração de BOs ***/
+			DEF VAR h-b1wpgd0029     AS HANDLE                NO-UNDO.
+
+			DEF TEMP-TABLE cratrap
+			FIELD cdagenci LIKE craprap.cdagenci        
+			FIELD cdcooper LIKE craprap.cdcooper
+			FIELD cdevento LIKE craprap.cdevento
+			FIELD cdgruava LIKE craprap.cdgruava
+			FIELD cditeava LIKE craprap.cditeava
+			FIELD dsobserv AS CHAR
+			FIELD dtanoage LIKE craprap.dtanoage
+			FIELD idevento LIKE craprap.idevento
+			FIELD nrseqeve LIKE craprap.nrseqeve
+			FIELD qtavabom LIKE craprap.qtavabom
+			FIELD qtavains LIKE craprap.qtavains
+			FIELD qtavaoti LIKE craprap.qtavaoti
+			FIELD qtavareg LIKE craprap.qtavareg
+			FIELD qtavares LIKE craprap.qtavares.
+
+			DEF BUFFER crabrap FOR craprap.
+
+			ASSIGN aux_selevento = INT(GET-VALUE("aux_selevento"))
+						 aux_nrseqpgm = INT(GET-VALUE("aux_nrseqpgm")).
+
+			/* Usado FOR EACH para poder utilizar o CONTAINS e WORD-INDEX, alterado para MATCHES */
+			FOR EACH gnapses WHERE gnapses.idsessao MATCHES "*" + get-cookie("cookie-usuario-em-uso") + "*" NO-LOCK:
+				LEAVE.
+			END.
+
+			DEFINE VARIABLE IdentificacaoDaSessao AS CHARACTER FORMAT "x(47)".
+			DEFINE VARIABLE aux_lspermis AS CHARACTER.
+			DEFINE VARIABLE aux_cdcopope AS INTEGER.
+			DEFINE VARIABLE aux_cdoperad AS CHARACTER.
+			DEFINE VARIABLE aux_nrseqdig LIKE crapadp.nrseqdig.
+			
+			RUN PermissaoDeAcesso(INPUT 'wpgd0019', OUTPUT IdentificacaoDaSessao, OUTPUT aux_lspermis).
+				
+			RUN RodaJavaScript("aguarde();").
+			
       /* Marcar primeiro evento selecionado  */
       IF REQUEST_METHOD = "GET" THEN
         DO: 
           ASSIGN aux_selevento = 0
+								 aux_nrseqpgm = 0
                  aux_cdcooper = INT(GET-VALUE("aux_cdcooper"))
                  aux_cdoperad = GET-VALUE("aux_cdoperad")
                  aux_cdcopope = INT(GET-VALUE("aux_cdcopope")).
@@ -481,8 +491,6 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
       
       IF GET-VALUE("mudaevento") = "sim" THEN /* Verificando se o POST foi feito somente para trocar de evento ou de cooperativa */
         LEAVE bloco.
-      
-	  
 	 
       /* Verificando se o POST foi feito para gerar nova agenda */
       IF GET-VALUE("gera") = "sim" THEN
@@ -505,287 +513,309 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
 
             END.
         
-          /* consistencia sobre cadastro meses de eventos na tela parametos da agenda */
-          /*IF NOT CAN-FIND(FIRST gnpapgd WHERE gnpapgd.idevento = gnpapgd.idevento
-                                      AND gnpapgd.cdcooper = gnpapgd.cdcooper
-                                      AND gnpapgd.dtanoage = gnpapgd.dtanonov
-                                      AND gnpapgd.lsmeseve = '') THEN*/
-		  IF gnpapgd.lsmeseve = ? OR gnpapgd.lsmeseve = "" THEN
-          DO:          
-                RUN RodaJavaScript("alert('Para a geração da agenda, favor cadastrar os meses para atribuição de eventos. Verifique na tela de ~"Parâmetros das Agendas~"')").
-                LEAVE bloco.              
-          END.
+					IF gnpapgd.lsmeseve = ? OR gnpapgd.lsmeseve = "" THEN
+						DO:          
+							RUN RodaJavaScript("alert('Para a geração da agenda, favor cadastrar os meses para atribuição de eventos. Verifique na tela de ~"Parâmetros das Agendas~"')").
+							LEAVE bloco.              
+						END.
             
-          RUN CriaAgenda.
-          
-          IF aux_erro = NO AND RETURN-VALUE <> "NOK" THEN
-            DO:
-              FOR EACH  crapagp WHERE crapagp.idevento = gnpapgd.idevento
-                                  AND crapagp.cdcooper = gnpapgd.cdcooper
-                                  AND crapagp.dtanoage = gnpapgd.dtanonov EXCLUSIVE-LOCK:
-                ASSIGN crapagp.idstagen = 4.  
-              END.
-              
-              ASSIGN aux_dstextab = '4'.
-              
-              RUN RodaJavaScript("alert('A agenda foi gerada com sucesso.Para libera-la aos PAs, clique no botão ~"Liberar Agenda~"')").
-            END.
+					RUN CriaAgenda.
+					
+					IF aux_erro = NO AND RETURN-VALUE <> "NOK" THEN
+						DO:
+							FOR EACH  crapagp WHERE crapagp.idevento = gnpapgd.idevento
+																	AND crapagp.cdcooper = gnpapgd.cdcooper
+																	AND crapagp.dtanoage = gnpapgd.dtanonov EXCLUSIVE-LOCK:
+								ASSIGN crapagp.idstagen = 4.  
+							END.
+							
+							ASSIGN aux_dstextab = '4'.
+							
+							RUN RodaJavaScript("alert('A agenda foi gerada com sucesso.Para libera-la aos PAs, clique no botão ~"Liberar Agenda~"')").
+						END.
         END.
       ELSE
-         /* Verificando se o POST foi feito para enviar nova agenda */
-        IF GET-VALUE("envia") = "sim" THEN
-          DO:
-            IF CAN-FIND(FIRST crapagp WHERE crapagp.idevento = gnpapgd.idevento
-                                        AND crapagp.cdcooper = gnpapgd.cdcooper
-                                        AND crapagp.dtanoage = gnpapgd.dtanonov) THEN
-              DO:
-                IF crapagp.idstagen < 4 THEN /* 4-agenda gerada*/
-                  DO:
-                    RUN RodaJavaScript("alert('A liberação da agenda só pode ser efetuada após sua geração. Efetue a geração através do botão ~"Gerar Agenda~".')").
-                    LEAVE bloco.
-                  END.
+				DO:
+					
+					/* Verificando se o POST foi feito para enviar nova agenda */
+					IF GET-VALUE("envia") = "sim" THEN
+						DO:
+							IF CAN-FIND(FIRST crapagp WHERE crapagp.idevento = gnpapgd.idevento
+																					AND crapagp.cdcooper = gnpapgd.cdcooper
+																					AND crapagp.dtanoage = gnpapgd.dtanonov) THEN
+								DO:
+									IF crapagp.idstagen < 4 THEN /* 4-agenda gerada*/
+										DO:
+											RUN RodaJavaScript("alert('A liberação da agenda só pode ser efetuada após sua geração. Efetue a geração através do botão ~"Gerar Agenda~".')").
+											LEAVE bloco.
+										END.
 
-                /* 5-Enviada aos pacs*/
-                IF crapagp.idstagen  > 4 THEN
-                  DO: 
-                    RUN RodaJavaScript("alert('A liberação da agenda já foi efetuada anteriormente. Todos os eventos da agenda estão disponíveis aos PAs.')").
-                    LEAVE bloco.
-                  END.
-              END.
+									/* 5-Enviada aos pacs*/
+									IF crapagp.idstagen  > 4 THEN
+										DO: 
+											RUN RodaJavaScript("alert('A liberação da agenda já foi efetuada anteriormente. Todos os eventos da agenda estão disponíveis aos PAs.')").
+											LEAVE bloco.
+										END.
+								END.
 
-            RUN EnviaAgenda.
+							RUN EnviaAgenda.
 
-            aux_dsdemail = "".
-            
-            FOR EACH crapagp WHERE crapagp.idevento = gnpapgd.idevento
-                               AND crapagp.cdcooper = gnpapgd.cdcooper
-                               AND crapagp.dtanoage = gnpapgd.dtanonov EXCLUSIVE-LOCK:
+							ASSIGN aux_dsdemail = "".
+							
+							FOR EACH crapagp WHERE crapagp.idevento = gnpapgd.idevento
+																 AND crapagp.cdcooper = gnpapgd.cdcooper
+																 AND crapagp.dtanoage = gnpapgd.dtanonov EXCLUSIVE-LOCK:
 
-              ASSIGN crapagp.idstagen = 5. 
-              /* busca o email dos pacs */
-              FIND FIRST crapage WHERE crapage.cdcooper = crapagp.cdcooper
-                                   AND crapage.cdagenci = crapagp.cdagenci NO-LOCK NO-ERROR.    
+								ASSIGN crapagp.idstagen = 5. 
+								/* busca o email dos pacs */
+								FIND FIRST crapage WHERE crapage.cdcooper = crapagp.cdcooper
+																		 AND crapage.cdagenci = crapagp.cdagenci NO-LOCK NO-ERROR.    
 
-              IF AVAIL crapage AND crapage.dsdemail <> ? THEN
-                IF aux_dsdemail = "" THEN 
-                  aux_dsdemail = crapage.dsdemail.
-                ELSE        
-                  aux_dsdemail = aux_dsdemail + ";" + crapage.dsdemail.  
+								IF AVAIL crapage AND crapage.dsdemail <> ? THEN
+									IF aux_dsdemail = "" THEN 
+										aux_dsdemail = crapage.dsdemail.
+									ELSE        
+										aux_dsdemail = aux_dsdemail + ";" + crapage.dsdemail.  
 
-            END. /*crapagp*/
-            
-            /* busca o e-mail de liberação agenda para cooperativa */
-            FIND FIRST crapppc WHERE crapppc.cdcooper = gnpapgd.cdcooper NO-LOCK NO-ERROR.    
+							END. /*crapagp*/
+							
+							/* busca o e-mail de liberação agenda para cooperativa */
+							FIND FIRST crapppc WHERE crapppc.cdcooper = gnpapgd.cdcooper NO-LOCK NO-ERROR.    
 
-            IF AVAIL crapppc AND crapppc.dsemllib <> ? THEN
-              IF aux_dsdemail = "" THEN 
-                aux_dsdemail =  crapppc.dsemllib.
-              ELSE        
-                aux_dsdemail = aux_dsdemail  + ";" + crapppc.dsemllib.             
-           
-            ASSIGN aux_dstextab = '5'.
-			
-			ASSIGN aux_dsdemail = REPLACE(aux_dsdemail,";",",")
-			aux_dsconteu = "A agenda do PROGRID para este ano já está liberada. " +                 
-						   "\nConsulte-a através da tela Agenda Anual.".
-            
-            /* envia email avisando os pacs da liberação da nova agenda*/    
-            IF aux_dsdemail <> "" THEN
-              DO:
+							IF AVAIL crapppc AND crapppc.dsemllib <> ? THEN
+								IF aux_dsdemail = "" THEN 
+									aux_dsdemail =  crapppc.dsemllib.
+								ELSE        
+									aux_dsdemail = aux_dsdemail  + ";" + crapppc.dsemllib.             
+									
+							ASSIGN aux_dstextab = '5'
+										 aux_dsdemail = REPLACE(aux_dsdemail,";",",")
+										 aux_dsconteu = "A agenda do PROGRID para este ano já está liberada. \nConsulte-a através da tela Agenda Anual.".
+							
+							/* envia email avisando os pacs da liberação da nova agenda*/    
+							IF aux_dsdemail <> "" THEN
+								DO:
 
-                RUN sistema/generico/procedures/b1wgen0011.p PERSISTENT SET h-b1wgen0011.
+									RUN sistema/generico/procedures/b1wgen0011.p PERSISTENT SET h-b1wgen0011.
 
-				IF VALID-HANDLE (h-b1wgen0011) THEN
-					DO:
-					  RUN solicita_email_oracle IN h-b1wgen0011(INPUT  INTEGER(gnpapgd.cdcooper)             	  /* par_cdcooper        */
-															   ,INPUT  "wpgd0019"                                 /* par_cdprogra        */
-															   ,INPUT  aux_dsdemail                               /* par_des_destino     */
-															   ,INPUT  "PROGRID - AGENDA LIBERADA" 				  /* par_des_assunto     */
-															   ,INPUT  aux_dsconteu                               /* par_des_corpo       */
-															   ,INPUT  ""                                         /* par_des_anexo       */
-															   ,INPUT  "N"                                        /* par_flg_remove_anex */
-															   ,INPUT  "N"                                        /* par_flg_remete_coop */
-															   ,INPUT  "Sistema de Relacionamento"                /* par_des_nome_reply  */
-															   ,INPUT  "gc.oqs@cecred.coop.br"                    /* par_des_email_reply */
-															   ,INPUT  "N"                                        /* par_flg_log_batch   */
-															   ,INPUT  "N"                                        /* par_flg_enviar      */
-															   ,OUTPUT aux_dscritic).                             /* par_des_erro        */
-											   
-					DELETE PROCEDURE h-b1wgen0011.
-				END.
-              END.
-              
-            /*fim da rotina de envio de email*/
-            RUN RodaJavaScript("alert('A agenda foi liberada com sucesso.')").
-          END.
-        ELSE
-          DO:
-            ASSIGN aux_pac     = GET-VALUE("auxpac")
-                   aux_mes     = GET-VALUE("auxmes")
-                   aux_motivos = GET-VALUE("auxmotivos")
-                   aux_evento  = GET-VALUE("auxevento")
-                   aux_rowid   = GET-VALUE("auxrowid").
-             
-            REPEAT aux_i=1 TO NUM-ENTRIES(aux_pac):
-              FIND crapadp WHERE ROWID(crapadp) = TO-ROWID(ENTRY(aux_i,aux_rowid)) EXCLUSIVE-LOCK NO-ERROR. /* verifica se o evento já existe na agenda */
-              IF AVAIL crapadp THEN
-                DO:
-				 
-                  /* caso esteja marcado para deletar*/
-                  IF ENTRY(aux_i,aux_pac) = "X" THEN 
-                    DELETE crapadp.
-                  ELSE
-                    DO:
-                      IF crapadp.nrmeseve <> INT(ENTRY(aux_i,aux_mes)) and aux_dstextab > '4' THEN
-                        DO:
-                          ASSIGN crapadp.idstaeve  = 3. 
-                          
-                          CREATE craphep.
-                          ASSIGN craphep.nrseqdig  = NEXT-VALUE(nrseqhep)
-                                 craphep.cdagenci  = crapadp.nrseqdig     
-                                 craphep.dshiseve  = "Evento transferido em " + STRING(TODAY,"99/99/9999") + " pelo usuário " + gnapses.cdoperad + " Motivo : " + ENTRY(aux_i,aux_motivos)
-                                 craphep.dtmvtolt  = TODAY. 
-                          
-                          ASSIGN crapadp.dtinieve  = ?
-                                 crapadp.dtfineve  = ?
-                                 crapadp.dshroeve  = " "
-                                 crapadp.dsdiaeve  = " "
-                                 crapadp.cdabrido  = 0
-                                 crapadp.cdlocali  = 0.   
-
-                          VALIDATE craphep.
-                        END.
-                      ASSIGN crapadp.idevento = gnpapgd.idevento
-                             crapadp.cdcooper = gnpapgd.cdcooper
-                             crapadp.dtanoage = gnpapgd.dtanonov
-                             crapadp.cdevento = INT(ENTRY(aux_i,aux_evento))
-                             crapadp.cdagenci = INT(ENTRY(aux_i,aux_pac))    
-                             crapadp.nrmeseve = INT(ENTRY(aux_i,aux_mes)).
-                    END.
-                END.  
-              ELSE /* caso registro nao exista */
-                DO:
-                  IF INT(ENTRY(aux_i,aux_pac)) <> 0 THEN
-                    DO:
-											/* AJUSTE PARA FORCAR NRSEQDIG CRAPADP */
-											ASSIGN aux_nrseqdig = NEXT-VALUE(nrseqadp)
-														 aux_contnrseq = 0.
-											agenda:
-											DO WHILE TRUE:
-												IF aux_nrseqdig = 0 OR aux_nrseqdig = ? THEN
+									IF VALID-HANDLE (h-b1wgen0011) THEN
+										DO:
+											RUN solicita_email_oracle IN h-b1wgen0011(INPUT  INTEGER(gnpapgd.cdcooper)             	  /* par_cdcooper        */
+																															 ,INPUT  "wpgd0019"                                 /* par_cdprogra        */
+																															 ,INPUT  aux_dsdemail                               /* par_des_destino     */
+																															 ,INPUT  "PROGRID - AGENDA LIBERADA" 				  /* par_des_assunto     */
+																															 ,INPUT  aux_dsconteu                               /* par_des_corpo       */
+																															 ,INPUT  ""                                         /* par_des_anexo       */
+																															 ,INPUT  "N"                                        /* par_flg_remove_anex */
+																															 ,INPUT  "N"                                        /* par_flg_remete_coop */
+																															 ,INPUT  "Sistema de Relacionamento"                /* par_des_nome_reply  */
+																															 ,INPUT  "gc.oqs@cecred.coop.br"                    /* par_des_email_reply */
+																															 ,INPUT  "N"                                        /* par_flg_log_batch   */
+																															 ,INPUT  "N"                                        /* par_flg_enviar      */
+																															 ,OUTPUT aux_dscritic).                             /* par_des_erro        */
+																	 
+											DELETE PROCEDURE h-b1wgen0011.
+									  END.
+								END. /* IF aux_dsdemail <> "" */
+								
+							/*fim da rotina de envio de email*/
+							RUN RodaJavaScript("alert('A agenda foi liberada com sucesso.')").
+						END.
+					ELSE
+						DO:
+							
+							ASSIGN aux_pac     = GET-VALUE("auxpac")
+										 aux_mes     = GET-VALUE("auxmes")
+										 aux_motivos = GET-VALUE("auxmotivos")
+										 aux_evento  = GET-VALUE("auxevento")
+										 aux_rowid   = GET-VALUE("auxrowid").
+							 
+							REPEAT aux_i=1 TO NUM-ENTRIES(aux_pac):
+								
+								FIND crapadp WHERE ROWID(crapadp) = TO-ROWID(ENTRY(aux_i,aux_rowid)) EXCLUSIVE-LOCK NO-ERROR. /* verifica se o evento já existe na agenda */
+								
+								IF AVAIL crapadp THEN
+									DO:
+										
+										/* caso esteja marcado para deletar*/
+										IF ENTRY(aux_i,aux_pac) = "X" THEN 
+											DELETE crapadp.
+										ELSE
+											DO:
+												IF crapadp.nrmeseve <> INT(ENTRY(aux_i,aux_mes)) and aux_dstextab > '4' THEN
 													DO:
-														ASSIGN aux_nrseqdig = NEXT-VALUE(nrseqadp).
-                            IF aux_nrseqdig = 0 OR aux_nrseqdig = ? THEN
-                              DO:
-                                ASSIGN aux_nrseqdig = NEXT-VALUE(nrseqadp).
-                                leave agenda.
-                              END.
-                            ELSE
-                              LEAVE agenda.
-                            
-                          END.
-                        ELSE
-                          DO:
-                            IF aux_contnrseq = 10 AND (aux_nrseqdig = 0 OR aux_nrseqdig = ?) THEN
-                                DO:
-                                  MESSAGE "ERRO AO GERAR AGENDA. NRSEQDIG NAO TEM VALOR, VERIFICAR A SEQUENCE. JMD". /* MENSAGEM PARA TESTE */
-                                  ASSIGN aux_msgderro = 'Erro ao gerar agenda.'
-                                         aux_erro = NO.
-                                  RUN RodaJavaScript("alert('" + aux_msgderro + "')").
-                                  RETURN "NOK".
-                                END.
-                            ELSE IF aux_nrseqdig <> 0 AND aux_nrseqdig <> ? THEN	
-                              LEAVE agenda.      
-                          END.
-												
-                          
-												ASSIGN aux_contnrseq = aux_contnrseq + 1.
-												
+														ASSIGN crapadp.idstaeve  = 3. 
+														
+														CREATE craphep.
+														ASSIGN craphep.nrseqdig  = NEXT-VALUE(nrseqhep)
+																	 craphep.cdagenci  = crapadp.nrseqdig     
+																	 craphep.dshiseve  = "Evento transferido em " + STRING(TODAY,"99/99/9999") + " pelo usuário " + gnapses.cdoperad + " Motivo : " + ENTRY(aux_i,aux_motivos)
+																	 craphep.dtmvtolt  = TODAY. 
+														
+														ASSIGN crapadp.dtinieve  = ?
+																	 crapadp.dtfineve  = ?
+																	 crapadp.dshroeve  = " "
+																	 crapadp.dsdiaeve  = " "
+																	 crapadp.cdabrido  = 0
+																	 crapadp.cdlocali  = 0.   
+
+														VALIDATE craphep.
+													END.
+												ASSIGN crapadp.idevento = gnpapgd.idevento
+															 crapadp.cdcooper = gnpapgd.cdcooper
+															 crapadp.dtanoage = gnpapgd.dtanonov
+															 crapadp.cdevento = INT(ENTRY(aux_i,aux_evento))
+															 crapadp.cdagenci = INT(ENTRY(aux_i,aux_pac))    
+															 crapadp.nrmeseve = INT(ENTRY(aux_i,aux_mes)).
 											END.
-											/* FIM AJUSTE PARA FORCAR NRSEQDIG CRAPADP */
-											
-                      CREATE crapadp.
-                      ASSIGN crapadp.nrseqdig  = aux_nrseqdig
-                             crapadp.idevento  = gnpapgd.idevento
-                             crapadp.cdcooper  = gnpapgd.cdcooper
-                             crapadp.dtanoage  = gnpapgd.dtanonov 
-                             crapadp.cdevento  = INT(ENTRY(aux_i,aux_evento))
-                             crapadp.cdagenci  = INT(ENTRY(aux_i,aux_pac))    
-                             crapadp.nrmeseve  = INT(ENTRY(aux_i,aux_mes))
-                             crapadp.idstaeve  = 1. /*Agendado */
+									END.  
+								ELSE /* caso registro nao exista */
+									DO:
+										
+										IF INT(ENTRY(aux_i,aux_pac)) <> 0 THEN
+											DO:
+												/* AJUSTE PARA FORCAR NRSEQDIG CRAPADP */
+												ASSIGN aux_nrseqdig = NEXT-VALUE(nrseqadp)
+															 aux_contnrseq = 0.
+												agenda:
+												DO WHILE TRUE:
+													IF aux_nrseqdig = 0 OR aux_nrseqdig = ? THEN
+														DO:
+															ASSIGN aux_nrseqdig = NEXT-VALUE(nrseqadp).
+															IF aux_nrseqdig = 0 OR aux_nrseqdig = ? THEN
+																DO:
+																	ASSIGN aux_nrseqdig = NEXT-VALUE(nrseqadp).
+																	leave agenda.
+																END.
+															ELSE
+																LEAVE agenda.
+															
+														END.
+													ELSE
+														DO:
+															IF aux_contnrseq = 10 AND (aux_nrseqdig = 0 OR aux_nrseqdig = ?) THEN
+																	DO:
+																		ASSIGN aux_msgderro = 'Erro ao gerar agenda.'
+																					 aux_erro = NO.
+																		RUN RodaJavaScript("alert('" + aux_msgderro + "')").
+																		RETURN "NOK".
+																	END.
+															ELSE IF aux_nrseqdig <> 0 AND aux_nrseqdig <> ? THEN	
+																LEAVE agenda.      
+														END.
+													
+														
+													ASSIGN aux_contnrseq = aux_contnrseq + 1.
+													
+												END.
+												/* FIM AJUSTE PARA FORCAR NRSEQDIG CRAPADP */
+												
+												CREATE crapadp.
+												ASSIGN crapadp.nrseqdig  = aux_nrseqdig
+															 crapadp.idevento  = gnpapgd.idevento
+															 crapadp.cdcooper  = gnpapgd.cdcooper
+															 crapadp.dtanoage  = gnpapgd.dtanonov 
+															 crapadp.cdevento  = INT(ENTRY(aux_i,aux_evento))
+															 crapadp.cdagenci  = INT(ENTRY(aux_i,aux_pac))    
+															 crapadp.nrmeseve  = INT(ENTRY(aux_i,aux_mes))
+															 crapadp.idstaeve  = 1. /*Agendado */
 
-                      /* Se a agenda já está liberada, guarda o mes de agendamento inicial do novo evento,
-                      e cria o histórico de acréscimo */
-                      IF crapagp.idstagen > 4 THEN
-                        DO:
-                          ASSIGN crapadp.nrmesage  = INT(ENTRY(aux_i,aux_mes))
-                          crapadp.idstaeve  = 6.
+												/* Se a agenda já está liberada, guarda o mes de agendamento inicial do novo evento,
+												e cria o histórico de acréscimo */
+												IF crapagp.idstagen > 4 THEN
+													DO:
+														ASSIGN crapadp.nrmesage  = INT(ENTRY(aux_i,aux_mes))
+																	 crapadp.idstaeve  = 6.
 
-                          CREATE craphep.
-                          ASSIGN craphep.nrseqdig  = NEXT-VALUE(nrseqhep)
-                                 craphep.cdagenci  = crapadp.nrseqdig     
-                                 craphep.dshiseve  = "Evento acrescido em " + STRING(TODAY,"99/99/9999") + " pelo usuário " + gnapses.cdoperad + " Motivo : " + ENTRY(aux_i,aux_motivos)
-                                 craphep.dtmvtolt  = TODAY. 
+														CREATE craphep.
+														ASSIGN craphep.nrseqdig  = NEXT-VALUE(nrseqhep)
+																	 craphep.cdagenci  = crapadp.nrseqdig     
+																	 craphep.dshiseve  = "Evento acrescido em " + STRING(TODAY,"99/99/9999") + " pelo usuário " + gnapses.cdoperad + " Motivo : " + ENTRY(aux_i,aux_motivos)
+																	 craphep.dtmvtolt  = TODAY. 
 
-                          VALIDATE craphep.
+														VALIDATE craphep.
 
-                          /* Busca itens de avaliação já cadastrados */ 
-                          FIND FIRST craprap WHERE craprap.idevento = gnpapgd.idevento
-                                               AND craprap.cdcooper = gnpapgd.cdcooper
-                                               AND craprap.dtanoage = gnpapgd.dtanonov
-                                               AND craprap.cdevento = INT(ENTRY(aux_i,aux_evento)) NO-LOCK NO-ERROR.           
+														/* Busca itens de avaliação já cadastrados */ 
+														FIND FIRST craprap WHERE craprap.idevento = gnpapgd.idevento
+																								 AND craprap.cdcooper = gnpapgd.cdcooper
+																								 AND craprap.dtanoage = gnpapgd.dtanonov
+																								 AND craprap.cdevento = INT(ENTRY(aux_i,aux_evento)) NO-LOCK NO-ERROR.           
 
-                          IF AVAIL craprap THEN
-                            DO:
-                              /* Instancia a BO para executar as procedures */  
-                              RUN dbo/b1wpgd0029.p PERSISTENT SET h-b1wpgd0029.
+														IF AVAIL craprap THEN
+															DO:
+																/* Instancia a BO para executar as procedures */  
+																RUN dbo/b1wpgd0029.p PERSISTENT SET h-b1wpgd0029.
 
-                              /* Se BO foi instanciada */  
-                              IF VALID-HANDLE(h-b1wpgd0029)  THEN
-                                DO:
-                                  ASSIGN aux_msgderro = "".
+																/* Se BO foi instanciada */  
+																IF VALID-HANDLE(h-b1wpgd0029)  THEN
+																	DO:
+																		ASSIGN aux_msgderro = "".
 
-                                  FOR EACH crabrap WHERE crabrap.idevento = craprap.idevento
-                                                     AND crabrap.cdcooper = craprap.cdcooper
-                                                     AND crabrap.dtanoage = craprap.dtanoage 
-                                                     AND crabrap.cdevento = craprap.cdevento
-                                                     AND crabrap.cdagenci = craprap.cdagenci
-                                                     AND crabrap.nrseqeve = craprap.nrseqeve EXCLUSIVE-LOCK:
-                                         
-                                    EMPTY TEMP-TABLE cratrap.
+																		FOR EACH crabrap WHERE crabrap.idevento = craprap.idevento
+																											 AND crabrap.cdcooper = craprap.cdcooper
+																											 AND crabrap.dtanoage = craprap.dtanoage 
+																											 AND crabrap.cdevento = craprap.cdevento
+																											 AND crabrap.cdagenci = craprap.cdagenci
+																											 AND crabrap.nrseqeve = craprap.nrseqeve EXCLUSIVE-LOCK:
+																					 
+																			EMPTY TEMP-TABLE cratrap.
 
-                                    CREATE cratrap.
-                                    /* BUFFER-COPY crabrap  EXCEPT cdagenci nrseqeve qtavabom qtavains qtavaoti qtavareg qtavares TO cratrap. */
-                                    ASSIGN cratrap.dsobserv = ""
-                                           cratrap.cdagenci = INT(ENTRY(aux_i,aux_pac))
-                                           cratrap.nrseqeve = crapadp.nrseqdig
-                                           cratrap.cdcooper = crabrap.cdcooper
-                                           cratrap.cdevento = crabrap.cdevento
-                                           cratrap.cdgruava = crabrap.cdgruava
-                                           cratrap.cditeava = crabrap.cditeava
-                                           cratrap.dtanoage = crabrap.dtanoage
-                                           cratrap.idevento = crabrap.idevento.
+																			CREATE cratrap.
+																			/* BUFFER-COPY crabrap  EXCEPT cdagenci nrseqeve qtavabom qtavains qtavaoti qtavareg qtavares TO cratrap. */
+																			ASSIGN cratrap.dsobserv = ""
+																						 cratrap.cdagenci = INT(ENTRY(aux_i,aux_pac))
+																						 cratrap.nrseqeve = crapadp.nrseqdig
+																						 cratrap.cdcooper = crabrap.cdcooper
+																						 cratrap.cdevento = crabrap.cdevento
+																						 cratrap.cdgruava = crabrap.cdgruava
+																						 cratrap.cditeava = crabrap.cditeava
+																						 cratrap.dtanoage = crabrap.dtanoage
+																						 cratrap.idevento = crabrap.idevento.
 
-                                    RUN inclui-registro IN h-b1wpgd0029(INPUT TABLE cratrap, OUTPUT aux_msgderro, OUTPUT aux_nrdrowid).
+																			RUN inclui-registro IN h-b1wpgd0029(INPUT TABLE cratrap, OUTPUT aux_msgderro, OUTPUT aux_nrdrowid).
 
-                                    IF aux_msgderro <> "" THEN
-                                      DO:
-                                        RUN RodaJavaScript("alert('" + aux_msgderro + "')").
-                                        LEAVE.
-                                      END.
-                                  END. /* FOR EACH crabrap */
+																			IF aux_msgderro <> "" THEN
+																				DO:
+																					RUN RodaJavaScript("alert('" + aux_msgderro + "')").
+																					LEAVE.
+																				END.
+																		END. /* FOR EACH crabrap */
 
-                                END. /*VALID-HANDLE(h-b1wpgd0029)*/ 
+																	END. /*VALID-HANDLE(h-b1wpgd0029)*/ 
 
-                              /* "mata" a instância da BO */  
-                              DELETE PROCEDURE h-b1wpgd0029 NO-ERROR.          
-                            END. /* AVAIL craprap */
-                        END. /* crapagp.idstagen > 4 */
-                      VALIDATE crapadp.
-                    END. /* INT(ENTRY(aux_i,aux_pac)) <> 0 */
-                END. /* /* caso registro nao exista */ */
-      END. /* REPEAT */
-      END. /* ELSE */
+																/* "mata" a instância da BO */  
+																DELETE PROCEDURE h-b1wpgd0029 NO-ERROR.          
+															END. /* AVAIL craprap */
+													END. /* crapagp.idstagen > 4 */
+												ELSE
+													DO:
+														FIND FIRST crapagp WHERE crapagp.idevento = gnpapgd.idevento
+																								 AND crapagp.cdcooper = gnpapgd.cdcooper
+																								 AND crapagp.dtanoage = gnpapgd.dtanonov
+																								 AND crapagp.cdagenci <> INT(ENTRY(aux_i,aux_pac)) 
+																								 AND crapagp.idstagen = 5 NO-LOCK NO-ERROR NO-WAIT.
+																								 
+														IF AVAILABLE crapagp THEN
+															DO:
+																
+																FIND FIRST crapagp WHERE crapagp.idevento = gnpapgd.idevento
+																										 AND crapagp.cdcooper = gnpapgd.cdcooper
+																										 AND crapagp.dtanoage = gnpapgd.dtanonov
+																										 AND crapagp.cdagenci = INT(ENTRY(aux_i,aux_pac)) EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+																	
+																IF AVAILABLE crapagp AND crapagp.idstagen < 5 THEN /* 5-Liberado*/
+																	DO:
+																		ASSIGN crapagp.idstagen = 5.
+																	END.																	
+
+															END. /* AVAILABLE crapagp */
+													END. /* ELSE */
+												VALIDATE crapadp.
+											END. /* INT(ENTRY(aux_i,aux_pac)) <> 0 */
+									END. /* /* caso registro nao exista */ */
+							END. /* REPEAT */
+						END. /* ELSE */
+				END.
       END. /* REQUEST_METHOD = POST */
 
       PROCEDURE EnviaAgenda:
@@ -832,7 +862,9 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
                                
           IF NOT AVAIL crapagp THEN NEXT.
 
-          FIND FIRST crapedp WHERE crapedp.cdevento = crapeap.cdevento NO-LOCK NO-ERROR.
+          FIND FIRST crapedp WHERE crapedp.cdevento = crapeap.cdevento 
+															 AND crapedp.tpevento <> 10
+															 AND crapedp.tpevento <> 11 NO-LOCK NO-ERROR.
           
           FOR EACH crapsde where crapsde.idevento = gnpapgd.idevento
                              and crapsde.cdcooper = gnpapgd.cdcooper
@@ -861,7 +893,6 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
                 DO:
                   IF aux_contnrseq = 10 AND (aux_nrseqdig = 0 OR aux_nrseqdig = ?) THEN
                       DO:
-                        MESSAGE "ERRO AO GERAR AGENDA. NRSEQDIG NAO TEM VALOR, VERIFICAR A SEQUENCE. JMD". /* MENSAGEM PARA TESTE */
                         ASSIGN aux_msgderro = 'Erro ao gerar agenda.'
                                aux_erro = NO.
                         RUN RodaJavaScript("alert('" + aux_msgderro + "')").
@@ -902,7 +933,9 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
       PROCEDURE CriaCratedp:
         FOR EACH crapedp WHERE crapedp.idevento = gnpapgd.idevento
                            AND crapedp.cdcooper = gnpapgd.cdcooper
-                           AND crapedp.dtanoage = gnpapgd.dtanonov NO-LOCK by crapedp.tpevento :
+                           AND crapedp.dtanoage = gnpapgd.dtanonov
+													 AND crapedp.tpevento <> 10
+                           AND crapedp.tpevento <> 11 NO-LOCK by crapedp.tpevento :
 
           CREATE cratedp.
           BUFFER-COPY crapedp TO cratedp.
@@ -932,8 +965,8 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
                                AND crapidp.cdageins = crapadp.cdagenci
                                AND crapidp.cdevento = crapadp.cdevento 
                                AND crapidp.nrseqeve = crapadp.nrseqdig
-                               AND (crapidp.idstains = 1 OR /*Pendente*/ 
-                                    crapidp.idstains = 2)   /*Confirmado*/  NO-LOCK NO-ERROR.
+                               AND (crapidp.idstains = 1  /*Pendente*/ 
+                                OR  crapidp.idstains = 2) /*Confirmado*/  NO-LOCK NO-ERROR.
 
           CREATE tt-evento.
           ASSIGN tt-evento.nrmeseve = crapadp.nrmeseve
@@ -951,16 +984,16 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
             ASSIGN tt-evento.idstaeve = 99.
 
           /* Total de Eventos + Integracoes */
-          aux_qttotger = aux_qttotger + 1.
+          ASSIGN aux_qttotger = aux_qttotger + 1.
 
           IF CAN-DO(aux_cdeveint,STRING(crapadp.cdevento)) THEN
             /* Total de Integracoes */
-            aux_qttotint = aux_qttotint + 1.
+            ASSIGN aux_qttotint = aux_qttotint + 1.
 
         END. /* FOR EACH */
 
         /* Total de Eventos */
-        aux_qttoteve = aux_qttotger - aux_qttotint.
+        ASSIGN aux_qttoteve = aux_qttotger - aux_qttotint.
 
       END PROCEDURE.
 
@@ -978,11 +1011,11 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
                              AND b-crapadp.cdevento = aux_param_cdevento
                              AND b-crapadp.nrmeseve  = aux_param_mes NO-LOCK :
           
-          aux_conta = aux_conta + 1.
+          ASSIGN aux_conta = aux_conta + 1.
         END.
         
         IF aux_conta < 2 THEN /* minimo de 2 linhas por evento */
-          aux_conta = 2. 
+          ASSIGN aux_conta = 2. 
           
         RETURN aux_conta.
       END FUNCTION.
@@ -1027,7 +1060,7 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
                     <table id="tbanobase" width="100%" cellpadding="0" cellspacing="0" border="0" >
                       <tr> 
                         <td height="23" align="left" valign="middle" class="NomeCampo">Cooperativa:
-                          <select name="aux_cdcooper" class="Campo" id="cdcooper" onchange="document.form.aux_dtanoage.value=''; buscaEvento(this.value)" class="LinhaTabelaSelect">
+                          <select name="aux_cdcooper" class="Campo" id="cdcooper" onchange="document.form.aux_dtanoage.value=''; buscaEvento()" class="LinhaTabelaSelect">
                             <script language="SpeedScript">
                               /* Carregamento de COOPERATIVAS conforme includes/wpgd0098.i */
                               FIND crapope WHERE crapope.cdcooper = gnapses.cdcooper
@@ -1078,21 +1111,18 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
                                       ELSE
                                         aux_nmresage19 = aux_nmresage19 + crapage.nmresage + "/".
 										
-									  
                                     END.
                                                                                                                                                                      
                                     /* Tira a ultima "/" */
                                     aux_nmresage19 = SUBSTRING(aux_nmresage19,1,LENGTH(aux_nmresage19) - 1).
 
-                                    IF vetorpac = ""   THEN
-                                      vetorpac = "~{" + "cdcooper:"   + "'" + TRIM(STRING(crapeap.cdcooper))
-                                                      + "',cdagenci:" + "'" + TRIM(STRING(crapeap.cdagenci))
-                                                      + "',nmresage:" + "'" + LC(string(aux_nmresage19,"x(30)")) + "'~}".
-                                    ELSE
-                                      vetorpac = vetorpac + "," +                                                
-                                                     "~{" + "cdcooper:"   + "'" + TRIM(string(crapeap.cdcooper)) 
-                                                          + "',cdagenci:" + "'" + TRIM(string(crapeap.cdagenci))
-                                                          + "',nmresage:" + "'" + LC( string(aux_nmresage19,"x(30)")) + "'~}".
+                                    IF vetorpac <> "" THEN
+																		  ASSIGN vetorpac = vetorpac + ",".
+																			
+                                    ASSIGN vetorpac = vetorpac + "~{cdcooper:'" + TRIM(STRING(crapeap.cdcooper))
+																															 + "',cdagenci:'" + TRIM(STRING(crapeap.cdagenci))
+																															 + "',nmresage:'" + LC(string(aux_nmresage19,"x(30)")) + "'~}".
+                                    
                                   END. /* FOR EACH crapeap */
                                 END. /* Fim de evento selecionado */
                               ELSE
@@ -1101,34 +1131,38 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
 
                                   /* coloca os PAs em minusculo */
                                   vetorpac = LC(vetorpac).                  
-                                  END.          
+																END.          
 
 
-                                  IF aux_selevento = 0  THEN DO:
+															IF aux_selevento = 0  THEN
+																DO:
                                   RUN RodaJavaScript("var maux_acdagenci = new Array(" + aux_acdagenci +  ");").
                                   RUN RodaJavaScript("var maux_acdevento = new Array(" + aux_acdevento +  ");").
-                                END.
+																END.
                               
                               aux_corfundo = "white".
                             </script>
                           </select>
                         </td>
                         <td height="23" align="left" valign="middle" class="NomeCampo">
-                          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Eventos:
-                          <select name="aux_selevento" class="Campo" id="cdevento" onchange="buscaEvento(this.value)">
+													&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Eventos:
+                          <select name="aux_selevento" class="Campo" id="aux_selevento" onchange="buscaEvento()">
+														<option value="0">-- SELECIONE --</option>
                             <script language="SpeedScript">
-                               RUN RodaJavaScript("aguarde()").
-							  RUN CriaCratedp.
+                              RUN RodaJavaScript("aguarde()").
+															RUN CriaCratedp.
                               RUN CriaEventosTemp.
                               RUN RodaJavaScript("hideMsgAguardo()").
                               FOR EACH cratedp WHERE cratedp.idevento = gnpapgd.idevento
                                                  AND cratedp.cdcooper = gnpapgd.cdcooper
                                                  AND cratedp.dtanoage = gnpapgd.dtanonov 
                                                  AND cratedp.tpevento <> 10
-                                                 AND cratedp.tpevento <> 11 NO-LOCK
+                                                 AND cratedp.tpevento <> 11
+																								 AND (cratedp.nrseqpgm = aux_nrseqpgm
+																									OR aux_nrseqpgm = 0) NO-LOCK
                                                   BY cratedp.flgordem
                                                   BY cratedp.nmevento:
-                                IF cratedp.tpevento <> 2 AND cratedp.tpevento <> 10 THEN
+                                IF cratedp.tpevento <> 2 THEN
                                   DO:  /* nao for integracao de novos associados e eventos EAD */
                                     FIND FIRST crapeap WHERE crapeap.idevento = cratedp.idevento
                                                          AND crapeap.cdcooper = cratedp.cdcooper
@@ -1149,13 +1183,34 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
                             <script language="SpeedScript">						
                               END.             
                             </script>               							              
-                          </select>                          
+                          </select> 
                         </td>
                         <td height="23" align="left" valign="middle" colspan="2" class="NomeCampo">Ano Base:
                           <input type="text" name="aux_dtanoage" size="4" class="Campo" onChange="aguarde(); document.form.submit();" value="`aux_dtanoage`">						 
 						  
                         </td>
                       </tr>
+											<tr>
+												<td height="23" align="left" valign="middle" colspan="2" class="NomeCampo">
+													
+													&nbsp;&nbsp;&nbsp;&nbsp;Programa:
+                          <select name="aux_nrseqpgm" class="Campo" id="aux_nrseqpgm" onchange="buscaEvento()">
+														<option value="0">-- TODOS --</option>
+														<script language="SpeedScript">
+															FOR EACH crappgm WHERE crappgm.idsitpgm = 1  NO-LOCK BY crappgm.nmprogra:
+																
+																IF aux_nrseqpgm = crappgm.nrseqpgm THEN
+																	assign aux_selected = "SELECTED".																					      
+																ELSE
+																	assign aux_selected = "".	
+														</script>   
+														<option value="`crappgm.nrseqpgm`" `aux_selected`>`CAPS(crappgm.nmprogra)`</option>
+														<script language="SpeedScript">
+															END.
+														</script>
+													</select>
+												</td>	
+											</tr>
                     </table>
                   </fieldset>
       
@@ -1221,16 +1276,19 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
               <tr>
                 <td align="left" valign="top" bgcolor="#FFFFFF" >              
                   <table class="dataTable" id="selecao" cellpadding="0" cellspacing="0" border="0"> 
-                    <script language="SpeedScript">                                                 
+                    <script language="SpeedScript">    
+											IF aux_selevento <> 0 THEN
+												DO:
                       FOR EACH cratedp WHERE cratedp.idevento  = gnpapgd.idevento
                                          AND cratedp.cdcooper  = gnpapgd.cdcooper
-                                         AND cratedp.dtanoage  = gnpapgd.dtanonov NO-LOCK
+                                         AND cratedp.dtanoage  = gnpapgd.dtanonov
+																				 AND cratedp.tpevento <> 10 
+																				 AND cratedp.tpevento <> 11
+																				 AND (cratedp.nrseqpgm = aux_nrseqpgm
+																				  OR aux_nrseqpgm = 0)	
+																				AND cratedp.cdevento = aux_selevento NO-LOCK
                                           BY cratedp.flgordem
                                           BY cratedp.nmevento:
-
-                        IF aux_selevento <> 0 THEN
-                          IF aux_selevento <> cratedp.cdevento THEN
-                            NEXT.                                                        
                           
                         FIND FIRST crapeap WHERE crapeap.idevento = cratedp.idevento
                                              AND crapeap.cdcooper = cratedp.cdcooper
@@ -1262,27 +1320,30 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
                           aux_linha = 0.
                           DO WHILE aux_linha < aux_maxlin.
                             ASSIGN aux_contador = aux_contador + 1
-                                   aux_linha    = aux_linha + 1.
+                                   aux_linha    = aux_linha + 1
+																	 aux_mescont = aux_mesini.
+																	 
                             IF aux_prievento = "" THEN
                               DO:
                                 ASSIGN aux_prievento = STRING(aux_linha)     + aux_meses[3] + STRING(cratedp.cdevento)
-                                aux_segevento = STRING(aux_linha)     + aux_meses[4] + STRING(cratedp.cdevento)
-                                aux_abaevento = STRING(aux_linha + 1) + aux_meses[4] + STRING(cratedp.cdevento).
+																			 aux_segevento = STRING(aux_linha)     + aux_meses[4] + STRING(cratedp.cdevento)
+																			 aux_abaevento = STRING(aux_linha + 1) + aux_meses[4] + STRING(cratedp.cdevento).
                               END.
-                              
-                            aux_mescont = aux_mesini.
-                            
+                                                          
                             DO WHILE aux_mescont <= aux_mesmax.
-                              ASSIGN aux_nmresage19 = ""
+                              
+															ASSIGN aux_nmresage19 = ""
                                      aux_cdagenci   = 0
                                      aux_ttrowid    = "".
+																		 
                               FIND FIRST tt-evento WHERE tt-evento.cdevento = cratedp.cdevento
                                                      AND tt-evento.nrmeseve = aux_mescont NO-ERROR.
                               
                               IF AVAIL tt-evento THEN
                                 DO:
                                   ASSIGN aux_cdagenci = tt-evento.cdagenci.
-                                  FIND FIRST crapage WHERE crapage.cdcooper = gnpapgd.cdcooper
+                                  
+																	FIND FIRST crapage WHERE crapage.cdcooper = gnpapgd.cdcooper
                                                        AND crapage.cdagenci = tt-evento.cdagenci NO-LOCK NO-ERROR.
                                   
                                   IF AVAIL crapage THEN
@@ -1305,12 +1366,13 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
                                         END.
                                     END.
 								
-                                  IF aux_evts = "" THEN
-                                    ASSIGN aux_evts = '"nome'  + STRING(aux_contador) + '"'.
-                                  ELSE
-                                    aux_evts = aux_evts  + ',"nome'  + STRING(aux_contador) + '"'.
-
-                                  aux_ttrowid = tt-evento.auxrowid.
+                                  IF aux_evts <> "" THEN
+																		ASSIGn aux_evts = aux_evts + ",".
+																		
+                                  ASSIGN aux_evts = aux_evts + '"nome' + STRING(aux_contador) + '"'.
+                                  
+                                  ASSIGN aux_ttrowid = tt-evento.auxrowid.
+																	
                                   CASE tt-evento.idstaeve :
                                          WHEN 0  THEN aux_corfundo = '#FFFF99'.
                                          WHEN 1  THEN aux_corfundo = '#FFFF99'.
@@ -1322,27 +1384,27 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
                                     WHEN 99 THEN aux_corfundo = '#66CC66'. /* inventado*/
                                   END CASE.
 
-                                  aux_idinseve = STRING(tt-evento.idinseve).
+                                  ASSIGN aux_idinseve = STRING(tt-evento.idinseve).
                                                                                       
                                   DELETE tt-evento.
                                 END.
                               
 							   /* rotina para buscar o registro de parametro correto */
 							  FIND FIRST crapagp WHERE crapagp.idevento = gnpapgd.idevento
-												   AND crapagp.cdcooper = gnpapgd.cdcooper
-												   AND crapagp.dtanoage = gnpapgd.dtanonov NO-LOCK NO-ERROR.
+																		 AND crapagp.cdcooper = gnpapgd.cdcooper
+																		 AND crapagp.dtanoage = gnpapgd.dtanonov NO-LOCK NO-ERROR.
 											 
 							  IF AVAIL crapagp THEN 
-								ASSIGN aux_dstextab = STRING(crapagp.idstagen).	
+									ASSIGN aux_dstextab = STRING(crapagp.idstagen).	
 								
-                              IF aux_nmresage19 = "" THEN
-                                IF aux_zebra = "" THEN
-                                  ASSIGN aux_corfundo = "white".
-                                ELSE
-                                  ASSIGN aux_corfundo = "#e4e6dd".
+								IF aux_nmresage19 = "" THEN
+									IF aux_zebra = "" THEN
+										ASSIGN aux_corfundo = "white".
+									ELSE
+										ASSIGN aux_corfundo = "#e4e6dd".
 
-                              RUN RodaJavaScript("mesEvento.push(~{mo:'',bg:'" + aux_corfundo + "',a:'n',m:" + STRING(aux_mescont) + ",e:" + STRING(cratedp.cdevento) + ",x:0,y:0,p:'" + STRING(aux_cdagenci) + "',td:'" + STRING(aux_linha) + aux_meses[aux_mescont] + STRING(cratedp.cdevento) + "',rw:'" + aux_ttrowid + "',ix:'" + STRING(aux_linha) + "',ev:'nome" + STRING(aux_contador) + "'~});").                                                                  
-                          </script>      
+								RUN RodaJavaScript("mesEvento.push(~{mo:'',bg:'" + aux_corfundo + "',a:'n',m:" + STRING(aux_mescont) + ",e:" + STRING(cratedp.cdevento) + ",x:0,y:0,p:'" + STRING(aux_cdagenci) + "',td:'" + STRING(aux_linha) + aux_meses[aux_mescont] + STRING(cratedp.cdevento) + "',rw:'" + aux_ttrowid + "',ix:'" + STRING(aux_linha) + "',ev:'nome" + STRING(aux_contador) + "'~});").                                                                  
+						</script>      
                         <td nowrap class="LinhaTabelaSelect`aux_zebra`" id="`STRING(aux_linha) + aux_meses[aux_mescont] + STRING(cratedp.cdevento)`">
 						  <input type="hidden" name="aux_idstagen" size="1" class="Campo" value="`aux_dstextab`">
                           <div STYLE="width:'55px'; BACKGROUND-COLOR:'`aux_corfundo`'; cursor:default" class="infparcela`aux_zebra`" id="nome`aux_contador`" idstagen="`aux_dstextab`" idinseve="`aux_idinseve`" registro="`aux_ttrowid`" mes="`STRING(aux_mescont)`" nowrap ondblclick="EdEvento(this.registro,this.mes,`aux_dstextab`)" title="`LC(TRIM(STRING(aux_nmresage19)))`">`LC(TRIM(STRING(aux_nmresage19,"x(8)")))`</div>
@@ -1356,22 +1418,21 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
                     <script language="SpeedScript">                                                        
                         END. 
                           
-                        i-poseventos = ((i-poseventos + aux_maxlin)).
+                        ASSIGN i-poseventos = ((i-poseventos + aux_maxlin)).
                         
-                        IF c-poseventos = "" THEN
-                          ASSIGN c-poseventos = STRING(i-poseventos).
-                        ELSE
-                          ASSIGN c-poseventos = c-poseventos + "," + STRING(i-poseventos).
-
-                        aux_posicaovetor = aux_posicaovetor + 1.
-                        /* RANGHETTI */
-                        leave.
+                        IF c-poseventos <> "" THEN
+													ASSIGN c-poseventos = c-poseventos + ",".
+													
+												ASSIGN c-poseventos = c-poseventos + STRING(i-poseventos)
+															 aux_posicaovetor = aux_posicaovetor + 1.	
+                        
+                        LEAVE.
                       END. /*fim cratedp */
-                      
+                      END. /* FIM IF*/
                       IF aux_evts = "" THEN
-                        aux_evts = '"novo"'.
+                        ASSIGN aux_evts = '"novo"'.
                       ELSE
-                        aux_evts = aux_evts + ',"novo"'.
+                        ASSIGN aux_evts = aux_evts + ',"novo"'.
 
                       RUN RodaJavaScript("SET_DHTML(CURSOR_HAND," + aux_evts + ");").         
                       RUN RodaJavaScript("hideMsgAguardo()").
@@ -1406,7 +1467,6 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
       <input type="hidden" name="gera" value="">
       <input type="hidden" name="envia" value="">
       <input type="hidden" name="auxdstextab" value="`aux_dstextab`">
-
     </form>
     
     <script language="JavaScript">
@@ -1561,14 +1621,6 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
               break;
             }
           }
-
-        /*if (posicionou==false){
-          if (dd.obj.name=="novo"){
-            dd.obj.moveTo(parseInt(findPosX(document.all['tdpac'])),parseInt(findPosY(document.all['tdpac'])));
-          }else{
-            dd.obj.moveTo(parseInt(tdx),parseInt(tdy));
-          }
-        } */
       }
       
       var mpac=new Array();mpac=[`vetorpac`];
@@ -1638,17 +1690,13 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
       }
       
       function mudaEvento(){
-        var dtanoage = document.form.aux_dtanoage.value;
-      
-        if(dtanoage == 0){
+        if(document.form.aux_dtanoage.value == 0){
           buscaEvento();
         }
       }
       
       function buscaEvento(){
-        var dtanoage = document.form.aux_dtanoage.value;
         document.form.mudaevento.value="sim";
-        aguarde();
         document.form.submit();
       }
       
@@ -1715,12 +1763,10 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
           }
           pula = 0;
         }   
-      }
-
-    
+      }    
 
       NomeDoProgramaPrincipal  = '/wpgd0019.w';
-	  NomeDoProgramaPrincipal = document.form.aux_dsendurl.value + NomeDoProgramaPrincipal;
+			NomeDoProgramaPrincipal = document.form.aux_dsendurl.value + NomeDoProgramaPrincipal;
       document.form.action = NomeDoProgramaPrincipal;
       
       if (document.all.cdagenci.selectedIndex >= 0){
@@ -1743,15 +1789,11 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
 
     <script language="JavaScript">
       // faz com que a janela de aguarde feche
-    
-	  hideMsgAguardo();
+			hideMsgAguardo();
       // tira a moldura dos totais
       document.form.aux_qttoteve.style.border='none';
       document.form.aux_qttotint.style.border='none';
-      document.form.aux_qttotger.style.border='none';
-	 
+      document.form.aux_qttotger.style.border='none';                                                                                                        
     </script>
   </body>
- 
 </html> 
-    

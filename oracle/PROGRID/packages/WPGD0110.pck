@@ -26,6 +26,7 @@ CREATE OR REPLACE PACKAGE PROGRID.WPGD0110 IS
   PROCEDURE pc_lista_sugestao_eventos(pr_dtanoage IN crapeap.dtanoage%TYPE --> Filtro de ANO
                                      ,pr_cdcooper IN VARCHAR2              --> Codigo da Cooperativa
                                      ,pr_cdagenci IN VARCHAR2              --> Codigo do PA               
+                                     ,pr_nrseqpgm IN crapedp.nrseqpgm%TYPE --> Código do Progragam          
                                      ,pr_cdevento IN VARCHAR2              --> Codigo do Evento
                                      ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
                                      ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
@@ -37,6 +38,7 @@ CREATE OR REPLACE PACKAGE PROGRID.WPGD0110 IS
   PROCEDURE pc_lista_evento_dtsugest(pr_cdcooper IN VARCHAR2              --> Codigo da Cooperativa
                                     ,pr_cdagenci IN VARCHAR2            	--> Codigo da Agencia (PA)    
                                     ,pr_dtanoage IN crapeap.dtanoage%TYPE --> Ano do filtro
+                                    ,pr_nrseqpgm IN crapedp.nrseqpgm%TYPE --> Código do Progragam
                                     ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
                                     ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
                                     ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
@@ -75,6 +77,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0110 IS
   PROCEDURE pc_lista_sugestao_eventos(pr_dtanoage IN crapeap.dtanoage%TYPE --> Filtro de ANO
                                      ,pr_cdcooper IN VARCHAR2              --> Codigo da Cooperativa
                                      ,pr_cdagenci IN VARCHAR2              --> Codigo do PA             	
+                                     ,pr_nrseqpgm IN crapedp.nrseqpgm%TYPE --> Código do Progragam            	
                                      ,pr_cdevento IN VARCHAR2              --> Codigo do Evento
                                      ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
                                      ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
@@ -118,6 +121,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0110 IS
       CURSOR cr_relatorio(pr_dtanoage IN crapeap.dtanoage%TYPE
                          ,pr_cdcooper IN VARCHAR2
                          ,pr_cdagenci IN VARCHAR2
+                         ,pr_nrseqpgm crapedp.nrseqpgm%TYPE
                          ,pr_cdevento IN VARCHAR2) IS    
                          
       SELECT DISTINCT       
@@ -159,6 +163,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0110 IS
         AND (INSTR(','||pr_cdcooper||',', ','||c.cdcooper||',') > 0 OR pr_cdcooper = '0')
         AND (INSTR(','||pr_cdevento||',', ','||c.cdevento||',') > 0 OR pr_cdevento = '0')
         AND (INSTR(','||pr_cdagenci||',', ','||TO_CHAR(c.cdcooper||'|'||c.cdagenci)||',') > 0 OR pr_cdagenci = '0')
+        AND (ce.nrseqpgm = pr_nrseqpgm OR pr_nrseqpgm = 0)
         AND       cs.hrsugini IS NOT NULL
      ORDER BY c.dtanoage,c.cdcooper,c.cdagenci,ce.nmevento,cs.nrocoeve;
     
@@ -199,6 +204,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0110 IS
       OPEN cr_relatorio(pr_dtanoage => pr_dtanoage
                        ,pr_cdcooper => pr_cdcooper
                        ,pr_cdagenci => pr_cdagenci
+                       ,pr_nrseqpgm => pr_nrseqpgm
                        ,pr_cdevento => pr_cdevento);
           
       LOOP
@@ -262,6 +268,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0110 IS
   PROCEDURE pc_lista_evento_dtsugest(pr_cdcooper IN VARCHAR2              --> Codigo da Cooperativa
                                     ,pr_cdagenci IN VARCHAR2            	--> Codigo da Agencia (PA)    
                                     ,pr_dtanoage IN crapeap.dtanoage%TYPE --> Ano do filtro
+                                    ,pr_nrseqpgm IN crapedp.nrseqpgm%TYPE --> Código do Progragam
                                     ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
                                     ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
                                     ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
@@ -286,20 +293,6 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0110 IS
   BEGIN
     DECLARE
 
-      -- Cursor sobre os eventos da agenda 
-      CURSOR cr_crapedp_age IS
-      SELECT DISTINCT edp.cdevento, edp.nmevento
-        FROM crapedp edp,
-             crapeap eap
-       WHERE (edp.cdcooper = eap.cdcooper)
-         AND (eap.cdevento = edp.cdevento)
-         AND (edp.cdcooper = pr_cdcooper OR pr_cdcooper = 0)
-         AND (eap.cdagenci = pr_cdagenci OR pr_cdagenci = 0)
-         AND (eap.dtanoage = pr_dtanoage OR pr_dtanoage = 0)
-       ORDER BY edp.nmevento;
-        
-      rw_crapedp_age cr_crapedp_age%ROWTYPE;      
-      
       -- Cursor sobre os eventos da agenda 
       CURSOR cr_crapedp_coop_age(pr_cdagenci IN VARCHAR2) IS
       SELECT DISTINCT ce.cdevento, ce.nmevento       
@@ -329,6 +322,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0110 IS
         AND (ce.cdevento = ce.cdevento)
         AND (ce.cdcooper = pr_cdcooper OR pr_cdcooper = 0)
         AND (ce.dtanoage = pr_dtanoage OR pr_dtanoage = 0)
+        AND (ce.nrseqpgm = pr_nrseqpgm OR pr_nrseqpgm = 0)
       ORDER BY ce.nmevento;
         
       rw_crapedp_coop_age cr_crapedp_coop_age%ROWTYPE;

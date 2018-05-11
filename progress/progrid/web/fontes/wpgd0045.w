@@ -2,11 +2,13 @@
 
 Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro).
 			
-			05/06/2012 - Adaptação dos fontes para projeto Oracle. Alterado
-						 busca na gnapses de CONTAINS para MATCHES (Guilherme Maba).
+            05/06/2012 - Adaptação dos fontes para projeto Oracle. Alterado
+                         busca na gnapses de CONTAINS para MATCHES (Guilherme Maba).
 
-      07/06/2016 - Retirada dos aux_cdtiprel "Detalhado,1,Consolidado,2,Completo,3"
-                   deixando apenas o Completo.
+            07/06/2016 - Retirada dos aux_cdtiprel "Detalhado,1,Consolidado,2,Completo,3"
+                         deixando apenas o Completo.
+                         
+            30/08/2017 - Inclusao do filtro por Programa,Prj. 322 (Jean Michel).             
 
 ...............................................................................*/
 
@@ -27,7 +29,9 @@ DEFINE TEMP-TABLE ab_unmap
        FIELD aux_lspermis AS CHARACTER FORMAT "X(256)":U 
        FIELD cdagenci AS CHARACTER FORMAT "X(256)":U 
        FIELD cdcooper AS CHARACTER FORMAT "X(256)":U 
-       FIELD idevento AS CHARACTER FORMAT "X(256)":U .
+       FIELD idevento AS CHARACTER FORMAT "X(256)":U
+       FIELD nrseqpgm AS CHARACTER FORMAT "X(256)":U 
+       FIELD aux_nrseqpgm AS CHARACTER FORMAT "X(256)":U.
 
 
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _DEFINITIONS w-html 
@@ -85,6 +89,7 @@ DEFINE VARIABLE v-identificacao       AS CHARACTER                      NO-UNDO.
 
 DEFINE VARIABLE aux_crapcop           AS CHAR                           NO-UNDO.
 DEFINE VARIABLE vetorpac              AS CHAR                           NO-UNDO.
+DEFINE VARIABLE vetorprogra           AS CHAR                           NO-UNDO.
 
 DEFINE TEMP-TABLE ttEventos 
     FIELD CdCooper AS INTEGER
@@ -113,11 +118,13 @@ DEFINE TEMP-TABLE ttEventos
 &Scoped-Define ENABLED-OBJECTS ab_unmap.aux_cdagenci ab_unmap.aux_cdcooper ~
 ab_unmap.aux_cdevento ab_unmap.aux_dsendurl ab_unmap.aux_cdtiprel ~
 ab_unmap.aux_dtanoage ab_unmap.aux_idevento ab_unmap.aux_lspermis ~
-ab_unmap.cdagenci ab_unmap.cdcooper ab_unmap.idevento 
+ab_unmap.cdagenci ab_unmap.cdcooper ab_unmap.idevento ab_unmap.aux_nrseqpgm ~
+ab_unmap.nrseqpgm
 &Scoped-Define DISPLAYED-OBJECTS ab_unmap.aux_cdagenci ~
 ab_unmap.aux_cdcooper ab_unmap.aux_cdevento ab_unmap.aux_dsendurl ~
 ab_unmap.aux_cdtiprel ab_unmap.aux_dtanoage ab_unmap.aux_idevento ~
-ab_unmap.aux_lspermis ab_unmap.cdagenci ab_unmap.cdcooper ab_unmap.idevento 
+ab_unmap.aux_lspermis ab_unmap.cdagenci ab_unmap.cdcooper ab_unmap.idevento ~
+ab_unmap.aux_nrseqpgm ab_unmap.nrseqpgm
 
 /* Custom List Definitions                                              */
 /* List-1,List-2,List-3,List-4,List-5,List-6                            */
@@ -136,6 +143,10 @@ ab_unmap.aux_lspermis ab_unmap.cdagenci ab_unmap.cdcooper ab_unmap.idevento
 
 DEFINE FRAME Web-Frame
      ab_unmap.aux_cdagenci AT ROW 1 COL 1 HELP
+          "" NO-LABEL
+          VIEW-AS SELECTION-LIST SINGLE NO-DRAG 
+          SIZE 20 BY 4
+     ab_unmap.aux_nrseqpgm AT ROW 1 COL 1 HELP
           "" NO-LABEL
           VIEW-AS SELECTION-LIST SINGLE NO-DRAG 
           SIZE 20 BY 4
@@ -176,6 +187,10 @@ DEFINE FRAME Web-Frame
           VIEW-AS FILL-IN 
           SIZE 20 BY 1
      ab_unmap.idevento AT ROW 1 COL 1 HELP
+          "" NO-LABEL FORMAT "X(256)":U
+          VIEW-AS FILL-IN 
+          SIZE 20 BY 1
+     ab_unmap.nrseqpgm AT ROW 1 COL 1 HELP
           "" NO-LABEL FORMAT "X(256)":U
           VIEW-AS FILL-IN 
           SIZE 20 BY 1
@@ -290,6 +305,15 @@ DEFINE FRAME Web-Frame
 
 /* **********************  Internal Procedures  *********************** */
 
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE CriaListaProgramas w-html 
+PROCEDURE CriaListaProgramas:
+
+ {includes/wpgd0010.i}
+ vetorprogra = REPLACE(vetorprogra,'-- TODOS --','TODOS').
+ ASSIGN ab_unmap.aux_nrseqpgm:LIST-ITEM-PAIRS IN FRAME {&FRAME-NAME} = vetorprogra.
+  
+END PROCEDURE.
+
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE CriaListaEventos w-html 
 PROCEDURE CriaListaEventos :
 
@@ -299,7 +323,7 @@ PROCEDURE CriaListaEventos :
          INITIAL ["Janeiro","Fevereiro","Março","Abril","Maio","Junho",
                   "Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"].
 
-  RUN RodaJavaScript("var mevento=new Array();").
+  RUN RodaJavaScript("var mevento = new Array();").
   
   FOR EACH crapeap WHERE crapeap.idevento       = INT(ab_unmap.aux_idevento)  AND
                          crapeap.cdcooper       = INT(ab_unmap.cdcooper)      AND
@@ -310,7 +334,9 @@ PROCEDURE CriaListaEventos :
      FIRST crapedp WHERE crapedp.cdevento       = crapeap.cdevento            AND
                          crapedp.idevento       = crapeap.idevento            AND
                          crapedp.cdcooper       = crapeap.cdcooper            AND
-                         crapedp.dtanoage       = crapeap.dtanoage            NO-LOCK,
+                         crapedp.dtanoage       = crapeap.dtanoage            AND
+                         (crapedp.nrseqpgm = INT(ab_unmap.nrseqpgm)        OR
+                         INT(ab_unmap.nrseqpgm) = 0) NO-LOCK,
       EACH crapadp WHERE crapadp.idevento       = crapeap.idevento            AND
                          crapadp.cdcooper       = crapeap.cdcooper            AND
                          crapadp.cdagenci       = crapeap.cdagenci            AND
@@ -390,6 +416,10 @@ PROCEDURE htmOffsets :
   RUN readOffsets ("{&WEB-FILE}":U).
   RUN htmAssociate
     ("aux_cdagenci":U,"ab_unmap.aux_cdagenci":U,ab_unmap.aux_cdagenci:HANDLE IN FRAME {&FRAME-NAME}).
+  RUN htmAssociate
+    ("aux_nrseqpgm":U,"ab_unmap.aux_nrseqpgm":U,ab_unmap.aux_nrseqpgm:HANDLE IN FRAME {&FRAME-NAME}).
+  RUN htmAssociate
+    ("nrseqpgm":U,"ab_unmap.nrseqpgm":U,ab_unmap.nrseqpgm:HANDLE IN FRAME {&FRAME-NAME}).  
   RUN htmAssociate
     ("aux_cdcooper":U,"ab_unmap.aux_cdcooper":U,ab_unmap.aux_cdcooper:HANDLE IN FRAME {&FRAME-NAME}).
   RUN htmAssociate
@@ -473,7 +503,8 @@ ASSIGN opcao                    = GET-FIELD("aux_cddopcao")
        ab_unmap.aux_lspermis    = FlagPermissoes
        ab_unmap.aux_dtanoage    = GET-VALUE("aux_dtanoage")
        ab_unmap.cdagenci        = GET-VALUE("cdagenci")
-       ab_unmap.cdcooper        = GET-VALUE("cdcooper").
+       ab_unmap.cdcooper        = GET-VALUE("cdcooper")
+       ab_unmap.nrseqpgm        = GET-VALUE("nrseqpgm").
 
 RUN outputHeader.
 
@@ -533,7 +564,7 @@ RUN CriaListaEventos.
 /* cria o combo dos tipos de relatório */
 ab_unmap.aux_cdtiprel:LIST-ITEM-PAIRS IN FRAME {&FRAME-NAME} = "Completo,3". /*"Detalhado,1,Consolidado,2,Completo,3"*/ .
 
-
+RUN CriaListaProgramas.
    
 /* método POST */
 IF REQUEST_METHOD = "POST":U THEN 

@@ -100,21 +100,24 @@
                 06/10/2016 - SD 489677 - Inclusao do flgativo na CRAPLGP
                              (Guilherme/SUPERO)
 
-			          17/11/2016 - #549653 Ajustes de formats das quantidades para rotinas do bcaixa (Carlos)
+			    17/11/2016 - #549653 Ajustes de formats das quantidades para rotinas do bcaixa (Carlos)
 				
                 06/12/2016 - P341-Automatização BACENJUD - Alterar o uso da descrição do
                              departamento passando a considerar o código (Renato Darosci)
                              
                 10/01/2016 - #587076 aumento de formats para o boletim de caixa (Carlos)
 
-				        13/04/2017 - Inserido o campo nrsequen no create da tt-estorno
-				                     #625135 (Tiago/Elton)
+				13/04/2017 - Inserido o campo nrsequen no create da tt-estorno
+				             #625135 (Tiago/Elton)
 				
                 26/06/2017 - Incluido parametro de etapa com valor 0 para procedure Busca_Dados e valor 1 para procedure imprime_caixa_cofre
-            				         Chamado 660322 - (Belli Envolti)
+            				 Chamado 660322 - (Belli Envolti)
                 
                 15/08/2017 - Ajuste para permitir o fechamento de caixas de dias diferentes do dia atual
                              (Lucas Ranghetti #665982)
+
+				24/01/2018 - Aumentar o campo AUX_BLIDENTI de 40 para 59 posições, pois estava truncando a tag "Final do BL"
+				             SD 812596 - Marcelo Telles Coelho
 ............................................................................*/
 
 /*............................. DEFINICOES .................................*/
@@ -884,7 +887,9 @@ PROCEDURE Gera_Boletim:
     DEF VAR aux_qtdepcop AS INTE                                    NO-UNDO. 
     DEF VAR aux_vldepout AS DECI                                    NO-UNDO. 
     DEF VAR aux_qtdepout AS INTE                                    NO-UNDO. 
-    
+	DEF VAR aux_vlchqout AS DECI                                    NO-UNDO. 
+    DEF VAR aux_qtchqout AS INTE                                    NO-UNDO. 
+
     /*Auxiliares para impressao*/
     DEF VAR aux_nrdevias AS INTE                                    NO-UNDO.
     DEF VAR aux_dscomand AS CHAR                                    NO-UNDO.
@@ -1204,7 +1209,9 @@ PROCEDURE Gera_Boletim:
                    aux_vldepcop = 0
                    aux_qtdepcop = 0
                    aux_vldepout = 0
-                   aux_qtdepout = 0.                   
+                   aux_qtdepout = 0
+				   aux_vlchqout = 0
+                   aux_qtchqout = 0.                   
 
             EMPTY TEMP-TABLE tt-histor.
             
@@ -1257,6 +1264,7 @@ PROCEDURE Gera_Boletim:
                             
                             RUN gera_tt-histor 
                                 ( INPUT par_cdcooper,
+								  INPUT par_dtmvtolt,
                                   INPUT craplcm.cdhistor,
                                   INPUT craplcm.vllanmto,
                                   INPUT "", /*dsdcompl*/
@@ -1280,6 +1288,8 @@ PROCEDURE Gera_Boletim:
                                   INPUT-OUTPUT aux_qtdepcop,
                                   INPUT-OUTPUT aux_vldepout,
                                   INPUT-OUTPUT aux_qtdepout,
+								  INPUT-OUTPUT aux_vlchqout,
+								  INPUT-OUTPUT aux_qtchqout,
 								  INPUT pr_tpcartao).
 
                         END. /* FOR EACH craplcm */
@@ -1311,6 +1321,7 @@ PROCEDURE Gera_Boletim:
 
                             RUN gera_tt-histor 
                                 ( INPUT par_cdcooper,
+								  INPUT par_dtmvtolt,
                                   INPUT craplem.cdhistor,
                                   INPUT craplem.vllanmto,
                                   INPUT "", /*dsdcompl*/
@@ -1334,6 +1345,8 @@ PROCEDURE Gera_Boletim:
                                   INPUT-OUTPUT aux_qtdepcop,
                                   INPUT-OUTPUT aux_vldepout,
                                   INPUT-OUTPUT aux_qtdepout,
+								  INPUT-OUTPUT aux_vlchqout,
+								  INPUT-OUTPUT aux_qtchqout,
                                   INPUT 9).
 
                         END. /* FOR EACH craplem */
@@ -1420,6 +1433,7 @@ PROCEDURE Gera_Boletim:
 
                             RUN gera_tt-histor 
                                 ( INPUT par_cdcooper,
+								  INPUT par_dtmvtolt,
                                   INPUT craplft.cdhistor,         
                                   INPUT aux_vlrtotal,      
                                   INPUT "", /*dsdcompl*/
@@ -1443,6 +1457,8 @@ PROCEDURE Gera_Boletim:
                                   INPUT-OUTPUT aux_qtdepcop,
                                   INPUT-OUTPUT aux_vldepout,
                                   INPUT-OUTPUT aux_qtdepout,
+								  INPUT-OUTPUT aux_vlchqout,
+								  INPUT-OUTPUT aux_qtchqout,
                                   INPUT 9).
 
                         END. /* FOR EACH craplft */
@@ -1469,6 +1485,7 @@ PROCEDURE Gera_Boletim:
 
                             RUN gera_tt-histor 
                                 ( INPUT par_cdcooper,
+								  INPUT par_dtmvtolt, 
                                   INPUT 373,
                                   INPUT craptit.vldpagto,
                                   INPUT "", /*dsdcompl*/
@@ -1492,6 +1509,8 @@ PROCEDURE Gera_Boletim:
                                   INPUT-OUTPUT aux_qtdepcop,
                                   INPUT-OUTPUT aux_vldepout,
                                   INPUT-OUTPUT aux_qtdepout,
+								  INPUT-OUTPUT aux_vlchqout,
+								  INPUT-OUTPUT aux_qtchqout,
                                   INPUT 9).
 
                         END. /* FOR EACH craptit */
@@ -1625,6 +1644,7 @@ PROCEDURE Gera_Boletim:
                         IF  craphis.indcompl <> 0 THEN
                             RUN gera_tt-histor 
                                 ( INPUT par_cdcooper,
+								  INPUT par_dtmvtolt,
                                   INPUT craplcx.cdhistor,
                                   INPUT craplcx.vldocmto,
                                   INPUT craplcx.dsdcompl,
@@ -1648,6 +1668,8 @@ PROCEDURE Gera_Boletim:
                                   INPUT-OUTPUT aux_qtdepcop,
                                   INPUT-OUTPUT aux_vldepout,
                                   INPUT-OUTPUT aux_qtdepout,
+								  INPUT-OUTPUT aux_vlchqout,
+								  INPUT-OUTPUT aux_qtchqout,
                                   INPUT 9).
                         ELSE
                             ASSIGN aux_vlrttctb = aux_vlrttctb + 
@@ -1999,38 +2021,59 @@ PROCEDURE Gera_Boletim:
                         DO:
                            IF CAN-DO("715",STRING(craphis.cdhistor)) THEN
                               DO:
-                                 /*DEP. CHQ. SUPERIOR*/
-                                 ASSIGN aux_deschist = "DEP. CHQ. SUPERIOR" + 
-                                        FILL(" ",5) + 
-                                        "(" + STRING(aux_qtdepsup,"zz,zz9") + ")  " +
-                                        FILL(".",9)   
-                                        aux_vlrtthis = aux_vldepsup.
+                                 IF  aux_qtchqout > 0  THEN 
+								     DO:
+									    /*DEP. CHQ. OUTROS*/
+                                        ASSIGN aux_deschist = "DEP.CHQ. OUTROS BANCOS" + 
+                                               FILL(" ",1) + 
+                                               "(" + STRING(aux_qtchqout,"zz,zz9") + ")  " +
+                                               FILL(".",9)   
+                                               aux_vlrtthis = aux_vlchqout.
                                         
-                                 DISPLAY STREAM str_1
-                                    aux_deschist aux_vlrtthis 
-                                    WITH FRAME f_his_boletim.
-                                 DOWN STREAM str_1 WITH FRAME f_his_boletim.
+                                        DISPLAY STREAM str_1
+                                                aux_deschist aux_vlrtthis 
+                                                WITH FRAME f_his_boletim.
+                                                DOWN STREAM str_1 WITH FRAME f_his_boletim.
                                        
-                                 IF  NOT par_tipconsu AND
-                                     LINE-COUNTER(str_1) = 80 THEN
-                                     PAGE STREAM str_1.
+                                        IF  NOT par_tipconsu AND
+                                            LINE-COUNTER(str_1) = 80 THEN
+                                            PAGE STREAM str_1.
+									 END.
+                                 ELSE
+								     DO:
+										 /*DEP. CHQ. SUPERIOR*/
+										 ASSIGN aux_deschist = "DEP. CHQ. SUPERIOR" + 
+												FILL(" ",5) + 
+												"(" + STRING(aux_qtdepsup,"zz,zz9") + ")  " +
+												FILL(".",9)   
+												aux_vlrtthis = aux_vldepsup.
+                                        
+										 DISPLAY STREAM str_1
+											aux_deschist aux_vlrtthis 
+											WITH FRAME f_his_boletim.
+										 DOWN STREAM str_1 WITH FRAME f_his_boletim.
+                                       
+										 IF  NOT par_tipconsu AND
+											 LINE-COUNTER(str_1) = 80 THEN
+											 PAGE STREAM str_1.
 
-                                 /*DEP. CHQ. INFERIOR*/
-                                 ASSIGN aux_deschist = "DEP. CHQ. INFERIOR" + 
-                                        FILL(" ",5) + 
-                                        "(" + STRING(aux_qtdepinf,"zz,zz9") + ")  " +
-                                        FILL(".",9)   
-                                        aux_vlrtthis = aux_vldepinf.
+										 /*DEP. CHQ. INFERIOR*/
+										 ASSIGN aux_deschist = "DEP. CHQ. INFERIOR" + 
+												FILL(" ",5) + 
+												"(" + STRING(aux_qtdepinf,"zz,zz9") + ")  " +
+												FILL(".",9)   
+												aux_vlrtthis = aux_vldepinf.
 
-                                 DISPLAY STREAM str_1
-                                    aux_deschist aux_vlrtthis 
-                                    WITH FRAME f_his_boletim.
-                                 DOWN STREAM str_1 WITH FRAME f_his_boletim.
+										 DISPLAY STREAM str_1
+											aux_deschist aux_vlrtthis 
+											WITH FRAME f_his_boletim.
+										 DOWN STREAM str_1 WITH FRAME f_his_boletim.
                                     
-                                 IF  NOT par_tipconsu AND
-                                     LINE-COUNTER(str_1) = 80 THEN
-                                     PAGE STREAM str_1.
-                                     
+										 IF  NOT par_tipconsu AND
+											 LINE-COUNTER(str_1) = 80 THEN
+											 PAGE STREAM str_1.
+                                     END.
+
                                  /*DEP. CHQ. COOP.*/
                                  ASSIGN aux_deschist = "DEP. CHQ. COOP." + 
                                         FILL(" ",8) + 
@@ -2880,7 +2923,7 @@ PROCEDURE Gera_Fita_Caixa:
     FORM "Inicio do BL: " cratfit.blidenti SKIP(1)
          WITH NO-BOX COLUMN aux_nrcoluna NO-LABELS DOWN WIDTH 128 FRAME f_inicio_bl.
     
-    FORM " Final do BL: " aux_blidenti FORMAT "x(40)"
+    FORM " Final do BL: " aux_blidenti FORMAT "x(59)"
          SKIP(1)
          WITH NO-BOX COLUMN aux_nrcoluna NO-LABELS DOWN WIDTH 128 FRAME f_final_bl.
     
@@ -3862,7 +3905,7 @@ PROCEDURE Gera_Depositos_Saques:
         
         VIEW STREAM str_1 FRAME f_label_dep.
 
-        ASSIGN aux_dshistor = "1,3,4,386,372".
+        ASSIGN aux_dshistor = "1,3,4,2433,386,372".
 
         FOR EACH craplcm WHERE 
                  craplcm.cdcooper = par_cdcooper                  AND
@@ -4626,7 +4669,7 @@ PROCEDURE Grava_Dados:
                        crapbcx.vldsdfin = par_vldentra - par_vldsaida
                        crapbcx.ipmaqcxa = ""
                        aux_nrdrecid     = RECID(crapbcx).
-                       
+
                 /* Buscar nome do operador de caixa */    
                 FIND FIRST crapope WHERE crapope.cdcooper = par_cdcooper
                                      AND crapope.cdoperad = par_cdopecxa
@@ -5522,6 +5565,7 @@ END PROCEDURE.
 PROCEDURE gera_tt-histor:
 
     DEF INPUT PARAM par_cdcooper AS INTE                            NO-UNDO.
+	DEF INPUT PARAM par_dtmvtolt AS DATE                            NO-UNDO.
     DEF INPUT PARAM par_cdhistor LIKE craphis.cdhistor.
     DEF INPUT PARAM par_vllanmto LIKE craplcm.vllanmto.
     DEF INPUT PARAM par_dsdcompl LIKE craplcx.dsdcompl.
@@ -5545,6 +5589,8 @@ PROCEDURE gera_tt-histor:
     DEF INPUT-OUTPUT PARAM par_qtdepcop AS INTE                     NO-UNDO.
     DEF INPUT-OUTPUT PARAM par_vldepout AS DECI                     NO-UNDO.
     DEF INPUT-OUTPUT PARAM par_qtdepout AS INTE                     NO-UNDO.
+    DEF INPUT-OUTPUT PARAM par_vlchqout AS DECI                     NO-UNDO.
+    DEF INPUT-OUTPUT PARAM par_qtchqout AS INTE                     NO-UNDO. 
     DEF INPUT PARAM pr_tpcartao AS INTE.  /* tpcartao */
     
     /* Vriavel da prcodeure gera_tt-hist -> b1wgen0120.p*/
@@ -5633,7 +5679,20 @@ PROCEDURE gera_tt-histor:
                      END.
                END.
          END.
-    /*Deposito a vista*/       
+    /*Deposito a vista*/   
+	/**** Aguardando nova data de implantacao do projeto
+	/*Projeto 367 - DEP. CHQ. OUTROS BANCOS:  inferiores e superiores */
+    IF CAN-DO("2433,372",STRING(crabhis.cdhistor)) AND
+	   par_dtmvtolt >= 16/04/2018  THEN  /* Inicio COMPE SESSAO UNICA */
+       DO:
+           ASSIGN par_vlchqout = par_vlchqout + par_vllanmto
+                  par_qtchqout = par_qtchqout + 1.
+         END.
+    ELSE
+	*******/
+	/*Projeto 367 -  Serao mantidos os contadores(inferir e superior)
+	para nao alterar a descricao dos boletins gerados antes do projeto */ 
+	 
     /*EP. CHQ. SUPERIOR: cheques depositados que nao pertencem 
       A COOPERATIVA QUE RECEBEU O CHEQUE e sao igual ou superior 
       a R$300,00.*/
@@ -5645,7 +5704,7 @@ PROCEDURE gera_tt-histor:
        END.
     ELSE
        DO:
-          /*DEP. CHQ. INFERIOR: cheques depositados que nao 
+           /*DEP. CHQ. INFERIOR: cheques depositados que nao 
            pertencem A COOPERATIVA QUE RECEBEU O CHEQUE e sao 
            igual ou inferior a R$299,99.*/
           IF CAN-DO("3,4,372",STRING(crabhis.cdhistor)) AND
@@ -6110,7 +6169,7 @@ PROCEDURE SaldoCaixas:
                        OUTPUT "", /* nmarqimp */
                        OUTPUT 0,  /* saldotot */
                        OUTPUT "", /* critica */
-                       OUTPUT ?). /* tabela com registros */
+                       OUTPUT ?). /* tabela com registros */				   
 
     CLOSE STORED-PROC pc_saldo_caixas 
        aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
@@ -6126,7 +6185,7 @@ PROCEDURE SaldoCaixas:
                              WHEN pc_saldo_caixas.pr_nmarqimp <> ?
            par_saldotot = pc_saldo_caixas.pr_saldotot
                              WHEN pc_saldo_caixas.pr_saldotot <> ?.
-    
+
     IF  aux_dscritic <> "" THEN
         DO:
             CREATE tt-erro.

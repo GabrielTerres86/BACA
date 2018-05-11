@@ -47,6 +47,12 @@
                 19/04/2017 - Alteraçao DSNACION pelo campo CDNACION.
                              PRJ339 - CRM (Odirlei-AMcom)      
                              
+                24/11/2017 - Corrigida a ordem dos parametros da chamada 
+                             da gerenciar-telefone. PRJ339 - CRM(Odirlei-AMcom)
+
+                14/03/2018 - Substituida validacao "cdtipcta = (6, 7, 17, 18)" 
+                             pela modalidade do tipo de conta = 3. PRJ339 (Lombardi).
+                             
 .............................................................................*/
 
 
@@ -64,6 +70,7 @@
 { sistema/generico/includes/b1wgen0071tt.i }
 { sistema/generico/includes/b1wgen0072tt.i }
 { sistema/generico/includes/b1wgen0075tt.i }
+{ sistema/generico/includes/var_oracle.i }
 
 DEF VAR aux_tpatlcad AS INTE                                        NO-UNDO.
 DEF VAR aux_msgatcad AS CHAR                                        NO-UNDO.
@@ -109,6 +116,9 @@ PROCEDURE Busca_Conta:
     DEF OUTPUT PARAM par_dscritic AS CHAR                           NO-UNDO.
 
     DEF VAR aux_dtaltera AS DATE                                    NO-UNDO.
+    DEF VAR aux_cdmodali AS INTE                                    NO-UNDO.
+    DEF VAR aux_des_erro AS CHAR                                    NO-UNDO.
+    DEF VAR aux_dscritic AS CHAR                                    NO-UNDO.
 
     DEF BUFFER crabass FOR crapass.
     DEF BUFFER crabttl FOR crapttl.
@@ -124,14 +134,44 @@ PROCEDURE Busca_Conta:
                                crabttl.idseqttl  = 1            
                                NO-LOCK, 
 
-           FIRST crabass FIELDS(cdcooper nrdconta cdtipcta)
+           FIRST crabass FIELDS(cdcooper nrdconta cdtipcta inpessoa)
                          WHERE crabass.cdcooper = crabttl.cdcooper AND
                                crabass.nrdconta = crabttl.nrdconta AND
                                crabass.dtdemiss = ?                
                                NO-LOCK:
            
+            { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
+            
+            RUN STORED-PROCEDURE pc_busca_modalidade_tipo
+            aux_handproc = PROC-HANDLE NO-ERROR (INPUT crabass.inpessoa, /* Tipo de pessoa */
+                                                 INPUT crabass.cdtipcta, /* Tipo de conta */
+                                                OUTPUT 0,                /* Modalidade */
+                                                OUTPUT "",               /* Flag Erro */
+                                                OUTPUT "").              /* Descriçao da crítica */
+            
+            CLOSE STORED-PROC pc_busca_modalidade_tipo
+                  aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+            
+            { includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }
+            
+            ASSIGN aux_cdmodali = 0
+                   aux_des_erro = ""
+                   aux_dscritic = ""
+                   aux_cdmodali = pc_busca_modalidade_tipo.pr_cdmodalidade_tipo 
+                                  WHEN pc_busca_modalidade_tipo.pr_cdmodalidade_tipo <> ?
+                   aux_des_erro = pc_busca_modalidade_tipo.pr_des_erro 
+                                  WHEN pc_busca_modalidade_tipo.pr_des_erro <> ?
+                   aux_dscritic = pc_busca_modalidade_tipo.pr_dscritic
+                                  WHEN pc_busca_modalidade_tipo.pr_dscritic <> ?.
+            
+            IF aux_des_erro = "NOK"  THEN
+                DO:
+                   ASSIGN par_dscritic = aux_dscritic.
+                   LEAVE Conta.
+                END.
+            
             /** Ignora conta aplicacao **/
-            IF  CAN-DO("6,7,17,18",STRING(crabass.cdtipcta))  THEN
+            IF  aux_cdmodali = 3 THEN
                 NEXT.
 
             FOR LAST crapalt FIELDS(nrdconta dtaltera)
@@ -630,9 +670,9 @@ PROCEDURE Recebe_Dados:
                   INPUT tt-telefone-cooperado.nmpescto,
                   INPUT tt-telefone-cooperado.cdopetfn,
                   INPUT "A",/*prgqfalt*/
+                  INPUT par_flgerlog,
                   INPUT tt-telefone-cooperado.idsittfc,
                   INPUT tt-telefone-cooperado.idorigem, 
-                  INPUT par_flgerlog,
                  OUTPUT aux_tpatlcad,
                  OUTPUT aux_msgatcad,
                  OUTPUT aux_chavealt,

@@ -119,6 +119,8 @@ ETIME(TRUE).
 RUN STORED-PROCEDURE pc_crps349 aux_handproc = PROC-HANDLE
    (INPUT glb_cdcooper,
     INPUT INT(STRING(glb_flgresta,"1/0")),
+	INPUT  0,
+	INPUT  0,
     OUTPUT 0,
     OUTPUT 0,
     OUTPUT 0, 

@@ -2,7 +2,7 @@
 
     Programa: sistema/generico/includes/b1wgen0115tt.i
     Autor(a): Gabriel Capoia dos Santos (DB1)
-    Data    : Setembro/2011                      Ultima atualizacao: 15/12/2014
+    Data    : Setembro/2011                      Ultima atualizacao: 30/10/2017
   
     Dados referentes ao programa:
   
@@ -11,6 +11,8 @@
     Alteracoes: 15/12/2014 - Adicionado campo tpproapl na temp-table 
                              tt-aplicacoes. (Reinert)
     
+                30/10/2017 - Adicionado tpctrato. (Jaison/Marcos Martini - PRJ404)
+
 .............................................................................*/
 
 DEF TEMP-TABLE tt-aditiv NO-UNDO
@@ -47,7 +49,8 @@ DEF TEMP-TABLE tt-aditiv NO-UNDO
     FIELD vlpromis  AS DECIMAL FORMAT "zzz,zzz,zz9.99"  EXTENT 10
     FIELD dsaditiv  AS CHAR    FORMAT "x(36)"
     FIELD dscpfavl  AS CHAR    FORMAT "x(18)"
-    FIELD tpdescto  AS INTE    FORMAT 9.
+    FIELD tpdescto  AS INTE    FORMAT 9
+    FIELD tpctrato  LIKE crapadt.tpctrato.
 
 DEF TEMP-TABLE tt-aplicacoes NO-UNDO
     FIELD nraplica AS INTE FORMAT "zzz,zz9"

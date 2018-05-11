@@ -250,6 +250,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
   -- Alteracoes:  24/11/2017 - Ajustado para gravar espaco qnd nulo no campos de cidada e uf.
   --                           PRJ339-CRM (Odirlei-AMcom) 
   --  
+  --              29/01/2017 - Ajustes para atualizar a data de alteração, para posicionar que essa pessoa teve 
+  --                           alguma alteração cadastral. PRJ309-CRM(Odirlei-AMcom)
+  --
+  --              16/03/2018 - colocado NVL nos valores que irão atualizar ou inserir no campo vlsalari tabela crapcje, pois caso o campo vlsalari estiver nulo,
+  --                           irá impactar no caluclo do rating. Chamado 830113 (Alcemir Mouts).
   ---------------------------------------------------------------------------------------------------------------*/
   
   vr_dtpadrao DATE := to_date('01/01/1900','DD/MM/RRRR');
@@ -476,6 +481,55 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
     WHEN OTHERS THEN
       pr_dscritic := 'Erro nao tratado pc_ret_conta_recente: '||SQLERRM; 
   END pc_ret_conta_recente;  
+  
+  /*****************************************************************************/
+  /**       Procedure para atualizar data de alteracao da tabela pessoa       **/
+  /*****************************************************************************/
+  PROCEDURE pc_atlz_dtaltera_pessoa( pr_idpessoa         IN tbcadast_pessoa.idpessoa%TYPE     --> Identificador de pessoa
+                                    ,pr_dscritic        OUT VARCHAR2                          --> Retornar Critica 
+                                   ) IS   
+     
+  /* ..........................................................................
+    --
+    --  Programa : pc_atlz_dtaltera_pessoa
+    --  Sistema  : Conta-Corrente - Cooperativa de Credito
+    --  Sigla    : CRED
+    --  Autor    : Odirlei Busana(AMcom)
+    --  Data     : Janeiro/2018.                   Ultima atualizacao: 
+    --
+    --  Dados referentes ao programa:
+    --
+    --   Frequencia: Sempre que for chamado
+    --   Objetivo  : Procedure para atualizar data de alteracao da tabela pessoa
+    --
+    --  Alteração :
+    --
+    --
+    -- ..........................................................................*/
+    
+    ---------------> CURSORES <----------------- 
+    
+    
+    ---------------> VARIAVEIS <----------------- 
+    vr_dscritic    VARCHAR2(1000);
+    vr_exc_erro    EXCEPTION; 
+  
+    
+    
+  BEGIN
+  
+    --> Atualizar a data de alteração, para posicionar que essa pessoa teve 
+    --> alguma alteração cadastral
+    UPDATE tbcadast_pessoa pes
+       SET pes.dtalteracao = SYSDATE
+      WHERE pes.idpessoa = pr_idpessoa;  
+  
+  EXCEPTION 
+    WHEN vr_exc_erro THEN
+      pr_dscritic := vr_dscritic;
+    WHEN OTHERS THEN
+      pr_dscritic := 'Nao foi possivel atualizar dtalteracao no cadastro de pessoa: '||SQLERRM; 
+  END pc_atlz_dtaltera_pessoa;
   
   
   /*****************************************************************************/
@@ -754,7 +808,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                  SET avt.nrcepend     = pr_endereco_new.nrcep,
                      avt.dsendres##1  = pr_endereco_new.nmlogradouro,
                      avt.nrendere     = pr_endereco_new.nrlogradouro, 
-                     avt.complend     = substr(pr_endereco_new.dscomplemento,1,57),
+                     avt.complend     = substr(pr_endereco_new.dscomplemento,1,47),
                      avt.nmbairro     = pr_endereco_new.nmbairro,
                      avt.nmcidade     = nvl(vr_dscidade,' '),
                      avt.cdufresd     = nvl(vr_cdestado,' ')
@@ -853,6 +907,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
       END LOOP; --> Fim loop vr_tab_contas
     END IF; --> vr_tab_contas.count     
   
+    --> atualizar a data de alteração, para posicionar que essa pessoa teve alguma alteração cadastral
+    pc_atlz_dtaltera_pessoa( pr_idpessoa => pr_idpessoa   --> Identificador de pessoa
+                            ,pr_dscritic => pr_dscritic); --> Retornar Critica 
+
   EXCEPTION 
     WHEN vr_exc_erro THEN
       pr_dscritic := vr_dscritic;
@@ -1170,6 +1228,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
       END LOOP; --> Fim Looop vr_tab_contas
     END IF; --> Fim IF  vr_tab_contas.count
     
+    --> atualizar a data de alteração, para posicionar que essa pessoa teve alguma alteração cadastral
+    pc_atlz_dtaltera_pessoa( pr_idpessoa => pr_idpessoa   --> Identificador de pessoa
+                            ,pr_dscritic => pr_dscritic); --> Retornar Critica 
+
+    
   EXCEPTION 
     WHEN vr_exc_erro THEN
       pr_dscritic := vr_dscritic;
@@ -1392,6 +1455,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
       END LOOP; --> Fim Looop vr_tab_contas
     END IF; --> Fim IF  vr_tab_contas.count
     
+    --> atualizar a data de alteração, para posicionar que essa pessoa teve alguma alteração cadastral
+    pc_atlz_dtaltera_pessoa( pr_idpessoa => pr_idpessoa   --> Identificador de pessoa
+                            ,pr_dscritic => pr_dscritic); --> Retornar Critica 
+
+    
   EXCEPTION 
     WHEN vr_exc_erro THEN
       pr_dscritic := vr_dscritic;
@@ -1575,6 +1643,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
       END LOOP; --> Fim Looop vr_tab_contas
     END IF; --> Fim IF  vr_tab_contas.count
     
+    --> atualizar a data de alteração, para posicionar que essa pessoa teve alguma alteração cadastral
+    pc_atlz_dtaltera_pessoa( pr_idpessoa => pr_idpessoa   --> Identificador de pessoa
+                            ,pr_dscritic => pr_dscritic); --> Retornar Critica 
+
+    
   EXCEPTION 
     WHEN vr_exc_erro THEN
       pr_dscritic := vr_dscritic;
@@ -1726,6 +1799,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
       
       END LOOP; --> Fim Looop vr_tab_contas
     END IF; --> Fim IF  vr_tab_contas.count
+    
+    --> Atualizar a data de alteração, para posicionar que essa pessoa teve alguma alteração cadastral
+    pc_atlz_dtaltera_pessoa( pr_idpessoa => pr_idpessoa   --> Identificador de pessoa
+                            ,pr_dscritic => pr_dscritic); --> Retornar Critica 
+
     
   EXCEPTION 
     WHEN vr_exc_erro THEN
@@ -1916,7 +1994,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                      cje.cdnvlcgo = pr_renda_new.cdnivel_cargo,
                      cje.cdturnos = pr_renda_new.cdturno,       
                      cje.dtadmemp = pr_renda_new.dtadmissao,
-                     cje.vlsalari = pr_renda_new.vlrenda,         
+                     cje.vlsalari = nvl(pr_renda_new.vlrenda,0),         
                      cje.nmextemp = substr(rw_pessoa_renda.nmpessoa,1,40),
                      cje.nrdocnpj = rw_pessoa_renda.nrcpfcgc                 
                WHERE cje.cdcooper = vr_tab_contas(idx).cdcooper
@@ -1960,6 +2038,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
         END IF; --> tipo de relacao
       END LOOP; --> Fim Looop vr_tab_contas
     END IF; --> Fim IF  vr_tab_contas.count
+    
+    --> Atualizar a data de alteração, para posicionar que essa pessoa teve alguma alteração cadastral
+    pc_atlz_dtaltera_pessoa( pr_idpessoa => pr_idpessoa   --> Identificador de pessoa
+                            ,pr_dscritic => pr_dscritic); --> Retornar Critica 
+
     
   EXCEPTION 
     WHEN vr_exc_erro THEN
@@ -2187,6 +2270,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
       END LOOP; --> Fim Looop vr_tab_contas
     END IF; --> Fim IF  vr_tab_contas.count
     
+    --> Atualizar a data de alteração, para posicionar que essa pessoa teve alguma alteração cadastral
+    pc_atlz_dtaltera_pessoa( pr_idpessoa => pr_idpessoa   --> Identificador de pessoa
+                            ,pr_dscritic => pr_dscritic); --> Retornar Critica 
+
   EXCEPTION 
     WHEN vr_exc_erro THEN
       pr_dscritic := vr_dscritic;
@@ -2451,6 +2538,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
       END LOOP; --> Fim Looop vr_tab_contas
     END IF; --> Fim IF  vr_tab_contas.count
     
+    --> Atualizar a data de alteração, para posicionar que essa pessoa teve alguma alteração cadastral
+    pc_atlz_dtaltera_pessoa( pr_idpessoa => pr_idpessoa   --> Identificador de pessoa
+                            ,pr_dscritic => pr_dscritic); --> Retornar Critica 
+
   EXCEPTION 
     WHEN vr_exc_erro THEN
       pr_dscritic := vr_dscritic;
@@ -2749,6 +2840,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
       END LOOP; --> Fim Looop vr_tab_contas
     END IF; --> Fim IF  vr_tab_contas.count
     
+    --> Atualizar a data de alteração, para posicionar que essa pessoa teve alguma alteração cadastral
+    pc_atlz_dtaltera_pessoa( pr_idpessoa => pr_idpessoa   --> Identificador de pessoa
+                            ,pr_dscritic => pr_dscritic); --> Retornar Critica 
+
+    
   EXCEPTION 
     WHEN vr_exc_erro THEN
       pr_dscritic := vr_dscritic;
@@ -2934,6 +3030,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
       
       END LOOP; --> Fim Looop vr_tab_contas
     END IF; --> Fim IF  vr_tab_contas.count
+    
+    --> Atualizar a data de alteração, para posicionar que essa pessoa teve alguma alteração cadastral
+    pc_atlz_dtaltera_pessoa( pr_idpessoa => pr_idpessoa   --> Identificador de pessoa
+                            ,pr_dscritic => pr_dscritic); --> Retornar Critica 
+
     
   EXCEPTION 
     WHEN vr_exc_erro THEN
@@ -3160,6 +3261,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
       
       END LOOP; --> Fim Looop vr_tab_contas
     END IF; --> Fim IF  vr_tab_contas.count
+    
+    --> Atualizar a data de alteração, para posicionar que essa pessoa teve alguma alteração cadastral
+    pc_atlz_dtaltera_pessoa( pr_idpessoa => pr_idpessoa   --> Identificador de pessoa
+                            ,pr_dscritic => pr_dscritic); --> Retornar Critica 
+
     
   EXCEPTION 
     WHEN vr_exc_erro THEN
@@ -4044,6 +4150,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
       END LOOP; --> Fim Looop vr_tab_contas
     END IF; --> Fim IF  vr_tab_contas.count
     
+    --> Atualizar a data de alteração, para posicionar que essa pessoa teve alguma alteração cadastral
+    pc_atlz_dtaltera_pessoa( pr_idpessoa => pr_idpessoa   --> Identificador de pessoa
+                            ,pr_dscritic => pr_dscritic); --> Retornar Critica 
+
+
   EXCEPTION 
     WHEN vr_exc_erro THEN
       pr_dscritic := vr_dscritic;
@@ -4232,6 +4343,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
       END LOOP; --> Fim Looop vr_tab_contas
     END IF; --> Fim IF  vr_tab_contas.count
     
+    --> Atualizar a data de alteração, para posicionar que essa pessoa teve alguma alteração cadastral
+    pc_atlz_dtaltera_pessoa( pr_idpessoa => pr_idpessoa   --> Identificador de pessoa
+                            ,pr_dscritic => pr_dscritic); --> Retornar Critica 
+
+    
   EXCEPTION 
     WHEN vr_exc_erro THEN
       pr_dscritic := vr_dscritic;
@@ -4414,6 +4530,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
       END LOOP; --> Fim Looop vr_tab_contas
     END IF; --> Fim IF  vr_tab_contas.count
     
+    --> Atualizar a data de alteração, para posicionar que essa pessoa teve alguma alteração cadastral
+    pc_atlz_dtaltera_pessoa( pr_idpessoa => pr_idpessoa   --> Identificador de pessoa
+                            ,pr_dscritic => pr_dscritic); --> Retornar Critica 
+
+
   EXCEPTION 
     WHEN vr_exc_erro THEN
       pr_dscritic := vr_dscritic;
@@ -4901,6 +5022,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
       END LOOP; --> Fim Looop vr_tab_contas
     END IF; --> Fim IF  vr_tab_contas.count
     
+    --> Atualizar a data de alteração, para posicionar que essa pessoa teve alguma alteração cadastral
+    pc_atlz_dtaltera_pessoa( pr_idpessoa => pr_idpessoa   --> Identificador de pessoa
+                            ,pr_dscritic => pr_dscritic); --> Retornar Critica 
+
+    
   EXCEPTION 
     WHEN vr_exc_erro THEN
       pr_dscritic := vr_dscritic;
@@ -5055,7 +5181,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                     rw_renda.cdnivel_cargo,      --> cdnvlcgo
                     rw_renda.cdturno,            --> cdturnos
                     rw_renda.dtadmissao,         --> dtadmemp
-                    rw_renda.vlrenda,            --> vlsalari
+                    nvl(rw_renda.vlrenda,0),     --> vlsalari
                     -- Telefone -- 3 Comercial
                     rw_telefone.dstelefone,      --> nrfonemp
                     rw_telefone.nrramal          --> nrramemp                    
@@ -5073,7 +5199,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                    cdnvlcgo = rw_renda.cdnivel_cargo,      --> cdnvlcgo
                    cdturnos = rw_renda.cdturno,            --> cdturnos
                    dtadmemp = rw_renda.dtadmissao,         --> dtadmemp
-                   vlsalari = rw_renda.vlrenda,            --> vlsalari
+                   vlsalari = nvl(rw_renda.vlrenda,0),            --> vlsalari
                    -- Telefone -- 3 Comercial
                    nrfonemp = rw_telefone.dstelefone,      --> nrfonemp
                    nrramemp = rw_telefone.nrramal          --> nrramemp  
@@ -5150,7 +5276,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                     rw_renda.cdnivel_cargo,             --> cdnvlcgo
                     rw_renda.cdturno,                   --> cdturnos
                     rw_renda.dtadmissao,                --> dtadmemp
-                    rw_renda.vlrenda,                   --> vlsalari
+                    nvl(rw_renda.vlrenda,0),            --> vlsalari
                     -- Telefone -- 3 Comercial
                     rw_telefone.dstelefone,             --> nrfonemp
                     rw_telefone.nrramal                 --> nrramemp                    
@@ -5182,7 +5308,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
                    cdnvlcgo = rw_renda.cdnivel_cargo,             --> cdnvlcgo
                    cdturnos = rw_renda.cdturno,                   --> cdturnos
                    dtadmemp = rw_renda.dtadmissao,                --> dtadmemp
-                   vlsalari = rw_renda.vlrenda,                   --> vlsalari
+                   vlsalari = nvl(rw_renda.vlrenda,0),            --> vlsalari
                    -- Telefone -- 3 Comercial
                    nrfonemp = rw_telefone.dstelefone,             --> nrfonemp
                    nrramemp = rw_telefone.nrramal                 --> nrramemp   
@@ -5631,6 +5757,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
       END LOOP; --> Fim Looop vr_tab_contas
     END IF; --> Fim IF  vr_tab_contas.count
     
+    --> Atualizar a data de alteração, para posicionar que essa pessoa teve alguma alteração cadastral
+    pc_atlz_dtaltera_pessoa( pr_idpessoa => pr_idpessoa   --> Identificador de pessoa
+                            ,pr_dscritic => pr_dscritic); --> Retornar Critica 
+
+    
   EXCEPTION 
     WHEN vr_exc_erro THEN
       pr_dscritic := vr_dscritic;
@@ -5933,6 +6064,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
       
       END LOOP; --> Fim Looop vr_tab_contas
     END IF; --> Fim IF  vr_tab_contas.count
+    
+    --> Atualizar a data de alteração, para posicionar que essa pessoa teve alguma alteração cadastral
+    pc_atlz_dtaltera_pessoa( pr_idpessoa => pr_idpessoa   --> Identificador de pessoa
+                            ,pr_dscritic => pr_dscritic); --> Retornar Critica 
+
     
   EXCEPTION 
     WHEN vr_exc_erro THEN
@@ -6759,6 +6895,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
       END LOOP; --> Fim Looop vr_tab_contas
     END IF; --> Fim IF  vr_tab_contas.count
     
+    --> Atualizar a data de alteração, para posicionar que essa pessoa teve alguma alteração cadastral
+    pc_atlz_dtaltera_pessoa( pr_idpessoa => pr_idpessoa   --> Identificador de pessoa
+                            ,pr_dscritic => pr_dscritic); --> Retornar Critica 
+
+    
   EXCEPTION 
     WHEN vr_exc_erro THEN
       pr_dscritic := vr_dscritic;
@@ -7051,6 +7192,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0016 IS
     
       END LOOP; --> Fim Looop vr_tab_contas
     END IF; --> Fim IF  vr_tab_contas.count
+    
+    --> Atualizar a data de alteração, para posicionar que essa pessoa teve alguma alteração cadastral
+    pc_atlz_dtaltera_pessoa( pr_idpessoa => pr_idpessoa   --> Identificador de pessoa
+                            ,pr_dscritic => pr_dscritic); --> Retornar Critica 
+
     
   EXCEPTION 
     WHEN vr_exc_erro THEN

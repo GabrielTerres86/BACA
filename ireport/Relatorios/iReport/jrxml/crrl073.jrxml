@@ -2,7 +2,7 @@
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="crrl073" language="groovy" pageWidth="442" pageHeight="924" whenNoDataType="AllSectionsNoDetail" columnWidth="442" leftMargin="0" rightMargin="0" topMargin="0" bottomMargin="0" whenResourceMissingType="Empty" uuid="b0b8a82c-538e-4c5e-a2d2-48ac4a892d8a">
 	<property name="ireport.zoom" value="2.657341500000001"/>
 	<property name="ireport.x" value="0"/>
-	<property name="ireport.y" value="159"/>
+	<property name="ireport.y" value="15"/>
 	<subDataset name="dataset1" uuid="0695e938-6a20-48a5-9cc2-5c0937dbf294"/>
 	<parameter name="PR_NMRESCOP" class="java.lang.String">
 		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
@@ -84,7 +84,7 @@
 			<band height="155">
 				<frame>
 					<reportElement uuid="97df9083-da22-4056-a178-f0ffcaa215e2" positionType="Float" x="0" y="0" width="442" height="122" isRemoveLineWhenBlank="true">
-						<printWhenExpression><![CDATA[new Boolean($F{flgmensag} == "N" && $F{tpemprst} == "2")]]></printWhenExpression>
+						<printWhenExpression><![CDATA[new Boolean($F{flgmensag} == "N" && $F{tpemprst} == "0")]]></printWhenExpression>
 					</reportElement>
 					<staticText>
 						<reportElement uuid="6048e203-b707-4347-9272-a2cb3d56521f" x="0" y="44" width="180" height="11"/>
@@ -276,7 +276,7 @@
 				</frame>
 				<frame>
 					<reportElement uuid="6cc2b4ce-0828-4e84-a4f3-a9a0e67d2ebf" positionType="Float" x="0" y="122" width="442" height="33" isRemoveLineWhenBlank="true">
-						<printWhenExpression><![CDATA[new Boolean($F{flgmensag} == "N" && $F{tpemprst} == "1")]]></printWhenExpression>
+						<printWhenExpression><![CDATA[new Boolean($F{flgmensag} == "N" && ($F{tpemprst} == "1" || $F{tpemprst} == "2"))]]></printWhenExpression>
 					</reportElement>
 					<textField>
 						<reportElement uuid="c5e1d960-9d87-40f0-af1c-2f61f23d5b06" x="32" y="0" width="302" height="11"/>
@@ -398,7 +398,7 @@
 		<band height="11" splitType="Stretch">
 			<subreport>
 				<reportElement uuid="27f4e593-89bd-4b42-9d68-3b436e5c278d" x="0" y="0" width="442" height="11" isRemoveLineWhenBlank="true">
-					<printWhenExpression><![CDATA[new Boolean($F{flgmensag} == "N" && $F{tpemprst} == "2")]]></printWhenExpression>
+					<printWhenExpression><![CDATA[new Boolean($F{flgmensag} == "N" && $F{tpemprst} == "0")]]></printWhenExpression>
 				</reportElement>
 				<subreportParameter name="PR_PAGE_NUMBER">
 					<subreportParameterExpression><![CDATA[$V{PAGE_NUMBER}]]></subreportParameterExpression>
@@ -410,7 +410,7 @@
 		<band height="11">
 			<subreport>
 				<reportElement uuid="27f4e593-89bd-4b42-9d68-3b436e5c278d" x="0" y="0" width="442" height="11" isRemoveLineWhenBlank="true">
-					<printWhenExpression><![CDATA[new Boolean($F{flgmensag} == "N" && $F{tpemprst} == "1")]]></printWhenExpression>
+					<printWhenExpression><![CDATA[new Boolean($F{flgmensag} == "N" && ($F{tpemprst} == "1" || $F{tpemprst} == "2"))]]></printWhenExpression>
 				</reportElement>
 				<subreportParameter name="PR_PAGE_NUMBER">
 					<subreportParameterExpression><![CDATA[$V{PAGE_NUMBER}]]></subreportParameterExpression>
@@ -429,6 +429,18 @@
 				</subreportParameter>
 				<dataSourceExpression><![CDATA[$P{REPORT_DATA_SOURCE}.subDataSource("//extratos/extrato")]]></dataSourceExpression>
 				<subreportExpression><![CDATA["crrl073_saldos.jasper"]]></subreportExpression>
+			</subreport>
+		</band>
+		<band height="11">
+			<subreport>
+				<reportElement uuid="27f4e593-89bd-4b42-9d68-3b436e5c278d" x="0" y="0" width="442" height="11" isRemoveLineWhenBlank="true">
+					<printWhenExpression><![CDATA[new Boolean($F{flgmensag} == "N" && $F{tpemprst} == "2")]]></printWhenExpression>
+				</reportElement>
+				<subreportParameter name="PR_PAGE_NUMBER">
+					<subreportParameterExpression><![CDATA[$V{PAGE_NUMBER}]]></subreportParameterExpression>
+				</subreportParameter>
+				<dataSourceExpression><![CDATA[$P{REPORT_DATA_SOURCE}.subDataSource("//extratos/extrato")]]></dataSourceExpression>
+				<subreportExpression><![CDATA["crrl073_posfixado_historicos.jasper"]]></subreportExpression>
 			</subreport>
 		</band>
 	</detail>

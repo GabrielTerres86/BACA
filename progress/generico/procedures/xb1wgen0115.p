@@ -2,7 +2,7 @@
 
      Programa: sistema/generico/procedures/xb1wgen0115.p
      Autor   : Rogerius Militão
-     Data    : Setembro/2011                   Ultima atualizacao: 15/12/2014
+     Data    : Setembro/2011                   Ultima atualizacao: 01/11/2017
 
      Objetivo  : BO de Comunicacao XML x BO - Telas aditiv
 
@@ -11,6 +11,8 @@
                            
                  15/12/2014 - Adicionado campo tpproapl no recibemento de 
                               parametros da temp-table tt-aplicacoes. (Reinert)
+
+                 01/11/2017 - Passagem do tpctrato e idgaropc. (Jaison/Marcos Martini - PRJ404)
 
 .............................................................................*/
 
@@ -56,6 +58,8 @@ DEF VAR aux_nrdocgar AS CHAR                                           NO-UNDO.
 DEF VAR aux_nmdgaran AS CHAR                                           NO-UNDO.
 DEF VAR aux_nrpromis AS CHAR EXTENT 10                                 NO-UNDO.
 DEF VAR aux_vlpromis AS DECI EXTENT 10                                 NO-UNDO.
+DEF VAR aux_tpctrato AS INTE                                           NO-UNDO.
+DEF VAR aux_idgaropc AS INTE                                           NO-UNDO.
  
 DEF VAR aux_dsiduser AS CHAR                                           NO-UNDO.
 DEF VAR aux_nmarqimp AS CHAR                                           NO-UNDO. 
@@ -158,6 +162,8 @@ DEF VAR aux_qtregist AS INTE                                           NO-UNDO.
              WHEN "impdocir" THEN aux_impdocir = LOGICAL(tt-param.valorCampo).
 
              WHEN "uladitiv" THEN aux_uladitiv = INTE(tt-param.valorCampo).
+             WHEN "tpctrato" THEN aux_tpctrato = INT(tt-param.valorCampo).
+             WHEN "idgaropc" THEN aux_idgaropc = INT(tt-param.valorCampo).
 
              WHEN "nrregist" THEN aux_nrregist = INTE(tt-param.valorCampo).
              WHEN "nriniseq" THEN aux_nriniseq = INTE(tt-param.valorCampo).
@@ -240,6 +246,7 @@ PROCEDURE Busca_Dados:
                       INPUT aux_cdaditiv,
                       INPUT aux_tpaplica,
                       INPUT aux_nrctagar,
+                      INPUT aux_tpctrato,
                       INPUT TRUE,
                       INPUT aux_nrregist, 
                       INPUT aux_nriniseq, 
@@ -300,6 +307,7 @@ PROCEDURE Valida_Dados:
                       INPUT aux_cddopcao,
                       INPUT aux_nrdconta,
                       INPUT aux_cdaditiv,
+                      INPUT aux_tpctrato,
                       INPUT aux_nrctremp,
                       INPUT aux_dtdpagto,
                       INPUT aux_flgpagto,
@@ -371,6 +379,8 @@ PROCEDURE Grava_Dados:
                       INPUT aux_nrctremp,
                       INPUT aux_cdaditiv,
                       INPUT aux_nraditiv,
+                      INPUT aux_tpctrato,
+                      INPUT aux_idgaropc,
                       INPUT aux_flgpagto,
                       INPUT aux_dtdpagto,
                       INPUT aux_flgaplic,
@@ -443,6 +453,7 @@ PROCEDURE Gera_Impressao:
                       INPUT aux_dtmvtolt,
                       INPUT aux_dtmvtopr,
                       INPUT aux_inproces,
+                      INPUT aux_tpctrato,
                      OUTPUT aux_nmarqimp,
                      OUTPUT aux_nmarqpdf,
                      OUTPUT TABLE tt-erro).

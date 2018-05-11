@@ -10,7 +10,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS588(pr_cdcooper  IN NUMBER         -->
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Guilherme
-   Data    : Janeiro/2011                       Ultima atualizacao: 24/11/2017
+   Data    : Janeiro/2011                       Ultima atualizacao: 02/01/2018
 
    Dados referentes ao programa:
    Frequencia: Diario.
@@ -72,6 +72,12 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS588(pr_cdcooper  IN NUMBER         -->
                24/11/2017 - Retirado (nrborder = 0) e feita validacao para verificar
                             se o cheque esta em bordero de desconto efetivado
                             antes de prosseguir com a custodia(Tiago/Adriano #766582)
+
+               02/01/2018 - Foi ajustado a função do cálculo do dia útil (fn_calc_prox_dia_útil) 
+                            para gerar os arquivos de compensação para a ABBC referente aos cheques 
+                            que compensam nos dias 29/12, 30/12, 31/12 e 01/01/18. 
+                            Esse fato está ocorrendo sempre no último dia do ano.
+                            (Douglas - Chamado 822733)
 ..............................................................................*/
 BEGIN
   DECLARE
@@ -260,6 +266,8 @@ BEGIN
           -- Compara datas de atuação
           IF tmp_dtrefere = pr_datautl THEN
             tmp_dtrefere := tmp_dtrefere + 1;
+            -- Ajuste chamado 822733
+            continue;
           END IF;
 
           -- Condição de saída do LOOP

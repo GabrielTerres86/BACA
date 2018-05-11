@@ -102,6 +102,10 @@ IF  VALID-HANDLE(h-b1wgen0003)  THEN
                                      TRIM(STRING(tt-lancamento_futuro.vllanmto,
                                                  "zzz,zzz,zz9.99-")) +
                                             "</vllanmto>"
+                   xml_operacao9.cdtiptra = "<cdtiptra>" + STRING(tt-lancamento_futuro.cdtiptra) + "</cdtiptra>"                      
+                   xml_operacao9.idlstdom = "<idlstdom>" + STRING(tt-lancamento_futuro.idlstdom) + "</idlstdom>"                       
+                   xml_operacao9.idlancto = "<idlancto>" + STRING(tt-lancamento_futuro.idlancto) + "</idlancto>"                      
+                   xml_operacao9.incancel = "<incancel>" + STRING(tt-lancamento_futuro.incancel) + "</incancel>"                                                
                    xml_operacao9.dscabfim = "</LANCAMENTO>".
         END.
 

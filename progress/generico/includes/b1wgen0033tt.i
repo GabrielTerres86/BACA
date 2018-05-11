@@ -27,6 +27,10 @@
 
 			   04/08/2017 - Inclusao de novos campos na tt-associado 
 			                (Adriano)
+
+               27/11/2017 - Chamado 792418 - Incluir opções de cancelamento 10 e 11
+                            (Andrei Vieira - MOUTs )
+
 ..............................................................................*/
 
 DEF TEMP-TABLE tt-matricula NO-UNDO
@@ -172,7 +176,7 @@ DEF TEMP-TABLE tt-cobert-seg NO-UNDO
     LIKE craptsg.
 
 DEF TEMP-TABLE tt-mot-can NO-UNDO
-    FIELD cdmotcan AS INTEGER FORMAT "9"
+    FIELD cdmotcan AS INTEGER FORMAT "99"
     FIELD dsmotcan AS CHAR FORMAT "x(40)".
 
 DEF TEMP-TABLE tt-seguradora NO-UNDO

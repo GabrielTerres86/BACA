@@ -11,7 +11,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps156 (pr_cdcooper IN crapcop.cdcooper%T
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Deborah/Edson
-     Data    : Abril/96.                       Ultima atualizacao: 29/11/2016
+     Data    : Abril/96.                       Ultima atualizacao: 01/12/2017
 
      Dados referentes ao programa:
 
@@ -88,6 +88,12 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps156 (pr_cdcooper IN crapcop.cdcooper%T
                    
                  29/11/2016 - Efetuar o resgate no dia quando passado uma conta especifica
                               Utilizado pela rotina BLQJ0002 (Andrino-Mouts)
+                              
+                 01/12/2017 - Inclusao da validação de bloqueis de aplic.
+                              PRJ404 - Garantia(Odirlei-AMcom) 
+                              
+                 18/04/2018 - Tratamento se existe valor bloqueado como garantia de operação com poupança programa
+                              PRJ404 - Garantia(Oscar-AMcom)              
                               
   ............................................................................ */
 
@@ -186,7 +192,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps156 (pr_cdcooper IN crapcop.cdcooper%T
            craprej.dtdaviso,
            craprej.vldaviso,
            craprej.vlsdapli, 
-           craprej.vllanmto
+           craprej.vllanmto,
+           craprej.cdpesqbb
       FROM craprej
      WHERE craprej.cdcooper = pr_cdcooper
        AND craprej.dtmvtolt = pr_dtmvtopr
@@ -728,8 +735,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps156 (pr_cdcooper IN crapcop.cdcooper%T
         END IF;   
         CLOSE cr_craptab;
       END IF;
-      
-      /* Se nao houve erro ou é uma bloqueada vencida r ser resgatada */
+
       IF  nvl(vr_cdcritic,0) = 0 OR vr_cdcritic = 828  THEN
         IF vr_saldorpp > 0   THEN
           vr_vlirabap := 0;
@@ -778,6 +784,41 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps156 (pr_cdcooper IN crapcop.cdcooper%T
                 vr_vlresgat := rw_craplrg.vllanmto;
               END IF;
           END CASE;
+        ELSE
+          vr_cdcritic := 494; --> 494 - Poupanca programada sem saldo.
+        END IF;
+      END IF;
+
+      IF nvl(vr_cdcritic,0) NOT IN(484,640,494)  THEN
+        -- Validar resgate
+        
+        Apli0002.pc_ver_val_bloqueio_poup(pr_cdcooper => pr_cdcooper,
+                                          pr_cdagenci => 1,
+                                          pr_nrdcaixa => 1,
+                                          pr_cdoperad => '1',
+                                          pr_nmdatela => 'CRPS156',
+                                          pr_idorigem => 7,
+                                          pr_nrdconta => rw_craplrg.nrdconta,
+                                          pr_idseqttl => 1,
+                                          pr_dtmvtolt => rw_crapdat.dtmvtolt,
+                                          pr_dtmvtopr => rw_crapdat.dtmvtopr,
+                                          pr_inproces => rw_crapdat.inproces,
+                                          pr_cdprogra => 'CRPS156',
+                                          pr_vlresgat => vr_vlresgat,
+                                          pr_flgerlog => 0,
+                                          pr_cdcritic => vr_cdcritic,
+                                          pr_dscritic => vr_dscritic);
+        
+        -- Verifica se houve retorno de erros
+        IF NVL(vr_dscritic, 'OK') <> 'OK'  THEN
+          -- Enviaremos a critica 999 ao relatório para gravar dscritic no cdpesqbb da craprej
+           vr_cdcritic := 999; 
+        END IF; 
+      END IF;
+
+      
+      /* Se nao houve erro ou é uma bloqueada vencida r ser resgatada */
+      IF  (nvl(vr_cdcritic,0) = 0 OR vr_cdcritic = 828 OR vr_cdcritic = 429) THEN
               
           IF rw_craplrg.flgcreci = 0 /* false */ THEN /*Resgate Conta Corrente*/
             -- Buscar dados do lote
@@ -994,9 +1035,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps156 (pr_cdcooper IN crapcop.cdcooper%T
               
           vr_regexist := TRUE;
           
-        ELSE
-          vr_cdcritic := 494; --> 494 - Poupanca programada sem saldo.
-        END IF;  
       END IF;
       
       IF nvl(vr_cdcritic,0) = 0 THEN
@@ -1023,7 +1061,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps156 (pr_cdcooper IN crapcop.cdcooper%T
                       ,craprej.vllanmto
                       ,craprej.cdcritic
                       ,craprej.tpintegr
-                      ,craprej.cdcooper)
+                      ,craprej.cdcooper
+                      ,craprej.cdpesqbb)
                VALUES (rw_crapdat.dtmvtopr  -- craprej.dtmvtolt 
                       ,156                  -- craprej.cdagenci 
                       ,156                  -- craprej.cdbccxlt 
@@ -1036,9 +1075,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps156 (pr_cdcooper IN crapcop.cdcooper%T
                       ,vr_vlresgat          -- craprej.vllanmto 
                       ,nvl(vr_cdcritic,0)   -- craprej.cdcritic 
                       ,156                  -- craprej.tpintegr 
-                      ,pr_cdcooper);        -- craprej.cdcooper 
+                      ,pr_cdcooper
+                      ,NVL(vr_dscritic, '')); 
                       
-          vr_cdcritic := 0;            
+          vr_cdcritic := 0;
+          vr_dscritic := '';            
           
         EXCEPTION
           WHEN OTHERS THEN
@@ -1120,19 +1161,24 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps156 (pr_cdcooper IN crapcop.cdcooper%T
                                 tplotmov="'||rw_craplot.tplotmov||'" >');
           
         END IF;
-              
+    
       END IF;
-      
+        
       vr_cdcritic := 0;
-      
+        
       -- ler criticas
       FOR rw_craprej  IN cr_craprej (pr_cdcooper => pr_cdcooper,
                                      pr_dtmvtopr => rw_crapdat.dtmvtopr) LOOP
         
         -- buscar descrição da critica
         IF nvl(vr_cdcritic,0) <> rw_craprej.cdcritic THEN
+          
           vr_cdcritic := rw_craprej.cdcritic;
-          vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+          IF vr_cdcritic = 999 THEN
+             vr_dscritic := rw_craprej.cdpesqbb;
+          ELSE
+             vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+          END IF;
         END IF;
         
         pc_escreve_xml('<rejeitados>
@@ -1148,13 +1194,13 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps156 (pr_cdcooper IN crapcop.cdcooper%T
         IF rw_craprej.vllanmto = 0   THEN
           vr_rel_qtdrejln := nvl(vr_rel_qtdrejln,0) + 1;
           vr_rel_vldrejdb := nvl(vr_rel_vldrejdb,0) + rw_craprej.vldaviso;
-        END IF;  
-        
+      END IF;
+      
       END LOOP;
       
       IF vr_regexist THEN
         pc_escreve_xml('</lote>');
-        
+      
         pc_escreve_xml('<total>
                           <tot_qtcompln>'|| rw_craplot.qtcompln  ||'</tot_qtcompln>
                           <tot_vlcompdb>'|| rw_craplot.vlcompdb  ||'</tot_vlcompdb>
@@ -1167,12 +1213,12 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps156 (pr_cdcooper IN crapcop.cdcooper%T
       
       -- Finalizar o agrupador do relatório
       pc_escreve_xml('</crrl125>',TRUE);
-      
+
       -- Busca do diretório base da cooperativa para PDF
       vr_nom_direto := gene0001.fn_diretorio(pr_tpdireto => 'C' -- /usr/coop
                                             ,pr_cdcooper => pr_cdcooper
                                             ,pr_nmsubdir => '/rl'); --> Utilizaremos o rl
-      
+    
       -- Efetuar solicitação de geração de relatório --
       gene0002.pc_solicita_relato(pr_cdcooper  => pr_cdcooper         --> Cooperativa conectada
                                  ,pr_cdprogra  => vr_cdprogra         --> Programa chamador

@@ -204,6 +204,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps688 (pr_cdcooper IN crapcop.cdcooper%T
       ------------------------------- VARIAVEIS -------------------------------
       vr_nmdcampo VARCHAR2(45);
 			vr_nrdocmto craplcm.nrdocmto%TYPE;
+			vr_dsprotoc crappro.dsprotoc%TYPE;
 			vr_tab_msg_confirma APLI0002.typ_tab_msg_confirma;
       
       vr_nrdocsrc VARCHAR2(30);
@@ -674,6 +675,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps688 (pr_cdcooper IN crapcop.cdcooper%T
                                                  ,pr_flgerlog => 1
                                                  ,pr_nmdcampo => vr_nmdcampo
                                                  ,pr_nrdocmto => vr_nrdocmto
+																								 ,pr_dsprotoc => vr_dsprotoc
                                                  ,pr_tab_msg_confirma => vr_tab_msg_confirma
                                                  ,pr_cdcritic => vr_cdcritic
                                                  ,pr_dscritic => vr_dscritic);              

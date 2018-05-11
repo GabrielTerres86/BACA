@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Edson
-   Data    : Janeiro/94.                      Ultima atualizacao: 13/01/2017
+   Data    : Janeiro/94.                      Ultima atualizacao: 17/02/2017
 
    Dados referentes ao programa:
 
@@ -229,7 +229,10 @@
 
                13/01/2017 - Implementar trava para não permitir efetivar empréstimo sem que 
                             as informações de Imóveis estejam preenchidas (Renato - Supero)
-                            
+
+               30/01/2017 - Nao permitir efetuar lancamento para o produto Pos-Fixado.
+                            (Jaison/James - PRJ298)
+
                17/02/2017 - Retirada a trava de efetivaçao de empréstimo sem que as informações 
                             de Imóveis estejam preenchidas, conforme solicitaçao antes da 
                             liberaçao do projeto (Renato - Supero)
@@ -295,6 +298,8 @@ DEF VAR aux_percetop         AS DECI                 NO-UNDO.
 DEF VAR aux_txcetmes         AS DECI                 NO-UNDO.
 DEF VAR aux_flctrliq         AS LOGI                 NO-UNDO.
 DEF VAR aux_flgativo         AS INTE                 NO-UNDO.
+DEF VAR aux_dscatbem         AS CHAR                 NO-UNDO.
+DEF VAR aux_dsctrliq         AS CHAR                 NO-UNDO.
 /*DEF VAR aux_flimovel         AS INTE	             NO-UNDO. 17/02/2017 - Validaçao removida */
 
 DEF BUFFER b_crawepr FOR crawepr.
@@ -612,6 +617,14 @@ DO WHILE TRUE:
             DO:
                 MESSAGE "A proposta nao pode ser efetivada,"
                         + " analise nao finalizada".
+                NEXT.            
+            END.
+
+            /* Nao permite efetuar lancamento para o produto Pos-Fixado */
+			IF crawepr.tpemprst = 2 THEN
+            DO:
+                ASSIGN glb_cdcritic = 946.
+                NEXT-PROMPT tel_nrctremp WITH FRAME f_lanctr.
                 NEXT.            
             END.
           
@@ -1301,6 +1314,19 @@ DO WHILE TRUE:
                                        crapass.nrdconta = tel_nrdconta
                                        NO-LOCK NO-ERROR.
 
+              ASSIGN aux_dscatbem = "".
+               FOR EACH crapbpr WHERE crapbpr.cdcooper = crawepr.cdcooper  AND
+                                     crapbpr.nrdconta = crawepr.nrdconta  AND
+                                     crapbpr.nrctrpro = crawepr.nrctremp  AND 
+                                     crapbpr.tpctrpro = 90 NO-LOCK:
+                  ASSIGN aux_dscatbem = aux_dscatbem + "|" + crapbpr.dscatbem.
+               END.
+               
+               RUN buscar_liquidacoes_contrato IN h-b1wgen0002(INPUT crawepr.cdcooper,
+                                                              INPUT crawepr.nrdconta,
+                                                              INPUT crawepr.nrctremp,
+                                                              OUTPUT aux_dsctrliq).  
+       
               /* Calcular o cet automaticamente */
               RUN calcula_cet_novo IN h-b1wgen0002(
                                    INPUT glb_cdcooper,
@@ -1323,6 +1349,9 @@ DO WHILE TRUE:
                                    INPUT tel_qtpreemp,
                                    INPUT tel_dtdpagto,
                                    INPUT crawepr.cdfinemp,
+                                   INPUT aux_dscatbem, /* dscatbem */
+                                   INPUT crawepr.idfiniof, /* IDFINIOF */
+                                   INPUT aux_dsctrliq, /* dsctrliq */
                                   OUTPUT aux_percetop, /* taxa cet ano */
                                   OUTPUT aux_txcetmes, /* taxa cet mes */
                                   OUTPUT TABLE tt-erro).

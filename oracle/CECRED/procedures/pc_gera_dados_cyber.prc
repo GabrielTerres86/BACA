@@ -7,13 +7,22 @@ BEGIN
   Sistema : Conta-Corrente - Cooperativa de Credito
   Sigla   : CRED
   Autor   : 
-  Data    : 2017.                                     Ultima atualizacao: 14/11/2017
+  Data    : 2017.                                     Ultima atualizacao: 16/01/2018
   Dados referentes ao programa:
     Frequencia: Diaria. Seg-sex, 08h
     Programa Chamador: JBCYB_GERA_DADOS_CYBER
 
   Alteracoes: 14/11/2017 - Log de trace da exception others e retorno de crítica para
                            o programa chamador (Carlos)
+
+              09/01/2018 - #826598 Tratamento para enviar e-mail e abrir chamado quando 
+                           ocorrer erro na execução do programa pc_crps652 (Carlos)
+
+              16/01/2018 - Quando chegar reagendamento não retornar mensagem de erro.
+                           A solução definitiva será em novo chamado e a GENE0004 pode retonar
+                           alem do codigo da mensagem um indicador de tipo de mensagem para não dar erro.
+                           (Envolti - Belli - Chamado 831545)
+                           
   .............................................................................. */  
 
   DECLARE
@@ -34,6 +43,11 @@ BEGIN
     vr_nomdojob    VARCHAR2(40) := 'JBCYB_GERA_DADOS_CYBER';
     vr_flgerlog    BOOLEAN := FALSE;
     vr_dthoje      DATE := TRUNC(SYSDATE);
+
+    vr_dstexto VARCHAR2(2000);
+    vr_titulo VARCHAR2(1000);
+    vr_destinatario_email VARCHAR2(500);
+    vr_idprglog   tbgen_prglog.idprglog%TYPE;
 
     --> Controla log proc_batch, para apenas exibir qnd realmente processar informação
     PROCEDURE pc_controla_log_batch(pr_dstiplog IN VARCHAR2, -- 'I' início; 'F' fim; 'E' erro
@@ -95,14 +109,42 @@ BEGIN
                   ,pr_dscritic => vr_dscritic);
                                          
         IF NVL(vr_cdcritic,0) <> 0 OR vr_dscritic IS NOT NULL THEN
+           
+          -- Abrir chamado - Texto para utilizar na abertura do chamado e no email enviado
+          vr_dstexto := to_char(sysdate,'hh24:mi:ss') || ' - ' || vr_nomdojob || ' --> ' ||
+                       'Erro na execucao do programa. Critica: ' || nvl(vr_dscritic,' ');
+
+          -- Parte inicial do texto do chamado e do email
+          vr_titulo := '<b>Abaixo os erros encontrados no job ' || vr_nomdojob || '</b><br><br>';
+
+          -- Buscar e-mails dos destinatarios do produto cyber
+          vr_destinatario_email := gene0001.fn_param_sistema('CRED',vr_cdcooper,'CYBER_RESPONSAVEL');
+
+          cecred.pc_log_programa(
+              PR_DSTIPLOG      => 'E'           --> Tipo do log: I - início; F - fim; O - ocorrência
+             ,PR_CDPROGRAMA    => vr_nomdojob   --> Codigo do programa ou do job
+             ,pr_tpexecucao    => 2             --> Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+             -- Parametros para Ocorrencia
+             ,pr_tpocorrencia  => 2             --> tp ocorrencia (1-Erro de negocio/ 2-Erro nao tratado/ 3-Alerta/ 4-Mensagem)
+             ,pr_cdcriticidade => 2             --> Nivel criticidade (0-Baixa/ 1-Media/ 2-Alta/ 3-Critica)
+             ,pr_dsmensagem    => vr_dstexto    --> dscritic       
+             ,pr_flgsucesso    => 0             --> Indicador de sucesso da execução
+             ,pr_flabrechamado => 1             --> Abrir chamado (Sim=1/Nao=0)
+             ,pr_texto_chamado => vr_titulo
+             ,pr_destinatario_email => vr_destinatario_email
+             ,pr_flreincidente => 1             --> Erro pode ocorrer em dias diferentes, devendo abrir chamado
+             ,PR_IDPRGLOG      => vr_idprglog); --> Identificador unico da tabela (sequence)
+           
            RAISE vr_exc_erro; 
         END IF;
       
       ELSE
+        -- Não retornar o erro - Chamado 831545 - 16/01/2018
+        IF vr_dserro NOT LIKE '%Processo noturno nao finalizado para cooperativa%' THEN
         vr_cdcritic := 0;
         vr_dscritic := vr_dserro;
-
         RAISE vr_exc_erro;  
+      END IF;
       END IF;
 
     END IF; 

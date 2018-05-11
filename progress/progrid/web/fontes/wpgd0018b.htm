@@ -15,6 +15,11 @@
   <body>
   <script language="JavaScript">
     NomeDoProgramaPrincipal  = '/wpgd0018b.w';
+    
+    function aguarde() {
+      // abre a janela com a mesagem de aguarde
+      showMsgAguardo("Atualizando Valores...");
+		}
   </script>
   <form action="#." method="POST" name="form" id="form">
     <input type="hidden" name="aux_cddopcao" id="aux_cddopcao" VALUE="">
@@ -141,7 +146,8 @@
             </table>
             <table width="200" align="center">
               <tr>
-                <th scope="col"><img style="cursor:hand" src="/cecred/images/botoes/btn_salvar.gif"  onClick="Salvar()"></th>
+                <th scope="col"><img style="cursor:hand" src="/cecred/images/botoes/btn_salvar.gif"  onClick="Salvar();"></th>
+                <th scope="col"><img style="cursor:hand" src="/cecred/images/botoes/btn_atualizar_valores.gif"  onClick="Replica();"></th>
               </tr>
             </table>
           </div>
@@ -692,7 +698,8 @@
                  cell.align = 'left';
                  cell.width = document.all.tbevento_col13.width;;
                  cell.height = 20;         
-                 linky='<a href="#." onClick=Replica(); class="linkGuia"><img src="/cecred/images/icones/financeiro.gif" border="0" title="Calcular Custos Orçados"></a>';
+                 //linky='<a href="#." onClick=Replica(); class="linkGuia"><img src="/cecred/images/icones/financeiro.gif" border="0" title="Calcular Custos Orçados"></a>';
+                 linky = '<in' + 'put type="checkbox" name="aux_protodos" id="aux_protodos" onClick="replicaTodos();" checked>';
                  cell.innerHTML=linky; 
               } // if(row.id==0)
               // Flag que indica se o PA vai receber os valores de propagação ou não
@@ -1366,6 +1373,18 @@
       }else{
         for(i=1;i<document.form.aux_qtdagenc.value;i++){
           document.getElementById("aux_flgfecha[" + i + "]").checked = false;
+        }
+      }
+    }
+    
+    function replicaTodos(){
+      if(document.getElementById("aux_protodos").checked){
+        for(i=1;i<document.form.aux_qtdagenc.value;i++){
+          document.getElementById("aux_flpropag[" + i + "]").checked = true;
+        }
+      }else{
+        for(i=1;i<document.form.aux_qtdagenc.value;i++){
+          document.getElementById("aux_flpropag[" + i + "]").checked = false;
         }
       }
     }

@@ -4,7 +4,7 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : David
-   Data    : Marco/2007                        Ultima atualizacao: 30/10/2017
+   Data    : Marco/2007                        Ultima atualizacao: 26/01/2018
 
    Dados referentes ao programa:
 
@@ -66,6 +66,10 @@
 			   30/10/2017 - Trocar a chamada da rotina verifica-rollout pela
                             verifica-titulo-npc-cip (SD784234 - AJFink)
 
+               07/12/2017 - Adicionado o retorno dos campo dtmvtatu e flgvenci
+                            (Douglas - Chamado 805008)
+
+                           26/01/2018 - Ajustes referente ao novo IB (PRJ285 - Rafael)
 ..............................................................................*/
     
 CREATE WIDGET-POOL.
@@ -493,9 +497,22 @@ FOR EACH tt-consulta-blt NO-LOCK:
                                         tt-consulta-blt.dtvctori, "99/99/9999") + "</dtvctori>" + 
                                    "<flgcbdda>" + STRING(IF aux_npc_cip = 1 THEN "S" ELSE "N") + "</flgcbdda>" +
 								   "<vldocmto>" + STRING(tt-consulta-blt.vldocmto)+ "</vldocmto>" +
+                                   "<dtmvtatu>" + STRING(tt-consulta-blt.dtmvtatu,"99/99/9999") + "</dtmvtatu>" +
+                                   "<flgvenci>" + STRING(tt-consulta-blt.flgvenci) + "</flgvenci>" +
+                                   "<vldocmto_boleto>" + STRING(tt-consulta-blt.vldocmto_boleto,"zzzzzzzzz9.99") + "</vldocmto_boleto>" +
+                                   "<vlcobrado_boleto>" + STRING(tt-consulta-blt.vlcobrado_boleto,"zzzzzzzzz9.99") + "</vlcobrado_boleto>" +
+                                   "<dtvencto_boleto>" + STRING(tt-consulta-blt.dtvencto_boleto,"99/99/9999") + "</dtvencto_boleto>" +
+                                   "<linhadigitavel>" + tt-consulta-blt.dslindig + "</linhadigitavel>" + 
+                                   "<codigobarras>" + tt-consulta-blt.dscodbar + "</codigobarras>" +
+                                   "<dsdespec>" + tt-consulta-blt.dsdespec + "</dsdespec>" +
+                                   "<nrborder>" + STRING(tt-consulta-blt.nrborder) + "</nrborder>" +
+                                   "<dsdinst1>" + STRING(tt-consulta-blt.dsdinst1) + "</dsdinst1>" +                                   
+                                   "<dsdinst2>" + STRING(tt-consulta-blt.dsdinst2) + "</dsdinst2>" +                                   
+                                   "<dsdinst3>" + STRING(tt-consulta-blt.dsdinst3) + "</dsdinst3>" +                                   
+                                   "<dsdinst4>" + STRING(tt-consulta-blt.dsdinst4) + "</dsdinst4>" +                                   
+                                   "<dsdinst5>" + STRING(tt-consulta-blt.dsdinst5) + "</dsdinst5>" +                                                                      
                                    "</BOLETO>".       
-  
-END.
+  END.
 
 DELETE PROCEDURE h-b1wgen0010.
 

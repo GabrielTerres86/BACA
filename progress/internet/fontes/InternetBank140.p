@@ -47,7 +47,18 @@ DEF VAR xml_req       AS LONGCHAR                                   NO-UNDO.
 DEF VAR aux_cdcritic AS INT                                            NO-UNDO.
 DEF VAR aux_dscritic AS CHAR                                           NO-UNDO.
 
+DEF VAR aux_iteracoes AS INT                                           NO-UNDO.
+DEF VAR aux_posini    AS INT                                           NO-UNDO.
+DEF VAR aux_contador  AS INT                                           NO-UNDO.
+
 DEF VAR h-b1wgen0015 AS HANDLE                                         NO-UNDO.
+
+FUNCTION roundUp RETURNS INTEGER ( x as decimal ):
+  IF x = TRUNCATE( x, 0 ) THEN
+    RETURN INTEGER( x ).
+  ELSE
+    RETURN INTEGER(TRUNCATE( x, 0 ) + 1 ).
+  END.
 
 RUN sistema/generico/procedures/b1wgen0015.p PERSISTENT SET h-b1wgen0015.
 
@@ -95,7 +106,15 @@ IF  aux_cdcritic > 0 OR aux_dscritic <> "" THEN DO:
     RETURN "NOK".
 END.
 
+ASSIGN aux_iteracoes = roundUp(LENGTH(xml_req) / 31000)
+       aux_posini    = 1.    
+
+DO aux_contador = 1 TO aux_iteracoes:
+ 
 CREATE xml_operacao.
-ASSIGN xml_operacao.dslinxml = xml_req.
+    ASSIGN xml_operacao.dslinxml = SUBSTR(xml_req, aux_posini, 31000)
+           aux_posini            = aux_posini + 31000.
+
+END.
 
 RETURN "OK".

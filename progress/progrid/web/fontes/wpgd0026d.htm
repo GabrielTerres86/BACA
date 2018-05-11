@@ -1,0 +1,82 @@
+<!--
+	Alteracoes:
+-->
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+		<meta name="wsoptions" content="no-output">
+		<title>Observa&ccedil;&otilde;es (wpgd0026d)</title>
+		<link href="/cecred/estilos/progrid.css" rel="stylesheet" type="text/css">
+	</head>
+	<body leftmargin="0" topmargin="0">
+		<script language="JavaScript">
+			NomeDoProgramaPrincipal  = 'wpgd0026d.w';
+			NomeDoProgramaDeZoom     = 'zoei01.w'; 
+		</script>
+		<script SRC="/cecred/js/funcoes.js"></script>
+		<form action="#." method="POST" name="form">
+			<input type="hidden" name="aux_cddopcao" id="aux_cddopcao" value="">
+			<input type="hidden" name="aux_lspermis" id="aux_lspermis" value="">
+			<input type="hidden" name="aux_nrdrowid" id="aux_nrdrowid" value="">
+			<input type="hidden" name="aux_dsretorn" id="aux_dsretorn" value="">
+			<input type="hidden" name="aux_stdopcao" id="aux_stdopcao" value="">
+			<input type="hidden" name="aux_dsendurl" id="aux_dsendurl" value="">
+			<input type="hidden" name="aux_cdevento" id="aux_cdevento" value="">
+			<input type="hidden" name="idevento"     id="idevento"     value="">
+			<input type="hidden" name="cdcooper"     id="cdcooper"     value="">
+			<input type="hidden" name="aux_cdcopope" id="aux_cdcopope"     value="">
+			<input type="hidden" name="aux_cdoperad" id="aux_cdoperad"     value="">
+
+			<table border="0" align="center" cellpadding="0" cellspacing="0" height="150" width="100%">
+				<tr>
+					<td colspan="2">
+						<table width="100%"  border="0" align="center" cellspacing="0">
+							<tr>
+								<td colspan="3" height="21">
+									<table width="169" height="21" border="0" cellpadding="0" cellspacing="0" background="/cecred/images/geral/guia_fundo.gif">
+										<tr>
+											<td width="11"><img src="/cecred/images/geral/guia_esquerda.gif" width="11" height="21"></td>
+											<td width="150" class="linkGuia"><div align="center">Observa&ccedil;&otilde;es </div></td>
+											<td width="10" align="right"><img src="/cecred/images/geral/guia_direita.gif" width="8" height="21"></td>
+										</tr>
+									</table>
+								</td>
+							</tr>
+						</table>
+						<table width="100%"  border="0" align="center" cellspacing="0" bgcolor="#FFFFFF">
+							<tr>
+								<td><div align="right" class="NomeCampo">Observa&ccedil;&atilde;o:</div></td>
+								<td>
+									<textarea name="dsobsloc" id="dsobsloc" rows=4 cols=60 onKeyUp="ValidaTamanho(this.form.dsobsloc,200)" onKeyDown="ValidaTamanho(this.form.dsobsloc,200)"></textarea>
+								</td>
+							</tr>
+						</table>
+					</td>
+				</tr>
+				<tr>
+					<td align="right">&nbsp;<img src="/cecred/images/botoes/btn_salvar.gif" onClick="Salvar();" style="cursor: hand; "></td>
+					<td align="left">&nbsp;<img src="/cecred/images/botoes/btn_fechar.gif" onClick="Fechar();" style="cursor: hand; "></td>
+				</tr>
+			</table>					
+		</form>
+	</body>
+	<script language="JavaScript">
+		NomeDoProgramaPrincipal  = '/wpgd0026d.w';
+		NomeDoProgramaDeListagem = '/wpgd0026ds.w';
+		NomeDoProgramaDeAjuda    = '/wpgd0026daj.w';
+		NomeDoProgramaDeZoom     = '/zoom/zoei01.w';
+
+		NomeDoProgramaPrincipal = document.form.aux_dsendurl.value + NomeDoProgramaPrincipal;
+		document.form.action = NomeDoProgramaPrincipal;
+		
+		function Salvar() {
+			document.form.aux_cddopcao.value = "sa"; 
+			document.form.aux_stdopcao.value = "al"; 
+			document.form.submit();
+		}
+		
+		function Fechar() {
+			window.close();
+		}
+	</script>
+</html>

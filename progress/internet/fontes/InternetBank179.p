@@ -42,6 +42,7 @@ DEF  INPUT PARAM par_dtcustod AS CHAR                NO-UNDO.
 DEF  INPUT PARAM par_intipchq AS CHAR                NO-UNDO.
 DEF  INPUT PARAM par_dsdocmc7 AS CHAR                NO-UNDO.
 DEF  INPUT PARAM par_nrremret AS CHAR                NO-UNDO.
+DEF  INPUT PARAM par_iddspscp AS INTE                NO-UNDO.
 
 DEF OUTPUT PARAM xml_dsmsgerr AS CHAR                NO-UNDO.
 DEF OUTPUT PARAM TABLE FOR xml_operacao.
@@ -156,6 +157,7 @@ ELSE IF par_operacao = 4 THEN
                          ,INPUT par_idseqttl
                          ,INPUT par_nrctrlim
                          ,INPUT par_nrborder
+                         ,INPUT par_iddspscp
                          ,OUTPUT ""
                          ,OUTPUT "").   
 

@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Evandro
-   Data    : Junho/2005                   Ultima atualizacao: 10/01/2014
+   Data    : Junho/2005                   Ultima atualizacao: 07/11/2017
 
    Dados referentes ao programa:
 
@@ -77,6 +77,8 @@
                10/01/2014 - Alteracao referente a integracao Progress X 
                             Dataserver Oracle 
                             Inclusao do VALIDATE ( Andre Euzebio / SUPERO)                                             
+                            
+               07/11/2017 - Adicionar validacao para inserir registros na crapeca (Lucas Ranghetti #740723)
 ............................................................................. */
 
 { includes/var_batch.i }
@@ -554,18 +556,30 @@ PROCEDURE proc_processa_arquivo:
                                     ASSIGN crapneg.flgctitg = 4. /* Reenviar */
                            END.
 
-                      CREATE crapeca.
-                      ASSIGN crapeca.cdcooper = glb_cdcooper
-                             crapeca.nrdconta = aux_nrdconta
-                             crapeca.dtretarq = glb_dtmvtolt
-                             crapeca.nrdcampo = 
-                                  INT(STRING(INT(SUBSTR(aux_setlinha,112,2))) +
-                                      aux_nrcheque)
-                             crapeca.nrseqarq = crawarq.nrsequen
-                             crapeca.tparquiv = 508
-                             crapeca.idseqttl = INT(SUBSTR(aux_setlinha,112,2))
-                             crapeca.dscritic = aux_dscritic.
-                      VALIDATE crapeca.
+                      FIND FIRST crapeca WHERE crapeca.cdcooper = glb_cdcooper
+                                           AND crapeca.tparquiv = 508
+                                           AND crapeca.nrdconta = aux_nrdconta
+                                           AND crapeca.nrseqarq = crawarq.nrsequen
+                                           AND crapeca.nrdcampo = INT(STRING(INT(SUBSTR(aux_setlinha,112,2))) +
+                                                                   aux_nrcheque)
+                                           NO-LOCK NO-ERROR.
+                                     
+                      IF  NOT AVAILABLE crapeca THEN
+                          DO:
+                              CREATE crapeca.
+                              ASSIGN crapeca.cdcooper = glb_cdcooper
+                                     crapeca.nrdconta = aux_nrdconta
+                                     crapeca.dtretarq = glb_dtmvtolt
+                                     crapeca.nrdcampo = 
+                                          INT(STRING(INT(SUBSTR(aux_setlinha,112,2))) +
+                                              aux_nrcheque)
+                                     crapeca.nrseqarq = crawarq.nrsequen
+                                     crapeca.tparquiv = 508
+                                     crapeca.idseqttl = INT(SUBSTR(aux_setlinha,112,2))
+                                     crapeca.dscritic = aux_dscritic.
+                              VALIDATE crapeca.
+                          END.
+                      
                   END.
               ELSE     /* se registro detalhe foi processado com sucesso */
                   DO:

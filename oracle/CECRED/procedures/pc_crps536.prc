@@ -12,7 +12,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS536(
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Diego
-   Data    : Novembro/2009                     Ultima atualizacao: 01/09/2017.
+   Data    : Novembro/2009                     Ultima atualizacao: 09/02/2018.
 
    Dados referentes ao programa:
 
@@ -78,6 +78,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS536(
                01/09/2017 - SD737676 - Para evitar duplicidade devido o Matera mudar
 			               o nome do arquivo apos processamento, iremos gerar o arquivo
 						   _Criticas com o sufixo do crrl gerado por este (Marcos-Supero)
+						   
+               09/02/2018 - Adicionado coluna cdagenci no relatorio 521 - Chamado 751963 - (Mateus Zimmermann - Mouts)
 
 .............................................................................*/
 
@@ -169,7 +171,14 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS536(
       AND nrdctabb = pr_nrdctabb
       AND nrdocmto = pr_nrdocmto;
   rw_craplcm cr_craplcm%ROWTYPE;
-
+	
+	CURSOR cr_crapass (pr_cdcooper crapass.cdcooper%TYPE
+                    ,pr_nrdconta crapass.nrdconta%TYPE) IS
+    SELECT crapass.cdagenci
+     FROM crapass crapass
+    WHERE crapass.cdcooper = pr_cdcooper
+      AND crapass.nrdconta = pr_nrdconta;
+  rw_crapass cr_crapass%ROWTYPE;
 
   -- REGISTROS
   rw_crapcop      cr_crapcop%ROWTYPE;
@@ -193,6 +202,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS536(
                             ,tpcaptur   NUMBER      -- "Tipo de Captura" (1 - titulo liquidado no caixa, 3 - liquidado via internet)
                             ,tpdocmto   NUMBER      -- "Tipo do Documento"
                             ,nrseqarq   NUMBER      -- "Seq. Arq."
+							,cdagenci   NUMBER      -- "Numero do PA"
               ,flglanca   VARCHAR2(3));-- Lançado (SIM/NAO)
   -- Registro para guardar os valores processados
   TYPE typ_relato IS TABLE OF rec_relato INDEX BY BINARY_INTEGER;
@@ -841,7 +851,22 @@ BEGIN
             ELSE
               -- Fecha Cursor
               CLOSE cr_craplcm;
-            END IF;  
+            END IF;
+			
+			-- Buscar o numero do PA(cdagenci)
+            OPEN cr_crapass(pr_cdcooper => pr_cdcooper
+                           ,pr_nrdconta => rw_craptit.nrdconta);
+            FETCH cr_crapass INTO rw_crapass;
+            
+            --Se nao encontrou 
+            IF cr_crapass%NOTFOUND THEN
+              vr_relato(vr_indice).cdagenci := 0;
+            ELSE
+              vr_relato(vr_indice).cdagenci := rw_crapass.cdagenci;
+            END IF;
+			--Fechar Cursor
+            CLOSE cr_crapass;
+				
             -- Registro lançado
             vr_relato(vr_indice).flglanca := 'SIM';  
                 
@@ -955,6 +980,7 @@ BEGIN
                                  ||'  <nrdolote>'||LPAD(vr_relato(ind).nrdolote,7,'0')||'</nrdolote>'
                                  ||'  <nrseqarq>'||LPAD(vr_relato(ind).nrseqarq,9,'0')||'</nrseqarq>'
                                  ||'  <flglanca>'||vr_relato(ind).flglanca||'</flglanca>'
+								 ||'  <cdagenci>'||nvl(vr_relato(ind).cdagenci,0)||'</cdagenci>'
                                  ||'</titulo>');
         
         -- Se NAO foi lancado corretamente
@@ -985,6 +1011,7 @@ BEGIN
                                  ,pr_nrcopias  => 1                                    --> Número de cópias
                                  ,pr_sqcabrel  => 1                                    --> Qual a seq do cabrel
                                  ,pr_dspathcop => vr_dircop_rlnsv                      --> Enviar para o rlnsv cfme tela chamada
+								 ,pr_nrvergrl => 1                                     --> Numero da versão da função de geração de relatorio
                                  ,pr_des_erro  => vr_des_erro);                        --> Saída com erro
 
       -- Liberando a memória alocada pro CLOB

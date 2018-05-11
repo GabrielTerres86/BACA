@@ -140,7 +140,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CXON0041 AS
     Sistema  : Conta-Corrente - Cooperativa de Credito
     Sigla    : CRED
     Autor    : Jean Michel
-    Data     : Maio/2013                   Ultima atualizacao: 03/04/2017
+    Data     : Maio/2013                   Ultima atualizacao: 07/12/2017
   
     Dados referentes ao programa:
   
@@ -183,7 +183,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CXON0041 AS
     
                03/04/2017 - Retirar a soma do nrseqdig do craplot desta rotina pois ja esta
                             sendo efetuado na LOTE0001.pc_insere_lote (Lucas Ranghetti #633737)
-    
+               
+               07/12/2017 - Tratar verifica-digito-num-referencia-darf para validar o 
+                            digito verificador corretamente quando passar pela segunda 
+                            validacao (Lucas Ranghetti #805724)
   ---------------------------------------------------------------------------------------------------------------*/
   
   /* Busca dos dados da cooperativa */
@@ -310,15 +313,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CXON0041 AS
   --  Sistema  : Procedure para verificacao de numero de referencia da DARF
   --  Sigla    : CRED
   --  Autor    : Jean Michel
-  --  Data     : Julho/2016.                   Ultima atualizacao: --/--/----
+  --  Data     : Julho/2016.                   Ultima atualizacao: 07/12/2017
   --
   -- Dados referentes ao programa:
   --
   -- Frequencia: -----
   -- Objetivo  : Procedure para verificacao de numero de referencia da DARF
   --
-  -- Alteracoes:
-  --
+  -- Alteracoes: 07/12/2017 - Tratar verifica-digito-num-referencia-darf para validar o 
+  --                          digito verificador corretamente quando passar pela segunda 
+  --                          validacao (Lucas Ranghetti #805724)
   ---------------------------------------------------------------------------------------------------------------
   BEGIN
     DECLARE
@@ -337,7 +341,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CXON0041 AS
       vr_vlrcalcu NUMBER(20,5) := 0;
       vr_cddigito NUMBER(20,5) := 0;
       vr_vlorpeso NUMBER(20,5) := 2;
-      vr_cdrefere NUMBER(20,5) := 0;
+      vr_cdrefere NUMBER(25,5) := 0;
     BEGIN
       -- Inicializar variaveis retorno
       pr_cdcritic:= NULL;
@@ -392,6 +396,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CXON0041 AS
     END LOOP;
 
     vr_cddigito := 11 - MOD(vr_vlrcalcu,11);
+
+    IF MOD(vr_vlrcalcu,11) = 1  THEN
+      vr_cddigito := 0;
+    END IF;
+
+    IF MOD(vr_vlrcalcu,11) = 0  THEN
+      vr_cddigito := 1;
+    END IF;
 
     -- Valida o primeiro Digito
     IF (TO_NUMBER(SUBSTR(pr_cdrefere,LENGTH(TO_CHAR(pr_cdrefere)) - 1,1)) <> vr_cddigito) THEN

@@ -19,6 +19,7 @@ CREATE OR REPLACE PACKAGE PROGRID.WPGD0109 IS
   PROCEDURE pc_lista_eventos(pr_cdcooper IN crapcop.cdcooper%TYPE --> Codigo da Cooperativa
                             ,pr_cdeixtem IN gnapetp.cdeixtem%TYPE --> Codigo do Eixo
                             ,pr_nrseqtem IN craptem.nrseqtem%TYPE --> Numero do Tema
+                            ,pr_nrseqpgm IN crapedp.nrseqpgm%TYPE --> Código do Programa
                             ,pr_cdevento IN crapedp.cdevento%TYPE --> Codigo do Evento
                             ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
                             ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
@@ -48,6 +49,7 @@ CREATE OR REPLACE PACKAGE PROGRID.WPGD0109 IS
   /* Procedure para listar os eventos do sistema */                               
   PROCEDURE pc_lista_evento_grade(pr_cdeixtem IN gnapetp.cdeixtem%TYPE --> Codigo do Eixo
                                  ,pr_nrseqtem IN craptem.nrseqtem%TYPE --> Codigo do Tema
+                                 ,pr_nrseqpgm IN crapedp.nrseqpgm%TYPE --> Código do Programa
                                  ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
                                  ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
                                  ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
@@ -78,6 +80,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0109 IS
   PROCEDURE pc_lista_eventos(pr_cdcooper IN crapcop.cdcooper%TYPE --> Codigo da Cooperativa
                             ,pr_cdeixtem IN gnapetp.cdeixtem%TYPE --> Codigo do Eixo
                             ,pr_nrseqtem IN craptem.nrseqtem%TYPE --> Numero do Tema
+                            ,pr_nrseqpgm IN crapedp.nrseqpgm%TYPE --> Código do Programa
                             ,pr_cdevento IN crapedp.cdevento%TYPE --> Codigo do Evento
                             ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
                             ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
@@ -161,7 +164,8 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0109 IS
                    AND ct.nrseqtem = c.nrseqtem
                    AND ge.idevento = ct.idevento
                    AND ge.cdcooper = ct.cdcooper
-                   AND ge.cdeixtem = ct.cdeixtem  
+                   AND ge.cdeixtem = ct.cdeixtem 
+                   AND (c.nrseqpgm = pr_nrseqpgm OR pr_nrseqpgm = 0 )
         ORDER BY ge.dseixtem ,ct.dstemeix,c.cdevento;
     
       rw_relatorio cr_relatorio%ROWTYPE;
@@ -406,6 +410,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0109 IS
 
   PROCEDURE pc_lista_evento_grade(pr_cdeixtem IN gnapetp.cdeixtem%TYPE --> Codigo do Eixo
                                  ,pr_nrseqtem IN craptem.nrseqtem%TYPE --> Codigo do Tema
+                                 ,pr_nrseqpgm IN crapedp.nrseqpgm%TYPE --> Código do Programa
                                  ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
                                  ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
                                  ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
@@ -454,7 +459,8 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0109 IS
                    AND ge.cdcooper = ct.cdcooper
                    AND ge.cdeixtem = ct.cdeixtem  
                    AND (ge.cdeixtem = pr_cdeixtem OR pr_cdeixtem = 0)
-                   AND (ct.nrseqtem = pr_nrseqtem OR pr_nrseqtem = 0)                   
+                   AND (ct.nrseqtem = pr_nrseqtem OR pr_nrseqtem = 0)
+                   AND (c.nrseqpgm = pr_nrseqpgm OR pr_nrseqpgm = 0)
               ORDER BY c.nmevento;         
       
       rw_crapedp cr_crapedp%ROWTYPE;

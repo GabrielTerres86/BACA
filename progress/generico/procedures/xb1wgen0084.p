@@ -56,6 +56,7 @@ DEF VAR aux_vltaxiof AS DECI                                          NO-UNDO.
 DEF VAR aux_vltariof AS DECI                                          NO-UNDO.
 DEF VAR aux_nrcpfope AS DECI                                          NO-UNDO.
 DEF VAR aux_dsjustificativa AS CHAR                                   NO-UNDO.
+DEF VAR aux_idfiniof AS INTEGER                                       NO-UNDO.
 
 DEF VAR aux_insitapv AS INTE                                          NO-UNDO.
 DEF VAR aux_dsobscmt AS CHAR                                          NO-UNDO.
@@ -121,6 +122,7 @@ PROCEDURE valores_entrada:
             WHEN "vltaxiof" THEN aux_vltaxiof = DEC(tt-param.valorCampo).
             WHEN "vltariof" THEN aux_vltariof = DEC(tt-param.valorCampo).
             WHEN "nrcpfope" THEN aux_nrcpfope = DEC(tt-param.valorCampo).
+            WHEN "idfiniof" THEN aux_idfiniof = INTE(tt-param.valorCampo).
             WHEN "dsjustificativa" THEN aux_dsjustificativa = tt-param.valorCampo.
 
        END CASE.
@@ -178,7 +180,9 @@ PROCEDURE valores_entrada:
                     WHEN "vlmrapar" THEN
                         tt-pagamentos-parcelas.vlmrapar = 
                             DECI(tt-param-i.valorCampo).
-
+			        WHEN "vliofcpl" THEN
+                        tt-pagamentos-parcelas.vliofcpl = 
+                            DECI(tt-param-i.valorCampo).
                     WHEN "vlmtzepr" THEN
                         tt-pagamentos-parcelas.vlmtzepr = 
                             DECI(tt-param-i.valorCampo).
@@ -357,9 +361,6 @@ PROCEDURE grava_efetivacao_proposta:
                                           INPUT aux_nrdolote,
                                           INPUT aux_dtmvtopr,
                                           INPUT aux_inproces,
-                                          INPUT aux_vltarifa,
-                                          INPUT aux_vltaxiof,
-                                          INPUT aux_vltariof,
                                           INPUT aux_nrcpfope,
                                           OUTPUT par_mensagem,
                                           OUTPUT TABLE tt-ratings,

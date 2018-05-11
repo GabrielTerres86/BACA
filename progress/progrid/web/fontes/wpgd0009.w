@@ -107,7 +107,12 @@ Alteraçoes:  27/11/2007 - Incluidas atribuiçoes dos campos "cratidp.nrdconta" e
                           e também erros de regras de negócio. (Jean Michel)             
 													
              12/09/2017 - Removido campo dsdemail.PRJ339-CRM(Odirlei-AMcom)
-													
+			 
+			 03/04/2018 - Incidente INC0011750:
+			              Ajuste nas telas de "Inscrições" do Progrid e do Assembleias.
+                          Motivo: O sistema estava puxando de forma errada a conta da última 
+						  inscrição efetuada. (Wagner/Sustenção)
+													 
 ............................................................................................................*/
 
 { sistema/generico/includes/var_log_progrid.i }
@@ -2711,7 +2716,7 @@ IF REQUEST_METHOD = "POST":U THEN
       
       /* limpar variavel para nao apresentar critica ao carregar tela */  
       ab_unmap.aux_cdagenci = "".
-      IF msg-erro-aux = 10 OR (opcao <> "sa" AND opcao <> "ex" AND opcao <> "in") THEN
+      IF msg-erro-aux = 10 OR (opcao <> "sa" AND opcao <> "ex" AND opcao <> "in" AND opcao <> "i" AND opcao <> "carcop") THEN
          RUN displayFields.
  
       RUN enableFields.

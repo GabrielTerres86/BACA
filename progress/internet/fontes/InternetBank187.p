@@ -80,7 +80,7 @@
                                     	   ,INPUT 0			   /* Numero Conta Transferencia */
                                     	   ,INPUT 10  
                                     	   ,INPUT "996"		   /* Codigo Operador */
-                                    	   ,INPUT 10 
+                                    	   ,INPUT par_tpdaguia 
                                     	   ,INPUT 0			   /* (0- False, 1-True)Indicador validacoes */
                                     	   ,INPUT "INTERNET"   /* Descricao Origem */
                                     	   ,INPUT par_nrcpfope /* CPF operador */

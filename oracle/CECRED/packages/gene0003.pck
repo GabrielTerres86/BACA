@@ -1353,18 +1353,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Carlos (Cecred)
-       Data    : Abril/2014                          Ultima alteracao: 
+       Data    : Abril/2014                          Ultima alteracao: 24/01/2018
 
        Dados referentes ao programa:
 
        Frequencia : Sempre que chamado
        Objetivo   : Validar o e-mail informado
          
-       Alterações : 
+       Alterações : 24/01/2018 - Ajuste no regex para que seja possível cadastrar e-mails
+                                 com apenas um caracter, conforme solicitado no chamado 
+                                 830663. (Kelvin)
          
     ............................................................................. */
   BEGIN
-    if REGEXP_LIKE (pr_dsdemail, '^[a-zA-Z0-9$''-\_][^*{|\}?]+@[a-zA-Z0-9._-]+\.[a-zA-Z]{2,4}$') then
+    if REGEXP_LIKE (pr_dsdemail, '^[a-zA-Z0-9$''-\_][^*{|\}?]*@[a-zA-Z0-9._-]+\.[a-zA-Z]{2,4}$') then
       return 1;
     else
       return 0;
@@ -1440,7 +1442,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
                               ,pr_nmdcampo => 'NRDMENSG'
                               ,pr_dsdchave => pr_cdcooper || ';' || pr_nrdconta
                               ,pr_flgdecre => 'N');
-
+  
     /* trocando "#cooperado#" pelo nome do cooperado,
       trocando #cooperativa# pelo nome fantasia da cooperativa
       trocando #titular# pelo nome do titular da conta */

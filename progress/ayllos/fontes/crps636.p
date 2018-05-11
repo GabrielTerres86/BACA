@@ -4,7 +4,7 @@
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Lucas Lunelli
-    Data    : Fevereiro/2013                  Ultima Atualizacao : 17/07/2017
+    Data    : Fevereiro/2013                  Ultima Atualizacao : 23/10/2017
     
     Dados referente ao programa:
     
@@ -148,6 +148,9 @@
                  17/07/2017 - Ajustes para permitir o agendamento de lancamentos da mesma
                               conta e referencia no mesmo dia(dtmvtolt) porem com valores
                               diferentes (Lucas Ranghetti #684123) 
+                              
+                 23/10/2017 - Incluir tratamento para os consorcios igual ao do chamado 684123
+                              (Lucas Ranghetti #739738)
 ............................................................................*/
 
 { includes/var_batch.i "NEW" }
@@ -974,9 +977,13 @@ FOR EACH crapcop NO-LOCK.
                 NEXT.
             END.
 
-        /* Consorcios continuam utilizando o nrdocmto, a regra nao foi alterada */
         IF craplau.cdhistor <> 1019 THEN                         
+           DO:
+               IF  craplau.nrcrcard <> 0 THEN
+                   ASSIGN aux_nrcrcard = craplau.nrcrcard.
+               ELSE
            ASSIGN aux_nrcrcard = craplau.nrdocmto.        
+           END.
 
         /* retornar o valor do documento formatado corretamente */
         IF  craplcm.cdhistor = 1019 THEN

@@ -27,6 +27,7 @@ DEF INPUT  PARAM pr_dspacote  AS CHAR                                 NO-UNDO.
 DEF INPUT  PARAM pr_dtinivig  AS CHAR                                 NO-UNDO.
 DEF INPUT  PARAM pr_dtdiadeb  AS CHAR                                 NO-UNDO.
 DEF INPUT  PARAM pr_vlpacote  AS CHAR                                 NO-UNDO.
+DEF INPUT  PARAM pr_iddscscp  AS INTE                                 NO-UNDO.
 
 DEF OUTPUT PARAM xml_dsmsgerr AS CHAR                                 NO-UNDO.
 DEF OUTPUT PARAM TABLE FOR xml_operacao.
@@ -43,6 +44,8 @@ DEF VAR ponteiro_xml  AS MEMPTR                                        NO-UNDO.
 DEF VAR xml_req       AS LONGCHAR                                      NO-UNDO.
 
 DEF VAR aux_nmarquiv AS CHAR                                           NO-UNDO.
+DEF VAR aux_dssrvarq AS CHAR                                           NO-UNDO.
+DEF VAR aux_dsdirarq AS CHAR                                           NO-UNDO.
 DEF VAR aux_dscritic AS CHAR                                           NO-UNDO.
               
 
@@ -58,6 +61,9 @@ RUN STORED-PROCEDURE pc_termo_adesao_pacote_ib
                       INPUT pr_dtinivig, 
                       INPUT pr_dtdiadeb, 
                       INPUT pr_vlpacote, 
+                      INPUT pr_iddscscp,
+                      OUTPUT "",
+                      OUTPUT "",
                       OUTPUT "",
                       OUTPUT "",
                       OUTPUT "").
@@ -67,9 +73,15 @@ CLOSE STORED-PROC pc_termo_adesao_pacote_ib aux_statproc = PROC-STATUS
       WHERE PROC-HANDLE = aux_handproc.
 
     ASSIGN aux_nmarquiv = ""
+           aux_dssrvarq = ""
+           aux_dsdirarq = ""
            aux_dscritic = ""
            aux_nmarquiv = pc_termo_adesao_pacote_ib.pr_nmarquiv
-                      WHEN pc_termo_adesao_pacote_ib.pr_nmarquiv <> ?
+                      WHEN pc_termo_adesao_pacote_ib.pr_nmarquiv <> ?                      
+           aux_dssrvarq = pc_termo_adesao_pacote_ib.pr_dssrvarq
+                          WHEN pc_termo_adesao_pacote_ib.pr_dssrvarq <> ?
+           aux_dsdirarq = pc_termo_adesao_pacote_ib.pr_dsdirarq
+                          WHEN pc_termo_adesao_pacote_ib.pr_dsdirarq <> ?                       
            aux_dscritic = pc_termo_adesao_pacote_ib.pr_dscritic
                       WHEN pc_termo_adesao_pacote_ib.pr_dscritic <> ?.           
 
@@ -82,7 +94,9 @@ END.
 
 
 CREATE xml_operacao.
-ASSIGN xml_operacao.dslinxml = "<nmarquiv>" + aux_nmarquiv + "</nmarquiv>".
+ASSIGN xml_operacao.dslinxml = "<nmarquiv>" + aux_nmarquiv + "</nmarquiv>" +
+                               "<dssrvarq>" + aux_dssrvarq + "</dssrvarq>" +
+                               "<dsdirarq>" + aux_dsdirarq + "</dsdirarq>".
 
 RETURN "OK".
 

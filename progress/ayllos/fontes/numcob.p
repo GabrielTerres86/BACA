@@ -53,8 +53,12 @@
                18/02/2011 - Incluir critica para validacao da crapceb
                             (Gabriel).
 
+               08/03/2018 - Substituida verificacao "cdtipcta = 5" por codigo 
+                            da modalidade = 2. PRJ366(Lombardi).
+
 .............................................................................. */
 
+{ sistema/generico/includes/var_oracle.i }
 { includes/var_online.i }
 
 
@@ -75,6 +79,11 @@ DEF        VAR aux_dsdocmto AS CHAR   FORMAT "x(24)"                 NO-UNDO.
 
 DEF        VAR aux_cddopcao AS CHAR                                  NO-UNDO.
 DEF        VAR aux_confirma AS CHAR    FORMAT "!"                    NO-UNDO.
+
+DEF        VAR aux_cdmodali AS INT                                   NO-UNDO.
+DEF        VAR aux_des_erro AS CHAR                                  NO-UNDO.
+DEF        VAR aux_dscritic AS CHAR                                  NO-UNDO.
+
 
 DEF TEMP-TABLE crawcnv                                               NO-UNDO
            FIELD cdconven   AS INTEGER.
@@ -535,7 +544,38 @@ DO WHILE TRUE:
 
                tel_nmprimtl = crapass.nmprimtl.
 
-               IF   CAN-DO("5",STRING(crapass.cdtipcta)) THEN
+               { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
+
+               RUN STORED-PROCEDURE pc_busca_modalidade_tipo
+               aux_handproc = PROC-HANDLE NO-ERROR (INPUT crapass.inpessoa, /* Tipo de pessoa */
+                                                    INPUT crapass.cdtipcta, /* Tipo de conta */
+                                                   OUTPUT 0,                /* Modalidade */
+                                                   OUTPUT "",               /* Flag Erro */
+                                                   OUTPUT "").              /* Descrição da crítica */
+
+               CLOSE STORED-PROC pc_busca_modalidade_tipo
+                     aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+               { includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }
+
+               ASSIGN aux_cdmodali = 0
+                      aux_des_erro = ""
+                      aux_dscritic = ""
+                      aux_cdmodali = pc_busca_modalidade_tipo.pr_cdmodalidade_tipo 
+                                     WHEN pc_busca_modalidade_tipo.pr_cdmodalidade_tipo <> ?
+                      aux_des_erro = pc_busca_modalidade_tipo.pr_des_erro 
+                                     WHEN pc_busca_modalidade_tipo.pr_des_erro <> ?
+                      aux_dscritic = pc_busca_modalidade_tipo.pr_dscritic
+                                     WHEN pc_busca_modalidade_tipo.pr_dscritic <> ?.
+
+               IF aux_des_erro = "NOK"  THEN
+                   DO:
+                      ASSIGN glb_dscritic = aux_dscritic.
+                      NEXT-PROMPT tel_nrdconta WITH FRAME f_numcob.
+                      NEXT.
+                   END.
+               
+               IF aux_cdmodali = 2 THEN
                     DO:
                         glb_cdcritic = 127.
                         NEXT-PROMPT tel_nrdconta WITH FRAME f_numcob.

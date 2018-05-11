@@ -1,48 +1,50 @@
 /******************************************************************************
- * Programa wpgd0043c.p - Listagem de fechamento final (chamado a partir dos
+  Programa wpgd0043c.p - Listagem de fechamento final (chamado a partir dos
                           dados de wpgd0043)
 
-Alteracoes: 03/11/2008 - Incluido widget-pool.
+  Alteracoes: 03/11/2008 - Incluido widget-pool.
 
-            10/12/2008 - Melhoria de performance para a tabela gnapses
-                        (Evandro).
-            
-            19/12/2009 - Troca da coluna realizados por colunas cooperados
-                         comunidade e total.
-            
-            09/06/2011 - Correção da quebra de página (Isara - RKAM).
+              10/12/2008 - Melhoria de performance para a tabela gnapses
+                          (Evandro).
+              
+              19/12/2009 - Troca da coluna realizados por colunas cooperados
+                           comunidade e total.
+              
+              09/06/2011 - Correção da quebra de página (Isara - RKAM).
 
-            05/06/2012 - Adaptação dos fontes para projeto Oracle. Alterado
-                         busca na gnapses de CONTAINS para MATCHES
-                         (Guilherme Maba).
-                         
-            04/04/2013 - Alteração para receber logo na alto vale,
-                         recebendo nome de viacrediav e buscando com
-                         o respectivo nome (David Kruger).
-            
-            11/09/2013 - Nova forma de chamar as agências, de PAC agora 
-                         a escrita será PA (André Euzébio - Supero).             
-						 
-            23/06/2015 - Inclusao de tratamento para todas as cooperativas e 
-                         criacao de novas funcoes para melhorar o
-                         codigo(Jean Michel).
-                         
-            05/10/2015 - Incluida verificacao de qtmaxtur na crapeap antes
-                         da atribuicao da crapedp Projeto 229 (Jean Michel). 
-                         
-            25/04/2016 - Correcao na mascara dos campos de percentual.  
-                         (Carlos Rafael Tanholi)
-                         
-            27/04/2016 - Correcao do erro que estava preenchendo o LOG, informando
-                         que o evento selecionado nao existia, decorrende da falta
-                         de uso do AVAIL no comando FIND. (Carlos Rafael Tanholi)                       
-                         
-            31/05/2016 - Ajustes exibicao de todas as agencias dos eventos EAD por PA
-                         PRJ229 - Melhorias OQS(Odirlei-AMcom)
-                         
-            06/06/2016 - Ajustado detalhado para exibir os todos os eventos,
-                         mesmo os que ainda apensa estao previstos.
-                         PRJ229 - Melhorias OQS(Odirlei-AMcom)
+              05/06/2012 - Adaptação dos fontes para projeto Oracle. Alterado
+                           busca na gnapses de CONTAINS para MATCHES
+                           (Guilherme Maba).
+                           
+              04/04/2013 - Alteração para receber logo na alto vale,
+                           recebendo nome de viacrediav e buscando com
+                           o respectivo nome (David Kruger).
+              
+              11/09/2013 - Nova forma de chamar as agências, de PAC agora 
+                           a escrita será PA (André Euzébio - Supero).             
+               
+              23/06/2015 - Inclusao de tratamento para todas as cooperativas e 
+                           criacao de novas funcoes para melhorar o
+                           codigo(Jean Michel).
+                           
+              05/10/2015 - Incluida verificacao de qtmaxtur na crapeap antes
+                           da atribuicao da crapedp Projeto 229 (Jean Michel). 
+                           
+              25/04/2016 - Correcao na mascara dos campos de percentual.  
+                           (Carlos Rafael Tanholi)
+                           
+              27/04/2016 - Correcao do erro que estava preenchendo o LOG, informando
+                           que o evento selecionado nao existia, decorrende da falta
+                           de uso do AVAIL no comando FIND. (Carlos Rafael Tanholi)                       
+                           
+              31/05/2016 - Ajustes exibicao de todas as agencias dos eventos EAD por PA
+                           PRJ229 - Melhorias OQS(Odirlei-AMcom)
+                           
+              06/06/2016 - Ajustado detalhado para exibir os todos os eventos,
+                           mesmo os que ainda apensa estao previstos.
+                           PRJ229 - Melhorias OQS(Odirlei-AMcom)
+                           
+              30/08/2017 - Inclusao do filtro por Programa,Prj. 322 (Jean Michel).             
                          
 ******************************************************************************/
 
@@ -103,6 +105,7 @@ DEFINE VARIABLE aux_nmevento LIKE crapedp.nmevento NO-UNDO.
 
 DEFINE VARIABLE aux_tpevento                 AS CHARACTER NO-UNDO.
 DEFINE VARIABLE aux_cdtpeven                 AS INTEGER NO-UNDO.
+DEFINE VARIABLE nrseqpgm                     AS INTEGER NO-UNDO.
 
 /* Turmas */
 DEFINE TEMP-TABLE turmas
@@ -678,19 +681,15 @@ FUNCTION montaTela RETURNS LOGICAL ():
     /* Eventos */
     FOR EACH crapadp WHERE crapadp.idevento = idevento
                        AND crapadp.cdcooper = crapcop.cdcooper
-                       AND crapadp.dtanoage = dtanoage NO-LOCK:
-                       
-      ASSIGN aux_cdtpeven = 0.
+                       AND crapadp.dtanoage = dtanoage NO-LOCK,
+      EACH crapedp WHERE crapedp.cdevento = crapadp.cdevento
+                     AND crapedp.cdcooper = 0
+                     AND crapedp.dtanoage = 0
+                     AND crapedp.idevento = idevento
+                     AND (crapedp.nrseqpgm = INT(nrseqpgm)      
+                      OR INT(nrseqpgm) = 0) NO-LOCK:
       
-      FOR FIRST crapedp WHERE crapedp.cdevento = crapadp.cdevento
-                          AND crapedp.cdcooper = 0
-                          AND crapedp.dtanoage = 0
-                          AND crapedp.idevento = idevento NO-LOCK. END.
-      
-      IF NOT AVAILABLE crapedp THEN
-        ASSIGN aux_cdtpeven = 0.
-      ELSE
-        ASSIGN aux_cdtpeven = crapedp.tpevento.
+			ASSIGN aux_cdtpeven = crapedp.tpevento.
             
       IF aux_cdtpeven <> 10 THEN      
         DO:
@@ -790,103 +789,115 @@ FUNCTION montaTela RETURNS LOGICAL ():
                                               craphep.cdagenci = crapadp.nrseqdig  AND 
                                               craphep.dshiseve MATCHES "*acrescido*" NO-LOCK)   THEN DO:
                                               
-        FIND FIRST crapeap WHERE crapeap.cdcooper = crapadp.cdcooper AND
-                                 crapeap.idevento = crapadp.idevento AND                                     
-                                 crapeap.cdevento = crapadp.cdevento AND
-                                 crapeap.dtanoage = crapadp.dtanoage AND
-                                 crapeap.cdagenci = crapadp.cdagenci NO-LOCK NO-ERROR NO-WAIT.
-         
-        IF AVAILABLE crapeap THEN
-          DO:
-            IF crapeap.qtmaxtur > 0 THEN
-              DO:
-                IF aux_cdtpeven <> 10 THEN
-                  ASSIGN participantes.qtprevis = participantes.qtprevis + crapeap.qtmaxtur.
-              END.
-            ELSE
-              DO:
-                /* para a frequencia minima */
-                FIND FIRST crabedp WHERE crabedp.idevento = crapadp.idevento AND 
-                                         crabedp.cdcooper = crapadp.cdcooper AND
-                                         crabedp.dtanoage = crapadp.dtanoage AND 
-                                         crabedp.cdevento = crapadp.cdevento NO-LOCK NO-ERROR NO-WAIT. 
-                IF AVAILABLE crabedp THEN
-                  DO:
-                    IF crabedp.qtmaxtur > 0 THEN
-                      DO:
-                        IF aux_cdtpeven <> 10 THEN
-                          ASSIGN participantes.qtprevis = participantes.qtprevis + crabedp.qtmaxtur.
-                        
-                      END.
-                    ELSE
-                      DO:
-                        FIND FIRST crabedp WHERE crabedp.idevento = crapadp.idevento AND 
-                                             crabedp.cdcooper = 0 AND
-                                             crabedp.dtanoage = 0 AND 
-                                             crabedp.cdevento = crapadp.cdevento NO-LOCK NO-ERROR NO-WAIT.
-                                            
-                        IF AVAILABLE crabedp THEN
-                          DO:
-                            IF aux_cdtpeven <> 10 THEN
-                              ASSIGN participantes.qtprevis = participantes.qtprevis + crabedp.qtmaxtur. 
-                            
-                          END.
-                      END.
-                  END.
-              END.
-          END.
-        ELSE
-          DO:
-            /* para a frequencia minima */
-            FIND FIRST crabedp WHERE crabedp.idevento = crapadp.idevento AND 
-                                     crabedp.cdcooper = crapadp.cdcooper AND
-                                     crabedp.dtanoage = crapadp.dtanoage AND 
-                                     crabedp.cdevento = crapadp.cdevento NO-LOCK NO-ERROR NO-WAIT. 
-            IF AVAILABLE crabedp THEN
-              DO:
-                IF crabedp.qtmaxtur > 0 THEN
-                  DO:
-                    IF aux_cdtpeven <> 10 THEN
-                      ASSIGN participantes.qtprevis = participantes.qtprevis + crabedp.qtmaxtur.  
-                    
-                  END.
-                ELSE
-                  DO:
-                    FIND FIRST crabedp WHERE crabedp.idevento = crapadp.idevento AND 
-                                         crabedp.cdcooper = 0 AND
-                                         crabedp.dtanoage = 0 AND 
-                                         crabedp.cdevento = crapadp.cdevento NO-LOCK NO-ERROR NO-WAIT.
-                                        
-                    IF AVAILABLE crapedp THEN
-                      DO:
-                        IF aux_cdtpeven <> 10 THEN
-                          ASSIGN participantes.qtprevis = participantes.qtprevis + crabedp.qtmaxtur. 
-                        
-                      END.
-                  END.
-              END.
-            ELSE
-              DO:
-                FIND FIRST crabedp WHERE crabedp.idevento = crapadp.idevento AND 
-                                     crabedp.cdcooper = 0 AND
-                                     crabedp.dtanoage = 0 AND 
-                                     crabedp.cdevento = crapadp.cdevento NO-LOCK NO-ERROR NO-WAIT.
-                                    
-                IF AVAILABLE crabedp THEN
-                  DO:
-                    IF aux_cdtpeven <> 10 THEN
-                      ASSIGN participantes.qtprevis = participantes.qtprevis + crabedp.qtmaxtur. 
-                  END.  
-              END.
-          END.
+          FIND FIRST crapeap WHERE crapeap.cdcooper = crapadp.cdcooper AND
+                                   crapeap.idevento = crapadp.idevento AND                                     
+                                   crapeap.cdevento = crapadp.cdevento AND
+                                   crapeap.dtanoage = crapadp.dtanoage AND
+                                   crapeap.cdagenci = crapadp.cdagenci NO-LOCK NO-ERROR NO-WAIT.
+           
+          IF AVAILABLE crapeap THEN
+            DO:
+              IF crapeap.qtmaxtur > 0 THEN
+                DO:
+                  IF aux_cdtpeven <> 10 THEN
+                    ASSIGN participantes.qtprevis = participantes.qtprevis + crapeap.qtmaxtur.
+                END.
+              ELSE
+                DO:
+                  /* para a frequencia minima */
+                  FIND FIRST crabedp WHERE crabedp.idevento = crapadp.idevento AND 
+                                           crabedp.cdcooper = crapadp.cdcooper AND
+                                           crabedp.dtanoage = crapadp.dtanoage AND 
+                                           crabedp.cdevento = crapadp.cdevento AND
+                                          (crabedp.nrseqpgm = INT(nrseqpgm)    OR
+                                           INT(nrseqpgm) = 0) NO-LOCK NO-ERROR NO-WAIT. 
+                  IF AVAILABLE crabedp THEN
+                    DO:
+                      IF crabedp.qtmaxtur > 0 THEN
+                        DO:
+                          IF aux_cdtpeven <> 10 THEN
+                            ASSIGN participantes.qtprevis = participantes.qtprevis + crabedp.qtmaxtur.
+                          
+                        END.
+                      ELSE
+                        DO:
+                          FIND FIRST crabedp WHERE crabedp.idevento = crapadp.idevento AND 
+                                                   crabedp.cdcooper = 0 AND
+                                                   crabedp.dtanoage = 0 AND 
+                                                   crabedp.cdevento = crapadp.cdevento AND
+                                                  (crabedp.nrseqpgm = INT(nrseqpgm)   OR
+                                                   INT(nrseqpgm) = 0) NO-LOCK NO-ERROR NO-WAIT.
+                                              
+                          IF AVAILABLE crabedp THEN
+                            DO:
+                              IF aux_cdtpeven <> 10 THEN
+                                ASSIGN participantes.qtprevis = participantes.qtprevis + crabedp.qtmaxtur. 
+                              
+                            END.
+                        END.
+                    END.
+                END.
+            END.
+          ELSE
+            DO:
+              /* para a frequencia minima */
+              FIND FIRST crabedp WHERE crabedp.idevento = crapadp.idevento AND 
+                                       crabedp.cdcooper = crapadp.cdcooper AND
+                                       crabedp.dtanoage = crapadp.dtanoage AND 
+                                       crabedp.cdevento = crapadp.cdevento AND
+                                      (crabedp.nrseqpgm = INT(nrseqpgm)   OR
+                                       INT(nrseqpgm) = 0) NO-LOCK NO-ERROR NO-WAIT. 
+                                       
+              IF AVAILABLE crabedp THEN
+                DO:
+                  IF crabedp.qtmaxtur > 0 THEN
+                    DO:
+                      IF aux_cdtpeven <> 10 THEN
+                        ASSIGN participantes.qtprevis = participantes.qtprevis + crabedp.qtmaxtur.  
+                      
+                    END.
+                  ELSE
+                    DO:
+                      FIND FIRST crabedp WHERE crabedp.idevento = crapadp.idevento AND 
+                                               crabedp.cdcooper = 0 AND
+                                               crabedp.dtanoage = 0 AND 
+                                               crabedp.cdevento = crapadp.cdevento AND
+                                              (crabedp.nrseqpgm = INT(nrseqpgm)    OR
+                                               INT(nrseqpgm) = 0) NO-LOCK NO-ERROR NO-WAIT.
+                                          
+                      IF AVAILABLE crabedp THEN
+                        DO:
+                          IF aux_cdtpeven <> 10 THEN
+                            ASSIGN participantes.qtprevis = participantes.qtprevis + crabedp.qtmaxtur. 
+                          
+                        END.
+                    END.
+                END.
+              ELSE
+                DO:
+                  FIND FIRST crabedp WHERE crabedp.idevento = crapadp.idevento AND 
+                                           crabedp.cdcooper = 0 AND
+                                           crabedp.dtanoage = 0 AND 
+                                           crabedp.cdevento = crapadp.cdevento AND
+                                          (crabedp.nrseqpgm = INT(nrseqpgm)    OR
+                                          INT(nrseqpgm) = 0) NO-LOCK NO-ERROR NO-WAIT.
+                                      
+                  IF AVAILABLE crabedp THEN
+                    DO:
+                      IF aux_cdtpeven <> 10 THEN
+                        ASSIGN participantes.qtprevis = participantes.qtprevis + crabedp.qtmaxtur. 
+                    END.  
+                END.
+            END.
         END. /* Fim IF CRAPHEP */
-         
+        
         /* para a frequencia minima */
-        FIND FIRST crapedp 
-             WHERE crapedp.idevento = crapadp.idevento   AND 
-                   crapedp.cdcooper = crapadp.cdcooper   AND
-                   crapedp.dtanoage = crapadp.dtanoage   AND 
-                   crapedp.cdevento = crapadp.cdevento   NO-LOCK. 
+        /*FIND FIRST crapedp WHERE crapedp.idevento = crapadp.idevento   AND 
+                                 crapedp.cdcooper = crapadp.cdcooper AND
+                                 crapedp.dtanoage = crapadp.dtanoage AND 
+                                 crapedp.cdevento = crapadp.cdevento AND
+                                (crapedp.nrseqpgm = INT(nrseqpgm)    OR
+                                INT(nrseqpgm) = 0) NO-LOCK. */
                                  
         /* Participantes realizados */
         FOR EACH crapidp WHERE crapidp.idevento = crapadp.idevento
@@ -967,7 +978,9 @@ FUNCTION montaTela RETURNS LOGICAL ():
         FOR FIRST crapedp WHERE crapedp.cdevento = crapced.cdevento
                             AND crapedp.cdcooper = 0
                             AND crapedp.dtanoage = 0
-                            AND crapedp.idevento = crapced.idevento NO-LOCK. END.
+                            AND crapedp.idevento = crapced.idevento 
+                            AND (crapedp.nrseqpgm = INT(nrseqpgm)
+                             OR INT(nrseqpgm) = 0) NO-LOCK. END.
       
         IF NOT AVAILABLE crapedp THEN
           ASSIGN aux_cdtpeven = 0.
@@ -1191,7 +1204,9 @@ FUNCTION montaTelaDetalhado RETURNS LOGICAL ():
 		FIRST crapedp WHERE crapedp.idevento = crapadp.idevento
                     AND crapedp.cdcooper = crapadp.cdcooper
                     AND crapedp.dtanoage = crapadp.dtanoage
-                    AND crapedp.cdevento = crapadp.cdevento NO-LOCK, 
+                    AND crapedp.cdevento = crapadp.cdevento 
+                    AND (crapedp.nrseqpgm = INT(nrseqpgm)    
+                     OR INT(nrseqpgm) = 0) NO-LOCK, 
 							
         FIRST crapage WHERE crapage.cdcooper = crapadp.cdcooper
                         AND crapage.cdagenci = crapadp.cdagenci NO-LOCK
@@ -1287,74 +1302,86 @@ FUNCTION montaTelaDetalhado RETURNS LOGICAL ():
                                                   craphep.cdevento = 0                 AND
                                                   craphep.cdagenci = crapadp.nrseqdig  AND 
                                                   craphep.dshiseve MATCHES "*acrescido*" NO-LOCK)   THEN DO:
-            FIND FIRST crapeap WHERE crapeap.cdcooper = crapadp.cdcooper 
-                                 AND crapeap.idevento = crapadp.idevento                                      
-                                 AND crapeap.cdevento = crapadp.cdevento 
-                                 AND crapeap.dtanoage = crapadp.dtanoage 
-                                 AND crapeap.cdagenci = crapadp.cdagenci NO-LOCK.
-             
-            IF AVAILABLE crapeap THEN
-              DO:
-                IF crapeap.qtmaxtur > 0 THEN
-                  ASSIGN aux_qtmaxtur = aux_qtmaxtur + crapeap.qtmaxtur.
-                ELSE
-                  DO:
-                    /* para a frequencia minima */
-                    FIND FIRST crabedp WHERE crabedp.idevento = crapadp.idevento AND 
-                                             crabedp.cdcooper = crapadp.cdcooper AND
-                                             crabedp.dtanoage = crapadp.dtanoage AND 
-                                             crabedp.cdevento = crapadp.cdevento NO-LOCK. 
-                    IF AVAILABLE crabedp THEN
-                      DO:
-                        IF crabedp.qtmaxtur > 0 THEN
-                          ASSIGN aux_qtmaxtur = aux_qtmaxtur + crabedp.qtmaxtur.
-                        ELSE
-                          DO:
-                            FIND FIRST crabedp WHERE crabedp.idevento = crapadp.idevento AND 
-                                                 crabedp.cdcooper = 0 AND
-                                                 crabedp.dtanoage = 0 AND 
-                                                 crabedp.cdevento = crapadp.cdevento NO-LOCK.
-                                                
-                            IF AVAILABLE crabedp THEN
-                              ASSIGN aux_qtmaxtur = aux_qtmaxtur + crabedp.qtmaxtur. 
-                          END.
-                      END.
-                    ELSE 
-                      DO:
-                        FIND FIRST crabedp WHERE crabedp.idevento = crapadp.idevento
-                                             AND crabedp.cdcooper = 0
-                                             AND crabedp.dtanoage = 0
-                                             AND crabedp.cdevento = crapadp.cdevento NO-LOCK.
-                                            
-                        IF AVAILABLE crabedp THEN
-                          ASSIGN aux_qtmaxtur = aux_qtmaxtur + crabedp.qtmaxtur. 
-                      END.
-                  END.
-              END.
-            ELSE
-              DO:
-                /* para a frequencia minima */
-                FIND FIRST crabedp WHERE crabedp.idevento = crapadp.idevento AND 
-                                         crabedp.cdcooper = crapadp.cdcooper AND
-                                         crabedp.dtanoage = crapadp.dtanoage AND 
-                                         crabedp.cdevento = crapadp.cdevento NO-LOCK. 
-                IF AVAILABLE crabedp THEN
-                  DO:
-                    IF crabedp.qtmaxtur > 0 THEN
-                      ASSIGN aux_qtmaxtur = aux_qtmaxtur + crabedp.qtmaxtur.
-                    ELSE
-                      DO:
-                        FIND FIRST crabedp WHERE crabedp.idevento = crapadp.idevento AND 
-                                             crabedp.cdcooper = 0 AND
-                                             crabedp.dtanoage = 0 AND 
-                                             crabedp.cdevento = crapadp.cdevento NO-LOCK.
-                                            
-                        IF AVAILABLE crabedp THEN
-                          ASSIGN aux_qtmaxtur = aux_qtmaxtur + crabedp.qtmaxtur.
-                      END.
-                  END.
-              END.
-          END.
+              FIND FIRST crapeap WHERE crapeap.cdcooper = crapadp.cdcooper 
+                                   AND crapeap.idevento = crapadp.idevento                                      
+                                   AND crapeap.cdevento = crapadp.cdevento 
+                                   AND crapeap.dtanoage = crapadp.dtanoage 
+                                   AND crapeap.cdagenci = crapadp.cdagenci NO-LOCK.
+               
+              IF AVAILABLE crapeap THEN
+                DO:
+                  IF crapeap.qtmaxtur > 0 THEN
+                    ASSIGN aux_qtmaxtur = aux_qtmaxtur + crapeap.qtmaxtur.
+                  ELSE
+                    DO:
+                      /* para a frequencia minima */
+                      FIND FIRST crabedp WHERE crabedp.idevento = crapadp.idevento AND 
+                                               crabedp.cdcooper = crapadp.cdcooper AND
+                                               crabedp.dtanoage = crapadp.dtanoage AND 
+                                               crabedp.cdevento = crapadp.cdevento AND
+                                              (crabedp.nrseqpgm = INT(nrseqpgm)    OR
+                                              INT(nrseqpgm) = 0) NO-LOCK. 
+                                              
+                      IF AVAILABLE crabedp THEN
+                        DO:
+                          IF crabedp.qtmaxtur > 0 THEN
+                            ASSIGN aux_qtmaxtur = aux_qtmaxtur + crabedp.qtmaxtur.
+                          ELSE
+                            DO:
+                              FIND FIRST crabedp WHERE crabedp.idevento = crapadp.idevento AND 
+                                                       crabedp.cdcooper = 0 AND
+                                                       crabedp.dtanoage = 0 AND 
+                                                       crabedp.cdevento = crapadp.cdevento AND
+                                                      (crabedp.nrseqpgm = INT(nrseqpgm)    OR
+                                                      INT(nrseqpgm) = 0) NO-LOCK.
+                                                  
+                              IF AVAILABLE crabedp THEN
+                                ASSIGN aux_qtmaxtur = aux_qtmaxtur + crabedp.qtmaxtur. 
+                            END.
+                        END.
+                      ELSE 
+                        DO:
+                          FIND FIRST crabedp WHERE crabedp.idevento = crapadp.idevento
+                                               AND crabedp.cdcooper = 0
+                                               AND crabedp.dtanoage = 0
+                                               AND crabedp.cdevento = crapadp.cdevento
+                                               AND (crabedp.nrseqpgm = INT(nrseqpgm)    
+                                                OR INT(nrseqpgm) = 0) NO-LOCK.
+                                              
+                          IF AVAILABLE crabedp THEN
+                            ASSIGN aux_qtmaxtur = aux_qtmaxtur + crabedp.qtmaxtur. 
+                        END.
+                    END.
+                END.
+              ELSE
+                DO:
+                  /* para a frequencia minima */
+                  FIND FIRST crabedp WHERE crabedp.idevento = crapadp.idevento AND 
+                                           crabedp.cdcooper = crapadp.cdcooper AND
+                                           crabedp.dtanoage = crapadp.dtanoage AND 
+                                           crabedp.cdevento = crapadp.cdevento AND
+                                          (crabedp.nrseqpgm = INT(nrseqpgm)    OR
+                                          INT(nrseqpgm) = 0) NO-LOCK. 
+                                          
+                  IF AVAILABLE crabedp THEN
+                    DO:
+                      IF crabedp.qtmaxtur > 0 THEN
+                        ASSIGN aux_qtmaxtur = aux_qtmaxtur + crabedp.qtmaxtur.
+                      ELSE
+                        DO:
+                          FIND FIRST crabedp WHERE crabedp.idevento = crapadp.idevento AND 
+                                                   crabedp.cdcooper = 0 AND
+                                                   crabedp.dtanoage = 0 AND 
+                                                   crabedp.cdevento = crapadp.cdevento AND
+                                                  (crabedp.nrseqpgm = INT(nrseqpgm)    OR
+                                                  INT(nrseqpgm) = 0) NO-LOCK.
+                                              
+                          IF AVAILABLE crabedp THEN
+                            ASSIGN aux_qtmaxtur = aux_qtmaxtur + crabedp.qtmaxtur.
+                        END.
+                    END.
+                END.
+            END.
           END. /*Fim IF CRAPHEP */   
         ELSE
           DO:
@@ -1398,7 +1425,9 @@ FUNCTION montaTelaDetalhado RETURNS LOGICAL ():
       FOR FIRST crapedp WHERE crapedp.cdevento = crapced.cdevento
                           AND crapedp.cdcooper = 0
                           AND crapedp.dtanoage = 0
-                          AND crapedp.idevento = crapced.idevento NO-LOCK. END.
+                          AND crapedp.idevento = crapced.idevento 
+                          AND (crapedp.nrseqpgm = INT(nrseqpgm)   
+                           OR INT(nrseqpgm) = 0) NO-LOCK. END.
     
       IF NOT AVAILABLE crapedp THEN
         ASSIGN aux_cdtpeven = 0.
@@ -1484,10 +1513,11 @@ RUN PermissaoDeAcesso("", OUTPUT IdentificacaoDaSessao, OUTPUT permiteExecutar).
     erroNaValidacaoDoLogin(permiteExecutar).
   ELSE
     DO:
-			ASSIGN idevento  = INTEGER(GET-VALUE("parametro1"))
-				     cdcooper  =  STRING(GET-VALUE("parametro2"))
-				     dtanoage  = INTEGER(GET-VALUE("parametro3")) 
-				     detalhar  = LOGICAL(GET-VALUE("parametro4")) NO-ERROR.          
+			ASSIGN idevento = INTEGER(GET-VALUE("parametro1"))
+				     cdcooper =  STRING(GET-VALUE("parametro2"))
+				     dtanoage = INTEGER(GET-VALUE("parametro3")) 
+				     detalhar = LOGICAL(GET-VALUE("parametro4"))
+             nrseqpgm = INTEGER(GET-VALUE("parametro5")) NO-ERROR.          
 			
 			IF detalhar THEN
 				ASSIGN eventoDetelhe = ' - DETALHADO'.

@@ -34,6 +34,9 @@
                19/09/2017 - Ajuste rotina Busca_Dados para carregar o telefone 
                             residencial. PRJ339-CRM (Odirlei-AMcom)
                              
+                14/03/2018 - Removida validacao que gera a critica "Contato com 
+                             cadastro incompleto". PRJ366 (Lombardi).
+                             
 .............................................................................*/
 
 /*............................. DEFINICOES ..................................*/
@@ -355,13 +358,13 @@ PROCEDURE Busca_Dados_Cto:
                ASSIGN par_cdcritic = 9.
                LEAVE Busca.
             END.
-
+        /*
         IF  (crapass.indnivel < 2) AND (crapass.cdtipcta > 7) THEN
             DO:
                ASSIGN par_dscritic = "Contato com cadastro incompleto".
                LEAVE Busca.
             END.
-
+        */
         CREATE tt-crapavt.
 
         /* Endereco */

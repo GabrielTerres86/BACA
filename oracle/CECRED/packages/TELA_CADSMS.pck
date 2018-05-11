@@ -2222,7 +2222,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADSMS IS
                 ,cdoperad
             FROM tbcobran_sms_pacotes
            WHERE cdcooper = pr_cdcooper
-             AND idpacote > 2
              AND flgstatus = pr_flgstatus
              AND (inpessoa = pr_inpessoa OR pr_inpessoa IS NULL)
         )a WHERE rownum < ((pr_pagina * pr_tamanho_pagina) + 1)
@@ -2334,6 +2333,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADSMS IS
                                pr_tag_nova => 'vlpacote',
                                pr_tag_cont => TO_CHAR(NVL(vr_vlpacote,0),'fm999g999g990d00'),
                                pr_des_erro => vr_dscritic);                                                                                                                                                                                                                                                      
+
+        gene0007.pc_insere_tag(pr_xml      => vr_retxml,
+                               pr_tag_pai  => 'inf',
+                               pr_posicao  => vr_contador,
+                               pr_tag_nova => 'cdcooper',
+                               pr_tag_cont => pr_cdcooper,
+                               pr_des_erro => vr_dscritic); 
 
         vr_contador := vr_contador + 1;
      

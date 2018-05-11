@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Gabriel
-   Data    : Marco/2012                        Ultima Atualizacao: 03/06/2014 
+   Data    : Marco/2012                        Ultima Atualizacao: 04/08/2017
 
    Dados referentes ao programa:
 
@@ -18,7 +18,10 @@
                
                03/06/2014 - Concatena o numero do servidor no endereco do
                             terminal (Tiago-RKAM).
-   
+
+               04/08/2017 - Inclusao dos historicos de pagamento de
+                            emprestimo do Pos-Fixado. (Jaison/James - PRJ298)
+
 ............................................................................ */
 
 { includes/var_online.i }
@@ -388,7 +391,7 @@ PROCEDURE gera_crrl621:
              END.
 
         ASSIGN aux_dshistor =
-             "91,92,93,95,393,353,1044,1045,1046,1039,1057,1058". 
+             "91,92,93,95,393,353,1044,1045,1046,1039,1057,1058,2331,2330,2335,2334". 
 
         FIND FIRST craplem WHERE craplem.cdcooper = glb_cdcooper        AND
                                  craplem.nrdconta = crapepr.nrdconta  AND

@@ -15,6 +15,8 @@
    
    Alteracoes: 16/03/2017 - Alteracao de mensagem de Contrato em acordo. (Jaison/James)
 
+			   12/10/2017 - Projeto 410 Inclusão do IOF Complementar atraso (Jean - MOut´S)
+
 ..............................................................................*/
 
 CREATE WIDGET-POOL.
@@ -139,7 +141,8 @@ IF VALID-HANDLE(h-b1wgen0084a) THEN
 
            vlatraso = tt-pagamentos-parcelas.vlmtapar +
                       tt-pagamentos-parcelas.vljinpar +
-                      tt-pagamentos-parcelas.vlmrapar.
+                      tt-pagamentos-parcelas.vlmrapar +
+					  tt-pagamentos-parcelas.vliofcpl.
 
             aux_vencida = "0". /* Parcela nao esta vencida */
 
@@ -162,6 +165,7 @@ IF VALID-HANDLE(h-b1wgen0084a) THEN
                    + "<vlatrpag>" + STRING(tt-pagamentos-parcelas.vlatrpag,"zzz,zzz,zzz,zz9.99") + "</vlatrpag>"
                    + "<vlpreemp>" + TRIM(STRING(crapepr.vlpreemp,"zzz,zzz,zzz,zz9.99")) + "</vlpreemp>"
                    + "<vencida>" + aux_vencida + "</vencida>"
+                   + "<dtmvtolt>" + STRING(crapdat.dtmvtolt,"99/99/9999") + "</dtmvtolt>"
                    + "</PARCELA>".
        END.
 

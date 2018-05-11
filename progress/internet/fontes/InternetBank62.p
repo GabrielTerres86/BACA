@@ -158,6 +158,9 @@ ASSIGN xml_operacao.dslinxml = "<LIMITE><hrinipag>" +
                                "<hrfimvrb>" + aux_hrfimvrb + "</hrfimvrb>" +
                                "</LIMITE>".
 
+IF par_dtvenini = ? AND par_dtvenfin = ? AND par_nritmini = 0 AND par_nritmfin = 0 THEN
+   RETURN "OK".
+
 RUN lista-titulos-sacado IN h-b1wgen0079 
                               (INPUT par_cdcooper,
                                INPUT 90,             /** PAC       **/

@@ -49,6 +49,7 @@ DEF VAR aux_flmntage AS LOGI                                           NO-UNDO.
 DEF VAR aux_cdoperad AS CHAR                                           NO-UNDO.
 DEF VAR aux_nmdatela AS CHAR                                           NO-UNDO.
 DEF VAR aux_cdcoptel AS CHAR                                           NO-UNDO.
+DEF VAR aux_nrcpfope AS DECI                                           NO-UNDO.
 
 { sistema/generico/includes/b1wgen0016tt.i }
 { sistema/generico/includes/b1wgen0119tt.i }
@@ -98,6 +99,7 @@ PROCEDURE valores_entrada:
             WHEN "flmobted" THEN aux_flmobted = LOGICAL(tt-param.valorCampo).
             WHEN "dsestted" THEN aux_dsestted = tt-param.valorCampo.
             WHEN "flmntage" THEN aux_flmntage = LOGICAL(tt-param.valorCampo).
+            WHEN "nrcpfope" THEN aux_nrcpfope = DECI(tt-param.valorCampo).
 
         END CASE.
 
@@ -216,10 +218,12 @@ PROCEDURE cancelar_agendamento:
 									 INPUT "INTERNET",  /** ORIGEM   **/
 									 INPUT aux_dtmvtage,
 									 INPUT aux_nrdocmto,
+                   INPUT 0,
 									 INPUT aux_nmdatela,
+                                     INPUT aux_nrcpfope,
 									 OUTPUT aux_dstransa,
 									 OUTPUT aux_dscritic).
-         message RETURN-VALUE   aux_dscritic.                 
+                        
     IF  RETURN-VALUE <> "OK" OR
 	    aux_dscritic <> ""    THEN
         DO:

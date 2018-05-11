@@ -9,20 +9,23 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
             05/06/2012 - Adaptação dos fontes para projeto Oracle. Alterado
                          busca na gnapses de CONTAINS para MATCHES (Guilherme Maba).
 
-			22/10/2012 - Ajustes para a nova estrutura gnappob(Gabriel).
+            22/10/2012 - Ajustes para a nova estrutura gnappob(Gabriel).
 
-			29/06/2015 - Incluido os campos de Dados do Fornecedor e Dados do Evento (Jean Michel).
+            29/06/2015 - Incluido os campos de Dados do Fornecedor e Dados do Evento (Jean Michel).
 
-			28/03/2016 - Ajustado para carregar dados existentes do evento EAD,
+            28/03/2016 - Ajustado para carregar dados existentes do evento EAD,
                          mesmo nao existindo proposta para o evento PRJ243.2 (Odirlei-AMcom)  
 
-			19/04/2016 - Removi os campos de Publico Alvo (Carlos Rafael Tanholi). 	     
+            19/04/2016 - Removi os campos de Publico Alvo (Carlos Rafael Tanholi). 	     
             
             31/05/2016 - Ajustes de Homologação conforme email do Márcio de 27/05 (Vanessa)
 
-	        24/06/2016 - Reformulação da tela conforme RF05  - Vanessa
+            24/06/2016 - Reformulação da tela conforme RF05  - Vanessa
 
-			28/09/2016 - Ajuste no formato do telefone com 9 digitos (Diego).
+            28/09/2016 - Ajuste no formato do telefone com 9 digitos (Diego).
+            
+            03/02/2016 - Incluida leitura de fornecedores pela CRAPADP, Prj. 229
+                         (Jean Michel).
 ...............................................................................*/
 
 &ANALYZE-SUSPEND _VERSION-NUMBER AB_v9r12 GUI adm2
@@ -284,263 +287,269 @@ END PROCEDURE.
 
 
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE PreencheDados w-html 
-PROCEDURE PreencheDados :
+PROCEDURE PreencheDados:
 
-DEFINE VARIABLE aux_contador AS INTEGER         NO-UNDO.
-DEFINE VARIABLE aux_temfones AS LOGICAL         NO-UNDO.
-DEFINE VARIABLE vetordados   AS CHAR            NO-UNDO.
-DEFINE VARIABLE aux_dados    AS CHAR            NO-UNDO.
-DEFINE VARIABLE aux_dsconteu AS CHAR            NO-UNDO.
-DEFINE VARIABLE aux_cdeixtem AS CHAR  INIT " - "   NO-UNDO.
-DEFINE VARIABLE aux_nrseqtem AS CHAR  INIT " - "   NO-UNDO.
+  DEFINE VARIABLE aux_contador AS INTEGER            NO-UNDO.
+  DEFINE VARIABLE aux_temfones AS LOGICAL            NO-UNDO.
+  DEFINE VARIABLE vetordados   AS CHAR               NO-UNDO.
+  DEFINE VARIABLE aux_dados    AS CHAR               NO-UNDO.
+  DEFINE VARIABLE aux_dsconteu AS CHAR               NO-UNDO.
+  DEFINE VARIABLE aux_cdeixtem AS CHAR    INIT " - " NO-UNDO.
+  DEFINE VARIABLE aux_nrseqtem AS CHAR    INIT " - " NO-UNDO.
+  DEFINE VARIABLE aux_nrcpfcgc AS DECIMAL INIT 0     NO-UNDO.
+  DEFINE VARIABLE aux_nrpropos AS CHAR    INIT ""    NO-UNDO.
 
-/*------------------------------------------------------------------------------
-  Purpose:     
-  Parameters:  <none>
-  Notes:       
-------------------------------------------------------------------------------*/
+  ASSIGN ab_unmap.aux_nmevento = ""
+         ab_unmap.nmfacili = ""
+         ab_unmap.dscurric = ""
+         ab_unmap.dsfornec = ""
+         ab_unmap.txaObservacoes = ""
+         ab_unmap.txaPreRequisito = ""
+         ab_unmap.txtIdadePublicoAlvo = ""
+         ab_unmap.aux_idforrev = ""
+         ab_unmap.txaPublicoAlvo = ""
+         ab_unmap.txtHonorarios = ""
+         ab_unmap.txtQtdMaxTurma = ""
+         ab_unmap.txtQtdMinTurma = ""
+         ab_unmap.aux_dsobjeti = ""
+         aux_dsconteu = "".
+         
+  RUN RodaJavaScript("var mdadoseve = new Array();"). 
 
-FIND FIRST crapedp WHERE
-    crapedp.cdevento = INT(ab_unmap.aux_cdevento) AND
-    crapedp.cdcooper = INT(ab_unmap.aux_cdcooper) AND
-    crapedp.dtanoage = INT(ab_unmap.aux_dtanoage) NO-LOCK NO-ERROR.
+  FIND FIRST crapedp WHERE crapedp.cdevento = INT(ab_unmap.aux_cdevento)
+                       AND crapedp.cdcooper = INT(ab_unmap.aux_cdcooper)
+                       AND crapedp.dtanoage = INT(ab_unmap.aux_dtanoage) NO-LOCK NO-ERROR.
 
-
-
-/* Verificar se é um evento EAD, caso for 
-   nao precisar verificar proposta pois nao existe
-   apenas carregar informacoes existentes */
-IF crapedp.tpevento <> 10 THEN
-DO:
-  RUN RodaJavaScript("var mdadoseve=new Array();"). 
-  IF NOT AVAIL gnappdp THEN 
-  DO:     
-      LEAVE.
-END.
-END.
-  
-
-ASSIGN
-    ab_unmap.aux_nmevento = ""
-    ab_unmap.nmfacili = ""
-    ab_unmap.dscurric = ""
-    ab_unmap.dsfornec = ""
-    ab_unmap.txaObservacoes = ""
-    ab_unmap.txaPreRequisito = ""
-    ab_unmap.txtIdadePublicoAlvo = ""
-    ab_unmap.aux_idforrev = ""
-    ab_unmap.txaPublicoAlvo = ""
-    ab_unmap.txtHonorarios = ""
-    ab_unmap.txtQtdMaxTurma = ""
-    ab_unmap.txtQtdMinTurma = "".
-
-ASSIGN ab_unmap.aux_dsobjeti = ""
-       aux_dsconteu = "".
-
-FIND gnappob WHERE gnappob.idevento = gnappdp.idevento   AND
-                   gnappob.cdcooper = gnappdp.cdcooper   AND
-                   gnappob.nrcpfcgc = gnappdp.nrcpfcgc   AND
-                   gnappob.nrpropos = gnappdp.nrpropos
-                   NO-LOCK NO-ERROR.
-
-IF   AVAIL gnappob   THEN
-     ASSIGN ab_unmap.aux_dsobjeti = gnappob.dsobjeti.
-
-FIND FIRST crapadp WHERE
-    crapadp.cdcooper = INT(ab_unmap.aux_cdcooper) AND
-    crapadp.cdagenci = INT(ab_unmap.aux_cdagenci) AND 
-    crapadp.dtanoage = INT(ab_unmap.aux_dtanoage) AND
-    crapadp.nrseqdig = INT(ab_unmap.aux_nrseqeve) NO-LOCK NO-ERROR.
-
-IF AVAIL crapadp THEN
-DO:
+  IF AVAILABLE crapedp THEN
+    DO: 
+      /* Verificar se é um evento EAD, caso for nao precisar verificar proposta pois nao existe
+         apenas carregar informacoes existentes */
+      IF crapedp.tpevento <> 10 THEN
+        DO:
+          IF NOT AVAILABLE gnappdp THEN 
+            DO:
+              LEAVE.
+            END.
+        END.
         
-        IF  crapadp.dtinieve = ? then
-             ASSIGN ab_unmap.aux_dtinieve = "".
-        ELSE
-             ASSIGN ab_unmap.aux_dtinieve = STRING(crapadp.dtinieve, "99/99/9999").
-        IF  crapadp.dtfineve = ? THEN
-            ASSIGN ab_unmap.aux_dtfineve = "".
-        ELSE
-            ASSIGN ab_unmap.aux_dtfineve = STRING(crapadp.dtfineve, "99/99/9999").
-END.
+      ASSIGN ab_unmap.aux_nmevento = crapedp.nmevento.
+      
+      /* Eixo e Tema*/ 
+      FOR FIRST craptem WHERE craptem.idevento = crapedp.idevento
+                          AND craptem.idsittem = "A"             
+                          AND craptem.nrseqtem = crapedp.nrseqtem
+                          AND craptem.cdeixtem =  crapedp.cdeixtem NO-LOCK,
+        FIRST gnapetp WHERE gnapetp.idevento = craptem.idevento
+                        AND gnapetp.cdeixtem = craptem.cdeixtem
+                        AND gnapetp.flgativo = TRUE NO-LOCK:                                              
+        
+          ASSIGN aux_cdeixtem  = gnapetp.dseixtem
+                 aux_nrseqtem  = craptem.dstemeix.      
+      END.
+    END.
+    
+  FIND gnappob WHERE gnappob.idevento = gnappdp.idevento
+                 AND gnappob.cdcooper = gnappdp.cdcooper
+                 AND gnappob.nrcpfcgc = gnappdp.nrcpfcgc
+                 AND gnappob.nrpropos = gnappdp.nrpropos NO-LOCK NO-ERROR.
 
-IF AVAIL crapedp THEN
-DO: 
-    ab_unmap.aux_nmevento = crapedp.nmevento.
-    /* Eixo e Tema*/ 
+  IF AVAILABLE gnappob THEN
+    ASSIGN ab_unmap.aux_dsobjeti = gnappob.dsobjeti.
 
-     FOR FIRST craptem WHERE craptem.idevento = crapedp.idevento      AND
-                        craptem.idsittem = "A"                        AND
-                        craptem.nrseqtem = crapedp.nrseqtem           AND
-                        craptem.cdeixtem =  crapedp.cdeixtem         NO-LOCK,
-         FIRST gnapetp where gnapetp.idevento = craptem.idevento      AND
-                             gnapetp.cdeixtem = craptem.cdeixtem      AND
-                             gnapetp.flgativo = TRUE                 NO-LOCK:                                              
+  FIND FIRST crapadp WHERE crapadp.cdcooper = INT(ab_unmap.aux_cdcooper)
+                       AND crapadp.cdagenci = INT(ab_unmap.aux_cdagenci)
+                       AND crapadp.dtanoage = INT(ab_unmap.aux_dtanoage)
+                       AND crapadp.nrseqdig = INT(ab_unmap.aux_nrseqeve) NO-LOCK NO-ERROR.
 
-     
-             
-                 ASSIGN aux_cdeixtem  = gnapetp.dseixtem
-                        aux_nrseqtem  = craptem.dstemeix.      
-                                    
-     END.
-END.
+  IF AVAILABLE crapadp THEN
+    DO:
+      ASSIGN aux_nrcpfcgc = crapadp.nrcpfcgc
+             aux_nrpropos = crapadp.nrpropos.
+						 ab_unmap.txaObservacoes  = STRING(crapadp.dsobsloc).
+      
+      IF crapadp.dtinieve = ? then
+        ASSIGN ab_unmap.aux_dtinieve = "".
+      ELSE
+        ASSIGN ab_unmap.aux_dtinieve = STRING(crapadp.dtinieve, "99/99/9999").
+      IF crapadp.dtfineve = ? THEN
+        ASSIGN ab_unmap.aux_dtfineve = "".
+      ELSE
+        ASSIGN ab_unmap.aux_dtfineve = STRING(crapadp.dtfineve, "99/99/9999").
+    END.
 
-/* Dados do Fornecedor */
-FIND FIRST crapcdp WHERE crapcdp.idevento = gnappdp.idevento
-                     AND crapcdp.cdcooper = INT(ab_unmap.aux_cdcooper)
-                     AND crapcdp.cdevento = INT(ab_unmap.aux_cdevento)
-                     AND crapcdp.cdagenci = INT(ab_unmap.aux_cdagenci)
-                     AND crapcdp.dtanoage = INT(ab_unmap.aux_dtanoage) NO-LOCK NO-ERROR.
+  IF aux_nrcpfcgc = 0 OR aux_nrcpfcgc = ? THEN
+    DO:
+      /* Dados do Fornecedor */
+      FIND FIRST crapcdp WHERE crapcdp.idevento = gnappdp.idevento
+                           AND crapcdp.cdcooper = INT(ab_unmap.aux_cdcooper)
+                           AND crapcdp.cdevento = INT(ab_unmap.aux_cdevento)
+                           AND crapcdp.cdagenci = INT(ab_unmap.aux_cdagenci)
+                           AND crapcdp.dtanoage = INT(ab_unmap.aux_dtanoage) NO-LOCK NO-ERROR.
 
-IF AVAIL crapcdp THEN
-	DO:	
-		FIND gnapfdp WHERE gnapfdp.idevento = 1
-					         AND gnapfdp.nrcpfcgc = crapcdp.nrcpfcgc NO-LOCK NO-ERROR.
+      IF AVAILABLE crapcdp THEN
+        DO:	
+          ASSIGN aux_nrcpfcgc = crapcdp.nrcpfcgc
+                 aux_nrpropos = crapcdp.nrpropos.
+        END.  
+    END. /* IF aux_nrcpfcgc = 0 OR aux_nrcpfcgc = ? */
+      
+  FIND gnapfdp WHERE gnapfdp.idevento = 1
+                 AND gnapfdp.nrcpfcgc = aux_nrcpfcgc NO-LOCK NO-ERROR.
 
-		ab_unmap.dsfornec = "Nome: " 	 	+ STRING(gnapfdp.nmfornec) + " <br> " + 
-                        "DDD/Fone: (" 	+ STRING(gnapfdp.cddddfor) + ") " + STRING(gnapfdp.nrfonfor) + " <br> " + 
-                        "DDD/Celular: (" + STRING(gnapfdp.cddddfax) + ") "  + STRING(gnapfdp.nrfaxfor).
-	END.
-/* Fim Dados do Fornecedor */
+  IF AVAILABLE gnapfdp THEN
+    ASSIGN ab_unmap.dsfornec = "Nome: " 	 	+ STRING(gnapfdp.nmfornec) + " <br> " + 
+                               "DDD/Fone: (" 	+ STRING(gnapfdp.cddddfor) + ") " + STRING(gnapfdp.nrfonfor) + " <br> " + 
+                               "DDD/Celular: (" + STRING(gnapfdp.cddddfax) + ") "  + STRING(gnapfdp.nrfaxfor).
+    
+  /* Fim Dados do Fornecedor */
 
-/* Dados do Evento */
-FIND FIRST gnappdp WHERE gnappdp.idevento = 1
-					 AND gnappdp.cdcooper = 0
-				   AND gnappdp.nrcpfcgc = crapcdp.nrcpfcgc
-					 AND gnappdp.nrpropos = crapcdp.nrpropos NO-LOCK NO-ERROR.
+  /* Dados do Evento */
+  FIND FIRST gnappdp WHERE gnappdp.idevento = 1
+         AND gnappdp.cdcooper = 0
+         AND gnappdp.nrcpfcgc = aux_nrcpfcgc
+         AND gnappdp.nrpropos = aux_nrpropos NO-LOCK NO-ERROR.
 
-IF AVAIL gnappdp THEN
-	DO:
-     
-    ASSIGN	ab_unmap.txaObservacoes 	   = STRING(gnappdp.dsobserv)
-            ab_unmap.txaPreRequisito 	   = STRING(gnappdp.dsprereq)
-            aux_dsconteu                 = TRIM(STRING(REPLACE(gnappdp.dsconteu,"\n","<br>")))            
-            ab_unmap.txtHonorarios 		   = TRIM(STRING(gnappdp.vlinvest,"->>>,>>9.99")).
-            
-    CASE gnappdp.idforrev:
-      WHEN 1 THEN
-        ab_unmap.aux_idforrev = "PRESENCIAL".
-      WHEN 2 THEN
-        ab_unmap.aux_idforrev = "EAD".
-      WHEN 3 THEN
-        ab_unmap.aux_idforrev  = "HIBRIDO".
-    END CASE.
-	END.
-  
-  
-  
-FIND FIRST crapeap WHERE crapeap.idevento = INT(ab_unmap.aux_idevento) AND
-                         crapeap.cdcooper = INT(ab_unmap.aux_cdcooper) AND
-                         crapeap.dtanoage = INT(ab_unmap.aux_dtanoage) AND
-                         crapeap.cdagenci = INT(ab_unmap.aux_cdagenci) AND
-                         crapeap.cdevento = INT(ab_unmap.aux_cdevento) NO-LOCK NO-ERROR.
+  IF AVAILABLE gnappdp THEN
+    DO:       
+      ASSIGN	/*ab_unmap.txaObservacoes  = STRING(gnappdp.dsobserv)*/
+              ab_unmap.txaPreRequisito = STRING(gnappdp.dsprereq)
+              aux_dsconteu             = TRIM(STRING(REPLACE(gnappdp.dsconteu,"\n","<br>")))            
+              ab_unmap.txtHonorarios 	 = TRIM(STRING(gnappdp.vlinvest,"->>>,>>9.99")).
+              
+      CASE gnappdp.idforrev:
+        WHEN 1 THEN
+          ab_unmap.aux_idforrev = "PRESENCIAL".
+        WHEN 2 THEN
+          ab_unmap.aux_idforrev = "EAD".
+        WHEN 3 THEN
+          ab_unmap.aux_idforrev  = "HIBRIDO".
+      END CASE.
+    END.
+    
+  FIND FIRST crapeap WHERE crapeap.idevento = INT(ab_unmap.aux_idevento)
+                       AND crapeap.cdcooper = INT(ab_unmap.aux_cdcooper)
+                       AND crapeap.dtanoage = INT(ab_unmap.aux_dtanoage)
+                       AND crapeap.cdagenci = INT(ab_unmap.aux_cdagenci)
+                       AND crapeap.cdevento = INT(ab_unmap.aux_cdevento) NO-LOCK NO-ERROR.
 
-IF AVAILABLE crapeap AND crapeap.qtmaxtur <> 0 AND crapeap.qtmaxtur <> ? THEN
-    ab_unmap.txtQtdMaxTurma = STRING(crapeap.qtmaxtur).
+  IF AVAILABLE crapeap AND crapeap.qtmaxtur <> 0 AND crapeap.qtmaxtur <> ? THEN
+    ASSIGN ab_unmap.txtQtdMaxTurma = STRING(crapeap.qtmaxtur).
 
-FIND FIRST crapedp WHERE crapedp.idevento = INT(ab_unmap.aux_idevento) AND
-                         crapedp.cdcooper = INT(ab_unmap.aux_cdcooper) AND
-                         crapedp.dtanoage = INT(ab_unmap.aux_dtanoage) AND
-                         crapedp.cdevento = INT(ab_unmap.aux_cdevento) NO-LOCK NO-ERROR.
+  FIND FIRST crapedp WHERE crapedp.idevento = INT(ab_unmap.aux_idevento)
+                       AND crapedp.cdcooper = INT(ab_unmap.aux_cdcooper)
+                       AND crapedp.dtanoage = INT(ab_unmap.aux_dtanoage)
+                       AND crapedp.cdevento = INT(ab_unmap.aux_cdevento) NO-LOCK NO-ERROR.
 
   IF AVAILABLE crapedp THEN
     DO:
       IF ab_unmap.txtQtdMaxTurma = "" THEN
-        ab_unmap.txtQtdMaxTurma = STRING(crapedp.qtmaxtur).
+        ASSIGN ab_unmap.txtQtdMaxTurma = STRING(crapedp.qtmaxtur).
       
-      ab_unmap.txtQtdMinTurma = STRING(crapedp.qtmintur).
+      ASSIGN ab_unmap.txtQtdMinTurma = STRING(crapedp.qtmintur).
     END.
-  
-/* Fim Dados do Evento */
+    
+  /* Fim Dados do Evento */
 
+  FOR EACH gnfacep WHERE gnfacep.cdcooper = 0
+                     AND gnfacep.nrcpfcgc = gnappdp.nrcpfcgc
+                     AND gnfacep.nrpropos = gnappdp.nrpropos NO-LOCK:
 
+    FOR EACH gnapfep WHERE gnapfep.cdcooper = 0
+                       AND gnapfep.nrcpfcgc = gnfacep.nrcpfcgc
+                       AND gnapfep.cdfacili = gnfacep.cdfacili NO-LOCK:
 
-FOR EACH gnfacep WHERE
-    gnfacep.cdcooper = 0                AND
-    gnfacep.nrcpfcgc = gnappdp.nrcpfcgc AND
-    gnfacep.nrpropos = gnappdp.nrpropos NO-LOCK:
+      ASSIGN ab_unmap.nmfacili = ab_unmap.nmfacili + "\n- " + gnapfep.nmfacili
+             ab_unmap.dscurric = ab_unmap.dscurric + "\n- " + gnapfep.dscurric
+             aux_temfones = NO.
 
-    FOR EACH gnapfep WHERE
-        gnapfep.cdcooper = 0                AND
-                gnapfep.nrcpfcgc = gnfacep.nrcpfcgc AND
-        gnapfep.cdfacili = gnfacep.cdfacili NO-LOCK :
+      /* Telefone dos facilitadores */
+      DO aux_contador = 1 TO 3:
+        IF gnapfep.nrdddfon[aux_contador] <> 0   AND
+           gnapfep.nrtelefo[aux_contador] <> 0   THEN
+          DO:
+            IF aux_temfones THEN
+              ASSIGN ab_unmap.nmfacili = ab_unmap.nmfacili + " / (" + STRING(gnapfep.nrdddfon[aux_contador]) + ") " + STRING(gnapfep.nrtelefo[aux_contador],"z9999,9999").
+            ELSE 
+              DO:
+                ASSIGN ab_unmap.nmfacili = ab_unmap.nmfacili + " - DDD/Fone(s): (" + STRING(gnapfep.nrdddfon[aux_contador]) + ") " + STRING(gnapfep.nrtelefo[aux_contador],"z9999,9999")
+                       aux_temfones = YES.
+              END.
+          END.
+      END. /* DO aux_contador = 1 TO 3: */
+    END. /* FOR EACH gnapfep */
+  END. /* FOR EACH gnfacep */
 
-                aux_temfones = NO.
+  /*Publico Alvo*/
+  FOR EACH crappap NO-LOCK BY crappap.dspubalv:
+    FIND FIRST crapedp WHERE crapedp.idevento = 1
+                         AND crapedp.cdcooper = 0
+                         AND crapedp.dtanoage = 0
+                         AND crapedp.cdevento = INT(ab_unmap.aux_cdevento) NO-LOCK NO-ERROR.
+                         
+    IF AVAILABLE crapedp THEN
+      DO: 
 
-        ASSIGN ab_unmap.nmfacili = ab_unmap.nmfacili + "\n- " + gnapfep.nmfacili.
-               ab_unmap.dscurric = ab_unmap.dscurric + "\n- " + gnapfep.dscurric.
+        FOR EACH crappae WHERE crappae.idevento = crapedp.idevento
+                           AND crappae.cdcooper = crapedp.cdcooper
+                           AND crappae.dtanoage = crapedp.dtanoage
+                           AND crappae.cdevento = crapedp.cdevento NO-LOCK :
 
-        /* Telefone dos facilitadores */
-        DO aux_contador = 1 TO 3:
-           IF   gnapfep.nrdddfon[aux_contador] <> 0   AND
-                gnapfep.nrtelefo[aux_contador] <> 0   THEN
-                DO:
-                    IF   aux_temfones   THEN
-                         ab_unmap.nmfacili = ab_unmap.nmfacili + " / (" + STRING(gnapfep.nrdddfon[aux_contador]) + ") " + STRING(gnapfep.nrtelefo[aux_contador],"z9999,9999").
-                    ELSE 
-                         DO:
-                             ab_unmap.nmfacili = ab_unmap.nmfacili + " - DDD/Fone(s): (" + STRING(gnapfep.nrdddfon[aux_contador]) + ") " + STRING(gnapfep.nrtelefo[aux_contador],"z9999,9999").
-                             aux_temfones = YES.
-                         END.
-                END.
-        END.
-    END.
-END.
-
-/*Publico Alvo*/
-FOR EACH crappap NO-LOCK BY crappap.dspubalv:
-  FIND FIRST crapedp WHERE crapedp.idevento = 1
-                       AND crapedp.cdcooper = 0
-                       AND crapedp.dtanoage = 0
-                       AND crapedp.cdevento = INT(ab_unmap.aux_cdevento) NO-LOCK NO-ERROR.
-  IF AVAILABLE crapedp THEN
-   DO: 
-
-      FOR EACH crappae WHERE crappae.idevento = crapedp.idevento
-                         AND crappae.cdcooper = crapedp.cdcooper
-                         AND crappae.dtanoage = crapedp.dtanoage
-                         AND crappae.cdevento = crapedp.cdevento NO-LOCK :
-
-          IF  crappap.nrseqpap = crappae.nrseqpap THEN
-                                     DO:
-            IF  ab_unmap.txaPublicoAlvo = "" THEN
+          IF crappap.nrseqpap = crappae.nrseqpap THEN
+            DO:
+              IF ab_unmap.txaPublicoAlvo = "" THEN
                 ASSIGN ab_unmap.txaPublicoAlvo = crappap.dspubalv.
-                                  ELSE
+              ELSE
                 ASSIGN ab_unmap.txaPublicoAlvo = ab_unmap.txaPublicoAlvo + "<br> " + crappap.dspubalv.
+            END.
+        END. /* FOR EACH crappae */
+      END. /* IF AVAILABLE crapedp THEN */    
+  END.
+                         
+  ASSIGN aux_dados = "~{cdeixtem:'" + TRIM(STRING(aux_cdeixtem))
+                   + "',nrseqtem:'"  + TRIM(STRING(aux_nrseqtem))
+                   + "',nmevento:'"  + TRIM(STRING(ab_unmap.aux_nmevento))
+                   + "',nmfacili:'"  + TRIM(STRING(ab_unmap.nmfacili))
+                   + "',dscurric:'"  + TRIM(STRING(ab_unmap.dscurric))
+                   + "',dsfornec:'"  + TRIM(STRING(ab_unmap.dsfornec))
+                   + "',observac:'"  + TRIM(STRING(ab_unmap.txaObservacoes))
+                   + "',prerequi:'"  + TRIM(STRING(ab_unmap.txaPreRequisito))
+                   + "',idapubal:'"  + TRIM(STRING(ab_unmap.txtIdadePublicoAlvo))
+                   + "',idforrev:'"  + TRIM(STRING(ab_unmap.aux_idforrev))
+                   + "',publalvo:'"  + TRIM(STRING(ab_unmap.txaPublicoAlvo))
+                   + "',honorari:'"  + TRIM(STRING(ab_unmap.txtHonorarios))
+                   + "',qtdmaxtu:'"  + TRIM(STRING(ab_unmap.txtQtdMaxTurma))
+                   + "',qtdmintu:'"  + TRIM(STRING(ab_unmap.txtQtdMinTurma ))
+                   + "',dsconteu:'"  + TRIM(STRING(aux_dsconteu))
+                   + "',qtcarhor:'"  + TRIM(STRING(gnappdp.qtcarhor,">>,>>9.99"))
+                   + "',dsmetodo:'"  + TRIM(STRING(gnappdp.dsmetodo))
+                   + "',dtinieve:'"  + TRIM(STRING(ab_unmap.aux_dtinieve))
+                   + "',dtfimeve:'"  + TRIM(STRING(ab_unmap.aux_dtfineve))
+                   + "',dsobjeti:'"  + TRIM(STRING(ab_unmap.aux_dsobjeti)) + "'~}".
 
-                                  END.
-                                  END.
-                               END.     
+  ASSIGN vetordados = REPLACE(aux_dados,'\n','<br>').
+  
+  RUN RodaJavaScript("mdadoseve.push(" + vetordados + ");"). 
+  
+END PROCEDURE.
+                    
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE PosicionaNoPrimeiro w-html 
+PROCEDURE PosicionaNoPrimeiro :
+FIND FIRST {&SECOND-ENABLED-TABLE} WHERE {&SECOND-ENABLED-TABLE}.idevento = INTEGER(ab_unmap.aux_idevento) NO-LOCK NO-WAIT NO-ERROR.
 
-                       END.
 
-                           
-    ASSIGN aux_dados = "~{" +               
-                      "cdeixtem:'" +  TRIM(STRING(aux_cdeixtem))              + "'," +
-                      "nrseqtem:'" +  TRIM(STRING(aux_nrseqtem))              + "'," +
-                      "nmevento:'" +  TRIM(STRING(ab_unmap.aux_nmevento))     + "'," +
-                      "nmfacili:'" +  TRIM(STRING(ab_unmap.nmfacili))         + "'," +
-                      "dscurric:'" +  TRIM(STRING(ab_unmap.dscurric))         + "'," +
-                      "dsfornec:'" +  TRIM(STRING(ab_unmap.dsfornec))         + "'," +
-                      "observac:'" +  TRIM(STRING(ab_unmap.txaObservacoes))   + "'," +
-                      "prerequi:'" +  TRIM(STRING(ab_unmap.txaPreRequisito))  + "'," +
-                      "idapubal:'" +  TRIM(STRING(ab_unmap.txtIdadePublicoAlvo))     + "'," +
-                      "idforrev:'" +  TRIM(STRING(ab_unmap.aux_idforrev))     + "'," +
-                      "publalvo:'" +  TRIM(STRING(ab_unmap.txaPublicoAlvo))   + "'," +
-                      "honorari:'" +  TRIM(STRING(ab_unmap.txtHonorarios))    + "'," +
-                      "qtdmaxtu:'" +  TRIM(STRING(ab_unmap.txtQtdMaxTurma))   + "'," +
-                      "qtdmintu:'" +  TRIM(STRING(ab_unmap.txtQtdMinTurma ))  + "'," +
-                      "dsconteu:'" +  TRIM(STRING(aux_dsconteu))  + "'," +
-                      "qtcarhor:'" +  TRIM(STRING(gnappdp.qtcarhor,">>,>>9.99"))  + "'," +
-                      "dsmetodo:'" +  TRIM(STRING(gnappdp.dsmetodo))  + "'," +
-                      "dtinieve:'" +  TRIM(STRING(ab_unmap.aux_dtinieve))  + "'," +
-                      "dtfimeve:'" +  TRIM(STRING(ab_unmap.aux_dtfineve))  + "'," +                      
-                      "dsobjeti:'" +  TRIM(STRING(ab_unmap.aux_dsobjeti))    + "'"  + "~}". 
+IF NOT AVAILABLE {&SECOND-ENABLED-TABLE} THEN
+    ASSIGN ab_unmap.aux_nrdrowid  = "?"
+           ab_unmap.aux_stdopcao = "".
+ELSE
+    ASSIGN ab_unmap.aux_nrdrowid  = STRING(ROWID({&SECOND-ENABLED-TABLE}))
+           ab_unmap.aux_stdopcao = "".  /* aqui p */
 
-                       
-   ASSIGN vetordados = REPLACE(aux_dados,'\n','<br>').
-   RUN RodaJavaScript("var mdadoseve=new Array(" + vetordados + ");"). 
+/* Não traz inicialmente nenhum registro */ 
+RELEASE {&SECOND-ENABLED-TABLE}.
+
+ASSIGN ab_unmap.aux_nrdrowid  = "?"
+       ab_unmap.aux_stdopcao = "".
+
 END PROCEDURE.
                     
 /* _UIB-CODE-BLOCK-END */
@@ -675,7 +684,7 @@ ELSE /* Método GET */
                        RUN PosicionaNoPrimeiro.
 
                     RUN PreencheDados.
-
+                    
                     RUN displayFields.
                     RUN enableFields.
                     RUN outputFields.
@@ -687,9 +696,9 @@ END. /* fim do método GET */
 
 /* Show error messages. */
 IF AnyMessage() THEN 
-DO:
-   ShowDataMessages().
-END.
+  DO:
+     ShowDataMessages().
+  END.
 
 END PROCEDURE.
 
@@ -698,8 +707,7 @@ END PROCEDURE.
 
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE RodaJavaScript w-html 
 PROCEDURE RodaJavaScript :
-{includes/rodajava.i}
-
+  {includes/rodajava.i}
 END PROCEDURE.
 
 /* _UIB-CODE-BLOCK-END */

@@ -839,9 +839,8 @@
             
        // já possui inscrição
       if (document.form.aux_flginscr.value == "S") {
-        if (!confirm("O cooperado já possui inscrições nesse evento sob sua responsabilidade. São elas : " + document.form.aux_dsinscri.value + "\nDeseja prosseguir com a pré-inscrição?")){
-          return false; 
-        }
+        alert("O cooperado já possui inscrições nesse evento sob sua responsabilidade. São elas : " + document.form.aux_dsinscri.value);
+          return false;
       }
 
         // Rosangela - Fim  

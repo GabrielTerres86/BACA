@@ -39,6 +39,13 @@
 
 
 
+
+
+
+
+
+
+
 /*..............................................................................
 
    Programa: sistema/internet/procedures/b1wgen0088.p
@@ -5641,7 +5648,7 @@ PROCEDURE efetua-validacao-recusa-padrao:
       			  ELSE 
       				aux_cdacesso = "LIMDESCTITPF".		  	
       			END.
-      			ELSE
+            ELSE
       			DO:	
       			  IF crapass.inpessoa = 2 THEN /* Pessoa Jurídica */
       			  DO: 	

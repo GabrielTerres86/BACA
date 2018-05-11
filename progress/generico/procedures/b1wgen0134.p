@@ -182,51 +182,113 @@ PROCEDURE cria_lancamento_lem:
     DEF VAR h-b1craplot          AS HANDLE                          NO-UNDO.
 
 
+    RUN cria_lancamento_lem_chave( INPUT par_cdcooper, 
+                                   INPUT par_dtmvtolt,
+                                   INPUT par_cdagenci, 
+                                   INPUT par_cdbccxlt, 
+                                   INPUT par_cdoperad, 
+                                   INPUT par_cdpactra, 
+                                   INPUT par_tplotmov, 
+                                   INPUT par_nrdolote, 
+                                   INPUT par_nrdconta, 
+                                   INPUT par_cdhistor, 
+                                   INPUT par_nrctremp, 
+                                   INPUT par_vllanmto, 
+                                   INPUT par_dtpagemp, 
+                                   INPUT par_txjurepr, 
+                                   INPUT par_vlpreemp, 
+                                   INPUT par_nrsequni, 
+                                   INPUT par_nrparepr, 
+                                   INPUT par_flgincre, 
+                                   INPUT par_flgcredi, 
+                                   INPUT par_nrseqava, 
+                                   INPUT par_cdorigem, 
+                                  OUTPUT aux_nrseqdig).
+        
+    RETURN "OK".
+
+END PROCEDURE.
+
+PROCEDURE cria_lancamento_lem_chave:
+
+    DEF INPUT PARAM par_cdcooper AS INTE                            NO-UNDO.
+    DEF INPUT PARAM par_dtmvtolt AS DATE                            NO-UNDO.
+    DEF INPUT PARAM par_cdagenci AS INTE                            NO-UNDO.
+    DEF INPUT PARAM par_cdbccxlt AS INTE                            NO-UNDO.
+    DEF INPUT PARAM par_cdoperad AS CHAR                            NO-UNDO.
+    DEF INPUT PARAM par_cdpactra AS INTE                            NO-UNDO.
+    DEF INPUT PARAM par_tplotmov AS INTE                            NO-UNDO.
+    DEF INPUT PARAM par_nrdolote AS INTE                            NO-UNDO.
+    DEF INPUT PARAM par_nrdconta AS INTE                            NO-UNDO.
+    DEF INPUT PARAM par_cdhistor AS INTE                            NO-UNDO.
+    DEF INPUT PARAM par_nrctremp AS INTE                            NO-UNDO.
+    DEF INPUT PARAM par_vllanmto AS DECI                            NO-UNDO.
+    DEF INPUT PARAM par_dtpagemp AS DATE                            NO-UNDO.
+    DEF INPUT PARAM par_txjurepr AS DECI                            NO-UNDO.
+    DEF INPUT PARAM par_vlpreemp AS DECI                            NO-UNDO.
+    DEF INPUT PARAM par_nrsequni AS INTE                            NO-UNDO.
+    DEF INPUT PARAM par_nrparepr AS INTE                            NO-UNDO.
+    DEF INPUT PARAM par_flgincre AS LOGI                            NO-UNDO.
+    DEF INPUT PARAM par_flgcredi AS LOGI                            NO-UNDO. 
+    DEF INPUT PARAM par_nrseqava AS INTE                            NO-UNDO.
+    DEF INPUT PARAM par_cdorigem AS INTE                            NO-UNDO.
+    DEF OUTPUT PARAM par_nrseqdig AS INTE                           NO-UNDO.
+
+    DEF VAR aux_cdcritic         AS INTE                            NO-UNDO.
+    DEF VAR aux_nrseqdig         AS INTE                            NO-UNDO.
+    
+    DEF VAR h-b1craplot          AS HANDLE                          NO-UNDO.
+
+
     DO TRANSACTION ON ERROR UNDO , RETURN "NOK":
     
-       /* Atualiza lote */
-       RUN sistema/generico/procedures/b1craplot.p PERSISTENT SET h-b1craplot.
-       
-       RUN inclui-altera-lote IN h-b1craplot (INPUT par_cdcooper,
-                                              INPUT par_dtmvtolt,
-                                              INPUT par_cdpactra,
-                                              INPUT par_cdbccxlt,
-                                              INPUT par_nrdolote,
-                                              INPUT par_tplotmov, 
-                                              INPUT par_cdoperad,
-                                              INPUT par_cdhistor,
-                                              INPUT par_dtmvtolt,
-                                              INPUT par_vllanmto,
-                                              INPUT par_flgincre,
-                                              INPUT par_flgcredi,
-                                             OUTPUT aux_nrseqdig,
-                                             OUTPUT aux_cdcritic).
-       
-       DELETE PROCEDURE h-b1craplot.
+       IF ROUND(par_vllanmto,2) > 0 THEN
+          DO:
+              /* Atualiza lote */
+              RUN sistema/generico/procedures/b1craplot.p PERSISTENT SET h-b1craplot.
+              
+              RUN inclui-altera-lote IN h-b1craplot (INPUT par_cdcooper,
+                                                     INPUT par_dtmvtolt,
+                                                     INPUT par_cdpactra,
+                                                     INPUT par_cdbccxlt,
+                                                     INPUT par_nrdolote,
+                                                     INPUT par_tplotmov, 
+                                                     INPUT par_cdoperad,
+                                                     INPUT par_cdhistor,
+                                                     INPUT par_dtmvtolt,
+                                                     INPUT par_vllanmto,
+                                                     INPUT par_flgincre,
+                                                     INPUT par_flgcredi,
+                                                    OUTPUT aux_nrseqdig,
+                                                    OUTPUT aux_cdcritic).
+             
+              DELETE PROCEDURE h-b1craplot.
          
-       CREATE craplem.
-       ASSIGN craplem.dtmvtolt = par_dtmvtolt
-              craplem.cdagenci = par_cdpactra
-              craplem.cdbccxlt = par_cdbccxlt
-              craplem.nrdolote = par_nrdolote
-              craplem.nrdconta = par_nrdconta
-              craplem.nrdocmto = aux_nrseqdig 
-              craplem.cdhistor = par_cdhistor
-              craplem.nrseqdig = aux_nrseqdig 
-              craplem.nrctremp = par_nrctremp
-              craplem.vllanmto = par_vllanmto
-              craplem.dtpagemp = par_dtpagemp
-              craplem.txjurepr = par_txjurepr
-              craplem.vlpreemp = par_vlpreemp
-              craplem.nrsequni = par_nrsequni 
-              craplem.cdcooper = par_cdcooper
-              craplem.nrparepr = par_nrparepr
-              craplem.nrseqava = par_nrseqava
-              craplem.cdorigem = par_cdorigem.
-       VALIDATE craplem.
-
+              CREATE craplem.
+              ASSIGN craplem.dtmvtolt = par_dtmvtolt
+                     craplem.cdagenci = par_cdpactra
+                     craplem.cdbccxlt = par_cdbccxlt
+                     craplem.nrdolote = par_nrdolote
+                     craplem.nrdconta = par_nrdconta
+                     craplem.nrdocmto = aux_nrseqdig 
+                     craplem.cdhistor = par_cdhistor
+                     craplem.nrseqdig = aux_nrseqdig 
+                     craplem.nrctremp = par_nrctremp
+                     craplem.vllanmto = par_vllanmto
+                     craplem.dtpagemp = par_dtpagemp
+                     craplem.txjurepr = par_txjurepr
+                     craplem.vlpreemp = par_vlpreemp
+                     craplem.nrsequni = par_nrsequni 
+                     craplem.cdcooper = par_cdcooper
+                     craplem.nrparepr = par_nrparepr
+                     craplem.nrseqava = par_nrseqava
+                     craplem.cdorigem = par_cdorigem.
+              VALIDATE craplem.
+          END.
     END.
 
+    ASSIGN par_nrseqdig = aux_nrseqdig.
+    
     RETURN "OK".
 
 END PROCEDURE.

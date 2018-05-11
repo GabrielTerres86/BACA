@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Lucas Lunelli
-   Data    : Abril/2013                        Ultima atualizacao: 24/10/2016
+   Data    : Abril/2013                        Ultima atualizacao: 14/02/2018
 
    Dados referentes ao programa:
 
@@ -31,6 +31,10 @@
 							
                24/10/2016 - Inserido nova opcao na tela "S - Sumario" para contabilizar
                             os lancamentos do dia - Melhoria349 (Tiago/Elton). 							            
+                            
+               15/01/2018 - Adicionar flgativo na busca da crapcop (Lucas Ranghetti #822845)
+               
+               14/02/2018 - Retirar validaçao do horario de pagamento SICREDI (Lucas Ranghetti #838937)
 ..............................................................................*/
 
 { includes/var_online.i }
@@ -196,7 +200,8 @@ ASSIGN glb_cddopcao    = "C"
 /* Alimenta SELECTION-LIST de COOPERATIVAS */
 IF  glb_cdcooper = 3 THEN
     DO:
-        FOR EACH crapcop WHERE crapcop.cdcooper <> 3 NO-LOCK 
+        FOR EACH crapcop WHERE crapcop.cdcooper <> 3 AND
+                               crapcop.flgativo = TRUE NO-LOCK 
                                BY crapcop.dsdircop:
          
             IF   aux_contador = 0 THEN
@@ -278,7 +283,8 @@ DO WHILE TRUE:
 
             FOR EACH crapcop WHERE crapcop.cdcooper <> 3            AND 
                                    crapcop.cdcooper >= aux_cdcoopin AND
-                                   crapcop.cdcooper <= aux_cdcoopfi NO-LOCK:
+                                   crapcop.cdcooper <= aux_cdcoopfi AND
+                                   crapcop.flgativo = TRUE NO-LOCK:
 
                 RUN carrega-agendamentos-debito(INPUT crapcop.cdcooper
                                                ,INPUT crapcop.nmrescop
@@ -589,7 +595,8 @@ PROCEDURE executa-agendamento:
     /*** PROCESSA COOPERATIVAS ***/
     FOR EACH crapcop WHERE crapcop.cdcooper <> 3            AND
                            crapcop.cdcooper >= par_cdcoopin AND
-                           crapcop.cdcooper <= par_cdcoopfi NO-LOCK:
+                           crapcop.cdcooper <= par_cdcoopfi AND
+                           crapcop.flgativo = TRUE NO-LOCK:
 
         IF  TIME > crapcop.hrlimsic THEN
             DO:
@@ -624,13 +631,6 @@ PROCEDURE executa-agendamento:
                                         " - Opcao para processo manual "
                                           + "desabilitada.". 
 
-
-                /** Verifica se horario para pagamentos nao esgotou **/
-                IF  TIME > INT(ENTRY(1,craptab.dstextab," ")) AND
-                    TIME < INT(ENTRY(2,craptab.dstextab," ")) THEN
-                    ASSIGN glb_dscritic = crapcop.nmrescop +
-                                          " - Horario para " + 
-                                   "pagamentos SICREDI na Internet nao esgotou". 
             END.
 
             IF  glb_dscritic <> ""  THEN

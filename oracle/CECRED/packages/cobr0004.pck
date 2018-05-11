@@ -901,18 +901,37 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cobr0004 IS
   PROCEDURE pc_upload_webservice_pg(pr_nmarcnab IN VARCHAR2 -- Nome do arquivo CNAB de remessa
                                    ,pr_dscritic OUT VARCHAR2) IS
 
+    ---------------------------------------------------------------------------------------------------------------
+    --
+    --  Programa : pc_upload_webservice_pg
+    --  Sistema  : Procedimentos para  gerais da cobranca
+    --  Sigla    : CRED
+    --  Autor    : Dionathan Henchel
+    --  Data     : Abril/2015.                   Ultima atualizacao: 12/12/2017
+    --
+    --  Alteracoes: 06/06/2017 - Inclusão de espera de tempo em segundos entre cada
+    --                           comando que acessa o WS da PG para evitar o erro
+    --                           "Referência de objeto não definida para uma instância de um objeto."
+    --                           (SD#813103 - AJFink)
+    ---------------------------------------------------------------------------------------------------------------
+
     vr_nrdtoken VARCHAR2(100); -- Token de conexão com o WS da PG
     vr_idsessao VARCHAR2(100); -- Id da Sessão no WS da PG
   
     vr_nrrepete NUMBER(2) := 10; -- Número das tentativas para busca do status do upload no webservice
     vr_finaliza BOOLEAN := FALSE; -- Indicador se finalizou busca do status do upload no webservice
   
+    vr_qtsegund number(2);
+
     vr_exc_saida EXCEPTION;
   BEGIN
     
     -- Busca a hora atual para concatenar no nome dos arquivos
     vr_horaatua := to_char(SYSDATE, 'yymmddhh24miss');
     
+    vr_qtsegund := nvl(gene0001.fn_param_sistema(pr_nmsistem => 'CRED'
+                                                ,pr_cdacesso => 'PAINELWEBPG_DELAY'),'0');
+
     -- Autenticação
     pc_ws_pg_autenticacao(pr_nrdtoken => vr_nrdtoken
                          ,pr_dscritic => pr_dscritic);
@@ -921,6 +940,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cobr0004 IS
       RAISE vr_exc_saida;
     END IF;
   
+    pc_espera_segundo(pr_qtsegund => vr_qtsegund);
+
     -- Cria Job
     pc_ws_pg_cria_job(pr_nrdtoken => vr_nrdtoken -- Token de conexão com o WS da PG
                      ,pr_nmarcnab => pr_nmarcnab -- Nome do arquivo CNAB de remessa
@@ -931,6 +952,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cobr0004 IS
       RAISE vr_exc_saida;
     END IF;
   
+    pc_espera_segundo(pr_qtsegund => vr_qtsegund);
+
     -- Upload do arquivo
     pc_ws_pg_upload(pr_idsessao => vr_idsessao -- Id da Sessão no WS da PG
                    ,pr_nmarcnab => pr_nmarcnab -- Nome do arquivo CNAB de remessa
@@ -941,6 +964,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cobr0004 IS
       RAISE vr_exc_saida;
     END IF;
   
+    pc_espera_segundo(pr_qtsegund => vr_qtsegund);
+
     -- Caso o upload ja retornou FINISH não precisa executar esta etapa, pula direto para o logoff
     IF NOT vr_finaliza THEN
     
@@ -961,6 +986,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cobr0004 IS
           RAISE vr_exc_saida;
         END IF;
       
+        pc_espera_segundo(pr_qtsegund => vr_qtsegund);
+
         IF vr_nrrepete = 0 THEN
           pr_dscritic := 'Limite de tentativas de checagem de operação assíncrona atingido.';
           RAISE vr_exc_saida;
@@ -968,6 +995,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cobr0004 IS
       END LOOP;
     END IF;
   
+    pc_espera_segundo(pr_qtsegund => vr_qtsegund);
+
     --Logoff
     pc_ws_pg_logoff(pr_nrdtoken => vr_nrdtoken -- Token de conexão com o WS da PG
                    ,pr_dscritic => pr_dscritic);
@@ -1008,7 +1037,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cobr0004 IS
     vr_nrrepete NUMBER(2) := 10; -- Número das tentativas para busca do status do arquivo para download no webservice
     vr_finaliza BOOLEAN := FALSE; -- Indicador se pode iniciar o download
     
-    vr_qtsegund number(1);
+    vr_qtsegund number(2);
     
     vr_exc_saida EXCEPTION;
 
@@ -1063,6 +1092,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cobr0004 IS
           RAISE vr_exc_saida;
         END IF;
       
+        pc_espera_segundo(pr_qtsegund => vr_qtsegund);
+
         IF vr_nrrepete = 0 THEN
           pr_dscritic := 'Limite de tentativas de checagem de operação assíncrona atingido.';
           RAISE vr_exc_saida;

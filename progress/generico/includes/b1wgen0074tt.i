@@ -37,7 +37,13 @@
                 12/01/2016 - Remoção dos campos flgcrdpa e cdoplcpa do 
                              tt-conta-corr (Anderson)
                 18/03/2016 - Inclusao campos na tt-conta-corr
-				             PRJ207 - Esteira (Odirlei-AMcom)    
+				             PRJ207 - Esteira (Odirlei-AMcom)   
+                             
+                14/11/2017 - Incluido campo FIELD dtadmiss. PRJ339-CRM(Odirlei-AMcom) 
+                             
+                06/02/2018 - Incluido campo FIELD cdcatego e flblqtal. PRJ366 (Lombardi)
+                             
+                12/02/2018 - Retirada referencia a tabela CRAPTIP. PRJ366 (Lombardi)
                              
 .............................................................................*/
 
@@ -51,7 +57,7 @@ DEFINE TEMP-TABLE tt-conta-corr NO-UNDO
     FIELD cdsitdct LIKE crapass.cdsitdct
     FIELD dssitdct AS CHAR
     FIELD cdtipcta LIKE crapass.cdtipcta
-    FIELD dstipcta LIKE craptip.dstipcta
+    FIELD dstipcta AS CHAR
     FIELD cdbcochq LIKE crapass.cdbcochq
     FIELD nrdctitg LIKE crapass.nrdctitg
     FIELD dssititg AS CHAR
@@ -88,7 +94,10 @@ DEFINE TEMP-TABLE tt-conta-corr NO-UNDO
     FIELD indserma LIKE crapass.indserma
     FIELD idastcjt LIKE crapass.idastcjt
 	FIELD dtdscore LIKE crapass.dtdscore
-	FIELD dsdscore LIKE crapass.dsdscore.
+	FIELD dsdscore LIKE crapass.dsdscore
+    FIELD cdcatego LIKE crapass.cdcatego
+    FIELD flblqtal LIKE crapass.flblqtal
+    FIELD dtadmiss LIKE crapass.dtadmiss.
 
 DEFINE TEMP-TABLE tt-titulares NO-UNDO 
     FIELD idseqttl LIKE crapttl.idseqttl

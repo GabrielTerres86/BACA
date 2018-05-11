@@ -49,16 +49,6 @@ CREATE OR REPLACE PACKAGE PROGRID.ASSE0001 IS
                                  ,pr_idcokses IN gnapses.idsessao%TYPE --> ID da sessao
                                  ,pr_dscritic OUT CLOB);               --> Descrição da crítica
 
-  PROCEDURE pc_envia_email_sondagem(pr_cdcooper IN crapfsc.cdcooper%TYPE    --> Código da Cooperativa
-                                   ,pr_cdagenci IN crapfsc.cdagenci%TYPE    --> Código do PA
-                                   ,pr_dtanoage IN crapfsc.dtanoage%TYPE    --> Ano da Agenda
-                                   ,pr_xmllog         IN VARCHAR2           --> XML com informações de LOG
-                                   ,pr_cdcritic      OUT PLS_INTEGER        --> Código da crítica
-                                   ,pr_dscritic      OUT VARCHAR2           --> Descrição da crítica
-                                   ,pr_retxml     IN OUT NOCOPY XMLType     --> Arquivo de retorno do XML
-                                   ,pr_nmdcampo      OUT VARCHAR2           --> Nome do campo com erro
-                                   ,pr_des_erro      OUT VARCHAR2);         --> Erros do processo
-
   PROCEDURE pc_email_dat_ini_planej(pr_cdcritic OUT crapcri.cdcritic%TYPE   --> Código da Crítica
                                    ,pr_dscritic OUT crapcri.dscritic%TYPE); --> Descrição da Crítica
 END ASSE0001;
@@ -1578,174 +1568,6 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.ASSE0001 IS
       ROLLBACK;    
   END pc_calc_custo_eve_ass;
 
-  PROCEDURE pc_envia_email_sondagem(pr_cdcooper IN crapfsc.cdcooper%TYPE    --> Código da Cooperativa
-                                   ,pr_cdagenci IN crapfsc.cdagenci%TYPE    --> Código do PA
-                                   ,pr_dtanoage IN crapfsc.dtanoage%TYPE    --> Ano da Agenda
-                                   ,pr_xmllog         IN VARCHAR2              --> XML com informações de LOG
-                                   ,pr_cdcritic      OUT PLS_INTEGER           --> Código da crítica
-                                   ,pr_dscritic      OUT VARCHAR2              --> Descrição da crítica
-                                   ,pr_retxml     IN OUT NOCOPY XMLType        --> Arquivo de retorno do XML
-                                   ,pr_nmdcampo      OUT VARCHAR2              --> Nome do campo com erro
-                                   ,pr_des_erro      OUT VARCHAR2) IS          --> Erros do processo
-    -- ..........................................................................
-    --
-    --  Programa : pc_envia_email_sondagem
-    --  Sistema  : PROGRID
-    --  Sigla    : ASSE
-    --  Autor    : Jean Michel
-    --  Data     : Agosto/2017.                   Ultima atualizacao:
-    --
-    --  Dados referentes ao programa:
-    --
-    --   Frequencia: Sempre que for chamado
-    --   Objetivo  : Esta rotina irá rodar quando o formulário de sondagem estiver totalmente preenchido.
-    --
-    --   Alteracoes: 
-    -- .............................................................................
-  BEGIN
-    DECLARE
-      
-      --------> CURSORES <--------
-      -- Cursor para buscar a quantidade de dias e os endereços de email para envio 
-      CURSOR cr_parametro IS
-        SELECT cp.dsemlfso AS dsemlfso
-          FROM crapppc cp
-         WHERE cp.idevento = 1
-           AND cp.cdcooper = pr_cdcooper
-           AND TRIM(cp.dsemlfso) IS NOT NULL
-           AND cp.dtanoage = (SELECT MAX(g.dtanoage)
-                                FROM gnpapgd g
-                               WHERE g.idevento = cp.idevento
-                                 AND g.cdcooper = cp.cdcooper)
-       ORDER BY cp.cdcooper;  
-      
-      rw_parametro cr_parametro%ROWTYPE;
-
-      CURSOR cr_crapage(pr_cdcooper IN crapage.cdcooper%TYPE
-                       ,pr_cdagenci IN crapage.cdagenci%TYPE) IS
-       SELECT age.nmresage || ' - ' || TO_CHAR(age.cdagenci) AS nmresage
-         FROM crapage age
-        WHERE age.cdcooper = pr_cdcooper
-          AND (age.cdagenci = pr_cdagenci OR pr_cdagenci = 0);
-    
-      rw_crapage cr_crapage%ROWTYPE;
-      
-      -- Variaveis de log
-      vr_cdcooper crapcop.cdcooper%TYPE;
-      vr_cdoperad crapope.cdoperad%TYPE;
-      vr_nmdatela craptel.nmdatela%TYPE;
-      vr_nmdeacao crapaca.nmdeacao%TYPE;     
-      vr_idcokses VARCHAR2(100);
-      vr_idsistem craptel.idsistem%TYPE;
-      vr_cddopcao VARCHAR2(100);
-
-      -- Variaveis de erro e excessao
-      vr_exc_null  EXCEPTION;
-      vr_exc_saida EXCEPTION;
-      vr_cdcritic crapcri.cdcritic%TYPE := 0;
-      vr_dscritic VARCHAR2(4000);
-      
-      -- Variaveis locais
-      vr_nmresage VARCHAR(4000) := '';
-      vr_dscorpo VARCHAR(4000) := '';
-      
-    BEGIN
-    
-      PRGD0001.pc_extrai_dados_prgd(pr_xml      => pr_retxml
-                                   ,pr_cdcooper => vr_cdcooper
-                                   ,pr_cdoperad => vr_cdoperad
-                                   ,pr_nmdatela => vr_nmdatela
-                                   ,pr_nmdeacao => vr_nmdeacao
-                                   ,pr_idcokses => vr_idcokses
-                                   ,pr_idsistem => vr_idsistem
-                                   ,pr_cddopcao => vr_cddopcao
-                                   ,pr_dscritic => vr_dscritic);
-
-      -- Verifica se houve critica
-      IF vr_dscritic IS NOT NULL THEN
-        RAISE vr_exc_saida;
-      END IF; 
-
-      OPEN cr_parametro();
-
-      FETCH cr_parametro INTO rw_parametro;
-
-      IF cr_parametro%NOTFOUND THEN
-        CLOSE cr_parametro;
-        vr_dscritic := 'Email não cadastrado.';
-        RAISE vr_exc_saida;
-      ELSE
-        CLOSE cr_parametro;
-      END IF;
-
-      OPEN cr_crapage(pr_cdcooper => pr_cdcooper
-                     ,pr_cdagenci => pr_cdagenci);
-      
-      FETCH cr_crapage INTO rw_crapage;
-
-      IF cr_crapage%NOTFOUND THEN
-        CLOSE cr_crapage;
-        vr_dscritic := 'PA não cadastrado.';
-        RAISE vr_exc_saida; 
-      ELSE
-        CLOSE cr_crapage;
-        vr_nmresage := rw_crapage.nmresage;
-      END IF;
-
-      vr_dscorpo := '<br>Prezado responsável pelo Programa COOPERACRIANÇA.' ||
-                    '<br>O ' || vr_nmresage || ' já preencheu o formulário de sondagem.' ||
-                    '<br>Agora é preciso que você faça a análise sobre quais serão as atividades a serem realizadas no COOPERACRIANÇA.' ||
-                    '<br><br>Para consultar entre no Sistema de Gestão de Eventos no relatório de Sondagem.' ||
-                    '<br><br>Atenciosamente<br>Equipe de OQS.';
-
-      -- Enviar e-mail dos dados deste sinistro
-      gene0003.pc_solicita_email(pr_cdcooper        => pr_cdcooper                                      --> Código da Cooperativa 
-                                ,pr_cdprogra        => 'ASSE0001'                                       --> Programa conectado
-                                ,pr_des_destino     => rw_parametro.dsemlfso                            --> Um ou mais detinatários separados por ';' ou ','
-                                ,pr_des_assunto     => 'Término da Digitação do Formulário de Sondagem' --> Assunto do e-mail
-                                ,pr_des_corpo       => vr_dscorpo                                       --> Corpo (conteudo) do e-mail
-                                ,pr_des_anexo       => NULL                                             --> Um ou mais anexos separados por ';' ou ','
-                                ,pr_flg_remove_anex => NULL                                             --> Remover os anexos passados
-                                ,pr_flg_log_batch   => NULL                                             --> Incluir no log a informação do anexo?
-                                ,pr_flg_enviar      => 'S'                                              --> Enviar o e-mail na hora
-                                ,pr_des_erro        => vr_dscritic) ;    
-                              
-      -- Caso encontre alguma critica no envio do email                          
-      IF vr_dscritic IS NOT NULL THEN
-        RAISE vr_exc_saida;
-      END IF;
-     
-      BEGIN
-        UPDATE crapfsc
-           SET crapfsc.dtterpre = SYSDATE
-              ,crapfsc.cdcoppre = vr_cdcooper
-              ,crapfsc.cdopepre = vr_cdoperad
-         WHERE crapfsc.cdcooper = pr_cdcooper
-           AND crapfsc.cdagenci = pr_cdagenci
-           AND crapfsc.dtanoage = pr_dtanoage;
-      EXCEPTION
-        WHEN OTHERS THEN
-          vr_dscritic := 'Erro ao atualizar registro de sondagem. Erro: ' || SQLERRM;
-          RAISE vr_exc_saida;
-      END;
-
-    EXCEPTION
-      WHEN vr_exc_null THEN
-        NULL;
-      WHEN vr_exc_saida THEN
-        IF vr_cdcritic <> 0 THEN
-          pr_cdcritic := vr_cdcritic;
-          pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
-        ELSE
-          pr_cdcritic := 0;
-          pr_dscritic := vr_dscritic;
-        END IF;
-      WHEN OTHERS THEN
-        pr_cdcritic := 0;
-        pr_dscritic := 'Erro geral ASSE0001.pc_envia_email_sondagem: ' || SQLERRM;
-    END;
-  END pc_envia_email_sondagem;
-
   PROCEDURE pc_email_dat_ini_planej(pr_cdcritic OUT crapcri.cdcritic%TYPE     --> Código da Crítica
                                    ,pr_dscritic OUT crapcri.dscritic%TYPE) IS --> Descrição da Crítica
     -- ..........................................................................
@@ -1772,15 +1594,19 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.ASSE0001 IS
       
       CURSOR cr_crapcop IS
        SELECT cop.cdcooper AS cdcooper
-             ,age.nmresage AS nmresage
+             ,age.cdagenci || '-' || age.nmresage AS nmresage
              ,age.dsdemail AS dsdemail
          FROM crapcop cop
              ,crapage age
              ,crappcc pcc
+             ,crappcp pcp
         WHERE cop.flgativo = 1
-          AND cop.flgdopgd = 1
+          AND age.flgdopgd = 1
           AND cop.cdcooper = age.cdcooper
           AND cop.cdcooper = pcc.cdcooper
+          AND pcc.cdcooper = pcp.cdcooper
+          AND pcc.dtanoage = pcp.dtanoage
+          AND age.cdagenci = pcp.cdagenci
           AND pcc.dtiniexe = TRUNC(SYSDATE)
           AND TRIM(age.dsdemail) IS NOT NULL;
     
@@ -1800,7 +1626,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.ASSE0001 IS
     
       FOR rw_crapcop IN cr_crapcop LOOP
       
-        vr_dscorpo := '<br>Prezado coordenador do ' || rw_crapcop.nmresage || '#PA (nome e número do PA).' ||
+        vr_dscorpo := '<br>Prezado coordenador do PA ' || rw_crapcop.nmresage || '.' ||
                       '<br>Você e sua equipe precisam iniciar a execução do PROGRAMA COOPERACRIANÇA deste ano.' ||
                       '<br>É muito importante para o sucesso desse evento, que você verifique quais serão as ações, eventos e atividades.' ||
                       '<br><br>Consulte a OQS da sua sede para maiores informações.' ||

@@ -1,5 +1,9 @@
 <!-----------------------------------------------------------------------------------------------------------
-  Alterações: 28/07/2017 - Criaçao da tela, Prj. 322. (Jean Michel)               
+  Alterações: 28/07/2017 - Criaçao da tela, Prj. 322. (Jean Michel) 
+              08/02/2018 - PJ 322 - SM 8 - Mateus(Mouts)
+   			               Permitir incluir participante mesmo com o evento encerrado (desde que não esteja fechada a conatbilização)  
+              15/02/2018 - PJ 322 - SM 7 - (Mateus) Se só exitir um titular na conta, trazer o mesmo como default
+                           Permitir ordenação por comentários						   
 ----------------------------------------------------------------------------------------------------------->
 
 <html>
@@ -789,17 +793,30 @@
     function ValidaDados(form) { 
 
       var msg = "";
-      // verifica se as inscrições já estão encerradas.
-      if (document.form.aux_idstaeve.value == "4"){
-        alert("Evento com inscrições encerradas. Inclusão de novas inscrições não permitida!")
-        return false;
-      }
-      
+	  
       if (document.form.aux_fechamen.value == 'Sim') {
           alert("Mês do evento fechado para contabilização.")
           return false;
       }    
-            
+	  
+      // verifica se as inscrições já estão encerradas.
+	  
+	  //Início PJ322 - SM 8
+	    // O código abaixo foi comentado
+	  
+        //if (document.form.aux_idstaeve.value == "4"){
+        //  alert("Evento com inscrições encerradas. Inclusão de novas inscrições não permitida!")
+        //  return false;
+        //}	  
+	  
+	    //E substituído por este
+	  
+        if (document.form.aux_idstaeve.value == "4") {
+          if (!confirm("Evento com inscrições encerradas. Deseja prosseguir com a pré-inscrição?")) 
+            return false; 
+        }      
+	    //Fim PJ322 - SM 8	  
+		
        // já possui inscrição
       if (document.form.aux_flginscr.value == "S") {
         alert("O cooperado já possui inscrições nesse evento sob sua responsabilidade. São elas : " + document.form.aux_dsinscri.value + "\nInclusão duplicada não permitida!")
@@ -1183,6 +1200,7 @@
               document.form.aux_nrseqeve.focus();
               return false; 
             }
+            document.form.aux_cddopcao.value = 'carcop';   //PJ 322 - SM 7 - Mateus
             document.form.aux_cdcooper.disabled = false;
             document.form.submit();
           }
@@ -1674,7 +1692,7 @@
 				}
 			}
 				
-			$("#aux_nmcooper").val(99);
+			//$("#aux_nmcooper").val(99);	   // Linha comentada PJ 322 - SM 7 - Mateus 
 		}
             
             function carregaContaNrcpccgc(idseq) {            

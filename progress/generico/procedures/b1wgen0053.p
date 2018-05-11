@@ -2,7 +2,7 @@
 
     Programa: b1wgen0053.p
     Autor   : Jose Luis (DB1)
-    Data    : Janeiro/2010                   Ultima atualizacao: 22/09/2017
+    Data    : Janeiro/2010                   Ultima atualizacao: 16/11/2017
 
     Objetivo  : Tranformacao BO tela CONTAS - Pessoa Juridica
 
@@ -32,6 +32,12 @@
                 17/01/2017 - Adicionado chamada a procedure de replicacao do 
                              nome fantasia para o CDC. (Reinert Prj 289)     	
 
+                11/08/2017 - Incluído o número do cpf ou cnpj na tabela crapdoc.
+                             Projeto 339 - CRM. (Lombardi)		                  		  
+                 
+                22/09/2017 - Adicionar tratamento para caso o inpessoa for juridico gravar 
+                             o idseqttl como zero (Luacas Ranghetti #756813)
+
 				09/10/2017 - Projeto 410 - RF 52 / 62 - Diogo (Mouts): alterada 
                              procedure grava_dados com as regras:
                              - se o campo tpregtrb (regime de tributaçao) for Nao, 
@@ -40,11 +46,9 @@
                                idimpdsn com o valor 1; 
                                Porém se o idimpdsn já estiver com 2, nao deve ser 
                                alterado pois indica que a declaraçao já foi impressa.
-                11/08/2017 - Incluído o número do cpf ou cnpj na tabela crapdoc.
-                             Projeto 339 - CRM. (Lombardi)		                  		  
-                                    
-                22/09/2017 - Adicionar tratamento para caso o inpessoa for juridico gravar 
-                             o idseqttl como zero (Luacas Ranghetti #756813)
+                             
+                16/11/2017 - Adicionar tratamento para licenca socio ambiental do idseqttl
+                             como zero para pessoa juridica (Lucas Ranghetti #786704)
 ..................................................................................*/
 
 
@@ -605,7 +609,7 @@ PROCEDURE grava_dados:
                RUN cria_pendencia_digidoc(INPUT par_cdcooper,
                                           INPUT par_nrdconta,
                                           INPUT par_dtmvtolt,
-                                          INPUT par_idseqttl,
+                                          INPUT aux_idseqttl,
                                           INPUT par_cdoperad,
                                           INPUT crapass.nrcpfcgc,
                                           OUTPUT aux_cdcritic).

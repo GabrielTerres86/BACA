@@ -36,6 +36,10 @@ Alterações: 10/12/2008 - Paginação (Diego);
           
             02/08/2016 - Inclusao insitage 3-Temporariamente Indisponivel.
                          (Jaison/Anderson)
+                         
+            03/02/2017 - Incluida leitura de fornecedores para filtro da tabela CRAPADP
+                         (Jean Michel)
+                       
 ...............................................................................*/
 
 
@@ -68,10 +72,11 @@ DEFINE TEMP-TABLE ab_unmap
        FIELD aux_cdeixtem AS CHARACTER
        FIELD aux_nrcpfcgc AS CHARACTER
        FIELD aux_tpevento AS CHARACTER
-       FIELD aux_dtinieve AS CHARACTER FORMAT "X(256)":U
-       FIELD aux_dtfineve AS CHARACTER FORMAT "X(256)":U
-       FIELD aux_cdoperad AS CHARACTER FORMAT "X(256)":U
-       FIELD aux_cdcopope AS CHARACTER FORMAT "X(256)":U.
+       FIELD aux_dtinieve AS CHARACTER
+       FIELD aux_dtfineve AS CHARACTER
+       FIELD aux_cdoperad AS CHARACTER
+       FIELD aux_cdcopope AS CHARACTER
+       FIELD aux_nrseqpgm AS CHARACTER.
 
 DEFINE TEMP-TABLE fornecedores
        FIELD nrcpfcgc AS CHARACTER 
@@ -107,10 +112,9 @@ DEFINE TEMP-TABLE crateap             LIKE crapeap.
 DEFINE BUFFER crabedp FOR crapedp.   
 
 DEFINE VARIABLE aux_crapcop           AS CHAR                           NO-UNDO.
-
-DEFINE VARIABLE vetorevento           AS CHAR                           NO-UNDO.
-                                                                        
+                                                                      
 DEFINE VARIABLE vetorevcoop           AS CHAR                           NO-UNDO.
+DEFINE VARIABLE vetorprogra           AS CHAR                           NO-UNDO.
 
 /* _UIB-CODE-BLOCK-END */
 &ANALYZE-RESUME
@@ -142,7 +146,7 @@ ab_unmap.aux_reginils ab_unmap.aux_regfimls ab_unmap.aux_contarow ~
 ab_unmap.aux_maxrows  ab_unmap.aux_cdeixtem ab_unmap.aux_cdevento_pa ~
 ab_unmap.aux_nrseqtem ab_unmap.aux_nrcpfcgc ab_unmap.aux_dtinieve ~
 ab_unmap.aux_dtfineve ab_unmap.aux_tpevento ab_unmap.aux_cdoperad ~
-ab_unmap.aux_cdcopope
+ab_unmap.aux_cdcopope ab_unmap.aux_nrseqpgm
 &Scoped-Define DISPLAYED-FIELDS crapeap.dtanoage 
 &Scoped-define DISPLAYED-TABLES ab_unmap crapeap
 &Scoped-define FIRST-DISPLAYED-TABLE ab_unmap
@@ -156,7 +160,7 @@ ab_unmap.aux_reginils ab_unmap.aux_regfimls ab_unmap.aux_contarow ~
 ab_unmap.aux_maxrows  ab_unmap.aux_cdeixtem ab_unmap.aux_cdevento_pa ~
 ab_unmap.aux_nrseqtem ab_unmap.aux_nrcpfcgc ab_unmap.aux_dtinieve ~
 ab_unmap.aux_dtfineve ab_unmap.aux_tpevento ab_unmap.aux_cdoperad ~
-ab_unmap.aux_cdcopope
+ab_unmap.aux_cdcopope ab_unmap.aux_nrseqpgm
 
 
 &ANALYZE-RESUME
@@ -203,6 +207,10 @@ DEFINE FRAME Web-Frame
           VIEW-AS SELECTION-LIST SINGLE NO-DRAG 
           SIZE 20 BY 4
      ab_unmap.aux_nrcpfcgc AT ROW 1 COL 1 HELP
+          "" NO-LABEL
+          VIEW-AS SELECTION-LIST SINGLE NO-DRAG 
+          SIZE 20 BY 4
+     ab_unmap.aux_nrseqpgm AT ROW 1 COL 1 HELP
           "" NO-LABEL
           VIEW-AS SELECTION-LIST SINGLE NO-DRAG 
           SIZE 20 BY 4
@@ -315,15 +323,12 @@ PROCEDURE CriaListaEvCoop :
     DEFINE VARIABLE aux_lsevento AS CHAR NO-UNDO.
     DEFINE VARIABLE aux_fcrapeap AS INT  NO-UNDO.
     
-    
-    
-
-    ASSIGN aux_cdeixtem    = "—TODOS --,-1"
-           aux_nrseqtem    = "—TODOS --,-1"
-           aux_cdevento    = "--Selecione Evento --,0"
-           aux_cdevento_pa = "—TODOS --,-1"
-           aux_nrcpfcgc    = "—TODOS --,-1"
-           aux_tpevento    = "—TODOS --,-1"
+    ASSIGN aux_cdeixtem    = "-- TODOS --,-1"
+           aux_nrseqtem    = "-- TODOS --,-1"
+           aux_cdevento    = "-- Selecione Evento --,0"
+           aux_cdevento_pa = "-- TODOS --,-1"
+           aux_nrcpfcgc    = "-- TODOS --,-1"
+           aux_tpevento    = "-- TODOS --,-1"
            aux_lsevento    = ""
            aux_lstpeven    = ""
            aux_fcrapeap    = 0.
@@ -338,7 +343,9 @@ PROCEDURE CriaListaEvCoop :
             EACH  crapedp WHERE crapedp.idevento = craptem.idevento           AND
                                 crapedp.nrseqtem = craptem.nrseqtem           AND
                                 crapedp.cdcooper = INT(ab_unmap.aux_cdcooper) AND
-                                crapedp.dtanoage = INT(ab_unmap.aux_dtanoage) NO-LOCK,
+                                crapedp.dtanoage = INT(ab_unmap.aux_dtanoage) AND
+ 															 (crapedp.nrseqpgm = INT(ab_unmap.aux_nrseqpgm) OR
+															 INT(ab_unmap.aux_nrseqpgm) = 0) NO-LOCK,
             EACH  crapeap WHERE crapeap.idevento = crapedp.idevento           AND
                                 crapeap.cdcooper = crapedp.cdcooper           AND
                                 crapeap.dtanoage = crapedp.dtanoage           AND
@@ -365,7 +372,9 @@ PROCEDURE CriaListaEvCoop :
         FOR EACH crapedp WHERE crapedp.idevento = craptem.idevento             AND
                                crapedp.nrseqtem = craptem.nrseqtem             AND
                                crapedp.cdcooper = INT(ab_unmap.aux_cdcooper)   AND
-                               crapedp.dtanoage = INT(ab_unmap.aux_dtanoage)   NO-LOCK,
+                               crapedp.dtanoage = INT(ab_unmap.aux_dtanoage)   AND
+ 															(crapedp.nrseqpgm = INT(ab_unmap.aux_nrseqpgm) OR
+															 INT(ab_unmap.aux_nrseqpgm) = 0) NO-LOCK,
             EACH crapeap WHERE crapeap.idevento = crapedp.idevento             AND
                                crapeap.cdcooper = crapedp.cdcooper             AND
                                crapeap.dtanoage = crapedp.dtanoage             AND
@@ -394,7 +403,9 @@ PROCEDURE CriaListaEvCoop :
                            (INT(ab_unmap.aux_nrseqtem) < 1                 OR 
                             crapedp.nrseqtem = INT(ab_unmap.aux_nrseqtem)) AND
                             crapedp.cdcooper = INT(ab_unmap.aux_cdcooper)  AND
-                            crapedp.dtanoage = INT(ab_unmap.aux_dtanoage)  NO-LOCK  BY crapedp.nmevento:
+                            crapedp.dtanoage = INT(ab_unmap.aux_dtanoage)  AND
+													 (crapedp.nrseqpgm = INT(ab_unmap.aux_nrseqpgm) OR
+													 INT(ab_unmap.aux_nrseqpgm) = 0) NO-LOCK  BY crapedp.nmevento:
        
        ASSIGN aux_fcrapeap = 0.
        
@@ -482,7 +493,9 @@ PROCEDURE CriaListaEvCoop :
                            (INT(ab_unmap.aux_nrseqtem) < 1                 OR 
                             crapedp.nrseqtem = INT(ab_unmap.aux_nrseqtem)) AND
                             crapedp.cdcooper = INT(ab_unmap.aux_cdcooper)  AND
-                            crapedp.dtanoage = INT(ab_unmap.aux_dtanoage)  NO-LOCK,
+                            crapedp.dtanoage = INT(ab_unmap.aux_dtanoage)  AND
+ 													 (crapedp.nrseqpgm = INT(ab_unmap.aux_nrseqpgm) OR
+														INT(ab_unmap.aux_nrseqpgm) = 0) NO-LOCK,
         FIRST crapeap WHERE crapeap.idevento = crapedp.idevento            AND
                             crapeap.cdcooper = crapedp.cdcooper            AND
                             crapeap.dtanoage = crapedp.dtanoage            AND
@@ -533,7 +546,8 @@ PROCEDURE CriaListaEvCoop :
                              (crapedp.cdevento = INT(ab_unmap.aux_cdevento_pa) OR INT(ab_unmap.aux_cdevento_pa) = -1) AND 
                              (INT(ab_unmap.aux_cdeixtem) = -1 OR crapedp.cdeixtem = INT(ab_unmap.aux_cdeixtem)) AND 
                              (INT(ab_unmap.aux_nrseqtem) = -1 OR crapedp.nrseqtem = INT(ab_unmap.aux_nrseqtem)) AND 
-                             (INT(ab_unmap.aux_tpevento) = -1 OR crapedp.tpevento = INT(ab_unmap.aux_tpevento))   NO-LOCK:
+                             (INT(ab_unmap.aux_tpevento) = -1 OR crapedp.tpevento = INT(ab_unmap.aux_tpevento)) AND
+ 														(crapedp.nrseqpgm = INT(ab_unmap.aux_nrseqpgm) OR INT(ab_unmap.aux_nrseqpgm) = 0)  NO-LOCK:
        
         FIND FIRST crapadp WHERE crapadp.idevento = crapedp.idevento AND
                                  crapadp.cdcooper = crapedp.cdcooper AND
@@ -544,41 +558,75 @@ PROCEDURE CriaListaEvCoop :
                 
         IF NOT AVAILABLE crapadp THEN
            NEXT. 
-         ELSE 
-         DO: 
+        ELSE 
+          DO: 
           
-           /* Se selecionado o evento pega apenas o tipo do evento selecionado para o filtro.*/
-           IF INT(ab_unmap.aux_cdevento_pa) <> -1 THEN
+            /* Se selecionado o evento pega apenas o tipo do evento selecionado para o filtro.*/
+            IF INT(ab_unmap.aux_cdevento_pa) <> -1 THEN
               ASSIGN aux_lstpeven = STRING(crapedp.tpevento).               
             
-              FOR EACH crapcdp WHERE crapcdp.idevento = crapedp.idevento AND
-                                     crapcdp.cdcooper = crapedp.cdcooper AND
-                                     crapcdp.dtanoage = crapedp.dtanoage AND
-                                     crapcdp.tpcuseve = 1                AND
-                                     crapcdp.cdcuseve = 1                AND
-                                     crapcdp.cdevento = crapedp.cdevento AND 
-                                     (ab_unmap.pagina = "divConfirma"     OR
-                                     INT(ab_unmap.aux_cdagenci) = -1      OR
-                                        crapcdp.cdagenci = INT(ab_unmap.aux_cdagenci))    
-                                     /*LOOKUP(STRING(crapcdp.cdevento), aux_lsevento, ",") > 0*/
-                           NO-LOCK BREAK BY crapcdp.nrcpfcgc :
-                                   
-               
+            FOR EACH crapcdp WHERE crapcdp.idevento = crapedp.idevento 
+                               AND crapcdp.cdcooper = crapedp.cdcooper 
+                               AND crapcdp.dtanoage = crapedp.dtanoage 
+                               AND crapcdp.tpcuseve = 1                
+                               AND crapcdp.cdcuseve = 1                
+                               AND crapcdp.cdevento = crapedp.cdevento  
+                               AND (ab_unmap.pagina = "divConfirma"    
+                                OR INT(ab_unmap.aux_cdagenci) = -1
+                                OR crapcdp.cdagenci = INT(ab_unmap.aux_cdagenci))    
+                                /*LOOKUP(STRING(crapcdp.cdevento), aux_lsevento, ",") > 0*/
+                                NO-LOCK BREAK BY crapcdp.nrcpfcgc:
                  
-                IF FIRST-OF(crapcdp.nrcpfcgc) THEN 
+              IF FIRST-OF(crapcdp.nrcpfcgc) THEN 
                 DO:
-                             
-                    FIND gnapfdp WHERE gnapfdp.idevento = crapcdp.idevento AND
-                           gnapfdp.nrcpfcgc = crapcdp.nrcpfcgc           NO-LOCK NO-ERROR.
-        IF AVAILABLE gnapfdp THEN
+                  FIND gnapfdp WHERE gnapfdp.idevento = crapcdp.idevento
+                                 AND gnapfdp.nrcpfcgc = crapcdp.nrcpfcgc NO-LOCK NO-ERROR.
+                 
+                  IF AVAILABLE gnapfdp THEN
                     DO: 
-          CREATE fornecedores.
-          ASSIGN fornecedores.nrcpfcgc = STRING(gnapfdp.nrcpfcgc)
-                 fornecedores.nmfornec = STRING(gnapfdp.nmfornec).       
+                      CREATE fornecedores.
+                      ASSIGN fornecedores.nrcpfcgc = STRING(gnapfdp.nrcpfcgc)
+                             fornecedores.nmfornec = STRING(gnapfdp.nmfornec).       
           
-      END.
-    END.
-             END.
+                    END. /* IF AVAILABLE gnapfdp */
+                END. /* FIRST-OF */
+             END. /* FOR EACH crapcdp */
+             
+           /* ADP */
+           FOR EACH crapadp WHERE crapadp.idevento = crapedp.idevento 
+                              AND crapadp.cdcooper = crapedp.cdcooper 
+                              AND crapadp.dtanoage = crapedp.dtanoage 
+                              /*AND crapadp.tpcuseve = 1                
+                              AND crapadp.cdcuseve = 1                */
+                              AND crapadp.cdevento = crapedp.cdevento  
+                              AND (ab_unmap.pagina = "divConfirma"    
+                               OR INT(ab_unmap.aux_cdagenci) = -1
+                               OR crapadp.cdagenci = INT(ab_unmap.aux_cdagenci))    
+                               /*LOOKUP(STRING(crapcdp.cdevento), aux_lsevento, ",") > 0*/
+                               NO-LOCK BREAK BY crapadp.nrcpfcgc:
+                 
+              IF FIRST-OF(crapadp.nrcpfcgc) THEN 
+                DO:
+                  FIND gnapfdp WHERE gnapfdp.idevento = crapadp.idevento
+                                 AND gnapfdp.nrcpfcgc = crapadp.nrcpfcgc NO-LOCK NO-ERROR.
+                 
+                  IF AVAILABLE gnapfdp THEN
+                    DO: 
+                    
+                      FIND fornecedores where fornecedores.nrcpfcgc = STRING(gnapfdp.nrcpfcgc) NO-LOCK NO-ERROR NO-WAIT.
+                      
+                      IF NOT AVAILABLE fornecedores THEN
+                        DO:
+                          CREATE fornecedores.
+                          ASSIGN fornecedores.nrcpfcgc = STRING(gnapfdp.nrcpfcgc)
+                                 fornecedores.nmfornec = STRING(gnapfdp.nmfornec).       
+                        END.
+          
+                    END. /* IF AVAILABLE gnapfdp */
+                END. /* FIRST-OF */
+             END. /* FOR EACH crapcdp */
+             
+             /* ADP */
          END.
     END.
     
@@ -665,7 +713,6 @@ PROCEDURE CriaListaEventos :
     DEF VAR aux_idstaeve AS CHAR                        NO-UNDO.
     DEF VAR aux_dtevento AS CHAR                        NO-UNDO.
     DEF VAR aux_nmevento AS CHAR                        NO-UNDO.
-    DEF VAR aux_dados    AS CHAR                        NO-UNDO.
     DEF VAR aux_cdeveant AS INT                         NO-UNDO.
     DEF VAR aux_cdageant AS INT                         NO-UNDO.
     DEF VAR aux_contador AS INT                         NO-UNDO.
@@ -673,7 +720,6 @@ PROCEDURE CriaListaEventos :
     DEF VAR aux_qtregist AS INT  INIT 0                 NO-UNDO.
     DEF VAR aux_procregi AS LOGICAL                     NO-UNDO.
     DEF VAR aux_contevto AS INT  INIT 0                 NO-UNDO.
-    DEF VAR vetorevento  AS CHAR                        NO-UNDO.
     DEF VAR aux_contregi AS INT  INIT 0                 NO-UNDO.
     DEF VAR aux_exibefle AS INT  INIT 0                 NO-UNDO.
     
@@ -701,7 +747,9 @@ PROCEDURE CriaListaEventos :
                                                 crapedp.dtanoage = crapadp.dtanoage                AND
                                                 crapedp.cdevento = crapadp.cdevento                AND
                                                (INT(ab_unmap.aux_tpevento) = -1                    OR
-                                                crapedp.tpevento = INT(ab_unmap.aux_tpevento)) NO-LOCK 
+                                                crapedp.tpevento = INT(ab_unmap.aux_tpevento))		 AND
+																								(INT(ab_unmap.aux_nrseqpgm) = 0 OR
+																								crapedp.nrseqpgm = INT(ab_unmap.aux_nrseqpgm))NO-LOCK /*JMD*/
                                                 BY crapadp.nrmeseve
                                                 BY crapadp.dtinieve                                                                                             
                                                 BY crapedp.nmevento
@@ -758,7 +806,9 @@ PROCEDURE CriaListaEventos :
                                                  crapedp.cdevento = crapadp.cdevento           AND
                                                  crapedp.cdcooper = crapadp.cdcooper           AND
                                                  crapedp.dtanoage = crapadp.dtanoage           AND
-                                                 crapedp.nrseqtem = INT(ab_unmap.aux_nrseqtem) NO-LOCK:
+                                                 crapedp.nrseqtem = INT(ab_unmap.aux_nrseqtem) AND
+																								 (crapedp.nrseqpgm = INT(ab_unmap.aux_nrseqpgm) OR
+																								  INT(ab_unmap.aux_nrseqpgm) = 0) NO-LOCK:
                              ASSIGN aux_procregi = TRUE.
                          END.
                        END.
@@ -767,7 +817,9 @@ PROCEDURE CriaListaEventos :
                          FOR FIRST crapedp WHERE crapedp.idevento = crapadp.idevento           AND
                                                  crapedp.cdevento = crapadp.cdevento           AND
                                                  crapedp.cdcooper = crapadp.cdcooper           AND
-                                                 crapedp.dtanoage = crapadp.dtanoage           NO-LOCK,
+                                                 crapedp.dtanoage = crapadp.dtanoage           AND
+																								 (crapedp.nrseqpgm = INT(ab_unmap.aux_nrseqpgm) OR
+																								  INT(ab_unmap.aux_nrseqpgm) = 0) NO-LOCK,
                              FIRST craptem WHERE craptem.idevento = crapedp.idevento           AND
                                                  craptem.idsittem = "A"                        AND
                                                  craptem.nrseqtem = crapedp.nrseqtem           AND
@@ -810,7 +862,9 @@ PROCEDURE CriaListaEventos :
                                   FIND FIRST crapedp WHERE crapedp.idevento = crapadp.idevento            AND
                                                            crapedp.cdcooper = crapadp.cdcooper            AND
                                                            crapedp.dtanoage = crapadp.dtanoage            AND
-                                                           crapedp.cdevento = crapadp.cdevento            
+                                                           crapedp.cdevento = crapadp.cdevento            AND
+																													(crapedp.nrseqpgm = INT(ab_unmap.aux_nrseqpgm) OR
+																													 INT(ab_unmap.aux_nrseqpgm) = 0)
                                                            NO-LOCK NO-ERROR NO-WAIT.
 
                                   IF AVAILABLE crapedp THEN
@@ -833,7 +887,9 @@ PROCEDURE CriaListaEventos :
                               FIND FIRST crapedp WHERE crapedp.idevento = crapadp.idevento   AND
                                                        crapedp.cdcooper = crapadp.cdcooper   AND
                                                        crapedp.dtanoage = crapadp.dtanoage   AND
-                                                       crapedp.cdevento = crapadp.cdevento
+                                                       crapedp.cdevento = crapadp.cdevento   AND
+																											(crapedp.nrseqpgm = INT(ab_unmap.aux_nrseqpgm) OR
+																											 INT(ab_unmap.aux_nrseqpgm) = 0)
                                                        NO-LOCK NO-ERROR NO-WAIT.
 
                               IF AVAILABLE crapedp THEN
@@ -868,7 +924,9 @@ PROCEDURE CriaListaEventos :
                                 FIND FIRST crabedp WHERE crabedp.idevento = crapadp.idevento AND 
                                                          crabedp.cdcooper = crapadp.cdcooper AND
                                                          crabedp.dtanoage = crapadp.dtanoage AND 
-                                                         crabedp.cdevento = crapadp.cdevento NO-LOCK NO-ERROR NO-WAIT.
+                                                         crabedp.cdevento = crapadp.cdevento AND
+ 																											  (crabedp.nrseqpgm = INT(ab_unmap.aux_nrseqpgm) OR
+																												 INT(ab_unmap.aux_nrseqpgm) = 0) NO-LOCK NO-ERROR NO-WAIT.
                                 IF AVAILABLE crabedp THEN
                                   DO:
                                     IF crabedp.qtmaxtur > 0 THEN
@@ -878,7 +936,9 @@ PROCEDURE CriaListaEventos :
                                         FIND FIRST crabedp WHERE crabedp.idevento = crapadp.idevento AND 
                                                              crabedp.cdcooper = 0 AND
                                                              crabedp.dtanoage = 0 AND 
-                                                             crabedp.cdevento = crapadp.cdevento NO-LOCK NO-ERROR NO-WAIT.
+                                                             crabedp.cdevento = crapadp.cdevento AND
+																													  (crabedp.nrseqpgm = INT(ab_unmap.aux_nrseqpgm) OR
+																														 INT(ab_unmap.aux_nrseqpgm) = 0) NO-LOCK NO-ERROR NO-WAIT.
                                                             
                                         IF AVAILABLE crabedp THEN
                                           ASSIGN aux_qtmaxtur = aux_qtmaxtur + crabedp.qtmaxtur.
@@ -892,7 +952,9 @@ PROCEDURE CriaListaEventos :
                             FIND FIRST crabedp WHERE crabedp.idevento = crapadp.idevento AND 
                                                      crabedp.cdcooper = crapadp.cdcooper AND
                                                      crabedp.dtanoage = crapadp.dtanoage AND 
-                                                     crabedp.cdevento = crapadp.cdevento NO-LOCK NO-ERROR NO-WAIT. 
+                                                     crabedp.cdevento = crapadp.cdevento AND
+																										(crabedp.nrseqpgm = INT(ab_unmap.aux_nrseqpgm) OR
+																										 INT(ab_unmap.aux_nrseqpgm) = 0) NO-LOCK NO-ERROR NO-WAIT. 
                             IF AVAILABLE crabedp THEN
                               DO:
                                 IF crabedp.qtmaxtur > 0 THEN
@@ -902,7 +964,9 @@ PROCEDURE CriaListaEventos :
                                     FIND FIRST crabedp WHERE crabedp.idevento = crapadp.idevento AND 
                                                          crabedp.cdcooper = 0 AND
                                                          crabedp.dtanoage = 0 AND 
-                                                         crabedp.cdevento = crapadp.cdevento NO-LOCK NO-ERROR NO-WAIT.
+                                                         crabedp.cdevento = crapadp.cdevento AND
+																												(crabedp.nrseqpgm = INT(ab_unmap.aux_nrseqpgm) OR
+																												 INT(ab_unmap.aux_nrseqpgm) = 0) NO-LOCK NO-ERROR NO-WAIT.
                                                         
                                     IF AVAILABLE crapedp THEN
                                       ASSIGN aux_qtmaxtur = aux_qtmaxtur + crabedp.qtmaxtur.
@@ -1090,41 +1154,25 @@ PROCEDURE CriaListaEventos :
                        IF   aux_idstaeve = ?   THEN
                             aux_idstaeve = "".
                       
-                       ASSIGN aux_dados = "~{" +
-                                          "cdagenci:'" +  TRIM(STRING(crapadp.cdagenci)) + "'," + 
-                                          "cdcooper:'" +  TRIM(STRING(crapadp.cdcooper)) + "'," +
-                                          "cdevento:'" +  TRIM(STRING(crapadp.cdevento)) + "'," +
-                                          "nrseqeve:'" +  TRIM(STRING(crapadp.nrseqdig)) + "'," +
-                                          "nmevento:'" +  TRIM(STRING(aux_nmevento))     + "'," +
-                                          "tpevento:'" +  TRIM(STRING(aux_tpevento))     + "'," +
-                                          "nmresage:'" +  TRIM(STRING(aux_nmresage))     + "'," +
-                                          "idpropos:'" +  TRIM(STRING(aux_idpropos))     + "'," +
-                                          "dtevento:'" +  TRIM(STRING(aux_dtevento))     + "'," +
-                                          "dslocali:'" +  TRIM(STRING(aux_dslocali))     + "'," +
-                                          "dshroeve:'" +  TRIM(crapadp.dshroeve)         + "'," +
-                                          "qtmaxtur:'" +  TRIM(STRING(aux_qtmaxtur))     + "'," +
-                                          "nrinscri:'" +  TRIM(STRING(aux_nrinscri))     + "'," +
-                                          "idstaeve:'" +  TRIM(STRING(aux_idstaeve))     + "'," +
-                                          "enlocali:'" +  TRIM(STRING(aux_enlocali))     + "'," +
-                                          "nrconfir:'" +  TRIM(STRING(aux_nrconfir))     + "'," +
-                                          "nrdrowid:'" +  STRING(ROWID(crapadp))         + "'"  + "~}".        
-                       
-                       IF  vetorevento = '' THEN
-                           vetorevento = aux_dados.
-                       ELSE
-                           vetorevento = vetorevento + ',' + aux_dados.
-                           
-                       ASSIGN aux_contevto = aux_contevto + 1
-                              aux_contregi = aux_contregi + 1.
-                       
-                       
-                       IF aux_contevto = 50 THEN
-                        DO:
-                          RUN RodaJavaScript("mevento.push(" + TRIM(STRING(vetorevento)) + ");").
-                         
-                          ASSIGN aux_contevto = 0
-                                 vetorevento = "".                      
-                        END.
+											 RUN RodaJavaScript("mevento.push(~{cdagenci:'" +  TRIM(STRING(crapadp.cdagenci))
+																										 + "',cdcooper:'" +  TRIM(STRING(crapadp.cdcooper))
+																										 + "',cdevento:'" +  TRIM(STRING(crapadp.cdevento))
+																										 + "',nrseqeve:'" +  TRIM(STRING(crapadp.nrseqdig))
+																										 + "',nmevento:'" +  TRIM(STRING(aux_nmevento))    
+																										 + "',tpevento:'" +  TRIM(STRING(aux_tpevento))    
+																										 + "',nmresage:'" +  TRIM(STRING(aux_nmresage))    
+																										 + "',idpropos:'" +  TRIM(STRING(aux_idpropos))    
+																										 + "',dtevento:'" +  TRIM(STRING(aux_dtevento))    
+																										 + "',dslocali:'" +  TRIM(STRING(aux_dslocali))    
+																										 + "',dshroeve:'" +  TRIM(crapadp.dshroeve)        
+																										 + "',qtmaxtur:'" +  TRIM(STRING(aux_qtmaxtur))    
+																										 + "',nrinscri:'" +  TRIM(STRING(aux_nrinscri))    
+																										 + "',idstaeve:'" +  TRIM(STRING(aux_idstaeve))    
+																										 + "',enlocali:'" +  TRIM(STRING(aux_enlocali))    
+																										 + "',nrconfir:'" +  TRIM(STRING(aux_nrconfir))    
+																										 + "',nrdrowid:'" +  STRING(ROWID(crapadp)) + "'~});"). 
+											 
+                       ASSIGN aux_contregi = aux_contregi + 1.                       
                       
                      END.
                      ELSE DO:
@@ -1136,11 +1184,6 @@ PROCEDURE CriaListaEventos :
 
     CLOSE QUERY q_crapadp.
 
-    IF aux_contevto < 50  THEN
-    DO:
-      RUN RodaJavaScript("mevento.push(" + TRIM(STRING(vetorevento)) + ");"). 
-      
-    END.
     IF aux_contregi <= aux_qtpagina AND aux_exibefle = 1 THEN
       RUN RodaJavaScript(" aux_exibedir = 1").  
 
@@ -1240,6 +1283,8 @@ PROCEDURE htmOffsets :
     ("aux_cdoperad":U,"ab_unmap.aux_cdoperad":U,ab_unmap.aux_cdoperad:HANDLE IN FRAME {&FRAME-NAME}).
   RUN htmAssociate
     ("aux_cdcopope":U,"ab_unmap.aux_cdcopope":U,ab_unmap.aux_cdcopope:HANDLE IN FRAME {&FRAME-NAME}).
+  RUN htmAssociate
+    ("aux_nrseqpgm":U,"ab_unmap.aux_nrseqpgm":U,ab_unmap.aux_nrseqpgm:HANDLE IN FRAME {&FRAME-NAME}).
 
 END PROCEDURE.
 
@@ -1411,6 +1456,14 @@ ELSE
 
 END PROCEDURE.
 
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE CriaListaProgramas w-html 
+PROCEDURE CriaListaProgramas:
+
+ {includes/wpgd0010.i}
+ ASSIGN ab_unmap.aux_nrseqpgm:LIST-ITEM-PAIRS IN FRAME {&FRAME-NAME} = vetorprogra.
+  
+END PROCEDURE.
+
 /* _UIB-CODE-BLOCK-END */
 &ANALYZE-RESUME
 
@@ -1449,9 +1502,10 @@ ASSIGN opcao                    = GET-FIELD("aux_cddopcao")
        ab_unmap.aux_reginils    = GET-VALUE("aux_reginils")
        ab_unmap.aux_regfimls    = GET-VALUE("aux_regfimls")
        ab_unmap.aux_contarow    = INT(GET-VALUE("aux_contarow"))
-         ab_unmap.aux_maxrows     = INT(GET-VALUE("aux_maxrows"))
-         ab_unmap.aux_cdcopope    = GET-VALUE("aux_cdcopope")
-         ab_unmap.aux_cdoperad    = GET-VALUE("aux_cdoperad").
+       ab_unmap.aux_maxrows     = INT(GET-VALUE("aux_maxrows"))
+       ab_unmap.aux_cdcopope    = GET-VALUE("aux_cdcopope")
+       ab_unmap.aux_cdoperad    = GET-VALUE("aux_cdoperad")
+       ab_unmap.aux_nrseqpgm    = GET-VALUE("aux_nrseqpgm").
 
 RUN outputHeader.
 
@@ -1667,9 +1721,9 @@ IF REQUEST_METHOD = "POST":U THEN
       END CASE.
 
       RUN CriaListaEvCoop.
-
+			RUN CriaListaProgramas.
       RUN CriaListaEventos. 
-      
+            
       IF msg-erro-aux = 10 OR (opcao <> "sa" AND opcao <> "ex" AND opcao <> "in") THEN
          RUN displayFields.
  
@@ -1765,6 +1819,7 @@ ELSE /* Método GET */
                        RUN PosicionaNoPrimeiro.
                     
                     RUN CriaListaEvCoop.                                        
+										RUN CriaListaProgramas.
                     RUN CriaListaEventos.
                     RUN displayFields.
                     RUN enableFields.

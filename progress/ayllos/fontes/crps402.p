@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Evandro
-   Data    : Agosto/2004.                    Ultima atualizacao: 05/03/2015
+   Data    : Agosto/2004.                    Ultima atualizacao: 05/01/2018
 
    Dados referentes ao programa:
 
@@ -61,6 +61,8 @@
                             
                05/03/2015 - Ajuste no estouro do format do campo nrdocmto (Daniel).  
                             
+               05/01/2017 - Ajuste para quando enviar extrato CNAB240 por email 
+                            fazer ux2dos (Tiago #820277)
 ..............................................................................*/
 { includes/var_batch.i "NEW" } 
 { includes/var_cnab.i "NEW" }  
@@ -491,8 +493,8 @@ FOR EACH crapcex WHERE
          DO:
             /* Move para diretorio converte para utilizar na BO */
             UNIX SILENT VALUE 
-                       ("cp " + "salvar/" + aux_nmarqimp + " /usr/coop/" +
-                        crapcop.dsdircop + "/converte" + 
+                       ("ux2dos " + "salvar/" + aux_nmarqimp + " > /usr/coop/" +
+                        crapcop.dsdircop + "/converte/" + aux_nmarqimp +
                         " 2> /dev/null").
          
             /* envio de email */ 

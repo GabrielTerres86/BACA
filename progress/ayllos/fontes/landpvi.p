@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Deborah/Edson
-   Data    : Outubro/91.                     Ultima atualizacao: 19/11/2017
+   Data    : Outubro/91.                     Ultima atualizacao: 01/02/2018
 
    Dados referentes ao programa:
 
@@ -502,12 +502,24 @@
               11/07/2017 - Ajustes historico 354
                            (Demetrius Wolff MOUTS - Prj 364)
 
-                            
                10/08/2017 - Somente vamos exibir a critica 728 para casos em que o Tipo do 
                             cartao do titular nao for de um operador isso na leitura da crapcrm 
                             (Lucas Ranghetti #726238)
+
 			  19/11/2017 - Ajustes para retirar o uso do historico 354
                            (Jonata RKAM - P364)
+
+              01/02/2018 - Inserçao da verificaçao e solicitaçao de permissao de uso de saldo bloqueado em pagamento
+                            de empréstimo
+                           ( Lindon GFT )
+
+			  02/02/2018 - Alteraçao do local de pesquisa do saldo bloqueado por solicitaçao do Sr. Daniel da tabela 
+                           crapsld para (aux_vlsdbloq = tt-saldos.vlsdblpr + tt-saldos.vlsdblfp + tt-saldos.vlsdbloq.) 
+                           a fim de pegar os valore de alteraçao do dia.
+                           ( Lindon GFT )
+
+               08/03/2018 - Substituidas verificacoes pelo campo "cdtipcta" fixos pelo código da modalidade e 
+                            flag de conta integraçao. PRJ366 (Lombardi).
 
 ............................................................................. */
 /*** Historico 351 aceita nossos cheques e de outros bancos ***/
@@ -560,6 +572,9 @@ DEF VAR par_numipusr         AS CHAR                            NO-UNDO.
 DEF VAR aux_vlblqjud         AS DEC                             NO-UNDO.
 DEF VAR aux_vlresblq         AS DEC                             NO-UNDO.
 DEF VAR aux_flgativo         AS DEC                             NO-UNDO.
+DEF VAR aux_cdmodali         AS INT                             NO-UNDO.
+DEF VAR aux_idctaitg         AS INT                             NO-UNDO.
+DEF VAR aux_des_erro         AS CHAR                            NO-UNDO.
 
 DEF VAR h-b1wgen9999         AS HANDLE                          NO-UNDO.
 DEF VAR h-b1wgen0175         AS HANDLE                          NO-UNDO.
@@ -1843,10 +1858,40 @@ DO WHILE TRUE ON ERROR UNDO, NEXT.
 
       IF   craphis.indebcre = "C"   AND    glb_cdcritic = 0   THEN
            DO:
-               IF   crapass.cdtipcta = 6   OR
-                    crapass.cdtipcta = 7   OR
-                    crapass.cdtipcta = 17  OR
-                    crapass.cdtipcta = 18  THEN
+               
+               { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+               RUN STORED-PROCEDURE pc_busca_modalidade_tipo
+               aux_handproc = PROC-HANDLE NO-ERROR (INPUT crapass.inpessoa, /* Tipo de pessoa */
+                                                    INPUT crapass.cdtipcta, /* Tipo de conta */
+                                                   OUTPUT 0,                /* Modalidade */
+                                                   OUTPUT "",               /* Flag Erro */
+                                                   OUTPUT "").              /* Descrição da crítica */
+
+               CLOSE STORED-PROC pc_busca_modalidade_tipo
+                     aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+               { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+               ASSIGN aux_cdmodali = 0
+                      aux_des_erro = ""
+                      aux_dscritic = ""
+                      aux_cdmodali = pc_busca_modalidade_tipo.pr_cdmodalidade_tipo 
+                                     WHEN pc_busca_modalidade_tipo.pr_cdmodalidade_tipo <> ?
+                      aux_des_erro = pc_busca_modalidade_tipo.pr_des_erro 
+                                     WHEN pc_busca_modalidade_tipo.pr_des_erro <> ?
+                      aux_dscritic = pc_busca_modalidade_tipo.pr_dscritic
+                                     WHEN pc_busca_modalidade_tipo.pr_dscritic <> ?.
+
+               IF aux_des_erro = "NOK"  THEN
+                   DO:
+                      BELL.
+                      ASSIGN glb_dscritic = aux_dscritic.
+                      MESSAGE glb_dscritic.
+                      LEAVE.
+                   END.
+               
+               IF   aux_cdmodali = 3 THEN
                     DO:
                         BELL.
 
@@ -2574,17 +2619,51 @@ DO WHILE TRUE ON ERROR UNDO, NEXT.
               FIND FIRST tt-saldos NO-LOCK NO-ERROR.
               IF AVAILABLE tt-saldos THEN
                  DO:
+						/* É atribuido ao saldo disponivel o valor da soma do saldo */
+						/* disponivel  + saldo do cheque especial + o valor do limite de crédito*/
                      ASSIGN aux_vlsddisp = tt-saldos.vlsddisp +
                                            tt-saldos.vlsdchsl + 
                                            tt-saldos.vllimcre.
-                 END.
+						ASSIGN aux_vlsdbloq = tt-saldos.vlsdblpr +
+												tt-saldos.vlsdblfp + 
+												tt-saldos.vlsdbloq.
+					END. /*AVAILABLE tt-saldos THEN*/
+
                  
                  IF aux_indebcre = "D" THEN
                     DO:
-                       /* Condicao para verifica se possui saldo disponivel */
+					   /* Verifica se o valor de lançamento é maior que o saldo disponível (Saldo normal + valor do cheque */
+                       /*  especial + valor do limite de crédito). */
                        IF tel_vllanmto > aux_vlsddisp THEN
                           DO:
-                            
+							/* Verifica se o saldo bloqueado é maio que 0.*/
+							IF  aux_vlsdbloq > 0 THEN
+							  DO:
+								/* Solicita a confirmaçao de utilizaçao do saldo bloqueado para o pagamento. */
+								/* Se o valor bloqueado for maior que 0, solicita a senha para utilizaçao do valor */
+								/* do saldo bloqueado para pagamento do débito. */
+								DO:
+								  /* Solicita a confirmaçao de pagamento mesmo ocorrendo o estouro da conta.*/
+								  RUN fontes/confirma.p
+									(INPUT "Deseja utilizar o valor do saldo bloqueado? S/N",
+										OUTPUT aux_confirma).
+								  IF aux_confirma <> "S" THEN
+									UNDO, NEXT INICIO. 
+								  ELSE 
+									  DO:
+										RUN fontes/pedesenha.p (INPUT glb_cdcooper,
+										  INPUT 2, 
+										  OUTPUT aut_flgsenha,
+										  OUTPUT aut_cdoperad).
+										/*Se nao for dada a autorizaçao ou a senha estiver errada é cancelado o pagamento*/
+										IF NOT aut_flgsenha  THEN
+										  UNDO, NEXT INICIO.
+									  END. 
+								END. /* aux_vlsdbloq <= tel_vllanmto */
+							  END.
+							  IF  (aux_vlsdbloq + aux_vlsddisp)< tel_vllanmto THEN
+								DO:
+								  /* Solicita a confirmaçao de pagamento mesmo ocorrendo o estouro da conta.*/
                             RUN fontes/confirma.p
                               (INPUT "Saldo Disp.: " + STRING(aux_vlsddisp,"zzz,zzz,zz9.99-")
                                       + ". Confirma estouro de conta? S/N",
@@ -2592,10 +2671,9 @@ DO WHILE TRUE ON ERROR UNDO, NEXT.
                             
                             IF aux_confirma <> "S" THEN
                               UNDO, NEXT INICIO.
-                            
-                        END.
-                    END.                 
-              
+								END. /* aux_vlsdbloq <= tel_vllanmto */
+						  END. /* tel_vllanmto >= aux_vlsddisp */             
+					END. /* aux_indebcre = "D" */
         END. /* END IF  CAN-DO("275,394,428",STRING(tel_cdhistor)) */        
       
 
@@ -3534,7 +3612,7 @@ DO WHILE TRUE ON ERROR UNDO, NEXT.
                         ELSE
                             DO:
                                 ASSIGN glb_cdcritic = 0
-                                       glb_dscritic = "Proposta de portabilidade não encontrada.".
+                                       glb_dscritic = "Proposta de portabilidade nao encontrada.".
                             END.
                    END.
                IF   aux_inhistor = 12   THEN
@@ -5163,17 +5241,42 @@ DO WHILE TRUE ON ERROR UNDO, NEXT.
                               crabass5.nrdconta = tel_nrdctabb
                               NO-LOCK NO-ERROR.
           
-          IF   crabass5.cdtipcta >= 8    AND
-               crabass5.cdtipcta <= 11   THEN
+          { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+          RUN STORED-PROCEDURE pc_busca_tipo_conta_itg
+          aux_handproc = PROC-HANDLE NO-ERROR (INPUT crabass5.inpessoa, /* Tipo de pessoa */
+                                               INPUT crabass5.cdtipcta, /* Tipo de conta */
+                                              OUTPUT 0,                /* Modalidade */
+                                              OUTPUT "",               /* Flag Erro */
+                                              OUTPUT "").              /* Descrição da crítica */
+
+          CLOSE STORED-PROC pc_busca_tipo_conta_itg
+                aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+          { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+          ASSIGN aux_idctaitg = 0
+                 aux_des_erro = ""
+                 aux_dscritic = ""
+                 aux_idctaitg = pc_busca_tipo_conta_itg.pr_indconta_itg 
+                                WHEN pc_busca_tipo_conta_itg.pr_indconta_itg <> ?
+                 aux_des_erro = pc_busca_tipo_conta_itg.pr_des_erro 
+                                WHEN pc_busca_tipo_conta_itg.pr_des_erro <> ?
+                 aux_dscritic = pc_busca_tipo_conta_itg.pr_dscritic
+                                WHEN pc_busca_tipo_conta_itg.pr_dscritic <> ?.
+
+          IF aux_des_erro = "NOK"  THEN
                DO:
-                        /* IF CECRED */
-                   IF  crabass5.cdbcochq = crapcop.cdbcoctl  THEN
+                 BELL.
+                 ASSIGN glb_dscritic = aux_dscritic.
+                 MESSAGE glb_dscritic.
+                 LEAVE.
+              END.
+          
+          IF aux_idctaitg = 0 THEN
+               DO:
                        ASSIGN crabfdc.cdbandep = crapcop.cdbcoctl
                               crabfdc.cdagedep = crapcop.cdagectl.
-                   ELSE /* BANCOOB */
-                       ASSIGN crabfdc.cdbandep = 756
-                              crabfdc.cdagedep = crapcop.cdagebcb.
-
                END.
           ELSE
                /* BANCO DO BRASIL - SEM DIGITO */

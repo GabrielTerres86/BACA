@@ -831,8 +831,8 @@ ab_unmap.aux_cdcooper:LIST-ITEM-PAIRS IN FRAME {&FRAME-NAME} = aux_crapcop.
 /* Se a cooperativa ainda não foi escolhida, pega a da sessão do usuário */
 IF INT(ab_unmap.hdn_cdcooper) = 0 THEN
      ab_unmap.aux_cdcooper = STRING(gnapses.cdcooper).
-/*ELSE
-  ab_unmap.aux_cdcooper = ab_unmap.hdn_cdcooper.*/
+ELSE IF INT(ab_unmap.aux_cdcooper) = 0 THEN
+  ab_unmap.aux_cdcooper = ab_unmap.hdn_cdcooper.
 
    RUN CriaListaPac.
 

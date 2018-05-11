@@ -214,7 +214,12 @@
              07/02/2017 - Ajustes para verificar vencimento da P.M. TROMBUDO CENTRAL 
                           e FMS TROMBUDO CENTRAL (Tiago/Fabricio SD653830)
 
-	         26/05/2017 - Ajustes para verificar vencimento da P.M. AGROLANDIA (Tiago/Fabricio #647174)
+	         26/05/2017 - Ajustes para verificar vencimento da P.M. AGROLANDIA (Tiago/Fabricio #647174
+           
+           08/12/2017 - Melhoria 458, adicionado campo tppagmto na procedure gera-faturas
+                        Antonio R. Jr (mouts)
+	        			 
+			 03/01/2018 - M307 Solicitação de senha e limite para pagamento (Diogo / MoutS)
 ............................................................................ */
 
 {dbo/bo-erro1.i}
@@ -1153,6 +1158,7 @@ PROCEDURE gera-faturas.
     DEF INPUT  PARAM par_nrterfin        AS INTE                       NO-UNDO.
     /* Tipo de captura 1-codbarra 2- linha digitavel*/
     DEF INPUT  PARAM par_tpcptdoc        AS INTE                       NO-UNDO. 
+    DEF INPUT  PARAM p-tppagmto          AS INTE                       NO-UNDO. /** 0 - Conta / 1 - Especie **/
                                                                      
     DEF OUTPUT PARAM p-histor            AS INTE                       NO-UNDO.
     DEF OUTPUT PARAM p-pg                AS LOG                        NO-UNDO.
@@ -1465,6 +1471,7 @@ PROCEDURE gera-faturas.
            craplft.cdempcon = crapcon.cdempcon
            craplft.cdsegmto = crapcon.cdsegmto
            craplft.tpcptdoc = par_tpcptdoc
+           craplft.tppagmto = p-tppagmto
            craplot.nrseqdig = craplot.nrseqdig + 1
            craplot.qtcompln = craplot.qtcompln + 1
            craplot.qtinfoln = craplot.qtinfoln + 1
@@ -2158,6 +2165,112 @@ PROCEDURE calcula_dv_adicional:
 
 END PROCEDURE.
 
+
+/* valida o valor recebido como parâmetro com o limite da agencia / cooperativa e solicita senha do coordenador se for maior */
+PROCEDURE valida-valor-limite:
+
+    DEF INPUT PARAM par_cdcooper  AS INTEGER                         NO-UNDO. /* Cooperativa */
+    DEF INPUT PARAM par_cdoperad  AS CHARACTER                       NO-UNDO. /* Codigo do coordenador */
+    DEF INPUT PARAM par_cdagenci  AS INTEGER                         NO-UNDO. /* PA */
+    DEF INPUT PARAM par_nrocaixa  AS INTEGER                         NO-UNDO. /* Caixa */
+    DEF INPUT PARAM par_vltitfat  AS DECIMAL                         NO-UNDO. /* Valor a ser comparado com o limite */
+    DEF INPUT PARAM par_senha     AS CHARACTER                       NO-UNDO. /* Senha do coordenador */
+    DEF OUTPUT PARAM par_des_erro AS CHARACTER                       NO-UNDO. /* Descriçao do erro */
+    DEF OUTPUT PARAM par_dscritic AS CHARACTER                       NO-UNDO. /* Descriçao da critica */
+    DEF OUTPUT PARAM par_inssenha AS INTEGER                         NO-UNDO. /* Retorna 1 se foi inserida senha do coordenador e passou e 0 se nao precisou inserir a senha - valor abaixo do limite*/
+
+    DEF VARIABLE aux_valorlimite AS DECIMAL                         NO-UNDO.
+  
+  
+    ASSIGN aux_valorlimite = 0
+           par_inssenha = 0.
+    
+    /* Verifica o limite da agencia primeiro */
+    FIND crapage WHERE crapage.cdagenci = par_cdagenci 
+                       AND crapage.cdcooper = par_cdcooper
+                       NO-LOCK NO-ERROR.
+    IF AVAILABLE crapage AND crapage.vllimpag > 0 THEN
+      DO:
+        ASSIGN aux_valorlimite = crapage.vllimpag.
+      END.
+    ELSE
+      /* Se nao tiver, verifica o limite da cooperativa */
+      DO:
+        FIND crapcop WHERE crapcop.cdcooper = par_cdcooper NO-LOCK NO-ERROR.
+        IF AVAILABLE crapcop AND crapcop.vllimpag > 0 THEN
+          DO:
+            ASSIGN aux_valorlimite = crapcop.vllimpag.
+          END.
+      END.
+    
+    /* Se o valor encontrado (parametrizado) for maior que zero e menor que o valor do título, solicita senha */ 
+    IF aux_valorlimite > 0 AND par_vltitfat > aux_valorlimite THEN
+      DO:
+        IF par_cdoperad = "" THEN
+          DO:
+            ASSIGN par_des_erro = "Operaçao acima do limite. Informe código e senha do coordenador."
+                   par_dscritic = "Operaçao acima do limite. Informe código e senha do coordenador.".
+            RETURN "NOK".
+          END.
+             
+        /* Valida o operador */
+        FIND crapope WHERE crapope.cdcooper = par_cdcooper   AND
+                           crapope.cdoperad = par_cdoperad 
+                           NO-LOCK NO-ERROR.
+   
+        IF NOT AVAILABLE crapope THEN
+         DO:
+             ASSIGN par_des_erro = "Coordenador nao localizado."
+                    par_dscritic = "Coordenador nao localizado.".
+             RETURN "NOK".
+         END.
+        
+        /* Nivel 2-Coordenador / 3-Gerente */        
+        IF crapope.nvoperad < 2 THEN
+           DO:
+               ASSIGN par_des_erro = "Usuário nao é coordenador."
+                      par_dscritic = "Usuário nao é coordenador.".
+               RETURN "NOK".
+           END.
+           
+        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+        /* Efetuar a chamada da rotina Oracle */ 
+        RUN STORED-PROCEDURE pc_valida_senha_AD
+            aux_handproc = PROC-HANDLE NO-ERROR(INPUT crapcop.cdcooper, /*Cooperativa*/
+                                                INPUT par_cdoperad,         /*Operador   */
+                                                INPUT par_senha,          /*Nr.da Senha*/
+                                                OUTPUT 0,               /*Cod. critica */
+                                                OUTPUT "").             /*Desc. critica*/
+
+        /* Fechar o procedimento para buscarmos o resultado */ 
+        CLOSE STORED-PROC pc_valida_senha_AD
+               aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+
+        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
+
+        HIDE MESSAGE NO-PAUSE.
+
+        /* Busca possíveis erros */ 
+        ASSIGN par_des_erro = ""
+               par_dscritic = ""
+               par_des_erro = pc_valida_senha_AD.pr_dscritic 
+                             WHEN pc_valida_senha_AD.pr_dscritic <> ?
+               par_dscritic = pc_valida_senha_AD.pr_dscritic 
+                             WHEN pc_valida_senha_AD.pr_dscritic <> ?.
+                              
+        /* Retorna erro */
+        IF  par_dscritic <> "" THEN
+          DO:
+              RETURN "NOK".
+          END.
+           
+        ASSIGN par_inssenha = 1.
+           
+      END. /* aux_valorlimite */
+      
+    RETURN "OK".
+END PROCEDURE.
 
 /* b1crap14.p */
 

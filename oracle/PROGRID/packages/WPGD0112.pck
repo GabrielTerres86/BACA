@@ -13,7 +13,7 @@ CREATE OR REPLACE PACKAGE PROGRID.WPGD0112 IS
   -- Frequencia: 
   -- Objetivo  : Rotinas para Custos dos Eventos do Progrid
   --
-  -- Alteracoes:  
+  -- Alteracoes: 30/08/2017 - Incluído filtro por Programas em ambas procedures, Prj. 322 (Jean Michel)
   --
   ---------------------------------------------------------------------------------------------------------------
   
@@ -21,6 +21,7 @@ CREATE OR REPLACE PACKAGE PROGRID.WPGD0112 IS
   PROCEDURE pc_relatorio_custos_orcados_a(pr_dtanoage IN crapagp.dtanoage%TYPE --> ano da agencia
                                          ,pr_cdcooper IN crapcop.cdcooper%TYPE --> codigo da cooperativa
                                          ,pr_cdagenci IN VARCHAR2              --> uma ou varias agencias
+                                         ,pr_nrseqpgm IN crappgm.nrseqpgm%TYPE --> Código do Programa
                                          ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
                                          ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
                                          ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
@@ -32,6 +33,7 @@ CREATE OR REPLACE PACKAGE PROGRID.WPGD0112 IS
   PROCEDURE pc_relatorio_custos_orcados_s(pr_dtanoage IN crapagp.dtanoage%TYPE --> ano da agencia
                                          ,pr_cdcooper IN crapcop.cdcooper%TYPE --> codigo da cooperativa
                                          ,pr_cdagenci IN VARCHAR2              --> uma ou varias agencias
+                                         ,pr_nrseqpgm IN crappgm.nrseqpgm%TYPE --> Código do Programa
                                          ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
                                          ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
                                          ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
@@ -59,12 +61,15 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0112 IS
   -- Alteracoes:  08/06/2016 - Ajustado rotina para apresentara a carga horaria com :
   --                           PRJ229 - Melhorias OQS (Odirlei-AMcom)
   --
+  --              30/08/2017 - Incluído filtro por Programas em ambas procedures, Prj. 322 (Jean Michel)
+  --
   ---------------------------------------------------------------------------------------------------------------
   
   -- Gera relatório ANALITICO para a tela WPGD0112.
   PROCEDURE pc_relatorio_custos_orcados_a(pr_dtanoage IN crapagp.dtanoage%TYPE --> ano da agencia
                                          ,pr_cdcooper IN crapcop.cdcooper%TYPE --> codigo da cooperativa
                                          ,pr_cdagenci IN VARCHAR2              --> uma ou varias agencias
+                                         ,pr_nrseqpgm IN crappgm.nrseqpgm%TYPE --> Código do Programa
                                          ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
                                          ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
                                          ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
@@ -176,6 +181,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0112 IS
             and cp.cdcooper = ce.cdcooper
             and cp.dtanoage = ce.dtanoage
             and cp.cdevento = ce.cdevento
+            and (cp.nrseqpgm = pr_nrseqpgm OR pr_nrseqpgm = 0)
             --Evento Raiz
             and cp2.idevento = ce.idevento
             and cp2.cdcooper = 0
@@ -228,6 +234,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0112 IS
         and cp.cdcooper = 0
         and cp.dtanoage = 0
         and cp.cdevento = cd.cdevento
+        and (cp.nrseqpgm = pr_nrseqpgm OR pr_nrseqpgm = 0)
         and ct.nrseqtem(+) = cp.nrseqtem
         and ge.idevento(+) = ct.idevento
         and ge.cdcooper(+) = ct.cdcooper
@@ -362,6 +369,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0112 IS
   PROCEDURE pc_relatorio_custos_orcados_s(pr_dtanoage IN crapagp.dtanoage%TYPE --> ano da agencia
                                          ,pr_cdcooper IN crapcop.cdcooper%TYPE --> codigo da cooperativa
                                          ,pr_cdagenci IN VARCHAR2              --> uma ou varias agencias
+                                         ,pr_nrseqpgm IN crappgm.nrseqpgm%TYPE --> Código do Programa
                                          ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
                                          ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
                                          ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
@@ -452,6 +460,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0112 IS
           and cp.cdcooper = ce.cdcooper
           and cp.dtanoage = ce.dtanoage
           and cp.cdevento = ce.cdevento
+          and (cp.nrseqpgm = pr_nrseqpgm OR pr_nrseqpgm = 0)
           --Evento Raiz
           and cp2.idevento = ce.idevento
           and cp2.cdcooper = 0
@@ -507,7 +516,8 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0112 IS
           and ge.cdeixtem(+) = ct.cdeixtem
           and cd.cdcooper = pr_cdcooper
           and cd.dtanoage = pr_dtanoage
-          AND (INSTR(','||pr_cdagenci||',', ','||TO_CHAR(cd.cdagenci)||',') > 0 OR pr_cdagenci = '0')                         
+          and (INSTR(','||pr_cdagenci||',', ','||TO_CHAR(cd.cdagenci)||',') > 0 OR pr_cdagenci = '0')                         
+          and (cp.nrseqpgm = pr_nrseqpgm OR pr_nrseqpgm = 0)
         group by ge.dseixtem, ct.dstemeix,cp.nmevento,cp.dscarhor 
         order by 1,2,3,4;      
        

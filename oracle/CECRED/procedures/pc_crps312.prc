@@ -1,5 +1,4 @@
-CREATE OR REPLACE PROCEDURE CECRED.
-                pc_crps312 (pr_cdcooper IN crapcop.cdcooper%TYPE   --> Cooperativa solicitada
+CREATE OR REPLACE PROCEDURE CECRED.pc_crps312 (pr_cdcooper IN crapcop.cdcooper%TYPE   --> Cooperativa solicitada
                            ,pr_flgresta  IN PLS_INTEGER            --> Flag padrão para utilização de restart
                            ,pr_stprogra OUT PLS_INTEGER            --> Saída de termino da execução
                            ,pr_infimsol OUT PLS_INTEGER            --> Saída de termino da solicitação
@@ -122,6 +121,8 @@ CREATE OR REPLACE PROCEDURE CECRED.
 
               19/09/2016 - Gravar na coluna "crapepr.vlsprjat" o saldo do prejuízo anterior 
                            "crapepr.vlsdprej", Prj.302 (Jean Michel)           
+               
+              25/06/2017 - M324 - Incluir historico de pagamento - Rafael (Mout´S)
 ................................................................................. */
 
     DECLARE
@@ -200,6 +201,21 @@ CREATE OR REPLACE PROCEDURE CECRED.
       rw_craplot cr_craplot%ROWTYPE;
 
       -- Buscar os lançamento de pagamento e abono
+      /*CURSOR cr_craplem(pr_cdcooper IN craplem.cdcooper%type,
+                        pr_nrdconta IN craplem.nrdconta%type,
+                        pr_nrctremp IN craplem.nrctremp%type,
+                        pr_dtmvtolt IN crapdat.dtmvtolt%TYPE) IS
+        SELECT craplem.vllanmto,
+               craplem.dtmvtolt,
+               craplem.cdhistor
+          FROM craplem
+         WHERE craplem.cdcooper  = pr_cdcooper
+           AND craplem.nrdconta  = pr_nrdconta
+           AND craplem.nrctremp  = pr_nrctremp
+           AND craplem.dtmvtolt <= pr_dtmvtolt
+           AND (craplem.cdhistor = 382 \* Pagamentos *\
+             OR craplem.cdhistor = 383 \* Abonos *\
+             OR craplem.cdhistor = 2388);*/ /* Pagamento Prejuizo */
       CURSOR cr_craplem(pr_cdcooper IN craplem.cdcooper%type,
                         pr_nrdconta IN craplem.nrdconta%type,
                         pr_nrctremp IN craplem.nrctremp%type,
@@ -212,8 +228,21 @@ CREATE OR REPLACE PROCEDURE CECRED.
            AND craplem.nrdconta  = pr_nrdconta
            AND craplem.nrctremp  = pr_nrctremp
            AND craplem.dtmvtolt <= pr_dtmvtolt
-           AND (craplem.cdhistor = 382 /* Pagamentos */
-             OR craplem.cdhistor = 383); /* Abonos */
+           AND craplem.cdhistor IN (382, /* Pagamentos */
+                                    383, /* Abonos */
+                                    384,
+                                    2388, /* 2388 - PAGAMENTO DE PREJUIZO VALOR PRINCIPAL */
+                                    2473, /* 2473 - PAGAMENTO JUROS +60 PREJUIZO */
+                                    --2389, /* 2389 - PAGAMENTO JUROS PREJUIZO */
+                                    2390, /* 2390 - PAGAMENTO MULTA ATRASO PREJUIZO */
+                                    2475, /* 2475 - PAGAMENTO JUROS MORA PREJUIZO */
+                                    2391, /* 2391 - ABONO DE PREJUIZO */
+                                    2392, /* 2392 - ESTORNO PAGAMENTO DE PREJUIZO VALOR PRINCIPAL */
+                                    2474, /* 2474 - ESTORNO PAGAMENTO JUROS +60 PREJUIZO */
+                                    --2393, /* 2393 - ESTORNO PAGAMENTO DE JUROS PREJUIZO */
+                                    2394, /* 2394 - ESTORNO PAGAMENTO MULTA ATRASO PREJUIZO */
+                                    2476, /* 2476 - ESTORNO PAGAMENTO JUROS MORA PREJUIZO */
+                                    2395); /* 2395 - ESTORNO ABONO DE PREJUIZO */                                     
       rw_craplem cr_craplem%ROWTYPE;
 
       -- Buscar nome da agência
@@ -239,6 +268,7 @@ CREATE OR REPLACE PROCEDURE CECRED.
                ,crapepr.dtprejuz
                ,crapepr.dtdpagto
                ,crapepr.vljurmes
+               ,crapepr.txmensal
                ,DECODE(crapepr.tpemprst,0,'TR',1,'PP','-') tpemprst
                ,crapepr.rowid
                ,crapepr.vlttmupr
@@ -259,11 +289,20 @@ CREATE OR REPLACE PROCEDURE CECRED.
                 crapepr.nrdconta,
                 crapepr.nrctremp;
 
+      CURSOR cr_craplcr(prc_cdcooper IN craplcr.cdcooper%TYPE,
+                        prc_cdlcremp IN craplcr.cdlcremp%TYPE) IS
+        SELECT c.txmensal
+          FROM craplcr c
+         WHERE c.cdcooper = prc_cdcooper
+           AND c.cdlcremp = prc_cdlcremp;
+
       ------------------------------- VARIAVEIS -------------------------------
       vr_txdjuros     NUMBER(35,7);             -- Taxas de Juros de Prejuizo.
+      vr_txmensal     craplcr.txmensal%TYPE;
       vr_vljurmes     crapepr.vljurmes%TYPE;    -- Valor do juros do mes
       vr_vlrabono     crapepr.vlsdprej%TYPE;    -- Valor do Abono
       vr_vlrpagos     crapepr.vlsdprej%TYPE;    -- Valor de Pagamento
+      vr_vlrestor     crapepr.vlsdprej%TYPE;    -- Valor de Estorno
       vr_dtrefere     DATE;                     -- Data do ultimo dia do mes
       vr_flgpgmes     BOOLEAN;                  -- Flag para controlar se houve pagamento dentro do mes
       vr_dspconta     VARCHAR2(1);              -- Define com * no relatorio se o contrato esta em prejuizo
@@ -453,9 +492,17 @@ CREATE OR REPLACE PROCEDURE CECRED.
             pc_escreve_xml(vr_des_xml_lst,'<agencia cdagenci="'||rw_crapepr_crapass.cdagenci||'" nmresage="'||nvl(vr_nmresage,'Nao Cadastrada')||'">');
 
           END IF;
-
-          -- Valor do juros do mes
-          vr_vljurmes := nvl(ROUND((rw_crapepr_crapass.vlsdprej * vr_txdjuros / 100),2),0);
+          -- M324
+          -- Valor do juros do mes por contrato e o que está na tela LCREDI
+          --vr_vljurmes := nvl(ROUND((rw_crapepr_crapass.vlsdprej * vr_txdjuros / 100),2),0);
+          vr_txmensal := NULL;
+          FOR rw_craplcr IN cr_craplcr(pr_cdcooper,
+                                       rw_crapepr_crapass.cdlcremp ) LOOP
+            vr_txmensal := rw_craplcr.txmensal;
+          END LOOP;
+          
+          vr_vljurmes := nvl(ROUND((rw_crapepr_crapass.vlsdprej * nvl(vr_txmensal, vr_txdjuros) / 100),2),0);
+          
           BEGIN
             -- Atualiza os campos da tabela crapepr
             UPDATE crapepr
@@ -551,12 +598,12 @@ CREATE OR REPLACE PROCEDURE CECRED.
                                  ,rw_crapepr_crapass.nrdconta
                                  ,rw_crapepr_crapass.nrctremp
                                  ,rw_crapepr_crapass.nrctremp
-                                 ,381 -- Codigo do Historico
+                                 ,2409--381 -- Codigo do Historico
                                  ,rw_craplot.nrseqdig + 1
                                  ,vr_vljurmes
-                                 ,vr_txdjuros,
-                                 null, -- Data de pagamento do emprestimo
-                                 0); -- Valor da prestacao
+                                 ,nvl(vr_txmensal, vr_txdjuros)
+                                 ,null -- Data de pagamento do emprestimo
+                                 ,0); -- Valor da prestacao
             EXCEPTION
               WHEN OTHERS THEN
                 -- Gerar erro e fazer rollback
@@ -590,6 +637,7 @@ CREATE OR REPLACE PROCEDURE CECRED.
 
           vr_vlrpagos := 0;
           vr_vlrabono := 0;
+          vr_vlrestor := 0;
           vr_flgpgmes := FALSE;
 
           -- Percorre todos os lancamentos de pagamento e abono
@@ -598,8 +646,10 @@ CREATE OR REPLACE PROCEDURE CECRED.
                                         pr_nrctremp => rw_crapepr_crapass.nrctremp,
                                         pr_dtmvtolt => vr_dtrefere) LOOP
             /* Historico de Abono */
-            IF rw_craplem.cdhistor = 383 THEN
+            IF rw_craplem.cdhistor IN (383,2391) THEN
               vr_vlrabono := vr_vlrabono + rw_craplem.vllanmto;
+            ELSIF rw_craplem.cdhistor IN (2392,2474,2393,2394,2476,2395) THEN /* Historico de Estorno*/
+              vr_vlrestor := vr_vlrestor + rw_craplem.vllanmto;
             ELSE  /* Historico de Pagamento */
               vr_vlrpagos := vr_vlrpagos + rw_craplem.vllanmto;
 
@@ -666,6 +716,8 @@ CREATE OR REPLACE PROCEDURE CECRED.
                               <vlsdprej>'||to_char(nvl(rw_crapepr_crapass.vlsdprej,0),'fm999g999g990d00')||'</vlsdprej>
                               <vlprejuz>'||to_char(nvl(rw_crapepr_crapass.vlprejuz,0),'fm999g999g990d00')||'</vlprejuz>
                               <vlrpagos>'||to_char(nvl(vr_vlrpagos,0),'fm999g999g990d00')||'</vlrpagos>
+                              <vlrestor>'||to_char(nvl(vr_vlrestor,0),'fm999g999g990d00')||'</vlrestor>
+                              <vlrpgatz>'||to_char(nvl(vr_vlrpagos - vr_vlrestor,0),'fm999g999g990d00')||'</vlrpgatz>
                               <dtprejuz>'||to_char(rw_crapepr_crapass.dtprejuz,'DD/MM/RR')||'</dtprejuz>
                               <dtdpagto>'||to_char(rw_crapepr_crapass.dtdpagto,'DD/MM/RR')||'</dtdpagto>
                               <vljrmprj>'||to_char(nvl(rw_crapepr_crapass.vljrmprj,0),'fm999g999g990d00')||'</vljrmprj>

@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito 
    Sigla   : CRED
    Autor   : Martin
-   Data    : Junho/2008.                        Ultima Atualizacao: 15/09/2010
+   Data    : Junho/2008.                        Ultima Atualizacao: 05/04/2018
             
    Dados referentes ao programa:
 
@@ -22,16 +22,21 @@
                
                15/09/2010 - Substituido crapcop.nmrescop por crapcop.dsdircop 
                             na leitura e gravacao dos arquivos (Elton).
+                            
+               05/04/2018 - Inserido filtro na tela de data final para pesquisa 
+                            no log (#845236 Tiago)
 .............................................................................*/
 
 { includes/var_online.i }
 
 DEF   VAR tel_dtmvtolt AS   DATE       FORMAT "99/99/9999"             NO-UNDO.
+DEF   VAR tel_dtafinal AS   DATE       FORMAT "99/99/9999"             NO-UNDO.
 DEF   VAR tel_nomelog  AS   CHARACTER  FORMAT "x(10)"                  NO-UNDO.
 DEF   VAR tel_pesquisa AS   CHARACTER  FORMAT "x(25)"                  NO-UNDO.
 DEF   VAR tel_lgvisual AS   CHARACTER  FORMAT "!(1)" INIT "T"          NO-UNDO.
 DEF   VAR aux_tipodlog AS   CHARACTER                                  NO-UNDO.
 DEF   VAR aux_nomedarq AS   CHARACTER  EXTENT 2                        NO-UNDO.
+DEF   VAR aux_cmdgrep  AS   CHARACTER                                  NO-UNDO.
 
 DEF   VAR aux_cddopcao AS   CHARACTER                                  NO-UNDO.
 DEF   VAR aux_linha    AS   CHARACTER                                  NO-UNDO.
@@ -62,12 +67,15 @@ DEF TEMP-TABLE tt-arqlog
 FORM SKIP(1)
      tel_dtmvtolt COLON 10 LABEL "Data Log"   AUTO-RETURN
              HELP "Informe a data de referencia (RETURN para qualquer data)."
-
-     tel_nomelog COLON 30 LABEL "Tela" AUTO-RETURN
+     '  ate' 
+     tel_dtafinal COLON 29 NO-LABEL  AUTO-RETURN
+             HELP "Informe a data de referencia (RETURN para qualquer data)."
+     
+     tel_nomelog COLON 50 LABEL "Tela" AUTO-RETURN
                  HELP "Informe o nome da tela ou pressione <F7> para listar."
                  VALIDATE (tel_nomelog <> "","375 - O campo deve ser preenchido.")
-                      
-     tel_pesquisa COLON 52 LABEL "Pesquisar"
+     SKIP(1)                 
+     tel_pesquisa COLON 10 LABEL "Pesquisar"
                   HELP "Informe texto a pesquisar (espaco em branco, tudo)."
      SKIP(14)
      WITH ROW 4 OVERLAY WIDTH 80 SIDE-LABELS TITLE glb_tldatela FRAME f_logspb.
@@ -133,13 +141,14 @@ DO WHILE TRUE:
    RUN fontes/inicia.p.
     
    ASSIGN tel_dtmvtolt = ?
+          tel_dtafinal = ?
           tel_pesquisa = ""
           tel_nomelog = "".
    
    CLEAR FRAME f_logspb NO-PAUSE. 
    
    DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
-      UPDATE tel_dtmvtolt WITH FRAME f_logspb.
+      UPDATE tel_dtmvtolt tel_dtafinal WITH FRAME f_logspb.
       LEAVE.
    END.
    
@@ -232,11 +241,26 @@ DO WHILE TRUE:
         UNIX SILENT VALUE("cp " + aux_nomedarq[1] + " " + aux_nomedarq[2]).
    
    ELSE 
-        UNIX SILENT VALUE ("grep " 
-                           + string(tel_dtmvtolt,"99/99/9999") 
-                           + " " + aux_nomedarq[1] 
-                           + " > "   + aux_nomedarq[2] + " 2> /dev/null").
-                    
+   DO:
+       IF tel_dtafinal = ? THEN
+          tel_dtafinal = TODAY.
+       
+       IF tel_dtmvtolt > tel_dtafinal THEN
+          DO:
+             BELL. 
+             MESSAGE "Data final deve ser maior que a inicial.".
+             NEXT.          
+          END.
+       
+       RUN monta_grep_data(INPUT  tel_dtmvtolt
+                          ,INPUT  tel_dtafinal
+                          ,INPUT  aux_nomedarq[1]
+                          ,INPUT  aux_nomedarq[2]
+                          ,OUTPUT aux_cmdgrep).
+         
+       UNIX SILENT VALUE (aux_cmdgrep).
+   END.
+   
    aux_nmarqimp = aux_nomedarq[2].
             
    /* Verifica se o arquivo esta vazio e critica */
@@ -295,3 +319,31 @@ DO WHILE TRUE:
 END. /* Fim do DO WHILE TRUE */   
 
 /*...........................................................................*/
+
+PROCEDURE monta_grep_data:
+ 
+  DEF INPUT  PARAM pr_dtinicio  AS DATE NO-UNDO.
+  DEF INPUT  PARAM pr_dtafinal  AS DATE NO-UNDO.
+  DEF INPUT  PARAM pr_nomedarq1 AS CHAR NO-UNDO.
+  DEF INPUT  PARAM pr_nomedarq2 AS CHAR NO-UNDO.
+  DEF OUTPUT PARAM pr_cmdgrep   AS CHAR NO-UNDO.
+  
+  DEF VAR vr_dtinicio AS DATE NO-UNDO.
+  
+  pr_cmdgrep = "egrep '".
+    
+  vr_dtinicio = pr_dtinicio.  
+    
+  DO WHILE vr_dtinicio <= pr_dtafinal:
+  
+    IF vr_dtinicio < pr_dtafinal THEN
+       pr_cmdgrep = pr_cmdgrep + STRING(vr_dtinicio,"99/99/9999") + "|".
+    ELSE
+       pr_cmdgrep = pr_cmdgrep + STRING(vr_dtinicio,"99/99/9999") + "' " + pr_nomedarq1 
+                    + " > "   + pr_nomedarq2 + " 2> /dev/null".             
+  
+    vr_dtinicio = vr_dtinicio + 1.
+  END.
+
+  RETURN "OK".
+END PROCEDURE.

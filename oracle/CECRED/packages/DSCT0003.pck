@@ -64,7 +64,7 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0003 AS
   /* Tipo utilizado na pc_efetua_analise_bordero*/
   TYPE typ_tab_msg_confirma IS TABLE OF typ_reg_msg_confirma INDEX BY PLS_INTEGER;
 
-  
+
 
   PROCEDURE pc_liberar_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> Número da Conta
                                    ,pr_nrborder IN crapbdt.nrborder%TYPE  --> numero do bordero
@@ -195,8 +195,8 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0003 AS
                                       );
 
   PROCEDURE pc_efetua_analise_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> Número da Conta
-                        								  ,pr_nrborder IN crapbdt.nrborder%TYPE  --> numero do bordero
-                         								  --  (OBRIGATÓRIOS E NESSA ORDEM SEMPRE)
+                                          ,pr_nrborder IN crapbdt.nrborder%TYPE  --> numero do bordero
+                                           --  (OBRIGATÓRIOS E NESSA ORDEM SEMPRE)
                                           ,pr_xmllog   IN VARCHAR2               --> XML com informações de LOG
                                           --------> OUT <--------
                                           ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica

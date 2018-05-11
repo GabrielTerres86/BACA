@@ -1,3 +1,15 @@
+  ---------------------------------------------------------------------------------------------------------------
+  --
+  --  Programa : vw_parcelado_contrato
+  --  Sistema  : View de parcelas de emprestimos
+  --  Sigla    : CRED
+  --  Autor    : DESCONHECIDO
+  --  Data     : DESCONHECIDO                  Ultima atualizacao: 08/08/2017
+  --
+  -- Dados referentes ao programa:
+  --
+  -- Alteracoes: 08/08/2017 - Inclusao do produto Pos-Fixado. (Jaison/James - PRJ298)
+  ---------------------------------------------------------------------------------------------------------------
 create or replace force view cecred.vw_parcelado_contrato as
 select
   '1' nr,
@@ -138,7 +150,10 @@ select
   fn_busca_modalidade_bacen(case when (select dsoperac from craplcr where cdcooper = epr.cdcooper and cdlcremp = epr.cdlcremp) = 'FINANCIAMENTO' then 0499 else 0299 end , ass.cdcooper, ass.nrdconta, epr.nrctremp, ass.inpessoa, 3, '') as cdproduto,
   to_char(epr.dtmvtolt,'YYYYMMDD') as DtCtrc,
   ass.cdagenci as PrfAg,
-  'S' as InPrefix,
+  case epr.tpemprst
+    when 1 then 'S'
+    when 2 then 'N'
+  end InPrefix,
   to_char(nvl(epr.vlemprst,0),'fm9999900V00') as VlCtrdFut,
   epr.qtpreemp as QtPcl,
   to_char(ADD_MONTHS((select dtdpagto from crawepr where cdcooper = ass.cdcooper and nrdconta = ass.nrdconta and nrctremp = epr.nrctremp),decode(epr.qtpreemp, 1,1,epr.qtpreemp-1)),'YYYYMMDD') as DtVnctUltPcl,
@@ -159,7 +174,7 @@ where
   and ass.incadpos = 2
   --and ass.nrdconta = 2543923
   --and ass.nrcpfcgc in (03297156902,91596670959,08486610000159,01268248940,18515174000152,05370297703,10381840000103,65468252287,11212502000100,73481289987, 67548610963, 9013972000195, 6130589000129, 97007277934, 59203919953, 82991191000165, 625159934, 43959636920, 86024299915)
-  and epr.tpemprst = 1 --emprestimo NOVO
+  and epr.tpemprst IN (1,2) -- PP ou POS
 --  AND (EPR.DTULTPAG >= (sysdate - 366) OR EPR.INLIQUID = 0 )
   and (exists (select 1 from crappep pep
               where pep.cdcooper = epr.cdcooper
@@ -170,5 +185,3 @@ where
               ) OR EPR.INLIQUID = 0 )
 order by
   CNPJCtrc, idfccli, nrctr
-;
-

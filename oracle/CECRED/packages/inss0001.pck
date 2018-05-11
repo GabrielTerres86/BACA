@@ -4,7 +4,7 @@ CREATE OR REPLACE PACKAGE CECRED.INSS0001 AS
 
    Programa : INSS0001                       Antiga: generico/procedures/b1wgen0091.p
    Autor   : Andre - DB1
-   Data    : 16/05/2011                        Ultima atualizacao: 13/02/2017
+   Data    : 16/05/2011                        Ultima atualizacao: 22/01/2018
 
    Dados referentes ao programa:
 
@@ -129,6 +129,9 @@ CREATE OR REPLACE PACKAGE CECRED.INSS0001 AS
                             Incluido tipo de falha variavel na Procedure pc_retorna_linha_log implica em alterar 10 procedures que a disparam
                             Colocado no padrão todas chamadas pc_gera_log_batch em torno de 60 chamadas
                             (Belli - Envolti - Chamado 660327 e 664301)              
+                            
+               22/01/2018 - Ajustar a rotina pc_consulta_log para ler via DB apartir de 22/11/2017
+                            (Belli - Envolti - Chamado 828247)             
                             
   --------------------------------------------------------------------------------------------------------------- */
 
@@ -1097,7 +1100,7 @@ create or replace package body cecred.INSS0001 as
    Sigla   : CRED
 
    Autor   : Odirlei Busana(AMcom)
-   Data    : 27/08/2013                        Ultima atualizacao: 07/08/2017
+   Data    : 27/08/2013                        Ultima atualizacao: 26/02/2018
 
    Dados referentes ao programa:
 
@@ -1197,6 +1200,19 @@ create or replace package body cecred.INSS0001 as
 			   07/08/2017 - Ajuste para efetuar log (temporário) de pontos criticos da rotina de pagamentos para tentarmos
 				            identificar lentidões que estão ocorrendo
 							(Adriano).
+              
+         22/01/2018 - Ajustar a rotina pc_consulta_log para ler via DB apartir de 22/11/2017
+                      (Belli - Envolti - Chamado 828247)
+                      
+         26/02/2018 - Buscar data e hora do lugar correto na procedure pc_consulta_log, 
+                      pois estavamos buscando a hora errado. (Lucas Ranghetti #848876)
+
+         28/02/2018 - #827612 Comando rm com user grid inserido no package gene001 conforme o padrão da rotina 
+                      pc_oscommand. Retirada a passagem da pl table tab_crapdat da rotina 
+                      INSS0001.pc_proces_pagto_benef_inss e realizada a consulta da crapdat dentro da rotina para 
+                      pegar a data sempre atualizada e começar a realizar o pagamento assim que o processo da 
+                      cooperativa terminar. (Carlos)
+                      
   ---------------------------------------------------------------------------------------------------------------*/
 
   /*Procedimento para gerar lote e lancamento, para gerar credito em conta*/
@@ -2059,11 +2075,8 @@ create or replace package body cecred.INSS0001 as
                                                     
         /** MOVE SEM CRIPTOGRAFAR **/
         -- Comando para mover arquivo
-        vr_comando:= 'mv '||pr_nmarquiv||' '||pr_arqdesti||' 2> /dev/null';
-                     
-        --Executar o comando no unix
-        GENE0001.pc_OScommand (pr_typ_comando => 'S'
-                              ,pr_des_comando => vr_comando
+        GENE0001.pc_mv_arquivo(pr_dsarqori => pr_nmarquiv 
+                              ,pr_dsarqdes => pr_arqdesti
                               ,pr_typ_saida   => vr_typ_saida
                               ,pr_des_saida   => vr_dscritic);
                               
@@ -2071,7 +2084,8 @@ create or replace package body cecred.INSS0001 as
         IF vr_typ_saida = 'ERR' THEN
           
           --Monta mensagem de critica
-          vr_dscritic:= 'Nao foi possivel executar comando unix: '||vr_comando||' - '||vr_dscritic;
+          vr_dscritic:= 'Nao foi possivel executar comando unix: '||
+                         'mv '||pr_nmarquiv||' '||pr_arqdesti||' - '||vr_dscritic;
           
           -- retornando ao programa chamador
           RAISE vr_exc_erro;
@@ -2080,11 +2094,8 @@ create or replace package body cecred.INSS0001 as
       ELSE
         /** MOVE ARQ CRIPTOGRAFADO **/
         -- Comando para mover arquivo
-        vr_comando:= 'mv '||vr_nmarqcri||' '||pr_arqdesti||'.crypto 2> /dev/null';
-                     
-        --Executar o comando no unix
-        GENE0001.pc_OScommand (pr_typ_comando => 'S'
-                              ,pr_des_comando => vr_comando
+        GENE0001.pc_mv_arquivo(pr_dsarqori => vr_nmarqcri 
+                              ,pr_dsarqdes => pr_arqdesti||'.crypto'
                               ,pr_typ_saida   => vr_typ_saida
                               ,pr_des_saida   => vr_dscritic);
                               
@@ -2092,7 +2103,8 @@ create or replace package body cecred.INSS0001 as
         IF vr_typ_saida = 'ERR' THEN
           
           --Monta mensagem de critica
-          vr_dscritic:= 'Nao foi possivel executar comando unix: '||vr_comando||' - '||vr_dscritic;
+          vr_dscritic:= 'Nao foi possivel executar comando unix: '||
+                        'mv '||vr_nmarqcri||' '||pr_arqdesti||'.crypto'||' - '||vr_dscritic;
           
           -- retornando ao programa chamador
           RAISE vr_exc_erro;
@@ -4332,7 +4344,6 @@ create or replace package body cecred.INSS0001 as
                                        ,pr_tab_salvar       IN INSS0001.typ_tab_salvar    -- Tabela de Diretorios
                                        ,pr_tab_dircoop      IN INSS0001.typ_tab_salvar    -- Tabela de Diretorios
                                        ,pr_tab_cdagesic     IN INSS0001.typ_tab_cdagesic  -- Tabela de Agencias Sicredi
-                                       ,pr_tab_crapdat      IN OUT INSS0001.typ_tab_crapdat   -- Tabela de Datas por Cooperativa
                                        ,pr_tab_rejeicoes    IN OUT NOCOPY INSS0001.typ_tab_rejeicoes -- Tabela de Rejeicoes
                                        -- Identificacao de Processo Automatico
                                        ,pr_proc_aut         IN INTEGER                    -- Identifica se esta rodando o processo automatico (0-Nao/1-Sim)
@@ -4699,14 +4710,14 @@ create or replace package body cecred.INSS0001 as
         script mqcecred_processa_sicredi_648.pl. 
         */ 
         -- Leitura do calendário da cooperativa
-        IF NOT pr_tab_crapdat.EXISTS(vr_cdcooper)       OR 
-           pr_tab_crapdat(vr_cdcooper) < TRUNC(SYSDATE) THEN                
+        OPEN btch0001.cr_crapdat(pr_cdcooper => vr_cdcooper);          
+        FETCH btch0001.cr_crapdat INTO rw_crapdat;
                  
-          --Proximo Arquivo
+        IF btch0001.cr_crapdat%NOTFOUND OR rw_crapdat.inproces <> 1 THEN
+          CLOSE btch0001.cr_crapdat;
           RAISE vr_exc_proximo;
-        ELSE
-          rw_crapdat.dtmvtolt:= pr_tab_crapdat(vr_cdcooper);  
         END IF;
+        CLOSE btch0001.cr_crapdat;
                                                              
         /* VALIDAR CPF */
         --Selecionar Titular
@@ -4874,15 +4885,11 @@ create or replace package body cecred.INSS0001 as
                              
                                                             
               -- Comando para mover arquivo
-              vr_comando:= 'mv '||pr_nmdireto_integra||'/'||pr_nmarquiv||' '||
-                           vr_nmdireto_salvar||'/'||'INSS.MQ.RREJ.'||
+              gene0001.pc_mv_arquivo(pr_dsarqori => pr_nmdireto_integra||'/'||pr_nmarquiv
+                                    ,pr_dsarqdes => vr_nmdireto_salvar || '/'||'INSS.MQ.RREJ.'||
                            LPAD(pr_tab_creditos(pr_index_creditos).nrrecben,11,'0')||'.'||
                            LPAD(gene0002.fn_busca_time,5,'0')||
-                           LPAD(TRUNC(DBMS_RANDOM.Value(0,9999)),4,'0')||'.xml 2> /dev/null';
-                  
-              --Executar o comando no unix
-              GENE0001.pc_OScommand (pr_typ_comando => 'S'
-                                    ,pr_des_comando => vr_comando
+                                                    LPAD(TRUNC(DBMS_RANDOM.Value(0,9999)),4,'0')||'.xml'
                                     ,pr_typ_saida   => vr_typ_saida
                                     ,pr_des_saida   => vr_dscritic);
                                         
@@ -4890,7 +4897,9 @@ create or replace package body cecred.INSS0001 as
               IF vr_typ_saida = 'ERR' THEN
                   
                 --Monta mensagem de critica
-                vr_dscritic:= 'Nao foi possivel executar comando unix: '||vr_comando;
+                vr_dscritic:= 'Nao foi possivel mover o arquivo: '||
+                              pr_nmdireto_integra||'/'||pr_nmarquiv||' '||
+                              vr_nmdireto_salvar;
                   
                 -- retornando ao programa chamador
                 RAISE vr_exc_erro;
@@ -4956,15 +4965,11 @@ create or replace package body cecred.INSS0001 as
                              
                                                                      
               -- Comando para mover arquivo
-              vr_comando:= 'mv '||pr_nmdireto_integra||'/'||pr_nmarquiv||' '||
-                           vr_nmdireto_salvar||'/'||'INSS.MQ.RPAG.'||
+              gene0001.pc_mv_arquivo(pr_dsarqori => pr_nmdireto_integra||'/'||pr_nmarquiv
+                                    ,pr_dsarqdes => vr_nmdireto_salvar||'/'||'INSS.MQ.RPAG.'||
                            LPAD(pr_tab_creditos(pr_index_creditos).nrrecben,11,'0')||'.'||
                            LPAD(gene0002.fn_busca_time,5,'0')||
-                           LPAD(TRUNC(DBMS_RANDOM.Value(0,9999)),4,'0')||'.xml 2> /dev/null';
-                  
-              --Executar o comando no unix
-              GENE0001.pc_OScommand (pr_typ_comando => 'S'
-                                    ,pr_des_comando => vr_comando
+                                                    LPAD(TRUNC(DBMS_RANDOM.Value(0,9999)),4,'0')||'.xml'
                                     ,pr_typ_saida   => vr_typ_saida
                                     ,pr_des_saida   => vr_dscritic);
                                         
@@ -4972,7 +4977,9 @@ create or replace package body cecred.INSS0001 as
               IF vr_typ_saida = 'ERR' THEN
                   
                 --Mensagem de Critica
-                vr_dscritic:= 'Nao foi possivel executar comando unix: '||vr_comando;
+                vr_dscritic:= 'Nao foi possivel mover o arquivo: '||
+                              pr_nmdireto_integra||'/'||pr_nmarquiv||' '||
+                              vr_nmdireto_salvar;
                   
                 -- retornando ao programa chamador
                 RAISE vr_exc_erro;
@@ -5130,22 +5137,20 @@ create or replace package body cecred.INSS0001 as
         de processamento do Sicredi pois, o NB em questao ja foi tratado... 
         */
         -- Comando para mover arquivo
-        vr_comando:= 'mv '||pr_nmdireto_integra||'/'||pr_nmarquiv||' '||
-                     vr_nmdireto_salvar||'/'||'INSS.MQ.RREJ.'||
+        gene0001.pc_mv_arquivo(pr_dsarqori => pr_nmdireto_integra||'/'||pr_nmarquiv
+                              ,pr_dsarqdes => vr_nmdireto_salvar||'/'||'INSS.MQ.RREJ.'||
                      LPAD(pr_tab_creditos(pr_index_creditos).nrrecben,11,'0')||'.'||
                      LPAD(gene0002.fn_busca_time,5,'0')||
-                     LPAD(TRUNC(DBMS_RANDOM.Value(0,9999)),4,'0')||'.xml 2> /dev/null';
-            
-        --Executar o comando no unix
-        GENE0001.pc_OScommand (pr_typ_comando => 'S'
-                              ,pr_des_comando => vr_comando
+                                              LPAD(TRUNC(DBMS_RANDOM.Value(0,9999)),4,'0')||'.xml'
                               ,pr_typ_saida   => vr_typ_saida
                               ,pr_des_saida   => vr_nmarqcri);
                                   
         --Se ocorreu erro dar RAISE
         IF vr_typ_saida = 'ERR' THEN
               
-          vr_dscritic:= 'Nao foi possivel executar comando unix: '||vr_comando;
+          vr_dscritic:= 'Nao foi possivel mover o arquivo: '||
+                        pr_nmdireto_integra||'/'||pr_nmarquiv||' '||
+                        vr_nmdireto_salvar;
               
           -- Escrever no log qual arquivo processou com erro
            btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
@@ -5336,8 +5341,6 @@ create or replace package body cecred.INSS0001 as
     vr_tab_dircoop   INSS0001.typ_tab_salvar;
     --Tabela de Agencias Sicredi
     vr_tab_cdagesic  INSS0001.typ_tab_cdagesic;
-    --Tabela de Datas por Cooperativa
-    vr_tab_crapdat   INSS0001.typ_tab_crapdat; 
     --Tabela de Memoria de Creditos
     vr_tab_creditos  INSS0001.typ_tab_creditos;
     --Tabela de Memoria de Arquivos 
@@ -5363,7 +5366,6 @@ create or replace package body cecred.INSS0001 as
     --Procedure para limpar tabelas temporarias
     PROCEDURE pc_limpa_tabela IS
     BEGIN
-      vr_tab_crapdat.DELETE;
       vr_tab_salvar.DELETE;
       vr_tab_dircoop.DELETE;
       vr_tab_creditos.DELETE;
@@ -5412,9 +5414,8 @@ create or replace package body cecred.INSS0001 as
       CLOSE cr_crapcop;
     END IF;
 
-    --Carregar tabela de datas
+    --Carregar diretórios das coops
     FOR rw_crapdat_cooper IN cr_crapdat_cooper LOOP
-      vr_tab_crapdat(rw_crapdat_cooper.cdcooper):= rw_crapdat_cooper.dtmvtolt;
       
       --Montar Diretorio Padrao de cada cooperativa    
       vr_tab_dircoop(rw_crapdat_cooper.cdcooper):= gene0001.fn_diretorio (pr_tpdireto => 'C' --> Usr/Coop
@@ -5924,7 +5925,6 @@ create or replace package body cecred.INSS0001 as
                                    ,pr_tab_salvar      => vr_tab_salvar     -- Tabela de Diretorios
                                    ,pr_tab_dircoop     => vr_tab_dircoop    -- Tabela de Diretorios
                                    ,pr_tab_cdagesic    => vr_tab_cdagesic   -- Tabela de Agencias Sicredi
-                                   ,pr_tab_crapdat     => vr_tab_crapdat    -- Tabela de Datas por Cooperativa
                                    ,pr_tab_rejeicoes   => vr_tab_rejeicoes  -- Tabela de Rejeicoes
                                    ,pr_proc_aut        => 1                 -- Essa procedure esta apenas no CRPS, e é executado com os arquivos do MQ
                                    -- Arquivo e Diretorio
@@ -18102,8 +18102,6 @@ create or replace package body cecred.INSS0001 as
     vr_tab_dircoop   INSS0001.typ_tab_salvar;
     --Tabela de Agencias Sicredi
     vr_tab_cdagesic  INSS0001.typ_tab_cdagesic;
-    --Tabela de Datas por Cooperativa
-    vr_tab_crapdat   INSS0001.typ_tab_crapdat; 
     --Tabela de Memoria de Creditos
     vr_tab_creditos  INSS0001.typ_tab_creditos;
     --Tabela de Memoria de Arquivos 
@@ -18131,7 +18129,6 @@ create or replace package body cecred.INSS0001 as
     --Procedure para limpar tabelas temporarias
     PROCEDURE pc_limpa_tabela IS
     BEGIN
-      vr_tab_crapdat.DELETE;
       vr_tab_salvar.DELETE;
       vr_tab_dircoop.DELETE;
       vr_tab_creditos.DELETE;
@@ -18179,9 +18176,8 @@ create or replace package body cecred.INSS0001 as
       RAISE vr_exc_erro;
     END IF;
 
-    --Carregar tabela de datas
+    --Carregar diretórios das coops
     FOR rw_crapdat_cooper IN cr_crapdat_cooper LOOP
-      vr_tab_crapdat(rw_crapdat_cooper.cdcooper):= rw_crapdat_cooper.dtmvtolt;
       
       --Montar Diretorio Padrao de cada cooperativa    
       vr_tab_dircoop(rw_crapdat_cooper.cdcooper):= gene0001.fn_diretorio (pr_tpdireto => 'C' --> Usr/Coop
@@ -18340,7 +18336,6 @@ create or replace package body cecred.INSS0001 as
                                      ,pr_tab_salvar      => vr_tab_salvar     -- Tabela de Diretorios
                                      ,pr_tab_dircoop     => vr_tab_dircoop    -- Tabela de Diretorios
                                      ,pr_tab_cdagesic    => vr_tab_cdagesic   -- Tabela de Agencias Sicredi
-                                     ,pr_tab_crapdat     => vr_tab_crapdat    -- Tabela de Datas por Cooperativa
                                      ,pr_tab_rejeicoes   => vr_tab_rejeicoes  -- Tabela de Rejeicoes
                                      ,pr_proc_aut        => 0                 -- Essa procedure esta apenas no CRPS, e é executado com os arquivos do MQ
                                      -- Arquivo e Diretorio
@@ -18874,7 +18869,7 @@ create or replace package body cecred.INSS0001 as
   Sistema  : Conta-Corrente - Cooperativa de Credito
   Sigla    : CRED
   Autor    : Lombardi
-  Data     : Outubro/2015                           Ultima atualizacao: ---/--/----
+  Data     : Outubro/2015                           Ultima atualizacao: 26/02/2018
   
   Dados referentes ao programa:
   
@@ -18883,6 +18878,11 @@ create or replace package body cecred.INSS0001 as
   
   Alterações : 
               
+         22/01/2018 - Ajustar a rotina pc_consulta_log para ler via DB apartir de 22/11/2017
+                      (Belli - Envolti - Chamado 828247)
+              
+         26/02/2018 - Buscar date e hora do lugar correto, pois estavamos buscando a hora
+                      errado. (Lucas Ranghetti #848876)
   -------------------------------------------------------------------------------------------------------------*/
     
     -- Campos para o XML
@@ -18927,19 +18927,144 @@ create or replace package body cecred.INSS0001 as
     vr_cdcritic  INTEGER;
     vr_exc_saida EXCEPTION;
     
+    -- Ajustar a rotina pc_consulta_log para ler via DB - 22/01/2018 - Chamado 828247 
+    -- Data de entrada do novo padrao de Log
+    vr_exc_erro   EXCEPTION;
+    vr_dtbanco    DATE       := to_date('23/08/2017','DD/MM/YYYY');
+    vr_idprglog   NUMBER;
+    vr_dsparame   VARCHAR2(4000);
+    
+    -- Gera Log - 22/01/2018 - Chamado 828247
+    PROCEDURE pc_grava_log 
+    ( pr_cdmensagem     IN NUMBER   -- Codigo do Log
+     ,pr_dsmensagem     IN VARCHAR2 -- Descrição do Log 
+    )
+      IS
     BEGIN
-      CECRED.GENE0004.pc_extrai_dados(pr_xml      => pr_retxml
-                                     ,pr_cdcooper => vr_cdcooper
-                                     ,pr_nmdatela => vr_nmdatela
-                                     ,pr_nmeacao  => vr_nmeacao
-                                     ,pr_cdagenci => vr_cdagenci
-                                     ,pr_nrdcaixa => vr_nrdcaixa
-                                     ,pr_idorigem => vr_idorigem
-                                     ,pr_cdoperad => vr_cdoperad
-                                     ,pr_dscritic => vr_dscritic);
+      CECRED.pc_log_programa(pr_dstiplog      => 'E'
+                           , pr_cdprograma    => 'INSS'
+                           , pr_cdcooper      => vr_cdcooper
+                           , pr_tpexecucao    => 3
+                           , pr_tpocorrencia  => 2
+                           , pr_cdcriticidade => 2 
+                           , pr_cdmensagem    => pr_cdmensagem
+                           , pr_dsmensagem    => pr_dsmensagem
+                           , pr_idprglog      => vr_idprglog
+                           , pr_nmarqlog      => 'inss_historico.log');
+    EXCEPTION        
+      WHEN OTHERS
+       THEN
+        -- No caso de erro de programa gravar tabela especifica de log
+        CECRED.pc_internal_exception (pr_cdcooper => NVL(vr_cdcooper,3)); 
+    END pc_grava_log;    
                                      
-  	  -- Incluir nome do módulo logado - Chamado 664301
-		  GENE0001.pc_set_modulo(pr_module => vr_nmdatela, pr_action => 'INSS0001.pc_consulta_log');
+    -- Processa informações geradas em banco de dados - 22/01/2018 - Chamado 828247   
+    PROCEDURE pc_banco 
+      IS      
+      
+	  -- Busca dados do log	
+	  CURSOR cr_tbgen_prglog 
+    ( pr_nrdnblog IN VARCHAR2  -- parametro obrigatorio
+     ,pr_dtmvtlog IN DATE      -- parametro opcional
+    )
+    IS
+		SELECT t.dhinicio
+          ,TO_CHAR(t2.dhocorrencia,'DD/MM/YYYY') dtocorre
+          ,TO_CHAR(t2.dhocorrencia,'HH24:MI:SS') hrocorre
+          , substr(t2.dsmensagem
+            , ( instr(t2.dsmensagem, 'Conta:') + 7 )
+            , ( instr(t2.dsmensagem, 'Nome:')  - instr(t2.dsmensagem, 'Conta:') - 7 - 3)
+             ) nrdconta 
+          , substr(t2.dsmensagem
+            , ( instr(t2.dsmensagem, 'Nome:') + 6 )
+            , ( instr(t2.dsmensagem, 'NB:')  - instr(t2.dsmensagem, 'Nome:') - 6 - 3)
+             ) nmdconta 
+          , substr(t2.dsmensagem
+            , ( instr(t2.dsmensagem, 'NB:') + 4 )
+            , ( instr(t2.dsmensagem, 'operador:')  - instr(t2.dsmensagem, 'NB:') - 4 - 3)
+             ) nrrecben 
+          , substr(t2.dsmensagem
+            , ( instr(t2.dsmensagem, 'operador:') + 10 )
+            , ( instr(t2.dsmensagem, 'Alteracao:')  - instr(t2.dsmensagem, 'operador:') - 10 - 3)
+             ) operador 
+          , substr(t2.dsmensagem
+            , ( instr(t2.dsmensagem, 'Alteracao:') + 11 )
+            , ( instr(t2.dsmensagem, '- Module:')  - instr(t2.dsmensagem, 'Alteracao:') - 11 - 3)
+             ) alteracao 
+          ,t.cdcooper
+          ,t2.dsmensagem
+    FROM tbgen_prglog t
+        ,tbgen_prglog_ocorrencia t2
+    WHERE ( pr_dtmvtlog       IS NULL      OR
+            TRUNC(t.dhinicio) = pr_dtmvtlog ) 
+    AND   t.dhinicio  >= vr_dtbanco        
+    AND   t.nmarqlog  = 'inss_historico.log'
+    AND   t2.idprglog = t.idprglog 
+    AND   t2.dsmensagem LIKE '%' || pr_nrdnblog || '%'
+    ORDER BY t.dhinicio, t2.dhocorrencia;         
+    vr_date date;
+      
+    BEGIN
+  	  -- Retorno nome do módulo logado - Chamado 828247
+		  GENE0001.pc_set_modulo(pr_module => vr_nmdatela, pr_action => 'INSS0001.pc_banco');
+
+      IF to_char(pr_dtmvtlog) != '0' THEN
+        vr_date := to_date(pr_dtmvtlog,'DD/MM/YYYY');        
+      ELSE
+        vr_date := null;
+      END IF;
+
+			-- Percorre dados do beneficiario
+		  FOR rw_tbgen_prglog IN 
+      cr_tbgen_prglog( pr_nrdnblog => pr_nrdnblog
+				              ,pr_dtmvtlog => vr_date
+                     ) LOOP        
+        -- Data
+        vr_dtmvtolt := rw_tbgen_prglog.dtocorre;        
+        -- Hora
+        vr_hrmvtolt := rw_tbgen_prglog.hrocorre;              
+        -- Conta
+        vr_nrdconta := rw_tbgen_prglog.nrdconta;
+        -- Nome
+        vr_nmdconta := rw_tbgen_prglog.nmdconta;              
+        -- Numero do Beneficiario
+        vr_nrrecben := rw_tbgen_prglog.nrrecben;              
+        -- Operador
+        vr_operador := rw_tbgen_prglog.operador;                            
+        -- Alteracao
+        vr_historic := rw_tbgen_prglog.alteracao;
+            
+        -- Cria sequncial com a data e as horas
+        vr_qtregist := vr_qtregist + 1;
+        
+        -- Popula tabela
+        vr_tab_log(vr_qtregist).dtmvtolt := vr_dtmvtolt;
+        vr_tab_log(vr_qtregist).hrmvtolt := vr_hrmvtolt;
+        vr_tab_log(vr_qtregist).nrdconta := vr_nrdconta;
+        vr_tab_log(vr_qtregist).nmdconta := substr(vr_nmdconta,1,20);
+        vr_tab_log(vr_qtregist).nrrecben := vr_nrrecben;
+        vr_tab_log(vr_qtregist).historic := substr(vr_historic,1,200);
+        vr_tab_log(vr_qtregist).operador := vr_operador;      
+      END LOOP;
+
+  	  -- Retorno nome do módulo logado - Chamado 828247
+		  GENE0001.pc_set_modulo(pr_module => vr_nmdatela, pr_action => NULL);
+    EXCEPTION        
+      WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log - 22/01/2018 - Chamado 828247 
+        CECRED.pc_internal_exception (pr_cdcooper => NVL(vr_cdcooper,3)); 
+        vr_cdcritic:= 9999;
+        vr_dscritic:= gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) ||
+                      'pc_banco, erro: ' || SQLERRM;
+        RAISE vr_exc_erro;
+    END pc_banco;
+
+    -- Processa informações geradas em arquivo - 22/01/2018 - Chamado 828247    
+    PROCEDURE pc_arq
+      IS
+    BEGIN
+  	  -- Retorno nome do módulo logado - Chamado 828247
+		  GENE0001.pc_set_modulo(pr_module => vr_nmdatela, pr_action => 'INSS0001.pc_arq');
       
       -- Pega o diretorio do log
       vr_caminho := cecred.gene0001.fn_diretorio(pr_tpdireto => 'C' -- /usr/coop
@@ -18951,9 +19076,11 @@ create or replace package body cecred.INSS0001 as
       IF to_char(pr_dtmvtlog) != '0'THEN
         vr_comando := vr_comando || ' | grep "' || REPLACE(pr_dtmvtlog,'/','\/') || '"';
       END IF;
+  
       -- Filtrar pelo nb
       IF to_char(pr_nrdnblog) != '0' THEN
-        vr_comando := vr_comando || ' | grep "' || lpad(pr_nrdnblog,10,'0') || '"';
+        -- Ajustar a rotina pc_consulta_log para ler via DB - 22/01/2018 - Chamado 828247 
+        vr_comando := vr_comando || ' | grep "' || pr_nrdnblog || '"';
       END IF;
       -- Filtrar pela conta
       IF pr_nrdctlog != '0000.000-0' OR pr_nrdctlog != '0' THEN
@@ -18966,12 +19093,18 @@ create or replace package body cecred.INSS0001 as
       gene0001.pc_OSCommand_Shell(pr_des_comando => vr_comando
                                  ,pr_typ_saida   => vr_typ_saida
                                  ,pr_des_saida   => vr_des_saida);
-      
       --Se ocorreu erro dar RAISE
       IF vr_typ_saida = 'ERR' THEN
-        vr_dscritic := 'Nenhum registro encontrado.';
-        RAISE vr_exc_saida;    
+        --Ajuste mensagem de erro - 22/01/2018 - Chamado 828247
+        -- Montar mensagem de critica
+        -- excluida mensagem - Nenhum registro encontrado 
+        vr_cdcritic := 1054;       
+        vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) ||
+                       ' - ' || vr_des_saida;
+        RAISE vr_exc_erro; 
       END IF;
+  	  -- Retorno nome do módulo logado - Chamado 828247
+		  GENE0001.pc_set_modulo(pr_module => vr_nmdatela, pr_action => 'INSS0001.pc_arq');
       
       -- Leitura do arquivo de log
       gene0001.pc_abre_arquivo(pr_nmdireto => vr_caminho   --> Diretorio do arquivo
@@ -18979,11 +19112,17 @@ create or replace package body cecred.INSS0001 as
                               ,pr_tipabert => 'R'          --> Modo de abertura (R,W,A)
                               ,pr_utlfileh => log          --> Handle do arquivo aberto
                               ,pr_des_erro => vr_dscritic);--> Descricão da critica
-         
       IF vr_dscritic IS NOT NULL THEN
-        vr_dscritic := 'Nenhum registro encontrado.';
-        RAISE vr_exc_saida;
+        -- excluida mensagem - Nenhum registro encontrado
+        -- Ajuste mensagem de erro - 22/01/2018 - Chamado 828247
+        -- Montar mensagem de critica 
+        vr_cdcritic := 1038; 
+        vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) || 
+                       ' - ' || vr_dscritic;
+        RAISE vr_exc_erro;
       END IF;
+  	  -- Retorno nome do módulo logado - Chamado 828247
+		  GENE0001.pc_set_modulo(pr_module => vr_nmdatela, pr_action => 'INSS0001.pc_arq');
       
       BEGIN
         LOOP
@@ -18992,10 +19131,18 @@ create or replace package body cecred.INSS0001 as
             -- Ler linha
             gene0001.pc_le_linha_arquivo(pr_utlfileh => log --> Handle do arquivo aberto
                                         ,pr_des_text => linha);  --> Texto lido
+            -- Retorno nome do módulo logado - Chamado 828247
+            GENE0001.pc_set_modulo(pr_module => vr_nmdatela, pr_action => 'INSS0001.pc_arq');
+            
             -- Data
             vr_dtmvtolt := substr(linha, 1, 10);
             linha := substr(linha, INSTR(linha, 'Horario: ') + 9);
                
+            -- Ajustar a rotina pc_consulta_log para ler via DB - 22/01/2018 - Chamado 828247                           
+            IF  substr(vr_dtmvtolt, 3, 1) <> '/' THEN 
+              CONTINUE;   
+            END IF;
+                           
             -- Hora
             vr_posicao := instr(linha, ' ');
             vr_hrmvtolt := substr(linha, 1, vr_posicao - 1);
@@ -19042,23 +19189,97 @@ create or replace package body cecred.INSS0001 as
         WHEN no_data_found THEN
           -- Fechar o arquivo
           gene0001.pc_fecha_arquivo(log); --> Handle do arquivo aberto;
-        WHEN OTHERS THEN
-          vr_cdcritic:= 0;
-          vr_dscritic:= 'Erro na rotina inss0001.pc_solicita_log. '|| SQLERRM;
+        WHEN vr_exc_saida THEN
           RAISE vr_exc_saida;
+        WHEN vr_exc_erro THEN
+          RAISE vr_exc_erro;   
+        WHEN OTHERS THEN
+          -- No caso de erro de programa gravar tabela especifica de log - 22/01/2018 - Chamado 828247 
+          CECRED.pc_internal_exception (pr_cdcooper => NVL(vr_cdcooper,3)); 
+          vr_cdcritic:= 9999;
+          vr_dscritic:= gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) ||
+                        'pc_arq - Loop, erro: ' || SQLERRM;
+          RAISE vr_exc_erro;      
       END;
+  	  -- Retorno nome do módulo logado - Chamado 828247
+		  GENE0001.pc_set_modulo(pr_module => vr_nmdatela, pr_action => NULL);
+
+    EXCEPTION
+      WHEN vr_exc_saida THEN
+          RAISE vr_exc_saida;
+      WHEN vr_exc_erro THEN
+        RAISE vr_exc_erro;     
+      WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log - 22/01/2018 - Chamado 828247 
+        CECRED.pc_internal_exception (pr_cdcooper => NVL(vr_cdcooper,3)); 
+        vr_cdcritic:= 9999;
+        vr_dscritic:= gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) ||
+                      'pc_arq, erro: ' || SQLERRM;
+        RAISE vr_exc_erro;      
+    END pc_arq;
+    
+    --                                INICIO PROCESSO
+    BEGIN
+  	  -- Incluir nome do módulo logado - Chamado 664301
+		  GENE0001.pc_set_modulo(pr_module => vr_nmdatela, pr_action => 'INSS0001.pc_consulta_log');
+      vr_dsparame := ' pr_dtmvtlog:' || pr_dtmvtlog || 
+                     ' ,pr_nrdnblog:' || pr_nrdnblog || 
+                     ' ,pr_nrdctlog:' || pr_nrdctlog || 
+                     ' ,pr_nriniseq:' || pr_nriniseq ||
+                     ' ,pr_qtregist:' || pr_qtregist || 
+                     ' ,pr_xmllog  :' || pr_xmllog  ;
+
+      CECRED.GENE0004.pc_extrai_dados(pr_xml      => pr_retxml
+                                     ,pr_cdcooper => vr_cdcooper
+                                     ,pr_nmdatela => vr_nmdatela
+                                     ,pr_nmeacao  => vr_nmeacao
+                                     ,pr_cdagenci => vr_cdagenci
+                                     ,pr_nrdcaixa => vr_nrdcaixa
+                                     ,pr_idorigem => vr_idorigem
+                                     ,pr_cdoperad => vr_cdoperad
+                                     ,pr_dscritic => vr_dscritic);
+      -- Ajuste mensagem de erro - 22/01/2018 - Chamado 828247
+      IF vr_dscritic IS NOT NULL THEN
+        -- Montar mensagem de critica 
+        vr_cdcritic := 1138; 
+        vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) || 
+                       ' - ' || vr_dscritic;
+        RAISE vr_exc_erro;
+      END IF;
+  	  -- Retorno nome do módulo logado - Chamado 664301
+		  GENE0001.pc_set_modulo(pr_module => vr_nmdatela, pr_action => 'INSS0001.pc_consulta_log');
+
+      -- Ajustar a rotina pc_consulta_log para ler via DB - 22/01/2018 - Chamado 828247
+      IF to_char(pr_dtmvtlog) != '0' THEN   
+        IF to_date(pr_dtmvtlog,'DD/MM/YYYY') >= vr_dtbanco THEN
+          pc_banco;
+        ELSE    
+          pc_arq;
+        END IF;
+      ELSE
+        pc_banco;
+        pc_arq;
+      END IF;
+
+  	  -- Retorno nome do módulo logado - Chamado 828247
+		  GENE0001.pc_set_modulo(pr_module => vr_nmdatela, pr_action => 'INSS0001.pc_consulta_log');
       
       --Remove o arquivo XML fisico de retorno
       GENE0001.pc_OScommand (pr_typ_comando => 'S'
                             ,pr_des_comando => 'rm '|| vr_caminho || '/'|| vr_nmlog ||' 2> /dev/null'
                             ,pr_typ_saida   => vr_typ_saida
                             ,pr_des_saida   => vr_des_saida);
-      
       --Se ocorreu erro dar RAISE
       IF vr_typ_saida = 'ERR' THEN
-        vr_dscritic := vr_des_saida;
-        RAISE vr_exc_saida;    
+        -- Ajuste mensagem de erro - 22/01/2018 - Chamado 828247
+        -- Montar mensagem de critica 
+        vr_cdcritic := 1137; 
+        vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) || 
+                       ' - ' || vr_des_saida;
+        RAISE vr_exc_erro;    
       END IF;
+  	  -- Retorno nome do módulo logado - Chamado 828247
+		  GENE0001.pc_set_modulo(pr_module => vr_nmdatela, pr_action => 'INSS0001.pc_consulta_log');
       
       vr_contador := 0;
       -- Popula xml
@@ -19081,22 +19302,55 @@ create or replace package body cecred.INSS0001 as
       -- Retorna lista
       pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Dados><registros>' || vr_xml || '</registros><qtregistros>' || vr_qtregist || '</qtregistros></Dados>');
       
+      -- Mensagem quando não encontra regsitro no Log - 22/01/2018 - Chamado 828247
+      IF vr_qtregist = 0 THEN
+        -- Montar mensagem de critica 
+        vr_cdcritic := 1135; --Nenhum registro encontrado
+        vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+        RAISE vr_exc_saida;
+      END IF;
+      
     EXCEPTION
+      -- Ajuste na exception - 22/01/2018 - Chamado 828247 
       WHEN vr_exc_saida THEN
         -- Retorno não OK          
         pr_des_erro:= 'NOK';
-        
         --Se nao tem a descricao do erro
         pr_cdcritic:= vr_cdcritic;
         pr_dscritic:= vr_dscritic;
+	      -- Incluido nome do módulo logado
+		    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => NULL);
+
+      WHEN vr_exc_erro THEN
+        -- Retorno não OK          
+        pr_des_erro:= 'NOK';        
+        pr_cdcritic:= 1136; --Nao foi possivel concluir a requisicao
+        pr_dscritic:= gene0001.fn_busca_critica(pr_cdcritic => pr_cdcritic);
+        --> Geração de log                             
+        pc_grava_log( pr_cdmensagem    => vr_cdcritic  -- Codigo do Log
+                     ,pr_dsmensagem    => vr_dscritic ||
+                                          vr_dsparame ||
+                                          ' ,rotina inss0001.pc_consulta_log' 
+                    );                             
+	      -- Incluido nome do módulo logado
+		    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => NULL);
         
       WHEN OTHERS THEN
+        -- No caso de erro de programa gravar tabela especifica de log
+        CECRED.pc_internal_exception (pr_cdcooper => NVL(vr_cdcooper,3)); 
         -- Retorno não OK
         pr_des_erro:= 'NOK';
-        
-        -- Chamar rotina de gravação de erro
-        pr_cdcritic:= 0;
-        pr_dscritic:= 'Erro na rotina inss0001.pc_solicita_log. '|| SQLERRM;
+        --> Geração de log                             
+        pc_grava_log( pr_cdmensagem    => 9999  -- Codigo do Log
+                     ,pr_dsmensagem    => gene0001.fn_busca_critica(pr_cdcritic => 9999) ||
+                                          vr_dsparame ||
+                                          ' ,rotina inss0001.pc_consulta_log erro:' ||sqlerrm
+                     );      
+        -- Ajuste mensagem de erro
+        pr_cdcritic:= 1136; --Nao foi possivel concluir a requisicao
+        pr_dscritic:= gene0001.fn_busca_critica(pr_cdcritic => pr_cdcritic);                 
+	      -- Incluido nome do módulo logado
+		    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => NULL);
         
   END pc_consulta_log;
   
@@ -19935,8 +20189,8 @@ create or replace package body cecred.INSS0001 as
 
     IF vr_msgenvio IS NOT NULL THEN
       --Move o arquivo XML fisico de envio
-      GENE0001.pc_OScommand (pr_typ_comando => 'S'
-                            ,pr_des_comando => 'mv '||vr_msgenvio||' '||vr_movarqto||' 2> /dev/null'
+      GENE0001.pc_mv_arquivo(pr_dsarqori => vr_msgenvio
+                            ,pr_dsarqdes => vr_movarqto
                             ,pr_typ_saida   => vr_des_reto
                             ,pr_des_saida   => vr_dscritic);
       --Se ocorreu erro dar RAISE
@@ -19947,8 +20201,8 @@ create or replace package body cecred.INSS0001 as
 
     IF vr_msgreceb IS NOT NULL THEN
       --Move o arquivo XML fisico de recebimento
-      GENE0001.pc_OScommand (pr_typ_comando => 'S'
-                            ,pr_des_comando => 'mv '||vr_msgreceb||' '||vr_movarqto||' 2> /dev/null'
+      GENE0001.pc_mv_arquivo(pr_dsarqori => vr_msgreceb
+                            ,pr_dsarqdes => vr_movarqto
                             ,pr_typ_saida   => vr_des_reto
                             ,pr_des_saida   => vr_dscritic);
       --Se ocorreu erro dar RAISE

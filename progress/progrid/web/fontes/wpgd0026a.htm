@@ -1,39 +1,40 @@
 <!--
 	29/06/2015 - Incluido os campos de Dados do Fornecedor e Dados do Evento (Jean Michel).
 
-    19/04/2016 - Removi os campos de Publico Alvo (Carlos Rafael Tanholi).
+  19/04/2016 - Removi os campos de Publico Alvo (Carlos Rafael Tanholi).
 	
 	31/05/2016 - Ajustes de Homologação conforme email do Márcio de 27/05(Vanessa)
 	
 	24/06/2016 - Reformulação da tela conforme RF05  - Vanessa	 
 	
+  03/02/2017 - Alteraçao de labels do relatório, prj. 229 - 5 (Jean Michel)
 -->
 
 <html>
-<head>
-<title>Informações do Evento (wpgd0026a)</title>
-</head>
-<body>
-<link href="/cecred/estilos/progrid.css" rel="stylesheet" type="text/css">
-<script SRC="/cecred/jsbiblio/biblio.js"></script>
-<script SRC="/cecred/jsbiblio/frcod.js"></script>
+	<head> 
+		<title>Informações do Evento (wpgd0026a)</title>
+	</head>
+	<body>
+		<link href="/cecred/estilos/progrid.css" rel="stylesheet" type="text/css">
+		<script SRC="/cecred/jsbiblio/biblio.js"></script>
+		<script SRC="/cecred/jsbiblio/frcod.js"></script>
     	<script language="JavaScript">
 
 		
 		</script>
-<form action="#." method="POST" name="form">
-        <input name="aux_idevento" type="hidden" value="">
-		<input name="aux_dtanoage" type="hidden" value="">
-        <input name="aux_dsendurl" type="hidden" value="">
-        <input name="aux_stdopcao" type="hidden" value="">
-        <input name="aux_dsretorn" type="hidden" value="">
-        <input name="aux_nrdrowid" type="hidden" value="">
-        <input name="aux_lspermis" type="hidden" value="">
-        <input name="aux_cddopcao" type="hidden" value="">
-        <input name="aux_cdcooper" type="hidden" value="">
-        <input name="aux_cdagenci" type="hidden" value="">
-        <input name="aux_cdevento" type="hidden" value="">
-        <input name="aux_nrseqeve" type="hidden" value="">
+		<form action="#." method="POST" name="form">			
+			<input name="aux_idevento" type="hidden" value="">
+			<input name="aux_dtanoage" type="hidden" value="">
+			<input name="aux_dsendurl" type="hidden" value="">
+			<input name="aux_stdopcao" type="hidden" value="">
+			<input name="aux_dsretorn" type="hidden" value="">
+			<input name="aux_nrdrowid" type="hidden" value="">
+			<input name="aux_lspermis" type="hidden" value="">
+			<input name="aux_cddopcao" type="hidden" value="">
+			<input name="aux_cdcooper" type="hidden" value="">
+			<input name="aux_cdagenci" type="hidden" value="">
+			<input name="aux_cdevento" type="hidden" value="">
+			<input name="aux_nrseqeve" type="hidden" value="">			
 			<!-- Botoes de fechar e imprimir -->
 			<div align="right" id="botoes">
 				<table border="0" cellspacing="0" cellpadding="0" width="100%" >
@@ -41,11 +42,11 @@
 						<td align="right">
 							<img src="/cecred/images/botoes/btn_fechar.gif" alt="Fechar esta janela" style="cursor: hand" onClick="top.close()">
 							<img src="/cecred/images/botoes/btn_imprimir.gif" alt="Imprimir" style="cursor: hand" onClick="document.all.botoes.style.visibility = 'hidden'; print(); document.all.botoes.style.visibility = 'visible';">
-      </td>
-    </tr>
-  </table>
+						</td>
+					</tr>
+				</table>
 			</div>
-  <!-- Início do modelo geral -->
+			<!-- Início do modelo geral -->
 			<table width="100%" border="0" align="left" bgcolor="#FFFFFF" cellpadding="0" cellspacing="0" style="float: left;">
 				<thead>
 					<tr valign="botton" background="/cecred/images/geral/guia_fundo.gif">
@@ -53,9 +54,9 @@
 						<th align="center" nowrap width="150px" class="linkGuia" bgcolor="#6B7984" valign="middle" >Informa&ccedil;&otilde;es do Evento </th>
 						<th bgcolor="#6B7984" width="1px" align="right"><img src="/cecred/images/geral/guia_direita.gif" width="2" height="21"></th>
 						<th width="798px" bgcolor="#DEE3D6">&nbsp; </th>
-          </tr>
+					</tr>
 				</thead>
-        </table>
+			</table>
 			
 			
 				<table width="100%" id="tbevento" border="0" cellpadding="0" cellspacing="0">
@@ -64,9 +65,9 @@
 				
 				
 			
-  <!-- Fim do modelo geral -->
-</form>
-<script language="JavaScript">
+		<!-- Fim do modelo geral -->
+		</form>
+		<script language="JavaScript">
 
 			
 			function mostraDadosEvento() {
@@ -394,7 +395,7 @@
                 cell.height = 20;
 				cell.align = 'right';
                 cell.id = document.all.tbevento.rows.length - 1;
-                cell.innerHTML = 'Qtde Máxima Turma:';
+                cell.innerHTML = 'Meta do PA:';
 				
 				cell = row.insertCell();
                 cell.className = 'campoTextoTbl';
@@ -412,7 +413,7 @@
                 cell.height = 20;
 				cell.align = 'right';
                 cell.id = document.all.tbevento.rows.length - 1;
-                cell.innerHTML = 'Qtde Mínima Turma:';
+                cell.innerHTML = 'Capacidade M&aacute;xima:';
 				
 				cell = row.insertCell();
                 cell.className = 'campoTextoTbl';
@@ -472,7 +473,7 @@
                 cell.height = 40;
 				cell.align = 'right';
                 cell.id = document.all.tbevento.rows.length - 1;
-                cell.innerHTML = 'P&uacute;blico Alvo: ';
+                cell.innerHTML = 'P&uacute;blico-Alvo: ';
 				
 				cell = row.insertCell();
                 cell.className = 'campoTextoTbl';
@@ -737,7 +738,7 @@
 			}
 		}
       mostraDadosEvento();
-
-</script>
-</body>
+      
+		</script>
+	</body>
 </html>

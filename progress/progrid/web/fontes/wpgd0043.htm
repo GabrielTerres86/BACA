@@ -4,7 +4,7 @@
    Sistema : Progrid
    Sigla   : PROGRID
    Autor   : Jean Michel
-   Data    : ######/####                       Ultima atualizacao: 23/06/2015
+   Data    : ######/####                       Ultima atualizacao: 30/08/2017
    
    Dados referentes ao programa:
    Frequencia: Sempre que for chamado (On-Line)
@@ -12,11 +12,14 @@
    Objetivo  : Tela de relatório de fechamento geral
       
    Alteracoes: 23/06/2015 - Ajustes no JavaScript, código e inclusão de nova
-							cooperativa "99-TODAS" (Jean Michel).
+                            cooperativa "99-TODAS" (Jean Michel).
 							
-			   25/04/2016 - Alteracao nas dimensoes	dos campos e da tela assim
-							como a forma de exibicao da opcao detalhar.
-							(Carlos Rafael Tanholi).              				
+               25/04/2016 - Alteracao nas dimensoes	dos campos e da tela assim
+                            como a forma de exibicao da opcao detalhar.
+                            (Carlos Rafael Tanholi).              				
+                            
+               30/08/2017 - Inclusao do filtro por Programa,Prj. 322 (Jean Michel).
+               
 --------------------------------------------------------------------------------->
 
 <html>
@@ -88,33 +91,33 @@
 					
 					// Dados Quantitativos
 					if(document.form.aux_tprelato.value==1)
-						linha = "wpgd0043a" + 
-								"?parametro1=" + document.form.aux_idevento.value +  
-								"&parametro2=" + listCooper						  +  
-								"&parametro3=" + document.form.aux_dtanoage.value;
+						linha = "wpgd0043a?parametro1=" + document.form.aux_idevento.value
+                           + "&parametro2=" + listCooper
+                           + "&parametro3=" + document.form.aux_dtanoage.value
+                           + "&parametro4=" + document.form.aux_nrseqpgm.value;
 								  
 						// Por Evento
 						if(document.form.aux_tprelato.value==2)
-							linha = "wpgd0043b" + 
-									"?parametro1=" + document.form.aux_idevento.value +  
-									"&parametro2=" + listCooper						  +  
-									"&parametro3=" + document.form.aux_dtanoage.value +
-									"&parametro4=" + document.form.aux_detalhar.checked;
+							linha = "wpgd0043b?parametro1=" + document.form.aux_idevento.value
+                             + "&parametro2=" + listCooper
+                             + "&parametro3=" + document.form.aux_dtanoage.value
+                             + "&parametro4=" + document.form.aux_detalhar.checked
+                             + "&parametro5=" + document.form.aux_nrseqpgm.value;
 
 						// Por PAC
 						if(document.form.aux_tprelato.value==3)
-							linha = "wpgd0043c" + 
-									"?parametro1=" + document.form.aux_idevento.value +  
-									"&parametro2=" + listCooper						  +  
-									"&parametro3=" + document.form.aux_dtanoage.value +
-									"&parametro4=" + document.form.aux_detalhar.checked;						  
+							linha = "wpgd0043c?parametro1=" + document.form.aux_idevento.value
+                             + "&parametro2=" + listCooper
+                             + "&parametro3=" + document.form.aux_dtanoage.value
+                             + "&parametro4=" + document.form.aux_detalhar.checked
+                             + "&parametro5=" + document.form.aux_nrseqpgm.value;
 
 						imp = window.open(linha,"imp","toolbar=no,location=no,diretories=no,status=yes,menubar=yes,scrollbars=yes,resizable=yes,top=10,left=10,width=850,height=600");
 				}
 			}
 
 			function verifica_coop(){
-
+        
 				if (document.form.aux_cdcooper.value == ''){
 					alert('A Cooperativa deve ser escolhida!');
 					return false;
@@ -130,7 +133,7 @@
 			<input name="aux_dsendurl" id="aux_dsendurl" type="hidden" value="">		
 			<input name="aux_lspermis" id="aux_lspermis" type="hidden" value="">
       <input name="aux_cdoperad" id="aux_cdoperad" type="hidden" value="">
-			 
+			      
 			<!-- Início do modelo geral -->
 			<div id="Layer1" style="position:absolute; border:0px; width:35px; height:35; z-index:1; left: 25px; top: 2px; visibility: ;">
 				<img src="/cecred/images/icones/ico_fornecedor.gif" width="28" height="32" align="bottom">
@@ -180,6 +183,10 @@
 															<div id="divDetalhe"><input type="checkbox" name="aux_detalhar">Detalhar</div>									   
 														</td>									
 													</tr>
+                          <tr>
+                            <td align="right" class="NomeCampo" ><div id="divNrseqpgmLabel">Programa:</div></td>
+                            <td colspan="2"><div id="divNrseqpgm"><select style="width: 270px;" name="aux_nrseqpgm" type="hidden" class="Campo" id="aux_nrseqpgm" ></select></div></td>
+                          </tr>
 												</table>
 												<!-- Fim dos dados específicos da tela, reinício do modelo geral -->
 											</td>
@@ -202,14 +209,20 @@
 			</table>
 		</form>
 	</body>
+  <script type="text/javascript">
+    NomeDoProgramaPrincipal  = '/wpgd0043.w';
+    NomeDoProgramaDeListagem = '/wpgd0043ls.w';
+    NomeDoProgramaDeAjuda    = '/wpgd0043aj.w';
+
+    NomeDoProgramaPrincipal = document.form.aux_dsendurl.value + NomeDoProgramaPrincipal;
+    document.form.action = NomeDoProgramaPrincipal;
+
+    var aux_vazio = false;
+    
+    
+    if(document.form.aux_idevento.value == 2){
+      document.getElementById("divNrseqpgm").style.display = "none";
+      document.getElementById("divNrseqpgmLabel").style.display = "none";
+    }
+  </script>
 </html>
-<script type="text/javascript">
-	NomeDoProgramaPrincipal  = '/wpgd0043.w';
-	NomeDoProgramaDeListagem = '/wpgd0043ls.w';
-	NomeDoProgramaDeAjuda    = '/wpgd0043aj.w';
-
-	NomeDoProgramaPrincipal = document.form.aux_dsendurl.value + NomeDoProgramaPrincipal;
-	document.form.action = NomeDoProgramaPrincipal;
-
-	var aux_vazio = false;
-</script>

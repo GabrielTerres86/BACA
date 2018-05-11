@@ -13,7 +13,7 @@ BEGIN
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Ze Eduardo
-     Data    : Marco/2005.                     Ultima atualizacao: 17/10/2017
+     Data    : Marco/2005.                     Ultima atualizacao: 21/02/2018
 
      Dados referentes ao programa:
 
@@ -344,6 +344,9 @@ BEGIN
                               lançamentos contábeis de críticas de integração de contas do BB
                               P307 - (Jonatas Supero)
 
+                 21/06/2017 - Removidas condições que validam o valor de cheque VLB e enviam
+                              email para o SPB. PRJ367 - Compe Sessao Unica (Lombardi)
+
                  01/09/2017 - Ajustado critica 110 no AAMMDD_XX_CRITICAITG.txt
                               (Rafael Faria - Supero)
 
@@ -357,6 +360,15 @@ BEGIN
                  17/10/2017 - Atualizar descricao do historico 0729 enviado no arquivo pelo BB,
                               de: '0729TRANSFERENCIA' para: '0729TRANSF RECEBIDA'.
                               (Chamado 775188) - (Fabricio)
+                              
+                 15/12/2017 - Chamado 779705 - Inclusão de informações do histórico 
+                              0729TRANSF RECEBIDA em arquivo contábil (Andrei-Mouts)
+
+			     15/12/2017 - Ajuste no cursor cr_craplcm_tot, desta forma, agora os cheques
+							  registrados com histórico 50 serão inseridos no Relatório 414, 
+							  página de "Lançamentos Integrados".
+							  Chamado 792327 (Gabriel / Mouts)
+                              
      ............................................................................. */
 
   DECLARE
@@ -815,8 +827,7 @@ BEGIN
                            ,pr_dtmvtolt  IN craplcm.dtmvtolt%type
                            ,pr_cdagenci  IN craplcm.cdagenci%type
                            ,pr_cdbccxlt  IN craplcm.cdbccxlt%type
-                           ,pr_nrdolote  IN craplcm.nrdolote%type
-                           ,pr_vllanmto  IN craplcm.vllanmto%type) IS
+                           ,pr_nrdolote  IN craplcm.nrdolote%type) IS
        SELECT craplcm.nrdctabb
              ,craplcm.nrdocmto
              ,craplcm.nrdconta
@@ -830,8 +841,7 @@ BEGIN
        AND   craplcm.cdagenci  = pr_cdagenci
        AND   craplcm.cdbccxlt  = pr_cdbccxlt
        AND   craplcm.nrdolote  = pr_nrdolote
-       AND   craplcm.cdhistor  IN (50,59)
-       AND   craplcm.vllanmto >= pr_vllanmto;
+       AND   craplcm.cdhistor  IN (50,59);
 
      --Selecionar Rejeitados Retroativos
      CURSOR cr_craprej_ret (pr_cdcooper IN craprej.cdcooper%type
@@ -873,7 +883,7 @@ BEGIN
                FROM crapage age
               WHERE age.cdcooper = pr_cdcooper
                 AND age.insitage = 1
-                AND age.cdagenci NOT IN (90,91,999)
+                AND age.cdagenci NOT IN (90,91,95,999)
              ORDER BY cdagenci);
 
      --Variaveis Locais
@@ -1175,7 +1185,11 @@ BEGIN
 
         vr_tab_historico('795CONTR CDC I').nrctaori := 1179;
         vr_tab_historico('795CONTR CDC I').nrctades := 4894;
-        vr_tab_historico('795CONTR CDC I').dsrefere := '"CREDITO C/C pr_nrdctabb B.BRASIL REF. CREDITO CDA NAO INTEGRADO NA C/C ITG pr_nrctaitg - A REGULARIZAR"';                                                                                                        
+        vr_tab_historico('795CONTR CDC I').dsrefere := '"CREDITO C/C pr_nrdctabb B.BRASIL REF. CREDITO CDA NAO INTEGRADO NA C/C ITG pr_nrctaitg - A REGULARIZAR"';  
+        
+        vr_tab_historico('0729TRANSF RECE').nrctaori := 1179;
+        vr_tab_historico('0729TRANSF RECE').nrctades := 4894;
+        vr_tab_historico('0729TRANSF RECE').dsrefere := '"CREDITO C/C pr_nrdctabb B.BRASIL REF. TRANSFERENCIA NAO INTEGRADA NA C/C ITG pr_nrctaitg - A REGULARIZAR"';                                                                                                                
         
      END;
 
@@ -2422,10 +2436,6 @@ BEGIN
        vr_vlmaichq:= gene0002.fn_char_para_number(substr(vr_dstextab,01,15));
      END IF;
 
-     /* Valor dos maiores cheques do BB - 3000,00 - nao usa da tabela pois a
-        tabela eh usada em outros programas */
-     vr_vlmaichq:= 3000;
-
      /*  Le tabela com as contas convenio do Banco do Brasil - CTA. ITG. ....... */
      vr_lsconta4:= gene0005.fn_busca_conta_centralizadora(pr_cdcooper => pr_cdcooper
                                                          ,pr_tpregist => 4);
@@ -2806,7 +2816,7 @@ BEGIN
 
            vr_nrdctabb:= TO_NUMBER(SUBSTR(vr_setlinha,33,09));
            vr_nrseqint:= TO_NUMBER(SUBSTR(vr_setlinha,195,06));
-           vr_dshistor:= TRIM(SUBSTR(vr_setlinha,46,29));
+           vr_dshistor:= TRIM(SUBSTR(vr_setlinha,46,29));           
            vr_nrdocmto:= TO_NUMBER(SUBSTR(vr_setlinha,75,06));
            vr_vllanmto:= TO_NUMBER(SUBSTR(vr_setlinha,87,18)) / 100;
            vr_dtmvtolt:= TO_DATE(SUBSTR(vr_setlinha,184,2)||
@@ -4720,99 +4730,6 @@ BEGIN
              END IF;
            END IF;
 
-           /* Entrada, Cheque e Valor Lancamento > Limite */
-           IF vr_flgentra AND vr_flgchequ AND vr_vllanmto >= vr_vlchqvlb THEN
-             --Inserir rejeitado
-             BEGIN
-               INSERT INTO craprej
-                   (craprej.cdcooper
-                   ,craprej.dtmvtolt
-                   ,craprej.cdagenci
-                   ,craprej.cdbccxlt
-                   ,craprej.nrdolote
-                   ,craprej.tpintegr
-                   ,craprej.dtrefere
-                   ,craprej.nrdconta
-                   ,craprej.nrdocmto
-                   ,craprej.vllanmto
-                   ,craprej.nrseqdig
-                   ,craprej.cdcritic
-                   ,craprej.cdpesqbb
-                   ,craprej.dshistor
-                   ,craprej.nrdctabb
-                   ,craprej.indebcre)
-               VALUES
-                   (pr_cdcooper
-                   ,rw_crapdat.dtmvtolt
-                   ,nvl(vr_cdagenci,0)
-                   ,nvl(vr_cdbccxlt,0)
-                   ,nvl(vr_nrdolote,0)
-                   ,vr_contaarq
-                   ,vr_dtrefere
-                   ,nvl(vr_nrdconta,0)
-                   ,nvl(vr_nrdocmto,0)
-                   ,nvl(vr_vllanmto,0)
-                   ,nvl(vr_nrseqint,0)
-                   ,929
-                   ,nvl(vr_cdpesqbb,' ')
-                   ,nvl(vr_dshistor,' ')
-                   ,nvl(vr_nrdctabb,0)
-                   ,vr_indebcre);
-             EXCEPTION
-               WHEN OTHERS THEN
-                 vr_cdcritic:= 0;
-                 vr_dscritic:= 'Erro ao inserir na tabela craprej. '||sqlerrm;
-                 --Levantar Excecao
-                 RAISE vr_exc_saida;
-             END;
-             --Montar Conteudo do Email
-             vr_conteudo:= 'Segue dados do Cheque VLB:<br><br>'||
-                           'Cooperativa: '|| pr_cdcooper||
-                           ' - '|| rw_crapcop.nmrescop ||
-                           '<br>PA: ' || TRIM(rw_crapass.cdagenci)||
-                           '<br>Banco: '||gene0002.fn_mask(vr_cdbccxlt,'zz9')|| '<br>'||
-                           'Conta/dv: '||gene0002.fn_mask_conta(vr_nrdconta)||'<br>'||
-                           'Cheque: '|| gene0002.fn_mask_conta(vr_nrdocmto)|| '<br>'||
-                           'Valor: R$ '||gene0002.fn_mask(vr_vllanmto,'zzz,zzz,zz9.99')||'<br>'||
-                           'Data: '|| TO_CHAR(vr_dtleiarq,'DD/MM/YYYY');
-
-             --Montar Assunto
-             vr_des_assunto:= 'Cheque VLB '||gene0002.fn_mask(vr_cdbccxlt,'999')||' - '||
-                              TO_CHAR(vr_dtleiarq,'DD/MM/YYYY');
-
-             --Recuperar emails de destino
-             vr_email_dest:= gene0001.fn_param_sistema('CRED',pr_cdcooper,'DEVOLUCAO_VLB');
-
-             IF vr_email_dest IS NULL THEN
-               --Montar mensagem de erro
-               vr_dscritic:= 'Nao foi encontrado destinatario para os Cheques VLB.';
-               --Levantar Excecao
-               RAISE vr_exc_saida;
-             END IF;
-
-             --Enviar Email
-             gene0003.pc_solicita_email(pr_cdcooper        => pr_cdcooper
-                                       ,pr_cdprogra        => vr_cdprogra
-                                       ,pr_des_destino     => vr_email_dest
-                                       ,pr_des_assunto     => vr_des_assunto
-                                       ,pr_des_corpo       => vr_conteudo
-                                       ,pr_des_anexo       => NULL
-                                       ,pr_flg_remove_anex => 'N' --> Remover os anexos passados
-                                       ,pr_flg_remete_coop => 'N' --> Se o envio serÃ¡ do e-mail da Cooperativa
-                                       ,pr_flg_enviar      => 'N' --> Enviar o e-mail na hora
-                                       ,pr_des_erro        => vr_dscritic);
-             IF vr_dscritic IS NOT NULL  THEN
-               -- Envio centralizado de log de erro
-               btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                         ,pr_ind_tipo_log => 2 -- Erro tratato
-                                         ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                             || vr_cdprogra || ' --> '
-                                                             || vr_dscritic );
-               --Levantar Excecao
-               RAISE vr_exc_saida;
-             END IF;
-           END IF;
-
            --Se for restart
            IF pr_flgresta = 1 THEN
              IF rw_crapres.rowid IS NULL THEN
@@ -5068,6 +4985,7 @@ BEGIN
                                               ,pr_tpintegr => vr_contaarq) LOOP
            /*   Utilizado para a Somatoria dos Valores de Devolucao  */
            vr_dshistor:= TRIM(SUBSTR(rw_craprej_tot.dshistor,1,15));
+           
            IF INSTR(vr_dshstdev,SUBSTR(vr_dshistor,01,04)) > 0 OR 
               SUBSTR(vr_dshistor,01,04) = '0114' THEN
              --Se existir crawtot
@@ -5309,8 +5227,7 @@ BEGIN
                                               ,pr_dtmvtolt  => rw_crapdat.dtmvtolt
                                               ,pr_cdagenci  => vr_cdagenci
                                               ,pr_cdbccxlt  => vr_cdbccxlt
-                                              ,pr_nrdolote  => vr_nrdolote
-                                              ,pr_vllanmto  => vr_vlmaichq) LOOP
+                                              ,pr_nrdolote  => vr_nrdolote) LOOP
            --Incrementar total registros e valor
            vr_tot_contareg:= Nvl(vr_tot_contareg,0) + 1;
            vr_tot_vllanmto:= Nvl(vr_tot_vllanmto,0) + rw_craplcm_tot.vllanmto;

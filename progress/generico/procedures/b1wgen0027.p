@@ -21,7 +21,7 @@
 
     Programa  : b1wgen0027.p
     Autor     : Guilherme
-    Data      : Fevereiro/2008                Ultima Atualizacao: 19/06/2015
+    Data      : Fevereiro/2008                Ultima Atualizacao: 24/01/2018
     
     Dados referentes ao programa:
 
@@ -87,6 +87,15 @@
                 
                 19/06/2015 - Ajuste para alimentar o campo tt-ocorren.innivris
                              na procedure lista_ocorren. (James)             
+
+                30/01/2017 - Exibir mensagem de atrasado quando for produto Pos-Fixado.
+                             (Jaison/James - PRJ298)
+					 
+                24/01/2018 - Ajuste na extratos_emitidos_no_cash para mostrar apenas
+                             extratos com numero do terminal financeiro (Tiago #824708).
+                              
+                12/03/2018 - Alterado para buscar descricao do tipo de conta do oracle. 
+                             PRJ366 (Lombardi).
 ..............................................................................*/
 
 { sistema/generico/includes/b1wgen0027tt.i }
@@ -95,6 +104,7 @@
 { sistema/generico/includes/var_internet.i }
 { sistema/generico/includes/gera_erro.i }
 { sistema/generico/includes/gera_log.i }
+{ sistema/generico/includes/var_oracle.i }
 
 DEF VAR aux_cdcritic AS INTE                                           NO-UNDO.
 DEF VAR aux_dscritic AS CHAR                                           NO-UNDO.
@@ -376,7 +386,8 @@ PROCEDURE lista_ocorren:
     FIND FIRST tt-dados-epr WHERE (tt-dados-epr.tpemprst = 0   AND
                                    tt-dados-epr.vlpreapg > 0)  OR
 
-                                  (tt-dados-epr.tpemprst = 1   AND
+                                 ((tt-dados-epr.tpemprst = 1   OR
+								   tt-dados-epr.tpemprst = 2)  AND
                                    tt-dados-epr.flgatras)      AND                              
 
                                    tt-dados-epr.inprejuz = 0  
@@ -1066,6 +1077,8 @@ PROCEDURE lista_estouros:
     DEF VAR aux_cdobserv AS CHAR NO-UNDO.
     DEF VAR aux_dscodant AS CHAR NO-UNDO.
     DEF VAR aux_dscodatu AS CHAR NO-UNDO.
+    DEF VAR aux_dstipcta AS CHAR NO-UNDO.
+    DEF VAR aux_des_erro AS CHAR NO-UNDO.
     
     EMPTY TEMP-TABLE tt-erro.
     EMPTY TEMP-TABLE tt-estouros.
@@ -1132,23 +1145,97 @@ PROCEDURE lista_estouros:
 
         IF   crapneg.cdhisest = 2   THEN
              DO:
-                 FIND craptip WHERE craptip.cdcooper = par_cdcooper AND
-                                    craptip.cdtipcta = crapneg.cdtctant
+                 FIND crapass WHERE crapass.cdcooper = par_cdcooper AND
+                                    crapass.nrdconta = par_nrdconta
                                     NO-LOCK NO-ERROR.
             
-                 IF   NOT AVAILABLE craptip THEN
+                 IF AVAILABLE crapass THEN
+                     DO:
+                         { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+                         
+                         RUN STORED-PROCEDURE pc_descricao_tipo_conta
+                         aux_handproc = PROC-HANDLE NO-ERROR (INPUT crapass.inpessoa,    /* tipo de pessoa */
+                                                              INPUT crapneg.cdtctant,    /* tipo de conta */
+                                                             OUTPUT "",   /* Descricao do tipo de conta */
+                                                             OUTPUT "",   /* Flag Erro */
+                                                             OUTPUT "").  /* Descrição da crítica */
+                         
+                         CLOSE STORED-PROC pc_descricao_tipo_conta
+                               aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+                         
+                         { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+                         
+                         ASSIGN aux_dstipcta = ""
+                                aux_des_erro = ""
+                                aux_dscritic = ""
+                                aux_dstipcta = pc_descricao_tipo_conta.pr_dstipo_conta 
+                                               WHEN pc_descricao_tipo_conta.pr_dstipo_conta <> ?
+                                aux_des_erro = pc_descricao_tipo_conta.pr_des_erro 
+                                               WHEN pc_descricao_tipo_conta.pr_des_erro <> ?
+                                aux_dscritic = pc_descricao_tipo_conta.pr_dscritic
+                                               WHEN pc_descricao_tipo_conta.pr_dscritic <> ?.
+                         
+                         IF aux_des_erro = "NOK" or 
+                            aux_dstipcta = ""    THEN
                       aux_dscodant = STRING(crapneg.cdtctant).
                  ELSE
-                      aux_dscodant = craptip.dstipcta.
+                             aux_dscodant =  aux_dstipcta.
+                         
+                         { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+                         
+                         RUN STORED-PROCEDURE pc_descricao_tipo_conta
+                         aux_handproc = PROC-HANDLE NO-ERROR (INPUT crapass.inpessoa,    /* tipo de pessoa */
+                                                              INPUT crapneg.cdtctatu,    /* tipo de conta */
+                                                             OUTPUT "",   /* Descricao do tipo de conta */
+                                                             OUTPUT "",   /* Flag Erro */
+                                                             OUTPUT "").  /* Descrição da crítica */
+                         
+                         CLOSE STORED-PROC pc_descricao_tipo_conta
+                               aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+                         
+                         { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
  
-                 FIND craptip WHERE craptip.cdcooper = par_cdcooper AND
-                                    craptip.cdtipcta = crapneg.cdtctatu
-                                    NO-LOCK NO-ERROR.
+                         ASSIGN aux_dstipcta = ""
+                                aux_des_erro = ""
+                                aux_dscritic = ""
+                                aux_dstipcta = pc_descricao_tipo_conta.pr_dstipo_conta 
+                                               WHEN pc_descricao_tipo_conta.pr_dstipo_conta <> ?
+                                aux_des_erro = pc_descricao_tipo_conta.pr_des_erro 
+                                               WHEN pc_descricao_tipo_conta.pr_des_erro <> ?
+                                aux_dscritic = pc_descricao_tipo_conta.pr_dscritic
+                                               WHEN pc_descricao_tipo_conta.pr_dscritic <> ?.
 
-                 IF   NOT AVAILABLE craptip THEN
+                         IF aux_des_erro = "NOK" OR 
+                            aux_dstipcta = ""    THEN
                       aux_dscodatu = STRING(crapneg.cdtctatu).
                  ELSE
-                      aux_dscodatu = craptip.dstipcta.
+                             aux_dscodatu =  aux_dstipcta.
+                     end.
+                 ELSE
+                     do:
+                         ASSIGN aux_cdcritic = 9
+                                aux_dscritic = "".
+
+                         RUN gera_erro (INPUT par_cdcooper,
+                                        INPUT par_cdagenci,
+                                        INPUT par_nrdcaixa,
+                                        INPUT 1,            /** Sequencia **/
+                                        INPUT aux_cdcritic,
+                                        INPUT-OUTPUT aux_dscritic).        
+                                                   
+                         RUN proc_gerar_log (INPUT par_cdcooper,
+                                             INPUT par_cdoperad,
+                                             INPUT aux_dscritic,
+                                             INPUT aux_dsorigem,
+                                             INPUT aux_dstransa,
+                                             INPUT FALSE,
+                                             INPUT par_idseqttl,
+                                             INPUT par_nmdatela,
+                                             INPUT par_nrdconta,
+                                            OUTPUT aux_nrdrowid).               
+
+                         RETURN "NOK".  
+                     end.
              END.
       
         IF   crapneg.cdhisest = 3 THEN
@@ -1297,6 +1384,7 @@ PROCEDURE extratos_emitidos_no_cash:
                            crapext.dtreffim >= par_dtrefere            AND
                            crapext.nrdconta =  crapass.nrdconta        AND
                            crapext.tpextrat =  1 /* C/C */             AND
+                           crapext.nrterfin > 0                        AND
                           (crapext.insitext =  1    OR 
                            crapext.insitext =  5)                  NO-LOCK  
                            BY crapext.dtrefere:
