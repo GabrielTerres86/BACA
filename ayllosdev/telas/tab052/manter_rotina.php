@@ -302,7 +302,7 @@ if ($cdopcao == 'C') {
     foreach ($registros as $r) {
 
         echo '$("#cddepart", "#frmTab052").val("' . getByTagName($r->tags, 'dsdepart') . '");';
-
+	
         echo '$("#vllimite", "#frmTab052").val("' . getByTagName($r->tags, 'vllimite') . '");';
         echo '$("#vllimite_c", "#frmTab052").val("' . getByTagName($r->tags, 'vllimite_c') . '");';
         
@@ -311,7 +311,7 @@ if ($cdopcao == 'C') {
         
         echo '$("#vlminsac", "#frmTab052").val("' . getByTagName($r->tags, 'vlminsac') . '");';
         echo '$("#vlminsac_c", "#frmTab052").val("' . getByTagName($r->tags, 'vlminsac_c') . '");';
-    
+
         echo '$("#qtremcrt", "#frmTab052").val("' . getByTagName($r->tags, 'qtremcrt') . '");';
         echo '$("#qtremcrt_c", "#frmTab052").val("' . getByTagName($r->tags, 'qtremcrt_c') . '");';
 
@@ -349,7 +349,7 @@ if ($cdopcao == 'C') {
         echo '$("#qtnaopag_c", "#frmTab052").val("' . getByTagName($r->tags, 'qtnaopag_c') . '");';
 
         echo '$("#qtprotes", "#frmTab052").val("' . getByTagName($r->tags, 'qtprotes') . '");';
-        echo '$("#qtprotes_c", "#frmTab052").val("' . getByTagName($r->tags, 'qtprotes_c') . '");';
+        echo '$("#qtprotes_c", "#frmTab052").val("' . getByTagName($r->tags, 'qtprotes_c') . '");'; 
 
         echo '$("#vlmxassi", "#frmTab052").val("' . getByTagName($r->tags, 'vlmxassi') . '");';
         echo '$("#vlmxassi_c", "#frmTab052").val("' . getByTagName($r->tags, 'vlmxassi_c') . '");'; 

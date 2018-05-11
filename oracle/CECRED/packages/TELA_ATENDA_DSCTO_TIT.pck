@@ -1284,7 +1284,7 @@ BEGIN
          raise vr_exc_saida;
    end   if;
    close cr_crawlim;
-
+   
    open  cr_craplim;
    fetch cr_craplim into rw_craplim;
    vr_flcraplim := cr_craplim%FOUND;
@@ -1501,8 +1501,8 @@ BEGIN
 
    else
        if  NOT vr_flcraplim then
-           vr_dscritic := 'Não foi encontrado um contrato de limite de desconto de título associado a proposta. Conta ' || pr_nrdconta || ' proposta ' || pr_nrctrlim;
-           raise vr_exc_saida;
+             vr_dscritic := 'Não foi encontrado um contrato de limite de desconto de título associado a proposta. Conta ' || pr_nrdconta || ' proposta ' || pr_nrctrlim;
+             raise vr_exc_saida;
        end if;
        
        begin
@@ -1519,7 +1519,7 @@ BEGIN
                raise vr_exc_saida;
        end;
    end if;
-   
+
    -- Atualiza a Proposta de Limite de Desconto de Título
    begin
       update crawlim lim

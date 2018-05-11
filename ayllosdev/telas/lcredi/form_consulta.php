@@ -3,7 +3,7 @@
 
   Fonte: form_consulta.php
   Autor: Andrei - RKAM
-  Data : Julho/2016                       Última Alteração: 27/03/2017
+  Data : Julho/2016                       Última Alteração: 10/10/2017
 
   Objetivo  : Mostrar o form com as informaões da linha de crédito.
 
@@ -15,6 +15,9 @@
 
               27/03/2017 - Inclusao dos campos Produto e Indexador. Ajuste na
                            label de Taxa variavel. (Jaison/James - PRJ298)
+
+ 			  10/10/2017 - Inclusao do campos % Mínimo Garantia e adicionado 
+						   opção 4 no campo Modelo. (Lombardi - PRJ404)
 
  * ********************************************************************* */
 
@@ -33,7 +36,7 @@
 	<fieldset id="fsetConsulta" name="fsetConsulta" style="padding:0px; margin:0px; padding-bottom:10px;">
 		
 		<legend>Informa&ccedil;&otilde;es</legend>
-
+			
 		<label for="tpprodut"><? echo utf8ToHtml("Produto:"); ?></label>
 		<select id="tpprodut" name="tpprodut" onchange="exibeFieldIndexador();">
 			<option value="1" <?php echo (getByTagName($linha->tags,'tpprodut') == 1 ? 'selected' : ''); ?>>Price TR/Price Pr&eacute;-Fixado</option>
@@ -74,12 +77,16 @@
 			<option value="1" <?php if (getByTagName($linha->tags,'tpctrato') == 1) { ?> selected <?php } ?> >Empr&eacute;stimo</option>
 			<option value="2" <?php if (getByTagName($linha->tags,'tpctrato') == 2) { ?> selected <?php } ?> >Aliena&ccedil;&atilde;o fiduciaria</option>
 			<option value="3" <?php if (getByTagName($linha->tags,'tpctrato') == 3) { ?> selected <?php } ?> >Hipoteca</option>
+			<option value="4" <?php if (getByTagName($linha->tags,'tpctrato') == 4) { ?> selected <?php } ?> >Aplica&ccedil;&atilde;o</option>
 		</select>
 						
 		<br />
 
 		<label for="nrdevias"><? echo utf8ToHtml("Quantidade de vias:"); ?></label>
 		<input  type="text" id="nrdevias" name="nrdevias"value="<?echo getByTagName($linha->tags,'nrdevias'); ?>" > 
+		
+		<label for="permingr"><? echo utf8ToHtml("% M&iacute;nimo Garantia:"); ?></label>
+		<input  type="text" id="permingr" name="permingr"value="<?echo getByTagName($linha->tags,'permingr') ? getByTagName($linha->tags,'permingr') : '0,00'; ?>" > 
 		
 		<br />
 
@@ -183,7 +190,7 @@
 	<fieldset id="fsetTaxa" name="fsetTaxa" style="padding:0px; margin:0px; padding-bottom:10px;">
 		
 		<legend>Taxa</legend>
-
+				
 		<div id="divIndexador">
             <label for="cddindex"><? echo utf8ToHtml("Indexador:"); ?></label>
             <select id="cddindex" name="cddindex">

@@ -57,7 +57,7 @@
 									<fieldset>
 											Antes de prosseguir com o desbloqueio da<br>
 											Cobertura da Opera&ccedil;&atilde;o de Cr&eacute;dito selecionada,<br>
-											favor informar o valor bloqueado. <br>
+											favor informar o valor de desbloqueio. <br>
 											Observa&ccedil;&atilde;o: Ser&aacute; necess&aacute;ria aprova&ccedil;&atilde;o do seu Coordenador!
 										<div align="center">
 											<label for="vldesblo">Valor a Desbloquear:</label>

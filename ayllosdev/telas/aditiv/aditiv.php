@@ -7,6 +7,7 @@
  * --------------
  * ALTERAÇÕES   : 22/11/2012 - Alterado botões do tipo tag <input> por
  *							   tag <a>, alterado css para novo padrao (Daniel).
+ *                31/10/2017 - Alteracao do titulo da tela. (Jaison/Marcos Martini - PRJ404)
  * --------------
  */
 ?>
@@ -60,7 +61,7 @@
 									<table width="100%"  border="0" cellspacing="0" cellpadding="0">
 										<tr>
 											<td width="11"><img src="<?php echo $UrlImagens; ?>background/tit_tela_esquerda.gif" width="11" height="21"></td>
-											<td class="txtBrancoBold" background="<?php echo $UrlImagens; ?>background/tit_tela_fundo.gif"><? echo utf8ToHtml('ADITIV - Aditivos Contrato de Emprestimo') ?></td>
+											<td class="txtBrancoBold" background="<?php echo $UrlImagens; ?>background/tit_tela_fundo.gif"><? echo utf8ToHtml('ADITIV - Aditivos Contratuais de Operações de Crédito') ?></td>
 											<td class="txtBrancoBold" background="<?php echo $UrlImagens; ?>background/tit_tela_fundo.gif" align="right"><a href="#" onClick='mostraAjudaF2()' class="txtNormalBold">F2 = AJUDA</a>&nbsp;&nbsp;</td>
 											<td class="txtBrancoBold" background="<?php echo $UrlImagens; ?>background/tit_tela_fundo.gif"><a href="#" onClick='mostraAjudaF2()' class="txtNormalBold"><img src="<?php echo $UrlImagens; ?>geral/ico_help.jpg" width="15" height="15" border="0"></a></td>
 											<td width="8"><img src="<?php echo $UrlImagens; ?>background/tit_tela_direita.gif" width="8" height="21"></td>
@@ -87,6 +88,7 @@
 																		
 																		<div id="divRotina"></div>
 																		<div id="divUsoGenerico"></div>
+                                                                        <div id="divUsoGAROPC"></div>
 																		
 																		<div id="divTela">
 																			<? include('form_cabecalho.php'); ?>

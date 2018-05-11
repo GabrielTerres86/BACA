@@ -968,7 +968,7 @@ PROCEDURE valida-dados-plano:
                                             (INPUT par_cdcooper,
                                              INPUT par_nrdconta,
                                              INPUT 15, /* Plano de Cotas */
-                                             INPUT STRING(par_vlprepla),
+                                             INPUT par_vlprepla,
                                              INPUT par_idorigem,
                                              INPUT 0,   /* pr_cddchave */
                                              OUTPUT 0,   /* pr_solcoord */
@@ -1292,7 +1292,7 @@ PROCEDURE valida-dados-alteracao-plano:
                                             (INPUT par_cdcooper,
                                              INPUT par_nrdconta,
                                              INPUT 15, /* Plano de Cotas */
-                                             INPUT STRING(par_vlprepla),
+                                             INPUT par_vlprepla,
                                              INPUT par_idorigem,
                                              INPUT 0,   /* pr_cddchave */
                                              OUTPUT 0,   /* pr_solcoord */

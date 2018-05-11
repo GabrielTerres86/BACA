@@ -6,6 +6,8 @@
 	 * OBJETIVO     : Formulario de Agencias.
 	 * --------------
 	 * ALTERAÇÕES   : 08/01/2014 - Ajustes para homolagação (Adriano)
+	 *
+	 *                11/10/2017 - Inclusao dos campos Modelo e % Mínimo Garantia. (Lombardi - PRJ404)
 	 * --------------
 	 */	
 
@@ -51,6 +53,17 @@
 				<option value="0"><? echo utf8ToHtml("Isentar"); ?></option>
 				<option value="1"><? echo utf8ToHtml("Cobrar"); ?></option>
 			</select>
+
+			<br />
+
+			<label class="rotulo txtNormalBold" for="tpctrato"><? echo utf8ToHtml("Modelo:"); ?></label>
+			<select class="campoTelaSemBorda" id="tpctrato" name="tpctrato">
+				<option value="0"><? echo utf8ToHtml("Geral"); ?></option>
+				<option value="4"><? echo utf8ToHtml("Aplicação"); ?></option>
+			</select>
+						
+			<label class="rotulo-linha txtNormalBold" for="permingr"><? echo utf8ToHtml("% M&iacute;nimo Garantia:"); ?></label>
+			<input class="campoTelaSemBorda" type="text" id="permingr" name="permingr" > 
 
 			<br />
 

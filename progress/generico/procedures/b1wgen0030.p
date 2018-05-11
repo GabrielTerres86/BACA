@@ -9603,7 +9603,7 @@ PROCEDURE valida_inclusao_bordero:
         aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper, /* Cooperativa */
                                              INPUT par_nrdconta, /* Numero da conta */
                                              INPUT 35,           /* Desconto de Titulo */
-                                             INPUT STRING(par_vltottit), /* Valor contratado */
+                                             INPUT par_vltottit, /* Valor contratado */
                                              INPUT par_idorigem, /* Codigo do produto */
                                              INPUT 0,            /* Codigo da chave */
                                             OUTPUT 0,            /* Solicita senha coordenador */
@@ -10027,7 +10027,7 @@ PROCEDURE valida_alteracao_bordero:
         aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper, /* Cooperativa */
                                              INPUT par_nrdconta, /* Numero da conta */
                                              INPUT 35,           /* Desconto de Titulo */
-                                             INPUT STRING(par_vltottit), /* Valor contratado */
+                                             INPUT par_vltottit, /* Valor contratado */
                                              INPUT par_idorigem, /* Codigo do produto */
                                              INPUT 0,            /* Codigo da chave */
                                             OUTPUT 0,            /* Solicita senha coordenador */
@@ -10423,7 +10423,7 @@ PROCEDURE valida_exclusao_tit_bordero:
         aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper, /* Cooperativa */
                                              INPUT par_nrdconta, /* Numero da conta */
                                              INPUT 35,           /* Desconto de Titulo */
-                                             INPUT STRING(par_vltottit), /* Valor contratado */
+                                             INPUT par_vltottit, /* Valor contratado */
                                              INPUT par_idorigem, /* Codigo do produto */
                                              INPUT 0,            /* Codigo da chave */
                                             OUTPUT 0,            /* Solicita senha coordenador */
