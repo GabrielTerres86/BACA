@@ -1,4 +1,4 @@
-CREATE OR REPLACE PACKAGE CECRED.EMPR0008 IS
+CREATE OR REPLACE PACKAGE EMPR0008 IS
 
   ---------------------------------------------------------------------------
   --
@@ -137,7 +137,7 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0008 IS
                                 ,pr_qtdialib IN PLS_INTEGER) RETURN DATE; --> Quantidade de dias para acrescentar
 END EMPR0008;
 /
-CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0008 IS
+CREATE OR REPLACE PACKAGE BODY EMPR0008 IS
   ---------------------------------------------------------------------------
   --
   --  Programa : EMPR0008
