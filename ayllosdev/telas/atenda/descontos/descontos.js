@@ -30,9 +30,9 @@
              26/06/2017 - Ajuste para rotina ser chamada através da tela ATENDA > Produtos (Jonata - RKAM / P364).
 			 
 			 21/07/2017 - Ajuste no cadastro de emitentes. Projeto 300. (Lombardi)
-			 
+
              07/03/2018 - Formatação do novo campo 'Data Renovação' para o formulário de titulos (Leonardo Oliveira - GFT)
-			 
+
              07/03/2018 - Formatação do novo campo 'Data Renovação' para o formulário de titulos (Leonardo Oliveira - GFT)
 
              13/03/2018 - Formatação do botão Renovação para  o formulário de titulos. (Leonardo Oliveira - GFT)
@@ -48,7 +48,7 @@
              15/04/2018 - Correção de sobreescrita.
 
 			 18/04/2018 - Alteração da coluna 'contrato' para 'prospota', inclusão da coluna 'contrato' (Leonardo Oliveira - GFT).
-  
+
 ************************************************************************/
 
 // Carrega biblioteca javascript referente ao RATING
@@ -73,6 +73,8 @@ arrayAlinhaInclusaoBordero[4] = 'right';
 arrayAlinhaInclusaoBordero[5] = 'center';
 arrayAlinhaInclusaoBordero[6] = 'center';
 				
+var flgverbor = 0;
+
 // Função para voltar para o div anterior conforme parâmetros
 function voltaDiv(esconder,mostrar,qtdade,titulo,rotina,novotam,novalar) {	
 
@@ -325,7 +327,7 @@ function formataLayout(nomeForm){
 		arrayLargura[5] = '60px';
 		arrayLargura[6] = '80px';
 		arrayLargura[7] = '120px';
-				
+		
 				
 		var arrayAlinha = new Array();
 		arrayAlinha[0] = 'center';
@@ -350,7 +352,6 @@ function formataLayout(nomeForm){
 	
 	}else if ( nomeForm == 'divBorderosTitulos' ){
 	
-		$('#'+nomeForm).css('width','785px');
 	
 		var divRegistro = $('div.divRegistros','#'+nomeForm);		
 		var tabela      = $('table', divRegistro );
@@ -359,25 +360,51 @@ function formataLayout(nomeForm){
 		
 		var ordemInicial = new Array();
 				
-		var arrayLargura = new Array();
-		arrayLargura[0] = '60px';
-		arrayLargura[1] = '60px';
-		arrayLargura[2] = '60px';
-		arrayLargura[3] = '60px';
-		arrayLargura[4] = '80px';
-		arrayLargura[5] = '120px';
-		arrayLargura[6] = '80px';
+		if(flgverbor){
+			$('#'+nomeForm).css('width','945px');
+		    var arrayLargura = new Array();
+		    arrayLargura[0] = '60px';
+		    arrayLargura[1] = '60px';
+		    arrayLargura[2] = '60px';
+		    arrayLargura[3] = '60px';
+		    arrayLargura[4] = '80px';
+		    arrayLargura[5] = '120px';
+		    arrayLargura[6] = '80px';
+		    arrayLargura[7] = '120px';
+		    arrayLargura[8] = '';
+		    arrayLargura[9] = '65px';
 		
 				
-		var arrayAlinha = new Array();
-		arrayAlinha[0] = 'center';
-		arrayAlinha[1] = 'center';
-		arrayAlinha[2] = 'center';
-		arrayAlinha[3] = 'center';
-		arrayAlinha[4] = 'right';
-		arrayAlinha[5] = 'center';
-		arrayAlinha[6] = 'right';
-		arrayAlinha[7] = 'center';
+		    var arrayAlinha = new Array();
+		    arrayAlinha[0] = 'center';
+		    arrayAlinha[1] = 'center';
+		    arrayAlinha[2] = 'center';
+		    arrayAlinha[3] = 'center';
+		    arrayAlinha[4] = 'right';
+		    arrayAlinha[5] = 'center';
+		    arrayAlinha[6] = 'right';
+		    arrayAlinha[7] = 'center';
+			arrayAlinha[8] = 'center';
+			arrayAlinha[9] = 'center';
+		}
+		else{
+			$('#'+nomeForm).css('width','745px');
+			var arrayLargura = new Array();
+			arrayLargura[0] = '80px';
+			arrayLargura[1] = '80px';
+			arrayLargura[2] = '80px';
+			arrayLargura[3] = '70px';
+			arrayLargura[4] = '140px';
+			arrayLargura[5] = '';
+					
+			var arrayAlinha = new Array();
+			arrayAlinha[0] = 'center';
+			arrayAlinha[1] = 'right';
+			arrayAlinha[2] = 'right';
+			arrayAlinha[3] = 'right';
+			arrayAlinha[4] = 'right';
+			arrayAlinha[5] = 'center';
+		}
 						
 		tabela.formataTabela( ordemInicial, arrayLargura, arrayAlinha, '' );
 		
@@ -512,7 +539,7 @@ function formataLayout(nomeForm){
 
 		layoutPadrao();
 		ajustarCentralizacao();
-	
+
 	}else if ( nomeForm == 'divIncluirBordero' ){
 		$('#'+nomeForm).css('width','940px');
 		var camposFiltros = $("input[type='text'],select",'#'+nomeForm);
@@ -706,7 +733,7 @@ function formataLayout(nomeForm){
 		Ctxdiaria.desabilitaCampo();
 		Cdsopelib.desabilitaCampo();
 		Ctxjurmor.desabilitaCampo();
-			
+
 	}else if ( nomeForm == 'divPropostas' ){
 
 			
@@ -1036,7 +1063,7 @@ function formataLayout(nomeForm){
 		var Cdtrenova = $('#dtrenova','#'+nomeForm);
 		var Cdtultmnt = $('#dtultmnt','#'+nomeForm);
 		var Cperrenov = $('#hd_perrenov','#'+nomeForm);
-		
+
 		$('#'+nomeForm).css('width','530px');
 		
 		Lnrctrlim.addClass('rotulo').css('width','80px');
@@ -1287,8 +1314,8 @@ function formataLayout(nomeForm){
 			// Se é a tecla TAB ou ENTER, 
 			if (e.keyCode == 9 || e.keyCode == 13 ) {
 				cDtdcaptu.focus();
-	return false;
-}
+				return false;
+		}
 		});
 		cDtdcaptu.unbind('keydown').bind('keydown', function(e) {
 			// Se é a tecla TAB ou ENTER, 
@@ -1605,7 +1632,7 @@ function formataLayout(nomeForm){
 		$('tbody > tr',tabela).each( function() {
 			if ( $(this).hasClass('corSelecao') ) {
 				$(this).focus();		
-	}
+			}
 		});
 
 
@@ -1617,7 +1644,7 @@ function formataLayout(nomeForm){
 		$('#'+nomeForm).css('width','940px');
 		
 		
-	
+
 		//restrições	
 		var divRestricoes 					= $('div.divRestricoes','#'+nomeForm);
 		var tabelaRestricoes	   			= $('table', divRestricoes );
