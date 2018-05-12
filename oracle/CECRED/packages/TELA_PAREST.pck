@@ -35,7 +35,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_PAREST IS
   TYPE typ_tab_crapcop IS TABLE OF typ_reg_crapcop INDEX BY BINARY_INTEGER;
 
   PROCEDURE pc_lista_cooperativas(pr_cdcooper IN crapcop.cdcooper%TYPE --> Codigo da Cooperativa
-                                 ,pr_flgativo IN crapcop.flgativo%TYPE --> Flag Ativo
+                                 ,pr_flgativo IN crapcop.flgativo%TYPE --> Flag Ativo         
                                  ,pr_xmllog   IN VARCHAR2 --> XML com informações de LOG
                                  ,pr_cdcritic OUT PLS_INTEGER --> Código da crítica
                                  ,pr_dscritic OUT VARCHAR2 --> Descrição da crítica
@@ -44,7 +44,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_PAREST IS
                                  ,pr_des_erro OUT VARCHAR2); --> Descricao do Erro
 
   PROCEDURE pc_cons_parametos_web(pr_tlcooper IN crapcop.cdcooper%TYPE
-                                 ,pr_flgativo IN crapcop.flgativo%TYPE --> Flag Ativo
+                                 ,pr_flgativo IN crapcop.flgativo%TYPE --> Flag Ativo  
                                  ,pr_tpprodut IN NUMBER --> Tipo de produto (0 - Empréstimos e Financiamentos / 1 - Desconto de Títulos)  
                                  ,pr_xmllog   IN VARCHAR2 --> XML com informações de LOG
                                  ,pr_cdcritic OUT PLS_INTEGER --> Código da crítica
@@ -54,7 +54,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_PAREST IS
                                  ,pr_des_erro OUT VARCHAR2); --> Erros do processo
 
   PROCEDURE pc_cons_parametos(pr_cdcooper    IN crapcop.cdcooper%TYPE
-                             ,pr_flgativo    IN crapcop.flgativo%TYPE --> Flag Ativo
+                             ,pr_flgativo    IN crapcop.flgativo%TYPE --> Flag Ativo  
                              ,pr_tpprodut IN NUMBER --> Tipo de produto (0 - Empréstimos e Financiamentos / 1 - Desconto de Títulos)  
                              ,pr_nmdcampo    OUT VARCHAR2
                              ,pr_cdcritic    OUT crapcri.cdcritic%TYPE --> Cód. da crítica
@@ -62,7 +62,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_PAREST IS
                              ,pr_tab_crapcop OUT typ_tab_crapcop);
 
   PROCEDURE pc_altera_parametos(pr_tlcooper IN crapcop.cdcooper%TYPE
-                               ,pr_flgativo IN crapcop.flgativo%TYPE --> Flag Ativo
+                               ,pr_flgativo IN crapcop.flgativo%TYPE --> Flag Ativo  
                                ,pr_tpprodut IN NUMBER --> Tipo de produto (0 - Empréstimos e Financiamentos / 1 - Desconto de Títulos)  
                                ,pr_incomite IN NUMBER
                                ,pr_contigen IN NUMBER
@@ -101,7 +101,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PAREST IS
   ---------------------------------------------------------------------------
 
   PROCEDURE pc_lista_cooperativas(pr_cdcooper IN crapcop.cdcooper%TYPE --> Codigo da Cooperativa
-                                 ,pr_flgativo IN crapcop.flgativo%TYPE --> Flag Ativo
+                                 ,pr_flgativo IN crapcop.flgativo%TYPE --> Flag Ativo         
                                  ,pr_xmllog   IN VARCHAR2 --> XML com informações de LOG
                                  ,pr_cdcritic OUT PLS_INTEGER --> Código da crítica
                                  ,pr_dscritic OUT VARCHAR2 --> Descrição da crítica
@@ -185,7 +185,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PAREST IS
   END pc_lista_cooperativas;
 
   PROCEDURE pc_cons_parametos_web(pr_tlcooper IN crapcop.cdcooper%TYPE
-                                 ,pr_flgativo IN crapcop.flgativo%TYPE --> Flag Ativo
+                                 ,pr_flgativo IN crapcop.flgativo%TYPE --> Flag Ativo  
                                  ,pr_tpprodut IN NUMBER --> Tipo de produto (0 - Empréstimos e Financiamentos / 1 - Desconto de Títulos)  
                                  ,pr_xmllog   IN VARCHAR2 --> XML com informações de LOG
                                  ,pr_cdcritic OUT PLS_INTEGER --> Código da crítica
@@ -418,7 +418,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PAREST IS
   END pc_cons_parametos_web;
 
   PROCEDURE pc_cons_parametos(pr_cdcooper    IN crapcop.cdcooper%TYPE
-                             ,pr_flgativo    IN crapcop.flgativo%TYPE --> Flag Ativo
+                             ,pr_flgativo    IN crapcop.flgativo%TYPE --> Flag Ativo  
                              ,pr_tpprodut    IN NUMBER --> Tipo de produto (0 - Empréstimos e Financiamentos / 1 - Desconto de Títulos)  
                              ,pr_nmdcampo    OUT VARCHAR2
                              ,pr_cdcritic    OUT crapcri.cdcritic%TYPE --> Cód. da crítica
@@ -454,7 +454,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PAREST IS
     
       vr_ind_crapcop INTEGER := 0;
       vr_ind_crapcop_desc INTEGER := 0;
-      
+    
       ---------------------------- CURSORES -----------------------------------
       CURSOR cr_crapcop IS
         SELECT DECODE(GENE0001.fn_param_sistema(pr_nmsistem => 'CRED',
@@ -489,7 +489,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PAREST IS
 																				 pr_cdacesso => 'QTD_MES_HIST_DEV_CHEQUES') qtmeschq,
                GENE0001.fn_param_sistema(pr_nmsistem => 'CRED',
 																				 pr_cdcooper => cop.cdcooper,
-																				 pr_cdacesso => 'QTD_MES_HIST_ESTOUROS') qtmesest,
+																				 pr_cdacesso => 'QTD_MES_HIST_ESTOUROS') qtmesest,																				 
                GENE0001.fn_param_sistema(pr_nmsistem => 'CRED',
 																				 pr_cdcooper => cop.cdcooper,
 																				 pr_cdacesso => 'QTD_MES_HIST_EMPREST') qtmesemp,
@@ -501,7 +501,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PAREST IS
            AND cop.flgativo = pr_flgativo
          ORDER BY cop.cdcooper;
       rw_crapcop cr_crapcop%ROWTYPE;
-
+    
       CURSOR cr_crapcop_desc IS
         SELECT DECODE(GENE0001.fn_param_sistema(pr_nmsistem => 'CRED',
                                                 pr_cdcooper => cop.cdcooper,
@@ -554,28 +554,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PAREST IS
     
       -- Abre cursor para atribuir os registros encontrados na PL/Table
       IF pr_tpprodut = 0 THEN -- Se o tipo de produto for empréstimos ou financioamentos
-        FOR rw_crapcop IN cr_crapcop LOOP
-          
-          IF rw_crapcop.comite IS NULL THEN
-            continue;
-            END IF;
+      FOR rw_crapcop IN cr_crapcop LOOP
         
-          -- Incrementa contador para utilizar como indice da PL/Table
-          vr_ind_crapcop := vr_ind_crapcop + 1;
-        
-          pr_tab_crapcop(vr_ind_crapcop).cdcooper := rw_crapcop.cdcooper;
-          pr_tab_crapcop(vr_ind_crapcop).nmrescop := rw_crapcop.nmrescop;
-          pr_tab_crapcop(vr_ind_crapcop).incomite := rw_crapcop.comite;
-          pr_tab_crapcop(vr_ind_crapcop).contigen := rw_crapcop.contigencia;
-          pr_tab_crapcop(vr_ind_crapcop).anlautom := rw_crapcop.analise_autom;
-          pr_tab_crapcop(vr_ind_crapcop).nmregmpf := rw_crapcop.nmregmpf;
-          pr_tab_crapcop(vr_ind_crapcop).nmregmpj := rw_crapcop.nmregmpj;
-          pr_tab_crapcop(vr_ind_crapcop).qtsstime := rw_crapcop.qtsstime;								
-          pr_tab_crapcop(vr_ind_crapcop).qtmeschq := rw_crapcop.qtmeschq;								
-          pr_tab_crapcop(vr_ind_crapcop).qtmesest := rw_crapcop.qtmesest;								
-          pr_tab_crapcop(vr_ind_crapcop).qtmesemp := rw_crapcop.qtmesemp;																				
-        
-        END LOOP;
+        IF rw_crapcop.comite IS NULL THEN
+          continue;
+          END IF;
+      
+        -- Incrementa contador para utilizar como indice da PL/Table
+        vr_ind_crapcop := vr_ind_crapcop + 1;
+      
+        pr_tab_crapcop(vr_ind_crapcop).cdcooper := rw_crapcop.cdcooper;
+        pr_tab_crapcop(vr_ind_crapcop).nmrescop := rw_crapcop.nmrescop;
+        pr_tab_crapcop(vr_ind_crapcop).incomite := rw_crapcop.comite;
+        pr_tab_crapcop(vr_ind_crapcop).contigen := rw_crapcop.contigencia;
+        pr_tab_crapcop(vr_ind_crapcop).anlautom := rw_crapcop.analise_autom;
+        pr_tab_crapcop(vr_ind_crapcop).nmregmpf := rw_crapcop.nmregmpf;
+        pr_tab_crapcop(vr_ind_crapcop).nmregmpj := rw_crapcop.nmregmpj;
+        pr_tab_crapcop(vr_ind_crapcop).qtsstime := rw_crapcop.qtsstime;								
+        pr_tab_crapcop(vr_ind_crapcop).qtmeschq := rw_crapcop.qtmeschq;								
+        pr_tab_crapcop(vr_ind_crapcop).qtmesest := rw_crapcop.qtmesest;								
+        pr_tab_crapcop(vr_ind_crapcop).qtmesemp := rw_crapcop.qtmesemp;																				
+      
+      END LOOP;
       ELSE
         FOR rw_crapcop_desc IN cr_crapcop_desc LOOP
           
@@ -598,8 +598,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PAREST IS
           pr_tab_crapcop(vr_ind_crapcop_desc).qtmesest := rw_crapcop_desc.qtmesest;               
           pr_tab_crapcop(vr_ind_crapcop_desc).qtmesemp := rw_crapcop_desc.qtmesemp;                                       
         
-        END LOOP;
-
+      END LOOP;
+    
       END IF;
     
     EXCEPTION
@@ -624,7 +624,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PAREST IS
   END pc_cons_parametos;
 
   PROCEDURE pc_altera_parametos(pr_tlcooper IN crapcop.cdcooper%TYPE
-                               ,pr_flgativo IN crapcop.flgativo%TYPE --> Flag Ativo
+                               ,pr_flgativo IN crapcop.flgativo%TYPE --> Flag Ativo  
                                ,pr_tpprodut IN NUMBER --> Tipo de produto (0 - Empréstimos e Financiamentos / 1 - Desconto de Títulos)  
                                ,pr_incomite IN NUMBER
                                ,pr_contigen IN NUMBER
@@ -670,7 +670,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PAREST IS
       vr_exc_saida EXCEPTION;
     
       vr_possui_reg BOOLEAN;
-
+    
       vr_cd_incomite crapprm.cdacesso%TYPE;
       vr_cd_contigen crapprm.cdacesso%TYPE;
       vr_cd_anlautom crapprm.cdacesso%TYPE;
@@ -695,7 +695,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PAREST IS
       ---------------------------------- VALIDACOES INICIAIS --------------------------
     
       vr_possui_reg := FALSE;
-      
+    
       IF pr_tpprodut = 0 THEN --  Se o tipo de produto for empréstimos e financiamentos
         vr_cd_incomite := 'ENVIA_EMAIL_COMITE'; 
         vr_cd_contigen := 'CONTIGENCIA_ESTEIRA_IBRA'; 

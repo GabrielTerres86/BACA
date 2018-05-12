@@ -69,7 +69,7 @@
                
 			   07/02/2018 - Adicionados novos campos na tt-limite_tit (Luis Fernando - GFT)               
 
-			   11/12/2017 - P404 - Inclusao de Garantia de Cobertura das Operaçoes de Crédito (Augusto / Marcos (Supero))
+               11/12/2017 - P404 - Inclusao de Garantia de Cobertura das Operaçoes de Crédito (Augusto / Marcos (Supero))
                
 			   07/03/2018 - Inclusão do novo campo 'dtrenova' na TEMP-TABLE 'tt-desconto_titulos' (Leonardo Oliveira - GFT)
 
@@ -239,7 +239,7 @@ DEF TEMP-TABLE tt-dados_dsctit NO-UNDO
     FIELD qtprzmin AS INTE FORMAT " zz9"
     FIELD qtprzmax AS INTE FORMAT " zz9"
     FIELD qtminfil AS INTE FORMAT " zz9"
-    FIELD pctitemi AS DECI FORMAT "zz9"
+    FIELD pcmxctip AS DECI FORMAT "zzz9"
     FIELD pctolera AS DECI FORMAT "zz9"
     FIELD pcdmulta AS DECI FORMAT "zz9.999999"
     FIELD flgregis AS LOG  FORMAT "Registrada/Sem Registro"
@@ -248,6 +248,7 @@ DEF TEMP-TABLE tt-dados_dsctit NO-UNDO
     FIELD cardbtit AS INTE FORMAT "zz9"
     FIELD pcnaopag AS DECI FORMAT "zz9"
     FIELD qtnaopag AS INTE FORMAT "zzz9"
+    /*FIELD pctitemi AS DECI FORMAT "zz9"*/
     FIELD qtprotes AS INTE FORMAT "zzz9".
 
 DEF TEMP-TABLE tt-dados_cecred_dsctit NO-UNDO LIKE tt-dados_dsctit.  

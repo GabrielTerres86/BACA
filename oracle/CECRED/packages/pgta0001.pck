@@ -630,7 +630,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
 --             27/10/2017 - #781654 Na rotina pc_processar_arq_pgto, alterado o arquivo de log de null (proc_batch)
 --                          para proc_message (Carlos)
 --
---             18/12/2017 - Efetuado alteração para controle de lock (Jonata - Mouts).
+--             11/12/2017 - Alterar campo flgcnvsi por tparrecd.
+--                          PRJ406-FGTS (Odirlei-AMcom)  
+--
+--             18/12/2017 - Efetuado alteração para controle de lock (Jonata - Mouts).  
 --
 --             26/02/2018 - Alterado cursor cr_crapass da procedure pc_busca_termo_servico, 
 --                          substituindo o acesso à tabela CRAPTIP, pela tabela TBCC_TIPO_CONTA.
@@ -4182,7 +4185,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
        WHERE crapcon.cdcooper = pr_cdcooper
          AND crapcon.cdempcon = pr_cdempcon
          AND crapcon.cdsegmto = pr_cdsegmto
-         AND crapcon.flgcnvsi = 0; -- True
+         AND crapcon.tparrecd <> 1; -- Diferente Sicredi
 
       -- Buscas dados da capa de lote
       CURSOR cr_craplot(pr_cdcooper craplot.cdcooper%TYPE,
@@ -7013,6 +7016,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
     Objetivo  : Rotina para incluir o convenio de pagto por arquivo
 
     Alteracoes: 24/11/2017 - Adicinar DECODE no campo inpessoa (Douglas - Melhoria 271.3)
+                
+                20/04/2018 - Adicionada verificação de adesao do produto 39 Pagamento por 
+                             por Arquivo. PRJ366 (Lombardi).
     ..............................................................................*/
     DECLARE
 
@@ -7084,6 +7090,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
          RAISE vr_exc_saida;
       END IF;
 
+      -- Valida adesao do produto
+      CADA0006.pc_valida_adesao_produto(pr_cdcooper => vr_cdcooper
+                                       ,pr_nrdconta => pr_nrdconta
+                                       ,pr_cdprodut => 39 -- Pagto por Arquivo
+                                       ,pr_cdcritic => vr_cdcritic
+                                       ,pr_dscritic => vr_dscritic);
+      
+      IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_saida;
+      END IF;
+      
 		  -- Alimenta descrição da origem
 		  --vr_dsorigem := TRIM(GENE0001.vr_vet_des_origens(vr_idorigem));
 

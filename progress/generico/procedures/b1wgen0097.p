@@ -2,7 +2,7 @@
     
     Programa: sistema/generico/procedures/b1wgen0097.p
     Autor   : Gabriel, GATI - Diego
-    Data    : Maio/2011               Ultima Atualizacao: 04/04/2018
+    Data    : Maio/2011               Ultima Atualizacao: 12/04/2018
     
     Dados referentes ao programa:
     
@@ -112,6 +112,9 @@
 				             o numero do contrato (Jean - Mout´s)
                      
                 04/04/2018 - Corrigir o calculo do CET. (James)     
+                
+                12/04/2018 - P410 - Melhorias/Ajustes IOF (Marcos-Envolti)
+                
 ............................................................................*/
 
 { sistema/generico/includes/var_internet.i }
@@ -544,7 +547,7 @@ PROCEDURE grava_simulacao:
     DEF  INPUT PARAM par_dtdpagto AS DATE                           NO-UNDO.  
     DEF  INPUT PARAM par_percetop AS DECI                           NO-UNDO.
     DEF  INPUT PARAM par_cdfinemp AS INTE                           NO-UNDO.
-	DEF  INPUT PARAM par_idfiniof AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_idfiniof AS INTE                           NO-UNDO.
     DEF OUTPUT PARAM TABLE FOR tt-erro.
     DEF OUTPUT PARAM par_nrgravad AS INTE                           NO-UNDO.
     DEF OUTPUT PARAM par_txcetano AS DECI                           NO-UNDO.
@@ -560,40 +563,36 @@ PROCEDURE grava_simulacao:
 
 
     EMPTY TEMP-TABLE tt-erro.
-	
-	/* valida o cadastro/alteracao de simulacao de portabilidade para PJ */
-	IF par_cddopcao = "A" OR par_cddopcao = "I" THEN
-	DO:
-	
-		FIND LAST crapass WHERE
-				  crapass.cdcooper = par_cdcooper   AND
-                  crapass.nrdconta = par_nrdconta   NO-LOCK NO-ERROR.
-		IF   AVAIL crapass   THEN
-		DO:
-		
-			FIND LAST crapfin WHERE
-			          crapfin.cdfinemp = par_cdfinemp AND
-					  crapfin.cdcooper = par_cdcooper NO-LOCK NO-ERROR.
-			IF   AVAIL crapfin   THEN
-			DO:		
-				IF crapass.inpessoa = 2 AND crapfin.tpfinali = 2 THEN
-				DO:
-				
-					ASSIGN aux_cdcritic = 0
-						   aux_dscritic = "Operação não permitida para conta PJ".
+          
+    /* Busca dados do Associado */
+    FIND LAST crapass 
+        WHERE crapass.cdcooper = par_cdcooper   
+          AND crapass.nrdconta = par_nrdconta   NO-LOCK NO-ERROR.
+                      
+    /* valida o cadastro/alteracao de simulacao de portabilidade para PJ */
+    IF par_cddopcao = "A" OR par_cddopcao = "I" THEN
+    DO:    
+        FIND LAST crapfin 
+            WHERE crapfin.cdfinemp = par_cdfinemp
+              AND crapfin.cdcooper = par_cdcooper NO-LOCK NO-ERROR.
+        IF   AVAIL crapfin   THEN
+        DO:                
+            IF crapass.inpessoa = 2 AND crapfin.tpfinali = 2 THEN
+            DO:
+          
+                ASSIGN aux_cdcritic = 0
+                       aux_dscritic = "Operação não permitida para conta PJ".
 
-					RUN gera_erro (INPUT par_cdcooper,
-								   INPUT par_cdagenci,
-								   INPUT par_nrdcaixa,
-								   INPUT 1,
-								   INPUT aux_cdcritic,
-								   INPUT-OUTPUT aux_dscritic).
-					RETURN "NOK".				
-				END.
-			END.	
-		END.
-	
-	END.
+                RUN gera_erro (INPUT par_cdcooper,
+                               INPUT par_cdagenci,
+                               INPUT par_nrdcaixa,
+                               INPUT 1,
+                               INPUT aux_cdcritic,
+                               INPUT-OUTPUT aux_dscritic).
+                RETURN "NOK".                                
+            END.
+        END.        
+    END.
 
     IF   par_cddopcao = "I"   THEN
          DO:
@@ -673,48 +672,73 @@ PROCEDURE grava_simulacao:
            aux_dscritic = ""
            var_vliofepr = 0.
 
-    /* Apenas carregar valor do IOF para linhas de crédito que estejam habilitadas para isso */
-    IF  craplcr.flgtaiof = TRUE AND crapfin.tpfinali <> 2 THEN /* 2 - Portabilidade(408032) */
-        DO:
-	
-            RUN consulta_iof(INPUT  par_cdcooper,
-                             INPUT  par_dtmvtolt,
-                             INPUT  par_vlemprst,
-                             INPUT  par_nrdconta,
-                             INPUT  par_dtdpagto,
-                             INPUT  par_qtparepr,
-                             INPUT  par_cdlcremp,
-                             INPUT  IF AVAIL tt-parcelas-epr THEN 
-                                             tt-parcelas-epr.vlparepr
-                                    ELSE 0, 
-                             INPUT  par_dtlibera,
-							 INPUT 1 , /*par_tpemprst */
-                             INPUT "", /*dscatbem */
-                             INPUT par_idfiniof,
-                             OUTPUT var_vliofepr,
-                             OUTPUT TABLE tt-erro).
+    /* Financia IOF e Tarifa */
+    IF  craplcr.flgtaiof = TRUE THEN
+    DO:
+              /* Calcular o IOF da operação */
+        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+        /* Efetuar a chamada a rotina Oracle */ 
+        RUN STORED-PROCEDURE pc_calcula_iof_epr
+         aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper,
+                                              INPUT par_nrdconta,
+                                              INPUT 0,
+                                              INPUT par_dtmvtolt,
+                                              INPUT crapass.inpessoa,
+                                              INPUT par_cdlcremp,
+                                              INPUT par_cdfinemp,   
+                                              INPUT par_qtparepr,                                              
+                                              INPUT IF AVAIL tt-parcelas-epr THEN 
+                                                             tt-parcelas-epr.vlparepr
+                                                    ELSE 0,
+                                              INPUT par_vlemprst,
+                                              INPUT par_dtdpagto,
+                                              INPUT par_dtlibera,
+                                              INPUT 1,
+                                              INPUT ?, /* pr_dtcarenc */
+                                              INPUT 0, /* pr_qtdias_carencia */
+                                              INPUT "",     /* Bens em garantia */
+                                              INPUT par_idfiniof,     /* Indicador de financiamento de IOF e tarifa */
+                                              INPUT ?,
+                                             OUTPUT 0, /* Valor Calculado Parcela */
+                                             OUTPUT 0, /* IOF */
+                                             OUTPUT 0, /* IOF principal */
+                                             OUTPUT 0, /* IOF adicional */
+                                             OUTPUT 0, /* Imunidade */
+                                             OUTPUT "").        
+        /* Fechar o procedimento para buscarmos o resultado */ 
+        CLOSE STORED-PROC pc_calcula_iof_epr
+            aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+        ASSIGN var_vliofepr = pc_calcula_iof_epr.pr_valoriof
+                                 WHEN pc_calcula_iof_epr.pr_valoriof <> ?           
+               aux_dscritic = pc_calcula_iof_epr.pr_dscritic
+                                 WHEN pc_calcula_iof_epr.pr_dscritic <> ?.
+     
+        IF aux_dscritic <> "" THEN
+            RETURN "NOK".        
+        
+        /* Calcular a Tarifa da Operação */
+        RUN consulta_tarifa_emprst(INPUT  par_cdcooper,
+                                   INPUT  par_cdlcremp,
+                                   INPUT  par_vlemprst,
+                                   INPUT  par_nrdconta,
+                                   INPUT 0, /* Número do contrato - passa zero pois na simulacao nao tem bens */
+                                   OUTPUT var_vlrtarif,
+                                   OUTPUT TABLE tt-erro).
 
-            IF  RETURN-VALUE = "NOK" THEN
-                RETURN "NOK".
-        END.
+        IF  RETURN-VALUE = "NOK" THEN
+            RETURN "NOK".
 
-    RUN consulta_tarifa_emprst(INPUT  par_cdcooper,
-                               INPUT  par_cdlcremp,
-                               INPUT  par_vlemprst,
-                               INPUT  par_nrdconta,
-                               INPUT 0, /* Número do contrato - passa zero pois na simulacao nao tem bens */
-                               OUTPUT var_vlrtarif,
-                               OUTPUT TABLE tt-erro).
-
-    IF  RETURN-VALUE = "NOK" THEN
-        RETURN "NOK".
-
-    IF par_idfiniof = 1 THEN
-       ASSIGN var_vllibera = par_vlemprst.
+        /* Incrementar Tarifa e IOF */
+        ASSIGN var_vllibera = par_vlemprst - var_vlrtarif - var_vliofepr.
+    
+    END.
     ELSE
-       ASSIGN var_vllibera = par_vlemprst - var_vlrtarif - var_vliofepr.
-
-    /* Criacao ou busca do registro de simulacao */
+    DO:
+        ASSIGN var_vllibera = par_vlemprst.
+    END.
+    
+    /* Criacao ou busca do registro de simulacao */                     
     IF   par_cddopcao = "I"   THEN
          DO:
              CREATE crapsim.
@@ -786,8 +810,7 @@ PROCEDURE grava_simulacao:
                                      INPUT par_cdoperad, 
                                      INPUT par_nmdatela, 
                                      INPUT par_idorigem, 
-                                     INPUT par_dtmvtolt, 
-                                
+                                     INPUT par_dtmvtolt,                                 
                                      INPUT par_qtparepr, 
                                      INPUT IF AVAIL tt-parcelas-epr THEN 
                                               tt-parcelas-epr.vlparepr 
@@ -1700,91 +1723,6 @@ PROCEDURE verifica-dia-util:
 
 END.
 
-/*****************************************************************************
-*                           PROCEDURE consulta IOF                           *
-******************************************************************************/
-PROCEDURE consulta_iof:
-    
-    DEF INPUT        PARAM par_cdcooper AS INT                      NO-UNDO.
-    DEF INPUT        PARAM par_dtmvtolt AS DATE                     NO-UNDO.
-    DEF INPUT        PARAM par_vlemprst AS DEC                      NO-UNDO.
-    DEF INPUT        PARAM par_nrdconta AS INTE                     NO-UNDO.
-    DEF INPUT        PARAM par_dtdpagto AS DATE                     NO-UNDO.
-    DEF INPUT        PARAM par_qtpreemp AS INTE                     NO-UNDO.        
-    DEF INPUT        PARAM par_cdlcremp AS INTEGER                  NO-UNDO.
-    DEF INPUT        PARAM par_vlpreemp AS DECI                     NO-UNDO.
-    DEF INPUT        PARAM par_dtlibera AS DATE                     NO-UNDO.
-    DEF INPUT        PARAM par_tpemprst AS INTE                     NO-UNDO.
-    DEF INPUT        PARAM par_dscatbem AS CHAR                     NO-UNDO.
-    DEF INPUT        PARAM par_idfiniof AS INTE                     NO-UNDO.
-    DEF OUTPUT       PARAM par_vliofepr AS DEC                      NO-UNDO.        
-    DEF OUTPUT       PARAM TABLE FOR tt-erro.
-    
-    DEF VAR aux_inpessoa AS INTEGER INIT 0                          NO-UNDO.
-	DEF VAR aux_nrctremp AS INTEGER									NO-UNDO.
-    
-    FOR FIRST crapass FIELDS(inpessoa)
-                      WHERE crapass.cdcooper = par_cdcooper AND
-                            crapass.nrdconta = par_nrdconta
-                            NO-LOCK: END.
-    
-    IF AVAILABLE crapass THEN
-       ASSIGN aux_inpessoa = crapass.inpessoa.
-       
-    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
-
-     ASSIGN aux_nrctremp = 0.
-    /* Efetuar a chamada a rotina Oracle */ 
-    RUN STORED-PROCEDURE pc_calcula_iof_epr
-     aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper,
-                                          INPUT par_nrdconta,
-										  INPUT aux_nrctremp,
-                                          INPUT par_dtmvtolt,
-                                          INPUT aux_inpessoa,
-                                          INPUT par_cdlcremp,
-                                          INPUT par_qtpreemp,
-                                          INPUT par_vlpreemp,
-                                          INPUT par_vlemprst,
-                                          INPUT par_dtdpagto,
-                                          INPUT par_dtlibera,
-                                          INPUT par_tpemprst,
-                                          INPUT ?, /* pr_dtcarenc */
-                                          INPUT 0, /* pr_qtdias_carencia */
-                                          INPUT par_dscatbem,     /* Bens em garantia */
-                                          INPUT par_idfiniof,     /* Indicador de financiamento de IOF e tarifa */
-                                          INPUT ?,
-                                         OUTPUT 0, /* IOF */
-                                         OUTPUT 0, /* IOF principal */
-                                         OUTPUT 0, /* IOF adicional */
-                                         OUTPUT 0, /* Imunidade */
-                                         OUTPUT "").
-    
-    /* Fechar o procedimento para buscarmos o resultado */ 
-    CLOSE STORED-PROC pc_calcula_iof_epr
-        aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
-
-    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
-
-    ASSIGN par_vliofepr = pc_calcula_iof_epr.pr_valoriof
-                             WHEN pc_calcula_iof_epr.pr_valoriof <> ?           
-           aux_dscritic = pc_calcula_iof_epr.pr_dscritic
-                             WHEN pc_calcula_iof_epr.pr_dscritic <> ?.
- 
-    IF aux_dscritic <> "" THEN
-       DO:
-           ASSIGN aux_cdcritic = 0.
-           RUN gera_erro (INPUT par_cdcooper,
-                          INPUT 1,
-                          INPUT 1,
-                          INPUT 1,
-                          INPUT aux_cdcritic,
-                          INPUT-OUTPUT aux_dscritic).
-					RETURN "NOK".	
-       END.    
-          
-    RETURN "OK".
-    
-END.
 
 /*****************************************************************************
 *             PROCEDURE Consulta tarifa do contrato do emprestimo            *
@@ -1932,8 +1870,8 @@ PROCEDURE consulta_tarifa_emprst:
                                               ,OUTPUT 0                 /* Valor da tarifa garantia */
                                               ,OUTPUT 0                 /* Histórico do lançamento */
                                               ,OUTPUT 0                 /* Faixa de valor por cooperativa */
-                                              ,OUTPUT 0	                /* Historico Garantia */
-                                              ,OUTPUT 0	                /* Faixa de valor garantia */
+                                              ,OUTPUT 0                        /* Historico Garantia */
+                                              ,OUTPUT 0                        /* Faixa de valor garantia */
                                               ,OUTPUT 0                 /* Crítica encontrada */
                                               ,OUTPUT "").              /* Critica */
 

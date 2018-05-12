@@ -7011,7 +7011,7 @@ PROCEDURE pi_carrega_temp_cooperativas:
          DO:
              FOR EACH crapcop NO-LOCK:
                  CREATE tt-crapcop.
-                 BUFFER-COPY crapcop TO tt-crapcop.
+                 BUFFER-COPY crapcop EXCEPT nrctabcb TO tt-crapcop.
              END.
          END.
     ELSE 
@@ -7033,7 +7033,7 @@ PROCEDURE pi_carrega_temp_cooperativas:
                  END.
 
             CREATE tt-crapcop.
-            BUFFER-COPY crapcop TO tt-crapcop.
+            BUFFER-COPY crapcop EXCEPT nrctabcb TO tt-crapcop.
             RELEASE crapcop.
         END.
 

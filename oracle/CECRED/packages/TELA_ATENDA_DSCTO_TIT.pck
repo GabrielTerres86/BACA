@@ -754,7 +754,7 @@ PROCEDURE pc_validar_data_proposta(pr_cdcooper IN crapcop.cdcooper%TYPE  --> Cód
    cursor cr_crawlim is
    select 1
    from   crawlim lim
-   where  lim.dtpropos < vr_dtviglim
+   where  lim.dtpropos <= vr_dtviglim
    and    lim.cdcooper = pr_cdcooper
    and    lim.nrdconta = pr_nrdconta
    and    lim.nrctrlim = pr_nrctrlim
@@ -1190,6 +1190,7 @@ DECLARE
    -- Variaveis auxiliares
    vr_nrdolote     craplot.nrdolote%type;
    vr_rowid_log    rowid;
+   vr_flcraplim    BOOLEAN;
 
    -- Variáveis incluídas
    vr_des_erro      varchar2(3);                           -- 'OK' / 'NOK'
@@ -1239,6 +1240,7 @@ DECLARE
    select nvl(lim.nrctrmnt,0) nrctrmnt
          ,lim.vllimite
          ,lim.cddlinha
+         ,lim.insitapr
    from   crawlim lim
    where  lim.cdcooper = pr_cdcooper
    and    lim.nrdconta = pr_nrdconta
@@ -1251,6 +1253,7 @@ DECLARE
          ,lim.nrdconta
          ,lim.nrctrlim
          ,lim.tpctrlim
+         ,lim.vllimite
    from   craplim lim
    where  lim.cdcooper = pr_cdcooper
    and    lim.nrdconta = pr_nrdconta
@@ -1281,6 +1284,11 @@ BEGIN
          raise vr_exc_saida;
    end   if;
    close cr_crawlim;
+   
+   open  cr_craplim;
+   fetch cr_craplim into rw_craplim;
+   vr_flcraplim := cr_craplim%FOUND;
+   close cr_craplim;
    
    --  Quando o campo nrctrmnt for zero, significa que a proposta é a principal de criação do contrato do limite. Neste momento deve-se
    --  inserir o contrato do limite.
@@ -1492,14 +1500,10 @@ BEGIN
                            ,pr_nrdrowid => vr_rowid_log);
 
    else
-       open  cr_craplim;
-       fetch cr_craplim into rw_craplim;
-       if    cr_craplim%notfound then
-             close cr_craplim;
+       if  NOT vr_flcraplim then
              vr_dscritic := 'Não foi encontrado um contrato de limite de desconto de título associado a proposta. Conta ' || pr_nrdconta || ' proposta ' || pr_nrctrlim;
              raise vr_exc_saida;
-       end   if;
-       close cr_craplim;
+       end if;
        
        begin
           update craplim lim
@@ -1521,7 +1525,7 @@ BEGIN
       update crawlim lim
       set    insitlim = 2
             ,insitest = 3
-            ,insitapr = nvl(pr_insitapr, insitapr) -- Decisão (Depende do Retorno da Análise...)
+            ,insitapr = nvl(pr_insitapr, case when rw_crawlim.insitapr = 0 then 3 else insitapr end)
             ,qtrenova = 0
             ,dtinivig = rw_crapdat.dtmvtolt
             ,dtfimvig = (rw_crapdat.dtmvtolt + lim.qtdiavig)
@@ -1535,6 +1539,27 @@ BEGIN
            raise vr_exc_saida;
    end;
    
+   --  Caso seja uma proposta de majoração, ou seja, se o valor da proposta for maior que o do contrato, E caso a 
+   --  esteira não esteja em contingencia, então deve enviar a efetivação da proposta para o Ibratan
+   IF  rw_crawlim.vllimite > rw_craplim.vllimite AND
+       NOT fn_contigencia_motor_esteira(pr_cdcooper => pr_cdcooper) THEN
+       este0003.pc_efetivar_limite_esteira(pr_cdcooper => pr_cdcooper
+                                          ,pr_nrdconta => pr_nrdconta
+                                          ,pr_nrctrlim => pr_nrctrlim
+                                          ,pr_tpctrlim => pr_tpctrlim
+                                          ,pr_cdagenci => pr_cdagenci
+                                          ,pr_cdoperad => pr_cdoperad
+                                          ,pr_cdorigem => 9 --Esteira
+                                          ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                          ,pr_cdcritic => vr_cdcritic
+                                          ,pr_dscritic => vr_dscritic);
+
+       IF  vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
+           vr_dscritic := 'Erro ao enviar a efetivação da proposta para o Ibratan: '||vr_dscritic;
+           RAISE vr_exc_saida;
+       END IF;
+   END IF;
+
    COMMIT;
 
 EXCEPTION
@@ -3045,8 +3070,8 @@ PROCEDURE pc_obtem_dados_proposta(pr_cdcooper           in crapcop.cdcooper%type
                                      ctr.tpctrlim = lim.tpctrlim and
                                      ctr.nrdconta = lim.nrdconta and
                                      ctr.cdcooper = lim.cdcooper)
-   where  case --   mostrar propostas em situações de analise (em estudo) dentro de x dias
-               when lim.insitlim in (1,5,6) and lim.dtpropos >= vr_dtpropos then 1
+   where  case --   mostrar propostas em situações de analise (em estudo) ou canceladas dentro de x dias
+               when lim.insitlim in (1,3,5,6) and lim.dtpropos >= vr_dtpropos then 1
                --   mostrar somente a última proposta ativa
                when lim.insitlim = 2 and
                     lim.nrctrlim = (select max(lim_ativo.nrctrlim)
@@ -3061,8 +3086,6 @@ PROCEDURE pc_obtem_dados_proposta(pr_cdcooper           in crapcop.cdcooper%type
                                                                  and    lim_ativo.tpctrlim = pr_tpctrlim
                                                                  and    lim_ativo.nrdconta = pr_nrdconta
                                                                  and    lim_ativo.cdcooper = pr_cdcooper)) then 1
-               --   não mostrar as propostas canceladas
-               when lim.insitlim = 3 then 0
                --   mostrar todas as demais
                when lim.insitlim in (4,7) then 1
                else 0
@@ -4479,7 +4502,7 @@ BEGIN
          open  cr_analise_pagador(vr_tab_dados_titulos(vr_index).nrinssac);
          fetch cr_analise_pagador into rw_analise_pagador;
          if    cr_analise_pagador%notfound then
-
+			   /*	
                dsct0002.pc_efetua_analise_pagador(pr_cdcooper => vr_cdcooper
                                                  ,pr_nrdconta => pr_nrdconta
                                                  ,pr_nrinssac => vr_tab_dados_titulos(vr_index).nrinssac
@@ -4489,6 +4512,8 @@ BEGIN
                if  vr_cdcritic > 0  or vr_dscritic is not null then
                    raise vr_exc_saida;
                end if;
+			   */
+			   NULL;
                
          end   if;
          close cr_analise_pagador;

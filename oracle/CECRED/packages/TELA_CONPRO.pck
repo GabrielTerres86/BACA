@@ -1624,7 +1624,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONPRO IS
            AND trunc(a.DHACIONAMENTO) >= pr_dtinicio
            AND trunc(a.DHACIONAMENTO) <= pr_dtafinal
            AND a.tpacionamento IN(1,2)
-           AND a.tpproduto = pr_tpproduto
+           AND a.tpproduto = nvl(pr_tpproduto, 0/*0 = emprestimo*/)
 		 ORDER BY a.DHACIONAMENTO DESC;
       rw_crawepr cr_cratbepr%ROWTYPE;
       

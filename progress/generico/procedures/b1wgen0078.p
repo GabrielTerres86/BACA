@@ -1797,7 +1797,7 @@ PROCEDURE busca-coop:
          END.
 
     CREATE tt-crapcop.
-    BUFFER-COPY crapcop TO tt-crapcop.
+    BUFFER-COPY crapcop EXCEPT nrctabcb TO tt-crapcop.
 
     RETURN "OK".
 

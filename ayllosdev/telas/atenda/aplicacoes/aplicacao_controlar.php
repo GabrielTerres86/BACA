@@ -3,7 +3,7 @@
 	/*********************************************************************************
 	 Fonte: aplicacao_controlar.php                                     
 	 Autor: David                                                     
-	 Data : Outubro/2010                 Última Alteração: 16/06/2014
+	 Data : Outubro/2010                 Última Alteração: 26/07/2016
 	                                                                  
 	 Objetivo  : Script para excluir nova aplicação                   	
 	                                                                  	 
@@ -17,7 +17,13 @@
 							  (Jean Michel).
 
 				 17/06/2016 - M181 - Alterar o CDAGENCI para          
-                      passar o CDPACTRA (Rafael Maciel - RKAM) 
+							  passar o CDPACTRA (Rafael Maciel - RKAM) 
+				
+				 26/07/2016 - Corrigi uso incorreto de variaveis dentro de funcoes
+							  e tratei o retorno de erro XML. SD 479874 (Carlos.R.)
+
+				 05/04/2018 - Chamada da rotina para verificar o range permitido para 
+				              contratação do produto. PRJ366 (Lombardi).
 
 	********************************************************************************/
 	
@@ -34,7 +40,8 @@
 	// Classe para leitura do xml de retorno
 	require_once("../../../class/xmlfile.php");
 
-	$cddopcao = "";
+	$cddopcao = '';
+	$frm = '';
 			
 	// Se parâmetros necessários não foram informados
 	if (!isset($_POST["nrdconta"]) || 
@@ -172,47 +179,90 @@
 	$xmlObjAplicacao = getObjectXML($xmlResult);
 	
 	// Se ocorrer um erro, mostra crítica
-	if (strtoupper($xmlObjAplicacao->roottag->tags[0]->name) == "ERRO") {		
+	if (isset($xmlObjAplicacao->roottag->tags[0]->name) && strtoupper($xmlObjAplicacao->roottag->tags[0]->name) == "ERRO") {		
 		$msgErro = $xmlObjAplicacao->roottag->tags[0]->tags[0]->tags[4]->cdata;
 		
 		if($msgErro == null || $msgErro == ""){
 			$msgErro = $xmlObjPermanencia->roottag->tags[0]->cdata;
 		}
-		
 		exibeErro($msgErro);
-		
 	} 
 	
+	if ($flgvalid == "true") {
+		
+		$vllanmto = str_replace(',','.',str_replace('.','',$vllanmto));
+	
+		// Montar o xml de Requisicao
+		$xml  = "";
+		$xml .= "<Root>";
+		$xml .= " <Dados>";	
+		$xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
+		$xml .= "   <cdprodut>".    3    ."</cdprodut>"; //Poupança Programada
+		$xml .= "   <vlcontra>".$vllanmto."</vlcontra>";
+		$xml .= "   <cddchave>".    0    ."</cddchave>";
+		$xml .= " </Dados>";
+		$xml .= "</Root>";
+
+		$xmlResult = mensageria($xml, "CADA0006", "VALIDA_VALOR_ADESAO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+		$xmlObject = getObjectXML($xmlResult);
+
+		// Se ocorrer um erro, mostra crítica
+		if (strtoupper($xmlObject->roottag->tags[0]->name) == "ERRO") {
+			$msgErro = $xmlObject->roottag->tags[0]->tags[0]->tags[4]->cdata;
+			exibeErro(utf8_encode($msgErro));
+		}
+		
+		$solcoord = $xmlObject->roottag->tags[0]->cdata;
+		$mensagem = $xmlObject->roottag->tags[1]->cdata;
+	} else {
+		$solcoord = 0;
+		$mensagem = "";
+	}
+	
+	$executar = "";
+	
 	// Esconde mensagem de aguardo
-	echo 'hideMsgAguardo();';	
+	$executar .= "hideMsgAguardo();";
 	
 	// Bloqueia conteúdo que está átras do div da rotina
-	echo 'blockBackground(parseInt($("#divRotina").css("z-index")));';
+	$executar .= "blockBackground(parseInt($(\"#divRotina\").css(\"z-index\")));";
 	
 	// Pega mensagens de confirmação/notificação
-	$msgConfirma = $xmlObjAplicacao->roottag->tags[0]->tags;
+	$msgConfirma = ( isset($xmlObjAplicacao->roottag->tags[0]->tags) ) ? $xmlObjAplicacao->roottag->tags[0]->tags : array();
 	$qtMsgConf   = count($msgConfirma);
 	
-	echo 'msgAplica = new Array();';
+	$executar .= "msgAplica = new Array();";
 			
 	for ($i = 0; $i < $qtMsgConf; $i++) {
-		echo 'var objConf = new Object();';
-		echo 'objConf.inconfir = '.$msgConfirma[$i]->tags[0]->cdata.';';
-		echo 'objConf.dsmensag = "'.$msgConfirma[$i]->tags[1]->cdata.'";';
-		echo 'msgAplica['.$i.'] = objConf;';
+		$executar .= "var objConf = new Object();";
+		$executar .= "objConf.inconfir = ".$msgConfirma[$i]->tags[0]->cdata.";";
+		$executar .= "objConf.dsmensag = \"".$msgConfirma[$i]->tags[1]->cdata."\";";
+		$executar .= "msgAplica[".$i."] = objConf;";
 	}
 	
 	if ($flgvalid == "true") { // Operação de Validação			
-		echo 'confirmaOperacaoAplicacao("'.$cddopcao.'",0);';		
+		$executar .= "confirmaOperacaoAplicacao(\"".$cddopcao."\",0);";
 	} else {		
-		echo 'idLinha  = -1;';
-		echo 'nraplica = 0;';			
-		echo 'notificaOperacaoAplicacao(0);';				
+		$executar .= "idLinha  = -1;";
+		$executar .= "nraplica = 0;";			
+		$executar .= "notificaOperacaoAplicacao(0);";
 	}
 
+	// Se ocorrer um erro, mostra crítica
+	if ($mensagem != "") {
+		$executar = str_replace("\"","\\\"", str_replace("\\", "\\\\", $executar));
+		$executar = str_replace("\"","\\\"", str_replace("\\", "\\\\", $executar));
+		$executar = str_replace("\"","\\\"", str_replace("\\", "\\\\", $executar));
+		
+		exibirErro("error",$mensagem,"Alerta - Ayllos", ($solcoord == 1 ? "senhaCoordenador(\\\"".$executar."\\\");" : ""),false);
+	} else {
+		echo $executar;
+	}
+	
 	// Função para exibir erros na tela através de javascript
 	function exibeErro($msgErro) { 
 		global $cddopcao;
+		global $frm;
 		
 		if ($cddopcao == "E" || $cddopcao == "") {
 			$funcao = "voltarDivPrincipal()";

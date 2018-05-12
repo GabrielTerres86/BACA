@@ -9,7 +9,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps149(pr_cdcooper IN crapcop.cdcooper%TY
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Odair
-   Data    : Marco/96.                       Ultima atualizacao: 04/02/2018
+   Data    : Marco/96.                       Ultima atualizacao: 12/04/2018
 
    Dados referentes ao programa:
 
@@ -237,6 +237,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps149(pr_cdcooper IN crapcop.cdcooper%TY
 
                14/12/2017 - Novo cálculo IOF e financiamento de IOF no valor do empréstimo.
                             Projeto 410 - RF 14 a 18 (Diogo - MoutS)
+                            
+               12/04/2018 - P410 - Melhorias/Ajustes IOF (Marcos-Envolti)                            
 
   ............................................................................. */
   
@@ -270,6 +272,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps149(pr_cdcooper IN crapcop.cdcooper%TY
                      pr_dtmvtolt IN crapepr.dtmvtolt%TYPE,
                      pr_nrctares IN crapepr.nrdconta%TYPE) IS
     SELECT epr.cdcooper
+          ,epr.cdfinemp
           ,epr.cdlcremp  
           ,epr.nrdconta
           ,epr.tpemprst
@@ -564,6 +567,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps149(pr_cdcooper IN crapcop.cdcooper%TY
  
   -- Variaveis Tarifa
   vr_vltottar NUMBER := 0;
+  vr_vlpreclc NUMBER := 0; -- Parcela calcula
   vr_vliofaux NUMBER := 0;
   vr_cdhistor craphis.cdhistor%TYPE;
   vr_cdhisest craphis.cdhistor%TYPE;
@@ -1506,7 +1510,7 @@ BEGIN
              ,rw_crabepr.nrdconta
              ,rw_crabepr.nrdconta
              ,GENE0002.fn_mask(rw_crabepr.nrdconta,'99999999')
-             ,rw_crabepr.nrctremp
+             ,GENE0002.fn_mask(rw_crabepr.nrctremp || TO_CHAR(sysdate,'SSSSS') || (nvl(rw_craplot.nrseqdig,0) + 1),'999999999999999') -- rw_crabepr.nrctremp
              ,15 -- CR.EMPRESTIMO
              ,nvl(rw_craplot.nrseqdig,0) + 1
              ,GENE0002.fn_mask(rw_crabepr.nrctremp,'99999999')
@@ -2063,7 +2067,7 @@ BEGIN
              ,rw_crapepr.nrdconta
              ,rw_crapepr.nrdconta
              ,GENE0002.fn_mask(rw_crapepr.nrdconta,'99999999')
-             ,GENE0002.fn_mask(rw_crapepr.nrctremp,'99999999')
+             ,GENE0002.fn_mask(rw_crapepr.nrctremp || TO_CHAR(sysdate,'SSSSS') || (nvl(rw_craplot.nrseqdig,0) + 1),'999999999999999') --GENE0002.fn_mask(rw_crapepr.nrctremp,'99999999')
              ,282 -- DB.EMPRESTIMO
              ,nvl(rw_craplot.nrseqdig,0) + 1
              ,GENE0002.fn_mask(rw_crabepr.nrctremp,'99999999')
@@ -2678,6 +2682,7 @@ BEGIN
                                  ,pr_nrdconta => rw_crabepr.nrdconta          
                                  ,pr_dtmvtolt => rw_crapdat.dtmvtolt          
                                  ,pr_inpessoa => rw_crapass.inpessoa          
+                                 ,pr_cdfinemp => rw_crabepr.cdfinemp
                                  ,pr_cdlcremp => rw_crabepr.cdlcremp          
                                  ,pr_qtpreemp => rw_crabepr.qtpreemp          
                                  ,pr_vlpreemp => rw_crabepr.vlpreemp          
@@ -2687,6 +2692,7 @@ BEGIN
                                  ,pr_tpemprst => rw_crabepr.tpemprst          
                                  ,pr_dtcarenc        => rw_crawepr.dtcarenc
                                  ,pr_qtdias_carencia => vr_qtdias_carencia
+                                 ,pr_vlpreclc => vr_vlpreclc
                                  ,pr_valoriof => vr_vliofaux                  
                                  ,pr_vliofpri => vr_vliofpri_tmp
                                  ,pr_vliofadi => vr_vliofadi_tmp
@@ -2784,7 +2790,7 @@ BEGIN
                ,rw_crabepr.nrdconta
                ,rw_crabepr.nrdconta
                ,GENE0002.FN_MASK(rw_crabepr.nrdconta,'99999999')
-               ,rw_crabepr.nrctremp
+               ,GENE0002.fn_mask(rw_crabepr.nrctremp || TO_CHAR(sysdate,'SSSSS') || (nvl(rw_craplot.nrseqdig,0) + 1),'999999999999999') --, rw_crabepr.nrctremp
                ,vr_cdhistor --322 -- IOF Sobre Emprestimo.
                ,nvl(rw_craplot.nrseqdig,0) + 1
                 -- controlar para que mantenha 14 posicoes para cada valor devido a 

@@ -3,7 +3,7 @@
 	/***************************************************************************
 	 Fonte: titulos.php
 	 Autor: Guilherme
-	 Data : Novembro/2008                 Última Alteração: 26/06/2017
+	 Data : Novembro/2008                 Última Alteração: 25/04/2018
 
 	 Objetivo  : Mostrar opção Títulos da Rotina de Desconto de Títulos
 
@@ -16,7 +16,7 @@
                               registro (Lucas).
 
                  26/06/2017 - Ajuste para rotina ser chamada através da tela ATENDA > Produtos (Jonata - RKAM / P364).
-                 
+
                  07/03/2018 - Novo campo 'Data Renovação' (Leonardo Oliveira - GFT)
 
                  13/03/2018 - Ajuste nos botões da tela, novo campo 'Renovação' e novo input perrenov do tipo hidden. (Leonardo Oliveira - GFT)
@@ -31,7 +31,7 @@
 
 
 	***************************************************************************/
-	 
+	
 	session_start();
 	
 	// Includes para controle da session, variáveis globais de controle, e biblioteca de funções	
@@ -90,7 +90,7 @@
 	} 
 	
 	$dados = $xmlObjDscTit->roottag->tags[0]->tags[0]->tags;
-
+		
 	
 	// Função para exibir erros na tela através de javascript
 	function exibeErro($msgErro) { 
@@ -139,7 +139,7 @@
 		<label for="vlutilsr"><? echo utf8ToHtml('Valor utilizado (Sem Registro):') ?></label>
 		<input type="text" name="vlutilsr" id="vlutilsr" value="<?php echo number_format(str_replace(",",".",$dados[12]->cdata),2,",",".") . " (". $dados[11]->cdata; if ($dados[11]->cdata > 1) { echo " t&iacute;tulos)"; } else { echo " t&iacute;tulos)"; } ?>" />
 		<br />
-
+		
 		<label for="dtrenova"><? echo utf8ToHtml('Data Renovação: ') ?></label>
 		<input type="text" name="dtrenova" id="dtrenova" value="<?php echo $dados[13]->cdata ?>"/>
 		<br />
@@ -244,30 +244,30 @@
 
 
 <script type="text/javascript">
-	dscShowHideDiv("divOpcoesDaOpcao1","divConteudoOpcao");
+dscShowHideDiv("divOpcoesDaOpcao1","divConteudoOpcao");
 
-	// Muda o título da tela
-	$("#tdTitRotina").html("DESCONTO DE T&Iacute;TULOS");
+// Muda o título da tela
+$("#tdTitRotina").html("DESCONTO DE T&Iacute;TULOS");
 
-	formataLayout('frmTitulos');
+formataLayout('frmTitulos');
 
-	// Esconde mensagem de aguardo
-	hideMsgAguardo();
+// Esconde mensagem de aguardo
+hideMsgAguardo();
 
-	// Bloqueia conteúdo que está átras do div da rotina
-	blockBackground(parseInt($("#divRotina").css("z-index")));
+// Bloqueia conteúdo que está átras do div da rotina
+blockBackground(parseInt($("#divRotina").css("z-index")));
+	
+	//Se esta tela foi chamada através da rotina "Produtos" então acessa a opção conforme definido pelos responsáveis do projeto P364
+	if (executandoProdutos == true) {
+	
+       //Bordero	
+	  if (cdproduto == 35 ) {
+		$('#btnbordero','#divBotoes').click();
 		
-		//Se esta tela foi chamada através da rotina "Produtos" então acessa a opção conforme definido pelos responsáveis do projeto P364
-		if (executandoProdutos == true) {
-		
-	       //Bordero	
-		  if (cdproduto == 35 ) {
-			$('#btnbordero','#divBotoes').click();
-			
-		  //Limite
-		  }else if (cdproduto == 37 ) {
-			$('#btnlimite','#divBotoes').click();
-		  } 
-		}
-	 
+	  //Limite
+	  }else if (cdproduto == 37 ) {
+		$('#btnlimite','#divBotoes').click();
+	  }
+	}
+	
 </script>

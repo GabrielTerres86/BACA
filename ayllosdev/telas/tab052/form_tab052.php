@@ -47,7 +47,7 @@
 			</tr><!-- vl -->
 
 
-
+			
 			<tr class="registerRow">
 				<!-- qtremcrt -->
 				<td width="300px"><label for="qtremcrt" class='labelPri'><?php echo utf8ToHtml('Qtd. Remessa em Cartório:') ?></label></td>

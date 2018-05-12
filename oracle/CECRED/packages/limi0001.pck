@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.LIMI0001 AS
   --  Sistema  : Rotinas referentes ao limite de credito
   --  Sigla    : LIMI
   --  Autor    : James Prust Junior
-  --  Data     : Dezembro - 2014.                   Ultima atualizacao: 17/08/2016
+  --  Data     : Dezembro - 2014.                   Ultima atualizacao: 13/03/2018
   --
   -- Dados referentes ao programa:
   --
@@ -28,6 +28,11 @@ CREATE OR REPLACE PACKAGE CECRED.LIMI0001 AS
   --
   --                 16/03/2018 - Inclusão do parâmetro de input 'crapldc' na procedure pc_renovar_lim_desc_titulo (Leonardo Oliveira - GFT)
   --
+  --                 13/03/2018 - Inclusão de novo campo (Quantidade de Meses do novo limite após o cancelamento)
+  --                              Diego Simas (AMcom)
+  --
+  --                 27/04/2018 - Adicionados campos de indicador de cancelamento automatico por inadimplencia, e, campo de qtde de dias para cancelamento por inadimplencia
+  --                            Marcel (AMcom)
   ---------------------------------------------------------------------------------------------------------------
   --> Armazenar dados do contrato de limite (antigo b1wge0019tt.i - tt-dados-ctr)
   TYPE typ_rec_dados_ctr 
@@ -124,10 +129,15 @@ CREATE OR REPLACE PACKAGE CECRED.LIMI0001 AS
                                   ,pr_dsrisdop IN craprli.dsrisdop%TYPE --> Riscos que englobam a operacao
                                   ,pr_tplimite IN craprli.tplimite%TYPE --> Tipo de limite de crédito
                                   ,pr_pcliqdez IN craprli.pcliqdez%TYPE --> Percentual mínimo de liquidez
-                                  ,pr_qtdialiq IN craprli.qtdialiq%TYPE --> Quantidade de dias para calculo do percentual liquidez
+                                  ,pr_qtdialiq IN craprli.qtdialiq%TYPE --> Quantidade de dias para calculo do percentual liquidez                                  
                                   ,pr_qtcarpag IN craprli.qtcarpag%TYPE --> Contem o periodo de carencia de pagamento
                                   ,pr_qtaltlim IN craprli.qtaltlim%TYPE --> Contem o periodo de alteracao de limites rejeitados                               
                                   ,pr_idgerlog IN INTEGER               --> Identificador de Log (Fixo no código, 0 – Não / 1 - Sim)         
+                                  ,pr_qtcarpag IN craprli.qtcarpag%TYPE --> Contem o periodo de carencia de pagamento
+                                  ,pr_qtaltlim IN craprli.qtaltlim%TYPE --> Contem o periodo de alteracao de limites rejeitados
+								  ,pr_qtmeslic IN craprli.qtmeslic%TYPE --> Quantidade de Meses do novo limite após o cancelamento
+                                  ,pr_cnauinad IN craprli.cnauinad%TYPE --> indicador de cancelamento automatico por inadimplencia
+                                  ,pr_qtdiatin IN craprli.qtdiatin%TYPE --> Quantidade de dias de atraso para cancelamento por ina
                                   ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
                                   ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
                                   ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
@@ -238,7 +248,7 @@ CREATE OR REPLACE PACKAGE CECRED.LIMI0001 AS
                                       ,pr_idorigem IN INTEGER               --> Identificador de Origem
                                       ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
                                       ,pr_dscritic OUT VARCHAR2);           --> Descrição da crítica                                       
-                                       
+
 END LIMI0001;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
@@ -249,7 +259,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
   --  Sistema  : Rotinas referentes ao limite de credito
   --  Sigla    : LIMI
   --  Autor    : James Prust Junior
-  --  Data     : Dezembro - 2014.                   Ultima atualizacao: 17/08/2016
+  --  Data     : Dezembro - 2014.                   Ultima atualizacao: 13/03/2018
   --
   -- Dados referentes ao programa:
   --
@@ -273,6 +283,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
   --                          para a nova coluna ultimas alterações do limite de credito
   --                          Chamado 791852 (Mateus Z - Mouts)
   --  
+  --             13/03/2018 - Inclusão de novo campo (Quantidade de Meses do novo limite após o cancelamento)
+  --                          Diego Simas (AMcom)
+  --  
   ---------------------------------------------------------------------------------------------------------------
   PROCEDURE pc_tela_cadlim_consultar(pr_inpessoa IN craprli.inpessoa%TYPE --> Codigo do tipo de pessoa
                                     ,pr_flgdepop IN INTEGER               --> Flag para verificar o departamento do operador
@@ -291,7 +304,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
      Sistema : Rotinas referentes ao limite de credito
      Sigla   : LIMI
      Autor   : James Prust Junior
-     Data    : Dezembro/14.                    Ultima atualizacao: 11/08/2016
+     Data    : Dezembro/14.                    Ultima atualizacao: 13/03/2018
 
      Dados referentes ao programa:
 
@@ -307,8 +320,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
                  11/08/2016 - Inclusão do parâmetro pr_tplmite para filtro por tipo de limite
                             - Inclusão dos campos pcliqdez e qtdialiq na consulta
                               (Linhares - Projeto 300)
-
+           
                  05/02/2018 - Adicionados campos novos (qtcarpag e qtaltlim) - (Luis Fernando - GFT)
+                 
+				 13/03/2018 - Inclusão de novo campo (Quantidade de Meses do novo limite após o cancelamento)
+                              Diego Simas (AMcom)
+
+                 27/04/2018 - Adicionados campos de indicador de cancelamento automatico por inadimplencia, e, campo de qtde de dias para cancelamento por inadimplencia
+                              Marcel (AMcom)
      ..............................................................................*/ 
     DECLARE
 
@@ -320,6 +339,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
                nrrevcad,
                qtmincta,
                qtdiaren,
+               qtmeslic,
+               cnauinad,
+               qtdiatin,
                qtmaxren,
                qtdiaatr,
                qtatracc,
@@ -422,6 +444,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
       gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => 0, pr_tag_nova => 'nrrevcad', pr_tag_cont => rw_craprli.nrrevcad, pr_des_erro => vr_dscritic);
       gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => 0, pr_tag_nova => 'qtmincta', pr_tag_cont => rw_craprli.qtmincta, pr_des_erro => vr_dscritic);
       gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => 0, pr_tag_nova => 'qtdiaren', pr_tag_cont => rw_craprli.qtdiaren, pr_des_erro => vr_dscritic);
+      gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => 0, pr_tag_nova => 'qtmeslic', pr_tag_cont => rw_craprli.qtmeslic, pr_des_erro => vr_dscritic);
+      gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => 0, pr_tag_nova => 'cnauinad', pr_tag_cont => rw_craprli.cnauinad, pr_des_erro => vr_dscritic);
+      gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => 0, pr_tag_nova => 'qtdiatin', pr_tag_cont => rw_craprli.qtdiatin, pr_des_erro => vr_dscritic);
       gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => 0, pr_tag_nova => 'qtmaxren', pr_tag_cont => rw_craprli.qtmaxren, pr_des_erro => vr_dscritic);
       gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => 0, pr_tag_nova => 'qtdiaatr', pr_tag_cont => rw_craprli.qtdiaatr, pr_des_erro => vr_dscritic);
       gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => 0, pr_tag_nova => 'qtatracc', pr_tag_cont => rw_craprli.qtatracc, pr_des_erro => vr_dscritic);
@@ -431,7 +456,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
       gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => 0, pr_tag_nova => 'qtdialiq', pr_tag_cont => rw_craprli.qtdialiq, pr_des_erro => vr_dscritic);
       gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => 0, pr_tag_nova => 'qtcarpag', pr_tag_cont => rw_craprli.qtcarpag, pr_des_erro => vr_dscritic);
       gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => 0, pr_tag_nova => 'qtaltlim', pr_tag_cont => rw_craprli.qtaltlim, pr_des_erro => vr_dscritic);
-
+      
     EXCEPTION      
       WHEN vr_exc_saida THEN
         -- Se foi retornado apenas código
@@ -460,6 +485,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
 
   END pc_tela_cadlim_consultar;
   
+  -- Rotina referente a alteracao da tela CADLIM
   PROCEDURE pc_tela_cadlim_alterar(pr_inpessoa IN craprli.inpessoa%TYPE --> Codigo do tipo de pessoa                                  
                                   ,pr_vlmaxren IN craprli.vlmaxren%TYPE --> Valor Maximo para renovacao do limite
                                   ,pr_nrrevcad IN craprli.nrrevcad%TYPE --> Numero de meses da revisao cadastral
@@ -472,10 +498,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
                                   ,pr_dsrisdop IN craprli.dsrisdop%TYPE --> Riscos que englobam a operacao
                                   ,pr_tplimite IN craprli.tplimite%TYPE --> Tipo de limite de crédito
                                   ,pr_pcliqdez IN craprli.pcliqdez%TYPE --> Percentual mínimo de liquidez
-                                  ,pr_qtdialiq IN craprli.qtdialiq%TYPE --> Quantidade de dias para calculo do percentual liquidez
+                                  ,pr_qtdialiq IN craprli.qtdialiq%TYPE --> Quantidade de dias para calculo do percentual liquidez                                  
                                   ,pr_qtcarpag IN craprli.qtcarpag%TYPE --> Contem o periodo de carencia de pagamento
                                   ,pr_qtaltlim IN craprli.qtaltlim%TYPE --> Contem o periodo de alteracao de limites rejeitados
                                   ,pr_idgerlog IN INTEGER               --> Identificador de Log (Fixo no código, 0 – Não / 1 - Sim)         
+                                  ,pr_qtcarpag IN craprli.qtcarpag%TYPE --> Contem o periodo de carencia de pagamento
+                                  ,pr_qtaltlim IN craprli.qtaltlim%TYPE --> Contem o periodo de alteracao de limites rejeitados
+                                  ,pr_qtmeslic IN craprli.qtmeslic%TYPE --> Quantidade de Meses do novo limite após o cancelamento
+                                  ,pr_cnauinad IN craprli.cnauinad%TYPE --> indicador de cancelamento automatico por inadimplencia
+                                  ,pr_qtdiatin IN craprli.qtdiatin%TYPE --> Quantidade de dias de atraso para cancelamento por inadimplencia
                                   ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
                                   ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
                                   ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
@@ -489,7 +520,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
      Sistema : Rotinas referentes ao limite de credito
      Sigla   : LIMI
      Autor   : James Prust Junior
-     Data    : Dezembro/14.                    Ultima atualizacao:
+     Data    : Dezembro/14.                    Ultima atualizacao: 13/03/2018
 
      Dados referentes ao programa:
 
@@ -508,6 +539,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
 
                  05/02/2018 - Adicionados campos novos (qtcarpag e qtaltlim) - (Luis Fernando - GFT)
 
+
+                 13/03/2018 - Inclusão de novo campo (Quantidade de Meses do novo limite após o cancelamento)
+                              Diego Simas (AMcom)
+
      ..............................................................................*/ 
     DECLARE
 
@@ -518,6 +553,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
                nrrevcad,
                qtmincta,
                qtdiaren,
+               qtmeslic,
+               cnauinad,
+               qtdiatin,
                qtmaxren,
                qtdiaatr,
                qtatracc,
@@ -687,6 +725,36 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
                                       ,pr_des_text => vr_dsclinha);
       END IF;
         
+      IF rw_craprli.qtmeslic <> pr_qtmeslic THEN
+        vr_dsclinha := vr_dtaltcad || vr_tpaltcad
+                                   || ' -->  Operador ' || vr_cdoperad
+                                   || ' alterou o campo Inclusão de Novo Limite após o cancelamento de '
+                                   || rw_craprli.qtmeslic || ' para ' || pr_qtmeslic;
+        -- Gravar linha no arquivo
+        gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_utlfileh
+                                      ,pr_des_text => vr_dsclinha);
+      END IF;
+
+      IF rw_craprli.cnauinad <> pr_cnauinad THEN
+        vr_dsclinha := vr_dtaltcad || vr_tpaltcad
+                                   || ' -->  Operador ' || vr_cdoperad
+                                   || ' alterou o indicador de Cancelamento automático por inadimplência  '
+                                   || rw_craprli.cnauinad || ' para ' || pr_cnauinad;
+        -- Gravar linha no arquivo
+        gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_utlfileh
+                                      ,pr_des_text => vr_dsclinha);
+      END IF;
+
+      IF rw_craprli.qtdiatin <> pr_qtdiatin THEN
+        vr_dsclinha := vr_dtaltcad || vr_tpaltcad
+                                   || ' -->  Operador ' || vr_cdoperad
+                                   || ' alterou o campo qtde de dias para Cancelamento automático por inadimplência  '
+                                   || rw_craprli.qtdiatin || ' para ' || pr_qtdiatin;
+        -- Gravar linha no arquivo
+        gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_utlfileh
+                                      ,pr_des_text => vr_dsclinha);
+      END IF;
+
       IF rw_craprli.dssitdop <> pr_dssitdop THEN
         vr_dsclinha := vr_dtaltcad || vr_tpaltcad
                                    || ' -->  Operador ' || vr_cdoperad 
@@ -762,14 +830,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
         vr_dsclinha := vr_dtaltcad || vr_tpaltcad
                                    || ' -->  Operador ' || vr_cdoperad 
                                    || ' alterou o campo Quantidade de Dias para Calculo Percentual Liquidez de ' 
-                                   || rw_craprli.qtdialiq || ' para ' || pr_qtdialiq;
+                                   || rw_craprli.qtdialiq || ' para ' || pr_qtdialiq;                                 
                                      
         -- Gravar linha no arquivo
         gene0001.pc_escr_linha_arquivo(pr_utlfileh => vr_utlfileh
                                       ,pr_des_text => vr_dsclinha);
         
       END IF;
-
+        
       IF rw_craprli.qtcarpag <> pr_qtcarpag THEN
 
         vr_dsclinha := vr_dtaltcad || vr_tpaltcad
@@ -805,6 +873,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
                nrrevcad = pr_nrrevcad,
                qtmincta = pr_qtmincta,
                qtdiaren = pr_qtdiaren,
+               qtmeslic = pr_qtmeslic,
+               cnauinad = pr_cnauinad,
+               qtdiatin = pr_qtdiatin,               
                qtmaxren = pr_qtmaxren,
                qtdiaatr = pr_qtdiaatr,
                qtatracc = pr_qtatracc,
@@ -1267,7 +1338,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
     
 	vr_stsnrcal       BOOLEAN;
 	vr_inpessoa       INTEGER;
-
+    
   BEGIN
     
     
@@ -1301,7 +1372,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
 			 vr_tab_avais_ctr(vr_idxavais).cpfavali := gene0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => rw_crapass.nrcpfcgc, 
 																				 pr_inpessoa => rw_crapass.inpessoa );	
 		  END IF;
-
+          
           --> Buscar conjuge do cooperado
           OPEN cr_crapcje ( pr_cdcooper => pr_cdcooper,
                             pr_nrdconta => rw_crapass.nrdconta);
@@ -1350,7 +1421,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
             vr_tab_avais_ctr(vr_idxavais).nrcpfcjg := 'CPF: ' || lpad('_',35,'_');
             vr_tab_avais_ctr(vr_idxavais).dsdoccjg := 'CI: '  || lpad('_',36,'_');
             
-          END IF;
+            END IF;
           END IF;
           
         ELSE
@@ -1365,7 +1436,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
 			 vr_tab_avais_ctr(vr_idxavais).cpfavali := gene0002.fn_mask_cpf_cnpj(pr_nrcpfcgc => rw_crapass.nrcpfcgc, 
 																																							  pr_inpessoa => rw_crapass.inpessoa );						
 		  END IF;
-
+          
         END IF; --> Fim IF rw_crapass.inpessoa = 1
         
         --> Buscar endereço do avalista
@@ -1394,7 +1465,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
         vr_tab_avais_ctr(vr_idxavais).dsdoccjg := 'CI: ' || lpad('_',36,'_');
         vr_tab_avais_ctr(vr_idxavais).dsendava := lpad('_',40,'_');
             END IF;        
-
+        
       END IF; 
     END LOOP;
         
@@ -1653,7 +1724,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
     vr_cdorgexp        tbgen_orgao_expedidor.cdorgao_expedidor%TYPE;
     vr_nmorgexp        tbgen_orgao_expedidor.nmorgao_expedidor%TYPE;
 	vr_nrvrsctr        NUMBER;
-
+    
   BEGIN
   
     -- Verifica se a cooperativa esta cadastrada
@@ -1857,7 +1928,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
 		ELSE
 		   vr_nrvrsctr := 2; -- Atribui versão 2
 		END IF;
-
+    
     IF rw_crapass.inpessoa > 1 THEN
       --Listar representantes/socios
       FOR rw_crapavt IN cr_crapavt LOOP
@@ -1992,9 +2063,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
                                      ,pr_flgimpnp IN INTEGER                --> indica se deve gerar nota promissoria(0-nao 1-sim)
                                      ,pr_flgemail IN INTEGER                --> Indicador de envia por email (0-nao, 1-sim)
                                      ,pr_flgerlog IN INTEGER                --> Indicador se deve gerar log(0-nao, 1-sim)
-                                        ,pr_tab_dados_ctr  IN typ_tab_dados_ctr  --> Dados do contrato 
-                                        ,pr_tab_avais_ctr  IN typ_tab_avais_ctr  --> Dados do avalista
-                                        ,pr_tab_repres_ctr IN typ_tab_repres_ctr --> Dados do representantes/socios       
+                                     ,pr_tab_dados_ctr  IN typ_tab_dados_ctr  --> Dados do contrato 
+                                     ,pr_tab_avais_ctr  IN typ_tab_avais_ctr  --> Dados do avalista
+                                     ,pr_tab_repres_ctr IN typ_tab_repres_ctr --> Dados do representantes/socios       
                                      --------> OUT <--------
                                      ,pr_nmarqpdf  OUT VARCHAR2              --> Retornar quantidad de registros                           
                                      ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
@@ -2073,13 +2144,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
     vr_dsorigem        craplgm.dsorigem%TYPE;
     vr_dstransa        craplgm.dstransa%TYPE;
     vr_nrdrowid        ROWID;
-
+    
     vr_dsextmail       VARCHAR2(3);
     vr_dsmailcop       VARCHAR2(4000);
     vr_dsassmail       VARCHAR2(200);
     vr_dscormail       VARCHAR2(50);
     vr_nmarquivo       VARCHAR2(50) := 'crrl580_contrato_limite.jasper';
-
+    
     -- Variáveis para armazenar as informações em XML
     vr_des_xml   CLOB;
     vr_txtcompl  VARCHAR2(32600);
@@ -2469,7 +2540,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0001 AS
                                 pr_dsdadant => NULL, 
                                 pr_dsdadatu => pr_nrctrlim);
     END IF;
-
+    
   EXCEPTION    
     WHEN vr_exc_erro THEN
       

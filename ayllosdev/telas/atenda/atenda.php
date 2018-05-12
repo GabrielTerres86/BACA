@@ -2,7 +2,7 @@
 /*******************************************************************************
  Fonte: atenda.php                                                
  Autor: David                                                     
- Data : Julho/2007                   Última Alteração: 08/08/2017
+ Data : Julho/2007                   Última Alteração: 05/12/2017
                                                                   
  Objetivo  : Mostrar tela ATENDA                                  
                                                                   
@@ -67,7 +67,8 @@
              23/11/2017 - Quando acessado a tela Atenda diretamente pelo CRM nao precisa apresentar produtos
                           PRJ339-CRM(Odirlei-AMcom) 
 
-
+			 05/12/2017 - Adicionada div divUsoGAROPC para poder chamar a tela GAROPC.
+                          Projeto 404 (Lombardi).
 //**************************************************************************/
 session_start();
 // Includes para controle da session, variáveis globais de controle, e biblioteca de funções
@@ -198,6 +199,8 @@ setVarSession("rotinasTela", $rotinasTela);
 
                                                                                 <!-- ROTINA -->
                                                                                 <div id="divRotina"></div>
+																				<!-- TELA GAROPC -->
+																				<div id="divUsoGAROPC"></div>
 
                                                                                 <!-- INCLUDE DO CABECALHO  -->
                                                                                 <? include('form_cabecalho.php') ?>							

@@ -101,6 +101,9 @@
                 Fraudes/Impedimentos e remoçao do processo de devoluçao de Cheques.
                 PRJ367 - Compe Sessao Unica (Lombardi)
 
+   12/04/2018 - Ajustes para permitir devolver o cheque com alinea 11 em casos de já haver
+                devolução pela alinea 22 (Wagner/Sustentação #839414)
+                 
    16/04/2018 - Incluido tratamento na procedure valida-alinea para nao 
                 criticar horario limite de devolucao quando se tratar de 
 				cheques trocados no caixa (Diego).
@@ -1883,7 +1886,7 @@ PROCEDURE valida-alinea:
     DEF VAR aux_dsoperad AS CHAR                                       NO-UNDO.
     DEF VAR aux_qtdevolu AS INTE                                       NO-UNDO.
     DEF VAR ret_execucao AS LOGICAL                                    NO-UNDO.
-    
+
     DEF BUFFER b-crapneg FOR crapneg.
     
     FIND crapass WHERE crapass.cdcooper = par_cdcooper
@@ -1938,6 +1941,7 @@ PROCEDURE valida-alinea:
 
     IF  par_cdalinea = 11 THEN DO:
 		IF NOT CAN-DO(aux_lsalinea,"")   AND
+		   NOT CAN-DO(aux_lsalinea,"22") AND /* 22 - Cheque sem assinatura*/
 		   NOT CAN-DO(aux_lsalinea,"31") AND
 		   NOT CAN-DO(aux_lsalinea,"39") AND
 		   NOT CAN-DO(aux_lsalinea,"48") AND
@@ -2487,7 +2491,7 @@ PROCEDURE valida-alinea:
                        INPUT-OUTPUT aux_dscritic).
         RETURN "NOK".
     END.
-    
+
     /* Permitir somente alineas de Fraude e Impedimentos apos
       primeira devolucao */
     RUN verifica_hora_execucao(INPUT par_cdcooper,
@@ -3268,8 +3272,8 @@ PROCEDURE gera-devolu:
             crapdev.indctitg = TRUE.
 
         VALIDATE crapdev.
-        
-    END.
+    
+            END.
     ELSE
     IF  par_inchqdev = 2   OR
         par_inchqdev = 4   THEN DO:
@@ -3444,7 +3448,7 @@ PROCEDURE gera-devolu:
              crapdev.indctitg = TRUE.
 
         VALIDATE crapdev.
-        
+
     END.
     ELSE
     IF  par_inchqdev = 5   THEN DO:
@@ -4071,7 +4075,7 @@ PROCEDURE executa-processo-devolu:
                                             INPUT par_cddevolu,
                                             INPUT aux_valorvlb,
                                             OUTPUT TABLE tt-erro).
-                                            
+
                 END.
 
                 HIDE MESSAGE NO-PAUSE.
@@ -4849,8 +4853,8 @@ PROCEDURE gera_lancamento:
                     END.
                             
                     IF  par_cddevolu = 5 THEN DO: /* 1a devolucao - 13:30* */
-                          crapdev.indevarq = 2.   /* Envia */
-                      END.
+                            crapdev.indevarq = 2.   /* Envia */
+                    END.
                     ELSE /* 2a devolucao – 19:00 – Sessao de Prevencao a Fraudes e Impedimentos*/
                          /* Somente alineas 20, 21, 24, 25, 28, 30, 35 e 70 */
                          /* Na segunda Devolucao envia todos com o 
@@ -6475,10 +6479,10 @@ PROCEDURE gera_arquivo_cecred:
                                           crapdev.vllanmto.
            
                 WHEN 2 THEN 
-                    ASSIGN aux_dsorigem = "Arq. Diurno"
-                           aux_totqtdiu = aux_totqtdiu + 1
-                           aux_totvldiu = aux_totvldiu +
-                                          crapdev.vllanmto.
+                            ASSIGN aux_dsorigem = "Arq. Diurno"
+                                   aux_totqtdiu = aux_totqtdiu + 1
+                                   aux_totvldiu = aux_totvldiu +
+                                                  crapdev.vllanmto.
             END CASE.     
 
             ASSIGN aux_totqtrej = aux_totqtrej + 1                
@@ -6737,11 +6741,11 @@ PROCEDURE gera_arquivo_cecred:
                                                   crapdev.vllanmto.
            
                 WHEN 2 THEN DO: 
-                    ASSIGN aux_dsorigem = "Arq. Diurno"
+                        ASSIGN aux_dsorigem = "Arq. Diurno"
                                aux_totqtdiu = aux_totqtdiu + 1
                                aux_totvldiu = aux_totvldiu +
                                               crapdev.vllanmto.
-                END.
+                    END.
             END CASE.     
         END.
 
@@ -7269,29 +7273,29 @@ PROCEDURE marcar_cheque_devolu:
         
         DO WHILE TRUE:
         
-            /* Validar ultimo horario para devolucao */
-            RUN verifica_hora_execucao(INPUT par_cdcooper,
-                                       INPUT par_dtmvtolt,
-                                       INPUT 6,
-                                       OUTPUT ret_execucao,
-                                       OUTPUT TABLE tt-erro).
-        
-            IF  ret_execucao THEN DO:
-                ASSIGN ret_pedsenha  = TRUE /* Exigira a senha ao usuario */
-                       aux_cdcritic = 0
-                       aux_dscritic = "Hora limite para marcar cheques " +
-                                      "foi ultrapassada!".
-               
-                RUN gera_erro (INPUT par_cdcooper,
-                               INPUT 0,
-                               INPUT 0,
-                               INPUT 1, /*sequencia*/
-                               INPUT aux_cdcritic,
-                               INPUT-OUTPUT aux_dscritic).
-                RETURN "OK".
-            END.
-            ELSE
-                LEAVE.
+                /* Validar ultimo horario para devolucao */
+                RUN verifica_hora_execucao(INPUT par_cdcooper,
+                                           INPUT par_dtmvtolt,
+                                           INPUT 6,
+                                           OUTPUT ret_execucao,
+                                           OUTPUT TABLE tt-erro).
+            
+                IF  ret_execucao THEN DO:
+                    ASSIGN ret_pedsenha  = TRUE /* Exigira a senha ao usuario */
+                           aux_cdcritic = 0
+                           aux_dscritic = "Hora limite para marcar cheques " +
+                                          "foi ultrapassada!".
+                   
+                    RUN gera_erro (INPUT par_cdcooper,
+                                   INPUT 0,
+                                   INPUT 0,
+                                   INPUT 1, /*sequencia*/
+                                   INPUT aux_cdcritic,
+                                   INPUT-OUTPUT aux_dscritic).
+                    RETURN "OK".
+                END.
+                ELSE
+                    LEAVE.
 
         END. /* Fim DO WHILE TRUE */
     END.

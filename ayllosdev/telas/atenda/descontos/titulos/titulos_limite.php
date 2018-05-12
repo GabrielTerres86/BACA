@@ -3,7 +3,7 @@
 	/************************************************************************
 	 Fonte: titulos_limite.php                                        
 	 Autor: Guilherme                                                 
-	 Data : Novembro/2008                Última Alteração: 26/06/2017
+	 Data : Novembro/2008                Última Alteração: 15/04/2018
 	                                                                  
 	 Objetivo  : Mostrar opcao Limites de descontos da rotina         
 	             Descontos da tela ATENDA                 		   	  
@@ -25,14 +25,13 @@
 				 26/06/2017 - Ajuste para rotina ser chamada através da tela ATENDA > Produtos (Jonata - RKAM / P364).
 
                  11/12/2017 - P404 - Inclusão de Garantia de Cobertura das Operações de Crédito (Augusto / Marcos (Supero))
-				 
+
 				 28/03/2018 - Alteração nos botões para as novas funcionalidades da tela (Andre Avila GFT).
 
 				 15/04/2018 - Alteração no botão 'Detalhes da Proposta' (Leonardo Oliveira - GFT).
 
-				 26/04/2018 - Ajuste no botão de voltar, uso da função generica (Leonardo Oliveira - GFT).
 	************************************************************************/
-	 
+	
 	session_start();
 	
 	// Includes para controle da session, variáveis globais de controle, e biblioteca de funções	
@@ -46,13 +45,13 @@
 	// Classe para leitura do xml de retorno
 	require_once("../../../../class/xmlfile.php");
 	
-	setVarSession("nmrotina","DSC TITS - CONTRATO");
+	setVarSession("nmrotina","DSC TITS - LIMITE");
 
 	// Carrega permissões do operador
 	include("../../../../includes/carrega_permissoes.php");	
 	
 	setVarSession("opcoesTela",$opcoesTela);
-
+	
 	// Verifica se o número da conta foi informado
 	if (!isset($_POST["nrdconta"])) {
 		exibeErro("Par&acirc;metros incorretos.");
@@ -78,7 +77,7 @@
 	$xmlGetLimites .= "		<dtmvtolt>".$glbvars["dtmvtolt"]."</dtmvtolt>";
 	$xmlGetLimites .= "	</Dados>";
 	$xmlGetLimites .= "</Root>";
-
+		
 	// Executa script para envio do XML
 	$xmlResult = getDataXML($xmlGetLimites);
 	
@@ -92,7 +91,7 @@
 	
 	$limites   = $xmlObjLimites->roottag->tags[0]->tags;
 	$qtLimites = count($limites);
-
+	
 	// Fun&ccedil;&atilde;o para exibir erros na tela atrav&eacute;s de javascript
 	function exibeErro($msgErro) { 
 		echo '<script type="text/javascript">';
@@ -100,7 +99,7 @@
 		echo 'showError("error","'.$msgErro.'","Alerta - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))");';
 		echo '</script>';
 		exit();
-	}
+	}	
 ?>
 
 <div id="divContratos">
@@ -120,7 +119,7 @@
 			<tbody>
 				
 				<?  for ($i = 0; $i < $qtLimites; $i++) {
-   
+												
 					    $pr_dtpropos = getByTagName($limites[$i]->tags,"dtpropos");//0
 					    $pr_dtinivig = getByTagName($limites[$i]->tags,"dtinivig");//1
 					    $pr_vllimite = getByTagName($limites[$i]->tags,"vllimite");//2
@@ -135,7 +134,7 @@
 						$pr_insitlim = getByTagName($limites[$i]->tags,"flgenvio");//11
 						$pr_idcobope = getByTagName($limites[$i]->tags,"idcobope");//12
 						$pr_cdageori = getByTagName($limites[$i]->tags,"cdageori");//13
-
+									
 						$mtdClick = "selecionaLimiteTitulos('"
 							.($i + 1)."', '"
 							.$qtLimites."', '"
@@ -147,22 +146,22 @@
 				?>
 
 					<tr id="trLimite<? echo $i + 1; ?>" onFocus="<? echo $mtdClick; ?>" onClick="<? echo $mtdClick; ?>">
-
+					
 						<td><?php
 							  // Vamos salvar o numero do contrato ativo para usar na tela de garantia (Merge GFT)
-							  if ($limites[$i]->tags[9]->cdata == 2) {
+              if ($limites[$i]->tags[9]->cdata == 2) {
 								echo '<input type="hidden" name="nrcontratoativo" id="nrcontratoativo" value="'.$pr_nrctrlim.'"/>';
-							  }
+              }
 							  echo $pr_dtpropos; ?>
-							  </td>
-
+            </td>
+						
 						<td><? echo $pr_dtinivig; ?></td>
 						
 						<td>
 							<span><? echo $pr_nrctrlim ?></span>
 							<? echo formataNumericos('zzz.zzz.zzz',$pr_nrctrlim,'.'); ?>
 						</td>
-
+						
 						<td>
 							<span><? echo $pr_vllimite; ?></span>
 							<? echo number_format(str_replace(",",".",$pr_vllimite),2,",","."); ?>
@@ -171,8 +170,8 @@
 						<td><? echo $pr_qtdiavig; ?></td>
 						<td><? echo $pr_cddlinha; ?></td>
 						<td><? echo $pr_dssitlim; ?></td>
-				
-												
+						
+						
 					</tr>
 				<?} // Fim do for ?>			
 			</tbody>
@@ -186,14 +185,18 @@
 		type="button" 
 		class="botao" 
 		value="Voltar"  
-		onClick="fecharRotinaGenerico('TITULOS');return false;" />
+		onClick="
+			voltaDiv(2,1,4,'DESCONTO DE T&Iacute;TULOS','DSC TITS');
+			carregaTitulos();
+			return false;" 
+		/>
 
 	<input 
 		type="button"
 		class="botao"
 		value="Cancelar"
 		<?php if ($qtLimites == 0) {
-			echo 'onClick="return false;';
+			echo 'onClick="return false;"';
 		} else {
 			echo 'style="'.$dispX.'" onClick="showConfirmacao(\'Deseja cancelar o Contrato?\',\'Confirma&ccedil;&atilde;o - Ayllos\',\'cancelaLimiteDscTit()\',\'metodoBlock()\',\'sim.gif\',\'nao.gif\');return false;"';
 		} ?>  />
@@ -203,7 +206,7 @@
 		class="botao"
 		value="Consultar"
 		<?php if ($qtLimites == 0) {
-			echo 'onClick="return false;';
+			echo 'onClick="return false;"';
 			} else {
 				echo 'onClick="carregaDadosConsultaLimiteDscTit();return false;"'; 
 		} ?> />
@@ -213,7 +216,7 @@
 		class="botao"
 		value="Imprimir"
 		<?php if ($qtLimites == 0) { 
-			echo 'onClick="return false;';
+			echo 'onClick="return false;"';
 		} else {
 			echo 'onClick="mostraImprimirLimite(\'CONTRATO\');return false;"';
 		} ?> />
@@ -224,7 +227,7 @@
 		value="Detalhes da Proposta"  
 		id="btnDetalhesProposta" name="btnDetalhesProposta" 
 		<?php if ($qtLimites == 0) { 
-			echo 'onClick="return false;';
+			echo 'onClick="return false;"';
 		} else { 
 			echo 'onClick="carregaDadosDetalhesProposta(\'CONTRATO\', nrcontrato, 0);return false;"'; 
 		} ?> />
@@ -234,18 +237,16 @@
 <script type="text/javascript">
 dscShowHideDiv("divOpcoesDaOpcao2","divOpcoesDaOpcao1;divOpcoesDaOpcao3");
 
-	dscShowHideDiv("divOpcoesDaOpcao2","divOpcoesDaOpcao1;divOpcoesDaOpcao3");
-
-	// Muda o título da tela
-	$("#tdTitRotina").html("DESCONTO DE T&Iacute;TULOS - LIMITE");
+// Muda o título da tela
+$("#tdTitRotina").html("DESCONTO DE T&Iacute;TULOS - LIMITE");
 
 	formataLayout('divContratos');
 
-	// Esconde mensagem de aguardo
-	hideMsgAguardo();
+// Esconde mensagem de aguardo
+hideMsgAguardo();
 
-	// Bloqueia conteúdo que está átras do div da rotina
-	blockBackground(parseInt($("#divRotina").css("z-index")));
+// Bloqueia conteúdo que está átras do div da rotina
+blockBackground(parseInt($("#divRotina").css("z-index")));
 	
 	//Se esta tela foi chamada através da rotina "Produtos" então acessa a opção conforme definido pelos responsáveis do projeto P364
 	if (executandoProdutos == true) {
@@ -253,5 +254,5 @@ dscShowHideDiv("divOpcoesDaOpcao2","divOpcoesDaOpcao1;divOpcoesDaOpcao3");
 		$("#btnIncluirLimite", "#divBotoesTitulosLimite").click();
 		
 	}
-
+	
 </script>

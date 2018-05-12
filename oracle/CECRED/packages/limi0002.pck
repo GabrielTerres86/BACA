@@ -21,6 +21,10 @@ CREATE OR REPLACE PACKAGE CECRED.LIMI0002 AS
   --             15/02/2018 - Adicionado o procedimento pc_apaga_estudo_limdesctit (Paulo Penteado GFT)
   --
   --             09/03/2018 - Adicionado o procedimento pc_renova_autom_limdesctit (Paulo Penteado GFT)
+  --
+  --             09/04/2018 - PC_CANCELA_LIMITE60 - Cancelar limites de crédito para contas com atraso igual ou maior que 60 dias - Daniel(AMcom)
+  --             27/04/2018 - PC_CANCELA_LIMITE_CREDITO - Alteração de nome da funcao (Antes era PC_CANCELA_LIMITE60) e de parâmetros para consulta do limite, agora baseado nos campos da craprli (regras de limite de credito) - Marcel(AMCom)
+  --
   ---------------------------------------------------------------------------------------------------------------
 
   ------------------------------- TIPOS DE REGISTROS -----------------------
@@ -68,6 +72,10 @@ CREATE OR REPLACE PACKAGE CECRED.LIMI0002 AS
                       ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
                       ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
                       ,pr_des_erro OUT VARCHAR2);           --> Erros do processo
+
+  PROCEDURE PC_CANCELA_LIMITE_CREDITO(pr_cdcooper  IN crapcop.cdcooper%TYPE  --> Cooperativa
+                                     ,pr_cdcritic OUT crapcri.cdcritic%TYPE  --> Critica encontrada
+                                     ,pr_dscritic OUT VARCHAR2);             --> Texto de erro/critica encontrada
 END LIMI0002;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0002 AS
@@ -98,7 +106,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0002 AS
      
                  20/09/2017 - Ajustado para não gravar nmarqlog, pois so gera a tbgen_prglog
                               (Ana - Envolti - Chamado 746134)
-  
+
                  15/02/2018 - Adicionado o procedimento pc_apaga_estudo_limdesctit (Paulo Penteado GFT) que será
                               chamado no procedimento pc_crps517
                               
@@ -108,6 +116,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LIMI0002 AS
                  04/04/2018 - Comentado a utilização da pc_apaga_estudo_limdesctit. Devido a criação da estrutura 
                               de proposta do limite de desconto de titulos tabela (crawlim) não vai mais precisar 
                               desse processo de apagar os titulos em estudo (Paulo Penteado (GFT))
+
+                 09/04/2018 - PC_CANCELA_LIMITE60 - Cancelar limites de crédito para contas com atraso igual ou maior que 60 dias - Daniel(AMcom)
+                 27/04/2018 - PC_CANCELA_LIMITE_CREDITO - Alteração de nome da funcao (Antes era PC_CANCELA_LIMITE60) e de parâmetros para consulta do limite, agora baseado nos campos da craprli (regras de limite de credito) - Marcel(AMCom)
   */
   ---------------------------------------------------------------------------------------------------------------
   
@@ -984,211 +995,6 @@ DECLARE
                                                          || vr_cdprogra || ' --> '|| vr_des_erro);
    END;
 
-   --> Rotina para cobrança das tarifas de renovação de contrato
-   PROCEDURE pc_gera_tarifa_renova(pr_cdcooper crapcop.cdcooper%type
-                                  ,pr_crapdat  btch0001.cr_crapdat%rowtype
-                                  ) is
-      cursor cr_craplim_tari is
-      select ass.inpessoa
-            ,ass.nrdconta
-            ,lim.nrctrlim
-            ,lim.vllimite 
-      from   craplim lim
-            ,crapass ass
-      where  lim.cdcooper = ass.cdcooper
-      and    lim.nrdconta = ass.nrdconta
-      and    lim.cdcooper = pr_cdcooper
-      and    lim.tpctrlim = pr_tpctrlim
-      and    lim.insitlim = 2 -- Ativo
-      and    lim.dtrenova = pr_crapdat.dtmvtoan
-      and    lim.tprenova = 'A'
-      and    lim.qtrenova > 0;
-
-      --> Critica
-      vr_cdcritic pls_integer;
-      vr_dscritic varchar2(4000);
-      vr_tab_erro gene0001.typ_tab_erro;
-            
-      -- Variaveis de tarifa
-      vr_cdhistor craphis.cdhistor%type;
-      vr_cdhisest craphis.cdhistor%type;
-      vr_dtdivulg date;
-      vr_dtvigenc date;
-      vr_cdfvlcop crapfco.cdfvlcop%type;
-      vr_vltarifa crapfco.vltarifa%type;
-      vr_cdbattar varchar2(10);
-      vr_rowid         rowid;
-      vr_email_tarif VARCHAR2(300); --> Email da area de taifa.
-        
-   BEGIN
-      --> buscar os limites renovados hj para cobrança de Tarifa
-      for rw_craplim_tari in cr_craplim_tari loop
-          --  1 - Pessoa Fisica
-          if  rw_craplim_tari.inpessoa = 1 then
-              vr_cdbattar := 'DSTRENOVPF'; -- Renovacao contrato pessoa fisica
-          else            
-              vr_cdbattar := 'DSTRENOVPJ'; -- Renovacao contrato pessoa juridica
-          end if;
-
-          -- Busca valor da tarifa
-          tari0001.pc_carrega_dados_tar_vigente(pr_cdcooper => pr_cdcooper
-                                               ,pr_cdbattar => vr_cdbattar
-                                               ,pr_vllanmto => rw_craplim_tari.vllimite
-                                               ,pr_cdprogra => vr_cdprogra
-                                               ,pr_cdhistor => vr_cdhistor
-                                               ,pr_cdhisest => vr_cdhisest
-                                               ,pr_vltarifa => vr_vltarifa
-                                               ,pr_dtdivulg => vr_dtdivulg
-                                               ,pr_dtvigenc => vr_dtvigenc
-                                               ,pr_cdfvlcop => vr_cdfvlcop
-                                               ,pr_cdcritic => vr_cdcritic
-                                               ,pr_dscritic => vr_dscritic
-                                               ,pr_tab_erro => vr_tab_erro);
-
-          -- Incluir nome do módulo logado - Chamado 660306 29/06/2017
-          gene0001.pc_set_modulo(pr_module => pr_nmdatela
-                                ,pr_action => vr_acao); 
-
-          --  Se ocorreu erro
-          if  vr_cdcritic is not null or trim(vr_dscritic) is not null then
-              --  Se possui erro no vetor
-              if  vr_tab_erro.count() > 0 then
-                  vr_cdcritic:= vr_tab_erro(vr_tab_erro.first).cdcritic;
-                  vr_dscritic:= vr_tab_erro(vr_tab_erro.first).dscritic;
-              else
-                  vr_cdcritic:= 0;
-                  vr_dscritic:= 'Nao foi possivel carregar a tarifa.';
-              end if;
-
-              -- Envio centralizado de log de erro
-              btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                        ,pr_ind_tipo_log => 2 -- Erro tratato
-                                        ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                            || vr_cdprogra || ' --> '
-                                                            || vr_dscritic || ' - ' || vr_cdbattar);
-              -- Efetua Limpeza das variaveis de critica
-              --vr_cdcritic := 0;
-              --vr_dscritic := null;
-            
-              if  vr_email_tarif is null then
-                  vr_email_tarif := gene0001.fn_param_sistema(pr_nmsistem => 'CRED'
-                                                             ,pr_cdcooper => pr_cdcooper
-                                                             ,pr_cdacesso => 'EMAIL_TARIF');
-              end if;
-            
-              pc_email_critica(pr_cdcooper    => pr_cdcooper
-                              ,pr_cdprogra    => vr_cdprogra
-                              ,pr_email_dest  => vr_email_tarif
-                              ,pr_des_assunto => 'Erros log de tarifas ('||rw_crapcop.nmrescop ||')'
-                              ,pr_des_corpo   => to_char(SYSDATE,'HH24:MI:SS') ||' - '||
-                                                 vr_cdprogra ||' --> '|| vr_dscritic || ' - '||vr_cdbattar);
-
-              -- Se não Existe Tarifa
-              continue;
-          end if;
-          
-          --  Verifica se valor da tarifa esta zerado
-          if  vr_vltarifa = 0 then
-              continue;
-          end if;
-
-          -- Criar Lançamento automatico Tarifas de contrato de desconto de titulo
-          tari0001.pc_cria_lan_auto_tarifa( pr_cdcooper     => pr_cdcooper
-                                          , pr_nrdconta     => rw_craplim_tari.nrdconta
-                                          , pr_dtmvtolt     => pr_crapdat.dtmvtolt
-                                          , pr_cdhistor     => vr_cdhistor
-                                          , pr_vllanaut     => vr_vltarifa
-                                          , pr_cdoperad     => pr_cdoperad
-                                          , pr_cdagenci     => 1
-                                          , pr_cdbccxlt     => 100
-                                          , pr_nrdolote     => 10300
-                                          , pr_tpdolote     => 1
-                                          , pr_nrdocmto     => 0
-                                          , pr_nrdctabb     => rw_craplim_tari.nrdconta
-                                          , pr_nrdctitg     => gene0002.fn_mask(rw_craplim_tari.nrdconta,'99999999')
-                                          , pr_cdpesqbb     => 'Fato gerador tarifa:' || to_char(rw_craplim_tari.nrctrlim)
-                                          , pr_cdbanchq     => 0
-                                          , pr_cdagechq     => 0
-                                          , pr_nrctachq     => 0
-                                          , pr_flgaviso     => false
-                                          , pr_tpdaviso     => 0
-                                          , pr_cdfvlcop     => vr_cdfvlcop
-                                          , pr_inproces     => pr_crapdat.inproces
-                                          , pr_rowid_craplat=> vr_rowid
-                                          , pr_tab_erro     => vr_tab_erro
-                                          , pr_cdcritic     => vr_cdcritic
-                                          , pr_dscritic     => vr_dscritic);
-
-          -- Incluir nome do módulo logado - Chamado 660306 29/06/2017
-          GENE0001.pc_set_modulo(pr_module => pr_nmdatela
-                                ,pr_action => vr_acao); 
-
-          --  Se ocorreu erro
-          if  vr_cdcritic is not null or trim(vr_dscritic) is not null then
-              --  Se possui erro no vetor
-              if  vr_tab_erro.count > 0 then
-                  vr_cdcritic:= vr_tab_erro(vr_tab_erro.first).cdcritic;
-                  vr_dscritic:= vr_tab_erro(vr_tab_erro.first).dscritic;
-              else
-                  vr_cdcritic:= 0;
-                  vr_dscritic:= 'Erro no lancamento Tarifa de contrato de limite de desconto de titulo';
-              end if;
-
-              -- Envio centralizado de log de erro
-              btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                        ,pr_ind_tipo_log => 2 -- Erro tratato
-                                        ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '|| vr_cdprogra || ' --> '||
-                                                            gene0002.fn_mask_conta(rw_craplim_tari.nrdconta)||'- '|| vr_dscritic );
-
-              vr_dscritic := to_char(sysdate,'hh24:mi:ss')||' - ' || vr_cdprogra || 
-                                     ' --> ERRO: ' ||vr_dscritic ||
-                                     ' pr_cdcooper=' || pr_cdcooper ||
-                                     ' ,pr_nrdconta=' || rw_craplim_tari.nrdconta ||
-                                     ' ,pr_dtmvtolt=' || pr_crapdat.dtmvtolt ||
-                                     ' ,pr_cdhistor=' || vr_cdhistor ||
-                                     ' ,pr_vllanaut=' || vr_vltarifa ||
-                                     ' ,pr_cdoperad=' || pr_cdoperad ||
-                                     ' ,pr_nrdctabb=' || rw_craplim_tari.nrdconta ||
-                                     ' ,pr_nrdctitg=' || to_char(rw_craplim_tari.nrdconta,'fm00000000') ||
-                                     ' ,pr_cdpesqbb=' || TO_CHAR(rw_craplim_tari.nrctrlim) ||
-                                     ' ,pr_cdfvlcop=' || vr_cdfvlcop ||
-                                     ' ,pr_inproces=' || pr_crapdat.inproces ||
-                                     ' ,pr_rowid_craplat=' || vr_rowid ||                         
-                                     ' - Module: ' || pr_nmdatela ||
-                                     ' - Action: ' || vr_acao;
-                                            
-              -- Colocado Log no padrão - 29/06/2017 - Chamado 660306
-              -- Envio centralizado de log de erro
-              cecred.pc_log_programa(pr_dstiplog      => 'O',          -- tbgen_prglog  DEFAULT 'O' --> Tipo do log: I - início; F - fim; O || E - ocorrência
-                                     pr_cdprograma    => pr_nmdatela,  -- tbgen_prglog
-                                     pr_cdcooper      => pr_cdcooper,  -- tbgen_prglog
-                                     pr_tpexecucao    => 1,            -- tbgen_prglog  DEFAULT 1 -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
-                                     pr_tpocorrencia  => 1,            -- tbgen_prglog_ocorrencia -- 1 ERRO TRATADO
-                                     pr_cdcriticidade => 0,            -- tbgen_prglog_ocorrencia DEFAULT 0 -- Nivel criticidade (0-Baixa/ 1-Media/ 2-Alta/ 3-Critica)
-                                     pr_dsmensagem    => vr_dscritic,  -- tbgen_prglog_ocorrencia
-                                     pr_flgsucesso    => 1,            -- tbgen_prglog  DEFAULT 1 -- Indicador de sucesso da execução
-                                     pr_nmarqlog      => NULL,
-                                     pr_idprglog      => vr_idprglog
-                                     );
-              -- Limpa valores das variaveis de critica
-              vr_cdcritic:= 0;
-              vr_dscritic:= null;
-          end if;
-      end loop;
-      
-   EXCEPTION
-      when others then
-           vr_dscritic:= 'Não foi possivel gerar tarifa de renovação: '||sqlerrm;	
-           -- Envio centralizado de log de erro
-           btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                     ,pr_ind_tipo_log => 2 -- Erro tratato
-                                     ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                     || vr_cdprogra || ' --> '|| vr_dscritic );
-           -- Limpa valores das variaveis de critica
-           --vr_cdcritic:= 0;
-           --vr_dscritic:= null;
-   END pc_gera_tarifa_renova;
-
 BEGIN
    -- Incluir nome do módulo logado
    gene0001.pc_informa_acesso(pr_module => 'PC_'||vr_cdprogra);
@@ -1534,10 +1340,6 @@ BEGIN
       
    pc_limpa_tabela;
       
-   --> Rotina para cobrança das tarifas de renovação de contrato
-   pc_gera_tarifa_renova(pr_cdcooper => pr_cdcooper
-                        ,pr_crapdat  => rw_crapdat);
-
    -- Salvar informações atualizadas
    COMMIT;
 
@@ -1564,7 +1366,7 @@ END;
 END pc_renova_limdesctit;
   
 
-PROCEDURE pc_crps517(pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
+  PROCEDURE pc_crps517(pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
                       ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
                       ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
                       ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
@@ -1680,7 +1482,7 @@ PROCEDURE pc_crps517(pr_xmllog   IN VARCHAR2              --> XML com informaçõe
       -- Variaveis de inclusão de log 
       vr_idprglog       tbgen_prglog.idprglog%TYPE := 0;
       vr_acao           VARCHAR2  (100)            := 'LIMI0002.pc_crps517';
-
+      
       -- Extração dados XML
       vr_cdcooper   NUMBER;
       vr_cdoperad   VARCHAR2(100);
@@ -1794,7 +1596,7 @@ PROCEDURE pc_crps517(pr_xmllog   IN VARCHAR2              --> XML com informaçõe
            AND crapsab.nrdconta = pr_nrdconta
            AND crapsab.nrinssac = pr_nrinssac;
       rw_crapsab cr_crapsab%ROWTYPE;
-      
+
       CURSOR cr_crapldc IS
         SELECT 0 AS flgsaldo_novo, 
                ldc.cddlinha,
@@ -1918,27 +1720,211 @@ PROCEDURE pc_crps517(pr_xmllog   IN VARCHAR2              --> XML com informaçõe
        END IF;
 
       END;
+      
+   --> Rotina para cobrança das tarifas de renovação de contrato
+   PROCEDURE pc_gera_tarifa_renova(pr_cdcooper crapcop.cdcooper%type
+                                  ,pr_crapdat  btch0001.cr_crapdat%rowtype
+                                  ) is
+      cursor cr_craplim_tari is
+      select ass.inpessoa
+            ,ass.nrdconta
+            ,lim.nrctrlim
+            ,lim.vllimite
+      from   craplim lim
+            ,crapass ass
+      where  lim.cdcooper = ass.cdcooper
+      and    lim.nrdconta = ass.nrdconta
+      and    lim.cdcooper = pr_cdcooper
+      and    lim.tpctrlim = 3
+      and    lim.insitlim = 2 -- Ativo
+      and    lim.dtrenova = pr_crapdat.dtmvtolt
+      and    lim.tprenova = 'A'
+      and    lim.qtrenova > 0;
 
-      /* Rotina para solicitar o envio de email */
-      PROCEDURE pc_email_critica(pr_email_dest  IN VARCHAR2,
-                                 pr_des_assunto IN VARCHAR2,
-                                 pr_des_corpo   IN VARCHAR2) IS
+      --> Critica
+      vr_cdcritic pls_integer;
+      vr_dscritic varchar2(4000);
+      vr_tab_erro gene0001.typ_tab_erro;
                                  
-        vr_des_erro VARCHAR2(1000);
+      -- Variaveis de tarifa
+      vr_cdhistor craphis.cdhistor%type;
+      vr_cdhisest craphis.cdhistor%type;
+      vr_dtdivulg date;
+      vr_dtvigenc date;
+      vr_cdfvlcop crapfco.cdfvlcop%type;
+      vr_vltarifa crapfco.vltarifa%type;
+      vr_cdbattar varchar2(10);
+      vr_rowid         rowid;
+      vr_email_tarif VARCHAR2(300); --> Email da area de taifa.
                                  
       BEGIN
-         /* Envio do arquivo detalhado via e-mail */
-         gene0003.pc_solicita_email(pr_cdcooper        => vr_cdcooper
+      --> buscar os limites renovados hj para cobrança de Tarifa
+      for rw_craplim_tari in cr_craplim_tari loop
+          --  1 - Pessoa Fisica
+          if  rw_craplim_tari.inpessoa = 1 then
+              vr_cdbattar := 'DSTRENOVPF'; -- Renovacao contrato pessoa fisica
+          else
+              vr_cdbattar := 'DSTRENOVPJ'; -- Renovacao contrato pessoa juridica
+          end if;
+
+          -- Busca valor da tarifa
+          tari0001.pc_carrega_dados_tar_vigente(pr_cdcooper => pr_cdcooper
+                                               ,pr_cdbattar => vr_cdbattar
+                                               ,pr_vllanmto => rw_craplim_tari.vllimite
+                                               ,pr_cdprogra => vr_cdprogra
+                                               ,pr_cdhistor => vr_cdhistor
+                                               ,pr_cdhisest => vr_cdhisest
+                                               ,pr_vltarifa => vr_vltarifa
+                                               ,pr_dtdivulg => vr_dtdivulg
+                                               ,pr_dtvigenc => vr_dtvigenc
+                                               ,pr_cdfvlcop => vr_cdfvlcop
+                                               ,pr_cdcritic => vr_cdcritic
+                                               ,pr_dscritic => vr_dscritic
+                                               ,pr_tab_erro => vr_tab_erro);
+
+          -- Incluir nome do módulo logado - Chamado 660306 29/06/2017
+          gene0001.pc_set_modulo(pr_module => vr_nmdatela
+                                ,pr_action => vr_acao);
+
+          --  Se ocorreu erro
+          if  vr_cdcritic is not null or trim(vr_dscritic) is not null then
+              --  Se possui erro no vetor
+              if  vr_tab_erro.count() > 0 then
+                  vr_cdcritic:= vr_tab_erro(vr_tab_erro.first).cdcritic;
+                  vr_dscritic:= vr_tab_erro(vr_tab_erro.first).dscritic;
+              else
+                  vr_cdcritic:= 0;
+                  vr_dscritic:= 'Nao foi possivel carregar a tarifa.';
+              end if;
+
+              -- Envio centralizado de log de erro
+              btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                        ,pr_ind_tipo_log => 2 -- Erro tratato
+                                        ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
+                                                            || vr_cdprogra || ' --> '
+                                                            || vr_dscritic || ' - ' || vr_cdbattar);
+              -- Efetua Limpeza das variaveis de critica
+              --vr_cdcritic := 0;
+              --vr_dscritic := null;
+
+              if  vr_email_tarif is null then
+                  vr_email_tarif := gene0001.fn_param_sistema(pr_nmsistem => 'CRED'
+                                                             ,pr_cdcooper => pr_cdcooper
+                                                             ,pr_cdacesso => 'EMAIL_TARIF');
+              end if;
+
+              pc_email_critica(pr_cdcooper    => pr_cdcooper
                                    ,pr_cdprogra        => vr_cdprogra
-                                   ,pr_des_destino     => pr_email_dest
-                                   ,pr_des_assunto     => pr_des_assunto
-                                   ,pr_des_corpo       => pr_des_corpo
-                                   ,pr_des_anexo       => NULL
-                                   ,pr_flg_remove_anex => 'N' --> Remover os anexos passados
-                                   ,pr_flg_remete_coop => 'N' --> Se o envio será do e-mail da Cooperativa
-                                   ,pr_flg_enviar      => 'N' --> Enviar o e-mail na hora
-                                   ,pr_des_erro        => vr_des_erro);         
-      END;
+                              ,pr_email_dest  => vr_email_tarif
+                              ,pr_des_assunto => 'Erros log de tarifas ('||rw_crapcop.nmrescop ||')'
+                              ,pr_des_corpo   => to_char(SYSDATE,'HH24:MI:SS') ||' - '||
+                                                 vr_cdprogra ||' --> '|| vr_dscritic || ' - '||vr_cdbattar);
+
+              -- Se não Existe Tarifa
+              continue;
+          end if;
+
+          --  Verifica se valor da tarifa esta zerado
+          if  vr_vltarifa = 0 then
+              continue;
+          end if;
+
+          -- Criar Lançamento automatico Tarifas de contrato de desconto de titulo
+          tari0001.pc_cria_lan_auto_tarifa( pr_cdcooper     => pr_cdcooper
+                                          , pr_nrdconta     => rw_craplim_tari.nrdconta
+                                          , pr_dtmvtolt     => pr_crapdat.dtmvtolt
+                                          , pr_cdhistor     => vr_cdhistor
+                                          , pr_vllanaut     => vr_vltarifa
+                                          , pr_cdoperad     => vr_cdoperad
+                                          , pr_cdagenci     => 1
+                                          , pr_cdbccxlt     => 100
+                                          , pr_nrdolote     => 10300
+                                          , pr_tpdolote     => 1
+                                          , pr_nrdocmto     => 0
+                                          , pr_nrdctabb     => rw_craplim_tari.nrdconta
+                                          , pr_nrdctitg     => gene0002.fn_mask(rw_craplim_tari.nrdconta,'99999999')
+                                          , pr_cdpesqbb     => 'Fato gerador tarifa:' || to_char(rw_craplim_tari.nrctrlim)
+                                          , pr_cdbanchq     => 0
+                                          , pr_cdagechq     => 0
+                                          , pr_nrctachq     => 0
+                                          , pr_flgaviso     => false
+                                          , pr_tpdaviso     => 0
+                                          , pr_cdfvlcop     => vr_cdfvlcop
+                                          , pr_inproces     => pr_crapdat.inproces
+                                          , pr_rowid_craplat=> vr_rowid
+                                          , pr_tab_erro     => vr_tab_erro
+                                          , pr_cdcritic     => vr_cdcritic
+                                          , pr_dscritic     => vr_dscritic);
+
+          -- Incluir nome do módulo logado - Chamado 660306 29/06/2017
+          GENE0001.pc_set_modulo(pr_module => vr_nmdatela
+                                ,pr_action => vr_acao);
+
+          --  Se ocorreu erro
+          if  vr_cdcritic is not null or trim(vr_dscritic) is not null then
+              --  Se possui erro no vetor
+              if  vr_tab_erro.count > 0 then
+                  vr_cdcritic:= vr_tab_erro(vr_tab_erro.first).cdcritic;
+                  vr_dscritic:= vr_tab_erro(vr_tab_erro.first).dscritic;
+              else
+                  vr_cdcritic:= 0;
+                  vr_dscritic:= 'Erro no lancamento Tarifa de contrato de limite de desconto de titulo';
+              end if;
+
+              -- Envio centralizado de log de erro
+              btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                        ,pr_ind_tipo_log => 2 -- Erro tratato
+                                        ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '|| vr_cdprogra || ' --> '||
+                                                            gene0002.fn_mask_conta(rw_craplim_tari.nrdconta)||'- '|| vr_dscritic );
+
+              vr_dscritic := to_char(sysdate,'hh24:mi:ss')||' - ' || vr_cdprogra ||
+                                     ' --> ERRO: ' ||vr_dscritic ||
+                                     ' pr_cdcooper=' || pr_cdcooper ||
+                                     ' ,pr_nrdconta=' || rw_craplim_tari.nrdconta ||
+                                     ' ,pr_dtmvtolt=' || pr_crapdat.dtmvtolt ||
+                                     ' ,pr_cdhistor=' || vr_cdhistor ||
+                                     ' ,pr_vllanaut=' || vr_vltarifa ||
+                                     ' ,pr_cdoperad=' || vr_cdoperad ||
+                                     ' ,pr_nrdctabb=' || rw_craplim_tari.nrdconta ||
+                                     ' ,pr_nrdctitg=' || to_char(rw_craplim_tari.nrdconta,'fm00000000') ||
+                                     ' ,pr_cdpesqbb=' || TO_CHAR(rw_craplim_tari.nrctrlim) ||
+                                     ' ,pr_cdfvlcop=' || vr_cdfvlcop ||
+                                     ' ,pr_inproces=' || pr_crapdat.inproces ||
+                                     ' ,pr_rowid_craplat=' || vr_rowid ||
+                                     ' - Module: ' || vr_nmdatela ||
+                                     ' - Action: ' || vr_acao;
+
+              -- Colocado Log no padrão - 29/06/2017 - Chamado 660306
+              -- Envio centralizado de log de erro
+              cecred.pc_log_programa(pr_dstiplog      => 'O',          -- tbgen_prglog  DEFAULT 'O' --> Tipo do log: I - início; F - fim; O || E - ocorrência
+                                     pr_cdprograma    => vr_nmdatela,  -- tbgen_prglog
+                                     pr_cdcooper      => pr_cdcooper,  -- tbgen_prglog
+                                     pr_tpexecucao    => 1,            -- tbgen_prglog  DEFAULT 1 -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+                                     pr_tpocorrencia  => 1,            -- tbgen_prglog_ocorrencia -- 1 ERRO TRATADO
+                                     pr_cdcriticidade => 0,            -- tbgen_prglog_ocorrencia DEFAULT 0 -- Nivel criticidade (0-Baixa/ 1-Media/ 2-Alta/ 3-Critica)
+                                     pr_dsmensagem    => vr_dscritic,  -- tbgen_prglog_ocorrencia
+                                     pr_flgsucesso    => 1,            -- tbgen_prglog  DEFAULT 1 -- Indicador de sucesso da execução
+                                     pr_nmarqlog      => NULL,
+                                     pr_idprglog      => vr_idprglog
+                                     );
+              -- Limpa valores das variaveis de critica
+              vr_cdcritic:= 0;
+              vr_dscritic:= null;
+          end if;
+      end loop;
+
+   EXCEPTION
+      when others then
+           vr_dscritic:= 'Não foi possivel gerar tarifa de renovação: '||sqlerrm;
+           -- Envio centralizado de log de erro
+           btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                     ,pr_ind_tipo_log => 2 -- Erro tratato
+                                     ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
+                                                     || vr_cdprogra || ' --> '|| vr_dscritic );
+           -- Limpa valores das variaveis de critica
+           --vr_cdcritic:= 0;
+           --vr_dscritic:= null;
+   END pc_gera_tarifa_renova;
 
       --------------- VALIDACOES INICIAIS -----------------
     BEGIN
@@ -2034,8 +2020,8 @@ PROCEDURE pc_crps517(pr_xmllog   IN VARCHAR2              --> XML com informaçõe
         vr_flgregis := TRUE;
     
         /** Se nao atingiu limite de renovacoes, renovar limites ativos **/
-        IF  /*rw_craplim.qtrenova < rw_craplim.qtrenctr AND*/ rw_craplim.insitlim = 2  THEN
-        
+        IF  rw_craplim.qtrenova < rw_craplim.qtrenctr AND rw_craplim.insitlim = 2  THEN
+          
           pc_renova_limdesctit(pr_cdcooper => vr_cdcooper
                               ,pr_nrdconta => rw_craplim.nrdconta
                               ,pr_nrctrlim => rw_craplim.nrctrlim
@@ -2180,7 +2166,7 @@ PROCEDURE pc_crps517(pr_xmllog   IN VARCHAR2              --> XML com informaçõe
         END IF;
 
       END LOOP;
-      
+
       -- Atualização do saldo das linhas de desconto
       FOR rw_crapldc IN cr_crapldc LOOP
         BEGIN
@@ -2197,6 +2183,10 @@ PROCEDURE pc_crps517(pr_xmllog   IN VARCHAR2              --> XML com informaçõe
             RAISE vr_exc_saida;
           END; 
       END LOOP;
+
+      --> Rotina para cobrança das tarifas de renovação de contrato
+      pc_gera_tarifa_renova(pr_cdcooper => vr_cdcooper
+                           ,pr_crapdat  => rw_crapdat);
 
       ------------------------
       ------------------------ GERACAO DO RELATORIO CRRL492
@@ -2526,5 +2516,315 @@ PROCEDURE pc_crps517(pr_xmllog   IN VARCHAR2              --> XML com informaçõe
       
   END pc_crps517;
   
-END LIMI0002;
+  PROCEDURE PC_CANCELA_LIMITE_CREDITO(pr_cdcooper  IN crapcop.cdcooper%TYPE  --> Cooperativa
+                               ,pr_cdcritic OUT crapcri.cdcritic%TYPE  --> Critica encontrada
+                               ,pr_dscritic OUT VARCHAR2) IS           --> Texto de erro/critica encontrada
+  BEGIN
+    /* ............................................................................
+     Programa: PC_CANCELA_LIMITE_CREDITO
+     Sistema : Atenda - Cooperativa de Credito
+     Sigla   : CRED
+     Autor   : Daniel Silva(AMcom)
+     Data    : Março/2018                           Ultima atualizacao: 15/03/2018
+
+     Dados referentes ao programa:
+
+     Frequencia: Diária
+     Objetivo  : Cancelar limites de crédito para contas com atraso igual ou maior que 60 dias
+     Alteracoes:
+    ..............................................................................*/
+
+  DECLARE
+  --*** VARIÁVEIS ***--
+    vr_exc_saida exception;
+    vr_exc_fimprg exception;
+    vr_cdcritic crapcri.cdcritic%TYPE; -- Codigo da critica
+    vr_dscritic VARCHAR2(2000);        -- Descricao da critica
+    vr_inusatab BOOLEAN := FALSE;
+    vr_des_reto VARCHAR2(3);
+    vr_tab_erro GENE0001.typ_tab_erro;
+
+    -- Cursor Genérico de Calendário
+    rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;
+
+  --**************************--
+  --*** CURSORES GENÉRICOS ***--
+  --**************************--
+    -- Busca dos dados da cooperativa
+    CURSOR cr_crapcop(pr_cdcooper IN craptab.cdcooper%TYPE) IS
+      SELECT cop.nmrescop
+        FROM crapcop cop
+       WHERE cop.cdcooper = pr_cdcooper;
+      rw_crapcop cr_crapcop%ROWTYPE;
+
+    -- Calendário da cooperativa selecionada
+    CURSOR cr_dat(pr_cdcooper INTEGER) IS
+    SELECT dat.dtmvtolt
+         , (SELECT MAX(dtrefere) FROM crapris WHERE cdcooper = pr_cdcooper) dtmvtoan
+         , dat.dtultdma
+      FROM crapdat dat
+     WHERE dat.cdcooper = pr_cdcooper;
+    rw_dat cr_dat%ROWTYPE;
+
+    -- Busca conta corrente que possui limite de crédito e está em ADP
+    CURSOR cr_conta(pr_cdcooper INTEGER) IS
+    SELECT DISTINCT ris.cdcooper, ris.nrdconta, ris.nrctremp, rlim.nrctremp nrctrlim
+      FROM crapris ris, crapass ass
+         , (SELECT r.cdcooper, r.nrdconta, r.nrctremp, r.dtrefere
+              FROM crapris r
+             WHERE r.cdcooper = pr_cdcooper
+               AND r.dtrefere = rw_dat.dtmvtoan -- Buscar Central Atual **Antes de Rodar a Central de Risco
+               AND r.cdmodali = 201) rlim -- Limite de crédito
+     WHERE rlim.cdcooper = ris.cdcooper
+       AND rlim.nrdconta = ris.nrdconta
+       AND rlim.dtrefere = ris.dtrefere
+       AND ris.cdcooper  = ass.cdcooper
+       AND ris.nrdconta  = ass.nrdconta
+       AND ass.flcnaulc  = 1 -- Cancelamento automatico do Limite de Crédito igual 'Sim'
+       AND ris.qtdiaatr >= nvl((select distinct rli.qtdiatin -- qtde de dias de atraso
+                              from craprli rli
+                             where rli.cdcooper = pr_cdcooper
+                               and rli.tplimite = 1 -- Limite de crédito
+                               and rli.inpessoa = ass.inpessoa
+                               and rli.cnauinad = 1 -- indicador de cancelamento
+                               ), 999999)
+       AND ris.cdmodali  = 101 -- ADP
+       AND ris.cdorigem  = 1   -- Conta corrente
+       AND ris.dtrefere  = rw_dat.dtmvtoan -- Buscar Central Atual **Antes de Rodar a Central de Risco
+       AND ris.cdcooper  = pr_cdcooper;
+     rw_conta cr_conta%ROWTYPE;
+
+  --**************************--
+  --***     PROCEDURES     ***--
+  --**************************--
+    -- Cancela limite de crédito
+    PROCEDURE pc_cancela_limite(pr_cdcooper IN NUMBER         -- Cooperativa
+                               ,pr_nrdconta IN NUMBER         -- Conta Corrente
+                               ,pr_nrctrlim IN NUMBER         -- Contrato de Limite
+                               ,pr_cdcritic OUT PLS_INTEGER   -- Código da crítica
+                               ,pr_dscritic OUT VARCHAR2) IS  -- Erros do processo
+      BEGIN
+        pr_cdcritic := NULL;
+        pr_dscritic := NULL;
+
+        -- Efetua cancelamento dos limites
+        UPDATE craplim lim
+           SET lim.insitlim        = 3 -- Cancelado
+             , lim.ininadim        = 1 -- Inadimplencia
+             , lim.cdmotcan        = 0
+             , lim.cdopeexc        = '1'
+             , lim.cdageexc        = 0
+             , lim.dtinsexc = rw_dat.dtmvtolt
+             , lim.dtfimvig = rw_dat.dtmvtolt
+         WHERE lim.cdcooper = pr_cdcooper
+           AND lim.nrdconta = pr_nrdconta
+           AND lim.nrctrlim = pr_nrctrlim
+           AND lim.tpctrlim = 1  -- Cheque especial
+           AND lim.insitlim = 2; -- Ativo
+         --
+       EXCEPTION
+         WHEN OTHERS THEN
+           pr_cdcritic := 0;
+           pr_dscritic := 'Erro PC_CANCELA_LIMITE: '||SQLERRM;
+           -- Efetuar rollback
+           ROLLBACK;
+    END pc_cancela_limite;
+
+    -- Cancela limite de crédito Conta
+    PROCEDURE pc_cancela_limite_cta(pr_cdcooper IN NUMBER         -- Cooperativa
+                                   ,pr_nrdconta IN NUMBER         -- Conta Corrente
+                                   ,pr_cdcritic OUT PLS_INTEGER   -- Código da crítica
+                                   ,pr_dscritic OUT VARCHAR2) IS  -- Erros do processo
+      BEGIN
+        pr_cdcritic := NULL;
+        pr_dscritic := NULL;
+
+        -- Efetua cancelamento dos limites
+        UPDATE crapass ass
+           SET ass.vllimcre = 0
+         WHERE ass.cdcooper = pr_cdcooper
+           AND ass.nrdconta = pr_nrdconta;
+         --
+       EXCEPTION
+         WHEN OTHERS THEN
+           pr_cdcritic := 0;
+           pr_dscritic := 'Erro PC_CANCELA_LIMITE_CTA: '||SQLERRM;
+           -- Efetuar rollback
+           ROLLBACK;
+    END pc_cancela_limite_cta;
+
+    -- Cancela Microfilmagem
+    PROCEDURE pc_cancela_microfilmagem(pr_cdcooper IN NUMBER  -- Cooperativa
+                                      ,pr_nrdconta IN NUMBER         -- Conta Corrente
+                                      ,pr_nrctrlim IN NUMBER         -- Contrato de Limite
+                                      ,pr_cdcritic OUT PLS_INTEGER   -- Código da crítica
+                                      ,pr_dscritic OUT VARCHAR2) IS  -- Erros do processo
+      BEGIN
+        pr_cdcritic := NULL;
+        pr_dscritic := NULL;
+
+        -- Efetua cancelamento da microfilmagem
+        -- Somente para registros com data de início de vigência maior que 04/01/2003(Regra TELA_ATENDA_OCORRENCIAS)
+        UPDATE crapmcr mcr
+           SET mcr.dtcancel = rw_dat.dtmvtolt
+         WHERE mcr.cdcooper = pr_cdcooper
+           AND mcr.nrdconta = pr_nrdconta
+           AND mcr.nrcontra = pr_nrctrlim
+           AND EXISTS (SELECT 1
+                         FROM craplim lim
+                        WHERE lim.cdcooper = mcr.cdcooper
+                          AND lim.nrdconta = mcr.nrdconta
+                          AND lim.nrctrlim = mcr.nrcontra
+                          AND lim.dtinivig >= TO_DATE('04/01/2003', 'dd/mm/yyyy'));
+         --
+       EXCEPTION
+         WHEN OTHERS THEN
+           pr_cdcritic := 0;
+           pr_dscritic := 'Erro PC_CANCELA_MICROFILMAGEM: '||SQLERRM;
+           -- Efetuar rollback
+           ROLLBACK;
+    END pc_cancela_microfilmagem;
+
+    --************************--
+    --   INICIO DO PROGRAMA   --
+    --************************--
+    BEGIN
+      vr_cdcritic := NULL;
+      vr_dscritic := NULL;
+
+      -- Verifica se a cooperativa esta cadastrada
+      OPEN cr_crapcop(pr_cdcooper => pr_cdcooper);
+      FETCH cr_crapcop
+       INTO rw_crapcop;
+
+      -- Se não encontrar registro da cooperativa
+      IF cr_crapcop%NOTFOUND THEN
+        CLOSE cr_crapcop;
+        -- Montar mensagem de critica
+        vr_cdcritic := 651;
+        RAISE vr_exc_saida;
+      ELSE
+        CLOSE cr_crapcop;
+      END IF;
+
+      -- Busca calendário para a cooperativa selecionada
+      OPEN cr_dat(pr_cdcooper);
+      FETCH cr_dat INTO rw_dat;
+      -- Se não encontrar calendário
+      IF cr_dat%NOTFOUND THEN
+        CLOSE cr_dat;
+        -- Montar mensagem de critica
+        vr_cdcritic  := 794;
+        RAISE vr_exc_saida;
+      ELSE
+        CLOSE cr_dat;
+      END IF;
+
+      -- Leitura do calendário da cooperativa
+      OPEN BTCH0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
+      FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
+      -- Se não encontrar
+      IF BTCH0001.cr_crapdat%NOTFOUND THEN
+        -- Fechar o cursor pois efetuaremos raise
+        CLOSE BTCH0001.cr_crapdat;
+        -- Montar mensagem de critica
+        vr_cdcritic:= 1;
+        RAISE vr_exc_saida;
+      ELSE
+         -- Apenas fechar o cursor
+        CLOSE BTCH0001.cr_crapdat;
+      END IF;
+
+    --************************--
+    --  INICIO PROCESSAMENTO  --
+    --************************--
+      BEGIN
+        FOR rw_conta IN cr_conta(pr_cdcooper) LOOP
+
+          pc_cancela_limite(pr_cdcooper => pr_cdcooper        -- Cooperativa
+                           ,pr_nrdconta => rw_conta.nrdconta  -- Conta Corrente
+                           ,pr_nrctrlim => rw_conta.nrctrlim  -- Contrato de Limite
+                           ,pr_cdcritic => vr_cdcritic        -- Código da crítica
+                           ,pr_dscritic => vr_dscritic);      -- Erros do processo
+          -- Verifica erro
+          IF vr_cdcritic = 0 THEN
+            RAISE vr_exc_saida;
+          END IF;
+
+          pc_cancela_limite_cta(pr_cdcooper => pr_cdcooper        -- Cooperativa
+                               ,pr_nrdconta => rw_conta.nrdconta  -- Conta Corrente
+                               ,pr_cdcritic => vr_cdcritic        -- Código da crítica
+                               ,pr_dscritic => vr_dscritic);      -- Erros do processo
+          -- Verifica erro
+          IF vr_cdcritic = 0 THEN
+            RAISE vr_exc_saida;
+          END IF;
+
+          pc_cancela_microfilmagem(pr_cdcooper => pr_cdcooper        -- Cooperativa
+                                  ,pr_nrdconta => rw_conta.nrdconta  -- Conta Corrente
+                                  ,pr_nrctrlim => rw_conta.nrctrlim  -- Contrato de Limite
+                                  ,pr_cdcritic => vr_cdcritic        -- Código da crítica
+                                  ,pr_dscritic => vr_dscritic);      -- Erros do processo
+          -- Verifica erro
+          IF vr_cdcritic = 0 THEN
+            RAISE vr_exc_saida;
+          END IF;
+
+          -- Desativar Rating
+          -- RATI0001.pc_desativa_rating
+          -- Desativar o Rating associado a esta operação
+          rati0001.pc_desativa_rating(pr_cdcooper   => pr_cdcooper          -- Cooperativa
+                                     ,pr_cdagenci   => 0                    -- Agência
+                                     ,pr_nrdcaixa   => 0                    -- Caixa
+                                     ,pr_cdoperad   => '1'                  -- Operador
+                                     ,pr_rw_crapdat => rw_crapdat           -- Vetor com dados de parâmetro (CRAPDAT)
+                                     ,pr_nrdconta   => rw_conta.nrdconta    -- Conta do associado
+                                     ,pr_tpctrrat   => 1                    -- Tipo do Rating (1-Limite de crédito)
+                                     ,pr_nrctrrat   => rw_conta.nrctrlim    -- Contrato de Rating
+                                     ,pr_flgefeti   => 'S'                  -- Flag para efetivação ou não do Rating
+                                     ,pr_idseqttl   => 1                    -- Sequencia de titularidade da conta
+                                     ,pr_idorigem   => 1                    -- Indicador da origem da chamada
+                                     ,pr_inusatab   => vr_inusatab          -- Indicador de utilização da tabela de juros
+                                     ,pr_nmdatela   => 'PC_CANCELA_LIMITE_CREDITO'-- Nome datela conectada
+                                     ,pr_flgerlog   => 'N'                  -- Gerar log S/N
+                                     ,pr_des_reto   => vr_des_reto          -- Retorno OK / NOK
+                                     ,pr_tab_erro   => vr_tab_erro);       --> Tabela com possíves erros
+           -- Verifica erro
+           IF vr_des_reto = 'NOK' THEN
+             --Se tem erro na tabela
+             IF vr_tab_erro.COUNT = 0 THEN
+               vr_cdcritic:= 0;
+               vr_dscritic:= 'Erro na rati0001.pc_desativa_rating';
+             ELSE
+               vr_cdcritic:= vr_tab_erro(vr_tab_erro.FIRST).cdcritic;
+               vr_dscritic:= vr_tab_erro(vr_tab_erro.FIRST).dscritic;
+             END IF;
+             --Levantar Excecao
+             RAISE vr_exc_saida;
+           END IF;
+           --
+        END LOOP;
+        --
+        COMMIT;
+        --
+      END;
+    EXCEPTION
+      WHEN vr_exc_saida THEN
+      IF vr_cdcritic <> 0 THEN
+        vr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+      END IF;
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := 'Erro PC_CANCELA_LIMITE_CREDITO. Detalhes: '||vr_dscritic;
+        -- Efetuar rollback
+        ROLLBACK;
+      WHEN OTHERS THEN
+        -- Retornar o erro não tratado
+        pr_cdcritic := 0;
+        pr_dscritic := 'Erro não tratado na rotina PC_CANCELA_LIMITE_CREDITO. Detalhes: '||sqlerrm;
+        -- Efetuar rollback
+        ROLLBACK;
+    END;
+  END PC_CANCELA_LIMITE_CREDITO;
+
+end limi0002;
 /

@@ -13,6 +13,8 @@
  *								          		de proposta de novo limite de desconto de titulo para
  *									      		menores nao emancipados.
  * 003: [26/06/2017] Jonata             (RKAM): Ajuste para rotina ser chamada através da tela ATENDA > Produtos (P364).
+ * 004: [16/04/2018] Lombardi        (CECRED) : Incluida validacao se a adesao do produto é permitida
+ *									            para o tipo de conta do coperado. PRJ366
  */
 ?>
 
@@ -31,7 +33,7 @@
 	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"I")) <> "") {
 		exibirErro('error',$msgError,'Alerta - Ayllos','bloqueiaFundo(divRotina)');
 	}	
-		
+	
 	$tipo = (isset($_POST['tipo'])) ? $_POST['tipo'] : "CONTRATO";
 	
 	// Verifica se o número da conta foi informado
@@ -44,6 +46,25 @@
 	// Verifica se o número da conta é um inteiro válido
 	if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Ayllos','bloqueiaFundo(divRotina)');
 
+	// Monta o xml de requisição
+	$xml  = "";
+	$xml .= "<Root>";
+	$xml .= "	<Dados>";
+	$xml .= "		<nrdconta>".$nrdconta."</nrdconta>";
+	$xml .= "		<cdprodut>".   37    ."</cdprodut>";
+	$xml .= "	</Dados>";
+	$xml .= "</Root>";
+	
+	// Executa script para envio do XML
+	$xmlResult = mensageria($xml, "CADA0006", "VALIDA_ADESAO_PRODUTO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	$xmlObj = getObjectXML($xmlResult);
+	
+	// Se ocorrer um erro, mostra crítica
+	if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
+		$msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
+		exibirErro('error',utf8_encode($msgErro),'Alerta - Ayllos',$funcaoAposErro);
+	}
+	
 	// Monta o xml de requisição
 	$xmlGetDadosLimIncluir  = "";
 	$xmlGetDadosLimIncluir .= "<Root>";

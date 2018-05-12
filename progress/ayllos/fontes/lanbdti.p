@@ -44,6 +44,11 @@
 			                incluso em um bordero
 							(Adriano - SD 603451).
 			          
+               17/04/2017 - Inlusao da procedure valida_inclusao_bordero para tratar 
+                            chamada da rotina que pede a senha do coordenador.
+                          - Adicionado input tel_nrcustod na chamada da procedure 
+                            valida-titulo-bordero. Projeto 366 (Lombardi).
+			          
 ............................................................................. */
 
 { includes/var_online.i }
@@ -61,6 +66,9 @@ DEF VAR aux_flgalter AS LOGICAL                                     NO-UNDO.
 DEF VAR aux_vlutiliz AS DECIMAL                                     NO-UNDO.
 DEF VAR aux_qttitpro AS INTEGER                                     NO-UNDO.
 DEF VAR aux_qttitcar AS INTEGER                                     NO-UNDO.
+DEF VAR aux_solcoord AS DECIMAL                                     NO-UNDO.
+DEF VAR aux_flginclu AS LOGICAL                                     NO-UNDO.
+DEF VAR aux_cdoperad AS CHAR                                        NO-UNDO.
 
 DEF QUERY q-criticas FOR tt-erro.
 
@@ -128,6 +136,61 @@ ON "END-ERROR" OF b_browse IN FRAME f_browse DO:
             LEAVE.
         END.
 
+    ASSIGN aux_flginclu = TRUE.
+    
+    RUN valida_inclusao_bordero IN h-b1wgen0030
+                                (INPUT glb_cdcooper,
+                                 INPUT tel_cdagenci,
+                                 INPUT 0, /*nrdcaixa*/
+                                 INPUT glb_cdoperad,
+                                 INPUT glb_dtmvtolt,
+                                 INPUT 1, /*idorigem*/
+                                 INPUT tel_nrcustod,
+                                 INPUT tel_cdbccxlt,
+                                 INPUT tel_nrdolote,
+                                 INPUT tel_qtinfoln, /*quantidade de titulos */
+                                 INPUT tel_vlinfodb, /*valor total de titulos*/
+                                 INPUT TABLE tt-titulos,
+                                OUTPUT aux_solcoord,
+                                OUTPUT TABLE tt-erro).
+
+    IF  RETURN-VALUE = "NOK"  THEN
+        DO:
+            FIND FIRST tt-erro NO-LOCK NO-ERROR.
+
+            IF  AVAIL tt-erro  THEN
+                DO:
+                    IF aux_solcoord = 1 THEN
+                        DO:
+                            MESSAGE tt-erro.dscritic VIEW-AS ALERT-BOX.
+                        END.
+                    ELSE
+                        DO:
+                            DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
+                                OPEN QUERY q-criticas FOR EACH tt-erro	NO-LOCK.
+                                UPDATE b-criticas
+                                WITH FRAME f_criticas.
+                                LEAVE.
+                            END.
+                            CLOSE QUERY q-criticas.
+                            HIDE FRAME f_criticas.
+                        END.
+                END.
+            ELSE
+                MESSAGE "Ocorreu erro na inclusao de titulos.".
+
+            IF  aux_solcoord = 1 THEN
+                DO:
+                    RUN fontes/pedesenha.p (INPUT glb_cdcooper,
+                                            INPUT 2,
+                                           OUTPUT aux_flginclu,
+                                           OUTPUT aux_cdoperad).
+              END.
+    
+        END.
+    
+    IF  aux_flginclu THEN 
+        DO:
     RUN efetua_inclusao_bordero IN h-b1wgen0030
                                 (INPUT glb_cdcooper,
                                  INPUT tel_cdagenci,
@@ -143,8 +206,6 @@ ON "END-ERROR" OF b_browse IN FRAME f_browse DO:
                                  INPUT TABLE tt-titulos,
                                 OUTPUT TABLE tt-erro).
 
-    DELETE PROCEDURE h-b1wgen0030.
-            
     IF  RETURN-VALUE = "NOK"  THEN
         DO:
             FIND FIRST tt-erro NO-LOCK NO-ERROR.
@@ -168,8 +229,11 @@ ON "END-ERROR" OF b_browse IN FRAME f_browse DO:
 				END.
             ELSE
                 MESSAGE "Ocorreu erro na inclusao de titulos.".
-
+                END.
         END.
+
+    IF  VALID-HANDLE(h-b1wgen0030)  THEN
+        DELETE PROCEDURE h-b1wgen0030.
 END.
 
 ON "RETURN" OF b_browse IN FRAME f_browse DO:
@@ -189,6 +253,7 @@ ON "RETURN" OF b_browse IN FRAME f_browse DO:
         
     RUN valida-titulo-bordero IN h-b1wgen0030
                                  (INPUT glb_cdcooper,
+                                  INPUT tel_nrcustod,
                                   INPUT tel_cdagenci,
                                   INPUT 0,
                                   INPUT glb_cdoperad,
@@ -277,6 +342,32 @@ ON "RETURN" OF b_browse IN FRAME f_browse DO:
                                 LEAVE.
                             END.
 
+                        /* GGS - Inicio */      
+                        /* Buscar dados do Associado */
+                        FIND crapass WHERE crapass.cdcooper = glb_cdcooper AND
+                                           crapass.nrdconta = tel_nrcustod 
+                                           NO-LOCK NO-ERROR.
+                                           
+                        IF NOT AVAIL(crapass) THEN
+                            DO:
+                                MESSAGE "Associado nao encontrado.".
+                                RETURN  "NOK".                                
+                            END.
+                        /* GGS - Fim */      
+
+                        /* GGS - Inicio */      
+                        /* Buscar dados do Associado */
+                        FIND crapass WHERE crapass.cdcooper = glb_cdcooper AND
+                                           crapass.nrdconta = tel_nrcustod 
+                                           NO-LOCK NO-ERROR.
+                                           
+                        IF NOT AVAIL(crapass) THEN
+                            DO:
+                                MESSAGE "Associado nao encontrado.".
+                                RETURN  "NOK".                                
+                            END.
+                        /* GGS - Fim */      
+
                         RUN busca_parametros_dsctit IN h-b1wgen0030 (INPUT glb_cdcooper,
                                                                      INPUT 0,
                                                                      INPUT 0,
@@ -284,6 +375,7 @@ ON "RETURN" OF b_browse IN FRAME f_browse DO:
                                                                      INPUT glb_dtmvtolt,
                                                                      INPUT 0,
                                                                      INPUT TRUE, /* COB.REGISTRADA */
+                                                                     INPUT crapass.inpessoa, /* GGS - Incluido Tipo Pessoa */
                                                                      OUTPUT TABLE tt-erro,
                                                                      OUTPUT TABLE tt-dados_dsctit_cr,
                                                                      OUTPUT TABLE tt-dados_cecred_dsctit).

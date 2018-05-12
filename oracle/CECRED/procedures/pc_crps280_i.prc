@@ -3993,14 +3993,13 @@ BEGIN
         vr_dtdrisco := NULL;
         vr_qtdiaris := 0;
 
-         -- Busca o ultimo lançamento de risco para a conta com
-         -- valor superior ao valor de arrasto e desta vez com a data igual
-         -- a data de referência passada para buscarmos as informações do risco atual
+        -- Buscar o ultimo lançamento de risco para a conta com
+        -- valor superior ao valor de arrasto e data igual ao final do mês
         vr_nivrisco     := NULL;
         rw_crapris_last := NULL;
 
          FOR rw_crapris_last IN cr_crapris_last(pr_nrdconta => vr_tab_crapris(vr_des_chave_crapris).nrdconta
-                                                ,pr_dtrefere => pr_dtrefere) LOOP  --> Data passada
+                                                ,pr_dtrefere => pr_rw_crapdat.dtultdma) LOOP  --> Final do mês anterior
           IF rw_crapris_last.vldivida > vr_vlarrast THEN
             vr_nivrisco := vr_tab_risco_aux(rw_crapris_last.innivris).dsdrisco;
             vr_dtdrisco := rw_crapris_last.dtdrisco;
@@ -4019,16 +4018,17 @@ BEGIN
           END IF;
         END LOOP;
 
-         -- Buscar novamente o ultimo lançamento de risco para a conta com
-         -- valor superior ao valor de arrasto e data igual ao final do mês         
+        -- Novamente busca o ultimo lançamento de risco para a conta com
+        -- valor superior ao valor de arrasto e desta vez com a data igual
+        -- a data de referência passada para buscarmos as informações do risco atual
         vr_dsnivris     := 'A';
         rw_crapris_last := NULL;
 
          FOR rw_crapris_last IN cr_crapris_last(pr_nrdconta => vr_tab_crapris(vr_des_chave_crapris).nrdconta
-                                               ,pr_dtrefere => pr_rw_crapdat.dtultdma) LOOP  --> Final do mês anterior
-          IF vr_dtdrisco IS NULL THEN
+                                                ,pr_dtrefere => pr_dtrefere) LOOP  --> Data passada
+        --  IF vr_dtdrisco IS NULL THEN
             vr_dtdrisco := rw_crapris_last.dtdrisco;
-          END IF;
+        --  END IF;
 
           IF rw_crapris_last.vldivida > vr_vlarrast THEN
             vr_dsnivris := vr_tab_risco_aux(rw_crapris_last.innivris).dsdrisco;

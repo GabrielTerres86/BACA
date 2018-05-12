@@ -5896,8 +5896,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
           vr_tab_pagamento(vr_idx_pagto).dthordeb := '';
           vr_tab_pagamento(vr_idx_pagto).dthorcre := '';
           vr_tab_pagamento(vr_idx_pagto).dthortar := '';
-          vr_tab_pagamento(vr_idx_pagto).dthrdebi := '';          
-          vr_tab_pagamento(vr_idx_pagto).dthrcred := '';                    
           vr_tab_pagamento(vr_idx_pagto).dthrtari := '';          
           vr_tab_pagamento(vr_idx_pagto).dscomprv := '';
           vr_tab_pagamento(vr_idx_pagto).cdempres := rw_registros.cdempres;
@@ -5905,6 +5903,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
           vr_tab_pagamento(vr_idx_pagto).dstpapgt := CASE WHEN rw_registros.idtppagt = 'A' THEN 'Arquivo' ELSE 'Convencional' END;
           vr_tab_pagamento(vr_idx_pagto).idsitapr := rw_registros.idsitapr;
           vr_tab_pagamento(vr_idx_pagto).nrseqpag := rw_registros.nrseqpag;
+          vr_tab_pagamento(vr_idx_pagto).dthrdebi := TO_CHAR(rw_registros.dtdebito,'DD/MM/RRRR') || ' 00:00';
+          vr_tab_pagamento(vr_idx_pagto).dthrcred := TO_CHAR(rw_registros.dtcredit,'DD/MM/RRRR') || ' 00:00';          
           
           vr_idx_pagto := vr_idx_pagto + 1;
           vr_flgpende := 1;

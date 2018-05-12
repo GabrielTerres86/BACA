@@ -12,6 +12,8 @@
 								(Adriano)
 
                    27/03/2017 - Inclusao dos campos Produto e Indexador. (Jaison/James - PRJ298)
+
+                   10/10/2017 - Inclusao do campo % Mínimo Garantia. (Lombardi - PRJ404)
  */
 ?>
 
@@ -41,6 +43,7 @@
   $tpdescto = (isset($_POST["tpdescto"])) ? $_POST["tpdescto"] : 0;
   $tpctrato = (isset($_POST["tpctrato"])) ? $_POST["tpctrato"] : 0;
   $nrdevias = (isset($_POST["nrdevias"])) ? $_POST["nrdevias"] : 0;
+  $permingr = (isset($_POST["permingr"])) ? $_POST["permingr"] : 0;
   $flgrefin = (isset($_POST["flgrefin"])) ? $_POST["flgrefin"] : 0;
   $flgreneg = (isset($_POST["flgreneg"])) ? $_POST["flgreneg"] : 0;
   $cdusolcr = (isset($_POST["cdusolcr"])) ? $_POST["cdusolcr"] : 0;
@@ -125,6 +128,7 @@
   $xml 	   .= "     <cdhistor>".$cdhistor."</cdhistor>";
   $xml 	   .= "     <tpprodut>".$tpprodut."</tpprodut>";
   $xml 	   .= "     <cddindex>".$cddindex."</cddindex>";
+  $xml 	   .= "     <permingr>".$permingr."</permingr>";
   $xml 	   .= "  </Dados>";
   $xml 	   .= "</Root>";
 	
@@ -172,12 +176,16 @@
 			exibirErro('error','Tipo inv&aacute;lido.','Alerta - Ayllos','formataFormularioConsulta();focaCampoErro(\'tpdescto\',\'frmConsulta\');',false);
 		}
    
-    IF($GLOBALS["tpctrato"] != 1 && $GLOBALS["tpctrato"] != 2 && $GLOBALS["tpctrato"] != 3){ 
+    IF($GLOBALS["tpctrato"] != 1 && $GLOBALS["tpctrato"] != 2 && $GLOBALS["tpctrato"] != 3 && $GLOBALS["tpctrato"] != 4){ 
 			exibirErro('error','Modelo de contrato inv&aacute;lido.','Alerta - Ayllos','formataFormularioConsulta();focaCampoErro(\'tpctrato\',\'frmConsulta\');',false);
 		}
     
     IF($GLOBALS["nrdevias"] == 0){ 
 			exibirErro('error','N&uacute;mero de vias inv&aacute;lido.','Alerta - Ayllos','formataFormularioConsulta();focaCampoErro(\'nrdevias\',\'frmConsulta\');',false);
+		}
+    
+	IF(($GLOBALS["permingr"] < 0.01 && $GLOBALS["tpctrato"] == 4) || $GLOBALS["permingr"] > 300){ 
+			exibirErro('error','Percentual minimo da cobertura da garantia de aplicacao inválido. Deve ser entre \"0.01\" e \"300\".','Alerta - Ayllos','formataFormularioConsulta();focaCampoErro(\'permingr\',\'frmConsulta\');',false);
 		}
     
     IF($GLOBALS["cdusolcr"] != 0 && $GLOBALS["cdusolcr"] != 1 && $GLOBALS["cdusolcr"] != 2){ 

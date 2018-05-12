@@ -5,7 +5,7 @@
  * DATA CRIAÇÃO : 02/08/2011 
  * OBJETIVO     : Formulário de exibição do EXTRDA
  * --------------
- * ALTERAÇÕES   :
+ * ALTERAÇÕES   : 27/11/2017 - Inclusao do valor de bloqueio em garantia. PRJ404 - Garantia Empr.(Odirlei-AMcom)  
  * --------------
  */	
 ?>
@@ -44,6 +44,13 @@
 
 		<label for="txminima"><? echo utf8ToHtml('Taxa Minima:') ?></label>
 		<input name="txminima" id="txminima" type="text" value="<? echo formataTaxa(getByTagName($dados,'txminima')) ?>" />
+        
+        <label for="vlbloque"><? echo utf8ToHtml('Bloq. Jud:') ?></label>
+		<input name="vlbloque" id="vlbloque" type="text" />
+        
+        <label for="vlblqapl"><? echo utf8ToHtml('Bloq. Garantia:') ?></label>
+		<input name="vlblqapl" id="vlblqapl" type="text" />
+		
 		
 	</fieldset>		
 	

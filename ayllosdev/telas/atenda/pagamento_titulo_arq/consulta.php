@@ -7,7 +7,9 @@
 	Objetivo: Tela para visualizar a consulta/habilitacao/alteracao da 
 	          rotina.
 	
-	Alteracoes: 
+	Alteracoes: 20/04/2018 - Adicionada verificação de adesao do produto 39
+                             Pagamento por Arquivo. PRJ366 (Lombardi). 
+                
 *************************************************************************/
 
 session_start();
@@ -25,6 +27,28 @@ require_once("../../../class/xmlfile.php");
 
 $cddopcao    = trim($_POST["cddopcao"]);
 $nrdconta    = $_POST['nrdconta'];
+
+// Monta o xml de requisição
+$xml  = "";
+$xml .= "<Root>";
+$xml .= "	<Dados>";
+$xml .= "		<nrdconta>".$nrdconta."</nrdconta>";
+$xml .= "		<cdprodut>".   39    ."</cdprodut>";
+$xml .= "	</Dados>";
+$xml .= "</Root>";
+
+// Executa script para envio do XML
+$xmlResult = mensageria($xml, "CADA0006", "VALIDA_ADESAO_PRODUTO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+$xmlObj = getObjectXML($xmlResult);
+
+// Se ocorrer um erro, mostra crítica
+if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
+	$msgErro = utf8_encode($xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata);
+	echo "<script type=\"text/javascript\">";
+	echo "showError('error','$msgErro','Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))',false);";
+	echo "</script>";
+	exit();
+}
 
 // Monta o xml para a requisicao
 $xmlGetDadosTitulos  = "";

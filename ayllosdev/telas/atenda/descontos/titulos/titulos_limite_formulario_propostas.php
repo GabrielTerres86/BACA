@@ -80,6 +80,10 @@
 		
 	</div>
 	
+  <div id="divUsoGAROPC"></div>
+  
+  <div id="divFormGAROPC"></div>
+	
 	<div id="divDscTit_Renda">
 	
 		<fieldset>
@@ -152,6 +156,13 @@
 	
 </div>
 
+<div id="divBotoesGAROPC">
+
+  <input type="image" id="btnVoltarGAROPC" name="btnVoltarGAROPC" src="<? echo $UrlImagens; ?>botoes/voltar.gif" />
+	<input type="image" id="btnContinuarGAROPC" name="btnContinuarGAROPC" src="<? echo $UrlImagens; ?>botoes/continuar.gif" />
+
+</div>
+
 <div id="divBotoesRenda">
 		
 	<input type="image" id="btnVoltarRendas" name="btnVoltarRendas" src="<? echo $UrlImagens; ?>botoes/voltar.gif" />
@@ -200,7 +211,7 @@
 
 	operacao = '<? echo $cddopcao; ?>';
 	
-	dscShowHideDiv("divOpcoesDaOpcao3;divDscTit_Limite;divBotoesLimite","divBotoesRenda;divBotoesObs;divBotoesAval;divOpcoesDaOpcao2;divDscTit_Renda;divDscTit_Observacao;divDscTit_Avalistas;divDscTit_Confirma");
+	dscShowHideDiv("divOpcoesDaOpcao3;divDscTit_Limite;divBotoesLimite","divBotoesGAROPC;divBotoesRenda;divBotoesObs;divBotoesAval;divOpcoesDaOpcao2;divDscTit_Renda;divDscTit_Observacao;divDscTit_Avalistas;divDscTit_Confirma");
 
 	$("#divDscTit_Confirma").css("display","<? if ($cddopcao == "I") { echo "block"; } else { echo "none"; } ?>");
 		
@@ -281,7 +292,12 @@
 	
 	$('#btnContinuarLimite','#divBotoesLimite').unbind('click').bind('click',function() {
 		if (operacao == 'C') {
+      <? if ($dados[30]->cdata > 0) { ?>
+			abrirTelaGAROPC("C");
+      blockBackground(parseInt($("#divRotina").css("z-index")));
+      <? } else { ?>
 			dscShowHideDiv('divDscTit_Renda;divBotoesRenda','divDscTit_Limite;divBotoesLimite');
+      <? } ?>
 		} else {
 			aux_inconfir = 1; 
 			aux_inconfi2 = 11; 
@@ -294,8 +310,33 @@
 		return false;
 	});
 	
+  $("#btnVoltarGAROPC","#divBotoesGAROPC").unbind("click").bind("click",function() {
+    $("#divUsoGAROPC").empty();
+    $("#divFormGAROPC").empty();
+    $("#frmDadosLimiteDscTit").css("width", 515);
+    dscShowHideDiv("divDscTit_Limite;divBotoesLimite", "divFormGAROPC;divBotoesGAROPC");
+		return false;
+	});
+	
+  $("#btnContinuarGAROPC","#divBotoesGAROPC").unbind("click").bind("click",function() {
+    gravarGAROPC('idcobert','frmDadosLimiteDscTit','dscShowHideDiv("divDscTit_Renda;divBotoesRenda","divFormGAROPC;divBotoesGAROPC", "");$("#frmDadosLimiteDscTit").css("width", 515);bloqueiaFundo($("#divDscTit_Renda"));');
+    return false;
+	});
+	
 	$('#btnVoltarRendas','#divBotoesRenda').unbind('click').bind('click',function() {
+    <? if ($cddopcao == "C") { ?>
+      <? if ($dados[30]->cdata > 0) { ?>
+        dscShowHideDiv('divFormGAROPC;divBotoesGAROPC','divDscTit_Renda;divBotoesRenda');
+        $("#frmDadosLimiteDscTit").css("width", 540);
+      <? } else { ?>
 		dscShowHideDiv('divDscTit_Limite;divBotoesLimite','divDscTit_Renda;divBotoesRenda');
+      <? } ?>      
+    <? } else if ($cddopcao == "A" || $cddopcao == "I") { ?>
+      dscShowHideDiv('divFormGAROPC;divBotoesGAROPC','divDscTit_Renda;divBotoesRenda');
+      $("#frmDadosLimiteDscTit").css("width", 540);
+    <? } else { ?>
+        dscShowHideDiv('divDscTit_Limite;divBotoesLimite','divDscTit_Renda;divBotoesRenda');
+    <? } ?>
 		return false;
 	});
 	

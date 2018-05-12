@@ -311,9 +311,14 @@
                               nas procedures alterar-novo-limite e altera-numero-proposta-limite.
                               Projeto 404 (Lombardi)
          
-                06/03/2018 - Adicionado campo idcobope na temp-table tt-cabec-limcredito
-                             para as novas propostas de limite na procedure obtem-cabecalho-limite.
-                             (PRJ404 Reinert)
+                 06/03/2018 - Adicionado campo idcobope na temp-table tt-cabec-limcredito
+                              para as novas propostas de limite na procedure obtem-cabecalho-limite.
+                              (PRJ404 Reinert)
+                 
+				 20/03/2018 - Substituida verificacao "cdtipcta = 8,9,10,11" pela consulta se 
+                              o produto limite de credito está liberado para o tipo de conta.
+                            - Retirada alteracao do tipo de conta. Projeto 366 (Lombardi).
+
 ..............................................................................*/
 
 
@@ -357,6 +362,8 @@ DEF        VAR par_dsdevice AS CHAR                                  NO-UNDO.
 DEF        VAR par_dtconnec AS CHAR                                  NO-UNDO.
 DEF        VAR par_numipusr AS CHAR                                  NO-UNDO.
 DEF        VAR h-b1wgen9999 AS HANDLE                                NO-UNDO.
+
+DEF        VAR aux_possuipr AS CHAR                                  NO-UNDO.
 
 /*............................ PROCEDURES EXTERNAS ...........................*/
 
@@ -830,8 +837,8 @@ PROCEDURE confirmar-novo-limite:
     DEF VAR old_vllimite AS DECI                                    NO-UNDO.
     
     DEF VAR aux_contador AS INTE                                    NO-UNDO.
-    DEF VAR aux_cdtipcta AS INTE                                    NO-UNDO.
-    DEF VAR old_cdtipcta AS INTE                                    NO-UNDO.
+  /*DEF VAR aux_cdtipcta AS INTE                                    NO-UNDO.
+    DEF VAR old_cdtipcta AS INTE                                    NO-UNDO.*/
     DEF VAR old_nrctrlim AS INTE                                    NO-UNDO.
     DEF VAR old_tplimcre AS INTE                                    NO-UNDO.
     DEF VAR old_cddlinha AS INTE                                    NO-UNDO.
@@ -1213,7 +1220,38 @@ PROCEDURE confirmar-novo-limite:
                 UNDO TRANSACAO, LEAVE TRANSACAO.
             END.
 
-        IF  LOOKUP(STRING(crapass.cdtipcta),"5,6,7,17,18") <> 0  THEN
+        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+        
+        RUN STORED-PROCEDURE pc_permite_produto_tipo
+        aux_handproc = PROC-HANDLE NO-ERROR (INPUT 13,               /* Codigo do produto */
+                                             INPUT crapass.cdtipcta, /* Tipo de conta */
+                                             INPUT crapass.cdcooper, /* Cooperativa */
+                                             INPUT crapass.inpessoa, /* Tipo de pessoa */
+                                            OUTPUT "",   /* Possui produto */
+                                            OUTPUT 0,   /* Codigo da crítica */
+                                            OUTPUT "").  /* Descriçao da crítica */
+        
+        CLOSE STORED-PROC pc_permite_produto_tipo
+              aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+        
+        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+        
+        ASSIGN aux_possuipr = ""
+               aux_cdcritic = 0
+               aux_dscritic = ""
+               aux_possuipr = pc_permite_produto_tipo.pr_possuipr 
+                              WHEN pc_permite_produto_tipo.pr_possuipr <> ?
+               aux_cdcritic = pc_permite_produto_tipo.pr_cdcritic 
+                              WHEN pc_permite_produto_tipo.pr_cdcritic <> ?
+               aux_dscritic = pc_permite_produto_tipo.pr_dscritic
+                              WHEN pc_permite_produto_tipo.pr_dscritic <> ?.
+        
+        IF aux_cdcritic > 0 OR aux_dscritic <> ""  THEN
+            DO:
+                UNDO TRANSACAO, LEAVE TRANSACAO.
+             END.
+        
+        IF aux_possuipr = "N" THEN 
             DO:
                 ASSIGN aux_cdcritic = 104
                        aux_dscritic = "".
@@ -1221,17 +1259,17 @@ PROCEDURE confirmar-novo-limite:
                 UNDO TRANSACAO, LEAVE TRANSACAO.
             END.
           
-        ASSIGN aux_cdtipcta = crapass.cdtipcta
-               old_cdtipcta = crapass.cdtipcta
+        ASSIGN /*aux_cdtipcta = crapass.cdtipcta
+               old_cdtipcta = crapass.cdtipcta*/
                old_tplimcre = crapass.tplimcre
                old_dtultlcr = crapass.dtultlcr
                old_nrctrlim = 0
                old_vllimite = 0
                old_cddlinha = 0.
-        
+        /*
         IF  CAN-DO("1,3,8,10,12,14",STRING(crapass.cdtipcta))  THEN
             ASSIGN aux_cdtipcta = crapass.cdtipcta + 1.
- 
+        */
         /** Cancela limite atual **/
         DO aux_contador = 1 TO 10:  
 
@@ -1385,7 +1423,7 @@ PROCEDURE confirmar-novo-limite:
 
         IF  aux_dscritic <> ""  THEN
             UNDO TRANSACAO, LEAVE TRANSACAO.
-         
+            
 		FIND crapope WHERE crapope.cdcooper = par_cdcooper
 		               AND UPPER(crapope.cdoperad) = UPPER(par_cdoperad)
 					   NO-LOCK NO-ERROR.
@@ -1516,7 +1554,7 @@ PROCEDURE confirmar-novo-limite:
                                          INPUT par_cdoperad,
                                          INPUT par_nrdconta,
                                          INPUT par_dtmvtolt,
-                                         INPUT aux_cdtipcta,
+                                         INPUT 0,
                                          INPUT craplim.vllimite,
                                          INPUT craplim.inbaslim,
                                         OUTPUT TABLE tt-erro).
@@ -1675,6 +1713,7 @@ PROCEDURE confirmar-novo-limite:
                                                            "zzz,zzz,zz9,99")),
                                          INPUT TRIM(STRING(craplim.vllimite,
                                                            "zzz,zzz,zz9.99"))).
+            /*
             /** Tipo da Conta **/
             IF  old_cdtipcta <> aux_cdtipcta  THEN
                 RUN proc_gerar_log_item (INPUT aux_nrdrowid,
@@ -1683,7 +1722,7 @@ PROCEDURE confirmar-novo-limite:
                                                            "z9")),
                                          INPUT TRIM(STRING(aux_cdtipcta,
                                                            "z9"))).
-                                              
+            */
             /** Tipo do Limite **/
             IF  old_tplimcre <> craplim.inbaslim  THEN
                 RUN proc_gerar_log_item (INPUT aux_nrdrowid,
@@ -2259,8 +2298,8 @@ PROCEDURE cancelar-limite-atual:
     DEF VAR old_dtultlcr AS DATE                                    NO-UNDO.
     
     DEF VAR aux_contador AS INTE                                    NO-UNDO.
-    DEF VAR aux_cdtipcta AS INTE                                    NO-UNDO.
-    DEF VAR old_cdtipcta AS INTE                                    NO-UNDO.
+  /*DEF VAR aux_cdtipcta AS INTE                                    NO-UNDO.
+    DEF VAR old_cdtipcta AS INTE                                    NO-UNDO.*/
     DEF VAR old_nrctrlim AS INTE                                    NO-UNDO.
     DEF VAR old_tplimcre AS INTE                                    NO-UNDO.
         
@@ -2380,7 +2419,38 @@ PROCEDURE cancelar-limite-atual:
                 UNDO TRANSACAO, LEAVE TRANSACAO.
             END.
                    
-        IF  LOOKUP(STRING(crapass.cdtipcta),"5,6,7,17,18") <> 0   THEN
+        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+        
+        RUN STORED-PROCEDURE pc_permite_produto_tipo
+        aux_handproc = PROC-HANDLE NO-ERROR (INPUT 13,               /* Codigo do produto */
+                                             INPUT crapass.cdtipcta, /* Tipo de conta */
+                                             INPUT crapass.cdcooper, /* Cooperativa */
+                                             INPUT crapass.inpessoa, /* Tipo de pessoa */
+                                            OUTPUT "",   /* Possui produto */
+                                            OUTPUT 0,   /* Codigo da crítica */
+                                            OUTPUT "").  /* Descriçao da crítica */
+        
+        CLOSE STORED-PROC pc_permite_produto_tipo
+              aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+        
+        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+        
+        ASSIGN aux_possuipr = ""
+               aux_cdcritic = 0
+               aux_dscritic = ""
+               aux_possuipr = pc_permite_produto_tipo.pr_possuipr 
+                              WHEN pc_permite_produto_tipo.pr_possuipr <> ?
+               aux_cdcritic = pc_permite_produto_tipo.pr_cdcritic 
+                              WHEN pc_permite_produto_tipo.pr_cdcritic <> ?
+               aux_dscritic = pc_permite_produto_tipo.pr_dscritic
+                              WHEN pc_permite_produto_tipo.pr_dscritic <> ?.
+        
+        IF aux_cdcritic > 0 OR aux_dscritic <> ""  THEN
+             DO:
+                UNDO TRANSACAO, LEAVE TRANSACAO.
+            END.
+                   
+        IF aux_possuipr = "N" THEN 
             DO:
                 ASSIGN aux_cdcritic = 104
                        aux_dscritic = "".
@@ -2410,16 +2480,16 @@ PROCEDURE cancelar-limite-atual:
                 UNDO TRANSACAO, LEAVE TRANSACAO.
             END.
 
-        ASSIGN aux_cdtipcta = crapass.cdtipcta
-               old_cdtipcta = crapass.cdtipcta
+        ASSIGN /*aux_cdtipcta = crapass.cdtipcta
+               old_cdtipcta = crapass.cdtipcta*/
                old_tplimcre = crapass.tplimcre
                old_dtultlcr = crapass.dtultlcr
                old_nrctrlim = 0
                old_vllimite = 0.
-        
+        /*
         IF  CAN-DO("2,4,9,11,13,15",STRING(crapass.cdtipcta))  THEN
             ASSIGN aux_cdtipcta = crapass.cdtipcta - 1.
-        
+        */
           
         DO aux_contador = 1 TO 10:
 
@@ -2550,7 +2620,7 @@ PROCEDURE cancelar-limite-atual:
                                          INPUT par_cdoperad,
                                          INPUT par_nrdconta,
                                          INPUT par_dtmvtolt,
-                                         INPUT aux_cdtipcta,
+                                         INPUT 0,
                                          INPUT 0,
                                          INPUT craplim.inbaslim,
                                         OUTPUT TABLE tt-erro).
@@ -2699,7 +2769,7 @@ PROCEDURE cancelar-limite-atual:
                                      INPUT TRIM(STRING(old_vllimite,
                                                        "zzz,zzz,zz9,99")),
                                      INPUT "0").
-                                                                  
+            /*                  
             /** Tipo da Conta **/
             IF  old_cdtipcta <> aux_cdtipcta  THEN
                 RUN proc_gerar_log_item (INPUT aux_nrdrowid,
@@ -2708,7 +2778,7 @@ PROCEDURE cancelar-limite-atual:
                                                            "z9")),
                                          INPUT TRIM(STRING(aux_cdtipcta,
                                                            "z9"))).
-                                              
+            */
             /** Data Alteracao do Limite **/
             IF  old_dtultlcr <> par_dtmvtolt  THEN
                 RUN proc_gerar_log_item (INPUT aux_nrdrowid,
@@ -3886,7 +3956,7 @@ PROCEDURE cadastrar-novo-limite:
                craplim.dtconbir    = par_dtconbir.
                                  
         { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
-
+                                         
         /* Faz a vinculaçao da garantia com a proposta */
         RUN STORED-PROCEDURE pc_vincula_cobertura_operacao
         aux_handproc = PROC-HANDLE NO-ERROR (INPUT 0
@@ -4124,7 +4194,7 @@ PROCEDURE cadastrar-novo-limite:
                                     
                     UNDO TRANSACAO, LEAVE TRANSACAO.
                 END.
-                
+                            
               IF aux_mensagens <> ? AND aux_mensagens <> "" THEN
                  DO:
                      CREATE tt-msg-confirma.                        
@@ -4222,6 +4292,7 @@ PROCEDURE cadastrar-novo-limite:
                                  INPUT "vllimite",
                                  INPUT "",
                                  INPUT TRIM(STRING(craplim.vllimite, "zzz,zzz,zz9.99"))).
+        
         /** Tipo da Conta **/
         
         RUN proc_gerar_log_item (INPUT aux_nrdrowid,
@@ -6677,8 +6748,10 @@ PROCEDURE atualiza-registro-associado:
                         
     ASSIGN crapass.vllimcre = par_vllimite
            crapass.tplimcre = par_inbaslim              
-           crapass.dtultlcr = par_dtmvtolt
-           crapass.cdtipcta = par_cdtipcta.
+           crapass.dtultlcr = par_dtmvtolt.
+    
+    IF par_cdtipcta > 0 THEN       
+       ASSIGN crapass.cdtipcta = par_cdtipcta.
             
     VALIDATE crapass.
     
@@ -7240,7 +7313,7 @@ PROCEDURE obtem-dados-contrato:
                                                        "99999999999"),
                                                        "xxx.xxx.xxx-xx")
                        tt-repres-ctr.dsdocrep = crapavt.nrdocava.
-                           
+                 
                 ASSIGN tt-repres-ctr.cdoedrep = "".  
                 IF crapavt.idorgexp <> 0 THEN 
                 DO:
@@ -7248,7 +7321,7 @@ PROCEDURE obtem-dados-contrato:
                   IF  NOT VALID-HANDLE(h-b1wgen0052b) THEN
                       RUN sistema/generico/procedures/b1wgen0052b.p 
                           PERSISTENT SET h-b1wgen0052b.
-
+                  
                   RUN busca_org_expedidor IN h-b1wgen0052b 
                                    (INPUT crapavt.idorgexp,
                                     OUTPUT tt-repres-ctr.cdoedrep,
@@ -7256,7 +7329,7 @@ PROCEDURE obtem-dados-contrato:
                                     OUTPUT aux_dscritic).
 
                   DELETE PROCEDURE h-b1wgen0052b. 
-                
+                  
                   IF  RETURN-VALUE = "NOK" THEN
                   DO:
                       RUN gera_erro (INPUT par_cdcooper,
@@ -7284,7 +7357,7 @@ PROCEDURE obtem-dados-contrato:
                                                             "99999999999"),
                                                             "xxx.xxx.xxx-xx")
                                    tt-repres-ctr.dsdocrep = crabass.nrdocptl.
-                                   
+                            
 							ASSIGN tt-repres-ctr.cdoedrep = "".       
                             IF crabass.idorgexp <> 0 THEN
                             DO:
@@ -7292,7 +7365,7 @@ PROCEDURE obtem-dados-contrato:
                               IF  NOT VALID-HANDLE(h-b1wgen0052b) THEN
                                   RUN sistema/generico/procedures/b1wgen0052b.p 
                                       PERSISTENT SET h-b1wgen0052b.
-
+                              
                               RUN busca_org_expedidor IN h-b1wgen0052b 
                                                  (INPUT crabass.idorgexp,
                                                   OUTPUT tt-repres-ctr.cdoedrep,
@@ -7300,7 +7373,7 @@ PROCEDURE obtem-dados-contrato:
                                                   OUTPUT aux_dscritic).
 
                               DELETE PROCEDURE h-b1wgen0052b. 
-                            
+                              
                               IF  RETURN-VALUE = "NOK" THEN
                               DO:
                                   RUN gera_erro (INPUT par_cdcooper,
@@ -7311,7 +7384,7 @@ PROCEDURE obtem-dados-contrato:
                                                  INPUT-OUTPUT aux_dscritic).
 
                                   RETURN "NOK".
-                              END.       
+                              END.      
                       END.
                     END.
                 
@@ -7336,7 +7409,7 @@ PROCEDURE obtem-dados-contrato:
                                   OUTPUT aux_dscritic).
 
               DELETE PROCEDURE h-b1wgen0052b. 
-            
+              
               IF  RETURN-VALUE = "NOK" THEN
               DO:
                   RUN gera_erro (INPUT par_cdcooper,
@@ -7349,7 +7422,7 @@ PROCEDURE obtem-dados-contrato:
                   RETURN "NOK".
               END.    
             END.
-        
+
             ASSIGN tt-dados-ctr.nrcpfcgc = "CPF: " +
                                            STRING(STRING(crapass.nrcpfcgc,
                                                   "99999999999"),
@@ -9820,7 +9893,7 @@ PROCEDURE alterar-novo-limite:
                                       INPUT 1,            /** Sequencia **/
                                       INPUT aux_cdcritic,
                                       INPUT-OUTPUT aux_dscritic).
-                                              
+                                         
                        UNDO TRANSACAO, LEAVE TRANSACAO.
                  END.
                    END.
@@ -10470,7 +10543,7 @@ PROCEDURE altera-numero-proposta-limite:
         /* Mudar o numero do contrato */
         ASSIGN aux_nrctrlim     = craplim.nrctrlim
                craplim.nrctrlim = par_nrctrlim.
-        
+
         /* Faz a vinculaçao da garantia com a proposta */
         RUN STORED-PROCEDURE pc_vincula_cobertura_operacao
         aux_handproc = PROC-HANDLE NO-ERROR (INPUT 0

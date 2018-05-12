@@ -37,14 +37,14 @@
 		
 	// Classe para leitura do xml de retorno
 	require_once("../../../../class/xmlfile.php");
-
+	
 	$tipo = (isset($_POST['tipo'])) ? $_POST['tipo'] : "CONTRATO";
 	
 	// Verifica se os parâmetros necessários foram informados
 	$params = array("nrdconta","nrctrlim","cddlinha","vllimite","dsramati","vlmedtit","vlfatura","vloutras","vlsalari","vlsalcon","dsdbens1","dsdbens2","dsobserv",
                     "nrctaav1","nmdaval1","nrcpfav1","tpdocav1","dsdocav1","nmdcjav1","cpfcjav1","tdccjav1","doccjav1","ende1av1","ende2av1","nrcepav1","nmcidav1","cdufava1","nrfonav1","emailav1",
                     "nrctaav2","nmdaval2","nrcpfav2","tpdocav2","dsdocav2","nmdcjav2","cpfcjav2","tdccjav2","doccjav2","ende1av2","ende2av2","nrcepav2","nmcidav2","cdufava2","nrfonav2","emailav2",
-					"nrgarope","nrinfcad","nrliquid","nrpatlvr","nrperger","vltotsfn","perfatcl",
+					"nrgarope","nrinfcad","nrliquid","nrpatlvr","nrperger","vltotsfn","perfatcl","idcobope",
 					"cddopcao","nrcpfcgc","redirect");
 
 	foreach ($params as $nomeParam) {
@@ -313,7 +313,7 @@
 	if ($cddopcao == "A"){
 		$opermail = "Alterar Limite de Desconto de Titulos";
 	}else{  if ($cddopcao == "I"){
-                // Buscar numero do contrato gerado 
+				// Buscar numero do contrato gerado 
                 $nrctrlim = $xmlObjLimite->roottag->tags[0]->attributes["NRCTRLIM"];	
 				$opermail = "Novo Limite de Desconto de Titulos";
 			}
