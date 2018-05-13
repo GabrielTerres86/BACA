@@ -25,10 +25,15 @@
 	
 	// Classe para leitura do xml de retorno
 	require_once("../../../../class/xmlfile.php");	
+	require_once("../../../../includes/carrega_permissoes.php");
+
+	setVarSession("opcoesTela",$opcoesTela);
+	
 	
 	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"X")) <> "") {
 		exibeErro($msgError);		
 	}	
+	
 	
 	// Se parâmetros necessários não foram informados
 	if (!isset($_POST["nrdconta"]) || !isset($_POST["nrctrlim"])) {

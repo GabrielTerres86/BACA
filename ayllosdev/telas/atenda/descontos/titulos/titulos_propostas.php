@@ -82,9 +82,9 @@
 	$xmlGetLimites .= "	</Dados>";
 	$xmlGetLimites .= "</Root>";
 		
-$procedure_acao = 'OBTEM_DADOS_PROPOSTA';
-$pakage = 'TELA_ATENDA_DESCTO';
-$glbvars['rotinasTela'][8] = 'PROPOSTAS';
+	$procedure_acao = 'OBTEM_DADOS_PROPOSTA';
+	$pakage = 'TELA_ATENDA_DESCTO';
+	$glbvars['rotinasTela'][8] = 'PROPOSTAS';
 
 	$xmlResult = mensageria(
 		$xmlGetLimites,
@@ -97,7 +97,7 @@ $glbvars['rotinasTela'][8] = 'PROPOSTAS';
 		$glbvars["cdoperad"],
 		"</Root>");
 
-$xmlObjLimites = getObjectXML($xmlResult);
+	$xmlObjLimites = getObjectXML($xmlResult);
 
 
 	// Se ocorrer um erro, mostra crítica

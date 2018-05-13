@@ -1,11 +1,11 @@
 <? 
 /*!
  * FONTE        : manter_rotina.php
- * CRIAÇÃO      : James Prust Junior
- * DATA CRIAÇÃO : 15/12/2014
- * OBJETIVO     : Rotina para alteração cadastral da tela CADLIM
+ * CRIAÃ‡ÃƒO      : James Prust Junior
+ * DATA CRIAÃ‡ÃƒO : 15/12/2014
+ * OBJETIVO     : Rotina para alteraÃ§Ã£o cadastral da tela CADLIM
  * --------------
- * ALTERAÇÕES   : 21/09/2016 - Inclusão do filtro "Tipo de Limite" no cabecalho. Inclusão dos campos
+ * ALTERAÃ‡Ã•ES   : 21/09/2016 - InclusÃ£o do filtro "Tipo de Limite" no cabecalho. InclusÃ£o dos campos
  *                             "pcliqdez" e "qtdialiq" no formulario de regras. Projeto 300. (Lombardi)
  * -------------- 
  */

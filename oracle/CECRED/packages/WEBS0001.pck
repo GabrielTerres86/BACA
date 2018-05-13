@@ -1439,14 +1439,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
                                             when pr_insitapr = 3 then 4 -- [com restricao] rejeitado manual
                                             else 0 -- nao analisado
                              end
-                                  else
-                                       case when pr_insitapr = 0 then 0 -- [nao analisado] nao analisado
-                                            when pr_insitapr = 1 then 2 -- [aprovado]      aprovado manual
-                                            when pr_insitapr = 2 then 4 -- [nao aprovado]  rejeitado manual
-                                            when pr_insitapr = 4 then 8 -- [refazer]       refazer
-                                            when pr_insitapr = 3 then 4 -- [com restricao] rejeitado manual
-                                            else 0 -- nao analisado
-                                       end
                              end
                  ,cdopeapr = decode(pr_tpretest,'M','MOTOR','ESTEIRA')
                  ,dtaprova = pr_rw_crapdat.dtmvtolt

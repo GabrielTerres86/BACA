@@ -1,10 +1,10 @@
 /*!
  * FONTE        : cadlim.js
- * CRIA«√O      : James Prust Junior
- * DATA CRIA«√O : 15/12/2014
- * OBJETIVO     : Biblioteca de funÁıes da tela CADLIM
+ * CRIA√á√ÉO      : James Prust Junior
+ * DATA CRIA√á√ÉO : 15/12/2014
+ * OBJETIVO     : Biblioteca de fun√ß√µes da tela CADLIM
  * --------------
- * ALTERA«’ES   : 21/09/2016 - Inclus„o do filtro "Tipo de Limite" no cabecalho. Inclus„o dos campos
+ * ALTERA√á√ïES   : 21/09/2016 - Inclus√£o do filtro "Tipo de Limite" no cabecalho. Inclus√£o dos campos
  *                             "pcliqdez" e "qtdialiq" no formulario de regras. Projeto 300. (Lombardi)
  * --------------
  */
@@ -118,7 +118,7 @@ function formataCabecalho() {
 	cTplimite = $('#tplimite','#frmCab'); 
 	cInpessoa = $('#inpessoa','#frmCab'); 
 
-	//RÛtulos
+	//R√≥tulos
 	rCddopcao.css('width','44px');
 	rTplimite.addClass('rotulo-linha').css('width','102px');
 	rInpessoa.addClass('rotulo-linha').css('width','102px');
@@ -592,7 +592,7 @@ function buscaRegra(op) {
 	$('#tplimite','#frmCab').removeClass('campoErro');
 	$('#inpessoa','#frmCab').removeClass('campoErro');
 	
-	// Executa script de bloqueio atravÈs de ajax
+	// Executa script de bloqueio atrav√©s de ajax
 	$.ajax({		
 		type: "POST",
 		url: UrlSite + "telas/cadlim/busca_regra.php", 
@@ -661,7 +661,7 @@ function alteraRegra() {
         vlriscop = vlriscop + (vlriscop == '' ? '' : ';') + $(this).val();
     });
 
-	// Executa script de bloqueio atravÈs de ajax
+	// Executa script de bloqueio atrav√©s de ajax
 	$.ajax({		
 		type: "POST",
 		url: UrlSite + "telas/cadlim/manter_rotina.php", 

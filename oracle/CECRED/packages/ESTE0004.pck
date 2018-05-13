@@ -1358,7 +1358,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0004 IS
   and    ass.nrdconta = pr_nrdconta;
   rw_crapass cr_crapass%rowtype;
 
-
   -->    Buscar dados da proposta de emprestimo
   cursor cr_crawlim is  
   select lim.nrctrlim

@@ -5,7 +5,7 @@ CREATE OR REPLACE PACKAGE CECRED.ESTE0001 is
       Sistema  : Rotinas referentes a comunicação com a ESTEIRA de CREDITO da IBRATAN
       Sigla    : CADA
       Autor    : Odirlei Busana - AMcom
-      Data     : Março/2016.                   Ultima atualizacao: 08/03/2016
+      Data     : Março/2016.                   Ultima atualizacao: 02/04/2018
 
       Dados referentes ao programa:
 

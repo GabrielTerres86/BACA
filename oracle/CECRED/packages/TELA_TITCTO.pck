@@ -1207,6 +1207,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
          pr_tab_dados_conciliacao(0).vlcredit := vr_vlcredit;
     END;
     EXCEPTION
+      when vr_exc_erro then
+           /*  se foi retornado apenas código */
+           if  nvl(vr_cdcritic,0) > 0 and vr_dscritic is null then
+               /* buscar a descriçao */
+               vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+           end if;
+           /* variavel de erro recebe erro ocorrido */
+           pr_cdcritic := nvl(vr_cdcritic,0);
+           pr_dscritic := vr_dscritic;
       WHEN OTHERS THEN
            /* montar descriçao de erro nao tratado */
            pr_dscritic := 'erro nao tratado na TELA_TITCTO.pc_obtem_dados_conciliacao ' ||sqlerrm;
@@ -3035,5 +3044,4 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TITCTO IS
   END pc_consulta_pag_remetente_web;
 
 END TELA_TITCTO;
-
 /

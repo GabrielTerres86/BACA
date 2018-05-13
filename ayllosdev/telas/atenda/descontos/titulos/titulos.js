@@ -1070,11 +1070,7 @@ function mostraTelaAltera() {
         return false;
     }
 
-    hideMsgAguardo();
-    fechaRotinaAltera();
-    carregaDadosAlteraLimiteDscTit();
-    return false;
-    /*
+
     limpaDivGenerica();
 
     $.ajax({
@@ -1098,7 +1094,6 @@ function mostraTelaAltera() {
 
     $('#todaProp', '#frmAltera').focus();
     return false;
-	*/
 }
 
 function confirmaEnvioAnalise(){
@@ -2548,6 +2543,9 @@ function removerTituloResumo(){
             removeTituloBordero(td);
         }
         bloqueiaFundo(divRotina);
+
+        //Remove a seleção do titulo
+        tituloSelecionadoResumo = null;
     }
     else{
         showError("error","Selecione um t&iacute;tulo para remover","Alerta - Ayllos","");
@@ -2756,7 +2754,6 @@ function realizarManutencaoDeLimite(operacao, flgstlcr) {
     }
 
     if(operacao === 1){
-
     $.ajax({
         type: "POST",
         url: UrlSite + "telas/atenda/descontos/titulos/titulos_limite_manutencao.php",

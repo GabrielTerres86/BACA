@@ -1,11 +1,11 @@
 <? 
 /*!
  * FONTE        : form_regras.php
- * CRIAÇÃO      : James Prust Junior
- * DATA CRIAÇÃO : 15/12/2014
+ * CRIAÃ‡ÃƒO      : James Prust Junior
+ * DATA CRIAÃ‡ÃƒO : 15/12/2014
  * OBJETIVO     : Formulario de Regras.
  * --------------
- * ALTERAÇÕES   : 21/09/2016 - Inclusão dos campos "pcliqdez" e "qtdialiq" no formulario de regras. Projeto 300. (Lombardi)
+ * ALTERAÃ‡Ã•ES   : 21/09/2016 - InclusÃ£o dos campos "pcliqdez" e "qtdialiq" no formulario de regras. Projeto 300. (Lombardi)
  * --------------
  */	
 ?>

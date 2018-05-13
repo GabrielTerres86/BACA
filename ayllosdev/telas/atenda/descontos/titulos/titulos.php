@@ -29,7 +29,6 @@
 
  				 25/04/2018 - Alterado o comportamento dos botões na <div id="divBotoes" >, por definicção do cliente os mesmos devem ser ocultados caso o usuário não possua permissão. (Andre Avila - GFT)
 
-
 				 07/05/2018 - Adicionada verificação para definir se o bordero vai seguir o fluxo novo ou o antigo (Luis Fernando - GFT)
 
 	***************************************************************************/
@@ -173,6 +172,7 @@
 		
 	</fieldset>
 </form>
+
 
 <div id="divBotoes" >
 
