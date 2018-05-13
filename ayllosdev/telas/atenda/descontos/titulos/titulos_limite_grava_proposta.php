@@ -18,7 +18,7 @@
                       passar o CDPACTRA (Rafael Maciel - RKAM)					  
 		 28/07/2017 - Desenvolvimento da melhoria 364 - Grupo Economico Novo. (Mauro)
 		 
-		
+		 22/03/2018 - Incluso tratativa para retornar numero de contrato gerado automaticamente. (Daniel - projeto 403)
  */
 ?>
 
@@ -336,7 +336,7 @@
 	// Mensagens de alerta
 	$msg = Array(); 
 	foreach( $mensagens as $mensagem ) {
-		$msg[] = getByTagName($mensagem->tags,'dsmensag');
+		$msg[] = str_replace('|@|','<br>',getByTagName($mensagem->tags,'dsmensag'));
 	}
 	$stringArrayMsg = implode( "|", $msg);
 	echo 'exibirMensagens("'.$stringArrayMsg.'","atualizaDadosRating(\"divOpcoesDaOpcao3\");");';

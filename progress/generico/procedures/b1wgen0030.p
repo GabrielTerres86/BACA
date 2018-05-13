@@ -3058,7 +3058,8 @@ PROCEDURE busca_limites:
                                              ELSE
                                                   "NAO"
                                         ELSE
-                                             "NAO".
+                                             "NAO"
+               tt-limite_tit.insitlim = craplim.insitlim.
 
     END.  /*  Fim da leitura do craplim  */
     

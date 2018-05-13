@@ -29,7 +29,7 @@
 	setVarSession("opcoesTela",$opcoesTela);
 
 	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"I")) <> "") {
-		exibeErro($msgError);		
+		exibirErro('error',$msgError,'Alerta - Ayllos','bloqueiaFundo(divRotina)');
 	}
 	
 	$tipo = (isset($_POST['tipo'])) ? $_POST['tipo'] : "CONTRATO";

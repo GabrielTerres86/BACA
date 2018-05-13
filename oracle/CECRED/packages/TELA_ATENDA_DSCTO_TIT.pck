@@ -705,6 +705,42 @@ BEGIN
 END fn_contigencia_motor_esteira;
 
 
+
+FUNCTION fn_contigencia_motor_esteira(pr_cdcooper IN crapcop.cdcooper%TYPE
+                                     ) RETURN BOOLEAN IS
+  /*---------------------------------------------------------------------------------------------------------------------
+    Programa : fn_contigencia_motor_esteira
+    Sistema  : Ayllos
+    Sigla    : TELA_ATENDA_DSCTO_TIT
+    Autor    : Paulo Penteado (GFT)
+    Data     : Abril/2018
+
+    Objetivo  : Procedure para verificar e tanto o motor quanto a esteira estão em contingência
+
+    Alteração : 26/04/2018 - Criação (Paulo Penteado (GFT))
+
+  ---------------------------------------------------------------------------------------------------------------------*/
+  vr_dscritic varchar2(10000);
+  vr_dsmensag varchar2(10000);
+BEGIN
+   este0003.pc_verifica_contigenc_motor(pr_cdcooper => pr_cdcooper
+                                       ,pr_flctgmot => vr_flctgmot
+                                       ,pr_dsmensag => vr_dsmensag
+                                       ,pr_dscritic => vr_dscritic);
+
+   este0003.pc_verifica_contigenc_esteira(pr_cdcooper => pr_cdcooper
+                                         ,pr_flctgest => vr_flctgest
+                                         ,pr_dsmensag => vr_dsmensag
+                                         ,pr_dscritic => vr_dscritic);
+
+   if  (vr_flctgest and vr_flctgmot) then
+       return true;
+   else
+       return false;
+   end if;
+END fn_contigencia_motor_esteira;
+
+
 FUNCTION fn_em_contingencia_ibratan (pr_cdcooper IN crapcop.cdcooper%TYPE) RETURN BOOLEAN IS
 
   /*---------------------------------------------------------------------------------------------------------------------

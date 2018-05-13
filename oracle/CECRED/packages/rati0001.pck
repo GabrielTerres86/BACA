@@ -7453,7 +7453,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
       END IF; -- Fim pr_tpctrrat = 90
     END IF;
 
-
     /* Nao validaremos os itens a seguir em caso de cessao de credito */
     IF vr_flgcescr THEN
       IF pr_tab_erro.COUNT > 0 THEN

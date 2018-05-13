@@ -323,7 +323,7 @@
 	});
 	
 	$('#btnContinuarObservacao','#divBotoesObs').unbind('click').bind('click',function() {
-    
+    $("#frmDadosLimiteDscTit").css("width", 525);
 		dscShowHideDiv('divDscTit_Avalistas;divBotoesAval','divDscTit_Observacao;divBotoesObs');
 		return false;
 	});
