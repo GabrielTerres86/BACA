@@ -75,13 +75,13 @@
 			<label for="cdlimcrd"  class="rotulo txtNormalBold"><? echo utf8ToHtml("Cód. Limite") ?>:</label>
 		<td>
 		<td>
-			<input type="text" id="cdlimcrd" name="cdlimcrd" class="campoTelaSemBorda "> 
+			<input type="text" id="cdlimcrd" name="cdlimcrd" class=" "disabled> 
 		</td>
 		<td>
 			<label for="tpcartao"  class="rotulo txtNormalBold"><? echo utf8ToHtml("Tipo Cartão") ?>:</label>
 		<td>
 		<td>
-			<select id="tpcartao" class="campoTelaSemBorda ">
+			<select id="tpcartao" class=" " disabled>
 				<option value="0"> - </option>
 				<option value="1">Nacional </option>
 				<option value="2">Internacional </option>
@@ -110,16 +110,7 @@
 			<label for="DDDEBITO" class="rotulo txtNormalBold"><? echo utf8ToHtml("Dia de Débito") ?>:</label>
 		<td>
 		<td colspan="4">
-		<input type="text" id="DDDEBITO" name="DDDEBITO" class="campoTelaSemBorda "> 
-						<? 	/*	$dias = array();
-					for($i = 1;$i<30; $i++){
-							$label = $i<10? "0".$i: $i;
-							array_push($dias, array($label,$i));
-					}
-					//build_select("DDDEBITO", array(0=>array("03",03), 1=>array("07",07), 2=>array("11",11),3=>array("19",19),4=>array("22",22),5=>array("27",27),6=>array("30",30)), "");	
-					build_select("DDDEBITO",$dias,"campoTelaSemBorda",1);*/
-					//build_select("DDDEBITO", array(0=>array("03",03), 1=>array("07",07), 2=>array("11",11),3=>array("19",19),4=>array("22",22),5=>array("27",27),6=>array("30",30)),"", 1);		
-			?>
+			<input type="text" id="DDDEBITO" name="DDDEBITO" class=" "disabled> 
 		</td>
 	</tr>
 </table>

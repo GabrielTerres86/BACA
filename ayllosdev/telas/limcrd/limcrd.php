@@ -158,6 +158,10 @@ isPostMethod();
                                                                             <div id="divBotoes" style='border-top:1px solid #777'>
                                                                                 <a href="#" class="botao" id="btVoltar"   >Voltar</a>
                                                                                 <a href="#" class="botao" id="btConcluir" onclick="salvarLimite()" >Concluir</a>
+                                                                                <a  href="#" 
+                                                                                    class="botao" 
+                                                                                    id="btnExcluir" 
+                                                                                    onclick="showConfirmacao('<? echo utf8ToHtml("Deseja excluir este registro?") ?>', 'Confirma&ccedil;&atilde;o - Ayllos', 'excluirLimite()', '', 'sim.gif', 'nao.gif');"> Excluir</a>
                                                                                 <div class="hideable navbtn">
 
                                                                                    

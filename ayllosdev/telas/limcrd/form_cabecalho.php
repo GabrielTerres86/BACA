@@ -18,6 +18,7 @@
 					<option value="I"><? echo utf8ToHtml("I - Incluir Limite") ?></option>
 					<option value="C"><? echo utf8ToHtml("C - Consultar Limites") ?></option>
 					<option value="A"><? echo utf8ToHtml("A - Alterar Limites") ?></option>
+					<option value="E"><? echo utf8ToHtml("E - Excluir Limites") ?></option>
 				</select>
 				<? build_card_adm_select("mainAdmCrd", $glbvars);?> 
 				<a href="#" class="botao" id="btnOK" name="btnOK" style = "text-align:right;">OK</a>

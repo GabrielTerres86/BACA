@@ -31,33 +31,34 @@
     $insittab = isset($_POST['insittab'])? $_POST['insittab'] : "";
     $tpcartao = isset($_POST['tpcartao'])? $_POST['tpcartao'] : "";
     $dddebito = isset($_POST['dddebito'])? $_POST['dddebito'] : "";
-
+    $tpproces = isset($_POST['tpproces'])? $_POST['tpproces'] : "A";
     $cecred = $cdadmcrd > 9 && $cdadmcrd < 81;
-    if($cecred){
-        if($vllimite_min == 0){
-            echo "success = false; message='".utf8ToHtml("Por favor preencha o valor de limite mínimo.")."'";
-            return;
-        }
-        if($vllimite_max == 0){
-            echo "success = false; message='".utf8ToHtml("Por favor preencha o valor de limite máximo.")."'";
-            return;
-        }        
-        if(floatval($vllimite_min) > floatval($vllimite_max)){
-            echo "success = false; message='".utf8ToHtml("Valor de limite mínimo maior que o máximo.")."'";
-            return;
-        }
+    if($tpproces == "A"){
+        if($cecred  ){
+            if($vllimite_min == 0){
+                echo "success = false; message='".utf8ToHtml("Por favor preencha o valor de limite mínimo.")."'";
+                return;
+            }
+            if($vllimite_max == 0){
+                echo "success = false; message='".utf8ToHtml("Por favor preencha o valor de limite máximo.")."'";
+                return;
+            }        
+            if(floatval($vllimite_min) > floatval($vllimite_max)){
+                echo "success = false; message='".utf8ToHtml("Valor de limite mínimo maior que o máximo.")."'";
+                return;
+            }
 
-    }else{
-        if($vllimite == 0){
-            echo "success = false; message='".utf8ToHtml("Por favor preencha o valor de limite.")."'";
+        }else{
+            if($vllimite == 0){
+                echo "success = false; message='".utf8ToHtml("Por favor preencha o valor de limite.")."'";
+                return;
+            }
+        }
+        if(strlen($dddebito) < 1){
+            echo "success = false; message='".utf8ToHtml("Por favor, selecione pelo menos um dia para vencimento.")."'";
             return;
         }
     }
-    if(strlen($dddebito) < 1){
-        echo "success = false; message='".utf8ToHtml("Por favor, selecione pelo menos um dia para vencimento.")."'";
-        return;
-    }
-
 
 
     $xml .= "<Root>";
@@ -71,18 +72,21 @@
     $xml .= "<nrctamae>".$nrctamae."</nrctamae>"; 
     $xml .= "<insittab>".$insittab."</insittab>"; 
     $xml .= "<tpcartao>".$tpcartao."</tpcartao>";
-    $xml .= "<dddebito>".$dddebito."</dddebito>";         
+    $xml .= "<dddebito>".$dddebito."</dddebito>";
+    $xml .= "<tpproces>".$tpproces."</tpproces>"; 
     $xml .= " </Dados>";
     $xml .= "</Root>";
 
     
     $xmlResult = mensageria($xml, "TELA_LIMCRD", "SALVA_LIMCRD", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
     $obj = simplexml_load_string($xmlResult);
+    echo "/* req: $xml \n resp: $xmlResult*/";
+    echo "hideMsgAguardo();";
     if(isset($obj->Erro->Registro->dscritic)){
        echo "success = false;"; 
        exibirErro('error',preg_replace( "/\r|\n/", "<br>", utf8ToHtml($obj->Erro->Registro->cdcritic." ".$obj->Erro->Registro->dscritic)),'Alerta - Ayllos',$funcaoAposErro,false);
     }else{
-        echo "success = true;";
+        echo "success = true;message ='".utf8ToHtml($obj->Dados->status)."'";
     }
     //echo "$xmlResult";
 ?>

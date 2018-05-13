@@ -13,16 +13,19 @@ var page;
 var globalEdit;
 var btnVoltar;
 var btnConcluir;
+var btnExcluir;
 var btnOKPressed;
 $(document).ready(function () {
     // Estado Inicial da tela
     waiting = $("#waiting");
     btnVoltar = $("#btVoltar");
     btnConcluir = $("#btConcluir");
+    btnExcluir  = $('#btnExcluir');
     btnVoltar.click(function (evt) {
         $("#content").hide();
         $(".hideable").hide();
         btnConcluir.hide();
+        btnExcluir.hide();
         btnVoltar.hide();
         $("#cddotipo").removeAttr("disabled");
         $("#mainAdmCrd").removeAttr("disabled", true);
@@ -32,6 +35,7 @@ $(document).ready(function () {
     });
     btnOKPressed = false;
     btnConcluir.hide();
+    btnExcluir.hide();
     $(".hideable").hide();
     $(".clickable").css("cursor", "pointer");
     $(".VLLIMCRD").setMask("DECIMAL", "zzz.zzz.zz9,99", "", "");
@@ -56,7 +60,6 @@ function carregarFormulario() {
         },
         success: function (response) {
             $("#cadastros").html(response);
-
         }
     });
 }
@@ -78,16 +81,32 @@ function triggerBtnOK() {
             $(".campoTelaSemBorda").removeAttr("readonly");
             $(".campoTelaSemBorda").removeAttr("disabled");//frmck
             $(".frmck").removeAttr("disabled");
-
+            btnExcluir.hide();
             btnConcluir.show();
             globalEdit = true;
         }
-        else if (opt == "C") {
+        else if (opt == "C") 
+        {
+            btnExcluir.hide();
+            $(".campoTelaSemBorda").attr("readonly", true);
+            $(".campoTelaSemBorda").attr("disabled", true);
+            $(".frmck").attr("disabled", true);
+            $(".frmck").attr("readonly", true);
             globalEdit = false;
             getLimites(false);
         } else if (opt == "A") {
             globalEdit = true;
+            btnExcluir.hide();
             getLimites(true);
+        }else if(opt == "E"){
+            globalEdit = false;
+            $(".campoTelaSemBorda").attr("readonly", true);
+            $(".campoTelaSemBorda").attr("disabled", true);
+            $(".frmck").attr("disabled", true);
+            $(".frmck").attr("readonly", true);
+            globalEdit = false;
+            btnExcluir.show();
+            getLimites(false);
         }
         $(".clickable").css("cursor", "pointer");
         $("#cddotipo").attr("disabled", true);
@@ -120,7 +139,6 @@ function gerenciarResultados(resp, edit) {
     }
     //console.log(resp);
     $.each(resp, function (i, data) {
-
         if (i == 0) {
             return;
         }
@@ -150,7 +168,6 @@ function buildHeader() {
         header.append('<th id="diadebitoCell" class=" diadebitoCell" style=\'width: 127;\'>' + labels.diasDBT + '</th>');
         header.append('<th id="limCell" class=" limCell" style=\'width: 60;\' >' + labels.codLimite + '</th>');
         header.append('<th id="limiteCell" class=" limiteCell">' + labels.ctaMae + '</th>');
-
     }
 }
 
@@ -178,6 +195,7 @@ function pagination(movement) {
 }
 
 function editarLimite(index, edit) {
+    $("#btnExcluir").attr("index",index);
     $.ajax({
         type: "POST",
         dataType: "html",
@@ -214,22 +232,24 @@ function editarLimite(index, edit) {
                 $("#VLLIMCRD").val(obj.vllimite_maximo);
                 var diasDbt = obj.dsdias_debito.split(",");
                 $("#DDDEBITO").val(obj.dsdias_debito);
-                if (!edit) {
-                    $(".campoTelaSemBorda").attr("readonly", true);
-                    $(".campoTelaSemBorda").attr("disabled", true);
-                    $(".frmck").attr("disabled", true);
-                    $(".frmck").attr("readonly", true);
-
-                } else {
-                    $(".campoTelaSemBorda").removeAttr("readonly");
-                    $(".campoTelaSemBorda").removeAttr("disabled");
-                    $(".frmck").removeAttr("disabled");
-                    $(".frmck").removeAttr("readonly");
-                    btnConcluir.show();
-                }
+                $("#tpcartao").val(obj.tpcartao);
                 $(".rls").removeClass("corSelecao");
                 $("#linha" + index).addClass("corSelecao");
                 $(".tableform").show();
+            }
+            if (!edit) {
+                $(".campoTelaSemBorda").attr("readonly", true);
+                $(".campoTelaSemBorda").attr("disabled", true);
+                $(".frmck").attr("disabled", true);
+                $(".frmck").attr("readonly", true);
+                btnConcluir.hide();
+
+            } else {
+                $(".campoTelaSemBorda").removeAttr("readonly");
+                $(".campoTelaSemBorda").removeAttr("disabled");
+                $(".frmck").removeAttr("disabled");
+                $(".frmck").removeAttr("readonly");
+                btnConcluir.show();
             }
 
         }
@@ -313,7 +333,7 @@ function salvarLimite() {
     if (objToSend.dddebito == undefined) {
 
     }
-
+    objToSend.tpproces = "A";
     $.ajax({
         type: "POST",
         dataType: "html",
@@ -328,10 +348,78 @@ function salvarLimite() {
             console.log(response);
             success = false;
             eval(response);
-            if(success)
+            if(success){
+                showError("Alert", message, "Alerta - Ayllos", "");
                 btnVoltar.click();
-            else
-                showError("error", message, "Alerta - Ayllos", "");
+            }
+            
+        }
+    });
+}
+
+function excluirLimite(){
+    var index = $("#btnExcluir").attr("index");
+    showMsgAguardo("Aguarde, Excluindo registro.");
+    $("#btnExcluir").removeAttr("index");
+    console.log("Excluido "+registros[index]);
+
+    var cdadmcrd = $("#mainAdmCrd").val();
+    var vllimite_min = $("#vllimite_min").val();
+    var vllimite_max = $("#vllimite_max").val();
+    var VLLIMCRD = $("#VLLIMCRD").val();
+    var vllimite = $("#VLLIMCRD").val();
+    var cdlimcrd = $("#cdlimcrd").val();
+    var nrctamae = $("#NRCTAMAE").val();
+    var insittab = $("#insittab").val();
+    var tpcartao = registros[index].tpcartao;
+    var dddebito = "";
+
+    var objToSend = {};
+    if ((cdadmcrd > 9) && (cdadmcrd < 81)) {
+        $(".DDDEBITO").each(function (key, elem) {
+            if (elem.checked) {
+                dddebito += (elem.value) + ",";
+            }
+        })
+        objToSend.cdadmcrd = cdadmcrd;
+        objToSend.vllimite_min = vllimite_min;
+        objToSend.vllimite_max = vllimite_max;
+        objToSend.dddebito = dddebito.substring(0, dddebito.length - 1);
+    } else {
+
+        objToSend.cdadmcrd = cdadmcrd;
+        objToSend.vllimite = VLLIMCRD;
+        objToSend.nrctamae = nrctamae;
+        objToSend.tpcartao = tpcartao;
+        objToSend.cdlimcrd = cdlimcrd;
+        objToSend.insittab = $("#insittab").val();
+
+       // objToSend.dddebito = $("input[id=DDDEBITO]:checked").val();
+        objToSend.dddebito = $("#DDDEBITO").val();
+    }
+    if (objToSend.dddebito == undefined) {
+
+    }
+    objToSend.tpproces = "E";
+    $.ajax({
+        type: "POST",
+        dataType: "html",
+        url: UrlSite + "telas/limcrd/cadastro_limite.php",
+        data: objToSend,
+        error: function (objAjax, responseError, objExcept) {
+
+            hideMsgAguardo();
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+        },
+        success: function (response) {
+            console.log(response);
+            success = false;
+            eval(response);
+            if(success){
+                showError("Alert", message, "Alerta - Ayllos", "");
+                btnVoltar.click();
+            }
+            
         }
     });
 }
