@@ -347,7 +347,7 @@
 		    		$html .=	"<td>Sim</td>";
 	    		}
 	    		else{
-		    		$html .=	"<td>N&atilde;o Analisado</td>";
+		    		$html .=	"<td class='titulo-nao-analisado'>N&atilde;o Analisado</td>";
 	    		}
 	    		$html .=	"<td class='botaoSelecionar' onclick='incluiTituloBordero(this);'><button type='button' class='botao'>Incluir</button></td>";
 	    		$html .= "</tr>";

@@ -721,6 +721,10 @@ function liberaAnalisaBorderoDscTit(opcao, idconfir, idconfi2, idconfi3, idconfi
     var mensagem = '';
     var cdopcoan = 0;
     var cdopcolb = 0;
+    var url = "telas/atenda/descontos/titulos/titulos_bordero_analisar.php";
+    if(!flgverbor){
+        url = "telas/atenda/descontos/titulos/titulos_bordero_liberaranalisar.php";
+    }
 
     // Reinicializa somente quando pede a senha
     if (idconfi6 == 51) {
@@ -741,7 +745,7 @@ function liberaAnalisaBorderoDscTit(opcao, idconfir, idconfi2, idconfi3, idconfi
     // Carrega conteúdo da opção através de ajax
     $.ajax({
         type: "POST",
-        url: UrlSite + "telas/atenda/descontos/titulos/titulos_bordero_analisar.php",
+        url: UrlSite + url,
         data: {
             nrdconta: nrdconta,
             nrborder: nrbordero,

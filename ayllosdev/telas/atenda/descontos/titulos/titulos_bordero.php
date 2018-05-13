@@ -21,6 +21,7 @@
 
 				 28/04/2018 - Inclusão de novas colunas na grid de borderô e migrado chamada de progress para oracle (Alex Sandro  - GFT)
 
+				 07/05/2018 - Adicionada verificação para definir se o bordero vai seguir o fluxo novo ou o antigo (Luis Fernando - GFT)
 	************************************************************************/
 	
 	session_start();
@@ -56,17 +57,54 @@
 		exibeErro("Conta/dv inv&aacute;lida.");
 	}
 	
-
+	/*Verifica se o borderô deve ser utilizado no sistema novo ou no antigo*/
 	$xml = "<Root>";
-    $xml .= " <Dados>";
-    $xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
-	$xml .= "	<dtmvtolt>".$glbvars["dtmvtolt"]."</dtmvtolt>";
-    $xml .= " </Dados>";
-    $xml .= "</Root>";
+	$xml .= " <Dados>";
+	$xml .= " </Dados>";
+	$xml .= "</Root>";
+	$xmlResult = mensageria($xml,"TELA_ATENDA_DESCTO","VIRADA_BORDERO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	$xmlObj = getClassXML($xmlResult);
+	$root = $xmlObj->roottag;
+	// Se ocorrer um erro, mostra crítica
+	if ($root->erro){
+		exibeErro(htmlentities($root->erro->registro->dscritic));
+		exit;
+	}
+	$flgverbor = $root->dados->flgverbor->cdata;
 
-    $xmlResult = mensageria($xml,"TELA_ATENDA_DESCTO","BUSCA_BORDEROS", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
-    $xmlObjBorderos = getClassXML($xmlResult);
-	
+	if($flgverbor){
+		$xml = "<Root>";
+	    $xml .= " <Dados>";
+	    $xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
+		$xml .= "	<dtmvtolt>".$glbvars["dtmvtolt"]."</dtmvtolt>";
+	    $xml .= " </Dados>";
+	    $xml .= "</Root>";
+
+	    $xmlResult = mensageria($xml,"TELA_ATENDA_DESCTO","BUSCA_BORDEROS", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	    $xmlObjBorderos = getClassXML($xmlResult);
+	}
+	else{ // busca o bordero do progress
+		// Monta o xml de requisição
+		$xmlGetBorderos  = "";
+		$xmlGetBorderos .= "<Root>";
+		$xmlGetBorderos .= "	<Cabecalho>";
+		$xmlGetBorderos .= "		<Bo>b1wgen0030.p</Bo>";
+		$xmlGetBorderos .= "		<Proc>busca_borderos</Proc>";
+		$xmlGetBorderos .= "	</Cabecalho>";
+		$xmlGetBorderos .= "	<Dados>";
+		$xmlGetBorderos .= "		<cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
+		$xmlGetBorderos .= "		<nrdconta>".$nrdconta."</nrdconta>";
+		$xmlGetBorderos .= "		<dtmvtolt>".$glbvars["dtmvtolt"]."</dtmvtolt>";
+		$xmlGetBorderos .= "	</Dados>";
+		$xmlGetBorderos .= "</Root>";
+			
+		// Executa script para envio do XML
+		$xmlResult = getDataXML($xmlGetBorderos);
+		
+		// Cria objeto para classe de tratamento de XML
+		$xmlObjBorderos = getObjectXML($xmlResult);
+	}
+
 	// Se ocorrer um erro, mostra crítica
 	if (strtoupper($xmlObjBorderos->roottag->tags[0]->name) == "ERRO") {
 		exibeErro($xmlObjBorderos->roottag->tags[0]->tags[0]->tags[4]->cdata);
@@ -75,6 +113,7 @@
 	$borderos   = $xmlObjBorderos->roottag->tags[0]->tags;
 	$qtBorderos = count($borderos);
 	
+
 	// Função para exibir erros na tela através de javascript
 	function exibeErro($msgErro) { 
 		echo '<script type="text/javascript">';
@@ -86,59 +125,6 @@
 	
 ?>
 
-<div id="divBorderosTitulos">
-	<div class="divRegistros">
-		<table>
-			<thead>
-				<tr>
-					<th>Data Proposta</th>
-					<th>Border&ocirc;</th>
-					<th>Contrato</th>
-					<th>Qt.Tits</th>
-					<th>Valor</th>
-					<th>Qtd. Apr.</th>
-					<th>Valor Apr.</th>
-					<th>Situa&ccedil;&atilde;o do Border&ocirc;</th>
-					<th>Decis&atilde;o da An&aacute;lise</th>
-					<th>Data Libera&ccedil;&atilde;o</th>
-				</tr>			
-			</thead>
-			<tbody>
-				<?  for ($i = 0; $i < $qtBorderos; $i++) { 								
-						$cor = "";
-						
-						$mtdClick = "selecionaBorderoTitulos('".($i + 1)."','".$qtBorderos."','".($borderos[$i]->tags[1]->cdata)."','".($borderos[$i]->tags[2]->cdata)."');";
-					?>
-					<tr id="trBordero<? echo $i + 1; ?>" onFocus="<? echo $mtdClick; ?>" onClick="<? echo $mtdClick; ?>">
-					
-						<td><? echo $borderos[$i]->tags[0]->cdata; ?></td>
-						
-						<td><span><? echo $borderos[$i]->tags[1]->cdata ?></span>
-							<? echo formataNumericos('z.zzz.zzz',$borderos[$i]->tags[1]->cdata,'.'); ?></td>
-						
-						<td><span><? echo $borderos[$i]->tags[2]->cdata ?></span>
-							<? echo formataNumericos('z.zzz.zzz',$borderos[$i]->tags[2]->cdata,'.'); ?></td>
-						
-						<td><span><? echo $borderos[$i]->tags[3]->cdata ?></span>
-							<? echo formataNumericos('zzz.zzz',$borderos[$i]->tags[3]->cdata,'.'); ?></td>
-						
-						<td><span><? echo $borderos[$i]->tags[4]->cdata ?></span>
-							<? echo number_format(str_replace(",",".",$borderos[$i]->tags[4]->cdata),2,",","."); ?></td>
-
-						<td><? echo $borderos[$i]->tags[5]->cdata; ?></td>
-						<td><span><? echo $borderos[$i]->tags[6]->cdata ?></span>
-							<? echo number_format(str_replace(",",".",$borderos[$i]->tags[6]->cdata),2,",","."); ?></td>
-						
-						<td><? echo $borderos[$i]->tags[7]->cdata; ?></td>
-						<td><? echo $borderos[$i]->tags[8]->cdata; ?></td>
-						<td><? echo $borderos[$i]->tags[9]->cdata; ?></td>
-					</tr>							
-				<?} // Fim do for ?>			
-			</tbody>
-		</table>
-	</div>
-</div>
-
 <?php
 	$dispN = (!in_array("N",$glbvars["opcoesTela"])) ? 'display:none;' : '';
 	$dispC = (!in_array("I",$glbvars["opcoesTela"])) ? 'display:none;' : '';
@@ -146,62 +132,186 @@
 	$dispE = (!in_array("E",$glbvars["opcoesTela"])) ? 'display:none;' : '';
 	$dispM = (!in_array("M",$glbvars["opcoesTela"])) ? 'display:none;' : '';
 	$dispL = (!in_array("L",$glbvars["opcoesTela"])) ? 'display:none;' : '';
-	//$dispR = (!in_array("R",$glbvars["opcoesTela"])) ? 'display:none;' : '';
 ?>
 
-<div id="divBotoes">
-	
-	<?if($executandoProdutos == 'true'){?>
-		<input type="button" class="botao" value="Voltar" onClick="encerraRotina(true);return false;"/>
+<? if($flgverbor){ ?>
+	<div id="divBorderosTitulos">
+		<div class="divRegistros">
+			<table>
+				<thead>
+					<tr>
+						<th>Data Proposta</th>
+						<th>Border&ocirc;</th>
+						<th>Contrato</th>
+						<th>Qt.Tits</th>
+						<th>Valor</th>
+						<th>Qtd. Apr.</th>
+						<th>Valor Apr.</th>
+						<th>Situa&ccedil;&atilde;o do Border&ocirc;</th>
+						<th>Decis&atilde;o da An&aacute;lise</th>
+						<th>Data Libera&ccedil;&atilde;o</th>
+					</tr>			
+				</thead>
+				<tbody>
+					<?  for ($i = 0; $i < $qtBorderos; $i++) { 								
+							$cor = "";
+							
+							$mtdClick = "selecionaBorderoTitulos('".($i + 1)."','".$qtBorderos."','".($borderos[$i]->tags[1]->cdata)."','".($borderos[$i]->tags[2]->cdata)."');";
+						?>
+						<tr id="trBordero<? echo $i + 1; ?>" onFocus="<? echo $mtdClick; ?>" onClick="<? echo $mtdClick; ?>">
+						
+							<td><? echo $borderos[$i]->tags[0]->cdata; ?></td>
+							
+							<td><span><? echo $borderos[$i]->tags[1]->cdata ?></span>
+								<? echo formataNumericos('z.zzz.zzz',$borderos[$i]->tags[1]->cdata,'.'); ?></td>
+							
+							<td><span><? echo $borderos[$i]->tags[2]->cdata ?></span>
+								<? echo formataNumericos('z.zzz.zzz',$borderos[$i]->tags[2]->cdata,'.'); ?></td>
+							
+							<td><span><? echo $borderos[$i]->tags[3]->cdata ?></span>
+								<? echo formataNumericos('zzz.zzz',$borderos[$i]->tags[3]->cdata,'.'); ?></td>
+							
+							<td><span><? echo $borderos[$i]->tags[4]->cdata ?></span>
+								<? echo number_format(str_replace(",",".",$borderos[$i]->tags[4]->cdata),2,",","."); ?></td>
+
+							<td><? echo $borderos[$i]->tags[5]->cdata; ?></td>
+							<td><span><? echo $borderos[$i]->tags[6]->cdata ?></span>
+								<? echo number_format(str_replace(",",".",$borderos[$i]->tags[6]->cdata),2,",","."); ?></td>
+							
+							<td><? echo $borderos[$i]->tags[7]->cdata; ?></td>
+							<td><? echo $borderos[$i]->tags[8]->cdata; ?></td>
+							<td><? echo $borderos[$i]->tags[9]->cdata; ?></td>
+						</tr>							
+					<?} // Fim do for ?>			
+				</tbody>
+			</table>
+		</div>
+	</div>
+
+	<div id="divBotoes">
 		
-	<?}else{?>
-		<input type="button" class="botao" value="Voltar" onClick="voltaDiv(2,1,4,'DESCONTO DE T&Iacute;TULOS','DSC TITS');carregaTitulos();return false;"/>
-	
-	<?}?>
-	<input type="button" class="botao" value="Incluir" onClick="mostrarBorderoIncluir();return false;" style="<?php echo $dispI;?>"  />
-	<input type="button" class="botao" value="Consultar" <?php if ($qtBorderos == 0) { echo 'style="cursor: default;'.$dispC.'" onClick="return false;"'; } else { echo 'style="'.$dispC.'" onClick="mostraDadosBorderoDscTit(\'C\');return false;"'; } ?> />
-
-	<input type="button" class="botao" value="Alterar"  onClick="mostrarBorderoAlterar();return false;" />
-	<input type="button" class="botao" value="Analisar" <?php if ($qtBorderos == 0) { echo 'style="cursor: default;'.$dispN.'" onClick="return false;"'; } else { echo 'style="'.$dispN.'" onClick="mostrarBorderoAnalisar();return false;"'; } ?> />
-	<input type="button" class="botao" value="Excluir"  <?php if ($qtBorderos == 0) { echo 'style="cursor: default;'.$dispE.'" onClick="return false;"'; } else { echo 'style="'.$dispE.'" onClick="mostraDadosBorderoDscTit(\'E\');return false;"'; } ?> />
-	<input type="button" class="botao" value="Imprimir" <?php if ($qtBorderos == 0) { echo 'style="cursor: default;'.$dispM.'" onClick="return false;"'; } else { echo 'style="'.$dispM.'" onClick="mostraImprimirBordero();return false;"'; } ?> />
-	<input type="button" class="botao" value="Liberar"  <?php if ($qtBorderos == 0) { echo 'style="cursor: default;'.$dispL.'" onClick="return false;"'; } else { echo 'style="'.$dispL.'" onClick="mostrarBorderoLiberar();return false;"'; } ?> />
+		<?if($executandoProdutos == 'true'){?>
+			<input type="button" class="botao" value="Voltar" onClick="encerraRotina(true);return false;"/>
+			
+		<?}else{?>
+			<input type="button" class="botao" value="Voltar" onClick="voltaDiv(2,1,4,'DESCONTO DE T&Iacute;TULOS','DSC TITS');carregaTitulos();return false;"/>
 		
-	
-	<input type="button" class="botao" value="Rejeitar"  <?php if ($qtBorderos == 0) { echo 'style="cursor: default;'.$dispR.'" onClick="return false;"'; } else { echo 'style="'.$dispR.'" onClick="mostrarBorderoRejeitar();return false;"'; } ?> />
+		<?}?>
+		<input type="button" class="botao" value="Incluir" onClick="mostrarBorderoIncluir();return false;" style="<?php echo $dispI;?>"  />
+		<input type="button" class="botao" value="Consultar" <?php if ($qtBorderos == 0) { echo 'style="cursor: default;'.$dispC.'" onClick="return false;"'; } else { echo 'style="'.$dispC.'" onClick="mostraDadosBorderoDscTit(\'C\');return false;"'; } ?> />
+		<input type="button" class="botao" value="Rejeitar"  <?php if ($qtBorderos == 0) { echo 'style="cursor: default;'.$dispR.'" onClick="return false;"'; } else { echo 'style="'.$dispR.'" onClick="mostrarBorderoRejeitar();return false;"'; } ?> />
+		<input type="button" class="botao" value="Alterar"  onClick="mostrarBorderoAlterar();return false;" />
+		<input type="button" class="botao" value="Analisar" <?php if ($qtBorderos == 0) { echo 'style="cursor: default;'.$dispN.'" onClick="return false;"'; } else { echo 'style="'.$dispN.'" onClick="mostrarBorderoAnalisar();return false;"'; } ?> />
+		<input type="button" class="botao" value="Imprimir" <?php if ($qtBorderos == 0) { echo 'style="cursor: default;'.$dispM.'" onClick="return false;"'; } else { echo 'style="'.$dispM.'" onClick="mostraImprimirBordero();return false;"'; } ?> />
+		<input type="button" class="botao" value="Liberar"  <?php if ($qtBorderos == 0) { echo 'style="cursor: default;'.$dispL.'" onClick="return false;"'; } else { echo 'style="'.$dispL.'" onClick="mostrarBorderoLiberar();return false;"'; } ?> />
 
-</div>
+	</div>
 
-<script type="text/javascript">
-dscShowHideDiv("divOpcoesDaOpcao2","divOpcoesDaOpcao1;divOpcoesDaOpcao3");
+	<script type="text/javascript">
+	dscShowHideDiv("divOpcoesDaOpcao2","divOpcoesDaOpcao1;divOpcoesDaOpcao3");
 
-// Muda o título da tela
-$("#tdTitRotina").html("DESCONTO DE T&Iacute;TULOS - BORDER&Ocirc;S");
+	// Muda o título da tela
+	$("#tdTitRotina").html("DESCONTO DE T&Iacute;TULOS - BORDER&Ocirc;S");
 
-formataLayout('divBorderosTitulos');
+	formataLayout('divBorderosTitulos');
 
-// Esconde mensagem de aguardo
-hideMsgAguardo();
+	// Esconde mensagem de aguardo
+	hideMsgAguardo();
 
-// Bloqueia conteúdo que está átras do div da rotina
-blockBackground(parseInt($("#divRotina").css("z-index")));
+	// Bloqueia conteúdo que está átras do div da rotina
+	blockBackground(parseInt($("#divRotina").css("z-index")));
 
-//habilitaBotaoLiberar(botaoLiberar);
+	//habilitaBotaoLiberar(botaoLiberar);
 
-function habilitaBotaoLiberar(botaoLiberar){
+	function habilitaBotaoLiberar(botaoLiberar){
 
-    if(botaoLiberar == 'S'){
+	    if(botaoLiberar == 'S'){
 
-        var Inputs4 = $('input[type="button"][value=Liberar]');
-        Inputs4.removeAttr( 'style' );
+	        var Inputs4 = $('input[type="button"][value=Liberar]');
+	        Inputs4.removeAttr( 'style' );
 
-    } else {
+	    } else {
 
-        var Inputs4 = $('input[type="button"][value=Liberar]');
-        Inputs4.css({'color':'gray'});
-        Inputs4.css({'cursor':'default'});
-        Inputs4.css({'pointer-events':'none'});
-    }
-}
+	        var Inputs4 = $('input[type="button"][value=Liberar]');
+	        Inputs4.css({'color':'gray'});
+	        Inputs4.css({'cursor':'default'});
+	        Inputs4.css({'pointer-events':'none'});
+	    }
+	}
 
-</script>
+	</script>
+<?}
+else{
+?>
+	<div id="divBorderosTitulos">
+		<div class="divRegistros">
+			<table>
+				<thead>
+					<tr>
+						<th>Data</th>
+						<th>Border&ocirc;</th>
+						<th>Contrato</th>
+						<th>Qt.Tits</th>
+						<th>Valor</th>
+						<th>Situa&ccedil;&atilde;o</th>
+						<th style="display:none;"></th>
+						<th style="display:none;"></th>
+					</tr>			
+				</thead>
+				<tbody>
+					<?  for ($i = 0; $i < $qtBorderos; $i++) { 								
+							$cor = "";
+							
+							$mtdClick = "selecionaBorderoTitulos('".($i + 1)."','".$qtBorderos."','".($borderos[$i]->tags[1]->cdata)."','".($borderos[$i]->tags[2]->cdata)."');";
+						?>
+						<tr id="trBordero<? echo $i + 1; ?>" onFocus="<? echo $mtdClick; ?>" onClick="<? echo $mtdClick; ?>">
+						
+							<td><? echo $borderos[$i]->tags[0]->cdata; ?></td>
+							
+							<td><span><? echo $borderos[$i]->tags[1]->cdata ?></span>
+								<? echo formataNumericos('z.zzz.zzz',$borderos[$i]->tags[1]->cdata,'.'); ?></td>
+							
+							<td><span><? echo $borderos[$i]->tags[2]->cdata ?></span>
+								<? echo formataNumericos('z.zzz.zzz',$borderos[$i]->tags[2]->cdata,'.'); ?></td>
+							
+							<td><span><? echo $borderos[$i]->tags[3]->cdata ?></span>
+								<? echo formataNumericos('zzz.zzz',$borderos[$i]->tags[3]->cdata,'.'); ?></td>
+							
+							<td><span><? echo $borderos[$i]->tags[4]->cdata ?></span>
+								<? echo number_format(str_replace(",",".",$borderos[$i]->tags[4]->cdata),2,",","."); ?></td>
+							
+							<td><? echo $borderos[$i]->tags[5]->cdata; ?></td>
+							<td style="display:none;"></td>
+							<td style="display:none;"></td>
+						</tr>							
+					<?} // Fim do for ?>			
+				</tbody>
+			</table>
+		</div>
+	</div>
+
+	<div id="divBotoes" >
+		<?if($executandoProdutos == 'true'){?>
+			<input type="image" src="<?php echo $UrlImagens; ?>botoes/voltar.gif" onClick="encerraRotina(true);return false;" />
+		<?}else{?>		
+			<input type="image" src="<?php echo $UrlImagens; ?>botoes/voltar.gif" onClick="voltaDiv(2,1,4,'DESCONTO DE T&Iacute;TULOS','DSC TITS');carregaTitulos();return false;" />
+		<?}?>
+
+		<input type="image" src="<?php echo $UrlImagens; ?>botoes/pre-analise.gif"  <?php if ($qtBorderos == 0) { echo 'style="cursor: default;'.$dispN.'" onClick="return false;"'; } else { echo 'style="'.$dispN.'" onClick="mostraDadosBorderoDscTit(\'N\');return false;"'; } ?> />
+		<input type="image" src="<?php echo $UrlImagens; ?>botoes/consultar.gif" <?php if ($qtBorderos == 0) { echo 'style="cursor: default;'.$dispC.'" onClick="return false;"'; } else { echo 'style="'.$dispC.'" onClick="mostraDadosBorderoDscTit(\'C\');return false;"'; } ?> />
+		<input type="image" src="<?php echo $UrlImagens; ?>botoes/excluir.gif"   <?php if ($qtBorderos == 0) { echo 'style="cursor: default;'.$dispE.'" onClick="return false;"'; } else { echo 'style="'.$dispE.'" onClick="mostraDadosBorderoDscTit(\'E\');return false;"'; } ?> />
+		<input type="image" src="<?php echo $UrlImagens; ?>botoes/imprimir.gif"  <?php if ($qtBorderos == 0) { echo 'style="cursor: default;'.$dispM.'" onClick="return false;"'; } else { echo 'style="'.$dispM.'" onClick="mostraImprimirBordero();return false;"'; } ?> />
+		<input type="image" src="<?php echo $UrlImagens; ?>botoes/liberar.gif"   <?php if ($qtBorderos == 0) { echo 'style="cursor: default;'.$dispL.'" onClick="return false;"'; } else { echo 'style="'.$dispL.'" onClick="mostraDadosBorderoDscTit(\'L\');return false;"'; } ?> />
+	</div>
+
+	<script type="text/javascript">
+	dscShowHideDiv("divOpcoesDaOpcao2","divOpcoesDaOpcao1;divOpcoesDaOpcao3");
+	// Muda o título da tela
+	$("#tdTitRotina").html("DESCONTO DE T&Iacute;TULOS - BORDER&Ocirc;S");
+	formataLayout('divBorderosTitulos');
+	// Esconde mensagem de aguardo
+	hideMsgAguardo();
+	// Bloqueia conteúdo que está átras do div da rotina
+	blockBackground(parseInt($("#divRotina").css("z-index")));
+	</script>
+<?}?>

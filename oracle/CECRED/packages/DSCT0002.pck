@@ -41,6 +41,8 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0002 AS
   --
   --    13/04/2018 - Remoção do campo 'pctitemi' Percentual de títulos por pagador da procedure 
   --                 'pc_busca_parametros_dsctit'  (Leonardo Oliveira - GFT). 
+  --     
+  --    10/05/2018 - Inserção do campo 'cardbtit_c' para cálculo do % Geral de Liquidez
   --------------------------------------------------------------------------------------------------------------
 
   -- Registro para armazenar parametros para desconto de titulo
@@ -60,6 +62,7 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0002 AS
                   pctolera  NUMBER,
                   pcdmulta  NUMBER,
                   cardbtit  NUMBER,
+                  cardbtit_c  NUMBER,
                   pcnaopag  NUMBER,
                   qtnaopag  INTEGER,
                   qtprotes  INTEGER,
@@ -1486,6 +1489,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
       vr_tab_dados_dsctit(1).pctolera := vr_tab_dstextab(14);
       vr_tab_dados_dsctit(1).pcdmulta := to_number(vr_tab_dstextab(15),'000d000000','NLS_NUMERIC_CHARACTERS='',.''');
       vr_tab_dados_dsctit(1).cardbtit := vr_tab_dstextab(31);
+      vr_tab_dados_dsctit(1).cardbtit_c := vr_tab_dstextab(32);
       vr_tab_dados_dsctit(1).pcnaopag := vr_tab_dstextab(33);
       vr_tab_dados_dsctit(1).qtnaopag := vr_tab_dstextab(34);
       vr_tab_dados_dsctit(1).qtprotes := vr_tab_dstextab(35);

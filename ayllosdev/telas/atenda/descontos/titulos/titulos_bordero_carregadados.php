@@ -114,6 +114,21 @@
 	
 	$bordero  = $xmlObjBordero->roottag->tags[0]->tags[0]->tags;
 	
+	/*Verifica se o borderô deve ser utilizado no sistema novo ou no antigo*/
+	$xml = "<Root>";
+	$xml .= " <Dados>";
+	$xml .= " </Dados>";
+	$xml .= "</Root>";
+	$xmlResult = mensageria($xml,"TELA_ATENDA_DESCTO","VIRADA_BORDERO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	$xmlObj = getClassXML($xmlResult);
+	$root = $xmlObj->roottag;
+	// Se ocorrer um erro, mostra crítica
+	if ($root->erro){
+		exibeErro(htmlentities($root->erro->registro->dscritic));
+		exit;
+	}
+	$flgverbor = $root->dados->flgverbor->cdata;
+
 	// Função para exibir erros na tela através de javascript
 	function exibeErro($msgErro) { 
 		echo '<script type="text/javascript">';
@@ -207,6 +222,8 @@ hideMsgAguardo();
 // Bloqueia conteúdo que está átras do div da rotina
 blockBackground(parseInt($("#divRotina").css("z-index")));
 
+flgverbor = <?=$flgverbor?>
+
 <?php if ($cddopcao == "N") { ?>
 			aux_inconfir = 1; 
 			aux_inconfi2 = 11; 
@@ -222,8 +239,12 @@ blockBackground(parseInt($("#divRotina").css("z-index")));
 			aux_inconfi4 = 71; 
 			aux_inconfi5 = 30;
 			aux_inconfi6 = 51;
-			//showConfirmacao("Deseja liberar o border&ocirc; de desconto de t&iacute;tulos?","Confirma&ccedil;&atilde;o - Ayllos","liberaAnalisaBorderoDscTit('L','1','11','21','71','30','51','1','0')","metodoBlock()","sim.gif","nao.gif");
-			showConfirmacao("Deseja liberar o border&ocirc; de desconto de t&iacute;tulos?","Confirma&ccedil;&atilde;o - Ayllos","liberaBorderoDscTit()","metodoBlock()","sim.gif","nao.gif");
+			if(flgverbor){
+				showConfirmacao("Deseja liberar o border&ocirc; de desconto de t&iacute;tulos?","Confirma&ccedil;&atilde;o - Ayllos","liberaBorderoDscTit()","metodoBlock()","sim.gif","nao.gif");
+			}
+			else{
+				showConfirmacao("Deseja liberar o border&ocirc; de desconto de t&iacute;tulos?","Confirma&ccedil;&atilde;o - Ayllos","liberaAnalisaBorderoDscTit('L','1','11','21','71','30','51','1','0')","metodoBlock()","sim.gif","nao.gif");
+			}
 <?php } elseif ($cddopcao == "E") { ?>
 			showConfirmacao("Deseja excluir o border&ocirc; de desconto de t&iacute;tulos?","Confirma&ccedil;&atilde;o - Ayllos","excluirBorderoDscTit()","metodoBlock()","sim.gif","nao.gif");
 <?php } ?>
