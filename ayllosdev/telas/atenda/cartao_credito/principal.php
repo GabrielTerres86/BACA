@@ -3,64 +3,64 @@
 	/************************************************************************
 	  Fonte: principal.php
 	  Autor: Guilherme
-	  Data : Marco/2008                 Última Alteração: 01/12/2017
+	  Data : Marco/2008                 ï¿½ltima Alteraï¿½ï¿½o: 01/12/2017
 
-	  Objetivo  : Mostrar opcao Principal da rotina de Cartões de Crédito
+	  Objetivo  : Mostrar opcao Principal da rotina de Cartï¿½es de Crï¿½dito
 				  da tela ATENDA
 
-	  Alterações: 22/10/2010 - Adaptações para PJ (David).       
+	  Alteraï¿½ï¿½es: 22/10/2010 - Adaptaï¿½ï¿½es para PJ (David).       
 
 				  30/11/2010 - Bloqueio cartao Pac 5 AcrediCoop (Gabriel).
 
 				  23/03/2011 - Adicionado opcao de encerramento de cartao
 							   de credito (Jorge).
 
-				  08/07/2011 - Alterado para layout padrão ( Gabriel - DB1 )
+				  08/07/2011 - Alterado para layout padrï¿½o ( Gabriel - DB1 )
 
 				  01/08/2011 - Adicionado botao Extrato (Guilherme/Supero)
 				  
 				  03/07/2013 - Retirado botao Liberar (Daniel - Cecred).
 				  
-				  24/04/2013 - Tratamento das opções (Jean Michel - Cecred).
+				  24/04/2013 - Tratamento das opï¿½ï¿½es (Jean Michel - Cecred).
 				  
 				  17/07/2014 - Incluso tratamento para nao lista todo numero
 				               do cartao de credito SD 179666 (Daniel)
 							   
-				  28/07/2014 - Novo tratamento para exibição parcial do
-							   número do cartão (Lunelli).
+				  28/07/2014 - Novo tratamento para exibiï¿½ï¿½o parcial do
+							   nï¿½mero do cartï¿½o (Lunelli).
 
 				  29/07/2015 - Incluir a opcao TAA. (James)			   
 
 				  09/12/2016 - (CECRED) : Ajuste realizado conforme solicitado no chamado 574068. (Kelvin)										  				  
 				  				  
-				  29/11/2016 - P341-Automatização BACENJUD - Alterado a validação 
+				  29/11/2016 - P341-Automatizaï¿½ï¿½o BACENJUD - Alterado a validaï¿½ï¿½o 
 					           pelo DSDEPART passando a utilizar o CDDEPART (Renato Darosci)   
 							   
-				  27/03/2017 - Adicionado botão "Dossiê DigiDOC". (Projeto 357 - Reinert)
+				  27/03/2017 - Adicionado botï¿½o "Dossiï¿½ DigiDOC". (Projeto 357 - Reinert)
 				  
-				  01/12/2017 - Não permitir acesso a opção de incluir quando conta demitida (Jonata - RKAM P364).
+				  01/12/2017 - Nï¿½o permitir acesso a opï¿½ï¿½o de incluir quando conta demitida (Jonata - RKAM P364).
 				  							   
 	************************************************************************/
 	
 	session_start();
 	
-	// Includes para controle da session, variáveis globais de controle, e biblioteca de funções	
+	// Includes para controle da session, variï¿½veis globais de controle, e biblioteca de funï¿½ï¿½es	
 	require_once("../../../includes/config.php");
 	require_once("../../../includes/funcoes.php");
 	require_once("../../../includes/controla_secao.php");
 
-	// Verifica se tela foi chamada pelo método POST
+	// Verifica se tela foi chamada pelo mï¿½todo POST
 	isPostMethod();	
 		
 	// Classe para leitura do xml de retorno
 	require_once("../../../class/xmlfile.php");
 	
-	// Verifica permissão
+	// Verifica permissï¿½o
 	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"@")) <> "") {
 		exibeErro($msgError);
 	}
 
-	// Verifica se o número da conta foi informado
+	// Verifica se o nï¿½mero da conta foi informado
 	if (!isset($_POST["nrdconta"]) || !isset($_POST["inpessoa"])) {
 		exibeErro("Par&acirc;metros incorretos.");
 	}	
@@ -69,17 +69,17 @@
 	$inpessoa = $_POST["inpessoa"];
 	$sitaucaoDaContaCrm = (isset($_POST['sitaucaoDaContaCrm'])?$_POST['sitaucaoDaContaCrm']:'');
 
-	// Verifica se o número da conta é um inteiro válido
+	// Verifica se o nï¿½mero da conta ï¿½ um inteiro vï¿½lido
 	if (!validaInteiro($nrdconta)) {
 		exibeErro("Conta/dv inv&aacute;lida.");
 	}
 	
-	// Verifica se o tipo de pessoa é um inteiro válido
+	// Verifica se o tipo de pessoa ï¿½ um inteiro vï¿½lido
 	if (!validaInteiro($inpessoa)) {
 		exibeErro("Tipo de pessoa inv&aacute;lida.");
 	}
 
-	// Monta o xml de requisição
+	// Monta o xml de requisiï¿½ï¿½o
 	$xmlGetCCredito  = "";
 	$xmlGetCCredito .= "<Root>";
 	$xmlGetCCredito .= "	<Cabecalho>";
@@ -101,11 +101,12 @@
 
 	// Executa script para envio do XML
 	$xmlResult = getDataXML($xmlGetCCredito);
-	
+
+
 	// Cria objeto para classe de tratamento de XML
 	$xmlObjCCredito = getObjectXML($xmlResult);
 	
-	// Se ocorrer um erro, mostra crítica
+	// Se ocorrer um erro, mostra crï¿½tica
 	if (strtoupper($xmlObjCCredito->roottag->tags[0]->name) == "ERRO") {
 		exibeErro($xmlObjCCredito->roottag->tags[0]->tags[0]->tags[4]->cdata);
 	} 
@@ -114,9 +115,31 @@
 	$flgativo = $inpessoa == "1" ? "yes" : $xmlObjCCredito->roottag->tags[0]->attributes["FLGATIVO"];
 	$nrctrhcj = $inpessoa == "1" ? "0" : $xmlObjCCredito->roottag->tags[0]->attributes["NRCTRHCJ"];
 	$flgliber = $xmlObjCCredito->roottag->tags[0]->attributes["FLGLIBER"];
-	
 
-	// Função para exibir erros na tela através de javascript
+	/* Busca se a Cooper / PA esta ativa para usar o novo formato de comunicacao com o WS Bancoob.
+	   Procedimento temporario ate que todas as cooperativas utilizem */
+	$adxml = "<Root>";
+	$adxml .= " <Dados>";
+	$adxml .= "   <cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
+	$adxml .= "   <cdagenci>".$glbvars["cdpactra"]."</cdagenci>";
+	$adxml .= " </Dados>";
+	$adxml .= "</Root>";
+
+	$result = mensageria($adxml, "ATENDA_CRD", "BUSCA_PARAMETRO_PA_CARTAO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	$oObj = simplexml_load_string($result);
+	$bAtivaOld = false;
+	if($oObj->Dados->ativo){
+		//echo $oObj->Dados->ativo;
+		//echo '<pre>'; print_r($glbvars); echo '</pre>';
+		$bAtivaOld = ($oObj->Dados->ativo == '0');		
+	}
+	$methodNovo = 'opcaoNovo';
+	if($bAtivaOld){
+		$methodNovo = 'opcaoNovoOld';
+	}
+	/* FIM procedimento temporario */
+
+	// Funï¿½ï¿½o para exibir erros na tela atravï¿½s de javascript
 	function exibeErro($msgErro) { 
 		echo '<script type="text/javascript">';
 		echo 'hideMsgAguardo();';
@@ -142,8 +165,14 @@
 
 
 	}
-?>
+	
 
+?>
+<script>
+function voltarParaTelaPrincipal(){
+	<?echo 'acessaOpcaoAba(\''.count($glbvars["opcoesTela"]).'\',0,\''.$glbvars["opcoesTela"][0].'\');';?>;
+}
+</script>
 
 <div id="divCartoes">
 	<input type="hidden" name="flgliber" id="flgliber" value="<? echo $flgliber; ?>" >
@@ -157,14 +186,15 @@
 	<div id="divConteudoCartoes">
 		
 		<div class="divRegistros">
-			<table>
-				<thead>
+			<table style="display: block;">
+				<thead >
 					<tr>
 						<? if ($inpessoa <> "1") { ?>
 							<th>Conta/dv</th>
 						<? } ?>
 						<th>Titular</th>
 						<th>Administradora</th>
+	
 						<th>N&uacute;mero do cart&atilde;o</th>
 						<th>Situa&ccedil;&atilde;o</th>
 						<th  style="width: 55px;">Decis&atilde;o</th>
@@ -173,7 +203,7 @@
 				<tbody>
 					<?  for ($i = 0; $i < count($ccredito); $i++) { 					
 							$mtdClick = "selecionaCartao('".getByTagName($ccredito[$i]->tags,'NRCTRCRD')."' , '".getByTagName($ccredito[$i]->tags,'NRCRCARD')."' , '".getByTagName($ccredito[$i]->tags,'CDADMCRD')."' , '".$i."' , '".$cor."' , '".getByTagName($ccredito[$i]->tags,'DSSITCRD')."','".getByTagName($ccredito[$i]->tags,'FLGCCHIP')."');";
-					
+							
 					?>
 						<?;?>
 						<tr id="<?php echo $i; ?>" onFocus="<? echo $mtdClick;?>" onClick="<? echo $mtdClick;?>">
@@ -186,8 +216,9 @@
 							<td style="width:50px" ><?php echo getByTagName($ccredito[$i]->tags,"NMRESADM"); ?></td>
 							
 							<td  style="width: 95px;"><?php echo getByTagName($ccredito[$i]->tags,"DSCRCARD"); ?></td>
-							<td><?php echo getByTagName($ccredito[$i]->tags,"DSSITCRD"); ?></td>
-							<td  style="width: 40px;"><?php getDecisao(getByTagName($ccredito[$i]->tags,"NRDCONTA"), getByTagName($ccredito[$i]->tags,'NRCTRCRD'), $glbvars); ?></td>
+							<td style="width: 45px;"><?php echo getByTagName($ccredito[$i]->tags,"DSSITCRD"); ?></td>
+							<td  style="width: 55px;"><?php getDecisao($nrdconta, getByTagName($ccredito[$i]->tags,'NRCTRCRD'), $glbvars);
+							 ; ?></td>
 							
 						</tr>				
 					<? } ?>			
@@ -203,11 +234,12 @@
 				       $sitaucaoDaContaCrm == '7' || 
 				       $sitaucaoDaContaCrm == '8'  )){?>
 
-				<input type="image" id="btnnovo" src="<?php echo $UrlImagens; ?>botoes/novo.gif"      <?php if (!in_array("N",$glbvars["opcoesTela"])) { echo "style='cursor: default' onClick='return false;'"; } else { echo "onClick='opcaoNovo(" . $glbvars["cdcooper"] . "); return false;'"; } ?>>
+				<input type="image" id="btnnovo" src="<?php echo $UrlImagens; ?>botoes/novo.gif"      <?php if (!in_array("N",$glbvars["opcoesTela"])) { echo "style='cursor: default' onClick='return false;'"; } else { echo "onClick='$methodNovo(" . $glbvars["cdcooper"] . "); return false;'"; } ?>>
 						
 			<?}?>
 			
 			<input type="image" id="btnimpr" src="<?php echo $UrlImagens; ?>botoes/imprimir.gif"  <?php if (!in_array("M",$glbvars["opcoesTela"])) { echo "style='cursor: default' onClick='return false;'"; } else { echo "onClick='opcaoImprimir();return false;'"; } ?>>
+			
 			<input type="image" id="btnentr" src="<?php echo $UrlImagens; ?>botoes/entregar.gif"  <?php if (!in_array("F",$glbvars["opcoesTela"])) { echo "style='cursor: default' onClick='return false;'"; } else { echo "onClick='opcaoEntregar();return false;'"; } ?>>
 			<input type="image" id="btnaltr" src="<?php echo $UrlImagens; ?>botoes/alterar.gif"   <?php if (!in_array("A",$glbvars["opcoesTela"])) { echo "style='cursor: default' onClick='return false;'"; } else { echo "onClick='opcaoAlterar();return false;'"; } ?>>
 			<input type="image" id="btnnseg" src="<?php echo $UrlImagens; ?>botoes/2via.gif"      <?php if (!in_array("2",$glbvars["opcoesTela"])) { echo "style='cursor: default' onClick='return false;'"; } else { echo "onClick='opcao2via();return false;'"; } ?>>
@@ -234,7 +266,7 @@
 	flgativo = "<?php echo $flgativo; ?>";
 	nrctrhcj = "<?php echo $nrctrhcj; ?>";
 
-	// Esconde div das opções
+	// Esconde div das opï¿½ï¿½es
 	$("#divOpcoesDaOpcao1").css("display","none");
 	
 	controlaLayout('divConteudoCartoes');

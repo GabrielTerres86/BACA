@@ -8,6 +8,44 @@
 	isPostMethod();	
 	$nrdconta = $_POST['nrdconta'];
 	$funcaoAposErro = 'bloqueiaFundo(divRotina);';
+
+	$xml .= "<Root>";
+	$xml .= " <Dados>";
+	$xml .= "   <nrdconta>$nrdconta</nrdconta>";
+	$xml .= "   <cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
+	$xml .= " </Dados>";
+	$xml .= "</Root>";
+
+	$admresult = mensageria($xml, "ATENDA_CRD", "VALIDAR_EXISTE_SENHA_APROV_CRD", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	$xmlSenhaResult = simplexml_load_string($admresult);
+	//print_r($xmlSenhaResult);
+	if(isset($xmlSenhaResult->Erro->Registro->erro))
+	{
+		exibirErro('error',utf8ToHtml("(".$xmlSenhaResult->Erro->Registro->cdcritic.")".$xmlSenhaResult->Erro->Registro->dscritic),'Alerta - Ayllos',"");
+		return;
+	}
+	$possuiSenha = ($xmlSenhaResult->Dados->senhas->senha->status == "OK");
+	if(!$possuiSenha)
+	{
+		exibirErro('error',utf8ToHtml("Conta sem cartão magnético ativo ou com cartão magnético sem senha cadastrada."),'Alerta - Ayllos',"");
+		return;
+	}
+	
+	
+
+
+	//if($xmlSenhaResult->Dados->senhas[0])
+	//$xml_adm =  simplexml_load_string($admresult);
+	$nm = $xml_adm->Dados->cartoes->cartao->operador;
+	
+
+
+
+
+
+
+
+
 	if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Ayllos',$funcaoAposErro);
 	function contaDoOperador($nrdconta,$glbvars ){
 			//nrcrcard
@@ -41,6 +79,7 @@ $(document).ready(function(){
 });
 function goBB(opt){
 	var cc = opt == 0? "bb":"dbt";
+	showMsgAguardo("Aguarde, carregando dados para novo cart&atilde;o ...");
 	$.ajax({		
 		type: "POST", 
 		dataType: "html",
@@ -63,7 +102,7 @@ function goBB(opt){
 }
 
 function goCecred(){
-	
+	showMsgAguardo("Aguarde, carregando dados para novo cart&atilde;o ...");
 	$.ajax({		
 		type: "POST", 
 		dataType: "html",

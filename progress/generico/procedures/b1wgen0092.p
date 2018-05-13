@@ -168,7 +168,7 @@
                            
               17/01/2017 - Retirar validacao para a TIM, historico 834, par_cdrefere < 1000000000
                            (Lucas Ranghetti #581878)
-                           
+
               28/03/2017 - Ajustado para utilizar nome resumo se houver. (Ricardo Linhares - 547566)
                            
               09/05/2017 - Ajuste na procedure valida_senha_cooperado para considerar os zeros a 
@@ -215,6 +215,10 @@
                            
               07/03/2018 - Alterar validacao do digito do samae Pomerode para validar com o modulo 11
                            (Lucas Ranghetti #858121).
+                           
+              03/04/2018 - Adicionada chamada pc_valida_adesao_produto para verificar se o tipo de conta 
+                           permite a contrataçao do produto. PRJ366 (Lombardi).
+                           
 .............................................................................*/
 
 /*............................... DEFINICOES ................................*/
@@ -1110,6 +1114,7 @@ PROCEDURE valida-dados:
     DEF VAR aux_nrdigito AS INTE                                    NO-UNDO.
     DEF VAR aux_nrrefere AS CHAR                                    NO-UNDO.
     DEF VAR aux_qtdigito AS INTE                                    NO-UNDO.
+    DEF VAR aux_cdprodut AS INTE                                    NO-UNDO.
 
     EMPTY TEMP-TABLE tt-erro.
 
@@ -1139,7 +1144,40 @@ PROCEDURE valida-dados:
                                par_nmdcampo = "cdrefere".
                         LEAVE Valida.
                     END.
+                
+                IF CAN-DO("1,5",TRIM(STRING(par_idorigem))) THEN
+                    aux_cdprodut = 10. /* Débito Automático */
+                ELSE
+                    aux_cdprodut = 29. /* Débito Automático Fácil */
+                    
+                /* buscar quantidade maxima de digitos aceitos para o convenio */
+                { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
                               
+                RUN STORED-PROCEDURE pc_valida_adesao_produto
+                    aux_handproc = PROC-HANDLE NO-ERROR
+                                            (INPUT par_cdcooper,
+                                             INPUT par_nrdconta,
+                                             INPUT aux_cdprodut,
+                                             OUTPUT 0,   /* pr_cdcritic */
+                                             OUTPUT ""). /* pr_dscritic */
+                            
+                CLOSE STORED-PROC pc_valida_adesao_produto
+                      aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+                { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+                ASSIGN aux_cdcritic = 0
+                       aux_dscritic = ""
+                       aux_cdcritic = pc_valida_adesao_produto.pr_cdcritic                          
+                                          WHEN pc_valida_adesao_produto.pr_cdcritic <> ?
+                       aux_dscritic = pc_valida_adesao_produto.pr_dscritic
+                                          WHEN pc_valida_adesao_produto.pr_dscritic <> ?.
+                
+                IF  aux_cdcritic <> 0 OR aux_dscritic <> "" THEN
+                  DO:
+                      LEAVE Valida.
+                  END.
+                /*
                 /* buscar quantidade maxima de digitos aceitos para o convenio */
                 { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
                               
@@ -1170,7 +1208,7 @@ PROCEDURE valida-dados:
                                             WHEN pc_retorna_referencia_conv.pr_cdcritic <> ?
                          aux_dscritic = pc_retorna_referencia_conv.pr_dscritic
                                             WHEN pc_retorna_referencia_conv.pr_dscritic <> ?.        
-                              
+                  */            
                 IF  par_cdhistor = 0 THEN
                     DO:
                         ASSIGN aux_dscritic = "Convenio nao selecionado."
@@ -1365,7 +1403,7 @@ PROCEDURE valida-dados:
                             END.                              
                     END.
                 ELSE                                 
-                IF  par_cdhistor = 674  THEN   /* SEMASA Itajai*/
+                IF  par_cdhistor = 674 THEN /* SEMASA Itajai*/
                     DO:
                         ASSIGN aux_cdrefere = par_cdrefere.
 
@@ -2338,7 +2376,7 @@ PROCEDURE grava-dados:
                                 ASSIGN aux_dscritic = "Exclusao permitida somente no proximo dia util.".
                                 UNDO Grava, LEAVE Grava.
                              END.
-                             
+                        
                          /* Inicio - Alteracoes referentes a M181 - Rafael Maciel (RKAM) */
                         IF par_cdagenci = 0 THEN
                           ASSIGN par_cdagenci = glb_cdagenci.
@@ -2501,9 +2539,9 @@ PROCEDURE busca_convenios_codbarras:
 					   gnconve.cdconven <> 108 THEN
 						ASSIGN aux_nmempcon = gnconve.nmempres.
             END.
-
+            
          IF aux_nmresumi <> "" THEN
-          ASSIGN aux_nmempcon = aux_nmresumi.    
+          ASSIGN aux_nmempcon = aux_nmresumi.
 
         IF (INDEX(aux_nmempcon, "FEBR") > 0) THEN 
             ASSIGN aux_nmempcon = SUBSTRING(aux_nmempcon, 1, (R-INDEX(aux_nmempcon, "-") - 1))
@@ -2535,10 +2573,10 @@ PROCEDURE busca_autorizacoes_cadastradas:
 
     DEF OUTPUT PARAM TABLE FOR tt-autorizacoes-cadastradas.
 
-    DEF VAR aux_nmempcon         AS CHAR  NO-UNDO.
-    DEF VAR aux_inaltera         AS LOGI  NO-UNDO.
-    DEF VAR aux_cdempcon         AS INTE  NO-UNDO.
-    DEF VAR aux_cdsegmto         AS INTE  NO-UNDO.
+    DEF VAR aux_nmempcon         AS CHAR NO-UNDO.
+    DEF VAR aux_inaltera         AS LOGI NO-UNDO.
+    DEF VAR aux_cdempcon         AS INTE NO-UNDO.
+    DEF VAR aux_cdsegmto         AS INTE NO-UNDO.
     DEF VAR aux_dssegmto AS CHAR EXTENT 8 NO-UNDO.
     
     ASSIGN aux_dssegmto[1] = "Prefeituras"
@@ -2607,8 +2645,8 @@ PROCEDURE busca_autorizacoes_cadastradas:
         CREATE tt-autorizacoes-cadastradas.
         ASSIGN tt-autorizacoes-cadastradas.nmextcon = aux_nmempcon
                tt-autorizacoes-cadastradas.nmrescon = IF AVAIL crapcon AND TRIM(crapcon.nmrescon) <> '' THEN crapcon.nmrescon ELSE aux_nmempcon
-               tt-autorizacoes-cadastradas.cdempcon = IF crapatr.cdhistor = 1019 THEN crapatr.cdempcon ELSE aux_cdempcon
-               tt-autorizacoes-cadastradas.cdsegmto = IF crapatr.cdhistor = 1019 THEN crapatr.cdsegmto ELSE aux_cdsegmto
+               tt-autorizacoes-cadastradas.cdempcon = IF  crapatr.cdhistor = 1019 THEN crapatr.cdempcon ELSE aux_cdempcon
+               tt-autorizacoes-cadastradas.cdsegmto = IF  crapatr.cdhistor = 1019 THEN crapatr.cdsegmto ELSE aux_cdsegmto
                tt-autorizacoes-cadastradas.cdrefere = crapatr.cdrefere
                tt-autorizacoes-cadastradas.vlmaxdeb = crapatr.vlrmaxdb
                tt-autorizacoes-cadastradas.dshisext = crapatr.dshisext
@@ -4056,7 +4094,7 @@ PROCEDURE busca_lancamentos:
                                      (crapscn.cddmoden = 'A'                       OR
                                       crapscn.cddmoden = 'C') 
                                       NO-LOCK NO-ERROR NO-WAIT.
-                                      
+
         IF  NOT AVAIL gnconve  AND
             NOT AVAIL crapscn  THEN
             NEXT.
@@ -4123,7 +4161,7 @@ PROCEDURE busca_lancamentos:
                                              (crapscn.cddmoden = 'A'                       OR
                                               crapscn.cddmoden = 'C') 
                                               NO-LOCK NO-ERROR NO-WAIT.
-                          
+        
                 IF  NOT AVAIL gnconve  AND
                     NOT AVAIL crapscn  THEN
                     NEXT.
@@ -5929,7 +5967,7 @@ PROCEDURE valida_senha_cooperado:
    DEF VAR aux_cdcritic AS INT                                     NO-UNDO.
    DEF VAR aux_dscritic AS CHAR                                    NO-UNDO.
    DEF VAR aux_flgsevld AS LOGICAL                                 NO-UNDO.   
-  
+   DEF VAR aux_dscteste AS CHAR                                     NO-UNDO.
    ASSIGN aux_cdcritic = 0
           aux_dscritic = ""
           aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
@@ -5961,7 +5999,25 @@ PROCEDURE valida_senha_cooperado:
            END.
    END.
       END. 
-
+   /* Amasonas - Supero - Validaçao senha Online*/   
+    IF  aux_flgsevld = FALSE THEN 
+      DO:
+          FOR EACH crapsnh FIELDS (cddsenha) 
+                           WHERE  crapsnh.cdcooper = par_cdcooper
+                             AND  crapsnh.nrdconta = par_nrdconta
+                             AND  crapsnh.tpdsenha = 1 /*internet*/ 
+                             NO-LOCK:                
+              DO:        
+              IF  CAPS(ENCODE(STRING(par_cddsenha,"999999"))) = CAPS(crapsnh.cddsenha) THEN
+                  DO:
+                      ASSIGN aux_flgsevld = TRUE.
+                      LEAVE.
+              END.
+             END.
+              
+      END.
+    END.
+  /*Fim validaçao senha online */
   IF  aux_flgsevld = FALSE THEN
       DO:
           ASSIGN aux_cdcritic  = 0
@@ -6530,19 +6586,19 @@ PROCEDURE busca_convenio_nome:
     DEF INPUT PARAM par_cdcooper AS INTE NO-UNDO.
     DEF INPUT PARAM par_cdempcon AS INTE NO-UNDO.
     DEF INPUT PARAM par_cdsegmto AS INTE NO-UNDO.
-   
+
     DEF OUTPUT PARAM pr_nmempcon AS CHAR NO-UNDO.
-   
+        
     FIND FIRST crapcon WHERE crapcon.cdcooper = par_cdcooper AND
                              crapcon.cdempcon = par_cdempcon AND
                              crapcon.cdsegmto = par_cdsegmto NO-LOCK.    
-   
+             
     IF AVAILABLE crapcon THEN    
       DO:
       ASSIGN pr_nmempcon = crapcon.nmextcon.
       END.
-   
+
     RELEASE crapcon.
   
   RETURN "OK".
-END PROCEDURE.
+END PROCEDURE.    
