@@ -39,13 +39,6 @@
 
 
 
-
-
-
-
-
-
-
 /*..............................................................................
 
    Programa: sistema/internet/procedures/b1wgen0088.p
@@ -5645,16 +5638,16 @@ PROCEDURE efetua-validacao-recusa-padrao:
       			DO:
       			  IF (bcrapcob.flgregis) THEN /* Cobrança com Regisro */
       				aux_cdacesso = "LIMDESCTITCRPF".
-            ELSE
+      			  ELSE 
       				aux_cdacesso = "LIMDESCTITPF".		  	
       			END.
-            ELSE
+      			ELSE
       			DO:	
       			  IF crapass.inpessoa = 2 THEN /* Pessoa Jurídica */
       			  DO: 	
       				IF (bcrapcob.flgregis) THEN /* Cobrança com Regisro */
       				  aux_cdacesso = "LIMDESCTITCRPJ".
-            ELSE
+      				ELSE 
       				  aux_cdacesso = "LIMDESCTITPJ".
       			  END.		
       			END.

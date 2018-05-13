@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Edson/Margarete
-   Data    : Maio/2001                       Ultima atualizacao: 30/01/2017
+   Data    : Maio/2001                       Ultima atualizacao: 11/08/2016 
 
    Dados referentes ao programa:
 
@@ -88,10 +88,6 @@
                             
                11/08/2016 - Criar procedure para buscar o saldo disponivel do cooperado
                             (James)                            
-
-               30/01/2017 - Nao permitir efetuar pagamento para o produto Pos-Fixado.
-                            (Jaison/James - PRJ298)
-
 ........................................................................... */
 
 PROCEDURE mostra_dados:
@@ -796,8 +792,7 @@ PROCEDURE critica_contrato:
                NEXT.
            END.
                  
-      IF   crapepr.tpemprst = 1 OR
-	       crapepr.tpemprst = 2 THEN
+      IF   crapepr.tpemprst = 1 THEN
            DO:
                ASSIGN glb_cdcritic = 946.
                NEXT. 

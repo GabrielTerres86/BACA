@@ -118,12 +118,7 @@ IF  NOT AVAILABLE tt-extrato_cotas  THEN
     
 CREATE xml_operacao.
 ASSIGN xml_operacao.dslinxml = "<SALDO_ANTERIOR>" +
-                               "<dtmvtolt>" +
-                               (IF par_dtiniper <> ? THEN
-                                   STRING((par_dtiniper - 1),"99/99/9999")
-                                ELSE
-                                   "") +
-                               "</dtmvtolt>" +
+                               "<dtmvtolt></dtmvtolt>" +
                                "<dsextrat>SALDO ANTERIOR</dsextrat>" +
                                "<nrdocmto></nrdocmto>" +
                                "<nrctrpla></nrctrpla>" +

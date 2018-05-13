@@ -110,9 +110,6 @@
     25/10/2017 - Ajuste para criar arquivo de chamada web com chaves para tratamento
 				 de concorrência.
                  PRJ356.4 - DDA (Ricardo Linhares)  
-                           
-    04/04/2018 - Adicionada chamada pc_valida_adesao_produto para verificar se o 
-                 tipo de conta permite a contrataçao do produto. PRJ366 (Lombardi).
 .............................................................................*/
 
 
@@ -123,7 +120,6 @@
 { sistema/generico/includes/var_internet.i }
 { sistema/generico/includes/gera_erro.i }
 { sistema/generico/includes/gera_log.i }
-{ sistema/generico/includes/var_oracle.i }
 
 DEF TEMP-TABLE bb-instr-tit-sacado-dda  NO-UNDO LIKE tt-instr-tit-sacado-dda.
 DEF TEMP-TABLE bb-descto-tit-sacado-dda NO-UNDO LIKE tt-descto-tit-sacado-dda.
@@ -756,32 +752,6 @@ PROCEDURE requisicao-incluir-sacado:
 
        ASSIGN aux_tppessoa = IF crapass.inpessoa = 1 THEN "F" ELSE "J".
 
-       /* buscar quantidade maxima de digitos aceitos para o convenio */
-       { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
-                     
-       RUN STORED-PROCEDURE pc_valida_adesao_produto
-           aux_handproc = PROC-HANDLE NO-ERROR
-                                   (INPUT par_cdcooper,
-                                    INPUT par_nrdconta,
-                                    INPUT 9, /* DDA */
-                                    OUTPUT 0,   /* pr_cdcritic */
-                                    OUTPUT ""). /* pr_dscritic */
-                   
-       CLOSE STORED-PROC pc_valida_adesao_produto
-             aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
-
-       { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
-
-       ASSIGN aux_cdcritic = 0
-              aux_dscritic = ""
-              aux_cdcritic = pc_valida_adesao_produto.pr_cdcritic                          
-                                 WHEN pc_valida_adesao_produto.pr_cdcritic <> ?
-              aux_dscritic = pc_valida_adesao_produto.pr_dscritic
-                                 WHEN pc_valida_adesao_produto.pr_dscritic <> ?.
-       
-       IF  aux_cdcritic <> 0 OR aux_dscritic <> "" THEN
-         LEAVE.
-       
        RUN obtem-dados-legado (INPUT par_cdcooper,
                                INPUT par_nrdconta,
                                INPUT par_idseqttl,

@@ -52,7 +52,7 @@
 		$xmlLogin .= "      <cdagenci>".$cdpactra."</cdagenci>";
 		$xmlLogin .= "      <nrdcaixa>0</nrdcaixa>";
 		$xmlLogin .= "      <cdoperad>".$cdoperad."</cdoperad>";
-		$xmlLogin .= "      <idorigem>999</idorigem>";			// CRM
+		$xmlLogin .= "      <idorigem>5</idorigem>";			
 		$xmlLogin .= "      <vldsenha>no</vldsenha>";
 		$xmlLogin .= "      <cddsenha></cddsenha>";
 		$xmlLogin .= "      <cdpactra>".$cdpactra."</cdpactra>";

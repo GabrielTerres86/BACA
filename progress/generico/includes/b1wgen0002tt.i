@@ -27,7 +27,7 @@
 
    Programa: b1wgen0002tt.i
    Autor   : David
-   Data    : Agosto/2007                      Ultima atualizacao: 21/02/2018
+   Data    : Agosto/2007                      Ultima atualizacao: 10/07/2017
 
    Dados referentes ao programa:
 
@@ -175,24 +175,9 @@
                            
               07/07/2015 - Criacao do FIELD insitest na tt-proposta-epr.
                            (Jaison/Marcos Martini - PRJ337)
-              20/09/2017 - Projeto 410 - Incluidos campos de indicacao de IOF, 
-                           tarifa e valor total para demonstração do empréstimo (Diogo - Mouts)
                            
-              05/04/2017 - Adicionado parametros de carencia do produto Pos-Fixado. (Jaison/James - PRJ298)
-
               19/04/2017 - Alteraçao DSNACION pelo campo CDNACION.
                            PRJ339 - CRM (Odirlei-AMcom)
-              
-              15/12/2017 - Inserção do campo idcobope nas TEMP-TABLE tt-dados-epr
-                           e tt-proposta-epr. PRJ404 (Lombardi)
-
-			  05/02/2018 - Inclusao do campo vlrdtaxa na tt tt-extrato_epr. (James)
-
-			  25/01/2018 - Inclusão do FIELD NIVRIORI na tt-proposta-epr.
-			               (Reginaldo AMcom)
-
-			  21/02/2018 - Inclusão do FIELD IDENEMPR na tt-dados-epr.
-			               (Simas AMcom)
               
 .............................................................................*/
 DEF TEMP-TABLE tt-extrato_epr NO-UNDO               
@@ -215,9 +200,7 @@ DEF TEMP-TABLE tt-extrato_epr NO-UNDO
     FIELD flgsaldo AS LOGICAL INITIAL TRUE
     FIELD dsextrat AS CHAR
     FIELD flglista AS LOGICAL INITIAL TRUE
-    FIELD cdorigem AS INTE
-    FIELD qtdiacal LIKE craplem.qtdiacal
-	FIELD vlrdtaxa LIKE craplem.vltaxprd.
+    FIELD cdorigem AS INTE.
 
 DEF TEMP-TABLE tt-dados-epr   NO-UNDO  
     FIELD nrdconta AS INTE    FORMAT "zzzz,zzz,9"
@@ -298,10 +281,7 @@ DEF TEMP-TABLE tt-dados-epr   NO-UNDO
     FIELD liquidia AS INTE
     FIELD tipoempr AS CHAR
     FIELD qtimpctr LIKE crapepr.qtimpctr
-    FIELD dtapgoib AS DATE    FORMAT "99/99/9999"
-	FIELD vliofcpl LIKE crapepr.vliofcpl
-    FIELD idcobope AS INTE
-	FIELD idenempr LIKE crapepr.tpemprst.
+    FIELD dtapgoib AS DATE    FORMAT "99/99/9999".
     
 DEF TEMP-TABLE tt-dados-epr-out NO-UNDO LIKE tt-dados-epr.
 
@@ -381,16 +361,7 @@ DEF TEMP-TABLE tt-proposta-epr NO-UNDO
 	FIELD dssitest AS CHAR
     FIELD dssitapr AS CHAR
     FIELD insitest LIKE crawepr.insitest
-    FIELD inobriga AS CHAR
-	FIELD idfiniof AS INTE
-    FIELD vliofepr LIKE crapepr.vliofepr
-    FIELD vlrtarif AS DECI
-    FIELD vlrtotal AS DECI
-	FIELD idcarenc LIKE crawepr.idcarenc
-    FIELD dtcarenc LIKE crawepr.dtcarenc
-    FIELD idcobope AS INTE
-    FIELD vlfinanc AS DECI
-	FIELD nivriori LIKE crawepr.dsnivori.
+    FIELD inobriga AS CHAR.
 
 DEF TEMP-TABLE tt-bens-alienacao NO-UNDO
     FIELD lsbemfin AS CHAR

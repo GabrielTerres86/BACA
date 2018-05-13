@@ -22,15 +22,11 @@
  *
  *				  21/07/2016 - Removi o session_start desnecessario, removi a funcao utf8tohtml
  *							   desnecessaria, corrigi o uso da variavel $opcoesTela. SD 479874 (Carlos R.)
- *
- *                11/05/2017 - Exibir produto Pos-Fixado. (Jaison/James - PRJ298)
-
- *                17/01/2018 - Inclusão do botão "Alterar Qualificação" ( Diego Simas - AMcom )
  * --------------------------------------------------------------------------------------------------
  */
  
 	isPostMethod();	
-	
+
 ?>
 
 <div id="tabPrestacao">
@@ -50,21 +46,9 @@
 				</tr>
 			</thead>
 			<tbody>
-				<?php foreach( $registros as $banco ) {
-                switch (getByTagName($banco->tags,'tpemprst')) {
-                    case 0:
-                        $tipo = "Price TR";
-                        break;
-                    case 1:
-                        $tipo = "Price Pre-fixado";
-                        break;
-                    case 2:
-                        $tipo = "Pos-fixado";
-                        break;
-                } ?>
-				<tr onclick="changebtPagar(this);">
+				<?php foreach( $registros as $banco ) { $tipo = (getByTagName($banco->tags,'tpemprst') == "0") ? "Price TR" : "Price Pre-fixado"  ?>
+				<tr>
 				    <td><?php echo getByTagName($banco->tags,'cdlcremp') ?>
-						<input type="hidden" id="vlsdprej" name="vlsdprej" value="<?php echo getByTagName($banco->tags,'vlsdprej') ?>" />
 						<input type="hidden" id="nrctremp" name="nrctremp" value="<?php echo getByTagName($banco->tags,'nrctremp') ?>" />
 						<input type="hidden" id="inprejuz" name="inprejuz" value="<?php echo getByTagName($banco->tags,'inprejuz') ?>" />
 						<input type="hidden" id="tplcremp" name="tplcremp" value="<?php echo getByTagName($banco->tags,'tplcremp') ?>" />
@@ -77,9 +61,7 @@
                         <input type="hidden" id="cdorigem" name="cdorigem" value="<?php echo getByTagName($banco->tags,'cdorigem') ?>" />
 						<input type="hidden" id="liquidia" name="liquidia" value="<?php echo getByTagName($banco->tags,'liquidia') ?>" />
 						<input type="hidden" id="vlemprst" name="vlemprst" value="<?php echo number_format(floatval(str_replace(",",".",getByTagName($banco->tags,'vlemprst'))),2,",",".");?>" />
-						<input type="hidden" id="portabil" name="portabil" value="<?php echo getByTagName($banco->tags,'portabil') ?>" />
-						<input type="hidden" id="cdlcremp" name="cdlcremp" value="<?php echo getByTagName($banco->tags,'cdlcremp') ?>" />
-						<input type="hidden" id="qttolatr" name="qttolatr" value="<?php echo getByTagName($banco->tags,'qttolatr') ?>" />
+						<input type="hidden" id="portabil" name="portabil" value="<?php echo getByTagName($banco->tags,'portabil') ?>" />						
 					</td>
 					<td><?php echo getByTagName($banco->tags,'cdfinemp') ?></td>
 					<td><?php echo formataNumericos("z.zzz.zzz.zzz",getByTagName($banco->tags,'nrctremp'),"."); ?></td>
@@ -137,18 +119,10 @@
     <a href="#" class="botao" id="btVoltar"        onClick="encerraRotina('true');">Voltar</a>
 	<a href="#" class="botao" id="btConsultar"     onClick="direcionaConsulta();">Consultar</a>
 	<a href="#" class="botao" id="btPagar" 	       onClick="validarLiquidacao();">Pagar</a>
- 	<!--<a href="#" class="botao" id="bttranfPreju"    onClick="confirmaPrejuizo()">Transferir Prejuízo</a>-->
-	<!--<a href="#" class="botao" id="btdesfazPreju"   onClick="confirmaDesfazPrejuizo()">Desfazer Prejuízo</a>-->
-	<a href="#" class="botao" id="btCancelar"      onClick="controlaOperacao('D_EFETIVA');">Desfazer Efetiva&ccedil;&atilde;o</a>
+ 	<a href="#" class="botao" id="bttranfPreju"    onClick="confirmaPrejuizo()">Transferir Prejuízo</a>
+	<a href="#" class="botao" id="btdesfazPreju"   onClick="confirmaDesfazPrejuizo()">Desfazer Prejuízo</a>
+	<a href="#" class="botao" id="btCancelar"      onClick="controlaOperacao('D_EFETIVA');">Desfazer Efetivação</a>
     <a href="#" class="botao" id="btPortabilidade" onClick="controlaOperacao('PORTAB_CRED');">Portabilidade</a>
-	<? 
-		$permissao = in_array('X', $glbvars['opcoesTela']);
-		if($glbvars["cddepart"] == 7 && $permissao == true) {  
-	?>
-			<a href="#" class="botao" id="btAltQualif" onClick="controlaOperacao('CON_QUALIFICA');">Alterar Qualificação</a>
-	<? 	
-		} 
-	?>
 </div>
 
 <script type="text/javascript">
@@ -161,24 +135,5 @@
 	});	
 	
 	$('#divPesquisaRodape','#divConteudoOpcao').formataRodapePesquisa();
-	
-	function changebtPagar(_this){
-		if ($(_this).find('#inprejuz').val() == 1){
-	   		$('a#btPagar').html('Pagar Prejuizo');
-		}
-		else{
-			$('a#btPagar').html('Pagar');
-		}
-	}
-	
-	if ($('.tituloRegistros tbody tr').length == 1){
-		if ($('.tituloRegistros tbody tr').find('#inprejuz').val() == 1){
-			$('a#btPagar').html('Pagar Prejuizo');
-		}
-	}
-
-	$('#divRotina').ready(function(e){
-		changebtPagar(this);
-	});
 
 </script>

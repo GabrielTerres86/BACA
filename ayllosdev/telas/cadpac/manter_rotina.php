@@ -11,10 +11,6 @@
  *                08/08/2017 - Implementacao da melhoria 438. Heitor (Mouts).
  *  
  *				  08/08/2017 - Adicionado novo parametro flgutcrm para a ação CADPAC_GRAVA. (Reinert - Projeto 339)
- *
- *                19/12/2017 - Incluido campos FGTS. PRJ406 -FGTS(Odirlei-AMcom)
- *
- *                03/01/2018 - M307 Solicitação de senha e limite para pagamento (Diogo / MoutS)
  */
     session_start();
 	require_once('../../includes/config.php');
@@ -44,7 +40,6 @@
     $flgdsede = (isset($_POST['flgdsede'])) ? $_POST['flgdsede'] : '';
     $cdagepac = (isset($_POST['cdagepac'])) ? $_POST['cdagepac'] : '';
     $flgutcrm = (isset($_POST['flgutcrm'])) ? $_POST['flgutcrm'] : '';
-    $cdagefgt = (isset($_POST['cdagefgt'])) ? $_POST['cdagefgt'] : '';
     $dsendcop = (isset($_POST['dsendcop'])) ? $_POST['dsendcop'] : '';
     $nrendere = (isset($_POST['nrendere'])) ? $_POST['nrendere'] : '';
     $nmbairro = (isset($_POST['nmbairro'])) ? $_POST['nmbairro'] : '';
@@ -60,10 +55,6 @@
     $dsinform3 = (isset($_POST['dsinform3'])) ? $_POST['dsinform3'] : '';
     $hhsicini = (isset($_POST['hhsicini'])) ? $_POST['hhsicini'] : '';
     $hhsicfim = (isset($_POST['hhsicfim'])) ? $_POST['hhsicfim'] : '';
-    
-    $hhini_bancoob = (isset($_POST['hhini_bancoob'])) ? $_POST['hhini_bancoob'] : '';
-    $hhfim_bancoob = (isset($_POST['hhfim_bancoob'])) ? $_POST['hhfim_bancoob'] : '';    
-    
     $hhtitini = (isset($_POST['hhtitini'])) ? $_POST['hhtitini'] : '';
     $hhtitfim = (isset($_POST['hhtitfim'])) ? $_POST['hhtitfim'] : '';
     $hhcompel = (isset($_POST['hhcompel'])) ? $_POST['hhcompel'] : '';
@@ -80,7 +71,6 @@
     $hhcpafim = (isset($_POST['hhcpafim'])) ? $_POST['hhcpafim'] : '';
     $hhlimcan = (isset($_POST['hhlimcan'])) ? $_POST['hhlimcan'] : '';
     $hhsiccan = (isset($_POST['hhsiccan'])) ? $_POST['hhsiccan'] : '';
-    $hhcan_bancoob = (isset($_POST['hhcan_bancoob'])) ? $_POST['hhcan_bancoob'] : '';
     $nrtelvoz = (isset($_POST['nrtelvoz'])) ? $_POST['nrtelvoz'] : '';
     $nrtelfax = (isset($_POST['nrtelfax'])) ? $_POST['nrtelfax'] : '';
     $qtddaglf = (isset($_POST['qtddaglf'])) ? $_POST['qtddaglf'] : '';
@@ -109,7 +99,6 @@
     $nrlatitu = (isset($_POST['nrlatitu'])) ? $_POST['nrlatitu'] : '';
     $nrlongit = (isset($_POST['nrlongit'])) ? $_POST['nrlongit'] : '';
 	$flmajora = (isset($_POST['flmajora'])) ? $_POST['flmajora'] : '';
-    $vllimpag = (isset($_POST['vllimpag'])) ? converteFloat($_POST['vllimpag']) : '';
 
 	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],$cddopcao)) <> '') {
         exibirErro('error',$msgError,'Alerta - Ayllos','',false);
@@ -140,7 +129,6 @@
     $xml .= "   <flgdsede>".$flgdsede."</flgdsede>";
     $xml .= "   <cdagepac>".$cdagepac."</cdagepac>";
     $xml .= "   <flgutcrm>".$flgutcrm."</flgutcrm>";
-    $xml .= "   <cdagefgt>".$cdagefgt."</cdagefgt>";    
     $xml .= "   <dsendcop>".utf8_decode($dsendcop)."</dsendcop>";
     $xml .= "   <nrendere>".$nrendere."</nrendere>";
     $xml .= "   <nmbairro>".utf8_decode($nmbairro)."</nmbairro>";
@@ -156,8 +144,6 @@
     $xml .= "   <dsinform3>".utf8_decode($dsinform3)."</dsinform3>";
     $xml .= "   <hhsicini>".$hhsicini."</hhsicini>";
     $xml .= "   <hhsicfim>".$hhsicfim."</hhsicfim>";
-    $xml .= "   <hhini_bancoob>".$hhini_bancoob."</hhini_bancoob>";
-    $xml .= "   <hhfim_bancoob>".$hhfim_bancoob."</hhfim_bancoob>";
     $xml .= "   <hhtitini>".$hhtitini."</hhtitini>";
     $xml .= "   <hhtitfim>".$hhtitfim."</hhtitfim>";
     $xml .= "   <hhcompel>".$hhcompel."</hhcompel>";
@@ -174,7 +160,6 @@
     $xml .= "   <hhcpafim>".$hhcpafim."</hhcpafim>";
     $xml .= "   <hhlimcan>".$hhlimcan."</hhlimcan>";
     $xml .= "   <hhsiccan>".$hhsiccan."</hhsiccan>";
-    $xml .= "   <hhcan_bancoob>".$hhcan_bancoob."</hhcan_bancoob>";
     $xml .= "   <nrtelvoz>".$nrtelvoz."</nrtelvoz>";
     $xml .= "   <nrtelfax>".$nrtelfax."</nrtelfax>";
     $xml .= "   <qtddaglf>".$qtddaglf."</qtddaglf>";
@@ -202,7 +187,6 @@
 	$xml .= "   <indspcxa>".$indspcxa."</indspcxa>";
     $xml .= "   <nrlatitu>".$nrlatitu."</nrlatitu>";
     $xml .= "   <nrlongit>".$nrlongit."</nrlongit>";
-    $xml .= "   <vllimpag>".$vllimpag."</vllimpag>";
 
 	if ($cddopcao == 'B') { // Cadastramento de Caixa
         $nmdeacao = 'CADPAC_CAIXA';

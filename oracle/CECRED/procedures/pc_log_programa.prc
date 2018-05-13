@@ -48,10 +48,6 @@ BEGIN
               29/09/2017 - Inclusão dos parâmetros cd_prioridade=5 (normal) e 
                            cd_nivel_indisponibilidade=4 (Operação normal) para a abertura de
                            chamados (Carlos)
-
-              11/04/2018 - Inclusão no NVL no cursor cr_ultima_execucao para os casos em que o
-                           parâmetro pr_cdcooper = NULL
-                           (Ana - Envolti - INC00116662)
   .......................................................................................... */
   DECLARE 
   
@@ -84,7 +80,7 @@ BEGIN
     SELECT p.nrexecucao
           ,p.idprglog
       FROM tbgen_prglog p
-     WHERE nvl(p.cdcooper,0) = nvl(pr_cdcooper,0)  --CH INC00116662
+     WHERE p.cdcooper = pr_cdcooper
        AND p.cdprograma = vr_cdprograma
        AND TRUNC(p.dhinicio) = TRUNC(SYSDATE)
      ORDER BY p.nrexecucao DESC;

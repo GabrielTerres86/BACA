@@ -34,7 +34,6 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_CONTAS_DESAB AS
                                  ,pr_flgrenli  IN crapass.flgrenli%TYPE --> Renova Limite de Credito
                                  ,pr_flmajora  IN crapass.flmajora%TYPE --> Flag Majoracao
                                  ,pr_dsmotmaj  IN crapass.dsmotmaj%TYPE --> Motivo Bloqueio Majoracao
-                                 ,pr_flcnaulc  IN crapass.flcnaulc%TYPE --> Flag de cancelamento de credito automatico
                                  ,pr_xmllog    IN VARCHAR2              --> XML com informações de LOG
                                  ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
                                  ,pr_dscritic OUT VARCHAR2              --> Descrição da crítica
@@ -469,7 +468,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONTAS_DESAB AS
                         ,pr_nrdconta crapass.nrdconta%TYPE) IS
         SELECT c.flgrenli
              , c.flmajora
-             , c.flcnaulc
              , c.dsmotmaj
              , c.cdopemaj
              , o.nmoperad nmopemaj
@@ -560,13 +558,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONTAS_DESAB AS
         GENE0007.pc_insere_tag(pr_xml      => pr_retxml
                               ,pr_tag_pai  => 'Dados'
                               ,pr_posicao  => 0
-                              ,pr_tag_nova => 'flcnaulc'
-                              ,pr_tag_cont => rw_crapass.flcnaulc
-                              ,pr_des_erro => vr_dscritic);
-                              
-        GENE0007.pc_insere_tag(pr_xml      => pr_retxml
-                              ,pr_tag_pai  => 'Dados'
-                              ,pr_posicao  => 0
                               ,pr_tag_nova => 'cdopemaj'
                               ,pr_tag_cont => rw_crapass.cdopemaj
                               ,pr_des_erro => vr_dscritic);
@@ -609,7 +600,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONTAS_DESAB AS
                                  ,pr_flgrenli  IN crapass.flgrenli%TYPE --> Renova Limite de Credito
                                  ,pr_flmajora  IN crapass.flmajora%TYPE --> Flag Majoracao
                                  ,pr_dsmotmaj  IN crapass.dsmotmaj%TYPE --> Motivo Bloqueio Majoracao
-                                 ,pr_flcnaulc  IN crapass.flcnaulc%TYPE --> Flag de cancelamento de credito automatico
                                  ,pr_xmllog    IN VARCHAR2              --> XML com informações de LOG
                                  ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
                                  ,pr_dscritic OUT VARCHAR2              --> Descrição da crítica
@@ -637,7 +627,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONTAS_DESAB AS
                         ,pr_nrdconta crapass.nrdconta%TYPE) IS
         SELECT flgrenli
              , flmajora
-             , flcnaulc
              , dsmotmaj
              , cdopemaj
           FROM crapass
@@ -709,7 +698,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONTAS_DESAB AS
           UPDATE crapass
              SET flgrenli = pr_flgrenli
                , flmajora = pr_flmajora
-               , flcnaulc = pr_flcnaulc
                , dsmotmaj = vr_dsmotmaj
                , cdopemaj = vr_cdoperad
            WHERE cdcooper = vr_cdcooper
@@ -748,17 +736,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONTAS_DESAB AS
                                                    ELSE 'Nao'
                                                  END
                                  ,pr_dsdadatu => CASE pr_flmajora
-                                                   WHEN 1 THEN 'Sim'
-                                                   ELSE 'Nao'
-                                                 END);
-                                                 
-          gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
-                                 ,pr_nmdcampo => 'Cancelamento Automatico Limite Credito'
-                                 ,pr_dsdadant => CASE rw_crapass.flcnaulc
-                                                   WHEN 1 THEN 'Sim'
-                                                   ELSE 'Nao'
-                                                 END
-                                 ,pr_dsdadatu => CASE pr_flcnaulc
                                                    WHEN 1 THEN 'Sim'
                                                    ELSE 'Nao'
                                                  END);

@@ -5,15 +5,14 @@
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Daniel Zimmermann
-   Data    : Setembro/2015.                       Ultima atualizacao: 08/11/2017
+   Data    : Setembro/2015.                       Ultima atualizacao: 
    
    Dados referentes ao programa:
    
    Frequencia: Sempre que for chamado (On-Line)
    Objetivo  : Busca contratos
    
-   Alteracoes: 08/11/2017 - Retornar nome do produto e separar codigo e descricao
-                            da linha de credito e finalidade (David).
+   Alteracoes: 
 
 ..............................................................................*/
 
@@ -46,7 +45,10 @@ RUN sistema/generico/procedures/b1wgen0002.p PERSISTENT SET h-b1wgen0002.
 
 IF VALID-HANDLE(h-b1wgen0002) THEN
    DO: 
-      IF  par_inproces <> 1  THEN
+/*
+      FIND FIRST crapdat WHERE cdcooper = par_cdcooper NO-LOCK.
+*/
+      IF par_inproces <> 1 THEN
       DO:
           ASSIGN xml_dsmsgerr = "<processo>ERRO</processo>".
           RETURN "NOK".
@@ -92,11 +94,13 @@ IF VALID-HANDLE(h-b1wgen0002) THEN
        FOR EACH tt-dados-epr 
            WHERE tt-dados-epr.vlsdeved > 0 NO-LOCK:
 
-           IF tt-dados-epr.dtmvtolt = par_dtmvtolt THEN
+           IF tt-dados-epr.dtmvtolt = par_dtmvtolt  THEN
                NEXT.
 
            IF tt-dados-epr.tpemprst = 1 THEN
            DO:
+           
+
             CREATE xml_operacao.
             ASSIGN xml_operacao.dslinxml =  "<EMPRESTIMO>"
                    + "<nrctremp>" + TRIM(STRING(tt-dados-epr.nrctremp,"zz,zzz,zz9")) + "</nrctremp>" 
@@ -106,20 +110,21 @@ IF VALID-HANDLE(h-b1wgen0002) THEN
                    + "<vlsdeved>" + TRIM(STRING(tt-dados-epr.vlsdeved,"zzz,zzz,zzz,zz9.99")) + "</vlsdeved>"
                    + "<dtmvtolt>" + STRING(tt-dados-epr.dtmvtolt,"99/99/9999") + "</dtmvtolt>"     
                    + "<nmprimtl>" + TRIM(tt-dados-epr.nmprimtl) + "</nmprimtl>"       
+                   
+                  
+                   
                    + "<qtprecal>" + TRIM(STRING(tt-dados-epr.qtprecal,"zzz,zz9.9999-")) + "</qtprecal>"
+                   
                    + "<dslcremp>" + TRIM(tt-dados-epr.dslcremp) + "</dslcremp>"
                    + "<dsfinemp>" + TRIM(tt-dados-epr.dsfinemp) + "</dsfinemp>"
                    + "<tpemprst>" + STRING(tt-dados-epr.tpemprst,"9") + "</tpemprst>"
                    + "<flgpreap>" + STRING(tt-dados-epr.flgpreap) + "</flgpreap>"
                    + "<cdorigem>" + STRING(tt-dados-epr.cdorigem) + "</cdorigem>"
+                   
                    + "<diavenct>" + STRING(DAY(tt-dados-epr.dtdpagto)) + "</diavenct>"
-                         + "<dsprodut>" + (IF tt-dados-epr.tpemprst = 1 THEN "Price Pré-Fixado" ELSE IF tt-dados-epr.tpemprst = 2 THEN "Price Pós-Fixado" ELSE "Price TR") + "</dsprodut>"
+                   + "<dsprodut>" + "Pré-Fixado" + "</dsprodut>"
                    + "<qtpreres>" + STRING(tt-dados-epr.qtpreemp - tt-dados-epr.qtprecal) + "</qtpreres>"
-                         + "<cddlinha>" + STRING(tt-dados-epr.cdlcremp) + "</cddlinha>"
-                         + "<dsdlinha>" + TRIM(SUBSTR(tt-dados-epr.dslcremp,INDEX(tt-dados-epr.dslcremp,"-",1) + 1)) + "</dsdlinha>" 
-                         + "<cdfinali>" + STRING(tt-dados-epr.cdfinemp) + "</cdfinali>"
-                         + "<dsfinali>" + TRIM(SUBSTR(tt-dados-epr.dsfinemp,INDEX(tt-dados-epr.dsfinemp,"-",1) + 1)) + "</dsfinali>"
-                         + "<inproces>" + (IF par_inproces = 1 THEN "1" ELSE "0") + "</inproces>"
+                   
                    + "</EMPRESTIMO>".
             END.
 
@@ -133,6 +138,7 @@ IF VALID-HANDLE(h-b1wgen0002) THEN
                                     + "<idemprtr>" + STRING(aux_idemprtr) + "</idemprtr>".
        
        RETURN "OK".
+       
    END.
 
 /*...........................................................................*/

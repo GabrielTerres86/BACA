@@ -28,8 +28,6 @@
 	
 	$nroficon = $_POST["nroficon"];
 	$nrctacon = $_POST["nrctacon"];
-	$operacao = $_POST["operacao"];
-	$cddopcao = $_POST["cddopcao"];
 		
 	// Monta o xml de requisição
 	$xmlImpressao  = "";
@@ -45,8 +43,6 @@
 	$xmlImpressao .= "		<dtmvtolt>".$glbvars["dtmvtolt"]."</dtmvtolt>";
 	$xmlImpressao .= "		<nroficon>".$nroficon."</nroficon>";
 	$xmlImpressao .= "		<nrctacon>".$nrctacon."</nrctacon>";
-	$xmlImpressao .= "		<operacao>".$operacao."</operacao>";
-	$xmlImpressao .= "		<cddopcao>".$cddopcao."</cddopcao>";
 	$xmlImpressao .= "	</Dados>";
 	$xmlImpressao .= "</Root>";	
 	

@@ -121,9 +121,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0010 IS
                   13/10/2016 - Inclusao opcao 95 e 96, para Enviar e cancelar
                                SMS de vencimento. PRJ319 - SMS Cobranca (Odirlei-AMcom)
                                     
-                  08/12/2017 - Inclusão de commit/rollback para finalizar a transação
-                               e possibilitar a chamada da npcb0002.pc_libera_sessao_sqlserver_npc
-                               (SD#791193 - AJFink)
 
      .................................................................................*/
     CURSOR cr_crapcop(pr_cdcooper crapcop.cdcooper%TYPE) IS
@@ -415,14 +412,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0010 IS
           
     END IF;
  
-    commit;
-    npcb0002.pc_libera_sessao_sqlserver_npc('COBR0010_1');
-
   EXCEPTION
     WHEN vr_exc_erro THEN
-    begin
-      rollback;
-      npcb0002.pc_libera_sessao_sqlserver_npc('COBR0010_2');
       
       -- se possui codigo, porém não possui descrição     
       IF nvl(vr_cdcritic, 0) > 0 AND TRIM(vr_dscritic) IS NULL THEN
@@ -433,17 +424,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0010 IS
       
       -- definir retorno
       pr_xml_dsmsgerr := '<dsmsgerr>'|| vr_dscritic ||'</dsmsgerr>';
-    end;
+                                
     WHEN OTHERS THEN
-    begin
-      rollback;
-      npcb0002.pc_libera_sessao_sqlserver_npc('COBR0010_3');
       
       -- definir retorno
       pr_cdcritic := 0;
       pr_dscritic := 'Erro inesperado no processamento de instrucoes. Tente novamente ou contacte seu PA';
       pr_xml_dsmsgerr := '<dsmsgerr>' || pr_dscritic || ' - ' || SQLERRM || '</dsmsgerr>';
-    end;
+      
   END pc_InternetBank66;
 
   /* Comandar Instruções Bancárias para Títulos através da tela COBRAN */
@@ -472,9 +460,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0010 IS
      Frequencia: Sempre que for chamado (On-Line)
      Objetivo  : Comandar Instruções Bancárias para Títulos - Cob. Registrada
          
-     Alteracoes: 08/12/2017 - Inclusão de commit/rollback para finalizar a transação
-                              e possibilitar a chamada da npcb0002.pc_libera_sessao_sqlserver_npc
-                              (SD#791193 - AJFink)
+     Alteracoes:                   
     
     .................................................................................*/
   
@@ -773,14 +759,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0010 IS
     
     END IF;
   
-    commit;
-    npcb0002.pc_libera_sessao_sqlserver_npc('COBR0010_4');
-
   EXCEPTION
     WHEN vr_exc_erro THEN
-    begin
-      rollback;
-      npcb0002.pc_libera_sessao_sqlserver_npc('COBR0010_5');
       -- se possui codigo, porém não possui descrição     
       IF nvl(vr_cdcritic, 0) > 0 AND TRIM(vr_dscritic) IS NULL THEN
         -- buscar descrição
@@ -789,16 +769,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0010 IS
     
       pr_cdcritic := vr_cdcritic;
       pr_dscritic := vr_dscritic;
-    end;
+    
     WHEN OTHERS THEN
-    begin
-      rollback;
-      npcb0002.pc_libera_sessao_sqlserver_npc('COBR0010_6');
+    
       -- definir retorno
       pr_cdcritic := 0;
       pr_dscritic := 'Erro inesperado no processamento de instrucoes. Tente novamente ou contacte seu PA' ||
                      ' - ' || SQLERRM;
-    end;
+    
   END pc_grava_instr_boleto;
   
   --> Comandar baixa efetiva de boletos pagos no dia fora da cooperativo(interbancaria)

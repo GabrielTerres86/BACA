@@ -13,9 +13,6 @@
    Objetivo  : Gerenciar operadores da conta e itens do menu do InternetBank.
    
    Alteracoes: 03/09/2011 - Gerar nova senha do operador (Guilherme).
-
-   12/04/2018 - Ajuste da mensagem quando não exigir ass. conjunta (Ricardo Linhares).
- 			  
  
 ..............................................................................*/
  
@@ -116,13 +113,7 @@ DO:
 END.
 ELSE
 DO:
-
-  FIND FIRST crapass WHERE crapass.cdcooper = par_cdcooper AND 
-  crapass.nrdconta = par_nrdconta
-  NO-LOCK NO-ERROR.
-
-
-  IF par_geraflux = 1 AND aux_dscritic = "" AND crapass.idastcjt = 1 THEN
+    IF par_geraflux = 1 AND aux_dscritic = "" THEN
 	DO:
 		ASSIGN aux_dscritic = "Alteracao registrada, aguardando aprovacao dos demais prepostos para ser finalizada".
 	END.

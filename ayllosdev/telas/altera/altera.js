@@ -7,7 +7,6 @@
  * ALTERAÇÕES   : 
  * --------------
  * [27/03/2012] Rogérius Militão (DB1) : Novo layout padrão
- * [11/04/2017] Permitir acessar o Ayllos mesmo vindo do CRM. (Jaison/Andrino)
  */
  
 var nrdconta, nmprimtl, nrdctitg;
@@ -64,11 +63,6 @@ function formataCabecalho() {
 	} 
 	
 	cNrdconta.buscaConta('carrega_dados();','estadoInicial();');
-
-    // Seta os valores caso tenha vindo do CRM
-    if ($("#crm_inacesso","#frmCabAltera").val() == 1) {
-        $("#nrdconta","#frmCabAltera").val($("#crm_nrdconta","#frmCabAltera").val());
-    }
 	
 }
 

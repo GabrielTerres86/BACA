@@ -109,9 +109,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
   --
   --  Alteracoes: 30/09/2013 - Conversao Progress para oracle (Odirlei-AMcom).
   --
-  --              30/09/2013 - Remover as validações de cheque VLB. 
-  --                           PRJ367 - Compe Sessao Unica (Lombardi)
-  --
   ---------------------------------------------------------------------------------------------------------------
   
     -- Armazenar os valores da CRAPTAB na sessão
@@ -453,14 +450,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
     -- Buscar Lancamentos de faturas de convênios
     CURSOR cr_craplft (pr_cdcooper IN NUMBER
                       ,pr_dtdpagto IN DATE 
-                      ,pr_tparrecd IN INTEGER) IS
+                      ,pr_flgcnvsi IN INTEGER) IS
       SELECT nvl(sum(vllanmto + vlrmulta + vlrjuros),0) vldtotal
         FROM craplft
        WHERE cdcooper = pr_cdcooper
          AND dtmvtolt = pr_dtdpagto
-         AND ( (pr_tparrecd = 3 AND cdhistor NOT IN (1154,2515)) OR -- Convenios CECRED
-               (pr_tparrecd = 1 AND cdhistor = 1154)  OR            -- Somente para Sicredi
-               (pr_tparrecd = 2 AND cdhistor = 2515)                -- Somente para Bancoob
+         AND ( (pr_flgcnvsi = 0 AND cdhistor <> 1154) -- Diferente do Sicredi
+              OR 
+               (pr_flgcnvsi = 1 AND cdhistor = 1154)                      -- Somente para Sicredi
               );
               
     --Buscar de bloquetos de cobranca Cecred
@@ -5969,6 +5966,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
 
     vr_exc_erro      EXCEPTION;
     vr_dstextab      CRAPTAB.Dstextab%type;
+    vr_valorvlb      NUMBER := 0;
     vr_vlrttdev      NUMBER := 0;
 
     --Buscar Compensacao de Cheques Devolvidos da Central
@@ -6075,6 +6073,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
         CLOSE cr_crapcop;
       END IF;
 
+      -- Buscar informacoes CRAPTAB
+      vr_dstextab := tabe0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
+                                               ,pr_nmsistem => 'CRED'
+                                               ,pr_tptabela => 'GENERI'
+                                               ,pr_cdempres => 0
+                                               ,pr_cdacesso => 'VALORESVLB'
+                                               ,pr_tpregist => 0);
+      IF vr_dstextab IS NOT NULL THEN
+        vr_valorvlb := to_number(gene0002.fn_busca_entrada(2,vr_dstextab,';'));
+      ELSE
+        pr_dscritic := 'NOK';
+        Return;
+      END IF;
+
       --Ler Arquivo intermediario para a devolucao de cheques ou taxa de devolucao.
       FOR rw_crapdev IN cr_crapdev(pr_cdbcoctl => rw_crapcop.cdbcoctl,
                                    pr_cdcooper => pr_cdcooper) LOOP
@@ -6082,7 +6094,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
         -- Se não foi informada a conta
         IF rw_crapdev.nrdconta = 0 THEN
           -- calcular valor de devolução
+          CASE rw_crapdev.indevarq
+            WHEN 1 THEN  -- devolução enviada pelo arquivo
               vr_vlrttdev := vr_vlrttdev + nvl(rw_crapdev.vllanmto,0);
+            WHEN 2 THEN
+              IF nvl(rw_crapdev.vllanmto,0) < vr_valorvlb THEN
+                vr_vlrttdev := vr_vlrttdev + nvl(rw_crapdev.vllanmto,0);
+              END IF;
+          END CASE;
         ELSE
           IF rw_crapdev.cdpesqui is null THEN
             --Buscar ultimo registro na Compensacao de Cheques da Central
@@ -6137,8 +6156,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
            rw_crapdev.cdpesqui <> 'TCO'    THEN
           continue;
         ELSE
+          -- calcular valor de devolução
+          CASE rw_crapdev.indevarq
+            WHEN 1 THEN
+              vr_vlrttdev := vr_vlrttdev + nvl(rw_crapdev.vllanmto,0);
+            WHEN 2 THEN
+              IF rw_crapdev.vllanmto < vr_valorvlb THEN
                 vr_vlrttdev := vr_vlrttdev + nvl(rw_crapdev.vllanmto,0);
               END IF;
+          END CASE;
+        END IF;
       END LOOP; -- Fim loop cr_gncpdev
 
     END IF; -- Fim pr_nmdatela <> 'PREVIS'
@@ -7285,16 +7312,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
     --  Sistema  : Cred
     --  Sigla    : FLXF0001
     --  Autor    : Odirlei Busana
-    --  Data     : novembro/2013.                   Ultima atualizacao: 25/01/2018
+    --  Data     : novembro/2013.                   Ultima atualizacao: 22/11/2013
     --
     --  Dados referentes ao programa:
     --
     --   Objetivo  : Gravar movimento financeiro dos conveniados
     --
     --   Atualizacao: 22/11/2013 - Conversao Progress => Oracle (Odirlei-AMcom)
-    --
-    --                25/01/2018 - Ajustes devido a arrecadacao de convenios Bancoob
-    --                             PRJ406-FGTS (Odirlei-AMcom)
     --..........................................................................
 
     vr_exc_erro      EXCEPTION;
@@ -7307,7 +7331,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
     -- Lançamentos Faturas Cecred
     FOR rw_lft IN cr_craplft (pr_cdcooper => pr_cdcooper
                              ,pr_dtdpagto => pr_dtmvtolt
-                             ,pr_tparrecd => 3) LOOP
+                             ,pr_flgcnvsi => 0) LOOP
       vr_vlrconve := vr_vlrconve + rw_lft.vldtotal;
     END LOOP;
     
@@ -7343,7 +7367,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
     -- Lançamentos Faturas Sicredi
     FOR rw_lft IN cr_craplft (pr_cdcooper => pr_cdcooper
                              ,pr_dtdpagto => pr_dtmvtolt
-                             ,pr_tparrecd => 1) LOOP
+                             ,pr_flgcnvsi => 1) LOOP
       vr_vlrconve := vr_vlrconve + rw_lft.vldtotal;
     END LOOP;
 
@@ -7361,27 +7385,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
                          ,pr_dtmvtolt => pr_dtmvtolt    -- Data de movimento
                          ,pr_tpdmovto => 2              -- Tipo de movimento
                          ,pr_cdbccxlt => 748            -- Codigo do banco/caixa.
-                         ,pr_tpdcampo => 11/*VLCONVEN*/ -- Tipo de campo
-                         ,pr_vldcampo => vr_vlrconve    -- Valor do campo
-                         ,pr_dscritic => pr_dscritic);
-
-    IF pr_dscritic <> 'OK' THEN
-      RAISE vr_exc_erro;
-    END IF;
-
-    -- Lançamentos Faturas BANCOOB
-    vr_vlrconve := 0;
-    FOR rw_lft IN cr_craplft (pr_cdcooper => pr_cdcooper
-                             ,pr_dtdpagto => pr_dtmvtolt
-                             ,pr_tparrecd => 2) LOOP --> Bancoob
-      vr_vlrconve := vr_vlrconve + rw_lft.vldtotal;
-    END LOOP;
-
-    -- Gravar convênios BANCOOB
-    pc_grava_movimentacao(pr_cdcooper => pr_cdcooper    -- Codigo da Cooperativa
-                         ,pr_dtmvtolt => pr_dtmvtolt    -- Data de movimento
-                         ,pr_tpdmovto => 2              -- Tipo de movimento
-                         ,pr_cdbccxlt => 756            -- Codigo do banco/caixa.
                          ,pr_tpdcampo => 11/*VLCONVEN*/ -- Tipo de campo
                          ,pr_vldcampo => vr_vlrconve    -- Valor do campo
                          ,pr_dscritic => pr_dscritic);
@@ -7413,14 +7416,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
     --  Sistema  : Cred
     --  Sigla    : FLXF0001
     --  Autor    : Marcos Martini
-    --  Data     : Outubro/2016.                   Ultima atualizacao: 25/01/2018 
+    --  Data     : Outubro/2016.                   Ultima atualizacao: 
     --
     --  Dados referentes ao programa:
     --
     --   Objetivo  : Gravar projeção movimento financeiro dos convênios
     --
-    --   Atualizacao: 25/01/2018 - Ajustes devido a arrecadacao de convenios Bancoob
-    --                             PRJ406-FGTS (Odirlei-AMcom) 
+    --   Atualizacao: 
     --..........................................................................
 
     vr_exc_erro      EXCEPTION;
@@ -7471,7 +7473,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
         -- Lançamentos Faturas Cecred 
         FOR rw_lft IN cr_craplft (pr_cdcooper => pr_cdcooper
                                  ,pr_dtdpagto => vr_tab_per_datas(vr_idx).dtmvtolt
-                                 ,pr_tparrecd => 3) LOOP
+                                 ,pr_flgcnvsi => 0) LOOP
           vr_vltotger := vr_vltotger + rw_lft.vldtotal;
         END LOOP;
         
@@ -7537,7 +7539,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
         -- Lançamentos Faturas Sicred 
         FOR rw_lft IN cr_craplft (pr_cdcooper => pr_cdcooper
                                  ,pr_dtdpagto => vr_tab_per_datas(vr_idx).dtmvtolt
-                                 ,pr_tparrecd => 1) LOOP
+                                 ,pr_flgcnvsi => 1) LOOP
           vr_vltotger := vr_vltotger + rw_lft.vldtotal;
         END LOOP;
 
@@ -7576,62 +7578,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.flxf0001 AS
     IF pr_dscritic <> 'OK' THEN
       RETURN;
     END IF;
-    --> Fim SICREDI
-    
-    -- Inicializar valores para busca dos convênios Bancoob
-    vr_contador := 0;
-    vr_vlrmedia := 0;
-    vr_vltotger := 0;
-    
-    vr_idx := vr_tab_per_datas.first;
-    LOOP
-      EXIT WHEN vr_idx IS NULL;
-      
-      -- CAso utilizar base histórica
-      IF pr_flghistor THEN 
-        -- Buscar dos valores realizados e armazenados no fluxo financeiro BANCOOB
-        FOR rw_crapffm IN cr_crapffm_histor(pr_cdcooper => pr_cdcooper
-                                           ,pr_dtmvtolt => vr_tab_per_datas(vr_idx).dtmvtolt
-                                           ,pr_cdbccxlt => 756 
-                                           ,pr_tpdmovto => 2 --> Saida
-                                           ,pr_tpdcampo => 11 --> VLCONVEN
-                                           ) LOOP 
-          vr_vltotger := vr_vltotger + nvl(rw_crapffm.vllanmto,0);
-        END LOOP;
-      ELSE 
-        -- Lançamentos Faturas BANCOOB 
-        FOR rw_lft IN cr_craplft (pr_cdcooper => pr_cdcooper
-                                 ,pr_dtdpagto => vr_tab_per_datas(vr_idx).dtmvtolt
-                                 ,pr_tparrecd => 2) LOOP --> BANCOOB
-          vr_vltotger := vr_vltotger + rw_lft.vldtotal;
-        END LOOP;
-        
-      END IF;  
-      
-      vr_contador := vr_contador + 1;
-
-      vr_idx := vr_tab_per_datas.NEXT(vr_idx);
-    END LOOP;
-    
-    -- Se encontramos alguma ocorrência
-    IF vr_contador > 0 THEN 
-      vr_vlrmedia := vr_vlrmedia + (vr_vltotger  / vr_contador);
-    ELSE
-      vr_vlrmedia := 0;
-    END IF; 
-    
-    pc_grava_movimentacao(pr_cdcooper => pr_cdcooper     -- Codigo da Cooperativa
-                         ,pr_dtmvtolt => pr_dtmvtolt     -- Data de movimento
-                         ,pr_tpdmovto => 4               -- Tipo de movimento
-                         ,pr_cdbccxlt => 756             -- Codigo do banco/caixa.
-                         ,pr_tpdcampo => 11              -- Tipo de campo
-                         ,pr_vldcampo => vr_vlrmedia     -- Valor do campo
-                         ,pr_dscritic => pr_dscritic);
-
-    IF pr_dscritic <> 'OK' THEN
-      RETURN;
-    END IF;
-    --> Fim BANCOOB
 
     pr_dscritic := 'OK';
 

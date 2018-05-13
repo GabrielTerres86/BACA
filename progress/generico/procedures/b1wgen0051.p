@@ -26,9 +26,6 @@
 				26/06/2017 - Inclusao de novo tipo de demissao
 							 (Jonata - RKAM P364).
 
-                06/02/2018 -  Incluido campo cdcatego na tt-cabec. PRJ366 (Lombardi)
-
-                12/03/2018 - Alterado para buscar descricao do tipo de conta do oracle. PRJ366 (Lombardi).
 .............................................................................*/
 
 
@@ -39,7 +36,6 @@
 { sistema/generico/includes/var_internet.i}
 { sistema/generico/includes/gera_log.i}
 { sistema/generico/includes/gera_erro.i}
-{ sistema/generico/includes/var_oracle.i }
 
 DEF VAR aux_dscritic AS CHAR                                           NO-UNDO.
 DEF VAR aux_dstransa AS CHAR                                           NO-UNDO.
@@ -73,8 +69,6 @@ PROCEDURE Busca-Associado:
     DEF OUTPUT PARAM TABLE FOR tt-erro. 
 
     DEF VAR aux_returnvl AS CHAR                                    NO-UNDO.
-    DEF VAR aux_dstipcta AS CHAR                                    NO-UNDO.
-    DEF VAR aux_des_erro AS CHAR                                    NO-UNDO.
     
     DEF VAR h-b1wgen0031 AS HANDLE                                  NO-UNDO.
 
@@ -101,36 +95,18 @@ PROCEDURE Busca-Associado:
         CREATE tt-crapass.
         BUFFER-COPY crapass TO tt-crapass.
 
-        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+        /* Tipo da conta */
+        FIND craptip WHERE craptip.cdcooper = tt-crapass.cdcooper AND
+                           craptip.cdtipcta = tt-crapass.cdtipcta 
+                           NO-LOCK NO-ERROR.
 
-        RUN STORED-PROCEDURE pc_descricao_tipo_conta
-        aux_handproc = PROC-HANDLE NO-ERROR (INPUT tt-crapass.inpessoa,    /* tipo de pessoa */
-                                             INPUT tt-crapass.cdtipcta,    /* tipo de conta */
-                                            OUTPUT "",   /* Descricao do tipo de conta */
-                                            OUTPUT "",   /* Flag Erro */
-                                            OUTPUT "").  /* Descrição da crítica */
-        
-        CLOSE STORED-PROC pc_descricao_tipo_conta
-              aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
-
-        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
-        
-        ASSIGN aux_dstipcta = ""
-               aux_des_erro = ""
-               aux_dscritic = ""
-               aux_dstipcta = pc_descricao_tipo_conta.pr_dstipo_conta 
-                              WHEN pc_descricao_tipo_conta.pr_dstipo_conta <> ?
-               aux_des_erro = pc_descricao_tipo_conta.pr_des_erro 
-                              WHEN pc_descricao_tipo_conta.pr_des_erro <> ?
-               aux_dscritic = pc_descricao_tipo_conta.pr_dscritic
-                              WHEN pc_descricao_tipo_conta.pr_dscritic <> ?.
-        
-        IF aux_des_erro = "NOK"  THEN
+        IF   NOT AVAILABLE craptip   THEN
              DO:
+                ASSIGN aux_cdcritic = 017.
                 LEAVE Busca.
              END.
 
-        ASSIGN tt-crapass.dstipcta = CAPS(aux_dstipcta).
+        ASSIGN tt-crapass.dstipcta = CAPS(craptip.dstipcta).
 
         FIND crapage WHERE crapage.cdcooper = tt-crapass.cdcooper AND
                            crapage.cdagenci = tt-crapass.cdagenci 
@@ -284,9 +260,6 @@ PROCEDURE obtem-cabecalho:
     DEF OUTPUT PARAM TABLE FOR tt-erro. 
     DEF OUTPUT PARAM TABLE FOR tt-cabec. 
 
-    DEF VAR aux_dstipcta AS CHAR                                    NO-UNDO.
-    DEF VAR aux_des_erro AS CHAR                                    NO-UNDO.
-    
     DEF VAR h-b1wgen0031 AS HANDLE                                  NO-UNDO.
 
     DEF BUFFER crabttl FOR crapttl.
@@ -303,7 +276,7 @@ PROCEDURE obtem-cabecalho:
     Cabec: DO ON ERROR UNDO Cabec, LEAVE Cabec:
         FOR FIRST crapass FIELDS(cdcooper nrdconta inpessoa cdagenci 
                                  cdtipcta nrmatric nmprimtl nrcpfcgc 
-                                 cdsitdct cdcatego nrdctitg dtdemiss)
+                                 cdsitdct nrdctitg dtdemiss)
                           WHERE crapass.cdcooper = par_cdcooper AND
                                 crapass.nrdconta = par_nrdconta NO-LOCK: 
         END.
@@ -369,32 +342,15 @@ PROCEDURE obtem-cabecalho:
                  LEAVE Cabec.
              END.
 
-        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
-        
-        RUN STORED-PROCEDURE pc_descricao_tipo_conta
-        aux_handproc = PROC-HANDLE NO-ERROR (INPUT crapass.inpessoa,    /* tipo de pessoa */
-                                             INPUT crapass.cdtipcta,    /* tipo de conta */
-                                            OUTPUT "",   /* Descricao do tipo de conta */
-                                            OUTPUT "",   /* Flag Erro */
-                                            OUTPUT "").  /* Descrição da crítica */
-        
-        CLOSE STORED-PROC pc_descricao_tipo_conta
-              aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+        /* Tipo da conta */
+        FOR FIRST craptip FIELDS(dstipcta)
+                          WHERE craptip.cdcooper = crapass.cdcooper AND
+                                craptip.cdtipcta = crapass.cdtipcta NO-LOCK:
+        END.
 
-        { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
-        
-        ASSIGN aux_dstipcta = ""
-               aux_des_erro = ""
-               aux_dscritic = ""
-               aux_dstipcta = pc_descricao_tipo_conta.pr_dstipo_conta 
-                              WHEN pc_descricao_tipo_conta.pr_dstipo_conta <> ?
-               aux_des_erro = pc_descricao_tipo_conta.pr_des_erro 
-                              WHEN pc_descricao_tipo_conta.pr_des_erro <> ?
-               aux_dscritic = pc_descricao_tipo_conta.pr_dscritic
-                              WHEN pc_descricao_tipo_conta.pr_dscritic <> ?.
-
-        IF aux_des_erro = "NOK"  THEN
+        IF   NOT AVAILABLE craptip THEN
              DO:
+                 ASSIGN aux_cdcritic = 017.
                  LEAVE Cabec.
              END.
 
@@ -436,10 +392,9 @@ PROCEDURE obtem-cabecalho:
                                 THEN CAPS(gnetcvl.rsestcvl)
                                 ELSE "NAO INFORMADO"
             tt-cabec.cdtipcta = crapass.cdtipcta
-            tt-cabec.dstipcta = CAPS(aux_dstipcta)
+            tt-cabec.dstipcta = CAPS(craptip.dstipcta)
             tt-cabec.cdsitdct = crapass.cdsitdct
             tt-cabec.dssitdct = BuscaSitConta(tt-cabec.cdsitdct)
-            tt-cabec.cdcatego = crapass.cdcatego
             tt-cabec.nrdctitg = crapass.nrdctitg 
             tt-cabec.dtnasttl = IF AVAIL crapttl THEN 
                                    crapttl.dtnasttl 

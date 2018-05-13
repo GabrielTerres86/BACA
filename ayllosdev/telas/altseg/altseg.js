@@ -8,10 +8,7 @@
 //***					                                                                       ***//	 
 //***			  19/10/2017 - Correcao na exibicao do campo Prosseguir na opcao de Alteracao  ***//	 
 //***			               SD 770963 (Carlos Rafael Tanholi).                              ***//	 
-//***                                                                                          ***//
-//***             05/12/2017 - Correcao na exebicao do campo Prosseguir na opcao de Consulta   ***// 
-//***                          SD 782144 (Carlos Rafael Tanholi)                               ***//
-//************************************************************************************************//
+//*********************************************************************************************//
 
 // Definição de algumas variáveis globais 
 var cddopcao = 'C';
@@ -119,7 +116,8 @@ function formataCabecalho() {
 
 }
 
-function formataCamposBuscaSeguradora() {
+function formataCamposBuscaSeguradora()
+{
     rCdsegura = $('label[for="cdsegura"]', '#frmInfSeguradora');
     rTpseguro = $('label[for="tpseguro"]', '#frmInfSeguradora');
     rTpplaseg = $('label[for="tpplaseg"]', '#frmInfSeguradora');
@@ -142,7 +140,8 @@ function formataCamposBuscaSeguradora() {
 	
 }
 
-function formataCamposPrestamistaVida() {
+function formataCamposPrestamistaVida()
+{
     rDsmoradaPV = $('label[for="dsmorada"]', '#frmInfPlano');
     rVlplasegPV = $('label[for="vlplaseg"]', '#frmInfPlano');
     rDsocupacPV = $('label[for="dsocupac"]', '#frmInfPlano');
@@ -360,7 +359,8 @@ function formataCamposPrestamistaVida() {
 	
 }
 
-function formataCamposCasa() {
+function formataCamposCasa()
+{
     rDsmoradaC = $('label[for="dsmorada"]', '#frmInfPlanoCasa');
     rVlplasegC = $('label[for="vlplaseg"]', '#frmInfPlanoCasa');
     rDsocupacC = $('label[for="dsocupac"]', '#frmInfPlanoCasa');
@@ -869,7 +869,8 @@ function consultaPlano() {
                 try {
                     cTodosBuscaSeguradora.desabilitaCampo();
                     hideMsgAguardo();
-                    if (cTpseguro.val() == "11" && cTpplaseg.val() != "" && cTpplaseg.val() != "0") {
+                    if (cTpseguro.val() == "11" && cTpplaseg.val() != "" && cTpplaseg.val() != "0")
+                    {
                         eval(response);
                         cTpplaseg.removeClass('campoErro');
                         
@@ -883,13 +884,14 @@ function consultaPlano() {
                         /*habilita campos para alteração*/
 
                         if (cddopcao == "C") {
-                            $('#btSalvar', '#divBotoes').show().focus();
+                            $('#btSalvar', '#divBotoes').focus();
                         } else {
                             cDsmoradaC.focus();
                             $('#btSalvar', '#divBotoes').show();
                         }
 
-                    } else if (cTpseguro.val() != "11" && cTpplaseg.val() != "" && cTpplaseg.val() != "0") {
+                    } else if (cTpseguro.val() != "11" && cTpplaseg.val() != "" && cTpplaseg.val() != "0")
+                    {
                         eval(response);
                         $('#frmInfPlano').css({'display': 'block'});
                         cTpplaseg.removeClass('campoErro');
@@ -907,7 +909,8 @@ function consultaPlano() {
 
                         }
 
-                    } else if (cTpplaseg.val() == "" || cTpplaseg.val() == "0") {
+                    } else if (cTpplaseg.val() == "" || cTpplaseg.val() == "0")
+                    {
                         $('#btSalvar', '#divBotoes').hide();
                         formataTabPlanoSeguro();
                     } else {
@@ -941,15 +944,18 @@ function controlaOperacao() {
 
 	if (cTpplaseg.hasClass('campoTelaSemBorda')) {
 	
-        if (cddopcao == "C" && $('#frmInfPlanoCasa').css('display') == "block") {
+        if (cddopcao == "C" && $('#frmInfPlanoCasa').css('display') == "block")
+        {		
             buscarGarantias();
             $('#frmInfPlanoCasa').css({'display': 'none'});
             $('#frmTabGarantia').css({'display': 'block'});
             $('#btSalvar', '#divBotoes').hide();
 			
-        } else if (cddopcao == "A") {
+        } else if (cddopcao == "A")
+        { 
             showConfirmacao("078 - Confirma a opera&ccedil;&atilde;o?", "Confirma&ccedil;&atilde;o - Ayllos", "realizaOperacao();", "", "sim.gif", "nao.gif");
-        } else if (cddopcao == "I") {
+        } else if (cddopcao == "I")
+        { 
             showConfirmacao("078 - Confirma a opera&ccedil;&atilde;o?", "Confirma&ccedil;&atilde;o - Ayllos", "realizaOperacao();", "", "sim.gif", "nao.gif");
         }else if (cddopcao == "K"){
 			
@@ -981,12 +987,14 @@ function controlaOperacao() {
 function realizaOperacao() {
 
     // Mostra mensagem de aguardo.
-    if (cInplasegC.val() == '1') {
+    if (cInplasegC.val() == '1')
+    {
         cInplasegC.val('1');
     } else {
         cInplasegC.val('0');
     }
-    if (cInplasegPV.val() == '1') {
+    if (cInplasegPV.val() == '1')
+    {
         cInplasegPV.val('1');
     } else {
         cInplasegPV.val('0');
@@ -1007,7 +1015,8 @@ function realizaOperacao() {
         mmpripag = cMmpripagC.val();
         qtdiacar = cQtdiacarC.val();
         qtmaxpar = cQtmaxparC.val();
-    } else {
+    } else
+    {
         dsmorada = cDsmoradaPV.val();
         vlplaseg = cVlplasegPV.val();
         dsocupac = cDsocupacPV.val();

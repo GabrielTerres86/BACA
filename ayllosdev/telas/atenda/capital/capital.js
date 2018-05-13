@@ -1,7 +1,7 @@
 /**********************************************************************
   Fonte: capital.js                                                
   Autor: David													   
-  Data : Outubro/2007                 Ultima Alteracao: 16/01/2018
+  Data : Outubro/2007                 Ultima Alteracao: 14/11/2017
                                                                    
   Objetivo  : Biblioteca de funcoes da rotina Capital da tela      
               ATENDA                                               
@@ -33,12 +33,6 @@
               14/11/2017 - Ajuste permitir não permitir acesso a opção de integralização quando
                            (Jonata - RKAM P364).
  					
-			  16/01/2018 - Aumentado tamanho do campo de senha para 30 caracteres. (PRJ339 - Reinert)						   
-
-			  04/04/2018 - Chamada da rotina para verificar se o tipo de conta permite produto 
-                           15 - Plano de Cotas. Ajuste para chamar a rotina de senha do coordenador. 
-						   PRJ366 (Lombardi).
- 					
 *************************************************************************/
 
 var callafterCapital = '';
@@ -48,7 +42,6 @@ var lstEstorno = new Array();
 var glb_opcao = "";
 
 var vintegra = 0;
-
 
 // Fun&ccedil;&atilde;o para acessar op&ccedil;&otilde;es da rotina
 function acessaOpcaoAba(nrOpcoes, id, opcao) {
@@ -304,9 +297,6 @@ function validaNovoPlano(altera) {
         showError("error", "Data de in&iacute;cio do plano inv&aacute;lida.", "Alerta - Ayllos", "$('#dtdpagto','#frmNovoPlano').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
 		return false;
 	}
-	
-	// Verifica se tipo de conta permite produto 15 – Plano de Cotas
-	validaAdesaoProduto(nrdconta, 15, '');
 	
 	// Executa script de valida&ccedil;&atilde;o do plano atrav&eacute;s de ajax
 	$.ajax({		
@@ -845,7 +835,7 @@ function formataSenha() {
     cSenha = $('#codsenha', '#frmSenha');
 	
     cOperador.addClass('campo').css({ 'width': '100px' }).attr('maxlength', '10');
-    cSenha.addClass('campo').css({ 'width': '100px' }).attr('maxlength', '30');
+    cSenha.addClass('campo').css({ 'width': '100px' }).attr('maxlength', '10');
 	
     $('#divConteudoSenha').css({ 'width': '400px', 'height': '120px' });
 
@@ -920,8 +910,4 @@ function controlaBotoes(tipo) {
     }
 
     
-}
-    
-function senhaCoordenador(executaDepois) {
-	pedeSenhaCoordenador(2,executaDepois,'divRotina');
 }

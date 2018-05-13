@@ -22,10 +22,6 @@
  *				  11/07/2017 - Inclusao das novas colunas e campos "Tipo de tarifacao", "Percentual", "Valor Minimo" e
  *                             "Valor Maximo" (Mateus - MoutS)
  *
- *                09/02/2018 - Ajuste feito para que a tela seja aberta no navegador IE. (SD 840276 - Kelvin)
- *
- *				  01/03/2018 - Ajuste na insercao do detalhamento da tarifa. (SD 848069 - Kelvin)
- *
  * -------------- 
  */
 
@@ -43,8 +39,8 @@ var frmVinculacaoParametro = 'frmVinculacaoParametro';
 //Labels/Campos do cabeçalho
 var rCddopcao, rcdsubgru, rCdsubgru, cCddopcao, cDssubgru, cCdsubgru, cTodosCabecalho, cCdfaixav, cCdpartar, glbTabCdpartar,
 glbTabCdfaixav, glbTabVlinifvl, glbTabVlfinfvl, glbTabCdhistor, glbTabCdhisest, glbTabDshistor, glbTabDshisest,
-glbFcoCdcooper, glbFcoDtdivulg,	glbFcoDtvigenc,	glbFcoVltarifa, gblFcoVlpertar,	glbFcoVlrepass, glbFcoCdfaixav, glbFcoNmrescop, glbFcoCdfvlcop,
-gblFcoVlmaxtar, gblFcoVlmintar, glbFcoNrconven, glbFcoDsconven, glbFcoCdlcremp, glbFcoDslcremp, gblFcoTpcobtar;
+glbFcoCdcooper, glbFcoDtdivulg,	glbFcoDtvigenc,	glbFcoVltarifa,	glbFcoVlrepass, glbFcoCdfaixav, glbFcoNmrescop, glbFcoCdfvlcop,
+glbFcoNrconven, glbFcoDsconven, glbFcoCdlcremp, glbFcoDslcremp;
 
 var lstconve;
 var lstcdfvl;
@@ -674,11 +670,8 @@ function carregaDetalhamento(){
 	return false;		
 }
 
-function carregaAtribuicaoDetalhamento( cdfaixav, nriniseq, flgCarregando){
-	
-	nriniseq = 1;
-	flgCarregando = false;
-	
+function carregaAtribuicaoDetalhamento( cdfaixav, nriniseq = 1, flgCarregando = false){
+
 	if(flgCarregando == true){
 		showMsgAguardo("Aguarde, carregando...");
 	}
@@ -2671,13 +2664,9 @@ function buscaAtribuicaoDetalhamento(cdatrdet) {
 	if (cdatrdet == 'I'){
 		glbFcoVltarifa = '0';
 		glbFcoVlrepass = '0';	
-		gblFcoVlpertar = '0';	
-		gblFcoVlmintar = '0';
-		gblFcoVlmaxtar = '0';
 		glbFcoCdfvlcop = '';
 		glbFcoNrconven = '';
 		glbFcoCdlcremp = '';
-		gblFcoTpcobtar = ''; 
 	}	
 
 	var vltarifa2 = number_format(glbFcoVltarifa,2,',','');	

@@ -177,8 +177,6 @@
 			                solicitação feita no chamado 549118 (Renato Darosci - Supero)
                       
                08/08/2017 - Incluido o campo "Habilitar Acesso CRM". (Reinert - Projeto 339)
-               
-               24/11/2017 - Melhoria 458, Adicionado campo tel_insaqesp "Libera Saque Especie" - (Antonio R Junior - Mouts)
 ............................................................................. */
 
 { includes/var_online.i }
@@ -206,7 +204,6 @@ DEF        VAR tel_flgperac AS LOGICAL FORMAT "Sim/Nao"              NO-UNDO.
 DEF        VAR tel_flgdopgd AS LOGICAL FORMAT "Sim/Nao"              NO-UNDO.
 DEF        VAR tel_flgacres AS LOGICAL FORMAT "Sim/Nao"              NO-UNDO.
 DEF        VAR tel_flgdonet AS LOGICAL FORMAT "Sim/Nao"              NO-UNDO.
-DEF        VAR tel_insaqesp AS LOGICAL INITIAL FALSE FORMAT "Sim/Nao" NO-UNDO.
 DEF        VAR tel_flgutcrm AS LOGICAL FORMAT "Sim/Nao"              NO-UNDO.
 DEF        VAR tel_flgcarta AS LOGICAL                               NO-UNDO.
 
@@ -228,7 +225,6 @@ DEF        VAR log_cdagenci AS INTE                                  NO-UNDO.
 DEF        VAR log_cdcomite AS INTE                                  NO-UNDO.
 DEF        VAR log_dscomite AS CHAR                                  NO-UNDO.
 DEF        VAR log_flgdonet AS LOGICAL FORMAT "Sim/Nao"              NO-UNDO.
-DEF        VAR log_insaqesp AS LOGICAL FORMAT "Sim/Nao"              NO-UNDO.
 DEF        VAR log_flgdopgd AS LOGICAL FORMAT "Sim/Nao"              NO-UNDO.
 DEF        VAR log_flgacres AS LOGICAL FORMAT "Sim/Nao"              NO-UNDO.
 DEF        VAR log_flgperac AS LOGICAL FORMAT "Sim/Nao"              NO-UNDO.
@@ -327,10 +323,6 @@ FORM SKIP
      
      tel_flgdonet AT  3 LABEL "Acessar Sistema Ayllos WEB"
          HELP "Informe SIM para liberar a tela Ayllos WEB."
-     
-     tel_insaqesp AT  40 LABEL "Libera Saque Especie"
-         HELP "Informe SIM para liberar saque especie."
-
      tel_flgdopgd AT  8 LABEL "Aces. Sist. de Relac." 
          HELP "Informe SIM para liberar acesso ao Sistema de Relacionamento"
      SKIP     
@@ -358,7 +350,7 @@ FORM SKIP
      SKIP
      tel_vlapvcap AT 02 LABEL "Valor da Alcada de Captacao"
          HELP "Informe o valor da alcada de captacao."
-     tel_flgutcrm AT 46 LABEL "Habilitar acesso CRM" HELP "Informe SIM para liberar o acesso ao CRM."        
+     tel_flgutcrm AT 46 LABEL "Habilitar Acesso CRM" HELP "Informe SIM para liberar o acesso ao CRM."        
      WITH ROW 5 COLUMN 2 OVERLAY NO-BOX SIDE-LABELS FRAME f_operad.
 
 FORM SKIP(1)
@@ -655,7 +647,6 @@ DO WHILE TRUE:
                   tel_flgacres = crapope.flgacres
                   tel_vlpagchq = crapope.vlpagchq
                   tel_flgdonet = crapope.flgdonet
-                  tel_insaqesp = crapope.insaqesp
                   tel_cdcomite = crapope.cdcomite
                   tel_vlalccre = crapope.vlapvcre
                   tel_vlapvcap = crapope.vlapvcap
@@ -668,7 +659,6 @@ DO WHILE TRUE:
                   log_cdagenci = tel_cdagenci
                   log_flgdopgd = tel_flgdopgd
                   log_flgdonet = tel_flgdonet
-                  log_insaqesp = tel_insaqesp
                   log_flgcarta = tel_flgcarta     
                   log_flgacres = tel_flgacres
                   log_vlapvcap = tel_vlapvcap
@@ -690,7 +680,7 @@ DO WHILE TRUE:
            DISPLAY tel_nmoperad tel_nvoperad tel_flgperac tel_tpoperad 
                    tel_flgcarta tel_flgacres tel_dssitope tel_cddepart
                    tel_dsdepart tel_cdagenci tel_cdpactra
-                   tel_flgdonet tel_flgdopgd tel_vlpagchq tel_insaqesp
+                   tel_flgdonet tel_flgdopgd tel_vlpagchq
                    tel_cdcomite WHEN crapcop.flgcmtlc
                    tel_dscomite WHEN crapcop.flgcmtlc
                    tel_vlalccre tel_vlapvcap tel_flgutcrm
@@ -702,7 +692,6 @@ DO WHILE TRUE:
                   tel_flgcarta WHEN NOT AVAIL crapcrm
                   tel_cdagenci  /*Somente op. CEDRED alteram este campo*/
                   tel_flgdonet 
-                  tel_insaqesp
                   tel_flgdopgd
                   tel_flgacres WHEN tel_flgdopgd = TRUE
                   WITH FRAME f_operad   
@@ -883,7 +872,6 @@ DO WHILE TRUE:
                       crapope.tpoperad = aux_inpostip
                       crapope.cdagenci = tel_cdagenci
                       crapope.flgdonet = tel_flgdonet
-                      crapope.insaqesp = tel_insaqesp
                       crapope.cddepart = tel_cddepart.
                
                IF   log_nmoperad <> tel_nmoperad   THEN
@@ -902,11 +890,6 @@ DO WHILE TRUE:
                     RUN gera_log ("Acessar Sistema Ayllos INTRANET",
                                   STRING(log_flgdonet,"Sim/Nao"),
                                   STRING(tel_flgdonet,"Sim/Nao")).
-               
-               IF   log_insaqesp <> tel_insaqesp   THEN
-                    RUN gera_log ("Libera Saque Especie",
-                                  STRING(log_insaqesp,"Sim/Nao"),
-                                  STRING(tel_insaqesp,"Sim/Nao")).
                
                IF   log_flgperac <> tel_flgperac  THEN
                     RUN gera_log ("Acessar contas restritas",
@@ -1065,7 +1048,6 @@ DO WHILE TRUE:
                   tel_flgacres = crapope.flgacres
                   tel_vlpagchq = crapope.vlpagchq
                   tel_flgdonet = crapope.flgdonet
-                  tel_insaqesp = crapope.insaqesp
                   tel_cdcomite = crapope.cdcomite
                   tel_vlalccre = crapope.vlapvcre
                   tel_vlapvcap = crapope.vlapvcap       
@@ -1076,7 +1058,7 @@ DO WHILE TRUE:
            DISPLAY tel_nmoperad tel_nvoperad tel_flgperac tel_tpoperad 
                    tel_dssitope tel_flgcarta tel_cdagenci tel_cdpactra
                    tel_flgdopgd tel_flgacres tel_vlpagchq
-                   tel_flgdonet tel_insaqesp tel_cdcomite WHEN crapcop.flgcmtlc
+                   tel_flgdonet tel_cdcomite WHEN crapcop.flgcmtlc
                    tel_dscomite WHEN crapcop.flgcmtlc
                    tel_vlalccre tel_vlapvcap tel_flgutcrm
                    WITH FRAME f_operad.
@@ -1177,7 +1159,6 @@ DO WHILE TRUE:
                    tel_vlpagchq = crapope.vlpagchq
                    tel_vllimted = crapope.vllimted
                    tel_flgdonet = crapope.flgdonet
-                   tel_insaqesp = crapope.insaqesp
                    tel_cdcomite = crapope.cdcomite
                    tel_vlalccre = crapope.vlapvcre
                    tel_vlapvcap = crapope.vlapvcap
@@ -1189,7 +1170,7 @@ DO WHILE TRUE:
                     tel_dssitope tel_cddepart tel_dsdepart tel_cdagenci 
                     tel_cdpactra tel_flgdopgd tel_flgacres
                     tel_vlpagchq tel_vllimted
-                    tel_flgdonet tel_insaqesp
+                    tel_flgdonet
                     tel_cdcomite WHEN crapcop.flgcmtlc
                     tel_dscomite WHEN crapcop.flgcmtlc
                     tel_vlalccre tel_vlapvcap tel_flgutcrm
@@ -1220,7 +1201,6 @@ DO WHILE TRUE:
                    tel_flgdopgd = FALSE
                    tel_flgacres = FALSE
                    tel_flgdonet = TRUE
-                   tel_insaqesp = FALSE
                    tel_cddepart = 0
                    tel_dsdepart = ""
                    tel_vlapvcap = 0
@@ -1236,7 +1216,6 @@ DO WHILE TRUE:
                       tel_flgcarta
                       tel_cdagenci /*Somente op.CECRED podem alterar o campo*/
                       tel_flgdonet
-                      tel_insaqesp
                       WITH FRAME f_operad
                   
                EDITING:
@@ -1457,7 +1436,6 @@ DO WHILE TRUE:
                          crapope.flgdopgd = tel_flgdopgd
                          crapope.flgacres = tel_flgacres
                          crapope.flgdonet = tel_flgdonet
-                         crapope.insaqesp = tel_insaqesp
                          crapope.cddepart = tel_cddepart
                          crapope.vlapvcap = tel_vlapvcap
                          crapope.flgutcrm = tel_flgutcrm.
@@ -1805,7 +1783,6 @@ DO WHILE TRUE:
                    tel_flgacres = crapope.flgacres
                    tel_vlpagchq = crapope.vlpagchq
                    tel_flgdonet = crapope.flgdonet
-                   tel_insaqesp = crapope.insaqesp
                    tel_cdcomite = crapope.cdcomite
                    tel_vlalccre = crapope.vlapvcre
                    tel_vlapvcap = crapope.vlapvcap
@@ -1818,7 +1795,7 @@ DO WHILE TRUE:
                     tel_cddepart tel_dsdepart 
                     tel_cdagenci tel_cdpactra
                     tel_flgdopgd tel_flgacres
-                    tel_vlpagchq tel_flgdonet tel_insaqesp
+                    tel_vlpagchq tel_flgdonet
                     tel_cdcomite WHEN crapcop.flgcmtlc
                     tel_dscomite WHEN crapcop.flgcmtlc
                     tel_vlalccre tel_vlapvcap tel_flgutcrm
@@ -1918,7 +1895,6 @@ DO WHILE TRUE:
                      tel_vlpagchq = crapope.vlpagchq
                      tel_vllimted = crapope.vllimted
                      tel_flgdonet = crapope.flgdonet
-                     tel_insaqesp = crapope.insaqesp
                      tel_cdcomite = crapope.cdcomite
                      tel_vlalccre = crapope.vlapvcre
                      tel_vlapvcap = crapope.vlapvcap
@@ -1931,7 +1907,7 @@ DO WHILE TRUE:
                       tel_cddepart tel_dsdepart
                       tel_flgdopgd tel_flgacres
                       tel_vlpagchq tel_vllimted
-                      tel_flgdonet tel_insaqesp
+                      tel_flgdonet
                       tel_cdcomite WHEN crapcop.flgcmtlc
                       tel_dscomite WHEN crapcop.flgcmtlc
                       tel_vlalccre tel_vlapvcap tel_flgutcrm
@@ -2227,7 +2203,6 @@ DO WHILE TRUE:
                     tel_flgacres = crapope.flgacres
                     tel_vlpagchq = crapope.vlpagchq
                     tel_flgdonet = crapope.flgdonet
-                    tel_insaqesp = crapope.insaqesp
                     tel_cdcomite = crapope.cdcomite
                     tel_vlalccre = crapope.vlapvcre
                     tel_vlapvcap = crapope.vlapvcap
@@ -2239,7 +2214,7 @@ DO WHILE TRUE:
                      tel_dssitope tel_cdagenci tel_cdpactra
                      tel_cddepart tel_dsdepart
                      tel_flgdopgd tel_flgacres
-                     tel_vlpagchq tel_flgdonet tel_insaqesp
+                     tel_vlpagchq tel_flgdonet
                      tel_cdcomite WHEN crapcop.flgcmtlc
                      tel_dscomite WHEN crapcop.flgcmtlc
                      tel_vlalccre tel_vlapvcap tel_flgutcrm
@@ -2305,7 +2280,6 @@ DO WHILE TRUE:
                      tel_flgacres = crapope.flgacres
                      tel_vlpagchq = crapope.vlpagchq
                      tel_flgdonet = crapope.flgdonet
-                     tel_insaqesp = crapope.insaqesp
                      tel_cdcomite = crapope.cdcomite
                      tel_vlalccre = crapope.vlapvcre
                      tel_vlapvcap = crapope.vlapvcap
@@ -2317,7 +2291,7 @@ DO WHILE TRUE:
                       tel_dssitope tel_cdagenci tel_cdpactra
                       tel_cddepart tel_dsdepart
                       tel_flgdopgd tel_flgacres
-                      tel_vlpagchq tel_flgdonet tel_insaqesp
+                      tel_vlpagchq tel_flgdonet
                       tel_cdcomite WHEN crapcop.flgcmtlc
                       tel_dscomite WHEN crapcop.flgcmtlc
                       tel_vlalccre tel_vlapvcap tel_flgutcrm
@@ -2374,14 +2348,13 @@ PROCEDURE limpa:
            tel_vlpagchq = 0
            tel_vlalccre = 0
            tel_flgdonet = TRUE
-           tel_insaqesp = TRUE
            tel_cdcomite = 0.
     
     RUN atualiza_dscomite.
     
     DISPLAY tel_nmoperad tel_tpoperad tel_nvoperad tel_flgperac
             tel_dssitope tel_cddepart tel_dsdepart tel_flgcarta
-            tel_vlpagchq tel_flgdonet tel_insaqesp
+            tel_vlpagchq tel_flgdonet
             tel_cdcomite WHEN crapcop.flgcmtlc
             tel_dscomite WHEN crapcop.flgcmtlc
             tel_vlalccre tel_cdpactra tel_cdagenci

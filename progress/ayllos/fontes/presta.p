@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Deborah/Edson
-   Data    : Fevereiro/94.                      Ultima atualizacao: 30/01/2017
+   Data    : Fevereiro/94.                      Ultima atualizacao: 20/01/2015
 
    Dados referentes ao programa:
 
@@ -38,10 +38,6 @@
                
                20/01/2015 - Alterado o formato do campo nrctremp para 8 
                             caracters (Kelvin - 233714)             
-
-               30/01/2017 - Nao permitir alterar valor da prestacao para o produto Pos-Fixado.
-                            (Jaison/James - PRJ298)
-
 ............................................................................. */
 
 { includes/ctremp.i "NEW" }
@@ -370,8 +366,7 @@ DO WHILE TRUE:
             NEXT.
         END.
    
-   IF crapepr.tpemprst = 1   OR
-      crapepr.tpemprst = 2   THEN 
+   IF crapepr.tpemprst = 1   THEN 
         DO:
             MESSAGE "Operacao invalida para esse tipo de contrato.".
             NEXT.

@@ -2,7 +2,7 @@
 
     Programa: xb1wgen0059.p
     Autor   : Jose Luis
-    Data    : Marco/2010                   Ultima atualizacao: 31/10/2017
+    Data    : Marco/2010                   Ultima atualizacao: 15/07/2017
 
     Objetivo  : BO de Comunicacao XML x BO Generica de Buscas (b1wgen0059.p)
 
@@ -66,17 +66,7 @@
 
 				23/03/2017 - Adicionado tratamento na procedure Busca-Agencia. (PRJ321 - Reinert)
 
-                29/03/2017 - Criacao do novo parametro aux_tpprodut na busca_linhas_credito.
-                             (Jaison/James - PRJ298)
-
 				15/07/2017 - Nova procedure. busca-crapass para listar os associados. (Mauro).
-
-                31/10/2017 - Passagem do tpctrato. (Jaison/Marcos Martini - PRJ404)
-
-                
-                13/03/2018 - Removida procedure "Busca_Tipo_Conta" pois nao e mais usada. 
-                             PRJ366 (Lombardi).
-
 .............................................................................*/
 
                                                                              
@@ -210,8 +200,6 @@ DEF VAR aux_inpessoa AS INTE                                           NO-UNDO.
 DEF VAR aux_nmprimtl AS CHAR                                           NO-UNDO.
 DEF VAR aux_cdrelacionamento AS INTE                                   NO-UNDO.
 DEF VAR aux_dsrelacionamento AS CHAR                                   NO-UNDO.
-DEF VAR aux_tpctrato AS INTE                                           NO-UNDO.
-DEF VAR aux_tpprodut AS INTE INIT ?                                    NO-UNDO.
 
 { sistema/generico/includes/var_internet.i }
 { sistema/generico/includes/supermetodos.i }
@@ -368,8 +356,6 @@ PROCEDURE valores_entrada:
             WHEN "nmprimtl" THEN aux_nmprimtl = tt-param.valorCampo.            
             WHEN "cdrelacionamento" THEN aux_cdrelacionamento = INTE(tt-param.valorCampo).
             WHEN "dsrelacionamento" THEN aux_dsrelacionamento = tt-param.valorCampo.
-            WHEN "tpctrato" THEN aux_tpctrato = INT(tt-param.valorCampo).
-            WHEN "tpprodut" THEN aux_tpprodut = INT(tt-param.valorCampo).
                 
         END CASE.
 
@@ -1395,6 +1381,46 @@ PROCEDURE Busca_Destino_Extrato:
 
 END PROCEDURE.
 
+PROCEDURE Busca_Tipo_Conta:
+
+    RUN carrega-objeto.
+
+    RUN busca-craptip IN h-b1wgen0059
+        ( INPUT aux_cdcooper,
+          INPUT aux_cdtipcta,
+          INPUT aux_dstipcta,
+          INPUT (IF aux_nrregist = 0 THEN 1 ELSE aux_nrregist),
+          INPUT aux_nriniseq,
+         OUTPUT aux_qtregist,
+         OUTPUT TABLE tt-craptip ).
+
+    IF  LOOKUP(RETURN-VALUE,"OK,") = 0 THEN
+        DO:
+            FIND FIRST tt-erro NO-LOCK NO-ERROR.
+
+            IF  NOT AVAILABLE tt-erro  THEN
+                DO:
+                    CREATE tt-erro.
+                    ASSIGN tt-erro.dscritic = "Nao foi possivel concluir a " +
+                                              "busca de dados.".
+                END.
+
+            RUN piXmlSaida (INPUT TEMP-TABLE tt-erro:HANDLE,
+                            INPUT "Erro").
+        END.
+    ELSE
+        DO:
+            RUN piXmlNew.
+            RUN piXmlExport (INPUT TEMP-TABLE tt-craptip:HANDLE,
+                             INPUT "TipoConta").
+            RUN piXmlAtributo (INPUT "qtregist",INPUT STRING(aux_qtregist)).
+            RUN piXmlSave.
+        END.
+
+    RUN remove-objeto.
+
+END PROCEDURE.
+
 PROCEDURE zoom-associados:
 
     RUN carrega-objeto.
@@ -1691,7 +1717,6 @@ PROCEDURE busca_linhas_credito:
                       INPUT aux_nrregist, 
                       INPUT aux_nriniseq, 
                       INPUT aux_cdmodali,
-                      INPUT aux_tpprodut,
                      OUTPUT aux_qtregist, 
                      OUTPUT TABLE tt-craplcr ).
 
@@ -1985,7 +2010,6 @@ PROCEDURE busca_aditivos:
         ( INPUT aux_cdcooper,
           INPUT aux_nrdconta,
           INPUT aux_nrctremp,
-          INPUT aux_tpctrato,
           INPUT aux_nrregist, 
           INPUT aux_nriniseq, 
          OUTPUT aux_qtregist, 

@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Edson
-   Data    : Janeiro/94.                         Ultima atualizacao: 16/04/2018
+   Data    : Janeiro/94.                         Ultima atualizacao: 21/01/2015
 
    Dados referentes ao programa:
 
@@ -59,9 +59,7 @@
                             posicoes (Tiago/Gielow SD137074).
                
                21/01/2015 - Alterado o formato do campo nrctremp para 8 
-                            caracters (Kelvin - 233714)
-               
-               16/04/2018 - P410 - Melhorias/Ajustes IOF (Marcos-Envolti)              
+                            caracters (Kelvin - 233714)             
 ............................................................................. */
 
 DEF {1} SHARED VAR tel_dtmvtolt AS DATE    FORMAT "99/99/9999"          NO-UNDO.
@@ -136,6 +134,9 @@ DEF {1} SHARED VAR aux_indebcre AS CHAR                                 NO-UNDO.
 DEF {1} SHARED VAR aux_inhistor AS INT                                  NO-UNDO.
 
 DEF {1} SHARED VAR tab_diapagto AS INT                                  NO-UNDO.
+DEF {1} SHARED VAR tab_dtiniiof AS DATE FORMAT "99/99/9999"             NO-UNDO.
+DEF {1} SHARED VAR tab_dtfimiof AS DATE FORMAT "99/99/9999"             NO-UNDO.
+DEF {1} SHARED VAR tab_txiofepr AS DECIMAL FORMAT "zzzzzzzz9,999999"    NO-UNDO.
 
 DEF {1} SHARED VAR tab_nrctabol AS INT                                  NO-UNDO.
 DEF {1} SHARED VAR tab_cdlcrbol AS INT                                  NO-UNDO.

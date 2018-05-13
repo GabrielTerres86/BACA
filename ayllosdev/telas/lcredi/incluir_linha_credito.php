@@ -1,6 +1,6 @@
 <?php
 /*!
- * FONTE        : incluir_linha_credito.php                    Última alteração: 10/10/2017
+ * FONTE        : incluir_linha_credito.php                    Última alteração: 09/09/2016
  * CRIAÇÃO      : Andrei (RKAM)
  * DATA CRIAÇÃO : Julho/2016 
  * OBJETIVO     : Rotina para incluir uma linha de crédito
@@ -10,10 +10,6 @@
 
 			       09/09/2016 - Ajuste para pegar corretamente o valor do parametro consaut
 								(Adriano)
-
-                   27/03/2017 - Inclusao dos campos Produto e Indexador. (Jaison/James - PRJ298)
-
-                   10/10/2017 - Inclusao do campo % Mínimo Garantia e opção 4 no campo Modelo. (Lombardi - PRJ404)
  */
 ?>
 
@@ -43,7 +39,6 @@
   $tpdescto = (isset($_POST["tpdescto"])) ? $_POST["tpdescto"] : 0;
   $tpctrato = (isset($_POST["tpctrato"])) ? $_POST["tpctrato"] : 0;
   $nrdevias = (isset($_POST["nrdevias"])) ? $_POST["nrdevias"] : 0;
-  $permingr = (isset($_POST["permingr"])) ? $_POST["permingr"] : 0;
   $flgrefin = (isset($_POST["flgrefin"])) ? $_POST["flgrefin"] : 0;
   $flgreneg = (isset($_POST["flgreneg"])) ? $_POST["flgreneg"] : 0;
   $cdusolcr = (isset($_POST["cdusolcr"])) ? $_POST["cdusolcr"] : 0;
@@ -78,8 +73,6 @@
   $flgsegpr = (isset($_POST["flgsegpr"])) ? $_POST["flgsegpr"] : 0;
   $cdhistor = (isset($_POST["cdhistor"])) ? $_POST["cdhistor"] : 0;
   $finalidades = (isset($_POST["finalidades"])) ? $_POST["finalidades"] : '';
-  $tpprodut = (isset($_POST["tpprodut"])) ? $_POST["tpprodut"] : 0;
-  $cddindex = (isset($_POST["cddindex"])) ? $_POST["cddindex"] : 0;
     
   validaDados();
   
@@ -160,9 +153,6 @@
   $xml 	   .= "     <flgsegpr>".$flgsegpr."</flgsegpr>";
   $xml 	   .= "     <cdhistor>".$cdhistor."</cdhistor>";
   $xml 	   .= "     <cdfinali>".$cdfinali."</cdfinali>";
-  $xml 	   .= "     <tpprodut>".$tpprodut."</tpprodut>";
-  $xml 	   .= "     <cddindex>".$cddindex."</cddindex>";
-  $xml 	   .= "     <permingr>".$permingr."</permingr>";
 	$xml 	   .= "  </Dados>";
 	$xml 	   .= "</Root>";
 	
@@ -210,16 +200,12 @@
 			exibirErro('error','Tipo inv&aacute;lido.','Alerta - Ayllos','formataFormularioConsulta();focaCampoErro(\'tpdescto\',\'frmConsulta\');',false);
 		}
    
-    IF($GLOBALS["tpctrato"] != 1 && $GLOBALS["tpctrato"] != 2 && $GLOBALS["tpctrato"] != 3 && $GLOBALS["tpctrato"] != 4){ 
+    IF($GLOBALS["tpctrato"] != 1 && $GLOBALS["tpctrato"] != 2 && $GLOBALS["tpctrato"] != 3){ 
 			exibirErro('error','Modelo de contrato inv&aacute;lido.','Alerta - Ayllos','formataFormularioConsulta();focaCampoErro(\'tpctrato\',\'frmConsulta\');',false);
 		}
     
     IF($GLOBALS["nrdevias"] == 0){ 
 			exibirErro('error','N&uacute;mero de vias inv&aacute;lido.','Alerta - Ayllos','formataFormularioConsulta();focaCampoErro(\'nrdevias\',\'frmConsulta\');',false);
-		}
-    
-	IF(($GLOBALS["permingr"] < 0.01 && $GLOBALS["tpctrato"] == 4) || $GLOBALS["permingr"] > 300){ 
-			exibirErro('error','% M&iacute;nimo Garantia inv&aacute;lida.','Alerta - Ayllos','formataFormularioConsulta();focaCampoErro(\'permingr\',\'frmConsulta\');',false);
 		}
     
     IF($GLOBALS["cdusolcr"] != 0 && $GLOBALS["cdusolcr"] != 1 && $GLOBALS["cdusolcr"] != 2){ 
@@ -233,11 +219,6 @@
     IF($GLOBALS["cdsubmod"] == ''){ 
 			exibirErro('error','C&oacute;digo da submodalidade inv&aacute;lida.','Alerta - Ayllos','formataFormularioConsulta();focaCampoErro(\'cdsubmod\',\'frmConsulta\');',false);
 		}
-
-    // Se for Pos-Fixado e Taxa Variavel nao for maior que zero
-    IF($GLOBALS["tpprodut"] == 2 && $GLOBALS["txjurvar"] <= 0) {
-        exibirErro('error','Taxa inv&aacute;lida.','Alerta - Ayllos','formataFormularioConsulta();focaCampoErro(\'txjurvar\',\'frmConsulta\');',false);
-    }
 
     IF($GLOBALS["nrinipre"] == 0){ 
 			exibirErro('error','Valor inv&aacute;lido','Alerta - Ayllos','formataFormularioConsulta();focaCampoErro(\'nrinipre\',\'frmConsulta\');',false);

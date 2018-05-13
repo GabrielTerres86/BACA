@@ -35,11 +35,6 @@
                 19/09/2016 - Alteraçoes pagamento/agendamento de DARF/DAS 
                              pelo InternetBanking (Projeto 338 - Lucas Lunelli)
                              
-                14/12/2017 - Incluido campo na tt-empr-conve.
-                             PRJ406-FGTS(Odirlei-AMcom)    
-           
-                18/01/2018 - Alteraçoes referente ao PJ406.
-                             
 .............................................................................*/
 
 DEF TEMP-TABLE tt-dados-pesqti NO-UNDO
@@ -74,10 +69,7 @@ DEF TEMP-TABLE tt-dados-pesqti NO-UNDO
     FIELD tpcptdoc AS INTE
     FIELD dscptdoc AS CHAR FORMAT "x(30)"
     FIELD dslindig AS CHAR
-    FIELD dsnomfon LIKE craplft.dsnomfon
-    FIELD nmresage LIKE crapage.nmresage
-    FIELD nmarrecd AS CHAR  /* Agente Arrecadador*/
-    FIELD dtdpagto AS DATE.
+    FIELD dsnomfon LIKE craplft.dsnomfon.
 
 
 DEF TEMP-TABLE tt-historicos NO-UNDO
@@ -88,7 +80,6 @@ DEF TEMP-TABLE tt-empr-conve NO-UNDO
     FIELD nmextcon AS CHAR FORMAT "X(25)"
     FIELD cdempcon LIKE crapcon.cdempcon
     FIELD cdsegmto LIKE crapcon.cdsegmto
-    FIELD nmrescon LIKE crapcon.nmrescon
     FIELD flgcnvsi AS CHAR.
     
 /*............................................................................*/

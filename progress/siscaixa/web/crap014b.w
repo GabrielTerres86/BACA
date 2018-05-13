@@ -71,9 +71,6 @@ Alteracoes: 22/08/2007 - Alterado os parametros nas chamadas para as
 
 			20/10/2017 - Ajuste para pegar o erro corretamente ao retornar da pc_atualz_situac_titulo_sacado
 			             (Adriano - SD 773635).
-                
-            08/12/2017 - Melhoria 458, incluir parametro v_tppagmto na chamada da pc_gera_titulos_iptu_prog
-                         Antonio R. Jr (mouts)
 ..............................................................................*/
 
 { sistema/generico/includes/var_oracle.i }
@@ -112,8 +109,7 @@ DEFINE TEMP-TABLE ab_unmap
        FIELD v_inpesbnf     AS CHARACTER FORMAT "X(256)":U
        FIELD v_cdctrlcs     AS CHARACTER FORMAT "X(256)":U
        FIELD v_cod          AS CHARACTER FORMAT "X(256)":U
-       FIELD v_senha        AS CHARACTER FORMAT "X(256)":U
-       FIELD v_tppagmto     AS CHARACTER FORMAT "X(256)":U.
+       FIELD v_senha        AS CHARACTER FORMAT "X(256)":U.
        
 
 
@@ -681,7 +677,6 @@ PROCEDURE process-web-request :
   DEFINE VARIABLE aux_dsmanual     AS CHAR.
   DEFINE VARIABLE aux_tpcptdoc     AS INTE.
   DEFINE VARIABLE aux_cdsittit     AS INTE.
-  DEFINE VARIABLE aux_vllimite     AS DECIMAL.
 
   RUN outputHeader.
   {include/i-global.i}
@@ -701,8 +696,7 @@ PROCEDURE process-web-request :
          v_inpesbnf   = get-value("v_inpesbnf")
          v_cdctrlcs   = get-value("v_cdctrlcs")
          aux_dsmanual = get-value("manual") 
-         vh_foco     = "21"
-         v_tppagmto   = get-value("v_tppagmto").
+         vh_foco     = "21".
 
   IF v_nrdocbnf <> "" THEN DO:
     IF v_cpfcedente = "" THEN
@@ -1090,7 +1084,6 @@ PROCEDURE process-web-request :
                                INPUT par_vloutcre,
                                INPUT aux_tpcptdoc, 
                                INPUT v_cdctrlcs, /* pr_cdctrlcs*/
-                               INPUT INT(v_tppagmto), /* 0-Conta |1-Especie*/
                                OUTPUT 0, /* aux_rowidcob, */
                                OUTPUT 0, /*aux_indpagto,*/
                                OUTPUT 0, /*aux_nrcnvbol,*/
@@ -1279,48 +1272,8 @@ PROCEDURE process-web-request :
                              scrollbars=auto,alwaysRaised=true")
                        </script>'.
 
-                       DO TRANSACTION ON ERROR UNDO:
-                            /*****************************************************************************/
-                            IF INT(v_tppagmto) = 1 THEN 
-                              DO:                                  
-                                  { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }                               
-                                  RUN STORED-PROCEDURE pc_consultar_parmon_pld_car 
-                                             aux_handproc = PROC-HANDLE NO-ERROR (INPUT crapcop.cdcooper,
-                                                                                  OUTPUT 0,
-                                                                                  OUTPUT 0,
-                                                                                  OUTPUT 0,
-                                                                                  OUTPUT 0,
-                                                                                  OUTPUT 0,
-                                                                                  OUTPUT "").
-                                  CLOSE STORED-PROC pc_consultar_parmon_pld_car
-                                                    aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.                                                 
-                                  { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }                                
-                                  ASSIGN aux_vllimite = pc_consultar_parmon_pld_car.pr_vlmonitoracao_pagamento.                                                
-                                  
-                                   IF DEC(v_valorinf) >= aux_vllimite THEN
-                                     DO:
                         {&OUT}
-                                         '<script> window.location=
-                                         "crap051e.w?v_pconta=' + STRING(v_conta) '" +
-                                         "&v_pvalor=" + "' STRING(v_valorinf) '" +
-                                         "&v_pult_sequencia=" + "' p-ult-sequencia '" +
-                                         "&v_pprograma=CRAP014" +
-                                         "&v_ptpdocmto=2" </script>'.
-
-                                     END.
-                                   ELSE
-                                      DO:
-                                       {&OUT}
                     '<script> window.location = "crap014.html" </script>'.
-                                      END.                            
-                              END.
-                            ELSE
-                              DO:
-                                {&OUT}
-                                '<script> window.location = "crap014.html" </script>'.
-                              END.
-                            /******************************************************************/
-                      END.
                  END.
             END.   /*get-value "ok" */   
         END.                           

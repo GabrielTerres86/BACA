@@ -66,9 +66,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps160(pr_cdcooper IN crapcop.cdcooper%TY
                    16/06/2014 - Ajustes no padrão de tratamento de DML cfme 
                                 solicitação da equipe de qualidade (Marcos-Supero)
 
-                   05/03/2018 - Substituída verificacao do tipo de conta "IN (5,6,7,17,18)" para a 
-                                modalidade do tipo de conta igual a "2" ou "3". PRJ366 (Lombardi)
-
     ............................................................................ */
 
     DECLARE
@@ -171,12 +168,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps160(pr_cdcooper IN crapcop.cdcooper%TY
               ,cp.cdagenci
               ,cp.cdsecext
         FROM crapass cp
-            ,tbcc_tipo_conta tpcta
         WHERE cp.cdcooper = pr_cdcooper                  
           AND cp.nrdconta > pr_nrctares
-          AND cp.inpessoa = tpcta.inpessoa
-          AND cp.cdtipcta = tpcta.cdtipo_conta
-          AND (tpcta.cdmodalidade_tipo IN (2, 3)
+          AND (cp.cdtipcta IN (5, 6, 7, 17, 18)
                OR cp.cdsitdct = 5);
                
       -- Buscar as informações para restart e Rowid para atualização posterior

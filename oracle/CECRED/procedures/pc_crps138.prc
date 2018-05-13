@@ -1,4 +1,5 @@
-CREATE OR REPLACE PROCEDURE CECRED.pc_crps138 (pr_cdcooper IN crapcop.cdcooper%TYPE   --> Cooperativa solicitada
+CREATE OR REPLACE PROCEDURE CECRED.
+         pc_crps138 (pr_cdcooper IN crapcop.cdcooper%TYPE   --> Cooperativa solicitada
                     ,pr_flgresta  IN PLS_INTEGER            --> Flag padrão para utilização de restart
                     ,pr_stprogra OUT PLS_INTEGER            --> Saída de termino da execução
                     ,pr_infimsol OUT PLS_INTEGER            --> Saída de termino da solicitação
@@ -11,7 +12,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps138 (pr_cdcooper IN crapcop.cdcooper%T
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Odair
-       Data    : Novembro/95                     Ultima atualizacao: 04/04/2018
+       Data    : Novembro/95                     Ultima atualizacao: 17/06/2014
 
        Dados referentes ao programa:
 
@@ -76,11 +77,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps138 (pr_cdcooper IN crapcop.cdcooper%T
                    17/06/2014 - Alteração para apresentar dados gerais consolidados
                                 das singulares no crrl115 da CECRED - Alteração de 12/02/2014
                                 que está na produção (Douglas - Chamado 111830).
-                                
-                   04/04/2018 - INC0012086 Criado novo rowtype da crapdat pois o rowtype principal
-                                quando o programa roda na CECRED estava retendo a data da última 
-                                cooperativa buscada (Concredi); Na rotina pc_gera_dados_gerais_coop,
-                                retiradas as vars não utilizadas: dtmvtolt e dtmvtopr (Carlos)
+
     ............................................................................ */
 
     DECLARE
@@ -108,11 +105,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps138 (pr_cdcooper IN crapcop.cdcooper%T
           FROM crapcop cop
          WHERE cop.cdcooper = pr_cdcooper;
       rw_crapcop cr_crapcop%ROWTYPE;
-      
-      -- Cursores genéricos de calendário
-      rw_crapdat  btch0001.cr_crapdat%ROWTYPE;
-      rw_crapdat2 btch0001.cr_crapdat%ROWTYPE;
-      
+      -- Cursor genérico de calendário
+      rw_crapdat btch0001.cr_crapdat%ROWTYPE;
       --busca cadastro de informacoes gerais para PA maior que zero
       CURSOR cr_crapger1 (pr_cdcooper IN crapcop.cdcooper%TYPE) IS
         SELECT  dtrefere,
@@ -619,6 +613,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps138 (pr_cdcooper IN crapcop.cdcooper%T
 
       PROCEDURE pc_gera_dados_gerais_coop  IS
       BEGIN
+        DECLARE
+          vr_dtmvtopr DATE;
+          vr_dtmvtolt DATE;
         BEGIN
           -- Geramos as informações da CECRED
           pc_carrega_info_cooperativa(pr_cdcooper,vr_nmresage,TRUE);
@@ -632,16 +629,19 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps138 (pr_cdcooper IN crapcop.cdcooper%T
             vr_tab_data.DELETE;
 
             OPEN btch0001.cr_crapdat(pr_cdcooper => rw_crapcop2.cdcooper);
-            FETCH btch0001.cr_crapdat INTO rw_crapdat2;
+            FETCH btch0001.cr_crapdat INTO rw_crapdat;
             CLOSE btch0001.cr_crapdat;
-            vr_dtrefere := to_date(to_char(rw_crapdat2.dtmvtolt,'mm')||
-                                   to_char(rw_crapdat2.dtmvtolt,'dd')||
-                                   to_number(to_char(rw_crapdat2.dtmvtolt,'yyyy')-1),'mmddyyyy');
+            vr_dtmvtopr := rw_crapdat.dtmvtopr;
+            vr_dtmvtolt := rw_crapdat.dtmvtolt;
+
+            vr_dtrefere := to_date(to_char(rw_crapdat.dtmvtolt,'mm')||
+                                   to_char(rw_crapdat.dtmvtolt,'dd')||
+                                   to_number(to_char(rw_crapdat.dtmvtolt,'yyyy')-1),'mmddyyyy');
             --calcula data referencia menos o dia calculado
             vr_dtrefere := vr_dtrefere - to_number(to_char(vr_dtrefere,'dd'));
             vr_dtrefere := vr_dtrefere - to_number(to_char(vr_dtrefere,'dd'));
             /* pega data do fim do mes */
-            vr_dtfimmes := rw_crapdat2.dtmvtopr - to_number(to_char(rw_crapdat2.dtmvtopr,'dd'));
+            vr_dtfimmes := rw_crapdat.dtmvtopr - to_number(to_char(rw_crapdat.dtmvtopr,'dd'));
 
             vr_nmresage := 'GERAL       ' || upper(rw_crapcop2.nmrescop);
             -- Carregamos as informações para a cooperativa
@@ -830,3 +830,4 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps138 (pr_cdcooper IN crapcop.cdcooper%T
 
   END pc_crps138;
 /
+

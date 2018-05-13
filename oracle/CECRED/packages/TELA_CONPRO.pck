@@ -112,7 +112,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_CONPRO IS
                                      ,pr_nmdcampo OUT VARCHAR2 --> Nome do campo com erro
                                      ,pr_des_erro OUT VARCHAR2);
 
-  PROCEDURE pc_tela_busca_contratos(pr_nrdconta IN crapepr.nrdconta%TYPE --> Numero da Conta
+  PROCEDURE pc_tela_busca_contratos_pp(pr_nrdconta IN crapepr.nrdconta%TYPE --> Numero da Conta
                                       ,pr_xmllog   IN VARCHAR2 --> XML com informações de LOG
                                       ,pr_cdcritic OUT PLS_INTEGER --> Código da crítica
                                       ,pr_dscritic OUT VARCHAR2 --> Descrição da crítica
@@ -1141,7 +1141,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONPRO IS
     END;
   END pc_impressao_proposta_web;
 
-  PROCEDURE pc_tela_busca_contratos(pr_nrdconta IN crapepr.nrdconta%TYPE --> Numero da Conta
+  PROCEDURE pc_tela_busca_contratos_pp(pr_nrdconta IN crapepr.nrdconta%TYPE --> Numero da Conta
                                       ,pr_xmllog   IN VARCHAR2 --> XML com informações de LOG
                                       ,pr_cdcritic OUT PLS_INTEGER --> Código da crítica
                                       ,pr_dscritic OUT VARCHAR2 --> Descrição da crítica
@@ -1151,25 +1151,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONPRO IS
   BEGIN
     /* .............................................................................
     
-    Programa: pc_tela_busca_contratos
+    Programa: pc_tela_busca_contratos_pp
     Sistema : Rotinas referentes ao limite de credito
     Sigla   : LIMI
     Autor   : James Prust Junior
-    Data    : Setembro/15.                    Ultima atualizacao: 30/01/2017
+    Data    : Setembro/15.                    Ultima atualizacao:
     
     Dados referentes ao programa:
     
     Frequencia: Sempre que for chamado
     
-    Objetivo  : Buscar todos os contratos.
+    Objetivo  : Buscar todos os contratos PP
     
     Observacao: -----
-    Alteracoes: 30/01/2017 - Alterado para listar todos os tipos de contrato. (Jaison/James - PRJ298)
+    Alteracoes:
     ..............................................................................*/
   
     DECLARE
       CURSOR cr_crapepr(pr_cdcooper IN crapepr.cdcooper%TYPE
-                       ,pr_nrdconta IN crapepr.nrdconta%TYPE) IS
+                       ,pr_nrdconta IN crapepr.nrdconta%TYPE
+                       ,pr_tpemprst IN crapepr.tpemprst%TYPE) IS
         SELECT nrctremp,
                dtmvtolt,
                vlemprst,
@@ -1179,7 +1180,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONPRO IS
                cdfinemp
           FROM crawepr
          WHERE crawepr.cdcooper = pr_cdcooper
-           AND crawepr.nrdconta = pr_nrdconta;
+           AND crawepr.nrdconta = pr_nrdconta
+           AND crawepr.tpemprst = pr_tpemprst;
     
       -- Variável de críticas
       vr_cdcritic crapcri.cdcritic%TYPE;
@@ -1215,7 +1217,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONPRO IS
     
       -- Busca todos os emprestimos de acordo com o numero da conta
       FOR rw_crapepr IN cr_crapepr(pr_cdcooper => vr_cdcooper,
-                                   pr_nrdconta => pr_nrdconta) LOOP
+                                   pr_nrdconta => pr_nrdconta,
+                                   pr_tpemprst => 1) LOOP
       
         gene0007.pc_insere_tag(pr_xml      => pr_retxml,
                                pr_tag_pai  => 'Dados',
@@ -1288,7 +1291,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONPRO IS
       WHEN OTHERS THEN
       
         pr_cdcritic := vr_cdcritic;
-        pr_dscritic := 'Erro geral em TELA_CONPRO.pc_tela_busca_contratos: ' || SQLERRM;
+        pr_dscritic := 'Erro geral em EMPR0008.pc_tela_busca_contratos_pp: ' || SQLERRM;
       
         -- Carregar XML padrão para variável de retorno não utilizada.
         -- Existe para satisfazer exigência da interface.
@@ -1297,7 +1300,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONPRO IS
       
     END;
   
-  END pc_tela_busca_contratos;
+  END pc_tela_busca_contratos_pp;
 
   PROCEDURE pc_consulta_acionamento_web(pr_nrdconta IN crawepr.nrdconta%TYPE --> Nr. da Conta
                                        ,pr_nrctremp IN crawepr.nrctremp%TYPE --> Nr. Contrato   
@@ -1624,7 +1627,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONPRO IS
            AND trunc(a.DHACIONAMENTO) >= pr_dtinicio
            AND trunc(a.DHACIONAMENTO) <= pr_dtafinal
            AND a.tpacionamento IN(1,2)
-           AND a.tpproduto = nvl(pr_tpproduto, 0/*0 = emprestimo*/)
+           AND a.tpproduto = pr_tpproduto
 		 ORDER BY a.DHACIONAMENTO DESC;
       rw_crawepr cr_cratbepr%ROWTYPE;
       

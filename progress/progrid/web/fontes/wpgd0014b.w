@@ -6,24 +6,20 @@ Alterações: 05/06/2012 - Adaptação dos fontes para projeto Oracle. Alterado
             10/09/2013 - Nova forma de chamar as agências, de PAC agora 
                             a escrita será PA (André Euzébio - Supero).
                             
-            10/08/2015 - Ajustes para projeto 229 - Melhorias OQS (Jean Michel).                      
+            10/08/2015 - Ajustes para projeto 229 - Melhorias OQS (Jean Michel).                             
 
             08/03/2016 - Alterado para que os eventos do tipo EAD 
                          e EAD Assemblear não sejam apresentados.
                          Projeto 229 - Melhorias OQS (Lombardi)
                          
            03/06/2016 - Criação da variável aux_flgevsel (Vanessa)
-           
-           31/01/2017 - Alterar o label “Max. Participante” por “Meta do PA”,
-                        Prj. 229 (Jean Michel).
-                        
 ...............................................................................*/
 
 &ANALYZE-SUSPEND _VERSION-NUMBER AB_v9r12 GUI adm2
 &ANALYZE-RESUME
 &Scoped-define WINDOW-NAME CURRENT-WINDOW
 
-/* Temp-Table and Buffer definitions */
+/* Temp-Table and Buffer definitions                                    */
 DEFINE TEMP-TABLE ab_unmap
        FIELD aux_cdcooper AS CHARACTER FORMAT "X(256)":U 
        FIELD aux_cddopcao AS CHARACTER FORMAT "X(256)":U 
@@ -323,17 +319,20 @@ DEFINE FRAME Web-Frame
 
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE CriaListaPacs w-html 
 PROCEDURE CriaListaPacs :
-    
+/*------------------------------------------------------------------------------
+  Purpose:     
+  Parameters:  <none>
+  Notes:       
+------------------------------------------------------------------------------*/
+  
     ASSIGN vetorpacs    = ""
            aux_ttcabeca = 0
            aux_qttotpac = 0
            aux_qttotdes = 0.
     
-    RUN RodaJavaScript("var mpacs = new Array();").
-    
     /* Limpa a tabela temporária */
     EMPTY TEMP-TABLE cratagp.
-        
+    
     /* Faz o agrupamento dos PA'S */
     /* PA's agrupadores */
     FOR EACH crapagp WHERE crapagp.idevento = INTEGER(ab_unmap.aux_idevento)  AND
@@ -356,13 +355,13 @@ PROCEDURE CriaListaPacs :
     END.
     
     /* PA's agrupados */
-    FOR EACH crapagp WHERE crapagp.idevento = INTEGER(ab_unmap.aux_idevento)  
-                       AND crapagp.cdcooper = INTEGER(ab_unmap.aux_cdcooper)  
-                       AND crapagp.dtanoage = INTEGER(ab_unmap.aux_dtanoage)   
-                       AND crapagp.cdageagr <> crapagp.cdagenci               NO-LOCK:
+    FOR EACH crapagp WHERE crapagp.idevento = INTEGER(ab_unmap.aux_idevento)  AND
+                           crapagp.cdcooper = INTEGER(ab_unmap.aux_cdcooper)  AND
+                           crapagp.dtanoage = INTEGER(ab_unmap.aux_dtanoage)  AND 
+                           crapagp.cdageagr <> crapagp.cdagenci               NO-LOCK:
     
         FIND crapage WHERE crapage.cdcooper = crapagp.cdcooper   AND
-                           crapage.cdagenci = crapagp.cdagenci   NO-LOCK NO-ERROR NO-WAIT.
+                           crapage.cdagenci = crapagp.cdagenci   NO-LOCK NO-ERROR.
     
         FIND cratagp WHERE cratagp.cdagenci = crapagp.cdageagr EXCLUSIVE-LOCK NO-ERROR.
     
@@ -373,20 +372,16 @@ PROCEDURE CriaListaPacs :
     END.    
     
     /* Nome do EVENTO */
-    FIND crapedp WHERE crapedp.cdcooper = INTEGER(ab_unmap.aux_cdcooper)   
-                   AND crapedp.idevento = INTEGER(ab_unmap.aux_idevento)   
-                   AND crapedp.dtanoage = INTEGER(ab_unmap.aux_dtanoage)   
-                   AND crapedp.cdevento = INTEGER(ab_unmap.aux_cdevento)   
-                   AND crapedp.tpevento <> 10                              
-                   AND crapedp.tpevento <> 11 NO-LOCK NO-ERROR NO-WAIT.
+    FIND crapedp WHERE crapedp.cdcooper = INTEGER(ab_unmap.aux_cdcooper)   AND
+                       crapedp.idevento = INTEGER(ab_unmap.aux_idevento)   AND
+                       crapedp.dtanoage = INTEGER(ab_unmap.aux_dtanoage)   AND
+                       crapedp.cdevento = INTEGER(ab_unmap.aux_cdevento)   AND
+                       crapedp.tpevento <> 10                              AND
+                       crapedp.tpevento <> 11                              NO-LOCK NO-ERROR.
 
     /* cabeçalho */
-    If available crapedp Then
-      vetorpacs = "~{nmevento:'" + crapedp.nmevento + "',nmresage:'PA',cdagenci:'0'" + ",qtmaxtur:'Meta do PA'~}".    
-    Else
-      vetorpacs = "~{nmevento:' ',nmresage:'PA',cdagenci:'0'" + ",qtmaxtur:'Meta do PA'~}".    
-      
-      
+    vetorpacs = "~{nmevento:'" + crapedp.nmevento + "',nmresage:'PA',cdagenci:'0'" + ",qtmaxtur:'Max. Participante'~}".    
+    
     /* Monta a tabela dos PA'S */
     FOR EACH cratagp NO-LOCK BY cratagp.nmresage:
     
@@ -433,17 +428,17 @@ PROCEDURE CriaListaPacs :
         END.
     
         /* Cria o PA mesmo sem ter sugestões */
-        IF aux_flgexist = FALSE THEN
-          DO:
-            ASSIGN vetorpacs = vetorpacs + ",~{nmresage:'" + cratagp.nmresage + "',cdagenci:'" + STRING(cratagp.cdagenci) + "'".
-          END.
+        IF   aux_flgexist = FALSE   THEN
+             DO:
+                 vetorpacs = vetorpacs + ",~{nmresage:'" + cratagp.nmresage + "',cdagenci:'" + STRING(cratagp.cdagenci) + "'".
+             END.
     
         /* Verifica se o PA já está escolhido */
-        FIND crapeap WHERE crapeap.cdcooper = INTEGER(ab_unmap.aux_cdcooper)
-                       AND crapeap.idevento = INTEGER(ab_unmap.aux_idevento)
-                       AND crapeap.cdagenci = cratagp.cdagenci                 
-                       AND crapeap.cdevento = INTEGER(ab_unmap.aux_cdevento)
-                       AND crapeap.dtanoage = INTEGER(ab_unmap.aux_dtanoage) NO-LOCK NO-ERROR NO-WAIT.
+        FIND crapeap WHERE crapeap.cdcooper = INTEGER(ab_unmap.aux_cdcooper)   AND
+                           crapeap.idevento = INTEGER(ab_unmap.aux_idevento)   AND
+                           crapeap.cdagenci = cratagp.cdagenci                 AND
+                           crapeap.cdevento = INTEGER(ab_unmap.aux_cdevento)   AND
+                           crapeap.dtanoage = INTEGER(ab_unmap.aux_dtanoage)   NO-LOCK NO-ERROR.
     
         /* Obrigatoriedade escolhida para o PA */
         IF AVAILABLE crapeap THEN 
@@ -464,7 +459,7 @@ PROCEDURE CriaListaPacs :
 
     END.
 
-    RUN RodaJavaScript("mpacs.push(" + vetorpacs + ");"). 
+    RUN RodaJavaScript("var mpacs=new Array();mpacs=["  + vetorpacs + "]"). 
 
 END PROCEDURE.
 
@@ -525,7 +520,7 @@ DEFINE INPUT PARAMETER opcao AS CHARACTER.
     
     /* Instancia a BO para executar as procedures */
     RUN dbo/b1wpgd0014b.p PERSISTENT SET h-b1wpgd0014b.
-   
+    
     /* Se BO foi instanciada */
     IF VALID-HANDLE(h-b1wpgd0014b) THEN
        DO:
@@ -537,7 +532,7 @@ DEFINE INPUT PARAMETER opcao AS CHARACTER.
                                           
                     /* Pega os PA'S que foram escolhidos */
                     DO i = 1 TO NUM-ENTRIES(ab_unmap.aux_lsagenci,";"):
-          
+    
                        /* Limpa a tabela temporária */
                        /*EMPTY TEMP-TABLE crateap.*/
     
@@ -561,7 +556,7 @@ DEFINE INPUT PARAMETER opcao AS CHARACTER.
     
                        RUN inclui-registro IN h-b1wpgd0014b (INPUT TABLE crateap, OUTPUT msg-erro).*/
                        ASSIGN aux_flgevsel = FALSE.                      
-                       
+                                             
                        FIND crapeap WHERE crapeap.cdagenci = INTEGER(ENTRY(1,ENTRY(i,ab_unmap.aux_lsagenci,";"),","))
                                       AND crapeap.cdcooper = INTEGER(ab_unmap.aux_cdcooper)
                                       AND crapeap.cdevento = INTEGER(ab_unmap.aux_cdevento)
@@ -577,7 +572,7 @@ DEFINE INPUT PARAMETER opcao AS CHARACTER.
                                           AND crapedp.dtanoage = 0
                                           AND crapedp.tpevento <> 10
                                           AND crapedp.tpevento <> 11 NO-LOCK NO-ERROR. 
-                           
+                            
                            FIND FIRST crapadp WHERE crapadp.cdagenci = INTEGER(ENTRY(1,ENTRY(i,ab_unmap.aux_lsagenci,";"),","))
                                                 AND crapadp.cdcooper = INTEGER(ab_unmap.aux_cdcooper)
                                                 AND crapadp.cdevento = INTEGER(ab_unmap.aux_cdevento)

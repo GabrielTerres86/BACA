@@ -41,7 +41,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Evandro
-   Data    : Agosto/2006                   Ultima Atualizacao: 02/10/2017
+   Data    : Agosto/2006                   Ultima Atualizacao: 05/06/2017
    Dados referentes ao programa:
 
    Frequencia: Diario (internet)
@@ -540,26 +540,25 @@ PROCEDURE lista_protocolo:
                                                         OR crabpro.cdtippro = 6
                                                         OR crabpro.cdtippro = 9
                                                         OR crabpro.cdtippro = 11
-                                                        OR crabpro.cdtippro = 13
+														OR crabpro.cdtippro = 13
                                                         OR crabpro.cdtippro = 15
                                                         OR crabpro.cdtippro = 16
                                                         OR crabpro.cdtippro = 17
                                                         OR crabpro.cdtippro = 18
                                                         OR crabpro.cdtippro = 19
-                                                        OR crabpro.cdtippro = 20
-                                                        
+														OR crabpro.cdtippro = 20
                cratpro.cdagectl    = crapcop.cdagectl WHEN (crabpro.cdtippro = 1 AND par_cdorigem = 3)
                                                         OR crabpro.cdtippro = 2
                                                         OR crabpro.cdtippro = 6
                                                         OR crabpro.cdtippro = 9
                                                         OR crabpro.cdtippro = 11
-                                                        OR crabpro.cdtippro = 13
+														OR crabpro.cdtippro = 13
                                                         OR crabpro.cdtippro = 15
                                                         OR crabpro.cdtippro = 16
                                                         OR crabpro.cdtippro = 17
                                                         OR crabpro.cdtippro = 18
                                                         OR crabpro.cdtippro = 19
-                                                        OR crabpro.cdtippro = 20
+														OR crabpro.cdtippro = 20
                cratpro.cdagesic    = crapcop.cdagesic.
 
         IF   par_cdorigem = 4   THEN /* TAA */
@@ -636,28 +635,12 @@ PROCEDURE estorna_protocolo:
          IF   NOT AVAILABLE crappro   THEN
               RETURN "NOK".
               
+         ASSIGN par_dsprotoc     = crappro.dsprotoc
                                                     
-         ASSIGN par_dsprotoc     = crappro.dsprotoc.
-             
-         IF par_cdtippro = 23 OR    /* DAE */
-            par_cdtippro = 24 THEN  /* FGTS */
-           DO:
-             /* Padrao diferente pois para FGTS e DAE utiliza modelo MD5
-                Gerando protocolo maior, e fazendo que estoure o campo 
-                ao concatenar texto. PRJ406 - FGTS*/
-             ASSIGN crappro.dsprotoc = crappro.dsprotoc                  + " " +
-                                     "**ESTORNADO("                 +
-                                     STRING(par_dtmvtolt,"99/99/99") + "-" +
-                                     STRING(TIME,"HH:MM:SS")         + ")".
-           END. 
-         ELSE
-         DO:
-           ASSIGN crappro.dsprotoc = crappro.dsprotoc                  + " " +
+                crappro.dsprotoc = crappro.dsprotoc                  + " " +
                                    "*** ESTORNADO ("                 +
                                    STRING(par_dtmvtolt,"99/99/9999") + " - " +
                                    STRING(TIME,"HH:MM:SS")           + ")".
-         END.                                    
-
 
       END.
 

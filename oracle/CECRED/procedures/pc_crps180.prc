@@ -64,9 +64,6 @@ BEGIN
                             
                17/06/2014 - Conversao Progress -> Oracle (Alisson - AMcom)
                             
-               05/03/2018 - Alterada verificação "cdtipcta IN (5,6,7,17,18)" pela modalidade
-                            do tipo de conta igual à "2" ou "3". PRJ366 (Lombardi).
-                
                 
   ............................................................................. */
 
@@ -120,11 +117,8 @@ BEGIN
              crapass.cdsecext,
              crapass.nmprimtl
        FROM crapass crapass
-           ,tbcc_tipo_conta tpcta
        WHERE crapass.cdcooper = pr_cdcooper 
-        AND crapass.inpessoa = tpcta.inpessoa
-        AND crapass.cdtipcta = tpcta.cdtipo_conta
-        AND (crapass.cdsitdct = 5 OR tpcta.cdmodalidade_tipo IN (2,3))
+       AND  (crapass.cdsitdct = 5 OR crapass.cdtipcta IN (5,6,7,17,18))
        ORDER BY crapass.cdcooper, crapass.nrdconta;
     rw_crapass cr_crapass%ROWTYPE;
 

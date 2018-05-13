@@ -412,8 +412,8 @@
 			<printWhenExpression><![CDATA[!$F{linavali2}.isEmpty()]]></printWhenExpression>
 			<frame>
 				<reportElement x="20" y="0" width="556" height="23" uuid="7c4f2a58-c24b-483d-8366-199f688a83c4">
-					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
-				</reportElement>
+						<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
+					</reportElement>
 				<box>
 					<topPen lineWidth="0.0"/>
 					<leftPen lineWidth="1.0"/>
@@ -756,7 +756,7 @@
 			</textField>
 		</band>
 		<band height="10">
-			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 			<textField isStretchWithOverflow="true">
 				<reportElement positionType="Float" x="20" y="0" width="556" height="10" uuid="da8a1c8b-1b95-444f-a950-9ab78675595a">
 					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
@@ -843,7 +843,7 @@
 					<property name="com.jaspersoft.studio.unit.width" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.x" value="pixel"/>
 					<property name="com.jaspersoft.studio.unit.y" value="pixel"/>
-					<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
+			<property name="com.jaspersoft.studio.unit.height" value="pixel"/>
 				</reportElement>
 				<textElement textAlignment="Justified" markup="styled">
 					<font fontName="Courier New" size="8" pdfFontName="Courier"/>

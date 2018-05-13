@@ -22,8 +22,6 @@
 	$flgPoderes   = (in_array('P', $glbvars['opcoesTela']));
 	$nmdatela     = ( isset($_POST['nmdatela']) ) ? $_POST['nmdatela'] : '';
 	$flgcadas     = ( isset($_POST['flgcadas']) ) ? $_POST['flgcadas'] : '';
-	// melhoria 339 - CADCTA
-	$opeaction    = ( isset($_POST['opeaction']) ) ? $_POST['opeaction'] : '';
 	
 			
 	if ($flgAcesso == '') exibirErro('error','Seu usu&aacute;rio n&atilde;o possui permiss&atilde;o de acesso a tela de Representantes/Procuradores.','Alerta - Ayllos','');
@@ -83,20 +81,11 @@
 	var flgPoderes 	 = "<? echo $flgPoderes;   ?>";
 	var nmdatela     = "<? echo $nmdatela;     ?>";
 	var flgcadas     = "<? echo $flgcadas;     ?>"; 
-	var opeaction     = "<? echo $opeaction;     ?>"; 
 
 	// Função que exibe a Rotina
 	exibeRotina(divRotina);
 	
-	// melhoria 339 - CADCTA
-	if (opeaction == 'TI_CADCTA'){
-		controlaOperacaoProc('TI'); 
-	}else if (opeaction == 'TC_CADCTA'){
-		controlaOperacaoProc('TC'); 
-	}else{
-	  <? echo "acessaOpcaoAbaProc(".count($opcoesTela).",0,'".$opcoesTela[0]."');"; ?>
-	}
-	
+	<? echo "acessaOpcaoAbaProc(".count($opcoesTela).",0,'".$opcoesTela[0]."');"; ?>
 	
 </script>
 

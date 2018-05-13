@@ -44,8 +44,8 @@
 
 		$msgError = "Operador nao possui permissao de acesso.";
 		exibeErro($msgError);		
-	}			
-	
+	}
+
 
 	$tipo = (isset($_POST['tipo'])) ? $_POST['tipo'] : "CONTRATO";
 

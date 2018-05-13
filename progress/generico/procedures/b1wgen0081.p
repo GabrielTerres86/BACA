@@ -27,7 +27,6 @@
  | retorna-aplicacoes-resgate-automatico| APLI0005.pc_ret_apl_resg_aut            |
  | retorna-aplicacoes-resgate-manual    | APLI0005.pc_ret_apl_resg_manu           |
  | obtem-resgates-conta                 | APLI0005.pc_obtem_resgates_conta        |
- | cadastrar-varios-resgates-aplicacao  | APLI0005.pc_cadast_varios_resgat_aplica |
  +--------------------------------------+-----------------------------------------+
 
  TODA E QUALQUER ALTERACAO EFETUADA NESSE FONTE A PARTIR DE 08/05/2014 DEVERA
@@ -44,7 +43,7 @@
 
    Programa: b1wgen0081.p                  
    Autora  : Adriano.
-   Data    : 29/11/2010                        Ultima atualizacao: 30/11/2017
+   Data    : 29/11/2010                        Ultima atualizacao: 25/09/2017
 
    Dados referentes ao programa:
 
@@ -200,11 +199,6 @@
 
 			  25/09/2017 - Inclusao do departamento 14 - Produtos, na listagem do Demonstrativo de aplicacoes
 						   procedure consulta-extrato-rdca. SD 759762. (Carlos Rafael Tanholi)
-               
-                            
-               30/11/2017 - Removido rotina ver-valores-bloqueados-judicial,
-                            pois foi convertida e nao é mais utilizada.
-                            PRJ404-Garantia(Odirlei-AMcom)             
 ............................................................................*/
  
  { sistema/generico/includes/b1wgen0001tt.i }
@@ -1625,6 +1619,191 @@ PROCEDURE valida-acesso-opcao-resgate:
 
 END PROCEDURE.
 
+/******************************************************************************/
+/**       Procedure para obter os valores Bloqueados Judicialmente           **/
+/******************************************************************************/
+
+PROCEDURE ver-valores-bloqueados-judicial:
+
+    DEF  INPUT PARAM par_cdcooper AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_cdagenci AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_nrdcaixa AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_cdoperad AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_nmdatela AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_idorigem AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_nrdconta AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_nraplica AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_idseqttl AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_cdprogra AS CHAR                           NO-UNDO.
+    DEF  INPUT PARAM par_dtmvtolt AS DATE                           NO-UNDO.
+    DEF  INPUT PARAM par_vlresgat AS DECI                           NO-UNDO.
+    DEF  INPUT PARAM par_flgerlog AS LOGI                           NO-UNDO.
+    
+    DEF OUTPUT PARAM TABLE FOR tt-erro.
+
+    DEF VAR aux_sltotres AS DECIMAL                                 NO-UNDO.
+    DEF VAR aux_vlresgat AS DECIMAL                                 NO-UNDO.
+    DEF VAR tot_vlsldtot AS DECI                                    NO-UNDO.
+    DEF VAR aux_vlblqjud AS DECI                                    NO-UNDO.
+    DEF VAR aux_vlresblq AS DECI                                    NO-UNDO.
+    
+    DEF VAR h-b1wgen0155 AS HANDLE                                  NO-UNDO.
+
+    RUN obtem-dados-aplicacoes(INPUT par_cdcooper,
+                               INPUT par_cdagenci,
+                               INPUT par_nrdcaixa,
+                               INPUT par_cdoperad,
+                               INPUT par_nmdatela,
+                               INPUT par_idorigem,
+                               INPUT par_nrdconta,
+                               INPUT par_idseqttl,
+                               INPUT 0,
+                               INPUT par_cdprogra,
+                               INPUT FALSE,
+                               INPUT ?,
+                               INPUT ?,
+                               OUTPUT tot_vlsldtot,
+                               OUTPUT TABLE tt-saldo-rdca,
+                               OUTPUT TABLE tt-erro).
+
+    IF   RETURN-VALUE = "NOK"  THEN
+         DO:
+            FIND FIRST tt-erro NO-LOCK NO-ERROR.
+            
+            IF  AVAILABLE tt-erro  THEN
+                ASSIGN aux_cdcritic = tt-erro.cdcritic
+                       aux_dscritic = tt-erro.dscritic.
+            ELSE
+                DO:
+                    ASSIGN aux_cdcritic = 0
+                           aux_dscritic = "Nao foi possivel cadastrar o " +
+                                          "resgate.".
+                                          
+                    RUN gera_erro (INPUT par_cdcooper,
+                                   INPUT par_cdagenci,
+                                   INPUT par_nrdcaixa,
+                                   INPUT 1,          /** Sequencia **/
+                                   INPUT aux_cdcritic,
+                                   INPUT-OUTPUT aux_dscritic).                 
+                END.
+                                          
+            IF  par_flgerlog THEN
+                RUN proc_gerar_log (INPUT par_cdcooper,
+                                    INPUT par_cdoperad,
+                                    INPUT aux_dscritic,
+                                    INPUT aux_dsorigem,
+                                    INPUT aux_dstransa,
+                                    INPUT FALSE,
+                                    INPUT par_idseqttl,
+                                    INPUT par_nmdatela,
+                                    INPUT par_nrdconta,
+                                   OUTPUT aux_nrdrowid).
+            RETURN "NOK".       
+         END.
+        
+    FOR EACH tt-saldo-rdca WHERE tt-saldo-rdca.dtmvtolt < par_dtmvtolt
+                             AND tt-saldo-rdca.sldresga > 0
+                             AND (tt-saldo-rdca.dssitapl = "DISPONIVEL"
+                              OR tt-saldo-rdca.dssitapl = "")
+                             NO-LOCK:
+
+        FIND craplrg WHERE craplrg.cdcooper = par_cdcooper
+                       AND craplrg.nrdconta = par_nrdconta
+                       AND craplrg.nraplica = tt-saldo-rdca.nraplica
+                       AND craplrg.tpaplica = tt-saldo-rdca.tpaplica
+                       AND craplrg.dtresgat >= par_dtmvtolt
+                       AND craplrg.inresgat = 0 NO-LOCK NO-ERROR.
+
+        IF   AVAIL craplrg THEN
+             DO:
+                  IF   craplrg.tpresgat = 2 THEN
+                       NEXT.
+                  ELSE
+                       ASSIGN aux_sltotres = aux_sltotres + 
+                              (tt-saldo-rdca.sldresga - craplrg.vllanmto).
+             END.
+        ELSE
+             ASSIGN aux_sltotres = aux_sltotres + tt-saldo-rdca.sldresga.
+    END.
+
+    IF   par_vlresgat = 0 THEN
+         aux_vlresgat = aux_sltotres.
+    ELSE
+         aux_vlresgat = par_vlresgat.
+
+    IF   par_nraplica <> 0 AND
+         par_vlresgat =  0 THEN
+         DO:
+             FIND tt-saldo-rdca WHERE tt-saldo-rdca.nraplica = par_nraplica
+                                  AND tt-saldo-rdca.dtmvtolt < par_dtmvtolt
+                                  AND tt-saldo-rdca.sldresga > 0
+                                  AND (tt-saldo-rdca.dssitapl = "DISPONIVEL"
+                                   OR tt-saldo-rdca.dssitapl = "")
+                                   NO-LOCK NO-ERROR.
+
+             IF   NOT AVAIL tt-saldo-rdca THEN
+                  DO:
+                       ASSIGN aux_cdcritic = 426
+                              aux_dscritic = "".
+                               
+                       RUN gera_erro (INPUT par_cdcooper,
+                                      INPUT par_cdagenci,
+                                      INPUT par_nrdcaixa,
+                                      INPUT 1,          /** Sequencia **/
+                                      INPUT aux_cdcritic,
+                                      INPUT-OUTPUT aux_dscritic).
+
+                       RETURN "NOK".
+                  END.
+        
+             FIND craplrg WHERE craplrg.cdcooper = par_cdcooper
+                            AND craplrg.nrdconta = par_nrdconta
+                            AND craplrg.nraplica = tt-saldo-rdca.nraplica
+                            AND craplrg.tpaplica = tt-saldo-rdca.tpaplica
+                            AND craplrg.dtresgat >= par_dtmvtolt
+                            AND craplrg.inresgat = 0 NO-LOCK NO-ERROR.
+
+             IF   AVAIL craplrg THEN
+                  DO:
+                      IF   craplrg.tpresgat = 2 THEN
+                           NEXT.
+                      ELSE
+                           ASSIGN aux_vlresgat = 
+                                  (tt-saldo-rdca.sldresga - craplrg.vllanmto).
+                  END.
+             ELSE
+                  ASSIGN aux_vlresgat = tt-saldo-rdca.sldresga.
+         END.
+    
+    RUN sistema/generico/procedures/b1wgen0155.p
+                   PERSISTENT SET h-b1wgen0155.
+
+    RUN retorna-valor-blqjud IN h-b1wgen0155(INPUT par_cdcooper,
+                                             INPUT par_nrdconta,
+                                             INPUT 0, /* fixo - nrcpfcgc  */
+                                             INPUT 1, /* Bloqueio         */
+                                             INPUT 2, /* 2 - Aplicacao    */
+                                             INPUT par_dtmvtolt,
+                                             OUTPUT aux_vlblqjud,
+                                             OUTPUT aux_vlresblq).
+
+    DELETE PROCEDURE h-b1wgen0155.
+
+    IF   aux_vlresgat > (aux_sltotres - aux_vlblqjud) THEN
+         DO:
+              ASSIGN aux_cdcritic = 0
+                     aux_dscritic = "Nao foi possivel resgatar. " + 
+                                    "Ha valores bloqueados judicialmente".
+
+              RUN gera_erro (INPUT par_cdcooper,
+                             INPUT par_cdagenci,
+                             INPUT par_nrdcaixa,
+                             INPUT 1,          /** Sequencia **/
+                             INPUT aux_cdcritic,
+                             INPUT-OUTPUT aux_dscritic).
+         END.         
+
+END.
 
 /******************************************************************************/
 /**        Procedure para obter resgates programados para a aplicacao        **/
@@ -5187,10 +5366,8 @@ PROCEDURE incluir-nova-aplicacao:
                                    INPUT INT(par_flgdebci),
                                    INPUT par_vllanmto,
                                    INPUT INT(par_flgerlog),
-                                   INPUT 'A',
                                    OUTPUT "",
                                    OUTPUT 0,
-                                   OUTPUT "",
                                    OUTPUT 0,
                                    OUTPUT "").
       
@@ -5759,7 +5936,6 @@ PROCEDURE consulta-agendamento:
     DEF INPUT  PARAM p-id-seqttl     AS INTE                        NO-UNDO.
     DEF INPUT  PARAM p-nro-aplicacao AS INTE                        NO-UNDO.
     DEF INPUT  PARAM p-tip-aplicacao AS INTE                        NO-UNDO.
-    DEF INPUT  PARAM par_cdsitaar    LIKE crapaar.cdsitaar          NO-UNDO.
     DEF INPUT  PARAM p-cdprogra      AS CHAR                        NO-UNDO.    
     DEF INPUT  PARAM p-origem        AS INTE                        NO-UNDO.
                                        
@@ -5805,9 +5981,6 @@ PROCEDURE consulta-agendamento:
     DEF VAR aux_nrmesaar  LIKE crapaar.nrmesaar NO-UNDO.
     DEF VAR aux_qtmesaar  LIKE crapaar.qtmesaar NO-UNDO.
     DEF VAR aux_vlparaar  LIKE crapaar.vlparaar NO-UNDO.
-    DEF VAR aux_incancel  AS INTEGER            NO-UNDO.
-    DEF VAR aux_dssitaar  AS CHAR               NO-UNDO.
-    DEF VAR aux_dstipaar  AS CHAR               NO-UNDO.
                                       
     /* Inicializando objetos para leitura do XML */ 
     CREATE X-DOCUMENT xDoc.    /* Vai conter o XML completo */ 
@@ -5826,7 +5999,6 @@ PROCEDURE consulta-agendamento:
                           INPUT p-nro-conta,     
                           INPUT p-id-seqttl,
                           INPUT p-nro-aplicacao, 
-                          INPUT par_cdsitaar,
                           OUTPUT "",
                           OUTPUT 0,               
                           OUTPUT "").
@@ -5899,10 +6071,7 @@ PROCEDURE consulta-agendamento:
                aux_nrmesaar = 0
                aux_qtdiacar = 0
                aux_qtmesaar = 0
-               aux_vlparaar = 0
-               aux_incancel = 0
-               aux_dssitaar = ""
-               aux_dstipaar = "".
+               aux_vlparaar = 0.                                           
 
         DO aux_cont = 1 TO xRoot2:NUM-CHILDREN: 
 
@@ -5940,53 +6109,46 @@ PROCEDURE consulta-agendamento:
                    aux_nrmesaar = INT(xText:NODE-VALUE)  WHEN xField:NAME = "nrmesaar"
                    aux_qtdiacar = INT(xText:NODE-VALUE)  WHEN xField:NAME = "qtdiacar"
                    aux_qtmesaar = INT(xText:NODE-VALUE)  WHEN xField:NAME = "qtmesaar"
-                   aux_vlparaar = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlparaar"
-                   aux_incancel = INT(xText:NODE-VALUE)  WHEN xField:NAME = "incancel"
-                   aux_dssitaar = xText:NODE-VALUE       WHEN xField:NAME = "dssitaar"
-                   aux_dstipaar = xText:NODE-VALUE       WHEN xField:NAME = "dstipaar".
-            
+                   aux_vlparaar = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlparaar".
             
         END. 
 
         CREATE tt-agendamento.
-        ASSIGN tt-agendamento.cdcooper = aux_cdcooper
-               tt-agendamento.cdageass = aux_cdageass
-               tt-agendamento.cdagenci = aux_cdagenci
-               tt-agendamento.cdoperad = aux_cdoperad
-               tt-agendamento.cdsitaar = aux_cdsitaar
-               tt-agendamento.dtcancel = aux_dtcancel
-               tt-agendamento.dtcarenc = aux_dtcarenc
-               tt-agendamento.dtiniaar = aux_dtiniaar
-               tt-agendamento.dtvencto = aux_dtvencto
-               tt-agendamento.dtmvtolt = aux_dtmvtolt
+        ASSIGN tt-agendamento.cdcooper = aux_cdcooper.
+               tt-agendamento.cdageass = aux_cdageass.
+               tt-agendamento.cdagenci = aux_cdagenci.
+               tt-agendamento.cdoperad = aux_cdoperad.
+               tt-agendamento.cdsitaar = aux_cdsitaar.
+               tt-agendamento.dtcancel = aux_dtcancel.
+               tt-agendamento.dtcarenc = aux_dtcarenc.
+               tt-agendamento.dtiniaar = aux_dtiniaar.
+               tt-agendamento.dtvencto = aux_dtvencto.
+               tt-agendamento.dtmvtolt = aux_dtmvtolt.
                tt-agendamento.flgctain = IF aux_flgctain = 0 THEN
                                             FALSE
                                          ELSE
-                                            TRUE
+                                            TRUE.
                tt-agendamento.flgresin = IF aux_flgresin = 0 THEN
                                             FALSE
                                          ELSE 
-                                            TRUE
+                                            TRUE.
                tt-agendamento.flgtipar = IF aux_flgtipar = 0 THEN
                                             FALSE
                                          ELSE 
-                                            TRUE
+                                            TRUE.
                tt-agendamento.flgtipin = IF aux_flgtipin = 0 THEN
                                             FALSE
                                          ELSE
-                                            TRUE
-               tt-agendamento.hrtransa = aux_hrtransa
-               tt-agendamento.idseqttl = aux_idseqttl
-               tt-agendamento.nrctraar = aux_nrctraar
-               tt-agendamento.nrdconta = aux_nrdconta
-               tt-agendamento.nrdocmto = aux_nrdocmto
-               tt-agendamento.nrmesaar = aux_nrmesaar
-               tt-agendamento.qtdiacar = aux_qtdiacar
-               tt-agendamento.qtmesaar = aux_qtmesaar
-               tt-agendamento.vlparaar = aux_vlparaar
-               tt-agendamento.incancel = aux_incancel
-               tt-agendamento.dssitaar = aux_dssitaar
-               tt-agendamento.dstipaar = aux_dstipaar.
+                                            TRUE.
+               tt-agendamento.hrtransa = aux_hrtransa.
+               tt-agendamento.idseqttl = aux_idseqttl.
+               tt-agendamento.nrctraar = aux_nrctraar.
+               tt-agendamento.nrdconta = aux_nrdconta.
+               tt-agendamento.nrdocmto = aux_nrdocmto.
+               tt-agendamento.nrmesaar = aux_nrmesaar.
+               tt-agendamento.qtdiacar = aux_qtdiacar.
+               tt-agendamento.qtmesaar = aux_qtmesaar.
+               tt-agendamento.vlparaar = aux_vlparaar.
 
                VALIDATE tt-agendamento.
     END.
@@ -6049,14 +6211,6 @@ PROCEDURE consulta-agendamento-det:
     DEF VAR aux_tpdvalor  LIKE craplau.tpdvalor NO-UNDO.
     DEF VAR aux_vllanaut  LIKE craplau.vllanaut NO-UNDO.
     DEF VAR aux_nrdocmto  AS   CHAR             NO-UNDO.
-    DEF VAR aux_flgtipar  AS   INTE             NO-UNDO.
-    DEF VAR aux_dstipaar  AS   CHAR             NO-UNDO.
-    DEF VAR aux_flgtipin  AS   INTE             NO-UNDO.
-    DEF VAR aux_dstipinv  AS   CHAR             NO-UNDO.
-    DEF VAR aux_qtdiacar  LIKE crapaar.qtdiacar NO-UNDO.
-    DEF VAR aux_dssitlau  AS   CHAR             NO-UNDO.
-    DEF VAR aux_vlsolaar  AS   DECI             NO-UNDO.
-    DEF VAR aux_dsprotoc  LIKE crappro.dsprotoc NO-UNDO. 
  
     /* Inicializando objetos para leitura do XML */ 
     CREATE X-DOCUMENT xDoc.    /* Vai conter o XML completo */ 
@@ -6171,15 +6325,7 @@ PROCEDURE consulta-agendamento-det:
                    aux_nrseqlan = INT(xText:NODE-VALUE)  WHEN xField:NAME = "nrseqlan"
                    aux_tpdvalor = INT(xText:NODE-VALUE)  WHEN xField:NAME = "tpdvalor"
                    aux_vllanaut = DEC(xText:NODE-VALUE)  WHEN xField:NAME = "vllanaut"
-                   aux_nrdocmto = xText:NODE-VALUE       WHEN xField:NAME = "nrdocmto"
-                   aux_flgtipar = INTE(xText:NODE-VALUE) WHEN xField:NAME = "flgtipar"
-                   aux_dstipaar = xText:NODE-VALUE       WHEN xField:NAME = "dstipaar"
-                   aux_flgtipin = INTE(xText:NODE-VALUE) WHEN xField:NAME = "flgtipin"
-                   aux_dstipinv = xText:NODE-VALUE       WHEN xField:NAME = "dstipinv"
-                   aux_qtdiacar = INT(xText:NODE-VALUE)  WHEN xField:NAME = "qtdiacar"
-                   aux_dssitlau = xText:NODE-VALUE       WHEN xField:NAME = "dssitlau"
-                   aux_vlsolaar = DEC(xText:NODE-VALUE)  WHEN xField:NAME = "vlsolaar"
-                   aux_dsprotoc = xText:NODE-VALUE       WHEN xField:NAME = "dsprotoc".
+                   aux_nrdocmto = xText:NODE-VALUE       WHEN xField:NAME = "nrdocmto".
 
         END. 
 
@@ -6200,15 +6346,7 @@ PROCEDURE consulta-agendamento-det:
                tt-agen-det.tpdvalor = aux_tpdvalor
                tt-agen-det.vllanaut = aux_vllanaut
                tt-agen-det.cdcooper = aux_cdcooper
-               tt-agen-det.nrdocmto = aux_nrdocmto
-               tt-agen-det.flgtipar = aux_flgtipar
-               tt-agen-det.dstipaar = aux_dstipaar
-               tt-agen-det.flgtipin = aux_flgtipin
-               tt-agen-det.dstipinv = aux_dstipinv
-               tt-agen-det.qtdiacar = aux_qtdiacar
-               tt-agen-det.dssitlau = aux_dssitlau
-               tt-agen-det.vlsolaar = aux_vlsolaar
-               tt-agen-det.dsprotoc = aux_dsprotoc.
+               tt-agen-det.nrdocmto = aux_nrdocmto.
 
         VALIDATE tt-agen-det.
     END.

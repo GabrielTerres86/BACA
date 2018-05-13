@@ -26,8 +26,6 @@
 				 17/06/2015 - Ajuste decorrente a melhoria no layout da tela
  							  (Adriano).
 	                                                                  	  
-				 11/01/2018 - Alterações referente ao PRJ406.
-	                                                                  	  
 	**************************************************************************/
 	
 ?>
@@ -61,15 +59,10 @@
 	$vldpagto = $_POST["vldpagto"];	
 	$cdempcon = $_POST["cdempcon"];	
 	$cdsegmto = $_POST["cdsegmto"];	
+	$flgcnvsi = $_POST["flgcnvsi"];	
 	$cdhiscxa = $_POST["cdhiscxa"];	
 	$nrregist = (isset($_POST["nrregist"])) ? $_POST["nrregist"] : 30;
 	$nriniseq = (isset($_POST["nriniseq"])) ? $_POST["nriniseq"] : 1;	
-  
-  //PJ406
-  $dtipagto = $_POST["dtipagto"];
-  $dtfpagto = $_POST["dtfpagto"];
-  $nrdconta = $_POST["nrdconta"];
-  $nrautdoc = $_POST["nrautdoc"];
 			
 	//Verifica se será consultado titulos ou faturas	
 	if ($tpdpagto == "yes") {
@@ -98,12 +91,7 @@
 	$xmlConsulta .= "    <cdempcon>".$cdempcon."</cdempcon>";
 	$xmlConsulta .= "    <cdsegmto>".$cdsegmto."</cdsegmto>";
 	$xmlConsulta .= "    <nriniseq>".$nriniseq."</nriniseq>";
-  //PJ406
-  $xmlConsulta .= "    <dtipagto>".$dtipagto."</dtipagto>";
-  $xmlConsulta .= "    <dtfpagto>".$dtfpagto."</dtfpagto>";
-  $xmlConsulta .= "    <nrdconta>".$nrdconta."</nrdconta>";
-  $xmlConsulta .= "    <nrautdoc>".$nrautdoc."</nrautdoc>";
-  
+	$xmlConsulta .= "    <flgcnvsi>".$flgcnvsi."</flgcnvsi>";
 	$xmlConsulta .= "  </Dados>";
 	$xmlConsulta .= "</Root>";		
 				

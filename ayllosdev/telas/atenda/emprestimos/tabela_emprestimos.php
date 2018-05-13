@@ -19,43 +19,37 @@
  * 009: [15/10/2015] Alteracao do nome do botao "Recalcular" para "Atualizar Data". (Jaison/Oscar)
  * 010: [16/03/2016] Inclusao da operacao ENV_ESTEIRA. PRJ207 Esteira de Credito. (Odirlei-AMcom) 
  * 011: [22/03/2016] Inclusao da operacao ACIONAMENTOS. PRJ207 Esteira de Credito. (Daniel/Oscar)
- * 012: [30/03/2017] Exibir produto Pos-Fixado. (Jaison/James - PRJ298)
- * 012: [25/04/2017] Alterado ordem das colunas "Ac" e "Situação" Projeto 337 - Motor de crédito. (Reinert)
+ * 012: [25/04/2017] Alterado ordem das colunas "Ac" e "Situação" Projeto 337 - Motor de crédito. (Reinert) 
  * 013: [01/12/2017] Não permitir acesso a opção de incluir quando conta demitida (Jonata - RKAM P364)
+ * 014: [25/01/2018] Adicionado tela de seleção de tipos de empréstimos (Alex)
+ * 015: [26/01/2018] Adicionado as operações de consignado em andamento na FUNCAO (SOFTPAR) na tabela de empréstimos (Alex)
  */
 ?>
 
+<script type="text/javascript" src="scripts/funcoes.js"></script>
+
 <div id="divEmpres" class="divRegistros">
-    
 	<table>
 		<thead>
-			<tr><th>Data</th>
+			<tr>
+				<th>Data</th>
 				<th>Contrato</th>
 				<th>Produto</th>
+				<th>Tipo Contrato</th>
 				<th><? echo utf8ToHtml('Empréstimo');?></th>
-				<th>Financiado</th>
 				<th><? echo utf8ToHtml('Prestação');?></th>
 				<th>Pr</th>
 				<th>Lcr</th>
 				<th>Fin</th>
 				<th>Ac</th>
 				<th><? echo utf8ToHtml('Situação');?></th>
-				<th><? echo utf8ToHtml('Decisão');?></th></tr>
+				<th><? echo utf8ToHtml('Decisão');?></th>
+			</tr>
 		</thead>
 		<tbody>
-			<? foreach( $registros as $registro ) {
-                switch (getByTagName($registro->tags,'tpemprst')) {
-                    case 0:
-                        $tipo = "Price TR";
-                        break;
-                    case 1:
-                        $tipo = "Price Pre-fixado";
-                        break;
-                    case 2:
-                        $tipo = "Pos-fixado";
-                        break;
-                } ?>
-				<tr><td><span><? echo dataParaTimestamp(getByTagName($registro->tags,'dtmvtolt')) ?></span>
+			<? foreach( $registros as $registro ) {  $tipo = (getByTagName($registro->tags,'tpemprst') == "0") ? "Price TR" : "Price Pre-fixado"   ?>
+				<tr>
+					<td><span><? echo dataParaTimestamp(getByTagName($registro->tags,'dtmvtolt')) ?></span>
 						<? echo getByTagName($registro->tags,'dtmvtolt') ?></td>
 					<td><span><? echo getByTagName($registro->tags,'nrctremp') ?></span>
 						<? echo formataNumericos("zzz.zz9",getByTagName($registro->tags,'nrctremp'),".") ?>
@@ -72,16 +66,14 @@
                         <input type="hidden" id="err_efet" name="err_efet" value="<? echo getByTagName($registro->tags,'err_efet') ?>" />
 						<input type="hidden" id="insitapr" name="insitapr" value="<? echo getByTagName($registro->tags,'insitapr') ?>" />
 						<input type="hidden" id="cdlcremp" name="cdlcremp" value="<? echo getByTagName($registro->tags,'cdlcremp') ?>" />
-					    <input type="hidden" id="vlfinanc" name="vlfinanc" value="<? echo getByTagName($registro->tags,'vlfinanc') ?>" />
 						<input type="hidden" id="dssitest" name="dssitest" value="<? echo getByTagName($registro->tags,'dssitest') ?>" />
-            <input type="hidden" id="inobriga" name="inobriga" value="<? echo getByTagName($registro->tags,'inobriga') ?>" />
+            			<input type="hidden" id="inobriga" name="inobriga" value="<? echo getByTagName($registro->tags,'inobriga') ?>" />
                     </td>
 
 					<td> <? echo stringTabela($tipo,40,'maiuscula'); ?>  </td>
+					<td> Emp. E Financ. </td>
 					<td><span><? echo str_replace(",",".",getByTagName($registro->tags,'vlemprst')) ?></span>
 						<? echo number_format(str_replace(",",".",getByTagName($registro->tags,'vlemprst')),2,",",".") ?></td>
-						<td><span><? echo str_replace(",",".",getByTagName($registro->tags,'vlfinanc')) ?></span>
-						<? echo number_format(str_replace(",",".",getByTagName($registro->tags,'vlfinanc')),2,",",".") ?></td>
 					<td><span><? echo str_replace(",",".",getByTagName($registro->tags,'vlpreemp')) ?></span>
 						<? echo number_format(str_replace(",",".",getByTagName($registro->tags,'vlpreemp')),2,",",".") ?></td>
 					<td><? echo stringTabela(getByTagName($registro->tags,'qtpreemp'),10,'maiuscula') ?></td>
@@ -89,8 +81,44 @@
 					<td><? echo stringTabela(getByTagName($registro->tags,'cdfinemp'),10,'maiuscula') ?></td>
 					<td><? echo stringTabela(getByTagName($registro->tags,'cdoperad'),10,'maiuscula') ?></td>					
 					<td><? echo getByTagName($registro->tags,'dssitest') ?></td>
-					<td><? echo getByTagName($registro->tags,'dssitapr') ?></td></tr>
+					<td><? echo getByTagName($registro->tags,'dssitapr') ?></td>
+				</tr>
 			<? } ?>
+
+
+			<!-- inicio foreach $registrosFuncao -->
+
+			<? 
+			/* Efetuar ajustes para trazer do banco informações que estão fixas, após definição de regras do progress
+			*/
+				foreach ($registrosFuncao as $registroFuncao) { 
+			?>
+					<tr>
+						<td>
+							<span><? echo dataParaTimestamp(getByTagName($registroFuncao->tags,'dtmvtolt')) ?></span>
+							<? echo getByTagName($registroFuncao->tags,'dtmvtolt') ?>
+						</td>
+						<td>
+							<span><? echo getByTagName($registroFuncao->tags,'nrctremp') ?></span>
+							<? echo formataNumericos("zzz.zz9",getByTagName($registroFuncao->tags,'nrctremp'),".") ?>
+						</td>
+						<td>PRICE PRE-FIXADO</td>
+						<td>Emp. Consignado</td>
+						<td>-</td>
+						<td>-</td>
+						<td>-</td>
+						<td>-</td>
+						<td>-</td>
+						<td><? echo stringTabela(getByTagName($registroFuncao->tags,'cdoperad'),10,'maiuscula') ?></td>
+						<td>-</td>
+						<td>-</td>
+					</tr>
+			<?
+				}
+			?>
+
+			<!-- fim foreach registrosFuncao -->
+
 		</tbody>
 	</table>
 </div>
@@ -100,11 +128,13 @@
 	<a href="#" class="botao" id="btAlterar"   onclick="controlaOperacao('TA');">Alterar</a>
 	<a href="#" class="botao" id="btConsultar" onClick="direcionaConsulta();">Consultar</a>
 	
-	<?php if(!(/* $sitaucaoDaContaCrm == '4' || */ 
+	<?php if(!($sitaucaoDaContaCrm == '4' || 
 			   $sitaucaoDaContaCrm == '7' || 
 			   $sitaucaoDaContaCrm == '8'  )){?>
 
-	<a href="#" class="botao" id="btIncluir"   onClick="controlaOperacao('I');">Incluir</a>
+			<!--<a href="#" class="botao" id="btIncluir" onClick="controlaOperacao('I');">Incluir</a>-->
+			<a href="#" class="botao" id="btIncluir" onClick="escolherTipoEmprestimo()">Incluir</a>
+
 	
 	<?}?>
 	
@@ -119,3 +149,11 @@
 	<a href="#" class="botao" id="btAcionamentos"  onClick="controlaOperacao('ACIONAMENTOS')">Detalhes Proposta</a>
 	
 </div>
+
+
+<script type="text/javascript">
+	mostraRotina();	
+	hideMsgAguardo();	
+	bloqueiaFundo(divRotina);
+	controlaFoco();
+</script>

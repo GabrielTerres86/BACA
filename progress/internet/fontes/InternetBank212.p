@@ -108,7 +108,7 @@ DO aux_contador = 1 TO aux_qtagdcan:
                              " Tipo Mov: " + STRING(aux_intipmvt) + 
                              " Nr Ret: "   + STRING(aux_nrremret) + 
                              " Seq Arq: "  + STRING(aux_nrseqarq) + 
-                             " - "     + aux_dscritic.
+                             " - "     + aux_dscritic + "<br>".
     END.
 
 END.

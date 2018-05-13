@@ -36,7 +36,6 @@
 			<br />
 			<label for="vldesblo">Valor do Desbloqueio:</label>
 			<input id="vldesblo" name="vldesblo" class="moeda" type="text" maxlength="15" />
-			<input id="vltmpbloque" name="vltmpbloque" type="hidden" />
 				
 		</fieldset>	
 	</form>

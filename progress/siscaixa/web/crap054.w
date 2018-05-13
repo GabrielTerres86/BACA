@@ -47,8 +47,6 @@
                             
                10/10/2016 - Incluir log na chamada da rotina crap051f - Controle 
                             de movimentacao em especie (Lucas Ranghetti #463572)
-                            
-               06/12/2017 - Melhorias 458 -  Ajustes da melhoria - Antonio R. Jr (mouts)
 ............................................................................ */
 
 &ANALYZE-SUSPEND _VERSION-NUMBER AB_v9r12 GUI adm2
@@ -137,7 +135,6 @@ DEF VAR p-nrdolote           AS INTE    NO-UNDO.
 DEF VAR flgsubopcao          AS LOGI    NO-UNDO.
 DEF VAR p-programa           AS CHAR INITIAL "CRAP054".
 DEF VAR p-flgdebcc           AS LOGI INITIAL FALSE.
-DEF VAR p-solicita           AS CHAR.
 
 DEF VAR aux_nrdconta    AS INTE.
 DEF VAR aux_vllanmto    LIKE craplcm.vllanmto.
@@ -788,58 +785,6 @@ PROCEDURE process-web-request :
                                                 {include/i-erro.i}                       
                                             END.
                                             ELSE DO:
-                                              
-                                                RUN dbo/b1crap54.p PERSISTENT SET h-b1crap54.
-                                                RUN consulta-provisao IN h-b1crap54(
-                                                                                   INPUT v_coop,
-                                                                                   INPUT INT(v_pac),
-                                                                                   INPUT INT(v_caixa),
-                                                                                   INPUT DEC(v_conta),
-                                                                                   INPUT DEC(v_valor),
-                                                                                   INPUT "", /* cmc7 */
-                                                                                   OUTPUT p-solicita).
-
-                                                DELETE PROCEDURE h-b1crap54.
-                                                
-                                                IF RETURN-VALUE = "NOK" THEN DO:
-                                                    ASSIGN v_cod = ""
-                                                           v_senha = "".
-                                                           
-                                                    {include/i-erro.i}
-                                                END.
-                                                
-                                                ELSE DO:
-                                                    IF p-solicita <> "" THEN
-                                                      DO:
-                                                        ASSIGN v_habilita = 'yes'.
-                                                      END.
-                                                    ELSE
-                                                        ASSIGN v_habilita = 'no'.
-                                                    IF v_action = 'LeaveConta' THEN DO:
-                                                        ASSIGN v_action = ''.
-                                                    END.
-                                                    ELSE DO:
-                                                          RUN dbo/b1crap54.p
-                                                              PERSISTENT SET h-b1crap54.
-                                                              
-                                                          RUN valida-permissao-provisao IN h-b1crap54(
-                                                                                                     INPUT v_coop,
-                                                                                                     INPUT INT(v_pac),
-                                                                                                     INPUT INT(v_caixa),
-                                                                                                     INPUT v_cod,
-                                                                                                     INPUT v_senha,
-                                                                                                     INPUT INT(v_conta),
-                                                                                                     INPUT DEC(v_valor),
-                                                                                                     INPUT p-solicita).
-                                                          DELETE PROCEDURE h-b1crap54.
-
-                                                          IF RETURN-VALUE = 'NOK' THEN DO:
-                                                                ASSIGN v_cod = ""
-                                                                       v_senha = ""
-                                                                       vh_foco = "19".
-                                                                {include/i-erro.i}
-                                                          END.
-                                                          ELSE DO:                                              
                                                 ASSIGN l-houve-erro = NO
                                                        v_action = 'Ok'.
                                                 DO TRANSACTION ON ERROR UNDO:
@@ -964,9 +909,7 @@ PROCEDURE process-web-request :
                                                            OK = ''.
                                                 END.
                                             END.
-                                           END.
-                                          END.
-                                         END.
+
                                         END. /*ok*/
 
                                     END. /*leaveConta*/
@@ -1101,3 +1044,5 @@ END PROCEDURE.
 
 /* _UIB-CODE-BLOCK-END */
 &ANALYZE-RESUME
+
+

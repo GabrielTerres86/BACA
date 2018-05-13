@@ -2,7 +2,7 @@
 
     Programa: xb1wgen0104.p
     Autor   : Guilherme/Gabriel
-    Data    : Julho/2011                   Ultima atualizacao: 10/04/2018
+    Data    : Julho/2011                   Ultima atualizacao: 19/07/2012 
 
     Objetivo  : BO de Comunicacao XML x BO CMEDEP/CMESAQ (b1wgen0104.p)
 
@@ -12,9 +12,6 @@
                             
                 19/07/2012 - Adicionado campo aux_nrdconta em procedure
                              inclui_altera_dados. (Jorge)
-
-				08/03/2018 - Alterado tipo do parametro docmto de INT para DECIMAL
-                             Chamado 851313 (Antonio R JR)
    
 .............................................................................*/
                                                                             
@@ -31,7 +28,7 @@ DEF VAR aux_idseqttl AS INTE                                           NO-UNDO.
 DEF VAR aux_dtdepesq AS DATE                                           NO-UNDO.
 DEF VAR aux_cdbccxlt AS INTE                                           NO-UNDO.
 DEF VAR aux_nrdolote AS INTE                                           NO-UNDO.
-DEF VAR aux_nrdocmto AS DECIMAL                                        NO-UNDO.
+DEF VAR aux_nrdocmto AS INTE                                           NO-UNDO.
 DEF VAR aux_tpdocmto AS INTE                                           NO-UNDO.
 DEF VAR aux_dsdconta AS CHAR                                           NO-UNDO.
 DEF VAR aux_vllanmto LIKE crapcme.vllanmto                             NO-UNDO.                                                          
@@ -79,7 +76,7 @@ PROCEDURE valores_entrada:
             
             WHEN "cdbccxlt" THEN aux_cdbccxlt = INTE(tt-param.valorCampo).
             WHEN "nrdolote" THEN aux_nrdolote = INTE(tt-param.valorCampo).
-            WHEN "nrdocmto" THEN aux_nrdocmto = DECIMAL(tt-param.valorCampo).
+            WHEN "nrdocmto" THEN aux_nrdocmto = INTE(tt-param.valorCampo).
             WHEN "tpdocmto" THEN aux_tpdocmto = INTE(tt-param.valorCampo).
             WHEN "dtdepesq" THEN aux_dtdepesq = DATE(tt-param.valorCampo).
 

@@ -12,7 +12,7 @@ BEGIN
  Sistema : Conta-Corrente - Cooperativa de Credito
  Sigla   : CRED
  Autor   : Deborah/Edson
- Data    : Janeiro/92.                         Ultima atualizacao: 06/02/2018
+ Data    : Janeiro/92.                         Ultima atualizacao: 27/12/2017
  Dados referentes ao programa:
 
  Frequencia: Mensal (Batch - Background).
@@ -163,8 +163,6 @@ BEGIN
                       (Jonata - RKAM P364).
 
           27/12/2017 - #806757 Incluídos os logs de trace dos erros nas principais exceptions others (Carlos)
-          
-          06/02/2018 - #842836 Inclusão do hint FULL no cursor cr_craplem para melhoria de performance (Carlos)
    ............................................................................. */
    DECLARE
 
@@ -623,8 +621,7 @@ BEGIN
 
      -- Selecionar informacoes dos lancamentos do emprestimos
      CURSOR cr_craplem (pr_cdcooper IN crapepr.cdcooper%TYPE) IS
-       SELECT /*+ FULL(craplem) */
-              craplem.nrdconta
+       SELECT craplem.nrdconta
              ,craplem.nrctremp
              ,max(craplem.dtmvtolt) keep (dense_rank last order by craplem.dtmvtolt) dtmvtolt
              ,sum(craplem.vllanmto) keep (dense_rank last order by craplem.dtmvtolt) vllanmto
@@ -2952,10 +2949,13 @@ BEGIN
       END LOOP;
 
       -- Carregar tabela de memoria com motivos de demissao
-      FOR rw_motivo IN (SELECT A.CDMOTIVO, A.DSMOTIVO
-                          FROM TBCOTAS_MOTIVO_DESLIGAMENTO A) LOOP
-         -- Atribuir valor de motivo para a tabela de memoria
-         vr_tab_craptab_motivo(rw_motivo.CDMOTIVO):= rw_motivo.DSMOTIVO;
+      FOR rw_craptab IN cr_craptab_motivo (pr_cdcooper => pr_cdcooper
+                                          ,pr_nmsistem => 'CRED'
+                                          ,pr_tptabela => 'GENERI'
+                                          ,pr_cdempres => 0
+                                          ,pr_cdacesso => 'MOTIVODEMI') LOOP
+         -- Atribuir valor da provisao para a tabela de memoria
+         vr_tab_craptab_motivo(rw_craptab.tpregist):= rw_craptab.dstextab;
       END LOOP;
 
       -- Carregar tabela de memoria com limites dos associados

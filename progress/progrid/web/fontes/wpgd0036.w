@@ -2,10 +2,8 @@
 
 Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro).
 
-            05/06/2012 - Adaptação dos fontes para projeto Oracle. Alterado
-                         busca na gnapses de CONTAINS para MATCHES (Guilherme Maba).
-                         
-            29/08/2017 - Inclusao do filtro por Programa,Prj. 322 (Jean Michel).             
+                        05/06/2012 - Adaptação dos fontes para projeto Oracle. Alterado
+                                                 busca na gnapses de CONTAINS para MATCHES (Guilherme Maba).
 
 ...............................................................................*/
 
@@ -18,29 +16,46 @@ Alterações: 10/12/2008 - Melhoria de performance para a tabela gnapses (Evandro)
 
 /* Temp-Table and Buffer definitions                                    */
 DEFINE TEMP-TABLE ab_unmap
-  FIELD aux_cdagenci AS CHARACTER 
-  FIELD aux_cdcooper AS CHARACTER 
-  FIELD cdcooper     AS CHARACTER 
-  FIELD cdagenci     AS CHARACTER 
-  FIELD aux_cddopcao AS CHARACTER FORMAT "X(256)":U 
-  FIELD aux_cdevento AS CHARACTER 
-  FIELD aux_dsendurl AS CHARACTER FORMAT "X(256)":U 
-  FIELD aux_dsretorn AS CHARACTER FORMAT "X(256)":U 
-  FIELD aux_dtanoage AS CHARACTER 
-  FIELD aux_idevento AS CHARACTER FORMAT "X(256)":U 
-  FIELD aux_lspermis AS CHARACTER FORMAT "X(256)":U 
-  FIELD aux_nrdrowid AS CHARACTER FORMAT "X(256)":U 
-  FIELD aux_stdopcao AS CHARACTER FORMAT "X(256)":U 
-  FIELD cdeixtem     AS CHARACTER FORMAT "X(256)":U 
-  FIELD consideraEventosForaDaAgenda AS LOGICAL  INITIAL no
-  FIELD dataFinal    AS DATE FORMAT "99/99/9999":U  INITIAL ?
-  FIELD dataInicial  AS DATE FORMAT "99/99/9999":U  INITIAL ?
-  FIELD tipoDeRelatorio AS CHARACTER
-  FIELD aux_nrseqpgm AS CHARACTER
-  FIELD nrseqpgm AS CHARACTER.
+       FIELD aux_cdagenci AS CHARACTER 
+       FIELD aux_cdcooper AS CHARACTER 
+       FIELD cdcooper     AS CHARACTER 
+       FIELD cdagenci     AS CHARACTER 
+       FIELD aux_cddopcao AS CHARACTER FORMAT "X(256)":U 
+       FIELD aux_cdevento AS CHARACTER 
+       FIELD aux_dsendurl AS CHARACTER FORMAT "X(256)":U 
+       FIELD aux_dsretorn AS CHARACTER FORMAT "X(256)":U 
+       FIELD aux_dtanoage AS CHARACTER 
+       FIELD aux_idevento AS CHARACTER FORMAT "X(256)":U 
+       FIELD aux_lspermis AS CHARACTER FORMAT "X(256)":U 
+       FIELD aux_nrdrowid AS CHARACTER FORMAT "X(256)":U 
+       FIELD aux_stdopcao AS CHARACTER FORMAT "X(256)":U 
+       FIELD cdeixtem     AS CHARACTER FORMAT "X(256)":U 
+       FIELD consideraEventosForaDaAgenda AS LOGICAL  INITIAL no
+       FIELD dataFinal    AS DATE FORMAT "99/99/9999":U  INITIAL ?
+       FIELD dataInicial  AS DATE FORMAT "99/99/9999":U  INITIAL ?
+       FIELD tipoDeRelatorio AS CHARACTER .
 
 
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _DEFINITIONS w-html 
+/*------------------------------------------------------------------------
+
+  File: 
+
+  Description: 
+
+  Input Parameters:
+      <none>
+
+  Output Parameters:
+      <none>
+
+  Author: 
+
+  Created: 
+
+------------------------------------------------------------------------*/
+/*           This .W file was created with AppBuilder.                  */
+/*----------------------------------------------------------------------*/
 
 /* Create an unnamed pool to store all the widgets created 
      by this procedure. This is a good default which assures
@@ -78,7 +93,6 @@ DEFINE VARIABLE v-identificacao       AS CHARACTER                      NO-UNDO.
 DEFINE VARIABLE aux_crapcop           AS CHAR                           NO-UNDO.
 DEFINE VARIABLE vetorpac              AS CHAR                           NO-UNDO.
 DEFINE VARIABLE vetorevento           AS CHAR                           NO-UNDO.
-DEFINE VARIABLE vetorprogra           AS CHAR                           NO-UNDO.
 
 DEFINE VARIABLE anoBase               AS INTEGER INITIAL [2005].
 DEFINE VARIABLE conta                 AS INTEGER.
@@ -123,28 +137,27 @@ DEFINE VARIABLE vetormes              AS CHAR EXTENT 12
 &Scoped-define ENABLED-TABLES ab_unmap crapidp
 &Scoped-define FIRST-ENABLED-TABLE ab_unmap
 &Scoped-define SECOND-ENABLED-TABLE crapidp
-&Scoped-Define ENABLED-OBJECTS ab_unmap.consideraEventosForaDaAgenda ab_unmap.tipoDeRelatorio ~
-ab_unmap.dataFinal ab_unmap.dataInicial ab_unmap.aux_cdagenci ab_unmap.aux_cdcooper ~
-ab_unmap.aux_cddopcao ab_unmap.aux_cdevento ab_unmap.aux_dsendurl ab_unmap.aux_dsretorn ~
-ab_unmap.aux_dtanoage ab_unmap.aux_idevento ab_unmap.aux_lspermis ab_unmap.aux_nrdrowid ~
-ab_unmap.aux_stdopcao ab_unmap.cdeixtem ab_unmap.cdcooper ab_unmap.cdagenci ab_unmap.aux_nrseqpgm ~
-ab_unmap.nrseqpgm
+&Scoped-Define ENABLED-OBJECTS ab_unmap.consideraEventosForaDaAgenda ab_unmap.tipoDeRelatorio ab_unmap.dataFinal ab_unmap.dataInicial ab_unmap.aux_cdagenci ab_unmap.aux_cdcooper ab_unmap.aux_cddopcao ab_unmap.aux_cdevento ab_unmap.aux_dsendurl ab_unmap.aux_dsretorn ab_unmap.aux_dtanoage ab_unmap.aux_idevento ab_unmap.aux_lspermis ab_unmap.aux_nrdrowid ab_unmap.aux_stdopcao ab_unmap.cdeixtem ab_unmap.cdcooper     ab_unmap.cdagenci
 &Scoped-Define DISPLAYED-FIELDS crapidp.idevento 
 &Scoped-define DISPLAYED-TABLES ab_unmap crapidp
 &Scoped-define FIRST-DISPLAYED-TABLE ab_unmap
 &Scoped-define SECOND-DISPLAYED-TABLE crapidp
-&Scoped-Define DISPLAYED-OBJECTS ab_unmap.consideraEventosForaDaAgenda ab_unmap.tipoDeRelatorio ~
-ab_unmap.dataFinal ab_unmap.dataInicial ab_unmap.aux_cdagenci ab_unmap.aux_cdcooper ~
-ab_unmap.aux_cddopcao ab_unmap.aux_cdevento ab_unmap.aux_dsendurl ab_unmap.aux_dsretorn ~
-ab_unmap.aux_dtanoage ab_unmap.aux_idevento ab_unmap.aux_lspermis ab_unmap.aux_nrdrowid ~
-ab_unmap.aux_stdopcao ab_unmap.cdeixtem ab_unmap.cdcooper ab_unmap.cdagenci ab_unmap.aux_nrseqpgm ~
-ab_unmap.nrseqpgm
+&Scoped-Define DISPLAYED-OBJECTS ab_unmap.consideraEventosForaDaAgenda ab_unmap.tipoDeRelatorio ab_unmap.dataFinal ab_unmap.dataInicial ab_unmap.aux_cdagenci ab_unmap.aux_cdcooper ab_unmap.aux_cddopcao ab_unmap.aux_cdevento ab_unmap.aux_dsendurl ab_unmap.aux_dsretorn ab_unmap.aux_dtanoage ab_unmap.aux_idevento ab_unmap.aux_lspermis ab_unmap.aux_nrdrowid ab_unmap.aux_stdopcao ab_unmap.cdeixtem ab_unmap.cdcooper     ab_unmap.cdagenci
 
 /* Custom List Definitions                                              */
 /* List-1,List-2,List-3,List-4,List-5,List-6                            */
 
 /* _UIB-PREPROCESSOR-BLOCK-END */
 &ANALYZE-RESUME
+
+
+
+/* ***********************  Control Definitions  ********************** */
+
+
+/* Definitions of the field level widgets                               */
+
+/* ************************  Frame Definitions  *********************** */
 
 DEFINE FRAME Web-Frame
      ab_unmap.consideraEventosForaDaAgenda AT ROW 1 COL 1 HELP
@@ -171,10 +184,6 @@ DEFINE FRAME Web-Frame
           "" NO-LABEL
           VIEW-AS SELECTION-LIST SINGLE NO-DRAG 
           SIZE 20 BY 4
-    ab_unmap.aux_nrseqpgm AT ROW 1 COL 1 HELP
-          "" NO-LABEL
-          VIEW-AS SELECTION-LIST SINGLE NO-DRAG 
-          SIZE 20 BY 4
      ab_unmap.aux_cdcooper AT ROW 1 COL 1 HELP
           "" NO-LABEL
           VIEW-AS SELECTION-LIST SINGLE NO-DRAG 
@@ -184,10 +193,6 @@ DEFINE FRAME Web-Frame
           VIEW-AS FILL-IN 
           SIZE 20 BY 1
      ab_unmap.cdagenci AT ROW 1 COL 1 HELP
-          "" NO-LABEL FORMAT "X(256)":U
-          VIEW-AS FILL-IN 
-          SIZE 20 BY 1
-     ab_unmap.nrseqpgm AT ROW 1 COL 1 HELP
           "" NO-LABEL FORMAT "X(256)":U
           VIEW-AS FILL-IN 
           SIZE 20 BY 1
@@ -378,6 +383,7 @@ PROCEDURE CriaListaEventos :
     DEFINE VARIABLE aux_nrdturma AS INT  NO-UNDO.
     DEFINE VARIABLE aux_nmevento AS CHAR NO-UNDO.
     
+    
     FOR EACH crapeap WHERE crapeap.cdcooper = INT(ab_unmap.cdcooper)         AND
                            crapeap.idevento = INT(ab_unmap.aux_idevento)     AND
                            crapeap.dtanoage = INT(ab_unmap.aux_dtanoage)     AND
@@ -387,9 +393,7 @@ PROCEDURE CriaListaEventos :
        FIRST crapedp WHERE crapedp.cdevento = crapeap.cdevento               AND
                            crapedp.idevento = crapeap.idevento               AND
                            crapedp.cdcooper = crapeap.cdcooper               AND
-                           crapedp.dtanoage = crapeap.dtanoage               AND
-                           (crapedp.nrseqpgm = INT(ab_unmap.nrseqpgm)    OR
-                           INT(ab_unmap.nrseqpgm) = 0) NO-LOCK,
+                           crapedp.dtanoage = crapeap.dtanoage               NO-LOCK,
         EACH crapadp WHERE crapadp.idevento = crapeap.idevento               AND
                            crapadp.cdcooper = crapeap.cdcooper               AND
                            crapadp.cdagenci = crapeap.cdagenci               AND
@@ -534,14 +538,6 @@ PROCEDURE CriaListaPacAssemb :
 
 END PROCEDURE.
 
-&ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE CriaListaProgramas w-html 
-PROCEDURE CriaListaProgramas:
-
- {includes/wpgd0010.i}
- ASSIGN ab_unmap.aux_nrseqpgm:LIST-ITEM-PAIRS IN FRAME {&FRAME-NAME} = vetorprogra.
-  
-END PROCEDURE.
-
 /* _UIB-CODE-BLOCK-END */
 &ANALYZE-RESUME
 
@@ -554,10 +550,6 @@ PROCEDURE htmOffsets :
   Notes:       
 ------------------------------------------------------------------------------*/
   RUN readOffsets ("{&WEB-FILE}":U).
-  RUN htmAssociate
-    ("aux_nrseqpgm":U,"ab_unmap.aux_nrseqpgm":U,ab_unmap.aux_nrseqpgm:HANDLE IN FRAME {&FRAME-NAME}).
-  RUN htmAssociate
-    ("nrseqpgm ":U,"ab_unmap.nrseqpgm ":U,ab_unmap.nrseqpgm :HANDLE IN FRAME {&FRAME-NAME}).
   RUN htmAssociate
     ("aux_cdagenci":U,"ab_unmap.aux_cdagenci":U,ab_unmap.aux_cdagenci:HANDLE IN FRAME {&FRAME-NAME}).
   RUN htmAssociate
@@ -856,8 +848,7 @@ ASSIGN opcao                    = GET-FIELD("aux_cddopcao")
        ab_unmap.aux_stdopcao    = GET-VALUE("aux_stdopcao")
        ab_unmap.aux_dtanoage    = GET-VALUE("aux_dtanoage")
        ab_unmap.cdcooper        = GET-VALUE("cdcooper")
-       ab_unmap.cdagenci        = GET-VALUE("cdagenci")
-       ab_unmap.nrseqpgm        = GET-VALUE("nrseqpgm").
+       ab_unmap.cdagenci        = GET-VALUE("cdagenci").
 
 RUN outputHeader.
 
@@ -913,9 +904,6 @@ ELSE
 
 /* gera lista de eventos */
 RUN CriaListaEventos. 
-
-/* Gera Lista de Programas */
-RUN CriaListaProgramas.
 
 IF   INTEGER(ab_unmap.aux_dtanoage) <> 0   THEN
      ASSIGN dataInicial = DATE(01,01,INTEGER(ab_unmap.aux_dtanoage))

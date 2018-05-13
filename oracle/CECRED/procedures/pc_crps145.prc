@@ -12,7 +12,7 @@ CREATE OR REPLACE PROCEDURE CECRED.
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Odair
-       Data    : Marco/96.                       Ultima atualizacao: 09/03/2018
+       Data    : Marco/96.                       Ultima atualizacao: 05/06/2017
 
        Dados referentes ao programa:
 
@@ -104,9 +104,6 @@ CREATE OR REPLACE PROCEDURE CECRED.
                    24/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
          			                  crapass, crapttl, crapjur 
                   							(Adriano - P339).
-                   
-                   09/03/2018 - Alteração na forma de gravação da craplpp, utilizar sequence para gerar nrseqdig
-                                Projeto Ligeirinho - Jonatas Jaqmam (AMcom)                                 
 
     ............................................................................. */
 
@@ -1132,7 +1129,7 @@ CREATE OR REPLACE PROCEDURE CECRED.
 
             --atualizando as demais informações do lote 8384
             BEGIN
-              UPDATE craplot SET craplot.nrseqdig = CRAPLOT_8384_SEQ.NEXTVAL
+              UPDATE craplot SET craplot.nrseqdig = nvl(craplot.nrseqdig,0) + 1
                                 ,craplot.qtcompln = nvl(craplot.qtcompln,0) + 1
                                 ,craplot.qtinfoln = nvl(craplot.qtcompln,0) + 1
                                 ,craplot.vlcompcr = nvl(craplot.vlcompcr,0) + nvl(rw_craprpp.vlprerpp,0)

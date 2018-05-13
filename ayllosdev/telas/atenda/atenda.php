@@ -2,7 +2,7 @@
 /*******************************************************************************
  Fonte: atenda.php                                                
  Autor: David                                                     
- Data : Julho/2007                   Última Alteração: 05/12/2017
+ Data : Julho/2007                   Última Alteração: 08/08/2017
                                                                   
  Objetivo  : Mostrar tela ATENDA                                  
                                                                   
@@ -57,18 +57,14 @@
 			 21/03/2017 - Ajuste para incluir o controle mt_rand na chamada do atenda.css (Adriano - SD 603451).
 
 			 28/03/2017 - Ajuste para incluir o controle mt_rand na chamada do funcoes.js (Jonata - RKAM / M294).   
-			 
+			 															 
              26/06/2017 - Incluido mt_rand na chamada do script menu.js (Jonata - RKAM P364)
 									   
              14/07/2017 - Alteração para o cancelamento manual de produtos. Projeto 364 (Reinert)
 
 			 08/08/2017 - Implementacao da melhoria 438. Heitor (Mouts).
 
-             23/11/2017 - Quando acessado a tela Atenda diretamente pelo CRM nao precisa apresentar produtos
-                          PRJ339-CRM(Odirlei-AMcom) 
 
-			 05/12/2017 - Adicionada div divUsoGAROPC para poder chamar a tela GAROPC.
-                          Projeto 404 (Lombardi).
 //**************************************************************************/
 session_start();
 // Includes para controle da session, variáveis globais de controle, e biblioteca de funções
@@ -199,8 +195,6 @@ setVarSession("rotinasTela", $rotinasTela);
 
                                                                                 <!-- ROTINA -->
                                                                                 <div id="divRotina"></div>
-																				<!-- TELA GAROPC -->
-																				<div id="divUsoGAROPC"></div>
 
                                                                                 <!-- INCLUDE DO CABECALHO  -->
                                                                                 <? include('form_cabecalho.php') ?>							
@@ -421,7 +415,7 @@ setVarSession("rotinasTela", $rotinasTela);
 																						     <p id="valueRot31" class="txtNormal">&nbsp;</p>
 																							</div>
 																						  </div>
-																						  																
+																						  
 																						  <div class="bloco_full">
 
 																						    <div class="bloco_line" onMouseOver="focoRotina(32, true);" onMouseOut="focoRotina(32, false);">
@@ -458,13 +452,6 @@ setVarSession("rotinasTela", $rotinasTela);
 		</table>
 	</body>
 </html>
-
-<?
-    $crm_inacesso = isset($glbvars['CRM_INACESSO']) ? $glbvars['CRM_INACESSO'] : 0;
-    $crm_nmdatela = isset($glbvars['CRM_NMDATELA']) ? $glbvars['CRM_NMDATELA'] : 0;
-
-?>
-
 <script type="text/javascript">
 
 	var nrdconta           = '<? echo $_POST['nrdconta']; ?>';           // Conta que vai vir caso esteja sendo incluida uma nova conta
@@ -528,18 +515,9 @@ setVarSession("rotinasTela", $rotinasTela);
 		produtosCancMCheque = produtosCheque.split("|");
 	}
 
-	var CRM_INACESSO =  <? echo $crm_inacesso; ?>;
-    var CRM_NMDATELA = '<? echo $crm_nmdatela; ?>';
-
 	if (nrdconta != '' && executandoImpedimentos == '') {
 		 $("#nrdconta","#frmCabAtenda").val(nrdconta);
-
-         // Quando acessado a tela Atenda diretamente pelo CRM nao precisa apresentar produtos
-         if (CRM_INACESSO == 1 && CRM_NMDATELA.toUpperCase() == 'ATENDA'){
-            flgProdutos = false;		  
-         }else{
-		   flgProdutos = true;		 
-         }
+		 flgProdutos = true;		 
 	} else if (nrdconta != '' && executandoImpedimentos) {
 		$("#nrdconta","#frmCabAtenda").val(nrdconta);		
 	}

@@ -2,7 +2,7 @@
 
     Programa: b1wgen0092tt.i                  
     Autor   : André (DB1)
-    Data    : Maio/2011                       Ultima atualizacao: 07/11/2017
+    Data    : Maio/2011                       Ultima atualizacao: 30/05/2016
 
     Dados referentes ao programa:
 
@@ -29,12 +29,6 @@
                              de Débito Fácil (Lucas Lunelli - Out/2014).
                             
                 30/05/2016 - Alteraçoes Oferta DEBAUT Sicredi (Lucas Lunelli - [PROJ320])
-                
-                07/11/2017 - Incluir campos nas temp-tables tt-lancamentos e
-                             tt-autorizacoes-cadastradas (David).
-                            
-                23/02/2018 - Ajustado tipo da variavel flgcnvsi.
-                             PRJ406-FGTS(Odirlei-AMcom)
                             
 .............................................................................*/
 
@@ -97,7 +91,7 @@ DEF TEMP-TABLE tt-crapscn NO-UNDO
 DEF TEMP-TABLE tt-convenios-codbarras NO-UNDO
     FIELD nmextcon LIKE crapcon.nmextcon
     FIELD nmrescon LIKE crapcon.nmrescon
-    FIELD flgcnvsi AS LOGICAL 
+    FIELD flgcnvsi LIKE crapcon.flgcnvsi
     FIELD cdempcon LIKE crapcon.cdempcon
     FIELD cdsegmto LIKE crapcon.cdsegmto
     FIELD cdhistor LIKE crapcon.cdhistor.
@@ -111,10 +105,7 @@ DEF TEMP-TABLE tt-autorizacoes-cadastradas NO-UNDO
     FIELD vlmaxdeb LIKE crapatr.vlrmaxdb
     FIELD dshisext LIKE crapatr.dshisext
     FIELD inaltera AS LOGICAL
-    FIELD cdhistor AS INTEGER
-    FIELD insituac AS INTEGER
-    FIELD dssituac AS CHAR
-    FIELD dssegmto AS CHAR.
+    FIELD cdhistor AS INTEGER.
 
 DEF TEMP-TABLE tt-autorizacoes-suspensas NO-UNDO
     FIELD nmextcon LIKE crapcon.nmextcon
@@ -132,9 +123,7 @@ DEF TEMP-TABLE tt-lancamentos NO-UNDO
     FIELD nrdocmto LIKE craplcm.nrdocmto
     FIELD vllanmto LIKE craplcm.vllanmto
     FIELD situacao LIKE crapatr.dshisext
-    FIELD cdhistor LIKE craplcm.cdhistor
-    FIELD insituac AS INTEGER
-    FIELD dsprotoc LIKE crappro.dsprotoc.
+    FIELD cdhistor LIKE craplcm.cdhistor.
     
 DEF TEMP-TABLE tt-motivos-cancel-debaut NO-UNDO
     FIELD idmotivo AS INTEGER

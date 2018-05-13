@@ -28,13 +28,8 @@
  * 018: [16/03/2016] Inclusao da operacao ENV_ESTEIRA. PRJ207 Esteira de Credito. (Odirlei-AMcom) 
  * 019: [15/07/2016] Adicionado pergunta para bloquear a oferta de credito pre-aprovado. PRJ299/3 Pre aprovado. (Lombardi) 
  * 020: [30/11/2016] P341-Automatização BACENJUD - Remover o envio da descrição do departamento, pois não utiliza na BO (Renato Darosci - Supero)
- * 021: [05/04/2017] Cadastro dos campos Carencia. (Jaison/James - PRJ298)
  * 021: [17/07/2017] Retornar as mensagens dentro de uma DIV com IMG. (Jaison/Marcos - PRJ337)
  * 022: [12/05/2017] Buscar a nacionalidade com CDNACION. (Jaison/Andrino)
- * 023: [12/05/2017] Inserção do campo idcobope. PRJ404 (Lombardi)
- * 024: [21/09/2017] Projeto 410 - Incluir campo Indicador de financiamento do IOF (Diogo - Mouts)
- * 025: [16/01/2018] Incluído novo campo em Empréstimos (Qualif Oper. Controle) (Diego Simas - AMcom)
- * 026: [24/01/2018] Processamento do campo DSNIVORI (risco original da proposta) (Reginaldo - AMcom)
  */
 ?>
 
@@ -157,19 +152,13 @@
 	$flgconsu = (isset($_POST['flgconsu'])) ? $_POST['flgconsu'] : '' ;
 	$resposta = (isset($_POST['resposta'])) ? $_POST['resposta'] : '' ;
 	$blqpreap = (isset($_POST['blqpreap'])) ? $_POST['blqpreap'] : '' ;
-    $idcobope = (isset($_POST['idcobope'])) ? $_POST['idcobope'] : '' ;
-    $idcarenc = (isset($_POST['idcarenc'])) ? $_POST['idcarenc'] : '' ;
-    $dtcarenc = (isset($_POST['dtcarenc'])) ? $_POST['dtcarenc'] : '' ;
-	$vlfinanc = (isset($_POST['vlfinanc'])) ? $_POST['vlfinanc'] : '' ;
 	
 	// Daniel
 	$inpesso1 = (isset($_POST['inpesso1'])) ? $_POST['inpesso1'] : '' ;
 	$dtnasct1 = (isset($_POST['dtnasct1'])) ? $_POST['dtnasct1'] : '' ;
 	$inpesso2 = (isset($_POST['inpesso2'])) ? $_POST['inpesso2'] : '' ;
 	$dtnasct2 = (isset($_POST['dtnasct2'])) ? $_POST['dtnasct2'] : '' ;
-	$dscatbem = (isset($_POST['dscatbem'])) ? $_POST['dscatbem'] : '' ;
 	
-	$idfiniof = (isset($_POST['idfiniof'])) ? $_POST['idfiniof'] : '1' ;
 	
 	$array1 = array("á","à","â","ã","ä","é","è","ê","ë","í","ì","î","ï","ó","ò","ô","õ","ö","ú","ù","û","ü","ç","ñ"
 	               ,"Á","À","Â","Ã","Ä","É","È","Ê","Ë","Í","Ì","Î","Ï","Ó","Ò","Ô","Õ","Ö","Ú","Ù","Û","Ü","Ç","Ñ"
@@ -424,8 +413,6 @@
 	$xml .= '		<cdlcremp>'.$cdlcremp.'</cdlcremp>';
 	$xml .= '		<flgimppr>'.$flgimppr.'</flgimppr>';
 	$xml .= '		<idquapro>'.$idquapro.'</idquapro>';
-	//Adição de novo campo (Qualif. Oper. Controle) Diego Simas (AMcom) 
-	//$xml .= '		<idquaprc>'.$idquaprc.'</idquaprc>';
 	$xml .= '		<flgpagto>'.$flgpagto.'</flgpagto>';
 	$xml .= '		<nrctaav2>'.$nrctaav2.'</nrctaav2>';
 	$xml .= '		<dtcnsspc>'.$dtcnsspc.'</dtcnsspc>';
@@ -462,9 +449,6 @@
 	$xml .= '		<operacao>'.$operacao.'</operacao>';
 	$xml .= '		<flgconsu>'.$flgconsu.'</flgconsu>';
 	$xml .= '		<vleprori>'.$vlpreant.'</vleprori>';
-    $xml .= '		<idcarenc>'.$idcarenc.'</idcarenc>';
-    $xml .= '		<dtcarenc>'.$dtcarenc.'</dtcarenc>';
-	$xml .= '		<vlfinanc>'.$vlfinanc.'</vlfinanc>';
 	
 	// Daniel 
 	$xml .= '		<inpesso1>'.$inpesso1.'</inpesso1>';
@@ -476,11 +460,6 @@
 		$xml .= '		<dsjusren>'.$dsjusren.'</dsjusren>';
 	}
 	$xml .= '		<dtlibera>'.$dtlibera.'</dtlibera>';
-    $xml .= '		<idcobope>'.$idcobope.'</idcobope>';
-	$xml .= '		<idfiniof>'.$idfiniof.'</idfiniof>';
-    $xml .= '		<dscatbem>'.$dscatbem.'</dscatbem>';	
-	$xml .= '		<cdcoploj>0</cdcoploj>';
-	$xml .= '		<nrcntloj>0</nrcntloj>';
 	$xml .= '	</Dados>';
 	$xml .= '</Root>';
     
@@ -515,7 +494,7 @@
 	$mensagens = $xmlObjeto->roottag->tags[$i_mensagens]->tags;
 				
 	foreach( $mensagens as $mensagem ) {
-		$msg[] = str_replace('|@|','<br>',getByTagName($mensagem->tags,'dsmensag'));		
+		$msg[] = getByTagName($mensagem->tags,'dsmensag');
 	}
 	
 	$stringArrayMsg  = implode( "|", $msg);

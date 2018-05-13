@@ -4,7 +4,7 @@ CREATE OR REPLACE PACKAGE CECRED.gene0003 AS
 
     Programa: GENE0003 ( Antigo b1wgen0011.p )
     Autor   : David
-    Data    : Agosto/2006                     Ultima Atualizacao: 06/11/2017
+    Data    : Agosto/2006                     Ultima Atualizacao: 30/08/2012
 
     Dados referentes ao programa:
 
@@ -124,7 +124,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
 
     Programa: GENE0003 ( Antigo b1wgen0011.p )
     Autor   : David
-    Data    : Agosto/2006                     Ultima Atualizacao: 06/12/2017
+    Data    : Agosto/2006                     Ultima Atualizacao: 19/06/2017
 
     Dados referentes ao programa:
 
@@ -209,28 +209,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
                              
                 19/06/2017 - #642644 Ajustada a rotina pc_solicita_email para gravar a mensagem de 
                              "email enviado" no proc_message, inclusive no ELSE dos anexos (Carlos)
-
+                             
                 17/10/2017 - Ajuste na pc_gerar_mensagem para não obrigar mais o idseqttl, se este vier nulo, então
                              o o programa vai percorrer todos os usuários da conta no ibank (Pablão)
-                             
-                06/12/2017 - Padronização mensagens (crapcri, pc_gera_log (tbgen))
-                           - Padronização erros comandos DDL
-                           - Pc_set_modulo, cecred.pc_internal_exception
-                           - Tratamento erros others
-                             Chamado 788828 - Ana Volles (Envolti)
 
-               12/12/2017 - Ajuste na substituicao de caracteres especiais na mensagem enviada. Estava ocasionando problemas
+                12/12/2017 - Ajuste na substituicao de caracteres especiais na mensagem enviada. Estava ocasionando problemas
                              na leitura dessas mensagens na Conta Online.
                              Heitor (Mouts) - Chamado 807108
-
 ..............................................................................*/
 
   /* Saída com erro */
-  vr_des_erro   VARCHAR2(4000);
-  vr_exc_erro   EXCEPTION;
-  vr_cdcritic   crapcri.cdcritic%type := 0;
-  vr_dscritic   crapcri.dscritic%type := NULL;
-  vr_idprglog   tbgen_prglog.idprglog%TYPE := 0;
+  vr_des_erro VARCHAR2(4000);
+  vr_exc_erro EXCEPTION;
 
   -- Busca de informações da cooperativa
   CURSOR cr_crapcop(pr_cdcooper IN crapcop.cdcooper%TYPE) IS
@@ -264,35 +254,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
     --  Sistema  : Processos Genéricos
     --  Sigla    : GENE
     --  Autor    : Marcos E. Martini - Supero
-    --  Data     : Dezembro/2012.                   Ultima atualizacao: 06/12/2017
+    --  Data     : Dezembro/2012.                   Ultima atualizacao: --/--/----
     --
     --  Dados referentes ao programa:
     --
-    --   Frequencia:
+    --   Frequencia: ---
     --   Objetivo  : Prever método centralizado de log de E-mails
     --
     --   Alteracoes: 31/10/2013 - Troca do arquivo de log para salvar a partir
     --                            de agora no diretório log das Cooperativas (Marcos-Supero)
-    --
-    --            06/12/2017 - Padronização mensagens (crapcri, pc_gera_log (tbgen))
-    --                       - Padronização erros comandos DDL
-    --                       - Pc_set_modulo, cecred.pc_internal_exception
-    --                       - Tratamento erros others
-    --                         Chamado 788828 - Ana Volles (Envolti)
     -- .............................................................................
 
     DECLARE
       vr_ind_arqlog UTL_FILE.file_type; -- Handle para o arquivo de log
-      vr_cdcritic    INTEGER;
-      vr_des_erro    VARCHAR2(4000); -- Descrição de erro
-      vr_exc_saida   EXCEPTION; -- Saída com exception
+      vr_des_erro VARCHAR2(4000); -- Descrição de erro
+      vr_exc_saida EXCEPTION; -- Saída com exception
       vr_des_complet VARCHAR2(100);
       vr_des_diretor VARCHAR2(100);
       vr_des_arquivo VARCHAR2(100);
     BEGIN
-      -- Incluído pc_set_modulo da procedure - Chamado 788828 - 06/12/2017
-      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'GENE0003.pc_gera_log_email');
-
       -- Busca o diretório de log da Cooperativa
       vr_des_complet := gene0001.fn_diretorio(pr_tpdireto => 'C'
                                              ,pr_cdcooper => pr_cdcooper
@@ -303,96 +283,42 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
       gene0001.pc_separa_arquivo_path(pr_caminho => vr_des_complet
                                      ,pr_direto  => vr_des_diretor
                                      ,pr_arquivo => vr_des_arquivo);
-
       -- Tenta abrir o arquivo de log em modo append
       gene0001.pc_abre_arquivo(pr_nmdireto => vr_des_diretor    --> Diretório do arquivo
                               ,pr_nmarquiv => vr_des_arquivo      --> Nome do arquivo
                               ,pr_tipabert => 'A'              --> Modo de abertura (R,W,A)
                               ,pr_utlfileh => vr_ind_arqlog    --> Handle do arquivo aberto
                               ,pr_des_erro => vr_des_erro);
-
-        -- Incluído pc_set_modulo da procedure - Chamado 788828 - 06/12/2017
-        GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'GENE0003.pc_gera_log_email');
       IF vr_des_erro IS NOT NULL THEN
         RAISE vr_exc_saida;
       END IF;
-
       -- Adiciona a linha de log
       BEGIN
         gene0001.pc_escr_linha_arquivo(vr_ind_arqlog,pr_des_log);
-
-        -- Incluído pc_set_modulo da procedure - Chamado 788828 - 06/12/2017
-        GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'GENE0003.pc_gera_log_email');
       EXCEPTION
         WHEN OTHERS THEN
           -- Apenas imprimir na DMBS_OUTPUT e ignorar o log
-          vr_cdcritic := 1044;
-          vr_des_erro := gene0001.fn_busca_critica(vr_cdcritic)||' <'||vr_des_diretor||'/'||vr_des_arquivo||'>: ' || sqlerrm;
-
-          -- No caso de erro de programa gravar tabela especifica de log - 06/12/2017 - Ch 788828 
-          CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);                                                             
+          vr_des_erro := 'Problema ao escrever no arquivo <'||vr_des_diretor||'/'||vr_des_arquivo||'>: ' || sqlerrm;
           RAISE vr_exc_saida;
       END;
-
       -- Libera o arquivo
       BEGIN
         gene0001.pc_fecha_arquivo(pr_utlfileh => vr_ind_arqlog);
-
-        -- Incluído pc_set_modulo da procedure - Chamado 788828 - 06/12/2017
-        GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'GENE0003.pc_gera_log_email');
       EXCEPTION
         WHEN OTHERS THEN
           -- Gerar erro
-          vr_cdcritic := 1039;
-          vr_des_erro := gene0001.fn_busca_critica(vr_cdcritic)||' <'||vr_des_diretor||'/'||vr_des_arquivo||'>: ' || sqlerrm;
-
-          -- No caso de erro de programa gravar tabela especifica de log - 06/12/2017 - Ch 788828 
-          CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);                                                             
+          vr_des_erro := 'Problema ao fechar o arquivo <'||vr_des_diretor||'/'||vr_des_arquivo||'>: ' || sqlerrm;
           RAISE vr_exc_saida;
       END;
-
-      -- Incluído pc_set_modulo da procedure - Chamado 788828 - 06/12/2017
-      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => NULL);
     EXCEPTION
       WHEN vr_exc_saida THEN
         -- Enviar a mensagem de erro ao DMBS_OUTPUT e ignorar o log
         gene0001.pc_print(to_char(sysdate,'hh24:mi:ss')||' - '|| 'GENE0003.pc_gera_log_email --> '||vr_des_erro);
-
-        -- Log de erro de execucao
-        cecred.pc_log_programa(pr_dstiplog      => 'E', 
-                               pr_cdprograma    => 'JBEMAIL_PROCESS_PENDENTES',
-                               pr_cdcooper      => pr_cdcooper, 
-                               pr_tpexecucao    => 0, -- Outros
-                               pr_tpocorrencia  => 1, -- erro tratado
-                               pr_cdcriticidade => 1, -- media
-                               pr_cdmensagem    => nvl(vr_cdcritic,0),
-                               pr_dsmensagem    => vr_des_erro,
-                               pr_flgsucesso    => 0,
-                               pr_idprglog      => vr_idprglog);
-
       WHEN OTHERS THEN
         -- Temporariamente apenas imprimir na tela
-        vr_cdcritic := 9999;
-        vr_des_erro := gene0001.fn_busca_critica(vr_cdcritic)||'gene0003.pc_gera_log_email. '||sqlerrm;
-
         gene0001.pc_print(pr_des_mensag => to_char(sysdate,'hh24:mi:ss')||' - '
                                            || 'GENE0003.pc_gera_log_email'
-                                           || ' --> ' ||gene0001.fn_busca_critica(vr_cdcritic)|| sqlerrm);
-
-        -- Log de erro de execucao
-        cecred.pc_log_programa(pr_dstiplog      => 'E', 
-                               pr_cdprograma    => 'JBEMAIL_PROCESS_PENDENTES',
-                               pr_cdcooper      => pr_cdcooper, 
-                               pr_tpexecucao    => 0, -- Outros
-                               pr_tpocorrencia  => 2, -- erro nao tratado
-                               pr_cdcriticidade => 2, -- alta
-                               pr_cdmensagem    => nvl(vr_cdcritic,0),
-                               pr_dsmensagem    => vr_des_erro,
-                               pr_flgsucesso    => 0,
-                               pr_idprglog      => vr_idprglog);
-
-        -- No caso de erro de programa gravar tabela especifica de log - 06/12/2017 - Ch 788828 
-        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);                                                             
+                                           || ' --> Erro não tratado : ' || sqlerrm);
     END;
   END pc_gera_log_email;
 
@@ -406,7 +332,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
     --  Sistema  : Rotinas genéricas
     --  Sigla    : GENE
     --  Autor    : Marcos E. Martini - Supero
-    --  Data     : Dezembro/2012.                   Ultima atualizacao: 06/12/2017
+    --  Data     : Dezembro/2012.                   Ultima atualizacao: 28/05/2014
     --
     --  Dados referentes ao programa:
     --
@@ -416,24 +342,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
     --
     --   Alteracoes: 28/05/2014 - Remover inicialização da pltable pois houve mudança
     --                            na tipagem (Marcos-Supero)
-    --
-    --            06/12/2017 - Padronização mensagens (crapcri, pc_gera_log (tbgen))
-    --                       - Padronização erros comandos DDL
-    --                       - Pc_set_modulo, cecred.pc_internal_exception
-    --                       - Tratamento erros others
-    --                         Chamado 788828 - Ana Volles (Envolti)
     -- .............................................................................
     DECLARE
       -- String temporária
       vr_des_orige VARCHAR2(32000);
       -- Guardar posição do ;
       vr_pos INTEGER;
-      vr_cdcritic  INTEGER;
-      vr_dscritic  VARCHAR2(4000);
     BEGIN
-      -- Incluído pc_set_modulo da procedure - Chamado 788828 - 06/12/2017
-      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'GENE0003.pc_separa_lista');
-
       -- Copia para a temporária a string passada
       vr_des_orige := pr_des_orige;
       -- Troca todas as virgulas por ponto e virgula, para facilitar as buscas abaixo
@@ -458,29 +373,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
         pr_tab_lista(pr_tab_lista.COUNT) := vr_des_orige;
       END IF;
     END;
-
-    -- Incluído pc_set_modulo da procedure - Chamado 788828 - 06/12/2017
-    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => NULL);
-  EXCEPTION
-    WHEN OTHERS THEN
-      --Tratamento de mensagem
-      vr_cdcritic := 9999;
-      vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'gene0003.pc_separa_lista. '||sqlerrm;
-
-      -- Log de erro de execucao
-      cecred.pc_log_programa(pr_dstiplog      => 'E', 
-                             pr_cdprograma    => 'GENE000.PC_SEPARA_LISTA3',
-                             pr_cdcooper      => 3, 
-                             pr_tpexecucao    => 0, -- Outros
-                             pr_tpocorrencia  => 2, -- erro nao tratado
-                             pr_cdcriticidade => 2, -- alta
-                             pr_cdmensagem    => nvl(vr_cdcritic,0),
-                             pr_dsmensagem    => vr_dscritic,
-                             pr_flgsucesso    => 0,
-                             pr_idprglog      => vr_idprglog);
-
-      -- No caso de erro de programa gravar tabela especifica de log - 06/12/2017 - Ch 788828 
-      CECRED.pc_internal_exception;
   END pc_separa_lista;
 
   /* Procedimento para envio de e-mail solicitado */
@@ -493,7 +385,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
     --  Sistema  : Rotinas genéricas
     --  Sigla    : GENE
     --  Autor    : Marcos E. Martini - Supero
-    --  Data     : Dezembro/2012.                   Ultima atualizacao: 06/12/2017
+    --  Data     : Dezembro/2012.                   Ultima atualizacao: 03/03/2016
     --
     --  Dados referentes ao programa:
     --
@@ -521,13 +413,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
     --               03/03/2016 - Adicionado replace no Subject pois estava cortando o assunto pela
     --                            metade, o motivo era que a funcao quebrava linha e nao mostrava o
     --                            texto completo (Lucas Ranghetti #410456)
-    --                            na tipagem (Marcos-Supero)
-    --
-    --            06/12/2017 - Padronização mensagens (crapcri, pc_gera_log (tbgen))
-    --                       - Padronização erros comandos DDL
-    --                       - Pc_set_modulo, cecred.pc_internal_exception
-    --                       - Tratamento erros others
-    --                         Chamado 788828 - Ana Volles (Envolti)
     -- .............................................................................
 
     DECLARE
@@ -586,9 +471,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
       vr_buffer       RAW ( 32767 );
       vr_amount_read  PLS_INTEGER := 57; --> Tamanho máximo quea UTL_SMTP aceita para WriteRaw (Não mudar)
     begin
-      -- Incluído pc_set_modulo da procedure - Chamado 788828 - 06/12/2017
-      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'GENE0003.pc_envia_email');
-
       -- Busca das informaçoes do e-mail solicitado
       OPEN cr_crapsle;
       FETCH cr_crapsle
@@ -668,8 +550,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
            upper(rw_crapsle.dsendere) <> 'MONITORACAODEFRAUDES@CECRED.COOP.BR' THEN
           -- Envia log com o destinatário
           pc_gera_log_email(rw_crapsle.cdcooper,to_char(sysdate,'DD/MM/RRRR hh24:mi:ss')||' - '|| rw_crapsle.cdprogra || ' --> Coop: '||rw_crapsle.cdcooper||' --> Enviando solicitação de e-mail nº '||pr_nrseqsol||' para '||rw_crapsle.dsendere||'.');
-          -- Incluído pc_set_modulo da procedure - Chamado 788828 - 06/12/2017
-          GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'GENE0003.pc_envia_email');
         END IF;
 
         -- Abrir conexão de dados
@@ -715,14 +595,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
           utl_smtp.write_data(vr_conexao, vr_des_quebra || vr_des_quebra );
           -- Envia log com o nome do arquivo e o destinatário
           pc_gera_log_email(rw_crapsle.cdcooper,to_char(sysdate,'DD/MM/RRRR hh24:mi:ss')||' - '|| rw_crapsle.cdprogra || ' --> '||rw_crapsla.dspathan||'/'||rw_crapsla.dsnmarqv||' ENVIADO PARA '||rw_crapsle.dsendere||'.');
-          -- Incluído pc_set_modulo da procedure - Chamado 788828 - 06/12/2017
-          GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'GENE0003.pc_envia_email');
 
           IF rw_crapsla.rownum = 1 THEN
             -- Inicializar variavel
             vr_dsanexos     := '--anexo=''';
           END IF;
-
           --Acrescentar anexos na string
           vr_dsanexos := vr_dsanexos||vr_direconv||'/'||rw_crapsla.dsnmarqv;
 
@@ -741,6 +618,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
         --Gerar Envia*.SH no diretorio converte conforme no progress
         IF rw_crapsle.cdprogra not in ('WPGD0014','WPGD0020','WPGD0026B','CRPS217') AND
            NVL(rw_crapsle.cdcooper,0) <> 0 THEN
+
+
 
           --Gerar comando
           vr_dscomdSH := 'gnusend.pl --para='''||rw_crapsle.dsendere||''''||
@@ -762,15 +641,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
             --Levantar Excecao
             RAISE vr_exc_erro;
           END IF;
-          -- Incluído pc_set_modulo da procedure - Chamado 788828 - 06/12/2017
-          GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'GENE0003.pc_envia_email');
 
           --Escrever o cabecalho no arquivo
           gene0001.pc_escr_linha_arquivo(pr_utlfileh  => vr_input_file             --> Handle do arquivo aberto
                                         ,pr_des_text  => vr_dscomdSH);  --> Texto para escrita
-
-          -- Incluído pc_set_modulo da procedure - Chamado 788828 - 06/12/2017
-          GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'GENE0003.pc_envia_email');
 
           --Fechar Arquivo dados
           BEGIN
@@ -778,10 +652,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
           EXCEPTION
             WHEN OTHERS THEN
             -- Apenas imprimir na DMBS_OUTPUT e ignorar o log
-            vr_des_erro := gene0001.fn_busca_critica(1039)||' <'||vr_direconv||'/'||'envia_'||lower(rw_crapcop.dsdircop)||'.sh' ||'>: ' || sqlerrm;
-
-            -- No caso de erro de programa gravar tabela especifica de log - 06/12/2017 - Ch 788828 
-            CECRED.pc_internal_exception;                                                          
+            vr_des_erro := 'Problema ao fechar o arquivo <'||vr_direconv||'/'||'envia_'||lower(rw_crapcop.dsdircop)||'.sh' ||'>: ' || sqlerrm;
             RAISE vr_exc_erro;
           END;
 
@@ -791,9 +662,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
         -- Fechar o cursor
         CLOSE cr_crapsle;
       END IF;
-
-      -- Incluído pc_set_modulo da procedure - Chamado 788828 - 06/12/2017
-      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => NULL);
     EXCEPTION
       WHEN vr_exc_erro THEN --> Erro tratado
         BEGIN
@@ -804,21 +672,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
             NULL;
         END;
         -- Concatenar o erro previamente montado e retornar
-        vr_cdcritic := 1046;
-        pr_des_erro := gene0001.fn_busca_critica(vr_cdcritic)||' <'||rw_crapsle.dsendere||'> --> ' || vr_des_erro;
-
-        -- Log de erro de execucao
-        cecred.pc_log_programa(pr_dstiplog      => 'E', 
-                               pr_cdprograma    => 'GENE0003.PC_ENvIA_EMAIL',
-                               pr_cdcooper      => 3, 
-                               pr_tpexecucao    => 0, -- Outros
-                               pr_tpocorrencia  => 1, -- erro nao tratado
-                               pr_cdcriticidade => 1, -- alta
-                               pr_cdmensagem    => nvl(vr_cdcritic,0),
-                               pr_dsmensagem    => pr_des_erro,
-                               pr_flgsucesso    => 0,
-                               pr_idprglog      => vr_idprglog);
-
+        pr_des_erro := 'GENE0003.pc_envia_email --> Erro ao enviar para <'||rw_crapsle.dsendere||'> --> ' || vr_des_erro;
       WHEN OTHERS THEN -- Gerar log de erro
         BEGIN
           utl_smtp.quit( vr_conexao );
@@ -828,22 +682,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
             NULL;
         END;
         -- Retornar o erro contido na sqlerrm
-        vr_cdcritic := 9999;
-        pr_des_erro := gene0001.fn_busca_critica(vr_cdcritic)||'gene0003.pc_envia_email. '||sqlerrm;
-
-        -- Log de erro de execucao
-        cecred.pc_log_programa(pr_dstiplog      => 'E', 
-                               pr_cdprograma    => 'GENE0003.PC_ENvIA_EMAIL',
-                               pr_cdcooper      => 3, 
-                               pr_tpexecucao    => 0, -- Outros
-                               pr_tpocorrencia  => 2, -- erro nao tratado
-                               pr_cdcriticidade => 2, -- alta
-                               pr_cdmensagem    => nvl(vr_cdcritic,0),
-                               pr_dsmensagem    => pr_des_erro,
-                               pr_flgsucesso    => 0,
-                               pr_idprglog      => vr_idprglog);
-
-        CECRED.pc_internal_exception;                                                       
+        pr_des_erro := 'GENE0003.pc_envia_email --> Erro ao enviar para <'||rw_crapsle.dsendere||'> --> '|| sqlerrm;
     END;
   END pc_envia_email;
 
@@ -857,7 +696,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
     --  Sistema  : Rotinas genéricas
     --  Sigla    : GENE
     --  Autor    : Marcos E. Martini - Supero
-    --  Data     : Dezembro/2012.                   Ultima atualizacao: 06/12/2017
+    --  Data     : Dezembro/2012.                   Ultima atualizacao: 28/05/2014
     --
     --  Dados referentes ao programa:
     --
@@ -871,13 +710,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
     --
     --   Alteracoes: 28/05/2014 - Mudança na vinculação dos anexos ao e-mail, agora prevendo
     --                            a tabela associativa CRAPSLV (Marcos-Supero)
-    --                            na tipagem (Marcos-Supero)
-    --
-    --            06/12/2017 - Padronização mensagens (crapcri, pc_gera_log (tbgen))
-    --                       - Padronização erros comandos DDL
-    --                       - Pc_set_modulo, cecred.pc_internal_exception
-    --                       - Tratamento erros others
-    --                         Chamado 788828 - Ana Volles (Envolti)
     -- .............................................................................
     DECLARE
       -- Guardar quantidade de dias a manter os emails
@@ -889,7 +721,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
         SELECT sle.cdcooper
               ,sle.nrseqsol
           FROM crapsle sle
-         WHERE sle.flenviad ='N' --> Ainda não enviado
+         WHERE sle.flenviad = 'N' --> Ainda não enviado
            AND trim(sle.dserrenv) IS NULL --> Sem erros
            AND ROWNUM <= vr_qtdemailjob --> Somente qtde parametrizada por Job
          ORDER BY sle.nrseqsol; --> Os mais antigos primeiro
@@ -903,8 +735,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
       PROCEDURE pc_controla_log_batch(pr_dstiplog IN VARCHAR2, -- 'I' início; 'F' fim; 'E' erro
                                       pr_dscritic IN VARCHAR2 DEFAULT NULL) IS
     BEGIN
-        -- Incluído pc_set_modulo da procedure - Chamado 788828 - 06/12/2017
-        GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'GENE0003.pc_controla_log_batch');
         --> Controlar geração de log de execução dos jobs 
         BTCH0001.pc_log_exec_job( pr_cdcooper  => 3    --> Cooperativa
                                  ,pr_cdprogra  => vr_cdprogra    --> Codigo do programa
@@ -912,14 +742,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
                                  ,pr_dstiplog  => pr_dstiplog    --> Tipo de log(I-inicio,F-Fim,E-Erro)
                                  ,pr_dscritic  => pr_dscritic    --> Critica a ser apresentada em caso de erro
                                  ,pr_flgerlog  => vr_flgerlog);  --> Controla se gerou o log de inicio, sendo assim necessario apresentar log fim
-        -- Incluído pc_set_modulo da procedure - Chamado 788828 - 06/12/2017
-        GENE0001.pc_set_modulo(pr_module => NULL, pr_action => NULL);
       END pc_controla_log_batch;
 
     BEGIN
-      -- Incluído pc_set_modulo da procedure - Chamado 788828 - 06/12/2017
-      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'GENE0003.pc_process_email_penden');
-
       -- Se estiver rodando no processo automatizado
       IF pr_nrseqsol IS NULL THEN
 
@@ -931,77 +756,33 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
             -- Ocorreu erro pq o parametros nao era number, então usar qtde padrao (7)
             vr_qtddiaemail := 7;
         END;
-
         -- Efetuar limpeza das tabelas de e-mais e anexos
         BEGIN
-          BEGIN
           -- Eliminar vinculos de e-mails com data inferior aos dias parametrizados
-            DELETE FROM crapslv slv
+          DELETE
+            FROM crapslv slv
            WHERE EXISTS(SELECT 1
                           FROM crapsle sle
                          WHERE sle.nrseqsol = slv.nrseqsle
                            AND sle.dtsolici < TRUNC(SYSDATE) - vr_qtddiaemail
                            AND sle.flenviad = 'S');
-          EXCEPTION
-            WHEN OTHERS THEN
-              pr_des_erro := gene0001.fn_busca_critica(1037)||'crapslv: '||
-                             'com dtsolici:'||SYSDATE ||'-'|| vr_qtddiaemail||
-                             ', flenviad:S. '||sqlerrm;
-              -- No caso de erro de programa gravar tabela especifica de log - 06/12/2017 - Ch 788828 
-              CECRED.pc_internal_exception;                                                            
-          END;
-          BEGIN
           -- Eliminar anexos de e-mails com data inferior aos dias parametrizados
-            DELETE FROM crapsla sla
+          DELETE
+            FROM crapsla sla
            WHERE EXISTS(SELECT 1
                           FROM crapsle sle
                          WHERE sle.nrseqsol = sla.nrseqsol
                            AND sle.dtsolici < TRUNC(SYSDATE) - vr_qtddiaemail
                            AND sle.flenviad = 'S');
-          EXCEPTION
-            WHEN OTHERS THEN
-              pr_des_erro := gene0001.fn_busca_critica(1037)||'crapsla: '||
-                             'com dtsolici:'||TRUNC(SYSDATE) - vr_qtddiaemail||
-                             ', flenviad:S. '||sqlerrm;
-
-              -- No caso de erro de programa gravar tabela especifica de log - 06/12/2017 - Ch 788828 
-              CECRED.pc_internal_exception;                                                        
-          END;
-          BEGIN
           -- Eliminar emails com data inferior aos dias parametrizados
-            DELETE FROM crapsle sle
+          DELETE
+            FROM crapsle sle
            WHERE sle.dtsolici < TRUNC(SYSDATE) - vr_qtddiaemail
              AND sle.flenviad = 'S';
         EXCEPTION
           WHEN OTHERS THEN
-              pr_des_erro := gene0001.fn_busca_critica(1037)||'crapsle: '||
-                             'com dtsolici:'||TRUNC(SYSDATE) - vr_qtddiaemail||
-                             ', flenviad:S. '||sqlerrm;
-
-              -- No caso de erro de programa gravar tabela especifica de log - 06/12/2017 - Ch 788828 
-              CECRED.pc_internal_exception;                                            
-          END;
-
-          IF pr_des_erro IS NOT NULL THEN
             -- Log de erro de execucao          
-            cecred.pc_log_programa(pr_dstiplog      => 'E', 
-                                   pr_cdprograma    => vr_nomdojob, 
-                                   pr_cdcooper      => 3, 
-                                   pr_tpexecucao    => 0, -- Outros
-                                   pr_tpocorrencia  => 2, -- erro nao tratado
-                                   pr_cdcriticidade => 2, -- normal
-                                   pr_cdmensagem    => 1037,  
-                                   pr_dsmensagem    => pr_des_erro,
-                                   pr_flgsucesso    => 0,
-                                   pr_idprglog      => vr_idprglog);
-
-            -- Log de erro de execucao por email
-            pc_gera_log_email(0,to_char(sysdate,'DD/MM/RRRR hh24:mi:ss')||' --> '||gene0001.fn_busca_critica(1045)
-            ||sqlerrm||'.');
-
-            CECRED.pc_internal_exception;                              
-          END IF;
-
+            pc_gera_log_email(0,to_char(sysdate,'DD/MM/RRRR hh24:mi:ss')||' --> Problema ao eliminar os e-mails antigos: '||sqlerrm||'.');
         END;
         -- Buscar quantidade de e-mails a processar no Job
         BEGIN
@@ -1010,25 +791,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
           WHEN OTHERS THEN
             -- Ocorreu erro pq o parametros nao era number, então usar qtde padrao (500)
             vr_qtdemailjob := 500;
-
-            -- No caso de erro de programa gravar tabela especifica de log - 06/12/2017 - Ch 788828 
-            CECRED.pc_internal_exception;                                   
         END;
-
         -- Busca de todos os emails pendentes de envio
         FOR rw_crapsle IN cr_crapsle LOOP
           
           -- Log de inicio de execucao
           pc_controla_log_batch(pr_dstiplog => 'I');
-          -- Incluído pc_set_modulo da procedure - Chamado 788828 - 06/12/2017
-          GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'GENE0003.pc_process_email_penden');
                     
           -- Chamar o envio
           pc_envia_email(pr_nrseqsol => rw_crapsle.nrseqsol
                         ,pr_des_erro => vr_des_erro);
-          -- Incluído pc_set_modulo da procedure - Chamado 788828 - 06/12/2017
-          GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'GENE0003.pc_process_email_penden');
-
           -- Atualizar o registro como processado
           BEGIN
             UPDATE crapsle
@@ -1036,44 +808,35 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
                   ,dserrenv = vr_des_erro
              WHERE nrseqsol = rw_crapsle.nrseqsol
                AND flenviad = 'N';
-
+          END;
           -- Se houve erro
           IF trim(vr_des_erro) IS NOT NULL THEN
+
             -- Log de erro de execucao
-              cecred.pc_log_programa(pr_dstiplog      => 'E', 
-                                     pr_cdprograma    => vr_nomdojob, 
-                                     pr_cdcooper      => 3, 
-                                     pr_tpexecucao    => 0, -- Outros
-                                     pr_tpocorrencia  => 1, -- erro nao tratado
-                                     pr_cdcriticidade => 1, -- normal
-                                     pr_cdmensagem    => 0,
-                                     pr_dsmensagem    => vr_des_erro||', Solicitacao:'||rw_crapsle.nrseqsol,
-                                     pr_flgsucesso    => 0,
-                                     pr_idprglog      => vr_idprglog);
+            cecred.pc_log_programa(PR_DSTIPLOG      => 'E', 
+                                   PR_CDPROGRAMA    => vr_nomdojob, 
+                                   pr_cdcooper      => 3, 
+                                   pr_tpexecucao    => 1, -- batch
+                                   pr_tpocorrencia  => 4, -- mensagem
+                                   pr_cdcriticidade => 0, -- normal
+                                   pr_dsmensagem    => vr_des_erro,
+                                   pr_flgsucesso    => 0,
+                                   PR_IDPRGLOG      => vr_idprglog);
 
             -- Adicionar no arquivo de log o problema na execução
             pc_gera_log_email(rw_crapsle.cdcooper,to_char(sysdate,'DD/MM/RRRR hh24:mi:ss')||' --> '||vr_des_erro);
-              -- Incluído pc_set_modulo da procedure - Chamado 788828 - 06/12/2017
-              GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'GENE0003.pc_process_email_penden');
           END IF;
-          END;
         END LOOP;
 
         -- Log de fim de execucao
         pc_controla_log_batch(pr_dstiplog => 'F');
-        -- Incluído pc_set_modulo da procedure - Chamado 788828 - 06/12/2017
-        GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'GENE0003.pc_process_email_penden');
 
         -- Commitar os registros processados
         COMMIT;
       ELSE
-
         -- Processar somente a solicitação passada
         pc_envia_email(pr_nrseqsol => pr_nrseqsol
                       ,pr_des_erro => vr_des_erro);
-        -- Incluído pc_set_modulo da procedure - Chamado 788828 - 06/12/2017
-        GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'GENE0003.pc_process_email_penden');
-
         -- Atualizar o registro como processado
         BEGIN
           UPDATE crapsle
@@ -1081,57 +844,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
                 ,dserrenv = vr_des_erro
            WHERE nrseqsol = pr_nrseqsol
              AND flenviad = 'N';
-
+        END;
         -- Se houve erro
         IF trim(vr_des_erro) IS NOT NULL THEN
-            -- Log de erro de execucao
-            cecred.pc_log_programa(pr_dstiplog      => 'E', 
-                                   pr_cdprograma    => vr_nomdojob, 
-                                   pr_cdcooper      => 3, 
-                                   pr_tpexecucao    => 0, -- Outros
-                                   pr_tpocorrencia  => 1, -- erro nao tratado
-                                   pr_cdcriticidade => 1, -- normal
-                                   pr_cdmensagem    => 0,
-                                   pr_dsmensagem    => vr_des_erro||', Solicitacao:'||pr_nrseqsol,
-                                   pr_flgsucesso    => 0,
-                                   pr_idprglog      => vr_idprglog);
-
           -- Adicionar no arquivo de log o problema na execução
           pc_gera_log_email(0,to_char(sysdate,'DD/MM/RRRR hh24:mi:ss')||' --> '||vr_des_erro);
-            -- Incluído pc_set_modulo da procedure - Chamado 788828 - 06/12/2017
-            GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'GENE0003.pc_process_email_penden');
         END IF;
-        END;
       END IF;
-      -- Incluído pc_set_modulo da procedure - Chamado 788828 - 06/12/2017
-      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => NULL);
 
     EXCEPTION
       WHEN OTHERS THEN
         -- Gravar pois não podemos reenviar os e-mails
         COMMIT;
 
-        vr_cdcritic := 9999;
-        pr_des_erro := gene0001.fn_busca_critica(vr_cdcritic)||'gene0003.pc_process_email_penden. '||sqlerrm;
-
-        -- Log de erro de execucao
-        cecred.pc_log_programa(pr_dstiplog      => 'E', 
-                               pr_cdprograma    => vr_nomdojob, 
-                               pr_cdcooper      => 3, 
-                               pr_tpexecucao    => 0, -- Outros
-                               pr_tpocorrencia  => 2, -- erro nao tratado
-                               pr_cdcriticidade => 2, -- alta
-                               pr_cdmensagem    => vr_cdcritic,
-                               pr_dsmensagem    => pr_des_erro,
-                               pr_flgsucesso    => 0,
-                               pr_idprglog      => vr_idprglog);
-
-        -- No caso de erro de programa gravar tabela especifica de log - 06/12/2017 - Ch 788828 
-        CECRED.pc_internal_exception;                                                         
+        cecred.pc_internal_exception;
 
         -- Gerar Log
-        pc_gera_log_email(0,to_char(sysdate,'DD/MM/RRRR hh24:mi:ss')||' --> '||gene0001.fn_busca_critica(9999)
-                            ||'ao processar emails pendentes --> '|| sqlerrm);
+        pc_gera_log_email(0,to_char(sysdate,'DD/MM/RRRR hh24:mi:ss')||' --> Erro não tratado ao processar emails pendentes --> '|| sqlerrm);
     END;
   END pc_process_email_penden;
 
@@ -1156,7 +885,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
     --  Sistema  : Rotinas genéricas
     --  Sigla    : GENE
     --  Autor    : Marcos E. Martini - Supero
-    --  Data     : Dezembro/2012.                   Ultima atualizacao: 06/12/2017
+    --  Data     : Dezembro/2012.                   Ultima atualizacao: 22/08/2014
     --
     --  Dados referentes ao programa:
     --
@@ -1177,28 +906,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
     -- 
     --               22/08/2014 - Correção da passsagem do parâmetro pr_cdprogra, pois indevidamente
     --                            estava sendo enviado a pr_cdcooper (Marcos-Supero)
-    --                            na tipagem (Marcos-Supero)
-    --
-    --              06/12/2017 - Padronização mensagens (crapcri, pc_gera_log (tbgen))
-    --                         - Padronização erros comandos DDL
-    --                         - Pc_set_modulo, cecred.pc_internal_exception
-    --                         - Tratamento erros others
-    --                           Chamado 788828 - Ana Volles (Envolti)
     -- .............................................................................
     DECLARE
       -- Guardar a lista genérica de destinatários
       vr_tab_lista    gene0003.typ_tab_listas;
       vr_tab_destinos gene0003.typ_tab_destinos;
     BEGIN
-      -- Incluído pc_set_modulo da procedure - Chamado 788828 - 06/12/2017
-      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'GENE0003.pc_solicita_email');
-
       -- Chamar rotina para separar da lista enviada todos os destinatarios para o vetor
       pc_separa_lista(pr_des_orige => pr_des_destino
                      ,pr_tab_lista => vr_tab_lista);
-      -- Incluído pc_set_modulo da procedure - Chamado 788828 - 06/12/2017
-      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'GENE0003.pc_solicita_email');
-
       -- Converter da lista genérica para a lista de destinatários
       IF vr_tab_lista.COUNT > 0 THEN
         FOR vr_ind IN vr_tab_lista.FIRST..vr_tab_lista.LAST LOOP
@@ -1220,45 +936,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
                        ,pr_flg_enviar      => pr_flg_enviar      --> Enviar o e-mail na hora
                        ,pr_des_erro        => pr_des_erro);      --> Possivel erro
       
-      -- Incluído pc_set_modulo da procedure - Chamado 788828 - 06/12/2017
-      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => NULL);
-
     EXCEPTION
       WHEN vr_exc_erro THEN --> Erro tratado
         -- Concatenar o erro previamente montado e retornar
-        pr_des_erro := vr_des_erro;
-
-        -- Log de erro de execucao
-        cecred.pc_log_programa(pr_dstiplog      => 'E', 
-                               pr_cdprograma    => 'GENE0003.PC_SOLICITA_EMAIL', 
-                               pr_cdcooper      => pr_cdcooper, 
-                               pr_tpexecucao    => 0, -- Outros
-                               pr_tpocorrencia  => 1, -- erro nao tratado
-                               pr_cdcriticidade => 1, -- alta
-                               pr_cdmensagem    => vr_cdcritic,
-                               pr_dsmensagem    => pr_des_erro,
-                               pr_flgsucesso    => 0,
-                               pr_idprglog      => vr_idprglog);
-
+        pr_des_erro := 'GENE0003.pc_solicita_email --> ' || vr_des_erro;
       WHEN OTHERS THEN -- Gerar log de erro
-        --Tratamento de mensagem
-        vr_cdcritic := 9999;
-        pr_des_erro := gene0001.fn_busca_critica(vr_cdcritic)||'gene0003.pc_solicita_email. '||sqlerrm;
-
-        -- Log de erro de execucao
-        cecred.pc_log_programa(pr_dstiplog      => 'E', 
-                               pr_cdprograma    => 'GENE0003.PC_SOLICITA_EMAIL',
-                               pr_cdcooper      => pr_cdcooper, 
-                               pr_tpexecucao    => 0, -- Outros
-                               pr_tpocorrencia  => 2, -- erro nao tratado
-                               pr_cdcriticidade => 2, -- alta
-                               pr_cdmensagem    => vr_cdcritic,
-                               pr_dsmensagem    => pr_des_erro,
-                               pr_flgsucesso    => 0,
-                               pr_idprglog      => vr_idprglog);
-
-        -- No caso de erro de programa gravar tabela especifica de log - 06/12/2017 - Ch 788828 
-        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);                                                             
+        -- Retornar o erro contido na sqlerrm
+        pr_des_erro := 'GENE0003.pc_solicita_email --> '|| sqlerrm;
     END;
   END pc_solicita_email;
 
@@ -1283,7 +967,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
     --  Sistema  : Rotinas genéricas
     --  Sigla    : GENE
     --  Autor    : Marcos E. Martini - Supero
-    --  Data     : Dezembro/2012.                   Ultima atualizacao: 06/12/2017
+    --  Data     : Dezembro/2012.                   Ultima atualizacao: 28/05/2014
     --
     --  Dados referentes ao programa:
     --
@@ -1297,13 +981,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
     --                            alterações conforme nova lógica, onde não inserimos os anexos a cada e-mails
     --                            mas sim apenas uma vez quando for o mesmo e depois fazemos o vinculo pela 
     --                            tabela CRAPSLV (Marcos-Supero)
-    --                            na tipagem (Marcos-Supero)
-    --
-    --               06/12/2017 - Padronização mensagens (crapcri, pc_gera_log (tbgen))
-    --                          - Padronização erros comandos DDL
-    --                          - Pc_set_modulo, cecred.pc_internal_exception
-    --                          - Tratamento erros others
-    --                            Chamado 788828 - Ana Volles (Envolti)
     -- .............................................................................
     DECLARE
       -- Guardar a lista de anexos e de destinatários
@@ -1320,13 +997,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
       vr_nrseqsol_anx crapsle.nrseqsol%TYPE;
       --Diretorio da cooperativa para manter os anexos
       vr_direconv varchar2(100);
-      vr_cdcritic integer;
       
       vr_idprglog  tbgen_prglog.idprglog%type;
     BEGIN
-      -- Incluído pc_set_modulo da procedure - Chamado 788828 - 06/12/2017
-      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'GENE0003.pc_solicita_email 1');
-
       -- Busca do diretório base da cooperativa
       vr_direconv := gene0001.fn_diretorio(pr_tpdireto => 'C' -- /usr/coop
                                           ,pr_cdcooper => pr_cdcooper
@@ -1334,11 +1007,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
       -- Se a lista estiver vazia
       IF pr_tab_destino.COUNT = 0 THEN
         -- Gerar exceção
-        vr_cdcritic := 1047;
-        vr_des_erro := gene0001.fn_busca_critica(vr_cdcritic);
+        vr_des_erro := 'Nenhum destinatário enviado!';
         RAISE vr_exc_erro;
       END IF;
-
       -- Chamar rotina para separar da lista enviada de anexos para o vetor
       pc_separa_lista(pr_des_orige => pr_des_anexo
                      ,pr_tab_lista => vr_tab_lista);
@@ -1349,31 +1020,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
           vr_tab_anexos(vr_ind).nrseqsol := 0;
         END LOOP;
       END IF;        
-
-      -- Incluído pc_set_modulo da procedure - Chamado 788828 - 06/12/2017
-      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'GENE0003.pc_solicita_email 1');
-
       -- Para cada destinatário na lista
       FOR vr_ind IN pr_tab_destino.FIRST..pr_tab_destino.LAST LOOP
         -- Limpar sequencia para gravação
         vr_nrseqsol := NULL;
         -- Criar o registro na tabela de solicitaçao
         BEGIN
+          
           -- Validação do e-mail
           IF fn_valida_email(pr_tab_destino(vr_ind)) = 0 THEN
-            cecred.pc_log_programa(pr_dstiplog      => 'E', 
-                                   pr_cdprograma    => 'GENE0003.PC_SOLICITA_EMAIL', 
-                                   pr_cdcooper      => 3, 
+            cecred.pc_log_programa(PR_DSTIPLOG      => 'E', 
+                                   PR_CDPROGRAMA    => 'GENE0003.PC_SOLICITA_EMAIL',
                                    pr_tpexecucao    => 3,  -- Tipo de execucao (1-Batch/ 2-Job/ 3-Online)
                                    pr_tpocorrencia  => 3,  -- Alerta
-                                   pr_cdcriticidade => 0,  -- baixa
-                                   pr_cdmensagem    => 883,
-                                   pr_dsmensagem    => gene0001.fn_busca_critica(883)||' '||pr_tab_destino(vr_ind) ||
-                                                       ', pr_cdprogra: '    || pr_cdprogra || 
-                                                       ', pr_des_assunto: ' || pr_des_assunto,
-                                   pr_flgsucesso    => 0,
-                                   pr_idprglog      => vr_idprglog);
-
+                                   pr_dsmensagem    => 'E-mail [' || pr_tab_destino(vr_ind) || '] inválido.' ||
+                                                       ' pr_cdprogra: '    || pr_cdprogra || 
+                                                       ' pr_des_assunto: ' || pr_des_assunto,
+                                   PR_IDPRGLOG      => vr_idprglog);
             CONTINUE;
           END IF;
 
@@ -1401,7 +1064,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
                              ,pr_des_email_reply
                              ,'N') --> Ainda nao enviada
                     RETURNING nrseqsol INTO vr_nrseqsol;
-
           -- Verifica se existem anexos a processar
           IF vr_tab_anexos.COUNT > 0 THEN
             -- Se ja foram processados os anexos para envio
@@ -1417,8 +1079,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
                   -- Se não conseguiu montar o caminho e nome corretos
                   IF vr_arquivo IS NULL OR vr_caminho IS NULL THEN
                     -- Gerar erro
-                    vr_cdcritic := 1048;
-                    vr_des_erro := gene0001.fn_busca_critica(vr_cdcritic)||' <'||vr_tab_anexos(vr_ind).dspathan||'>';
+                    vr_des_erro := 'Não foi possível encontrar o caminho e nome do arquivo em: <'||vr_tab_anexos(vr_ind).dspathan||'>';
                     RAISE vr_exc_erro;
                   END IF;
 
@@ -1432,9 +1093,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
                   -- Chamar rotina que le um BLOB a partir de um arquivo
                   vr_blob := gene0002.fn_arq_para_blob(pr_caminho => vr_caminho
                                                       ,pr_arquivo => vr_arquivo);
-                  -- Incluído pc_set_modulo da procedure - Chamado 788828 - 06/12/2017
-                  GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'GENE0003.pc_solicita_email 1');
-
                   -- Criar o registro na tabela de anexos
                   BEGIN
                     INSERT INTO crapsla(dspathan
@@ -1449,16 +1107,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
                                    INTO vr_nrseqsol_anx;
                   EXCEPTION
                     WHEN OTHERS THEN
-                      vr_cdcritic := 1034;
-                      pr_des_erro := gene0001.fn_busca_critica(vr_cdcritic)||'crapsla:'||
-                                    ' dspathan:'||vr_caminho||', dsnmarqv:'||vr_arquivo||
-                                    ', qttamane:'||DBMS_LOB.getlength(vr_blob)||'. '||sqlerrm;
-
-                      -- No caso de erro de programa gravar tabela especifica de log - 06/12/2017 - Ch 788828 
-                      CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);                                                             
+                      vr_des_erro := 'Problema ao inserir na tabela CRAPSLA: '||sqlerrm;
                       RAISE vr_exc_erro;
                   END;
-                  
                   -- Guardar na pltable o sequencial do anexo
                   vr_tab_anexos(vr_ind_a).nrseqsol := vr_nrseqsol_anx;
                   -- Criar o vinculo deste anexo ao e-mail
@@ -1469,15 +1120,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
                                        ,vr_nrseqsol_anx);
                   EXCEPTION
                     WHEN OTHERS THEN
-                      vr_cdcritic := 1034;
-                      pr_des_erro := gene0001.fn_busca_critica(vr_cdcritic)||'crapslv:'||
-                                     ' nrseqsle:'||vr_nrseqsol||', nrseqsla:'||vr_nrseqsol_anx||'. '||sqlerrm;
-
-                      -- No caso de erro de programa gravar tabela especifica de log - 06/12/2017 - Ch 788828 
-                      CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);                                                             
+                      vr_des_erro := 'Problema ao inserir na tabela CRAPSLV: '||sqlerrm;
                       RAISE vr_exc_erro;
                   END;
-                  
                   -- Se foi solicitado para remover os anexos
                   IF pr_flg_remove_anex = 'S' THEN
                     -- Efetuar chamada shell para remover o arquivo anexados
@@ -1486,31 +1131,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
                   -- Se foi solicitado envio de log
                   IF pr_flg_log_batch = 'S' THEN
                     -- Grava log no PROC_MESSAGE avisando que o anexo será enviado para o destinatário
-                    btch0001.pc_gera_log_batch(pr_cdcooper      => pr_cdcooper                    
-                                              ,pr_ind_tipo_log  => 1 -- Processo normal
-                                              ,pr_nmarqlog      => gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE')
-                                              ,pr_dstiplog      => 'E'
-                                              ,pr_cdprograma    => pr_cdprogra                      
-                                              ,pr_tpexecucao    => 0 -- Outros                     
-                                              ,pr_cdcriticidade => 0 -- Baixa                      
-                                              ,pr_cdmensagem    => 0           
-                                              ,pr_des_log       => to_char(sysdate,'hh24:mi:ss')||' - '|| pr_cdprogra ||
-                                                                    ' --> '||vr_caminho||'/'||vr_arquivo||
-                                                                    ' ENVIADO PARA '||pr_tab_destino(vr_ind)||'.');
+                    BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                              ,pr_ind_tipo_log => 1 -- Processo normal
+                                              ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '|| pr_cdprogra || ' --> '||vr_caminho||'/'||vr_arquivo||' ENVIADO PARA '||pr_tab_destino(vr_ind)||'.'
+                                              ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE'));
                   END IF;
                 ELSE
                   -- Grava log para avisar que não localizou o anexo
-                  btch0001.pc_gera_log_batch(pr_cdcooper      => pr_cdcooper                    
-                                            ,pr_ind_tipo_log  => 2 -- Erro Tratado
-                                            ,pr_nmarqlog      => gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE')
-                                            ,pr_dstiplog      => 'E'
-                                            ,pr_cdprograma    => pr_cdprogra                      
-                                            ,pr_tpexecucao    => 0 -- Outros                     
-                                            ,pr_cdcriticidade => 0 -- Baixa                      
-                                            ,pr_cdmensagem    => 1049 --pr_cdmensagem 
-                                            ,pr_des_log       => to_char(sysdate,'hh24:mi:ss')||' - '|| pr_cdprogra ||
-                                                                ' --> '||gene0001.fn_busca_critica(1049)||' '||
-                                                                vr_tab_anexos(vr_ind_a).dspathan);
+                  BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                            ,pr_ind_tipo_log => 2 -- erro tratado
+                                            ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '|| pr_cdprogra ||
+                                                                ' --> Anexo não encontrato '||vr_tab_anexos(vr_ind_a).dspathan);
                 END IF;
               END LOOP;
             ELSE
@@ -1525,26 +1156,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
                   -- Se foi solicitado envio de log
                   IF pr_flg_log_batch = 'S' THEN
                     -- Grava log para avisar que o anexo será enviado para o destinatário
-                    btch0001.pc_gera_log_batch(pr_cdcooper      => pr_cdcooper                    
-                                              ,pr_ind_tipo_log  => 1 -- Processo normal
-                                              ,pr_nmarqlog      => gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE')
-                                              ,pr_dstiplog      => 'E'
-                                              ,pr_cdprograma    => pr_cdprogra                      
-                                              ,pr_tpexecucao    => 0 -- Outros                     
-                                              ,pr_cdcriticidade => 0 -- Baixa                      
-                                              ,pr_cdmensagem    => 0 -- pr_cdmensagem       
-                                              ,pr_des_log       => to_char(sysdate,'hh24:mi:ss')||' - '|| pr_cdprogra || 
-                                                                   ' --> '||vr_tab_anexos(vr_ind_a).dspathan||
-                                                                   ' ENVIADO PARA '||pr_tab_destino(vr_ind)||'.');
+                    BTCH0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                              ,pr_ind_tipo_log => 1 -- Processo normal
+                                              ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '|| pr_cdprogra || ' --> '||vr_tab_anexos(vr_ind_a).dspathan||' ENVIADO PARA '||pr_tab_destino(vr_ind)||'.'
+                                              ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE'));
                   END IF;
                 EXCEPTION
                   WHEN OTHERS THEN
-                    vr_cdcritic := 1034;
-                    pr_des_erro := gene0001.fn_busca_critica(vr_cdcritic)||'crapslv:'||
-                                   ' nrseqsle:'||vr_nrseqsol||', nrseqsla:'||vr_tab_anexos(vr_ind_a).nrseqsol||'. '||sqlerrm;
-
-                    -- No caso de erro de programa gravar tabela especifica de log - 06/12/2017 - Ch 788828 
-                    CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);                                                             
+                    vr_des_erro := 'Problema ao copiar os anexos da tabela CRAPSLV: '||sqlerrm;
                     RAISE vr_exc_erro;
                 END;
               END LOOP;
@@ -1560,68 +1179,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
               -- sair por exceçao
               RAISE vr_exc_erro;
             END IF;
-            -- Incluído pc_set_modulo da procedure - Chamado 788828 - 06/12/2017
-            GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'GENE0003.pc_solicita_email 1');
           END IF;
         EXCEPTION
           WHEN vr_exc_erro THEN
             -- Efetuar raise novamente para a exception ser tratada no bloco de fora
             RAISE vr_exc_erro;
           WHEN OTHERS THEN
-            vr_cdcritic := 1034;
-            vr_des_erro := gene0001.fn_busca_critica(vr_cdcritic)||'crapsle:'||
-                   ' dtsolici:'||SYSDATE||', cdcooper:'||pr_cdcooper||
-                   ', cdprogra:'||pr_cdprogra||', dsendere:'||pr_tab_destino(vr_ind)||
-                   ', dsassunt:'||pr_des_assunto||', dscorpoe:'||pr_des_corpo||
-                   ', dsanexos:'||pr_des_anexo||', flremcop:'||pr_flg_remete_coop||
-                   ', dsnmrepl:'||pr_des_nome_reply||', dsemrepl:'||pr_des_email_reply||
-                   ', flenviad:N. '||sqlerrm;
-
-            -- No caso de erro de programa gravar tabela especifica de log - 06/12/2017 - Ch 788828 
-            CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);                                                             
+            vr_des_erro := 'Problema ao inserir na tabela CRAPSLE: '||sqlerrm;
             RAISE vr_exc_erro;
         END;
       END LOOP;
-
-      -- Incluído pc_set_modulo da procedure - Chamado 788828 - 06/12/2017
-      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => NULL);
     EXCEPTION
       WHEN vr_exc_erro THEN --> Erro tratado
         -- Concatenar o erro previamente montado e retornar
-        vr_cdcritic := nvl(vr_cdcritic,0);
-        pr_des_erro := vr_des_erro;
-
-        -- Log de erro de execucao
-        cecred.pc_log_programa(pr_dstiplog      => 'E', 
-                               pr_cdprograma    => 'GENE0003.PC_SOLICITA_EMAIL',
-                               pr_cdcooper      => pr_cdcooper, 
-                               pr_tpexecucao    => 0, -- Outros
-                               pr_tpocorrencia  => 1, -- erro nao tratado
-                               pr_cdcriticidade => 1, -- alta
-                               pr_cdmensagem    => vr_cdcritic,
-                               pr_dsmensagem    => pr_des_erro,
-                               pr_flgsucesso    => 0,
-                               pr_idprglog      => vr_idprglog);
-
+        pr_des_erro := 'GENE0003.pc_solicita_email --> ' || vr_des_erro;
       WHEN OTHERS THEN -- Gerar log de erro
-        --Tratamento de mensagem
-        vr_cdcritic := 9999;
-        pr_des_erro := gene0001.fn_busca_critica(vr_cdcritic)||'gene0003.pc_solicita_email 1. '||sqlerrm;
-
-        -- Log de erro de execucao
-        cecred.pc_log_programa(pr_dstiplog      => 'E', 
-                               pr_cdprograma    => 'GENE0003.PC_SOLICITA_EMAIL',
-                               pr_cdcooper      => pr_cdcooper, 
-                               pr_tpexecucao    => 0, -- Outros
-                               pr_tpocorrencia  => 2, -- erro nao tratado
-                               pr_cdcriticidade => 2, -- alta
-                               pr_cdmensagem    => vr_cdcritic,
-                               pr_dsmensagem    => pr_des_erro,
-                               pr_flgsucesso    => 0,
-                               pr_idprglog      => vr_idprglog);
-
-        -- No caso de erro de programa gravar tabela especifica de log - 06/12/2017 - Ch 788828 
-        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);                                                             
+        -- Retornar o erro contido na sqlerrm
+        pr_des_erro := 'GENE0003.pc_solicita_email --> '|| sqlerrm;
     END;
   END pc_solicita_email;
 
@@ -1642,7 +1216,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
     --  Sistema  : Rotinas genéricas
     --  Sigla    : GENE
     --  Autor    : Marcos E. Martini - Supero
-    --  Data     : Dezembro/2012.                   Ultima atualizacao: 06/12/2017
+    --  Data     : Dezembro/2012.                   Ultima atualizacao: 13/05/2013
     --
     --  Dados referentes ao programa:
     --
@@ -1650,19 +1224,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
     --   Objetivo  : Apenas fazer overload do procedimento acima sem necessidade de informarmos a Coop
     --
     --   Alteracoes: 13/05/2013 - Prever novos parâmetros de reposta ao e-mail (Marcos/Supero)
-    --
     --               31/07/2013 - Incluir novo parâmetro pr_flg_log_batch (Marcos/Supero)
-    --                            na tipagem (Marcos-Supero)
-    --
-    --               06/12/2017 - Padronização mensagens (crapcri, pc_gera_log (tbgen))
-    --                          - Padronização erros comandos DDL
-    --                          - Pc_set_modulo, cecred.pc_internal_exception
-    --                          - Tratamento erros others
-    --                            Chamado 788828 - Ana Volles (Envolti)
     -- .............................................................................
-    -- Incluído pc_set_modulo da procedure - Chamado 788828 - 06/12/2017
-    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'GENE0003.pc_solicita_email 2');
-    
     pc_solicita_email(pr_cdcooper         => 0
                      ,pr_cdprogra         => pr_cdprogra
                      ,pr_des_destino      => pr_des_destino
@@ -1676,9 +1239,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
                      ,pr_flg_log_batch    => pr_flg_log_batch
                      ,pr_flg_enviar       => pr_flg_enviar
                      ,pr_des_erro         => pr_des_erro);
-                     
-    -- Incluído pc_set_modulo da procedure - Chamado 788828 - 06/12/2017
-    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => NULL);
   END pc_solicita_email;
 
   /* Procedimento para chamada da rotina de solicitação de email via Progress */
@@ -1701,22 +1261,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
     --  Sistema  : Rotinas genéricas
     --  Sigla    : GENE
     --  Autor    : Odirlei Busana - AMcom
-    --  Data     : Janeiro/2016.                   Ultima atualizacao: 06/12/2017
+    --  Data     : Janeiro/2016.                   Ultima atualizacao: 06/01/2015
     --
     --  Dados referentes ao programa:
     --
     --   Frequencia: Sempre que for chamado
     --   Objetivo  : Chamar a rotina pc_solicita_email via progress
     --   
-    --   Alteracoes: 06/12/2017 - Padronização mensagens (crapcri, pc_gera_log (tbgen))
-    --                          - Padronização erros comandos DDL
-    --                          - Pc_set_modulo, cecred.pc_internal_exception
-    --                          - Tratamento erros others
-    --                            Chamado 788828 - Ana Volles (Envolti)
+    --
+    --   Alteracoes: 
+    --                            
     -- .............................................................................*/
+  
+    
   BEGIN    
-    -- Incluído pc_set_modulo da procedure - Chamado 788828 - 06/12/2017
-    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'GENE0003.pc_solicita_email_prog');
   
     pc_solicita_email(pr_cdcooper         => pr_cdcooper
                      ,pr_cdprogra         => pr_cdprogra
@@ -1732,27 +1290,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
                      ,pr_flg_enviar       => pr_flg_enviar
                      ,pr_des_erro         => pr_des_erro);
   
-    -- Incluído pc_set_modulo da procedure - Chamado 788828 - 06/12/2017
-    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => NULL);
-  EXCEPTION
-    WHEN OTHERS THEN
-      vr_cdcritic := 9999;
-      pr_des_erro := gene0001.fn_busca_critica(vr_cdcritic)||' gene0003.pc_solicita_email_prog. '||sqlerrm;
-
-      -- Log de erro de execucao
-      cecred.pc_log_programa(pr_dstiplog      => 'E', 
-                             pr_cdprograma    => 'GENE0003.PC_SOLICITA_EMAIL_PROG', 
-                             pr_cdcooper      => pr_cdcooper, 
-                             pr_tpexecucao    => 0, -- Outros
-                             pr_tpocorrencia  => 2, -- erro nao tratado
-                             pr_cdcriticidade => 2, -- alta
-                             pr_cdmensagem    => vr_cdcritic,
-                             pr_dsmensagem    => pr_des_erro,
-                             pr_flgsucesso    => 0,
-                             pr_idprglog      => vr_idprglog);
-
-      -- No caso de erro de programa gravar tabela especifica de log - 06/12/2017 - Ch 788828 
-      CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);                                                             
   END pc_solicita_email_prog;
 
   /* Rotina Responsável pela conversao de programa unix para DOS */
@@ -1762,11 +1299,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
                                ,pr_des_erro IN OUT VARCHAR2) IS                --> Variavel de retorno de erro
   BEGIN
     /* .............................................................................
+
        Programa: pc_converte_arquivo - Antiga converte_arquivo (sistema/generico/procedures/b1wgen0011.p)
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Alisson (AMcom)
-       Data    : Dezembro/2012                          Ultima alteracao: 06/12/2017
+       Data    : Dezembro/2012                          Ultima alteracao: 11/03/2014
 
        Dados referentes ao programa:
 
@@ -1775,11 +1313,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
        
        Alterações : 11/03/2014 - Simplificação da rotina - Marcos (Supero)
        
-                    06/12/2017 - Padronização mensagens (crapcri, pc_gera_log (tbgen))
-                               - Padronização erros comandos DDL
-                               - Pc_set_modulo, cecred.pc_internal_exception
-                               - Tratamento erros others
-                                 Chamado 788828 - Ana Volles (Envolti)
     ............................................................................. */
     DECLARE
       vr_nmdirconv VARCHAR2(300);  --> Diretório converte da Cooperativa
@@ -1788,9 +1321,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
       vr_des_erro  VARCHAR2(4000);
       vr_typ_saida VARCHAR2(4000);
     BEGIN
-      -- Incluído pc_set_modulo da procedure - Chamado 788828 - 06/12/2017
-      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'GENE0003.pc_converte_arquivo');
-
       -- Buscar o diretório converte da Cooperativa
       vr_nmdirconv := gene0001.fn_diretorio(pr_tpdireto => 'C'
                                            ,pr_cdcooper => pr_cdcooper
@@ -1806,45 +1336,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
       IF vr_typ_saida = 'ERR' THEN
         RAISE vr_exc_erro;
       END IF;
-
-      -- Incluído pc_set_modulo da procedure - Chamado 788828 - 06/12/2017
-      GENE0001.pc_set_modulo(pr_module => NULL, pr_action => NULL);
     EXCEPTION
       WHEN vr_exc_erro THEN
-        vr_cdcritic := 1053;
-        pr_des_erro := gene0001.fn_busca_critica(vr_cdcritic)||' gene0003.pc_converte_arquivo. '||vr_des_erro;
-
-        -- Log de erro de execucao
-        cecred.pc_log_programa(pr_dstiplog      => 'E', 
-                               pr_cdprograma    => 'GENE0003.PC_CONVERTE_ARQUIVO', 
-                               pr_cdcooper      => pr_cdcooper, 
-                               pr_tpexecucao    => 0, -- Outros
-                               pr_tpocorrencia  => 1, -- erro nao tratado
-                               pr_cdcriticidade => 1, -- alta
-                               pr_cdmensagem    => vr_cdcritic,
-                               pr_dsmensagem    => pr_des_erro,
-                               pr_flgsucesso    => 0,
-                               pr_idprglog      => vr_idprglog);
-
+        pr_des_erro := 'Erro na Rotina gene0003.pc_converte_arquivo: '||vr_des_erro;
       WHEN OTHERS THEN
-        vr_cdcritic := 9999;
-        pr_des_erro := gene0001.fn_busca_critica(vr_cdcritic)||' gene0003.pc_converte_arquivo. '||sqlerrm;
-
-        -- Log de erro de execucao
-        cecred.pc_log_programa(pr_dstiplog      => 'E', 
-                               pr_cdprograma    => 'GENE0003.PC_CONVERTE_ARQUIVO', 
-                               pr_cdcooper      => pr_cdcooper, 
-                               pr_tpexecucao    => 0, -- Outros
-                               pr_tpocorrencia  => 2, -- erro nao tratado
-                               pr_cdcriticidade => 2, -- alta
-                               pr_cdmensagem    => vr_cdcritic,
-                               pr_dsmensagem    => pr_des_erro,
-                               pr_flgsucesso    => 0,
-                               pr_idprglog      => vr_idprglog);
-
-        -- No caso de erro de programa gravar tabela especifica de log - 06/12/2017 - Ch 788828 
-        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);                                                             
+        pr_des_erro := 'Erro na Rotina gene0003.pc_converte_arquivo: '||sqlerrm;
     END;
+
   END pc_converte_arquivo;
   
   /* Função validadora do e-mail*/
@@ -1855,20 +1353,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Carlos (Cecred)
-       Data    : Abril/2014                          Ultima alteracao: 24/01/2018
+       Data    : Abril/2014                          Ultima alteracao: 
 
        Dados referentes ao programa:
 
        Frequencia : Sempre que chamado
        Objetivo   : Validar o e-mail informado
          
-       Alterações : 24/01/2018 - Ajuste no regex para que seja possível cadastrar e-mails
-                                 com apenas um caracter, conforme solicitado no chamado 
-                                 830663. (Kelvin)
+       Alterações : 
          
     ............................................................................. */
   BEGIN
-    if REGEXP_LIKE (pr_dsdemail, '^[a-zA-Z0-9$''-\_][^*{|\}?]*@[a-zA-Z0-9._-]+\.[a-zA-Z]{2,4}$') then
+    if REGEXP_LIKE (pr_dsdemail, '^[a-zA-Z0-9$''-\_][^*{|\}?]+@[a-zA-Z0-9._-]+\.[a-zA-Z]{2,4}$') then
       return 1;
     else
       return 0;
@@ -1894,7 +1390,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
     --  Sistema  : BO responsavel pela parte de mensagens no InternetBank.
     --  Sigla    : CRED
     --  Autor    : Andrino Carlos de Souza Junior - RKAM
-    --  Data     : Novembro/2013.                   Ultima atualizacao: 04/12/2017
+    --  Data     : Novembro/2013.                   Ultima atualizacao: --/--/----
     --
     -- Dados referentes ao programa:
     --
@@ -1906,12 +1402,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
     --             16/10/2017 - Alteração para utilizar a vw_usuarios_internet, e quando não
     --                          receber titular, deve gerar mensagem para todos os usuários
     --                          (Pablão)
-
-    --             06/12/2017 - Padronização mensagens (crapcri, pc_gera_log (tbgen))
-    --                        - Padronização erros comandos DDL
-    --                        - Pc_set_modulo, cecred.pc_internal_exception
-    --                        - Tratamento erros others
-    --                          Chamado 788828 - Ana Volles (Envolti)
     ---------------------------------------------------------------------------------------------------------------
     
     
@@ -1932,8 +1422,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
     vr_dsdmensg crapmsg.dsdmensg%TYPE := ' ';
     
   BEGIN
-    -- Incluído pc_set_modulo da procedure - Chamado 788828 - 06/12/2017
-    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'GENE0003.pc_gerar_mensagem');
   
     /* trocando caracteres especiais */
     vr_dsdmensg := REPLACE(pr_dsdmensg, '<', '%3C');
@@ -1947,7 +1435,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
 
     FOR idx IN 1 .. vr_usuarios_internet.count LOOP
 
-    -- Obtém o proximo valor da sequence
+      -- Obtém o proximo valor da sequence32
     vr_nrdmensg := fn_sequence(pr_nmtabela => 'CRAPMSG'
                               ,pr_nmdcampo => 'NRDMENSG'
                               ,pr_dsdchave => pr_cdcooper || ';' || pr_nrdconta
@@ -1994,54 +1482,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
         ,pr_cdcadmsg);
     EXCEPTION
       WHEN OTHERS THEN
-        pr_dscritic := gene0001.fn_busca_critica(1034)||'crapmsg:'||
-                       ' cdcooper:'||pr_cdcooper||', nrdconta:'||pr_nrdconta||
-                       ', idseqttl:'||pr_idseqttl||', nrdmensg:'||vr_nrdmensg||
-                       ', cdprogra:'||pr_cdprogra||', dtdmensg:'||trunc(SYSDATE)||
-                       ', hrdmensg:'||to_char(SYSDATE, 'sssss')||', dsdremet:'||pr_dsdremet||
-                       ', dsdassun:'||pr_dsdassun||', flgleitu:0, inpriori:'||pr_inpriori||
-                       ', dsdplchv:'||pr_dsdplchv||', cdoperad:'||pr_cdoperad||
-                       ', cdcadmsg:'||pr_cdcadmsg||'. '||sqlerrm;
-
-        -- Log de erro de execucao
-        cecred.pc_log_programa(pr_dstiplog      => 'E', 
-                               pr_cdprograma    => 'GENE0003.PC_GERAR_MENSAGEM', 
-                               pr_cdcooper      => pr_cdcooper, 
-                               pr_tpexecucao    => 0, -- Outros
-                               pr_tpocorrencia  => 2, -- erro nao tratado
-                               pr_cdcriticidade => 2, -- alta
-                               pr_cdmensagem    => 1034,
-                               pr_dsmensagem    => pr_dscritic,
-                               pr_flgsucesso    => 0,
-                               pr_idprglog      => vr_idprglog);
-
-        -- No caso de erro de programa gravar tabela especifica de log - 06/12/2017 - Ch 788828 
-        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);                                                             
+        pr_dscritic := 'Erro ao inserir CRAPMSG: ' || SQLERRM;
     END;
-	END LOOP;
-
-    -- Incluído pc_set_modulo da procedure - Chamado 788828 - 06/12/2017
-    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => NULL);
-  EXCEPTION
-    WHEN OTHERS THEN
-      --Tratamento de mensagem
-      vr_cdcritic := 9999;
-      pr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'gene0003.pc_gerar_mensagem. '||sqlerrm;
-
-      -- Log de erro de execucao
-      cecred.pc_log_programa(pr_dstiplog      => 'E', 
-                             pr_cdprograma    => 'GENE0003.PC_GERAR_MENSAGEM', 
-                             pr_cdcooper      => pr_cdcooper, 
-                             pr_tpexecucao    => 0, -- Outros
-                             pr_tpocorrencia  => 2, -- erro nao tratado
-                             pr_cdcriticidade => 2, -- alta
-                             pr_cdmensagem    => vr_cdcritic,
-                             pr_dsmensagem    => pr_dscritic,
-                             pr_flgsucesso    => 0,
-                             pr_idprglog      => vr_idprglog);
-
-      -- No caso de erro de programa gravar tabela especifica de log - 06/12/2017 - Ch 788828 
-      CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);                                                             
+    END LOOP;
   END pc_gerar_mensagem;
 
   -- Rotina para buscar conteúdo das mensagens do iBank/SMS
@@ -2055,15 +1498,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
     --
     --  Programa : fn_buscar_mensagem
     --  Autor    : Dionathan
-    --  Data     : Abril/2016.                   Ultima atualizacao: 06/12/2017
+    --  Data     : Abril/2016.                   Ultima atualizacao: --/--/----
     --
     -- Objetivo  : Buscar as mensagens do iBank/SMS
-    --
-    -- Alterações: 06/12/2017 - Padronização mensagens (crapcri, pc_gera_log (tbgen))
-    --                        - Padronização erros comandos DDL
-    --                        - Pc_set_modulo, cecred.pc_internal_exception
-    --                        - Tratamento erros others
-    --                          Chamado 788828 - Ana Volles (Envolti)
     ---------------------------------------------------------------------------------------------------------------
   
     /* Busca dos dados do associado */
@@ -2084,8 +1521,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
               CONNECT BY LEVEL <= LENGTH(regexp_replace(pr_valores_dinamicos ,'[^;]+','')) + 1);
   
   BEGIN
-    -- Incluído pc_set_modulo da função - Chamado 788828 - 06/12/2017
-    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'GENE0003.fn_buscar_mensagem');
   
     OPEN cr_mensagem;
     FETCH cr_mensagem
@@ -2104,29 +1539,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
       vr_dsmensagem := SUBSTR(vr_dsmensagem, 1, 160);
     END IF;
   
-    -- Incluído pc_set_modulo da procedure - Chamado 788828 - 06/12/2017
-    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => NULL);
     RETURN vr_dsmensagem;
-  EXCEPTION
-    WHEN OTHERS THEN
-      --Tratamento de mensagem
-      vr_cdcritic := 9999;
-      vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'gene0003.fn_buscar_mensagem. '||sqlerrm;
-
-      -- Log de erro de execucao
-      cecred.pc_log_programa(pr_dstiplog      => 'E', 
-                             pr_cdprograma    => 'GENE0003.FN_GERAR_MENSAGEM', 
-                             pr_cdcooper      => pr_cdcooper, 
-                             pr_tpexecucao    => 0, -- Outros
-                             pr_tpocorrencia  => 2, -- erro nao tratado
-                             pr_cdcriticidade => 2, -- alta
-                             pr_cdmensagem    => vr_cdcritic,
-                             pr_dsmensagem    => vr_dscritic,
-                             pr_flgsucesso    => 0,
-                             pr_idprglog      => vr_idprglog);
-
-      -- No caso de erro de programa gravar tabela especifica de log - 06/12/2017 - Ch 788828 
-      CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);                                                             
   
   END fn_buscar_mensagem;
   
@@ -2141,51 +1554,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
     --
     --  Programa : pc_buscar_mensagem
     --  Autor    : Odirlei Busana - AMcom
-    --  Data     : Maio/2016.                   Ultima atualizacao: 06/12/2017
+    --  Data     : Maio/2016.                   Ultima atualizacao: --/--/----
     --
     -- Objetivo  : Buscar as mensagens do iBank/SMS, procedure para ser utilizada no progress
-    --
-    -- Alterações: 06/12/2017 - Padronização mensagens (crapcri, pc_gera_log (tbgen))
-    --                        - Padronização erros comandos DDL
-    --                        - Pc_set_modulo, cecred.pc_internal_exception
-    --                        - Tratamento erros others
-    --                          Chamado 788828 - Ana Volles (Envolti)
     ---------------------------------------------------------------------------------------------------------------
   BEGIN
-    -- Incluído pc_set_modulo da procedure - Chamado 788828 - 06/12/2017
-    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'GENE0003.pc_buscar_mensagem');
-
     -- Buscar conteúdo das mensagens do iBank/SMS
     pr_dsmensagem := fn_buscar_mensagem(pr_cdcooper          => pr_cdcooper         
                                        ,pr_cdproduto         => pr_cdproduto        
                                        ,pr_cdtipo_mensagem   => pr_cdtipo_mensagem  
                                        ,pr_sms               => pr_sms              
                                        ,pr_valores_dinamicos => pr_valores_dinamicos);
-
-    -- Incluído pc_set_modulo da procedure - Chamado 788828 - 06/12/2017
-    GENE0001.pc_set_modulo(pr_module => NULL, pr_action => NULL);
-
-  EXCEPTION
-    WHEN OTHERS THEN
-      --Tratamento de mensagem
-      vr_cdcritic := 9999;
-      vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'gene0003.pc_buscar_mensagem. '||sqlerrm;
-
-      -- Log de erro de execucao
-      cecred.pc_log_programa(pr_dstiplog      => 'E', 
-                             pr_cdprograma    => 'GENE0003.PC_BUSCAR_MENSAGEM', 
-                             pr_cdcooper      => pr_cdcooper, 
-                             pr_tpexecucao    => 0, -- Outros
-                             pr_tpocorrencia  => 2, -- erro nao tratado
-                             pr_cdcriticidade => 2, -- alta
-                             pr_cdmensagem    => vr_cdcritic,
-                             pr_dsmensagem    => vr_dscritic,
-                             pr_flgsucesso    => 0,
-                             pr_idprglog      => vr_idprglog);
-
-      -- No caso de erro de programa gravar tabela especifica de log - 06/12/2017 - Ch 788828 
-      CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);                                                             
   END pc_buscar_mensagem;
-  
 END gene0003;
 /

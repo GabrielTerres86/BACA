@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Mirtes.
-   Data    : Marco/2001                      Ultima atualizacao: 28/03/2018
+   Data    : Marco/2001                      Ultima atualizacao: 01/08/2016
 
    Dados referentes ao programa:
 
@@ -59,16 +59,7 @@
 
 			  01/08/2016 - Adicionado novo campo de arrecadacao GPS
                             conforme solicitado no chamado 460485. (Kelvin)
-
-              03/01/2018 - M307 - Solicitaçao de senha do coordenador quando 
-                             valor do pagamento for superior ao limite cadastrado 
-                             na CADCOP / CADPAC
-                            (Diogo - MoutS)
                            
-              28/03/2018 - Ajuste para permitir arrecadar 
-                           convenio Bancoob (tparrecd = 2).
-                           PRJ406 - FGTS(Odirlei-AMcom)
-
    ......................................................................... */
 
 /*--------------------------------------------------------------------------*/
@@ -430,9 +421,7 @@ PROCEDURE retorna-valores-fatura.
          crapcon.cdempcon = INTE(SUBSTR(p-codigo-barras,16,4)) AND
          crapcon.cdsegmto = INTE(SUBSTR(p-codigo-barras,2,1))  NO-ERROR.
          
-    IF  AVAIL crapcon AND 
-         /* E nao for arrecadacao bancoob */
-        crapcon.tparrecd <> 2 THEN
+    IF  AVAIL crapcon THEN
         DO:
             ASSIGN i-cod-erro  = 0           
                    c-desc-erro = "Empresa Conveniada - Utilize opcao 14".
@@ -2411,63 +2400,3 @@ PROCEDURE calcula_data_vencimento:
     RETURN "OK".
    
 END.
-
-
-PROCEDURE validar-valor-limite:
-
-    DEF INPUT PARAM par_nmrescop  AS CHARACTER                       NO-UNDO.
-    DEF INPUT PARAM par_cdoperad  AS CHARACTER                       NO-UNDO.
-    DEF INPUT PARAM par_cdagenci  AS INTEGER                         NO-UNDO.
-    DEF INPUT PARAM par_nrocaixa  AS INTEGER                         NO-UNDO.
-    DEF INPUT PARAM par_vltitfat  AS DECIMAL                         NO-UNDO.
-    DEF INPUT PARAM par_senha     AS CHARACTER                       NO-UNDO.
-    DEF OUTPUT PARAM par_des_erro AS CHARACTER                       NO-UNDO.
-    DEF OUTPUT PARAM par_dscritic AS CHARACTER                       NO-UNDO.
-    DEF OUTPUT PARAM par_inssenha AS INTEGER                         NO-UNDO.
-
-    DEF VAR aux_inssenha          AS INTEGER                         NO-UNDO.
-    DEF VAR h_b1crap14            AS HANDLE                          NO-UNDO.
-    
-    
-    FIND crapcop WHERE crapcop.nmrescop = par_nmrescop NO-LOCK NO-ERROR.
-    IF NOT AVAILABLE crapcop THEN
-      DO: 
-        ASSIGN i-cod-erro  = 0
-               c-desc-erro = "Cooperativa nao encontrada.".
-        RUN cria-erro (INPUT par_nmrescop,
-                       INPUT par_cdagenci,
-                       INPUT par_nrocaixa,
-                       INPUT i-cod-erro,
-                       INPUT c-desc-erro,
-                       INPUT YES).
-        RETURN "NOK".
-      END.
-      
-    
-    RUN dbo/b1crap14.p PERSISTENT SET h_b1crap14.
-                           
-    RUN valida-valor-limite IN h_b1crap14(INPUT crapcop.cdcooper,
-                                          INPUT par_cdoperad,
-                                          INPUT par_cdagenci,
-                                          INPUT par_nrocaixa,
-                                          INPUT par_vltitfat,
-                                          INPUT par_senha,
-                                          OUTPUT par_des_erro,
-                                          OUTPUT par_dscritic,
-                                          OUTPUT par_inssenha).
-    DELETE PROCEDURE h_b1crap14.
-    
-    IF RETURN-VALUE = 'NOK' THEN  
-     DO:
-        RUN cria-erro (INPUT par_nmrescop,
-                       INPUT par_cdagenci,
-                       INPUT par_nrocaixa,
-                       INPUT 0,
-                       INPUT par_dscritic,
-                       INPUT YES).
-        RETURN "NOK".
-     END.
-     
-    RETURN "OK".
-
-END PROCEDURE.

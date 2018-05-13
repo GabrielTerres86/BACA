@@ -10,7 +10,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS314"
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Junior.
-   Data    : Julho/2001                          Ultima atualizacao: 26/10/2017
+   Data    : Julho/2001                          Ultima atualizacao: 28/07/2017
 
    Dados referentes ao programa:
 
@@ -155,10 +155,6 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS314"
                28/07/2017 - Incluso tratativa para nao incluir cheques nao aprovados ao compor valor
 			                do bordero de desconto de cheques (Daniel)
 
-               08/08/2017 - Inclusao do produto Pos-Fixado. (Jaison/James - PRJ298)
-
-               26/10/2017 - Passagem do tpctrato. (Jaison/Marcos Martini - PRJ404)
-
  ............................................................................ */
   --
   -- Dados da cooperativa
@@ -256,15 +252,14 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS314"
                               vr_nrctremp  crapadt.nrctremp%type,
                               vr_cdaditiv  crapadt.cdaditiv%type,
                               vr_nmprimtl  crapass.nmprimtl%type,
-                              vr_dsaditiv  varchar2(45),
-                              vr_cdoperad  crapadt.cdoperad%TYPE,
-                              vr_tpctrato  crapadt.tpctrato%TYPE);
+                              vr_dsaditiv  varchar2(34),
+                              vr_cdoperad  crapadt.cdoperad%TYPE);
   -- Definição da tabela para armazenar os aditivos
-  type typ_tab_aditivo is table of typ_aditivo index by varchar2(42);
+  type typ_tab_aditivo is table of typ_aditivo index by varchar2(40);
   -- Instância da tabela. O índice será cdagenci || nrdconta || cdaditiv || nraditiv
   vr_tab_aditivo         typ_tab_aditivo;
   -- Variavel para leitura das pl/tables
-  vr_indice_aditivo      varchar2(42);
+  vr_indice_aditivo      varchar2(40);
 
   -- PL/Table geral com os limites de crédito
   type typ_geral is record (vr_cdagenci  crapass.cdagenci%type,
@@ -330,7 +325,6 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS314"
   vr_vllanbdc            craplim.vllimite%type;
   vr_vlemprst_total      craplim.vllimite%type;
   vr_lancou_aditivos     varchar2(1); --SD#539415
-  vr_dstipctr            varchar2(15);
   -- Exceptions
   vr_exc_saida           EXCEPTION;
 
@@ -771,10 +765,8 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS314"
             -- Se o tipo do empréstimo for igual a zero
             IF rw_crapepr.tpemprst = 0 THEN
               vr_tab_geral(vr_indice_geral).vr_dsemprst := 'CONTRATOS PRICE TR';
-            ELSIF rw_crapepr.tpemprst = 1 THEN
+            ELSE
               vr_tab_geral(vr_indice_geral).vr_dsemprst := 'CONTRATOS PRICE PRE FIXADO';
-            ELSIF rw_crapepr.tpemprst = 2 THEN
-              vr_tab_geral(vr_indice_geral).vr_dsemprst := 'CONTRATOS PRICE POS FIXADO';
             END IF;
             -- Inclui na segunda tabela, ordenada pelos indicadores e depois por agencia e conta
             vr_indice_geral2 := '1'||'1'||TO_CHAR(rw_crapepr.tpemprst,'fm00000')||to_char(rw_crapepr.cdagenci, 'fm00000')||to_char(rw_crapepr.nrdconta, 'fm0000000000')||to_char(rw_crapepr.vlemprst, 'fm0000000000000000000000000')||to_char(rw_crapepr.nrctremp, 'fm0000000000')||'0000000000';
@@ -799,10 +791,8 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS314"
             -- Se o tipo do empréstimo for igual a zero
             IF rw_crapepr.tpemprst = 0 THEN
               vr_tab_geral2(vr_indice_geral2).vr_dsemprst := 'CONTRATOS PRICE TR';
-            ELSIF rw_crapepr.tpemprst = 1 THEN
+            ELSE
               vr_tab_geral2(vr_indice_geral2).vr_dsemprst := 'CONTRATOS PRICE PRE FIXADO';
-            ELSIF rw_crapepr.tpemprst = 2 THEN
-              vr_tab_geral2(vr_indice_geral2).vr_dsemprst := 'CONTRATOS PRICE POS FIXADO';
             END IF;
           close cr_crapass2;
         end if;
@@ -892,10 +882,8 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS314"
             -- Se o tipo do empréstimo for igual a zero
             IF rw_crapepr.tpemprst = 0 THEN
               vr_tab_geral(vr_indice_geral).vr_dsemprst := 'CONTRATOS PRICE TR';
-            ELSIF rw_crapepr.tpemprst = 1 THEN
+            ELSE
               vr_tab_geral(vr_indice_geral).vr_dsemprst := 'CONTRATOS PRICE PRE FIXADO';
-            ELSIF rw_crapepr.tpemprst = 2 THEN
-              vr_tab_geral(vr_indice_geral).vr_dsemprst := 'CONTRATOS PRICE POS FIXADO';
             END IF;
             -- Inclui na segunda tabela, ordenada pelos indicadores e depois por agencia e conta
             vr_tab_geral2(vr_indice_geral2).vr_cdagenci := rw_crapepr.cdagenci;
@@ -917,10 +905,8 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS314"
             -- Se o tipo do empréstimo for igual a zero
             IF rw_crapepr.tpemprst = 0 THEN
               vr_tab_geral2(vr_indice_geral2).vr_dsemprst := 'CONTRATOS PRICE TR';
-            ELSIF rw_crapepr.tpemprst = 1 THEN
+            ELSE
               vr_tab_geral2(vr_indice_geral2).vr_dsemprst := 'CONTRATOS PRICE PRE FIXADO';
-            ELSIF rw_crapepr.tpemprst = 2 THEN
-              vr_tab_geral2(vr_indice_geral2).vr_dsemprst := 'CONTRATOS PRICE POS FIXADO';
             END IF;
           close cr_crapass2;
         end if;
@@ -995,10 +981,8 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS314"
             -- Se o tipo do empréstimo for igual a zero
             IF rw_crapepr.tpemprst = 0 THEN
               vr_tab_geral(vr_indice_geral).vr_dsemprst := 'CONTRATOS PRICE TR';
-            ELSIF rw_crapepr.tpemprst = 1 THEN
+            ELSE
               vr_tab_geral(vr_indice_geral).vr_dsemprst := 'CONTRATOS PRICE PRE FIXADO';
-            ELSIF rw_crapepr.tpemprst = 2 THEN
-              vr_tab_geral(vr_indice_geral).vr_dsemprst := 'CONTRATOS PRICE POS FIXADO';
             END IF;
             -- Inclui na segunda tabela, ordenada pelos indicadores e depois por agencia e conta
             vr_desvalor := 'CONTRATOS ACIMA R$ '||to_char(pr_vlfim, 'fm999G999G990D00')||' INCLUSIVE';
@@ -1024,10 +1008,8 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS314"
             -- Se o tipo do empréstimo for igual a zero
             IF rw_crapepr.tpemprst = 0 THEN
               vr_tab_geral2(vr_indice_geral2).vr_dsemprst := 'CONTRATOS PRICE TR';
-            ELSIF rw_crapepr.tpemprst = 1 THEN
+            ELSE
               vr_tab_geral2(vr_indice_geral2).vr_dsemprst := 'CONTRATOS PRICE PRE FIXADO';
-            ELSIF rw_crapepr.tpemprst = 2 THEN
-              vr_tab_geral2(vr_indice_geral2).vr_dsemprst := 'CONTRATOS PRICE POS FIXADO';
             END IF;
           close cr_crapass2;
         end if;
@@ -1046,8 +1028,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS314"
              crapadt.cdaditiv,
              crapadt.nrdconta,
              crapadt.cdagenci,
-             crapadt.cdoperad,
-             crapadt.tpctrato
+             crapadt.cdoperad
         from crapadt
        where crapadt.cdcooper = pr_cdcooper
          and crapadt.dtmvtolt = pr_dtmvtolt;
@@ -1096,7 +1077,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS314"
         end if;
       close cr_crapass;
       --
-      vr_indice_aditivo := to_char(rw_crapadt.cdagenci, 'fm00000')||to_char(rw_crapadt.nrdconta, 'fm0000000000')||to_char(rw_crapadt.cdaditiv, 'fm00000')||to_char(rw_crapadt.nraditiv, 'fm0000000000')||to_char(rw_crapadt.nrctremp,'fm0000000000')||to_char(rw_crapadt.tpctrato, 'fm00');
+      vr_indice_aditivo := to_char(rw_crapadt.cdagenci, 'fm00000')||to_char(rw_crapadt.nrdconta, 'fm0000000000')||to_char(rw_crapadt.cdaditiv, 'fm00000')||to_char(rw_crapadt.nraditiv, 'fm0000000000')||to_char(rw_crapadt.nrctremp,'fm0000000000');
       -- Informações do aditivo
       vr_tab_aditivo(vr_indice_aditivo).vr_cdagenci := rw_crapadt.cdagenci;
       vr_tab_aditivo(vr_indice_aditivo).vr_nrdconta := rw_crapadt.nrdconta;
@@ -1104,7 +1085,6 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS314"
       vr_tab_aditivo(vr_indice_aditivo).vr_nrctremp := rw_crapadt.nrctremp;
       vr_tab_aditivo(vr_indice_aditivo).vr_cdaditiv := rw_crapadt.cdaditiv;
       vr_tab_aditivo(vr_indice_aditivo).vr_cdoperad := rw_crapadt.cdoperad;
-      vr_tab_aditivo(vr_indice_aditivo).vr_tpctrato := rw_crapadt.tpctrato;
       -- Descrição do aditivo
       if rw_crapadt.cdaditiv = 1 then
         vr_tab_aditivo(vr_indice_aditivo).vr_dsaditiv := 'Alteracao Data do Debito';
@@ -1122,8 +1102,6 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS314"
         vr_tab_aditivo(vr_indice_aditivo).vr_dsaditiv := 'Sub-rogacao - C/ Nota Promissoria';
       elsif rw_crapadt.cdaditiv = 8 then
         vr_tab_aditivo(vr_indice_aditivo).vr_dsaditiv := 'Sub-rogacao - S/ Nota Promissoria';
-      elsif rw_crapadt.cdaditiv = 9 then
-        vr_tab_aditivo(vr_indice_aditivo).vr_dsaditiv := 'Cobertura de Aplicacao Vinculada a Operacao';
       end if;
       -- Reduzir para 24 caracteres devido a limitação no relatório
       vr_tab_aditivo(vr_indice_aditivo).vr_dsaditiv := substr(vr_tab_aditivo(vr_indice_aditivo).vr_dsaditiv, 1, 24);
@@ -1378,14 +1356,6 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS314"
     while vr_indice_aditivo is not null and
           (vr_tab_aditivo(vr_indice_aditivo).vr_cdagenci = pr_cdagenci or
            pr_cdagenci = 99) loop
-
-      CASE vr_tab_aditivo(vr_indice_aditivo).vr_tpctrato
-        WHEN 1 THEN vr_dstipctr := 'LIM.CRED';
-        WHEN 2 THEN vr_dstipctr := 'DSCT.CHEQ';
-        WHEN 3 THEN vr_dstipctr := 'DSCT.TITU';
-        WHEN 90 THEN vr_dstipctr := 'EMP.FIN.';
-      END CASE;
-
       if pr_cdagenci <> 99 then
         -- Escreve no XML o detalhe da informação (relatório por agência)
         gene0002.pc_escreve_xml(vr_des_xml,vr_des_xml_temp
@@ -1403,7 +1373,6 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS314"
                                '<nraditiv>'||vr_tab_aditivo(vr_indice_aditivo).vr_nraditiv||'</nraditiv>'||
                                '<tpaditiv>'||vr_tab_aditivo(vr_indice_aditivo).vr_cdaditiv||'</tpaditiv>'||
                                '<dsaditiv>'||vr_tab_aditivo(vr_indice_aditivo).vr_dsaditiv||'</dsaditiv>'||
-                               '<dstipctr>'||vr_dstipctr||'</dstipctr>'||
                              '</conta>');
       else
         -- Escreve no XML o detalhe da informação (relatório geral)
@@ -1422,7 +1391,6 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS314"
                          '<nraditiv>'||vr_tab_aditivo(vr_indice_aditivo).vr_nraditiv||'</nraditiv>'||
                          '<tpaditiv>'||vr_tab_aditivo(vr_indice_aditivo).vr_cdaditiv||'</tpaditiv>'||
                          '<dsaditiv>'||vr_tab_aditivo(vr_indice_aditivo).vr_dsaditiv||'</dsaditiv>'||
-                         '<dstipctr>'||vr_dstipctr||'</dstipctr>'||
                        '</conta>');
       end if;
       -- Passa para o próximo registro
@@ -1636,7 +1604,6 @@ begin
                            '<nraditiv></nraditiv>'||
                            '<tpaditiv></tpaditiv>'||
                            '<dsaditiv></dsaditiv>'||
-                           '<dstipctr></dstipctr>'||
                          '</conta>');
         end if;
       end if;
@@ -1810,7 +1777,6 @@ begin
                          '<nraditiv></nraditiv>'||
                          '<tpaditiv></tpaditiv>'||
                          '<dsaditiv></dsaditiv>'||
-                         '<dstipctr></dstipctr>'||
                        '</conta>');
       end if;
       vr_indice_separados := vr_tab_separados.next(vr_indice_separados);
@@ -1851,7 +1817,6 @@ begin
                          '<nraditiv></nraditiv>'||
                          '<tpaditiv></tpaditiv>'||
                          '<dsaditiv></dsaditiv>'||
-                         '<dstipctr></dstipctr>'||
                        '</conta>');
       end if;
       vr_indice_separados := vr_tab_separados.next(vr_indice_separados);
@@ -1899,7 +1864,6 @@ begin
                          '<nraditiv></nraditiv>'||
                          '<tpaditiv></tpaditiv>'||
                          '<dsaditiv></dsaditiv>'||
-                         '<dstipctr></dstipctr>'||
                        '</conta>');
       end if;
       vr_indice_separados := vr_tab_separados.next(vr_indice_separados);
@@ -1940,7 +1904,6 @@ begin
                          '<nraditiv></nraditiv>'||
                          '<tpaditiv></tpaditiv>'||
                          '<dsaditiv></dsaditiv>'||
-                         '<dstipctr></dstipctr>'||
                        '</conta>');
       end if;
       vr_indice_separados := vr_tab_separados.next(vr_indice_separados);
@@ -2063,7 +2026,6 @@ begin
                      '<nraditiv></nraditiv>'||
                      '<tpaditiv></tpaditiv>'||
                      '<dsaditiv></dsaditiv>'||
-                     '<dstipctr></dstipctr>'||
                    '</conta>');
     -- Passa para o próximo registro da PL/Table
     vr_indice_geral2 := vr_tab_geral2.next(vr_indice_geral2);

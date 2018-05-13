@@ -10,9 +10,6 @@
                              pela DB1
                              (Adriano).
         
-                14/03/2018 - Ajuste para buscar a descricao do tipo de conta do oracle. 
-                             PRJ366 (Lombardi)
-        
 ............................................................................*/
 
 /*............................. DEFINICOES .................................*/
@@ -20,7 +17,6 @@
 { sistema/generico/includes/b1wgen0163tt.i }
 { sistema/generico/includes/gera_erro.i }
 { sistema/generico/includes/gera_log.i }
-{ sistema/generico/includes/var_oracle.i }
 
 /*................................ PROCEDURES ..............................*/
 
@@ -63,8 +59,6 @@ PROCEDURE Busca_Dados:
     DEF VAR aux_nrdrowid AS ROWID                                     NO-UNDO.
     DEF VAR h-b1wgen9998 AS HANDLE                                    NO-UNDO.
     DEF VAR aux_nrregist AS INT                                       NO-UNDO.
-    DEF VAR aux_dstipcta AS CHAR                                      NO-UNDO.
-    DEF VAR aux_des_erro AS CHAR                                      NO-UNDO.
 
     ASSIGN aux_dscritic = ""
            aux_cdcritic = 0
@@ -199,63 +193,23 @@ PROCEDURE Busca_Dados:
                  
                  IF crapneg.cdhisest = 2 THEN
                     DO:
-                       { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
-                       RUN STORED-PROCEDURE pc_descricao_tipo_conta
-                         aux_handproc = PROC-HANDLE NO-ERROR
-                                                 (INPUT crapass.inpessoa, /* Tipo de pessoa */
-                                                  INPUT crapneg.cdtctant, /* Tipo de conta */
-                                                 OUTPUT "",               /* Descriçao do Tipo de conta */
-                                                 OUTPUT "",               /* Flag Erro */
-                                                 OUTPUT "").              /* Descriçao da crítica */
+                       FIND craptip WHERE craptip.cdcooper = par_cdcooper AND
+                                          craptip.cdtipcta = crapneg.cdtctant
+                                          NO-LOCK NO-ERROR.
                  
-                       CLOSE STORED-PROC pc_descricao_tipo_conta
-                             aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
-                       
-                       { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
-                       
-                       ASSIGN aux_dstipcta = ""
-                              aux_des_erro = ""
-                              aux_dscritic = ""
-                              aux_dstipcta = pc_descricao_tipo_conta.pr_dstipo_conta 
-                                              WHEN pc_descricao_tipo_conta.pr_dstipo_conta <> ?
-                              aux_des_erro = pc_descricao_tipo_conta.pr_des_erro 
-                                              WHEN pc_descricao_tipo_conta.pr_des_erro <> ?
-                              aux_dscritic = pc_descricao_tipo_conta.pr_dscritic
-                                              WHEN pc_descricao_tipo_conta.pr_dscritic <> ?.
-                       
-                       IF aux_des_erro = "NOK"  THEN
+                       IF NOT AVAILABLE craptip THEN
                           ASSIGN aux_dscodant = STRING(crapneg.cdtctant).
                        ELSE
-                          ASSIGN aux_dscodant = aux_dstipcta.
+                          ASSIGN aux_dscodant = craptip.dstipcta.
                  
-                       { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
-                       RUN STORED-PROCEDURE pc_descricao_tipo_conta
-                         aux_handproc = PROC-HANDLE NO-ERROR
-                                                 (INPUT crapass.inpessoa, /* Tipo de pessoa */
-                                                  INPUT crapneg.cdtctatu, /* Tipo de conta */
-                                                 OUTPUT "",               /* Descriçao do Tipo de conta */
-                                                 OUTPUT "",               /* Flag Erro */
-                                                 OUTPUT "").              /* Descriçao da crítica */
-                       
-                       CLOSE STORED-PROC pc_descricao_tipo_conta
-                             aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
-                       
-                       { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+                       FIND craptip WHERE craptip.cdcooper = par_cdcooper AND
+                                          craptip.cdtipcta = crapneg.cdtctatu
+                                          NO-LOCK NO-ERROR.
                  
-                       ASSIGN aux_dstipcta = ""
-                              aux_des_erro = ""
-                              aux_dscritic = ""
-                              aux_dstipcta = pc_descricao_tipo_conta.pr_dstipo_conta 
-                                              WHEN pc_descricao_tipo_conta.pr_dstipo_conta <> ?
-                              aux_des_erro = pc_descricao_tipo_conta.pr_des_erro 
-                                              WHEN pc_descricao_tipo_conta.pr_des_erro <> ?
-                              aux_dscritic = pc_descricao_tipo_conta.pr_dscritic
-                                              WHEN pc_descricao_tipo_conta.pr_dscritic <> ?.
-                 
-                       IF aux_des_erro = "NOK"  THEN
+                       IF NOT AVAILABLE craptip THEN
                           ASSIGN aux_dscodatu = STRING(crapneg.cdtctatu).
                        ELSE
-                          ASSIGN aux_dscodatu = aux_dstipcta.
+                          ASSIGN aux_dscodatu = craptip.dstipcta.
                  
                     END.
                  

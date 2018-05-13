@@ -13,8 +13,6 @@
  * 003: [12/05/2015] Reinert      (CECRED) : Alterado para apresentar mensagem ao realizar inclusao
  *									         de proposta de novo limite de desconto de cheque para
  *										     menores nao emancipados.
- * 004: [13/04/2018] Lombardi     (CECRED) : Incluida validacao se a adesao do produto é permitida
- *									         para o tipo de conta do coperado. PRJ366
  */
 ?>
 
@@ -41,25 +39,6 @@
 
 	// Verifica se o número da conta é um inteiro válido
 	if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Ayllos',$funcaoAposErro);
-	
-	// Monta o xml de requisição
-	$xml  = "";
-	$xml .= "<Root>";
-	$xml .= "	<Dados>";
-	$xml .= "		<nrdconta>".$nrdconta."</nrdconta>";
-	$xml .= "		<cdprodut>".   36    ."</cdprodut>";
-	$xml .= "	</Dados>";
-	$xml .= "</Root>";
-	
-	// Executa script para envio do XML
-	$xmlResult = mensageria($xml, "CADA0006", "VALIDA_ADESAO_PRODUTO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
-	$xmlObj = getObjectXML($xmlResult);
-	
-	// Se ocorrer um erro, mostra crítica
-	if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
-		$msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
-		exibirErro('error',utf8_encode($msgErro),'Alerta - Ayllos',$funcaoAposErro);
-	}
 	
 	// Monta o xml de requisição
 	$xmlGetDadosLimIncluir  = "";

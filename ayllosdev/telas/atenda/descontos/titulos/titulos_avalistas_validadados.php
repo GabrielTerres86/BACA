@@ -8,7 +8,7 @@
  * ALTERAÇÕES   :
  * --------------
  * 000: [10/06/2010] David          (CECRED) : Adaptação para RATING
- * 001: [04/05/2011] Rodolpho Telmo    (DB1) : Adaptação formulário genérico avalistas e endereço
+ * 001: [04/05/2011] Rodolpho Telmo (DB1) : Adaptação formulário genérico avalistas e endereço
  * 002: [28/03/2018] Andre Avila    (GFT) : Alteração de mensagem para opção A [Alteração].
  */
 ?> 
@@ -19,7 +19,7 @@
 	require_once('../../../../includes/funcoes.php');		
 	require_once('../../../../includes/controla_secao.php');
 	require_once('../../../../class/xmlfile.php');		
-	isPostMethod();	
+	isPostMethod();	 
 	
 	// Verifica se os parâmetros necessários foram informados
 	$params = array('nrdconta','nrctaav1','nmdaval1','nrcpfav1','cpfcjav1','ende1av1',

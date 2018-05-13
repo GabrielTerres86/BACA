@@ -22,7 +22,6 @@ DEF INPUT  PARAM pr_cdcooper  LIKE crapcop.cdcooper                   NO-UNDO.
 DEF INPUT  PARAM pr_nrdconta  LIKE crapass.nrdconta                   NO-UNDO.
 DEF INPUT  PARAM pr_idtipfol  AS INT                                  NO-UNDO.
 DEF INPUT  PARAM pr_lisrowid AS CHAR                                  NO-UNDO.
-DEF INPUT  PARAM pr_iddspscp AS INTE                                  NO-UNDO.
 
 DEF OUTPUT PARAM xml_dsmsgerr AS CHAR                                 NO-UNDO.
 DEF OUTPUT PARAM TABLE FOR xml_operacao.
@@ -48,7 +47,6 @@ RUN STORED-PROCEDURE pc_impressao_comprovante aux_handproc = PROC-HANDLE NO-ERRO
                       INPUT INT(pr_nrdconta),
                       INPUT INT(pr_idtipfol),                      
                       INPUT STRING(pr_lisrowid),
-                      INPUT pr_iddspscp,
                       OUTPUT ?,
                       OUTPUT 0,
                       OUTPUT "").
@@ -74,7 +72,7 @@ END.
 
 
 CREATE xml_operacao.
-ASSIGN xml_operacao.dslinxml = xml_req.
+ASSIGN xml_operacao.dslinxml = "<nmarquiv>" + xml_req + "</nmarquiv>".
 
 RETURN "OK".
 

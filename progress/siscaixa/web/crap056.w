@@ -7,8 +7,6 @@ Alteracoes:  21/12/2011 - Inclusao de parametro na rotina valida-saldo-conta
                           Dataserver Oracle 
                           Inclusao do VALIDATE ( Andre Euzebio / SUPERO)              
 
-			 06/02/2018 - Adicionado novo historico. (SD 838581 - Kelvin)
-                                        
                                         
 ***************************************************************************/
 &ANALYZE-SUSPEND _VERSION-NUMBER AB_v9r12 GUI adm2
@@ -635,8 +633,7 @@ PROCEDURE process-web-request :
                              v_historico <> "555" AND 
                              v_historico <> "503" AND
                              v_historico <> "486" AND 
-                             v_historico <> "561" AND 
-							 v_historico <> "2553" THEN
+                             v_historico <> "561" THEN
                              ASSIGN vh_foco = "10".
                         ELSE                        
                              ASSIGN vh_foco = "11" 
@@ -812,8 +809,7 @@ PROCEDURE process-web-request :
                                                     INT(v_historico) = 103 OR
                                                     INT(v_historico) = 555 OR
                                                     INT(v_historico) = 503 OR
-                                                    INT(v_historico) = 486 OR                                                    													 
-													INT(v_historico) = 2553 THEN
+                                                    INT(v_historico) = 486 OR                                                    INT(v_historico) = 561 THEN
                                                     ASSIGN lRecibo =  YES. 
                                                     
                                                     
@@ -881,8 +877,7 @@ PROCEDURE process-web-request :
          GET-VALUE("v_historico") <> "555" AND
          GET-VALUE("v_historico") <> "503" AND
          GET-VALUE("v_historico") <> "486" AND  
-         GET-VALUE("v_historico") <> "561" AND 
-		 GET-VALUE("v_historico") <> "2553" THEN
+         GET-VALUE("v_historico") <> "561" THEN
          DO:
              ENABLE v_documento 
                     WITH FRAME {&FRAME-NAME}.

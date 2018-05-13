@@ -82,7 +82,18 @@ create or replace package cecred.TELA_APRDES is
        dsparecer            tbdsct_parecer_titulo.dsparecer%TYPE
   );
   TYPE typ_tab_dados_parecer IS TABLE OF typ_reg_dados_parecer INDEX BY BINARY_INTEGER;
-                                         
+
+  FUNCTION fn_concentracao_titulo_pagador (pr_cdcooper craptdb.cdcooper%TYPE
+                                        ,pr_nrdconta craptdb.nrdconta%TYPE
+                                        ,pr_nrinssac crapcob.nrinssac%TYPE
+                                        ) RETURN NUMBER;
+                                        
+  FUNCTION fn_liquidez_pagador_cedente (pr_cdcooper craptdb.cdcooper%TYPE
+                                        ,pr_nrdconta craptdb.nrdconta%TYPE
+                                        ,pr_nrinssac crapcob.nrinssac%TYPE
+                                        ,pr_cdtpinsc crapcob.cdtpinsc%TYPE
+                                        ) RETURN NUMBER;
+                                        
   PROCEDURE pc_buscar_bordero (pr_cdcooper IN crapbdt.cdcooper%TYPE   --> Código da cooperativa
                              ,pr_nrdconta IN crapbdt.nrborder%TYPE   --> Número do Borderô
                              ,pr_nrborder IN crapbdt.nrborder%TYPE   --> Número do Borderô
@@ -245,6 +256,230 @@ create or replace package body cecred.TELA_APRDES is
      );
      
  END fn_busca_decisao_bordero;
+   
+ FUNCTION fn_concentracao_titulo_pagador (pr_cdcooper craptdb.cdcooper%TYPE
+                                        ,pr_nrdconta craptdb.nrdconta%TYPE
+                                        ,pr_nrinssac crapcob.nrinssac%TYPE
+                                        ) RETURN NUMBER IS
+  /*---------------------------------------------------------------------------------------------------------------------
+    Programa : fn_concentracao_titulo_pagador
+    Sistema  : CRED
+    Sigla    : TELA_APRDES
+    Autor    : Luis Fernando (GFT)
+    Data     : Abril/2018
+    Frequencia: Sempre que for chamado
+    Objetivo  : Função que retorna a porcentagem de concentracaoo de titulos daquele pagador
+  ---------------------------------------------------------------------------------------------------------------------*/
+  cursor cr_concentracao is -- Percentual de Concentração de Títulos por Pagador  
+   select * from (
+        select nrdconta,
+               nrinssac,
+              (totalporpagador*100/(sum(totalporpagador) over(partition by nrdconta))) pe_conc
+        from ( select nrdconta,
+                      nrinssac,
+                      count(1) as totalporpagador
+               from   crapcob
+               where  cdcooper = pr_cdcooper
+               and    crapcob.flgregis = 1
+               and    crapcob.incobran = 0
+               and    crapcob.dtdpagto is null
+               and    crapcob.nrdconta = pr_nrdconta
+               group  by nrdconta,
+                         crapcob.nrinssac
+               order  by crapcob.nrdconta
+             )
+           
+        group  by nrdconta,
+                  nrinssac,
+                  totalporpagador
+    )
+   where
+      nrinssac = pr_nrinssac
+      AND nrdconta = pr_nrdconta;
+   rw_concentracao cr_concentracao%rowtype;
+   BEGIN
+     open  cr_concentracao;
+     fetch cr_concentracao into rw_concentracao;
+     IF (cr_concentracao%NOTFOUND) THEN
+       return 0;
+     END IF;
+     return rw_concentracao.pe_conc;    
+ END fn_concentracao_titulo_pagador;
+   
+ FUNCTION fn_liquidez_pagador_cedente (pr_cdcooper craptdb.cdcooper%TYPE
+                                        ,pr_nrdconta craptdb.nrdconta%TYPE
+                                        ,pr_nrinssac crapcob.nrinssac%TYPE
+                                        ,pr_cdtpinsc crapcob.cdtpinsc%TYPE
+                                        ) RETURN NUMBER IS
+  /*---------------------------------------------------------------------------------------------------------------------
+    Programa : fn_liquidez_pagador_cedente
+    Sistema  : CRED
+    Sigla    : TELA_APRDES
+    Autor    : Luis Fernando (GFT)
+    Data     : Abril/2018
+    Frequencia: Sempre que for chamado
+    Objetivo  : Função que retorna a porcentagem de liquidez do pagador contra o cedente
+  ---------------------------------------------------------------------------------------------------------------------*/
+  
+    -- Títulos Descontados com vencimento dentro do período
+   cursor cr_craptdb_desc is
+   select count(1) qttitulo, nvl(sum(tdb.vltitulo), 0) vltitulo
+   from   crapsab sab -- Pagador
+         ,craptdb tdb -- Titulos do Bordero
+         ,crapbdt dbt -- Bordero de Titulos
+   where  sab.nrinssac = pr_nrinssac
+   and    sab.cdtpinsc = pr_cdtpinsc
+   and    sab.cdcooper = pr_cdcooper
+   and    sab.nrdconta = pr_nrdconta
+   and    tdb.dtresgat is null
+   and    tdb.dtlibbdt is not null -- Somente os titulos que realmente foram descontados
+   and    tdb.nrborder = dbt.nrborder
+   and    tdb.nrdconta = dbt.nrdconta
+   and    tdb.cdcooper = dbt.cdcooper
+   and    dbt.nrdconta = pr_nrdconta
+   and    dbt.cdcooper = pr_cdcooper
+   --     Não considerar como título pago, os liquidados em conta corrente do cedente, ou seja, pagos pelo próprio emitente
+   and    not exists( select 1
+                      from   craptit tit
+                      where  tit.cdcooper = tdb.cdcooper
+                      and    tit.dtmvtolt = tdb.dtdpagto
+                      and    tdb.nrdconta = substr(upper(tit.dscodbar), 26, 8)
+                      and    tdb.nrcnvcob = substr(upper(tit.dscodbar), 20, 6)
+                      and    tit.cdbandst = 85
+                      and    tit.cdagenci in (90,91) );
+   rw_craptdb_desc cr_craptdb_desc%rowtype;
+   
+   -- Títulos Não Pagos com vencimento dentro do período
+   cursor cr_craptdb_npag is
+   select count(1) AS qttitulo, nvl(sum(tdb.vltitulo),0) AS vltitulo
+   from   crapsab sab
+         ,craptdb tdb
+         ,crapbdt dbt
+   where  sab.nrinssac  = pr_nrinssac
+    and    sab.cdtpinsc  = pr_cdtpinsc 
+   and    sab.cdcooper  = tdb.cdcooper
+   and    sab.nrdconta  = tdb.nrdconta
+   and    tdb.dtresgat  is null
+   and    tdb.dtlibbdt  is not null
+   and    tdb.dtvencto <= nvl(tdb.dtdpagto, trunc(sysdate))
+   and    tdb.nrborder = dbt.nrborder
+   and    tdb.nrdconta = dbt.nrdconta
+   and    tdb.cdcooper = dbt.cdcooper
+   and    dbt.nrdconta = pr_nrdconta
+   and    dbt.cdcooper = pr_cdcooper
+   --     Não considerar como título pago, os liquidados em conta corrente do cedente, ou seja, pagos pelo próprio emitente
+   
+   and    not exists( select 1
+                      from   craptit tit
+                      where  tit.cdcooper = tdb.cdcooper
+                      and    tit.dtmvtolt = tdb.dtdpagto
+                      and    tdb.nrdconta = substr(upper(tit.dscodbar), 26, 8)
+                      and    tdb.nrcnvcob = substr(upper(tit.dscodbar), 20, 6)
+                      and    tit.cdbandst = 85
+                      and    tit.cdagenci in (90,91));
+   rw_craptdb_npag cr_craptdb_npag%rowtype;
+ 
+   -- Controle
+   vr_vlliquidez NUMBER;
+   BEGIN
+     ----> DETALHES (LIQUIDEZ DO PAGADOR COM O CEDENTE)
+     --  Valor Total Descontado com vencimento dentro do período
+     open  cr_craptdb_desc;
+     fetch cr_craptdb_desc into rw_craptdb_desc;
+     close cr_craptdb_desc;
+             
+     --  Se não houver desconto, liquidez é 100%
+     if  rw_craptdb_desc.qttitulo = 0 then
+         vr_vlliquidez := 100;
+     else 
+         -- Valor Total descontado pago com atraso e não pagos
+         open  cr_craptdb_npag;
+         fetch cr_craptdb_npag into rw_craptdb_npag;
+         close cr_craptdb_npag;
+         vr_vlliquidez := (rw_craptdb_npag.qttitulo / rw_craptdb_desc.qttitulo) * 100;
+     end if;
+     return vr_vlliquidez;
+ END fn_liquidez_pagador_cedente;
+ 
+ FUNCTION fn_liquidez_geral (pr_cdcooper craptdb.cdcooper%TYPE
+                                        ,pr_nrdconta craptdb.nrdconta%TYPE
+                                        ,pr_nrinssac crapcob.nrinssac%TYPE
+                                        ,pr_cdtpinsc crapcob.cdtpinsc%TYPE
+                                        ) RETURN NUMBER IS
+  /*---------------------------------------------------------------------------------------------------------------------
+    Programa : fn_liquidez_geral
+    Sistema  : CRED
+    Sigla    : TELA_APRDES
+    Autor    : Luis Fernando (GFT)
+    Data     : Abril/2018
+    Frequencia: Sempre que for chamado
+    Objetivo  : Função que retorna a porcentagem de liquidez geral
+  ---------------------------------------------------------------------------------------------------------------------*/
+   
+    -- Percentual Liquidez Geral
+    --
+    -- Títulos Descontados com vencimento dentro do período
+    cursor cr_craptdb_desc_geral is
+    select count(1) qttitulo, nvl(sum(tdb.vltitulo), 0) vltitulo
+    from   crapsab sab
+          ,craptdb tdb -- Titulos contidos do Bordero de desconto de titulos
+          ,crapbdt dbt -- Cadastro de borderos de descontos de titulos
+    where  sab.nrinssac = pr_nrinssac
+     and    sab.cdtpinsc = pr_cdtpinsc
+    and    sab.cdcooper = pr_cdcooper
+    and    sab.nrdconta = pr_nrdconta
+    and    tdb.dtresgat is null
+    and    tdb.dtlibbdt is not null -- Somente os titulos que realmente foram descontados
+    and    tdb.nrborder = dbt.nrborder
+    and    tdb.nrdconta = dbt.nrdconta
+    and    tdb.cdcooper = dbt.cdcooper
+    and    dbt.nrdconta = pr_nrdconta
+    and    dbt.cdcooper = pr_cdcooper;
+    rw_craptdb_desc_geral cr_craptdb_desc_geral%rowtype;
+
+    -- Títulos Não Pagos com vencimento dentro do período
+    cursor cr_craptdb_npag_geral is
+    select count(1) qttitulo, nvl(sum(tdb.vltitulo),0) vltitulo
+    from   crapsab sab
+          ,craptdb tdb
+          ,crapbdt dbt
+    where  sab.nrinssac = pr_nrinssac
+     and    sab.cdtpinsc = pr_cdtpinsc
+    and    sab.cdcooper  = tdb.cdcooper
+    and    sab.nrdconta  = tdb.nrdconta
+    and    tdb.dtresgat  is null
+    and    tdb.dtlibbdt  is not null
+    and    tdb.dtvencto <= nvl(tdb.dtdpagto, trunc(sysdate))
+    and    tdb.nrborder = dbt.nrborder
+    and    tdb.nrdconta = dbt.nrdconta
+    and    tdb.cdcooper = dbt.cdcooper
+    and    dbt.nrdconta = pr_nrdconta
+    and    dbt.cdcooper = pr_cdcooper;
+    rw_craptdb_npag_geral cr_craptdb_npag_geral%rowtype;
+ 
+   -- Controle
+   vr_vlliquidez NUMBER;
+   BEGIN
+      --> DETALHES (LIQUIDEZ GERAL)
+      --  Valor Total Descontado com vencimento dentro do período
+      open  cr_craptdb_desc_geral;
+      fetch cr_craptdb_desc_geral into rw_craptdb_desc_geral;
+      close cr_craptdb_desc_geral;
+              
+      --  Se não houver desconto, liquidez é 100%
+      if  rw_craptdb_desc_geral.qttitulo = 0 then
+          vr_vlliquidez := 100;
+      else 
+          -- Valor Total descontado pago com atraso e não pagos
+          open  cr_craptdb_npag_geral;
+          fetch cr_craptdb_npag_geral into rw_craptdb_npag_geral;
+          close cr_craptdb_npag_geral;
+
+          vr_vlliquidez := (rw_craptdb_npag_geral.vltitulo / rw_craptdb_desc_geral.vltitulo) * 100;
+      end if;
+      
+     return vr_vlliquidez;
+ END fn_liquidez_geral;
  
  -- Rotina para escrever texto na variável CLOB do XML
  PROCEDURE pc_escreve_xml( pr_des_dados in varchar2
@@ -513,8 +748,8 @@ create or replace package body cecred.TELA_APRDES is
           cob.nrnosnum,
           tdb.vltitulo,
           tdb.dtvencto,
-          DSCT0003.fn_liquidez_pagador_cedente(pr_cdcooper,pr_nrdconta,sab.nrinssac,sab.cdtpinsc) AS nrliqpag,
-          DSCT0003.fn_concentracao_titulo_pagador(pr_cdcooper,pr_nrdconta,sab.nrinssac) AS nrconcen,
+          fn_liquidez_pagador_cedente(pr_cdcooper,pr_nrdconta,sab.nrinssac,sab.cdtpinsc) AS nrliqpag,
+          fn_concentracao_titulo_pagador(pr_cdcooper,pr_nrdconta,sab.nrinssac) AS nrconcen,
           nvl((SELECT 
                   decode(inpossui_criticas,1,'S','N')
                   FROM 
@@ -1161,8 +1396,8 @@ create or replace package body cecred.TELA_APRDES is
          /*!Verifica contingencia*/
          vr_em_contingencia_ibratan := tela_atenda_dscto_tit.fn_em_contingencia_ibratan(pr_cdcooper => vr_cdcooper);
          IF (vr_em_contingencia_ibratan) THEN --em Contingência Aprova
-           vr_insitbdt := 1; -- Volta para em estudo
-           vr_insitapr := 0; -- Volta para aguardando análise
+           vr_insitbdt := 2;
+           vr_insitapr := 4;
          ELSE
            vr_insitapr := 6;
            dsct0003.pc_envia_esteira (pr_cdcooper => vr_cdcooper
@@ -1410,8 +1645,6 @@ create or replace package body cecred.TELA_APRDES is
    vr_nrinssac            crapcob.nrinssac%TYPE;
    vr_nrconbir            craprpf.nrconbir%TYPE;
    vr_nrseqdet            craprpf.nrseqdet%TYPE;
-   vr_tab_dados_dsctit    cecred.dsct0002.typ_tab_dados_dsctit;
-   vr_tab_cecred_dsctit   cecred.dsct0002.typ_tab_cecred_dsctit;
    
     -- Titulos (Boletos de Cobrança)
     CURSOR cr_crapcob (pr_nrdocmto IN crapcob.nrdocmto%TYPE,pr_nrcnvcob IN crapcob.nrcnvcob%TYPE, pr_nrdctabb IN crapcob.nrdctabb%TYPE, pr_cdbandoc IN crapcob.cdbandoc%TYPE) IS 
@@ -1556,23 +1789,10 @@ create or replace package body cecred.TELA_APRDES is
                  AND craprpf.innegati = 7);
                      
      rw_craprpf cr_craprpf%rowtype; 
-     
-   -- Cursor genérico de calendário
-   rw_crapdat btch0001.cr_crapdat%rowtype;
-   
    vr_tab_chaves  gene0002.typ_split;
    vr_index     PLS_INTEGER;
-   
-   -- Variáveis de críticas
-   vr_cdcritic        crapcri.cdcritic%TYPE; --> Cód. Erro
-   vr_dscritic        VARCHAR2(1000);        --> Desc. Erro
     
    BEGIN
-      --    Leitura do calendário da cooperativa
-      OPEN  btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
-      FETCH btch0001.cr_crapdat into rw_crapdat;
-      CLOSE btch0001.cr_crapdat;
-      
       vr_tab_chaves := gene0002.fn_quebra_string(pr_string  => pr_chave,
                                              pr_delimit => ';');
       OPEN cr_crapcob(vr_tab_chaves(4), -- Conta
@@ -1586,21 +1806,6 @@ create or replace package body cecred.TELA_APRDES is
       vr_cdtpinsc := rw_crapcob.cdtpinsc;
       pr_nrinssac := rw_crapcob.nrinssac;
       pr_nmdsacad := rw_crapcob.nmdsacad;
-      
-      -- Busca dos valores para calcular a liquidez a partir dos valores da TAB052
-      DSCT0002.pc_busca_parametros_dsctit(pr_cdcooper          => pr_cdcooper
-                                   ,pr_cdagenci          => null -- Não utiliza dentro da procedure
-                                   ,pr_nrdcaixa          => null -- Não utiliza dentro da procedure
-                                   ,pr_cdoperad          => null -- Não utiliza dentro da procedure
-                                   ,pr_dtmvtolt          => null -- Não utiliza dentro da procedure
-                                   ,pr_idorigem          => null -- Não utiliza dentro da procedure
-                                   ,pr_tpcobran          => 1    -- Tipo de Cobrança: 0 = Sem Registro / 1 = Com Registro
-                                   ,pr_inpessoa          => vr_cdtpinsc
-                                   ,pr_tab_dados_dsctit  => vr_tab_dados_dsctit  --> Tabela contendo os parametros da cooperativa
-                                   ,pr_tab_cecred_dsctit => vr_tab_cecred_dsctit --> Tabela contendo os parametros da cecred
-                                   ,pr_cdcritic          => vr_cdcritic
-                                   ,pr_dscritic          => vr_dscritic);
-
       
       --> Lista de pareceres
       OPEN cr_tbdsct_parecer_titulo (vr_tab_chaves(4), -- Conta
@@ -1637,14 +1842,10 @@ create or replace package body cecred.TELA_APRDES is
       END IF; 
       
       --> Preenche liquidez e concentração
-      pr_tab_dados_detalhe(0).liqpagcd := DSCT0003.fn_liquidez_pagador_cedente(pr_cdcooper,pr_nrdconta,vr_nrinssac,vr_cdtpinsc);
-      pr_tab_dados_detalhe(0).concpaga := DSCT0003.fn_concentracao_titulo_pagador(pr_cdcooper,pr_nrdconta,vr_nrinssac);
-      pr_tab_dados_detalhe(0).liqgeral := DSCT0003.fn_calcula_liquidez_geral(pr_nrdconta 
-                                                                                 ,pr_cdcooper             
-                                                                                 ,rw_crapdat.dtmvtolt - vr_tab_dados_dsctit(1).qtmesliq*30
-                                                                                 ,rw_crapdat.dtmvtolt
-                                                                                 ,vr_tab_dados_dsctit(1).cardbtit_c);
-                                                                                       
+      pr_tab_dados_detalhe(0).liqpagcd := fn_liquidez_pagador_cedente(pr_cdcooper,pr_nrdconta,vr_nrinssac,vr_cdtpinsc);
+      pr_tab_dados_detalhe(0).concpaga := fn_concentracao_titulo_pagador(pr_cdcooper,pr_nrdconta,vr_nrinssac);
+      pr_tab_dados_detalhe(0).liqgeral := fn_liquidez_geral(pr_cdcooper,pr_nrdconta,vr_nrinssac,vr_cdtpinsc);
+      
       --> CRÍTICAS DO PAGADOR (JOB - ANÁLISE PAGADOR)
       vr_idtabcritica := 0;
       OPEN  cr_analise_pagador;

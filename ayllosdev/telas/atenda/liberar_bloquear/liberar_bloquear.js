@@ -8,7 +8,6 @@
  *                27/07/2016 - Adicionados novos campos para a fase 3 do projeto pre aprovado (Lombardi)
  *                03/05/2017 - Ajuste na label do campo flgrenli para o projeto 300. (Lombardi)
  *                08/08/2017 - Implementacao da melhoria 438. Heitor (Mouts).
- *								15/03/2018 - Campo de selecao de cancelamento automatico de credito (Marcel Kohls / AMCom)
  * --------------
  */
 // Função para acessar opções da rotina
@@ -200,7 +199,6 @@ function manterRotina(operacao) {
 	if (operacao == 'ALTERARC') {
 		var flgrenli = $('#flgrenli', '#frmContaCorrente').val();
 		var flmajora = $('#flmajora', '#frmContaCorrente').val();
-		var flcnaulc = $('#flcnaulc', '#frmContaCorrente').val();
 		var dsmotmaj = $('#motivo_bloqueio_maj', '#frmContaCorrente').val();
 	} else {
 		var flgcrdpa = $('#flgcrdpa', '#frmLiberarBloquear').val();
@@ -214,7 +212,6 @@ function manterRotina(operacao) {
 			flgrenli: flgrenli,
             flgcrdpa: flgcrdpa,
 			flmajora: flmajora,
-			flcnaulc: flcnaulc,
 			dsmotmaj: dsmotmaj,
 			operacao: operacao, 
 			redirect: 'script_ajax'
@@ -241,7 +238,6 @@ function controlaLayout(operacao) {
 	
 	var rFlgrenli = $('label[for="flgrenli"]', '#frmContaCorrente');
 	var rFlmajora = $('label[for="flmajora"]', '#frmContaCorrente');
-	var rFlcnaulc = $('label[for="flcnaulc"]', '#frmContaCorrente');
 	var rMotivo_bloqueio_maj = $('label[for="motivo_bloqueio_maj"]', '#frmContaCorrente');
 	var rCdopemaj = $('label[for="cdopemaj"]', '#frmContaCorrente');
 	//
@@ -255,7 +251,6 @@ function controlaLayout(operacao) {
 	//
 	var cFlgrenli = $('#flgrenli', '#frmContaCorrente');
 	var cFlmajora = $('#flmajora', '#frmContaCorrente');
-	var cFlcnaulc = $('#flcnaulc', '#frmContaCorrente');
 	var cMotivo_bloqueio_maj = $('#motivo_bloqueio_maj', '#frmContaCorrente');
 	var cCdopemaj = $('#cdopemaj', '#frmContaCorrente');
 	var cNmopemaj = $('#nmopemaj', '#frmContaCorrente');
@@ -273,7 +268,6 @@ function controlaLayout(operacao) {
 		$('#frmLiberarBloquear').css({'padding-top':'5px','padding-bottom':'15px'});		
 		cFlgrenli.css('width','50px').desabilitaCampo();
 		cFlmajora.css('width','50px').desabilitaCampo();
-		cFlcnaulc.css('width','50px').desabilitaCampo();
 		cMotivo_bloqueio_maj.css('width', '350px').desabilitaCampo();
 		cCdopemaj.css('width','67px').desabilitaCampo();
 		cNmopemaj.css('width','280px').desabilitaCampo();
@@ -290,7 +284,6 @@ function controlaLayout(operacao) {
 		// Formatação dos rotulos
 		rFlgrenli.css('width', '381px');
 		rFlmajora.css('width', '381px');
-		rFlcnaulc.css('width', '381px');
 		rMotivo_bloqueio_maj.css('width', '180px');
 		rCdopemaj.css('width', '180');
 		//
@@ -310,7 +303,6 @@ function controlaLayout(operacao) {
 			case 'MA':
 				cFlgrenli.habilitaCampo();
 				cFlmajora.habilitaCampo();
-				cFlcnaulc.habilitaCampo();
 				cMotivo_bloqueio_maj.habilitaCampo();
 				break;
 		}

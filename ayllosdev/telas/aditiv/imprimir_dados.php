@@ -5,7 +5,7 @@
  * DATA CRIAÇÃO : 17/10/2011
  * OBJETIVO     : Carregar dados para impressões do ADITIV	
  * --------------
- * ALTERAÇÕES   : 01/11/2017 - Passagem do tpctrato. (Jaison/Marcos Martini - PRJ404)
+ * ALTERAÇÕES   : 
  * -------------- 
  */ 
 ?>
@@ -44,7 +44,6 @@
 	$nraditiv = $_POST['nraditiv'];	
 	$nrctremp = $_POST['nrctremp'];	
 	$nrdconta = $_POST['nrdconta'];	
-	$tpctrato = $_POST['tpctrato'];	
 	
 	// Monta o xml de requisição
 	$xml  = '';
@@ -69,7 +68,6 @@
 	$xml .= '		<nraditiv>'.$nraditiv.'</nraditiv>';
 	$xml .= '		<nrctremp>'.$nrctremp.'</nrctremp>';
 	$xml .= '		<nrdconta>'.$nrdconta.'</nrdconta>';
-	$xml .= '		<tpctrato>'.$tpctrato.'</tpctrato>';
 	$xml .= '	</Dados>';                                  
 	$xml .= '</Root>';
 

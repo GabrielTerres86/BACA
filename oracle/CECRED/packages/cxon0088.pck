@@ -133,9 +133,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CXON0088 IS
    -- Frequencia: -----
    -- Objetivo  :
 
-   -- Alteracoes: 20/02/2018 - Alterada verificação de cdtipcta = 6 e 7 por modalidade = 3.
-   --                          PRJ366 (Lombardi).
-   --
+   -- Alteracoes:
    ---------------------------------------------------------------------------------------------------------------
 
    /* Busca o codigo da Coop. passando como parametro o nome resumido da Coop. */
@@ -177,13 +175,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CXON0088 IS
                          ,p_nrdconta IN INTEGER)IS
       SELECT ass.nrdconta
             ,ass.nmprimtl
-            ,tpcta.cdmodalidade_tipo cdmodali
+            ,ass.cdtipcta
         FROM crapass ass
-            ,tbcc_tipo_conta tpcta
        WHERE ass.cdcooper = p_cdcooper
-         AND ass.nrdconta = p_nrdconta
-         AND tpcta.inpessoa = ass.inpessoa
-         AND tpcta.cdtipo_conta = ass.cdtipcta;
+         AND ass.nrdconta = p_nrdconta;
    rw_verifica_ass cr_verifica_ass%ROWTYPE;
 
    /* Verifica se existe LCM de CREDITO / CHEQUE COOP */
@@ -426,7 +421,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CXON0088 IS
 
                pr_nom_titular := rw_verifica_ass.nmprimtl;
 
-               IF rw_verifica_ass.cdmodali = 3 THEN /* Conta tipo Poupanca */
+               IF rw_verifica_ass.cdtipcta = 6 AND
+                  rw_verifica_ass.cdtipcta = 7 THEN /* Conta tipo Poupanca */
                   pr_poupanca := 1;
                END IF;
 

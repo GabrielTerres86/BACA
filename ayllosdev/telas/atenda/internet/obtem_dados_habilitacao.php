@@ -14,14 +14,8 @@
 	//***             13/07/2011 - Alterado para layout padrão             ***//	 
 	//***             			   (Gabriel Capoia - DB1)                  ***//	 
 	//***                                                                  ***//	 
-	//***             01/05/2012 - Projeto TED Internet (Lucas).           ***//
-	//***                                                                  ***//	 
-    //***             05/09/2017 - Alteração referente ao Projeto          ***//
-	//***                          Assinatura conjunta (Proj 397)          ***//
-	//***                                                                  ***//	 
-    //***             06/04/2018 - Adicionada chamada para a function      ***//
-	//***                          validaAdesaoProduto. PRJ366 (Lombardi). ***//
-	//***                                                                  ***//	 
+	//***             01/05/2012 - Projeto TED Internet (Lucas).  
+    //***             05/09/2017 - Alteração referente ao Projeto Assinatura conjunta (Proj 397)  ***//	 
 	//************************************************************************//
 	
 	session_start();
@@ -82,12 +76,11 @@
 		<fieldset>
 			<legend><? echo utf8ToHtml('Habilitação') ?></legend>
 			<div id="divBotoes">
-				<a class="botao" href="#" style='padding:2px 5px;' onClick="validaAdesaoProduto(<?php echo $nrdconta ?>, 14, 'obtemDadosLimites();');return false;">Cadastramento de Limite</a>
+				<a class="botao" href="#" style='padding:2px 5px;' onClick="obtemDadosLimites();return false;">Cadastramento de Limite</a>
 				<a class="botao" href="#" style='padding:2px 5px;' onClick="carregaContas();return false;">Cadastramento de Contas</a>
 				<?php if($idastcjt == 1){?>
 				<a class="botao" href="#" style='padding:2px 5px;' onClick="obtemDadosLimitesprep();return false;">Limites de Preposto</a>
 				<?php }?>
-				<a class="botao" href="#" onClick="desativarPush();return false;" >&nbsp;Desativar alertas do Cecred Mobile&nbsp;</a>
 				<br />
 				<a class="botao" href="#" style='margin:10px; padding:2px 5px;' onClick = "acessaOpcaoAba('<? echo count($glbvars["opcoesTela"])?>','<? echo $idPrincipal ?>','<? echo $glbvars["opcoesTela"][$idPrincipal]?>');">Voltar</a>
 			</div>
@@ -99,7 +92,7 @@
 controlaLayout('frmOpHabilitacao');
 
 // Aumenta tamanho do div onde o conte&uacute;do da op&ccedil;&atilde;o ser&aacute; visualizado
-$("#divConteudoOpcao").css("height","115");
+$("#divConteudoOpcao").css("height","85");
 
 // Esconde mensagem de aguardo
 hideMsgAguardo();

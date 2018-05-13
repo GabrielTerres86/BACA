@@ -5,7 +5,7 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0001 is
     Sistema  : Rotinas para cadastros Web
     Sigla    : CADA
     Autor    : Petter R. Villa Real  - Supero
-    Data     : Maio/2013.                   Ultima atualizacao: 12/04/2018
+    Data     : Maio/2013.                   Ultima atualizacao: 22/06/2017
   
    Dados referentes ao programa:
   
@@ -23,8 +23,6 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0001 is
                             foi criado a tela CADNAC para genrenciar as nacionalidades
                             (Adriano - P339).
                                              
-               12/04/2018 - Inserida procedure prc_busca_motivo_demissao e alterada origem de dados da 
-			                procedure prc_busca_motivo_demissao                              
   ---------------------------------------------------------------------------------------------------------------*/
 
   --Tipo de Registro para os lançamentos
@@ -368,13 +366,6 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0001 is
                            ,pr_dsdidade OUT VARCHAR2              --Descricao da idade
                            ,pr_des_erro OUT VARCHAR2);            --Mensagem de Erro
 
-  /* Rotina responsavel por Buscar o Motivo da demissao - via progress*/
-  PROCEDURE prc_busca_motivo_demissao (pr_cdcooper IN crapcop.cdcooper%TYPE  --Código Cooperativa
-                                     ,pr_cdmotdem IN crapass.cdmotdem%TYPE  --Código Motivo Demissao
-                                     ,pr_dsmotdem OUT VARCHAR2              --Descrição Motivo Demissao
-                                     ,pr_cdcritic OUT INTEGER               --Codigo da Critica
-                                     ,pr_des_erro OUT VARCHAR2);
-
   /* Rotina responsavel por Buscar o Motivo da demissao */
   PROCEDURE pc_busca_motivo_demissao (pr_cdcooper IN crapcop.cdcooper%TYPE  --Código Cooperativa
                                      ,pr_cdmotdem IN crapass.cdmotdem%TYPE  --Código Motivo Demissao
@@ -606,7 +597,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
     Sistema  : Rotinas para cadastros Web
     Sigla    : CADA
     Autor    : Petter R. Villa Real  - Supero
-    Data     : Maio/2013.                   Ultima atualizacao: 12/04/2018
+    Data     : Maio/2013.                   Ultima atualizacao: 22/06/2017
   
    Dados referentes ao programa:
   
@@ -640,9 +631,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
               
 			  24/07/2017 - Alterar cdoedptl para idorgexp.
                            PRJ339-CRM  (Odirlei-AMcom)
-	
-			  12/04/2018 - Inserida procedure prc_busca_motivo_demissao e alterada origem de dados da 
-			                procedure prc_busca_motivo_demissao 
 	
   ---------------------------------------------------------------------------------------------------------------*/
 
@@ -906,20 +894,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
     END;
   END;
 
-  /* Rotina responsavel por Buscar o Motivo da demissao - via progress*/
-  PROCEDURE prc_busca_motivo_demissao (pr_cdcooper IN crapcop.cdcooper%TYPE  --Código Cooperativa
-                                     ,pr_cdmotdem IN crapass.cdmotdem%TYPE  --Código Motivo Demissao
-                                     ,pr_dsmotdem OUT VARCHAR2              --Descrição Motivo Demissao
-                                     ,pr_cdcritic OUT INTEGER               --Codigo da Critica
-                                     ,pr_des_erro OUT VARCHAR2) IS          --Mensagem de Erro
-  BEGIN
-     cada0001.pc_busca_motivo_demissao (pr_cdcooper  --Código Cooperativa
-                                       ,pr_cdmotdem  --Código Motivo Demissao
-                                       ,pr_dsmotdem  --Descrição Motivo Demissao
-                                       ,pr_cdcritic  --Codigo da Critica
-                                       ,pr_des_erro);
-
-  END;
 
   /* Rotina responsavel por Buscar o Motivo da demissao */
   PROCEDURE pc_busca_motivo_demissao (pr_cdcooper IN crapcop.cdcooper%TYPE  --Código Cooperativa
@@ -951,11 +925,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
     DECLARE
 
       --Cursores Locais
-       CURSOR cr_motivo_deslig (pr_cdmotivo IN tbcotas_motivo_desligamento.cdmotivo%TYPE) IS
-        SELECT cdmotivo
-             , dsmotivo
-          FROM tbcotas_motivo_desligamento 
-         WHERE cdmotivo = pr_cdmotivo OR pr_cdmotivo IS NULL;
+      CURSOR cr_craptab (pr_cdcooper IN craptab.cdcooper%TYPE
+                        ,pr_nmsistem IN craptab.nmsistem%TYPE
+                        ,pr_tptabela IN craptab.tptabela%TYPE
+                        ,pr_cdempres IN craptab.cdempres%TYPE
+                        ,pr_cdacesso IN craptab.cdacesso%TYPE
+                        ,pr_tpregist IN craptab.tpregist%TYPE) IS
+        SELECT craptab.tpregist
+             , craptab.dstextab
+        FROM craptab craptab
+        WHERE craptab.cdcooper = pr_cdcooper
+        AND   UPPER(craptab.nmsistem) = pr_nmsistem
+        AND   UPPER(craptab.tptabela) = pr_tptabela
+        AND   craptab.cdempres = pr_cdempres
+        AND   UPPER(craptab.cdacesso) = pr_cdacesso
+        AND   (craptab.tpregist = pr_tpregist OR pr_tpregist IS NULL);
+      rw_craptab cr_craptab%ROWTYPE;
 
       --Variaveis Locais
       vr_exc_erro     EXCEPTION;
@@ -967,32 +952,45 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
       pr_cdcritic:= 0;
       pr_des_erro:= NULL;
 
-      -- Se nao informar o motivo da demissao
+      -- Se n¿o informar o motivo da demiss¿o
       IF pr_cdmotdem IS NULL THEN
         -- Limpar os dados em memória
         vr_tbmotdem.DELETE;
         -- Percorre os motivos de demiss¿o
-        FOR rw_motivo_deslig IN cr_motivo_deslig(pr_cdmotivo => NULL) LOOP
+        FOR rg_craptab IN cr_craptab(pr_cdcooper => pr_cdcooper
+                                    ,pr_nmsistem => 'CRED'
+                                    ,pr_tptabela => 'GENERI'
+                                    ,pr_cdempres => 0
+                                    ,pr_cdacesso => 'MOTIVODEMI'
+                                    ,pr_tpregist => NULL) LOOP
           -- Inclui o registro na memória
-          vr_tbmotdem(rw_motivo_deslig.cdmotivo) := rw_motivo_deslig.dsmotivo;
+          vr_tbmotdem(rg_craptab.tpregist) := rg_craptab.dstextab;
+
         END LOOP;
-        --
+
       ELSIF NOT vr_tbmotdem.EXISTS(pr_cdmotdem) THEN
         --Se o codigo do motivo da demissao for zero ignora
         IF NVL(pr_cdmotdem,-1) <> 0 THEN
-          -- inicaliza variável
-          pr_dsmotdem := null;
-          -- Buscar registro específico
-          FOR rw_motivo_deslig IN cr_motivo_deslig(pr_cdmotivo => pr_cdmotdem) LOOP
-            -- Inclui o registro na memória
-            pr_dsmotdem := rw_motivo_deslig.dsmotivo;
-          END LOOP;
+
+          -- Buscar configuração na tabela
+          vr_dstextab := TABE0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
+                          ,pr_nmsistem => 'CRED'
+                          ,pr_tptabela => 'GENERI'
+                          ,pr_cdempres => 0
+                          ,pr_cdacesso => 'MOTIVODEMI'
+                          ,pr_tpregist => pr_cdmotdem);
+
           --Se nao encontrou registro
-          IF pr_dsmotdem IS NULL THEN
+          IF TRIM(vr_dstextab) IS NULL THEN
             --Retornar que nao encontrou
             pr_cdcritic:= 848;
             pr_dsmotdem:= 'MOTIVO NAO CADASTRADO';
+          ELSE
+            --Retornar o motivo encontrado
+            pr_dsmotdem:= vr_dstextab;
           END IF;
+          --Fechar Cursor
+          CLOSE cr_craptab;
         END IF;
       ELSIF vr_tbmotdem.EXISTS(pr_cdmotdem) THEN
         -- Retorna a descrição do registro de memória
@@ -1686,7 +1684,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
    Sistema : CRED
    Sigla   : CADA0001
    Autor   : Alisson C. Berrido
-   Data    : Janeiro/2014.                        Ultima atualizacao: 19/02/2018
+   Data    : Janeiro/2014.                        Ultima atualizacao:
 
    Dados referentes ao programa:
 
@@ -1694,10 +1692,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
    Objetivo  : Procedure para verificar se o cooperado é primeiro titular em outra conta
 
    Alteracoes: 08/01/2014 - Conversao Progress >> Oracle (PLSQL) (Alisson-AMcom)
-
-               19/02/2018 - Retirada a validação do NOT IN dos tipos de contas 6, 7, 17 e 18, 
-                            substituído pelo NOT IN dos tipos de contas que tem a modalidade 3 – Conta Aplicação.
-                            PRJ366 (Lombardi).
 
   ............................................................................. */
   BEGIN
@@ -1737,13 +1731,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
         WHERE crapass.cdcooper = pr_cdcooper
         AND   crapass.nrdconta = pr_nrdconta
         AND   crapass.dtdemiss IS NULL
-        AND NOT EXISTS (SELECT 1
-                          FROM tbcc_tipo_conta tpcta
-                         WHERE tpcta.cdmodalidade_tipo = 3
-                           AND tpcta.inpessoa = crapass.inpessoa
-                           AND tpcta.cdtipo_conta = crapass.cdtipcta); /** Ignora conta aplicacao **/
-        
-        
+        AND   crapass.cdtipcta NOT IN (6,7,17,18); /** Ignora conta aplicacao **/
       --Selecionar Historico alteracoes na crapass
       CURSOR cr_crapalt (pr_cdcooper IN crapass.cdcooper%type
                         ,pr_nrdconta IN crapass.nrdconta%type) IS
@@ -2715,7 +2703,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
    Sistema : CRED
    Sigla   : CADA0001
    Autor   : Alisson C. Berrido
-   Data    : Janeiro/2014.                        Ultima atualizacao: 19/02/2018
+   Data    : Janeiro/2014.                        Ultima atualizacao:
 
    Dados referentes ao programa:
 
@@ -2723,9 +2711,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
    Objetivo  : Procedure para buscar dados empresa participante pela conta Contato
 
    Alteracoes: 09/01/2014 - Conversao Progress >> Oracle (PLSQL) (Alisson-AMcom)
-
-               19/02/2018 - Comentado validação se o cadastro do contato está completo.
-                            PRJ366 (Lombardi).
 
   ............................................................................. */
   BEGIN
@@ -2828,7 +2813,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
       END IF;
       --Fechar Cursor
       CLOSE cr_crapass;
-      /*
       --Verificar cadastro incompleto
       IF rw_crapass.indnivel < 2 AND rw_crapass.cdtipcta > 7 THEN
         --Mensagem Critica
@@ -2836,7 +2820,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
         --Levantar Excecao
         RAISE vr_exc_erro;
       END IF;
-      */
       --Encontrar proximo indice para tabela
       vr_index:= pr_tab_crapavt.count+1;
       /* Endereco */
@@ -3323,7 +3306,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
    Sistema : CRED
    Sigla   : CADA0001
    Autor   : Alisson C. Berrido
-   Data    : Janeiro/2014.                        Ultima atualizacao: 19/02/2018
+   Data    : Janeiro/2014.                        Ultima atualizacao: 24/07/2017
 
    Dados referentes ao programa:
 
@@ -3344,10 +3327,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
                24/07/2017 - Alterar cdoedptl para idorgexp.
                             PRJ339-CRM  (Odirlei-AMcom)             
 
-               19/02/2018 - A validação se o tipo de conta é maior ou igual a 12 alterada de 
-                            forma que seja validada através da modalidade e do indicador de 
-                            situação da conta ITG. PRJ366 (Lombardi).
-
   ............................................................................. */
   BEGIN
     DECLARE
@@ -3360,7 +3339,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
               ,crapass.nrdconta
               ,crapass.cdcooper
               ,crapass.nrcpfcgc
-              ,crapass.flgctitg
         FROM crapass
         WHERE crapass.cdcooper = pr_cdcooper
         AND   crapass.nrdconta = pr_nrdconta;
@@ -3373,7 +3351,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
               ,crapass.nrdconta
               ,crapass.cdcooper
               ,crapass.nrcpfcgc
-              ,crapass.flgctitg
         FROM crapass
         WHERE crapass.cdcooper = pr_cdcooper
         AND   crapass.nrcpfcgc = pr_nrcpfcgc
@@ -3455,15 +3432,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
         AND   crapcrl.nrdconta = pr_nrdctato
         AND   crapcrl.nrcpfcgc = pr_nrcpfcto;
       rw_crapcrl cr_crapcrl%ROWTYPE;
-      --Selecionar modalidade
-      CURSOR cr_tipo_conta (pr_cdtipcta IN tbcc_tipo_conta.cdtipo_conta%TYPE
-                           ,pr_inpessoa IN tbcc_tipo_conta.inpessoa%TYPE) IS
-        SELECT tpcta.cdmodalidade_tipo
-        FROM tbcc_tipo_conta tpcta
-        WHERE tpcta.cdtipo_conta = pr_cdtipcta
-        AND   tpcta.inpessoa = pr_inpessoa;
-      rw_tipo_conta cr_tipo_conta%ROWTYPE;
-      
       --Variaveis Locais
       vr_flgsuces BOOLEAN;
       vr_crapass  BOOLEAN;
@@ -3556,22 +3524,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0001 IS
       --Marcar Sucesso
       vr_flgsuces:= TRUE;
 
-      OPEN cr_tipo_conta (pr_cdtipcta => rw_crapass.cdtipcta
-                         ,pr_inpessoa => rw_crapass.inpessoa);
-      FETCH cr_tipo_conta INTO rw_tipo_conta;
-      --Se Encontrou
-      IF cr_tipo_conta%NOTFOUND THEN
-        --Fechar Cursor
-        CLOSE cr_tipo_conta;
-        vr_dscritic:= 'Tipo de conta nao encontrado.';
-        --Levantar Excecao
-        RAISE vr_exc_erro;
-      END IF;
-      --Fechar Cursor
-      CLOSE cr_tipo_conta;
-      
       --Tipo da Conta
-      IF rw_tipo_conta.cdmodalidade_tipo = 3 /*AND rw_crapass.flgctitg IN (2,3)*/ THEN
+      IF rw_crapass.cdtipcta >= 12 THEN
         --Selecionar Titulares
         OPEN cr_crapttl2 (pr_cdcooper => rw_crapass.cdcooper
                          ,pr_nrdconta => rw_crapass.nrdconta);

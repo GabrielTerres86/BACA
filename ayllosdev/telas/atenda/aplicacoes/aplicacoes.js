@@ -1,7 +1,7 @@
 /******************************************************************************
  Fonte: aplicacoes.js                                             
  Autor: David                                                     
- Data : Setembro/2009                Última Alteração: 18/12/2017
+ Data : Setembro/2009                Última Alteração: 01/12/2017
                                                                   
  Objetivo  : Biblioteca de funções da rotina Aplicações da tela   
              ATENDA                                               
@@ -84,17 +84,9 @@
 
              28/09/2017 - Correcao na simulacao de aplicacoes atraves ATENDA - APLICACOES. SD 685979. (Carlos Rafael Tanholi)
 
-		     27/11/2017 - Inclusao do valor de bloqueio em garantia.
-                          PRJ404 - Garantia Empr.(Odirlei-AMcom) 
-
 			 29/11/2017 - Validacao sobre valor bloqueado. M460 - BancenJud (Thiago Rodrigues)
 
              01/12/2017 - Não permitir acesso a opção de incluir quando conta demitida (Jonata - RKAM P364).
-			 
-             18/12/2017 - P404 - Inclusão de Garantia de Cobertura das Operações de Crédito (Augusto / Marcos (Supero))
-
-			 04/04/2018 - Ajuste para chamar as rotinas de validacao do valor de adesao do produto e 
-						  senha do coordenador. PRJ366 (Lombardi).
 
 ***************************************************************************/
 
@@ -533,8 +525,8 @@ function cadastrarResgate(flmensag) {
     var dtresgat = $("#dtresgat", "#frmResgate").val();
     var flgctain = $("#flgctain", "#frmResgate").val();
     // consiste check "Autorizar operação" 
-    var cdopera2 = ( $("#flautori").is(':checked') ) ? $("#cdopera2", "#frmResgate").val() : '';
-    var cddsenha = ( $("#flautori").is(':checked') ) ? $("#cddsenha", "#frmResgate").val() : '';
+    var cdopera2 = ($("#flautori").is(':checked')) ? $("#cdopera2", "#frmResgate").val() : '';
+    var cddsenha = ($("#flautori").is(':checked')) ? $("#cddsenha", "#frmResgate").val() : '';
 
     if (tpresgat == "P" || tpresgat == 1) {
         // Valida valor do resgate
@@ -1506,12 +1498,10 @@ function controlaLayout(layout) {
     $('li:eq(7)', complemento).addClass('txtNormal').css({ 'width': '8%' });
     $('li:eq(8)', complemento).addClass('txtNormalBold');
     $('li:eq(9)', complemento).addClass('txtNormal');
-    $('li:eq(10)', complemento).addClass('txtNormalBold').css({ 'width': '18%' });
-    $('li:eq(11)', complemento).addClass('txtNormal').css({ 'width': '14%' });
-    $('li:eq(12)', complemento).addClass('txtNormalBold').css({ 'width': '18%' });
-    $('li:eq(13)', complemento).addClass('txtNormal').css({ 'width': '14%' });
-    $('li:eq(14)', complemento).addClass('txtNormalBold').css({ 'width': '19%' });
-    $('li:eq(15)', complemento).addClass('txtNormal').css({ 'width': '13%' });
+    $('li:eq(10)', complemento).addClass('txtNormalBold').css({ 'width': '20%' });
+    $('li:eq(11)', complemento).addClass('txtNormal').css({ 'width': '30%' });
+    $('li:eq(12)', complemento).addClass('txtNormalBold');
+    $('li:eq(13)', complemento).addClass('txtNormal');
 
     /*****************************
 			FORMATA DADOS		
@@ -2632,7 +2622,6 @@ function cadastrarVariosResgates(formaResgate, flmensag, nrdconta, dtresgat, flg
     var camposPc = '';
     var dadosPrc = '';
     var cdopera2 = $("#cdopera2", "#frmResgateVarias").val();
-    var tdTotSel = $("#tdTotSel").html().replace(/\./g, "");;
 
     if (formaResgate == "automatica") {
         camposPc = retornaCampos(lstDadosResgate, '|');
@@ -2662,7 +2651,6 @@ function cadastrarVariosResgates(formaResgate, flmensag, nrdconta, dtresgat, flg
             camposPc: camposPc,
             dadosPrc: dadosPrc,
             formargt: formaResgate,
-            tdTotSel: tdTotSel,
             redirect: "script_ajax"
         },
         error: function (objAjax, responseError, objExcept) {
@@ -3295,13 +3283,4 @@ function ativaCampo() {
     $("#vllanmto", "#frmDadosAplicacaoPos").bind("keyup", function (e) {
         return $(this).setMaskOnKeyUp("DECIMAL", "zz.zzz.zz9,99", "", e);
     });
-}
-
-function validaValorProdutoResgate (executa, campo, form) {
-	var vlresgat = $("#"+campo, "#"+form).val().replace(/\./g, "").replace(",", ".");
-	validaValorProduto(nrdconta, 41, vlresgat, executa, 'divRotina', 0);
-}
-
-function senhaCoordenador(executaDepois) {
-	pedeSenhaCoordenador(2,executaDepois,'divRotina');
 }

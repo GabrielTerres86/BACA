@@ -1,4 +1,4 @@
-CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS310" (pr_cdcooper  IN crapcop.cdcooper%TYPE  --> Coop conectada
+CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS310" (pr_cdcooper IN crapcop.cdcooper%TYPE   --> Coop conectada
                        ,pr_flgresta  IN PLS_INTEGER            --> Flag padrão para utilização de restart
                        ,pr_stprogra OUT PLS_INTEGER            --> Saída de termino da execução
                        ,pr_infimsol OUT PLS_INTEGER            --> Saída de termino da solicitação
@@ -10,7 +10,7 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS310" (pr_cdcooper  IN crapcop.cdcoope
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Deborah/Margarete
-     Data    : Maio/2001                       Ultima atualizacao: 13/03/2018
+     Data    : Maio/2001                       Ultima atualizacao: 25/11/2013
 
      Dados referentes ao programa:
 
@@ -96,8 +96,6 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS310" (pr_cdcooper  IN crapcop.cdcoope
                  10/10/2013 - Ajuste para controle de criticas (Gabriel).
 
                  25/11/2013 - Ajustes na passagem dos parâmetros para restart (Marcos-Supero)
-
-                 13/03/2018 - Ajustes na passagem dos parâmetros para controle paralelismo (Mario-AMcom)
 
   ..............................................................................*/
       -- Código do programa
@@ -232,8 +230,6 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS310" (pr_cdcooper  IN crapcop.cdcoope
       END IF;
       -- Por fim, chamar a 310i, que é a responsável por todo o processo de criação dos riscos
       pc_crps310_i(pr_cdcooper   => pr_cdcooper    --> Coop conectada
-                  ,pr_cdagenci   => 0              --> Codigo Agencia 
-                  ,pr_idparale   => 0              --> Indicador de processoparalelo
                   ,pr_rw_crapdat => rw_crapdat     --> Rowtype de informações da crapdat
                   ,pr_cdprogra   => vr_cdprogra    --> Codigo programa conectado
                   ,pr_vlarrasto  => vr_vlr_arrasto --> Valor parametrizado para arrasto
@@ -314,3 +310,4 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS310" (pr_cdcooper  IN crapcop.cdcoope
       ROLLBACK;
   END pc_crps310;
 /
+

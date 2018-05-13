@@ -71,10 +71,8 @@ FOR EACH tt-operadores NO-LOCK BY tt-operadores.nmoperad:
                                    "</nrcpfope><dsdcargo>" +
                                    tt-operadores.dsdcargo +
                                    "</dsdcargo><flgsitop>" +
-                                   (IF tt-operadores.flgsitop <> ? THEN
-                                       TRIM(STRING(tt-operadores.flgsitop,"yes/no"))
-                                    ELSE
-                                       "no") +
+                                   TRIM(STRING(tt-operadores.flgsitop,
+                                               "yes/no")) +
                                    "</flgsitop><dsdemail>" +
                                    tt-operadores.dsdemail +
                                    "</dsdemail><vllbolet>" +

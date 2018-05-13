@@ -40,12 +40,8 @@
  * 030: [15/12/2016] Tiago            (CECRED): Ajustes na hora da consulta das prestações pois nao carrega dados corretamente(SD531549)
  * 031: [03/04/2017] - Jean             (MOut´S): Chamado 643208 - tratamento de caracteres especiais dos campos descritivos, pois estava
  *                                                causando travamento na tela
- * 032: [23/06/2017] Inclusao dos campos do produto Pos-Fixado. (Jaison/James - PRJ298)
- * 032: [05/10/2017] - Diogo            (MoutS): Adicionado campo vliofcpl no formulário (Projeto 410 - RF 23)
- * 033: [11/10/2017] - Heitor          (Mouts): Liberacao da melhoria 442
- * 034: [13/12/2017] Passagem do idcobope. (Jaison/Marcos Martini - PRJ404)	 
- * 035: [17/01/2018] Incluído novo campo (Qualif Oper. Controle) (Diego Simas - AMcom)
  */
+ 
 ?>
 
 <?
@@ -84,11 +80,7 @@
 	$inpessoa_busca = (isset($_POST['inpessoa_busca'])) ? $_POST['inpessoa_busca'] : '';
 	$nrdconta_busca = (isset($_POST['nrdconta_busca'])) ? $_POST['nrdconta_busca'] : 0;
 	$nrcpfcgc_busca = (isset($_POST['nrcpfcgc_busca'])) ? $_POST['nrcpfcgc_busca'] : 0;
-	$nrparepr_pos = (isset($_POST['nrparepr_pos'])) ? $_POST['nrparepr_pos'] : 0;
-	$vlpagpar_pos = (isset($_POST['vlpagpar_pos'])) ? $_POST['vlpagpar_pos'] : 0;
-    $cdlcremp = (isset($_POST['cdlcremp'])) ? $_POST['cdlcremp'] : 0;
-	$qttolatr = (isset($_POST['qttolatr'])) ? $_POST['qttolatr'] : 0;
-    $dtvencto = (isset($_POST['dtvencto'])) ? $_POST['dtvencto'] : '';
+	
 	
 	// Verifica se o número da conta e o titular são inteiros válidos
 	if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inválida.','Alerta - Ayllos','fechaRotina(divRotina)',false);
@@ -135,7 +127,7 @@
 
             $xml .= "  </Dados>";
             $xml .= "</Root>";
-            
+
             $xmlResult = mensageria($xml, "ATENDA", "OBTDADEMPR", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
             
         } else {     
@@ -173,23 +165,6 @@
             $xml .= "</Root>";
             
             $xmlResult = getDataXML($xml);
-
-			//Chama a ação de consultar o controle da qualificação da operação
-			$xmlC  = "";
-			$xmlC .= "<Root>";
-			$xmlC .= "  <Dados>";
-			$xmlC .= "    <nrdconta>".$nrdconta."</nrdconta>";
-			$xmlC .= "    <nrctremp>".$nrctremp."</nrctremp>";
-			$xmlC .= "  </Dados>";
-			$xmlC .= "</Root>";
-
-			$xmlResultC = mensageria($xmlC, "TELA_ATENDA_PRESTACOES", "CONSULTAR_CONTROLE", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");		
-			$xmlObjetoC = getObjectXML($xmlResultC);	
-			
-			$paramC = $xmlObjetoC->roottag->tags[0]->tags[0];
-			
-			$idquaprc = getByTagName($paramC->tags,'idquaprc');	
-			$dsquaprc = obtemDescricaoQualificacao($idquaprc);			
 		}
         
 		$xmlObjeto = getObjectXML($xmlResult);
@@ -212,8 +187,7 @@
             
             $vlsldliq = str_replace(',', '.', str_replace('.', '', getByTagName($registros,'vlsdeved'))) +
                         str_replace(',', '.', str_replace('.', '', getByTagName($registros,'vlmtapar'))) +
-                        str_replace(',', '.', str_replace('.', '', getByTagName($registros,'vlmrapar'))) +
-                        str_replace(',', '.', str_replace('.', '', getByTagName($registros,'vliofcpl')));
+                        str_replace(',', '.', str_replace('.', '', getByTagName($registros,'vlmrapar')));
 		
 			?><script type="text/javascript">
 			var arrayRegistros = new Object();
@@ -269,14 +243,6 @@
 			arrayRegistros['vltotpag'] = '<? echo formataMoeda(getByTagName($registros,'vltotpag')); ?>';
 			arrayRegistros['qtimpctr'] = '<? echo getByTagName($registros,'qtimpctr'); ?>';
                         
-            // Se for Pos-Fixado
-            if (arrayRegistros['tpemprst'] == 2) {
-                arrayRegistros['tpatuidx'] = '<? echo getByTagName($registros,'tpatuidx'); ?>';
-                arrayRegistros['idcarenc'] = '<? echo getByTagName($registros,'idcarenc'); ?>';
-                arrayRegistros['dtcarenc'] = '<? echo getByTagName($registros,'dtcarenc'); ?>';
-                arrayRegistros['nrdiacar'] = '<? echo getByTagName($registros,'nrdiacar'); ?>';
-            }
-                        
                         
 			/* Daniel */
 			arrayRegistros['vlttmupr'] = '<? echo getByTagName($registros,'vlttmupr'); ?>';
@@ -285,7 +251,6 @@
 			arrayRegistros['vlpgjmpr'] = '<? echo getByTagName($registros,'vlpgjmpr'); ?>';
 			arrayRegistros['vlsdpjtl'] = '<? echo getByTagName($registros,'vlsdpjtl'); ?>';
 			
-			arrayRegistros['vliofcpl'] = '<? echo formataMoeda(getByTagName($registros,'vliofcpl')); ?>';
 			</script><?
 			
 		} else if (in_array($operacao,array('C_NOVA_PROP'))) {
@@ -343,7 +308,6 @@
 			arrayProposta['vlpreemp'] = '<? echo getByTagName($proposta,'vlpreemp'); ?>';     
 			arrayProposta['qtpreemp'] = '<? echo getByTagName($proposta,'qtpreemp'); ?>';     
 			arrayProposta['nivrisco'] = '<? echo getByTagName($proposta,'nivrisco'); ?>';     
-			arrayProposta['nivriori'] = '<? echo getByTagName($proposta,'nivriori'); ?>'; // nível de risco original
 			arrayProposta['nivcalcu'] = '<? echo getByTagName($proposta,'nivcalcu'); ?>';     
 			arrayProposta['cdlcremp'] = '<? echo getByTagName($proposta,'cdlcremp'); ?>';     
 			arrayProposta['cdfinemp'] = '<? echo getByTagName($proposta,'cdfinemp'); ?>';     
@@ -365,9 +329,7 @@
 			arrayProposta['dslcremp'] = '<? echo retiraCharEsp(getByTagName($proposta,'dslcremp')); ?>';
 			arrayProposta['dsfinemp'] = '<? echo retiraCharEsp(getByTagName($proposta,'dsfinemp')); ?>';
 			arrayProposta['idquapro'] = '<? echo getByTagName($proposta,'idquapro'); ?>';
-			arrayProposta['idquaprc'] = '<? echo $idquaprc; ?>';
 			arrayProposta['dsquapro'] = '<? echo retiraCharEsp(getByTagName($proposta,'dsquapro')); ?>';
-			arrayProposta['dsquaprc'] = '<? echo $dsquaprc; ?>';
 			arrayProposta['percetop'] = '<? echo getByTagName($proposta,'percetop'); ?>';
 			arrayProposta['dtmvtolt'] = '<? echo getByTagName($proposta,'dtmvtolt'); ?>';
 			arrayProposta['nrctremp'] = '<? echo getByTagName($proposta,'nrctremp'); ?>';
@@ -382,15 +344,8 @@
 			arrayProposta['cdtpempr'] = '<? echo getByTagName($proposta,'cdtpempr'); ?>';
 			arrayProposta['dstpempr'] = '<? echo retiraCharEsp(getByTagName($proposta,'dstpempr')); ?>';
 			arrayProposta['dtlibera'] = '<? echo getByTagName($proposta,'dtlibera'); ?>';
-            arrayProposta['idcobope'] = '<? echo getByTagName($proposta,'idcobope'); ?>';
 
-            // Se for Pos-Fixado
-            if (arrayProposta['tpemprst'] == 2) {
-                arrayProposta['idcarenc'] = '<? echo getByTagName($proposta,'idcarenc'); ?>';
-                arrayProposta['dtcarenc'] = '<? echo getByTagName($proposta,'dtcarenc'); ?>';
-            }
 
-			
 			var arrayRendimento = new Object();
 			
 			var contRend = <? echo count($rendimento[0]->tags)?>;
@@ -638,37 +593,6 @@
 							
 			</script><?
 		
-		    // Monta o xml de requisição
-            $xml  = "";
-            $xml .= "<Root>";
-            $xml .= "  <Dados>";
-            $xml .= "    <nrdconta>".$nrdconta."</nrdconta>";
-            $xml .= "    <idseqttl>".$idseqttl."</idseqttl>";
-            $xml .= "    <dtcalcul></dtcalcul>";	
-            $xml .= "    <nrctremp>".$nrctremp."</nrctremp>";
-            $xml .= "    <cdprogra>".$glbvars["nmdatela"]."</cdprogra>";
-            $xml .= "    <flgcondc>1</flgcondc>";
-            $xml .= "	 <nrregist>".$nrregist."</nrregist>";
-            
-                      if($nrctremp == '0'){
-            $xml .= "    <nriniseq>".$nriniseq."</nriniseq>";
-                      }else{
-                          $xml .= "    <nriniseq>1</nriniseq>";
-                      }
-
-            $xml .= "  </Dados>";
-            $xml .= "</Root>";
-            
-            $xmlResult = mensageria($xml, "ATENDA", "OBTDADEMPR", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
-		    $xmlObjeto = getObjectXML($xmlResult);
-			$registros = $xmlObjeto->roottag->tags[0]->tags[0]->tags;
-			
-			?><script type="text/javascript">
-			
-			arrayProposta['dsratpro'] = '<? echo getByTagName($registros,'dsratpro'); ?>';
-			arrayProposta['dsratatu'] = '<? echo getByTagName($registros,'dsratatu'); ?>';
-			
-			</script><?
 		}
 	}else if (in_array($operacao,array('C_PAG_PREST','C_DESCONTO'))){
 
@@ -722,72 +646,6 @@
 		
 		}
 		
-	} else if(in_array($operacao,array('C_PAG_PREST_POS'))) {
-
-		// Montar o xml de Requisicao
-		$xml  = "<Root>";
-		$xml .= "	<Dados>";
-		$xml .= "       <cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
-		$xml .= "		<dtmvtolt>".$glbvars["dtmvtolt"]."</dtmvtolt>";
-		$xml .= "		<dtmvtoan>".$glbvars["dtmvtoan"]."</dtmvtoan>";
-		$xml .= "		<nrdconta>".$nrdconta."</nrdconta>";
-		$xml .= "		<nrctremp>".$nrctremp."</nrctremp>";
-		$xml .= "		<cdlcremp>".$cdlcremp."</cdlcremp>";
-		$xml .= "		<qttolatr>".$qttolatr."</qttolatr>";
-		$xml .= "	</Dados>";
-		$xml .= "</Root>";
-
-		$xmlResult = mensageria($xml, "EMPR0011", "EMPR0011_BUSCA_PARC_POS", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
-		$xmlObject = getObjectXML($xmlResult);
-
-		//-----------------------------------------------------------------------------------------------
-		// Controle de Erros
-		//-----------------------------------------------------------------------------------------------
-
-		if(strtoupper($xmlObject->roottag->tags[0]->name == 'ERRO')){	
-			$msgErro = $xmlObject->roottag->tags[0]->cdata;
-			if($msgErro == null || $msgErro == ''){
-				$msgErro = $xmlObject->roottag->tags[0]->tags[0]->tags[4]->cdata;
-	}
-			exibirErro('error',$msgErro,'Alerta - Ayllos',"controlaOperacao('')",false);
-		}
-
-        $registros = $xmlObject->roottag->tags[0]->tags;
-
-	} else if(in_array($operacao,array('C_DESCONTO_POS'))) {
-
-		// Montar o xml de Requisicao
-		$xml  = "<Root>";
-		$xml .= "	<Dados>";
-		$xml .= "		<dtmvtolt>".$glbvars["dtmvtolt"]."</dtmvtolt>";
-		$xml .= "		<dtmvtoan>".$glbvars["dtmvtoan"]."</dtmvtoan>";
-		$xml .= "       <cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
-		$xml .= "		<nrdconta>".$nrdconta."</nrdconta>";
-		$xml .= "		<nrctremp>".$nrctremp."</nrctremp>";
-		$xml .= "		<nrparepr>".$nrparepr_pos."</nrparepr>";
-		$xml .= "		<dtvencto>".$dtvencto."</dtvencto>";
-		$xml .= "		<vlsdvpar>".$vlpagpar_pos."</vlsdvpar>";
-		$xml .= "	</Dados>";
-		$xml .= "</Root>";
-
-		$xmlResult = mensageria($xml, "EMPR0011", "EMPR0011_BUSCA_DESC_POS", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
-		$xmlObject = getObjectXML($xmlResult);
-
-		//-----------------------------------------------------------------------------------------------
-		// Controle de Erros
-		//-----------------------------------------------------------------------------------------------
-
-		if(strtoupper($xmlObject->roottag->tags[0]->name == 'ERRO')){	
-			$msgErro = $xmlObject->roottag->tags[0]->cdata;
-			if($msgErro == null || $msgErro == ''){
-				$msgErro = $xmlObject->roottag->tags[0]->tags[0]->tags[4]->cdata;
-			}
-			exibirErro('error',$msgErro,'Alerta - Ayllos',"controlaOperacao('')",false);
-		}
-
-        $registro = $xmlObject->roottag->tags[0];
-
-        echo "$('#vldespar_".$nrparepr_pos."','#divTabela').html('".getByTagName($registro->tags,'vldescto')."');";
 	}
 	else if(in_array($operacao,array('C_TRANSF_PREJU','C_DESFAZ_PREJU'))) {
 	
@@ -953,10 +811,6 @@
 		include('form_hipoteca.php');
 	}else if (in_array($operacao,array('C_PAG_PREST'))){
 		include('tabela_pagamento.php');
-	}else if (in_array($operacao,array('C_PAG_PREST_POS'))){
-		include('tabela_pagamento_pos.php');
-	}else if (in_array($operacao,array('C_PAG_PREST_PREJU'))){
-		include('tabela_pagamento_prejuizo.php');
 	} else if (in_array($operacao,array('C_MICRO_PERG'))) {
 		include ('questionario.php');
 	} else if (in_array($operacao,array('PORTAB_CRED_C'))) {
@@ -981,7 +835,7 @@
 		
 	}
 	
-	if (!(in_array($operacao,array('C_DESCONTO','C_DESCONTO_POS','C_TRANSF_PREJU','C_DESFAZ_PREJU','C_LIQ_MESMO_DIA')))) {
+	if (!(in_array($operacao,array('C_DESCONTO','C_TRANSF_PREJU','C_DESFAZ_PREJU','C_LIQ_MESMO_DIA')))) {
 ?>	
 	<script type="text/javascript">
 		var operacao = '<? echo $operacao; ?>';
@@ -1004,34 +858,6 @@
 		bloqueiaFundo($('#divRotina'));
 	</script>
 <? } ?>
-
-<?php
-	//Função para opções da Qualificação da Operação
-	function obtemDescricaoQualificacao($idQuaOpe){
-		$dsquaprc = "";
-		switch ($idQuaOpe) {
-			case 1:
-				$dsquaprc = "Operacao Normal";
-				break;
-			case 2:
-				$dsquaprc = "Renovacao Credito";
-				break;
-			case 3:
-				$dsquaprc = "Renegociacao Credito";
-				break;
-			case 4:
-				$dsquaprc = "Composicao Divida";				
-				break;
-			case 5:
-				$dsquaprc = "Cessao de Cartao";				
-				break;
-			default:
-				$dsquaprc = "Operacao Inexistente";				;
-				break;
-		}
-		return $dsquaprc;
-	}
-?>
 
 <?php
 	function retiraCharEsp($valor){

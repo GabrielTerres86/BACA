@@ -207,8 +207,7 @@
 	} 
 
 	// Mostra div para com informações de Renda
-	//echo 'dscShowHideDiv("divDscTit_Renda;divBotoesRenda","divDscTit_Limite;divBotoesLimite");';	
-    echo 'abrirTelaGAROPC("'.$cddopcao.'");';
+	echo 'dscShowHideDiv("divDscTit_Renda;divBotoesRenda","divDscTit_Limite;divBotoesLimite");';	
 
 	// Esconde mensagem de aguardo e bloqueia conteúdo que está átras do div da rotina
 	echo 'hideMsgAguardo();';

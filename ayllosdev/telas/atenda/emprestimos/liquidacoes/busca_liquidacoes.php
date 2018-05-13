@@ -10,7 +10,6 @@
  * 				 [ 29/06/2015] Ajustes referente Projeto 215 - DV 3 (Daniel). 
  * 				 [ 07/07/2015] Ajustes referente Projeto 218 (Carlos Rafael). 	 
  * 				 [ 14/07/2016] Busca período de bloqueio de limite por refinanceamento da tela CADPRE. Projeto 299 (Lombardi).
- * 				 [ 21/02/2018] Incluído identificador de empréstimo para liquidar (Simas-AMcom).
  */
 
 session_start();
@@ -162,7 +161,6 @@ if (count($liquidacoes) == 0) {
         echo 'arrayLiquidacao' . $identificador . '[\'nrdrecid\'] = "' . getByTagName($liquidacoes[$i]->tags, 'nrdrecid') . '";';
 
         echo 'arrayLiquidacao' . $identificador . '[\'tpemprst\'] = "' . getByTagName($liquidacoes[$i]->tags, 'tpemprst') . '";';
-        echo 'arrayLiquidacao' . $identificador . '[\'idenempr\'] = "' . getByTagName($liquidacoes[$i]->tags, 'idenempr') . '";';
 
         echo 'arrayLiquidacoes[' . $i . '] = arrayLiquidacao' . $identificador . ';';
     }

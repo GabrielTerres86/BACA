@@ -32,7 +32,7 @@
     
   Programa: b1wgen0168.p
   Autor(a): James Prust Junior
-  Data    : 14/08/2013                         Ultima atualizacao: 22/11/2017
+  Data    : 14/08/2013                         Ultima atualizacao: 06/03/2014
 
   Dados referentes ao programa:
 
@@ -61,10 +61,6 @@
                            
               06/03/2014 - Ajuste para somente atualizar caso nao tiver 
                            baixado (James)
-
-			  22/11/2017 - Inclusao de informacoes na geracao do log codigo 77
-						   data proc. atualiza_data_manutencao_cadastro. 
-						   (SD 773399) - Carlos Rafael Tanholi.	
 .............................................................................*/
 { sistema/generico/includes/b1wgen0168tt.i }
 
@@ -217,8 +213,7 @@ PROCEDURE atualiza_data_manutencao_cadastro:
                           DO:
                               IF aux_contador = 10 THEN
                                  DO:
-                                     ASSIGN par_cdcritic = 77
-									        par_dscritic = "(CRAPCYB - BO168)".
+                                     ASSIGN par_cdcritic = 77.
                                      LEAVE Contador.
                                  END.
                               ELSE

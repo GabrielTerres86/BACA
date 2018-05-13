@@ -9,8 +9,6 @@
  * ALTERAÇÕES   : 02/12/2016 - P341-Automatização BACENJUD - Removido passagem do departamento como parametros
  *                             pois a BO não utiliza o mesmo (Renato Darosci)
  *                16/12/2016 - Alterações referentes ao projeto 300. (Reinert)
- *
- *				  06/02/2018 - Alterações referentes ao projeto 454.1 - Resgate de cheque em custodia. (Mateus Zimmermann - Mouts)
  * -------------- 
  */
 
@@ -154,9 +152,6 @@ if ($operacao == 'BIA') {
     if ($cddopcao != 'S') {
         $associado = $xmlObjeto->roottag->tags[0]->tags[0]->tags; // dados associado
         echo "cNmprimtl.val('" . getByTagName($associado, 'nmprimtl') . "');";
-		
-        echo "inpessoa = " . getByTagName($associado, 'inpessoa') . ";";
-        echo "idastcjt = " . getByTagName($associado, 'idastcjt') . ";";
     }
 
     echo "controlaAssociado();";

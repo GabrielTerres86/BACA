@@ -5,7 +5,7 @@
  * DATA CRIAÇÃO : Junho/2007
  * OBJETIVO     : Carregar formulário de dados para gerenciar limite
  * --------------
- * ALTERAÇÕES   : 11/12/2017
+ * ALTERAÇÕES   : 10/10/2016
  * --------------
  * 001: [04/05/2011] Rodolpho Telmo  (DB1) : Adaptação no formulário de avalista genérico
  * 002: [11/07/2011] Gabriel Capoia  (DB1) : Alterado para layout padrão
@@ -27,14 +27,10 @@
  * 011: [10/10/2016] Lucas Ranghetti (CECRED): Remover verificacao de digitalizaco para o botao de consultar imagem(#510032)
  * 012: [26/05/2017] Odirlei Busana (AMcom)  : Desabilitar campo de numero do contrato, será gerado automaticamente. PRJ300 - desconto de cheque
  * 013: [26/06/2017] Jonata            (RKAM): Ajuste para rotina ser chamada através da tela ATENDA > Produtos ( P364)
- * 014: [11/12/2017] P404 - Inclusão de Garantia de Cobertura das Operações de Crédito (Augusto / Marcos (Supero))
- * 015: [13/04/2018] Lombardi     (CECRED) : Incluida chamada da function validaValorProduto. PRJ366
  */
 ?>
 
 <form action="" name="frmDadosLimiteDscChq" id="frmDadosLimiteDscChq">
-
-  <input type="hidden" id="idcobert" value="<?php echo $dados[33]->cdata; ?>" />
 
 	<div id="divDscChq_Limite">
 	
@@ -87,10 +83,6 @@
 		</fieldset>
 				
 	</div>
-	
-  <div id="divUsoGAROPC"></div>
-  
-  <div id="divFormGAROPC"></div>
 	
 	<div id="divDscChq_Renda">
 	
@@ -156,13 +148,6 @@
 	
 </div>
 
-<div id="divBotoesGAROPC">
-
-  <input type="image" id="btnVoltarGAROPC" name="btnVoltarGAROPC" src="<? echo $UrlImagens; ?>botoes/voltar.gif" />
-	<input type="image" id="btnContinuarGAROPC" name="btnContinuarGAROPC" src="<? echo $UrlImagens; ?>botoes/continuar.gif" />
-
-</div>
-
 <div id="divBotoesRenda">
 
 	<input type="image" id="btnVoltarRendas" name="btnVoltarRendas" src="<? echo $UrlImagens; ?>botoes/voltar.gif" />
@@ -211,7 +196,7 @@
 	
 	operacao = '<? echo $cddopcao; ?>';
 	
-	dscShowHideDiv("divOpcoesDaOpcao3;divDscChq_Limite;divBotoesLimite","divBotoesGAROPC;divBotoesRenda;divBotoesObs;divBotoesAval;divOpcoesDaOpcao2;divDscChq_Renda;divDscChq_Observacao;divDscChq_Avalistas");
+	dscShowHideDiv("divOpcoesDaOpcao3;divDscChq_Limite;divBotoesLimite","divBotoesRenda;divBotoesObs;divBotoesAval;divOpcoesDaOpcao2;divDscChq_Renda;divDscChq_Observacao;divDscChq_Avalistas");
 		
 	// Muda o título da tela
 	$("#tdTitRotina").html("DESCONTO DE CHEQUES - LIMITE - <? if ($cddopcao == "A") { echo "ALTERAR"; } elseif ($cddopcao == "C") { echo "CONSULTAR"; } else { echo "INCLUIR"; } ?>");
@@ -299,12 +284,7 @@
 		}
 		
 		<? if ($cddopcao == "C") { ?>
-      <? if ($dados[33]->cdata > 0) { ?>      
-      abrirTelaGAROPC("C");
-      blockBackground(parseInt($("#divRotina").css("z-index")));
-      <? } else { ?>
 			dscShowHideDiv("divDscChq_Renda;divBotoesRenda","divDscChq_Limite;divBotoesLimite");
-      <? } ?>
 		<? } else { ?>
 			aux_inconfir = 1; 
 			aux_inconfi2 = 11; 
@@ -312,38 +292,13 @@
 			aux_inconfi4 = 71; 
 			aux_inconfi5 = 30;
 			aux_inconfi6 = 51;
-			validaValorProduto(nrdconta, 36, $("#vllimite","#frmDadosLimiteDscChq").val().replace('.','').replace(',','.'),"validaLimiteDscChq(\"<? echo $cddopcao; ?>\",1,11,30);","divRotina");
+			validaLimiteDscChq("<? echo $cddopcao; ?>",1,11,30);
 		<? } ?>
 		return false;
 	});
 	
-  $("#btnVoltarGAROPC","#divBotoesGAROPC").unbind("click").bind("click",function() {
-    $("#divUsoGAROPC").empty();
-    $("#divFormGAROPC").empty();
-    $("#frmDadosLimiteDscChq").css("width", 515);
-    dscShowHideDiv("divDscChq_Limite;divBotoesLimite", "divFormGAROPC;divBotoesGAROPC");
-		return false;
-	});
-	
-  $("#btnContinuarGAROPC","#divBotoesGAROPC").unbind("click").bind("click",function() {
-    gravarGAROPC('idcobert','frmDadosLimiteDscChq','dscShowHideDiv("divDscChq_Renda;divBotoesRenda","divFormGAROPC;divBotoesGAROPC", "");$("#frmDadosLimiteDscChq").css("width", 515);bloqueiaFundo($("#divDscChq_Renda"));');
-    return false;
-	});
-  
 	$("#btnVoltarRendas","#divBotoesRenda").unbind("click").bind("click",function() {
-    <? if ($cddopcao == "C") { ?>
-      <? if ($dados[33]->cdata > 0) { ?>
-        dscShowHideDiv('divFormGAROPC;divBotoesGAROPC','divDscChq_Renda;divBotoesRenda');
-        $("#frmDadosLimiteDscChq").css("width", 540);
-      <? } else { ?>
 		dscShowHideDiv('divDscChq_Limite;divBotoesLimite','divDscChq_Renda;divBotoesRenda');
-      <? } ?>      
-    <? } else if ($cddopcao == "A" || $cddopcao == "I") { ?>
-      dscShowHideDiv('divFormGAROPC;divBotoesGAROPC','divDscChq_Renda;divBotoesRenda');
-      $("#frmDadosLimiteDscChq").css("width", 540);
-    <? } else { ?>
-		dscShowHideDiv('divDscChq_Limite;divBotoesLimite','divDscChq_Renda;divBotoesRenda');
-    <? } ?>
 		return false;
 	});
 	
@@ -367,13 +322,11 @@
 	});
 	
 	$("#btnContinuarObservacao","#divBotoesObs").unbind("click").bind("click",function() {
-    $("#frmDadosLimiteDscChq").css("width", 525);
 		dscShowHideDiv("divDscChq_Avalistas;divBotoesAval","divDscChq_Observacao;divBotoesObs");
 		return false;
 	});
 	
 	$("#btnVoltarAvalistas","#divBotoesAval").unbind("click").bind("click",function() {
-		$("#frmDadosLimiteDscChq").css("width", 515);
 		dscShowHideDiv("divDscChq_Observacao;divBotoesObs","divDscChq_Avalistas;divBotoesAval");
 		return false;
 	});

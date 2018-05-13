@@ -91,8 +91,6 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0009 IS
   -- Objetivo  : Rotinas para tela de inscricoes
   --
   -- Alteracoes: 
-  --              15/02/2018 - PJ 322 - SM 7 - (Mateus) Se só exitir um titular na conta, trazer o mesmo como default
-  --              Permitir ordenação por comentários
   --
   ---------------------------------------------------------------------------------------------------------------
 
@@ -136,7 +134,7 @@ CREATE OR REPLACE PACKAGE BODY PROGRID.WPGD0009 IS
                      ,pr_tpordena crapidp.idevento%TYPE
                      ,pr_nrficpre crapidp.nrficpre%TYPE) IS
                      SELECT insc.*, 
-ROW_NUMBER() OVER(ORDER BY DECODE(pr_tpordena,1,insc.nminseve,2,LPAD(insc.nrdconta,10,'0'),3,insc.dsstains,4,upper(insc.dsobsins),insc.nminseve)) nrdseque
+ROW_NUMBER() OVER(ORDER BY DECODE(pr_tpordena,1,insc.nminseve,2,LPAD(insc.nrdconta,10,'0'),3,insc.dsstains,insc.nminseve)) nrdseque
 FROM (
       SELECT idp.nminseve -- NAO RETIRAR ESSE CAMPO, IMPACTA NA ORDENACAO
             ,idp.nrdconta -- NAO RETIRAR ESSE CAMPO, IMPACTA NA ORDENACAO
@@ -149,7 +147,7 @@ FROM (
             ,idp.cdgraupr
             ,idp.nrdddins
             ,idp.nrtelins
-            ,idp.dsobsins -- NAO RETIRAR ESSE CAMPO, IMPACTA NA ORDENACAO
+            ,idp.dsobsins
             ,idp.cdagenci
             ,idp.cdageins
             ,idp.cdevento
@@ -181,8 +179,8 @@ FROM (
          AND pr_cdageins = 0
          AND pr_nrseqeve <> 0 )
          )
-    ORDER BY DECODE(pr_tpordena,1,idp.nminseve,2,LPAD(idp.nrdconta,10,'0'),3,dsstains,4,upper(idp.dsobsins),idp.nminseve)
-            ,DECODE(pr_tpordena,3,idp.nminseve,4,idp.nminseve,0)) insc;
+    ORDER BY DECODE(pr_tpordena,1,idp.nminseve,2,LPAD(idp.nrdconta,10,'0'),3,dsstains,idp.nminseve)
+            ,DECODE(pr_tpordena,3,idp.nminseve,0)) insc;
 
     rw_crapidp cr_crapidp%ROWTYPE;
     

@@ -1,19 +1,5 @@
 /*............................................................................................................
   Alterações: 28/07/2017 - Criaçao da tela, Prj. 322. (Jean Michel)													
-	          15/02/2018 - PJ 322 - SM 7 - (Mateus) Se só exitir um titular na conta, trazer o mesmo como default
-              Permitir ordenação por comentários
-			  
- 			  03/04/2018 - Incidente INC0011750:
-			               Ajuste nas telas de "Inscrições" do Progrid e do Assembleias.
-                           Motivo: O sistema estava puxando de forma errada a conta da última 
-				 		   inscrição efetuada. (Wagner/Sustenção).
-
- 			  18/04/2018 - Incidente INC0013170:
-			               Ajuste nas telas de "Inscrições" do Progrid e do Assembleias.
-                           Motivo: Devido ao comportamento do progress com caracter NULL
-						   ser processado como ?(interrogação) estava gerando erro JavaScript
-						   na tela, não permitindo a inscrição das pessoas. (Wagner/Sustenção).
-						   
 ............................................................................................................*/
 
 { sistema/generico/includes/var_log_progrid.i }
@@ -152,7 +138,6 @@ DEFINE TEMP-TABLE cratidp             LIKE crapidp.
 DEFINE VARIABLE vetorpac              AS CHAR                NO-UNDO.
 DEFINE VARIABLE vetorinscri           AS CHAR                NO-UNDO.
 DEFINE VARIABLE aux_dadoseve          AS CHAR                NO-UNDO.
-DEFINE VARIABLE vetorNome             AS CHAR                NO-UNDO.
 
 DEFINE VARIABLE aux_crapcop           AS CHAR                NO-UNDO.
 DEFINE VARIABLE aux_contador          AS INT                 NO-UNDO.
@@ -2025,22 +2010,6 @@ END PROCEDURE.
 /* _UIB-CODE-BLOCK-END */
 &ANALYZE-RESUME
 
-/* Função responsável por transformar o caracter ? (interroga)
-   que é null para o PROGRESS em vazio.
-   Isso foi necessário devido a erros ao escrever JavaScripts 
-   que recebiam estas strings com interroga.*/
-FUNCTION FUN_FORMATA_VALOR RETURNS CHAR (INPUT VALOR AS CHAR ):
-  DEF VAR aux_valor AS CHAR NO-UNDO.
-
-  ASSIGN aux_valor = valor.
-  
-  IF aux_valor = ? THEN
-    aux_valor = "".
-	
-  RETURN aux_valor.
-  
-END FUNCTION.
-
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE NomeCooperado w-html 
 PROCEDURE NomeCooperado :
 
@@ -2060,7 +2029,6 @@ PROCEDURE NomeCooperado :
     DEF VAR aux_nmprimtl AS CHAR NO-UNDO.
     DEF VAR aux_nmresage AS CHAR NO-UNDO.
             
- ASSIGN vetorNome = "". /* PJ332 - SM 7 - Mateus*/
     IF INT(aux_nrdconta) = 0 THEN
       RETURN "NOK".
     		
@@ -2155,37 +2123,17 @@ PROCEDURE NomeCooperado :
              ASSIGN aux_nrtelefo = STRING(craptfc.nrtelefo)
                     aux_nrdddtfc = STRING(craptfc.nrdddtfc).
                         
-/*Início PJ 322 - SM 7 - Mateus*/
-
-/*Comentar o código abaixo*/
-           /*RUN RodaJavaScript("vetNome.push(~{nmextttl:" + "'" + TRIM(crapttl.nmextttl)*/
-                                           /*+ "',idseqttl:" + "'" + STRING(crapttl.idseqttl)*/
-                                           /*+ "',nrdddtfc:" + "'" + STRING(aux_nrdddtfc)*/
-                                           /*+ "',nrtelefo:" + "'" + STRING(aux_nrtelefo) */
-                                           /*+ "',dsdemail:" + "'" + TRIM(aux_dsdemail)*/
-                                           /*+ "',nmprimtl:" + "'" + STRING(aux_nmprimtl)*/
-                                           /*+ "',tppessoa:" + "'F" */
-                                           /*+ "',nmresage:" + "'" + STRING(aux_nmresage)*/
-                                           /*+ "',flginscr:" + "'" + STRING(aux_flginscr)*/										   
-                                           /*+ "',dsinscri:" + "'" + STRING(aux_dsinscri)*/										   
-                                           /*+ "',nrcpfcgc:" + "'" + STRING(crapttl.nrcpfcgc) + "'~});").*/ 
-
-/*E substituir por*/
-          IF TRIM(vetorNome) <> "" THEN
-            ASSIGN vetorNome = vetorNome + ",".
-              
-           ASSIGN vetorNome = vetorNome + "~{nmextttl:" + "'"    + FUN_FORMATA_VALOR(TRIM(STRING(crapttl.nmextttl)))
-                                           + "',idseqttl:" + "'" + FUN_FORMATA_VALOR(STRING(crapttl.idseqttl))
-                                           + "',nrdddtfc:" + "'" + FUN_FORMATA_VALOR(STRING(aux_nrdddtfc))
-                                           + "',nrtelefo:" + "'" + FUN_FORMATA_VALOR(STRING(aux_nrtelefo)) 
-                                           + "',dsdemail:" + "'" + FUN_FORMATA_VALOR(TRIM(STRING(aux_dsdemail)))
-                                           + "',nmprimtl:" + "'" + FUN_FORMATA_VALOR(STRING(aux_nmprimtl))
+           RUN RodaJavaScript("vetNome.push(~{nmextttl:" + "'" + TRIM(crapttl.nmextttl)
+                                           + "',idseqttl:" + "'" + STRING(crapttl.idseqttl)
+                                           + "',nrdddtfc:" + "'" + STRING(aux_nrdddtfc)
+                                           + "',nrtelefo:" + "'" + STRING(aux_nrtelefo) 
+                                           + "',dsdemail:" + "'" + TRIM(aux_dsdemail)
+                                           + "',nmprimtl:" + "'" + STRING(aux_nmprimtl)
                                            + "',tppessoa:" + "'F" 
-                                           + "',nmresage:" + "'" + FUN_FORMATA_VALOR(STRING(aux_nmresage))                                          
-                                           + "',flginscr:" + "'" + FUN_FORMATA_VALOR(STRING(aux_flginscr))										   
-                                           + "',dsinscri:" + "'" + FUN_FORMATA_VALOR(STRING(aux_dsinscri))											   
-                                           + "',nrcpfcgc:" + "'" + FUN_FORMATA_VALOR(STRING(crapttl.nrcpfcgc)) + "'~}".
-/*Fim PJ 322 - SM 7 - Mateus */ 
+                                           + "',nmresage:" + "'" + STRING(aux_nmresage)                                           
+                                           + "',flginscr:" + "'" + STRING(aux_flginscr)										   
+                                           + "',dsinscri:" + "'" + STRING(aux_dsinscri)											   
+                                           + "',nrcpfcgc:" + "'" + STRING(crapttl.nrcpfcgc) + "'~});").  
                                            
         END. /* FIM FOR EACH CRAPTTL */
       END. /* FIM PESSOA FISICA */
@@ -2268,80 +2216,41 @@ PROCEDURE NomeCooperado :
                 IF AVAILABLE craptfc THEN
                    ASSIGN aux_nrtelefo = STRING(craptfc.nrtelefo)
                           aux_nrdddtfc = STRING(craptfc.nrdddtfc).
-/*Início PJ 322 - SM 7 - Mateus */                               
-                  
-/*Comentar o código abaixo */
-                /*RUN RodaJavaScript("vetNome.push(~{nmextttl:'" + TRIM(STRING(crapttl.nmextttl))*/
-                                                 /*+ "',idseqttl:'" + STRING(crapttl.idseqttl)*/
-                                                 /*+ "',nrdddtfc:'" + STRING(aux_nrdddtfc)*/
-                                                 /*+ "',nrtelefo:'" + STRING(aux_nrtelefo)*/ 
-                                                 /*+ "',dsdemail:'" + STRING(aux_dsdemail)*/
-                                                 /*+ "',nmprimtl:'" + STRING(aux_nmprimtl)*/
-                                                 /*+ "',tppessoa:'J"*/
-                                                 /*+ "',nmresage:'" + STRING(aux_nmresage)*/                                                 
-                                                 /*+ "',flginscr:'" + STRING(aux_flginscr)*/      
-                                                 /*+ "',dsinscri:'" + STRING(aux_dsinscri)*/													 
-                                                 /*+ "',nrcpfcgc:'" + STRING(crapttl.nrcpfcgc) + "'~});").  */
-/*E substituir por*/
-                 IF TRIM(vetorNome) <> "" THEN
-                  ASSIGN vetorNome = vetorNome + ",".
-                                                 
-                ASSIGN vetorNome = vetorNome + "~{nmextttl:" + "'"     + FUN_FORMATA_VALOR(TRIM(STRING(crapttl.nmextttl)))
-                                                 + "',idseqttl:" + "'" + FUN_FORMATA_VALOR(STRING(crapttl.idseqttl))
-                                                 + "',nrdddtfc:" + "'" + FUN_FORMATA_VALOR(STRING(aux_nrdddtfc))
-                                                 + "',nrtelefo:" + "'" + FUN_FORMATA_VALOR(STRING(aux_nrtelefo))
-                                                 + "',dsdemail:" + "'" + FUN_FORMATA_VALOR(STRING(aux_dsdemail))
-                                                 + "',nmprimtl:" + "'" + FUN_FORMATA_VALOR(STRING(aux_nmprimtl))
-                                                 + "',tppessoa:" + "'J" 
-                                                 + "',nmresage:" + "'" + FUN_FORMATA_VALOR(STRING(aux_nmresage))                                                 
-                                                 + "',flginscr:" + "'" + FUN_FORMATA_VALOR(STRING(aux_flginscr))      
-                                                 + "',dsinscri:" + "'" + FUN_FORMATA_VALOR(STRING(aux_dsinscri))													 
-                                                 + "',nrcpfcgc:" + "'" + FUN_FORMATA_VALOR(STRING(crapttl.nrcpfcgc)) + "'~}".
-
-/*Fim PJ 322 - SM 7 - Mateus*/                            
+                                
+                RUN RodaJavaScript("vetNome.push(~{nmextttl:'" + TRIM(STRING(crapttl.nmextttl))
+                                                 + "',idseqttl:'" + STRING(crapttl.idseqttl)
+                                                 + "',nrdddtfc:'" + STRING(aux_nrdddtfc)
+                                                 + "',nrtelefo:'" + STRING(aux_nrtelefo) 
+                                                 + "',dsdemail:'" + STRING(aux_dsdemail)
+                                                 + "',nmprimtl:'" + STRING(aux_nmprimtl)
+                                                 + "',tppessoa:'J" 
+                                                 + "',nmresage:'" + STRING(aux_nmresage)                                                 
+                                                 + "',flginscr:'" + STRING(aux_flginscr)      
+                                                 + "',dsinscri:'" + STRING(aux_dsinscri)													 
+                                                 + "',nrcpfcgc:'" + STRING(crapttl.nrcpfcgc) + "'~});").  
                   
                                                  
               END.
             END. /* FIM IF NRDCTATO THEN*/
           ELSE
             DO:
-/*Início PJ 322 - SM 7 - Mateus */ 
-
-/*Comentar o código abaixo*/          
-              /*RUN RodaJavaScript("vetNome.push(~{" + "nmextttl:'" + TRIM(STRING(crapavt.nmdavali))*/
-																									 /*+ "',idseqttl:'0" */
-																									 /*+ "',nrdddtfc:'" */ 
-																									 /*+ "',nrtelefo:'" + STRING(crapavt.nrfonres)*/
-																									 /*+ "',dsdemail:'" + STRING(crapavt.dsdemail)*/
-																									 /*+ "',nmprimtl:'" + STRING(aux_nmprimtl)*/
-																									 /*+ "',tppessoa:'J" */
-																									 /*+ "',nmresage:'" + STRING(aux_nmresage) */                                            
-																									 /*+ "',flginscr:'" + STRING(aux_flginscr)*/		
-																									 /*+ "',dsinscri:'" + STRING(aux_dsinscri)*/												 
-																									 /*+ "',nrcpfcgc:'" + STRING(crapavt.nrcpfcgc) + "'~});"). */                  
-/*E substituir por este*/
-              IF TRIM(vetorNome) <> "" THEN
-                ASSIGN vetorNome = vetorNome + ",".  
-                  
-              ASSIGN vetorNome = vetorNome + "~{" + "nmextttl:" + "'"  + FUN_FORMATA_VALOR(TRIM(STRING(crapavt.nmdavali)))
-												 + "',idseqttl:" + "'0" 
-												 + "',nrdddtfc:" + "'"  
-												 + "',nrtelefo:" + "'" + FUN_FORMATA_VALOR(STRING(crapavt.nrfonres))
-												 + "',dsdemail:" + "'" + FUN_FORMATA_VALOR(STRING(crapavt.dsdemail))
-												 + "',nmprimtl:" + "'" + FUN_FORMATA_VALOR(STRING(aux_nmprimtl))
-												 + "',tppessoa:" + "'J" 
-												 + "',nmresage:" + "'" + FUN_FORMATA_VALOR(STRING(aux_nmresage))                                             
-												 + "',flginscr:" + "'" + FUN_FORMATA_VALOR(STRING(aux_flginscr))		
-												 + "',dsinscri:" + "'" + FUN_FORMATA_VALOR(STRING(aux_dsinscri))												 
-												 + "',nrcpfcgc:" + "'" + FUN_FORMATA_VALOR(STRING(crapavt.nrcpfcgc)) + "'~}".
-
-/*Fim PJ 322 - SM 7 - Mateus */
+            
+              RUN RodaJavaScript("vetNome.push(~{" + "nmextttl:'" + TRIM(STRING(crapavt.nmdavali))
+																									 + "',idseqttl:'0" 
+																									 + "',nrdddtfc:'"  
+																									 + "',nrtelefo:'" + STRING(crapavt.nrfonres)
+																									 + "',dsdemail:'" + STRING(crapavt.dsdemail)
+																									 + "',nmprimtl:'" + STRING(aux_nmprimtl)
+																									 + "',tppessoa:'J" 
+																									 + "',nmresage:'" + STRING(aux_nmresage)                                             
+																									 + "',flginscr:'" + STRING(aux_flginscr)		
+																									 + "',dsinscri:'" + STRING(aux_dsinscri)												 
+																									 + "',nrcpfcgc:'" + STRING(crapavt.nrcpfcgc) + "'~});").                   
             END.                                           
         END. /* FIM FOR EACH CRAPAVT PESSOA JURIDICA */
         
       END. /* FIM PESSOA JURIDICA */    
        
-    RUN RodaJavaScript("vetNome = ["  + vetorNome + "];"). /*PJ 322 - SM 7 - Mateus*/
 END PROCEDURE.
 
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE NomeCooperado w-html 
@@ -2731,8 +2640,7 @@ PROCEDURE process-web-request :
     ASSIGN ab_unmap.aux_dtanoage = "".
 
   ASSIGN ab_unmap.aux_tpfiltro:LIST-ITEM-PAIRS IN FRAME {&FRAME-NAME} = "Conta,2,Pré-Inscrito,1".
-  /*PJ 332 - SM 7 - Mateus Inclusão do  ,Comentário,4*/
-  ASSIGN ab_unmap.aux_pesqorde:LIST-ITEM-PAIRS IN FRAME {&FRAME-NAME} = "Pré-Inscrito,1,Conta,2,Situação,3,Comentário,4".
+  ASSIGN ab_unmap.aux_pesqorde:LIST-ITEM-PAIRS IN FRAME {&FRAME-NAME} = "Pré-Inscrito,1,Conta,2,Situação,3".
 
   FIND FIRST craptab WHERE craptab.cdcooper = INT(ab_unmap.aux_cdcooper)
                        AND craptab.nmsistem = "CRED"                    
@@ -2929,7 +2837,7 @@ PROCEDURE process-web-request :
       
       /* limpar variavel para nao apresentar critica ao carregar tela */  
       ab_unmap.aux_cdagenci = "".
-      IF msg-erro-aux = 10 OR (opcao <> "sa" AND opcao <> "ex" AND opcao <> "in" AND opcao <> "i" AND opcao <> "carcop") THEN
+      IF msg-erro-aux = 10 OR (opcao <> "sa" AND opcao <> "ex" AND opcao <> "in") THEN
          RUN displayFields.
  
       RUN enableFields.

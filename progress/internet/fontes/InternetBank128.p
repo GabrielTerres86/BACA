@@ -17,12 +17,6 @@
                    07/04/2016 - Ajuste para remover caracteres especiais do nmageban,
                                 conforme solicitado no chamado 430305. (Kelvin)
                                   
-                   09/02/2018 - Ajustado para quando nao encontrar a agencia nao retornar
-                                erro. Alguns bancos realmente nao possuem a descricao das
-                                agencias publicadas, exemplo banco 102 - XP INVEST.
-                                O IB atual ignora as mensagens de erro, conforme fonte:
-                                [...]\viacredi\extrato\busca_agencia.php (Anderson - P285)
-                                  
 ..............................................................................*/
     
 CREATE WIDGET-POOL.
@@ -62,13 +56,9 @@ DEF VAR aux_nmageban AS CHAR									                         NO-UNDO.
         
     ELSE 
         DO:
-            CREATE xml_operacao.
-            ASSIGN xml_operacao.dslinxml = 
-            "<DADOS>" +
-            "<cddbanco>"  + TRIM(STRING(par_cdabanco)) + "</cddbanco>" + 
-            "<cdageban>"  + TRIM(STRING(par_nragenci)) + "</cdageban>" + 
-            "<nmageban>"  + "</nmageban>" + 
-            "</DADOS>".
+            ASSIGN aux_dscritic = "Agencia Inexistente.".
+            xml_dsmsgerr = "<dsmsgerr>" + aux_dscritic + "</dsmsgerr>". 
+            RETURN "NOK".
         END.
 
     RETURN 'OK'.

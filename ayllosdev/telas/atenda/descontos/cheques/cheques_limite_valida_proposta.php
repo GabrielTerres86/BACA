@@ -3,15 +3,11 @@
 	/************************************************************************
 	 Fonte: cheques_limite_valida_proposta.php
 	 Autor: David                                                 
-	 Data : Junho/2010                          Última Alteração: 11/12/2017
+	 Data : Junho/2010                          Última Alteração: 21/11/2012
 	                                                                  
 	 Objetivo  : Validar dados da proposta do limite				 
 	                                                                  	 
 	 Alterações: 21/11/2012 - Ajustes referente ao projeto GE (Adriano).
-   
-                 11/12/2017 - P404 - Inclusão de Garantia de Cobertura das
-                 Operações de Crédito (Augusto / Marcos (Supero))
-
 	************************************************************************/
 
 	session_start();
@@ -208,9 +204,7 @@
 	}
 
 	// Mostra div para com informações de Renda
-	//echo 'dscShowHideDiv("divDscChq_Renda;divBotoesRenda","divDscChq_Limite;divBotoesLimite");';	
-    // Abre tela de garantia
-    echo 'abrirTelaGAROPC("'.$cddopcao.'");';
+	echo 'dscShowHideDiv("divDscChq_Renda;divBotoesRenda","divDscChq_Limite;divBotoesLimite");';	
 
 	// Esconde mensagem de aguardo e bloqueia conteúdo que está átras do div da rotina
 	echo 'hideMsgAguardo();';

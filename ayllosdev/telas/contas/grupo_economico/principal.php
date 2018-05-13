@@ -7,9 +7,6 @@
  * --------------
  * ALTERAÇÕES   : 
  * --------------
- 
- 20/02/2018 - #846981 Utilização da função removeCaracteresInvalidos (Carlos)
- 
  */	
 	session_start();
 	require_once("../../../includes/config.php");
@@ -46,7 +43,7 @@
 	// Executa script para envio do XML
 	$xmlResult = mensageria($xml, "TELA_GRUPO_ECONOMICO", "GRUPO_ECONOMICO_CONSULTAR", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 	// Cria objeto para classe de tratamento de XML
-	$xmlObjeto = getObjectXML(removeCaracteresInvalidos($xmlResult));
+	$xmlObjeto = getObjectXML($xmlResult);
 	
 	if (strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO") {
 		$msgErro = $xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata;

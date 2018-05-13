@@ -5,7 +5,7 @@
   DATA CRIAÇÃO : 23/06/2017
   OBJETIVO     : Rotina para controlar as operações da tela MANCRD
   --------------
-  ALTERAÇÕES   : 27/10/2017 - Efetuar ajustes e melhorias na tela (Lucas Ranghetti #742880) 
+  ALTERAÇÕES   : 
   -------------- 
  */
 ?> 
@@ -41,7 +41,8 @@ if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
 
 $registros = $xmlObj->roottag->tags;
 
-$nmprimtl  = $registros[0]->tags[13]->cdata;
+$nmprimtl  = $registros[0]->tags[11]->cdata;
+
 
 include('tab_cartoes.php');
 

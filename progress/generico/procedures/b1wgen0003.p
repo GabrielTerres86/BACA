@@ -23,7 +23,7 @@
 
    Programa: b1wgen0003.p
    Autora  : Junior.
-   Data    : 20/10/2005                     Ultima atualizacao: 09/08/2017
+   Data    : 20/10/2005                     Ultima atualizacao: 28/06/2016 
    
 
    Dados referentes ao programa:
@@ -208,14 +208,6 @@
 
 			   28/06/2016 - Incluir conta na busca do maximo Float na consulta-lancamento-periodo
 			                (Marcos-Supero #477843)
-
-               09/08/2017 - Inclusao do produto Pos-Fixado. (Jaison/James - PRJ298)
-
-         05/10/2017 - Ajuste para desconsiderar a situacao da folha de pagamento quando esta em 
-                      Transacao Pendente (Rafael Monteiro - Mouts)
-
-               12/03/2018 - Substituida verificacao "cdtipcta IN (1,2,3,4,..." pela modalidade do 
-                            tipo de conta igual a 1. PRJ366 (Lombardi).
 
 ............................................................................ */
 
@@ -526,12 +518,7 @@ PROCEDURE consulta-lancto-car.
                         tt-lancamento_futuro.cdbccxlt = INT(xText:NODE-VALUE)  WHEN xField:NAME = "cdbccxlt"
                         tt-lancamento_futuro.nrdolote = INT(xText:NODE-VALUE)  WHEN xField:NAME = "nrdolote"
                         tt-lancamento_futuro.nrseqdig = INT(xText:NODE-VALUE)  WHEN xField:NAME = "nrseqdig"
-                        tt-lancamento_futuro.dtrefere = DATE(xText:NODE-VALUE) WHEN xField:NAME = "dtrefere"
-                        tt-lancamento_futuro.cdtiptra = INT(xText:NODE-VALUE)  WHEN xField:NAME = "cdtiptra"
-                        tt-lancamento_futuro.idlancto = INT(xText:NODE-VALUE)  WHEN xField:NAME = "idlancto"
-                        tt-lancamento_futuro.idlstdom = INT(xText:NODE-VALUE)  WHEN xField:NAME = "idlstdom"
-                        tt-lancamento_futuro.incancel = INT(xText:NODE-VALUE)  WHEN xField:NAME = "incancel".
-                        
+                        tt-lancamento_futuro.dtrefere = DATE(xText:NODE-VALUE) WHEN xField:NAME = "dtrefere".
                END.              
              
            END.    
@@ -648,10 +635,6 @@ PROCEDURE consulta-lancamento-periodo.
 
     DEF VAR aux_vllanmto AS DECI           NO-UNDO.
 
-    DEF VAR aux_cdmodali AS INTE           NO-UNDO.
-    DEF VAR aux_des_erro AS CHAR           NO-UNDO.
-    DEF VAR aux_dscritic AS CHAR           NO-UNDO.
-
     DEF VAR h-b1wgen0002 AS HANDLE         NO-UNDO.
     DEF VAR h-b1wgen0159 AS HANDLE         NO-UNDO.
     
@@ -737,52 +720,7 @@ PROCEDURE consulta-lancamento-periodo.
             /*  Nao calcula programados para quem movimenta com talao 
                 de cheques  */
     
-            { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
-            
-            RUN STORED-PROCEDURE pc_busca_modalidade_tipo
-            aux_handproc = PROC-HANDLE NO-ERROR (INPUT crapass.inpessoa,    /* tipo de pessoa */
-                                                 INPUT crapass.cdtipcta,    /* tipo de conta */
-                                                OUTPUT 0,                /* Modalidade */
-                                                OUTPUT "",   /* Flag Erro */
-                                                OUTPUT "").  /* Descrição da crítica */
-            
-            CLOSE STORED-PROC pc_busca_modalidade_tipo
-                  aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
-            
-            { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
-            
-            ASSIGN aux_cdmodali = 0
-                   aux_des_erro = ""
-                   aux_dscritic = ""
-                   aux_cdmodali = pc_busca_modalidade_tipo.pr_cdmodalidade_tipo 
-                                  WHEN pc_busca_modalidade_tipo.pr_cdmodalidade_tipo <> ?
-                   aux_des_erro = pc_busca_modalidade_tipo.pr_des_erro 
-                                  WHEN pc_busca_modalidade_tipo.pr_des_erro <> ?
-                   aux_dscritic = pc_busca_modalidade_tipo.pr_dscritic
-                                  WHEN pc_busca_modalidade_tipo.pr_dscritic <> ?.
-            
-            IF aux_des_erro = "NOK"  THEN
-                DO:
-                    ASSIGN i-cod-erro = 0 
-                           c-dsc-erro = aux_dscritic.
-                    
-                    {sistema/generico/includes/b1wgen0001.i}
-                    
-                    RUN proc_gerar_log (INPUT p-cdcooper,
-                                        INPUT p-cod-operador,
-                                        INPUT "",
-                                        INPUT aux_dsorigem,
-                                        INPUT aux_dstransa,
-                                        INPUT FALSE,
-                                        INPUT p-idseqttl,
-                                        INPUT p-nmdatela,
-                                        INPUT p-nro-conta,
-                                       OUTPUT aux_nrdrowid).
-                  
-                    RETURN "NOK". 
-                END.
-            
-            IF  aux_cdmodali = 1      AND
+            IF  CAN-DO('1,2,3,4,8,9,10,11,12,13,14,15',STRING(crapass.cdtipcta)) AND
                 crapass.cdsitdct = 1  THEN
                 DO:
                     CREATE tt-totais-futuros.
@@ -1156,7 +1094,7 @@ PROCEDURE consulta-lancamento-periodo.
     /* Lancamentos de Debito de Folha */
     FOR EACH crappfp WHERE crappfp.cdcooper = p-cdcooper
                        AND crappfp.idsitapr > 3 /* Aprovados */
-                       AND crappfp.idsitapr <> 6 /*Transacao Pendente*/
+                       AND crappfp.idsitapr <> 6 /* Transacao Pendente */
                        AND crappfp.flsitdeb = 0 /* Ainda nao debitado */
                        NO-LOCK
        ,EACH craplfp WHERE craplfp.cdcooper = crappfp.cdcooper
@@ -1233,7 +1171,7 @@ PROCEDURE consulta-lancamento-periodo.
     /* Lancamentos de Debitos de Tarifas */
     FOR EACH crappfp WHERE crappfp.cdcooper =  p-cdcooper
                        AND crappfp.idsitapr > 3 /* Aprovados */
-                       AND crappfp.idsitapr <> 6 /*Transacao Pendente*/
+                       AND crappfp.idsitapr <> 6 /* Transacao Pendente */
                        AND crappfp.flsittar = 0 /* Ainda nao debitado a tarifa */
                        AND crappfp.vltarapr > 0 /* Com tarifa a cobrar */
                        NO-LOCK
@@ -1331,7 +1269,7 @@ PROCEDURE consulta-lancamento-periodo.
     /* Lancamentos de Creditos de Folha */
     FOR EACH crappfp WHERE crappfp.cdcooper =  p-cdcooper
                        AND crappfp.idsitapr > 3 /* Aprovados */
-                       AND crappfp.idsitapr <> 6 /*Transacao Pendente*/
+                       AND crappfp.idsitapr <> 6 /* Transacao Pendente */
                        AND crappfp.flsitcre = 0 /* Pagamento ainda não creditado */
                        NO-LOCK
        ,EACH craplfp WHERE craplfp.cdcooper = crappfp.cdcooper
@@ -1663,8 +1601,8 @@ PROCEDURE consulta-lancamento-periodo.
         IF   par_indebcre = "C"    THEN
              NEXT.
 
-        IF tt-dados-epr.tpemprst = 1 OR   /* PP */
-           tt-dados-epr.tpemprst = 2 THEN /* POS */
+        /* Emprestimo novo */
+        IF tt-dados-epr.tpemprst = 1 THEN
            DO:
                /* Valor da parcela vencida */
                IF tt-dados-epr.vlprvenc > 0 THEN
@@ -1720,7 +1658,7 @@ PROCEDURE consulta-lancamento-periodo.
 
                   END. /* END IF tt-dados-epr.vlpraven > 0 */
               
-           END. /* END IF tt-dados-epr.tpemprst = 1 ou 2 */
+           END. /* END IF tt-dados-epr.tpemprst = 1 */
         ELSE
            DO:
               /**  Magui quando a pessoa estava em atraso nao mostrava tudo */

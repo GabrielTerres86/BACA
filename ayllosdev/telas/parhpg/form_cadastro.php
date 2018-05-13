@@ -5,9 +5,7 @@
  * DATA CRIAÇÃO : 15/04/2016
  * OBJETIVO     : Formulario de alteracao dos horarios de pagamento da COMPE
  * --------------
- * ALTERAÇÕES   : 19/06/2017 - Removida a linha com informações da Devolução VLB, e alterada
-                               a descrição "Devolução Noturna" para "Devolução Fraude/Imp.:".
-				               PRJ367 - Compe Sessao Unica (Lombardi)
+ * ALTERAÇÕES   :
  * --------------
  */ 
 ?>
@@ -159,6 +157,19 @@
 			<table width="100%">
 				<tr>
 					<td>
+						<label for="hrdevvlb"><? echo utf8ToHtml('Devolu&ccedil;&atilde;o VLB:') ?></label>
+						<select class="campo" id="hrvlbatu" name="hrvlbatu">
+							<option value="S"><? echo utf8ToHtml('Atualizar')?></option>
+							<option value="N"><? echo utf8ToHtml('N&atilde;o Atualizar')?></option>
+						</select>
+						<label for="hrvlbini"><? echo utf8ToHtml('- In&iacute;cio:') ?></label>
+						<input id="hrvlbini" name="hrvlbini" type="text"/>
+						<label for="hrvlbfim"><? echo utf8ToHtml('Fim:') ?></label>
+						<input id="hrvlbfim" name="hrvlbfim" type="text"/>
+					</td>
+				</tr>
+				<tr>
+					<td>
 						<label for="hrdevdiu"><? echo utf8ToHtml('Devolu&ccedil;&atilde;o Diurna:') ?></label>
 						<select class="campo" id="hrdiuatu" name="hrdiuatu">
 							<option value="S"><? echo utf8ToHtml('Atualizar')?></option>
@@ -172,7 +183,7 @@
 				</tr>
 				<tr>
 					<td>
-						<label for="hrdevnot"><? echo utf8ToHtml('Devolu&ccedil;&atilde;o Fraude/Imp:') ?></label>
+						<label for="hrdevnot"><? echo utf8ToHtml('Devolu&ccedil;&atilde;o Noturna:') ?></label>
 						<select class="campo" id="hrnotatu" name="hrnotatu">
 							<option value="S"><? echo utf8ToHtml('Atualizar')?></option>
 							<option value="N"><? echo utf8ToHtml('N&atilde;o Atualizar')?></option>

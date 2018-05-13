@@ -13,7 +13,6 @@
  * 005: [29/06/2012] Jorge Hamaguchi (CEBRED) : Ajuste em esquema de impressao em  imprimeFichaCadastralCF()
  * 006: [09/07/2012] Jorge Hamaguchi (CEBRED) : Retirado campo "redirect" popup.
  * 007: [05/08/2015] Gabriel (RKAM)           : Reformulacao cadastral. 
- * 008: [29/11/2017] Carlos Rafael Tanholi (CECRED) : Correcao no carregamento do campo cod.banco. SD 803263.
  */
  
 var tpregist = '';
@@ -252,7 +251,7 @@ function manterRotina(operacao) {
 	
 	// Recebendo valores do formulário  
 	var nrcpfcgc = $('#nrcpfcgc','#frmCabClienteFinanceiro').val();	
-	var cdbccxlt = $('#cdbccxlt',nomeFormulario).val();
+	var cddbanco = $('#cddbanco',nomeFormulario).val();
 	var cdageban = $('#cdageban',nomeFormulario).val();
 	var cdagenci = $('#cdagenci',nomeFormulario).val();
 	var dtabtcct = $('#dtabtcct',nomeFormulario).val();
@@ -282,7 +281,7 @@ function manterRotina(operacao) {
 		url: UrlSite + 'telas/contas/cliente_financeiro/manter_rotina.php', 		
 		data: {
 			nrdconta: nrdconta, idseqttl: idseqttl, nrcpfcgc: nrcpfcgc,						
-			tpregist: tpregist, nrseqdig: nrseqdig, cdbccxlt: cdbccxlt,		                
+			tpregist: tpregist, nrseqdig: nrseqdig, cddbanco: cddbanco,		                
 			cdageban: cdageban, dtabtcct: dtabtcct, nrdctasf: nrdctasf,                     
 			hrtransa: hrtransa, flgenvio: flgenvio, dtdenvio: dtdenvio,                     
 			insitcta: insitcta, dtdemiss: dtdemiss, cdmotdem: cdmotdem,                     
@@ -327,7 +326,7 @@ function controlaLayout(operacao) {
 	$('#divConteudoClienteFinanc').css({'clear':'left','margin-top':'5px','padding-top':'5px','border-top':'1px solid #949EAD'});	
 	$('#formDadosSistFinanc,#formEmissaoSistFinanc').css('height','174px');
 	
-	$('#dtabtcct,#nrdctasf,#dgdconta,#cdbccxlt,#cdageban','#formDadosSistFinanc').addClass('campo');
+	$('#dtabtcct,#nrdctasf,#dgdconta,#cddbanco,#cdageban','#formDadosSistFinanc').addClass('campo');
 	$('#nmdbanco,#nmageban','#formDadosSistFinanc').css({'width':'379px'});
 	$('#nminsfin','#formDadosSistFinanc').css({'width':'394px'});
 	$('#dtabtcct','#formDadosSistFinanc').css({'width':'80px'});
@@ -408,7 +407,7 @@ function controlaLayout(operacao) {
 		case 'FE': // Formulário Emissão
 			$("#formEmissaoSistFinanc").limpaFormulario();
 			$('#nmdbanco,#nmageban','#formEmissaoSistFinanc').css({'width':'379px'});
-			$('#cdbccxlt,#cdageban','#formEmissaoSistFinanc').habilitaCampo();
+			$('#cddbanco,#cdageban','#formEmissaoSistFinanc').habilitaCampo();
 			break;
 		
 		default: 
@@ -479,12 +478,12 @@ function controlaLupas(operacao) {
 				campoAnterior = $(this).prev().attr('name');
 
 				// Banco
-				if ( campoAnterior == 'cdbccxlt' ) {
+				if ( campoAnterior == 'cddbanco' ) {
 					bo			= 'b1wgen0059.p';
 					procedure	= 'busca_banco';
 					titulo      = 'Banco';
 					qtReg		= '30';
-					filtros 	= 'Cód. Banco;cdbccxlt;30px;S;0|Nome Banco;nmdbanco;200px;S;';
+					filtros 	= 'Cód. Banco;cddbanco;30px;S;0|Nome Banco;nmdbanco;200px;S;';
 					colunas 	= 'Código;cdbccxlt;20%;right|Banco;nmextbcc;80%;left';
 					mostraPesquisa(bo,procedure,titulo,qtReg,filtros,colunas,divRotina);
 					return false;
@@ -495,7 +494,7 @@ function controlaLupas(operacao) {
 					procedure	= 'busca_agencia';
 					titulo      = 'Agência';
 					qtReg		= '30';
-					filtros 	= 'Cód. Agência;cdageban;30px;S;0|Agência;nmageban;200px;S;|Cód. Banco;cdbccxlt;30px;N;|Banco;nmdbanco;200px;N;';
+					filtros 	= 'Cód. Agência;cdageban;30px;S;0|Agência;nmageban;200px;S;|Cód. Banco;cddbanco;30px;N;|Banco;nmdbanco;200px;N;';
 					colunas 	= 'Código;cdageban;20%;right|Agência;nmageban;80%;left';
 					mostraPesquisa(bo,procedure,titulo,qtReg,filtros,colunas,divRotina);
 					return false;
@@ -506,8 +505,8 @@ function controlaLupas(operacao) {
 	});
 	
 	
-	// Bancos cdbccxlt
-	$('#cdbccxlt','#'+nomeFormulario).unbind('change').bind('change',function() {		
+	// Bancos cddbanco
+	$('#cddbanco','#'+nomeFormulario).unbind('change').bind('change',function() {		
 		$('#cdageban,#nmageban','#'+nomeFormulario).val('');
 		
 		//Alteração: Mantem sempre o campo instituição finaceira bloqueado
@@ -515,23 +514,23 @@ function controlaLupas(operacao) {
 			// if ( $(this).val() == 0 || $(this).val() == '' ) {
 			if ( $(this).val() == 0 ) {
 				showError('error','Informe o banco','Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
-				$('#cdbccxlt,#nmdbanco').val('');
+				$('#cddbanco,#nmdbanco').val('');
 				return false;
 				// $('#nminsfin','#formDadosSistFinanc').habilitaCampo();
 			}
 		}	
-		buscaDescricao('b1wgen0059.p','busca_banco','Banco',$(this).attr('name'),'nmdbanco',$(this).val(),'nmextbcc','cdbccxlt',nomeFormulario);
+		buscaDescricao('b1wgen0059.p','busca_banco','Banco',$(this).attr('name'),'nmdbanco',$(this).val(),'nmextbcc','cddbanco',nomeFormulario);
 		return false;
 	});	
 	
 			
 	// Agencia
 	$('#cdageban','#'+nomeFormulario).unbind('change').bind('change', function() {	
-		if ($('#cdbccxlt','#'+nomeFormulario).val() == '') {
+		if ($('#cddbanco','#'+nomeFormulario).val() == '') {
 			showError('error','Informe o banco','Alerta - Ayllos', 'bloqueiaFundo(divRotina)');			
 			return false;
 		}		
-		buscaDescricao('b1wgen0059.p','busca_agencia','Agencia',$(this).attr('name'),'nmageban',$(this).val(),'nmageban','cdbccxlt',nomeFormulario);
+		buscaDescricao('b1wgen0059.p','busca_agencia','Agencia',$(this).attr('name'),'nmageban',$(this).val(),'nmageban','cddbanco',nomeFormulario);
 		return false;
 	});	
 	

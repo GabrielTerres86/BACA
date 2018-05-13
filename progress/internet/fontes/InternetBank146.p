@@ -21,11 +21,10 @@
 
 
 DEF INPUT  PARAM pr_cdcooper LIKE crapcop.cdcooper                     NO-UNDO.
-DEF INPUT  PARAM pr_nrdconta LIKE crapass.nrdconta                     NO-UNDO.
+DEF INPUT  PARAM pr_nrdconta LIKE crapass.nrdconta                    NO-UNDO.
 DEF INPUT  PARAM pr_dsarquiv AS CHAR                                   NO-UNDO.
 DEF INPUT  PARAM pr_dsdireto AS CHAR                                   NO-UNDO.
 DEF INPUT  PARAM pr_nrseqpag AS INT                                    NO-UNDO.
-DEF INPUT  PARAM pr_iddspscp AS INTE                                   NO-UNDO.
                      
 DEF OUTPUT PARAM xml_dsmsgerr AS CHAR                                  NO-UNDO.
 DEF OUTPUT PARAM TABLE FOR xml_operacao.
@@ -74,10 +73,9 @@ EMPTY TEMP-TABLE xml_operacao146.
                      (INPUT pr_cdcooper,
                       INPUT 3,
                       INPUT pr_nrdconta,
-                      INPUT pr_nrseqpag,
+                      INPUT pr_nrseqpag ,
                       INPUT pr_dsarquiv,
-                      INPUT pr_dsdireto,
-                      INPUT pr_iddspscp,
+                      INPUT pr_dsdireto ,
                       OUTPUT "",
                       OUTPUT ?).
                                             

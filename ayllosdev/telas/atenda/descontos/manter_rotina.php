@@ -323,7 +323,7 @@
 									<th>Pagador</th>
 									<th>Vencimento</th>
 									<th>Valor</th>
-									<th>Situa&ccedil;&atilde;o</th>
+									<th>Cr&iacute;ticas</th>
 									<th>Selecionar</th>
 								</tr>
 							</thead>
@@ -341,13 +341,13 @@
 	    		$html .=	"<td><span>".converteFloat($t->vltitulo)."</span>".formataMoeda($t->vltitulo)."</td>";
 	    		$sit = $t->dssituac;
 	    		if ($sit=="N") {
-		    		$html .=	"<td><img src='../../imagens/icones/sit_ok.png'/></td>";
+		    		$html .=	"<td>N&atilde;o</td>";
 	    		}
 	    		elseif ($sit=="S") {
-		    		$html .=	"<td><img src='../../imagens/icones/sit_er.png'/></td>";
+		    		$html .=	"<td>Sim</td>";
 	    		}
 	    		else{
-		    		$html .=	"<td class='titulo-nao-analisado'>N&atilde;o Analisado</td>";
+		    		$html .=	"<td>N&atilde;o Analisado</td>";
 	    		}
 	    		$html .=	"<td class='botaoSelecionar' onclick='incluiTituloBordero(this);'><button type='button' class='botao'>Incluir</button></td>";
 	    		$html .= "</tr>";

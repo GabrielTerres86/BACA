@@ -5,7 +5,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Guilherme/Supero
-   Data    : Janeiro/2010.                    Ultima atualizacao: 08/03/2018 
+   Data    : Janeiro/2010.                    Ultima atualizacao: 24/03/2017
 
    Dados referentes ao programa:
 
@@ -171,13 +171,6 @@
                             valor e lancar debito na conta da filiada.
                             (Jaison/Diego - SD: 556800)
 
-               21/06/2017 - removida leitura da craptab e campos qtd_lancainf e 
-                            vlr_lantotin na procedure pi_processa_chq_sua. 
-                            PRJ367 - Compe Sessao Unica (Lombardi)
-
-			   08/03/2018 - Removida separacao de cheques inferiore e superiores
-			                no processamento pi_processa_chq_nossa (Diego).
-                            
 ............................................................................. */
 
 DEF STREAM str_1.   /* Relatorio */
@@ -334,7 +327,7 @@ DO TRANSACTION ON ERROR UNDO TRANS_1, RETURN:
     /* Processa todas cooperativas ativas, exceto 3 [Cecred] */
     FOR EACH crapcop  WHERE crapcop.cdcooper <> 3 AND 
                             crapcop.flgativo      NO-LOCK:
-        
+
         FIND crapass WHERE crapass.cdcooper = glb_cdcooper      AND
                            crapass.nrdconta = crapcop.nrctactl
                            NO-LOCK NO-ERROR.
@@ -493,8 +486,29 @@ PROCEDURE pi_processa_chq_nossa:
 /* NOSSA REMESSA  */
    DEF INPUT PARAM par_temassoc AS LOG                   NO-UNDO.
 
+   FIND craptab WHERE craptab.cdcooper = crabcop.cdcooper AND
+                      craptab.nmsistem = "CRED"           AND
+                      craptab.tptabela = "USUARI"         AND
+                      craptab.cdempres = 11               AND
+                      craptab.cdacesso = "MAIORESCHQ"     AND
+                      craptab.tpregist = 01 NO-LOCK NO-ERROR.
+
+   IF   NOT AVAILABLE craptab   THEN
+        DO:
+            glb_cdcritic = 55.
+            RUN fontes/critic.p.
+            UNIX SILENT VALUE ("echo " + STRING(TODAY,"99/99/9999") + 
+                               " - "   + STRING(TIME,"HH:MM:SS") +
+                               " - "   + glb_cdprogra + 
+                               "' --> '" + glb_dscritic + 
+                               " >> log/proc_message.log").
+            RETURN.                   
+        END.
+   
+    
    /* Zerar variaveis */
-   ASSIGN vlr_lantotsu = 0.
+   ASSIGN vlr_lantotin = 0
+          vlr_lantotsu = 0.
 
    /* Acumular variaveis */
    FOR EACH gncpchq WHERE gncpchq.cdcooper = crapcop.cdcooper AND
@@ -505,6 +519,7 @@ PROCEDURE pi_processa_chq_nossa:
 
        IF   FIRST-OF(gncpchq.cdagenci) THEN
             ASSIGN qtd_lancasup = 0       
+                   qtd_lancainf = 0
                    qtd_chqrouba = 0.
 
        IF   par_temassoc THEN 
@@ -514,10 +529,18 @@ PROCEDURE pi_processa_chq_nossa:
                      ASSIGN qtd_chqrouba = qtd_chqrouba + 1.
                 ELSE 
                      DO: /* Cheque Normal */
+                         IF   gncpchq.vlcheque >=
+                              DEC(SUBSTR(craptab.dstextab,01,15)) THEN
                               ASSIGN qtd_lancasup = qtd_lancasup + 1.
+                         ELSE
+                              ASSIGN qtd_lancainf = qtd_lancainf + 1.
                      END.
                      
+                IF   gncpchq.vlcheque >=
+                     DEC(SUBSTR(craptab.dstextab,01,15)) THEN
                      ASSIGN vlr_lantotsu = vlr_lantotsu + gncpchq.vlcheque.
+                ELSE
+                     ASSIGN vlr_lantotin = vlr_lantotin + gncpchq.vlcheque.
             END.
        ELSE 
             DO:
@@ -532,6 +555,15 @@ PROCEDURE pi_processa_chq_nossa:
 
        IF   LAST-OF(gncpchq.cdagenci) THEN 
             DO:
+                IF   qtd_lancainf <> 0  THEN
+                     RUN pi_cria_tab_tarifas
+                               (INPUT gncpchq.cdagenci,
+                                INPUT 1, /* 01 - Cheque Inferior N R */
+                                INPUT qtd_lancainf,
+                                INPUT qtd_lancainf * gncdtrf.vltrfchq,
+                                INPUT 0,
+                                INPUT gncdtrf.vltrfchq).
+        
                 IF   qtd_lancasup <> 0  THEN
                      RUN pi_cria_tab_tarifas
                                (INPUT gncpchq.cdagenci,
@@ -559,6 +591,12 @@ PROCEDURE pi_processa_chq_nossa:
         RUN pi_cria_craplcm(INPUT vlr_lantotsu,
                             INPUT 791).
    
+   /* Criando LCM para valor INF */
+
+   IF   vlr_lantotin <> 0  THEN
+        RUN pi_cria_craplcm(INPUT vlr_lantotin,
+                            INPUT 792).
+
 END PROCEDURE.
 
 /*............................................................................*/
@@ -568,8 +606,28 @@ PROCEDURE pi_processa_chq_sua:
    /* SUA REMESSA */
    DEF INPUT PARAM par_temassoc AS LOG                   NO-UNDO.
 
+   FIND craptab WHERE craptab.cdcooper = crabcop.cdcooper AND
+                      craptab.nmsistem = "CRED"           AND
+                      craptab.tptabela = "USUARI"         AND
+                      craptab.cdempres = 11               AND
+                      craptab.cdacesso = "MAIORESCHQ"     AND
+                      craptab.tpregist = 01  NO-LOCK NO-ERROR.
+
+   IF   NOT AVAILABLE craptab   THEN
+        DO:
+            glb_cdcritic = 55.
+            RUN fontes/critic.p.
+            UNIX SILENT VALUE ("echo " + STRING(TODAY,"99/99/9999") +
+                               " - " + STRING(TIME,"HH:MM:SS") +
+                               " - " + glb_cdprogra + 
+                               "' --> '" + glb_dscritic + 
+                               " >> log/proc_message.log").
+            RETURN.                   
+        END.
+        
    /* Zerar variaveis */
-   ASSIGN vlr_lantotsu = 0.
+   ASSIGN vlr_lantotin = 0
+          vlr_lantotsu = 0.
 
    /* Acumular variaveis */
    FOR EACH gncpchq WHERE gncpchq.cdcooper = crapcop.cdcooper  AND
@@ -581,6 +639,7 @@ PROCEDURE pi_processa_chq_sua:
 
        IF   FIRST-OF(gncpchq.cdagenci) THEN
             ASSIGN qtd_lancasup = 0
+                   qtd_lancainf = 0
                    qtd_chqrouba = 0.
 
        IF   par_temassoc THEN 
@@ -590,10 +649,18 @@ PROCEDURE pi_processa_chq_sua:
                     ASSIGN qtd_chqrouba = qtd_chqrouba + 1.
                ELSE 
                     DO: /* CHQ NORMAL */
-                       ASSIGN qtd_lancasup = qtd_lancasup + 1.
+                        IF   gncpchq.vlcheque >=
+                                     DEC(SUBSTR(craptab.dstextab,01,15)) THEN
+                             ASSIGN qtd_lancasup = qtd_lancasup + 1.
+                        ELSE
+                             ASSIGN qtd_lancainf = qtd_lancainf + 1.
                     END.
                     
-               ASSIGN vlr_lantotsu = vlr_lantotsu + gncpchq.vlcheque.
+               IF   gncpchq.vlcheque >=
+                            DEC(SUBSTR(craptab.dstextab,01,15)) THEN
+                    ASSIGN vlr_lantotsu = vlr_lantotsu + gncpchq.vlcheque.
+               ELSE
+                    ASSIGN vlr_lantotin = vlr_lantotin + gncpchq.vlcheque.
             END.
        ELSE 
             DO:
@@ -607,6 +674,15 @@ PROCEDURE pi_processa_chq_sua:
             END.
             IF   LAST-OF(gncpchq.cdagenci) THEN 
                  DO:
+                     IF   qtd_lancainf <> 0  THEN
+                          RUN pi_cria_tab_tarifas 
+                                    (INPUT gncpchq.cdagenci,
+                                     INPUT 6, /*06 - Cheque Inferior S R*/
+                                     INPUT qtd_lancainf,
+                                     INPUT qtd_lancainf * gncdtrf.vltrfchq,
+                                     INPUT 0,
+                                     INPUT gncdtrf.vltrfchq).
+        
                      IF   qtd_lancasup <> 0  THEN
                           RUN pi_cria_tab_tarifas 
                                     (INPUT gncpchq.cdagenci,
@@ -631,6 +707,11 @@ PROCEDURE pi_processa_chq_sua:
         /* Criando LCM para valor SUP */
         RUN pi_cria_craplcm (INPUT vlr_lantotsu,
                              INPUT 784).
+
+   IF   vlr_lantotin <> 0  THEN
+        /* Criando LCM para valor INF */
+        RUN pi_cria_craplcm (INPUT vlr_lantotin,
+                             INPUT 785).
 
 END PROCEDURE.
 

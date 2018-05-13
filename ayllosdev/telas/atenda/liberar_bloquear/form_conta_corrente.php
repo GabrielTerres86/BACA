@@ -6,7 +6,6 @@
  * OBJETIVO     : Formulário da rotina Liberar/Bloquear da tela ATENDA
  * --------------
  * ALTERAÇÕES   : 08/08/2017 - Implementacao da melhoria 438. Heitor (Mouts).
- *                15/03/2018 - Campo de selecao de cancelamento automatico de credito (Marcel Kohls / AMCom)
  * --------------
  */	
 ?>
@@ -30,15 +29,6 @@
 	<br \>
 	<br \>
 	
-    <label for="flcnaulc"><? echo utf8ToHtml(' Cancelamento Autom&aacute;tico do Limite de Cr&eacute;dito:') ?></label>
-	<select id="flcnaulc" name="flcnaulc" >
-        <option value="yes">Sim</option>
-		<option value="no">Não</option>
-	</select>
-
-	<br \>
-	<br \>
-
 	<label for="motivo_bloqueio_maj"><? echo utf8ToHtml('Motivo do bloqueio da Majora&ccedil;&atilde;o:') ?></label>
 	<input type="text" id="motivo_bloqueio_maj" name="motivo_bloqueio_maj" />
 	

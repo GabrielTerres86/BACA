@@ -42,7 +42,8 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS599" (pr_cdcooper in crapcop.cdcooper
           from craphis h
          where h.cdcooper = pr_cdcooper
            and h.indebcre = 'C'
-           and h.inmonpld = 1)
+           and h.cdhistor not in (2, 15, 47, 191, 270, 338, 478, 483, 497, 499, 501, 530,
+                                  573, 600, 622, 686, 766, 794, 801, 802, 803, 804, 887))
     select craplcm.nrdconta,
            crapass.inpessoa,
            crapass.cdagenci,
@@ -173,17 +174,6 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS599" (pr_cdcooper in crapcop.cdcooper
      where crapjur.cdcooper = pr_cdcooper
        and crapjur.nrdconta = pr_nrdconta;
   rw_crapjur       cr_crapjur%rowtype;
-  
-   -- Cursor para obter os parametros da tabela TBCC_MONITOR_PARAMETROS
-  CURSOR cr_monitora (pr_cdcooper IN tbcc_monitoramento_parametro.cdcooper%TYPE)IS
-  SELECT mon.qtrenda_mensal_pf,
-         mon.qtrenda_mensal_pj,
-         mon.vlcredito_mensal_pf,
-         mon.vlcredito_mensal_pj,
-         mon.inrenda_zerada
-  FROM tbcc_monitoramento_parametro mon
-  WHERE mon.cdcooper = pr_cdcooper;  
-  
   --
   rw_crapdat       btch0001.cr_crapdat%rowtype;
   -- Exception para tratamento de erros tratáveis sem abortar a execução
@@ -206,9 +196,6 @@ CREATE OR REPLACE PROCEDURE CECRED."PC_CRPS599" (pr_cdcooper in crapcop.cdcooper
   vr_vlfatano      crapjur.vlfatano%type;
   -- Tratamento de erros
   vr_exc_erro      exception;
-  vr_indrenda      NUMBER(1);
-  vr_qtmenfis      NUMBER(5);
-  vr_qtmenjur      NUMBER(5);
 begin
   vr_cdprogra := 'CRPS599';
   -- Incluir nome do módulo logado
@@ -246,21 +233,16 @@ begin
   vr_dtinimes := trunc(vr_dtmvtolt, 'mm');
   vr_dtfimmes := vr_dtmvtolt;
   -- Busca informação de valor mensal para pessoa física e jurídica
-  OPEN cr_monitora(pr_cdcooper => pr_cdcooper);
-  FETCH cr_monitora INTO vr_qtmenfis,
-                         vr_qtmenjur,
-                         vr_vlmenfis,
-                         vr_vlmenjur,
-                         vr_indrenda;
-  
-  IF cr_monitora%NOTFOUND THEN
-    pr_cdcritic := 055;
-    CLOSE cr_monitora;
-    RAISE vr_exc_erro;
-  ELSE
-    CLOSE cr_monitora;
-  END IF;
-  
+  vr_dstextab := tabe0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper,
+                                            pr_nmsistem => 'LAV',
+                                            pr_tptabela => 'CONFIG',
+                                            pr_cdempres => 0,
+                                            pr_cdacesso => 'PARLVDNCP',
+                                            pr_tpregist => null);
+  if vr_dstextab is not null then
+    vr_vlmenfis := gene0002.fn_busca_entrada(5, vr_dstextab, ';');
+    vr_vlmenjur := gene0002.fn_busca_entrada(6, vr_dstextab, ';');
+  end if;
   -- Leitura dos lançamentos em depósitos a vista
   for rw_craplcm in cr_craplcm (pr_cdcooper,
                                 vr_dtinimes,
@@ -287,14 +269,6 @@ begin
             end if;
           close cr_crapcje;
         end loop;
-        
-        /*** Indicador de renda zerada ****/
-        IF vr_indrenda = 0 AND
-           vr_vlrendim = 0 THEN
-           CONTINUE;
-        END IF; 
-        
-        if rw_craplcm.vlcredit >= (vr_vlrendim * vr_qtmenfis) then
         -- Cria registro de controle de lavagem de dinheiro
         begin
           insert into crapcld (cdcooper,
@@ -322,7 +296,6 @@ begin
             raise vr_exc_erro;
         end;
       end if;
-      end if;
     elsif rw_craplcm.inpessoa = 2 then
       -- Pessoa jurídica
       if rw_craplcm.vlcredit >= vr_vlmenjur then
@@ -346,17 +319,8 @@ begin
             vr_vlfatano := 0;
           end if;
         close cr_crapjur;
-        
         -- Verifica se o valor de faturamento do mês mais recente é maior que a média mensal. Utiliza o maior valor.
         vr_vlrendim := greatest(vr_vlfatano / 12, vr_vlfatmes);
-        
-        /*** Indicador de renda zerada ****/
-        IF vr_indrenda = 0 AND
-           vr_vlrendim = 0 THEN
-           CONTINUE;
-        END IF;
-        
-        if rw_craplcm.vlcredit >= (vr_vlrendim * vr_qtmenjur) then     
         -- Cria registro de controle de lavagem de dinheiro
         begin
           insert into crapcld (cdcooper,
@@ -384,7 +348,6 @@ begin
             raise vr_exc_erro;
         end;
       end if;
-    end if;
     end if;
   end loop;
   -- Processo OK, devemos chamar a fimprg

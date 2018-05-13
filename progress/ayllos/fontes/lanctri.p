@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Edson
-   Data    : Janeiro/94.                      Ultima atualizacao: 16/04/2018
+   Data    : Janeiro/94.                      Ultima atualizacao: 13/01/2017
 
    Dados referentes ao programa:
 
@@ -229,15 +229,10 @@
 
                13/01/2017 - Implementar trava para não permitir efetivar empréstimo sem que 
                             as informações de Imóveis estejam preenchidas (Renato - Supero)
-
-               30/01/2017 - Nao permitir efetuar lancamento para o produto Pos-Fixado.
-                            (Jaison/James - PRJ298)
-
+                            
                17/02/2017 - Retirada a trava de efetivaçao de empréstimo sem que as informações 
                             de Imóveis estejam preenchidas, conforme solicitaçao antes da 
                             liberaçao do projeto (Renato - Supero)
-               
-               16/04/2018 - P410 - Melhorias/Ajustes IOF (Marcos-Envolti)  
                             
 ............................................................................. */
 
@@ -256,55 +251,51 @@ ON RETURN OF b-ge-economico
         APPLY "GO".
    END.
 
-DEF VAR h-b1wgen0001         AS HANDLE                                NO-UNDO.
-DEF VAR h-b1wgen0043         AS HANDLE                                NO-UNDO.
-DEF VAR h-b1wgen0134         AS HANDLE                                NO-UNDO.
-DEF VAR h-b1wgen0138         AS HANDLE                                NO-UNDO.
-DEF VAR h-b1wgen0110         AS HANDLE                                NO-UNDO.
-DEF VAR h-b1wgen0171         AS HANDLE                                NO-UNDO.
-DEF VAR h-b1wgen0002         AS HANDLE                                NO-UNDO.
+DEF VAR h-b1wgen0001         AS HANDLE               NO-UNDO.
+DEF VAR h-b1wgen0043         AS HANDLE               NO-UNDO.
+DEF VAR h-b1wgen0134         AS HANDLE               NO-UNDO.
+DEF VAR h-b1wgen0138         AS HANDLE               NO-UNDO.
+DEF VAR h-b1wgen0110         AS HANDLE               NO-UNDO.
+DEF VAR h-b1wgen0171         AS HANDLE               NO-UNDO.
+DEF VAR h-b1wgen0002         AS HANDLE               NO-UNDO.
 
-DEF VAR aux_totlinha         AS DECI                                  NO-UNDO.
-DEF VAR aux_cdgraupr         LIKE crapttl.cdgraupr                    NO-UNDO.
-DEF VAR ass_cdempres         AS INTE                                  NO-UNDO.
-DEF VAR ass_nrcadast         AS INTE                                  NO-UNDO.
-DEF VAR aux_flgpagto         AS LOGI                                  NO-UNDO.
-DEF VAR aux_par_nrdconta     AS INTE                                  NO-UNDO.
-DEF VAR aux_par_dsctrliq     AS CHAR                                  NO-UNDO.
-DEF VAR aux_par_vlutiliz     AS DECI                                  NO-UNDO.
-DEF VAR aux_vlr_maxleg       AS DECI                                  NO-UNDO.
-DEF VAR aux_vlr_maxutl       AS DECI                                  NO-UNDO.
-DEF VAR aux_vlr_minscr       AS DECI                                  NO-UNDO.
-DEF VAR aux_vlr_excedido     AS LOGI                                  NO-UNDO.
-DEF VAR aux_qtprecal_retorno LIKE crapepr.qtprecal                    NO-UNDO.
-DEF VAR aux_mensagem_liq     AS CHAR FORMAT "x(40)"                   NO-UNDO.
-DEF VAR aux_valor_maximo     AS DECI                                  NO-UNDO.
-DEF VAR aux_tpdescto         LIKE crawepr.tpdescto                    NO-UNDO.
-DEF VAR aux_cdtpinsc         LIKE crapsab.cdtpinsc                    NO-UNDO.
-DEF VAR aux_nmdsacad         LIKE crapsab.nmdsacad                    NO-UNDO.
-DEF VAR aux_dsendsac         LIKE crapsab.dsendsac                    NO-UNDO.
-DEF VAR aux_nmbaisac         LIKE crapsab.nmbaisac                    NO-UNDO.
-DEF VAR aux_nrcepsac         LIKE crapsab.nrcepsac                    NO-UNDO.
-DEF VAR aux_nmcidsac         LIKE crapsab.nmcidsac                    NO-UNDO.
-DEF VAR aux_cdufsaca         LIKE crapsab.cdufsaca                    NO-UNDO.
-DEF VAR aux_complend         LIKE crapsab.complend                    NO-UNDO.
-DEF VAR aux_nrendsac         LIKE crapsab.nrcepsac                    NO-UNDO.
-DEF VAR aux_dsnivris         AS CHAR                                  NO-UNDO.
-DEF VAR aux_nrdgrupo         AS INTE                                  NO-UNDO.
-DEF VAR aux_gergrupo         AS CHAR                                  NO-UNDO.
-DEF VAR aux_dsdrisco         AS CHAR                                  NO-UNDO.
-DEF VAR aux_dsdrisgp         AS CHAR                                  NO-UNDO.
-DEF VAR aux_pertengp         AS LOGI                                  NO-UNDO.
-DEF VAR aux_dsrotina         AS CHAR                                  NO-UNDO.
-DEF VAR aux_percetop         AS DECI                                  NO-UNDO.
-DEF VAR aux_txcetmes         AS DECI                                  NO-UNDO.
-DEF VAR aux_flctrliq         AS LOGI                                  NO-UNDO.
-DEF VAR aux_flgativo         AS INTE                                  NO-UNDO.
-DEF VAR aux_vltotiof         AS DECI                                  NO-UNDO.
-DEF VAR aux_vliofpri         AS DECI                                  NO-UNDO.
-DEF VAR aux_vliofadi         AS DECI                                  NO-UNDO.
-DEF VAR aux_flgimune         AS DECI                                  NO-UNDO.
-DEF VAR aux_dscatbem         AS CHAR                                  NO-UNDO.
+DEF VAR aux_totlinha         AS DECI                 NO-UNDO.
+DEF VAR aux_cdgraupr         LIKE crapttl.cdgraupr   NO-UNDO.
+DEF VAR ass_cdempres         AS INTE                 NO-UNDO.
+DEF VAR ass_nrcadast         AS INTE                 NO-UNDO.
+DEF VAR aux_flgpagto         AS LOGI                 NO-UNDO.
+DEF VAR aux_par_nrdconta     AS INTE                 NO-UNDO.
+DEF VAR aux_par_dsctrliq     AS CHAR                 NO-UNDO.
+DEF VAR aux_par_vlutiliz     AS DECI                 NO-UNDO.
+DEF VAR aux_vlr_maxleg       AS DECI                 NO-UNDO.
+DEF VAR aux_vlr_maxutl       AS DECI                 NO-UNDO.
+DEF VAR aux_vlr_minscr       AS DECI                 NO-UNDO.
+DEF VAR aux_vlr_excedido     AS LOGI                 NO-UNDO.
+DEF VAR aux_qtprecal_retorno LIKE crapepr.qtprecal   NO-UNDO.
+DEF VAR aux_mensagem_liq     AS CHAR FORMAT "x(40)"  NO-UNDO.
+DEF VAR aux_valor_maximo     AS DECI                 NO-UNDO.
+DEF VAR aux_tpdescto         LIKE crawepr.tpdescto   NO-UNDO.
+DEF VAR aux_cdtpinsc         LIKE crapsab.cdtpinsc   NO-UNDO.
+DEF VAR aux_nmdsacad         LIKE crapsab.nmdsacad   NO-UNDO.
+DEF VAR aux_dsendsac         LIKE crapsab.dsendsac   NO-UNDO.
+DEF VAR aux_nmbaisac         LIKE crapsab.nmbaisac   NO-UNDO.
+DEF VAR aux_nrcepsac         LIKE crapsab.nrcepsac   NO-UNDO.
+DEF VAR aux_nmcidsac         LIKE crapsab.nmcidsac   NO-UNDO.
+DEF VAR aux_cdufsaca         LIKE crapsab.cdufsaca   NO-UNDO.
+DEF VAR aux_complend         LIKE crapsab.complend   NO-UNDO.
+DEF VAR aux_nrendsac         LIKE crapsab.nrcepsac   NO-UNDO.
+DEF VAR aux_dsnivris         AS CHAR                 NO-UNDO.
+DEF VAR aux_nrdgrupo         AS INTE                 NO-UNDO.
+DEF VAR aux_gergrupo         AS CHAR                 NO-UNDO.
+DEF VAR aux_dsdrisco         AS CHAR                 NO-UNDO.
+DEF VAR aux_dsdrisgp         AS CHAR                 NO-UNDO.
+DEF VAR aux_pertengp         AS LOGI                 NO-UNDO.
+DEF VAR aux_dsrotina         AS CHAR                 NO-UNDO.
+DEF VAR aux_percetop         AS DECI                 NO-UNDO.
+DEF VAR aux_txcetmes         AS DECI                 NO-UNDO.
+DEF VAR aux_flctrliq         AS LOGI                 NO-UNDO.
+DEF VAR aux_flgativo         AS INTE                 NO-UNDO.
+/*DEF VAR aux_flimovel         AS INTE	             NO-UNDO. 17/02/2017 - Validaçao removida */
 
 DEF BUFFER b_crawepr FOR crawepr.
 
@@ -621,14 +612,6 @@ DO WHILE TRUE:
             DO:
                 MESSAGE "A proposta nao pode ser efetivada,"
                         + " analise nao finalizada".
-                NEXT.            
-            END.
-
-            /* Nao permite efetuar lancamento para o produto Pos-Fixado */
-			IF crawepr.tpemprst = 2 THEN
-            DO:
-                ASSIGN glb_cdcritic = 946.
-                NEXT-PROMPT tel_nrctremp WITH FRAME f_lanctr.
                 NEXT.            
             END.
           
@@ -1219,76 +1202,7 @@ DO WHILE TRUE:
    RELEASE craplot.
    RELEASE crablem.
    RELEASE crabepr.
-   
-   
-   /* Buscar dados do associado */
-   FIND FIRST crapass WHERE crapass.cdcooper = glb_cdcooper AND
-                            crapass.nrdconta = tel_nrdconta
-                            NO-LOCK NO-ERROR.
-   
-   /* Montar lista de bens */   
-   ASSIGN aux_dscatbem = "".
-   FOR EACH crapbpr WHERE crapbpr.cdcooper = glb_cdcooper  AND
-                          crapbpr.nrdconta = tel_nrdconta  AND
-                          crapbpr.nrctrpro = tel_nrctremp  AND 
-                          crapbpr.tpctrpro = 90 NO-LOCK:
-       ASSIGN aux_dscatbem = aux_dscatbem + "|" + crapbpr.dscatbem.
-   END.
-       
-   
-   { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} } 
-   RUN STORED-PROCEDURE pc_calcula_iof_epr
-   aux_handproc = PROC-HANDLE NO-ERROR (INPUT glb_cdcooper       /* Código da cooperativa */
-                                       ,INPUT tel_nrdconta       /* Número da conta */
-                                       ,INPUT tel_nrctremp       /* Numero do contrato */
-                                       ,INPUT tel_dtmvtolt       /* Data do movimento para busca na tabela de IOF */
-                                       ,INPUT crapass.inpessoa   /* Tipo de Pessoa */
-                                       ,INPUT tel_cdlcremp       /* Linha de crédito */
-                                       ,INPUT tel_cdfinemp       /* Finalidade */
-                                       ,INPUT tel_qtpreemp       /* Quantidade de parcelas */
-                                       ,INPUT tel_vlpreemp       /* Valor da parcela do emprestimo */
-                                       ,INPUT tel_vlemprst       /* Valor do emprestimo */
-                                       ,INPUT tel_dtdpagto       /* Data de pagamento */
-                                       ,INPUT crawepr.dtlibera   /* Data de liberação */
-                                       ,INPUT crawepr.tpemprst   /* Tipo de emprestimo */
-                                       ,INPUT crawepr.dtcarenc   /* Data de Carencia */
-                                       ,INPUT 0                  /* dias de carencia */
-                                       ,INPUT aux_dscatbem       /* Bens em garantia */
-                                       ,INPUT crawepr.idfiniof   /* Indicador de financiamento de iof e tarifa */
-                                       ,INPUT aux_par_dsctrliq   /* pr_dsctrliq */
-                                       ,OUTPUT 0                 /* Valor calculado da Parcela */
-                                       ,OUTPUT 0                 /* Retorno do valor do IOF */
-                                       ,OUTPUT 0                 /* pr_vliofpri Valor calculado do iof principal */
-                                       ,OUTPUT 0                 /* pr_vliofadi Valor calculado do iof adicional */
-                                       ,OUTPUT 0                 /* pr_flgimune Possui imunidade tributária (1 - Sim / 0 - Nao) */
-                                       ,OUTPUT "").              /* Critica */
 
-   /* Fechar o procedimento para buscarmos o resultado */ 
-   CLOSE STORED-PROC pc_calcula_iof_epr
-   
-   aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
-   { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
-   
-   /* Se retornou erro */
-   ASSIGN glb_dscritic = ""
-          glb_dscritic = pc_calcula_iof_epr.pr_dscritic
-                         WHEN pc_calcula_iof_epr.pr_dscritic <> ?.
-   IF glb_dscritic <> "" THEN
-     LEAVE.
-     
-   /* Soma IOF principal, adicional e secundário */
-   ASSIGN aux_vliofpri = 0
-          aux_vliofadi = 0
-          aux_vltotiof = 0.
-   IF pc_calcula_iof_epr.pr_valoriof <> ? THEN
-       ASSIGN aux_vltotiof = ROUND(DECI(pc_calcula_iof_epr.pr_valoriof),2).
-   IF pc_calcula_iof_epr.pr_vliofpri <> ? THEN
-       ASSIGN aux_vliofpri = ROUND(DECI(pc_calcula_iof_epr.pr_vliofpri),2).   
-   IF pc_calcula_iof_epr.pr_vliofadi <> ? THEN
-       ASSIGN aux_vliofadi = ROUND(DECI(pc_calcula_iof_epr.pr_vliofadi),2).   
-   IF pc_calcula_iof_epr.pr_flgimune <> ? THEN
-       ASSIGN aux_flgimune = pc_calcula_iof_epr.pr_flgimune.
-       
    DO TRANSACTION ON ENDKEY UNDO, LEAVE:
 
       DO WHILE TRUE:
@@ -1358,7 +1272,7 @@ DO WHILE TRUE:
              crabepr.qtprecal = 0
              crabepr.dtinipag = ?
              crabepr.tpdescto = aux_tpdescto
-             crabepr.vliofepr = aux_vltotiof
+             crabepr.vliofepr = TRUNCATE((tel_vlemprst * tab_txiofepr),2)
              crabepr.cdcooper = glb_cdcooper.
 
       IF tel_cdlcremp = 100   THEN
@@ -1378,61 +1292,60 @@ DO WHILE TRUE:
                          EXCLUSIVE-LOCK NO-ERROR.
 
       IF  AVAIL crawepr THEN
-          DO:      
-      
-      
-        IF  NOT VALID-HANDLE(h-b1wgen0002) THEN
-            RUN sistema/generico/procedures/b1wgen0002.p
-                PERSISTENT SET h-b1wgen0002.
+          DO:
+              IF  NOT VALID-HANDLE(h-b1wgen0002) THEN
+                  RUN sistema/generico/procedures/b1wgen0002.p
+                      PERSISTENT SET h-b1wgen0002.
 
-        /* Calcular o cet automaticamente */
-        RUN calcula_cet_novo IN h-b1wgen0002(
-                             INPUT glb_cdcooper,
-                             INPUT 0, /* agencia */
-                             INPUT 0, /* caixa */
-                             INPUT glb_cdoperad,
-                             INPUT glb_nmdatela,
-                             INPUT 1, /* ayllos*/
-                             INPUT glb_dtmvtolt,
-                             INPUT tel_nrdconta,
-                             INPUT crapass.inpessoa,
-                             INPUT 2, /* cdusolcr */
-                             INPUT crawepr.cdlcremp,
-                             INPUT crawepr.tpemprst,
-                             INPUT crawepr.nrctremp,
-                             INPUT glb_dtmvtolt,
-                             INPUT tel_vlemprst,
-                             INPUT tel_vlpreemp,
-                             INPUT tel_qtpreemp,
-                             INPUT tel_dtdpagto,
-                             INPUT crawepr.cdfinemp,
-                             INPUT aux_dscatbem, /* dscatbem */
-                             INPUT crawepr.idfiniof, /* IDFINIOF */
-                             INPUT aux_par_dsctrliq, /* dsctrliq */
-                             INPUT "S",
-                            OUTPUT aux_percetop, /* taxa cet ano */
-                            OUTPUT aux_txcetmes, /* taxa cet mes */
-                            OUTPUT TABLE tt-erro).
+              FIND FIRST crapass WHERE crapass.cdcooper = glb_cdcooper AND
+                                       crapass.nrdconta = tel_nrdconta
+                                       NO-LOCK NO-ERROR.
 
-        IF  VALID-HANDLE(h-b1wgen0002) THEN
-            DELETE OBJECT h-b1wgen0002.
+              /* Calcular o cet automaticamente */
+              RUN calcula_cet_novo IN h-b1wgen0002(
+                                   INPUT glb_cdcooper,
+                                   INPUT 0, /* agencia */
+                                   INPUT 0, /* caixa */
+                                   INPUT glb_cdoperad,
+                                   INPUT glb_nmdatela,
+                                   INPUT 1, /* ayllos*/
+                                   INPUT glb_dtmvtolt,
+                                   INPUT tel_nrdconta,
 
-        IF  RETURN-VALUE <> "OK" THEN
-            DO:
-                FIND FIRST tt-erro NO-LOCK NO-ERROR.
+                                   INPUT crapass.inpessoa,
+                                   INPUT 2, /* cdusolcr */
+                                   INPUT crawepr.cdlcremp,
+                                   INPUT crawepr.tpemprst,
+                                   INPUT crawepr.nrctremp,
+                                   INPUT glb_dtmvtolt,
+                                   INPUT tel_vlemprst,
+                                   INPUT tel_vlpreemp,
+                                   INPUT tel_qtpreemp,
+                                   INPUT tel_dtdpagto,
+                                   INPUT crawepr.cdfinemp,
+                                  OUTPUT aux_percetop, /* taxa cet ano */
+                                  OUTPUT aux_txcetmes, /* taxa cet mes */
+                                  OUTPUT TABLE tt-erro).
 
-                DO  WHILE TRUE ON ENDKEY UNDO, LEAVE:
-                    IF  AVAIL tt-erro THEN
-                        MESSAGE tt-erro.dscritic.
+             IF  VALID-HANDLE(h-b1wgen0002) THEN
+                 DELETE OBJECT h-b1wgen0002.
 
-                    PAUSE 3 NO-MESSAGE.
-                    LEAVE.
-                END.
-            END.
+             IF  RETURN-VALUE <> "OK" THEN
+                 DO:
+                     FIND FIRST tt-erro NO-LOCK NO-ERROR.
 
-        ASSIGN crawepr.percetop = aux_percetop.
-      END.
-      
+                     DO  WHILE TRUE ON ENDKEY UNDO, LEAVE:
+                         IF  AVAIL tt-erro THEN
+                             MESSAGE tt-erro.dscritic.
+
+                         PAUSE 3 NO-MESSAGE.
+                         LEAVE.
+                     END.
+                 END.
+
+                 ASSIGN crawepr.percetop = aux_percetop.
+          END.
+
       RUN sistema/generico/procedures/b1wgen0043.p PERSISTENT SET h-b1wgen0043.
 
       RUN obtem_emprestimo_risco IN h-b1wgen0043
@@ -1487,54 +1400,7 @@ DO WHILE TRUE:
              craplot.vlcompdb = craplot.vlcompdb + tel_vlemprst.
 
       VALIDATE crablem.
-      
 
-      /* Se houve valor de IOF calculado */
-      IF aux_vliofpri + aux_vliofadi > 0 THEN
-      DO:
-
-          { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} } 
-          /* Efetuar a chamada a rotina Oracle */
-          RUN STORED-PROCEDURE pc_insere_iof
-          aux_handproc = PROC-HANDLE NO-ERROR (INPUT glb_cdcooper        /* Cooperativa              */ 
-                                              ,INPUT tel_nrdconta        /* Numero da Conta Corrente */
-                                              ,INPUT tel_dtmvtolt        /* Data de Movimento        */
-                                              ,INPUT 1                   /* Emprestimo               */
-                                              ,INPUT tel_nrctremp        /* Numero do Bordero        */
-                                              ,INPUT ?                   /* ID Lautom                */
-                                              ,INPUT tel_dtmvtolt        /* Data Movimento LCM       */
-                                              ,INPUT tel_cdagenci        /* Numero da Agencia LCM    */
-                                              ,INPUT 100                 /* Numero do Caixa LCM      */
-                                              ,INPUT tel_nrdolote        /* Numero do Lote LCM       */
-                                              ,INPUT tel_nrseqdig        /* Sequencia LCM            */
-                                              ,INPUT aux_vliofpri        /* Valor Principal IOF      */
-                                              ,INPUT aux_vliofadi        /* Valor Adicional IOF      */
-                                              ,INPUT 0                   /* Valor Complementar IOF   */
-                                              ,INPUT aux_flgimune        /* Possui imunidade tributária (1 - Sim / 0 - Nao) */
-                                              ,OUTPUT 0                  /* Codigo da Critica        */
-                                              ,OUTPUT "").               /* Descriçao da crítica     */
-                                              
-          /* Fechar o procedimento para buscarmos o resultado */ 
-          CLOSE STORED-PROC pc_insere_iof
-            aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
-          { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
-          ASSIGN glb_cdcritic = 0
-                 glb_dscritic = ""
-                 glb_cdcritic = pc_insere_iof.pr_cdcritic
-                                WHEN pc_insere_iof.pr_cdcritic <> ?
-                 glb_dscritic = pc_insere_iof.pr_dscritic
-                                WHEN pc_insere_iof.pr_dscritic <> ?.
-          /* Se retornou erro */
-          IF glb_cdcritic > 0 OR glb_dscritic <> "" THEN 
-             DO:
-                 ASSIGN glb_dscritic = "Erro ao inserir lancamento de IOF: " + glb_dscritic.
-                 MESSAGE glb_dscritic.
-                 PAUSE 3 NO-MESSAGE.
-                 UNDO, RETURN.
-             END.
-      
-      END.
-      
       /* Caso for emprestimos com emissao de boletos, criar crapsab
          Este tipo de emprestimo nao tem avalistas */
       IF crabepr.cdlcremp = tab_cdlcrbol  THEN

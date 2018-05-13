@@ -7,15 +7,15 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps702 (pr_cdcooper IN crapcop.cdcooper%T
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Odirlei Busana(AMcom)
-     Data    : Maio/2016                     Ultima atualizacao: 08/12/2017
+     Data    : Maio/2016                     Ultima atualizacao: 09/05/2015
 
      Dados referentes ao programa:
 
      Frequencia: Job Oracle - 15 em 15 Minutos - JBCOBRAN_CRPS702
      Objetivo  : Atualização do status do convênio de cobrança dos cooperados.
 
-     Alteracoes: 08/12/2017 - Inclusão de chamada da npcb0002.pc_libera_sessao_sqlserver_npc
-                              (SD#791193 - AJFink)
+     Alteracoes: 99/99/9999 - xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
   ............................................................................ */
 
 
@@ -532,7 +532,6 @@ BEGIN
   
   -- Salvar informações atualizadas
   COMMIT;
-  npcb0002.pc_libera_sessao_sqlserver_npc('PC_CRPS702_1');
 
 EXCEPTION  
   WHEN vr_exc_saida THEN
@@ -548,7 +547,6 @@ EXCEPTION
                                          
     -- Efetuar rollback
     ROLLBACK;
-    npcb0002.pc_libera_sessao_sqlserver_npc('PC_CRPS702_2');
   WHEN OTHERS THEN
     -- Efetuar retorno do erro não tratado
     vr_dscritic := SQLERRM;                           
@@ -557,6 +555,5 @@ EXCEPTION
                           pr_dscritic => vr_dscritic);
     -- Efetuar rollback
     ROLLBACK;
-    npcb0002.pc_libera_sessao_sqlserver_npc('PC_CRPS702_3');
 END pc_crps702;
 /

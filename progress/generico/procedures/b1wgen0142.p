@@ -208,7 +208,7 @@ PROCEDURE Busca_Dados:
             DO:
                 FOR EACH crapcop NO-LOCK:
                     CREATE tt-crapcop.
-                    BUFFER-COPY crapcop EXCEPT nrctabcb TO tt-crapcop.
+                    BUFFER-COPY crapcop TO tt-crapcop.
                 END.
             END.
         ELSE 
@@ -218,7 +218,7 @@ PROCEDURE Busca_Dados:
                 IF  AVAIL crapcop THEN
                     DO:
                         CREATE tt-crapcop.
-                        BUFFER-COPY crapcop EXCEPT nrctabcb TO tt-crapcop.
+                        BUFFER-COPY crapcop TO tt-crapcop.
                         RELEASE crapcop.
                     END.
             END.
@@ -447,7 +447,7 @@ PROCEDURE pi_carrega_cooperativas:
                                crapcop.flgativo = TRUE NO-LOCK:
 
             CREATE tt-crapcop.
-            BUFFER-COPY crapcop EXCEPT nrctabcb TO tt-crapcop
+            BUFFER-COPY crapcop TO tt-crapcop
             ASSIGN par_nmcooper = par_nmcooper           + "," +
                                   CAPS(crapcop.nmrescop) + "," +
                                   STRING(crapcop.cdcooper).

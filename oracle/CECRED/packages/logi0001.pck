@@ -115,19 +115,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LOGI0001 AS
     Alteracoes: 28/09/2015 - Conversao Progress >> Oracle (PLSQL) - José Luís (DB1)
     
                 30/06/2016 - Adicionado UPPER no campo do operador (Douglas - Chamado 478630)
-
-				23/08/2017 - Alterado para validar senha do coordenador através da senha do usuario no AD. (PRJ339 - Reinert)
   ---------------------------------------------------------------------------------------------------------------*/
 
   ------------------------------- CURSORES ---------------------------------
   -- Busca os dados do operador
   CURSOR cr_crapope (pr_cdcooper IN crapope.cdcooper%TYPE,
-                     pr_cdoperad IN crapope.cdoperad%TYPE) IS
+                     pr_cdoperad IN crapope.cdoperad%TYPE,
+                     pr_cddsenha IN crapope.cddsenha%TYPE) IS
   SELECT ope.nvoperad
         ,ope.cdsitope
     FROM crapope ope
    WHERE ope.cdcooper = pr_cdcooper
-     AND UPPER(ope.cdoperad) = UPPER(pr_cdoperad);
+     AND UPPER(ope.cdoperad) = UPPER(pr_cdoperad)
+     AND ope.cddsenha = pr_cddsenha;
      
   rw_crapope cr_crapope%ROWTYPE;   
   
@@ -182,33 +182,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LOGI0001 AS
     
     -- Verificar os dados do operador
     OPEN cr_crapope (pr_cdcooper => pr_cdcooper,
-                     pr_cdoperad => pr_operador);
+                     pr_cdoperad => pr_operador,
+                     pr_cddsenha => pr_nrdsenha);
     
     FETCH cr_crapope INTO rw_crapope;
     
     -- Se não encontrar registro
     IF cr_crapope%NOTFOUND THEN                     
-			-- Fecha o cursor
+      -- Fechar o cursor pois haverá raise
       CLOSE cr_crapope;
       
-			-- Monta critica
-			vr_cdcritic := 67;
-			vr_dscritic := '';
+      -- Montar mensagem de critica
+      vr_cdcritic := 0;
+      vr_dscritic := 'Senha invalida';
            
       RAISE vr_exc_erro; 
     ELSE
-			-- Validar senha do operador no AD
-			gene0001.pc_valida_senha_AD(pr_cdcooper => pr_cdcooper
-																 ,pr_cdoperad => pr_operador
-																 ,pr_nrdsenha => pr_nrdsenha
-																 ,pr_cdcritic => vr_cdcritic
-																 ,pr_dscritic => vr_dscritic);
-			-- Se retornou crítica										 
-			IF vr_cdcritic > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
-				-- Levantar exceção
-				RAISE vr_exc_erro;
-			END IF;
-		
       -- Verificar o nivel do operador, confirmar se eh coordenador
       IF rw_crapope.nvoperad < pr_nvoperad THEN
         -- Concatenar a descricao do nivel do operador na msg de critica
@@ -246,12 +235,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.LOGI0001 AS
   EXCEPTION 
     WHEN vr_exc_erro THEN
       
-			-- Se possui código de crítica sem descrição
-			IF vr_cdcritic > 0 AND TRIM(vr_dscritic) IS NULL THEN
-				-- Buscar descrição da crítica
-				vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
-			END IF;
-
       -- Retorno não OK          
       pr_des_erro := vr_retornvl;
       

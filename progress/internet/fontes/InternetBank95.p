@@ -19,9 +19,6 @@
                             da aplicacao, conforme calculo no crps495.
                            (Douglas - Projeto Captação Internet 2014/2)
 
-               20/04/2018 - Adicionado validacao da adesao do produto 41 resgate 
-                            de aplicacao. PRJ366 (Lombardi).
-
 ..............................................................................*/
     
 CREATE WIDGET-POOL.
@@ -29,7 +26,6 @@ CREATE WIDGET-POOL.
 { sistema/internet/includes/var_ibank.i }
 { sistema/generico/includes/b1wgen0004tt.i }
 { sistema/generico/includes/var_internet.i }
-{ sistema/generico/includes/var_oracle.i   }
 
 DEF INPUT PARAM par_cdcooper LIKE crapcop.cdcooper                     NO-UNDO.
 DEF INPUT PARAM par_nrdconta LIKE crapttl.nrdconta                     NO-UNDO.
@@ -48,7 +44,6 @@ DEF VAR h-b1wgen0155 AS HANDLE                                         NO-UNDO.
 DEF VAR aux_nrdrowid AS ROWID                                          NO-UNDO.
 
 DEF VAR aux_dstransa AS CHAR                                           NO-UNDO.
-DEF VAR aux_cdcritic AS INTE                                           NO-UNDO.
 DEF VAR aux_dscritic AS CHAR                                           NO-UNDO.
 
 /* Variaveis para saldo bloqueado judicialmente */
@@ -73,13 +68,11 @@ DEF VAR aux_sldpresg LIKE craplap.vllanmto                             NO-UNDO.
 DEF VAR aux_qtaplica AS INTE                                           NO-UNDO. /* Quantidade de aplicacoes por parametro */
 DEF VAR aux_nraplica AS INTE                                           NO-UNDO. /* numero da aplicação */
 DEF VAR aux_vlresgat AS DECI                                           NO-UNDO. /* Valor de resgate (recuperado do parametro)*/
-DEF VAR aux_tpresgat AS INTE                                           NO-UNDO. 
 
 /* Contadores */
 DEF VAR aux_contador AS INTE                                           NO-UNDO.
 DEF VAR aux_indice   AS INTE                                           NO-UNDO.
 
-DEF VAR aux_qtvlresg AS INTE                                           NO-UNDO.
 
 ASSIGN aux_dstransa = "Leitura do Resumo do Resgate de Aplicacao".
 
@@ -88,101 +81,6 @@ ASSIGN aux_vlblqjud = 0
        aux_vlsldtot = 0
        aux_vlbasrgt = 0.
 
-/* Quantidade de aplicacoes */
-ASSIGN aux_qtvlresg = NUM-ENTRIES(par_vlresgat,"|")
-       aux_vlresgat = 0.
-
-/* Percorrer todas as aplicacoes para verificar o numero da aplicacao */
-DO aux_contador = 1 TO aux_qtvlresg:
-    ASSIGN aux_vlresgat = aux_vlresgat + DECI(ENTRY(aux_contador,par_vlresgat,"|")).
-END.
-
-/* Verificar se o tipo de conta permite a contrataçao do produto. */
-{ includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
-
-RUN STORED-PROCEDURE pc_valida_adesao_produto
-    aux_handproc = PROC-HANDLE NO-ERROR
-                            (INPUT par_cdcooper,
-                             INPUT par_nrdconta,
-                             INPUT 41,   /* Codigo Produto */
-                             OUTPUT 0,   /* pr_cdcritic */
-                             OUTPUT ""). /* pr_dscritic */
-
-CLOSE STORED-PROC pc_valida_adesao_produto
-      aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
-
-{ includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
-
-ASSIGN aux_cdcritic = 0
-       aux_dscritic = ""
-       aux_cdcritic = pc_valida_adesao_produto.pr_cdcritic                          
-                          WHEN pc_valida_adesao_produto.pr_cdcritic <> ?
-       aux_dscritic = pc_valida_adesao_produto.pr_dscritic
-                          WHEN pc_valida_adesao_produto.pr_dscritic <> ?.
-
-IF  aux_cdcritic <> 0 OR aux_dscritic <> "" THEN
-    DO:
-        IF aux_dscritic = "" THEN
-           DO:
-              FIND crapcri WHERE crapcri.cdcritic = aux_cdcritic 
-                                 NO-LOCK NO-ERROR.
-              
-              IF AVAIL crapcri THEN
-                 ASSIGN aux_dscritic = crapcri.dscritic.
-              ELSE
-                 ASSIGN aux_dscritic =  "Nao foi possivel validar a adesao do produto.".
-           
-           END.
-        
-        ASSIGN xml_dsmsgerr = "<dsmsgerr>" + aux_dscritic + "</dsmsgerr>".
-        
-        RETURN "NOK".
-    END.
-
-{ includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
-RUN STORED-PROCEDURE pc_valida_valor_de_adesao
-aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper, /* Cooperativa */
-                                     INPUT par_nrdconta, /* Numero da conta */
-                                     INPUT 41,           /* Codigo Produto */
-                                     INPUT aux_vlresgat, /* Valor contratado */
-                                     INPUT 3,            /* Id Origem */
-                                     INPUT 0,            /* Codigo da chave */
-                                    OUTPUT 0,            /* Solicita senha coordenador */
-                                    OUTPUT 0,            /* Codigo da crítica */
-                                    OUTPUT "").          /* Descriçao da crítica */
-
-CLOSE STORED-PROC pc_valida_valor_de_adesao
-      aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
-
-{ includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
-
-ASSIGN aux_cdcritic = 0
-       aux_dscritic = ""
-       aux_cdcritic = pc_valida_valor_de_adesao.pr_cdcritic 
-                      WHEN pc_valida_valor_de_adesao.pr_cdcritic <> ?
-       aux_dscritic = pc_valida_valor_de_adesao.pr_dscritic
-                      WHEN pc_valida_valor_de_adesao.pr_dscritic <> ?.
-
-IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
-     DO:
-         IF aux_dscritic = "" THEN
-             DO:
-                FIND crapcri WHERE crapcri.cdcritic = aux_cdcritic 
-                                   NO-LOCK NO-ERROR.
-                
-                IF AVAIL crapcri THEN
-                   ASSIGN aux_dscritic = crapcri.dscritic.
-                ELSE
-                   ASSIGN aux_dscritic =  "Nao foi possivel validar o valor de adesao.".
-             END.
-          
-          ASSIGN xml_dsmsgerr = "<dsmsgerr>" + aux_dscritic +
-                                "</dsmsgerr>".
-          
-          RUN proc_geracao_log (INPUT FALSE).
-          
-          RETURN "NOK".
-     END.
 
 FIND FIRST crapdat WHERE crapdat.cdcooper = par_cdcooper 
                          NO-LOCK NO-ERROR.
@@ -301,15 +199,14 @@ DO:
                 RETURN "NOK".
             END.
 
+            
             /* Verificar se existe valor para resgate*/
-            IF  aux_vlresgat = 0 OR aux_vlresgat = tt-saldo-rdca.sldresga  THEN
+            IF aux_vlresgat = 0 THEN
                 /* Valor solicitado para resgate = VALOR TOTAL */
-                ASSIGN aux_vlsolrgt = aux_vlrgttot
-                       aux_tpresgat = 2.
+                ASSIGN aux_vlsolrgt = aux_vlrgttot.
             ELSE
                 /* Valor solicitado para resgate = VALOR RESGATAR */
-                ASSIGN aux_vlsolrgt = aux_vlresgat
-                       aux_tpresgat = 1.
+                ASSIGN aux_vlsolrgt = aux_vlresgat.
 
 
             /*** Calcular o valor real a ser resgatado quando nao esta na carencia ***/
@@ -441,17 +338,6 @@ DO:
                                                    STRING(tt-saldo-rdca.dtmvtolt + tt-saldo-rdca.qtdiacar,"99/99/9999") +
                                                    " (" + STRING(tt-saldo-rdca.qtdiacar) + " dias)" +
                                                "</dtcarencia>" + 
-                                               /* Novo IB */
-                                               "<dtresgat>" +
-                                                   STRING(par_dtmvtolt,"99/99/9999") +
-                                               "</dtresgat>" +  
-                                               "<dtcarenc>" +
-                                                   STRING(tt-saldo-rdca.dtmvtolt + tt-saldo-rdca.qtdiacar,"99/99/9999") +
-                                               "</dtcarenc>" + 
-                                               "<idtipapl>A</idtipapl>" +  /* Fixo, tratar futuramente */
-                                               "<tpresgat>" +
-                                                   TRIM(STRING(aux_tpresgat,"9")) +
-                                               "</tpresgat>" +                                                                                             
                                            "</APLICACAO>".
 
         END.

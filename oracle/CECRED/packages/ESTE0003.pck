@@ -145,24 +145,10 @@ procedure pc_enviar_analise_manual(pr_cdcooper    in crawlim.cdcooper%type  --> 
                                    ,pr_dscritic OUT VARCHAR2              --> Descricao da critica 
                                    ,pr_des_erro out varchar2              --> Erros do processo OK ou NOK
                                    );
-   
-
-PROCEDURE pc_efetivar_limite_esteira(pr_cdcooper  IN crawlim.cdcooper%TYPE --> Codigo da cooperativa
-                                    ,pr_nrdconta  IN crawlim.nrdconta%TYPE --> Numero da conta do cooperado
-                                    ,pr_nrctrlim  IN crawlim.nrctrlim%TYPE --> Numero da proposta
-                                    ,pr_tpctrlim  IN crawlim.tpctrlim%TYPE --> Tipo da proposta
-                                    ,pr_cdagenci  IN crapage.cdagenci%TYPE --> Codigo da agencia
-                                    ,pr_cdoperad  IN crapope.cdoperad%TYPE --> Codigo do operador
-                                    ,pr_cdorigem  IN INTEGER               --> Codigo da Origem
-                                    ,pr_dtmvtolt  IN crapdat.dtmvtolt%TYPE --> Data do movimento
-                                    ---- OUT ----
-                                    ,pr_cdcritic OUT NUMBER                --> Codigo da Critica
-                                    ,pr_dscritic OUT VARCHAR2              --> Descriçao da Critica
-                                    );
 
 
-PROCEDURE pc_crps703(pr_cdcritic OUT NUMBER   --> Codigo da Critica
-                    ,pr_dscritic OUT VARCHAR2 --> Descriçao da Critica
+PROCEDURE pc_crps703(pr_cdcritic out number   --> Código da Crítica
+                    ,pr_dscritic out varchar2 --> Descriçao da Critica
                     );
 
 end ESTE0003;
@@ -931,7 +917,7 @@ end pc_obrigacao_analise_autom;
   
 PROCEDURE pc_verifica_regras(pr_cdcooper  IN crawlim.cdcooper%TYPE  --> Codigo da cooperativa                                        
                             ,pr_nrdconta  IN crawlim.nrdconta%TYPE  --> Numero da conta do cooperado
-                            ,pr_nrctrlim  IN crawlim.nrctrlim%TYPE  --> Numero da proposta
+                            ,pr_nrctrlim  IN crawlim.nrctrlim%TYPE  --> Numero da proposta de emprestimo
                             ,pr_tpctrlim  in crawlim.tpctrlim%type  --> Tipo de proposta do limite.
                             ,pr_tpenvest  IN VARCHAR2 DEFAULT NULL  --> Tipo de envio
                             ,pr_cdcritic OUT NUMBER                 --> Codigo da critica
@@ -953,7 +939,7 @@ PROCEDURE pc_verifica_regras(pr_cdcooper  IN crawlim.cdcooper%TYPE  --> Codigo d
         
   ..........................................................................*/
     -----------> CURSORES <-----------
-    --> Buscar dados da proposta
+    --> Buscar dados da proposta de emprestimo
     CURSOR cr_crawlim is
       select lim.insitest
            , lim.cdopeapr
@@ -1337,7 +1323,7 @@ BEGIN
   --> Se Obrigatorio e ainda nao Enviada ou Enviada mas com Erro Conexao
   IF not(vr_flctgmot) AND (rw_crawlim.insitest = 0 OR rw_crawlim.insitapr = 8) THEN 
       
-    --> Gerar informaçoes no padrao JSON da proposta          
+    --> Gerar informaçoes no padrao JSON da proposta de emprestimo          
     ESTE0004.pc_gera_json_analise_lim(pr_cdcooper  => pr_cdcooper           --> Codigo da cooperativa    
                                      ,pr_cdagenci  => rw_crawlim.cdagenci   --> Codigo da Agencia
                                      ,pr_nrdconta  => pr_nrdconta           --> Numero da Conta
@@ -1584,11 +1570,11 @@ BEGIN
                             ,pr_cdoperad => pr_cdoperad      --> codigo do operador
                             ,pr_cdorigem => pr_cdorigem      --> Origem da operacao
                             ,pr_nrdconta => pr_nrdconta      --> Numero da conta do cooperado
-                            ,pr_nrctrlim => pr_nrctrlim      --> Numero da proposta
+                            ,pr_nrctrlim => pr_nrctrlim      --> Numero da proposta de emprestimo
                             ,pr_tpctrlim => pr_tpctrlim      --> Tipo de proposta de limite
                             ,pr_dtmvtolt => pr_dtmvtolt      --> Data do movimento
                             ,pr_nmarquiv => pr_nmarquiv      --> Indica se deve reiniciar o fluxo de aprovacao na esteira
-                            ,vr_flgdebug => vr_flgdebug      --> Diretorio e nome do arquivo pdf da proposta
+                            ,vr_flgdebug => vr_flgdebug      --> Diretorio e nome do arquivo pdf da proposta de emprestimo
                             ,pr_dsmensag => pr_dsmensag      
                             ,pr_cdcritic => vr_cdcritic      
                             ,pr_dscritic => vr_dscritic      --> Descricao da critica 
@@ -1625,11 +1611,11 @@ END pc_incluir_proposta;
                                ,pr_cdoperad  in crapope.cdoperad%type  --> codigo do operador
                                ,pr_cdorigem  in integer                --> Origem da operacao
                                ,pr_nrdconta  in crawlim.nrdconta%type  --> Numero da conta do cooperado
-                               ,pr_nrctrlim  in crawlim.nrctrlim%type  --> Numero da proposta
+                               ,pr_nrctrlim  in crawlim.nrctrlim%type  --> Numero da proposta de emprestimo
                                ,pr_tpctrlim  in crawlim.tpctrlim%type  --> Tipo de proposta de limite
                                ,pr_dtmvtolt  in crapdat.dtmvtolt%type  --> Data do movimento
                                ,pr_flreiflx  in integer                --> Indica se deve reiniciar o fluxo de aprovacao na esteira
-                               ,pr_nmarquiv  in varchar2               --> Diretorio e nome do arquivo pdf da proposta
+                               ,pr_nmarquiv  in varchar2               --> Diretorio e nome do arquivo pdf da proposta de emprestimo
                                ,pr_cdcritic out number                 --> Codigo da critica
                                ,pr_dscritic out varchar2               --> Descricao da critica 
                                ) is
@@ -1705,15 +1691,15 @@ END pc_incluir_proposta;
       --END IF;
     END IF;   
   
-    --> Gerar informaçoes no padrao JSON da proposta
+    --> Gerar informaçoes no padrao JSON da proposta de emprestimo
     este0004.pc_gera_json_proposta_lim(pr_cdcooper  => pr_cdcooper
                                       ,pr_cdagenci  => pr_cdagenci
                                       ,pr_cdoperad  => pr_cdoperad
                                       ,pr_nrdconta  => pr_nrdconta
                                       ,pr_nrctrlim  => pr_nrctrlim
                                       ,pr_tpctrlim  => pr_tpctrlim
-                                      ,pr_nmarquiv  => pr_nmarquiv  --> Diretorio e nome do arquivo pdf da proposta
-                                      ,pr_proposta  => vr_obj_proposta  --> Retorno do clob em modelo json da proposta
+                                      ,pr_nmarquiv  => pr_nmarquiv  --> Diretorio e nome do arquivo pdf da proposta de emprestimo
+                                      ,pr_proposta  => vr_obj_proposta  --> Retorno do clob em modelo json da proposta de emprestimo
                                       ,pr_cdcritic  => vr_cdcritic
                                       ,pr_dscritic  => vr_dscritic);
     
@@ -1891,7 +1877,7 @@ END pc_incluir_proposta;
                              ,pr_cdoperad    IN crapope.cdoperad%type  --> codigo do operador
                              ,pr_cdorigem    IN integer                --> Origem da operacao
                              ,pr_nrdconta    IN crawlim.nrdconta%type  --> Numero da conta do cooperado
-                             ,pr_nrctrlim    IN crawlim.nrctrlim%type  --> Numero da proposta
+                             ,pr_nrctrlim    IN crawlim.nrctrlim%type  --> Numero da proposta de emprestimo
                              ,pr_dtmvtolt    IN crapdat.dtmvtolt%type  --> Data do movimento                                      
                              ,pr_comprecu    IN varchar2               --> Complemento do recuros da URI
                              ,pr_dsmetodo    IN varchar2               --> Descricao do metodo
@@ -2160,16 +2146,16 @@ END pc_incluir_proposta;
   
   vr_cdagenci := nvl(nullif(pr_cdagenci, 0), rw_crapass.cdagenci);
 
-   --> Gerar informaçoes no padrao JSON da proposta
+   --> Gerar informaçoes no padrao JSON da proposta de emprestimo
    este0004.pc_gera_json_proposta_lim(pr_cdcooper  => pr_cdcooper
                                      ,pr_cdagenci  => vr_cdagenci
                                      ,pr_cdoperad  => pr_cdoperad
                                      ,pr_nrdconta  => pr_nrdconta
                                      ,pr_nrctrlim  => pr_nrctrlim
                                      ,pr_tpctrlim  => pr_tpctrlim
-                                     ,pr_nmarquiv  => pr_nmarquiv  --> Diretorio e nome do arquivo pdf da proposta
+                                     ,pr_nmarquiv  => pr_nmarquiv  --> Diretorio e nome do arquivo pdf da proposta de emprestimo
                                      ---- OUT ----
-                                     ,pr_proposta  => vr_obj_proposta  --> Retorno do clob em modelo json da proposta
+                                     ,pr_proposta  => vr_obj_proposta  --> Retorno do clob em modelo json da proposta de emprestimo
                                      ,pr_cdcritic  => vr_cdcritic
                                      ,pr_dscritic  => vr_dscritic);
           
@@ -2312,19 +2298,19 @@ END pc_incluir_proposta;
           ROLLBACK;
    END pc_enviar_analise_manual;
    
-
-PROCEDURE pc_efetivar_limite_esteira(pr_cdcooper  IN crawlim.cdcooper%TYPE --> Codigo da cooperativa
-                                    ,pr_nrdconta  IN crawlim.nrdconta%TYPE --> Numero da conta do cooperado
-                                    ,pr_nrctrlim  IN crawlim.nrctrlim%TYPE --> Numero da proposta
-                                    ,pr_tpctrlim  IN crawlim.tpctrlim%TYPE --> Tipo da proposta
-                                    ,pr_cdagenci  IN crapage.cdagenci%TYPE --> Codigo da agencia
-                                    ,pr_cdoperad  IN crapope.cdoperad%TYPE --> Codigo do operador
-                                    ,pr_cdorigem  IN INTEGER               --> Codigo da Origem
-                                    ,pr_dtmvtolt  IN crapdat.dtmvtolt%TYPE --> Data do movimento
+   
+PROCEDURE pc_efetivar_limite_esteira(pr_cdcooper  in crawlim.cdcooper%type
+                                    ,pr_nrdconta  in crawlim.nrdconta%type
+                                    ,pr_nrctrlim  in crawlim.nrctrlim%type
+                                    ,pr_tpctrlim  in crawlim.tpctrlim%type
+                                    ,pr_cdagenci  in crapage.cdagenci%type
+                                    ,pr_cdoperad  in crapope.cdoperad%type
+                                    ,pr_cdorigem  in integer
+                                    ,pr_dtmvtolt  in crapdat.dtmvtolt%type
                                     ---- OUT ----
-                                    ,pr_cdcritic OUT NUMBER                --> Codigo da Critica
-                                    ,pr_dscritic OUT VARCHAR2              --> Descriçao da Critica
-                                    ) IS
+                                    ,pr_cdcritic out number
+                                    ,pr_dscritic out varchar2
+                                    ) is
    /* ...........................................................................
   
     Programa : pc_efetivar_limite_esteira        
@@ -2351,7 +2337,6 @@ PROCEDURE pc_efetivar_limite_esteira(pr_cdcooper  IN crawlim.cdcooper%TYPE --> C
 
    -- Auxiliares
    vr_dsprotocolo  varchar2(1000);
-   vr_cdagenci     crapage.cdagenci%TYPE;
 
    -- Variaveis para DEBUG
    vr_flgdebug varchar2(100) := gene0001.fn_param_sistema('CRED',pr_cdcooper,'DEBUG_MOTOR_IBRA');
@@ -2405,22 +2390,11 @@ PROCEDURE pc_efetivar_limite_esteira(pr_cdcooper  IN crawlim.cdcooper%TYPE --> C
    rw_crawlim cr_crawlim%rowtype;
 
 BEGIN
-   open  cr_crapass;
-   fetch cr_crapass into rw_crapass;
-   if    cr_crapass%notfound then
-         close cr_crapass;
-         vr_cdcritic := 9;
-         raise vr_exc_erro;
-   end   if;
-   close cr_crapass;
-   
-   vr_cdagenci := nvl(nullif(pr_cdagenci,0), rw_crapass.cdagenci);
-
    --  Se o DEBUG estiver habilitado
    if  vr_flgdebug = 'S' then
        -- Gravar dados log acionamento
        este0001.pc_grava_acionamento(pr_cdcooper              => pr_cdcooper
-                                    ,pr_cdagenci              => vr_cdagenci
+                                    ,pr_cdagenci              => pr_cdagenci
                                     ,pr_cdoperad              => pr_cdoperad
                                     ,pr_cdorigem              => pr_cdorigem
                                     ,pr_nrctrprp              => pr_nrctrlim
@@ -2436,6 +2410,15 @@ BEGIN
                                     ,pr_idacionamento         => vr_idaciona
                                     ,pr_dscritic              => vr_dscritic);
    end if;
+
+   open  cr_crapass;
+   fetch cr_crapass into rw_crapass;
+   if    cr_crapass%notfound then
+         close cr_crapass;
+         vr_cdcritic := 9;
+         raise vr_exc_erro;
+   end   if;
+   close cr_crapass;
 
    open  cr_crawlim;
    fetch cr_crawlim into rw_crawlim;
@@ -2492,7 +2475,7 @@ BEGIN
    if  vr_flgdebug = 'S' then
        -- Gravar dados log acionamento
        este0001.pc_grava_acionamento(pr_cdcooper              => pr_cdcooper
-                                    ,pr_cdagenci              => vr_cdagenci
+                                    ,pr_cdagenci              => pr_cdagenci
                                     ,pr_cdoperad              => pr_cdoperad
                                     ,pr_cdorigem              => pr_cdorigem
                                     ,pr_nrctrprp              => pr_nrctrlim
@@ -2511,11 +2494,11 @@ BEGIN
 
    -- Enviar dados para Esteira
    pc_enviar_analise(pr_cdcooper    => pr_cdcooper               --> Codigo da cooperativa
-                    ,pr_cdagenci    => vr_cdagenci               --> Codigo da agencia
+                    ,pr_cdagenci    => pr_cdagenci               --> Codigo da agencia
                     ,pr_cdoperad    => pr_cdoperad               --> codigo do operador
                     ,pr_cdorigem    => pr_cdorigem               --> Origem da operacao
                     ,pr_nrdconta    => pr_nrdconta               --> Numero da conta do cooperado
-                    ,pr_nrctrlim    => pr_nrctrlim               --> Numero da proposta atual/antigo
+                    ,pr_nrctrlim    => pr_nrctrlim               --> Numero da proposta de emprestimo atual/antigo
                     ,pr_dtmvtolt    => pr_dtmvtolt               --> Data do movimento
                     ,pr_comprecu    => '/efetivar'               --> Complemento do recuros da URI
                     ,pr_dsmetodo    => 'PUT'                     --> Descricao do metodo
@@ -2546,7 +2529,7 @@ BEGIN
    if  vr_flgdebug = 'S' then
        -- Gravar dados log acionamento
        este0001.pc_grava_acionamento(pr_cdcooper              => pr_cdcooper
-                                    ,pr_cdagenci              => vr_cdagenci
+                                    ,pr_cdagenci              => pr_cdagenci
                                     ,pr_cdoperad              => pr_cdoperad
                                     ,pr_cdorigem              => pr_cdorigem
                                     ,pr_nrctrprp              => pr_nrctrlim
@@ -2579,12 +2562,12 @@ END pc_efetivar_limite_esteira;
 
    
 
-PROCEDURE pc_solicitar_limite_efetivacao(pr_cdcooper  IN crawlim.cdcooper%TYPE --> Codigo da cooperativa
-                                        ,pr_tpctrlim  IN crawlim.tpctrlim%TYPE --> Tipo da proposta
-                                        ,pr_dtmvtolt  IN crapdat.dtmvtolt%TYPE --> Data do movimento
-                                        ,pr_cdcritic OUT NUMBER                --> Codigo da Critica
-                                        ,pr_dscritic OUT VARCHAR2              --> Descriçao da Critica
-                                        ) IS
+PROCEDURE pc_solicitar_limite_efetivacao(pr_cdcooper  in crawlim.cdcooper%type
+                                        ,pr_tpctrlim  in crawlim.tpctrlim%type
+                                        ,pr_dtmvtolt  in crapdat.dtmvtolt%type
+                                        ,pr_cdcritic out number
+                                        ,pr_dscritic out varchar2
+                                        ) is
    /* ...........................................................................
   
     Programa : pc_solicitar_limite_efetivacao        
@@ -2603,39 +2586,38 @@ PROCEDURE pc_solicitar_limite_efetivacao(pr_cdcooper  IN crawlim.cdcooper%TYPE -
    ..........................................................................*/
     
    --> Tratamento de erros
-   vr_cdcritic NUMBER := 0;
-   vr_dscritic VARCHAR2(4000);
-   vr_exc_erro EXCEPTION;
+   vr_cdcritic number := 0;
+   vr_dscritic varchar2(4000);
+   vr_exc_erro exception;
 
    --     buscar as propostas que já foram analisada e efetivadas no Ayllos
-   CURSOR cr_crawlim IS
-   SELECT pro.cdcooper
+   cursor cr_crawlim is
+   select pro.cdcooper
          ,pro.nrdconta
          ,pro.nrctrlim
          ,pro.tpctrlim
          ,pro.cdagenci
          ,pro.cdoperad
-         ,pro.dtenefes
-   FROM   craplim ctr
+   from   craplim ctr
          ,crawlim pro
-   WHERE  ctr.dtpropos          < pr_dtmvtolt
-   AND    ctr.tpctrlim          = pro.tpctrlim
-   AND    ctr.nrctrlim          = pro.nrctrlim
-   AND    ctr.nrdconta          = pro.nrdconta
-   AND    ctr.cdcooper          = pro.cdcooper
-   AND    pro.dtenefes          IS NULL
-   AND    nvl(pro.cdopeapr,'#') <> 'MOTOR'
-   AND    pro.dtenvest          IS NOT NULL
-   AND    pro.insitlim          = 2
-   AND    pro.tpctrlim          = pr_tpctrlim
-   AND    pro.cdcooper          = pr_cdcooper;
-   rw_crawlim cr_crawlim%ROWTYPE;
+   where  ctr.dtpropos  < pr_dtmvtolt
+   and    ctr.tpctrlim  = pro.tpctrlim
+   and    ctr.nrctrlim  = pro.nrctrlim
+   and    ctr.nrdconta  = pro.nrdconta
+   and    ctr.cdcooper  = pro.cdcooper
+   and    pro.dtenefes is null
+   and    nvl(pro.cdopeapr,'#') <> 'MOTOR'
+   and    pro.dtenvest is not null
+   and    pro.insitlim  = 2
+   and    pro.tpctrlim  = pr_tpctrlim
+   and    pro.cdcooper  = pr_cdcooper;
+   rw_crawlim cr_crawlim%rowtype;
 
 BEGIN
-   OPEN  cr_crawlim;
-   LOOP
-         FETCH cr_crawlim INTO rw_crawlim;
-         EXIT  WHEN cr_crawlim%NOTFOUND;
+   open  cr_crawlim;
+   loop
+         fetch cr_crawlim into rw_crawlim;
+         exit  when cr_crawlim%notfound;
          
          pc_efetivar_limite_esteira(pr_cdcooper => rw_crawlim.cdcooper
                                    ,pr_nrdconta => rw_crawlim.nrdconta
@@ -2648,39 +2630,32 @@ BEGIN
                                    ,pr_cdcritic => vr_cdcritic
                                    ,pr_dscritic => vr_dscritic );
 
-         IF  nvl(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
-             RAISE vr_exc_erro;
-         END IF;
-   END   LOOP;
-   CLOSE cr_crawlim; 
-
+         /*  Como é um JOB, por hora não vamos mostrar os erros, verificar pelos acionamentos
+         if  nvl(vr_cdcritic,0) > 0 or trim(vr_dscritic) is not null then
+             raise vr_exc_erro;        
+         end if;*/
+   end   loop;
+   close cr_crawlim; 
+    
 EXCEPTION
-   WHEN vr_exc_erro THEN
-        IF  cr_crawlim%ISOPEN THEN
-            CLOSE cr_crawlim;
-        END IF;
-
-        IF  nvl(vr_cdcritic,0) > 0 AND TRIM(vr_dscritic) IS NULL THEN
+   when vr_exc_erro then
+        if  nvl(vr_cdcritic,0) > 0 and  trim(vr_dscritic) is null then
             vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);        
-        END IF;
+        end if;  
       
         pr_cdcritic := vr_cdcritic;
         pr_dscritic := vr_dscritic;
     
-   WHEN OTHERS THEN
-        IF  cr_crawlim%ISOPEN THEN
-            CLOSE cr_crawlim;
-        END IF;
-
+   when others then
         pr_cdcritic := 0;
-        pr_dscritic := 'Nao foi possivel realizar a efetivação de proposta de Análise de Crédito: '||SQLERRM;
+        pr_dscritic := 'Nao foi possivel realizar a efetivação de proposta de Análise de Crédito: '||sqlerrm;
 
 END pc_solicitar_limite_efetivacao;
 
 
-PROCEDURE pc_crps703(pr_cdcritic OUT NUMBER   --> Codigo da Critica
-                    ,pr_dscritic OUT VARCHAR2 --> Descriçao da Critica
-                    ) IS
+PROCEDURE pc_crps703(pr_cdcritic out number   --> Código da Crítica
+                    ,pr_dscritic out varchar2 --> Descriçao da Critica
+                    ) is
    /* ...........................................................................
   
     Programa : pc_crps703        
@@ -2700,40 +2675,40 @@ PROCEDURE pc_crps703(pr_cdcritic OUT NUMBER   --> Codigo da Critica
    ..........................................................................*/
     
    --> Tratamento de erros
-   vr_cdcritic NUMBER := 0;
-   vr_dscritic VARCHAR2(4000);
-   vr_exc_erro EXCEPTION;
+   vr_cdcritic number := 0;
+   vr_dscritic varchar2(4000);
+   vr_exc_erro exception;
 
    --     buscar todas as cooperativas ativas sem nenhum processamento ativo
-   CURSOR cr_copdat is
-   SELECT cop.cdcooper
+   cursor cr_copdat is
+   select cop.cdcooper
          ,dat.dtmvtolt
-   FROM   crapdat dat
+   from   crapdat dat
          ,crapcop cop
-   WHERE  dat.inproces  = 1 -- online
-   AND    dat.cdcooper  = cop.cdcooper
-   AND    cop.flgativo  = 1; -- ativas
-   rw_copdat cr_copdat%ROWTYPE;
+   where  dat.inproces  = 1 -- online
+   and    dat.cdcooper  = cop.cdcooper
+   and    cop.flgativo  = 1; -- ativas
+   rw_copdat cr_copdat%rowtype;
 
 BEGIN
-   OPEN  cr_copdat;
-   LOOP
-         FETCH cr_copdat INTO rw_copdat;
-         EXIT  WHEN cr_copdat%NOTFOUND;
+   open  cr_copdat;
+   loop
+         fetch cr_copdat into rw_copdat;
+         exit  when cr_copdat%notfound;
          
          pc_verifica_contigenc_esteira(pr_cdcooper => rw_copdat.cdcooper
                                       ,pr_flctgest => vr_flctgest
                                       ,pr_dsmensag => vr_dsmensag
                                       ,pr_dscritic => vr_dscritic);     
 
-         IF  TRIM(vr_dscritic) IS NOT NULL THEN
-             RAISE vr_exc_erro;
-         END IF; 
-
-         IF  vr_flctgest THEN -- se a esteira estiver em contigencia
+         if  trim(vr_dscritic)  is not null then
+             raise vr_exc_erro;
+         end if; 
+                                      
+         if  vr_flctgest then -- se a esteira estiver em contigencia
              vr_dscritic := vr_dsmensag;
-             RAISE vr_exc_erro;
-         END IF;
+             raise vr_exc_erro;
+         end if;
          
          pc_solicitar_limite_efetivacao(pr_cdcooper => rw_copdat.cdcooper
                                        ,pr_tpctrlim => 3
@@ -2741,39 +2716,31 @@ BEGIN
                                        ,pr_cdcritic => vr_cdcritic
                                        ,pr_dscritic => vr_dscritic );
 
-         IF  nvl(vr_cdcritic,0) > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
-             RAISE vr_exc_erro;
-         END IF;
+         if  nvl(vr_cdcritic,0) > 0 or trim(vr_dscritic) is not null then
+             raise vr_exc_erro;        
+         end if;
          
-   END   LOOP;
-   CLOSE cr_copdat;
+   end   loop;
+   close cr_copdat;
 
-   COMMIT;   
+   commit;   
     
 EXCEPTION
-   WHEN vr_exc_erro THEN
-        IF  cr_copdat%ISOPEN THEN
-            CLOSE cr_copdat;
-        END IF;
-   
-        IF  nvl(vr_cdcritic,0) > 0 AND TRIM(vr_dscritic) IS NULL THEN
+   when vr_exc_erro then
+        if  nvl(vr_cdcritic,0) > 0 and  trim(vr_dscritic) is null then
             vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);        
-        END IF;
+        end if;  
       
         pr_cdcritic := vr_cdcritic;
         pr_dscritic := vr_dscritic;
         
-        ROLLBACK;
+        rollback;
     
-   WHEN OTHERS THEN
-        IF  cr_copdat%ISOPEN THEN
-            CLOSE cr_copdat;
-        END IF;
-
+   when others then
         pr_cdcritic := 0;
-        pr_dscritic := 'Nao foi possivel realizar a efetivação de proposta de Análise de Crédito: '||SQLERRM;
+        pr_dscritic := 'Nao foi possivel realizar a efetivação de proposta de Análise de Crédito: '||sqlerrm;
         
-        ROLLBACK;
+        rollback;
 
 END pc_crps703;
 

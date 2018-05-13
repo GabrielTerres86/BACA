@@ -4,7 +4,7 @@
  * DATA CRIAÇÃO : Março/2009
  * OBJETIVO     : Biblioteca de funções da subrotina de Descontos de cheques
  * --------------
- * ALTERAÇÕES   : 11/12/2017
+ * ALTERAÇÕES   : 21/07/2017
  * --------------
  * 000: [14/06/2010] David     (CECRED) : Adaptação para RATING
  * 000: [21/09/2010] David	   (CECRED) : Ajuste para enviar impressoes via email para o PAC Sede
@@ -33,9 +33,6 @@
  * 017: [31/05/2017] Odirlei   (AMcom)  : Ajuste para verificar se possui cheque custodiado no dia de hoje. - PRJ300 - Desconto de cheque 
  * 018: [26/06/2017] Jonata     (RKAM)  : Ajuste para rotina ser chamada através da tela ATENDA > Produtos - P364. 
  * 019: [21/07/2017] Lombardi  (CECRED) : Ajuste no cadastro de emitentes. - PRJ300 - Desconto de cheque 
- * 020: [11/12/2017] Augusto / Marcos (Supero) : P404 - Inclusão de Garantia de Cobertura das Operações de Crédito
- * 021: [06/02/2018] Mateus Z  (Mouts)  : Alterações referentes ao projeto 454.1 - Resgate de cheque em custodia.
- * 022: [16/04/2018] Lombardi  (CECRED) : Adicionado parametro vlcompcr no ajax da function verificarEmitentes. PRJ366
  */
 
 var contWin    = 0;  // Variável para contagem do número de janelas abertas para impressos
@@ -48,7 +45,6 @@ var flresghj = 0;    // Variável para armazenar se deseja resgatar os cheques c
 var situacao_limite = ""; // Variável para armazenar a situação do limite atualmente selecionado
 var cd_situacao_lim = 0; // Variável para armazenar o código da situação do limite atualmente selecionado
 var valor_limite = 0; // Variável para armazenar o valor limite do limite atualmente selecionado
-var idcobope = 0; // Variável para armazenar o id da cobertura da garantia da operação
 var idLinhaB   = 0;  // Variável para armazanar o id da linha que contém o bordero selecionado
 var idLinhaL   = 0;  // Variável para armazanar o id da linha que contém o limite selecionado
 var dtrating   = 0;  // Data rating (é calculada e alimentada no cheques_limite_incluir.php)
@@ -175,59 +171,6 @@ function mostraDadosBorderoDscChq(opcaomostra) {
 			$("#divOpcoesDaOpcao3").html(response);
 		}
 	});
-}
-
-function abrirTelaGAROPC(cddopcao) {
-
-    showMsgAguardo('Aguarde, carregando ...');
-
-    var idcobert = normalizaNumero($('#idcobert','#'+nomeForm).val());
-    var codlinha = normalizaNumero($('#cddlinha','#'+nomeForm).val());
-    var vlropera = $('#vllimite','#'+nomeForm).val();
-    
-    var nrctrlim = '';
-    // Se estamos consultando e está em estudo ou se iremos incluir ou se iremos alterar o limite enviaremos o codigo do contrato ativo
-    if ( (cddopcao == 'C' && cd_situacao_lim == 1) || cddopcao == 'I' || cddopcao == 'A') {
-      nrctrlim = normalizaNumero($('#nrcontratoativo').val());
-    }
-    
-    // Se estivermos alterando, porém não houver cobertura é por que estamos alterando algo antigo (devemos criar um novo para estes casos)
-    if (cddopcao == 'A' && idcobert == '') {
-      cddopcao = 'I';
-    }
-  
-
-    // Carrega conteúdo da opção através do Ajax
-    $.ajax({
-        type: 'POST',
-        dataType: 'html',
-        url: UrlSite + 'telas/garopc/garopc.php',
-        data: {
-            tipaber      : cddopcao,
-            idcobert     : idcobert,
-            nrdconta     : nrdconta,
-            tpctrato     : 2,
-            dsctrliq     : nrctrlim,
-            codlinha     : codlinha,
-            vlropera     : vlropera
-        },
-        error: function (objAjax, responseError, objExcept) {
-            hideMsgAguardo();
-            showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
-        },
-        success: function (response) {
-            hideMsgAguardo();
-            // Criaremos uma div oculta para conter toda a estrutura da tela GAROPC
-            $('#divUsoGAROPC').html(response).hide();
-            // Iremos incluir o conteúdo do form da div oculta dentro da div principal de descontos
-            $("#frmGAROPC", "#divUsoGAROPC").appendTo('#divFormGAROPC');
-            // Iremos remover os botões originais da GAROPC e usar os proprios da tela
-            $("#divBotoes","#frmGAROPC").detach();
-            dscShowHideDiv("divFormGAROPC;divBotoesGAROPC","divDscChq_Limite;divBotoesLimite");
-            bloqueiaFundo($('#divFormGAROPC'));
-            $("#frmDadosLimiteDscChq").css("width", 540);
-        }
-    });
 }
 
 // OPÇÃO CONSULTAR
@@ -468,7 +411,7 @@ function carregaLimitesCheques() {
 }
 
 // Função para seleção do limite
-function selecionaLimiteCheques(id,qtLimites,limite,dssitlim,insitlim,vllimite,mIdcobope) {
+function selecionaLimiteCheques(id,qtLimites,limite,dssitlim,insitlim,vllimite) {
 	var cor = "";
 
 	// Formata cor da linha da tabela que lista os limites de descto cheques
@@ -492,7 +435,6 @@ function selecionaLimiteCheques(id,qtLimites,limite,dssitlim,insitlim,vllimite,m
 			situacao_limite = dssitlim;
 			cd_situacao_lim = insitlim;
 			valor_limite = vllimite;
-			idcobope = mIdcobope;
 		}
 	}
 }
@@ -866,7 +808,6 @@ function gravaLimiteDscChq(cddopcao) {
 			nrender2: normalizaNumero($("#nrender2","#frmDadosLimiteDscChq").val()),
 			complen2: $("#complen2","#frmDadosLimiteDscChq").val(),
 			nrcxaps2: normalizaNumero($("#nrcxaps2","#frmDadosLimiteDscChq").val()),
-            idcobope: normalizaNumero($("#idcobert","#frmDadosLimiteDscChq").val()),
 
 			// Variáveis globais alimentadas na função validaDadosRating em rating.js
 			nrgarope: nrgarope,
@@ -1403,7 +1344,6 @@ function confirmaNovoLimite(cddopera) {
 			vllimite: valor_limite,
 			nrctrlim: nrcontrato,
 			cddopera: cddopera,
-			idcobope: idcobope,
 			redirect: "script_ajax"
 		},
 		error: function(objAjax,responseError,objExcept) {
@@ -2347,8 +2287,6 @@ function verificarEmitentes(){
 
 	});
 
-	var vlcompcr = $('#vlcompcr', '#frmBorderosIA').val().replace('.','').replace(',','.');
-	
 	if( dscheque == "" ){
 		hideMsgAguardo();
 		showError('error','Nenhum cheque foi informado para o border&ocirc;.','Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));');
@@ -2362,7 +2300,6 @@ function verificarEmitentes(){
 			data: {
 				nrdconta: nrdconta,
 				dscheque: dscheque,
-				vlcompcr: vlcompcr,
 				redirect: 'html_ajax'
 				},
 			error: function(objAjax,responseError,objExcept) {
@@ -2849,7 +2786,7 @@ function verificaAssinaturaBordero(){
 	});
 }
 
-function efetivaBordero(flgImpressao){
+function efetivaBordero(){
 	// Mostra mensagem de aguardo
 	showMsgAguardo("Aguarde, verificando se border&ocirc; necessita de assinatura...");
 
@@ -2872,12 +2809,6 @@ function efetivaBordero(flgImpressao){
 		success: function(response) {
 			hideMsgAguardo();
 			try {
-				if (response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1) {
-					if (flgImpressao) {
-						var action = UrlSite + "telas/atenda/descontos/cheques/comprovante_pdf.php";
-	                	carregaImpressaoAyllos("formImpres",action,'estadoInicial();');
-					}
-				}
 				eval( response );
 			} catch(error) {
 				showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));');
@@ -3425,314 +3356,4 @@ function incluiEmitente(){
 	
 	return false;
 	
-}
-
-function mostraAutorizaResgate(){
-
-    // Executa script através de ajax
-    $.ajax({        
-        type: 'POST',
-        dataType: 'html',
-        url: UrlSite + 'telas/atenda/descontos/cheques/autorizar_resgate.php', 
-        data: {         
-            redirect: 'html_ajax'           
-            }, 
-        error: function(objAjax,responseError,objExcept) {
-            hideMsgAguardo();
-            showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos',"unblockBackground()");
-        },
-        success: function(response) {
-            $("#divOpcoesDaOpcao2").html(response);
-            formataAutorizarRegaste();
-        }
-    });
-	
-	return false;
-	
-}
-
-function formataAutorizarRegaste(){
-
-    $('#divAutSenha').css('display', 'none');
-    $('#divNomeDoc').css('display', 'none');
-
-    if (inpessoa > 1 && idastcjt == 1) {
-        $('#divAutIB').css('display', 'block');
-    } else {
-        $('#divAutIB').css('display', 'none');
-    }
-    
-    // label
-    var rSenha     = $('label[for="dssencar"]', '#frmAutorizar');
-    var rNome      = $('label[for="nomeresg"]', '#frmAutorizar');
-    var rDocumento = $('label[for="docuresg"]', '#frmAutorizar');
-
-    rSenha.addClass('rotulo').css('width', '40px');
-    rNome.addClass('rotulo').css('width', '40px');
-    rDocumento.addClass('rotulo').css('width', '40px');
-
-    // input
-    var cSenha                  = $('#dssencar', '#frmAutorizar');
-    var cFlgAutorizaSenha       = $('#flgAutorizaSenha', '#frmAutorizar');
-    var cFlgAutorizaIB          = $('#flgAutorizaIB', '#frmAutorizar');
-    var cFlgAutorizaComprovante = $('#flgAutorizaComprovante', '#frmAutorizar');
-    var cNome                   = $('#nomeresg', '#frmAutorizar');
-    var cDocumento              = $('#docuresg', '#frmAutorizar');
-    
-    cSenha.css('width', '100px').addClass('campo');
-    cFlgAutorizaSenha.css('clear', 'left');
-    cFlgAutorizaIB.css('clear', 'left');
-    cFlgAutorizaComprovante.css('clear', 'left');
-    cNome.css('width', '220px').addClass('campo');
-    cDocumento.css('width', '220px').addClass('campo');
-}
-
-function alteraOpcaoAutorizar(){
-    var opcaoSelecionada = $('input[type=radio][name=flgautoriza]:checked', '#frmAutorizar').val();
-    if (opcaoSelecionada == 'senha') {
-        $('#divAutSenha').css('display', 'block');
-        $('#divNomeDoc').css('display', 'none');
-    } else if (opcaoSelecionada == 'ib') {
-        $('#divAutSenha').css('display', 'none');
-        $('#divNomeDoc').css('display', 'none');
-    } else if (opcaoSelecionada == 'comprovante') {
-        $('#divAutSenha').css('display', 'none');
-        $('#divNomeDoc').css('display', 'block');
-    }
-}
-
-function prosseguirAutorizacao(){
-
-    hideMsgAguardo();
-
-    var opcaoSelecionada = $('input[type=radio][name=flgautoriza]:checked', '#frmAutorizar').val();
-
-    if (opcaoSelecionada == 'senha') {
-        // Validar a senha digitada
-        var dssencar = $('#dssencar', '#frmAutorizar').val();
-
-        showMsgAguardo('Aguarde, validando ...');
-
-        $.ajax({
-            type: 'POST',
-            async: true,
-            url: UrlSite + 'telas/atenda/descontos/cheques/valida_senha_cooperado.php',
-            data: {
-                nrdconta: nrdconta,
-                dssencar: dssencar,
-                inpessoa: inpessoa,
-                idastcjt: idastcjt,
-                redirect: 'script_ajax'
-            },
-            error: function(objAjax, responseError, objExcept) {
-                hideMsgAguardo();
-                showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'unblockBackground()');
-            },
-            success: function(response) {
-                try {
-                    eval(response);
-                    return false;
-                } catch (error) {
-                    hideMsgAguardo();
-                    showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'unblockBackground()');
-                }
-            }
-        });
-    } else if(opcaoSelecionada == 'ib'){
-        criaTransPendenteCheque('ib');
-    } else if(opcaoSelecionada == 'comprovante'){
-        geraImpressaoComprovante();
-    }
-
-    return false;
-
-}
-
-function geraImpressaoComprovante(){
-
-    showMsgAguardo('Aguarde, buscando cheque(s) resgatados(s) ...');
-
-    $('#formImpres').html('');
-
-    $('#formImpres').append('<input type="hidden" id="nrdconta" name="nrdconta" value="'+nrdconta+'"/>');
-    $('#formImpres').append('<input type="hidden" id="nmprimtl" name="nmprimtl" value="'+nmprimtl+'"/>');
-    $('#formImpres').append('<input type="hidden" id="sidlogin" name="sidlogin" value="'+ $('#sidlogin','#frmMenu').val() + '"/>');
-    $('#formImpres').append('<input type="hidden" id="inpessoa" name="inpessoa" value="'+inpessoa+'"/>');
-    $('#formImpres').append('<input type="hidden" id="idastcjt" name="idastcjt" value="'+idastcjt+'"/>');
-
-    buscarChequesCustodiadosHoje();
-}
-
-function buscarChequesCustodiadosHoje(){
-    
-    // Executa script através de ajax
-    $.ajax({        
-        type: 'POST',
-        dataType: 'html',
-        url: UrlSite + 'telas/atenda/descontos/cheques/busca_cheques_cust_hj.php', 
-        data: {         
-            nrdconta: nrdconta,
-            nrborder: nrbordero,
-            redirect: 'html_ajax'           
-            }, 
-        error: function(objAjax,responseError,objExcept) {
-            hideMsgAguardo();
-            showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos',"unblockBackground()");
-        },
-        success: function(response) {
-            hideMsgAguardo();
-            if (response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1) {
-                try{
-
-                    $('#formImpres').append(response);
-                    
-                    buscarResponsaveisAssinatura();
-
-                } catch(error){
-                    showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','unblockBackground();');
-                }
-            }else{
-                try {
-                    eval( response );                   
-                } catch(error) {                        
-                    showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','unblockBackground();');
-                }
-            }
-        }
-    });
-    
-    return false;
-    
-}
-
-function buscarResponsaveisAssinatura(){
-    
-    // Executa script através de ajax
-    $.ajax({        
-        type: 'POST',
-        dataType: 'html',
-        url: UrlSite + 'telas/atenda/descontos/cheques/busca_responsaveis_assinatura.php', 
-        data: {         
-            nrdconta: nrdconta,
-            redirect: 'html_ajax'           
-            }, 
-        error: function(objAjax,responseError,objExcept) {
-            hideMsgAguardo();
-            showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos',"unblockBackground()");
-        },
-        success: function(response) {
-            hideMsgAguardo();
-            if (response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1) {
-                try{
-
-                    $('#formImpres').append(response);
-                    efetivaBordero(true);
-
-                } catch(error){
-                    showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','unblockBackground();');
-                }
-            }else{
-                try {
-                    eval( response );                   
-                } catch(error) {                        
-                    showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','unblockBackground();');
-                }
-            }
-        }
-    });
-    
-    return false;
-    
-}
-
-function selecionarResponsavel(){
-    var nrcpfcgc = $('input[type=radio][name=nrcpfcgc]:checked', '#tabelaResponsaveis').val();
-
-    criaTransPendenteCheque('senha', nrcpfcgc);
-}
-
-function criaTransPendenteCheque(opcao, nrcpfcgc){
-    
-    showMsgAguardo('Aguarde, criando pendências para os outros responsáveis...');
-
-    $.ajax({
-      type: 'POST',
-      dataType: 'html',
-      url: UrlSite + 'telas/atenda/descontos/cheques/cria_trans_pend_resgate_cst.php', 
-        async: false,
-        data: {
-            nrdconta: nrdconta,
-            nrcpfcgc: nrcpfcgc,
-            nrborder: nrbordero,
-            redirect: 'html_ajax'
-            }, 
-        error: function(objAjax,responseError,objExcept) {
-            hideMsgAguardo();
-            showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos',"unblockBackground()");
-        },
-        success: function(response) {
-            hideMsgAguardo();
-            try {
-                eval( response );                   
-            } catch(error) {                    
-                showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','unblockBackground();');
-            }
-        }
-    });
-}
-
-function formRespAssinatura(){
-    
-    // Executa script através de ajax
-    $.ajax({        
-        type: 'POST',
-        dataType: 'html',
-        url: UrlSite + 'telas/atenda/descontos/cheques/form_resp_assinatura.php', 
-        data: {         
-            nrdconta: nrdconta,
-            redirect: 'html_ajax'           
-            }, 
-        error: function(objAjax,responseError,objExcept) {
-            hideMsgAguardo();
-            showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos',"unblockBackground()");
-        },
-        success: function(response) {
-            hideMsgAguardo();  
-            if (response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1) {
-                try{
-                    $('#divAutorizar').html(response);           
-                    formataTabelaResponsaveisAssinatura();
-                } catch(error){
-                    showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','unblockBackground();');
-                }
-            }else{
-                try {
-                    eval( response );                   
-                } catch(error) {                        
-                    showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','unblockBackground();');
-                }
-            }         
-        }               
-    });
-    
-    return false;
-    
-}
-
-function formataTabelaResponsaveisAssinatura(){
-    
-    // tabela
-    var divRegistro = $('div.divRegistros', '#divAutorizar');
-    var tabela = $('table', divRegistro);
-
-    var ordemInicial = new Array();
-
-    var arrayLargura = new Array();
-	arrayLargura[0] = '13px';
-    
-    var arrayAlinha = new Array();
-    arrayAlinha[0] = 'center';
-
-    tabela.formataTabela(ordemInicial, arrayLargura, arrayAlinha, '');
-    
 }

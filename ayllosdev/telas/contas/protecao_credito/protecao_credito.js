@@ -170,7 +170,6 @@ function manterRotina(operacao) {
 	var inlbacen = $('#inlbacen','#' + nomeForm ).val();
 	var flgrestr = $('#flgrestr', '#' + nomeForm).val();
 	var idastcjt = $('#idastcjt', '#' + nomeForm).val();
-	var cdcatego = $('#cdcatego', '#' + nomeForm).val();
   			
 	$.ajax({		
 		type: 'POST',
@@ -185,7 +184,6 @@ function manterRotina(operacao) {
             flgcrdpa: flgcrdpa, flgiddep: flgiddep,	tpavsdeb: tpavsdeb, 
             tpextcta: tpextcta, flgrestr: flgrestr,	inadimpl: inadimpl,	
             inlbacen: inlbacen, idastcjt: idastcjt, operacao: operacao,
-			cdcatego: cdcatego,
 			redirect: 'script_ajax'
 		}, 
 		error: function(objAjax,responseError,objExcept) {

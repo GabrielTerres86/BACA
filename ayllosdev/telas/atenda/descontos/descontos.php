@@ -70,7 +70,8 @@
 									<div id="divOpcoesDaOpcao1"></div>
 									<div id="divOpcoesDaOpcao2"></div>
 									<div id="divOpcoesDaOpcao3"></div>
-									<div id="divOpcoesDaOpcao4"></div>											
+									<div id="divOpcoesDaOpcao4"></div>
+									<div id="divOpcoesDaOpcao5"></div>											
 									<div id="divConteudoOpcao" style="height: 80px;">
 										<!-- Botoes Titulos e Cheque -->
 										

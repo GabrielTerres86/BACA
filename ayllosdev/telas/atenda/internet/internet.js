@@ -1,7 +1,7 @@
 /*************************************************************************
  Fonte: internet.js                                               
  Autor: David                                                     
- Data : Junho/2008                   Última Alteração: 13/12/2017
+ Data : Junho/2008                   Última Alteração: 13/06/2017
                                                                   
  Objetivo  : Biblioteca de funções da rotina de Internet da tela  
              ATENDA                                               
@@ -12,12 +12,15 @@
 																  
 			 10/01/2011 - Retirar a parte de Cobranca (Gabriel)  
                                                                   
-             08/07/2011 - Tratado na funcao selecionaTitularInternet,
-						  a habilitacao do botao Liberacao (Fabricio)          
+             08/07/2011 - Tratado na funcao                       
+                          selecionaTitularInternet, a habilitacao 
+						  do botao Liberacao (Fabricio)          
 						                                          
-			 13/07/2011 - Alterado para layout padrão (Gabriel - DB1)
+			 13/07/2011 - Alterado para layout padrão            
+			  			  (Gabriel - DB1)						  
 						                                          
 			 17/05/2012 - Projeto TED Internet	(Lucas)           
+						                                          
 						                                          
 			 27/06/2012 - Alterado funcao carregarContrato(),    
 						  novo esquema para impressao.(Jorge)    
@@ -61,20 +64,12 @@
                           formatação da tela (Dionathan).
 						  
              07/09/2016 - Adicionado função controlaFoco.(Evandro - RKAM).
-
              26/08/2016 - Alteracao da function validaResponsaveis, SD 510426 (Jean Michel)
 
              13/06/2017 - Ajuste devido ao aumento do formato para os campos crapass.nrdocptl, crapttl.nrdocttl, 
 	                      crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava
 						  (Adriano - P339).	
              05/09/2017 - Alteração referente ao Projeto Assinatura conjunta (Proj 397)
-
-             04/09/2017 - Inclusão de novas functions, Prj. 354 (Jean Michel)
-			 
-			 13/12/2017 - Chamado 793407 - Ajustar teste para esconder botões em caso 
-			              de operadores (Andrei-MOUTs)
-
-			 06/04/2018 - Inclusao das function validaValorAdesao e senhaCoordenador. PRJ366 (Lombardi).
 
 *********************************************************************************/
 
@@ -96,8 +91,6 @@ var idastcjt;
 var qtdTitular;
 var confPJ = false;
 var exibePJ = false;
-
-var idmobile;
 
 // Função para acessar opções da rotina
 function acessaOpcaoAba(nrOpcoes,id,opcao) { 
@@ -194,6 +187,7 @@ function controlaFoco() {
 // Função para seleção de titular para consulta e alteração de dados
 function selecionaTitularInternet(id,qtTitulares,cpf,idastcjt,titularidade,sqttl,cpfcgc) {
 	
+		
 	// Formata cor da linha da tabela que lista titulares e esconde div com dados do mesmo
 	for (var i = 1; i <= qtTitulares; i++) {		
 				
@@ -209,6 +203,10 @@ function selecionaTitularInternet(id,qtTitulares,cpf,idastcjt,titularidade,sqttl
     }
 	$("#divTitInternet" + id).css("display","block");
 	
+	if(idastcjt == "1"){
+		// Mostra CPF do titular no título da área de dados
+		$("#spanSeqTitular").html(cpf);
+		
 		if (sqttl == "999"){
 			$('#divBotoes').hide();
 			$('#preoroper').html('OPERADOR');
@@ -217,9 +215,6 @@ function selecionaTitularInternet(id,qtTitulares,cpf,idastcjt,titularidade,sqttl
 			$('#divBotoes').show();
 		}
 		
-	if(idastcjt == "1"){
-		// Mostra CPF do titular no título da área de dados
-		$("#spanSeqTitular").html(cpf);
 	}else{
 		// Mostra sequência do titular no título da área de dados
 		$("#spanSeqTitular").html(id);	
@@ -1644,7 +1639,7 @@ function validaDadosLimitesprep(inpessoa) {
 		showError("error","Valor do limite di&aacute;rio para folha de pagamento inv&aacute;lido.","Alerta - Ayllos","$('#vllimflp','#frmAlterarLimites').focus();blockBackground(parseInt($('#divRotina').css('z-index')))");
 		return false;
 	}	
-	
+
 	// Carrega conteúdo da opção através de ajax
 	$.ajax({		
 		type: "POST", 
@@ -1670,37 +1665,6 @@ function validaDadosLimitesprep(inpessoa) {
 			$("#divHabilitacaoInternet02").html(response);
 		}				
 	});
-}
-
-function validaValorAdesao(inpessoa) {
-	
-	$.ajax({
-		type: 'POST',
-		dataType: 'html',
-		url: UrlSite + 'telas/atenda/internet/valida_valor_adesao.php', 
-		data: {
-			nrdconta: nrdconta,
-			inpessoa: inpessoa,
-			vllimweb: $("#vllimweb", "#frmAlterarLimites").val().replace(/\./g, "").replace(",", "."),
-			vllimtrf: $("#vllimtrf", "#frmAlterarLimites").val().replace(/\./g, "").replace(",", "."),
-			vllimpgo: $("#vllimpgo", "#frmAlterarLimites").val().replace(/\./g, "").replace(",", "."),
-			vllimted: $("#vllimted", "#frmAlterarLimites").val().replace(/\./g, "").replace(",", "."),
-			vllimvrb: $("#vllimvrb", "#frmAlterarLimites").val().replace(/\./g, "").replace(",", "."),
-			redirect: 'script_ajax'
-		}, 
-		error: function (objAjax, responseError, objExcept) {
-			hideMsgAguardo();
-			showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
-		},
-		success: function (response) {
-			hideMsgAguardo();
-            try {
-				eval(response);
-			} catch (error) {
-				showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'unblockBackground();');
-			}
-		}				
-	});	
 }
 
 // Função para esconder divtacaoInternet02
@@ -2166,49 +2130,6 @@ function controlaLayout( nomeForm ){
 		$("#frmDadosTitInternet").hide();
 		$("#divInternetPrincipal").hide();
 		$("#divResponsaveisAss").hide();
-	}else if( nomeForm == 'frmOpDesativaPush'){
-		
-		$("#divDispositivos").show();	
-		$("#divPrincipalPJ").hide();
-		$("#divBotoes").hide();
-		$("#frmDadosTitInternet").hide();
-		$("#divInternetPrincipal").hide();
-		$("#divResponsaveisAss").hide();
-		
-		ajustarCentralizacao();
-		
-		var divRegistro = $('div.divRegistros','#divDispositivos');		
-		var tabela      = $('table', divRegistro );
-		var linha       = $('table > tbody > tr', divRegistro );
-		
-		divRegistro.css({'height':'50%','width':'100%'});
-		
-		if($("#qtdDispositivos").val() > 0){
-			var ordemInicial = new Array();
-			ordemInicial = [[2,0]];
-			
-			var arrayLargura = new Array();
-			arrayLargura[0] = '100px';
-			arrayLargura[1] = '200px';
-			
-			var arrayAlinha = new Array();
-			arrayAlinha[0] = 'right';
-			arrayAlinha[1] = 'right';
-			arrayAlinha[2] = 'right';
-		}else{
-			$("#btnDesativar").hide();
-			$("#btnvoltar").css({'margin-left':'260px'});
-		}
-		
-		tabela.formataTabela( ordemInicial, arrayLargura, arrayAlinha, '' );
-		
-		$('.divDispositivos > table > thead').remove();
-				
-		$('table', tabela).removeClass();
-		$('th', tabela).unbind('click');
-		$('.headerSort', tabela).removeClass();
-		$('#frmOpDesativaPush').addClass('formulario');
-		$("#divConteudoOpcao").css("width","100%");
 	}else if( nomeForm == 'divResponsaveisAss' ){
 				
 		$("#divResponsaveisAss").show();
@@ -2649,58 +2570,4 @@ function alterarPrepostoMaster(nrdconta, cpf){
 			eval(response);
 		}
 	});
-}
-
-function desativarPush(){
-	// Mostra mensagem de aguardo
-	showMsgAguardo("Aguarde, carregando listagem de dispositivos...");
-	
-	// Carrega conteúdo da opção através de ajax
-	$.ajax({		
-		type: "POST", 
-		url: UrlSite + "telas/atenda/internet/listagem_push.php",
-		dataType: "html",
-		data: {
-			nrdconta: nrdconta,
-			idseqttl: idseqttl,
-			redirect: "html_ajax"
-		},		
-		error: function(objAjax,responseError,objExcept) {
-			hideMsgAguardo();
-			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
-		},
-		success: function(response) {
-			$("#divConteudoOpcao").html(response);
-		}				
-	});
-}
-
-function selecionaMobile(id){
-	idmobile = id;
-}
-function desativarEnvioPush(){
-	// Mostra mensagem de aguardo
-	showMsgAguardo("Aguarde, carregando listagem de dispositivos...");
-	
-	// Carrega conteúdo da opção através de ajax
-	$.ajax({		
-		type: "POST", 
-		url: UrlSite + "telas/atenda/internet/desativa_push.php",
-		data: {
-			idmobile: idmobile,
-			redirect: "script_ajax"
-		},		
-		error: function(objAjax,responseError,objExcept) {
-			hideMsgAguardo();
-			showError("error","N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.","Alerta - Ayllos","blockBackground(parseInt($('#divRotina').css('z-index')))");
-		},
-		success: function(response) {
-			hideMsgAguardo();
-			eval(response);
-		}
-	});
-}
-
-function senhaCoordenador(executaDepois) {
-	pedeSenhaCoordenador(2,executaDepois,'divRotina');
 }

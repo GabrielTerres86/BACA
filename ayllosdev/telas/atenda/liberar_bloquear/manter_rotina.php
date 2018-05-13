@@ -11,9 +11,6 @@
  *				  27/07/2016 - Adicionados novos campos para a fase 3 do projeto pre aprovado
  *                             (Lombardi).
  *                08/08/2017 - Implementacao da melhoria 438. Heitor (Mouts).
- *				  09/11/2017 - Ajuste para remover acentos e caracteres especiais do campo
- *                             dsmotmaj. Chamado 783434 - Mateus Z (Mouts)
- *                15/03/2018 - Campo de selecao de cancelamento automatico de credito (Marcel Kohls / AMCom)
  * --------------
  */	
 	session_start();
@@ -33,17 +30,11 @@
 	$flgrenli = (isset($_POST['flgrenli'])) ? $_POST['flgrenli'] : '0';
 	$flgcrdpa = (isset($_POST['flgcrdpa'])) ? $_POST['flgcrdpa'] : '0';
 	$flmajora = (isset($_POST['flmajora'])) ? $_POST['flmajora'] : '1';
-	$flcnaulc = (isset($_POST['flcnaulc'])) ? $_POST['flcnaulc'] : '1';
 	$dsmotmaj = (isset($_POST['dsmotmaj'])) ? $_POST['dsmotmaj'] : '';
-	
-	$dsmotmaj = utf8_decode($dsmotmaj);
-	$dsmotmaj = removeCaracteresInvalidos($dsmotmaj);
-	$dsmotmaj = retiraAcentos($dsmotmaj);
 
 	$flgrenli = strtoupper($flgrenli) == 'NO' ? 0 : 1;
 	$flgcrdpa = strtoupper($flgcrdpa) == 'NO' ? 0 : 1;
 	$flmajora = strtoupper($flmajora) == 'NO' ? 0 : 1;
-	$flcnaulc = strtoupper($flcnaulc) == 'NO' ? 0 : 1;
 	
 	if ($operacao == 'ALTERARC' && $flmajora == 0 && $dsmotmaj == '')
 	  exibirErro('error',"&Eacute; obrigat&oacute;rio informar o motivo do bloqueio.",'Alerta - Ayllos',"$(\'#motivo_bloqueio_maj\',\'#frmContaCorrente\').focus();hideMsgAguardo();bloqueiaFundo(divRotina);",false);
@@ -76,7 +67,6 @@
 		$xml .= "		<flgrenli>".$flgrenli."</flgrenli>";
 		$xml .= "		<flmajora>".$flmajora."</flmajora>";
 		$xml .= "		<dsmotmaj>".$dsmotmaj."</dsmotmaj>";
-		$xml .= "		<flcnaulc>".$flcnaulc."</flcnaulc>";
 		$xml .= "	</Dados>";
 		$xml .= "</Root>";
 		

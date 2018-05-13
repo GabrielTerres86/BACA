@@ -26,7 +26,7 @@
 	require_once("../../../../class/xmlfile.php");
 
 	setVarSession("nmrotina","DSC TITS - LIMITE");
-	
+
 	require_once("../../../../includes/carrega_permissoes.php");
 
 	setVarSession("opcoesTela",$opcoesTela);
@@ -233,9 +233,9 @@
 	if (sitinctrmnt == 1){
 		dscShowHideDiv("divOpcoesDaOpcao3","divOpcoesDaOpcao2;");	
 	}else{
-		dscShowHideDiv("divOpcoesDaOpcao2","divOpcoesDaOpcao1;");	
+	dscShowHideDiv("divOpcoesDaOpcao2","divOpcoesDaOpcao1;");
 	}
-	
+
 	// Muda o título da tela
 	$("#tdTitRotina").html("DESCONTO DE T&Iacute;TULOS - TITULOS - MANUTEN&Ccedil;&Atilde;o");
 

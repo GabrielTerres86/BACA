@@ -12,8 +12,6 @@
 		         06/12/2016 - P341-Automatização BACENJUD - Alterar a passagem 
 				              da descrição do departamento como parametro e 
 							  passar o o código (Renato Darosci)
-
-                 05/12/2017 - Melhoria 458 adicionado campo inmonpld - Antonio R. Jr (Mouts)
 ............................................................................*/
 
 
@@ -52,7 +50,6 @@ DEF VAR aux_inautori AS INTE                                         NO-UNDO.
 DEF VAR aux_inavisar AS INTE                                         NO-UNDO.
 DEF VAR aux_inclasse AS INTE                                         NO-UNDO.
 DEF VAR aux_incremes AS INTE                                         NO-UNDO.
-DEF VAR aux_inmonpld AS INTE                                         NO-UNDO.
 DEF VAR aux_indcompl AS INTE                                         NO-UNDO.
 DEF VAR aux_indebcta AS INTE                                         NO-UNDO.
 DEF VAR aux_indoipmf AS INTE                                         NO-UNDO.
@@ -82,7 +79,6 @@ DEF VAR log_vltarcsh AS DECI                                         NO-UNDO.
 
 DEF VAR aux_cdagrupa AS INTE                                         NO-UNDO.
 DEF VAR aux_dsagrupa AS CHAR                                         NO-UNDO.
-DEF VAR aux_cdgrphis AS INTE                                         NO-UNDO.
 
 DEF VAR aux_cdprodut AS INTE                                         NO-UNDO.
 DEF VAR aux_dsprodut AS CHAR                                         NO-UNDO.
@@ -124,7 +120,6 @@ PROCEDURE valores_entrada:
              WHEN "inavisar" THEN aux_inavisar = INTE(tt-param.valorCampo).
              WHEN "inclasse" THEN aux_inclasse = INTE(tt-param.valorCampo).
              WHEN "incremes" THEN aux_incremes = INTE(tt-param.valorCampo).
-             WHEN "inmonpld" THEN aux_inmonpld = INTE(tt-param.valorCampo).
              WHEN "indcompl" THEN aux_indcompl = INTE(tt-param.valorCampo).
              WHEN "indebcta" THEN aux_indebcta = INTE(tt-param.valorCampo).
              WHEN "indoipmf" THEN aux_indoipmf = INTE(tt-param.valorCampo).
@@ -157,7 +152,6 @@ PROCEDURE valores_entrada:
 
              WHEN "cdprodut" THEN aux_cdprodut = INTE(tt-param.valorCampo).
              WHEN "dsprodut" THEN aux_dsprodut = tt-param.valorCampo.
-             WHEN "cdgrphis" THEN aux_cdgrphis = INTE(tt-param.valorCampo).
 
          END CASE.
 
@@ -186,7 +180,6 @@ PROCEDURE Busca_Dados:
                      INPUT aux_dshistor,                            
                      INPUT aux_tpltmvpq,                       
                      INPUT aux_cdhinovo,                  
-                     INPUT aux_cdgrphis,
                      INPUT aux_nrregist,                            
                      INPUT aux_nriniseq,                            
                      INPUT TRUE,                                    
@@ -345,7 +338,6 @@ PROCEDURE Grava_Dados:
                      INPUT aux_inavisar,     
                      INPUT aux_inclasse,     
                      INPUT aux_incremes,     
-                     INPUT aux_inmonpld, 
                      INPUT aux_indcompl,     
                      INPUT aux_indebcta,     
                      INPUT aux_indoipmf,     
@@ -363,9 +355,6 @@ PROCEDURE Grava_Dados:
                      
                      INPUT aux_ingercre,     
                      INPUT aux_ingerdeb,     
-                     
-                     INPUT aux_cdgrphis,
-                     
                      INPUT aux_flgsenha,     
                      INPUT aux_cdprodut,     
                      INPUT aux_cdagrupa,     
@@ -495,4 +484,3 @@ PROCEDURE Gera_ImpressaoO:
         END.
 
 END PROCEDURE. /* Gera_ImpressaoO */
-

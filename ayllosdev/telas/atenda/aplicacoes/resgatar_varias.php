@@ -16,12 +16,8 @@
    			     12/08/2014 - Adicionar o valor padrão para o campo Data de 
 				              Resgate (Douglas - Projeto Captação Internet 2014/2)
 							  
-				 08/12/2014 - Ajuste de flags de resgate manual e automatico (Jean Michel).
-			                                					         
-				 27/07/2016 - Corrigi a recuperacao de dados do post e do retorno XML. SD 479874 (Carlos R.)
-			                                					         
-				 17/04/2018 - Incluida verificacao de adesao do produto pelo 
-                              tipo de conta. PRJ366 (Lombardi)
+				 08/12/2014 - Ajuste de flags de resgate manual e automatico
+						      (Jean Michel).
 			                                					         
 	**************************************************************************/
 	
@@ -49,31 +45,12 @@
 		
 	$nrdconta = $_POST["nrdconta"];
 	$flcadrgt = $_POST["flcadrgt"];
-	$flgauto  = ( isset($_POST["flgauto"]) ) ? $_POST["flgauto"] : '';
+	$flgauto  = $_POST["flgauto"];
 	
 	// Verifica se numero da conta e um inteiro valido
 	if (!validaInteiro($nrdconta)) {
 		exibeErro("Conta/dv inv&aacute;lida.");
 	}	
-	
-	// Monta o xml de requisição
-	$xml  = "";
-	$xml .= "<Root>";
-	$xml .= "	<Dados>";
-	$xml .= "		<nrdconta>".$nrdconta."</nrdconta>";
-	$xml .= "		<cdprodut>".   41    ."</cdprodut>";
-	$xml .= "	</Dados>";
-	$xml .= "</Root>";
-	
-	// Executa script para envio do XML
-	$xmlResult = mensageria($xml, "CADA0006", "VALIDA_ADESAO_PRODUTO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
-	$xmlObj = getObjectXML($xmlResult);
-	
-	// Se ocorrer um erro, mostra crítica
-	if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
-		$msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
-		exibeErro(utf8_encode($msgErro));
-	}
 	
 	// Verifica se flag de opcao resgate e valida
 	if ($flcadrgt <> "yes" && $flcadrgt <> "no") {
@@ -96,7 +73,7 @@
 		
 	}else{
 						
-		$flgauto = ($flgauto == 'false') ? 0 : 1;
+		$flgauto = $flgauto == 'false' ? 0 : 1;
 		
 		// Monta o xml de requisição
 		$xml  = "";
@@ -117,8 +94,8 @@
 		$xmlObj = getObjectXML($xmlResult);
 				
 		// Se ocorrer um erro, mostra critica
-		if(isset($xmlObj->roottag->tags[0]->name) && strtoupper($xmlObj->roottag->tags[0]->name) == 'ERRO'){	
-			$msgErro = ( isset($xmlObj->roottag->tags[0]->cdata) ) ? $xmlObj->roottag->tags[0]->cdata : null;
+		if(strtoupper($xmlObj->roottag->tags[0]->name) == 'ERRO'){	
+			$msgErro = $xmlObj->roottag->tags[0]->cdata;
 			
 			if($msgErro == null || $msgErro == ''){
 				$msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
@@ -134,7 +111,7 @@
 				$idPrincipal = 0;
 			}
 			
-			$sldtotrg = ( isset($xmlObj->roottag->tags[0]->tags[0]->cdata) ) ? $xmlObj->roottag->tags[0]->tags[0]->cdata : 0;
+			$sldtotrg = $xmlObj->roottag->tags[0]->tags[0]->cdata;
 			
 			if ($sldtotrg == 0)
 				exibeErro("N&atilde;o h&aacute; saldo dispon&iacute;vel para resgate. Verifique a situa&ccedil;&atilde;o das aplica&ccedil;&otilde;es e se n&atilde;o h&aacute; resgate programado.");
@@ -194,12 +171,12 @@
 			<?php 
 			if ($flgauto == 1) { 
 			?>
-				strHTML += '	<a href="#" class="botao" id="btProsseguir" onClick="validaValorProdutoResgate(\'listarResgatesAuto(<?php echo dataParaTimestamp($glbvars["dtmvtolt"]); ?>);\',\'vlresgat\',\'frmResgateVarias\');return false;" >Prosseguir</a>';
+				strHTML += '	<a href="#" class="botao" id="btProsseguir" onClick="listarResgatesAuto(<?php echo dataParaTimestamp($glbvars["dtmvtolt"]); ?>);return false;" >Prosseguir</a>';
 									
 			<?php 
 			} else {
 			?>
-				strHTML += '	<a href="#" class="botao" id="btProsseguir" onClick="validaValorProdutoResgate(\'listarResgatesManual(<?php echo dataParaTimestamp($glbvars["dtmvtolt"]); ?>);\',\'vlresgat\',\'frmResgateVarias\');return false;" >Prosseguir</a>';
+				strHTML += '	<a href="#" class="botao" id="btProsseguir" onClick="listarResgatesManual(<?php echo dataParaTimestamp($glbvars["dtmvtolt"]); ?>);return false;" >Prosseguir</a>';
 									
 			<?php
 			}

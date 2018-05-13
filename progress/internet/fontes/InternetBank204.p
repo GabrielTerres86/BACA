@@ -38,7 +38,6 @@ DEF VAR aux_nrconven AS   INTE                                         NO-UNDO.
 DEF VAR aux_flghomol AS   INTE                                         NO-UNDO.
 DEF VAR aux_idretorn AS   INTE                                         NO-UNDO.
 DEF VAR aux_cdagectl AS   INTE                                         NO-UNDO.
-DEF VAR aux_dtadesao AS   DATE                                         NO-UNDO.
 DEF VAR aux_nrcpfcgc LIKE crapass.nrcpfcgc                             NO-UNDO.
 
 
@@ -65,8 +64,7 @@ ASSIGN aux_dstransa = "Acesso a tela de upload do arquivo de agendamento de paga
        aux_flghomol = 0
        aux_idretorn = 0
        aux_cdagectl = 0
-       aux_nrcpfcgc = 0
-       aux_dtadesao = ?.
+       aux_nrcpfcgc = 0.
 
 /* Carregar as informacoes da agencia do cooperado */ 
 FIND FIRST crapcop 
@@ -160,7 +158,6 @@ IF  VALID-HANDLE(h-b1wgen0015)  THEN
                       (INPUT par_cdcooper, /* Codigo da Cooperativa */
                        INPUT par_nrdconta, /* Numero da Conta */
                       OUTPUT 0,            /* Numero do Convenio */
-                      OUTPUT ?,            /* Data de adesao */
                       OUTPUT 0,            /* Convenio esta homologado */
                       OUTPUT 0,            /* Retorno para o Cooperado (1-Internet/2-FTP) */
                       OUTPUT 0,            /* Flag convenio homologado */
@@ -176,8 +173,6 @@ IF  VALID-HANDLE(h-b1wgen0015)  THEN
    
     ASSIGN aux_nrconven = pc_verifica_conv_pgto.pr_nrconven
                           WHEN pc_verifica_conv_pgto.pr_nrconven <> ?
-           aux_dtadesao = pc_verifica_conv_pgto.pr_dtadesao
-                          WHEN pc_verifica_conv_pgto.pr_dtadesao <> ?               
            aux_flghomol = pc_verifica_conv_pgto.pr_flghomol
                           WHEN pc_verifica_conv_pgto.pr_flghomol <> ?
            aux_idretorn = pc_verifica_conv_pgto.pr_idretorn
@@ -191,12 +186,10 @@ ASSIGN xml_operacao.dslinxml = " <LIMITE>" +
                                "   <nrtelfax>" + aux_nrtelfax + "</nrtelfax>" + 
                                "   <hrcancel>" + aux_hrcancel + "</hrcancel>" + 
                                "   <nrconven>" + STRING(aux_nrconven) + "</nrconven>" + 
-
                                "   <flghomol>" + STRING(aux_flghomol) + "</flghomol>" + 
                                "   <idretorn>" + STRING(aux_idretorn) + "</idretorn>" +
                                "   <nrcpfcgc>" + STRING(aux_nrcpfcgc) + "</nrcpfcgc>" + 
                                "   <cdagectl>" + STRING(aux_cdagectl) + "</cdagectl>" + 
-                               "   <dtadesao>" + STRING(aux_dtadesao,"99/99/9999") + "</dtadesao>" +                                
                                " </LIMITE>".
 
 RUN proc_geracao_log (INPUT TRUE).

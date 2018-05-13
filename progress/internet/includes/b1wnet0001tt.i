@@ -97,13 +97,7 @@ DEF TEMP-TABLE tt-sacados-blt NO-UNDO
     FIELD nrctasac LIKE crapass.nrdconta
     FIELD dsctasac AS CHAR
     /* Campo para identificar se exite e-mail crapsab*/
-    FIELD flgemail AS LOGI
-    FIELD dsflgend AS LOGI
-    FIELD dsflgprc AS LOGI
-    FIELD nmsacado LIKE crapsab.nmdsacad
-    FIELD cdsitsac LIKE crapsab.cdsitsac
-    FIELD dssitsac AS CHAR
-    FIELD dsdemail AS CHAR.
+    FIELD flgemail AS LOGI. 
     
 DEF TEMP-TABLE tt-gera-blt NO-UNDO                 
     FIELD nrdocmto LIKE crapcob.nrdocmto
@@ -116,7 +110,6 @@ DEF TEMP-TABLE tt-dados-sacado-blt NO-UNDO LIKE crapsab
     FIELD dsdemail AS CHAR
     FIELD flgremov AS LOGI
     FIELD flgsacad AS LOGI
-    FIELD dscriend AS CHAR
-    FIELD dssitsac AS CHAR.
+    FIELD dscriend AS CHAR.
  
 /*............................................................................*/

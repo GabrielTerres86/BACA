@@ -30,8 +30,7 @@ DEF TEMP-TABLE tt-titulares                                             NO-UNDO
     FIELD nrcpfope LIKE crapopi.nrcpfope
     FIELD incadsen AS INTE
     FIELD inbloque AS INTE
-    FIELD inpessoa AS INTE
-    FIELD idastcjt AS INTE.
+    FIELD inpessoa AS INTE.
     
 DEF TEMP-TABLE tt-acesso                                                NO-UNDO
     FIELD dtaltsnh LIKE crapsnh.dtaltsnh

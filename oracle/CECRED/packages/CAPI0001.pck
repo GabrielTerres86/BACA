@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.CAPI0001 IS
 --  Sistema  : Rotinas genericas referentea integralização de cotas
 --  Sigla    : CAPI
 --  Autor    : Ricardo Linhares - CECRED
---  Data     : Setembro - 2016.                   Ultima atualizacao: 23/03/2018
+--  Data     : Setembro - 2016.                   Ultima atualizacao: -
 --
 -- Dados referentes ao programa:
 --
@@ -15,12 +15,6 @@ CREATE OR REPLACE PACKAGE CECRED.CAPI0001 IS
 --
 -- Alteracoes : 24/04/2017 - Nao considerar valores bloqueados na composicao de saldo disponivel
 --                           Heitor (Mouts) - Melhoria 440
---
---              23/03/2018 - Incluido na rotina pc_integraliza_cotas validação de valores de integralizacao
---                           negativos ou zerados (Tiago/Jean INC0010838).
---
---              20/02/2018 - Removido tabela "craptip" do cursor "cr_crapass" na procedure
---                           pc_integraliza_cotas. PRJ366 (Lombardi).
 ---------------------------------------------------------------------------------------------------------
   -- Rotina para integralizar as cotas
   PROCEDURE pc_integraliza_cotas(pr_cdcooper IN crapcop.cdcooper%TYPE
@@ -435,8 +429,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.capi0001 IS
           ,decode(crapass.inpessoa,1,1,2) inpessoa
           ,crapass.cdtipcta
       FROM crapass 
+          ,craptip
      WHERE crapass.cdcooper = pr_cdcooper
-       AND crapass.nrdconta = pr_nrdconta;
+       AND crapass.nrdconta = pr_nrdconta
+       AND craptip.cdcooper = crapass.cdcooper
+       AND craptip.cdtipcta = crapass.cdtipcta;
     rw_crapass cr_crapass%ROWTYPE;
     
     -- Erros do processo
@@ -472,12 +469,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.capi0001 IS
 
 
   BEGIN
-
-    IF NVL(pr_vlintegr,0) <= 0 THEN
-      vr_cdcritic := 0;
-      vr_dscritic := 'Valor de integralização não pode ser negativo ou zero.';
-      RAISE vr_exc_erro;
-    END IF;
 
     -- verifica o saldo disponível para intgegralização
     IF pr_flgnegat = TRUE THEN -- Pelo Ayllos pode forçar a integralização mesmo que a negative.

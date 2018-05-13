@@ -57,9 +57,6 @@
                
                28/10/2015 - #318705 Adicionado sequencial na descricao da 
                             critica 90 (Carlos)
-               
-               08/12/2017 - Melhoria 458, criada procedure atualiza-crapcme-pagamento
-                            Antonio R. Jr (mouts)
 ............................................................................. */
 
 {dbo/bo-erro1.i}
@@ -68,8 +65,6 @@
 DEF BUFFER crabcme FOR crapcme.
 DEF BUFFER crabass FOR crapass.
 DEF BUFFER crablcm FOR craplcm.
-DEF BUFFER crablft FOR craplft.
-DEF BUFFER crabtit FOR craptit.
 
 DEF  VAR i-cod-erro     AS INTEGER.
 DEF  VAR c-desc-erro    AS CHAR.
@@ -83,7 +78,7 @@ DEF  VAR rel_nrcpfcgc   AS CHAR FORMAT "x(18)".
 DEF  VAR rel_nmpesrcb   AS CHAR FORMAT "x(70)".
 DEF  VAR rel_tppesrcb   AS CHAR FORMAT "x(08)".
 DEF  VAR rel_cpfcgrcb   AS CHAR FORMAT "x(18)".
-DEF  VAR rel_tpoperac   AS CHAR FORMAT "x(09)".
+DEF  VAR rel_tpoperac   AS CHAR FORMAT "x(08)".
 DEF  VAR rel_vllanmto   AS CHAR FORMAT "x(10)".
 DEF  VAR in01           AS INTE                                     NO-UNDO.
 
@@ -347,58 +342,6 @@ PROCEDURE bo_imp_ctr_depositos:
             END.      
     END.
 
-    FOR EACH crablft WHERE crablft.cdcooper = crapcop.cdcooper AND
-             crablft.dtmvtolt = da-data AND
-             crablft.cdagenci = par_cdagenci AND
-             crablft.cdbccxlt = 11 AND
-             crablft.nrdolote = par_nrdolote AND
-             crablft.nrautdoc = par_nrseqaut
-             NO-LOCK:
-
-        FIND crabcme WHERE crabcme.cdcooper = crapcop.cdcooper AND
-             crabcme.dtmvtolt = crablft.dtmvtolt AND
-             crabcme.cdagenci = crablft.cdagenci AND
-             crabcme.cdbccxlt = crablft.cdbccxlt AND
-             crabcme.nrdolote = crablft.nrdolote AND
-             crabcme.nrdocmto = crablft.nrseqdig 
-             NO-LOCK NO-ERROR.
-
-        IF AVAILABLE crabcme THEN
-           DO:
-             ASSIGN aux_flgexist = YES
-             aux_nrdctabb = crabcme.nrdctabb
-             aux_nrdocmto = crabcme.nrdocmto.
-             LEAVE.
-           END.
-    END.
-    
-    FOR EACH crabtit WHERE crabtit.cdcooper = crapcop.cdcooper AND
-             crabtit.dtmvtolt = da-data AND
-             crabtit.cdagenci = par_cdagenci AND
-             crabtit.cdbccxlt = 11 AND
-             crabtit.nrdolote = par_nrdolote AND
-             crabtit.nrautdoc = par_nrseqaut
-             NO-LOCK:
-			
-			 
-
-        FIND crabcme WHERE crabcme.cdcooper = crapcop.cdcooper AND
-             crabcme.dtmvtolt = crabtit.dtmvtolt AND
-             crabcme.cdagenci = crabtit.cdagenci AND
-             crabcme.cdbccxlt = crabtit.cdbccxlt AND
-             crabcme.nrdolote = crabtit.nrdolote AND
-             crabcme.nrdocmto = crabtit.nrseqdig 
-             NO-LOCK NO-ERROR.
-
-        IF AVAILABLE crabcme THEN
-          DO:
-             ASSIGN aux_flgexist = YES
-             aux_nrdctabb = crabcme.nrdctabb
-             aux_nrdocmto = crabcme.nrdocmto.
-             LEAVE.
-          END.
-    END.
-
     IF  NOT aux_flgexist   THEN
         DO:
             ASSIGN i-cod-erro  = 90
@@ -435,8 +378,6 @@ PROCEDURE bo_imp_ctr_depositos:
             RETURN "NOK".  
         END.   
 
-    IF crabcme.nrdconta <> 0 THEN
-      DO:
     FIND crabass WHERE crabass.cdcooper = crapcop.cdcooper  AND
                        crabass.nrdconta = crabcme.nrdconta 
                        NO-LOCK NO-ERROR.
@@ -458,7 +399,6 @@ PROCEDURE bo_imp_ctr_depositos:
                        crapenc.nrdconta = crabass.nrdconta AND
                        crapenc.idseqttl = 1                AND
                        crapenc.cdseqinc = 1                NO-LOCK NO-ERROR.
-      END.  
 
     FIND craptab WHERE craptab.cdcooper = crapcop.cdcooper AND
                        craptab.nmsistem = "CRED"           AND
@@ -517,13 +457,8 @@ PROCEDURE bo_imp_ctr_depositos:
     IF  crabcme.tpoperac = 1   THEN
         ASSIGN rel_tpoperac = "Deposito".
     ELSE
-   IF crabcme.tpoperac = 2 THEN
         ASSIGN rel_tpoperac = "Saque".
-   ELSE
-      ASSIGN rel_tpoperac = "Pagamento". 
           
-    IF crabcme.nrdconta <> 0 THEN
-      DO:
     IF   crabass.inpessoa = 1   THEN
          ASSIGN rel_tppessoa = "Fisica"
                 rel_nrcpfcgc = STRING(crabass.nrcpfcgc,"99999999999")
@@ -532,7 +467,6 @@ PROCEDURE bo_imp_ctr_depositos:
          ASSIGN rel_tppessoa = "Juridica"
                 rel_nrcpfcgc = STRING(crabass.nrcpfcgc,"99999999999999")
                 rel_nrcpfcgc = STRING(rel_nrcpfcgc,"xx.xxx.xxx/xxxx-xx").
-      END.
 
     IF   crabcme.nrccdrcb <> 0   THEN
          ASSIGN rel_nmpesrcb = "      Conta/Dv: " + 
@@ -558,7 +492,6 @@ PROCEDURE bo_imp_ctr_depositos:
             PUT STREAM str_1 CONTROL "\0330\033x0" NULL.
         END.
 
-    IF crabcme.nrdconta <> 0 THEN      
     DISPLAY STREAM str_1
             rel_nmcooper      rel_linhadet      rel_tpoperac 
             crabcme.nrdocmto  rel_vllanmto      crabcme.nrdconta
@@ -570,17 +503,6 @@ PROCEDURE bo_imp_ctr_depositos:
             crabcme.nrceprcb  crabcme.recursos
             crabcme.dtmvtolt  
             WITH FRAME f_comprovante.
-      ELSE
-           DISPLAY STREAM str_1
-                   rel_nmcooper rel_linhadet rel_tpoperac
-                   crabcme.nrdocmto rel_vllanmto crabcme.nrdconta
-                   rel_tppessoa rel_nrcpfcgc
-                   rel_nmpesrcb rel_tppesrcb
-                   rel_cpfcgrcb crabcme.nridercb crabcme.dtnasrcb
-                   crabcme.desenrcb crabcme.nmcidrcb crabcme.cdufdrcb
-                   crabcme.nrceprcb crabcme.recursos
-                   crabcme.dtmvtolt
-                   WITH FRAME f_comprovante.      
 
     DOWN STREAM str_1 WITH FRAME f_comprovante.
 
@@ -797,6 +719,21 @@ PROCEDURE valida-depositante-sacador:
             RETURN "NOK".
         END.
 
+   /* Tem que ser pessoa fisica */
+   IF   aux_tppessoa <> 1   THEN
+        DO:
+            ASSIGN i-cod-erro  = 436
+                   c-desc-erro = " "
+                   par_focoerro = '12'.
+            RUN cria-erro (INPUT p-cooper,
+                           INPUT par_cdagenci,
+                           INPUT par_nrdcaixa,
+                           INPUT i-cod-erro,
+                           INPUT c-desc-erro,
+                           INPUT YES).
+            RETURN "NOK".
+        END.
+           
    IF   par_nridercb = ""   THEN
         DO:
             ASSIGN i-cod-erro  = 375
@@ -1732,213 +1669,6 @@ PROCEDURE atualiza-crapcme:
 
    VALIDATE crapcme.
 
-   RETURN "OK".
-   
-END PROCEDURE.
-
-
-PROCEDURE atualiza-crapcme-pagamento:
-
-     DEF INPUT PARAM p-cooper AS CHAR.
-     DEF INPUT PARAM par_cdagenci LIKE crapcme.cdagenci.
-     DEF INPUT PARAM par_nrdcaixa LIKE crapcme.nrdcaixa.
-     DEF INPUT PARAM par_cdopecxa LIKE crapcme.cdopecxa.
-     DEF INPUT PARAM par_vlmincen AS DECIMAL.
-     DEF INPUT PARAM par_nrseqaut LIKE crapcme.nrseqaut.
-     DEF INPUT PARAM par_nrccdrcb LIKE crapcme.nrccdrcb.
-     DEF INPUT PARAM par_nmpesrcb LIKE crapcme.nmpesrcb.
-     DEF INPUT PARAM par_cpfcgrcb AS CHAR FORMAT "x(18)".
-     DEF INPUT PARAM par_inpesrcb AS CHARACTER FORMAT "x(08)".
-     DEF INPUT PARAM par_nridercb LIKE crapcme.nridercb.
-     DEF INPUT PARAM par_dtnasrcb LIKE crapcme.dtnasrcb.
-     DEF INPUT PARAM par_desenrcb LIKE crapcme.desenrcb.
-     DEF INPUT PARAM par_nmcidrcb LIKE crapcme.nmcidrcb.
-     DEF INPUT PARAM par_cdufdrcb LIKE crapcme.cdufdrcb.
-     DEF INPUT PARAM par_nrceprcb LIKE crapcme.nrceprcb.
-     DEF INPUT PARAM par_recursos LIKE crapcme.recursos.
-     DEF INPUT PARAM par_dstrecur LIKE crapcme.dstrecur.
-     DEF INPUT PARAM par_flinfdst AS CHAR.
-     DEF INPUT PARAM par_tpdocmto AS INTEGER.
-     
-     DEF VAR h-b1wgen9998 AS HANDLE NO-UNDO.
-     DEF VAR aux_nrdconta LIKE craplft.nrdconta.
-     DEF VAR aux_vllanmto LIKE craplft.vllanmto.
-     DEF VAR aux_nrseqdig LIKE craplft.nrseqdig.
-     
-     FIND crapcop WHERE crapcop.nmrescop = p-cooper NO-LOCK NO-ERROR.
-
-     RUN elimina-erro (INPUT p-cooper,
-                       INPUT par_cdagenci,
-                       INPUT par_nrdcaixa).
-     
-     FIND FIRST crapdat WHERE crapdat.cdcooper = crapcop.cdcooper
-                NO-LOCK NO-ERROR.
-
-     IF par_tpdocmto = 1 THEN /***FATURA**/
-       DO:
-         aux_nrdolote = 15000 + par_nrdcaixa.
-         
-         FIND craplft WHERE craplft.cdcooper = crapcop.cdcooper AND
-                            craplft.dtmvtolt = crapdat.dtmvtolt AND
-                            craplft.cdagenci = par_cdagenci AND
-                            craplft.cdbccxlt = 11 AND
-                            craplft.nrdolote = aux_nrdolote AND
-                            craplft.nrautdoc = par_nrseqaut NO-LOCK NO-ERROR.
-                            
-         IF NOT AVAIL craplft THEN
-           DO:
-          
-             ASSIGN i-cod-erro = 90
-                    c-desc-erro = "(#01)".
-                   
-             RUN cria-erro (INPUT p-cooper,
-                            INPUT par_cdagenci,
-                            INPUT par_nrdcaixa,
-                            INPUT i-cod-erro,
-                            INPUT c-desc-erro,
-                            INPUT YES).
-              RETURN "NOK".
-           END.
-         ASSIGN aux_nrdconta = craplft.nrdconta
-                aux_vllanmto = craplft.vllanmto
-                aux_nrseqdig = craplft.nrseqdig.
-       END.
-     ELSE /***TITULO***/
-       DO:
-          aux_nrdolote = 16000 + par_nrdcaixa.
-          FIND craptit WHERE craptit.cdcooper = crapcop.cdcooper AND
-                             craptit.dtmvtolt = crapdat.dtmvtolt AND
-                             craptit.cdagenci = par_cdagenci AND
-                             craptit.cdbccxlt = 11 AND
-                             craptit.nrdolote = aux_nrdolote AND
-                             craptit.nrautdoc = par_nrseqaut NO-LOCK NO-ERROR.
-                             
-          IF NOT AVAIL craptit THEN
-            DO:
-              ASSIGN i-cod-erro = 90
-                     c-desc-erro = "(#02)".
-                     
-              RUN cria-erro (INPUT p-cooper,
-                             INPUT par_cdagenci,
-                             INPUT par_nrdcaixa,
-                             INPUT i-cod-erro,
-                             INPUT c-desc-erro,
-                             INPUT YES).
-              RETURN "NOK".
-            END.
-            
-          ASSIGN aux_nrdconta = craptit.nrdconta
-                 aux_vllanmto = craptit.vldpagto
-                 aux_nrseqdig = craptit.nrseqdig.
-       END.
-           
-     FIND crabcme WHERE crabcme.cdcooper = crapcop.cdcooper AND
-                        crabcme.dtmvtolt = crapdat.dtmvtolt AND
-                        crabcme.cdagenci = par_cdagenci AND
-                        crabcme.cdbccxlt = 11 AND
-                        crabcme.nrdolote = aux_nrdolote AND
-                        crabcme.nrdctabb = 0 AND
-                        crabcme.nrdocmto = par_nrseqaut
-                        NO-LOCK NO-ERROR.
- 
-     IF AVAILABLE crabcme THEN
-       DO:
-           ASSIGN i-cod-erro = 92
-                  c-desc-erro = "".
-           RUN cria-erro (INPUT p-cooper,
-                          INPUT par_cdagenci,
-                          INPUT par_nrdcaixa,
-                          INPUT i-cod-erro,
-                          INPUT c-desc-erro,
-                          INPUT YES).
-           RETURN "NOK".
-       END.
-       
-     ASSIGN par_cpfcgrcb = REPLACE(par_cpfcgrcb,'/','')
-            par_cpfcgrcb = REPLACE(par_cpfcgrcb,'.','')
-            par_cpfcgrcb = REPLACE(par_cpfcgrcb,'-','').
-            
-     CREATE crapcme.
-     ASSIGN crapcme.cdcooper = crapcop.cdcooper
-            crapcme.dtmvtolt = crapdat.dtmvtolt
-            crapcme.cdagenci = par_cdagenci
-            crapcme.cdbccxlt = 11
-            crapcme.nrdolote = aux_nrdolote
-            crapcme.nrseqdig = aux_nrseqdig
-            crapcme.nrdcaixa = par_nrdcaixa
-            crapcme.cdopecxa = par_cdopecxa
-            crapcme.nrdocmto = aux_nrseqdig
-            crapcme.nmpesrcb = par_nmpesrcb
-            crapcme.nrccdrcb = par_nrccdrcb
-            crapcme.cpfcgrcb = DEC(STRING(par_cpfcgrcb,"99999999999999"))
-            crapcme.dtnasrcb = par_dtnasrcb
-            crapcme.desenrcb = par_desenrcb
-            crapcme.nmcidrcb = par_nmcidrcb
-            crapcme.cdufdrcb = par_cdufdrcb
-            crapcme.vllanmto = aux_vllanmto
-            crapcme.tpoperac = 3 /* pagamentos */
-            crapcme.nridercb = par_nridercb
-            crapcme.recursos = par_recursos
-            crapcme.dstrecur = par_dstrecur
-            crapcme.nrdconta = aux_nrdconta
-            crapcme.inpesrcb = 1
-            crapcme.nrceprcb = par_nrceprcb
-            crapcme.nrseqaut = par_nrseqaut
-            crapcme.nrdctabb = aux_nrdconta
-            crapcme.flinfdst = (par_flinfdst = "S"). /* Informar Destinatario */
-
-     IF aux_vllanmto >= par_vlmincen AND crapass.inpessoa < 3 THEN
-        DO:
-           ASSIGN crapcme.infrepcf = 1. /* Informar ao COAF */
-           
-           IF crapass.inpessoa <> 2 THEN
-              ASSIGN crapcme.sisbacen = TRUE.
-              
-           RUN sistema/generico/procedures/b1wgen9998.p
-              PERSISTENT SET h-b1wgen9998.
-              
-           RUN email-controle-movimentacao IN h-b1wgen9998(INPUT crapcop.cdcooper,
-                                                           INPUT par_cdagenci,
-                                                           INPUT par_nrdcaixa,
-                                                           INPUT par_cdopecxa,
-                                                           INPUT "crap051e.w",
-                                                           INPUT 2, /* Caixa */
-                                                           INPUT crapcme.nrdconta,
-                                                           INPUT 1, /* Tit. */
-                                                           INPUT 1, /* Inclusao*/
-                                                           INPUT ROWID(crapcme),
-                                                           INPUT TRUE, /* Enviar */
-                                                           INPUT crapdat.dtmvtolt,
-                                                           INPUT TRUE,
-                                                           OUTPUT TABLE tt-erro).
-                                                           
-           DELETE PROCEDURE h-b1wgen9998.
- 
-           IF RETURN-VALUE <> "OK" THEN
-             DO:
-                FIND FIRST tt-erro NO-LOCK NO-ERROR.
-
-                 IF AVAIL tt-erro THEN
-                    IF tt-erro.cdcritic <> 0 THEN
-                       ASSIGN i-cod-erro = tt-erro.cdcritic.
-                    ELSE
-                       ASSIGN c-desc-erro = tt-erro.dscritic.
-                 ELSE
-                    ASSIGN c-desc-erro = "Erro no envio do email.".
-                 
-                 RUN cria-erro (INPUT p-cooper,
-                                INPUT par_cdagenci,
-                                INPUT par_nrdcaixa,
-                                INPUT i-cod-erro,
-                                INPUT c-desc-erro,
-                                INPUT YES).
-                 RETURN "NOK".
-             END.
-        END.
-        ELSE
-           ASSIGN crapcme.infrepcf = 0. /* Nao Informar ao COAF */
-        
-     VALIDATE crapcme.
    RETURN "OK".
    
 END PROCEDURE.

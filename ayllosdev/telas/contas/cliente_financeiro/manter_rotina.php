@@ -10,7 +10,6 @@
  * 001 [07/07/2011] David (CECRED)        : Ajuste na funcao validaPermissao() para utilizar opcao @.
  * 002 [14/06/2016] Kelvin (CECRED) 	  : Removendo validação de permissão para corrigir problema no chamado 468177.
  * 003 [01/12/2016] Renato Darosci(Supero): Alterado para passar como parametro o código do departamento ao invés da descrição.
- * 004 [29/11/2017] Carlos Rafael Tanholi (CECRED) : Correcao no carregamento do campo cod.banco. SD 803263.
  */
  
     session_start();
@@ -29,7 +28,7 @@
 	$nrcpfcgc = (isset($_POST['nrcpfcgc'])) ? $_POST['nrcpfcgc'] : '';
 	$tpregist = (isset($_POST['tpregist'])) ? $_POST['tpregist'] : '';
 	$nrseqdig = (isset($_POST['nrseqdig'])) ? $_POST['nrseqdig'] : '';
-	$cdbccxlt = (isset($_POST['cdbccxlt'])) ? $_POST['cdbccxlt'] : '';
+	$cddbanco = (isset($_POST['cddbanco'])) ? $_POST['cddbanco'] : '';
 	$cdageban = (isset($_POST['cdageban'])) ? $_POST['cdageban'] : '';
 	$dtabtcct = (isset($_POST['dtabtcct'])) ? $_POST['dtabtcct'] : '';
 	$nrdctasf = (isset($_POST['nrdctasf'])) ? $_POST['nrdctasf'] : '';
@@ -81,7 +80,7 @@
 	$xml .= '       <nrcpfcgc>'.$nrcpfcgc.'</nrcpfcgc>';                       
 	$xml .= '       <tpregist>'.$tpregist.'</tpregist>';                       
 	$xml .= '       <nrseqdig>'.$nrseqdig.'</nrseqdig>';                       
-	$xml .= '       <cddbanco>'.$cdbccxlt.'</cddbanco>';                       
+	$xml .= '       <cddbanco>'.$cddbanco.'</cddbanco>';                       
 	$xml .= '       <cdageban>'.$cdageban.'</cdageban>';                       
 	$xml .= '       <cddopcao>'.$cddopcao.'</cddopcao>';                       
 	$xml .= '       <desopcao>'.$desopcao.'</desopcao>';                       
@@ -148,7 +147,7 @@
 			if ( !validaData( $GLOBALS['dtabtcct'] )) exibirErro('error','Data de abertura inv&aacute;lida.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'dtabtcct\',\'formDadosSistFinanc\')',false);
 			
 			// Cod. do banco
-			if ( $GLOBALS['cdbccxlt'] == '' || !validaInteiro($GLOBALS['cdbccxlt']) ) exibirErro('error','C&oacute;digo do banco inv&aacute;lido.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'cdbccxlt\',\'formDadosSistFinanc\')',false);
+			if ( $GLOBALS['cddbanco'] == '' || !validaInteiro($GLOBALS['cddbanco']) ) exibirErro('error','C&oacute;digo do banco inv&aacute;lido.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'cddbanco\',\'formDadosSistFinanc\')',false);
 			
 			// Cod. da agencia
 			if ( $GLOBALS['cdageban'] == '' || !validaInteiro($GLOBALS['cdageban']) ) exibirErro('error','C&oacute;digo da ag&ecirc;ncia inv&aacute;lida.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'cdageban\',\'formDadosSistFinanc\')',false);
@@ -160,14 +159,14 @@
 			if ( $GLOBALS['dgdconta'] == '' ) exibirErro('error','DV inv&aacute;lido.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'dgdconta\',\'formDadosSistFinanc\')',false);
 			
 			// Inst. Financeira
-			if ( $GLOBALS['cdbccxlt'] == 0 ) { if ( $GLOBALS['nminsfin'] =='' ) exibirErro('error','Nome Titular deve ser informado.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'nminsfin\',\'formDadosSistFinanc\')',false);}
+			if ( $GLOBALS['cddbanco'] == 0 ) { if ( $GLOBALS['nminsfin'] =='' ) exibirErro('error','Nome Titular deve ser informado.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'nminsfin\',\'formDadosSistFinanc\')',false);}
 			
 		}else if ($op == 'VE' ){
 			// No início das validações, primeiro remove a classe erro de todos os campos
 			echo '$("input,select","#formEmissaoSistFinanc").removeClass("campoErro");';
 			
 			// Cod. do banco
-			if ( $GLOBALS['cdbccxlt'] == '' || !validaInteiro($GLOBALS['cdbccxlt']) || $GLOBALS['cdbccxlt'] == 0 ) exibirErro('error','C&oacute;digo do banco inv&aacute;lida.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'cdbccxlt\',\'formEmissaoSistFinanc\')',false);
+			if ( $GLOBALS['cddbanco'] == '' || !validaInteiro($GLOBALS['cddbanco']) || $GLOBALS['cddbanco'] == 0 ) exibirErro('error','C&oacute;digo do banco inv&aacute;lida.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'cddbanco\',\'formEmissaoSistFinanc\')',false);
 			
 			// Cod. da agencia
 			if ( $GLOBALS['cdageban'] == '' || !validaInteiro($GLOBALS['cdageban']) || $GLOBALS['cdageban'] == 0 ) exibirErro('error','C&oacute;digo da ag&ecirc;ncia inv&aacute;lida.','Alerta - Ayllos','bloqueiaFundo(divRotina,\'cdageban\',\'formEmissaoSistFinanc\')',false);

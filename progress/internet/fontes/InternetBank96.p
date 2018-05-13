@@ -28,7 +28,6 @@ DEF INPUT PARAM par_nrdcaixa AS INT                                    NO-UNDO.
 DEF INPUT PARAM par_cdoperad LIKE crapope.cdoperad                     NO-UNDO.
 DEF INPUT PARAM par_nmdatela AS CHAR                                   NO-UNDO.
 DEF INPUT PARAM par_idorigem AS INT                                    NO-UNDO.
-DEF INPUT PARAM par_tpvalida AS INTE                                   NO-UNDO.
 
 DEF OUTPUT PARAM xml_dsmsgerr AS CHAR                                  NO-UNDO.
 DEF OUTPUT PARAM TABLE FOR xml_operacao.
@@ -37,7 +36,6 @@ DEF VAR aux_cdcritic AS INT                                            NO-UNDO.
 DEF VAR aux_dscritic AS CHAR                                           NO-UNDO.
 DEF VAR aux_hrlimini AS INT                                            NO-UNDO.
 DEF VAR aux_hrlimfim AS INT                                            NO-UNDO.
-DEF VAR aux_idesthor AS INT                                            NO-UNDO.
 
 { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
 
@@ -49,8 +47,7 @@ RUN STORED-PROCEDURE pc_horario_limite
                              INPUT par_cdoperad,
                              INPUT par_nmdatela,
                              INPUT par_idorigem,
-                             INPUT par_tpvalida,
-                             OUTPUT 0,
+                             INPUT 1, /*Valida horario limite*/
                              OUTPUT 0,
                              OUTPUT 0,
                              OUTPUT 0,
@@ -67,8 +64,6 @@ ASSIGN aux_cdcritic = 0
                           WHEN pc_horario_limite.pr_hrlimini <> ?
        aux_hrlimfim = pc_horario_limite.pr_hrlimfim
                           WHEN pc_horario_limite.pr_hrlimfim <> ?
-       aux_idesthor = pc_horario_limite.pr_idesthor
-                          WHEN pc_horario_limite.pr_idesthor <> ?
        aux_cdcritic = pc_horario_limite.pr_cdcritic 
                           WHEN pc_horario_limite.pr_cdcritic <> ?
        aux_dscritic = pc_horario_limite.pr_dscritic
@@ -106,9 +101,6 @@ ASSIGN xml_operacao.dslinxml = "<HORARIO>" +
                                     "<hrlimfim>" +  
                                            TRIM(STRING(aux_hrlimfim,"HH:MM:SS")) +
                                     "</hrlimfim>" +
-                                    "<idesthor>" +  
-                                           TRIM(STRING(aux_idesthor)) +
-                                    "</idesthor>" +
                                "</HORARIO>".
 
 RETURN "OK".

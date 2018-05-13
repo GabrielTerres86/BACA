@@ -2,7 +2,7 @@
 
     Programa: b1wgen0057.p
     Autor   : Jose Luis (DB1)
-    Data    : Marco/2010                   Ultima atualizacao: 31/01/2018
+    Data    : Marco/2010                   Ultima atualizacao: 22/09/2017
 
     Objetivo  : Tranformacao BO tela CONTAS - CONJUGE
 
@@ -48,9 +48,6 @@
 							  registro da crapttl. (PRJ339 - Reinert)
                 
 				 09/11/2017 - Criaçao do documento de conjuge (codigo 22). (PRJ339 - Lombardi)
-         
-                 31/01/2018 - Ajustar busca da descricao do Perfil do conjuge, caso valor 
-                              venha nulo vamos considerar zero (Lucas Ranghetti #836600)
 .............................................................................*/
 
 /*............................. DEFINICOES ..................................*/
@@ -723,7 +720,7 @@ PROCEDURE Atualiza_Descricao:
         FOR EACH tt-crapcje:
             /* atulizar descricoes */
             DYNAMIC-FUNCTION("BuscaGrauEscolar" IN h-b1wgen0060,
-                             INPUT IF tt-crapcje.grescola = ? THEN 0 ELSE tt-crapcje.grescola,
+                             INPUT tt-crapcje.grescola,
                              OUTPUT tt-crapcje.dsescola,
                              OUTPUT aux_dscritic).
 
@@ -731,7 +728,7 @@ PROCEDURE Atualiza_Descricao:
                 ASSIGN tt-crapcje.dsescola = "NAO INFORMADO".
 
             DYNAMIC-FUNCTION("BuscaFormacao" IN h-b1wgen0060,
-                             INPUT IF tt-crapcje.cdfrmttl = ? THEN 0 ELSE tt-crapcje.cdfrmttl,
+                             INPUT tt-crapcje.cdfrmttl,
                              OUTPUT tt-crapcje.rsfrmttl,
                              OUTPUT aux_dscritic).
 
@@ -739,7 +736,7 @@ PROCEDURE Atualiza_Descricao:
                 ASSIGN tt-crapcje.rsfrmttl = "NAO INFORMADO".
 
             DYNAMIC-FUNCTION("BuscaNatOcupacao" IN h-b1wgen0060,
-                             INPUT IF tt-crapcje.cdnatopc = ? THEN 0 ELSE tt-crapcje.cdnatopc,
+                             INPUT tt-crapcje.cdnatopc,
                              OUTPUT tt-crapcje.rsnatocp,
                              OUTPUT aux_dscritic).
 
@@ -747,7 +744,7 @@ PROCEDURE Atualiza_Descricao:
                 ASSIGN tt-crapcje.rsnatocp = "NAO INFORMADO".
 
             DYNAMIC-FUNCTION("BuscaOcupacao" IN h-b1wgen0060,
-                             INPUT IF tt-crapcje.cdocpcje = ? THEN 0 ELSE tt-crapcje.cdocpcje,
+                             INPUT tt-crapcje.cdocpcje,
                              OUTPUT tt-crapcje.rsdocupa,
                              OUTPUT aux_dscritic).
 

@@ -15,8 +15,6 @@
              15/09/2017 - Alteracao na mascara da Agencia do Banco do Brasil. (Jaison/Elton - M459)
 
 			 17/10/2017 - Adicionar flgofatr para o form frmConsulta5 (Lucas Ranghetti #772863)
-            
-             03/01/2018 - M307 Solicitação de senha e limite para pagamento (Diogo / MoutS)
 ************************************************************************/
 var cddepart;
 
@@ -273,7 +271,6 @@ function formataFormularioConsulta() {
     $('label[for="qtdiaenl"]', "#frmConsulta2").addClass("rotulo-linha").css({ "width": "180px" });
     $('label[for="cdsinfmg"]', "#frmConsulta2").addClass("rotulo").css({ "width": "150px" });
     $('label[for="taamaxer"]', "#frmConsulta2").addClass("rotulo-linha").css({ "width": "160px" });
-    $('label[for="vllimpag"]', "#frmConsulta2").addClass("rotulo-linha").css({ "width": "180px" });
 
     $('label[for="flgcmtlc"]', "#frmConsulta3").addClass("rotulo").css({ "width": "180px" });
     $('label[for="vllimapv"]', "#frmConsulta3").addClass("rotulo-linha").css({ "width": "180px" });
@@ -322,25 +319,17 @@ function formataFormularioConsulta() {
     $('label[for="dsemascr"]', "#frmConsulta5").addClass("rotulo").css({ "width": "150px" });
     $('label[for="dstelscr"]', "#frmConsulta5").addClass("rotulo").css({ "width": "150px" });
 
-    $('label[for="cdagesic"]', "#frmConsulta5").addClass("rotulo").css({ "width": "210px" });
+    $('label[for="cdagesic"]', "#frmConsulta5").addClass("rotulo").css({ "width": "200px" });
     $('label[for="nrctasic"]', "#frmConsulta5").addClass("rotulo-linha").css({ "width": "150px" });
-    $('label[for="cdcrdins"]', "#frmConsulta5").addClass("rotulo").css({ "width": "210px" });
+    $('label[for="cdcrdins"]', "#frmConsulta5").addClass("rotulo").css({ "width": "200px" });
     $('label[for="vltarsic"]', "#frmConsulta5").addClass("rotulo-linha").css({ "width": "150px" });
-    $('label[for="vltardrf"]', "#frmConsulta5").addClass("rotulo").css({ "width": "210px" });
-    $('label[for="vltfcxsb"]', "#frmConsulta5").addClass("rotulo").css({ "width": "210px" });
+    $('label[for="vltardrf"]', "#frmConsulta5").addClass("rotulo").css({ "width": "200px" });
+    $('label[for="vltfcxsb"]', "#frmConsulta5").addClass("rotulo").css({ "width": "200px" });
     $('label[for="vltfcxcb"]', "#frmConsulta5").addClass("rotulo-linha").css({ "width": "200px" });
-    $('label[for="vlrtrfib"]', "#frmConsulta5").addClass("rotulo").css({ "width": "210px" });
+    $('label[for="vlrtrfib"]', "#frmConsulta5").addClass("rotulo").css({ "width": "200px" });
     $('label[for="hrinigps"]', "#frmConsulta5").addClass("rotulo-linha").css({ "width": "150px" });
     $('label[for="hrfimgps"]', "#frmConsulta5").addClass("rotulo-linha").css({ "width": "35px" });
-    $('label[for="hrlimsic"]', "#frmConsulta5").addClass("rotulo").css({ "width": "210px" });
-
-    //Bancoob  
-    $('label[for="nrctabcb"]', "#frmConsulta5").addClass("rotulo").css({ "width": "200px" }); 
-    $('label[for="vltarbcb"]', "#frmConsulta5").addClass("rotulo").css({ "width": "200px" }); 
-    $('label[for="vlgarbcb"]', "#frmConsulta5").addClass("rotulo").css({ "width": "240px" }); 
-    $('label[for="nrouvbcb"]', "#frmConsulta5").addClass("rotulo-linha").css({ "width": "150px" }); 
-    $('label[for="nrsacbcb"]', "#frmConsulta5").addClass("rotulo-linha").css({ "width": "190px" }); 
-    
+    $('label[for="hrlimsic"]', "#frmConsulta5").addClass("rotulo").css({ "width": "200px" });
 
     $('label[for="qttmpsgr"]', "#frmConsulta5").addClass("rotulo").css({ "width": "150px" });
     $('label[for="flgkitbv"]', "#frmConsulta5").addClass("rotulo-linha").css({ "width": "180px" });
@@ -439,7 +428,6 @@ function formataFormularioConsulta() {
     $('#qtdiaenl', '#frmConsulta2').css({ 'width': '140px', 'text-align': 'right' }).desabilitaCampo().addClass('inteiro').attr('maxlength', '3');
     $('#cdsinfmg', '#frmConsulta2').css({ 'width': '120px', 'text-align': 'left' }).desabilitaCampo();
     $('#taamaxer', '#frmConsulta2').css({ 'width': '140px', 'text-align': 'right' }).desabilitaCampo().addClass('inteiro').attr('maxlength', '3');
-    $('#vllimpag', '#frmConsulta2').css({ 'width': '100px', 'text-align': 'right' }).desabilitaCampo().addClass('inteiro').attr('maxlength', '18').setMask("DECIMAL", "zzz.zzz.zzz.zz9,99", "", "");
 
     $('#flgcmtlc', '#frmConsulta3').css({ 'width': '100px', 'text-align': 'left' }).desabilitaCampo();
     $('#vllimapv', '#frmConsulta3').css({ 'width': '100px', 'text-align': 'right' }).desabilitaCampo().addClass('inteiro').attr('maxlength', '18').setMask("DECIMAL", "zzz.zzz.zzz.zz9,99", "", "");
@@ -501,13 +489,6 @@ function formataFormularioConsulta() {
     $('#hrfimgps', '#frmConsulta5').css({ 'width': '60px', 'text-align': 'right' }).desabilitaCampo().setMask('STRING', '99:99', ':', '');
     $('#hrlimsic', '#frmConsulta5').css({ 'width': '60px', 'text-align': 'right' }).desabilitaCampo().setMask('STRING', '99:99', ':', '');
 
-    //Bancoob
-    $('#nrctabcb', '#frmConsulta5').css({ 'width': '100px', 'text-align': 'right' }).desabilitaCampo().addClass('inteiro').attr('maxlength', '12').setMask("INTEGER", "zzzz.zzzzz-z", "", "");
-    $('#vltarbcb', '#frmConsulta5').css({ 'width': '60px', 'text-align': 'right' }).addClass('porcento_n').attr('maxlength', '4').desabilitaCampo();    
-    $('#vlgarbcb', '#frmConsulta5').css({ 'width': '100px', 'text-align': 'right' }).desabilitaCampo().addClass('inteiro').attr('maxlength', '18').setMask("DECIMAL", "zzz.zzz.zzz.zz9,99", "", "");
-    $('#nrouvbcb', '#frmConsulta5').css({ 'width': '100px', 'text-align': 'right' }).desabilitaCampo().addClass('alphanum').attr('maxlength', '20');
-    $('#nrsacbcb', '#frmConsulta5').css({ 'width': '100px', 'text-align': 'right' }).desabilitaCampo().addClass('alphanum').attr('maxlength', '20');
-    
     $('#qttmpsgr', '#frmConsulta5').css({ 'width': '60px', 'text-align': 'right' }).desabilitaCampo().setMask('STRING', '99:99', ':', '');
 
     $('#flgkitbv', '#frmConsulta5').css({ 'width': '100px', 'text-align': 'left' }).desabilitaCampo();
@@ -2535,6 +2516,7 @@ function formataFormularioConsulta() {
         if (e.keyCode == 13 || e.keyCode == 9) {
 
             $(this).nextAll('.campo:first').focus();
+
             return false;
         }
 
@@ -2559,93 +2541,6 @@ function formataFormularioConsulta() {
 
     //Define ação para o campo hrlimsic
     $("#hrlimsic", "#frmConsulta5").unbind('keypress').bind('keypress', function (e) {
-
-        if (divError.css('display') == 'block') { return false; }
-
-        $('input,select').removeClass('campoErro');
-
-        // Se é a tecla ENTER, TAB
-        if (e.keyCode == 13 || e.keyCode == 9) {
-
-            $("#nrctabcb", "#frmConsulta5").focus();
-
-            return false;
-        }
-
-    });
-    
-    //Define ação para o campo nrctabcb
-    $("#nrctabcb", "#frmConsulta5").unbind('keypress').bind('keypress', function (e) {
-
-        if (divError.css('display') == 'block') { return false; }
-
-        $('input,select').removeClass('campoErro');
-
-        // Se é a tecla ENTER, TAB
-        if (e.keyCode == 13 || e.keyCode == 9) {
-
-            $("#nrouvbcb", "#frmConsulta5").focus();
-
-            return false;
-        }
-
-    });
-    
-    //Define ação para o campo nrctabcb
-    $("#nrouvbcb", "#frmConsulta5").unbind('keypress').bind('keypress', function (e) {
-
-        if (divError.css('display') == 'block') { return false; }
-
-        $('input,select').removeClass('campoErro');
-
-        // Se é a tecla ENTER, TAB
-        if (e.keyCode == 13 || e.keyCode == 9) {
-
-            $("#vltarbcb", "#frmConsulta5").focus();
-
-            return false;
-        }
-
-    });
-    
-    //Define ação para o campo vltarbcb
-    $("#vltarbcb", "#frmConsulta5").unbind('keypress').bind('keypress', function (e) {
-
-        if (divError.css('display') == 'block') { return false; }
-
-        $('input,select').removeClass('campoErro');
-
-        // Se é a tecla ENTER, TAB
-        if (e.keyCode == 13 || e.keyCode == 9) {           
-           $("#nrsacbcb", "#frmConsulta5").focus(); 
-            return false;
-        }
-
-    });
-    
-    //Define ação para o campo vltarbcb
-    $("#nrsacbcb", "#frmConsulta5").unbind('keypress').bind('keypress', function (e) {
-
-        if (divError.css('display') == 'block') { return false; }
-
-        $('input,select').removeClass('campoErro');
-
-        // Se é a tecla ENTER, TAB
-        if (e.keyCode == 13 || e.keyCode == 9) {
-            // campo vlgarbcb será exibido apenas na cecred
-            if ($("#cdcooper", "#frmConsulta").val() == 3) {
-              $("#vlgarbcb", "#frmConsulta5").focus();
-            }else{
-            $("#qttmpsgr", "#frmConsulta5").focus();
-            }
-
-            return false;
-        }
-
-    });
-    
-    //Define ação para o campo vlgarbcb
-    $("#vlgarbcb", "#frmConsulta5").unbind('keypress').bind('keypress', function (e) {
 
         if (divError.css('display') == 'block') { return false; }
 
@@ -3429,7 +3324,6 @@ function alterarCooperativa() {
     var qtdiaenl = $("#qtdiaenl", "#frmConsulta2").val();
     var cdsinfmg = $("#cdsinfmg", "#frmConsulta2").val();
     var taamaxer = $("#taamaxer", "#frmConsulta2").val();
-    var vllimpag = isNaN(parseFloat($('#vllimpag', '#frmConsulta2').val().replace(/\./g, "").replace(/\,/g, "."))) ? 0 : parseFloat($('#vllimpag', '#frmConsulta2').val().replace(/\./g, "").replace(/\,/g, "."));
 
     var cdcrdarr = $("#cdcrdarr", "#frmConsulta3").val();
     var cdagsede = $("#cdagsede", "#frmConsulta3").val();
@@ -3505,19 +3399,6 @@ function alterarCooperativa() {
     var vltarsic = isNaN(parseFloat($('#vltarsic', '#frmConsulta5').val().replace(/\./g, "").replace(/\,/g, "."))) ? 0 : parseFloat($('#vltarsic', '#frmConsulta5').val().replace(/\./g, "").replace(/\,/g, "."));
     var vltardrf = isNaN(parseFloat($('#vltardrf', '#frmConsulta5').val().replace(/\./g, "").replace(/\,/g, "."))) ? 0 : parseFloat($('#vltardrf', '#frmConsulta5').val().replace(/\./g, "").replace(/\,/g, "."));
     var qttmpsgr = $("#qttmpsgr", "#frmConsulta5").val();
-
-    //Bancoob
-    var nrctabcb = normalizaNumero($("#nrctabcb", "#frmConsulta5").val());
-    var vltarbcb = isNaN(parseFloat($('#vltarbcb', '#frmConsulta5').val().replace(/\./g, "").replace(/\,/g, "."))) ? 0 : parseFloat($('#vltarbcb', '#frmConsulta5').val().replace(/\./g, "").replace(/\,/g, "."));
-    if ($("#cdcooper", "#frmConsulta").val() == 3) {
-      var vlgarbcb = isNaN(parseFloat($('#vlgarbcb', '#frmConsulta5').val().replace(/\./g, "").replace(/\,/g, "."))) ? 0 : parseFloat($('#vlgarbcb', '#frmConsulta5').val().replace(/\./g, "").replace(/\,/g, "."));
-    } else {
-      var vlgarbcb = 0;  
-    }
-    var nrsacbcb = $("#nrsacbcb", "#frmConsulta5").val();
-    var nrouvbcb = $("#nrouvbcb", "#frmConsulta5").val();
-    
-    
 
     showMsgAguardo("Aguarde, alterando cooperativa ...");
 
@@ -3650,13 +3531,6 @@ function alterarCooperativa() {
             cdsinfmg: cdsinfmg,
             taamaxer: taamaxer,
             vllimapv: vllimapv,
-            vllimpag: vllimpag,
-            nrctabcb: nrctabcb,
-            vltarbcb: vltarbcb,
-            vlgarbcb: vlgarbcb,
-            nrsacbcb: nrsacbcb,
-            nrouvbcb: nrouvbcb,
-            
             redirect: "script_ajax"
         },
         error: function (objAjax, responseError, objExcept) {

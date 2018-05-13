@@ -102,20 +102,12 @@
                              
                 29/02/2016 - Trocando o campo flpolexp para inpolexp conforme
                              solicitado no chamado 402159 (Kelvin).
-                             
-                21/12/2017 - Adicionado o tpoperac = 3 para a melhoria 458.
-                             Antonio R. Jr (Mouts)
-                             
-                15/03/2018 - Substituida verificacao "cdtipcta < 12" pela flag 
-                             de conta integraçao. PRJ366 (Lombardi).
-                             
  ............................................................................*/
     
 { sistema/generico/includes/var_internet.i }    
 { sistema/generico/includes/b1wgen9998tt.i }
 { sistema/generico/includes/gera_erro.i }   
 { sistema/generico/includes/gera_log.i  }
-{ sistema/generico/includes/var_oracle.i }
 
 DEF STREAM str_1.
 
@@ -124,8 +116,6 @@ DEF VAR aux_dscritic AS CHAR                                           NO-UNDO.
 DEF VAR aux_dstransa AS CHAR                                           NO-UNDO.
 DEF VAR aux_dsorigem AS CHAR                                           NO-UNDO.
 DEF VAR aux_nrdrowid AS ROWID                                          NO-UNDO.
-DEF VAR aux_idctaitg AS INTE                                           NO-UNDO.
-DEF VAR aux_des_erro AS CHAR                                           NO-UNDO.
 
 /* Variaveis usadas no Controle de Movimentacao */
 DEF  VAR aux_nmarquiv AS CHAR                                          NO-UNDO.
@@ -716,43 +706,8 @@ PROCEDURE existe_conta_integracao:
          
        END.
    
-   { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
-   
-   RUN STORED-PROCEDURE pc_busca_tipo_conta_itg
-   aux_handproc = PROC-HANDLE NO-ERROR (INPUT crapass.inpessoa, /* Tipo de pessoa */
-                                        INPUT crapass.cdtipcta, /* Tipo de conta */
-                                       OUTPUT 0,                /* Modalidade */
-                                       OUTPUT "",               /* Flag Erro */
-                                       OUTPUT "").              /* Descriçao da crítica */
-   
-   CLOSE STORED-PROC pc_busca_tipo_conta_itg
-         aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
-   
-   { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
-   
-   ASSIGN aux_idctaitg = 0
-          aux_des_erro = ""
-          aux_dscritic = ""
-          aux_idctaitg = pc_busca_tipo_conta_itg.pr_indconta_itg 
-                         WHEN pc_busca_tipo_conta_itg.pr_indconta_itg <> ?
-          aux_des_erro = pc_busca_tipo_conta_itg.pr_des_erro 
-                         WHEN pc_busca_tipo_conta_itg.pr_des_erro <> ?
-          aux_dscritic = pc_busca_tipo_conta_itg.pr_dscritic
-                         WHEN pc_busca_tipo_conta_itg.pr_dscritic <> ?.
-   
-   IF aux_des_erro = "NOK"  THEN
-        DO:
-            RUN gera_erro (INPUT par_cdcooper,
-                           INPUT 0,
-                           INPUT 0,
-                           INPUT 1,            /** Sequencia **/
-                           INPUT 0,
-                           INPUT-OUTPUT aux_dscritic).
-            RETURN "NOK".
-        END.
-   
    IF   par_nrdctitg      <> ""   AND
-        aux_idctaitg     =  0    AND
+        crapass.cdtipcta < 12    AND 
         crapass.flgctitg <> 2   THEN
         DO:
             IF  crapass.flgctitg <> 3   THEN 
@@ -1089,8 +1044,7 @@ PROCEDURE email-controle-movimentacao:
              END.
 
         IF   crapcme.tpoperac <> 1   AND
-             crapcme.tpoperac <> 2   AND
-             crapcme.tpoperac <> 3   THEN
+             crapcme.tpoperac <> 2   THEN
              DO:
                  ASSIGN aux_dscritic = "Tipo de operacao invalida".
                  LEAVE.

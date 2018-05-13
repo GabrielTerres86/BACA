@@ -28,7 +28,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
   --  Sistema  : Rotinas referentes a importacao de arquivos CYBER de acordos de emprestimos
   --  Sigla    : RECP
   --  Autor    : Jean Michel Deschamps
-  --  Data     : Outubro/2016.                   Ultima atualizacao: 06/04/2018
+  --  Data     : Outubro/2016.                   Ultima atualizacao: 21/09/2017
   --
   -- Dados referentes ao programa:
   --
@@ -45,21 +45,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
   --
   --             03/05/2017 - Salvar registros por arquivo e desfazer acoes se aconteceu erro numa linha. (Jaison/James)
 
-                 21/09/2017 - #756229 Setando pr_flgemail true nas rotinas pc_imp_arq_acordo_cancel e pc_imp_arq_acordo_quitado
+     21/09/2017 - #756229 Setando pr_flgemail true nas rotinas pc_imp_arq_acordo_cancel e pc_imp_arq_acordo_quitado
                   quando ocorrer erro nos comandos de extração de zip, listagem dos arquivos extraídos e conversão 
                   txt para unix para que os responsáveis pelo negócio sejam avisados por e-mail (Carlos)
 
-                 27/09/2017 - Ajuste para atender SM 3 do projeto 210.2 (Daniel)
-
-                 08/12/2017 - Inclusão de chamada da npcb0002.pc_libera_sessao_sqlserver_npc
-                              na procedure pc_imp_arq_acordo_cancel. (SD#791193 - AJFink)
-
-  --             13/03/2018 - Chamado 806202 - ALterado update CRAPCYC para não atualizar motivos 2 e 7.
-
-			     06/04/2018 - Alteração do cursor "cr_crapcyb" para considerar somente contratos marcados
-							  com INDPAGAR = 'S' e considerar o contrato LC100 que não está na CRAPCYB.
-															(Reginaldo - AMcom)
-
+  --             27/09/2017 - Ajuste para atender SM 3 do projeto 210.2 (Daniel)
+  --
   ---------------------------------------------------------------------------------------------------------------*/
 
   vr_flgerlog BOOLEAN := FALSE;
@@ -480,7 +471,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
              END LOOP;
 
              COMMIT; -- Salva os dados por arquivo
-             npcb0002.pc_libera_sessao_sqlserver_npc('RECP0003_1');
 
              -- Verificar se o arquivo está aberto
              IF utl_file.IS_OPEN(vr_input_file) THEN
@@ -552,7 +542,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                            ,pr_dstiplog => 'E'
                            ,pr_dscritic => pr_dscritic);
       ROLLBACK;
-      npcb0002.pc_libera_sessao_sqlserver_npc('RECP0003_2');
   END pc_imp_arq_acordo_cancel;
 
   -- Importa arquivo referente a acordos quitados
@@ -603,30 +592,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
 
       -- Consulta contratos em acordo
       CURSOR cr_crapcyb(pr_nracordo tbrecup_acordo.nracordo%TYPE) IS
-			  WITH acordo_contrato AS (
-				     SELECT a.cdcooper
-						  , a.nracordo
-              , a.nrdconta
-              , c.nrctremp
-              , c.cdorigem
-              , c.indpagar
-           FROM tbrecup_acordo a
-              , tbrecup_acordo_contrato c
-         WHERE a.nracordo = pr_nracordo
-           AND c.nracordo = a.nracordo 
-					 AND c.indpagar = 'S'
-				)
-        SELECT acc.nracordo
-              ,acc.cdcooper
-              ,acc.nrdconta
-              ,acc.cdorigem
-              ,acc.nrctremp
-          FROM acordo_contrato acc,
+        SELECT acordo.nracordo
+              ,acordo.cdcooper
+              ,acordo.nrdconta
+              ,cyb.cdorigem
+              ,acordoctr.nrctremp
+          FROM tbrecup_acordo acordo,
+               tbrecup_acordo_contrato acordoctr,
                crapcyb cyb
-         WHERE cyb.cdcooper(+) = acc.cdcooper
-           AND cyb.nrdconta(+) = acc.nrdconta
-           AND cyb.nrctremp(+) = acc.nrctremp
-           AND cyb.cdorigem(+) = acc.cdorigem          
+         WHERE acordo.nracordo = acordoctr.nracordo      
+           AND cyb.cdcooper = acordo.cdcooper
+           AND cyb.nrdconta = acordo.nrdconta
+           AND cyb.nrctremp = acordoctr.nrctremp
+           AND cyb.cdorigem = acordoctr.cdorigem          
+           AND acordoctr.nracordo = pr_nracordo
       ORDER BY cyb.cdorigem;
       rw_crapcyb cr_crapcyb%ROWTYPE;
 
@@ -685,7 +664,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
               ,epr.vljuracu
               ,epr.txjuremp
               ,epr.dtultpag
-              ,epr.vliofcpl
          FROM crapepr epr
         WHERE epr.cdcooper = pr_cdcooper
           AND epr.nrdconta = pr_nrdconta
@@ -1074,7 +1052,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                                                             ,pr_vlparcel => 0
                                                             ,pr_nmtelant => vr_nmdatela
                                                             ,pr_inliqaco => 'S'           -- Indicador informando que é para liquidar o contrato de emprestimo
-                                                            ,pr_vliofcpl => rw_crapepr.vliofcpl
                                                             ,pr_vltotpag => vr_vltotpag -- Retorno do total pago       
                                                             ,pr_cdcritic => vr_cdcritic
                                                             ,pr_dscritic => vr_dscritic);
@@ -1231,10 +1208,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
 
                    BEGIN
                      UPDATE crapcyc 
-                        SET flgehvip = decode(cdmotcin,2,flgehvip,7,flgehvip,flvipant),
-                            cdmotcin = decode(cdmotcin,2,cdmotcin,7,cdmotcin,cdmotant),
-                            dtaltera = vr_tab_crapdat(rw_crapcyb.cdcooper).dtmvtolt,
-                            cdoperad = 'cyber'
+                        SET flgehvip = 0
+                          , cdmotcin = 0
+                          , dtaltera = vr_tab_crapdat(rw_crapcyb.cdcooper).dtmvtolt
                       WHERE cdcooper = rw_crapcyb.cdcooper
                         AND cdorigem = DECODE(rw_crapcyb.cdorigem,2,3,rw_crapcyb.cdorigem)
                         AND nrdconta = rw_crapcyb.nrdconta

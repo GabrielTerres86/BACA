@@ -61,8 +61,6 @@
                             
                20/03/2017 - Alteraçao filtro relatório e adiçao de campo
 	                          PRJ319 - SMS Cobrança(Ricardo Linhares)                                          
-
-               30/01/2018 - Adicionado novas tags devido ao projeto 285 - Novo IB (Rafael).                                         
 ..............................................................................*/
     
 CREATE WIDGET-POOL.
@@ -467,9 +465,9 @@ IF  par_idrelato = 1 OR
                 ASSIGN xml_operacao.dslinxml = "<boleto><cdbanpag>" +
                                         STRING(tt-consulta-blt.cdbanpag) +
                                         "</cdbanpag><iniemiss>" +
-                                        STRING(par_iniemiss,"99/99/9999") + 
+                                        STRING(par_iniemiss,"99/99/99") + 
                                         "</iniemiss><fimemiss>" + 
-                                        STRING(par_fimemiss,"99/99/9999") + 
+                                        STRING(par_fimemiss,"99/99/99") + 
                                         "</fimemiss><cdocorre>" +
                                         STRING(tt-consulta-blt.cdocorre) +
                                         "</cdocorre><dsocorre>" +
@@ -488,7 +486,7 @@ IF  par_idrelato = 1 OR
                                         tt-consulta-blt.nmdsacad +
                                         "</nmdsacad><dtvencto>" +
                                         STRING(tt-consulta-blt.dtvencto,
-                                               "99/99/9999") +
+                                               "99/99/99") +
                                         "</dtvencto><vltitulo>" +
                                         TRIM(STRING(tt-consulta-blt.vltitulo,
                                                     "zzzzzzzzz9.99")) +
@@ -515,24 +513,27 @@ IF  par_idrelato = 1 OR
                                                     "zzzzzzzzz9.99")) +
                                         "</vltarifa><dtocorre>" +
                                         STRING(tt-consulta-blt.dtocorre,
-                                               "99/99/9999") +
+                                               "99/99/99") +
                                         "</dtocorre><dtcredit>" + 
                                         (IF tt-consulta-blt.dtcredit = ? THEN 
+                                           IF tt-consulta-blt.cdocorre = 6 AND 
+                                              tt-consulta-blt.flgdesco = "*" THEN 
+                                              "* TD *"
+                                           ELSE
                                                " "
                                         ELSE 
                                            STRING(tt-consulta-blt.dtcredit,
-                                               "99/99/9999")) + 
+                                               "99/99/99")) + 
                                         "</dtcredit><dsmotivo>" +
                                         tt-consulta-blt.dsmotivo +
                                         "</dsmotivo>" +
-                                        "<dsorigem>" + tt-consulta-blt.dsorigem + "</dsorigem>" + 
-                                        "<dsorigem_proc>" + tt-consulta-blt.dsorigem_proc + "</dsorigem_proc>" +
-                                        "<dtdocmto>" + STRING(tt-consulta-blt.dtdocmto, "99/99/9999") + "</dtdocmto>" + 
-                                        "<nossonro>" + tt-consulta-blt.nossonro + "</nossonro>" + 
-                                        "<nrborder>" + STRING(tt-consulta-blt.nrborder) + "</nrborder>" +
-                                        "<dscredit>" + tt-consulta-blt.dscredit + "</dscredit>" +
-                                        "<dsbcoage>" + tt-consulta-blt.dsbcoage + "</dsbcoage>" +
-                                        "</boleto>".   
+                                        "<dsorigem>" +
+                                        tt-consulta-blt.dsorigem +
+                                        "</dsorigem><dtdocmto>" +
+                                        STRING(tt-consulta-blt.dtdocmto, "99/99/9999") +
+                                        "</dtdocmto><nossonro>" +
+										tt-consulta-blt.nossonro +
+                                        "</nossonro></boleto>".   
 
                                              
                 

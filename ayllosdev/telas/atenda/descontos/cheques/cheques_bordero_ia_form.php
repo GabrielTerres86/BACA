@@ -10,8 +10,6 @@
 	                                                                  	 
 	 Alterações: 26/06/2017 - Ajuste para rotina ser chamada através da tela ATENDA > Produtos (Jonata - RKAM / P364).
 
-                 16/04/2018 - Incluida verificacao de adesao do produto pelo tipo de conta. PRJ366 (Lombardi)
-
 
 	************************************************************************/
 	
@@ -35,26 +33,6 @@
 	
 	$qtcompln = 0;
 	$vlcompcr = 0;
-	
-	// Monta o xml de requisição
-	$xml  = "";
-	$xml .= "<Root>";
-	$xml .= "	<Dados>";
-	$xml .= "		<nrdconta>".$nrdconta."</nrdconta>";
-	$xml .= "		<cdprodut>".   34    ."</cdprodut>";
-	$xml .= "	</Dados>";
-	$xml .= "</Root>";
-	
-	// Executa script para envio do XML
-	$xmlResult = mensageria($xml, "CADA0006", "VALIDA_ADESAO_PRODUTO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
-	$xmlObj = getObjectXML($xmlResult);
-	
-	// Se ocorrer um erro, mostra crítica
-	if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
-		$msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
-		exibeErro(utf8_encode($msgErro));
-		exit();
-	}
 	
 	// Montar o xml de Requisicao
 	$xml  = "<Root>";

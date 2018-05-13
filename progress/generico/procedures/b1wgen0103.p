@@ -40,9 +40,6 @@
 			   07/12/2016 - P341-Automatização BACENJUD - Alterar o uso da descrição do
                             departamento passando a considerar o código (Renato Darosci)   
 							              
-               14/03/2018 - Substituida validacao "cdtipcta = (5, 6, 7, 17, 18)" 
-                            pela modalidade do tipo de conta = 2 ou 3. PRJ339 (Lombardi).
-							              
 .............................................................................*/
 
 /*............................. DEFINICOES ..................................*/
@@ -72,8 +69,6 @@ DEF VAR aux_nrsequen AS INTE                                        NO-UNDO.
 DEF VAR aux_nrdrowid AS ROWID                                       NO-UNDO.
 DEF VAR h-b1wgen9998 AS HANDLE                                      NO-UNDO.
 DEF VAR h-b1wgen0024 AS HANDLE                                      NO-UNDO.
-DEF VAR aux_cdmodali AS INTE                                        NO-UNDO.
-DEF VAR aux_des_erro AS CHAR                                        NO-UNDO.
 
 FUNCTION ValidaDigFun RETURNS LOGICAL PRIVATE
     ( INPUT par_cdcooper AS INTEGER,
@@ -221,7 +216,7 @@ PROCEDURE Valida_Desext:
         EMPTY TEMP-TABLE tt-erro.
         
         /* Informacoes sobre o cooperado */
-        FOR FIRST crabass FIELDS(tpextcta cdtipcta dtdemiss cdsitdct cdagenci inpessoa)
+        FOR FIRST crabass FIELDS(tpextcta cdtipcta dtdemiss cdsitdct cdagenci)
                           WHERE crabass.cdcooper = par_cdcooper AND
                                 crabass.nrdconta = par_nrdconta NO-LOCK: END.
 
@@ -257,37 +252,7 @@ PROCEDURE Valida_Desext:
                 LEAVE Valida.
             END.
         
-        { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
-        
-        RUN STORED-PROCEDURE pc_busca_modalidade_tipo
-        aux_handproc = PROC-HANDLE NO-ERROR (INPUT crabass.inpessoa, /* Tipo de pessoa */
-                                             INPUT crabass.cdtipcta, /* Tipo de conta */
-                                            OUTPUT 0,                /* Modalidade */
-                                            OUTPUT "",               /* Flag Erro */
-                                            OUTPUT "").              /* Descriçao da crítica */
-        
-        CLOSE STORED-PROC pc_busca_modalidade_tipo
-              aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
-        
-        { includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }
-        
-        ASSIGN aux_cdmodali = 0
-               aux_des_erro = ""
-               aux_dscritic = ""
-               aux_cdmodali = pc_busca_modalidade_tipo.pr_cdmodalidade_tipo 
-                              WHEN pc_busca_modalidade_tipo.pr_cdmodalidade_tipo <> ?
-               aux_des_erro = pc_busca_modalidade_tipo.pr_des_erro 
-                              WHEN pc_busca_modalidade_tipo.pr_des_erro <> ?
-               aux_dscritic = pc_busca_modalidade_tipo.pr_dscritic
-                              WHEN pc_busca_modalidade_tipo.pr_dscritic <> ?.
-        
-        IF aux_des_erro = "NOK"  THEN
-            DO:
-               par_nmdcampo = "tpextcta".
-               LEAVE Valida.
-            END.
-        
-        IF  (CAN-DO("02,03",STRING(aux_cdmodali,"99")) OR
+        IF  (CAN-DO("00,05,06,07,17,18",STRING(crabass.cdtipcta,"99")) OR
              crabass.dtdemiss <> ?  OR  crabass.cdsitdct <> 1)  THEN
              IF  par_tpextcta > 0 THEN
                  DO:  

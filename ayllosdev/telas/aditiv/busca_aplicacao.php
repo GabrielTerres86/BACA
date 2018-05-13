@@ -4,9 +4,6 @@
  * CRIAÇÃO      : Rogérius Militão (DB1)
  * DATA CRIAÇÃO : 20/10/2011 
  * OBJETIVO     : Rotina para busca das aplicacoes
- * --------------
- * ALTERAÇÕES   : 01/11/2017 - Passagem do tpctrato. (Jaison/Marcos Martini - PRJ404)
- * -------------- 
  */
 ?>
  
@@ -26,7 +23,6 @@
 	$cdaditiv  = (isset($_POST['cdaditiv']))  ? $_POST['cdaditiv'] : 0 ;
 	$tpaplica  = (isset($_POST['tpaplica']))  ? $_POST['tpaplica'] : '';
 	$nrctagar  = (isset($_POST['nrctagar']))  ? $_POST['nrctagar'] : 0 ;
-	$tpctrato  = (isset($_POST['tpctrato']))  ? $_POST['tpctrato'] : 0 ;
 	
 	switch ($tpaplica) {
 	 case '1': $rgaplica  = (!empty($_POST['tpaplic1']))  ? arrayTipo('1', $_POST['tpaplic1']) : array(); break;
@@ -61,7 +57,6 @@
 	$xml .= '		<cdaditiv>'.$cdaditiv.'</cdaditiv>';
 	$xml .= '		<tpaplica>'.$tpaplica.'</tpaplica>';
 	$xml .= '		<nrctagar>'.$nrctagar.'</nrctagar>';
-	$xml .= '		<tpctrato>'.$tpctrato.'</tpctrato>';
 	$xml .= "  </Dados>";
 	$xml .= "</Root>";	
 	

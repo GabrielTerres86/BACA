@@ -60,10 +60,6 @@
 
 				27/03/2017 - Ajuste na DEV COB REM. (P340 - Fase SILOC - Rafael)
 
-                26/06/2017 - Listar uma única linha para NR CHQ e outra para SR CHQ, com o
-                             somatório dos antigos valores que estao separados em CHQ SUP 
-                             e CHQ INF. Relatório 547 nao será mais gerado. Projeto 367 (Lombardi)
-
 ..............................................................................*/
 
 DEF STREAM str_1.
@@ -83,14 +79,15 @@ DEF VAR rel_nmmodulo AS CHAR FORMAT "x(15)" EXTENT 5
 DEF VAR rel_nrmodulo AS INTE FORMAT "9"                                NO-UNDO.
 
 DEF VAR aux_nmarqimp AS CHAR                                           NO-UNDO.
+DEF VAR aux_vlchqsup AS DECI                                           NO-UNDO.
 DEF VAR aux_vlcobvlb AS DECI                                           NO-UNDO.
 DEF VAR aux_dscooper AS CHAR                                           NO-UNDO.
 DEF VAR aux_rowid    AS ROWID                                          NO-UNDO.
 
 
 /* EXTEND de 6 -> 1-FAC / 2-ROC / 3-ABBC / 4-CECRED / 5-GerCoop / 6-IntCoop */
-DEF VAR rel_nrcheque AS DEC             EXTENT 6        INIT 0         NO-UNDO.
-DEF VAR rel_srcheque AS DEC             EXTENT 6        INIT 0         NO-UNDO.
+DEF VAR rel_nrchqsup AS DEC             EXTENT 6        INIT 0         NO-UNDO.
+DEF VAR rel_srchqsup AS DEC             EXTENT 6        INIT 0         NO-UNDO.
 DEF VAR rel_nrchqinf AS DEC             EXTENT 6        INIT 0         NO-UNDO.
 DEF VAR rel_srchqinf AS DEC             EXTENT 6        INIT 0         NO-UNDO.
 DEF VAR rel_dvchqrmn AS DEC             EXTENT 6        INIT 0         NO-UNDO.
@@ -145,8 +142,10 @@ DEF VAR vlr_totdevol    AS DEC INIT 0                                  NO-UNDO.
 DEF TEMP-TABLE w-relatorio                                             NO-UNDO
     FIELD cdcooper  AS INT
     FIELD cdtipreg  AS CHAR 
-    FIELD nrcheque  AS DEC  /* CHQ NR SUP */
-    FIELD srcheque  AS DEC  /* CHQ SR SUP */
+    FIELD nrchqsup  AS DEC  /* CHQ NR SUP */
+    FIELD srchqsup  AS DEC  /* CHQ SR SUP */
+    FIELD nrchqinf  AS DEC  /* CHQ NR INF */
+    FIELD srchqinf  AS DEC  /* CHQ SR INF */
     FIELD dvchqrmn  AS DEC  /* DEV REMET CHQ NOTURNA */
     FIELD dvchqrmd  AS DEC  /* DEV REMET CHQ DIURNA  */
     FIELD dvchqrcn  AS DEC  /* DEV RECEB CHQ NOTURNA */
@@ -181,13 +180,21 @@ FORM SKIP(3)
      "GERADO COOP"                                AT 099
      "INTEGRADO COOP"                             AT 114
      SKIP
-     "NR CHQ"                                     AT 001
-     rel_nrcheque[1] FORMAT ">>,>>>,>>>,>>9.99"   AT 021     
-     rel_nrcheque[2] FORMAT ">>,>>>,>>>,>>9.99"   AT 039
-     rel_nrcheque[3] FORMAT ">>,>>>,>>>,>>9.99"   AT 057
-     rel_nrcheque[4] FORMAT ">>,>>>,>>>,>>9.99"   AT 075
-     rel_nrcheque[5] FORMAT ">>,>>>,>>>,>>9.99"   AT 093
-     rel_nrcheque[6] FORMAT ">>,>>>,>>>,>>9.99"   AT 111
+     "NR CHQ SUP"                                 AT 001
+     rel_nrchqsup[1] FORMAT ">>,>>>,>>>,>>9.99"   AT 021     
+     rel_nrchqsup[2] FORMAT ">>,>>>,>>>,>>9.99"   AT 039
+     rel_nrchqsup[3] FORMAT ">>,>>>,>>>,>>9.99"   AT 057
+     rel_nrchqsup[4] FORMAT ">>,>>>,>>>,>>9.99"   AT 075
+     rel_nrchqsup[5] FORMAT ">>,>>>,>>>,>>9.99"   AT 093
+     rel_nrchqsup[6] FORMAT ">>,>>>,>>>,>>9.99"   AT 111
+     SKIP
+     "NR CHQ INF"                                 AT 001
+     rel_nrchqinf[1] FORMAT ">>,>>>,>>>,>>9.99"   AT 021
+     rel_nrchqinf[2] FORMAT ">>,>>>,>>>,>>9.99"   AT 039
+     rel_nrchqinf[3] FORMAT ">>,>>>,>>>,>>9.99"   AT 057
+     rel_nrchqinf[4] FORMAT ">>,>>>,>>>,>>9.99"   AT 075
+     rel_nrchqinf[5] FORMAT ">>,>>>,>>>,>>9.99"   AT 093
+     rel_nrchqinf[6] FORMAT ">>,>>>,>>>,>>9.99"   AT 111
      SKIP
      "NR COB VLB"                                 AT 001
      rel_nrcobvlb[1] FORMAT ">>,>>>,>>>,>>9.99"   AT 021
@@ -230,13 +237,21 @@ FORM SKIP(3)
      WITH WIDTH 132 NO-BOX NO-LABELS FRAME f_relat_sintetico_1.
 
 FORM SKIP
-     "SR CHQ"                                     AT 001
-     rel_srcheque[1] FORMAT ">>,>>>,>>>,>>9.99"   AT 021
-     rel_srcheque[2] FORMAT ">>,>>>,>>>,>>9.99"   AT 039
-     rel_srcheque[3] FORMAT ">>,>>>,>>>,>>9.99"   AT 057
-     rel_srcheque[4] FORMAT ">>,>>>,>>>,>>9.99"   AT 075
-     rel_srcheque[5] FORMAT ">>,>>>,>>>,>>9.99"   AT 093
-     rel_srcheque[6] FORMAT ">>,>>>,>>>,>>9.99"   AT 111
+     "SR CHQ SUP"                                 AT 001
+     rel_srchqsup[1] FORMAT ">>,>>>,>>>,>>9.99"   AT 021
+     rel_srchqsup[2] FORMAT ">>,>>>,>>>,>>9.99"   AT 039
+     rel_srchqsup[3] FORMAT ">>,>>>,>>>,>>9.99"   AT 057
+     rel_srchqsup[4] FORMAT ">>,>>>,>>>,>>9.99"   AT 075
+     rel_srchqsup[5] FORMAT ">>,>>>,>>>,>>9.99"   AT 093
+     rel_srchqsup[6] FORMAT ">>,>>>,>>>,>>9.99"   AT 111
+     SKIP
+     "SR CHQ INF"                                 AT 001
+     rel_srchqinf[1] FORMAT ">>,>>>,>>>,>>9.99"   AT 021
+     rel_srchqinf[2] FORMAT ">>,>>>,>>>,>>9.99"   AT 039
+     rel_srchqinf[3] FORMAT ">>,>>>,>>>,>>9.99"   AT 057
+     rel_srchqinf[4] FORMAT ">>,>>>,>>>,>>9.99"   AT 075
+     rel_srchqinf[5] FORMAT ">>,>>>,>>>,>>9.99"   AT 093
+     rel_srchqinf[6] FORMAT ">>,>>>,>>>,>>9.99"   AT 111
      SKIP
      "SR COB VLB"                                 AT 001
      rel_srcobvlb[1] FORMAT ">>,>>>,>>>,>>9.99"   AT 021
@@ -280,7 +295,7 @@ FORM SKIP
      WITH WIDTH 132 NO-BOX NO-LABELS FRAME f_relat_sintetico_2.
 
 FORM SKIP
-     "DEV CHQ REM FRAUDES"                        AT 001
+     "DEV CHQ REM NOTURNA"                        AT 001
      rel_dvchqrmn[1] FORMAT ">>,>>>,>>>,>>9.99"   AT 021
      rel_dvchqrmn[2] FORMAT ">>,>>>,>>>,>>9.99"   AT 039
      rel_dvchqrmn[3] FORMAT ">>,>>>,>>>,>>9.99"   AT 057
@@ -288,7 +303,7 @@ FORM SKIP
      rel_dvchqrmn[5] FORMAT ">>,>>>,>>>,>>9.99"   AT 093
      rel_dvchqrmn[6] FORMAT ">>,>>>,>>>,>>9.99"   AT 111
      SKIP
-     "DEV CHQ REC FRAUDES"                        AT 001
+     "DEV CHQ REC NOTURNA"                        AT 001
      rel_dvchqrcn[1] FORMAT ">>,>>>,>>>,>>9.99"   AT 021
      rel_dvchqrcn[2] FORMAT ">>,>>>,>>>,>>9.99"   AT 039
      rel_dvchqrcn[3] FORMAT ">>,>>>,>>>,>>9.99"   AT 057
@@ -296,7 +311,7 @@ FORM SKIP
      rel_dvchqrcn[5] FORMAT ">>,>>>,>>>,>>9.99"   AT 093
      rel_dvchqrcn[6] FORMAT ">>,>>>,>>>,>>9.99"   AT 111
      SKIP
-     "DEV CHQ REM"                                AT 001
+     "DEV CHQ REM DIURNA"                         AT 001
      rel_dvchqrmd[1] FORMAT ">>,>>>,>>>,>>9.99"   AT 021
      rel_dvchqrmd[2] FORMAT ">>,>>>,>>>,>>9.99"   AT 039
      rel_dvchqrmd[3] FORMAT ">>,>>>,>>>,>>9.99"   AT 057
@@ -304,7 +319,7 @@ FORM SKIP
      rel_dvchqrmd[5] FORMAT ">>,>>>,>>>,>>9.99"   AT 093
      rel_dvchqrmd[6] FORMAT ">>,>>>,>>>,>>9.99"   AT 111
      SKIP
-     "DEV CHQ REC"                                AT 001
+     "DEV CHQ REC DIURNA"                         AT 001
      rel_dvchqrcd[1] FORMAT ">>,>>>,>>>,>>9.99"   AT 021
      rel_dvchqrcd[2] FORMAT ">>,>>>,>>>,>>9.99"   AT 039
      rel_dvchqrcd[3] FORMAT ">>,>>>,>>>,>>9.99"   AT 057
@@ -364,7 +379,6 @@ FORM SKIP(1)
      SKIP
      WITH NO-BOX NO-LABELS WIDTH 234 FRAME f_titulo_sintetico.
 
-/* Nao usa mais. Projeto 367
 FORM SKIP(1)
      "FECHAMENTO DA COMPE - NOTURNA/DIURNA (ANALITICO)"   AT 67
      SKIP
@@ -562,9 +576,9 @@ FORM SKIP
      tot_vlgerfac        FORMAT "->>,>>>,>>>,>>9.99"   AT 45
      tot_vlgerroc        FORMAT "->>,>>>,>>>,>>9.99"   AT 75
      WITH WIDTH 132 NO-BOX NO-LABELS FRAME f_total_tarifa.    
-*/
 
-ASSIGN glb_cdprogra = "crps548"
+
+ASSIGN glb_cdprogra = "crps548".
        glb_flgbatch = FALSE.
  
 
@@ -575,6 +589,18 @@ IF  glb_cdcritic > 0  THEN
 
 { includes/cabrel132_1.i }
 { includes/cabrel234_2.i }
+
+FIND craptab WHERE craptab.cdcooper = glb_cdcooper AND
+                   craptab.nmsistem = "CRED"       AND
+                   craptab.tptabela = "USUARI"     AND
+                   craptab.cdempres = 11           AND
+                   craptab.cdacesso = "MAIORESCHQ" AND
+                   craptab.tpregist = 1            NO-LOCK NO-ERROR.
+
+ASSIGN aux_vlchqsup = IF  AVAILABLE craptab  THEN
+                          DEC(SUBSTR(craptab.dstextab,01,15))
+                      ELSE
+                          0.
 
 FIND craptab WHERE craptab.cdcooper = glb_cdcooper AND
                    craptab.nmsistem = "CRED"       AND
@@ -597,10 +623,14 @@ ASSIGN aux_vlcobvlb = IF  AVAILABLE craptab  THEN
                            BREAK BY gnfcomp.cdperarq
                                     BY gnfcomp.cdtipdoc:
 
-        IF   CAN-DO("30,33,70,76,90,433,34,39,94,439",STRING(gnfcomp.cdtipdoc))  THEN
-             ASSIGN rel_nrcheque[1] = rel_nrcheque[1] + gnfcomp.vlremdoc
-                    rel_srcheque[1] = rel_srcheque[1] + gnfcomp.vlrecdoc.
+        IF   CAN-DO("30,33,70,76,90,433",STRING(gnfcomp.cdtipdoc))  THEN
+             ASSIGN rel_nrchqsup[1] = rel_nrchqsup[1] + gnfcomp.vlremdoc
+                    rel_srchqsup[1] = rel_srchqsup[1] + gnfcomp.vlrecdoc.
         ELSE
+        IF   CAN-DO("34,39,94,439",STRING(gnfcomp.cdtipdoc))  THEN
+             ASSIGN rel_nrchqinf[1] = rel_nrchqinf[1] + gnfcomp.vlremdoc
+                    rel_srchqinf[1] = rel_srchqinf[1] + gnfcomp.vlrecdoc.
+        ELSE      
         IF   CAN-DO("11,31,73",STRING(gnfcomp.cdtipdoc))  THEN
              ASSIGN rel_dvchqrmn[1] = rel_dvchqrmn[1] + gnfcomp.vlremdoc
                     rel_dvchqrcn[1] = rel_dvchqrcn[1] + gnfcomp.vlrecdoc.
@@ -610,9 +640,11 @@ ASSIGN aux_vlcobvlb = IF  AVAILABLE craptab  THEN
                     rel_dvchqrcd[1] = rel_dvchqrcd[1] + gnfcomp.vlrecdoc.
                   
     END.
-
-    IF   rel_nrcheque[1] <> 0 OR
-         rel_srcheque[1] <> 0 OR
+    
+    IF   rel_nrchqsup[1] <> 0 OR
+         rel_srchqsup[1] <> 0 OR
+         rel_nrchqinf[1] <> 0 OR
+         rel_srchqinf[1] <> 0 OR
          rel_dvchqrmn[1] <> 0 OR
          rel_dvchqrcn[1] <> 0 OR
          rel_dvchqrmd[1] <> 0 OR
@@ -625,15 +657,19 @@ ASSIGN aux_vlcobvlb = IF  AVAILABLE craptab  THEN
              FIND w-relatorio WHERE ROWID(w-relatorio) = aux_rowid
                                     EXCLUSIVE-LOCK NO-ERROR.
 
-             ASSIGN w-relatorio.nrcheque = rel_nrcheque[1]
-                    w-relatorio.srcheque = rel_srcheque[1]
+             ASSIGN w-relatorio.nrchqsup = rel_nrchqsup[1]
+                    w-relatorio.srchqsup = rel_srchqsup[1]
+                    w-relatorio.nrchqinf = rel_nrchqinf[1]
+                    w-relatorio.srchqinf = rel_srchqinf[1]
                     w-relatorio.dvchqrmn = rel_dvchqrmn[1]
                     w-relatorio.dvchqrcn = rel_dvchqrcn[1]
                     w-relatorio.dvchqrmd = rel_dvchqrmd[1]
                     w-relatorio.dvchqrcd = rel_dvchqrcd[1].
 
-             ASSIGN rel_nrcheque[1] = 0
-                    rel_srcheque[1] = 0
+             ASSIGN rel_nrchqsup[1] = 0
+                    rel_srchqsup[1] = 0
+                    rel_nrchqinf[1] = 0
+                    rel_srchqinf[1] = 0
                     rel_dvchqrmn[1] = 0
                     rel_dvchqrcn[1] = 0
                     rel_dvchqrmd[1] = 0
@@ -757,7 +793,12 @@ FOR EACH crapcop WHERE crapcop.cdcooper <> 3 NO-LOCK
                  FIND w-relatorio WHERE ROWID(w-relatorio) = aux_rowid
                                         EXCLUSIVE-LOCK NO-ERROR.
 
-                 ASSIGN w-relatorio.nrcheque = w-relatorio.nrcheque + gncpchq.vlcheque.
+                 IF   gncpchq.vlcheque >= aux_vlchqsup  THEN
+                      ASSIGN w-relatorio.nrchqsup = w-relatorio.nrchqsup
+                                                    + gncpchq.vlcheque.
+                 ELSE
+                      ASSIGN w-relatorio.nrchqinf = w-relatorio.nrchqinf
+                                                    + gncpchq.vlcheque.
              
                  /** Integrado Cecred **/
 
@@ -767,8 +808,12 @@ FOR EACH crapcop WHERE crapcop.cdcooper <> 3 NO-LOCK
                  FIND w-relatorio WHERE ROWID(w-relatorio) = aux_rowid
                                         EXCLUSIVE-LOCK NO-ERROR.
 
-                 ASSIGN w-relatorio.nrcheque = w-relatorio.nrcheque + gncpchq.vlcheque.
-                 
+                 IF   gncpchq.vlcheque >= aux_vlchqsup  THEN
+                      ASSIGN w-relatorio.nrchqsup = w-relatorio.nrchqsup
+                                                    + gncpchq.vlcheque.
+                 ELSE
+                      ASSIGN w-relatorio.nrchqinf = w-relatorio.nrchqinf
+                                                    + gncpchq.vlcheque.
              END.
 
         /** Integrado Coop **/
@@ -782,7 +827,12 @@ FOR EACH crapcop WHERE crapcop.cdcooper <> 3 NO-LOCK
                  FIND w-relatorio WHERE ROWID(w-relatorio) = aux_rowid
                                         EXCLUSIVE-LOCK NO-ERROR.
 
-                 ASSIGN w-relatorio.nrcheque = w-relatorio.nrcheque + gncpchq.vlcheque.
+                 IF   gncpchq.vlcheque >= aux_vlchqsup  THEN
+                      ASSIGN w-relatorio.nrchqsup = w-relatorio.nrchqsup
+                                                    + gncpchq.vlcheque.
+                 ELSE
+                      ASSIGN w-relatorio.nrchqinf = w-relatorio.nrchqinf
+                                                    + gncpchq.vlcheque.
              END.
 
     
@@ -797,7 +847,12 @@ FOR EACH crapcop WHERE crapcop.cdcooper <> 3 NO-LOCK
                  FIND w-relatorio WHERE ROWID(w-relatorio) = aux_rowid
                                         EXCLUSIVE-LOCK NO-ERROR.
     
-                 ASSIGN w-relatorio.srcheque = w-relatorio.srcheque + gncpchq.vlcheque.
+                 IF   gncpchq.vlcheque >= aux_vlchqsup  THEN
+                      ASSIGN w-relatorio.srchqsup = w-relatorio.srchqsup
+                                                    + gncpchq.vlcheque.
+                 ELSE
+                      ASSIGN w-relatorio.srchqinf = w-relatorio.srchqinf
+                                                    + gncpchq.vlcheque.
     
                  /** Integrado Cecred **/
                  IF   gncpchq.cdtipreg  = 4  OR
@@ -810,7 +865,14 @@ FOR EACH crapcop WHERE crapcop.cdcooper <> 3 NO-LOCK
                           FIND w-relatorio WHERE ROWID(w-relatorio) = aux_rowid
                                                  EXCLUSIVE-LOCK NO-ERROR.
     
-                          ASSIGN w-relatorio.srcheque = w-relatorio.srcheque + gncpchq.vlcheque.
+                          IF   gncpchq.vlcheque >= aux_vlchqsup  THEN
+                               ASSIGN w-relatorio.srchqsup =
+                                                    w-relatorio.srchqsup
+                                                    + gncpchq.vlcheque.
+                          ELSE
+                               ASSIGN w-relatorio.srchqinf =
+                                                    w-relatorio.srchqinf
+                                                    + gncpchq.vlcheque.
                       END.
 
                  /** Integrado Coop **/
@@ -823,7 +885,14 @@ FOR EACH crapcop WHERE crapcop.cdcooper <> 3 NO-LOCK
                           FIND w-relatorio WHERE ROWID(w-relatorio) = aux_rowid
                                                  EXCLUSIVE-LOCK NO-ERROR.
     
-                          ASSIGN w-relatorio.srcheque = w-relatorio.srcheque + gncpchq.vlcheque.
+                          IF   gncpchq.vlcheque >= aux_vlchqsup  THEN
+                               ASSIGN w-relatorio.srchqsup =
+                                                     w-relatorio.srchqsup
+                                                     + gncpchq.vlcheque.
+                          ELSE
+                               ASSIGN w-relatorio.srchqinf =
+                                                     w-relatorio.srchqinf
+                                                     + gncpchq.vlcheque.
                       END.
              END.
 
@@ -838,7 +907,12 @@ FOR EACH crapcop WHERE crapcop.cdcooper <> 3 NO-LOCK
                 FIND w-relatorio WHERE ROWID(w-relatorio) = aux_rowid
                                        EXCLUSIVE-LOCK NO-ERROR.
     
-                ASSIGN w-relatorio.nrcheque = w-relatorio.nrcheque + gncpchq.vlcheque.
+                IF   gncpchq.vlcheque >= aux_vlchqsup  THEN
+                     ASSIGN w-relatorio.nrchqsup = w-relatorio.nrchqsup
+                                                   + gncpchq.vlcheque.
+                ELSE
+                     ASSIGN w-relatorio.nrchqinf = w-relatorio.nrchqinf
+                                                   + gncpchq.vlcheque.
             END.
 
     END. /** Fim do FOR EACH gncpchq **/
@@ -1533,8 +1607,7 @@ END. /* Fim do FOR EACH crapcop */
 
 
 
-/* Nao sera mais gerado o relatório crrl547, porém continuará chamando esta procedure 
-para popular a tabela temporaria - Projeto 367 */
+
 RUN imprime_relat_analitico.
 RUN imprime_relat_sintetico.
 
@@ -1544,21 +1617,21 @@ RUN fontes/fimprg.p.
 
 PROCEDURE imprime_relat_analitico:
 /* Quebra por COOPER */
-/* 
+
     ASSIGN aux_nmarqimp = "rl/crrl547.lst".
 
     OUTPUT STREAM str_2 TO VALUE(aux_nmarqimp) PAGED PAGE-SIZE 65.
     
     VIEW STREAM str_2 FRAME f_cabrel234_2.
-    
+
     /* FRAME com o Titulo da pagina */
     VIEW STREAM str_2  FRAME f_titulo_analitico.
-*/
+
     /** PROCESSANDO RELATORIO **/
     FOR EACH bw-relatorio WHERE bw-relatorio.cdcooper <> 0 NO-LOCK
                        BREAK BY bw-relatorio.cdtipreg
                              BY bw-relatorio.cdcooper:
-/*
+
         FIND FIRST crabcop WHERE crabcop.cdcooper = bw-relatorio.cdcooper
                                  NO-LOCK NO-ERROR.
         
@@ -1625,7 +1698,7 @@ PROCEDURE imprime_relat_analitico:
 
                  END.
         END CASE.
-*/
+
         /* Acumula valores para esse tipo na cooperativa 0 - Acumular TOTAIS */
         RUN cria_tt_relatorio (INPUT 0,
                                INPUT bw-relatorio.cdtipreg,
@@ -1636,7 +1709,7 @@ PROCEDURE imprime_relat_analitico:
 
         RUN soma_tt_relatorio.
 
-/*
+
         IF   LAST-OF(bw-relatorio.cdtipreg) THEN 
              DO:
                  /* cdcooper = 0 eh o acumulador para campo TOTAL */
@@ -1725,9 +1798,8 @@ PROCEDURE imprime_relat_analitico:
                                    WITH FRAME f_total_analitico_3.
                  END CASE.
              END. /* END do LAST-OF */
- */
     END. /* Fim FOR EACH */
- /*   
+    
     OUTPUT STREAM str_2 CLOSE.
 
     ASSIGN glb_nrcopias = 1
@@ -1751,7 +1823,7 @@ PROCEDURE imprime_relat_analitico:
                                       INPUT TRUE).
                            
     DELETE PROCEDURE h-b1wgen0011.
-*/                
+                
 END PROCEDURE.
 
 /*........................................................................... */
@@ -1780,7 +1852,9 @@ PROCEDURE imprime_relat_sintetico:
             WHEN "6 - INTEGRADO COOP"   THEN  /* EXTEND = 6 */
                 ASSIGN aux_extend = 6.
         END CASE.
-        ASSIGN rel_nrcheque[aux_extend] = w-relatorio.nrcheque
+
+        ASSIGN rel_nrchqsup[aux_extend] = w-relatorio.nrchqsup
+               rel_nrchqinf[aux_extend] = w-relatorio.nrchqinf
                rel_nrcobvlb[aux_extend] = w-relatorio.nrcobvlb
                rel_nrcobinf[aux_extend] = w-relatorio.nrcobinf
                rel_srcobvlb[aux_extend] = w-relatorio.srcobvlb
@@ -1792,7 +1866,8 @@ PROCEDURE imprime_relat_sintetico:
                rel_srddainf[aux_extend] = w-relatorio.srddainf
 
                rel_nrdedocs[aux_extend] = w-relatorio.nrdedocs
-               rel_srcheque[aux_extend] = w-relatorio.srcheque
+               rel_srchqsup[aux_extend] = w-relatorio.srchqsup
+               rel_srchqinf[aux_extend] = w-relatorio.srchqinf
                rel_srdedocs[aux_extend] = w-relatorio.srdedocs
                rel_dvchqrmn[aux_extend] = w-relatorio.dvchqrmn
                rel_dvchqrcn[aux_extend] = w-relatorio.dvchqrcn
@@ -1804,11 +1879,13 @@ PROCEDURE imprime_relat_sintetico:
                rel_devdocrm[aux_extend] = w-relatorio.devdocrm.
               
         IF   aux_extend = 1 THEN /* FAC */
-             ASSIGN rel_totl_fac = rel_totl_fac + w-relatorio.nrcheque +
+             ASSIGN rel_totl_fac = rel_totl_fac + w-relatorio.nrchqsup +
+                                                  w-relatorio.nrchqinf +
                                                   w-relatorio.nrcobvlb +
                                                   w-relatorio.nrcobinf +
                                                   w-relatorio.nrdedocs +
-                                                  w-relatorio.srcheque +
+                                                  w-relatorio.srchqsup +
+                                                  w-relatorio.srchqinf +
                                                   w-relatorio.srdedocs +
                                                   w-relatorio.dvchqrmn +
                                                   w-relatorio.dvchqrcn +
@@ -1820,13 +1897,15 @@ PROCEDURE imprime_relat_sintetico:
                                                   w-relatorio.devdocrm.
 
         IF   aux_extend = 2 THEN /* ROC */
-             ASSIGN rel_totl_roc = rel_totl_roc + w-relatorio.nrcheque +
+             ASSIGN rel_totl_roc = rel_totl_roc + w-relatorio.nrchqsup +
+                                                  w-relatorio.nrchqinf +
                                                   w-relatorio.nrcobvlb +
                                                   w-relatorio.nrcobinf +
                                                   w-relatorio.nrddavlb +
                                                   w-relatorio.nrddainf +
                                                   w-relatorio.nrdedocs +
-                                                  w-relatorio.srcheque +
+                                                  w-relatorio.srchqsup +
+                                                  w-relatorio.srchqinf +
                                                   w-relatorio.srcobvlb +
                                                   w-relatorio.srcobinf +
                                                   w-relatorio.srddavlb +
@@ -1844,20 +1923,20 @@ PROCEDURE imprime_relat_sintetico:
     END. /* END do FOR EACH w-relatorio */
 
     ASSIGN rel_t_facroc = rel_totl_fac + rel_totl_roc
-           rel_tot_abbc = rel_tot_abbc    + rel_nrcheque[3] 
+           rel_tot_abbc = rel_tot_abbc    + rel_nrchqsup[3] + rel_nrchqinf[3]
                         + rel_nrcobvlb[3] + rel_nrcobinf[3] + rel_nrdedocs[3]
-                        + rel_srcheque[3] + rel_srdedocs[3] + rel_dvchqrmn[3]
+                        + rel_srchqsup[3] + rel_srdedocs[3] + rel_dvchqrmn[3]
                         + rel_dvchqrcn[3] + rel_dvchqrmd[3] + rel_dvchqrcd[3]
                         + rel_devcobrc[3] + rel_devdocrc[3] + rel_devdocrm[3]
-                        + rel_srcobvlb[3] + rel_srcobinf[3]
+                        + rel_srchqinf[3] + rel_srcobvlb[3] + rel_srcobinf[3]
                         + rel_devcobrm[3] + rel_nrddavlb[3] + rel_nrddainf[3]
                         + rel_srddavlb[3] + rel_srddainf[3]
-           rel_totcecre = rel_totcecre    + rel_nrcheque[4] 
+           rel_totcecre = rel_totcecre    + rel_nrchqsup[4] + rel_nrchqinf[4]
                         + rel_nrcobvlb[4] + rel_nrcobinf[4] + rel_nrdedocs[4]
-                        + rel_srcheque[4] + rel_srdedocs[4] + rel_dvchqrmn[4]
+                        + rel_srchqsup[4] + rel_srdedocs[4] + rel_dvchqrmn[4]
                         + rel_dvchqrcn[4] + rel_dvchqrmd[4] + rel_dvchqrcd[4]
                         + rel_devcobrc[4] + rel_devdocrc[4] + rel_devdocrm[4]
-                        + rel_srcobvlb[4] + rel_srcobinf[4]
+                        + rel_srchqinf[4] + rel_srcobvlb[4] + rel_srcobinf[4]
                         + rel_devcobrm[4] + rel_nrddavlb[4] + rel_nrddainf[4]
                         + rel_srddavlb[4] + rel_srddainf[4].
 
@@ -1870,7 +1949,8 @@ PROCEDURE imprime_relat_sintetico:
     VIEW STREAM str_1  FRAME f_titulo_sintetico.
 
     DISPLAY STREAM str_1
-                   rel_nrcheque
+                   rel_nrchqsup
+                   rel_nrchqinf
                    rel_nrcobvlb 
                    rel_nrddavlb
                    rel_nrcobinf
@@ -1879,7 +1959,8 @@ PROCEDURE imprime_relat_sintetico:
         WITH FRAME f_relat_sintetico_1.
 
     DISPLAY STREAM str_1
-                   rel_srcheque
+                   rel_srchqsup
+                   rel_srchqinf
                    rel_srcobvlb
                    rel_srddavlb
                    rel_srcobinf
@@ -1906,7 +1987,6 @@ PROCEDURE imprime_relat_sintetico:
                    rel_totcecre
         WITH FRAME f_relat_sintetico_totais.
 
-/*** PROJETO 367 ***
     /* Inclusao das tarifas FAC/ROC */
 
     /* DIURNO */
@@ -2147,8 +2227,7 @@ PROCEDURE imprime_relat_sintetico:
     DISPLAY STREAM str_1 tot_vlgerfac
                          tot_vlgerroc
     WITH FRAME f_total_tarifa.             
-****/ 
-   
+    
     OUTPUT STREAM str_1 CLOSE.
 
     ASSIGN glb_nrcopias = 1
@@ -2202,8 +2281,10 @@ END PROCEDURE.
 
 PROCEDURE soma_tt_relatorio.
 
-    ASSIGN w-relatorio.nrcheque = w-relatorio.nrcheque + bw-relatorio.nrcheque
-           w-relatorio.srcheque = w-relatorio.srcheque + bw-relatorio.srcheque
+    ASSIGN w-relatorio.nrchqsup = w-relatorio.nrchqsup + bw-relatorio.nrchqsup
+           w-relatorio.nrchqinf = w-relatorio.nrchqinf + bw-relatorio.nrchqinf
+           w-relatorio.srchqsup = w-relatorio.srchqsup + bw-relatorio.srchqsup
+           w-relatorio.srchqinf = w-relatorio.srchqinf + bw-relatorio.srchqinf
            w-relatorio.dvchqrmn = w-relatorio.dvchqrmn + bw-relatorio.dvchqrmn
            w-relatorio.dvchqrmd = w-relatorio.dvchqrmd + bw-relatorio.dvchqrmd
            w-relatorio.dvchqrcn = w-relatorio.dvchqrcn + bw-relatorio.dvchqrcn

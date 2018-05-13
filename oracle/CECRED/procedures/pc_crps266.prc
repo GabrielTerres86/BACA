@@ -11,7 +11,7 @@ BEGIN
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Odair
-   Data    : Julho/99                        Ultima alteracao: 31/10/2017
+   Data    : Julho/99                        Ultima alteracao: 24/04/2017
 
    Dados referentes ao programa:
 
@@ -44,15 +44,8 @@ BEGIN
                18/02/2015 - Conversão Progress >> Oracle PL/SQL (Vanessa).
 
 			   24/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
-                            crapass, crapttl, crapjur 
-                            (Adriano - P339).
-
-               31/10/2017 - #755898 Correção de sintaxe de uso de índice nos cursores 
-                            cr_craplcm e cr_craplcm2 (Carlos)
-               12/03/2018 - Substituida validacao "cdtipcta in (1,2..)" pela categoria
-                            da conta. PRJ366 (Lombardi).
-
-               24/04/2018 - Ajustes para o relatório 215. PRJ366 (Lombardi).
+			                crapass, crapttl, crapjur 
+							(Adriano - P339).
 
 
 ............................................................................. */
@@ -78,14 +71,14 @@ BEGIN
         
       vr_flgsitua  VARCHAR2(10);
       vr_dstipcta  VARCHAR2(200);
-      vr_cdcatego  crapass.cdcatego%TYPE;
+      vr_cdtipcta  crapass.cdtipcta%TYPE;
       vr_nrcpfcgc  crapass.nrcpfcgc%TYPE;
       vr_nrcpfstl  crapttl.nrcpfcgc%TYPE;
       vr_nmtitula  VARCHAR2(200);
       
       vr_dstipcta2 VARCHAR2(200);
       vr_nmtitula2 VARCHAR2(200);
-      vr_cdcatego2 crapass.cdcatego%TYPE;
+      vr_cdtipcta2 crapass.cdtipcta%TYPE;
       vr_nrcpfcgc2 crapass.nrcpfcgc%TYPE;
       vr_nrcpfstl2 crapttl.nrcpfcgc%TYPE;
       vr_nrdconta2 craplcm.nrdconta%TYPE;
@@ -110,7 +103,7 @@ BEGIN
       CURSOR cr_craplcm(pr_cdcooper IN craptab.cdcooper%TYPE,
                         pr_dtmvtolt IN crapdat.dtmvtolt%TYPE,
                         pr_cdhistor IN craplcm.cdhistor%TYPE) IS
-         SELECT /*+ index (lcm CRAPLCM##CRAPLCM4)*/ 
+         SELECT /*index (lcm CRAPLCM##CRAPLCM4)*/ 
                 lcm.cdcooper,
                 ass.cdagenci,
                 lcm.dtmvtolt,
@@ -118,17 +111,17 @@ BEGIN
                 lcm.nrdocmto,
                 lcm.vllanmto,
                 ass.nmprimtl,
-                ass.cdcatego,
+                ass.cdtipcta,
                 ass.nrcpfcgc,
 				ass.inpessoa,
-                tip.dstipo_conta dstipcta 
+                tip.dstipcta 
            FROM craplcm lcm
                ,crapass ass
-               ,tbcc_tipo_conta tip
+               ,craptip tip
           WHERE  lcm.cdcooper = ass.cdcooper  AND
                  lcm.nrdconta = ass.nrdconta  AND
-                 ass.inpessoa = tip.inpessoa  AND
-                 ass.cdtipcta = tip.cdtipo_conta  AND                 
+                 tip.cdcooper = ass.cdcooper  AND
+                 tip.cdtipcta = ass.cdtipcta  AND                 
                  lcm.cdcooper = pr_cdcooper   AND
                  lcm.dtmvtolt = pr_dtmvtolt   AND 
                  lcm.cdhistor = pr_cdhistor
@@ -140,21 +133,21 @@ BEGIN
                          pr_dtmvtolt IN crapdat.dtmvtolt%TYPE,
                          pr_nrdocmto IN craplcm.nrdocmto%TYPE,
                          pr_vllanmto IN craplcm.vllanmto%TYPE) IS
-         SELECT /*+ index (lcm CRAPLCM##CRAPLCM4)*/ 
+         SELECT /*index (lcm CRAPLCM##CRAPLCM4)*/ 
                 lcm.cdcooper,
                 lcm.nrdconta,
                 ass.nmprimtl,
-                ass.cdcatego,
+                ass.cdtipcta,
                 ass.nrcpfcgc,
 				ass.inpessoa,
-                tip.dstipo_conta dstipcta 
+                tip.dstipcta 
            FROM craplcm lcm
                ,crapass ass
-               ,tbcc_tipo_conta tip
+               ,craptip tip
           WHERE  lcm.cdcooper = ass.cdcooper  AND
                  lcm.nrdconta = ass.nrdconta  AND
-                 ass.inpessoa = tip.inpessoa  AND
-                 ass.cdtipcta = tip.cdtipo_conta  AND       
+                 tip.cdcooper = ass.cdcooper  AND
+                 tip.cdtipcta = ass.cdtipcta  AND       
                  lcm.cdcooper = pr_cdcooper   AND
                  lcm.dtmvtolt = pr_dtmvtolt   AND 
                  lcm.cdhistor = 303           AND 
@@ -238,7 +231,7 @@ BEGIN
                 
             vr_dstipcta := rw_craplcm.dstipcta;
             vr_nmtitula := rw_craplcm.nmprimtl;
-            vr_cdcatego := rw_craplcm.cdcatego; 
+            vr_cdtipcta := rw_craplcm.cdtipcta; 
             vr_nrcpfcgc := rw_craplcm.nrcpfcgc;
             vr_nrcpfstl := 0;
 
@@ -267,7 +260,7 @@ BEGIN
                 vr_flgsitua := 'CORRETO';
                 vr_dstipcta2 := rw_craplcm2.dstipcta;
                 vr_nmtitula2 := rw_craplcm2.nmprimtl;
-                vr_cdcatego2 := rw_craplcm2.cdcatego;
+                vr_cdtipcta2 := rw_craplcm2.cdtipcta;
                 vr_nrcpfcgc2 := rw_craplcm2.nrcpfcgc;
                 vr_nrcpfstl2 := 0;
                 vr_nrdconta2 := rw_craplcm2.nrdconta;
@@ -289,15 +282,15 @@ BEGIN
 
 				END IF;
                       
-                IF(vr_cdcatego = 1 AND vr_cdcatego2 IN(2,3)) THEN
+                IF(vr_cdtipcta  IN(1,2,5,7,8,9,12,13,18)AND vr_cdtipcta2 IN(3,4,6,10,11,14,15,17)) THEN
                    vr_flgsitua := 'ERRADO'; -- individual para conjunta 
-                ELSIF(vr_cdcatego = 1 AND vr_cdcatego2 = 1) THEN
+                ELSIF(vr_cdtipcta  IN(1,2,5,7,8,9,12,13,18)AND vr_cdtipcta2 IN(1,2,5,7,8,9,12,13,18)) THEN
                         
                    IF vr_nrcpfcgc <> vr_nrcpfcgc2 THEN
                       vr_flgsitua := 'ERRADO'; -- individual para individual diferente
                    END IF;
-                ELSIF vr_cdcatego  IN(2,3) THEN
-                   IF vr_cdcatego2 = 1 THEN
+                ELSIF (vr_cdtipcta  IN(3,4,6,10,11,14,15,17)) THEN
+                   IF (vr_cdtipcta2 IN(1,2,5,7,8,9,12,13,18)) THEN
                             
                       IF(vr_nrcpfcgc2 <> vr_nrcpfcgc AND vr_nrcpfcgc2 <> vr_nrcpfstl) THEN
                          vr_flgsitua := 'ERRADO'; /* conjunta para individual */
@@ -383,7 +376,7 @@ BEGIN
                                  ,pr_dsjasper  => 'crrl215.jasper'                     --> Arquivo de layout do iReport
                                  ,pr_dsparams  => NULL                                 --> Sem parâmetros
                                  ,pr_dsarqsaid => vr_dsdireto||'/crrl215.lst'         --> Arquivo final com o path
-                                 ,pr_qtcoluna  => 234                                  --> 234 colunas
+                                 ,pr_qtcoluna  => 132                                  --> 234 colunas
                                  ,pr_flg_gerar => 'N'                                  --> Geraçao na hora
                                  ,pr_flg_impri => 'S'                                  --> Chamar a impressão (Imprim.p)
                                  ,pr_nmformul  => 'col'                                --> Nome do formulário para impressão
@@ -391,7 +384,6 @@ BEGIN
                                  ,pr_sqcabrel  => 1                                    --> Qual a seq do cabrel
                                  ,pr_cdrelato  => '215'                                --> Código fixo para o relatório (nao busca pelo sqcabrel)
                                  ,pr_dspathcop => vr_dsdireto_rlnsv                    --> Enviar para o rlnsv
-                                 ,pr_nrvergrl  => 1                                    --> Versão geração do relatório
                                  ,pr_des_erro  => vr_dscritic);                        --> Saída com erro
 
       -- Liberando a memória alocada pro CLOB
@@ -464,3 +456,4 @@ BEGIN
       END;
 END pc_crps266;
 /
+

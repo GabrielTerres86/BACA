@@ -146,9 +146,6 @@
 
               16/06/2017 - Adicionado e-mail convenios@cecred.coop.br, conforme
                            solicitado no chamado 687836 (Kelvin).
-
-              06/03/2018 - Retirado filtro "cdtipcta = 1" e colocado filtro da conta buscando
-                           do campo "nrctactl" da tabela "crapcop". PRJ366 (Lombardi).
 .............................................................................*/
                         
 { includes/var_batch.i}
@@ -1044,15 +1041,7 @@ PROCEDURE prepara_lancamento.
    FIND FIRST crapass WHERE
               crapass.cdcooper = glb_cdcooper      AND
               crapass.nrcpfcgc = crapcop.nrdocnpj  AND         
-              crapass.nrdconta = crapcop.nrctactl  NO-ERROR.
-              
-   IF NOT AVAILABLE crapass THEN
-      DO:
-          ASSIGN glb_dscritic = "Conta para arrecadacao de convenio nao encontrada.".
-          MESSAGE glb_dscritic.
-          RETURN "NOK".
-      END.
-          
+              crapass.cdtipcta = 1 NO-ERROR.
    ASSIGN aux_nrdconta_debito  = crapass.nrdconta.
 
    /* Cooperativa a receber o credito */

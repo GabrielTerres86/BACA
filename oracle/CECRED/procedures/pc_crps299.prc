@@ -12,7 +12,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS299(pr_cdcooper  IN crapcop.cdcooper%T
          Sistema : Conta-Corrente - Cooperativa de Credito
          Sigla   : CRED
          Autor   : Eduardo.
-         Data    : Novembro/2000.                    Ultima atualizacao: 08/08/2017
+         Data    : Novembro/2000.                    Ultima atualizacao: 25/09/2015
 
          Dados referentes ao programa:
 
@@ -67,8 +67,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS299(pr_cdcooper  IN crapcop.cdcooper%T
 																	
 									   25/09/2015 - Alterações na composição do crrl251 
 										              (Lucas Lunelli SD 324285)
-
-                     08/08/2017 - Inclusao do produto Pos-Fixado. (Jaison/James - PRJ298)
 
   ............................................................................. */
     DECLARE
@@ -396,12 +394,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS299(pr_cdcooper  IN crapcop.cdcooper%T
             vr_tab_resumo(vr_idxger).cdagenci := rw_crapepr.cdagenci;
             vr_tab_resumo(vr_idxger).dsoperac := vr_tab_craplcr(rw_crapepr.cdlcremp).dsoperac;
 
-            IF rw_crapepr.tpemprst = 0 THEN
-              vr_tab_resumo(vr_idxger).dsemprst := 'TR';
-            ELSIF rw_crapepr.tpemprst = 1 THEN
+            IF rw_crapepr.tpemprst = 1 THEN
               vr_tab_resumo(vr_idxger).dsemprst := 'PP';
-            ELSIF rw_crapepr.tpemprst = 2 THEN
-              vr_tab_resumo(vr_idxger).dsemprst := 'POS';
+            ELSE
+              vr_tab_resumo(vr_idxger).dsemprst := 'TR';
             END IF;
 
           END IF;
@@ -446,7 +442,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS299(pr_cdcooper  IN crapcop.cdcooper%T
           -- Guardar os valores para listar ordenados por CONTA e CONTRATO
           vr_chave_contratos := lpad(to_char(rw_crapepr.nrdconta),10,'0') || '0' || lpad(to_char(rw_crapepr.nrctremp),10,'0');
 
-          IF rw_crapepr.tpemprst IN (1,2) THEN -- PP ou POS
+          IF rw_crapepr.tpemprst = 1 THEN
             vr_tab_contratos(vr_chave_contratos).vlsdvctr := rw_crapepr.vlsdvctr;
           ELSE
             vr_tab_contratos(vr_chave_contratos).vlsdvctr := 0;

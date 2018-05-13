@@ -12,7 +12,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_1(pr_cdcooper    IN crapcop.cdcoop
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Belli / Envolti
-   Data    : Agosto/2017.                   Ultima atualizacao: 04/04/2018
+   Data    : Agosto/2017.                   Ultima atualizacao: 11/08/2017
    
    Projeto:  Chamado 714566.
 
@@ -27,12 +27,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_1(pr_cdcooper    IN crapcop.cdcoop
      - relatorio 686 - "MOVIMENTO FLOAT - 085"
 
    Alteracoes: 
-
-   - Incluido controle de inicio e fim de programa - 
-     ( Belli - Chamado 801477 - 24/11/2017 )
-
-   - Ajuste na criação de críticas, lógica do programa invertida.
-     ( Andrey Formigari - Mouts #856928  - 04/04/2018 )
               
    .............................................................................*/
 
@@ -437,12 +431,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_1(pr_cdcooper    IN crapcop.cdcoop
          vr_contador:= 1;
          --Posicionar parametros
          vr_nmarquiv           := pr_nmarquiv;
-         
-		 -- Preparar o CLOB para armazenar as infos do arquivo
-         dbms_lob.createtemporary(vr_clobcri, TRUE, dbms_lob.CALL);
-         dbms_lob.open(vr_clobcri, dbms_lob.lob_readwrite);
-		 
-		 --Selecionar Convenios
+         --Selecionar Convenios
          FOR rw_crapcco IN cr_crapcco_relat (pr_cdcooper => pr_cdcooper
                                             ,pr_cddbanco => 85) LOOP
 
@@ -484,6 +473,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_1(pr_cdcooper    IN crapcop.cdcoop
            vr_contador:= vr_contador + 1;
            --Marcar como nao rejeitado
            vr_rejeitad:= FALSE;
+
+           -- Preparar o CLOB para armazenar as infos do arquivo
+           dbms_lob.createtemporary(vr_clobcri, TRUE, dbms_lob.CALL);
+           dbms_lob.open(vr_clobcri, dbms_lob.lob_readwrite);
 
            -- Inicializar o CLOB
            dbms_lob.createtemporary(vr_des_xml, TRUE);
@@ -573,6 +566,31 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_1(pr_cdcooper    IN crapcop.cdcoop
            ELSE
              vr_dtmvtolt:= rw_crapdat.dtmvtolt;
            END IF;
+
+           -- Se possuir conteudo de critica no CLOB
+           IF LENGTH(vr_clobcri) > 0 THEN
+             -- Busca o diretório para contabilidade
+             vr_dircon := gene0001.fn_param_sistema('CRED', vc_cdtodascooperativas, vc_cdacesso);
+             vr_dircon := vr_dircon || vc_dircon;
+             vr_arqcon := TO_CHAR(vr_dtmvtolt,'RRMMDD')||'_'||LPAD(TO_CHAR(pr_cdcooper),2,0)||'_CRITICAS_605.txt';
+
+             -- Chama a geracao do TXT
+             GENE0002.pc_solicita_relato_arquivo(pr_cdcooper  => pr_cdcooper              --> Cooperativa conectada
+                                                ,pr_cdprogra  => vr_cdprogra              --> Programa chamador
+                                                ,pr_dtmvtolt  => rw_crapdat.dtmvtolt      --> Data do movimento atual
+                                                ,pr_dsxml     => vr_clobcri               --> Arquivo XML de dados
+                                                ,pr_dsarqsaid => vr_caminho_puro || '/contab/' || vr_arqcon    --> Arquivo final com o path
+                                                ,pr_cdrelato  => NULL                     --> Código fixo para o relatório
+                                                ,pr_flg_gerar => 'N'                      --> Apenas submeter
+                                                ,pr_dspathcop => vr_dircon
+                                                ,pr_fldoscop  => 'S'
+                                                ,pr_des_erro  => vr_des_erro2);            --> Saída com erro
+
+           END IF;
+
+           -- Liberando a memória alocada pro CLOB
+           dbms_lob.close(vr_clobcri);
+           dbms_lob.freetemporary(vr_clobcri);
 
            -- Verifica se ocorreram erros na geracao do TXT
            IF vr_des_erro2 IS NOT NULL THEN
@@ -901,30 +919,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_1(pr_cdcooper    IN crapcop.cdcoop
            dbms_lob.freetemporary(vr_des_xml);
            vr_dstexto:= NULL;
          END LOOP; --rw_crapcco
-
-		 -- Se possuir conteudo de critica no CLOB
-         IF LENGTH(vr_clobcri) > 0 THEN
-            -- Busca o diretório para contabilidade
-            vr_dircon := gene0001.fn_param_sistema('CRED', vc_cdtodascooperativas, vc_cdacesso);
-            vr_dircon := vr_dircon || vc_dircon;
-            vr_arqcon := TO_CHAR(vr_dtmvtolt,'RRMMDD')||'_'||LPAD(TO_CHAR(pr_cdcooper),2,0)||'_CRITICAS_605.txt';
-
-            -- Chama a geracao do TXT
-            GENE0002.pc_solicita_relato_arquivo(pr_cdcooper  => pr_cdcooper              --> Cooperativa conectada
-                                            ,pr_cdprogra  => vr_cdprogra              --> Programa chamador
-                                            ,pr_dtmvtolt  => rw_crapdat.dtmvtolt      --> Data do movimento atual
-                                            ,pr_dsxml     => vr_clobcri               --> Arquivo XML de dados
-                                            ,pr_dsarqsaid => vr_caminho_puro || '/contab/' || vr_arqcon    --> Arquivo final com o path
-                                            ,pr_cdrelato  => NULL                     --> Código fixo para o relatório
-                                            ,pr_flg_gerar => 'N'                      --> Apenas submeter
-                                            ,pr_dspathcop => vr_dircon
-                                            ,pr_fldoscop  => 'S'
-                                            ,pr_des_erro  => vr_des_erro2);            --> Saída com erro
-			-- Liberando a memória alocada pro CLOB
-           dbms_lob.close(vr_clobcri);
-           dbms_lob.freetemporary(vr_clobcri);
-
-         END IF;
          
          --Escrever mensagem no Log
          IF vr_rejeitad THEN
@@ -1549,9 +1543,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_1(pr_cdcooper    IN crapcop.cdcoop
       pr_cdcritic := NULL;
       pr_dscritic := NULL;
       
-      -- Incluido controle de inicio de programa - Chamado 801477 - 24/11/2017
-      pc_controla_log_programa('I', NULL);   
-      
       --Posicionar parametros
       vr_typ_craprej_array  := pr_tab_cratrej;
             
@@ -1562,7 +1553,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_1(pr_cdcooper    IN crapcop.cdcoop
       END IF;
       -- Incluir nome do modulo logado
       GENE0001.pc_set_modulo(pr_module => vr_cdprogra, pr_action => NULL);
-                                
+                             
       pc_controla_log_programa('O', 'Programa CRPS538_1 iniciado');
       
       --Se der um erro no CRPS538_1 Ficara registrado no Log com erro e vai abrir chamado Não vai parar a cadeia     
@@ -1703,9 +1694,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_1(pr_cdcooper    IN crapcop.cdcoop
       COMMIT;
       
       pc_controla_log_programa('O', 'Programa CRPS538_1 Finalizado com Sucesso');
-      
-      -- Incluido controle de fim de programa - Chamado 801477 - 24/11/2017
-      pc_controla_log_programa('F', NULL);   
       
     EXCEPTION
       WHEN vr_exc_saida THEN

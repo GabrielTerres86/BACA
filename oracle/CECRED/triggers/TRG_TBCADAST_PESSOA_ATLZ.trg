@@ -1,21 +1,5 @@
 CREATE OR REPLACE TRIGGER CECRED.TRG_TBCADAST_PESSOA_ATLZ
-  AFTER INSERT OR UPDATE OR DELETE 
-  OF idpessoa, 
-     nrcpfcgc, 
-     nmpessoa, 
-     nmpessoa_receita, 
-     tppessoa, 
-     dtconsulta_spc, 
-     dtconsulta_rfb, 
-     cdsituacao_rfb, 
-     tpconsulta_rfb, 
-     dtatualiza_telefone, 
-     dtconsulta_scr, 
-     tpcadastro, 
-     cdoperad_altera, 
-     idcorrigido,      
-     dtrevisao_cadastral
-  ON TBCADAST_PESSOA
+  AFTER INSERT OR UPDATE OR DELETE ON TBCADAST_PESSOA
   FOR EACH ROW
   /* ..........................................................................
 
@@ -23,15 +7,14 @@ CREATE OR REPLACE TRIGGER CECRED.TRG_TBCADAST_PESSOA_ATLZ
      Sistema  : Conta-Corrente - Cooperativa de Credito
      Sigla    : CRED
      Autor    : Odirlei Busana(AMcom)
-     Data     : Julho/2017.                   Ultima atualizacao: 29/01/2018
+     Data     : Julho/2017.                   Ultima atualizacao:
 
      Dados referentes ao programa:
 
       Frequencia: Sempre que for chamado
       Objetivo  : Trigger para atualizar tabela estrutura antiga
 
-     Alteração : 29/01/2018 - Inclui campos na config da trigger para desprezar campo dtalteracao.
-                              PRJ339-CRM(Odirlei-AMcom)
+     Alteração :
 
   ............................................................................*/
 

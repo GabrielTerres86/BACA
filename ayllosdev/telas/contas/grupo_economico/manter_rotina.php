@@ -7,9 +7,6 @@
  * --------------
  * ALTERAÇÕES   : 
  * --------------
- 
- 20/02/2018 - #846981 Utilização da função removeCaracteresInvalidos (Carlos)
- 
  */	
 	session_start();	
 	// Includes para controle da session, variáveis globais de controle, e biblioteca de funções	
@@ -57,8 +54,8 @@
 			$xml .= "<Root>";
 			$xml .= "	<Dados>";
 			$xml .= '		<nrdconta>'.$nrdconta.'</nrdconta>';
-			$xml .= '		<nmgrupo>'.removeCaracteresInvalidos($nmgrupo).'</nmgrupo>';
-			$xml .= "		<dsobservacao>".removeCaracteresInvalidos($dsobservacao)."</dsobservacao>";
+			$xml .= '		<nmgrupo>'.$nmgrupo.'</nmgrupo>';
+			$xml .= "		<dsobservacao>".$dsobservacao."</dsobservacao>";
 			$xml .= "	</Dados>";
 			$xml .= "</Root>";
 			
@@ -95,7 +92,7 @@
 			$xml .= '		<tppessoa>'.$tppessoa.'</tppessoa>';
 			$xml .= '		<nrcpfcgc>'.$nrcpfcgc.'</nrcpfcgc>';
 			$xml .= "		<nrdconta>".$nrdconta."</nrdconta>";
-			$xml .= "		<nmintegrante>".removeCaracteresInvalidos($nmprimtl)."</nmintegrante>";
+			$xml .= "		<nmintegrante>".$nmprimtl."</nmintegrante>";
 			$xml .= "		<tpvinculo>".$tpvinculo."</tpvinculo>";
 			$xml .= "		<peparticipacao>".$peparticipacao."</peparticipacao>";
 			$xml .= "	</Dados>";

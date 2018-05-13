@@ -5,7 +5,7 @@
  * DATA CRIAÇÃO : 26/02/2013
  * OBJETIVO     : Rotina para buscar dados - CTASAL
  * --------------
- * ALTERAÇÕES   : Ajuste para caracteres especiais não gerarem problemas. (SD 845660 - Kelvin).
+ * ALTERAÇÕES   : 
  * -------------- 
  *
  * -------------- 
@@ -58,7 +58,7 @@
 	
 	$xmlResult = getDataXML($xml);
 	
-	$xmlObjeto = getObjectXML(removeCaracteresInvalidos($xmlResult));
+	$xmlObjeto = getObjectXML($xmlResult);
 	
 	if (strtoupper($xmlObjeto->roottag->tags[0]->name) == 'ERRO') {	
 		$msgErro	= $xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata;		

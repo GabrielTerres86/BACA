@@ -2,7 +2,7 @@
 
    Programa: b1wgen0092.p                  
    Autora  : André - DB1
-   Data    : 04/05/2011                        Ultima atualizacao: 26/03/2018
+   Data    : 04/05/2011                        Ultima atualizacao: 13/10/2017
     
    Dados referentes ao programa:
    
@@ -199,36 +199,6 @@
 
               13/10/2017 - #765295 Criada a rotina busca_convenio_nome para logar no TAA o
                            nome do convenio que esta sendo pago (Carlos)
-			   
-              16/10/2017 - Adicionar chamada da procedure pc_retorna_referencia_conv para formatar 
-                           a referencia do convenio de acordo com o cadastrado na tabela crapprm 
-                           (Lucas Ranghetti #712492)
-              07/11/2017 - Retornar indicador de situacao e descricao de protocolo
-                           na consulta de autorizacoes e lancamentos (David).
-                         
-              12/12/2017 - Alterar campo flgcnvsi por tparrecd.
-                           PRJ406-FGTS (Odirlei-AMcom)                 
-                           
-              20/12/2017 - Gravar dtiniatr e dtfimsus ou dtinisus como proximo dia util para convenios
-                           sicredi no ultimo dia nao util do ano (Lucas Ranghetti #809954)
-
-              01/02/2018 - Ajustar na exclui_suspensao_autorizacao para sempre que possivel, utilizar a chave unica da
-                           tabela crapatr para encontrar a autorizacao para exclusao da suspensao. Quando isso nao for
-                           possivel, continuara buscando pelo cdempcon e cdsegmto (Anderson P285).
-                           
-              07/03/2018 - Alterar validacao do digito do samae Pomerode para validar com o modulo 11
-                           (Lucas Ranghetti #858121).
-                           
-              23/03/2018 - Validar se empresa do codigo de barras e igual ao cadastrado na base 
-                           (Lucas Ranghetti #856427)
-                           
-              26/03/2018 - Incluir tratamento no cancelamento e recadastramento, para 
-                           quando nao for o ultimo dia util do ano, grave a data como 
-                           dia atual (Lucas Ranghetti #860768)
-                           
-              03/04/2018 - Adicionada chamada pc_valida_adesao_produto para verificar se o tipo de conta 
-                           permite a contrataçao do produto. PRJ366 (Lombardi).
-                           
 .............................................................................*/
 
 /*............................... DEFINICOES ................................*/
@@ -1122,9 +1092,6 @@ PROCEDURE valida-dados:
     DEF VAR aux_cdrefere AS DECI                                    NO-UNDO.
     DEF VAR aux_stsnrcal AS LOGI                                    NO-UNDO.
     DEF VAR aux_nrdigito AS INTE                                    NO-UNDO.
-    DEF VAR aux_nrrefere AS CHAR                                    NO-UNDO.
-    DEF VAR aux_qtdigito AS INTE                                    NO-UNDO.
-    DEF VAR aux_cdprodut AS INTE                                    NO-UNDO.
 
     EMPTY TEMP-TABLE tt-erro.
 
@@ -1147,77 +1114,12 @@ PROCEDURE valida-dados:
 
         IF  par_cddopcao = "I"  THEN
             DO:                                 
-                              
                 IF  par_cdrefere = 0 THEN              
                     DO:
                         ASSIGN aux_dscritic = "Informe o Codigo Identificador "
                                par_nmdcampo = "cdrefere".
                         LEAVE Valida.
                     END.
-                              
-                IF CAN-DO("1,5",TRIM(STRING(par_idorigem))) THEN
-                    aux_cdprodut = 10. /* Débito Automático */
-                ELSE
-                    aux_cdprodut = 29. /* Débito Automático Fácil */
-                    
-                /* buscar quantidade maxima de digitos aceitos para o convenio */
-                { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
-                              
-                RUN STORED-PROCEDURE pc_valida_adesao_produto
-                    aux_handproc = PROC-HANDLE NO-ERROR
-                                            (INPUT par_cdcooper,
-                                             INPUT par_nrdconta,
-                                             INPUT aux_cdprodut,
-                                             OUTPUT 0,   /* pr_cdcritic */
-                                             OUTPUT ""). /* pr_dscritic */
-                            
-                CLOSE STORED-PROC pc_valida_adesao_produto
-                      aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
-
-                { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
-
-                ASSIGN aux_cdcritic = 0
-                       aux_dscritic = ""
-                       aux_cdcritic = pc_valida_adesao_produto.pr_cdcritic                          
-                                          WHEN pc_valida_adesao_produto.pr_cdcritic <> ?
-                       aux_dscritic = pc_valida_adesao_produto.pr_dscritic
-                                          WHEN pc_valida_adesao_produto.pr_dscritic <> ?.
-                
-                IF  aux_cdcritic <> 0 OR aux_dscritic <> "" THEN
-                  DO:
-                      LEAVE Valida.
-                  END.
-                
-                /* buscar quantidade maxima de digitos aceitos para o convenio */
-                { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
-                              
-                  RUN STORED-PROCEDURE pc_retorna_referencia_conv
-                      aux_handproc = PROC-HANDLE NO-ERROR
-                                              (INPUT 0, /* cdconven */
-                                               INPUT par_cdhistor,
-                                               INPUT STRING(par_cdrefere),
-                                               OUTPUT aux_nrrefere,
-                                               OUTPUT aux_qtdigito,
-                                               OUTPUT 0,   /* pr_cdcritic */
-                                               OUTPUT ""). /* pr_dscritic */
-                              
-                  CLOSE STORED-PROC pc_retorna_referencia_conv
-                        aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
-
-                  { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
-
-                  ASSIGN aux_cdcritic = 0
-                         aux_dscritic = ""
-                         aux_nrrefere = ""
-                         aux_qtdigito = 0
-                         aux_nrrefere = pc_retorna_referencia_conv.pr_nrrefere
-                                            WHEN pc_retorna_referencia_conv.pr_nrrefere <> ?
-                         aux_qtdigito = pc_retorna_referencia_conv.pr_qtdigito                          
-                                            WHEN pc_retorna_referencia_conv.pr_qtdigito <> ?
-                         aux_cdcritic = pc_retorna_referencia_conv.pr_cdcritic                          
-                                            WHEN pc_retorna_referencia_conv.pr_cdcritic <> ?
-                         aux_dscritic = pc_retorna_referencia_conv.pr_dscritic
-                                            WHEN pc_retorna_referencia_conv.pr_dscritic <> ?.        
                               
                 IF  par_cdhistor = 0 THEN
                     DO:
@@ -1226,17 +1128,25 @@ PROCEDURE valida-dados:
                         LEAVE Valida.
                     END.
                 ELSE
-                IF  aux_qtdigito <> 0 THEN /* CERSAD E SANEPAR */
+                IF  par_cdhistor = 2291 THEN /* CERSAD */
                     DO:                    
-                         IF  LENGTH(STRING(par_cdrefere)) > aux_qtdigito THEN
+                        IF  LENGTH(STRING(par_cdrefere)) > 9 THEN
                             DO:
                                 ASSIGN aux_cdcritic = 654
                                        par_nmdcampo = "cdrefere".
                                 LEAVE Valida.
                             END.   
-                       
+                    END.
+                ELSE
                 IF par_cdhistor = 2263 THEN /* SANEPAR */
                    DO:                   
+                       IF  LENGTH(STRING(par_cdrefere)) > 8 THEN
+                           DO:
+                               ASSIGN aux_cdcritic = 654
+                                      par_nmdcampo = "cdrefere".
+                               LEAVE Valida.
+                           END. 
+                           
                        ASSIGN aux_cdrefere = par_cdrefere.
                        
                        RUN dig_sanepar ( INPUT-OUTPUT aux_cdrefere,
@@ -1249,9 +1159,8 @@ PROCEDURE valida-dados:
                                ASSIGN aux_cdcritic = 008
                                       par_nmdcampo = "cdrefere".
                                LEAVE Valida.
-                    END.
+                           END. 
                    END.
-                    END.                
                 ELSE
                 IF  par_cdhistor = 509   THEN   /* UNIMED */
                     DO:
@@ -1352,8 +1261,7 @@ PROCEDURE valida-dados:
                                      
                     END.
                 ELSE       
-                IF  par_cdhistor = 635 OR /* SAMAE GASPAR   */
-                    par_cdhistor = 619  THEN  /* SAMAE Pomerode */
+                IF  par_cdhistor = 635 THEN /* SAMAE GASPAR */
                     DO:
                          IF  par_cdrefere > 999999 THEN
                              DO:
@@ -1380,6 +1288,7 @@ PROCEDURE valida-dados:
                     END.
                 ELSE
                 IF  par_cdhistor = 616  OR   /* SAMAE Brusque */
+                    par_cdhistor = 619  OR   /* SAMAE Pomerode */
                     par_cdhistor = 900  THEN /* SAMAE Rio Negrinho */
                     DO:
                         IF   par_cdrefere > 999999 THEN
@@ -1768,7 +1677,7 @@ PROCEDURE grava-dados:
     DEF VAR aux_cdhistor AS INTE                                    NO-UNDO.
     DEF VAR aux_tpautori AS INTE                                    NO-UNDO.
     DEF VAR aux_flgmaxdb AS LOGI                                    NO-UNDO.
-    DEF VAR aux_tparrecd AS INTE                                    NO-UNDO.
+    DEF VAR aux_flgsicre AS LOGI                                    NO-UNDO.
     DEF VAR aux_flgachtr AS LOGI                                    NO-UNDO.
     DEF VAR aux_nmdcampo AS CHAR                                    NO-UNDO.   
     DEF VAR aux_dsnomcnv AS CHAR                                    NO-UNDO.    
@@ -1777,9 +1686,6 @@ PROCEDURE grava-dados:
     DEF VAR aux_nrctacns AS INTE                                    NO-UNDO. 
     DEF VAR aux_nrdrowid AS ROWID                                   NO-UNDO.
     DEF VAR aux_dtamenor AS DATE                                    NO-UNDO.
-    DEF VAR aux_dtmvtolt AS DATE                                    NO-UNDO.
-    DEF VAR aux_emconbar AS INTE                                    NO-UNDO.
-    DEF VAR aux_segmtbar AS CHAR                                    NO-UNDO.
     
     EMPTY TEMP-TABLE tt-erro.
 
@@ -1891,31 +1797,10 @@ PROCEDURE grava-dados:
         /* Associa corretamente ao histórico SICREDI */
         IF  par_flgsicre = "S" THEN
             ASSIGN aux_cdhistor = 1019
-                   aux_tparrecd = 1.
+                   aux_flgsicre = TRUE.
         ELSE 
             ASSIGN aux_cdhistor = INT(par_cdhistor)
-                   aux_tparrecd = 3.
-            
-        IF  aux_cdhistor = 1019 THEN
-            DO:
-                RUN valida_dia_util(INPUT par_cdcooper,
-                                    INPUT aux_dtiniatr,
-                                    INPUT TRUE, /* Ultimo dia do ano */
-                                    INPUT "A",  /* Anterior */
-                                    OUTPUT aux_dtmvtolt). 
-                                    
-                /* Entrar somente se for o ultimo dia util do ano */
-                IF  aux_dtiniatr = aux_dtmvtolt THEN
-                    DO:                
-                        RUN valida_dia_util(INPUT par_cdcooper,
-                                            INPUT aux_dtiniatr,
-                                            INPUT TRUE, /* primeiro dia util do ano*/
-                                            INPUT "P",  /* Proximo */
-                                            OUTPUT aux_dtmvtolt).     
-                    
-                        ASSIGN aux_dtiniatr = aux_dtmvtolt.
-                    END.
-            END.
+                   aux_flgsicre = FALSE.
             
         IF  par_cddopcao = "I" THEN
             DO: 
@@ -1976,7 +1861,7 @@ PROCEDURE grava-dados:
                             DO:
                                 ASSIGN aux_cdempcon = crapcon.cdempcon 
                                        aux_cdsegmto = STRING(crapcon.cdsegmto)
-                                       aux_tparrecd = crapcon.tparrecd
+                                       aux_flgsicre = crapcon.flgcnvsi
                                        aux_cdhistor = IF crapcon.cdhistor = 1154 THEN 1019 ELSE aux_cdhistor.
                             END.
                     END.    
@@ -1991,23 +1876,19 @@ PROCEDURE grava-dados:
                                                        SUBSTR(STRING(par_fatura04,"999999999999"),1,11).
 
                                 ASSIGN  aux_cdempcon  = INT(SUBSTR(aux_vlrcalcu,16,4))
-                                        aux_cdsegmto  = SUBSTR(aux_vlrcalcu,2,1)
-                                        aux_emconbar  = aux_cdempcon
-                                        aux_segmtbar  = aux_cdsegmto.
+                                        aux_cdsegmto  = SUBSTR(aux_vlrcalcu,2,1).
                             END.
                         /* Retirar empresa e semgto do cod de barras */
                         ELSE 
                             DO:
                                 ASSIGN aux_cdempcon   = INT(SUBSTR(par_codbarra,16,4))
                                        aux_cdsegmto   = SUBSTR(par_codbarra,2,1)
-                                       aux_vlrcalcu   = par_codbarra
-                                       aux_emconbar  = aux_cdempcon
-                                       aux_segmtbar  = aux_cdsegmto.
+                                       aux_vlrcalcu   = par_codbarra.
                             END.                    
                     END.
                     
                 /* Se for SICREDI... */
-                IF  aux_tparrecd = 1 THEN
+                IF  aux_flgsicre = TRUE THEN
                     DO:
                         /* Caso a empresa e segmento estejam zerados */
                         IF  INT(aux_cdempcon) = 0 AND 
@@ -2039,8 +1920,7 @@ PROCEDURE grava-dados:
                                 UNDO Grava, LEAVE Grava.
                             END.                           
                     END.
-                /* Se for CECRED... */    
-                ELSE IF  aux_tparrecd = 3 THEN
+                ELSE
                     DO:
                         FIND FIRST gnconve WHERE gnconve.flgativo = TRUE            AND
                                                 (gnconve.cdhisdeb = aux_cdhistor    AND
@@ -2062,14 +1942,6 @@ PROCEDURE grava-dados:
                             END.
 
                     END.
-                /* Se for Bancoob... */    
-                ELSE IF aux_tparrecd = 2 THEN
-                    DO:
-                        /* Bancoob nao permite deb.aut. */                                            
-                        ASSIGN aux_dscritic = "Convenio indisponivel para Debito Automatico.".
-                        UNDO Grava, LEAVE Grava.
-                    
-                    END.    
                     
                 /* registra tp com base no idorigem, AUTORI = 0. Assim, se <> 0 entao é Debito Fácil */
                 IF  par_idorigem = 3 /* IBANK */    OR 
@@ -2158,14 +2030,11 @@ PROCEDURE grava-dados:
                     aux_cdhistor = 31     THEN 
                     DO:
                         /* Se for SICREDI... */
-                        IF  aux_tparrecd = 1 THEN
+                        IF  aux_flgsicre = TRUE THEN
                             DO:
-                                /* Caso a empresa e segmento estejam zerados ou a empresa seja diferente 
-                                   da do codigo de barras */
+                                /* Caso a empresa e segmento estejam zerados */
                                 IF  INT(aux_cdempcon) = 0 OR 
-                                    INT(aux_cdsegmto) = 0 OR 
-                                    aux_cdempcon <> aux_emconbar OR
-                                    aux_cdsegmto <> aux_segmtbar THEN
+                                    INT(aux_cdsegmto) = 0 THEN
                                     DO:
                                         ASSIGN aux_dscritic = "Operacao nao finalizada, tente novamente.".
                                         UNDO Grava, LEAVE Grava.
@@ -2199,7 +2068,7 @@ PROCEDURE grava-dados:
                 BUFFER-COPY crapatr TO tt-autori-atl.
                     
                 /* Verificar se ja possui conta sicredi*/
-                IF  aux_tparrecd = 1  AND
+                IF  aux_flgsicre = TRUE  AND
                     crapass.nrctacns = 0 THEN
                     DO:
                         /* Caso nao possua deve gerar */
@@ -2358,41 +2227,17 @@ PROCEDURE grava-dados:
                         END.
                 END.
 
-                ASSIGN aux_dtmvtolt = par_dtmvtolt.
-                
-                IF  aux_cdhistor = 1019 THEN
-                    DO: 
-                        RUN valida_dia_util(INPUT par_cdcooper,
-                                            INPUT par_dtmvtolt,
-                                            INPUT TRUE, /* Ultimo dia do ano */
-                                            INPUT "A",  /* Anterior */
-                                            OUTPUT aux_dtmvtolt). 
-                                    
-                        /* Entrar somente se for o ultimo dia util do ano */
-                        IF  par_dtmvtolt = aux_dtmvtolt THEN
-                            DO:                
-                                RUN valida_dia_util(INPUT par_cdcooper,
-                                                    INPUT par_dtmvtolt,
-                                                    INPUT TRUE, /* primeiro dia util do ano*/
-                                                    INPUT "P",  /* Proximo */
-                                                    OUTPUT aux_dtmvtolt).     
-                                
-                            END.
-                        ELSE
-                            ASSIGN aux_dtmvtolt = par_dtmvtolt.
-                    END.    
-
                 IF  par_cddopcao = "R" THEN
                     DO:  
                         IF  crapatr.dtfimatr <> ? THEN
                             ASSIGN crapatr.dtfimatr = ?.
                     
-                        ASSIGN crapatr.dtiniatr = aux_dtmvtolt.
+                        ASSIGN crapatr.dtiniatr = par_dtmvtolt.
                     END.
                 ELSE
                 IF  par_cddopcao = "E" THEN
                     DO:
-                        IF  crapatr.dtiniatr = aux_dtmvtolt THEN
+                        IF  crapatr.dtiniatr = par_dtmvtolt THEN
                             DO: 
                                 ASSIGN aux_dscritic = "Esta alteracao podera" +
                                                       " ser efetuada no proximo dia util.".
@@ -2401,7 +2246,7 @@ PROCEDURE grava-dados:
                             
                          /* Permitir a exclusao do debito somente no proximo dia util apos 
                             o cancelamento */
-                         IF  crapatr.dtfimatr = aux_dtmvtolt THEN
+                         IF  crapatr.dtfimatr = par_dtmvtolt THEN
                              DO:
                                 ASSIGN aux_dscritic = "Exclusao permitida somente no proximo dia util.".
                                 UNDO Grava, LEAVE Grava.
@@ -2421,7 +2266,7 @@ PROCEDURE grava-dados:
                         IF  crapatr.dtfimatr = ? AND 
                             par_idorigem <> 4    THEN /* TAA */
                             DO:
-                                ASSIGN crapatr.dtfimatr = aux_dtmvtolt.
+                                ASSIGN crapatr.dtfimatr = par_dtmvtolt.
                                 CREATE tt-autori-atl.
                                 BUFFER-COPY crapatr TO tt-autori-atl.
                             END.
@@ -2523,8 +2368,7 @@ PROCEDURE busca_convenios_codbarras:
         ASSIGN aux_nmempcon = ""
                aux_nmresumi = "".
                            
-        /* Sicredi */                   
-        IF  crapcon.tparrecd = 1 THEN
+        IF  crapcon.flgcnvsi = TRUE THEN
             DO:
                 FIND FIRST crapscn WHERE (crapscn.cdempcon = crapcon.cdempcon          AND
                                           crapscn.cdempcon <> 0)                       AND
@@ -2538,11 +2382,9 @@ PROCEDURE busca_convenios_codbarras:
                   IF(crapscn.dsnomres <> "") then
                       ASSIGN aux_nmempcon = crapscn.dsnomres.
                   ELSE
-                      ASSIGN aux_nmempcon = crapscn.dsnomcnv.
+                    ASSIGN aux_nmempcon = crapscn.dsnomcnv.
             END.
-        
-        /* Cecred */
-        ELSE IF  crapcon.tparrecd = 3 THEN
+        ELSE
             DO:      
                 /* Iremos buscar tambem o convenio aguas de schroeder(87) pois possui dois codigos e a 
                    busca anterior nao funciona */
@@ -2570,16 +2412,8 @@ PROCEDURE busca_convenios_codbarras:
                 ELSE 
                     IF gnconve.cdconven <> 87  AND
 					   gnconve.cdconven <> 108 THEN
-						ASSIGN aux_nmempcon = gnconve.nmempres.
+                       ASSIGN aux_nmempcon = gnconve.nmempres.
             END.
-         /* Bancoob */
-        ELSE IF crapcon.tparrecd = 2 THEN
-            DO:                
-                /* No caso do bancoob deve utilizar dados da crapcon,
-                   pois na tabela nao existe esses dados */
-                ASSIGN aux_nmresumi = ""
-                       aux_nmempcon = "".                
-            END.   
 
          IF aux_nmresumi <> "" THEN
           ASSIGN aux_nmempcon = aux_nmresumi.    
@@ -2594,7 +2428,7 @@ PROCEDURE busca_convenios_codbarras:
                tt-convenios-codbarras.cdempcon = crapcon.cdempcon
                tt-convenios-codbarras.cdsegmto = crapcon.cdsegmto
                tt-convenios-codbarras.cdhistor = IF AVAIL gnconve THEN gnconve.cdhisdeb ELSE crapcon.cdhistor
-               tt-convenios-codbarras.flgcnvsi = IF crapcon.tparrecd = 1 THEN TRUE ELSE FALSE.
+               tt-convenios-codbarras.flgcnvsi = crapcon.flgcnvsi.
                
        RELEASE crapcon.
        RELEASE gnconve.
@@ -2614,20 +2448,10 @@ PROCEDURE busca_autorizacoes_cadastradas:
 
     DEF OUTPUT PARAM TABLE FOR tt-autorizacoes-cadastradas.
 
-    DEF VAR aux_nmempcon         AS CHAR  NO-UNDO.
-    DEF VAR aux_inaltera         AS LOGI  NO-UNDO.
-    DEF VAR aux_cdempcon         AS INTE  NO-UNDO.
-    DEF VAR aux_cdsegmto         AS INTE  NO-UNDO.
-    DEF VAR aux_dssegmto AS CHAR EXTENT 8 NO-UNDO.
-    
-    ASSIGN aux_dssegmto[1] = "Prefeituras"
-           aux_dssegmto[2] = "Saneamento"
-           aux_dssegmto[3] = "Energia Elétrica e Gás"
-           aux_dssegmto[4] = "Telecomunicaçoes"
-           aux_dssegmto[5] = "Órgaos Governamentais"
-           aux_dssegmto[6] = "Órgaos Identificados pelo CNPJ"
-           aux_dssegmto[7] = "Multas de Trânsito"
-           aux_dssegmto[8] = "Uso Exclusivo do Banco".
+    DEF VAR aux_nmempcon         AS CHAR NO-UNDO.
+    DEF VAR aux_inaltera         AS LOGI NO-UNDO.
+    DEF VAR aux_cdempcon         AS INTE NO-UNDO.
+    DEF VAR aux_cdsegmto         AS INTE NO-UNDO.
     
     FOR EACH crapatr WHERE crapatr.cdcooper = par_cdcooper AND
                            crapatr.nrdconta = par_nrdconta AND
@@ -2638,6 +2462,7 @@ PROCEDURE busca_autorizacoes_cadastradas:
                             
         ASSIGN aux_nmempcon = ""
                aux_inaltera = FALSE
+               aux_nmempcon = ""
                aux_cdempcon = 0
                aux_cdsegmto = 0.
         
@@ -2679,23 +2504,19 @@ PROCEDURE busca_autorizacoes_cadastradas:
                            aux_cdsegmto = crapcon.cdsegmto.                                                    
             END.   
 
-        IF (INDEX(aux_nmempcon, "FEBR") > 0) THEN 
-            ASSIGN aux_nmempcon = SUBSTRING(aux_nmempcon, 1, (R-INDEX(aux_nmempcon, "-") - 1))
-                   aux_nmempcon = REPLACE(aux_nmempcon, "FEBRABAN", "").
+            
+            
             
         CREATE tt-autorizacoes-cadastradas.
         ASSIGN tt-autorizacoes-cadastradas.nmextcon = aux_nmempcon
-               tt-autorizacoes-cadastradas.nmrescon = IF AVAIL crapcon AND TRIM(crapcon.nmrescon) <> '' THEN crapcon.nmrescon ELSE aux_nmempcon
-               tt-autorizacoes-cadastradas.cdempcon = IF crapatr.cdhistor = 1019 THEN crapatr.cdempcon ELSE aux_cdempcon
-               tt-autorizacoes-cadastradas.cdsegmto = IF crapatr.cdhistor = 1019 THEN crapatr.cdsegmto ELSE aux_cdsegmto
+               tt-autorizacoes-cadastradas.nmrescon = ""
+               tt-autorizacoes-cadastradas.cdempcon = IF  crapatr.cdhistor = 1019 THEN crapatr.cdempcon ELSE aux_cdempcon
+               tt-autorizacoes-cadastradas.cdsegmto = IF  crapatr.cdhistor = 1019 THEN crapatr.cdsegmto ELSE aux_cdsegmto
                tt-autorizacoes-cadastradas.cdrefere = crapatr.cdrefere
                tt-autorizacoes-cadastradas.vlmaxdeb = crapatr.vlrmaxdb
                tt-autorizacoes-cadastradas.dshisext = crapatr.dshisext
                tt-autorizacoes-cadastradas.inaltera = aux_inaltera
-               tt-autorizacoes-cadastradas.cdhistor = crapatr.cdhistor
-               tt-autorizacoes-cadastradas.insituac = IF crapatr.dtfimsus <> ? AND crapatr.dtfimsus > par_dtmvtolt THEN 2 ELSE 1
-               tt-autorizacoes-cadastradas.dssituac = IF tt-autorizacoes-cadastradas.insituac = 1 THEN 'ATIVO' ELSE 'SUSPENSO'
-               tt-autorizacoes-cadastradas.dssegmto = aux_dssegmto[tt-autorizacoes-cadastradas.cdsegmto].
+               tt-autorizacoes-cadastradas.cdhistor = crapatr.cdhistor.
                
         RELEASE crapscn.
         RELEASE gnconve.
@@ -3502,53 +3323,11 @@ PROCEDURE cadastra_suspensao_autorizacao:
 
     DEF VAR aux_contador AS INTE INIT 0  NO-UNDO.
     DEF VAR aux_retornvl AS CHAR INIT "NOK"                        NO-UNDO.
-    DEF VAR aux_dtmvtolt AS DATE                                   NO-UNDO.
-    
 
     ASSIGN aux_dscritic = ""
            aux_cdcritic = 0
            aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
            aux_dstransa = "Suspende autorizacao de debito em conta".
-
-    IF  par_cdhistor = 1019 THEN
-        DO:
-            RUN valida_dia_util(INPUT par_cdcooper,
-                                INPUT par_dtinisus,
-                                INPUT TRUE, /* Ultimo dia do ano */
-                                INPUT "A",
-                                OUTPUT aux_dtmvtolt). 
-                                
-            /* Entrar somente se for o ultimo dia util do ano */
-            IF  par_dtinisus = aux_dtmvtolt THEN
-                DO:                
-                    RUN valida_dia_util(INPUT par_cdcooper,
-                                        INPUT par_dtinisus,
-                                        INPUT TRUE, /* primeiro dia util do ano*/
-                                        INPUT "P",
-                                        OUTPUT aux_dtmvtolt).     
-                
-                    ASSIGN par_dtinisus = aux_dtmvtolt.
-                END.
-            
-            RUN valida_dia_util(INPUT par_cdcooper,
-                                INPUT par_dtfimsus,
-                                INPUT TRUE, /* Ultimo dia do ano */
-                                INPUT "A",
-                                OUTPUT aux_dtmvtolt). 
-                                
-            /* Entrar somente se for o ultimo dia util do ano */                    
-            IF  par_dtfimsus = aux_dtmvtolt THEN
-                DO:                
-                    RUN valida_dia_util(INPUT par_cdcooper,
-                                        INPUT par_dtfimsus,
-                                        INPUT TRUE, /* primeiro dia util do ano*/
-                                        INPUT "P",
-                                        OUTPUT aux_dtmvtolt).     
-                
-                    ASSIGN par_dtfimsus = aux_dtmvtolt.
-                END.
-            
-        END.
 
     Bloqueia: DO WHILE TRUE TRANSACTION ON ERROR UNDO, LEAVE ON ENDKEY UNDO, LEAVE:
 
@@ -3868,7 +3647,6 @@ PROCEDURE exclui_suspensao_autorizacao:
     DEF OUTPUT PARAM TABLE FOR tt-erro.
 
     DEF VAR aux_contador AS INTE INIT 0  NO-UNDO.
-    DEF VAR aux_dtinisus AS DATE         NO-UNDO.
     DEF VAR aux_dtfimsus AS DATE         NO-UNDO.
     DEF VAR aux_retornvl AS CHAR INIT "NOK"                        NO-UNDO.
 
@@ -3879,16 +3657,7 @@ PROCEDURE exclui_suspensao_autorizacao:
 
     Desbloqueia: DO WHILE TRUE TRANSACTION ON ERROR UNDO, LEAVE ON ENDKEY UNDO, LEAVE:
 
-        IF par_cdhistor > 0 THEN
-           /* Se vier o cdhistor, vamos dar preferencia a ele pois eh a chave unica (Novo IB) */
         FIND crapatr WHERE crapatr.cdcooper = par_cdcooper AND
-                              crapatr.nrdconta = par_nrdconta AND
-                              crapatr.cdhistor = par_cdhistor AND
-                              crapatr.cdrefere = par_cdrefere
-                              EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
-        ELSE
-           /* Se nao veio, vamos continuar a testar a busca atraves do cdempcon e cdsegmto (Antigo IB) */
-           FIND crapatr WHERE crapatr.cdcooper = par_cdcooper AND
                            crapatr.nrdconta = par_nrdconta AND
                            crapatr.cdsegmto = par_cdsegmto AND
                            crapatr.cdempcon = par_cdempcon AND
@@ -3919,8 +3688,7 @@ PROCEDURE exclui_suspensao_autorizacao:
             CREATE tt-autori-ant.
             BUFFER-COPY crapatr TO tt-autori-ant.
             
-            ASSIGN aux_dtinisus     = crapatr.dtinisus
-                   aux_dtfimsus     = crapatr.dtfimsus
+            ASSIGN aux_dtfimsus     = crapatr.dtfimsus
                    crapatr.dtfimsus = par_dtmvtolt.
 
             IF  crapatr.dtinisus > par_dtmvtolt THEN
@@ -4015,7 +3783,7 @@ PROCEDURE exclui_suspensao_autorizacao:
                                       "zzzzzzzzzzzzzzzz9") + "#" +
                                       STRING(crapatr.vlrmaxdb,
                                       "zzz,zzz,zz9.99")    + "#" +
-                                      STRING(aux_dtinisus,
+                                      STRING(crapatr.dtinisus,
                                       "99/99/9999")        + "#" +
                                       STRING(aux_dtfimsus,
                                       "99/99/9999").
@@ -4094,8 +3862,6 @@ PROCEDURE busca_lancamentos:
 
     DEF OUTPUT PARAM TABLE FOR tt-lancamentos.
     
-    DEF VAR aux_dsprotoc LIKE crappro.dsprotoc NO-UNDO.
-    
     /* busca os lancamentos agendados (PENDENTES e BLOQUEADOS) */
     FOR EACH craplau WHERE craplau.cdcooper = par_cdcooper      AND
                            craplau.nrdconta = par_nrdconta      AND
@@ -4120,8 +3886,6 @@ PROCEDURE busca_lancamentos:
                             crapatr.cdhistor = craplau.cdhistor AND
                             crapatr.cdrefere = craplau.nrdocmto NO-LOCK:
                             
-        ASSIGN aux_dsprotoc = "".
-        
         IF  crapatr.cdhistor <> 1019 THEN
             FIND FIRST gnconve WHERE gnconve.flgativo = TRUE             AND
                             gnconve.cdhisdeb = crapatr.cdhistor AND
@@ -4136,29 +3900,6 @@ PROCEDURE busca_lancamentos:
                                       crapscn.cddmoden = 'C') 
                                       NO-LOCK NO-ERROR NO-WAIT.
 
-        IF  NOT AVAIL gnconve  AND
-            NOT AVAIL crapscn  THEN
-            NEXT.
-            
-        IF  craplau.flgblqdb  THEN /* Carregar comprovante do bloqueio */
-            DO:
-                FOR EACH crappro FIELDS (dsinform dsprotoc)
-                                  WHERE crappro.cdcooper  = craplau.cdcooper AND
-                                        crappro.nrdconta  = craplau.nrdconta AND
-                                        crappro.cdtippro  = 11               AND
-                                        crappro.dtmvtolt >= craplau.dtmvtolt AND
-                                        crappro.nrdocmto  = craplau.nrdocmto NO-LOCK
-                                        BY crappro.dttransa DESC BY crappro.hrautent:
-                                        
-                    IF  crappro.dsinform[1] = "Bloqueio de Debito - Inclusao"  THEN
-                        DO:
-                            ASSIGN aux_dsprotoc = crappro.dsprotoc.
-                            LEAVE. /* Carregar somente o ultimo comprovante de bloqueio */
-                        END.
-                        
-                END.
-            END.
-
         CREATE tt-lancamentos.
         ASSIGN tt-lancamentos.dtmvtolt = craplau.dtmvtopg
                tt-lancamentos.nmextcon = IF (crapatr.cdhistor <> 1019) THEN gnconve.nmempres ELSE crapscn.dsnomcnv 
@@ -4169,9 +3910,7 @@ PROCEDURE busca_lancamentos:
                tt-lancamentos.situacao = IF craplau.flgblqdb THEN
                                             "BLOQUEADO"
                                          ELSE 
-                                            "PENDENTE"
-               tt-lancamentos.insituac = IF craplau.flgblqdb THEN 2 ELSE 1
-               tt-lancamentos.dsprotoc = aux_dsprotoc.
+                                            "PENDENTE".
     END.
 
     /* Ira consultar registros de Debito Facil somente se for a opcao de consulta */
@@ -4187,8 +3926,6 @@ PROCEDURE busca_lancamentos:
                                     crapatr.cdhistor = craplcm.cdhistor AND
                                     crapatr.cdrefere = craplcm.nrdocmto NO-LOCK:
                                     
-                ASSIGN aux_dsprotoc = "".
-                
                 IF  crapatr.cdhistor <> 1019 THEN
                     FIND FIRST gnconve WHERE gnconve.flgativo = TRUE             AND
                                              gnconve.cdhisdeb = crapatr.cdhistor AND
@@ -4203,21 +3940,6 @@ PROCEDURE busca_lancamentos:
                                               crapscn.cddmoden = 'C') 
                                               NO-LOCK NO-ERROR NO-WAIT.
         
-                IF  NOT AVAIL gnconve  AND
-                    NOT AVAIL crapscn  THEN
-                    NEXT.
-            
-                FOR FIRST crappro FIELDS (dsprotoc)
-                                  WHERE crappro.cdcooper = craplcm.cdcooper AND
-                                        crappro.nrdconta = craplcm.nrdconta AND
-                                        crappro.cdtippro = 15               AND
-                                        crappro.dtmvtolt = craplcm.dtmvtolt AND
-                                        crappro.nrdocmto = craplcm.nrdocmto AND
-                                        crappro.nrseqaut = craplcm.nrautdoc NO-LOCK. END.
-        
-                IF  AVAIL crappro  THEN
-                    ASSIGN aux_dsprotoc = crappro.dsprotoc.
-        
                 CREATE tt-lancamentos.
                 ASSIGN tt-lancamentos.dtmvtolt = craplcm.dtmvtolt
                        tt-lancamentos.nmextcon = IF (crapatr.cdhistor <> 1019) THEN gnconve.nmempres ELSE crapscn.dsnomcnv
@@ -4225,9 +3947,7 @@ PROCEDURE busca_lancamentos:
                        tt-lancamentos.nrdocmto = craplcm.nrdocmto
                        tt-lancamentos.vllanmto = craplcm.vllanmto
                        tt-lancamentos.cdhistor = craplcm.cdhistor
-                       tt-lancamentos.situacao = "EFETIVADO"
-                       tt-lancamentos.insituac = 3
-                       tt-lancamentos.dsprotoc = aux_dsprotoc.
+                       tt-lancamentos.situacao = "EFETIVADO".
             END.
         END. 
 
@@ -6536,73 +6256,6 @@ PROCEDURE atualiza_inassele:
     
 END PROCEDURE.    
 
-PROCEDURE valida_dia_util:
-
-   DEF INPUT PARAMETER pr_cdcooper AS INTEGER NO-UNDO.
-   DEF INPUT PARAMETER pr_dtmvtolt AS DATE    NO-UNDO.
-   DEF INPUT PARAMETER pr_flultimo AS LOG     NO-UNDO.
-   DEF INPUT PARAMETER pr_dstpcons AS CHAR    NO-UNDO.
-   
-   DEF OUTPUT PARAMETER pr_dtcaluti AS DATE   NO-UNDO.
-   
-   DEF VAR aux_dscritic  AS CHAR    NO-UNDO.
-   DEF VAR aux_dtcaluti  AS DATE    NO-UNDO.
-   
-   DEF VAR aux_dtmvtolt  AS CHAR    NO-UNDO. 
-  
-   IF pr_flultimo THEN
-     ASSIGN aux_dtmvtolt = "31/12/" +  STRING(YEAR(pr_dtmvtolt),"9999").
-   ELSE
-     ASSIGN aux_dtmvtolt = string(pr_dtmvtolt).  
-
-  /* validar dia util, senao for retorna o proximo - Rotina Oracle */
-  { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
-
-  RUN STORED-PROCEDURE pc_valida_dia_util
-    aux_handproc = PROC-HANDLE NO-ERROR
-                  (INPUT pr_cdcooper         /* pr_cdcooper */
-                  ,INPUT-OUTPUT date(aux_dtmvtolt)  /* pr_dtmvtolt */
-                  ,INPUT pr_dstpcons         /* pr_tipo */
-                  ,INPUT 1                    /* pr_feriado - Considerar feriados*/
-                  ,INPUT 0).                  /* pr_excultdia - Nao excluir ultimo dia do ano*/
-
-  CLOSE STORED-PROC pc_valida_dia_util
-    aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
-
-  { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl}}
-
-  /* FIM validar dia util - Rotina Oracle */
-
-  IF  ERROR-STATUS:ERROR  THEN DO:
-      DO  aux_qterrora = 1 TO ERROR-STATUS:NUM-MESSAGES:
-          ASSIGN aux_msgerora = aux_msgerora + ERROR-STATUS:GET-MESSAGE(aux_qterrora) + " ".
-      END.
-        
-      ASSIGN aux_dscritic = "valida_dia_util --> "  +
-                            "Erro ao executar Stored Procedure: " +
-                            aux_msgerora.
-     
-      RETURN "NOK".   
-  END. 
-
-  ASSIGN aux_dtcaluti  = ?
-         aux_dtcaluti  = DATE(pc_valida_dia_util.pr_dtmvtolt)
-                         WHEN pc_valida_dia_util.pr_dtmvtolt <> ?.
-                              
-  IF  DATE(aux_dtcaluti) = ? THEN
-      DO:
-          ASSIGN aux_dscritic = "valida_dia_util --> "  +
-                                "Erro ao processar data de retorno".
-         
-          RETURN "NOK".
-      END.
-   
-  ASSIGN pr_dtcaluti = aux_dtcaluti.
-  
-  RETURN "OK".
-  
-END PROCEDURE.    
-
 /* Retorna nome do convenio */
 PROCEDURE busca_convenio_nome:
 
@@ -6617,11 +6270,11 @@ PROCEDURE busca_convenio_nome:
                              crapcon.cdsegmto = par_cdsegmto NO-LOCK.    
              
     IF AVAILABLE crapcon THEN    
-      DO:
+    DO:
       ASSIGN pr_nmempcon = crapcon.nmextcon.
-      END.
+    END.    
 
     RELEASE crapcon.
   
-  RETURN "OK".
+    RETURN "OK".
 END PROCEDURE.    

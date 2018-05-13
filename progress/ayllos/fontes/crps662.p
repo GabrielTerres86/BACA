@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Tiago     
-   Data    : Fevereiro/2014.                    Ultima atualizacao: 24/01/2018
+   Data    : Fevereiro/2014.                    Ultima atualizacao: 22/11/2017
 
    Dados referentes ao programa:
 
@@ -89,20 +89,8 @@
                              
                 12/09/2017 - Alteracao da Agencia do Banco do Brasil. (Jaison/Elton - M459)
 
-                23/10/2017 - Incluir execucao Matutina para a DEBCNS (Lucas Ranghetti #739738)
                 22/11/2017 - Alteracao para não enviar os arquivos 2* para a ABBC, caso o dia atual 
                              nao for feriado e nao for o ultimo dia util do ano. (Rafael)                
-
-                24/01/2018 - Ajustar a variavel tot_vlrtotal para DECI, pois esta gerando erro 
-                             para a Viacredi devido ao grande volume de cheques, com isso o 
-                             relatorio crrl262 nao estava sendo gerado (Douglas - Chamado 832279)
-                             
-                29/01/2018 - Ajustar DEBCNS conforme solicitaçao do chamado (Lucas Ranghetti #837834)
-
-                22/01/2018 - Incluido tratamento para geraçao de arquivos para o bancoob
-                             (craphec ARQUIVOS BANCOOB) PRJ406-FGTS(Odirlei-Busana).
-
-				08/03/2018 - Removida DEVOLUCAO VLB - COMPE Sessao Unica (Diego).
 
 .............................................................................*/
 
@@ -242,8 +230,7 @@ DEF TEMP-TABLE tt-obtem-consorcio                                      NO-UNDO
     FIELD dscritic AS   CHAR
     FIELD nrdocmto LIKE craplau.nrdocmto
     FIELD nrdgrupo LIKE crapcns.nrdgrupo
-    FIELD nrctrato AS   DECI FORMAT "zzz,zzz,zzz"
-    FIELD tpconsor LIKE crapcns.tpconsor.
+    FIELD nrctrato AS   DECI FORMAT "zzz,zzz,zzz".
 
 
 /* Handles */
@@ -260,66 +247,65 @@ FORM SKIP(1)
      WITH NO-BOX NO-LABEL WIDTH 132 FRAME f_titulo.
 
 FORM SKIP(1)
+     "->"
+     aux_dstiptra FORMAT "x(19)" SKIP
+     "--->"
+     aux_dscooper
+     SKIP(1)
      " PA  "
      "CONTA/DV"
-     "DOCUMENTO"
-     "             CTA.CONSOR"
-     "NOME                       "
+     "CTA.CONSOR"
+     "NOME                         "
      "TIPO     "
-     "GRUPO"
-     "       COTA"
+     "GRUPO "
+     "      COTA"
      "     VALOR"
      SKIP
-     " --- --------- ---------------------- ----------"
-     "--------------------------- --------- ------ ---------- ----------"
-     WITH NO-BOX NO-LABEL WIDTH 234 FRAME f_transacao.
+     " --- --------- ---------- ----------------------------- ---------"
+     "------ ---------- ----------"
+     WITH NO-BOX NO-LABEL WIDTH 132 FRAME f_transacao.
 
 FORM SKIP(1)
      "->"
      aux_dstiptra FORMAT "x(19)" SKIP
      "--->"
      aux_dscooper
-     WITH NO-BOX NO-LABEL WIDTH 234 FRAME f_transacao1.    
+     WITH NO-BOX NO-LABEL WIDTH 132 FRAME f_transacao1.    
 
 FORM SKIP(1)
      " PA  "
      "CONTA/DV"
-     "DOCUMENTO"
-     "             CTA.CONSOR"
-     "NOME                       "
+     "CTA.CONSOR"
+     "NOME                         "
      "TIPO     "
-     "GRUPO"
-     "       COTA"
+     "GRUPO "
+     "      COTA"
      "     VALOR"
-     "CRITICA"
      SKIP
-     " --- --------- ---------------------- ----------"
-     "--------------------------- --------- ------ ---------- ----------"
-     "---------------------------------------"
-     WITH NO-BOX NO-LABEL WIDTH 234 FRAME f_transacao2.
+     " --- --------- ---------- ----------------------------- ---------"
+     "------ ---------- ----------"
+     WITH NO-BOX NO-LABEL WIDTH 132 FRAME f_transacao2.
 
 FORM tt-obtem-consorcio.cdagenci FORMAT "zz9"        
      tt-obtem-consorcio.nrdconta FORMAT "zzzz,zzz,9" 
-     tt-obtem-consorcio.nrdocmto FORMAT "9999999999999999999999"
      tt-obtem-consorcio.nrctacns FORMAT "zzzz,zzz,9" 
-     tt-obtem-consorcio.nmprimtl FORMAT "x(27)"      
+     tt-obtem-consorcio.nmprimtl FORMAT "x(29)"      
      tt-obtem-consorcio.dsconsor FORMAT "x(9)"       
      tt-obtem-consorcio.nrdgrupo FORMAT "999999"
      tt-obtem-consorcio.nrcotcns FORMAT "zzzz,zzz,9" 
      tt-obtem-consorcio.vlparcns FORMAT "zzz,zz9.99"
-     tt-obtem-consorcio.dscritic FORMAT "x(39)"
-     WITH NO-BOX NO-LABEL DOWN WIDTH 234 FRAME f_nao_efetuados.
+     tt-obtem-consorcio.dscritic FORMAT "x(44)"
+     WITH NO-BOX NO-LABEL DOWN WIDTH 132 FRAME f_nao_efetuados.
 
 FORM tt-obtem-consorcio.cdagenci FORMAT "zz9"          
      tt-obtem-consorcio.nrdconta FORMAT "zzzz,zzz,9"   
-     tt-obtem-consorcio.nrdocmto FORMAT "9999999999999999999999"
      tt-obtem-consorcio.nrctacns FORMAT "zzzz,zzz,9"   
-     tt-obtem-consorcio.nmprimtl FORMAT "x(27)"        
+     tt-obtem-consorcio.nmprimtl FORMAT "x(29)"        
      tt-obtem-consorcio.dsconsor FORMAT "x(9)"         
      tt-obtem-consorcio.nrdgrupo FORMAT "999999"
      tt-obtem-consorcio.nrcotcns FORMAT "zzzz,zzz,9"   
      tt-obtem-consorcio.vlparcns FORMAT "zzz,zz9.99" 
-     WITH NO-BOX NO-LABEL DOWN WIDTH 234 FRAME f_efetuados.
+     WITH NO-BOX NO-LABEL DOWN WIDTH 132 FRAME f_efetuados.
 
 FORM SKIP(2)
      "TOTAIS --> Quantidade: "                                      AT 01
@@ -327,7 +313,7 @@ FORM SKIP(2)
      SKIP
      "                Valor: "                                      AT 01
      aux_vlefetua FORMAT "zzz,zzz,zz9.99"                           AT 24
-     WITH NO-BOX NO-LABEL WIDTH 234 FRAME f_total.
+     WITH NO-BOX NO-LABEL WIDTH 132 FRAME f_total.
 
 /*Include DEBCNS precisa estar nesta posicao no fonte devido a 
  variaveis que precisam estar declaradas antes*/
@@ -641,7 +627,7 @@ PROCEDURE gera_arq:
     DEF VAR aux_cdagenci            AS  INT                         NO-UNDO.
     DEF VAR tot_qtarquiv            AS  INTE                        NO-UNDO.
     DEF VAR tot_totregis            AS  INTE                        NO-UNDO.
-    DEF VAR tot_vlrtotal            AS  DECI                        NO-UNDO.
+    DEF VAR tot_vlrtotal            AS  INTE                        NO-UNDO.
 
     /*tratamento para quando par_nmprgexe for DEVOLUCAO trocar para
       DEVOLU e preencher a variavel aux_tpdevolu com o tipo de devolucao*/
@@ -870,6 +856,8 @@ PROCEDURE gera_arq:
                   
           /*pegar numero da seq*/
           CASE aux_tpdevolu:
+              WHEN "VLB" THEN
+                  aux_nrseqsol = 4.
               WHEN "DIURNA" THEN
                   aux_nrseqsol = 5.
               OTHERWISE
@@ -883,7 +871,41 @@ PROCEDURE gera_arq:
                                INPUT 78,
                                INPUT aux_nrseqsol).
 
+         
+          IF  TRIM(aux_tpdevolu) = "VLB" THEN 
+              DO:
+                   /* Grava Data e Hora da execucao */ 
+                   RUN grava_dthr_proc(INPUT par_cdcooper,
+                                       INPUT par_dtmvtolt,
+                                       INPUT TIME,
+                                       INPUT "DEVOLUCAO VLB"). 
+        
+                   RUN gera_log_execucao (INPUT par_nmprgexe + "(VLB)",
+                                          INPUT "Inicio execucao", 
+                                          INPUT par_cdcooper,
+                                          INPUT "").
+                   
+                    /* Cria solicitação na Coop. filiada. Esta solicitacao 
+                       nao deve ser eliminada durante o dia, pois garante 
+                       que nao serao marcados novos cheques na DEVOLU depois
+                       que o arquivo ja tiver sido processado  */ 
+                   RUN cria_solicitacao(INPUT par_cdcooper,
+                                        INPUT par_dtmvtolt,
+                                        INPUT par_nmprgexe,
+                                        INPUT 78,
+                                        INPUT aux_nrseqsol).
 
+                   RUN fontes/crps264.p 
+                           (INPUT INT(par_cdcooper),
+                            INPUT aux_nrseqsol).
+
+                   RUN gera_log_execucao (INPUT par_nmprgexe + "(VLB)",
+                                          INPUT "Fim execucao", 
+                                          INPUT par_cdcooper,
+                                          INPUT "").
+
+              END.
+          ELSE
           IF  TRIM(aux_tpdevolu) = "DIURNA" THEN
               DO:
 
@@ -973,9 +995,9 @@ PROCEDURE gera_arq:
                     RUN grava_dthr_proc(INPUT par_cdcooper,
                                         INPUT par_dtmvtolt,
                                         INPUT TIME,
-                                        INPUT "DEVOLUCAO FRAUDES E IMPEDIMENTOS"). 
+                                        INPUT "DEVOLUCAO NOTURNA"). 
 
-                    RUN gera_log_execucao (INPUT par_nmprgexe + "(FRAUDES E IMPEDIMENTOS)",
+                    RUN gera_log_execucao (INPUT par_nmprgexe + "(NOTURNA)",
                                            INPUT "Inicio execucao", 
                                            INPUT par_cdcooper,
                                            INPUT "").
@@ -996,7 +1018,7 @@ PROCEDURE gera_arq:
                     RUN fontes/crps264.p
                                 (INPUT INT(par_cdcooper),
                                  INPUT aux_nrseqsol).
-                    RUN gera_log_execucao (INPUT par_nmprgexe + "(FRAUDES E IMPEDIMENTOS)",
+                    RUN gera_log_execucao (INPUT par_nmprgexe + "(NOTURNA)",
                                            INPUT "Fim execucao", 
                                            INPUT par_cdcooper,
                                            INPUT "").
@@ -1116,29 +1138,6 @@ PROCEDURE gera_arq:
                                    INPUT "").
         END.                  
         
-        WHEN "DEBCNS MATUTINA" THEN DO:
-
-            /* Grava Data e Hora da execucao */ 
-            RUN grava_dthr_proc(INPUT par_cdcooper,
-                                INPUT par_dtmvtolt,
-                                INPUT TIME,
-                                INPUT TRIM(par_nmprgexe)). 
-
-            RUN gera_log_execucao (INPUT par_nmprgexe,
-                                   INPUT "Inicio execucao", 
-                                   INPUT par_cdcooper,
-                                   INPUT "").
-                                   
-            RUN gera_arq_debcns(INPUT par_cdcooper,
-                                INPUT 1). /*Primeira execucao*/
-                                
-            RUN gera_log_execucao (INPUT par_nmprgexe,
-                                   INPUT "Fim execucao", 
-                                   INPUT par_cdcooper,
-                                   INPUT "").
-
-        END.                  
-        
         WHEN "DEBCNS VESPERTINA" THEN DO:
 
             /* Grava Data e Hora da execucao */ 
@@ -1153,7 +1152,7 @@ PROCEDURE gera_arq:
                                    INPUT "").
                                    
             RUN gera_arq_debcns(INPUT par_cdcooper,
-                                INPUT 2). /*Segunda execucao*/
+                                INPUT 1). /*Primeira execucao*/
                                 
             RUN gera_log_execucao (INPUT par_nmprgexe,
                                    INPUT "Fim execucao", 
@@ -1176,7 +1175,7 @@ PROCEDURE gera_arq:
                                    INPUT "").
                                    
             RUN gera_arq_debcns(INPUT par_cdcooper,
-                                INPUT 3). /*Ultima execucao*/
+                                INPUT 2). /*Segunda execucao*/
             
             RUN gera_log_execucao (INPUT par_nmprgexe,
                                    INPUT "Fim execucao", 
@@ -1247,28 +1246,6 @@ PROCEDURE gera_arq:
              END.
           END.
 
-        WHEN "ARQUIVOS BANCOOB" THEN 
-          DO:          
-
-               /* Grava Data e Hora da execucao */ 
-               RUN grava_dthr_proc(INPUT par_cdcooper,
-                                   INPUT par_dtmvtolt,
-                                   INPUT TIME,
-                                   INPUT TRIM(par_nmprgexe)). 
-
-               RUN gera_log_execucao (INPUT par_nmprgexe,
-                                      INPUT "Inicio execucao", 
-                                      INPUT par_cdcooper,
-                                      INPUT "").              
-            
-               RUN gera_arrecadacao_bancoob(par_cdcooper).                      
-                                            
-               RUN gera_log_execucao (INPUT par_nmprgexe,
-                                      INPUT "Fim execucao", 
-                                      INPUT par_cdcooper,
-                                      INPUT "").               
-           
-          END.
     END CASE.
 
     RETURN "OK".
@@ -1362,7 +1339,7 @@ PROCEDURE arquivos_noturnos:
     DEF VAR aux_dsmsgerr            AS  CHAR                        NO-UNDO.
     DEF VAR tot_qtarquiv            AS  INTE                        NO-UNDO.
     DEF VAR tot_totregis            AS  INTE                        NO-UNDO.
-    DEF VAR tot_vlrtotal            AS  DECI                        NO-UNDO.
+    DEF VAR tot_vlrtotal            AS  INTE                        NO-UNDO.
 
     /* Instancia a BO */
     RUN sistema/generico/procedures/b1wgen0012.p 
@@ -2483,8 +2460,6 @@ PROCEDURE gera_arq_debcns:
    
     ASSIGN glb_cddopcao    = "P"
            glb_cdempres    = 11
-           glb_nmrescop    = crapcop.nmrescop
-           glb_progerad    = "663"
            glb_cdrelato[1] = 663
            glb_nmdestin[1] = "DESTINO: ADMINISTRATIVO"
            aux_dtdebito    = glb_dtmvtolt
@@ -2505,8 +2480,7 @@ PROCEDURE gera_arq_debcns:
     ELSE
         DO:
             ASSIGN glb_dtmvtolt = crapdat.dtmvtolt
-                   glb_dtmvtopr = crapdat.dtmvtopr
-                   glb_inproces = crapdat.inproces.
+                   glb_dtmvtopr = crapdat.dtmvtopr.
         END.
 
     EMPTY TEMP-TABLE tt-obtem-consorcio.
@@ -3908,49 +3882,6 @@ PROCEDURE proc_retorno_tit_pg:
 
     UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS")    + 
                       " - "   + glb_cdprogra + "' --> '"   +
-                      "Stored Procedure rodou em "         + 
-                      STRING(INT(ETIME / 1000),"HH:MM:SS") + 
-                      " >> log/proc_batch.log").
-
-    RETURN "OK".
-
-END PROCEDURE.
-
-
-PROCEDURE gera_arrecadacao_bancoob:
-         
-    DEF INPUT PARAM par_cdcooper    AS  INTE                        NO-UNDO.
-
-
-    ETIME(TRUE).
-
-    { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
-
-    RUN STORED-PROCEDURE pc_gera_arrecadacao_bancoob 
-        aux_handproc = PROC-HANDLE NO-ERROR
-           (INPUT par_cdcooper,
-            INPUT "0", /* pr_cdconven */ 
-            INPUT '0').
-
-    IF  ERROR-STATUS:ERROR  THEN DO:
-        DO  aux_qterrora = 1 TO ERROR-STATUS:NUM-MESSAGES:
-            ASSIGN aux_msgerora = aux_msgerora + 
-                                  ERROR-STATUS:GET-MESSAGE(aux_qterrora) + " ".
-        END.
-
-        UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") +
-                          " - ARQUIVOS BANCOOB' --> '"  +
-                          "Erro ao executar Stored Procedure: '" +
-                          aux_msgerora + "' >> log/proc_batch.log").
-        RETURN.
-    END.
-
-    CLOSE STORED-PROCEDURE pc_gera_arrecadacao_bancoob WHERE PROC-HANDLE = aux_handproc.
-
-    { includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }
-
-    UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS")    + 
-                      " - ARQUIVOS BANCOOB ' --> '"   +
                       "Stored Procedure rodou em "         + 
                       STRING(INT(ETIME / 1000),"HH:MM:SS") + 
                       " >> log/proc_batch.log").

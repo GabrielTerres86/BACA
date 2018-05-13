@@ -37,7 +37,7 @@
 		
 	// Classe para leitura do xml de retorno
 	require_once("../../../../class/xmlfile.php");
-	
+
 	$tipo = (isset($_POST['tipo'])) ? $_POST['tipo'] : "CONTRATO";
 	
 	// Verifica se os parâmetros necessários foram informados
@@ -313,7 +313,7 @@
 	if ($cddopcao == "A"){
 		$opermail = "Alterar Limite de Desconto de Titulos";
 	}else{  if ($cddopcao == "I"){
-				// Buscar numero do contrato gerado 
+                // Buscar numero do contrato gerado 
                 $nrctrlim = $xmlObjLimite->roottag->tags[0]->attributes["NRCTRLIM"];	
 				$opermail = "Novo Limite de Desconto de Titulos";
 			}

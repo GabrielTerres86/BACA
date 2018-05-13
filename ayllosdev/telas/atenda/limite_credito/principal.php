@@ -3,7 +3,7 @@
 	//************************************************************************//
 	//*** Fonte: principal.php                                             ***//
 	//*** Autor: David                                                     ***//
-	//*** Data : Fevereiro/2008               Última Alteração: 22/03/2018 ***//
+	//*** Data : Fevereiro/2008               Última Alteração: 20/07/2015 ***//
 	//***                                                                  ***//
 	//*** Objetivo  : Mostrar opção Principal da rotina de Limite de       ***//
 	//***             Crédito da tela ATENDA                               ***//
@@ -54,15 +54,6 @@
 	//***                                                                  ***//
 	//***             08/08/2017 - Implementacao da melhoria 438.          ***//
 	//***                          Heitor (Mouts).                         ***//
-	//***																   ***//
-	//***			  06/03/2018 - Adicionado variável idcobope. 		   ***//
-	//***					       (PRJ404 Reinert)						   ***//
-    //***                                                                  ***//
-	//***             22/03/2018 - Verifica situacao do limite,            ***// 
-    //***                          se foi cancelado automaticamente        ***//  
-    //***                          por inadimplencia.                      ***//
-	//***                          Diego Simas (AMcom).                    ***//
-    //***                                                                  ***//     
 	//************************************************************************//
 	
 	session_start();
@@ -158,7 +149,6 @@
 	$qtrenova = getByTagName($limite,"qtrenova");
 	$flgimpnp = getByTagName($limite,"flgimpnp");
 	$dslimpro = getByTagName($limite,"dslimpro");	
-	$idcobope = getByTagName($limite,"idcobope");	
 	//$dsobserv = removeCaracteresInvalidos($dsobserv);
 	
 	$xml  = "<Root>";
@@ -179,32 +169,6 @@
 	
 	$dtultmaj = getByTagName($majora,"dtultmaj");	
 	
-	//Verifica situacao do limite, se foi cancelado automaticamente por inadimplencia
-	$xml  = "";
-	$xml .= "<Root>";
-	$xml .= "  <Dados>";
-	$xml .= "    <cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
-	$xml .= "    <nrdconta>".$nrdconta."</nrdconta>";
-	$xml .= "    <nrctrlim>".$nrctrlim."</nrctrlim>";
-	$xml .= "  </Dados>";
-	$xml .= "</Root>";
-
-	$xmlResult = mensageria($xml, "ZOOM0001", "CONSULTAR_CCL_LIMITE", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");		
-	$xmlObjeto = getObjectXML($xmlResult);	
-	
-	$param = $xmlObjeto->roottag->tags[0]->tags[0];
-
-	$cancAuto = getByTagName($param->tags,'tipo');	
-	$dtcanlim = getByTagName($param->tags,'data');
-		
-	if (strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO") {
-		exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos',"controlaOperacao('');",false); 
-	}else{
-		if($cancAuto == 1){
-			$dssitlli = "Cancelado Automaticamente por Inadimpl&ecirc;ncia";				
-		}
-	}
-
 	include ("form_principal.php");
 
 	// Função para exibir erros na tela através de javascript

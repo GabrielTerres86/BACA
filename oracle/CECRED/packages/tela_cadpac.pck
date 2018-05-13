@@ -77,11 +77,6 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_CADPAC IS
                         ,pr_vlminsgr     IN crapage.vlminsgr%TYPE --> Contem o valor minimo para efetuar a sangria de caixa
                         ,pr_vlmaxsgr     IN crapage.vlmaxsgr%TYPE --> Contem o valor maximo para efetuar a sangria de caixa
                         ,pr_flmajora     IN crapage.flmajora%TYPE --> Contem o identificador de Majoracao habilitada
-                        ,pr_cdagefgt     IN crapage.cdagefgt%TYPE --> Agencia do CAF/FGTS
-                        ,pr_hhini_bancoob IN VARCHAR2             --> Horario inicial de pagamento bancoob
-                        ,pr_hhfim_bancoob IN VARCHAR2             --> Horario final de pagamento bancoob 
-                        ,pr_hhcan_bancoob IN VARCHAR2             --> Horario limite cancelamento de pagamento bancoob                         
-                        ,pr_vllimpag      IN crapage.vllimpag%TYPE --> Valor limite máximo pagamento sem autorização
                         ,pr_xmllog       IN VARCHAR2 --> XML com informacoes de LOG
                         ,pr_cdcritic    OUT PLS_INTEGER --> Codigo da critica
                         ,pr_dscritic    OUT VARCHAR2 --> Descricao da critica
@@ -136,11 +131,6 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_CADPAC IS
                                ,pr_nmdcampo    OUT VARCHAR2 --> Nome do campo com erro
                                ,pr_des_erro    OUT VARCHAR2); --> Erros do processo
 
-  PROCEDURE pc_lista_pas(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Codigo da cooperativa
-                        ,pr_flgpaaut  IN INTEGER DEFAULT 1     --> Flag que indica se PAs de Auto-Atendimento deverão ser listados
-                        ,pr_retxml   OUT NOCOPY xmltype        --> Arquivo de retorno do XML
-                        ,pr_des_erro OUT VARCHAR2);            --> Erros do processo                                                              
-
 END TELA_CADPAC;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
@@ -158,10 +148,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
   -- Alteracoes: 08/08/2017 - Inclusao de flag de majoracao, melhoria 438
   --                          Heitor (Mouts)
   --
-  --             20/12/2017 - Ajustes para inclusao dos campos do FGTS/Bancoob.
-  --                          PRJ406-FGTS(Odirlei-AMcom)
-  --
-  --             03/01/2018 - M307 Solicitação de senha e limite para pagamento (Diogo / MoutS)
   ---------------------------------------------------------------------------
   
   -- Definicao do tipo de registro
@@ -185,7 +171,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
          ,flgdsede crapage.flgdsede%TYPE
          ,cdagepac crapage.cdagepac%TYPE
 				 ,flgutcrm crapage.flgutcrm%TYPE
-         ,cdagefgt crapage.cdagefgt%TYPE
          ,dsendcop crapage.dsendcop%TYPE
          ,nrendere crapage.nrendere%TYPE
          ,nmbairro crapage.nmbairro%TYPE
@@ -201,8 +186,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
          ,dsinform3 crapage.dsinform##3%TYPE
          ,hhsicini VARCHAR2(5)
          ,hhsicfim VARCHAR2(5)
-         ,hhini_bancoob VARCHAR2(5)
-         ,hhfim_bancoob VARCHAR2(5)
          ,hhtitini VARCHAR2(5)
          ,hhtitfim VARCHAR2(5)
          ,hhcompel VARCHAR2(5)
@@ -219,7 +202,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
          ,hhcpafim VARCHAR2(5)
          ,hhlimcan VARCHAR2(5)
          ,hhsiccan VARCHAR2(5)
-         ,hhcan_bancoob VARCHAR2(5)
          ,nrtelvoz crapage.nrtelvoz%TYPE
          ,nrtelfax crapage.nrtelfax%TYPE
          ,qtddaglf crapage.qtddaglf%TYPE
@@ -246,8 +228,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
 				 ,indsptaa VARCHAR2(1)
          ,nrlatitu crapage.nrlatitu%TYPE
          ,nrlongit crapage.nrlongit%TYPE
-         ,flmajora crapage.flmajora%TYPE
-         ,vllimpag crapage.vllimpag%TYPE);
+         ,flmajora crapage.flmajora%TYPE);
 
   -- Definicao do tipo de tabela registro
   TYPE typ_tab_crapage IS TABLE OF typ_reg_crapage INDEX BY PLS_INTEGER;
@@ -318,7 +299,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
               ,crapage.flgdsede
               ,crapage.cdagepac
 							,crapage.flgutcrm
-              ,crapage.cdagefgt
               ,crapage.dsendcop
               ,crapage.nrendere
               ,crapage.nmbairro
@@ -367,7 +347,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
               ,crapage.nrlatitu
               ,crapage.nrlongit
               ,crapage.flmajora
-              ,crapage.vllimpag
           FROM crapage
          WHERE crapage.cdcooper = pr_cdcooper
            AND crapage.cdagenci = pr_cdagenci;
@@ -386,8 +365,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
       vr_dstextab craptab.dstextab%TYPE;
       vr_hhsicini VARCHAR2(5); -- HH:MM
       vr_hhsicfim VARCHAR2(5); -- HH:MM
-      vr_hhini_bancoob VARCHAR2(5); -- HH:MM
-      vr_hhfim_bancoob VARCHAR2(5); -- HH:MM      
       vr_hhtitini VARCHAR2(5); -- HH:MM
       vr_hhtitfim VARCHAR2(5); -- HH:MM
       vr_hhcompel VARCHAR2(5); -- HH:MM
@@ -403,7 +380,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
       vr_hhcpaini VARCHAR2(5); -- HH:MM
       vr_hhcpafim VARCHAR2(5); -- HH:MM
       vr_hhsiccan VARCHAR2(5); -- HH:MM
-      vr_hhcan_bancoob VARCHAR2(5); -- HH:MM
       vr_flsgproc VARCHAR2(3);
       vr_dsdregio crapreg.dsdregio%TYPE;
 			vr_dssitpaa VARCHAR2(10);
@@ -441,20 +417,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
         vr_hhsicini := GENE0002.fn_converte_time_data(GENE0002.fn_busca_entrada(1,vr_dstextab,' '));
         vr_hhsicfim := GENE0002.fn_converte_time_data(GENE0002.fn_busca_entrada(2,vr_dstextab,' '));
         vr_hhsiccan := GENE0002.fn_converte_time_data(GENE0002.fn_busca_entrada(3,vr_dstextab,' '));
-
-        -- Pagamentos Faturas Bancoob
-        vr_dstextab := NULL;
-        vr_dstextab := TABE0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
-                                                 ,pr_nmsistem => 'CRED'
-                                                 ,pr_tptabela => 'GENERI'
-                                                 ,pr_cdempres => 0
-                                                 ,pr_cdacesso => 'HRPGBANCOOB'
-                                                 ,pr_tpregist => pr_cdagenci);
-
-        vr_hhini_bancoob := GENE0002.fn_converte_time_data(GENE0002.fn_busca_entrada(1,vr_dstextab,' '));
-        vr_hhfim_bancoob := GENE0002.fn_converte_time_data(GENE0002.fn_busca_entrada(2,vr_dstextab,' '));
-        vr_hhcan_bancoob := GENE0002.fn_converte_time_data(GENE0002.fn_busca_entrada(3,vr_dstextab,' '));
-
 
         -- Pagamentos Titulos/Faturas
         vr_dstextab := TABE0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
@@ -582,7 +544,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
         pr_tab_crapage(pr_cdagenci).flgdsede := rw_crapage.flgdsede;
         pr_tab_crapage(pr_cdagenci).cdagepac := rw_crapage.cdagepac;
         pr_tab_crapage(pr_cdagenci).flgutcrm := rw_crapage.flgutcrm;				
-        pr_tab_crapage(pr_cdagenci).cdagefgt := rw_crapage.cdagefgt;
         pr_tab_crapage(pr_cdagenci).dsendcop := rw_crapage.dsendcop;
         pr_tab_crapage(pr_cdagenci).nrendere := rw_crapage.nrendere;
         pr_tab_crapage(pr_cdagenci).nmbairro := rw_crapage.nmbairro;
@@ -598,8 +559,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
         pr_tab_crapage(pr_cdagenci).dsinform3 := rw_crapage.dsinform3;
         pr_tab_crapage(pr_cdagenci).hhsicini := vr_hhsicini;
         pr_tab_crapage(pr_cdagenci).hhsicfim := vr_hhsicfim;
-        pr_tab_crapage(pr_cdagenci).hhini_bancoob := vr_hhini_bancoob;
-        pr_tab_crapage(pr_cdagenci).hhfim_bancoob := vr_hhfim_bancoob;        
         pr_tab_crapage(pr_cdagenci).hhtitini := vr_hhtitini;
         pr_tab_crapage(pr_cdagenci).hhtitfim := vr_hhtitfim;
         pr_tab_crapage(pr_cdagenci).hhcompel := vr_hhcompel;
@@ -616,7 +575,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
         pr_tab_crapage(pr_cdagenci).hhcpafim := vr_hhcpafim;
         pr_tab_crapage(pr_cdagenci).hhlimcan := GENE0002.fn_converte_time_data(rw_crapage.hrcancel);
         pr_tab_crapage(pr_cdagenci).hhsiccan := vr_hhsiccan;
-        pr_tab_crapage(pr_cdagenci).hhcan_bancoob := vr_hhcan_bancoob;
         pr_tab_crapage(pr_cdagenci).nrtelvoz := rw_crapage.nrtelvoz;
         pr_tab_crapage(pr_cdagenci).nrtelfax := rw_crapage.nrtelfax;
         pr_tab_crapage(pr_cdagenci).qtddaglf := rw_crapage.qtddaglf;
@@ -644,7 +602,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
         pr_tab_crapage(pr_cdagenci).nrlatitu := rw_crapage.nrlatitu;
         pr_tab_crapage(pr_cdagenci).nrlongit := rw_crapage.nrlongit;
         pr_tab_crapage(pr_cdagenci).flmajora := rw_crapage.flmajora;
-        pr_tab_crapage(pr_cdagenci).vllimpag := rw_crapage.vllimpag;
 
       END IF;
 
@@ -679,8 +636,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
 
     Objetivo  : Rotina para buscar os dados do PA.
 
-    Alteracoes: 23/01/2018 - Adicionado nova permissao para o departamento CANAIS,
-                             conforme solicitado no chamado 825830. (Kelvin)
+    Alteracoes: -----
     ..............................................................................*/
     DECLARE
 
@@ -730,9 +686,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
       -- Verifica se tem permissao de alteracao
       IF (pr_cdagenci = 90 OR pr_cdagenci = 91) AND
           pr_cddopcao <> 'C'                    AND
-          -- Não for 4-COMPE / 8-COORD.ADM/FINANCEIRO / 9-COORD.PRODUTOS / 18-SUPORTE / 20-TI / 1-CANAIS
-          rw_crapope.cddepart NOT IN (4,8,9,18,20,1) THEN
-          vr_dscritic := 'PA 90 ou PA 91 podem ser alterados pelos departamentos: TI, SUPORTE, COORD.ADM/FIN., COORD.PROD, COMPE e CANAIS.';
+          -- Não for 4-COMPE / 8-COORD.ADM/FINANCEIRO / 9-COORD.PRODUTOS / 18-SUPORTE / 20-TI
+          rw_crapope.cddepart NOT IN (4,8,9,18,20) THEN
+          vr_dscritic := 'PA 90 ou PA 91 podem ser alterados pelos departamentos: TI, SUPORTE, COORD.ADM/FIN., COORD.PROD e COMPE.';
           RAISE vr_exc_erro;
       END IF;
 
@@ -908,13 +864,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
         GENE0007.pc_insere_tag(pr_xml      => pr_retxml
                               ,pr_tag_pai  => 'Dados'
                               ,pr_posicao  => 0
-                              ,pr_tag_nova => 'cdagefgt'
-                              ,pr_tag_cont => GENE0002.fn_mask(vr_tab_crapage(pr_cdagenci).cdagefgt,'zzzz.z')
-                              ,pr_des_erro => vr_dscritic);
-                
-        GENE0007.pc_insere_tag(pr_xml      => pr_retxml
-                              ,pr_tag_pai  => 'Dados'
-                              ,pr_posicao  => 0
                               ,pr_tag_nova => 'dsendcop'
                               ,pr_tag_cont => vr_tab_crapage(pr_cdagenci).dsendcop
                               ,pr_des_erro => vr_dscritic);
@@ -1017,21 +966,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
                               ,pr_tag_cont => NVL(vr_tab_crapage(pr_cdagenci).hhsicfim,'00:00')
                               ,pr_des_erro => vr_dscritic);
 
-        --> BANCOOB
-        GENE0007.pc_insere_tag(pr_xml      => pr_retxml
-                              ,pr_tag_pai  => 'Dados'
-                              ,pr_posicao  => 0
-                              ,pr_tag_nova => 'hhini_bancoob'
-                              ,pr_tag_cont => NVL(vr_tab_crapage(pr_cdagenci).hhini_bancoob,'00:00')
-                              ,pr_des_erro => vr_dscritic);
-
-        GENE0007.pc_insere_tag(pr_xml      => pr_retxml
-                              ,pr_tag_pai  => 'Dados'
-                              ,pr_posicao  => 0
-                              ,pr_tag_nova => 'hhfim_bancoob'
-                              ,pr_tag_cont => NVL(vr_tab_crapage(pr_cdagenci).hhfim_bancoob,'00:00')
-                              ,pr_des_erro => vr_dscritic);
-                              
         GENE0007.pc_insere_tag(pr_xml      => pr_retxml
                               ,pr_tag_pai  => 'Dados'
                               ,pr_posicao  => 0
@@ -1142,13 +1076,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
                               ,pr_posicao  => 0
                               ,pr_tag_nova => 'hhsiccan'
                               ,pr_tag_cont => NVL(vr_tab_crapage(pr_cdagenci).hhsiccan,'00:00')
-                              ,pr_des_erro => vr_dscritic);
-
-        GENE0007.pc_insere_tag(pr_xml      => pr_retxml
-                              ,pr_tag_pai  => 'Dados'
-                              ,pr_posicao  => 0
-                              ,pr_tag_nova => 'hhcan_bancoob'
-                              ,pr_tag_cont => NVL(vr_tab_crapage(pr_cdagenci).hhcan_bancoob,'00:00')
                               ,pr_des_erro => vr_dscritic);
 
         GENE0007.pc_insere_tag(pr_xml      => pr_retxml
@@ -1298,14 +1225,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
                               ,pr_tag_cont => vr_tab_crapage(pr_cdagenci).hrinipaa
                               ,pr_des_erro => vr_dscritic);
 															
-        GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+				GENE0007.pc_insere_tag(pr_xml      => pr_retxml
                               ,pr_tag_pai  => 'Dados'
                               ,pr_posicao  => 0
                               ,pr_tag_nova => 'hrfimpaa'
                               ,pr_tag_cont => vr_tab_crapage(pr_cdagenci).hrfimpaa
                               ,pr_des_erro => vr_dscritic);
-
-        GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+															
+		    GENE0007.pc_insere_tag(pr_xml      => pr_retxml
                               ,pr_tag_pai  => 'Dados'
                               ,pr_posicao  => 0
                               ,pr_tag_nova => 'indspcxa'
@@ -1337,12 +1264,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
                               ,pr_posicao  => 0
                               ,pr_tag_nova => 'flmajora'
                               ,pr_tag_cont => vr_tab_crapage(pr_cdagenci).flmajora
-                              ,pr_des_erro => vr_dscritic);
-        GENE0007.pc_insere_tag(pr_xml      => pr_retxml
-                              ,pr_tag_pai  => 'Dados'
-                              ,pr_posicao  => 0
-                              ,pr_tag_nova => 'vllimpag'
-                              ,pr_tag_cont => TO_CHAR(vr_tab_crapage(pr_cdagenci).vllimpag,'FM999G999G999G990D00')
                               ,pr_des_erro => vr_dscritic);
       END IF;
 
@@ -1515,11 +1436,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
                         ,pr_vlminsgr     IN crapage.vlminsgr%TYPE --> Contem o valor minimo para efetuar a sangria de caixa
                         ,pr_vlmaxsgr     IN crapage.vlmaxsgr%TYPE --> Contem o valor maximo para efetuar a sangria de caixa
                         ,pr_flmajora     IN crapage.flmajora%TYPE --> Contem o identificador de Majoracao habilitada
-                        ,pr_cdagefgt     IN crapage.cdagefgt%TYPE --> Agencia do CAF/FGTS
-                        ,pr_hhini_bancoob IN VARCHAR2 --> Horario inicial de pagamento bancoob
-                        ,pr_hhfim_bancoob IN VARCHAR2 --> Horario final de pagamento bancoob 
-                        ,pr_hhcan_bancoob IN VARCHAR2 --> Horario limite cancelamento de pagamento bancoob 
-                        ,pr_vllimpag      IN crapage.vllimpag%TYPE --> Valor limite máximo pagamento sem autorização
                         ,pr_xmllog       IN VARCHAR2 --> XML com informacoes de LOG
                         ,pr_cdcritic    OUT PLS_INTEGER --> Codigo da critica
                         ,pr_dscritic    OUT VARCHAR2 --> Descricao da critica
@@ -1637,11 +1553,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
       vr_dscnteml VARCHAR2(10000) := '';
       vr_emaildst VARCHAR2(4000);
       vr_dscidnew VARCHAR2(50);
-
-      --Bancoob
-      vr_hhini_bancoob VARCHAR2(5);
-      vr_hhfim_bancoob VARCHAR2(5);
-      vr_hhcan_bancoob VARCHAR2(5);
 
       -- Variaveis de log
       vr_cdcooper INTEGER;
@@ -1935,71 +1846,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
         END IF; -- Fim Deposito TAA
 
       END IF; -- rw_crapope.cddepart IN (4,20)
-      
-      --> Validar horarios Bancoob
-      BEGIN
-        
-        BEGIN
-          vr_hhini_bancoob := to_char(to_date(pr_hhini_bancoob,'HH24:MI'),'SSSSS');
-          
-        EXCEPTION
-          WHEN OTHERS THEN
-            vr_dscritic := 'Hora inválida.###hhini_bancoob###2';
-            RAISE vr_exc_saida;
-        END;
-        
-        BEGIN
-          vr_hhfim_bancoob := to_char(to_date(pr_hhfim_bancoob,'HH24:MI'),'SSSSS');
-          
-        EXCEPTION
-          WHEN OTHERS THEN
-            vr_dscritic := 'Hora inválida.###hhfim_bancoob###2';
-            RAISE vr_exc_saida;
-        END;
-        
-        IF nvl(vr_hhini_bancoob,0) = 0 AND
-           nvl(vr_hhfim_bancoob,0) = 0 THEN
-           
-          vr_dscritic := 'Horário para pagamento BANCOOB não pode ser nulo.###hhini_bancoob###2';
-          RAISE vr_exc_saida;
-        END IF;   
-          
-        
-        
-        -- Valida se hora inicial eh maior que final
-        IF vr_hhini_bancoob >= vr_hhfim_bancoob THEN
-          vr_cdcritic := 687;
-          vr_dsabacmp := '###hhini_bancoob###2';
-          RAISE vr_exc_saida;
-        
-        END IF;
-        
-        BEGIN
-          vr_hhcan_bancoob := to_char(to_date(pr_hhcan_bancoob,'HH24:MI'),'SSSSS');
-          
-          -- Se NAO foi informado algum valor
-          IF nvl(vr_hhcan_bancoob,0) = 0 THEN
-            vr_dscritic := 'Horário para cancelamento de pagamento BANCOOB não pode ser nulo.###hhcan_bancoob###2';
-            RAISE vr_exc_saida;
-          END IF;
-          
-        EXCEPTION
-          WHEN vr_exc_saida THEN
-            RAISE vr_exc_saida;
-          WHEN OTHERS THEN
-            vr_dscritic := 'Hora inválida.###hhcan_bancoob###2';
-            RAISE vr_exc_saida;
-        END;
-        
-      EXCEPTION
-        WHEN vr_exc_saida THEN
-          RAISE vr_exc_saida;
-        WHEN OTHERS THEN
-          vr_dscritic := 'Erro ao validar horario bancoob: '||SQLERRM;
-          RAISE vr_exc_saida;
-          
-      END;
-      
       
       -- Se for INTERNET BANK ou TAA
       IF pr_cdagenci = 90 OR pr_cdagenci = 91 THEN
@@ -2786,7 +2632,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
                 ,crapage.flgdsede = pr_flgdsede
                 ,crapage.cdagepac = pr_cdagepac
 								,crapage.flgutcrm = pr_flgutcrm
-                ,crapage.cdagefgt = pr_cdagefgt
                 ,crapage.dsendcop = NVL(pr_dsendcop,' ')
                 ,crapage.nrendere = pr_nrendere
                 ,crapage.nmbairro = NVL(pr_nmbairro,' ')
@@ -2816,7 +2661,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
                 ,crapage.vlminsgr = pr_vlminsgr
                 ,crapage.vlmaxsgr = pr_vlmaxsgr
                 ,crapage.flmajora = pr_flmajora
-                ,crapage.vllimpag = pr_vllimpag
            WHERE crapage.cdcooper = vr_cdcooper
              AND crapage.cdagenci = pr_cdagenci;
 
@@ -2832,56 +2676,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
              AND craptab.cdempres        = 0
              AND UPPER(craptab.cdacesso) = 'HRPGSICRED'
              AND craptab.tpregist        = pr_cdagenci;
-
-          --> Begin
-          IF vr_hhini_bancoob > 0 OR vr_hhfim_bancoob > 0 THEN
-          
-            BEGIN
-            -- Altera o Horario SICREDI
-            UPDATE craptab
-               SET craptab.dstextab = TO_CHAR(vr_hhini_bancoob) || ' ' ||
-                                      TO_CHAR(vr_hhfim_bancoob) || ' ' ||
-                                      TO_CHAR(vr_hhcan_bancoob)
-             WHERE craptab.cdcooper        = vr_cdcooper
-               AND UPPER(craptab.nmsistem) = 'CRED'
-               AND UPPER(craptab.tptabela) = 'GENERI'
-               AND craptab.cdempres        = 0
-               AND UPPER(craptab.cdacesso) = 'HRPGBANCOOB'
-               AND craptab.tpregist        = pr_cdagenci;
-            EXCEPTION
-              WHEN OTHERS THEN
-                vr_dscritic := 'Não foi possivel atualizar horario Bancoob: '||SQLERRM;
-                RAISE vr_exc_saida;
-            END;
-            
-            IF SQL%ROWCOUNT = 0 THEN
-              BEGIN
-                INSERT INTO craptab
-                            ( nmsistem, 
-                              tptabela, 
-                              cdempres, 
-                              cdacesso, 
-                              tpregist, 
-                              dstextab, 
-                              cdcooper) 
-                     VALUES ( 'CRED',        --> nmsistem
-                              'GENERI',      --> tptabela
-                              0,             --> cdempres
-                              'HRPGBANCOOB', --> cdacesso
-                              pr_cdagenci,   --> tpregist
-                              TO_CHAR(vr_hhini_bancoob) || ' ' ||TO_CHAR(vr_hhfim_bancoob) || ' ' ||TO_CHAR(vr_hhcan_bancoob), --> dstextab
-                              vr_cdcooper);  --> cdcooper       
-
-              EXCEPTION
-                WHEN OTHERS THEN
-                  vr_dscritic := 'Não foi possivel incluir horario Bancoob: '||SQLERRM;
-                  RAISE vr_exc_saida;
-              END;
-            
-            END IF;
-            
-          END IF;
-
 
           -- Se for INTERNET BANK ou TAA
           IF pr_cdagenci = 90 OR pr_cdagenci = 91 THEN
@@ -3344,15 +3138,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
                  ,pr_cddopcao => pr_cddopcao
                  ,pr_cdoperad => vr_cdoperad
                  ,pr_cdagenci => pr_cdagenci
-                 ,pr_dsdcampo => 'Agencia CAF/FGTS'
-                 ,pr_vldantes => (CASE WHEN vr_tab_crapage.EXISTS(pr_cdagenci) THEN TO_CHAR(vr_tab_crapage(pr_cdagenci).cdagefgt) ELSE '-' END)
-                 ,pr_vldepois => pr_cdagefgt);
-
-
-      pc_item_log(pr_cdcooper => vr_cdcooper
-                 ,pr_cddopcao => pr_cddopcao
-                 ,pr_cdoperad => vr_cdoperad
-                 ,pr_cdagenci => pr_cdagenci
                  ,pr_dsdcampo => 'Habilitar acesso CRM'
                  ,pr_vldantes => (CASE WHEN vr_tab_crapage.EXISTS(pr_cdagenci) THEN TO_CHAR(vr_tab_crapage(pr_cdagenci).flgutcrm) ELSE '-' END)
                  ,pr_vldepois => pr_flgutcrm);
@@ -3477,30 +3262,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
                  ,pr_vldantes => (CASE WHEN vr_tab_crapage.EXISTS(pr_cdagenci) THEN vr_tab_crapage(pr_cdagenci).hhsicfim ELSE '-' END)
                  ,pr_vldepois => pr_hhsicfim);
 
-      pc_item_log(pr_cdcooper => vr_cdcooper
-                 ,pr_cddopcao => pr_cddopcao
-                 ,pr_cdoperad => vr_cdoperad
-                 ,pr_cdagenci => pr_cdagenci
-                 ,pr_dsdcampo => 'Horario inicio pagamentos bancoob'
-                 ,pr_vldantes => (CASE WHEN vr_tab_crapage.EXISTS(pr_cdagenci) THEN vr_tab_crapage(pr_cdagenci).hhini_bancoob ELSE '-' END)
-                 ,pr_vldepois => pr_hhini_bancoob);
-
-      pc_item_log(pr_cdcooper => vr_cdcooper
-                 ,pr_cddopcao => pr_cddopcao
-                 ,pr_cdoperad => vr_cdoperad
-                 ,pr_cdagenci => pr_cdagenci
-                 ,pr_dsdcampo => 'Horario fim pagamentos bancoob'
-                 ,pr_vldantes => (CASE WHEN vr_tab_crapage.EXISTS(pr_cdagenci) THEN vr_tab_crapage(pr_cdagenci).hhfim_bancoob ELSE '-' END)
-                 ,pr_vldepois => pr_hhfim_bancoob);
-                 
-      pc_item_log(pr_cdcooper => vr_cdcooper
-                 ,pr_cddopcao => pr_cddopcao
-                 ,pr_cdoperad => vr_cdoperad
-                 ,pr_cdagenci => pr_cdagenci
-                 ,pr_dsdcampo => 'Horario limite canc. pagamentos bancoob'
-                 ,pr_vldantes => (CASE WHEN vr_tab_crapage.EXISTS(pr_cdagenci) THEN vr_tab_crapage(pr_cdagenci).hhcan_bancoob ELSE '-' END)
-                 ,pr_vldepois => pr_hhcan_bancoob);
-                 
       pc_item_log(pr_cdcooper => vr_cdcooper
                  ,pr_cddopcao => pr_cddopcao
                  ,pr_cdoperad => vr_cdoperad
@@ -4539,8 +4300,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
                  ,pr_dsdcampo => 'inicio horario de atendimento'
                  ,pr_vldantes => vr_tab_crapage(pr_cdagenci).hrinipaa
                  ,pr_vldepois => NVL(vr_hrinipaa, ' '));
-
-      pc_item_log(pr_cdcooper => vr_cdcooper
+								 
+			pc_item_log(pr_cdcooper => vr_cdcooper
                  ,pr_cddopcao => 'A'
                  ,pr_cdoperad => vr_cdoperad
                  ,pr_cdagenci => pr_cdagenci
@@ -4595,7 +4356,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
                     || '<b>Horário inicio atendimento:</b> de ''' || vr_tab_crapage(pr_cdagenci).hrinipaa
                     || ''' para ''' || vr_hrinipaa || '''<br>';
       END IF;
-
+			
 			IF NVL(vr_tab_crapage(pr_cdagenci).hrfimpaa, ' ') <> NVL(vr_hrfimpaa, ' ') THEN
 
         vr_dscnteml := vr_dscnteml
@@ -4683,113 +4444,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPAC IS
     END;
 
   END pc_grava_dados_site;
-
-  PROCEDURE pc_lista_pas(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Codigo da cooperativa
-                        ,pr_flgpaaut  IN INTEGER DEFAULT 1  --> Flag que indica se PAs de Auto-Atendimento deverão ser listados
-                        ,pr_retxml   OUT NOCOPY xmltype        --> Arquivo de retorno do XML
-                        ,pr_des_erro OUT VARCHAR2) IS          --> Erros do processo  
-  BEGIN
-
-    /* .............................................................................
-
-    Programa: pc_lista_pas
-    Sistema : SOA
-    Autor   : David
-    Data    : Janeiro/2018                 Ultima atualizacao: 
-
-    Dados referentes ao programa:
-
-    Frequencia: Sempre que for chamado
-
-    Objetivo  : Rotina para listar os PAs da cooperativa
-
-    Alteracoes: 
-    ..............................................................................*/
-    DECLARE        
-      -- Tratamento de erros
-      vr_dscritic  VARCHAR2(10000);
-      vr_exc_saida EXCEPTION;
-      
-      vr_qtregist  NUMBER;     
-      
-      -- Selecionar os dados
-      CURSOR cr_crapage(pr_cdcooper IN crapage.cdcooper%TYPE,
-                        pr_flgpaaut IN NUMBER) IS
-      SELECT crapage.cdagenci
-            ,crapage.nmextage
-            ,crapage.nmresage
-            ,crapage.nmpasite
-        FROM crapage
-       WHERE crapage.cdcooper = pr_cdcooper
-         AND crapage.insitage NOT IN (0,2)
-         AND ((pr_flgpaaut = 1 AND crapage.cdagenci NOT IN (999))
-          OR  (pr_flgpaaut = 0 AND crapage.cdagenci NOT IN (90,91,999)));
-      rw_crapage cr_crapage%ROWTYPE; 
-    BEGIN    
-      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
-      
-      gene0007.pc_insere_tag(pr_xml => pr_retxml
-                            ,pr_tag_pai => 'Root'
-                            ,pr_posicao => 0
-                            ,pr_tag_nova => 'Dados'
-                            ,pr_tag_cont => ''
-                            ,pr_des_erro => vr_dscritic);
-      
-      vr_qtregist := 0;      
-      
-      FOR rw_crapage IN cr_crapage(pr_cdcooper => pr_cdcooper
-                                  ,pr_flgpaaut => pr_flgpaaut) LOOP          
-        
-        gene0007.pc_insere_tag(pr_xml => pr_retxml
-                              ,pr_tag_pai => 'Dados'
-                              ,pr_posicao => 0
-                              ,pr_tag_nova => 'PA'
-                              ,pr_tag_cont => ''
-                              ,pr_des_erro => vr_dscritic);      
-                              
-        gene0007.pc_insere_tag(pr_xml => pr_retxml
-                              ,pr_tag_pai => 'PA'
-                              ,pr_posicao => vr_qtregist
-                              ,pr_tag_nova => 'cdagenci'
-                              ,pr_tag_cont => TO_CHAR(rw_crapage.cdagenci)
-                              ,pr_des_erro => vr_dscritic);          
-
-        gene0007.pc_insere_tag(pr_xml => pr_retxml
-                              ,pr_tag_pai => 'PA'
-                              ,pr_posicao => vr_qtregist
-                              ,pr_tag_nova => 'nmextage'
-                              ,pr_tag_cont => TO_CHAR(rw_crapage.nmextage)
-                              ,pr_des_erro => vr_dscritic);                                                            
-                              
-        gene0007.pc_insere_tag(pr_xml => pr_retxml
-                              ,pr_tag_pai => 'PA'
-                              ,pr_posicao => vr_qtregist
-                              ,pr_tag_nova => 'nmresage'
-                              ,pr_tag_cont => TO_CHAR(rw_crapage.nmresage)
-                              ,pr_des_erro => vr_dscritic);  
-                              
-        gene0007.pc_insere_tag(pr_xml => pr_retxml
-                              ,pr_tag_pai => 'PA'
-                              ,pr_posicao => vr_qtregist
-                              ,pr_tag_nova => 'nmpasite'
-                              ,pr_tag_cont => TO_CHAR(rw_crapage.nmpasite)
-                              ,pr_des_erro => vr_dscritic);                                                              
-                              
-        vr_qtregist := vr_qtregist + 1;                              
-        
-      END LOOP;    
-      
-    EXCEPTION
-      WHEN OTHERS THEN
-        pr_des_erro := 'NOK';
-        vr_dscritic := 'Erro geral na rotina da tela CADPAC: ' || SQLERRM;
-
-        -- Carregar XML padrão para variavel de retorno
-        pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
-                                       '<Root><dsmsgerr>' || vr_dscritic || '</dsmsgerr></Root>');
-    END;
-
-  END pc_lista_pas;                                                   
 
 END TELA_CADPAC;
 /

@@ -23,7 +23,7 @@ $.getScript(UrlSite + "includes/rating/rating.js");
 
 // Função para Mostrar Div de Impressão
 function mostraDivImpressao( operacao ) {
-	
+
 	showMsgAguardo('Aguarde, abrindo impressão...');
     
     limpaDivGenerica();
@@ -68,7 +68,7 @@ function mostraDivImpressao( operacao ) {
 function validaImpressao( operacao ){
 	
 	showMsgAguardo('Aguarde, carregando...');
-		
+	
 	// Executa script de confirmação através de ajax
 	$.ajax({		
 		type: 'POST',
@@ -76,12 +76,11 @@ function validaImpressao( operacao ){
 		data: {
 			nrdconta: nrdconta, idseqttl: idseqttl, 
 			recidepr: nrdrecid, operacao: operacao,
-			tplcremp: tplcremp, nrctremp: nrctremp, 
-			redirect: 'script_ajax'
+			tplcremp: tplcremp, redirect: 'script_ajax'
 		}, 
 		error: function(objAjax,responseError,objExcept) {
 			hideMsgAguardo();
-						
+
 			showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','bloqueiaFundo(divRotina)');
 		},
 		success: function(response) {
@@ -121,8 +120,8 @@ function verificaImpressao(par_idimpres){
 		return false;
 	}
 	
-	if ( idimpres >= 1 && idimpres <= 57 ) {
-	
+	if ( idimpres >= 1 && idimpres <= 9 ) {
+
 		if ( idimpres == 5 ) {
 			var metodo = '';
 			
@@ -136,7 +135,7 @@ function verificaImpressao(par_idimpres){
 			fechaRotina($('#divUsoGenerico'),metodo);
 		}
 		else 
-		if  (idimpres == 7 || idimpres == 8 || idimpres == 9 || idimpres == 57) {
+		if  (idimpres == 7 || idimpres == 8 || idimpres == 9) {
 			carregarImpresso();
 		}
 		else {
@@ -278,8 +277,7 @@ function mostraEmail() {
 
 // Função para envio de formulário de impressao
 function carregarImpresso(){
-	var nrcpfcgc = normalizaNumero($("#nrcpfcgc", "#frmCabAtenda").val());
-
+	
 	fechaRotina($('#divUsoGenerico'),$('#divRotina'));
 	
 	$('#idimpres','#formEmpres').remove();
@@ -289,7 +287,6 @@ function carregarImpresso(){
 	$('#nrdconta','#formEmpres').remove();
 	$('#nrctremp','#formEmpres').remove();
 	$('#sidlogin','#formEmpres').remove();
-	$('#nrcpfcgc','#formEmpres').remove();
 	
 	
 	// Insiro input do tipo hidden do formulário para enviá-los posteriormente
@@ -300,7 +297,6 @@ function carregarImpresso(){
 	$('#formEmpres').append('<input type="hidden" id="nrdconta" name="nrdconta" />');
 	$('#formEmpres').append('<input type="hidden" id="nrctremp" name="nrctremp" />');
 	$('#formEmpres').append('<input type="hidden" id="sidlogin" name="sidlogin" />');
-	$('#formEmpres').append('<input type="hidden" id="nrcpfcgc" name="nrcpfcgc" />');
 	
 	// Agora insiro os devidos valores nos inputs criados
 	$('#idimpres','#formEmpres').val( idimpres );
@@ -310,7 +306,6 @@ function carregarImpresso(){
 	$('#nrdconta','#formEmpres').val( nrdconta );
 	$('#nrctremp','#formEmpres').val( nrctremp );
 	$('#sidlogin','#formEmpres').val( $('#sidlogin','#frmMenu').val() );
-	$('#nrcpfcgc','#formEmpres').val( nrcpfcgc );
 
 	var action = UrlSite + 'telas/atenda/emprestimos/imprimir_dados.php';
 	
