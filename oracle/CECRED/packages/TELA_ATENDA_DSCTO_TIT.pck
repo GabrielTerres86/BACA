@@ -3153,7 +3153,7 @@ BEGIN
          pr_tab_dados_proposta(vr_idxdados).insitlim := rw_crawlim.insitlim;
          pr_tab_dados_proposta(vr_idxdados).insitest := rw_crawlim.insitest;
          pr_tab_dados_proposta(vr_idxdados).insitapr := rw_crawlim.insitapr;
-
+         
          pr_tab_dados_proposta(vr_idxdados).inctrmnt := rw_crawlim.inctrmnt;
 
          pr_qtregist := nvl(pr_qtregist,0) + 1;
@@ -4387,7 +4387,7 @@ PROCEDURE pc_listar_titulos_resumo(pr_cdcooper          in crapcop.cdcooper%type
               
               --Caso já tenha restricao do CNAE nao precisa verificar as outras para colocar a flag
               IF NOT restricao_cnae THEN
-              SELECT (nvl((SELECT 
+                 SELECT (nvl((SELECT 
                               decode(inpossui_criticas,1,'S','N')
                               FROM 
                                tbdsct_analise_pagador tap 
@@ -4510,7 +4510,7 @@ PROCEDURE pc_solicita_biro_bordero(pr_nrdconta in crapass.nrdconta%type --> Cont
    and    tap.nrinssac = pr_nrinssac;
    rw_analise_pagador cr_analise_pagador%rowtype;
 
-BEGIN
+BEGIN   
    gene0004.pc_extrai_dados(pr_xml      => pr_retxml
                            ,pr_cdcooper => vr_cdcooper
                            ,pr_nmdatela => vr_nmdatela
