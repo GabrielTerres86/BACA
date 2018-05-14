@@ -4618,8 +4618,6 @@ PROCEDURE pc_risco_central_ocr(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Coopera
           RAISE vr_exc_saida;
         END IF;
       --
-      --COMMIT;
-      --
       -- Ajustar Risco CPF por Grupo Econômico
       -- Chama processo de ajuste CPF
       -- Não considera a materialidade
@@ -4631,10 +4629,6 @@ PROCEDURE pc_risco_central_ocr(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Coopera
           RAISE vr_exc_saida;
         END IF;
       --  
-      
-      -- Efetuar COMMIT FINAL!
-      --COMMIT;
-      --
       -- Atualiza Controle BI      
       pc_atualiza_controle(pr_cdcooper => pr_cdcooper  -- Cooperativa
                           ,pr_situacao => 2            -- Situação da execução(1-Erro  2-Sucesso)
@@ -4643,9 +4637,6 @@ PROCEDURE pc_risco_central_ocr(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Coopera
         -- Verifica erro na atualização controle BI
         IF vr_cdcritic = 0 THEN
           RAISE vr_exc_saida;
-        ELSE
-		  -- Efetuar COMMIT FINAL!
-          COMMIT;
         END IF;    
    EXCEPTION
       WHEN vr_exc_saida THEN
@@ -4654,14 +4645,10 @@ PROCEDURE pc_risco_central_ocr(pr_cdcooper  IN crapcop.cdcooper%TYPE --> Coopera
       END IF;
         pr_cdcritic := vr_cdcritic;
         pr_dscritic := 'Erro na rotina PC_RISCO_CENTRAL_OCR. Detalhes: '||vr_dscritic;
-        -- Efetuar rollback
-        ROLLBACK;
       WHEN OTHERS THEN
         -- Retornar o erro não tratado
         pr_cdcritic := 0;
         pr_dscritic := 'Erro não tratado na rotina PC_RISCO_CENTRAL_OCR. Detalhes: '||sqlerrm;
-        -- Efetuar rollback
-        ROLLBACK;
    END;
    END pc_risco_central_ocr;
 
