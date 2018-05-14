@@ -5,7 +5,7 @@ CREATE OR REPLACE PACKAGE CECRED.AFRA0001 is
       Sistema  : Rotinas referentes a Analise de Fraude
       Sigla    : AFRA
       Autor    : Odirlei Busana - AMcom
-      Data     : Novembro/2016.                   Ultima atualizacao: 02/02/2018
+      Data     : Novembro/2016.                   Ultima atualizacao: 03/04/2018
 
       Dados referentes ao programa:
 
@@ -16,6 +16,8 @@ CREATE OR REPLACE PACKAGE CECRED.AFRA0001 is
 								     os segundos, desta forma a cursor se torna compatível com  os 
 									 intervalos cadastrados na Tela CADFRA.
 									 Chamado 789957 - Gabriel (Mouts).
+
+				        03/04/2018 - Adicionado NOTI0001.pc_cria_notificacao
 
   ---------------------------------------------------------------------------------------------------------------*/
   
@@ -207,6 +209,42 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
     WHEN OTHERS THEN
       RETURN NULL;
   END fn_base_cnpj_central;
+
+  -- Rotina para buscar conteúdo das mensagens do iBank/SMS
+  FUNCTION fn_buscar_valor(pr_campo             IN VARCHAR2
+                          ,pr_valores_dinamicos IN VARCHAR2 DEFAULT NULL) -- Máscara #Cooperativa#=1;#Convenio#=123
+   RETURN VARCHAR2 IS
+    ---------------------------------------------------------------------------------------------------------------
+    --
+    --  Programa : fn_buscar_valor
+    --  Autor    : Everton
+    --  Data     : Abril/2018.                   Ultima atualizacao: --/--/----
+    --
+    -- Objetivo  : Buscar campo de variavéis dinâmicas
+    ---------------------------------------------------------------------------------------------------------------
+  
+ 
+    /*Quebra os valores da string recebida por parâmetro*/
+    CURSOR cr_parametro IS
+      SELECT regexp_substr(parametro, '[^=]+', 1, 1) parametro
+            ,regexp_substr(parametro, '[^=]+', 1, 2) valor
+        FROM (SELECT regexp_substr(pr_valores_dinamicos, '[^;]+', 1, ROWNUM) parametro
+                FROM dual
+              CONNECT BY LEVEL <= LENGTH(regexp_replace(pr_valores_dinamicos ,'[^;]+','')) + 1);
+  
+  BEGIN
+  
+    -- Sobrescreve os parâmetros
+    FOR rw_parametro IN cr_parametro LOOP
+      --
+      IF UPPER(rw_parametro.parametro) = (pr_campo) THEN
+         RETURN rw_parametro.valor;
+      END IF;                              
+      --                       
+    END LOOP;
+  
+  END fn_buscar_valor;  
+
   
   --> Rotina para carregar no objeto Json os telefones do cooperado  
   PROCEDURE pc_carregar_fone_json ( pr_cdcooper     IN crapcop.cdcooper%TYPE, --> Codigo da cooperativa
@@ -3049,6 +3087,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
     vr_cdtipmsg tbgen_tipo_mensagem.cdtipo_mensagem%TYPE;
     vr_vldinami VARCHAR2(1000);
     vr_nmprimtl crapass.nmprimtl%TYPE;
+
+    -- Objetos para armazenar as variáveis da notificação
+    vr_variaveis_notif NOTI0001.typ_variaveis_notif;
+    vr_notif_origem   tbgen_notif_automatica_prm.cdorigem_mensagem%TYPE;
+    vr_notif_motivo   tbgen_notif_automatica_prm.cdmotivo_mensagem%TYPE;
     
     
   BEGIN
@@ -3071,15 +3114,30 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
     IF pr_tptransacao = 1 THEN
       IF pr_inpessoa = 1 THEN
         vr_cdtipmsg := 21;
+        vr_notif_origem   := 5;
+        vr_notif_motivo   := 1; 
+        vr_variaveis_notif('#valor')    := fn_buscar_valor('#VALOR#',pr_vldinami);
       ELSE
         vr_cdtipmsg := 18;
+        vr_notif_origem   := 5;
+        vr_notif_motivo   := 2;  
+        vr_variaveis_notif('#valor')    := fn_buscar_valor('#VALOR#',pr_vldinami);
       END IF;
     --> Agendada
     ELSIF pr_tptransacao = 2 THEN
       IF pr_inpessoa = 1 THEN
         vr_cdtipmsg := 19;
+        vr_notif_origem   := 3;
+        vr_notif_motivo   := 10; 
+        vr_variaveis_notif('#valor')    := fn_buscar_valor('#VALOR#',pr_vldinami);
+        vr_variaveis_notif('#dtdebito') := fn_buscar_valor('#DTDEBITO#',pr_vldinami);                   
       ELSE
         vr_cdtipmsg := 20;
+        vr_notif_origem   := 3;
+        vr_notif_motivo   := 11;  
+        vr_variaveis_notif('#valor')    := fn_buscar_valor('#VALOR#',pr_vldinami);
+        vr_variaveis_notif('#dtdebito') := fn_buscar_valor('#DTDEBITO#',pr_vldinami);                   
+
       END IF;
     END IF; 
     
@@ -3126,6 +3184,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AFRA0001 is
       IF TRIM(vr_dscritic) IS NOT NULL THEN
         RAISE vr_exc_erro;
       END IF;
+      --
+      -- Cria uma notificação
+      noti0001.pc_cria_notificacao(pr_cdorigem_mensagem => vr_notif_origem
+                                  ,pr_cdmotivo_mensagem => vr_notif_motivo
+                                  ,pr_cdcooper => pr_cdcooper
+                                  ,pr_nrdconta => pr_nrdconta
+                                  ,pr_idseqttl => rw_crapsnh.idseqttl
+                                  ,pr_variaveis => vr_variaveis_notif);      
+      --
     END LOOP;
   
   EXCEPTION

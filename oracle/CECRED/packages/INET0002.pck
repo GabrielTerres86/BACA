@@ -1305,6 +1305,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
 	
 	rw_crapdat btch0001.cr_crapdat%ROWTYPE;
 	
+    -- Objetos para armazenar as variáveis da notificação
+    vr_variaveis_notif NOTI0001.typ_variaveis_notif;
+    vr_notif_origem   tbgen_notif_automatica_prm.cdorigem_mensagem%TYPE := 7;
+    vr_notif_motivo   tbgen_notif_automatica_prm.cdmotivo_mensagem%TYPE := 3;
+	
 	CURSOR cr_crapavt IS
     SELECT avt.idmsgvct
 		      ,avt.dtvalida
@@ -1402,6 +1407,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
 							RAISE vr_exc_saida;
               CLOSE cr_crapavt;
 						END IF;
+				      
+           vr_variaveis_notif('#dtvalida') := to_char(rw_crapavt.dtvalida, 'dd/mm/rrrr');
+
+           -- Cria uma notificação
+           noti0001.pc_cria_notificacao(pr_cdorigem_mensagem => vr_notif_origem
+                                       ,pr_cdmotivo_mensagem => vr_notif_motivo
+                                       ,pr_cdcooper => pr_cdcooper
+                                       ,pr_nrdconta => pr_nrdconta
+                                       ,pr_idseqttl => pr_idseqttl 
+                                       ,pr_variaveis => vr_variaveis_notif);             
+            
+           --
 				      
 					 -- Indicar que mensagem já foi gerada
 					 UPDATE crapavt
@@ -1812,8 +1829,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
      vr_cdcritic  crapcri.cdcritic%TYPE; -- Codigo de erro
      vr_dscritic  crapcri.dscritic%TYPE; -- Retorno de Erro
      vr_dsdmensg  VARCHAR2(4000);
+	 vr_dsdmensg_notif  VARCHAR2(4000);
      vr_idsitapr  INTEGER; -- Situacao de Aprovacao
      vr_ind       INTEGER;
+
+     -- Objetos para armazenar as variáveis da notificação
+     vr_variaveis_notif NOTI0001.typ_variaveis_notif;
+     vr_notif_origem   tbgen_notif_automatica_prm.cdorigem_mensagem%TYPE := 6;
+     vr_notif_motivo   tbgen_notif_automatica_prm.cdmotivo_mensagem%TYPE := 1;      
+
    BEGIN
 
     --Dados da Cooperativa
@@ -1922,6 +1946,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
            RAISE vr_exc_saida;
         END IF;
 
+		vr_dsdmensg_notif := vr_dsdmensg;
         vr_dsdmensg := 'Atenção, ' || pr_tab_crapavt(vr_ind).nmdavali || '!<br><br>Informamos que a seguinte transação está pendente de aprovação:<br><br>' || vr_dsdmensg;
 
         --Sequencial do titular
@@ -1959,6 +1984,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
         IF vr_dscritic IS NOT NULL THEN
           RAISE vr_exc_saida;
         END IF; 
+        --
+        -- ews
+        vr_variaveis_notif('#dsdmensg')     := vr_dsdmensg_notif;
+                
+        -- Cria uma notificação
+        noti0001.pc_cria_notificacao(pr_cdorigem_mensagem => vr_notif_origem
+                                    ,pr_cdmotivo_mensagem => vr_notif_motivo
+                                    ,pr_cdcooper => pr_cdcooper
+                                    ,pr_nrdconta => pr_nrdconta
+                                    ,pr_idseqttl => rw_crapsnh.idseqttl
+                                    ,pr_variaveis => vr_variaveis_notif);         
+        --
       END IF;
     END LOOP; 	
      
@@ -2259,7 +2296,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
       vr_vlresgat VARCHAR2(100);      
       vr_saldo_rdca APLI0001.typ_tab_saldo_rdca; --Tabela para o saldo da aplicação
       vr_dstransa   VARCHAR2(80);
-      
+
 
       --Variaveis de Erro
       vr_cdcritic crapcri.cdcritic%type;
@@ -2940,6 +2977,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
 	  vr_tptransa NUMBER(2);
     vr_cddoitem tbgen_trans_pend.cdtransacao_pendente%TYPE;
     vr_dsdmensg VARCHAR2(32000) := ' ';
+	vr_dsdmensg_notif VARCHAR2(32000) := ' ';
     vr_ncctarep crapavt.nrdctato%TYPE;
     vr_auxnumbe NUMBER;
     vr_msgretor VARCHAR2(1000);
@@ -2955,6 +2993,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
     vr_dscritic VARCHAR2(4000);
     --Variaveis de Excecao
     vr_exc_erro EXCEPTION;
+		
+    -- Objetos para armazenar as variáveis da notificação
+    vr_variaveis_notif NOTI0001.typ_variaveis_notif;
+    vr_notif_origem   tbgen_notif_automatica_prm.cdorigem_mensagem%TYPE := 6;
+    vr_notif_motivo   tbgen_notif_automatica_prm.cdmotivo_mensagem%TYPE := 2;
 		
 	  -- Buscar nome da cooperativa
 	  CURSOR cr_crapcop (pr_cdcooper IN crapcop.cdcooper%TYPE) IS
@@ -3331,6 +3374,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                                             ,pr_cdcritic => vr_cdcritic   -- Codigo do erro
                                             ,pr_dscritic => vr_dscritic); -- Descricao do erro
     
+                vr_dsdmensg_notif := vr_dsdmensg;
                 vr_dsdmensg := 'Atenção, ' || vr_nmprimtl || '!<br><br>' ||
                                'Informamos que a seguinte transação foi reprovada:<br><br>' || vr_dsdmensg;
                             
@@ -3347,6 +3391,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                                           ,pr_cdoperad => 1
                                           ,pr_cdcadmsg => 0
                                           ,pr_dscritic => vr_dscritic);
+			
+                --
+                vr_variaveis_notif('#dsdmensg')     := vr_dsdmensg_notif;
+                -- Cria uma notificação
+                noti0001.pc_cria_notificacao(pr_cdorigem_mensagem => vr_notif_origem
+                                            ,pr_cdmotivo_mensagem => vr_notif_motivo
+                                            ,pr_cdcooper => pr_cdcooper
+                                            ,pr_nrdconta => rw_tbgen_aprova_trans_pend.nrdconta
+                                            ,pr_idseqttl => vr_idseqttl   
+                                            ,pr_variaveis => vr_variaveis_notif);                 
+                --
 			
 			      END LOOP;
 			      
@@ -8130,7 +8185,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.INET0002 AS
                     CONTINUE;
                   END IF;	
                END IF;
-               
+                 
                --Valor a somar  
                vr_vlasomar := rw_tbtrib_pend.vlpagamento;
                --Variaveis do resumo                   
@@ -11889,7 +11944,7 @@ PROCEDURE pc_busca_resp_assinatura(pr_cdcooper IN VARCHAR2
         pr_dscritic := 'Erro geral em pc_busca_resp_assinatura: ' || SQLERRM;
     END;
   END pc_busca_resp_assinatura;
-  
+
     --> Rotina responsavel pela criacao de transacoes pendentes de pagamentos de tributos
   PROCEDURE pc_cria_trans_pend_tributos(pr_cdcooper  IN crapcop.cdcooper%TYPE                 --> Código da cooperativa
                                        ,pr_nrdcaixa  IN craplot.nrdcaixa%TYPE                 --> Numero do Caixa

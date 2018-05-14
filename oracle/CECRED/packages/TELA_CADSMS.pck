@@ -221,15 +221,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADSMS IS
   --  Sistema  : Rotinas utilizadas pela Tela CADSMS
   --  Sigla    : COBR
   --  Autor    : Odirlei Busana - AMcom
-  --  Data     : Outubro - 2016.                   Ultima atualizacao:
+  --  Data     : Outubro - 2016.                   Ultima atualizacao: 03/04/2018
   --
   -- Dados referentes ao programa:
   --
   -- Frequencia: -----
   -- Objetivo  : Centralizar rotinas relacionadas a Tela CADSMS
   --
-  -- Alteracoes:
+  -- Alteracoes: 03/04/2018 - Inserido noti0001.pc_cria_notificacao
   --
+  -- 
   ---------------------------------------------------------------------------*/
   PROCEDURE pc_busca_mensagens_produto(pr_cdcooper       IN tbgen_mensagem.cdcooper%TYPE
                                       ,pr_cdproduto      IN tbgen_mensagem.cdproduto%TYPE
@@ -2112,7 +2113,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADSMS IS
       vr_dsdplchv VARCHAR2(40) := 'Alteração no Pacote'; 
       vr_dsdmensg VARCHAR2(340) := 'Informamos que houve alteração no pacote de SMS de cobrança, ativo em sua conta.
                       Para consultar seu saldo de SMS e o valor do pacote, consulte o relatório na conta online “Resumo do
-                      serviço de SMS”.';      
+                      serviço de SMS”.';  
+					  
+      -- Objetos para armazenar as variáveis da notificação
+      vr_variaveis_notif NOTI0001.typ_variaveis_notif;
+      vr_notif_origem   tbgen_notif_automatica_prm.cdorigem_mensagem%TYPE := 8;
+      vr_notif_motivo   tbgen_notif_automatica_prm.cdmotivo_mensagem%TYPE := 3;                                 
       
   BEGIN
     
@@ -2145,6 +2151,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADSMS IS
                                   ,pr_cdoperad => 1
                                   ,pr_cdcadmsg => 0
                                   ,pr_dscritic => vr_dscritic); 
+
+        -- Cria uma notificação
+        noti0001.pc_cria_notificacao(pr_cdorigem_mensagem => vr_notif_origem
+                                    ,pr_cdmotivo_mensagem => vr_notif_motivo
+                                    ,pr_cdcooper => pr_cooper
+                                    ,pr_nrdconta => pacote.nrdconta
+                                    ,pr_idseqttl => pacote.idseqttl
+                                    ,pr_variaveis => vr_variaveis_notif);        
+        
+        -- 
 
      END LOOP;
     

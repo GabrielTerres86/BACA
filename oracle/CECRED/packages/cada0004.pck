@@ -5,7 +5,7 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0004 is
     Sistema  : Rotinas para detalhes de cadastros
     Sigla    : CADA
     Autor    : Odirlei Busana - AMcom
-    Data     : Agosto/2015.                   Ultima atualizacao: 12/12/2017
+    Data     : Agosto/2015.                   Ultima atualizacao: 03/04/2018
   
    Dados referentes ao programa:
   
@@ -39,6 +39,8 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0004 is
 
                  12/12/2017 - Alterar para varchar2 o campo nrcartao na procedure 
                               pc_gera_log_ope_cartao (Lucas Ranghetti #810576)
+
+                 03/04/2018 - Adicionado NOTI0001.pc_cria_notificacao
   ---------------------------------------------------------------------------------------------------------------*/
   
   ---------------------------- ESTRUTURAS DE REGISTRO ---------------------
@@ -754,7 +756,7 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0004 is
                                     ,pr_cdcritic OUT INTEGER
                                     ,pr_dscritic OUT VARCHAR2
                                     );
-                                    
+
   PROCEDURE pc_pode_impr_dec_pj_coop(pr_cdcooper IN crapcop.cdcooper%TYPE --> Codigo Cooperativa
                                     ,pr_nrdconta IN crapcop.nrdconta%TYPE --> Numero da Conta
                                     ,pr_xmllog   IN VARCHAR2 --> XML com informac?es de LOG
@@ -815,7 +817,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
   --  Sistema  : Rotinas para detalhes de cadastros
   --  Sigla    : CADA
   --  Autor    : Odirlei Busana - AMcom
-  --  Data     : Agosto/2015.                   Ultima atualizacao: 12/12/2017
+  --  Data     : Agosto/2015.                   Ultima atualizacao: 03/04/2018
   --
   -- Dados referentes ao programa:
   --
@@ -871,8 +873,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
   --
   --               03/12/2017 - Alterado cursor para ler da tbcotas e eliminado cursor da craplcm (Jonata - RKAM P364).
   --
-  --                12/12/2017 - Alterar para varchar2 o campo nrcartao na procedure 
-  --                             pc_gera_log_ope_cartao (Lucas Ranghetti #810576)
+  --               12/12/2017 - Alterar para varchar2 o campo nrcartao na procedure 
+  --                            pc_gera_log_ope_cartao (Lucas Ranghetti #810576)
+  --
+  --               03/04/2018 - Adicionado NOTI0001.pc_cria_notificacao
 ---------------------------------------------------------------------------------------------------------------
 
 
@@ -2249,7 +2253,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
      WHERE crapepr.cdcooper = pr_cdcooper
        AND crapepr.nrdconta = pr_nrdconta
        AND crapepr.inprejuz = 1;
-       
+    
     --> Buscar Rating efetivo 
     CURSOR cr_crapnrc (pr_cdcooper crapsld.cdcooper%TYPE,
                        pr_nrdconta crapsld.nrdconta%TYPE) IS 
@@ -2602,7 +2606,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     pr_tab_ocorren(vr_idx).qtdevolu := vr_qtdevolu;
     pr_tab_ocorren(vr_idx).dtcnsspc := rw_crapass.dtcnsspc;
     pr_tab_ocorren(vr_idx).dtdsdsps := rw_crapass.dtdsdspc;
-       pr_tab_ocorren(vr_idx).qtddsdev := rw_crapsld.qtddsdev;
+    pr_tab_ocorren(vr_idx).qtddsdev := rw_crapsld.qtddsdev;
     pr_tab_ocorren(vr_idx).dtdsdclq := rw_crapsld.dtdsdclq;
     pr_tab_ocorren(vr_idx).qtddtdev := rw_crapsld.qtddtdev;
     pr_tab_ocorren(vr_idx).flginadi := vr_flginadi;
@@ -3116,7 +3120,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     --  Alteração : 16/09/2015 - Conversão Progress -> Oracle (Odirlei)
     --
     --              14/11/2017 - Auste para considerar lancamentos de devolucao de capital (Jonata - RKAM P364).
-	--
+    --
 	--              03/12/2017 - Alterado cursor para ler da tbcotas (Jonata - RKAM P364).                 
     -- ..........................................................................*/
     
@@ -3566,7 +3570,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     CLOSE cr_crapsld;
     
     vr_qtddtdev := nvl(rw_crapsld.qtddtdev,0);
-      vr_qtddsdev := nvl(rw_crapsld.qtddsdev,0);
+    vr_qtddsdev := nvl(rw_crapsld.qtddsdev,0);
     
     /* Data SFN */
     IF  nvl(rw_crapass.vledvmto,0) <> 0 THEN
@@ -5859,7 +5863,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     IF vr_tab_mensagens.COUNT > 0 THEN
       FOR i IN vr_tab_mensagens.first..vr_tab_mensagens.last LOOP
         pc_cria_registro_msg(pr_dsmensag             => vr_tab_mensagens(i).dsmensag,
-                             pr_tab_mensagens_atenda => pr_tab_mensagens_atenda);
+                           pr_tab_mensagens_atenda => pr_tab_mensagens_atenda);
       END LOOP; 
     END IF;
 	-- Verifica se foi impressa a declaração de optante do simples nacional
@@ -6203,7 +6207,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     --                                  o valor retornado (Mateus Zimmermann-MoutS)                         
     -- 
 	--             14/11/2017 - Ajuste para considerar lancamentos de devolucao de capital (Jonata - RKAM P364).                 
-	--
+    -- 
 	--             03/12/2017 - Eliminado cursor da craplcm, não será usado (Jonata - RKAM P364).                 
     -- 
     -- ..........................................................................*/
@@ -6240,7 +6244,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
          AND dtcancelamento IS NULL;
     rw_pacotes_tarifas cr_pacotes_tarifas%ROWTYPE;
     
-        
+    
     --------------> TempTable <-----------------
     vr_tab_saldos             EXTR0001.typ_tab_saldos;
     vr_tab_libera_epr         EXTR0001.typ_tab_libera_epr;
@@ -6975,8 +6979,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
                            ,pr_cdcritic         => vr_cdcritic
                            ,pr_dscritic         => vr_dscritic);                             
     
-     
-                                  
+    
+    
     vr_vldevolver := nvl(vr_vlcapital,0) - nvl(vr_vlpago,0);
     
     vr_vlcapital:= 0;
@@ -7390,7 +7394,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
                                        END)   ||'</pacote_tarifa>'||
                         '<vldevolver>'|| vr_tab_valores_conta(i).vldevolver ||'</vldevolver>'||
                         '</Registro>');                                               
-                                                                  
+                                                                     
                                                                      
       END LOOP;                                                      
       pc_escreve_xml ('</Valores>');                                 
@@ -11907,6 +11911,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     
     vr_exc_erro EXCEPTION;
 
+    -- Objetos para armazenar as variáveis da notificação
+    vr_variaveis_notif NOTI0001.typ_variaveis_notif;
+    vr_notif_origem   tbgen_notif_automatica_prm.cdorigem_mensagem%TYPE;
+    vr_notif_motivo   tbgen_notif_automatica_prm.cdmotivo_mensagem%TYPE; 
+
   BEGIN
 
 		-- Verifica cooperativa
@@ -11983,6 +11992,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
                             'Em caso de dúvidas relacionadas a atualização cadastral, entre em '     ||
                             'contato com seu Posto de Atendimento ou através do SAC da cooperativa, '||
                             'pelo 0800 647 2200 ou e-mail sac@cecred.coop.br.';
+
+             vr_notif_origem   := 7;
+             vr_notif_motivo   := 1;
+
            ELSE
              vr_dsmensag := 'Cooperado,' ||
                             '</br></br>' ||
@@ -12003,6 +12016,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
                             'contato pelo SAC 0800 647 2200 ou através do e-mail '                   ||
                             'sac@cecred.coop.br, todos os dias (incluindo domingos e feriados), '    ||
                             'das 6h às 22h.';
+
+             vr_notif_origem   := 7;
+             vr_notif_motivo   := 2;
+             vr_variaveis_notif('#qtmeatel') := to_char(vr_qtmeatel);
+             vr_variaveis_notif('#lstfones') := vr_lstfones;
+
            END IF;
 
            -- CRIAR A MENSAGEM NA CONTA DO COOPERADO
@@ -12025,6 +12044,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
            
            COMMIT; -- COMMITAR A MENSAGEM NA BASE
            pr_dscritic := vr_dsmensag;
+		   --
+           -- Cria uma notificação
+           noti0001.pc_cria_notificacao(pr_cdorigem_mensagem => vr_notif_origem
+                                       ,pr_cdmotivo_mensagem => vr_notif_motivo
+                                       ,pr_cdcooper => pr_cdcooper
+                                       ,pr_nrdconta => pr_nrdconta
+                                       ,pr_idseqttl => 1 -- fixo Primeiro titular
+                                       ,pr_variaveis => vr_variaveis_notif);               
+           --     
 
          END IF;
 

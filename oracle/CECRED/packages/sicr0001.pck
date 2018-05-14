@@ -314,7 +314,7 @@ create or replace package body cecred.SICR0001 is
                  17/07/2017 - Ajustes para permitir o agendamento de lancamentos da mesma
                               conta e referencia no mesmo dia(dtmvtolt) porem com valores
                               diferentes (Lucas Ranghetti #684123)                      
-
+                              
                  15/12/2017 - Padronização mensagens (crapcri, pc_gera_log (tbgen))
                             - Padronização erros comandos DDL
                             - Pc_set_modulo, cecred.pc_internal_exception
@@ -329,10 +329,12 @@ create or replace package body cecred.SICR0001 is
   vr_variaveis_notif NOTI0001.typ_variaveis_notif;
   
   /* CONSTANTES */
-  ORIGEM_AGEND_NAO_EFETIVADO CONSTANT tbgen_notif_automatica_prm.cdorigem_mensagem%TYPE := 3;
-  MOTIVO_SALDO_INSUFICIENTE  CONSTANT tbgen_notif_automatica_prm.cdmotivo_mensagem%TYPE := 8;
-  MOTIVO_LIMITE_EXCEDIDO     CONSTANT tbgen_notif_automatica_prm.cdmotivo_mensagem%TYPE := 9;
+  ORIGEM_TRANS_NAO_EFETIVADO CONSTANT tbgen_notif_automatica_prm.cdorigem_mensagem%TYPE := 5;
+  MOTIVO_SALDO_INSUFICIENTE  CONSTANT tbgen_notif_automatica_prm.cdmotivo_mensagem%TYPE := 4;
+  MOTIVO_LIMITE_EXCEDIDO     CONSTANT tbgen_notif_automatica_prm.cdmotivo_mensagem%TYPE := 5;
   vr_cdprogra                tbgen_prglog.cdprograma%type := 'SICR0001';  
+
+
 
   --> Grava informações para resolver erro de programa/ sistema
   PROCEDURE pc_gera_log(pr_cdcooper      IN PLS_INTEGER           --> Cooperativa
@@ -1233,7 +1235,7 @@ create or replace package body cecred.SICR0001 is
     vr_dsdplchv               crapmsg.dsdplchv%TYPE;
     vr_idmotivo               tbconv_motivo_msg.idmotivo%TYPE;
     vr_valores_dinamicos      VARCHAR2(500);
-    
+
     vr_motivo_mensagem tbgen_notif_automatica_prm.cdmotivo_mensagem%TYPE;
 
   BEGIN
@@ -1271,7 +1273,7 @@ create or replace package body cecred.SICR0001 is
                             '#Data#='    || to_char(pr_dtmvtopg,'DD/MM/RRRR') ||';'||
                             '#Valor#='   || to_char(pr_vllanaut,'fm999G999G990D00') ||';'||
                             '#Limite#='  || to_char(pr_vlrmaxdb,'fm999G999G990D00');
-    
+
     --> Se for todos ou Msg Ibank
     IF pr_tpdnotif IN (0,1) THEN
       
@@ -1281,7 +1283,7 @@ create or replace package body cecred.SICR0001 is
       vr_variaveis_notif('#limite') := to_char(pr_vlrmaxdb,'fm999G999G990D00');  
       
       -- Cria uma notificação
-      NOTI0001.pc_cria_notificacao(pr_cdorigem_mensagem => ORIGEM_AGEND_NAO_EFETIVADO
+      NOTI0001.pc_cria_notificacao(pr_cdorigem_mensagem => ORIGEM_TRANS_NAO_EFETIVADO
                                   ,pr_cdmotivo_mensagem => vr_motivo_mensagem
                                   --,pr_dhenvio => SYSDATE
                                   ,pr_cdcooper => pr_cdcooper
@@ -2334,7 +2336,7 @@ create or replace package body cecred.SICR0001 is
             -- atualiza temp-table com a critica de erro
             pr_cdcritic := 717; --'Nao ha saldo suficiente para a operacao.'
             pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic);
-
+          
             --Esse retorno com erro não era apresentado
             --Grava tabela de log - Ch 788828
             pc_gera_log(pr_cdcooper      => pr_cdcooper,
@@ -2685,7 +2687,7 @@ create or replace package body cecred.SICR0001 is
           END IF;
         END IF;
       END LOOP;
-    
+
     -- Retira nome do modulo logado - 15/12/2017 - Ch 788828
     GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
     EXCEPTION
