@@ -5854,6 +5854,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
 
          Alteracoes:	18/10/2017 - Correcao no extrato de creditos recebidos tela ATENDA - DEP. VISTA
                                      rotina pc_lista_cred_recebidos. SD 762694 (Carlos Rafael Tanholi)
+                        
+                        14/05/2018 - Ajustes para gravar o tpproduto na tabela tbcc_produtos_coop e retirar 
+                                     esse campo do where. Gravar o cdproduto na tabela de historicos.
+                                     PRJ366 (Lombardi).
 
       ............................................................................. */
 
@@ -6128,12 +6132,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
       BEGIN
             UPDATE tbcc_produtos_coop tpc
                SET tpc.dtvigencia = NULL -- Volta a data vigencia para null
+                  ,tpc.tpproduto = pr_tpproduto
                   ,tpc.vlminimo_adesao = vr_servico(2)
                   ,tpc.vlmaximo_adesao = vr_servico(3)
                   ,tpc.nrordem_exibicao = vr_servico(4)
              WHERE tpc.cdcooper  = pr_cdcooper
                AND tpc.tpconta   = pr_tpconta
-               AND tpc.tpproduto = pr_tpproduto
                AND tpc.inpessoa  = pr_inpessoa
                AND tpc.cdproduto = vr_servico(1);
       EXCEPTION
@@ -6206,6 +6210,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
                                         ,pr_cdcooper => pr_cdcooper
                                         ,pr_inpessoa => pr_inpessoa
                                         ,pr_cdtipcta => pr_tpconta
+                                        ,pr_cdprodut => vr_cdproduto
                                         ,pr_tpoperac => 2
                                         ,pr_dsvalant => NULL
                                         ,pr_dsvalnov => to_char(SYSDATE,'DD/MM/RRRR')
