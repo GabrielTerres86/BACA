@@ -4103,6 +4103,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                                portabilidade, sendo que essa validação já é feita anteriormente no momento da
                                aprovação do pagamento. (SD 846721 - Kelvin).
                                
+                  26/03/2018 - Ajuste feito para que caso ocorra algum erro na procedure pc_proc_envia_tec_ted
+                               seja atualizado a situacao para erro e grave a descrição. SD (852564 - Kelvin)
+                               
   ---------------------------------------------------------------------------------------------------------------*/
   ---------------> CURSORES <-----------------
 
@@ -4208,7 +4211,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
        nrdocmto craplcs.nrdocmto%TYPE,
        vllanmto craplcs.vllanmto%TYPE,
        dtmvtolt craplcs.dtmvtolt%TYPE,
-       tppessoa INTEGER);
+       tppessoa INTEGER,
+       nrridlfp craplcs.progress_recid%TYPE);
 
   TYPE typ_tab_crattem IS
     TABLE OF typ_tab_reg_crattem
@@ -4582,6 +4586,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
            vr_tab_crattem(vr_contador).vllanmto := rw_crapccs.vllanmto;
            vr_tab_crattem(vr_contador).dtmvtolt := rw_crapccs.dtmvtolt;
            vr_tab_crattem(vr_contador).tppessoa := 1;
+           vr_tab_crattem(vr_contador).nrridlfp := rw_crapccs.nrridlfp;
 
         END IF;
 
@@ -4684,6 +4689,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                                          pr_des_log      => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - ' ||
                                          'SSPB0001 --> Operador: ' || pr_cdoperad || ' - ' || vr_cdcritic || ' - ' || vr_dscritic);
                         
+              IF rw_crapccs.nrridlfp > 0 THEN
+                
+                --Rollback para liberar registro para atualização (CRAPLFP)
+                ROLLBACK;
+   
+                UPDATE craplfp
+                   SET idsitlct = 'E'  --Erro
+                      ,dsobslct = 'Erro encontrado ' || vr_dscritic
+                 WHERE progress_recid = vr_tab_crattem(vr_idxtbtem).nrridlfp;
+                
+                COMMIT;
+              
+              END IF;
+                                                                         
               vr_dscritic := 'Nao foi possivel enviar o TEC ao SPB';
               RAISE vr_exc_erro;
           END IF;
@@ -5423,8 +5442,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
           END IF;
 
           -- Montar XML com registros
-          GENE0002.pc_escreve_xml(pr_xml            => vr_clobxmlc 
-                                 ,pr_texto_completo => vr_xml_temp 
+        GENE0002.pc_escreve_xml(pr_xml            => vr_clobxmlc 
+                               ,pr_texto_completo => vr_xml_temp 
                                  ,pr_texto_novo     => '<coop>'
                                                     || '  <cdcooper>' || vr_cdcooper || '</cdcooper>'
                                                     || '  <dtintegr>' || TO_CHAR(vr_dtintegr, 'dd/mm/rrrr') || '</dtintegr>'
@@ -5571,7 +5590,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
 				vr_dsdemail := 'Não foi possível atualizar a situação operacional da IF na camara' ||
 											' PAG: Instituição Financeira não encontrada ou não operante no STR.<br/><br/>' ||
 											vr_lista_ispb;
-      
+
 				-- Envia email para o spb
 				gene0003.pc_solicita_email(pr_cdcooper        => 3
 																	,pr_cdprogra        => pr_cdprogra
@@ -5586,7 +5605,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
 					--Levantar Excecao
 					RAISE vr_exc_erro;
 				END IF;
-			END IF;
+      END IF;  
     EXCEPTION
 			WHEN vr_exc_erro THEN
         -- Grava erro em log
