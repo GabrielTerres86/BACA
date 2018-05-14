@@ -36,6 +36,8 @@
 							  
         12/01/2018 - Alteracoes refrente ao PJ406.
 							  
+             14/05/2018 - Alterado para não permitir alterar faturas com datas
+                          inferiores à data atual. (Melhoria PRJ406 - Reinert)
 ****************************************************************************/
 
 var frmPesqti    = 'frmPesqti';
@@ -392,11 +394,13 @@ function formataFiltro() {
 
 	if ($('#cddopcao', '#frmCabPesqti').val() == "A") {
 	    $('#dtdpagto', '#divFiltroFatura').desabilitaCampo();
-	    $('#dtdpagto', '#divFiltroFaturaSicredi').desabilitaCampo();
+	    $('#dtipagto', '#divFiltroFaturaSicredi').desabilitaCampo();
+	    $('#dtfpagto', '#divFiltroFaturaSicredi').desabilitaCampo();
 	    $('#dtdpagto', '#divFiltroTitulos').desabilitaCampo();
 	} else {
 	    $('#dtdpagto', '#divFiltroFatura').habilitaCampo();
-	    $('#dtdpagto', '#divFiltroFaturaSicredi').habilitaCampo();
+	    $('#dtipagto', '#divFiltroFaturaSicredi').habilitaCampo();
+	    $('#dtfpagto', '#divFiltroFaturaSicredi').habilitaCampo();		
 	    $('#dtdpagto', '#divFiltroTitulos').habilitaCampo();
 	}
 	
