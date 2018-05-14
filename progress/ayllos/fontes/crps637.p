@@ -4,7 +4,7 @@
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Lucas Lunelli
-    Data    : Fevereiro/2013                  Ultima Atualizacao : 12/12/2017
+    Data    : Fevereiro/2013                  Ultima Atualizacao : 14/05/2018
     
     Dados referente ao programa:
     
@@ -52,6 +52,8 @@
                 11/12/2017 - Alterar campo flgcnvsi por tparrecd.
                              PRJ406-FGTS (Odirlei-AMcom)    
                              
+                14/05/2018 - Adicionar chamada do fonte imprim_unif.p no lugar do imprim.p
+                             (Lucas Ranghetti #860204)
 ..............................................................................*/
 
 DEF STREAM str_1.  /* ARQ. IMPORTAÇÃO       */
@@ -1061,8 +1063,8 @@ PROCEDURE gera-rel640:
     END.
 
     OUTPUT STREAM str_3 CLOSE.
-   
-    RUN fontes/imprim.p.
+    
+    RUN fontes/imprim_unif.p (INPUT glb_cdcooper).
 
 END PROCEDURE.
 
