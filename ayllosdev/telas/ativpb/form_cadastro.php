@@ -4,6 +4,11 @@
  * CRIAÇÃO      : Marcel Kohls (AMCom)
  * DATA CRIAÇÃO : 15/03/2018
  * OBJETIVO     : formulário para cadastro de ativos problematicos
+ * ALTERAÇÕES   :
+ *
+ *                Criação de lupa para listas os contratos
+ *                Diego Simas - AMcom
+ *
  */
 
 session_start();
@@ -12,8 +17,6 @@ require_once('../../includes/funcoes.php');
 require_once('../../includes/controla_secao.php');
 require_once('../../class/xmlfile.php');
 
-// $nrdconta		= (isset($_POST['nrdconta'])) ? $_POST['nrdconta']  : '0';
-// $nrctrato		= (isset($_POST['nrctrato'])) ? $_POST['nrctrato']  : '0';
 $nrdconta		= (isset($_POST['nrdconta'])) ? $_POST['nrdconta']  : '';
 $nrctremp		= (isset($_POST['nrctremp'])) ? $_POST['nrctremp']  : '';
 $cdmotivo		= (isset($_POST['cdmotivo'])) ? $_POST['cdmotivo']  : '';
@@ -52,6 +55,7 @@ $acaoSalvar = (empty($cdmotivo) ?  "Inclui_Dados" : "Altera_Dados");
 
 												<label for="nrctremp" class="rotulo">Contrato:</label>
 												<input name="nrctremp" id="nrctremp" type="text"  class="campo" value="<?= $nrctremp ?>" />
+												<a onClick="mostraContrato('#nrctremp','#frmCad',$('#nrdconta', '#frmCad').val()); return false;"><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif" /></a>
 
 												<label for="flmotivo">Motivo:</label>
 												<select id="flmotivo" name="flmotivo">

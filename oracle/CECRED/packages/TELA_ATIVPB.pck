@@ -1,17 +1,17 @@
-CREATE OR REPLACE PACKAGE CECRED.TELA_ATVPRB AS
+CREATE OR REPLACE PACKAGE CECRED.TELA_ATIVPB AS
 
   ---------------------------------------------------------------------------------------------------------------
   --
-  --  Programa : TELA_ATVPRB                        
-  --  Sistema  : Rotina para gravar informações de Operações Ativo Problematico
-  --  Sigla    : ATVPRB
+  --  Programa : TELA_ATIVPB                        
+  --  Sistema  : Rotina para gravar informaÃ§Ãµes de OperaÃ§Ãµes Ativo Problematico
+  --  Sigla    : ATIVPB
   --  Autor    : Rangel Decker
   --  Data     : Marco/2018.                   Ultima atualizacao:
   --
   -- Dados referentes ao programa:
   --
   -- Frequencia: Sempre que for chamado
-  -- Objetivo  : Atualização e cadastro de Operações Ativo Problematico
+  -- Objetivo  : AtualizaÃ§Ã£o e cadastro de OperaÃ§Ãµes Ativo Problematico
 
   -- Alteracoes:
   --
@@ -28,25 +28,25 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ATVPRB AS
   PROCEDURE pc_valida_informacoes(pr_cdcooper  IN crapepr.cdcooper%TYPE --Cooperativa
                                   ,pr_nrdconta IN crapepr.nrdconta%TYPE --Conta
                                   ,pr_nrctremp IN crapepr.nrctremp%TYPE --Contrato Emprestimo
-                                  ,pr_cdcritic OUT PLS_INTEGER          --Código da crítica
-                                  ,pr_dscritic OUT VARCHAR2             --Descrição da crítica
+                                  ,pr_cdcritic OUT PLS_INTEGER          --CÃ³digo da crÃ­tica
+                                  ,pr_dscritic OUT VARCHAR2             --DescriÃ§Ã£o da crÃ­tica
                                   ,pr_nmdcampo OUT VARCHAR2             --Nome do Campo
                                   ,pr_des_erro OUT VARCHAR2);
 
-   PROCEDURE pc_consulta ( pr_cdcooper  IN tbcadast_ativo_probl.cdcooper%TYPE   --Cooperativa
+   PROCEDURE pc_consulta (  pr_idativo  IN tbcadast_ativo_probl.idativo%TYPE   -- 1-Ativo / 0 Inativo   
+                          ,pr_cdcooper IN tbcadast_ativo_probl.cdcooper%TYPE   --Cooperativa
                           ,pr_nrdconta IN tbcadast_ativo_probl.nrdconta%TYPE  --Conta
                           ,pr_nrctremp IN tbcadast_ativo_probl.nrctremp%TYPE  --Contrato Emprestimo
                           ,pr_cdmotivo IN tbcadast_ativo_probl.cdmotivo%TYPE  --Codigo do moitvo
                           ,pr_datainic IN VARCHAR2 --Data de Inclusao Inicio
                           ,pr_datafina IN VARCHAR2 --Data de Inclusao Fim
                           ,pr_pagina   IN NUMBER   --Nr da Pagina
-                          ,pr_xmllog   IN VARCHAR2              --XML com informações de LOG
-                          ,pr_cdcritic OUT PLS_INTEGER          --Código da crítica
-                          ,pr_dscritic OUT VARCHAR2             --Descrição da crítica
+                          ,pr_xmllog   IN VARCHAR2              --XML com informaÃ§Ãµes de LOG
+                          ,pr_cdcritic OUT PLS_INTEGER          --CÃ³digo da crÃ­tica
+                          ,pr_dscritic OUT VARCHAR2             --DescriÃ§Ã£o da crÃ­tica
                           ,pr_retxml   IN OUT NOCOPY XMLType    --Arquivo de retorno do XML
                           ,pr_nmdcampo OUT VARCHAR2             --Nome do Campo
-                          ,pr_des_erro OUT VARCHAR2);          --Saida OK/NOK
-
+                          ,pr_des_erro OUT VARCHAR2);            --OK/NOK
 
 
    PROCEDURE pc_consulta_historico ( pr_cdcooper IN tbhist_ativo_probl.cdcooper%TYPE --Cooperativa
@@ -56,9 +56,9 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ATVPRB AS
                                      ,pr_datainic IN VARCHAR2 --Data inicio
                                      ,pr_datafina IN VARCHAR2 --Data fim
                                      ,pr_pagina   IN NUMBER   --Nr da Pagina
-                                     ,pr_xmllog   IN VARCHAR2              --XML com informações de LOG
-                                     ,pr_cdcritic OUT PLS_INTEGER          --Código da crítica
-                                     ,pr_dscritic OUT VARCHAR2             --Descrição da crítica
+                                     ,pr_xmllog   IN VARCHAR2              --XML com informaÃ§Ãµes de LOG
+                                     ,pr_cdcritic OUT PLS_INTEGER          --CÃ³digo da crÃ­tica
+                                     ,pr_dscritic OUT VARCHAR2             --DescriÃ§Ã£o da crÃ­tica
                                      ,pr_retxml   IN OUT NOCOPY XMLType    --Arquivo de retorno do XML
                                      ,pr_nmdcampo OUT VARCHAR2             --Nome do Campo
                                      ,pr_des_erro OUT VARCHAR2);          --Saida OK/NOK
@@ -76,10 +76,10 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ATVPRB AS
                         ,pr_nrdconta  IN crapepr.nrdconta%TYPE --Numero da Conta
                         ,pr_nrctremp  IN crapepr.nrctremp%TYPE --Conta base
                         ,pr_cdmotivo IN NUMBER                 --Codigo motivo
-                        ,pr_dsobserv  IN VARCHAR2              -- Observação
-                        ,pr_xmllog    IN VARCHAR2              --XML com informações de LOG
-                        ,pr_cdcritic  OUT PLS_INTEGER          --Código da crítica
-                        ,pr_dscritic  OUT VARCHAR2             --Descrição da crítica
+                        ,pr_dsobserv  IN VARCHAR2              -- ObservaÃ§Ã£o
+                        ,pr_xmllog    IN VARCHAR2              --XML com informaÃ§Ãµes de LOG
+                        ,pr_cdcritic  OUT PLS_INTEGER          --CÃ³digo da crÃ­tica
+                        ,pr_dscritic  OUT VARCHAR2             --DescriÃ§Ã£o da crÃ­tica
                         ,pr_retxml    IN OUT NOCOPY XMLType    --Arquivo de retorno do XML
                         ,pr_nmdcampo  OUT VARCHAR2             --Nome do Campo
                         ,pr_des_erro  OUT VARCHAR2);           --Saida OK/NOK
@@ -89,9 +89,9 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ATVPRB AS
                         ,pr_nrdconta  IN crapepr.nrdconta%TYPE --Numero da Conta
                         ,pr_nrctremp  IN crapepr.nrctremp%TYPE --Conta base
                          ,pr_cdmotivo IN NUMBER                -- Codigo do Motivo
-                        ,pr_xmllog    IN VARCHAR2              --XML com informações de LOG
-                        ,pr_cdcritic  OUT PLS_INTEGER          --Código da crítica
-                        ,pr_dscritic  OUT VARCHAR2             --Descrição da crítica
+                        ,pr_xmllog    IN VARCHAR2              --XML com informaÃ§Ãµes de LOG
+                        ,pr_cdcritic  OUT PLS_INTEGER          --CÃ³digo da crÃ­tica
+                        ,pr_dscritic  OUT VARCHAR2             --DescriÃ§Ã£o da crÃ­tica
                         ,pr_retxml    IN OUT NOCOPY XMLType    --Arquivo de retorno do XML
                         ,pr_nmdcampo  OUT VARCHAR2             --Nome do Campo
                         ,pr_des_erro  OUT VARCHAR2);            --Saida OK/NOK
@@ -100,31 +100,31 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ATVPRB AS
                         ,pr_nrdconta  IN crapepr.nrdconta%TYPE --Numero da Conta
                         ,pr_nrctremp  IN crapepr.nrctremp%TYPE --Conta base
                         ,pr_cdmotivo IN NUMBER                 --Codigo motivo
-                        ,pr_dsobserv  IN VARCHAR2              -- Observação
-                        ,pr_xmllog    IN VARCHAR2              --XML com informações de LOG
-                        ,pr_cdcritic  OUT PLS_INTEGER          --Código da crítica
-                        ,pr_dscritic  OUT VARCHAR2             --Descrição da crítica
+                        ,pr_dsobserv  IN VARCHAR2              -- ObservaÃ§Ã£o
+                        ,pr_xmllog    IN VARCHAR2              --XML com informaÃ§Ãµes de LOG
+                        ,pr_cdcritic  OUT PLS_INTEGER          --CÃ³digo da crÃ­tica
+                        ,pr_dscritic  OUT VARCHAR2             --DescriÃ§Ã£o da crÃ­tica
                         ,pr_retxml    IN OUT NOCOPY XMLType    --Arquivo de retorno do XML
                         ,pr_nmdcampo  OUT VARCHAR2             --Nome do Campo
                         ,pr_des_erro  OUT VARCHAR2);           --Saida OK/NOK
 
 
    PROCEDURE pc_busca_motivos_probl( pr_tipo      IN VARCHAR2
-                                     ,pr_xmllog   IN VARCHAR2              --XML com informações de LOG
-                                     ,pr_cdcritic OUT PLS_INTEGER          --Código da crítica
-                                     ,pr_dscritic OUT VARCHAR2             --Descrição da crítica
+                                     ,pr_xmllog   IN VARCHAR2              --XML com informaÃ§Ãµes de LOG
+                                     ,pr_cdcritic OUT PLS_INTEGER          --CÃ³digo da crÃ­tica
+                                     ,pr_dscritic OUT VARCHAR2             --DescriÃ§Ã£o da crÃ­tica
                                      ,pr_retxml   IN OUT NOCOPY XMLType    --Arquivo de retorno do XML
                                      ,pr_nmdcampo OUT VARCHAR2             --Nome do Campo
                                      ,pr_des_erro OUT VARCHAR2);          --Saida OK/NOK
 
-END TELA_ATVPRB;
+END TELA_ATIVPB;
 /
-CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
+CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATIVPB AS
 
 /*---------------------------------------------------------------------------------------------------------------
-   Programa: TELA_ATVPRB                          
+   Programa: TELA_ATIVPB                          
    Sistema : Cadastro - Tela Ativo Problematico
-   Sigla   : ATVPRB 
+   Sigla   : ATIVPB 
 
    Autor   : Rangel Decker - AMcom
    Data    : Marco/2018                       Ultima atualizacao:
@@ -137,7 +137,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
    Alteracoes:
   ---------------------------------------------------------------------------------------------------------------*/
 
-  -- Variavel temporária para LOG
+  -- Variavel temporÃ¡ria para LOG
   vr_dslogtel VARCHAR2(32767) := '';
 
 
@@ -153,7 +153,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
 
     Programa : pc_gera_log                            
     Sistema  : Cadastro - Tela Ativo Problematico
-    Sigla    : ATVPRB
+    Sigla    : ATIVPB
     Autor    : Rangel Decker - AMcom
     Data     : Marco/2018                           Ultima atualizacao:
 
@@ -162,7 +162,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
     Frequencia : Sempre que for chamado
     Objetivo   : Procedure para gerar log
 
-    Alterações :
+    AlteraÃ§Ãµes :
     -------------------------------------------------------------------------------------------------------------*/
 
    BEGIN
@@ -172,7 +172,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
          vr_dslogtel := vr_dslogtel
                      || to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss')
                      || ' -->  Operador ' || pr_cdoperad || ' - '
-                     || 'Incluiu a conta '|| pr_nrconta  || ' como ativo problemático.'
+                     || 'Incluiu a conta '|| pr_nrconta  || ' como ativo problemÃ¡tico.'
                      || 'Na cooperativa ' || pr_cdcooper  ;
 
        WHEN 2 THEN
@@ -202,7 +202,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
          vr_dslogtel := vr_dslogtel
                      || to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss')
                      || ' -->  Operador '|| pr_cdoperad || ' - '
-                     || 'Excluiu a operação de ativo problematico para conta '
+                     || 'Excluiu a operaÃ§Ã£o de ativo problematico para conta '
                      || pr_nrconta ||'da cooperativa'||pr_cdcooper|| '.';
 
        ELSE NULL;
@@ -215,12 +215,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
       btch0001.pc_gera_log_batch(pr_cdcooper => pr_cdcooper,
                                  pr_ind_tipo_log => 2,
                                  pr_des_log  => vr_dslogtel,
-                                 pr_nmarqlog => 'atvprb.log',
+                                 pr_nmarqlog => 'ativpb.log',
                                  pr_flfinmsg => 'N');
 
    EXCEPTION
      WHEN OTHERS THEN
-       -- Não havia tratamento anterior no retorno da mesma
+       -- NÃ£o havia tratamento anterior no retorno da mesma
        NULL;
    END pc_gera_log;
 
@@ -228,10 +228,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
                         ,pr_nrdconta  IN crapepr.nrdconta%TYPE --Numero da Conta
                         ,pr_nrctremp  IN crapepr.nrctremp%TYPE --Conta base
                         ,pr_cdmotivo  IN NUMBER                --Codigo motivo
-                        ,pr_dsobserv  IN VARCHAR2              -- Observação
-                        ,pr_xmllog    IN VARCHAR2              --XML com informações de LOG
-                        ,pr_cdcritic  OUT PLS_INTEGER          --Código da crítica
-                        ,pr_dscritic  OUT VARCHAR2             --Descrição da crítica
+                        ,pr_dsobserv  IN VARCHAR2              -- ObservaÃ§Ã£o
+                        ,pr_xmllog    IN VARCHAR2              --XML com informaÃ§Ãµes de LOG
+                        ,pr_cdcritic  OUT PLS_INTEGER          --CÃ³digo da crÃ­tica
+                        ,pr_dscritic  OUT VARCHAR2             --DescriÃ§Ã£o da crÃ­tica
                         ,pr_retxml    IN OUT NOCOPY XMLType    --Arquivo de retorno do XML
                         ,pr_nmdcampo  OUT VARCHAR2             --Nome do Campo
                         ,pr_des_erro  OUT VARCHAR2)IS          --Saida OK/NOK
@@ -240,16 +240,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
 
     Programa : pc_alteracao                           
     Sistema  : Cadastro - Tela Ativo Problematico
-    Sigla    : ATVPRB
-    Autor    : Rangel Decker -AMcom
+    Sigla    : ATIVPB
+    Autor    : Rangel Decker - AMcom
     Data     : Marco/2018                           Ultima atualizacao:
 
     Dados referentes ao programa:
 
     Frequencia : Sempre que for chamado
-    Objetivo   : Altera cadastro Operação Ativo Problematico
+    Objetivo   : Altera cadastro OperaÃ§Ã£o Ativo Problematico
 
-    Alterações :
+    AlteraÃ§Ãµes :
     -------------------------------------------------------------------------------------------------------------*/
 
 
@@ -267,8 +267,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
 
   BEGIN
 
-    -- Incluir nome do módulo logado
-    GENE0001.pc_informa_acesso(pr_module => 'ATVPRB'
+    -- Incluir nome do mÃ³dulo logado
+    GENE0001.pc_informa_acesso(pr_module => 'ATIVPB'
                               ,pr_action => null);
 
     -- Recupera dados de log para consulta posterior
@@ -288,11 +288,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
       RAISE vr_exc_erro;
     END IF;
 
-    TELA_ATVPRB.pc_valida_informacoes(pr_cdcooper   => pr_cdcooper --Cooperativa
+    TELA_ATIVPB.pc_valida_informacoes(pr_cdcooper   => pr_cdcooper --Cooperativa
                                       ,pr_nrdconta  => pr_nrdconta --Conta
                                       ,pr_nrctremp  => pr_nrctremp --Contrato Emprestimo
-                                      ,pr_cdcritic => vr_cdcritic --Cõdigo da critica
-                                      ,pr_dscritic => vr_dscritic --Descrção da critica
+                                      ,pr_cdcritic => vr_cdcritic --CÃµdigo da critica
+                                      ,pr_dscritic => vr_dscritic --DescrÃ§Ã£o da critica
                                       ,pr_nmdcampo => vr_nmdcampo --Nome do campo de retorno
                                       ,pr_des_erro => vr_des_erro); --Retorno OK;NOK
 
@@ -304,7 +304,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
 
     END IF;
 
-    --Realiza a alteração do registro de convenio
+    --Realiza a alteraÃ§Ã£o do registro de convenio
     BEGIN
 
       UPDATE tbcadast_ativo_probl tbap
@@ -320,13 +320,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
       WHEN OTHERS THEN
         --Monta mensagem de erro
         vr_cdcritic := 0;
-        vr_dscritic := 'Nao foi possivel atualizar a operação - ' || sqlerrm;
+        vr_dscritic := 'Nao foi possivel atualizar a operaÃ§Ã£o - ' || sqlerrm;
 
         RAISE vr_exc_erro;
 
     END;
 
-    -- Geração de LOG
+    -- GeraÃ§Ã£o de LOG
      pc_gera_log (pr_cdoperad => vr_cdoperad
                 ,pr_tipdolog => 3
                 ,pr_cdcooper => pr_cdcooper
@@ -370,7 +370,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
       pr_cdcritic := vr_cdcritic;
       pr_dscritic := vr_dscritic;
 
-      -- Existe para satisfazer exigência da interface.
+      -- Existe para satisfazer exigÃªncia da interface.
       pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                      '<Root><Erro>'||pr_dscritic ||'</Erro></Root>');
 
@@ -382,7 +382,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
       pr_cdcritic:= 0;
       pr_dscritic:='Erro na pc_alteracao --> '|| SQLERRM;
 
-      -- Existe para satisfazer exigência da interface.
+      -- Existe para satisfazer exigÃªncia da interface.
       pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                      '<Root><Erro>'||pr_dscritic || '</Erro></Root>');
 
@@ -391,14 +391,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
 
 
   END pc_alteracao;
+  
 
   PROCEDURE pc_exclusao (pr_cdcooper  IN crapepr.cdcooper%TYPE --Codigo Cooperativa
                         ,pr_nrdconta  IN crapepr.nrdconta%TYPE --Numero da Conta
                         ,pr_nrctremp  IN crapepr.nrctremp%TYPE --Conta base
                         ,pr_cdmotivo IN NUMBER                -- Codigo do Motivo
-                        ,pr_xmllog    IN VARCHAR2              --XML com informações de LOG
-                        ,pr_cdcritic  OUT PLS_INTEGER          --Código da crítica
-                        ,pr_dscritic  OUT VARCHAR2             --Descrição da crítica
+                        ,pr_xmllog    IN VARCHAR2              --XML com informaÃ§Ãµes de LOG
+                        ,pr_cdcritic  OUT PLS_INTEGER          --CÃ³digo da crÃ­tica
+                        ,pr_dscritic  OUT VARCHAR2             --DescriÃ§Ã£o da crÃ­tica
                         ,pr_retxml    IN OUT NOCOPY XMLType    --Arquivo de retorno do XML
                         ,pr_nmdcampo  OUT VARCHAR2             --Nome do Campo
                         ,pr_des_erro  OUT VARCHAR2)IS          --Saida OK/NOK)
@@ -407,16 +408,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
 
     Programa : pc_exclusao                            
     Sistema  : Cadastro - Tela Ativo Problematico
-    Sigla    : ATVPRB
+    Sigla    : ATIVPB
     Autor    : Rangel Decker AMcom
     Data     : Marco/2018                           Ultima atualizacao:
 
     Dados referentes ao programa:
 
     Frequencia : Sempre que for chamado
-    Objetivo   : Desativa a situação de ativo problematico.
+    Objetivo   : Desativa a situaÃ§Ã£o de ativo problematico.
 
-    Alterações :
+    AlteraÃ§Ãµes :
     -------------------------------------------------------------------------------------------------------------*/
 
     --Variaveis de Criticas
@@ -429,7 +430,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
     vr_des_erro VARCHAR2(100);
     vr_nmdcampo VARCHAR2(100);
 
-    -- Variável genérica de calendário com base no cursor da btch0001
+    -- VariÃ¡vel genÃ©rica de calendÃ¡rio com base no cursor da btch0001
     rw_crapdat btch0001.cr_crapdat%ROWTYPE;
 
     --Variaveis de Excecoes
@@ -437,8 +438,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
 
   BEGIN
 
-    -- Incluir nome do módulo logado
-    GENE0001.pc_informa_acesso(pr_module => 'ATVPRB'
+    -- Incluir nome do mÃ³dulo logado
+    GENE0001.pc_informa_acesso(pr_module => 'ATIVPB'
                               ,pr_action => null);
 
     -- Recupera dados de log para consulta posterior
@@ -457,11 +458,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
       RAISE vr_exc_erro;
     END IF;*/
 
-     -- Leitura do calendário da cooperativa
+     -- Leitura do calendÃ¡rio da cooperativa
       OPEN btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
       FETCH btch0001.cr_crapdat
        INTO rw_crapdat;
-      -- Se não encontrar
+      -- Se nÃ£o encontrar
       IF btch0001.cr_crapdat%NOTFOUND THEN
         -- Fechar o cursor pois efetuaremos raise
         CLOSE btch0001.cr_crapdat;
@@ -479,11 +480,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
 
 
    -- Verifica se houve erro recuperando informacoes de log
-     TELA_ATVPRB.pc_valida_informacoes(pr_cdcooper   => pr_cdcooper --Cooperativa
-                                      ,pr_nrdconta  => pr_nrdconta --Conta
-                                      ,pr_nrctremp  => pr_nrctremp --Contrato Emprestimo
-                                      ,pr_cdcritic => vr_cdcritic --Cõdigo da critica
-                                      ,pr_dscritic => vr_dscritic --Descrção da critica
+     TELA_ATIVPB.pc_valida_informacoes(pr_cdcooper => pr_cdcooper --Cooperativa
+                                      ,pr_nrdconta => pr_nrdconta --Conta
+                                      ,pr_nrctremp => pr_nrctremp --Contrato Emprestimo
+                                      ,pr_cdcritic => vr_cdcritic --CÃµdigo da critica
+                                      ,pr_dscritic => vr_dscritic --DescrÃ§Ã£o da critica
                                       ,pr_nmdcampo => vr_nmdcampo --Nome do campo de retorno
                                       ,pr_des_erro => vr_des_erro); --Retorno OK
 
@@ -496,14 +497,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
     END IF;
 
     BEGIN
-
-      UPDATE tbcadast_ativo_probl tbap
-      SET    tbap.dtexclus = rw_crapdat.dtmvtolt,
-             tbap.idativo  = 0
-      WHERE  tbap.cdcooper = pr_cdcooper
-      AND    tbap.nrdconta = pr_nrdconta
-      AND    tbap.nrctremp = pr_nrctremp
-      AND    tbap.cdmotivo = pr_cdmotivo;
+      -- Se nÃ£o for informado contrato, inativar todos os contratos ativos
+      -- disponiveis na conta do associado na cooperativa 
+      IF nvl(pr_nrctremp,0) = 0 THEN  
+        UPDATE tbcadast_ativo_probl tbap
+        SET    tbap.dtexclus = rw_crapdat.dtmvtolt,
+               tbap.idativo  = 0
+        WHERE  tbap.cdcooper = pr_cdcooper
+        AND    tbap.nrdconta = pr_nrdconta
+        AND    tbap.dtexclus IS NULL 
+        AND    tbap.nrctremp = DECODE(pr_nrctremp, 0, tbap.nrctremp, pr_nrctremp);
+      ELSE
+        UPDATE tbcadast_ativo_probl tbap
+        SET    tbap.dtexclus = rw_crapdat.dtmvtolt,
+               tbap.idativo  = 0
+        WHERE  tbap.cdcooper = pr_cdcooper
+        AND    tbap.nrdconta = pr_nrdconta
+        AND    tbap.nrctremp = pr_nrctremp
+        AND    tbap.cdmotivo = pr_cdmotivo;          
+      END IF;  
 
     EXCEPTION
         WHEN OTHERS THEN
@@ -542,7 +554,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
       pr_dscritic:= vr_dscritic;
 
 
-      -- Existe para satisfazer exigência da interface.
+      -- Existe para satisfazer exigÃªncia da interface.
       pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                      '<Root><Erro>'||pr_dscritic ||'</Erro></Root>');
 
@@ -556,7 +568,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
       pr_cdcritic:= 0;
       pr_dscritic:= 'Erro na pc_exclusao --> '|| SQLERRM;
 
-      -- Existe para satisfazer exigência da interface.
+      -- Existe para satisfazer exigÃªncia da interface.
       pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                      '<Root><Erro>' ||pr_dscritic || '</Erro></Root>');
 
@@ -568,10 +580,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
                         ,pr_nrdconta  IN crapepr.nrdconta%TYPE --Numero da Conta
                         ,pr_nrctremp  IN crapepr.nrctremp%TYPE --Conta base
                         ,pr_cdmotivo IN NUMBER                --Codigo motivo
-                        ,pr_dsobserv  IN VARCHAR2              -- Observação
-                        ,pr_xmllog    IN VARCHAR2              --XML com informações de LOG
-                        ,pr_cdcritic  OUT PLS_INTEGER          --Código da crítica
-                        ,pr_dscritic  OUT VARCHAR2             --Descrição da crítica
+                        ,pr_dsobserv  IN VARCHAR2              -- ObservaÃ§Ã£o
+                        ,pr_xmllog    IN VARCHAR2              --XML com informaÃ§Ãµes de LOG
+                        ,pr_cdcritic  OUT PLS_INTEGER          --CÃ³digo da crÃ­tica
+                        ,pr_dscritic  OUT VARCHAR2             --DescriÃ§Ã£o da crÃ­tica
                         ,pr_retxml    IN OUT NOCOPY XMLType    --Arquivo de retorno do XML
                         ,pr_nmdcampo  OUT VARCHAR2             --Nome do Campo
                         ,pr_des_erro  OUT VARCHAR2) IS          --Saida OK/NOK
@@ -579,16 +591,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
 
     Programa : pc_inclusao                            
     Sistema  : Cadastro - Tela Ativo Problematico
-    Sigla    : ATVPRB
+    Sigla    : ATIVPB
     Autor    : Rangel Decker - AMcom
     Data     : Marco/2018                           Ultima atualizacao:
 
     Dados referentes ao programa:
 
     Frequencia:  Sempre que for chamado
-    Objetivo   : Inclui cadastro operações ativo problematico.
+    Objetivo   : Inclui cadastro operaÃ§Ãµes ativo problematico.
 
-    Alterações :
+    AlteraÃ§Ãµes :
     -------------------------------------------------------------------------------------------------------------*/
 
     --Variaveis locais
@@ -596,7 +608,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
     vr_nmdcampo VARCHAR2(100);
     vr_des_erro VARCHAR2(10);
 
-    vr_dtrefere     DATE;                   --> Data de referência do processo
+    vr_dtrefere     DATE;                   --> Data de referÃªncia do processo
 
     vr_verifica NUMBER;
 
@@ -604,24 +616,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
     vr_exc_erro EXCEPTION;
     vr_cdcritic INTEGER;
     vr_dscritic VARCHAR2(1000);
+    vr_datahora VARCHAR2(20);
+    
+    vr_retxml XMLType;
+    vr_xmllog VARCHAR2(100);
 
-    -- Variável genérica de calendário com base no cursor da btch0001
+
+    -- VariÃ¡vel genÃ©rica de calendÃ¡rio com base no cursor da btch0001
     rw_crapdat btch0001.cr_crapdat%ROWTYPE;
 
-
+    
 
   BEGIN
 
-   -- Incluir nome do módulo logado
-    GENE0001.pc_informa_acesso(pr_module => 'ATVPRB'
-                              ,pr_action => null);
-
-
-     -- Leitura do calendário da cooperativa
+     -- Leitura do calendÃ¡rio da cooperativa
       OPEN btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
       FETCH btch0001.cr_crapdat
        INTO rw_crapdat;
-      -- Se não encontrar
+      -- Se nÃ£o encontrar
       IF btch0001.cr_crapdat%NOTFOUND THEN
         -- Fechar o cursor pois efetuaremos raise
         CLOSE btch0001.cr_crapdat;
@@ -635,25 +647,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
         -- Apenas fechar o cursor
         CLOSE btch0001.cr_crapdat;
       END IF;
-
-  -- Recupera dados de log para consulta posterior
-    /*gene0004.pc_extrai_dados(pr_xml      => pr_retxml
-                            ,pr_cdcooper => vr_cdcooper
-                            ,pr_nmdatela => vr_nmdatela
-                            ,pr_nmeacao  => vr_nmeacao
-                            ,pr_cdagenci => vr_cdagenci
-                            ,pr_nrdcaixa => vr_nrdcaixa
-                            ,pr_idorigem => vr_idorigem
-                            ,pr_cdoperad => vr_cdoperad
-                            ,pr_dscritic => vr_dscritic);*/
-
-
-   -- Verifica se houve erro recuperando informacoes de log
-     TELA_ATVPRB.pc_valida_informacoes(pr_cdcooper   => pr_cdcooper --Cooperativa
+      
+     vr_datahora := to_char(rw_crapdat.dtmvtolt,'dd/mm/yyyy') ||' '|| to_char(sysdate,'hh24:mi:ss');
+      
+   
+    -- Verifica se houve erro recuperando informacoes de log
+     TELA_ATIVPB.pc_valida_informacoes(pr_cdcooper  => pr_cdcooper --Cooperativa
                                       ,pr_nrdconta  => pr_nrdconta --Conta
-                                      ,pr_nrctremp  => pr_nrctremp --Contrato Emprestimo
-                                      ,pr_cdcritic => vr_cdcritic --Cõdigo da critica
-                                      ,pr_dscritic => vr_dscritic --Descrção da critica
+                                      ,pr_nrctremp  => nvl(pr_nrctremp,0) --Contrato Emprestimo
+                                      ,pr_cdcritic => vr_cdcritic --CÃµdigo da critica
+                                      ,pr_dscritic => vr_dscritic --DescrÃ§Ã£o da critica
                                       ,pr_nmdcampo => vr_nmdcampo --Nome do campo de retorno
                                       ,pr_des_erro => vr_des_erro); --Retorno OK
 
@@ -664,8 +667,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
       RAISE vr_exc_erro;
 
     END IF;
+    -- se nÃ£o busca todos os contratos da conta e marca como excluido
 
-    -- Verifica se o registro já existe
+    -- Verifica se o registro jÃ¡ existe
     BEGIN
       SELECT 1 INTO vr_verifica
       FROM tbcadast_ativo_probl tbap
@@ -686,9 +690,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
         RAISE vr_exc_erro;
      END IF;
 
-     --Incluir registro de operações ativo problematico
+     --Incluir registro de operaÃ§Ãµes ativo problematico
      BEGIN
-
+     IF  nvl(pr_nrctremp,0) = 0 THEN 
+       
+        TELA_ATIVPB.pc_exclusao (pr_cdcooper =>pr_cdcooper --Codigo Cooperativa
+                                ,pr_nrdconta =>pr_nrdconta             --Numero da Conta
+                                ,pr_nrctremp =>pr_nrctremp             --Conta base
+                                ,pr_cdmotivo =>pr_cdmotivo             -- Codigo do Motivo
+                                ,pr_xmllog   =>vr_xmllog               --XML com informaÃ§Ãµes de LOG
+                                ,pr_cdcritic =>vr_cdcritic             --CÃ³digo da crÃ­tica
+                                ,pr_dscritic =>vr_dscritic             --DescriÃ§Ã£o da crÃ­tica
+                                ,pr_retxml   =>vr_retxml               --Arquivo de retorno do XML
+                                ,pr_nmdcampo =>vr_nmdcampo             --Nome do Campo
+                                ,pr_des_erro =>vr_des_erro);
+     
+                               
+     END IF;    
+     
+    
+  
      INSERT INTO tbcadast_ativo_probl(cdcooper,
                                       nrdconta,
                                       nrctremp,
@@ -698,7 +719,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
       VALUES(pr_cdcooper,
              pr_nrdconta,
              pr_nrctremp,
-             rw_crapdat.dtmvtolt,
+             to_date(vr_datahora,'dd/mm/yyyy hh24:mi:ss'),
              pr_cdmotivo,
              pr_dsobserv
              );
@@ -714,7 +735,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
 
     END;
 
-  -- Geração de LOG
+  -- GeraÃ§Ã£o de LOG
     pc_gera_log (pr_cdoperad => vr_cdoperad
                 ,pr_tipdolog => 1
                 ,pr_cdcooper => pr_cdcooper
@@ -779,7 +800,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
       pr_cdcritic:= vr_cdcritic;
       pr_dscritic:= vr_dscritic;
 
-      -- Existe para satisfazer exigência da interface.
+      -- Existe para satisfazer exigÃªncia da interface.
       pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                      '<Root><Erro>'||pr_dscritic||'</Erro></Root>');
 
@@ -796,7 +817,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
       pr_cdcritic:= 0;
       pr_dscritic:= 'Erro na pc_inclusao --> '|| SQLERRM;
 
-      -- Existe para satisfazer exigência da interface.
+      -- Existe para satisfazer exigÃªncia da interface.
       pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||pr_dscritic||
                                      '<Root><Erro></Erro></Root>');
 
@@ -814,7 +835,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
 
     Programa : pc_gera_log_arquivo                            
     Sistema  : Cadastro - Tela Ativo Problematico
-    Sigla    : ATVPRB
+    Sigla    : ATIVPB
     Autor    : Rangel Decker AMcom
     Data     : Marco/2018                           Ultima atualizacao:
 
@@ -823,14 +844,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
     Frequencia: Sempre que for chamado
     Objetivo   :Procedure para gerar log 
 
-    Alterações :
+    AlteraÃ§Ãµes :
     -------------------------------------------------------------------------------------------------------------*/
 
    BEGIN
 
      btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
                                ,pr_ind_tipo_log => 2 -- Erro tratato
-                               ,pr_nmarqlog     => 'atvprb.log'
+                               ,pr_nmarqlog     => 'ativpb.log'
                                ,pr_des_log      => rtrim(vr_dslogtel,chr(10)));
    EXCEPTION
     WHEN OTHERS THEN
@@ -842,9 +863,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
 
   PROCEDURE pc_valida_informacoes(pr_cdcooper IN crapepr.cdcooper%TYPE --Cooperativa
                                   ,pr_nrdconta IN crapepr.nrdconta%TYPE --Conta
-                                  ,pr_nrctremp IN crapepr.nrctremp%TYPE --Contrato Emprestimo
-                                  ,pr_cdcritic OUT PLS_INTEGER          --Código da crítica
-                                  ,pr_dscritic OUT VARCHAR2             --Descrição da crítica
+                                  ,pr_nrctremp IN crapepr.nrctremp%TYPE  --Contrato Emprestimo
+                                  ,pr_cdcritic OUT PLS_INTEGER          --CÃ³digo da crÃ­tica
+                                  ,pr_dscritic OUT VARCHAR2             --DescriÃ§Ã£o da crÃ­tica
                                   ,pr_nmdcampo OUT VARCHAR2             --Nome do Campo
                                   ,pr_des_erro OUT VARCHAR2)IS          --Saida OK/NOK
 
@@ -852,16 +873,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
 
     Programa : pc_valida_informacoes                            
     Sistema  : Cadastro - Tela Ativo Problematico
-    Sigla    : ATVPRB
+    Sigla    : ATIVPB
     Autor    : Rangel Decker - AMCom
     Data     : Marco/2018                           Ultima atualizacao:
 
     Dados referentes ao programa:
 
     Frequencia:  Sempre que for chamado
-    Objetivo   : Validações das  informações para cadastro e atualizações
+    Objetivo   : ValidaÃ§Ãµes das  informaÃ§Ãµes para cadastro e atualizaÃ§Ãµes
 
-    Alterações :
+    AlteraÃ§Ãµes :
     -------------------------------------------------------------------------------------------------------------*/
 
     --Cursor para encontrar a cooperativa
@@ -878,12 +899,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
                      ,pr_nrctremp IN crapepr.nrctremp%TYPE)IS
     SELECT epr.cdcooper
       FROM crapepr epr
-     WHERE epr.cdcooper = pr_cdcooper
-       AND epr.nrdconta = pr_nrdconta
-       AND epr.nrctremp = pr_nrctremp;
+     WHERE epr.cdcooper   = pr_cdcooper
+     AND   epr.nrdconta   = pr_nrdconta
+     AND   epr.nrctremp   = pr_nrctremp;
+       
+
 
     rw_crapepr cr_crapepr%ROWTYPE;
+    
+    --Cursor para encontrar a conta do associado
+    CURSOR cr_crapass(pr_cdcooper IN crapepr.cdcooper%TYPE
+                     ,pr_nrdconta IN crapepr.nrdconta%TYPE)IS
+     SELECT cras.cdcooper
+      FROM  crapass cras
+     WHERE cras.cdcooper = pr_cdcooper
+     AND cras.nrdconta   = pr_nrdconta;
 
+    rw_crapass cr_crapass%ROWTYPE;
+    
+    
+
+    --Se passar o nr do contrato valida conforme hoje
+    --Se nÃ£o grava sem o numero do contrato e marca todos os registros ativos como excluidos 
+    -- Somente na inclusao 
 
     --Variaveis de Criticas
     vr_cdcritic INTEGER;
@@ -893,7 +931,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
     vr_exc_erro  EXCEPTION;
 
   BEGIN
-
+    
+     --Valida a cooperativa  informada
     OPEN cr_crapcop(pr_cdcooper => pr_cdcooper);
 
     FETCH cr_crapcop INTO rw_crapcop;
@@ -914,7 +953,35 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
         CLOSE cr_crapcop;
 
       END IF;
+  
 
+  
+     --Valida a conta informada
+    OPEN cr_crapass(pr_cdcooper => pr_cdcooper,
+                    pr_nrdconta => pr_nrdconta);
+
+    FETCH cr_crapass INTO rw_crapass;
+
+    IF cr_crapass%NOTFOUND THEN
+
+        --Fecha o cursor
+        CLOSE cr_crapass;
+
+        -- Montar mensagem de critica
+        vr_cdcritic := 485;
+
+        -- Busca critica
+        vr_dscritic :='Conta nao encontrada.'; --gene0001.fn_busca_critica(vr_cdcritic);
+        RAISE vr_exc_erro;
+
+      ELSE
+        CLOSE cr_crapass;
+
+      END IF;
+    
+    
+    IF  nvl(pr_nrctremp,0) <> 0 THEN
+     --Valida o contrato de emprestimo informado para determinada conta
      OPEN cr_crapepr(pr_cdcooper => pr_cdcooper
                     ,pr_nrdconta => pr_nrdconta
                     ,pr_nrctremp => pr_nrctremp);
@@ -930,12 +997,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
         vr_cdcritic := 484;
 
         -- Busca critica
-        vr_dscritic :='Conta ou contrato nao encontrados.';--gene0001.fn_busca_critica(vr_cdcritic);
+        vr_dscritic :='Contrato nao encontrado.';--gene0001.fn_busca_critica(vr_cdcritic);
         RAISE vr_exc_erro;
 
       ELSE
         CLOSE cr_crapepr;
       END IF;
+    END IF;  
 
     pr_des_erro := 'OK';
 
@@ -959,31 +1027,33 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
   END pc_valida_informacoes;
 
 
-  PROCEDURE pc_consulta ( pr_cdcooper  IN tbcadast_ativo_probl.cdcooper%TYPE   --Cooperativa
+  PROCEDURE pc_consulta (  pr_idativo  IN tbcadast_ativo_probl.idativo%TYPE   -- 1-Ativo / 0 Inativo   
+                          ,pr_cdcooper IN tbcadast_ativo_probl.cdcooper%TYPE   --Cooperativa
                           ,pr_nrdconta IN tbcadast_ativo_probl.nrdconta%TYPE  --Conta
                           ,pr_nrctremp IN tbcadast_ativo_probl.nrctremp%TYPE  --Contrato Emprestimo
                           ,pr_cdmotivo IN tbcadast_ativo_probl.cdmotivo%TYPE  --Codigo do moitvo
                           ,pr_datainic IN VARCHAR2 --Data de Inclusao Inicio
                           ,pr_datafina IN VARCHAR2 --Data de Inclusao Fim
                           ,pr_pagina   IN NUMBER   --Nr da Pagina
-                          ,pr_xmllog   IN VARCHAR2              --XML com informações de LOG
-                          ,pr_cdcritic OUT PLS_INTEGER          --Código da crítica
-                          ,pr_dscritic OUT VARCHAR2             --Descrição da crítica
+                          ,pr_xmllog   IN VARCHAR2              --XML com informaÃ§Ãµes de LOG
+                          ,pr_cdcritic OUT PLS_INTEGER          --CÃ³digo da crÃ­tica
+                          ,pr_dscritic OUT VARCHAR2             --DescriÃ§Ã£o da crÃ­tica
                           ,pr_retxml   IN OUT NOCOPY XMLType    --Arquivo de retorno do XML
                           ,pr_nmdcampo OUT VARCHAR2             --Nome do Campo
-                          ,pr_des_erro OUT VARCHAR2)IS          --Saida OK/NOK
+                          ,pr_des_erro OUT VARCHAR2) IS         --Saida OK/NOK
+
 
      /* .............................................................................
       Programa: pc_consulta
       Sistema : Cadastro - Tela Ativo Problematico
-      Sigla   : ATVPRB
+      Sigla   : ATIVPB
       Autor   : Rangel Decker
       Data    : Marco/2018                       Ultima atualizacao:
 
       Dados referentes ao programa:
 
       Frequencia: Sempre que for chamado
-      Objetivo  : Rotina para buscar dados da tela Cadastro de Operações Ativo Problematico
+      Objetivo  : Rotina para buscar dados da tela Cadastro de OperaÃ§Ãµes Ativo Problematico
 
       Alteracoes:
       ..............................................................................*/
@@ -995,31 +1065,31 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
                        ,pr_regini   NUMBER
                        ,pr_regfim   NUMBER) IS
 
-        SELECT * FROM (
-         SELECT  tcap.cdcooper,
-                 tcap.nrdconta,
-                 tcap.nrctremp,
-                 to_char(tcap.dtinclus,'dd/mm/yyyy') dtinclus,
-                 to_char(tcap.dtexclus,'dd/mm/yyyy') dtexclus,
-                 tcap.cdmotivo,
-                 tbmtv.dsmotivo,
-                 tcap.dsobserv,
-                 tcap.idativo,
-                 ROW_NUMBER() OVER (ORDER BY dtinclus) Row_Num
-          FROM tbcadast_ativo_probl tcap,
-               tbgen_motivo tbmtv
-          WHERE tcap.cdcooper  = pr_cdcooper
-          AND   tbmtv.idmotivo = tcap.cdmotivo
-          AND   tbmtv.cdproduto = 42
-          AND tcap.nrdconta = DECODE(pr_nrdconta, 0, tcap.nrdconta, pr_nrdconta)
-          AND tcap.nrctremp = DECODE(pr_nrctremp, 0, tcap.nrctremp, pr_nrctremp)
-          AND tcap.cdmotivo = DECODE(pr_cdmotivo, 0, tcap.cdmotivo, pr_cdmotivo)
-          AND tcap.dtinclus BETWEEN to_date(pr_datainic,'DD/MM/YYYY') AND to_date(pr_datafina,'DD/MM/YYYY'))
-          WHERE Row_Num BETWEEN pr_regini AND pr_regfim;
+        SELECT * FROM ( SELECT   tcap.cdcooper,
+                                 tcap.nrdconta,
+                                 tcap.nrctremp,
+                                 to_char(tcap.dtinclus,'dd/mm/yyyy') dtinclus,
+                                 to_char(tcap.dtexclus,'dd/mm/yyyy') dtexclus,
+                                 tcap.cdmotivo,
+                                 tbmtv.dsmotivo,
+                                 tcap.dsobserv,
+                                 tcap.idativo,
+                                 ROW_NUMBER() OVER (ORDER BY dtinclus) Row_Num
+                          FROM tbcadast_ativo_probl tcap,
+                               tbgen_motivo tbmtv
+                          WHERE tcap.cdcooper  = pr_cdcooper
+                          AND   tbmtv.idmotivo = tcap.cdmotivo
+                          AND   tbmtv.cdproduto = 42
+                          AND tcap.nrdconta = DECODE(pr_nrdconta, 0, tcap.nrdconta, pr_nrdconta)
+                          AND tcap.nrctremp = DECODE(pr_nrctremp, 0, tcap.nrctremp, pr_nrctremp)
+                          AND tcap.cdmotivo = DECODE(pr_cdmotivo, 0, tcap.cdmotivo, pr_cdmotivo)
+                          AND tcap.idativo = DECODE(pr_idativo, 0, tcap.idativo, 1)
+                          AND trunc(tcap.dtinclus) BETWEEN to_date(pr_datainic,'DD/MM/YYYY') AND to_date(pr_datafina,'DD/MM/YYYY'))
+        WHERE Row_Num BETWEEN pr_regini AND pr_regfim;
 
         rw_tcap cr_tcap%ROWTYPE;
 
-        -- Variável de críticas
+        -- VariÃ¡vel de crÃ­ticas
         vr_exc_erro  EXCEPTION;
         vr_cdcritic  INTEGER;
         vr_dscritic  VARCHAR2(1000);
@@ -1030,6 +1100,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
         vr_nrlinhas  INTEGER :=8;
         vr_auxinicial  INTEGER :=0;
         vr_auxfinal    INTEGER :=0 ;
+        vr_testes   varchar2(3600);
 
 
 
@@ -1049,11 +1120,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
           AND tcap.nrdconta = DECODE(pr_nrdconta, 0, tcap.nrdconta, pr_nrdconta)
           AND tcap.nrctremp = DECODE(pr_nrctremp, 0, tcap.nrctremp, pr_nrctremp)
           AND tcap.cdmotivo = DECODE(pr_cdmotivo, 0, tcap.cdmotivo, pr_cdmotivo)
+          AND tcap.idativo  = DECODE(pr_idativo, 0, tcap.idativo, 1)
           AND tcap.dtinclus BETWEEN to_date(pr_datainic,'DD/MM/YYYY') AND to_date(pr_datafina,'DD/MM/YYYY');
 
+       
 
           -- Incluir nome
-         GENE0001.pc_informa_acesso(pr_module => 'ATVPRB'
+         GENE0001.pc_informa_acesso(pr_module => 'ATIVPB'
                                    ,pr_action => null);
 
 
@@ -1068,15 +1141,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
                                  ,pr_tag_cont => NULL
                                  ,pr_des_erro => vr_dscritic);
 
-
          FOR rw_tcap IN cr_tcap (pr_cdcooper => pr_cdcooper,
                                  pr_nrdconta => pr_nrdconta,
                                  pr_nrctremp => pr_nrctremp,
                                  pr_regini   => vr_auxinicial,
-                                 pr_regfim   => vr_auxfinal
+                                 pr_regfim   => vr_auxfinal                                 
                                  ) LOOP
 
-          -- Consulta as informações
+          -- Consulta as informaÃ§Ãµes
 
            GENE0007.pc_insere_tag(pr_xml      => pr_retxml
                                 ,pr_tag_pai  => 'Dados'
@@ -1173,7 +1245,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
 
         EXCEPTION
           WHEN vr_exc_erro THEN
-          -- Retorno não OK
+          -- Retorno nÃ£o OK
           pr_des_erro := 'NOK';
 
           IF NVL(vr_cdcritic,0) > 0 THEN
@@ -1184,15 +1256,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
           pr_cdcritic := vr_cdcritic;
           pr_dscritic := vr_dscritic;
 
-          -- Existe para satisfazer exigência da interface.
+          -- Existe para satisfazer exigÃªncia da interface.
           pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                          '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
         WHEN OTHERS THEN
           pr_cdcritic := 0;
           pr_dscritic := 'Erro geral em consultar operacao. ' || SQLERRM;
 
-          -- Carregar XML padrão para variável de retorno não utilizada.
-          -- Existe para satisfazer exigência da interface.
+          -- Carregar XML padrÃ£o para variÃ¡vel de retorno nÃ£o utilizada.
+          -- Existe para satisfazer exigÃªncia da interface.
           pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                          '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
           ROLLBACK;
@@ -1206,9 +1278,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
                                      ,pr_datainic IN VARCHAR2 --Data inicio
                                      ,pr_datafina IN VARCHAR2 --Data fim
                                      ,pr_pagina   IN NUMBER   --Nr da Pagina
-                                     ,pr_xmllog   IN VARCHAR2              --XML com informações de LOG
-                                     ,pr_cdcritic OUT PLS_INTEGER          --Código da crítica
-                                     ,pr_dscritic OUT VARCHAR2             --Descrição da crítica
+                                     ,pr_xmllog   IN VARCHAR2              --XML com informaÃ§Ãµes de LOG
+                                     ,pr_cdcritic OUT PLS_INTEGER          --CÃ³digo da crÃ­tica
+                                     ,pr_dscritic OUT VARCHAR2             --DescriÃ§Ã£o da crÃ­tica
                                      ,pr_retxml   IN OUT NOCOPY XMLType    --Arquivo de retorno do XML
                                      ,pr_nmdcampo OUT VARCHAR2             --Nome do Campo
                                      ,pr_des_erro OUT VARCHAR2)IS          --Saida OK/NOK
@@ -1216,7 +1288,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
    /* .............................................................................
     Programa: pc_consulta_historico
     Sistema : Cadastro - Tela Ativo Problematico
-    Sigla   : ATVPRB 
+    Sigla   : ATIVPB 
     Autor   : Diego Simas
     Data    : Marco/2018                       Ultima atualizacao:
 
@@ -1224,7 +1296,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
 
     Frequencia: Sempre que for chamado
     Objetivo  : Rotina para listar o historico dos ativos problematicos
-                enviado ao arquivo 3040 -  Tela ATVPRB
+                enviado ao arquivo 3040 -  Tela ATIVPB
 
     Alteracoes:
 
@@ -1258,14 +1330,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
              AND thap.nrdconta = decode(pr_nrdconta, 0, thap.nrdconta, pr_nrdconta)
              AND thap.nrctremp = decode(pr_nrctremp, 0, thap.nrctremp, pr_nrctremp)
              AND thap.cdmotivo = decode(pr_cdmotivo, 0, thap.cdmotivo, pr_cdmotivo)
-             AND thap.dthistreg BETWEEN to_date(pr_datainic,'DD/MM/YYYY') AND to_date(pr_datafina,'DD/MM/YYYY'))
+             AND trunc(thap.dthistreg) BETWEEN to_date(pr_datainic,'DD/MM/YYYY') AND to_date(pr_datafina,'DD/MM/YYYY'))
              WHERE Row_Num BETWEEN pr_regini AND pr_regfim;
-
-
 
         rw_thap cr_thap%ROWTYPE;
 
-      -- Variável de críticas
+      -- VariÃ¡vel de crÃ­ticas
       vr_exc_erro  EXCEPTION;
       vr_cdcritic  INTEGER;
       vr_dscritic  VARCHAR2(1000);
@@ -1311,7 +1381,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
           AND thap.dthistreg BETWEEN to_date(pr_datainic,'DD/MM/YYYY') AND to_date(pr_datafina,'DD/MM/YYYY');
 
        -- Incluir nome
-       GENE0001.pc_informa_acesso(pr_module => 'ATVPRB'
+       GENE0001.pc_informa_acesso(pr_module => 'ATIVPB'
                                 ,pr_action => null);
 
        -- Criar cabecalho do XML
@@ -1336,14 +1406,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
                                pr_datafina => pr_datafina) LOOP
 
         IF rw_thap.idtipo_envio = 1 THEN
-           -- Envio de forma automática
+           -- Envio de forma automÃ¡tica
            vr_tipo_envio := 'A';
         ELSE
            -- Envio de forma manual
            vr_tipo_envio := 'M';
         END IF;
 
-        -- Consulta as informações
+        -- Consulta as informaÃ§Ãµes
 
         GENE0007.pc_insere_tag(pr_xml       => pr_retxml
                                ,pr_tag_pai  => 'Dados'
@@ -1432,7 +1502,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
 
       EXCEPTION
         WHEN vr_exc_erro THEN
-        -- Retorno não OK
+        -- Retorno nÃ£o OK
         pr_des_erro := 'NOK';
 
         IF NVL(vr_cdcritic,0) > 0 THEN
@@ -1443,15 +1513,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
         pr_cdcritic := vr_cdcritic;
         pr_dscritic := vr_dscritic;
 
-        -- Existe para satisfazer exigência da interface.
+        -- Existe para satisfazer exigÃªncia da interface.
         pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                        '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
       WHEN OTHERS THEN
         pr_cdcritic := 0;
         pr_dscritic := 'Erro geral em consultar operacao. ' || SQLERRM;
 
-        -- Carregar XML padrão para variável de retorno não utilizada.
-        -- Existe para satisfazer exigência da interface.
+        -- Carregar XML padrÃ£o para variÃ¡vel de retorno nÃ£o utilizada.
+        -- Existe para satisfazer exigÃªncia da interface.
         pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                        '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
         ROLLBACK;
@@ -1459,9 +1529,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
     END  pc_consulta_historico;
 
     PROCEDURE pc_busca_motivos_probl(pr_tipo      IN VARCHAR2
-                                     ,pr_xmllog   IN VARCHAR2              --XML com informações de LOG
-                                     ,pr_cdcritic OUT PLS_INTEGER          --Código da crítica
-                                     ,pr_dscritic OUT VARCHAR2             --Descrição da crítica
+                                     ,pr_xmllog   IN VARCHAR2              --XML com informaÃ§Ãµes de LOG
+                                     ,pr_cdcritic OUT PLS_INTEGER          --CÃ³digo da crÃ­tica
+                                     ,pr_dscritic OUT VARCHAR2             --DescriÃ§Ã£o da crÃ­tica
                                      ,pr_retxml   IN OUT NOCOPY XMLType    --Arquivo de retorno do XML
                                      ,pr_nmdcampo OUT VARCHAR2             --Nome do Campo
                                      ,pr_des_erro OUT VARCHAR2)IS          --Saida OK/NOK
@@ -1470,7 +1540,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
 
    Programa : pc_busca_motivos_probl                           
     Sistema  : Ativos Problematicos
-    Sigla    : ATVPRB
+    Sigla    : ATIVPB
     Autor    : Rangel Decker
     Data     : Marco/2018                           Ultima atualizacao:
 
@@ -1479,7 +1549,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
     Frequencia:  Sempre que for chamado
     Objetivo   : Pesquisa de motivos de ativos problematicos para cadastro.
 
-    Alterações :
+    AlteraÃ§Ãµes :
     -------------------------------------------------------------------------------------------------------------*/
 
    CURSOR cr_tbmtv IS
@@ -1496,7 +1566,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
     FROM   tbgen_motivo tbmtv
     WHERE  tbmtv.cdproduto = 42;
 
-     -- Variável de críticas
+     -- VariÃ¡vel de crÃ­ticas
      vr_exc_erro  EXCEPTION;
      vr_cdcritic  INTEGER;
      vr_dscritic  VARCHAR2(1000);
@@ -1568,11 +1638,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATVPRB AS
       pr_cdcritic:= 0;
       pr_dscritic:= 'Erro na pc_busca_motivo --> '|| SQLERRM;
 
-      -- Existe para satisfazer exigência da interface.
+      -- Existe para satisfazer exigÃªncia da interface.
       pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||pr_dscritic ||'<Root><Erro></Erro></Root>');
 
     END;
 
   END pc_busca_motivos_probl;
-END TELA_ATVPRB;
-/
+END TELA_ATIVPB;

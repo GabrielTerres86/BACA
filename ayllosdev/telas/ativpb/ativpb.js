@@ -1,8 +1,14 @@
 /*!
- * FONTE        : atvprb.js
+ * FONTE        : ativpb.js
  * CRIAÇÃO      : Marcel Kohls / AMCom
  * DATA CRIAÇÃO : 19/03/2018
- * OBJETIVO     : Biblioteca de funções da tela ATVPRB
+ * OBJETIVO     : Biblioteca de funções da tela ATIVPB
+ * ALTERAÇÕES   :   
+ *                
+ *                Inclusão de lupa para listar contratos
+ *                Diego Simas - AMcom  
+ *
+ *
  */
 
 var cCddopcao, btnOK, cTodosCabecalho;
@@ -12,6 +18,7 @@ var frmCab = 'frmCab';
 var frmCad = 'frmCad';
 var frmFiltro = 'frmFiltro';
 var fsListagem = 'fsListagem';
+var cadValidado =  false; // indica se a inclusão foi aprovada pelo operador. Quando o operador fizer a inclusão de um registro sem numero de contrato
 
 $(document).ready(function() {
 	estadoInicial();
@@ -143,6 +150,137 @@ function formataFiltros() {
 	return false;
 }
 
+// início contrato
+function mostraContrato(campo,formulario,nrdconta) {
+
+	nrdconta = normalizaNumero(nrdconta);
+	
+	showMsgAguardo('Aguarde, buscando ...');
+
+	// Executa script de confirmação através de ajax
+	$.ajax({
+		type: 'POST',
+		dataType: 'html',
+		url: UrlSite + 'telas/aditiv/contrato.php',
+		data: {
+			redirect: 'html_ajax'
+		},
+		error: function (objAjax, responseError, objExcept) {
+			hideMsgAguardo();
+			showError('error', 'Não foi possível concluir a requisição.', 'Alerta - Ayllos', "unblockBackground()");
+		},
+		success: function (response) {
+			$('#divRotina').html(response);
+			$('#divRotina').css({ 'z-index': '500' });
+			buscaContrato(campo, formulario, nrdconta);
+			return false;
+		}
+	});
+
+	return false;
+
+}
+
+function buscaContrato(campo, formulario, nrdconta) {
+
+	showMsgAguardo('Aguarde, buscando ...');
+	$.ajax({
+		type: 'POST',
+		dataType: 'html',
+		url: UrlSite + 'telas/aditiv/busca_contrato.php',
+		data: {
+			nrdconta: nrdconta,
+			redirect: 'script_ajax'
+		},
+		error: function (objAjax, responseError, objExcept) {
+			hideMsgAguardo();
+			showError('error', 'Não foi possível concluir a requisição.', 'Alerta - Ayllos', "unblockBackground();");
+		},
+		success: function (response) {
+
+			if (response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1) {
+				try {
+					$('#divConteudo').html(response);
+					exibeRotina($('#divRotina'));
+					formataContrato(campo, formulario);
+					return false;
+				} catch (error) {
+					hideMsgAguardo();
+					showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'unblockBackground()');
+				}
+			} else {
+				try {
+					eval(response);
+				} catch (error) {
+					hideMsgAguardo();
+					showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'unblockBackground()');
+				}
+			}
+		}
+	});
+	return false;
+}
+
+function formataContrato(campo, formulario) {
+
+	var divRegistro = $('div.divRegistros', '#divContrato');
+	var tabela = $('table', divRegistro);
+	var linha = $('table > tbody > tr', divRegistro);
+
+	divRegistro.css({ 'height': '120px', 'width': '500px' });
+
+	var ordemInicial = new Array();
+	ordemInicial = [[0, 0]];
+
+	var arrayLargura = new Array();
+	arrayLargura[0] = '60px';
+	arrayLargura[1] = '62px';
+	arrayLargura[2] = '80px';
+	arrayLargura[3] = '60px';
+	arrayLargura[4] = '80px';
+	arrayLargura[5] = '38px';
+
+
+	var arrayAlinha = new Array();
+	arrayAlinha[0] = 'right';
+	arrayAlinha[1] = 'left';
+	arrayAlinha[2] = 'right';
+	arrayAlinha[3] = 'right';
+	arrayAlinha[4] = 'right';
+	arrayAlinha[5] = 'right';
+	arrayAlinha[6] = 'right';
+
+	var metodoTabela = "selecionaContrato('" + campo + "','" + formulario + "');";
+	
+	tabela.formataTabela(ordemInicial, arrayLargura, arrayAlinha, metodoTabela);
+
+	hideMsgAguardo();
+	bloqueiaFundo($('#divRotina'));
+
+	return false;
+}
+
+function selecionaContrato(campo, formulario) {	
+
+	if ($('table > tbody > tr', '#divContrato').hasClass('corSelecao')) {
+
+		$('table > tbody > tr', '#divContrato').each(function () {
+			if ($(this).hasClass('corSelecao')) {
+				if(formulario == "#frmCad"){
+					$('#nrctremp', '#frmCad').val($('#nrctremp', $(this)).val());
+				}else{
+					$('#nrctrato', '#frmFiltro').val($('#nrctremp', $(this)).val());
+				}				
+			}
+		});
+	}
+
+	fechaRotina($('#divRotina'));
+	return false;
+
+}
+//fim contrato
+
 function limparCamposFiltro() {
 	$('#'+frmFiltro+' input[type="text"]').val('');
 	$('#flmotivo').val("0");
@@ -211,6 +349,7 @@ function manterRotina(dados) {
 	hideMsgAguardo();
 
 	var mensagem = "";
+	var idativo = (dados.idativo || 0);
 
 	switch( dados.operacao ) {
 		case 'Historico_Dados':	mensagem = 'Aguarde, listando historico ...';	break;
@@ -225,8 +364,9 @@ function manterRotina(dados) {
 
 	$.ajax({
 			type  : 'POST',
-			url   : UrlSite + 'telas/atvprb/manter_rotina.php',
+			url   : UrlSite + 'telas/ativpb/manter_rotina.php',
 			data: {
+				idativo: idativo,
 				cddopcao: cddopcao,
 				operacao: dados.operacao,
 				nrdconta: retiraCaracteres(dados.nrdconta, "0123456789", true),
@@ -241,20 +381,25 @@ function manterRotina(dados) {
 			error: function(objAjax,responseError,objExcept) {
 				hideMsgAguardo();
 				showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','estadoInicial();');
+				cadValidado = false;
 			},
 			success: function(response) {
 				try {
 					hideMsgAguardo();
 
-					if ((dados.operacao == 'Valida_Dados' || dados.operacao == 'Historico_Dados')&& response.indexOf("error") == -1) {
+					if (((dados.operacao == 'Valida_Dados' && idativo == 0) || dados.operacao == 'Historico_Dados')&& response.indexOf("error") == -1) {
 						carregaListagem(response);
 					} else {
 						eval(response);
 					}
+
+					cadValidado = false;
 					return false;
 				} catch(error) {
 					hideMsgAguardo();
 					showError('error','N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','estadoInicial();');
+					
+					cadValidado = false;
 				}
 			}
 		});
@@ -404,10 +549,12 @@ function abreIncluir() {
 function exibeFormCadastro(dados) {
     exibeRotina($('#divUsoGenerico'));
 
+		cadValidado = false; // sinaliza que o usuário ainda não confirmou nenhuma alteração.
+
     $.ajax({
         type: 'POST',
         dataType: 'html',
-        url: UrlSite + 'telas/atvprb/form_cadastro.php',
+		url: UrlSite + 'telas/ativpb/form_cadastro.php',
         data: {
 						nrdconta:	dados.nrdconta,
 						nrctremp: dados.nrctremp,
@@ -481,6 +628,7 @@ function formataCadastro(operacao) {
 	$("#btnLupaAssociado", "#"+frmCad).click(function(){
 		mostraPesquisaAssociado('nrdconta', frmCad);
 	});
+	
 }
 
 function excluirRegistro() {
@@ -508,9 +656,24 @@ function salvarCadastro(operacao) {
 
 	if (dados.flmotivo == 65 && dados.dsobserv == "") { // se cod motivo = outros, precisa preencher observacao
 		showError('error','Favor preencher o campo de observa&ccedil;&otilde;es','Alerta - Ayllos');
-	} else {
+	} else if (operacao == 'Inclui_Dados' && dados.nrctremp.length == 0 && cadValidado == false) {
+		validaOutrosRegistrosESalva(dados);
+	}	else {
 		manterRotina(dados);
 	}
+}
+
+function validaOutrosRegistrosESalva(dados) {
+	dados = {
+		operacao: 'Valida_Dados',
+		idativo: 1,
+		nrdconta: (dados.nrdconta.length > 0 ? dados.nrdconta : '9999999'),
+		datainic: '01/01/1980',
+		datafina: '31/12/2099',
+		nrctremp: ''
+	};
+
+	manterRotina(dados);
 }
 
 function trocaPagina(salto) {

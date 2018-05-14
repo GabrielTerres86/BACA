@@ -1,9 +1,9 @@
 <?
 /*
- * FONTE        : atvprb.php
- * CRIAﾃ�ﾃグ      : Marcel Kohls / AMCom
- * DATA CRIAﾃ�ﾃグ : 20/03/2018
- * OBJETIVO     : Mostrar tela ATVPRB
+ * FONTE        : ativpb.php
+ * CRIAﾃ?ﾃグ      : Marcel Kohls / AMCom
+ * DATA CRIAﾃ?ﾃグ : 20/03/2018
+ * OBJETIVO     : Mostrar tela ATIVPB
  * --------------
  */
 
@@ -35,7 +35,7 @@
 		<script type="text/javascript" src="../../scripts/mascara.js"></script>
 		<script type="text/javascript" src="../../scripts/menu.js"></script>
 		<script type="text/javascript" src="../../includes/pesquisa/pesquisa.js"></script>
-		<script type="text/javascript" src="atvprb.js"></script>
+		<script type="text/javascript" src="ativpb.js"></script>
 	</head>
 <body>
 <table width="100%" border="0" cellpadding="0" cellspacing="0">
@@ -60,7 +60,7 @@
 									<table width="100%"  border="0" cellspacing="0" cellpadding="0">
 										<tr>
 											<td width="11"><img src="<?php echo $UrlImagens; ?>background/tit_tela_esquerda.gif" width="11" height="21"></td>
-											<td class="txtBrancoBold" background="<?php echo $UrlImagens; ?>background/tit_tela_fundo.gif"><? echo utf8ToHtml('ATVPRB - Cadastro de Ativos Problem&aacute;ticos') ?></td>
+											<td class="txtBrancoBold" background="<?php echo $UrlImagens; ?>background/tit_tela_fundo.gif"><? echo utf8ToHtml('ATIVPB - Cadastro de Ativos Problem&aacute;ticos') ?></td>
 											<td class="txtBrancoBold" background="<?php echo $UrlImagens; ?>background/tit_tela_fundo.gif" align="right"><a href="#" onClick='mostraAjudaF2()' class="txtNormalBold">F2 = AJUDA</a>&nbsp;&nbsp;</td>
 											<td class="txtBrancoBold" background="<?php echo $UrlImagens; ?>background/tit_tela_fundo.gif"><a href="#" onClick='mostraAjudaF2()' class="txtNormalBold"><img src="<?php echo $UrlImagens; ?>geral/ico_help.jpg" width="15" height="15" border="0"></a></td>
 											<td width="8"><img src="<?php echo $UrlImagens; ?>background/tit_tela_direita.gif" width="8" height="21"></td>

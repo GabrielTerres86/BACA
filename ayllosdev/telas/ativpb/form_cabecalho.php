@@ -3,7 +3,7 @@
  * FONTE        : form_cabecalho.php
  * CRIAÇÃO      : Marcel Kohls /AMCom
  * DATA CRIAÇÃO : 20/03/2018
- * OBJETIVO     : Cabeçalho para a tela ATVPRB
+ * OBJETIVO     : Cabeçalho para a tela ATIVPB
  */
  ?>
 
