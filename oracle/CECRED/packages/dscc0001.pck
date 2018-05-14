@@ -139,7 +139,7 @@ CREATE OR REPLACE PACKAGE CECRED.DSCC0001 AS
 								Vlmxassi    NUMBER,   -- Valor Máximo Dispensa Assinatura
 								Vlmxassi_c  NUMBER    -- Valor Máximo Dispensa Assinatura
 								);
-                  
+
   TYPE typ_tab_lim_desconto IS TABLE OF typ_rec_lim_desconto
        INDEX BY PLS_INTEGER;
 			 
@@ -427,7 +427,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
   --
   --  Programa: DSCC0001                        Antiga: generico/procedures/b1wgen0009.p
   --  Autor   : Jaison
-  --  Data    : Agosto/2016                     Ultima Atualizacao: 03/04/2018
+  --  Data    : Agosto/2016                     Ultima Atualizacao: 27/04/2018
   --
   --  Dados referentes ao programa:
   --
@@ -446,6 +446,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
                   (Adriano - SD 791712).                   
 				  
       03/04/2018 - Adicionado noti0001.pc_cria_notificacao       
+				  
+	  27/04/2018 - Utilizar a função fn_sequence para gerar o nrseqdig (Jonata - Mouts INC0011931).
+				              
   --------------------------------------------------------------------------------------------------------------*/
 
   PROCEDURE pc_busca_tab_limdescont(  pr_cdcooper IN crapcop.cdcooper%TYPE --> Codigo da cooperativa 
@@ -727,7 +730,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
                                ,pr_tab_lim_desconto => vr_tab_lim_desconto  --> Temptable com os dados do limite de desconto                                     
                                ,pr_cdcritic => vr_cdcritic    --> Código da crítica
                                ,pr_dscritic => vr_dscritic);  --> Descrição da crítica                
-    
+
     -- Se retornou alguma crítica
     IF TRIM(vr_dscritic) IS NOT NULL OR 
       nvl(vr_cdcritic,0) > 0 THEN
@@ -1318,7 +1321,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 		vr_inpessoa        NUMBER;
     vr_dtjurtab        DATE;
     vr_vlliquid        NUMBER;
-
+    
   BEGIN
     -- Limpa a PLTABLE
     pr_tab_chq_bordero.DELETE;
@@ -1380,12 +1383,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
               vr_rel_nmcheque := rw_crapjur.nmtalttl;
               vr_rel_dscpfcgc := GENE0002.fn_mask_cpf_cnpj(pr_nrcpfcgc =>rw_crapass_2.nrcpfcgc,
                                                            pr_inpessoa => 2);
-            ELSE
+      ELSE
               vr_rel_dscpfcgc := 'NAO CADASTRADO';
               vr_rel_nmcheque := 'NAO CADASTRADO';
             END IF;
           END IF;
-        END IF;
+      END IF;
       ELSE
         -- Buscar cadastro de emitentes de cheques
         OPEN cr_crapcec(pr_cdcooper => pr_cdcooper,
@@ -1465,7 +1468,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
                                    ,pr_vlliquid => vr_vlliquid         --> Retorna valor liquidacao do cheque													 
                                    ,pr_cdcritic => vr_cdcritic         --> Cód. da crítica
                                    ,pr_dscritic => vr_dscritic);       --> Descrição da crítica
-         
+
         IF nvl(vr_cdcritic,0) > 0 OR
            TRIM(vr_dscritic) IS NOT NULL THEN 
           RAISE vr_exc_erro; 
@@ -1892,7 +1895,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
          AND crapbdc.nrborder = pr_nrborder;
          
     rw_crapbdc cr_crapbdc%ROWTYPE;
-    
+
     -- Linha de Desconto
     CURSOR cr_crapldc (pr_cddlinha IN crapldc.cddlinha%TYPE) IS
       SELECT cddlinha
@@ -2431,10 +2434,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
                     -- Se NAO existir na PLTABLE
                     IF NOT vr_tab_restri_apr_coo.EXISTS(vr_tab_bordero_restri(idx2).dsrestri) THEN
                       vr_tab_restri_apr_coo(vr_tab_bordero_restri(idx2).dsrestri) := '';
-                    END IF;
-                  END IF;
                 END IF;
-              END LOOP;
+            END IF;
+        END IF;
+      END LOOP;
             END IF;
           END IF;
           pc_escreve_xml(        '</restricoes>');
@@ -7344,7 +7347,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
     Programa: pc_efetiva_desconto_bordero
     Sistema : CECRED
     Autor   : Lucas Reinert
-    Data    : Dezembro/2016                 Ultima atualizacao:	14/08/2017
+    Data    : Dezembro/2016                 Ultima atualizacao:	27/04/2018
 
     Dados referentes ao programa:
 
@@ -7360,7 +7363,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
                              
                 26/07/2017 - Criada verificação de cheques com data de liberacao fora do limite.
                              PRJ300-Desconto de cheque(Lombardi) 
-
+                             
                 27/07/2017 - Ajuste para verificar custódia também para cheques que não são 
                              da cooperativa. PRJ300-Desconto de cheque(Lombardi)
 
@@ -7369,6 +7372,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
                 24/08/2017 - Ajuste para gravar log. (Lombardi)	  
 
                 24/08/2017 - Ajuste para verificar a custodia (cr_crapcst) para todos os cheques. (Lombardi)
+                
+                27/04/2018 - Utilizar a função fn_sequence para gerar o nrseqdig (Jonata - Mouts INC0011931).
+                
   ..............................................................................*/																			 
 	-- Variável de críticas
 	vr_cdcritic        crapcri.cdcritic%TYPE; --> Cód. Erro
@@ -7751,7 +7757,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
       vr_dscritic := 'Registro de parametros de desconto de cheques nao encontrado.';
       RAISE vr_exc_erro;    
     END IF;
-
+    
     -- Percorrer todos os cheques do bordero
     vr_vltotoperacao := 0;
     FOR rw_crapcdb IN cr_crapcdb(pr_cdcooper => pr_cdcooper
@@ -7940,8 +7946,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
          RAISE vr_exc_erro;
        END IF;               
                        
-                       
-				
 				BEGIN
 					-- Inserir lançamento automatico
 					INSERT INTO craplau
@@ -8075,14 +8079,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 			vr_vlborder := nvl(vr_vlborder,0) + vr_tab_cheques(vr_idx_cheque).vlliquid;
       
       
-
-             
-
-
-             
-
-
-      
 		END LOOP;
 		
 		-- Tira vinculo da dcc e cst com o borderô
@@ -8162,6 +8158,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 		IF cr_craplot%NOTFOUND THEN
 			-- Fechar cursor
 			CLOSE cr_craplot;
+      
       BEGIN
 				-- Se não existir lote, criar
 				INSERT INTO craplot
@@ -8189,14 +8186,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 					-- Levantar exceção
 					RAISE vr_exc_erro;				
 			END;
+      
 			-- Buscar lote
 			OPEN cr_craplot(pr_cdcooper => pr_cdcooper
 										 ,pr_dtmvtolt => rw_crapdat.dtmvtolt);
 			FETCH cr_craplot INTO rw_craplot;
+			
 			-- Fechar cursor
 			CLOSE cr_craplot;
+      
+    ELSE
+      
+      -- Fechar cursor
+	  	CLOSE cr_craplot;
+      
 		END IF;
 		
+    vr_nrseqdig := fn_sequence('CRAPLOT','NRSEQDIG',''||pr_cdcooper||';'||
+                              to_char(rw_craplot.dtmvtolt,'DD/MM/RRRR')||';'||
+                              rw_craplot.cdagenci||';'||
+                              rw_craplot.cdbccxlt||';'||
+                              rw_craplot.nrdolote);
+                                                          
 		-- Verificar se lançamento já existe
 		OPEN cr_craplcm(pr_cdcooper => pr_cdcooper
 	                 ,pr_dtmvtolt => rw_craplot.dtmvtolt
@@ -8233,13 +8244,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 								,pr_nrborder
 								,vr_vlborder
 								,270
-								,rw_craplot.nrseqdig + 1
+								,vr_nrseqdig
 								,pr_nrdconta
 								,to_char(pr_nrdconta, 'fm00000000')
 								,0
 								,pr_cdcooper
-								,'Desconto do bordero ' || to_char(pr_nrborder, 'fm999g999g990'))
-				RETURNING nrseqdig INTO vr_nrseqdig;
+								,'Desconto do bordero ' || to_char(pr_nrborder, 'fm999g999g990'));
 			EXCEPTION
 				WHEN OTHERS THEN      
 					-- Gerar crítica
@@ -8267,10 +8277,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 					RAISE vr_exc_erro;								
 			END;
 		END IF;
-		
-
-												 
-												 
 		
 		-- Se for imune de tributação
 		IF vr_vltotiof > 0 THEN
@@ -8327,6 +8333,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 			
 			-- Se não encontrou IOF
 			IF cr_craplot_iof%NOTFOUND THEN
+            --Feca o cursor
+            CLOSE cr_craplot_iof;
+            
 				BEGIN
           INSERT INTO craplot(dtmvtolt
 					                   ,cdagenci
@@ -8340,7 +8349,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 														 ,(19000 + vr_cdpactra)
 														 ,1
 														 ,pr_cdcooper)
-				  RETURNING nrseqdig, ROWID INTO vr_nrseqdig, vr_nrdrowid;
+                          RETURNING ROWID INTO vr_nrdrowid;
+
 				EXCEPTION
 					WHEN OTHERS THEN      
 						-- Gerar crítica
@@ -8349,14 +8359,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 						-- Levantar exceção
 						RAISE vr_exc_erro;
 				END;
+            
 			ELSE
-				-- Se encontrou, atribui valores às variáveis
-				vr_nrseqdig := rw_craplot_iof.nrseqdig;
-				vr_nrdrowid := rw_craplot_iof.rowid;
-			END IF;
+            
 			-- Fechar cursor
 			CLOSE cr_craplot_iof;
 			
+            vr_nrdrowid:= rw_craplot_iof.rowid;
+            
+          END IF;
+    						
+          vr_nrseqdig := fn_sequence('CRAPLOT','NRSEQDIG',''||pr_cdcooper||';'||
+                                     to_char(rw_crapdat.dtmvtolt,'DD/MM/RRRR')||
+                                     ';1;'|| --cdagenci
+                                     '100;'|| --cdbccxlt
+                                     (19000 + vr_cdpactra)); --nrdolote
+                                  
 			-- Cria lançamento na craplcm refente ao IOF
 			BEGIN
 				INSERT INTO craplcm(dtmvtolt
@@ -8381,7 +8399,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 													 ,to_char(pr_nrdconta, 'fm00000000')
 													 ,pr_nrborder
 													 ,2318 --324 Novo histórico - Projeto 410
-													 ,(vr_nrseqdig + 1)
+                               ,vr_nrseqdig
 													 ,to_char(vr_vlborder, 'fm000g000g000d00')
 													 --,ROUND( ( ROUND((vr_vlborder * vr_txccdiof), 2) + vr_vltotiof),2)
                            ,ROUND(vr_vltotiof, 2)
@@ -8406,7 +8424,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
                           ,pr_cdagenci_lcm  => 1                     --> Chave: Agencia do Lancamento
                           ,pr_cdbccxlt_lcm  => 100                   --> Chave: Caixa do Lancamento
                           ,pr_nrdolote_lcm  => (19000 + vr_cdpactra) --> Chave: Lote do Lancamento
-                          ,pr_nrseqdig_lcm  => (vr_nrseqdig + 1)    --> Chave: Sequencia do Lancamento
+                              ,pr_nrseqdig_lcm  => vr_nrseqdig           --> Chave: Sequencia do Lancamento
                           ,pr_vliofpri      => vr_vltotiofpri       --> Valor do IOF Principal
                           ,pr_vliofadi      => vr_vltotiofadi       --> Valor do IOF Adicional
                           ,pr_vliofcpl      => vr_vltotiofcpl       --> Valor do IOF Complementar
@@ -8428,7 +8446,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 					    ,lot.vlcompdb = lot.vlcompdb + vr_vllanmto 
 							,lot.qtinfoln = lot.qtinfoln + 1
 							,lot.qtcompln = lot.qtinfoln + 1
-							,lot.nrseqdig = lot.nrseqdig + 1
+                  ,lot.nrseqdig = vr_nrseqdig
 				 WHERE lot.rowid = vr_nrdrowid;
 				
 			EXCEPTION

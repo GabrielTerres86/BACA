@@ -10,7 +10,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps457(pr_cdcooper  IN crapcop.cdcooper%T
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Felipe Oliveira
-   Data    : Fevereiro/2015                   Ultima atualizacao: 12/05/2015
+   Data    : Fevereiro/2015                   Ultima atualizacao: 08/05/2018
 
    Dados referentes ao programa:
 
@@ -34,6 +34,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps457(pr_cdcooper  IN crapcop.cdcooper%T
                09/02/2015 - Convertido para PL-SQL (pc_crps457) (Felipe)
                
                12/05/2015 - #269728 Inclusão dos comentários do fonte crps457 (Carlos)
+
+			   08/05/2018 - Ajuste no Case-sensitive dos operadores (Andrey Formigari - Mouts)
    
 -----------------------------------------------------------------------------*/
 BEGIN
@@ -86,7 +88,7 @@ BEGIN
            crapope ope,
            craphis his
       WHERE aut.cdcooper = ope.cdcooper AND
-            aut.cdopecxa = ope.cdoperad AND
+            UPPER(aut.cdopecxa) = UPPER(ope.cdoperad) AND
             aut.nrseqaut > 0            AND
             aut.dtmvtolt = pr_dtmvtolt  AND
             aut.cdcooper = ope.cdcooper AND
