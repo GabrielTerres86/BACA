@@ -2682,7 +2682,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
                              (Adriano).             
                              
                  09/03/2017 - Ajuste para incluir informações referentes a comprovante
-                              de pagamento em debito automatico (Aline).  
+                              de pagamento em debito automatico (Aline).                      
 							                      
                  09/01/2018 - Incluido tratamento para FGTS e DAE - PRJ406.
     ..............................................................................*/ 
@@ -3648,7 +3648,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
       Sistema  : Rotinas para validacao de inclusao de contas para transferencia
       Sigla    : CRED
       Autor    : Jean Michel
-      Data     : Fevereiro/2016.                   Ultima atualizacao: 08/06/2017
+      Data     : Fevereiro/2016.                   Ultima atualizacao: 24/04/2018
     
       Dados referentes ao programa:
     
@@ -3664,6 +3664,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
                                 (Adriano - SD 620221).
                                 
                    08/06/2017 - Ajustes referentes ao novo catalogo do SPB (Lucas Ranghetti #668207)
+                   
+                   24/04/2018 - Normalizandos criticas para que busque apenas da tabela crapcri
+                                tambem no "WHEN OTHERS THEN" para que nao mostre mais críticas
+                                que o usuário não precise enxergar e então gravando em log. 
+                                (SD 865935 - Kelvin)
      ...................................................................................*/
 
     -- CURSORES
@@ -3811,9 +3816,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
     vr_dsorigem VARCHAR2(100) := gene0001.vr_vet_des_origens(pr_idorigem);
                            
   BEGIN
-   
+    vr_cdispbif := 'A';
     -- Verifica se a cooperativa esta cadastrada
-    OPEN cr_crapcop(pr_cdcooper => pr_cdcooper);      
+    OPEN cr_crapcop(pr_cdcooper => pr_cdcooper);
       
     FETCH cr_crapcop INTO rw_crapcop;
       
@@ -3928,7 +3933,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
       -- nao devera utiliza-lo nesta validacao      
       vr_cdispbif := NULL;
     END IF;
-    
+
     -- Validaçao para conta da cooperativa
     -- Validação é realizada antes do controle de conta já cadastrada para capturar os dados da conta
     -- Os dados serão apresentados junto a mensagem de alerta de conta já cadastrada. 
@@ -4041,8 +4046,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
     -- Validaçao para conta de outras IFs
     IF pr_intipdif <> 1 THEN
       IF pr_cddbanco = 85 THEN
-        vr_dscritic := 0;
-        vr_dscritic := 'Nao e posssivel efetuar transferencia entre IFs do Sistema CECRED.';
+        vr_cdcritic := 1215;
+        vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
         pr_nmdcampo := 'cddbanco';
         RAISE vr_exc_saida;
       END IF;
@@ -4079,16 +4084,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
       -- Verifica se conta para transferencia e valida
       IF LENGTH(TRIM(TO_CHAR(pr_nrctatrf))) < 2  OR 
          LENGTH(TRIM(TO_CHAR(pr_nrctatrf))) > 13 THEN
-        vr_cdcritic := 0;
-          vr_dscritic := 'Informe o numero da conta com ate 13 caracteres.';
+          vr_cdcritic := 1216;
+          vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
           pr_nmdcampo := 'nrctatrf';
           RAISE vr_exc_saida;
         END IF;
       ELSE -- 3 Conta de Pagamento
         IF LENGTH(TRIM(TO_CHAR(pr_nrctatrf))) < 2  OR 
            LENGTH(TRIM(TO_CHAR(pr_nrctatrf))) > 20 THEN
-          vr_cdcritic := 0;
-        vr_dscritic := 'Conta do favorecido invalida.';
+          vr_cdcritic := 1217;
+          vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
         pr_nmdcampo := 'nrctatrf';
         RAISE vr_exc_saida;
       END IF;
@@ -4097,8 +4102,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
       -- Verifica o tipo de pessoa
       IF pr_inpessoa < 1 OR 
          pr_inpessoa > 2  THEN
-        vr_cdcritic := 0;
-        vr_dscritic := 'Tipo de pessoa invalido.';
+        vr_cdcritic := 1218;
+        vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
         pr_nmdcampo := 'inpessoa';
         vr_cdcritic := 0;
       END IF;
@@ -4121,8 +4126,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
                                                ,pr_tpregist => pr_intipcta);
 
       IF vr_dstextab IS NULL THEN
-        vr_cdcritic := 0;
-        vr_dscritic := 'Tipo de conta invalido.';
+        vr_cdcritic := 17;
+        vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
         pr_nmdcampo := 'intipcta';
         RAISE vr_exc_saida;
       END IF;
@@ -4132,17 +4137,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
           Pagamento" não deve permitir preenhcimento do campo Agencia. ***/
       IF pr_cdageban = 0 OR pr_cdageban IS NULL THEN
         IF pr_intipcta IN(1,2) THEN
-          vr_cdcritic := 0;
-          vr_dscritic := 'Preenchimento de campo agencia obrigatorio para o ' ||
-                         'tipo de conta: ' || vr_dstextab;
+          vr_cdcritic := 1219;
+          vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) || ' '|| vr_dstextab;
           pr_nmdcampo := 'intipcta';
           RAISE vr_exc_saida;
         END IF;
       ELSE
         IF pr_intipcta = 3 THEN -- Conta de Pagamento
-          vr_cdcritic := 0;
-          vr_dscritic := 'Preenchimento de campo agencia nao e permitido para ' ||
-                         'o tipo de conta: ' || vr_dstextab;
+          vr_cdcritic := 1219;
+          vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) || ' '|| vr_dstextab;
           pr_nmdcampo := 'intipcta';
           RAISE vr_exc_saida;
       END IF;
@@ -4154,8 +4157,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
                               ,pr_stsnrcal => vr_stsnrcal);   --Situacao
         
       IF NOT vr_stsnrcal THEN
-        vr_cdcritic := 0;
-          vr_dscritic := 'CPF invalido.';
+        vr_cdcritic := 1220;
+        vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
         pr_nmdcampo := 'nrcpfcgc';
         RAISE vr_exc_saida;
       END IF;
@@ -4165,39 +4168,39 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
                                ,pr_stsnrcal => vr_stsnrcal);   --Situacao
           
         IF NOT vr_stsnrcal THEN
-        vr_cdcritic := 0;
-          vr_dscritic := 'CNPJ invalido.';
+          vr_cdcritic := 1221;
+          vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
         pr_nmdcampo := 'nrcpfcgc';
         RAISE vr_exc_saida;
       END IF;
-      END IF;                                 
+      END IF;
     END IF;
-
+      
     IF pr_insitcta < 1  OR
        pr_insitcta > 3  THEN
       vr_dscritic := 'Situacao da conta invalida.';
-      pr_nmdcampo := 'nrctatrf';
-      RAISE vr_exc_saida;
-    END IF;
-        
+        pr_nmdcampo := 'nrctatrf';
+        RAISE vr_exc_saida;
+      END IF;
+
     EXCEPTION
 			WHEN vr_exc_saida THEN
-				
+             
         IF vr_cdcritic <> 0 AND TRIM(vr_dscritic) IS NULL THEN
 					vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
-				END IF;
+      END IF;
 
 			  -- Alimenta parametros com as críticas
         pr_cdcritic := vr_cdcritic;
         pr_dscritic := vr_dscritic;
-        
-        COMMIT;
 
+        COMMIT;
+      
       WHEN OTHERS THEN
 
 	    --Gera log
 	    btch0001.pc_log_internal_exception(pr_cdcooper => pr_cdcooper);
-
+               
 
         pr_cdcritic := vr_cdcritic;
         pr_dscritic := 'Erro nao tratado na CADA0002.pc_val_inclui_conta_transf: ' || SQLERRM;
@@ -4252,29 +4255,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
     
     --Variaveis auxiliares
     vr_idprglog NUMBER;
-    
+  
     --Variaveis de excecoes
     vr_exc_error EXCEPTION;
-    
+                  
   BEGIN
-    
+                
     CECRED.pc_log_programa(pr_dstiplog => 'I'
                          , pr_cdprograma => 'JBOPE_BLOQUEIA_OPERADORES'                                
                          , pr_idprglog => vr_idprglog);
-  
+
     --Busca todos os operadores ativos
     FOR rw_crapope IN cr_crapope LOOP
-        
+
       --Verifica se o operador esta na tbcadast_colaborador
       OPEN cr_tbcadast_colaborador(pr_cdcooper => rw_crapope.cdcooper
                                   ,pr_cdoperad => rw_crapope.cdoperad);
         FETCH cr_tbcadast_colaborador
           INTO rw_tbcadast_colaborador;
-        
+
         --Caso esse operador nao esteja na tabela TBCADAST_COLABORADOR devera ser inativado
         IF cr_tbcadast_colaborador%NOTFOUND THEN 
           CLOSE cr_tbcadast_colaborador;         
-          
+
           /*Valida se o operador é da cecred pois caso for deverá manter o operador ativo
           em outras cooperativas*/          
           OPEN cr_valida_cecred(pr_cdoperad => rw_crapope.cdoperad);
@@ -4306,8 +4309,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
               WHEN OTHERS THEN
                 RAISE vr_exc_error;
             END;
-          END IF;
-          
+    END IF;
+
           -- Log de sucesso.
           CECRED.pc_log_programa(pr_dstiplog => 'O'
                                , pr_cdprograma => 'JBOPE_BLOQUEIA_OPERADORES' 
@@ -4319,24 +4322,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
                                                   rw_crapope.cdoperad || ' Cooperativa - ' || rw_crapope.cdcooper
                                , pr_idprglog => vr_idprglog);                      
 
-        
+
         ELSE
           CLOSE cr_tbcadast_colaborador;
-        END IF;
-     
+    END IF;
+        
                 
-      
+				
     END LOOP;
-    
+
     CECRED.pc_log_programa(pr_dstiplog => 'F'
                          , pr_cdprograma => 'JBOPE_BLOQUEIA_OPERADORES'                                
                          , pr_idprglog => vr_idprglog);
-    
-    COMMIT;
-    
+        
+        COMMIT;
+
   EXCEPTION
     WHEN vr_exc_error THEN
-      
+
       pr_dscritic := TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - CADA0002 --> Erro ao atualzar a tabela crapope na rotina pc_bloqueia_operadores. Detalhes: ' || SQLERRM;
 
       CECRED.pc_log_programa(pr_dstiplog => 'O'
@@ -4346,14 +4349,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
                            , pr_tpocorrencia => 2
                            , pr_dsmensagem => pr_dscritic                                                
                            , pr_idprglog => vr_idprglog);  
-                           
-      ROLLBACK;
+        
+        ROLLBACK;
     WHEN OTHERS THEN      
       --Gera log
       cecred.pc_internal_exception(pr_cdcooper => 0);
-      
+
       pr_dscritic := 'Erro nao tratado na CADA0002.pc_bloqueia_operadores: ' || SQLERRM;
-          
+
       ROLLBACK;
   END pc_bloqueia_operadores;
 END CADA0002;
