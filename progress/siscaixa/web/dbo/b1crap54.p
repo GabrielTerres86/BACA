@@ -4,7 +4,7 @@
    Sistema : Caixa On-line
    Sigla   : CRED   
    Autor   : Mirtes.
-   Data    : Marco/2001                      Ultima atualizacao: 17/04/2017
+   Data    : Marco/2001                      Ultima atualizacao: 23/04/2018
 
    Dados referentes ao programa:
 
@@ -56,8 +56,8 @@
                             
 			   17/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
 			                crapass, crapttl, crapjur 
-							(Adriano - P339). 
-              
+							(Adriano - P339).
+                            
 			   23/08/2017 - Alterado para validar as informacoes do operador 
 							pelo AD. (PRJ339 - Reinert)
 
@@ -67,6 +67,9 @@
                             
                12/12/2017 - Passar como texto o campo nrcartao na chamada da procedure 
                             pc_gera_log_ope_cartao (Lucas Ranghetti #810576)
+
+23/04/2018 - inc0011899 Inclusão de log de liberação de débito sem saldo pelo operador, para
+             possível auditoria, rotina valida-permissao-saldo-conta (Carlos)
 ............................................................................ */
 
 /*----------------------------------------------------------------------*/
@@ -77,7 +80,6 @@
 { sistema/generico/includes/var_internet.i }
 { sistema/generico/includes/gera_erro.i }
 { sistema/generico/includes/gera_log.i }
-
 
 DEF VAR i-cod-erro         AS INT                               NO-UNDO.
 DEF VAR c-desc-erro        AS CHAR                              NO-UNDO.
@@ -647,6 +649,31 @@ PROCEDURE valida-permissao-saldo-conta:
                     RETURN "NOK".
                 END.  /* p-mensagem <> " " */
         
+            /* Registrar liberação do valor pelo operador para possível auditoria */
+            { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+            RUN STORED-PROCEDURE pc_gera_log_batch aux_handproc = PROC-HANDLE
+                (INPUT crapcop.cdcooper,
+                 INPUT 1, /* ind_tipo_log: 1-mensagem / 2-erro de negócio / 3-erro nao tratado / 4-alerta */
+                 INPUT ("valida-permissao-saldo-conta. " +
+                        " Operador: " + STRING(p-codigo) + " liberou lancamento." + 
+                        " Mensagem: " + p-mensagem +
+                        " PA: "       + STRING(p-cod-agencia) +
+                        " Caixa: "    + STRING(p-nro-caixa) +
+                        " Valor: "    + STRING(p-valor)),
+                 input "",      /* nmarqlog */
+                 input "N",    /* flnovlog - criar novo arquivo? */
+                 input "N",    /* flfinmsg - inserir string '[PL/SQL]' no final da mensagem? */
+                 input "",     /* dsdirlog */
+                 input "E",    /* dstiplog - I inicio, F fim, E erro */
+                 input "B1CRAP54", /* cdprograma */
+                 input 3,      /* tpexecucao 0-Outro/ 1-Batch/ 2-Job/ 3-Online */
+                 input 1,      /* cdcriticidade 0-Baixa/1-Media/2-Alta/3-Critica */
+                 input 0,      /* flgsucesso 0/1 */
+                 input 0       /* Codigo da mensagem ou critica */
+                 ).
+            CLOSE STORED-PROCEDURE pc_gera_log_batch WHERE PROC-HANDLE = aux_handproc.
+            { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }   
+    
         END.
    
     RETURN "OK".
@@ -1142,7 +1169,7 @@ PROCEDURE atualiza-cheque-avulso:
                       INPUT p-nro-caixa,
                       INPUT aux_cdcritic,
                       INPUT aux_dscritic,
-                      INPUT YES).
+                        INPUT YES).
         RETURN "NOK".
       END.
 
@@ -1232,15 +1259,15 @@ PROCEDURE valida-permissao-provisao:
           DO:
             ASSIGN i-cod-erro = 67
                    c-desc-erro = "".
-                   
+
             RUN cria-erro (INPUT p-cooper,
                            INPUT p-cod-agencia,
                            INPUT p-nro-caixa,
                            INPUT i-cod-erro,
                            INPUT c-desc-erro,
                            INPUT YES).
-            RETURN "NOK".
-          END.
+         RETURN "NOK".            
+      END.     
 
         /* PRJ339 - REINERT (INICIO) */         
             /* Validacao de senha do usuario no AD somente no ambiente de producao */
@@ -1312,7 +1339,7 @@ PROCEDURE valida-permissao-provisao:
                                     " >> /usr/coop/" + TRIM(crapcop.dsdircop) +
                                     "/log/provisao_especie.log").
       END.
-      RETURN "OK".         
+    RETURN "OK".
 END PROCEDURE.
 
 /* b1crap54.p */
