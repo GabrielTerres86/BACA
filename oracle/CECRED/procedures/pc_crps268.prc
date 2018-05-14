@@ -91,7 +91,7 @@
         FROM crapseg seg
         WHERE seg.cdcooper  = pr_cdcooper
           AND seg.nrdconta >= pr_nrdconta
-          AND seg.nrctrseg  > pr_nrctrseg
+          AND seg.nrctrseg  > nvl(pr_nrctrseg, 0)
           AND seg.tpseguro  = pr_tpseguro
           AND seg.cdsitseg  = pr_cdsitseg
           AND seg.indebito  = pr_indebito;
