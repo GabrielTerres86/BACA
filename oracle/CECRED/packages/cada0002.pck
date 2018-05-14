@@ -3816,7 +3816,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
     vr_dsorigem VARCHAR2(100) := gene0001.vr_vet_des_origens(pr_idorigem);
                            
   BEGIN
-    vr_cdispbif := 'A';
+   
     -- Verifica se a cooperativa esta cadastrada
     OPEN cr_crapcop(pr_cdcooper => pr_cdcooper);
       
@@ -4094,9 +4094,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
            LENGTH(TRIM(TO_CHAR(pr_nrctatrf))) > 20 THEN
           vr_cdcritic := 1217;
           vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
-        pr_nmdcampo := 'nrctatrf';
-        RAISE vr_exc_saida;
-      END IF;
+          pr_nmdcampo := 'nrctatrf';
+          RAISE vr_exc_saida;
+        END IF;
       END IF;
 
       -- Verifica o tipo de pessoa
@@ -4148,7 +4148,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
           vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) || ' '|| vr_dstextab;
           pr_nmdcampo := 'intipcta';
           RAISE vr_exc_saida;
-      END IF;
+        END IF;
       END IF;
 
       IF pr_inpessoa = 1 THEN 
@@ -4170,8 +4170,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
         IF NOT vr_stsnrcal THEN
           vr_cdcritic := 1221;
           vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
-        pr_nmdcampo := 'nrcpfcgc';
-        RAISE vr_exc_saida;
+          pr_nmdcampo := 'nrcpfcgc';
+          RAISE vr_exc_saida;
       END IF;
       END IF;
     END IF;
@@ -4341,7 +4341,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0002 IS
     WHEN vr_exc_error THEN
 
       pr_dscritic := TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - CADA0002 --> Erro ao atualzar a tabela crapope na rotina pc_bloqueia_operadores. Detalhes: ' || SQLERRM;
-
+        
       CECRED.pc_log_programa(pr_dstiplog => 'O'
                            , pr_cdprograma => 'JBOPE_BLOQUEIA_OPERADORES' 
                            , pr_cdcooper => 0
