@@ -4478,6 +4478,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
         vr_dtinreg      DATE         := NULL;
         vr_cdmotivo     NUMBER(5)    := NULL;
         vr_idtipo_envio NUMBER(5)    := NULL;
+        vr_dsobservacao VARCHAR2(100) := NULL;
+
 
         -- Cursor REESTRUTURAÇÃO
         CURSOR cr_atvprb_reest(pr_cdcooper IN NUMBER
@@ -4527,6 +4529,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                , idtipo_envio
                , idatvprobl
                , idreestrut
+               , dsobservacao
             FROM (SELECT DISTINCT
                          ris.cdcooper
                        , ris.nrdconta
@@ -4536,8 +4539,17 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                        , 1 idatvprobl
                        , 0 idreestrut
                        , ris.dtinictr dtinreg
+                       , null dsobservacao
                   FROM crapris ris, crapepr epr
-                 WHERE ris.qtdiaatr >= 90
+                  -- Verifica se o contrato está atraso a mais de 90 dias ou se não foi quitado após estar em 90 dias de atraso
+                 WHERE (ris.qtdiaatr > 90 or (ris.qtdiaatr >= 30 
+                                         and exists(select distinct 1
+                                                      from tbhist_ativo_probl his
+                                                     where his.cdcooper  = ris.cdcooper
+                                                       and his.nrdconta  = ris.nrdconta
+                                                       and his.nrctremp  = ris.nrctremp
+                                                       and his.cdmotivo  = 58 
+                                                       and to_char(his.dthistreg, 'YYYYMM') = to_char(ADD_MONTHS(rw_crapdat.dtultdma, -1), 'YYYYMM'))))
                    AND epr.idquaprc(+) NOT IN (3, 4) -- Somente contrato diferente 3-Renegociação
                                                      --                            4-Composição de Dívida
                    AND ris.cdcooper  = epr.cdcooper(+)
@@ -4558,6 +4570,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                        , 1 idatvprobl
                        , 0 idreestrut
                        , ris.dtinictr dtinreg
+                       , null dsobservacao                       
                   FROM crapris ris, crapepr epr
                  WHERE epr.idquaprc(+) NOT IN (3, 4) -- Somente contrato diferente 3-Renegociação
                                                      --                            4-Composição de Dívida
@@ -4579,6 +4592,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                        , 1 idatvprobl
                        , 0 idreestrut
                        , a.dtasitct dtinreg
+                       , null dsobservacao                       
                   FROM crapass a
                  WHERE a.cdcooper = pr_cdcooper
                    AND a.nrdconta = pr_nrdconta
@@ -4593,6 +4607,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                      , 1 idatvprobl
                      , 0 idreestrut
                      , nvl(cyc.dtinclus, cyc.dtaltera) dtinreg
+                     , null dsobservacao                     
                   from crapcyc cyc
                  where cyc.cdmotcin in (2,7)
                    and cyc.cdcooper = pr_cdcooper
@@ -4608,12 +4623,14 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                        , 1 idatvprobl
                        , 0 idreestrut
                        , ap.dtinclus dtinreg
+                       , ap.dsobserv dsobservacao                       
                   FROM TBCADAST_ATIVO_PROBL AP
                  WHERE ap.cdcooper = pr_cdcooper
                    AND ap.nrdconta = pr_nrdconta
-                   AND ap.nrctremp = pr_nrctremp
+                   AND ap.nrctremp = decode(ap.nrctremp, 0, ap.nrctremp, pr_nrctremp)
                    AND ap.dtexclus is null
-                   AND ap.cdmotivo IN( 62  -- COOPERADO PRESO
+                   AND ap.cdmotivo IN( 60  -- SOCIO FALECIDO MANUAL
+                                     , 62  -- COOPERADO PRESO
                                      , 63  -- FALENCIA PJ
                                      , 64  -- RECUPERACAO JUDICIAL PJ
                                      , 65) -- OUTROS
@@ -4624,6 +4641,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
         rw_atvprb cr_atvprb%ROWTYPE;
 
       BEGIN
+           
        -- ** INÍCIO VERIFICAÇÃO ATIVO PROBLEMÁTICO ** --
        -- Inicializa variáveis de retorno
        pr_atvprobl   := 0;
@@ -4652,6 +4670,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
         vr_dtinreg      := rw_atvprb_reest.dtinreg;
         vr_cdmotivo     := rw_atvprb_reest.cdmotivo;
         vr_idtipo_envio := rw_atvprb_reest.idtipo_envio;
+        vr_dsobservacao := rw_atvprb.dsobservacao;        
       end if;
 
       -- Se não encontrou REESTRUTURAÇÃO, verifica os outros motivos
@@ -4675,6 +4694,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
         vr_dtinreg      := rw_atvprb.dtinreg;
         vr_cdmotivo     := rw_atvprb.cdmotivo;
         vr_idtipo_envio := rw_atvprb.idtipo_envio;
+        vr_dsobservacao := rw_atvprb.dsobservacao;
       end if;
        -- 
        
@@ -4696,7 +4716,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                                              ,vr_dtinreg
                                              ,rw_crapdat.dtultdma  -- dthistreg
                                              ,vr_cdmotivo
-                                             ,NULL                 -- dsobserv
+                                             ,vr_dsobservacao
                                              ,vr_idtipo_envio);
         --
           EXCEPTION
@@ -4967,6 +4987,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                                    ,pr_dtatvprobl => vr_dtatvprobl                    -- Data do contrato de Reestruturação
                                    ,pr_cdcritic => vr_cdcritic                        -- Código da crítica
                                    ,pr_dscritic => vr_dscritic);                      -- Erros do processo
+                                   
         -- Verifica erro
         IF vr_cdcritic = 0 THEN
           RAISE vr_exc_saida;

@@ -11,8 +11,9 @@
  *                             departamento como parametros e passar o o código (Renato Darosci)
  *
  *				  05/12/2017 - Adicionado campo Ind. Monitoramento - Melhoria 458 - Antonio R. Jr (mouts)
- * -------------- 
  *
+ *                11/04/2018 - Incluído novo campo "Estourar a conta corrente" (inestocc)
+ *                             Diego Simas - AMcom  
  * -------------- 
  */
 ?>
@@ -103,6 +104,10 @@
 	echo "$('#ingerdeb','#frmHistorico').val('" . getByTagName($historico,'ingerdeb') . "');";
 	echo "$('#nrctatrc','#frmHistorico').val('" . getByTagName($historico,'nrctatrc') . "');";
 	echo "$('#nrctatrd','#frmHistorico').val('" . getByTagName($historico,'nrctatrd') . "');";
+	if($cddopcao == 'A'){
+		echo "$('#inestocc','#frmHistorico').val('" . getByTagName($historico,'inestocc') . "');";		
+	}	
+	
 	
 	// LABEL - Tarifas
 	$vltarayl = number_format(str_replace(',','.',getByTagName($historico,'vltarayl')),2,',','.');
@@ -129,8 +134,6 @@
 	echo "$('#cdagrupa','#frmHistorico').val('" . $cdagrupa . "');";
 	echo "$('#dsagrupa','#frmHistorico').val('" . getByTagName($historico,'dsagrupa') . "');";
 	
-	
-
 	if( $cddopcao == "X" ){
 		echo "$('input[type=\"text\"],select','#frmHistorico').desabilitaCampo().removeClass('campoErro');";
 		echo "$('#btSalvar').focus();";

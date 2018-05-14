@@ -6,6 +6,8 @@
  * OBJETIVO     : Rotina para alteração e inclusão cadastral da tela HISTOR
  * --------------
  * ALTERAÇÕES   :  05/12/2017 - Adicionado campo Ind. Monitoramento - Melhoria 458 - Antonio R. Jr (mouts)
+ *                 11/04/2018 - Incluído novo campo "Estourar a conta corrente" (inestocc)
+ *                              Diego Simas - AMcom
  * -------------- 
  */
 ?> 
@@ -38,6 +40,7 @@
 	$indcompl = (isset($_POST['indcompl'])) ? $_POST['indcompl'] : 0;
 	$indebcta = (isset($_POST['indebcta'])) ? $_POST['indebcta'] : 0;
 	$indoipmf = (isset($_POST['indoipmf'])) ? $_POST['indoipmf'] : 0;
+	$inestocc = (isset($_POST['inestocc'])) ? $_POST['inestocc'] : 0;
 
 	$inhistor = (isset($_POST['inhistor'])) ? $_POST['inhistor'] : 0;
 	$indebcre = (isset($_POST['indebcre'])) ? $_POST['indebcre'] : '';
@@ -132,6 +135,10 @@
 		exibirErro('error','Gerencial a cr&eacute;dito inv&aacute;lido.','Alerta - Ayllos',"focaCampoErro('ingercre','frmHistorico');",false);
 	}
 	
+	if ($inestocc != 0 && $inestocc != 1) {
+		exibirErro('error','Estourar a Conta Corrente inv&aacute;lido.','Alerta - Ayllos',"focaCampoErro('inestocc','frmHistorico');",false);
+	}
+	
     if ($ingerdeb != 1 && $ingerdeb != 2 && $ingerdeb != 3) {
 		exibirErro('error','Gerencial a d&eacute;bito inv&aacute;lido.','Alerta - Ayllos',"focaCampoErro('ingerdeb','frmHistorico');",false);
 	}
@@ -200,6 +207,7 @@
 	$xml .= '       <tpctbcxa>'.$tpctbcxa.'</tpctbcxa>';
 
 	$xml .= '       <ingercre>'.$ingercre.'</ingercre>';
+	$xml .= '       <inestocc>'.$inestocc.'</inestocc>';
 	$xml .= '       <ingerdeb>'.$ingerdeb.'</ingerdeb>';
 	
 	$xml .= '       <cdgrphis>'.$cdgrupo_historico.'</cdgrphis>';
