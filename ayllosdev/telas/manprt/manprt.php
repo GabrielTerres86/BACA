@@ -88,6 +88,8 @@
 																		
 																		<div id="divTela">
 																			<? include('form_cabecalho.php'); ?>
+
+																			<div id="divFormulario"></div>
 																		</div>
 																		
 																		
