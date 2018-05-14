@@ -339,6 +339,12 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                    17/04/2018 - Incluir no arquivo somente fluxo de vencimento com valor maior que 0
                                 ou menor que -100. Empresa 81, o sistema deve validar (se não tem mais
                                 CNPJ deve ser enviado 1) conforme o manual do 3040. (SD#855059-AJFink)
+								
+                   09/05/2018 - Correção para considerar apenas os contratos com cobertura de operação ativa (Lucas Skroch - Supero)
+								
+                   10/05/2018 - Ajuste na proc pc_garantia_cobertura_opera para nao enviar atricuto Ident 
+                                da tag Gar quando tipo for "0104" ou "0105". PRJ366 (Lombardi)
+				   
 .............................................................................................................................*/
 
     DECLARE
@@ -3827,6 +3833,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
         vr_vlroriginal   NUMBER := 0;
         vr_vlratualizado NUMBER := 0;
         vr_nrcpfcnpj     VARCHAR2(20);
+        --vr_nrcpfcnpj_valida NUMBER := 0;
         vr_inpessoa      NUMBER := 0;
         vr_stsnrcal      BOOLEAN := FALSE;
         vr_idcobertura   NUMBER := 0;
@@ -3842,7 +3849,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
            WHERE cdcooper = pr_cdcooper
              AND nrdconta = pr_nrdconta
              AND tpcontrato = pr_tpcontrato
-             AND nrcontrato = pr_nrcontrato;
+             AND nrcontrato = pr_nrcontrato
+             AND insituacao = 1;
            
         BEGIN
           IF vr_tab_individ(vr_idx_individ).cdmodali IN(0299,0499) THEN
@@ -3863,7 +3871,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                           ,pr_nrcontrato => vr_tab_individ(vr_idx_individ).nrctremp);
          FETCH cr_cobertura INTO vr_idcobertura;
          
-         IF vr_idcobertura > 0 THEN
+         IF nvl(vr_idcobertura,0) > 0 THEN
            bloq0001.pc_bloqueio_garantia_atualizad(pr_idcobert            => vr_idcobertura
                                                   ,pr_vlroriginal         => vr_vlroriginal
                                                   ,pr_vlratualizado       => vr_vlratualizado
@@ -3879,8 +3887,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                                          ,pr_inpessoa => vr_inpessoa);
              IF vr_inpessoa = 1 THEN
                vr_nrcpfcnpj := to_char(vr_nrcpfcnpj,'fm00000000000');
+               --vr_nrcpfcnpj_valida := lpad(vr_nrcpfcnpj,11,'0');
              ELSE
                vr_nrcpfcnpj := to_char(vr_nrcpfcnpj,'fm00000000000000');
+               --vr_nrcpfcnpj_valida := lpad(vr_nrcpfcnpj,8,'0');
              END IF;
              
              -- Se for pós fixado envia como TP105
@@ -3899,14 +3909,16 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps573(pr_cdcooper  IN crapcop.cdcooper%T
                                                        || ' Tp="0104"' 
                                                        || ' VlrOrig="' || replace(to_char(vr_vlroriginal,'fm99999999999990D00'),',','.') || '"');
              END IF;                                          
+             /* Retirado por causa da regra: O preenchimento do atributo 'VlrOrig' é obrigatório e os atributos 'Ident' 
+                                             e 'PercGar' não podem ser preenchidos para 'Tp' diferente de '9'.
               
              -- Enviar o ident quando o CNPJ for diferente do contratante do empréstimo
-             --IF vr_tab_individ(vr_idx_individ).nrcpfcgc <> vr_nrcpfcnpj THEN
+             IF vr_tab_individ(vr_idx_individ).nrcpfcgc <> vr_nrcpfcnpj_valida THEN
                gene0002.pc_escreve_xml(pr_xml            => vr_xml_3040
                                       ,pr_texto_completo => vr_xml_3040_temp
                                       ,pr_texto_novo     => ' Ident="' || vr_nrcpfcnpj || '"');
-             --END IF;
-
+             END IF;
+             */
              IF vr_vlroriginal <> vr_vlratualizado THEN
                gene0002.pc_escreve_xml(pr_xml            => vr_xml_3040
                                       ,pr_texto_completo => vr_xml_3040_temp
