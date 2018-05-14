@@ -2494,9 +2494,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
           
           /* Se teve juros ao capital e a conta esta eliminada, vamos zerar o saldo de cotas e 
              criar o registro na tabela de devolucao de cotas */
-          IF (vr_tab_crrl048(vr_indice).vljurcap > 0 AND
-              vr_tab_crrl048(vr_indice).dtelimin IS NOT NULL) OR
-              vr_cdsitdct = 8 THEN -- Para quando estiver com situação 8 atualizar cotas
+          IF vr_tab_crrl048(vr_indice).vljurcap > 0 AND
+            (vr_tab_crrl048(vr_indice).dtelimin IS NOT NULL OR
+             vr_cdsitdct = 8) THEN -- Para quando estiver com situação 8 atualizar cotas
              
             -- Atualizar informações do lote  
             rw_craplot.nrseqdig := rw_craplot.nrseqdig + 1;
