@@ -10,7 +10,10 @@
 	 Alterações: 21/07/2016 - Corrigi a forma de validacao do retorno XML"ERRO".SD 479874 (Carlos R.)
 	 
 	             05/04/2018 - Chamada da rotina para verificar o range permitido para 
-				              contratação do produto. PRJ366 (Lombardi).
+				              contratação do produto. PRJ366 (Lombardi).	 
+	 
+	             14/05/2018 - Ajustes no codigo e valor de contratacao do produto.
+				              PRJ366 (Lombardi).
 							  
 	********************************************************************************/
 	
@@ -52,16 +55,20 @@
 		exibeErro(str_replace("#","<br>",$xmlObjAgendamento->roottag->tags[0]->tags[0]->tags[4]->cdata));
 	} 
 	
-	$vllanmto = str_replace(',','.',str_replace('.','',$vlparaar));
+	$vllanmto = floatval(str_replace(',','.',str_replace('.','',$vlparaar)));
+	$vllanmto = $qtmesaar * $vllanmto;
 	
-	$vllanmto = $qtmesaar * $vlparaar;
+	if ($flgtipar == 1) 
+		$cdprodut = 41; // Resgate
+	else
+		$cdprodut = 3; // Aplicacao
 	
 	// Montar o xml de Requisicao
 	$xml  = "";
 	$xml .= "<Root>";
 	$xml .= " <Dados>";	
 	$xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
-	$xml .= "   <cdprodut>".    3    ."</cdprodut>"; //Poupança Programada
+	$xml .= "   <cdprodut>".$cdprodut."</cdprodut>";
 	$xml .= "   <vlcontra>".$vllanmto."</vlcontra>";
 	$xml .= "   <cddchave>".    0    ."</cddchave>";
 	$xml .= " </Dados>";

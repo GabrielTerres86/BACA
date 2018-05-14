@@ -20,7 +20,10 @@
                            (Douglas - Projeto Captação Internet 2014/2)	 
                
                20/04/2018 - Adicionado validacao da adesao do produto 41 resgate 
-                            de aplicacao. PRJ366 (Lombardi).
+                            de aplicacao. PRJ366 (Lombardi). 
+               
+               14/05/2018 - Ajuste para garantir que seja pego o valor do resgate.
+                            PRJ366 (Lombardi).
 
 ..............................................................................*/
     
@@ -68,6 +71,7 @@ DEF VAR aux_vlrvtfim AS DECI                                           NO-UNDO.
 DEF VAR aux_vlsolrgt LIKE craplap.vllanmto                             NO-UNDO.
 DEF VAR aux_vlbasrgt LIKE craplap.vllanmto                             NO-UNDO.
 DEF VAR aux_sldpresg LIKE craplap.vllanmto                             NO-UNDO.
+DEF VAR aux_totvlres LIKE craplap.vllanmto                             NO-UNDO.
 
 /* Aplicacoes por parametro */
 DEF VAR aux_qtaplica AS INTE                                           NO-UNDO. /* Quantidade de aplicacoes por parametro */
@@ -138,51 +142,6 @@ IF  aux_cdcritic <> 0 OR aux_dscritic <> "" THEN
         
         RETURN "NOK".
     END.
-
-{ includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
-RUN STORED-PROCEDURE pc_valida_valor_de_adesao
-aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper, /* Cooperativa */
-                                     INPUT par_nrdconta, /* Numero da conta */
-                                     INPUT 41,           /* Codigo Produto */
-                                     INPUT aux_vlresgat, /* Valor contratado */
-                                     INPUT 3,            /* Id Origem */
-                                     INPUT 0,            /* Codigo da chave */
-                                    OUTPUT 0,            /* Solicita senha coordenador */
-                                    OUTPUT 0,            /* Codigo da crítica */
-                                    OUTPUT "").          /* Descriçao da crítica */
-
-CLOSE STORED-PROC pc_valida_valor_de_adesao
-      aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
-
-{ includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
-
-ASSIGN aux_cdcritic = 0
-       aux_dscritic = ""
-       aux_cdcritic = pc_valida_valor_de_adesao.pr_cdcritic 
-                      WHEN pc_valida_valor_de_adesao.pr_cdcritic <> ?
-       aux_dscritic = pc_valida_valor_de_adesao.pr_dscritic
-                      WHEN pc_valida_valor_de_adesao.pr_dscritic <> ?.
-
-IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
-     DO:
-         IF aux_dscritic = "" THEN
-             DO:
-                FIND crapcri WHERE crapcri.cdcritic = aux_cdcritic 
-                                   NO-LOCK NO-ERROR.
-                
-                IF AVAIL crapcri THEN
-                   ASSIGN aux_dscritic = crapcri.dscritic.
-                ELSE
-                   ASSIGN aux_dscritic =  "Nao foi possivel validar o valor de adesao.".
-             END.
-          
-          ASSIGN xml_dsmsgerr = "<dsmsgerr>" + aux_dscritic +
-                                "</dsmsgerr>".
-          
-          RUN proc_geracao_log (INPUT FALSE).
-          
-          RETURN "NOK".
-     END.
 
 FIND FIRST crapdat WHERE crapdat.cdcooper = par_cdcooper 
                          NO-LOCK NO-ERROR.
@@ -343,7 +302,9 @@ DO:
                             RETURN "NOK".
                     END.
                 END.        
-
+            
+            ASSIGN aux_totvlres = aux_totvlres + aux_vlbasrgt.
+            
             /* Calcular as informacoes de imposto de renda com o valor base para resgate */
             RUN saldo_rgt_rdc_pos IN h-b1wgen0004 (INPUT par_cdcooper,
                                                    INPUT par_nrdconta,
@@ -456,6 +417,52 @@ DO:
 
         END.
     END.
+    
+    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+    RUN STORED-PROCEDURE pc_valida_valor_de_adesao
+    aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper, /* Cooperativa */
+                                         INPUT par_nrdconta, /* Numero da conta */
+                                         INPUT 41,           /* Codigo Produto */
+                                         INPUT aux_totvlres, /* Valor contratado */
+                                         INPUT 3,            /* Id Origem */
+                                         INPUT 0,            /* Codigo da chave */
+                                        OUTPUT 0,            /* Solicita senha coordenador */
+                                        OUTPUT 0,            /* Codigo da crítica */
+                                        OUTPUT "").          /* Descriçao da crítica */
+
+    CLOSE STORED-PROC pc_valida_valor_de_adesao
+          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+    ASSIGN aux_cdcritic = 0
+           aux_dscritic = ""
+           aux_cdcritic = pc_valida_valor_de_adesao.pr_cdcritic 
+                          WHEN pc_valida_valor_de_adesao.pr_cdcritic <> ?
+           aux_dscritic = pc_valida_valor_de_adesao.pr_dscritic
+                          WHEN pc_valida_valor_de_adesao.pr_dscritic <> ?.
+
+    IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
+         DO:
+             IF aux_dscritic = "" THEN
+                 DO:
+                    FIND crapcri WHERE crapcri.cdcritic = aux_cdcritic 
+                                       NO-LOCK NO-ERROR.
+                    
+                    IF AVAIL crapcri THEN
+                       ASSIGN aux_dscritic = crapcri.dscritic.
+                    ELSE
+                       ASSIGN aux_dscritic =  "Nao foi possivel validar o valor de adesao.".
+                 END.
+              
+              ASSIGN xml_dsmsgerr = "<dsmsgerr>" + aux_dscritic +
+                                    "</dsmsgerr>".
+              
+              RUN proc_geracao_log (INPUT FALSE).
+              
+              RETURN "NOK".
+         END.
+
     
     CREATE xml_operacao.
     ASSIGN xml_operacao.dslinxml = "</DADOS>".

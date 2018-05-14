@@ -94,7 +94,9 @@
              18/12/2017 - P404 - Inclusão de Garantia de Cobertura das Operações de Crédito (Augusto / Marcos (Supero))
 
 			 04/04/2018 - Ajuste para chamar as rotinas de validacao do valor de adesao do produto e 
-						  senha do coordenador. PRJ366 (Lombardi).
+						  senha do coordenador. PRJ366 (Lombardi).	  
+
+			 14/05/2018 - Ajustes na function validaValorProdutoResgate. PRJ366 (Lombardi).	
 
 ***************************************************************************/
 
@@ -3298,8 +3300,37 @@ function ativaCampo() {
 }
 
 function validaValorProdutoResgate (executa, campo, form) {
-	var vlresgat = $("#"+campo, "#"+form).val().replace(/\./g, "").replace(",", ".");
-	validaValorProduto(nrdconta, 41, vlresgat, executa, 'divRotina', 0);
+	var vlresgat = 0;
+	var tpresgat = $("#tpresgat", "#frmResgate").val();
+	
+	if (form == 'frmResgate' && tpresgat == "T") {
+		$.ajax({
+			type: "POST",
+			dataType: "html",
+			url: UrlSite + "telas/atenda/aplicacoes/busca_saldo_resgate_aplicacao.php",
+			data: {
+				nrdconta: nrdconta,
+				nraplica: nraplica,
+				redirect: "script_ajax"
+			},
+			error: function (objAjax, responseError, objExcept) {
+				hideMsgAguardo();
+				showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+			},
+			success: function (response) {
+				try {
+					eval(response);
+					validaValorProduto(nrdconta, 41, vlresgat, executa, 'divRotina', 0);
+				} catch (error) {
+					hideMsgAguardo();
+					showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o. " + error.message, "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+				}
+			}
+		});
+	} else {
+		vlresgat = $("#"+campo, "#"+form).val().replace(/\./g, "").replace(",", ".");
+		validaValorProduto(nrdconta, 41, vlresgat, executa, 'divRotina', 0);
+	}
 }
 
 function senhaCoordenador(executaDepois) {
