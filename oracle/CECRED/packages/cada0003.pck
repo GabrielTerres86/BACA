@@ -4321,6 +4321,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
           FROM crapaar 
          WHERE cdcooper = pr_cdcooper
            AND nrdconta = pr_nrdconta
+           AND flgtipar = 0 -- Considerar apenas aplicação
            AND cdsitaar <> 3;
        rw_aplicacao cr_aplicacao%ROWTYPE;
 
