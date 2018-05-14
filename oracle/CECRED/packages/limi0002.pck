@@ -2647,8 +2647,6 @@ END pc_renova_limdesctit;
          WHEN OTHERS THEN
            pr_cdcritic := 0;
            pr_dscritic := 'Erro PC_CANCELA_LIMITE: '||SQLERRM;
-           -- Efetuar rollback
-           ROLLBACK;
     END pc_cancela_limite;
 
     -- Cancela limite de crédito Conta
@@ -2670,8 +2668,6 @@ END pc_renova_limdesctit;
          WHEN OTHERS THEN
            pr_cdcritic := 0;
            pr_dscritic := 'Erro PC_CANCELA_LIMITE_CTA: '||SQLERRM;
-           -- Efetuar rollback
-           ROLLBACK;
     END pc_cancela_limite_cta;
 
     -- Cancela Microfilmagem
@@ -2702,8 +2698,6 @@ END pc_renova_limdesctit;
          WHEN OTHERS THEN
            pr_cdcritic := 0;
            pr_dscritic := 'Erro PC_CANCELA_MICROFILMAGEM: '||SQLERRM;
-           -- Efetuar rollback
-           ROLLBACK;
     END pc_cancela_microfilmagem;
 
     --************************--
@@ -2825,9 +2819,7 @@ END pc_renova_limdesctit;
            END IF;
            --
         END LOOP;
-        --
-        COMMIT;
-        --
+
       END;
     EXCEPTION
       WHEN vr_exc_saida THEN
@@ -2836,14 +2828,10 @@ END pc_renova_limdesctit;
       END IF;
         pr_cdcritic := vr_cdcritic;
         pr_dscritic := 'Erro PC_CANCELA_LIMITE_CREDITO. Detalhes: '||vr_dscritic;
-        -- Efetuar rollback
-        ROLLBACK;
       WHEN OTHERS THEN
         -- Retornar o erro não tratado
         pr_cdcritic := 0;
         pr_dscritic := 'Erro não tratado na rotina PC_CANCELA_LIMITE_CREDITO. Detalhes: '||sqlerrm;
-        -- Efetuar rollback
-        ROLLBACK;
     END;
   END PC_CANCELA_LIMITE_CREDITO;
 
