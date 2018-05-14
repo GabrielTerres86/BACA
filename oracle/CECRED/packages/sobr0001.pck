@@ -243,6 +243,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
                21/12/2017 - Alteracao para desconsiderar se o cooperado esta eliminado ou nao.
                             Adequar lancamentos para cooperados eliminados para voltar a lancar
                             o credito das sobras/juros. (Anderson SD820374).
+               
+               14/05/2018 - Ajustar para atualizar a sobras e capital para a situação 8
+                            (Rafael - Mouts).
 ............................................................................. */
 
       -- Código do programa
@@ -651,10 +654,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
          e nem juros sobre o capital - Incorporacao Transulcred -> Transpocred */
       TYPE vr_typ_cta_proibidas IS TABLE OF NUMBER INDEX BY PLS_INTEGER;
       vr_tab_cta_proibidas vr_typ_cta_proibidas;
-      
+      --
+      CURSOR cr_crapass (prc_cdcooper IN crapass.cdcooper%TYPE
+                        ,prc_nrdconta IN crapass.nrdconta%TYPE) IS
+        SELECT ass.cdsitdct
+          FROM crapass ass
+         WHERE ass.cdcooper = prc_cdcooper
+           AND ass.nrdconta = prc_nrdconta;
       -- Vetor para armazenar os dados para o processo definitivo
       vr_tab_crrl048 typ_tab_crrl048;
       vr_indice      PLS_INTEGER := 0;      
+      vr_cdsitdct       crapass.cdsitdct%TYPE;      
       
       /* escrita no log centralizada */
       PROCEDURE pc_controle_critica IS
@@ -1835,7 +1845,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
         -- Perceorre a tabela que foi populada para o processo definitivo
         vr_indice := vr_tab_crrl048.first;
         WHILE vr_indice IS NOT NULL LOOP
-
+          vr_cdsitdct := 0;
+          FOR rw_crapass IN cr_crapass (pr_cdcooper,
+                                        vr_tab_crrl048(vr_indice).nrdconta) LOOP
+            vr_cdsitdct := rw_crapass.cdsitdct;
+          END LOOP;
           /*  Credito do retorno  */
           IF vr_increret = 1 THEN           
 
@@ -1882,7 +1896,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
                 rw_craplot.qtcompln := rw_craplot.qtcompln + 1;
                 
                 /* Se for cooperado eliminado - vamos lancar debitar o lancamento e mover para a tabela de devolucao de cotas/cc */
-                IF vr_tab_crrl048(vr_indice).dtelimin IS NOT NULL THEN
+                IF vr_tab_crrl048(vr_indice).dtelimin IS NOT NULL OR
+                    vr_cdsitdct = 8 THEN -- Para quando estiver com situação 8 atualizar cotas
                   -- Incrementar sequencia no lote e quantidades
                   rw_craplot.nrseqdig := rw_craplot.nrseqdig + 1;                
                   rw_craplot.qtinfoln := rw_craplot.qtinfoln + 1;
@@ -1946,7 +1961,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
                   rw_craplot.qtcompln := rw_craplot.qtcompln + 1;
                 
                   /* Se for cooperado eliminado - vamos lancar debitar o lancamento e mover para a tabela de devolucao de cotas/cc */
-                  IF vr_tab_crrl048(vr_indice).dtelimin IS NOT NULL THEN
+                  IF vr_tab_crrl048(vr_indice).dtelimin IS NOT NULL OR
+                    vr_cdsitdct = 8 THEN -- Para quando estiver com situação 8 atualizar cotas
                     -- Incrementar sequencia no lote e quantidades
                     rw_craplot.nrseqdig := rw_craplot.nrseqdig + 1;
                     rw_craplot.qtinfoln := rw_craplot.qtinfoln + 1;
@@ -2020,7 +2036,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
                   rw_craplot.qtcompln := rw_craplot.qtcompln + 1;
                   
                   /* Se for cooperado eliminado - vamos lancar debitar o lancamento e mover para a tabela de devolucao de cotas/cc */
-                  IF vr_tab_crrl048(vr_indice).dtelimin IS NOT NULL THEN
+                  IF vr_tab_crrl048(vr_indice).dtelimin IS NOT NULL OR
+                    vr_cdsitdct = 8 THEN -- Para quando estiver com situação 8 atualizar cotas
                     -- Incrementar sequencia no lote e quantidades
                     rw_craplot.nrseqdig := rw_craplot.nrseqdig + 1;                
                     rw_craplot.qtinfoln := rw_craplot.qtinfoln + 1;
@@ -2083,7 +2100,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
                   rw_craplot.qtcompln := rw_craplot.qtcompln + 1;
                   
                   /* Se for cooperado eliminado - vamos lancar debitar o lancamento e mover para a tabela de devolucao de cotas/cc */
-                  IF vr_tab_crrl048(vr_indice).dtelimin IS NOT NULL THEN
+                  IF vr_tab_crrl048(vr_indice).dtelimin IS NOT NULL OR
+                    vr_cdsitdct = 8 THEN -- Para quando estiver com situação 8 atualizar cotas
                     -- Incrementar sequencia no lote e quantidades
                     rw_craplot.nrseqdig := rw_craplot.nrseqdig + 1;
                     rw_craplot.qtinfoln := rw_craplot.qtinfoln + 1;
@@ -2156,7 +2174,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
                 rw_craplot.qtcompln := rw_craplot.qtcompln + 1;
                   
                 /* Se for cooperado eliminado - vamos lancar debitar o lancamento e mover para a tabela de devolucao de cotas/cc */
-                IF vr_tab_crrl048(vr_indice).dtelimin IS NOT NULL THEN
+                IF vr_tab_crrl048(vr_indice).dtelimin IS NOT NULL OR
+                    vr_cdsitdct = 8 THEN -- Para quando estiver com situação 8 atualizar cotas
                   -- Incrementar sequencia no lote e quantidades
                   rw_craplot.nrseqdig := rw_craplot.nrseqdig + 1;
                   rw_craplot.qtinfoln := rw_craplot.qtinfoln + 1;
@@ -2219,7 +2238,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
                   rw_craplot.qtcompln := rw_craplot.qtcompln + 1;
                   
                   /* Se for cooperado eliminado - vamos lancar debitar o lancamento e mover para a tabela de devolucao de cotas/cc */
-                  IF vr_tab_crrl048(vr_indice).dtelimin IS NOT NULL THEN
+                  IF vr_tab_crrl048(vr_indice).dtelimin IS NOT NULL OR
+                    vr_cdsitdct = 8 THEN -- Para quando estiver com situação 8 atualizar cotas
                     -- Incrementar sequencia no lote e quantidades
                     rw_craplot.nrseqdig := rw_craplot.nrseqdig + 1;
                     rw_craplot.qtinfoln := rw_craplot.qtinfoln + 1;
@@ -2289,7 +2309,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
                   rw_craplot.qtinfoln := rw_craplot.qtinfoln + 1;
                   rw_craplot.qtcompln := rw_craplot.qtcompln + 1;
                     
-                  IF vr_tab_crrl048(vr_indice).dtelimin IS NOT NULL THEN
+                  IF vr_tab_crrl048(vr_indice).dtelimin IS NOT NULL OR
+                    vr_cdsitdct = 8 THEN -- Para quando estiver com situação 8 atualizar cotas
                     -- Incrementar sequencia no lote e quantidades
                     rw_craplot.nrseqdig := rw_craplot.nrseqdig + 1;                
                     rw_craplot.qtinfoln := rw_craplot.qtinfoln + 1;
@@ -2351,7 +2372,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
                   rw_craplot.qtinfoln := rw_craplot.qtinfoln + 1;
                   rw_craplot.qtcompln := rw_craplot.qtcompln + 1;
                     
-                  IF vr_tab_crrl048(vr_indice).dtelimin IS NOT NULL THEN
+                  IF vr_tab_crrl048(vr_indice).dtelimin IS NOT NULL OR
+                     vr_cdsitdct = 8 THEN -- Para quando estiver com situação 8 atualizar cotas
                     -- Incrementar sequencia no lote e quantidades
                     rw_craplot.nrseqdig := rw_craplot.nrseqdig + 1;
                     rw_craplot.qtinfoln := rw_craplot.qtinfoln + 1;
@@ -2472,8 +2494,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
           
           /* Se teve juros ao capital e a conta esta eliminada, vamos zerar o saldo de cotas e 
              criar o registro na tabela de devolucao de cotas */
-          IF vr_tab_crrl048(vr_indice).vljurcap > 0 AND
-             vr_tab_crrl048(vr_indice).dtelimin IS NOT NULL THEN
+          IF (vr_tab_crrl048(vr_indice).vljurcap > 0 AND
+              vr_tab_crrl048(vr_indice).dtelimin IS NOT NULL) OR
+              vr_cdsitdct = 8 THEN -- Para quando estiver com situação 8 atualizar cotas
              
             -- Atualizar informações do lote  
             rw_craplot.nrseqdig := rw_craplot.nrseqdig + 1;
@@ -2540,7 +2563,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
               rw_craplot.qtinfoln := rw_craplot.qtinfoln + 1;
               rw_craplot.qtcompln := rw_craplot.qtcompln + 1;
               
-              IF vr_tab_crrl048(vr_indice).dtelimin IS NOT NULL THEN
+              IF vr_tab_crrl048(vr_indice).dtelimin IS NOT NULL OR
+                 vr_cdsitdct = 8 THEN -- Para quando estiver com situação 8 atualizar cotas
                 -- Incrementar sequencia no lote e quantidades
                 rw_craplot.nrseqdig := rw_craplot.nrseqdig + 1;                
                 rw_craplot.qtinfoln := rw_craplot.qtinfoln + 1;
@@ -2602,7 +2626,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
               rw_craplot.qtinfoln := rw_craplot.qtinfoln + 1;
               rw_craplot.qtcompln := rw_craplot.qtcompln + 1;  
               
-              IF vr_tab_crrl048(vr_indice).dtelimin IS NOT NULL THEN
+              IF vr_tab_crrl048(vr_indice).dtelimin IS NOT NULL OR
+                 vr_cdsitdct = 8 THEN -- Para quando estiver com situação 8 atualizar cotas
                 -- Incrementar sequencia no lote e quantidades
                 rw_craplot.nrseqdig := rw_craplot.nrseqdig + 1;
                 rw_craplot.qtinfoln := rw_craplot.qtinfoln + 1;
@@ -2670,7 +2695,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
               rw_craplot.qtinfoln := rw_craplot.qtinfoln + 1;
               rw_craplot.qtcompln := rw_craplot.qtcompln + 1;
               
-              IF vr_tab_crrl048(vr_indice).dtelimin IS NOT NULL THEN
+              IF vr_tab_crrl048(vr_indice).dtelimin IS NOT NULL OR
+                 vr_cdsitdct = 8 THEN -- Para quando estiver com situação 8 atualizar cotas
                 -- Incrementar sequencia no lote e quantidades
                 rw_craplot.nrseqdig := rw_craplot.nrseqdig + 1;                
                 rw_craplot.qtinfoln := rw_craplot.qtinfoln + 1;
@@ -2732,7 +2758,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sobr0001 AS
               rw_craplot.qtinfoln := rw_craplot.qtinfoln + 1;
               rw_craplot.qtcompln := rw_craplot.qtcompln + 1;
               
-              IF vr_tab_crrl048(vr_indice).dtelimin IS NOT NULL THEN
+              IF vr_tab_crrl048(vr_indice).dtelimin IS NOT NULL OR
+                 vr_cdsitdct = 8 THEN -- Para quando estiver com situação 8 atualizar cotas
                 -- Incrementar sequencia no lote e quantidades
                 rw_craplot.nrseqdig := rw_craplot.nrseqdig + 1;                
                 rw_craplot.qtinfoln := rw_craplot.qtinfoln + 1;
