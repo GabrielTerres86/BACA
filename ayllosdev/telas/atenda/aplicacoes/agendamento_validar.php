@@ -7,7 +7,9 @@
 	 
 	 Objetivo  : Validar o agendamento de aplicação e resgate
 	 
-	 Alterações: 05/04/2018 - Chamada da rotina para verificar o range permitido para 
+	 Alterações: 21/07/2016 - Corrigi a forma de validacao do retorno XML"ERRO".SD 479874 (Carlos R.)
+	 
+	             05/04/2018 - Chamada da rotina para verificar o range permitido para 
 				              contratação do produto. PRJ366 (Lombardi).
 							  
 	********************************************************************************/
@@ -46,7 +48,7 @@
 	$xmlObjAgendamento = getObjectXML($xmlResult);
 	
 	// Se ocorrer um erro, mostra crítica
-	if (strtoupper($xmlObjAgendamento->roottag->tags[0]->name) == "ERRO") {
+	if (isset($xmlObjAgendamento->roottag->tags[0]->name) && strtoupper($xmlObjAgendamento->roottag->tags[0]->name) == "ERRO") {
 		exibeErro(str_replace("#","<br>",$xmlObjAgendamento->roottag->tags[0]->tags[0]->tags[4]->cdata));
 	} 
 	
