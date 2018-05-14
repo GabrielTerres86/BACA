@@ -5,7 +5,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps716 (pr_cdcooper IN crapcop.cdcooper%T
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Odirlei Busana - AMcom
-     Data    : Março/2017                     Ultima atualizacao: 27/03/2017
+     Data    : Março/2017                     Ultima atualizacao: 02/04/2018
 
      Dados referentes ao programa:
 
@@ -15,6 +15,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps716 (pr_cdcooper IN crapcop.cdcooper%T
      Alteracoes: 27/07/2017 - Adicionado geração do arquivo log para conferencia pela area
                               de negocio. Adicionado envio de e-mail quando problemas forem
                               encontrados (Anderson).
+
+                              
+                 02/04/2018 - INC0011837 Inclusão do parâmetro cdcooper na chamada da rotina 
+                              pc_controla_log_batch da exception vr_exc_saida (Carlos)
 
   ............................................................................ */
 
@@ -89,8 +93,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps716 (pr_cdcooper IN crapcop.cdcooper%T
   vr_qtdiaatr     INTEGER;  
   vr_nrcartao     NUMBER;
   vr_dtdatual     DATE;
-  vr_flgemail     BOOLEAN;
-  
+
   --------------------------- SUBROTINAS INTERNAS --------------------------
 
   vr_nomdojob    VARCHAR2(40) := 'JBCRD_ARQ_FAT_ATRASO';
@@ -126,7 +129,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps716 (pr_cdcooper IN crapcop.cdcooper%T
   
   
   END pc_gerar_log;
-  
+
   --> Envio de e-mail de alerta
   PROCEDURE pc_envia_email_alerta(pr_cdcooper IN crapcop.cdcooper%TYPE,
                                   pr_dscritic IN VARCHAR2) IS
@@ -205,7 +208,7 @@ BEGIN
       IF rw_crapdat.inproces > 1 THEN 
         IF rw_crapdat.dtmvtopr <> vr_dtdatual THEN
           continue;
-        END IF;
+      END IF;
       ELSE
         IF rw_crapdat.dtmvtolt <> vr_dtdatual THEN
           continue;
@@ -215,7 +218,7 @@ BEGIN
       -- Log de início da execução
       pc_controla_log_batch(pr_cdcooper => rw_crapcop.cdcooper,
                             pr_dstiplog => 'I');
-                            
+      
       pc_gerar_log(rw_crapcop.cdcooper, 'Início importação do arquivo de faturas em atraso - Cooperativa: '||rw_crapcop.cdcooper);      
       
       -- Busca do diretório do arquivo
@@ -261,7 +264,7 @@ BEGIN
         --> Importar arquivos
         FOR i IN vr_tab_arquivo.first..vr_tab_arquivo.last LOOP
           BEGIN
-            
+
             pc_gerar_log(rw_crapcop.cdcooper, 'Início importação do arquivo '||vr_tab_arquivo(i)||' da Cooperativa: '||rw_crapcop.cdcooper);
           
             --> Importar o arquivo texto
@@ -422,7 +425,7 @@ BEGIN
                               pr_dstiplog => 'E',
                               pr_dscritic => vr_dscritic);
         vr_dscritic := NULL;
-        
+
       WHEN OTHERS THEN
         vr_dscritic := 'Nao foi possivel importar arquivo de faturas em atraso: '||SQLERRM;
         pc_controla_log_batch(pr_cdcooper => rw_crapcop.cdcooper,
@@ -450,41 +453,42 @@ BEGIN
      vr_dscritic := 'Erro ao converter arquivo de log: ' || vr_dscritic;
      RAISE vr_exc_saida;
   END IF;
-  
+
   --> Remove arquivo de log temporario
   GENE0001.pc_OScommand(pr_typ_comando => 'S'
                        ,pr_des_comando => 'rm -f '|| vr_dsdirarq || '/' || vr_nmlogtmp || '.log'
                        ,pr_typ_saida   => vr_typ_saida
                        ,pr_des_saida   => vr_dscritic);
-
+  
   IF vr_typ_saida = 'ERR' THEN
      -- O comando shell executou com erro, gerar log e sair do processo
      vr_dscritic := 'Erro ao remover arquivo de log: ' || vr_dscritic;
      RAISE vr_exc_saida;
   END IF;
-                 
+
   -- Salvar informações atualizadas
   COMMIT;
 
 EXCEPTION
   WHEN vr_exc_saida THEN
-    -- Se foi retornado apenas código
-    IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
-      -- Buscar a descrição
-      vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
-    END IF;
 
-    pc_controla_log_batch('E', vr_dscritic);
-    
+    -- Buscar a descrição
+    vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic, vr_dscritic);
+
+    pc_controla_log_batch(pr_cdcooper, 'E', vr_dscritic);
+
     -- Efetuar rollback
     ROLLBACK;
   WHEN OTHERS THEN
+    
+    CECRED.pc_internal_exception(pr_cdcooper);
+    
     -- Efetuar retorno do erro não tratado
     vr_dscritic := sqlerrm;
 
     -- Envio centralizado de log de erro
     vr_flgerlog := TRUE;
-    pc_controla_log_batch('E', vr_dscritic);
+    pc_controla_log_batch(pr_cdcooper, 'E', vr_dscritic);
     -- Efetuar rollback
     ROLLBACK;
 
