@@ -79,7 +79,15 @@ create or replace package cecred.PCAP0001 is
           cddosexo VARCHAR2(5),
           dsendere VARCHAR2(200),
           nrcepend NUMBER,
-          flgcheck BOOLEAN);
+          flgcheck BOOLEAN,
+          cdestcvl crapavt.cdestcvl%TYPE,
+          inpolexp crapttl.inpolexp%TYPE,
+          
+          dslograd crapenc.dsendere%TYPE,
+          nrendere crapenc.nrendere%TYPE,
+          complend crapenc.complend%TYPE,
+          nmbairro crapenc.nmbairro%TYPE,
+          nrcxapst crapenc.nrcxapst%TYPE);
           
   TYPE typ_tab_avalistas IS TABLE OF typ_reg_avalistas 
        INDEX BY VARCHAR2(15); --nrcpfcgc(15)
@@ -101,7 +109,9 @@ create or replace package cecred.PCAP0001 is
            cdufende crapenc.cdufende%type,
            nmcidade crapenc.nmcidade%type,
            nrdddtfc craptfc.nrdddtfc%type,
-           nrtelefo craptfc.nrtelefo%type);
+           nrtelefo craptfc.nrtelefo%type,
+           nrcxapst crapenc.nrcxapst%TYPE,
+           inpolexp crapttl.inpolexp%TYPE);
            
   TYPE typ_tab_brde IS TABLE OF typ_reg_brde 
        INDEX BY VARCHAR2(10); --nrdconta(10)   
@@ -222,7 +232,7 @@ create or replace package body cecred.PCAP0001 is
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Tiago
-    Data    : Setembro/12                            Ultima alteracao: 31/03/2015
+    Data    : Setembro/12                            Ultima alteracao: 19/04/2018
 
     Objetivo  : Procedures referentes ao PROCAP (Programa de capitalização).
 
@@ -241,6 +251,9 @@ create or replace package body cecred.PCAP0001 is
                 29/11/2016 - P341 - Automatização BACENJUD - Alterado para validar 
                              o departamento à partir do código e não mais pela 
                              descrição (Renato Darosci - Supero)
+
+                19/04/2018 - inc0011932 Ajustes no layout do arquivo enviado ao BRDE
+                             (pc_gerar_arq_enc_brde) (Carlos)
   ............................................................................ */
 
   -- Cursor de associados
@@ -1082,6 +1095,7 @@ create or replace package body cecred.PCAP0001 is
     vr_coopbrde INTEGER;
     vr_cdestcvl INTEGER;
     
+   
     -- Variáveis para armazenar as informações em XML
     vr_des_xml         CLOB;
     -- Variável para armazenar os dados do XML antes de incluir no CLOB
@@ -1101,7 +1115,8 @@ create or replace package body cecred.PCAP0001 is
              crapcop.nrcepend,
              crapcop.nrendcop,
              crapcop.nmbairro,
-             crapcop.dtrjunta
+             crapcop.dtrjunta,
+             crapcop.dscomple
         FROM crapcop
        WHERE crapcop.cdcooper = pr_cdcooper;
     rw_crapcop cr_crapcop%ROWTYPE;
@@ -1174,6 +1189,7 @@ create or replace package body cecred.PCAP0001 is
             ,crapttl.cdcooper
             ,crapttl.cdestcvl
             ,crapttl.cdsexotl
+            ,crapttl.inpolexp
         FROM crapttl
        WHERE crapttl.cdcooper = pr_cdcooper
          AND crapttl.nrdconta = pr_nrdconta
@@ -1198,6 +1214,8 @@ create or replace package body cecred.PCAP0001 is
             ,crapttl.nrdconta
             ,crapttl.cdcooper
             ,crapttl.cdsexotl
+            ,crapttl.cdestcvl
+            ,crapttl.inpolexp
         FROM crapttl
        WHERE crapttl.cdcooper = pr_cdcooper
          AND (crapttl.nrdconta = pr_nrdconta or
@@ -1212,14 +1230,14 @@ create or replace package body cecred.PCAP0001 is
                       pr_idseqttl IN crapttl.idseqttl%TYPE,
                       pr_tpendass IN crapenc.tpendass%TYPE) IS
       SELECT crapenc.nrdconta
-            ,crapenc.dsendere
-            ,crapenc.nrendere
-            ,crapenc.complend
-            ,crapenc.nmbairro
-            ,crapenc.nrcepend
+            ,crapenc.dsendere --logradouro
+            ,crapenc.nrendere --número
+            ,crapenc.complend --complemento
+            ,crapenc.nmbairro --bairro
+            ,crapenc.nrcepend --cep
             ,crapenc.nmcidade
             ,crapenc.cdufende
-            
+            ,crapenc.nrcxapst
         FROM crapenc
        WHERE crapenc.cdcooper = pr_cdcooper
          AND crapenc.nrdconta = pr_nrdconta
@@ -1349,6 +1367,9 @@ create or replace package body cecred.PCAP0001 is
             ,crapavt.nmbairro
             ,crapavt.nmcidade 
             ,crapavt.nrcepend
+            ,crapavt.cdestcvl
+            ,crapavt.complend
+            ,crapavt.nrcxapst
         FROM crapavt
        WHERE crapavt.cdcooper = pr_cdcooper
          AND crapavt.tpctrato = pr_tpctrato
@@ -1463,6 +1484,7 @@ create or replace package body cecred.PCAP0001 is
           vr_tab_brde(vr_idxbrde).vlsalari := rw_crapttl.vlsalari;
           vr_tab_brde(vr_idxbrde).dtrefere := null;
           vr_tab_brde(vr_idxbrde).nrcpfcgc := rw_crapttl.nrcpfcgc;
+          vr_tab_brde(vr_idxbrde).inpolexp := rw_crapttl.inpolexp; --0 nao, 1 sim, 2 pendente
           
           -- Buscar inf. do endereço do titular 
           OPEN cr_crapenc(pr_cdcooper => rw_crapttl.cdcooper,
@@ -1481,6 +1503,7 @@ create or replace package body cecred.PCAP0001 is
             vr_tab_brde(vr_idxbrde).nrcepend := rw_crapenc.nrcepend;
             vr_tab_brde(vr_idxbrde).nmcidade := rw_crapenc.nmcidade;
             vr_tab_brde(vr_idxbrde).cdufende := rw_crapenc.cdufende;
+            vr_tab_brde(vr_idxbrde).nrcxapst := rw_crapenc.nrcxapst;
 
           ELSE
             CLOSE cr_crapenc;
@@ -1564,7 +1587,8 @@ create or replace package body cecred.PCAP0001 is
                   vr_tab_avalistas(vr_idxaval).nmdavali := rw_crabttl.nmextttl;
                   vr_tab_avalistas(vr_idxaval).cddosexo := vr_fldosexo;
                   vr_tab_avalistas(vr_idxaval).nrcpfcgc := rw_crabttl.nrcpfcgc;
-                  
+                  vr_tab_avalistas(vr_idxaval).cdestcvl := rw_crabttl.cdestcvl;
+                  vr_tab_avalistas(vr_idxaval).inpolexp := rw_crabttl.inpolexp;
                   rw_crapenc := null;
                   -- Buscar inf. do endereço do conjuge
                   OPEN cr_crapenc(pr_cdcooper => rw_crabttl.cdcooper,
@@ -1582,6 +1606,12 @@ create or replace package body cecred.PCAP0001 is
                                                             ||' '|| rw_crapenc.nmcidade);
                     vr_tab_avalistas(vr_idxaval).nrcepend := rw_crapenc.nrcepend;
                     
+                    vr_tab_avalistas(vr_idxaval).dslograd := rw_crapenc.dsendere;
+                    vr_tab_avalistas(vr_idxaval).nrendere := rw_crapenc.nrendere;
+                    vr_tab_avalistas(vr_idxaval).complend := rw_crapenc.complend;
+                    vr_tab_avalistas(vr_idxaval).nmbairro := rw_crapenc.nmbairro;
+                    vr_tab_avalistas(vr_idxaval).nrcxapst := rw_crapenc.nrcxapst;
+
                   ELSE
                     CLOSE cr_crapenc;
                     -- senao usar a endereço do titular principal
@@ -1590,6 +1620,12 @@ create or replace package body cecred.PCAP0001 is
                                                              ||' '|| vr_tab_brde(vr_idxbrde).nmbairro
                                                              ||' '|| vr_tab_brde(vr_idxbrde).nmcidade);
                     vr_tab_avalistas(vr_idxaval).nrcepend := vr_tab_brde(vr_idxbrde).nrcepend;
+                    
+                    vr_tab_avalistas(vr_idxaval).dslograd := vr_tab_brde(vr_idxbrde).dsendere;
+                    vr_tab_avalistas(vr_idxaval).nrendere := vr_tab_brde(vr_idxbrde).nrendere;
+                    vr_tab_avalistas(vr_idxaval).complend := vr_tab_brde(vr_idxbrde).compleme;
+                    vr_tab_avalistas(vr_idxaval).nmbairro := vr_tab_brde(vr_idxbrde).nmbairro;
+                    vr_tab_avalistas(vr_idxaval).nrcxapst := vr_tab_brde(vr_idxbrde).nrcxapst;
                     
                   END IF;  
                   
@@ -1615,11 +1651,19 @@ create or replace package body cecred.PCAP0001 is
                                                              ||' '|| vr_tab_brde(vr_idxbrde).nmcidade);
                     vr_tab_avalistas(vr_idxaval).nrcepend := vr_tab_brde(vr_idxbrde).nrcepend;
                     
+                    vr_tab_avalistas(vr_idxaval).dslograd := vr_tab_brde(vr_idxbrde).dsendere;
+                    vr_tab_avalistas(vr_idxaval).nrendere := vr_tab_brde(vr_idxbrde).nrendere;
+                    vr_tab_avalistas(vr_idxaval).complend := vr_tab_brde(vr_idxbrde).compleme;
+                    vr_tab_avalistas(vr_idxaval).nmbairro := vr_tab_brde(vr_idxbrde).nmbairro;
+                    vr_tab_avalistas(vr_idxaval).nrcxapst := vr_tab_brde(vr_idxbrde).nrcxapst;
+                    
                     vr_tab_avalistas(vr_idxaval).cddosexo := (CASE rw_crapttl.cdsexotl 
                                                                WHEN  1 THEN 'F' 
                                                                ELSE 'M'
                                                                END); 
                     /*contrario do titular */
+                  
+                    vr_tab_avalistas(vr_idxaval).cdestcvl := rw_crapttl.cdestcvl;
                   
                   END IF;                  
                 END IF; -- Fim IF cr_crabttl
@@ -1642,7 +1686,7 @@ create or replace package body cecred.PCAP0001 is
         vr_inpessoa := 2;
         vr_nrcpfcgc := rw_crapipc.nrcpfcgc;
         vr_ctrcapit := 'N';
-        vr_cdetnia  := ' ';
+        vr_cdetnia  := '9';
         
         -- Buscar dados pessoa juridica
         OPEN cr_crapjur(pr_cdcooper => pr_cdcooper,
@@ -1669,6 +1713,7 @@ create or replace package body cecred.PCAP0001 is
           vr_tab_brde(vr_idxbrde).nrdconta := rw_crapipc.nrdconta;
           vr_tab_brde(vr_idxbrde).nmextttl := rw_crapipc.nmprimtl;
           vr_tab_brde(vr_idxbrde).nrcpfcgc := rw_crapipc.nrcpfcgc;
+          vr_tab_brde(vr_idxbrde).inpolexp := 0; --pj não politicamente exposto
             
           -- Buscar inf. do endereço do titular 
           OPEN cr_crapenc(pr_cdcooper => rw_crapipc.cdcooper,
@@ -1687,6 +1732,7 @@ create or replace package body cecred.PCAP0001 is
             vr_tab_brde(vr_idxbrde).nrcepend := rw_crapenc.nrcepend;
             vr_tab_brde(vr_idxbrde).nmcidade := rw_crapenc.nmcidade;
             vr_tab_brde(vr_idxbrde).cdufende := rw_crapenc.cdufende;
+            vr_tab_brde(vr_idxbrde).nrcxapst := rw_crapenc.nrcxapst;
 
           ELSE
             CLOSE cr_crapenc;        
@@ -1746,6 +1792,16 @@ create or replace package body cecred.PCAP0001 is
                                                              ||' '|| rw_crapavt.nmcidade);
               vr_tab_avalistas(vr_idxaval).nrcepend := rw_crapavt.nrcepend;
               vr_tab_avalistas(vr_idxaval).flgcheck := FALSE;
+              vr_tab_avalistas(vr_idxaval).cdestcvl := rw_crapavt.cdestcvl;
+              
+            
+              
+              vr_tab_avalistas(vr_idxaval).dslograd := rw_crapavt.dsendres##1;
+              vr_tab_avalistas(vr_idxaval).nrendere := rw_crapavt.nrendere;
+              vr_tab_avalistas(vr_idxaval).complend := rw_crapavt.complend;
+              vr_tab_avalistas(vr_idxaval).nmbairro := rw_crapavt.nmbairro;
+              vr_tab_avalistas(vr_idxaval).nrcxapst := rw_crapavt.nrcxapst;
+              
   
             ELSE /* caso o avalista tenha conta na coop. */
               /* Buscar dados dos representantes/procuradores */
@@ -1805,6 +1861,11 @@ create or replace package body cecred.PCAP0001 is
               vr_tab_avalistas(vr_idxaval).nrcepend := vr_tab_crapavt(vr_indxavt).nrcepend;
               vr_tab_avalistas(vr_idxaval).flgcheck := FALSE;
                 
+              vr_tab_avalistas(vr_idxaval).dslograd := vr_tab_crapavt(vr_indxavt).dsendres(1);--to_char(vr_tab_crapavt(vr_indxavt).dsendres);
+              vr_tab_avalistas(vr_idxaval).nrendere := vr_tab_crapavt(vr_indxavt).nrendere;
+              vr_tab_avalistas(vr_idxaval).complend := vr_tab_crapavt(vr_indxavt).complend;
+              vr_tab_avalistas(vr_idxaval).nmbairro := vr_tab_crapavt(vr_indxavt).nmbairro;
+              vr_tab_avalistas(vr_idxaval).nrcxapst := vr_tab_crapavt(vr_indxavt).nrcxapst;              
                
             END IF; -- Fim  if crapapc.nrctarep <> 0
           END LOOP;  -- Fim FOR rw_crapapc                           
@@ -1823,7 +1884,7 @@ create or replace package body cecred.PCAP0001 is
         
         /******** HEADER DO ARQUIVO ************/
         vr_dsdlinha := '0'||                               /* Tipo de registro */
-                    to_char(rw_crapcop.nrdocnpj, 'fm00000000000000' )||
+                    '05463212000129'                               ||
                     LPAD(' ',12,' ')                               ||
                     to_char(pr_dtmvtolt,'RRRRMMDD')                ||
                     LPAD(' ',560,' ')                              ||
@@ -1851,47 +1912,67 @@ create or replace package body cecred.PCAP0001 is
                                                 pr_cdacesso => 'AGENCIA_BRDE');
       
       /*************** TIPO 1 - DADOS CADASTRAIS *****************/
-      vr_dsdlinha := '1'                                                    || --Tipo de registro
-                      TO_CHAR(rw_crapcop.nrdocnpj, 'fm00000000000000')      || --CNPJ da instituição conveniada
-                      to_char(vr_coopbrde, 'fm000000')                      || --Código da instituição conveniada
-                      RPAD(rw_crapipc.nmprimtl,30,' ')                      || --Nome/Razão social do beneficiário
-                      vr_inpessoa                                           || --Tipo de pessoa (1 = Física / 2 = Jurídica)
+      vr_dsdlinha := '1'                                                    || --1 Tipo de registro
+                      '05463212000129'                                      || -- cecred --14 CNPJ da instituição conveniada
+
+                      to_char(vr_coopbrde, 'fm000000')                      || --6 Código da instituição conveniada
+                      RPAD(rw_crapipc.nmprimtl,30,' ')                      || --30 Nome/Razão social do beneficiário
+                      vr_inpessoa                                           || --1 Tipo de pessoa (1 = Física / 2 = Jurídica)
                       NVL(TO_CHAR(rw_crapipc.dtvencnd,'RRRRMMDD')
-                          ,LPAD(' ',8,' '))                                 || --Data de vencimento da certidão negativa de débitos
-                      LPAD(' ',6,' ')                                       || --Filler
-                      TO_CHAR(vr_dtnascim,'RRRRMMDD')                       || --Data de nascimento/fundação do beneficiário
-                      TO_CHAR(vr_vlrendim * 100,'fm00000000000000000')      || --Renda/Faturamento anual do beneficiário
-                      (TO_CHAR(pr_dtmvtolt,'RRRR') - 1) || '1231'           || --Data de referência da renda bruta anual do beneficiário
-                      'E'                                                   || --Classificação da renda (E = Efetiva / P = Prevista)
-                      LPAD(' ',16,' ')                                      || --Filler
-                      to_char(vr_cdestcvl, 'fm00')                          || --estado civil (conforme tabela BRDE)
-                      TO_CHAR(vr_nrcpfcgc, 'fm00000000000000')              || --CPF/CNPJ do beneficiário
-                      LPAD(' ',60,' ')                                      || --Filler
-                      RPAD(vr_tab_brde(vr_idxbrde).dsendere,'35',' ')       || --Endereço do beneficiário
-                      to_char(vr_tab_brde(vr_idxbrde).nrcepend,'fm00000000')|| --CEP
-                      TO_CHAR(rw_crapipc.cdmunben,'fm0000000')              || --Código do município do cliente
-                      LPAD(' ',25,' ')                                      || --Filler
-                      TO_CHAR(vr_tab_brde(vr_idxbrde).nrdddtfc,'fm00')      || --DDD beneficiário
-                     TO_CHAR(vr_tab_brde(vr_idxbrde).nrtelefo,'fm000000000')|| --Telefone beneficiário
-                      LPAD(' ',3,' ')                                       || --Filler
-                      TO_CHAR(rw_crapipc.cdgenben,'fm000')                  || --Gênero do beneficiário
-                      TO_CHAR(rw_crapipc.cdporben,'fm00')                   || --Porte do beneficiário
-                      TO_CHAR(rw_crapipc.cdsetben,'fm0000000')              || --Setor de atividade do beneficiário
-                      LPAD(' ',3,' ')                                       || --Código do banco do beneficiário
-                      LPAD(' ',6,' ')                                       || --Código da agência bancária do beneficiário
-                      LPAD(' ',15,' ')                                      || --Código da conta corrente do beneficiário
-                      LPAD(' ',8,' ')                                       || --Data de vencimento da CND-FGTS
-                      LPAD(' ',8,' ')                                       || --Filler
-                      LPAD(' ',55,' ')                                      || --Endereço de correspondência - Logradouro
-                      LPAD(' ',10,' ')                                      || --Endereço de correspondência - Número
-                      LPAD(' ',20,' ')                                      || --Endereço de correspondência - Complemento
-                      LPAD(' ',16,' ')                                      || --Endereço de correspondência - Bairro
-                      LPAD(' ',8,' ')                                       || --Endereço de correspondência - CEP
+                          ,LPAD(' ',8,' '))                                 || --8 Data de vencimento da certidão negativa de débitos
+                      LPAD(' ',6,' ')                                       || --6 Filler
+                      TO_CHAR(vr_dtnascim,'RRRRMMDD')                       || --8 Data de nascimento/fundação do beneficiário
+                      TO_CHAR(vr_vlrendim * 100,'fm00000000000000000')      || --17 Renda/Faturamento anual do beneficiário
+                      (TO_CHAR(pr_dtmvtolt,'RRRR') - 1) || '1231'           || --8 Data de referência da renda bruta anual do beneficiário
+                      'E';                                                     --1 Classificação da renda (E = Efetiva / P = Prevista)
+
+      -- #825846 NOVAS ALTERAÇÕES
+      IF vr_tab_brde(vr_idxbrde).inpolexp = 1 THEN
+        vr_dsdlinha := vr_dsdlinha || 'S'; --1 (pos 101) Indicador de Pessoa Politicamente Exposta (S/N)
+      ELSE
+        vr_dsdlinha := vr_dsdlinha || 'N';
+      END IF;
+
+      vr_dsdlinha := vr_dsdlinha || LPAD(' ',14,' ');                          --14 Filler
+
+      IF vr_cdestcvl = 2 THEN -- modalidades "casado"
+        vr_dsdlinha := vr_dsdlinha || 'S'; --1 (pos 116) Indicador de União Estável (S/N)
+      ELSE
+        vr_dsdlinha := vr_dsdlinha || 'N';
+      END IF;
+      -- FIM #825846
+
+      vr_dsdlinha := vr_dsdlinha ||
+                      to_char(vr_cdestcvl, 'fm00')                          || --2 estado civil (conforme tabela BRDE)
+                      TO_CHAR(vr_nrcpfcgc, 'fm00000000000000')              || --14 CPF/CNPJ do beneficiário                                            
+                      LPAD(' ',60,' ')                                      || --60 Filler
+                      RPAD(vr_tab_brde(vr_idxbrde).dsendere,'35',' ')       || --35 Endereço do beneficiário
+                      to_char(vr_tab_brde(vr_idxbrde).nrcepend,'fm00000000')|| --8 CEP
+                      TO_CHAR(rw_crapipc.cdmunben,'fm0000000')              || --7 Código do município do cliente
+                      LPAD(' ',25,' ')                                      || --25 Filler
+                      NVL(TO_CHAR(vr_tab_brde(vr_idxbrde).nrdddtfc,'fm00'),'  ')               || --2 DDD beneficiário
+                      NVL(TO_CHAR(vr_tab_brde(vr_idxbrde).nrtelefo,'fm000000000'),'         ') || --9 Telefone beneficiário
+                      LPAD(' ',3,' ')                                       || --3 Filler
+                      TO_CHAR(rw_crapipc.cdgenben,'fm000')                  || --3 Gênero do beneficiário
+                      TO_CHAR(rw_crapipc.cdporben,'fm00')                   || --2 Porte do beneficiário
+                      TO_CHAR(rw_crapipc.cdsetben,'fm0000000')              || --7 Setor de atividade do beneficiário
+                      LPAD(' ',3,' ')                                       || --3 Código do banco do beneficiário
+                      LPAD(' ',6,' ')                                       || --6 Código da agência bancária do beneficiário
+                      LPAD(' ',15,' ')                                      || --15 Código da conta corrente do beneficiário
+                      LPAD(' ',8,' ')                                       || --8 Data de vencimento da CND-FGTS
+                      LPAD(' ',1,' ')                                       || --1 Filler
+                      '32'                                                  || --2 Endereço do Proponente: Tipo de logradouro (Conforme tabela)                      
+                      LPAD(vr_tab_brde(vr_idxbrde).dsendere,60,' ')         || -- Endereço do Proponente: Logradouro (Neste campo deve constar apenas o nome da rua, av., etc.)
+                      to_char(vr_tab_brde(vr_idxbrde).nrendere,'fm0000000000')   || --Endereço de correspondência - Número
+                      LPAD(vr_tab_brde(vr_idxbrde).compleme,20,' ')              || --Endereço de correspondência - Complemento
+                      LPAD(vr_tab_brde(vr_idxbrde).nmbairro,16,' ') || --Endereço de correspondência - Bairro                      
+                      to_char(vr_tab_brde(vr_idxbrde).nrcepend,'fm00000000')     || --Endereço de correspondência - CEP 89037003
                       LPAD(' ',19,' ')                                      || --Nome fantasia da empresa
                       LPAD(' ',4,' ')                                       || --Ano base da RAIS
                       vr_cdetnia                                            || --Cor/Etnia do beneficiário
-           RPAD(NVL(TRIM(SUBSTR(rw_crapipc.dsdemail,1,50)),' '),50,' ')     || --email beneficiario
-                      LPAD(' ',79,' ')                                      || --Filler
+                      RPAD(NVL(TRIM(rw_crapipc.dsdemail),'teste@cecred.coop.br'),50,' ') || --email beneficiario
+                      RPAD(TO_CHAR(vr_tab_brde(vr_idxbrde).nrcxapst),6,' ') || -- Endereço do Proponente: Caixa Postal
+                      LPAD(' ',73,' ')                                      || --Filler
                       TO_CHAR(vr_cdseqlin,'fm00000');                          --Número sequencial
                       
       -- incluir linha do arquivo
@@ -1903,15 +1984,20 @@ create or replace package body cecred.PCAP0001 is
       
       /*************** TIPO 3 - Garantias *****************/
       vr_dsdlinha :=  '3'                                                            || --Tipo de registro
-                      TO_CHAR(rw_crapcop.nrdocnpj, 'fm00000000000000')               || --CNPJ da instituição conveniada
-                      TO_CHAR(vr_nrcpfcgc,'fm00000000000000')                        || --CPF/CNPJ do beneficiário
+                      '05463212000129'                                               || -- cecred --14 CNPJ da instituição conveniada
+
+                      TO_CHAR(vr_nrcpfcgc,         'fm00000000000000')               || --CPF/CNPJ do beneficiário
                       LPAD(' ',34,' ')                                               || --Filler
                       '000'                                                          || --Grau da hipoteca
                       LPAD('0',17,'0')                                                   || --Valor da garantia
                       '9998'                                                         || --Tipo garantia
                       RPAD('Contratos sem garantia real',60,' ')                     || --Descricao garantia
                       LPAD(0,17,0)                                                   || --Saldo devedor total
-                      LPAD(' ',431,' ')                                              || --Filler
+                      LPAD('0',5,'0')                                                || --Filler
+                      LPAD('0',7,'0')                                                || --Matricula do imovel
+                      LPAD('0',17,'0')                                               || --Area total do imovel
+                      LPAD('0',7,'0')                                                || --Código do município do imóvel
+                      LPAD(' ',395,' ')                                              || --Filler
                       TO_CHAR(vr_cdseqlin,'fm00000');                                   --Número sequencial
         
       -- incluir linha do arquivo
@@ -1920,25 +2006,84 @@ create or replace package body cecred.PCAP0001 is
 
       vr_cdseqlin := vr_cdseqlin + 1;        
       
+      
       /*************** TIPO 4 - Avalistas *****************/
       vr_idxaval := vr_tab_avalistas.first;
       -- ler avalistas
       WHILE vr_idxaval IS NOT NULL LOOP
         vr_dsdlinha :=  '4'                                                            || --Tipo de registro
-                        TO_CHAR(rw_crapcop.nrdocnpj, 'fm00000000000000')               || --CNPJ da instituição conveniada
+                        '05463212000129'                                               || -- cecred --14 CNPJ da instituição conveniada
+
                         TO_CHAR(vr_nrcpfcgc,'fm00000000000000')                        || --CPF/CNPJ do beneficiário
                         RPAD(vr_tab_avalistas(vr_idxaval).nmdavali,35,' ')             || --Nome do avalista
                         vr_tab_avalistas(vr_idxaval).cddosexo                          || --Sexo
-                        LPAD(' ',11,' ')                                               || --Filler
-                        'F'                                                            || --Tipo de avalista(F = Fisica)
-                     TO_CHAR(vr_tab_avalistas(vr_idxaval).nrcpfcgc,'fm00000000000000') || --CPF/CNPJ do avalista
-                        LPAD(' ',5,' ')                                                || --Filler
+                        LPAD(' ',10,' ');                                                 --Filler
+
+        -- Indicador de União Estável (S/N)
+        IF vr_tab_avalistas(vr_idxaval).cdestcvl IN (2,3,4,8,9,11,12) THEN /*modalidades casado*/  
+          vr_dsdlinha := vr_dsdlinha || 'S';
+        ELSE
+          vr_dsdlinha := vr_dsdlinha || 'N';  
+        END IF;
+
+        vr_dsdlinha := vr_dsdlinha || 'F'                                                || --Tipo de avalista(F = Fisica)
+                       TO_CHAR(vr_tab_avalistas(vr_idxaval).nrcpfcgc,'fm00000000000000');   --CPF/CNPJ do avalista
+
+        -- Estado Civil (BRDE, conforme tabela)
+        IF vr_tab_avalistas(vr_idxaval).cdestcvl = 1 THEN /* solteiro */
+          vr_dsdlinha := vr_dsdlinha || '01';
+        ELSIF vr_tab_avalistas(vr_idxaval).cdestcvl IN (2,3,4,8,9,11,12) THEN /*modalidades casado*/
+          vr_dsdlinha := vr_dsdlinha || '02';
+        ELSIF vr_tab_avalistas(vr_idxaval).cdestcvl = 5 THEN /*viuvo*/
+          vr_dsdlinha := vr_dsdlinha || '04';
+        ELSIF vr_tab_avalistas(vr_idxaval).cdestcvl = 6 THEN /*separado judicialmente*/
+          vr_dsdlinha := vr_dsdlinha || '07';
+        ELSIF vr_tab_avalistas(vr_idxaval).cdestcvl = 7 THEN /*divorciado*/
+          vr_dsdlinha := vr_dsdlinha || '03';
+        ELSE
+          vr_dsdlinha := vr_dsdlinha || '01';
+        END IF;
+
+        -- Regime de Bens (BRDE, conforme tabela)
+        /*
+        CÓDIGO	DESCRIÇÃO
+        10	Comunhão Universal de Bens
+        11	Comunhão Parcial de Bens
+        12	Separação de Bens
+        13	Participação final nos aquestos
+        estado civil
+        2,8        = 10
+        3,9,11,12  = 11
+        4          = 12 */
+        IF vr_tab_avalistas(vr_idxaval).cdestcvl IN (2,8) THEN
+          vr_dsdlinha := vr_dsdlinha || '10';
+        ELSIF vr_tab_avalistas(vr_idxaval).cdestcvl IN (3,9,11,12) THEN
+          vr_dsdlinha := vr_dsdlinha || '11';
+        ELSIF vr_tab_avalistas(vr_idxaval).cdestcvl = 4 THEN
+          vr_dsdlinha := vr_dsdlinha || '12';
+        ELSE
+          vr_dsdlinha := vr_dsdlinha || '00';  
+        END IF;
+
+        vr_dsdlinha :=  vr_dsdlinha ||
+                        LPAD(' ',1,' ')                                                || --Filler
                         RPAD(vr_tab_avalistas(vr_idxaval).dsendere,35,' ')             || --Endereço do avalista
                         TO_CHAR(vr_tab_avalistas(vr_idxaval).nrcepend,'fm00000000')    || --CEP do avalista
-                        LPAD(' ',32,' ')                                               || --Filler
+                        LPAD(' ',31,' ')                                               || --Filler
+                        ' '                                                            || -- Pessoa Politicamente Exposta NAO OBRIGATORIO
                         LPAD(' ',2,' ')                                                || --DDD contato
                         LPAD(' ',9,' ')                                                || --Telefone contato
-                        LPAD(' ',413,' ')                                              || --Filler
+
+                        LPAD(' ',1,' ')                                                || --Filler
+                        '32' || --Endereço do Avalista: Tipo de logradouro (Conforme Tabela)
+
+                        RPAD(vr_tab_avalistas(vr_idxaval).dslograd,60,' ')        || -- Endereço do Avalista: Logradouro (Neste campo deve constar apenas o nome da rua, av., etc., ex,:“Panamericana”)
+                        RPAD(vr_tab_avalistas(vr_idxaval).nrendere,10,' ')        || -- Endereço do Avalista: Numero
+                        RPAD(vr_tab_avalistas(vr_idxaval).complend,20,' ')        || -- Endereço do Avalista: Complemento
+                        RPAD(vr_tab_avalistas(vr_idxaval).nmbairro,16,' ')        || -- Endereço do Avalista: Bairro                        
+                        RPAD(vr_tab_avalistas(vr_idxaval).nrcxapst,6,' ')         || -- Endereço do Avalista: Caixa postal
+
+                        LPAD(' ',298,' ')                                         || --Filler
                         TO_CHAR(vr_cdseqlin,'fm00000');                                   --Número sequencial
       
         -- incluir linha do arquivo
@@ -1960,11 +2105,11 @@ create or replace package body cecred.PCAP0001 is
                                                  pr_excultdia => FALSE);                                     
       
       vr_dsdlinha :=  '5'                                                  || --Tipo de registro
-                      TO_CHAR(rw_crapcop.nrdocnpj, 'fm00000000000000')     || --CNPJ da instituição conveniada
+                      '05463212000129'                                     || -- cecred --14 CNPJ da instituição conveniada
                       TO_CHAR(vr_nrcpfcgc,'fm00000000000000')              || --CPF/CNPJ do beneficiário
                       LPAD(' ',2,' ')                                      || --Filler
                       TO_CHAR(rw_craplpc.dtcontrt,'RRRRMMDD')              || --Data da contratação
-                      '155'                                                || --Linha de crédito
+                      '416'                                                || --Linha de crédito
                       'M'                                                  || --Periodicidade
                       TO_CHAR(rw_craplpc.dtfincar,'RRRRMMDD')              || --Data final da carência
                       TO_CHAR(rw_craplpc.dtpriamo,'RRRRMMDD')              || --Data da primeira amortização
@@ -2006,7 +2151,7 @@ create or replace package body cecred.PCAP0001 is
                       LPAD(' ', 2,' ')                                     || --UF do órgão que condedeu ou dispensou a licença ambiental ao empreendimento
                       LPAD(' ',100,' ')                                    || --Finalidade da licença ambiental ou da dispensa de licença
                       LPAD(' ',10,' ')                                     || --Filler
-                      TO_CHAR(rw_craplpc.cdsetpro,'fm0000000')             || --Setor de atividade do projeto
+                      TO_CHAR(rw_craplpc.cdsetpro,'fm0000000')             || --Setor de atividade do projeto: 6424702
                       'CCB'                                                || --Tipo de instrumento contratual
                       LPAD(' ',14,' ')                                     || --Código do empreendimento
                       LPAD(' ',14,' ')                                     || --Filler
@@ -2035,6 +2180,26 @@ create or replace package body cecred.PCAP0001 is
       vr_cdseqlin := vr_cdseqlin + 1;    
       vr_nr5conta := vr_nr5conta + 1;
       vr_vltotope := vr_vltotope + rw_crapipc.vlprocap;
+      
+      /*************** TIPO F - Dados da Operação - continuação (Endereço da central) *********/
+      vr_dsdlinha :=  'F'                                               || --01 Tipo de registro
+                      TO_CHAR(5463212000129, 'fm00000000000000')        || --14 CNPJ da instituição conveniada
+                      TO_CHAR(vr_nrcpfcgc,   'fm00000000000000')        || --14 CPF/CNPJ do beneficiário
+                      LPAD(' ',1,' ')                                   || --01 Filler
+                      '32'                                              || --02 Tipo de logradouro                      
+                      RPAD('FREI ESTANISLAU SCHAETTE',60,' ')           || --60 Logradouro
+                      RPAD('1201',10,' ')                               || --10 Número
+                      RPAD(' ',20,' ')                                  || --20 Complemento
+                      RPAD('AGUA VERDE',16,' ')                         || --16 Bairro
+                      TO_CHAR(89037003,'fm00000000')                    || --08 CEP
+                      LPAD('5930',7,'0')                                || --07 Matrícula do imóvel
+                      LPAD(' ',442,' ')                                 || --442 Filler
+                      TO_CHAR(vr_cdseqlin,'fm00000');                      --05 Número sequencial
+      
+      -- incluir linha do arquivo
+      vr_tab_arq_brde(vr_cdseqlin).cdseqlin := vr_cdseqlin;
+      vr_tab_arq_brde(vr_cdseqlin).dsdlinha := vr_dsdlinha;
+      vr_cdseqlin := vr_cdseqlin + 1;
       
       /*************** TIPO 7 - Complemento *****************/
       
@@ -2065,14 +2230,14 @@ create or replace package body cecred.PCAP0001 is
       
       vr_endcoope := rw_crapcop.dsendcop ||' '|| rw_crapcop.nrendcop;
       vr_dsdlinha :=  '7'                                                  || --Tipo de registro
-                      TO_CHAR(rw_crapcop.nrdocnpj, 'fm00000000000000')     || --CNPJ da instituição conveniada
+                      '05463212000129'                                     || -- cecred --14 CNPJ da instituição conveniada
                       TO_CHAR(vr_nrcpfcgc,'fm00000000000000')              || --CPF/CNPJ do beneficiário
                       TO_CHAR(vr_cdcidbnd,'fm0000000')                     || --Código do município da cooperativa da qual serão adquiridas as cotas
                       LPAD(vr_ctrcapit,1,' ')                              || --Controle de capital do cooperado
                       LPAD(rw_crapcop.cdufdcop,2,' ')                      || --UF da cooperativa
                       LPAD(' ',5,' ')                                      || --Filler
                       TO_CHAR(rw_crapcop.nrdocnpj, 'fm00000000000000')     || --CNPJ da cooperativa da qual serão adquiridas as cotas
-                      TO_CHAR(rw_craplpc.dtpricar,'RRRRMMDD')              || --Data da primeira carência
+                      TO_CHAR(rw_craplpc.dtpricar,'RRRRMM') || '15'        || --Data da primeira carência
                       '05'                                                 || --Periodicidade de pagamento dos juros na carência
                       RPAD(vr_nmcopcuf,18,' ')                             || --Nome da cooperativa da qual serão adquiridas as cotas
                       RPAD(vr_endcoope,30,' ')                             || --Endereço da cooperativa da qual serão adquiridas as cotas
@@ -2081,7 +2246,14 @@ create or replace package body cecred.PCAP0001 is
                       SUBSTR(rw_crapcop.nrcepend,6,3)                      || --Complemento do CEP da cooperativa da qual serão adquiridas as cotas
                       TO_CHAR(rw_crapcop.dtrjunta,'RRRRMMDD')              || --Data de abertura da cooperativa da qual serão adquiridas as cotas
                       LPAD('1',17,'0')                                     || --Patrimônio de referência da cooperativa da qual serão adquiridas as cotas
-                      LPAD(' ',431,' ')                                    || --Filler
+
+                      -- Endereço
+                      '32'                                                 || --Tipo de logradouro Rua
+                      RPAD(rw_crapcop.dsendcop,60,' ')                     || -- Logradouro
+                      TO_CHAR(rw_crapcop.nrendcop, 'fm0000000000')         || --Número
+                      RPAD(rw_crapcop.dscomple, 20,' ')                    || --Complemento
+
+                      LPAD(' ',359,' ')                                    || --Filler
                       TO_CHAR(vr_cdseqlin,'fm00000');                         --Número sequencial
       
       -- incluir linha do arquivo
@@ -2094,7 +2266,7 @@ create or replace package body cecred.PCAP0001 is
       -- Simulando last-of
       IF rw_crapipc.qtseqlot = rw_crapipc.nrseqlot THEN
         vr_dsdlinha :=  '9'                                                  || --Tipo de registro
-                        TO_CHAR(rw_crapcop.nrdocnpj, 'fm00000000000000')     || --CNPJ da instituição conveniada
+                        '05463212000129'                                     || -- cecred --14 CNPJ da instituição conveniada                        
                         TO_CHAR(vr_nr1conta,'fm00000')                       || --Total de registros tipo 1
                         TO_CHAR(vr_nr5conta,'fm00000')                       || --Total de registros tipo 5
                         TO_CHAR(vr_vltotope * 100,'fm0000000000000000000')   || --Valor total das operações
@@ -2196,7 +2368,7 @@ create or replace package body cecred.PCAP0001 is
        pr_des_reto := 'NOK';
     
     WHEN OTHERS THEN
-      
+      cecred.pc_internal_exception;
       vr_dscritic := 'Erro na rotina pc_gerar_arq_enc_brde: '||SQLErrm;
       -- Chamar rotina de gravacao de erro
       gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
