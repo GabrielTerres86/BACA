@@ -4689,7 +4689,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                                          pr_des_log      => TO_CHAR(SYSDATE,'DD/MM/RRRR HH24:MI:SS') || ' - ' ||
                                          'SSPB0001 --> Operador: ' || pr_cdoperad || ' - ' || vr_cdcritic || ' - ' || vr_dscritic);
                         
-              IF rw_crapccs.nrridlfp > 0 THEN
+              IF vr_tab_crattem(vr_idxtbtem).nrridlfp > 0 THEN
                 
                 --Rollback para liberar registro para atualização (CRAPLFP)
                 ROLLBACK;
