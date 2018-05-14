@@ -106,29 +106,6 @@
 
 	$procedure = (in_array($operacao,array('A_NOVA_PROP','A_VALOR','A_AVALISTA','A_NUMERO','TE','TI','TC'))) ? 'obtem-dados-proposta-emprestimo' : 'obtem-propostas-emprestimo';
 
-	if ($operacao == "TI") {
-		// Monta o xml de requisição
-		$xml  = "";
-		$xml .= "<Root>";
-		$xml .= "	<Dados>";
-		$xml .= "		<nrdconta>".$nrdconta."</nrdconta>";
-		$xml .= "		<cdprodut>".   31    ."</cdprodut>";
-		$xml .= "	</Dados>";
-		$xml .= "</Root>";
-		
-		// Executa script para envio do XML
-		$xmlResult = mensageria($xml, "CADA0006", "VALIDA_ADESAO_PRODUTO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
-		$xmlObj = getObjectXML($xmlResult);
-		
-		// Se ocorrer um erro, mostra crítica
-		if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
-			//exibirErro('error','Tipo de Conta não permite empréstimo. Será permitido apenas inclusão de propostas de CDC.','Alerta - Ayllos','',false);
-			echo '<script type="text/javascript">';
-			echo 'showError("alert","Tipo de Conta n&atilde;o permite empr&eacute;stimo. Ser&aacute; permitido apenas inclus&atilde;o de propostas de CDC.","Alerta - Ayllos","bloqueiaFundo(divRotina);");';
-			echo '</script>';
-		}
-	}
-	
 	if (in_array($operacao,array('A_NOVA_PROP','A_NUMERO','A_VALOR','A_AVALISTA','TI','TE','TC',''))) {
 
 		$xml = "<Root>";
@@ -167,7 +144,27 @@
             
 			exibirErro('error',$xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos',$mtdErro,false);
 		}
-
+		
+		if ($operacao == "TI") {
+			// Monta o xml de requisição
+			$xml  = "";
+			$xml .= "<Root>";
+			$xml .= "	<Dados>";
+			$xml .= "		<nrdconta>".$nrdconta."</nrdconta>";
+			$xml .= "		<cdprodut>".   31    ."</cdprodut>";
+			$xml .= "	</Dados>";
+			$xml .= "</Root>";
+			
+			// Executa script para envio do XML
+			$xmlResult = mensageria($xml, "CADA0006", "VALIDA_ADESAO_PRODUTO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+			$xmlObj = getObjectXML($xmlResult);
+			
+			// Se ocorrer um erro, mostra crítica
+			if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") { 
+				exibirErro('inform','Tipo de Conta n&atilde;o permite empr&eacute;stimo. Ser&aacute; permitido apenas inclus&atilde;o de propostas de CDC.','Alerta - Ayllos',"bloqueiaFundo(divRotina);",true);
+			}
+		}
+		
 		if (in_array($operacao,array(''))){
 
 			$registros = $xmlObjeto->roottag->tags[0]->tags;

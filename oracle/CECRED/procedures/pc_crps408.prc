@@ -704,12 +704,14 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
                                        ,pr_cdcritic => vr_cdcritic
                                        ,pr_dscritic => vr_dscritic);
       
-      IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
+      IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
         RAISE vr_exc_saida;
       END IF;
       
       IF vr_possuipr = 'N' THEN
         vr_cdcritic := 65;-- 065 - Tipo de conta nao permite req.
+      ELSE 
+        vr_cdcritic := 0;
       END IF;
       /*
       -- Verificacao se o cooperado nao esta rejeitado
@@ -730,7 +732,7 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
       END IF;
       */
       -- Se não houver rejeição no associado
-      IF vr_cdcritic = 0 THEN
+      IF nvl(vr_cdcritic,0) = 0 THEN
         IF rw_crapass.cdsitdct <> 1 THEN -- Se a situação da conta for diferente de ativo
           vr_cdcritic := 18; --018 - Situacao da conta errada.
         ELSIF rw_crapass.cdsitdtl IN (5,6,7,8) THEN --5=NORMAL C/PREJ., 6=NORMAL BLQ.PREJ, 7=DEMITIDO C/PREJ, 8=DEM. BLOQ.PREJ.
@@ -747,7 +749,7 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
                       rw_crapass.nrdconta,
                       2);
       FETCH cr_crapttl INTO rw_crapttl;
-      IF cr_crapttl%FOUND AND vr_cdcritic = 0 THEN
+      IF cr_crapttl%FOUND AND NVL(vr_cdcritic,0) = 0 THEN
         IF rw_crapass.cdcatego = 1 THEN --INDIVIDUAL
           vr_cdcritic := 832; --832 - Tipo de conta nao permite MAIS DE UM TITULAR.
         END IF;
@@ -846,7 +848,7 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
       END IF;
 
       -- Se o cooperado nao estiver com situacao de rejeitado
-      IF vr_cdcritic = 0 THEN
+      IF NVL(vr_cdcritic,0) = 0 THEN
         -- Inicializa variavel auxiliar de contados de taloes
         vr_qtreqtal := 1;
 

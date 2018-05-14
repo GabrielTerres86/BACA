@@ -1,4 +1,4 @@
-CREATE OR REPLACE PACKAGE CADA0006 is
+CREATE OR REPLACE PACKAGE CECRED.CADA0006 is
  /* ---------------------------------------------------------------------------------------------------------------
   
     Programa : CADA0004
@@ -229,7 +229,7 @@ CREATE OR REPLACE PACKAGE CADA0006 is
 
 END CADA0006;
 /
-CREATE OR REPLACE PACKAGE BODY CADA0006 IS
+CREATE OR REPLACE PACKAGE BODY CECRED.CADA0006 IS
   ---------------------------------------------------------------------------------------------------------------
   --
   --  Programa : CADA0006
@@ -2785,7 +2785,7 @@ CREATE OR REPLACE PACKAGE BODY CADA0006 IS
         ROLLBACK;
       WHEN OTHERS THEN
         pr_cdcritic := vr_cdcritic;
-        pr_dscritic := 'Erro geral na rotina da tela pc_verifica_tipo_acesso: ' || SQLERRM;
+        pr_dscritic := 'Erro geral na rotina da tela pc_valida_adesao_produto: ' || SQLERRM;
         ROLLBACK;
     END;
   END pc_valida_adesao_produto;
@@ -2885,7 +2885,7 @@ CREATE OR REPLACE PACKAGE BODY CADA0006 IS
         ROLLBACK;
       WHEN OTHERS THEN
         pr_cdcritic := vr_cdcritic;
-        pr_dscritic := 'Erro geral na rotina da tela pc_verifica_tipo_acesso: ' || SQLERRM;        
+        pr_dscritic := 'Erro geral na rotina da tela pc_valida_adesao_prod_web: ' || SQLERRM;        
         pr_des_erro := 'NOK';
         -- Carregar XML padrão para variável de retorno não utilizada.
         -- Existe para satisfazer exigência da interface.
@@ -2943,7 +2943,7 @@ CREATE OR REPLACE PACKAGE BODY CADA0006 IS
     EXCEPTION
       WHEN OTHERS THEN
         pr_cdcritic := 0;
-        pr_dscritic := 'Erro geral na rotina da tela pc_verifica_tipo_acesso: ' || SQLERRM;
+        pr_dscritic := 'Erro geral na rotina da tela pc_valida_valor_adesao: ' || SQLERRM;
         ROLLBACK;
     END;
   END pc_valida_valor_adesao;
@@ -3106,7 +3106,7 @@ CREATE OR REPLACE PACKAGE BODY CADA0006 IS
         ROLLBACK;
       WHEN OTHERS THEN
         pr_cdcritic := vr_cdcritic;
-        pr_dscritic := 'Erro geral na rotina da tela pc_verifica_tipo_acesso: ' || SQLERRM;
+        pr_dscritic := 'Erro geral na rotina da tela pc_valida_valor_de_adesao: ' || SQLERRM;
         ROLLBACK;
     END;
   END pc_valida_valor_de_adesao;
@@ -3181,9 +3181,9 @@ CREATE OR REPLACE PACKAGE BODY CADA0006 IS
            AND t.inprejuz = 0
            -- Desconsidera o valor dos emprestimos marcados para liquidacao
            AND (TRIM(pr_dsctrliq) IS NULL
-            OR t.nrctremp NOT IN(SELECT regexp_substr(TRIM(pr_dsctrliq), '[^,]+', 1, LEVEL) item
-                                   FROM dual
-                            CONNECT BY LEVEL <= regexp_count(TRIM(pr_dsctrliq), '[^,]+')));
+            OR TO_CHAR(t.nrctremp) NOT IN (SELECT regexp_substr(TRIM(pr_dsctrliq), '[^,]+', 1, LEVEL) item
+                                             FROM dual
+                                       CONNECT BY LEVEL <= regexp_count(TRIM(pr_dsctrliq), '[^,]+')));
       
 		  -- Cursor da data
       rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;
@@ -3320,7 +3320,7 @@ CREATE OR REPLACE PACKAGE BODY CADA0006 IS
         ROLLBACK;
       WHEN OTHERS THEN
         pr_cdcritic := vr_cdcritic;
-        pr_dscritic := 'Erro geral na rotina da tela pc_verifica_tipo_acesso: ' || SQLERRM;
+        pr_dscritic := 'Erro geral na rotina da tela pc_valida_valor_adesao_empr: ' || SQLERRM;
         pr_des_erro := 'NOK';
         -- Carregar XML padrão para variável de retorno não utilizada.
         -- Existe para satisfazer exigência da interface.
@@ -3485,7 +3485,7 @@ CREATE OR REPLACE PACKAGE BODY CADA0006 IS
         ROLLBACK;
       WHEN OTHERS THEN
         pr_cdcritic := vr_cdcritic;
-        pr_dscritic := 'Erro geral na rotina da tela pc_verifica_tipo_acesso: ' || SQLERRM;
+        pr_dscritic := 'Erro geral na rotina da tela pc_valida_valor_adesao_web: ' || SQLERRM;
         pr_des_erro := 'NOK';
         -- Carregar XML padrão para variável de retorno não utilizada.
         -- Existe para satisfazer exigência da interface.
