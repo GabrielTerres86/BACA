@@ -5135,6 +5135,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
                 
                 22/02/2016 - Realizado ajuste para para trazer a razao social ao inves
                              do nome resumido, conforme solicitado no chamado 590014. (Kelvin)
+                
+                20/02/2018 - Alterado cursor cr_crapass, substituindo o acesso à tabela CRAPTIP
+                             pela tabela TBCC_TIPO_CONTA. PRJ366 (Lombardi).
+                             
+                             
     ............................................................................. */
 
      -- Seleciona os dados da Cooperativa
@@ -5162,7 +5167,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
              ,gene0002.fn_mask_cpf_cnpj(crapass.nrcpfcgc,crapass.inpessoa) nrcpfcgc
              ,crapass.nmprimtl
              ,crapass.inpessoa
-             ,craptip.dstipcta
+             ,tpcta.dstipo_conta dstipcta
              ,INITCAP(crapenc.dsendere)||', '||crapenc.nrendere||DECODE(crapenc.complend,' ','',', '||crapenc.complend) dsendere
              ,crapenc.nmcidade
              ,crapenc.nmbairro
@@ -5171,10 +5176,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
              ,gene0002.fn_mask(crapass.cdbcochq,'9999') cdbcoctl
              ,gene0002.fn_mask(crapass.cdagenci,'9999') cdagectl
          FROM crapass crapass
-             ,craptip craptip
+             ,tbcc_tipo_conta tpcta
              ,crapenc crapenc
-        WHERE crapass.cdcooper = craptip.cdcooper
-          AND crapass.cdtipcta = craptip.cdtipcta
+        WHERE crapass.inpessoa = tpcta.inpessoa
+          AND crapass.cdtipcta = tpcta.cdtipo_conta
           AND crapass.cdcooper = crapenc.cdcooper
           AND crapass.nrdconta = crapenc.nrdconta
           AND crapass.cdcooper = p_cdcooper
@@ -5891,8 +5896,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
           vr_tab_pagamento(vr_idx_pagto).dthordeb := '';
           vr_tab_pagamento(vr_idx_pagto).dthorcre := '';
           vr_tab_pagamento(vr_idx_pagto).dthortar := '';
-          vr_tab_pagamento(vr_idx_pagto).dthrdebi := '';          
-          vr_tab_pagamento(vr_idx_pagto).dthrcred := '';                    
           vr_tab_pagamento(vr_idx_pagto).dthrtari := '';          
           vr_tab_pagamento(vr_idx_pagto).dscomprv := '';
           vr_tab_pagamento(vr_idx_pagto).cdempres := rw_registros.cdempres;
@@ -5900,6 +5903,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
           vr_tab_pagamento(vr_idx_pagto).dstpapgt := CASE WHEN rw_registros.idtppagt = 'A' THEN 'Arquivo' ELSE 'Convencional' END;
           vr_tab_pagamento(vr_idx_pagto).idsitapr := rw_registros.idsitapr;          
           vr_tab_pagamento(vr_idx_pagto).nrseqpag := rw_registros.nrseqpag;
+          vr_tab_pagamento(vr_idx_pagto).dthrdebi := TO_CHAR(rw_registros.dtdebito,'DD/MM/RRRR') || ' 00:00';
+          vr_tab_pagamento(vr_idx_pagto).dthrcred := TO_CHAR(rw_registros.dtcredit,'DD/MM/RRRR') || ' 00:00';          
           
           vr_idx_pagto := vr_idx_pagto + 1;
           vr_flgpende := 1;
@@ -6009,12 +6014,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
              -- Se o pagamento tiver recebido a carga de algum comprovante.
              IF cr_val_comprov%FOUND THEN
                 vr_tab_pagamento(vr_idx_pagto).imgcompr := 'comprov_salario.png';
-                vr_tab_pagamento(vr_idx_pagto).hintcomp := 'Comprovante salárial enviado!';
-                vr_tab_pagamento(vr_idx_pagto).dscomprv := 'Comprovante salárial enviado.';
+                vr_tab_pagamento(vr_idx_pagto).hintcomp := 'Comprovante salarial enviado!';
+                vr_tab_pagamento(vr_idx_pagto).dscomprv := 'Comprovante salarial enviado.';
              ELSE
                 vr_tab_pagamento(vr_idx_pagto).imgcompr := '';
                 vr_tab_pagamento(vr_idx_pagto).hintcomp := '';
-                vr_tab_pagamento(vr_idx_pagto).dscomprv := 'Comprovante salárial não enviado.';
+                vr_tab_pagamento(vr_idx_pagto).dscomprv := 'Comprovante salarial não enviado.';
              END IF;
           CLOSE cr_val_comprov;
 
@@ -9083,12 +9088,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
                                               ,pr_cdacesso => 'FOLHAIB_QTD_DIA_ENV_COMP');
                                               
       IF rw_crappfp.qtsubtra > vr_qtdiaenv THEN        
-        vr_cdcritic := 'O envio dos comprovantes deve ser efetuado no máximo ' || TO_CHAR(vr_qtdiaenv) || ' dia(s) após o pagamento.';
+        vr_dscritic := 'O envio dos comprovantes deve ser efetuado no máximo ' || TO_CHAR(vr_qtdiaenv) || ' dia(s) após o pagamento.';
         RAISE vr_erro;
       END IF;     
       
       IF rw_crappfp.flsitcre NOT IN (1,2) THEN
-        vr_cdcritic := 'Apenas registros creditados podem ser enviados.';
+        vr_dscritic := 'Apenas registros creditados podem ser enviados.';
         RAISE vr_erro;        
       END IF;
 
