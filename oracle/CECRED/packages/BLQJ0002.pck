@@ -1088,7 +1088,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
   PROCEDURE pc_encerra_processo_erro(pr_idordem tbblqj_ordem_online.idordem%TYPE, -- Sequencial do recebimento
                                      pr_cdcooper crapcop.cdcooper%TYPE, -- Codigo da cooperativa
                                      pr_dsinconsit tbgen_inconsist.dsinconsist%TYPE,
-                                     pr_dsregistro_referencia tbgen_inconsist.dsregistro_referencia%TYPE) IS
+                                     pr_dsregistro_referencia tbgen_inconsist.dsregistro_referencia%TYPE,
+                                     pr_idatualiza_ordem IN NUMBER DEFAULT 1) IS
     vr_des_erro VARCHAR2(10);
     vr_dscritic VARCHAR2(500);
   BEGIN
@@ -1096,10 +1097,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
     ROLLBACK;
     
     -- Coloca o registro da solicitacao como processado com Erro
-    pc_atualiza_situacao(pr_idordem => pr_idordem,
-                         pr_instatus => 4, -- Erro
-                         pr_dslog_erro => pr_dsinconsit);
-      
+	IF pr_idatualiza_ordem = 1 THEN
+      pc_atualiza_situacao(pr_idordem => pr_idordem,
+                           pr_instatus => 4, -- Erro
+                           pr_dslog_erro => pr_dsinconsit);
+    END IF;
+
     -- Insere na inconsistencia
     gene0005.pc_gera_inconsistencia(pr_cdcooper => pr_cdcooper
                                    ,pr_iddgrupo => 1 -- Inconsistencia Bloqueio Judicial
@@ -2600,10 +2603,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
           -- Efetuar retorno do erro não tratado
           vr_dscritic := 'Erro BLQJ0002.pc_processa_ted: '||sqlerrm;
 
-          pc_encerra_processo_erro(pr_idordem => vr_idordem
+          pc_encerra_processo_erro(pr_idordem => 0
                                   ,pr_cdcooper => vr_cdcooper
                                   ,pr_dsinconsit => 'Processamento TED: '||vr_dscritic
-                                  ,pr_dsregistro_referencia => vr_dsinconsist);
+                                  ,pr_dsregistro_referencia => vr_dsinconsist
+								  ,pr_idatualiza_ordem => 0);
       END;
     END LOOP; -- Fim dos loop das TEDs a enviar
     --Fim Bacenjud - SM 1
