@@ -423,7 +423,7 @@ DO:
     aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper, /* Cooperativa */
                                          INPUT par_nrdconta, /* Numero da conta */
                                          INPUT 41,           /* Codigo Produto */
-                                         INPUT aux_totvlres, /* Valor contratado */
+                                         INPUT STRING(aux_vlresgat), /* Valor contratado */
                                          INPUT 3,            /* Id Origem */
                                          INPUT 0,            /* Codigo da chave */
                                         OUTPUT 0,            /* Solicita senha coordenador */
