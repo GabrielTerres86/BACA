@@ -661,6 +661,8 @@ begin
   -- Se não localizar, cria um novo lote
   if cr_craplot%notfound then
     BEGIN
+     CLOSE cr_craplot;
+	 		
      LANC0001.pc_incluir_lote( pr_dtmvtolt => vr_dtmvtolt
                               ,pr_cdagenci => 1
                               ,pr_cdbccxlt => 100
