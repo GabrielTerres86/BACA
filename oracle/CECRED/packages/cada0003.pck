@@ -5925,7 +5925,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
       -- Buscar todos os grupos selecionados
       CURSOR cr_cdprodutos(pr_cdcooper IN tbcc_produtos_coop.cdcooper%TYPE
                           ,pr_tpconta  IN tbcc_produtos_coop.tpconta%TYPE
-                          ,pr_inpessoa IN tbcc_produtos_coop.inpessoa%TYPE) IS
+                          ,pr_inpessoa IN tbcc_produtos_coop.inpessoa%TYPE
+                          ,pr_tpprodut IN tbcc_produtos_coop.tpproduto%TYPE) IS
         SELECT tpc.cdproduto
               ,tpc.vlminimo_adesao  
               ,tpc.vlmaximo_adesao  
@@ -5933,6 +5934,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
          WHERE tpc.cdcooper   = pr_cdcooper
            AND tpc.tpconta    = pr_tpconta
            AND tpc.inpessoa   = pr_inpessoa
+           AND tpc.tpproduto  = pr_tpprodut
            AND tpc.dtvigencia IS NULL;
       
       -- Tabela de memória
@@ -5969,7 +5971,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
       -- Buscar e guardar todos os produtos selecionados atualmente
       FOR rw_cdprodutos IN cr_cdprodutos(pr_cdcooper => pr_cdcooper
                                         ,pr_tpconta  => pr_tpconta
-                                        ,pr_inpessoa => pr_inpessoa) LOOP
+                                        ,pr_inpessoa => pr_inpessoa
+                                        ,pr_tpprodut => pr_tpproduto) LOOP
         -- Adiciona o registro 
         vr_tab_produto_old(rw_cdprodutos.cdproduto).vlminimo_adesao  := rw_cdprodutos.vlminimo_adesao;
         vr_tab_produto_old(rw_cdprodutos.cdproduto).vlmaximo_adesao  := rw_cdprodutos.vlmaximo_adesao;
@@ -6248,6 +6251,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
                                         ,pr_cdcooper => pr_cdcooper
                                         ,pr_inpessoa => pr_inpessoa
                                         ,pr_cdtipcta => pr_tpconta
+                                        ,pr_cdprodut => vr_cdproduto
                                         ,pr_tpoperac => vr_tpoperac
                                         ,pr_dsvalant => NULL
                                         ,pr_dsvalnov => vr_cdproduto
