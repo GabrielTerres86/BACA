@@ -2325,6 +2325,8 @@ PROCEDURE pc_analisar_proposta(pr_tpenvest in varchar2               --> Tipo do
   ---------------------------------------------------------------------------------------------------------------------*/
 
    vr_dsmensag varchar2(32767);
+   vr_dtmvtolt DATE;
+   
 
    -- Variável de críticas
    vr_cdcritic crapcri.cdcritic%type;
@@ -2347,6 +2349,8 @@ BEGIN
    pr_des_erro := pr_xmllog; -- somente para não haver hint, caso for usado, pode remover essa linha
    pr_des_erro := 'OK';
    pr_nmdcampo := null;
+
+   vr_dtmvtolt := to_date(pr_dtmovito, 'DD/MM/RRRR');
 
    gene0004.pc_extrai_dados(pr_xml      => pr_retxml
                            ,pr_cdcooper => vr_cdcooper
@@ -2371,7 +2375,7 @@ BEGIN
                                       ,pr_nrctrlim => pr_nrctrlim
                                       ,pr_tpctrlim => pr_tpctrlim
                                       ,pr_nrdconta => pr_nrdconta
-                                      ,pr_dtmovito => pr_dtmovito
+                                      ,pr_dtmvtolt => vr_dtmvtolt
                                       ,pr_dsmensag => vr_dsmensag
                                       ,pr_cdcritic => vr_cdcritic
                                       ,pr_dscritic => vr_dscritic
@@ -2461,6 +2465,7 @@ PROCEDURE pc_enviar_proposta_manual(pr_nrctrlim in  crawlim.nrctrlim%type --> Nu
   ---------------------------------------------------------------------------------------------------------------------*/
 
    vr_dsmensag varchar2(32767);
+   vr_dtmvtolt DATE;
    
    -- Variável de críticas
    vr_cdcritic crapcri.cdcritic%type;
@@ -2484,6 +2489,8 @@ BEGIN
    pr_des_erro := 'OK';
    pr_nmdcampo := null;
 
+   vr_dtmvtolt := to_date(pr_dtmovito, 'DD/MM/RRRR');
+
    gene0004.pc_extrai_dados(pr_xml      => pr_retxml
                            ,pr_cdcooper => vr_cdcooper
                            ,pr_nmdatela => vr_nmdatela
@@ -2501,7 +2508,7 @@ BEGIN
                                     ,pr_nrdconta => pr_nrdconta
                                     ,pr_nrctrlim => pr_nrctrlim
                                     ,pr_tpctrlim => pr_tpctrlim
-                                    ,pr_dtmvtolt => pr_dtmovito
+                                    ,pr_dtmvtolt => vr_dtmvtolt
                                     ,pr_nmarquiv => null
                                     ,vr_flgdebug => 'N'
                                     ,pr_dsmensag => vr_dsmensag
@@ -2517,7 +2524,7 @@ BEGIN
    vr_dsmensag := replace(replace(vr_dsmensag, '<br>', ' '), '<BR>', ' ');
    pr_retxml   := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                     '<Root><dsmensag>' || vr_dsmensag || '</dsmensag></Root>');
-   dbms_output.put_line(vr_dsmensag);
+
    
    COMMIT;
 

@@ -49,7 +49,7 @@ procedure pc_enviar_proposta_esteira(pr_cdcooper in  crawlim.cdcooper%type      
                                     ,pr_nrctrlim in  crawlim.nrctrlim%type             --> Numero do Contrato do Limite.
                                     ,pr_tpctrlim in  crawlim.tpctrlim%type             --> Tipo de proposta do limite
                                     ,pr_nrdconta in  crapass.nrdconta%type             --> Conta do associado
-                                    ,pr_dtmovito in  varchar2                          --> Data do movimento atual
+                                    ,pr_dtmvtolt in  crapdat.dtmvtolt%type             --> Data do movimento atual
                                     ,pr_dsmensag out varchar2                          --> Mensagem 
                                     ,pr_cdcritic out pls_integer                       --> Codigo da critica
                                     ,pr_dscritic out varchar2                          --> Descricao da critica
@@ -137,7 +137,7 @@ procedure pc_enviar_analise_manual(pr_cdcooper    in crawlim.cdcooper%type  --> 
                                    ,pr_nrdconta    in crawlim.nrdconta%type  --> Numero da conta do cooperado
                                    ,pr_nrctrlim    in crawlim.nrctrlim%type  --> Numero da proposta
                                    ,pr_tpctrlim    in crawlim.tpctrlim%type  --> Tipo de proposta do limite
-                                   ,pr_dtmvtolt    in VARCHAR2
+                                   ,pr_dtmvtolt  in crapdat.dtmvtolt%type --> Data do movimento atual
                                    ,pr_nmarquiv  in varchar2                 --> Diretorio e nome do arquivo pdf da proposta
                                    ,vr_flgdebug  IN VARCHAR2                 --> Flag se debug ativo
                                    ,pr_dsmensag OUT VARCHAR2
@@ -248,14 +248,12 @@ PROCEDURE pc_enviar_proposta_esteira(pr_cdcooper in  crawlim.cdcooper%type      
                                     ,pr_nrctrlim in  crawlim.nrctrlim%type             --> Numero da Proposta do Limite.
                                     ,pr_tpctrlim in  crawlim.tpctrlim%type             --> Tipo de proposta do limite
                                     ,pr_nrdconta in  crapass.nrdconta%type             --> Conta do associado
-                                    ,pr_dtmovito in  varchar2                          --> Data do movimento atual
+                                    ,pr_dtmvtolt in  crapdat.dtmvtolt%type             --> Data do movimento atual
                                     ,pr_dsmensag out varchar2                          --> Mensagem 
                                     ,pr_cdcritic out pls_integer                       --> Codigo da critica
                                     ,pr_dscritic out varchar2                          --> Descricao da critica
                                     ,pr_des_erro out varchar2                          --> Erros do processo OK ou NOK
                                     ) is
-
-  vr_dtmvtolt DATE;
 
   vr_cdagenci crapage.cdagenci%type; --> Codigo da agencia
   vr_inobriga varchar2(1);
@@ -292,8 +290,6 @@ PROCEDURE pc_enviar_proposta_esteira(pr_cdcooper in  crawlim.cdcooper%type      
 BEGIN
    pr_des_erro := 'OK';
    vr_tpenvest := pr_tpenvest;
-   vr_dtmvtolt := TO_DATE(pr_dtmovito, 'DD/MM/YYYY');
-  
   
    pc_verifica_contigenc_motor(pr_cdcooper => pr_cdcooper    --> Codigo da Cooperativa
                               ,pr_flctgmot => vr_flctgmot    --> Flag de contingencia flag de 
@@ -383,7 +379,7 @@ BEGIN
                           ,pr_nrdconta => pr_nrdconta         --> Numero da conta
                           ,pr_nrctrlim => pr_nrctrlim         --> Numero de crontrole de limite
                           ,pr_tpctrlim => pr_tpctrlim         --> Tipo DO crontrole de limite
-                          ,pr_dtmvtolt => vr_dtmvtolt         --> Data DO Movimento
+                          ,pr_dtmvtolt => pr_dtmvtolt         --> Data DO Movimento
                           ,pr_nmarquiv => null                --> Nome DO arquivo
                           ,pr_dsmensag => pr_dsmensag         --> Descriao da Mensagem
                           ,pr_cdcritic => vr_cdcritic         --> Código da Critica
@@ -1025,7 +1021,7 @@ PROCEDURE pc_derivar_proposta(pr_cdcooper  in crawlim.cdcooper%type     --> Codi
                              ,pr_dtmvtolt  in crapdat.dtmvtolt%type     --> Data do movimento
                              ) is
   /*..........................................................................
-  Programa : pc_derivar_proposta_est
+  Programa : pc_derivar_proposta
   Sistema  : Conta-Corrente - Cooperativa de Credito
   Sigla    : CRED
   Autor    : Paulo Penteado (GFT) 
@@ -1040,11 +1036,23 @@ PROCEDURE pc_derivar_proposta(pr_cdcooper  in crawlim.cdcooper%type     --> Codi
 
   ..........................................................................*/
 
+  vr_cdagenci crapage.cdagenci%type; --> Codigo da agencia
+
   --> Tratamento de erros
   vr_cdcritic number := 0;
   vr_dscritic varchar2(4000);
   vr_dsmensag varchar2(4000);
   vr_exc_erro exception;
+
+  --> Busca PA do associado
+  cursor cr_crapass is
+  select ass.nmprimtl
+        ,ass.inpessoa
+        ,ass.cdagenci
+  from   crapass ass
+  where  ass.cdcooper = pr_cdcooper
+  and    ass.nrdconta = pr_nrdconta;
+  rw_crapass cr_crapass%rowtype;
 
   --> Buscar informaçoes da Proposta
   cursor cr_crawlim is
@@ -1064,10 +1072,21 @@ PROCEDURE pc_derivar_proposta(pr_cdcooper  in crawlim.cdcooper%type     --> Codi
   vr_idaciona tbgen_webservice_aciona.idacionamento%type;
 
 BEGIN
+   open  cr_crapass;
+   fetch cr_crapass into rw_crapass;
+   if    cr_crapass%notfound then
+         close cr_crapass;
+         vr_dscritic := 'Associado nao cadastrado. Conta: ' || pr_nrdconta;
+         raise vr_exc_erro;
+   end   if;
+   close cr_crapass;
+  
+   vr_cdagenci := nvl(nullif(pr_cdagenci, 0), rw_crapass.cdagenci);
+  
    -->  Se o DEBUG estiver habilitado
    if  vr_flgdebug = 'S' then
        ESTE0001.pc_grava_acionamento(pr_cdcooper              => pr_cdcooper                    --> Codigo da cooperativa
-                                    ,pr_cdagenci              => pr_cdagenci                    --> Codigo da agencia           
+                                    ,pr_cdagenci              => vr_cdagenci                    --> Codigo da agencia           
                                     ,pr_cdoperad              => pr_cdoperad                    --> Codigo do operador
                                     ,pr_cdorigem              => pr_cdorigem                    --> Origem da operacao
                                     ,pr_nrctrprp              => pr_nrctrlim                    --> Numero da proposta de limite
@@ -1096,7 +1115,7 @@ BEGIN
    if  rw_crawlim.dtenvest is null then
        --> Inclusao na esteira
        pc_incluir_proposta(pr_cdcooper => pr_cdcooper     --> Codigo da cooperativa
-                          ,pr_cdagenci => pr_cdagenci     --> Codigo da agencia           
+                          ,pr_cdagenci => vr_cdagenci     --> Codigo da agencia           
                           ,pr_cdoperad => pr_cdoperad     --> Codigo do operador
                           ,pr_cdorigem => pr_cdorigem     --> Origem da operacao
                           ,pr_nrdconta => pr_nrdconta     --> Numero da proposta de limite
@@ -1110,7 +1129,7 @@ BEGIN
    else                                                       
        --> Atualizaçao com reinício de fluxo                  
        pc_alterar_proposta(pr_cdcooper => pr_cdcooper     --> Codigo da cooperativa
-                          ,pr_cdagenci => pr_cdagenci     --> Codigo da agencia           
+                          ,pr_cdagenci => vr_cdagenci     --> Codigo da agencia           
                           ,pr_cdoperad => pr_cdoperad     --> Codigo do operador
                           ,pr_cdorigem => pr_cdorigem     --> Origem da operacao
                           ,pr_nrdconta => pr_nrdconta     --> Numero da proposta de limite
@@ -1131,7 +1150,7 @@ BEGIN
    --> Se o DEBUG estiver habilitado
    if  vr_flgdebug = 'S' then
        ESTE0001.pc_grava_acionamento(pr_cdcooper              => pr_cdcooper                  --> Codigo da cooperativa
-                                    ,pr_cdagenci              => pr_cdagenci                  --> Codigo da agencia           
+                                    ,pr_cdagenci              => vr_cdagenci                  --> Codigo da agencia           
                                     ,pr_cdoperad              => pr_cdoperad                  --> Codigo do operador
                                     ,pr_cdorigem              => pr_cdorigem                  --> Origem da operacao
                                     ,pr_nrctrprp              => pr_nrctrlim                  --> Numero da proposta de limite
@@ -2084,7 +2103,7 @@ END pc_incluir_proposta;
                                     ,pr_nrdconta  IN crawlim.nrdconta%TYPE
                                     ,pr_nrctrlim  IN crawlim.nrctrlim%TYPE
                                     ,pr_tpctrlim  in crawlim.tpctrlim%type
-                                    ,pr_dtmvtolt  IN VARCHAR2
+                                    ,pr_dtmvtolt  in crapdat.dtmvtolt%type
                                     ,pr_nmarquiv  IN VARCHAR2
                                     ,vr_flgdebug  IN VARCHAR2
                                      ---- OUT ----
@@ -2107,8 +2126,6 @@ END pc_incluir_proposta;
    Objetivo  : Rotina responsavel por gerar a geracao e inclusao da proposta psistemara a esteira 
 
  ..........................................................................*/
-
- vr_dtmvtolt DATE;
 
  vr_cdagenci crapage.cdagenci%type; --> Codigo da agencia
     
@@ -2147,8 +2164,6 @@ END pc_incluir_proposta;
        raise vr_exc_erro;
    end if;
     
-  vr_dtmvtolt := TO_DATE(pr_dtmvtolt, 'DD/MM/YYYY');
-                          
   open  cr_crapass;
   fetch cr_crapass into rw_crapass;
   if    cr_crapass%notfound then
@@ -2202,7 +2217,7 @@ END pc_incluir_proposta;
                                    pr_tpacionamento         => 0,  --> 0 - DEBUG
                                    pr_dsoperacao            => 'ANTES ENVIAR PROPOSTA',       
                                    pr_dsuriservico          => NULL,       
-                                   pr_dtmvtolt              => vr_dtmvtolt,       
+                                   pr_dtmvtolt              => pr_dtmvtolt,       
                                    pr_cdstatus_http         => 0,
                                    pr_dsconteudo_requisicao => vr_obj_proposta_clob,
                                    pr_dsresposta_requisicao => null,
@@ -2222,7 +2237,7 @@ END pc_incluir_proposta;
                      ,pr_cdorigem    => pr_cdorigem
                      ,pr_nrdconta    => pr_nrdconta
                      ,pr_nrctrlim    => pr_nrctrlim
-                     ,pr_dtmvtolt    => vr_dtmvtolt
+                     ,pr_dtmvtolt    => pr_dtmvtolt
                      ,pr_comprecu    => NULL
                      ,pr_dsmetodo    => 'POST'
                      ,pr_conteudo    => vr_obj_proposta_clob
@@ -2242,7 +2257,7 @@ END pc_incluir_proposta;
                         ,pr_nrdconta => pr_nrdconta
                         ,pr_nrctrlim => pr_nrctrlim
                         ,pr_tpctrlim => pr_tpctrlim
-                        ,pr_dtmvtolt => vr_dtmvtolt
+                        ,pr_dtmvtolt => pr_dtmvtolt
                         ,pr_flreiflx => 1
                         ,pr_nmarquiv => pr_nmarquiv
                         ,pr_cdcritic => vr_cdcritic
