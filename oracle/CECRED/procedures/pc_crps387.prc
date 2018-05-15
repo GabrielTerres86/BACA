@@ -11,7 +11,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autora  : Mirtes
-   Data    : Abril/2004                        Ultima atualizacao: 17/04/2018
+   Data    : Abril/2004                        Ultima atualizacao: 15/05/2018
 
    Dados referentes ao programa:
 
@@ -450,9 +450,11 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                             Ajustar pc_trata_log 
                             ( Belli - Envolti - Chamados INC0011662 ) 
                             
-                            
                17/04/2018 - Validar valor ao efetuar o cancelamento do agendamento na
                             procedure pc_critica_debito_cancelado (Lucas Ranghetti INC0012982)
+                              
+               15/05/2018 - Validar autorização somente para novas inclusoes 
+                            (Lucas Ranghetti #INC0015198)
 ............................................................................ */
 
     DECLARE
@@ -4294,6 +4296,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                       (cr_crapatr%NOTFOUND)                                  OR
                       (cr_crapass%FOUND AND rw_crapass.dtdemiss IS NOT NULL) OR
                       (cr_crapass%NOTFOUND))                                 AND
+                      SUBSTR(vr_setlinha,150,1) = 0                          AND
                       vr_tpregist <> 'B'                                     THEN
                     IF rw_gnconve.flgindeb = 1 AND
                        vr_tpregist     = 'E'   AND
@@ -4810,7 +4813,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps387 (pr_cdcooper IN crapcop.cdcooper%T
                       vr_flgrejei     := TRUE;
                     END IF;
 
-                    IF rw_crapatr.dtfimatr IS NOT NULL THEN
+                    IF rw_crapatr.dtfimatr IS NOT NULL AND
+                       SUBSTR(vr_setlinha,150,1) = 0 THEN
                       vr_dtultdia := fn_verifica_ult_dia(vr_cdcooper, rw_crapdat.dtmvtopr);
                       -- Inclusão do módulo e ação logado - Chamado 758608 - 24/10/2017
                       GENE0001.pc_set_modulo(pr_module => 'PC_'||vr_cdprogra, pr_action => NULL);
