@@ -23,6 +23,8 @@ CREATE OR REPLACE PACKAGE CECRED.BLQJ0002 AS
 
 			    30/11/2017 - Alterações referentes a M460 BACENJUD. (Thiago Rodrigues)
 
+				15/05/2018 - Bacenjud SM 1 - Heitor (Mouts)
+
   .............................................................................*/
 
   -- Efetuar o recebimento das solicitacoes de consulta de conta
@@ -180,7 +182,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
     -- Verifica se ja existe bloqueio ativo para este oficio
     OPEN cr_crapblj;
     FETCH cr_crapblj INTO rw_crapblj;
-      
+         
     -- Busca a data do sistema
     OPEN btch0001.cr_crapdat(pr_cdcooper);
     FETCH btch0001.cr_crapdat INTO rw_crapdat;
@@ -276,7 +278,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
     END IF;
 
     -- Busca o numero do oficio que sera utilizado
-      vr_nroficio := pr_nroficio;
+    vr_nroficio := pr_nroficio;
     -- Inclui o bloqueio judicial
     blqj0001.pc_inclui_bloqueio_jud(pr_cdcooper => pr_cdcooper
                                    ,pr_nrdconta => pr_nrdconta
@@ -372,7 +374,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
     END IF;
     CLOSE cr_crapblj;
 
-      
+    
       IF pr_fldestrf = 0 THEN
         vr_fldestrf := FALSE;
         vr_dsinfdes := 'Desbloqueio BACENJUD';
@@ -2181,6 +2183,41 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
        WHERE a.instatus  = 5 -- Processada, porem sem TED gerada
          AND b.idordem   = a.idordem;
 
+    CURSOR cr_ted_reenvio IS
+      SELECT c.rowid,
+             a.cdcooper,
+             a.nrcpfcnpj,
+             b.nrdconta, 
+             b.dsoficio,
+             b.nrcnpj_if_destino,
+             b.nragencia_if_destino,
+             b.nrcpfcnpj_favorecido,
+             b.cdtransf_bacenjud,
+             substr(b.nmfavorecido,1,60) nmfavorecido,
+             SUM(b.vlordem) vllanmto
+        FROM crapdat             d,
+             tbblqj_ordem_transf b,
+             tbblqj_ordem_online a,
+             tbblqj_erro_ted     c
+        WHERE d.cdcooper          = a.cdcooper
+         AND a.instatus          = 2 --Processada
+         AND b.idordem           = a.idordem
+         AND a.cdcooper          = c.cdcooper
+         AND b.nrdconta          = c.nrdconta
+         AND b.cdtransf_bacenjud = c.cdtransf_bacenjud
+         AND trunc(c.dtinclusao) = d.dtmvtoan
+         AND c.dtenvio IS NULL
+        GROUP 
+          BY c.rowid,
+             a.cdcooper,
+             a.nrcpfcnpj,
+             b.nrdconta,
+             b.nrcnpj_if_destino, 
+             b.nragencia_if_destino,
+             b.nrcpfcnpj_favorecido,
+             b.cdtransf_bacenjud,
+             b.nmfavorecido,
+             b.dsoficio;
     
     -- Registro sobre a data do sistema
     rw_crapdat btch0001.cr_crapdat%ROWTYPE;
@@ -2457,6 +2494,119 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
       vr_dscritic := NULL;
     
     END LOOP; -- Loop sobre as solicitacoes
+    
+    --Bacenjud - SM 1
+    --Processa o reenvio das TEDs
+    
+    --Efetua loop sobre as contas a reenviar
+    FOR rw_ted_reenvio IN cr_ted_reenvio LOOP
+      BEGIN
+        --Se mudou a cooperativa, buscar a data
+        IF nvl(vr_cdcooper,0) <> rw_ted_reenvio.cdcooper THEN
+          -- Busca a data do sistema
+          OPEN btch0001.cr_crapdat(rw_ted_reenvio.cdcooper);
+          FETCH btch0001.cr_crapdat INTO rw_crapdat;
+          CLOSE btch0001.cr_crapdat;
+        END IF;
+          
+        --Atualiza registro de inconsistencia, caso apresente erro
+        vr_cdcooper := rw_ted_reenvio.cdcooper;
+
+        vr_dsinconsist := ' Cpf/Cnpj: '   ||rw_ted_reenvio.nrcpfcnpj||
+                          ' Oficio: '     ||rw_ted_reenvio.dsoficio||
+                          ' Valor: '      ||to_char(rw_ted_reenvio.vllanmto,'FM999G999G990D00')||
+                          ' Id.Deposito: '||rw_ted_reenvio.cdtransf_bacenjud;
+        
+        -- Busca o banco de destino
+        OPEN cr_crapagb(pr_nrcnpjag => rw_ted_reenvio.nrcnpj_if_destino,
+                        pr_cdageban => rw_ted_reenvio.nragencia_if_destino);
+        FETCH cr_crapagb INTO rw_crapagb;
+        IF cr_crapagb%NOTFOUND THEN 
+          CLOSE cr_crapagb;
+          vr_dscritic := 'Agencia '|| rw_ted_reenvio.nragencia_if_destino||
+           ' nao encontrada para o CNPJ da IF de destino (CNPJ '||rw_ted_reenvio.nrcnpj_if_destino||').';
+          RAISE vr_exc_saida;
+        END IF;
+        CLOSE cr_crapagb;
+
+        -- Defino o tipo de pessoa do destinatario.
+        -- Como nao recebemos o tipo de pessoa da origem, utilizaremos a regra de 
+        --   tamanho do campo
+        IF length(rw_ted_reenvio.nrcpfcnpj_favorecido) > 11 THEN
+          vr_inpessoa := 2; -- CNPJ
+        ELSE
+          vr_inpessoa := 1; -- CPF
+        END IF;
+
+        -- Efetua a TED
+        cxon0020.pc_executa_reenvio_ted(
+                             pr_cdcooper => rw_ted_reenvio.cdcooper  --> Cooperativa    
+                            ,pr_cdagenci => 1  --> Agencia
+                            ,pr_nrdcaixa => 900  --> Caixa Operador    
+                            ,pr_cdoperad => '1'  --> Operador Autorizacao
+                            ,pr_idorigem => 1 -- Alterado por Andrino para ajuste no LOGSPB 7 --Batch --> Origem                 
+                            ,pr_dtmvtolt => rw_crapdat.dtmvtolt --> Data do movimento
+                            ,pr_nrdconta => rw_ted_reenvio.nrdconta  --> Conta Remetente        
+                            ,pr_idseqttl => 1  --> Titular                
+                            ,pr_nrcpfope => 0  --> CPF operador juridico
+                            ,pr_cddbanco => rw_crapagb.cddbanco --> Banco destino
+                            ,pr_cdageban => rw_ted_reenvio.nragencia_if_destino  --> Agencia destino
+                            ,pr_nrctatrf => rw_ted_reenvio.cdtransf_bacenjud  --> Conta transferencia. Neste caso sera enviado o codigo de transferencia do Bacenjud
+                            ,pr_nmtitula => rw_ted_reenvio.nmfavorecido --> nome do titular destino
+                            ,pr_nrcpfcgc => nvl(rw_ted_reenvio.nrcpfcnpj_favorecido,0)  --> CPF do titular destino
+                            ,pr_inpessoa => vr_inpessoa --> Tipo de pessoa
+                            ,pr_intipcta => 9 -- Deposito judicial --> Tipo de conta
+                            ,pr_vllanmto => rw_ted_reenvio.vllanmto --> Valor do lançamento
+                            ,pr_dstransf => 'Transferencia Judicial' --> Identificacao Transf.
+                            ,pr_cdfinali => 100 -- Deposito Judicial --> Finalidade TED
+                            ,pr_dshistor => 'Transferencia judicial' --> Descriçao do Histórico
+                            ,pr_cdispbif => rw_crapagb.nrispbif             --> ISPB Banco Favorecido
+                            ,pr_idagenda => 1 --> Tipo de agendamento
+                            -- saida
+                            ,pr_dsprotoc => vr_dsprotoc --> Retorna protocolo    
+                            ,pr_tab_protocolo_ted => vr_tab_protocolo_ted --> dados do protocolo
+                            ,pr_cdcritic => vr_cdcritic  --> Codigo do erro
+                            ,pr_dscritic => vr_dscritic); --> Descricao do erro
+
+        IF vr_dscritic IS NOT NULL THEN
+          RAISE vr_exc_saida;
+        END IF;
+        
+        BEGIN
+          UPDATE tbblqj_erro_ted t
+             SET dtenvio = SYSDATE
+           WHERE ROWID = rw_ted_reenvio.rowid; -- Teds Processadas
+        EXCEPTION
+          WHEN OTHERS THEN
+            vr_dscritic := 'Erro ao atualizar tbblqj_erro_ted: '||SQLERRM;
+            RAISE vr_exc_saida;
+        END;
+
+        -- Grava o que foi feito ate o momento
+        COMMIT;
+      EXCEPTION
+        WHEN vr_exc_saida THEN
+          -- Desfaz o que foi feito ate o momento
+          ROLLBACK;
+
+          -- Executa rotina para encerrar o processo com erro
+          pc_encerra_processo_erro(pr_idordem               => 0
+                                  ,pr_cdcooper              => vr_cdcooper
+                                  ,pr_dsinconsit            => 'Reenvio da TED: '||vr_dscritic
+                                  ,pr_dsregistro_referencia => vr_dsinconsist
+                                  ,pr_idatualiza_ordem      => 0);
+            
+        WHEN OTHERS THEN
+          -- Efetuar retorno do erro não tratado
+          vr_dscritic := 'Erro BLQJ0002.pc_processa_ted: '||sqlerrm;
+
+          pc_encerra_processo_erro(pr_idordem => vr_idordem
+                                  ,pr_cdcooper => vr_cdcooper
+                                  ,pr_dsinconsit => 'Processamento TED: '||vr_dscritic
+                                  ,pr_dsregistro_referencia => vr_dsinconsist);
+      END;
+    END LOOP; -- Fim dos loop das TEDs a enviar
+    --Fim Bacenjud - SM 1
     
     -- Grava as informacoes
     COMMIT;
