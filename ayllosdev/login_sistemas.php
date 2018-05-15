@@ -26,6 +26,10 @@
     //***             31/01/2017 - Alterado para gravar o log em tabela    ***//
     //***                          (Guilherme/SUPERO)                      ***//
     //***                                                                  ***//
+    //***             23/08/2017 - Incluido parametro des_login ao efetuar ***//
+    //***                          o metodo POST no form frmRedirect.      ***//
+    //***                          (PRJ339 - Reinert)                      ***//
+    //***                                                                  ***//
     //***             15/01/2018 - #787877 Login LDAP alterado da intranet ***//
     //***                          para o ayllos (Carlos)                  ***//
     //************************************************************************//
@@ -229,6 +233,7 @@ ix_1 [DAT_TRANSACAO]
                     <?php for ($i = 0; $i < count($mtccserver); $i++) { ?>
                     <input type="hidden" name="mtccserver[]" id="mtccserver[]" value="<?php echo $mtccserver[$i]; ?>">
                     <?php } ?>
+                    <input type="hidden" name="des_login" id="des_login" value="<?php echo $DES_LOGIN; ?>">
                     </form>
                     </body>
                     </html>
