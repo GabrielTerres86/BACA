@@ -64,6 +64,9 @@
 			 16/04/2018 - Ajustes nos filtros do relatório somente para EAD.
                           Para que os números deste relatório batam com o relatório 
 						  especifico do EAD(Chamado #INC0012368, Wagner/Sustentação).
+
+			 14/05/2018 - Ajustes nos filtros do relatório Presencial.
+			             (Chamado #INC0014943, Wagner/Sustentação).
                           
 **************************************************************************** */
 
@@ -1195,9 +1198,6 @@ ELSE DO:
             AND crapidp.cdagenci = ttCrapadp.cdagenci           
             AND crapidp.cdevento = ttCrapadp.cdevento           
             AND crapidp.nrseqeve = ttCrapadp.nrSeqDig           
-			AND ((crapidp.dtconins >= dataInicial
-              AND crapidp.dtconins <= dataFinal)
-                OR (idevento         <> 1))
             AND (idevento         = 1                            
             OR   cdagenci         = 0                  
             OR   crapidp.cdageins = cdagenci),
@@ -1209,6 +1209,12 @@ ELSE DO:
             AND (crapedp.nrseqpgm = INT(nrseqpgm)
              OR  INT(nrseqpgm) = 0)
             AND NOT crapedp.tpevento = 7 
+            AND ((crapedp.tpevento <> 10 AND 
+				  crapedp.tpevento <> 11) OR
+				 ((crapedp.tpevento = 10 OR
+				   crapedp.tpevento = 11 ) AND
+			      (crapidp.dtconins >= dataInicial
+               AND crapidp.dtconins <= dataFinal)))			
             BREAK BY crapidp.idstains: 
 
            IF Crapidp.IdStaIns > 0 AND Crapidp.IdStaIns < 6 THEN DO:
