@@ -323,9 +323,9 @@ create or replace package body cecred.SICR0001 is
   vr_variaveis_notif NOTI0001.typ_variaveis_notif;
   
   /* CONSTANTES */
-  ORIGEM_AGEND_NAO_EFETIVADO CONSTANT tbgen_notif_automatica_prm.cdorigem_mensagem%TYPE := 3;
-  MOTIVO_SALDO_INSUFICIENTE  CONSTANT tbgen_notif_automatica_prm.cdmotivo_mensagem%TYPE := 8;
-  MOTIVO_LIMITE_EXCEDIDO     CONSTANT tbgen_notif_automatica_prm.cdmotivo_mensagem%TYPE := 9;
+  ORIGEM_TRANS_NAO_EFETIVADO CONSTANT tbgen_notif_automatica_prm.cdorigem_mensagem%TYPE := 5;
+  MOTIVO_SALDO_INSUFICIENTE  CONSTANT tbgen_notif_automatica_prm.cdmotivo_mensagem%TYPE := 4;
+  MOTIVO_LIMITE_EXCEDIDO     CONSTANT tbgen_notif_automatica_prm.cdmotivo_mensagem%TYPE := 5;
 
   /* Procedimento para buscar os lançamentos automáticos efetuados pela Internet e TAA*/
   PROCEDURE pc_obtem_agendamentos_debito( pr_cdcooper  IN crapcop.cdcooper%TYPE        --> Código da cooperativa
