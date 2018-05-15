@@ -389,7 +389,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
 
                20/03/2018 - Substituida validacao "cdtipcta IN (6,7,17,18)" pelo "cdmodali = 3".
                             Substituida validacao "cdtipcta IN (2,4,9,11,13,15)" pela chamada
-                            da procedure pc_permite_produto_tipo. (Josiane - AMcom)
+                            da procedure pc_permite_produto_tipo. (Lombardi)
      ............................................................................. */
 
      DECLARE
@@ -429,7 +429,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS005(pr_cdcooper  IN crapcop.cdcooper%T
               ,vlblqjud crapsld.vlsddisp%TYPE
               ,vlsldtot NUMBER
               ,vr_rowid ROWID);
-
 
        -- Definicao do tipo de registro gn099
        TYPE typ_reg_gn099 IS
