@@ -323,7 +323,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
     Sistema  : Procedimentos e funcoes das transacoes do caixa online
     Sigla    : CRED
     Autor    : Alisson C. Berrido - Amcom
-    Data     : Junho/2013.                   Ultima atualizacao: 13/08/2017 
+    Data     : Junho/2013.                   Ultima atualizacao: 12/12/2017 
   
     Dados referentes ao programa:
   
@@ -369,6 +369,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
 							 > Devolver critica através de parâmetros 
 							  (Jonata - RKAM / P364).
 
+                12/12/2017 - Passar como texto o campo nrcartao na chamada da procedure 
+                             pc_gera_log_ope_cartao (Lucas Ranghetti #810576)
   ---------------------------------------------------------------------------------------------------------------*/
 
   /* Busca dos dados da cooperativa */
@@ -1271,7 +1273,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
       Sistema  : Rotinas acessadas pelas telas de cadastros Web
       Sigla    : CRED
       Autor    : Odirlei Busana - Amcom
-      Data     : Junho/2015.                   Ultima atualizacao: 15/08/2017
+      Data     : Junho/2015.                   Ultima atualizacao: 12/12/2017
   
       Dados referentes ao programa:
   
@@ -1312,6 +1314,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
 
 				  15/08/2017 - Ajuste para devolver critica através de parâmetros (Jonata - RKAM / P364).
 
+                  12/12/2017 - Passar como texto o campo nrcartao na chamada da procedure 
+                               pc_gera_log_ope_cartao (Lucas Ranghetti #810576)
   ---------------------------------------------------------------------------------------------------------------*/
     ---------------> CURSORES <-----------------        
     -- Buscar dados do associado
@@ -2401,7 +2405,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0020 AS
                           ,pr_indtipo_cartao  => 0
                           ,pr_nrdocmto        => pr_nrdocmto
                           ,pr_cdhistor        => vr_cdhisted
-                          ,pr_nrcartao        => 0
+                          ,pr_nrcartao        => '0'
                           ,pr_vllanmto        => pr_vldocmto
                           ,pr_cdoperad        => pr_cdoperad     
                           ,pr_cdbccrcb        => pr_cdbanfav     
