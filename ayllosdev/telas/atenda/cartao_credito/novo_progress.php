@@ -471,7 +471,15 @@
 
 			$("#dscartao").attr("disabled",true);
 			$("#dtnasccr").removeAttr("disabled");
+			$("#tpdpagto").val(1);
+			$("#tpdpagto").attr("disabled",true);
+
 			<?php
+		}else{
+			?>
+
+				
+			<?
 		}
 	?>
 	

@@ -671,7 +671,7 @@ $cdLimite			 = explode("@",$aListaLimite[1]);
         $("#flgdebit").attr("disabled",true);
         $("#dtnasccr").removeAttr("disabled");
         $("#nrcpfcgc").attr("disabled",true);
-        $("#tpdpagto").attr("disabled",true);
+       
         $("#tpenvcrd").attr("disabled",true);
     }
 

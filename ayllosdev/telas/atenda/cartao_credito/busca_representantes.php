@@ -1,12 +1,12 @@
 <? 
 /*!
  * FONTE        : busca_representantes.php
- * CRIAÇÃO      : Jean Michel       
- * DATA CRIAÇÃO : 17/04/2014 
- * OBJETIVO     : Rotina para consulta de representates para tele de novos cartões de crédito
+ * CRIA??O      : Jean Michel       
+ * DATA CRIA??O : 17/04/2014 
+ * OBJETIVO     : Rotina para consulta de representates para tele de novos cart?es de cr?dito
  * --------------
- * ALTERAÇÕES   : 
- *         22/10/2014 - Retirado validação de permissão para carregar combo de representantes ( Renato - Supero )
+ * ALTERA??ES   : 
+ *         22/10/2014 - Retirado valida??o de permiss?o para carregar combo de representantes ( Renato - Supero )
  *         13/10/2015 - Desenvolvimento do projeto 126. (James)
  * -------------- 
  */
@@ -28,7 +28,7 @@
 		exibirErro('error',$msgError,'Alerta - Ayllos','',false);
 	}*/
 	
-	// Verifica se os parâmetros necessários foram informados	
+	// Verifica se os par?metros necess?rios foram informados	
 	if(!isset($_POST["nrdconta"]) || !isset($_POST["tpctrato"])) {
 		exibirErro('error','Par&acirc;metros incorretos.','Alerta - Ayllos',$funcaoAposErro,false);
 	}else{
@@ -36,9 +36,10 @@
 		$nrdconta = $_POST["nrdconta"];
 		$tpctrato = $_POST["tpctrato"];
 		$dsoutros = $_POST["dsoutros"];
+		$cdadmcrd = $_POST['cdadmcrd'];
 		$nrcpfcgc = !isset($_POST["nrcpfcgc"]) ? 0 : $_POST["nrcpfcgc"];
 		
-		// Verifica se número da conta ou tpctrato é um inteiro válido
+		// Verifica se n?mero da conta ou tpctrato ? um inteiro v?lido
 		if (!validaInteiro($nrdconta) || !validaInteiro($tpctrato)) exibirErro('error','Op&ccedil;&atilde;o inv&aacute;lida.','Alerta - Ayllos',$funcaoAposErro,false);
 	}
 			
@@ -90,7 +91,7 @@
 			$i++;
 		}			
 
-		if ($dsoutros == 'OUTROS'){ 
+		if ($dsoutros == 'OUTROS' && $cdadmcrd == 15){ 
 			?>				
 				ObjRepresent = new Object(); 		
 				ObjRepresent.nmdavali = '';

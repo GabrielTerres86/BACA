@@ -95,7 +95,7 @@ var operacao = '';
 var Representantes = new Array();
 var ObjRepresent = new Object();
 var sPortaPinpad = '';
-
+var flagIdprocess = false;
 var dsadmcrdList = {
     16: "CECRED DEBITO",
     14: "CECRED PLATINUM",
@@ -4270,7 +4270,39 @@ function buscaDadosCartao(cdadmcrd, nrcpfcgc, nmtitcrd, inpessoa, floutros) {
 
 // Mostra mensagem de aguardo
     showMsgAguardo("Aguarde, validando dados...");
+    console.log("olha o bug aqui >>> "+cdadmcrd);
+    if (typeof(cdadmcrd) != "number" ||cdadmcrd == undefined) {
+    //fix Amasonas
+        if (inpessoa == 1) {
+            try {
+                var crdAux = $('#dsadmcrd').children().attr("value").split(";");
+                cdadmcrd = crdAux[0];
+                log4console("new value =" + cdadmcrd);
+            } catch (e) {
+                var chklen = $('input[name="dsadmcrdcc"]').length;
+                var outros = false;
+                for (j = 0; j < chklen; j++) {
+                    var o = $('input[name="dsadmcrdcc"]')[j];
+                    console.log(o);
+                    if ($(o).attr("checked") == 'checked') {
+                        if ($(o).val() == "outro")
+                            outros = true;
+                    }
+                }
+                if (outros) {
+                    var auxADM = $("#listType").val();
+                    cdadmcrd = auxADM.split(";")[1];
+                }
+            }
+        } else {
 
+            if ($('#dsadmcrd').val().indexOf("DEB") > -1) {
+                cdadmcrd = 17;
+            } else {
+                cdadmcrd = 15;
+            }
+        }
+    }   
 // Carrega conte�do da op��o atrav�s de ajax
     $.ajax({
         type: "POST",
@@ -4463,7 +4495,17 @@ function carregaRepresentantes() {
     cdadmcrd = cdadmcrd.split(";");
     var dsoutros = cdadmcrd[5];
     cdadmcrd = cdadmcrd[0];
-
+    if(inpessoa == 2 ){
+            log4console("Resolvido pj");
+            dsoutros = "OUTROS";
+            if($('#dsadmcrd').val().toUpperCase().indexOf("DEB") > -1){
+                cdadmcrd = 17;
+                
+            }else{
+                cdadmcrd = 15;
+            }
+    }
+       console.log(">> > > "+$('#dsadmcrd').val().toUpperCase());
 // Mostra mensagem de aguardo
     showMsgAguardo("Aguarde, carregando representantes...");
 
@@ -4477,6 +4519,7 @@ function carregaRepresentantes() {
             nrdconta: nrdconta,
             nrcpfcgc: nrcpfcgc,
             dsoutros: dsoutros,
+            cdadmcrd: cdadmcrd,
             redirect: "html_ajax"
         },
         error: function (objAjax, responseError, objExcept) {
@@ -5826,7 +5869,8 @@ function registraSenha(nrctrcrd, callback){
 
 function atualizaContrato(nrctrcrd,idacionamento,idproces, cbk)
 {
-
+    //idproces
+    
     console.log("Atualizando");
     if(cdadmcrd == 0){
         if(inpessoa == 1){
@@ -5874,7 +5918,8 @@ function atualizaContrato(nrctrcrd,idacionamento,idproces, cbk)
                 idacionamento : idacionamento,
                 cdadmcrd      : cdadmcrd,
                 inpessoa      : inpessoa,
-                idproces      :idproces
+                idproces      :idproces,
+                flagIdprocess  : flagIdprocess? "1":"2"
             },
             error: function (objAjax, responseError, objExcept) {
                 hideMsgAguardo();

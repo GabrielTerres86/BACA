@@ -70,6 +70,17 @@
 	
 	if (contaDoOperador($nrdconta,$glbvars)) exibirErro('error', utf8ToHtml("Não é possível solicitar cartão de crédito para a própria conta do Operador."),'Alerta - Ayllos',$funcaoAposErro);
 
+	$sNomeCartaoDebito   = 'Cartão CECRED Débito';
+	$sNomeCartaoMultiplo = 'Cartão CECRED Múltiplo';
+	$sNomeCartaoBB       = 'Cartão Banco do Brasil';
+	/* Se for pesso juridica, mudar o nome dos botoes */
+	if(isset($glbvars["inpessoa"])){
+		if($glbvars["inpessoa"] > 1){
+			$sNomeCartaoDebito   = 'Cartão CECRED Empresas Débito';
+			$sNomeCartaoMultiplo = 'Cartão CECRED Empresas';
+		}
+	}
+	
 ?>
 <script>
 
@@ -147,14 +158,14 @@ function goCecred(){
 		<p style="padding-top:10px">   <h3> Selecione a admistradora </h3></p>
 			<p>
 				<p style="display:table; margin:0 auto; padding-top:20px">
-					<a style="display:table; margin:0 auto; vertical-align: middle;    cursor: default;height: 20px;" class="botao" onClick="goBB(1);"><span style="margin-right: 10px; margin-left: 10px;"><? echo utf8ToHtml('Cartão de Débito') ?></span></a>
+					<a style="display:table; margin:0 auto; vertical-align: middle;    cursor: default;height: 20px;" class="botao" onClick="goCecred()"><span style="margin-right: 10px; margin-left: 10px;"><? echo utf8ToHtml($sNomeCartaoMultiplo) ?></span></a>
 				</p>
 				<p style="display:table; margin:0 auto; padding-top:20px">
-					<a style="display:table; margin:0 auto; vertical-align: middle;    cursor: default;height: 20px;" class="botao" onClick="goCecred()"><span style="margin-right: 10px; margin-left: 10px;"><? echo utf8ToHtml('CECRED Cartões') ?></span></a>
+					<a style="display:table; margin:0 auto; vertical-align: middle;    cursor: default;height: 20px;" class="botao" onClick="goBB(1);"><span style="margin-right: 10px; margin-left: 10px;"><? echo utf8ToHtml($sNomeCartaoDebito) ?></span></a>
 				</p>
 				<br>
 				<p id="bbcard"  style="display:table; margin:0 auto; padding-top:10px; padding-bottom: 20px">
-					<a  class="botao" style="    cursor: default;height: 20px;"onClick="goBB(0);"> <span style="margin-right: 10px; margin-left: 10px;">Banco do Brasil</span></a>
+					<a  class="botao" style="    cursor: default;height: 20px;"onClick="goBB(0);"> <span style="margin-right: 10px; margin-left: 10px;">Cart&atilde;o Banco do Brasil</span></a>
 				</p>
 				
 			</p>
