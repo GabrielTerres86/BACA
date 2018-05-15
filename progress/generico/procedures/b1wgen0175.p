@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Andre Santos - SUPERO
-   Data    : Setembro/2013                      Ultima atualizacao: 16/04/2018
+   Data    : Setembro/2013                      Ultima atualizacao: 13/05/2018
    Dados referentes ao programa:
 
    Frequencia: Diario (on-line)
@@ -110,6 +110,11 @@
    
    15/03/2018 - Ajuste para buscar a descricao do tipo de conta do oracle. 
                 PRJ366 (Lombardi)
+
+   13/05/2018 - Efetuado correcao para que alineas 20,21,28 possam ser usadas
+                apenas se a contra ordem for permanente (Jonata - MOUTS - SCTASK0011337).
+
+
 ............................................................................. */
 DEF STREAM str_1.  /*  Para relatorio de entidade  */
 
@@ -1796,6 +1801,25 @@ PROCEDURE verifica_alinea:
 
             RETURN "NOK".
         END.
+
+		/* Para devolução com alinea 20,21,28 a contra ordem deve ser permanente. */
+		IF  CAN-DO("20,21,28,",STRING(par_cdalinea)) AND
+		    crapcor.dtvalcor <> ?                    THEN      
+		   DO:
+		      ASSIGN aux_cdcritic = 412
+				     aux_dscritic = "".
+
+			  RUN gera_erro (INPUT par_cdcooper,
+				 		     INPUT 0,
+							 INPUT 0,
+							 INPUT 1, /*sequencia*/
+							 INPUT aux_cdcritic,
+							 INPUT-OUTPUT aux_dscritic).
+
+			  RETURN "NOK".
+
+
+		   END.
 
         IF  par_cdalinea = 20         AND
             crapcor.cdhistor <> 818   THEN DO:
