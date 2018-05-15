@@ -4,6 +4,10 @@
  * CRIAÇÃO      : Diego Simas - AMcom
  * DATA CRIAÇÃO : 11/05/2018
  * OBJETIVO     : Rotina para busca dos contratos
+ * ALTERAÇÕES   : 15/05/2018 - Alteração para a lupa que lista os contratos
+ *                             listar somente os ativos
+ *                             Diego Simas - AMcom 
+ *
  */
 ?>
  
@@ -17,46 +21,30 @@
 	
 	// Guardo os parâmetos do POST em variáveis	
 	$nrdconta = (isset($_POST['nrdconta'])) ? $_POST['nrdconta'] : 0;
-	$idseqttl = 1;
-	$nrctremp = 0;
 	
-	// Monta o xml de requisição
-	$xml  = "";
-	$xml .= "<Root>";
-	$xml .= "  <Cabecalho>";
-	$xml .= "	    <Bo>b1wgen0002.p</Bo>";
-	$xml .= "        <Proc>obtem-dados-emprestimos</Proc>";
-	$xml .= "  </Cabecalho>";
-	$xml .= "  <Dados>";
-	$xml .= '       <cdcooper>'.$glbvars['cdcooper'].'</cdcooper>';
-	$xml .= '		<cdagenci>'.$glbvars['cdagenci'].'</cdagenci>';
-	$xml .= '		<nrdcaixa>'.$glbvars['nrdcaixa'].'</nrdcaixa>';
-	$xml .= '		<cdoperad>'.$glbvars['cdoperad'].'</cdoperad>';
-	$xml .= '		<nmdatela>extemp</nmdatela>';	
-	$xml .= '		<idorigem>'.$glbvars['idorigem'].'</idorigem>';	
-	$xml .= '		<nrdconta>'.$nrdconta.'</nrdconta>';
-	$xml .= '		<idseqttl>'.$idseqttl.'</idseqttl>';
-	$xml .= '		<dtmvtolt>'.$glbvars['dtmvtolt'].'</dtmvtolt>';
-	$xml .= '		<dtmvtopr>'.$glbvars['dtmvtopr'].'</dtmvtopr>';
-	$xml .= '		<dtcalcul>'.$glbvars['dtmvtolt'].'</dtcalcul>';
-	$xml .= "		<nrctremp>".$nrctremp."</nrctremp>";
-	$xml .= '		<cdprogra>extemp</cdprogra>';	
-	$xml .= '		<inproces>'.$glbvars['inproces'].'</inproces>';	
-	$xml .= '		<flgerlog>no</flgerlog>';	
-	$xml .= "  </Dados>";
-	$xml .= "</Root>";	
+	// Monta o xml de requisicao
+	$xml  = "<Root>";
+	$xml .= " <Dados>";
+	$xml .= "  <cdcooper>".$glbvars["cdcooper"]."</cdcooper>";		
+	$xml .= "  <nrdconta>".$nrdconta."</nrdconta>";
+	$xml .= " </Dados>";
+	$xml .= "</Root>";
 	
-	// Executa script para envio do XML
-	$xmlResult = getDataXML($xml);
-	
-	// Cria objeto para classe de tratamento de XML
-	$xmlObj = getObjectXML($xmlResult);
-	
-	if ( strtoupper($xmlObj->roottag->tags[0]->name) == 'ERRO' ) {
-		exibirErro('error',$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos','',false);
+	// Executa script para envio do XML e cria objeto para classe de tratamento de XML
+	$xmlResult = mensageria($xml, "ZOOM0001", "BUSCA_CONTRATOS_ATIVOS", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	$xmlObjeto = getObjectXML($xmlResult);
+
+	if (strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO") {
+		$msgErro = $xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata;
+		if ($msgErro == "") {
+			$msgErro = $xmlObjeto->roottag->tags[0]->cdata;
+		}
+		exibirErro('error',$msgErro,'Alerta - Ayllos',"bloqueiaFundo($('#divRotina'));",false);
 	}
+		
+	$registros = $xmlObjeto->roottag->tags[0]->tags;
 	
-	$registros = $xmlObj->roottag->tags[0]->tags;
+	//$registros = $xmlObj->roottag->tags[0]->tags;
 	include('tab_contrato.php');
 							
 ?>

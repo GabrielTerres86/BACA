@@ -5,8 +5,11 @@
  * OBJETIVO     : Biblioteca de funções da tela ATIVPB
  * ALTERAÇÕES   :   
  *                
- *                Inclusão de lupa para listar contratos
- *                Diego Simas - AMcom  
+ *                11/05/2018 - Inclusão de lupa para listar contratos
+ *                             Diego Simas - AMcom  
+ *                15/05/2018 - Alteração para a lupa que lista os contratos
+ *                             listar somente os ativos
+ *                             Diego Simas - AMcom
  *
  *
  */
@@ -161,7 +164,7 @@ function mostraContrato(campo,formulario,nrdconta) {
 	$.ajax({
 		type: 'POST',
 		dataType: 'html',
-		url: UrlSite + 'telas/aditiv/contrato.php',
+		url: UrlSite + 'telas/ativpb/contrato.php',
 		data: {
 			redirect: 'html_ajax'
 		},
@@ -187,7 +190,7 @@ function buscaContrato(campo, formulario, nrdconta) {
 	$.ajax({
 		type: 'POST',
 		dataType: 'html',
-		url: UrlSite + 'telas/aditiv/busca_contrato.php',
+		url: UrlSite + 'telas/ativpb/busca_contrato.php',
 		data: {
 			nrdconta: nrdconta,
 			redirect: 'script_ajax'
