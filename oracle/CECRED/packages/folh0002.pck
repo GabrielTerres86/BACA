@@ -9434,6 +9434,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
    --                          FETCH para encontrar os valores (Vanessa).
    --
    --             26/01/2016 - Inclusão de log nas operações da rotina (Marcos-Supero)
+   --               
+   --             15/05/2018 - Ajuste realizado para validar a situacao da transacao pedente
+   --                          na exclusao de funcionario (PRB0040042 - Kelvin).
+   --                          
    ---------------------------------------------------------------------------------------------------------------
       --Cursores
       CURSOR cr_craplfp(pr_cdcooper crapcop.cdcooper%TYPE
@@ -9441,7 +9445,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
                        ,pr_nrdctemp crapass.nrdconta%TYPE
                        ,pr_nrcpfemp craplfp.nrcpfemp%TYPE
                        ,pr_idtpcont craplfp.idtpcont%TYPE) IS
-        SELECT DISTINCT 1
+        SELECT pfp.idsitapr
+              ,pfp.cdcooper
+              ,pfp.cdempres
+              ,pfp.nrseqpag
           FROM craplfp lfp
               ,crappfp pfp
               ,crapemp emp
@@ -9459,6 +9466,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
           AND lfp.idtpcont = pr_idtpcont
           AND lfp.idsitlct = 'L';
       rw_craplfp cr_craplfp%ROWTYPE;
+      
+      CURSOR cr_valida_trans_pend(pr_cdcooper crapcop.cdcooper%TYPE
+                                 ,pr_cdempres crappfp.cdempres%TYPE
+                                 ,pr_nrseqpag crappfp.nrseqpag%TYPE) IS
+        SELECT tpd.idsituacao_transacao
+          FROM tbfolha_trans_pend tfl
+          JOIN tbgen_trans_pend tpd
+            ON tpd.cdtransacao_pendente = tfl.cdtransacao_pendente
+         WHERE tfl.cdcooper = pr_cdcooper
+           AND tfl.cdempres = pr_cdempres
+           AND tfl.nrsequencia_folha = pr_nrseqpag
+           AND tpd.idsituacao_transacao NOT IN (1,2,5);
+      rw_valida_trans_pend cr_valida_trans_pend%ROWTYPE;    
+      
       -- Variaveis
       vr_hasfound BOOLEAN;
       vr_erro EXCEPTION;
@@ -9466,21 +9487,39 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
 
    BEGIN
      -- Verifica se existe algum pagamento pendente.
-     OPEN cr_craplfp(pr_cdcooper => pr_cdcooper
-                    ,pr_nrdconta => pr_nrdconta
-                    ,pr_nrdctemp => pr_nrdctemp
-                    ,pr_nrcpfemp => pr_nrcpfemp
-                    ,pr_idtpcont => pr_idtpcont);
-     FETCH cr_craplfp INTO rw_craplfp;
-     vr_hasfound := cr_craplfp%FOUND;
-     CLOSE cr_craplfp;
-     -- Se existir
-     IF vr_hasfound THEN
-        -- Gera critica
-        pr_cdcritic := 0;
-        pr_dscritic := 'Empregado não pode ser excluído enquanto houver agendamentos cadastrados!';
-        RAISE vr_erro;
-     END IF;
+     FOR rw_craplfp IN cr_craplfp(pr_cdcooper => pr_cdcooper
+                                 ,pr_nrdconta => pr_nrdconta
+                                 ,pr_nrdctemp => pr_nrdctemp
+                                 ,pr_nrcpfemp => pr_nrcpfemp
+                                 ,pr_idtpcont => pr_idtpcont) LOOP
+       
+       --Se for transação pendente  
+       IF rw_craplfp.idsitapr = 6 THEN
+         OPEN cr_valida_trans_pend(rw_craplfp.cdcooper
+                                  ,rw_craplfp.cdempres
+                                  ,rw_craplfp.nrseqpag);
+           FETCH cr_valida_trans_pend
+             INTO rw_valida_trans_pend;
+             
+           IF cr_valida_trans_pend%NOTFOUND THEN
+             CLOSE cr_valida_trans_pend;
+             -- Gera critica
+             pr_cdcritic := 0;
+             pr_dscritic := 'Empregado não pode ser excluído enquanto houver agendamentos cadastrados! (1)';
+             RAISE vr_erro;
+           END IF;
+              
+         CLOSE cr_valida_trans_pend;
+       
+       ELSE
+         -- Gera critica
+         pr_cdcritic := 0;
+         pr_dscritic := 'Empregado não pode ser excluído enquanto houver agendamentos cadastrados! (2)';
+         RAISE vr_erro;         
+       END IF;
+                   
+     END LOOP;
+     
      BEGIN
 
        DELETE FROM crapefp
