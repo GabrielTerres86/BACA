@@ -245,6 +245,8 @@ BEGIN
 			   16/03/2018 - Ajustado tamanho de variável (Adriano).
 
 			   23/04/2018 - Ajuste para buscar corretamente a cooperativa (Adriano - Homol conversão).
+			   
+			   15/05/2018 - Bacenjud SM 1 - Heitor (Mouts)
 
              #######################################################
              ATENCAO!!! Ao incluir novas mensagens para recebimento,
@@ -5429,7 +5431,7 @@ END;
 
             --Bacenjud - SM 1
             --Geracao log SPB
-            pc_gera_log_SPB(pr_tipodlog  => 'ENVIADA NAO OK'
+            pc_gera_log_SPB(pr_tipodlog  => 'REJEITADA OK'
                            ,pr_msgderro  => 'REJEITADA BACENJUD');
 
             -- Retornar a execução
