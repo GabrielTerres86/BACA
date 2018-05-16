@@ -9,6 +9,7 @@
  * --------------
 
  * 000: [25/01/2018] Adicionado tela de seleção de tipos de empréstimos (Alex)
+ * 001: [16/05/2018] Adicionado a operação de Emprestimo Consignado (Leonardo Oliveira - GFT)
  */
 ?>
 <?

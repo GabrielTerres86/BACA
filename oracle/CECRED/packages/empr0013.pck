@@ -15,6 +15,8 @@ CREATE OR REPLACE PACKAGE CECRED.empr0013 AS
   --
   -- Alteração :
   --
+  -- 16/05/2018 - Adicionado a procedure para buscar os parametros para o acionamento do barramento 'pc_busca_param_barramento_web' (Leonardo Oliveira - GFT)
+  --
   ---------------------------------------------------------------------------------------------------------------
 
   /* Tipo com as informacoes do registro de consignado */
