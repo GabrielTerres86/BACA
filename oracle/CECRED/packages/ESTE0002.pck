@@ -1132,9 +1132,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
       -- Variáveis para exceções
       vr_cdcritic PLS_INTEGER;
       vr_dscritic VARCHAR2(4000);
+      vr_nmdcampo VARCHAR2(100);
       vr_exc_saida EXCEPTION;
-			vr_des_reto VARCHAR2(3);
-			vr_tab_erro GENE0001.typ_tab_erro;
+      vr_des_reto VARCHAR2(3);
+      vr_tab_erro GENE0001.typ_tab_erro;
+      vr_des_erro VARCHAR2(10);
+      vr_exc_erro EXCEPTION;
     
       -- Declarar objetos Json necessários:
       vr_obj_generico  json := json();
@@ -1211,6 +1214,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
       vr_qtdiaat2 INTEGER := 0;
       vr_idcarga  tbepr_carga_pre_aprv.idcarga%TYPE;
       vr_maior_nratrmai NUMBER(25,10);
+      vr_vltprava crapepr.vlpreemp%TYPE;
+      vr_qtconava INTEGER := 0;
       vr_vlblqapl NUMBER(18,2);
       vr_vlblqpou NUMBER(18,2);
       vr_vlbloque NUMBER(18,2);
