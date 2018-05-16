@@ -3140,11 +3140,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
       IF pr_tab_price.COUNT > 0 THEN
         vr_qtparcel := pr_tab_price.COUNT + 1;
         vr_dtvencto := pr_dtvencto;
-      ELSE 
-        IF TO_NUMBER(TO_CHAR(pr_dtcalcul,'DD')) >= TO_NUMBER(TO_CHAR(pr_dtvencto,'DD')) THEN
-          vr_qtparcel := ROUND(months_between(pr_dtvencto,pr_dtcalcul));
-        ELSE
-          vr_qtparcel := ROUND(months_between(pr_dtvencto,pr_dtcalcul)) + 1;
+      ELSE
+        vr_qtparcel := months_between(trunc(pr_dtvencto,'MM'),trunc(pr_dtcalcul,'MM'));  
+        IF TO_NUMBER(TO_CHAR(pr_dtcalcul,'DD')) < TO_NUMBER(TO_CHAR(pr_dtvencto,'DD')) THEN
+          vr_qtparcel := vr_qtparcel + 1;
         END IF;
         IF NVL(vr_qtparcel,0) = 0 THEN
           vr_qtparcel := 1;          
