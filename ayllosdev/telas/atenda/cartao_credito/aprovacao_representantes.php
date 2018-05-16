@@ -161,7 +161,7 @@
                 }else{
                     ?>
                         <a href="#" class="botao" id="" onclick="<?echo 'acessaOpcaoAba(\''.count($glbvars["opcoesTela"]).'\',0,\''.$glbvars["opcoesTela"][0].'\');';?>;"> Sair</a>
-                        <a href="#" class="botao" id="" onclick="validarSenha(<?php echo $nrctrcrd; ?>)" disabled="disabled"> Validar</a>
+                        <a href="#" class="botao" id="" onclick="validarSenha(<?php echo $nrctrcrd; ?>)"> Validar</a>
                     <?                   
                 }
             ?>

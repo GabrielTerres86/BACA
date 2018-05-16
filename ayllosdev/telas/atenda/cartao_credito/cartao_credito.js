@@ -1773,6 +1773,10 @@ function validarNovoCartao() {
         showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
     }
 }
+	  
+function senhaCoordenador(executaDepois) {
+	pedeSenhaCoordenador(2,executaDepois,'divRotina');
+}
 
 /*!
 * OBJETIVO : Fun��o para cadastrar nova proposta de cart�o de cr�dito
@@ -4270,7 +4274,7 @@ function buscaDadosCartao(cdadmcrd, nrcpfcgc, nmtitcrd, inpessoa, floutros) {
 
 // Mostra mensagem de aguardo
     showMsgAguardo("Aguarde, validando dados...");
-    console.log("olha o bug aqui >>> "+cdadmcrd);
+
     if (typeof(cdadmcrd) != "number" ||cdadmcrd == undefined) {
     //fix Amasonas
         if (inpessoa == 1) {
@@ -5677,6 +5681,12 @@ function validarSenha(nrctrcrd) {
 }
 
 function solicitaSenha(nrctrcrd) {
+    try{
+    if($("#btnsaveRequest").attr('onclick') != 'solicitaSenha('+nrctrcrd+')'){
+        $("#btnsaveRequest").attr('onclick','solicitaSenha('+nrctrcrd+')');
+    }}catch(e){
+        console.log('estamos fora da tela novo');
+    }
     if (inpessoa == 1) {
         validarSenha(nrctrcrd);
         return;
@@ -5869,8 +5879,7 @@ function registraSenha(nrctrcrd, callback){
 
 function atualizaContrato(nrctrcrd,idacionamento,idproces, cbk)
 {
-    //idproces
-    
+
     console.log("Atualizando");
     if(cdadmcrd == 0){
         if(inpessoa == 1){
@@ -5995,6 +6004,37 @@ function enviarBancoob(nrctrcrd){
 
 
 
+}
+
+function reenviarBancoob(nrctrcrd){
+	showMsgAguardo("Aguarde Enviando solicita&ccedil;&atilde;o para bancoob");
+	
+	/* Para forcar o envio */
+	var dsgraupr = 5;
+	
+	var objectSend = {
+        tpacao: 'montagrid',
+        nrdconta: nrdconta,
+        nrctrcrd: nrctrcrd,
+        dsgraupr: dsgraupr,
+        inpessoa: inpessoa,
+        bancoob : 1
+    };
+	$.ajax({
+            type: "POST",
+            dataType: "html",
+            url: UrlSite + "telas/atenda/cartao_credito/solicitar_cartao_bancoob.php",
+            data: objectSend,
+            error: function (objAjax, responseError, objExcept) {
+
+                hideMsgAguardo();
+                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+            },
+            success: function (response) {
+                hideMsgAguardo();
+                eval(response);
+            }
+        });
 }
 
 function verificaRetornoBancoob(nrctrcrd){
