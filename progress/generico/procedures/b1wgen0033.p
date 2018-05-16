@@ -33,7 +33,7 @@
 
     Programa: b1wgen0033.p
     Autor   : Guilherme
-    Data    : Agosto/2008                     Ultima Atualizacao: 13/03/2018
+    Data    : Agosto/2008                     Ultima Atualizacao: 16/05/2018
            
     Dados referentes ao programa:
                 
@@ -225,9 +225,8 @@
 			                 crapcje.nrdoccje, crapcrl.nridenti e crapavt.nrdocava
 							 (Adriano - P339).
 
-				       04/08/2017 - Ajuste para retirar o uso de campos removidos da tabela
-			                      crapass, crapttl, crapjur 
-							              (Adriano - P339).
+				04/08/2017 - Ajuste para retirar o uso de campos removidos da tabela
+			                 crapass, crapttl, crapjur (Adriano - P339).
 
                 27/11/2017 - Chamado 792418 - Incluir opções de cancelamento 10 e 11
                              (Andrei Vieira - MOUTs)
@@ -238,6 +237,10 @@
 				13/03/2018 - Ajuste no relatorio seguro de vida onde estava escrito
 							 "cerasa" para "serasa", conforme solicitado no chamado
 							 863323. (Kelvin)
+
+				16/05/2018 - Alteração na procedure "buscar_motivo_can" para inclusão do
+				             novo motivo de cancelamento "Insuf. saldo e/ou Inadimplencia (autom.)"
+							 (Reginaldo/AMcom)
 ..............................................................................*/
                     
 { sistema/generico/includes/b1wgen0038tt.i }
@@ -9151,13 +9154,13 @@ PROCEDURE buscar_motivo_can:
 
     valida:
     DO:
-        IF par_cdmotcan > 11 THEN
+        IF par_cdmotcan > 12 THEN
             DO:
                 ASSIGN aux_dscritic = "Motivo nao cadastrado".
                 LEAVE valida.
             END.
 
-        ASSIGN par_qtregist = 9.
+        ASSIGN par_qtregist = 12.
 
         CREATE tt-mot-can.
         ASSIGN tt-mot-can.cdmotcan = 1
@@ -9202,6 +9205,10 @@ PROCEDURE buscar_motivo_can:
         CREATE tt-mot-can.
         ASSIGN tt-mot-can.cdmotcan = 11
                tt-mot-can.dsmotcan = "Perdido para a concorrencia".
+
+		CREATE tt-mot-can.
+        ASSIGN tt-mot-can.cdmotcan = 12
+               tt-mot-can.dsmotcan = "Insuf. saldo e/ou Inadimplencia (autom.)".			   
 
         IF par_cdmotcan <> 0 THEN DO:
             FOR EACH tt-mot-can WHERE

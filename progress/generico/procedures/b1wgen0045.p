@@ -41,7 +41,7 @@
 
     Programa: b1wgen0045.p
     Autor   : Guilherme - Precise
-    Data    : Outubro/2009                       Ultima Atualizacao: 25/06/2015
+    Data    : Outubro/2009                       Ultima Atualizacao: 16/05/2018
            
     Dados referentes ao programa:
                 
@@ -109,6 +109,10 @@
                 25/06/2015 - Alterar para gravar a variavel aux_dadosusr na aux_dscritic.
                            - Alterado procedure seguros-resid-vida para meolhorar a
                              performace. (Lucas Ranghetti/Thiago Rodrigues #300957 )
+
+			    16/05/2018 - Alteração nas procedures "gera-relatorio" e "proc_cancelamento"
+				             para inclusão do relatório do tipo 7 (Motivos de Cancelamento 
+							 de seguros de vida individual) (Reginaldo/AMcom)
                          
 ..............................................................................*/
 
@@ -1875,12 +1879,13 @@ PROCEDURE gera-relatorio:
                                       aux_listahis = "341,175,460,511"
                                       aux_cdrelato = 508.
        
-             WHEN   5   THEN   ASSIGN aux_nmarqimp = aux_nmarqimp + 
+             WHEN 5 
+			 OR WHEN 7  THEN   ASSIGN aux_nmarqimp = aux_nmarqimp + 
                                       "rl/motivos_cancelamento".
        
         END CASE.
                
-        IF par_tprelato <> 5 THEN
+        IF par_tprelato <> 5 AND par_tprelato <> 7 THEN
            DO:
                ASSIGN aux_nmarqimp = aux_nmarqimp + STRING(TIME)  + ".ex".
         
@@ -2122,7 +2127,7 @@ PROCEDURE gera-relatorio:
        
               END.
        
-           WHEN 5 THEN
+           WHEN 5 OR WHEN 7 THEN
               DO: 
                  RUN proc_cancelamento (INPUT par_cdcooper,     
                                         INPUT par_cdagenci,      
@@ -2133,7 +2138,8 @@ PROCEDURE gera-relatorio:
                                         INPUT par_nmdatela,
                                         INPUT par_telcdage,
                                         INPUT par_dtiniper,  
-                                        INPUT par_dtfimper,  
+                                        INPUT par_dtfimper, 
+										INPUT par_tprelato, 
                                         OUTPUT TABLE tt-erro).
        
                  IF RETURN-VALUE <> "OK" THEN
@@ -3008,6 +3014,7 @@ PROCEDURE proc_cancelamento.
     DEF INPUT PARAM par_telcdage AS INTE                    NO-UNDO.
     DEF INPUT PARAM par_dtiniper AS DATE                    NO-UNDO.
     DEF INPUT PARAM par_dtfimper AS DATE                    NO-UNDO.
+	DEF INPUT PARAM par_tprelato AS INTE                    NO-UNDO.
 
     DEF OUTPUT PARAM TABLE FOR tt-erro.
 
@@ -3019,6 +3026,9 @@ PROCEDURE proc_cancelamento.
 
     FORM  crapcop.nmrescop "- MOTIVOS CANCELAMENTO SEGURO RESIDENCIAL"
           WITH NO-LABEL WIDTH 200 FRAME f_seg.
+
+	FORM  crapcop.nmrescop "- MOTIVOS CANCELAMENTO SEGURO VIDA INDIVIDUAL"
+          WITH NO-LABEL WIDTH 200 FRAME f_seg_vida.
 
     FORM crapass.cdagenci COLUMN-LABEL "PA"
          crapass.nrdconta COLUMN-LABEL "Conta"
@@ -3073,7 +3083,10 @@ PROCEDURE proc_cancelamento.
         IF RETURN-VALUE <> "OK" THEN
            LEAVE.
    
-        DISP STREAM str_1 crapcop.nmrescop WITH FRAME f_seg. 
+		IF par_tprelato = 5 THEN
+			DISP STREAM str_1 crapcop.nmrescop WITH FRAME f_seg. 
+		ELSE
+			DISP STREAM str_1 crapcop.nmrescop WITH FRAME f_seg_vida. 
 
         FOR EACH crapass WHERE crapass.cdcooper = par_cdcooper AND
                                (IF par_telcdage <> 0 THEN 
@@ -3084,8 +3097,11 @@ PROCEDURE proc_cancelamento.
          
             EACH crapseg WHERE crapseg.cdcooper = crapass.cdcooper AND
                                crapseg.nrdconta = crapass.nrdconta AND
+							 ((par_tprelato = 5                    AND
                               (crapseg.tpseguro = 1                OR
-                               crapseg.tpseguro = 11)              AND
+                               crapseg.tpseguro = 11))             OR
+							  (par_tprelato = 7                    AND
+                               crapseg.tpseguro = 3))   		   AND
                                crapseg.cdsitseg = 2                AND 
                                crapseg.dtcancel >= par_dtiniper    AND
                                crapseg.dtcancel <= par_dtfimper  
