@@ -9354,3 +9354,25 @@ function abreProtocoloAcionamento(dsprotocolo) {
         }
     });
 }
+
+function carregarEmprestimosConsignado(){
+    showMsgAguardo('Aguarde, carregando...');
+
+    // Executa script de através de ajax
+    $.ajax({
+        type: 'POST',
+        dataType: 'html',
+        url: UrlSite + 'telas/atenda/emprestimos/consignado/consignado.php',
+        data: {
+            redirect: 'html_ajax'
+        },
+        error: function(objAjax, responseError, objExcept) {
+            hideMsgAguardo();
+            showError('error', 'N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
+        },
+        success: function(response) {
+            hideMsgAguardo();
+            eval(response);
+        }
+    });
+}
