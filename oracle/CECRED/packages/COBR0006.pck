@@ -2023,7 +2023,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                   21/08/2017 - Incluir vencto original (dtvctori) ao registrar o boleto. (Rafael)
 
                   15/01/2018 - Gravar o cdmensag (tipo de desconto) que foi carregado
-                               (Douglas - Chamado 831413)                                
+                               (Douglas - Chamado 831413) 
+							   
+				  16/05/2018 - Ajuste para impedir insert de campo cdmensag com valor nulo.
+				               Chamado INC0011898 - Gabriel (Mouts).
+							   	                                  
     ............................................................................ */   
     
     ------------------------ VARIAVEIS PRINCIPAIS ----------------------------
@@ -2214,7 +2218,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                 pr_tab_crapcob(vr_idx_cob).dsdoccop,
                 pr_tab_crapcob(vr_idx_cob).vltitulo,
                 pr_tab_crapcob(vr_idx_cob).vldescto,
-                pr_tab_crapcob(vr_idx_cob).cdmensag,
+                nvl(pr_tab_crapcob(vr_idx_cob).cdmensag,0),
                 pr_tab_crapcob(vr_idx_cob).dtvencto,
                 pr_tab_crapcob(vr_idx_cob).cdcartei,
                 pr_tab_crapcob(vr_idx_cob).cddespec,
