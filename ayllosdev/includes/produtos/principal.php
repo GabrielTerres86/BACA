@@ -10,6 +10,9 @@
 	                                                                  	 
 	 Alteraçães: 01/10/2015 - Projeto 217 Reformulacao Cadastral
 				 (Tiago Castro - RKAM)
+                 
+                 16/05/2018 - Adicionado parametro flgautom na mensageria
+                              SERVICOS_OFERECIDOS. PRJ366 (Lombardi).
 	 
 	 
 	*********************************************************************/
@@ -135,6 +138,7 @@
 	$xmlBuscaServicos .= "<Root>";
 	$xmlBuscaServicos .= "   <Dados>";
 	$xmlBuscaServicos .= "	   <nrdconta>".$nrdconta."</nrdconta>";
+	$xmlBuscaServicos .= "	   <flgautom>".    0    ."</flgautom>";
 	$xmlBuscaServicos .= "   </Dados>";
 	$xmlBuscaServicos .= "</Root>";
 		

@@ -6,6 +6,9 @@
  * OBJETIVO     : Mostrar opcao Principal da rotina de Impedimentos Desligamento da tela de CONTAS
  * --------------
  * ALTERAÇÕES   : 14/11/2017 - Ajsute para inclusão de novo item para impedimento (Jonata - RKAM P364).
+ *               
+ *               16/05/2018 - Adicionado parametro flgautom na mensageria SERVICOS_OFERECIDOS.
+ *                            PRJ366 (Lombardi).
  * --------------
 
  */	
@@ -43,6 +46,7 @@
 	$xmlBuscaServicos .= "<Root>";
 	$xmlBuscaServicos .= "   <Dados>";
 	$xmlBuscaServicos .= "	   <nrdconta>".$nrdconta."</nrdconta>";
+	$xmlBuscaServicos .= "	   <flgautom>".    1    ."</flgautom>";
 	$xmlBuscaServicos .= "   </Dados>";
 	$xmlBuscaServicos .= "</Root>";
 		

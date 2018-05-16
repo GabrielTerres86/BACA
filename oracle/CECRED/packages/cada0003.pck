@@ -164,6 +164,7 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0003 is
                                ,pr_des_erro   OUT VARCHAR2);                        --> Erros do processo
 
   PROCEDURE pc_servicos_oferecidos(pr_nrdconta IN crapass.nrdconta%TYPE         --> Numero da conta
+                                  ,pr_flgautom IN INTEGER                       --> Flag (0 - Todos / 1 - Apena automáticas)
                                   ,pr_xmllog   IN VARCHAR2                      --> XML com informações de LOG
                                   ,pr_cdcritic OUT PLS_INTEGER                  --> Código da crítica
                                   ,pr_dscritic OUT VARCHAR2                     --> Descrição da crítica
@@ -818,6 +819,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
   --
   --             12/04/2018 - Criar os documentos corretos ao duplicar uma conta 
   --                          (Lucas Ranghetti INC0012381)
+  --
+  --             12/04/2018 - Adicionado campo pr_flgautom na proc pc_servicos_oferecidos
+  --                          PRJ366 (Lombardi).
   ---------------------------------------------------------------------------------------------------------------
 
   CURSOR cr_tbchq_param_conta(pr_cdcooper crapcop.cdcooper%TYPE
@@ -5037,6 +5041,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
 
   -- Rotina para exibir os produtos disponiveis na tela ATENDA
   PROCEDURE pc_servicos_oferecidos(pr_nrdconta IN crapass.nrdconta%TYPE         --> Numero da conta
+                                  ,pr_flgautom IN INTEGER                       --> Flag (0 - Todos / 1 - Apena automáticas)
                                   ,pr_xmllog   IN VARCHAR2                      --> XML com informações de LOG
                                   ,pr_cdcritic OUT PLS_INTEGER                  --> Código da crítica
                                   ,pr_dscritic OUT VARCHAR2                     --> Descrição da crítica
@@ -5082,6 +5087,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
          AND tbcc_produto.cdproduto      = tbcc_produtos_coop.cdproduto
          -- Produtos que não devem ser exibidos
          AND tbcc_produto.cdproduto NOT IN (25)
+         AND ((pr_flgautom = 1
+         AND  tbcc_produto.cdproduto NOT IN (3,4,5,6,7,13,16,17,18,19,21,22,23,24,31,33,34,35,36,37,38,39,40,41)) 
+          OR pr_flgautom = 0)
        ORDER BY tbcc_produtos_coop.tpproduto,
                 tbcc_produtos_coop.nrordem_exibicao;
 
