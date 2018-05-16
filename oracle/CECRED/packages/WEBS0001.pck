@@ -89,6 +89,28 @@ CREATE OR REPLACE PACKAGE CECRED.WEBS0001 IS
                                        ,pr_nmdcampo out varchar2          --> Nome do campo com erro
                                        ,pr_des_erro out varchar2          --> Erros do processo
                                        ); 
+
+  PROCEDURE pc_retorno_analise_aut(pr_cdorigem IN NUMBER                --> Origem da Requisição (9-Esteira ou 5-Ayllos)
+                                  ,pr_dsprotoc IN VARCHAR2              --> Protocolo da análise
+                                  ,pr_nrtransa IN NUMBER                --> Transacao do acionamento
+                                  ,pr_dsresana IN VARCHAR2              --> Resultado da análise automática; Contendo as seguintes opções: APROVAR, REPROVAR, DERIVAR ou ERRO
+                                  ,pr_indrisco IN VARCHAR2              --> Nível do risco calculado para a operação
+                                  ,pr_nrnotrat IN VARCHAR2              --> Valor do rating calculado para a operação
+                                  ,pr_nrinfcad IN VARCHAR2              --> Valor do item Informações Cadastrais calculado no Rating
+                                  ,pr_nrliquid IN VARCHAR2              --> Valor do item Liquidez calculado no Rating
+                                  ,pr_nrgarope IN VARCHAR2              --> Valor das Garantias calculada no Rating
+                                  ,pr_nrparlvr IN VARCHAR2              --> Valor do Patrimônio Pessoal Livre calculado no Rating
+                                  ,pr_nrperger IN VARCHAR2              --> Valor da Percepção Geral da Empresa calculada no Rating
+                                  ,pr_desscore IN VARCHAR2              --> Descrição do Score Boa Vista
+                                  ,pr_datscore IN VARCHAR2              --> Data do Score Boa Vista
+                                  ,pr_dsrequis IN VARCHAR2              --> Conteúdo da requisição oriunda da Análise Automática na Esteira
+                                  ,pr_namehost IN VARCHAR2              --> Nome do host oriundo da requisição da Análise Automática na Esteira
+                                  ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
+                                  ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
+                                  ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
+                                  ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+                                  ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
+                                  ,pr_des_erro OUT VARCHAR2);           --> Erros do processo
 END WEBS0001;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
@@ -3366,6 +3388,119 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
           COMMIT;
   END;
   END pc_retorno_analise_limdesct;	                                                     	
+
+  PROCEDURE pc_retorno_analise_aut(pr_cdorigem IN NUMBER                --> Origem da Requisição (9-Esteira ou 5-Ayllos)
+                                  ,pr_dsprotoc IN VARCHAR2              --> Protocolo da análise
+                                  ,pr_nrtransa IN NUMBER                --> Transacao do acionamento
+                                  ,pr_dsresana IN VARCHAR2              --> Resultado da análise automática; Contendo as seguintes opções: APROVAR, REPROVAR, DERIVAR ou ERRO
+                                  ,pr_indrisco IN VARCHAR2              --> Nível do risco calculado para a operação
+                                  ,pr_nrnotrat IN VARCHAR2              --> Valor do rating calculado para a operação
+                                  ,pr_nrinfcad IN VARCHAR2              --> Valor do item Informações Cadastrais calculado no Rating
+                                  ,pr_nrliquid IN VARCHAR2              --> Valor do item Liquidez calculado no Rating
+                                  ,pr_nrgarope IN VARCHAR2              --> Valor das Garantias calculada no Rating
+                                  ,pr_nrparlvr IN VARCHAR2              --> Valor do Patrimônio Pessoal Livre calculado no Rating
+                                  ,pr_nrperger IN VARCHAR2              --> Valor da Percepção Geral da Empresa calculada no Rating
+                                  ,pr_desscore IN VARCHAR2              --> Descrição do Score Boa Vista
+                                  ,pr_datscore IN VARCHAR2              --> Data do Score Boa Vista
+                                  ,pr_dsrequis IN VARCHAR2              --> Conteúdo da requisição oriunda da Análise Automática na Esteira
+                                  ,pr_namehost IN VARCHAR2              --> Nome do host oriundo da requisição da Análise Automática na Esteira
+                                  ,pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
+                                  ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
+                                  ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
+                                  ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
+                                  ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
+                                  ,pr_des_erro OUT VARCHAR2) IS         --> Erros do processo
+	   /* .............................................................................
+       Programa: pc_retorno_analise_aut
+       Sistema : Rotinas referentes ao WebService
+       Sigla   : WEBS
+       Autor   : Daniel Zimmerman (CECRED) / Paulo Penteado (GFT) 
+       Data    : Maio/18
+
+       Dados referentes ao programa:
+
+       Frequencia: Sempre que for chamado
+
+       Objetivo  : Receber as informações da análise automática do motor
+
+       Alteracoes:  14/05/2018 - Criação Daniel Zimmerman (CECRED) / Paulo Penteado (GFT) 
+             
+    ..............................................................................*/	
+		BEGIN
+    --  Produto 999 = Monitoração do serviço
+    IF  pr_dsprotoc = 'PoliticaGeralMonitoramento' THEN
+        -- Apenas gerar retorno de sucesso para a esteira
+        pc_gera_retor_proposta_esteira(pr_status      => 200  --> Status
+                                      ,pr_nrtransacao => NULL --> Numero da transacao
+                                      ,pr_cdcritic    => 0    --> Codigo da critica
+                                      ,pr_dscritic    => 0    --> Descricao da critica
+                                      ,pr_msg_detalhe => 'Monitoracao' --> Mensagem de detalhe
+                                      ,pr_dtmvtolt    => NULL
+                                      ,pr_retxml      => pr_retxml);  
+        RETURN;
+    END IF;    
+
+    IF  pr_dsprotoc LIKE 'PoliticaDescontoTitulos%' THEN
+        pc_retorno_analise_limdesct
+                    (pr_cdorigem => pr_cdorigem          
+                    ,pr_dsprotoc => pr_dsprotoc
+                    ,pr_nrtransa => pr_nrtransa
+                    ,pr_dsresana => pr_dsresana
+                    ,pr_indrisco => pr_indrisco
+                    ,pr_nrnotrat => pr_nrnotrat
+                    ,pr_nrinfcad => pr_nrinfcad
+                    ,pr_nrliquid => pr_nrliquid
+                    ,pr_nrgarope => pr_nrgarope
+                    ,pr_nrparlvr => pr_nrparlvr
+                    ,pr_nrperger => pr_nrperger
+                    ,pr_desscore => pr_desscore
+                    ,pr_datscore => pr_datscore
+                    ,pr_dsrequis => pr_dsrequis
+                    ,pr_namehost => pr_namehost
+                    ,pr_xmllog   => pr_xmllog  
+                    ,pr_cdcritic => pr_cdcritic
+                    ,pr_dscritic => pr_dscritic
+                    ,pr_retxml   => pr_retxml  
+                    ,pr_nmdcampo => pr_nmdcampo
+                    ,pr_des_erro => pr_des_erro
+                    );
+    ELSE
+        pc_retorno_analise_proposta
+                    (pr_cdorigem => pr_cdorigem          
+                    ,pr_dsprotoc => pr_dsprotoc
+                    ,pr_nrtransa => pr_nrtransa
+                    ,pr_dsresana => pr_dsresana
+                    ,pr_indrisco => pr_indrisco
+                    ,pr_nrnotrat => pr_nrnotrat
+                    ,pr_nrinfcad => pr_nrinfcad
+                    ,pr_nrliquid => pr_nrliquid
+                    ,pr_nrgarope => pr_nrgarope
+                    ,pr_nrparlvr => pr_nrparlvr
+                    ,pr_nrperger => pr_nrperger
+                    ,pr_desscore => pr_desscore
+                    ,pr_datscore => pr_datscore
+                    ,pr_dsrequis => pr_dsrequis
+                    ,pr_namehost => pr_namehost
+                    ,pr_xmllog   => pr_xmllog  
+                    ,pr_cdcritic => pr_cdcritic
+                    ,pr_dscritic => pr_dscritic
+                    ,pr_retxml   => pr_retxml  
+                    ,pr_nmdcampo => pr_nmdcampo
+                    ,pr_des_erro => pr_des_erro
+                    );
+    END IF;
+		EXCEPTION
+    WHEN OTHERS THEN
+         -- Enviar LOG geral, independente de ter encontro de proposta 
+         btch0001.pc_gera_log_batch(pr_cdcooper     => 3
+									,pr_ind_tipo_log => 3
+									,pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss')||
+                                    ' - WEBS0001 --> Nao foi possivel atualizar retorno da Analise: '||SQLERRM
+									,pr_nmarqlog     => gene0001.fn_param_sistema(pr_nmsistem => 'CRED'
+									,pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE'));
+         -- Gravar
+         COMMIT;
+  END pc_retorno_analise_aut;
 
   
 END WEBS0001;
