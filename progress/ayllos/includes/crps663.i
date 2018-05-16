@@ -1,3 +1,21 @@
+/******************************************************************************
+                 ATENCAO!    CONVERSAO PROGRESS - ORACLE
+            ESTE FONTE ESTA ENVOLVIDO NA MIGRACAO PROGRESS->ORACLE!
+  +---------------------------------+-----------------------------------+
+  | Rotina Progress                 | Rotina Oracle PLSQL               |
+  +---------------------------------+-----------------------------------+
+  | includes/crps663.i              | pc_crps663 / cnso0001 (package)   |
+  +---------------------------------+-----------------------------------+
+  
+  TODA E QUALQUER ALTERACAO EFETUADA NESSE FONTE A PARTIR DE 11/MAI/2018 DEVERAH
+  SER REPASSADA PARA ESTA MESMA ROTINA NO ORACLE, CONFORME DADOS ACIMA.
+  
+  PARA DETALHES DE COMO PROCEDER, FAVOR ENTRAR EM CONTATO COM AS SEGUINTES
+  PESSOAS:
+   - TEOBALDO JAMUNDA    (AMcom)
+   
+*******************************************************************************/
+
 /*.............................................................................
 
    Programa: includes/crps663.i
@@ -45,6 +63,10 @@
                            
                21/02/2018 - Ajustar relatorio e gravar critica na lau caso 
                             tenha alguma (Lucas Ranghetti #852207)
+							
+			   11/05/2018 - Migracao Progress --> Oracle 
+				            (Teobaldo J., AMcom - Projeto Debito Unico)
+							
 .............................................................................*/
 
 
@@ -52,7 +74,14 @@
 /******* faz a busca de consorcios nao debitados no processo noturno ********/
 /****************************************************************************/
 
-DEF VAR aux_nrcrcard AS DECIMAL                                         NO-UNDO.
+DEF VAR aux_nrcrcard AS DECIMAL                                       NO-UNDO.
+
+
+/*****************************************************************************
+
+  ---> TODAS PROCEDURES FORAM COMENTADAS DEVIDO Migracao PROGRESS -> ORACLE
+  ---> 11/05/2018 - Teobaldo J., AMcom - Projeto Debitador Unico
+
 
 PROCEDURE obtem-consorcio:
          
@@ -710,3 +739,4 @@ PROCEDURE gera_log_execucao_663:
 
     RETURN "OK".  
 END PROCEDURE.
+******************************************************************************/
