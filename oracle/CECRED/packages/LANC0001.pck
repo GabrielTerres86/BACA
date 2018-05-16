@@ -297,8 +297,8 @@ DECLARE
     vr_exc_erro       EXCEPTION;               
 
 BEGIN
-  pr_cdcritic := NULL;
-	pr_dscritic := NULL;	 
+  pr_cdcritic := 0;
+	pr_dscritic := '';	 
 	
 	vr_nrseqdig := pr_nrseqdig;
 	
