@@ -8,7 +8,13 @@
 	 Objetivo  : Mostrar opcao Principal da rotina de Produtos da   tela ATENDA                                          
 	                                                                  	 
 	 Alteraçães: 01/10/2015 - Projeto 217 Reformulacao Cadastral (Tiago Castro - RKAM)
-						  14/07/2016 - Correcao na forma de recuperacao de parametros do array $_POST. SD 479874 (Carlos Rafael Tanholi)
+						  
+                 14/07/2016 - Correcao na forma de recuperacao de parametros do array $_POST. SD 479874 (Carlos Rafael Tanholi)
+				 
+                 16/05/2018 - Adicionado parametro flgautom na mensageria
+                              SERVICOS_OFERECIDOS. PRJ366 (Lombardi).
+	 
+	 
 	*********************************************************************/
 	
 	session_start();
@@ -124,6 +130,7 @@
 	$xmlBuscaServicos .= "<Root>";
 	$xmlBuscaServicos .= "   <Dados>";
 	$xmlBuscaServicos .= "	   <nrdconta>".$nrdconta."</nrdconta>";
+	$xmlBuscaServicos .= "	   <flgautom>".    0    ."</flgautom>";
 	$xmlBuscaServicos .= "   </Dados>";
 	$xmlBuscaServicos .= "</Root>";
 		
