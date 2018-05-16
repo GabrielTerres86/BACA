@@ -694,8 +694,8 @@ DECLARE
   vr_progress_recid craplot.progress_recid%TYPE; -- Guarda o PROGRESS_RECID do registro inserido na CRAPLOT
 												
 BEGIN
-  pr_cdcritic := NULL;
-	pr_dscritic := NULL;                  	
+  pr_cdcritic := 0;
+	pr_dscritic := '';                  	
 
   INSERT INTO craplot lot (
 	    dtmvtolt
