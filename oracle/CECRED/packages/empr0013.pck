@@ -15,6 +15,8 @@ CREATE OR REPLACE PACKAGE CECRED.empr0013 AS
   --
   -- Alteração :
   --
+  -- 16/05/2018 - Adicionado a procedure para buscar os parametros para o acionamento do barramento 'pc_busca_param_barramento_web' (Leonardo Oliveira - GFT)
+  --
   ---------------------------------------------------------------------------------------------------------------
 
   /* Tipo com as informacoes do registro de consignado */
@@ -72,6 +74,15 @@ CREATE OR REPLACE PACKAGE CECRED.empr0013 AS
                                          ,pr_retxml   IN  OUT NOCOPY XMLType    --> Arquivo de retorno do XML
                                          ,pr_nmdcampo OUT VARCHAR2              --> Nome do campo com erro
                                          ,pr_des_erro OUT VARCHAR2);
+
+  PROCEDURE pc_busca_param_barramento_web(pr_cdcooper  	IN  INTEGER             --> Resposta de confirmacao
+                                       ,pr_cdacesso IN  crapprm.cdacesso%TYPE	--> cdacesso uri
+                                       ,pr_xmllog    IN VARCHAR2				--> XML com informacoes de LOG
+                                       ,pr_cdcritic  OUT PLS_INTEGER			--> Codigo da critica
+                                       ,pr_dscritic  OUT VARCHAR2				--> Descricao da critica
+                                       ,pr_retxml    IN OUT NOCOPY xmltype		--> Arquivo de retorno do XML
+                                       ,pr_nmdcampo  OUT VARCHAR2				--> Nome do campo com erro
+                                       ,pr_des_erro  OUT VARCHAR2);				--> Erros do processo
 
 END empr0013;
 /
@@ -312,7 +323,83 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0013 as
     WHEN OTHERS THEN
          -- Montar descrição de erro não tratado
          pr_dscritic := 'Erro não tratado na EMPR0001.pc_obtem_dados_consignado_web ' ||SQLERRM;
-  end;
+  END pc_obtem_dados_consignado_web;
+
+  PROCEDURE pc_busca_param_barramento_web(pr_cdcooper  	IN  INTEGER               	--> Resposta de confirmacao
+                                       ,pr_cdacesso IN  crapprm.cdacesso%TYPE	--> cdacesso uri
+                                       ,pr_xmllog    IN VARCHAR2              --> XML com informacoes de LOG
+                                       ,pr_cdcritic  OUT PLS_INTEGER           --> Codigo da critica
+                                       ,pr_dscritic  OUT VARCHAR2              --> Descricao da critica
+                                       ,pr_retxml    IN OUT NOCOPY xmltype    --> Arquivo de retorno do XML
+                                       ,pr_nmdcampo  OUT VARCHAR2              --> Nome do campo com erro
+                                       ,pr_des_erro  OUT VARCHAR2) IS          --> Erros do processo	
+  BEGIN
+
+    /* .............................................................................
+
+    Programa: pc_busca_param_barramento_web
+    Sistema : Ayllos Web
+    Autor   : Leonardo de Freitas Oliveira (GFT) 
+    Data    : Maio/2018.                Ultima atualizacao: 
+
+    Dados referentes ao programa:
+
+    Frequencia: Sempre que for chamado
+
+    Objetivo  : Buscar parametros para o acionamento do serviço do barramento
+
+    Alteracoes: 
+    ..............................................................................*/
+    DECLARE
+	
+      vr_host_barramento	crapprm.dsvlrprm%TYPE;				-- Host da esteira
+      vr_uri_servico  	  crapprm.dsvlrprm%TYPE;				-- URI do servico
+      vr_exc_erro 		    exception;
+      vr_dscritic 		    crapcri.dscritic%TYPE;
+		
+    BEGIN
+       --> Buscar hots so webservice do barramento
+           vr_host_barramento := gene0001.fn_param_sistema(pr_nmsistem => 'CRED'
+                                                       ,pr_cdcooper => pr_cdcooper
+                                                       ,pr_cdacesso => 'HOST_BARRAMENTO');
+           if  vr_host_barramento is null then
+               vr_dscritic := 'Parametro HOSWEBSRVCE_BARRAMENTO não encontrado.';
+               raise vr_exc_erro;
+           end if;
+  		 
+       --> Buscar hots so webservice do barramento
+           vr_uri_servico := gene0001.fn_param_sistema(pr_nmsistem => 'CRED'
+                                                       ,pr_cdcooper => pr_cdcooper
+                                                       ,pr_cdacesso => pr_cdacesso);
+           if  vr_uri_servico is null then
+               vr_dscritic := 'Parametro ' || pr_cdacesso || ' não encontrado.';
+               raise vr_exc_erro;
+           end if;
+  	
+            -- Criar cabecalho do XML
+      pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?>'||
+          '<Root>' ||
+          '<Dados>' ||
+            '<host>'|| vr_host_barramento 	||'</host>'||
+            '<uri>'	|| vr_uri_servico 		||'</uri>'|| 
+          '</Dados>'||
+          '</Root>');
+  			  
+    EXCEPTION
+        WHEN vr_exc_erro THEN
+          pr_dscritic := vr_dscritic;
+
+          -- Carregar XML padrao para variavel de retorno
+          pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                         '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+    WHEN OTHERS THEN
+      pr_dscritic := 'Erro geral na rotina da tela pc_busca_param_barramento_web: ' || SQLERRM;
+  		 
+          -- Carregar XML padrão para variavel de retorno
+          pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                         '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+    END;
+  END pc_busca_param_barramento_web;
 
 END empr0013;
 /

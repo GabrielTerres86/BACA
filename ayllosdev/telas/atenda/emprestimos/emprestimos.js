@@ -121,6 +121,8 @@
  * 099: [25/11/2018] Adidionado função escolherTipoEmprestimo() para selecção do tipo de emprestimo
  * 100: [21/12/2017] Alterado para quando a linha de crédito for (6901 - Cessão Cartão Crédito) a 
  *                   qualificação da operação seja (5 - Cessão de Cartão) (Diego Simas - AMcom)
+ * 101: [16/05/2018] Adicionado a chamada a operação de Emprestimo Consignado 'carregarEmprestimosConsignado' (Leonardo Oliveira - GFT) 
+ *
   * ##############################################################################
  FONTE SENDO ALTERADO - DUVIDAS FALAR COM DANIEL OU JAMES
  * ##############################################################################
@@ -9351,6 +9353,28 @@ function abreProtocoloAcionamento(dsprotocolo) {
                 carregaImpressaoAyllos("frmImprimir",action,"bloqueiaFundo(divRotina);");
 			}
             return false;
+        }
+    });
+}
+
+function carregarEmprestimosConsignado(){
+    showMsgAguardo('Aguarde, carregando...');
+
+    // Executa script de através de ajax
+    $.ajax({
+        type: 'POST',
+        dataType: 'html',
+        url: UrlSite + 'telas/atenda/emprestimos/consignado/consignado.php',
+        data: {
+            redirect: 'html_ajax'
+        },
+        error: function(objAjax, responseError, objExcept) {
+            hideMsgAguardo();
+            showError('error', 'N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
+        },
+        success: function(response) {
+            hideMsgAguardo();
+            eval(response);
         }
     });
 }

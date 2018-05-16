@@ -9,6 +9,7 @@
  * --------------
 
  * 000: [25/01/2018] Adicionado tela de seleção de tipos de empréstimos (Alex)
+ * 001: [16/05/2018] Adicionado a operação de Emprestimo Consignado (Leonardo Oliveira - GFT)
  */
 ?>
 <?
@@ -25,10 +26,20 @@
 					<td>
 						<table width="100%" border="0" cellspacing="0" cellpadding="0">
 							<tr>
-								<td width="11"><img src="<?php echo $UrlImagens; ?>background/tit_tela_esquerda.gif" width="11" height="21"></td>
-								<td class="txtBrancoBold ponteiroDrag" background="<?php echo $UrlImagens; ?>background/tit_tela_fundo.gif">Empr&eacute;stimos e Financiamentos</td>
-								<td width="12" id="tdTitTela" background="<?php echo $UrlImagens; ?>background/tit_tela_fundo.gif"><a href="#" onClick="fechaRotina($('#divUsoGenerico'),divRotina);"><img src="<?php echo $UrlImagens; ?>geral/excluir.jpg" width="12" height="12" border="0"></a></td>
-								<td width="8"><img src="<?php echo $UrlImagens; ?>background/tit_tela_direita.gif" width="8" height="21"></td>
+								<td width="11">
+									<img src="<?php echo $UrlImagens; ?>background/tit_tela_esquerda.gif" width="11" height="21">
+								</td>
+								<td class="txtBrancoBold ponteiroDrag" background="<?php echo $UrlImagens; ?>background/tit_tela_fundo.gif">
+									Empr&eacute;stimos e Financiamentos
+								</td>
+								<td width="12" id="tdTitTela" background="<?php echo $UrlImagens; ?>background/tit_tela_fundo.gif">
+									<a href="#" onClick="fechaRotina($('#divUsoGenerico'),divRotina);">
+										<img src="<?php echo $UrlImagens; ?>geral/excluir.jpg" width="12" height="12" border="0">
+									</a>
+								</td>
+								<td width="8">
+									<img src="<?php echo $UrlImagens; ?>background/tit_tela_direita.gif" width="8" height="21">
+								</td>
 							</tr>
 						</table>     
 					</td> 
@@ -42,8 +53,23 @@
 									<div id="divConteudoOpcao" style="height: 80px;">
 									
 									<div id="divBotoes" style="height:80px;">
-										<a href="#" class="botao gft" id="btEmprestimosFinanciamentos" onClick="fechaRotina($('#divUsoGenerico'),divRotina);controlaOperacao('I');" style="margin: 20px 6px">Empr&eacute;stimos e Financiamentos</a>
-										<a href="#" class="botao gft" id="btEmprestimosConsignado" onClick="alert('Funcionalidade ainda em desenvolvimento!');" style="margin: 20px 6px">Empr&eacute;stimo Consignado</a>
+										<a 
+											href="#" 
+											class="botao" 
+											id="btEmprestimosFinanciamentos"
+											onClick="fechaRotina($('#divUsoGenerico'),divRotina); controlaOperacao('I'); return false;" 
+											style="margin: 20px 6px">
+												Empr&eacute;stimos e Financiamentos
+										</a>
+										
+										<a 
+											href="#" 
+											class="botao" 
+											id="btEmprestimosConsignado" 
+											onClick="fechaRotina($('#divUsoGenerico'),divRotina); carregarEmprestimosConsignado(); return false;" 
+											style="margin: 20px 6px">
+												Empr&eacute;stimo Consignado
+										</a>
 									</div>
 								</td>
 							</tr>
