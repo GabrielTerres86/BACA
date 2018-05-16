@@ -149,7 +149,7 @@
       vr_dtdebito     DATE;              --> Data do Débito
       vr_dtdeb28      DATE;              --> Data do Débito dia 28
       podeDebitar     BOOLEAN;           --> Pode debitar o histórico
-			vr_rw_craplot   craplot%ROWTYPE;
+      vr_rw_craplot   craplot%ROWTYPE;
       
       vr_dsseguro     VARCHAR2(50);
       vr_rowid_log     rowid;
@@ -414,7 +414,7 @@
                  -- Fechar o antigo cursor do lote
                  CLOSE cr_craplot;
 
-							   LANC0001.pc_incluir_lote(pr_dtmvtolt => rw_crapdat.dtmvtolt -- dtmvtolt
+                 LANC0001.pc_incluir_lote(pr_dtmvtolt => rw_crapdat.dtmvtolt -- dtmvtolt
                                           , pr_cdagenci => 1    -- cdagenci
                                           , pr_cdbccxlt => 100  -- cdbccxlt
                                           , pr_nrdolote => 4154 -- nrdolote
@@ -457,21 +457,21 @@
             
             -- Efetua o lançamento do débito
             BEGIN
-               LANC0001.pc_incluir_lcto_lcm(pr_cdagenci => rw_craplot.cdagenci
-                                                    , pr_cdbccxlt => rw_craplot.cdbccxlt
-                                                    , pr_cdhistor => vr_cdhistor
-                                                    , pr_dtmvtolt => rw_crapdat.dtmvtolt
-                                                    , pr_cdpesqbb => to_char(rw_crapseg.cdsegura)
-                                                    , pr_nrdconta => rw_crapseg.nrdconta
-                                                    , pr_nrdctabb => rw_crapseg.nrdconta
-                                                    , pr_nrdctitg => to_char(rw_crapseg.nrdconta)
-                                                    , pr_nrdocmto => rw_crapseg.nrctrseg
-                                                    , pr_nrdolote => rw_craplot.nrdolote
-                                                    , pr_nrseqdig => rw_craplot.nrseqdig + 1
-                                                    , pr_vllanmto => rw_crapseg.vlpreseg
-                                                    , pr_cdcooper => pr_cdcooper
-                                                    , pr_cdcritic => vr_cdcritic
-                                                    , pr_dscritic => vr_dscritic);
+               LANC0001.pc_gerar_lancamento_conta(pr_cdagenci => rw_craplot.cdagenci
+                                                 , pr_cdbccxlt => rw_craplot.cdbccxlt
+                                                 , pr_cdhistor => vr_cdhistor
+                                                 , pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                                 , pr_cdpesqbb => to_char(rw_crapseg.cdsegura)
+                                                 , pr_nrdconta => rw_crapseg.nrdconta
+                                                 , pr_nrdctabb => rw_crapseg.nrdconta
+                                                 , pr_nrdctitg => to_char(rw_crapseg.nrdconta)
+                                                 , pr_nrdocmto => rw_crapseg.nrctrseg
+                                                 , pr_nrdolote => rw_craplot.nrdolote
+                                                 , pr_nrseqdig => rw_craplot.nrseqdig + 1
+                                                 , pr_vllanmto => rw_crapseg.vlpreseg
+                                                 , pr_cdcooper => pr_cdcooper
+                                                 , pr_cdcritic => vr_cdcritic
+                                                 , pr_dscritic => vr_dscritic);
             EXCEPTION
               WHEN OTHERS THEN
                 vr_dscritic := 'Erro ao  inserir  na tabela  craplcm.'||SQLERRM;
@@ -689,4 +689,3 @@
    END;
 
 END pc_crps268;
-/
