@@ -5,7 +5,7 @@ declare
 	select cdoperad 
 		from crapope
 	 where cdcooper = 3
-		 and cddepart in (14, 20);
+		 and cddepart = 14;
 	rw_crapope cr_crapope%ROWTYPE;
  
 begin
