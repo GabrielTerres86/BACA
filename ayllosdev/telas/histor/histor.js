@@ -418,7 +418,7 @@ function liberaCadastro() {
     $('#ingercre', '#frmHistorico').val("1");
     $('#ingerdeb', '#frmHistorico').val("1");
     $('#flgsenha', '#frmHistorico').val("1");
-	$('#idmonpld', '#frmHistorico').val("0");
+	$('#idmonpld', '#frmHistorico').val("1");
 	
 	// Adicionar foco no primeiro campo
     $("#cdhistor", "#frmHistorico").habilitaCampo().val("").focus();
