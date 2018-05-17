@@ -87,7 +87,17 @@
                         pr_tpseguro IN crapseg.tpseguro%TYPE,
                         pr_cdsitseg IN crapseg.cdsitseg%TYPE,
                         pr_indebito IN crapseg.indebito%TYPE) IS
-        SELECT seg.*, seg.rowid
+        SELECT seg.rowid
+              ,seg.dtprideb
+              ,seg.dtrenova
+              ,seg.dtdebito
+              ,seg.nrdconta
+              ,seg.cdsegura
+              ,seg.vlpreseg
+              ,seg.nrctrseg
+              ,seg.vlprepag
+              ,seg.qtprevig
+              ,seg.qtprepag
         FROM crapseg seg
         WHERE seg.cdcooper  = pr_cdcooper
           AND seg.nrdconta >= pr_nrdconta
@@ -100,7 +110,8 @@
       -- Busca dados do associado --
       CURSOR cr_crapass(pr_cdcooper IN crapass.cdcooper%TYPE,
                         pr_nrdconta IN crapass.nrdconta%TYPE) IS
-        SELECT ass.*
+        SELECT ass.cdsecext
+              ,ass.cdagenci              
         FROM crapass ass
         WHERE ass.cdcooper = pr_cdcooper
           AND ass.nrdconta = pr_nrdconta;
@@ -109,7 +120,8 @@
       -- Busca dados da seguradora
       CURSOR cr_crapcsg(pr_cdcooper IN crapcsg.cdcooper%TYPE,
                         pr_cdsegura IN crapcsg.cdsegura%TYPE) IS
-        SELECT csg.*
+        SELECT csg.nrcgcseg
+              ,csg.cdhstaut##2
         FROM crapcsg csg
         WHERE csg.cdcooper = pr_cdcooper
           AND csg.cdsegura = pr_cdsegura;
@@ -121,7 +133,13 @@
                         pr_cdagenci IN craplot.cdagenci%TYPE,
                         pr_cdbccxlt IN craplot.cdbccxlt%TYPE,
                         pr_nrdolote IN craplot.nrdolote%TYPE) IS
-        SELECT lot.*, lot.rowid
+        SELECT lot.rowid
+              ,lot.nrseqdig
+              ,lot.nrdolote
+              ,lot.cdbccxlt
+              ,lot.cdagenci
+              ,lot.vlcompdb
+              ,lot.qtcompln
         FROM craplot lot
         WHERE lot.cdcooper = pr_cdcooper
           AND lot.dtmvtolt = pr_dtmvtolt
@@ -342,11 +360,12 @@
             RAISE vr_exc_saida;
           END IF;
 
-          podeDebitar := lanc0001.fn_pode_debitar(pr_cdcooper => pr_cdcooper,
+          /*podeDebitar := lanc0001.fn_pode_debitar(pr_cdcooper => pr_cdcooper,
                                                   pr_nrdconta => rw_crapseg.nrdconta,
                                                   pr_cdhistor => vr_cdhistor);
+                                                  
 
-          /* se nao puder debitar historico, entao cancela o contrato e avisa cooperado */
+          \* se nao puder debitar historico, entao cancela o contrato e avisa cooperado *\
           IF podeDebitar = false THEN
              -- marca contrato como cancelado
              update crapseg
@@ -371,7 +390,7 @@
                          ,pr_idseqttl => 1          -- Primeiro titular da conta
                          ,pr_cdprogra => 'CRPS439'  -- Programa
                          ,pr_inpriori => 0          -- prioridade
-                         ,pr_dsdmensg => 'Cooperado, seu seguro '||vr_dsseguro||' foi cancelado por falta de pagamento. DЩvidas consulte seu posto de atendimento' -- corpo da mensagem
+                         ,pr_dsdmensg => 'Cooperado, seu seguro '||vr_dsseguro||' foi cancelado por falta de pagamento. D?vidas consulte seu posto de atendimento' -- corpo da mensagem
                          ,pr_dsdassun => 'Aviso sobre seu seguro'         -- Assunto
                          ,pr_dsdremet => rw_crapcop.nmrescop --nome cooperativa remetente
                          ,pr_dsdplchv => 'emprestimo'
@@ -396,7 +415,7 @@
              commit;
              -- proximo registro
              continue;
-          ELSE
+          ELSE*/
             -- Insere o lançamento de débito no valor do seguro
             -- Início
             -- Verifica se há capas de lote formado
@@ -411,10 +430,11 @@
             -- Inserir capa de lote caso não haja
             IF cr_craplot%NOTFOUND THEN
               BEGIN
-                 -- Fechar o antigo cursor do lote
-                 CLOSE cr_craplot;
-
-                 LANC0001.pc_incluir_lote(pr_dtmvtolt => rw_crapdat.dtmvtolt -- dtmvtolt
+                -- Fechar o antigo cursor do lote
+                CLOSE cr_craplot;
+                -- REGINALDO --
+                /* ROTINA NOVA  
+                LANC0001.pc_incluir_lote(pr_dtmvtolt => rw_crapdat.dtmvtolt -- dtmvtolt
                                           , pr_cdagenci => 1    -- cdagenci
                                           , pr_cdbccxlt => 100  -- cdbccxlt
                                           , pr_nrdolote => 4154 -- nrdolote
@@ -425,7 +445,29 @@
                                           , pr_cdcooper => pr_cdcooper
                                           , pr_cdcritic => vr_cdcritic
                                           , pr_dscritic => vr_dscritic
-                                          , pr_rw_craplot => vr_rw_craplot);
+                                          , pr_rw_craplot => vr_rw_craplot);                 
+                */                        
+
+                -- SIMAS --
+                INSERT INTO craplot(craplot.dtmvtolt
+                                   ,craplot.cdagenci
+                                   ,craplot.cdbccxlt
+                                   ,craplot.nrdolote
+                                   ,craplot.tplotmov
+                                   ,craplot.nrseqdig
+                                   ,craplot.vlcompcr
+                                   ,craplot.vlinfocr
+                                   ,craplot.cdcooper)
+                             VALUES(rw_crapdat.dtmvtolt
+                                   ,1
+                                   ,100
+                                   ,4154
+                                   ,1 
+                                   ,0
+                                   ,0
+                                   ,0
+                                   ,pr_cdcooper);               
+                -- SIMAS --                 
 
                 -- Posiciona a capa de lote
                 OPEN cr_craplot(pr_cdcooper => pr_cdcooper,
@@ -457,8 +499,9 @@
             
             -- Efetua o lançamento do débito
             BEGIN
-               LANC0001.pc_gerar_lancamento_conta(pr_cdagenci => rw_craplot.cdagenci
-                                                 , pr_cdbccxlt => rw_craplot.cdbccxlt
+              /*
+              LANC0001.pc_gerar_lancamento_conta(pr_cdagenci => rw_craplot.cdagenci
+                                                , pr_cdbccxlt => rw_craplot.cdbccxlt
                                                  , pr_cdhistor => vr_cdhistor
                                                  , pr_dtmvtolt => rw_crapdat.dtmvtolt
                                                  , pr_cdpesqbb => to_char(rw_crapseg.cdsegura)
@@ -472,6 +515,36 @@
                                                  , pr_cdcooper => pr_cdcooper
                                                  , pr_cdcritic => vr_cdcritic
                                                  , pr_dscritic => vr_dscritic);
+              */  
+              -- SIMAS --
+              INSERT INTO craplcm(craplcm.cdagenci
+                                 ,craplcm.cdbccxlt
+                                 ,craplcm.cdhistor
+                                 ,craplcm.dtmvtolt
+                                 ,craplcm.cdpesqbb
+                                 ,craplcm.nrdconta
+                                 ,craplcm.nrdctabb
+                                 ,craplcm.nrdctitg
+                                 ,craplcm.nrdocmto
+                                 ,craplcm.nrdolote
+                                 ,craplcm.nrseqdig
+                                 ,craplcm.vllanmto
+                                 ,craplcm.cdcooper)
+                           VALUES(rw_craplot.cdagenci
+                                 ,rw_craplot.cdbccxlt
+                                 ,vr_cdhistor
+                                 ,rw_crapdat.dtmvtolt
+                                 ,to_char(rw_crapseg.cdsegura)
+                                 ,rw_crapseg.nrdconta
+                                 ,rw_crapseg.nrdconta
+                                 ,to_char(rw_crapseg.nrdconta)
+                                 ,rw_crapseg.nrctrseg
+                                 ,rw_craplot.nrdolote
+                                 ,rw_craplot.nrseqdig + 1
+                                 ,rw_crapseg.vlpreseg
+                                 ,pr_cdcooper
+                                 );               
+              -- SIMAS -- 
             EXCEPTION
               WHEN OTHERS THEN
                 vr_dscritic := 'Erro ao  inserir  na tabela  craplcm.'||SQLERRM;
@@ -611,7 +684,7 @@
               -- Finalmente efetua commit
               COMMIT;
             END IF;
-          END IF;
+          --END IF;
 
         END IF;
       END LOOP;
