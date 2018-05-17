@@ -4,7 +4,7 @@
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : Elton/Ze Eduardo
-    Data    : Marco/07.                       Ultima atualizacao: 10/03/2018
+    Data    : Marco/07.                       Ultima atualizacao: 11/05/2018
     
     Dados referentes ao programa:
 
@@ -237,6 +237,10 @@
               06/03/2018 - Ajuste para buscar a descricao do tipo de conta do oracle. PRJ366 (Lombardi)
 
 			  10/03/2018 - Removida procedure envia_arquivo_xml - Compe Sessao Unica (Diego).
+
+			  11/05/2018 - Ajuste para processar cheques com alinea 35, os mesmos nao estavam
+			               sendo processados e nao apareciam no Relatorio 219.
+			               Chamado SCTASK0012893 - Gabriel (Mouts).
 
 ..............................................................................*/
 
@@ -1442,7 +1446,9 @@ PROCEDURE gera_lancamento:
                         IF  crapdev.cdbanchq <> crapcop.cdbcoctl THEN
                             NEXT.    
                     END.
-                ELSE
+              /*ELSE Estava impedindo que cheques com alinea 35 
+				     tivessem seus campos atualizados para serem 
+					 processados e constarem no Relatorio 219 */ 
                   /* Verificar se alinea do cheque devolvido é 35 */
                   IF  crapdev.cdalinea = 35 THEN
                       ASSIGN crapdev.insitdev = 1
