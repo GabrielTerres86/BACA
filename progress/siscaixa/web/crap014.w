@@ -716,7 +716,8 @@ PROCEDURE process-web-request:
          glb_cdagenci = INTE(get-value("user_pac"))
          glb_cdbccxlt = INTE(get-value("user_cx"))
          glb_cdoperad = get-value("operador")
-         ab_unmap.hdnVerifEstorno = get-value("hdnVerifEstorno ").
+         ab_unmap.hdnVerifEstorno = get-value("hdnVerifEstorno ")
+		 v_tppagmto   = get-value("v_tppagmto").
 
   ASSIGN vh_foco          = "8"
          v_msg_vencido    = "no"
@@ -1036,7 +1037,7 @@ PROCEDURE process-web-request:
       DO:
         {&out} '<script>var conf = confirm("ATENCAO, este pagamento nao pode ser estornado, deseja continuar?");</script>'.
         {&out} '<script>((!conf) ? $("#hdnVerifEstorno").val(0) : $("#hdnVerifEstorno").val(1))</script>'.
-        {&out} '<script>((!conf) ? window.location = "crap014.html" : document.forms[0].submit())</script>'.
+        {&out} '<script>((!conf) ? window.location = "crap014.html?v_tppagmto=" + STRING(v_tppagmto) : document.forms[0].submit())</script>'.
       END.
      
        
@@ -1412,7 +1413,7 @@ PROCEDURE processa-titulo:
 						 INPUT glb_cdagenci,
 						 INPUT glb_cdbccxlt,
 						 INPUT 0,
-						 INPUT "Necessário depositar o recurso em conta e após isso proceder com o pagamento na opção ~"Conta~" ou nos canais digitais.",
+						 INPUT "Necessário depositar o recurso em conta e após isso proceder com o pagamento nos canais digitais ou no caixa online - Rotina 14 opção ~"Conta~".",
 						 INPUT YES).
 						 
 		   /* Exibir o erro */ 
@@ -1652,7 +1653,7 @@ PROCEDURE processa-fatura:
 						 INPUT glb_cdagenci,
 						 INPUT glb_cdbccxlt,
 						 INPUT 0,
-						 INPUT "Necessário depositar o recurso em conta e após isso proceder com o pagamento na opção ~"Conta~" ou nos canais digitais.",
+						 INPUT "Necessário depositar o recurso em conta e após isso proceder com o pagamento nos canais digitais ou no caixa online - Rotina 14 opção ~"Conta~".",
 						 INPUT YES).
 
 		   /* Exibir o erro */ 
@@ -1818,6 +1819,7 @@ PROCEDURE processa-fatura:
                  /* Chama fonte que oferece débito automático da fatura paga para o cooperado */
                  ASSIGN par_funcaojs = 'window.location = "crap014g.html?v_conta='
                         par_funcaojs = par_funcaojs + STRING(par_nrdconta) + "&v_nome=" + v_nome
+						par_funcaojs = par_funcaojs + "&v_tppagmto=" + STRING(v_tppagmto)
                         par_funcaojs = par_funcaojs + "&v_codbarras=" + c_codbarras + '";'.
             END.
         
@@ -1827,7 +1829,7 @@ PROCEDURE processa-fatura:
                  IF  par_nrdconta > 0  AND aux_debitaut  THEN
                      ASSIGN par_funcaojs = par_funcaojs + 'window.open("autentica.html?v_plit='.
                  ELSE 
-                     ASSIGN par_funcaojs = 'window.location = "crap014.html";'
+                     ASSIGN par_funcaojs = 'window.location = "crap014.html?v_tppagmto=' + STRING(v_tppagmto) + '";'
                             par_funcaojs = par_funcaojs + 'window.open("autentica.html?v_plit='.
                      
                  ASSIGN par_funcaojs = par_funcaojs + p-literal
@@ -1841,7 +1843,7 @@ PROCEDURE processa-fatura:
                 IF  par_nrdconta > 0  AND aux_debitaut  THEN
                      ASSIGN par_funcaojs = par_funcaojs + 'window.open("autentica.html?v_plit='.
                  ELSE 
-                     ASSIGN par_funcaojs = 'window.location = "crap014.html";'
+                     ASSIGN par_funcaojs = 'window.location = "crap014.html?v_tppagmto=' + STRING(v_tppagmto) + '";'
                             par_funcaojs = par_funcaojs + 'window.open("autentica.html?v_plit='.
                      
                  ASSIGN par_funcaojs = par_funcaojs + p-literal
