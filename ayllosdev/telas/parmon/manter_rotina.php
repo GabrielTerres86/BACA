@@ -12,6 +12,8 @@
  *                24/05/2016 - Inclusão do novo parâmetro (flmntage) de monitoração de agendamento (Carlos)
  *
  *				  01/11/2017 - Melhoria 458 Prevenção Lavagem de Dinheiro (junior - Mouts)
+ *
+ *                16/05/2017 - Ajustes prj420 - Resolucao - Heitor (Mouts)
  * -------------- 
  */
 ?> 
@@ -55,8 +57,10 @@
 	$vllimitedeposito 			= (isset($_POST['vllimitedeposito'])) 			? $_POST['vllimitedeposito'] : 0 ;
 	$vllimitepagamento 			= (isset($_POST['vllimitepagamento'])) 			? $_POST['vllimitepagamento'] : 0 ;
 	$vlprovisaoemail 			= (isset($_POST['vlprovisaoemail'])) 			? $_POST['vlprovisaoemail'] : 0 ;
+	$vlalteracaoprovemail   	= (isset($_POST['vlalteracaoprovemail'])) 		? $_POST['vlalteracaoprovemail'] : 0 ;
 	$vlprovisaosaque 			= (isset($_POST['vlprovisaosaque'])) 			? $_POST['vlprovisaosaque'] : 0 ;
 	$vlmonpagto 				= (isset($_POST['vlmonpagto'])) 				? $_POST['vlmonpagto'] : 0 ;
+	$vllimitepagtoespecie 		= (isset($_POST['vllimitepagtoespecie'])) 		? $_POST['vllimitepagtoespecie'] : 0 ;
 	$qtdiasprovisao 			= (isset($_POST['qtdiasprovisao'])) 			? $_POST['qtdiasprovisao'] : 0 ;
 	$hrlimiteprovisao 			= (isset($_POST['hrlimiteprovisao'])) 			? $_POST['hrlimiteprovisao'] : 0 ;
 	$qtdiasprovisaocancelamento = (isset($_POST['qtdiasprovisaocancelamento'])) ? $_POST['qtdiasprovisaocancelamento'] : 0 ; 
@@ -170,9 +174,11 @@
 			$vllimitedeposito  		= str_replace(',','.',str_replace('.','',$vllimitedeposito));
 			$vllimitepagamento 		= str_replace(',','.',str_replace('.','',$vllimitepagamento));
 			$vlprovisaoemail   		= str_replace(',','.',str_replace('.','',$vlprovisaoemail));
+			$vlalteracaoprovemail   = str_replace(',','.',str_replace('.','',$vlalteracaoprovemail));
 			$vlprovisaosaque   		= str_replace(',','.',str_replace('.','',$vlprovisaosaque));
 			$vlmonpagto   			= str_replace(',','.',str_replace('.','',$vlmonpagto));
-			$hrlimiteprovisao      = str_replace(':','',$hrlimiteprovisao);
+			$vllimitepagtoespecie   = str_replace(',','.',str_replace('.','',$vllimitepagtoespecie));
+			$hrlimiteprovisao       = str_replace(':','',$hrlimiteprovisao);
 
 			$xml = "<Root>";
 			$xml .= " <Dados>";
@@ -201,7 +207,9 @@
 			$xml .= "   <inaltera_prov_presencial>" . $inalteraprovisaopresencial . "</inaltera_prov_presencial>";
 			$xml .= "   <inverifica_saldo>" . $inverificasaldo . "</inverifica_saldo>";
 			$xml .= "   <dsdemail>" . $dsdeemail . "</dsdemail>";	
-			$xml .= "   <dsemailcoop>" . $dsemailcoop . "</dsemailcoop>";				
+			$xml .= "   <dsemailcoop>" . $dsemailcoop . "</dsemailcoop>";
+			$xml .= "   <vlalteracao_prov_email>" . $vlalteracaoprovemail . "</vlalteracao_prov_email>";
+			$xml .= "   <vllimite_pagto_especie>" . $vllimitepagtoespecie . "</vllimite_pagto_especie>";
 			$xml .= " </Dados>";
 			$xml .= "</Root>";				
 
@@ -254,8 +262,10 @@
 		$vllimitedeposito 			= empty($xmlObj->Dados->inf->vllimite_deposito)?0:$xmlObj->Dados->inf->vllimite_deposito;
 		$vllimitepagamento 			= empty($xmlObj->Dados->inf->vllimite_pagamento)?0:$xmlObj->Dados->inf->vllimite_pagamento;
 		$vlprovisaoemail 			= empty($xmlObj->Dados->inf->vlprovisao_email)?0:$xmlObj->Dados->inf->vlprovisao_email;
+		$vlalteracaoprovemail 		= empty($xmlObj->Dados->inf->vlalteracao_prov_email)?0:$xmlObj->Dados->inf->vlalteracao_prov_email;
 		$vlprovisaosaque 			= empty($xmlObj->Dados->inf->vlprovisao_saque)?0:$xmlObj->Dados->inf->vlprovisao_saque;		
 		$vlmonpagto 				= empty($xmlObj->Dados->inf->vlmonitoracao_pagamento)?0:$xmlObj->Dados->inf->vlmonitoracao_pagamento;		
+		$vllimitepagtoespecie 		= empty($xmlObj->Dados->inf->vllimite_pagto_especie)?0:$xmlObj->Dados->inf->vllimite_pagto_especie;		
 		$qtdiasprovisao 			= empty($xmlObj->Dados->inf->qtdias_provisao)?0:$xmlObj->Dados->inf->qtdias_provisao;
 		$hrlimiteprovisao 			= empty($xmlObj->Dados->inf->hrlimite_provisao)?0:$xmlObj->Dados->inf->hrlimite_provisao;
 		$qtdiasprovisaocancelamento = empty($xmlObj->Dados->inf->qtdias_provisao_cancelamento)?0:$xmlObj->Dados->inf->qtdias_provisao_cancelamento;
@@ -362,8 +372,10 @@
 			echo "$('#vllimitedeposito','#frmparmon').val('".($vllimitedeposito)."')".$desab.";";
 			echo "$('#vllimitepagamento','#frmparmon').val('".($vllimitepagamento)."')".$desab.";";
 			echo "$('#vlprovisaoemail','#frmparmon').val('".($vlprovisaoemail)."')".$desab.";";
+			echo "$('#vlalteracaoprovemail','#frmparmon').val('".($vlalteracaoprovemail)."')".$desab.";";
 			echo "$('#vlprovisaosaque','#frmparmon').val('".($vlprovisaosaque)."')".$desab.";";			
 			echo "$('#vlmonpagto','#frmparmon').val('".($vlmonpagto)."')".$desab.";";			
+			echo "$('#vllimitepagtoespecie','#frmparmon').val('".($vllimitepagtoespecie)."')".$desab.";";
 			echo "$('#qtdiasprovisao','#frmparmon').val('".($qtdiasprovisao)."')".$desab.";";			
 			echo "$('#hrlimiteprovisao','#frmparmon').val('".($hrlimiteprovisao)."')".$desab.";";
 			echo "$('#qtdiasprovisaocancelamento','#frmparmon').val('".($qtdiasprovisaocancelamento)."')".$desab.";";			
