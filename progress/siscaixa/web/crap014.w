@@ -123,8 +123,8 @@ Alteracoes: 22/08/2007 - Alterado os parametros nas chamadas para as
                         (Lucas Ranghetti #760721)
 
            12/12/2017 - Alterar campo flgcnvsi por tparrecd.
-                        PRJ406-FGTS (Odirlei-AMcom)             
-
+                        PRJ406-FGTS (Odirlei-AMcom)    
+                        
            16/05/2018 - Ajustes prj420 - Resolucao - Heitor (Mouts)
 
 ..............................................................................*/
@@ -692,7 +692,7 @@ PROCEDURE process-web-request:
   DEF VAR hdnVerifEstorno          AS CHAR                           NO-UNDO.
   DEF VAR hdnValorAcima            AS CHAR                           NO-UNDO.
   DEF VAR aux_cdcritic             AS INTE                           NO-UNDO.
-
+  
   RUN outputHeader.
 
   /*******************************************************************
@@ -716,7 +716,8 @@ PROCEDURE process-web-request:
          glb_cdagenci = INTE(get-value("user_pac"))
          glb_cdbccxlt = INTE(get-value("user_cx"))
          glb_cdoperad = get-value("operador")
-         ab_unmap.hdnVerifEstorno = get-value("hdnVerifEstorno ").
+         ab_unmap.hdnVerifEstorno = get-value("hdnVerifEstorno ")
+		 v_tppagmto   = get-value("v_tppagmto").
 
   ASSIGN vh_foco          = "8"
          v_msg_vencido    = "no"
@@ -795,7 +796,7 @@ PROCEDURE process-web-request:
                          ASSIGN v_conta = TRIM(STRING(tt-crapcbl.nrdconta, "zzzz,zzz,9"))
                                 v_nome  = TRIM(tt-crapcbl.dsdonome).
                      END.
-                     
+
                  ASSIGN aux_des_erro = "OK".
 
                  /*se o cod barras estiver preenchido verifica o campo 
@@ -803,7 +804,7 @@ PROCEDURE process-web-request:
                    ou o campo nao estiver preenchido*/
                  IF get-value("v_codbarras") <> "" AND 
                     v_tipdocto <> "2" THEN
-                    DO:       
+                    DO:
                         /*v_tpproces (1-Automatico(leitora)|2-Manual(digitado p ope)*/
                         IF  INT(v_tpproces) = 1 THEN
                         DO:
@@ -1036,7 +1037,7 @@ PROCEDURE process-web-request:
       DO:
         {&out} '<script>var conf = confirm("ATENCAO, este pagamento nao pode ser estornado, deseja continuar?");</script>'.
         {&out} '<script>((!conf) ? $("#hdnVerifEstorno").val(0) : $("#hdnVerifEstorno").val(1))</script>'.
-        {&out} '<script>((!conf) ? window.location = "crap014.html" : document.forms[0].submit())</script>'.
+        {&out} '<script>((!conf) ? window.location = "crap014.html?v_tppagmto=" + STRING(v_tppagmto) : document.forms[0].submit())</script>'.
       END.
      
        
@@ -1208,7 +1209,7 @@ PROCEDURE processa-titulo:
     DEFINE VARIABLE de_tit3          AS DECIMAL                        NO-UNDO. 
     DEFINE VARIABLE de_tit4          AS DECIMAL                        NO-UNDO. 
     DEFINE VARIABLE de_tit5          AS DECIMAL                        NO-UNDO. 
-
+	
 	DEF VAR aux_vllimite_especie     AS DECIMAL                  NO-UNDO.
 
     FIND FIRST ab_unmap.
@@ -1412,7 +1413,7 @@ PROCEDURE processa-titulo:
 						 INPUT glb_cdagenci,
 						 INPUT glb_cdbccxlt,
 						 INPUT 0,
-						 INPUT "Necessário depositar o recurso em conta e após isso proceder com o pagamento na opção ~"Conta~" ou nos canais digitais.",
+						 INPUT "Necessário depositar o recurso em conta e após isso proceder com o pagamento nos canais digitais ou no caixa online - Rotina 14 opção ~"Conta~".",
 						 INPUT YES).
 						 
 		   /* Exibir o erro */ 
@@ -1426,7 +1427,7 @@ PROCEDURE processa-titulo:
 		 END.
 	   END.
 	   
-     
+	
     /* ***Passou pelas validacoes*** */
     IF  par_titvenci = "no" AND 
         aux_intitcop = 1     THEN /** Titulo da cooperativa **/
@@ -1652,7 +1653,7 @@ PROCEDURE processa-fatura:
 						 INPUT glb_cdagenci,
 						 INPUT glb_cdbccxlt,
 						 INPUT 0,
-						 INPUT "Necessário depositar o recurso em conta e após isso proceder com o pagamento na opção ~"Conta~" ou nos canais digitais.",
+						 INPUT "Necessário depositar o recurso em conta e após isso proceder com o pagamento nos canais digitais ou no caixa online - Rotina 14 opção ~"Conta~".",
 						 INPUT YES).
 
 		   /* Exibir o erro */ 
@@ -1667,7 +1668,7 @@ PROCEDURE processa-fatura:
 	   END.
 	   
 		
-        /* Valida o valor do limite do PA / Cooperativa */    
+	    /* Valida o valor do limite do PA / Cooperativa */    
         RUN validar-valor-limite(INPUT par_cdcooper,
                                  INPUT v_cod,
                                  INPUT par_cdagenci,
@@ -1818,6 +1819,7 @@ PROCEDURE processa-fatura:
                  /* Chama fonte que oferece débito automático da fatura paga para o cooperado */
                  ASSIGN par_funcaojs = 'window.location = "crap014g.html?v_conta='
                         par_funcaojs = par_funcaojs + STRING(par_nrdconta) + "&v_nome=" + v_nome
+						par_funcaojs = par_funcaojs + "&v_tppagmto=" + STRING(v_tppagmto)
                         par_funcaojs = par_funcaojs + "&v_codbarras=" + c_codbarras + '";'.
             END.
         
@@ -1827,7 +1829,7 @@ PROCEDURE processa-fatura:
                  IF  par_nrdconta > 0  AND aux_debitaut  THEN
                      ASSIGN par_funcaojs = par_funcaojs + 'window.open("autentica.html?v_plit='.
                  ELSE 
-                     ASSIGN par_funcaojs = 'window.location = "crap014.html";'
+                     ASSIGN par_funcaojs = 'window.location = "crap014.html?v_tppagmto=' + STRING(v_tppagmto) + '";'
                             par_funcaojs = par_funcaojs + 'window.open("autentica.html?v_plit='.
                      
                  ASSIGN par_funcaojs = par_funcaojs + p-literal
@@ -1841,7 +1843,7 @@ PROCEDURE processa-fatura:
                 IF  par_nrdconta > 0  AND aux_debitaut  THEN
                      ASSIGN par_funcaojs = par_funcaojs + 'window.open("autentica.html?v_plit='.
                  ELSE 
-                     ASSIGN par_funcaojs = 'window.location = "crap014.html";'
+                     ASSIGN par_funcaojs = 'window.location = "crap014.html?v_tppagmto=' + STRING(v_tppagmto) + '";'
                             par_funcaojs = par_funcaojs + 'window.open("autentica.html?v_plit='.
                      
                  ASSIGN par_funcaojs = par_funcaojs + p-literal
@@ -1881,9 +1883,9 @@ PROCEDURE processa-fatura:
                                         par_funcaojs = par_funcaojs + '";'.
             END.
         
-        END.        
    END.
-   
+   END.
+
    RETURN "OK".
 
 END PROCEDURE.

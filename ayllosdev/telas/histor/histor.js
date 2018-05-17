@@ -418,7 +418,7 @@ function liberaCadastro() {
     $('#ingercre', '#frmHistorico').val("1");
     $('#ingerdeb', '#frmHistorico').val("1");
     $('#flgsenha', '#frmHistorico').val("1");
-	$('#idmonpld', '#frmHistorico').val("0");
+	$('#idmonpld', '#frmHistorico').val("1");
 	
 	// Adicionar foco no primeiro campo
     $("#cdhistor", "#frmHistorico").habilitaCampo().val("").focus();
@@ -841,7 +841,7 @@ function controlaCamposCadastroHistorico() {
 	});
 
     //Define ação para ENTER e TAB no campo codigo do agrupamento
-    $("#cdagrupa", "#frmHistorico").unbind('keypress').bind('keypress', function (e) {
+	$("#cdagrupa", "#frmHistorico").unbind('keypress').bind('keypress', function (e) {
 		if (e.keyCode == 9 || e.keyCode == 13) {
 			// Finaliza o cadastro
 			$('#idmonpld', '#frmHistorico').focus();
