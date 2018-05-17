@@ -10,6 +10,8 @@
  *				  05/12/2017 - Adicionado novo campo Ind. Monitaoramento - Melhoria 458 - Antonio R. Jr (mouts)
  *                11/04/2018 - Incluído novo campo "Estourar a conta corrente" (inestocc)
  *                             Diego Simas - AMcom
+ *
+ *                16/05/2017 - Ajustes prj420 - Resolucao - Heitor (Mouts)
  * --------------
  */
 
@@ -222,6 +224,7 @@ function formataCadastroHistorico() {
     $('label[for="flgsenha"]', '#frmHistorico').addClass('rotulo').css({ 'width': '100px' });
     $('label[for="cdprodut"]', '#frmHistorico').addClass('rotulo').css({ 'width': '100px' });
     $('label[for="cdagrupa"]', '#frmHistorico').addClass('rotulo').css({ 'width': '100px' });
+	$('label[for="idmonpld"]', '#frmHistorico').addClass('rotulo').css({ 'width': '100px' });
 
 	// CAMPOS - Outros
     $('#flgsenha', '#frmHistorico').css({ 'width': '60px' });
@@ -229,6 +232,7 @@ function formataCadastroHistorico() {
     $('#dsprodut', '#frmHistorico').css({ 'width': '350px' }).desabilitaCampo();
     $('#cdagrupa', '#frmHistorico').css({ 'width': '60px' }).attr('maxlength', '5').setMask('INTEGER', 'zzzzz', '', '');
     $('#dsagrupa', '#frmHistorico').css({ 'width': '350px' }).desabilitaCampo();
+	$('#idmonpld', '#frmHistorico').css({ 'width': '60px' });
 	
     $('input[type="text"],select', '#frmHistorico').desabilitaCampo().limpaFormulario().removeClass('campoErro');
 	
@@ -414,6 +418,7 @@ function liberaCadastro() {
     $('#ingercre', '#frmHistorico').val("1");
     $('#ingerdeb', '#frmHistorico').val("1");
     $('#flgsenha', '#frmHistorico').val("1");
+	$('#idmonpld', '#frmHistorico').val("0");
 	
 	// Adicionar foco no primeiro campo
     $("#cdhistor", "#frmHistorico").habilitaCampo().val("").focus();
@@ -837,6 +842,14 @@ function controlaCamposCadastroHistorico() {
 
     //Define ação para ENTER e TAB no campo codigo do agrupamento
     $("#cdagrupa", "#frmHistorico").unbind('keypress').bind('keypress', function (e) {
+		if (e.keyCode == 9 || e.keyCode == 13) {
+			// Finaliza o cadastro
+			$('#idmonpld', '#frmHistorico').focus();
+			return false;
+		}
+    });	
+	
+    $("#idmonpld", "#frmHistorico").unbind('keypress').bind('keypress', function (e) {
 		if (e.keyCode == 9 || e.keyCode == 13) {
 			// Finaliza o cadastro
 			$('#btSalvar', '#divBotoes').focus();
@@ -1509,6 +1522,8 @@ function manterRotina() {
     var indebfol = $('#indebfol', '#frmHistorico').val();
     var txdoipmf = $('#txdoipmf', '#frmHistorico').val();
 	
+	var idmonpld = $('#idmonpld', '#frmHistorico').val();
+	
 	
 	$.ajax({		
         type: 'POST',
@@ -1553,6 +1568,7 @@ function manterRotina() {
 				  vltarcsh : vltarcsh,
 				  indebfol : indebfol,
 				  txdoipmf : txdoipmf,
+				  idmonpld : idmonpld,
 				  redirect : 'script_ajax'
 				  
 				},

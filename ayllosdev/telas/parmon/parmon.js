@@ -11,6 +11,8 @@
  *                24/05/2016 - Inclusão do novo parâmetro (flmntage) de monitoração de agendamento (Carlos)
  *
  *				  31/10/2017 - Ajuste tela prevencao a lavagem de dinheiro - Melhoria 458 (junior Mouts)
+ *
+ *                16/05/2017 - Ajustes prj420 - Resolucao - Heitor (Mouts)
  * -----------------------------------------------------------------------
  */
 
@@ -364,6 +366,8 @@ function manter_rotina(rotina) {
     var inverificasaldo = $('#inverificasaldo', '#' + frmparmon).is(":checked") ? 1 : 0;
     var dsdemailseg = $('#dsdemailseg', '#' + frmparmon).val();
     var dsdeemail = $('#dsdeemail', '#' + frmparmon).val();
+	var vlalteracaoprovemail = $('#vlalteracaoprovemail', '#' + frmparmon).val();
+	var vllimitepagtoespecie = $('#vllimitepagtoespecie', '#' + frmparmon).val();
 
     if (rotina != undefined) {
         cddopcao = rotina;
@@ -451,6 +455,8 @@ function manter_rotina(rotina) {
             inverificasaldo: inverificasaldo,
             dsdemailseg: dsdemailseg,
             dsdeemail: dsdeemail,
+			vlalteracaoprovemail: vlalteracaoprovemail,
+			vllimitepagtoespecie: vllimitepagtoespecie,
             redirect: "script_ajax"
         },
         error: function (objAjax, responseError, objExcept) {
@@ -692,6 +698,15 @@ function formatTabEnter() {
         if (divError.css('display') == 'block') { return false; }
         $('input,select,textarea').removeClass('campoErro');
         if (e.keyCode == 13) {
+            $('#vlalteracaoprovemail', '#' + frmparmon).focus();
+            return false;
+        }
+    });
+	
+	$('#vlalteracaoprovemail', '#' + frmparmon).unbind('keydown').bind('keydown', function (e) {
+        if (divError.css('display') == 'block') { return false; }
+        $('input,select,textarea').removeClass('campoErro');
+        if (e.keyCode == 13) {
             $('#vlprovisaosaque', '#' + frmparmon).focus();
             return false;
         }
@@ -707,6 +722,15 @@ function formatTabEnter() {
     });
 
     $('#vlmonpagto', '#' + frmparmon).unbind('keydown').bind('keydown', function (e) {
+        if (divError.css('display') == 'block') { return false; }
+        $('input,select,textarea').removeClass('campoErro');
+        if (e.keyCode == 13) {
+            $('#vllimitepagtoespecie', '#' + frmparmon).focus();
+            return false;
+        }
+    });
+	
+	$('#vllimitepagtoespecie', '#' + frmparmon).unbind('keydown').bind('keydown', function (e) {
         if (divError.css('display') == 'block') { return false; }
         $('input,select,textarea').removeClass('campoErro');
         if (e.keyCode == 13) {

@@ -19,6 +19,8 @@
                 11/04/2018 - Incluído novo campo "Estourar a conta corrente" (inestocc)
                              Diego Simas - AMcom  
         
+                16/05/2018 - Ajustes prj420 - Resolucao - Heitor (Mouts)
+        
 ............................................................................*/
 
 /*............................. DEFINICOES .................................*/
@@ -589,7 +591,8 @@ PROCEDURE Busca_Historico:
            tt-histor.flgsenha = IF craphis.flgsenha THEN
                                     1
                                 ELSE
-                                    0. 
+                                    0
+		   tt-histor.idmonpld = craphis.idmonpld.
 
         IF craphis.cdgrphis > 0 THEN
             DO:
@@ -845,6 +848,8 @@ PROCEDURE Grava_Dados:
 
     DEF  INPUT PARAM par_indebfol AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_txdoipmf AS INTE                           NO-UNDO.
+    
+	DEF  INPUT PARAM par_idmonpld AS INTE                           NO-UNDO.
     
     DEF OUTPUT PARAM par_nmdcampo AS CHAR                           NO-UNDO.
     DEF OUTPUT PARAM TABLE FOR tt-erro.
@@ -1258,7 +1263,8 @@ PROCEDURE Grava_Dados:
                                        INPUT aux_vltarcxo,
                                        INPUT aux_vltarint,
                                        INPUT aux_vltarcsh,
-                                       INPUT 0). /* cdcoprep */
+                                       INPUT 0,
+									   INPUT par_idmonpld). /* cdcoprep */
                      /* Codigo da cooperativa que esta replicando eh 0
                         esta alterando o historico */
                 END.
@@ -1296,7 +1302,8 @@ PROCEDURE Grava_Dados:
                            craphis.cdagrupa  =  par_cdagrupa
                            craphis.dsextrat  =  CAPS(par_dsextrat)
                            craphis.flgsenha  =  aux_flgsenha
-                           craphis.cdgrphis  =  par_cdgrphis.
+                           craphis.cdgrphis  =  par_cdgrphis
+						   craphis.idmonpld  =  par_idmonpld.
     
                     /* Atualizar as informacoes das tarifas */
                     FIND FIRST crapthi WHERE crapthi.cdcooper = craphis.cdcooper
@@ -1552,7 +1559,8 @@ PROCEDURE Replica_Dados:
                                INPUT log_vltarcxo,
                                INPUT log_vltarint,
                                INPUT log_vltarcsh,
-                               INPUT par_cdcooper). /* cdcoprep */
+                               INPUT par_cdcooper,
+							   INPUT craphis.idmonpld). /* cdcoprep */
             /* passar o codigo da cooperativa 
               que estamos replicando o historico */
         END.
@@ -2026,7 +2034,8 @@ PROCEDURE gera_item_log:
     DEF INPUT PARAM log_vltarint AS DECI                            NO-UNDO.
     DEF INPUT PARAM log_vltarcsh AS DECI                            NO-UNDO.
     /* Codigo da cooperativa que replicou os dados */
-    DEF INPUT PARAM par_cdcoprep AS INTE NO-UNDO.
+    DEF INPUT PARAM par_cdcoprep AS INTE                            NO-UNDO.
+	DEF INPUT PARAM par_idmonpld AS INTE                            NO-UNDO.
 
     FOR FIRST b-craphis WHERE b-craphis.cdcooper = par_cdcooper
                           AND b-craphis.cdhistor = par_cdhistor NO-LOCK: END.
@@ -2302,6 +2311,21 @@ PROCEDURE gera_item_log:
                              ELSE
                                 "Nao"), 
                       INPUT (IF par_flgsenha = TRUE THEN
+                                "Sim"
+                             ELSE 
+                                "Nao")).
+       
+    IF par_idmonpld <> b-craphis.idmonpld THEN
+        RUN gera_log (INPUT par_cdcooper,
+                      INPUT par_cdoperad,
+                      INPUT par_cdhistor,
+                      INPUT par_cdcoprep,
+                      INPUT "Monitoramento PLD",
+                      INPUT (IF b-craphis.idmonpld = 1 THEN
+                                "Sim" 
+                             ELSE
+                                "Nao"), 
+                      INPUT (IF par_idmonpld = 1 THEN
                                 "Sim"
                              ELSE 
                                 "Nao")).

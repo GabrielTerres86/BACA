@@ -14,6 +14,8 @@
 	*				 03/08/2016 - Corrigi o uso desnecessario da funcao session_start. SD 491672 (Carlos R.)
 	*
 	*				 31/10/2017 - Ajuste tela prevencao a lavagem de dinheiro - Melhoria 458 (junior Mouts)
+	*
+	*                16/05/2017 - Ajustes prj420 - Resolucao - Heitor (Mouts)
 	* --------------
 	*/
 
@@ -335,6 +337,15 @@
 
             <tr>
               <td>
+                <label for="vlalteracaoprovemail">Valor altera&ccedil;&atilde;o de provis&atildeo envio de e-mail:</label>
+                <input type="text" id="vlalteracaoprovemail" name="vlalteracaoprovemail" value=""
+                <? echo $vlalteracaoprovemail ?>" />
+						
+              </td>
+            </tr>
+
+            <tr>
+              <td>
                 <label for="vlprovisaosaque">Valor provis&atilde;o de saque:</label>
                 <input type="text" id="vlprovisaosaque" name="vlprovisaosaque" value=""
                 <? echo $vlprovisaosaque ?>" />
@@ -347,6 +358,15 @@
                 <label for="vlmonpagto">Valor monitora&ccedil;&atilde;o de pagamento:</label>
                 <input type="text" id="vlmonpagto" name="vlmonpagto" value=""
                 <? echo $vlmonpagto ?>" />
+						
+              </td>
+            </tr>
+
+            <tr>
+              <td>
+                <label for="vllimitepagtoespecie">Limite pagamento boleto em esp&eacute;cie:</label>
+                <input type="text" id="vllimitepagtoespecie" name="vllimitepagtoespecie" value=""
+                <? echo $vllimitepagtoespecie ?>" />
 						
               </td>
             </tr>

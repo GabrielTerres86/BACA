@@ -14,6 +14,8 @@
  *
  *                11/04/2018 - Incluído novo campo "Estourar a conta corrente" (inestocc)
  *                             Diego Simas - AMcom  
+ *
+ *                16/05/2017 - Ajustes prj420 - Resolucao - Heitor (Mouts)
  * -------------- 
  */
 ?>
@@ -133,6 +135,9 @@
 	echo "$('#dsprodut','#frmHistorico').val('" . getByTagName($historico,'dsprodut') . "');";
 	echo "$('#cdagrupa','#frmHistorico').val('" . $cdagrupa . "');";
 	echo "$('#dsagrupa','#frmHistorico').val('" . getByTagName($historico,'dsagrupa') . "');";
+	echo "$('#idmonpld','#frmHistorico').val('" . getByTagName($historico,'idmonpld') . "');";
+	
+	
 	
 	if( $cddopcao == "X" ){
 		echo "$('input[type=\"text\"],select','#frmHistorico').desabilitaCampo().removeClass('campoErro');";
