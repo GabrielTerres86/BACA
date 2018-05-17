@@ -18,6 +18,110 @@ CREATE OR REPLACE PACKAGE CECRED.ESTE0002 IS
 
   ---------------------------------------------------------------------------------------------------------------*/
   
+  --> Funcao para CPF/CNPJ
+  FUNCTION fn_mask_cpf_cnpj(pr_nrcpfcgc IN NUMBER, pr_inpessoa IN NUMBER) return VARCHAR2;
+  
+  --> Funcao para formatar data hora conforme padrao da IBRATAN
+  FUNCTION fn_Data_ibra_motor (pr_data IN DATE) RETURN VARCHAR2;
+  
+  --> Rotina para retornar descrição do grau escolar
+  FUNCTION fn_des_grescola (pr_grescola  IN NUMBER) 
+                            RETURN VARCHAR2; 
+  
+  --> Rotina para retornar descrição de formação
+  FUNCTION fn_des_cdfrmttl (pr_cdfrmttl  IN NUMBER) --> codigo da formacao. 
+                            RETURN VARCHAR2; 
+  
+  --> Rotina para retornar descrição do tipos de naturezas de ocupacao
+  FUNCTION fn_des_cdnatopc (pr_cdnatocp  IN NUMBER) --> Codigo da natureza de ocupacao.  
+                            RETURN VARCHAR2; 
+  
+  --> Rotina para retornar descrição da ocupacão.
+  FUNCTION fn_des_cdocupa (pr_cdocupa  IN NUMBER) --> codigo da ocupacao. 
+                            RETURN VARCHAR2;
+  
+  --> Rotina para retornar descrição do turno
+  FUNCTION fn_des_cdturnos (pr_cdturnos  IN NUMBER) --> Codigo do turno
+                            RETURN VARCHAR2; 
+  
+  --> Rotina para retornar descrição do nivel do cargo.
+  FUNCTION fn_des_cdnvlcgo (pr_cdnvlcgo  IN NUMBER) --> Codigo do nivel do cargo
+                            RETURN VARCHAR2; 
+  
+  --> Rotina para retornar descrição do tipo de contrato de trabalho
+  FUNCTION fn_des_tpcttrab (pr_tpcttrab  IN NUMBER) --> Codigo tipo de contrato de trabalho
+                            RETURN VARCHAR2;   
+  
+  --> Rotina para retornar descrição do estado civil
+  FUNCTION fn_des_cdestciv (pr_cdestciv  IN NUMBER) --> Codigo do estado civil
+                            RETURN VARCHAR2;
+  
+  --> Rotina para retornar descrição de indicador de menor
+  FUNCTION fn_des_inhabmen (pr_inhabmen  IN NUMBER) --> indicador de menor
+                            RETURN VARCHAR2;
+  
+  --> Rotina para retornar descrição do tipo de conta
+  FUNCTION fn_des_cdtipcta (pr_inpessoa IN tbcc_tipo_conta.inpessoa%TYPE,  --> Tipo de pessoa
+                            pr_cdtipcta IN tbcc_tipo_conta.cdtipo_conta%TYPE)  --> Tipo de conta
+                            RETURN VARCHAR2;
+  
+  --> Rotina para retornar descrição de situacao da conta
+  FUNCTION fn_des_cdsitdct (pr_cdsitdct  IN NUMBER) --> Codigo de situacao da conta
+                            RETURN VARCHAR2;
+  
+  --> Rotina para retornar descrição de indicador
+  FUNCTION fn_des_incasprp (pr_incasprp  IN NUMBER) --> Codigo indicador
+                            RETURN VARCHAR2;
+  
+  --> Rotina para retornar descrição da situação do CPF
+  FUNCTION fn_des_cdsitcpf (pr_cdsitcpf  IN NUMBER) --> Codigo da situação do CPF
+                            RETURN VARCHAR2;
+  
+  --> Rotina para retornar descrição de cadastro positivo
+  FUNCTION fn_des_incadpos (pr_incadpos  IN NUMBER) --> Codigo cadastro positivo
+                            RETURN VARCHAR2;
+  
+  --> Rotina para remover caracteres do telefone
+  FUNCTION fn_somente_numeros_telefone(pr_nrtelefo VARCHAR2) RETURN VARCHAR2;
+  
+  --> Rotina para retornar descrição de atraso
+  FUNCTION fn_des_pontualidade (pr_qtdiaatr  IN NUMBER) --> qtd dias de atraso
+                                RETURN VARCHAR2;
+  
+    /* Rotina de calculo de dias do ultimo pagamento de emprestimos em atraso*/
+  PROCEDURE pc_calc_dias_atraso(pr_cdcooper   IN crapepr.cdcooper%TYPE --> Código da cooperativa
+                               ,pr_nrdconta   IN crapepr.nrdconta%TYPE --> Numero da conta do emprestimo
+                               ,pr_nrctremp   IN crapepr.nrctremp%TYPE --> Numero do contrato de emprestimo
+                               ,pr_dtmvtolt   IN crapdat.dtmvtolt%TYPE --> Data Movimento
+                               ,pr_dtmvtoan   IN crapdat.dtmvtoan%TYPE --> Data Movimento Anterior
+                               ,pr_dtmvtopr   IN crapdat.dtmvtopr%TYPE --> Data Movimento Próximo
+                               ,pr_tpemprst   IN crapepr.tpemprst%TYPE --> Tipo do Empréstimo
+                               ,pr_qtmesdec   IN crapepr.qtmesdec%TYPE --> Meses decorridos
+                               ,pr_dtdpagto   IN crapepr.dtdpagto%TYPE --> Data de pagamento
+                               ,pr_qtprecal   IN crapepr.qtprecal%TYPE --> Quantidade parcelas calculadas
+                               ,pr_flgpagto   IN crapepr.flgpagto%TYPE --> TIpo de pagamento
+                               ,pr_qtdiaatr   OUT NUMBER --> Quantidade de dias em atraso
+                               ,pr_cdcritic   OUT crapcri.cdcritic%TYPE --> Código de critica encontrada
+                               ,pr_des_erro   OUT VARCHAR2);
+  
+  PROCEDURE pc_gera_json_pessoa_ass(pr_cdcooper IN crapass.cdcooper%TYPE
+                                   ,pr_nrdconta IN crapass.nrdconta%TYPE
+                                   ,pr_nrctremp IN crapepr.nrctremp%TYPE
+                  ,pr_flprepon IN BOOLEAN DEFAULT FALSE
+                                   ,pr_vlsalari IN NUMBER  DEFAULT 0
+                                   ,pr_persocio IN NUMBER  DEFAULT 0
+                                   ,pr_dtadmsoc IN DATE    DEFAULT NULL
+                                   ,pr_dtvigpro IN DATE    DEFAULT NULL
+                                   ,pr_dsjsonan OUT json
+                                   ,pr_cdcritic OUT NUMBER
+                                   ,pr_dscritic OUT VARCHAR2);
+                               
+  PROCEDURE pc_gera_json_pessoa_avt ( pr_rw_crapavt  IN crapavt%ROWTYPE,        --> Dados do avalista
+                                      ---- OUT ----
+                                      pr_dsjsonavt OUT NOCOPY json,             --> Retorno do clob em modelo json dos dados do avalista
+                                      pr_cdcritic  OUT NUMBER,                  --> Codigo da critica
+                                      pr_dscritic  OUT VARCHAR2);
+  
   --> Rotina responsavel por montar o objeto json para analise
   PROCEDURE pc_gera_json_analise ( pr_cdcooper   IN crapass.cdcooper%TYPE   --> Codigo da cooperativa
                                   ,pr_cdagenci   IN crapass.cdagenci%TYPE   --> Codigo da cooperativa
@@ -3812,7 +3916,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
       Sistema  : Conta-Corrente - Cooperativa de Credito
       Sigla    : CRED
       Autor    : Odirlei Busana(AMcom)
-      Data     : Maio/2017.                   Ultima atualizacao: 23/11/2017
+      Data     : Maio/2017.                   Ultima atualizacao: 12/04/2018
     
       Dados referentes ao programa:
     
@@ -3820,6 +3924,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
       Objetivo  : Rotina responsavel por montar o objeto json para analise.
     
       Alteração : 19/10/2017 - Enviar um novo campo "valorPrestLiquidacao". (Lombardi)
+        
+                  23/11/2017 - Alterações para o projeto 404. (Lombardi)
         
                   23/11/2017 - Alterações para o projeto 404. (Lombardi)
         
@@ -3893,6 +3999,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
              ,wpr.dtlibera
              ,wpr.dtcarenc
              ,wpr.percetop
+             ,wpr.idcarenc
         FROM crawepr wpr
             ,craplcr lcr
             ,crapfin fin      
@@ -4158,6 +4265,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
     vr_flgcolab      BOOLEAN;
     vr_cddcargo      tbcadast_colaborador.cdcooper%TYPE;
 		vr_qtdiarpv      INTEGER;
+    vr_vlpreclc      NUMBER := 0;                -- Parcela calcula
     vr_valoriof      NUMBER;
     vr_vliofpri      NUMBER;
     vr_vliofadi      NUMBER;
@@ -4168,6 +4276,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
     vr_sum_vlpreemp  crapepr.vlpreemp%TYPE := 0;
     vr_vlpreemp      crapepr.vlpreemp%TYPE;
     vr_percenminimo  tbgar_cobertura_operacao.perminimo%TYPE;
+    vr_qtdias_carencia tbepr_posfix_param_carencia.qtddias%TYPE := 0;
       
   BEGIN
   
@@ -4405,11 +4514,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
       END IF;
     END IF;  
 
+    -- Busca quantidade de dias da carencia
+    IF rw_crawepr.tpemprst = 2 AND nvl(rw_crawepr.idcarenc,0) > 0 THEN
+      EMPR0011.pc_busca_qtd_dias_carencia(pr_idcarencia => rw_crawepr.idcarenc
+                                         ,pr_qtddias    => vr_qtdias_carencia
+                                         ,pr_cdcritic   => vr_cdcritic
+                                         ,pr_dscritic   => vr_dscritic); 
+      -- Testar possíveis erros na rotina:
+      IF vr_cdcritic > 0 OR trim(vr_dscritic) IS NOT NULL THEN 
+        RAISE vr_exc_erro;
+      END IF;                                          
+    END IF;
+    
     -- Buscar IOF
     EMPR0001.pc_calcula_iof_epr(pr_cdcooper => pr_cdcooper
                                ,pr_nrdconta => pr_nrdconta
                                ,pr_dtmvtolt => rw_crapdat.dtmvtolt
                                ,pr_inpessoa => rw_crawepr.inpessoa
+                               ,pr_cdfinemp => rw_crawepr.cdfinemp
                                ,pr_cdlcremp => rw_crawepr.cdlcremp
                                ,pr_qtpreemp => rw_crawepr.qtpreemp
                                ,pr_vlpreemp => rw_crawepr.vlpreemp
@@ -4418,12 +4540,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
                                ,pr_dtlibera => rw_crawepr.dtlibera
                                ,pr_tpemprst => rw_crawepr.tpemprst
                                ,pr_dtcarenc => rw_crawepr.dtcarenc
-                               ,pr_qtdias_carencia => 0
+                               ,pr_qtdias_carencia => vr_qtdias_carencia
+                               ,pr_vlpreclc => vr_vlpreclc
                                ,pr_valoriof => vr_valoriof
                                ,pr_vliofpri => vr_vliofpri
                                ,pr_vliofadi => vr_vliofadi
                                ,pr_flgimune => vr_flgimune
                                ,pr_dscritic => vr_dscritic);
+    -- Testar possíveis erros na rotina:
+    IF trim(vr_dscritic) IS NOT NULL THEN 
+      RAISE vr_exc_erro;
+    END IF;    
+       
 
     vr_obj_generico.put('operacao', rw_crawepr.dsoperac); 
     vr_obj_generico.put('CETValor', este0001.fn_decimal_ibra(nvl(rw_crawepr.percetop,0)));
