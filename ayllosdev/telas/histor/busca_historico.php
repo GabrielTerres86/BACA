@@ -9,8 +9,11 @@
  *
  *                05/12/2016 - P341-Automatização BACENJUD - Alterar a passagem da descrição do 
  *                             departamento como parametros e passar o o código (Renato Darosci)
- * -------------- 
  *
+ *				  05/12/2017 - Adicionado campo Ind. Monitoramento - Melhoria 458 - Antonio R. Jr (mouts)
+ *
+ *                11/04/2018 - Incluído novo campo "Estourar a conta corrente" (inestocc)
+ *                             Diego Simas - AMcom  
  * -------------- 
  */
 ?>
@@ -89,6 +92,7 @@
 	echo "$('#indcompl','#frmHistorico').val('" . getByTagName($historico,'indcompl') . "');";
 	echo "$('#indebcta','#frmHistorico').val('" . getByTagName($historico,'indebcta') . "');";
 	echo "$('#incremes','#frmHistorico').val('" . getByTagName($historico,'incremes') . "');";
+	echo "$('#inmonpld','#frmHistorico').val('" . getByTagName($historico,'inmonpld') . "');";
 	
 	// Dados Contabeis
 	echo "$('#cdhstctb','#frmHistorico').val('" . getByTagName($historico,'cdhstctb') . "');";
@@ -100,6 +104,10 @@
 	echo "$('#ingerdeb','#frmHistorico').val('" . getByTagName($historico,'ingerdeb') . "');";
 	echo "$('#nrctatrc','#frmHistorico').val('" . getByTagName($historico,'nrctatrc') . "');";
 	echo "$('#nrctatrd','#frmHistorico').val('" . getByTagName($historico,'nrctatrd') . "');";
+	if($cddopcao == 'A'){
+		echo "$('#inestocc','#frmHistorico').val('" . getByTagName($historico,'inestocc') . "');";		
+	}	
+	
 	
 	// LABEL - Tarifas
 	$vltarayl = number_format(str_replace(',','.',getByTagName($historico,'vltarayl')),2,',','.');
@@ -112,7 +120,7 @@
 	echo "$('#vltarint','#frmHistorico').val('" . $vltarint . "');";
 	echo "$('#vltarcsh','#frmHistorico').val('" . $vltarcsh . "');";
 	
-	// LABEL - Situacoes de Contas
+	// LABEL - Grupo de Histórico
 	$cdgrphis = (getByTagName($historico,'cdgrphis') == "0") ? "" : getByTagName($historico,'cdgrphis');
 	echo "$('#cdgrupo_historico','#frmHistorico').val('" . $cdgrphis . "');";
 	echo "$('#dsgrupo_historico','#frmHistorico').val('" . getByTagName($historico,'dsgrphis') . "');";
@@ -126,8 +134,6 @@
 	echo "$('#cdagrupa','#frmHistorico').val('" . $cdagrupa . "');";
 	echo "$('#dsagrupa','#frmHistorico').val('" . getByTagName($historico,'dsagrupa') . "');";
 	
-	
-
 	if( $cddopcao == "X" ){
 		echo "$('input[type=\"text\"],select','#frmHistorico').desabilitaCampo().removeClass('campoErro');";
 		echo "$('#btSalvar').focus();";
