@@ -123,7 +123,9 @@ Alteracoes: 22/08/2007 - Alterado os parametros nas chamadas para as
                         (Lucas Ranghetti #760721)
 
            12/12/2017 - Alterar campo flgcnvsi por tparrecd.
-                        PRJ406-FGTS (Odirlei-AMcom)             
+                        PRJ406-FGTS (Odirlei-AMcom)    
+                        
+           16/05/2018 - Ajustes prj420 - Resolucao - Heitor (Mouts)
 
 ..............................................................................*/
 
@@ -675,22 +677,22 @@ END PROCEDURE.
 PROCEDURE process-web-request:
 
   /* usar no lugar de c-fnc-javascript*/
-  DEF VAR aux_funcaojs    AS  CHAR                           NO-UNDO. 
-  DEF VAR aux_vltitulo    AS  DECI                           NO-UNDO. 
-  DEF VAR aux_vlrjuros    AS  DECI                           NO-UNDO. 
-  DEF VAR aux_vlrmulta    AS  DECI                           NO-UNDO. 
-  DEF VAR aux_fltitven    AS  INTE                           NO-UNDO. 
-  DEF VAR aux_nmbenefi    AS  CHAR                           NO-UNDO. 
-  DEF VAR aux_inpesbnf    AS  INTE                           NO-UNDO. 
-  DEF VAR aux_nrdocbnf    AS  DECI                           NO-UNDO. 
-  DEF VAR aux_cdctrlcs    AS  CHAR                           NO-UNDO. 
-  DEF VAR aux_des_erro    AS  CHAR                           NO-UNDO. 
-  DEF VAR aux_dscritic    AS  CHAR                           NO-UNDO. 
-  DEF VAR hdnEstorno      AS  CHAR                           NO-UNDO.
-  DEF VAR hdnVerifEstorno AS  CHAR                           NO-UNDO.
-  DEF VAR hdnValorAcima   AS  CHAR                           NO-UNDO.
-
-
+  DEF VAR aux_funcaojs             AS CHAR                           NO-UNDO. 
+  DEF VAR aux_vltitulo             AS DECI                           NO-UNDO. 
+  DEF VAR aux_vlrjuros             AS DECI                           NO-UNDO. 
+  DEF VAR aux_vlrmulta             AS DECI                           NO-UNDO. 
+  DEF VAR aux_fltitven             AS INTE                           NO-UNDO. 
+  DEF VAR aux_nmbenefi             AS CHAR                           NO-UNDO. 
+  DEF VAR aux_inpesbnf             AS INTE                           NO-UNDO. 
+  DEF VAR aux_nrdocbnf             AS DECI                           NO-UNDO. 
+  DEF VAR aux_cdctrlcs             AS CHAR                           NO-UNDO. 
+  DEF VAR aux_des_erro             AS CHAR                           NO-UNDO. 
+  DEF VAR aux_dscritic             AS CHAR                           NO-UNDO. 
+  DEF VAR hdnEstorno               AS CHAR                           NO-UNDO.
+  DEF VAR hdnVerifEstorno          AS CHAR                           NO-UNDO.
+  DEF VAR hdnValorAcima            AS CHAR                           NO-UNDO.
+  DEF VAR aux_cdcritic             AS INTE                           NO-UNDO.
+  
   RUN outputHeader.
 
   /*******************************************************************
@@ -774,7 +776,8 @@ PROCEDURE process-web-request:
                             v_codbarras = ""
                             v_msg       = ""
                             vh_foco     = "7"
-                            v_tppagmto  = "0".
+                            /*v_tppagmto  = "0"*/
+							.
                  END.
              ELSE 
              DO:    
@@ -792,7 +795,7 @@ PROCEDURE process-web-request:
                          ASSIGN v_conta = TRIM(STRING(tt-crapcbl.nrdconta, "zzzz,zzz,9"))
                                 v_nome  = TRIM(tt-crapcbl.dsdonome).
                      END.
-                     
+
                  ASSIGN aux_des_erro = "OK".
 
                  /*se o cod barras estiver preenchido verifica o campo 
@@ -800,8 +803,7 @@ PROCEDURE process-web-request:
                    ou o campo nao estiver preenchido*/
                  IF get-value("v_codbarras") <> "" AND 
                     v_tipdocto <> "2" THEN
-                    DO:       
-
+                    DO:
                         /*v_tpproces (1-Automatico(leitora)|2-Manual(digitado p ope)*/
                         IF  INT(v_tpproces) = 1 THEN
                         DO:
@@ -1206,6 +1208,8 @@ PROCEDURE processa-titulo:
     DEFINE VARIABLE de_tit3          AS DECIMAL                        NO-UNDO. 
     DEFINE VARIABLE de_tit4          AS DECIMAL                        NO-UNDO. 
     DEFINE VARIABLE de_tit5          AS DECIMAL                        NO-UNDO. 
+	
+	DEF VAR aux_vllimite_especie     AS DECIMAL                  NO-UNDO.
 
     FIND FIRST ab_unmap.
 
@@ -1361,7 +1365,68 @@ PROCEDURE processa-titulo:
            ASSIGN par_setafoco = "10".
            RETURN "NOK".
         END. 
-     
+    
+	/* Heitor */
+	 IF par_tppagmto = 1 THEN
+	   DO:
+		 { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+		 RUN STORED-PROCEDURE pc_lim_pagto_especie_pld
+			 aux_handproc = PROC-HANDLE NO-ERROR
+			 (INPUT par_cdcooper,
+			  OUTPUT 0,
+			  OUTPUT 0,
+			  OUTPUT "").
+
+		 CLOSE STORED-PROC pc_lim_pagto_especie_pld
+			   aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+		 { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+		
+		 ASSIGN aux_cdcritic = 0
+				aux_dscritic = ""
+				aux_vllimite_especie = 0
+				aux_cdcritic = pc_lim_pagto_especie_pld.pr_cdcritic 
+							   WHEN pc_lim_pagto_especie_pld.pr_cdcritic <> ?
+				aux_dscritic = pc_lim_pagto_especie_pld.pr_dscritic 
+							   WHEN pc_lim_pagto_especie_pld.pr_dscritic <> ?
+				aux_vllimite_especie = pc_lim_pagto_especie_pld.pr_vllimite_pagto_especie 
+							   WHEN pc_lim_pagto_especie_pld.pr_vllimite_pagto_especie <> ?.
+		
+		 IF aux_vllimite_especie <= par_vltitulo THEN
+		 DO:
+		   /* Limpar as criticas */
+		   RUN elimina-erro(INPUT glb_nmrescop,
+							INPUT glb_cdagenci,
+							INPUT glb_cdbccxlt).
+		  
+		   /* Criar o erro novo */
+		   RUN cria-erro(INPUT glb_nmrescop,
+						 INPUT glb_cdagenci,
+						 INPUT glb_cdbccxlt,
+						 INPUT 0,
+						 INPUT "Valor de pagamento excede o permitido para a operação em espécie. Serão aceitos somente pagamentos inferiores a R$ " + TRIM(STRING(aux_vllimite_especie,'zzz,zzz,zz9.99'))
+						 + " (Resolução CMN 4.648/18).",
+						 INPUT YES).
+
+           RUN cria-erro(INPUT glb_nmrescop,
+						 INPUT glb_cdagenci,
+						 INPUT glb_cdbccxlt,
+						 INPUT 0,
+						 INPUT "Necessário depositar o recurso em conta e após isso proceder com o pagamento na opção ~"Conta~" ou nos canais digitais.",
+						 INPUT YES).
+						 
+		   /* Exibir o erro */ 
+		   RUN gera-erro(INPUT glb_cdcooper,
+						 INPUT glb_cdagenci,
+						 INPUT glb_cdbccxlt).
+			
+		   /* Setar o foco no campo Codigo de Barras */ 
+		   ASSIGN par_setafoco = "10".
+		   RETURN "NOK".
+		 END.
+	   END.
+	   /* Fim Heitor */
+	
     /* ***Passou pelas validacoes*** */
     IF  par_titvenci = "no" AND 
         aux_intitcop = 1     THEN /** Titulo da cooperativa **/
@@ -1471,6 +1536,8 @@ PROCEDURE processa-fatura:
     DEF VAR aux_debitaut            AS  LOG                     NO-UNDO.
     DEF VAR aux_des_erro            AS CHARACTER                NO-UNDO.
     DEF VAR aux_dscritic            AS CHARACTER                NO-UNDO.
+	DEF VAR aux_cdcritic            AS INTEGER                  NO-UNDO.
+	DEF VAR aux_vllimite_especie    AS DECIMAL                  NO-UNDO.
 
     FIND FIRST ab_unmap.
 
@@ -1539,7 +1606,68 @@ PROCEDURE processa-fatura:
         RETURN "NOK".
     END.
     ELSE DO:
-        /* Valida o valor do limite do PA / Cooperativa */    
+	 /* Heitor */
+	 IF par_tppagmto = 1 THEN
+	   DO:
+		 { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+		 RUN STORED-PROCEDURE pc_lim_pagto_especie_pld
+	 		 aux_handproc = PROC-HANDLE NO-ERROR
+			 (INPUT par_cdcooper,
+			  OUTPUT 0,
+			  OUTPUT 0,
+			  OUTPUT "").
+
+		 CLOSE STORED-PROC pc_lim_pagto_especie_pld
+	 		   aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+		 { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+		
+		 ASSIGN aux_cdcritic = 0
+		 	    aux_dscritic = ""
+			    aux_vllimite_especie = 0
+			    aux_cdcritic = pc_lim_pagto_especie_pld.pr_cdcritic 
+							   WHEN pc_lim_pagto_especie_pld.pr_cdcritic <> ?
+			    aux_dscritic = pc_lim_pagto_especie_pld.pr_dscritic 
+							   WHEN pc_lim_pagto_especie_pld.pr_dscritic <> ?
+			    aux_vllimite_especie = pc_lim_pagto_especie_pld.pr_vllimite_pagto_especie 
+							   WHEN pc_lim_pagto_especie_pld.pr_vllimite_pagto_especie <> ?.
+		
+		 IF aux_vllimite_especie <= aux_vltitfat THEN
+		 DO:
+		   /* Limpar as criticas */
+		   RUN elimina-erro(INPUT glb_nmrescop,
+						    INPUT glb_cdagenci,
+						    INPUT glb_cdbccxlt).
+		  
+		   /* Criar o erro novo */
+		   RUN cria-erro(INPUT glb_nmrescop,
+						 INPUT glb_cdagenci,
+						 INPUT glb_cdbccxlt,
+						 INPUT 0,
+						 INPUT "Valor de pagamento excede o permitido para a operação em espécie. Serão aceitos somente pagamentos inferiores a R$ " + TRIM(STRING(aux_vllimite_especie,'zzz,zzz,zz9.99'))
+						 + " (Resolução CMN 4.648/18).",
+						 INPUT YES).
+
+           RUN cria-erro(INPUT glb_nmrescop,
+						 INPUT glb_cdagenci,
+						 INPUT glb_cdbccxlt,
+						 INPUT 0,
+						 INPUT "Necessário depositar o recurso em conta e após isso proceder com o pagamento na opção ~"Conta~" ou nos canais digitais.",
+						 INPUT YES).
+
+		   /* Exibir o erro */ 
+		   RUN gera-erro(INPUT glb_cdcooper,
+						 INPUT glb_cdagenci,
+						 INPUT glb_cdbccxlt).                                   
+			
+		   /* Setar o foco no campo Codigo de Barras */ 
+		   ASSIGN vh_foco = "10".
+		   RETURN "NOK".
+		 END.
+	   END.
+	   /* Fim Heitor */
+		
+	    /* Valida o valor do limite do PA / Cooperativa */    
         RUN validar-valor-limite(INPUT par_cdcooper,
                                  INPUT v_cod,
                                  INPUT par_cdagenci,
@@ -1753,9 +1881,9 @@ PROCEDURE processa-fatura:
                                         par_funcaojs = par_funcaojs + '";'.
             END.
         
-        END.        
    END.
-   
+   END.
+
    RETURN "OK".
 
 END PROCEDURE.

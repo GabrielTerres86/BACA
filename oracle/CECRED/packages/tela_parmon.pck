@@ -25,14 +25,16 @@ PROCEDURE pc_alterar_parmon_pld(
                              ,pr_inlibera_provisao_saque             IN tbcc_monitoramento_parametro.inlibera_provisao_saque%TYPE        --> indicador provisao de saque em especie
                              ,pr_inaltera_prov_presencial            IN tbcc_monitoramento_parametro.inaltera_provisao_presencial%TYPE   --> indicador alteracao de provisao nao presencial
                              ,pr_inverifica_saldo                    IN tbcc_monitoramento_parametro.inverifica_saldo%TYPE               -->verifica saldo
-                             ,pr_dsdemail                            VARCHAR2                                                     --> email sede da cooperativa
-                             ,pr_dsemailcoop                         VARCHAR2                                                     --> email seguranca da cooperativa
-                             ,pr_xmllog                              IN VARCHAR2                                                      --> XML com informações de LOG
-                             ,pr_cdcritic                            OUT PLS_INTEGER                                                  --> Código da crítica
-                             ,pr_dscritic                            OUT VARCHAR2                                                     --> Descrição da crítica
-                             ,pr_retxml                              IN OUT NOCOPY XMLType                                            --> Arquivo de retorno do XML
-                             ,pr_nmdcampo                            OUT VARCHAR2                                                     --> Nome do campo com erro
-                             ,pr_des_erro                            OUT VARCHAR2);                                                   --> Erros do processo
+                             ,pr_dsdemail                            VARCHAR2                                                            --> email sede da cooperativa
+                             ,pr_dsemailcoop                         VARCHAR2                                                            --> email seguranca da cooperativa
+                             ,pr_vlalteracao_prov_email              IN tbcc_monitoramento_parametro.vlalteracao_provisao_email%TYPE     --> Valor alteracao de provisao envio de email
+                             ,pr_vllimite_pagto_especie              IN tbcc_monitoramento_parametro.vllimite_pagamento_especie%TYPE     --> Limite para pagamento de boleto em especie
+                             ,pr_xmllog                              IN VARCHAR2                                                         --> XML com informações de LOG
+                             ,pr_cdcritic                            OUT PLS_INTEGER                                                     --> Código da crítica
+                             ,pr_dscritic                            OUT VARCHAR2                                                        --> Descrição da crítica
+                             ,pr_retxml                              IN OUT NOCOPY XMLType                                               --> Arquivo de retorno do XML
+                             ,pr_nmdcampo                            OUT VARCHAR2                                                        --> Nome do campo com erro
+                             ,pr_des_erro                            OUT VARCHAR2);                                                      --> Erros do processo
  
 PROCEDURE pc_consultar_parmon_pld(pr_cdcooper IN NUMBER       --> Codigo da cooperativa
                                  ,pr_cdcoptel       IN VARCHAR2       --> Codigo da cooperativa escolhida pela cecred
@@ -50,6 +52,11 @@ PROCEDURE pc_consultar_parmon_pld_car(pr_cdcooper  IN tbcc_monitoramento_paramet
                                            ,pr_vlmonitoracao_pagamento OUT NUMBER                       --> indicador da monitoracao pagamento
                                            ,pr_cdcritic OUT PLS_INTEGER                                 --> Código da crítica
                                            ,pr_dscritic OUT VARCHAR2);                                  --> Descrição da crítica
+
+PROCEDURE pc_lim_pagto_especie_pld(pr_cdcooper               IN  tbcc_monitoramento_parametro.cdcooper%TYPE                    --> Codigo Cooperativa                                     
+                                  ,pr_vllimite_pagto_especie OUT tbcc_monitoramento_parametro.vllimite_pagamento_especie%TYPE  --> Valor limite para pagamento em especie
+                                  ,pr_cdcritic               OUT PLS_INTEGER                                                   --> Código da crítica
+                                  ,pr_dscritic               OUT VARCHAR2);                                                    --> Descrição da crítica
 END tela_parmon;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.tela_parmon IS
@@ -63,6 +70,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.tela_parmon IS
   -- Dados referentes ao programa:
   --
   -- Objetivo  : Centralizar rotinas relacionadas a tela parmon
+  --
+  -- Alteracoes: 16/05/2018 - Ajustes prj420 - Resolucao - Heitor (Mouts)
   --
   ---------------------------------------------------------------------------
 PROCEDURE pc_alterar_parmon_pld(                             
@@ -90,14 +99,16 @@ PROCEDURE pc_alterar_parmon_pld(
                              ,pr_inlibera_provisao_saque             IN tbcc_monitoramento_parametro.inlibera_provisao_saque%TYPE        --> indicador provisao de saque em especie
                              ,pr_inaltera_prov_presencial            IN tbcc_monitoramento_parametro.inaltera_provisao_presencial%TYPE   --> indicador alteracao de provisao nao presencial
                              ,pr_inverifica_saldo                    IN tbcc_monitoramento_parametro.inverifica_saldo%TYPE               -->verifica saldo
-                             ,pr_dsdemail                            VARCHAR2                                                     --> email sede da cooperativa
-                             ,pr_dsemailcoop                         VARCHAR2                                                     --> email seguranca da cooperativa
-                             ,pr_xmllog                              IN VARCHAR2                                                      --> XML com informações de LOG
-                             ,pr_cdcritic                            OUT PLS_INTEGER                                                  --> Código da crítica
-                             ,pr_dscritic                            OUT VARCHAR2                                                     --> Descrição da crítica
-                             ,pr_retxml                              IN OUT NOCOPY XMLType                                            --> Arquivo de retorno do XML
-                             ,pr_nmdcampo                            OUT VARCHAR2                                                     --> Nome do campo com erro
-                             ,pr_des_erro                            OUT VARCHAR2) IS                                                 --> Erros do processo
+                             ,pr_dsdemail                            VARCHAR2                                                            --> email sede da cooperativa
+                             ,pr_dsemailcoop                         VARCHAR2                                                            --> email seguranca da cooperativa
+                             ,pr_vlalteracao_prov_email              IN tbcc_monitoramento_parametro.vlalteracao_provisao_email%TYPE     --> Valor alteracao de provisao envio de email
+                             ,pr_vllimite_pagto_especie              IN tbcc_monitoramento_parametro.vllimite_pagamento_especie%TYPE     --> Limite para pagamento de boleto em especie
+                             ,pr_xmllog                              IN VARCHAR2                                                         --> XML com informações de LOG
+                             ,pr_cdcritic                            OUT PLS_INTEGER                                                     --> Código da crítica
+                             ,pr_dscritic                            OUT VARCHAR2                                                        --> Descrição da crítica
+                             ,pr_retxml                              IN OUT NOCOPY XMLType                                               --> Arquivo de retorno do XML
+                             ,pr_nmdcampo                            OUT VARCHAR2                                                        --> Nome do campo com erro
+                             ,pr_des_erro                            OUT VARCHAR2) IS                                                    --> Erros do processo
     /* .............................................................................
     
         Programa: pc_alterar_parmon_pld
@@ -292,7 +303,9 @@ PROCEDURE pc_alterar_parmon_pld(
                  ,inlibera_provisao_saque
                  ,inaltera_provisao_presencial
                  ,inverifica_saldo
-                 ,dsdemail) 
+                 ,dsdemail
+                 ,vlalteracao_provisao_email
+                 ,vllimite_pagamento_especie) 
                 VALUES(vr_cdcooper
                        ,pr_qtrenda_diario_pf
                        ,pr_qtrenda_diario_pj
@@ -316,57 +329,63 @@ PROCEDURE pc_alterar_parmon_pld(
                        ,pr_inlibera_provisao_saque
                        ,pr_inaltera_prov_presencial
                        ,pr_inverifica_saldo
-                       ,pr_dsdemail);
+                       ,pr_dsdemail
+                       ,pr_vlalteracao_prov_email
+                       ,pr_vllimite_pagto_especie);
               ELSE
                 /*se não for cecred*/
                 IF(pr_cdcooper <> 3)THEN                
                     UPDATE tbcc_monitoramento_parametro m
-                      SET qtrenda_diario_pf   = pr_qtrenda_diario_pf
-                         ,qtrenda_diario_pj   = pr_qtrenda_diario_pj
-                         ,vlcredito_diario_pf = pr_vlcredito_diario_pf
-                         ,vlcredito_diario_pj = pr_vlcredito_diario_pj
-                         ,qtrenda_mensal_pf   = pr_qtrenda_mensal_pf
-                         ,qtrenda_mensal_pj   = pr_qtrenda_mensal_pj
-                         ,vlcredito_mensal_pf = pr_vlcredito_mensal_pf
-                         ,vlcredito_mensal_pj = pr_vlcredito_mensal_pj
-                         ,inrenda_zerada      = pr_inrenda_zerada
-                         ,vllimite_saque      = pr_vllimite_saque
-                         ,vllimite_deposito   = pr_vllimite_deposito
-                         ,vllimite_pagamento  = pr_vllimite_pagamento
-                         ,vlprovisao_email    = pr_vlprovisao_email
-                         ,vlprovisao_saque    = pr_vlprovisao_saque
-                         ,vlmonitoracao_pagamento = pr_vlmon_pagto
-                         ,qtdias_provisao      = pr_qtdias_provisao
-                         ,hrlimite_provisao    = pr_hrlimite_provisao
+                      SET qtrenda_diario_pf            = pr_qtrenda_diario_pf
+                         ,qtrenda_diario_pj            = pr_qtrenda_diario_pj
+                         ,vlcredito_diario_pf          = pr_vlcredito_diario_pf
+                         ,vlcredito_diario_pj          = pr_vlcredito_diario_pj
+                         ,qtrenda_mensal_pf            = pr_qtrenda_mensal_pf
+                         ,qtrenda_mensal_pj            = pr_qtrenda_mensal_pj
+                         ,vlcredito_mensal_pf          = pr_vlcredito_mensal_pf
+                         ,vlcredito_mensal_pj          = pr_vlcredito_mensal_pj
+                         ,inrenda_zerada               = pr_inrenda_zerada
+                         ,vllimite_saque               = pr_vllimite_saque
+                         ,vllimite_deposito            = pr_vllimite_deposito
+                         ,vllimite_pagamento           = pr_vllimite_pagamento
+                         ,vlprovisao_email             = pr_vlprovisao_email
+                         ,vlalteracao_provisao_email   = pr_vlalteracao_prov_email
+                         ,vllimite_pagamento_especie   = pr_vllimite_pagto_especie
+                         ,vlprovisao_saque             = pr_vlprovisao_saque
+                         ,vlmonitoracao_pagamento      = pr_vlmon_pagto
+                         ,qtdias_provisao              = pr_qtdias_provisao
+                         ,hrlimite_provisao            = pr_hrlimite_provisao
                          ,qtdias_provisao_cancelamento = pr_qtdias_prov_cancelamento
-                         ,inlibera_saque       = pr_inlibera_saque
-                         ,inlibera_provisao_saque = pr_inlibera_provisao_saque
+                         ,inlibera_saque               = pr_inlibera_saque
+                         ,inlibera_provisao_saque      = pr_inlibera_provisao_saque
                          ,inaltera_provisao_presencial = pr_inaltera_prov_presencial
                          ,inverifica_saldo             = pr_inverifica_saldo
                          ,dsdemail                     = pr_dsdemail
                     WHERE m.cdcooper = vr_cdcooper; 
                 ELSE
                   UPDATE tbcc_monitoramento_parametro m
-                      SET qtrenda_diario_pf   = pr_qtrenda_diario_pf
-                         ,qtrenda_diario_pj   = pr_qtrenda_diario_pj
-                         ,vlcredito_diario_pf = pr_vlcredito_diario_pf
-                         ,vlcredito_diario_pj = pr_vlcredito_diario_pj
-                         ,qtrenda_mensal_pf   = pr_qtrenda_mensal_pf
-                         ,qtrenda_mensal_pj   = pr_qtrenda_mensal_pj
-                         ,vlcredito_mensal_pf = pr_vlcredito_mensal_pf
-                         ,vlcredito_mensal_pj = pr_vlcredito_mensal_pj
-                         ,inrenda_zerada      = pr_inrenda_zerada
-                         ,vllimite_saque      = pr_vllimite_saque
-                         ,vllimite_deposito   = pr_vllimite_deposito
-                         ,vllimite_pagamento  = pr_vllimite_pagamento
-                         ,vlprovisao_email    = pr_vlprovisao_email
-                         ,vlprovisao_saque    = pr_vlprovisao_saque
-                         ,vlmonitoracao_pagamento = pr_vlmon_pagto
-                         ,qtdias_provisao      = pr_qtdias_provisao
-                         ,hrlimite_provisao    = pr_hrlimite_provisao
+                      SET qtrenda_diario_pf            = pr_qtrenda_diario_pf
+                         ,qtrenda_diario_pj            = pr_qtrenda_diario_pj
+                         ,vlcredito_diario_pf          = pr_vlcredito_diario_pf
+                         ,vlcredito_diario_pj          = pr_vlcredito_diario_pj
+                         ,qtrenda_mensal_pf            = pr_qtrenda_mensal_pf
+                         ,qtrenda_mensal_pj            = pr_qtrenda_mensal_pj
+                         ,vlcredito_mensal_pf          = pr_vlcredito_mensal_pf
+                         ,vlcredito_mensal_pj          = pr_vlcredito_mensal_pj
+                         ,inrenda_zerada               = pr_inrenda_zerada
+                         ,vllimite_saque               = pr_vllimite_saque
+                         ,vllimite_deposito            = pr_vllimite_deposito
+                         ,vllimite_pagamento           = pr_vllimite_pagamento
+                         ,vlprovisao_email             = pr_vlprovisao_email
+                         ,vlalteracao_provisao_email   = pr_vlalteracao_prov_email
+                         ,vllimite_pagamento_especie   = pr_vllimite_pagto_especie
+                         ,vlprovisao_saque             = pr_vlprovisao_saque
+                         ,vlmonitoracao_pagamento      = pr_vlmon_pagto
+                         ,qtdias_provisao              = pr_qtdias_provisao
+                         ,hrlimite_provisao            = pr_hrlimite_provisao
                          ,qtdias_provisao_cancelamento = pr_qtdias_prov_cancelamento
-                         ,inlibera_saque       = pr_inlibera_saque
-                         ,inlibera_provisao_saque = pr_inlibera_provisao_saque
+                         ,inlibera_saque               = pr_inlibera_saque
+                         ,inlibera_provisao_saque      = pr_inlibera_provisao_saque
                          ,inaltera_provisao_presencial = pr_inaltera_prov_presencial
                          ,inverifica_saldo             = pr_inverifica_saldo
                     WHERE m.cdcooper = vr_cdcooper; 
@@ -970,7 +989,25 @@ PROCEDURE pc_consultar_parmon_pld(pr_cdcooper IN NUMBER               --> Codigo
                              pr_tag_nova => 'vlmonitoracao_pagamento',
                              pr_tag_cont => rw_tbcc_monit_param.vlmonitoracao_pagamento,
                              pr_des_erro => vr_dscritic);                                                       
-                                
+    
+    gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                             pr_tag_pai  => 'inf',
+                             pr_posicao  => vr_auxconta,
+                             pr_tag_nova => 'vlalteracao_prov_email',
+                             pr_tag_cont => to_char(rw_tbcc_monit_param.vlalteracao_provisao_email,
+                                                    'fm9g999g999g999g999g990d00',
+                                                    'NLS_NUMERIC_CHARACTERS='',.'''),                              
+                             pr_des_erro => vr_dscritic);
+    
+    gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                             pr_tag_pai  => 'inf',
+                             pr_posicao  => vr_auxconta,
+                             pr_tag_nova => 'vllimite_pagto_especie',
+                             pr_tag_cont => to_char(rw_tbcc_monit_param.vllimite_pagamento_especie,
+                                                    'fm9g999g999g999g999g990d00',
+                                                    'NLS_NUMERIC_CHARACTERS='',.'''),                              
+                             pr_des_erro => vr_dscritic);
+
     -- BUSCAS COOPERATIVAS QUANDO CECREDI
     IF(pr_cdcooper = 3)THEN 
         gene0007.pc_insere_tag(pr_xml=> pr_retxml,
@@ -1036,13 +1073,13 @@ PROCEDURE pc_consultar_parmon_pld(pr_cdcooper IN NUMBER               --> Codigo
   END pc_consultar_parmon_pld;
 
  /* Buscar limite de pagamento especie */
-  PROCEDURE pc_consultar_parmon_pld_car(pr_cdcooper  IN tbcc_monitoramento_parametro.cdcooper%TYPE      --> Codigo Cooperativa                                     
-                                           ,pr_vllimite OUT NUMBER                                      --> Valor Limite
-                                           ,pr_vlcredito_diario_pf OUT NUMBER                           --> valor credito diario pf
-                                           ,pr_vlcredito_diario_pj OUT NUMBER                           --> valor credito diario pj
-                                           ,pr_vlmonitoracao_pagamento OUT NUMBER                       --> indicador da monitoracao pagamento
-                                           ,pr_cdcritic OUT PLS_INTEGER                                 --> Código da crítica
-                                           ,pr_dscritic OUT VARCHAR2) IS                                --> Descrição da crítica
+  PROCEDURE pc_consultar_parmon_pld_car(pr_cdcooper                IN  tbcc_monitoramento_parametro.cdcooper%TYPE  --> Codigo Cooperativa                                     
+                                       ,pr_vllimite                OUT NUMBER                                      --> Valor Limite
+                                       ,pr_vlcredito_diario_pf     OUT NUMBER                                      --> valor credito diario pf
+                                       ,pr_vlcredito_diario_pj     OUT NUMBER                                      --> valor credito diario pj
+                                       ,pr_vlmonitoracao_pagamento OUT NUMBER                                      --> indicador da monitoracao pagamento
+                                       ,pr_cdcritic                OUT PLS_INTEGER                                 --> Código da crítica
+                                       ,pr_dscritic                OUT VARCHAR2) IS                                --> Descrição da crítica
 
 --------------------------------------------------------------------------------------------------------------
   --
@@ -1129,5 +1166,68 @@ PROCEDURE pc_consultar_parmon_pld(pr_cdcooper IN NUMBER               --> Codigo
     END;
   END pc_consultar_parmon_pld_car;
 
+  PROCEDURE pc_lim_pagto_especie_pld(pr_cdcooper               IN  tbcc_monitoramento_parametro.cdcooper%TYPE                    --> Codigo Cooperativa                                     
+                                    ,pr_vllimite_pagto_especie OUT tbcc_monitoramento_parametro.vllimite_pagamento_especie%TYPE  --> Valor limite para pagamento em especie
+                                    ,pr_cdcritic               OUT PLS_INTEGER                                                   --> Código da crítica
+                                    ,pr_dscritic               OUT VARCHAR2) IS                                                  --> Descrição da crítica
+    CURSOR cr_monit_param IS
+      SELECT p.vllimite_pagamento_especie
+        FROM tbcc_monitoramento_parametro p
+       WHERE p.cdcooper = pr_cdcooper;         
+  
+      rw_monit_param cr_monit_param%ROWTYPE;
+    
+    --Variaveis erro
+    vr_cdcritic crapcri.cdcritic%TYPE;
+    vr_dscritic VARCHAR2(4000);
+    
+    --Variaveis de Excecao
+    vr_exc_saida EXCEPTION;
+      
+  BEGIN
+    --Inicializar variaveis erro
+    pr_cdcritic:= NULL;
+    pr_dscritic:= NULL;
+
+    --> Buscar parametros
+    OPEN cr_monit_param;
+    FETCH cr_monit_param INTO rw_monit_param;
+    
+    -- Se nao encontrar
+    IF cr_monit_param%NOTFOUND THEN
+      -- Fechar o cursor
+      CLOSE cr_monit_param;
+      
+      -- Montar mensagem de critica
+      vr_cdcritic := 0;
+      vr_dscritic := 'Parametro nao encontrado!';
+      -- volta para o programa chamador
+      RAISE vr_exc_saida;
+    ELSE
+      -- Fechar o cursor
+      CLOSE cr_monit_param;   
+    END IF;
+
+    pr_vllimite_pagto_especie := rw_monit_param.vllimite_pagamento_especie;
+
+  EXCEPTION
+    WHEN vr_exc_saida THEN
+      IF vr_cdcritic <> 0 THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+      ELSE
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+      END IF;      
+      -- Carregar XML padrão para variável de retorno não utilizada.
+      -- Existe para satisfazer exigência da interface.
+      ROLLBACK;
+    WHEN OTHERS THEN      
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := 'Erro geral na rotina da tela PARMON: ' || SQLERRM;
+      -- Carregar XML padrão para variável de retorno não utilizada.
+      -- Existe para satisfazer exigência da interface.
+      ROLLBACK;
+  END pc_lim_pagto_especie_pld;
 END tela_parmon;
 /
