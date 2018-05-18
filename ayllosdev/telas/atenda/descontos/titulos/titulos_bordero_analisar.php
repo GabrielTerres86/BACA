@@ -31,7 +31,7 @@
 	$nrborder = $_POST["nrborder"];
 
 	// Verifica permissão
-	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],$cddopcao)) <> "") {
+	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"], 'N')) <> "") {
 		exibeErro($msgError);		
 	}	
 	

@@ -32,7 +32,7 @@
 	$confirma = $_POST["confirma"];
 
 	// Verifica permissão
-	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],$cddopcao)) <> "") {
+	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"], 'L')) <> "") {
 		exibeErro($msgError);		
 	}	
 	
