@@ -618,7 +618,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
   --  Sistema  : Procedimentos para Seguros
   --  Sigla    : CRED
   --  Autor    : Douglas Pagel
-  --  Data     : Novembro/2013.                   Ultima atualizacao: 22/09/2017
+  --  Data     : Novembro/2013.                   Ultima atualizacao: 17/05/2018
   --
   -- Dados referentes ao programa:
   --
@@ -642,6 +642,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
   --             22/09/2017 - Ajustado para não gravar nmarqlog, pois so gera a tbgen_prglog
   --                         (Ana - Envolti - Chamado 745575)
   --
+	--             17/05/2018 - Inclusão do novo motivo "Insuf. saldo e/ou Inadimplencia (autom.)" na
+	--                          procedure "pc_buscar_motivo_can".
+	--                          (Reginaldo - AMcom - PRJ450)
   ---------------------------------------------------------------------------------------------------------------
   -- Busca dos dados da cooperativa
   CURSOR cr_crapcop (pr_cdcooper IN crapcop.cdcooper%type) IS
@@ -2797,7 +2800,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
                                           ,'Insuficiencia de saldo'
                                           ,'Encerramento de conta'
                                           ,'Insatisfação'
-                                          ,'Perdido para a concorrência');
+                                          ,'Perdido para a concorrência'
+																					,'Insuf. saldo e/ou Inadimplencia (autom.)');
       --Variaveis Locais
       vr_dsorigem VARCHAR2(1000);
       vr_dstransa VARCHAR2(1000);
@@ -2825,13 +2829,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SEGU0001 AS
 
       BEGIN
 
-        IF nvl(pr_cdmotcan,0) > 11 THEN
+        IF nvl(pr_cdmotcan,0) > 12 THEN
           vr_dscritic:= 'Motivo nao cadastrado';
           --Sair
           RAISE vr_exc_sair;
         END IF;
         --Retornar total motivos
-        pr_qtregist:= 9;
+        pr_qtregist:= 12;
 
         --Adicionar todos os motivos
         FOR idx IN 1..vr_mot_can.COUNT() LOOP
