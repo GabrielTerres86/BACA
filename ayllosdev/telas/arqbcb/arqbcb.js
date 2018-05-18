@@ -7,11 +7,10 @@
  * ALTERAÇÕES   :  29/10/2014 - Ajuste na rotina realizaOperacao() para 
  *								aumentar o tempo de timeout para 15min
  *								(Odirlei/Amcom)
- *
+ *              :  11/05/2018 - Adicionar opcao de C - Configuracao do webservice (Anderson) 
  *
  * --------------
  */
-
 // Definição de algumas variáveis globais 
 var cddopcao		= 'C';
 	
@@ -40,6 +39,8 @@ function estadoInicial() {
 	$('#divTela').fadeTo(0,0.1);
 	$('#frmBcb').css({'display':'block'});
 	$('#divBotoes').css({'display':'none'});
+		
+	escondeCamposConfiguracaoWebService();
 	
 	trocaBotao( '' );
 		
@@ -90,6 +91,13 @@ function controlaFoco() {
 				btnContinuar(); 				
 			}
 	});
+	
+	$('#tlcooper','#frmBcb').unbind('keypress').bind('keypress', function(e) {
+			if ( e.keyCode == 9 || e.keyCode == 13 ) {	
+				liberaCamposConfiguracaoWebServicePosCooperativa();
+				return false;
+			}	
+	});
 }
 
 function formataCabecalho() {
@@ -102,6 +110,9 @@ function formataCabecalho() {
 	cCddarqui			= $('#cddarqui','#'+frmBcb); 
 	cTodosCabecalho		= $('input[type="text"],select','#'+frmBcb);
 	btnCab				= $('#btOK','#'+frmBcb);
+	
+	cCddarqui.show();
+	rCddarqui.show();
 	
 	rCddopcao.css('width','44px');
 	rCddarqui.addClass('rotulo-linha').css({'width':'43px'});
@@ -125,20 +136,24 @@ function formataCabecalho() {
 
 // botoes
 function btnVoltar() {
-	
 	estadoInicial();
 	return false;
 }
 
 function LiberaCampos() {
+	
+	cOpcao = $('#cddopcao','#frmBcb');
+	if (cOpcao.val() == 'C') {
+		liberaCamposConfiguracaoWebService();
+	}
 
 	if ( $('#cddopcao','#frmBcb').hasClass('campoTelaSemBorda')  ) { return false; }	
 
 	// Desabilita campo opção
-	cTodosCabecalho		= $('input[type="text"],select','#frmBcb'); 
-	cTodosCabecalho.desabilitaCampo();
+	/* cTodosCabecalho		= $('input[type="text"],select','#frmBcb'); 
+	cTodosCabecalho.desabilitaCampo(); */
 	
-	$('#cddarqui','#frmBcb').habilitaCampo();	
+	cOpcao.habilitaCampo();	
 	$('#divBotoes', '#divTela').css({'display':'block'});
 	
 	$("#btSalvar","#divBotoes").show();
@@ -149,9 +164,117 @@ function LiberaCampos() {
 	trocaBotao('Prosseguir');
 	
 	$('#cddarqui','#frmBcb').focus();
+	
+	
 
 	return false;
 
+}
+
+function escondeCamposConfiguracaoWebService(){
+	/* Esconde campos da cooperativa */
+	rCdcooper			= $('label[for="tlcooper"]','#'+frmBcb); 
+	cCdcooper			= $('#tlcooper','#'+frmBcb); 
+	rCdcooper.hide();
+	cCdcooper.hide();
+	
+	/* Esconde campos da configuracao WS */
+	rFlctgbcb			= $('label[for="flctgbcb"]','#'+frmBcb); 
+	cFlctgbcb			= $('#flctgbcb','#'+frmBcb); 	
+	rFlctgbcb.hide();
+	cFlctgbcb.hide();
+}
+
+function liberaCamposConfiguracaoWebService(){
+	/* Esconde campos do tipo de Arquivos */
+	rCddarqui			= $('label[for="cddarqui"]','#'+frmBcb); 
+	cCddarqui			= $('#cddarqui','#'+frmBcb); 
+	cCddarqui.hide();
+	rCddarqui.hide();
+	
+	/* Mostra campos da cooperativa */
+	rCdcooper			= $('label[for="tlcooper"]','#'+frmBcb); 
+	cCdcooper			= $('#tlcooper','#'+frmBcb);
+	rCdcooper.show();
+	cCdcooper.show();
+	/* rCdcooper.habilitaCampo();
+	cCdcooper.habilitaCampo();  */
+	
+	/* Esconde campos da configuracao WS */
+	rFlctgbcb			= $('label[for="flctgbcb"]','#'+frmBcb); 
+	cFlctgbcb			= $('#flctgbcb','#'+frmBcb); 	
+	rFlctgbcb.show();
+	cFlctgbcb.show();
+	
+	liberaCamposConfiguracaoWebServicePosCooperativa();
+}
+
+function liberaCamposConfiguracaoWebServicePosCooperativa(){
+	cCdcooper = $('#tlcooper','#frmBcb');
+	
+	hideMsgAguardo();
+    mensagem = 'Aguarde, carregando configura&ccedil;&otilde;es...';
+    showMsgAguardo(mensagem);
+	
+	/* Busca configuracao da cooperativa */
+	$.ajax({
+        type: "POST",
+        dataType: "html",
+        url: UrlSite + "telas/arqbcb/manter_rotina_webservice.php",
+        data: {
+            cdcooper: cCdcooper.val(),
+			cddopcao: "C",
+            redirect: "html_ajax"
+        },
+        error: function (objAjax, responseError, objExcept) {
+            hideMsgAguardo();
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+        },
+        success: function (response) {
+			try {
+                eval(response);	
+                return false;
+            } catch (error) {
+                hideMsgAguardo();
+                showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'estadoInicial();');
+            }			
+        }
+    });
+}
+
+function mantemConfiguracaoWebService(){
+	cCdcooper = $('#tlcooper','#frmBcb');
+	cFlctgbcb = $('#flctgbcb','#frmBcb');
+	
+	hideMsgAguardo();
+    mensagem = 'Aguarde, alterando configura&ccedil;&otilde;es...';
+    showMsgAguardo(mensagem);
+	
+	/* Busca configuracao da cooperativa */
+	$.ajax({
+        type: "POST",
+        dataType: "html",
+        url: UrlSite + "telas/arqbcb/manter_rotina_webservice.php",
+        data: {
+            cdcooper: cCdcooper.val(),
+			flctgbcb: cFlctgbcb.val(),
+			cddopcao: "A",
+            redirect: "html_ajax"
+        },
+        error: function (objAjax, responseError, objExcept) {
+            hideMsgAguardo();
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+        },
+        success: function (response) {
+			try {
+                eval(response);	
+                return false;
+            } catch (error) {
+                hideMsgAguardo();
+                showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'estadoInicial();');
+            }			
+        }
+    });
 }
 
 function controlaSelect() {
@@ -184,10 +307,16 @@ function btnContinuar() {
 
 	$('input,select', '#frmBcb').removeClass('campoErro');
 
-	cddarqui = cCddarqui.val()
-	cddopcao = cCddopcao.val();
-	
-	realizaOperacao();
+	$cOpcao = $('#cddopcao','#frmBcb');
+	/* Se for opcao de C - Configuracao WebService*/
+	if ($cOpcao.val() == 'C') {
+		mantemConfiguracaoWebService();
+	} else {
+		cddarqui = cCddarqui.val()
+		cddopcao = cCddopcao.val();
+		
+		realizaOperacao();	
+	}
 	
 	return false;
 		

@@ -229,7 +229,7 @@ function voltarParaTelaPrincipal(){
 		<div id="divBotoes">
 			
 			<input type="image" id="btncons" src="<?php echo $UrlImagens; ?>botoes/consultar.gif" <?php if (!in_array("C",$glbvars["opcoesTela"])) { echo "style='cursor: default' onClick='return false;'"; } else { echo "onClick='consultaCartao();return false;'"; } ?>>
-			<input type="image" id="btnalterarLimite" src="<?php echo $UrlImagens; ?>botoes/alterar.gif"  onClick="alteraCartao(this,'<? echo $_POST["nrdconta"]; ?>')" disabled>
+			<input type="image" id="btnalterarLimite" src="<?php echo $UrlImagens; ?>botoes/alterar_limite.jpg"  onClick="alteraCartao(this,'<? echo $_POST["nrdconta"]; ?>')" disabled>
 			<?php if(!($sitaucaoDaContaCrm == '4' || 
 				       $sitaucaoDaContaCrm == '7' || 
 				       $sitaucaoDaContaCrm == '8'  )){?>

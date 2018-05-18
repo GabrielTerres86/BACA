@@ -1,6 +1,6 @@
 <?
 /*!
- * FONTE        : consultar_dados_cartao_avais.php
+ * FONTE        : novo_cecred.php
  * CRIAÇÃO      : Amasonas (SUPERO)
  * DATA CRIAÇÃO : Marco/2018
  * OBJETIVO     : Mostrar opção de Novos Cartões da rotina de Cartões de Crédito da tela ATENDA obtidas na consulta Bancoob
@@ -99,27 +99,21 @@ $xmlObj = getObjectXML($xmlResult);
 
 $json_sugestoes = json_decode($xmlObj->roottag->tags[0]->tags[1]->tags[0]->tags[0]->cdata,true);
 echo "<!-- $xmlResult -->";
+echo "<!-- "; print_r($json_sugestoes['indicadoresGeradosRegra']['sugestaoCartaoCecred']); 
+echo "-->";
 //$idacionamento = $xmlObj->roottag->tags[0]->tags[1]->tags[0]->tags[1]->cdata;
 
 //$json_sugestoes = json_decode(html_entity_decode($xmlObj->roottag->tags[0]->tags[1]->tags[0]->tags[0]->cdata));
 
 $idacionamento = $json_sugestoes['protocolo'];
 $cartoes = $json_sugestoes["categoriasCartaoCecred"];
-$sugestoes = $json_sugestoes["sugestaoCartaoCecred"];
+$sugestoes = $json_sugestoes['indicadoresGeradosRegra']["sugestaoCartaoCecred"];
 $qtdSugestoes =  count($sugestoes);
 $sugestoesMotor = array();
 for($j = 0; $j < $qtdSugestoes; $j++){
     $sugestao = $sugestoes[$j];
     $sugestoesMotor[ $sugestao['codigoCategoria']] = $sugestao['vlLimite'];
 }
-
-//$cartoesSugestao = 
-
-
-
-//print_r($cartoes);
-//return;
-
 
 $dados = $xmlObjNovoCartao->roottag->tags[0]->tags[0]->tags;
 // Dados Cadastrais
@@ -229,8 +223,9 @@ $cdLimite			 = explode("@",$aListaLimite[1]);
                 var inputLimite = $(grandparent).find(".valorLimite")[0];
 				var value = $(inputLimite).val().replace('.', "").replace(",",".");
 				var min = $(inputLimite ).attr("min");
-				var max = $(inputLimite ).attr("max");
+				var max = $(inputLimite ).attr("max").replace('.', "").replace(",",".");
 				if(parseFloat(value) > parseFloat(max)){
+
 					showError("error", '<? echo utf8ToHtml("Valor maior que o permitido, por favor selecione a opção  na parte inferior da tela.");?>', "Alerta - Ayllos", "blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));")
 					return;
 				} else if(parseFloat(value) < parseFloat(min)){
@@ -370,7 +365,7 @@ $cdLimite			 = explode("@",$aListaLimite[1]);
                         $optionList = $optionList."<option value='$nmAdm;$id_administradora;$valor_sugerido'>". $nmAdm." </option>";
                     }
                     $limiteMinimo = $cartao['vlLimiteMinimo'];
-                    $limiteMaximo = $cartao['vlLimiteMaximo'];
+                    $limiteMaximo = $valor_sugerido;
 
                     if($registers % 2 == 0){
                         $outPut = "<tr><td class='optCard $classes' style=\"padding-top:5px\"> .mess. </td>";
@@ -381,12 +376,12 @@ $cdLimite			 = explode("@",$aListaLimite[1]);
                     $message ="<fieldset class=\"selectorCard $classes \" style='cursor:pointer'>"
                         ." <legend align=\"center\">". $nmAdm ."</legend>"
                         ."<br><div  style='float: left;$uniqueLeft'> "
-                        ."<input type='radio' class='optradio $classes' value='".$nmAdm.";$id_administradora;".number_format($valor_sugerido,2,",",".")."' id='dsadmcrdcc' name='dsadmcrdcc' onChange='changeRadio(this)' >"
+                        ."<input type='radio' class='optradio $classes' value='".$nmAdm.";$id_administradora;".$valor_sugerido."' id='dsadmcrdcc' name='dsadmcrdcc' onChange='changeRadio(this)' >"
                         ."</div>"
                         ."<div style='float: right;$uniqueRight ".($pessoaFisica? " ":"width: 150px")."'>"
-                        ." Min R$".number_format($limiteMinimo,2,",",".")."<br>"
-                        .utf8ToHtml("Máx")." R$".number_format($limiteMaximo,2,",",".")."<br>"
-                        ."<input placeholder='Valor solicitado' cdAdm='".$id_administradora."' nmAdm='".$nmAdm."' min='".$limiteMinimo."' max='".$limiteMaximo."' class='$classes valorLimite campo' style='float:left; width:85px;    margin-left: 0px;' value='". $valor_sugerido."'><br>"
+                        .utf8ToHtml("Limite Mínimo")." R$".number_format($limiteMinimo,2,",",".")."<br>"
+                        .utf8ToHtml("Limite Sugerido")." R$".$valor_sugerido."<br>"
+                        ."<input title='".utf8ToHtml('Informe um valor entre o limite mínimo e o sugerido.')."' placeholder='Valor solicitado' cdAdm='".$id_administradora."' nmAdm='".$nmAdm."' min='".$limiteMinimo."' max='".$valor_sugerido."' class='$classes valorLimite campo' style='float:left; width:85px;    margin-left: 0px; background:white' value='". $valor_sugerido."'><br>"
                         ." </div></td>"
                         ."</fieldset>";
 
@@ -399,15 +394,15 @@ $cdLimite			 = explode("@",$aListaLimite[1]);
                     ."<tr>"
                     ."<td colspan=2><div id=\"\" class=\" optCard \">"
                     ."<fieldset style=\"cursor:pointer\" class=\"selectorCard \" >"
-                    ."<legend align='center'>".utf8ToHtml('Outra Opção')." </legend> "
+                    ."<legend align='center'>".utf8ToHtml('Enviar para Análise da Esteira')." </legend> "
                     ."<div style='height:100%; width:100%' >"
-                    ."<div style='height: 100%; float: left; padding-top: 25%;'> <p><input  onChange='changeRadio(this)' type='radio' class='optradio' id='dsadmcrdcc' name='dsadmcrdcc' value='outro'></p> </div>"
-                    ."<div style='float: right'>"
-                    ."<select class='campo fieldclickable' id='listType' disabled> "
+                    ."<div style='height: 100%; float: left; padding-top: 15%;'> <p><input  onChange='changeRadio(this)' type='radio' class='optradio' id='dsadmcrdcc' name='dsadmcrdcc' value='outro'></p> </div>"
+                    ."<div style='float: right'><label for='listType'style='width: 70px;margin-right: 5px;'>Categoria:</label>"
+                    ."<select  class='campo fieldclickable' id='listType' disabled style='margin-left: 00px;'> "
                     .$optionList."</select>"
-                    ." </p><br><p>Justificativa </p>"
-                    ."<p><textarea class='' id=\"justificativa\" rows=\"5\" cols=\"30\" style=\"resize: none; border: 1px solid #777;\" disabled></textarea>"
-                    ." </p><p>Limite</p><p><input id='valorLimite' name='valorLimite' class='campo' disabled style='    margin-left: 0px;'>"
+                    ." </p><br><br>"
+                    ."<p><label for='justificativa' style='width: 70px;margin-right: 5px;'>Justificativa:</label><textarea class='' placeholder='' id=\"justificativa\" rows=\"5\" cols=\"50\" style=\"resize: none; border: 1px solid #777;\" disabled></textarea>"
+                    ." </p><p><label for='valorLimite'style='width: 70px;margin-right: 5px;'>Limite:</label><input id='valorLimite' name='valorLimite' class='campo' disabled style='    margin-left: 0px;'>"
                     ."</fieldset></div></div></div></td> </tr>";
 
                 echo "</table>";
@@ -661,7 +656,7 @@ $cdLimite			 = explode("@",$aListaLimite[1]);
         $("#dddebito").val("03");
         $("#dddebito").attr("disabled","true");
         $("#vllimdeb").attr("disabled",true);
-        $("#tpdpagto").attr("disabled",true);
+       // $("#tpdpagto").attr("disabled",true);
         $("#tpenvcrd").attr("disabled",true);
         
     }else{
