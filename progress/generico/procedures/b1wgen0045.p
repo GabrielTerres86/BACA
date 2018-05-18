@@ -109,7 +109,7 @@
                 25/06/2015 - Alterar para gravar a variavel aux_dadosusr na aux_dscritic.
                            - Alterado procedure seguros-resid-vida para meolhorar a
                              performace. (Lucas Ranghetti/Thiago Rodrigues #300957 )
-
+                         
 			    16/05/2018 - Alteração nas procedures "gera-relatorio" e "proc_cancelamento"
 				             para inclusão do relatório do tipo 7 (Motivos de Cancelamento 
 							 de seguros de vida individual) (Reginaldo/AMcom)
@@ -2138,7 +2138,7 @@ PROCEDURE gera-relatorio:
                                         INPUT par_nmdatela,
                                         INPUT par_telcdage,
                                         INPUT par_dtiniper,  
-                                        INPUT par_dtfimper, 
+                                        INPUT par_dtfimper,  
 										INPUT par_tprelato, 
                                         OUTPUT TABLE tt-erro).
        
@@ -3084,7 +3084,7 @@ PROCEDURE proc_cancelamento.
            LEAVE.
    
 		IF par_tprelato = 5 THEN
-			DISP STREAM str_1 crapcop.nmrescop WITH FRAME f_seg. 
+        DISP STREAM str_1 crapcop.nmrescop WITH FRAME f_seg. 
 		ELSE
 			DISP STREAM str_1 crapcop.nmrescop WITH FRAME f_seg_vida. 
 
