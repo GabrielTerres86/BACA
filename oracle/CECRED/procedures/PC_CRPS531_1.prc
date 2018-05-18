@@ -5747,7 +5747,7 @@ END;
 
               -- Conforme cabine
               IF vr_aux_tagCABInf THEN
-                vr_aux_CodMsg := 'ERROREJ';
+                vr_aux_CodMsg := 'MSGREJ';
               END IF;
               -- Cria registro das movimentacoes no SPB
               pc_cria_gnmvcen(pr_cdagenci => rw_crapcop_mensag.cdagectl
@@ -5764,7 +5764,7 @@ END;
       END IF;
 
       -- Mensagem de Sucesso
-      IF vr_aux_CodMsg IN('STR0010R2','PAG0111R2') THEN
+      IF vr_aux_CodMsg IN('STR0010R2','PAG0111R2') OR vr_aux_tagCABInf THEN
         -- Gerar log conforme situação cabine
         IF vr_aux_tagCABInf THEN
           vr_aux_CodMsg := vr_aux_msgrejei;
