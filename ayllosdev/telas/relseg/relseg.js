@@ -203,7 +203,7 @@ function formataRelatorio(){
 	
 	$('#tprelato','#frmRel').unbind('change').bind('change',function() {
 	
-		if (cTprelato.val() == 5){			
+		if (cTprelato.val() == 5 || cTprelato.val() == 7) {
 			$('#divExpRel','#frmRel').css('display','block');
             $('#divParam' ,'#frmRel').css('display','block');
             $('#divOp6'   ,'#frmRel').css('display','none');
@@ -262,7 +262,7 @@ function formataRelatorio(){
 
 	$('#dtfimper','#frmRel').unbind('keypress').bind('keypress', function(e) {
 		if(cddopcao == 'R'){
-			if ($('#tprelato','#frmRel').val() != 5) {
+			if ($('#tprelato', '#frmRel').val() != 5 && $('#tprelato', '#frmRel').val() != 7) {
 				if ( e.keyCode == 13 || e.keyCode == 9 || e.keyCode == 118 ) {
 					showConfirmacao('Confirma a operacao?','Confirma&ccedil;&atilde;o - Ayllos','btnRelatorio();','estadoInicial();','sim.gif','nao.gif');
 					return false;

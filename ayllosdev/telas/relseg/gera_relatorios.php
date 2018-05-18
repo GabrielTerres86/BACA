@@ -37,15 +37,15 @@
 	}
 	
     if ($tprelato <> 6){
-	// Monta o xml dinâmico de acordo com a operação 
-	$xml  = '';
-	$xml .= '<Root>';
+		// Monta o xml dinâmico de acordo com a operação 
+		$xml  = '';
+		$xml .= '<Root>';
         $xml .= '   <Cabecalho>';
         $xml .= '       <Bo>b1wgen0045.p</Bo>';
         $xml .= '       <Proc>inicia-relatorio</Proc>';
         $xml .= '   </Cabecalho>';
         $xml .= '   <Dados>';
-	$xml .= '       <cdcooper>'.$glbvars['cdcooper'].'</cdcooper>';
+		$xml .= '       <cdcooper>'.$glbvars['cdcooper'].'</cdcooper>';
         $xml .= '       <cdagenci>'.$glbvars['cdagenci'].'</cdagenci>';
         $xml .= '       <nrdcaixa>'.$glbvars['nrdcaixa'].'</nrdcaixa>';
         $xml .= '       <cdoperad>'.$glbvars['cdoperad'].'</cdoperad>';
@@ -58,11 +58,11 @@
         $xml .= '       <dtfimper>'.$dtfimper.'</dtfimper>';
         $xml .= '       <inexprel>'.$inexprel.'</inexprel>';
         $xml .= '   </Dados>';
-	$xml .= '</Root>';
-	
-    // Executa script para envio do XML e cria objeto para classe de tratamento de XML
-	$xmlResult = getDataXML($xml);
-	$xmlObjeto = getObjectXML($xmlResult);
+		$xml .= '</Root>';
+		
+		// Executa script para envio do XML e cria objeto para classe de tratamento de XML
+		$xmlResult = getDataXML($xml);
+		$xmlObjeto = getObjectXML($xmlResult);
 
 	//----------------------------------------------------------------------------------------------------------------------------------	
 	// Controle de Erros
@@ -70,14 +70,15 @@
 	if (strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO") {	
 		$msgErro  = $xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata;
 		$nmdcampo = $xmlObjeto->roottag->tags[0]->attributes['NMDCAMPO'];
-		if ( !empty($nmdcampo) ) { $mtdErro = $mtdErro . " $('#".$nmdcampo."').focus();";  } ?>
-		<script language="javascript">
-			alert("<?php echo $msgErro ?>");
-		</script><?php
-		exit();
-	}	
 
-	$nmarqpdf = $xmlObjeto->roottag->tags[0]->attributes["NMARQPDF"];
+		if ( !empty($nmdcampo) ) { $mtdErro = $mtdErro . " $('#".$nmdcampo."').focus();";  } ?>
+			<script language="javascript">
+				alert("<?php echo $msgErro ?>");
+			</script><?php
+			exit();
+		}	
+
+		$nmarqpdf = $xmlObjeto->roottag->tags[0]->attributes["NMARQPDF"];
     }
     else {  // Se for 6 - Seguro Auto Sicredi
         // Montar o xml de Requisicao
