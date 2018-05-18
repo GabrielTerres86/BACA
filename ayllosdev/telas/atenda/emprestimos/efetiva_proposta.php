@@ -33,62 +33,65 @@
 	$dtdpagto = (isset($_POST['dtdpagto'])) ? $_POST['dtdpagto'] : '';
 	$operacao = (isset($_POST['operacao'])) ? $_POST['operacao'] : '';
 					
-	// Monta o xml de requisi��o
-	$xml .= "<Root>";
-	$xml .= "	<Cabecalho>";
-	$xml .= "		<Bo>b1wgen0084.p</Bo>";
-	$xml .= "		<Proc>grava_efetivacao_proposta</Proc>";
-	$xml .= "	</Cabecalho>";
-	$xml .= "	<Dados>";
-	$xml .= "       <cdcooper>".$glbvars["cdcooper"]."</cdcooper>";		
-	$xml .= "		<cdagenci>".$glbvars["cdpactra"]."</cdagenci>";
-	$xml .= "		<nrdcaixa>".$glbvars["nrdcaixa"]."</nrdcaixa>";
-	$xml .= "		<cdoperad>".$glbvars["cdoperad"]."</cdoperad>";
-	$xml .= "		<nmdatela>".$glbvars["nmdatela"]."</nmdatela>";	
-	$xml .= "		<idorigem>".$glbvars["idorigem"]."</idorigem>";		
-	$xml .= "		<nrdconta>".$nrdconta."</nrdconta>";
-	$xml .= "		<idseqttl>".$idseqttl."</idseqttl>";
-	$xml .= "		<dtmvtolt>".$glbvars["dtmvtolt"]."</dtmvtolt>";
-	$xml .= "		<flgerlog>true</flgerlog>";
-	$xml .= "		<nrctremp>".$nrctremp."</nrctremp>";
-	$xml .= "		<dtdpagto>".$dtdpagto."</dtdpagto>";
-    $xml .= "		<nrcpfope>0</nrcpfope>";
-	$xml .= "	</Dados>";
-	$xml .= "</Root>";
+	// Monta o xml de requisicao MENSAGERIA
+	$xml  = "<Root>";
+    $xml .= " <Dados>";
+    $xml .= "  <cdcooper>".$glbvars["cdcooper"]."</cdcooper>";		
+    $xml .= "  <cdagenci>".$glbvars["cdpactra"]."</cdagenci>";
+    $xml .= "  <nrdcaixa>".$glbvars["nrdcaixa"]."</nrdcaixa>";
+    $xml .= "  <cdoperad>".$glbvars["cdoperad"]."</cdoperad>";
+    $xml .= "  <nmdatela>".$glbvars["nmdatela"]."</nmdatela>";	
+    $xml .= "  <idorigem>".$glbvars["idorigem"]."</idorigem>";		
+    $xml .= "  <nrdconta>".$nrdconta."</nrdconta>";
+    $xml .= "  <idseqttl>".$idseqttl."</idseqttl>";
+    $xml .= "  <dtmvtolt>".$glbvars["dtmvtolt"]."</dtmvtolt>";
+    $xml .= "  <flgerlog>1</flgerlog>";
+    $xml .= "  <nrctremp>".$nrctremp."</nrctremp>";
+    $xml .= "  <dtdpagto>".$dtdpagto."</dtdpagto>";
+    $xml .= "  <dtmvtopr>".$glbvars["dtmvtopr"]."</dtmvtopr>";		        
+    $xml .= "  <inproces>".$glbvars["inproces"]."</inproces>";		
+    $xml .= "  <nrcpfope>0</nrcpfope>";
+    $xml .= " </Dados>";
+    $xml .= "</Root>";
+	 
+    $x mlResult = mensageria($xml, "EMPR0001", "EFETIVA_PROPOSTA", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+    $xmlObjeto = getObjectXML($xmlResult);
 
-	// Executa script para envio do XML
-	$xmlResult = getDataXML($xml);
+    $retorno = "hideMsgAguardo(); $('#linkAba0').html('Principal');";
+    $retorno .= "arrayRatings.length = 0;";
+  
+    if (strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO") {
+ 	  $retorno .= 'exibirMensagens(\''.$mensagem.'\',\'controlaOperacao(\"RATING\")\');';
+ 	  $msgErro = utf8_encode($xmlObjeto->roottag->tags[0]->tags[0]->tags[4]->cdata);
+	  if ($msgErro == "") {
+	    $msgErro = utf8_encode($xmlObjeto->roottag->tags[0]->cdata);
+	  }		
+	  $msgErro = str_replace('"','',str_replace('(','',str_replace(')','',$msgErro)));	
 
-	// Cria objeto para classe de tratamento de XML
-	$xmlObj = getObjectXML($xmlResult);
-	
-	if ( strtoupper($xmlObj->roottag->tags[0]->name) == 'ERRO' ) {
-		exibirErro('error',$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos','bloqueiaFundo($(\'#divRotina\'));',false);
-	}
-	
-	$registros  = $xmlObj->roottag->tags[0]->tags;
-	$mensagem = $xmlObj->roottag->tags[0]->attributes["MENSAGEM"];
-	$retorno = "hideMsgAguardo(); $('#linkAba0').html('Principal');";
-	$retorno .= "arrayRatings.length = 0;";
-	foreach($registros as $indice => $registro)
-	{
-		$retorno .= 'var arrayRating'.$indice.' = new Object();
-					 arrayRating'.$indice.'[\'dtmvtolt\'] = "'.getByTagName($registro->tags,'dtmvtolt').'";
-					 arrayRating'.$indice.'[\'dsdopera\'] = "'.getByTagName($registro->tags,'dsdopera').'"; 
-					 arrayRating'.$indice.'[\'nrctrrat\'] = "'.getByTagName($registro->tags,'nrctrrat').'"; 
-					 arrayRating'.$indice.'[\'indrisco\'] = "'.getByTagName($registro->tags,'indrisco').'"; 
-					 arrayRating'.$indice.'[\'nrnotrat\'] = "'.getByTagName($registro->tags,'nrnotrat').'"; 
-					 arrayRating'.$indice.'[\'vlutlrat\'] = "'.getByTagName($registro->tags,'vlutlrat').'"; 
-					 arrayRatings['.$indice.'] = arrayRating'.$indice.';';
-	}
-    
-    if ($mensagem != '') {
-	   $retorno .= 'exibirMensagens(\''.$mensagem.'\',\'controlaOperacao(\"RATING\")\');';
-    }
-	else{
-	   $retorno .=  "controlaOperacao('T_C');";	
-	}
-    
-	echo $retorno;
+	  exibirErro('error',$msgErro,'Alerta - Ayllos','',false);
+	  exit();
+    }else{
+	  $ratings = $xmlObjetoSeg->roottag->tags[2]->tags;	
+	  $temRetorno = "N";
+
+	  foreach($ratings as $indice => $rating){
+	    $temRetorno = "S";
+	    $retorno .= 'var arrayRating'.$indice.' = new Object();
+          arrayRating'.$indice.'[\'dtmvtolt\'] = "'.getByTagName($rating->tags,'dtmvtolt').'";
+		  arrayRating'.$indice.'[\'dsdopera\'] = "'.getByTagName($rating->tags,'dsdopera').'"; 
+		  arrayRating'.$indice.'[\'nrctrrat\'] = "'.getByTagName($rating->tags,'nrctrrat').'"; 
+		  arrayRating'.$indice.'[\'indrisco\'] = "'.getByTagName($rating->tags,'indrisco').'"; 
+		  arrayRating'.$indice.'[\'nrnotrat\'] = "'.getByTagName($rating->tags,'nrnotrat').'"; 
+		  arrayRating'.$indice.'[\'vlutlrat\'] = "'.getByTagName($rating->tags,'vlutlrat').'"; 
+		  arrayRatings['.$indice.'] = arrayRating'.$indice.';';
+	  }
+
+	  if($temRetorno == "S"){
+	    $retorno .=  "controlaOperacao('T_C');";
+	  }else{
+	    $retorno .= 'exibirMensagens(\''.$mensagem.'\',\'controlaOperacao(\"RATING\")\');';
+	  }
+
+	  echo $retorno;
 
 ?>
