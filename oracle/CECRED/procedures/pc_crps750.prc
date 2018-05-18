@@ -14,7 +14,7 @@ BEGIN
   Sistema : Conta-Corrente - Cooperativa de Credito
   Sigla   : CRED
   Autor   : Jean
-  Data    : Abril/2017                      Ultima atualizacao: 09/08/2017
+  Data    : Abril/2017                      Ultima atualizacao: 13/04/2018
 
   Dados referentes ao programa:
 
@@ -28,6 +28,8 @@ BEGIN
                            gerado na execução em paralelo.
 
               09/08/2017 - Inclusao do filtro para produto PP. (Jaison/James - PRJ298)
+
+              13/04/2018 - Debitador Unico - (Fabiano B. Dias AMcom).
 
     ............................................................................. */
 
@@ -147,7 +149,7 @@ BEGIN
 
     --Variaveis Locais
        vr_flgpripr BOOLEAN;
-       
+
     --Variaveis para retorno de erro
        vr_cdcritic      INTEGER:= 0;
        vr_dscritic      VARCHAR2(4000);
@@ -167,6 +169,10 @@ BEGIN
     vr_nrctremp number;
     vr_nrparcela number;
     vr_idtpprd varchar2(2);
+
+    -- Debitador Unico
+    vr_flultexe     NUMBER;
+    vr_qtdexec      NUMBER;
 
     -- Busca de todas as agencias da cooperativa
     CURSOR cr_crapage(pr_cdcooper IN crapcop.cdcooper%TYPE
@@ -243,6 +249,16 @@ BEGIN
        pr_cdcritic:= NULL;
        pr_dscritic:= NULL;
 
+    IF pr_cdagenci = 0 THEN -- JOB principal do paralelismo.
+      -- Verifica quantidade de execuções do programa durante o dia no Debitador Único
+      gen_debitador_unico.pc_qt_hora_prg_debitador(pr_cdcooper   => pr_cdcooper   --Cooperativa
+                                                  ,pr_cdprocesso => 'PC_'||vr_cdprogra --Processo cadastrado na tela do Debitador (tbgen_debitadorparam)
+                                                  ,pr_ds_erro    => vr_dscritic); --Retorno de Erro/Crítica
+      IF vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_saida;
+      END IF;
+    END IF; -- pr_cdagenci = 0 THEN -- JOB principal do paralelismo.
+
     -- Incluir nome do modulo logado
        GENE0001.pc_informa_acesso(pr_module => 'PC_'||vr_cdprogra
                                  ,pr_action => NULL);
@@ -305,21 +321,40 @@ BEGIN
       CLOSE BTCH0001.cr_crapdat;
     END IF;
     -- define como primeira execucao
-    
-	-- gera log para futuros rastreios
+
+    -- Debitador Unico:
+    IF pr_cdagenci = 0 THEN -- JOB principal do paralelismo.
+      --> Verificar/controlar a execução.
+      SICR0001.pc_controle_exec_deb (  pr_cdcooper  => pr_cdcooper                 --> Código da coopertiva
+                                      ,pr_cdtipope  => 'I'                         --> Tipo de operacao I-incrementar e C-Consultar
+                                      ,pr_dtmvtolt  => rw_crapdat.dtmvtolt         --> Data do movimento
+                                      ,pr_cdprogra  => vr_cdprogra                 --> Codigo do programa
+                                      ,pr_flultexe  => vr_flultexe                 --> Retorna se é a ultima execução do procedimento
+                                      ,pr_qtdexec   => vr_qtdexec                  --> Retorna a quantidade
+                                      ,pr_cdcritic  => vr_cdcritic                 --> Codigo da critica de erro
+                                      ,pr_dscritic  => vr_dscritic);               --> descrição do erro se ocorrer
+
+      IF nvl(vr_cdcritic,0) > 0 OR
+         TRIM(vr_dscritic) IS NOT NULL THEN
+        RAISE vr_exc_saida;
+			ELSE
+			  COMMIT;
+      END IF;
+    END IF; -- pr_cdagenci = 0 THEN -- JOB principal do paralelismo.
+
+  -- gera log para futuros rastreios
         pc_log_programa(PR_DSTIPLOG           => 'O',
                         PR_CDPROGRAMA         => 'CRPS750',
                         pr_cdcooper           => pr_cdcooper,
                         pr_tpexecucao         => 2,
                         pr_tpocorrencia       => 4,
                         pr_dsmensagem         => 'Antes PC_CRPS750_1 - fase 1. AGENCIA - '||PR_CDAGENCI||' - INPROCES - '||rw_crapdat.inproces,
-                        PR_IDPRGLOG           => vr_idprglog); 
+                        PR_IDPRGLOG           => vr_idprglog);
 
       /* Todas as parcelas nao liquidadas que estao para serem pagas em dia ou estao em atraso */
-    if PR_CDAGENCI = 0
-    and   rw_crapdat.inproces >= 2 then
-                                 
-      
+    if PR_CDAGENCI = 0 then
+    --and   rw_crapdat.inproces >= 2 then
+
        --
        PC_CRPS750_1( pr_faseprocesso => 1
                     ,pr_cdcooper     => pr_cdcooper --> Codigo Cooperativa
@@ -335,9 +370,9 @@ BEGIN
 
 
     /* 229243 Paralelismo visando performance
-       Rodar Somente no processo Noturno */
-    IF rw_crapdat.inproces > 2 and
-       pr_cdagenci = 0 THEN
+       Paralelisar somente na primeira execucao do dia */
+    IF vr_qtdexec = 1 
+	AND pr_cdagenci = 0 THEN
       /* Inicial rotinas em paralelo por agencia para agilizar processamento */
 
       -- Gerar o ID para o paralelismo
@@ -471,7 +506,7 @@ BEGIN
            vr_idtpprd := rw_crappep.idtpprd;
 
            if  rw_crappep.idtpprd = 'TR' then
-               if rw_crapdat.inproces >= 2 then
+               --if rw_crapdat.inproces >= 2 then
                   PC_CRPS750_1( pr_faseprocesso => 2
                               ,pr_cdcooper     => pr_cdcooper --> Codigo Cooperativa
                               ,pr_nrdconta     => rw_crappep.nrdconta  --> Número da conta
@@ -485,7 +520,7 @@ BEGIN
                   if vr_dscritic is null then
                      COMMIT;
                   end if;
-               end if;
+               --end if;
            elsif rw_crappep.idtpprd = 'PP' then
 
                  PC_CRPS750_2(pr_cdcooper => pr_cdcooper
@@ -514,8 +549,9 @@ BEGIN
     END LOOP; /*  Fim do FOR EACH e da transacao -- Leitura dos emprestimos  */
 
     /* encerra a execucao da pc_crps750_1 */
-    IF pr_cdagenci <> 0
-    and rw_crapdat.inproces >= 2 THEN
+    IF pr_cdagenci <> 0 THEN
+    --and rw_crapdat.inproces >= 2 THEN
+
         PC_CRPS750_1( pr_faseprocesso => 3
                       ,pr_cdcooper     => pr_cdcooper --> Codigo Cooperativa
                       ,pr_nrdconta     => null  --> Número da conta

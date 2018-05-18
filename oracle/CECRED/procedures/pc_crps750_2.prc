@@ -15,7 +15,7 @@ BEGIN
   Sistema : Conta-Corrente - Cooperativa de Credito
   Sigla   : CRED
   Autor   : Jean (Mout´S)
-  Data    : Abril/2017.                    Ultima atualizacao: 13/12/2017
+  Data    : Abril/2017.                    Ultima atualizacao: 13/04/2018
 
   Dados referentes ao programa:
 
@@ -32,6 +32,9 @@ BEGIN
               
               13/12/2017 - Melhorar performance da rotina filtrando corretamente
                            os acordos, conforme chamado 807093. (Kelvin).
+
+              13/04/2018 - Debitador Unico - (Fabiano B. Dias AMcom).						   
+						   
     ............................................................................. */
 
   DECLARE
@@ -243,6 +246,10 @@ BEGIN
     -- Parametro de contas e contratos específicos que nao podem debitar os emprestimos SD#618307
     vr_dsctactrjud crapprm.dsvlrprm%TYPE := null;
 
+    -- Debitador Unico	
+    vr_flultexe     NUMBER;
+    vr_qtdexec      NUMBER;	
+	
     --Procedure para limpar os dados das tabelas de memoria
     PROCEDURE pc_limpa_tabela IS
     BEGIN
@@ -348,6 +355,21 @@ BEGIN
       CLOSE BTCH0001.cr_crapdat;
     END IF;
 
+    --> Verificar/controlar a execução. 
+    SICR0001.pc_controle_exec_deb (  pr_cdcooper  => pr_cdcooper                 --> Código da coopertiva
+                                    ,pr_cdtipope  => 'C'                         --> Tipo de operacao I-incrementar e C-Consultar
+                                    ,pr_dtmvtolt  => rw_crapdat.dtmvtolt         --> Data do movimento                                
+                                    ,pr_cdprogra  => substr(vr_cdprogra,1,7)     --> Codigo do programa                                  
+                                    ,pr_flultexe  => vr_flultexe                 --> Retorna se é a ultima execução do procedimento
+                                    ,pr_qtdexec   => vr_qtdexec                  --> Retorna a quantidade
+                                    ,pr_cdcritic  => vr_cdcritic                 --> Codigo da critica de erro
+                                    ,pr_dscritic  => vr_dscritic);               --> descrição do erro se ocorrer
+
+    IF nvl(vr_cdcritic,0) > 0 OR
+       TRIM(vr_dscritic) IS NOT NULL THEN
+      RAISE vr_exc_saida; 
+    END IF;
+	
    
     /*No ultimo dia util do ano, nao havera debito de parcelas em atraso no
     processo, mesmo que houver saldo em conta. Nesta data nenhum lancamento
@@ -528,13 +550,16 @@ BEGIN
       /* Atribuir se operacao esta em dia ou atraso */
          vr_flgemdia:= rw_crappep.dtvencto > rw_crapdat.dtmvtoan;
 
+      ------------------------------------------------------------------------------------------
       IF vr_flgemdia THEN /* Parcela em dia */
+      ------------------------------------------------------------------------------------------
         /* Parcela em dia */
         /* 229243 Definido pela area de negocio que serão pagas apenas
         parcelas vencidas no processo on-line */
         
-        IF rw_crapdat.inproces <> 1 THEN
-          /*primeiro processamento*/
+        --IF rw_crapdat.inproces <> 1 THEN  /*primeiro processamento*/
+        IF vr_flultexe = 1 THEN 
+          /*ultimo processamento*/
 
           --Criar savepoint
           SAVEPOINT sav_trans_750;
@@ -622,7 +647,8 @@ BEGIN
              vr_ehmensal:= rw_crappep.dtvencto > vr_dtcalcul;
 
             /* 229243 Juros não devem ser lançados no processamento on line */
-            IF rw_crapdat.inproces <> 1 THEN
+            --IF rw_crapdat.inproces <> 1 THEN
+            IF vr_flultexe = 1 THEN
               --Lancar Juro Contrato
              EMPR0001.pc_lanca_juro_contrato (pr_cdcooper => pr_cdcooper           --> Codigo Cooperativa
                                              ,pr_cdagenci => pr_cdagenci           --> Codigo Agencia
@@ -766,7 +792,9 @@ BEGIN
             END IF;
           END IF;
         END IF;
-         ELSE /* Parcela vencida */
+        ------------------------------------------------------------------------------------------
+ 				ELSE /* Parcela vencida */
+        ------------------------------------------------------------------------------------------
         /* verificar se existe boleto de contrato em aberto e se pode debitar do cooperado */
         /* 1º) verificar se o parametro está bloqueado para realizar busca de boleto em aberto */
         IF vr_blqresg_cc = 'S' THEN
