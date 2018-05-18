@@ -87,7 +87,8 @@
                         pr_tpseguro IN crapseg.tpseguro%TYPE,
                         pr_cdsitseg IN crapseg.cdsitseg%TYPE,
                         pr_indebito IN crapseg.indebito%TYPE) IS
-        SELECT seg.rowid
+        SELECT /*+index_asc (seg CRAPSEG##CRAPSEG2)*/
+               seg.rowid
               ,seg.dtprideb
               ,seg.dtrenova
               ,seg.dtdebito
@@ -171,6 +172,7 @@
       
       vr_dsseguro     VARCHAR2(50);
       vr_rowid_log     rowid;
+
     BEGIN
 
       -- Código do programa
@@ -266,7 +268,6 @@
           CLOSE cr_crapres;
         END IF;
       END IF;
-
       -- INÍCIO DO PROCESSAMENTO PRINCIPAL --
       FOR rw_crapseg IN cr_crapseg (pr_cdcooper => pr_cdcooper,
                                     pr_nrdconta => vr_nrctares,
@@ -301,11 +302,11 @@
             IF to_char(rw_crapdat.dtmvtolt, 'MM') <> to_char(rw_crapdat.dtmvtopr, 'MM') THEN
               IF rw_crapseg.dtdebito <= rw_crapdat.dtultdia THEN
                 vr_flgdebta := 1;
-              ELSE
-                -- Diário - Vencimento da parcela
-                IF rw_crapseg.dtdebito <= rw_crapdat.dtmvtolt THEN
-                  vr_flgdebta := 1;
-                END IF;
+              END IF;  
+            ELSE
+              -- Diário - Vencimento da parcela
+              IF rw_crapseg.dtdebito <= rw_crapdat.dtmvtolt THEN
+                vr_flgdebta := 1;
               END IF;
             END IF;
           END IF;
@@ -359,7 +360,7 @@
             vr_cdcritic := 581;
             RAISE vr_exc_saida;
           END IF;
-
+          -- REGINALDO --    
           /*podeDebitar := lanc0001.fn_pode_debitar(pr_cdcooper => pr_cdcooper,
                                                   pr_nrdconta => rw_crapseg.nrdconta,
                                                   pr_cdhistor => vr_cdhistor);
@@ -499,6 +500,7 @@
             
             -- Efetua o lançamento do débito
             BEGIN
+              -- REGINALDO --
               /*
               LANC0001.pc_gerar_lancamento_conta(pr_cdagenci => rw_craplot.cdagenci
                                                 , pr_cdbccxlt => rw_craplot.cdbccxlt
@@ -537,7 +539,7 @@
                                  ,to_char(rw_crapseg.cdsegura)
                                  ,rw_crapseg.nrdconta
                                  ,rw_crapseg.nrdconta
-                                 ,to_char(rw_crapseg.nrdconta)
+                                 ,to_char(rw_crapseg.nrdconta, 'FM00000000')
                                  ,rw_crapseg.nrctrseg
                                  ,rw_craplot.nrdolote
                                  ,rw_craplot.nrseqdig + 1
