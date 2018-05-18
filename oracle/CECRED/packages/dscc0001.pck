@@ -8327,9 +8327,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
     			
           -- Se não encontrou IOF
           IF cr_craplot_iof%NOTFOUND THEN
-            --Feca o cursor
-            CLOSE cr_craplot_iof;
-            
             BEGIN
               INSERT INTO craplot(dtmvtolt
                                  ,cdagenci
@@ -8343,8 +8340,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
                                  ,(19000 + vr_cdpactra)
                                  ,1
                                  ,pr_cdcooper)
-                          RETURNING ROWID INTO vr_nrdrowid;
-
+          RETURNING nrseqdig, ROWID INTO vr_nrseqdig, vr_nrdrowid;
             EXCEPTION
               WHEN OTHERS THEN      
                 -- Gerar crítica
@@ -8353,21 +8349,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
                 -- Levantar exceção
                 RAISE vr_exc_erro;
             END;
-            
           ELSE
-            
+        -- Se encontrou, atribui valores às variáveis
+        vr_nrseqdig := rw_craplot_iof.nrseqdig;
+        vr_nrdrowid := rw_craplot_iof.rowid;
+      END IF;
             -- Fechar cursor
             CLOSE cr_craplot_iof;
             
-            vr_nrdrowid:= rw_craplot_iof.rowid;
-            
-          END IF;
-    						
+          /*
           vr_nrseqdig := fn_sequence('CRAPLOT','NRSEQDIG',''||pr_cdcooper||';'||
                                      to_char(rw_crapdat.dtmvtolt,'DD/MM/RRRR')||
                                      ';1;'|| --cdagenci
                                      '100;'|| --cdbccxlt
                                      (19000 + vr_cdpactra)); --nrdolote
+          */
                                   
           -- Cria lançamento na craplcm refente ao IOF
           BEGIN
@@ -8393,7 +8389,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
                                ,to_char(pr_nrdconta, 'fm00000000')
                                ,pr_nrborder
                                ,2318 --324 Novo histórico - Projeto 410
-                               ,vr_nrseqdig
+                               ,(vr_nrseqdig + 1)
                                ,to_char(vr_vlborder, 'fm000g000g000d00')
                                --,ROUND( ( ROUND((vr_vlborder * vr_txccdiof), 2) + vr_vltotiof),2)
                                ,ROUND(vr_vltotiof, 2)
@@ -8418,7 +8414,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
                               ,pr_cdagenci_lcm  => 1                     --> Chave: Agencia do Lancamento
                               ,pr_cdbccxlt_lcm  => 100                   --> Chave: Caixa do Lancamento
                               ,pr_nrdolote_lcm  => (19000 + vr_cdpactra) --> Chave: Lote do Lancamento
-                              ,pr_nrseqdig_lcm  => vr_nrseqdig           --> Chave: Sequencia do Lancamento
+                              ,pr_nrseqdig_lcm  => (vr_nrseqdig + 1)    --> Chave: Sequencia do Lancamento
                               ,pr_vliofpri      => vr_vltotiofpri       --> Valor do IOF Principal
                               ,pr_vliofadi      => vr_vltotiofadi       --> Valor do IOF Adicional
                               ,pr_vliofcpl      => vr_vltotiofcpl       --> Valor do IOF Complementar
@@ -8440,7 +8436,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
                   ,lot.vlcompdb = lot.vlcompdb + vr_vllanmto 
                   ,lot.qtinfoln = lot.qtinfoln + 1
                   ,lot.qtcompln = lot.qtinfoln + 1
-                  ,lot.nrseqdig = vr_nrseqdig
+                  ,lot.nrseqdig = lot.nrseqdig + 1
              WHERE lot.rowid = vr_nrdrowid;
     				
           EXCEPTION

@@ -11169,9 +11169,8 @@ PROCEDURE aprova_trans_pend:
                                                                       INPUT par_nrdconta,
                                                                      OUTPUT aux_nrdrowid).
                                               END.
-                                      END.
-                                     
                                   RETURN "NOK".
+                                  END.
                               END.
                       END.
                                
