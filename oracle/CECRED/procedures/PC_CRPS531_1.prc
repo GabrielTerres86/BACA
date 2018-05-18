@@ -2678,7 +2678,7 @@ BEGIN
             vr_aux_NumCtrlRem := vr_aux_descrica;
           ELSIF vr_node_name = 'ISPBIFDebtd' THEN
             vr_aux_ISPBIFDebtd := vr_aux_descrica;
-          ELSIF vr_node_name IN('AgDebtd','CtDebtd','CPFCliDebtd','CNPJ_CPFCliDebtd','CNPJ_CPFCliDebtdTitlar1','CNPJ_CPFCliDebtdTitlar2','CNPJ_CPFRemet') THEN
+          ELSIF vr_node_name IN('AgDebtd','CtDebtd','CPFCliDebtd','CNPJ_CPFCliDebtd','CNPJ_CPFCliDebtdTitlar1','CNPJ_CPFCliDebtdTitlar2','CNPJ_CPFRemet','CNPJ_CPFCliDebtd_Remet') THEN
             IF vr_node_name = 'AgDebtd' THEN
               vr_aux_AgDebtd := vr_aux_descrica;
             ELSIF vr_node_name = 'CtDebtd' THEN
@@ -2686,7 +2686,7 @@ BEGIN
             ELSIF vr_node_name = 'CPFCliDebtd' THEN
               vr_aux_CNPJ_CPFCred := vr_aux_descrica;
               vr_aux_CNPJ_CPFDeb  := vr_aux_descrica;
-            ELSIF vr_node_name IN('CNPJ_CPFCliDebtd','CNPJ_CPFCliDebtdTitlar1','CNPJ_CPFCliDebtdTitlar2','CNPJ_CPFRemet') THEN
+            ELSIF vr_node_name IN('CNPJ_CPFCliDebtd','CNPJ_CPFCliDebtdTitlar1','CNPJ_CPFCliDebtdTitlar2','CNPJ_CPFRemet','CNPJ_CPFCliDebtd_Remet') THEN
               vr_aux_CNPJ_CPFDeb := vr_aux_descrica;
             END IF;
             IF vr_aux_dadosdeb IS NULL THEN
@@ -6262,8 +6262,8 @@ END;
                                                       || vr_dscritic
                                     ,pr_nmarqlog      => vr_nmarqlog);
 
-			  IF vr_aux_CodMsg = 'STR0006R2' and vr_aux_FinlddCli <> '15' and (vr_aux_CNPJ_CPFDeb<>'01027058000191' and vr_aux_CNPJ_CPFDeb<>'1027058000191') THEN
-
+			  IF vr_aux_CodMsg = 'STR0006R2' and (vr_aux_FinlddCli <> '15' OR (vr_aux_CNPJ_CPFDeb<>'01027058000191' and vr_aux_CNPJ_CPFDeb<>'1027058000191')) THEN
+			  
           /* Mensagem Invalida para o Tipo de Transacao ou Finalidade*/
             vr_aux_codierro := 4;
             vr_aux_dsdehist := 'Mensagem Invalida para o Tipo de Transacao ou Finalidade.';
