@@ -443,7 +443,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
                    comando rm está removendo todos os relatórios "crrl519_bordero_*" da cooperativa (Carlos)
                    
       20/12/2017 - Ajuste para considerar a data de liberação do bordero no cursor cr_crapcdb_dsc
-                  (Adriano - SD 791712).                   
+                  (Adriano - SD 791712).       
 				  
       03/04/2018 - Adicionado noti0001.pc_cria_notificacao       
 				  
@@ -7398,7 +7398,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 	vr_dsreturn         VARCHAR2(10);
   vr_tab_erro         gene0001.typ_tab_erro;
 	vr_cdpactra         NUMBER;
-  vr_nrdrowid         ROWID;
+	vr_nrdrowid         ROWID;
 	vr_vllanmto         NUMBER;
 	vr_tab_lim_desconto typ_tab_lim_desconto;
   vr_dsdmensg         VARCHAR2(300);
@@ -7945,7 +7945,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
        IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
          RAISE vr_exc_erro;
        END IF;               
-                       
+            
 				BEGIN
 					-- Inserir lançamento automatico
 					INSERT INTO craplau
@@ -8192,7 +8192,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
 										 ,pr_dtmvtolt => rw_crapdat.dtmvtolt);
 			FETCH cr_craplot INTO rw_craplot;
 			
-			-- Fechar cursor
+      -- Fechar cursor
 			CLOSE cr_craplot;
       
     ELSE
@@ -8200,7 +8200,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
       -- Fechar cursor
 	  	CLOSE cr_craplot;
       
-		END IF;
+		END IF;   
 		
     vr_nrseqdig := fn_sequence('CRAPLOT','NRSEQDIG',''||pr_cdcooper||';'||
                               to_char(rw_craplot.dtmvtolt,'DD/MM/RRRR')||';'||
@@ -8311,183 +8311,179 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
           END;
        ELSE
           --Lanca na LCM e na tabela de IOF  
-			-- Buscar PA do operador
-			OPEN cr_crapope(pr_cdcooper => pr_cdcooper
-			               ,pr_cdoperad => pr_cdoperad);
-			FETCH cr_crapope INTO rw_crapope;
-			
-			-- Se não encontrar
-			IF cr_crapope%NOTFOUND THEN
-				vr_cdpactra := 0;
-			ELSE
-				vr_cdpactra := rw_crapope.cdpactra;
-			END IF;
-			-- Fechar cursor
-			CLOSE cr_crapope;
-			
-			-- Buscar lote do IOF
-			OPEN cr_craplot_iof(pr_cdcooper => pr_cdcooper
-												 ,pr_dtmvtolt => rw_crapdat.dtmvtolt
-												 ,pr_cdpactra => vr_cdpactra);
-			FETCH cr_craplot_iof INTO rw_craplot_iof;
-			
-			-- Se não encontrou IOF
-			IF cr_craplot_iof%NOTFOUND THEN
-            --Feca o cursor
+          -- Buscar PA do operador
+          OPEN cr_crapope(pr_cdcooper => pr_cdcooper
+                         ,pr_cdoperad => pr_cdoperad);
+          FETCH cr_crapope INTO rw_crapope;
+    			
+          -- Se não encontrar
+          IF cr_crapope%NOTFOUND THEN
+            vr_cdpactra := 0;
+          ELSE
+            vr_cdpactra := rw_crapope.cdpactra;
+          END IF;
+          -- Fechar cursor
+          CLOSE cr_crapope;
+    			
+          -- Buscar lote do IOF
+          OPEN cr_craplot_iof(pr_cdcooper => pr_cdcooper
+                             ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                             ,pr_cdpactra => vr_cdpactra);
+          FETCH cr_craplot_iof INTO rw_craplot_iof;
+    			
+          -- Se não encontrou IOF
+          IF cr_craplot_iof%NOTFOUND THEN
+            BEGIN
+              INSERT INTO craplot(dtmvtolt
+                                 ,cdagenci
+                                 ,cdbccxlt
+                                 ,nrdolote
+                                 ,tplotmov
+                                 ,cdcooper)
+                           VALUES(rw_crapdat.dtmvtolt
+                                 ,1
+                                 ,100
+                                 ,(19000 + vr_cdpactra)
+                                 ,1
+                                 ,pr_cdcooper)
+          RETURNING nrseqdig, ROWID INTO vr_nrseqdig, vr_nrdrowid;
+            EXCEPTION
+              WHEN OTHERS THEN      
+                -- Gerar crítica
+                vr_cdcritic := 0;
+                vr_dscritic := REPLACE(REPLACE('Erro ao inserir lote (IOF): ' || SQLERRM, chr(13)),chr(10));																			
+                -- Levantar exceção
+                RAISE vr_exc_erro;
+            END;
+          ELSE
+        -- Se encontrou, atribui valores às variáveis
+        vr_nrseqdig := rw_craplot_iof.nrseqdig;
+        vr_nrdrowid := rw_craplot_iof.rowid;
+      END IF;
+            -- Fechar cursor
             CLOSE cr_craplot_iof;
             
-				BEGIN
-          INSERT INTO craplot(dtmvtolt
-					                   ,cdagenci
-														 ,cdbccxlt
-														 ,nrdolote
-														 ,tplotmov
-														 ,cdcooper)
-											 VALUES(rw_crapdat.dtmvtolt
-											       ,1
-														 ,100
-														 ,(19000 + vr_cdpactra)
-														 ,1
-														 ,pr_cdcooper)
-                          RETURNING ROWID INTO vr_nrdrowid;
-
-				EXCEPTION
-					WHEN OTHERS THEN      
-						-- Gerar crítica
-						vr_cdcritic := 0;
-						vr_dscritic := REPLACE(REPLACE('Erro ao inserir lote (IOF): ' || SQLERRM, chr(13)),chr(10));																			
-						-- Levantar exceção
-						RAISE vr_exc_erro;
-				END;
-            
-			ELSE
-            
-			-- Fechar cursor
-			CLOSE cr_craplot_iof;
-			
-            vr_nrdrowid:= rw_craplot_iof.rowid;
-            
-          END IF;
-    						
+          /*
           vr_nrseqdig := fn_sequence('CRAPLOT','NRSEQDIG',''||pr_cdcooper||';'||
                                      to_char(rw_crapdat.dtmvtolt,'DD/MM/RRRR')||
                                      ';1;'|| --cdagenci
                                      '100;'|| --cdbccxlt
                                      (19000 + vr_cdpactra)); --nrdolote
+          */
                                   
-			-- Cria lançamento na craplcm refente ao IOF
-			BEGIN
-				INSERT INTO craplcm(dtmvtolt
-													 ,cdagenci
-													 ,cdbccxlt
-													 ,nrdolote
-													 ,nrdconta
-													 ,nrdctabb
-													 ,nrdctitg
-													 ,nrdocmto
-													 ,cdhistor
-													 ,nrseqdig
-													 ,cdpesqbb
-													 ,vllanmto
-													 ,cdcooper)
-										 VALUES(rw_crapdat.dtmvtolt
-										       ,1
-													 ,100
-													 ,(19000 + vr_cdpactra)
-													 ,pr_nrdconta
-													 ,pr_nrdconta
-													 ,to_char(pr_nrdconta, 'fm00000000')
-													 ,pr_nrborder
-													 ,2318 --324 Novo histórico - Projeto 410
-                               ,vr_nrseqdig
-													 ,to_char(vr_vlborder, 'fm000g000g000d00')
-													 --,ROUND( ( ROUND((vr_vlborder * vr_txccdiof), 2) + vr_vltotiof),2)
-                           ,ROUND(vr_vltotiof, 2)
-													 ,pr_cdcooper)
-					RETURNING vllanmto INTO vr_vllanmto;
-				EXCEPTION
-					WHEN OTHERS THEN      
-						-- Gerar crítica
-						vr_cdcritic := 0;
-						vr_dscritic := REPLACE(REPLACE('Erro ao criar novo lançamento (IOF): ' || SQLERRM, chr(13)),chr(10));																			
-						-- Levantar exceção
-						RAISE vr_exc_erro;
-			END;			
-      BEGIN
-        TIOF0001.pc_insere_iof(pr_cdcooper	=> pr_cdcooper           --> Codigo da Cooperativa 
-                          ,pr_nrdconta      => pr_nrdconta           --> Numero da Conta Corrente
-                          ,pr_dtmvtolt      => rw_crapdat.dtmvtolt   --> Data de Movimento
-                          ,pr_tpproduto     => 3                     --> Tipo de Produto
-                          ,pr_nrcontrato    => pr_nrborder           --> Numero do Contrato
-                          ,pr_idlautom      => NULL                  --> Chave: Id dos Lancamentos Futuros
-                          ,pr_dtmvtolt_lcm  => rw_crapdat.dtmvtolt   --> Chave: Data de Movimento Lancamento
-                          ,pr_cdagenci_lcm  => 1                     --> Chave: Agencia do Lancamento
-                          ,pr_cdbccxlt_lcm  => 100                   --> Chave: Caixa do Lancamento
-                          ,pr_nrdolote_lcm  => (19000 + vr_cdpactra) --> Chave: Lote do Lancamento
-                              ,pr_nrseqdig_lcm  => vr_nrseqdig           --> Chave: Sequencia do Lancamento
-                          ,pr_vliofpri      => vr_vltotiofpri       --> Valor do IOF Principal
-                          ,pr_vliofadi      => vr_vltotiofadi       --> Valor do IOF Adicional
-                          ,pr_vliofcpl      => vr_vltotiofcpl       --> Valor do IOF Complementar
-                          ,pr_cdcritic      => vr_cdcritic          --> Código da Crítica
-                            ,pr_dscritic      => vr_dscritic
-                            ,pr_flgimune      => vr_flgimune);
-        EXCEPTION
-					WHEN OTHERS THEN      
-						-- Gerar crítica
-						vr_cdcritic := 0;
-						vr_dscritic := REPLACE(REPLACE('Erro ao criar novo lançamento (IOF): ' || SQLERRM, chr(13)),chr(10));																			
-						-- Levantar exceção
-						RAISE vr_exc_erro;
-			END;			
-			-- Atualizar valores da craplot refente ao IOF			
-			BEGIN
-			  UPDATE craplot lot
-				   SET lot.vlinfodb = lot.vlinfodb + vr_vllanmto 
-					    ,lot.vlcompdb = lot.vlcompdb + vr_vllanmto 
-							,lot.qtinfoln = lot.qtinfoln + 1
-							,lot.qtcompln = lot.qtinfoln + 1
-                  ,lot.nrseqdig = vr_nrseqdig
-				 WHERE lot.rowid = vr_nrdrowid;
-				
-			EXCEPTION
-				WHEN OTHERS THEN      
-					-- Gerar crítica
-					vr_cdcritic := 0;
-					vr_dscritic := REPLACE(REPLACE('Erro ao atualizar lote (IOF): ' || SQLERRM, chr(13)),chr(10));																			
-					-- Levantar exceção
-					RAISE vr_exc_erro;
-			END;
-			-- Buscar cota de IOF
-	    OPEN cr_crapcot(pr_cdcooper => pr_cdcooper
-			               ,pr_nrdconta => pr_nrdconta);
-			FETCH cr_crapcot INTO rw_crapcot;
-			
-			-- Se não encontrou registro
-			IF cr_crapcot%NOTFOUND THEN
-				-- Fechar cursor
-				CLOSE cr_crapcot;
-				-- Gerar crítica
-				vr_cdcritic := 0;
-				vr_dscritic := 'Registro de cota de IOF não encontrado';
-				-- Levantar exceção
-				RAISE vr_exc_erro;
-			END IF;
-			
-			BEGIN
-				-- Atualizar valores das cotas
-			  UPDATE crapcot cot
-				   SET cot.vliofapl = cot.vliofapl + vr_vllanmto
-					    ,cot.vlbsiapl = cot.vlbsiapl + vr_vlborder
-				 WHERE cot.rowid = rw_crapcot.rowid;
-			EXCEPTION
-				WHEN OTHERS THEN      
-					-- Gerar crítica
-					vr_cdcritic := 0;
-					vr_dscritic := REPLACE(REPLACE('Erro ao atualizar valores das cotas de IOF: ' || SQLERRM, chr(13)),chr(10));																			
-					-- Levantar exceção
-					RAISE vr_exc_erro;				
-			END;
-		END IF;
+          -- Cria lançamento na craplcm refente ao IOF
+          BEGIN
+            INSERT INTO craplcm(dtmvtolt
+                               ,cdagenci
+                               ,cdbccxlt
+                               ,nrdolote
+                               ,nrdconta
+                               ,nrdctabb
+                               ,nrdctitg
+                               ,nrdocmto
+                               ,cdhistor
+                               ,nrseqdig
+                               ,cdpesqbb
+                               ,vllanmto
+                               ,cdcooper)
+                         VALUES(rw_crapdat.dtmvtolt
+                               ,1
+                               ,100
+                               ,(19000 + vr_cdpactra)
+                               ,pr_nrdconta
+                               ,pr_nrdconta
+                               ,to_char(pr_nrdconta, 'fm00000000')
+                               ,pr_nrborder
+                               ,2318 --324 Novo histórico - Projeto 410
+                               ,(vr_nrseqdig + 1)
+                               ,to_char(vr_vlborder, 'fm000g000g000d00')
+                               --,ROUND( ( ROUND((vr_vlborder * vr_txccdiof), 2) + vr_vltotiof),2)
+                               ,ROUND(vr_vltotiof, 2)
+                               ,pr_cdcooper)
+              RETURNING vllanmto INTO vr_vllanmto;
+            EXCEPTION
+              WHEN OTHERS THEN      
+                -- Gerar crítica
+                vr_cdcritic := 0;
+                vr_dscritic := REPLACE(REPLACE('Erro ao criar novo lançamento (IOF): ' || SQLERRM, chr(13)),chr(10));																			
+                -- Levantar exceção
+                RAISE vr_exc_erro;
+          END;			
+          BEGIN
+            TIOF0001.pc_insere_iof(pr_cdcooper	=> pr_cdcooper           --> Codigo da Cooperativa 
+                              ,pr_nrdconta      => pr_nrdconta           --> Numero da Conta Corrente
+                              ,pr_dtmvtolt      => rw_crapdat.dtmvtolt   --> Data de Movimento
+                              ,pr_tpproduto     => 3                     --> Tipo de Produto
+                              ,pr_nrcontrato    => pr_nrborder           --> Numero do Contrato
+                              ,pr_idlautom      => NULL                  --> Chave: Id dos Lancamentos Futuros
+                              ,pr_dtmvtolt_lcm  => rw_crapdat.dtmvtolt   --> Chave: Data de Movimento Lancamento
+                              ,pr_cdagenci_lcm  => 1                     --> Chave: Agencia do Lancamento
+                              ,pr_cdbccxlt_lcm  => 100                   --> Chave: Caixa do Lancamento
+                              ,pr_nrdolote_lcm  => (19000 + vr_cdpactra) --> Chave: Lote do Lancamento
+                              ,pr_nrseqdig_lcm  => (vr_nrseqdig + 1)    --> Chave: Sequencia do Lancamento
+                              ,pr_vliofpri      => vr_vltotiofpri       --> Valor do IOF Principal
+                              ,pr_vliofadi      => vr_vltotiofadi       --> Valor do IOF Adicional
+                              ,pr_vliofcpl      => vr_vltotiofcpl       --> Valor do IOF Complementar
+                              ,pr_cdcritic      => vr_cdcritic          --> Código da Crítica
+                                ,pr_dscritic      => vr_dscritic
+                                ,pr_flgimune      => vr_flgimune);
+            EXCEPTION
+              WHEN OTHERS THEN      
+                -- Gerar crítica
+                vr_cdcritic := 0;
+                vr_dscritic := REPLACE(REPLACE('Erro ao criar novo lançamento (IOF): ' || SQLERRM, chr(13)),chr(10));																			
+                -- Levantar exceção
+                RAISE vr_exc_erro;
+          END;			
+          -- Atualizar valores da craplot refente ao IOF			
+          BEGIN
+            UPDATE craplot lot
+               SET lot.vlinfodb = lot.vlinfodb + vr_vllanmto 
+                  ,lot.vlcompdb = lot.vlcompdb + vr_vllanmto 
+                  ,lot.qtinfoln = lot.qtinfoln + 1
+                  ,lot.qtcompln = lot.qtinfoln + 1
+                  ,lot.nrseqdig = lot.nrseqdig + 1
+             WHERE lot.rowid = vr_nrdrowid;
+    				
+          EXCEPTION
+            WHEN OTHERS THEN      
+              -- Gerar crítica
+              vr_cdcritic := 0;
+              vr_dscritic := REPLACE(REPLACE('Erro ao atualizar lote (IOF): ' || SQLERRM, chr(13)),chr(10));																			
+              -- Levantar exceção
+              RAISE vr_exc_erro;
+          END;
+          -- Buscar cota de IOF
+          OPEN cr_crapcot(pr_cdcooper => pr_cdcooper
+                         ,pr_nrdconta => pr_nrdconta);
+          FETCH cr_crapcot INTO rw_crapcot;
+    			
+          -- Se não encontrou registro
+          IF cr_crapcot%NOTFOUND THEN
+            -- Fechar cursor
+            CLOSE cr_crapcot;
+            -- Gerar crítica
+            vr_cdcritic := 0;
+            vr_dscritic := 'Registro de cota de IOF não encontrado';
+            -- Levantar exceção
+            RAISE vr_exc_erro;
+          END IF;
+    			
+          BEGIN
+            -- Atualizar valores das cotas
+            UPDATE crapcot cot
+               SET cot.vliofapl = cot.vliofapl + vr_vllanmto
+                  ,cot.vlbsiapl = cot.vlbsiapl + vr_vlborder
+             WHERE cot.rowid = rw_crapcot.rowid;
+          EXCEPTION
+            WHEN OTHERS THEN      
+              -- Gerar crítica
+              vr_cdcritic := 0;
+              vr_dscritic := REPLACE(REPLACE('Erro ao atualizar valores das cotas de IOF: ' || SQLERRM, chr(13)),chr(10));																			
+              -- Levantar exceção
+              RAISE vr_exc_erro;				
+          END;
+        END IF;
 		END IF;
     
     OPEN cr_crapcop(pr_cdcooper);
