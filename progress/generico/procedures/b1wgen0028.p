@@ -3453,7 +3453,7 @@ PROCEDURE cadastra_novo_cartao:
                              aux_diasdebito = pc_busca_credito_config_categ.pr_diasdebito
                              aux_possui_registro = pc_busca_credito_config_categ.pr_possui_registro.
                                                                 
-                      IF CAN-DO(aux_diasdebito,"0") AND par_vllimpro >= aux_vllimite_minimo AND par_vllimpro <= aux_vllimite_maximo THEN 
+                      IF CAN-DO(aux_diasdebito,STRING(par_dddebito)) AND par_vllimpro >= aux_vllimite_minimo AND par_vllimpro <= aux_vllimite_maximo THEN 
                         DO:
                           aux_achou = 1.
                         END.
