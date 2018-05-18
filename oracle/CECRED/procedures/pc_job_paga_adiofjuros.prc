@@ -119,6 +119,8 @@ BEGIN
     vr_dscritic  crapcri.dscritic%TYPE;
     vr_exc_erro  EXCEPTION;
     vr_exc_email EXCEPTION;
+    
+    podeDebitar  BOOLEAN;
        
     -- Procedimento para inserir o lote e não deixar tabela lockada
     PROCEDURE pc_insere_lote (pr_cdcooper IN craplot.cdcooper%TYPE,
@@ -307,34 +309,26 @@ BEGIN
 
       /* Cria o lancamento do DEBITO */
       BEGIN
-        INSERT INTO craplcm (cdcooper
-                            ,dtmvtolt
-                            ,cdagenci
-                            ,cdbccxlt
-                            ,nrdolote
-                            ,nrdconta
-                            ,nrdctabb
-                            ,nrdctitg
-                            ,nrdocmto
-                            ,cdhistor
-                            ,nrseqdig
-                            ,vllanmto                          
-                            ,cdcoptfn
-                            ,idlautom)
-               VALUES  (pr_cdcooper  
-                       ,rw_craplot.dtmvtolt
-                       ,rw_craplot.cdagenci
-                       ,rw_craplot.cdbccxlt
-                       ,rw_craplot.nrdolote
-                       ,pr_nrdconta
-                       ,pr_nrdconta
-                       ,GENE0002.FN_MASK(pr_nrdconta, '99999999')
-                       ,vr_qtdlan
-                       ,pr_cdhistor
-                       ,rw_craplot.nrseqdig
-                       ,pr_vllanmto                     
-                       ,0
-                       ,pr_idlautom);
+        LANC0001.pc_gerar_lancamento_conta(pr_cdagenci => rw_craplot.cdagenci
+                                          , pr_cdbccxlt => rw_craplot.cdbccxlt
+                                          , pr_cdhistor => pr_cdhistor
+                                          , pr_dtmvtolt => rw_craplot.dtmvtolt
+                                          , pr_nrdconta => pr_nrdconta
+                                          , pr_nrdctabb => pr_nrdconta
+                                          , pr_nrdctitg => GENE0002.FN_MASK(pr_nrdconta, '99999999')
+                                          , pr_nrdocmto => vr_qtdlan
+                                          , pr_nrdolote => rw_craplot.nrdolote
+                                          , pr_nrseqdig => rw_craplot.nrseqdig
+                                          , pr_cdcooper => pr_cdcooper
+                                          , pr_vllanmto => pr_vllanmto
+                                          , pr_cdcritic => vr_cdcritic
+                                          , pr_dscritic => vr_dscritic
+                                          , pr_idlautom => pr_idlautom
+                                          , pr_cdcoptfn => 0);
+        IF vr_dscritic IS NOT NULL THEN
+           RAISE vr_exc_erro;
+        END IF;
+        
       EXCEPTION
         WHEN OTHERS THEN
           vr_cdcritic:= 0;
@@ -531,9 +525,14 @@ BEGIN
            --Levantar Excecao
            RAISE vr_exc_erro;
         ELSE
+          -- valida se historico pode debitar
+          podeDebitar := LANC0001.fn_pode_debitar(pr_cdcooper => rw_lautom_ctrl.cdcooper,
+                                                  pr_nrdconta => rw_lautom_ctrl.nrdconta,
+                                                  pr_cdhistor => rw_lautom_ctrl.cdhistor);
+            
           --Se tiver saldo suficiente, pago a divida
-          IF (nvl(vr_tab_saldo(vr_tab_saldo.FIRST).vlsddisp,0) +
-              nvl(vr_tab_saldo(vr_tab_saldo.FIRST).vllimcre,0)) >= rw_lautom_ctrl.vllanaut THEN
+          IF podeDebitar OR (nvl(vr_tab_saldo(vr_tab_saldo.FIRST).vlsddisp,0) +
+                            nvl(vr_tab_saldo(vr_tab_saldo.FIRST).vllimcre,0)) >= rw_lautom_ctrl.vllanaut THEN
 
              pc_paga_adiofjuros(pr_cdcooper => rw_lautom_ctrl.cdcooper
                                ,pr_dtmvtolt => rw_crapdat.dtmvtolt
@@ -588,8 +587,10 @@ BEGIN
                   CONTINUE;                            
                END IF;             
              END IF;
+             
+             
         
-             --JUROS LIM.CRD
+/*             --JUROS LIM.CRD
              IF rw_lautom_ctrl.cdhistor = 38 THEN             
                -- Valor minimo para cobrança de cheque especial                                      
                IF vr_vlminchq > (nvl(vr_tab_saldo(vr_tab_saldo.FIRST).vlsddisp,0) +
@@ -605,7 +606,7 @@ BEGIN
                                  nvl(vr_tab_saldo(vr_tab_saldo.FIRST).vllimcre,0)) THEN
                   CONTINUE;               
                END IF;                          
-             END IF;
+             END IF; */
              
              pc_paga_adiofjuros(pr_cdcooper => rw_lautom_ctrl.cdcooper
                                ,pr_dtmvtolt => rw_crapdat.dtmvtolt
