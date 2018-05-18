@@ -11,7 +11,7 @@ BEGIN
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Diego
-   Data    : Setembro/2009.                     Ultima atualizacao: 23/04/2018
+   Data    : Setembro/2009.                     Ultima atualizacao: 18/05/2018
 
    Dados referentes ao programa: Fonte extraido e adaptado para execucao em
                                  paralelo. Fonte original crps531.p.
@@ -247,6 +247,8 @@ BEGIN
 			   23/04/2018 - Ajuste para buscar corretamente a cooperativa (Adriano - Homol conversão).
 			   
 			   15/05/2018 - Bacenjud SM 1 - Heitor (Mouts)
+
+			   18/05/2018 - Ajuste para gerar criticas em contas encerradas (CRAPASS.CDSITDCT = 4)
 
              #######################################################
              ATENCAO!!! Ao incluir novas mensagens para recebimento,
@@ -894,7 +896,7 @@ BEGIN
           pr_cdcritic := 2;
           pr_dscritic := 'Conta informada invalida.';
           RETURN;
-        ELSIF rw_crapass.dtelimin IS NOT NULL THEN
+        ELSIF rw_crapass.dtelimin IS NOT NULL or rw_crapass.cdsitdct = 4 THEN
           pr_cdcritic := 1;  /* Conta encerrada */
           RETURN;
         ELSE
