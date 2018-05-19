@@ -126,13 +126,13 @@
 						    			<?
 							    			$sit = $t->dssituac;
 								    		if ($sit=="N") { ?>
-									    		<td>N&atilde;o</td>
+									    		<td class='situacao-titulo'>N&atilde;o</td>
 								    		<? }
 								    		elseif ($sit=="S") { ?>
-									    		<td>Sim</td>
+									    		<td class='situacao-titulo'>Sim</td>
 								    		<? }
 								    		else{ ?>
-									    		<td>N&atilde;o Analisado</td>
+									    		<td class='situacao-titulo'>N&atilde;o Analisado</td>
 								    		<? }
 								    	?>
 						    			<?
@@ -185,5 +185,13 @@
     var ordemInicial = new Array();
     table.formataTabela( ordemInicial, arrayLarguraInclusaoBordero, arrayAlinhaInclusaoBordero, '' );
 
+ 	//Atualizar a situacao da pagina anterior 
+    $(".divRegistrosTitulosSelecionados .titulo-nao-analisado").each(function(){
+     	//Pega a ID da linha e o valor novo da crítica
+    	var id_linha   = $(this).parent().attr("id");
+    	var novo_valor = $("#divResumoBordero .tituloRegistros tbody #"+id_linha+" .situacao-titulo").html();
 
+    	//Atualiza na tabela da pagina anterior
+    	$(this).html(novo_valor);
+    })
 </script>
