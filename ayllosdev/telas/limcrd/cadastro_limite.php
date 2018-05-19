@@ -35,7 +35,7 @@
     $cecred = $cdadmcrd > 9 && $cdadmcrd < 81;
     if($tpproces == "A"){
         if($cecred  ){
-            if($vllimite_min == 0){
+            if(is_null($vllimite_min)){
                 echo "success = false; message='".utf8ToHtml("Por favor preencha o valor de limite mínimo.")."'";
                 return;
             }
@@ -88,5 +88,6 @@
     }else{
         echo "success = true;message ='".utf8ToHtml($obj->Dados->status)."'";
     }
+	echo "/* nmdeacao: \n enviado \n $xml   \n recebido \n $xmlResult \n */";
     //echo "$xmlResult";
 ?>
