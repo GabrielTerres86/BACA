@@ -64,7 +64,37 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0003 AS
   /* Tipo utilizado na pc_efetua_analise_bordero*/
   TYPE typ_tab_msg_confirma IS TABLE OF typ_reg_msg_confirma INDEX BY PLS_INTEGER;
 
-  
+  /*Tabela de retorno dos titulos do bordero*/
+  TYPE typ_rec_tit_bordero
+       IS RECORD (nrdctabb craptdb.nrdctabb%TYPE,
+                  nrcnvcob craptdb.nrcnvcob%TYPE,
+                  nrinssac craptdb.nrinssac%TYPE,
+                  cdbandoc craptdb.cdbandoc%TYPE,
+                  nrdconta craptdb.nrdconta%TYPE,
+                  nrdocmto craptdb.nrdocmto%TYPE,
+                  dtvencto craptdb.dtvencto%TYPE,
+                  dtlibbdt craptdb.dtlibbdt%TYPE,
+                  vltitulo craptdb.vltitulo%TYPE,
+                  vlliquid craptdb.vlliquid%TYPE,
+                  nmsacado crapsab.nmdsacad%TYPE,
+                  flgregis crapcob.flgregis%TYPE,
+                  insittit craptdb.insittit%TYPE,
+                  vlsldtit craptdb.vlsldtit%TYPE,
+                  vlmtatit craptdb.vlmtatit%TYPE,
+                  vlpagmta craptdb.vlpagmta%TYPE,
+                  vlmratit craptdb.vlmratit%TYPE,
+                  vlpagmra craptdb.vlpagmra%TYPE,
+                  vliofcpl craptdb.vliofcpl%TYPE,
+                  vlpagiof craptdb.vlpagiof%TYPE,
+                  vlpago   NUMBER(25,2),
+                  vlmulta  NUMBER(25,2),
+                  vlmora   NUMBER(25,2),
+                  vliof    NUMBER(25,2),
+                  vlpagar  NUMBER(25,2)
+                  );
+
+  TYPE typ_tab_tit_bordero IS TABLE OF typ_rec_tit_bordero
+       INDEX BY VARCHAR2(50);
 
   PROCEDURE pc_liberar_bordero_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> Número da Conta
                                    ,pr_nrborder IN crapbdt.nrborder%TYPE  --> numero do bordero
@@ -259,18 +289,57 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0003 AS
                                       )RETURN NUMBER;
           
   -- Cálculo da Concentração do título do pagador
-  FUNCTION fn_concentracao_titulo_pagador (pr_cdcooper craptdb.cdcooper%TYPE
-                                ,pr_nrdconta craptdb.nrdconta%TYPE
-                                ,pr_nrinssac crapcob.nrinssac%TYPE
-                                ) RETURN NUMBER;
+  FUNCTION fn_concentracao_titulo_pagador (pr_cdcooper     IN craptdb.cdcooper%TYPE
+                                          ,pr_nrdconta     IN craptdb.nrdconta%TYPE
+                                          ,pr_nrinssac     IN crapcob.nrinssac%TYPE
+                                          ,pr_dtmvtolt_de  IN crapdat.dtmvtolt%TYPE 
+                                          ,pr_dtmvtolt_ate IN crapdat.dtmvtolt%TYPE
+                                          ,pr_qtcarpag     IN NUMBER
+                                          ) RETURN NUMBER;
                                 
-  -- Cálculo da Lidquidez do Pagador
-  FUNCTION fn_liquidez_pagador_cedente (pr_cdcooper craptdb.cdcooper%TYPE
-                                        ,pr_nrdconta craptdb.nrdconta%TYPE
-                                        ,pr_nrinssac crapcob.nrinssac%TYPE
-                                        ,pr_cdtpinsc crapcob.cdtpinsc%TYPE
+  -- Cálculo da Liquidez do Pagador
+  FUNCTION fn_liquidez_pagador_cedente (pr_cdcooper     IN craptdb.cdcooper%TYPE
+                                       ,pr_nrdconta     IN craptdb.nrdconta%TYPE
+                                       ,pr_nrinssac     IN crapcob.nrinssac%TYPE
+                                       ,pr_dtmvtolt_de  IN crapdat.dtmvtolt%TYPE 
+                                       ,pr_dtmvtolt_ate IN crapdat.dtmvtolt%TYPE
+                                       ,pr_qtcarpag     IN NUMBER
                                         ) RETURN NUMBER;
                                         
+  -- Buscar todo os titulos vencidos de um bordero                                        
+  PROCEDURE pc_busca_titulos_vencidos_web(pr_nrdconta IN crapass.nrdconta%TYPE  --> Número da Conta
+                                    ,pr_nrborder IN crapbdt.nrborder%TYPE  --> numero do bordero
+                                    ,pr_xmllog   IN VARCHAR2               --> XML com informações de LOG
+                                    --------> OUT <--------
+                                    ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
+                                    ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
+                                    ,pr_retxml   IN OUT NOCOPY xmltype    --> arquivo de retorno do xml
+                                    ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
+                                    ,pr_des_erro OUT VARCHAR2             --> Erros do processo
+                                    );    
+  PROCEDURE pc_calcula_possui_saldo (pr_nrdconta IN crapass.nrdconta%TYPE  --> Número da Conta
+                                    ,pr_nrborder IN crapbdt.nrborder%TYPE  --> Numero do bordero   
+                                    ,pr_arrnrdocmto IN VARCHAR2           --> Lista dos titulos
+                                    ,pr_xmllog   IN VARCHAR2               --> XML com informações de LOG
+                                    --------> OUT <--------
+                                    ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
+                                    ,pr_dscritic OUT VARCHAR2              --> Descrição da crítica
+                                    ,pr_retxml   IN OUT NOCOPY xmltype    --> arquivo de retorno do xml
+                                    ,pr_nmdcampo OUT VARCHAR2          --> Nome do campo com erro
+                                    ,pr_des_erro OUT VARCHAR2      --> Erros do processo
+                                   );
+ PROCEDURE pc_pagar_titulos_vencidos (pr_nrdconta         IN crapass.nrdconta%TYPE  --> Número da Conta
+                                     ,pr_nrborder         IN crapbdt.nrborder%TYPE  --> Numero do bordero   
+                                     ,pr_flavalista       IN VARCHAR2                --> Caso seja pagamento com avalista
+                                     ,pr_arrnrdocmto      IN VARCHAR2               --> Lista dos titulos
+                                     ,pr_xmllog           IN VARCHAR2               --> XML com informações de LOG
+                                     --------> OUT <--------
+                                     ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
+                                     ,pr_dscritic OUT VARCHAR2              --> Descrição da crítica
+                                     ,pr_retxml   IN OUT NOCOPY xmltype    --> arquivo de retorno do xml
+                                     ,pr_nmdcampo OUT VARCHAR2          --> Nome do campo com erro
+                                     ,pr_des_erro OUT VARCHAR2      --> Erros do processo
+                                    ) ;
 END  DSCT0003;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0003 AS
@@ -300,7 +369,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0003 AS
                             
                07/05/2018 - Criadas procedures para fazer a checagem se a cooperativa está utilizando a versão nova ou 
                             a antiga do borderô - Luis Fernando (GFT)
-
+               
+               14/05/2018 - Criacao da procedure para trazer os titulos vencidos                              - Vitor Shimada Assanuma (GFT)
+               16/05/2018 - Criacao das procedures de trazer o saldo e efetuar pagamento dos titulos vencidos - Vitor Shimada Assanuma (GFT)
   ---------------------------------------------------------------------------------------------------------------*/
 
   -- Variáveis para armazenar as informações em XML
@@ -518,6 +589,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0003 AS
          ,crapbdt.nrdconta
          ,crapbdt.insitbdt
          ,crapbdt.insitapr
+         ,crapbdt.dtenvmch
    FROM   crapbdt
    WHERE  crapbdt.cdcooper = pr_cdcooper
    AND    crapbdt.nrborder = pr_nrborder;
@@ -554,14 +626,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0003 AS
                  END IF;
                  
            ELSIF pr_cddeacao = 'ANALISAR' THEN
-                 IF  rw_crapbdt.insitbdt > 2 THEN
+                 IF  rw_crapbdt.insitbdt > 2 OR (rw_crapbdt.insitapr IN (2,6,7)) THEN
                      vr_dscritic := 'Análise não permitida. O Borderô deve estar na situação EM ESTUDO ou ANALISADO.';
                      CLOSE cr_crapbdt;
                      RAISE vr_exc_erro;
                  END IF;
 
            ELSIF pr_cddeacao = 'REJEITAR' THEN
-                 IF  rw_crapbdt.insitbdt <> 1 AND rw_crapbdt.insitapr <> 5 THEN
+                 IF  rw_crapbdt.insitbdt <> 1 OR (rw_crapbdt.insitapr <> 5 AND (rw_crapbdt.insitapr<>0 OR rw_crapbdt.dtenvmch IS NULL)) THEN
                      vr_dscritic := 'Rejeição não permitida. O Borderô deve estar na situação EM ESTUDO e decisão NÃO APROVADO.';
                      CLOSE cr_crapbdt;
                      RAISE vr_exc_erro;
@@ -5018,229 +5090,822 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0003 AS
      Sistema  : 
      Sigla    : CRED
      Autor    : Vitor Shimada Assanuma (GFT)
-     Data     : 08/05/2018
+     Data     : Maio/2018
      Frequencia: Sempre que for chamado
      Objetivo  : Cálculo da Liquidez Geral
    ---------------------------------------------------------------------------------------------------------------------*/
-   --     Valor Total descontado pago com atraso de até x dias e não pagos
-   cursor cr_craptdb_npag is
-   select nvl(sum(tdb.vltitulo),0) vltitulo
-   from   craptdb tdb
+   /* Calculo da Liquidez:
+    Soma do Valor de todos os titulos nao pagos dividido pela soma de todos os titulos daquele emitente (nrdconta)
+           dentro de um periodo de tempo da liquidez (Dt.Mov - Dias de Liquidez ATE Dt.Mov) levando em conta os dias de
+           carencia na data de vencimento.
+    (Não considerar como título pago, os liquidados em conta corrente do cedente, ou seja, pagos pelo próprio emitente) */
+   CURSOR cr_craptdb IS
+   SELECT (NVL(SUM(CASE WHEN dtdpagto IS NULL THEN vltitulo ELSE 0 END),0)/SUM(vltitulo))*100 AS vl_liquidez_geral
+   FROM   craptdb tdb
          ,crapbdt dbt
-   where  tdb.dtresgat                is null
-   and    tdb.dtlibbdt                is not null
-   and   (tdb.dtvencto + pr_qtcarpag) <= nvl(tdb.dtdpagto, trunc(sysdate))
-   and   (tdb.dtvencto) between pr_dtmvtolt_de and pr_dtmvtolt_ate
-   and    tdb.nrborder                = dbt.nrborder
-   and    tdb.nrdconta                = dbt.nrdconta
-   and    tdb.cdcooper                = dbt.cdcooper
-   and    dbt.nrdconta                = pr_nrdconta
-   and    dbt.cdcooper                = pr_cdcooper
+   WHERE  tdb.dtresgat                IS NULL
+   AND    tdb.dtlibbdt                IS NOT NULL
+   AND   (tdb.dtvencto + pr_qtcarpag) BETWEEN pr_dtmvtolt_de AND pr_dtmvtolt_ate
+   AND    tdb.nrborder                = dbt.nrborder
+   AND    tdb.nrdconta                = dbt.nrdconta
+   AND    tdb.cdcooper                = dbt.cdcooper
+   AND    dbt.nrdconta                = pr_nrdconta
+   AND    dbt.cdcooper                = pr_cdcooper
    --     Não considerar como título pago, os liquidados em conta corrente do cedente, ou seja, pagos pelo próprio emitente
-   and    not exists( select 1
-                      from   craptit tit
-                      where  tit.cdcooper = tdb.cdcooper
-                      and    tit.dtmvtolt = tdb.dtdpagto
-                      and    tdb.nrdconta = substr(upper(tit.dscodbar), 26, 8)
-                      and    tdb.nrcnvcob = substr(upper(tit.dscodbar), 20, 6)
-                      and    tit.cdbandst = 85
-                      and    tit.cdagenci in (90,91));
-   rw_craptdb_npag cr_craptdb_npag%rowtype;
-
-   --     Valor Total Descontado com vencimento dentro do período
-   cursor cr_craptdb_desc is
-   select nvl(sum(tdb.vltitulo), 0) vltitulo
-   from   craptdb tdb -- Titulos contidos do Bordero de desconto de titulos
-         ,crapbdt dbt -- Cadastro de borderos de descontos de titulos
-   where  tdb.dtresgat is null
-   and    tdb.dtlibbdt is not null -- somente os titulos que realmente foram descontados
-   and    tdb.dtvencto between pr_dtmvtolt_de and pr_dtmvtolt_ate 
-   and    tdb.nrborder = dbt.nrborder
-   and    tdb.nrdconta = dbt.nrdconta
-   and    tdb.cdcooper = dbt.cdcooper
-   and    dbt.nrdconta = pr_nrdconta
-   and    dbt.cdcooper = pr_cdcooper
-   --     Não considerar como título pago, os liquidados em conta corrente do cedente, ou seja, pagos pelo próprio emitente
-   and    not exists( select 1
-                      from   craptit tit
-                      where  tit.cdcooper = tdb.cdcooper
-                      and    tit.dtmvtolt = tdb.dtdpagto
-                      and    tdb.nrdconta = substr(upper(tit.dscodbar), 26, 8)
-                      and    tdb.nrcnvcob = substr(upper(tit.dscodbar), 20, 6)
-                      and    tit.cdbandst = 85
-                      and    tit.cdagenci in (90,91) );
-   rw_craptdb_desc cr_craptdb_desc%rowtype;
+   AND    NOT EXISTS( SELECT 1
+                      FROM   craptit tit
+                      WHERE  tit.cdcooper = tdb.cdcooper
+                      AND    tit.dtmvtolt = tdb.dtdpagto
+                      AND    tdb.nrdconta = substr(upper(tit.dscodbar), 26, 8)
+                      AND    tdb.nrcnvcob = substr(upper(tit.dscodbar), 20, 6)
+                      AND    tit.cdbandst = 85
+                      AND    tit.cdagenci IN (90,91));
+   rw_craptdb cr_craptdb%ROWTYPE;
    
-   BEGIN
-       /* Calculo da Liquidez:
-      Valor Total descontado pago com atraso de até x dias e não pagos, 
-      dividido pelo Valor Total Descontado com vencimento dentro do período,
-      vezes 100 = percentual de liquidez.
-     (Não considerar como título pago, os liquidados em conta corrente do cedente, ou seja, pagos pelo próprio emitente) */
+   BEGIN                                        
+     -- Efetua o calculo da Liquidez
+     OPEN  cr_craptdb();
+     FETCH cr_craptdb INTO rw_craptdb;
+     CLOSE cr_craptdb;
 
-     --    Valor Total Descontado com vencimento dentro do período
-     open  cr_craptdb_desc();
-     fetch cr_craptdb_desc into rw_craptdb_desc;
-     close cr_craptdb_desc;
-
-     --  Se não houver desconto, liquidez é 100%
-     if  rw_craptdb_desc.vltitulo = 0 then
-         RETURN 100;
-     else 
-       
-     -- Valor Total descontado pago com atraso de até x dias e não pagos
-     open  cr_craptdb_npag();
-     fetch cr_craptdb_npag into rw_craptdb_npag;
-     close cr_craptdb_npag;
-
-         RETURN (rw_craptdb_npag.vltitulo / rw_craptdb_desc.vltitulo) * 100;
-     end if;
-
+     RETURN rw_craptdb.vl_liquidez_geral;
   END fn_calcula_liquidez_geral;
  
-  FUNCTION fn_concentracao_titulo_pagador (pr_cdcooper craptdb.cdcooper%TYPE
-                                        ,pr_nrdconta craptdb.nrdconta%TYPE
-                                        ,pr_nrinssac crapcob.nrinssac%TYPE
-                                        ) RETURN NUMBER IS
+  FUNCTION fn_concentracao_titulo_pagador (pr_cdcooper     IN craptdb.cdcooper%TYPE
+                                          ,pr_nrdconta     IN craptdb.nrdconta%TYPE
+                                          ,pr_nrinssac     IN crapcob.nrinssac%TYPE
+                                          ,pr_dtmvtolt_de  IN crapdat.dtmvtolt%TYPE 
+                                          ,pr_dtmvtolt_ate IN crapdat.dtmvtolt%TYPE
+                                          ,pr_qtcarpag     IN NUMBER
+                                       ) RETURN NUMBER IS
   /*---------------------------------------------------------------------------------------------------------------------
     Programa : fn_concentracao_titulo_pagador
     Sistema  : CRED
-    Sigla    : TELA_APRDES
-    Autor    : Luis Fernando (GFT)
-    Data     : Abril/2018
+    Sigla    : CRED
+    Autor    : Vitor Shimada Assanuma (GFT)
+    Data     : Maio/2018
     Frequencia: Sempre que for chamado
-    Objetivo  : Função que retorna a porcentagem de concentracaoo de titulos daquele pagador
+    Objetivo  : Função que retorna a porcentagem de concentracao de titulos daquele pagador em um range de data de liquidez
   ---------------------------------------------------------------------------------------------------------------------*/
-    cursor cr_concentracao is -- Percentual de Concentração de Títulos por Pagador  
-     select * from (
-          select nrdconta,
-                 nrinssac,
-                (totalporpagador*100/(sum(totalporpagador) over(partition by nrdconta))) pe_conc
-          from ( select nrdconta,
-                        nrinssac,
-                        count(1) as totalporpagador
-                 from   crapcob
-                 where  cdcooper = pr_cdcooper
-                 and    crapcob.flgregis = 1
-                 and    crapcob.incobran = 0
-                 and    crapcob.dtdpagto is null
-                 and    crapcob.nrdconta = pr_nrdconta
-                 group  by nrdconta,
-                           crapcob.nrinssac
-                 order  by crapcob.nrdconta
-               )
-             
-          group  by nrdconta,
-                    nrinssac,
-                    totalporpagador
-      )
-     where
-        nrinssac = pr_nrinssac
-        AND nrdconta = pr_nrdconta;
+  cursor cr_concentracao IS
+     select (nvl(SUM(CASE WHEN dtdpagto IS NULL THEN vltitulo ELSE 0 END),0)/ SUM(vltitulo))*100 AS vl_perc_concentracao
+     from   craptdb tdb -- Titulos do Bordero
+           ,crapbdt dbt -- Bordero de Titulos
+     where  tdb.nrinssac       = pr_nrinssac           -- Titulos contra aquele sacado
+     AND    tdb.dtvencto + pr_qtcarpag BETWEEN pr_dtmvtolt_de AND pr_dtmvtolt_ate -- No intervalo de data da liquidez
+     and    tdb.dtresgat is null
+     and    tdb.dtlibbdt is not null                   -- Somente os titulos que realmente foram descontados
+     and    tdb.nrborder       = dbt.nrborder
+     and    tdb.cdcooper       = dbt.cdcooper
+     and    dbt.cdcooper       = pr_cdcooper
+     --     Não considerar como título pago, os liquidados em conta corrente do cedente, ou seja, pagos pelo próprio emitente
+     and    not exists( select 1
+                        from   craptit tit
+                        where  tit.cdcooper = tdb.cdcooper
+                        and    tit.dtmvtolt = tdb.dtdpagto
+                        and    tdb.nrdconta = substr(upper(tit.dscodbar), 26, 8)
+                        and    tdb.nrcnvcob = substr(upper(tit.dscodbar), 20, 6)
+                        and    tit.cdbandst = 85
+                        and    tit.cdagenci in (90,91) );
      rw_concentracao cr_concentracao%rowtype;
+    
      BEGIN
-       open  cr_concentracao;
-       fetch cr_concentracao into rw_concentracao;
+       OPEN   cr_concentracao();
+       FETCH cr_concentracao into rw_concentracao;
        IF (cr_concentracao%NOTFOUND) THEN
          return 0;
        END IF;
-       return rw_concentracao.pe_conc;
+       RETURN rw_concentracao.vl_perc_concentracao;    
    END fn_concentracao_titulo_pagador;
    
-   FUNCTION fn_liquidez_pagador_cedente (pr_cdcooper craptdb.cdcooper%TYPE
-                                        ,pr_nrdconta craptdb.nrdconta%TYPE
-                                        ,pr_nrinssac crapcob.nrinssac%TYPE
-                                        ,pr_cdtpinsc crapcob.cdtpinsc%TYPE
+   
+   FUNCTION fn_liquidez_pagador_cedente (pr_cdcooper     IN craptdb.cdcooper%TYPE
+                                        ,pr_nrdconta     IN craptdb.nrdconta%TYPE
+                                        ,pr_nrinssac     IN crapcob.nrinssac%TYPE
+                                        ,pr_dtmvtolt_de  IN crapdat.dtmvtolt%TYPE 
+                                        ,pr_dtmvtolt_ate IN crapdat.dtmvtolt%TYPE
+                                        ,pr_qtcarpag     IN NUMBER
                                         ) RETURN NUMBER IS
   /*---------------------------------------------------------------------------------------------------------------------
     Programa : fn_liquidez_pagador_cedente
     Sistema  : CRED
-    Sigla    : TELA_APRDES
-    Autor    : Luis Fernando (GFT)
-    Data     : Abril/2018
+    Sigla    : CRED
+    Autor    : Vitor Shimada Assanuma (GFT)
+    Data     : Maio/2018
     Frequencia: Sempre que for chamado
-    Objetivo  : Função que retorna a porcentagem de liquidez do pagador contra o cedente
-  ---------------------------------------------------------------------------------------------------------------------*/
-  
-    -- Títulos Descontados com vencimento dentro do período
-   cursor cr_craptdb_desc is
-   select count(1) qttitulo, nvl(sum(tdb.vltitulo), 0) vltitulo
-   from   crapsab sab -- Pagador
-         ,craptdb tdb -- Titulos do Bordero
-         ,crapbdt dbt -- Bordero de Titulos
-   where  sab.nrinssac = pr_nrinssac
-   and    sab.cdtpinsc = pr_cdtpinsc
-   and    sab.cdcooper = pr_cdcooper
-   and    sab.nrdconta = pr_nrdconta
-   and    tdb.dtresgat is null
-   and    tdb.dtlibbdt is not null -- Somente os titulos que realmente foram descontados
-   and    tdb.nrborder = dbt.nrborder
-   and    tdb.nrdconta = dbt.nrdconta
-   and    tdb.cdcooper = dbt.cdcooper
-   and    dbt.nrdconta = pr_nrdconta
-   and    dbt.cdcooper = pr_cdcooper
-   --     Não considerar como título pago, os liquidados em conta corrente do cedente, ou seja, pagos pelo próprio emitente
-   and    not exists( select 1
-                      from   craptit tit
-                      where  tit.cdcooper = tdb.cdcooper
-                      and    tit.dtmvtolt = tdb.dtdpagto
-                      and    tdb.nrdconta = substr(upper(tit.dscodbar), 26, 8)
-                      and    tdb.nrcnvcob = substr(upper(tit.dscodbar), 20, 6)
-                      and    tit.cdbandst = 85
-                      and    tit.cdagenci in (90,91) );
-   rw_craptdb_desc cr_craptdb_desc%rowtype;
+    Objetivo  : Função que retorna a porcentagem de liquidez do pagador contra o cedente no range de data
+  ---------------------------------------------------------------------------------------------------------------------*/ 
+   /* CÁLCULO DA CONCENTRACAO DO PAGADOR
+    Soma do Valor de todos os titulos nao pagos dividido pela soma de todos os titulos daquele emitente (nrdconta)
+       CONTRA aquele pagador (nrinssac) dentro de um periodo de tempo da liquidez (Dt.Mov - Dias de Liquidez ATE Dt.Mov) 
+       levando em conta os dias de carencia na data de vencimento.
+    (Não considerar como título pago, os liquidados em conta corrente do cedente, ou seja, pagos pelo próprio emitente) */
+   CURSOR cr_craptdb_desc IS
+     SELECT (nvl(SUM(CASE WHEN dtdpagto IS NULL THEN vltitulo ELSE 0 END),0)/SUM(vltitulo))*100 AS perc_liquidez
+     FROM   craptdb tdb -- Titulos do Bordero
+           ,crapbdt dbt -- Bordero de Titulos
+     WHERE  tdb.nrinssac       = pr_nrinssac           -- Titulos contra aquele sacado
+     AND   (tdb.dtvencto + pr_qtcarpag) BETWEEN pr_dtmvtolt_de AND pr_dtmvtolt_ate -- No intervalo de data da liquidez
+     AND    tdb.dtresgat IS NULL 
+     AND    tdb.dtlibbdt IS NOT NULL                   -- Somente os titulos que realmente foram descontados
+     AND    tdb.nrborder       = dbt.nrborder
+     AND    tdb.nrdconta       = dbt.nrdconta
+     AND    tdb.cdcooper       = dbt.cdcooper
+     AND    dbt.nrdconta       = pr_nrdconta
+     AND    dbt.cdcooper       = pr_cdcooper
+     --     Não considerar como título pago, os liquidados em conta corrente do cedente, ou seja, pagos pelo próprio emitente
+     AND    NOT EXISTS( SELECT 1
+                        FROM   craptit tit
+                        WHERE  tit.cdcooper = tdb.cdcooper
+                        AND    tit.dtmvtolt = tdb.dtdpagto
+                        AND    tdb.nrdconta = substr(upper(tit.dscodbar), 26, 8)
+                        AND    tdb.nrcnvcob = substr(upper(tit.dscodbar), 20, 6)
+                        AND    tit.cdbandst = 85
+                        AND    tit.cdagenci IN (90,91) );
+   rw_craptdb_desc cr_craptdb_desc%ROWTYPE;
    
-   -- Títulos Não Pagos com vencimento dentro do período
-   cursor cr_craptdb_npag is
-   select count(1) AS qttitulo, nvl(sum(tdb.vltitulo),0) AS vltitulo
-   from   crapsab sab
-         ,craptdb tdb
-         ,crapbdt dbt
-   where  sab.nrinssac  = pr_nrinssac
-    and    sab.cdtpinsc  = pr_cdtpinsc 
-   and    sab.cdcooper  = tdb.cdcooper
-   and    sab.nrdconta  = tdb.nrdconta
-   and    tdb.dtresgat  is null
-   and    tdb.dtlibbdt  is not null
-   and    tdb.dtvencto <= nvl(tdb.dtdpagto, trunc(sysdate))
-   and    tdb.nrborder = dbt.nrborder
-   and    tdb.nrdconta = dbt.nrdconta
-   and    tdb.cdcooper = dbt.cdcooper
-   and    dbt.nrdconta = pr_nrdconta
-   and    dbt.cdcooper = pr_cdcooper
-   --     Não considerar como título pago, os liquidados em conta corrente do cedente, ou seja, pagos pelo próprio emitente
-   
-   and    not exists( select 1
-                      from   craptit tit
-                      where  tit.cdcooper = tdb.cdcooper
-                      and    tit.dtmvtolt = tdb.dtdpagto
-                      and    tdb.nrdconta = substr(upper(tit.dscodbar), 26, 8)
-                      and    tdb.nrcnvcob = substr(upper(tit.dscodbar), 20, 6)
-                      and    tit.cdbandst = 85
-                      and    tit.cdagenci in (90,91));
-   rw_craptdb_npag cr_craptdb_npag%rowtype;
- 
-   -- Controle
-   vr_vlliquidez NUMBER;
-   BEGIN
-     ----> DETALHES (LIQUIDEZ DO PAGADOR COM O CEDENTE)
-     --  Valor Total Descontado com vencimento dentro do período
-     open  cr_craptdb_desc;
-     fetch cr_craptdb_desc into rw_craptdb_desc;
-     close cr_craptdb_desc;
-             
-     --  Se não houver desconto, liquidez é 100%
-     if  rw_craptdb_desc.qttitulo = 0 then
-         vr_vlliquidez := 100;
-     else 
-         -- Valor Total descontado pago com atraso e não pagos
-         open  cr_craptdb_npag;
-         fetch cr_craptdb_npag into rw_craptdb_npag;
-         close cr_craptdb_npag;
-         vr_vlliquidez := (rw_craptdb_npag.qttitulo / rw_craptdb_desc.qttitulo) * 100;
-     end if;
-     return vr_vlliquidez;
+   BEGIN       
+     -- Efetua o calculo
+     OPEN cr_craptdb_desc();
+     FETCH cr_craptdb_desc INTO rw_craptdb_desc;
+     CLOSE cr_craptdb_desc;
+     
+     RETURN rw_craptdb_desc.perc_liquidez;
    END fn_liquidez_pagador_cedente;
+  
+ PROCEDURE pc_busca_titulos_vencidos(pr_cdcooper IN crapbdt.cdcooper%TYPE  --> Numero da Cooperativa
+                                    ,pr_nrborder IN crapbdt.nrborder%TYPE  --> Numero do bordero 
+                                    ,pr_nrdconta IN crapass.nrdconta%TYPE  --> Número da Conta
+                                    ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE  --> Data de movimentacao   
+                                    --------> OUT <--------
+                                    ,pr_qtregist          OUT INTEGER              --> Quantidade de registros encontrados
+                                    ,pr_tab_tit_bordero   OUT  typ_tab_tit_bordero --> Tabela de retorno
+                                    ,pr_cdcritic OUT PLS_INTEGER                   --> Código da crítica
+                                    ,pr_dscritic OUT VARCHAR2                      --> Descrição da crítica  
+                               )IS
+     /*---------------------------------------------------------------------------------------------------------------------
+       Programa : pc_busca_titulos_vencidos
+       Sistema  : ATENDA
+       Sigla    : CRED
+       Autor    : Vitor Shimada Assanuma (GFT) 
+       Data     : 11/05/2018
+       Frequencia: Sempre que for chamado
+       Objetivo  : Buscar Titulos Vencidos para Pagamento
+     ---------------------------------------------------------------------------------------------------------------------*/
+     
+     -- Cursor dos titulos vencidos de um bordero usando a data de movimentacao atual do sistema
+     CURSOR cr_craptdb IS
+       SELECT  (vltitulo - vlsldtit) AS vlpago
+              ,(vlmtatit - vlpagmta) AS vlmulta
+              ,(vlmratit - vlpagmra) AS vlmora
+              ,(vliofcpl - vlpagiof) AS vliof
+              ,(vlsldtit + (vlmtatit - vlpagmta) + (vlmratit - vlpagmra)+ (vliofcpl - vlpagiof)) AS  vlpagar
+              ,tdb.*
+       FROM  craptdb tdb
+       WHERE    tdb.dtresgat IS NULL      -- Nao resgatado
+         AND    tdb.dtlibbdt IS NOT NULL
+         AND    tdb.dtdpagto IS NULL      -- Nao pago
+         AND    tdb.dtvencto < (pr_dtmvtolt+360) --Adicionado 360 apenas para teste, remover
+         AND    tdb.nrborder = pr_nrborder
+         AND    tdb.nrdconta = pr_nrdconta
+         AND    tdb.cdcooper = pr_cdcooper
+       ;
+     rw_craptdb cr_craptdb%rowtype;
+     
+     BEGIN
+       -- Contador de resultados
+       pr_qtregist := 0;
+       
+       -- Leitura dos titulos do bordero vencidos     
+       OPEN cr_craptdb;
+       LOOP
+         FETCH cr_craptdb INTO rw_craptdb;
+         EXIT WHEN cr_craptdb%NOTFOUND;
+         
+         -- A quantidade e indice dos registros encontrados
+         pr_qtregist := pr_tab_tit_bordero.count + 1;
+         
+         -- Tabela de resultados
+         pr_tab_tit_bordero(pr_qtregist).nrdocmto := rw_craptdb.nrdocmto;
+         pr_tab_tit_bordero(pr_qtregist).dtvencto := rw_craptdb.dtvencto;
+         pr_tab_tit_bordero(pr_qtregist).vltitulo := rw_craptdb.vltitulo;
+         pr_tab_tit_bordero(pr_qtregist).insittit := rw_craptdb.insittit;
+         pr_tab_tit_bordero(pr_qtregist).vlpago   := rw_craptdb.vlpago;   -- Valor pago (Vltit - VlSldTit)
+         pr_tab_tit_bordero(pr_qtregist).vlsldtit := rw_craptdb.vlsldtit; -- Saldo Devedor
+         pr_tab_tit_bordero(pr_qtregist).vlmtatit := rw_craptdb.vlmtatit; -- Valor da Multa
+         pr_tab_tit_bordero(pr_qtregist).vlpagmta := rw_craptdb.vlpagmta; -- Valor pago da Multa
+         pr_tab_tit_bordero(pr_qtregist).vlmulta  := rw_craptdb.vlmulta;  -- Diferenca do valor com o pago da Multa
+         pr_tab_tit_bordero(pr_qtregist).vlmratit := rw_craptdb.vlmratit; -- Valor de Mora
+         pr_tab_tit_bordero(pr_qtregist).vlpagmra := rw_craptdb.vlpagmra; -- Valor pago de MOra
+         pr_tab_tit_bordero(pr_qtregist).vlmora   := rw_craptdb.vlmora;   -- Diferenca do valor com o pago da Mora
+         pr_tab_tit_bordero(pr_qtregist).vliofcpl := rw_craptdb.vliofcpl; -- Valor do IOF Complementar
+         pr_tab_tit_bordero(pr_qtregist).vlpagiof := rw_craptdb.vlpagiof; -- Valor pago do IOF Complementar
+         pr_tab_tit_bordero(pr_qtregist).vliof    := rw_craptdb.vliof;    -- Diferenca do valor com o pago do IOF
+         pr_tab_tit_bordero(pr_qtregist).vlpagar  := rw_craptdb.vlpagar;  -- Soma do saldo com as multas 
+       END LOOP;
+       CLOSE cr_craptdb;
+ END pc_busca_titulos_vencidos;
+ 
+ 
+ PROCEDURE pc_busca_titulos_vencidos_web(pr_nrdconta IN crapass.nrdconta%TYPE  --> Número da Conta
+                                    ,pr_nrborder IN crapbdt.nrborder%TYPE  --> Numero do bordero           
+                                    ,pr_xmllog   IN VARCHAR2               --> XML com informações de LOG
+                                    --------> OUT <--------
+                                    ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
+                                    ,pr_dscritic OUT VARCHAR2              --> Descrição da crítica
+                                    ,pr_retxml   IN OUT NOCOPY xmltype    --> arquivo de retorno do xml
+                                    ,pr_nmdcampo OUT VARCHAR2          --> Nome do campo com erro
+                                    ,pr_des_erro OUT VARCHAR2      --> Erros do processo
+                                    ) IS
+     /*---------------------------------------------------------------------------------------------------------------------
+       Programa : pc_busca_titulos_vencidos_web
+       Sistema  : ATENDA
+       Sigla    : CRED
+       Autor    : Vitor Shimada Assanuma (GFT) 
+       Data     : 11/05/2018
+       Frequencia: Sempre que for chamado
+       Objetivo  : Buscar Titulos Vencidos para Pagamento
+     ---------------------------------------------------------------------------------------------------------------------*/
+     -- Variável de críticas
+     vr_cdcritic crapcri.cdcritic%type; --> Cód. Erro
+     vr_dscritic varchar2(1000);        --> Desc. Erro
+     
+     -- Cursor genérico de calendário
+     rw_crapdat btch0001.cr_crapdat%rowtype;
+     
+     -- variaveis de retorno
+     vr_tab_tit_bordero typ_tab_tit_bordero;
+     
+     -- Variaveis de entrada vindas no XML
+     vr_cdcooper INTEGER;
+     vr_qtregist INTEGER;
+     vr_index    INTEGER;
+     vr_cdoperad VARCHAR2(100);
+     vr_nmdatela VARCHAR2(100);
+     vr_nmeacao  VARCHAR2(100);
+     vr_cdagenci VARCHAR2(100);
+     vr_nrdcaixa VARCHAR2(100);
+     vr_idorigem VARCHAR2(100);
+     vr_idtabtitulo INTEGER;
+   
+     BEGIN 
+       -- Leitura dos dados
+       gene0004.pc_extrai_dados(pr_xml      => pr_retxml
+                              ,pr_cdcooper => vr_cdcooper
+                              ,pr_nmdatela => vr_nmdatela
+                              ,pr_nmeacao  => vr_nmeacao
+                              ,pr_cdagenci => vr_cdagenci
+                              ,pr_nrdcaixa => vr_nrdcaixa
+                              ,pr_idorigem => vr_idorigem
+                              ,pr_cdoperad => vr_cdoperad
+                              ,pr_dscritic => vr_dscritic);
+
+       -- Leitura do calendário da cooperativa
+       OPEN  btch0001.cr_crapdat(pr_cdcooper => vr_cdcooper);
+       FETCH btch0001.cr_crapdat into rw_crapdat;
+       CLOSE btch0001.cr_crapdat;
+       
+       -- Preenche a tabela com os dados do bordero
+       pc_busca_titulos_vencidos(vr_cdcooper
+                                ,pr_nrborder
+                                ,pr_nrdconta
+                                ,rw_crapdat.dtmvtolt --> Data de movimentacao do sistema
+                                --------> OUT <--------
+                                ,vr_qtregist        --> Quantidade de registros encontrados
+                                ,vr_tab_tit_bordero --> Tabela de retorno dos títulos encontrados
+                                ,vr_cdcritic        --> Código da crítica
+                                ,vr_dscritic        --> Descrição da crítica
+                              );
+       -- Inicializar o clob
+       vr_des_xml := null;
+       dbms_lob.createtemporary(vr_des_xml, true);
+       dbms_lob.open(vr_des_xml, dbms_lob.lob_readwrite);
+      
+       -- inicilizar as informaçoes do xml
+       pc_escreve_xml('<?xml version="1.0" encoding="iso-8859-1" ?>'||
+                             '<root><dados qtregist="' || vr_qtregist ||'" >');
+                             
+       -- Ler os registros de titulos e incluir no xml
+       vr_index := vr_tab_tit_bordero.first;
+                             
+       -- Leitura dos registros
+       WHILE vr_index IS NOT NULL LOOP 
+         pc_escreve_xml('<inf>'||
+                           '<nrdocmto>' || vr_tab_tit_bordero(vr_index).nrdocmto || '</nrdocmto>' ||
+                           '<dtvencto>' || to_char(vr_tab_tit_bordero(vr_index).dtvencto, 'DD/MM/RRRR') || '</dtvencto>' ||
+                           '<vltitulo>' || vr_tab_tit_bordero(vr_index).vltitulo || '</vltitulo>' ||
+                           '<vlpago>'   || vr_tab_tit_bordero(vr_index).vlpago   || '</vlpago>'   ||
+                           '<vlmulta>'  || vr_tab_tit_bordero(vr_index).vlmulta  || '</vlmulta>'  ||
+                           '<vlmora>'   || vr_tab_tit_bordero(vr_index).vlmora   || '</vlmora>'   ||
+                           '<vliof>'    || vr_tab_tit_bordero(vr_index).vliof    || '</vliof>'    ||
+                           '<vlsldtit>' || vr_tab_tit_bordero(vr_index).vlsldtit || '</vlsldtit>' ||
+                           '<vlpagar>'  || vr_tab_tit_bordero(vr_index).vlpagar  || '</vlpagar>'  ||
+                        '</inf>'
+                      );
+         vr_index := vr_tab_tit_bordero.next(vr_index);
+       END LOOP;
+       pc_escreve_xml ('</dados></root>',true);
+       pr_retxml := xmltype.createxml(vr_des_xml); 
+        
+       /* liberando a memória alocada pro clob */
+       dbms_lob.close(vr_des_xml);
+       dbms_lob.freetemporary(vr_des_xml);         
+ END pc_busca_titulos_vencidos_web;
+ 
+ PROCEDURE pc_calcula_possui_saldo (pr_nrdconta     IN crapass.nrdconta%TYPE  --> Número da Conta
+                                   ,pr_nrborder     IN crapbdt.nrborder%TYPE  --> Numero do bordero   
+                                   ,pr_arrnrdocmto  IN VARCHAR2               --> Lista dos titulos
+                                   ,pr_xmllog       IN VARCHAR2               --> XML com informações de LOG
+                                   --------> OUT <--------
+                                   ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
+                                   ,pr_dscritic OUT VARCHAR2              --> Descrição da crítica
+                                   ,pr_retxml   IN OUT NOCOPY xmltype    --> arquivo de retorno do xml
+                                   ,pr_nmdcampo OUT VARCHAR2          --> Nome do campo com erro
+                                   ,pr_des_erro OUT VARCHAR2      --> Erros do processo
+                                 ) IS
+    /*---------------------------------------------------------------------------------------------------------------------
+      Programa : pc_calcula_possui_saldo
+      Sistema  : 
+      Sigla    : CRED
+      Autor    : Vitor Shimada Assanuma (GFT)
+      Data     : 16/05/2018
+      Frequencia: Sempre que for chamado
+      Objetivo  : Buscar o Saldo em Conta
+    ---------------------------------------------------------------------------------------------------------------------*/
+    -- Variável de críticas
+    vr_cdcritic crapcri.cdcritic%type; --> Cód. Erro
+    vr_dscritic varchar2(1000);        --> Desc. Erro
+                  
+     -- Cursor genérico de calendário
+     rw_crapdat btch0001.cr_crapdat%rowtype;
+     
+    -- variaveis de retorno
+    vr_tab_tit_bordero typ_tab_tit_bordero;
+         
+    -- Variaveis de entrada vindas no XML
+    vr_cdcooper INTEGER;
+    vr_nmdatela VARCHAR2(100);
+    vr_nmeacao  VARCHAR2(100);
+    vr_cdagenci VARCHAR2(100);
+    vr_nrdcaixa VARCHAR2(100);
+    vr_idorigem VARCHAR2(100);
+    vr_cdoperad VARCHAR2(100);
+    
+    vr_total    NUMBER(25,2);
+    vr_pagar    NUMBER(25,2);
+    vr_possui_saldo INTEGER;
+    
+    -- Variaveis do calculo de saldo
+    pr_vllimcre crapass.vllimcre%TYPE;
+    pr_des_reto VARCHAR2(5);
+    pr_tab_sald EXTR0001.typ_tab_saldos;
+    pr_tab_erro GENE0001.typ_tab_erro;
+    
+    -- Variavel do array dos titulos
+    vr_nrdocmto  GENE0002.typ_split;
+    vr_index     INTEGER;
+    
+    BEGIN   
+       -- Variavel de verificacao se possui saldo suficiente para os titulos 
+       vr_possui_saldo := 0;   
+       
+       -- Leitura dos dados
+       gene0004.pc_extrai_dados(pr_xml     => pr_retxml
+                              ,pr_cdcooper => vr_cdcooper
+                              ,pr_nmdatela => vr_nmdatela
+                              ,pr_nmeacao  => vr_nmeacao
+                              ,pr_cdagenci => vr_cdagenci
+                              ,pr_nrdcaixa => vr_nrdcaixa
+                              ,pr_idorigem => vr_idorigem
+                              ,pr_cdoperad => vr_cdoperad
+                              ,pr_dscritic => vr_dscritic);
+                              
+      -- Leitura do calendário da cooperativa
+      OPEN  btch0001.cr_crapdat(pr_cdcooper => vr_cdcooper);
+      FETCH btch0001.cr_crapdat into rw_crapdat;
+      CLOSE btch0001.cr_crapdat;
+      
+      -- Limite da conta
+      SELECT vllimcre INTO pr_vllimcre FROM crapass WHERE nrdconta = pr_nrdconta AND cdcooper = vr_cdcooper;
+      
+       extr0001.pc_obtem_saldo_dia(pr_cdcooper => vr_cdcooper
+                              ,pr_rw_crapdat => rw_crapdat
+                              ,pr_cdagenci   => vr_cdagenci
+                              ,pr_nrdcaixa   => vr_nrdcaixa
+                              ,pr_cdoperad   => vr_cdoperad
+                              ,pr_nrdconta   => pr_nrdconta
+                              ,pr_vllimcre   => pr_vllimcre
+                              ,pr_dtrefere   => rw_crapdat.dtmvtolt
+                              ,pr_flgcrass   => TRUE
+                              ,pr_tipo_busca => 'A' /* I=usa dtrefere, A=Usa dtrefere-1, P=Usa dtrefere+1 */
+                              ,pr_des_reto   => pr_des_reto --> OK ou NOK
+                              ,pr_tab_sald   => pr_tab_sald
+                              ,pr_tab_erro   => pr_tab_erro);
+
+       -- Quebra a string de numero dos titulos selecionados em um array
+       vr_nrdocmto := gene0002.fn_quebra_string(pr_string  => pr_arrnrdocmto,
+                                                 pr_delimit => ',');
+                         
+       vr_total := 0;
+       -- Verifica se foi passado o numero dos titulos e itera eles para pegar a somatoria
+       IF vr_nrdocmto.count() > 0 THEN
+         vr_index := vr_nrdocmto.first;
+         WHILE vr_index IS NOT NULL LOOP
+           -- Puxa o valor do titulo
+           SELECT (vlsldtit + (vlmtatit - vlpagmta) + (vlmratit - vlpagmra)+ (vliofcpl - vlpagiof)) AS valor INTO vr_pagar FROM craptdb 
+           WHERE nrdocmto = vr_nrdocmto(vr_index) AND cdcooper = vr_cdcooper AND nrdconta = pr_nrdconta AND nrborder = pr_nrborder;
+           
+           -- Somador
+           vr_total := vr_total + vr_pagar;
+           
+           -- Contador
+           vr_index := vr_nrdocmto.next(vr_index); 
+         END LOOP;
+       END IF;
+       
+       -- Caso o saldo seja maior que o custo da soma dos titulos
+       IF vr_total <= pr_tab_sald(0).vlsddisp THEN
+          vr_possui_saldo := 1;
+       END IF;
+       
+       -- Inicializar o clob
+       vr_des_xml := null;
+       dbms_lob.createtemporary(vr_des_xml, true);
+       dbms_lob.open(vr_des_xml, dbms_lob.lob_readwrite);
+      
+       -- inicilizar as informaçoes do xml
+       pc_escreve_xml('<?xml version="1.0" encoding="iso-8859-1" ?>'||
+                             '<root>'||
+                                 '<dados>'||
+                                     '<inf>'||
+                                         '<possui_saldo>' || vr_possui_saldo || '</possui_saldo>'||
+                                     '</inf>'||
+                                 '</dados>'||
+                             '</root>',true);
+       pr_retxml := xmltype.createxml(vr_des_xml); 
+        
+       /* liberando a memória alocada pro clob */
+       dbms_lob.close(vr_des_xml);
+       dbms_lob.freetemporary(vr_des_xml);
+ END pc_calcula_possui_saldo;
+
+ PROCEDURE pc_pagar_titulos_vencidos (pr_nrdconta         IN crapass.nrdconta%TYPE  --> Número da Conta
+                                     ,pr_nrborder         IN crapbdt.nrborder%TYPE  --> Numero do bordero   
+                                     ,pr_flavalista       IN VARCHAR2               --> Caso seja pagamento com avalista
+                                     ,pr_arrnrdocmto      IN VARCHAR2               --> Lista dos titulos
+                                     ,pr_xmllog           IN VARCHAR2               --> XML com informações de LOG
+                                     --------> OUT <--------
+                                     ,pr_cdcritic OUT PLS_INTEGER           --> Código da crítica
+                                     ,pr_dscritic OUT VARCHAR2              --> Descrição da crítica
+                                     ,pr_retxml   IN OUT NOCOPY xmltype    --> arquivo de retorno do xml
+                                     ,pr_nmdcampo OUT VARCHAR2          --> Nome do campo com erro
+                                     ,pr_des_erro OUT VARCHAR2      --> Erros do processo
+                                    ) IS
+     /*---------------------------------------------------------------------------------------------------------------------
+       Programa : pc_pagar_titulos_vencidos
+       Sistema  : 
+       Sigla    : CRED
+       Autor    : Vitor Shimada Assanuma (GFT)
+       Data     : 16/05/2018
+       Frequencia: Sempre que for chamado
+       Objetivo  : Efetuar o Pagamento dos Titulos Vencidos
+     ---------------------------------------------------------------------------------------------------------------------*/
+     -- Variável de críticas
+     vr_cdcritic crapcri.cdcritic%type; --> Cód. Erro
+     vr_dscritic varchar2(1000);        --> Desc. Erro
+                   
+     -- variaveis de retorno
+     vr_tab_tit_bordero typ_tab_tit_bordero;
+          
+     -- Cursor genérico de calendário
+     rw_crapdat btch0001.cr_crapdat%rowtype;
+     
+     -- Variaveis de entrada vindas no XML
+     vr_cdcooper INTEGER;
+     vr_nmdatela VARCHAR2(100);
+     vr_nmeacao  VARCHAR2(100);
+     vr_cdagenci VARCHAR2(100);
+     vr_nrdcaixa VARCHAR2(100);
+     vr_idorigem VARCHAR2(100);
+     vr_cdoperad VARCHAR2(100);
+     
+     
+     vr_nrdolote craplot.nrdolote%TYPE;      
+     vr_exc_erro EXCEPTION;
+     vr_rowid    ROWID;
+     
+     -- CURSORES
+     CURSOR cr_craplot(pr_cdcooper IN craplot.cdcooper%TYPE
+                     ,pr_dtmvtolt IN craplot.dtmvtolt%TYPE
+                     ,pr_cdagenci IN craplot.cdagenci%TYPE
+                     ,pr_cdbccxlt IN craplot.cdbccxlt%TYPE
+                     ,pr_nrdolote IN craplot.nrdolote%TYPE) IS
+     SELECT lot.qtcompln
+            ,lot.vlcompcr
+            ,lot.qtinfoln
+              ,lot.vlinfocr
+              ,lot.vlcompdb
+              ,lot.vlinfodb
+              ,lot.dtmvtolt
+              ,lot.cdagenci
+              ,lot.cdbccxlt
+              ,lot.nrdolote
+              ,lot.nrseqdig
+              ,lot.tplotmov
+              ,lot.cdoperad
+              ,lot.cdhistor
+              ,lot.ROWID
+              ,count(1) over() retorno
+          FROM craplot lot
+         WHERE lot.cdcooper = pr_cdcooper
+           AND lot.dtmvtolt = pr_dtmvtolt
+           AND lot.cdagenci = pr_cdagenci
+           AND lot.cdbccxlt = pr_cdbccxlt
+           AND lot.nrdolote = pr_nrdolote
+        FOR UPDATE;
+     rw_craplot cr_craplot%ROWTYPE;
+     
+     -- Historicos
+     arr_hist dbms_sql.varchar2_table;
+     
+     -- Registros para armazenar dados do lancamento gerado
+     rw_craplcm craplcm%ROWTYPE;    
+     
+     -- Variavel do array dos titulos
+     vr_nrdocmto  GENE0002.typ_split;
+     vr_index     INTEGER;
+     vr_total     NUMBER(25,2);
+     vr_pagar     NUMBER(25,2);
+    
+     BEGIN
+        -- Caso seja pagamento com avalista muda as insercoes
+        IF pr_flavalista = 'true' THEN
+          -- Historico dos cooperados COM avalista
+          arr_hist(0) := 2681; -- PAGTO DE MULTA SOBRE DESCONTO DE TITULO
+          arr_hist(1) := 2685; -- PAGTO DE JUROS MORA SOBRE DESCONTO DE TITULO
+          arr_hist(2) := 2670; -- PPAGTO DESCONTO DE TITULO
+          arr_hist(3) := 2321; -- Valor do IOF complementar atraso       
+          
+          -- Historico dos Descontos COM avalista
+          arr_hist(4) := 2682; -- PAGTO DE MULTA SOBRE DESCONTO DE TITULO
+          arr_hist(5) := 2686; -- PAGTO DE JUROS MORA SOBRE DESCONTO DE TITULO
+          arr_hist(6) := 2671; -- PAGTO DESCONTO DE TITULO
+        ELSE  
+          -- Historico dos cooperados SEM avalista
+          arr_hist(0) := 2683; -- PAGTO DE MULTA SOBRE DESCONTO DE TITULO AVAL
+          arr_hist(1) := 2687; -- AGTO DE JUROS MORA SOBRE DESCONTO DE TITULO AVAL
+          arr_hist(2) := 2674; -- PAGTO DESCONTO DE TITULO AVAL
+          arr_hist(3) := 2321; -- Valor do IOF complementar atraso
+            
+          -- Historico dos Descontos SEM avalista
+          arr_hist(4) := 2684; -- PAGTO DE MULTA SOBRE DESCONTO DE TITULO AVAL
+          arr_hist(5) := 2688; -- PAGTO DE JUROS MORA SOBRE DESCONTO DE TITULO AVAL
+          arr_hist(6) := 2675; -- PAGTO DESCONTO DE TITULO AVAL
+        END IF;
+
+        -- Leitura dos dados
+        gene0004.pc_extrai_dados(pr_xml      => pr_retxml
+                                ,pr_cdcooper => vr_cdcooper
+                                ,pr_nmdatela => vr_nmdatela
+                                ,pr_nmeacao  => vr_nmeacao
+                                ,pr_cdagenci => vr_cdagenci
+                                ,pr_nrdcaixa => vr_nrdcaixa
+                                ,pr_idorigem => vr_idorigem
+                                ,pr_cdoperad => vr_cdoperad
+                                ,pr_dscritic => vr_dscritic);
+                                      
+        -- Busca a data do sistema
+        OPEN  BTCH0001.cr_crapdat(vr_cdcooper);
+        FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
+        CLOSE BTCH0001.cr_crapdat;
+        
+         -- Quebra a string de numero dos titulos selecionados em um array
+         vr_nrdocmto := gene0002.fn_quebra_string(pr_string  => pr_arrnrdocmto,
+                                                   pr_delimit => ',');
+                           
+         vr_total := 0;
+         -- Verifica se foi passado o numero dos titulos e itera eles para pegar a somatoria
+         IF vr_nrdocmto.count() > 0 THEN
+           vr_index := vr_nrdocmto.first;
+           WHILE vr_index IS NOT NULL LOOP
+             -- Puxa o valor dos titulos
+             SELECT (vlsldtit + (vlmtatit - vlpagmta) + (vlmratit - vlpagmra)+ (vliofcpl - vlpagiof)) AS valor INTO vr_pagar FROM craptdb 
+             WHERE nrdocmto = vr_nrdocmto(vr_index) AND cdcooper = vr_cdcooper AND nrdconta = pr_nrdconta AND nrborder = pr_nrborder;
+             -- TODO ALTERAR PARA ABRIR UM CURSOR E RETORNAR OS DADOS DO TITULO PARA INSERIR NA TABELA DE LANCAMENTOS AQUI,
+             -- TROCANDO O SELECT ACIMA PELO CURSOR
+             
+             -- Somador
+             vr_total := vr_total + vr_pagar;
+             
+             -- Contador
+             vr_index := vr_nrdocmto.next(vr_index); 
+           END LOOP;
+         END IF;
+        
+        -- Cria o numero do lote
+        vr_nrdolote := fn_sequence(pr_nmtabela => 'CRAPLOT'
+                      ,pr_nmdcampo => 'NRDOLOTE'
+                      ,pr_dsdchave => TO_CHAR(vr_cdcooper)|| ';' 
+                                   || rw_crapdat.dtmvtolt || ';'
+                                   || TO_CHAR(vr_cdagenci)|| ';'
+                                   || '100');
+                                       
+        
+        --Buscar o lote
+        OPEN cr_craplot(pr_cdcooper => vr_cdcooper
+                       ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                       ,pr_cdagenci => 1
+                       ,pr_cdbccxlt => 985 -- Ver o numero
+                       ,pr_nrdolote => vr_nrdolote);
+
+        FETCH cr_craplot INTO rw_craplot;
+
+        -- Gerar erro caso não encontre
+        IF cr_craplot%NOTFOUND THEN
+           -- Fechar cursor pois teremos raise
+           CLOSE cr_craplot;
+         
+             BEGIN
+               INSERT INTO craplot
+                          (cdcooper
+                          ,dtmvtolt
+                          ,cdagenci
+                          ,cdbccxlt
+                          ,nrdolote
+                          ,tplotmov
+                          ,cdoperad
+                          ,cdhistor)
+                   VALUES(vr_cdcooper
+                          ,rw_crapdat.dtmvtolt
+                          ,1
+                          ,985
+                          ,vr_nrdolote
+                          ,1
+                          ,vr_cdoperad
+                          ,2683) -- Numero do historico
+                RETURNING dtmvtolt
+                          ,cdagenci
+                          ,cdbccxlt
+                          ,nrdolote
+                          ,vlinfocr
+                          ,vlcompcr
+                          ,qtinfoln
+                          ,qtcompln
+                          ,nrseqdig
+                          ,ROWID
+                     INTO rw_craplot.dtmvtolt
+                          ,rw_craplot.cdagenci
+                          ,rw_craplot.cdbccxlt
+                          ,rw_craplot.nrdolote
+                          ,rw_craplot.vlinfocr
+                          ,rw_craplot.vlcompcr
+                          ,rw_craplot.qtinfoln
+                          ,rw_craplot.qtcompln
+                          ,rw_craplot.nrseqdig
+                          ,rw_craplot.rowid;
+             EXCEPTION
+               WHEN OTHERS THEN
+                 -- Monta critica
+                 vr_dscritic := 'Erro ao inserir na tabela craplot: ' || SQLERRM;
+                 -- Gera exceção
+                 RAISE vr_exc_erro;
+             END;
+        ELSE
+           -- Apenas fechar o cursor
+           CLOSE cr_craplot;
+        END IF;            
+        -- Loop por todos os historicos que irao ser inseridos
+        FOR vr_index IN 0..arr_hist.count-1 LOOP
+           BEGIN
+              -- Gero o Insert na tabela de Lancamentos em depositos a vista
+              INSERT INTO craplcm
+                     (dtmvtolt
+                     ,cdagenci
+                     ,cdbccxlt
+                     ,nrdolote
+                     ,nrdconta
+                     ,nrdocmto
+                     ,vllanmto
+                     ,cdhistor
+                     ,nrseqdig
+                     ,nrdctabb
+                     ,nrautdoc 
+                     ,cdcooper
+                     ,cdpesqbb)
+              VALUES (rw_craplot.dtmvtolt
+                     ,rw_craplot.cdagenci
+                     ,rw_craplot.cdbccxlt
+                     ,rw_craplot.nrdolote
+                     ,pr_nrdconta
+                     ,rw_craplot.nrseqdig +1
+                     ,vr_total --  VALOR PAGO DA SOMA DOS TITULOS
+                     ,arr_hist(vr_index)
+                     ,rw_craplot.nrseqdig +1
+                     ,pr_nrdconta
+                     ,0
+                     ,vr_cdcooper
+                     ,'Pagamento de titulos em atraso ' || pr_nrborder)
+                    RETURNING craplcm.ROWID
+                             ,craplcm.cdhistor
+                             ,craplcm.cdcooper
+                             ,craplcm.dtmvtolt
+                             ,craplcm.hrtransa
+                             ,craplcm.nrdconta
+                             ,craplcm.nrdocmto
+                             ,craplcm.vllanmto
+                        INTO  vr_rowid
+                             ,rw_craplcm.cdhistor
+                             ,rw_craplcm.cdcooper
+                             ,rw_craplcm.dtmvtolt
+                             ,rw_craplcm.hrtransa
+                             ,rw_craplcm.nrdconta
+                             ,rw_craplcm.nrdocmto
+                             ,rw_craplcm.vllanmto;
+            EXCEPTION
+              WHEN OTHERS THEN
+                -- Monta critica
+                vr_dscritic := 'Erro ao inserir na tabela craplcm: ' || SQLERRM;
+                -- Gera exceção
+                RAISE vr_exc_erro;
+            END;
+
+            BEGIN
+              UPDATE craplot
+                 SET craplot.nrseqdig = rw_craplcm.nrseqdig
+                    ,craplot.qtinfoln = craplot.qtinfoln + 1
+                    ,craplot.qtcompln = craplot.qtcompln + 1
+                    ,craplot.vlinfocr = craplot.vlinfocr + rw_craplcm.vllanmto
+                    ,craplot.vlcompcr = craplot.vlcompcr + rw_craplcm.vllanmto
+               WHERE craplot.rowid = rw_craplot.rowid
+               RETURNING dtmvtolt
+                         ,cdagenci
+                         ,cdbccxlt
+                         ,nrdolote
+                         ,vlinfocr
+                         ,vlcompcr
+                         ,qtinfoln
+                         ,qtcompln
+                         ,nrseqdig
+                         ,ROWID
+                    INTO rw_craplot.dtmvtolt
+                        ,rw_craplot.cdagenci
+                        ,rw_craplot.cdbccxlt
+                        ,rw_craplot.nrdolote
+                        ,rw_craplot.vlinfocr
+                        ,rw_craplot.vlcompcr
+                        ,rw_craplot.qtinfoln
+                        ,rw_craplot.qtcompln
+                        ,rw_craplot.nrseqdig
+                        ,rw_craplot.rowid;
+            EXCEPTION
+              WHEN OTHERS THEN
+                -- Monta critica
+                vr_dscritic := 'Erro ao atualizar o Lote!';
+
+                -- Gera exceção
+                RAISE vr_exc_erro;
+            END;
+            
+            -------------------------------------------------------            
+            -- INSERIR AQUI A O INSERT NA NOVA TABELA DE BORDERO --
+            -- nome da tabela: TBDSCT_LANCAMENTO_BORDERO         --
+            -------------------------------------------------------
+            -- Inserir titulo titulo a titulo
+           /* BEGIN
+              -- Gero o Insert na tabela de Lancamentos em depositos a vista
+              INSERT INTO 
+                tbdsct_lancamento_bordero(
+                     cdcooper
+                     ,nrdconta
+                     ,nrborder
+                     ,cdbandoc
+                     ,nrdctabb
+                     ,nrcnvcob
+                     ,nrdocmto
+                     ,nrseqdig
+                     ,nrtitulo
+                     ,dtmvtolt
+                     ,cdorigem
+                     ,cdhistor
+                     ,vllanmto
+                     ,dthrtran)
+              VALUES(
+                      vr_cdcooper
+                     ,pr_nrdconta
+                     ,pr_nrborder
+              )
+            EXCEPTION
+              WHEN OTHERS THEN
+                -- Monta critica
+                vr_dscritic := 'Erro ao atualizar a tabela de lancamentos do bordero!';
+
+                -- Gera exceção
+              RAISE vr_exc_erro;
+            END;*/
+        END LOOP;    
+ END pc_pagar_titulos_vencidos;
+
+
  
 END DSCT0003;
 /
