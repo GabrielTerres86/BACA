@@ -127,13 +127,15 @@
 
 <?php
 	$dispN = (!in_array("N",$glbvars["opcoesTela"])) ? 'display:none;' : '';
-	$dispC = (!in_array("I",$glbvars["opcoesTela"])) ? 'display:none;' : '';
+	$dispI = (!in_array("I",$glbvars["opcoesTela"])) ? 'display:none;' : '';
+	$dispR = (!in_array("R",$glbvars["opcoesTela"])) ? 'display:none;' : '';
+	$dispA = (!in_array("A",$glbvars["opcoesTela"])) ? 'display:none;' : '';
 	$dispC = (!in_array("C",$glbvars["opcoesTela"])) ? 'display:none;' : '';
 	$dispE = (!in_array("E",$glbvars["opcoesTela"])) ? 'display:none;' : '';
 	$dispM = (!in_array("M",$glbvars["opcoesTela"])) ? 'display:none;' : '';
 	$dispL = (!in_array("L",$glbvars["opcoesTela"])) ? 'display:none;' : '';
+	$dispP = (!in_array("P",$glbvars["opcoesTela"])) ? 'display:none;' : '';
 ?>
-
 <? if($flgverbor){ ?>
 	<div id="divBorderosTitulos">
 		<div class="divRegistros">
@@ -200,10 +202,11 @@
 		<input type="button" class="botao" value="Incluir" onClick="mostrarBorderoIncluir();return false;" style="<?php echo $dispI;?>"  />
 		<input type="button" class="botao" value="Consultar" <?php if ($qtBorderos == 0) { echo 'style="cursor: default;'.$dispC.'" onClick="return false;"'; } else { echo 'style="'.$dispC.'" onClick="mostraDadosBorderoDscTit(\'C\');return false;"'; } ?> />
 		<input type="button" class="botao" value="Rejeitar"  <?php if ($qtBorderos == 0) { echo 'style="cursor: default;'.$dispR.'" onClick="return false;"'; } else { echo 'style="'.$dispR.'" onClick="mostrarBorderoRejeitar();return false;"'; } ?> />
-		<input type="button" class="botao" value="Alterar"  onClick="mostrarBorderoAlterar();return false;" />
+		<input type="button" class="botao" value="Alterar"  onClick="mostrarBorderoAlterar();return false;" style="<?php echo $dispI;?>" />
 		<input type="button" class="botao" value="Analisar" <?php if ($qtBorderos == 0) { echo 'style="cursor: default;'.$dispN.'" onClick="return false;"'; } else { echo 'style="'.$dispN.'" onClick="mostrarBorderoAnalisar();return false;"'; } ?> />
 		<input type="button" class="botao" value="Imprimir" <?php if ($qtBorderos == 0) { echo 'style="cursor: default;'.$dispM.'" onClick="return false;"'; } else { echo 'style="'.$dispM.'" onClick="mostraImprimirBordero();return false;"'; } ?> />
 		<input type="button" class="botao" value="Liberar"  <?php if ($qtBorderos == 0) { echo 'style="cursor: default;'.$dispL.'" onClick="return false;"'; } else { echo 'style="'.$dispL.'" onClick="mostrarBorderoLiberar();return false;"'; } ?> />
+		<input type="button" class="botao" value="Pagar"  <?php if ($qtBorderos == 0) { echo 'style="cursor: default;'.$dispP.'" onClick="return false;"'; } else { echo 'style="'.$dispP.'" onClick="mostrarBorderoPagar();return false;"'; } ?> />
 
 	</div>
 
