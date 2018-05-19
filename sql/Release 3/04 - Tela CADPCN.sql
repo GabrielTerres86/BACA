@@ -260,17 +260,16 @@ INSERT INTO craprdr (nrseqrdr, nmprogra, dtsolici)
      VALUES (SEQRDR_NRSEQRDR.NEXTVAL, 'CADPCN', SYSDATE);
 
 INSERT INTO crapaca (nrseqaca, nmdeacao, nmpackag, nmproced, lstparam, nrseqrdr)
-     VALUES (SEQACA_NRSEQACA.NEXTVAL, 'CADPCN_BUSCAR', 'CADPCN', 'pc_buscar_cnae', 'pr_cdcnae', (SELECT nrseqrdr FROM craprdr WHERE nmprogra = 'CADPCN'));
+     VALUES (SEQACA_NRSEQACA.NEXTVAL, 'CADPCN_BUSCAR', 'TELA_CADPCN', 'pc_buscar_cnae', 'pr_cdcnae', (SELECT nrseqrdr FROM craprdr WHERE nmprogra = 'CADPCN'));
 
 INSERT INTO crapaca (nrseqaca, nmdeacao, nmpackag, nmproced, lstparam, nrseqrdr)
-     VALUES (SEQACA_NRSEQACA.NEXTVAL, 'CADPCN_INCLUSAO', 'CADPCN', 'pc_incluir_cnae', 'pr_cdcnae,pr_vlmaximo', (SELECT nrseqrdr FROM craprdr WHERE nmprogra = 'CADPCN'));
+     VALUES (SEQACA_NRSEQACA.NEXTVAL, 'CADPCN_INCLUSAO', 'TELA_CADPCN', 'pc_incluir_cnae', 'pr_cdcnae,pr_vlmaximo', (SELECT nrseqrdr FROM craprdr WHERE nmprogra = 'CADPCN'));
 
 INSERT INTO crapaca (nrseqaca, nmdeacao, nmpackag, nmproced, lstparam, nrseqrdr)
-     VALUES (SEQACA_NRSEQACA.NEXTVAL, 'CADPCN_ALTERACAO', 'CADPCN', 'pc_alterar_cnae', 'pr_cdcnae,pr_vlmaximo', (SELECT nrseqrdr FROM craprdr WHERE nmprogra = 'CADPCN'));
+     VALUES (SEQACA_NRSEQACA.NEXTVAL, 'CADPCN_ALTERACAO', 'TELA_CADPCN', 'pc_alterar_cnae', 'pr_cdcnae,pr_vlmaximo', (SELECT nrseqrdr FROM craprdr WHERE nmprogra = 'CADPCN'));
 
 INSERT INTO crapaca (nrseqaca, nmdeacao, nmpackag, nmproced, lstparam, nrseqrdr)
-     VALUES (SEQACA_NRSEQACA.NEXTVAL, 'CADPCN_EXCLUSAO', 'CADPCN', 'pc_excluir_cnae', 'pr_cdcnae', (SELECT nrseqrdr FROM craprdr WHERE nmprogra = 'CADPCN'));
-
+     VALUES (SEQACA_NRSEQACA.NEXTVAL, 'CADPCN_EXCLUSAO', 'TELA_CADPCN', 'pc_excluir_cnae', 'pr_cdcnae', (SELECT nrseqrdr FROM craprdr WHERE nmprogra = 'CADPCN'));
 
 commit;
 end;
