@@ -32,13 +32,7 @@
 		<script type="text/javascript" src="../../scripts/mascara.js"></script>
 		<script type="text/javascript" src="../../scripts/menu.js"></script>
 		<script type="text/javascript" src="../../includes/pesquisa/pesquisa.js"></script>
-		
-		<script type="text/javascript" src="cadpcn.js?<?=rand(1,9999);?>"></script>
-
-
-
-
-
+		<script type="text/javascript" src="cadpcn.js?<?=time();?>"></script>
 	</head>
 <body>
 <table width="100%" border="0" cellpadding="0" cellspacing="0">
