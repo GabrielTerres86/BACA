@@ -66,9 +66,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPCN AS
    Dados referentes ao programa:
    Frequencia: Diario (on-line).
    Objetivo  : Mostrar a tela CADPCN para permitir o gerenciamento de valor de desconto de título máximo por CNAE
-   Alteracoes: 
+   Alteracoes: 19/05/2018 - Correções de Erros (Luis Fernando - GFT)
   ---------------------------------------------------------------------------------------------------------------*/
 
+  -- variáveis para armazenar as informaçoes em xml
+  vr_des_xml        clob;
+  vr_texto_completo varchar2(32600);
+  vr_index          PLS_INTEGER;
+  procedure pc_escreve_xml( pr_des_dados in varchar2
+                          , pr_fecha_xml in boolean default false
+                          ) is
+  begin
+      gene0002.pc_escreve_xml( vr_des_xml
+                             , vr_texto_completo
+                             , pr_des_dados
+                             , pr_fecha_xml );
+  end;
   --Busca os cnaes cadastradas no sistema
   PROCEDURE pc_buscar_cnae(
                           pr_cdcnae IN NUMBER                  --> Código CNAE
@@ -110,7 +123,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPCN AS
     vr_qtregist INTEGER;
   
     CURSOR cr_cnae  IS
-    SELECT cdcnae, to_char(vlmaximo, 'FM999G999G999D90', 'nls_numeric_characters='',.''') AS vlmaximo, cdcooper
+    SELECT cdcnae, vlmaximo, cdcooper
       FROM tbdsct_cdnae 
       WHERE cdcooper = vr_cdcooper AND cdcnae = pr_cdcnae;
 
@@ -148,7 +161,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPCN AS
     FETCH cr_cnae INTO rw_cnae;
     IF cr_cnae%NOTFOUND THEN
       CLOSE cr_cnae;
-      vr_dscritic := 'Valor máximo não encontrado para este CNAE.';
+      vr_dscritic := 'Valor máximo não cadastrado para este CNAE.';
       RAISE vr_exc_saida;
     END IF;  
     CLOSE cr_cnae;
@@ -161,19 +174,28 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPCN AS
                              ,pr_numva => 0                   --> Número da localização da TAG na árvore XML
                              ,pr_des_erro => vr_dscritic);    --> Descrição de erros
 
+      -- inicializar o clob
+      vr_des_xml := null;
+      dbms_lob.createtemporary(vr_des_xml, true);
+      dbms_lob.open(vr_des_xml, dbms_lob.lob_readwrite);
+      -- inicilizar as informaçoes do xml
+      vr_texto_completo := null;
+      pc_escreve_xml('<?xml version="1.0" encoding="iso-8859-1" ?>'||
+                     '<root><dados>');
+      -- ler os registros de titcto e incluir no xml
+            pc_escreve_xml('<inf>'||
+                             '<cdcnae>' || rw_cnae.cdcnae || '</cdcnae>' ||
+                             '<vlmaximo>' || rw_cnae.vlmaximo || '</vlmaximo>' ||
+                           '</inf>'
+                          );
+          /* buscar proximo */
+      pc_escreve_xml ('</dados></root>',true);
+      pr_retxml := xmltype.createxml(vr_des_xml);
 
-      --Incrementar Quantidade Registros do Parametro
-    FOR rw_cnae IN cr_cnae LOOP
-      vr_qtregist:= nvl(vr_qtregist,0) + 1;
-
-       -- Criar cabeçalho do XML
-    pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
-    gene0007.pc_insere_tag(pr_xml => pr_retxml,pr_tag_pai => 'Root',pr_posicao => 0,pr_tag_nova => 'Dados', pr_tag_cont => null, pr_des_erro => vr_dscritic);
-    GENE0007.pc_insere_tag(pr_xml => pr_retxml,pr_tag_pai => 'Root',pr_posicao => 0,pr_tag_nova => 'cnae',pr_tag_cont => pr_cdcnae,pr_des_erro => vr_dscritic); 
-    GENE0007.pc_insere_tag(pr_xml => pr_retxml,pr_tag_pai => 'Root',pr_posicao => 0,pr_tag_nova => 'vlmaximo',pr_tag_cont => rw_cnae.vlmaximo,pr_des_erro => vr_dscritic);
-
-    END LOOP;
-    
+      /* liberando a memória alocada pro clob */
+      dbms_lob.close(vr_des_xml);
+      dbms_lob.freetemporary(vr_des_xml);
+      
     --Se encontrado erro executa exception
     IF vr_dscritic IS NOT NULL THEN
       RAISE vr_exc_saida;
@@ -345,14 +367,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPCN AS
       ROLLBACK;   
   
   END pc_incluir_cnae;  
-  
-  
-  
-  
-  
-  
-  
-  
+
   -- Exclui cnae requerida pelo usuario
   PROCEDURE pc_excluir_cnae(
                             pr_cdcnae IN NUMBER                    --> Código CNAE
@@ -398,7 +413,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPCN AS
   BEGIN
     
     -- Incluir nome do módulo logado
-    GENE0001.pc_informa_acesso(pr_module => 'CADNAC'
+    GENE0001.pc_informa_acesso(pr_module => 'CADPCN'
                               ,pr_action => null);
                               
     -- Extrai os dados dos dados que vieram do php
@@ -421,8 +436,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPCN AS
     FETCH cr_cnae INTO rw_cnae;
     IF cr_cnae%NOTFOUND THEN
       CLOSE cr_cnae;
-
-      vr_dscritic := 'CNAE não cadastrado.';
+      vr_dscritic := 'Valor máximo não cadastrado para este CNAE.';
       RAISE vr_exc_saida;
 
     END IF;  
@@ -491,13 +505,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPCN AS
       ROLLBACK;   
   END pc_excluir_cnae;  
 
-
-
-
-
-
-
-
   --Altear cnae requerida pelo usuario
   PROCEDURE pc_alterar_cnae(
                            pr_cdcnae IN NUMBER                    --> Código CNAE
@@ -522,8 +529,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPCN AS
    Alteracoes: 
    ............................................................................. */                                    
     
-
-       
     -- Variaveis de log
     vr_cdcooper NUMBER;
     vr_cdoperad VARCHAR2(100);
@@ -573,7 +578,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPCN AS
     FETCH cr_cnae INTO rw_cnae;
     IF cr_cnae%NOTFOUND THEN
       CLOSE cr_cnae;
-      vr_dscritic := 'CNAE não cadastrado.';
+      vr_dscritic := 'Valor máximo não cadastrado para este CNAE.';
       RAISE vr_exc_saida;
       
     END IF;  
@@ -611,9 +616,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CADPCN AS
     pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
     GENE0007.pc_insere_tag(pr_xml => pr_retxml,pr_tag_pai => 'Root',pr_posicao => 0,pr_tag_nova => 'cnae',pr_tag_cont => pr_cdcnae,pr_des_erro => vr_dscritic);
     GENE0007.pc_insere_tag(pr_xml => pr_retxml,pr_tag_pai => 'Root',pr_posicao => 0,pr_tag_nova => 'vlmaximo',pr_tag_cont => pr_vlmaximo,pr_des_erro => vr_dscritic);
-    
-    
-    
     
     COMMIT;
     

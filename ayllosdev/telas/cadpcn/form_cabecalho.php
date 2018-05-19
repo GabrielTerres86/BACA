@@ -24,7 +24,7 @@
 					<option value="I"><? echo ("I - Incluir um valor máximo de limite para o CNAE") ?></option>
 					<option value="C" selected="selected"><? echo ("C - Consultar o código CNAE e o valor cadastrado") ?></option>
 					<option value="A"><? echo ("A - Alterar o valor máximo cadastrado para o código CNAE") ?></option>
-					<option value="AE"><? echo ("E - Excluir o valor máximo cadastrado para um código CNAE") ?></option>
+					<option value="E"><? echo ("E - Excluir o valor máximo cadastrado para um código CNAE") ?></option>
 				</select>
 				<a href="#" class="botao" id="btOK" name="btnOK" onClick = "LiberaFormulario();" style = "text-align:right;">OK</a>
 			</td>
