@@ -3,7 +3,7 @@
 	/************************************************************************
 	 Fonte: titulos_limite.php                                        
 	 Autor: Guilherme                                                 
-	 Data : Novembro/2008                Última Alteração: 26/06/2017
+	 Data : Novembro/2008                Última Alteração: 15/04/2018
 	                                                                  
 	 Objetivo  : Mostrar opcao Limites de descontos da rotina         
 	             Descontos da tela ATENDA                 		   	  
@@ -24,6 +24,8 @@
 
 				 26/06/2017 - Ajuste para rotina ser chamada através da tela ATENDA > Produtos (Jonata - RKAM / P364).
 
+                 11/12/2017 - P404 - Inclusão de Garantia de Cobertura das Operações de Crédito (Augusto / Marcos (Supero))
+				 
 				 28/03/2018 - Alteração nos botões para as novas funcionalidades da tela (Andre Avila GFT).
 
 				 15/04/2018 - Alteração no botão 'Detalhes da Proposta' (Leonardo Oliveira - GFT).
@@ -91,8 +93,6 @@
 	$limites   = $xmlObjLimites->roottag->tags[0]->tags;
 	$qtLimites = count($limites);
 
-	//print_r($limites);
-	
 	// Fun&ccedil;&atilde;o para exibir erros na tela atrav&eacute;s de javascript
 	function exibeErro($msgErro) { 
 		echo '<script type="text/javascript">';
@@ -148,7 +148,13 @@
 
 					<tr id="trLimite<? echo $i + 1; ?>" onFocus="<? echo $mtdClick; ?>" onClick="<? echo $mtdClick; ?>">
 
-						<td><? echo $pr_dtpropos; ?></td>
+						<td><?php
+							  // Vamos salvar o numero do contrato ativo para usar na tela de garantia (Merge GFT)
+							  if ($limites[$i]->tags[9]->cdata == 2) {
+								echo '<input type="hidden" name="nrcontratoativo" id="nrcontratoativo" value="'.$pr_nrctrlim.'"/>';
+							  }
+							  echo $pr_dtpropos; ?>
+							  </td>
 
 						<td><? echo $pr_dtinivig; ?></td>
 						
@@ -180,14 +186,18 @@
 		type="button" 
 		class="botao" 
 		value="Voltar"  
-		onClick="fecharRotinaGenerico('TITULOS');return false;" />
+		onClick="
+			voltaDiv(2,1,4,'DESCONTO DE T&Iacute;TULOS','DSC TITS');
+			carregaTitulos();
+			return false;" 
+		/>
 
 	<input 
 		type="button"
 		class="botao"
 		value="Cancelar"
 		<?php if ($qtLimites == 0) {
-			echo 'onClick="return false;';
+			echo 'onClick="return false;"';
 		} else {
 			echo 'style="'.$dispX.'" onClick="showConfirmacao(\'Deseja cancelar o Contrato?\',\'Confirma&ccedil;&atilde;o - Ayllos\',\'cancelaLimiteDscTit()\',\'metodoBlock()\',\'sim.gif\',\'nao.gif\');return false;"';
 		} ?>  />
@@ -197,7 +207,7 @@
 		class="botao"
 		value="Consultar"
 		<?php if ($qtLimites == 0) {
-			echo 'onClick="return false;';
+			echo 'onClick="return false;"';
 			} else {
 				echo 'onClick="carregaDadosConsultaLimiteDscTit();return false;"'; 
 		} ?> />
@@ -207,7 +217,7 @@
 		class="botao"
 		value="Imprimir"
 		<?php if ($qtLimites == 0) { 
-			echo 'onClick="return false;';
+			echo 'onClick="return false;"';
 		} else {
 			echo 'onClick="mostraImprimirLimite(\'CONTRATO\');return false;"';
 		} ?> />
@@ -218,7 +228,7 @@
 		value="Detalhes da Proposta"  
 		id="btnDetalhesProposta" name="btnDetalhesProposta" 
 		<?php if ($qtLimites == 0) { 
-			echo 'onClick="return false;';
+			echo 'onClick="return false;"';
 		} else { 
 			echo 'onClick="carregaDadosDetalhesProposta(\'CONTRATO\', nrcontrato, 0);return false;"'; 
 		} ?> />
@@ -226,7 +236,6 @@
 </div>
 
 <script type="text/javascript">
-
 	dscShowHideDiv("divOpcoesDaOpcao2","divOpcoesDaOpcao1;divOpcoesDaOpcao3");
 
 	// Muda o título da tela

@@ -101,7 +101,6 @@
 	// Cria objeto para classe de tratamento de XML
 	$xmlObjTits = getObjectXML($xmlResult);
 
-	
 	// Se ocorrer um erro, mostra crítica
 	if (strtoupper($xmlObjTits->roottag->tags[0]->name) == "ERRO") {
 		exibeErro($xmlObjTits->roottag->tags[0]->tags[0]->tags[4]->cdata);

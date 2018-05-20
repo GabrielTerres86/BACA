@@ -292,7 +292,7 @@ CREATE OR REPLACE PACKAGE CECRED.CYBE0002 IS
                             ,pr_dscritic OUT VARCHAR2);           --> Retorno de crítica
 
   -- Rotina para controlar todo o processo de envio / retorno dos arquivos dos Bureaux
-  PROCEDURE pc_controle_remessas;
+  PROCEDURE pc_controle_remessas(pr_dscritic OUT VARCHAR2);
 
   -- Geracao do arquivo da Reabilitação Forçada
   PROCEDURE pc_grava_arquivo_reafor(pr_cdcooper IN crapcop.cdcooper%TYPE);
@@ -311,7 +311,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
   --
   --  Programa: CYBE0002
   --  Autor   : Andre Santos - SUPERO
-  --  Data    : Outubro/2013                     Ultima Atualizacao: 31/10/2016
+  --  Data    : Outubro/2013                     Ultima Atualizacao: 09/01/2018
   --
   --  Dados referentes ao programa:
   --
@@ -350,6 +350,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
   --              10/10/2017 - M434 - Adicionar dois novos parâmetros para atender o SPC/Brasil que usa chave 
   --                          de criptografia para o acesso ao SFTP. (Oscar)
   -- 
+  -- 23/11/2017 - #799360 Rotina pc_controle_remessas - Inclusão de limite de dias na busca dos 
+  --              retornos das remessas enviadas, dos tipos COBEMP e SMS; inclusão de retorno de 
+  --              crítica para o job; definição de horários de execução: entre 8h e 22h (Carlos)
+  --              09/01/2018 - #826598 Tratamento na rotina pc_controle_remessas para enviar e-mail e abrir
+  --                           chamado quando ocorrer erro (Carlos)
   ---------------------------------------------------------------------------------------------------------------
 
   -- Tratamento de erros
@@ -1320,7 +1325,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
       RETURN vr_nmarquiv;
     END;
   END fn_nmarquiv_ret_spc;
-
 
   /* Procedimento para retornar a situação de cada evento do Bureaux */
   PROCEDURE pc_lst_estagio_bureaux(pr_idtpreme IN crapcrb.idtpreme%TYPE     --> Tipo do Bureaux
@@ -7547,7 +7551,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
 
 
   -- Rotina para controlar todo o processo de envio / retorno dos arquivos dos Bureaux
-  PROCEDURE pc_controle_remessas IS --> Retorno de crítica
+  PROCEDURE pc_controle_remessas(pr_dscritic OUT VARCHAR2) IS --> Retorno de crítica
   BEGIN
     ---------------------------------------------------------------------------------------------------------------
     --
@@ -7602,6 +7606,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
       vr_excerror EXCEPTION;
       vr_dscritic VARCHAR2(4000);
 
+      vr_datautil DATE;
+
       -- Verificação de encerramento efetuado no dia atual para este Bureaux
       CURSOR cr_enc_bur(pr_idtpreme crapcrb.idtpreme%TYPE) IS
 
@@ -7637,6 +7643,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
       vr_hora_encer      VARCHAR2(10);   --> Hora para encerramento das remessas
       vr_hora_encer_max  VARCHAR2(10);   --> Hora máximo para encerramento das remessas
       vr_email_alert     VARCHAR2(4000); --> Lista de e-mails que recebem alertas
+      vr_dias_cobemp_sms INTEGER;
 
       -- Motivo do cancelamento remessa
       vr_dsmotcan    VARCHAR(4000);
@@ -7652,6 +7659,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
       -- Variaveis tratamento tipo do log da critica de retorno de remessa - Chamado 719114 - 07/08/2017
       vr_dstiplog    VARCHAR2(1);
       vr_flgerlog    BOOLEAN := FALSE;
+
+      vr_dstexto VARCHAR2(2000);
+      vr_titulo VARCHAR2(1000);
+      vr_destinatario_email VARCHAR2(500);
+      vr_idprglog   tbgen_prglog.idprglog%TYPE;
 
     BEGIN
 	    -- Inclusão do módulo e ação logado - Chamado 719114 - 21/07/2017
@@ -7671,6 +7683,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
         vr_hora_encer      := gene0001.fn_param_sistema('CRED',0,'AUTBUR_HORA_ENCER');      --> Hora para encerramento das remessas
         vr_hora_encer_max  := gene0001.fn_param_sistema('CRED',0,'AUTBUR_HORA_ENCER_MAX');  --> Hora Máximo para encerramento das remessas
         vr_email_alert     := gene0001.fn_param_sistema('CRED',0,'AUTBUR_EMAIL_ALERT');     --> Lista de e-mails que recebem alertas
+        vr_dias_cobemp_sms := nvl(gene0001.fn_param_sistema('CRED',0,'AUTBUR_DIAS_COBEMP_SMS'), 2); --> Dias limite para buscar arquivos enviados
 
         ----- 0 - Necessidade de Agendamento ---
         -- Buscamos o dia anterior
@@ -7679,6 +7692,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
         ELSE
           vr_dtprocan := trunc(SYSDATE)-1; -- Dia anterior
         END IF;
+
         -- Testamos se a data anterior não é um feriado
         vr_flgferiad := 'N';
         OPEN cr_feriad(pr_dtproces => vr_dtprocan);
@@ -7895,6 +7909,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
             END IF;
           END IF;
 
+          /* Ignorar se for cobemp ou sms e crb.dtmvtolt < (dia util anterior dias_param) */
+          vr_datautil := SYSDATE;
+          FOR i IN 1 .. vr_dias_cobemp_sms LOOP
+            vr_datautil := vr_datautil - 1;
+            vr_datautil := gene0005.fn_valida_dia_util(pr_cdcooper => 3, 
+                                                       pr_dtmvtolt => vr_datautil, 
+                                                       pr_tipo     => 'A');
+          END LOOP;
+                                      
+          IF UPPER(rw_crb.idtpreme) IN ('COBEMP','SMS') AND rw_crb.dtmvtolt < vr_datautil THEN
+            continue;
+          END IF;
+
           -- Tratamento tipo do log da critica de retorno de remessa - Chamado 719114 - 07/08/2017
           -- Proceder com o retorno das remessas
           pc_retorno_remessa(pr_idtpreme => rw_crb.idtpreme
@@ -8003,27 +8030,57 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0002 IS
 
       END IF; --> Somente de 2ª a 6ª
 
+      IF vr_dscritic IS NOT NULL THEN
+        RAISE vr_excerror;
+      END IF;
+
     EXCEPTION
       WHEN vr_excerror THEN
         -- Atualização de log para o padrão - 21/07/2017 - Chamado 719114
-        vr_dscritic := to_char(sysdate,'hh24:mi:ss')||' - ' || vr_nomdojob || ' --> ' || 
+        pr_dscritic := to_char(sysdate,'hh24:mi:ss')||' - ' || vr_nomdojob || ' --> ' || 
                                'ERRO: ' || 'CYBE0002.pc_controle_remessas - ' || vr_dscritic;                                                                  
         -- Gerar o erro no arquivo de log do Batch
         btch0001.pc_gera_log_batch(pr_cdcooper     => 3
                                   ,pr_ind_tipo_log => 3
-                                  ,pr_des_log      => vr_dscritic
+                                  ,pr_des_log      => pr_dscritic
                                   ,pr_nmarqlog     => 'proc_autbur'
                                   ,pr_cdprograma   => vr_nomdojob);
       WHEN OTHERS THEN
         -- No caso de erro de programa gravar tabela especifica de log - 21/07/2017 - Chamado 719114
         CECRED.pc_internal_exception (pr_cdcooper => 3);
         -- Atualização de log para o padrão - 21/07/2017 - Chamado 719114
-        vr_dscritic := to_char(sysdate,'hh24:mi:ss')||' - ' || vr_nomdojob || ' --> ' || 
+        pr_dscritic := to_char(sysdate,'hh24:mi:ss')||' - ' || vr_nomdojob || ' --> ' || 
                                'ERRO: ' || 'CYBE0002.pc_controle_remessas - ' || SQLERRM;   
+
+        -- Abrir chamado - Texto para utilizar na abertura do chamado e no email enviado
+        vr_dstexto := to_char(sysdate,'hh24:mi:ss') || ' - ' || vr_nomdojob || ' --> ' ||
+                     'Erro na execucao do programa. Critica: ' || nvl(vr_dscritic,' ');
+
+        -- Parte inicial do texto do chamado e do email
+        vr_titulo := '<b>Abaixo os erros encontrados no job '|| vr_nomdojob || '</b><br><br>';
+
+        -- Buscar e-mails dos destinatarios do produto cyber
+        vr_destinatario_email := gene0001.fn_param_sistema('CRED',3,'CYBER_RESPONSAVEL');
+
+        cecred.pc_log_programa(
+            PR_DSTIPLOG      => 'E'           --> Tipo do log: I - início; F - fim; O - ocorrência
+           ,PR_CDPROGRAMA    => vr_nomdojob   --> Codigo do programa ou do job
+           ,pr_tpexecucao    => 2             --> Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
+           -- Parametros para Ocorrencia
+           ,pr_tpocorrencia  => 2             --> tp ocorrencia (1-Erro de negocio/ 2-Erro nao tratado/ 3-Alerta/ 4-Mensagem)
+           ,pr_cdcriticidade => 2             --> Nivel criticidade (0-Baixa/ 1-Media/ 2-Alta/ 3-Critica)
+           ,pr_dsmensagem    => vr_dstexto    --> dscritic       
+           ,pr_flgsucesso    => 0             --> Indicador de sucesso da execução
+           ,pr_flabrechamado => 1             --> Abrir chamado (Sim=1/Nao=0)
+           ,pr_texto_chamado => vr_titulo
+           ,pr_destinatario_email => vr_destinatario_email
+           ,pr_flreincidente => 1             --> Erro pode ocorrer em dias diferentes, devendo abrir chamado
+           ,PR_IDPRGLOG      => vr_idprglog); --> Identificador unico da tabela (sequence)
+
         -- Gerar o erro no arquivo de log do Batch
         btch0001.pc_gera_log_batch(pr_cdcooper     => 3
                                   ,pr_ind_tipo_log => 3
-                                  ,pr_des_log      => vr_dscritic
+                                  ,pr_des_log      => pr_dscritic
                                   ,pr_nmarqlog     => 'proc_autbur'
                                   ,pr_cdprograma   => vr_nomdojob);
     END;

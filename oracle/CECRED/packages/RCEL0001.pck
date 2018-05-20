@@ -30,6 +30,21 @@ CREATE OR REPLACE PACKAGE CECRED.RCEL0001 AS
     TABLE OF typ_reg_repasse
     INDEX BY VARCHAR2(100);
  
+	TYPE typ_reg_age_recarga IS
+    RECORD(dtrecarga      tbrecarga_operacao.dtrecarga%TYPE
+          ,idoperacao     tbrecarga_operacao.idoperacao%TYPE
+          ,dttransa       tbrecarga_operacao.dttransa%TYPE
+          ,vlrecarga      tbrecarga_operacao.vlrecarga%TYPE
+          ,insit_operacao tbrecarga_operacao.insit_operacao%TYPE
+					,dssit_operacao VARCHAR2(100)
+          ,nrddd          tbrecarga_operacao.nrddd%TYPE
+          ,nrcelular      tbrecarga_operacao.nrcelular%TYPE
+          ,nmoperadora    tbrecarga_operadora.nmoperadora%TYPE
+					,incancel       NUMBER
+					,dscritic VARCHAR2(100));
+		
+	TYPE typ_tab_age_recarga IS TABLE OF typ_reg_age_recarga INDEX BY PLS_INTEGER;
+ 
   -- Busca operadora
   PROCEDURE pc_busca_operadora(pr_cdoperadora    IN  tbrecarga_operadora.cdoperadora%TYPE --> Código da Operadora
                               ,pr_tab_operadoras OUT tbrecarga_operadora%ROWTYPE          --> Record com as informações da operadora
@@ -154,6 +169,17 @@ CREATE OR REPLACE PACKAGE CECRED.RCEL0001 AS
 																	 
 	-- Solicitar produtos para o Aymaru
   PROCEDURE pc_job_solicita_produtos;
+
+	-- Carrega os agendamentos de recarga de celular
+  PROCEDURE pc_carrega_agend_recarga(pr_cdcooper  IN crapcop.cdcooper%TYPE
+                                    ,pr_nrdconta  IN crapass.nrdconta%TYPE
+                                    ,pr_situacao  IN INTEGER 
+                                    ,pr_dtinicial IN DATE
+                                    ,pr_dtfinal   IN DATE																		
+                                    ,pr_tab_age_recarga  OUT typ_tab_age_recarga
+																		,pr_qttotage OUT NUMBER
+                                    ,pr_cdcritic OUT PLS_INTEGER
+                                    ,pr_dscritic OUT VARCHAR2);
 
   -- Atualizar os produtos de recarga através do Aymaru	
 	PROCEDURE pc_atualiza_produtos_recarga(pr_xmlrequi IN xmltype
@@ -1081,8 +1107,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 					-- Levanta exceção
 					RAISE vr_exc_erro;
 				END IF;
-      END IF;
-      
+      END IF;		
+			
       -- Valida se possui saldo em conta
       OPEN cr_crapass(pr_cdcooper, pr_nrdconta);
       FETCH cr_crapass
@@ -1203,7 +1229,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 											 || ' Consulte suas recargas agendadas.';
 					-- Levantar exceção
 					RAISE vr_exc_erro;					 
-				 END IF;
+			END IF;
 				 -- Fechar cursor
 				 CLOSE cr_operacao_duplicada;
 				 
@@ -1709,7 +1735,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
       vr_vlrepasse   NUMBER; --> Valor do repasse
 			vr_flgoperac BOOLEAN;
 			vr_dtdebito DATE;
-
+			
 			-- Variáveis para utilizar o Aymaru
 			vr_resposta AYMA0001.typ_http_response_aymaru;
 			vr_parametros WRES0001.typ_tab_http_parametros;
@@ -1876,7 +1902,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 					GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
 																	 ,pr_nmdcampo => 'Erro'
 																	 ,pr_dsdadant => ' '
-																	 ,pr_dsdadatu => pr_dserrlog);	
+																	 ,pr_dsdadatu => pr_dserrlog);																 
           
           IF pr_idorigem = 3 THEN -- Ser for ibank/mobile
           --Origem
@@ -2161,7 +2187,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 				-- Gerar crítica
 				vr_cdcritic := 0;
 				vr_dscritic := 'Não foi possível efetuar a recarga.';
-
+				
 				     -- saida por TIMEOUT  
 				IF   vr_resposta.status_code = 408  THEN
 				     vr_dserrlog := 'Timeout-Limite de tempo da requisicao excedido.';
@@ -2213,8 +2239,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 					vr_dscritic := 'Não foi possível efetuar a recarga.';
 				END IF;
 
-			    -- Descrição do erro da Rede Tendencia
-			    vr_dserrlog := replace(vr_resposta.conteudo.get('Message').to_char(), '"', '');
+				-- Descrição do erro da Rede Tendencia
+				vr_dserrlog := replace(vr_resposta.conteudo.get('Message').to_char(), '"', '');
 
         -- Se encontrou operação
         IF vr_flgoperac THEN
@@ -2588,7 +2614,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 																		pr_dsdadant => ' ', 
 																		pr_dsdadatu =>TO_CHAR(gene0002.fn_mask_cpf_cnpj(vr_nrcpfcgc,1)));
         END IF;
-        
+				
         IF pr_idorigem = 3 THEN -- Ser for ibank/mobile
         --Origem
         GENE0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
@@ -3307,6 +3333,123 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 			COMMIT;                              																	
   END pc_atualiza_produtos_recarga;
 	
+	-- Carrega os agendamentos de recarga de celular
+  PROCEDURE pc_carrega_agend_recarga(pr_cdcooper  IN crapcop.cdcooper%TYPE
+                                         ,pr_nrdconta  IN crapass.nrdconta%TYPE
+                                         ,pr_situacao  IN INTEGER 
+                                         ,pr_dtinicial IN DATE
+                                         ,pr_dtfinal   IN DATE
+                                    ,pr_tab_age_recarga  OUT typ_tab_age_recarga
+																		,pr_qttotage OUT NUMBER
+                                         ,pr_cdcritic OUT PLS_INTEGER
+                                         ,pr_dscritic OUT VARCHAR2) IS
+  BEGIN
+    /* .............................................................................
+    Programa: pc_carrega_agend_recarga
+    Sistema : Ayllos Web
+    Autor   : Lucas Lunelli
+    Data    : Set/2017                 Ultima atualizacao:
+
+    Dados referentes ao programa:
+
+    Frequencia: Sempre que for chamado
+
+    Objetivo  :  Rotina para carregar os agendamentos de recarga de celular
+
+    Alteracoes: -----
+    ..............................................................................*/
+    DECLARE
+      
+      -- Variaveis auxiliares
+			vr_index      NUMBER;                --> Indexador para PL Table			
+      
+      -- Variavel de criticas
+      vr_cdcritic crapcri.cdcritic%TYPE;
+      vr_dscritic VARCHAR2(10000);
+
+      -- Tratamento de erros
+      vr_exc_erro EXCEPTION;
+			vr_exc_iter EXCEPTION;             --> Controle de iteração
+			
+	    -- Cursor para listar os agendamentos de recarga
+		  CURSOR cr_agendamentos (pr_cdcooper  IN crapcop.cdcooper%TYPE
+                             ,pr_nrdconta  IN crapass.nrdconta%TYPE
+                             ,pr_situacao  IN INTEGER 
+                             ,pr_dtinicial IN DATE
+                             ,pr_dtfinal   IN DATE) IS
+ 			  SELECT opc.idoperacao
+              ,opc.dtrecarga
+              ,opc.dttransa
+              ,opc.vlrecarga
+							,opc.insit_operacao
+              ,(CASE WHEN opc.insit_operacao = 1 THEN 'Pendente'
+					           WHEN opc.insit_operacao = 4 THEN 'Cancelado'
+										 ELSE 'Nao efetivado'
+               END) dssit_operacao
+              ,(CASE WHEN opc.insit_operacao = 1 THEN 1
+					           ELSE 2
+               END) incancel
+              ,opc.nrddd 
+              ,opc.nrcelular
+              ,opa.nmoperadora
+          FROM tbrecarga_operacao opc
+              ,tbrecarga_operadora opa
+         WHERE opc.cdcooper = pr_cdcooper
+           AND (pr_nrdconta = 0 OR opc.nrdconta = pr_nrdconta)
+           AND ((pr_situacao = 0
+           AND opc.insit_operacao IN (1,4,5))
+            OR opc.insit_operacao = pr_situacao)
+           AND ((pr_dtinicial IS NULL AND pr_dtfinal IS null) 
+					  OR opc.dtrecarga BETWEEN pr_dtinicial AND pr_dtfinal)
+           AND opa.cdoperadora = opc.cdoperadora;
+
+		BEGIN				
+			
+		  pr_qttotage := 0;									 
+
+			FOR rw_agendamentos IN cr_agendamentos (pr_cdcooper  => pr_cdcooper
+                                             ,pr_nrdconta  => pr_nrdconta
+                                             ,pr_situacao  => pr_situacao
+                                             ,pr_dtinicial => pr_dtinicial
+                                             ,pr_dtfinal   => pr_dtfinal) LOOP
+				BEGIN
+					
+					vr_index := pr_tab_age_recarga.count + 1;
+					pr_qttotage := pr_qttotage + 1;				
+				
+				  pr_tab_age_recarga(vr_index).dtrecarga      := rw_agendamentos.dtrecarga;
+					pr_tab_age_recarga(vr_index).idoperacao     := rw_agendamentos.idoperacao;
+					pr_tab_age_recarga(vr_index).dttransa       := rw_agendamentos.dttransa;
+					pr_tab_age_recarga(vr_index).vlrecarga      := rw_agendamentos.vlrecarga;
+					pr_tab_age_recarga(vr_index).insit_operacao := rw_agendamentos.insit_operacao;
+					pr_tab_age_recarga(vr_index).dssit_operacao := rw_agendamentos.dssit_operacao;
+					pr_tab_age_recarga(vr_index).nrddd          := rw_agendamentos.nrddd;
+					pr_tab_age_recarga(vr_index).nrcelular      := rw_agendamentos.nrcelular;
+					pr_tab_age_recarga(vr_index).nmoperadora    := rw_agendamentos.nmoperadora;
+					pr_tab_age_recarga(vr_index).incancel       := rw_agendamentos.incancel;
+					pr_tab_age_recarga(vr_index).dscritic      := ''; -- Alimentar DSCRITIC - P.285 Novo InternetBanking
+
+				EXCEPTION
+						WHEN vr_exc_iter THEN
+							-- Somente passa para a próxima iteração do LOOP
+							NULL;
+					END;
+      END LOOP;														 
+
+    EXCEPTION
+      WHEN vr_exc_erro THEN
+        IF vr_cdcritic <> 0 THEN
+          vr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+        END IF;
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := vr_dscritic;
+
+      WHEN OTHERS THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := 'Erro geral na rotina da tela RCEL0001: ' || SQLERRM;
+    END;																			
+  END pc_carrega_agend_recarga;
+           
 	-- Obtem os agendamentos de recarga de celular
   PROCEDURE pc_obtem_agendamentos_recarga(pr_cdcooper  IN crapcop.cdcooper%TYPE
                                          ,pr_nrdconta  IN crapass.nrdconta%TYPE
@@ -3317,7 +3460,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
                                          ,pr_clobxml  OUT CLOB
                                          ,pr_cdcritic OUT PLS_INTEGER
                                          ,pr_dscritic OUT VARCHAR2) IS
-  BEGIN
+		BEGIN
     /* .............................................................................
     Programa: pc_obtem_agendamentos_recarga
     Sistema : Ayllos Web
@@ -3335,6 +3478,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
     DECLARE
       
       -- Variaveis auxiliares
+			vr_tab_age_recarga   rcel0001.typ_tab_age_recarga;    --> PL Table para filtrar registros (retorno)
+			vr_qttotage   NUMBER;
       
       -- Variavel de criticas
       vr_cdcritic crapcri.cdcritic%TYPE;
@@ -3350,40 +3495,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 			vr_dstransa VARCHAR2(1000);
 			vr_nrdrowid ROWID;
 							 
-	    -- Cursor para listar os agendamentos de recarga
-		  CURSOR cr_agendamentos (pr_cdcooper  IN crapcop.cdcooper%TYPE
-                             ,pr_nrdconta  IN crapass.nrdconta%TYPE
-                             ,pr_situacao  IN INTEGER 
-                             ,pr_dtinicial IN DATE
-                             ,pr_dtfinal   IN DATE) IS
- 			  SELECT opc.idoperacao
-              ,to_char(opc.dtrecarga,'DD/MM/RRRR') dtrecarga
-              ,to_char(opc.dttransa,'DD/MM/RRRR') dttransa
-              ,to_char(opc.dttransa,'sssss') hrtransa
-              ,opc.vlrecarga
-              ,(CASE WHEN opc.insit_operacao = 1 THEN 'Pendente'
-					           WHEN opc.insit_operacao = 4 THEN 'Cancelado'
-										 ELSE 'Nao efetivado'
-               END) dssit_operacao
-              ,(CASE WHEN opc.insit_operacao = 1 THEN 1
-					           ELSE 2
-               END) incancel
-              ,opc.nrddd 
-              ,gene0002.fn_mask(opc.nrcelular,'99999-9999') nrcelular
-              ,opa.nmoperadora
-          FROM tbrecarga_operacao opc
-              ,tbrecarga_operadora opa
-         WHERE opc.cdcooper = pr_cdcooper
-           AND (pr_nrdconta = 0 OR opc.nrdconta = pr_nrdconta)
-           AND ((pr_situacao = 0
-           AND opc.insit_operacao IN (1,4,5))
-            OR opc.insit_operacao = pr_situacao)
-           AND ((pr_dtinicial IS NULL AND pr_dtfinal IS null) 
-					  OR opc.dtrecarga BETWEEN pr_dtinicial AND pr_dtfinal)
-           AND opa.cdoperadora = opc.cdoperadora;
-
-           
 		BEGIN
+			
+		  pc_carrega_agend_recarga(pr_cdcooper        => pr_cdcooper
+															,pr_nrdconta        => pr_nrdconta
+															,pr_situacao        => pr_situacao
+															,pr_dtinicial       => pr_dtinicial
+															,pr_dtfinal         => pr_dtfinal
+															,pr_tab_age_recarga => vr_tab_age_recarga
+															,pr_qttotage        => vr_qttotage
+															,pr_cdcritic        => vr_cdcritic
+															,pr_dscritic        => vr_dscritic);		
+
+			-- Verifica se retornou erro
+			IF vr_cdcritic > 0 OR TRIM(vr_dscritic) IS NOT NULL THEN
+				 RAISE vr_exc_erro;
+			END IF;
+           
       -- Criar documento XML
       dbms_lob.createtemporary(pr_clobxml, TRUE); 
       dbms_lob.open(pr_clobxml, dbms_lob.lob_readwrite);       
@@ -3393,27 +3521,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
                              ,pr_texto_completo => vr_xml_temp 
                              ,pr_texto_novo     => '<Raiz>'); 
 														 
-			-- Buscar telefones favoritos
-			FOR rw_agendamentos IN cr_agendamentos (pr_cdcooper  => pr_cdcooper
-                                             ,pr_nrdconta  => pr_nrdconta
-                                             ,pr_situacao  => pr_situacao
-                                             ,pr_dtinicial => pr_dtinicial
-                                             ,pr_dtfinal   => pr_dtfinal) LOOP
+			FOR vr_ind IN 1..vr_tab_age_recarga.count LOOP											 
+
         -- Montar clob de retorno
         -- Montar XML com registros de carencia
         gene0002.pc_escreve_xml(pr_xml            => pr_clobxml 
                                ,pr_texto_completo => vr_xml_temp 
                                ,pr_texto_novo     => '<AGENDAMENTO>'
-                                                  ||   '<dtrecarga>'     ||rw_agendamentos.dtrecarga      ||'</dtrecarga>'
-                                                  ||   '<idoperacao>'    ||rw_agendamentos.idoperacao     ||'</idoperacao>'
-                                                  ||   '<dttransa>'      ||rw_agendamentos.dttransa       ||'</dttransa>'
-                                                  ||   '<hrtransa>'      ||rw_agendamentos.hrtransa       ||'</hrtransa>'
-                                                  ||   '<vlrecarga>'     ||rw_agendamentos.vlrecarga      ||'</vlrecarga>'
-                                                  ||   '<dssit_operacao>'||rw_agendamentos.dssit_operacao ||'</dssit_operacao>'
-                                                  ||   '<nrddd>'         ||rw_agendamentos.nrddd          ||'</nrddd>'
-                                                  ||   '<nrcelular>'     ||rw_agendamentos.nrcelular      ||'</nrcelular>'
-                                                  ||   '<nmoperadora>'   ||rw_agendamentos.nmoperadora    ||'</nmoperadora>'
-                                                  ||   '<incancel>'      ||rw_agendamentos.incancel       ||'</incancel>'
+                                                  ||   '<dtrecarga>'     || to_char(vr_tab_age_recarga(vr_ind).dtrecarga, 'DD/MM/RRRR')         ||'</dtrecarga>'
+                                                  ||   '<idoperacao>'    || vr_tab_age_recarga(vr_ind).idoperacao                               ||'</idoperacao>'
+                                                  ||   '<dttransa>'      || to_char(vr_tab_age_recarga(vr_ind).dttransa, 'DD/MM/RRRR')          ||'</dttransa>'
+                                                  ||   '<hrtransa>'      || to_char(vr_tab_age_recarga(vr_ind).dttransa,'sssss')                ||'</hrtransa>'
+                                                  ||   '<vlrecarga>'     || vr_tab_age_recarga(vr_ind).vlrecarga                                ||'</vlrecarga>'
+                                                  ||   '<dssit_operacao>'|| vr_tab_age_recarga(vr_ind).dssit_operacao                           ||'</dssit_operacao>'
+                                                  ||   '<nrddd>'         || vr_tab_age_recarga(vr_ind).nrddd                                    ||'</nrddd>'
+                                                  ||   '<nrcelular>'     || gene0002.fn_mask(vr_tab_age_recarga(vr_ind).nrcelular,'99999-9999') ||'</nrcelular>'
+                                                  ||   '<nmoperadora>'   || vr_tab_age_recarga(vr_ind).nmoperadora                              ||'</nmoperadora>'
+                                                  ||   '<incancel>'      || vr_tab_age_recarga(vr_ind).incancel                                 ||'</incancel>'       
                                                   || '</AGENDAMENTO>');
       END LOOP;
        
@@ -3744,7 +3868,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
           FROM tbrecarga_favorito fav
          WHERE fav.cdcooper = pr_cdcooper
            AND fav.nrdconta = pr_nrdconta;
-           
+      
       -- Verificar se número do celular é fraudulento
 		  CURSOR cr_crapcbf(pr_dsfraude IN crapcbf.dsfraude%TYPE) IS
 			  SELECT 1
@@ -3824,7 +3948,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
       WHEN OTHERS THEN
         pr_cdcritic := vr_cdcritic;
         pr_dscritic := 'Erro geral na rotina da tela RCEL0001: ' || SQLERRM;
-    END;
+    END;																			
 	END pc_cadastra_favorito;
   
   -- Confirma recarga de celular
@@ -4394,7 +4518,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
       vr_index    VARCHAR2(100);
       vr_vldinami VARCHAR2(1000);
       vr_dsdmensg VARCHAR2(1000);
-			
+      
       -- Variaveis de critica
       vr_cdcritic crapcri.cdcritic%TYPE;
       vr_dscritic VARCHAR2(10000);
@@ -4428,7 +4552,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
           FROM crapcop cop
          WHERE cdcooper = pr_cdcooper;
       rw_crapcop cr_crapcop%ROWTYPE;
-    	
+      
       -- Busca dos dados do associado
       CURSOR cr_crapass(pr_cdcooper IN crapcop.cdcooper%TYPE
                        ,pr_nrdconta IN crapass.nrdconta%TYPE) IS
@@ -4529,7 +4653,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
                                   ,pr_dsprotoc  => vr_dsprotoc
                                   ,pr_cdcritic  => vr_cdcritic
                                   ,pr_dscritic  => vr_dscritic);
-																	
+        
         vr_index := rpad(rw_tbrecarga.cdcanal,2,'#')||  --dsorigem
                     lpad(rw_crapass.cdagenci,10,'0')||  --cdagenci
                     lpad(rw_crapass.nrdconta,10,'0')||  --nrdconta
@@ -4557,7 +4681,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
           vr_tab_critic(vr_index).situacao   := 0;
           vr_tab_critic(vr_index).cdcritic   := nvl(vr_cdcritic,0);
           vr_tab_critic(vr_index).dscritic   := gene0007.fn_caract_acento(nvl(vr_dscritic,''));
-          
+        
           -- Variáveis para envio de notificações no Mobile/Novo IB
           vr_variaveis_notif('#dataagendamento') := to_char(rw_crapdat.dtmvtolt, 'DD/MM/YYYY');
           vr_variaveis_notif('#valor') := to_char(rw_tbrecarga.vlrecarga,'fm999g999d00');
@@ -4617,15 +4741,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
 															 '#Data#='     ||rw_tbrecarga.dtrecarga||';'||
 															 '#Valor#='    ||to_char(rw_tbrecarga.vlrecarga,'fm999g999d00')||';'||
 															 '#Motivo#=Número de telefone inválido.';
-               
+
                 vr_variaveis_notif('#motivo') := 'número de telefone inválido';
 							ELSE -- Senão tratar erro genérico
 								-- Erros validados pelo sistema da CECRED
-            vr_vldinami := '#Operadora#='||rw_tbrecarga.nmoperadora||';'||
-                           '#DDD#='      ||rw_tbrecarga.nrddd||';'||
-                           '#Celular#='  ||gene0002.fn_mask(rw_tbrecarga.nrcelular,'99999-9999')||';'||
-                           '#Data#='     ||rw_tbrecarga.dtrecarga||';'||
-                           '#Valor#='    ||to_char(rw_tbrecarga.vlrecarga,'fm999g999d00')||';'||
+								vr_vldinami := '#Operadora#='||rw_tbrecarga.nmoperadora||';'||
+															 '#DDD#='      ||rw_tbrecarga.nrddd||';'||
+															 '#Celular#='  ||gene0002.fn_mask(rw_tbrecarga.nrcelular,'99999-9999')||';'||
+															 '#Data#='     ||rw_tbrecarga.dtrecarga||';'||
+															 '#Valor#='    ||to_char(rw_tbrecarga.vlrecarga,'fm999g999d00')||';'||
 															 '#Motivo#=Não foi possível efetuar a recarga.';
                
                 vr_variaveis_notif('#motivo') := 'Não foi possível efetuar a recarga.';
@@ -4640,7 +4764,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
                            '#Motivo#='   ||vr_dscritic;
                
                 vr_variaveis_notif('#motivo') := vr_dscritic;
-            END IF;
+            END IF;          
               
             --> buscar mensagem 
             vr_dsdmensg := gene0003.fn_buscar_mensagem(pr_cdcooper          => 3
@@ -4654,29 +4778,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RCEL0001 AS
           IF vr_dscritic <> 'Não há saldo suficiente para a operação.' OR
              vr_flultexe <> 1 THEN
             -- Busca todos os usuarios ativos com senha no IB
-            
-            -- Manda mensagem na conta do cooperado
-            GENE0003.pc_gerar_mensagem(pr_cdcooper => pr_cdcooper
-                                      ,pr_nrdconta => rw_tbrecarga.nrdconta
+
+                   -- Manda mensagem na conta do cooperado
+                   GENE0003.pc_gerar_mensagem(pr_cdcooper => pr_cdcooper
+                                             ,pr_nrdconta => rw_tbrecarga.nrdconta
                                       --,pr_idseqttl   => GERA PARA TODOS OS USUÁRIOS
-                                      ,pr_cdprogra => pr_nmdatela
-                                      ,pr_inpriori => 0
-                                      ,pr_dsdmensg => vr_dsdmensg
-                                      ,pr_dsdassun => 'Transação não efetivada'
-                                      ,pr_dsdremet => rw_crapcop.nmrescop
-                                      ,pr_dsdplchv => 'Sem Saldo'
-                                      ,pr_cdoperad => 0
-                                      ,pr_cdcadmsg => 0
-                                      ,pr_dscritic => vr_dscritic);
-                                      
+                                             ,pr_cdprogra => pr_nmdatela
+                                             ,pr_inpriori => 0
+                                             ,pr_dsdmensg => vr_dsdmensg
+                                             ,pr_dsdassun => 'Transação não efetivada'
+                                             ,pr_dsdremet => rw_crapcop.nmrescop
+                                             ,pr_dsdplchv => 'Sem Saldo'
+                                             ,pr_cdoperad => 0
+                                             ,pr_cdcadmsg => 0
+                                             ,pr_dscritic => vr_dscritic);
+                        
             -- Cria uma notificação
             NOTI0001.pc_cria_notificacao(pr_cdorigem_mensagem => ORIGEM_AGEND_NAO_EFETIVADO
                                         ,pr_cdmotivo_mensagem => MOTIVO_RECARGA_CELULAR
                                       --,pr_dhenvio => SYSDATE
                                         ,pr_cdcooper => pr_cdcooper
-                                        ,pr_nrdconta => rw_tbrecarga.nrdconta
+                                               ,pr_nrdconta => rw_tbrecarga.nrdconta
                                         ,pr_variaveis => vr_variaveis_notif);
-          END IF;
+           END IF;   
           
            -- Limpa variaveis de critica
            vr_cdcritic := 0;

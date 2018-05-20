@@ -194,4 +194,5 @@
     	//Atualiza na tabela da pagina anterior
     	$(this).html(novo_valor);
     })
+
 </script>

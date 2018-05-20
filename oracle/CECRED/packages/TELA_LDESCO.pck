@@ -13,7 +13,8 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_LDESCO IS
   -- Frequencia: -----
   -- Objetivo  : Centralizar rotinas relacionadas a Tela CONPRO
   --
-  -- Alteracoes:
+  -- Alteracoes: 11/10/2017 - Inclusao dos campos Modelo e % Mínimo Garantia na tela.
+  --                          (Lombardi - PRJ404)
   --
   ---------------------------------------------------------------------------
 
@@ -87,6 +88,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_LDESCO IS
                               ,pr_txjurmor IN NUMBER
                               ,pr_nrdevias IN NUMBER
                               ,pr_flgtarif IN NUMBER
+                              ,pr_permingr IN crapldc.permingr%TYPE
                               ,pr_xmllog   IN VARCHAR2 --> XML com informações de LOG
                               ,pr_cdcritic OUT PLS_INTEGER --> Código da crítica
                               ,pr_dscritic OUT VARCHAR2 --> Descrição da crítica
@@ -101,6 +103,8 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_LDESCO IS
                             ,pr_txjurmor IN NUMBER
                             ,pr_nrdevias IN NUMBER
                             ,pr_flgtarif IN NUMBER
+                            ,pr_tpctrato IN crapldc.tpctrato%TYPE
+                            ,pr_permingr IN crapldc.permingr%TYPE
                             ,pr_xmllog   IN VARCHAR2 --> XML com informações de LOG
                             ,pr_cdcritic OUT PLS_INTEGER --> Código da crítica
                             ,pr_dscritic OUT VARCHAR2 --> Descrição da crítica
@@ -198,8 +202,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LDESCO IS
                ldc.txmensal,
                ldc.flgtarif,
                ldc.txdiaria,
-               DECODE(ldc.flgsaldo, 1, ' COM SALDO', 0, ' SEM SALDO') flgsaldo
-        
+               DECODE(ldc.flgsaldo, 1, ' COM SALDO', 0, ' SEM SALDO') flgsaldo,
+               ldc.tpctrato,
+               ldc.permingr
           FROM crapldc ldc
          WHERE ldc.cdcooper = pr_cdcooper
            AND ldc.cddlinha = pr_cddlinha
@@ -318,6 +323,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LDESCO IS
                              pr_posicao  => vr_auxconta,
                              pr_tag_nova => 'flgtarif',
                              pr_tag_cont => rw_crapldc.flgtarif,
+                             pr_des_erro => vr_dscritic);
+      gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                             pr_tag_pai  => 'inf',
+                             pr_posicao  => vr_auxconta,
+                             pr_tag_nova => 'tpctrato',
+                             pr_tag_cont => rw_crapldc.tpctrato,
+                             pr_des_erro => vr_dscritic);
+      gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                             pr_tag_pai  => 'inf',
+                             pr_posicao  => vr_auxconta,
+                             pr_tag_nova => 'permingr',
+                             pr_tag_cont => to_char(rw_crapldc.permingr,
+                                                    '990D00',
+                                                    'NLS_NUMERIC_CHARACTERS='',.'''),
                              pr_des_erro => vr_dscritic);
       gene0007.pc_insere_tag(pr_xml      => pr_retxml,
                              pr_tag_pai  => 'inf',
@@ -730,6 +749,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LDESCO IS
                               ,pr_txjurmor IN NUMBER
                               ,pr_nrdevias IN NUMBER
                               ,pr_flgtarif IN NUMBER
+                              ,pr_permingr IN crapldc.permingr%TYPE
                               ,pr_xmllog   IN VARCHAR2 --> XML com informações de LOG
                               ,pr_cdcritic OUT PLS_INTEGER --> Código da crítica
                               ,pr_dscritic OUT VARCHAR2 --> Descrição da crítica
@@ -774,6 +794,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LDESCO IS
       vr_idorigem VARCHAR2(100);
     
       vr_txdiaria NUMBER;
+      vr_permingr crapldc.permingr%TYPE;
     
       vr_comando VARCHAR2(4000);
     
@@ -787,7 +808,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LDESCO IS
         SELECT ldc.cdcooper,
                ldc.cddlinha,
                ldc.tpdescto,
-               ldc.txmensal
+               ldc.txmensal,
+               ldc.tpctrato,
+               ldc.permingr
           FROM crapldc ldc
          WHERE ldc.cdcooper = pr_cdcooper
            AND ldc.cddlinha = pr_cddlinha
@@ -871,6 +894,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LDESCO IS
         -- volta para o programa chamador
         RAISE vr_exc_saida;
       END IF;
+            
+      IF rw_crapldc.tpctrato <> 4 THEN
+        vr_permingr := 0;
+      ELSE
+        vr_permingr := pr_permingr;
+      END IF;
+      
+      IF rw_crapldc.tpctrato = 4 AND (vr_permingr < 0.01 OR vr_permingr > 300) THEN
+        
+        vr_dscritic := 'Percentual minimo da cobertura da garantia de aplicacao inválido. Deve ser entre "0.01" e "300".';
+        pr_nmdcampo := 'permingr';
+          
+        RAISE  vr_exc_saida;
+        
+      END IF;
     
       -- Calcula Taxa Diaria
       vr_txdiaria := ROUND((POWER(1 + (pr_txmensal / 100), 1 / 30) - 1) * 100, 7);
@@ -882,7 +920,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LDESCO IS
                ldc.txjurmor = pr_txjurmor,
                ldc.nrdevias = pr_nrdevias,
                ldc.flgtarif = pr_flgtarif,
-               ldc.txdiaria = vr_txdiaria
+               ldc.txdiaria = vr_txdiaria,
+               ldc.permingr = vr_permingr
          WHERE ldc.cdcooper = vr_cdcooper
            AND ldc.cddlinha = pr_cddlinha
            AND ldc.tpdescto = pr_tpdescto;
@@ -908,6 +947,34 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LDESCO IS
                       to_char(pr_cddlinha) || ' - ' || 'Descricao ' || to_char(pr_dsdlinha) ||
                       ' - ' || 'Taxa alterada de ' || to_char(rw_crapldc.txmensal) || ' para ' ||
                       to_char(pr_txmensal) || ' por ' || vr_cdoperad || ' >> ' || vr_nmdireto ||
+                      '/log/ldesco.log';
+      
+        GENE0001.pc_OScommand(pr_typ_comando => 'S',
+                              pr_des_comando => vr_comando,
+                              pr_typ_saida   => vr_typ_saida,
+                              pr_des_saida   => pr_dscritic,
+                              pr_flg_aguard  => 'S');
+      
+        -- Se ocorreu erro dar RAISE
+        IF vr_typ_saida = 'ERR' THEN
+          vr_dscritic := 'Erro ao gerar registro de log.';
+          RAISE vr_exc_saida;
+        END IF;
+      
+      END IF;
+    
+      IF rw_crapldc.permingr <> vr_permingr THEN
+      
+        -- Define o diretório do arquivo
+        vr_nmdireto := gene0001.fn_diretorio(pr_tpdireto => 'C' --> /usr/coop
+                                            ,
+                                             pr_cdcooper => vr_cdcooper);
+      
+        vr_comando := 'echo ' || to_char(trunc(rw_crapdat.dtmvtolt), 'DD/MM/YYYY') || ' as ' ||
+                      to_char(SYSDATE, 'hh24:mi:ss') || ' - Linha de desconto ' ||
+                      to_char(pr_cddlinha) || ' - ' || 'Descricao ' || to_char(pr_dsdlinha) ||
+                      ' - ' || 'Percentual minimo da cobertura da garantia de aplicacao alterado de ' || to_char(rw_crapldc.permingr) || ' para ' ||
+                      to_char(vr_permingr) || ' por ' || vr_cdoperad || ' >> ' || vr_nmdireto ||
                       '/log/ldesco.log';
       
         GENE0001.pc_OScommand(pr_typ_comando => 'S',
@@ -963,6 +1030,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LDESCO IS
                             ,pr_txjurmor IN NUMBER
                             ,pr_nrdevias IN NUMBER
                             ,pr_flgtarif IN NUMBER
+                            ,pr_tpctrato IN crapldc.tpctrato%TYPE
+                            ,pr_permingr IN crapldc.permingr%TYPE
                             ,pr_xmllog   IN VARCHAR2 --> XML com informações de LOG
                             ,pr_cdcritic OUT PLS_INTEGER --> Código da crítica
                             ,pr_dscritic OUT VARCHAR2 --> Descrição da crítica
@@ -1007,6 +1076,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LDESCO IS
       vr_idorigem VARCHAR2(100);
     
       vr_txdiaria NUMBER;
+      vr_permingr crapldc.permingr%TYPE;
     
       CURSOR cr_crapldc(pr_cdcooper IN crapldc.cdcooper%TYPE
                        ,pr_cddlinha IN crapldc.cddlinha%TYPE
@@ -1089,6 +1159,30 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LDESCO IS
         RAISE vr_exc_saida;
       END IF;
     
+      IF pr_tpctrato NOT IN (0,4) THEN
+        
+        vr_cdcritic := 529;
+        pr_nmdcampo := 'tpctrato';
+          
+        RAISE  vr_exc_saida;
+        
+      END IF;
+      
+      IF pr_tpctrato <> 4 THEN
+        vr_permingr := 0;
+      ELSE
+        vr_permingr := pr_permingr;
+      END IF;
+      
+      IF pr_tpctrato = 4 AND (vr_permingr < 0.01 OR vr_permingr > 300) THEN
+        
+        vr_dscritic := 'Percentual minimo da cobertura da garantia de aplicacao inválido. Deve ser entre "0.01" e "300".';
+        pr_nmdcampo := 'permingr';
+          
+        RAISE  vr_exc_saida;
+        
+      END IF;
+      
       -- Calcular Taxa Diaria
       vr_txdiaria := ROUND((POWER(1 + (pr_txmensal / 100), 1 / 30) - 1) * 100, 7);
     
@@ -1099,9 +1193,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LDESCO IS
            ldc.tpdescto,
            ldc.dsdlinha,
            ldc.txmensal,
+           ldc.tpctrato,
            ldc.txjurmor,
            ldc.nrdevias,
            ldc.flgtarif,
+           ldc.permingr,
            ldc.txdiaria,
            ldc.flgsaldo,
            ldc.flgstlcr)
@@ -1111,9 +1207,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_LDESCO IS
            pr_tpdescto,
            UPPER(pr_dsdlinha),
            pr_txmensal,
+           pr_tpctrato,
            pr_txjurmor,
            pr_nrdevias,
            pr_flgtarif,
+           vr_permingr,
            vr_txdiaria,
            0,
            1);

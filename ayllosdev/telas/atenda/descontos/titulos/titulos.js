@@ -4,7 +4,7 @@
  * DATA CRIAÇÃO : Março/2009
  * OBJETIVO     : Biblioteca de funções da subrotina de Descontos de Títulos
  * --------------
- * ALTERAÇÕES   : 22/11/2016
+ * ALTERAÇÕES   : 26/04/2018
  * --------------
  * 000: [08/06/2010] David     (CECRED) : Adaptação para RATING
  * 000: [22/09/2010] David     (CECRED) : Ajuste para enviar impressoes via email para o PAC Sede
@@ -28,6 +28,7 @@
  * 012: [09/03/2017] Adriano    (CECRED): Ajuste devido ao tratamento para validar titulos já inclusos em outro borderô - SD 603451.
  * 013: [26/06/2017] Jonata (RKAM): Ajuste para rotina ser chamada através da tela ATENDA > Produtos ( P364).
  * 014: [11/12/2017] P404 - Inclusão de Garantia de Cobertura das Operações de Crédito (Augusto / Marcos (Supero))  
+ * 015: [22/03/2018] Daniel (Cecred) Alteracoes para geracao no numero do contrato automaticamente.
  * 015: [13/03/2018] Leonardo Oliveira (GFT): Novos métodos 'acessaValorLimite', 'formataValorLimite', 'renovaValorLimite' e 'converteNumero'.
  * 016: [16/03/2018] Leonardo Oliveira (GFT): Alteração dos métodos 'acessaValorLimite', 'formataValorLimite' e 'renovaValorLimite' para mostrar dialogo de confirmação e condirerar alteração de linha
  * 017: [22/03/2018] Daniel (Cecred) Alteracoes para geracao no numero do contrato automaticamente. 
@@ -659,14 +660,14 @@ function verificaEnvioEmail(idimpres,limorbor) {
 function gerarImpressao(idimpres,limorbor,flgemail,fnfinish) {
     
     if (idimpres == 8) {
-        imprimirRating(false,3,nrcontrato,"divOpcoesDaOpcao3",fnfinish);
+        imprimirRating(false,3,nrctrlim,"divOpcoesDaOpcao3",fnfinish);
         return false;       
     }
     
     $("#nrdconta","#frmImprimirDscTit").val(nrdconta);
     $("#idimpres","#frmImprimirDscTit").val(idimpres);
     $("#flgemail","#frmImprimirDscTit").val(flgemail);
-    $("#nrctrlim","#frmImprimirDscTit").val(nrcontrato);
+    $("#nrctrlim","#frmImprimirDscTit").val(nrctrlim);
     $("#nrborder","#frmImprimirDscTit").val(nrbordero);     
     $("#limorbor","#frmImprimirDscTit").val(limorbor);
     
@@ -835,7 +836,9 @@ function selecionaLimiteTitulos(id, qtLimites, limite, dssitlim, dssitest, insit
             $("#trLimite" + id).css("background-color","#FFB9AB");
             // Armazena número do limite selecionado
             nrcontrato = limite;
+			nrctrlim = limite;
             idLinhaL = id;
+            cd_situacao_lim = insitlim;
             situacao_limite = dssitlim;
 
         }

@@ -317,7 +317,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rcip0001 AS
   --  Sistema  : Ayllos
   --  Sigla    : CRED
   --  Autor    : Marcos Martini - SUPERO
-  --  Data     : Fevereiro/2016.                   Ultima atualizacao: --/--/----
+  --  Data     : Fevereiro/2016.                   Ultima atualizacao: 08/08/2017
   --
   -- Dados referentes ao programa:
   --
@@ -329,6 +329,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rcip0001 AS
   -- Alteracoes: 23/12/2016 - Indicador 3 deve considerar a quantidade de liquidações
   --                          realizadas no período. (AJFink - SD#578135)
   --
+  --             08/08/2017 - Inclusao do produto Pos-Fixado. (Jaison/James - PRJ298)
   ---------------------------------------------------------------------------------------------------------------
 
     -- Variáveis genéricas
@@ -661,7 +662,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rcip0001 AS
 		  --Se Retornou Dados
 		  WHILE vr_index_epr IS NOT NULL LOOP
              			  
-			  IF vr_tab_dados_epr(vr_index_epr).tpemprst = 1 THEN
+			  IF vr_tab_dados_epr(vr_index_epr).tpemprst IN (1,2) THEN -- PP ou POS
 					-- Somar saldo devedor de emprestimo
 					vr_retorno := nvl(vr_retorno,0) + nvl(vr_tab_dados_epr(vr_index_epr).vlsdeved,0);
         END IF;				
@@ -987,7 +988,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rcip0001 AS
   --  Sistema  : Ayllos
   --  Sigla    : CRED
   --  Autor    : Marcos Martini - SUPERO
-  --  Data     : Fevereiro/2016.                   Ultima atualizacao: --/--/----
+  --  Data     : Fevereiro/2016.                   Ultima atualizacao: 22/12/2017
   --
   -- Dados referentes ao programa:
   --
@@ -997,13 +998,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rcip0001 AS
   --             propostos, e em caso de não atingimento irá efetuar a reversão e débitos
   --             das tarifas – se configurado – ou irá recriar o próximo período de apuração
   --             da reciprocidade.
+  -- 
+  -- Alteracoes 
+  --      22/12/2017 - Chamado 802553 - Utilizar a estrutura de tarifas ao invés de histórico fixo
+  --                   Andrei - Mouts
 
   ---------------------------------------------------------------------------------------------------------------
     -- Calendário
     rw_crapdat btch0001.cr_crapdat%ROWTYPE;
     -- Tratamento de exceção
     vr_exc_erro EXCEPTION;
+    vr_cdcritic NUMBER;
     vr_des_erro VARCHAR2(4000);
+    vr_tab_erro gene0001.typ_tab_erro;
     -- Busca de todos os períodos de apuracação em aberto e expirados
     -- já vinculando a configuração de calculo da reciprocidade
     CURSOR cr_apura IS
@@ -1065,11 +1072,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rcip0001 AS
          AND CAT.flrecipr = 1; -- Somente as vinculadas a reciprocidade terão reversão
     vr_vlr_desconto NUMBER;             
     -- Retorno da rotina de tarifas
-    vr_cdhistor INTEGER;
+    vr_cdhisdeb INTEGER;
+    vr_cdhisest INTEGER;
+    vr_dtdivulg DATE;
+    vr_vltarfol NUMBER := 0;
+    vr_dtvigenc DATE;
     vr_cdfvlcop INTEGER;
-    vr_tab_erro gene0001.typ_tab_erro;
-    vr_cdcritic NUMBER;
-    vr_rowid_craplat ROWID;
+    vr_cdlantar craplat.cdlantar%TYPE;
     -- Lote do convênio de cobrança
     CURSOR cr_lote(pr_cdcooper crapcop.cdcooper%TYPE
                   ,pr_cdchave  tbrecip_apuracao.cdchave_produto%TYPE) IS
@@ -1140,7 +1149,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rcip0001 AS
               -- Então atualizar o convênio de cobrança removendo o cálculo de reciprocidade vinculado ao mesmo:
               BEGIN
                 UPDATE crapceb
-                   SET idrecipr = null
+                   SET idrecipr = 0
                  WHERE cdcooper = rw_apura.cdcooper
                    AND nrdconta = rw_apura.nrdconta
                    AND nrconven = rw_apura.cdchave_produto;
@@ -1165,12 +1174,30 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rcip0001 AS
             CLOSE cr_desc_tarifa;
             -- Somente se houve desconto
             IF vr_vlr_desconto > 0 THEN
-              -- Então, chamaremos a rotina para busca do histórico de lançamento conforme o tipo de pessoa
-              IF rw_apura.inpessoa = 1 THEN
-                vr_cdhistor := gene0001.fn_param_sistema('CRED',rw_apura.cdcooper,'HISTAR_REVERS_RECIPRO_PF');
-              ELSE
-                vr_cdhistor := gene0001.fn_param_sistema('CRED',rw_apura.cdcooper,'HISTAR_REVERS_RECIPRO_PJ');
+              -- Buscamos os valores da tarifa vigente no sistema de tarifação (CADTAR)
+              tari0001.pc_carrega_dados_tarifa_cobr(pr_cdcooper => rw_apura.cdcooper     --Codigo Cooperativa
+                                                   ,pr_nrdconta => rw_apura.nrdconta     --Conta da empresa
+                                                   ,pr_nrconven => 0                     --Numero Convenio
+                                                   ,pr_dsincide => 'COBRANCA'            --Descricao Incidencia
+                                                   ,pr_cdocorre => 0                     --Codigo Ocorrencia
+                                                   ,pr_cdmotivo => NULL                  --Codigo Motivo
+                                                   ,pr_inpessoa => rw_apura.inpessoa     --Tipo Pessoa(PJ)
+                                                   ,pr_vllanmto => vr_vlr_desconto       --Valor Lancamento
+                                                   ,pr_cdprogra => 'RCIP0001'            --Nome Programa
+                                                   ,pr_flaputar => 0                     --Apurar
+                                                   ,pr_cdhistor => vr_cdhisdeb           --Codigo Historico
+                                                   ,pr_cdhisest => vr_cdhisest           --Historico Estorno
+                                                   ,pr_vltarifa => vr_vltarfol           --Valor Tarifa
+                                                   ,pr_dtdivulg => vr_dtdivulg           --Data Divulgacao
+                                                   ,pr_dtvigenc => vr_dtvigenc           --Data Vigencia
+                                                   ,pr_cdfvlcop => vr_cdfvlcop
+                                                   ,pr_cdcritic => vr_cdcritic
+                                                   ,pr_dscritic => vr_des_erro);
+              -- Se ocorrer erro
+              IF NVL(vr_cdcritic,0) > 0 OR vr_des_erro IS NOT NULL THEN
+                RAISE vr_exc_erro;
               END IF;  
+
               -- Buscar o lote para lançamento da tarifa
               --  A busca abaixo é específica para produto de Cobrança, ou seja, tpproduto = 6,
               --  outros produtos devem ter suas regras de busca de lote implementadas em paralelo a esta:
@@ -1183,7 +1210,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rcip0001 AS
                 CLOSE cr_lote;                
               END IF;
               -- Se não encontrarmos lote ou histórico
-              IF vr_nrdolote = 0 OR vr_cdhistor = 0 THEN
+              IF vr_nrdolote = 0 OR vr_cdhisdeb = 0 THEN
                 vr_des_erro := 'Não foi possível encontrar lote ou histórico para débito da reversão.';
                 RAISE vr_exc_erro;
               ELSE --> Tudo ok
@@ -1192,42 +1219,48 @@ CREATE OR REPLACE PACKAGE BODY CECRED.rcip0001 AS
                 FETCH btch0001.cr_crapdat
                  INTO rw_crapdat;
                 CLOSE btch0001.cr_crapdat;
+                
                 -- Por fim, chamaremos a rotina responsável por tentar debitar a tarifa do cooperado:
-                TARI0001.pc_cria_lan_auto_tarifa (pr_cdcooper => rw_apura.cdcooper     --Codigo Cooperativa
-                                                 ,pr_nrdconta => rw_apura.nrdconta     --Numero da Conta
-                                                 ,pr_dtmvtolt => rw_crapdat.dtmvtolt   --Data atual                                                        
-                                                 ,pr_cdhistor => vr_cdhistor           --Encontrado acima
-                                                 ,pr_vllanaut => vr_vlr_desconto       --Valor do desconto
+                TARI0001.pc_lan_tarifa_online (pr_cdcooper => rw_apura.cdcooper    --Codigo Cooperativa
+                                              ,pr_cdagenci => 1                    --Codigo Agencia destino
+                                              ,pr_nrdconta => rw_apura.nrdconta    --Numero da Conta Destino
+                                              ,pr_cdbccxlt => 100                  --Codigo banco/caixa
+                                              ,pr_nrdolote => vr_nrdolote          --Numero do Lote
+                                              ,pr_tplotmov => 1                    --Tipo Lote
                                                  ,pr_cdoperad => '1'                   --Codigo Operador
-                                                 ,pr_cdagenci => 1                     --Codigo Agencia
-                                                 ,pr_cdbccxlt => 100                   --Codigo banco caixa
-                                                 ,pr_nrdolote => vr_nrdolote           --Numero do lote
-                                                 ,pr_tpdolote => 1                     --Tipo do lote
-                                                 ,pr_nrdocmto => 0                     --Numero do documento
-                                                 ,pr_nrdctabb => rw_apura.nrdconta     --Numero da conta
-                                                 ,pr_nrdctitg => gene0002.fn_mask(rw_apura.nrdconta,'99999999') -- CTA ITG
+                                              ,pr_dtmvtlat => rw_crapdat.dtmvtolt  --Data Tarifa
+                                              ,pr_dtmvtlcm => rw_crapdat.dtmvtolt  --Data lancamento
+                                              ,pr_nrdctabb => rw_apura.nrdconta    --Numero Conta BB
+                                              ,pr_nrdctitg => to_char(rw_apura.nrdconta,'fm00000000')  --Conta Integracao
+                                              ,pr_cdhistor => vr_cdhisdeb          --Codigo Historico
                                                  ,pr_cdpesqbb => NULL                  --Codigo pesquisa
                                                  ,pr_cdbanchq => 0                     --Codigo Banco Cheque
                                                  ,pr_cdagechq => 0                     --Codigo Agencia Cheque
                                                  ,pr_nrctachq => 0                     --Numero Conta Cheque
-                                                 ,pr_flgaviso => FALSE                 --Flag aviso
-                                                 ,pr_tpdaviso => 0                     --Tipo aviso
-                                                 ,pr_cdfvlcop => vr_cdfvlcop           --Encontrado na busca do histórico
-                                                 ,pr_inproces => rw_crapdat.inproces   --Indicador processo
-                                                 ,pr_rowid_craplat => vr_rowid_craplat --Rowid do lancamento tarifa (saida)
-                                                 ,pr_tab_erro => vr_tab_erro           --Tabela retorno erro
-                                                 ,pr_cdcritic => vr_cdcritic           --Codigo Critica
-                                                 ,pr_dscritic => vr_des_erro);         --Descricao Critica
-
-                -- Verificação de erro na rotina
+                                              ,pr_flgaviso => FALSE                --Flag Aviso
+                                              ,pr_tpdaviso => 0                    --Tipo Aviso
+                                              ,pr_vltarifa => vr_vlr_desconto      --Valor tarifa
+                                              ,pr_nrdocmto => 0                    --Numero Documento
+                                              ,pr_cdcoptfn => 0                    --Codigo Cooperativa Terminal
+                                              ,pr_cdagetfn => 0                    --Codigo Agencia Terminal
+                                              ,pr_nrterfin => 0                    --Numero Terminal Financeiro
+                                              ,pr_nrsequni => 0                    --Numero Sequencial Unico
+                                              ,pr_nrautdoc => 0                    --Numero Autenticacao Documento
+                                              ,pr_dsidenti => NULL                 --Descricao Identificacao
+                                              ,pr_cdfvlcop => vr_cdfvlcop          --Codigo Faixa Valor Cooperativa
+                                              ,pr_inproces => rw_crapdat.inproces  -- On-line --Indicador processo
+                                              ,pr_cdlantar => vr_cdlantar          --Codigo Lancamento tarifa
+                                              ,pr_tab_erro => vr_tab_erro          --Tabela de erro
+                                              ,pr_cdcritic => vr_cdcritic          --Codigo do erro
+                                              ,pr_dscritic => vr_des_erro);        --Descricao do erro
+                -- Se ocorrer erro
                 IF vr_cdcritic IS NOT NULL OR vr_des_erro IS NOT NULL THEN
                   --verificar o erro e criar log
                   IF vr_tab_erro.COUNT > 0 THEN
                     --Usar o erro da tab
                     vr_des_erro := vr_tab_erro(vr_tab_erro.FIRST).dscritic; --Descricao do erro
-                  END IF;
-                  --Levantar Excecao
                   RAISE vr_exc_erro;
+                  END IF;
                 END IF;
               END IF;
               END IF;

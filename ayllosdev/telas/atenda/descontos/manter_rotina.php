@@ -655,7 +655,7 @@
 				$html .= '<script type="text/javascript">';
 				$html .= '    hideMsgAguardo();';
 				$html .= '    bloqueiaFundo(divRotina);';
-				$html .= '    showError("error","'.$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata.'","Alerta - Ayllos","");';
+				$html .= '    showError("error","'.$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata.'","Alerta - Ayllos","bloqueiaFundo(divRotina);");';
 				$html .= '</script>';
 			}
 			$html .=  '<legend id="tabConteudoLegend" ><b>'. utf8ToHtml('Detalhes Proposta: ').formataNumericos("zzz.zz9",$nrctrlim,".").'</b></legend>';

@@ -123,7 +123,6 @@ if (($msgError = validaPermissao(
 }
 
 
-
 if ($cdopcao == 'C') {
 
     $xml = "<Root>";
@@ -133,16 +132,12 @@ if ($cdopcao == 'C') {
     $xml .= " </Dados>";
     $xml .= "</Root>";
 
-    //print_r($xml);
-
     $xmlResult = mensageria($xml,"TAB052","TAB052_CONSULTA", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
     $xmlObj = getObjectXML($xmlResult);
-
 
 } else {
 	$xml = "<Root>";
     $xml .= " <Dados>";
-
     $xml .= "   <tpcobran>".$tpcobran."</tpcobran>";
     $xml .= "   <inpessoa>".$inpessoa."</inpessoa>";
 
@@ -273,8 +268,6 @@ if ($cdopcao == 'C') {
     $xml .= " </Dados>";
     $xml .= "</Root>";
 
-    //print_r($xml);
-
 
     $xmlResult = mensageria(
             $xml,
@@ -289,7 +282,6 @@ if ($cdopcao == 'C') {
 
 
     $xmlObj = getObjectXML($xmlResult);
-
 }
 
 

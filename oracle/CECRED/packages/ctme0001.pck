@@ -244,7 +244,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CTME0001 AS
       Frequencia: Sempre que chamada
       Objetivo  : Montar e enviar o email que trata sobre Controle de Movimentacao
 
-      Alteracoes:
+      Alteracoes: 19/12/2017 - Antonio R. Jr (mouts): Adicionado tipo de operacao 3.
     ---------------------------------------------------------------------------------------------------------------*/
 
     ------------------------------- CURSORES ---------------------------------
@@ -491,7 +491,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CTME0001 AS
         raise vr_exec_sair;
       END IF;
       -- Validar tipo de operação
-      IF rw_crapcme.tpoperac  not in (1,2) THEN
+      IF rw_crapcme.tpoperac  not in (1,2,3) THEN
         vr_dscritic := 'Tipo de operacao invalida';
         raise vr_exec_sair;
       END IF;
@@ -1012,3 +1012,4 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CTME0001 AS
 
 END CTME0001;
 /
+

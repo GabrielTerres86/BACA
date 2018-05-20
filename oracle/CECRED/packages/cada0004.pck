@@ -5,7 +5,7 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0004 is
     Sistema  : Rotinas para detalhes de cadastros
     Sigla    : CADA
     Autor    : Odirlei Busana - AMcom
-    Data     : Agosto/2015.                   Ultima atualizacao: 23/06/2017
+    Data     : Agosto/2015.                   Ultima atualizacao: 12/12/2017
   
    Dados referentes ao programa:
   
@@ -37,6 +37,8 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0004 is
   				              "Desligamento por determinação do BACEN" 
   							  ( Jonata - RKAM P364).
 
+                 12/12/2017 - Alterar para varchar2 o campo nrcartao na procedure 
+                              pc_gera_log_ope_cartao (Lucas Ranghetti #810576)
   ---------------------------------------------------------------------------------------------------------------*/
   
   ---------------------------- ESTRUTURAS DE REGISTRO ---------------------
@@ -521,7 +523,7 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0004 is
                                    pr_indtipo_cartao tbcrd_log_operacao.tpcartao%TYPE,  -- Tipo de cartao utilizado. (0-Sem cartao/1-Magnetico/2-Cartao Cecred) 
                                    pr_nrdocmto    tbcrd_log_operacao.nrdocmto%TYPE, -- Numero do documento utilizado no lancamento
                                    pr_cdhistor    tbcrd_log_operacao.cdhistor%TYPE, -- Codigo do historico utilizado no lancamento
-                                   pr_nrcartao    tbcrd_log_operacao.nrcartao%TYPE, -- Numero do cartao utilizado. Zeros quando nao existe cartao
+                                   pr_nrcartao    VARCHAR2, -- Numero do cartao utilizado. Zeros quando nao existe cartao
                                    pr_vllanmto    tbcrd_log_operacao.vloperacao%TYPE, -- Valor do lancamento
                                    pr_cdoperad    tbcrd_log_operacao.cdoperad%TYPE, -- Codigo do operador
                                    pr_cdbccrcb    tbcrd_log_operacao.cdbanco_receb%TYPE, -- Codigo do banco de destino para os casos de TED e DOC
@@ -770,7 +772,6 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0004 is
 																	 ,pr_retxml   IN OUT NOCOPY XMLType --> Arquivo de retorno do XML
 																	 ,pr_nmdcampo OUT VARCHAR2 --> Nome do campo com erro
 																	 ,pr_des_erro OUT VARCHAR2);   
-
   PROCEDURE pc_buscar_tbcota_devol (pr_cdcooper         IN  tbcotas_devolucao.cdcooper%TYPE --> Codigo da Cooperativa
 																	 ,pr_nrdconta         IN  tbcotas_devolucao.nrdconta%TYPE --> Numero da conta
 																	 ,pr_tpdevolucao      IN  tbcotas_devolucao.tpdevolucao%TYPE --> Indicador de forma de devolucao (1-Total / 2-Parcelado / 3-Sobras Cotas Demitido / 4-Sobras Deposito Demitido)
@@ -795,6 +796,16 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0004 is
                                       ,pr_retxml     IN OUT NOCOPY XMLType  --> Arquivo de retorno do XML
                                       ,pr_nmdcampo  OUT VARCHAR2            --> Nome do campo com erro
                                       ,pr_des_erro  OUT VARCHAR2);        --> Erros do processo                                                                    
+  PROCEDURE pc_retorna_cartao_valido(pr_nrdconta IN crapcrm.nrdconta%TYPE  --> Código da opção
+                                    ,pr_idtipcar IN INTEGER                --> Indica qual o cartao 
+                                    ,pr_inpessoa IN crapass.inpessoa%TYPE  --> Indica o tipo de pessoa
+                                    ,pr_xmllog   IN VARCHAR2                --> XML com informações de LOG
+                                    ,pr_cdcritic OUT PLS_INTEGER            --> Código da crítica
+                                    ,pr_dscritic OUT VARCHAR2               --> Descrição da crítica
+                                    ,pr_retxml   IN OUT NOCOPY xmltype      --> Arquivo de retorno do XML
+                                    ,pr_nmdcampo OUT VARCHAR2               --> Nome do campo com erro
+                                    ,pr_des_erro OUT VARCHAR2);             --> Descricao do Erro									
+
 END CADA0004;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
@@ -804,7 +815,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
   --  Sistema  : Rotinas para detalhes de cadastros
   --  Sigla    : CADA
   --  Autor    : Odirlei Busana - AMcom
-  --  Data     : Agosto/2015.                   Ultima atualizacao: 03/12/2017
+  --  Data     : Agosto/2015.                   Ultima atualizacao: 12/12/2017
   --
   -- Dados referentes ao programa:
   --
@@ -859,6 +870,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
   --                            "Valores a devolver" da tela ATENDA  (Jonata - RKAM P364).
   --
   --               03/12/2017 - Alterado cursor para ler da tbcotas e eliminado cursor da craplcm (Jonata - RKAM P364).
+  --
+  --                12/12/2017 - Alterar para varchar2 o campo nrcartao na procedure 
+  --                             pc_gera_log_ope_cartao (Lucas Ranghetti #810576)
 ---------------------------------------------------------------------------------------------------------------
 
 
@@ -2128,7 +2142,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     --  Sistema  : Conta-Corrente - Cooperativa de Credito
     --  Sigla    : CRED
     --  Autor    : Odirlei Busana(Amcom)
-    --  Data     : Setembro/2015.                   Ultima atualizacao: 14/09/2015
+    --  Data     : Setembro/2015.                   Ultima atualizacao: 30/01/2017
     --
     --  Dados referentes ao programa:
     --
@@ -2137,6 +2151,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     --
     --  Alteração : 14/09/2015 - Conversão Progress -> Oracle (Odirlei)
     --
+    --              30/01/2017 - Exibir mensagem de atrasado quando for produto Pos-Fixado.
+    --                           (Jaison/James - PRJ298)
     --
     -- ..........................................................................*/
     
@@ -2446,7 +2462,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
       IF(vr_tab_dados_epr(vr_idxempr).tpemprst = 0   AND
          vr_tab_dados_epr(vr_idxempr).vlpreapg > 0)  OR
 
-        (vr_tab_dados_epr(vr_idxempr).tpemprst = 1   AND
+        (vr_tab_dados_epr(vr_idxempr).tpemprst IN (1,2)  AND
          vr_tab_dados_epr(vr_idxempr).flgatras = 1)      AND                              
 
          vr_tab_dados_epr(vr_idxempr).inprejuz = 0 THEN
@@ -3977,9 +3993,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
   /******************************************************************************/
   /**       Funcao para buscar descrição do tipo de conta do cooperado         **/
   /******************************************************************************/
-  FUNCTION fn_dstipcta(pr_cdcooper IN crapcop.cdcooper%TYPE,  --> Codigo da cooperativa
-                       pr_cdtipcta IN crapass.cdtipcta%TYPE,  --> Tipo de conta
-                       pr_cdbcochq IN crapass.cdbcochq%TYPE ) --> Banco para emissao de cheques do cooperado.
+  FUNCTION fn_dstipcta(pr_inpessoa IN tbcc_tipo_conta.inpessoa%TYPE,  --> Tipo de pessoa
+                       pr_cdtipcta IN tbcc_tipo_conta.cdtipo_conta%TYPE)  --> Tipo de conta
                        RETURN VARCHAR2 IS
   
     /* ..........................................................................
@@ -3997,56 +4012,32 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     --
     --  Alteração : 22/10/2015 - Conversão Progress -> Oracle (Odirlei)
     --
-    --
+    --              20/02/2018 - Busca a descrição do tipo de conta da tabela
+    --                           TBCC_TIPO_CONTA. PRJ366 (Lombardi).
     -- ..........................................................................*/
     
     --------------> CURSOR <---------------
-    CURSOR cr_craptip IS
-      SELECT craptip.dstipcta
-        FROM craptip
-       WHERE craptip.cdcooper = pr_cdcooper
-         AND craptip.cdtipcta = pr_cdtipcta;
-     rw_craptip cr_craptip%ROWTYPE;
-     vr_dstipcta VARCHAR2(100) := NULL;    
+    CURSOR cr_tipo_conta IS
+      SELECT tpcta.dstipo_conta
+        FROM tbcc_tipo_conta tpcta
+       WHERE tpcta.inpessoa = pr_inpessoa
+         AND tpcta.cdtipo_conta = pr_cdtipcta;
+    rw_tipo_conta cr_tipo_conta%ROWTYPE;
      
+     vr_dstipcta VARCHAR2(100) := NULL;    
   BEGIN
     -- Buscar descrição do tipo de conta
-    OPEN cr_craptip;
-    FETCH cr_craptip INTO rw_craptip;
+    OPEN cr_tipo_conta;
+    FETCH cr_tipo_conta INTO rw_tipo_conta;
     
-    IF cr_craptip%FOUND THEN
-      CLOSE cr_craptip;
-      
-      -- Tratar descrições dos tipos
-      CASE pr_cdtipcta
-        WHEN 8 THEN
-          vr_dstipcta:= pr_cdtipcta ||' - Normal Conv';
-        WHEN 9 THEN
-          vr_dstipcta:= pr_cdtipcta ||' - Espec. Conv';
-        WHEN 10 THEN
-          vr_dstipcta:= pr_cdtipcta ||' - Cj. Conv';  
-        WHEN 11 THEN
-          vr_dstipcta:= pr_cdtipcta ||' - Cj.Esp.Conv';   
-        ELSE
-           vr_dstipcta:= pr_cdtipcta ||' - '|| rw_craptip.dstipcta;
-        END CASE;
-        
-        -- Tratar tipos por banco
-        IF pr_cdtipcta IN (8,9,10,11) THEN
-          IF pr_cdbcochq = 756 THEN
-            vr_dstipcta:= vr_dstipcta ||'-BCB';
-          ELSE
-            vr_dstipcta:= vr_dstipcta ||'-CTR';
-          END IF;
-        END IF;
-        
+    IF cr_tipo_conta%FOUND THEN
+      CLOSE cr_tipo_conta;
+      vr_dstipcta := pr_cdtipcta || ' - ' || rw_tipo_conta.dstipo_conta;
         RETURN vr_dstipcta;
-        
     ELSE
-      CLOSE cr_craptip;
+      CLOSE cr_tipo_conta;
       RETURN pr_cdtipcta;
     END IF;
-    
     
   END fn_dstipcta;  
   
@@ -4184,7 +4175,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     --  Sistema  : Conta-Corrente - Cooperativa de Credito
     --  Sigla    : CRED
     --  Autor    : Odirlei Busana(Amcom)
-    --  Data     : Outubro/2015.                   Ultima atualizacao: 23/06/2017
+    --  Data     : Outubro/2015.                   Ultima atualizacao: 29/11/2017
     --
     --  Dados referentes ao programa:
     --
@@ -4222,6 +4213,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     --              29/09/2019 - Inclusao de verificacao de contratos de acordos de
     --                           empréstimos, Prj. 302 (Jean Michel).	
     --
+    --              30/01/2017 - Exibir mensagem quando Cooperado/Fiador atrasar emprestimo Pos-Fixado.
+    --                           (Jaison/James - PRJ298)
+    --
     --              03/03/2017 - Ajustado geração da mensagem de limite de desconto vencido.
     --                           PRJ-300 Desconto de Cheque (Daniel)
     --
@@ -4236,8 +4230,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     --   
     --              09/10/2017 - Inclusao de mensagens na tela Atenda. Projeto 410 - RF 52  62
     --
+	--              29/11/2017 - Chamado 784845 - Prova de vida não aparecendo na AV (Andrei-Mouts)
+	--
     --              18/12/2017 - Inclusao da leitura do parametro para apresentar a mensagem de fatura
     --                           de cartao de credito em atraso (Anderson).
+    -- 
+    --              20/02/2018 - Alteracao da verificação de tipos de conta individuais, pela 
+    --                           verificação da categoria da conta. PRJ366 (Lombardi).
+    --              
     -- ..........................................................................*/
     
     ---------------> CURSORES <----------------
@@ -4260,7 +4260,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
              crapass.flgctitg,
              crapass.idimprtr,
              crapass.idastcjt,
-             crapass.cdsitdct
+             crapass.cdsitdct,
+             crapass.cdcatego
         FROM crapass
        WHERE crapass.cdcooper = pr_cdcooper
          AND crapass.nrdconta = pr_nrdconta;
@@ -5182,7 +5183,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
         
         vr_dsmensag := NULL;
 
-        IF vr_tab_dados_epr(vr_idxepr).tpemprst = 1 and vr_tab_dados_epr(vr_idxepr).flgatras = 1 THEN  /*04/10/2016 #487823*/
+        IF vr_tab_dados_epr(vr_idxepr).tpemprst IN (1,2) and vr_tab_dados_epr(vr_idxepr).flgatras = 1 THEN  /*04/10/2016 #487823*/
             vr_dsmensag := 'Associado com emprestimo em atraso.';
         ELSIF (vr_tab_dados_epr(vr_idxepr).qtmesdec - vr_tab_dados_epr(vr_idxepr).qtprecal) >= 0.01  AND
                vr_tab_dados_epr(vr_idxepr).dtdpagto < pr_rw_crapdat.dtmvtolt                    THEN
@@ -5315,7 +5316,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
       
       vr_dsmensag := NULL;
                 
-      IF vr_tab_dados_epr(vr_idxepr).tpemprst = 1 and vr_tab_dados_epr(vr_idxepr).flgatras = 1 THEN /*04/10/2016 #487823*/
+      IF vr_tab_dados_epr(vr_idxepr).tpemprst IN (1,2) and vr_tab_dados_epr(vr_idxepr).flgatras = 1 THEN /*04/10/2016 #487823*/
           vr_dsmensag := 'Fiador de emprestimo em atraso: ';
       ELSIF rw_crapavl.inprejuz = 1 AND rw_crapavl.vlsdprej > 0  THEN
         vr_dsmensag := 'Fiador de emprestimo em atraso: ';
@@ -5499,19 +5500,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     END IF;
     CLOSE cr_crapccs;
     
-    --> Se for uma conta migrada "Viacredi Alto Vale" sera passado o cdcopant
-    --  para a funcao verificacao_bloqueio a fim de, verificar seus respectivos
-    --  beneficios na Viacredi.
-    OPEN cr_craptco(pr_cdcooper => 16,
-                    pr_nrdconta => rw_crapass.nrdconta); 
-    FETCH cr_craptco INTO rw_craptco;
-    vr_fcraptco := cr_craptco%FOUND;
-    CLOSE cr_craptco;
-		
-		vr_flgpvida := INSS0001.fn_verifica_renovacao_vida(pr_cdcooper => (CASE 
-													 																						   WHEN vr_fcraptco THEN rw_craptco.cdcopant
-																																				  ELSE pr_cdcooper
-																																			 END)                     --> Codigo da cooperativa
+		-- Verificar necessidade de Prova de Vida
+		vr_flgpvida := INSS0001.fn_verifica_renovacao_vida(pr_cdcooper => pr_cdcooper               --> Codigo da cooperativa
 																															,pr_nrdconta => pr_nrdconta               --> Numero da conta
 																															,pr_dtmvtolt => pr_rw_crapdat.dtmvtolt);  --> Data do movimento
 																															
@@ -5524,10 +5514,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
 		END IF;																															
     
     vr_tpbloque := INSS0001.fn_verifica_bloqueio_inss
-                                            ( pr_cdcooper => (CASE 
-                                                                WHEN vr_fcraptco THEN rw_craptco.cdcopant
-                                                                ELSE pr_cdcooper
-                                                              END)                    --> Codigo da cooperativa
+                                              (pr_cdcooper => pr_cdcooper              --> Codigo da cooperativa
                                               ,pr_nrdcaixa => pr_nrdcaixa              --> Numero do caixa
                                               ,pr_cdagenci => pr_cdagenci              --> Codigo de agencia
                                               ,pr_cdoperad => pr_cdoperad              --> Codigo do operador
@@ -5555,8 +5542,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     
     --> Verifica Se Tipo de Conta Individual e possui mais de um Titular 
     IF rw_crapass.inpessoa = 1  THEN
-      IF vr_qttitula > 1 AND 
-         rw_crapass.cdtipcta IN (1,2,7,8,9,12,13,18) THEN
+      IF vr_qttitula > 1 AND rw_crapass.cdcatego = 1 THEN
         --> Incluir na temptable
         pc_cria_registro_msg(pr_dsmensag             => 'Tipo de conta nao permite MAIS DE UM TITULAR.',
                              pr_tab_mensagens_atenda => pr_tab_mensagens_atenda);
@@ -5876,7 +5862,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
                              pr_tab_mensagens_atenda => pr_tab_mensagens_atenda);
       END LOOP; 
     END IF;
-
 	-- Verifica se foi impressa a declaração de optante do simples nacional
 	OPEN cr_impdecsn(pr_cdcooper => pr_cdcooper, pr_nrdconta => pr_nrdconta);
 	FETCH cr_impdecsn
@@ -5952,18 +5937,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     --  Alteração : 22/10/2015 - Conversão Progress -> Oracle (Odirlei)
     --
     --              01/12/2015 - Carregar o campo cdclcnae da crapass (Jaison/Andrino)
-	                
-					25/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
-			                     crapass, crapttl, crapjur 
-							    (Adriano - P339).
-
-					23/06/2017 - Ajuste para inclusao do novo tipo de situacao da conta
-  				                 "Desligamento por determinação do BACEN" 
-							     ( Jonata - RKAM P364).	
-
-                    20/09/2017 - Ajuste nome do segundo titular para concatenar e/ou.
-                                 PRJ339 - CRM(Odirlei-AMcom) 
-
+	 --              
+	--              25/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+	--                           crapass, crapttl, crapjur 
+	--		                     (Adriano - P339).
+    --              
+	--	            23/06/2017 - Ajuste para inclusao do novo tipo de situacao da conta
+  	--                           "Desligamento por determinação do BACEN" 
+	--                           ( Jonata - RKAM P364).	
+    --              
+    --              20/09/2017 - Ajuste nome do segundo titular para concatenar e/ou.
+    --                           PRJ339 - CRM(Odirlei-AMcom) 
+    --              
+    --              20/09/2017 - Ajuste nos parametros da procedure fn_dstipcta
+    --                           PRJ366 (Lombardi)
+    --              
     -- ..........................................................................*/
     
     ---------------> CURSORES <----------------
@@ -6104,9 +6092,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     pr_tab_cabec(vr_idxcab).cdsecext := rw_crapass.cdsecext;
     pr_tab_cabec(vr_idxcab).indnivel := rw_crapass.indnivel;
     
-    pr_tab_cabec(vr_idxcab).dstipcta := fn_dstipcta (pr_cdcooper => pr_cdcooper,  --> Codigo da cooperativa
-                                                     pr_cdtipcta => rw_crapass.cdtipcta,  --> Tipo de conta
-                                                     pr_cdbcochq => rw_crapass.cdbcochq ); --> Banco para emissao de cheques do cooperado.
+    pr_tab_cabec(vr_idxcab).dstipcta := fn_dstipcta (pr_inpessoa => rw_crapass.inpessoa,  --> Codigo da cooperativa
+                                                     pr_cdtipcta => rw_crapass.cdtipcta); --> Tipo de conta
     
     pr_tab_cabec(vr_idxcab).dssitdct := fn_dssitdct(pr_cdsitdct => rw_crapass.cdsitdct);  --> Codigo da situacao da conta;
     pr_tab_cabec(vr_idxcab).cdsitdct := rw_crapass.cdsitdct; 
@@ -8673,7 +8660,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
                                    pr_indtipo_cartao tbcrd_log_operacao.tpcartao%TYPE,  -- Tipo de cartao utilizado. (0-Sem cartao/1-Magnetico/2-Cartao Cecred)
                                    pr_nrdocmto    tbcrd_log_operacao.nrdocmto%TYPE, -- Numero do documento utilizado no lancamento
                                    pr_cdhistor    tbcrd_log_operacao.cdhistor%TYPE, -- Codigo do historico utilizado no lancamento
-                                   pr_nrcartao    tbcrd_log_operacao.nrcartao%TYPE, -- Numero do cartao utilizado. Zeros quando nao existe cartao
+                                   pr_nrcartao    VARCHAR2, -- Numero do cartao utilizado. Zeros quando nao existe cartao
                                    pr_vllanmto    tbcrd_log_operacao.vloperacao%TYPE, -- Valor do lancamento
                                    pr_cdoperad    tbcrd_log_operacao.cdoperad%TYPE, -- Codigo do operador
                                    pr_cdbccrcb    tbcrd_log_operacao.cdbanco_receb%TYPE, -- Codigo do banco de destino para os casos de TED e DOC
@@ -8689,7 +8676,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     --  Sistema  : Conta-Corrente - Cooperativa de Credito
     --  Sigla    : CRED
     --  Autor    : Andrino Carlos de Souza Junior (RKAM)
-    --  Data     : Abril/2016.                   Ultima atualizacao: 14/11/2016
+    --  Data     : Abril/2016.                   Ultima atualizacao: 12/12/2017
     --
     --  Dados referentes ao programa:
     --
@@ -8703,9 +8690,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     --                           e 'FINTRFTEDS' para utilizar a rotina padrao da TABE0001
     --                           (Douglas - Chamado 454248)
     --
-    --              14/11/2016 - Ajustado para ler o cdorigem da gene0001 e não utilizar 
+    --  Alteração : 14/11/2016 - Ajustado para ler o cdorigem da gene0001 e não utilizar 
     --                           ifs no programa(Odirlei-AMcom)  
-    -- ..........................................................................*/
+	--
+    --  Alteração : 12/12/2017 - Alterar para para varchar2 o campo nrcartao
+    --                           (Lucas Ranghetti #810576)
+	--							 
+	--  Alteração : 03/04/2018 - Alterar para o "Tipo de aprovacao" para "Saque com cartao CECRED"
+    --                           (Andrey Formigari - Mouts #845782)
+     ............................................................................*/
 
     -- Cursor para retornar o nome do banco
     CURSOR cr_crapban IS
@@ -8799,7 +8792,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
         gene0001.pc_gera_log_item(pr_nrdrowid => vr_rowid_log
                                  ,pr_nmdcampo => 'Tipo de aprovacao'
                                  ,pr_dsdadant => ' '
-                                 ,pr_dsdadatu => 'Cecred');
+                                 ,pr_dsdadatu => 'Aprovado por senha');
       END IF;
       
       -- Gera o log dos itens para numero do cartao
@@ -12163,8 +12156,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
 						WHERE crapass.nrdconta = pr_nrdconta
 									AND crapass.nrcpfcgc = pr_nrcpfcgc;
 				rw_crapass cr_crapass%ROWTYPE;
-        
-        
         -- Cursor da crapdoc
         CURSOR cr_crapdoc(pr_cdcooper IN crapdoc.cdcooper%TYPE,pr_nrdconta IN crapdoc.nrdconta%TYPE) IS
                SELECT t.idseqttl
@@ -12173,7 +12164,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
                AND t.nrdconta = pr_nrdconta
                AND t.tpdocmto = 56;
         rw_crapdoc cr_crapdoc%ROWTYPE;
-        
 				-- Tratamento de erros
 				vr_exc_saida EXCEPTION;
 				vr_cdcritic PLS_INTEGER;
@@ -12285,7 +12275,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
 				-- Criar XML de retorno para uso na Web
 				pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><nmarqpdf>' ||
 																			 vr_nmarqimp || '</nmarqpdf>');
-                                       
         -- gravar documento na CRAPDOC para controle de digitalização
         OPEN cr_crapdoc(pr_cdcooper => pr_cdcooper, pr_nrdconta => pr_nrdconta);
         FETCH cr_crapdoc INTO rw_crapdoc;
@@ -12311,8 +12300,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
                END;
         END IF;
         CLOSE cr_crapdoc;
-        
-				
 		EXCEPTION
 				WHEN vr_exc_saida THEN
 						-- Se foi retornado apenas código
@@ -12338,7 +12325,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
 																					 upper(pr_dscritic) || '</Erro></Root>');
 						ROLLBACK;
 		END pc_impr_dec_pj_coop_xml;	  
-
   PROCEDURE pc_buscar_tbcota_devol (pr_cdcooper         IN  tbcotas_devolucao.cdcooper%TYPE --> Codigo da Cooperativa
 																	 ,pr_nrdconta         IN  tbcotas_devolucao.nrdconta%TYPE --> Numero da conta
 																	 ,pr_tpdevolucao      IN  tbcotas_devolucao.tpdevolucao%TYPE --> Indicador de forma de devolucao (1-Total / 2-Parcelado / 3-Sobras Cotas Demitido / 4-Sobras Deposito Demitido)
@@ -12581,6 +12567,174 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
 	  	ROLLBACK;
   END pc_atualizar_tbcota_devol;
 
+  PROCEDURE pc_retorna_cartao_valido(pr_nrdconta IN crapcrm.nrdconta%TYPE  --> Código da opção
+                                    ,pr_idtipcar IN INTEGER                --> Indica qual o cartao 
+                                    ,pr_inpessoa IN crapass.inpessoa%TYPE  --> Indica o tipo de pessoa
+                                    ,pr_xmllog   IN VARCHAR2                --> XML com informações de LOG
+                                    ,pr_cdcritic OUT PLS_INTEGER            --> Código da crítica
+                                    ,pr_dscritic OUT VARCHAR2               --> Descrição da crítica
+                                    ,pr_retxml   IN OUT NOCOPY xmltype      --> Arquivo de retorno do XML
+                                    ,pr_nmdcampo OUT VARCHAR2               --> Nome do campo com erro
+                                    ,pr_des_erro OUT VARCHAR2) IS           --> Descricao do Erro
+    -- ..........................................................................
+    --
+    --  Programa : pc_retorna_cartao_valido
+    --  Sistema  : Rotinas para buscar cartao magnetico e cecred
+    --  Sigla    : CRED
+    --  Autor    : Mateus Zimmermann - Mouts
+    --  Data     : Dezembro/2017.                   Ultima atualizacao: --/--/----
+    --
+    --  Dados referentes ao programa:
+    --
+    --  Frequencia: Sempre que for chamado
+    --  Objetivo  : Retornar os cartoes da conta
+    --
+    --  Alteracoes:
+    -- .............................................................................
+  BEGIN
+    DECLARE
+    
+      -- Cursor sobre a tabela de datas
+      rw_crapdat  btch0001.cr_crapdat%ROWTYPE;
+    
+      CURSOR cr_crapcrm(pr_cdcooper IN crapcop.cdcooper%TYPE)IS
+      SELECT crapcrm.nrcartao 
+        FROM crapcrm
+       WHERE crapcrm.cdcooper = pr_cdcooper
+         AND crapcrm.nrdconta = pr_nrdconta
+         AND crapcrm.cdsitcar = 2
+         AND crapcrm.dtvalcar > rw_crapdat.dtmvtolt
+         AND crapcrm.tptitcar = CASE WHEN pr_inpessoa IN (1) THEN 1 ELSE crapcrm.tptitcar END
+         AND crapcrm.dtentcrm IS NOT NULL;
+      rw_crapcrm cr_crapcrm%ROWTYPE;
+      
+      CURSOR cr_crawcrd(pr_cdcooper IN craptip.cdcooper%TYPE) IS
+      SELECT crawcrd.nrcrcard
+        FROM crawcrd
+       WHERE crawcrd.cdcooper = pr_cdcooper
+         AND crawcrd.nrdconta = pr_nrdconta
+         AND crawcrd.insitcrd = 4
+         AND crawcrd.dtentreg < rw_crapdat.dtmvtolt
+         AND crawcrd.dtvalida > rw_crapdat.dtmvtolt
+         AND crawcrd.dtcancel IS NULL;    
+      rw_crawcrd cr_crawcrd%ROWTYPE;
+    
+      -- Variaveis locais      
+      vr_cdoperad VARCHAR2(100);
+      vr_cdcooper NUMBER;
+      vr_nmdatela VARCHAR2(100);
+      vr_nmeacao  VARCHAR2(100);
+      vr_cdagenci VARCHAR2(100);
+      vr_nrdcaixa VARCHAR2(100);
+      vr_idorigem VARCHAR2(100);
+      vr_auxconta PLS_INTEGER := 0;
+      vr_vlminimo NUMBER (25,2) := 0;
+      vr_nrcartao crapcrm.nrcartao%TYPE;
+      vr_nrcrcard crawcrd.nrcrcard%TYPE;
+      
+      -- Variaveis gerais
+      vr_contador PLS_INTEGER := 0;
+      
+      -- Variaveis de critica
+      vr_cdcritic crapcri.cdcritic%TYPE;
+      vr_dscritic crapcri.dscritic%TYPE;
+      vr_exc_saida   EXCEPTION;
+      
+    BEGIN
+    
+      -- Incluir nome do módulo logado
+      GENE0001.pc_informa_acesso(pr_module => 'MINCAP'
+                                ,pr_action => null);
+
+      gene0004.pc_extrai_dados(pr_xml      => pr_retxml
+                              ,pr_cdcooper => vr_cdcooper
+                              ,pr_nmdatela => vr_nmdatela
+                              ,pr_nmeacao  => vr_nmeacao
+                              ,pr_cdagenci => vr_cdagenci
+                              ,pr_nrdcaixa => vr_nrdcaixa
+                              ,pr_idorigem => vr_idorigem
+                              ,pr_cdoperad => vr_cdoperad
+                              ,pr_dscritic => vr_dscritic);
+
+      -- Se retornou alguma crítica
+      IF TRIM(vr_dscritic) IS NOT NULL THEN
+        -- Levanta exceção
+        RAISE vr_exc_saida;
+      END IF;
+      
+      -- Busca a data do sistema
+      OPEN btch0001.cr_crapdat(vr_cdcooper);
+      FETCH btch0001.cr_crapdat INTO rw_crapdat;
+      CLOSE btch0001.cr_crapdat;
+      
+      -- Cartao magnetico
+      IF pr_idtipcar = 1 THEN
+        
+        pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
+      
+        -- Loop sobre o cursor de busca de cartoes magnetico
+        FOR rw_crapcrm IN cr_crapcrm(pr_cdcooper => vr_cdcooper) LOOP
+
+          gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Root', pr_posicao => 0        , pr_tag_nova => 'inf', pr_tag_cont => NULL, pr_des_erro => vr_dscritic);
+          gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'nrcartao', pr_tag_cont => rw_crapcrm.nrcartao, pr_des_erro => vr_dscritic);
+          
+          vr_contador := vr_contador + 1;
+
+        END LOOP;
+      
+      END IF;
+      
+      -- Cartao cecred
+      IF pr_idtipcar = 2 THEN
+        pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
+      
+        -- Loop sobre o cursor de busca de cartoes cecred
+        FOR rw_crawcrd IN cr_crawcrd(pr_cdcooper => vr_cdcooper) LOOP
+
+          gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Root', pr_posicao => 0        , pr_tag_nova => 'inf', pr_tag_cont => NULL, pr_des_erro => vr_dscritic);
+          gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'nrcartao', pr_tag_cont => rw_crawcrd.nrcrcard, pr_des_erro => vr_dscritic);
+          
+          vr_contador := vr_contador + 1;
+
+        END LOOP;
+         
+      END IF;
+                                 
+      --Se ocorreu erro
+      IF vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_saida;
+      END IF;
+      
+      pr_des_erro := 'OK';
+      
+    EXCEPTION
+      WHEN vr_exc_saida THEN
+      
+        IF TRIM(vr_dscritic) IS NULL THEN
+          vr_dscritic:= GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic); 
+        END IF;
+        
+        pr_cdcritic := pr_cdcritic;
+        pr_dscritic := vr_dscritic;
+        
+        -- Carregar XML padrão para variável de retorno não utilizada.
+        -- Existe para satisfazer exigência da interface.
+        pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root><Erro>' || pr_dscritic || '</Erro></Root>');
+        ROLLBACK;
+        
+      WHEN OTHERS THEN
+        cecred.pc_internal_exception(3);
+        pr_cdcritic := 0;
+        pr_dscritic := 'Erro geral (CADA0004.pc_retorna_cartao_valido).';
+        -- Carregar XML padrão para variável de retorno não utilizada.
+        -- Existe para satisfazer exigência da interface.
+        pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root><Erro>' || pr_dscritic || '</Erro></Root>');
+        
+        ROLLBACK;   
+        
+    END;
+    
+  END pc_retorna_cartao_valido;
   
 END CADA0004;
 /

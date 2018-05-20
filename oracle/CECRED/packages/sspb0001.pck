@@ -131,7 +131,7 @@ CREATE OR REPLACE PACKAGE CECRED.sspb0001 AS
 
   -- variavel utilizada para contar registros rejeitados
   vr_qtrejeit INTEGER;
-
+  
   /** Enviar mensagem STR0026 para a cabine SPB **/
   PROCEDURE pc_proc_envia_vr_boleto (pr_cdcooper IN INTEGER         /* Cooperativa*/
                                     ,pr_cdagenci IN INTEGER         /* Cod. Agencia  */
@@ -4075,7 +4075,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
       Sistema  : Conta-Corrente - Cooperativa de Credito
       Sigla    : CRED
       Autor    : Evandro
-      Data     : Dezembro/2006.                   Ultima atualizacao: 07/12/2017
+      Data     : Dezembro/2006.                   Ultima atualizacao: 08/02/2018
 
 
       Dados referentes ao programa:
@@ -4097,6 +4097,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                   
                   07/12/2017 - Contabilizado lote e feito update apenas no fim da rotina fora do loop 
                               (Tiago/Adriano #745339)
+                              
+                  08/02/2018 - Houve problema ao realizar pagamentos de contas de outras instituições financeiras
+                               pois a procedure pc_trfsal_opcao_b estava realizando a validação da hora de 
+                               portabilidade, sendo que essa validação já é feita anteriormente no momento da
+                               aprovação do pagamento. (SD 846721 - Kelvin).
+                               
   ---------------------------------------------------------------------------------------------------------------*/
   ---------------> CURSORES <-----------------
 
@@ -4308,19 +4314,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
         RAISE vr_exc_erro;
     END IF;
 
-    vr_horalimb := gene0001.fn_param_sistema('CRED',rw_crapcop.cdcooper,'FOLHAIB_HOR_LIM_PORTAB');
-
-    vr_hrlimted := to_char(to_date(vr_horalimb,'hh24:mi'),'sssss');
-    
-    IF vr_hrlimted < to_char(SYSDATE, 'sssss') THEN
-       vr_cdcritic := 0;
-       vr_dscritic := 'Horario limite para envio de ted --> ' || vr_horalimb;
-       --Levantar Excecao
-       RAISE vr_exc_erro;
-    END IF;
-
     vr_nmarquiv := 'dc_ccs'||TO_CHAR(rw_crapdat.dtmvtolt, 'ddmm') || TO_CHAR(SYSDATE, 'sssss') ||'.rem';
-
 
     OPEN cr_craplot(pr_cdcooper => pr_cdcooper,
                                    pr_dtmvtolt => rw_crapdat.dtmvtolt,
@@ -5296,7 +5290,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
 
       ROLLBACK;
   END pc_trfsal_opcao_x;
-
+  
   /* Procedure para retornar o estado de crise */
   PROCEDURE pc_estado_crise (pr_flproces  IN VARCHAR2 DEFAULT 'N' -- Indica para verificar o processo
                             ,pr_inestcri OUT INTEGER -- 0-Sem crise / 1-Com Crise
@@ -5325,7 +5319,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
       -- Variaveis de XML 
       vr_xml_temp VARCHAR2(32767);
       vr_clobxmlc CLOB;
-
+      
       -- Busca as cooperativas
       CURSOR cr_crapcop IS
       SELECT crapcop.cdcooper
@@ -5435,7 +5429,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
                                                     || '  <cdcooper>' || vr_cdcooper || '</cdcooper>'
                                                     || '  <dtintegr>' || TO_CHAR(vr_dtintegr, 'dd/mm/rrrr') || '</dtintegr>'
                                                     || '  <inestcri>' || vr_inestcri || '</inestcri>'
-                                                    || '</coop>');
+                                                    || '</coop>');  
 
         END LOOP;
 
@@ -5458,11 +5452,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
   END pc_estado_crise;
   
   PROCEDURE pc_proc_pag0101(pr_cdprogra IN  VARCHAR2 -- Código do programa
-                           ,pr_nmarqxml IN  VARCHAR2 -- Nome do arquivo xml
-                           ,pr_nmarqlog IN  VARCHAR2 -- Nome do arquivo de log
+                              ,pr_nmarqxml IN  VARCHAR2 -- Nome do arquivo xml
+                              ,pr_nmarqlog IN  VARCHAR2 -- Nome do arquivo de log
 													 ,pr_clobxml  IN  CLOB     -- CLOB com os dados das IF
-													 ,pr_des_erro OUT VARCHAR2) IS -- Retorno OK/NOK
-    BEGIN																						 
+                              ,pr_des_erro OUT VARCHAR2) IS -- Retorno OK/NOK
+    BEGIN                                              
     ------------------------------------------------------------------------------
     --
     --  Programa : pc_proc_pag0101             Antigo: b1wgen0046.p/proc_pag0101
@@ -5475,33 +5469,33 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
     --
     --   Frequencia: Sempre que for chamado
     --   Objetivo  : Procedure para integrar mensagens PAG0101
-		--
-    ------------------------------------------------------------------------------	
-		DECLARE	
-		  vr_dsdemail VARCHAR2(1000);
-			vr_dscritic VARCHAR2(4000);
-			vr_exc_erro EXCEPTION;
-			vr_lista_ispb VARCHAR2(4000);
-		  vr_nmarqlog VARCHAR2(1000) := gene0002.fn_busca_entrada(pr_postext => 6
-																														 ,pr_dstext => pr_nmarqlog
-																														 ,pr_delimitador => '/');
-																
-			-- Verificar se banco está ativo no ispb
+    --
+    ------------------------------------------------------------------------------  
+    DECLARE 
+      vr_dsdemail VARCHAR2(1000);
+      vr_dscritic VARCHAR2(4000);
+      vr_exc_erro EXCEPTION;
+      vr_lista_ispb VARCHAR2(4000);
+      vr_nmarqlog VARCHAR2(1000) := gene0002.fn_busca_entrada(pr_postext => 6
+                                                             ,pr_dstext => pr_nmarqlog
+                                                             ,pr_delimitador => '/');
+                                
+      -- Verificar se banco está ativo no ispb
       CURSOR cr_crapban (pr_nrispbif IN crapban.nrispbif%TYPE) IS
-			  SELECT 1
-				  FROM crapban ban
-				 WHERE ban.nrispbif = pr_nrispbif
-				   AND ban.flgdispb = 1;
-			rw_crapban cr_crapban%ROWTYPE;
-																														 
-			-- Verificar se banco está ativo no ispb
+        SELECT 1
+          FROM crapban ban
+         WHERE ban.nrispbif = pr_nrispbif
+           AND ban.flgdispb = 1;
+      rw_crapban cr_crapban%ROWTYPE;
+                                                             
+      -- Verificar se banco está ativo no ispb
       CURSOR cr_crapban_bb (pr_nrispbif IN crapban.nrispbif%TYPE) IS
-			  SELECT 1
-				  FROM crapban ban
-				 WHERE ban.nrispbif = pr_nrispbif
-				   AND ban.cdbccxlt = 1
-				   AND ban.flgdispb = 1;
-			rw_crapban_bb cr_crapban_bb%ROWTYPE;
+        SELECT 1
+          FROM crapban ban
+         WHERE ban.nrispbif = pr_nrispbif
+           AND ban.cdbccxlt = 1
+           AND ban.flgdispb = 1;
+      rw_crapban_bb cr_crapban_bb%ROWTYPE;
 
 			-- Cursor para destrinchar o xml
 		  CURSOR cr_situacao_if IS
@@ -5509,75 +5503,75 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
 							,extractvalue(column_value, '/dados/cdsitope') cdsitope
 					FROM TABLE(xmlsequence(xmltype(pr_clobxml).extract('/root/dados'))) t; 
 
-		BEGIN					
-		  -- Percorre IFs
+    BEGIN         
+      -- Percorre IFs
       FOR rw_situacao_if IN cr_situacao_if LOOP
-				-- Se for uma das duas situações
+          -- Se for uma das duas situações
 				IF rw_situacao_if.cdsitope IN(4,5) THEN
-					-- Quando for BB precisamos filtrar por Código do banco e número do ISPB
+            -- Quando for BB precisamos filtrar por Código do banco e número do ISPB
 					IF rw_situacao_if.nrispbif = 0 THEN			
-						-- Verifica se situação atuel é operante
+              -- Verifica se situação atuel é operante
 						IF rw_situacao_if.cdsitope = 4 THEN
-							-- Verificar se é operante no ispb
+                -- Verificar se é operante no ispb
 							OPEN cr_crapban_bb(pr_nrispbif => rw_situacao_if.nrispbif);
-							FETCH cr_crapban_bb INTO rw_crapban_bb;
-							-- Se não encontrou banco 
-							IF cr_crapban_bb%FOUND THEN
-								-- Banco do Brasil				
-								UPDATE crapban ban
-									 SET ban.dtaltpag = CASE WHEN ban.flgoppag <> 1 THEN trunc(SYSDATE) ELSE ban.dtaltpag END
-											,ban.flgoppag = 1
+                FETCH cr_crapban_bb INTO rw_crapban_bb;
+                -- Se não encontrou banco 
+                IF cr_crapban_bb%FOUND THEN
+                  -- Banco do Brasil        
+                  UPDATE crapban ban
+                     SET ban.dtaltpag = CASE WHEN ban.flgoppag <> 1 THEN trunc(SYSDATE) ELSE ban.dtaltpag END
+                        ,ban.flgoppag = 1
 								 WHERE ban.nrispbif = rw_situacao_if.nrispbif
-									 AND ban.cdbccxlt = 1;						 
-	 						END IF;
-							-- Fecha cursor
-							CLOSE cr_crapban_bb;
-						-- Se for inoperante
+                     AND ban.cdbccxlt = 1;             
+                END IF;
+                -- Fecha cursor
+                CLOSE cr_crapban_bb;
+              -- Se for inoperante
 						ELSIF rw_situacao_if.cdsitope = 5 THEN							 
-							-- Banco do Brasil
-							UPDATE crapban ban
-								 SET ban.dtaltpag = CASE WHEN ban.flgoppag <> 0 THEN trunc(SYSDATE) ELSE ban.dtaltpag END
-										,ban.flgoppag = 0
+                -- Banco do Brasil
+                UPDATE crapban ban
+                   SET ban.dtaltpag = CASE WHEN ban.flgoppag <> 0 THEN trunc(SYSDATE) ELSE ban.dtaltpag END
+                      ,ban.flgoppag = 0
 							 WHERE ban.nrispbif = rw_situacao_if.nrispbif
-								 AND ban.cdbccxlt = 1;						 
-						END IF;
-				  ELSE
-					  -- Verifica se situação atuel é operante
+                   AND ban.cdbccxlt = 1;             
+              END IF;
+            ELSE
+              -- Verifica se situação atuel é operante
 						IF rw_situacao_if.cdsitope = 4 THEN
-              -- Verificar se é operante no ispb
+                -- Verificar se é operante no ispb
 							OPEN cr_crapban(pr_nrispbif => rw_situacao_if.nrispbif);
-							FETCH cr_crapban INTO rw_crapban;
-							-- Se não encontrou banco 
-							IF cr_crapban%FOUND THEN
-								UPDATE crapban ban
-									 SET ban.dtaltpag = CASE WHEN ban.flgoppag <> 1 THEN trunc(SYSDATE) ELSE ban.dtaltpag END
-											,ban.flgoppag = 1
+                FETCH cr_crapban INTO rw_crapban;
+                -- Se não encontrou banco 
+                IF cr_crapban%FOUND THEN
+                  UPDATE crapban ban
+                     SET ban.dtaltpag = CASE WHEN ban.flgoppag <> 1 THEN trunc(SYSDATE) ELSE ban.dtaltpag END
+                        ,ban.flgoppag = 1
 								 WHERE ban.nrispbif = rw_situacao_if.nrispbif;						 
-						  END IF;
-							-- Fecha cursor
-							CLOSE cr_crapban;
-            -- Se for inoperante
+                END IF;
+                -- Fecha cursor
+                CLOSE cr_crapban;
+              -- Se for inoperante
 						ELSIF rw_situacao_if.cdsitope = 5 THEN							 
-							UPDATE crapban ban
-								 SET ban.dtaltpag = CASE WHEN ban.flgoppag <> 0 THEN trunc(SYSDATE) ELSE ban.dtaltpag END
-										,ban.flgoppag = 0
+                UPDATE crapban ban
+                   SET ban.dtaltpag = CASE WHEN ban.flgoppag <> 0 THEN trunc(SYSDATE) ELSE ban.dtaltpag END
+                      ,ban.flgoppag = 0
 							 WHERE ban.nrispbif = rw_situacao_if.nrispbif;
-						END IF;
-				  END IF;					
+              END IF;
+            END IF;    
 					-- Se não atualizou nenhum registro
 /*					IF SQL%ROWCOUNT = 0 THEN
 						vr_lista_ispb := vr_lista_ispb || 'ISPB: ' || 
 						                 to_char(rw_situacao_if.nrispbif, '00000000') || '<br/>';
 					END IF;*/
-				END IF;				 
-			END LOOP;
-			
+          END IF;        
+        END LOOP;
+      
 /*		BEGIN
 			IF trim(vr_lista_ispb) IS NOT NULL THEN
 				vr_dsdemail := 'Não foi possível atualizar a situação operacional da IF na camara' ||
 											' PAG: Instituição Financeira não encontrada ou não operante no STR.<br/><br/>' ||
 											vr_lista_ispb;
-															
+      
 				-- Envia email para o spb
 				gene0003.pc_solicita_email(pr_cdcooper        => 3
 																	,pr_cdprogra        => pr_cdprogra
@@ -5593,22 +5587,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
 					RAISE vr_exc_erro;
 				END IF;
 			END IF;
-		EXCEPTION
+    EXCEPTION
 			WHEN vr_exc_erro THEN
-				-- Grava erro em log
-				btch0001.pc_gera_log_batch(pr_cdcooper     => 3,
-																	 pr_nmarqlog     => vr_nmarqlog,
-																	 pr_ind_tipo_log => 1, -- Normal
-																	 pr_des_log      => TO_CHAR(SYSDATE,'DD/MM/RRRR - HH24:MI:SS')||' - ' ||
-																											pr_cdprogra || ' - PAG0101            --> ' ||
-																											'Arquivo: ' || pr_nmarqxml || 
+        -- Grava erro em log
+        btch0001.pc_gera_log_batch(pr_cdcooper     => 3,
+                                   pr_nmarqlog     => vr_nmarqlog,
+                                   pr_ind_tipo_log => 1, -- Normal
+                                   pr_des_log      => TO_CHAR(SYSDATE,'DD/MM/RRRR - HH24:MI:SS')||' - ' ||
+                                                      pr_cdprogra || ' - PAG0101            --> ' ||
+                                                      'Arquivo: ' || pr_nmarqxml || 
 																											'. Codigo Erro: Erro ao enviar email ' || vr_dscritic);
-		END;				 	
+    END;
 	*/		
 		-- Execução OK
 		pr_des_erro := 'OK';
-		-- Efetuar commit
-		COMMIT;
+		  -- Efetuar commit
+		  COMMIT;
 		EXCEPTION
 			WHEN OTHERS THEN
 				-- Houve erro, retornar NOK
@@ -5767,7 +5761,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.sspb0001 AS
              SET ban.dtaltstr = CASE
                                   WHEN ban.flgdispb <> 0 THEN
                                    trunc(SYSDATE)
-				ELSE
+                                  ELSE
                                    ban.dtaltstr
                                 END,
                  ban.flgdispb = 0

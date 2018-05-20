@@ -113,7 +113,6 @@
 	$borderos   = $xmlObjBorderos->roottag->tags[0]->tags;
 	$qtBorderos = count($borderos);
 	
-
 	// Função para exibir erros na tela através de javascript
 	function exibeErro($msgErro) { 
 		echo '<script type="text/javascript">';
@@ -295,9 +294,13 @@ else{
 
 	<div id="divBotoes" >
 		<?if($executandoProdutos == 'true'){?>
+		
 			<input type="image" src="<?php echo $UrlImagens; ?>botoes/voltar.gif" onClick="encerraRotina(true);return false;" />
+		
 		<?}else{?>		
+		
 			<input type="image" src="<?php echo $UrlImagens; ?>botoes/voltar.gif" onClick="voltaDiv(2,1,4,'DESCONTO DE T&Iacute;TULOS','DSC TITS');carregaTitulos();return false;" />
+	
 		<?}?>
 
 		<input type="image" src="<?php echo $UrlImagens; ?>botoes/pre-analise.gif"  <?php if ($qtBorderos == 0) { echo 'style="cursor: default;'.$dispN.'" onClick="return false;"'; } else { echo 'style="'.$dispN.'" onClick="mostraDadosBorderoDscTit(\'N\');return false;"'; } ?> />

@@ -37,6 +37,9 @@ CREATE OR REPLACE PACKAGE CECRED.EXTR0001 AS
                             na procedure pc_obtem_saldo_dia, Prj. 302 (Jean Michel).                                           
                             
                10/07/2017 - Inclusao do campo vllimcpa na procedure pc_obtem_saldos_anteriores  (Roberto Holz - M441)                                         
+
+               21/04/2018 - Adicionar campo idlstdom no typ_reg_extrato_conta para retorno para
+                            a operacao 12 do IB (Anderson - P285).
 ..............................................................................*/
 
   -- Tipo para guardar as 5 linhas da mensagem de e-mail
@@ -147,7 +150,11 @@ CREATE OR REPLACE PACKAGE CECRED.EXTR0001 AS
              ,dsextrat VARCHAR2(100)
              ,vlblqjud crapblj.vlbloque%TYPE
              ,cdcoptfn craplcm.cdcoptfn%TYPE
-             ,nrseqlmt INTEGER);
+             ,nrseqlmt INTEGER
+             ,cdtippro crappro.cdtippro%TYPE
+             ,dsprotoc crappro.dsprotoc%TYPE
+             ,flgdetal INTEGER
+             ,idlstdom PLS_INTEGER);
   /* Definição de tabela que compreende os registros acima declarados */
   TYPE typ_tab_extrato_conta IS
     TABLE OF typ_reg_extrato_conta
@@ -367,6 +374,8 @@ CREATE OR REPLACE PACKAGE CECRED.EXTR0001 AS
                                     ,pr_flgident     IN BOOLEAN                  --> Se deve ou não usar o craplcm.dsidenti
                                     ,pr_nmdtable     IN VARCHAR2                 --> Extrato ou Depósito
                                     ,pr_lshistor     IN craptab.dstextab%TYPE    --> Lista de históricos de cheques
+                                    ,pr_lshiscon     IN VARCHAR2                 --> Lista de históricos de convênios para pagamento
+                                    ,pr_lshisrec     IN VARCHAR2                 --> Lista de históricos de recarga de celular                                    
                                     ,pr_tab_extr     IN OUT NOCOPY typ_tab_extrato_conta    --> Tabela Com Extrato de Conta
                                     ,pr_tab_depo     IN OUT NOCOPY typ_tab_dep_identificado --> Tabela Depositos Identificados
                                     ,pr_des_reto     OUT VARCHAR2                 --> Saida OK ou NOK
@@ -2856,6 +2865,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
                                     ,pr_flgident     IN BOOLEAN                  --> Se deve ou não usar o craplcm.dsidenti
                                     ,pr_nmdtable     IN VARCHAR2                 --> Extrato ou Depósito
                                     ,pr_lshistor     IN craptab.dstextab%TYPE    --> Lista de históricos de cheques
+                                    ,pr_lshiscon     IN VARCHAR2                 --> Lista de históricos de convênios para pagamento
+                                    ,pr_lshisrec     IN VARCHAR2                 --> Lista de históricos de recarga de celular
                                     ,pr_tab_extr     IN OUT NOCOPY typ_tab_extrato_conta    --> Tabela Com Extrato de Conta
                                     ,pr_tab_depo     IN OUT NOCOPY typ_tab_dep_identificado --> Tabela Depositos Identificados
                                     ,pr_des_reto     OUT VARCHAR2                 --> Saida OK ou NOK
@@ -2866,7 +2877,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
         Sistema : Conta-Corrente - Cooperativa de Credito
         Sigla   : CRED
         Autor   : Marcos (Supero)
-        Data    : Dez/2012                         Ultima atualizacao: 17/05/2016
+        Data    : Dez/2012                         Ultima atualizacao: 03/04/2018
 
         Dados referetes ao programa:
         Frequencia: Sempre que chamado pelos programas de extrato da conta
@@ -2897,6 +2908,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
                                  debito automatico concatenar com historico complementar
                                  PRJ320 - Ofernta conv Debaut(Odirlei-AMcom)
 
+					
+					03/04/2018 - Adicionados historicos 2433 e 2658 - COMPE SESSAO UNICA (Diego).
+
+					13/04/2018 - Ajustado para filtrar os protocolos pela dtmvtolt. (Linhares).
+
     */
     DECLARE
       -- Varíaveis para montagem do novo registro
@@ -2911,10 +2927,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
       vr_indebcre craphis.indebcre%TYPE;
       vr_inhistor craphis.inhistor%TYPE;
       vr_cdhistor craphis.cdhistor%TYPE;
+      vr_cdtippro crappro.cdtippro%TYPE;
+      vr_idlstdom PLS_INTEGER;
       vr_dsextrat VARCHAR2(100);
       vr_dshistor VARCHAR2(100);
       vr_nrdocmto VARCHAR2(40);
       vr_dslibera VARCHAR2(10);
+      vr_nmconven VARCHAR2(4000) := '';
       vr_nrsequen INTEGER;
       -- Buscar informações de depósitos bloqueados
       CURSOR cr_crapdpb (pr_cdcooper IN craplcm.cdcooper%TYPE
@@ -3010,6 +3029,35 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
            AND craplmt.vldocmto = pr_vllanmto;
       -- Tipo de registro do Log do SPB
       rw_craplmt cr_craplmt%ROWTYPE;     
+
+      -- Buscar registro de depósito de cheque
+      CURSOR cr_crapchd (pr_cdcooper IN craplcm.cdcooper%TYPE
+                        ,pr_nrdconta IN craplcm.nrdconta%TYPE
+                        ,pr_dtmvtolt IN craplcm.dtmvtolt%TYPE
+                        ,pr_nrdocmto IN craplcm.nrdocmto%TYPE) IS
+        SELECT 1 FROM crapchd c 
+         WHERE c.cdcooper = pr_cdcooper 
+           AND c.nrdconta = pr_nrdconta
+           AND c.dtmvtolt = pr_dtmvtolt
+           AND c.nrdocmto = pr_nrdocmto
+         GROUP BY c.nrdocmto;
+      rw_crapchd cr_crapchd%ROWTYPE;
+      
+      -- Consultar comprovante do lançamento
+      CURSOR cr_crappro (pr_cdcooper IN crappro.cdcooper%TYPE     
+                        ,pr_nrdconta IN crappro.nrdconta%TYPE     
+                        ,pr_cdtippro IN crappro.cdtippro%TYPE
+                        ,pr_dtmvtolt IN crappro.dtmvtolt%TYPE
+                        ,pr_nrdocmto IN crappro.nrdocmto%TYPE) IS 
+        SELECT crappro.dsprotoc
+          FROM crappro
+         WHERE crappro.cdcooper = pr_cdcooper    
+           AND crappro.nrdconta = pr_nrdconta
+           AND crappro.cdtippro = pr_cdtippro
+           AND ((pr_cdtippro <> 13 AND crappro.nrdocmto = pr_nrdocmto) OR
+                (pr_cdtippro = 13 and crappro.nrseqaut = pr_nrdocmto))
+           AND crappro.dtmvtolt = pr_dtmvtolt;
+      rw_crappro cr_crappro%ROWTYPE;
 
       --Busca o inprocess na crapdat
       CURSOR cr_crapdat(pr_cdcooper IN crapdat.cdcooper%TYPE) IS --> Cooperativa
@@ -3287,8 +3335,91 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
         pr_tab_extr(vr_ind_tab).dsextrat := vr_dsextrat;
         pr_tab_extr(vr_ind_tab).dshistor := vr_dshistor;
         pr_tab_extr(vr_ind_tab).cdcoptfn := vr_cdcoptfn;
+                
+        IF ','||pr_lshiscon||',' LIKE ('%,'||rw_craplcm.cdhistor||',%') THEN
+          vr_cdtippro := 15; -- Débito Automático
+          vr_idlstdom := 32; -- Débito Automático
+        ELSIF ','||pr_lshisrec||',' LIKE ('%,'||rw_craplcm.cdhistor||',%') THEN
+          vr_cdtippro := 20; -- Recarga de Celular
+          vr_idlstdom := 20; -- Recarga de Celular
+        ELSIF rw_craplcm.cdhistor IN (537,538) THEN --Transferência Intracoop
+          vr_cdtippro := 1; -- Transferência Intercoop e Intracoop
+          vr_idlstdom := 5; -- Transferência Intracoop
+        ELSIF rw_craplcm.cdhistor IN (1009) THEN --Transferência Intercoop
+          vr_cdtippro := 1; -- Transferência Intercoop e Intracoop
+          vr_idlstdom := 6; -- Transferência Intercoop
+        ELSIF rw_craplcm.cdhistor IN (771) THEN
+          vr_cdtippro := 4; -- Crédito de Salário (Transferência)
+          vr_idlstdom := 3; -- Crédito de Salário (Transferência)
+        ELSIF rw_craplcm.cdhistor IN (555) THEN
+          vr_cdtippro := 9; -- TED
+          vr_idlstdom := 4; -- TED
+        ELSIF rw_craplcm.cdhistor IN (527) THEN
+          vr_cdtippro := 10; -- Nova Aplicação
+          vr_idlstdom := 30; -- Nova Aplicação
+        ELSIF rw_craplcm.cdhistor IN (530) THEN --Resgate aplicacao RDCPOS
+          vr_cdtippro := 12; -- Resgate Aplicação
+          vr_idlstdom := 31; -- Resgate Aplicação
+        ELSIF rw_craplcm.cdhistor IN (508) THEN  
+          IF rw_craplcm.cdpesqbb like '%INTERNET - PAGAMENTO ON-LINE - BANCO%' THEN
+            vr_cdtippro := 2; -- Título
+            vr_idlstdom := 1; -- Título
+          ELSIF rw_craplcm.cdpesqbb like '%INTERNET - PAGAMENTO ON-LINE – GUIA PREVIDENCIA SOCIAL%' THEN
+            vr_cdtippro := 13; -- GPS
+            vr_idlstdom := 9;  -- GPS
+          ELSIF rw_craplcm.cdpesqbb like '%INTERNET - PAGAMENTO ON-LINE - CONVENIO%' THEN
+            vr_nmconven := TRIM(SUBSTR(rw_craplcm.cdpesqbb,41));
+            
+            IF vr_nmconven IN ('DARF BANCO COD BARRAS 0385','DARF 81 COOP COD BARRAS 0064','DARF 81 COOP COD BARRAS 0153','DARF SIMPLES COOP COD BARRAS 0154','DARF 81 PRETO EUROPA COOPERATIVA','DARF 67 SIMPLES COOPERATIVA') THEN
+              vr_cdtippro := 16; -- DARF
+              vr_idlstdom := 7;  -- DARF
+            ELSIF vr_nmconven IN ('DAS - SIMPLES NACIONAL') THEN
+              vr_cdtippro := 17; -- DAS
+              vr_idlstdom := 8;  -- DAS
+            ELSIF vr_nmconven IN ('FGTS - GRDE -  0178','FGTS - GRF - 0179','FGTS - GRF - 0180','FGTS - MTE - 0181','FGTS - GRRF - 0239','FGTS - GRDE - 0240') THEN
+              vr_cdtippro := 24; -- FGTS
+              vr_idlstdom := 10; -- FGTS
+            ELSIF vr_nmconven IN ('RFB -DAED') THEN
+              vr_cdtippro := 23; -- DAE         
+              vr_idlstdom := 11; -- DAE
+            ELSE
+              vr_cdtippro := 2; -- Demais Convênios
+              vr_idlstdom := 2; -- Demais Convênios
+            END IF;
+          ELSE
+            vr_cdtippro := 0; 
+            vr_idlstdom := 0;     
+          END IF;
+        ELSE
+          vr_cdtippro := 0; 
+          vr_idlstdom := 0;
+        END IF;
         
-        IF rw_craplcm.cdhistor IN(519,555,578,799,958) THEN
+        pr_tab_extr(vr_ind_tab).cdtippro := vr_cdtippro;
+        pr_tab_extr(vr_ind_tab).idlstdom := vr_idlstdom;
+        
+        -- Obter protocolo do comprovante gerado no lançamento
+        IF vr_cdtippro <> 0 THEN          
+          OPEN cr_crappro (pr_cdcooper => rw_craplcm.cdcooper
+                          ,pr_nrdconta => rw_craplcm.nrdconta
+                          ,pr_cdtippro => vr_cdtippro
+                          ,pr_dtmvtolt => rw_craplcm.dtmvtolt
+                          ,pr_nrdocmto => rw_craplcm.nrdocmto);
+          FETCH cr_crappro INTO rw_crappro;
+          IF cr_crappro%FOUND THEN
+            pr_tab_extr(vr_ind_tab).dsprotoc := rw_crappro.dsprotoc;
+            pr_tab_extr(vr_ind_tab).flgdetal := 1;
+          ELSE 
+            pr_tab_extr(vr_ind_tab).dsprotoc := '';
+            pr_tab_extr(vr_ind_tab).flgdetal := 0;
+          END IF;
+          CLOSE cr_crappro;
+        ELSE
+          pr_tab_extr(vr_ind_tab).dsprotoc := ''; 
+          pr_tab_extr(vr_ind_tab).flgdetal := 0;               
+        END IF;
+        
+        IF rw_craplcm.cdhistor IN (519,555,578,799,958) THEN -- TED Recebida e Realizada
           OPEN cr_craplmt(pr_cdcooper => rw_craplcm.cdcooper
                          ,pr_nrdconta => rw_craplcm.nrdconta
                          ,pr_dtmvtolt => rw_craplcm.dtmvtolt
@@ -3297,8 +3428,44 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
           FETCH cr_craplmt INTO rw_craplmt;
           IF cr_craplmt%FOUND THEN
             pr_tab_extr(vr_ind_tab).nrseqlmt := rw_craplmt.nrsequen;
+            pr_tab_extr(vr_ind_tab).flgdetal := 1;
+            pr_tab_extr(vr_ind_tab).cdtippro := 9;
+            pr_tab_extr(vr_ind_tab).idlstdom := 4;            
+          ELSE
+            pr_tab_extr(vr_ind_tab).nrseqlmt := 0;
+            pr_tab_extr(vr_ind_tab).flgdetal := 0;
+            pr_tab_extr(vr_ind_tab).cdtippro := 0;
+            pr_tab_extr(vr_ind_tab).idlstdom := 0;               
           END IF;
           CLOSE cr_craplmt;
+        END IF;
+        
+        IF rw_craplcm.cdhistor IN (539,1015) THEN -- Transferência Intracoop Recebida
+          pr_tab_extr(vr_ind_tab).nrseqlmt := rw_craplcm.nrdocmto;
+          pr_tab_extr(vr_ind_tab).flgdetal := 1;
+          pr_tab_extr(vr_ind_tab).cdtippro := 1;
+          pr_tab_extr(vr_ind_tab).idlstdom := 5;          
+        END IF;      
+        
+        IF rw_craplcm.cdhistor IN (1011) THEN -- Transferência Intercoop Recebida
+          pr_tab_extr(vr_ind_tab).nrseqlmt := rw_craplcm.nrdocmto;
+          pr_tab_extr(vr_ind_tab).flgdetal := 1;
+          pr_tab_extr(vr_ind_tab).cdtippro := 1;
+          pr_tab_extr(vr_ind_tab).idlstdom := 6;          
+        END IF;            
+        
+        IF rw_craplcm.cdhistor IN (386,3,4,1524,1526,1523) THEN
+          OPEN cr_crapchd (pr_cdcooper => rw_craplcm.cdcooper
+                          ,pr_nrdconta => rw_craplcm.nrdconta
+                          ,pr_dtmvtolt => rw_craplcm.dtmvtolt
+                          ,pr_nrdocmto => rw_craplcm.nrdocmto);                          
+          FETCH cr_crapchd INTO rw_crapchd;
+          IF cr_crapchd%FOUND THEN
+            pr_tab_extr(vr_ind_tab).flgdetal := 1;
+          ELSE 
+            pr_tab_extr(vr_ind_tab).flgdetal := 0;
+          END IF;
+          CLOSE cr_crapchd;
         END IF;
         
       ELSIF pr_nmdtable = 'D' THEN
@@ -3428,7 +3595,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
       -- Historicos 'de-para' Cabal
       vr_cdhishcb VARCHAR2(4000);
 			-- Históricos operadoras de celular
-			vr_cdhisope VARCHAR2(4000);			
+			vr_cdhisope VARCHAR2(4000);
+      -- Históricos Convênios par Pagamento
+      vr_lshiscon VARCHAR2(4000) := '';
       --Flag valida se estar rodando no batch
       vr_flgcrass BOOLEAN;
 
@@ -3446,7 +3615,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
          WHERE crapass.cdcooper = pr_cdcooper
            AND crapass.nrdconta = pr_nrdconta;
       rw_crapass_age cr_crapass_age%ROWTYPE;
-
+      
+    CURSOR cr_gnconve (pr_cdcooper IN craphis.cdcooper%TYPE) IS
+      SELECT c.cdhisdeb
+        FROM gnconve c
+            ,craphis h
+       WHERE h.cdhistor = c.cdhisdeb
+         AND h.cdcooper = pr_cdcooper;
+    rw_gnconve cr_gnconve%ROWTYPE;
 
    -- Tipo de registro para o saldo da conta
    TYPE typ_reg_saldo IS
@@ -3602,8 +3778,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
           vr_dtfimper := pr_dtfimper;
         END IF;
       END IF;
-
-
+      
+      -- Buscar os históricas de operadoras de celular
+      FOR rw_operadoras IN cr_operadoras LOOP
+        vr_cdhisope := vr_cdhisope || ',' || rw_operadoras.cdhisdeb_cooperado;
+      END LOOP;
+      
+      vr_lshiscon := '1019';
+      FOR rw_gnconve IN cr_gnconve (pr_cdcooper => pr_cdcooper) LOOP
+        vr_lshiscon := vr_lshiscon || ',' || to_char(rw_gnconve.cdhisdeb);
+      END LOOP;
     
       -- Busca de todos os lançamentos
       FOR rw_craplcm_ign IN cr_craplcm_ign(pr_cdcooper => pr_cdcooper    --> Cooperativa conectada
@@ -3617,6 +3801,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
                                 ,pr_flgident     => FALSE         --> Se deve ou não usar o craplcm.dsidenti
                                 ,pr_nmdtable     => 'E'           --> Extrato ou Depósito
                                 ,pr_lshistor     => pr_lshistor   --> Lista de históricos de Cheques
+                                ,pr_lshiscon     => vr_lshiscon   --> Lista de históricos de convênios para pagamento
+                                ,pr_lshisrec     => vr_cdhisope   --> Lista de históricos de recarga de celular
                                 ,pr_tab_extr     => vr_tab_extr   --> Tabela Extrato
                                 ,pr_tab_depo     => vr_tab_depo   --> Tabela Depositos
                                 ,pr_des_reto     => vr_des_reto   --> Retorno OK ou NOK
@@ -3705,11 +3891,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
           vr_cdhishcb := vr_cdhishcb || ',' || rw_craphcb.cdhistor;
         END LOOP;
 
-        -- Buscar os históricas de operadoras de celular
-        FOR rw_operadoras IN cr_operadoras LOOP
-					vr_cdhisope := vr_cdhisope || ',' || rw_operadoras.cdhisdeb_cooperado;
-				END LOOP;
-
         FOR rw_craplcm_olt IN cr_craplcm_olt(pr_cdcooper => pr_cdcooper            --> Cooperativa conectada
                                     ,pr_nrdconta => pr_nrdconta            --> Número da conta
                                     ,pr_dtmvtolt => pr_rw_crapdat.dtmvtocd --> Data do movimento utilizada no cash dispenser.                                    
@@ -3727,6 +3908,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
                                     ,pr_flgident     => FALSE         --> Se deve ou não usar o craplcm.dsidenti
                                     ,pr_nmdtable     => 'E'           --> Extrato ou Depósito
                                     ,pr_lshistor     => pr_lshistor   --> Lista de históricos de Cheques
+                                    ,pr_lshiscon     => vr_lshiscon   --> Lista de históricos de convênios para pagamento
+                                    ,pr_lshisrec     => vr_cdhisope   --> Lista de históricos de recarga de celular
                                     ,pr_tab_extr     => vr_tab_extr   --> Tabela Extrato
                                     ,pr_tab_depo     => vr_tab_depo   --> Tabela Depositos
                                     ,pr_des_reto     => vr_des_reto   --> Retorno OK ou NOK
@@ -6137,6 +6320,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
                                             ,pr_flgident   => TRUE             --> Se deve ou não usar o craplcm.dsidenti
                                             ,pr_nmdtable   => 'D'              --> Depósito Identificado
                                             ,pr_lshistor   => vr_lshistor      --> Lista de históricos de Cheques
+                                            ,pr_lshiscon   => ''               --> Lista de históricos de convênios para pagamento
+                                            ,pr_lshisrec   => ''               --> Lista de históricos de recarga de celular
                                             ,pr_tab_extr   => vr_tab_extr      --> Tabela Extrato
                                             ,pr_tab_depo   => pr_tab_dep_identific --> Tabela Depositos
                                             ,pr_des_reto   => vr_des_reto      --> Retorno OK ou NOK
@@ -6947,6 +7132,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
                         '<vlblqjud>'||NVL(TO_CHAR(vr_tab_extrato_conta(vr_index).vlblqjud),' ')|| '</vlblqjud>'|| 
                         '<cdcoptfn>'||NVL(TO_CHAR(vr_tab_extrato_conta(vr_index).cdcoptfn),'0')|| '</cdcoptfn>'|| 
                         '<nrseqlmt>'||NVL(TO_CHAR(vr_tab_extrato_conta(vr_index).nrseqlmt),' ')|| '</nrseqlmt>'|| 
+                        '<cdtippro>'||NVL(TO_CHAR(vr_tab_extrato_conta(vr_index).cdtippro),'0')|| '</cdtippro>'|| 
+                        '<dsprotoc>'||NVL(TO_CHAR(vr_tab_extrato_conta(vr_index).dsprotoc),' ')|| '</dsprotoc>'|| 
+                        '<flgdetal>'||NVL(TO_CHAR(vr_tab_extrato_conta(vr_index).flgdetal),'0')|| '</flgdetal>'||  
+                        '<idlstdom>'||NVL(TO_CHAR(vr_tab_extrato_conta(vr_index).idlstdom),'0')|| '</idlstdom>'||  
                       '</extrato>';
 
           -- Escrever no XML

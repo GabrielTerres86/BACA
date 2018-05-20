@@ -7,6 +7,10 @@
  * --------------
  * ALTERAÇÕES   : 21/09/2016 - Inclusão do filtro "Tipo de Limite" no cabecalho. Inclusão dos campos
  *                             "pcliqdez" e "qtdialiq" no formulario de regras. Projeto 300. (Lombardi)
+ *
+ *                16/03/2018 - Inclusão de novo campo (Quantidade de Meses do novo limite após o cancelamento)
+ *                             Diego Simas (AMcom)
+ *
  * -------------- 
  */
     session_start();
@@ -21,6 +25,9 @@
 	$inpessoa = (isset($_POST['inpessoa'])) ? $_POST['inpessoa'] : '';
 	$vlmaxren = (isset($_POST['vlmaxren'])) ? converteFloat($_POST['vlmaxren']) : '';
 	$qtdiaren = (isset($_POST['qtdiaren'])) ? $_POST['qtdiaren'] : '';
+	$qtmeslic = (isset($_POST['qtmeslic'])) ? $_POST['qtmeslic'] : '';//Diego Simas (AMcom)
+    $cnauinad = (isset($_POST['cnauinad'])) ? $_POST['cnauinad'] : '0';
+    $qtdiatin = (isset($_POST['qtdiatin'])) ? $_POST['qtdiatin'] : '0';
 	$qtmaxren = (isset($_POST['qtmaxren'])) ? $_POST['qtmaxren'] : '';
 	$qtdiaatr = (isset($_POST['qtdiaatr'])) ? $_POST['qtdiaatr'] : '';
 	$qtatracc = (isset($_POST['qtatracc'])) ? $_POST['qtatracc'] : '';
@@ -47,6 +54,7 @@
 		$xml .= "   <nrrevcad>".$nrrevcad."</nrrevcad>";
 		$xml .= "   <qtmincta>".$qtmincta."</qtmincta>";
 		$xml .= "   <qtdiaren>".$qtdiaren."</qtdiaren>";
+		
 		$xml .= "   <qtmaxren>".$qtmaxren."</qtmaxren>";
 		$xml .= "   <qtdiaatr>".$qtdiaatr."</qtdiaatr>";
 		$xml .= "   <qtatracc>".$qtatracc."</qtatracc>";		
@@ -55,9 +63,12 @@
 		$xml .= "   <tplimite>".$tplimite."</tplimite>";
 		$xml .= "   <pcliqdez>".$pcliqdez."</pcliqdez>";
 		$xml .= "   <qtdialiq>".$qtdialiq."</qtdialiq>";
+		$xml .= "   <idgerlog>0</idgerlog>";
 		$xml .= "	<qtcarpag>".$qtcarpag."</qtcarpag>";
 		$xml .= "	<qtaltlim>".$qtaltlim."</qtaltlim>";
-		$xml .= "   <idgerlog>0</idgerlog>";
+		$xml .= "   <qtmeslic>".$qtmeslic."</qtmeslic>";  //Diego Simas (AMcom)
+        $xml .= "   <cnauinad>".$cnauinad."</cnauinad>";
+        $xml .= "   <qtdiatin>".$qtdiatin."</qtdiatin>";
 		$xml .= " </Dados>";
 		$xml .= "</Root>";
 		

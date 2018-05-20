@@ -47,7 +47,6 @@
 	}
 
 
-
 	$tipo = (isset($_POST['tipo'])) ? $_POST['tipo'] : "CONTRATO";
 
 

@@ -705,42 +705,6 @@ BEGIN
 END fn_contigencia_motor_esteira;
 
 
-
-FUNCTION fn_contigencia_motor_esteira(pr_cdcooper IN crapcop.cdcooper%TYPE
-                                     ) RETURN BOOLEAN IS
-  /*---------------------------------------------------------------------------------------------------------------------
-    Programa : fn_contigencia_motor_esteira
-    Sistema  : Ayllos
-    Sigla    : TELA_ATENDA_DSCTO_TIT
-    Autor    : Paulo Penteado (GFT)
-    Data     : Abril/2018
-
-    Objetivo  : Procedure para verificar e tanto o motor quanto a esteira estão em contingência
-
-    Alteração : 26/04/2018 - Criação (Paulo Penteado (GFT))
-
-  ---------------------------------------------------------------------------------------------------------------------*/
-  vr_dscritic varchar2(10000);
-  vr_dsmensag varchar2(10000);
-BEGIN
-   este0003.pc_verifica_contigenc_motor(pr_cdcooper => pr_cdcooper
-                                       ,pr_flctgmot => vr_flctgmot
-                                       ,pr_dsmensag => vr_dsmensag
-                                       ,pr_dscritic => vr_dscritic);
-
-   este0003.pc_verifica_contigenc_esteira(pr_cdcooper => pr_cdcooper
-                                         ,pr_flctgest => vr_flctgest
-                                         ,pr_dsmensag => vr_dsmensag
-                                         ,pr_dscritic => vr_dscritic);
-
-   if  (vr_flctgest and vr_flctgmot) then
-       return true;
-   else
-       return false;
-   end if;
-END fn_contigencia_motor_esteira;
-
-
 FUNCTION fn_em_contingencia_ibratan (pr_cdcooper IN crapcop.cdcooper%TYPE) RETURN BOOLEAN IS
 
   /*---------------------------------------------------------------------------------------------------------------------
@@ -1009,8 +973,8 @@ BEGIN
    if  not fn_contigencia_motor_esteira(pr_cdcooper => pr_cdcooper) then
        if  rw_crawlim.insitapr not in (1,2) then
            vr_dscritic := 'Para esta operação, a Decisão deve ser "Aprovada Automaticamente" ou "Aprovada Manual".';
-       END IF;
        raise vr_exc_saida;
+   end if;
    end if;
 
    if  rw_crawlim.insitlim not in (1,5) then
@@ -1150,15 +1114,8 @@ BEGIN
              ,/*48*/ cdageori
              ,/*49*/ dtinsori
              ,/*50*/ insitblq
-             ,/*51*/ cdagenci
-             ,/*52*/ hrinclus
-             ,/*53*/ dtdscore
-             ,/*54*/ dsdscore
-             ,/*55*/ flgaprvc
-             ,/*56*/ dtenefes
-             ,/*57*/ dsprotoc
-             ,/*58*/ dtmanute
-             ,/*59*/ ininadim )
+             ,/*51*/ dtmanute
+             ,/*52*/ ininadim )
       values (/*01*/ rw_crawlim.nrdconta
              ,/*02*/ 2 --Ativo
              ,/*03*/ pr_dtmvtolt
@@ -1209,15 +1166,8 @@ BEGIN
              ,/*48*/ rw_crawlim.cdageori
              ,/*49*/ trunc(sysdate)
              ,/*50*/ rw_crawlim.insitblq
-             ,/*51*/ rw_crawlim.cdagenci
-             ,/*52*/ to_char(sysdate,'SSSSS')
-             ,/*53*/ rw_crawlim.dtdscore
-             ,/*54*/ rw_crawlim.dsdscore
-             ,/*55*/ rw_crawlim.flgaprvc
-             ,/*56*/ rw_crawlim.dtenefes
-             ,/*57*/ rw_crawlim.dsprotoc
-             ,/*58*/ trunc(sysdate)
-             ,/*59*/ rw_crawlim.ininadim );
+             ,/*51*/ trunc(sysdate)
+             ,/*52*/ rw_crawlim.ininadim );
    exception
       when others then
            vr_dscritic := 'Erro ao inserir o contrato de limite de desconto de título: '||sqlerrm;
@@ -1284,6 +1234,7 @@ DECLARE
    -- Variaveis auxiliares
    vr_nrdolote     craplot.nrdolote%type;
    vr_rowid_log    rowid;
+   vr_flcraplim    BOOLEAN;
 
    -- Variáveis incluídas
    vr_des_erro      varchar2(3);                           -- 'OK' / 'NOK'
@@ -1333,6 +1284,7 @@ DECLARE
    select nvl(lim.nrctrmnt,0) nrctrmnt
          ,lim.vllimite
          ,lim.cddlinha
+         ,lim.insitapr
    from   crawlim lim
    where  lim.cdcooper = pr_cdcooper
    and    lim.nrdconta = pr_nrdconta
@@ -1345,6 +1297,7 @@ DECLARE
          ,lim.nrdconta
          ,lim.nrctrlim
          ,lim.tpctrlim
+         ,lim.vllimite
    from   craplim lim
    where  lim.cdcooper = pr_cdcooper
    and    lim.nrdconta = pr_nrdconta
@@ -1375,6 +1328,11 @@ BEGIN
          raise vr_exc_saida;
    end   if;
    close cr_crawlim;
+   
+   open  cr_craplim;
+   fetch cr_craplim into rw_craplim;
+   vr_flcraplim := cr_craplim%FOUND;
+   close cr_craplim;
    
    --  Quando o campo nrctrmnt for zero, significa que a proposta é a principal de criação do contrato do limite. Neste momento deve-se
    --  inserir o contrato do limite.
@@ -1586,14 +1544,10 @@ BEGIN
                            ,pr_nrdrowid => vr_rowid_log);
 
    else
-       open  cr_craplim;
-       fetch cr_craplim into rw_craplim;
-       if    cr_craplim%notfound then
-             close cr_craplim;
+       if  NOT vr_flcraplim then
              vr_dscritic := 'Não foi encontrado um contrato de limite de desconto de título associado a proposta. Conta ' || pr_nrdconta || ' proposta ' || pr_nrctrlim;
              raise vr_exc_saida;
        end   if;
-       close cr_craplim;
        
        begin
           update craplim lim
@@ -1615,7 +1569,7 @@ BEGIN
       update crawlim lim
       set    insitlim = 2
             ,insitest = 3
-            ,insitapr = nvl(pr_insitapr, insitapr) -- Decisão (Depende do Retorno da Análise...)
+            ,insitapr = nvl(pr_insitapr, case when rw_crawlim.insitapr = 0 then 3 else insitapr end)
             ,qtrenova = 0
             ,dtinivig = rw_crapdat.dtmvtolt
             ,dtfimvig = (rw_crapdat.dtmvtolt + lim.qtdiavig)
@@ -1628,6 +1582,27 @@ BEGIN
            vr_dscritic := 'Erro ao atualizar a proposta de limite de desconto de título. ' || sqlerrm;
            raise vr_exc_saida;
    end;
+
+   --  Caso seja uma proposta de majoração, ou seja, se o valor da proposta for maior que o do contrato, E caso a 
+   --  esteira não esteja em contingencia, então deve enviar a efetivação da proposta para o Ibratan
+   IF  rw_crawlim.vllimite > rw_craplim.vllimite AND
+       NOT fn_contigencia_motor_esteira(pr_cdcooper => pr_cdcooper) THEN
+       este0003.pc_efetivar_limite_esteira(pr_cdcooper => pr_cdcooper
+                                          ,pr_nrdconta => pr_nrdconta
+                                          ,pr_nrctrlim => pr_nrctrlim
+                                          ,pr_tpctrlim => pr_tpctrlim
+                                          ,pr_cdagenci => pr_cdagenci
+                                          ,pr_cdoperad => pr_cdoperad
+                                          ,pr_cdorigem => 9 --Esteira
+                                          ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                          ,pr_cdcritic => vr_cdcritic
+                                          ,pr_dscritic => vr_dscritic);
+
+       IF  vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
+           vr_dscritic := 'Erro ao enviar a efetivação da proposta para o Ibratan: '||vr_dscritic;
+           RAISE vr_exc_saida;
+       END IF;
+   END IF;
 
    COMMIT;
 
@@ -2394,6 +2369,8 @@ PROCEDURE pc_analisar_proposta(pr_tpenvest in varchar2               --> Tipo do
   ---------------------------------------------------------------------------------------------------------------------*/
 
    vr_dsmensag varchar2(32767);
+   vr_dtmvtolt DATE;
+   
 
    -- Variável de críticas
    vr_cdcritic crapcri.cdcritic%type;
@@ -2416,6 +2393,8 @@ BEGIN
    pr_des_erro := pr_xmllog; -- somente para não haver hint, caso for usado, pode remover essa linha
    pr_des_erro := 'OK';
    pr_nmdcampo := null;
+
+   vr_dtmvtolt := to_date(pr_dtmovito, 'DD/MM/RRRR');
 
    gene0004.pc_extrai_dados(pr_xml      => pr_retxml
                            ,pr_cdcooper => vr_cdcooper
@@ -2440,7 +2419,7 @@ BEGIN
                                       ,pr_nrctrlim => pr_nrctrlim
                                       ,pr_tpctrlim => pr_tpctrlim
                                       ,pr_nrdconta => pr_nrdconta
-                                      ,pr_dtmovito => pr_dtmovito
+                                      ,pr_dtmvtolt => vr_dtmvtolt
                                       ,pr_dsmensag => vr_dsmensag
                                       ,pr_cdcritic => vr_cdcritic
                                       ,pr_dscritic => vr_dscritic
@@ -2530,6 +2509,7 @@ PROCEDURE pc_enviar_proposta_manual(pr_nrctrlim in  crawlim.nrctrlim%type --> Nu
   ---------------------------------------------------------------------------------------------------------------------*/
 
    vr_dsmensag varchar2(32767);
+   vr_dtmvtolt DATE;
    
    -- Variável de críticas
    vr_cdcritic crapcri.cdcritic%type;
@@ -2553,6 +2533,8 @@ BEGIN
    pr_des_erro := 'OK';
    pr_nmdcampo := null;
 
+   vr_dtmvtolt := to_date(pr_dtmovito, 'DD/MM/RRRR');
+
    gene0004.pc_extrai_dados(pr_xml      => pr_retxml
                            ,pr_cdcooper => vr_cdcooper
                            ,pr_nmdatela => vr_nmdatela
@@ -2570,7 +2552,7 @@ BEGIN
                                     ,pr_nrdconta => pr_nrdconta
                                     ,pr_nrctrlim => pr_nrctrlim
                                     ,pr_tpctrlim => pr_tpctrlim
-                                    ,pr_dtmvtolt => pr_dtmovito
+                                    ,pr_dtmvtolt => vr_dtmvtolt
                                     ,pr_nmarquiv => null
                                     ,vr_flgdebug => 'N'
                                     ,pr_dsmensag => vr_dsmensag
@@ -2586,7 +2568,7 @@ BEGIN
    vr_dsmensag := replace(replace(vr_dsmensag, '<br>', ' '), '<BR>', ' ');
    pr_retxml   := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                     '<Root><dsmensag>' || vr_dsmensag || '</dsmensag></Root>');
-   --dbms_output.put_line(vr_dsmensag);
+
    
    COMMIT;
 
@@ -2772,6 +2754,8 @@ PROCEDURE pc_alterar_proposta_manutencao(pr_cdcooper    in crapcop.cdcooper%type
     Alteração : 25/04/2018 - Criação (Paulo Penteado (GFT))
 
   ---------------------------------------------------------------------------------------------------------------------*/
+   -- Informações de data do sistema
+   rw_crapdat  btch0001.rw_crapdat%TYPE;
 
    -- Variável de críticas
    vr_cdcritic crapcri.cdcritic%type;
@@ -2782,6 +2766,9 @@ PROCEDURE pc_alterar_proposta_manutencao(pr_cdcooper    in crapcop.cdcooper%type
 
    -- Variaveis auxiliares
    vr_rowid_log    rowid;
+   
+   vr_tab_dados_dsctit cecred.dsct0002.typ_tab_dados_dsctit; -- retorno da TAB052 para Cooperativa e Cobrança Registrada
+   vr_tab_cecred_dsctit cecred.dsct0002.typ_tab_cecred_dsctit; -- retorno da TAB052 para CECRED
    
    cursor cr_crapldc is
    select nvl(ldc.flgstlcr,0) flgstlcr
@@ -2805,6 +2792,14 @@ PROCEDURE pc_alterar_proposta_manutencao(pr_cdcooper    in crapcop.cdcooper%type
    and    pro.tpctrlim = pr_tpctrlim;
    rw_craplim cr_craplim%rowtype;
 
+   -- Verifica Conta (Cadastro de associados)
+   cursor cr_crapass is
+   select inpessoa
+   from   crapass
+   where  crapass.cdcooper = pr_cdcooper
+   and    crapass.nrdconta = pr_nrdconta;
+   rw_crapass cr_crapass%rowtype;
+   
 BEGIN
    open  cr_crapldc;
    fetch cr_crapldc into rw_crapldc;
@@ -2824,6 +2819,48 @@ BEGIN
    open  cr_craplim;
    fetch cr_craplim into rw_craplim;
    close cr_craplim; 
+   
+    --    Verifica se a data esta cadastrada
+   open  btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
+   fetch btch0001.cr_crapdat into rw_crapdat;
+   if    btch0001.cr_crapdat%notfound then
+         close btch0001.cr_crapdat;
+         vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => 1);
+         raise vr_exc_saida;
+   end   if;
+   close btch0001.cr_crapdat;
+   
+    --    Puxa o tipo de pessoa
+   open  cr_crapass;
+   fetch cr_crapass into rw_crapass;
+   if    cr_crapass%notfound then
+         close cr_crapass;
+         vr_cdcritic := 9;
+         raise vr_exc_saida;
+   end   if;
+   close cr_crapass;
+   
+    cecred.dsct0002.pc_busca_parametros_dsctit(pr_cdcooper, --pr_cdcooper,
+                                                 pr_cdagenci, --Agencia de operação
+                                                 pr_nrdcaixa, --Número do caixa
+                                                 pr_cdoperad, --Operador
+                                                 rw_crapdat.dtmvtolt, -- Data da Movimentação
+                                                 pr_idorigem, --Identificação de origem
+                                                 1, --pr_tpcobran: 1-REGISTRADA / 0-NÃO REGISTRADA
+                                                 rw_crapass.inpessoa, --1-PESSOA FÍSICA / 2-PESSOA JURÍDICA
+                                                 vr_tab_dados_dsctit,
+                                                 vr_tab_cecred_dsctit,
+                                                 vr_cdcritic,
+                                                 vr_dscritic);
+     if  vr_cdcritic > 0  or vr_dscritic is not null then
+        raise vr_exc_saida;
+     end if;                                            
+    
+    /*LIMITE MAXIMO EXCEDIDO*/
+    if pr_vllimite > vr_tab_dados_dsctit(1).vllimite then
+        vr_dscritic := 'Limite máximo excedido.';
+        raise vr_exc_saida;
+    end if;                     
    
    begin
       update crawlim lim
@@ -2893,7 +2930,6 @@ EXCEPTION
 
         pr_cdcritic := vr_cdcritic;
         pr_dscritic := vr_dscritic;
-
    when others then
         pr_cdcritic := nvl(vr_cdcritic,0);
         pr_dscritic := 'Erro nao tratado na TELA_ATENDA_DSCTO_TIT.pc_alterar_proposta_manutencao: ' || sqlerrm;
@@ -5562,7 +5598,6 @@ END pc_solicita_biro_bordero;
             /* buscar proximo */
             vr_index_critica := vr_tab_dados_critica.next(vr_index_critica);
       end loop;
-          
       pc_escreve_xml('</criticas>');
           
       pc_escreve_xml ('</dados></root>',true);
@@ -5672,7 +5707,7 @@ PROCEDURE pc_buscar_tit_bordero(pr_cdcooper IN crapcop.cdcooper%TYPE  --> Código
     
      --carregando os dados de prazo limite da TAB052 
      -- BUSCAR O PRAZO PARA PESSOA FISICA
-     cecred.dsct0002.pc_busca_titulos_bordero (
+     dsct0002.pc_busca_titulos_bordero (
                                      pr_cdcooper                => pr_cdcooper
                                      ,pr_nrborder               => pr_nrborder
                                      ,pr_nrdconta               => pr_nrdconta   

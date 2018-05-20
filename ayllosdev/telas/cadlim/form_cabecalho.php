@@ -1,11 +1,11 @@
 <?
 /*!
  * FONTE        : form_cabecalho.php
- * CRIAÃ‡ÃƒO      : James Prust JÃºnior
- * DATA CRIAÃ‡ÃƒO : 15/12/2014
- * OBJETIVO     : CabeÃ§alho para a tela CADLIM
+ * CRIAÇÃO      : James Prust Júnior
+ * DATA CRIAÇÃO : 15/12/2014
+ * OBJETIVO     : Cabeçalho para a tela CADLIM
  * --------------
- * ALTERAÃ‡Ã•ES   : 21/09/2016 - InclusÃ£o do filtro "Tipo de Limite" no cabecalho. Projeto 300. (Lombardi)
+ * ALTERAÇÕES   : 21/09/2016 - Inclusão do filtro "Tipo de Limite" no cabecalho. Projeto 300. (Lombardi)
  *				  
  * --------------
  */	

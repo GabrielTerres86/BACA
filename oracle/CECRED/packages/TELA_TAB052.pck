@@ -216,7 +216,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_TAB052 AS
                              ,pr_nmdcampo OUT VARCHAR2     --> Nome do campo com erro
                              ,pr_des_erro OUT VARCHAR2);
 
-
+  
 END TELA_TAB052;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB052 AS
@@ -233,10 +233,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB052 AS
   -- Frequencia: Diario (on-line)
   -- Objetivo  : Centralizar rotinas relacionadas a Tela TAB052
   --
-  -- Histórico de Alterações:
-  --  25/01/2017 - Versão Inicial: Conversão Progress para Oracle
+  -- Histórico de Alterações: 
+  --  25/01/2017 - Versão Inicial: Conversão Progress para Oracle 
   --              (Gustavo Sene - GFT)
-  --
+  --  
   --  01/02/2018 - Inclusão de Parâmetro de entrada por tipo de pessoa: Física / Jurídica
   --              (Gustavo Sene - GFT)
   --
@@ -325,15 +325,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB052 AS
 
       pr_des_erro := 'OK';
       -- Extrai dados do xml
-      gene0004.pc_extrai_dados( pr_xml      => pr_retxml,
-                                pr_cdcooper => vr_cdcooper,
-                                pr_nmdatela => vr_nmdatela,
-                                pr_nmeacao  => vr_nmeacao,
-                                pr_cdagenci => vr_cdagenci,
-                                pr_nrdcaixa => vr_nrdcaixa,
-                                pr_idorigem => vr_idorigem,
-                                pr_cdoperad => vr_cdoperad,
-                                pr_dscritic => vr_dscritic);
+     gene0004.pc_extrai_dados(pr_xml      => pr_retxml,
+                               pr_cdcooper => vr_cdcooper,
+                               pr_nmdatela => vr_nmdatela,
+                               pr_nmeacao  => vr_nmeacao,
+                               pr_cdagenci => vr_cdagenci,
+                               pr_nrdcaixa => vr_nrdcaixa,
+                               pr_idorigem => vr_idorigem,
+                               pr_cdoperad => vr_cdoperad,
+                               pr_dscritic => vr_dscritic);
 
       -- Se retornou alguma crítica
       IF TRIM(vr_dscritic) IS NOT NULL THEN
@@ -355,7 +355,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB052 AS
                                 ,pr_tab_cecred_dsctit => vr_tab_cecred_dsctit --> Tabela contendo os pârametros da CECRED
                                 ,pr_cdcritic => vr_cdcritic   --> Código da crítica
                                 ,pr_dscritic => vr_dscritic   --> Descrição da crítica
-                              );
+                              );  
 
       -- Se retornou alguma crítica
       IF TRIM(vr_dscritic) IS NOT NULL OR
@@ -402,7 +402,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB052 AS
                              pr_tag_cont => NULL,
                              pr_des_erro => vr_dscritic);
 
-
+  
     	------------------ dsdepart
       gene0007.pc_insere_tag(pr_xml      => pr_retxml,
                              pr_tag_pai  => 'inf',
@@ -412,7 +412,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB052 AS
                              pr_des_erro => vr_dscritic);
 
 
-    	------------------ vllimite
+    ------------------ vllimite
       gene0007.pc_insere_tag(pr_xml      => pr_retxml,
                              pr_tag_pai  => 'inf',
                              pr_posicao  => vr_auxconta,
@@ -428,18 +428,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB052 AS
                              pr_tag_nova => 'vllimite_c',
                              pr_tag_cont => to_char(vr_tab_cecred_dsctit(1).vllimite,
                                                     'fm9g999g999g999g999g990d00',
-                                                    'NLS_NUMERIC_CHARACTERS='',.'''),
+                                                    'NLS_NUMERIC_CHARACTERS='',.'''),                                                    
                              pr_des_erro => vr_dscritic);
 
 
-    ------------------ vlconsul
+    ------------------ vlconsul   
     gene0007.pc_insere_tag(pr_xml      => pr_retxml,
                              pr_tag_pai  => 'inf',
                              pr_posicao  => vr_auxconta,
                              pr_tag_nova => 'vlconsul',
                              pr_tag_cont => to_char(vr_tab_dados_dsctit(1).vlconsul,
                                                     'fm9g999g999g999g999g990d00',
-                                                    'NLS_NUMERIC_CHARACTERS='',.'''),
+                                                    'NLS_NUMERIC_CHARACTERS='',.'''),                                                    
                              pr_des_erro => vr_dscritic);
 
       gene0007.pc_insere_tag(pr_xml      => pr_retxml,
@@ -448,9 +448,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB052 AS
                              pr_tag_nova => 'vlconsul_c',
                              pr_tag_cont => to_char(vr_tab_cecred_dsctit(1).vlconsul,
                                                     'fm9g999g999g999g999g990d00',
-                                                    'NLS_NUMERIC_CHARACTERS='',.'''),
+                                                    'NLS_NUMERIC_CHARACTERS='',.'''),                                                    
                              pr_des_erro => vr_dscritic);
-
+          
     ------------------ vlminsac
     gene0007.pc_insere_tag(pr_xml      => pr_retxml,
                              pr_tag_pai  => 'inf',
@@ -458,7 +458,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB052 AS
                              pr_tag_nova => 'vlminsac',
                              pr_tag_cont => to_char(vr_tab_dados_dsctit(1).vlminsac,
                                                     'fm9g999g999g999g999g990d00',
-                                                    'NLS_NUMERIC_CHARACTERS='',.'''),
+                                                    'NLS_NUMERIC_CHARACTERS='',.'''),                                                    
                              pr_des_erro => vr_dscritic);
 
       gene0007.pc_insere_tag(pr_xml      => pr_retxml,
@@ -467,9 +467,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB052 AS
                              pr_tag_nova => 'vlminsac_c',
                              pr_tag_cont => to_char(vr_tab_cecred_dsctit(1).vlminsac,
                                                     'fm9g999g999g999g999g990d00',
-                                                    'NLS_NUMERIC_CHARACTERS='',.'''),
+                                                    'NLS_NUMERIC_CHARACTERS='',.'''),                                                    
                              pr_des_erro => vr_dscritic);
-
+               
     ------------------ vlmaxsac --> Excluir
     gene0007.pc_insere_tag(pr_xml      => pr_retxml,
                              pr_tag_pai  => 'inf',
@@ -477,7 +477,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB052 AS
                              pr_tag_nova => 'vlmaxsac',
                              pr_tag_cont => to_char(vr_tab_dados_dsctit(1).vlmaxsac,
                                                     'fm9g999g999g999g999g990d00',
-                                                    'NLS_NUMERIC_CHARACTERS='',.'''),
+                                                    'NLS_NUMERIC_CHARACTERS='',.'''),                                                    
                              pr_des_erro => vr_dscritic);
 
       gene0007.pc_insere_tag(pr_xml      => pr_retxml,
@@ -486,10 +486,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB052 AS
                              pr_tag_nova => 'vlmaxsac_c',
                              pr_tag_cont => to_char(vr_tab_cecred_dsctit(1).vlmaxsac,
                                                     'fm9g999g999g999g999g990d00',
-                                                    'NLS_NUMERIC_CHARACTERS='',.'''),
-                             pr_des_erro => vr_dscritic);
+                                                    'NLS_NUMERIC_CHARACTERS='',.'''),                                                    
+                             pr_des_erro => vr_dscritic);    
 
-    ------------------ qtremcrt
+    ------------------ qtremcrt 
     gene0007.pc_insere_tag(pr_xml      => pr_retxml,
                              pr_tag_pai  => 'inf',
                              pr_posicao  => vr_auxconta,
@@ -502,9 +502,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB052 AS
                              pr_posicao  => vr_auxconta,
                              pr_tag_nova => 'qtremcrt_c',
                              pr_tag_cont => to_char(vr_tab_cecred_dsctit(1).qtremcrt),
-                             pr_des_erro => vr_dscritic);
+                             pr_des_erro => vr_dscritic);                 
 
-    ------------------ qttitprt
+    ------------------ qttitprt 
     gene0007.pc_insere_tag(pr_xml      => pr_retxml,
                              pr_tag_pai  => 'inf',
                              pr_posicao  => vr_auxconta,
@@ -517,8 +517,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB052 AS
                              pr_posicao  => vr_auxconta,
                              pr_tag_nova => 'qttitprt_c',
                              pr_tag_cont => to_char(vr_tab_cecred_dsctit(1).qttitprt),
-                             pr_des_erro => vr_dscritic);
-
+                             pr_des_erro => vr_dscritic);      
+    
     ------------------ qtrenova --> Excluir
     gene0007.pc_insere_tag(pr_xml      => pr_retxml,
                              pr_tag_pai  => 'inf',
@@ -533,8 +533,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB052 AS
                              pr_tag_nova => 'qtrenova_c',
                              pr_tag_cont => to_char(vr_tab_cecred_dsctit(1).qtrenova),
                              pr_des_erro => vr_dscritic);
-
-    ------------------ qtdiavig
+      
+    ------------------ qtdiavig 
     gene0007.pc_insere_tag(pr_xml      => pr_retxml,
                              pr_tag_pai  => 'inf',
                              pr_posicao  => vr_auxconta,
@@ -547,9 +547,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB052 AS
                              pr_posicao  => vr_auxconta,
                              pr_tag_nova => 'qtdiavig_c',
                              pr_tag_cont => to_char(vr_tab_cecred_dsctit(1).qtdiavig),
-                             pr_des_erro => vr_dscritic);
-
-    ------------------ qtprzmin
+                             pr_des_erro => vr_dscritic);  
+          
+    ------------------ qtprzmin 
     gene0007.pc_insere_tag(pr_xml      => pr_retxml,
                              pr_tag_pai  => 'inf',
                              pr_posicao  => vr_auxconta,
@@ -562,9 +562,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB052 AS
                              pr_posicao  => vr_auxconta,
                              pr_tag_nova => 'qtprzmin_c',
                              pr_tag_cont => to_char(vr_tab_cecred_dsctit(1).qtprzmin),
-                             pr_des_erro => vr_dscritic);
-
-    ------------------ qtprzmax
+                             pr_des_erro => vr_dscritic);  
+          
+    ------------------ qtprzmax 
     gene0007.pc_insere_tag(pr_xml      => pr_retxml,
                              pr_tag_pai  => 'inf',
                              pr_posicao  => vr_auxconta,
@@ -577,9 +577,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB052 AS
                              pr_posicao  => vr_auxconta,
                              pr_tag_nova => 'qtprzmax_c',
                              pr_tag_cont => to_char(vr_tab_cecred_dsctit(1).qtprzmax),
-                             pr_des_erro => vr_dscritic);
-
-    ------------------ cardbtit
+                             pr_des_erro => vr_dscritic);  
+          
+    ------------------ cardbtit                    
     gene0007.pc_insere_tag(pr_xml      => pr_retxml,
                              pr_tag_pai  => 'inf',
                              pr_posicao  => vr_auxconta,
@@ -592,9 +592,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB052 AS
                              pr_posicao  => vr_auxconta,
                              pr_tag_nova => 'cardbtit_c',
                              pr_tag_cont => to_char(vr_tab_cecred_dsctit(1).cardbtit),
-                             pr_des_erro => vr_dscritic);
-
-    ------------------ qtminfil
+                             pr_des_erro => vr_dscritic);  
+          
+    ------------------ qtminfil                
     gene0007.pc_insere_tag(pr_xml      => pr_retxml,
                              pr_tag_pai  => 'inf',
                              pr_posicao  => vr_auxconta,
@@ -607,8 +607,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB052 AS
                              pr_posicao  => vr_auxconta,
                              pr_tag_nova => 'qtminfil_c',
                              pr_tag_cont => to_char(vr_tab_cecred_dsctit(1).qtminfil),
-                             pr_des_erro => vr_dscritic);
-
+                             pr_des_erro => vr_dscritic);	
+				  
 		------------------ nrmespsq
 	  gene0007.pc_insere_tag(pr_xml      => pr_retxml,
                              pr_tag_pai  => 'inf',
@@ -622,9 +622,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB052 AS
                              pr_posicao  => vr_auxconta,
                              pr_tag_nova => 'nrmespsq_c',
                              pr_tag_cont => to_char(vr_tab_cecred_dsctit(1).nrmespsq),
-                             pr_des_erro => vr_dscritic);
-
-		------------------ pctolera
+                             pr_des_erro => vr_dscritic);	
+				  
+		------------------ pctolera	
 	  gene0007.pc_insere_tag(pr_xml      => pr_retxml,
                              pr_tag_pai  => 'inf',
                              pr_posicao  => vr_auxconta,
@@ -637,9 +637,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB052 AS
                              pr_posicao  => vr_auxconta,
                              pr_tag_nova => 'pctolera_c',
                              pr_tag_cont => to_char(vr_tab_cecred_dsctit(1).pctolera),
-                             pr_des_erro => vr_dscritic);
-
-		------------------ pcdmulta
+                             pr_des_erro => vr_dscritic);	
+				  
+		------------------ pcdmulta	
 	  gene0007.pc_insere_tag(pr_xml      => pr_retxml,
                              pr_tag_pai  => 'inf',
                              pr_posicao  => vr_auxconta,
@@ -652,9 +652,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB052 AS
                              pr_posicao  => vr_auxconta,
                              pr_tag_nova => 'pcdmulta_c',
                              pr_tag_cont => to_char(vr_tab_cecred_dsctit(1).pcdmulta),
-                             pr_des_erro => vr_dscritic);
-
-		------------------ pcnaopag
+                             pr_des_erro => vr_dscritic);	
+				  
+		------------------ pcnaopag	
 	  gene0007.pc_insere_tag(pr_xml      => pr_retxml,
                              pr_tag_pai  => 'inf',
                              pr_posicao  => vr_auxconta,
@@ -667,10 +667,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB052 AS
                              pr_posicao  => vr_auxconta,
                              pr_tag_nova => 'pcnaopag_c',
                              pr_tag_cont => to_char(vr_tab_cecred_dsctit(1).pcnaopag),
-                             pr_des_erro => vr_dscritic);
-
-		------------------ qtnaopag
-	  gene0007.pc_insere_tag(pr_xml        => pr_retxml,
+                             pr_des_erro => vr_dscritic);	
+				  
+		------------------ qtnaopag								 
+	  gene0007.pc_insere_tag(pr_xml      => pr_retxml,
                              pr_tag_pai  => 'inf',
                              pr_posicao  => vr_auxconta,
                              pr_tag_nova => 'qtnaopag',
@@ -682,10 +682,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB052 AS
                              pr_posicao  => vr_auxconta,
                              pr_tag_nova => 'qtnaopag_c',
                              pr_tag_cont => to_char(vr_tab_cecred_dsctit(1).qtnaopag),
-                             pr_des_erro => vr_dscritic);
-
-		------------------ qtprotes
-	  gene0007.pc_insere_tag(pr_xml        => pr_retxml,
+                             pr_des_erro => vr_dscritic);	
+				  
+		------------------ qtprotes							 
+	  gene0007.pc_insere_tag(pr_xml      => pr_retxml,
                              pr_tag_pai  => 'inf',
                              pr_posicao  => vr_auxconta,
                              pr_tag_nova => 'qtprotes',
@@ -697,8 +697,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB052 AS
                              pr_posicao  => vr_auxconta,
                              pr_tag_nova => 'qtprotes_c',
                              pr_tag_cont => to_char(vr_tab_cecred_dsctit(1).qtprotes),
-                             pr_des_erro => vr_dscritic);
-
+                             pr_des_erro => vr_dscritic);	
+				  
     ------------------ NOVOS CAMPOS ------------------
 
     ------------------ vlmxassi
@@ -1031,7 +1031,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB052 AS
 -- Procedure de Alteração da Tela TAB052
 -----------------------------------------------------------------------------------------
   PROCEDURE pc_alterar_tab052(
-                              pr_tpcobran    IN NUMBER --> Tipo de Cobrança: 0 = Sem Registro / 1 = Com Registro
+                              pr_tpcobran IN NUMBER    --> Tipo de Cobrança: 0 = Sem Registro / 1 = Com Registro
                              ,pr_inpessoa    IN NUMBER --> Tipo de Pessoa:   1 = Física       / 2 = Jurídica
                              ,pr_vllimite    IN NUMBER
                              ,pr_vlconsul    IN NUMBER
@@ -1110,12 +1110,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB052 AS
                              ,pr_vlmintcl_c  IN NUMBER  -- Valor mínimo para cálculo liquidez 
                              ,pr_pctitpag_c  IN NUMBER  -- Percentual de títulos por pagador 
                               ----------------------
-                             ,pr_xmllog      IN VARCHAR2      --> XML com informações de LOG
-                             ,pr_cdcritic    OUT PLS_INTEGER  --> Código da crítica
-                             ,pr_dscritic    OUT VARCHAR2     --> Descrição da crítica
-                             ,pr_retxml      IN OUT NOCOPY XMLType --> Arquivo de retorno do XML
-                             ,pr_nmdcampo    OUT VARCHAR2     --> Nome do campo com erro
-                             ,pr_des_erro OUT VARCHAR2) AS    --> Erros do processo
+                             ,pr_xmllog   IN VARCHAR2      --> XML com informações de LOG
+                             ,pr_cdcritic OUT PLS_INTEGER  --> Código da crítica
+                             ,pr_dscritic OUT VARCHAR2     --> Descrição da crítica
+                             ,pr_retxml   IN OUT NOCOPY XMLType --> Arquivo de retorno do XML
+                             ,pr_nmdcampo OUT VARCHAR2     --> Nome do campo com erro
+                             ,pr_des_erro OUT VARCHAR2) AS --> Erros do processo
   /* .............................................................................
 
     Programa: pc_alterar_tab052
@@ -1278,9 +1278,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB052 AS
     END IF;
 
 
-    OPEN  cr_crapope(pr_cdcooper => vr_cdcooper, pr_cdoperad => vr_cdoperad);
+    OPEN cr_crapope(pr_cdcooper => vr_cdcooper, pr_cdoperad => vr_cdoperad);
     FETCH cr_crapope
-    INTO  rw_crapope;
+      INTO rw_crapope;
 
     -- Se nao encontrar
     IF cr_crapope%NOTFOUND THEN
@@ -1320,7 +1320,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB052 AS
       RAISE vr_exc_saida;
 
     END IF;
-    
+
     IF pr_qtprzmax > pr_qtprzmax_c THEN
       -- Montar mensagem de critica
       vr_cdcritic := 0;
@@ -1499,43 +1499,43 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB052 AS
 
     ---- VALIDAÇÕES NOVOS CAMPOS - CECRED ----
 
-    vr_dstextab := to_char(pr_vllimite,     'FM000000000D00', 'NLS_NUMERIC_CHARACTERS='',.''') ||';'||
-                   to_char(pr_vlconsul,     'FM000000000D00', 'NLS_NUMERIC_CHARACTERS='',.''') ||';'||
-                   to_char(pr_vlmaxsac,     'FM000000000D00', 'NLS_NUMERIC_CHARACTERS='',.''') ||';'||
-                   to_char(pr_vlminsac,     'FM000000000D00', 'NLS_NUMERIC_CHARACTERS='',.''') ||';'||
-                   to_char(pr_qtremcrt,     'FM000')                                           ||';'||
-                   to_char(pr_qttitprt,     'FM000')                                           ||';'||
+    vr_dstextab := to_char(pr_vllimite,   'FM000000000D00', 'NLS_NUMERIC_CHARACTERS='',.''') ||';'||
+                   to_char(pr_vlconsul,   'FM000000000D00', 'NLS_NUMERIC_CHARACTERS='',.''') ||';'||
+                   to_char(pr_vlmaxsac,   'FM000000000D00', 'NLS_NUMERIC_CHARACTERS='',.''') ||';'||
+                   to_char(pr_vlminsac,   'FM000000000D00', 'NLS_NUMERIC_CHARACTERS='',.''') ||';'||
+                   to_char(pr_qtremcrt,   'FM000')                                           ||';'||
+                   to_char(pr_qttitprt,   'FM000')                                           ||';'||
                    to_char(pr_qtrenova,     'FM00')                                           ||';'|| -- ***
-                   to_char(pr_qtdiavig,     'FM0000')                                          ||';'||
-                   to_char(pr_qtprzmin,     'FM000')                                           ||';'||
-                   to_char(pr_qtprzmax,     'FM000')                                           ||';'||
-                   to_char(pr_qtminfil,     'FM000')                                           ||';'||
+                   to_char(pr_qtdiavig,   'FM0000')                                          ||';'||
+                   to_char(pr_qtprzmin,   'FM000')                                           ||';'||
+                   to_char(pr_qtprzmax,   'FM000')                                           ||';'||
+                   to_char(pr_qtminfil,   'FM000')                                           ||';'||
                    to_char(pr_nrmespsq,     'FM00')                                           ||';'|| -- **
                    to_char(0,               'FM000')                                           ||';'||-- campo removido pctitemi
-                   to_char(pr_pctolera,     'FM000')                                           ||';'||
-                   to_char(pr_pcdmulta,     'FM000D000000', 'NLS_NUMERIC_CHARACTERS='',.''')   ||';'||
-                   to_char(pr_vllimite_c,   'FM000000000D00', 'NLS_NUMERIC_CHARACTERS='',.''') ||';'||
-                   to_char(pr_vlconsul_c,   'FM000000000D00', 'NLS_NUMERIC_CHARACTERS='',.''') ||';'||
-                   to_char(pr_vlmaxsac_c,   'FM000000000D00', 'NLS_NUMERIC_CHARACTERS='',.''') ||';'||
-                   to_char(pr_vlminsac_c,   'FM000000000D00', 'NLS_NUMERIC_CHARACTERS='',.''') ||';'||
-                   to_char(pr_qtremcrt_c,   'FM000')                                           ||';'||
-                   to_char(pr_qttitprt_c,   'FM000')                                           ||';'||
+                   to_char(pr_pctolera,   'FM000')                                           ||';'||
+                   to_char(pr_pcdmulta,   'FM000D000000', 'NLS_NUMERIC_CHARACTERS='',.''')   ||';'||
+                   to_char(pr_vllimite_c, 'FM000000000D00', 'NLS_NUMERIC_CHARACTERS='',.''') ||';'||
+                   to_char(pr_vlconsul_c, 'FM000000000D00', 'NLS_NUMERIC_CHARACTERS='',.''') ||';'||
+                   to_char(pr_vlmaxsac_c, 'FM000000000D00', 'NLS_NUMERIC_CHARACTERS='',.''') ||';'||
+                   to_char(pr_vlminsac_c, 'FM000000000D00', 'NLS_NUMERIC_CHARACTERS='',.''') ||';'||
+                   to_char(pr_qtremcrt_c, 'FM000')                                           ||';'||
+                   to_char(pr_qttitprt_c, 'FM000')                                           ||';'||
                    to_char(pr_qtrenova_c,   'FM00')                                           ||';'|| -- **
-                   to_char(pr_qtdiavig_c,   'FM0000')                                          ||';'||
-                   to_char(pr_qtprzmin_c,   'FM000')                                           ||';'||
-                   to_char(pr_qtprzmax_c,   'FM000')                                           ||';'||
-                   to_char(pr_qtminfil_c,   'FM000')                                           ||';'||
+                   to_char(pr_qtdiavig_c, 'FM0000')                                          ||';'||
+                   to_char(pr_qtprzmin_c, 'FM000')                                           ||';'||
+                   to_char(pr_qtprzmax_c, 'FM000')                                           ||';'||
+                   to_char(pr_qtminfil_c, 'FM000')                                           ||';'||
                    to_char(pr_nrmespsq_c,   'FM00')                                           ||';'|| -- **
                    to_char(0,               'FM000')                                           ||';'||-- campo removido pctitemi
-                   to_char(pr_pctolera_c,   'FM000')                                           ||';'||
-                   to_char(pr_pcdmulta_c,   'FM000D000000', 'NLS_NUMERIC_CHARACTERS='',.''')   ||';'||
-                   to_char(pr_cardbtit,     'FM000')                                           ||';'||
-                   to_char(pr_cardbtit_c,   'FM000')                                           ||';'||
-                   to_char(pr_pcnaopag,     'FM000')                                           ||';'||
-                   to_char(pr_qtnaopag,     'FM0000')                                          ||';'||
-                   to_char(pr_qtprotes,     'FM0000')                                          ||';'||
-                   to_char(pr_pcnaopag_c,   'FM000')                                           ||';'||
-                   to_char(pr_qtnaopag_c,   'FM0000')                                          ||';'||
+                   to_char(pr_pctolera_c, 'FM000')                                           ||';'||
+                   to_char(pr_pcdmulta_c, 'FM000D000000', 'NLS_NUMERIC_CHARACTERS='',.''')   ||';'||
+                   to_char(pr_cardbtit,   'FM000')                                           ||';'||
+                   to_char(pr_cardbtit_c, 'FM000')                                           ||';'||
+                   to_char(pr_pcnaopag,   'FM000')                                           ||';'||
+                   to_char(pr_qtnaopag,   'FM0000')                                          ||';'||
+                   to_char(pr_qtprotes,   'FM0000')                                          ||';'||
+                   to_char(pr_pcnaopag_c, 'FM000')                                           ||';'||
+                   to_char(pr_qtnaopag_c, 'FM0000')                                          ||';'||
                    to_char(pr_qtprotes_c, 	'FM0000')                                          ||';'||
                    ---- NOVOS CAMPOS - OPERACIONAL ----
                    to_char(pr_vlmxassi,     'FM000000000D00', 'NLS_NUMERIC_CHARACTERS='',.''') ||';'||
@@ -2486,11 +2486,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB052 AS
     -- FIM LOG --
 
 
-  COMMIT;
+    COMMIT;
 
   EXCEPTION
     WHEN vr_exc_saida THEN
-
+      
       IF vr_cdcritic <> 0 THEN
         pr_cdcritic := vr_cdcritic;
         pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
@@ -2498,7 +2498,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB052 AS
         pr_cdcritic := vr_cdcritic;
         pr_dscritic := vr_dscritic;
       END IF;
-
+      
       pr_des_erro := 'NOK';
       -- Carregar XML padrão para variável de retorno não utilizada.
       -- Existe para satisfazer exigência da interface.
@@ -2506,7 +2506,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB052 AS
                                      '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
       ROLLBACK;
     WHEN OTHERS THEN
-
+      
       pr_cdcritic := vr_cdcritic;
       pr_dscritic := 'Erro geral na rotina da tela ' || vr_nmdatela || ': ' || SQLERRM;
       pr_des_erro := 'NOK';

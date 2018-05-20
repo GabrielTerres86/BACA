@@ -3,7 +3,7 @@
 	/***************************************************************************
 	 Fonte: titulos.php
 	 Autor: Guilherme
-	 Data : Novembro/2008                 Última Alteração: 26/06/2017
+	 Data : Novembro/2008                 Última Alteração: 25/04/2018
 
 	 Objetivo  : Mostrar opção Títulos da Rotina de Desconto de Títulos
 
@@ -172,7 +172,6 @@
 		
 	</fieldset>
 </form>
-
 
 <div id="divBotoes" >
 

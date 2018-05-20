@@ -5,7 +5,7 @@ CREATE OR REPLACE PACKAGE CECRED.ESTE0001 is
       Sistema  : Rotinas referentes a comunicação com a ESTEIRA de CREDITO da IBRATAN
       Sigla    : CADA
       Autor    : Odirlei Busana - AMcom
-      Data     : Março/2016.                   Ultima atualizacao: 02/04/2018
+      Data     : Março/2016.                   Ultima atualizacao: 08/03/2016
 
       Dados referentes ao programa:
 
@@ -305,14 +305,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
                                        ,pr_nrctremp IN NUMBER) RETURN tbgen_webservice_aciona.dsprotocolo%TYPE IS
 
       CURSOR cr_tbgen_webservice_aciona IS
-        select aci.dsprotocolo dsprotocolo
-        from   tbgen_webservice_aciona aci
-        where  aci.cdcooper = pr_cdcooper
-        and    aci.nrdconta = pr_nrdconta
-        and    aci.nrctrprp = pr_nrctremp
-        and    aci.tpacionamento = 2 /* Retorno */
-        and    aci.dsprotocolo is not null
-        order  by aci.dhacionamento desc;
+        SELECT aci.dsprotocolo dsprotocolo
+          FROM tbgen_webservice_aciona aci
+         WHERE aci.cdcooper = pr_cdcooper
+           AND aci.nrdconta = pr_nrdconta
+           AND aci.nrctrprp = pr_nrctremp
+           AND aci.tpacionamento = 2 /* Retorno */
+           AND aci.dsprotocolo IS NOT NULL
+         ORDER BY aci.dhacionamento DESC;
        rw_tbgen_webservice_aciona cr_tbgen_webservice_aciona%ROWTYPE;
     BEGIN
       OPEN cr_tbgen_webservice_aciona;
@@ -684,6 +684,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
                                ,pr_dscritic      out varchar2 ) is
   /* ..........................................................................
 
+
     Programa : pc_busca_param_ibra
     Sistema  : Conta-Corrente - Cooperativa de Credito
     Sigla    : CRED
@@ -857,6 +858,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0001 IS
                        ,pr_chave_aplica  => pr_chave_aplica
                        ,pr_dscritic      => pr_dscritic );
 
+    IF vr_dscritic  IS NOT NULL THEN
+				RAISE vr_exc_erro;      
+			END IF;
+  
   EXCEPTION
     WHEN vr_exc_erro THEN
       --> Buscar critica
@@ -975,7 +980,7 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
                                pr_idacionamento           OUT tbgen_webservice_aciona.idacionamento%TYPE,
                                pr_dscritic                OUT VARCHAR2) IS
                  
-/* ..........................................................................
+  /* ..........................................................................
   
   Programa : pc_grava_acionamento        
   Sistema  : Conta-Corrente - Cooperativa de Credito
@@ -990,9 +995,9 @@ PROCEDURE pc_grava_acionamento(pr_cdcooper                 IN tbgen_webservice_a
   
   Alteração : 
     
-..........................................................................*/
+  ..........................................................................*/
   PRAGMA AUTONOMOUS_TRANSACTION;
-BEGIN
+  BEGIN
   INSERT INTO tbgen_webservice_aciona
               ( cdcooper, 
                 cdagenci_acionamento, 
@@ -1012,33 +1017,33 @@ BEGIN
                 --tpconteudo,
                 tpproduto,
                 dsprotocolo)  
-        VALUES( pr_cdcooper,
-                pr_cdagenci,
-                pr_cdoperad,
-                pr_cdorigem,
-                pr_nrctrprp,
-                pr_nrdconta,
-                pr_tpacionamento,
-                pr_dhacionamento,
-                pr_dsoperacao,
-                pr_dsuriservico,
-                pr_dtmvtolt,
-                pr_cdstatus_http,
+          VALUES( pr_cdcooper,        --cdcooper
+                  pr_cdagenci,        -- cdagenci_acionamento, 
+                  pr_cdoperad,        -- cdoperad, 
+                  pr_cdorigem,        -- cdorigem
+                  pr_nrctrprp,        -- nrctrprp
+                  pr_nrdconta,        -- nrdconta
+                  pr_tpacionamento,   -- tpacionamento 
+                  pr_dhacionamento,   -- dhacionamento
+                  pr_dsoperacao,      -- dsoperacao
+                  pr_dsuriservico,    -- dsuriservico
+                  pr_dtmvtolt,        -- dtmvtolt
+                  pr_cdstatus_http,   -- cdstatus_http
                 pr_dsconteudo_requisicao,
-                pr_dsresposta_requisicao,
+                  pr_dsresposta_requisicao, --dsresposta_requisicao       
                 --pr_dsmetodo,
                 --pr_tpconteudo,
                 pr_tpproduto,
-                pr_dsprotocolo)
+                  pr_dsprotocolo)     -- protocolo
          RETURNING tbgen_webservice_aciona.idacionamento INTO pr_idacionamento;
   
   --> Commit para garantir que guarde as informações do log de acionamento
   COMMIT;
-EXCEPTION
+  EXCEPTION
   WHEN OTHERS THEN
     pr_dscritic := 'Erro ao inserir tbgen_webservice_aciona: '||SQLERRM;
     ROLLBACK;
-END pc_grava_acionamento;
+  END pc_grava_acionamento;
 
   --> Rotina para alterar o numero da proposta no acionamento
   PROCEDURE pc_alter_nrctrprp_aciona( pr_cdcooper  IN crawepr.cdcooper%TYPE,  --> Codigo da cooperativa
@@ -1078,7 +1083,8 @@ END pc_grava_acionamento;
   END;
 
 
-  --> Rotina para converter arquivo(pdf) para CLOB em base64 para ser enviado via JSON
+  --> Rotina para converter arquivo(pdf) para CLOB em base64 para ser enviado
+   -- via JSON  
   PROCEDURE pc_arq_para_clob_base64(pr_nmarquiv     IN VARCHAR2,
                                     pr_json_value_arq OUT json_value,
                                     pr_dscritic    OUT VARCHAR2  )IS

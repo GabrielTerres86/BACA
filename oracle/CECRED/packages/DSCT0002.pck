@@ -1,6 +1,6 @@
 CREATE OR REPLACE PACKAGE CECRED.DSCT0002 AS
 
-  -------------------------------------------------------------------------------------------------------------
+  /*-------------------------------------------------------------------------------------------------------------
   --
   --  Programa:  DSCT0002                       Antiga: generico/procedures/b1wgen0030.p
   --  Autor   :  Odirlei Busana - AMcom
@@ -43,8 +43,11 @@ CREATE OR REPLACE PACKAGE CECRED.DSCT0002 AS
   --                 'pc_busca_parametros_dsctit'  (Leonardo Oliveira - GFT). 
   --     
   --    10/05/2018 - Inserção do campo 'cardbtit_c' para cálculo do % Geral de Liquidez
-  --------------------------------------------------------------------------------------------------------------
-
+  --
+  --	10/05/2018 - Ajuste para considerar os novos contratos do PJ404 a com a data da proposta
+  --				 para contratos de desconto de título e cheque (Lucas Skroch - Supero)
+  --------------------------------------------------------------------------------------------------------------*/
+ 
   -- Registro para armazenar parametros para desconto de titulo
   TYPE typ_rec_dados_dsctit
        IS RECORD (vllimite  NUMBER,
@@ -548,6 +551,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
   --    25/01/2018 - Inclusão da Procedure "pc_busca_parametros_dsctit", referente à
   --                 conversão de Progress para Oracle da tela "TAB052".
   --                (Gustavo Sene - GFT)
+  --
+  --             08/03/2018 - Chamado 847579 - Correção da impressão de estado incorreto na impressao do contrato de limite
   --
   --    01/02/2018 - Inclusão de Parâmetro de entrada por Tipo de Pessoa (Física / Jurídica)
   --                 na procedure "pc_busca_parametros_dsctit"
@@ -3479,7 +3484,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
     --> Buscar Dados agencia
     CURSOR cr_crapage(pr_cdcooper crapage.cdcooper%TYPE,
                       pr_cdagenci crapage.cdagenci%TYPE) IS
-      SELECT age.nmcidade
+      SELECT age.nmcidade,
+	         age.cdufdcop
         FROM crapage age
        WHERE age.cdcooper = pr_cdcooper
          AND age.cdagenci = pr_cdagenci;
@@ -5119,7 +5125,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
 
       --> Se for Cheque e igual ou superior a data do novo contrato
       IF (pr_tpctrlim = 2 OR pr_tpctrlim = 3) AND 
-         nvl(rw_craplim.dtinivig, rw_craplim.dtpropos) >= TO_DATE(GENE0001.fn_param_sistema(pr_nmsistem => 'CRED'
+         rw_craplim.dtpropos >= TO_DATE(GENE0001.fn_param_sistema(pr_nmsistem => 'CRED'
                                                                  ,pr_cdacesso => 'DT_VIG_IMP_CTR_V2'),'DD/MM/RRRR') THEN
         vr_nrvrsctr := 2;
       END IF;

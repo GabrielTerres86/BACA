@@ -1853,7 +1853,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
                    || '  vr_cdcritic NUMBER;'||chr(13)
                    || '  vr_dscritic VARCHAR2(4000);'||chr(13)                   
                    || 'BEGIN'||chr(13)
-                   || '  pc_crps682('||vr_cdcooper||',0,0,vr_stprogra,vr_infimsol,vr_cdcritic,vr_dscritic);'||chr(13)
+                   || '  pc_crps682('||vr_cdcooper||',0,0,0,0,0,vr_stprogra,vr_infimsol,vr_cdcritic,vr_dscritic);'||chr(13)
                    || 'END;';
                    
         -- Montar o prefixo do código do programa para o jobname
@@ -4476,6 +4476,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0002 AS
       
       FOR rw_crapcop IN cr_crapcop LOOP  -- busca as cooperativas <> 3
         pc_crps682(pr_cdcooper => rw_crapcop.cdcooper,
+                   pr_cdagenci => 0,
+                   pr_iddcarga => 0,
+                   pr_idparale => 0,
                    pr_flgresta => 0,
                    pr_flgexpor => 0,
                    pr_stprogra => vr_stprogra,
