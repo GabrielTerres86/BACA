@@ -1226,7 +1226,7 @@ function selecionaTabela(tr) {
 // opcao C - consulta
 function buscaConsulta(operacao) {
 
-    if (operacao == 'instrucoes' && (cdsituac == 'B' || cdsituac == 'L')) {
+    if (operacao == 'instrucoes' && cdsituac == 'L') {
         showError('error', 'Opcao nao disponivel para situacao ' + dssituac, 'Alerta - Ayllos', "");
         return false;
     }
@@ -1497,6 +1497,10 @@ function formataInstrucoes(operacao) {
 
     cCdinstru = $('#cdinstru', '#frmConsulta');
     cCdinstru.css({ 'width': '548px' });
+
+    if (cdsituac == 'B') {
+        cCdinstru.find('option:not([value=81])').prop('disabled', true);
+    }
 
     // Outros	
     btnOK2 = $('#btnOk2', '#frmConsulta');
