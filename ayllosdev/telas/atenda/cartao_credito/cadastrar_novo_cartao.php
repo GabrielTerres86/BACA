@@ -293,7 +293,27 @@
 	// N�mero do novo contrato
 	$nrctrcrd = $xmlObjCartao->roottag->tags[1]->tags[0]->tags[0]->cdata;
 	
-	if($cdadmcrd == 11 ||$cdadmcrd == 12 || $cdadmcrd == 13 ||$cdadmcrd == 4 || $cdadmcrd == 16 || $cdadmcrd == 17 || $cdadmcrd == 15){
+
+	/* Busca se a Cooper / PA esta ativa para usar o novo formato de comunicacao com o WS Bancoob.
+	   Procedimento temporario ate que todas as cooperativas utilizem */
+	$adxml = "<Root>";
+	$adxml .= " <Dados>";
+	$adxml .= "   <cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
+	$adxml .= "   <cdagenci>".$glbvars["cdpactra"]."</cdagenci>";
+	$adxml .= " </Dados>";
+	$adxml .= "</Root>";
+
+	$result = mensageria($adxml, "ATENDA_CRD", "BUSCA_PARAMETRO_PA_CARTAO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	$oObj = simplexml_load_string($result);
+	$bAtivoPiloto = false;
+	if($oObj->Dados->ativo){
+		$bAtivoPiloto = ($oObj->Dados->ativo == '1');
+	}
+	/* FIM procedimento temporario */
+
+
+
+	if(($cdadmcrd == 11 ||$cdadmcrd == 12 || $cdadmcrd == 13 ||$cdadmcrd == 4 || $cdadmcrd == 16 || $cdadmcrd == 17 || $cdadmcrd == 15) && $bAtivoPiloto){
 
 		echo "hideMsgAguardo();";
 		if(isset($nrctrcrd) && isset($cdadmcrd))

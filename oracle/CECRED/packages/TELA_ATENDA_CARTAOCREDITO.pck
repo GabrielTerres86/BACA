@@ -1913,7 +1913,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
 
         Alteracoes:
     ..............................................................................*/
-    
+
     vr_cdcooper INTEGER;
     vr_cdoperad VARCHAR2(100);
     vr_nmdatela VARCHAR2(100);
@@ -1921,14 +1921,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
     vr_cdagenci VARCHAR2(100);
     vr_nrdcaixa VARCHAR2(100);
     vr_idorigem VARCHAR2(100);
-    
+
     -- Variavel de criticas
     vr_cdcritic crapcri.cdcritic%TYPE; --> Cód. Erro
     vr_dscritic VARCHAR2(10000);
-    
+
     -- Tratamento de erros
     vr_exc_saida EXCEPTION;
     
+    vr_retorno  PLS_INTEGER;
+    vr_param    VARCHAR2(10);
+    vr_usa_pilo PLS_INTEGER;
+    vr_papiloto PLS_INTEGER;
+
     BEGIN
       GENE0004.pc_extrai_dados(pr_xml      => pr_retxml
                               ,pr_cdcooper => vr_cdcooper
@@ -1945,6 +1950,44 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
         RAISE vr_exc_saida;
       END IF;
       
+      -- Por padrao, nao eh piloto;
+      vr_retorno := 0;
+      
+      -- Verificar se está ativo o parametro de PA piloto.
+      vr_param := GENE0001.fn_param_sistema(pr_nmsistem => 'CRED'
+                                           ,pr_cdcooper => pr_cdcooper
+                                           ,pr_cdacesso => 'BANCOOB_USA_PA_PILOTO');      
+      
+      vr_usa_pilo := nvl(trim(vr_param),0);
+      BEGIN
+        vr_usa_pilo := nvl(trim(vr_param),0);
+      EXCEPTION
+        WHEN OTHERS THEN
+          vr_usa_pilo := 0;
+      END;
+      
+      IF vr_usa_pilo = 1 THEN
+        
+        -- Verificar qual o PA piloto, passando a cooperativa.
+        vr_param := GENE0001.fn_param_sistema(pr_nmsistem => 'CRED'
+                                             ,pr_cdcooper => pr_cdcooper
+                                             ,pr_cdacesso => 'BANCOOB_PILOTO_WS_PA');
+        BEGIN
+          vr_papiloto := nvl(trim(vr_param),0);
+        EXCEPTION
+          WHEN OTHERS THEN
+            vr_papiloto := 0;
+        END;
+          
+        -- Se for o PA piloto, ativa parametro
+        IF (pr_cdagenci = vr_papiloto) and (vr_papiloto > 0) THEN
+          vr_retorno := 1;
+        END IF;
+      ELSE
+        --Se não estiver ativo, ok, liberado para todo mundo
+        vr_retorno := 1;
+      END IF;
+
       pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
 
       GENE0007.pc_insere_tag(pr_xml      => pr_retxml
@@ -1958,25 +2001,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
                             ,pr_tag_pai  => 'Dados'
                             ,pr_posicao  => 0
                             ,pr_tag_nova => 'ativo'
-                            ,pr_tag_cont => 1
+                            ,pr_tag_cont => vr_retorno
                             ,pr_des_erro => vr_dscritic);
-                                    
+
     EXCEPTION
       WHEN vr_exc_saida THEN
         pr_cdcritic := vr_cdcritic;
         pr_dscritic := vr_dscritic;
-        
+
         pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                        '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
         ROLLBACK;
       WHEN OTHERS THEN
         pr_cdcritic := vr_cdcritic;
         pr_dscritic := 'Erro geral em TELA_ATENDA_CARTAOCREDITO.pc_busca_parametro_pa_cartao: ' || SQLERRM;
-        
+
         pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
                                        '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
         ROLLBACK;
-    
+
   END pc_busca_parametro_pa_cartao;
   
   --> Rotina responsavel por gerar a inclusao da proposta para a esteira

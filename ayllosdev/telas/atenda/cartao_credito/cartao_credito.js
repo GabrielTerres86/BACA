@@ -92,6 +92,9 @@ var boAvalista = 'b1wgen0028.p';        // BO para esta rotina
 var procAvalista = 'carrega_avalista';    // Nome da procedures que busca os avalistas
 var operacao = '';
 
+// Temporaria 
+var bTelaAntiga = false;
+
 var Representantes = new Array();
 var ObjRepresent = new Object();
 var sPortaPinpad = '';
@@ -1302,6 +1305,9 @@ function opcaoNovoOld(cdcooper) {
 // Mostra mensagem de aguardo
     showMsgAguardo("Aguarde, carregando dados para novo cart&atilde;o ...");
 
+    // Carrega variavel indicativa de versao antiga da tela.
+    bTelaAntiga = true;
+
 // Carrega conte�do da op��o atrav�s de ajax
     $.ajax({
         type: "POST",
@@ -1718,14 +1724,18 @@ function validarNovoCartao() {
 
                             /*dsadmcrd = cdadmcrd+";03,07,11,19,22;MASTERCARD;;OUTROS";*/
         }
-        // FIX Amasonas
-        cdadmcrd = $("#cdadmcrd").val();
-        if (!cdadmcrd) {
-            var crdAux = $('#dsadmcrd').children().attr("value").split(";");
-            cdadmcrd = crdAux[0];
 
-            dsadmcrd =  $('#dsadmcrd').children().html();
+        // Este procedimento deve ser executado somente na tela nova
+        if (!bTelaAntiga) {
+            // FIX Amasonas
+            cdadmcrd = $("#cdadmcrd").val();
+            if (!cdadmcrd) {
+                var crdAux = $('#dsadmcrd').children().attr("value").split(";");
+                cdadmcrd = crdAux[0];
 
+                dsadmcrd = $('#dsadmcrd').children().html();
+
+            }
         }
 
 
