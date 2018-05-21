@@ -193,6 +193,9 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
                             
                30/04/2018 - Buscar descricao de situacao pela procedure pc_descricao_situacao_conta.
                             Permite talonario pela procedure pc_ind_impede_talonario. PRJ366 (Lombardi).
+                            
+               21/05/2018 - Utilizar dtvigencia no subselect da tabela tbcc_produtos_coop. 
+                            PRJ366 (Lombardi).
  
 ............................................................................. */
 
@@ -325,7 +328,8 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
     -- Cursor para leitura de requisicoes de talonarios
     CURSOR cr_crapreq(pr_cdcooper     IN crapreq.cdcooper%TYPE,
                       pr_cdbanchq     IN crapcop.cdbcoctl%TYPE,
-                      pr_tprequis     in crapreq.tprequis%TYPE) IS
+                      pr_tprequis     IN crapreq.tprequis%TYPE,
+                      pr_dtmvtolt     IN crapdat.dtmvtolt%TYPE) IS
       SELECT crapreq.ROWID,
              crapreq.cdagenci,
              crapreq.nrdconta,
@@ -344,7 +348,9 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
                    , t.tpconta
                 FROM tbcc_produtos_coop t
                WHERE t.cdcooper  = pr_cdcooper
-                       AND t.cdproduto = 38) -- Folhas de Cheque 
+                       AND t.cdproduto = 38
+                       AND (dtvigencia >= pr_dtmvtolt
+                        OR  dtvigencia IS NULL)) -- Folhas de Cheque 
          AND crapreq.insitreq IN (1,4,5)
          AND crapass.cdcooper = crapreq.cdcooper
          AND crapass.nrdconta = crapreq.nrdconta
@@ -650,7 +656,8 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
     -- Verifica se ha requisicoes a serem atendidas
     FOR rw_crapreq IN cr_crapreq(pr_cdcooper,
                                  pr_cdbanchq,
-                                 pr_tprequis) LOOP
+                                 pr_tprequis,
+                                 vr_dtmvtolt) LOOP
 
       -- Verifica se é o primeiro dia útil do mês ou primeiro dia útil a partir do dia 15, pois as
       -- solicitações de formulário continuo só acontecerão de 15 em 15 dias, apenas para a empresa RR Donnelley
@@ -699,6 +706,8 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
       FETCH cr_crapass INTO rw_crapass;
       CLOSE cr_crapass;
 
+      vr_cdcritic := 0;
+
       /*   CHEQUE ESPECIAL  */
       CADA0006.pc_permite_produto_tipo (pr_cdprodut => 38
                                        ,pr_cdtipcta => rw_crapass.cdtipcta
@@ -708,14 +717,14 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
                                        ,pr_cdcritic => vr_cdcritic
                                        ,pr_dscritic => vr_dscritic);
       
-      IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
+      IF NVL(vr_cdcritic,0) > 0 OR vr_dscritic IS NOT NULL THEN
         RAISE vr_exc_saida;
       END IF;
       
-      vr_cdcritic := 0;
-      
       IF vr_possuipr = 'N' THEN
         vr_cdcritic := 65;-- 065 - Tipo de conta nao permite req.
+      ELSE 
+        vr_cdcritic := 0;
       END IF;
       /*
       -- Verificacao se o cooperado nao esta rejeitado
@@ -736,7 +745,7 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
       END IF;
       */
       -- Se não houver rejeição no associado
-      IF vr_cdcritic = 0 THEN
+      IF nvl(vr_cdcritic,0) = 0 THEN
         
         CADA0006.pc_ind_impede_talonario(pr_cdcooper => pr_cdcooper
                                 ,pr_nrdconta => rw_crapass.nrdconta
@@ -763,7 +772,7 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
                       rw_crapass.nrdconta,
                       2);
       FETCH cr_crapttl INTO rw_crapttl;
-      IF cr_crapttl%FOUND AND vr_cdcritic = 0 THEN
+      IF cr_crapttl%FOUND AND NVL(vr_cdcritic,0) = 0 THEN
         IF rw_crapass.cdcatego = 1 THEN --INDIVIDUAL
           vr_cdcritic := 832; --832 - Tipo de conta nao permite MAIS DE UM TITULAR.
         END IF;
@@ -862,7 +871,7 @@ create or replace procedure cecred.pc_crps408 (pr_cdcooper in craptab.cdcooper%T
       END IF;
 
       -- Se o cooperado nao estiver com situacao de rejeitado
-      IF vr_cdcritic = 0 THEN
+      IF NVL(vr_cdcritic,0) = 0 THEN
         -- Inicializa variavel auxiliar de contados de taloes
         vr_qtreqtal := 1;
 
