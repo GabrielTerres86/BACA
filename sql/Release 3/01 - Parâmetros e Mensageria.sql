@@ -108,6 +108,8 @@ INSERT INTO crapaca (nrseqaca, nmdeacao, nmpackag, nmproced, lstparam, nrseqrdr)
 INSERT INTO crapaca (nrseqaca, nmdeacao, nmpackag, nmproced, lstparam, nrseqrdr)
      VALUES (SEQACA_NRSEQACA.NEXTVAL, 'ALTERAR_PROPOSTA_MANUTENCAO', 'TELA_ATENDA_DSCTO_TIT', 'pc_alterar_proposta_manute_web', 'pr_nrdconta,pr_nrctrlim,pr_tpctrlim,pr_vllimite,pr_cddlinha', (SELECT nrseqrdr FROM craprdr WHERE nmprogra = 'TELA_ATENDA_DESCTO'));
 
+INSERT INTO crapaca (nrseqaca, nmdeacao, nmpackag, nmproced, lstparam, nrseqrdr)
+     VALUES (SEQACA_NRSEQACA.NEXTVAL, 'CONTINGENCIA_IBRATAN', 'TELA_ATENDA_DSCTO_TIT', 'pc_contingencia_ibratan_web', '', (SELECT nrseqrdr FROM craprdr WHERE nmprogra = 'TELA_ATENDA_DESCTO'))
 
 -- APRDES
 INSERT INTO craprdr (nrseqrdr, nmprogra, dtsolici)
