@@ -1455,7 +1455,7 @@ function formataLayout(nomeForm){
 	
 	}else if ( nomeForm == 'divTitulosBorderos' ){
 
-		$('#'+nomeForm).css('width','1000px');
+		$('#'+nomeForm).css('width','1100px');
 
 		var divcr = $('#divcr','#'+nomeForm);		
 		var tabela      = $('table', divcr );
@@ -1466,12 +1466,12 @@ function formataLayout(nomeForm){
 				
 
 		var arrayLargura = new Array();
-		arrayLargura[0] = '60px';//Vencto
-		arrayLargura[1] = '150px';//130 Nosso Número
+		arrayLargura[0] = '75px';//Vencto
+		arrayLargura[1] = '151px';//130 Nosso Número
 		arrayLargura[2] = '80px';//Valor
 		arrayLargura[3] = '80px';//Valor Líquido
 		arrayLargura[4] = '30px';//Prz
-		arrayLargura[5] = '250px';//Pagador
+		arrayLargura[5] = '220px';//Pagador
 		arrayLargura[6] = '110px';// CPF/CNPJ
 		arrayLargura[7] = '80px';//130 //Situação 50 30
 		arrayLargura[8] = '70px';//130 //Decisao 50 30
@@ -1482,7 +1482,7 @@ function formataLayout(nomeForm){
 		arrayAlinha[1] = 'center';//Nosso número
 		arrayAlinha[2] = 'right';//Valor
 		arrayAlinha[3] = 'right';//Valor Lóquido
-		arrayAlinha[4] = 'right';//Prz
+		arrayAlinha[4] = 'center';//Prz
 		arrayAlinha[5] = 'left';//Pagador
 		arrayAlinha[6] = 'right';// CPF/CNPJ
 		arrayAlinha[7] = 'center';//Situação
