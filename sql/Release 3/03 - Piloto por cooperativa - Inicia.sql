@@ -3,17 +3,51 @@
     Projeto     : 403 - Desconto de Títulos - Release 3
     Autor       : Lucas Lazari (GFT)
     Data        : Maio/2018
-    Objetivo    : "Virade chave" do piloto por cooperativa da funcionalidade de borderôs de desconto de títulos
+    Objetivo    : Inicia a "virada de chave" do piloto por cooperativa da funcionalidade de borderôs de desconto de títulos
   ---------------------------------------------------------------------------------------------------------------------*/
 
 begin
 
-UPDATE crapprm SET dsvlrprm = '1' WHERE cdacesso = 'FL_VIRADA_BORDERO' AND cdcooper IN (14);
+UPDATE crapprm SET dsvlrprm = 'P' WHERE cdacesso = 'FL_VIRADA_BORDERO' AND cdcooper IN (7,14);
 
+-- Inclui a nova opção na tela TITCTO
 UPDATE craptel
-   SET idambtel = 2  
- WHERE nmdatela IN ('TITCTO')
-  AND  cdcooper IN (SELECT cdcooper FROM crapprm WHERE cdacesso = 'FL_VIRADA_BORDERO' AND dsvlrprm = '1');
+   SET idambtel = 2,
+       cdopptel = 'C,F,L,Q,S,T,B'
+ WHERE nmdatela = 'TITCTO'
+  AND  cdcooper IN (7,14);
+
+-- Insere a permissão da nova opção
+INSERT INTO crapace
+    (nmdatela,
+     cddopcao,
+     cdoperad,   
+     nmrotina,   
+     cdcooper,   
+     nrmodulo,   
+     idevento,   
+     idambace)
+    SELECT acn.nmdatela, 
+           'B', 
+           ope.cdoperad,
+           ' ',
+           acn.cdcooper,
+           acn.nrmodulo,
+           acn.idevento,
+           acn.idambace
+      FROM crapcop cop,
+           crapope ope,
+           crapace acn
+     WHERE cop.flgativo = 1
+       AND cop.cdcooper IN (7,14)
+       AND ope.cdsitope = 1 
+       AND cop.cdcooper = ope.cdcooper
+       AND acn.cdcooper = ope.cdcooper
+       AND trim(upper(acn.cdoperad)) = trim(upper(ope.cdoperad))
+       AND acn.cddopcao = 'L'
+       AND acn.nmrotina = ' '
+       AND acn.nmdatela = 'TITCTO'
+       AND acn.idambace = 2;
 
 commit;
 end;

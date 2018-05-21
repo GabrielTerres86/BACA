@@ -22,7 +22,7 @@
 	
 
 	// Verifica permissão
-	if (($msgError = validaPermissao($glbvars['nmdatela'], $glbvars['nmrotina'], $cddopcao)) <> '') {
+	if (($msgError = validaPermissao($glbvars['nmdatela'], $glbvars['nmrotina'], "C")) <> '') {
 	    exibirErro('error', $msgError, 'Alerta - Ayllos', '', false);
 	}	
 
