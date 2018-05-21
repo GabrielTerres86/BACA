@@ -6,6 +6,7 @@
  * OBJETIVO     : Faz as impressões da tela ALTAVA	
  * --------------
  * ALTERAÇÕES   : 17/11/2014 - Imprimir dados a partir da BO b1wgen0115 (ADITIV) (Jonata-RKAM).
+ *                26/10/2017 - Passagem do tpctrato fixo 90. (Jaison/Marcos Martini - PRJ404)
  * -------------- 
  */ 
 ?>
@@ -72,6 +73,7 @@
 	$xml .= '		<dtmvtolt>'.$glbvars['dtmvtolt'].'</dtmvtolt>';
 	$xml .= '		<dtmvtopr>'.$glbvars['dtmvtopr'].'</dtmvtopr>';
 	$xml .= '		<inproces>'.$glbvars['inproces'].'</inproces>';
+	$xml .= '		<tpctrato>90</tpctrato>'; // Emprestimo/Financiamento
 	$xml .= '	</Dados>';                                  
 	$xml .= '</Root>';
 

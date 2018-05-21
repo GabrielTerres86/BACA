@@ -33,6 +33,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS515 (pr_cdcooper IN crapcop.cdcooper%T
                  23/02/2016 - Incluido cooperativa 1 - Viacredi para rodar nova versão com ajustes de performace
                               SD385161 (Odirlei-AMcom) 
 
+                 13/03/2018 - Ajustes na passagem dos parâmetros para controle paralelismo (Mario-AMcom)
+
     ..............................................................................*/
 
     DECLARE
@@ -169,6 +171,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS515 (pr_cdcooper IN crapcop.cdcooper%T
 
         -- Por fim, chamar a 310i, que é a responsável por todo o processo de criação dos riscos
           pc_crps310_i(pr_cdcooper   => pr_cdcooper    --> Coop conectada
+                      ,pr_cdagenci   => 0              --> Codigo Agencia 
+                      ,pr_idparale   => 0              --> Indicador de processoparalelo
                       ,pr_rw_crapdat => rw_crapdat     --> Rowtype de informações da crapdat
                       ,pr_cdprogra   => vr_cdprogra    --> Codigo programa conectado
                       ,pr_vlarrasto  => vr_vlr_arrasto --> Valor parametrizado para arrasto
@@ -225,4 +229,3 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS515 (pr_cdcooper IN crapcop.cdcooper%T
     END;
   END pc_crps515;
 /
-

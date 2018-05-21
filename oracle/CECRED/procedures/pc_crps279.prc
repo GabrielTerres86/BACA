@@ -11,7 +11,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS279 (pr_cdcooper IN crapcop.cdcooper%T
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Deborah
-       Data    : Janeiro/2000                      Ultima atualizacao: 27/05/2015
+       Data    : Janeiro/2000                      Ultima atualizacao: 17/04/2018
 
        Dados referentes ao programa:
 
@@ -176,6 +176,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS279 (pr_cdcooper IN crapcop.cdcooper%T
                    20/02/2017 - Ajuste na query do cursor cr_crapepr, este está retornando registros
                                 desordenado e duplicado. (Chamado 615774 - Rafael Monteiro)
 
+                   17/04/2018 - Retirar o <= da validacao de idade do seguro prestamista
+                                (Lucas Ranghetti #INC0012820)
     ............................................................................ */
 
     DECLARE
@@ -587,7 +589,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS279 (pr_cdcooper IN crapcop.cdcooper%T
         IF rw_crapepr.sqregcpf = rw_crapepr.qtregcpf THEN
           -- Somente se o saldo devedor for superior ao mínimo
           -- e a idade(anos) menor que a quantida máxima parametrizada
-          IF vr_vlsdeved > vr_tab_vlminimo AND vr_nrdeanos <= vr_tab_nrdeanos THEN
+          IF vr_vlsdeved > vr_tab_vlminimo AND vr_nrdeanos < vr_tab_nrdeanos THEN
             -- Considerar somente o valor maximo parametrizado
             vr_vlsdeved := LEAST(vr_tab_vlmaximo,vr_vlsdeved);
 

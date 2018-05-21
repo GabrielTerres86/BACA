@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ATENDA_OCORRENCIAS IS
   --  Sistema  : Procedimentos para tela Atenda / Ocorrencias
   --  Sigla    : CRED
   --  Autor    : Jean Michel
-  --  Data     : Setembro/2016.
+  --  Data     : Setembro/2016.                
   --
   -- Frequencia: -----
   -- Objetivo  : Procedimentos para retorno das informações da Atenda Ocorrencias
@@ -15,7 +15,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ATENDA_OCORRENCIAS IS
   -- Ajuste: Criada procedure pc_busca_dados_risco
   --
   ---------------------------------------------------------------------------------------------------------------
-
+  
   /* Busca dados de risco das contas (contratos de empréstimo e limite de crédito) */
   PROCEDURE pc_busca_dados_risco(pr_nrdconta IN crawepr.nrdconta%TYPE --> Número da conta
                                 ,pr_cdcooper IN crawepr.cdcooper%TYPE --> Código da cooperativa
@@ -26,7 +26,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ATENDA_OCORRENCIAS IS
                                 ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
                                 ,pr_des_erro OUT VARCHAR2);           --> Erros do processo
 
-						/* Busca contratos de acordos do Cooperado */
+  /* Busca contratos de acordos do Cooperado */
   PROCEDURE pc_busca_ctr_acordos(pr_nrdconta   IN crapceb.nrdconta%TYPE --Número da conta solicitada;
                                 ,pr_xmllog     IN VARCHAR2              --XML com informações de LOG
                                 ,pr_cdcritic  OUT PLS_INTEGER           --Código da crítica
@@ -64,7 +64,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
                                ,pr_ris_grupo     IN crawepr.dsnivris%TYPE
                                ,pr_rating        IN crawepr.dsnivris%TYPE
                                ,pr_ris_atraso    IN crawepr.dsnivris%TYPE
-															 ,pr_ris_refin     IN crawepr.dsnivris%TYPE
+                               ,pr_ris_refin     IN crawepr.dsnivris%TYPE
                                ,pr_ris_agravado  IN crawepr.dsnivris%TYPE
                                ,pr_ris_operacao  IN crawepr.dsnivris%TYPE
                                ,pr_ris_cpf       IN crawepr.dsnivris%TYPE
@@ -129,7 +129,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
                              pr_tag_cont => pr_ris_atraso,
                              pr_des_erro => pr_dscritic);
 
-					gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+          gene0007.pc_insere_tag(pr_xml      => pr_retxml,
                              pr_tag_pai  => 'Conta',
                              pr_posicao  => pr_pos_conta,
                              pr_tag_nova => 'risco_refin',
@@ -281,11 +281,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
 
       ---------->> CURSORES <<--------
 
-		  -- Contas de mesmo titular da conta base
+      -- Contas de mesmo titular da conta base
       CURSOR cr_contas_do_titular(rw_cbase IN crapass%ROWTYPE) IS
       SELECT c.cdcooper
            , c.nrdconta
-           , gene0002.fn_mask(c.nrcpfcgc,
+           , gene0002.fn_mask(c.nrcpfcgc, 
 				                    DECODE(c.inpessoa, 1, '99999999999','99999999999999')) nrcpfcgc
            , c.inpessoa
            , c.dsnivris
@@ -305,7 +305,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
     CURSOR cr_contas_grupo_economico(rw_cbase IN crapass%ROWTYPE) IS
     SELECT DISTINCT cgr.cdcooper
          , cgr.nrdconta
-         , gene0002.fn_mask(cgr.nrcpfcgc,
+         , gene0002.fn_mask(cgr.nrcpfcgc, 
 				                    DECODE(cgr.inpessoa, 1, '99999999999','99999999999999')) nrcpfcgc
          , cgr.inpessoa
          , cgr.dsnivris
@@ -427,7 +427,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
         -- Levanta exceção
         RAISE vr_exc_saida;
       END IF;
-      
+
       -- Criar cabeçalho do XML
       pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
       gene0007.pc_insere_tag(pr_xml      => pr_retxml,
@@ -465,14 +465,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
        IN cr_contas_do_titular(rw_cbase) LOOP
           FOR rw_tabrisco_central
 						IN cr_tbrisco_central(pr_cdcooper
-						                     , rw_contas_do_titular.nrdconta
+                                 , rw_contas_do_titular.nrdconta
 																 , rw_dat.dtmvtoan) LOOP
-							-- Adiciona registro para a conta/contrato no XML de retorno
-							pc_monta_reg_conta_xml(pr_retxml
-																	 , vr_auxconta
-																	 , vr_dscritic
-																	 , rw_contas_do_titular.nrdconta
-																	 , rw_contas_do_titular.nrcpfcgc
+										-- Adiciona registro para a conta/contrato no XML de retorno
+										pc_monta_reg_conta_xml(pr_retxml
+																				 , vr_auxconta
+																				 , vr_dscritic
+																				 , rw_contas_do_titular.nrdconta
+																				 , rw_contas_do_titular.nrcpfcgc
 																	 , rw_tabrisco_central.nrctremp
 																	 , rw_tabrisco_central.risco_inclusao
 																	 , rw_tabrisco_central.risco_grupo
@@ -487,24 +487,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
 																	 , rw_tabrisco_central.risco_final
 																	 , rw_tabrisco_central.tipo_registro);
 
-							vr_auxconta := vr_auxconta + 1; -- Para controle da estrutura do XML
+					   vr_auxconta := vr_auxconta + 1; -- Para controle da estrutura do XML
 			   END LOOP; -- contratos
       END LOOP; -- contas de mesmo titular
 
       -- Percorre contas dos grupos econômicos em que o titular da conta base faz parte
       FOR rw_contas_grupo_economico
         IN cr_contas_grupo_economico(rw_cbase) LOOP
-				
+
 				FOR rw_tabrisco_central
 						IN cr_tbrisco_central(pr_cdcooper
-						                     , rw_contas_grupo_economico.nrdconta
+																							, rw_contas_grupo_economico.nrdconta
 																 , rw_dat.dtmvtoan) LOOP
-							-- Adiciona registro para a conta/contrato no XML de retorno
-							pc_monta_reg_conta_xml(pr_retxml
-																	 , vr_auxconta
-																	 , vr_dscritic
-																	 , rw_contas_grupo_economico.nrdconta
-																	 , rw_contas_grupo_economico.nrcpfcgc
+								-- Adiciona registro para a conta/contrato no XML de retorno
+                pc_monta_reg_conta_xml(pr_retxml
+                                     , vr_auxconta
+                                     , vr_dscritic
+                                     , rw_contas_grupo_economico.nrdconta
+                                     , rw_contas_grupo_economico.nrcpfcgc
 																	 , rw_tabrisco_central.nrctremp
 																	 , rw_tabrisco_central.risco_inclusao
 																	 , rw_tabrisco_central.risco_grupo
@@ -519,7 +519,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
 																	 , rw_tabrisco_central.risco_final
 																	 , rw_tabrisco_central.tipo_registro);
 
-							vr_auxconta := vr_auxconta + 1; -- Para controle da estrutura do XML
+					   vr_auxconta := vr_auxconta + 1; -- Para controle da estrutura do XML
 			   END LOOP; -- contratos
       END LOOP; -- contas do grupo econômico
 
@@ -569,7 +569,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
       ROLLBACK;
   END pc_busca_dados_risco;
 
-	 /* Busca contratos de acordos do Cooperado */
+  /* Busca contratos de acordos do Cooperado */
   PROCEDURE pc_busca_ctr_acordos(pr_nrdconta   IN crapceb.nrdconta%TYPE --Número da conta solicitada;
                                 ,pr_xmllog     IN VARCHAR2              --XML com informações de LOG
                                 ,pr_cdcritic  OUT PLS_INTEGER           --Código da crítica
@@ -616,7 +616,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
            AND tbrecup_acordo.cdsituacao = pr_cdsituacao;
 
       rw_acordo cr_acordo%ROWTYPE;
-
+     
       -- Variavel de criticas
       vr_dscritic VARCHAR2(10000);
 
@@ -663,9 +663,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_OCORRENCIAS IS
         gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'acordo',   pr_posicao => vr_contador, pr_tag_nova => 'nracordo', pr_tag_cont => TO_CHAR(rw_acordo.nracordo), pr_des_erro => vr_dscritic);
         gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'acordo',   pr_posicao => vr_contador, pr_tag_nova => 'dsorigem', pr_tag_cont => TO_CHAR(rw_acordo.dsorigem), pr_des_erro => vr_dscritic);
         gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'acordo',   pr_posicao => vr_contador, pr_tag_nova => 'nrctremp', pr_tag_cont => GENE0002.fn_mask_contrato(rw_acordo.nrctremp), pr_des_erro => vr_dscritic);
-
+        
         vr_contador := vr_contador + 1;
-      END LOOP;
+      END LOOP;    
 
       gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Dados', pr_posicao => 0, pr_tag_nova => 'qtdregis', pr_tag_cont => TO_CHAR(vr_contador), pr_des_erro => vr_dscritic);
 

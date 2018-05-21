@@ -2,7 +2,7 @@
 
    Programa: b1wgen0196.p
    Autora  : Odirlei Busana - AMcom.
-   Data    : 21/03/2017                        Ultima atualizacao: 24/01/2018
+   Data    : 21/03/2017                        Ultima atualizacao: 12/04/2018
 
    Dados referentes ao programa:
 
@@ -13,13 +13,18 @@
                22/06/2017 - Ajuste para calcular o risco da operacao de acordo
                             com a quantidade de dias em atraso. (Anderson)
 
+               15/12/2017 - Inserção do campo idcobope. PRJ404 (Lombardi)
+
 	           12/10/2017 - Projeto 410 - passar como parametro da calcula_iof o
 			                numero do contrato (Jean - Mout´s)
 
                21/11/2017 - Incluir campo cdcoploj e nrcntloj na chamada da rotina 
                             grava-proposta-completa. PRJ402 - Integracao CDC
                             (Reinert)						                  
+							  
                24/01/2018 - Passagem de parametros nulos. (Jaison/James - PRJ298)
+               
+               12/04/2018 - P410 - Melhorias/Ajustes IOF (Marcos-Envolti)
 
  ..............................................................................*/
 
@@ -483,6 +488,7 @@ PROCEDURE grava_dados:
                                            INPUT "", /* dscatbem */
                                            INPUT 0,  /* idfiniof */
                                            INPUT "", /* dsctrliq */
+                                           INPUT "N",
                                            OUTPUT aux_percetop,
                                            OUTPUT aux_txcetmes,
                                            OUTPUT TABLE tt-erro).
@@ -620,11 +626,11 @@ PROCEDURE grava_dados:
                         INPUT aux_flgerlog,              /* par_flgerlog LOGI */
                         INPUT aux_dsjusren,              /* par_dsjusren CHAR */
                         INPUT par_dtmvtolt,              /* par_dtlibera DATE */
+                        INPUT 0, /* idcobope */
                         /* INPUT 0,                         cdcoploj */
                         /* INPUT 0,                         nrcntloj */
                         INPUT 0,						 /* idfiniof */
 						INPUT "",                        /* dscatbem */
-     
                        OUTPUT TABLE tt-erro,
                        OUTPUT TABLE tt-msg-confirma,
                        OUTPUT aux_recidepr,
@@ -756,6 +762,7 @@ END PROCEDURE. /* END grava_dados */
     DEF VAR aux_datatual AS DATE                                    NO-UNDO.
     DEF VAR aux_dscritic AS CHAR                                    NO-UNDO.
     DEF VAR aux_vltrfgar AS DECI                                    NO-UNDO.
+    DEF VAR aux_vlpreclc AS DECI                                    NO-UNDO.
     DEF VAR aux_vliofpri AS DECI                                    NO-UNDO.
     DEF VAR aux_vliofadi AS DECI                                    NO-UNDO.
     DEF VAR aux_flgimune AS INTE                                    NO-UNDO.
@@ -929,11 +936,11 @@ END PROCEDURE. /* END grava_dados */
         END. /* IF aux_vltrfgar > 0 */
 
         IF VALID-HANDLE(h-b1wgen0153)  THEN
-           DELETE PROCEDURE h-b1wgen0153.
+           DELETE PROCEDURE h-b1wgen0153.        
     
         FIND crapass WHERE crapass.cdcooper = par_cdcooper AND crapass.nrdconta = par_nrdconta NO-LOCK.
     
-        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
+        { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
     
         /* Efetuar a chamada a rotina Oracle */ 
         RUN STORED-PROCEDURE pc_calcula_iof_epr
@@ -943,6 +950,7 @@ END PROCEDURE. /* END grava_dados */
                                                 ,INPUT par_dtmvtolt
                                                 ,INPUT crapass.inpessoa
                                                 ,INPUT par_cdlcremp
+                                                ,INPUT crawepr.cdfinemp
                                                 ,INPUT crawepr.qtpreemp
                                                 ,INPUT crawepr.vlpreemp
                                                 ,INPUT par_vlemprst
@@ -958,6 +966,7 @@ END PROCEDURE. /* END grava_dados */
                                                 ,OUTPUT 0
                                                 ,OUTPUT 0
                                                 ,OUTPUT 0
+                                                ,OUTPUT 0
                                                 ,OUTPUT "").
        
            
@@ -967,12 +976,14 @@ END PROCEDURE. /* END grava_dados */
 
          { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
 
-         ASSIGN aux_vliofpri = 0
+         ASSIGN aux_vlpreclc = 0
+                aux_vliofpri = 0
                 aux_vliofadi = 0
                 aux_flgimune = 0
                 par_vltottar = 0
                 par_vltariof = 0
                 par_vltariof = DECI(pc_calcula_iof_epr.pr_valoriof) WHEN pc_calcula_iof_epr.pr_valoriof <> ?
+                aux_vlpreclc = DECI(pc_calcula_iof_epr.pr_vlpreclc) WHEN pc_calcula_iof_epr.pr_vlpreclc <> ?
                 aux_vliofpri = DECI(pc_calcula_iof_epr.pr_vliofpri) WHEN pc_calcula_iof_epr.pr_vliofpri <> ?
                 aux_vliofadi = DECI(pc_calcula_iof_epr.pr_vliofadi) WHEN pc_calcula_iof_epr.pr_vliofadi <> ?
                 aux_dscritic = pc_calcula_iof_epr.pr_dscritic WHEN pc_calcula_iof_epr.pr_dscritic <> ?

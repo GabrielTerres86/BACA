@@ -39,6 +39,12 @@
                             efetua_liber_anali_bordero. (Jaison/James)
 
                28/07/2017 - Desenvolvimento da melhoria 364 - Grupo Economico Novo. (Mauro)
+               
+               11/12/2017 - P404 - Inclusao de Garantia de Cobertura das Operaçoes de Crédito (Augusto / Marcos (Supero))
+
+               12/02/2018 -Exposição das procedures 'busca_dados_limite_manutencao' e 'realizar_manutencao_contrato' (Leonardo Oliveira - GFT)
+
+               24/04/2018 - Adicionado a procedure busca_dados_proposta_manuten (Paulo Penteado GFT)
 ............................................................................ */
 
 { sistema/generico/includes/b1wgen0138tt.i }
@@ -77,6 +83,7 @@ DEF VAR aux_vllimite AS DECI                                           NO-UNDO.
 DEF VAR aux_dtrating AS DATE                                           NO-UNDO.
 DEF VAR aux_vlrrisco AS DECI                                           NO-UNDO.
 DEF VAR aux_cddlinha AS INTE                                           NO-UNDO.
+DEF VAR aux_nrctrmnt AS INTE                                           NO-UNDO.
 
 DEF VAR aux_dsramati AS CHAR                                           NO-UNDO.
 DEF VAR aux_vlmedtit AS DECI                                           NO-UNDO.
@@ -146,6 +153,7 @@ DEF VAR aux_dsiduser AS CHAR                                           NO-UNDO.
 DEF VAR aux_nmarqimp AS CHAR                                           NO-UNDO.
 DEF VAR aux_nmarqpdf AS CHAR                                           NO-UNDO.
 DEF VAR aux_flgemail AS LOGI                                           NO-UNDO.
+DEF VAR aux_idcobope AS INTE                                           NO-UNDO.
 
 { sistema/generico/includes/b1wgen0030tt.i }
     
@@ -266,6 +274,7 @@ PROCEDURE valores_entrada:
 
             WHEN "dsiduser" THEN aux_dsiduser = tt-param.valorCampo.
             WHEN "flgemail" THEN aux_flgemail = LOGICAL(tt-param.valorCampo).
+            WHEN "idcobope" THEN aux_idcobope = INTE(tt-param.valorCampo).
 
         END CASE.
         
@@ -733,7 +742,6 @@ PROCEDURE efetua_inclusao_limite:
                                        INPUT aux_vlsalcon,
                                        INPUT aux_dsdbens1,
                                        INPUT aux_dsdbens2,
-                                       INPUT aux_nrctrlim,
                                        INPUT aux_cddlinha,
                                        INPUT aux_dsobserv,
                                        INPUT aux_qtdiavig,
@@ -786,6 +794,9 @@ PROCEDURE efetua_inclusao_limite:
                                        INPUT aux_nrperger,
                                        INPUT aux_vltotsfn,
                                        INPUT aux_perfatcl,
+									   INPUT aux_nrctrmnt,
+                                       INPUT aux_idcobope, 
+									  OUTPUT aux_nrctrlim,
                                       OUTPUT TABLE tt-erro,
                                       OUTPUT TABLE tt-msg-confirma).
                                     
@@ -806,6 +817,7 @@ PROCEDURE efetua_inclusao_limite:
     ELSE 
         DO:
             RUN piXmlNew.
+            RUN piXmlAtributo (INPUT "nrctrlim", INPUT STRING(aux_nrctrlim)).            
             RUN piXmlExport (INPUT TEMP-TABLE tt-msg-confirma:HANDLE,
                              INPUT "Mensagens").
             RUN piXmlSave.
@@ -1053,6 +1065,7 @@ PROCEDURE efetua_alteracao_limite:
                                         INPUT aux_nrperger,
                                         INPUT aux_vltotsfn,
                                         INPUT aux_perfatcl,
+                                        INPUT aux_idcobope,
                                        OUTPUT TABLE tt-erro).
                                     
     IF  RETURN-VALUE = "NOK"  THEN
@@ -1223,6 +1236,196 @@ PROCEDURE busca_restricoes_coordenador:
     RUN piXmlExport (INPUT TEMP-TABLE tt-dsctit_bordero_restricoes:HANDLE,
                      INPUT "Restricoes").
     RUN piXmlSave.
+        
+END PROCEDURE.
+
+/***************************************************************************
+    Buscar dados de um limite para manutencao 
+***************************************************************************/
+PROCEDURE busca_dados_limite_manutencao:
+
+    RUN busca_dados_limite_manutencao IN hBO (INPUT aux_cdcooper,
+                                          INPUT aux_cdagenci,
+                                          INPUT aux_nrdcaixa,
+                                          INPUT aux_cdoperad,
+                                          INPUT aux_dtmvtolt,
+                                          INPUT aux_idorigem,
+                                          INPUT aux_nrdconta,
+                                          INPUT aux_idseqttl,
+                                          INPUT aux_nmdatela,
+                                          INPUT aux_nrctrlim,
+                                         OUTPUT TABLE tt-erro,
+                                         OUTPUT TABLE tt-dsctit_dados_limite,
+                                         OUTPUT TABLE tt-dados_dsctit).
+
+    IF  RETURN-VALUE = "NOK"  THEN
+        DO:
+            FIND FIRST tt-erro NO-LOCK NO-ERROR.
+      
+            IF  NOT AVAILABLE tt-erro  THEN
+                DO:
+                    CREATE tt-erro.
+                    ASSIGN tt-erro.dscritic = "Nao foi possivel concluir a " +
+                                              "operacao.".
+                END.
+                
+            RUN piXmlSaida (INPUT TEMP-TABLE tt-erro:HANDLE,
+                            INPUT "Erro").
+        END.
+    ELSE 
+        DO:
+            RUN piXmlNew.
+            RUN piXmlExport (INPUT TEMP-TABLE tt-dsctit_dados_limite:HANDLE,
+                             INPUT "Dados_Limite").
+            RUN piXmlExport (INPUT TEMP-TABLE tt-dados_dsctit:HANDLE,
+                             INPUT "Dados_Desconto").
+            RUN piXmlSave.
+        END.
+        
+END PROCEDURE.
+
+/*****************************************************************************
+       Realizar a manutençao do contrato                                   
+****************************************************************************/
+PROCEDURE realizar_manutencao_contrato:
+
+    RUN realizar_manutencao_contrato IN hBO (INPUT aux_cdcooper,    
+                                        INPUT aux_cdagenci,    
+                                        INPUT aux_nrdcaixa,
+                                        INPUT aux_cdoperad,
+                                        INPUT aux_dtmvtolt,
+                                        INPUT aux_idorigem,
+                                        INPUT aux_nrdconta, 
+                                        INPUT aux_idseqttl,      
+                                        INPUT aux_nmdatela,
+                                        INPUT aux_nrctrlim,
+                                        INPUT aux_vllimite,
+                                        INPUT aux_cddlinha,
+                                        OUTPUT TABLE tt-erro,
+                                        OUTPUT TABLE tt-msg-confirma,
+                                        OUTPUT TABLE tt-dsctit_dados_limite,
+                                        OUTPUT TABLE tt-dados-avais,
+                                        OUTPUT TABLE tt-dados_dsctit).
+
+                                    
+    IF  RETURN-VALUE = "NOK"  THEN
+        DO:
+            FIND FIRST tt-erro NO-LOCK NO-ERROR.
+      
+            IF  NOT AVAILABLE tt-erro  THEN
+                DO:
+                    CREATE tt-erro.
+                    ASSIGN tt-erro.dscritic = "Nao foi possivel concluir a " +
+                                              "operacao.".
+                END.
+                
+            RUN piXmlSaida (INPUT TEMP-TABLE tt-erro:HANDLE,
+                            INPUT "Erro").
+        END.
+    ELSE 
+        DO:
+            RUN piXmlNew.
+            RUN piXmlExport (INPUT TEMP-TABLE tt-dsctit_dados_limite:HANDLE,
+                             INPUT "Dados_Limite").
+            RUN piXmlExport (INPUT TEMP-TABLE tt-dados-avais:HANDLE,
+                             INPUT "Avais").
+            RUN piXmlExport (INPUT TEMP-TABLE tt-dados_dsctit:HANDLE,
+                             INPUT "Dados_Desconto").
+            RUN piXmlSave.
+        END.
+        
+END PROCEDURE.
+
+/********************************************************************/
+/*    Buscar dados de uma proposta limite de desconto de titulos    */
+/********************************************************************/
+PROCEDURE busca_dados_proposta_consulta:
+
+    RUN busca_dados_proposta_consulta IN hBO (INPUT aux_cdcooper,
+                                            INPUT aux_cdagenci,
+                                            INPUT aux_nrdcaixa,
+                                            INPUT aux_cdoperad,
+                                            INPUT aux_dtmvtolt,
+                                            INPUT aux_idorigem,
+                                            INPUT aux_nrdconta,
+                                            INPUT aux_idseqttl,
+                                            INPUT aux_nmdatela,
+                                            INPUT aux_nrctrlim,
+                                           OUTPUT TABLE tt-erro,
+                                           OUTPUT TABLE tt-dsctit_dados_limite,
+                                           OUTPUT TABLE tt-dados-avais,
+                                           OUTPUT TABLE tt-dados_dsctit).
+
+    IF  RETURN-VALUE = "NOK"  THEN
+        DO:
+            FIND FIRST tt-erro NO-LOCK NO-ERROR.
+      
+            IF  NOT AVAILABLE tt-erro  THEN
+                DO:
+                    CREATE tt-erro.
+                    ASSIGN tt-erro.dscritic = "Nao foi possivel concluir a " +
+                                              "operacao.".
+                END.
+                
+            RUN piXmlSaida (INPUT TEMP-TABLE tt-erro:HANDLE,
+                            INPUT "Erro").
+        END.
+    ELSE 
+        DO:
+            RUN piXmlNew.
+            RUN piXmlExport (INPUT TEMP-TABLE tt-dsctit_dados_limite:HANDLE,
+                             INPUT "Dados_Limite").
+            RUN piXmlExport (INPUT TEMP-TABLE tt-dados-avais:HANDLE,
+                             INPUT "Avais").
+            RUN piXmlExport (INPUT TEMP-TABLE tt-dados_dsctit:HANDLE,
+                             INPUT "Dados_Desconto").
+            RUN piXmlSave.
+        END.
+        
+END PROCEDURE.
+
+/***************************************************************************
+    Buscar dados de uma marjoração para manutenção pelo botão alterar
+***************************************************************************/
+PROCEDURE busca_dados_proposta_manuten:
+
+    RUN busca_dados_proposta_manuten IN hBO (INPUT aux_cdcooper,
+                                             INPUT aux_cdagenci,
+                                             INPUT aux_nrdcaixa,
+                                             INPUT aux_cdoperad,
+                                             INPUT aux_dtmvtolt,
+                                             INPUT aux_idorigem,
+                                             INPUT aux_nrdconta,
+                                             INPUT aux_idseqttl,
+                                             INPUT aux_nmdatela,
+                                             INPUT aux_nrctrlim,
+                                            OUTPUT TABLE tt-erro,
+                                            OUTPUT TABLE tt-dsctit_dados_limite,
+                                            OUTPUT TABLE tt-dados_dsctit).
+
+    IF  RETURN-VALUE = "NOK"  THEN
+        DO:
+            FIND FIRST tt-erro NO-LOCK NO-ERROR.
+      
+            IF  NOT AVAILABLE tt-erro  THEN
+                DO:
+                    CREATE tt-erro.
+                    ASSIGN tt-erro.dscritic = "Nao foi possivel concluir a " +
+                                              "operacao.".
+                END.
+                
+            RUN piXmlSaida (INPUT TEMP-TABLE tt-erro:HANDLE,
+                            INPUT "Erro").
+        END.
+    ELSE 
+        DO:
+            RUN piXmlNew.
+            RUN piXmlExport (INPUT TEMP-TABLE tt-dsctit_dados_limite:HANDLE,
+                             INPUT "Dados_Limite").
+            RUN piXmlExport (INPUT TEMP-TABLE tt-dados_dsctit:HANDLE,
+                             INPUT "Dados_Desconto").
+            RUN piXmlSave.
+        END.
         
 END PROCEDURE.
 

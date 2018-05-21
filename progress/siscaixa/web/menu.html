@@ -38,12 +38,44 @@ Alterações:  17/03/2010 - Incluida a rotina 61 (Evandro).
 <script language=JavaScript src="/script/formatadadosie.js"></script>
 <link rel=StyleSheet type="text/css" href="/script/viacredi.css">
 <style>
-DIV.clTop{position:absolute; width:130;}
-DIV.clSub{position:absolute; left:5; width:130}
-#divCont{position:relative; left:0; top:5; height:350; width:130;}
-A.clMain{font-family:Arial, Verdana, Helvetica, Helv; font-size:11px; text-decoration:none; font-weight:bold; color:#006600; cursor: default;}
-A.clSubb{font-family:Arial, Verdana, Helvetica, Helv; font-size:10px; text-decoration:none; color:#006600}
-#divMain{position:absolute}
+        DIV.clTop {
+            position: absolute;
+            width: 130;
+        }
+
+        DIV.clSub {
+            position: absolute;
+            left: 5;
+            width: 130;
+        }
+
+        #divCont {
+            position: relative;
+            left: 0;
+            top: 5;
+            height: 350;
+            width: 130;
+        }
+
+        A.clMain {
+            font-family: Arial, Verdana, Helvetica, Helv;
+            font-size: 11px;
+            text-decoration: none;
+            font-weight: bold;
+            color: #006600;
+            cursor: default;
+        }
+
+        A.clSubb {
+            font-family: Arial, Verdana, Helvetica, Helv;
+            font-size: 10px;
+            text-decoration: none;
+            color: #006600;
+        }
+
+        #divMain {
+            position: absolute;
+        }
 </style>
 <script language="JavaScript">
 
@@ -194,9 +226,9 @@ if(browser) onload=init;
                 &nbsp;<a href="crap055.html?v_sangria=S" target="pane" class="clSubb" onmouseover="window.status='Depósito Cheque Liberado';return true;" onmouseout="window.status='';return true;">055 - Dep. Cheque Lib.</a><br>
                 &nbsp;<a href="crap056.html?v_sangria=S" target="pane" class="clSubb" onmouseover="window.status='Outros';return true;" onmouseout="window.status='';return true;">056 - Outros</a><br>
                 &nbsp;<a href="crap057.html?v_sangria=S" target="pane" class="clSubb" onmouseover="window.status='Cheque Lib. Div.';return true;" onmouseout="window.status='';return true;">057 - Cheque Lib. Div.</a><br>
-                &nbsp;<a href="crap058.html?v_sangria=S" target="pane" class="clSubb" onmouseover="window.status='Pagamento de Emprestimo';return true;" onmouseout="window.status='';return true;">058 - Pagto Emprestimo</a><br>
+                &nbsp;<a href="crap058.html?v_sangria=S" target="pane" class="clSubb" onmouseover="window.status='Pagamento de Emprestimo Consignado';return true;" onmouseout="window.status='';return true;">058 - Pagto. Empr.Consig.</a><br>
+                &nbsp;<a href="crap090.html?v_sangria=S" target="pane" class="clSubb" onmouseover="window.status='Pagamento de Emprestimo';return true;" onmouseout="window.status='';return true;">090 - Pagto Emprestimo</a><br>
                 &nbsp;<a href="crap061.html?v_sangria=S" target="pane" class="clSubb" onmouseover="window.status='Lib. de Envelopes';return true;" onmouseout="window.status='';return true;">061 - Lib. de Envelopes</a><br>
-                &nbsp;<a href="crap066.html" target="pane" class="clSubb" onmouseover="window.status='Lançamento de Cheques';return true;" onmouseout="window.status='';return true;">066 - Lançam. Cheques</a><br>
             </div><br>
         </div>
         <div id="divTop2" class="clTop">
@@ -275,7 +307,8 @@ if(browser) onload=init;
                 &nbsp;<a href="login.w?v_prog=crap076.w" target="pane" class="clSubb" onmouseover="window.status='Outros';return true;" onmouseout="window.status='';return true;">076 - Outros</a><br>
                 &nbsp;<a href="login.w?v_prog=crap077.w" target="pane" class="clSubb" onmouseover="window.status='Cheque Lib. Div';return true;" onmouseout="window.status='';return true;">077 - Cheque Lib. Div.</a><br>
                 &nbsp;<a href="login.w?v_prog=crap078.w" target="pane" class="clSubb" onmouseover="window.status='Cheque Capturado';return true;" onmouseout="window.status='';return true;">078 - Cheque Capturado</a><br>
-                &nbsp;<a href="login.w?v_prog=crap079.w" target="pane" class="clSubb" onmouseover="window.status='Pagamento de Emprestimo';return true;" onmouseout="window.status='';return true;">079 - Pagto Emprestimo</a><br>
+                &nbsp;<a href="login.w?v_prog=crap079.w" target="pane" class="clSubb" onmouseover="window.status='Pagamento de Emprestimo Consignado';return true;" onmouseout="window.status='';return true;">079 - Pagto. Empr.Consig.</a><br>
+                &nbsp;<a href="login.w?v_prog=crap091.w" target="pane" class="clSubb" onmouseover="window.status='Pagamento de Emprestimo';return true;" onmouseout="window.status='';return true;">091 - Pagto Emprestimo</a><br>
                 &nbsp;<a href="login.w?v_prog=crap086.w" target="pane" class="clSubb" onmouseover="window.status='Lançamento de Cheques';return true;" onmouseout="window.status='';return true;">086 - Lançam. Cheques</a><br>
                 &nbsp;<a href="login.w?v_prog=crap088.html" target="pane" class="clSubb" onmouseover="window.status='Cheque entre Coop.';return true;" onmouseout="window.status='';return true;">088 - Cheque entre Coop</a><br>
 

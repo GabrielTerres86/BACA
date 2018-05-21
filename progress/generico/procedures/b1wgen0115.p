@@ -26,7 +26,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0115.p
     Autor   : Gabriel Capoia (DB1)
-    Data    : Setembro/2011                     Ultima atualizacao: 23/06/2017
+    Data    : Setembro/2011                     Ultima atualizacao: 01/11/2017
 
     Objetivo  : Tranformacao BO tela ADITIV
 
@@ -155,6 +155,9 @@
                23/06/2017 - Nao permitir alterar a data do debito para o produto 
                             Pos-Fixado. (Jaison/James - PRJ298)
 
+               01/11/2017 - Ajustes conforme inclusao do campo tipo de contrato.
+                            (Jaison/Marcos Martini - PRJ404)
+
 ............................................................................*/
 
 /*............................. DEFINICOES .................................*/
@@ -203,10 +206,19 @@ DEF VAR aux_dsaditiv AS CHAR    FORMAT "x(36)"  EXTENT 8
 DEF VAR xDoc          AS HANDLE   NO-UNDO.
 DEF VAR xRoot         AS HANDLE   NO-UNDO.
 DEF VAR xRoot2        AS HANDLE   NO-UNDO.
+DEF VAR xRoot3        AS HANDLE   NO-UNDO.
+DEF VAR xRoot4        AS HANDLE   NO-UNDO.
 DEF VAR xField        AS HANDLE   NO-UNDO.
+DEF VAR xField2       AS HANDLE   NO-UNDO.
+DEF VAR xField3       AS HANDLE   NO-UNDO.
 DEF VAR xText         AS HANDLE   NO-UNDO.
+DEF VAR xText2        AS HANDLE   NO-UNDO.
 DEF VAR aux_cont_raiz AS INTEGER  NO-UNDO.
 DEF VAR aux_cont      AS INTEGER  NO-UNDO.
+DEF VAR aux_cont2     AS INTEGER  NO-UNDO.
+DEF VAR aux_cont3     AS INTEGER  NO-UNDO.
+DEF VAR aux_cont4     AS INTEGER  NO-UNDO.
+DEF VAR aux_cont5     AS INTEGER  NO-UNDO.
 DEF VAR ponteiro_xml  AS MEMPTR   NO-UNDO.
 DEF VAR xml_req       AS LONGCHAR NO-UNDO.
 
@@ -248,6 +260,7 @@ PROCEDURE Busca_Dados:
     DEF  INPUT PARAM par_cdaditiv AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_tpaplica AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_nrctagar AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_tpctrato AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_flgpagin AS LOGI                           NO-UNDO.
     DEF  INPUT PARAM par_nrregist AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_nriniseq AS INTE                           NO-UNDO.
@@ -258,734 +271,74 @@ PROCEDURE Busca_Dados:
     DEF OUTPUT PARAM TABLE FOR tt-aplicacoes.
     DEF OUTPUT PARAM TABLE FOR tt-erro.
 
-    DEF VAR aux_despreza AS LOGI                                    NO-UNDO.
-    DEF VAR aux_contador AS INTE                                    NO-UNDO.
-    DEF VAR h-b1wgen0081 AS HANDLE                                  NO-UNDO.
-    DEF VAR h-b1wgen0006 AS HANDLE                                  NO-UNDO.
-    DEF VAR aux_vlsldapl AS DECI                                    NO-UNDO.
-    DEF VAR aux_nrdconta AS INTE                                    NO-UNDO.
-    DEF VAR aux_nrregist AS INTE                                    NO-UNDO.
-
-    ASSIGN aux_dscritic = ""
-           aux_cdcritic = 0
-           aux_nrdconta = 0
-           aux_returnvl = "NOK"
-           aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
-           aux_dstransa = "Busca Aditivo Contratual de Emprestimo."
-           aux_nrregist = par_nrregist.
-
-    Busca: DO ON ERROR UNDO Busca, LEAVE Busca:
         EMPTY TEMP-TABLE tt-aditiv.
         EMPTY TEMP-TABLE tt-aplicacoes.
         EMPTY TEMP-TABLE tt-erro.
 
-        IF  NOT CAN-DO("C,E,I,V,X",par_cddopcao) THEN
-            DO:
-                ASSIGN aux_cdcritic = 14.
-                LEAVE Busca.
-            END.
-
-        IF  par_cddopcao = "V" THEN
-            DO:
-                IF  par_nrdconta <> 0 THEN
-                    IF  NOT CAN-FIND(FIRST crapass WHERE
-                                           crapass.cdcooper = par_cdcooper AND
-                                           crapass.nrdconta = par_nrdconta)
-                        THEN
-                        DO:
-                            ASSIGN aux_cdcritic = 9.
-                            LEAVE Busca.
-                        END.
-
-                IF  par_nrctremp <> 0 THEN
-                    IF  par_nrdconta <> 0  AND
-                        NOT CAN-FIND(FIRST crawepr WHERE
-                                        crawepr.cdcooper = par_cdcooper AND
-                                        crawepr.nrdconta = par_nrdconta AND
-                                        crawepr.nrctremp = par_nrctremp)
-                        THEN
-                        DO:
-                            ASSIGN aux_dscritic = "Contrato/Proposta de " +
-                                                  "emprestimo nao encontrado.".
-                            LEAVE Busca.
-                        END.
-                    ELSE
-                    IF  NOT CAN-FIND(FIRST crawepr WHERE
-                                        crawepr.cdcooper = par_cdcooper AND
-                                        crawepr.nrctremp = par_nrctremp)
-                        THEN
-                        DO:
-                            ASSIGN aux_dscritic = "Contrato/Proposta de " +
-                                                  "emprestimo nao encontrado.".
-                            LEAVE Busca.
-                        END.
-
-                FOR EACH crapadt WHERE
-                                  crapadt.cdcooper  = par_cdcooper AND
-                                 (crapadt.nrdconta  = par_nrdconta OR
-                                  par_nrdconta  = 0)               AND
-                                 (crapadt.nrctremp  = par_nrctremp OR
-                                  par_nrctremp  = 0)               AND
-                                 (crapadt.dtmvtolt >= par_dtmvtolx OR
-                                  par_dtmvtolx      = ?) NO-LOCK:
-
-                    ASSIGN par_qtregist = par_qtregist + 1.
-
-                    IF  par_flgpagin                  AND
-                       ((par_qtregist < par_nriniseq) OR
-                        (par_qtregist > (par_nriniseq + par_nrregist))) THEN
-                        NEXT.
-
-                    IF  aux_nrregist > 0 or
-                        NOT par_flgpagin THEN
-                        DO:
-                            CREATE tt-aditiv.
-                            ASSIGN tt-aditiv.nrdconta = crapadt.nrdconta
-                                   tt-aditiv.nrctremp = crapadt.nrctremp
-                                   tt-aditiv.dsaditiv =
-                                                 aux_dsaditiv[crapadt.cdaditiv]
-                                   tt-aditiv.nraditiv = crapadt.nraditiv
-                                   tt-aditiv.dtmvtolt = crapadt.dtmvtolt.
-                        END.
-
-                    ASSIGN aux_nrregist = aux_nrregist - 1.
-
-                END. /* FOR EACH crapadt */
-
-            END. /* IF  par_cddopcao = "V" */
-        ELSE
-        IF  CAN-DO("C,E,I",par_cddopcao) THEN
-            DO:
-                IF  NOT CAN-FIND(FIRST crapass WHERE
-                                       crapass.cdcooper = par_cdcooper AND
-                                       crapass.nrdconta = par_nrdconta) THEN
-                    DO:
-                        ASSIGN aux_cdcritic = 9.
-                        LEAVE Busca.
-                    END.
-
-                IF  NOT CAN-FIND(FIRST crawepr WHERE
-                                       crawepr.cdcooper = par_cdcooper AND
-                                       crawepr.nrdconta = par_nrdconta AND
-                                       crawepr.nrctremp = par_nrctremp) THEN
-                    DO:
-                        ASSIGN aux_dscritic = "Contrato/Proposta de " +
-                                              "emprestimo nao encontrado.".
-                        LEAVE Busca.
-                    END.
-
-                FOR FIRST crapadt WHERE
-                          crapadt.cdcooper = par_cdcooper AND
-                          crapadt.nrdconta = par_nrdconta AND
-                          crapadt.nrctremp = par_nrctremp AND
-                          crapadt.nraditiv = par_nraditiv NO-LOCK:
-                END.
-
-                CREATE tt-aditiv.
-                ASSIGN tt-aditiv.nrdconta = par_nrdconta
-                       tt-aditiv.nrctremp = par_nrctremp
-                       tt-aditiv.nraditiv = par_nraditiv
-                       tt-aditiv.cdaditiv = par_cdaditiv.
-
-                IF  NOT AVAIL crapadt AND
-                    NOT CAN-DO("I",par_cddopcao) THEN
-                    DO:
-                        ASSIGN aux_cdcritic = 816.
-                        LEAVE Busca.
-                    END.
-
-                IF  AVAIL crapadt THEN
-                    ASSIGN par_cdaditiv       = crapadt.cdaditiv
-                           tt-aditiv.cdaditiv = crapadt.cdaditiv
-                           tt-aditiv.nrctagar = crapadt.nrctagar
-                           tt-aditiv.nrcpfgar = crapadt.nrcpfgar
-                           tt-aditiv.nrdocgar = crapadt.nrdocgar
-                           tt-aditiv.nmdgaran = crapadt.nmdgaran
-                           tt-aditiv.dtmvtolt = crapadt.dtmvtolt
-                           tt-aditiv.cdaditiv = par_cdaditiv.
-
-                IF  par_cdaditiv > 9 OR
-                    par_cdaditiv < 1 THEN
-                    DO:
-                        ASSIGN aux_cdcritic = 814.
-                        LEAVE Busca.
-                    END.
-
-                IF  CAN-DO("2,3",STRING(par_cdaditiv)) AND
-                    par_cddopcao = "I" THEN
-                    DO:
-                        ASSIGN aux_nrdconta = IF   par_cdaditiv = 3 THEN
-                                                   par_nrctagar
-                                              ELSE par_nrdconta.
-
-                        IF  par_tpaplica = 0 THEN
-                            DO:
                                 ASSIGN aux_returnvl = "OK".
-                                LEAVE Busca.
-                            END.
-                        ELSE
-                        IF  par_tpaplica = 1 THEN
-                            DO:
-                                IF  NOT VALID-HANDLE(h-b1wgen0006)  THEN
-                                    RUN sistema/generico/procedures/b1wgen0006.p
-                                        PERSISTENT SET h-b1wgen0006.
 
-                                RUN consulta-poupanca IN h-b1wgen0006
-                                    ( INPUT par_cdcooper,
-                                      INPUT par_cdagenci,
-                                      INPUT par_nrdcaixa,
-                                      INPUT par_cdoperad,
-                                      INPUT par_nmdatela,
-                                      INPUT par_idorigem,
-                                      INPUT aux_nrdconta,
-                                      INPUT 1, /* idseqttl */
-                                      INPUT 0, /* nrctrrpp */
-                                      INPUT par_dtmvtolt,
-                                      INPUT par_dtmvtopr,
-                                      INPUT par_inproces,
-                                      INPUT par_nmdatela,
-                                      INPUT FALSE, /* flgerlog */
-                                     OUTPUT aux_vlsldapl,
-                                     OUTPUT TABLE tt-erro,
-                                     OUTPUT TABLE tt-dados-rpp ).
+    /* Inicializando objetos para leitura do XML */
+    CREATE X-DOCUMENT xDoc.    /* Vai conter o XML completo */
+    CREATE X-NODEREF  xRoot.   /* Vai conter a tag raiz em diante */
+    CREATE X-NODEREF  xRoot2.  /* Vai conter a tag aplicacao em diante */
+    CREATE X-NODEREF  xRoot3.  /* Vai conter a tag aplicacao em diante */
+    CREATE X-NODEREF  xRoot4.  /* Vai conter a tag aplicacao em diante */
+    CREATE X-NODEREF  xField.  /* Vai conter os campos dentro da tag INF */
+    CREATE X-NODEREF  xField2. /* Vai conter os campos dentro da tag INF */
+    CREATE X-NODEREF  xField3. /* Vai conter os campos dentro da tag INF */
+    CREATE X-NODEREF  xText.   /* Vai conter o texto que existe dentro da tag xField */
+    CREATE X-NODEREF  xText2.  /* Vai conter o texto que existe dentro da tag xField */
 
-                                IF  VALID-HANDLE(h-b1wgen0006)  THEN
-                                    DELETE PROCEDURE h-b1wgen0006.
+    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
 
-                                IF  RETURN-VALUE <> "OK" AND
-                                    TEMP-TABLE tt-erro:HAS-RECORDS THEN
-                                    LEAVE Busca.
-
-                                FOR EACH tt-dados-rpp WHERE
-                                         tt-dados-rpp.vlsdrdpp > 0 AND
-                                         tt-dados-rpp.dsblqrpp <> "SIM" :
-
-                                    CREATE tt-aplicacoes.
-                                    ASSIGN tt-aplicacoes.nraplica =
-                                                  tt-dados-rpp.nrctrrpp
-                                           tt-aplicacoes.dtmvtolt =
-                                                  tt-dados-rpp.dtmvtolt
-                                           tt-aplicacoes.dshistor = "P.PROG "
-                                           tt-aplicacoes.vlaplica = tt-dados-rpp.vlprerpp /*,"zzzzz9.99"*/
-                                           tt-aplicacoes.nrdocmto =
-                                         STRING(tt-dados-rpp.nrctrrpp,"zzzzz9")
-                                           tt-aplicacoes.dtvencto =
-                                                  tt-dados-rpp.dtvctopp
-                                           tt-aplicacoes.vlsldapl =
-                                                  tt-dados-rpp.vlsdrdpp
-                                           tt-aplicacoes.sldresga =
-                                                 tt-dados-rpp.vlrgtrpp
-                                           tt-aplicacoes.tpaplica = 1
-                                           tt-aplicacoes.tpproapl = 2.
-                                END.
-                            END.
-                        ELSE
-                            DO:
-                                IF  NOT VALID-HANDLE(h-b1wgen0081)  THEN
-                                    RUN sistema/generico/procedures/b1wgen0081.p
-                                        PERSISTENT SET h-b1wgen0081.
-
-                                RUN obtem-dados-aplicacoes IN h-b1wgen0081
-                                    ( INPUT par_cdcooper,
-                                      INPUT par_cdagenci,
-                                      INPUT par_nrdcaixa,
-                                      INPUT par_cdoperad,
-                                      INPUT par_nmdatela,
-                                      INPUT par_idorigem,
-                                      INPUT aux_nrdconta,
-                                      INPUT 1, /* idseqttl */
-                                      INPUT 0, /* nraplica - Todas */
-                                      INPUT par_nmdatela,
-                                      INPUT FALSE, /*flgerlog*/
-                                      INPUT ?,
-                                      INPUT ?,
-                                     OUTPUT aux_vlsldapl,
-                                     OUTPUT TABLE tt-saldo-rdca,
-                                     OUTPUT TABLE tt-erro).
-
-                                IF  VALID-HANDLE(h-b1wgen0081)  THEN
-                                    DELETE PROCEDURE h-b1wgen0081.
-
-                                IF  RETURN-VALUE <> "OK" AND
-                                    TEMP-TABLE tt-erro:HAS-RECORDS THEN
-                                    LEAVE Busca.
-
-
-                                IF  par_tpaplica = 7 OR
-                                    par_tpaplica = 8 THEN
-                                    DO:
-                                        RUN busca_aplicacoes_car(INPUT par_cdcooper
+    /* Efetuar a chamada a rotina Oracle */
+    RUN STORED-PROCEDURE pc_busca_dados_aditiv_prog
+    aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper
+                                        ,INPUT par_cdagenci
+                                        ,INPUT par_nrdcaixa
                                                                 ,INPUT par_cdoperad
                                                                 ,INPUT par_nmdatela
-                                                                ,INPUT aux_nrdconta
-                                                                ,INPUT 1
-                                                                ,INPUT 0
-                                                                ,INPUT par_dtmvtolt
-                                                                ,INPUT par_cddopcao).
-                                    END.
+                                        ,INPUT par_idorigem
+                                        ,INPUT STRING(par_dtmvtolt,"99/99/9999")
+                                        ,INPUT STRING(par_dtmvtopr,"99/99/9999")
+                                        ,INPUT par_inproces
+                                        ,INPUT par_cddopcao
+                                        ,INPUT par_nrdconta
+                                        ,INPUT par_nrctremp
+                                        ,INPUT STRING(par_dtmvtolx,"99/99/9999")
+                                        ,INPUT par_nraditiv
+                                        ,INPUT par_cdaditiv
+                                        ,INPUT par_tpaplica
+                                        ,INPUT par_nrctagar
+                                        ,INPUT par_tpctrato
+                                        ,INPUT INT(par_flgpagin)
+                                        ,INPUT par_nrregist
+                                        ,INPUT par_nriniseq
+                                        ,INPUT INT(par_flgerlog)
+                                        ,OUTPUT 0     /* pr_qtregist */
+                                        ,OUTPUT ?     /* pr_clob_xml */
+                                        ,OUTPUT 0     /* pr_cdcritic */
+                                        ,OUTPUT "").  /* pr_dscritic */
 
-                                FOR EACH tt-saldo-rdca WHERE
-                                         tt-saldo-rdca.tpaplica =
-                                                               par_tpaplica AND
-                                         tt-saldo-rdca.vllanmto > 0         AND
-                                         tt-saldo-rdca.indebcre <> "B":
+    /* Fechar o procedimento para buscarmos o resultado */
+    CLOSE STORED-PROC pc_busca_dados_aditiv_prog
+          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
 
-                                    CREATE tt-aplicacoes.
-                                    ASSIGN tt-aplicacoes.nraplica =
-                                                 tt-saldo-rdca.nraplica
-                                           tt-aplicacoes.dtmvtolt =
-                                                 tt-saldo-rdca.dtmvtolt
-                                           tt-aplicacoes.dshistor =
-                                               tt-saldo-rdca.dsaplica
-                                           tt-aplicacoes.vlaplica =
-                                               tt-saldo-rdca.vlaplica
-                                           tt-aplicacoes.nrdocmto =
-                                                 tt-saldo-rdca.nrdocmto
-                                           tt-aplicacoes.dtvencto =
-                                                 tt-saldo-rdca.dtvencto
-                                           tt-aplicacoes.vlsldapl =
-                                                 tt-saldo-rdca.vllanmto
-                                           tt-aplicacoes.sldresga =
-                                                tt-saldo-rdca.sldresga
-                                           tt-aplicacoes.tpaplica =
-                                                par_tpaplica
-                                           tt-aplicacoes.tpproapl =
-                                                IF tt-saldo-rdca.idtipapl = "N" THEN
-                                                    1
-                                                ELSE
-                                                    2.
+    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
 
-                                END.
-
-                            END.
-                    END.
-                ELSE
-                IF  CAN-DO("2,3",STRING(par_cdaditiv)) THEN
-                    DO:
-                        ASSIGN aux_nrdconta = IF   par_cdaditiv = 3 THEN
-                                                   crapadt.nrctagar
-                                              ELSE par_nrdconta.
-
-                        FOR EACH crapadi WHERE
-                                 crapadi.cdcooper = par_cdcooper AND
-                                 crapadi.nrdconta = par_nrdconta AND
-                                 crapadi.nrctremp = par_nrctremp AND
-                                 crapadi.nraditiv = par_nraditiv NO-LOCK:
-
-                            IF  crapadi.tpaplica = 1 THEN
-                                DO:
-                                    IF  NOT VALID-HANDLE(h-b1wgen0006)  THEN
-                                    RUN sistema/generico/procedures/b1wgen0006.p
-                                        PERSISTENT SET h-b1wgen0006.
-
-                                    RUN consulta-poupanca IN h-b1wgen0006
-                                        ( INPUT par_cdcooper,
-                                          INPUT par_cdagenci,
-                                          INPUT par_nrdcaixa,
-                                          INPUT par_cdoperad,
-                                          INPUT par_nmdatela,
-                                          INPUT par_idorigem,
-                                          INPUT aux_nrdconta,
-                                          INPUT 1, /* idseqttl */
-                                          INPUT crapadi.nraplica,
-                                          INPUT par_dtmvtolt,
-                                          INPUT par_dtmvtopr,
-                                          INPUT par_inproces,
-                                          INPUT par_nmdatela,
-                                          INPUT FALSE, /* flgerlog */
-                                         OUTPUT aux_vlsldapl,
-                                         OUTPUT TABLE tt-erro,
-                                         OUTPUT TABLE tt-dados-rpp ).
-
-                                    IF  VALID-HANDLE(h-b1wgen0006)  THEN
-                                        DELETE PROCEDURE h-b1wgen0006.
-
-                                    IF  RETURN-VALUE <> "OK" AND
-                                        TEMP-TABLE tt-erro:HAS-RECORDS THEN
-                                        LEAVE Busca.
-
-                                    FIND FIRST tt-dados-rpp NO-ERROR.
-
-                                    IF  AVAIL tt-dados-rpp THEN
-                                        DO:
-                                            CREATE tt-aplicacoes.
-                                            ASSIGN tt-aplicacoes.nraplica =
-                                                          tt-dados-rpp.nrctrrpp
-                                                   tt-aplicacoes.dtmvtolt =
-                                                          tt-dados-rpp.dtmvtolt
-                                                   tt-aplicacoes.dshistor =
-                                                                 "P.PROG    " /* +
-                                      STRING(tt-dados-rpp.vlprerpp,"zzzzz9.99") */
-                                                   tt-aplicacoes.vlaplica = tt-dados-rpp.vlprerpp
-                                                   tt-aplicacoes.nrdocmto =
-                                         STRING(tt-dados-rpp.nrctrrpp,"zzzzz9")
-                                                   tt-aplicacoes.dtvencto =
-                                                          tt-dados-rpp.dtvctopp
-                                                   tt-aplicacoes.vlsldapl =
-                                                    IF tt-dados-rpp.vlsdrdpp > 0
-                                                    THEN tt-dados-rpp.vlsdrdpp
-                                                    ELSE 0
-                                                   tt-aplicacoes.sldresga =
-                                                    IF tt-dados-rpp.vlrgtrpp > 0
-                                                    THEN tt-dados-rpp.vlrgtrpp
-                                                    ELSE 0.
-                                        END.
-
-                                END. /*  IF  crapadi.tpaplica = 1 */
-                            ELSE
-                                DO:
-                                    IF  NOT VALID-HANDLE(h-b1wgen0081)  THEN
-                                    RUN sistema/generico/procedures/b1wgen0081.p
-                                        PERSISTENT SET h-b1wgen0081.
-
-                                    RUN obtem-dados-aplicacoes IN h-b1wgen0081
-                                        ( INPUT par_cdcooper,
-                                          INPUT par_cdagenci,
-                                          INPUT par_nrdcaixa,
-                                          INPUT par_cdoperad,
-                                          INPUT par_nmdatela,
-                                          INPUT par_idorigem,
-                                          INPUT aux_nrdconta,
-                                          INPUT 1, /* idseqttl */
-                                          INPUT crapadi.nraplica,
-                                          INPUT par_nmdatela,
-                                          INPUT FALSE, /*flgerlog*/
-                                          INPUT ?,
-                                          INPUT ?,
-                                         OUTPUT aux_vlsldapl,
-                                         OUTPUT TABLE tt-saldo-rdca,
-                                         OUTPUT TABLE tt-erro).
-
-                                    IF  VALID-HANDLE(h-b1wgen0081)  THEN
-                                        DELETE PROCEDURE h-b1wgen0081.
-
-                                    IF  RETURN-VALUE <> "OK" AND
-                                        TEMP-TABLE tt-erro:HAS-RECORDS THEN
-                                        LEAVE Busca.
-
-                                    FIND FIRST tt-saldo-rdca NO-ERROR.
-
-                                    IF  AVAIL tt-saldo-rdca THEN
-                                        DO:
-                                            CREATE tt-aplicacoes.
-                                            ASSIGN tt-aplicacoes.nraplica =
-                                                         tt-saldo-rdca.nraplica
-                                                   tt-aplicacoes.dtmvtolt =
-                                                         tt-saldo-rdca.dtmvtolt
-                                                   tt-aplicacoes.dshistor =
-                                                         tt-saldo-rdca.dshistor
-                                                   tt-aplicacoes.vlaplica =
-                                                         tt-saldo-rdca.vlaplica
-                                                   tt-aplicacoes.nrdocmto =
-                                                         tt-saldo-rdca.nrdocmto
-                                                   tt-aplicacoes.dtvencto =
-                                                         tt-saldo-rdca.dtvencto
-                                                   tt-aplicacoes.vlsldapl =
-                                                   IF tt-saldo-rdca.vllanmto > 0
-                                                   THEN tt-saldo-rdca.vllanmto
-                                                   ELSE 0
-                                                   tt-aplicacoes.sldresga =
-                                                   IF tt-saldo-rdca.sldresga > 0
-                                                   THEN tt-saldo-rdca.sldresga
-                                                   ELSE 0.
-                                        END.
-
-                                    EMPTY TEMP-TABLE tt-saldo-rdca.
-
-                                    RUN busca_aplicacoes_car(INPUT par_cdcooper
-                                                            ,INPUT par_cdoperad
-                                                            ,INPUT par_nmdatela
-                                                            ,INPUT aux_nrdconta
-                                                            ,INPUT 1
-                                                            ,INPUT crapadi.nraplica
-                                                            ,INPUT par_dtmvtolt
-                                                            ,INPUT par_cddopcao).
-
-                                    FIND FIRST tt-saldo-rdca NO-ERROR.
-
-                                    IF  AVAIL tt-saldo-rdca THEN
-                                        DO:
-                                            CREATE tt-aplicacoes.
-                                            ASSIGN tt-aplicacoes.nraplica =
-                                                         tt-saldo-rdca.nraplica
-                                                   tt-aplicacoes.dtmvtolt =
-                                                         tt-saldo-rdca.dtmvtolt
-                                                   tt-aplicacoes.dshistor =
-                                                         tt-saldo-rdca.dshistor
-                                                   tt-aplicacoes.vlaplica =
-                                                         tt-saldo-rdca.vlaplica
-                                                   tt-aplicacoes.nrdocmto =
-                                                         tt-saldo-rdca.nrdocmto
-                                                   tt-aplicacoes.dtvencto =
-                                                         tt-saldo-rdca.dtvencto
-                                                   tt-aplicacoes.vlsldapl =
-                                                   IF tt-saldo-rdca.vllanmto > 0
-                                                   THEN tt-saldo-rdca.vllanmto
-                                                   ELSE 0
-                                                   tt-aplicacoes.sldresga =
-                                                   IF tt-saldo-rdca.sldresga > 0
-                                                   THEN tt-saldo-rdca.sldresga
-                                                   ELSE 0.
-                                        END.
-
-                                END. /* IF  crapadi.tpaplica > 1 */
-
-                        END. /* Fim FOR EACH crapadi  */
-
-                    END. /* IF  CAN-DO("2,3",par_cdaditiv) */
-
-                ELSE
-                IF  par_cdaditiv = 7 THEN
-                    DO:
-                        FOR EACH crapadi WHERE
-                                 crapadi.cdcooper = par_cdcooper AND
-                                 crapadi.nrdconta = par_nrdconta AND
-                                 crapadi.nrctremp = par_nrctremp AND
-                                 crapadi.nraditiv = par_nraditiv NO-LOCK:
-
-                            ASSIGN tt-aditiv.nrpromis[crapadi.nrsequen] =
-                                                               crapadi.nrpromis
-                                   tt-aditiv.vlpromis[crapadi.nrsequen] =
-                                                               crapadi.vlpromis
-                                   tt-aditiv.nrcpfgar = crapadi.nrcpfcgc
-                                   tt-aditiv.nmdgaran = crapadi.nmdavali.
-
-                        END. /* FOR EACH crapadi */
-
-                    END. /* par_cdaditiv = 7 */
-                ELSE
-                    DO:
-                        FOR FIRST crapadi WHERE
-                                  crapadi.cdcooper = par_cdcooper AND
-                                  crapadi.nrdconta = par_nrdconta AND
-                                  crapadi.nrctremp = par_nrctremp AND
-                                  crapadi.nraditiv = par_nraditiv NO-LOCK: END.
-                    END.
-
-                IF  AVAIL crapadi THEN
-                    ASSIGN tt-aditiv.flgpagto = crapadi.flgpagto
-                           tt-aditiv.dtdpagto = crapadi.dtdpagto
-                           tt-aditiv.dsbemfin = crapadi.dsbemfin
-                           tt-aditiv.dschassi = crapadi.dschassi
-                           tt-aditiv.nrdplaca = crapadi.nrdplaca
-                           tt-aditiv.dscorbem = crapadi.dscorbem
-                           tt-aditiv.nranobem = crapadi.nranobem
-                           tt-aditiv.nrmodbem = crapadi.nrmodbem
-                           tt-aditiv.nrrenava = crapadi.nrrenava
-                           tt-aditiv.tpchassi = crapadi.tpchassi
-                           tt-aditiv.ufdplaca = crapadi.ufdplaca
-                           tt-aditiv.uflicenc = crapadi.uflicenc
-                           tt-aditiv.nmdavali = crapadi.nmdavali
-                           tt-aditiv.nrcpfgar = IF   par_cdaditiv = 7 OR
-                                                     par_cdaditiv = 8 THEN
-                                                     crapadi.nrcpfcgc
-                                                ELSE tt-aditiv.nrcpfgar
-                           tt-aditiv.nmdgaran = IF   par_cdaditiv = 7 OR
-                                                     par_cdaditiv = 8 THEN
-                                                     crapadi.nmdavali
-                                                ELSE tt-aditiv.nmdgaran
-                           tt-aditiv.vlpromis[1] = IF  par_cdaditiv = 8 THEN
-                                                       crapadi.vlpromis
-                                                   ELSE 0.
-
-                CASE par_cdaditiv:
-
-                    WHEN 1 THEN
-                        DO:
-                            FOR FIRST crapepr FIELDS(flgpagto tpdescto)
-                                WHERE crapepr.cdcooper = par_cdcooper AND
-                                      crapepr.nrdconta = par_nrdconta AND
-                                      crapepr.nrctremp = par_nrctremp NO-LOCK:
-                            END.
-
-                            IF  NOT AVAIL crapepr THEN
-                                DO:
-                                    ASSIGN aux_cdcritic = 356.
-                                    LEAVE Busca.
-                                END.
-
-                            IF  par_cddopcao = "E" THEN
-                                DO:
-                                    ASSIGN aux_dscritic = "Tipo de aditivo " +
-                                                        "nao permite EXCLUSAO".
-                                    LEAVE Busca.
-                                END.
-                            ELSE
-                            IF  par_cddopcao <> "C" THEN
-                                DO:
-                                    ASSIGN tt-aditiv.flgpagto =
-                                                              crapepr.flgpagto
-                                           tt-aditiv.tpdescto =
-                                                               crapepr.tpdescto.
-
-                                END.
-
-                        END. /* par_cdaditiv = 1 */
-                    WHEN 4 THEN
-                        DO:
-                            IF  CAN-DO("E,I",par_cddopcao) THEN
-                                DO:
-                                    ASSIGN aux_dscritic = "Tipo de aditivo" +
-                                                   " permite somente CONSULTA".
-                                    LEAVE Busca.
-                                END.
-                            ELSE
-                                DO:
-                                    FOR FIRST crapadi WHERE
-                                              crapadi.cdcooper = par_cdcooper AND
-                                              crapadi.nrdconta = par_nrdconta AND
-                                              crapadi.nrctremp = par_nrctremp AND
-                                              crapadi.nraditiv = par_nraditiv AND
-                                              crapadi.nrsequen = 1 NO-LOCK: END.
-
-                                    IF  AVAIL crapadi THEN
-                                        DO:
-                                            ASSIGN tt-aditiv.dscpfavl =
-                                                        STRING(crapadi.nrcpfcgc,
-                                                                  "99999999999")
-                                                   tt-aditiv.dscpfavl =
-                                                      STRING(tt-aditiv.dscpfavl,
-                                                          "    xxx.xxx.xxx-xx")
-                                                   tt-aditiv.nmdavali =
-                                                               crapadi.nmdavali.
-                                        END.
-
-                                END.
-                        END. /* par_cdaditiv = 4 */
-                    WHEN 5 THEN
-                        DO:
-                            ASSIGN aux_contador = 0.
-
-                            IF  par_cddopcao <> "I" THEN
-                                ASSIGN tt-aditiv.nrcpfcgc = crapadi.nrcpfcgc
-                                       tt-aditiv.nmdavali = crapadi.nmdavali.
-
-
-                            FOR EACH crapbpr WHERE
-                                     crapbpr.cdcooper = par_cdcooper AND
-                                     crapbpr.nrdconta = par_nrdconta AND
-                                     crapbpr.tpctrpro = 90           AND
-                                     crapbpr.nrctrpro = par_nrctremp AND
-                                     crapbpr.flgalien = TRUE NO-LOCK:
-
-                                ASSIGN aux_contador = aux_contador + 1.
-
-                                CREATE tt-aditiv.
-                                ASSIGN tt-aditiv.nrsequen = aux_contador
-                                       tt-aditiv.idseqbem = crapbpr.idseqbem
-                                       tt-aditiv.dsbemfin = crapbpr.dsbemfin
-                                       tt-aditiv.nrcpfcgc = crapbpr.nrcpfbem.
-                            END.
-                        END.
-                    WHEN 6 THEN
-                        DO:
-                            IF  par_cddopcao = "I" THEN
-                                DO:
-                                    ASSIGN aux_dscritic = "TIPO DE ADITIVO " +
-                                                          "NAO PERMITIDO ".
-                                    LEAVE Busca.
-                                END.
-                        END.
-
-                END CASE.
-
-            END. /* IF  CAN-DO("C,E,I",par_cddopcao) */
-        ELSE
-        IF  par_cddopcao = "X" THEN
-            DO:
-                IF  NOT CAN-FIND(FIRST crapass WHERE
-                                       crapass.cdcooper = par_cdcooper AND
-                                       crapass.nrdconta = par_nrdconta) THEN
-                    DO:
-                        ASSIGN aux_cdcritic = 9.
-                        LEAVE Busca.
-                    END.
-
-                IF  NOT CAN-FIND(FIRST crawepr WHERE
-                                       crawepr.cdcooper = par_cdcooper AND
-                                       crawepr.nrdconta = par_nrdconta AND
-                                       crawepr.nrctremp = par_nrctremp) THEN
-                    DO:
-                        ASSIGN aux_dscritic = "Contrato/Proposta de " +
-                                              "emprestimo nao encontrado.".
-                        LEAVE Busca.
-                    END.
-
-                /* Bens alienados */
-                Alienados:
-                FOR EACH crapbpr WHERE crapbpr.cdcooper = par_cdcooper AND
-                                       crapbpr.nrdconta = par_nrdconta AND
-                                       crapbpr.tpctrpro = 90           AND
-                                       crapbpr.nrctrpro = par_nrctremp AND
-                                       crapbpr.flgalien = TRUE NO-LOCK:
-
-                    ASSIGN aux_despreza = NO.
-
-                    FOR EACH crapadt WHERE crapadt.cdcooper = par_cdcooper AND
-                                           crapadt.nrdconta = par_nrdconta AND
-                                           crapadt.nrctremp = par_nrctremp AND
-                                           crapadt.cdaditiv = 5 NO-LOCK,
-                       FIRST crapadi WHERE /* Se houver aditiv.nao elim.*/
-                                   crapadi.cdcooper = crapadt.cdcooper AND
-                                   crapadi.nrdconta = crapadt.nrdconta AND
-                                   crapadi.nrctremp = crapadt.nrctremp AND
-                                   crapadi.nraditiv = crapadt.nraditiv AND
-                                   crapadi.dsbemfin = crapbpr.dsbemfin AND
-                                   crapadi.dschassi = crapbpr.dschassi AND
-                                   crapadi.nrdplaca = crapbpr.nrdplaca AND
-                                   crapadi.dscorbem = crapbpr.dscorbem AND
-                                   crapadi.nranobem = crapbpr.nranobem AND
-                                   crapadi.nrmodbem = crapbpr.nrmodbem AND
-                                   crapadi.nrrenava = crapbpr.nrrenava AND
-                                   crapadi.tpchassi = crapbpr.tpchassi AND
-                                   crapadi.ufdplaca = crapbpr.ufdplaca AND
-                                   crapadi.uflicenc = crapbpr.uflicenc NO-LOCK:
-
-                        ASSIGN aux_despreza = YES.
-                        LEAVE.
-
-                    END. /* FOR EACH crapadt */
-
-                    IF  aux_despreza  THEN
-                        NEXT.
-
-                    CREATE tt-aditiv.
-                    ASSIGN tt-aditiv.dsbemfin = crapbpr.dsbemfin
-                           tt-aditiv.dschassi = crapbpr.dschassi
-                           tt-aditiv.nrdplaca = crapbpr.nrdplaca
-                           tt-aditiv.dscorbem = crapbpr.dscorbem
-                           tt-aditiv.nranobem = crapbpr.nranobem
-                           tt-aditiv.nrmodbem = crapbpr.nrmodbem
-                           tt-aditiv.nrrenava = crapbpr.nrrenava
-                           tt-aditiv.tpchassi = crapbpr.tpchassi
-                           tt-aditiv.ufdplaca = crapbpr.ufdplaca
-                           tt-aditiv.uflicenc = crapbpr.uflicenc
-                           tt-aditiv.idseqbem = crapbpr.idseqbem
-                           tt-aditiv.nrcpfcgc = crapbpr.nrcpfbem
-                           tt-aditiv.nrdconta = par_nrdconta
-                           tt-aditiv.nrctremp = par_nrctremp
-                           tt-aditiv.nraditiv = par_nraditiv
-                           tt-aditiv.cdaditiv = par_cdaditiv.
-
-                END. /* Fim do FOR EACH dos BENS ALIENADOS */
-
-            END. /* IF  par_cddopcao = "X" */
-        ELSE
-            DO:
-                ASSIGN aux_cdcritic = 14.
-                LEAVE Busca.
-            END.
-
-        ASSIGN aux_returnvl = "OK".
-
-        LEAVE Busca.
-
-    END. /* Busca */
-
+    /* Busca possíveis erros */
+    ASSIGN aux_cdcritic = 0
+           aux_dscritic = ""
+           aux_cdcritic = pc_busca_dados_aditiv_prog.pr_cdcritic
+                          WHEN pc_busca_dados_aditiv_prog.pr_cdcritic <> ?
+           aux_dscritic = pc_busca_dados_aditiv_prog.pr_dscritic
+                          WHEN pc_busca_dados_aditiv_prog.pr_dscritic <> ?.
 
     IF  aux_dscritic <> "" OR aux_cdcritic <> 0 THEN
         DO:
-            ASSIGN aux_returnvl = "NOK".
+            ASSIGN aux_returnvl = "NOK"
+                   aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
+                   aux_dstransa = "Busca Aditivo Contratual.".
 
             RUN gera_erro (INPUT par_cdcooper,
                            INPUT par_cdagenci,
@@ -1005,7 +358,144 @@ PROCEDURE Busca_Dados:
                                     INPUT par_nmdatela,
                                     INPUT par_nrdconta,
                                    OUTPUT aux_nrdrowid).
+        END.
+    ELSE
+        DO:
+            /* Buscar o XML na tabela de retorno da procedure Progress */
+            ASSIGN xml_req      = pc_busca_dados_aditiv_prog.pr_clob_xml
+                   par_qtregist = pc_busca_dados_aditiv_prog.pr_qtregist.
 
+            /* Efetuar a leitura do XML*/
+            SET-SIZE(ponteiro_xml) = LENGTH(xml_req) + 1.
+            PUT-STRING(ponteiro_xml,1) = xml_req.
+
+            xDoc:LOAD("MEMPTR",ponteiro_xml,FALSE).
+            xDoc:GET-DOCUMENT-ELEMENT(xRoot).
+
+            DO  aux_cont = 1 TO xRoot:NUM-CHILDREN:
+
+                xRoot:GET-CHILD(xRoot2,aux_cont).
+
+                IF xRoot2:SUBTYPE <> "ELEMENT"   THEN
+                   NEXT.
+
+                DO  aux_cont2 = 1 TO xRoot2:NUM-CHILDREN:
+                  
+                  xRoot2:GET-CHILD(xRoot3,aux_cont2).
+
+                  IF xRoot3:SUBTYPE <> "ELEMENT" THEN
+                     NEXT.
+                      
+                  IF xRoot2:NAME = "aditivos" THEN                      
+                    CREATE tt-aditiv.
+                  ELSE
+                    CREATE tt-aplicacoes.
+                    
+                  DO  aux_cont3 = 1 TO xRoot3:NUM-CHILDREN:
+
+                    xRoot3:GET-CHILD(xField,aux_cont3).
+
+                    IF xField:SUBTYPE <> "ELEMENT" THEN
+                       NEXT.
+
+                    IF xField:NUM-CHILDREN = 0   THEN
+                       NEXT.
+                                 
+                    xField:GET-CHILD(xText,1).
+                    
+                    /* Se for tag de aditivos */
+                    IF xRoot2:NAME = "aditivos" THEN
+                       DO:
+                          ASSIGN tt-aditiv.nrdconta = INTE(xText:NODE-VALUE) WHEN xField:NAME = "nrdconta"
+                                 tt-aditiv.nrctremp = INTE(xText:NODE-VALUE) WHEN xField:NAME = "nrctremp"
+                                 tt-aditiv.nraditiv = INTE(xText:NODE-VALUE) WHEN xField:NAME = "nraditiv"
+                                 tt-aditiv.cdaditiv = INTE(xText:NODE-VALUE) WHEN xField:NAME = "cdaditiv"
+                                 tt-aditiv.dsaditiv = xText:NODE-VALUE WHEN xField:NAME = "dsaditiv"
+                                 tt-aditiv.dtmvtolt = DATE(xText:NODE-VALUE) WHEN xField:NAME = "dtmvtolt"
+                                 tt-aditiv.nrctagar = INTE(xText:NODE-VALUE) WHEN xField:NAME = "nrctagar"
+                                 tt-aditiv.nrcpfgar = DECI(xText:NODE-VALUE) WHEN xField:NAME = "nrcpfgar"
+                                 tt-aditiv.nrdocgar = xText:NODE-VALUE WHEN xField:NAME = "nrdocgar"
+                                 tt-aditiv.nmdgaran = xText:NODE-VALUE WHEN xField:NAME = "nmdgaran"
+                                 tt-aditiv.flgpagto = LOGICAL(INTE(xText:NODE-VALUE)) WHEN xField:NAME = "flgpagto"
+                                 tt-aditiv.dtdpagto = DATE(xText:NODE-VALUE) WHEN xField:NAME = "dtdpagto"
+                                 tt-aditiv.dsbemfin = xText:NODE-VALUE WHEN xField:NAME = "dsbemfin"
+                                 tt-aditiv.dschassi = xText:NODE-VALUE WHEN xField:NAME = "dschassi"
+                                 tt-aditiv.nrdplaca = xText:NODE-VALUE WHEN xField:NAME = "nrdplaca"
+                                 tt-aditiv.dscorbem = xText:NODE-VALUE WHEN xField:NAME = "dscorbem"
+                                 tt-aditiv.nranobem = INTE(xText:NODE-VALUE) WHEN xField:NAME = "nranobem"
+                                 tt-aditiv.nrmodbem = INTE(xText:NODE-VALUE) WHEN xField:NAME = "nrmodbem"
+                                 tt-aditiv.nrrenava = INTE(xText:NODE-VALUE) WHEN xField:NAME = "nrrenava"
+                                 tt-aditiv.tpchassi = INTE(xText:NODE-VALUE) WHEN xField:NAME = "tpchassi"
+                                 tt-aditiv.ufdplaca = xText:NODE-VALUE WHEN xField:NAME = "ufdplaca"
+                                 tt-aditiv.uflicenc = xText:NODE-VALUE WHEN xField:NAME = "uflicenc"
+                                 tt-aditiv.nmdavali = xText:NODE-VALUE WHEN xField:NAME = "nmdavali"
+                                 tt-aditiv.tpdescto = INTE(xText:NODE-VALUE) WHEN xField:NAME = "tpdescto"
+                                 tt-aditiv.dscpfavl = xText:NODE-VALUE WHEN xField:NAME = "dscpfavl"
+                                 tt-aditiv.nrcpfcgc = DECI(xText:NODE-VALUE) WHEN xField:NAME = "nrcpfcgc"
+                                 tt-aditiv.nrsequen = INTE(xText:NODE-VALUE) WHEN xField:NAME = "nrsequen"
+                                 tt-aditiv.idseqbem = INTE(xText:NODE-VALUE) WHEN xField:NAME = "idseqbem".
+
+                          IF xField:NAME = "promissorias" THEN
+                             DO:
+                                DO  aux_cont4 = 1 TO xField:NUM-CHILDREN:
+
+                                  xField:GET-CHILD(xField2,aux_cont4).
+
+                                  IF xField2:SUBTYPE <> "ELEMENT" THEN
+                                      NEXT.
+
+                                  IF xField2:NUM-CHILDREN = 0 THEN
+                                      NEXT.
+
+                                  DO  aux_cont5 = 1 TO xField2:NUM-CHILDREN:
+                                  
+                                    xField2:GET-CHILD(xField3,aux_cont5).
+
+                                    IF xField3:SUBTYPE <> "ELEMENT" THEN
+                                        NEXT.
+
+                                    IF xField3:NUM-CHILDREN = 0 THEN
+                                        NEXT.
+                                  
+                                    xField3:GET-CHILD(xText2,1).
+                                  
+                                    ASSIGN aux_nrsequex = INTE(xText2:NODE-VALUE) WHEN xField3:NAME = "nrseqpro"
+                                           tt-aditiv.nrpromis[aux_nrsequex] = xText2:NODE-VALUE WHEN xField3:NAME = "nrpromis"
+                                           tt-aditiv.vlpromis[aux_nrsequex] = DECI(xText2:NODE-VALUE) WHEN xField3:NAME = "vlpromis".
+                                  END.
+                                  
+                                END.
+                             END.
+                       END.
+                    ELSE
+                       DO:
+                          ASSIGN tt-aplicacoes.nraplica = INTE(xText:NODE-VALUE) WHEN xField:NAME = "nraplica"
+                                 tt-aplicacoes.dtmvtolt = DATE(xText:NODE-VALUE) WHEN xField:NAME = "dtmvtolt"
+                                 tt-aplicacoes.dshistor = xText:NODE-VALUE WHEN xField:NAME = "dshistor"
+                                 tt-aplicacoes.vlaplica = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlaplica"
+                                 tt-aplicacoes.nrdocmto = xText:NODE-VALUE WHEN xField:NAME = "nrdocmto"
+                                 tt-aplicacoes.dtvencto = DATE(xText:NODE-VALUE) WHEN xField:NAME = "dtvencto"
+                                 tt-aplicacoes.vlsldapl = DECI(xText:NODE-VALUE) WHEN xField:NAME = "vlsldapl"
+                                 tt-aplicacoes.sldresga = DECI(xText:NODE-VALUE) WHEN xField:NAME = "sldresga".
+                       END.
+                  END.
+
+                END.
+
+            END.
+
+            SET-SIZE(ponteiro_xml) = 0.
+
+            DELETE OBJECT xDoc.
+            DELETE OBJECT xRoot.
+            DELETE OBJECT xRoot2.
+            DELETE OBJECT xRoot3.
+            DELETE OBJECT xRoot4.
+            DELETE OBJECT xField.
+            DELETE OBJECT xField2.
+            DELETE OBJECT xField3.
+            DELETE OBJECT xText.
+            DELETE OBJECT xText2.
         END.
 
     RETURN aux_returnvl.
@@ -1027,6 +517,7 @@ PROCEDURE Valida_Dados:
     DEF  INPUT PARAM par_cddopcao AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_nrdconta AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_cdaditiv AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_tpctrato AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_nrctremp AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_dtdpagto AS DATE                           NO-UNDO.
     DEF  INPUT PARAM par_flgpagto AS LOGI                           NO-UNDO.
@@ -1061,7 +552,7 @@ PROCEDURE Valida_Dados:
 
     ASSIGN aux_dscritic = ""
            aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
-           aux_dstransa = "Valida Aditivos Contrato de Emprestimo"
+           aux_dstransa = "Valida Aditivos Contratuais de Operacoes de Credito"
            aux_cdcritic = 0
            aux_flgaplic = NO
            aux_returnvl = "NOK"
@@ -1070,7 +561,8 @@ PROCEDURE Valida_Dados:
     Valida: DO ON ERROR UNDO Valida, LEAVE Valida:
         EMPTY TEMP-TABLE tt-erro.
 
-        IF  CAN-DO("I,E",par_cddopcao) THEN
+        IF  CAN-DO("I,E",par_cddopcao) AND
+            par_tpctrato = 90          THEN
             DO:
                 CASE par_cdaditiv:
 
@@ -1688,6 +1180,8 @@ PROCEDURE Grava_Dados:
     DEF  INPUT PARAM par_nrctremp AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_cdaditiv AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_nraditiv AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_tpctrato AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_idgaropc AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_flgpagto AS LOGI                           NO-UNDO.
     DEF  INPUT PARAM par_dtdpagto AS DATE                           NO-UNDO.
     DEF  INPUT PARAM par_flgaplic AS LOGI                           NO-UNDO.
@@ -1734,6 +1228,8 @@ PROCEDURE Grava_Dados:
     DEF VAR aux_cdagenci AS INTE                                    NO-UNDO.
 
     DEF VAR aux_flsitgrv AS LOGICAL                                 NO-UNDO.
+
+    DEF VAR aux_idgaropc_old AS INTE                                NO-UNDO.
 
     DEF VAR h-b1wgen0168 AS HANDLE                                  NO-UNDO.
     DEF BUFFER crabbpr FOR crapbpr.
@@ -1784,6 +1280,7 @@ PROCEDURE Grava_Dados:
                                 ( INPUT par_cdcooper,
                                   INPUT par_nrdconta,
                                   INPUT par_nrctremp,
+                                  INPUT par_tpctrato,
                                  OUTPUT aux_uladitiv,
                                  OUTPUT aux_cdcritic).
 
@@ -1795,6 +1292,7 @@ PROCEDURE Grava_Dados:
                                    crapadt.nrctremp = par_nrctremp
                                    crapadt.nraditiv = aux_uladitiv
                                    crapadt.cdaditiv = 1
+                                   crapadt.tpctrato = par_tpctrato
                                    crapadt.dtmvtolt = par_dtmvtolt
                                    crapadt.cdcooper = par_cdcooper
                                    crapadt.cdagenci = aux_cdagenci
@@ -1806,6 +1304,7 @@ PROCEDURE Grava_Dados:
                             ASSIGN crapadi.nrdconta = par_nrdconta
                                    crapadi.nrctremp = par_nrctremp
                                    crapadi.nraditiv = aux_uladitiv
+                                   crapadi.tpctrato = par_tpctrato
                                    crapadi.nrsequen = 1
                                    crapadi.flgpagto = par_flgpagto
                                    crapadi.dtdpagto = par_dtdpagto
@@ -1961,7 +1460,9 @@ PROCEDURE Grava_Dados:
                                           INPUT  "", /* nrdocgar */
                                           INPUT  "", /* nrpromis */
                                           INPUT  0,  /* vlpromis */
-                                          INPUT  0). /* tpproapl */
+                                          INPUT  0,  /* tpproapl */
+                                          INPUT  par_tpctrato,
+                                          INPUT  0). /* idgaropc */
 
                         END. /* par_cdaditiv = 1 */
                     WHEN 2 THEN
@@ -1971,6 +1472,7 @@ PROCEDURE Grava_Dados:
                                 ( INPUT par_cdcooper,
                                   INPUT par_nrdconta,
                                   INPUT par_nrctremp,
+                                  INPUT par_tpctrato,
                                  OUTPUT aux_uladitiv,
                                  OUTPUT aux_cdcritic).
 
@@ -1984,6 +1486,7 @@ PROCEDURE Grava_Dados:
                                            crapadt.nrctremp = par_nrctremp
                                            crapadt.nraditiv = aux_uladitiv
                                            crapadt.cdaditiv = 2
+                                           crapadt.tpctrato = par_tpctrato
                                            crapadt.dtmvtolt = par_dtmvtolt
                                            crapadt.cdcooper = par_cdcooper
                                            crapadt.cdagenci = aux_cdagenci
@@ -2000,6 +1503,7 @@ PROCEDURE Grava_Dados:
                                 ASSIGN crapadi.nrdconta = par_nrdconta
                                        crapadi.nrctremp = par_nrctremp
                                        crapadi.nraditiv = aux_uladitiv
+                                       crapadi.tpctrato = par_tpctrato
                                        crapadi.nrsequen = aux_nrsequen
                                        crapadi.tpaplica = tt-aplicacoes.tpaplica
                                        crapadi.nraplica = tt-aplicacoes.nraplica
@@ -2038,7 +1542,9 @@ PROCEDURE Grava_Dados:
                                               INPUT  "", /* nrdocgar */
                                               INPUT  "", /* nrpromis */
                                               INPUT  0,  /* vlpromis */
-                                              INPUT tt-aplicacoes.tpproapl).
+                                              INPUT tt-aplicacoes.tpproapl,
+                                              INPUT  par_tpctrato,
+                                              INPUT  0). /* idgaropc */
 
                                 IF  tt-aplicacoes.tpproapl = 1 THEN
                                     DO:
@@ -2121,6 +1627,7 @@ PROCEDURE Grava_Dados:
                                 ( INPUT par_cdcooper,
                                   INPUT par_nrdconta,
                                   INPUT par_nrctremp,
+                                  INPUT par_tpctrato,
                                  OUTPUT aux_uladitiv,
                                  OUTPUT aux_cdcritic).
 
@@ -2134,6 +1641,7 @@ PROCEDURE Grava_Dados:
                                            crapadt.nrctremp = par_nrctremp
                                            crapadt.nraditiv = aux_uladitiv
                                            crapadt.cdaditiv = 3
+                                           crapadt.tpctrato = par_tpctrato
                                            crapadt.dtmvtolt = par_dtmvtolt
                                            crapadt.nrctagar = par_nrctagar
                                            crapadt.cdcooper = par_cdcooper
@@ -2152,6 +1660,7 @@ PROCEDURE Grava_Dados:
                                 ASSIGN crapadi.nrdconta = par_nrdconta
                                        crapadi.nrctremp = par_nrctremp
                                        crapadi.nraditiv = aux_uladitiv
+                                       crapadi.tpctrato = par_tpctrato
                                        crapadi.nrsequen = aux_nrsequen
                                        crapadi.tpaplica = tt-aplicacoes.tpaplica
                                        crapadi.nraplica = tt-aplicacoes.nraplica
@@ -2190,7 +1699,9 @@ PROCEDURE Grava_Dados:
                                               INPUT  "", /* nrdocgar */
                                               INPUT  "", /* nrpromis */
                                               INPUT  0,  /* vlpromis */
-                                              INPUT  tt-aplicacoes.tpproapl).
+                                              INPUT  tt-aplicacoes.tpproapl,
+                                              INPUT  par_tpctrato,
+                                              INPUT  0). /* idgaropc */
 
                                 IF  tt-aplicacoes.tpproapl = 2 THEN
                                     DO:
@@ -2273,6 +1784,7 @@ PROCEDURE Grava_Dados:
                                 ( INPUT par_cdcooper,
                                   INPUT par_nrdconta,
                                   INPUT par_nrctremp,
+                                  INPUT par_tpctrato,
                                  OUTPUT aux_uladitiv,
                                  OUTPUT aux_cdcritic).
 
@@ -2321,6 +1833,7 @@ PROCEDURE Grava_Dados:
                                    crapadt.nrctremp = par_nrctremp
                                    crapadt.nraditiv = aux_uladitiv
                                    crapadt.cdaditiv = 5
+                                   crapadt.tpctrato = par_tpctrato
                                    crapadt.dtmvtolt = par_dtmvtolt
                                    crapadt.cdcooper = par_cdcooper
                                    crapadt.cdagenci = aux_cdagenci
@@ -2332,6 +1845,7 @@ PROCEDURE Grava_Dados:
                             ASSIGN crapadi.nrdconta = par_nrdconta
                                    crapadi.nrctremp = par_nrctremp
                                    crapadi.nraditiv = aux_uladitiv
+                                   crapadi.tpctrato = par_tpctrato
                                    crapadi.nrsequen = 1
                                    crapadi.dsbemfin = par_dsbemfin
                                    crapadi.dschassi = par_dschassi
@@ -2469,7 +1983,9 @@ PROCEDURE Grava_Dados:
                                                   INPUT  "", /* nrdocgar */
                                                   INPUT  "", /* nrpromis */
                                                   INPUT  0,  /* vlpromis */
-                                                  INPUT  0).
+                                                  INPUT  0,
+                                                  INPUT  par_tpctrato,
+                                                  INPUT  0). /* idgaropc */
                                 END.
 
                                 /** GRAVAMES - Copia BEM para tipo 99 **/
@@ -2604,7 +2120,9 @@ PROCEDURE Grava_Dados:
                                           INPUT  "", /* nrdocgar */
                                           INPUT  "", /* nrpromis */
                                           INPUT  0,  /* vlpromis */
-                                          INPUT  0).
+                                          INPUT  0,
+                                          INPUT  par_tpctrato,
+                                          INPUT  0). /* idgaropc */
                         END. /* par_cdaditiv = 5 */
 
                     WHEN 6 THEN
@@ -2613,6 +2131,7 @@ PROCEDURE Grava_Dados:
                                 ( INPUT par_cdcooper,
                                   INPUT par_nrdconta,
                                   INPUT par_nrctremp,
+                                  INPUT par_tpctrato,
                                  OUTPUT aux_uladitiv,
                                  OUTPUT aux_cdcritic).
 
@@ -2661,6 +2180,7 @@ PROCEDURE Grava_Dados:
                                    crapadt.nrctremp = par_nrctremp
                                    crapadt.nraditiv = aux_uladitiv
                                    crapadt.cdaditiv = 6
+                                   crapadt.tpctrato = par_tpctrato
                                    crapadt.dtmvtolt = par_dtmvtolt
                                    crapadt.nrcpfgar = par_nrcpfgar
                                    crapadt.nrdocgar = par_nrdocgar
@@ -2675,6 +2195,7 @@ PROCEDURE Grava_Dados:
                             ASSIGN crapadi.nrdconta = par_nrdconta
                                    crapadi.nrctremp = par_nrctremp
                                    crapadi.nraditiv = aux_uladitiv
+                                   crapadi.tpctrato = par_tpctrato
                                    crapadi.nrsequen = 1
                                    crapadi.dsbemfin = par_dsbemfin
                                    crapadi.dschassi = par_dschassi
@@ -2719,7 +2240,9 @@ PROCEDURE Grava_Dados:
                                           INPUT  par_nrdocgar,
                                           INPUT  "", /* nrpromis */
                                           INPUT  0,  /* vlpromis */
-                                          INPUT  0). /* tpproapl */
+                                          INPUT  0,  /* tpproapl */
+                                          INPUT  par_tpctrato,
+                                          INPUT  0). /* idgaropc */
 
                         END. /* par_cdaditiv = 6 */
                     WHEN 7 THEN
@@ -2728,6 +2251,7 @@ PROCEDURE Grava_Dados:
                                 ( INPUT par_cdcooper,
                                   INPUT par_nrdconta,
                                   INPUT par_nrctremp,
+                                  INPUT par_tpctrato,
                                  OUTPUT aux_uladitiv,
                                  OUTPUT aux_cdcritic).
 
@@ -2780,6 +2304,7 @@ PROCEDURE Grava_Dados:
                                                crapadt.nrctremp = par_nrctremp
                                                crapadt.nraditiv = aux_uladitiv
                                                crapadt.cdaditiv = 7
+                                               crapadt.tpctrato = par_tpctrato
                                                crapadt.dtmvtolt = par_dtmvtolt
                                                crapadt.cdcooper = par_cdcooper
                                                crapadt.cdagenci = aux_cdagenci
@@ -2804,6 +2329,7 @@ PROCEDURE Grava_Dados:
                                         ASSIGN crapadi.nrdconta = par_nrdconta
                                                crapadi.nrctremp = par_nrctremp
                                                crapadi.nraditiv = aux_uladitiv
+                                               crapadi.tpctrato = par_tpctrato
                                                crapadi.nrsequen = aux_nrsequen
                                                crapadi.nrcpfcgc = par_nrcpfgar
                                                crapadi.nmdavali = par_nmdgaran
@@ -2844,7 +2370,9 @@ PROCEDURE Grava_Dados:
                                                       INPUT  "", /* nrdocgar */
                                                       INPUT  par_nrpromis[aux_contador],
                                                       INPUT  par_vlpromis[aux_contador],
-                                                      INPUT  0). /* tpproapl */
+                                                      INPUT  0, /* tpproapl */
+                                                      INPUT  par_tpctrato,
+                                                      INPUT  0). /* idgaropc */
 
                                     END.
                             END.
@@ -2857,6 +2385,7 @@ PROCEDURE Grava_Dados:
                                 ( INPUT par_cdcooper,
                                   INPUT par_nrdconta,
                                   INPUT par_nrctremp,
+                                  INPUT par_tpctrato,
                                  OUTPUT aux_uladitiv,
                                  OUTPUT aux_cdcritic).
 
@@ -2905,6 +2434,7 @@ PROCEDURE Grava_Dados:
                                    crapadt.nrctremp = par_nrctremp
                                    crapadt.nraditiv = aux_uladitiv
                                    crapadt.cdaditiv = 8
+                                   crapadt.tpctrato = par_tpctrato
                                    crapadt.dtmvtolt = par_dtmvtolt
                                    crapadt.cdcooper = par_cdcooper
                                    crapadt.cdagenci = aux_cdagenci
@@ -2916,6 +2446,7 @@ PROCEDURE Grava_Dados:
                             ASSIGN crapadi.nrdconta = par_nrdconta
                                    crapadi.nrctremp = par_nrctremp
                                    crapadi.nraditiv = aux_uladitiv
+                                   crapadi.tpctrato = par_tpctrato
                                    crapadi.nrsequen = 1
                                    crapadi.nrcpfcgc = par_nrcpfgar
                                    crapadi.nmdavali = par_nmdgaran
@@ -2953,10 +2484,179 @@ PROCEDURE Grava_Dados:
                                           INPUT  "", /* nrdocgar */
                                           INPUT  "", /* nrpromis */
                                           INPUT  par_vlpromis[1],
-                                          INPUT  0). /* tpproapl */
+                                          INPUT  0,  /* tpproapl */
+                                          INPUT  par_tpctrato,
+                                          INPUT  0). /* idgaropc */
 
 
                         END. /* par_cdaditiv = 8 */
+
+                    WHEN 9 THEN
+                        DO:
+                            FIND FIRST crapadt WHERE
+                                       crapadt.cdcooper = par_cdcooper AND
+                                       crapadt.tpctrato = par_tpctrato AND
+                                       crapadt.nrdconta = par_nrdconta AND
+                                       crapadt.nrctremp = par_nrctremp AND
+                                       crapadt.cdaditiv = 9
+                                       EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+
+                            IF  AVAIL crapadt  THEN
+                                DO:
+                                    ASSIGN crapadt.dtmvtolt = par_dtmvtolt 
+                                           crapadt.cdagenci = aux_cdagenci 
+                                           crapadt.cdoperad = par_cdoperad 
+                                           crapadt.flgdigit = NO
+                                           aux_uladitiv     = crapadt.nraditiv.
+                                END.
+                            ELSE
+                                DO:
+                                    RUN obtem_nro_aditivo
+                                        ( INPUT par_cdcooper,
+                                          INPUT par_nrdconta,
+                                          INPUT par_nrctremp,
+                                          INPUT par_tpctrato,
+                                         OUTPUT aux_uladitiv,
+                                         OUTPUT aux_cdcritic).
+
+                                    IF  aux_cdcritic <> 0 THEN
+                                        UNDO Grava, LEAVE Grava.
+
+                                    CREATE crapadt.
+                                    ASSIGN crapadt.nrdconta = par_nrdconta
+                                           crapadt.nrctremp = par_nrctremp
+                                           crapadt.nraditiv = aux_uladitiv
+                                           crapadt.cdaditiv = 9
+                                           crapadt.tpctrato = par_tpctrato
+                                           crapadt.dtmvtolt = par_dtmvtolt
+                                           crapadt.cdcooper = par_cdcooper
+                                           crapadt.cdagenci = aux_cdagenci
+                                           crapadt.cdoperad = par_cdoperad
+                                           crapadt.flgdigit = NO.
+                                    VALIDATE crapadt.
+                                END.
+
+                            /* Atualizar na proposta o ID da cobertura gravada conforme o tipo de contrato */
+                            IF  par_tpctrato = 90 THEN
+                                DO:
+                                   FIND FIRST crawepr WHERE
+                                              crawepr.cdcooper = par_cdcooper AND
+                                              crawepr.nrdconta = par_nrdconta AND
+                                              crawepr.nrctremp = par_nrctremp
+                                              EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+
+                                   IF  AVAIL crawepr THEN
+                                       DO:
+                                           ASSIGN aux_idgaropc_old = crawepr.idcobope
+                                                  crawepr.idcobope = par_idgaropc
+                                                  crawepr.idcobefe = par_idgaropc
+                                                                     WHEN crawepr.idcobefe = 0.
+                                       END.
+                                END.
+                            ELSE
+                                DO:
+                                   FIND FIRST craplim WHERE
+                                              craplim.cdcooper = par_cdcooper AND
+                                              craplim.nrdconta = par_nrdconta AND
+                                              craplim.nrctrlim = par_nrctremp AND
+                                              craplim.tpctrlim = par_tpctrato
+                                              EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+
+                                   IF  AVAIL craplim THEN
+                                       DO:
+                                           ASSIGN aux_idgaropc_old = craplim.idcobope
+                                                  craplim.idcobope = par_idgaropc
+                                                  craplim.idcobefe = par_idgaropc
+                                                                     WHEN craplim.idcobefe = 0.
+                                       END.
+                                END.
+
+                            { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+                            /* Efetuar a chamada a rotina Oracle */
+                            RUN STORED-PROCEDURE pc_vincula_cobertura_operacao
+                            aux_handproc = PROC-HANDLE NO-ERROR (INPUT aux_idgaropc_old /* pr_idcobertura_anterior */
+                                                                ,INPUT par_idgaropc     /* pr_idcobertura_nova */
+                                                                ,INPUT par_nrctremp     /* pr_nrcontrato */
+                                                                ,OUTPUT "").            /* pr_dscritic */
+
+                            /* Fechar o procedimento para buscarmos o resultado */
+                            CLOSE STORED-PROC pc_vincula_cobertura_operacao
+                                  aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+                            { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+                            /* Busca possiveis erros */
+                            ASSIGN aux_dscritic = ""
+                                   aux_dscritic = pc_vincula_cobertura_operacao.pr_dscritic
+                                                  WHEN pc_vincula_cobertura_operacao.pr_dscritic <> ?.
+
+                            IF  aux_dscritic <> "" THEN
+                                UNDO Grava, LEAVE Grava.
+
+                            { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+                            /* Efetuar a chamada a rotina Oracle */
+                            RUN STORED-PROCEDURE pc_bloq_desbloq_cob_operacao
+                            aux_handproc = PROC-HANDLE NO-ERROR (INPUT "ADITIV"     /* pr_nmdatela */
+                                                                ,INPUT par_idgaropc /* pr_idcobertura */
+                                                                ,INPUT "B"          /* pr_inbloq_desbloq */
+                                                                ,INPUT par_cdoperad /* pr_cdoperador */
+                                                                ,INPUT ""           /* pr_cdcoordenador_desbloq */
+                                                                ,INPUT 0            /* pr_vldesbloq */
+                                                                ,INPUT "S"          /* pr_flgerar_log */
+                                                                ,OUTPUT "").        /* pr_dscritic */
+
+                            /* Fechar o procedimento para buscarmos o resultado */
+                            CLOSE STORED-PROC pc_bloq_desbloq_cob_operacao
+                                  aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+                            { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+                            /* Busca possiveis erros */
+                            ASSIGN aux_dscritic = ""
+                                   aux_dscritic = pc_bloq_desbloq_cob_operacao.pr_dscritic
+                                                  WHEN pc_bloq_desbloq_cob_operacao.pr_dscritic <> ?.
+
+                            IF  aux_dscritic <> "" THEN
+                                UNDO Grava, LEAVE Grava.
+
+                            /* Log */
+                            RUN Gera_Log (INPUT  par_cdcooper,
+                                          INPUT  par_cdoperad,
+                                          INPUT  par_nmdatela,
+                                          INPUT  par_dtmvtolt,
+                                          INPUT  par_cddopcao,
+                                          INPUT  par_nrdconta,
+                                          INPUT  par_nrctremp,
+                                          INPUT  aux_uladitiv,
+                                          INPUT  par_cdaditiv,
+                                          INPUT  par_flgpagto,
+                                          INPUT  par_dtdpagto,
+                                          INPUT  0, /* nrctagar */
+                                          INPUT  0, /* tpaplica */
+                                          INPUT  0, /* nraplica */
+                                          INPUT  par_dsbemfin,
+                                          INPUT  par_nrrenava,
+                                          INPUT  par_tpchassi,
+                                          INPUT  par_dschassi,
+                                          INPUT  par_nrdplaca,
+                                          INPUT  par_ufdplaca,
+                                          INPUT  par_dscorbem,
+                                          INPUT  par_nranobem,
+                                          INPUT  par_nrmodbem,
+                                          INPUT  par_uflicenc,
+                                          INPUT  "", /* nmdgaran */
+                                          INPUT  0,  /* nrcpfgar */
+                                          INPUT  "", /* nrdocgar */
+                                          INPUT  "", /* nrpromis */
+                                          INPUT  0,  /* vlpromis */
+                                          INPUT  0,  /* tpproapl */
+                                          INPUT  par_tpctrato,
+                                          INPUT  par_idgaropc).
+
+
+                        END. /* par_cdaditiv = 9 */
 
                 END CASE.
 
@@ -3080,7 +2780,9 @@ PROCEDURE Grava_Dados:
                                               INPUT  "", /* nrdocgar */
                                               INPUT  "", /* nrpromis */
                                               INPUT  0,  /* vlpromis */
-                                              INPUT  crapadi.tpproapl).
+                                              INPUT  crapadi.tpproapl,
+                                              INPUT  par_tpctrato,
+                                              INPUT  0). /* idgaropc */
 
                                 DELETE crapadi.
 
@@ -3201,7 +2903,9 @@ PROCEDURE Grava_Dados:
                                               INPUT  "", /* nrdocgar */
                                               INPUT  "", /* nrpromis */
                                               INPUT  0,  /* vlpromis */
-                                              INPUT  crapadi.tpproapl).
+                                              INPUT  crapadi.tpproapl,
+                                              INPUT  par_tpctrato,
+                                              INPUT  0). /* idgaropc */
 
                                 DELETE crapadi.
 
@@ -3348,7 +3052,9 @@ PROCEDURE Grava_Dados:
                                                   INPUT  "", /* nrdocgar */
                                                   INPUT  "", /* nrpromis */
                                                   INPUT  0,  /* vlpromis */
-                                                  INPUT  0). /* tpproapl */
+                                                  INPUT  0,  /* tpproapl */
+                                                  INPUT  par_tpctrato,
+                                                  INPUT  0). /* idgaropc */
 
                                         /* GRAVAMES - Copia BEM para tipo 99 */
                                         IF  (par_cdcooper = 1 AND
@@ -3507,7 +3213,9 @@ PROCEDURE Grava_Dados:
                                                   INPUT  crapadt.nrdocgar,
                                                   INPUT  "", /* nrpromis */
                                                   INPUT  0,  /* vlpromis */
-                                                  INPUT  0). /* tpproapl */
+                                                  INPUT  0,  /* tpproapl */
+                                                  INPUT  par_tpctrato,
+                                                  INPUT  0). /* idgaropc */
                                 END.
 
                             DELETE crapadt.
@@ -3631,7 +3339,9 @@ PROCEDURE Grava_Dados:
                                                   INPUT  "", /* nrdocgar */
                                                   INPUT  crapadi.nrpromis,
                                                   INPUT  crapadi.vlpromis,
-                                                  INPUT  0). /* tpproapl */
+                                                  INPUT  0,  /* tpproapl */
+                                                  INPUT  par_tpctrato,
+                                                  INPUT  0). /* idgaropc */
 
                                 DELETE crapadi.
                             END.
@@ -3789,7 +3499,9 @@ PROCEDURE Grava_Dados:
                                           INPUT  "", /* nrdocgar */
                                           INPUT  "", /* nrpromis */
                                           INPUT  aux_vlpromis,
-                                          INPUT  0). /* tpproapl */
+                                          INPUT  0,  /* tpproapl */
+                                          INPUT  par_tpctrato,
+                                          INPUT  0). /* idgaropc */
 
                             DELETE crapadt.
                             DELETE crapadi.
@@ -3876,7 +3588,9 @@ PROCEDURE Grava_Dados:
                                       INPUT  "", /* nrdocgar */
                                       INPUT  "", /* nrpromis */
                                       INPUT  0,  /* vlpromis */
-                                      INPUT  0). /* tpproapl */
+                                      INPUT  0,  /* tpproapl */
+                                      INPUT  par_tpctrato,
+                                      INPUT  0). /* idgaropc */
                     END.
 
 
@@ -3989,339 +3703,6 @@ PROCEDURE Grava_Dados:
 
 END PROCEDURE. /* Grava_Dados */
 
-PROCEDURE Gera_Termo:
-
-    DEF  INPUT PARAM par_cdcooper AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_cdagenci AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_nrdcaixa AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_idorigem AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_nmdatela AS CHAR                           NO-UNDO.
-    DEF  INPUT PARAM par_dtmvtolt AS DATE                           NO-UNDO.
-    DEF  INPUT PARAM par_cdprogra AS CHAR                           NO-UNDO.
-    DEF  INPUT PARAM par_cdoperad AS CHAR FORMAT "x(10)"            NO-UNDO.
-    DEF  INPUT PARAM par_dsiduser AS CHAR                           NO-UNDO.
-    DEF  INPUT PARAM par_nrdconta AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_nrctremp AS INTE                           NO-UNDO.
-    DEF  INPUT PARAM par_nraditiv AS INTE   FORMAT "z9"             NO-UNDO.
-
-    DEF  OUTPUT PARAM aux_nmarqimp AS CHAR                          NO-UNDO.
-    DEF  OUTPUT PARAM aux_nmarqpdf AS CHAR                          NO-UNDO.
-
-    DEF  OUTPUT PARAM TABLE FOR tt-erro.
-
-    DEF VAR rel_nrdconta AS DECI                                   NO-UNDO.
-    DEF VAR aux_tpdocged AS INTE                                   NO-UNDO.
-    DEF VAR rel_nrctremp AS DECI                                   NO-UNDO.
-    DEF VAR rel_nrcpfcgc AS CHAR FORMAT "x(18)"                    NO-UNDO.
-    DEF VAR rel_nmdavali AS CHAR FORMAT "x(40)"                    NO-UNDO.
-    DEF VAR rel_nmoperad AS CHAR FORMAT "x(17)"                    NO-UNDO.
-    DEF VAR aux_nrcpfavl AS DECI FORMAT "99999999999999"           NO-UNDO.
-    DEF VAR aux_nrctaavl AS INTE FORMAT "zzzz,zzz,9"               NO-UNDO.
-    DEF VAR aux_qtcontpa AS INTE                                   NO-UNDO.
-    DEF VAR rel_dscpfavl AS CHAR FORMAT "x(18)"                    NO-UNDO.
-    DEF VAR rel_nmrescop AS CHAR FORMAT "x(30)" EXTENT 2           NO-UNDO.
-    DEF VAR rel_ddmvtolt AS INTE FORMAT "99"                       NO-UNDO.
-    DEF VAR rel_aamvtolt AS INTE FORMAT "9999"                     NO-UNDO.
-    DEF VAR aux_qtpalavr AS INTE                                   NO-UNDO.
-    DEF VAR rel_mmmvtolt AS CHAR FORMAT "x(17)"  EXTENT 12
-                                   INIT["de  Janeiro  de","de Fevereiro de",
-                                        "de   Marco   de","de   Abril   de",
-                                        "de   Maio    de","de   Junho   de",
-                                        "de   Julho   de","de   Agosto  de",
-                                        "de  Setembro de","de  Outubro  de",
-                                        "de  Novembro de","de  Dezembro de"]
-                                                                   NO-UNDO.
-
-
-    FORM "\022\024\033\120"     /* Reseta impressora */
-     SKIP(1)
-     "\033\016\033\105ADITIVO CONTRATUAL"  AT 20
-     "\022\024\033\120"     /* Reseta impressora */
-     par_nraditiv AT 63
-     SKIP(1)
-     "\033\016INCLUSAO DE FIADOR/AVALISTA"  AT 10 "\033\106"
-     SKIP(4)
-     "No contrato de emprestimo n."
-     "\033\105" crapepr.nrctremp                 AT 32   "\033\106"
-     "firmado em"                                AT 44
-     "\033\105" crapepr.dtmvtolt                 AT 59   "\033\106"
-     ",tendo como"                               AT 73
-     SKIP(1)
-     "partes de um lado a:\033\105"
-     SKIP(1)
-     crapcop.nmextcop
-     "\033\106,CNPJ\033\105"
-     crapcop.nrdocnpj
-     "\033\106"
-     SKIP(1)
-     "e de outro o(a) Sr(a).:\033\105"
-     SKIP(1)
-     crapass.nmprimtl
-     "\033\106Conta\033\105"
-     crapepr.nrdconta
-     "      ,"
-     SKIP(1)
-     "\033\106CPF/CNPJ\033\105"
-     rel_nrcpfcgc
-     "\033\106 comparece  como  interveniente  garantidor  na"
-     SKIP(1)
-     "condicao  de fiador/avalista o(a) Sr(a).:\033\105"
-     SKIP(1)
-     rel_nmdavali "\033\106"
-     " ,       CPF\033\105"
-     rel_dscpfavl
-     "\033\106."
-     SKIP(1)
-     "Para garantir o cumprimento das obrigacoes assumidas, no referido"
-     "contrato"                                  AT 68
-     SKIP(1)
-     "comparece igualmente o FIADOR nominado, INTERVENIENTE  GARANTIDOR,"
-     "o  qual"                                   AT 69
-     SKIP(1)
-     "expressamente declara que responsabiliza-se solidariamente, como"
-     "principal"                                 AT 67
-     SKIP(1)
-     "pagador, pelo cumprimento de todas as obrigacoes assumidas  pelo"
-     "COOPERADO"                                 AT 67
-      SKIP(1)
-     "no contrato citado, renunciando expressamente, os beneficios de  ordem"
-     "que"                                       AT 73
-     SKIP(1)
-     "trata o art.827, em conformidade com  o  art.828,  incisos  I  e  II,"
-     "e  o"                                      AT 72
-     SKIP(1)
-     "art.838, do Codigo Civil Brasileiro (lei n.10.406, de 10/01/2002)."
-     SKIP(1)
-     "Como garantia adicional o  interveniente  garantidor  subscreve  tambem"
-     "as"                                        AT 74
-     SKIP(1)
-     "notas promissorias correspondentes  as  obrigacoes  assumidas  no"
-     "contrato"                                  AT 68
-     SKIP(1)
-     "principal de emprestimo pessoal."
-     SKIP(3)
-     "As demais clausulas e condicoes continuam inalteradas."
-     WITH NO-BOX NO-LABELS WIDTH 96 COLUMN 6 FRAME f_termo_avalistas.
-
-     FORM SKIP(4)
-     crapcop.nmcidade FORMAT "x(13)"
-     crapcop.cdufdcop
-     ","
-     rel_ddmvtolt
-     rel_mmmvtolt[MONTH(par_dtmvtolt)]
-     rel_aamvtolt
-     "."
-     SKIP(3)
-     "______________________________"
-     SKIP
-     crapass.nmprimtl
-     SKIP(2)
-     "______________________________"
-     SKIP
-     "Interveniente Garantidor"
-     SKIP(2)
-     "______________________________"
-     "______________________________"  AT 46
-     SKIP
-     "Fiador"
-     "Fiador"                          AT 46
-     SKIP(2)
-     "______________________________"
-     "______________________________"  AT 46
-     SKIP
-     "Testemunha"
-     "Testemunha"                      AT 46
-     SKIP(2)
-     "______________________________"
-     "______________________________"  AT 46
-     SKIP
-     par_cdoperad
-     "-"
-     rel_nmoperad
-     rel_nmrescop[1]                   AT 46
-     SKIP
-     rel_nmrescop[2]                   AT 46
-     WITH NO-BOX NO-LABELS WIDTH 96 COLUMN 6 FRAME f_assinatura_avalistas.
-
-FORM "PARA USO DA DIGITALIZACAO"                                    AT  87
-     SKIP(1)
-     rel_nrdconta                    NO-LABEL FORMAT "zzzz,zzz,9"   AT  87
-     rel_nrctremp                    NO-LABEL FORMAT "zz,zzz,zz9"    AT 102
-     aux_tpdocged                    NO-LABEL FORMAT "zz9"          AT 114
-     WITH NO-BOX WIDTH 132 COLUMN 9 FRAME f_uso_digitalizacao.
-
-    Imprime: DO ON ERROR UNDO Imprime, LEAVE Imprime:
-        EMPTY TEMP-TABLE tt-erro.
-
-        FOR FIRST crapcop WHERE crapcop.cdcooper = par_cdcooper NO-LOCK: END.
-
-        IF  NOT AVAILABLE crapcop  THEN
-            DO:
-                ASSIGN aux_cdcritic = 651
-                       aux_dscritic = "".
-                LEAVE Imprime.
-            END.
-
-        ASSIGN aux_nmendter = "/usr/coop/" + crapcop.dsdircop + "/rl/" +
-                              par_dsiduser.
-
-        UNIX SILENT VALUE("rm " + aux_nmendter + "* 2>/dev/null").
-
-        ASSIGN aux_nmendter = aux_nmendter + STRING(TIME)
-               aux_nmarqimp = aux_nmendter + ".ex"
-               aux_nmarqpdf = aux_nmendter + ".pdf".
-
-        OUTPUT STREAM str_1 TO VALUE(aux_nmarqimp) PAGED PAGE-SIZE 84.
-
-        FIND craptab WHERE craptab.cdcooper = par_cdcooper   AND
-                           craptab.nmsistem = "CRED"         AND
-                           craptab.tptabela = "GENERI"       AND
-                           craptab.cdempres = 00             AND
-                           craptab.cdacesso = "DIGITALIZA"   AND
-                           craptab.tpregist = 5    /* Contrt. emprestimo/financiamento (GED) */
-                           NO-LOCK NO-ERROR NO-WAIT.
-
-        IF  AVAIL craptab THEN
-            ASSIGN aux_tpdocged = INT(ENTRY(3,craptab.dstextab,";")).
-
-        FOR FIRST crapope FIELDS(cdoperad nmoperad)
-                          WHERE crapope.cdcooper = par_cdcooper     AND
-                                crapope.cdoperad = par_cdoperad
-                                NO-LOCK:
-        END.
-
-        IF  NOT AVAILABLE crapope THEN
-            ASSIGN rel_nmoperad = "NAO ENCONTRADO!".
-        ELSE
-            ASSIGN rel_nmoperad = TRIM(crapope.nmoperad).
-
-        FIND crapadi WHERE crapadi.cdcooper = par_cdcooper AND
-                           crapadi.nrdconta = par_nrdconta AND
-                           crapadi.nrctremp = par_nrctremp AND
-                           crapadi.nraditiv = par_nraditiv AND
-                           crapadi.nrsequen = 1 NO-LOCK NO-ERROR.
-
-        ASSIGN aux_nrcpfavl = crapadi.nrcpfcgc
-               rel_nmdavali = crapadi.nmdavali
-               aux_nrctaavl = 0.  /* nao sera usada a conta do avalista */
-
-        ASSIGN rel_dscpfavl = STRING(aux_nrcpfavl,"99999999999")
-               rel_dscpfavl = STRING(rel_dscpfavl,"    xxx.xxx.xxx-xx").
-
-        FIND crapepr WHERE crapepr.cdcooper = par_cdcooper AND
-                           crapepr.nrdconta = par_nrdconta AND
-                           crapepr.nrctremp = par_nrctremp NO-LOCK NO-ERROR.
-
-        FIND crapass WHERE crapass.cdcooper = par_cdcooper AND
-                           crapass.nrdconta = par_nrdconta NO-LOCK NO-ERROR.
-
-        ASSIGN rel_nrcpfcgc = STRING(crapass.nrcpfcgc,"99999999999")
-               rel_nrcpfcgc = STRING(rel_nrcpfcgc,"    xxx.xxx.xxx-xx").
-
-        /*   Divide o crapcop.nmextcop em duas variaveis  */
-        ASSIGN aux_qtpalavr = NUM-ENTRIES(TRIM(crapcop.nmextcop)," ") / 2
-               rel_nmrescop = "".
-
-        DO aux_qtcontpa = 1 TO NUM-ENTRIES(TRIM(crapcop.nmextcop)," "):
-            IF  aux_qtcontpa <= aux_qtpalavr THEN
-                ASSIGN rel_nmrescop[1] = rel_nmrescop[1] +
-                                        (IF TRIM(rel_nmrescop[1]) = "" THEN ""
-                                         ELSE " ") +
-                                         ENTRY(aux_qtcontpa,crapcop.nmextcop
-                                                                        ," ").
-            ELSE
-                ASSIGN rel_nmrescop[2] = rel_nmrescop[2] +
-                                         (IF TRIM(rel_nmrescop[2]) = "" THEN ""
-                                          ELSE " ") +
-                                          ENTRY(aux_qtcontpa,crapcop.nmextcop
-                                                                         ," ").
-        END.  /*  Fim DO .. TO  */
-
-        ASSIGN rel_nmrescop[1] = FILL(" ",20 - INT(LENGTH(rel_nmrescop[1]) / 2))
-                                     + rel_nmrescop[1]
-               rel_nmrescop[2] = FILL(" ",20 - INT(LENGTH(rel_nmrescop[2]) / 2))
-                                     + rel_nmrescop[2]
-               rel_nmrescop[1] = TRIM(rel_nmrescop[1]," ")
-               rel_nmrescop[2] = TRIM(rel_nmrescop[2]," ")
-               rel_ddmvtolt = DAY(par_dtmvtolt)
-               rel_aamvtolt = YEAR(par_dtmvtolt).
-
-         ASSIGN rel_nrdconta = crapepr.nrdconta
-                rel_nrctremp = crapepr.nrctremp.
-
-         DISPLAY STREAM str_1
-                 rel_nrdconta
-                 rel_nrctremp
-                 aux_tpdocged
-                 WITH FRAME f_uso_digitalizacao.
-
-        DISPLAY STREAM str_1
-                crapepr.nrctremp crapepr.dtmvtolt crapcop.nmextcop
-                crapcop.nrdocnpj crapass.nmprimtl crapepr.nrdconta
-                rel_nrcpfcgc     rel_nmdavali     rel_dscpfavl
-                par_nraditiv
-                WITH FRAME f_termo_avalistas.
-
-        DISPLAY STREAM str_1
-            crapcop.nmcidade   crapcop.cdufdcop    rel_ddmvtolt
-            rel_aamvtolt       rel_mmmvtolt[MONTH(par_dtmvtolt)]
-            crapass.nmprimtl   rel_nmrescop[1]     rel_nmrescop[2]
-            par_cdoperad       rel_nmoperad
-            WITH FRAME f_assinatura_avalistas.
-
-        OUTPUT STREAM str_1 CLOSE.
-
-        IF  par_idorigem = 5  THEN  /** Ayllos Web **/
-            DO:
-                RUN sistema/generico/procedures/b1wgen0024.p PERSISTENT
-                    SET h-b1wgen0024.
-
-                IF  NOT VALID-HANDLE(h-b1wgen0024)  THEN
-                    DO:
-                        ASSIGN aux_dscritic = "Handle invalido para BO " +
-                                              "b1wgen0024.".
-                        LEAVE Imprime.
-                    END.
-
-                RUN envia-arquivo-web IN h-b1wgen0024
-                    ( INPUT par_cdcooper,
-                      INPUT par_cdagenci,
-                      INPUT par_nrdcaixa,
-                      INPUT aux_nmarqimp,
-                     OUTPUT aux_nmarqpdf,
-                     OUTPUT TABLE tt-erro ).
-
-                IF  VALID-HANDLE(h-b1wgen0024)  THEN
-                    DELETE PROCEDURE h-b1wgen0024.
-
-                IF  RETURN-VALUE <> "OK" THEN
-                    RETURN "NOK".
-            END.
-
-        ASSIGN aux_returnvl = "OK".
-
-        LEAVE Imprime.
-
-    END. /*Imprime*/
-
-    IF  aux_dscritic <> "" OR aux_cdcritic <> 0 THEN
-        DO:
-            ASSIGN aux_returnvl = "NOK".
-
-            RUN gera_erro (INPUT par_cdcooper,
-                           INPUT par_cdagenci,
-                           INPUT par_nrdcaixa,
-                           INPUT 1,
-                           INPUT aux_cdcritic,
-                           INPUT-OUTPUT aux_dscritic).
-        END.
-    ELSE
-        ASSIGN aux_returnvl = "OK".
-
-    RETURN aux_returnvl.
-
-END PROCEDURE.
-
 PROCEDURE Gera_Impressao:
 
     DEF  INPUT PARAM par_cdcooper AS INTE                             NO-UNDO.
@@ -4339,6 +3720,7 @@ PROCEDURE Gera_Impressao:
     DEF  INPUT PARAM par_dtmvtolt AS DATE                             NO-UNDO.
     DEF  INPUT PARAM par_dtmvtopr AS DATE                             NO-UNDO.
     DEF  INPUT PARAM par_inproces AS INTE                             NO-UNDO.
+    DEF  INPUT PARAM par_tpctrato AS INTE                             NO-UNDO.
     DEF  OUTPUT PARAM aux_nmarqimp AS CHAR                            NO-UNDO.
     DEF  OUTPUT PARAM aux_nmarqpdf AS CHAR                            NO-UNDO.
 
@@ -4347,6 +3729,7 @@ PROCEDURE Gera_Impressao:
 
     DEF VAR aux_qtregstr AS INTE                                      NO-UNDO.
     DEF VAR aux_nmendter AS CHAR    FORMAT "x(20)"                    NO-UNDO.
+    DEF VAR aux_dtcontra AS DATE                                      NO-UNDO.
 
 
     EMPTY TEMP-TABLE tt-erro.
@@ -4364,13 +3747,29 @@ PROCEDURE Gera_Impressao:
                 LEAVE Imprime.
             END.
             
+        IF par_tpctrato = 90 THEN
+           DO:
         /* Proposta de emprestimo */
         FIND crawepr WHERE crawepr.cdcooper = par_cdcooper   AND
                            crawepr.nrdconta = par_nrdconta   AND
                            crawepr.nrctremp = par_nrctremp
                            NO-LOCK NO-ERROR.
                            
-        IF  crawepr.dtmvtolt >= 10/22/2014    THEN
+              ASSIGN aux_dtcontra = crawepr.dtmvtolt.
+           END.
+        ELSE
+           DO:
+              /* Contrato de limite */
+              FIND craplim WHERE craplim.cdcooper = par_cdcooper   AND
+                                 craplim.nrdconta = par_nrdconta   AND
+                                 craplim.nrctrlim = par_nrctremp   AND
+                                 craplim.tpctrlim = par_tpctrato
+                                 NO-LOCK NO-ERROR.
+
+              ASSIGN aux_dtcontra = craplim.dtinivig.
+           END.
+                           
+        IF  aux_dtcontra >= 10/22/2014    THEN
           DO:
             { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
 
@@ -4391,6 +3790,7 @@ PROCEDURE Gera_Impressao:
                                  ,INPUT par_dtmvtolt  /* pr_dtmvtolt --> Data de movimento */
                                  ,INPUT par_dtmvtopr  /* pr_dtmvtopr --> Data do prox. movimento */
                                  ,INPUT par_inproces  /* pr_inproces --> Indicador de processo */
+                                 ,INPUT par_tpctrato  /* pr_tpctrato --> Tipo do Contrato do Aditivo */
                                  
                                  ,OUTPUT  "" /* pr_nmarqpdf --> Retornar quantidad de registros */
                                  ,OUTPUT  0  /* pr_cdcritic --> Código da crítica */
@@ -4444,6 +3844,7 @@ PROCEDURE Gera_Impressao:
                           INPUT par_cdaditiv,
                           INPUT 0,
                           INPUT 0,
+                          INPUT par_tpctrato,
                           INPUT FALSE,
                           INPUT 0,
                           INPUT 0,
@@ -4458,7 +3859,7 @@ PROCEDURE Gera_Impressao:
 
           
 
-        IF   crawepr.dtmvtolt >= 10/22/2014    THEN
+        IF   aux_dtcontra >= 10/22/2014    THEN
              RUN gera_impressao_nova (INPUT par_cdcooper,
                                       INPUT par_cdagenci,
                                       INPUT par_nrdcaixa,
@@ -4511,7 +3912,7 @@ PROCEDURE Gera_Impressao:
                 IF  RETURN-VALUE <> "OK" THEN
                     RETURN "NOK".
             END.
-        END. /* Fim IF crawepr THEN*/      
+        END. /* Fim IF aux_dtcontra THEN*/      
     END.
 
     IF  VALID-HANDLE(h-b1wgen9999)  THEN
@@ -5782,7 +5183,8 @@ PROCEDURE gera_impressao_nova:
                                    crapadi.nrdconta = par_nrdconta AND
                                    crapadi.nrctremp = par_nrctremp AND
                                    crapadi.nraditiv = par_nraditiv AND
-                                   crapadi.nrsequen = 1
+                                   crapadi.nrsequen = 1            AND
+                                   crapadi.tpctrato = 90
                                    NO-LOCK NO-ERROR.
 
                 ASSIGN rel_nmprimtl[1] = crapadi.nmdavali + " " +
@@ -7358,7 +6760,9 @@ PROCEDURE gera_impressao_antiga:
                                    crapadi.nrdconta = par_nrdconta AND
                                    crapadi.nrctremp = par_nrctremp AND
                                    crapadi.nraditiv = par_nraditiv AND
-                                   crapadi.nrsequen = 1 NO-LOCK NO-ERROR.
+                                   crapadi.nrsequen = 1            AND
+                                   crapadi.tpctrato = 90
+                                   NO-LOCK NO-ERROR.
 
                 ASSIGN aux_nrcpfavl = crapadi.nrcpfcgc
                        rel_nmdavali = crapadi.nmdavali
@@ -8091,6 +7495,8 @@ PROCEDURE Gera_Log:
     DEF  INPUT PARAM par_nrpromis AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_vlpromis AS DECI                           NO-UNDO.
     DEF  INPUT PARAM par_tpproapl AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_tpctrato AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_idgaropc AS INTE                           NO-UNDO.
 
     DEF  VAR par_dsgpagto AS CHAR                                   NO-UNDO.
 
@@ -8124,6 +7530,16 @@ PROCEDURE Gera_Log:
           INPUT "nrdconta" + (IF par_cddopcao <> "X" THEN
                               STRING(aux_nrsequex) ELSE ""),
           INPUT STRING(par_nrdconta),
+          INPUT "").
+
+    /* Item - tpctrato */
+    RUN proc_gerar_log_item
+        ( INPUT aux_nrdrowid,
+          INPUT "tpctrato",
+          INPUT STRING(par_tpctrato) + (IF par_tpctrato = 1 THEN "Lim. Cred"
+                                   ELSE IF par_tpctrato = 2 THEN "Lim. Dsc. Chq."
+                                   ELSE IF par_tpctrato = 3 THEN "Lim. Dsc. Tit."
+                                   ELSE "Emp.Fin."),
           INPUT "").
 
     /* Item - nrctremp */
@@ -8374,6 +7790,101 @@ PROCEDURE Gera_Log:
 
         END.
 
+    /* Item - cdaditiv 9 */
+   IF   par_cdaditiv = 9 THEN
+        DO:
+
+           /* Se possui garantia para operacao de credito */
+           IF   par_idgaropc > 0 THEN
+                DO:
+                   { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+                   /* Efetuar a chamada a rotina Oracle */
+                   RUN STORED-PROCEDURE pc_busca_cobert_garopc_prog
+                   aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_idgaropc
+                                                       ,OUTPUT 0     /* pr_inresaut */
+                                                       ,OUTPUT 0     /* pr_permingr */
+                                                       ,OUTPUT 0     /* pr_inaplpro */
+                                                       ,OUTPUT 0     /* pr_inpoupro */
+                                                       ,OUTPUT 0     /* pr_nrctater */
+                                                       ,OUTPUT 0     /* pr_inaplter */
+                                                       ,OUTPUT 0     /* pr_inpouter */
+                                                       ,OUTPUT 0     /* pr_cdcritic */
+                                                       ,OUTPUT "").  /* pr_dscritic */
+
+                   /* Fechar o procedimento para buscarmos o resultado */
+                   CLOSE STORED-PROC pc_busca_cobert_garopc_prog
+                         aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+                   { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+                   /* Busca possíveis erros */
+                   ASSIGN aux_cdcritic = 0
+                          aux_dscritic = ""
+                          aux_cdcritic = pc_busca_cobert_garopc_prog.pr_cdcritic
+                                         WHEN pc_busca_cobert_garopc_prog.pr_cdcritic <> ?
+                          aux_dscritic = pc_busca_cobert_garopc_prog.pr_dscritic
+                                         WHEN pc_busca_cobert_garopc_prog.pr_dscritic <> ?.
+
+                   IF  aux_dscritic = "" AND aux_cdcritic = 0 THEN
+                       DO:
+                          /* Item – resgate_automatico */
+                          RUN proc_gerar_log_item
+                              ( INPUT aux_nrdrowid,
+                                INPUT "ResgateAutomatico",
+                                INPUT (IF pc_busca_cobert_garopc_prog.pr_inresaut = 0 THEN "Nao" Else "Sim"),
+                                INPUT "").
+
+                          /* Item – perminimo */
+                          RUN proc_gerar_log_item
+                              ( INPUT aux_nrdrowid,
+                                INPUT "Percentual Cobertura Minima",
+                                INPUT STRING(pc_busca_cobert_garopc_prog.pr_permingr),
+                                INPUT "").
+
+                          /* Item – Aplicaçao Propria */
+                          RUN proc_gerar_log_item
+                              ( INPUT aux_nrdrowid,
+                                INPUT "Aplicacao Propria",
+                                INPUT (IF pc_busca_cobert_garopc_prog.pr_inaplpro = 0 THEN "Nao" Else "Sim"),
+                                INPUT "").
+
+                          /* Item – Poupanca Propria */
+                          RUN proc_gerar_log_item
+                              ( INPUT aux_nrdrowid,
+                                INPUT "Poupanca Propria",
+                                INPUT (IF pc_busca_cobert_garopc_prog.pr_inpoupro = 0 THEN "Nao" Else "Sim"),
+                                INPUT "").
+
+                          /* Se possuir conta terceiro */
+                          IF  pc_busca_cobert_garopc_prog.pr_nrctater > 0 THEN
+                              DO:
+                                 /* Item – Conta Terceiro */
+                                 RUN proc_gerar_log_item
+                                     ( INPUT aux_nrdrowid,
+                                       INPUT "Conta Terceiro",
+                                       INPUT STRING(pc_busca_cobert_garopc_prog.pr_nrctater),
+                                       INPUT "").
+
+                                 /* Item – Aplicacao Terceiro */
+                                 RUN proc_gerar_log_item
+                                     ( INPUT aux_nrdrowid,
+                                       INPUT "Aplicacao Terceiro",
+                                       INPUT (IF pc_busca_cobert_garopc_prog.pr_inaplter = 0 THEN "Nao" Else "Sim"),
+                                       INPUT "").
+
+                                 /* Item – Poupanca Terceiro */
+                                 RUN proc_gerar_log_item
+                                     ( INPUT aux_nrdrowid,
+                                       INPUT "Poupanca Terceiro",
+                                       INPUT (IF pc_busca_cobert_garopc_prog.pr_inpouter = 0 THEN "Nao" Else "Sim"),
+                                       INPUT "").
+                              END.
+                       END.
+
+                END.
+
+        END.
 
 END PROCEDURE.
 
@@ -8384,6 +7895,7 @@ PROCEDURE obtem_nro_aditivo:
     DEF  INPUT PARAM par_cdcooper AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_nrdconta AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_nrctremp AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_tpctrato AS INTE                           NO-UNDO.
 
     DEF OUTPUT PARAM aux_uladitiv AS INTE                           NO-UNDO.
     DEF OUTPUT PARAM par_cdcritic AS INTE                           NO-UNDO.
@@ -8397,7 +7909,8 @@ PROCEDURE obtem_nro_aditivo:
 
         FIND LAST crapadt WHERE crapadt.cdcooper = par_cdcooper AND
                                 crapadt.nrdconta = par_nrdconta AND
-                                crapadt.nrctremp = par_nrctremp
+                                crapadt.nrctremp = par_nrctremp AND
+                                crapadt.tpctrato = par_tpctrato
                                 EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
 
         IF  NOT AVAIL crapadt THEN

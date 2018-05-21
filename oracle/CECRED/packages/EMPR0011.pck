@@ -3140,11 +3140,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
       IF pr_tab_price.COUNT > 0 THEN
         vr_qtparcel := pr_tab_price.COUNT + 1;
         vr_dtvencto := pr_dtvencto;
-      ELSE 
-        IF TO_NUMBER(TO_CHAR(pr_dtcalcul,'DD')) >= TO_NUMBER(TO_CHAR(pr_dtvencto,'DD')) THEN
-          vr_qtparcel := ROUND(months_between(pr_dtvencto,pr_dtcalcul));
-        ELSE
-          vr_qtparcel := ROUND(months_between(pr_dtvencto,pr_dtcalcul)) + 1;
+      ELSE
+        vr_qtparcel := months_between(trunc(pr_dtvencto,'MM'),trunc(pr_dtcalcul,'MM'));  
+        IF TO_NUMBER(TO_CHAR(pr_dtcalcul,'DD')) < TO_NUMBER(TO_CHAR(pr_dtvencto,'DD')) THEN
+          vr_qtparcel := vr_qtparcel + 1;
         END IF;
         IF NVL(vr_qtparcel,0) = 0 THEN
           vr_qtparcel := 1;          
@@ -5404,7 +5403,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Jaison Fernando
-       Data    : Maio/2017                         Ultima atualizacao: 
+       Data    : Maio/2017                         Ultima atualizacao: 12/04/2018
 
        Dados referentes ao programa:
 
@@ -5412,7 +5411,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
 
        Objetivo  : Procedure para efetuar o credito do emprestimo direto na conta online.
 
-       Alteracoes: 
+       Alteracoes: 12/04/2018 - P410 - Melhorias/Ajustes IOF (Marcos-Envolti)
     ............................................................................. */
 
     DECLARE
@@ -5487,6 +5486,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
 
       -- Variaveis locais
       vr_vltottar        NUMBER := 0;
+      vr_vlpreclc        NUMBER := 0;                -- Parcela calcula
       vr_vltariof        NUMBER := 0;
       vr_cdhistor        INTEGER;
       vr_cdhisgar        INTEGER;
@@ -5637,6 +5637,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
                                  ,pr_nrctremp        => pr_nrctremp
                                  ,pr_dtmvtolt        => pr_dtmvtolt
                                  ,pr_inpessoa        => pr_inpessoa
+                                 ,pr_cdfinemp        => rw_crawepr.cdfinemp
                                  ,pr_cdlcremp        => rw_crawepr.cdlcremp
                                  ,pr_qtpreemp        => rw_crawepr.qtpreemp
                                  ,pr_vlpreemp        => rw_crawepr.vlpreemp
@@ -5648,6 +5649,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0011 IS
                                  ,pr_qtdias_carencia => vr_qtdias_carencia
                                  ,pr_dscatbem        => vr_dsbemgar
                                  ,pr_idfiniof        => rw_crawepr.idfiniof
+                                 ,pr_vlpreclc        => vr_vlpreclc
                                  ,pr_valoriof        => vr_vltariof
                                  ,pr_vliofpri        => vr_vliofpri
                                  ,pr_vliofadi        => vr_vliofadi

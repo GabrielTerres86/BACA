@@ -30,7 +30,7 @@ begin
         INTO vr_feriado
         FROM crapfer fer
        WHERE fer.cdcooper = 3 and
-             fer.dtferiad=sysdate;  
+             fer.dtferiad=trunc(sysdate);  
   
       IF vr_feriado=0 THEN 
          cecred.ccrd0006.pc_lancamentos_singulares(pr_cdcritic => vr_cdcritic, pr_dscritic => vr_dscritic);

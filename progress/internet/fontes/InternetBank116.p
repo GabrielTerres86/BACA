@@ -20,6 +20,9 @@
                11/12/2015 - Adicionado validacao do representante legal da conta.
                             (Jorge/David) - Proj. 131 Assinatura Multipla.
 
+               20/04/2018 - Adicionado validacao da adesao do produto 41 resgate 
+                            de aplicacao. PRJ366 (Lombardi).
+
 ..............................................................................*/
 
 { sistema/internet/includes/var_ibank.i    }
@@ -76,9 +79,53 @@ DEF VAR aux_nmprimtl AS CHAR                                           NO-UNDO.
 DEF VAR aux_nrcpfcgc AS DECI                                           NO-UNDO.
 DEF VAR aux_flcartma AS INTE                                           NO-UNDO.
 
+DEF VAR aux_vlresgat AS DECI                                           NO-UNDO.
+
+/* Verificar se o tipo de conta permite a contrataçao do produto. */
+{ includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
+
+RUN STORED-PROCEDURE pc_valida_adesao_produto
+    aux_handproc = PROC-HANDLE NO-ERROR
+                            (INPUT par_cdcooper,
+                             INPUT par_nrdconta,
+                             INPUT 41,   /* Codigo Produto */
+                             OUTPUT 0,   /* pr_cdcritic */
+                             OUTPUT ""). /* pr_dscritic */
+
+CLOSE STORED-PROC pc_valida_adesao_produto
+      aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+{ includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+ASSIGN aux_cdcritic = 0
+       aux_dscritic = ""
+       aux_cdcritic = pc_valida_adesao_produto.pr_cdcritic                          
+                          WHEN pc_valida_adesao_produto.pr_cdcritic <> ?
+       aux_dscritic = pc_valida_adesao_produto.pr_dscritic
+                          WHEN pc_valida_adesao_produto.pr_dscritic <> ?.
+
+IF  aux_cdcritic <> 0 OR aux_dscritic <> "" THEN
+    DO:
+        IF aux_dscritic = "" THEN
+           DO:
+              FIND crapcri WHERE crapcri.cdcritic = aux_cdcritic 
+                                 NO-LOCK NO-ERROR.
+              
+              IF AVAIL crapcri THEN
+                 ASSIGN aux_dscritic = crapcri.dscritic.
+              ELSE
+                 ASSIGN aux_dscritic =  "Nao foi possivel validar a adesao do produto.".
+           
+           END.
+        
+        ASSIGN xml_dsmsgerr = "<dsmsgerr>" + aux_dscritic + "</dsmsgerr>".
+        
+        RETURN "NOK".
+    END.
 
 /* Quantidade de aplicacoes */
-ASSIGN aux_qtaplica = NUM-ENTRIES(par_aplicacao,"|").
+ASSIGN aux_qtaplica = NUM-ENTRIES(par_aplicacao,"|")
+       aux_vlresgat = 0.
 
 /* Percorrer todas as aplicacoes para verificar o numero da aplicacao */
 DO aux_contador = 1 TO aux_qtaplica:
@@ -91,9 +138,53 @@ DO aux_contador = 1 TO aux_qtaplica:
            tt-dados-resgate.vlresgat = IF tt-dados-resgate.tpresgat = "1" THEN /* Resgate Parcial */
                                           DECI(ENTRY(3,aux_info_apl,";")) 
                                        ELSE /* Resgate Total sempre deve trabalhar com valor zerado devido a regra na procedure de resgate */
-                                          0.
+                                          0
+           aux_vlresgat = aux_vlresgat + DECI(ENTRY(3,aux_info_apl,";")).
 
 END.
+
+{ includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+RUN STORED-PROCEDURE pc_valida_valor_de_adesao
+aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper, /* Cooperativa */
+                                     INPUT par_nrdconta, /* Numero da conta */
+                                     INPUT 41,           /* Codigo Produto */
+                                     INPUT STRING(aux_vlresgat), /* Valor contratado */
+                                     INPUT 3,            /* Id Origem */
+                                     INPUT 0,            /* Codigo da chave */
+                                    OUTPUT 0,            /* Solicita senha coordenador */
+                                    OUTPUT 0,            /* Codigo da crítica */
+                                    OUTPUT "").          /* Descriçao da crítica */
+
+CLOSE STORED-PROC pc_valida_valor_de_adesao
+      aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+{ includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+ASSIGN aux_cdcritic = 0
+       aux_dscritic = ""
+       aux_cdcritic = pc_valida_valor_de_adesao.pr_cdcritic 
+                      WHEN pc_valida_valor_de_adesao.pr_cdcritic <> ?
+       aux_dscritic = pc_valida_valor_de_adesao.pr_dscritic
+                      WHEN pc_valida_valor_de_adesao.pr_dscritic <> ?.
+
+IF aux_cdcritic > 0 OR aux_dscritic <> "" THEN
+     DO:
+         IF aux_dscritic = "" THEN
+             DO:
+                FIND crapcri WHERE crapcri.cdcritic = aux_cdcritic 
+                                   NO-LOCK NO-ERROR.
+                
+                IF AVAIL crapcri THEN
+                   ASSIGN aux_dscritic = crapcri.dscritic.
+                ELSE
+                   ASSIGN aux_dscritic =  "Nao foi possivel validar o valor de adesao.".
+             END.
+          
+          ASSIGN xml_dsmsgerr = "<dsmsgerr>" + aux_dscritic + "</dsmsgerr>".
+
+          RETURN "NOK".
+END.
+
 
 { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
 

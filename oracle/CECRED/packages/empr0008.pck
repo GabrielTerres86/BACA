@@ -1,4 +1,4 @@
-CREATE OR REPLACE PACKAGE CECRED.EMPR0008 IS
+CREATE OR REPLACE PACKAGE EMPR0008 IS
 
   ---------------------------------------------------------------------------
   --
@@ -137,7 +137,7 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0008 IS
                                 ,pr_qtdialib IN PLS_INTEGER) RETURN DATE; --> Quantidade de dias para acrescentar
 END EMPR0008;
 /
-CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0008 IS
+CREATE OR REPLACE PACKAGE BODY EMPR0008 IS
   ---------------------------------------------------------------------------
   --
   --  Programa : EMPR0008
@@ -155,6 +155,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0008 IS
   /*
   31/01/2018 - #826621 Conforme posicionamento da área, os contratos de portabilidade também poderão 
                ser estornados. Regra retirada do sistema. (Carlos)
+               
+  03/05/2018 - P404 - Inclusão do novo tipo de contrato 4, para permitir estornos e não lançar a crítica
+               linha de crédito não permitida (Lucas Skroch - Supero)
   */
   ---------------------------------------------------------------------------  
   PROCEDURE pc_tela_busca_lancto_estorno(pr_nrdconta IN crapepr.nrdconta%TYPE --> Numero da Conta
@@ -880,7 +883,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0008 IS
       vr_flgretativo     INTEGER := 0;
       vr_flgretquitado   INTEGER := 0;
       vr_flgretcancelado INTEGER := 0;
-    
+          
     BEGIN
       vr_tab_erro.DELETE;
       vr_tab_lancto_parcelas.DELETE;
@@ -906,7 +909,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0008 IS
         
       ELSIF NVL(LENGTH(TRIM(pr_dsjustificativa)),0) > 250 THEN
         vr_dscritic := 'O tamanho do texto do campo Justificativa excedeu o tamanho maximo';
-        RAISE vr_exc_saida;      
+        RAISE vr_exc_saida;
       END IF;                        
 
       RECP0001.pc_verifica_situacao_acordo(pr_cdcooper        => vr_cdcooper
@@ -933,8 +936,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0008 IS
       IF vr_flgretquitado = 1 THEN
         vr_dscritic := 'Lancamento nao permitido, contrato liquidado atraves de acordo.';
         RAISE vr_exc_saida;
-      END IF;
-
+      END IF;                        
+                              
       vr_vlmaxest := 0;
       vr_dstextab := TABE0001.fn_busca_dstextab(pr_cdcooper => vr_cdcooper
                                                ,pr_nmsistem => 'CRED'
@@ -2586,8 +2589,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0008 IS
         CLOSE cr_craplcr;
       END IF;
       
-      -- Emprestimo/Financiamento, Alienacao de Veiculo, Hipoteca de Imoveis
-      IF rw_craplcr.tpctrato NOT IN (1,2,3) THEN
+      -- Emprestimo/Financiamento, Alienacao de Veiculo, Hipoteca de Imoveis, Aplicacao
+      IF rw_craplcr.tpctrato NOT IN (1,2,3,4) THEN
         vr_dscritic := 'Tipo de contrato da linha de credito nao permitida';
         RAISE vr_exc_saida;
       END IF;

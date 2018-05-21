@@ -62,8 +62,9 @@
                         $tipo = "Pos-fixado";
                         break;
                 } ?>
-				<tr>
+				<tr onclick="changebtPagar(this);">
 				    <td><?php echo getByTagName($banco->tags,'cdlcremp') ?>
+						<input type="hidden" id="vlsdprej" name="vlsdprej" value="<?php echo getByTagName($banco->tags,'vlsdprej') ?>" />
 						<input type="hidden" id="nrctremp" name="nrctremp" value="<?php echo getByTagName($banco->tags,'nrctremp') ?>" />
 						<input type="hidden" id="inprejuz" name="inprejuz" value="<?php echo getByTagName($banco->tags,'inprejuz') ?>" />
 						<input type="hidden" id="tplcremp" name="tplcremp" value="<?php echo getByTagName($banco->tags,'tplcremp') ?>" />
@@ -136,9 +137,9 @@
     <a href="#" class="botao" id="btVoltar"        onClick="encerraRotina('true');">Voltar</a>
 	<a href="#" class="botao" id="btConsultar"     onClick="direcionaConsulta();">Consultar</a>
 	<a href="#" class="botao" id="btPagar" 	       onClick="validarLiquidacao();">Pagar</a>
- 	<a href="#" class="botao" id="bttranfPreju"    onClick="confirmaPrejuizo()">Transferir Prejuízo</a>
-	<a href="#" class="botao" id="btdesfazPreju"   onClick="confirmaDesfazPrejuizo()">Desfazer Prejuízo</a>
-	<a href="#" class="botao" id="btCancelar"      onClick="controlaOperacao('D_EFETIVA');">Desfazer Efetivação</a>
+ 	<!--<a href="#" class="botao" id="bttranfPreju"    onClick="confirmaPrejuizo()">Transferir Prejuízo</a>-->
+	<!--<a href="#" class="botao" id="btdesfazPreju"   onClick="confirmaDesfazPrejuizo()">Desfazer Prejuízo</a>-->
+	<a href="#" class="botao" id="btCancelar"      onClick="controlaOperacao('D_EFETIVA');">Desfazer Efetiva&ccedil;&atilde;o</a>
     <a href="#" class="botao" id="btPortabilidade" onClick="controlaOperacao('PORTAB_CRED');">Portabilidade</a>
 	<? 
 		$permissao = in_array('X', $glbvars['opcoesTela']);
@@ -160,5 +161,24 @@
 	});	
 	
 	$('#divPesquisaRodape','#divConteudoOpcao').formataRodapePesquisa();
+	
+	function changebtPagar(_this){
+		if ($(_this).find('#inprejuz').val() == 1){
+	   		$('a#btPagar').html('Pagar Prejuizo');
+		}
+		else{
+			$('a#btPagar').html('Pagar');
+		}
+	}
+	
+	if ($('.tituloRegistros tbody tr').length == 1){
+		if ($('.tituloRegistros tbody tr').find('#inprejuz').val() == 1){
+			$('a#btPagar').html('Pagar Prejuizo');
+		}
+	}
+
+	$('#divRotina').ready(function(e){
+		changebtPagar(this);
+	});
 
 </script>

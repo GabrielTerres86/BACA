@@ -3,7 +3,7 @@
 	/************************************************************************
 	 Fonte: cheques_limite.php                                        
 	 Autor: Guilherme                                                 
-	 Data : Março/2009                Última Alteração: 26/06/2017
+	 Data : Março/2009                Última Alteração: 11/12/2017
 	                                                                  
 	 Objetivo  : Mostrar opcao Limites de descontos de cheques da rotina         
 	             Descontos da tela ATENDA                 		   	  
@@ -23,6 +23,8 @@
 				  12/09/2016 - Inclusão do campo "Confirmar Novo Limite" que vai substituir a "LANCDC". PRJ300 (Lombardi)
 
 				  26/06/2017 - Ajuste para rotina ser chamada através da tela ATENDA > Produtos (Jonata - RKAM / P364).
+
+                  11/12/2017 - P404 - Inclusão de Garantia de Cobertura das Operações de Crédito (Augusto / Marcos (Supero))
 
 	************************************************************************/
 	
@@ -115,11 +117,18 @@
 			<tbody>
 				<?  for ($i = 0; $i < $qtLimites; $i++) {
 												
-						$mtdClick = "selecionaLimiteCheques('".($i + 1)."','".$qtLimites."','".($limites[$i]->tags[3]->cdata)."','".($limites[$i]->tags[6]->cdata)."','".($limites[$i]->tags[10]->cdata)."','".($limites[$i]->tags[2]->cdata)."');";
+						$mtdClick = "selecionaLimiteCheques('".($i + 1)."','".$qtLimites."','".($limites[$i]->tags[3]->cdata)."','".($limites[$i]->tags[6]->cdata)."','".($limites[$i]->tags[10]->cdata)."','".($limites[$i]->tags[2]->cdata)."',".($limites[$i]->tags[11]->cdata).");";
 				?>
 					<tr id="trLimite<? echo $i + 1; ?>" onFocus="<? echo $mtdClick; ?>" onClick="<? echo $mtdClick; ?>">
 					
-						<td><? echo $limites[$i]->tags[0]->cdata; ?></td>
+						<td>
+              <?php
+              // Vamos salvar o numero do contrato ativo para usar na tela de garantia
+              if ($limites[$i]->tags[10]->cdata == 2) {
+                echo '<input type="hidden" name="nrcontratoativo" id="nrcontratoativo" value="'.$limites[$i]->tags[3]->cdata.'"/>';
+              }
+              echo $limites[$i]->tags[0]->cdata; ?>
+            </td>
 						
 						<td><? echo $limites[$i]->tags[1]->cdata; ?></td>
 						

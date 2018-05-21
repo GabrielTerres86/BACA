@@ -28,7 +28,7 @@
 		!isset($_POST["nrdgrupo"])){
 		exibeErro("Par&acirc;metros incorretos.");
 	}
-
+	$tipo = (isset($_POST['tipo'])) ? $_POST['tipo'] : "CONTRATO";
 	$nrdconta = $_POST["nrdconta"];
 	$nrdgrupo = $_POST["nrdgrupo"];
 	
@@ -117,7 +117,7 @@
 		
 	echo "mostraMsgsGrupoEconomico();";
 	echo "formataGrupoEconomico();";
-	echo 'dsmetodo = \'validarAvalistas();\';';
+	echo 'dsmetodo = \'validarAvalistas("'.$tipo.'");\';';
 	
 
 	

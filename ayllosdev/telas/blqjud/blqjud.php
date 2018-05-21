@@ -6,6 +6,9 @@
  * OBJETIVO     : Mostrar tela BLQJUD
  * --------------
  * ALTERAÇÕES   : 29/09/2017 - Melhoria 460 - (Andrey Formigari - Mouts)
+				
+				  14/03/2018 - Adicionado parametro que faltava na chamada da procedure
+				     		   consulta-bloqueio-jud. (Kelvin)
  *					   
  * --------------
  */
@@ -122,6 +125,8 @@
 																			
 																			<input name="nroficon" id="nroficon" type="hidden" value="" />
 																			<input name="nrctacon" id="nrctacon" type="hidden" value="" />
+																			<input name="operacao" id="operacao" type="hidden" value="" />
+																			<input name="cddopcao" id="cddopcao" type="hidden" value="" />
 																																						
 																		</form>																									
 																		

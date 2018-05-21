@@ -36,12 +36,12 @@
 	//***                          para consultar imagem do contrato;      ***//
 	//***                          adequacao ao format pre-definido para   ***//
 	//***                          nao ocorrer divergencia ao              ***//
-  //***                          pesquisar no SmartShare.                ***//
-  //***                          (Chamado 181988) - (Fabricio)           ***//
-  //***                                                                  ***//
-  //***             09/01/2015 - Altercoes referentes ao projeto de      ***//
-  //***                          melhoria para alteracao de propoosta    ***//
-  //***                          SD237152 (Tiago/Gielow).                ***//
+    //***                          pesquisar no SmartShare.                ***//
+    //***                          (Chamado 181988) - (Fabricio)           ***//
+    //***                                                                  ***//
+    //***             09/01/2015 - Altercoes referentes ao projeto de      ***//
+    //***                          melhoria para alteracao de propoosta    ***//
+    //***                          SD237152 (Tiago/Gielow).                ***//
 	//***                                                                  ***//
 	//***             06/04/2015 - Consultas automatizadas (Jonata-RKAM)   ***//   
 	//***                                                                  ***//
@@ -54,7 +54,7 @@
 	//***                                                                  ***//
 	//***             08/08/2017 - Implementacao da melhoria 438.          ***//
 	//***                          Heitor (Mouts).                         ***//
-    //***                                                                  ***//
+	//***																   ***//
 	//***			  06/03/2018 - Adicionado variável idcobope. 		   ***//
 	//***					       (PRJ404 Reinert)						   ***//
     //***                                                                  ***//
@@ -178,7 +178,7 @@
 	$majora = $xmlObjMaj->roottag->tags[0]->tags[0]->tags;
 	
 	$dtultmaj = getByTagName($majora,"dtultmaj");	
-
+	
 	//Verifica situacao do limite, se foi cancelado automaticamente por inadimplencia
 	$xml  = "";
 	$xml .= "<Root>";

@@ -15,7 +15,7 @@ BEGIN
   Sistema : Conta-Corrente - Cooperativa de Credito
   Sigla   : CRED
   Autor   : Everton (Mout´S)
-  Data    : Abril/2017.                    Ultima atualizacao:  07/08/2017
+  Data    : Abril/2017.                    Ultima atualizacao:  06/04/2018
 
   Dados referentes ao programa:
 
@@ -34,6 +34,10 @@ BEGIN
               07/11/2017 - Ajuste realizado para gravacao do arquivo referente ao relatorio 135 por agencia.
                            Everton (Mouts) - Chamado 773664
 
+              07/12/2017 - Passagem do idcobope. (Jaison/Marcos Martini - PRJ404)
+
+              06/04/2018 - Remover o resgate de aplicação pois a funcionalidade não deve ser aplicada para
+                           empréstimos TR (Renato - Supero).
     ............................................................................. */
 
   DECLARE
@@ -318,7 +322,6 @@ BEGIN
                                                ,pr_cdcritic => vr_cdcritic          -- Retorno de codigo de critica
                                                ,pr_dscritic => vr_dscritic);        -- Retorno de descricao de critica
 
-               
              ELSE
                vr_inliquid := 0;
              END IF;
@@ -1023,7 +1026,7 @@ BEGIN
       vr_flgprc       INTEGER;
       vr_cdagencia    tbepr_tr_parcelas.cdagenci%TYPE;
       vr_seqdig       NUMBER(10);
-      
+            
       -- Erro em chamadas da pc_gera_erro
       vr_des_reto VARCHAR2(3);
       vr_tab_erro GENE0001.typ_tab_erro;
@@ -1323,6 +1326,7 @@ BEGIN
 
           -- Se o valor de desconto aplicando a CPMF for maior que o saldo total
           IF TRUNC((vr_vldescto * (1 + vr_txcpmfcc)),2) > vr_vlsldtot THEN
+
             -- Se houver saldo total
             IF vr_vlsldtot > 0 THEN
               -- Aplicar a taxa de CPMF
@@ -1702,7 +1706,6 @@ BEGIN
                                                ,pr_tab_erro => vr_tab_erro          -- Retorno de erros em PlTable
                                                ,pr_cdcritic => vr_cdcritic          -- Retorno de codigo de critica
                                                ,pr_dscritic => vr_dscritic);        -- Retorno de descricao de critica
-
 
         ELSE
           -- Indicar que o emprestimo não está liquidado

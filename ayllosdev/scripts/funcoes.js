@@ -106,6 +106,10 @@
  * 092: [15/09/2017] Kelvin 		  (CECRED) : Alterações referente a melhoria 339.
  * 093: [06/10/2017] Kelvin 		  (CECRED) : Ajuste para ignorar campos com display none na funcao controlaFocoEnter. (PRJ339 - Kelvin).
  * 095: [06/02/2018] Lombardi 		  (CECRED) : Colocado tratativa para tirar o background quando o type for 'radio'. (PRJ366)
+ * 096: [21/03/2018] Reinert		  (CECRED) : Adicionado divUsoGAROPC na lista de divs reposicionaveis. 
+ * 097: [02/04/2018] Lombardi 		  (CECRED) : Adicionado função validaAdesaoProduto para verificar se o tipo de conta permite a contratação do produto. (PRJ366)
+ * 098: [07/04/2018] Renato Darosci   (SUPERO) : Ajustar controle de navegação para que a funcionalidade F1 funcione também na tela GAROPC. (PRJ404). 
+ * 099: [16/04/2018] Lombardi 		  (CECRED) : Adicionado função validaValorProduto para verificar se o tipo de conta permite o valor da contratação do produto. (PRJ366)
 */ 	 
 
 var UrlSite     = parent.window.location.href.substr(0,parent.window.location.href.lastIndexOf("/") + 1); // Url do site
@@ -374,7 +378,11 @@ $(document).ready(function () {
 					// 050 - adicionado a opcao btsair
                     } else if ($('#divRotina').css('visibility') == 'visible') {
                         if ($('#divRotina').find('#' + arrayTeclas[e.which]).length) {
+							if ($('#btConfirmar', '#divUsoGAROPC').css('visibility') == 'visible') {
+								$('#btConfirmar' + ':visible', '#divUsoGAROPC').click();
+							} else { 
                             $('#' + arrayTeclas[e.which] + ':visible', '#divRotina').click();
+							}
                         } else if ($('#divRotina').find('#btSair').length && e.which == 27) {
                             $('#btSair:visible', '#divRotina').click();
 						}
@@ -429,7 +437,7 @@ $(document).ready(function () {
 	 * OBJETIVO   : Tornar as mensagens padrão de Erro ou Confirmação "Movimentáveis", permitindo arrastar a janela para qualquer direção, com o objetivo
 	 *              de desobstruindo os dados que se encontram logo abaixo da caixa de mensagem. Funcionalidade replicada as telas de rotinas.
 	 */	 
-	var elementosDrag = $('#divRotina, #divError, #divConfirm, #divPesquisa, #divPesquisaEndereco, #divPesquisaEnderecoAssociado, #divFormularioEndereco, #divPesquisaAssociado, #divUsoGenerico, #divMsgsAlerta');
+	var elementosDrag = $('#divRotina, #divError, #divConfirm, #divPesquisa, #divPesquisaEndereco, #divPesquisaEnderecoAssociado, #divFormularioEndereco, #divPesquisaAssociado, #divUsoGenerico, #divMsgsAlerta, #divUsoGAROPC');
 	elementosDrag.unbind('dragstart');	
     elementosDrag.bind('dragstart', function (event) {
 		return $(event.target).is('.ponteiroDrag');
@@ -1907,7 +1915,7 @@ $.fn.extend({
             var tag = this.tagName.toLowerCase();
             if ((in_array(tag, ['input', 'select', 'textarea'])) && (type != 'image')) {
 				if (type == 'radio') $(this).css('background', 'none');
-                $(this).addClass('campo').removeClass('campoTelaSemBorda').prop('readonly', false).prop('disabled', false);
+				$(this).addClass('campo').removeClass('campoTelaSemBorda').prop('readonly', false).prop('disabled', false);
                 if ($(this).hasClass('pesquisa')) $(this).next().ponteiroMouse();
 			}
 		});		
@@ -2971,4 +2979,61 @@ function rpad(numero, tamanho, caracter) {
   caracter = caracter || '0';
   numero = numero + '';
   return numero.length >= tamanho ? numero : numero + new Array(tamanho - numero.length + 1).join(caracter);
+}
+
+function validaAdesaoProduto (nrdconta, cdprodut, executa_depois) {
+	
+	$.ajax({
+		type: 'POST',
+		dataType: 'html',
+		url: UrlSite + 'includes/valida_adesao_produto.php', 
+		data: {
+			nrdconta: nrdconta,
+			cdprodut: cdprodut, 
+			executa_depois: executa_depois,
+			redirect: 'script_ajax'
+		}, 
+		error: function (objAjax, responseError, objExcept) {
+			hideMsgAguardo();
+			showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
+		},
+		success: function (response) {
+			hideMsgAguardo();
+            try {
+				eval(response);
+			} catch (error) {
+				showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'unblockBackground();');
+			}
+		}				
+	});	
+}
+
+function validaValorProduto(nrdconta, cdprodut, vlcontra, executar, nmdivfnc, cddchave) {
+	
+	$.ajax({
+		type: 'POST',
+		dataType: 'html',
+		url: UrlSite + 'includes/valida_valor_produto.php', 
+		data: {
+			nrdconta: nrdconta,
+			cdprodut: cdprodut,
+			vlcontra: vlcontra,
+			executar: executar,
+			nmdivfnc: nmdivfnc,
+			cddchave: cddchave,
+			redirect: 'script_ajax'
+		}, 
+		error: function (objAjax, responseError, objExcept) {
+			hideMsgAguardo();
+			showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
+		},
+		success: function (response) {
+			hideMsgAguardo();
+            try {
+				eval(response);
+			} catch (error) {
+				showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'unblockBackground();');
+			}
+		}				
+	});	
 }

@@ -66,6 +66,10 @@
 
                17/07/2017 - Alteraçao CDOEDTTL pelo campo IDORGEXP.
                            PRJ339 - CRM (Odirlei-AMcom)  
+
+                12/03/2018 - Alterado para buscar descricao do tipo de conta do oracle.
+                             Substituida verificacao "cdtipcta = 1,2,7,8,9,..." por "cdcatego = 1".
+                             Retirada regra que apresentava a critica 830. PRJ366 (Lombardi).
 .............................................................................*/
 
 
@@ -294,7 +298,7 @@ PROCEDURE Busca_Dados:
                           tt-crapcrl.nmrespon = crapcrl.nmrespon
                           tt-crapcrl.nridenti = crapcrl.nridenti
                           tt-crapcrl.tpdeiden = crapcrl.tpdeiden
-                                                                
+
                           tt-crapcrl.cdufiden = crapcrl.cdufiden
                           tt-crapcrl.dtemiden = crapcrl.dtemiden
                           tt-crapcrl.dtnascin = crapcrl.dtnascin
@@ -584,6 +588,7 @@ PROCEDURE Busca_Impressao :
 
         CASE tt-relat-cab.inpessoa:
             WHEN 1 THEN DO:
+              
                 CREATE tt-relat-fis.
                 ASSIGN
                     tt-relat-fis.cdagenci = crapass.cdagenci
@@ -873,6 +878,9 @@ PROCEDURE Busca_Procurador :
 
     DEF VAR aux_returnvl AS CHAR                                    NO-UNDO.
     DEF VAR aux_nrcpfcgc AS DEC                                     NO-UNDO.
+    DEF VAR aux_dstipcta AS CHAR                                    NO-UNDO.
+    DEF VAR aux_des_erro AS CHAR                                    NO-UNDO.
+    DEF VAR aux_dscritic AS CHAR                                    NO-UNDO.
 
     DEF BUFFER crabass FOR crapass.
     DEF BUFFER crabavt FOR crapavt.
@@ -964,8 +972,8 @@ PROCEDURE Busca_Procurador :
                               DO:
                                 UNDO Procurador, LEAVE Procurador.
                           END.
-                          END.
                        END.
+               END.
                END.
     
                /* se informou o rowid deve obrigatoriamente retornar 
@@ -1020,7 +1028,7 @@ PROCEDURE Busca_Procurador :
                                  ASSIGN par_dscritic = {&GET-MSG}.
                                  UNDO Procurador, LEAVE Procurador.
                               END.
-                              
+
                           /* Retornar orgao expedidor */
                           ASSIGN tt-crapavt.cdoeddoc = "".
                           RUN busca_org_expedidor
@@ -1055,12 +1063,10 @@ PROCEDURE Busca_Procurador :
 
                       FOR EACH crabass FIELDS(nmprimtl nrcpfcgc nrdocptl 
                                               tpdocptl idorgexp cdufdptl 
-                                              dtemdptl nrdconta inpessoa)
+                                              dtemdptl nrdconta inpessoa
+                                              cdtipcta)
                           WHERE crabass.cdcooper = par_cdcooper AND
-                                crabass.nrcpfcgc = par_nrcpfcto NO-LOCK,
-                          FIRST craptip FIELDS(cdtipcta dstipcta)
-                          WHERE craptip.cdcooper = crabass.cdcooper AND
-                                craptip.cdtipcta = crabass.cdtipcta NO-LOCK:
+                                crabass.nrcpfcgc = par_nrcpfcto NO-LOCK:
     
                           IF  crabass.inpessoa <> 1 THEN
                               DO:
@@ -1068,6 +1074,36 @@ PROCEDURE Busca_Procurador :
                                  LEAVE Procurador.
                               END.
     
+                          { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+                          
+                          RUN STORED-PROCEDURE pc_descricao_tipo_conta
+                          aux_handproc = PROC-HANDLE NO-ERROR (INPUT crabass.inpessoa,    /* tipo de pessoa */
+                                                               INPUT crabass.cdtipcta,    /* tipo de conta */
+                                                              OUTPUT "",   /* Descricao do tipo de conta */
+                                                              OUTPUT "",   /* Flag Erro */
+                                                              OUTPUT "").  /* Descrição da crítica */
+                          
+                          CLOSE STORED-PROC pc_descricao_tipo_conta
+                                aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+                          { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+                          
+                          ASSIGN aux_dstipcta = ""
+                                 aux_des_erro = ""
+                                 aux_dscritic = ""
+                                 aux_dstipcta = pc_descricao_tipo_conta.pr_dstipo_conta 
+                                                WHEN pc_descricao_tipo_conta.pr_dstipo_conta <> ?
+                                 aux_des_erro = pc_descricao_tipo_conta.pr_des_erro 
+                                                WHEN pc_descricao_tipo_conta.pr_des_erro <> ?
+                                 aux_dscritic = pc_descricao_tipo_conta.pr_dscritic
+                                                WHEN pc_descricao_tipo_conta.pr_dscritic <> ?.
+                          
+                          IF aux_des_erro = "NOK"  THEN
+                              DO:
+                                  ASSIGN par_dscritic = aux_dscritic.
+                                  LEAVE Procurador.
+                              END.
+                          
                           CREATE tt-crapavt.
     
                           ASSIGN 
@@ -1088,8 +1124,8 @@ PROCEDURE Busca_Procurador :
                                                      (tt-crapavt.nrcpfcgc,
                                                       "99999999999"),
                                                            "xxx.xxx.xxx-xx") 
-                              tt-crapavt.dstipcta = STRING(craptip.cdtipcta) 
-                                                    + "-" + craptip.dstipcta
+                              tt-crapavt.dstipcta = STRING(crabass.cdtipcta) 
+                                                    + "-" + aux_dstipcta
                               aux_nrcpfcgc        = crabass.nrcpfcgc NO-ERROR.
     
                           IF  ERROR-STATUS:ERROR THEN
@@ -1370,14 +1406,25 @@ PROCEDURE Pesquisa_Associado PRIVATE :
                 PERSISTENT SET h-b1wgen0060.
 
         /* Motivo de demissao */
-        DYNAMIC-FUNCTION("BuscaMotivoDemi" IN h-b1wgen0060,
-                          INPUT tt-crapass.cdcooper,
-                          INPUT tt-crapass.cdmotdem,
-                         OUTPUT tt-crapass.dsmotdem,
-                         OUTPUT par_dscritic).
+		       { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+                /* Efetuar a chamada a rotina Oracle */ 
+                RUN STORED-PROCEDURE prc_busca_motivo_demissao
+                aux_handproc = PROC-HANDLE NO-ERROR 
+                  ( INPUT tt-crapass.cdcooper      /* pr_cdcooper --> Codigo da cooperativa */
+                   ,INPUT tt-crapass.cdmotdem      /* pr_cdmotdem --> Código Motivo Demissao */
+                   /* --------- OUT --------- */
+                   ,OUTPUT ""           /* pr_dsmotdem --> Descriçao Motivo Demissao */
+                   ,OUTPUT 0            /* pr_cdcritic --> Codigo da critica)   */
+                   ,OUTPUT "" ).        /* pr_dscritic --> Descriçao da critica).  */
+                                        
+                /* Fechar o procedimento para buscarmos o resultado */ 
+                CLOSE STORED-PROC prc_busca_motivo_demissao
+                aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+                            
+                { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
 
-        IF  tt-crapass.dsmotdem = "NAO CADASTRADO" THEN
-            ASSIGN tt-crapass.dsmotdem = "".
+                ASSIGN tt-crapass.dsmotdem = prc_busca_motivo_demissao.pr_dsmotdem
+                                 WHEN prc_busca_motivo_demissao.pr_dsmotdem <> ?.                          
 
         /* PAC */
         DYNAMIC-FUNCTION("BuscaPac" IN h-b1wgen0060,
@@ -2266,7 +2313,7 @@ PROCEDURE Verifica_Principal PRIVATE :
 
         /* dados iniciais do associado */
         FOR FIRST crabass FIELDS(inpessoa cdtipcta nmprimtl inpessoa
-                                 dtdemiss indnivel)
+                                 dtdemiss indnivel cdcatego)
                           WHERE crabass.cdcooper = par_cdcooper AND
                                 crabass.nrdconta = par_nrdconta NO-LOCK:
         END.
@@ -2293,8 +2340,7 @@ PROCEDURE Verifica_Principal PRIVATE :
                                       crabttl.nrdconta = par_nrdconta AND
                                       crabttl.idseqttl > 1 NO-LOCK:
             
-                   IF  CAN-DO("01,02,07,08,09,12,13,18",
-                              STRING(crabass.cdtipcta,"99")) THEN
+                   IF  crabass.cdcatego = 1 THEN
                        DO:
                           RUN Cria_Alerta
                               ( INPUT 0,
@@ -2488,8 +2534,6 @@ PROCEDURE Busca_Dados_Cto:
     DEF OUTPUT PARAM par_cdcritic AS INTE                           NO-UNDO.
     DEF OUTPUT PARAM par_dscritic AS CHAR                           NO-UNDO.
 
-    DEF VAR aux_flgsuces AS LOG                                     NO-UNDO.
-
     DEF BUFFER crabass FOR crapass.
     DEF BUFFER crabttl FOR crapttl.
 
@@ -2565,28 +2609,6 @@ PROCEDURE Busca_Dados_Cto:
         IF crabass.inpessoa <> 1 THEN
            DO:
               ASSIGN par_cdcritic = 833.
-              LEAVE Busca.
-
-           END.
-
-        ASSIGN aux_flgsuces = TRUE.
-        
-        IF crabass.cdtipcta >= 12 THEN
-           FOR EACH crabttl FIELDS(indnivel) 
-                            WHERE crabttl.cdcooper = crabass.cdcooper AND
-                                  crabttl.nrdconta = crabass.nrdconta 
-                                  NO-LOCK:
-
-               IF crabttl.indnivel <> 4 THEN
-                  ASSIGN aux_flgsuces = FALSE.
-
-           END.
-
-        IF NOT aux_flgsuces                 AND
-           crabass.dtdemiss = ?             AND
-           crabass.nrdconta <> par_nrdctato THEN
-           DO:
-              ASSIGN par_cdcritic = 830.
               LEAVE Busca.
 
            END.

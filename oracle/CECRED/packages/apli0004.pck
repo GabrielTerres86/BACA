@@ -198,6 +198,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
   --
   --             16/02/2018 - Alterado a logica do "IF" da proc pc_calcula_poupanca 
   --                          (Alcemir - Mouts : Chamado 846597)
+  --
+  --             05/03/2018 - Retirado a logica do "IF" da proc pc_calcula_poupanca pois
+  --                          o calculo nao estava correto (Tiago/Adriano)
   ---------------------------------------------------------------------------------------------------------------
 
   vr_dsmsglog  VARCHAR2(4000); -- Mensagem de log
@@ -1633,7 +1636,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
                                                ,pr_cdacesso => 'PERCIRRDCA'
                                                ,pr_tpregist => 0);      
 
-      IF (vr_dstextab <> '') or (vr_dstextab IS NOT NULL) THEN  
+      IF vr_dstextab <> '' AND NOT vr_dstextab IS NULL THEN 
 
         pr_txmespop := ROUND(pr_vlmoefix / (1 - (gene0002.fn_char_para_number(gene0002.fn_busca_entrada(2, gene0002.fn_busca_entrada(1, vr_dstextab, ';'), '#')) / 100)),6);
         pr_txdiapop := ROUND(((POWER(1 + (pr_txmespop / 100), 1 / pr_qtddiaut) - 1) * 100),6);

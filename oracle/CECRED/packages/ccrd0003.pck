@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0003 AS
   --  Sistema  : Rotinas genericas referente a tela de Cartões
   --  Sigla    : CCRD
   --  Autor    : Jean Michel - CECRED
-  --  Data     : Abril - 2014.                   Ultima atualizacao: 23/02/2018
+  --  Data     : Abril - 2014.                   Ultima atualizacao: 04/05/2018
   --
   -- Dados referentes ao programa:
   --
@@ -2143,7 +2143,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                              o credito em conta. (Chamado 836129) - (Fabricio)
                              
                 04/05/2018 - P450 - Aplicação das procedures de cancelamento de débito por inadimplência 
-                             na craplcm e craplot
+                             na craplcm e craplot (Marcel / AMCom)
     ....................................................................................................*/
     DECLARE
       ------------------------- VARIAVEIS PRINCIPAIS ------------------------------
@@ -6757,7 +6757,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Lucas Lunelli
-       Data    : Abril/2014.                     Ultima atualizacao: 21/09/2017
+       Data    : Abril/2014.                     Ultima atualizacao: 04/05/2018
 
        Dados referentes ao programa:
 

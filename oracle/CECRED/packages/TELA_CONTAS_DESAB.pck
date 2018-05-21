@@ -568,6 +568,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONTAS_DESAB AS
         GENE0007.pc_insere_tag(pr_xml      => pr_retxml
                               ,pr_tag_pai  => 'Dados'
                               ,pr_posicao  => 0
+                              ,pr_tag_nova => 'flcnaulc'
+                              ,pr_tag_cont => rw_crapass.flcnaulc
+                              ,pr_des_erro => vr_dscritic);
+                              
+        GENE0007.pc_insere_tag(pr_xml      => pr_retxml
+                              ,pr_tag_pai  => 'Dados'
+                              ,pr_posicao  => 0
                               ,pr_tag_nova => 'cdopemaj'
                               ,pr_tag_cont => rw_crapass.cdopemaj
                               ,pr_des_erro => vr_dscritic);
@@ -754,6 +761,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONTAS_DESAB AS
                                                  END);
 
          gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
+                                 ,pr_nmdcampo => 'Cancelamento Automatico Limite Credito'
+                                 ,pr_dsdadant => CASE rw_crapass.flcnaulc
+                                                   WHEN 1 THEN 'Sim'
+                                                   ELSE 'Nao'
+                                                 END
+                                 ,pr_dsdadatu => CASE pr_flcnaulc
+                                                   WHEN 1 THEN 'Sim'
+                                                   ELSE 'Nao'
+                                                 END);
+                                                 
+          gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid
                                  ,pr_nmdcampo => 'Cancelamento Automatico Limite Credito'
                                  ,pr_dsdadant => CASE rw_crapass.flcnaulc
                                                    WHEN 1 THEN 'Sim'

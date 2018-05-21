@@ -499,7 +499,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
 
                19/01/2017 - Adicionado novo limite de horario para pagamento no dia
                             para contas da cooperativa. (M342 - Kelvin)  
-
+               
                30/03/2017 - Ajuste referente a segunda fase da melhoria 342. (Kelvin)
                
                12/05/2017 - Segunda fase da melhoria 342 (Kelvin).
@@ -3353,7 +3353,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
    --
    --             07/07/2016 - Mudança nos parâmetros da chamada de saldo para melhora
    --                          de performance - Marcos(Supero)
-   --
+   -- 
    --             30/10/2017 - Somando os pagamentos aprovados e nao debitados na verificação
    --                          de estouro, conforme solicitado no chamado 707298 (Kelvin).
    --
@@ -3398,7 +3398,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
                   ,ass.nrdconta
                   ,ass.vllimcre;
       rw_crappfp cr_crappfp%ROWTYPE;
-
+      
       -- Busca os dados de convenios
       CURSOR cr_crappfp_aprovados(p_cdcooper crapcop.cdcooper%TYPE
                                  ,p_cdempres crapemp.cdempres%TYPE) IS
@@ -3543,7 +3543,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
 
             -- Adquire saldo disponível total da conta
             vr_vlsddisp := vr_tab_sald(vr_ind_sald).vlsddisp;
-
+            
             OPEN cr_crappfp_aprovados(p_cdcooper => vr_cdcooper
                                      ,p_cdempres => rw_crappfp.cdempres);
               FETCH cr_crappfp_aprovados
@@ -5135,6 +5135,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
                 
                 22/02/2016 - Realizado ajuste para para trazer a razao social ao inves
                              do nome resumido, conforme solicitado no chamado 590014. (Kelvin)
+                
+                20/02/2018 - Alterado cursor cr_crapass, substituindo o acesso à tabela CRAPTIP
+                             pela tabela TBCC_TIPO_CONTA. PRJ366 (Lombardi).
+                             
+                             
     ............................................................................. */
 
      -- Seleciona os dados da Cooperativa
@@ -5162,7 +5167,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
              ,gene0002.fn_mask_cpf_cnpj(crapass.nrcpfcgc,crapass.inpessoa) nrcpfcgc
              ,crapass.nmprimtl
              ,crapass.inpessoa
-             ,craptip.dstipcta
+             ,tpcta.dstipo_conta dstipcta
              ,INITCAP(crapenc.dsendere)||', '||crapenc.nrendere||DECODE(crapenc.complend,' ','',', '||crapenc.complend) dsendere
              ,crapenc.nmcidade
              ,crapenc.nmbairro
@@ -5171,10 +5176,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
              ,gene0002.fn_mask(crapass.cdbcochq,'9999') cdbcoctl
              ,gene0002.fn_mask(crapass.cdagenci,'9999') cdagectl
          FROM crapass crapass
-             ,craptip craptip
+             ,tbcc_tipo_conta tpcta
              ,crapenc crapenc
-        WHERE crapass.cdcooper = craptip.cdcooper
-          AND crapass.cdtipcta = craptip.cdtipcta
+        WHERE crapass.inpessoa = tpcta.inpessoa
+          AND crapass.cdtipcta = tpcta.cdtipo_conta
           AND crapass.cdcooper = crapenc.cdcooper
           AND crapass.nrdconta = crapenc.nrdconta
           AND crapass.cdcooper = p_cdcooper
@@ -5697,7 +5702,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
                                 SELECT pfp.cdempres
                                       ,pfp.idtppagt
                ,pfp.dtmvtolt
-               ,DECODE(pfp.flsitcre,1,'Creditado',2,'Cred. Parcial',DECODE(pfp.flsitdeb,1,'Debitado','Agendado')) dssitpgt
+                                      ,DECODE(pfp.flsitcre,1,'Creditado',2,'Cred. Parcial',DECODE(pfp.flsitdeb,1,'Debitado','Agendado')) dssitpgt
                ,pfp.qtregpag qtlctpag
                ,pfp.vllctpag
                ,pfp.qtlctpag * pfp.vltarapr vltarifa
@@ -5705,8 +5710,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
                ,pfp.dtcredit
                ,pfp.idsitapr
                                       ,pfp.rowid dsrowid
-               ,to_char(pfp.dtmvtolt,'dd/mm/rr hh24:mi') dthoragen
-                                      /* Detalhes (On-click) */     
+                                      ,to_char(pfp.dtmvtolt,'dd/mm/rr hh24:mi') dthoragen
+                                      /* Detalhes (On-click) */
                ,'Pagamento aprovado por '||
                        DECODE(pfp.nrcpfapr,0,(SELECT emp.nmresemp
                                                 FROM crapemp emp
@@ -5757,7 +5762,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
                                     OR TRUNC(pfp.dtcredit) BETWEEN p_dtiniper AND p_dtfimper
                                     OR TRUNC(pfp.dthorcre) BETWEEN p_dtiniper AND p_dtfimper
                                     OR TRUNC(pfp.dthordeb) BETWEEN p_dtiniper AND p_dtfimper)) dados
-                         ORDER BY dados.idsitapr, dados.dtmvtolt DESC) dados2) dados3
+                         ORDER BY dados.idsitapr, dados.dtmvtolt DESC) dados2) dados3	
          WHERE dados3.linha >= p_nriniseq
            AND dados3.linha <  p_nrregist;
 
@@ -5809,10 +5814,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
       vr_qtregist  := 0;      
       vr_flgprime  := 0;
       vr_flgpende  := 0;
-
+     
       vr_nriniseq := pr_nriniseq;
       vr_nrregist := pr_nrregist + pr_nriniseq;
-      
+
       -- Verificamos se os parametros de data estao corretos
       -- Primeiramente verificamos se os campos estao null
       IF pr_dtiniper IS NULL THEN
@@ -5891,8 +5896,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
           vr_tab_pagamento(vr_idx_pagto).dthordeb := '';
           vr_tab_pagamento(vr_idx_pagto).dthorcre := '';
           vr_tab_pagamento(vr_idx_pagto).dthortar := '';
-          vr_tab_pagamento(vr_idx_pagto).dthrdebi := '';          
-          vr_tab_pagamento(vr_idx_pagto).dthrcred := '';                    
           vr_tab_pagamento(vr_idx_pagto).dthrtari := '';          
           vr_tab_pagamento(vr_idx_pagto).dscomprv := '';
           vr_tab_pagamento(vr_idx_pagto).cdempres := rw_registros.cdempres;
@@ -5900,6 +5903,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
           vr_tab_pagamento(vr_idx_pagto).dstpapgt := CASE WHEN rw_registros.idtppagt = 'A' THEN 'Arquivo' ELSE 'Convencional' END;
           vr_tab_pagamento(vr_idx_pagto).idsitapr := rw_registros.idsitapr;
           vr_tab_pagamento(vr_idx_pagto).nrseqpag := rw_registros.nrseqpag;
+          vr_tab_pagamento(vr_idx_pagto).dthrdebi := TO_CHAR(rw_registros.dtdebito,'DD/MM/RRRR') || ' 00:00';
+          vr_tab_pagamento(vr_idx_pagto).dthrcred := TO_CHAR(rw_registros.dtcredit,'DD/MM/RRRR') || ' 00:00';          
           
           vr_idx_pagto := vr_idx_pagto + 1;
           vr_flgpende := 1;
@@ -6046,13 +6051,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
           vr_tab_pagamento(vr_idx_pagto).dstpapgt := CASE WHEN rw_registros.idtppagt = 'A' THEN 'Arquivo' ELSE 'Convencional' END;
           vr_tab_pagamento(vr_idx_pagto).nrseqpag := rw_registros.nrseqpag;
           vr_tab_pagamento(vr_idx_pagto).dthrtari := rw_registros.dthortar;
-
+          
           CASE 
             WHEN NVL(rw_registros.dthordeb,'') = '' THEN vr_tab_pagamento(vr_idx_pagto).dthrdebi := ''; 
             WHEN LENGTH(rw_registros.dthordeb) = 14 THEN vr_tab_pagamento(vr_idx_pagto).dthrdebi := rw_registros.dthordeb;
             ELSE vr_tab_pagamento(vr_idx_pagto).dthrdebi := rw_registros.dthordeb || ' 00:00';
           END CASE;
-
+          
           CASE 
             WHEN NVL(rw_registros.dthorcre,'') = '' THEN vr_tab_pagamento(vr_idx_pagto).dthrcred := '';
             WHEN LENGTH(rw_registros.dthorcre) = 14 THEN vr_tab_pagamento(vr_idx_pagto).dthrcred := rw_registros.dthorcre;
@@ -6111,7 +6116,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
                                                    || '<idtpapgt>' ||vr_tab_pagamento(vr_idx_pagto).idtppagt||'</idtpapgt>'
                                                    || '<idsitapr>' ||vr_tab_pagamento(vr_idx_pagto).idsitapr||'</idsitapr>'
                                                    || '<envcompr>' ||vr_tab_pagamento(vr_idx_pagto).envcompr||'</envcompr>'
-                                                   || '<qtregist>' || vr_qtregist || '</qtregist>'
+                                                   || '<qtregist>' || vr_qtregist || '</qtregist>' 
                                                    || '<dtcrefmt>'||TO_CHAR(vr_tab_pagamento(vr_idx_pagto).dtcredit,'DD/MM/YYYY') ||'</dtcrefmt>'
                                                    || '<nrseqpag>'||vr_tab_pagamento(vr_idx_pagto).nrseqpag ||'</nrseqpag>'
                                                    
@@ -6823,7 +6828,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
          ELSE
            vr_nrseqpag := vr_nrseqpag || ',' || rw_crappfp.nrseqpag;  
          END IF;
-
+          
          -- Caso NAO esteja como Pendente(1), Reprovado(3)
          -- Se for Solicitacao De Estouro(2), devemos deixar processeguir
          -- pois usuario pode ter ajustado o saldo da conta e desaja tentar
@@ -9076,7 +9081,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
               vr_msgtela := 'Pagamento com (' || vr_existe || ') comprovante(s) carregado(s). Carregue novos ou atualize.';
          END IF;
       END IF;
-      
+
       -- Busca a Qtde dias para envio comprovantes
       vr_qtdiaenv := GENE0001.fn_param_sistema(pr_nmsistem => 'CRED'
                                               ,pr_cdcooper => rw_crappfp.cdcooper
@@ -10019,7 +10024,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
       -- Se ocorreu erro dar RAISE
       IF vr_des_reto = 'ERR' THEN
         RAISE vr_exc_erro;
-        END IF;
+      END IF;
       ELSE
         gene0002.pc_copia_arq_para_download(pr_cdcooper => pr_cdcooper
                                            ,pr_dsdirecp => vr_nmdireto||'/'
@@ -10028,10 +10033,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
                                            ,pr_dssrvarq => pr_dssrvarq
                                            ,pr_dsdirarq => pr_dsdirarq
                                            ,pr_des_erro => vr_dscritic);
-          
+
         IF vr_dscritic IS NOT NULL AND TRIM(vr_dscritic) <> ' ' THEN
           RAISE vr_exc_erro;
-      END IF;
+        END IF;
       END IF;
 
       -- Seta o retorno

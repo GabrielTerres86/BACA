@@ -3998,8 +3998,8 @@ BEGIN
         vr_nivrisco     := NULL;
         rw_crapris_last := NULL;
 
-        FOR rw_crapris_last IN cr_crapris_last(pr_nrdconta => vr_tab_crapris(vr_des_chave_crapris).nrdconta
-                                                ,pr_dtrefere => pr_rw_crapdat.dtultdma) LOOP  --> Final do mês anterior
+         FOR rw_crapris_last IN cr_crapris_last(pr_nrdconta => vr_tab_crapris(vr_des_chave_crapris).nrdconta
+                                               ,pr_dtrefere => pr_rw_crapdat.dtultdma) LOOP  --> Final do mês anterior
           IF rw_crapris_last.vldivida > vr_vlarrast THEN
             vr_nivrisco := vr_tab_risco_aux(rw_crapris_last.innivris).dsdrisco;
             vr_dtdrisco := rw_crapris_last.dtdrisco;
@@ -4024,8 +4024,8 @@ BEGIN
         vr_dsnivris     := 'A';
         rw_crapris_last := NULL;
 
-        FOR rw_crapris_last IN cr_crapris_last(pr_nrdconta => vr_tab_crapris(vr_des_chave_crapris).nrdconta
-                                                ,pr_dtrefere => pr_dtrefere) LOOP  --> Data passada
+         FOR rw_crapris_last IN cr_crapris_last(pr_nrdconta => vr_tab_crapris(vr_des_chave_crapris).nrdconta
+                                               ,pr_dtrefere => pr_dtrefere) LOOP  --> Data passada
         --  IF vr_dtdrisco IS NULL THEN
             vr_dtdrisco := rw_crapris_last.dtdrisco;
         --  END IF;

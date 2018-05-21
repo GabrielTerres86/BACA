@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Deborah/Edson
-   Data    : Outubro/96.                     Ultima atualizacao: 24/01/2018
+   Data    : Outubro/96.                     Ultima atualizacao: 23/04/2018
 
    Dados referentes ao programa:
 
@@ -412,7 +412,11 @@
 			             grava-proposta-completa. PRJ207 - Esteira 
 						 (Odirlei-AMcom)						                  
                          
+            15/12/2017 - Inserção do campo idcobope. PRJ404 (Lombardi)
+
             24/01/2018 - Passagem de parametros nulos. (Jaison/James - PRJ298)
+            
+            23/04/2018 - P410 - Melhorias/Ajustes IOF (Marcos-Envolti)  
 
 ........................................................................... */
 
@@ -1071,6 +1075,7 @@ DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
                                      INPUT aux_dscatbem, /* dscatbem */
                                      INPUT tt-proposta-epr.idfiniof, /* idfiniof */
                                      INPUT aux_dsctrliq, /* dsctrliq */
+                                     INPUT "N",
                                     OUTPUT aux_percetop, /* taxa cet ano */
                                     OUTPUT aux_txcetmes, /* taxa cet mes */
                                     OUTPUT TABLE tt-erro). 
@@ -2125,6 +2130,7 @@ DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
                                 INPUT TRUE,
                                 INPUT tt-rendimento.dsjusren,
                                 INPUT ?, /* dtlibera */
+                                INPUT 0, /* idcobope */
 								INPUT tt-proposta-epr.idfiniof, /* par_idfiniof */
 								INPUT "", /* par_dscatbem */
                                 OUTPUT TABLE tt-erro,

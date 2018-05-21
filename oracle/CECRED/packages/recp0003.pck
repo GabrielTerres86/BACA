@@ -28,7 +28,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
   --  Sistema  : Rotinas referentes a importacao de arquivos CYBER de acordos de emprestimos
   --  Sigla    : RECP
   --  Autor    : Jean Michel Deschamps
-  --  Data     : Outubro/2016.                   Ultima atualizacao: 21/09/2017
+  --  Data     : Outubro/2016.                   Ultima atualizacao: 06/04/2018
   --
   -- Dados referentes ao programa:
   --
@@ -54,9 +54,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
                  08/12/2017 - Inclusão de chamada da npcb0002.pc_libera_sessao_sqlserver_npc
                               na procedure pc_imp_arq_acordo_cancel. (SD#791193 - AJFink)
 
-			           06/04/2018 - Alteração do cursor "cr_crapcyb" para considerar somente contratos marcados
-								              com INDPAGAR = 'S' e considerar o contrato LC100 que não está na CRAPCYB.
-															(Reginaldo - AMcom)  
+  --             13/03/2018 - Chamado 806202 - ALterado update CRAPCYC para não atualizar motivos 2 e 7.
+
+			     06/04/2018 - Alteração do cursor "cr_crapcyb" para considerar somente contratos marcados
+							  com INDPAGAR = 'S' e considerar o contrato LC100 que não está na CRAPCYB.
+															(Reginaldo - AMcom)
 
   ---------------------------------------------------------------------------------------------------------------*/
 
@@ -1229,9 +1231,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0003 IS
 
                    BEGIN
                      UPDATE crapcyc 
-                        SET flgehvip = 0
-                          , cdmotcin = 0
-                          , dtaltera = vr_tab_crapdat(rw_crapcyb.cdcooper).dtmvtolt
+                        SET flgehvip = decode(cdmotcin,2,flgehvip,7,flgehvip,flvipant),
+                            cdmotcin = decode(cdmotcin,2,cdmotcin,7,cdmotcin,cdmotant),
+                            dtaltera = vr_tab_crapdat(rw_crapcyb.cdcooper).dtmvtolt,
+                            cdoperad = 'cyber'
                       WHERE cdcooper = rw_crapcyb.cdcooper
                         AND cdorigem = DECODE(rw_crapcyb.cdorigem,2,3,rw_crapcyb.cdorigem)
                         AND nrdconta = rw_crapcyb.nrdconta

@@ -35,6 +35,7 @@
 					<option value="0">Selecione</option>
 					<option value="1">Limite de Cr&eacute;dito</option>
 					<option value="2">Limite Desconto de Cheque</option>
+					<option value="3">Limite Desconto de T&iacute;tulos</option>
 				</select>			
 			</td>
 		</tr>		

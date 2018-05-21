@@ -11,7 +11,10 @@
    Objetivo  :  Estorno de deposito em cheque entre cooperativas
 
    Alteracoes:   
-                12/09/2016 - Adicionado chamada da função "callBlass(event)" - (Evandro - RKAM).                       
+                12/09/2016 - Adicionado chamada da função "callBlass(event)" - (Evandro - RKAM).      
+                
+                03/06/2017 - Retirada tratamento de documentos 3,4 e 5. PRJ367 - Compe Sessao Unica (Lombardi)
+                
 ----------------------------------------------------------------------------->
 
 <html>
@@ -468,39 +471,12 @@ function reabilitaForm() {
         </tr>
         <script language="SpeedScript">
             END.
-        FOR EACH tt-lancamentos WHERE tt-lancamentos.tpdocmto = 3 NO-LOCK:
-            ASSIGN v_foco_conta = FALSE.
-        </script>
-        <tr>
-          <td width="30%" align="right" class="linhaform">Cheq. Menores Praça:</td>
-          <td width="67%"><!--webbot bot="Validation" B-Value-Required="TRUE" I-Maximum-Length="14" --><input type="text" size="18" value="`STRING(tt-lancamentos.vllanmto,"zzz,zzz,zzz,zz9.99")`" class="input" maxlength="14" disabled style="text-align: right"><!--webbot bot="Validation" B-Value-Required="TRUE" I-Maximum-Length="8" -->&nbsp;<input type="text" value="`tt-lancamentos.dtmvtolt`" size="12" disabled maxlength="8" class="input"></td>
-        </tr>
-        <script language="SpeedScript">
-        END.
-        FOR EACH tt-lancamentos WHERE tt-lancamentos.tpdocmto = 4 NO-LOCK:
-            ASSIGN v_foco_conta = FALSE.
-        </script>
-        <tr>
-          <td width="30%" align="right" class="linhaform">Cheq. Maiores Praça:</td>
-          <td width="67%"><!--webbot bot="Validation" B-Value-Required="TRUE" I-Maximum-Length="14" --><input type="text" value="`STRING(tt-lancamentos.vllanmto,"zzz,zzz,zzz,zz9.99")`" size="18" class="input" maxlength="14" disabled style="text-align: right"><!--webbot bot="Validation" B-Value-Required="TRUE" I-Maximum-Length="8" -->&nbsp;<input type="text" value="`tt-lancamentos.dtmvtolt`" size="12" disabled maxlength="8" class="input"></td>
-        </tr>
-        <script language="SpeedScript">
-        END.
-        FOR EACH tt-lancamentos WHERE tt-lancamentos.tpdocmto = 5 NO-LOCK:
-            ASSIGN v_foco_conta = FALSE.
-        </script>
-        <tr>
-          <td width="30%" align="right" nowrap class="linhaform">Cheq. Menores Fora Praça:</td>
-          <td width="67%"><!--webbot bot="Validation" B-Value-Required="TRUE" I-Maximum-Length="14" --><input type="text" value="`STRING(tt-lancamentos.vllanmto,"zzz,zzz,zzz,zz9.99")`" size="18" maxlength="14" class="input" disabled style="text-align: right"><!--webbot bot="Validation" B-Value-Required="TRUE" I-Maximum-Length="8" -->&nbsp;<input type="text" value="`tt-lancamentos.dtmvtolt`" size="12" disabled maxlength="8" class="input"></td>
-        </tr>
-        <script language="SpeedScript">
-        END.
         FOR EACH tt-lancamentos WHERE tt-lancamentos.tpdocmto = 6 NO-LOCK:
             ASSIGN v_foco_conta = FALSE.
         </script>
         <tr>
-          <td width="30%" align="right" class="linhaform">Cheq. Maiores Fora Praça:</td>
-          <td width="67%"><!--webbot bot="Validation" B-Value-Required="TRUE" I-Maximum-Length="14" --><input type="text" value="`STRING(tt-lancamentos.vllanmto,"zzz,zzz,zzz,zz9.99")`" maxlength="14" onKeyDown="JavaScript:validaInteiro(event)" size="18" class="input" disabled style="text-align: right"><!--webbot bot="Validation" B-Value-Required="TRUE" I-Maximum-Length="8" -->&nbsp;<input type="text" value="`tt-lancamentos.dtmvtolt`" size="12" disabled maxlength="8" class="input"></td>
+          <td width="30%" align="right" class="linhaform">Cheq. Outros Bancos:</td>
+          <td width="67%"><!--webbot bot="Validation" B-Value-Required="TRUE" I-Maximum-Length="14" --><input type="text" size="18" value="`STRING(tt-lancamentos.vllanmto,"zzz,zzz,zzz,zz9.99")`" class="input" maxlength="14" disabled style="text-align: right"><!--webbot bot="Validation" B-Value-Required="TRUE" I-Maximum-Length="8" -->&nbsp;<input type="text" value="`tt-lancamentos.dtmvtolt`" size="12" disabled maxlength="8" class="input"></td>
         </tr>
         <script language="SpeedScript">
         END.

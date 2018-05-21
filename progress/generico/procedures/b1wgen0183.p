@@ -5,7 +5,7 @@
   Sistema : Conta-Corrente - Cooperativa de Credito
   Sigla   : CRED
   Autor   : Tiago
-  Data    : Fevereiro/14                           Ultima alteracao: 17/10/2017
+  Data    : Fevereiro/14                           Ultima alteracao: 08/03/2018
 
   Objetivo  : Procedures referentes a tela HRCOMP.
 
@@ -46,6 +46,12 @@
                          nao estava encontrando o job fazendo com que as 
                          alteracoes na HRCOMP nao surtissem o efeito desejado
                          (Tiago #753784).
+                         
+            22/01/2018 - Ajustado para aplicar as mesmas regras da DEBSIC ao procedimento
+                         DEBBAN. PRJ406 - FGTS(Odirlei-AMcom)
+
+		    08/03/2018 - Removida DEVOLUCAO VLB - COMPE Sessao Unica (Diego).
+
 ............................................................................ */
 
 { sistema/generico/includes/b1wgen0183tt.i }
@@ -416,7 +422,8 @@ PROCEDURE grava_dados:
 
 						IF (craphec.cdprogra = "CRPS688" OR 
 						    craphec.cdprogra = "DEBNET"  OR 
-						    craphec.cdprogra = "DEBSIC") AND
+						    craphec.cdprogra = "DEBSIC"  OR 
+						    craphec.cdprogra = "DEBBAN") AND
 						    aux_hriniexe < TIME THEN
 						   DO:
 								ASSIGN aux_cdcritic = 0
@@ -443,7 +450,8 @@ PROCEDURE grava_dados:
 
     					IF  craphec.cdprogra = "CRPS688" OR 
 						    craphec.cdprogra = "DEBNET"  OR 
-						    craphec.cdprogra = "DEBSIC"  THEN
+						    craphec.cdprogra = "DEBSIC"  OR 
+						    craphec.cdprogra = "DEBBAN" THEN
     						DO:                                
                                 RUN reagenda_job(INPUT crapcop.cdcooper
                 								                ,INPUT craphec.cdprogra
@@ -578,7 +586,8 @@ PROCEDURE grava_dados:
     
 					IF (craphec.cdprogra = "CRPS688" OR 
 						craphec.cdprogra = "DEBNET"  OR 
-						craphec.cdprogra = "DEBSIC") AND
+						craphec.cdprogra = "DEBSIC"  OR 
+						craphec.cdprogra = "DEBBAN") AND
 						aux_hriniexe < TIME THEN
 						DO:
 							ASSIGN aux_cdcritic = 0
@@ -605,7 +614,8 @@ PROCEDURE grava_dados:
     
     					IF craphec.cdprogra = "CRPS688" OR 
 						   craphec.cdprogra = "DEBNET"  OR 
-						   craphec.cdprogra = "DEBSIC"  THEN
+						   craphec.cdprogra = "DEBSIC"  OR 
+						   craphec.cdprogra = "DEBBAN"  THEN
     					DO:                           
 
                             RUN reagenda_job(INPUT craphec.cdcooper
@@ -711,63 +721,9 @@ PROCEDURE valida_seq_execucao:
 
     EMPTY TEMP-TABLE tt-erro.
 
-    IF  TRIM(par_dsprogra) <> "DEVOLUCAO VLB"     AND
-        (TRIM(par_dsprogra) =  "DEVOLUCAO DIURNA"  OR
-         TRIM(par_dsprogra) =  "DEVOLUCAO NOTURNA") THEN
-        DO:
-            FIND FIRST crabhec WHERE crabhec.cdcooper  = par_cdcooper   AND
-                                     crabhec.dsprogra  = "DEVOLUCAO VLB" 
-                                     NO-LOCK NO-ERROR.
-    
-            IF  AVAIL(crabhec) THEN
-                DO:
-                    IF (crabhec.hriniexe >= par_hriniexe OR
-                        crabhec.hrfimexe >= par_hrfimexe) THEN
-                        DO: 
-                            ASSIGN aux_cdcritic = 0
-                                   aux_dscritic = "Devolucao VLB deve ser o primeiro processo.".
-    
-                            RUN gera_erro (INPUT par_cdcooper,
-                                           INPUT 0,
-                                           INPUT 0,
-                                           INPUT 1,     /** Sequencia **/
-                                           INPUT aux_cdcritic,
-                                           INPUT-OUTPUT aux_dscritic).
-    
-                            RETURN "NOK".
-                        END.
-                END.
-        END.
 
     CASE par_dsprogra:
-        WHEN "DEVOLUCAO VLB" THEN /*executado antes de todos outros processos*/
-            DO: 
-                        
-                FIND FIRST crabhec WHERE crabhec.cdcooper  = par_cdcooper AND
-                                         crabhec.dsprogra <> par_dsprogra AND
-                                         (crabhec.dsprogra = "DEVOLUCAO DIURNA" OR
-                                          crabhec.dsprogra = "DEVOLUCAO NOTURNA") AND
-                                         (crabhec.hriniexe <= par_hriniexe OR
-                                          crabhec.hrfimexe <= par_hrfimexe)
-                                         NO-LOCK NO-ERROR.
-
-                IF  AVAIL(crabhec) THEN
-                    DO:
-                        ASSIGN aux_cdcritic = 0
-                               aux_dscritic = "Devolucao VLB deve ser o primeiro processo.".
     
-                        RUN gera_erro (INPUT par_cdcooper,
-                                       INPUT 0,
-                                       INPUT 0,
-                                       INPUT 1,     /** Sequencia **/
-                                       INPUT aux_cdcritic,
-                                       INPUT-OUTPUT aux_dscritic).
-    
-                        RETURN "NOK".
-
-                    END.
-            END.
-
         WHEN "DEVOLUCAO DIURNA" THEN
             DO:
                 FIND crabhec WHERE crabhec.cdcooper  = par_cdcooper        AND
@@ -793,7 +749,7 @@ PROCEDURE valida_seq_execucao:
                     END.
             END.
 
-        WHEN "DEVOLUCAO NOTURNA" THEN
+        WHEN "DEVOLUCAO FRAUDES E IMPEDIMENTOS" THEN
             DO:
                 FIND crabhec WHERE crabhec.cdcooper  = par_cdcooper       AND
                                    crabhec.dsprogra  = "DEVOLUCAO DIURNA" AND
@@ -805,7 +761,7 @@ PROCEDURE valida_seq_execucao:
                 IF  AVAIL(crabhec) THEN
                     DO:
                         ASSIGN aux_cdcritic = 0
-                               aux_dscritic = "Devolucao Nortuna deve rodar apos Devolucao Diurna.".
+                               aux_dscritic = "Devolucao Fraudes e Impedimentos deve rodar apos Devolucao Diurna.".
     
                         RUN gera_erro (INPUT par_cdcooper,
                                        INPUT 0,
@@ -1012,15 +968,24 @@ PROCEDURE reagenda_job:
       uma logo apos o processo uma durante a tarde e uma a noite
       por este motivo o JOB que se chamava apenas _DIA agora foi 
       criado mais um com _NOT pra noite*/      
+      
+    /* 23/01/2017 - PRJ406 - Alterado pois DEBNET E DEBSIC nao rodaram assim 
+       que concluir o processo, ira respeitar os horarios configurados da craphec 
+       para isso utilizara o nome diurna(1-execucao),vespertino e noturno */  
+       
     IF  par_dsprogra MATCHES '*VESPERTINA*' THEN
     DO:
-      ASSIGN vr_jobname = par_cdprogra + "_" + TRIM(STRING(par_cdcooper,"99")) + "\_DIA". 
+      ASSIGN vr_jobname = par_cdprogra + "_" + TRIM(STRING(par_cdcooper,"99")) + "\_VES". 
     END.
     ELSE     
     DO:
       IF  par_dsprogra MATCHES '*NOTURNA*' THEN
           DO:
             ASSIGN vr_jobname = par_cdprogra + "_" + TRIM(STRING(par_cdcooper,"99")) + "\_NOT". 
+          END.
+      ELSE IF  par_dsprogra MATCHES '*DIURNA*' THEN
+          DO:
+            ASSIGN vr_jobname = par_cdprogra + "_" + TRIM(STRING(par_cdcooper,"99")) + "\_DIA". 
           END.
       ELSE
           DO:

@@ -4,7 +4,7 @@
     Sistema : Conta-Corrente - Cooperativa de Credito
     Sigla   : CRED
     Autor   : David
-    Data    : Dezembro/2009                     Ultima alteracao: 07/12/2016
+    Data    : Dezembro/2009                     Ultima alteracao: 08/06/2017
 
     Dados referentes ao programa:
 
@@ -30,14 +30,13 @@
                 07/12/2016 - Alterado campo dsdepart para cddepart.
                             PRJ341 - BANCENJUD (Odirlei-AMcom)
                             
+                08/06/2017 - Tirada devoluçao VLB e alterada Devolucao Noturna para Devolucao
+                             Fraudes e Impedimentos. PRJ367 - Compe Sessao Unica (Lombardi)
+                            
 ..............................................................................*/
 
 { includes/var_online.i }
 
-DEF VAR tel_hrinivlb AS INTE FORMAT "99"                               NO-UNDO.
-DEF VAR tel_mminivlb AS INTE FORMAT "99"                               NO-UNDO.
-DEF VAR tel_hrfimvlb AS INTE FORMAT "99"                               NO-UNDO.
-DEF VAR tel_mmfimvlb AS INTE FORMAT "99"                               NO-UNDO.
 DEF VAR tel_hrinidv1 AS INTE FORMAT "99"                               NO-UNDO.
 DEF VAR tel_mminidv1 AS INTE FORMAT "99"                               NO-UNDO.
 DEF VAR tel_hrfimdv1 AS INTE FORMAT "99"                               NO-UNDO.
@@ -49,8 +48,6 @@ DEF VAR tel_mmfimdv2 AS INTE FORMAT "99"                               NO-UNDO.
 
 DEF VAR aux_cddopcao AS CHAR                                           NO-UNDO.
 DEF VAR aux_confirma AS CHAR FORMAT "!(1)"                             NO-UNDO.
-DEF VAR aux_hrinivlb AS CHAR                                           NO-UNDO.
-DEF VAR aux_hrfimvlb AS CHAR                                           NO-UNDO.
 DEF VAR aux_hrinidv1 AS CHAR                                           NO-UNDO.
 DEF VAR aux_hrfimdv1 AS CHAR                                           NO-UNDO.
 DEF VAR aux_hrinidv2 AS CHAR                                           NO-UNDO.
@@ -74,19 +71,6 @@ FORM glb_cddopcao AT 14 LABEL "Opcao"  AUTO-RETURN FORMAT "!(1)"
                   HELP "Entre com a opcao desejada (A,C)."
                   VALIDATE(CAN-DO("A,C",glb_cddopcao),"014 - Opcao errada.")
      SKIP(1)
-     "------------- Devolucao VLB -----------"
-     SKIP(1)
-     tel_hrinivlb       LABEL "Inicio" AUTO-RETURN
-                  HELP "Entre com a hora inicial da devolucao VLB."
-     ":"          AT 11
-     tel_mminivlb AT 12 NO-LABEL
-                  HELP "Entre com a hora inicial da devolucao VLB."
-     tel_hrfimvlb AT 28 LABEL "Final" AUTO-RETURN
-                  HELP "Entre com a hora final da devolucao VLB."
-     ":"          AT 37
-     tel_mmfimvlb AT 38 NO-LABEL
-                  HELP "Entre com a hora final da devolucao VLB."
-     SKIP(2)
      "----------- Devolucao Diurna ----------"
      SKIP(1)
      tel_hrinidv1       LABEL "Inicio" AUTO-RETURN
@@ -100,7 +84,7 @@ FORM glb_cddopcao AT 14 LABEL "Opcao"  AUTO-RETURN FORMAT "!(1)"
      tel_mmfimdv1 AT 38 NO-LABEL
                   HELP "Entre com a hora final da primeira devolucao."
      SKIP(2)     
-     "---------- Devolucao Noturna ----------"  
+     "--- Devolucao Fraudes e Impedimentos --"  
      SKIP(1)
      tel_hrinidv2       LABEL "Inicio" AUTO-RETURN
                   HELP "Entre com a hora inicial da segunda devolucao."
@@ -187,7 +171,7 @@ DO WHILE TRUE:
                        craptab.cdempres = 0
                        craptab.cdacesso = "HRTRDEVOLU"
                        craptab.tpregist = 0
-                       craptab.dstextab = "25200;32400;28800;41400;41401;57600".
+                       craptab.dstextab = "00000;00000;28800;41400;41401;57600".
                 VALIDATE craptab.
 
                 FIND CURRENT craptab NO-LOCK NO-ERROR.
@@ -195,16 +179,10 @@ DO WHILE TRUE:
             END. /** Fim do DO TRANSACTION **/
         END.
 
-    ASSIGN aux_hrinivlb = STRING(INTE(ENTRY(1,craptab.dstextab,";")),"HH:MM")
-           aux_hrfimvlb = STRING(INTE(ENTRY(2,craptab.dstextab,";")),"HH:MM")
-           aux_hrinidv1 = STRING(INTE(ENTRY(3,craptab.dstextab,";")),"HH:MM")
+    ASSIGN aux_hrinidv1 = STRING(INTE(ENTRY(3,craptab.dstextab,";")),"HH:MM")
            aux_hrfimdv1 = STRING(INTE(ENTRY(4,craptab.dstextab,";")),"HH:MM")
            aux_hrinidv2 = STRING(INTE(ENTRY(5,craptab.dstextab,";")),"HH:MM")
            aux_hrfimdv2 = STRING(INTE(ENTRY(6,craptab.dstextab,";")),"HH:MM")
-           tel_hrinivlb = INTE(SUBSTR(aux_hrinivlb,1,2))
-           tel_mminivlb = INTE(SUBSTR(aux_hrinivlb,4,2))
-           tel_hrfimvlb = INTE(SUBSTR(aux_hrfimvlb,1,2))
-           tel_mmfimvlb = INTE(SUBSTR(aux_hrfimvlb,4,2))
            tel_hrinidv1 = INTE(SUBSTR(aux_hrinidv1,1,2))
            tel_mminidv1 = INTE(SUBSTR(aux_hrinidv1,4,2))
            tel_hrfimdv1 = INTE(SUBSTR(aux_hrfimdv1,1,2))
@@ -214,8 +192,7 @@ DO WHILE TRUE:
            tel_hrfimdv2 = INTE(SUBSTR(aux_hrfimdv2,1,2))
            tel_mmfimdv2 = INTE(SUBSTR(aux_hrfimdv2,4,2)).
 
-    DISPLAY tel_hrinivlb tel_mminivlb tel_hrfimvlb tel_mmfimvlb
-            tel_hrinidv1 tel_mminidv1 tel_hrfimdv1 tel_mmfimdv1
+    DISPLAY tel_hrinidv1 tel_mminidv1 tel_hrfimdv1 tel_mmfimdv1
             tel_hrinidv2 tel_mminidv2 tel_hrfimdv2 tel_mmfimdv2
             WITH FRAME f_tab055.
 
@@ -234,46 +211,9 @@ DO WHILE TRUE:
                         MESSAGE glb_dscritic.
                     END.
 
-                UPDATE tel_hrinivlb tel_mminivlb tel_hrfimvlb tel_mmfimvlb
-                       tel_hrinidv1 tel_mminidv1 tel_hrfimdv1 tel_mmfimdv1 
+                UPDATE tel_hrinidv1 tel_mminidv1 tel_hrfimdv1 tel_mmfimdv1 
                        tel_hrinidv2 tel_mminidv2 tel_hrfimdv2 tel_mmfimdv2 
                        WITH FRAME f_tab055.
-
-                IF  tel_hrinivlb > 23  THEN
-                    DO:
-                        ASSIGN glb_cdcritic = 687.
-                        NEXT-PROMPT tel_hrinivlb WITH FRAME f_tab055.
-                        NEXT.
-                    END.
-
-                IF  tel_mminivlb > 59  THEN
-                    DO:
-                        ASSIGN glb_cdcritic = 687.
-                        NEXT-PROMPT tel_mminivlb WITH FRAME f_tab055.
-                        NEXT.
-                    END.
-
-                IF  tel_hrfimvlb > 23  THEN
-                    DO:
-                        ASSIGN glb_cdcritic = 687.
-                        NEXT-PROMPT tel_hrfimvlb WITH FRAME f_tab055.
-                        NEXT.
-                    END.
-
-                IF  tel_mmfimvlb > 59  THEN
-                    DO:
-                        ASSIGN glb_cdcritic = 687.
-                        NEXT-PROMPT tel_mmfimvlb WITH FRAME f_tab055.
-                        NEXT.
-                    END.
-
-                IF  ((tel_hrinivlb * 3600) + (tel_mminivlb * 60))  >= 
-                    ((tel_hrfimvlb * 3600) + (tel_mmfimvlb * 60))  THEN
-                    DO:
-                        ASSIGN glb_cdcritic = 687.
-                        NEXT-PROMPT tel_hrinivlb WITH FRAME f_tab055.
-                        NEXT.
-                    END.
 
                 IF  tel_hrinidv1 > 23  THEN
                     DO:
@@ -389,11 +329,7 @@ DO WHILE TRUE:
                     NEXT.
                 END.
 
-            ASSIGN aux_hrinivlb = STRING((tel_hrinivlb * 3600) +
-                                         (tel_mminivlb * 60),"99999")
-                   aux_hrfimvlb = STRING((tel_hrfimvlb * 3600) +
-                                         (tel_mmfimvlb * 60),"99999")
-                   aux_hrinidv1 = STRING((tel_hrinidv1 * 3600) + 
+            ASSIGN aux_hrinidv1 = STRING((tel_hrinidv1 * 3600) + 
                                          (tel_mminidv1 * 60),"99999")
                    aux_hrfimdv1 = STRING((tel_hrfimdv1 * 3600) + 
                                          (tel_mmfimdv1 * 60),"99999")
@@ -475,9 +411,8 @@ DO WHILE TRUE:
 
                         UNDO, LEAVE.
                     END.
-
-                ASSIGN craptab.dstextab = aux_hrinivlb + ";" +
-                                          aux_hrfimvlb + ";" +
+                
+                ASSIGN craptab.dstextab = "00000;00000;" + /* horário inicial e final VLB zerados*/
                                           aux_hrinidv1 + ";" + 
                                           aux_hrfimdv1 + ";" +
                                           aux_hrinidv2 + ";" + 

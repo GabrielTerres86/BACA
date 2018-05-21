@@ -44,6 +44,9 @@
                22/12/2015 - Criada procedure para edição de número do contrato de limite 
                             (Lucas Lunelli - SD 360072 [M175])
                             
+               05/12/2017 - Adicionado campo aux_idcobope nas procedures cadastrar-novo-limite e 
+                            alterar-novo-limite. Projeto 404 (Lombardi)
+                            
 ..............................................................................*/
 
 
@@ -127,6 +130,7 @@ DEF VAR aux_inconfi2 AS INTE                                           NO-UNDO.
 DEF VAR aux_flpropos AS LOGI                                           NO-UNDO.
 DEF VAR aux_inconcje AS INTE                                           NO-UNDO.
 DEF VAR aux_dtconbir AS DATE                                           NO-UNDO.
+DEF VAR aux_idcobope AS INTE                                           NO-UNDO.
 DEF VAR aux_flmudfai AS CHAR                                           NO-UNDO.
 
 DEF VAR aux_rowidsin AS ROWID                                          NO-UNDO.
@@ -225,6 +229,7 @@ PROCEDURE valores_entrada:
             WHEN "flpropos" THEN aux_flpropos = LOGICAL(tt-param.valorCampo). 
             WHEN "inconcje" THEN aux_inconcje = INTE(tt-param.valorCampo).
             WHEN "dtconbir" THEN aux_dtconbir = DATE(tt-param.valorCampo).
+            WHEN "idcobope" THEN aux_idcobope = INTE(tt-param.valorCampo).
 
         END CASE.
     
@@ -827,6 +832,7 @@ PROCEDURE cadastrar-novo-limite:
                                       INPUT aux_vlrenme2,
                                       INPUT aux_inconcje,
                                       INPUT aux_dtconbir,
+                                      INPUT aux_idcobope,
                                      OUTPUT TABLE tt-erro,
                                      OUTPUT TABLE tt-msg-confirma).
 
@@ -1294,6 +1300,8 @@ PROCEDURE alterar-novo-limite:
                                     INPUT aux_vlrenme2,
                                     INPUT aux_inconcje,
                                     INPUT aux_dtconbir,
+                                    /** Garantia **/
+                                    INPUT aux_idcobope,
                                    OUTPUT TABLE tt-erro,
                                    OUTPUT TABLE tt-msg-confirma,
                                    OUTPUT aux_flmudfai).

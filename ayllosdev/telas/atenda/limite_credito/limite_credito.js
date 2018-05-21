@@ -33,13 +33,18 @@
  *
  * 018: [17/12/2015] Lunelli   (CECRED)  : Edição de número do contrato de limite (Lucas Lunelli - SD 360072 [M175])
  * 019: [15/07/2016] Andrei    (RKAM)    : Ajuste para utilizar rotina convertida a buscar as linhas de limite de credito.
- * 020:	[25/07/2016] Evandro     (RKAM)  : Alterado função controlaFoco.
- * 021: [08/08/2017] Heitor    (MOUTS)   : Implementacao da melhoria 438. 
+ * 020:	[25/07/2016] Evandro     (RKAM)  : Alterado função controlaFoco.		 
+ * 021: [08/08/2017] Heitor    (MOUTS)   : Implementacao da melhoria 438.
+ * 022:	[14/11/2017] Mateus Z    (MOUTS) : Adicionado a coluna Operador na tabela Ultimas Alterações. Chamado 791852
  * 022: [01/12/2017] Jonata      (RKAM)  : Não permitir acesso a opção de incluir quando conta demitida.
- * 023: [15/03/2018] Diego Simas (AMcom) : Alterado para exibir tratativas quando o limite de crédito foi
+ * 023: [05/12/2017] Lombardi  (CECRED)  : Gravação do campo idcobope e inserção da tela GAROPC. Projeto 404
+ * 024: [18/12/2017] Augusto / Marcos (Supero): P404 - Inclusão de Garantia de Cobertura das Operações de Crédito
+ * 025: [06/03/2018] Reinert (CECRED)    : Adicionado parametro idcobope na chamada do fonte confirma_novo_limite. (PRJ404 Reinert)
+ * 026: [15/03/2018] Diego Simas (AMcom) : Alterado para exibir tratativas quando o limite de crédito foi
  *                                         cancelado de forma automática pelo Ayllos.
- * 024: [22/03/2018] Diego Simas (AMcom) : Implementado nova situação para considerar Cancelamento Automático de Limite
+ * 027: [22/03/2018] Diego Simas (AMcom) : Implementado nova situação para considerar Cancelamento Automático de Limite
  *                                         por inadimplência e também novo campo onde contém a data do cancelamento automático.
+ * 028: [13/04/2018] Lombardi  (CECRED)  : Inluidas funcoes validaAdesaoValorProduto e senhaCoordenador. PRJ366 (Lombardi).
  */
 
 var callafterLimiteCred = '';
@@ -221,6 +226,7 @@ function confirmaNovoLimite(inconfir, flgratok) {
     var camposRS = "";
     var dadosRtS = "";
     var nrctrrat = $("#nrctrpro", "#frmDadosLimiteCredito").val();
+    var idcobope = $("#idcobope", "#frmDadosLimiteCredito").val();
 
     if (flgratok) {
         camposRS = retornaCampos(arrayRatingSingulares, '|');
@@ -239,6 +245,7 @@ function confirmaNovoLimite(inconfir, flgratok) {
             nrcpfcgc: nrcpfcgc,
             nrctrrat: nrctrrat,
             flgratok: flgratok,
+            idcobope: idcobope,
             /** Variaveis ref ao rating singulares **/
             camposRS: camposRS,
             dadosRtS: dadosRtS,
@@ -423,10 +430,10 @@ function cadastrarNovoLimite() {
             cddlinha: $("#cddlinha", "#frmNovoLimite").val(),
             vllimite: $("#vllimite", "#frmNovoLimite").val().replace(/\./g, ""),
             flgimpnp: $("#flgimpnp", "#frmNovoLimite").val(),
-            vlsalari: $("#vlsalari", "#frmNovoLimite").val().replace(/\./g, ""),
-            vlsalcon: $("#vlsalcon", "#frmNovoLimite").val().replace(/\./g, ""),
-            vloutras: $("#vloutras", "#frmNovoLimite").val().replace(/\./g, ""),
-            vlalugue: $("#vlalugue", "#frmNovoLimite").val().replace(/\./g, ""),
+            vlsalari: $("#vlsalari", "#frmNovoLimite").val() > 0 ? $("#vlsalari", "#frmNovoLimite").val().replace(/\./g, "") : '0,00',
+            vlsalcon: $("#vlsalcon", "#frmNovoLimite").val() > 0 ? $("#vlsalcon", "#frmNovoLimite").val().replace(/\./g, "") : '0,00',
+            vloutras: $("#vloutras", "#frmNovoLimite").val() > 0 ? $("#vloutras", "#frmNovoLimite").val().replace(/\./g, "") : '0,00',
+            vlalugue: $("#vlalugue", "#frmNovoLimite").val() > 0 ? $("#vlalugue", "#frmNovoLimite").val().replace(/\./g, "") : '0,00',
             inconcje: ($("#inconcje_1", "#frmNovoLimite").prop('checked')) ? 1 : 0,
             dsobserv: $("#dsobserv", "#frmNovoLimite").val(),
             dtconbir: dtconbir,
@@ -479,6 +486,7 @@ function cadastrarNovoLimite() {
             complen2: $("#complen2", "#frmNovoLimite").val(),
             nrcxaps2: normalizaNumero($("#nrcxaps2", "#frmNovoLimite").val()),
             vlrenme2: $("#vlrenme2", "#frmNovoLimite").val(),
+			idcobope: $("#idcobert", "#frmNovoLimite").val(),
             redirect: "script_ajax"
         },
         error: function (objAjax, responseError, objExcept) {
@@ -546,6 +554,82 @@ function checaEnter(campo, e) {
     else
         return true;
 }
+
+function trataGAROPC(cddopcao, nrctrlim) {
+  if (cddopcao == 'N' || (cddopcao == 'A' && normalizaNumero($('#idcobert','#frmNovoLimite').val()) > 0) || (cddopcao == 'P' && normalizaNumero($('#idcobert','#frmNovoLimite').val()) > 0)) {
+    abrirTelaGAROPC(cddopcao, nrctrlim);
+  } else {
+    lcrShowHideDiv('divDadosObservacoes','divDadosRenda');
+    $('#divRotina').css({'display':'block'});
+    bloqueiaFundo($('#divRotina'));
+  }
+}
+
+function abrirTelaGAROPC(cddopcao, nrctrlim) {
+
+    showMsgAguardo('Aguarde, carregando ...');
+	
+    //exibeRotina($('#divFormGAROPC'));
+    //$('#divRotina').css({'display':'none'});
+	
+    var tipaber = '';
+    var idcobert = normalizaNumero($('#idcobert','#frmNovoLimite').val());
+    var codlinha = normalizaNumero($('#cddlinha','#frmNovoLimite').val());
+    var vllimite = $('#vllimite','#frmNovoLimite').val();
+	
+    switch (cddopcao) {
+      case 'N':
+        tipaber = (idcobert > 0) ? 'A' : 'I';
+        break;
+      default:
+        tipaber = 'C';
+        break;
+    }
+	
+    // Carrega conteúdo da opção através do Ajax
+    $.ajax({
+        type: 'POST',
+        dataType: 'html',
+        url: UrlSite + 'telas/garopc/garopc.php',
+        data: {
+            nmdatela     : 'LIMITE_CREDITO',
+            tipaber      : tipaber,
+            nrdconta     : nrdconta,
+            tpctrato     : 1,
+            idcobert     : idcobert,
+            dsctrliq     : cddopcao = 'P' ? nrctrlim : '',
+            codlinha     : codlinha,
+            vlropera     : vllimite,
+            divanterior  : 'divRotina',
+            ret_nomcampo : 'idcobert',
+            ret_nomformu : 'frmNovoLimite',
+            ret_execfunc : 'lcrShowHideDiv(\\\'divDadosObservacoes\\\',\\\'divDadosRenda\\\');$(\\\'#divRotina\\\').css({\\\'display\\\':\\\'block\\\'});bloqueiaFundo($(\\\'#divRotina\\\'));',
+            ret_errofunc : '$(\\\'#divRotina\\\').css({\\\'display\\\':\\\'block\\\'});bloqueiaFundo($(\\\'#divRotina\\\'));',
+			redirect     : 'html_ajax'
+        },
+        error: function (objAjax, responseError, objExcept) {
+            hideMsgAguardo();
+            showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
+        },
+        success: function (response) {
+            hideMsgAguardo();
+            // Criaremos uma div oculta para conter toda a estrutura da tela GAROPC
+            $('#divUsoGAROPC').html(response).hide();
+            // Iremos incluir o conteúdo do form da div oculta dentro da div principal de descontos
+            $("#frmGAROPC", "#divUsoGAROPC").appendTo('#divFormGAROPC');
+            // Iremos remover os botões originais da GAROPC e usar os proprios da tela
+            $("#divBotoes","#frmGAROPC").detach();
+            
+            $("#divDadosRenda").css("display", "none");
+            $("#divFormGAROPC").css("display", "block");
+            $("#divBotoesGAROPC").css("display", "block");
+            
+            bloqueiaFundo($('#divFormGAROPC'));
+            blockBackground(parseInt($("#divRotina").css("z-index")));
+            $("#frmNovoLimite").css("width", 540);
+        }
+    });
+} 
 
 // Função para mostrar div com formulário de dados para digitação ou consulta
 function lcrShowHideDiv(divShow, divHide) {
@@ -655,7 +739,7 @@ function controlaLayout(cddopcao) {
     var rOutras = $('label[for="vloutras"]', '#' + nomeForm + ' .fsDadosRenda');
     var rAlugue = $('label[for="vlalugue"]', '#' + nomeForm + ' .fsDadosRenda');
     var rInconc = $('label[for="inconcje"]', '#' + nomeForm + ' .fsConjuge');
-    var cValores = $('input', '#' + nomeForm + ' .fsDadosRenda');
+    var cValores = $('input type="text"', '#' + nomeForm + ' .fsDadosRenda');
     var cInconcje = $('input', '#' + nomeForm + ' .fsConjuge');
 
     rSalTit.addClass('rotulo').css({ 'width': '130px' });
@@ -712,6 +796,7 @@ function formataUltimasAlteracoes() {
     arrayLargura[2] = '60px';
     arrayLargura[3] = '75px';
     arrayLargura[4] = '75px';
+	arrayLargura[5] = '75px';
 
 
     var arrayAlinha = new Array();
@@ -721,6 +806,7 @@ function formataUltimasAlteracoes() {
     arrayAlinha[3] = 'right';
     arrayAlinha[4] = 'left';
     arrayAlinha[5] = 'left';
+	arrayAlinha[6] = 'left';
 
     tabela.formataTabela(ordemInicial, arrayLargura, arrayAlinha);
     return false;
@@ -1444,6 +1530,7 @@ function alterarNovoLimite() {
             complen2: $("#complen2", "#frmNovoLimite").val(),
             nrcxaps2: normalizaNumero($("#nrcxaps2", "#frmNovoLimite").val()),
             vlrenme2: $("#vlrenme2", "#frmNovoLimite").val(),
+            idcobope: $("#idcobert", "#frmNovoLimite").val(),
             redirect: "script_ajax"
         },
         error: function (objAjax, responseError, objExcept) {
@@ -1506,7 +1593,7 @@ function dadosRenda() {
 
 }
 
-function setDadosProposta(vlsalari, vlsalcon, vloutras, vlalugue, nrctaav1, nrctaav2, inconcje, nrcpfav1, nrcpfav2) {
+function setDadosProposta(vlsalari, vlsalcon, vloutras, vlalugue, nrctaav1, nrctaav2, inconcje, nrcpfav1, nrcpfav2, idcobert) {
     //Nao estava preenchendo corretamente o campo quando retornava um valor decimal
     //Chamado 364592
     vlsalari = vlsalari.replace(",", ".");
@@ -1524,6 +1611,7 @@ function setDadosProposta(vlsalari, vlsalcon, vloutras, vlalugue, nrctaav1, nrct
     $("#nrctaav2", "#frmNovoLimite").val(nrctaav2);
     $("#nrcpfav1", "#frmNovoLimite").val(nrcpfav1);
     $("#nrcpfav2", "#frmNovoLimite").val(nrcpfav2);
+	$("#idcobert", "#frmNovoLimite").val(idcobert);
 
     // Salvar o valor da consulta do conjuge antes de ser alterado pelo usuario
     ant_inconcje = inconcje;
@@ -1716,12 +1804,14 @@ function controlaOperacao(operacao) {
 
         case 'A_AVAIS': {
             $("#frmOrgaos").remove();
+            $("#frmNovoLimite").css("width", 530);
             $("#divDadosAvalistas").css('display', 'block');
             return false;
         }
 
         case 'C_COMITE_APROV': {
             $("#frmOrgaos").remove();
+            $("#frmNovoLimite").css("width", 530);
             $("#divDadosAvalistas").css('display', 'block');
             return false;
         }
@@ -1780,6 +1870,7 @@ function controlaOperacao(operacao) {
             if (response.indexOf('showError("error"') == -1) {
 
                 $('#frmNovoLimite').append(response);
+                $('fieldset', '#frmOrgaos').css('height', 'auto');
 
                 dsinfcad = (operacao == 'I_PROTECAO_TIT') ? "" : dsinfcad;
 
@@ -1806,6 +1897,7 @@ function controlaSocios(operacao, cdcooper, idSocio, qtSocios) {
     if (idSocio > qtSocios) { // Nao tem mais socios, mostrar avais
 
         $("#frmOrgaos").remove();
+        $("#frmNovoLimite").css("width", 530);
         $("#divDadosAvalistas").css('display', 'block');
 
     }
@@ -1974,4 +2066,37 @@ function AlteraNrContrato() {
             bloqueiaFundo($('#divUsoGenerico'));
         }
     });
+}
+
+function validaAdesaoValorProduto(executar, vllimite) {
+	
+    var vllimite = vllimite != null ? vllimite : $("#vllimite", "#frmNovoLimite").val().replace(/\./g, "");
+	
+	$.ajax({
+		type: 'POST',
+		dataType: 'html',
+		url: UrlSite + 'telas/atenda/limite_credito/valida_valor_adesao_produto.php', 
+		data: {
+			nrdconta: nrdconta,
+			vllimite: vllimite,
+			executar: executar,
+			redirect: 'script_ajax'
+		}, 
+		error: function (objAjax, responseError, objExcept) {
+			hideMsgAguardo();
+			showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
+		},
+		success: function (response) {
+			hideMsgAguardo();
+            try {
+				eval(response);
+			} catch (error) {
+				showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'unblockBackground();');
+			}
+		}				
+	});	
+}
+
+function senhaCoordenador(executaDepois) {
+	pedeSenhaCoordenador(2,executaDepois,'divRotina');
 }

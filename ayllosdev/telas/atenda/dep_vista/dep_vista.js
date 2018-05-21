@@ -168,7 +168,7 @@ function controlaFoco(opcao) {
 
     if (opcao == "0") { //Principal
         $('.FirstInput:first ').focus();
-    }
+			}				
     if (opcao == "1") { //Extrato 
         $('#divConteudoOpcao').each(function () {
             formid = $('#divConteudoOpcao form');
@@ -183,13 +183,13 @@ function controlaFoco(opcao) {
                         if (e.keyCode == 13) {
                             $(".LastInputModal").click();
                         }
-                    });
+                });
                 });
 
             };
         });
         $('.FirstInputModal:first ').focus();
-    }
+	}
     if (opcao == "4") { //Imprimir extrato
         $('#divConteudoOpcao').each(function () {
             formid = $('#divConteudoOpcao form');
@@ -203,7 +203,7 @@ function controlaFoco(opcao) {
                     $(this).bind('keydown', function (e) {
                         if (e.keyCode == 13) {
                             $(".LastInputModal").click();
-                        }
+}
                     });
                 });
             };
@@ -404,7 +404,7 @@ function controlaLayout( nomeForm ){
 
         var Lvlipmfpg = $('label[for="vlipmfpg"]', '#' + nomeForm);
         var Cvlipmfpg = $('#vlipmfpg', '#' + nomeForm);
-
+	
 		var Lvlblqaco = $('label[for="vlblqaco"]', '#' + nomeForm);
         var Cvlblqaco = $('#vlblqaco', '#' + nomeForm);
 
@@ -680,7 +680,7 @@ function controlaLayout( nomeForm ){
         rVllimcre.addClass('rotulo').css({ 'width': '200px' });
         rVlblqjud.addClass('rotulo').css({ 'width': '200px' });
         rVllimcpa.addClass('rotulo').css({ 'width': '200px' });
-
+	
         // campos
         cDtrefere = $('#dtrefere', '#' + nomeForm);
         cVlsddisp = $('#vlsddisp', '#' + nomeForm);
@@ -705,7 +705,7 @@ function controlaLayout( nomeForm ){
         cVllimcre.css({ 'width': '75px', 'text-align': 'right' });
         cVlblqjud.css({ 'width': '75px', 'text-align': 'right' });
         cVllimcpa.css({ 'width': '75px', 'text-align': 'right' });
-
+		
 		$('input, select', '#'+nomeForm).desabilitaCampo();
 		cDtrefere.habilitaCampo();
 

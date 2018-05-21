@@ -52,7 +52,11 @@ Alteracoes: 15/12/2008 - Alteracoes para unificacao dos bancos de dados (Evandro
 		   
 		   04/09/2017 - Removido rotinas 84, 85 pois nao serao mais usadas (Tiago/Elton #679866).
 		   
-		   16/11/2017 - Iclusao da rotina 97. (SD 788441 - Kelvin).
+		    16/11/2017 - Inclusao da rotina 97. (SD 788441 - Kelvin).
+		   
+			02/05/2018 - Bloqueio da rotina 66. (SCTASK00113081 - Kelvin)
+
+            07/05/2018 - P450 - Nova opcao Pagto Emprestimos - Rotina 90 e 91 (Guilherme/AMcom)
 */
 
 // < ! --
@@ -131,22 +135,27 @@ function FormataCgc(campo,tammax,teclapres) {
 
         if ( tecla == 8 || tecla >= 48 && tecla <= 57 || tecla >= 96 && tecla <= 105 ){
                 if ( tam <= 2 ){
-                         document.forms[campo].value = vr ; }
+            document.forms[campo].value = vr;
+        }
                  if ( (tam > 2) && (tam <= 6) ){
-                         document.forms[campo].value = vr.substr( 0, tam - 2 ) + '-' + vr.substr( tam - 2, tam ) ; }
+            document.forms[campo].value = vr.substr(0, tam - 2) + '-' + vr.substr(tam - 2, tam);
+        }
                  if ( (tam >= 7) && (tam <= 9) ){
-                         document.forms[campo].value = vr.substr( 0, tam - 6 ) + '/' + vr.substr( tam - 6, 4 ) + '-' + vr.substr( tam - 2, tam ) ; }
+            document.forms[campo].value = vr.substr(0, tam - 6) + '/' + vr.substr(tam - 6, 4) + '-' + vr.substr(tam - 2, tam);
+        }
                  if ( (tam >= 10) && (tam <= 12) ){
-                         document.forms[campo].value = vr.substr( 0, tam - 9 ) + '.' + vr.substr( tam - 9, 3 ) + '/' + vr.substr( tam - 6, 4 ) + '-' + vr.substr( tam - 2, tam ) ; }
+            document.forms[campo].value = vr.substr(0, tam - 9) + '.' + vr.substr(tam - 9, 3) + '/' + vr.substr(tam - 6, 4) + '-' + vr.substr(tam - 2, tam);
+        }
                  if ( (tam >= 13) && (tam <= 14) ){
-                         document.forms[campo].value = vr.substr( 0, tam - 12 ) + '.' + vr.substr( tam - 12, 3 ) + '.' + vr.substr( tam - 9, 3 ) + '/' + vr.substr( tam - 6, 4 ) + '-' + vr.substr( tam - 2, tam ) ; }
+            document.forms[campo].value = vr.substr(0, tam - 12) + '.' + vr.substr(tam - 12, 3) + '.' + vr.substr(tam - 9, 3) + '/' + vr.substr(tam - 6, 4) + '-' + vr.substr(tam - 2, tam);
+        }
                  if ( (tam >= 15) && (tam <= 17) ){
-                         document.forms[campo].value = vr.substr( 0, tam - 14 ) + '.' + vr.substr( tam - 14, 3 ) + '.' + vr.substr( tam - 11, 3 ) + '.' + vr.substr( tam - 8, 3 ) + '.' + vr.substr( tam - 5, 3 ) + '-' + vr.substr( tam - 2, tam ) ;}
+            document.forms[campo].value = vr.substr(0, tam - 14) + '.' + vr.substr(tam - 14, 3) + '.' + vr.substr(tam - 11, 3) + '.' + vr.substr(tam - 8, 3) + '.' + vr.substr(tam - 5, 3) + '-' + vr.substr(tam - 2, tam);
         }
 }
+}
 
-function VerificaJava()
-         {
+function VerificaJava() {
         if (navigator.javaEnabled())
                 document.forms.javas.value="sim"
         }
@@ -174,24 +183,29 @@ function FormataCpf(campo,tammax,teclapres) {
 
         if ( tecla == 8 || tecla >= 48 && tecla <= 57 || tecla >= 96 && tecla <= 105 ){
                 if ( tam <= 2 ){
-                         document.forms[campo].value = vr ; }
-                 if ( (tam > 2) && (tam <= 5) ){
-                         document.forms[campo].value = vr.substr( 0, tam - 2 ) + '-' + vr.substr( tam - 2, tam ) ; }
-                 if ( (tam >= 6) && (tam <= 8) ){
-                         document.forms[campo].value = vr.substr( 0, tam - 5 ) + '.' + vr.substr( tam - 5, 3 ) + '-' + vr.substr( tam - 2, tam ) ; }
-                 if ( (tam >= 9) && (tam <= 11) ){
-                         document.forms[campo].value = vr.substr( 0, tam - 8 ) + '.' + vr.substr( tam - 8, 3 ) + '.' + vr.substr( tam - 5, 3 ) + '-' + vr.substr( tam - 2, tam ) ; }
-                 if ( (tam >= 12) && (tam <= 14) ){
-                         document.forms[campo].value = vr.substr( 0, tam - 11 ) + '.' + vr.substr( tam - 11, 3 ) + '.' + vr.substr( tam - 8, 3 ) + '.' + vr.substr( tam - 5, 3 ) + '-' + vr.substr( tam - 2, tam ) ; }
-                 if ( (tam >= 15) && (tam <= 17) ){
-                         document.forms[campo].value = vr.substr( 0, tam - 14 ) + '.' + vr.substr( tam - 14, 3 ) + '.' + vr.substr( tam - 11, 3 ) + '.' + vr.substr( tam - 8, 3 ) + '.' + vr.substr( tam - 5, 3 ) + '-' + vr.substr( tam - 2, tam ) ;}
+            document.forms[campo].value = vr;
         }
+                 if ( (tam > 2) && (tam <= 5) ){
+            document.forms[campo].value = vr.substr(0, tam - 2) + '-' + vr.substr(tam - 2, tam);
+        }
+                 if ( (tam >= 6) && (tam <= 8) ){
+            document.forms[campo].value = vr.substr(0, tam - 5) + '.' + vr.substr(tam - 5, 3) + '-' + vr.substr(tam - 2, tam);
+        }
+                 if ( (tam >= 9) && (tam <= 11) ){
+            document.forms[campo].value = vr.substr(0, tam - 8) + '.' + vr.substr(tam - 8, 3) + '.' + vr.substr(tam - 5, 3) + '-' + vr.substr(tam - 2, tam);
+        }
+                 if ( (tam >= 12) && (tam <= 14) ){
+            document.forms[campo].value = vr.substr(0, tam - 11) + '.' + vr.substr(tam - 11, 3) + '.' + vr.substr(tam - 8, 3) + '.' + vr.substr(tam - 5, 3) + '-' + vr.substr(tam - 2, tam);
+        }
+                 if ( (tam >= 15) && (tam <= 17) ){
+            document.forms[campo].value = vr.substr(0, tam - 14) + '.' + vr.substr(tam - 14, 3) + '.' + vr.substr(tam - 11, 3) + '.' + vr.substr(tam - 8, 3) + '.' + vr.substr(tam - 5, 3) + '-' + vr.substr(tam - 2, tam);
+        }
+}
 }
 
 function Apaga(){
         if (document.forms.elements.length != 0)
-                for (i = 0; i < document.forms.elements.length; i++)
-                {
+        for (i = 0; i < document.forms.elements.length; i++) {
                         if( document.forms[i].type != "hidden" )
                                 document.forms[i].value="";
                 }
@@ -202,8 +216,7 @@ var da = (document.all) ? 1 : 0;
 var pr = (window.print) ? 1 : 0;
 var mac = (navigator.userAgent.indexOf("Mac") != -1);
 
-function printPage()
-{
+function printPage() {
   if (pr) // NS4, IE5
     window.print()
   else if (da && !mac) // IE4 (Windows)
@@ -252,10 +265,12 @@ function FormataDado(campo,tammax,pos,teclapres){
 
         if ( tecla == 8 || tecla == 88 || tecla >= 48 && tecla <= 57 || tecla >= 96 && tecla <= 105 ){
                 if ( tam <= 2 ){
-                         campo.value = vr ;}
-                if ( tam > pos && tam <= tammax ){
-                        campo.value = vr.substr( 0, tam - pos ) + '-' + vr.substr( tam - pos, tam );}
+            campo.value = vr;
         }
+                if ( tam > pos && tam <= tammax ){
+            campo.value = vr.substr(0, tam - pos) + '-' + vr.substr(tam - pos, tam);
+        }
+}
 }
 
 function alteraFoco(){
@@ -335,17 +350,23 @@ function FormataValor(campo,tammax,teclapres) {
 
         if ( tecla == 8 || (tecla >= 48 && tecla <= 57) || (tecla >= 96 && tecla <= 105)){
                 if ( tam <= 2 ){
-                         campo.value = vr ; }
+            campo.value = vr;
+        }
                  if ( (tam > 2) && (tam <= 5) ){
-                         campo.value = vr.substr( 0, tam - 2 ) + ',' + vr.substr( tam - 2, tam ) ; }
+            campo.value = vr.substr(0, tam - 2) + ',' + vr.substr(tam - 2, tam);
+        }
                  if ( (tam >= 6) && (tam <= 8) ){
-                         campo.value = vr.substr( 0, tam - 5 ) + '.' + vr.substr( tam - 5, 3 ) + ',' + vr.substr( tam - 2, tam ) ; }
+            campo.value = vr.substr(0, tam - 5) + '.' + vr.substr(tam - 5, 3) + ',' + vr.substr(tam - 2, tam);
+        }
                  if ( (tam >= 9) && (tam <= 11) ){
-                         campo.value = vr.substr( 0, tam - 8 ) + '.' + vr.substr( tam - 8, 3 ) + '.' + vr.substr( tam - 5, 3 ) + ',' + vr.substr( tam - 2, tam ) ; }
+            campo.value = vr.substr(0, tam - 8) + '.' + vr.substr(tam - 8, 3) + '.' + vr.substr(tam - 5, 3) + ',' + vr.substr(tam - 2, tam);
+        }
                  if ( (tam >= 12) && (tam <= 14) ){
-                         campo.value = vr.substr( 0, tam - 11 ) + '.' + vr.substr( tam - 11, 3 ) + '.' + vr.substr( tam - 8, 3 ) + '.' + vr.substr( tam - 5, 3 ) + ',' + vr.substr( tam - 2, tam ) ; }
+            campo.value = vr.substr(0, tam - 11) + '.' + vr.substr(tam - 11, 3) + '.' + vr.substr(tam - 8, 3) + '.' + vr.substr(tam - 5, 3) + ',' + vr.substr(tam - 2, tam);
+        }
                  if ( (tam >= 15) && (tam <= 17) ){
-                         campo.value = vr.substr( 0, tam - 14 ) + '.' + vr.substr( tam - 14, 3 ) + '.' + vr.substr( tam - 11, 3 ) + '.' + vr.substr( tam - 8, 3 ) + '.' + vr.substr( tam - 5, 3 ) + ',' + vr.substr( tam - 2, tam ) ;}
+            campo.value = vr.substr(0, tam - 14) + '.' + vr.substr(tam - 14, 3) + '.' + vr.substr(tam - 11, 3) + '.' + vr.substr(tam - 8, 3) + '.' + vr.substr(tam - 5, 3) + ',' + vr.substr(tam - 2, tam);
+        }
         }
    else {if (tecla != 9 && tecla != 46 && (tecla < 37 || tecla > 40)) {event.returnValue = false;}}
 
@@ -439,11 +460,14 @@ function FormataTitulo(campo,tammax,teclapres) {
         if (tecla == 8 ){        tam = tam - 1 ; }
         if ( tecla == 8 || (tecla >= 48 && tecla <= 57) || (tecla >= 96 && tecla <= 105)){
                 if ( tam <= 5 ){
-                         campo.value = vr ; }
+            campo.value = vr;
+        }
                  if ( (tam > 5) && (tam <= 10) ){
-                         campo.value = vr.substr( 0, tam - 5 ) + '.' + vr.substr( tam - 5, tam ) ; }
+            campo.value = vr.substr(0, tam - 5) + '.' + vr.substr(tam - 5, tam);
+        }
            if ( (tam >= 11) && (tam <= 15) ){
-                         campo.value = vr.substr( 0, tam - 11 ) + '.' + vr.substr( tam - 11, 5 ) + '.' + vr.substr( tam - 5, tam ) ; }
+            campo.value = vr.substr(0, tam - 11) + '.' + vr.substr(tam - 11, 5) + '.' + vr.substr(tam - 5, tam);
+        }
         }
    else {if (tecla != 9 && tecla != 46 && (tecla < 37 || tecla > 40)) {event.returnValue = false;}}
 }
@@ -463,9 +487,11 @@ function FormataTitulos(campo,tammax,teclapres) {
 
         if ( tecla == 8 || (tecla >= 48 && tecla <= 57) || (tecla >= 96 && tecla <= 105)){
                 if ( tam <= 5 ){
-                         campo.value = vr ; }
+            campo.value = vr;
+        }
                  if ( (tam > 5) && (tam <= 10) ){
-                         campo.value = vr.substr( 0, tam - 5 ) + '.' + vr.substr( tam - 5, tam ) ; }
+            campo.value = vr.substr(0, tam - 5) + '.' + vr.substr(tam - 5, tam);
+        }
         }
    else {if (tecla != 9 && tecla != 46 && (tecla < 37 || tecla > 40)) {event.returnValue = false;}}
 }
@@ -485,15 +511,20 @@ function FormataTitulof(campo,tammax,teclapres) {
 
         if ( tecla == 8 || (tecla >= 48 && tecla <= 57) || (tecla >= 96 && tecla <= 105)){
                 if ( tam <= 6 ){
-                         campo.value = vr ; }
+            campo.value = vr;
+        }
                  if ( (tam > 6) && (tam <= 9) ){
-                         campo.value = vr.substr( 0, tam - 6 ) + '.' + vr.substr( tam - 6, tam ) ; }
+            campo.value = vr.substr(0, tam - 6) + '.' + vr.substr(tam - 6, tam);
+        }
                  if ( (tam >= 10) && (tam <= 12) ){
-                         campo.value = vr.substr( 0, tam - 9 ) + '.' + vr.substr( tam - 9, 3 ) + '.' + vr.substr( tam - 6, tam ) ; }
+            campo.value = vr.substr(0, tam - 9) + '.' + vr.substr(tam - 9, 3) + '.' + vr.substr(tam - 6, tam);
+        }
                  if ( (tam >= 13) && (tam <= 15) ){
-                         campo.value = vr.substr( 0, tam - 12 ) + '.' + vr.substr( tam - 12, 3 ) + '.' + vr.substr( tam - 9, 3 ) + '.' + vr.substr( tam - 6, tam ) ; }
+            campo.value = vr.substr(0, tam - 12) + '.' + vr.substr(tam - 12, 3) + '.' + vr.substr(tam - 9, 3) + '.' + vr.substr(tam - 6, tam);
+        }
                  if ( (tam >= 16) && (tam <= 17) ){
-                         campo.value = vr.substr( 0, tam - 15 ) + '.' + vr.substr( tam - 15, 2 ) + '.' + vr.substr( tam - 12, 3 ) + '.' + vr.substr( tam - 9, 3 ) + '.' + vr.substr( tam - 6, tam ) ;}
+            campo.value = vr.substr(0, tam - 15) + '.' + vr.substr(tam - 15, 2) + '.' + vr.substr(tam - 12, 3) + '.' + vr.substr(tam - 9, 3) + '.' + vr.substr(tam - 6, tam);
+        }
    }
    else {if (tecla != 9 && tecla != 46 && (tecla < 37 || tecla > 40)) {event.returnValue = false;}}
 }
@@ -513,11 +544,14 @@ function FormataFatura(campo,tammax,teclapres) {
 
         if ( tecla == 8 || (tecla >= 48 && tecla <= 57) || (tecla >= 96 && tecla <= 105)){
                 if ( tam <= 1 ){
-                         campo.value = vr ; }
+            campo.value = vr;
+        }
                  if ( (tam > 1) && (tam <= 7) ){
-                         campo.value = vr.substr( 0, tam - 1 ) + '.' + vr.substr( tam - 1, tam ) ; }
+            campo.value = vr.substr(0, tam - 1) + '.' + vr.substr(tam - 1, tam);
+        }
                  if ( (tam >= 8) && (tam <= 12) ){
-                         campo.value = vr.substr( 0, tam - 7 ) + '.' + vr.substr( tam - 7, 6 ) + '.' + vr.substr( tam - 1, tam ) ; }
+            campo.value = vr.substr(0, tam - 7) + '.' + vr.substr(tam - 7, 6) + '.' + vr.substr(tam - 1, tam);
+        }
         }
    else {if (tecla != 9 && tecla != 46 && (tecla < 37 || tecla > 40)) {event.returnValue = false;}}
 }
@@ -539,11 +573,14 @@ function FormataConta(campo,tammax,teclapres) {
 
         if ( tecla == 8 || (tecla >= 48 && tecla <= 57) || (tecla >= 96 && tecla <= 105))  {
                 if ( tam <= 1 ){
-                         campo.value = vr ; }
+            campo.value = vr;
+        }
                  if ( (tam > 1) && (tam <= 4) ){
-                         campo.value = vr.substr( 0, tam - 1 ) + '.' + vr.substr( tam - 1, tam ) ; }
+            campo.value = vr.substr(0, tam - 1) + '.' + vr.substr(tam - 1, tam);
+        }
                  if ( (tam >= 5) && (tam <= 9) ){
-                         campo.value = vr.substr( 0, tam - 4 ) + '.' + vr.substr( tam - 4, 3 ) + '.' + vr.substr( tam - 1, tam ) ; }
+            campo.value = vr.substr(0, tam - 4) + '.' + vr.substr(tam - 4, 3) + '.' + vr.substr(tam - 1, tam);
+        }
 
         }
    else {if (tecla != 9 && tecla != 46 && (tecla < 37 || tecla > 40)) {event.returnValue = false;}}
@@ -568,7 +605,8 @@ function FormataData(Campo,teclapres) {
                 if ( tam > 2 && tam < 5 )
                         Campo.value = vr.substr( 0, tam - 2  ) + '/' + vr.substr( tam - 2, tam );
                 if ( tam >= 5 && tam <= 10 )
-                        Campo.value = vr.substr( 0, 2 ) + '/' + vr.substr( 2, 2 ) + '/' + vr.substr( 4, 4 ); }
+            Campo.value = vr.substr(0, 2) + '/' + vr.substr(2, 2) + '/' + vr.substr(4, 4);
+    }
 }
 
 ///fungco para mudar o foco do campo atual para o campo de rotina do menu///
@@ -703,9 +741,6 @@ function change_location() {
 	else if(document.forms[0].v_rotina.value == 62) {
         top.frames[1].window.location.href="crap062.html" ;
     }
-    else if(document.forms[0].v_rotina.value == 66) {
-        top.frames[1].window.location.href="crap066.html" ;
-    }
     else if(document.forms[0].v_rotina.value == 86) {
         top.frames[1].window.location.href='login.w?v_prog=crap086.html';
     }
@@ -750,6 +785,12 @@ function change_location() {
     }
     else if(document.forms[0].v_rotina.value == 89) {
          top.frames[1].window.location.href="crap089.htm";
+    }
+    else if (document.forms[0].v_rotina.value == 90) {
+        top.frames[1].window.location.href = "crap090.html?v_sangria=S";
+    }
+    else if (document.forms[0].v_rotina.value == 91) {
+        top.frames[1].window.location.href = 'login.w?v_prog=crap091.w';
     }
 	else if(document.forms[0].v_rotina.value == 97) {
          top.frames[1].window.location.href="crap097.htm";
@@ -950,13 +991,10 @@ document.onmousedown=click
 
 // Vander - Funcao que desabilita botões de submits e limpeza de campos
 
-function desabok()
-{
-   if (window.action.ok.value != "Ok")
-   {
+function desabok() {
+    if (window.action.ok.value != "Ok") {
       window.action.ok.value = "Ok";
-      for (i = 0; i < action.length; i++)
-      {
+        for (i = 0; i < action.length; i++) {
          var tempobj = action.elements[i];
          if (tempobj.type.toLowerCase() == "submit" || tempobj.type.toLowerCase() == "reset")
          tempobj.disabled = true;
@@ -966,8 +1004,7 @@ function desabok()
 }
 
 
-function desabilita(botao)
-{
+function desabilita(botao) {
    document.all[botao].style.display='none';
 }
 
@@ -985,8 +1022,7 @@ function onKeyAutent(e, v) {
       if(e.keyCode == 27 && document.action.aut.value == "Ok") {
            window.close();
       }
-      else
-      {
+        else {
       alert("Você deve realizar ao menos uma autenticação.");
       }
    }

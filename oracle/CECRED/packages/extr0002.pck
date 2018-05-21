@@ -126,7 +126,8 @@ CREATE OR REPLACE PACKAGE CECRED.EXTR0002 AS
       ,nranomes INTEGER
       ,cdorigem VARCHAR2(100)
       ,qtdiacal craplem.qtdiacal%TYPE
-      ,vltaxprd craplem.vltaxprd%TYPE);
+      ,vltaxprd craplem.vltaxprd%TYPE
+      ,dthrtran craplem.dthrtran%TYPE);
     TYPE typ_tab_extrato_epr IS TABLE OF typ_reg_extrato_epr INDEX BY PLS_INTEGER;
     
     --Tipo de Registro para Extrato de Emprestimo Auxiliar (b1wgen0112tt.i/tt-extrato_epr_aux) 
@@ -2955,7 +2956,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
   --              14/10/2015 - Incluir o tratamento de pagamento de avalista 
   --                           que foi esquecido na migração para o Oracle. (Oscar)
   --
-  --              15/08/2017 - Inclusao do campo qtdiacal e historicos do Pos-Fixado. (Jaison/James - PRJ298)
+  --              15/08/2017 - Inclusao do campo qtdiacal e historicos do Pos-Fixado. (Jaison/James - PRJ298) 
+  --
+  --              03/04/2018 - M324 ajuste na configuração de extrato para emprestimo (Rafael Monteiro - Mouts)
   ---------------------------------------------------------------------------------------------------------------
   DECLARE
       --Tabela de Memoria primeira parcela
@@ -3001,6 +3004,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
               ,craplem.nrseqava
               ,craplem.qtdiacal
               ,craplem.vltaxprd
+              ,craplem.dthrtran
             --  ,DECODE(craplem.cdorigem,1,'Ayllos',2,'Caixa',3,'Internet',4,'Cash',5,'Ayllos WEB',6,'URA',7,'Batch',8,'Mensageria',' ') cdorigem
               ,DECODE(craplem.cdorigem,1,'Debito CC',2,'Caixa',3,'Internet',4,'Cash',5,'Debito CC',6,'URA',7,'Debito CC',8,'Mensageria',' ') cdorigem
               ,count(*) over (partition by  craplem.cdcooper,craplem.nrdconta,craplem.dtmvtolt) nrtotdat
@@ -3116,7 +3120,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
           --Proximo registro
           CONTINUE;
         END IF;
-        
+        /* Desprezando historicos de concessao de credito com juros a apropriar e lancamendo para desconto */
+        -- rmm desconsiderar pagamentos prejuizo (2390,2392,2388,2475)        
+        IF rw_crapepr.tpemprst = 1 AND rw_craplem.cdhistor IN --(2390,2392,2388,2475,2391,2395) 
+          (2386,2388,2473,2389,2390,2475,2391,2387,2392,2474,2393,2394,2476,2395) THEN
+          CONTINUE;          
+        END IF;
+        --
         /* Verifica se o contrato estah em prejuizo */
         IF rw_crapepr.tpemprst = 1 AND
            rw_crapepr.inprejuz = 1 AND 
@@ -3131,6 +3141,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
         
         --Criar Extrato
         vr_index:= pr_extrato_epr.count + 1;
+        --
+        pr_extrato_epr(vr_index).dthrtran := rw_craplem.dthrtran;
         --Se existe valor emprestimo 
         IF rw_craplem.vlpreemp > 0 THEN
           pr_extrato_epr(vr_index).qtpresta:= apli0001.fn_round(rw_craplem.vllanmto / rw_craplem.vlpreemp,4);
@@ -3138,7 +3150,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
           pr_extrato_epr(vr_index).qtpresta:= 0;
         END IF;    
         /*Historicos que nao vao compor o saldo, mas vao aparecer no relatorio*/
-        IF rw_craplem.cdhistor IN (1048,1049,1050,1051,1717,1720,1708,1711,2566,2567) THEN 
+        IF rw_craplem.cdhistor IN (1048,1049,1050,1051,1717,1720,1708,1711,2566,2567, /*2382,*/ 2411, 2415, 2423,2416,2390,2475,2394,2476) THEN 
           --marcar para nao mostrar saldo
           pr_extrato_epr(vr_index).flgsaldo:= FALSE;                           
         END IF;
@@ -3154,7 +3166,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
            rw_craplem.dtmvtolt >= rw_crapepr.dtprejuz THEN
            
            /* Multa e Juros de Mora de Prejuizo */
-           IF rw_craplem.cdhistor IN (1733,1734,1735,1736) THEN
+           /* M324 - inclusao dos novos historicos de multas e juros */
+           IF rw_craplem.cdhistor IN (1733,1734,1735,1736, 2382, 2411, 2415, 2423,2416,2390,2475,2394,2476) THEN
              pr_extrato_epr(vr_index).flgsaldo := FALSE;
            END IF;  
              
@@ -3767,6 +3780,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
   --                           registro deve ser igonardo. Será exibido somente no cursor cr_crapret
   --                           (SD793999 e SD795994 - AJFink)
   -- 
+  --              23/01/2017 - Ajustes para arrecadacao de FGTS/DAE. PRJ406 - FGTS
+  --                           (Odirlei-AMcom)
   ---------------------------------------------------------------------------------------------------------------
   DECLARE
       -- Busca dos dados do associado
@@ -4378,6 +4393,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
               ,t.flgbaixa_efetiva;
       rw_cred_npc cr_cred_npc%ROWTYPE;          
            
+      --Busca dados de agendamento de tributos
+      CURSOR cr_agen_trib(pr_idlancto craplau.idlancto%TYPE) IS
+      SELECT trib.tppagamento
+            ,NVL(trib.dsidenti_pagto, 
+                          DECODE(trib.tppagamento,3,'FGTS',4,'DAE','')) dsidentif_pagto
+        FROM cecred.tbpagto_agend_tributos trib
+       WHERE trib.idlancto = pr_idlancto;
+      rw_agen_trib cr_agen_trib%ROWTYPE;
+      
       --Variaveis Locais
       vr_cdhistaa INTEGER;
       vr_cdhsetaa INTEGER;
@@ -4843,6 +4867,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
             CLOSE cr_darf_das;
             
             vr_dscedent := rw_darf_das.dsidentif_pagto;
+            
+          ELSIF rw_craplau.cdtiptra IN (12,13) THEN --FGTS, DAE
+            OPEN cr_agen_trib(pr_idlancto => rw_craplau.idlancto);
+            FETCH cr_agen_trib INTO rw_agen_trib;
+            CLOSE cr_agen_trib;
+
+            vr_dscedent := rw_agen_trib.dsidentif_pagto;          
           END IF;
           
           --Chamado 376432
@@ -7328,11 +7359,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
                           to_char(pr_dtreffim,'DD/MM/YYYY') || ' **';    
 
             --Se Possui Bloqueio Judicial
-            IF vr_vlblqjud > 0 THEN
               vr_flgblqjud:= TRUE;
               --Escrever mensagem  
-              vr_dsblqjud:= 'Valor Bloqueado Judicialmente e de R$: '||to_char(vr_vlblqjud,'fm999g999g999g990d00');    
-            END IF;
+            vr_dsblqjud:= 'VALOR BLOQUEADO JUDICIALMENTE R$:        '||to_char(nvl(vr_vlblqjud,0),'fm999g999g999g990d00');    
                                       
             -- Procedimento para buscar dados do credito pre-aprovado (crapcpa)
             EMPR0002.pc_busca_dados_cpa (pr_cdcooper  => pr_cdcooper   --> Codigo da cooperativa
@@ -13651,8 +13680,18 @@ END pc_consulta_ir_pj_trim;
                 END IF;
 
                 vr_dsvltaxa := '';
-                IF pr_tab_extrato_epr_aux(vr_index_epr_aux).vltaxprd > 0 THEN
-                  vr_dsvltaxa := to_char(pr_tab_extrato_epr_aux(vr_index_epr_aux).vltaxprd * 100,'fm999g999g990d00')||'%';
+                -- Lancamento de Juros de Correcao
+                IF pr_tab_extrato_epr_aux(vr_index_epr_aux).cdhistor IN (2344,2345) THEN
+                  
+                  OPEN cr_crappep_taxa (pr_cdcooper => pr_cdcooper
+                                       ,pr_nrdconta => pr_nrdconta
+                                       ,pr_nrctremp => pr_nrctremp
+                                       ,pr_nrparepr => pr_tab_extrato_epr_aux(vr_index_epr_aux).nrparepr);
+                  FETCH cr_crappep_taxa INTO rw_crappep_taxa;
+                  IF cr_crappep_taxa%FOUND THEN
+                    vr_dsvltaxa := to_char(rw_crappep_taxa.vltaxatu,'fm990d00')||'%';  
+                  END IF;                    
+                  CLOSE cr_crappep_taxa;
                 END IF;  
                 
                 --Montar Texto
@@ -13827,6 +13866,18 @@ END pc_consulta_ir_pj_trim;
           WHERE crapage.cdcooper = pr_cdcooper 
           AND   crapage.cdagenci = pr_cdagenci;
         rw_crapage cr_crapage%ROWTYPE;
+        /*
+        99 - CONTRATO DE EMPRESTIMO 
+        349 - EMPRESTIMO TRANSFERIDO PARA PREJUIZO
+        2381 - TRANSFERENCIA EMPRESTIMO PP P/ PREJUIZO
+        2385 - TRANSFERENCIA EMPRESTIMO PP SUSPEITA DE FRAUDE
+        2396 - TRANSFERENCIA FINANCIAMENTO PP P/ PREJUIZO
+        2400 - TRANSFERENCIA EMPRESTIMO SUSPEITA DE FRAUDE
+        2401 - TRANSFERENCIA EMPRESTIMO TR P/ PREJUIZO
+        2405 - TRANSFERENCIA EMP/ FIN TR SUSPEITA DE FRAUDE
+        2412 - TRANSFERENCIA PREJUIZO C/C SUSPEITA DE FRAUDE
+
+		*/
         --Selecionar Lancamento Emprestimo
         CURSOR cr_craplem (pr_cdcooper IN craplem.cdcooper%type
                           ,pr_nrdconta IN craplem.nrdconta%type
@@ -13836,7 +13887,7 @@ END pc_consulta_ir_pj_trim;
           WHERE craplem.cdcooper = pr_cdcooper 
           AND   craplem.nrdconta = pr_nrdconta 
           AND   craplem.nrctremp = pr_nrctremp 
-          AND   craplem.cdhistor IN (99,349);
+          AND   craplem.cdhistor IN (99,349, 2381, 2396, 2401, 2405, 2385, 2400);
         rw_craplem cr_craplem%ROWTYPE;
         --Tipo de Tabela para Break-by do emprestimo
         TYPE typ_tab_extrato_epr_novo IS TABLE OF typ_reg_extrato_epr INDEX BY VARCHAR2(100);
@@ -14312,13 +14363,23 @@ END pc_consulta_ir_pj_trim;
               vr_tab_extrato_epr_novo.DELETE;
               vr_index_extrato:= vr_tab_extrato_epr.FIRST;
               WHILE vr_index_extrato IS NOT NULL LOOP
+                IF vr_tab_extrato_epr(vr_index_extrato).dthrtran IS NOT NULL THEN
                 --Montar novo indice conforme break-by
+                  vr_index_novo:= LPAD(vr_tab_extrato_epr(vr_index_extrato).nrdconta,10,'0')||
+                                  vr_tab_extrato_epr(vr_index_extrato).nranomes||
+                                  TO_CHAR(vr_tab_extrato_epr(vr_index_extrato).dthrtran,'YYYYMMDD hhmiss')|| 
+                                  LPAD(vr_tab_extrato_epr(vr_index_extrato).cdhistor,10,'0')||
+                                  LPAD(vr_tab_extrato_epr(vr_index_extrato).nrdocmto,10,'0')||
+                                  LPAD(vr_tab_extrato_epr(vr_index_extrato).nrdolote,10,'0');  
+                ELSE
+                  --Montar novo indice conforme break-by
                 vr_index_novo:= LPAD(vr_tab_extrato_epr(vr_index_extrato).nrdconta,10,'0')||
                                 vr_tab_extrato_epr(vr_index_extrato).nranomes||
                                 TO_CHAR(vr_tab_extrato_epr(vr_index_extrato).dtmvtolt,'YYYYMMDD')|| 
                                 LPAD(vr_tab_extrato_epr(vr_index_extrato).cdhistor,10,'0')||
                                 LPAD(vr_tab_extrato_epr(vr_index_extrato).nrdocmto,10,'0')||
                                 LPAD(vr_tab_extrato_epr(vr_index_extrato).nrdolote,10,'0');  
+                END IF;
                  
                 --Copiar de uma tabela para outra
                 vr_tab_extrato_epr_novo(vr_index_novo):= vr_tab_extrato_epr(vr_index_extrato);
@@ -14379,7 +14440,7 @@ END pc_consulta_ir_pj_trim;
                       vr_vlsaldod:= nvl(vr_vlsaldod,0) + vr_tab_extrato_epr_novo(vr_index_novo).vllanmto;
                     END IF;    
                   ELSIF vr_tab_extrato_epr_novo(vr_index_novo).indebcre = 'C' AND
-                        vr_tab_extrato_epr_novo(vr_index_novo).cdhistor <> 349 THEN
+                        vr_tab_extrato_epr_novo(vr_index_novo).cdhistor not in (349,2391,2401,2402,2403,2404,2405,2406,2407) THEN --<> 349 THEN
                     --Se Possui Saldo
                     IF vr_tab_extrato_epr_novo(vr_index_novo).flgsaldo THEN
                       --Saldo Devedor
@@ -14703,7 +14764,7 @@ END pc_consulta_ir_pj_trim;
   --  Sistema  : 
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Julho/2014                           Ultima atualizacao: 20/04/2016
+  --  Data     : Julho/2014                           Ultima atualizacao: 02/03/2018
   --
   -- Dados referentes ao programa:
   --
@@ -14720,6 +14781,13 @@ END pc_consulta_ir_pj_trim;
   --
   --              20/04/2016 - Remover comando rm e incluir direto na tela impres 
   --                           (Lucas Ranghetti/Rodrigo #399412)
+  --
+  --              27/11/2017 - Inclusao do valor de bloqueio em garantia nos relatorios. 
+  --                           PRJ404 - Garantia.(Odirlei-AMcom) 
+  --  
+  --              02/03/2018 - Ajustes na exibição dos valores de bloqueio Judicial e de cobertura de aplicacao
+  --                           (Lucas Skroch - Supero TI)
+  --
   ---------------------------------------------------------------------------------------------------------------
   DECLARE
         -- Busca dos dados da cooperativa
@@ -14780,6 +14848,8 @@ END pc_consulta_ir_pj_trim;
         --Variaveis Locais
         vr_vlblqjud NUMBER;
         vr_vlresblq NUMBER;
+        vr_vlblqapl NUMBER;
+        vr_vlblqpou NUMBER;
         vr_vlsldapl NUMBER;
         vr_dsaplica VARCHAR2(100);
         vr_txaplica NUMBER(35,8);
@@ -14851,6 +14921,20 @@ END pc_consulta_ir_pj_trim;
                                          ,pr_vlbloque => vr_vlblqjud          --Valor Bloqueado
                                          ,pr_vlresblq => vr_vlresblq          --Valor Residual
                                          ,pr_dscritic => vr_dscritic);        --Critica
+        --Se ocorreu erro
+        IF vr_dscritic IS NOT NULL THEN
+          --Levantar Excecao
+          RAISE vr_exc_erro;
+        END IF;
+
+        /*** Busca valor bloquedo garantia epr ***/
+        vr_vlblqapl := 0;
+        vr_vlblqpou := 0;
+        bloq0001.pc_calc_bloqueio_garantia( pr_cdcooper => pr_cdcooper          --Cooperativa
+                                           ,pr_nrdconta => pr_nrdconta          --Conta Corrente                                        
+                                           ,pr_vlbloque_aplica => vr_vlblqapl   --Valor Bloqueado aplicacao
+                                           ,pr_vlbloque_poupa  => vr_vlblqpou   --Valor Bloqueado poupanca
+                                           ,pr_dscritic        => vr_dscritic);  --Critica
         --Se ocorreu erro
         IF vr_dscritic IS NOT NULL THEN
           --Levantar Excecao
@@ -15257,12 +15341,14 @@ END pc_consulta_ir_pj_trim;
               --marcar que já processou primeiro registro
               vr_flgfirst:= FALSE;
               --Verificar se possui bloqueio judicial
-              IF vr_vlblqjud > 0 THEN
-                vr_dsextrat:= ' flgmsgjud="S" dsmsgjud="Valor Bloqueado Judicialmente e de R$ '||
-                              to_char(vr_vlblqjud,'fm999g999g999g990d00')||'"'; 
-              ELSE
-                vr_dsextrat:= ' flgmsgjud="N" dsmsgjud=""'; 
-              END IF;  
+              vr_dsextrat:= ' flgmsgjud="S" dsmsgjud="VALOR BLOQUEADO JUDICIALMENTE R$        '||
+                              to_char(nvl(vr_vlblqjud,0),'fm999g999g999g990d00')||'"'; 
+              
+              --Verificar se possui bloqueio por garantia de aplicacao
+
+                vr_dsextrat:= vr_dsextrat ||' flgmsggar="S" dsmsggar="VALOR BLOQUEADO COBERTURA GARANTIA R$ '||
+                            to_char(nvl(vr_vlblqapl,0),'fm999g999g999g990d00')||'"'; 
+               
               --Montar texto
               vr_dstexto:= '<conta nrdconta="'||to_char(rw_crapass.nrdconta,'fm9g999g999g0')||
                              '" nmprimtl="'||rw_crapass.nmprimtl||
@@ -15304,7 +15390,7 @@ END pc_consulta_ir_pj_trim;
                 CASE vr_tab_saldo_rdca_088(vr_index_saldo_rdca_088).tpaplrdc
                   WHEN 1 THEN
                     vr_dstexto_aux:= vr_dstexto_aux||
-                                     'Saldo disponivel para resgate: R$ '||to_char(vr_tab_saldo_rdca_088(vr_index_saldo_rdca_088).sldresga,'fm999g999g999g990d00');
+                                     'Saldo disponivel para resgate: R$ '||to_char(GREATEST(0,vr_tab_saldo_rdca_088(vr_index_saldo_rdca_088).sldresga),'fm999g999g999g990d00');
                   WHEN 2 THEN
                     vr_dstexto_aux:= vr_dstexto_aux||
                                      'Saldo liquido para resgate antes do vencimento, considerando a taxa minima'||
@@ -15662,7 +15748,7 @@ END pc_consulta_ir_pj_trim;
   --  Sistema  : 
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Julho/2014                           Ultima atualizacao: 20/04/2016
+  --  Data     : Julho/2014                           Ultima atualizacao: 02/03/2018
   --
   -- Dados referentes ao programa:
   --
@@ -15673,6 +15759,12 @@ END pc_consulta_ir_pj_trim;
   --              
   --              20/04/2016 - Remover comando rm e incluir direto na tela impres 
   --                           (Lucas Ranghetti/Rodrigo #399412)              
+  --
+  --              27/11/2017 - Inclusao do valor de bloqueio em garantia nos relatorios. 
+  --                           PRJ404 - Garantia.(Odirlei-AMcom)               
+  --
+  --              02/03/2018 - Ajustes na exibição dos valores de bloqueio Judicial e de cobertura de aplicacao
+  --                           (Lucas Skroch - Supero TI)
   ---------------------------------------------------------------------------------------------------------------
   DECLARE
         -- Busca dos dados da cooperativa
@@ -15717,10 +15809,13 @@ END pc_consulta_ir_pj_trim;
         --Variaveis Locais
         vr_vlblqjud NUMBER:= 0;
         vr_vlresblq NUMBER:= 0;
-        vr_vltotrpp NUMBER;
+        vr_vlblqapl NUMBER:= 0;
+        vr_vlblqpou NUMBER:= 0;
+        vr_vltotrpp NUMBER:= 0;
+        vr_vltotres NUMBER:= 0;
         vr_percenir NUMBER;
         vr_flgfirst BOOLEAN;
-        vr_dsblqjud VARCHAR2(100);
+        vr_dsblqjud VARCHAR2(500);
         vr_dsextrat VARCHAR2(100);
         vr_dsorigem VARCHAR2(100);
         vr_dstransa VARCHAR2(100);
@@ -15767,6 +15862,21 @@ END pc_consulta_ir_pj_trim;
            --Levantar Excecao
            RAISE vr_exc_erro;
          END IF;
+
+        /*** Busca valor bloquedo garantia epr ***/
+        vr_vlblqapl := 0;
+        vr_vlblqpou := 0;
+        bloq0001.pc_calc_bloqueio_garantia( pr_cdcooper => pr_cdcooper          --Cooperativa
+                                           ,pr_nrdconta => pr_nrdconta          --Conta Corrente                                        
+                                           ,pr_vlbloque_aplica => vr_vlblqapl   --Valor Bloqueado aplicacao
+                                           ,pr_vlbloque_poupa  => vr_vlblqpou   --Valor Bloqueado poupanca
+                                           ,pr_dscritic        => vr_dscritic);  --Critica
+        --Se ocorreu erro
+        IF vr_dscritic IS NOT NULL THEN
+          --Levantar Excecao
+          RAISE vr_exc_erro;
+        END IF; 
+         
 
         --Atribuir Descricao da Origem
         vr_dsorigem:= GENE0001.vr_vet_des_origens(pr_idorigem);
@@ -15977,13 +16087,20 @@ END pc_consulta_ir_pj_trim;
               RAISE vr_exc_sair;          
             END IF;
             
+            vr_dsblqjud:= ' dsmssaldo="SALDO DISPONIVEL R$                        '||
+                            to_char(nvl(vr_vltotrpp,0),'fm999g999g999g990d00')||'"'; --vr_vltotrpp
             --Verificar se possui bloqueio judicial
-            IF vr_vlblqjud > 0 THEN
-              vr_dsblqjud:= ' flgmsgjud="S" dsmsgjud="Valor Bloqueado Judicialmente e de R$ '||
-                            to_char(vr_vlblqjud,'fm999g999g999g990d00')||'"'; 
-            ELSE
-              vr_dsblqjud:= ' flgmsgjud="N" dsmsgjud=""'; 
-            END IF;  
+            vr_dsblqjud:= vr_dsblqjud ||' flgmsgjud="S" dsmsgjud="VALOR BLOQUEADO JUDICIALMENTE R$               '|| 
+                            to_char(nvl(vr_vlblqjud,0),'fm999g999g999g990d00')||'"'; 
+            
+            --Verificar se possui bloqueio de garantia de aplicacao
+            vr_dsblqjud:= vr_dsblqjud ||' flgmsggar="S" dsmsggar="VALOR BLOQUEADO COBERTURA GARANTIA R$      '||
+                            to_char(nvl(vr_vlblqpou,0),'fm999g999g999g990d00')||'"'; 
+            vr_vltotres := GREATEST(0,nvl(vr_vltotrpp,0) - (nvl(vr_vlblqjud,0) + nvl(vr_vlblqpou,0)));
+						
+            vr_dsblqjud:= vr_dsblqjud ||' dsmsslddis="SALDO DISPONIVEL PARA RESGATE R$           '||
+                                          to_char(vr_vltotres,'fm999g999g999g990d00')||'"';
+            
             --Verificar se possui extratos de poupanca
             IF vr_tab_extrato_rpp.COUNT = 0 THEN
               vr_dsextrat:= '<extratos flgmsgext="S" dsmsgext="** NAO HA LANCAMENTOS NO MES **">';
@@ -16087,6 +16204,7 @@ END pc_consulta_ir_pj_trim;
                                        ,pr_nrcopias  => 1                             --> Número de cópias
                                        ,pr_sqcabrel  => 1                             --> Qual a seq do cabrel
                                        ,pr_flappend  => 'S'                           --> Fazer append do relatorio se ja existir
+                                       ,pr_nrvergrl  => 1                             --> Versao do relatorio
                                        ,pr_des_erro  => vr_dscritic);                 --> Saída com erro
             --Se ocorreu erro no relatorio
             IF vr_dscritic IS NOT NULL THEN
@@ -16477,12 +16595,8 @@ END pc_consulta_ir_pj_trim;
           END IF;
           
           --Verificar se possui bloqueio judicial
-          IF vr_vlblqjud > 0 THEN
-            vr_dsblqjud:= ' flgmsgjud="S" dsmsgjud="Valor Bloqueado Judicialmente e de R$ '||
-                          to_char(vr_vlblqjud,'fm999g999g999g990d00')||'"'; 
-          ELSE
-            vr_dsblqjud:= ' flgmsgjud="N" dsmsgjud=""'; 
-          END IF;  
+          vr_dsblqjud:= ' flgmsgjud="S" dsmsgjud="VALOR BLOQUEADO JUDICIALMENTE R$        '||
+                          to_char(nvl(vr_vlblqjud,0),'fm999g999g999g990d00')||'"'; 
           --Verificar se possui extratos de capital
           IF vr_tab_extrato_cotas.COUNT = 0 THEN
             vr_dsextrat:= '<extratos flgmsgext="S" dsmsgext="** NAO HA LANCAMENTOS NO MES **">';
@@ -17510,12 +17624,8 @@ END pc_consulta_ir_pj_trim;
           END IF;          
           
           --Verificar se possui bloqueio judicial
-          IF vr_vlblqjud > 0 THEN
-            vr_dsblqjud:= ' flgmsgjud="S" dsmsgjud="Valor Bloqueado Judicialmente e de R$ '||
-                          to_char(vr_vlblqjud,'fm999g999g999g990d00')||'"'; 
-          ELSE
-            vr_dsblqjud:= ' flgmsgjud="N" dsmsgjud=""'; 
-          END IF;
+          vr_dsblqjud:= ' flgmsgjud="S" dsmsgjud="VALOR BLOQUEADO JUDICIALMENTE R$        '||
+                          to_char(nvl(vr_vlblqjud,0),'fm999g999g999g990d00')||'"'; 
             
           --Verificar se possui extratos 
           --IF (vr_tab_saldo_rdc.COUNT + vr_tab_saldo_rdca.COUNT + vr_tab_dados_rpp.COUNT) = 0 THEN
@@ -18326,6 +18436,7 @@ END pc_consulta_ir_pj_trim;
                                       ,pr_dtfinext => vr_dtfimext
                                         ,pr_cdhistor => vr_arr_histor_iof(i)) LOOP
           vr_tab_extrato_ope_credito(vr_index).demadesp := NVL(vr_tab_extrato_ope_credito(vr_index).demadesp,0) + rw_craplcm1.vllanmto;
+          
         END LOOP;
         END LOOP;
                                  
@@ -18365,6 +18476,14 @@ END pc_consulta_ir_pj_trim;
           
         END LOOP;
         
+        --Busca demais despesas referente a limite de crédito
+        FOR rw_craplcm1 IN cr_craplcm1(pr_cdcooper => pr_cdcooper
+                                      ,pr_nrdconta => pr_nrdconta
+                                      ,pr_dtiniext => vr_dtiniext
+                                      ,pr_dtfinext => vr_dtfimext
+                                      ,pr_cdhistor => '2322') LOOP
+          vr_tab_extrato_ope_credito(vr_index).demadesp := NVL(vr_tab_extrato_ope_credito(vr_index).demadesp,0) + rw_craplcm1.vllanmto;
+        END LOOP;
         --Busca demais despesas referente a limite de crédito
         FOR rw_craplcm1 IN cr_craplcm1(pr_cdcooper => pr_cdcooper
                                       ,pr_nrdconta => pr_nrdconta

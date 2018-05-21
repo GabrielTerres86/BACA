@@ -84,7 +84,7 @@
 	
 	// Se ocorrer um erro, mostra crítica
 	if (isset($xmlObjLimite->roottag->tags[0]->name) && strtoupper($xmlObjLimite->roottag->tags[0]->name) == "ERRO") 
-      exibirErro('error',$xmlObjLimite->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos','');
+		exibirErro('error',$xmlObjLimite->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos','');
 		
 	$qtMensagens = count($xmlObjLimite->roottag->tags[1]->tags);	
 	$mensagem  	 = ( isset($xmlObjLimite->roottag->tags[1]->tags[$qtMensagens - 1]->tags[1]->cdata) ) ? $xmlObjLimite->roottag->tags[1]->tags[$qtMensagens - 1]->tags[1]->cdata : '';
@@ -99,7 +99,7 @@
 	}
 	
 	$limite = $xmlObjLimite->roottag->tags[0]->tags[0]->tags;
-
+	
 	if($cddopcao == 'N'){
 		//Verifica se pode ser incluído novo limite
 		$xml  = "";
@@ -285,7 +285,7 @@
 				<input type="hidden" name="idimpres" id="idimpres" value="">
 				<input type="hidden" name="flgemail" id="flgemail" value="">
 				<input type="hidden" name="flgimpnp" id="flgimpnp" value="">
-				<input type="hidden" name="sidlogin" id="sidlogin" value="<?php echo $glbvars["sidlogin"]; ?>">						
+				<input type="hidden" name="sidlogin" id="sidlogin" value="<?php echo $glbvars["sidlogin"]; ?>">		
 			</form>		
 			
       <div id="divBotoesGAROPC">
@@ -307,7 +307,7 @@
 	$("#divDadosAvalistas").css("display","none");
 
 	$("#tdTitDivDadosLimite").html("DADOS DO " + strTitRotinaUC);
-	$("#divDadosLimite").css("display","block");	
+	$("#divDadosLimite").css("display","block");
 
   $("#btnVoltarGAROPC","#divBotoesGAROPC").unbind("click").bind("click",function() {
     $("#divUsoGAROPC").empty();

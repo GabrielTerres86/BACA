@@ -38,6 +38,8 @@
 	<field name="vlrpagos" class="java.lang.Double">
 		<fieldDescription><![CDATA[vlrpagos]]></fieldDescription>
 	</field>
+	<field name="vlrestor" class="java.lang.String"/>
+	<field name="vlrpgatz" class="java.lang.String"/>
 	<field name="dtprejuz" class="java.lang.String">
 		<fieldDescription><![CDATA[dtprejuz]]></fieldDescription>
 	</field>

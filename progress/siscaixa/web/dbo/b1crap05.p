@@ -73,6 +73,10 @@
                             
                12/12/2017 - Passar como texto o campo nrcartao na chamada da procedure 
                             pc_gera_log_ope_cartao (Lucas Ranghetti #810576)
+                            
+               04/04/2018 - Adicionada chamada pc_valida_adesao_produto para verificar se o 
+                            tipo de conta permite a contrataçao do produto. PRJ366 (Lombardi).
+                            
 ............................................................................ */
 /*----------------------------------------------------------------------*/
 /*  b1crap05.p - Solicitacao/Liberacoes Taloes Normal                   */
@@ -148,6 +152,8 @@ PROCEDURE valida-dados:
     DEF VAR aux_contorig             AS INT                           NO-UNDO.
     DEF VAR aux_cdorigem             AS INT                           NO-UNDO.
     DEF VAR aux_dsrotina             AS CHAR                          NO-UNDO.
+    DEF VAR aux_cdcritic             AS INT                           NO-UNDO.
+    DEF VAR aux_dscritic             AS CHAR                          NO-UNDO.
 
     DEF VAR h-b1wgen0001 AS HANDLE                                    NO-UNDO.
     DEF VAR h-b1wgen0110 AS HANDLE                                    NO-UNDO.
@@ -473,12 +479,34 @@ PROCEDURE valida-dados:
            RETURN "NOK".
        END.
     ELSE
-    IF crapass.cdtipcta <= 07   OR
-       crapass.cdtipcta  = 17   OR
-       crapass.cdtipcta  = 18   THEN
        DO:
-           ASSIGN i-cod-erro  = 17
-                  c-desc-erro = "".
+           /* buscar quantidade maxima de digitos aceitos para o convenio */
+            { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
+                          
+            RUN STORED-PROCEDURE pc_valida_adesao_produto
+                aux_handproc = PROC-HANDLE NO-ERROR
+                                        (INPUT crapcop.cdcooper,
+                                         INPUT aux_nrdconta,
+                                         INPUT 38, /* Folhas de Cheque */
+                                         OUTPUT 0,   /* pr_cdcritic */
+                                         OUTPUT ""). /* pr_dscritic */
+                        
+            CLOSE STORED-PROC pc_valida_adesao_produto
+                  aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+            { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+            ASSIGN aux_cdcritic = 0
+                   aux_dscritic = ""
+                   aux_cdcritic = pc_valida_adesao_produto.pr_cdcritic                          
+                                      WHEN pc_valida_adesao_produto.pr_cdcritic <> ?
+                   aux_dscritic = pc_valida_adesao_produto.pr_dscritic
+                                      WHEN pc_valida_adesao_produto.pr_dscritic <> ?.
+            
+            IF  aux_cdcritic <> 0 OR aux_dscritic <> "" THEN
+       DO:
+                    ASSIGN i-cod-erro  = aux_cdcritic
+                           c-desc-erro = aux_dscritic.
            
            RUN cria-erro (INPUT p-cooper,
                           INPUT p-cod-agencia,
@@ -488,6 +516,7 @@ PROCEDURE valida-dados:
                           INPUT YES).
            RETURN "NOK".
        END.
+            /*
     ELSE
     /* Verifica se tem conta integracao e se esta ativa  - somente p chq.BB */
     IF  p-banco-chq = 1             AND
@@ -506,7 +535,7 @@ PROCEDURE valida-dados:
                            INPUT c-desc-erro,
                            INPUT YES).
             RETURN "NOK".
-        END.
+                END. */
     ELSE
        DO:
        
@@ -723,6 +752,7 @@ PROCEDURE valida-dados:
                  END.
            
        END. /* Fim das Validacoes da conta e existencia do cheque final */
+       END.
     
     IF  p-banco-chq = 1  THEN
         /* Banco do Brasil - sem DV */

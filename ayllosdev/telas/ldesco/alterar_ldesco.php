@@ -1,11 +1,11 @@
 <?php
 /*!
- * FONTE        : ldesco.php                        Última alteração: 
+ * FONTE        : ldesco.php                        Última alteração: 11/10/2017
  * CRIAÇÃO      : Otto - RKAM
  * DATA CRIAÇÃO : 17/11/2016
  * OBJETIVO     : Mostrar tela LDESCO
  * --------------
- * ALTERAÇÕES   :  
+ * ALTERAÇÕES   :  11/10/2017 - Inclusao dos campos Modelo e % Mínimo Garantia. (Lombardi - PRJ404)
  * --------------
  */
 
@@ -79,10 +79,17 @@
     $('#descricao','#frmLdesco').val('<?echo getByTagName($linhas->tags,'DSDLINHA'); ?>').focus();
     $('#taxamora','#frmLdesco').val('<?echo getByTagName($linhas->tags,'TXJURMOR'); ?>');
     $('#taxamensal','#frmLdesco').val('<?echo getByTagName($linhas->tags,'TXMENSAL'); ?>');
+    $('#tpctrato','#frmLdesco').val('<?echo getByTagName($linhas->tags,'TPCTRATO'); ?>');
     $('#qtvias','#frmLdesco').val('<?echo getByTagName($linhas->tags,'NRDEVIAS'); ?>');
     $('#tarifa','#frmLdesco').val('<?echo (getByTagName($linhas->tags,'FLGTARIF') != 0) ? getByTagName($linhas->tags,'FLGTARIF') : ''; ?>');
+    $('#permingr','#frmLdesco').val('<?echo getByTagName($linhas->tags,'PERMINGR'); ?>');
     $('#situacao','#frmLdesco').val('<?echo getByTagName($linhas->tags,'DSSITLCR'); ?>').desabilitaCampo();
     $('#taxadiaria','#frmLdesco').val('<?echo getByTagName($linhas->tags,'TXDIARIA'); ?>').desabilitaCampo();
+    
+	if('<?echo $cddopcao;?>' == 'A')
+		$('#tpctrato','#frmLdesco').desabilitaCampo();
+	
+	($("#tpctrato", "#frmLdesco").val() == 4) ? $('#permingr', '#frmLdesco').habilitaCampo() : $('#permingr', '#frmLdesco').desabilitaCampo();
     
     trocaBotao('showConfirmacao(\'Deseja prosseguir com a opera&ccedil;&atilde;o?\',\'Confirma&ccedil;&atilde;o - Ayllos\',\'alteraLinhaDescontoDo();\',\' \',\'sim.gif\',\'nao.gif\')','btnVoltar(2)');
 	

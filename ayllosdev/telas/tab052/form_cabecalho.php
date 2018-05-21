@@ -24,6 +24,12 @@
         <option value="0"><?php echo utf8ToHtml('Sem Registro') ?></option>           
     </select>
 
+    <label for="inpessoa"><? echo utf8ToHtml('Tipo Pessoa:') ?></label>
+    <select id="inpessoa" name="inpessoa">       
+        <option value="1"><?php echo utf8ToHtml('Física') ?></option>                
+        <option value="2"><?php echo utf8ToHtml('Jurídica') ?></option>           
+    </select>
+
     <a href="#" class="botao" id="btnOK" name="btnOK" onClick="controlaOperacao();
                 return false;" style = "text-align:right;">OK</a>
 

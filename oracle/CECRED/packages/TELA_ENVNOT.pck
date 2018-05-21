@@ -69,7 +69,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ENVNOT IS
                                 ,pr_dsfiltro_tipos_conta  IN TBGEN_NOTIF_MANUAL_PRM.DSFILTRO_TIPOS_CONTA%TYPE           -- Filtro de tipo de conta: Tipos separados por virgula
                                 ,pr_tpfiltro_mobile       IN TBGEN_NOTIF_MANUAL_PRM.TPFILTRO_MOBILE%TYPE                -- Filtro para usuario do Cecred Mobile (0-Todas as plataformas/ 1-Cooperados sem Mobile/ 2-Android/ 3-IOS)
                                 ,pr_nmarquivo_csv         IN VARCHAR                                                    -- Nome do arquivo CSV para envio das notificações
-                                ,pr_dsxml_destinatarios   IN CLOB DEFAULT NULL                                          -- Lista de destinatários contida no CSV importado
+                                ,pr_caminho_arq_upload    IN VARCHAR2                                                   -- Caminho do arquivo CSV
                                 
                                 ,pr_xmllog       IN VARCHAR2                                                            --> XML com informacoes de LOG
                                 ,pr_cdcritic    OUT PLS_INTEGER                                                         --> Codigo da critica
@@ -121,6 +121,16 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_ENVNOT IS
                                  ,pr_retxml   IN OUT NOCOPY XMLType --> Arquivo de retorno do XML
                                  ,pr_nmdcampo OUT VARCHAR2          --> Nome do campo com erro
                                  ,pr_des_erro OUT VARCHAR2);        --> Erros do processo 
+                                 
+  PROCEDURE pc_importar_arquivo_notif( pr_arquivo          IN VARCHAR2 --> nome do arquivo de importação
+                                      ,pr_dirarquivo       IN VARCHAR2 --> nome do diretório arquivo de importação
+                                      ,pr_destinatarios    OUT NOTI0001.typ_destinatarios_notif
+																		  ,pr_xmllog           IN VARCHAR2 --> XML com informações de LOG
+																		  ,pr_cdcritic         OUT PLS_INTEGER --> Código da crítica
+																		  ,pr_dscritic         OUT VARCHAR2 --> Descrição da crítica
+																		  ,pr_retxml           IN OUT NOCOPY xmltype --> Arquivo de retorno do XML
+																		  ,pr_nmdcampo         OUT VARCHAR2 --> Nome do Campo
+																		  ,pr_des_erro         OUT VARCHAR2);                               
 
 END TELA_ENVNOT;
 /
@@ -169,7 +179,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ENVNOT IS
                                       
     CURSOR cr_var_inexistentes IS
     SELECT listagg(variavel, ', ') WITHIN GROUP (ORDER BY rownum) variaveis
-      FROM (SELECT regexp_substr(pr_dstexto_mensagem||' '||pr_dshtml_mensagem,'#\w+',1,LEVEL) variavel
+      FROM (SELECT regexp_replace(regexp_substr(pr_dstexto_mensagem||' '||pr_dshtml_mensagem,'#\w+',1,LEVEL),'#\d+$') variavel -- Replace para tirar os códigos html que usam #. Ex: Apóstrofo = &#39;
               FROM dual
             CONNECT BY LEVEL <= regexp_count(pr_dstexto_mensagem||' '||pr_dshtml_mensagem, '[^#]+'))
      WHERE variavel IS NOT NULL
@@ -863,7 +873,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ENVNOT IS
                                 ,pr_dsfiltro_tipos_conta  IN TBGEN_NOTIF_MANUAL_PRM.DSFILTRO_TIPOS_CONTA%TYPE -- Filtro de tipo de conta: Tipos separados por virgula
                                 ,pr_tpfiltro_mobile       IN TBGEN_NOTIF_MANUAL_PRM.TPFILTRO_MOBILE%TYPE      -- Filtro para usuario do Cecred Mobile (0-Todas as plataformas/ 1-Cooperados sem Mobile/ 2-Android/ 3-IOS)
                                 ,pr_nmarquivo_csv         IN VARCHAR                                          -- Nome do arquivo CSV para envio das notificações
-                                ,pr_dsxml_destinatarios   IN CLOB DEFAULT NULL                                -- Lista de destinatários contida no CSV importado
+                                ,pr_caminho_arq_upload    IN VARCHAR2                                         -- Caminho do arquivo CSV
                                 
                                 ,pr_xmllog       IN VARCHAR2                                                  --> XML com informacoes de LOG
                                 ,pr_cdcritic    OUT PLS_INTEGER                                               --> Codigo da critica
@@ -914,44 +924,42 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ENVNOT IS
     vr_idorigem VARCHAR2(100);
     
     -- Procedure para percorrer o arquivo CSV importado e agendar as notificações. Executa apenas se pr_tpfiltro = 2 (Importação de CSV)
-    PROCEDURE pc_cria_notificacoes_csv(pr_dsxml_destinatarios IN CLOB DEFAULT NULL -- XML Gerado no PHP a partir de um arquivo CSV importado na tela
-                                      ,pr_cdmensagem          IN tbgen_notif_manual_prm.cdmensagem%TYPE
-                                      ,pr_inalterou_dhenvio   IN NUMBER  -- Indicador se o usuário alterou a data do envio
-                                      ,pr_dhenvio             IN tbgen_notif_manual_prm.dhenvio_mensagem%TYPE) IS
+    PROCEDURE pc_cria_notificacoes_csv(pr_nmarquivo_csv         IN VARCHAR                                          -- Nome do arquivo CSV para envio das notificações
+                                      ,pr_caminho_arq_upload    IN VARCHAR2
+                                      ,pr_cdmensagem            IN tbgen_notif_manual_prm.cdmensagem%TYPE
+                                      ,pr_inalterou_dhenvio     IN NUMBER  -- Indicador se o usuário alterou a data do envio
+                                      ,pr_dhenvio               IN tbgen_notif_manual_prm.dhenvio_mensagem%TYPE
+                                      ,pr_xmllog                IN VARCHAR2 --> XML com informações de LOG
+																		  ,pr_cdcritic              OUT PLS_INTEGER --> Código da crítica
+																		  ,pr_dscritic              OUT VARCHAR2 --> Descrição da crítica
+																		  ,pr_retxml                IN OUT NOCOPY xmltype --> Arquivo de retorno do XML
+																		  ,pr_nmdcampo              OUT VARCHAR2 --> Nome do Campo
+																		  ,pr_des_erro              OUT VARCHAR2) IS
 
-      CURSOR cr_destinatarios IS
-      SELECT u.cdcooper
-                   ,u.nrdconta
-                   ,u.idseqttl
-                   ,NULL dsvariaveis -- Mensagem manuais não possuem variáveis (as padrão são preenchidas sempre)
-              FROM XMLTABLE('contas/conta' PASSING xmltype.createxml(pr_dsxml_destinatarios)
-                     COLUMNS cdcooper NUMBER(10) PATH '/conta/cdcooper'
-                            ,nrdconta NUMBER(10) PATH '/conta/nrdconta'
-                            ,idseqttl NUMBER(5) PATH '/conta/idseqttl') x
-                  ,vw_usuarios_internet u
-             WHERE x.cdcooper = u.cdcooper
-               AND x.nrdconta = u.nrdconta
-               AND (x.idseqttl = 0 OR x.idseqttl = u.idseqttl);
       vr_destinatarios NOTI0001.typ_destinatarios_notif;
-
     BEGIN
       
       -- Se deve entrou um xml gera as notificacoes (apaga as anticas se houver)
-      IF pr_dsxml_destinatarios IS NOT NULL THEN
+      IF pr_nmarquivo_csv IS NOT NULL AND pr_caminho_arq_upload IS NOT NULL THEN
         
         -- Delete Notificações e Pushs para não duplicar registros (quando o usuário importou um CSV, e depois importou outro CSV para substitur o anterior)
         DELETE FROM tbgen_notif_push push WHERE push.cdnotificacao IN (SELECT noti.cdnotificacao FROM tbgen_notificacao noti WHERE noti.cdmensagem = pr_cdmensagem);
         DELETE FROM tbgen_notificacao noti WHERE noti.cdmensagem = pr_cdmensagem;
         
-        -- Carrega os destinatários do XML em uma temp table (NOTI0001.typ_destinatarios_notif)
-        OPEN cr_destinatarios;
-        FETCH cr_destinatarios
-        BULK COLLECT INTO vr_destinatarios;
-        CLOSE cr_destinatarios;
-        
+        -- Carrega os destinatários para a tabela de importação
+        pc_importar_arquivo_notif(pr_arquivo    => pr_nmarquivo_csv
+                                 ,pr_dirarquivo => pr_caminho_arq_upload
+                                 ,pr_destinatarios => vr_destinatarios
+                                 ,pr_xmllog     => pr_xmllog
+                                 ,pr_cdcritic   => pr_cdcritic
+                                 ,pr_dscritic   => pr_dscritic
+                                 ,pr_retxml     => pr_retxml
+                                 ,pr_nmdcampo   => pr_nmdcampo
+                                 ,pr_des_erro   => pr_des_erro);
+                                        
         -- Cria as notificações para os destinatários que estão no CSV
         NOTI0001.pc_cria_notificacoes(pr_cdmensagem    => pr_cdmensagem    
-                                     ,pr_dhenvio       => pr_dhenvio      
+                                     ,pr_dhenvio       => pr_dhenvio
                                      ,pr_destinatarios => vr_destinatarios);
         
       -- Se não recebeu XML e a data foi alterada, então atualiza as datas das notificações que já foram geradas antes...
@@ -991,7 +999,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ENVNOT IS
     
     -- Remove o CDATA dos XMLs
     vr_dshtml_mensagem := SUBSTR(pr_dshtml_mensagem,10,LENGTH(pr_dshtml_mensagem)-12);
-    vr_dsxml_destinatarios := SUBSTR(pr_dsxml_destinatarios,10,LENGTH(pr_dsxml_destinatarios)-12);
+    --vr_dsxml_destinatarios := SUBSTR(pr_dsxml_destinatarios,10,LENGTH(pr_dsxml_destinatarios)-12);
     
     
     -- Se for UPDATE de registro existente, então valida o pr_cdmensagem
@@ -1170,10 +1178,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ENVNOT IS
     
     -- Se foi importação de CSV, então cria/altera os agendamentos das notificações
     IF pr_tpfiltro = 2 THEN
-      pc_cria_notificacoes_csv(pr_dsxml_destinatarios => vr_dsxml_destinatarios
+      pc_cria_notificacoes_csv(pr_nmarquivo_csv       => pr_nmarquivo_csv                     
+                              ,pr_caminho_arq_upload  => pr_caminho_arq_upload
                               ,pr_cdmensagem          => vr_cdmensagem
                               ,pr_inalterou_dhenvio   => vr_inalterou_dhenvio
-                              ,pr_dhenvio             => vr_dhenvio_mensagem);
+                              ,pr_dhenvio             => vr_dhenvio_mensagem
+                              ,pr_xmllog              => pr_xmllog
+                              ,pr_cdcritic            => pr_cdcritic
+                              ,pr_dscritic            => pr_dscritic
+                              ,pr_retxml              => pr_retxml
+                              ,pr_nmdcampo            => pr_nmdcampo
+                              ,pr_des_erro            => pr_des_erro);
     ELSE -- Se não for CSV, apaga os registros das notificações (para não ficar lixo caso o usuário importar um CSV e depois alterar o tpfiltro)
       DELETE FROM tbgen_notificacao noti WHERE noti.cdmensagem = vr_cdmensagem;
     END IF;
@@ -1731,6 +1746,265 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ENVNOT IS
                                      '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
       ROLLBACK;
   END pc_busca_telas_mobile;
+  
+  PROCEDURE pc_importar_arquivo_notif( pr_arquivo          IN VARCHAR2 --> nome do arquivo de importação
+                                      ,pr_dirarquivo       IN VARCHAR2 --> nome do diretório arquivo de importação
+                                      ,pr_destinatarios    OUT NOTI0001.typ_destinatarios_notif
+																		  ,pr_xmllog           IN VARCHAR2 --> XML com informações de LOG
+																		  ,pr_cdcritic         OUT PLS_INTEGER --> Código da crítica
+																		  ,pr_dscritic         OUT VARCHAR2 --> Descrição da crítica
+																		  ,pr_retxml           IN OUT NOCOPY xmltype --> Arquivo de retorno do XML
+																		  ,pr_nmdcampo         OUT VARCHAR2 --> Nome do Campo
+																		  ,pr_des_erro         OUT VARCHAR2) IS --> Saida OK/NOK
+		
+      CURSOR cr_destinatarios (pr_cdcooper NUMBER
+                              ,pr_nrdconta NUMBER
+                              ,pr_idseqttl NUMBER) IS
+      SELECT usr.cdcooper
+            ,usr.nrdconta
+            ,usr.idseqttl
+            ,NULL dsvariaveis
+        FROM vw_usuarios_internet usr
+       WHERE usr.cdcooper = pr_cdcooper
+         AND usr.nrdconta = pr_nrdconta
+         AND (usr.idseqttl = pr_idseqttl OR NVL(pr_idseqttl, 0) = 0);
+  
+      vr_nm_arquivo VARCHAR(2000);
+				
+      -- Variável de críticas
+      vr_dscritic VARCHAR2(10000);
+      vr_typ_said VARCHAR2(50);
+				
+      -- Variaveis padrao
+      vr_cdcooper NUMBER:=3;
+      vr_cdoperad VARCHAR2(100);
+      vr_nmdatela VARCHAR2(100);
+      vr_dsdireto VARCHAR2(250);
+				
+      vr_linha_arq VARCHAR2(2000);
+      vr_des_erro  VARCHAR2(2000);
+      vr_dsorigem  VARCHAR2(20);
+      vr_nrdrowid  ROWID;
+				
+      --Manipulação do texto do arquivo
+      vr_tabtexto gene0002.typ_split;
+				
+      --Variáveis do split            
+      vr_cdcooper_arq     NUMBER;
+      vr_nrdconta_arq     NUMBER;
+      vr_seqtitular_arq   NUMBER;      
+      vr_erros            NUMBER := 0;
+      vr_registros        NUMBER := 0;
+      vr_registros_inexis NUMBER := 0;
+				
+      vr_handle_arq utl_file.file_type;
+				
+      --Controle de erro
+      vr_exc_erro         EXCEPTION;
+      vr_exc_erro_negocio EXCEPTION;
+				
+      separador VARCHAR2(1) := ';';
+       
+      vr_table_import_notif   NOTI0001.typ_destinatarios_notif;
+                   
+  BEGIN
+    
+      IF pr_arquivo IS NULL OR pr_dirarquivo IS NULL THEN
+         vr_dscritic := 'Caminho do arquivo e nome são obrigatórios! ';
+         RAISE vr_exc_erro;
+      END if;
+				
+      vr_dsdireto := GENE0001.fn_diretorio(pr_tpdireto => 'C'
+                                          ,pr_cdcooper => vr_cdcooper
+                                          ,pr_nmsubdir => 'upload');
+      -- Realizar a cópia do arquivo
+      GENE0001.pc_OScommand_Shell(gene0001.fn_param_sistema('CRED',0,'SCRIPT_RECEBE_ARQUIVOS')||' '||pr_dirarquivo||pr_arquivo||' N'
+                                 ,pr_typ_saida   => vr_typ_said
+                                 ,pr_des_saida   => vr_des_erro);
+                                                         
+      -- Testar erro
+      IF vr_typ_said = 'ERR' THEN
+          -- O comando shell executou com erro, gerar log e sair do processo
+          vr_dscritic := 'Erro realizar o upload do arquivo: ' || vr_des_erro;
+          --Gera log
+          GENE0001.pc_gera_log(pr_cdcooper => vr_cdcooper,
+                               pr_cdoperad => vr_cdoperad,
+                               pr_dscritic => NVL(pr_dscritic, ' ') || vr_dscritic,
+                               pr_dsorigem => vr_dsorigem,
+                               pr_dstransa => NMDATELA||' - Importação cadastros cooperados',
+                               pr_dttransa => TRUNC(SYSDATE),
+                               --> ERRO/FALSE
+                               pr_flgtrans => 0,
+                               pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE, 'SSSSS')),
+                               pr_idseqttl => 1,
+                               pr_nmdatela => vr_nmdatela,
+                               pr_nrdconta => 0,
+                               pr_nrdrowid => vr_nrdrowid);
+          RAISE vr_exc_erro;
+      END IF;
+            
+      vr_nm_arquivo := vr_dsdireto||'/'||pr_arquivo;
+      --vr_nm_arquivo := pr_arquivo;
+            
+      IF NOT GENE0001.fn_exis_arquivo(pr_caminho => vr_nm_arquivo) THEN
+          -- Retorno de erro
+          vr_dscritic := 'Erro no upload do arquivo: '||vr_des_erro;
+						
+          --Gera log
+          GENE0001.pc_gera_log(pr_cdcooper => vr_cdcooper,
+                               pr_cdoperad => vr_cdoperad,
+                               pr_dscritic => NVL(pr_dscritic, ' ') || vr_dscritic,
+                               pr_dsorigem => vr_dsorigem,
+                               pr_dstransa => NMDATELA||' - Importação cadastros cooperados',
+                               pr_dttransa => TRUNC(SYSDATE),
+                               --> ERRO/FALSE
+                               pr_flgtrans => 0,
+                               pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE, 'SSSSS')),
+                               pr_idseqttl => 1,
+                               pr_nmdatela => vr_nmdatela,
+                               pr_nrdconta => 0,
+                               pr_nrdrowid => vr_nrdrowid);
+          --Levanta excessão
+          RAISE vr_exc_erro;
+      END IF;
+								
+      --Abre o arquivo de saída 
+      gene0001.pc_abre_arquivo(pr_nmcaminh => vr_nm_arquivo,
+                               pr_tipabert => 'R',
+                               pr_utlfileh => vr_handle_arq,
+                               pr_des_erro => vr_des_erro);
+				
+      IF vr_des_erro IS NOT NULL THEN
+          vr_dscritic := 'Erro abertura arquivo de importação! ' || vr_des_erro || ' ' ||
+                         SQLERRM;
+          RAISE vr_exc_erro;
+      END IF;   
+    
+      --Tudo certo até aqui, importa o arquivo
+      LOOP
+          BEGIN
+              --Lê a linha do arquivo
+              gene0001.pc_le_linha_arquivo(vr_handle_arq, vr_linha_arq);
+              vr_linha_arq := TRIM(vr_linha_arq);
+              vr_linha_arq := REPLACE(REPLACE(vr_linha_arq,chr(10),''),CHR(13),'');
+              vr_linha_arq := vr_linha_arq||separador;
+                                                   
+              IF NVL(vr_linha_arq,' ') <> ' ' THEN								
+                  --Explode no texto
+                  vr_tabtexto := gene0002.fn_quebra_string(vr_linha_arq, separador);
+								
+                  --Variáveis que serão usadas na atualização
+                  vr_cdcooper_arq   := to_number(vr_tabtexto(1));
+                  vr_nrdconta_arq   := to_number(vr_tabtexto(2));
+                  vr_seqtitular_arq := to_number(vr_tabtexto(3));
+                  
+              END IF;
+              
+              -- Usa o Bulk collect para agilizar a busca dos titulares, mas depois insere os registro individualmente a pr_destinatarios
+              OPEN cr_destinatarios(pr_cdcooper => vr_cdcooper_arq
+                                   ,pr_nrdconta => vr_nrdconta_arq
+                                   ,pr_idseqttl => vr_seqtitular_arq);
+             FETCH cr_destinatarios BULK COLLECT
+              INTO vr_table_import_notif;
+             CLOSE cr_destinatarios;
+             
+             FOR i IN 1 .. vr_table_import_notif.COUNT
+             LOOP
+                vr_registros := vr_registros +1;
+                pr_destinatarios(vr_registros) := vr_table_import_notif(i);
+             END LOOP;
+                     
+          EXCEPTION
+               WHEN NO_DATA_FOUND THEN
+                    --Fecha o arquivo se não tem mais linhas para ler
+                    GENE0001.pc_fecha_arquivo(pr_utlfileh => vr_handle_arq); --> Handle do arquivo aberto
+                    EXIT;
+          END;
+      END LOOP;
+            
+      IF (vr_erros + vr_registros_inexis) > 0 THEN
+          -- Retorno não OK          
+          pr_des_erro := 'NOK';
+          -- Erro
+          pr_cdcritic := 0;
+          pr_dscritic := 'Arquivo foi processado, porém com erros de preenchimento. Linhas processadas: ' || vr_registros || 
+                         '. Erros preenchimento: ' || vr_erros || '. Contas inexistentes: ' || vr_registros_inexis || 
+                         '. Para maiores informações, consulte o log.';
+                    
+          GENE0001.pc_gera_log(pr_cdcooper => vr_cdcooper,
+                               pr_cdoperad => vr_cdoperad,
+                               pr_dscritic => pr_dscritic,
+                               pr_dsorigem => vr_dsorigem,
+                               pr_dstransa => NMDATELA||' - Importação cadastros cooperados',
+                               pr_dttransa => TRUNC(SYSDATE),
+                               --> ERRO/FALSE
+                               pr_flgtrans => 0,
+                               pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE, 'SSSSS')),
+                               pr_idseqttl => 1,
+                               pr_nmdatela => vr_nmdatela,
+                               pr_nrdconta => 0,
+                               pr_nrdrowid => vr_nrdrowid);
+								
+          -- Existe para satisfazer exigência da interface. 
+          pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                         '<Root><Erro>' || pr_cdcritic || '-' ||
+                                         pr_dscritic || '</Erro></Root>');
+      END IF;
+				
+  EXCEPTION
+    WHEN vr_exc_erro_negocio THEN
+        ROLLBACK;
+        --Log
+        GENE0001.pc_gera_log(pr_cdcooper => vr_cdcooper,
+                             pr_cdoperad => vr_cdoperad,
+                             pr_dscritic => nvl(vr_dscritic,' ') || SQLERRM,
+                             pr_dsorigem => vr_dsorigem,
+                             pr_dstransa => NMDATELA||' - Importação cadastros cooperados',
+                             pr_dttransa => TRUNC(SYSDATE),
+                             --> ERRO/FALSE
+                             pr_flgtrans => 0,
+                             pr_hrtransa => TO_NUMBER(TO_CHAR(SYSDATE, 'SSSSS')),
+                             pr_idseqttl => 1,
+                             pr_nmdatela => vr_nmdatela,
+                             pr_nrdconta => 0,
+                             pr_nrdrowid => vr_nrdrowid);
+        COMMIT;
+						
+        -- Retorno não OK          
+        pr_des_erro := 'NOK';
+        -- Erro
+        pr_dscritic := vr_dscritic;
+						
+        -- Existe para satisfazer exigência da interface. 
+        pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || pr_cdcritic || '-' || pr_dscritic ||
+                                       '</Erro></Root>');
+    WHEN vr_exc_erro THEN
+        ROLLBACK;
+        -- Retorno não OK          
+        pr_des_erro := 'NOK';
+        -- Erro
+        pr_dscritic := vr_dscritic;
+						
+        -- Existe para satisfazer exigência da interface. 
+        pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || pr_cdcritic || '-' || pr_dscritic ||
+                                       '</Erro></Root>');
+    WHEN OTHERS THEN
+        ROLLBACK;
+        -- Retorno não OK
+        pr_des_erro := 'NOK';
+						
+        -- Erro
+        pr_cdcritic := 0;
+        pr_dscritic := 'Erro na TELA_ENVNOT.PC_IMPORTAR_ARQUIVO_NOTIF --> Veririque se o arquivo está em formato correto. ' || SQLERRM;
+						
+        -- Existe para satisfazer exigência da interface. 
+        pr_retxml := xmltype.createxml('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                       '<Root><Erro>' || pr_cdcritic || '-' || pr_dscritic ||
+                                       '</Erro></Root>');
+				
+  END pc_importar_arquivo_notif;
   
 END TELA_ENVNOT;
 /

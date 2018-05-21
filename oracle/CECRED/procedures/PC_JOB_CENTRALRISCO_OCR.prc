@@ -40,7 +40,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_CENTRALRISCO_OCR(pr_cdcooper in crapco
       SELECT distinct max(t.dtrefere) dtrefere
         FROM TBRISCO_CENTRAL_OCR t
        WHERE t.cdcooper = pr_cdcooper;
-    rw_tbrisco_centralocr cr_tbrisco_centralocr%ROWTYPE;
+    rw_tbrisco_centralocr cr_tbrisco_centralocr%ROWTYPE;       
 
     CURSOR cr_crapris(pr_cdcooper number) IS
       SELECT distinct max(r.dtrefere) dtrefere
@@ -119,13 +119,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_CENTRALRISCO_OCR(pr_cdcooper in crapco
        AND rw_crapris.dtrefere > nvl(rw_tbrisco_centralocr.dtrefere,to_date('01/01/1900','DD/MM/YYYY')) then
           -- Criar o nome para o job
           vr_jobname := 'JOB_CENTRALRISCO_OCR'||LPAD(rw_crapcop.cdcooper,2,'0')||'_$';
-
           vr_dsplsql := 'begin cecred.PC_JOB_CENTRALRISCO_OCR(pr_cdcooper => '||rw_crapcop.cdcooper ||'); end;';
-
-
           vr_minuto := 0;
-
-
+  
+          
           -- Faz a chamada ao programa paralelo atraves de JOB
           gene0001.pc_submit_job(pr_cdcooper  => rw_crapcop.cdcooper  --> Código da cooperativa
                                 ,pr_cdprogra  => vr_cdprogra          --> Código do programa
@@ -229,4 +226,4 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_CENTRALRISCO_OCR(pr_cdcooper in crapco
                           ,pr_cdcooper  => pr_cdcooper
                           ,pr_dtmvtolt  => TRUNC(SYSDATE));
  END PC_JOB_CENTRALRISCO_OCR;
- /
+/

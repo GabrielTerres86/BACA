@@ -1,5 +1,5 @@
 /*!
- * FONTE        : emprestimos.js                            Última alteração: 07/02/2018
+ * FONTE        : emprestimos.js                            Última alteração: 20/04/2018
  * CRIAÇÃO      : Gabriel Capoia (DB1)
  * DATA CRIAÇÃO : 08/02/2011
  * OBJETIVO     : Biblioteca de funções na rotina Emprestimos da tela ATENDA
@@ -127,7 +127,11 @@
  * 102: [26/02/2018] Ajuste na tela da simulacao da proposta para filtrar a linha de credito dos produtos TR/PP. (James)
  * 102: [21/12/2017] Alterado para quando a linha de credito for (6901 - Cessao Cartao Credito) a 
  *                   qualificacao da operacao seja (5 - Cessao de Cartao) (Diego Simas - AMcom)
-* 103: [21/02/2018] Alterado para tratar limite/adp na tela de seleção para liquidar (Simas - AMcom)
+ * 103: [21/02/2018] Alterado para tratar limite/adp na tela de seleção para liquidar (Simas - AMcom)
+* 104: [15/12/2017] Alterações para inserção da nova tela GAROPC. Inserção do campo idcobope. PRJ404 (Lombardi)
+* 105: [05/03/2018] Incluido campo idcobope na parametrizacao do fonte efetiva_proposta. (PRJ404 - Reinert)
+* 106: [13/04/2018] Adicionadas funcoes validaValorAdesaoProdutoEmp e senhaCoordenador para validar valor do produto pelo tipo de conta. PRJ366 (Lombardi)
+* 107: [20/04/2018] P410 - Não permitir selecionar Financia IOF para Portabilidade (Marcos-Envolti)
  * ##############################################################################
  FONTE SENDO ALTERADO - DUVIDAS FALAR COM DANIEL OU JAMES
  * ##############################################################################
@@ -205,6 +209,7 @@ var portabil = '';
 var cdorigem = 0;
 var tplcremp = '';
 var dsctrliq = '';
+var idcobope = 0;
 var nrdrecid = 0;
 var qtpromis = 0;
 var nrJanelas = 0;
@@ -338,6 +343,10 @@ var inobriga = '';
 //emprestimo
 var booPrimeiroBen = false; //809763
 
+// PRJ366
+var vlemprst_antigo = 0;
+var dsctrliq_antigo = '';
+
 $.getScript(UrlSite + "telas/atenda/emprestimos/impressao.js");
 $.getScript(UrlSite + "telas/atenda/emprestimos/simulacao/simulacao.js");
 $.getScript(UrlSite + "includes/consultas_automatizadas/protecao_credito.js");
@@ -446,6 +455,7 @@ function controlaOperacao(operacao) {
                 qtpromis = $('#qtpromis', $(this)).val();
                 nrdrecid = $('#nrdrecid', $(this)).val();
                 dsctrliq = $('#dsctrliq', $(this)).val();
+                idcobope = $('#idcobope', $(this)).val();
 
                 nomeAcaoCall = ''; // Reseta a global
             }
@@ -626,6 +636,18 @@ function controlaOperacao(operacao) {
             mensagem = 'abrindo altera ...';
             cddopcao = 'A';
             break;
+		case 'I_GAROPC': 
+			abrirTelaGAROPC(operacao);
+			return false;
+			break;
+		case 'A_GAROPC': 
+			abrirTelaGAROPC(operacao);
+			return false;
+			break;
+		case 'C_GAROPC': 
+			abrirTelaGAROPC(operacao);
+			return false;
+			break;
         case 'AI_DADOS_AVAL' :
             mensagem = 'abrindo altera ...';
             cddopcao = 'A';
@@ -938,6 +960,9 @@ function controlaOperacao(operacao) {
             } else if (arrayProposta['tplcremp'] == 3) {
                 controlaOperacao('I_HIPOTECA');
                 return false;
+            } else if (arrayProposta['tplcremp'] == 4) {
+                controlaOperacao('I_CONTRATO');
+                return false;
             } else {
                 //controlaOperacao('');
                 controlaOperacao('I_DEMONSTRATIVO_EMPRESTIMO');
@@ -1156,6 +1181,9 @@ function controlaOperacao(operacao) {
             $('table > tbody > tr', 'div.divRegistros').each(function() {
                 if ($(this).hasClass('corSelecao')) {
                     nrctremp = $('#nrctremp', $(this)).val();
+					tplcremp = $('#tplcremp', $(this)).val();
+					flgimppr = $('#flgimppr', $(this)).val();
+					flgimpnp = $('#flgimpnp', $(this)).val();
                 }
             });
             break;
@@ -1384,6 +1412,11 @@ function controlaOperacao(operacao) {
                     arrayProposta['tpemprst'] = 0;
                 }
                 
+                if (possuiPortabilidade == 'S') {
+                    $("#idfiniof").desabilitaCampo();
+                }
+                
+                
             } else {
                 eval(response);
             }
@@ -1472,16 +1505,17 @@ function manterRotina(operacao) {
 			var dsctrliq = (typeof arrayProposta['dsctrliq'] == 'undefined') ? '' : arrayProposta['dsctrliq'];
 			var dtlibera = (typeof arrayProposta['dtlibera'] == 'undefined') ? '' : arrayProposta['dtlibera'];
 			var dsobserv = (typeof arrayProposta['dsobserv'] == 'undefined') ? '' : arrayProposta['dsobserv'];
+            var idcobope = (typeof arrayProposta['idcobope'] == 'undefined') ? '' : arrayProposta['idcobope'];
 			var idfiniof = (typeof arrayProposta['idfiniof'] == 'undefined') ? '' : arrayProposta['idfiniof'];
 			var vliofepr = (typeof arrayProposta['vliofepr'] == 'undefined') ? '' : arrayProposta['vliofepr'];
 			var vlrtarif = (typeof arrayProposta['vlrtarif'] == 'undefined') ? '' : arrayProposta['vlrtarif'];
 			var vlrtotal = (typeof arrayProposta['vlrtotal'] == 'undefined') ? '' : arrayProposta['vlrtotal'];
-    var vlfinanc = (typeof arrayProposta['vlfinanc'] == 'undefined') ? '' : arrayProposta['vlfinanc'];
+			var vlfinanc = (typeof arrayProposta['vlfinanc'] == 'undefined') ? '' : arrayProposta['vlfinanc'];
 
 			var nrctaava = (typeof aux_nrctaav0 == 'undefined') ? '' : aux_nrctaav0;
 			var nrctaav2 = (typeof aux_nrctaav1 == 'undefined') ? '' : aux_nrctaav1;
-    var idcarenc = (typeof arrayProposta['idcarenc'] == 'undefined') ? '' : arrayProposta['idcarenc'];
-    var dtcarenc = (typeof arrayProposta['dtcarenc'] == 'undefined') ? '' : arrayProposta['dtcarenc'];
+			var idcarenc = (typeof arrayProposta['idcarenc'] == 'undefined') ? '' : arrayProposta['idcarenc'];
+			var dtcarenc = (typeof arrayProposta['dtcarenc'] == 'undefined') ? '' : arrayProposta['dtcarenc'];
 
 			var nrgarope = (typeof arrayProtCred['nrgarope'] == 'undefined') ? '' : arrayProtCred['nrgarope'];
 			var nrperger = (typeof arrayProtCred['nrperger'] == 'undefined') ? '' : arrayProtCred['nrperger'];
@@ -1687,6 +1721,7 @@ function manterRotina(operacao) {
             tpemprst: tpemprst, nrcpfcgc: nrcpfcgc, dsjusren: dsjusren,
             dtlibera: dtlibera, inconcje: inconcje, flgconsu: flgconsu,
             blqpreap: (bloquear_pre_aprovado ? 1 : 0),
+            idcobope: idcobope,
             idcarenc: idcarenc, dtcarenc: dtcarenc,
             // Daniel
             inpesso1: inpesso1, dtnasct1: dtnasct1, dscatbem: dscatbem,
@@ -1816,7 +1851,11 @@ function verificaQtDiaLib() {
             $("#qtdialib").datepicker('disable');
             $('#qtdialib').val('0');
             $('#qtdialib').change();
-            $("#idfiniof").habilitaCampo();
+            if (possuiPortabilidade == 'S') {
+              $("#idfiniof").desabilitaCampo();
+            }else {
+              $("#idfiniof").habilitaCampo();
+            }
             break;
         case '2': // Pos-Fixado
             $('#flgpagto').desabilitaCampo();
@@ -1824,7 +1863,11 @@ function verificaQtDiaLib() {
             $("#qtdialib").datepicker('disable');
             $('#qtdialib').val('0');
             $('#qtdialib').change();
-            $("#idfiniof").habilitaCampo();
+            if (possuiPortabilidade == 'S') {
+              $("#idfiniof").desabilitaCampo();
+            }else {
+              $("#idfiniof").habilitaCampo();
+            }
             break;
     }
     return true;
@@ -2131,6 +2174,8 @@ function controlaLayout(operacao) {
             if (possuiPortabilidade == 'S') {
                 $("#cdfinemp", "#frmNovaProp").desabilitaCampo();
                 $("#tpemprst", "#frmNovaProp").desabilitaCampo();
+                $("#idfiniof", "#frmNovaProp").desabilitaCampo();
+                $("#idfiniof").val(0);
             }
 
 
@@ -3947,9 +3992,12 @@ function verificaObs(operacao) {
 }
 
 function atualizaArray(novaOp, cdcooper) {
-
+	if (novaOp == 'I_DADOS_AVAL' || novaOp == 'A_DADOS_AVAL' || novaOp == 'V_VALOR')
+		validaValorAdesaoProdutoEmp(novaOp, cdcooper);
+    else {
     showMsgAguardo('Aguarde, validando dados ...');
     setTimeout('attArray(\'' + novaOp + '\',\'' + cdcooper + '\')', 400);
+	}
     return false;
 }
 
@@ -3971,6 +4019,7 @@ function copiaProposta(novaOp) {
     arrayProposta['flgimppr'] = $('#flgimppr', '#frmNovaProp').val();
     arrayProposta['flgimpnp'] = $('#flgimpnp', '#frmNovaProp').val();
     arrayProposta['dsctrliq'] = $('#dsctrliq', '#frmNovaProp').val();
+    arrayProposta['idcobope'] = $('#idcobope', '#frmNovaProp').val();
 	arrayProposta['idfiniof'] = $('#idfiniof', '#frmNovaProp').val();
 	arrayProposta['vlfinanc'] = $('#vlfinanc', '#frmNovaProp').val();
 
@@ -4025,6 +4074,7 @@ function attArray(novaOp, cdcooper) {
         arrayProposta['flgimpnp'] = $('#flgimpnp', '#frmNovaProp').val();
         arrayProposta['dsctrliq'] = $('#dsctrliq', '#frmNovaProp').val();
         arrayProposta['tpemprst'] = $('#tpemprst', '#frmNovaProp').val();
+        arrayProposta['idcobope'] = $('#idcobope', '#frmNovaProp').val();
         arrayProposta['idfiniof'] = $('#idfiniof', '#frmNovaProp').val();
         arrayProposta['vliofepr'] = $('#vliofepr', '#frmNovaProp').val();
         arrayProposta['vlrtarif'] = $('#vlrtarif', '#frmNovaProp').val();
@@ -4220,6 +4270,7 @@ function attArray(novaOp, cdcooper) {
         arrayProposta['dsctrliq'] = $('#dsctrliq', '#frmNovaProp').val();
         arrayProposta['tpemprst'] = $('#tpemprst', '#frmNovaProp').val();
         arrayProposta['vlfinanc'] = $('#vlfinanc', '#frmNovaProp').val();
+        arrayProposta['idcobope'] = $('#idcobope', '#frmNovaProp').val();
 
         flgimppr = arrayProposta['flgimppr'];
         flgimpnp = arrayProposta['flgimpnp'];
@@ -4312,6 +4363,7 @@ function atualizaTela() {
         $('#dslcremp', '#frmNovaProp').val(arrayProposta['dslcremp']);
         $('#dsfinemp', '#frmNovaProp').val(arrayProposta['dsfinemp']);
         $('#dtlibera', '#frmNovaProp').val(arrayProposta['dtlibera']);
+        $('#idcobope', '#frmNovaProp').val(arrayProposta['idcobope']);
         $('#idfiniof', '#frmNovaProp').val(arrayProposta['idfiniof']);
         $('#vliofepr', '#frmNovaProp').val(arrayProposta['vliofepr']);
         $('#vlrtarif', '#frmNovaProp').val(arrayProposta['vlrtarif']);
@@ -4320,6 +4372,9 @@ function atualizaTela() {
         $('#dtcarenc', '#frmNovaProp').val(arrayProposta['dtcarenc']);
 		$('#vlfinanc', '#frmNovaProp').val(arrayProposta['vlfinanc']);        
 
+        vlemprst_antigo = arrayProposta['vlemprst'];
+        dsctrliq_antigo = arrayProposta['dsctrliq'];
+		
         if (operacao == 'TI') {
 
             // Quando Price Pre-Fixado e Debitar em Folha alterar para Debitar em  Conta
@@ -5043,6 +5098,7 @@ function validaDadosGerais() {
     var cdlcremp = $('#cdlcremp', '#frmNovaProp').val();
     var qtpreemp = $('#qtpreemp', '#frmNovaProp').val();
     var dsctrliq = $('#dsctrliq', '#frmNovaProp').val();
+    var idcobope = $('#idcobope', '#frmNovaProp').val();
     var vlemprst = $('#vlemprst', '#frmNovaProp').val();
     var dtdpagto = $('#dtdpagto', '#frmNovaProp').val();
     var flgpagto = $('#flgpagto', '#frmNovaProp').val();
@@ -5105,8 +5161,9 @@ function validaDadosGerais() {
             inmatric: inmatric, operacao: operacao,
             tpemprst: tpemprst, dtlibera: dtlibera,
             inconfi2: inconfi2, percetop: percetop,
-            cdmodali: cdmodali, idcarenc: idcarenc,
-            dtcarenc: dtcarenc, idfiniof: idfiniof,
+            cdmodali: cdmodali, idcobope: idcobope,
+            idcarenc: idcarenc, dtcarenc: dtcarenc,
+            idfiniof: idfiniof,
             redirect: 'script_ajax'
         },
         error: function(objAjax, responseError, objExcept) {
@@ -6360,6 +6417,8 @@ function fechaSimulacoes(encerrarRotina) {
 }
 
 function validaSimulacao() {
+
+
 
     showMsgAguardo('Aguarde, validando ...');
     // Executa script de confirmação através de ajax
@@ -8583,6 +8642,8 @@ function efetivaProposta() {
     nrdconta = arrayStatusApprov['nrdconta'];
     nrctremp = arrayStatusApprov['nrctremp'];
     dtdpagto = arrayStatusApprov['dtdpagto'];
+    idcobope = arrayStatusApprov['idcobope'];
+    flliquid = arrayStatusApprov['flliquid'];
 
     // Executa script de confirmação através de ajax
     $.ajax({
@@ -8592,7 +8653,9 @@ function efetivaProposta() {
         data: {
             nrdconta: nrdconta, idseqttl: idseqttl,
             nrctremp: nrctremp, insitapv: insitapv,
-            dtdpagto: dtdpagto, redirect: 'html_ajax'
+            dtdpagto: dtdpagto, idcobope: idcobope, 
+			flliquid: flliquid,
+			redirect: 'html_ajax'
         },
         error: function(objAjax, responseError, objExcept) {
             hideMsgAguardo();
@@ -9639,6 +9702,77 @@ function abreProtocoloAcionamento(dsprotocolo) {
     });
 }
 
+function abrirTelaGAROPC(operacao) {
+
+    var tipaber = '';
+	var idcobert = arrayProposta['idcobope'];
+	var dsctrliq = validaNumero(arrayProposta['dsctrliq']) ? arrayProposta['dsctrliq'].replace(/[.-]/g, "").replace(/[,]/g, ";") : 0;
+	
+	switch (operacao) {
+		case 'I_GAROPC':
+			tipaber = (idcobert > 0) ? 'AI' : 'I';
+			opera = 'I';
+			break;
+		case 'A_GAROPC':
+			tipaber = (idcobert > 0) ? 'A' : 'I';
+			opera = 'A';
+			break;
+		default:
+			tipaber = 'C';
+			opera = 'C';
+			break;
+	}
+	
+	if (idcobert == 0 && opera == 'C') {
+		controlaOperacao('C_DADOS_AVAL');
+		return false;
+	}
+    
+	showMsgAguardo('Aguarde, carregando ...');
+	exibeRotina($('#divUsoGAROPC'));
+    $('#divRotina').css({'display':'none'});
+	
+	var tpemprst = $('#tpemprst', '#frmNovaProp').val();
+
+    // Carrega conteúdo da opção através do Ajax
+    $.ajax({
+        type: 'POST',
+        dataType: 'html',
+        url: UrlSite + 'telas/garopc/garopc.php',
+        data: {
+            nmdatela     : 'EMPRESTIMOS',
+            tipaber      : tipaber,
+            nrdconta     : nrdconta,
+			tpemprst	 : tpemprst,
+            tpctrato     : 90,
+            idcobert     : idcobert,
+            dsctrliq     : dsctrliq,
+            codlinha     : arrayProposta['cdlcremp'],
+            cdfinemp     : arrayProposta['cdfinemp'],
+            vlropera     : arrayProposta['vlemprst'],
+            divanterior  : 'divRotina',
+            ret_nomcampo : 'idcobope',
+            ret_nomformu : 'frmNovaProp',
+            ret_execfunc : (tipaber == 'I' || tipaber == 'A' ? 'arrayProposta[\\\'idcobope\\\'] = $(\\\'#idcobope\\\', \\\'#frmNovaProp\\\').val() > 0 ? $(\\\'#idcobope\\\', \\\'#frmNovaProp\\\').val() : 0;' : '') + 
+						   ' $(\\\'#divRotina\\\').css({\\\'display\\\':\\\'block\\\'});' + 
+						   ' bloqueiaFundo($(\\\'#divRotina\\\'));' + 
+						   ' controlaOperacao(\\\'' + opera + '_DADOS_AVAL\\\');',
+            ret_voltfunc : ' controlaOperacao(\'' + opera + '_INICIO\');',
+            ret_errofunc : '$(\\\'#divRotina\\\').css({\\\'display\\\':\\\'block\\\'});bloqueiaFundo($(\\\'#divRotina\\\'));',
+			redirect     : 'html_ajax'
+        },
+        error: function (objAjax, responseError, objExcept) {
+            hideMsgAguardo();
+            showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
+        },
+        success: function (response) {
+			hideMsgAguardo();
+            $('#divUsoGAROPC').html(response);
+            bloqueiaFundo($('#divUsoGAROPC'));
+        }
+    });
+}
+
 function exibeLinhaCarencia() {
     if ($("#tpemprst", "#frmNovaProp").val() == 2) { // Se for Pos-Fixado
         $("#linCarencia","#frmNovaProp").show();
@@ -9710,4 +9844,44 @@ function telefone(fone){
 	fone = fone.replace(/^(\d\d)(\d)/g,"($1) $2"); //Coloca parênteses em volta dos dois primeiros dígitos
 	fone = fone.replace(/(\d{4})(\d)/,"$1-$2");    //Coloca hífen entre o quarto e o quinto dígitos
 	return fone;
+}
+
+function validaValorAdesaoProdutoEmp(operacao,cdcooper) {
+	
+    var dsctrliq = $('#dsctrliq', '#frmNovaProp').val();
+    var vlemprst = $('#vlemprst', '#frmNovaProp').val();
+    var cdfinemp = $('#cdfinemp', '#frmNovaProp').val();
+	
+	$.ajax({
+		type: 'POST',
+		dataType: 'html',
+		url: UrlSite + 'telas/atenda/emprestimos/valida_valor_adesao_produto.php', 
+		data: {
+			nrdconta: nrdconta,
+			cdfinemp: cdfinemp,
+			vlemprst: vlemprst,
+			dsctrliq: dsctrliq,
+			operacao: operacao,
+			cdcooper: cdcooper,
+			vlemprst_antigo: vlemprst_antigo,
+			dsctrliq_antigo: dsctrliq_antigo,
+			redirect: 'script_ajax'
+		}, 
+		error: function (objAjax, responseError, objExcept) {
+			hideMsgAguardo();
+			showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
+		},
+		success: function (response) {
+			hideMsgAguardo();
+            try {
+				eval(response);
+			} catch (error) {
+				showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'unblockBackground();');
+			}
+		}				
+	});	
+}
+
+function senhaCoordenador(executaDepois) {
+	pedeSenhaCoordenador(2,executaDepois,'divRotina');
 }

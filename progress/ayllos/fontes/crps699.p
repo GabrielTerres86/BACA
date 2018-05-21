@@ -14,9 +14,11 @@
 
    Alteracoes: 03/06/2016 - Ajuste para apenas aprovar se a proposta ja 
                             foi aprovada na Esteira.
-							PRJ207 - Esteira (Odirlei-AMcom)
-                        
-
+                            PRJ207 - Esteira (Odirlei-AMcom)
+                            
+                            
+               13/04/2018 - INC0012655 - P410 - Melhorias/Ajustes IOF 
+                            (Marcos-Envolti)
 ............................................................................ */
 
 { includes/var_batch.i "NEW" }
@@ -92,12 +94,12 @@ FOR EACH crapcop WHERE crapcop.cdcooper <> 3
                           "logprt.log".
 
     /* Busca todas as propostas de PORTABILIDADE aprovadas 
-       a partir de 3 dias atras, pois apos enviarmos o pagamento para
+       a partir de 15 dias atras, pois apos enviarmos o pagamento para
        a IF Credora Original, ela tera mais 2 dias para confirmar o nosso
        pagamento e a proposta ser efetivada na cabine JDCTC */
     FOR EACH crawepr WHERE crawepr.cdcooper = crapcop.cdcooper
                        AND CAN-DO("1,3", STRING(crawepr.insitapr))
-                       AND crawepr.dtaprova >= (crapdat.dtmvtolt - 9)
+                       AND crawepr.dtaprova >= (crapdat.dtmvtolt - 15)
 					   AND crawepr.insitest = 3
                        NO-LOCK,
         FIRST crapfin WHERE crapfin.cdcooper = crawepr.cdcooper
@@ -222,32 +224,29 @@ FOR EACH crapcop WHERE crapcop.cdcooper <> 3
                                 PERSISTENT SET h-b1wgen0084.
 
                             /* Grava a efetivacao da proposta */
-                            RUN grava_efetivacao_proposta IN h-b1wgen0084
-                                (INPUT crawepr.cdcooper
-                                ,INPUT aux_cdagenci
-                                ,INPUT 100
-                                ,INPUT "1"
-                                ,INPUT "crps699"
-                                ,INPUT 1
-                                ,INPUT crawepr.nrdconta
-                                ,INPUT 1
-                                ,INPUT crapdat.dtmvtolt
-                                ,INPUT FALSE
-                                ,INPUT crawepr.nrctremp
-                                ,INPUT crawepr.insitapr
-                                ,INPUT crawepr.dsobscmt
-                                ,INPUT crawepr.dtdpagto
-                                ,INPUT 0 /*cdbccxlt*/
-                                ,INPUT 0 /*nrdolote*/
-                                ,INPUT crapdat.dtmvtopr
-                                ,INPUT crapdat.inproces
-                                ,INPUT 0
-                                ,INPUT 0
-                                ,INPUT 0
-                                ,INPUT 0
-                                ,OUTPUT aux_dsmensag
-                                ,OUTPUT TABLE tt-ratings
-                                ,OUTPUT TABLE tt-erro).
+                            RUN grava_efetivacao_proposta IN h-b1wgen0084           
+                                (INPUT crawepr.cdcooper                       /* par_cdcooper */
+                                ,INPUT aux_cdagenci                           /* par_cdagenci */
+                                ,INPUT 100                                    /* par_nrdcaixa */
+                                ,INPUT "1"                                    /* par_cdoperad */
+                                ,INPUT "crps699"                              /* par_nmdatela */
+                                ,INPUT 1                                      /* par_idorigem */
+                                ,INPUT crawepr.nrdconta                       /* par_nrdconta */
+                                ,INPUT 1                                      /* par_idseqttl */
+                                ,INPUT crapdat.dtmvtolt                       /* par_dtmvtolt */
+                                ,INPUT FALSE                                  /* par_flgerlog */
+                                ,INPUT crawepr.nrctremp                       /* par_nrctremp */
+                                ,INPUT crawepr.insitapr                       /* par_insitapr */
+                                ,INPUT crawepr.dsobscmt                       /* par_dsobscmt */
+                                ,INPUT crawepr.dtdpagto                       /* par_dtdpagto */
+                                ,INPUT 0 /*cdbccxlt*/                         /* par_cdbccxlt */
+                                ,INPUT 0 /*nrdolote*/                         /* par_nrdolote */
+                                ,INPUT crapdat.dtmvtopr                       /* par_dtmvtopr */
+                                ,INPUT crapdat.inproces                       /* par_inproces */
+                                ,INPUT 0                                      /* par_nrcpfope */
+                                ,OUTPUT aux_dsmensag                          /* par_mensagem          */
+                                ,OUTPUT TABLE tt-ratings                      /* TABLE FOR tt-ratings. */
+                                ,OUTPUT TABLE tt-erro).                       /* TABLE FOR tt-erro.    */
 
                             IF  VALID-HANDLE(h-b1wgen0084) THEN
                                 DELETE PROCEDURE h-b1wgen0084.

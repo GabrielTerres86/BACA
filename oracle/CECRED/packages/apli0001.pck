@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0001 AS
   --  Sistema  : Rotinas genericas focando nas funcionalidades das aplicacoes
   --  Sigla    : APLI
   --  Autor    : Alisson C. Berrido - AMcom
-  --  Data     : Dezembro/2012.                   Ultima atualizacao: 04/12/2017
+  --  Data     : Dezembro/2012.                   Ultima atualizacao: 29/01/2018
   --
   -- Dados referentes ao programa:
   --
@@ -90,6 +90,9 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0001 AS
   --
   -- 04/12/2017 - Remoção do paralelismo nas queries envolvendo as tabelas craptrd e crapmfx nos processos
   --              online - pc_saldo_rdc_pos (Rodrigo)
+  --
+  -- 29/01/2018 - #770327 Na rotina pc_consulta_aplicacoes, inclusão do INTERNETBANK para filtrar os 
+  --              lançamentos no período informado (Carlos)
   ---------------------------------------------------------------------------------------------------------------
 
   /* Tabela com o mes e a aliquota para desconto de IR nas aplicacoes
@@ -4680,7 +4683,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
         END LOOP;
       END IF;
       ELSE -- inproces <= 1
-        
+
         -- Se o vetor de dias uteis ainda não possuir informacoes
         IF vr_tab_qtdiaute.COUNT = 0 THEN
           -- Buscar os dias uteis
@@ -5401,7 +5404,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
     vr_flggrvir         boolean;
     vr_des_reto         varchar2(10);
     vr_tptaxrda         craptrd.tptaxrda%type;
-    
+
+
     --Variáveis acumulo lote
     vr_vlinfocr         craplot.vlinfocr%type := 0;
     vr_vlcompcr         craplot.vlcompcr%type := 0; 
@@ -5597,7 +5601,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
                        ' Data: '||to_char(rw_craprpp.dtiniper, 'dd/mm/yyyy');
         raise vr_exc_erro;
       end if;      
-      
+
       -- Para o programa CRPS148, foi realizado o upate no próprio crps, visto que teríamos problemas
       -- no paralelismo           
       if vr_cdprogra = 'CRPS148' then
@@ -5614,8 +5618,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
         
           if vr_des_erro is not null then
             raise vr_exc_erro; 
-          end if;
-        
+    end if;
+
         exception
           when others then
             vr_des_erro := 'Erro ao chamar procedure apli0001.pc_insere_tab_wrk: '||sqlerrm;
@@ -5896,7 +5900,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
                 vr_des_erro := 'Erro ao inserir informações da capa de lote: '||sqlerrm;
                 raise vr_exc_erro;
             end;
-          end if;
+        end if;
         
         end if;
        
@@ -6510,8 +6514,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
 
       end if;
 
-    end if;    
-    
+    end if;
+
   exception
     when vr_exc_erro THEN
       pr_cdcritic := nvl(pr_cdcritic,0);
@@ -12508,7 +12512,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
       -- Inicializa o conteudo do registro rw_crapdtc
       rw_crapdtc := NULL;
 
-      IF UPPER(pr_cdprogra) = 'IMPRES'  AND
+      IF (UPPER(pr_cdprogra) = 'IMPRES' OR 
+          UPPER(pr_cdprogra) = 'INTERNETBANK') AND
          pr_dtinicio IS NOT NULL AND
          pr_dtfim    IS NOT NULL THEN
         -- Busca sobre o cadastro dos lancamentos de aplicacoes RDCA.
@@ -12904,6 +12909,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
       -- Retorno não OK
       pr_des_reto := 'NOK';
     WHEN OTHERS THEN
+      cecred.pc_internal_exception;
       -- Retorno não OK
       pr_des_reto := 'NOK';
       -- Gerar erro montado
@@ -13034,7 +13040,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
       END LOOP;
     END IF;
   END;
-  
+
   PROCEDURE pc_insere_tab_wrk(pr_cdcooper     in tbgen_batch_relatorio_wrk.cdcooper%type 
                              ,pr_nrdconta     in tbgen_batch_relatorio_wrk.nrdconta%type
                              ,pr_cdprogra     in tbgen_batch_relatorio_wrk.cdprograma%type

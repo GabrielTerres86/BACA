@@ -75,6 +75,9 @@
                             investimento para a conta corrente, caso haja bloqueio
                             judicial, deixar apenas valor excedente do bloqueio.
                             (Jorge/Gielow) - SD 310965             
+                            
+               01/12/2017 - Alterar obtem-resgate para utilizar rotina para validar bloqueios             
+                            PRJ404-Garantia(Odirlei-AMcom)
 ..............................................................................*/
 
 
@@ -413,11 +416,48 @@ PROCEDURE obtem-resgate:
                     LEAVE.
                 END.
             ELSE
-            IF par_vlresgat > (crapsli.vlsddisp - aux_vlblqjud) THEN
                 DO:
-                    aux_dscritic = "Saldo insuficiente, verifique o Bloqueio " +
-                                   "Judicial.".
+                  { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} } 
+                  /* Efetuar a chamada a rotina Oracle */ 
+                  RUN STORED-PROCEDURE pc_ver_bloqueio_aplica_prog
+                     aux_handproc = PROC-HANDLE NO-ERROR(INPUT par_cdcooper,  /* pr_cdcooper */
+                                                         INPUT par_cdagenci,  /* pr_cdagenci */
+                                                         INPUT par_nrdcaixa,  /* pr_nrdcaixa */
+                                                         INPUT par_cdoperad,  /* pr_cdoperad */
+                                                         INPUT par_nmdatela,  /* pr_nmdatela */
+                                                         INPUT par_idorigem,  /* pr_idorigem */
+                                                         INPUT par_nrdconta,  /* pr_nrdconta */
+                                                         INPUT 0,             /* pr_nraplica */
+                                                         INPUT par_idseqttl,  /* pr_idseqttl */
+                                                         INPUT par_nmdatela,  /* pr_cdprogra */
+                                                         INPUT par_dtmvtolt,  /* pr_dtmvtolt */
+                                                         INPUT par_vlresgat,  /* pr_vlresgat */
+                                                         INPUT 0,             /* pr_flgerlog */
+                                                         INPUT 0,             /* pr_innivblq */
+                                                         INPUT 0,             /* pr_vlsldinv */                                                                              
+                                                         OUTPUT 0,
+                                                         OUTPUT "").
+
+                  /* Fechar o procedimento para buscarmos o resultado */ 
+                  CLOSE STORED-PROC pc_ver_bloqueio_aplica_prog
+                        aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+
+                  { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
+
+                  /* Busca possíveis erros */ 
+                  ASSIGN aux_cdcritic = 0
+                         aux_dscritic = ""
+                         aux_cdcritic = pc_ver_bloqueio_aplica_prog.pr_cdcritic 
+                                        WHEN pc_ver_bloqueio_aplica_prog.pr_cdcritic <> ?
+                         aux_dscritic = pc_ver_bloqueio_aplica_prog.pr_dscritic 
+                                        WHEN pc_ver_bloqueio_aplica_prog.pr_dscritic <> ?.
+                  
+                  IF aux_cdcritic <> 0 OR
+                     aux_dscritic <> "" THEN
+                   DO:
                     LEAVE.
+                   END.
+            
                 END.
 
             aux_dscritic = "".

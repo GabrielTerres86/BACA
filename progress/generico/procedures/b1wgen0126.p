@@ -2,7 +2,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0126.p
     Autor   : Rogerius Militao (DB1)
-    Data    : Dezembro/2011                     Ultima atualizacao: 18/04/2017 
+    Data    : Dezembro/2011                     Ultima atualizacao: 31/10/2017 
 
     Objetivo  : Tranformacao BO tela ALTAVA
 
@@ -79,6 +79,8 @@
 			    18/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
 			                 crapass, crapttl, crapjur 
 							(Adriano - P339).
+
+                31/10/2017 - Passagem do tpctrato. (Jaison/Marcos Martini - PRJ404)
 
 ............................................................................*/
 
@@ -1756,7 +1758,8 @@ PROCEDURE Cria_Aditivo:
     
             FIND LAST crapadt WHERE crapadt.cdcooper = par_cdcooper  AND
                                     crapadt.nrdconta = par_nrdconta  AND
-                                    crapadt.nrctremp = par_nrctremp 
+                                    crapadt.nrctremp = par_nrctremp  AND
+                                    crapadt.tpctrato = 90 /* Emprestimo/Financiamento */
                                     EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
     
             IF  NOT AVAIL crapadt THEN
@@ -1806,7 +1809,8 @@ PROCEDURE Cria_Aditivo:
                crapadt.cdaditiv = 4
                crapadt.cdcooper = par_cdcooper
                crapadt.cdagenci = aux_cdagenci
-               crapadt.cdoperad = par_cdoperad.
+               crapadt.cdoperad = par_cdoperad
+               crapadt.tpctrato = 90. /* Emprestimo/Financiamento */
         VALIDATE crapadt.
            
         CREATE crapadi.
@@ -1816,7 +1820,8 @@ PROCEDURE Cria_Aditivo:
                crapadi.nrsequen = 1
                crapadi.nrcpfcgc = par_nrcpfavl
                crapadi.nmdavali = par_nmdavali
-               crapadi.cdcooper = par_cdcooper. 
+               crapadi.cdcooper = par_cdcooper
+               crapadi.tpctrato = 90. /* Emprestimo/Financiamento */
         VALIDATE crapadi.  
         LEAVE Cria.
 

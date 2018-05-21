@@ -99,7 +99,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
     Sistema : Processos Batch
     Sigla   : BTCH
     Autor   : Odirlei Busana - AMcom
-    Data    : Maio/2014.                       Ultima atualizacao: 05/03/2018
+    Data    : Maio/2014.                       Ultima atualizacao: 28/03/2018
   
    Dados referentes ao programa:
   
@@ -128,6 +128,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
                             
                05/03/2018 - Alterado parametros de critica para não solicitar o processo
                             quando as moedas(6,16,17,18) não estiverem cadastradas (Tiago/Adriano)
+                            
+               28/03/2017 - Alterado rotina para deixar de criticar as moedas que não tem relevancia para
+                            o processo noturno (Tiago/Adriano).
   ---------------------------------------------------------------------------------------------------------------*/
   -- Gerar criticas do processo
   PROCEDURE pc_gera_criticas_proces (pr_cdcooper       IN NUMBER,                 --> Codigo da cooperativa
@@ -376,17 +379,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
          AND crapmfx.tpmoefix = pr_tpmoefix;
     rw_crapmfx  cr_crapmfx%rowtype;       
     
-    -- Verifica se ha resgates de RDCA
-    CURSOR cr_craplrg(pr_cdcooper crapcop.cdcooper%type,
-                      pr_dtmvtolt DATE) IS
-      SELECT 1
-        FROM craplrg
-       WHERE craplrg.cdcooper  = pr_cdcooper
-         AND craplrg.dtresgat <= pr_dtmvtolt
-         AND craplrg.inresgat  = 0
-         AND ROWNUM < 2;
-    rw_craplrg  cr_craplrg%rowtype;
-    
     -- Buscar agencias
     CURSOR cr_crapage (pr_cdcooper crapcop.cdcooper%type) IS
       SELECT age.cdagenci
@@ -477,20 +469,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
          AND rownum < 2; -- somente precisa encontra 1
     rw_craplbi cr_craplbi%rowtype;   
     
-    -- Buscar aplicacoes RDCA - Pos
-    CURSOR cr_craprda(pr_cdcooper crapcop.cdcooper%type) IS
-      SELECT 1
-        FROM crapdtc
-            ,craprda
-       WHERE crapdtc.cdcooper = pr_cdcooper
-         AND crapdtc.tpaplrdc = 2 -- Pos
-         AND craprda.cdcooper = pr_cdcooper
-         AND craprda.cdcooper = crapdtc.cdcooper
-         AND craprda.tpaplica = crapdtc.tpaplica
-         AND craprda.insaqtot = 0
-         AND rownum < 2; -- somente precisa encontra 1
-    rw_craprda cr_craprda%rowtype;           
-    
     -- Buscar aplicacoes RDCA por periodo
     CURSOR cr_craprda_2(pr_cdcooper crapcop.cdcooper%type,
                         pr_dtiniper DATE) IS
@@ -515,26 +493,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
          AND craptrd.incarenc = 0 -- Sem carencia
          AND craptrd.vlfaixas = 0;
     rw_craptrd cr_craptrd%rowtype;    
-    
-    -- Buscar tipo de captacao
-    CURSOR cr_crapdtc(pr_cdcooper crapcop.cdcooper%type) IS
-      SELECT tpaplica
-        FROM crapdtc
-       WHERE crapdtc.cdcooper = pr_cdcooper
-         AND crapdtc.tpaplrdc = 2  -- Pos         
-         AND rownum           < 2; -- somente precisa encontra 1
-    rw_crapdtc cr_crapdtc%rowtype; 
-    
-    -- Buscar aplicacoes RDCA por periodo
-    CURSOR cr_craprda_3(pr_cdcooper crapcop.cdcooper%type,
-                        pr_tpaplica craprda.tpaplica%type) IS
-      SELECT 1
-        FROM craprda
-       WHERE craprda.cdcooper = pr_cdcooper
-         AND craprda.tpaplica = pr_tpaplica
-         AND craprda.insaqtot = 0  -- Sem saque total
-         AND rownum           < 2; -- somente precisa encontra 1
-    rw_craprda_3 cr_craprda_3%rowtype; 
     
     -- Buscar poupanca programada.
     CURSOR cr_craprpp(pr_cdcooper crapcop.cdcooper%type,
@@ -727,16 +685,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
     vr_qtdiasut INTEGER;
     -- variavel para armazenar valor da tabela generica
     vr_dstextab craptab.dstextab%type;    
-    -- Data do ultimo dia do mês
-    vr_dtultdia DATE;
-    -- Tipo de moeda
-    vr_tpmoefix crapmfx.tpmoefix%type;
     --variaveis para varrer determinado periodo
     vr_dtfimper DATE;
     vr_dtiniper DATE;
-    vr_dtmvtocm DATE;
-    -- Valor da taxa ufir
-    vr_vlufircm NUMBER; 
     -- Lista das contas centralizadoras
     vr_lscontas VARCHAR2(1000);
     -- Numero da conta de retorno
@@ -757,10 +708,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
     vr_vlsalbol NUMBER;
     -- Lista dos historicos
     vr_lshistor VARCHAR2(5000);
-    -- Data de validação
-    vr_dtvalida DATE;
-    -- Valor do parametro
-    vr_vldparam NUMBER;
     -- Variáveis para armazenar as informações em XML
     vr_des_clob        clob;
     -- Variável para armazenar os dados do XML antes de incluir no CLOB
@@ -893,66 +840,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
       END LOOP;  
       
     END IF;  
-    
-    /*  Magui - usa Ufir ainda ? Verifica se a UFIR esta cadastrada  */
-    OPEN cr_crapmfx(pr_cdcooper => pr_cdcooper,
-                    pr_dtmvtolt => rw_crapdat.dtmvtolt,
-                    pr_tpmoefix => 2);
-    FETCH cr_crapmfx INTO rw_crapmfx;
-    
-    IF cr_crapmfx%NOTFOUND THEN
-      pc_grava_critica(pr_cdcooper => pr_cdcooper,
-                       pr_dscritic => ' - Cadastrar UFIR dia '||
-                                      TO_CHAR(RW_CRAPDAT.dtmvtolt,'DD/MM/RRRR')||
-                                      ' - Tela MOEDAS');  
-    END IF;  
-    CLOSE cr_crapmfx;
-    
-    /*Validar se a SELIC esta cadastrada para periodo de rendimento da poupanca */
-    BEGIN
-      -- retirar um mês da data
-      vr_dtiniper := TO_DATE(to_char(TO_CHAR(rw_crapdat.dtmvtolt,'MM') - 1,'00')||TO_CHAR(rw_crapdat.dtmvtolt,'DD')
-                     ||TO_CHAR(rw_crapdat.dtmvtolt,'RRRR'),'MMDDRRRR');
-    EXCEPTION
-      WHEN OTHERS THEN
-        IF TO_CHAR(rw_crapdat.dtmvtolt,'MM') = 1 THEN 
-          /*Tratar anos anteriores*/
-          vr_dtiniper := rw_crapdat.dtmvtolt - 31;
-        ELSE 
-          /* Caso nao exista a data, pegar o primeiro dia do mes */
-          vr_dtiniper := TRUNC(rw_crapdat.dtmvtolt,'MM');
-        END IF;      
-    END;
-    
-    -- buscar Valor da moeda TR fixa usada pelo sistema.
-    OPEN cr_crapmfx(pr_cdcooper => pr_cdcooper,
-                    pr_dtmvtolt => vr_dtiniper,
-                    pr_tpmoefix => 11);
-    FETCH cr_crapmfx INTO rw_crapmfx;
-    
-    IF cr_crapmfx%NOTFOUND THEN
-      pc_grava_critica(pr_cdcooper => pr_cdcooper,
-                       pr_dscritic => ' - Cadastrar TR dia '||
-                                      TO_CHAR(vr_dtiniper,'DD/MM/RRRR')||
-                                      ' - Tela MOEDAS');  
-    END IF;  
-    CLOSE cr_crapmfx;
-    /*Fim TR*/
-    
-    -- buscar Valor da moeda SELIC Meta fixa usada pelo sistema.
-    OPEN cr_crapmfx(pr_cdcooper => pr_cdcooper,
-                    pr_dtmvtolt => vr_dtiniper,
-                    pr_tpmoefix => 19);
-    FETCH cr_crapmfx INTO rw_crapmfx;
-    
-    IF cr_crapmfx%NOTFOUND THEN
-      pc_grava_critica(pr_cdcooper => pr_cdcooper,
-                       pr_dscritic => ' - Cadastrar SELIC Meta dia '||
-                                      TO_CHAR(vr_dtiniper,'DD/MM/RRRR')||
-                                      ' - Tela MOEDAS');  
-    END IF;  
-    CLOSE cr_crapmfx;
-    /*Fim TR*/
     
     -- Buscar parametro na tabela generica CONVERREAL
     vr_dstextab := TABE0001.fn_busca_dstextab( pr_cdcooper => pr_cdcooper, 
@@ -1179,141 +1066,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
                        pr_cdsitexc => 0);  
     END IF;  
     CLOSE cr_crapmfx;
-      
-    /*  Verifica se a Taxa de Aplicacao (RDC) esta cadastrada  */
-    /*
-    OPEN cr_crapmfx(pr_cdcooper => pr_cdcooper,
-                    pr_dtmvtolt => rw_crapdat.dtmvtolt,
-                    pr_tpmoefix => 13);
-    FETCH cr_crapmfx INTO rw_crapmfx;
-      
-    IF cr_crapmfx%NOTFOUND THEN
-      pc_grava_critica(pr_cdcooper => pr_cdcooper,
-                       pr_dscritic => ' - Cadastrar RDC dia '||
-                                      TO_CHAR(RW_CRAPDAT.dtmvtolt,'DD/MM/RRRR'));  
-    END IF;  
-    CLOSE cr_crapmfx;
-  */  
-    -- Verificar se é virada de mês
-    IF TO_CHAR(rw_crapdat.dtmvtolt,'MM') <> TO_CHAR(rw_crapdat.dtmvtopr,'MM') THEN
-      -- definir ultimo dia do mês
-      vr_dtultdia := LAST_DAY(rw_crapdat.dtmvtolt);
-      -- testar as taxas
-      FOR vr_contador IN 1..4 LOOP        
-        
-        -- Definir tipo de taxa conforme o contador
-        CASE vr_contador
-          WHEN 1 THEN vr_tpmoefix := 6;
-          WHEN 2 THEN vr_tpmoefix := 16;  
-          WHEN 3 THEN vr_tpmoefix := 18;
-          WHEN 4 THEN vr_tpmoefix := 8;
-          ELSE vr_tpmoefix := 11;
-        END CASE;      
-        
-        /* Desprezar se o ultimo dia do mes for no final de semana */        
-        IF vr_contador in (1,3)               AND
-           vr_dtultdia <> rw_crapdat.dtmvtolt THEN
-          continue;
-        END IF;
-        
-        /* Verifica a Tx esta cadastrada para o ult. Dia Tipo de Aplicaçao */      
-        OPEN cr_crapmfx(pr_cdcooper => pr_cdcooper,
-                        pr_dtmvtolt => vr_dtultdia,
-                        pr_tpmoefix => vr_tpmoefix);
-        FETCH cr_crapmfx INTO rw_crapmfx;
-          
-        IF cr_crapmfx%NOTFOUND THEN
-          pc_grava_critica(pr_cdcooper => pr_cdcooper,
-                           pr_dscritic => ' - Falta Cadastrar Taxa no dia '||
-                                          TO_CHAR(RW_CRAPDAT.dtmvtolt,'DD/MM/RRRR')||
-                                          ' - '||vr_tab_moeda(vr_contador));  
-        ELSIF rw_crapmfx.vlmoefix = 0 THEN
-          pc_grava_critica(pr_cdcooper => pr_cdcooper,
-                           pr_dscritic => ' - Cadastrar Taxa no dia '||
-                                          TO_CHAR(RW_CRAPDAT.dtmvtolt,'DD/MM/RRRR')||
-                                          ' para o Tipo de Aplicaçao - '||vr_tab_moeda(vr_contador)); 
-        END IF;  
-        CLOSE cr_crapmfx;
-      
-      END LOOP;  
-    END IF; -- Fim virada do mês  
-    
-    /*  Verifica se a TR P/RDC esta cadastrada  */
-    OPEN cr_crapmfx(pr_cdcooper => pr_cdcooper,
-                    pr_dtmvtolt => rw_crapdat.dtmvtolt,
-                    pr_tpmoefix => 11);
-    FETCH cr_crapmfx INTO rw_crapmfx;
-      
-    IF cr_crapmfx%NOTFOUND THEN
-      pc_grava_critica(pr_cdcooper => pr_cdcooper,
-                       pr_dscritic => ' - Cadastrar TR P/APLICACAO RDC dia '||
-                                      TO_CHAR(RW_CRAPDAT.dtmvtolt,'DD/MM/RRRR'));  
-    END IF;  
-    CLOSE cr_crapmfx;
-      
-    /*  Verifica se a TAXA DE JUROS P/RDC esta cadastrada  */
-    OPEN cr_crapmfx(pr_cdcooper => pr_cdcooper,
-                    pr_dtmvtolt => rw_crapdat.dtmvtolt,
-                    pr_tpmoefix => 10);
-    FETCH cr_crapmfx INTO rw_crapmfx;
-      
-    IF cr_crapmfx%NOTFOUND THEN
-      pc_grava_critica(pr_cdcooper => pr_cdcooper,
-                       pr_dscritic => ' - Cadastrar JUROS P/APLICACAO RDC dia '||
-                                      TO_CHAR(RW_CRAPDAT.dtmvtolt,'DD/MM/RRRR'));  
-    END IF;  
-    CLOSE cr_crapmfx;
-    
-    /*  Verifica se a TR P/RDC esta cadastrada  */
-    OPEN cr_crapmfx(pr_cdcooper => pr_cdcooper,
-                    pr_dtmvtolt => rw_crapdat.dtmvtopr,
-                    pr_tpmoefix => 11);
-    FETCH cr_crapmfx INTO rw_crapmfx;
-      
-    IF cr_crapmfx%NOTFOUND THEN
-      pc_grava_critica(pr_cdcooper => pr_cdcooper,
-                       pr_dscritic => ' - Cadastrar TR P/APLICACAO RDC dia '||
-                                      TO_CHAR(RW_CRAPDAT.dtmvtopr,'DD/MM/RRRR'));  
-    END IF;  
-    CLOSE cr_crapmfx;            
-    
-    /* Verifica se ha resgates de RDCA para o dia seguinte. Se houver,
-       exige a UFIR do dia seguinte. */
-    OPEN cr_craplrg (pr_cdcooper => pr_cdcooper,
-                     pr_dtmvtolt => rw_crapdat.dtmvtopr);
-    FETCH cr_craplrg INTO rw_craplrg;
-    -- se encontrar aplicações
-    IF cr_craplrg%FOUND THEN
-      /*  Verifica se a taxa UFIR esta cadastrada  */
-      OPEN cr_crapmfx(pr_cdcooper => pr_cdcooper,
-                      pr_dtmvtolt => rw_crapdat.dtmvtopr,
-                      pr_tpmoefix => 2);
-      FETCH cr_crapmfx INTO rw_crapmfx;
-      
-      IF cr_crapmfx%NOTFOUND THEN
-        pc_grava_critica(pr_cdcooper => pr_cdcooper,
-                         pr_dscritic => ' - Cadastrar UFIR dia '||
-                                        TO_CHAR(RW_CRAPDAT.dtmvtopr,'DD/MM/RRRR'));  
-      END IF;  
-      CLOSE cr_crapmfx;                
-    END IF; 
-    CLOSE cr_craplrg;
-    
-    /*** Magui, se houver aplicacoes RDCPOS, exigir TAXRDC glb_dtmvtolt **/
-    FOR rw_craprda in cr_craprda (pr_cdcooper => pr_cdcooper) LOOP
-      /*  Verifica se a TAXRDC para RDCPOS esta cadastrada  */
-      OPEN cr_crapmfx(pr_cdcooper => pr_cdcooper,
-                      pr_dtmvtolt => rw_crapdat.dtmvtolt,
-                      pr_tpmoefix => 6);
-      FETCH cr_crapmfx INTO rw_crapmfx;
-      
-      IF cr_crapmfx%NOTFOUND THEN
-        pc_grava_critica(pr_cdcooper => pr_cdcooper,
-                         pr_dscritic => ' - Falta CECRED cadastrar TAXRDC para RDCPOS do dia '||
-                                        TO_CHAR(RW_CRAPDAT.dtmvtolt,'DD/MM/RRRR'));  
-      END IF;  
-      CLOSE cr_crapmfx;   
-    END LOOP; 
     
     /* Verifica se ha aplicacoes com aniversario, exige as tabelas de
     taxas - craptrd. */
@@ -1445,45 +1197,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
                                         ||' - Tela TAXMES');
       END IF;      
       
-      /*  Verifica se a taxa UFIR esta cadastrada  */
-      OPEN cr_crapmfx(pr_cdcooper => pr_cdcooper,
-                      pr_dtmvtolt => rw_crapdat.dtmvtopr,
-                      pr_tpmoefix => 2);
-      FETCH cr_crapmfx INTO rw_crapmfx;
-      -- Senão localizou
-      IF cr_crapmfx%NOTFOUND THEN
-        pc_grava_critica(pr_cdcooper => pr_cdcooper,
-                         pr_dscritic => ' - Cadastrar UFIR dia '||
-                                        TO_CHAR(RW_CRAPDAT.dtmvtopr,'DD/MM/RRRR')||' - Tela MOEDAS');  
-      END IF;  
-      CLOSE cr_crapmfx;  
-      
-      /***  Exige TAXRDC quando for mensal ***/
-      OPEN cr_crapdtc(pr_cdcooper => pr_cdcooper);
-      FETCH cr_crapdtc INTO rw_crapdtc;  
-      -- SE ENCONTROU
-      IF cr_crapdtc%FOUND THEN
-        -- Buscar aplicações RDCA
-        OPEN cr_craprda_3(pr_cdcooper => pr_cdcooper,
-                          pr_tpaplica => rw_crapdtc.tpaplica);
-        FETCH cr_craprda_3 INTO rw_craprda_3;
-        -- Se encontrou
-        IF cr_craprda_3%FOUND THEN
-          /*  Verifica se a taxa TAXRDC esta cadastrada  */
-          OPEN cr_crapmfx(pr_cdcooper => pr_cdcooper,
-                          pr_dtmvtolt => rw_crapdat.dtmvtolt,
-                          pr_tpmoefix => 6);
-          FETCH cr_crapmfx INTO rw_crapmfx;
-          -- Senão localizou
-          IF cr_crapmfx%NOTFOUND THEN
-            pc_grava_critica(pr_cdcooper => pr_cdcooper,
-                             pr_dscritic => ' - Cadastrar TAXRDC dia '||
-                                            TO_CHAR(RW_CRAPDAT.dtmvtolt,'DD/MM/RRRR')||' - Tela TAXRDC');  
-          END IF;  
-          CLOSE cr_crapmfx;          
-        END IF;          
-      END IF; -- Fim cr_crapdtc 
-      
       /*  Exige taxa para Poupanca Programada quando for mensal  */
       FOR rw_craprpp IN cr_craprpp (pr_cdcooper => pr_cdcooper,
                                     pr_tipo     => 'I', 
@@ -1531,56 +1244,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
         END IF;
             
       END LOOP; -- Fim loop cr_craprpp 
-      
-      /*  Verifica se as taxas para correcao monetaria estao cadas-
-          tradas quando o processo e' um final de trimestre  */
-      IF TO_CHAR(rw_crapdat.dtmvtolt,'MM') in (3,6,9,12) THEN
-        -- primeiro dia de dois meses atras
-        vr_dtmvtocm := trunc(add_months(rw_crapdat.dtmvtolt,-2),'MM');
-        vr_vlufircm := 0;  
-        
-        -- Varrer os ultimos dois meses
-        LOOP
-          -- Buscar proximo dia util
-          vr_dtmvtocm := gene0005.fn_valida_dia_util( pr_cdcooper => pr_cdcooper, 
-                                                      pr_dtmvtolt => vr_dtmvtocm, 
-                                                      pr_tipo     => 'P', 
-                                                      pr_feriado  => TRUE);
-                                                      
-          /*  Verifica se a taxa UFIR de C.M. esta cadastrada  */
-          OPEN cr_crapmfx(pr_cdcooper => pr_cdcooper,
-                          pr_dtmvtolt => vr_dtmvtocm,
-                          pr_tpmoefix => 12);
-          FETCH cr_crapmfx INTO rw_crapmfx;
-          -- Senão localizou
-          IF cr_crapmfx%NOTFOUND THEN
-            pc_grava_critica(pr_cdcooper => pr_cdcooper,
-                             pr_dscritic => ' - Cadastrar UFIR de C.M. dia '||
-                                            TO_CHAR(vr_dtmvtocm,'DD/MM/RRRR')||' - Tela MOEDAS');  
-          ELSE
-            -- se estiver com valor zero, inicializar o valor
-            IF nvl(vr_vlufircm,0) = 0 THEN
-              vr_vlufircm := rw_crapmfx.vlmoefix;
-            END IF;  
-            -- Verificar se o valor é menor que o já encontrado
-            IF rw_crapmfx.vlmoefix < vr_vlufircm   THEN
-              pc_grava_critica(pr_cdcooper => pr_cdcooper,
-                               pr_dscritic => ' - UFIR C.M. do dia e menor que a do dia anterior: dia '||
-                                              TO_CHAR(vr_dtmvtocm,'DD/MM/RRRR')||' - Tela MOEDAS');  
-            END IF;  
-              
-          END IF;  
-          CLOSE cr_crapmfx;
-          
-          -- Incrementar data
-          vr_dtmvtocm := vr_dtmvtocm + 1;
-          
-          -- Sair do loop, qnd data for maior que a proxima data de movimento
-          IF vr_dtmvtocm > rw_crapdat.dtmvtopr THEN
-            EXIT;
-          END IF;                            
-        END LOOP; -- Fim loop validar datas 
-      END IF; -- Dim IF trimestres (3,6,9,12)           
     END IF; -- Fim Verificar se é virada de mês
     
     /* Verifica se ha poupanca programada com aniversario,
@@ -2144,33 +1807,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.btch0002 AS
       END IF;                      
     END IF;  -- Fim CTAEMISBOL                
     
-    /* Busca data para validaçao de borderos*/
-    vr_dstextab := TABE0001.fn_busca_dstextab( pr_cdcooper => pr_cdcooper, 
-                                               pr_nmsistem => 'CRED', 
-                                               pr_tptabela => 'GENERI', 
-                                               pr_cdempres => 00, 
-                                               pr_cdacesso => 'DIGITACOOP', 
-                                               pr_tpregist => 0);
-                                                     
-    -- verificar se existe valor
-    IF TRIM(vr_dstextab) IS NOT NULL THEN 
-      -- Buscar data
-      vr_dtvalida := to_date(gene0002.fn_busca_entrada(3,vr_dstextab,';'),'MM/DD/RRRR');      
-    END IF;
-    
     /* Alimenta a tabela de parametros */
     FOR rw_craptab IN cr_craptab (pr_cdcooper => pr_cdcooper,
                                   pr_cdacesso => 'DIGITALIZA') LOOP
      
       vr_tab_documentos(rw_craptab.tpregist) := gene0002.fn_char_para_number(gene0002.fn_busca_entrada(2,rw_craptab.dstextab,';'));
     END LOOP;                              
-    
-    /* Busca parametro limite para cheque */
-    IF vr_tab_documentos.exists(2) THEN
-      vr_vldparam := vr_tab_documentos(2);
-    ELSE  
-      vr_vldparam := 0;
-    END IF;  
     
     -- Retornar indicador se encontrou alguma 
     -- critica que deve cancelar solicitação 

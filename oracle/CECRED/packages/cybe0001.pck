@@ -52,6 +52,9 @@ CREATE OR REPLACE PACKAGE CECRED.CYBE0001 AS
   --
   --              11/05/2017 - Modificada a pc_importa_arquivo_cyber, para efetuar leituras de tabelas através de cursor
   --                           atendendo às melhores práticas de programação da Cecred - (Jean / MOut´S)
+  --
+  --              03/04/2018 - Inserido a procedure pc_altera_dados_crapcyc - (Chamado 806202)
+  --
   ---------------------------------------------------------------------------------------------------------------
 
   -- Definir o registro de memória que guardará os dados para atualização
@@ -153,6 +156,29 @@ CREATE OR REPLACE PACKAGE CECRED.CYBE0001 AS
   PROCEDURE pc_importa_arquivo_cyber(pr_dtmvto     IN DATE        --> Data de movimento
                                     ,pr_des_reto   OUT VARCHAR2   --> descrição do retorno ("OK" ou "NOK")
                                     ,pr_des_erro   out VARCHAR2); --> descrição do erro
+
+  PROCEDURE pc_altera_dados_crapcyc(pr_cdcooper in     crapcop.cdcooper%type
+                                   ,pr_cdagenci in     crapass.cdagenci%type
+                                   ,pr_dtmvtolt in     varchar2
+                                   ,pr_nrdcaixa in     crapbcx.nrdcaixa%type
+                                   ,pr_cdoperad in     crapope.cdoperad%type
+                                   ,pr_nmdatela in     craptel.nmdatela%type
+                                   ,pr_idorigem in     number
+                                   ,pr_nrdconta in     crapass.nrdconta%type
+                                   ,pr_nrctremp in     crapepr.nrctremp%type
+                                   ,pr_cdorigem in     crapcyc.cdorigem%type
+                                   ,pr_flgjudic in     varchar2
+                                   ,pr_flextjud in     varchar2
+                                   ,pr_flgehvip in     varchar2
+                                   ,pr_dtenvcbr in     varchar2
+                                   ,pr_cdassess in     crapcyc.cdassess%type
+                                   ,pr_cdmotcin in     crapcyc.cdmotcin%type
+                                   ,pr_xmllog   IN     VARCHAR2 --> XML com informacoes de LOG
+                                   ,pr_cdcritic    OUT PLS_INTEGER --> Codigo da critica
+                                   ,pr_dscritic    OUT VARCHAR2 --> Descricao da critica
+                                   ,pr_retxml   IN OUT NOCOPY xmltype --> Arquivo de retorno do XML
+                                   ,pr_nmdcampo    OUT VARCHAR2 --> Nome do campo com erro
+                                   ,pr_des_erro    OUT VARCHAR2);
 
 END CYBE0001;
 /
@@ -6724,6 +6750,214 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0001 AS
            pr_des_erro := vr_des_erro;
 
   END pc_importa_arquivo_cyber;
+
+    PROCEDURE pc_altera_dados_crapcyc(pr_cdcooper in     crapcop.cdcooper%type
+                                   ,pr_cdagenci in     crapass.cdagenci%type
+                                   ,pr_dtmvtolt in     varchar2
+                                   ,pr_nrdcaixa in     crapbcx.nrdcaixa%type
+                                   ,pr_cdoperad in     crapope.cdoperad%type
+                                   ,pr_nmdatela in     craptel.nmdatela%type
+                                   ,pr_idorigem in     number
+                                   ,pr_nrdconta in     crapass.nrdconta%type
+                                   ,pr_nrctremp in     crapepr.nrctremp%type
+                                   ,pr_cdorigem in     crapcyc.cdorigem%type
+                                   ,pr_flgjudic in     varchar2
+                                   ,pr_flextjud in     varchar2
+                                   ,pr_flgehvip in     varchar2
+                                   ,pr_dtenvcbr in     varchar2
+                                   ,pr_cdassess in     crapcyc.cdassess%type
+                                   ,pr_cdmotcin in     crapcyc.cdmotcin%type
+                                   ,pr_xmllog   IN     VARCHAR2 --> XML com informacoes de LOG
+                                   ,pr_cdcritic    OUT PLS_INTEGER --> Codigo da critica
+                                   ,pr_dscritic    OUT VARCHAR2 --> Descricao da critica
+                                   ,pr_retxml   IN OUT NOCOPY xmltype --> Arquivo de retorno do XML
+                                   ,pr_nmdcampo    OUT VARCHAR2 --> Nome do campo com erro
+                                   ,pr_des_erro    OUT VARCHAR2) IS
+    
+    vr_dsmsglog craplgm.dscritic%type;
+    vr_contador number(2);
+    vr_cdcritic crapcri.cdcritic%type;
+    vr_dscritic crapcri.dscritic%type;
+    vr_dsorigem craplgm.dsorigem%type;
+    vr_dstransa craplgm.dstransa%type;
+    vr_cddepart crapope.cddepart%type;
+    vr_rowid    rowid;
+    vr_exc_erro exception;
+    vr_flgehvip crapcyc.flgehvip%type;
+    vr_cdmotcin crapcyc.cdmotcin%type;
+    vr_msgfinal varchar2(1000);
+    vr_dtmvtolt date;
+    vr_dtenvcbr date;
+    
+    cursor cr_crapope is
+      select c.cddepart
+        from crapope c
+       where c.cdcooper = pr_cdcooper
+         and c.cdoperad = pr_cdoperad;
+
+    cursor cr_crapcyc is
+      select c.rowid
+           , c.flgehvip
+           , c.cdmotcin
+        from crapcyc c
+       where c.cdcooper = pr_cdcooper
+         and c.nrdconta = pr_nrdconta
+         and c.nrctremp = pr_nrctremp
+         and c.cdorigem = pr_cdorigem;
+
+    rw_crapcyc cr_crapcyc%rowtype;
+    rw_crapope cr_crapope%rowtype;
+
+  begin
+    vr_cdcritic := 0;
+    vr_dscritic := '';
+    vr_dsorigem := gene0001.vr_vet_des_origens(pr_idorigem);
+    vr_dstransa := 'Alterar registros da tabela crapcyc.';
+    vr_flgehvip := case pr_flgehvip when 'true' then 1 else 0 end;
+    vr_cdmotcin := nvl(pr_cdmotcin,0);
+    vr_dtmvtolt := to_date(pr_dtmvtolt,'dd/mm/rrrr');
+    vr_dtenvcbr := to_date(pr_dtenvcbr,'dd/mm/rrrr');
+    
+    open cr_crapcyc;
+    fetch cr_crapcyc into rw_crapcyc;
+    if cr_crapcyc%notfound then
+      close cr_crapcyc;
+      vr_cdcritic := 0;
+      vr_dscritic := 'Registro nao encontrado na tabela crapcyc!';
+      raise vr_exc_erro;
+    else
+      close cr_crapcyc;
+    end if;
+
+    open cr_crapope;
+    fetch cr_crapope into rw_crapope;
+    if cr_crapope%found then
+      if (nvl(rw_crapope.cddepart,0) <> 13 and rw_crapcyc.cdmotcin in (2,7) and rw_crapcyc.cdmotcin <> vr_cdmotcin) then
+        vr_cdcritic := 0;
+        vr_dscritic := 'Somente operadores do departamento juridico podem alterar MOTIVO CIN 2 ou 7 cadastrados previamente!';
+        raise vr_exc_erro;
+      end if;
+
+      if (nvl(rw_crapope.cddepart,0) <> 13 and vr_cdmotcin in (2,7) and rw_crapcyc.cdmotcin <> vr_cdmotcin) then
+        vr_cdcritic := 0;
+        vr_dscritic := 'Somente operadores do departamento juridico podem alterar para MOTIVO CIN 2 e 7!';
+        raise vr_exc_erro;
+      end if;
+
+      if ((rw_crapope.cddepart = 13) and (rw_crapcyc.cdmotcin in (2,7))) then
+        recp0001.pc_consistir_alt_cdmotcin(pr_cdcooper => pr_cdcooper,
+                                           pr_nrdconta => pr_nrdconta,
+                                           pr_nrctremp => pr_nrctremp,
+                                           pr_cdorigem => pr_cdorigem,
+                                           pr_cdmotcin => vr_cdmotcin,
+                                           pr_flgehvip => vr_flgehvip,
+                                           pr_dscritic => vr_dscritic,
+                                           pr_cdcritic => vr_cdcritic);
+
+        if vr_dscritic is not null or vr_dscritic != '' then
+          if vr_dscritic like '%Motivo CIN sera alterado para%' then
+            vr_msgfinal := vr_dscritic;
+            vr_flgehvip := 1;
+            vr_cdmotcin := to_number(trim(substr(vr_dscritic,instr(vr_dscritic,':')+1)));
+            vr_dscritic := 0;
+            vr_dscritic := '';
+          elsif vr_dscritic like '%Motivo CIN sera desabilitado%' then
+            vr_msgfinal := vr_dscritic;
+            vr_dscritic := 0;
+            vr_dscritic := '';
+            vr_flgehvip := 0;
+            vr_cdmotcin := 0;
+          else
+            raise vr_exc_erro;
+          end if;
+        end if;
+      end if;
+
+      if ((rw_crapope.cddepart = 13) and (vr_cdmotcin in (2,7)) and (rw_crapcyc.cdmotcin <> vr_cdmotcin)) then
+        recp0001.pc_gerar_historico_cdmotcin(pr_cdcooper => pr_cdcooper,
+                                             pr_nrdconta => pr_nrdconta,
+                                             pr_nrctremp => pr_nrctremp,
+                                             pr_cdorigem => pr_cdorigem,
+                                             pr_cdmotcin => rw_crapcyc.cdmotcin,
+                                             pr_flgehvip => rw_crapcyc.flgehvip,
+                                             pr_dscritic => vr_dscritic,
+                                             pr_cdcritic => vr_cdcritic);
+
+        if vr_dscritic is not null or vr_dscritic != '' then
+          raise vr_exc_erro;
+        end if;
+      end if;
+    end if;
+
+    close cr_crapope;
+    
+    update crapcyc c
+       set c.flgjudic = decode(pr_flgjudic,'true',1,0)
+         , c.flextjud = decode(pr_flextjud,'true',1,0)
+         , c.flgehvip = vr_flgehvip
+         , c.cdoperad = pr_cdoperad
+         , c.dtaltera = vr_dtmvtolt
+         , c.dtenvcbr = vr_dtenvcbr
+         , c.cdassess = nvl(pr_cdassess,0)
+         , c.cdmotcin = vr_cdmotcin
+     where c.rowid = rw_crapcyc.rowid;
+    
+    vr_dsmsglog := 'Contrato: ' || trim(gene0002.fn_mask_contrato(pr_nrctremp)) ||
+                   '. Jud.: ' || case pr_flgjudic when 'true' then 'Sim' else 'Nao' end ||
+                   '. Extra Jud.: ' || case pr_flextjud when 'true' then 'Sim' else 'Nao' end ||
+                   '. CIN: ' || case pr_flgehvip when 'true' then 'Sim' else 'Nao' end;
+
+    gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper,
+                         pr_cdoperad => pr_cdoperad,
+                         pr_dscritic => vr_dsmsglog,
+                         pr_dsorigem => vr_dsorigem,
+                         pr_dstransa => vr_dstransa,
+                         pr_dttransa => trunc(sysdate),
+                         pr_flgtrans => 1,
+                         pr_hrtransa => to_number(to_char(sysdate,'SSSSS')),
+                         pr_idseqttl => 1,
+                         pr_nmdatela => pr_nmdatela,
+                         pr_nrdconta => pr_nrdconta,
+                         pr_nrdrowid => vr_rowid);
+
+    update crapcyb c
+       set c.dtmancad = vr_dtmvtolt
+     where c.cdcooper = pr_cdcooper
+       and c.nrdconta = pr_nrdconta
+       and c.cdorigem in (1,2,3);
+    
+    if vr_msgfinal is not null then
+      vr_msgfinal := vr_msgfinal||'. ';
+    end if;
+    
+    pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Msg>' || vr_msgfinal || '</Msg></Root>');
+
+    commit;
+  exception
+    when vr_exc_erro then
+      if vr_cdcritic <> 0 then
+        vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+      end if;
+
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := vr_dscritic;
+
+      -- Carregar XML padrao para variavel de retorno
+      pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+      
+      rollback;
+    when others then
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := 'Erro geral na rotina da tela CADCYB: ' || SQLERRM;
+
+      -- Carregar XML padrao para variavel de retorno
+      pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+      
+      rollback;
+  end;
 
 END CYBE0001;
 /

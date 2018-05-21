@@ -857,6 +857,15 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps692 (pr_cdcooper  IN crapcop.cdcooper%
           RAISE vr_exc_saida;
         END IF;
         
+      -- Chama rotina de cancelamento de limite - Daniel(AMcom)
+      LIMI0002.PC_CANCELA_LIMITE_CREDITO(pr_cdcooper => pr_cdcooper   -- Cooperativa
+                                        ,pr_cdcritic => vr_cdcritic   -- Código do erro
+                                        ,pr_dscritic => vr_dscritic); -- Descrição do erro
+        -- Verifica erro
+        IF vr_cdcritic = 0 THEN
+          RAISE vr_exc_saida;
+        END IF;
+        
       -- Gerar relatorios dos limites de creditos vencidos que nao foram renovados
       pc_imprime_crrl692(pr_tab_rel692  => vr_tab_rel692,
                          pr_tab_crapage => vr_tab_crapage,

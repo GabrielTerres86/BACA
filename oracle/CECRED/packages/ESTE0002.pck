@@ -1004,7 +1004,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
                        sqlerrm;
     END;
   END;
-
+  
   --> Rotina para retornar total de prestações que o avalista tem
   --> e também retornar a quantidade de contrato em que é avalista
   --> Diego Simas (AMcom)
@@ -1134,8 +1134,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
       vr_dscritic VARCHAR2(4000);
       vr_nmdcampo VARCHAR2(100);
       vr_exc_saida EXCEPTION;
-      vr_des_reto VARCHAR2(3);
-      vr_tab_erro GENE0001.typ_tab_erro;
+			vr_des_reto VARCHAR2(3);
+			vr_tab_erro GENE0001.typ_tab_erro;
       vr_des_erro VARCHAR2(10);
       vr_exc_erro EXCEPTION;
     
@@ -1636,7 +1636,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
            AND lim.nrdconta = pr_nrdconta
            AND lim.insitlim = 2; -- Ativo
       rw_craplim_chqesp cr_craplim_chqesp%ROWTYPE;
-
+    
       -- Cursor para pegar os contratos em que o cooperado é avalista
       -- Diego Simas (AMcom)
       CURSOR cr_crapavl_contas (pr_cdcooper crapass.cdcooper%TYPE,
@@ -3316,7 +3316,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
                          ,(vr_tot_qtprecal > 0));
       vr_obj_generic2.put('valorAvalistaAtraso'
                          ,este0001.fn_decimal_ibra(vr_ava_vlsdeved));
-
+												 
       -- INÍCIO AVAIS CRUZADOS                   
       -- Buscar a quantidade de contratos e o valor total
       -- das prestações, de contratos ativos, em que o cooperado é avalista
@@ -3363,17 +3363,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
       -- Diego Simas (AMcom) 
       -- FIM AVAIS CRUZADOS
 
-		--Verificar se usa tabela juros
-		vr_dstextab:= TABE0001.fn_busca_dstextab (pr_cdcooper => pr_cdcooper
-																							,pr_nmsistem => 'CRED'
-																							,pr_tptabela => 'USUARI'
-																							,pr_cdempres => 11
-																							,pr_cdacesso => 'TAXATABELA'
-																							,pr_tpregist => 0);
-		-- Se a primeira posição do campo
-		-- dstextab for diferente de zero
-		vr_inusatab:= SUBSTR(vr_dstextab,1,1) != '0';
-
+			--Verificar se usa tabela juros
+			vr_dstextab:= TABE0001.fn_busca_dstextab (pr_cdcooper => pr_cdcooper
+																							 ,pr_nmsistem => 'CRED'
+																							 ,pr_tptabela => 'USUARI'
+																							 ,pr_cdempres => 11
+																							 ,pr_cdacesso => 'TAXATABELA'
+																							 ,pr_tpregist => 0);
+			-- Se a primeira posição do campo
+			-- dstextab for diferente de zero
+			vr_inusatab:= SUBSTR(vr_dstextab,1,1) != '0';												 
+    
       -- Leitura do indicador de uso da tabela de taxa de juros
       vr_dstextab_parempctl := tabe0001.fn_busca_dstextab(pr_cdcooper => 3
                                                          ,pr_nmsistem => 'CRED'
@@ -4131,7 +4131,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
       Objetivo  : Rotina responsavel por montar o objeto json para analise.
     
       Alteração : 19/10/2017 - Enviar um novo campo "valorPrestLiquidacao". (Lombardi)
-
+        
 	              23/11/2017 - Alterações para o projeto 404. (Lombardi)
       
                   23/11/2017 - Alterações para o projeto 404. (Lombardi)
@@ -4471,7 +4471,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
     vr_dsquapro      VARCHAR2(100);
     vr_flgcolab      BOOLEAN;
     vr_cddcargo      tbcadast_colaborador.cdcooper%TYPE;
-    vr_qtdiarpv      INTEGER;
+		vr_qtdiarpv      INTEGER;
     vr_vlpreclc      NUMBER := 0;                -- Parcela calcula
     vr_valoriof      NUMBER;
     vr_vliofpri      NUMBER;
@@ -4720,7 +4720,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
         vr_obj_generico.put('bemEmGarantia', vr_lst_generic2);
       END IF;
     END IF;  
-   
+
     -- Busca quantidade de dias da carencia
     IF rw_crawepr.tpemprst = 2 AND nvl(rw_crawepr.idcarenc,0) > 0 THEN
       EMPR0011.pc_busca_qtd_dias_carencia(pr_idcarencia => rw_crawepr.idcarenc
@@ -4758,7 +4758,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
     IF trim(vr_dscritic) IS NOT NULL THEN 
       RAISE vr_exc_erro;
     END IF;    
-       
+
     
     vr_obj_generico.put('operacao', rw_crawepr.dsoperac); 
     vr_obj_generico.put('CETValor', este0001.fn_decimal_ibra(nvl(rw_crawepr.percetop,0)));

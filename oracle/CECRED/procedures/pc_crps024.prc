@@ -1,12 +1,12 @@
 CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS024(pr_cdcooper  in crapcop.cdcooper%type,
-                                              pr_nrdevias  in number,
-                                              pr_flgresta  in PLS_INTEGER,
+                      pr_nrdevias  in number,
+                      pr_flgresta  in PLS_INTEGER,
                                               pr_cdagenci  IN PLS_INTEGER DEFAULT 0,  --> Código da agência, utilizado no paralelismo
                                               pr_idparale  IN PLS_INTEGER DEFAULT 0,  --> Identificador do job executando em paralelo.                      
-                                              pr_stprogra out PLS_INTEGER,
-                                              pr_infimsol out PLS_INTEGER,
-                                              pr_cdcritic out crapcri.cdcritic%type,
-                                              pr_dscritic out varchar2) is
+                      pr_stprogra out PLS_INTEGER,
+                      pr_infimsol out PLS_INTEGER,
+                      pr_cdcritic out crapcri.cdcritic%type,
+                      pr_dscritic out varchar2) is
 
 /* Emite relatório de acompanhamento dos talonários. */
 /* ........................................................................./*
@@ -68,6 +68,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS024(pr_cdcooper  in crapcop.cdcooper%t
            
            15/01/2018 - Projeto Ligeirinho. Fabiano Girardi AMcom. Alterado para paralelizar a execução deste relatorio.
            
+           05/03/2018 - Alterada a verificação para identificar contas individuais ou conjuntas 
+                        atraves do campo CRAPASS.CDCATEGO. PRJ366 (Lombardi)
+           
+		   25/04/2018 - Ajustado para incluir montagem de indice antes do continue, pois estava com erro e causando
+			            estouro nos contadores. (Renato Darosci - Supero)
 ............................................................................. */
   ds_character_separador constant varchar2(1) := '#';
 
@@ -120,6 +125,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS024(pr_cdcooper  in crapcop.cdcooper%t
            cdagenci,
            nmprimtl,
            cdtipcta,
+           cdcatego,
            cdsitdct,
            inpessoa
       from crapass
@@ -130,6 +136,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS024(pr_cdcooper  in crapcop.cdcooper%t
     (cdagenci crapass.cdagenci%type,
      nmprimtl crapass.nmprimtl%type,
      cdtipcta crapass.cdtipcta%type,
+     cdcatego crapass.cdcatego%type,
      cdsitdct crapass.cdsitdct%type,
      inpessoa crapass.inpessoa%type);  
       
@@ -199,13 +206,14 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS024(pr_cdcooper  in crapcop.cdcooper%t
        
   -- Declaração de variáveis
   /* Registro para armazenar informações do associado */
-  type typ_associado is record (nrdconta crapass.nrdconta%type,
-                                qtchqtal number(6),
-                                cdempres crapttl.cdempres%type,
-                                nmprimtl crapass.nmprimtl%type,
-                                cdtipcta crapass.cdtipcta%type,
-                                cdsitdct crapass.cdsitdct%type,
-                                nmtipcta varchar2(65), /* Conta individual ou conjunta + lista de tipos */
+  type typ_associado is record (nrdconta  crapass.nrdconta%type,
+                                qtchqtal  number(6),
+                                cdempres  crapttl.cdempres%type,
+                                nmprimtl  crapass.nmprimtl%type,
+                                cdtipcta  crapass.cdtipcta%type,
+                                cdcatego  crapass.cdcatego%type,
+                                cdsitdct  crapass.cdsitdct%type,
+                                nmtipcta  varchar2(65), /* Conta individual ou conjunta + lista de tipos */
                                 nrflspad number(3),
                                 intipcta number(1)); /* Número padrão de folhas para o tipo de conta */
   /* Tabela onde serão armazenados os registros do associado */
@@ -238,7 +246,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS024(pr_cdcooper  in crapcop.cdcooper%t
   -- Exceptions
   vr_exc_fimprg   exception;
   vr_exc_saida    exception;
-  
+
   vr_ds_xml  tbgen_batch_relatorio_wrk.dsxml%type;
 
   -- Código do programa
@@ -262,6 +270,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS024(pr_cdcooper  in crapcop.cdcooper%t
   vr_cdagenci      crapass.cdagenci%type;
   vr_nmprimtl      crapass.nmprimtl%type;
   vr_cdtipcta      crapass.cdtipcta%type;
+  vr_cdcatego      crapass.cdcatego%type;
   vr_cdsitdct      crapass.cdsitdct%type;
   vr_inpessoa      crapass.inpessoa%type;
   vr_cdempres      crapttl.cdempres%type;
@@ -312,7 +321,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS024(pr_cdcooper  in crapcop.cdcooper%t
   vr_dsmensag      varchar2(4000);
   --
   procedure pc_iniciar_amb_paralel is
-  begin
+begin
     -- Gerar o ID para o paralelismo
     vr_idparale := gene0001.fn_gera_id_paralelo;
     -- Se houver algum erro, vr_idparale será 0 (Zero)
@@ -321,7 +330,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS024(pr_cdcooper  in crapcop.cdcooper%t
        vr_dscritic := 'ID zerado na chamada a rotina gene0001.fn_gera_id_paralelo.';
        RAISE vr_exc_saida;
     END IF;
-    
+  
     -- Verifica se algum job paralelo executou com erro
     vr_qterro := 0;
     vr_qterro := gene0001.fn_ret_qt_erro_paralelo(pr_cdcooper    => pr_cdcooper,
@@ -331,7 +340,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS024(pr_cdcooper  in crapcop.cdcooper%t
                                                   pr_nrexecucao  => 1);
   exception
     when vr_exc_saida then
-      raise vr_exc_saida;
+    raise vr_exc_saida;
       
   end pc_iniciar_amb_paralel;
   
@@ -366,7 +375,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS024(pr_cdcooper  in crapcop.cdcooper%t
       if vr_dscritic is not null then
         -- Levantar exceçao
         raise vr_exc_saida;
-      end if;     
+  end if;
       -- Montar o bloco PLSQL que será executado
       -- Ou seja, executaremos a geração dos dados
       -- para a agência atual atraves de Job no banco
@@ -433,8 +442,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS024(pr_cdcooper  in crapcop.cdcooper%t
   procedure pc_pop_dados_acom_talonarios is
   begin
     vr_ind_associado := null;
-    -- Recupera a quantidade de folhas para cada tipo de conta
-    open cr_craptab (pr_cdcooper);
+  -- Recupera a quantidade de folhas para cada tipo de conta
+  open cr_craptab (pr_cdcooper);
     fetch cr_craptab into vr_nrflsind,
                           vr_nrflscon;
     if cr_craptab%notfound then
@@ -442,21 +451,21 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS024(pr_cdcooper  in crapcop.cdcooper%t
       vr_cdcritic := 183;
       raise vr_exc_saida;
     end if;
-    close cr_craptab;
+  close cr_craptab;
   
-    -- Define o nome do formulário
-    if pr_nrdevias > 1 then
-      vr_nmformul := lpad(pr_nrdevias, 2, ' ')||'vias';
-    else
-      vr_nmformul := ' ';
-    end if;
+  -- Define o nome do formulário
+  if pr_nrdevias > 1 then
+    vr_nmformul := lpad(pr_nrdevias, 2, ' ')||'vias';
+  else
+    vr_nmformul := ' ';
+  end if;
   
-    -- Carregar Contra-Ordens
+  -- Carregar Contra-Ordens
     for rw_crapcor in cr_crapcor (pr_cdcooper,pr_cdagenci) LOOP
-      vr_tab_crapcor(rw_crapcor.nrdconta):= 0;
-    end loop;
+    vr_tab_crapcor(rw_crapcor.nrdconta):= 0;
+  end loop;
   
-    -- Carregar Agencias
+  -- Carregar Agencias
     for rw_crapage in cr_crapage (pr_cdcooper
                                  ,pr_cdagenci
                                  ,vr_dtmvtolt
@@ -464,156 +473,163 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS024(pr_cdcooper  in crapcop.cdcooper%t
                                  ,vr_qterro
                                  ) LOOP
       vr_tab_crapage(rw_crapage.cdagenci) := rw_crapage.nmresage;
-    end loop;
+  end loop;
   
-    -- Carregar Dados dos Titulares                                            
+  -- Carregar Dados dos Titulares                                            
     for rw_crapttl in cr_crapttl (pr_cdcooper
                                  ,pr_cdagenci) LOOP
-      vr_tab_crapttl(rw_crapttl.nrdconta):= rw_crapttl.cdempres;
-    end loop;
+    vr_tab_crapttl(rw_crapttl.nrdconta):= rw_crapttl.cdempres;
+  end loop;
 
-    -- Carregar Dados dos Titulares - PJ
+  -- Carregar Dados dos Titulares - PJ
     for rw_crapjur in cr_crapjur (pr_cdcooper
                                  ,pr_cdagenci) LOOP
-      vr_tab_crapjur(rw_crapjur.nrdconta):= rw_crapjur.cdempres;
-    end loop;
+    vr_tab_crapjur(rw_crapjur.nrdconta):= rw_crapjur.cdempres;
+  end loop;
   
-    -- Carregar Dados dos Associados                                                 
+  -- Carregar Dados dos Associados                                                 
     for rw_crapass in cr_crapass (pr_cdcooper
                                  ,pr_cdagenci) LOOP
-      vr_tab_crapass(rw_crapass.nrdconta).cdagenci:= rw_crapass.cdagenci;
-      vr_tab_crapass(rw_crapass.nrdconta).nmprimtl:= rw_crapass.nmprimtl;
-      vr_tab_crapass(rw_crapass.nrdconta).cdtipcta:= rw_crapass.cdtipcta;
-      vr_tab_crapass(rw_crapass.nrdconta).cdsitdct:= rw_crapass.cdsitdct;
-      vr_tab_crapass(rw_crapass.nrdconta).inpessoa:= rw_crapass.inpessoa;
-    end loop;  
-    
-    -- Leitura e processamento dos cheques
-    vr_nrdconta := 0;
-    open cr_crapfdc (pr_cdcooper,pr_cdagenci);
-    loop
-      fetch cr_crapfdc BULK COLLECT INTO r_crapfdc LIMIT 250000;
-      exit when r_crapfdc.COUNT = 0; 
-      
-      idx:= r_crapfdc.first;
-      While idx is not null loop   
+    vr_tab_crapass(rw_crapass.nrdconta).cdagenci:= rw_crapass.cdagenci;
+    vr_tab_crapass(rw_crapass.nrdconta).nmprimtl:= rw_crapass.nmprimtl;
+    vr_tab_crapass(rw_crapass.nrdconta).cdtipcta:= rw_crapass.cdtipcta;
+    vr_tab_crapass(rw_crapass.nrdconta).cdcatego:= rw_crapass.cdcatego;
+    vr_tab_crapass(rw_crapass.nrdconta).cdsitdct:= rw_crapass.cdsitdct;
+    vr_tab_crapass(rw_crapass.nrdconta).inpessoa:= rw_crapass.inpessoa;
+  end loop;                                               
         
-        -- Verifica se passou a processar uma nova conta
-        if vr_nrdconta <> r_crapfdc(idx).nrdconta then
-          --
-          -- Recuperar informações da conta e do associado
-          if vr_tab_crapass.EXISTS(r_crapfdc(idx).nrdconta) then
-            vr_cdagenci:= vr_tab_crapass(r_crapfdc(idx).nrdconta).cdagenci;
-            vr_nmprimtl:= vr_tab_crapass(r_crapfdc(idx).nrdconta).nmprimtl;
-            vr_cdtipcta:= vr_tab_crapass(r_crapfdc(idx).nrdconta).cdtipcta;
-            vr_cdsitdct:= vr_tab_crapass(r_crapfdc(idx).nrdconta).cdsitdct;
-            vr_inpessoa:= vr_tab_crapass(r_crapfdc(idx).nrdconta).inpessoa;
-          else
-            -- Envio centralizado de log de erro
-            btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                      ,pr_ind_tipo_log => 2 -- Erro tratato
-                                      ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')   || ' - ' ||
-                                                          vr_cdprogra || ' --> '          ||
-                                                          gene0001.fn_busca_critica(9)    ||
-                                                          ' Conta: '||r_crapfdc(idx).nrdconta  ||
-                                                          ' Cheque: '||r_crapfdc(idx).nrcheque ||
-                                                          ' Banco: '||r_crapfdc(idx).cdbanchq);
-            continue;  
-          end if;                      
-          --
-          -- Recuperar informações da agência
-          if vr_tab_crapage.EXISTS(vr_cdagenci) then
-            vr_nmresage:= vr_tab_crapage(vr_cdagenci);
-          else
-            vr_nmresage := '***************';
-          end if;
-              
-          --
-          -- Verificar se tem contra-ordem
-          vr_contra_ordem:= vr_tab_crapcor.EXISTS(r_crapfdc(idx).nrdconta);
-          --
-          -- Recuperar o nome do titular da conta
-          if vr_inpessoa = 1 then
-            -- Pessoa física
-            if  vr_tab_crapttl.exists(r_crapfdc(idx).nrdconta) then
-              vr_cdempres:= vr_tab_crapttl(r_crapfdc(idx).nrdconta);
-            end if;  
-          else
-            -- Pessoa juridica
-            if  vr_tab_crapjur.exists(r_crapfdc(idx).nrdconta) then
-              vr_cdempres:= vr_tab_crapjur(r_crapfdc(idx).nrdconta);
-            end if;  
-          end if;
-          --
-          -- Identificar o tipo de conta (individual ou conjunta)
-          if vr_cdtipcta in (1,2,5,6,7,8,9,12,13,17,18) then
-            vr_intipcta := 1; -- Conta individual
-            vr_nmtipcta := 'CONTAS INDIVIDUAIS (TIPOS: 1,2,5,6,7,8,9,12,13,17,18)';
-            vr_nrflspad := vr_nrflsind;
-          elsif vr_cdtipcta in (3,4,10,11,14,15) then
-            vr_intipcta := 2; -- Conta conjunta
-            vr_nmtipcta := 'CONTAS CONJUNTAS (TIPOS: 3,4,10,11,14,15)';
-            vr_nrflspad := vr_nrflscon;
-          else
-            vr_cdcritic := 17; -- Tipo de conta errado
-            -- Envio centralizado de log de erro
-            btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
-                                      ,pr_ind_tipo_log => 2 -- Erro tratato
-                                      ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE')
-                                      ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
-                                                       || vr_cdprogra || ' --> '
-                                                       || gene0001.fn_busca_critica(vr_cdcritic) ||
+  -- Leitura e processamento dos cheques
+  vr_nrdconta := 0;
+    open cr_crapfdc (pr_cdcooper,pr_cdagenci);
+  loop
+    fetch cr_crapfdc BULK COLLECT INTO r_crapfdc LIMIT 250000;
+    exit when r_crapfdc.COUNT = 0; 
+    
+    idx:= r_crapfdc.first;
+    While idx is not null loop   
+        
+      -- Verifica se passou a processar uma nova conta
+      if vr_nrdconta <> r_crapfdc(idx).nrdconta then
+        --
+        -- Recuperar informações da conta e do associado
+        if vr_tab_crapass.EXISTS(r_crapfdc(idx).nrdconta) then
+          vr_cdagenci:= vr_tab_crapass(r_crapfdc(idx).nrdconta).cdagenci;
+          vr_nmprimtl:= vr_tab_crapass(r_crapfdc(idx).nrdconta).nmprimtl;
+          vr_cdtipcta:= vr_tab_crapass(r_crapfdc(idx).nrdconta).cdtipcta;
+          vr_cdcatego:= vr_tab_crapass(r_crapfdc(idx).nrdconta).cdcatego;
+          vr_cdsitdct:= vr_tab_crapass(r_crapfdc(idx).nrdconta).cdsitdct;
+          vr_inpessoa:= vr_tab_crapass(r_crapfdc(idx).nrdconta).inpessoa;
+        else
+          -- Envio centralizado de log de erro
+          btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                    ,pr_ind_tipo_log => 2 -- Erro tratato
+                                    ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')   || ' - ' ||
+                                                        vr_cdprogra || ' --> '          ||
+                                                        gene0001.fn_busca_critica(9)    ||
                                                         ' Conta: '||r_crapfdc(idx).nrdconta  ||
                                                         ' Cheque: '||r_crapfdc(idx).nrcheque ||
                                                         ' Banco: '||r_crapfdc(idx).cdbanchq);
-            -- Alimentar para não entrar em loop
-            vr_nrdconta := r_crapfdc(idx).nrdconta; 
-            idx:= r_crapfdc.next(idx);
-            continue;
-          end if;
-          -- Monta o índice utilizado para identificar a conta
-          vr_ind_associado := lpad(vr_intipcta, 2, '0')||lpad(r_crapfdc(idx).nrdconta, 10, '0');
-          -- Atualiza a variável de controle de agrupamento por conta
-          
-          vr_nrdconta := r_crapfdc(idx).nrdconta;
-        end if;
+          continue;  
+        end if;                      
         --
-        -- Processa os cheques e armazena informações nas PL/Tables
-        vr_tab_agencia(vr_cdagenci).nmresage := vr_nmresage;
-        vr_tab_agencia(vr_cdagenci).nrseqage := 1;
-        --
-        vr_tab_agencia(vr_cdagenci).tab_associado(vr_ind_associado).nmtipcta := vr_nmtipcta;
-        vr_tab_agencia(vr_cdagenci).tab_associado(vr_ind_associado).nrflspad := vr_nrflspad;
-        --
-        vr_tab_agencia(vr_cdagenci).tab_associado(vr_ind_associado).nrdconta := vr_nrdconta;
-        vr_tab_agencia(vr_cdagenci).tab_associado(vr_ind_associado).cdempres := vr_cdempres;
-        vr_tab_agencia(vr_cdagenci).tab_associado(vr_ind_associado).nmprimtl := vr_nmprimtl;
-        vr_tab_agencia(vr_cdagenci).tab_associado(vr_ind_associado).cdtipcta := vr_cdtipcta;
-        vr_tab_agencia(vr_cdagenci).tab_associado(vr_ind_associado).cdsitdct := vr_cdsitdct;
-        vr_tab_agencia(vr_cdagenci).tab_associado(vr_ind_associado).intipcta := vr_intipcta;
-        --
-        if r_crapfdc(idx).dtretchq is not null then
-          if vr_contra_ordem and r_crapfdc(idx).incheque in (0,2) then
-              vr_tab_agencia(vr_cdagenci).tab_associado(vr_ind_associado).qtchqtal := nvl(vr_tab_agencia(vr_cdagenci).tab_associado(vr_ind_associado).qtchqtal, 0) + 1;             
-          end if;
-        end if;
-        
-        -- Acumula o cheque no totalizador correto
-        if r_crapfdc(idx).dtretchq is not null then
-          if r_crapfdc(idx).dtliqchq is not null then
-            vr_tab_agencia(vr_cdagenci).qttaluso := nvl(vr_tab_agencia(vr_cdagenci).qttaluso, 0) + 1;
-            vr_tot_qttaluso := nvl(vr_tot_qttaluso, 0) + 1;
-          else
-            vr_tab_agencia(vr_cdagenci).qttalret := nvl(vr_tab_agencia(vr_cdagenci).qttalret, 0) + 1;
-            vr_tot_qttalret := nvl(vr_tot_qttalret, 0) + 1;
-          end if;
+        -- Recuperar informações da agência
+        if vr_tab_crapage.EXISTS(vr_cdagenci) then
+          vr_nmresage:= vr_tab_crapage(vr_cdagenci);
         else
-          vr_tab_agencia(vr_cdagenci).qttalarq := nvl(vr_tab_agencia(vr_cdagenci).qttalarq, 0) + 1;
-          vr_tot_qttalarq := nvl(vr_tot_qttalarq, 0) + 1;
+          vr_nmresage := '***************';
         end if;
+            
+        --
+        -- Verificar se tem contra-ordem
+        vr_contra_ordem:= vr_tab_crapcor.EXISTS(r_crapfdc(idx).nrdconta);
+        --
+        -- Recuperar o nome do titular da conta
+        if vr_inpessoa = 1 then
+          -- Pessoa física
+          if  vr_tab_crapttl.exists(r_crapfdc(idx).nrdconta) then
+            vr_cdempres:= vr_tab_crapttl(r_crapfdc(idx).nrdconta);
+          end if;  
+        else
+          -- Pessoa juridica
+          if  vr_tab_crapjur.exists(r_crapfdc(idx).nrdconta) then
+            vr_cdempres:= vr_tab_crapjur(r_crapfdc(idx).nrdconta);
+          end if;  
+        end if;
+        --
+        -- Identificar o tipo de conta (individual ou conjunta)
+        if vr_cdcatego = 1 then
+          vr_intipcta := 1; -- Conta individual
+          vr_nmtipcta := 'CONTAS INDIVIDUAIS';
+          vr_nrflspad := vr_nrflsind;
+        elsif vr_cdcatego in (2,3) then
+          vr_intipcta := 2; -- Conta conjunta
+          vr_nmtipcta := 'CONTAS CONJUNTAS';
+          vr_nrflspad := vr_nrflscon;
+        else
+          vr_cdcritic := 17; -- Tipo de conta errado
+          -- Envio centralizado de log de erro
+          btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper
+                                    ,pr_ind_tipo_log => 2 -- Erro tratato
+                                    ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED',pr_cdcooper,'NOME_ARQ_LOG_MESSAGE')
+                                    ,pr_des_log      => to_char(sysdate,'hh24:mi:ss')||' - '
+                                                     || vr_cdprogra || ' --> '
+                                                     || gene0001.fn_busca_critica(vr_cdcritic) ||
+                                                      ' Conta: '||r_crapfdc(idx).nrdconta  ||
+                                                      ' Cheque: '||r_crapfdc(idx).nrcheque ||
+                                                      ' Banco: '||r_crapfdc(idx).cdbanchq);
+          -- Alimentar para não entrar em loop
+          vr_nrdconta := r_crapfdc(idx).nrdconta; 
+          idx:= r_crapfdc.next(idx);
+
+		  -- Monta o índice utilizado para identificar a conta
+          vr_ind_associado := lpad(vr_intipcta, 2, '0')||lpad(r_crapfdc(idx).nrdconta, 10, '0');
+
+          continue;
+        end if;
+        -- Monta o índice utilizado para identificar a conta
+        vr_ind_associado := lpad(vr_intipcta, 2, '0')||lpad(r_crapfdc(idx).nrdconta, 10, '0');
+        -- Atualiza a variável de controle de agrupamento por conta
+          
+        vr_nrdconta := r_crapfdc(idx).nrdconta;
+      end if;
+      --
+      -- Processa os cheques e armazena informações nas PL/Tables
+      vr_tab_agencia(vr_cdagenci).nmresage := vr_nmresage;
+      vr_tab_agencia(vr_cdagenci).nrseqage := 1;
+      --
+      vr_tab_agencia(vr_cdagenci).tab_associado(vr_ind_associado).nmtipcta := vr_nmtipcta;
+      vr_tab_agencia(vr_cdagenci).tab_associado(vr_ind_associado).nrflspad := vr_nrflspad;
+      --
+      vr_tab_agencia(vr_cdagenci).tab_associado(vr_ind_associado).nrdconta := vr_nrdconta;
+      vr_tab_agencia(vr_cdagenci).tab_associado(vr_ind_associado).cdempres := vr_cdempres;
+      vr_tab_agencia(vr_cdagenci).tab_associado(vr_ind_associado).nmprimtl := vr_nmprimtl;
+      vr_tab_agencia(vr_cdagenci).tab_associado(vr_ind_associado).cdtipcta := vr_cdtipcta;
+      vr_tab_agencia(vr_cdagenci).tab_associado(vr_ind_associado).cdcatego := vr_cdcatego;
+      vr_tab_agencia(vr_cdagenci).tab_associado(vr_ind_associado).cdsitdct := vr_cdsitdct;
+        vr_tab_agencia(vr_cdagenci).tab_associado(vr_ind_associado).intipcta := vr_intipcta;
+      --
+      if r_crapfdc(idx).dtretchq is not null then
+        if vr_contra_ordem and r_crapfdc(idx).incheque in (0,2) then
+            vr_tab_agencia(vr_cdagenci).tab_associado(vr_ind_associado).qtchqtal := nvl(vr_tab_agencia(vr_cdagenci).tab_associado(vr_ind_associado).qtchqtal, 0) + 1;
+        end if;
+      end if;
         
-        --Proximo registro
-        idx:= r_crapfdc.next(idx);
+      -- Acumula o cheque no totalizador correto
+      if r_crapfdc(idx).dtretchq is not null then
+        if r_crapfdc(idx).dtliqchq is not null then
+          vr_tab_agencia(vr_cdagenci).qttaluso := nvl(vr_tab_agencia(vr_cdagenci).qttaluso, 0) + 1;
+          vr_tot_qttaluso := nvl(vr_tot_qttaluso, 0) + 1;
+        else
+          vr_tab_agencia(vr_cdagenci).qttalret := nvl(vr_tab_agencia(vr_cdagenci).qttalret, 0) + 1;
+          vr_tot_qttalret := nvl(vr_tot_qttalret, 0) + 1;
+        end if;
+      else
+        vr_tab_agencia(vr_cdagenci).qttalarq := nvl(vr_tab_agencia(vr_cdagenci).qttalarq, 0) + 1;
+        vr_tot_qttalarq := nvl(vr_tot_qttalarq, 0) + 1;
+      end if;
+        
+      --Proximo registro
+      idx:= r_crapfdc.next(idx);
         
         if idx is not null then
           
@@ -631,10 +647,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS024(pr_cdcooper  in crapcop.cdcooper%t
         
         end if;
         
-      end loop;  
+    end loop;  
     
-    end loop;
-    
+  end loop;
+  
     if vr_ind_associado is not null then
       --Ugly but necessary, check twice :|
       if vr_tab_agencia(vr_cdagenci).tab_associado(vr_ind_associado).qtchqtal > 
@@ -1022,7 +1038,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS024(pr_cdcooper  in crapcop.cdcooper%t
   
   
   begin
-    vr_indice_agencia := vr_tab_agencia.first;
+  vr_indice_agencia := vr_tab_agencia.first;
   -- Se houver informação, deve criar o arquivo
   if vr_indice_agencia is not null then
     -- Inicializar o CLOB
@@ -1428,13 +1444,13 @@ begin
                       pr_tpexecucao => vr_tpexecucao,          -- Tipo de execucao (0-Outro/ 1-Batch/ 2-Job/ 3-Online)
                       pr_idprglog   => vr_idlog_ini,
                       pr_flgsucesso => 1); 
-    end if;
-  
-    -- Processo OK, devemos chamar a fimprg
-    btch0001.pc_valida_fimprg(pr_cdcooper => pr_cdcooper
-                             ,pr_cdprogra => vr_cdprogra
-                             ,pr_infimsol => pr_infimsol
-                             ,pr_stprogra => pr_stprogra);
+  end if;
+
+  -- Processo OK, devemos chamar a fimprg
+  btch0001.pc_valida_fimprg(pr_cdcooper => pr_cdcooper
+                           ,pr_cdprogra => vr_cdprogra
+                           ,pr_infimsol => pr_infimsol
+                           ,pr_stprogra => pr_stprogra);
 
 
                                  
