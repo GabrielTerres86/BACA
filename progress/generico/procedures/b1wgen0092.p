@@ -2,7 +2,7 @@
 
    Programa: b1wgen0092.p                  
    Autora  : André - DB1
-   Data    : 04/05/2011                        Ultima atualizacao: 07/03/2018
+   Data    : 04/05/2011                        Ultima atualizacao: 26/03/2018
     
    Dados referentes ao programa:
    
@@ -206,6 +206,9 @@
               07/11/2017 - Retornar indicador de situacao e descricao de protocolo
                            na consulta de autorizacoes e lancamentos (David).
                          
+              12/12/2017 - Alterar campo flgcnvsi por tparrecd.
+                           PRJ406-FGTS (Odirlei-AMcom)                 
+                           
               20/12/2017 - Gravar dtiniatr e dtfimsus ou dtinisus como proximo dia util para convenios
                            sicredi no ultimo dia nao util do ano (Lucas Ranghetti #809954)
 
@@ -215,6 +218,13 @@
                            
               07/03/2018 - Alterar validacao do digito do samae Pomerode para validar com o modulo 11
                            (Lucas Ranghetti #858121).
+                           
+              23/03/2018 - Validar se empresa do codigo de barras e igual ao cadastrado na base 
+                           (Lucas Ranghetti #856427)
+                           
+              26/03/2018 - Incluir tratamento no cancelamento e recadastramento, para 
+                           quando nao for o ultimo dia util do ano, grave a data como 
+                           dia atual (Lucas Ranghetti #860768)
                            
               03/04/2018 - Adicionada chamada pc_valida_adesao_produto para verificar se o tipo de conta 
                            permite a contrataçao do produto. PRJ366 (Lombardi).
@@ -1177,7 +1187,7 @@ PROCEDURE valida-dados:
                   DO:
                       LEAVE Valida.
                   END.
-                /*
+                
                 /* buscar quantidade maxima de digitos aceitos para o convenio */
                 { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
                               
@@ -1208,7 +1218,7 @@ PROCEDURE valida-dados:
                                             WHEN pc_retorna_referencia_conv.pr_cdcritic <> ?
                          aux_dscritic = pc_retorna_referencia_conv.pr_dscritic
                                             WHEN pc_retorna_referencia_conv.pr_dscritic <> ?.        
-                  */            
+                              
                 IF  par_cdhistor = 0 THEN
                     DO:
                         ASSIGN aux_dscritic = "Convenio nao selecionado."
@@ -1758,7 +1768,7 @@ PROCEDURE grava-dados:
     DEF VAR aux_cdhistor AS INTE                                    NO-UNDO.
     DEF VAR aux_tpautori AS INTE                                    NO-UNDO.
     DEF VAR aux_flgmaxdb AS LOGI                                    NO-UNDO.
-    DEF VAR aux_flgsicre AS LOGI                                    NO-UNDO.
+    DEF VAR aux_tparrecd AS INTE                                    NO-UNDO.
     DEF VAR aux_flgachtr AS LOGI                                    NO-UNDO.
     DEF VAR aux_nmdcampo AS CHAR                                    NO-UNDO.   
     DEF VAR aux_dsnomcnv AS CHAR                                    NO-UNDO.    
@@ -1768,6 +1778,8 @@ PROCEDURE grava-dados:
     DEF VAR aux_nrdrowid AS ROWID                                   NO-UNDO.
     DEF VAR aux_dtamenor AS DATE                                    NO-UNDO.
     DEF VAR aux_dtmvtolt AS DATE                                    NO-UNDO.
+    DEF VAR aux_emconbar AS INTE                                    NO-UNDO.
+    DEF VAR aux_segmtbar AS CHAR                                    NO-UNDO.
     
     EMPTY TEMP-TABLE tt-erro.
 
@@ -1879,10 +1891,10 @@ PROCEDURE grava-dados:
         /* Associa corretamente ao histórico SICREDI */
         IF  par_flgsicre = "S" THEN
             ASSIGN aux_cdhistor = 1019
-                   aux_flgsicre = TRUE.
+                   aux_tparrecd = 1.
         ELSE 
             ASSIGN aux_cdhistor = INT(par_cdhistor)
-                   aux_flgsicre = FALSE.
+                   aux_tparrecd = 3.
             
         IF  aux_cdhistor = 1019 THEN
             DO:
@@ -1964,7 +1976,7 @@ PROCEDURE grava-dados:
                             DO:
                                 ASSIGN aux_cdempcon = crapcon.cdempcon 
                                        aux_cdsegmto = STRING(crapcon.cdsegmto)
-                                       aux_flgsicre = crapcon.flgcnvsi
+                                       aux_tparrecd = crapcon.tparrecd
                                        aux_cdhistor = IF crapcon.cdhistor = 1154 THEN 1019 ELSE aux_cdhistor.
                             END.
                     END.    
@@ -1979,19 +1991,23 @@ PROCEDURE grava-dados:
                                                        SUBSTR(STRING(par_fatura04,"999999999999"),1,11).
 
                                 ASSIGN  aux_cdempcon  = INT(SUBSTR(aux_vlrcalcu,16,4))
-                                        aux_cdsegmto  = SUBSTR(aux_vlrcalcu,2,1).
+                                        aux_cdsegmto  = SUBSTR(aux_vlrcalcu,2,1)
+                                        aux_emconbar  = aux_cdempcon
+                                        aux_segmtbar  = aux_cdsegmto.
                             END.
                         /* Retirar empresa e semgto do cod de barras */
                         ELSE 
                             DO:
                                 ASSIGN aux_cdempcon   = INT(SUBSTR(par_codbarra,16,4))
                                        aux_cdsegmto   = SUBSTR(par_codbarra,2,1)
-                                       aux_vlrcalcu   = par_codbarra.
+                                       aux_vlrcalcu   = par_codbarra
+                                       aux_emconbar  = aux_cdempcon
+                                       aux_segmtbar  = aux_cdsegmto.
                             END.                    
                     END.
                     
                 /* Se for SICREDI... */
-                IF  aux_flgsicre = TRUE THEN
+                IF  aux_tparrecd = 1 THEN
                     DO:
                         /* Caso a empresa e segmento estejam zerados */
                         IF  INT(aux_cdempcon) = 0 AND 
@@ -2023,7 +2039,8 @@ PROCEDURE grava-dados:
                                 UNDO Grava, LEAVE Grava.
                             END.                           
                     END.
-                ELSE
+                /* Se for CECRED... */    
+                ELSE IF  aux_tparrecd = 3 THEN
                     DO:
                         FIND FIRST gnconve WHERE gnconve.flgativo = TRUE            AND
                                                 (gnconve.cdhisdeb = aux_cdhistor    AND
@@ -2045,6 +2062,14 @@ PROCEDURE grava-dados:
                             END.
 
                     END.
+                /* Se for Bancoob... */    
+                ELSE IF aux_tparrecd = 2 THEN
+                    DO:
+                        /* Bancoob nao permite deb.aut. */                                            
+                        ASSIGN aux_dscritic = "Convenio indisponivel para Debito Automatico.".
+                        UNDO Grava, LEAVE Grava.
+                    
+                    END.    
                     
                 /* registra tp com base no idorigem, AUTORI = 0. Assim, se <> 0 entao é Debito Fácil */
                 IF  par_idorigem = 3 /* IBANK */    OR 
@@ -2133,11 +2158,14 @@ PROCEDURE grava-dados:
                     aux_cdhistor = 31     THEN 
                     DO:
                         /* Se for SICREDI... */
-                        IF  aux_flgsicre = TRUE THEN
+                        IF  aux_tparrecd = 1 THEN
                             DO:
-                                /* Caso a empresa e segmento estejam zerados */
+                                /* Caso a empresa e segmento estejam zerados ou a empresa seja diferente 
+                                   da do codigo de barras */
                                 IF  INT(aux_cdempcon) = 0 OR 
-                                    INT(aux_cdsegmto) = 0 THEN
+                                    INT(aux_cdsegmto) = 0 OR 
+                                    aux_cdempcon <> aux_emconbar OR
+                                    aux_cdsegmto <> aux_segmtbar THEN
                                     DO:
                                         ASSIGN aux_dscritic = "Operacao nao finalizada, tente novamente.".
                                         UNDO Grava, LEAVE Grava.
@@ -2171,7 +2199,7 @@ PROCEDURE grava-dados:
                 BUFFER-COPY crapatr TO tt-autori-atl.
                     
                 /* Verificar se ja possui conta sicredi*/
-                IF  aux_flgsicre = TRUE  AND
+                IF  aux_tparrecd = 1  AND
                     crapass.nrctacns = 0 THEN
                     DO:
                         /* Caso nao possua deve gerar */
@@ -2350,6 +2378,8 @@ PROCEDURE grava-dados:
                                                     OUTPUT aux_dtmvtolt).     
                                 
                             END.
+                        ELSE
+                            ASSIGN aux_dtmvtolt = par_dtmvtolt.
                     END.    
 
                 IF  par_cddopcao = "R" THEN
@@ -2493,7 +2523,8 @@ PROCEDURE busca_convenios_codbarras:
         ASSIGN aux_nmempcon = ""
                aux_nmresumi = "".
                            
-        IF  crapcon.flgcnvsi = TRUE THEN
+        /* Sicredi */                   
+        IF  crapcon.tparrecd = 1 THEN
             DO:
                 FIND FIRST crapscn WHERE (crapscn.cdempcon = crapcon.cdempcon          AND
                                           crapscn.cdempcon <> 0)                       AND
@@ -2509,7 +2540,9 @@ PROCEDURE busca_convenios_codbarras:
                   ELSE
                       ASSIGN aux_nmempcon = crapscn.dsnomcnv.
             END.
-        ELSE
+        
+        /* Cecred */
+        ELSE IF  crapcon.tparrecd = 3 THEN
             DO:                
                 /* Iremos buscar tambem o convenio aguas de schroeder(87) pois possui dois codigos e a 
                    busca anterior nao funciona */
@@ -2539,6 +2572,14 @@ PROCEDURE busca_convenios_codbarras:
 					   gnconve.cdconven <> 108 THEN
 						ASSIGN aux_nmempcon = gnconve.nmempres.
             END.
+         /* Bancoob */
+        ELSE IF crapcon.tparrecd = 2 THEN
+            DO:                
+                /* No caso do bancoob deve utilizar dados da crapcon,
+                   pois na tabela nao existe esses dados */
+                ASSIGN aux_nmresumi = ""
+                       aux_nmempcon = "".                
+            END.   
             
          IF aux_nmresumi <> "" THEN
           ASSIGN aux_nmempcon = aux_nmresumi.
@@ -2553,7 +2594,7 @@ PROCEDURE busca_convenios_codbarras:
                tt-convenios-codbarras.cdempcon = crapcon.cdempcon
                tt-convenios-codbarras.cdsegmto = crapcon.cdsegmto
                tt-convenios-codbarras.cdhistor = IF AVAIL gnconve THEN gnconve.cdhisdeb ELSE crapcon.cdhistor
-               tt-convenios-codbarras.flgcnvsi = crapcon.flgcnvsi.
+               tt-convenios-codbarras.flgcnvsi = IF crapcon.tparrecd = 1 THEN TRUE ELSE FALSE.
                
        RELEASE crapcon.
        RELEASE gnconve.
@@ -5967,7 +6008,7 @@ PROCEDURE valida_senha_cooperado:
    DEF VAR aux_cdcritic AS INT                                     NO-UNDO.
    DEF VAR aux_dscritic AS CHAR                                    NO-UNDO.
    DEF VAR aux_flgsevld AS LOGICAL                                 NO-UNDO.   
-   DEF VAR aux_dscteste AS CHAR                                     NO-UNDO.
+  
    ASSIGN aux_cdcritic = 0
           aux_dscritic = ""
           aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
@@ -5999,25 +6040,7 @@ PROCEDURE valida_senha_cooperado:
            END.
    END.
       END. 
-   /* Amasonas - Supero - Validaçao senha Online*/   
-    IF  aux_flgsevld = FALSE THEN 
-      DO:
-          FOR EACH crapsnh FIELDS (cddsenha) 
-                           WHERE  crapsnh.cdcooper = par_cdcooper
-                             AND  crapsnh.nrdconta = par_nrdconta
-                             AND  crapsnh.tpdsenha = 1 /*internet*/ 
-                             NO-LOCK:                
-              DO:        
-              IF  CAPS(ENCODE(STRING(par_cddsenha,"999999"))) = CAPS(crapsnh.cddsenha) THEN
-                  DO:
-                      ASSIGN aux_flgsevld = TRUE.
-                      LEAVE.
-              END.
-             END.
               
-      END.
-    END.
-  /*Fim validaçao senha online */
   IF  aux_flgsevld = FALSE THEN
       DO:
           ASSIGN aux_cdcritic  = 0
