@@ -207,6 +207,7 @@ function controlaOpcao() {
 
 // cabecalho
 function formataCabecalho() {
+    $('#divTela').css({'width': '890px'});
 
     // Label
     rCddopcao = $('label[for="cddopcao"]', '#' + frmCab);

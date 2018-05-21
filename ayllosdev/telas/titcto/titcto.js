@@ -38,6 +38,7 @@ $(document).ready(function() {
 function estadoInicial() {
 
     $('#divTela').fadeTo(0, 0.1);
+    $('#divTela').css({'width': '1057px'});
 
     // retira as mensagens  
     hideMsgAguardo();
@@ -361,11 +362,11 @@ function controlaAssociado() {
             showError('error', 'Associado n&atilde;o cadastrado.', 'Alerta - Ayllos', '$(\'#' + cNrdconta.attr("id") + '\',\'#frmOpcao\').select();');
         }
         else{
-        cNrcpfcgc.desabilitaCampo();
-        cFlresgat.habilitaCampo();
-        $('#' + frmOpcao +' .listar_resgatados').show();
-        $('#' + frmOpcao +' .tipo_cobranca').show();
-        cTpcobran.habilitaCampo().focus();
+            cNrcpfcgc.desabilitaCampo();
+            cFlresgat.habilitaCampo();
+            $('#' + frmOpcao +' .listar_resgatados').show();
+            $('#' + frmOpcao +' .tipo_cobranca').show();
+            cTpcobran.habilitaCampo().focus();
         }
     } else if (cddopcao == 'Q') {
         if(cNrdconta.val()=='0'){
@@ -375,8 +376,8 @@ function controlaAssociado() {
             showError('error', 'Associado n&atilde;o cadastrado.', 'Alerta - Ayllos', '$(\'#' + cNrdconta.attr("id") + '\',\'#frmOpcao\').select();');
         }
         else{
-        cNrcpfcgc.desabilitaCampo();
-        $('#' + frmOpcao +' .tipo_cobranca').show();
+            cNrcpfcgc.desabilitaCampo();
+            $('#' + frmOpcao +' .tipo_cobranca').show();
         }
         cTpcobran.habilitaCampo().focus();
     } else if (cddopcao == 'F') {
@@ -390,11 +391,11 @@ function controlaAssociado() {
             showError('error', 'Associado n&atilde;o cadastrado.', 'Alerta - Ayllos', '$(\'#' + cNrdconta.attr("id") + '\',\'#frmOpcao\').select();');
         }
         else{
-        $('#' + frmOpcao + ' fieldset:eq(1)').show();
-        cTpdepesq.habilitaCampo().focus();
-        cNrdocmto.habilitaCampo();
-        cVltitulo.habilitaCampo();
-    }
+            $('#' + frmOpcao + ' fieldset:eq(1)').show();
+            cTpdepesq.habilitaCampo().focus();
+            cNrdocmto.habilitaCampo();
+            cVltitulo.habilitaCampo();
+        }
     }
 
     hideMsgAguardo();
@@ -1483,6 +1484,7 @@ function btnContinuar() {
 
     if(cddopcao == 'B'){
 
+
         var dtmvtoltarr = dtmvtolt.split("/");
         var dtmvtolt_convert = new Date(Date.UTC(dtmvtoltarr[2], dtmvtoltarr[1]-1, dtmvtoltarr[0], 0, 0, 0));
 
@@ -1514,16 +1516,19 @@ function btnContinuar() {
             hideMsgAguardo();
             showError("error","Informe um intervalo de até 60 dias.","Alerta - Ayllos","cDtfimper.focus()");
         
+        //}else if (cDtiniper.val() > cDtfimper.val()){
         }else if (cDtiniper_convert_time > cDtfimper_convert_time){
         
             hideMsgAguardo();
             showError("error","Data de in&iacute;cio do periodo deve ser menor ou igual a data final","Alerta - Ayllos","cDtiniper.focus()");
         
+        //}else if (cDtiniper.val() > dtmvtolt){
         }else if (cDtiniper_convert_time > dtmvtolt_convert_time){
         
             hideMsgAguardo();
             showError("error","Data de in&iacute;cio do per&iacute;odo deve ser menor ou igual do que a data de movimentação do sistema","Alerta - Ayllos","cDtiniper.focus()");
         
+        //}else if(cDtfimper.val() > dtmvtolt){
         }else if(cDtfimper_convert_time > dtmvtolt_convert_time){
         
             hideMsgAguardo();
@@ -1533,8 +1538,11 @@ function btnContinuar() {
         else {
             gerarImpressaoBorderoNaoLiberado();
         }
-        
+
+
     } else if(cddopcao == 'C'){
+        
+
         if ((!cNrdconta.hasClass('campoTelaSemBorda'))) {
             hideMsgAguardo();
             cNrdconta.keypress();
