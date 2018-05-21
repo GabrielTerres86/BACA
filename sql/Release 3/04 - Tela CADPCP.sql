@@ -6,14 +6,14 @@
     Objetivo    : Realizar o cadastro da nova tela CADPCP no Ayllos Web
   ---------------------------------------------------------------------------------------------------------------------*/
 
-begin
+BEGIN
 
 -- remove qualquer "lixo" de BD que possa ter  
-delete from craptel where nmdatela = 'CADPCP';
-delete from crapace where nmdatela = 'CADPCP';
-delete from crapprg where cdprogra = 'CADPCP';
-delete from crapaca where nrseqrdr = (select nrseqrdr from craprdr where nmprogra = 'TELA_CADPCP') ;
-delete from craprdr where nmprogra = 'TELA_CADPCP';
+/*
+DELETE FROM craptel WHERE nmdatela = 'CADPCP';
+DELETE FROM crapace WHERE nmdatela = 'CADPCP';
+DELETE FROM crapprg WHERE cdprogra = 'CADPCP';
+*/
 
 -- Insere a tela
 INSERT INTO craptel 
@@ -52,10 +52,9 @@ INSERT INTO craptel
            '', 
            2 
       FROM crapcop          
-     WHERE flgativo = 1; 
+     WHERE cdcooper IN (SELECT cdcooper FROM crapprm WHERE cdacesso = 'FL_VIRADA_BORDERO' AND dsvlrprm = '1'); 
 
--- Insere as permissões de acesso para a tela
-                       
+-- Permissões de consulta para os usuários pré-definidos pela CECRED                       
 INSERT INTO crapace
     (nmdatela,
      cddopcao,
@@ -65,29 +64,7 @@ INSERT INTO crapace
      nrmodulo,   
      idevento,   
      idambace)
-    SELECT 'CADPCP', -- permisssões de consulta para o super usuário 
-           'C',
-           '1',
-           ' ',
-           cdcooper,
-           1,
-           0,
-           2
-      FROM crapcop
-     WHERE flgativo = 1
-     UNION 
-    SELECT 'CADPCP', -- permisssões de alteração para o super usuário
-           'A',
-           '1',
-           ' ',
-           cdcooper,
-           1,
-           0,
-           2
-      FROM crapcop
-     WHERE flgativo = 1 
-     UNION
-    SELECT 'CADPCP', -- permissões de consulta para os usuários pré-definidos pela CECRED
+    SELECT 'CADPCP', 
            'C',
            ope.cdoperad,
            ' ',
@@ -97,10 +74,11 @@ INSERT INTO crapace
            2
       FROM crapcop cop,
            crapope ope
-     WHERE cop.flgativo = 1
+     WHERE cop.cdcooper IN (SELECT cdcooper FROM crapprm WHERE cdacesso = 'FL_VIRADA_BORDERO' AND dsvlrprm = '1')
        AND ope.cdsitope = 1 
        AND cop.cdcooper = ope.cdcooper
-       AND trim(upper(ope.cdoperad)) IN ('F0030584',
+       AND trim(upper(ope.cdoperad)) IN ('1', -- super usuário
+                                         'F0030584',
                                          'F0030521',
                                          'F0030066',
                                          'F0030688',
@@ -115,9 +93,19 @@ INSERT INTO crapace
                                          'F0031090',
                                          'F0031810',
                                          'F0031809',
-                                         'F0031803')
-     UNION
-    SELECT 'CADPCP', -- permissões de alteração para os usuários pré-definidos pela CECRED
+                                         'F0031803');
+
+-- Permissões de consulta para os usuários pré-definidos pela CECRED
+INSERT INTO crapace
+    (nmdatela,
+     cddopcao,
+     cdoperad,   
+     nmrotina,   
+     cdcooper,   
+     nrmodulo,   
+     idevento,   
+     idambace)
+    SELECT 'CADPCP', 
            'A',
            ope.cdoperad,
            ' ',
@@ -127,10 +115,11 @@ INSERT INTO crapace
            2
       FROM crapcop cop,
            crapope ope
-     WHERE cop.flgativo = 1
+     WHERE cop.cdcooper IN (SELECT cdcooper FROM crapprm WHERE cdacesso = 'FL_VIRADA_BORDERO' AND dsvlrprm = '1')
        AND ope.cdsitope = 1 
        AND cop.cdcooper = ope.cdcooper
-       AND trim(upper(ope.cdoperad)) IN ('F0030584',
+       AND trim(upper(ope.cdoperad)) IN ('1', -- super usuário
+                                         'F0030584',
                                          'F0030521',
                                          'F0030066',
                                          'F0030688',
@@ -182,18 +171,7 @@ INSERT INTO crapprg
            1,
            cdcooper
       FROM crapcop          
-     WHERE flgativo = 1;
-
--- Insere os registros de acesso a inteface web via mensageria
-INSERT INTO craprdr (nrseqrdr, nmprogra, dtsolici)
-     VALUES (SEQRDR_NRSEQRDR.NEXTVAL, 'TELA_CADPCP', SYSDATE);
-
-INSERT INTO crapaca (nrseqaca, nmdeacao, nmpackag, nmproced, lstparam, nrseqrdr)
-     VALUES (SEQACA_NRSEQACA.NEXTVAL, 'CADPCP_BUSCA_CONTA', 'TELA_CADPCP', 'pc_busca_conta', 'pr_nrdconta', (SELECT nrseqrdr FROM craprdr WHERE nmprogra = 'TELA_CADPCP'));
-
-INSERT INTO crapaca (nrseqaca, nmdeacao, nmpackag, nmproced, lstparam, nrseqrdr)
-     VALUES (SEQACA_NRSEQACA.NEXTVAL, 'CADPCP_ALTERAR_PAGADOR', 'TELA_CADPCP', 'pc_alterar_pagador', 'pr_nrdconta,pr_nrinssac,pr_vlpercen', (SELECT nrseqrdr FROM craprdr WHERE nmprogra = 'TELA_CADPCP'));
-
+     WHERE cdcooper IN (SELECT cdcooper FROM crapprm WHERE cdacesso = 'FL_VIRADA_BORDERO' AND dsvlrprm = '1');
 
 commit;
 end;
