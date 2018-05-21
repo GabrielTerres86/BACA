@@ -6,7 +6,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_AGENDEB(pr_cdcooper in crapcop.cdcoope
    JOB: PC_JOB_AGENDEB
    Sistema : Conta-Corrente - Cooperativa de Credito
    Autor   : Odirlei Busana - AMcom
-   Data    : Novembro/2015.                     Ultima atualizacao: 02/08/2017
+   Data    : Novembro/2015.                     Ultima atualizacao: 18/05/2018
 
    Dados referentes ao programa:
 
@@ -53,6 +53,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_AGENDEB(pr_cdcooper in crapcop.cdcoope
                             
                11/01/2018 - Ajustado rotina para executar debitos agendados do bancoob DEBBAN.
                             PRJ406 - FGTS (Odirlei-AMcom)
+
+			   18/05/2018 - Ajuste para chamada do reagendamento do crps688 quando o mesmo ja
+			                havia sido reagendado anteriormente. (PRB0040045) - (Fabricio)
                             
   ..........................................................................*/
       ------------------------- VARIAVEIS PRINCIPAIS ------------------------------
@@ -78,6 +81,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_AGENDEB(pr_cdcooper in crapcop.cdcoope
     vr_tempo       NUMBER;
     vr_minuto      NUMBER;
     vr_minutos     NUMBER;   -- Tempo em minutos
+    
+    vr_dsjobnam     VARCHAR2(100);
     
     -- Variáveis de controle de calendário
     rw_crapdat     BTCH0001.cr_crapdat%ROWTYPE;    
@@ -487,7 +492,13 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_AGENDEB(pr_cdcooper in crapcop.cdcoope
         -- Transformar minuto em milisegundo  
         vr_tempo := vr_minutos/60/24;
  
-        pc_reprograma_job(pr_job_name => pr_dsjobnam,
+        if pr_cdprogra = 'CRPS688' then
+          vr_dsjobnam := substr(pr_dsjobnam, 1, 17);
+        else
+          vr_dsjobnam := pr_dsjobnam;
+        end if;
+ 
+        pc_reprograma_job(pr_job_name => vr_dsjobnam,
                           pr_dtreagen => SYSDATE + vr_tempo, --> reagendar para daqui a 5 min.
                           pr_dscritic => vr_dscritic);
         -- se retornou critica
