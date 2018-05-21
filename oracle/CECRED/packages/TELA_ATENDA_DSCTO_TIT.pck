@@ -711,7 +711,15 @@ PROCEDURE pc_busca_borderos_web (pr_nrdconta IN crapass.nrdconta%TYPE  --> Númer
                                   ,pr_nmdcampo OUT VARCHAR2          --> Nome do campo com erro
                                   ,pr_des_erro OUT VARCHAR2      --> Erros do processo
                                   ); 
-                            
+ 
+PROCEDURE pc_contingencia_ibratan_web(pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
+                                 --------> OUT <--------
+                                 ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
+                                 ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
+                                 ,pr_retxml   IN OUT NOCOPY xmltype    --> arquivo de retorno do xml
+                                 ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
+                                 ,pr_des_erro OUT VARCHAR2             --> Erros do processo
+                                 );                            
 END TELA_ATENDA_DSCTO_TIT;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_DSCTO_TIT IS
@@ -8044,5 +8052,113 @@ PROCEDURE pc_buscar_tit_bordero_web (
                                            '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
     END pc_busca_borderos_web;
     
+  PROCEDURE pc_contingencia_ibratan_web(pr_xmllog   IN VARCHAR2              --> XML com informações de LOG
+                                 --------> OUT <--------
+                                 ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
+                                 ,pr_dscritic OUT VARCHAR2             --> Descrição da crítica
+                                 ,pr_retxml   IN OUT NOCOPY xmltype    --> arquivo de retorno do xml
+                                 ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
+                                 ,pr_des_erro OUT VARCHAR2             --> Erros do processo
+                                 ) is
+  /*---------------------------------------------------------------------------------------------------------------------
+    Programa : pc_contingencia_ibratan_web
+    Sistema  : Ayllos
+    Sigla    : TELA_ATENDA_DSCTO_TIT
+    Autor    : Luis Fernando (GFT)
+    Data     : Maio/2018    
+
+    Objetivo  : Procedure para retornar se a esteira e o motor de crédito estão em contingencia
+
+    Alteração :
+
+  ---------------------------------------------------------------------------------------------------------------------*/
+  vr_tab_dados_titulos typ_tab_dados_titulos;
+  vr_tab_borderos      typ_tab_borderos;
+  vr_qtregist          NUMBER;
+  vr_dtmvtolt          DATE;
+
+  -- Variável de críticas
+  vr_cdcritic crapcri.cdcritic%TYPE; --> Cód. Erro
+  vr_dscritic VARCHAR2(1000);        --> Desc. Erro
+  vr_dsmensag VARCHAR2(10000);
+
+  -- Tratamento de erros
+  vr_exc_erro EXCEPTION;
+
+  -- variaveis de entrada vindas no xml
+  vr_cdcooper INTEGER;
+  vr_cdoperad VARCHAR2(100);
+  vr_nmdatela VARCHAR2(100);
+  vr_nmeacao  VARCHAR2(100);
+  vr_cdagenci VARCHAR2(100);
+  vr_nrdcaixa VARCHAR2(100);
+  vr_idorigem VARCHAR2(100);
+
+  vr_flctgest BOOLEAN; --se a esteira esta em contingencia
+  vr_flctgmot BOOLEAN; --se o motor esta em contingencia
+
+  BEGIN
+    gene0004.pc_extrai_dados(pr_xml      => pr_retxml
+                            ,pr_cdcooper => vr_cdcooper
+                            ,pr_nmdatela => vr_nmdatela
+                            ,pr_nmeacao  => vr_nmeacao
+                            ,pr_cdagenci => vr_cdagenci
+                            ,pr_nrdcaixa => vr_nrdcaixa
+                            ,pr_idorigem => vr_idorigem
+                            ,pr_cdoperad => vr_cdoperad
+                            ,pr_dscritic => vr_dscritic);
+     
+    ESTE0003.pc_verifica_contigenc_esteira(pr_cdcooper=>vr_cdcooper,
+                                           pr_flctgest=>vr_flctgest,
+                                           pr_dsmensag=>vr_dsmensag,
+                                           pr_dscritic=>vr_dscritic);
+
+    IF  vr_cdcritic > 0  OR TRIM(vr_dscritic) IS NOT NULL THEN
+        RAISE vr_exc_erro;
+    END IF;
+    ESTE0003.pc_verifica_contigenc_motor(pr_cdcooper=>vr_cdcooper,
+                                           pr_flctgmot=>vr_flctgmot,
+                                           pr_dsmensag=>vr_dsmensag,
+                                           pr_dscritic=>vr_dscritic);
+                                           
+    IF  vr_cdcritic > 0  OR TRIM(vr_dscritic) IS NOT NULL THEN
+        RAISE vr_exc_erro;
+    END IF;
+    
+    vr_des_xml        := null;
+    vr_texto_completo := NULL;
+    
+    dbms_lob.createtemporary(vr_des_xml, true);
+    dbms_lob.open(vr_des_xml, dbms_lob.lob_readwrite);
+    
+    pc_escreve_xml('<?xml version="1.0" encoding="ISO-8859-1" ?> <Root>' ||
+                   '<Dados>');
+                   pc_escreve_xml('<flctgest>'|| CASE WHEN vr_flctgest THEN 1 ELSE 0 END || '</flctgest>'||
+                                  '<flctgmot>'|| CASE WHEN vr_flctgmot THEN 1 ELSE 0 END || '</flctgmot>');
+    pc_escreve_xml ('</Dados></Root>',true);
+    pr_retxml := xmltype.createxml(vr_des_xml);
+
+    -- Liberando a memória alocada pro CLOB
+    dbms_lob.close(vr_des_xml);
+    dbms_lob.freetemporary(vr_des_xml);
+
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+         IF  nvl(vr_cdcritic,0) > 0 AND vr_dscritic IS NULL THEN
+             vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+         END IF;
+         pr_cdcritic := nvl(vr_cdcritic,0);
+         pr_dscritic := vr_dscritic;
+
+         pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                        '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+         ROLLBACK;
+    WHEN OTHERS THEN
+         pr_dscritic := 'erro nao tratado na tela_atenda_dscto_tit.pc_contingencia_ibratan_web ' ||sqlerrm;
+         
+         pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                        '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+         ROLLBACK;
+  END pc_contingencia_ibratan_web ;
 END TELA_ATENDA_DSCTO_TIT;
 /

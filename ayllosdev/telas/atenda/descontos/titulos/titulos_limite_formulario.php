@@ -305,14 +305,28 @@
 	
 	$('#btnContinuarRendas','#divBotoesRenda').unbind('click').bind('click',function() {
 		if (operacao == 'A') {
-			$('#divBotoesRenda').css('display','none');
-			informarRating('divDscTit_Renda',"dscShowHideDiv('divDscTit_Observacao;divBotoesObs','divDadosRating;divBotoesRenda')","dscShowHideDiv('divDscTit_Renda;divBotoesRenda','divDadosRating');","fecharRotinaGenerico('<? echo $tipo ?>');");
+			/*Motor em contingencia*/
+			if(flctgmot){
+				$('#divBotoesRenda').css('display','none');
+				informarRating('divDscTit_Renda',"dscShowHideDiv('divDscTit_Observacao;divBotoesObs','divDadosRating;divBotoesRenda')","dscShowHideDiv('divDscTit_Renda;divBotoesRenda','divDadosRating');","fecharRotinaGenerico('<? echo $tipo ?>');");
+			}
+			else{
+				informarRating('divDscTit_Renda',"dscShowHideDiv('divDscTit_Observacao;divBotoesObs','divDadosRating;divBotoesRenda')","dscShowHideDiv('divDscTit_Renda;divBotoesRenda','divDadosRating');","mostraImprimirLimite('<? echo $tipo ?>');");
+				dscShowHideDiv('divDscTit_Observacao;divBotoesObs','divDadosRating;divBotoesRenda;divDscTit_Renda');
+			}
 		} else if (operacao == 'C') {
 			$('#divBotoesRenda').css('display','none');
 			informarRating('divDscTit_Renda',"dscShowHideDiv('divDscTit_Observacao;divBotoesObs','divDadosRating;divBotoesRenda')","dscShowHideDiv('divDscTit_Renda;divBotoesRenda','divDadosRating');","fecharRotinaGenerico('<? echo $tipo ?>');");
 		} else {
-			$('#divBotoesRenda').css('display','none');
-			informarRating('divDscTit_Renda',"dscShowHideDiv('divDscTit_Observacao;divBotoesObs','divDadosRating;divBotoesRenda')","dscShowHideDiv('divDscTit_Renda;divBotoesRenda','divDadosRating');","mostraImprimirLimite('<? echo $tipo ?>');");
+			/*Motor em contingencia*/
+			if(flctgmot){
+				$('#divBotoesRenda').css('display','none');
+				informarRating('divDscTit_Renda',"dscShowHideDiv('divDscTit_Observacao;divBotoesObs','divDadosRating;divBotoesRenda')","dscShowHideDiv('divDscTit_Renda;divBotoesRenda','divDadosRating');","mostraImprimirLimite('<? echo $tipo ?>');");
+			}
+			else{
+				informarRating('divDscTit_Renda',"dscShowHideDiv('divDscTit_Observacao;divBotoesObs','divDadosRating;divBotoesRenda')","dscShowHideDiv('divDscTit_Renda;divBotoesRenda','divDadosRating');","mostraImprimirLimite('<? echo $tipo ?>');");
+				dscShowHideDiv('divDscTit_Observacao;divBotoesObs','divDadosRating;divBotoesRenda;divDscTit_Renda');
+			}
 		}
 		return false;
 	});

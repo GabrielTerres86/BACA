@@ -105,7 +105,22 @@
 			<?
 		}
 	}
+
+	$xml = "<Root>";
+	$xml .= " <Dados>";
+	$xml .= " </Dados>";
+	$xml .= "</Root>";
 	
+	$xmlResult = mensageria($xml,"TELA_ATENDA_DESCTO","CONTINGENCIA_IBRATAN", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	$xmlObj = getClassXML($xmlResult);
+	$root = $xmlObj->roottag;
+	// Se ocorrer um erro, mostra crítica
+	if ($root->erro){
+		exibirErro('error',$root->erro->registro->dscritic->cdata,'Alerta - Ayllos','bloqueiaFundo(divRotina)');
+		exit;
+	}
+	$flctgmot = $root->dados->flctgmot;
+
 	// Variável que armazena código da opção para utilização na include titulos_limite_formulario.php
 	$cddopcao = "I";
 	
@@ -115,4 +130,6 @@
 ?>
 <script type="text/javascript">
 	habilitaAvalista(true);
+	/*Motor em contingencia*/
+	var flctgmot = <?=$flctgmot?$flctgmot:0?>;
 </script>
