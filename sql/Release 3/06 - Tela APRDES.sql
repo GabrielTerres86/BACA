@@ -51,7 +51,7 @@ INSERT INTO craptel
            '', 
            2 
       FROM crapcop          
-     WHERE cdcooper IN (SELECT cdcooper FROM crapprm WHERE cdacesso = 'FL_VIRADA_BORDERO' AND dsvlrprm = '1'); 
+     WHERE cdcooper IN (SELECT cdcooper FROM crapprm WHERE cdacesso = 'FL_VIRADA_BORDERO' AND dsvlrprm = 'P'); 
 
 -- Insere as permissões de acesso para a tela
 INSERT INTO crapace
@@ -73,7 +73,7 @@ INSERT INTO crapace
            2
       FROM crapcop cop,
            crapope ope
-     WHERE cop.cdcooper IN (SELECT cdcooper FROM crapprm WHERE cdacesso = 'FL_VIRADA_BORDERO' AND dsvlrprm = '1')
+     WHERE cop.cdcooper IN (SELECT cdcooper FROM crapprm WHERE cdacesso = 'FL_VIRADA_BORDERO' AND dsvlrprm = 'P')
        AND ope.cdsitope = 1 
        AND cop.cdcooper = ope.cdcooper
        AND trim(upper(ope.cdoperad)) IN ('1', --  super usuário
@@ -129,7 +129,7 @@ INSERT INTO crapprg
            1,
            cdcooper
       FROM crapcop          
-     WHERE cdcooper IN (SELECT cdcooper FROM crapprm WHERE cdacesso = 'FL_VIRADA_BORDERO' AND dsvlrprm = '1');
+     WHERE cdcooper IN (SELECT cdcooper FROM crapprm WHERE cdacesso = 'FL_VIRADA_BORDERO' AND dsvlrprm = 'P');
 
 commit;
 end;

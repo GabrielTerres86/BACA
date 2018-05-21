@@ -24,7 +24,7 @@ UPDATE craptel
        idambtel = 2 -- Ayllos Web
  WHERE nmrotina = 'DSC TITS - BORDERO'
    AND nmdatela = 'ATENDA'
-   AND cdcooper IN (SELECT cdcooper FROM crapprm WHERE cdacesso = 'FL_VIRADA_BORDERO' AND dsvlrprm = '1');
+   AND cdcooper = 7;
 
 -- Fornece as permissões de acesso dos botões novos para os usuários que já possuem permissão na tela de borderôs
 INSERT INTO crapace
@@ -47,7 +47,7 @@ INSERT INTO crapace
       FROM crapcop cop,
            crapope ope,
            crapace acn
-     WHERE cop.cdcooper IN (SELECT cdcooper FROM crapprm WHERE cdacesso = 'FL_VIRADA_BORDERO' AND dsvlrprm = '1')
+     WHERE cop.cdcooper = 7
        AND ope.cdsitope = 1 
        AND cop.cdcooper = ope.cdcooper
        AND acn.cdcooper = ope.cdcooper
@@ -77,7 +77,7 @@ INSERT INTO crapace
       FROM crapcop cop,
            crapope ope,
            crapace acn
-     WHERE cop.cdcooper IN (SELECT cdcooper FROM crapprm WHERE cdacesso = 'FL_VIRADA_BORDERO' AND dsvlrprm = '1')
+     WHERE cop.cdcooper = 7
        AND ope.cdsitope = 1 
        AND cop.cdcooper = ope.cdcooper
        AND acn.cdcooper = ope.cdcooper
@@ -107,7 +107,7 @@ INSERT INTO crapace
       FROM crapcop cop,
            crapope ope,
            crapace acn
-     WHERE cop.cdcooper IN (SELECT cdcooper FROM crapprm WHERE cdacesso = 'FL_VIRADA_BORDERO' AND dsvlrprm = '1')
+     WHERE cop.cdcooper = 7
        AND ope.cdsitope = 1 
        AND cop.cdcooper = ope.cdcooper
        AND acn.cdcooper = ope.cdcooper
@@ -137,7 +137,7 @@ INSERT INTO crapace
       FROM crapcop cop,
            crapope ope,
            crapace acn
-     WHERE cop.cdcooper IN (SELECT cdcooper FROM crapprm WHERE cdacesso = 'FL_VIRADA_BORDERO' AND dsvlrprm = '1')
+     WHERE cop.cdcooper = 7
        AND ope.cdsitope = 1 
        AND cop.cdcooper = ope.cdcooper
        AND acn.cdcooper = ope.cdcooper
