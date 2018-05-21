@@ -313,6 +313,8 @@
                 31/10/2017 - Ajuste na retirada da mascara do CPF/CNPJ na procedure
                              requisicao-lista-documentos. Projeto 339 - CRM. (Lombardi)
                      
+                31/10/2017 - Passagem do tpctrato. (Jaison/Marcos Martini - PRJ404)
+                     
                 22/11/2017 - Em alguns documentos não virá mais nrdconta
                              Tratado consultas e updates. Projeto 339 - CRM. (Lombardi)
                      
@@ -2120,7 +2122,9 @@ PROCEDURE efetua_batimento_ged_credito:
         FOR EACH crapadt FIELDS(cdcooper nrdconta nrctremp nraditiv dtmvtolt)
                          WHERE crapadt.cdcooper = par_cdcooper AND
                                crapadt.flgdigit = NO               AND
-                               crapadt.dtmvtolt = aux_data         NO-LOCK:
+                               crapadt.dtmvtolt = aux_data         AND
+                               crapadt.tpctrato = 90 /* Emprestimo/Financiamento */
+                               NO-LOCK:
             
             /* Se cooperado estiver demitidos nao gera no relatorio */
             FIND FIRST crapass WHERE 
@@ -2157,7 +2161,8 @@ PROCEDURE efetua_batimento_ged_credito:
                         FIND FIRST b-crapadt WHERE b-crapadt.cdcooper = crapepr.cdcooper AND        
                                                    b-crapadt.nrctremp = crapepr.nrctremp AND
                                                    b-crapadt.nrdconta = crapepr.nrdconta AND
-                                                   b-crapadt.nraditiv = crapadt.nraditiv
+                                                   b-crapadt.nraditiv = crapadt.nraditiv AND
+                                                   b-crapadt.tpctrato = crapadt.tpctrato
                                                    EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
 
                         /*Caso encontre o arquivo digitalizado, altera flag do registro no banco*/
@@ -4685,7 +4690,9 @@ PROCEDURE traz_situacao_documento:
                     FIND crapadt WHERE crapadt.cdcooper = INT(par_cdcooper) AND
                                        crapadt.nrdconta = INT(par_nrdconta) AND
                                        crapadt.nrctremp = INT(par_nrctrato) AND
-                                       crapadt.nraditiv = INT(par_nraditiv) NO-LOCK NO-ERROR.
+                                       crapadt.nraditiv = INT(par_nraditiv) AND
+                                       crapadt.tpctrato = 90 /* Emprestimo/Financiamento */
+                                       NO-LOCK NO-ERROR.
              
                      ASSIGN par_cdstatus = IF AVAIL crapadt THEN 1 ELSE 0.
     
@@ -4775,7 +4782,9 @@ PROCEDURE gera_dados_pendencias:
             FOR EACH crapadt FIELDS(cdcooper nrdconta nrctremp nraditiv dtmvtolt)
                                 WHERE crapadt.cdcooper = par_cdcooper AND
                                       crapadt.flgdigit = NO           AND
-                                      crapadt.dtmvtolt = aux_data     NO-LOCK,
+                                      crapadt.dtmvtolt = aux_data     AND
+                                      crapadt.tpctrato = 90 /* Emprestimo/Financiamento */
+                                      NO-LOCK,
                 FIRST crapepr WHERE crapepr.cdcooper = crapadt.cdcooper AND
                                     crapepr.nrdconta = crapadt.nrdconta AND
                                     crapepr.nrctremp = crapadt.nrctremp AND
@@ -5233,7 +5242,9 @@ PROCEDURE retorna_docs_liberados:
                 FOR EACH crapadt FIELDS(cdcooper nrdconta nrctremp nraditiv 
                                         dtmvtolt cdagenci)
                                   WHERE crapadt.cdcooper = par_cdcooper AND
-                                        crapadt.dtmvtolt = par_dtlibera NO-LOCK,
+                                        crapadt.dtmvtolt = par_dtlibera AND
+                                        crapadt.tpctrato = 90 /* Emprestimo/Financiamento */
+                                        NO-LOCK,
                     FIRST crapepr WHERE crapepr.cdcooper = crapadt.cdcooper AND
                                         crapepr.nrdconta = crapadt.nrdconta AND
                                         crapepr.nrctremp = crapadt.nrctremp AND
