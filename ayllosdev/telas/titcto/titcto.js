@@ -38,6 +38,7 @@ $(document).ready(function() {
 function estadoInicial() {
 
     $('#divTela').fadeTo(0, 0.1);
+    $('#divTela').css({'width': '1057px'});
 
     // retira as mensagens  
     hideMsgAguardo();
