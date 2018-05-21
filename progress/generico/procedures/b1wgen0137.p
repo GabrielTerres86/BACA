@@ -2,7 +2,7 @@
 
     Programa  : sistema/generico/procedures/b1wgen0137.p
     Autor     : Guilherme
-    Data      : Abril/2012                      Ultima Atualizacao: 11/12/2017
+    Data      : Abril/2012                      Ultima Atualizacao: 21/05/2018
     
     Dados referentes ao programa:
 
@@ -319,7 +319,10 @@
                              Tratado consultas e updates. Projeto 339 - CRM. (Lombardi)
                      
                 11/12/2017 - Ajuste lentidao no programa crps620, CRM - 339 digidoc (Oscar).                             
-                     
+                
+                21/05/2018 - sctask0014409 Batimento de termos desativado temporariamente 
+                             na opção todos (Carlos).
+
 .............................................................................*/
 
 
@@ -675,6 +678,8 @@ PROCEDURE efetua_batimento_ged:
                 END. 
                 END.
 
+/*  21/05/2018 sctask0014409 Batimento de termos desativado temporariamente na opção todos (Carlos). */
+/*
              RUN efetua_batimento_ged_termos(INPUT crapcop.cdcooper,
                                              INPUT aux_dtterini,
                                              INPUT aux_dtterfim,
@@ -706,6 +711,7 @@ PROCEDURE efetua_batimento_ged:
                                       aux_dscritic + " >> /usr/coop/cecred/log/proc_batch.log").
                     RETURN "NOK".
                 END. 
+*/
         END.    
     ELSE IF  par_tipopcao = 1 THEN /* CADASTRO */
         DO:
