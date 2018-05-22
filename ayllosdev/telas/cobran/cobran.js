@@ -1208,12 +1208,17 @@ function selecionaTabela(tr) {
         qtdianeg = $('#qtdianeg', tr).val();
         flgdprot = $('#flgdprot', tr).val();
         insitcrt = $('#insitcrt', tr).val();
-		
-        if (insitcrt == 5) {
-		    $('#carta_anuencia', '#frmReport').habilitaCampo();
-		} else {
-		    $('#carta_anuencia', '#frmReport').desabilitaCampo();
-		}
+    }
+
+    $('[onclick^=geraCartaAnuencia]').length &&
+        $('[onclick^=geraCartaAnuencia]').attr('id', 'btn_carta_anuencia');
+
+    if (insitcrt == 5) {
+        $('#carta_anuencia', '#frmReport').habilitaCampo();
+        $('#btn_carta_anuencia').removeClass('botaoDesativado').attr('onclick', 'geraCartaAnuencia(); return false;')
+    } else {
+        $('#carta_anuencia', '#frmReport').desabilitaCampo();
+        $('#btn_carta_anuencia').removeClass('botaoDesativado').addClass('botaoDesativado').attr('onclick', 'return false;');
     }
 
     dsavisms = $('#dsavisms', tr).val();
@@ -1278,7 +1283,7 @@ function imprimirCartaAnuencia(){
 // opcao C - consulta
 function buscaConsulta(operacao) {
 
-    if (operacao == 'instrucoes' && (cdsituac == 'B' || cdsituac == 'L')) {
+    if (operacao == 'instrucoes' && cdsituac == 'L') {
         showError('error', 'Opcao nao disponivel para situacao ' + dssituac, 'Alerta - Ayllos', "");
         return false;
     }
@@ -1549,6 +1554,10 @@ function formataInstrucoes(operacao) {
 
     cCdinstru = $('#cdinstru', '#frmConsulta');
     cCdinstru.css({ 'width': '548px' });
+
+    if (cdsituac == 'B') {
+        cCdinstru.find('option:not([value=81])').prop('disabled', true);
+    }
 
     // Outros	
     btnOK2 = $('#btnOk2', '#frmConsulta');
