@@ -115,9 +115,8 @@
 	$nrliquid = $_POST["nrliquid"];
 	$nrpatlvr = $_POST["nrpatlvr"];
 	$nrperger = $_POST["nrperger"];	
-	$vltotsfn = $_POST["vltotsfn"];	
-	$perfatcl = $_POST["perfatcl"];
-    $idcobope = $_POST["idcobope"];
+	$vltotsfn = $_POST["vltotsfn"]?$_POST["vltotsfn"]:'00,00';	
+	$perfatcl = $_POST["perfatcl"]?$_POST["perfatcl"]:'00,00';	
 
 	$cddopcao = $_POST["cddopcao"];
 	
@@ -335,9 +334,9 @@
 
 	$mensagens = $xmlObjLimite->roottag->tags[0]->tags;
 	// Mensagens de alerta
-	$msg = Array();
+	$msg = Array(); 
 	foreach( $mensagens as $mensagem ) {
-		$msg[] = str_replace('|@|','<br>',getByTagName($mensagem->tags,'dsmensag'));
+		$msg[] = getByTagName($mensagem->tags,'dsmensag');
 	}
 	$stringArrayMsg = implode( "|", $msg);
 	echo 'exibirMensagens("'.$stringArrayMsg.'","atualizaDadosRating(\"divOpcoesDaOpcao3\");");';

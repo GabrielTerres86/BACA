@@ -417,7 +417,47 @@ function formataLayout(nomeForm){
 		});
 		
 		ajustarCentralizacao();
+	}else if ( nomeForm == 'divBorderoTitulosPagar' ){
+		var divRegistro = $('div.divRegistros','#'+nomeForm);		
+		var tabela      = $('table', divRegistro );
+		var ordemInicial = new Array();
+		var arrayLargura = new Array();
 
+		$('#'+nomeForm).css('width','910');
+
+		arrayLargura[0] = '70px';
+		arrayLargura[1] = '50px';
+		arrayLargura[2] = '90px';
+		arrayLargura[3] = '90px';
+		arrayLargura[4] = '60px';
+		arrayLargura[5] = '60px';
+		arrayLargura[6] = '80px';
+		arrayLargura[7] = '70px';
+		arrayLargura[8] = '70px';
+		arrayLargura[9] = '70px';
+		
+				
+		var arrayAlinha = new Array();
+		arrayAlinha[0] = 'center';
+		arrayAlinha[1] = 'center';
+		arrayAlinha[2] = 'center';
+		arrayAlinha[3] = 'center';
+		arrayAlinha[4] = 'center';
+		arrayAlinha[5] = 'center';
+		arrayAlinha[6] = 'center';
+		arrayAlinha[7] = 'center';
+		arrayAlinha[8] = 'center';
+		arrayAlinha[9] = 'center';
+		
+		tabela.formataTabela( ordemInicial, arrayLargura, arrayAlinha, '' );
+		
+		$('tbody > tr',tabela).each( function() {
+			if ( $(this).hasClass('corSelecao') ) {
+				$(this).focus();		
+			}
+		});
+		
+		ajustarCentralizacao();
 	}else if ( nomeForm == 'divIncluirBordero' ){
 		$('#'+nomeForm).css('width','940px');
 		var camposFiltros = $("input[type='text'],select",'#'+nomeForm);
@@ -1417,7 +1457,7 @@ function formataLayout(nomeForm){
 	
 	}else if ( nomeForm == 'divTitulosBorderos' ){
 
-		$('#'+nomeForm).css('width','950px');
+		$('#'+nomeForm).css('width','1100px');
 
 		var divcr = $('#divcr','#'+nomeForm);		
 		var tabela      = $('table', divcr );
@@ -1428,26 +1468,28 @@ function formataLayout(nomeForm){
 				
 
 		var arrayLargura = new Array();
-		arrayLargura[0] = '60px';//Vencto
-		arrayLargura[1] = '150px';//130 Nosso Número
+		arrayLargura[0] = '75px';//Vencto
+		arrayLargura[1] = '151px';//130 Nosso Número
 		arrayLargura[2] = '80px';//Valor
 		arrayLargura[3] = '80px';//Valor Líquido
 		arrayLargura[4] = '30px';//Prz
-		arrayLargura[5] = '250px';//Pagador
+		arrayLargura[5] = '220px';//Pagador
 		arrayLargura[6] = '110px';// CPF/CNPJ
 		arrayLargura[7] = '80px';//130 //Situação 50 30
-		arrayLargura[8] = '80px';//Saldo Devedor
+		arrayLargura[8] = '70px';//130 //Decisao 50 30
+		arrayLargura[9] = '80px';//Saldo Devedor
 				
 		var arrayAlinha = new Array();
 		arrayAlinha[0] = 'center';// Vencto
 		arrayAlinha[1] = 'center';//Nosso número
 		arrayAlinha[2] = 'right';//Valor
 		arrayAlinha[3] = 'right';//Valor Lóquido
-		arrayAlinha[4] = 'right';//Prz
+		arrayAlinha[4] = 'center';//Prz
 		arrayAlinha[5] = 'left';//Pagador
 		arrayAlinha[6] = 'right';// CPF/CNPJ
 		arrayAlinha[7] = 'center';//Situação
-		arrayAlinha[8] = 'right';//Saldo Devedor
+		arrayAlinha[8] = 'center';//Decisao
+		arrayAlinha[9] = 'right';//Saldo Devedor
 						
 		tabela.formataTabela( ordemInicial, arrayLargura, arrayAlinha, '' );
 		

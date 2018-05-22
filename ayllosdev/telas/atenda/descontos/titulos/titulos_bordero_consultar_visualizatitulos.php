@@ -18,6 +18,7 @@
 				 02/04/2018 - Padronização da tabela, retirada das restrições e adição do saldo devedor (Leonardo Oliveira -GFT)
 							  
 				 07/05/2018 - Adicionada verificação para definir se o bordero vai seguir o fluxo novo ou o antigo (Luis Fernando - GFT)
+				 19/05/2018 - Insert do campo de Decisão (Vitor Shimada Assanuma - GFT)
 	************************************************************************/
 	
 	session_start();
@@ -164,6 +165,7 @@
 								<th>Pagador</th>
 								<th>CPF/CNPJ</th>
 								<th>Situa&ccedil;&atilde;o</th>
+								<th>Decis&atilde;o</th>
 								<th>Saldo Devedor</th>
 							</tr>
 						</thead>
@@ -173,9 +175,7 @@
 								$vltotliq_cr = 0;
 										
 								for ($i = 0; $i < $qtTitulos; $i++) {
-
 									$t = $titulos[$i];
-												
 									if ($t->tags[13]->cdata == "no"){
 										continue;
 									}
@@ -230,6 +230,16 @@
 										case 4: echo "Liberado";break; 
 										default: "------";break; }
 								?></td>
+								<td>
+									<?php 
+										switch ($t->tags[14]->cdata){ 
+											case 0: echo "Aguardando An&aacute;lise";break;
+											case 1: echo "Aprovado";break;
+											case 2: echo "Reprovado";break;
+											default: "------";break;
+										}
+									?>	
+								</td>
 								<td><?php echo number_format(str_replace(",",".",$t->tags[8]->cdata),2,",",".");?></td> 
 							</tr>							
 						<?php 
