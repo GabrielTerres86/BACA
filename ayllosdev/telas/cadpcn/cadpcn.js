@@ -215,6 +215,7 @@ var escolheOpcao;
 					case 'E':
 						buscaValorCnae(cdcnae,function(){
 							if(!$("#divError").is(":visible")){
+								$("#vlcnae").blur();
 								trocaBotao('Excluir');
 								$('#btSalvar').focus();
 							}
@@ -272,45 +273,6 @@ var escolheOpcao;
 				}
 			});
 		}
-
-
-		// if(cddopcao == 'E'){
-		// 	// cddopcao = 'C';
-		// 	showMsgAguardo('Aguarde, buscando ...');
-		// 	// Executa script de confirmação através de ajax
-		// 	$.ajax({		
-		// 		type: "POST",
-		// 		dataType: 'html',
-		// 		url: UrlSite + 'telas/cadpcn/principal.php', 
-		// 		data: {
-		// 			cddopcao: cddopcao,
-		// 			cdcnae: cdcnae,
-		// 			dscnae: dscnae,
-		// 			vlcnae: vlcnae,
-		// 			redirect: 'html_ajax'
-		// 		}, 
-		// 		error: function(objAjax,responseError,objExcept) {
-		// 			hideMsgAguardo();
-		// 			showError('error','N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','bloqueiaFundo(divRotina)');
-		// 		},
-
-		// 		success: function(response) {
-
-		// 			try {
-		// 				hideMsgAguardo();
-		// 				eval(response);
-		// 				$('#vlcnae').val('');
-		// 				$('#cdcnae').val('');
-		// 				$('#dscnae').val('');
-
-		// 				showError("inform","Dados exclu&iacute;dos com sucesso","Alerta - Ayllos","hideMsgAguardo();focaCampoErro('cdcnae','frmValorMaximoCnae');");
-		// 			} catch(error) {
-		// 				hideMsgAguardo();
-		// 				showError("error",response,"Alerta - Ayllos","hideMsgAguardo();focaCampoErro('cdcnae','frmValorMaximoCnae');");
-		// 			}
-		// 		}				
-		// 	});			
-		// }
 	}
 
 
@@ -519,9 +481,16 @@ var escolheOpcao;
 		filtros     = 'Cód. CNAE;cdcnae;60px;S;0;;descricao|Desc. CNAE;dscnae;200px;S;;;descricao|;flserasa;;N;2;N;;descricao';
 		colunas     = 'Código;cdcnae;20%;right|Desc CANE;dscnae;80%;left';
 		
-		mostraPesquisa('ZOOM0001',procedure,titulo,qtReg,filtros,colunas,'' ,'console.log("eita")');
+		mostraPesquisa('ZOOM0001',procedure,titulo,qtReg,filtros,colunas,'' ,'sequenciaPesquisa()');
 
 		return false;
+	}
+
+	function sequenciaPesquisa(){
+		cddopcao = $("#cddopcao").val();
+		if(cddopcao == 'A' || cddopcao == 'E'){
+			controlaBuscaCnae(cddopcao,$("#cdcnae").val());
+		}
 	}
 
 	function buscaDescricaoCnae(cdcnae,callback) {
@@ -571,8 +540,8 @@ var escolheOpcao;
 				}, 
 				error: function(objAjax,responseError,objExcept) {
 					hideMsgAguardo();
-					showError('error','N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','bloqueiaFundo(divRotina);$("#cdcnae").focus();');
 					$("#vlcnae").val('');
+					showError('error','N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.','Alerta - Ayllos','bloqueiaFundo(divRotina);$("#cdcnae").focus();');
 				},
 				success: function(response) {
 					try {
@@ -580,6 +549,7 @@ var escolheOpcao;
 						eval(response);
 						callback();
 					} catch(error) {
+						$("#vlcnae").val('');
 						hideMsgAguardo();
 					}
 				}

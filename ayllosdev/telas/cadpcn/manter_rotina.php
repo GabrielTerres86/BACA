@@ -40,6 +40,7 @@ switch ($operacao){
 		$root = $xmlObj->roottag;
 		// Se ocorrer um erro, mostra crítica
 		if ($root->erro){
+			echo '$("#vlcnae").val("");';	
 			exibeErro(htmlentities($root->erro->registro->dscritic));
 			exit;
 		} 
@@ -68,6 +69,7 @@ switch ($operacao){
 		$root = $xmlObj->roottag;
 		// Se ocorrer um erro, mostra crítica
 		if ($root->erro){
+			echo '$("#vlcnae").val("");';
 			exibeErro(htmlentities($root->erro->registro->dscritic));
 			exit;
 		} 
