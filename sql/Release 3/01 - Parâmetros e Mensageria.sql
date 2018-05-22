@@ -85,7 +85,7 @@ INSERT INTO crapaca (nrseqaca, nmdeacao, nmpackag, nmproced, lstparam, nrseqrdr)
      VALUES (SEQACA_NRSEQACA.NEXTVAL, 'LISTAR_DETALHE_TITULO', 'TELA_ATENDA_DSCTO_TIT', 'pc_detalhes_tit_bordero_web', 'pr_nrdconta,pr_chave', (SELECT nrseqrdr FROM craprdr WHERE nmprogra = 'TELA_ATENDA_DESCTO'));
 
 INSERT INTO crapaca (nrseqaca, nmdeacao, nmpackag, nmproced, lstparam, nrseqrdr)
-     VALUES (SEQACA_NRSEQACA.NEXTVAL, 'SOLICITA_BIRO_BORDERO', 'TELA_ATENDA_DSCTO_TIT', 'pc_solicita_biro_bordero', 'pr_nrdconta,pr_chave', (SELECT nrseqrdr FROM craprdr WHERE nmprogra = 'TELA_ATENDA_DESCTO'));
+     VALUES (SEQACA_NRSEQACA.NEXTVAL, 'SOLICITA_BIRO_BORDERO', 'TELA_ATENDA_DSCTO_TIT', 'pc_solicita_biro_bordero_web', 'pr_nrdconta,pr_chave', (SELECT nrseqrdr FROM craprdr WHERE nmprogra = 'TELA_ATENDA_DESCTO'));
 
 INSERT INTO crapaca (nrseqaca, nmdeacao, nmpackag, nmproced, lstparam, nrseqrdr)
      VALUES (SEQACA_NRSEQACA.NEXTVAL, 'VALIDAR_TITULOS_ALTERACAO', 'TELA_ATENDA_DSCTO_TIT', 'pc_validar_titulos_alteracao', 'pr_nrdconta,pr_chave,pr_dtmvtolt', (SELECT nrseqrdr FROM craprdr WHERE nmprogra = 'TELA_ATENDA_DESCTO'));
