@@ -10,8 +10,11 @@ Alterações: 04/05/2009 - Utilizar cdcooper = 0 nas consultas (David).
       30/05/2016 - Ajustes navegaçao com a tela fornecedor wpgd0012c
                    PRJ229 - Melhorias OQS (Odirlei-AMcom)
 
-            28/11/2016 - Ajustes de carragamento de UF e cidades, SD - 563601
-                         (Jean Michel).
+      28/11/2016 - Ajustes de carragamento de UF e cidades, SD - 563601
+                   (Jean Michel).
+
+      22/05/2018 - #RITM0015402 - Remoção do format "x(9999999999)"  devido a erros de compilação
+	               na nova versão do PROGRESS. (Wagner/Sustentação). A pedidos do Fernando Klock. 
             
 ...............................................................................*/
 
@@ -119,8 +122,8 @@ DEFINE VARIABLE m-erros               AS CHARACTER                      NO-UNDO.
 DEFINE VARIABLE v-qtdeerro            AS INTEGER                        NO-UNDO.
 DEFINE VARIABLE v-descricaoerro       AS CHARACTER                      NO-UNDO.
 DEFINE VARIABLE v-identificacao       AS CHARACTER                      NO-UNDO.
-DEFINE VARIABLE vetorestados           AS CHAR FORMAT "x(2000)"          NO-UNDO.  
-DEFINE VARIABLE vetorcidades           AS CHAR FORMAT "x(99999999999)"          NO-UNDO.  
+DEFINE VARIABLE vetorestados          AS CHAR FORMAT "x(2000)"          NO-UNDO.  
+DEFINE VARIABLE vetorcidades          AS CHAR NO-UNDO.  
 
 /*** Declaração de BOs ***/
 DEFINE VARIABLE h-b1wpgd0016          AS HANDLE                         NO-UNDO.
