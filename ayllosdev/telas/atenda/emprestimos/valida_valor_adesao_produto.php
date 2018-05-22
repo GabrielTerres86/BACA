@@ -21,6 +21,7 @@
 	$cdcooper =  		(isset($_POST['cdcooper']))  		? $_POST['cdcooper'] 		: '';
 	$vlemprst_antigo =  (isset($_POST['vlemprst_antigo']))  ? $_POST['vlemprst_antigo'] : 0;
 	$dsctrliq_antigo =  (isset($_POST['dsctrliq_antigo']))  ? $_POST['dsctrliq_antigo'] : '';
+	$dsauxliq = '';
 	
 	$executar = "showMsgAguardo(\"Aguarde, validando dados ...\");";
 	$executar = "setTimeout(\"attArray(\\\"".$operacao."\\\",\\\"".$cdcooper."\\\")\", 400);";
@@ -52,13 +53,21 @@
 		$dsctrliq = str_replace('.','',$dsctrliq);
 		$dsctrliq_antigo = str_replace('.','',$dsctrliq_antigo);
 		
+		// Verificar se está sendo enviado a string "Sem liquidacoes"  
+		if (strcasecmp($dsctrliq, 'Sem liquidacoes') == 0) {
+			$dsauxliq = '';
+		} else {
+			$dsauxliq = $dsctrliq;
+		}
+
+
 		// Monta o xml de requisição
 		$xml  = "";
 		$xml .= "<Root>";
 		$xml .= "	<Dados>";
 		$xml .= "		<nrdconta>".$nrdconta."</nrdconta>";
 		$xml .= "		<vlcontra>".$vlemprst."</vlcontra>";
-		$xml .= "		<dsctrliq>".$dsctrliq."</dsctrliq>";
+		$xml .= "		<dsctrliq>".$dsauxliq."</dsctrliq>";
 		$xml .= "	</Dados>";
 		$xml .= "</Root>";
 		
