@@ -5239,11 +5239,24 @@ PROCEDURE calcula_rating_fisica:
                       IF   craplim.insitlim <> 2  THEN /* Diferente de ativo */
                            ASSIGN aux_vlendivi = craplim.vllimite.
                   END.   
+				  
+			 IF   AVAIL craplim   THEN
+             DO:			 
 
-             IF   craplim.vltotsfn <> 0  THEN
-                  aux_vlendivi = aux_vlendivi + craplim.vltotsfn.
-             ELSE 
-                  aux_vlendivi = aux_vlendivi + aux_vlutiliz.  
+				 IF   craplim.vltotsfn <> 0  THEN
+					  aux_vlendivi = aux_vlendivi + craplim.vltotsfn.
+				 ELSE 
+					  aux_vlendivi = aux_vlendivi + aux_vlutiliz.  
+			 END.
+			 
+			 IF   AVAIL crawlim   THEN
+             DO:			 
+
+				 IF   crawlim.vltotsfn <> 0  THEN
+					  aux_vlendivi = aux_vlendivi + crawlim.vltotsfn.
+				 ELSE 
+					  aux_vlendivi = aux_vlendivi + aux_vlutiliz.  
+			 END.
 
          END.
     ELSE
@@ -5628,12 +5641,35 @@ PROCEDURE calcula_rating_juridica:
                                 NO-LOCK NO-ERROR.
              END.
         ELSE
-             DO:                       /* Descontos / Limite rotativo */   
-                 FIND craplim WHERE craplim.cdcooper = par_cdcooper   AND
-                                    craplim.nrdconta = par_nrdconta   AND
-                                    craplim.tpctrlim = par_tpctrato   AND
-                                    craplim.nrctrlim = par_nrctrato
-                                    NO-LOCK NO-ERROR.                                               
+             DO:
+                 IF   par_tpctrato = 3   THEN
+                      DO:
+                          /* Descontos / Limite rotativo */   
+                          FIND crawlim WHERE crawlim.cdcooper = par_cdcooper   AND
+                                             crawlim.nrdconta = par_nrdconta   AND
+                                             crawlim.tpctrlim = par_tpctrato   AND
+                                             crawlim.nrctrlim = par_nrctrato
+                                             NO-LOCK NO-ERROR. 
+                          IF NOT AVAIL(crawlim) THEN
+                             DO:
+                                 /* Descontos / Limite rotativo */   
+                                 FIND craplim WHERE craplim.cdcooper = par_cdcooper   AND
+                                                    craplim.nrdconta = par_nrdconta   AND
+                                                    craplim.tpctrlim = par_tpctrato   AND
+                                                    craplim.nrctrlim = par_nrctrato
+                                                    NO-LOCK NO-ERROR.
+                             END.
+         
+                      END.
+                 ELSE
+                 DO:
+                      /* Descontos / Limite rotativo */   
+                      FIND craplim WHERE craplim.cdcooper = par_cdcooper   AND
+                                         craplim.nrdconta = par_nrdconta   AND
+                                         craplim.tpctrlim = par_tpctrato   AND
+                                         craplim.nrctrlim = par_nrctrato
+                                         NO-LOCK NO-ERROR.
+                 END.
              END.
     END.
 
@@ -5723,8 +5759,17 @@ PROCEDURE calcula_rating_juridica:
                   END.
              ELSE
                   DO:
-                      IF  AVAIL craplim  THEN
-                      ASSIGN aux_nrseqite = craplim.nrinfcad.
+                      IF   par_tpctrato = 3   THEN
+                           DO:
+                               IF  AVAIL crawlim  THEN
+                                   ASSIGN aux_nrseqite = crawlim.nrinfcad.
+              
+                               IF  AVAIL craplim  THEN
+                                   ASSIGN aux_nrseqite = craplim.nrinfcad.
+                           END.
+                      ELSE
+                           IF  AVAIL craplim  THEN
+                               ASSIGN aux_nrseqite = craplim.nrinfcad.
                   END.                 
          END.
 
@@ -5977,11 +6022,32 @@ PROCEDURE calcula_rating_juridica:
                       IF   craplim.insitlim <> 2   THEN
                            aux_vlendivi = craplim.vllimite.                      
                   END.
-
-             IF   craplim.vltotsfn <> 0   THEN
-                  aux_vlendivi = aux_vlendivi + craplim.vltotsfn.
-             ELSE
-                  aux_vlendivi = aux_vlendivi + aux_vlutiliz.
+				  
+		     IF   par_tpctrato = 3   THEN
+					  DO:
+						  IF  AVAIL crawlim  THEN
+						  DO:
+							  IF   crawlim.vltotsfn <> 0   THEN
+								  aux_vlendivi = aux_vlendivi + crawlim.vltotsfn.
+							 ELSE
+								  aux_vlendivi = aux_vlendivi + aux_vlutiliz.
+						  END.
+						  ELSE
+						  DO:
+									  IF   craplim.vltotsfn <> 0   THEN
+								  aux_vlendivi = aux_vlendivi + craplim.vltotsfn.
+							 ELSE
+								  aux_vlendivi = aux_vlendivi + aux_vlutiliz.
+						  END.
+						  
+					END.
+			 ELSE		
+             DO:
+				 IF   craplim.vltotsfn <> 0   THEN
+					  aux_vlendivi = aux_vlendivi + craplim.vltotsfn.
+				 ELSE
+					  aux_vlendivi = aux_vlendivi + aux_vlutiliz.
+			 END. 
                  
          END.   
     ELSE
@@ -6056,8 +6122,17 @@ PROCEDURE calcula_rating_juridica:
                   END.
              ELSE
                   DO:
-                      IF  AVAIL craplim  THEN
-                      aux_nrseqite = craplim.nrpatlvr.
+                      IF   par_tpctrato = 3   THEN
+                           DO:
+                               IF  AVAIL crawlim  THEN
+                                   aux_nrseqite = crawlim.nrpatlvr.
+                
+                               IF  AVAIL craplim  THEN
+                                   aux_nrseqite = craplim.nrpatlvr.
+                           END.
+                      ELSE
+                           IF  AVAIL craplim  THEN
+                               aux_nrseqite = craplim.nrpatlvr.
                   END.
          END.
 
@@ -6099,8 +6174,21 @@ PROCEDURE calcula_rating_juridica:
     ELSE
     IF  par_tpctrato <> 0  THEN
          DO:
-             ASSIGN aux_vlpresta = craplim.vllimite
-                    aux_nrctrliq = 0. 
+             IF   par_tpctrato = 3   THEN
+                  DO:
+                      IF  AVAIL crawlim  THEN
+                          ASSIGN aux_vlpresta = crawlim.vllimite
+                                 aux_nrctrliq = 0.
+          
+                      IF  AVAIL craplim  THEN
+                          ASSIGN aux_vlpresta = craplim.vllimite
+                                 aux_nrctrliq = 0.
+                  END.
+             ELSE
+                  DO:
+                      ASSIGN aux_vlpresta = craplim.vllimite
+                             aux_nrctrliq = 0. 
+             END.
          END.
     ELSE
     DO:
@@ -6178,8 +6266,17 @@ PROCEDURE calcula_rating_juridica:
                   END.
              ELSE
                   DO:   
-                      IF  AVAIL craplim  THEN
-                      ASSIGN aux_nrseqite = craplim.nrperger.
+                       IF   par_tpctrato = 3   THEN
+                            DO:
+                                IF  AVAIL crawlim  THEN
+                                    ASSIGN aux_nrseqite = crawlim.nrperger.
+          
+                                IF  AVAIL craplim  THEN
+                                    ASSIGN aux_nrseqite = craplim.nrperger.
+                            END.
+                       ELSE
+                            IF  AVAIL craplim  THEN
+                                ASSIGN aux_nrseqite = craplim.nrperger.
                   END.                 
          END.
 
@@ -6233,10 +6330,36 @@ PROCEDURE calcula_rating_juridica:
          END.
     ELSE                         /* Limites / Descontos */
          DO:
-             IF   craplim.tpctrlim = 1   THEN /* Limite */
-                  ASSIGN aux_nrseqite = 5.
+             IF   par_tpctrato = 3   THEN
+                  DO:
+                      IF  AVAIL crawlim  THEN
+                          DO:
+                              IF   crawlim.tpctrlim = 1   THEN /* Limite */
+                                   ASSIGN aux_nrseqite = 5
+                                          rat_dstpoper = "Limite de Credito".
+                              ELSE
+                                   ASSIGN aux_nrseqite = 2
+                                          rat_dstpoper = "Limite de Desconto".
+                       
+                          END.
+                       
+                      IF  AVAIL craplim  THEN
+                          DO:
+                              IF   craplim.tpctrlim = 1   THEN /* Limite */
+                                   ASSIGN aux_nrseqite = 5
+                                          rat_dstpoper = "Limite de Credito".
+                              ELSE
+                                   ASSIGN aux_nrseqite = 2
+                                          rat_dstpoper = "Limite de Desconto".
+                          END.
+                  END.    
              ELSE
-                  ASSIGN aux_nrseqite = 2.   /* Descontos*/
+                  DO:
+                      IF   craplim.tpctrlim = 1   THEN /* Limite */
+                           ASSIGN aux_nrseqite = 5.
+                      ELSE
+                           ASSIGN aux_nrseqite = 2.   /* Descontos*/
+                  END.
          END.
 
     RUN grava_item_rating (INPUT  par_cdcooper,
@@ -6263,7 +6386,16 @@ PROCEDURE calcula_rating_juridica:
          END.
     ELSE                            /* Descontos / Limite rotativo */
          DO:
-             ASSIGN aux_nrseqite = craplim.nrgarope.         
+             IF   par_tpctrato = 3   THEN
+                  DO:
+                      IF  AVAIL crawlim  THEN
+                          ASSIGN aux_nrseqite = crawlim.nrgarope.    
+     
+                      IF  AVAIL craplim  THEN
+                          ASSIGN aux_nrseqite = craplim.nrgarope.    
+                  END.
+             ELSE
+                  ASSIGN aux_nrseqite = craplim.nrgarope.         
          END.       
 
     RUN grava_item_rating (INPUT  par_cdcooper,
@@ -6289,7 +6421,16 @@ PROCEDURE calcula_rating_juridica:
          END.
     ELSE                           /* Descontos / Limite rotativo */ 
          DO:
-             ASSIGN aux_nrseqite = craplim.nrliquid.
+             IF   par_tpctrato = 3   THEN
+                  DO:
+                      IF  AVAIL crawlim  THEN
+                          ASSIGN aux_nrseqite = crawlim.nrliquid.
+              
+                      IF  AVAIL craplim  THEN
+                          ASSIGN aux_nrseqite = craplim.nrliquid.
+                  END.
+             ELSE
+                  ASSIGN aux_nrseqite = craplim.nrliquid.
          END.
 
     RUN grava_item_rating (INPUT  par_cdcooper,
@@ -6319,7 +6460,20 @@ PROCEDURE calcula_rating_juridica:
          END.
     ELSE 
          DO:
-             aux_qtdiapra = craplim.qtdiavig.
+             IF   par_tpctrato = 3   THEN
+                  DO:
+                      IF  AVAIL crawlim  THEN
+                          ASSIGN aux_qtdiapra = crawlim.qtdiavig
+                                 rat_qtpreope = crawlim.qtdiavig / 30.
+          
+                      IF  AVAIL craplim  THEN
+                          ASSIGN aux_qtdiapra = craplim.qtdiavig
+                                 rat_qtpreope = craplim.qtdiavig / 30.
+          
+                  END.
+             ELSE
+                  ASSIGN aux_qtdiapra = craplim.qtdiavig
+                         rat_qtpreope = craplim.qtdiavig / 30.
          END.
 
     ASSIGN aux_nrseqite = IF   aux_qtdiapra <= 360   THEN
@@ -8057,18 +8211,44 @@ PROCEDURE valor-operacao:
              END.
          END.
     ELSE
-         DO:     
-             FIND craplim WHERE craplim.cdcooper = par_cdcooper   AND
-                                craplim.nrdconta = par_nrdconta   AND
-                                craplim.tpctrlim = par_tpctrato   AND
-                                craplim.nrctrlim = par_nrctrato
-                                NO-LOCK NO-ERROR.
-                                        
-             IF   AVAIL craplim   THEN
-                  ASSIGN par_vloperac = craplim.vllimite.
-             ELSE 
-                  RETURN  "NOK".
+         DO:  
+             IF   par_tpctrato = 3   THEN
+                  DO:
+                      FIND crawlim WHERE crawlim.cdcooper = par_cdcooper   AND
+                                         crawlim.nrdconta = par_nrdconta   AND
+                                         crawlim.tpctrlim = par_tpctrato   AND
+                                         crawlim.nrctrlim = par_nrctrato 
+                                         NO-LOCK NO-ERROR.
 
+                      IF   NOT AVAILABLE crawlim   THEN
+                           DO:
+                               FIND craplim WHERE craplim.cdcooper = par_cdcooper   AND
+                                                  craplim.nrdconta = par_nrdconta   AND
+                                                  craplim.tpctrlim = par_tpctrato   AND
+                                                  craplim.nrctrlim = par_nrctrato   
+                                                  NO-LOCK NO-ERROR.
+                                                 
+                               IF   AVAIL craplim   THEN
+                                    ASSIGN par_vloperac = craplim.vllimite.
+                               ELSE 
+                                    RETURN  "NOK".
+                           END.
+                      ELSE
+                           ASSIGN par_vloperac = crawlim.vllimite.
+                  END.
+             ELSE
+                  DO:
+                      FIND craplim WHERE craplim.cdcooper = par_cdcooper   AND
+                                         craplim.nrdconta = par_nrdconta   AND
+                                         craplim.tpctrlim = par_tpctrato   AND
+                                         craplim.nrctrlim = par_nrctrato
+                                         NO-LOCK NO-ERROR.
+                                                 
+                      IF   AVAIL craplim   THEN
+                           ASSIGN par_vloperac = craplim.vllimite.
+                      ELSE 
+                           RETURN  "NOK".
+                  END.
          END.
    
     RETURN "OK".
