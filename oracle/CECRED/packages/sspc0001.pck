@@ -7166,8 +7166,10 @@ PROCEDURE pc_solicita_cons_bordero_biro(pr_cdcooper IN  crapcob.cdcooper%TYPE, -
              cob.cdtpinav, -- Codigo do tipo da inscricao do Avalista (0-nenhum/1-CPF/2-CNPJ)
              cob.nrinsava, -- Número de inscrição do Avalista (CPF/CNPJ)
              cob.dtvencto, -- Data de Vencimento do Título
-             cob.vltitulo --  valor do Título
-        FROM cecred.crapcob cob
+             cob.vltitulo, -- valor do Título
+             sab.nrcepsac  -- CEP Sacado 
+        FROM crapcob cob,
+             crapsab sab
        WHERE cob.flgregis > 0 -- Indicador de Registro CIP (0-Sem registro CIP/ 1-Registro Online/ 2-Registro offline)
          AND cob.incobran = 0 -- 0 cobrança em aberto.
          -- filtros paramétricos 
@@ -7176,7 +7178,10 @@ PROCEDURE pc_solicita_cons_bordero_biro(pr_cdcooper IN  crapcob.cdcooper%TYPE, -
          AND cob.nrdocmto = pr_nrdocmto
          and cob.cdbandoc = pr_cdbandoc
          and cob.nrdctabb = pr_nrdctabb
-         and cob.nrcnvcob = pr_nrcnvcob;
+         and cob.nrcnvcob = pr_nrcnvcob
+         AND sab.nrdconta = cob.nrdconta
+         AND sab.cdcooper = cob.cdcooper
+         AND sab.nrinssac = cob.nrinssac;
 
     -- Busca as tags para a consulta do biro
     CURSOR cr_crapmbr(pr_cdbircon crapmbr.cdbircon%TYPE,
@@ -7255,16 +7260,17 @@ PROCEDURE pc_solicita_cons_bordero_biro(pr_cdcooper IN  crapcob.cdcooper%TYPE, -
     vr_qtdiarpv_pj  PLS_INTEGER;           --> Quantidade de dias de reaproveitamento para pessoa juridica
 
     -- Variáveis para Retorno do Tìtulo
-    vr_nrdocmto cecred.crapcob.nrdocmto%TYPE;
-    vr_cdcooper cecred.crapcob.cdcooper%TYPE;
-    vr_nrdconta cecred.crapcob.nrdconta%TYPE;
-    vr_cdtpinsc cecred.crapcob.cdtpinsc%TYPE;
-    vr_nrinssac cecred.crapcob.nrinssac%TYPE;
-    vr_nrctasac cecred.crapcob.nrctasac%TYPE;
-    vr_cdtpinav cecred.crapcob.cdtpinav%TYPE;
-    vr_nrinsava cecred.crapcob.nrinsava%TYPE;   
-    vr_dtvencto cecred.crapcob.dtvencto%TYPE;
-    vr_vltitulo cecred.crapcob.vltitulo%TYPE;
+    vr_nrdocmto crapcob.nrdocmto%TYPE;
+    vr_cdcooper crapcob.cdcooper%TYPE;
+    vr_nrdconta crapcob.nrdconta%TYPE;
+    vr_cdtpinsc crapcob.cdtpinsc%TYPE;
+    vr_nrinssac crapcob.nrinssac%TYPE;
+    vr_nrctasac crapcob.nrctasac%TYPE;
+    vr_cdtpinav crapcob.cdtpinav%TYPE;
+    vr_nrinsava crapcob.nrinsava%TYPE;   
+    vr_dtvencto crapcob.dtvencto%TYPE;
+    vr_vltitulo crapcob.vltitulo%TYPE;
+    vr_nrcepsac crapsab.nrcepsac%TYPE;
     
     vr_dsprodut VARCHAR2(100);         --> Descricao do produto que sera utilizado
 
@@ -7292,7 +7298,8 @@ PROCEDURE pc_solicita_cons_bordero_biro(pr_cdcooper IN  crapcob.cdcooper%TYPE, -
                          vr_cdtpinav,
                          vr_nrinsava,
                          vr_dtvencto,
-                         vr_vltitulo;
+                         vr_vltitulo,
+                         vr_nrcepsac;
     IF cr_crapcob%NOTFOUND THEN
       vr_dscritic := 'Contrato de Título inexistente. Favor verificar!';
 
@@ -7452,7 +7459,7 @@ PROCEDURE pc_solicita_cons_bordero_biro(pr_cdcooper IN  crapcob.cdcooper%TYPE, -
     -- Atualiza o codigo da consulta na tabela de limite para o produto Título.
     /*    
     BEGIN
-      UPDATE cecred.crapsab
+      UPDATE crapsab
          SET nrconbir = vr_nrconbir
        WHERE cdcooper = pr_cdcooper
          AND nrdconta = pr_nrdconta
@@ -7517,6 +7524,7 @@ PROCEDURE pc_solicita_cons_bordero_biro(pr_cdcooper IN  crapcob.cdcooper%TYPE, -
                                 pr_cdpactra => rw_crapope.cdpactra,
                                 pr_qthrsrpv => vr_qthrsrpv_pj,
                                 pr_dtconscr => NULL,
+                                pr_nrcep    => vr_nrcepsac,
                                 pr_dscritic => vr_dscritic);
 
         -- Incrementa o contador de enviados
@@ -7566,6 +7574,7 @@ PROCEDURE pc_solicita_cons_bordero_biro(pr_cdcooper IN  crapcob.cdcooper%TYPE, -
                                     pr_cdpactra => rw_crapope.cdpactra,
                                     pr_qthrsrpv => vr_qthrsrpv_pf,
                                     pr_dtconscr => NULL,
+                                    pr_nrcep    => vr_nrcepsac,
                                     pr_dscritic => vr_dscritic);
 
             -- Incrementa o contador de enviados
@@ -7672,7 +7681,7 @@ PROCEDURE pc_solicita_cons_bordero_biro(pr_cdcooper IN  crapcob.cdcooper%TYPE, -
     -- AWAE: TODO: Atualizar quando for criado o campo DTCONBIR na tabela de Pagador (crapsab) 
     -- Atualiza a data da consulta na tabela de Pagador (crapsab)
     /*BEGIN
-      UPDATE cecred.crapsab
+      UPDATE crapsab
          SET dtconbir = (SELECT trunc(nvl(dtreapro, dtconbir))
                            FROM crapcbd
                           WHERE nrconbir = vr_nrconbir
@@ -7788,7 +7797,7 @@ PROCEDURE pc_solicita_cons_bordero_biro(pr_cdcooper IN  crapcob.cdcooper%TYPE, -
       -- AWAE: TODO: Atualizar quando for criado o campo NRCONBIR na tabela de Pagador (crapsab) 
       /*
       BEGIN
-      UPDATE cecred.crapsab
+      UPDATE crapsab
          SET nrconbir = nvl(vr_nrconbir, nrconbir)
        WHERE cdcooper = pr_cdcooper
          AND nrdconta = pr_nrdconta
