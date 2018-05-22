@@ -209,12 +209,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
                              
                 19/06/2017 - #642644 Ajustada a rotina pc_solicita_email para gravar a mensagem de 
                              "email enviado" no proc_message, inclusive no ELSE dos anexos (Carlos)
+
+                17/10/2017 - Ajuste na pc_gerar_mensagem para não obrigar mais o idseqttl, se este vier nulo, então
+                             o o programa vai percorrer todos os usuários da conta no ibank (Pablão)
                              
                 06/12/2017 - Padronização mensagens (crapcri, pc_gera_log (tbgen))
                            - Padronização erros comandos DDL
                            - Pc_set_modulo, cecred.pc_internal_exception
                            - Tratamento erros others
                              Chamado 788828 - Ana Volles (Envolti)
+
+               12/12/2017 - Ajuste na substituicao de caracteres especiais na mensagem enviada. Estava ocasionando problemas
+                             na leitura dessas mensagens na Conta Online.
+                             Heitor (Mouts) - Chamado 807108
+
 ..............................................................................*/
 
   /* Saída com erro */
@@ -653,7 +661,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
         
         -- Montar corpo incluindo a mensagem padrão do sistema
         vr_dscorpoe := rw_crapsle.dscorpoe || '<br><br>' || replace(gene0001.fn_param_sistema('CRED',rw_crapsle.cdcooper,'MSG_RODAPE_EMAIL'),'##NRSEQSOL##', pr_nrseqsol);
-
+        
         -- Incluir log do destinário somente em alguns casos específicos
         IF upper(rw_crapsle.cdprogra) <> 'ATENDA'      AND
            upper(rw_crapsle.cdprogra) <> 'B1WNET0002'  AND
@@ -894,7 +902,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
       --> Controla log proc_batch, para apenas exibir qnd realmente processar informação
       PROCEDURE pc_controla_log_batch(pr_dstiplog IN VARCHAR2, -- 'I' início; 'F' fim; 'E' erro
                                       pr_dscritic IN VARCHAR2 DEFAULT NULL) IS
-      BEGIN
+    BEGIN
         -- Incluído pc_set_modulo da procedure - Chamado 788828 - 06/12/2017
         GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'GENE0003.pc_controla_log_batch');
         --> Controlar geração de log de execução dos jobs 
@@ -927,13 +935,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
         -- Efetuar limpeza das tabelas de e-mais e anexos
         BEGIN
           BEGIN
-            -- Eliminar vinculos de e-mails com data inferior aos dias parametrizados
+          -- Eliminar vinculos de e-mails com data inferior aos dias parametrizados
             DELETE FROM crapslv slv
-             WHERE EXISTS(SELECT 1
-                            FROM crapsle sle
-                           WHERE sle.nrseqsol = slv.nrseqsle
-                             AND sle.dtsolici < TRUNC(SYSDATE) - vr_qtddiaemail
-                             AND sle.flenviad = 'S');
+           WHERE EXISTS(SELECT 1
+                          FROM crapsle sle
+                         WHERE sle.nrseqsol = slv.nrseqsle
+                           AND sle.dtsolici < TRUNC(SYSDATE) - vr_qtddiaemail
+                           AND sle.flenviad = 'S');
           EXCEPTION
             WHEN OTHERS THEN
               pr_des_erro := gene0001.fn_busca_critica(1037)||'crapslv: '||
@@ -943,13 +951,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
               CECRED.pc_internal_exception;                                                            
           END;
           BEGIN
-            -- Eliminar anexos de e-mails com data inferior aos dias parametrizados
+          -- Eliminar anexos de e-mails com data inferior aos dias parametrizados
             DELETE FROM crapsla sla
-             WHERE EXISTS(SELECT 1
-                            FROM crapsle sle
-                           WHERE sle.nrseqsol = sla.nrseqsol
-                             AND sle.dtsolici < TRUNC(SYSDATE) - vr_qtddiaemail
-                             AND sle.flenviad = 'S');
+           WHERE EXISTS(SELECT 1
+                          FROM crapsle sle
+                         WHERE sle.nrseqsol = sla.nrseqsol
+                           AND sle.dtsolici < TRUNC(SYSDATE) - vr_qtddiaemail
+                           AND sle.flenviad = 'S');
           EXCEPTION
             WHEN OTHERS THEN
               pr_des_erro := gene0001.fn_busca_critica(1037)||'crapsla: '||
@@ -960,12 +968,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
               CECRED.pc_internal_exception;                                                        
           END;
           BEGIN
-            -- Eliminar emails com data inferior aos dias parametrizados
+          -- Eliminar emails com data inferior aos dias parametrizados
             DELETE FROM crapsle sle
-             WHERE sle.dtsolici < TRUNC(SYSDATE) - vr_qtddiaemail
-               AND sle.flenviad = 'S';
-          EXCEPTION
-            WHEN OTHERS THEN
+           WHERE sle.dtsolici < TRUNC(SYSDATE) - vr_qtddiaemail
+             AND sle.flenviad = 'S';
+        EXCEPTION
+          WHEN OTHERS THEN
               pr_des_erro := gene0001.fn_busca_critica(1037)||'crapsle: '||
                              'com dtsolici:'||TRUNC(SYSDATE) - vr_qtddiaemail||
                              ', flenviad:S. '||sqlerrm;
@@ -975,7 +983,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
           END;
 
           IF pr_des_erro IS NOT NULL THEN
-            -- Log de erro de execucao
+            -- Log de erro de execucao          
             cecred.pc_log_programa(pr_dstiplog      => 'E', 
                                    pr_cdprograma    => vr_nomdojob, 
                                    pr_cdcooper      => 3, 
@@ -1014,7 +1022,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
           pc_controla_log_batch(pr_dstiplog => 'I');
           -- Incluído pc_set_modulo da procedure - Chamado 788828 - 06/12/2017
           GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'GENE0003.pc_process_email_penden');
-
+                    
           -- Chamar o envio
           pc_envia_email(pr_nrseqsol => rw_crapsle.nrseqsol
                         ,pr_des_erro => vr_des_erro);
@@ -1029,9 +1037,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
              WHERE nrseqsol = rw_crapsle.nrseqsol
                AND flenviad = 'N';
 
-            -- Se houve erro
-            IF trim(vr_des_erro) IS NOT NULL THEN
-              -- Log de erro de execucao
+          -- Se houve erro
+          IF trim(vr_des_erro) IS NOT NULL THEN
+            -- Log de erro de execucao
               cecred.pc_log_programa(pr_dstiplog      => 'E', 
                                      pr_cdprograma    => vr_nomdojob, 
                                      pr_cdcooper      => 3, 
@@ -1043,11 +1051,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
                                      pr_flgsucesso    => 0,
                                      pr_idprglog      => vr_idprglog);
 
-              -- Adicionar no arquivo de log o problema na execução
-              pc_gera_log_email(rw_crapsle.cdcooper,to_char(sysdate,'DD/MM/RRRR hh24:mi:ss')||' --> '||vr_des_erro);
+            -- Adicionar no arquivo de log o problema na execução
+            pc_gera_log_email(rw_crapsle.cdcooper,to_char(sysdate,'DD/MM/RRRR hh24:mi:ss')||' --> '||vr_des_erro);
               -- Incluído pc_set_modulo da procedure - Chamado 788828 - 06/12/2017
               GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'GENE0003.pc_process_email_penden');
-            END IF;
+          END IF;
           END;
         END LOOP;
 
@@ -1074,8 +1082,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
            WHERE nrseqsol = pr_nrseqsol
              AND flenviad = 'N';
 
-          -- Se houve erro
-          IF trim(vr_des_erro) IS NOT NULL THEN
+        -- Se houve erro
+        IF trim(vr_des_erro) IS NOT NULL THEN
             -- Log de erro de execucao
             cecred.pc_log_programa(pr_dstiplog      => 'E', 
                                    pr_cdprograma    => vr_nomdojob, 
@@ -1088,11 +1096,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
                                    pr_flgsucesso    => 0,
                                    pr_idprglog      => vr_idprglog);
 
-            -- Adicionar no arquivo de log o problema na execução
-            pc_gera_log_email(0,to_char(sysdate,'DD/MM/RRRR hh24:mi:ss')||' --> '||vr_des_erro);
+          -- Adicionar no arquivo de log o problema na execução
+          pc_gera_log_email(0,to_char(sysdate,'DD/MM/RRRR hh24:mi:ss')||' --> '||vr_des_erro);
             -- Incluído pc_set_modulo da procedure - Chamado 788828 - 06/12/2017
             GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'GENE0003.pc_process_email_penden');
-          END IF;
+        END IF;
         END;
       END IF;
       -- Incluído pc_set_modulo da procedure - Chamado 788828 - 06/12/2017
@@ -1709,7 +1717,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
   BEGIN    
     -- Incluído pc_set_modulo da procedure - Chamado 788828 - 06/12/2017
     GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'GENE0003.pc_solicita_email_prog');
-
+  
     pc_solicita_email(pr_cdcooper         => pr_cdcooper
                      ,pr_cdprogra         => pr_cdprogra
                      ,pr_des_destino      => pr_des_destino
@@ -1766,7 +1774,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
        Objetivo   : Converter arquivos unix para DOS).
        
        Alterações : 11/03/2014 - Simplificação da rotina - Marcos (Supero)
-
+       
                     06/12/2017 - Padronização mensagens (crapcri, pc_gera_log (tbgen))
                                - Padronização erros comandos DDL
                                - Pc_set_modulo, cecred.pc_internal_exception
@@ -1847,18 +1855,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Carlos (Cecred)
-       Data    : Abril/2014                          Ultima alteracao: 
+       Data    : Abril/2014                          Ultima alteracao: 24/01/2018
 
        Dados referentes ao programa:
 
        Frequencia : Sempre que chamado
        Objetivo   : Validar o e-mail informado
          
-       Alterações : 
+       Alterações : 24/01/2018 - Ajuste no regex para que seja possível cadastrar e-mails
+                                 com apenas um caracter, conforme solicitado no chamado 
+                                 830663. (Kelvin)
          
     ............................................................................. */
   BEGIN
-    if REGEXP_LIKE (pr_dsdemail, '^[a-zA-Z0-9$''-\_][^*{|\}?]+@[a-zA-Z0-9._-]+\.[a-zA-Z]{2,4}$') then
+    if REGEXP_LIKE (pr_dsdemail, '^[a-zA-Z0-9$''-\_][^*{|\}?]*@[a-zA-Z0-9._-]+\.[a-zA-Z]{2,4}$') then
       return 1;
     else
       return 0;
@@ -1893,6 +1903,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
     --
     -- Alterações: 20/10/2016 - Utilização da fn_sequence. (Pablão)
     --
+    --             16/10/2017 - Alteração para utilizar a vw_usuarios_internet, e quando não
+    --                          receber titular, deve gerar mensagem para todos os usuários
+    --                          (Pablão)
+
     --             06/12/2017 - Padronização mensagens (crapcri, pc_gera_log (tbgen))
     --                        - Padronização erros comandos DDL
     --                        - Pc_set_modulo, cecred.pc_internal_exception
@@ -1900,19 +1914,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
     --                          Chamado 788828 - Ana Volles (Envolti)
     ---------------------------------------------------------------------------------------------------------------
     
-    /* Busca dos dados do associado */
-    CURSOR cr_crapass(pr_cdcooper IN craptab.cdcooper%TYPE
-                     ,pr_nrdconta IN crapass.nrdconta%TYPE) IS
-      SELECT crapass.nrdconta
-            ,crapass.nmprimtl
-            ,crapass.inpessoa
-            ,crapass.cdagenci
-            ,crapass.vllimcre
-            ,crapass.nrcpfcgc
-        FROM crapass
-       WHERE crapass.cdcooper = pr_cdcooper
-             AND crapass.nrdconta = pr_nrdconta;
-    rw_crapass cr_crapass%ROWTYPE;
+    
+    --Selecionar titulares com senhas ativas
+    CURSOR cr_usuarios_internet IS
+     SELECT usr.*
+           ,cop.nmrescop
+       FROM vw_usuarios_internet usr
+           ,crapcop              cop
+      WHERE usr.cdcooper = cop.cdcooper
+        AND usr.cdcooper = pr_cdcooper
+        AND usr.nrdconta = pr_nrdconta
+        AND (pr_idseqttl IS NULL OR pr_idseqttl = 0 OR usr.idseqttl = pr_idseqttl);
+    TYPE typ_usuarios_internet IS TABLE OF cr_usuarios_internet%ROWTYPE INDEX BY PLS_INTEGER;
+    vr_usuarios_internet typ_usuarios_internet;
     
     vr_nrdmensg crapmsg.nrdmensg%TYPE := 0;
     vr_dsdmensg crapmsg.dsdmensg%TYPE := ' ';
@@ -1921,36 +1935,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
     -- Incluído pc_set_modulo da procedure - Chamado 788828 - 06/12/2017
     GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'GENE0003.pc_gerar_mensagem');
   
+    /* trocando caracteres especiais */
+    vr_dsdmensg := REPLACE(pr_dsdmensg, '<', '%3C');
+    vr_dsdmensg := REPLACE(vr_dsdmensg, '>', '%3E');
+    vr_dsdmensg := REPLACE(vr_dsdmensg, CHR(38), '%26');
+
+    OPEN cr_usuarios_internet;
+   FETCH cr_usuarios_internet BULK COLLECT
+    INTO vr_usuarios_internet;
+   CLOSE cr_usuarios_internet;
+
+    FOR idx IN 1 .. vr_usuarios_internet.count LOOP
+
     -- Obtém o proximo valor da sequence
     vr_nrdmensg := fn_sequence(pr_nmtabela => 'CRAPMSG'
                               ,pr_nmdcampo => 'NRDMENSG'
                               ,pr_dsdchave => pr_cdcooper || ';' || pr_nrdconta
                               ,pr_flgdecre => 'N');
-  
-    -- Busca os dados do associado
-    OPEN cr_crapass(pr_cdcooper => pr_cdcooper, pr_nrdconta => pr_nrdconta);
-    FETCH cr_crapass
-      INTO rw_crapass;
-    CLOSE cr_crapass;
-  
-    -- Busca os dados da cooperativa
-    OPEN cr_crapcop(pr_cdcooper => pr_cdcooper);
-    FETCH cr_crapcop
-      INTO rw_crapcop;
-    CLOSE cr_crapcop;
-  
+
     /* trocando "#cooperado#" pelo nome do cooperado,
-    trocando #cooperativa# pelo nome fantasia da cooperativa,
-    trocando caracteres especiais */
-    vr_dsdmensg := REPLACE(pr_dsdmensg
-                          ,'%23cooperado%23'
-                          ,rw_crapass.nmprimtl);
-    vr_dsdmensg := REPLACE(vr_dsdmensg
-                          ,'%23cooperativa%23'
-                          ,rw_crapcop.nmrescop);
-    vr_dsdmensg := REPLACE(vr_dsdmensg, '<', '%3C');
-    vr_dsdmensg := REPLACE(vr_dsdmensg, '>', '%3E');
-    vr_dsdmensg := REPLACE(vr_dsdmensg, CHR(38), '%26');
+      trocando #cooperativa# pelo nome fantasia da cooperativa
+      trocando #titular# pelo nome do titular da conta */
+      vr_dsdmensg := REPLACE(vr_dsdmensg,'%23cooperado%23',vr_usuarios_internet(idx).nmextttl);
+      vr_dsdmensg := REPLACE(vr_dsdmensg,'%23cooperativa%23',vr_usuarios_internet(idx).nmrescop);
   
     BEGIN
       INSERT INTO crapmsg
@@ -1970,9 +1977,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
         ,cdoperad
         ,cdcadmsg)
       VALUES
-        (pr_cdcooper
-        ,pr_nrdconta
-        ,pr_idseqttl
+          (vr_usuarios_internet(idx).cdcooper
+          ,vr_usuarios_internet(idx).nrdconta
+          ,vr_usuarios_internet(idx).idseqttl
         ,vr_nrdmensg
         ,pr_cdprogra
         ,trunc(SYSDATE)
@@ -2011,6 +2018,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
         -- No caso de erro de programa gravar tabela especifica de log - 06/12/2017 - Ch 788828 
         CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);                                                             
     END;
+	END LOOP;
 
     -- Incluído pc_set_modulo da procedure - Chamado 788828 - 06/12/2017
     GENE0001.pc_set_modulo(pr_module => NULL, pr_action => NULL);
@@ -2081,21 +2089,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.gene0003 AS
   
     OPEN cr_mensagem;
     FETCH cr_mensagem
-     INTO vr_dsmensagem;
+      INTO vr_dsmensagem;
     CLOSE cr_mensagem;
-
+  
     -- Sobrescreve os parâmetros
     FOR rw_parametro IN cr_parametro LOOP
       vr_dsmensagem := REPLACE(vr_dsmensagem
                               ,rw_parametro.parametro
                               ,rw_parametro.valor);
     END LOOP;
-
+  
     -- Se for SMS corta em 160 caracteres
     IF pr_sms <> 0 THEN
-       vr_dsmensagem := SUBSTR(vr_dsmensagem, 1, 160);
+      vr_dsmensagem := SUBSTR(vr_dsmensagem, 1, 160);
     END IF;
-
+  
     -- Incluído pc_set_modulo da procedure - Chamado 788828 - 06/12/2017
     GENE0001.pc_set_modulo(pr_module => NULL, pr_action => NULL);
     RETURN vr_dsmensagem;
