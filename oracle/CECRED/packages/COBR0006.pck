@@ -5,7 +5,7 @@ CREATE OR REPLACE PACKAGE CECRED.COBR0006 IS
   --  Sistema  : Procedimentos para  gerais da cobranca
   --  Sigla    : CRED
   --  Autor    : Odirlei Busana - AMcom
-  --  Data     : Novembro/2015.                   Ultima atualizacao: 29/12/2016 
+  --  Data     : Novembro/2015.                   Ultima atualizacao: 16/05/2016 
   --
   -- Dados referentes ao programa:
   --
@@ -20,6 +20,9 @@ CREATE OR REPLACE PACKAGE CECRED.COBR0006 IS
   --                           rejeitados (Rodrigo - 550849 / 583172)
   --
   --              29/12/2016 - P340 - Ajustes para leitura do Segmento y053 e envia a CIP (Ricardo Linhares).
+  --
+  --	          16/05/2018 - Ajuste para que o insert do campo cdmensag nunca seja com o valor nulo.
+  --                           Chamado INC0011898 - Gabriel (Mouts).
   --
   ---------------------------------------------------------------------------------------------------------------
     
@@ -2214,7 +2217,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                 pr_tab_crapcob(vr_idx_cob).dsdoccop,
                 pr_tab_crapcob(vr_idx_cob).vltitulo,
                 pr_tab_crapcob(vr_idx_cob).vldescto,
-                pr_tab_crapcob(vr_idx_cob).cdmensag,
+                nvl(pr_tab_crapcob(vr_idx_cob).cdmensag,0),
                 pr_tab_crapcob(vr_idx_cob).dtvencto,
                 pr_tab_crapcob(vr_idx_cob).cdcartei,
                 pr_tab_crapcob(vr_idx_cob).cddespec,
