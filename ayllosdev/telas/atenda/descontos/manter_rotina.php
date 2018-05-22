@@ -655,7 +655,7 @@
 				$html .= '<script type="text/javascript">';
 				$html .= '    hideMsgAguardo();';
 				$html .= '    bloqueiaFundo(divRotina);';
-				$html .= '    showError("error","'.$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata.'","Alerta - Ayllos","");';
+				$html .= '    showError("error","'.$xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata.'","Alerta - Ayllos","bloqueiaFundo(divRotina);");';
 				$html .= '</script>';
 			}
 			$html .=  '<legend id="tabConteudoLegend" ><b>'. utf8ToHtml('Detalhes Proposta: ').formataNumericos("zzz.zz9",$nrctrlim,".").'</b></legend>';
@@ -725,6 +725,63 @@
 	    //$html .= '<input type="hidden" name="qtregist" id="qtregist" value="'.$qtregist.'" />';
 
 	    echo $html;
+	}else if($operacao == 'CALCULAR_SALDO_TITULOS_VENCIDOS'){
+		$nrdconta     = $_POST['nrdconta'];
+		$nrborder    = $_POST['nrborder'];
+		$arr_nrdocmto = implode(',', $_POST['arr_nrdocmto']);
+
+		$xml =  "<Root>";
+		$xml .= " <Dados>";
+		$xml .= "		<nrdconta>".$nrdconta."</nrdconta>";
+		$xml .= "		<nrborder>".$nrborder."</nrborder>";
+		$xml .= "		<arrtitulo>".$arr_nrdocmto."</arrtitulo>";
+		$xml .= " </Dados>";
+		$xml .= "</Root>";
+		
+		$xmlResult = mensageria($xml, "TELA_ATENDA_DESCTO", "CALCULA_POSSUI_SALDO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+		$xmlObj = getClassXML($xmlResult);
+	    $root = $xmlObj->roottag;
+	    // Se ocorrer um erro, mostra crítica
+		if ($root->erro){
+			exibeErro(htmlentities($root->erro->registro->dscritic));
+			exit;
+		}
+		$dados = $root->dados;
+
+		//Pega o saldo de retorno
+		foreach($dados->find("inf") as $t){
+			$possui_saldo = $t->possui_saldo;
+		}
+		
+		//Se possuir saldo positivo o retorno é 1 senão 0
+		echo $possui_saldo;
+
+	}else if($operacao == 'PAGAR_TITULOS_VENCIDOS'){
+		$nrdconta     = $_POST['nrdconta'];
+		$nrborder     = $_POST['nrborder'];
+		$fl_avalista  = $_POST['fl_avalista'];
+		$arr_nrdocmto = implode(',', $_POST['arr_nrdocmto']);
+
+		$xml =  "<Root>";
+		$xml .= " <Dados>";
+		$xml .= "		<nrdconta>".$nrdconta."</nrdconta>";
+		$xml .= "		<nrborder>".$nrborder."</nrborder>";
+		$xml .= "		<flavalista>".$fl_avalista."</flavalista>";
+		$xml .= "		<arrtitulo>".$arr_nrdocmto."</arrtitulo>";
+		$xml .= " </Dados>";
+		$xml .= "</Root>";
+		
+		$xmlResult = mensageria($xml, "TELA_ATENDA_DESCTO", "PAGAR_TITULOS_VENCIDOS", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+		$xmlObj = getClassXML($xmlResult);
+	    $root = $xmlObj->roottag;
+	    // Se ocorrer um erro, mostra crítica
+		if ($root->erro){
+			exibeErro(htmlentities($root->erro->registro->dscritic));
+			exit;
+		}
+
+		//OK caso retorne com sucesso
+		echo $root->dsmensag;
 	}
 
 	// Função para exibir erros na tela através de javascript

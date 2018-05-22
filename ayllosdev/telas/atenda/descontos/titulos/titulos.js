@@ -40,6 +40,7 @@
  * 024: [19/04/2018] Leonardo Oliveira (GFT): Criação do método 'selecionaLimiteTitulosProposta', novo parâmetro 'nrctrmnt'/ numero da proposta, ao selecionar uma proposta.
  * 025: [26/04/2018] Leonardo Oliveira (GFT): Ajuste nos valores retornados ao buscar propostas.
  * 026: [26/04/2018] Vitor Shimada Assanuma (GFT): Ajuste na funcao de chamada da proposta e manutencao
+ * 027: [14/05/2018] Vitor Shimada Assanuma (GFT): Criacao da funcao mostrarBorderoPagar(), pagarTitulosVencidos() e efetuarPagamentoTitulosVencidos()
  */
 
  // variaveis propostas
@@ -267,6 +268,32 @@ function mostrarBorderoAlterar() {
     $.ajax({
         type: "POST",
         url: UrlSite + "telas/atenda/descontos/titulos/titulos_bordero_alterar.php",
+        dataType: "html",
+        data: {
+            nrdconta: nrdconta,
+            nrborder: nrbordero,
+            redirect: "html_ajax"
+        },
+        error: function (objAjax, responseError, objExcept) {
+            hideMsgAguardo();
+            showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+        },
+        success: function (response) {
+            $("#divOpcoesDaOpcao3").html(response);
+        }
+    });
+    return false;
+}
+
+// Mostrar tela de Pagar titulos do bordero
+function mostrarBorderoPagar() {
+    // Mostra mensagem de aguardo
+    showMsgAguardo("Aguarde, carregando dados do border&ocirc; ...");
+
+    // Carrega conteúdo da opção através de ajax
+    $.ajax({
+        type: "POST",
+        url: UrlSite + "telas/atenda/descontos/titulos/titulos_bordero_pagar.php",
         dataType: "html",
         data: {
             nrdconta: nrdconta,
@@ -835,7 +862,9 @@ function selecionaLimiteTitulos(id, qtLimites, limite, dssitlim, dssitest, insit
             $("#trLimite" + id).css("background-color","#FFB9AB");
             // Armazena número do limite selecionado
             nrcontrato = limite;
+			nrctrlim = limite;
             idLinhaL = id;
+            cd_situacao_lim = insitlim;
             situacao_limite = dssitlim;
 
         }
@@ -1603,7 +1632,7 @@ function gravaLimiteDscTit(cddopcao, tipo) {
             nrender2: normalizaNumero($("#nrender2","#frmDadosLimiteDscTit").val()),
             complen2: $("#complen2","#frmDadosLimiteDscTit").val(),
             nrcxaps2: normalizaNumero($("#nrcxaps2","#frmDadosLimiteDscTit").val()),
-            
+            idcobope: normalizaNumero($('#idcobert', '#frmDadosLimiteDscTit').val()),
 
             // Variáveis globais alimentadas na função validaDadosRating em rating.js 
             nrgarope: nrgarope,
@@ -3168,5 +3197,92 @@ function mostrarBorderoLiberar() {
 
 function mostrarBorderoRejeitar() {
     showConfirmacao("Deseja rejeitar o border&ocirc; de desconto de t&iacute;tulos?","Confirma&ccedil;&atilde;o - Ayllos","rejeitarBorderoDscTit(0);","blockBackground(parseInt($('#divRotina').css('z-index')))","sim.gif","nao.gif");
+    return false;
+}
+
+function efetuarPagamentoTitulosVencidos(fl_avalista, arr_titulos){
+    showMsgAguardo('Aguarde, efetuando pagamento...');
+    $.ajax({        
+            type    : 'POST',
+            dataType: 'html',
+            url     : UrlSite + 'telas/atenda/descontos/manter_rotina.php', 
+            data    : { 
+                        operacao: 'PAGAR_TITULOS_VENCIDOS',
+                        fl_avalista: fl_avalista,      //True ou False se é pagamento via avalista
+                        nrdconta: nrdconta,   
+                        nrborder: nrbordero,
+                        arr_nrdocmto: arr_titulos.split(","),          //Array contendo o numero dos titulos a serem pagos
+                        redirect: 'script_ajax'
+            },
+            error   : function(objAjax,responseError,objExcept) {
+                hideMsgAguardo();
+                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+            },
+            success : function(response) {
+                hideMsgAguardo();
+                console.log(response);
+                if (response == 1)
+                    showError('inform','T&iacute;tulos pagos com sucesso!','Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));voltaDiv(3,2,4,\'DESCONTO DE TÍTULOS - BORDERÔS\');');
+                else{
+                    showError("error", "N&atilde;o foi poss&iacute;vel concluir os pagamentos", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");      
+                }
+            }
+        });
+}
+
+function pagarTitulosVencidos(){
+    var msg_confirmacao = 'Confirmar Pagamento?';
+    var arr_nrdocmto    = [];
+    var pgto_avalista   = $(".pagar-com-avalista").is(":checked");
+    var possui_saldo    = false;    
+
+    //Coloca em um array todos os titulos que vao ser pagos
+    $('.pagar-pgto-tit:checked').each(function() {
+        arr_nrdocmto.push($(this).val());
+    });
+
+    //Caso nada tenha sido selecionado mostra erro
+    if (arr_nrdocmto.length <= 0){
+        showError("error", "Selecione ao menos um t&iacute;tulo.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+    }else if(pgto_avalista){ 
+        //Caso seja pagamento com avalista nao precisa verificar o saldo
+        msg_confirmacao = "Confirmar Pagamento com Avalista?";
+        showConfirmacao(msg_confirmacao,"Confirma&ccedil;&atilde;o - Ayllos","efetuarPagamentoTitulosVencidos('"+pgto_avalista+"','"+arr_nrdocmto+"');","blockBackground(parseInt($('#divRotina').css('z-index')))","sim.gif","nao.gif");
+    }else{
+        showMsgAguardo('Aguarde, calculando saldo em conta...');
+
+        //Invoca AJAX para verificar se possui Saldo em Conta
+        $.ajax({        
+            type    : 'POST',
+            dataType: 'html',
+            url     : UrlSite + 'telas/atenda/descontos/manter_rotina.php', 
+            data    : { 
+                        operacao: 'CALCULAR_SALDO_TITULOS_VENCIDOS',
+                        fl_avalista: pgto_avalista,      //True ou False se é pagamento via avalista
+                        nrdconta: nrdconta,   
+                        nrborder: nrbordero,
+                        arr_nrdocmto: arr_nrdocmto,          //Array contendo o numero dos titulos a serem pagos
+                        redirect: 'script_ajax'
+            },
+            error   : function(objAjax,responseError,objExcept) {
+                hideMsgAguardo();
+                showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+            },
+            success : function(response) { //Response:: 0 = Sem saldo e alçada | 1 = Possui Saldo | 2 = Sem saldo mas com alçada
+                hideMsgAguardo();
+                //Caso nao possua saldo, altera a mensagem
+                if (response == 0){
+                    showError("error", "Saldo do cooperado insuficiente e operador n&atilde;o possui al&ccedil;ada.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+                }
+                else if (response == 2){
+                    msg_confirmacao = "Saldo em conta insuficiente para pagamento do t&iacute;tulo. Confirmar Pagamento?";
+                }else{
+                    //Invoca a funcao
+                    showConfirmacao(msg_confirmacao,"Confirma&ccedil;&atilde;o - Ayllos","efetuarPagamentoTitulosVencidos('"+pgto_avalista+"','"+arr_nrdocmto+"');","blockBackground(parseInt($('#divRotina').css('z-index')))","sim.gif","nao.gif");
+                }
+            }
+        });
+       
+    }
     return false;
 }
