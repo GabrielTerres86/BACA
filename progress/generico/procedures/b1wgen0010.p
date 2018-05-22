@@ -41,7 +41,7 @@
    Programa: b1wgen0010.p                  
    Autora  : Ze Eduardo
    
-   Data    : 12/09/2005                     Ultima atualizacao: 31/01/2018
+   Data    : 12/09/2005                     Ultima atualizacao: 16/05/2018
 
    Dados referentes ao programa:
 
@@ -465,6 +465,10 @@
                             do Oracle (Douglas - Chamado 824704)
 
                31/01/2018 - Realizado ajustes devido ao projeto do novo IB (PRJ285 - Rafael).
+
+			   16/05/2018 - Ajuste para que o Internet Banking apresente na Tela: Cobrancas Bancarias >>
+			                Manutencao, registros que possuam o campo cdmensag com o valor nulo.
+			                Chamado INC0011898 - Gabriel (Mouts).
 
 ........................................................................... */
 
@@ -5610,7 +5614,10 @@ PROCEDURE proc_nosso_numero.
                                            ELSE
                                                0)
                tt-consulta-blt.vlabatim = crapcob.vlabatim
-               tt-consulta-blt.cdmensag = crapcob.cdmensag
+               tt-consulta-blt.cdmensag = (IF crapcob.cdmensag <> ? THEN
+			                                  crapcob.cdmensag
+										   ELSE
+										      0)
                tt-consulta-blt.idbaiexc = IF (crapcob.incobran = 0  OR
                                               crapcob.incobran = 3)  AND
                                               crapcob.dtdpagto = ?  THEN
