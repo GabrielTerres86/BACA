@@ -13,7 +13,8 @@ UPDATE crapprm SET dsvlrprm = 'P' WHERE cdacesso = 'FL_VIRADA_BORDERO' AND cdcoo
 -- Inclui a nova opção na tela TITCTO
 UPDATE craptel
    SET idambtel = 2,
-       cdopptel = 'C,F,L,Q,S,T,B'
+       cdopptel = 'C,F,L,Q,S,T,B',
+       lsopptel = 'CONSULTA,FECHAMENTO,LOTES,QUEM,SALDO,PESQUISA,BORDERO'
  WHERE nmdatela = 'TITCTO'
   AND  cdcooper IN (7,14);
 
