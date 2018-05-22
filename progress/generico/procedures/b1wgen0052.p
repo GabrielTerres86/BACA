@@ -1789,7 +1789,7 @@ PROCEDURE Grava_Dados:
                                                            crapdoc.nrdconta = par_nrdconta AND
                                                            crapdoc.tpdocmto = 10           AND
                                                            crapdoc.dtmvtolt = par_dtmvtolt AND
-                                                           crapdoc.idseqttl = par_idseqttl AND
+                                                           crapdoc.idseqttl = aux_idseqttl AND
                                                            crapdoc.nrcpfcgc = aux_nrcpfcgc 
                                                            NO-LOCK NO-ERROR.
                                                 
