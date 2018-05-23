@@ -94,7 +94,7 @@ PROCEDURE pc_gerar_lancamento_conta(pr_dtmvtolt IN  craplcm.dtmvtolt%TYPE DEFAUL
                                   , pr_cdcritic  OUT PLS_INTEGER
                                   , pr_dscritic  OUT VARCHAR2);
 
--- Inclui/Altera CRAPLOT
+-- Inclui/Altera CRAPLOT (migrada da EMPR0001)
 PROCEDURE pc_inclui_altera_lote(pr_cdcooper IN crapcop.cdcooper%TYPE --Codigo Cooperativa
                                ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE --Data Emprestimo
                                ,pr_cdagenci IN crapass.cdagenci%TYPE --Codigo Agencia
@@ -484,7 +484,8 @@ BEGIN
     , pr_nraplica
     , pr_cdorigem
     , pr_idlautom
-  );
+  )
+	RETURNING ROWID INTO pr_rowid_lcm;
 
 
   EXCEPTION
@@ -601,7 +602,7 @@ BEGIN
 																	, pr_rowid_lcm => vr_rowid_lcm);
 END pc_gerar_lancamento_conta; 
 
--- Incluir ou atualizar o lote (versão resumida)
+-- Incluir ou atualizar o lote (versão resumida - migrada da EMPR0001)
 PROCEDURE pc_inclui_altera_lote(pr_cdcooper IN crapcop.cdcooper%TYPE --Codigo Cooperativa
                                ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE --Data Emprestimo
                                ,pr_cdagenci IN crapass.cdagenci%TYPE --Codigo Agencia
