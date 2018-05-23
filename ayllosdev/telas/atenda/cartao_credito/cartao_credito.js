@@ -1326,6 +1326,8 @@ function opcaoNovoOld(cdcooper) {
         },
         success: function (response) {
             $("#divOpcoesDaOpcao1").html(response);
+            //Vamos adequar a funcao do botao voltar.
+            $(".btnVoltar", "#divBotoes").attr("onclick", "voltaDiv(0,1,4);return false;");
         }
     });
 
@@ -6114,6 +6116,36 @@ function alterarBancoob(autorizado){
 
 }
 
+function reenviaEsteira(nrctrcrd){
+
+    showMsgAguardo("Aguarde enviando para a Esteira ...");   
+    
+    var objectSend = {
+        tpacao: 'montagrid',
+        nrdconta: nrdconta,
+        nrctrcrd: nrctrcrd,
+        dsgraupr: 5,
+        inpessoa: inpessoa,
+        bancoob : 2
+    }
+		
+	$.ajax({
+		type: "POST",
+		dataType: "html",
+		url: UrlSite + "telas/atenda/cartao_credito/solicitar_cartao_bancoob.php",
+		data: objectSend,
+		error: function (objAjax, responseError, objExcept) {
+
+			hideMsgAguardo();
+			showError("error", "N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");
+		},
+		success: function (response) {
+			hideMsgAguardo();
+			eval(response);
+		}
+	});
+
+}
 
 function log4console(param){
     console.log(param);

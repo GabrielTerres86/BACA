@@ -2609,6 +2609,10 @@ PROCEDURE valida_nova_proposta:
                      crawcrd.nrcpftit = par_nrcpfcgc AND
                      crawcrd.cdadmcrd <= 80          AND
                      crawcrd.cdadmcrd >= 10 NO-LOCK:
+
+                IF   crawcrd.insitcrd = 6 /* Proposta cancelada */ AND 
+                     crawcrd.nrcctitg = 0 /* Apenas proposta, ainda nao foi pro bancoob */ THEN
+                     NEXT.
                    
                 IF   crawcrd.cdadmcrd = crapadc.cdadmcrd  THEN
                      DO:

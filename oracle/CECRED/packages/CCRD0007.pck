@@ -1044,6 +1044,9 @@ dbms_output.put_line('pr_dscritic: '||pr_des_mensagem);
           IF cr_craptfc%FOUND THEN
             vr_dstelres := rw_craptfc.nrtelefo;
             vr_dddresid := rw_craptfc.nrdddtfc;
+          ELSE
+            vr_dstelres := 0;
+            vr_dddresid := 0;
           END IF;
 
           -- fechar o cursor
@@ -1059,6 +1062,9 @@ dbms_output.put_line('pr_dscritic: '||pr_des_mensagem);
           IF cr_craptfc%FOUND THEN
             vr_dstelcel := rw_craptfc.nrtelefo;
             vr_dddcelul := rw_craptfc.nrdddtfc;
+          ELSE
+            vr_dstelcel := 0;
+            vr_dddcelul := 0;
           END IF;
 
           -- fechar o cursor
@@ -1074,6 +1080,9 @@ dbms_output.put_line('pr_dscritic: '||pr_des_mensagem);
           IF cr_craptfc%FOUND THEN
             vr_dstelcom := rw_craptfc.nrtelefo;
             vr_dddcomer := rw_craptfc.nrdddtfc;
+          ELSE
+            vr_dstelcom := 0;
+            vr_dddcomer := 0;
           END IF;
 
           -- fechar o cursor
