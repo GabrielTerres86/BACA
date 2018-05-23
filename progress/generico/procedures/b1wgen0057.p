@@ -2,7 +2,7 @@
 
     Programa: b1wgen0057.p
     Autor   : Jose Luis (DB1)
-    Data    : Marco/2010                   Ultima atualizacao: 31/01/2018
+    Data    : Marco/2010                   Ultima atualizacao: 22/05/2018
 
     Objetivo  : Tranformacao BO tela CONTAS - CONJUGE
 
@@ -30,27 +30,30 @@
                               
                  12/08/2015 - Reformulacao cadastral (Gabriel-RKAM).             
                               
-				 20/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
-			                  crapass, crapttl, crapjur 
-							 (Adriano - P339).        
+                 20/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+                              crapass, crapttl, crapjur 
+                              (Adriano - P339).        
 
                  19/07/2017 - Alteraçao CDOEDTTL pelo campo IDORGEXP.
                               PRJ339 - CRM (Odirlei-AMcom)  
                               
-				 28/08/2017 - Alterado tipos de documento para utilizarem CI, CN, 
-							  CH, RE, PP E CT. (PRJ339 - Reinert)                              
+                 28/08/2017 - Alterado tipos de documento para utilizarem CI, CN, 
+                              CH, RE, PP E CT. (PRJ339 - Reinert)                              
 
                  22/09/2017 - Ajuste realizado na tela Contas/Dados Pessoais/Conjuge
-						      onde o telefone comercial do conjugue estava sendo
-							  carregado errado. PRJ339 (Kelvin).
+                              onde o telefone comercial do conjugue estava sendo
+                              carregado errado. PRJ339 (Kelvin).
 
-				 28/09/2017 - Alterado para buscar nome da empresa do conjuge pelo
-							  registro da crapttl. (PRJ339 - Reinert)
+                 28/09/2017 - Alterado para buscar nome da empresa do conjuge pelo
+                              registro da crapttl. (PRJ339 - Reinert)
                 
-				 09/11/2017 - Criaçao do documento de conjuge (codigo 22). (PRJ339 - Lombardi)
+                 09/11/2017 - Criaçao do documento de conjuge (codigo 22). (PRJ339 - Lombardi)
          
                  31/01/2018 - Ajustar busca da descricao do Perfil do conjuge, caso valor 
                               venha nulo vamos considerar zero (Lucas Ranghetti #836600)
+                              
+                 22/05/2018 - Descontinuar gravaçao da pendencia 22 de conjuge 
+                              (Lucas Ranghetti #TASK0011687)
 .............................................................................*/
 
 /*............................. DEFINICOES ..................................*/
@@ -1265,63 +1268,6 @@ PROCEDURE Grava_Dados:
             ASSIGN aux_nmconjug = "".
         IF aux_nrcpfcjg = ? THEN
             ASSIGN aux_nrcpfcjg = 0.
-            
-        IF par_cddopcao = "I"                  OR 
-           aux_nmconjug <> UPPER(par_nmconjug) OR 
-           aux_nrcpfcjg <> par_nrcpfcjg        THEN 
-            DO:
-              
-              ContadorDoc22: DO aux_contador = 1 TO 10:
-          
-                  FIND FIRST crapdoc WHERE 
-                                     crapdoc.cdcooper = par_cdcooper AND
-                                     crapdoc.nrdconta = par_nrdconta AND
-                                     crapdoc.tpdocmto = 22            AND
-                                     crapdoc.dtmvtolt = par_dtmvtolt AND
-                                     crapdoc.idseqttl = par_idseqttl AND
-                                     crapdoc.nrcpfcgc = crapttl.nrcpfcgc
-                                     EXCLUSIVE NO-ERROR.
-
-                  IF NOT AVAILABLE crapdoc THEN
-                      DO:
-                          IF LOCKED(crapdoc) THEN
-                              DO:
-                                  IF aux_contador = 10 THEN
-                                      DO:
-                                          ASSIGN aux_cdcritic = 341.
-                                          LEAVE ContadorDoc22.
-                                      END.
-                                  ELSE 
-                                      DO: 
-                                          PAUSE 1 NO-MESSAGE.
-                                          NEXT ContadorDoc22.
-                                      END.
-                              END.
-                          ELSE        
-                              DO:
-                                  CREATE crapdoc.
-                                  ASSIGN crapdoc.cdcooper = par_cdcooper
-                                         crapdoc.nrdconta = par_nrdconta
-                                         crapdoc.flgdigit = FALSE
-                                         crapdoc.dtmvtolt = par_dtmvtolt
-                                         crapdoc.tpdocmto = 22
-                                         crapdoc.idseqttl = par_idseqttl
-                                         crapdoc.nrcpfcgc = crapttl.nrcpfcgc.
-                                  VALIDATE crapdoc.
-                              END.
-                      END.
-                  ELSE
-                      DO:
-                          ASSIGN crapdoc.flgdigit = FALSE.
-          
-                          LEAVE ContadorDoc22.
-                      END.
-              END.
-            
-        END.
-
-        IF  aux_dscritic <> "" OR aux_cdcritic <> 0 THEN
-            UNDO Grava, LEAVE Grava.  
         
         IF  par_flgerlog  THEN 
             DO:

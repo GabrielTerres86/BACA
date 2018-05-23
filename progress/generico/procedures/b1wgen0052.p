@@ -2,7 +2,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0052.p                  
     Autor(a): Jose Luis Marchezoni (DB1)
-    Data    : Junho/2010                      Ultima atualizacao: 01/12/2017
+    Data    : Junho/2010                      Ultima atualizacao: 22/05/2018
   
     Dados referentes ao programa:
   
@@ -123,14 +123,16 @@
                              para garantir replicaçao dos dados da tbcadast.
                              PRJ339 - CRM (Odirlei-AMcom)
                
-			   14/11/2017 - Ajuste na rotina que busca contas demitidas para enviar conta
-						     para pesquisa e retornar valor total da pesquisa
-							 (Jonata - RKAM P364). 
+                14/11/2017 - Ajuste na rotina que busca contas demitidas para enviar conta
+                             para pesquisa e retornar valor total da pesquisa
+                             (Jonata - RKAM P364).
+ 
+                16/11/2017 - Ajuste para validar conta (Jonata - RKAM P364).
 
-			   16/11/2017 - Ajuste para validar conta (Jonata - RKAM P364).
-
-			   01/12/2017 - Retirado leitura da craplct ( Jonata - RKAM P364).
-
+                01/12/2017 - Retirado leitura da craplct ( Jonata - RKAM P364).
+               
+                22/05/2018 - Descontinuar gravaçao da pendencia 22 de conjuge 
+                             (Lucas Ranghetti #TASK0011687)
 ............................................................................*/
 
 
@@ -2361,53 +2363,7 @@ PROCEDURE Grava_Dados:
                                                     ASSIGN crapdoc.flgdigit = FALSE.
                                                     LEAVE ContadorDoc4.
                                                 END.              
-                                        END.
-                                        /* Gerar pendencia de conjuge */
-                                        ContadorDoc22: DO aux_contador = 1 TO 10:
-
-                                            FIND FIRST crapdoc WHERE 
-                                                               crapdoc.cdcooper = par_cdcooper AND
-                                                               crapdoc.nrdconta = par_nrdconta AND
-                                                               crapdoc.tpdocmto = 22           AND
-                                                               crapdoc.dtmvtolt = par_dtmvtolt AND
-                                                               crapdoc.idseqttl = par_idseqttl AND
-                                                               crapdoc.nrcpfcgc = aux_nrcpfcgc
-                                                               EXCLUSIVE NO-ERROR.
-    
-                                            IF  NOT AVAILABLE crapdoc THEN
-                                                DO:
-                                                    IF LOCKED(crapdoc) THEN
-                                                        DO:
-                                                            IF aux_contador = 10 THEN
-                                                                DO:
-                                                                    ASSIGN aux_cdcritic = 341.
-                                                                    LEAVE ContadorDoc22.
-                                                                END.
-                                                            ELSE 
-                                                                DO: 
-                                                                    PAUSE 1 NO-MESSAGE.
-                                                                    NEXT ContadorDoc22.
-                                                                END.
-                                                        END.
-                                                    ELSE        
-                                                        DO:
-                                                            CREATE crapdoc.
-                                                            ASSIGN crapdoc.cdcooper = par_cdcooper
-                                                                   crapdoc.nrdconta = par_nrdconta
-                                                                   crapdoc.flgdigit = FALSE
-                                                                   crapdoc.dtmvtolt = par_dtmvtolt
-                                                                   crapdoc.tpdocmto = 22
-                                                                   crapdoc.idseqttl = par_idseqttl
-                                                                   crapdoc.nrcpfcgc = aux_nrcpfcgc.
-                                                            VALIDATE crapdoc.
-                                                        END.
-                                                END.
-                                            ELSE
-                                                DO:
-                                                    ASSIGN crapdoc.flgdigit = FALSE.
-                                                    LEAVE ContadorDoc22.
-                                                END.              
-                                        END.
+                                        END.                                        
                                     END.
                                 
                                 /* Gerar pendencia de cartao assinatura */
