@@ -68,14 +68,19 @@ switch ($operacao){
 
 		$root = $xmlObj->roottag;
 		// Se ocorrer um erro, mostra crítica
+		$json = array();
 		if ($root->erro){
-			echo '$("#vlcnae").val("");';
-			exibeErro(htmlentities($root->erro->registro->dscritic));
-			exit;
+			$json["vlcnae"] 	= "";
+			$json["status"] 	= "erro";
+			$json["mensagem"] 	= htmlentities($root->erro->registro->dscritic);
 		} 
-		$dados = $root->dados->inf;
-		echo '$("#cdcnae").val("'.$dados->cdcnae.'");';
-		echo '$("#vlcnae").val("'.$dados->vlmaximo.'").focus();';
+		else{
+			$dados = $root->dados->inf;
+			$json["cdcnae"] 	= $dados->cdcnae->cdata;
+			$json["vlcnae"] 	= $dados->vlmaximo->cdata;
+			$json["status"] 	= "sucesso";
+		}
+		echo json_encode($json);
 	break;
 	default:
 			exibirErro('error','Selecione a operacao','Alerta - Ayllos','',false);

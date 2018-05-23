@@ -147,16 +147,16 @@ var escolheOpcao;
 		}
 		else {
 			if ((cddopcao == "C" )) {
-					manterRotina();
+					// manterRotina();
 					return false;
 			} else if (cddopcao == "I"){
-				showConfirmacao('Confirma a operacao?','Confirma&ccedil;&atilde;o - Ayllos','mostraRotina(\'principal\');','btnVoltar();','sim.gif','nao.gif');
+				showConfirmacao('Confirma a opera&ccedil;&atilde;o?','Confirma&ccedil;&atilde;o - Ayllos','mostraRotina(\'principal\');','$("#vlcnae").focus()','sim.gif','nao.gif');
 				return false;
 			} else if (cddopcao == "A"){
-				showConfirmacao('Confirma a operacao?','Confirma&ccedil;&atilde;o - Ayllos','mostraRotina(\'principal\');','btnVoltar();','sim.gif','nao.gif');
+				showConfirmacao('Confirma a opera&ccedil;&atilde;o?','Confirma&ccedil;&atilde;o - Ayllos','mostraRotina(\'principal\');','$("#vlcnae").focus()','sim.gif','nao.gif');
 				return false;
 			} else if (cddopcao == "E"){
-				showConfirmacao('Confirma a operacao?','Confirma&ccedil;&atilde;o - Ayllos','mostraRotina(\'principal\');','btnVoltar();','sim.gif','nao.gif');
+				showConfirmacao('Confirma a opera&ccedil;&atilde;o?','Confirma&ccedil;&atilde;o - Ayllos','mostraRotina(\'principal\');','$("#btSalvar").focus()','sim.gif','nao.gif');
 				return false;
 			}
 		}
@@ -199,23 +199,56 @@ var escolheOpcao;
 			if(!$("#divError").is(":visible")){
 				switch (cddopcao){
 					case 'C':
-						$("#btSalvar").focus();
+						buscaValorCnae(cdcnae,function(r){
+							if(r.status=='erro'){
+								showError("error",r.mensagem,"Alerta - Ayllos","focaCampoErro(\"cdcnae\",\"frmValorMaximoCnae\");");
+								setTimeout(function(){bloqueiaFundo($("#divError"))},5);	
+							}
+							else{
+								trocaBotao('');
+								$("#cdcnae").val(r.cdcnae);
+								$("#vlcnae").val(r.vlcnae);
+								$("#btVoltar").focus();
+							}
+						});
 					break;
 					case 'I':
-						$("#vlcnae").habilitaCampo().focus();
+						buscaValorCnae(cdcnae,function(r){
+							if(r.status=='erro'){
+								if(r.mensagem.indexOf('Valor')===-1){
+									showError("error",r.mensagem,"Alerta - Ayllos","focaCampoErro(\"cdcnae\",\"frmValorMaximoCnae\");");
+									setTimeout(function(){bloqueiaFundo($("#divError"))},5);	
+								}
+								else{
+									$("#vlcnae").habilitaCampo().focus();
+								}
+							}
+							else{
+								showError("error","J&aacute; existe um valor cadastrado para este c&oacute;digo CNAE","Alerta - Ayllos","focaCampoErro(\"cdcnae\",\"frmValorMaximoCnae\");");
+							}
+						});
 					break;
 					case 'A':
-						buscaValorCnae(cdcnae,function(){
-							if($("#vlcnae").val()!=""){
-								$("#vlcnae").blur();
-								$("#vlcnae").habilitaCampo().focus();
+						buscaValorCnae(cdcnae,function(r){
+							if(r.status=='erro'){
+								showError("error",r.mensagem,"Alerta - Ayllos","focaCampoErro(\"cdcnae\",\"frmValorMaximoCnae\");");
+								setTimeout(function(){bloqueiaFundo($("#divError"))},5);	
+							}
+							else{
+								$("#cdcnae").val(r.cdcnae);
+								$("#vlcnae").val(r.vlcnae);
+								$("#vlcnae").blur().habilitaCampo().focus();
 							}
 						});
 					break;
 					case 'E':
-						buscaValorCnae(cdcnae,function(){
-							if(!$("#divError").is(":visible")){
-								$("#vlcnae").blur();
+						buscaValorCnae(cdcnae,function(r){
+							if(r.status=='erro'){
+								showError("error",r.mensagem,"Alerta - Ayllos","focaCampoErro(\"cdcnae\",\"frmValorMaximoCnae\");");
+								setTimeout(function(){bloqueiaFundo($("#divError"))},5);	
+							}
+							else{
+								$("#vlcnae").val(r.vlcnae).blur();
 								trocaBotao('Excluir');
 								$('#btSalvar').focus();
 							}
@@ -265,9 +298,14 @@ var escolheOpcao;
 		if(cddopcao == 'C'){
 			showMsgAguardo('Aguarde, buscando ...');
 			// Executa script de confirmação através de ajax
-			buscaValorCnae(cdcnae,function(){
-				if($("#vlcnae").val()!=""){
-					$("#vlcnae").blur();
+			buscaValorCnae(cdcnae,function(r){
+				if(r.status=='erro'){
+					showError("error",r.mensagem,"Alerta - Ayllos","focaCampoErro(\"cdcnae\",\"frmValorMaximoCnae\");");
+					setTimeout(function(){bloqueiaFundo($("#divError"))},5);	
+				}
+				else{
+					$("#cdcnae").val(r.cdcnae);
+					$("#vlcnae").val(r.vlcnae).blur();
 					trocaBotao('');
 					$('#btVoltar').focus();
 				}
@@ -342,8 +380,8 @@ var escolheOpcao;
 					// }
 						hideMsgAguardo();
 						$msgOK = "Dados exclu&iacute;dos com sucesso";
-						showError('inform', $msgOK, 'Alerta - Ayllos', "hideMsgAguardo();focaCampoErro('cdcnae','frmValorMaximoCnae');");
-						estadoInicial();
+						showError('inform', $msgOK, 'Alerta - Ayllos', "hideMsgAguardo();estadoInicial();");
+						bloqueiaFundo(divRotina);
 				}
 			});
 		} 
@@ -479,7 +517,7 @@ var escolheOpcao;
 		titulo      = 'CNAE';
 		qtReg		= '30';
 		filtros     = 'Cód. CNAE;cdcnae;60px;S;0;;descricao|Desc. CNAE;dscnae;200px;S;;;descricao|;flserasa;;N;2;N;;descricao';
-		colunas     = 'Código;cdcnae;20%;right|Desc CANE;dscnae;80%;left';
+		colunas     = 'Código;cdcnae;20%;right|Desc CNAE;dscnae;80%;left';
 		
 		mostraPesquisa('ZOOM0001',procedure,titulo,qtReg,filtros,colunas,'' ,'sequenciaPesquisa()');
 
@@ -488,7 +526,7 @@ var escolheOpcao;
 
 	function sequenciaPesquisa(){
 		cddopcao = $("#cddopcao").val();
-		if(cddopcao == 'A' || cddopcao == 'E'){
+		if(cddopcao == 'A' || cddopcao == 'E' || cddopcao == 'I' || cddopcao == 'C'){
 			controlaBuscaCnae(cddopcao,$("#cdcnae").val());
 		}
 	}
@@ -546,8 +584,8 @@ var escolheOpcao;
 				success: function(response) {
 					try {
 						hideMsgAguardo();
-						eval(response);
-						callback();
+						var r = $.parseJSON(response);
+						callback(r);
 					} catch(error) {
 						$("#vlcnae").val('');
 						hideMsgAguardo();
