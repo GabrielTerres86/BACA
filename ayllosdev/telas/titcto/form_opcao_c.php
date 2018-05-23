@@ -5,7 +5,7 @@
  * DATA CRIACAO : 08/03/2018
  * OBJETIVO     : Formulario que apresenta a consulta da opcao C da tela TITCTO
  * --------------
- * ALTERACOES   :
+ * ALTERACOES   : 23/05/2018 - Insert da validação da permissão para tela - Vitor Shimada Assanuma (GFT)
  * --------------
  */
 ?>
@@ -19,6 +19,9 @@ require_once('../../class/xmlfile.php');
 isPostMethod();
 
 include('form_cabecalho.php');
+if (($msgError = validaPermissao($glbvars['nmdatela'], $glbvars['nmrotina'], $_POST['cddopcao'], false)) <> '') {
+    exibirErro('error', $msgError, 'Alerta - Ayllos', 'estadoInicial()', true);
+}
 ?>
 
 <form id="frmOpcao" class="formulario" onSubmit="return false;">

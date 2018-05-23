@@ -195,9 +195,6 @@ function controlaPesquisas() {
 
 // opcao
 function buscaOpcao() {
-
-    showMsgAguardo('Aguarde, buscando dados ...');
-
     // Executa script de confirmação através de ajax
     $.ajax({
         type: 'POST',
@@ -224,7 +221,6 @@ function buscaOpcao() {
 
             formataOpcao();
 
-            hideMsgAguardo();
             return false;
         }
     });
