@@ -28,7 +28,11 @@ Alterações:  03/11/2008 - Inclusao widget-pool (martin)
                           criado a TT gnatrdp para facilitar a ordenacao em ordem
                           alfabética dos recursos, PRJ 229 (Jean Michel).
                           
-            16/12/2015 - Ajustes solicitados pelo Márcio (Vanessa).
+             16/12/2015 - Ajustes solicitados pelo Márcio (Vanessa).
+			 
+			 23/05/2018 - Chamado #SCTASK0014587, evitar erro ao acessar crapadp.
+			              Faltava colunas na clausula where do FIND. (Wagner/Sustentação).
+						  
 ............................................................................. */
 
 create widget-pool.
@@ -400,8 +404,10 @@ IF permiteExecutar = "1" OR permiteExecutar = "2"
           /* Esta linha de FIND é apenas para os testes enquanto a base não esta carrega com dados corretos */
           /*FIND FIRST Crapadp NO-LOCK NO-ERROR. */
                 
-                  FIND Crapadp WHERE Crapadp.cdcooper = cdcooper  AND
-                                     Crapadp.NrSeqDig = nrSeqEve NO-LOCK NO-ERROR. 
+		  FIND Crapadp WHERE Crapadp.cdcooper = cdcooper  AND
+							 Crapadp.NrSeqDig = nrSeqEve AND 
+							 Crapadp.Cdagenci = cdAgenci AND 
+							 Crapadp.Dtanoage = dtAnoAge NO-LOCK NO-ERROR. 
                   
           IF NOT AVAILABLE Crapadp 
              THEN
