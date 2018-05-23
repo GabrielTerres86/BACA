@@ -3041,7 +3041,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                         --Inicializar variavel de erro
                         vr_cdcritic:= 0;
                         vr_cdcritic_aux:= 0;
-                        commit; 
+                        
                         --Ler proxima linha do arquivo
                         RAISE vr_exc_pula;
                       END IF; --vr_cdcritic = 64                     
