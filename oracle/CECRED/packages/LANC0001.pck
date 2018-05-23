@@ -47,7 +47,52 @@ PROCEDURE pc_gerar_lancamento_conta(pr_dtmvtolt IN  craplcm.dtmvtolt%TYPE DEFAUL
                                   , pr_proclote IN  INTEGER DEFAULT 0 -- Indica se a procedure deve processar (incluir/atualizar) o LOTE (CRAPLOT)
                                   , pr_tplotmov IN  craplot.tplotmov%TYPE DEFAULT 0
                                   , pr_cdcritic OUT PLS_INTEGER
-                                  , pr_dscritic OUT VARCHAR2);
+                                  , pr_dscritic OUT VARCHAR2
+																	, pr_rowid_lcm OUT ROWID);
+
+-- Faz as críticas aplicáveis e efetua o lançamento na CRAPLCM se for permitido (sobrecarga)																	
+PROCEDURE pc_gerar_lancamento_conta(pr_dtmvtolt IN  craplcm.dtmvtolt%TYPE DEFAULT NULL
+                                  , pr_cdagenci IN  craplcm.cdagenci%TYPE default 0
+                                  , pr_cdbccxlt IN  craplcm.cdbccxlt%TYPE default 0
+                                  , pr_nrdolote IN  craplcm.nrdolote%TYPE default 0
+                                  , pr_nrdconta IN  craplcm.nrdconta%TYPE default 0
+                                  , pr_nrdocmto IN  craplcm.nrdocmto%TYPE default 0
+                                  , pr_cdhistor IN  craplcm.cdhistor%TYPE default 0
+                                  , pr_nrseqdig IN  craplcm.nrseqdig%TYPE default 0
+                                  , pr_vllanmto IN  craplcm.vllanmto%TYPE default 0
+                                  , pr_nrdctabb IN  craplcm.nrdctabb%TYPE default 0
+                                  , pr_cdpesqbb IN  craplcm.cdpesqbb%TYPE default ' '
+                                  , pr_vldoipmf IN  craplcm.vldoipmf%TYPE default 0
+                                  , pr_nrautdoc IN  craplcm.nrautdoc%TYPE default 0
+                                  , pr_nrsequni IN  craplcm.nrsequni%TYPE default 0
+                                  , pr_cdbanchq IN  craplcm.cdbanchq%TYPE default 0
+                                  , pr_cdcmpchq IN  craplcm.cdcmpchq%TYPE default 0
+                                  , pr_cdagechq IN  craplcm.cdagechq%TYPE default 0
+                                  , pr_nrctachq IN  craplcm.nrctachq%TYPE default 0
+                                  , pr_nrlotchq IN  craplcm.nrlotchq%TYPE default 0
+                                  , pr_sqlotchq IN  craplcm.sqlotchq%TYPE default 0
+                                  , pr_dtrefere IN  craplcm.dtrefere%TYPE DEFAULT NULL
+                                  , pr_hrtransa IN  craplcm.hrtransa%TYPE default 0
+                                  , pr_cdoperad IN  craplcm.cdoperad%TYPE default ' '
+                                  , pr_dsidenti IN  craplcm.dsidenti%TYPE default ' '
+                                  , pr_cdcooper IN  craplcm.cdcooper%TYPE default 0
+                                  , pr_nrdctitg IN  craplcm.nrdctitg%TYPE default ' '
+                                  , pr_dscedent IN  craplcm.dscedent%TYPE default ' '
+                                  , pr_cdcoptfn IN  craplcm.cdcoptfn%TYPE default 0
+                                  , pr_cdagetfn IN  craplcm.cdagetfn%TYPE default 0
+                                  , pr_nrterfin IN  craplcm.nrterfin%TYPE default 0
+                                  , pr_nrparepr IN  craplcm.nrparepr%TYPE default 0
+                                  , pr_nrseqava IN  craplcm.nrseqava%TYPE default 0
+                                  , pr_nraplica IN  craplcm.nraplica%TYPE default 0
+                                  , pr_cdorigem IN  craplcm.cdorigem%TYPE default 0
+                                  , pr_idlautom IN  craplcm.idlautom%TYPE default 0
+                                  -------------------------------------------------
+                                  -- Dados do lote (Opcional)
+                                  -------------------------------------------------
+                                  , pr_proclote  IN  INTEGER DEFAULT 0 -- Indica se a procedure deve processar (incluir/atualizar) o LOTE (CRAPLOT)
+                                  , pr_tplotmov  IN  craplot.tplotmov%TYPE DEFAULT 0
+                                  , pr_cdcritic  OUT PLS_INTEGER
+                                  , pr_dscritic  OUT VARCHAR2);
 
 -- Inclui/Altera CRAPLOT
 PROCEDURE pc_inclui_altera_lote(pr_cdcooper IN crapcop.cdcooper%TYPE --Codigo Cooperativa
@@ -292,10 +337,11 @@ PROCEDURE pc_gerar_lancamento_conta(pr_dtmvtolt IN  craplcm.dtmvtolt%TYPE DEFAUL
                                   -------------------------------------------------
                                   -- Dados do lote (Opcional)
                                   -------------------------------------------------
-                                  , pr_proclote IN  INTEGER DEFAULT 0 -- Indica se a procedure deve processar (incluir/atualizar) o LOTE (CRAPLOT)
-                                  , pr_tplotmov IN  craplot.tplotmov%TYPE DEFAULT 0
-                                  , pr_cdcritic OUT PLS_INTEGER
-                                  , pr_dscritic OUT VARCHAR2) IS
+                                  , pr_proclote  IN  INTEGER DEFAULT 0 -- Indica se a procedure deve processar (incluir/atualizar) o LOTE (CRAPLOT)
+                                  , pr_tplotmov  IN  craplot.tplotmov%TYPE DEFAULT 0
+                                  , pr_cdcritic  OUT PLS_INTEGER
+                                  , pr_dscritic  OUT VARCHAR2
+																	, pr_rowid_lcm OUT ROWID) IS
 BEGIN
    /* ............................................................................
         Programa: pc_gerar_lancamento_conta
@@ -449,6 +495,111 @@ BEGIN
       pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic) || ' pc_gerar_lancamento_conta - ' || SQLERRM || ')';
   END;
 END pc_gerar_lancamento_conta;
+
+-- Inclui um novo lançamento na CRAPLCM
+PROCEDURE pc_gerar_lancamento_conta(pr_dtmvtolt IN  craplcm.dtmvtolt%TYPE DEFAULT NULL
+                                  , pr_cdagenci IN  craplcm.cdagenci%TYPE default 0
+                                  , pr_cdbccxlt IN  craplcm.cdbccxlt%TYPE default 0
+                                  , pr_nrdolote IN  craplcm.nrdolote%TYPE default 0
+                                  , pr_nrdconta IN  craplcm.nrdconta%TYPE default 0
+                                  , pr_nrdocmto IN  craplcm.nrdocmto%TYPE default 0
+                                  , pr_cdhistor IN  craplcm.cdhistor%TYPE default 0
+                                  , pr_nrseqdig IN  craplcm.nrseqdig%TYPE default 0
+                                  , pr_vllanmto IN  craplcm.vllanmto%TYPE default 0
+                                  , pr_nrdctabb IN  craplcm.nrdctabb%TYPE default 0
+                                  , pr_cdpesqbb IN  craplcm.cdpesqbb%TYPE default ' '
+                                  , pr_vldoipmf IN  craplcm.vldoipmf%TYPE default 0
+                                  , pr_nrautdoc IN  craplcm.nrautdoc%TYPE default 0
+                                  , pr_nrsequni IN  craplcm.nrsequni%TYPE default 0
+                                  , pr_cdbanchq IN  craplcm.cdbanchq%TYPE default 0
+                                  , pr_cdcmpchq IN  craplcm.cdcmpchq%TYPE default 0
+                                  , pr_cdagechq IN  craplcm.cdagechq%TYPE default 0
+                                  , pr_nrctachq IN  craplcm.nrctachq%TYPE default 0
+                                  , pr_nrlotchq IN  craplcm.nrlotchq%TYPE default 0
+                                  , pr_sqlotchq IN  craplcm.sqlotchq%TYPE default 0
+                                  , pr_dtrefere IN  craplcm.dtrefere%TYPE DEFAULT NULL
+                                  , pr_hrtransa IN  craplcm.hrtransa%TYPE default 0
+                                  , pr_cdoperad IN  craplcm.cdoperad%TYPE default ' '
+                                  , pr_dsidenti IN  craplcm.dsidenti%TYPE default ' '
+                                  , pr_cdcooper IN  craplcm.cdcooper%TYPE default 0
+                                  , pr_nrdctitg IN  craplcm.nrdctitg%TYPE default ' '
+                                  , pr_dscedent IN  craplcm.dscedent%TYPE default ' '
+                                  , pr_cdcoptfn IN  craplcm.cdcoptfn%TYPE default 0
+                                  , pr_cdagetfn IN  craplcm.cdagetfn%TYPE default 0
+                                  , pr_nrterfin IN  craplcm.nrterfin%TYPE default 0
+                                  , pr_nrparepr IN  craplcm.nrparepr%TYPE default 0
+                                  , pr_nrseqava IN  craplcm.nrseqava%TYPE default 0
+                                  , pr_nraplica IN  craplcm.nraplica%TYPE default 0
+                                  , pr_cdorigem IN  craplcm.cdorigem%TYPE default 0
+                                  , pr_idlautom IN  craplcm.idlautom%TYPE default 0
+                                  -------------------------------------------------
+                                  -- Dados do lote (Opcional)
+                                  -------------------------------------------------
+                                  , pr_proclote  IN  INTEGER DEFAULT 0 -- Indica se a procedure deve processar (incluir/atualizar) o LOTE (CRAPLOT)
+                                  , pr_tplotmov  IN  craplot.tplotmov%TYPE DEFAULT 0
+                                  , pr_cdcritic  OUT PLS_INTEGER
+                                  , pr_dscritic  OUT VARCHAR2) IS
+	/* ............................................................................
+        Programa: pc_gerar_lancamento_conta (sobrecarga)
+        Sistema : Ayllos
+        Sigla   : CRED
+        Autor   : Reginaldo/AMcom
+        Data    : Abril/2018                 Ultima atualizacao:
+
+        Dados referentes ao programa:
+        Frequencia: Sempre que for chamado
+        Objetivo  : Rotina centralizada para incluir lançamentos na CRAPLCM, fazendo as críticas necessárias.
+				            Versão sobrecarregada para compatibilidade com chamadas que não incluem o parâmetro pr_rowid_lcm.
+        Observacao: -----
+        Alteracoes:
+    ..............................................................................*/
+		
+	vr_rowid_lcm ROWID;
+BEGIN
+          pc_gerar_lancamento_conta(pr_dtmvtolt => pr_dtmvtolt
+                                  , pr_cdagenci => pr_cdagenci
+                                  , pr_cdbccxlt => pr_cdbccxlt
+                                  , pr_nrdolote => pr_nrdolote
+                                  , pr_nrdconta => pr_nrdconta
+                                  , pr_nrdocmto => pr_nrdocmto
+                                  , pr_cdhistor => pr_cdhistor
+                                  , pr_nrseqdig => pr_nrseqdig
+                                  , pr_vllanmto => pr_vllanmto
+                                  , pr_nrdctabb => pr_nrdctabb
+                                  , pr_cdpesqbb => pr_cdpesqbb
+                                  , pr_vldoipmf => pr_vldoipmf
+                                  , pr_nrautdoc => pr_nrautdoc
+                                  , pr_nrsequni => pr_nrsequni
+                                  , pr_cdbanchq => pr_cdbanchq
+                                  , pr_cdcmpchq => pr_cdcmpchq
+                                  , pr_cdagechq => pr_cdagechq
+                                  , pr_nrctachq => pr_nrctachq
+                                  , pr_nrlotchq => pr_nrlotchq
+                                  , pr_sqlotchq => pr_sqlotchq
+                                  , pr_dtrefere => pr_dtrefere
+                                  , pr_hrtransa => pr_hrtransa
+                                  , pr_cdoperad => pr_cdoperad
+                                  , pr_dsidenti => pr_dsidenti
+                                  , pr_cdcooper => pr_cdcooper
+                                  , pr_nrdctitg => pr_nrdctitg
+                                  , pr_dscedent => pr_dscedent
+                                  , pr_cdcoptfn => pr_cdcoptfn
+                                  , pr_cdagetfn => pr_cdagetfn
+                                  , pr_nrterfin => pr_nrterfin
+                                  , pr_nrparepr => pr_nrparepr
+                                  , pr_nrseqava => pr_nrseqava
+                                  , pr_nraplica => pr_nraplica
+                                  , pr_cdorigem => pr_cdorigem
+                                  , pr_idlautom => pr_idlautom
+                                  -------------------------------------------------
+                                  -- Dados do lote (Opcional)
+                                  -------------------------------------------------
+                                  , pr_proclote  => pr_proclote
+                                  , pr_tplotmov  => pr_tplotmov
+                                  , pr_cdcritic  => pr_cdcritic
+                                  , pr_dscritic  => pr_dscritic
+																	, pr_rowid_lcm => vr_rowid_lcm);
+END pc_gerar_lancamento_conta; 
 
 -- Incluir ou atualizar o lote (versão resumida)
 PROCEDURE pc_inclui_altera_lote(pr_cdcooper IN crapcop.cdcooper%TYPE --Codigo Cooperativa
