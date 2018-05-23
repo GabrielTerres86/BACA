@@ -24,7 +24,7 @@
 
     Programa: b1wgen0058.p
     Autor   : Jose Luis (DB1)
-    Data    : Marco/2010                   Ultima atualizacao: 15/02/2018
+    Data    : Marco/2010                   Ultima atualizacao: 23/05/2018
 
     Objetivo  : Tranformacao BO tela CONTAS - PROCURADORES/REPRESENTANTES
 
@@ -209,6 +209,10 @@
 				15/02/2018 - Ajustado problema que não deixava a tela de poderes abrir pois
 							 havia um FIND retorando mais de um registro. Para solucionar
 							 fiz o filtro com a chave correta. (SD 841137 - Kelvin).
+
+				23/05/2018 - Atualização e Apresentação de Pendência Digidoc 
+					         Regulatorio de Credito - Diego Simas (AMcom)
+
 .....................................................................................*/
 
 /*............................. DEFINICOES ..................................*/
@@ -234,6 +238,7 @@ DEF VAR aux_ctdpoder AS INT                                            NO-UNDO.
 DEF VAR aux_flgisola AS CHAR                                           NO-UNDO.
 DEF VAR aux_flgconju AS CHAR                                           NO-UNDO.
 DEF VAR h-b1wgen0052b AS HANDLE                                        NO-UNDO.
+DEF VAR h-b1wgen0137 AS HANDLE										   NO-UNDO.
 
 FUNCTION ValidaUf      RETURNS LOGICAL 
     ( INPUT par_cdufdavt AS CHARACTER ) FORWARD.
@@ -3294,6 +3299,31 @@ PROCEDURE Grava_Dados:
 
     IF par_cddopcao = "I" THEN
        DO:  
+
+		   IF NOT VALID-HANDLE(h-b1wgen0137) THEN
+               RUN sistema/generico/procedures/b1wgen0137.p 
+               PERSISTENT SET h-b1wgen0137.
+             
+           RUN gera_pend_digitalizacao IN h-b1wgen0137                    
+                    ( INPUT par_cdcooper,
+                      INPUT par_nrdconta,
+                      INPUT par_idseqttl,
+                      INPUT aux_nrcpfcgc,
+                      INPUT par_dtmvtolt,
+                      /* 9 - DOCUMENTO DE IDENTIFICAÇAO - PROC
+                         6 - CARTAO DE ASSINATURA
+                         7 - FICHA CADASTRAL 
+						16 - DOCUMENTO DE IDENTIDADE - PJ
+					  */
+                      INPUT "9;6;7;16", 
+                      INPUT par_cdoperad,
+                     OUTPUT aux_cdcritic,
+                     OUTPUT aux_dscritic).
+
+           IF  VALID-HANDLE(h-b1wgen0137) THEN
+             DELETE OBJECT h-b1wgen0137. 
+		   
+		    		
            ContadorDoc9: DO TRANSACTION ON ENDKEY UNDO ContadorDoc9, LEAVE ContadorDoc9
                            ON ERROR  UNDO ContadorDoc9, LEAVE ContadorDoc9
                            ON STOP   UNDO ContadorDoc9, LEAVE ContadorDoc9: DO aux_contador = 1 TO 10:
@@ -3485,7 +3515,7 @@ PROCEDURE Grava_Dados:
              DO: 
                  ASSIGN aux_nrcpfcto = CarregaCpfCnpj(par_nrcpfcgc).
 
-                 FIND b-crapavt 
+				 FIND b-crapavt 
                       WHERE b-crapavt.cdcooper = par_cdcooper AND
                             b-crapavt.tpctrato = 6            AND
                             b-crapavt.nrdconta = par_nrdconta AND
@@ -3501,7 +3531,36 @@ PROCEDURE Grava_Dados:
                                             STRING(par_nrdctato) + " CPF " +
                                             STRING(par_nrcpfcgc). 
                            
-                       ASSIGN aux_nrcpfcto = CarregaCpfCnpj(par_nrcpfcgc).                       
+                       ASSIGN aux_nrcpfcto = CarregaCpfCnpj(par_nrcpfcgc).        
+					   
+					   IF par_persocio <> b-crapavt.persocio THEN
+						  DO:    
+                          
+							IF NOT VALID-HANDLE(h-b1wgen0137) THEN
+								RUN sistema/generico/procedures/b1wgen0137.p 
+								PERSISTENT SET h-b1wgen0137.
+                                 
+							RUN gera_pend_digitalizacao IN h-b1wgen0137                    
+									( INPUT par_cdcooper,
+										INPUT par_nrdconta,
+										INPUT par_idseqttl,
+										INPUT aux_nrcpfcgc,
+										INPUT par_dtmvtolt,
+										/* 16 - DOCUMENTO DE IDENTIDADE - PJ */
+										INPUT "16", 
+										INPUT par_cdoperad,
+										OUTPUT aux_cdcritic,
+										OUTPUT aux_dscritic).
+
+							IF  VALID-HANDLE(h-b1wgen0137) THEN
+								DELETE OBJECT h-b1wgen0137.                              
+
+						    ASSIGN aux_msgdolog = aux_msgdolog + 
+												", % Societario de "           +
+												STRING(b-crapavt.persocio) +
+												" para "                   +
+												STRING(par_persocio).  
+						  END.               
                        
                        IF par_dtvalida <> b-crapavt.dtvalida OR
                           par_tpdocava <> b-crapavt.tpdocava OR

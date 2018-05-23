@@ -3,7 +3,7 @@
 
     Programa: b1wgen0080.p
     Autor   : Guilherme
-    Data    : Agosto/2011                   Ultima atualizacao:   13/12/2013
+    Data    : Agosto/2011                   Ultima atualizacao:   23/05/2018
 
     Objetivo  : Tranformacao BO tela CONTAS - PARTICIPACAO EM OUTRAS EMPRESAS
 
@@ -26,7 +26,10 @@
                              "atualiza_data_manutencao_cadastro" dentro da
                              procedure "grava_dados" (James).
                              
-                13/12/2013 - Adicionado VALIDATE para CREATE. (Jorge)      
+                13/12/2013 - Adicionado VALIDATE para CREATE. (Jorge)  
+				
+				23/05/2018 - Atualização e Apresentação de Pendência Digidoc 
+					         Regulatorio de Credito - Diego Simas (AMcom)    
                              
 .............................................................................*/
 
@@ -47,6 +50,7 @@ DEF VAR aux_nrdrowid AS ROWID                                          NO-UNDO.
 DEF VAR aux_contador AS INTE                                           NO-UNDO.
 DEF VAR aux_nrcpfcto AS DECI                                           NO-UNDO.
 DEF VAR aux_msgdolog AS CHAR                                           NO-UNDO.
+DEF VAR h-b1wgen0137 AS HANDLE										   NO-UNDO.
 
 FUNCTION ValidaUf      RETURNS LOGICAL 
     ( INPUT par_cdufdavt AS CHARACTER ) FORWARD.
@@ -849,6 +853,7 @@ PROCEDURE Grava_Dados:
     DEF VAR aux_dsrotina AS CHAR                                    NO-UNDO.
     DEF VAR h-b1wgen0110 AS HANDLE                                  NO-UNDO.
     DEF VAR h-b1wgen0168 AS HANDLE                                  NO-UNDO.
+	DEF VAR aux_nrcpfcgc AS DECIMAL                                 NO-UNDO.
 
     DEF BUFFER b-crapepa FOR crapepa.
 
@@ -860,6 +865,50 @@ PROCEDURE Grava_Dados:
            aux_cdcritic = 0
            aux_dscritic = ""
            aux_dsrotina = "".
+
+	IF par_idseqttl > 1 THEN
+      DO:
+        FIND crapttl WHERE crapttl.cdcooper = par_cdcooper AND
+                           crapttl.nrdconta = par_nrdconta AND 
+                           crapttl.idseqttl = par_idseqttl
+                           NO-LOCK NO-ERROR.
+          IF  NOT AVAIL crapttl THEN
+              DO: 
+                  ASSIGN aux_dscritic = "Erro ao consultar titular da conta.".
+        
+                  RUN gera_erro (INPUT par_cdcooper,
+                                 INPUT par_cdagenci,
+                                 INPUT par_nrdcaixa,
+                                 INPUT 1, /*sequencia*/
+                                 INPUT aux_cdcritic,
+                                 INPUT-OUTPUT aux_dscritic).
+
+                  RETURN "NOK".
+              END.
+          ELSE 
+            aux_nrcpfcgc = crapttl.nrcpfcgc.
+      END.
+    ELSE
+      DO:
+        FIND crapass WHERE crapass.cdcooper = par_cdcooper AND
+                           crapass.nrdconta = par_nrdconta
+                           NO-LOCK NO-ERROR.
+          IF  NOT AVAIL crapass THEN
+              DO: 
+                  ASSIGN aux_dscritic = "Erro ao consultar conta.".
+        
+                  RUN gera_erro (INPUT par_cdcooper,
+                                 INPUT par_cdagenci,
+                                 INPUT par_nrdcaixa,
+                                 INPUT 1, /*sequencia*/
+                                 INPUT aux_cdcritic,
+                                 INPUT-OUTPUT aux_dscritic).
+
+                  RETURN "NOK".
+              END.
+          ELSE 
+            aux_nrcpfcgc = crapass.nrcpfcgc.
+      END.
     
     IF par_cddopcao = "I" THEN
        DO:  
@@ -875,6 +924,25 @@ PROCEDURE Grava_Dados:
                             INPUT par_cdoperad,
                             INPUT par_dtmvtolt,
                             INPUT aux_msgdolog). 
+
+		   IF NOT VALID-HANDLE(h-b1wgen0137) THEN
+               RUN sistema/generico/procedures/b1wgen0137.p 
+               PERSISTENT SET h-b1wgen0137.
+             
+           RUN gera_pend_digitalizacao IN h-b1wgen0137                    
+                    ( INPUT par_cdcooper,
+                      INPUT par_nrdconta,
+                      INPUT par_idseqttl,
+                      INPUT aux_nrcpfcgc,
+                      INPUT par_dtmvtolt,
+                      /* 16 - DOCUMENTO DE INDENTIDADE - PJ */
+                      INPUT "16", 
+                      INPUT par_cdoperad,
+                     OUTPUT aux_cdcritic,
+                     OUTPUT aux_dscritic).
+
+           IF  VALID-HANDLE(h-b1wgen0137) THEN
+             DELETE OBJECT h-b1wgen0137. 
        END.
     ELSE
        DO:
@@ -914,6 +982,53 @@ PROCEDURE Grava_Dados:
                                       " para "                    +
                                       STRING(par_dtadmsoc).
                            END.
+
+						IF par_nmprimtl <> b-crapepa.nmprimtl OR
+                           par_nrcpfcgc <> STRING(b-crapepa.nrdocsoc) OR
+                           par_persocio <> b-crapepa.persocio THEN
+                          DO:    
+                          
+                               IF NOT VALID-HANDLE(h-b1wgen0137) THEN
+                                   RUN sistema/generico/procedures/b1wgen0137.p 
+                                   PERSISTENT SET h-b1wgen0137.
+                                 
+                               RUN gera_pend_digitalizacao IN h-b1wgen0137                    
+                                        ( INPUT par_cdcooper,
+                                          INPUT par_nrdconta,
+                                          INPUT par_idseqttl,
+                                          INPUT aux_nrcpfcgc,
+                                          INPUT par_dtmvtolt,
+                                          /* 16 - DOCUMENTO DE IDENTIDADE - PJ */
+                                          INPUT "16", 
+                                          INPUT par_cdoperad,
+                                         OUTPUT aux_cdcritic,
+                                         OUTPUT aux_dscritic).
+
+                               IF  VALID-HANDLE(h-b1wgen0137) THEN
+                                 DELETE OBJECT h-b1wgen0137.                              
+
+							   IF par_nmprimtl <> b-crapepa.nmprimtl THEN
+							      ASSIGN aux_msgdolog = aux_msgdolog + 
+                                                   ", Razao Social de "           +
+                                                   STRING(b-crapepa.nmprimtl) +
+                                                   " para "                   +
+                                                   STRING(par_nmprimtl).  
+
+							   IF par_nrcpfcgc <> STRING(b-crapepa.nrdocsoc) THEN
+							      ASSIGN aux_msgdolog = aux_msgdolog + 
+                                                   ", CNPJ de "           +
+                                                   STRING(b-crapepa.nrdocsoc) +
+                                                   " para "                   +
+                                                   STRING(par_nrcpfcgc).  
+
+							   IF par_persocio <> b-crapepa.persocio THEN
+							      ASSIGN aux_msgdolog = aux_msgdolog + 
+                                                   ", % Societario de "           +
+                                                   STRING(b-crapepa.persocio) +
+                                                   " para "                   +
+                                                   STRING(par_persocio).  
+
+                          END.
 
                         RUN grava_logtel(INPUT par_cdcooper,
                                          INPUT par_cdoperad,
