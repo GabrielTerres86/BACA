@@ -90,6 +90,8 @@ BEGIN
                               tenham o produto "25 – CREDITO PRE-APROVADO". PRJ366 (Lombardi).
 
                  30/04/2018 - Alterados codigos de situacao "ass.cdsitdct". PRJ366 (Lombardi).
+
+                 23/05/2018 - Adicionado campo "dtvigencia" no where. PRJ366 (Lombardi). 
                               
   ............................................................................ */
 
@@ -148,7 +150,9 @@ BEGIN
                             FROM tbcc_produtos_coop pcp
                            WHERE pcp.cdcooper  = ass.cdcooper
                              AND pcp.inpessoa  = ass.inpessoa
-                             AND pcp.cdproduto = 25)  -- Pré-Aprovado
+                                 AND pcp.cdproduto = 25
+                                 AND (pcp.dtvigencia >= pr_dtmvtolt
+                                  OR  pcp.dtvigencia IS NULL))  -- Pré-Aprovado
          and (pr_qterro = 0 or
              (pr_qterro > 0 and exists (select 1
                                         from tbgen_batch_controle
@@ -173,7 +177,8 @@ BEGIN
     CURSOR cr_crapass(pr_cdcooper IN crapass.cdcooper%TYPE
                      ,pr_cdagenci IN crapass.cdagenci%TYPE
                      ,pr_inpessoa IN crapass.inpessoa%TYPE
-                     ,pr_cdsitdct IN VARCHAR2) IS
+                     ,pr_cdsitdct IN VARCHAR2
+                     ,pr_dtmvtolt IN crapdat.dtmvtolt%TYPE) IS
       SELECT ass.cdcooper
             ,ass.nrdconta
             ,ass.inrisctl
@@ -205,7 +210,9 @@ BEGIN
                             FROM tbcc_produtos_coop pcp
                            WHERE pcp.cdcooper  = ass.cdcooper
                              AND pcp.inpessoa  = ass.inpessoa
-                             AND pcp.cdproduto = 25)  -- Pré-Aprovado
+                             AND pcp.cdproduto = 25
+                             AND (pcp.dtvigencia >= pr_dtmvtolt
+                              OR  pcp.dtvigencia IS NULL))  -- Pré-Aprovado
          AND ass.inpessoa = pr_inpessoa;
 
     -- Listagem de parametros
@@ -1750,7 +1757,8 @@ BEGIN
          FOR rw_crapass IN cr_crapass(pr_cdcooper => rw_crapcop.cdcooper
                                      ,pr_cdagenci => pr_cdagenci
                                      ,pr_inpessoa => vr_inpessoa
-                                     ,pr_cdsitdct => vr_cdsitdct) LOOP
+                                          ,pr_cdsitdct => vr_cdsitdct
+                                          ,pr_dtmvtolt => rw_crapdat.dtmvtolt) LOOP
             -- inicializando as variaveis para controle de gravação da tbepr_carga_pre_aprv_det (M441-Holz)
             vr_tab_det := null;
             vr_cpa_com_erro := 'N';

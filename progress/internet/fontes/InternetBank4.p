@@ -136,6 +136,7 @@ DEF VAR h-b1wgen0015 AS HANDLE                                         NO-UNDO.
 DEF VAR h-b1wgen0088 AS HANDLE                                         NO-UNDO.
 
 DEF VAR aux_dscritic AS CHAR                                           NO-UNDO.
+DEF VAR aux_des_erro AS CHAR                                           NO-UNDO.
 
 /* Informações do beneficiário */
 DEF VAR aux_nmprimtl_ben LIKE crapass.nmprimtl                         NO-UNDO.
@@ -146,12 +147,56 @@ DEF VAR aux_dsdemail_ben LIKE crapcem.dsdemail                         NO-UNDO.
 DEF VAR aux_ctdemail AS INTE                                           NO-UNDO.
 DEF VAR aux_qtdemail AS INTE                                           NO-UNDO.
 
+DEF VAR aux_inconprd AS INTE                                           NO-UNDO.
+
 /* sistema deve atribuir data do dia vindo da crapdat
    Rafael Cechet - 06/04/2011 */
 FIND FIRST crapdat WHERE crapdat.cdcooper = par_cdcooper NO-LOCK NO-ERROR.
 
 IF  AVAILABLE crapdat  THEN
     ASSIGN par_dtmvtolt = crapdat.dtmvtocd.
+   
+/* busca indicador impedimento de contratacao de produto */
+{ includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
+
+RUN STORED-PROCEDURE pr_ind_contratacao_produto
+    aux_handproc = PROC-HANDLE NO-ERROR
+                            (INPUT par_cdcooper, /* pr_cdcooper */
+                             INPUT par_nrdconta,     /* pr_nrdconta */
+                             OUTPUT 0,               /* pr_incontratacao_produto */
+                             OUTPUT "",              /* pr_des_erro */
+                             OUTPUT "").             /* pr_dscritic */
+
+CLOSE STORED-PROC pr_ind_contratacao_produto
+      aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+{ includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+ASSIGN aux_inconprd = 0
+       aux_des_erro = ""
+       aux_dscritic = ""
+       aux_inconprd = pr_ind_contratacao_produto.pr_incontratacao_produto
+                          WHEN pr_ind_contratacao_produto.pr_incontratacao_produto <> ?
+       aux_des_erro = pr_ind_contratacao_produto.pr_des_erro
+                          WHEN pr_ind_contratacao_produto.pr_des_erro <> ?
+       aux_dscritic = pr_ind_contratacao_produto.pr_dscritic
+                          WHEN pr_ind_contratacao_produto.pr_dscritic <> ?.
+
+IF  aux_des_erro = "NOK" THEN
+    DO:
+        ASSIGN xml_dsmsgerr = "<dsmsgerr>" + aux_dscritic + 
+                              "</dsmsgerr>".
+        RETURN "NOK".
+    END.
+
+IF aux_inconprd = 1 THEN
+    DO:
+        ASSIGN aux_dscritic = "Situacao da conta nao permite emissao de boleto.".
+        
+        ASSIGN xml_dsmsgerr = "<dsmsgerr>" + aux_dscritic + 
+                              "</dsmsgerr>".
+        RETURN "NOK".
+    END.
    
 RUN sistema/generico/procedures/b1wgen0015.p PERSISTENT SET h-b1wgen0015.
 

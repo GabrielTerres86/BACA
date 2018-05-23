@@ -766,6 +766,10 @@
               
               13/04/2018 - Ajuste na procedure valida-dados-gerais para verificar se o tipo de conta
                            do cooperado permite adesao do produto 31 - Emprestimo. PRJ366 (Lombardi)
+              
+              22/05/2018 - Adicionado campo "par_idquapro" na procedure "valida-dados-gerais".
+                           Incluida validacao das linhas de credito 100,800,900 e 6901 e do campo
+                           par_idquapro. PRJ366 (Lombardi)
 
  ..............................................................................*/
 
@@ -3737,6 +3741,7 @@ PROCEDURE valida-dados-gerais:
     DEF  INPUT PARAM par_idcarenc AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_dtcarenc AS DATE                           NO-UNDO.
     DEF  INPUT PARAM par_idfiniof AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_idquapro AS INTE                           NO-UNDO.
 
     DEF OUTPUT PARAM TABLE FOR tt-erro.
     DEF OUTPUT PARAM TABLE FOR tt-msg-confirma.
@@ -3890,7 +3895,9 @@ PROCEDURE valida-dados-gerais:
     
     DO WHILE TRUE:
         
-        IF  NOT CAN-DO("0,58,59", STRING(par_cdfinemp)) THEN /* CDC */
+        IF  NOT CAN-DO("0,58,59", STRING(par_cdfinemp)) AND
+            NOT CAN-DO("100,800,900,6901", STRING(par_cdlcremp)) AND /* CDC */
+            NOT CAN-DO("2,4", STRING(par_idquapro)) THEN
             DO:
                 aux_valida_adesao = TRUE.
                 IF par_cddopcao = "A" THEN
@@ -3904,7 +3911,8 @@ PROCEDURE valida-dados-gerais:
                         /* Verifica se valida */
                         IF  AVAIL crawepr   THEN
                             DO:
-                                IF  CAN-DO("0,58,59", STRING(crawepr.cdfinemp)) THEN
+                                IF  CAN-DO("0,58,59", STRING(crawepr.cdfinemp)) OR 
+                                    CAN-DO("100,800,900,6901", STRING(crawepr.cdlcremp)) THEN
                                     aux_valida_adesao = TRUE.
                                 ELSE 
                                     aux_valida_adesao = FALSE.

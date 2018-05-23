@@ -19,6 +19,7 @@
 	$dsctrliq = 		(isset($_POST['dsctrliq'])) 		? $_POST['dsctrliq'] 	 	: '';
 	$operacao =  		(isset($_POST['operacao']))  		? $_POST['operacao'] 		: '';
 	$cdcooper =  		(isset($_POST['cdcooper']))  		? $_POST['cdcooper'] 		: '';
+	$idquapro =  		(isset($_POST['idquapro']))  		? $_POST['idquapro'] 		: 0;
 	$vlemprst_antigo =  (isset($_POST['vlemprst_antigo']))  ? $_POST['vlemprst_antigo'] : 0;
 	$dsctrliq_antigo =  (isset($_POST['dsctrliq_antigo']))  ? $_POST['dsctrliq_antigo'] : '';
 	$dsauxliq = '';
@@ -28,7 +29,7 @@
 	
 	
 	/* Desconsidera CDC */
-	if ($cdfinemp <> 0 && $cdfinemp <> 58 && $cdfinemp <> 59) {
+	if ($cdfinemp <> 0 && $cdfinemp <> 58 && $cdfinemp <> 59 && $idquapro <> 2 && $idquapro <> 4) {
 		
 		// Monta o xml de requisição
 		$xml  = "";
@@ -49,8 +50,9 @@
 			exibirErro('error',utf8_encode($msgErro),'Alerta - Ayllos','bloqueiaFundo(divRotina)',false);
 		}
 		
-		$vlemprst = str_replace(',','.',str_replace('.','',$vlemprst));
-		$dsctrliq = str_replace('.','',$dsctrliq);
+		$vlemprst 		 = str_replace(',','.',str_replace('.','',$vlemprst));
+		$vlemprst_antigo = str_replace(',','.',str_replace('.','',$vlemprst_antigo));
+		$dsctrliq 		 = str_replace('.','',$dsctrliq);
 		$dsctrliq_antigo = str_replace('.','',$dsctrliq_antigo);
 		
 		// Verificar se está sendo enviado a string "Sem liquidacoes"  
@@ -59,8 +61,14 @@
 		} else {
 			$dsauxliq = $dsctrliq;
 		}
-
-
+		
+		// Verificar se está sendo enviado a string "Sem liquidacoes"  
+		if (strcasecmp($dsctrliq_antigo, 'Sem liquidacoes') == 0) {
+			$dsctrliq_antigo = '';
+		} else {
+			$dsctrliq_antigo = $dsctrliq_antigo;
+		}
+		
 		// Monta o xml de requisição
 		$xml  = "";
 		$xml .= "<Root>";
@@ -85,9 +93,9 @@
 		$mensagem = $xmlObject->roottag->tags[1]->cdata;
 		
 		// Se ocorrer um erro, mostra crítica
-		if ($solcoord == 1 && ((float) $vlemprst != (float) $vlemprst_antigo || $dsctrliq != $dsctrliq_antigo)) {
+		if ($solcoord == 1 && ((float) $vlemprst != (float) $vlemprst_antigo || $dsauxliq != $dsctrliq_antigo)) {
 			//Guarda valores para futura consulta
-			$executar .= "vlemprst_antigo = ".$vlemprst.";dsctrliq_antigo = \"".$dsctrliq."\";";
+			$executar .= "vlemprst_antigo = ".$vlemprst.";dsctrliq_antigo = \"".$dsauxliq."\";";
 			//Necessario para usar a funcao senhaCoordenador
 			$executar = str_replace("\"","\\\"", str_replace("\\", "\\\\", $executar));
 			$executar = str_replace("\"","\\\"", str_replace("\\", "\\\\", $executar));

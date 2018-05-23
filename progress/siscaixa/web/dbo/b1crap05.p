@@ -77,6 +77,9 @@
                04/04/2018 - Adicionada chamada pc_valida_adesao_produto para verificar se o 
                             tipo de conta permite a contrataçao do produto. PRJ366 (Lombardi).
                             
+               18/05/2018 - Adicionada chamada pc_ind_impede_talonario para verificar se a 
+                            situacao de conta permite a solicitacao de talionario. PRJ366 (Lombardi).
+                            
 ............................................................................ */
 /*----------------------------------------------------------------------*/
 /*  b1crap05.p - Solicitacao/Liberacoes Taloes Normal                   */
@@ -480,7 +483,7 @@ PROCEDURE valida-dados:
        END.
     ELSE
        DO:
-           /* buscar quantidade maxima de digitos aceitos para o convenio */
+           /* valida adesao do produtos */
             { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
                           
             RUN STORED-PROCEDURE pc_valida_adesao_produto
@@ -906,6 +909,8 @@ PROCEDURE solicita-entrega-talao:
     DEF VAR aux_contador             AS INT                           NO-UNDO.
     DEF VAR aux_cdcritic             AS INT                           NO-UNDO.
     DEF VAR aux_dscritic             AS CHAR                          NO-UNDO.
+    DEF VAR aux_des_erro             AS CHAR                          NO-UNDO.
+    DEF VAR aux_inimptal             AS INT                           NO-UNDO.
 
     IF p-sistema = "CAIXA"   THEN
        ASSIGN aux_nrdolote = 19000 + p-nro-caixa.
@@ -1036,8 +1041,62 @@ PROCEDURE solicita-entrega-talao:
                      
                          UNDO TRANS_1, LEAVE TRANS_1.
                      END.
-
-                         /* Cheque inicial sem digito */
+                  
+                  /* busca indicador impedimento de solicitacao de talionario */
+                  { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
+                  
+                  RUN STORED-PROCEDURE pc_ind_impede_talonario
+                      aux_handproc = PROC-HANDLE NO-ERROR
+                                              (INPUT crapcop.cdcooper, /* pr_cdcooper */
+                                               INPUT aux_nrdconta,     /* pr_nrdconta */
+                                               OUTPUT 0,               /* pr_inimpede_talionario */
+                                               OUTPUT "",              /* pr_des_erro */
+                                               OUTPUT "").             /* pr_dscritic */
+                  
+                  CLOSE STORED-PROC pc_ind_impede_talonario
+                        aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+                  
+                  { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+                  
+                  ASSIGN aux_inimptal = 0
+                         aux_des_erro = ""
+                         aux_dscritic = ""
+                         aux_inimptal = pc_ind_impede_talonario.pr_inimpede_talionario
+                                            WHEN pc_ind_impede_talonario.pr_inimpede_talionario <> ?
+                         aux_des_erro = pc_ind_impede_talonario.pr_des_erro
+                                            WHEN pc_ind_impede_talonario.pr_des_erro <> ?
+                         aux_dscritic = pc_ind_impede_talonario.pr_dscritic
+                                            WHEN pc_ind_impede_talonario.pr_dscritic <> ?.
+                  
+                  IF  aux_des_erro = "NOK" THEN
+                      DO:
+                          ASSIGN i-cod-erro  = 0
+                                 c-desc-erro = aux_dscritic.
+                          
+                          RUN cria-erro (INPUT p-cooper,
+                                         INPUT p-cod-agencia,
+                                         INPUT p-nro-caixa,
+                                         INPUT i-cod-erro,
+                                         INPUT c-desc-erro,
+                                         INPUT YES).
+                          RETURN "NOK".
+                      END.
+                  
+                  IF aux_inimptal = 1 THEN
+                      DO:
+                          ASSIGN i-cod-erro  = 0
+                                 c-desc-erro = "Situacao da conta nao permite retirada de talonario.".
+                          
+                          RUN cria-erro (INPUT p-cooper,
+                                         INPUT p-cod-agencia,
+                                         INPUT p-nro-caixa,
+                                         INPUT i-cod-erro,
+                                         INPUT c-desc-erro,
+                                         INPUT YES).
+                          RETURN "NOK".
+                      END.
+                  
+                  /* Cheque inicial sem digito */
                   ASSIGN aux_num_cheque_inicial = INT(SUBSTR(STRING(
                                                              tt-taloes.nrinicial,
                                                              "9999999"),1,6))

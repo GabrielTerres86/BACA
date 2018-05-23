@@ -2,7 +2,7 @@
 
    Programa: xb1wgen0002.p
    Autor   : Murilo/David
-   Data    : Junho/2007                     Ultima atualizacao: 21/02/2018
+   Data    : Junho/2007                     Ultima atualizacao: 22/05/2018
 
    Dados referentes ao programa:
 
@@ -136,6 +136,9 @@
 
 			  21/02/2018 - Alterado a rotina obtem-dados-liquidacoes para ao final da listagem 
 						   trazer limite/adp para liquidar.(Diego/AMcom)
+              
+              22/05/2018 - Adicionado campo "par_idquapro" na procedure "valida-dados-gerais".
+                           PRJ366 (Lombardi)
 
 ..............................................................................*/
 
@@ -1159,6 +1162,7 @@ PROCEDURE valida-dados-gerais:
                             INPUT aux_idcarenc,
                             INPUT aux_dtcarenc,
                             INPUT aux_idfiniof,
+                            INPUT aux_idquapro,
                             OUTPUT TABLE tt-erro,
                             OUTPUT TABLE tt-msg-confirma,
                             OUTPUT TABLE tt-ge-epr,

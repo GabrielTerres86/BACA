@@ -253,6 +253,10 @@
 			                de SIM para NAO ou vice e versa, sera gravado log na tabela CRAPLGM. Esta 
 							alteracao pode ser feita na tela CONTAS, opção Conta Corrente. 
 							Chamado INC0013673 - Gabriel (Mouts).
+                              
+			   23/05/2018 - Incluida chamada para a procedure pc_verifica_lib_blq_pre_aprov para 
+			                verificar se deve ser liberado ou bloqueado pre aprovado para a conta 
+							com a nova situacao de conta. PRJ366 (Lombardi).
 
 .............................................................................*/
 
@@ -3818,6 +3822,35 @@ PROCEDURE Grava_Dados_Altera:
 
               END. /* ContadorNeg */
 
+              { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl}}
+              
+              /* Efetuar a chamada da rotina Oracle */ 
+              RUN STORED-PROCEDURE pc_verifica_lib_blq_pre_aprov 
+                  aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper, /* pr_cdcooper */
+                                                       INPUT par_nrdconta, /* pr_nrdconta */
+                                                       INPUT par_cdsitdct, /* pr_cdsitdct */
+                                                       OUTPUT "",          /* pr_des_erro */
+                                                       OUTPUT "").         /* pr_dscritic */
+              
+              /* Fechar o procedimento para buscarmos o resultado */ 
+              CLOSE STORED-PROC pc_verifica_lib_blq_pre_aprov
+                  aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+              
+              { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
+              
+              /* Busca possíveis erros */ 
+              ASSIGN aux_des_erro = ""
+                     par_dscritic = ""
+                     aux_des_erro = pc_verifica_lib_blq_pre_aprov.pr_des_erro 
+                                    WHEN pc_verifica_lib_blq_pre_aprov.pr_des_erro <> ?
+                     par_dscritic = pc_verifica_lib_blq_pre_aprov.pr_dscritic 
+                                    WHEN pc_verifica_lib_blq_pre_aprov.pr_dscritic <> ?.
+              
+              IF aux_des_erro = "NOK" THEN
+                 DO:	 
+                     UNDO GravaAltera, LEAVE GravaAltera.
+                 END.
+              
               IF par_cdcritic <> 0 THEN
                  UNDO GravaAltera, LEAVE GravaAltera.
 
