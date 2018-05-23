@@ -4,7 +4,7 @@
    Sistema : Caixa On-line
    Sigla   : CRED   
    Autor   : Mirtes.
-   Data    : Marco/2001                      Ultima atualizacao: 27/07/2016.
+   Data    : Marco/2001                      Ultima atualizacao: 17/04/2017
 
    Dados referentes ao programa:
 
@@ -79,6 +79,14 @@
                             de cheques de bancos que nao participam da COMPE
                             Utilizar apenas BANCO e FLAG ativo
                             (Douglas - Chamado 417655)
+
+			   17/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+			                crapass, crapttl, crapjur 
+							(Adriano - P339).
+
+               16/03/2018 - Substituida verificacao "cdtipcta = 6,7" pela
+                            modalidade do tipo de conta igual a 3. PRJ366 (Lombardi).
+
 ............................................................................ */
 /*-------------------------------------------------------------------------*/
 /* b1crap57.p   - Depositos Cheques Liberados(Varios)                      */  
@@ -199,6 +207,10 @@ PROCEDURE valida-conta:
     DEF OUTPUT PARAM p-transferencia-conta  AS CHAR NO-UNDO.
     DEF OUTPUT PARAM p-poupanca             AS LOG  NO-UNDO.
  
+    DEF VAR aux_cdmodali AS INTE                    NO-UNDO.
+    DEF VAR aux_des_erro AS CHAR                    NO-UNDO.
+    DEF VAR aux_dscritic AS CHAR                    NO-UNDO.
+    
     FIND crapcop WHERE crapcop.nmrescop = p-cooper NO-LOCK NO-ERROR.
 
     ASSIGN p-nro-conta = DEC(REPLACE(STRING(p-nro-conta),".","")).
@@ -373,8 +385,44 @@ PROCEDURE valida-conta:
 
     ASSIGN p-nome-titular = crapass.nmprimtl.
 
-    IF   crapass.cdtipcta = 6   OR
-         crapass.cdtipcta = 7   THEN /* Conta tipo Poupan‡a */
+    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+
+    RUN STORED-PROCEDURE pc_busca_modalidade_tipo
+    aux_handproc = PROC-HANDLE NO-ERROR (INPUT crapass.inpessoa, /* Tipo de pessoa */
+                                         INPUT crapass.cdtipcta, /* Tipo de conta */
+                                        OUTPUT 0,                /* Modalidade */
+                                        OUTPUT "",               /* Flag Erro */
+                                        OUTPUT "").              /* Descriçao da crítica */
+
+    CLOSE STORED-PROC pc_busca_modalidade_tipo
+          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+    ASSIGN aux_cdmodali = 0
+           aux_des_erro = ""
+           aux_dscritic = ""
+           aux_cdmodali = pc_busca_modalidade_tipo.pr_cdmodalidade_tipo 
+                          WHEN pc_busca_modalidade_tipo.pr_cdmodalidade_tipo <> ?
+           aux_des_erro = pc_busca_modalidade_tipo.pr_des_erro 
+                          WHEN pc_busca_modalidade_tipo.pr_des_erro <> ?
+           aux_dscritic = pc_busca_modalidade_tipo.pr_dscritic
+                          WHEN pc_busca_modalidade_tipo.pr_dscritic <> ?.
+    
+    IF aux_des_erro = "NOK"  THEN
+        DO:
+            ASSIGN i-cod-erro  = 0
+                   c-desc-erro = aux_dscritic.
+            RUN cria-erro (INPUT p-cooper,
+                           INPUT p-cod-agencia,
+                           INPUT p-nro-caixa,
+                           INPUT i-cod-erro,
+                           INPUT c-desc-erro,
+                           INPUT YES).
+            RETURN "NOK".
+        END.
+        
+    IF   aux_cdmodali = 3 THEN /* Conta tipo Poupan‡a */
          ASSIGN p-poupanca = YES.
 
     IF   CAN-DO("3",STRING(crapass.cdsitdtl))   THEN
@@ -715,6 +763,7 @@ PROCEDURE valida-codigo-cheque:
                        INPUT YES).
         RETURN "NOK".
     END.
+ 
  
     ASSIGN p-cdcmpchq = INT(SUBSTRING(c-cmc-7,11,03)) NO-ERROR.
     IF   ERROR-STATUS:ERROR    THEN 
@@ -1912,11 +1961,30 @@ PROCEDURE atualiza-deposito-com-captura:
     /*---- Gera literal autenticacao - RECEBIMENTO(Rolo) ----*/
     ASSIGN c-nome-titular1 = " "
            c-nome-titular2 = " ".
+
     FIND crapass WHERE crapass.cdcooper = crapcop.cdcooper  AND
-                       crapass.nrdconta = aux_nrdconta      NO-LOCK NO-ERROR.
+                       crapass.nrdconta = aux_nrdconta      
+					   NO-LOCK NO-ERROR.
+
     IF   AVAIL crapass   THEN
-         ASSIGN c-nome-titular1 = crapass.nmprimtl
-                c-nome-titular2 = crapass.nmsegntl.
+	   DO:
+          ASSIGN c-nome-titular1 = crapass.nmprimtl.
+          
+		  IF crapass.inpessoa = 1 THEN
+		     DO:
+			    FOR FIRST crapttl FIELDS(crapttl.nmextttl)
+				                   WHERE crapttl.cdcooper = crapass.cdcooper AND
+				                         crapttl.nrdconta = crapass.nrdconta AND
+								         crapttl.idseqttl = 2
+								         NO-LOCK:
+
+				  ASSIGN c-nome-titular2 = crapttl.nmextttl.
+
+		        END.
+
+			 END.
+
+	   END.
        
     ASSIGN c-literal = " "
            c-literal[1] = TRIM(crapcop.nmrescop) +  " - " + 
