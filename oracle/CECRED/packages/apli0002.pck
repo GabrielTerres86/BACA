@@ -9966,7 +9966,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0002 AS
                                   ,pr_nmdatela => pr_nmdatela
                                   ,pr_idorigem => pr_idorigem
                                   ,pr_nrdconta => pr_nrdconta
-                                  ,pr_nraplica => 1
+                                  ,pr_nraplica => 0
                                   ,pr_idseqttl => pr_idseqttl
                                   ,pr_cdprogra => pr_nmdatela
                                   ,pr_dtmvtolt => rw_crapdat.dtmvtolt
