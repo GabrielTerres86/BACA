@@ -82,8 +82,6 @@ foreach( $registro as $r ) {
 		} 
 	}	
 	
-    $cria_opcao = 1;	
-	
 	if ($cria_opcao == 1) {?>
         <option value="<? echo getByTagName($r->tags,'cdocorre') ?>"><? echo getByTagName($r->tags,'cdocorre') ?> - <? echo getByTagName($r->tags,'dsocorre') ?></option>
 <?php

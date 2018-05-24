@@ -43,6 +43,7 @@
 	$qtdiaprt   = $_POST['qtdiaprt'];
 	$cdtpinsc   = $_POST['cdtpinsc'];
 	$nrinssac   = $_POST['nrinssac'];
+	$insitcrt   = $_POST['insitcrt'];
 	
 	switch( $operacao ) {
 		case 'log':			$procedure = 'buca_log';			break;	
