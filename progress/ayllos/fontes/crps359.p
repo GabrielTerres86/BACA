@@ -34,7 +34,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Deborah/Mirtes
-   Data    : Outubro/2003                      Ultima atualizacao: 22/02/2017
+   Data    : Outubro/2003                      Ultima atualizacao: 03/05/2017
 
    Dados referentes ao programa:
 
@@ -170,7 +170,10 @@
                             Corvu (Douglas Pagel).
                             
                22/02/2017 - #601794 Inclusão de log de início e fim das 
-			                execuções (Carlos)
+			                      execuções (Carlos)
+                      
+               03/05/2017 - #601794 Inclusao dos parametros de criacao de 
+                            chamado (Carlos)
                             
 ............................................................................. */
 
@@ -890,7 +893,11 @@ PROCEDURE proc_roda_exclusivo:
                      input "PI exclusivo noturno", /* dsmensagem */                                          
                      input 1,  /* flgsucesso */
                      INPUT "", /* nmarqlog */
-                     INPUT 0  /* idprglog */                     
+                     input 0,  /* flabrechamado */
+                     input "", /* texto_chamado */
+                     input "", /* destinatario_email */
+                     input 0,  /* flreincidente */
+                     INPUT 0   /* idprglog */                     
                      ).
                 CLOSE STORED-PROCEDURE pc_log_programa WHERE PROC-HANDLE = aux_handproc.
                 { includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }
@@ -910,6 +917,10 @@ PROCEDURE proc_roda_exclusivo:
                      input "PF exclusivo noturno",                     
                      input 1,  /* flgsucesso */
                      INPUT "", /* nmarqlog */
+                     input 0,  /* flabrechamado */
+                     input "", /* texto_chamado */
+                     input "", /* destinatario_email */
+                     input 0,  /* flreincidente */
                      INPUT 0).
                 CLOSE STORED-PROCEDURE pc_log_programa WHERE PROC-HANDLE = aux_handproc.
                 { includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }
@@ -1026,6 +1037,10 @@ PROCEDURE proc_roda_paralelo:
             input "PI paralelo noturno",
             input 1,
             INPUT "", /* nmarqlog */
+            input 0,  /* flabrechamado */
+            input "", /* texto_chamado */
+            input "", /* destinatario_email */
+            input 0,  /* flreincidente */
             INPUT 0).
        CLOSE STORED-PROCEDURE pc_log_programa WHERE PROC-HANDLE = aux_handproc.
        { includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }
@@ -1052,6 +1067,10 @@ PROCEDURE proc_roda_paralelo:
             input "PF paralelo noturno",
             input 1,
             INPUT "", /* nmarqlog */
+            input 0,  /* flabrechamado */
+            input "", /* texto_chamado */
+            input "", /* destinatario_email */
+            input 0,  /* flreincidente */
             INPUT 0).
        CLOSE STORED-PROCEDURE pc_log_programa WHERE PROC-HANDLE = aux_handproc.
        { includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }
