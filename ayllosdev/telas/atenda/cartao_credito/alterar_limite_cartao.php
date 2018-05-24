@@ -117,7 +117,7 @@ $vllimmin = "0,00";
     $idacionamento = $xmlObj->roottag->tags[0]->tags[1]->tags[0]->tags[1]->cdata;
     $cartoes = $json_sugestoes["categoriasCartaoCecred"];
 
-    $sugestoes = $json_sugestoes["sugestaoCartaoCecred"];
+    $sugestoes = $json_sugestoes["indicadoresGeradosRegra"]["sugestaoCartaoCecred"];	
     $qtdSugestoes =  count($sugestoes);
     $sugestoesMotor = array();
     for($j = 0; $j < $qtdSugestoes; $j++){
@@ -209,7 +209,7 @@ $vllimmin = "0,00";
                             :</label>
                     <td>
                     <td>
-                        <input  type="text" id="vllimmax" name="vllimmax"value="<? echo  number_format(str_replace(",",".",$vllimmax),2,",","."); ?>" class="campoTelaSemBorda" disabled>
+                        <input  type="text" id="vllimmax" name="vllimmax"value="<? echo $vlsugmot; ?>" class="campoTelaSemBorda" disabled>
                     </td>
                 </tr>
                 </tr>

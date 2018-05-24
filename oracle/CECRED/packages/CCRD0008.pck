@@ -564,6 +564,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0008 AS
     CLOSE cr_craptfc;  
     -- Buscar assinatura
     BEGIN
+	  vr_idxassinaturas := 0;
       FOR rw_tbaprc IN cr_tbaprc(pr_cdcooper
                                ,pr_nrdconta
                                ,rw_crawcrd.nrctrcrd) 
@@ -584,6 +585,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0008 AS
          RAISE vr_exc_erro;
     END;
     
+	IF vr_idxassinaturas = 0 THEN
+       vr_dscritic := 'Assinatura não encontrada.';
+       vr_tab_assinaturas_ctr(1).nmaprovador := 'Assinatura realizada sobre o termo pré impresso na ocasião.';
+    END IF;
     
     -- Se for pessoa Juridica
     IF rw_crapass.inpessoa > 1 THEN
