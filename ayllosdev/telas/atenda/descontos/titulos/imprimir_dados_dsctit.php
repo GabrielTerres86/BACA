@@ -109,6 +109,7 @@
 	
     if ($idimpres == 1 || // COMPLETA
         $idimpres == 2 || // CONTRATO
+		$idimpres == 3 || // PROPOSTA
         $idimpres == 4 || // NOTA PROMISSORIA
         $idimpres == 7) { // BORDERO DE CHEQUES
         $xml  = "<Root>";
