@@ -167,6 +167,10 @@ CREATE OR REPLACE PACKAGE CECRED.APLI0004 AS
                                  ,pr_retxml   IN OUT NOCOPY XMLType    --> Arquivo de retorno do XML
                                  ,pr_nmdcampo OUT VARCHAR2             --> Nome do campo com erro
                                  ,pr_des_erro OUT VARCHAR2);
+                                 
+  /* Rotina de atualizacao da taxa média do CDI vindo do FTP do CETIP.*/
+  PROCEDURE pc_atualiza_taxa_media_cdi(pr_dscritic OUT VARCHAR2);                                 
+  
 END APLI0004;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
@@ -177,7 +181,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
   --  Sistema  : Rotinas referentes a tela INDICE
   --  Sigla    : APLI
   --  Autor    : Jean Michel - CECRED
-  --  Data     : Maio - 2014.                   Ultima atualizacao: 27/09/2017
+  --  Data     : Maio - 2014.                   Ultima atualizacao: 09/05/2018
   --
   -- Dados referentes ao programa:
   --
@@ -201,6 +205,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
   --
   --             05/03/2018 - Retirado a logica do "IF" da proc pc_calcula_poupanca pois
   --                          o calculo nao estava correto (Tiago/Adriano)
+  --
+  --             09/05/2018 - Migração do script PERL "Recebe_Taxa_CDI.sh" para processo Oracle.
+  --                          Processo esse responsável por buscar no FTP do CETIP a taxa média do CDI.
+  --                          (Wagner/Sustentação).   
+  -- 
   ---------------------------------------------------------------------------------------------------------------
 
   vr_dsmsglog  VARCHAR2(4000); -- Mensagem de log
@@ -5159,6 +5168,358 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
         ROLLBACK;
     END;
   END pc_verifica_tipo_data;
+
+  /*.............................................................................
+   Programa: pc_atualiza_taxa_poupanca
+   Autor   : Wagner
+   Data    : Maio/18.                    Ultima atualizacao: 09/05/2018
+
+   Dados referentes ao programa:
+   Frequencia: Sempre que for chamado (Chamada pelo JOB "JBAPLI_IMPORT_CDI_CETIP").
+   Objetivo  : Rotina de atualizacao da taxa média do CDI vindo do FTP do CETIP.
+   Observacao: -----
+   Alteracoes: -----
+  ..............................................................................*/
+  PROCEDURE pc_atualiza_taxa_media_cdi(pr_dscritic OUT VARCHAR2) IS --> Descrição da crítica
+    
+    -- Variáveis genéricas utilizadas pela procedure
+    vr_cdcooper      crapcop.cdcooper%TYPE := 3; -- CECRED
+    vr_programa      VARCHAR2(40)          := 'APLI0004.pc_atualiza_taxa_medi';
+    vr_idprglog      PLS_INTEGER           := 0;
+    vr_cdcritic      crapcri.cdcritic%TYPE; 
+    vr_dscritic      crapcri.dscritic%TYPE;
+    vr_stprogra      PLS_INTEGER;
+    vr_infimsol      PLS_INTEGER;
+    vr_idfinaliza    NUMBER(1);
+    vr_forca_saida   EXCEPTION;
+    vr_tabtexto      gene0002.typ_split;
+    
+    -- INI - Parâmetros para conexão com o FTP da CETIP.
+    vr_prm_cetip     VARCHAR2(4000) := gene0001.fn_param_sistema('CRED',0,'PRM_TAXAMEDIACDICETIP');
+    vr_serv_ftp      VARCHAR2(500);
+    vr_user_ftp      VARCHAR2(500);
+    vr_pass_ftp      VARCHAR2(500);
+    vr_dir_remoto    VARCHAR2(500);    
+    vr_hr_limite     NUMBER; -- Horário que já ultrapassa o horário padrão para ter obtido o arquivo
+    vr_ema_destino   VARCHAR2(500);     
+    -- FIM - Parâmetros para conexão com o FTP da CETIP.
+
+    -- INI - Nome do arquivo obtido no FTP da CETIP.
+    vr_data_execucao DATE          := SYSDATE;
+    vr_nmarquiv      VARCHAR2(100) := TO_CHAR(vr_data_execucao,'YYYYMMDD')||'.txt';      
+    -- FIM - Nome do arquivo obtido no FTP da CETIP.
+    
+    -- Diretório da CECRED utilizado para controle de geração de arquivo de logs.
+    vr_dir_local     VARCHAR2(100) := GENE0001.fn_diretorio(pr_tpdireto => 'C' --> /cooperativa
+                                                           ,pr_cdcooper => vr_cdcooper --> Cooperativa
+                                                           ,pr_nmsubdir => 'log');
+
+    -- Script genérico utilizado para conexão FTP.
+    vr_script_ftp    VARCHAR2(600) := gene0001.fn_param_sistema('CRED',0,'AUTBUR_SCRIPT_FTP');  
+    -- Arquivo de log do programa
+    vr_nmarqlog      VARCHAR2(100) := 'ftp_cetip_mediacdi.log';  
+         
+    -- Cursor de consulta de taxa
+    CURSOR cr_craptxi(pr_cddindex IN craptxi.cddindex%TYPE
+                     ,pr_dtmvtolt IN craptxi.dtiniper%TYPE) IS
+      SELECT 1
+        FROM craptxi txi
+       WHERE txi.cddindex = pr_cddindex 
+         AND txi.dtiniper = pr_dtmvtolt 
+         AND txi.dtfimper = pr_dtmvtolt; 
+         
+    -- Cursor genérico de calendário
+    rw_crapdat btch0001.cr_crapdat%ROWTYPE;
+
+    -- Declaração de rotina interna da procedure chamada por outros processos
+    -- antes de sua construção.
+    PROCEDURE pc_registra_erro(pr_dscritic             IN VARCHAR2, --> Descricao do erro
+                               pr_idaplica_regra_email IN BOOLEAN DEFAULT TRUE); --> aplica a regra de envio de e-mail para área de negócio?
+    
+    -- Faz download de arquivo em um servidor FTP
+    PROCEDURE pc_download_ftp(pr_serv_ftp   IN VARCHAR2     --> Servidor FTP
+                             ,pr_user_ftp   IN VARCHAR2     --> Usuario
+                             ,pr_pass_ftp   IN VARCHAR2     --> Senha
+                             ,pr_nmarquiv   IN VARCHAR2     --> Nome do arquivo a ser buscado
+                             ,pr_dir_local  IN VARCHAR2     --> Diretorio local
+                             ,pr_dir_remoto IN VARCHAR2     --> diretorio remoto
+                             ,pr_dir_log    IN VARCHAR2     --> diretorio para geração do log
+                             ,pr_script_ftp IN VARCHAR2     --> Script FTP                           
+                             ,pr_dscritic  OUT VARCHAR2) IS --> Descricao do erro
+                             
+      vr_comand_ftp VARCHAR2(1000);
+      vr_typ_saida  VARCHAR2(3);
+      
+    BEGIN
+
+      -- Preparar o comando de conexão e envio ao FTP
+      vr_comand_ftp := pr_script_ftp
+                    || ' -recebe'
+                    || ' -srv '          || pr_serv_ftp
+                    || ' -usr '          || pr_user_ftp
+                    || ' -pass '         || pr_pass_ftp
+                    || ' -arq '          || CHR(39) || pr_nmarquiv   || CHR(39)
+                    || ' -dir_local '    || CHR(39) || pr_dir_local  || CHR(39)
+                    || ' -dir_remoto '   || CHR(39) || pr_dir_remoto || CHR(39)
+                    || ' -log '||pr_dir_log;
+
+      -- Chama procedure de envio e recebimento via ftp
+      GENE0001.pc_OScommand(pr_typ_comando => 'S'
+                           ,pr_des_comando => vr_comand_ftp
+                           ,pr_flg_aguard  => 'S'
+                           ,pr_typ_saida   => vr_typ_saida
+                           ,pr_des_saida   => pr_dscritic);
+      -- Se ocorreu erro dar RAISE
+      IF vr_typ_saida = 'ERR' OR pr_dscritic IS NOT NULL THEN
+        pr_dscritic := 'Nao foi possivel executar comando unix. '||vr_comand_ftp ||' - Erro: ' || pr_dscritic;
+        RETURN;
+      END IF;
+      
+      -- Verificar se conseguiu realizar o download do arquivo.
+      IF NOT gene0001.fn_exis_arquivo(pr_caminho => vr_dir_local||'/'||pr_nmarquiv) THEN
+        pr_dscritic := 'Arquivo '||pr_dir_local||'/'||pr_nmarquiv||' nao localizado!';
+        RETURN;
+      END IF;
+      
+    EXCEPTION
+      WHEN OTHERS THEN
+        pr_dscritic := 'Erro pc_download_ftp (CETIP). Descricao: ' || SQLERRM;
+    END pc_download_ftp;
+
+    -- Faz a cópia do arquivo obtido da CETIP para todas as cooperativas do sistema.
+    PROCEDURE pc_distribui_arq_cooperativa(pr_dscritic OUT VARCHAR2) IS --> Descricao do erro
+      
+      CURSOR cur_cooperativas IS 
+        SELECT cdcooper,
+               nmrescop 
+          FROM crapcop
+         WHERE crapcop.flgativo = 1 -- Ativo
+         ORDER BY cdcooper;    
+      
+      vr_idcopiou_arq  BOOLEAN       := FALSE;
+      vr_nmarquiv_copy VARCHAR2(100) := 'Taxa_Aplic_'||vr_nmarquiv;    
+      vr_dir_origem    VARCHAR2(100) := vr_dir_local||'/'||vr_nmarquiv;
+      vr_dir_destino   VARCHAR2(100);
+      vr_dscomando     VARCHAR2(4000);
+      vr_typ_saida     VARCHAR2(4000);
+      vr_des_erro      VARCHAR2(4000);
+      
+    BEGIN
+      -- chmod 666
+      -- Setar as propriedades para garantir que o arquivo seja acessível por outros usuários
+      gene0001.pc_OScommand_Shell(pr_des_comando => 'chmod 666 '||vr_dir_origem);
+      -- Fez chmod
+
+      -- Para cada cooperativa
+      FOR reg IN cur_cooperativas LOOP
+        -- Diretório de destino da cooperativa
+        vr_dir_destino := gene0001.fn_diretorio(pr_tpdireto => 'C',
+                                                pr_cdcooper => reg.cdcooper,
+                                                pr_nmsubdir => 'integra');       
+        
+        -- Faz a cópia do arquivo
+        -- Executa comando UNIX
+        vr_dscomando := 'cp -p '|| vr_dir_origem ||' '|| vr_dir_destino||'/'||vr_nmarquiv_copy||' 2>/dev/null';
+        -- Executar o comando no unix
+        GENE0001.pc_OScommand(pr_typ_comando => 'S'
+                             ,pr_des_comando => vr_dscomando
+                             ,pr_typ_saida   => vr_typ_saida
+                             ,pr_des_saida   => vr_des_erro);                           
+        IF vr_typ_saida = 'ERR' OR vr_des_erro IS NOT NULL THEN
+          pr_dscritic := 'Erro ao copiar arquivo para coopertativa. Comando: '||vr_dscomando||' - Descricao: '||vr_des_erro;
+          RETURN;
+        END IF;    
+        -- Fez a cópia do arquivo.
+        
+        vr_idcopiou_arq := TRUE;
+
+      END LOOP;
+      
+      -- Caso ocorrer algum erro e não entrar no loop de cópia acima
+      IF NOT vr_idcopiou_arq THEN
+        pr_dscritic := 'Erro ao copiar arquivo para as cooperativas. Descricao: Nao realizou as copias!';
+        RETURN;
+      END IF;
+
+    EXCEPTION
+      WHEN OTHERS THEN
+        pr_dscritic := 'Erro pc_distribui_arq_cooperativa (CETIP). Descrição: ' || SQLERRM;      
+    END pc_distribui_arq_cooperativa;  
+    
+    -- Faz o envio de e-mails de problemas para a área de negócio.
+    PROCEDURE pc_envia_email_erros (pr_des_corpo IN VARCHAR2) IS
+    
+      --> Assunto do e-mail
+      vr_ema_assunto   VARCHAR2(500) := 'Erro no download do arquivo da CETIP com a taxa média do CDI'; 
+
+    BEGIN
+      
+      GENE0003.pc_solicita_email(pr_cdcooper        => vr_cdcooper --> Cooperativa conectada
+                                ,pr_cdprogra        => vr_programa --> Programa conectado
+                                ,pr_des_destino     => vr_ema_destino --> Destino
+                                ,pr_des_assunto     => vr_ema_assunto --> Assunto
+                                ,pr_des_corpo       => pr_des_corpo --> Corpo (conteudo) do e-mail
+                                ,pr_des_anexo       => NULL --> Um ou mais anexos separados por ';' ou ','
+                                ,pr_flg_remove_anex => 'N' --> Remover os anexos passados
+                                ,pr_flg_log_batch   => 'N' --> Incluir no log a informação do anexo?
+                                ,pr_flg_enviar      => 'S' --> Enviar o e-mail na hora
+                                ,pr_des_erro        => vr_dscritic);
+      --Se ocorreu erro
+      IF vr_dscritic IS NOT NULL THEN
+        pc_registra_erro('Erro na pc_envia_email_erros (CETIP). Descricao: '||vr_dscritic);
+      END IF;
+      
+      COMMIT;
+      
+    END pc_envia_email_erros;
+    
+    -- Faz o controle de log de erros
+    PROCEDURE pc_registra_erro(pr_dscritic             IN VARCHAR2, --> Descricao do erro
+                               pr_idaplica_regra_email IN BOOLEAN DEFAULT TRUE) IS --> aplica a regra de envio de e-mail para área de negócio?
+      
+      vr_ema_corpo_aux VARCHAR2(32767);
+      
+    BEGIN
+      btch0001.pc_gera_log_batch(pr_cdcooper     => vr_cdcooper --> Sempre na Cecred
+                                ,pr_ind_tipo_log => 1
+                                ,pr_des_log      => '['||TO_CHAR(SYSDATE,'YYYYMMDD HH24:MI:SS')||'] '||pr_dscritic
+                                ,pr_dstiplog     => 'E'
+                                ,pr_cdprograma   => vr_programa
+                                ,pr_nmarqlog     => vr_nmarqlog);      
+
+      -- Caso já esteja acima do horário padrão de download (18:45 horas), avisa por e-mail
+      -- Obs.: O padrão é o CETIP liberar o arquivo até no máximo 19:00 horas.
+      -- Obs2.: Nosso limite é às 23:00 horas, devido a início de execução de outros programas.
+      IF to_Number(to_char(SYSDATE,'FMhh24mi')) > vr_hr_limite AND pr_idaplica_regra_email THEN
+        vr_ema_corpo_aux := 'Já são '||to_char(SYSDATE,'hh24:mi')||' e até o momento não conseguimos realizar o download do arquivo da CETIP referente a taxa média do CDI.'||CHR(10)||CHR(13)||
+                            'Como plano de contigência é possível a área de negócio acessar a tela "INDICE" e realizar o cadastro manual da informação, evitando assim problemas no processo noturno.'||CHR(10)||CHR(13)||
+                            'Abaixo segue o erro que estamos tendo para baixar o arquivo, apenas como informativo para a área de Sustentação de Sistemas:'||CHR(10)||CHR(13)||
+                            'Erro: '||pr_dscritic;
+        pc_envia_email_erros (pr_des_corpo => vr_ema_corpo_aux);
+      END IF;      
+                                
+    END pc_registra_erro;
+
+  BEGIN 
+    -- log início
+    cecred.pc_log_programa(pr_dstiplog   => 'I', 
+                           pr_cdprograma => vr_programa, 
+                           pr_idprglog   => vr_idprglog);
+
+    -- Leitura do calendário da cooperativa
+    OPEN BTCH0001.cr_crapdat(pr_cdcooper => vr_cdcooper);
+      FETCH BTCH0001.cr_crapdat
+       INTO rw_crapdat;
+    CLOSE BTCH0001.cr_crapdat;
+                           
+    vr_idfinaliza := 0;                       
+    -- Verifica se a rotina já executou com sucesso no dia de hoje
+    OPEN cr_craptxi(pr_cddindex => 1
+                   ,pr_dtmvtolt => rw_crapdat.dtmvtolt);
+      FETCH cr_craptxi
+       INTO vr_idfinaliza;
+    CLOSE cr_craptxi;                            
+    -- Se já executou para hoje, aborta
+    IF vr_idfinaliza = 1 THEN
+      -- registra no arquivo de log do processo que abortou a rotina devido a taxa já estar cadastrada.  
+      pc_registra_erro('Abortou a execução da rotina '||vr_programa||', pois já cadastrou a taxa média CDI CETIP para o dia '||to_char(rw_crapdat.dtmvtolt,'dd/mm/yyyy')||' com sucesso.',FALSE);      
+      RAISE vr_forca_saida;
+    END IF;
+    
+    -- Obtem os parâmetros para conexão com o CETIP
+    IF vr_prm_cetip IS NULL THEN
+      pc_registra_erro('Não localizou o parâmetro "PRM_TAXAMEDIACDICETIP" necessário para acesso ao FTP do CETIP.');
+      RAISE vr_forca_saida;    
+    END IF;    
+    -- INI
+    vr_tabtexto    := gene0002.fn_quebra_string(vr_prm_cetip,'#');
+    vr_serv_ftp    := vr_tabtexto(1);
+    vr_user_ftp    := vr_tabtexto(2);
+    vr_pass_ftp    := vr_tabtexto(3);
+    vr_dir_remoto  := vr_tabtexto(4);
+    vr_hr_limite   := vr_tabtexto(5);
+    vr_ema_destino := vr_tabtexto(6);
+    -- FIM
+
+    -- Realiza o download do arquivo da CETIP
+    pc_download_ftp(pr_serv_ftp   => vr_serv_ftp        --> Servidor FTP
+                   ,pr_user_ftp   => vr_user_ftp        --> Usuario
+                   ,pr_pass_ftp   => vr_pass_ftp        --> Senha
+                   ,pr_nmarquiv   => vr_nmarquiv        --> Nome do arquivo a ser buscado
+                   ,pr_dir_local  => vr_dir_local       --> Diretorio local
+                   ,pr_dir_remoto => vr_dir_remoto      --> diretorio remoto
+                   ,pr_dir_log    => vr_dir_local||'/'||vr_nmarqlog --> Diretório e arquivo para log
+                   ,pr_script_ftp => vr_script_ftp      --> Script FTP                 
+                   ,pr_dscritic   => vr_dscritic);      --> Descricao do erro
+    -- Se ocorrer algum erro
+    IF vr_dscritic IS NOT NULL THEN
+      pc_registra_erro('Erro no download do arquivo '||vr_nmarquiv||' de '||vr_serv_ftp||'. Descricao: '||vr_dscritic);
+      RAISE vr_forca_saida;
+    END IF;
+    
+    -- Realiza a distribuição dos arquivos nas cooperativas
+    pc_distribui_arq_cooperativa(vr_dscritic);
+    -- Se ocorrer algum erro
+    IF vr_dscritic IS NOT NULL THEN
+      pc_registra_erro('Erro na copia do arq. para as cooperativas. Descricao: '||vr_dscritic);
+      RAISE vr_forca_saida;
+    END IF;
+
+    -- Responsável por realizar o cadastramento da taxa CDI para o dia.
+    pc_crps526(pr_cdcooper => vr_cdcooper, --> Roda na Central 
+               pr_flgresta => 0,
+               pr_stprogra => vr_stprogra,
+               pr_infimsol => vr_infimsol,
+               pr_cdcritic => vr_cdcritic,
+               pr_dscritic => vr_dscritic);  
+    -- Se ocorrer algum erro
+    IF vr_dscritic IS NOT NULL THEN
+      pc_registra_erro('Erro na copia do arq. para as cooperativas. Descricao: '||vr_dscritic);
+      RAISE vr_forca_saida;
+    END IF;
+
+    vr_idfinaliza := 0;                       
+    -- Verifica se a rotina pc_crps526 executou com sucesso e cadastrou a taxa
+    OPEN cr_craptxi(pr_cddindex => 1
+                   ,pr_dtmvtolt => rw_crapdat.dtmvtolt);
+      FETCH cr_craptxi
+       INTO vr_idfinaliza;
+    CLOSE cr_craptxi;                            
+    -- Se não cadastrou, então gera um erro.
+    IF NVL(vr_idfinaliza,0) <> 1 THEN
+      pc_registra_erro('Rotina pc_crps526 executou porém não cadastrou a taxa média CDI CETIP.');
+      RAISE vr_forca_saida;
+    ELSE
+      -- registra no arquivo de log do processo o sucesso na atualização da taxa, apenas para formalizaçaõ.  
+      pc_registra_erro('Rotina pc_crps526 executou e cadastrou a taxa média CDI CETIP.',FALSE);
+    END IF;
+               
+    -- log de fim de execução.
+    cecred.pc_log_programa(pr_dstiplog   => 'F', 
+                           pr_cdprograma => vr_programa, 
+                           pr_idprglog   => vr_idprglog);
+                           
+    COMMIT;
+    
+  EXCEPTION
+    WHEN vr_forca_saida THEN        
+      -- log de fim de execução.
+      cecred.pc_log_programa(pr_dstiplog   => 'F', 
+                             pr_cdprograma => vr_programa, 
+                             pr_idprglog   => vr_idprglog);      
+      ROLLBACK;    
+      
+    WHEN OTHERS THEN
+      pr_dscritic := 'Erro geral em pc_atualiza_taxa_media_cdi. Descricao: '||SQLERRM;
+      --Inclusão na tabela de erros Oracle
+      CECRED.pc_internal_exception( pr_cdcooper => vr_cdcooper );
+      -- log de fim de execução.
+      cecred.pc_log_programa(pr_dstiplog   => 'F', 
+                             pr_cdprograma => vr_programa, 
+                             pr_idprglog   => vr_idprglog);      
+      ROLLBACK;     
+      
+  END pc_atualiza_taxa_media_cdi;  
 
 END APLI0004;
 /
