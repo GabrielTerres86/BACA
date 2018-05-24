@@ -126,12 +126,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
      vr_exc_saida exception;
      -- Erro sem parar a cadeia
      vr_exc_fimprg exception;
-     vr_tab_erro        gene0001.typ_tab_erro;
+     vr_tab_erro        gene0001.typ_tab_erro;
+     
+     vr_dtrefere_aux  DATE;
 
 
   BEGIN
-
-      -- Leitura do calendário da cooperativa
+     -- Leitura do calendário da cooperativa
       OPEN btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
       FETCH btch0001.cr_crapdat
        INTO rw_crapdat;
@@ -165,8 +166,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
       END IF;
   
 
+      --Verificar data
+      IF to_char(rw_crapdat.dtmvtoan, 'MM') <> to_char(rw_crapdat.dtmvtolt, 'MM') THEN
+          -- Utilizar o final do mês como data
+          vr_dtrefere_aux := rw_crapdat.dtultdma;
+      ELSE
+          -- Utilizar a data atual
+          vr_dtrefere_aux := rw_crapdat.dtmvtoan;
+      END IF;  
+  
+
     --Transfere as contas em prejuizo para a tabela HIST...
-    FOR rw_crapris IN cr_crapris(pr_cdcooper,rw_crapdat.dtmvtoan,vr_valor_arrasto) LOOP
+    FOR rw_crapris IN cr_crapris(pr_cdcooper,vr_dtrefere_aux,vr_valor_arrasto) LOOP
       BEGIN
 
         INSERT INTO TBCC_PREJUIZO(cdcooper
