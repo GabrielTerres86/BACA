@@ -77,7 +77,7 @@ switch ($operacao){
 		else{
 			$dados = $root->dados->inf;
 			$json["cdcnae"] 	= $dados->cdcnae->cdata;
-			$json["vlcnae"] 	= $dados->vlmaximo->cdata;
+			$json["vlcnae"] 	= number_format($dados->vlmaximo->cdata+0, 2, ',', '.');
 			$json["status"] 	= "sucesso";
 		}
 		echo json_encode($json);
