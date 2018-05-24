@@ -162,6 +162,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
 
                   05/04/2018 - Novos campos criados para mandar ao motor de crédito 
                                Referente a avais cruzados. Diego Simas (AMcom)
+
+				  24/05/2018 - Projeto Regulatório de Crédito - Inclusão de cpf no objeto contasAvalizadas
+					           Diego Simas - AMcom
   ---------------------------------------------------------------------------------------------------------------*/
   
   --> Funcao para CPF/CNPJ
@@ -1126,7 +1129,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
           
                     21/12/2017 - Ajustar tratamento de erro, para que a mensagem seja exibida em tela
                                - Ajustar passagem de parametro cdcritic e dscritic 
-                               (Douglas - Chamado 819146)
+                                (Douglas - Chamado 819146)
+
+				    24/05/2018 - Projeto Regulatório de Crédito - Inclusão de cpf no objeto contasAvalizadas
+					             Diego Simas - AMcom
+
     ..........................................................................*/
     DECLARE
       -- Variáveis para exceções
@@ -1643,6 +1650,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
                                 pr_nrdconta crapass.nrdconta%TYPE)IS
       SELECT ass.nrdconta conta, 
              ass.nmprimtl nome,
+			 ass.nrcpfcgc cpf,
              emp.nrctremp contrato
         FROM crapavl ava, 
              crapass ass,        
@@ -3353,6 +3361,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
         vr_obj_generic3 := json();
         vr_obj_generic3.put('contaAval', rw_crapavl_contas.conta);
         vr_obj_generic3.put('nomeAval', rw_crapavl_contas.nome);
+		vr_obj_generic3.put('cpfAval', rw_crapavl_contas.cpf);
         vr_obj_generic3.put('contratoAval', rw_crapavl_contas.contrato);
         -- Adicionar contas avalizadas na lista
         vr_lst_generic3.append(vr_obj_generic3.to_json_value());
