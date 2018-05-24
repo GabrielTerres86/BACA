@@ -5483,6 +5483,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
     -- Cursor genérico de calendário
     rw_crapdat btch0001.cr_crapdat%ROWTYPE;
 
+    -- BUSCA DE ASSOCIADOS
+   CURSOR cr_crapass(pr_cdcooper crapcop.cdcooper%TYPE,
+                      pr_nrdconta crapass.nrdconta%TYPE) IS
+      SELECT crapass.vllimcre, crapass.cdagenci,
+             crapass.nmprimtl
+        FROM crapass
+       WHERE crapass.cdcooper = pr_cdcooper AND
+             crapass.nrdconta = pr_nrdconta;
+         
+    rw_crapass cr_crapass%ROWTYPE;   
 
  -- TIPOS DE TABELAS TEMPORARIAS
     
@@ -5648,21 +5658,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
       CLOSE btch0001.cr_crapdat;
     END IF;
 
-
-    
-    -- Verificar se a data atual é uma data util, se retornar uma data diferente
-    -- indica que não é um dia util, então deve abortar o programa sem executa-lo
-    IF gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper ,
-                                   pr_dtmvtolt => TRUNC(SYSDATE)) <> TRUNC(SYSDATE) THEN
-      -- para fazer somente na primeira execução do dia
-      IF vr_qtdexec = 1 then
-		-- ATUALIZA TARIFA VIGENTE
-		pc_atualiza_tarifa_vigente;
-      end if;  
-	  
-      RETURN;
-    END IF;
-
   --- para verificar a primeira execução do programa por coop, as demais são iguais
       SICR0001.pc_controle_exec_deb ( pr_cdcooper  => pr_cdcooper        --> Código da coopertiva
                                       ,pr_cdtipope  => 'I'                         --> Tipo de operacao I-incrementar e C-Consultar
@@ -5681,6 +5676,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
        --Commit para garantir o
        --controle de execucao do programa
        COMMIT;
+    
+    -- Verificar se a data atual é uma data util, se retornar uma data diferente
+    -- indica que não é um dia util, então deve abortar o programa sem executa-lo
+    IF gene0005.fn_valida_dia_util(pr_cdcooper => pr_cdcooper ,
+                                   pr_dtmvtolt => TRUNC(SYSDATE)) <> TRUNC(SYSDATE) THEN
+      -- para fazer somente na primeira execução do dia
+      IF vr_qtdexec = 1 then
+		-- ATUALIZA TARIFA VIGENTE
+		pc_atualiza_tarifa_vigente;
+      end if;  
+	  
+      RETURN;
+    END IF;
+
 
    -- PROCEDURE PARA BUSCAR TARIFA VIGENTE
     tari0001.pc_carrega_par_tarifa_vigente(pr_cdcooper => pr_cdcooper,
@@ -5804,12 +5813,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
             vr_flgvflcm := TRUE;
             vr_flgvfsld := FALSE;
           END IF;
+          
+                    --Busca limite credito do cooperado
+          OPEN cr_crapass(pr_cdcooper => rw_craplat.cdcooper,                          
+                          pr_nrdconta => rw_craplat.nrdconta);
+               
+          FETCH cr_crapass INTO rw_crapass;
+               
+          IF cr_crapass%NOTFOUND THEN
+             CLOSE cr_crapass;
+             CONTINUE;
+          END IF;   
+               
+          CLOSE cr_crapass;  
 
             --verificar se o cooperado possui lançamento de credito
             -- sinal que possivelmente possui credito para debitar
             pc_verifica_credito (pr_cdcooper => rw_craplat.cdcooper,  --> Codigo da cooperativa
                                  pr_nrdconta => rw_craplat.nrdconta,  --> Numero da conta do cooperaro
-                                 pr_vllimcre => 0,                    --> limite de credito do cooperado
+                                 pr_vllimcre => rw_crapass.vllimcre,  --> limite de credito do cooperado
                                  pr_rcrapdat => rw_crapdat,           --> data da cooperativa
                                  pr_flgvflcm => vr_flgvflcm,          --> flag de controle se deve verificar lançamentos de credito
                                  pr_flgvfsld => vr_flgvfsld,          --> flag de controle se deve verificar saldo do cooperado
