@@ -17,7 +17,7 @@
 				<label for="cdcanal"><? echo utf8ToHtml('Canal:&nbsp;&nbsp;') ?></label>
 				<select id="cdcanal" name="cdcanal" class="Campo" style="width:85%">
 					<option value="10" >Mobile Banking</option>
-					<!-- <option value="31" >Internet Banking</option> -->
+					<option value="3" >Internet Banking</option>
 				</select>
 
 			</td>

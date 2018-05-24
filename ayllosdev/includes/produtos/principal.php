@@ -5,11 +5,14 @@
 	 Autor: Gabriel - Rkam                                                     
 	 Data : Setembro - 2015                  Última Alteração: 
 	                                                                  
-	 Objetivo  : Mostrar opcao Principal da rotina de Produtos da     
-	             tela ATENDA                                          
+	 Objetivo  : Mostrar opcao Principal da rotina de Produtos da   tela ATENDA                                          
 	                                                                  	 
-	 Alteraçães: 01/10/2015 - Projeto 217 Reformulacao Cadastral
-				 (Tiago Castro - RKAM)
+	 Alteraçães: 01/10/2015 - Projeto 217 Reformulacao Cadastral (Tiago Castro - RKAM)
+						  
+                 14/07/2016 - Correcao na forma de recuperacao de parametros do array $_POST. SD 479874 (Carlos Rafael Tanholi)
+				 
+                 16/05/2018 - Adicionado parametro flgautom na mensageria
+                              SERVICOS_OFERECIDOS. PRJ366 (Lombardi).
 	 
 	 
 	*********************************************************************/
@@ -28,32 +31,24 @@
 	require_once('../../class/xmlfile.php');
 	
 	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"C")) <> "") {
-		
 		exibirErro('error',$msgError,'Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))');
-	
 	}		
 	
 	// Verifica se os parâmetros foram passados
-	if (!isset($_POST["nrdconta"])   ||
-	    !isset($_POST["nmrotina"])   ||
-	    !isset($_POST["opeProdutos"])) {
-		
+	if (!isset($_POST["nrdconta"])  || !isset($_POST["nmrotina"]) || !isset($_POST["opeProdutos"])) {	
 		exibirErro('error','Par&acirc;metros incorretos.','Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))');
-
 	}	
 
-	$nmrotina          = (isset($_POST["nmrotina"])) ? $_POST["nmrotina"] : '';
-	$nrdconta          = $_POST["nrdconta"];
-	$opeProdutos       = $_POST["opeProdutos"];
-	$atualizarServicos = $_POST["atualizarServicos"];
-	$flgcadas          = $_POST['flgcadas'];
+	$nmrotina				 = ( isset($_POST["nmrotina"]) ) ? $_POST["nmrotina"] : '';
+	$nrdconta				 = ( isset($_POST["nrdconta"]) ) ? $_POST["nrdconta"] : 0;
+	$opeProdutos        = ( isset($_POST["opeProdutos"]) ) ? $_POST["opeProdutos"] : 0;
+	$atualizarServicos = ( isset($_POST["atualizarServicos"]) ) ? $_POST["atualizarServicos"] : array();
+	$flgcadas				 = ( isset($_POST['flgcadas']) ) ? $_POST['flgcadas'] : '';	
 	
 	
 	// Verifica se o número da conta é um inteiro válido
 	if (!validaInteiro($nrdconta)) {
-		
 		exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))');
-
 	}
 	
 	if( ($opeProdutos == 2 && $flgcadas == 'M') || $opeProdutos == 3 ) {
@@ -135,6 +130,7 @@
 	$xmlBuscaServicos .= "<Root>";
 	$xmlBuscaServicos .= "   <Dados>";
 	$xmlBuscaServicos .= "	   <nrdconta>".$nrdconta."</nrdconta>";
+	$xmlBuscaServicos .= "	   <flgautom>".    0    ."</flgautom>";
 	$xmlBuscaServicos .= "   </Dados>";
 	$xmlBuscaServicos .= "</Root>";
 		

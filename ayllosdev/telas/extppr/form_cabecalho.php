@@ -22,10 +22,10 @@
 	<input name="nraplica" id="nraplica" type="text" autocomplete="off" />
 	<a><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif" /></a>
 
-	<label for="dtiniper"><? echo utf8ToHtml('Data Inicial:') ?></label>
+	<label for="dtiniper"><? echo utf8ToHtml('Data Ini.:') ?></label>
 	<input name="dtiniper" id="dtiniper" type="text" />
 	
-	<label for="dtfimper"><? echo utf8ToHtml('Data Final:') ?></label>
+	<label for="dtfimper"><? echo utf8ToHtml('Data Fim:') ?></label>
 	<input name="dtfimper" id="dtfimper" type="text" />
 	
 	<br style="clear:both" />	
