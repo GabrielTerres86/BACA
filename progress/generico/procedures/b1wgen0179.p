@@ -1,7 +1,7 @@
 /*.............................................................................
     Programa: sistema/generico/procedures/b1wgen0179.p
     Autor   : Jéssica Laverde Gracino (DB1)
-    Data    : 27/09/2013                     Ultima atualizacao: 06/02/2017
+    Data    : 27/09/2013                     Ultima atualizacao: 11/04/2018
 
     Objetivo  : Tranformacao BO tela HISTOR.
 
@@ -15,6 +15,11 @@
                              na rotina Busca_Consulta (Carlos)
                              
                 05/12/2017 - Melhoria 458 adicionado campo inmonpld - Antonio R. Jr (Mouts)
+        
+                11/04/2018 - Incluído novo campo "Estourar a conta corrente" (inestocc)
+                             Diego Simas - AMcom  
+        
+                16/05/2018 - Ajustes prj420 - Resolucao - Heitor (Mouts)
         
 ............................................................................*/
 
@@ -577,12 +582,17 @@ PROCEDURE Busca_Historico:
            tt-histor.tpctbcxa = craphis.tpctbcxa   
            tt-histor.txdoipmf = craphis.txdoipmf   
            tt-histor.ingercre = craphis.ingercre   
+           tt-histor.inestocc = IF craphis.inestoura_conta THEN
+                                    1
+                                ELSE
+                                    0
            tt-histor.ingerdeb = craphis.ingerdeb   
            tt-histor.dsextrat = craphis.dsextrat
            tt-histor.flgsenha = IF craphis.flgsenha THEN
                                     1
                                 ELSE
-                                    0. 
+                                    0
+		   tt-histor.idmonpld = craphis.idmonpld.
 
         IF craphis.cdgrphis > 0 THEN
             DO:
@@ -821,6 +831,7 @@ PROCEDURE Grava_Dados:
     DEF  INPUT PARAM par_tpctbcxa AS INTE                           NO-UNDO.
     
     DEF  INPUT PARAM par_ingercre AS INTE                           NO-UNDO.
+    DEF  INPUT PARAM par_inestocc AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_ingerdeb AS INTE                           NO-UNDO.
     
     DEF  INPUT PARAM par_cdgrphis AS INTE                           NO-UNDO.
@@ -838,6 +849,8 @@ PROCEDURE Grava_Dados:
     DEF  INPUT PARAM par_indebfol AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_txdoipmf AS INTE                           NO-UNDO.
     
+	DEF  INPUT PARAM par_idmonpld AS INTE                           NO-UNDO.
+    
     DEF OUTPUT PARAM par_nmdcampo AS CHAR                           NO-UNDO.
     DEF OUTPUT PARAM TABLE FOR tt-erro.
 
@@ -847,6 +860,7 @@ PROCEDURE Grava_Dados:
     DEF  VAR aux_vltarint AS DECI                                   NO-UNDO.
     DEF  VAR aux_vltarcsh AS DECI                                   NO-UNDO.
     DEF  VAR aux_flgsenha AS LOGI                                   NO-UNDO.
+    DEF  VAR aux_inestocc AS LOGI                                   NO-UNDO. 
     DEF  VAR aux_flggphis AS CHAR                                   NO-UNDO.
     DEF  VAR aux_des_erro AS CHAR                                   NO-UNDO.
 
@@ -1095,6 +1109,11 @@ PROCEDURE Grava_Dados:
                 ASSIGN aux_flgsenha = NO.
         END.
 
+        IF par_inestocc = 1 THEN
+            ASSIGN aux_inestocc = TRUE.
+        ELSE
+            ASSIGN aux_inestocc = NO.
+
         /*  Campos sem validacao:
                 - nmestrut
                 - inclasse
@@ -1228,6 +1247,7 @@ PROCEDURE Grava_Dados:
                                        INPUT par_nrctacrd,
                                        INPUT par_nrctadeb,
                                        INPUT par_ingercre,
+                                       INPUT aux_inestocc,
                                        INPUT par_ingerdeb,
                                        INPUT par_nrctatrc,
                                        INPUT par_nrctatrd,
@@ -1243,7 +1263,8 @@ PROCEDURE Grava_Dados:
                                        INPUT aux_vltarcxo,
                                        INPUT aux_vltarint,
                                        INPUT aux_vltarcsh,
-                                       INPUT 0). /* cdcoprep */
+                                       INPUT 0,
+									   INPUT par_idmonpld). /* cdcoprep */
                      /* Codigo da cooperativa que esta replicando eh 0
                         esta alterando o historico */
                 END.
@@ -1275,12 +1296,14 @@ PROCEDURE Grava_Dados:
                            craphis.tpctbcxa  =  par_tpctbcxa
                            craphis.txdoipmf  =  0 
                            craphis.ingercre  =  par_ingercre
+                           craphis.inestoura_conta  =  aux_inestocc
                            craphis.ingerdeb  =  par_ingerdeb
                            craphis.cdprodut  =  par_cdprodut
                            craphis.cdagrupa  =  par_cdagrupa
                            craphis.dsextrat  =  CAPS(par_dsextrat)
                            craphis.flgsenha  =  aux_flgsenha
-                           craphis.cdgrphis  =  par_cdgrphis.
+                           craphis.cdgrphis  =  par_cdgrphis
+						   craphis.idmonpld  =  par_idmonpld.
     
                     /* Atualizar as informacoes das tarifas */
                     FIND FIRST crapthi WHERE crapthi.cdcooper = craphis.cdcooper
@@ -1520,6 +1543,7 @@ PROCEDURE Replica_Dados:
                                INPUT craphis.nrctacrd,
                                INPUT craphis.nrctadeb,
                                INPUT craphis.ingercre,
+                               INPUT craphis.inestoura_conta,
                                INPUT craphis.ingerdeb,
                                INPUT craphis.nrctatrc,
                                INPUT craphis.nrctatrd,
@@ -1535,7 +1559,8 @@ PROCEDURE Replica_Dados:
                                INPUT log_vltarcxo,
                                INPUT log_vltarint,
                                INPUT log_vltarcsh,
-                               INPUT par_cdcooper). /* cdcoprep */
+                               INPUT par_cdcooper,
+							   INPUT craphis.idmonpld). /* cdcoprep */
             /* passar o codigo da cooperativa 
               que estamos replicando o historico */
         END.
@@ -1992,6 +2017,7 @@ PROCEDURE gera_item_log:
     DEF INPUT PARAM par_nrctacrd AS INTE                            NO-UNDO.
     DEF INPUT PARAM par_nrctadeb AS INTE                            NO-UNDO.
     DEF INPUT PARAM par_ingercre AS INTE                            NO-UNDO.
+    DEF INPUT PARAM par_inestocc AS LOGI                            NO-UNDO.
     DEF INPUT PARAM par_ingerdeb AS INTE                            NO-UNDO.
     DEF INPUT PARAM par_nrctatrc AS INTE                            NO-UNDO.
     DEF INPUT PARAM par_nrctatrd AS INTE                            NO-UNDO.
@@ -2008,7 +2034,8 @@ PROCEDURE gera_item_log:
     DEF INPUT PARAM log_vltarint AS DECI                            NO-UNDO.
     DEF INPUT PARAM log_vltarcsh AS DECI                            NO-UNDO.
     /* Codigo da cooperativa que replicou os dados */
-    DEF INPUT PARAM par_cdcoprep AS INTE NO-UNDO.
+    DEF INPUT PARAM par_cdcoprep AS INTE                            NO-UNDO.
+	DEF INPUT PARAM par_idmonpld AS INTE                            NO-UNDO.
 
     FOR FIRST b-craphis WHERE b-craphis.cdcooper = par_cdcooper
                           AND b-craphis.cdhistor = par_cdhistor NO-LOCK: END.
@@ -2231,6 +2258,21 @@ PROCEDURE gera_item_log:
                       INPUT STRING(b-craphis.ingercre),
                       INPUT STRING(par_ingercre)).
        
+    IF par_inestocc <> b-craphis.inestoura_conta THEN
+        RUN gera_log (INPUT par_cdcooper,
+                      INPUT par_cdoperad,
+                      INPUT par_cdhistor,
+                      INPUT par_cdcoprep,
+                      INPUT "Estourar a conta corrente",
+                      INPUT ( IF b-craphis.inestoura_conta = TRUE THEN
+                                        "Sim" 
+                                    ELSE
+                                        "Nao" ),
+                      INPUT ( IF par_inestocc = TRUE THEN
+                                        "Sim" 
+                                    ELSE
+                                        "Nao" )).
+       
     IF par_ingerdeb <> b-craphis.ingerdeb THEN
         RUN gera_log (INPUT par_cdcooper,
                       INPUT par_cdoperad,
@@ -2269,6 +2311,21 @@ PROCEDURE gera_item_log:
                              ELSE
                                 "Nao"), 
                       INPUT (IF par_flgsenha = TRUE THEN
+                                "Sim"
+                             ELSE 
+                                "Nao")).
+       
+    IF par_idmonpld <> b-craphis.idmonpld THEN
+        RUN gera_log (INPUT par_cdcooper,
+                      INPUT par_cdoperad,
+                      INPUT par_cdhistor,
+                      INPUT par_cdcoprep,
+                      INPUT "Monitoramento PLD",
+                      INPUT (IF b-craphis.idmonpld = 1 THEN
+                                "Sim" 
+                             ELSE
+                                "Nao"), 
+                      INPUT (IF par_idmonpld = 1 THEN
                                 "Sim"
                              ELSE 
                                 "Nao")).

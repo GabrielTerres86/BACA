@@ -14,6 +14,12 @@
 							  passar o o código (Renato Darosci)
 
                  05/12/2017 - Melhoria 458 adicionado campo inmonpld - Antonio R. Jr (Mouts)
+                 
+                 12/04/2018 - Incluído novo campo "Estourar a conta corrente" (inestocc)
+                              Diego Simas - AMcom
+                              
+                 16/05/2018 - Ajustes prj420 - Resolucao - Heitor (Mouts)
+                              
 ............................................................................*/
 
 
@@ -66,8 +72,9 @@ DEF VAR aux_tpctbccu AS INTE                                         NO-UNDO.
 DEF VAR aux_tplotmov AS INTE                                         NO-UNDO.
 DEF VAR aux_tpctbcxa AS INTE                                         NO-UNDO.
 DEF VAR aux_ingercre AS INTE                                         NO-UNDO.
+DEF VAR aux_inestocc AS INTE                                         NO-UNDO.
 DEF VAR aux_ingerdeb AS INTE                                         NO-UNDO.
-DEF VAR aux_flgsenha AS LOGI                                         NO-UNDO.
+DEF VAR aux_flgsenha AS INTE                                         NO-UNDO.
 DEF VAR aux_dsextrat AS CHAR                                         NO-UNDO.
 DEF VAR aux_vltarayl AS DECI                                         NO-UNDO.
 DEF VAR aux_vltarcxo AS DECI                                         NO-UNDO.
@@ -86,6 +93,8 @@ DEF VAR aux_cdgrphis AS INTE                                         NO-UNDO.
 
 DEF VAR aux_cdprodut AS INTE                                         NO-UNDO.
 DEF VAR aux_dsprodut AS CHAR                                         NO-UNDO.
+
+DEF VAR aux_idmonpld AS INTE                                         NO-UNDO.
 
 { sistema/generico/includes/var_internet.i } 
 { sistema/generico/includes/supermetodos.i } 
@@ -138,8 +147,9 @@ PROCEDURE valores_entrada:
              WHEN "tplotmov" THEN aux_tplotmov = INTE(tt-param.valorCampo).
              WHEN "tpctbcxa" THEN aux_tpctbcxa = INTE(tt-param.valorCampo).
              WHEN "ingercre" THEN aux_ingercre = INTE(tt-param.valorCampo).
+             WHEN "inestocc" THEN aux_inestocc = INTE(tt-param.valorCampo).
              WHEN "ingerdeb" THEN aux_ingerdeb = INTE(tt-param.valorCampo).
-             WHEN "flgsenha" THEN aux_flgsenha = LOGICAL(tt-param.valorCampo).
+             WHEN "flgsenha" THEN aux_flgsenha = INTE(tt-param.valorCampo).
              WHEN "dsextrat" THEN aux_dsextrat = tt-param.valorCampo.
              WHEN "vltarayl" THEN aux_vltarayl = DECI(tt-param.valorCampo).
              WHEN "vltarcxo" THEN aux_vltarcxo = DECI(tt-param.valorCampo).
@@ -159,6 +169,8 @@ PROCEDURE valores_entrada:
              WHEN "dsprodut" THEN aux_dsprodut = tt-param.valorCampo.
              WHEN "cdgrphis" THEN aux_cdgrphis = INTE(tt-param.valorCampo).
 
+			 WHEN "idmonpld" THEN aux_idmonpld = INTE(tt-param.valorCampo).
+			 
          END CASE.
 
      END. /** Fim do FOR EACH tt-param **/
@@ -362,6 +374,7 @@ PROCEDURE Grava_Dados:
                      INPUT aux_tpctbcxa,     
                      
                      INPUT aux_ingercre,     
+                     INPUT aux_inestocc,       
                      INPUT aux_ingerdeb,     
                      
                      INPUT aux_cdgrphis,
@@ -376,6 +389,7 @@ PROCEDURE Grava_Dados:
                      INPUT aux_vltarcsh,
                      INPUT aux_indebfol,
                      INPUT aux_txdoipmf,
+					 INPUT aux_idmonpld,
                     OUTPUT aux_nmdcampo,
                     OUTPUT TABLE tt-erro).   
                                              

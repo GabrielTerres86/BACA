@@ -11,7 +11,7 @@
    Frequencia: 
    Objetivo  :
 
-   Alteracoes: 
+   Alteracoes: 16/05/2018 - Ajustes prj420 - Resolucao - Heitor (Mouts)
    
 ..............................................................................*/
 
@@ -32,7 +32,8 @@ DEFINE TEMP-TABLE ab_unmap
        FIELD v_conta     AS CHARACTER FORMAT "X(256)":U       
        FIELD v_nome      AS CHARACTER FORMAT "X(256)":U       
        FIELD v_codbarras AS CHARACTER FORMAT "X(256)":U       
-       FIELD inflgdau    AS CHARACTER FORMAT "X(256)":U.
+       FIELD inflgdau    AS CHARACTER FORMAT "X(256)":U
+	   FIELD v_tppagmto  AS CHARACTER FORMAT "X(256)":U.
 
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _DEFINITIONS w-html 
 /*------------------------------------------------------------------------
@@ -427,6 +428,8 @@ PROCEDURE process-web-request :
    * Here we look at REQUEST_METHOD. 
    */
     
+   ASSIGN v_tppagmto   = get-value("v_tppagmto").
+    
     IF REQUEST_METHOD = "POST":U THEN DO:
     /* STEP 1 -
      * Copy HTML input field values to the Progress form buffer. */
@@ -453,7 +456,8 @@ PROCEDURE process-web-request :
             ASSIGN opcao       = ""
                    vh_foco     = "9".
 
-            {&OUT} '<script> window.location = "crap014.html" </script>'. 
+            {&OUT} '<script>window.location = "crap014.html?v_tppagmto=' + STRING(v_tppagmto) '"
+                    </script>'. 
         END.
      ELSE
         DO:
@@ -471,7 +475,8 @@ PROCEDURE process-web-request :
                 END.
             ELSE
                 DO:
-                    {&OUT} '<script> window.location = "crap014.html" </script>'. 
+                    {&OUT} '<script>window.location = "crap014.html?v_tppagmto=' + STRING(v_tppagmto) '"
+                            </script>'. 
                 END.
         END.
 
@@ -540,7 +545,8 @@ PROCEDURE process-web-request :
     IF (aux_flgdbaut    ) OR
        (NOT aux_flgcvdis) THEN
         DO:
-            {&OUT} '<script> window.location = "crap014.html" </script>'. 
+            {&OUT} '<script>window.location = "crap014.html?v_tppagmto=' + STRING(v_tppagmto) '"
+                    </script>'. 
         END.
      
     /* This is the first time that the form has been called. Just return the

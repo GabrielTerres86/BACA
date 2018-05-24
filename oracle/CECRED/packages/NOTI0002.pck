@@ -134,6 +134,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NOTI0002 IS
                     ,NVL2(noti.dhleitura, 1, 0) indicadorlida
                     ,icon.nmimagem_lida nomeiconelida
                     ,icon.nmimagem_naolida nomeiconenaolida
+                    ,icon.nmimagem_ibank nomeiconeibank
                     ,row_number() OVER(ORDER BY noti.dhenvio DESC, noti.cdnotificacao DESC) indiceregistro -- Índice utilizado para paginação
                     ,COUNT(1) OVER() totalregistros -- Quantidade total de registros
                 FROM tbgen_notificacao        noti
@@ -160,6 +161,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NOTI0002 IS
   
     vr_ultimoindice   NUMBER(10) := 0;
     vr_totalregistros NUMBER(10) := 0;
+
+    vr_nomeiconelida    tbgen_notif_icone.nmimagem_lida%TYPE; 
+    vr_nomeiconenaolida tbgen_notif_icone.nmimagem_naolida%TYPE; 
   
     -- Variaveis de XML
     vr_xml_tmp VARCHAR2(32767);
@@ -188,6 +192,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NOTI0002 IS
                            ,pr_texto_novo     => '<NOTIFICACOES>');
   
     FOR rw_notificacao IN cr_notificacoes LOOP
+      
+      IF pr_cdcanal = 3 THEN -- Conta Online
+        vr_nomeiconelida    := rw_notificacao.nomeiconeibank;
+        vr_nomeiconenaolida := rw_notificacao.nomeiconeibank;         
+      ELSE
+        vr_nomeiconelida    := rw_notificacao.nomeiconelida;
+        vr_nomeiconenaolida := rw_notificacao.nomeiconenaolida;        
+      END IF;
+      
       -- Insere dados
       gene0002.pc_escreve_xml(pr_xml            => pr_xml_ret
                              ,pr_texto_completo => vr_xml_tmp
@@ -199,8 +212,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NOTI0002 IS
                                                       '<dataenviofmt>'     || rw_notificacao.dhenviofmt || '</dataenviofmt>' ||
                                                       '<indicadorlida>'    || rw_notificacao.indicadorlida || '</indicadorlida>' ||
                                                       '<indiceregistro>'   || rw_notificacao.indiceregistro || '</indiceregistro>' ||
-                                                      '<nomeiconelida>'    || rw_notificacao.nomeiconelida || '</nomeiconelida>' ||
-                                                      '<nomeiconenaolida>' || rw_notificacao.nomeiconenaolida || '</nomeiconenaolida>' ||
+                                                      '<nomeiconelida>'    || vr_nomeiconelida || '</nomeiconelida>' ||
+                                                      '<nomeiconenaolida>' || vr_nomeiconenaolida || '</nomeiconenaolida>' ||
                                                    '</NOTIFICACAO>');
     
       vr_totalregistros := rw_notificacao.totalregistros;

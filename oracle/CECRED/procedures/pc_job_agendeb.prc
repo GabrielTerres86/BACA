@@ -6,7 +6,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_AGENDEB(pr_cdcooper in crapcop.cdcoope
    JOB: PC_JOB_AGENDEB
    Sistema : Conta-Corrente - Cooperativa de Credito
    Autor   : Odirlei Busana - AMcom
-   Data    : Novembro/2015.                     Ultima atualizacao: 02/08/2017
+   Data    : Novembro/2015.                     Ultima atualizacao: 18/05/2018
 
    Dados referentes ao programa:
 
@@ -53,6 +53,9 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_AGENDEB(pr_cdcooper in crapcop.cdcoope
                             
                11/01/2018 - Ajustado rotina para executar debitos agendados do bancoob DEBBAN.
                             PRJ406 - FGTS (Odirlei-AMcom)
+
+			   18/05/2018 - Ajuste para chamada do reagendamento do crps688 quando o mesmo ja
+			                havia sido reagendado anteriormente. (PRB0040045) - (Fabricio)
                             
   ..........................................................................*/
       ------------------------- VARIAVEIS PRINCIPAIS ------------------------------
@@ -78,6 +81,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_AGENDEB(pr_cdcooper in crapcop.cdcoope
     vr_tempo       NUMBER;
     vr_minuto      NUMBER;
     vr_minutos     NUMBER;   -- Tempo em minutos
+    
+    vr_dsjobnam     VARCHAR2(100);
     
     -- Variáveis de controle de calendário
     rw_crapdat     BTCH0001.cr_crapdat%ROWTYPE;    
@@ -235,7 +240,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_AGENDEB(pr_cdcooper in crapcop.cdcoope
         --NOVO  (18): JBP_CRPS688_01_P$R || 1234567
         --NOVO  (18): JBP_DEBNET_01_P$R || 1234567
         IF instr(pr_job_name, 'CRPS688', 1, 1) > 1 THEN
-          vr_jobname := substr(rw_job.job_name,1,17)||'R';
+        vr_jobname := substr(rw_job.job_name,1,17)||'R';
         ELSE
           vr_jobname := substr(rw_job.job_name,1,16)||'R';
         END IF;
@@ -487,7 +492,13 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_AGENDEB(pr_cdcooper in crapcop.cdcoope
         -- Transformar minuto em milisegundo  
         vr_tempo := vr_minutos/60/24;
  
-        pc_reprograma_job(pr_job_name => pr_dsjobnam,
+        if pr_cdprogra = 'CRPS688' then
+          vr_dsjobnam := substr(pr_dsjobnam, 1, 17);
+        else
+          vr_dsjobnam := pr_dsjobnam;
+        end if;
+ 
+        pc_reprograma_job(pr_job_name => vr_dsjobnam,
                           pr_dtreagen => SYSDATE + vr_tempo, --> reagendar para daqui a 5 min.
                           pr_dscritic => vr_dscritic);
         -- se retornou critica
@@ -801,7 +812,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_AGENDEB(pr_cdcooper in crapcop.cdcoope
                            'ao atualizar crapche: '||SQLERRM;
             RAISE vr_exc_email;
         END;
-
+        
       END IF;
     END IF; -- fim IF coop = 3
     
@@ -813,12 +824,12 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_JOB_AGENDEB(pr_cdcooper in crapcop.cdcoope
       
       /* Se aconteceu erro, gera o log e envia o erro por e-mail */
       btch0001.pc_gera_log_batch(pr_cdcooper     => pr_cdcooper,
-                                 pr_ind_tipo_log => 2, --> erro tratado
-                                 pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
+                                         pr_ind_tipo_log => 2, --> erro tratado
+                                         pr_des_log      => to_char(SYSDATE,'DD/MM/RRRR hh24:mi:ss') ||
                                                             ' - '||vr_cdprogra ||' --> ' || vr_dscritic,
                                  pr_dstiplog     => 'E',
                                  pr_cdprograma   => pr_dsjobnam,
-                                 pr_nmarqlog     => gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE'));
+                                         pr_nmarqlog     => gene0001.fn_param_sistema(pr_nmsistem => 'CRED', pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE'));
       -- buscar destinatarios do email                           
       vr_email_dest := gene0001.fn_param_sistema('CRED',pr_cdcooper,'ERRO_EMAIL_JOB');
       

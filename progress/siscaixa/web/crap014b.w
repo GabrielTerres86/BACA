@@ -74,6 +74,8 @@ Alteracoes: 22/08/2007 - Alterado os parametros nas chamadas para as
                 
             08/12/2017 - Melhoria 458, incluir parametro v_tppagmto na chamada da pc_gera_titulos_iptu_prog
                          Antonio R. Jr (mouts)
+            
+            16/05/2018 - Ajustes prj420 - Resolucao - Heitor (Mouts)
 ..............................................................................*/
 
 { sistema/generico/includes/var_oracle.i }
@@ -742,7 +744,7 @@ PROCEDURE process-web-request :
     
     IF  get-value("retorna") <> "" THEN DO:
         {&OUT}
-            '<script>window.location = "crap014.html"
+            '<script>window.location = "crap014.html?v_tppagmto=' + STRING(v_tppagmto) '"
             </script>'.
     END.
     ELSE  DO:
@@ -1311,13 +1313,15 @@ PROCEDURE process-web-request :
                                    ELSE
                                       DO:
                                        {&OUT}
-                    '<script> window.location = "crap014.html" </script>'.
+                    '<script>window.location = "crap014.html?v_tppagmto=' + STRING(v_tppagmto) '"
+                     </script>'.
                                       END.                            
                               END.
                             ELSE
                               DO:
                                 {&OUT}
-                                '<script> window.location = "crap014.html" </script>'.
+                                '<script>window.location = "crap014.html?v_tppagmto=' + STRING(v_tppagmto) '"
+                                 </script>'.
                               END.
                             /******************************************************************/
                       END.

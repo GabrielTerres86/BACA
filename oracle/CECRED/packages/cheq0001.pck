@@ -24,6 +24,10 @@ CREATE OR REPLACE PACKAGE cecred.CHEQ0001 IS
 	--               04/07/2016 - Adicionados busca_taloes_car para geração de relatório
   --                            (Lucas Lunelli - PROJ290 Cartao CECRED no CaixaOnline)													 
 	--
+  --               04/05/2018 - Adicionado novo parametro opcional na rotina "pc_gera_devolucao_cheque"
+  --                            para permitir inserir devolução já processada (pr_insitdev = 1).
+  --                            Somente iremos usar o parametro para devoluções que não forem de taxas (<> 46).
+  --                            (Wagner/Sustenção - Chamado #861675).
   ---------------------------------------------------------------------------------------------------------------
 
   -- Definicao to tipo de array para teste da cdalinea na crepdev
@@ -52,6 +56,7 @@ CREATE OR REPLACE PACKAGE cecred.CHEQ0001 IS
                                       ,pr_cdprogra IN VARCHAR2                 --> Código do programa que está executando
                                       ,pr_nrdrecid IN crapfdc.progress_recid%TYPE --> Número do recid do progress
                                       ,pr_vlchqvlb IN NUMBER                      --> Valor VLB do cheque
+                                      ,pr_insitdev IN crapdev.insitdev%TYPE DEFAULT 0 --> Situacao: 0 - a devolver, 1 - devolvido.
                                       ,pr_cdcritic IN OUT NUMBER                  --> Código da critica gerado pela rotina
                                       ,pr_des_erro IN OUT VARCHAR2);              --> Descrição do erro ocorrido na rotina
 
@@ -307,6 +312,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
                                       ,pr_cdprogra IN VARCHAR2
                                       ,pr_nrdrecid IN crapfdc.progress_recid%TYPE
                                       ,pr_vlchqvlb IN NUMBER
+                                      ,pr_insitdev IN crapdev.insitdev%TYPE DEFAULT 0
                                       ,pr_cdcritic IN OUT NUMBER
                                       ,pr_des_erro IN OUT VARCHAR2) IS
   BEGIN
@@ -885,7 +891,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
                                ,pr_cdoperad
                                ,pr_cdhistor
                                ,nvl(vr_aux_cdpesqui,' ')                               
-                               ,0
+                               ,pr_insitdev --> Respeita o que vir no parametro.
                                ,vr_aux_cdbanchq
                                ,pr_cdagechq
                                ,pr_nrctachq
@@ -1074,7 +1080,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
                                ,pr_cdoperad
                                ,pr_cdhistor
                                ,nvl(vr_aux_cdpesqui,' ')
-                               ,0
+                               ,pr_insitdev --> Respeita o que vir no parametro.
                                ,vr_aux_cdbanchq
                                ,pr_cdagechq
                                ,pr_nrctachq
@@ -2240,6 +2246,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
         END IF;    
     END pc_obtem_cheques_deposito; 
     
+                        
   -- TELA: CHEQUE - Matriz de Cheques
   PROCEDURE pc_busca_cheque(pr_cdcooper  IN     NUMBER           --> Código cooperativa
                            ,pr_nrtipoop  IN     NUMBER           --> Tipo de operação

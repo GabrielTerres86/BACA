@@ -108,14 +108,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBRAN IS
   --  Sistema  : Rotinas utilizadas pela Tela COBRAN
   --  Sigla    : Cobran
   --  Autor    : Odirlei Busana - AMcom
-  --  Data     : Maio/2016.                   Ultima atualizacao:
+  --  Data     : Maio/2016.                   Ultima atualizacao: 03/04/2018
   --
   -- Dados referentes ao programa:
   --
   -- Frequencia: -----
   -- Objetivo  : Centralizar rotinas relacionadas a Tela COBRAN
   --
-  -- Alteracoes:
+  -- Alteracoes: 03/04/2018 - Inserido noti0001.pc_cria_notificacao
   --
   ---------------------------------------------------------------------------*/
   -- Chamada AyllosWeb Rotina para retornar lista de convenios ceb e suas situações
@@ -892,8 +892,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBRAN IS
     vr_insitif  VARCHAR2(10);
     vr_insitcip VARCHAR2(10);    
     vr_dsdmensg     VARCHAR2(500);    
-    vr_dsdemail_dst VARCHAR2(100);    
-    
+    vr_dsdemail_dst VARCHAR2(100);  
+	
+    -- Objetos para armazenar as variáveis da notificação
+    vr_variaveis_notif NOTI0001.typ_variaveis_notif;
+    vr_notif_origem   tbgen_notif_automatica_prm.cdorigem_mensagem%TYPE := 8;
+    vr_notif_motivo   tbgen_notif_automatica_prm.cdmotivo_mensagem%TYPE := 5; 
+     
   BEGIN
     -- Extrai os dados vindos do XML
     GENE0004.pc_extrai_dados(pr_xml      => pr_retxml
@@ -1006,7 +1011,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_COBRAN IS
       IF vr_dscritic IS NOT NULL THEN
         RAISE vr_exc_saida;
       END IF;
-              
+
+      -- Cria uma notificação
+      noti0001.pc_cria_notificacao(pr_cdorigem_mensagem => vr_notif_origem
+                                  ,pr_cdmotivo_mensagem => vr_notif_motivo
+                                  ,pr_cdcooper => pr_telcdcop
+                                  ,pr_nrdconta => pr_nrdconta
+                                  ,pr_variaveis => vr_variaveis_notif);
+								                
       ------->> NOTIFICAR SAC <<--------
       vr_dsdmensg := 'Convênio de cobrança do cooperado: ' || pr_nrdconta || 
                      ' foi <b>Aprovado</b> - Cooperativa: ' || rw_crapass.nmrescop ||

@@ -239,10 +239,18 @@
 
                 24/04/2018 - Gravar historico de exclusao de titular.
                            - Gravar historico de alteracao dos campos cdtipcta, 
-                             cdsitdct e cdcatego. PRJ366 (Lombardi).
-                             
+                             cdsitdct e cdcatego. PRJ366 (Lombardi).	 
+
                 30/04/2018 - Incluido validaçao do departamento para alteraçao da situaçao da conta para 8
                              PRJ364 (Paulo Martins - Mouts)
+               03/05/2018 - Alteracao nos codigos da situacao de conta (cdsitdct).
+                            PRJ366 (Lombardi).
+                              
+			   08/05/2018 - Caso operador altere opcao "Exigir Assinatura Conjunta em Autoatendimento"
+			                de SIM para NAO ou vice e versa, sera gravado log na tabela CRAPLGM. Esta 
+							alteracao pode ser feita na tela CONTAS, opção Conta Corrente. 
+							Chamado INC0013673 - Gabriel (Mouts).
+
 .............................................................................*/
 
 /*............................. DEFINICOES ..................................*/
@@ -2558,6 +2566,8 @@ PROCEDURE Grava_Dados:
                       INPUT par_indserma,
 					  INPUT par_idastcjt,
                       INPUT par_cdcatego,
+					  INPUT par_idseqttl,
+					  INPUT aux_dsorigem,
                       BUFFER crapass,
                      OUTPUT aux_cdcritic,
                      OUTPUT aux_dscritic ) NO-ERROR.   
@@ -3190,6 +3200,8 @@ PROCEDURE Grava_Dados_Altera:
     DEF  INPUT PARAM par_indserma AS LOG                            NO-UNDO.
     DEF  INPUT PARAM par_idastcjt AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_cdcatego AS INTE							NO-UNDO.
+	DEF  INPUT PARAM par_idseqttl AS INTE                           NO-UNDO.
+	DEF  INPUT PARAM aux_dsorigem AS CHAR                           NO-UNDO.
 	
   	DEF PARAM BUFFER crabass FOR crapass.
 
@@ -4430,6 +4442,22 @@ PROCEDURE Grava_Dados_Altera:
            END.
 
         ASSIGN crabass.indnivel = 3.
+
+		/* Caso operador altere opcao "Exigir Assinatura Conjunta em Autoatendimento" de SIM
+		   para NAO ou vice e versa, sera gravado log na tabela CRAPLGM. Esta alteracao pode
+           ser feita na tela CONTAS, opção Conta Corrente. Chamado INC0013673.               */
+		
+		RUN proc_gerar_log (INPUT par_cdcooper,
+							INPUT par_cdoperad,
+							INPUT "",
+							INPUT aux_dsorigem,
+							INPUT (IF par_idastcjt = 0 THEN "Exige Assinatura Conjunta em Autoatendimento: Não" 
+							                           ELSE "Exige Assinatura Conjunta em Autoatendimento: Sim"),
+							INPUT YES,
+							INPUT par_idseqttl, 
+							INPUT par_nmdatela,
+							INPUT par_nrdconta, 
+						   OUTPUT aux_nrdrowid).
 
         IF crabass.inpessoa = 1 THEN
            DO:
@@ -6043,7 +6071,7 @@ PROCEDURE Critica_Cadastro_Pf:
               Removida validação do telefone comercial.
               Essa alteração foi solicitada pela Sarah no projeto 366.
               (Renato Darosci - Supero - 01/05/2018)
-            IF  craxttl.tpcttrab <> 3   THEN
+              IF  craxttl.tpcttrab <> 3   THEN
                 DO:
                    IF  NOT CAN-FIND(FIRST crabtfc WHERE 
                                     crabtfc.cdcooper = craxttl.cdcooper AND

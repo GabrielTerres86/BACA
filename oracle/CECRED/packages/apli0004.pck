@@ -1468,6 +1468,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
              -- Fechar o cursor
              CLOSE cr_crapmfx;
 
+             IF vr_taxcdi(vr_contaaux) = 2 THEN 
              apli0004.pc_calcula_poupanca(pr_cdcooper => pr_cdcooper
                                          ,pr_qtddiaut => vr_qtdiaute
                                          ,pr_vlmoefix => rw_crapmfx_2.vlmoefix
@@ -1499,6 +1500,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
                   ||' com rowid:'||vr_rowidtrd||'. '||SQLERRM;
                   RAISE vr_exc_saida;
               END;
+
+           END IF;
 
            END IF;
 
@@ -1563,6 +1566,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
                  RAISE vr_exc_saida;
              END;
            END IF;
+                  
          END IF;
          
          vr_contaaux := vr_contaaux + 1;
@@ -1636,7 +1640,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
                                                ,pr_cdacesso => 'PERCIRRDCA'
                                                ,pr_tpregist => 0);      
 
-      IF vr_dstextab <> '' AND NOT vr_dstextab IS NULL THEN 
+      IF trim(vr_dstextab) IS NOT NULL THEN 
 
         pr_txmespop := ROUND(pr_vlmoefix / (1 - (gene0002.fn_char_para_number(gene0002.fn_busca_entrada(2, gene0002.fn_busca_entrada(1, vr_dstextab, ';'), '#')) / 100)),6);
         pr_txdiapop := ROUND(((POWER(1 + (pr_txmespop / 100), 1 / pr_qtddiaut) - 1) * 100),6);
@@ -3711,6 +3715,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
       
       vr_vlpoupan NUMBER(20,8) := 0;
       vr_vlpoupnr NUMBER(20,8) := 0;
+      vr_aux_vlpoupan NUMBER(20,8) := 0;
       vr_taxselic NUMBER(20,8) := 0;
       vr_vlcdimes NUMBER(20,8) := 0;      
       vr_vltxadic NUMBER(20,8) := 0;
@@ -4068,11 +4073,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
             CLOSE cr_craptrd;
           END IF;               
          
-          IF vr_tptaxcdi(vr_qtdtxtab) = 4 THEN
+          IF vr_tptaxcdi(vr_qtdtxtab) = 4 OR vr_tptaxcdi(vr_qtdtxtab) = 2 THEN
+           
+            vr_aux_vlpoupan := (case when vr_tptaxcdi(vr_qtdtxtab) = 4 then vr_vlpoupnr /* Valor da taxa nova regra poupanca */ else vr_vlpoupan  /* Valor da taxa regra antiga poupanca */ END);
            
             pc_calcula_poupanca(pr_cdcooper => pr_cdcooper   --> Codigo da Cooperativa
                                ,pr_qtddiaut => vr_qtdiaute   --> Quantidade de dias uteis
-                               ,pr_vlmoefix => vr_vlpoupnr   --> Valor da taxa nova regra poupanca
+                               ,pr_vlmoefix => vr_aux_vlpoupan
                                ,pr_txmespop => vr_txmespop   --> Taxa do Mes
                                ,pr_txdiapop => vr_txdiapop   --> Taxa do Dia
                                ,pr_cdcritic => vr_cdcritic   --> Codigo de Erro
@@ -4083,20 +4090,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
               RAISE vr_exc_saida;
             END IF;
                    
-          ELSE
-            pc_calcula_poupanca(pr_cdcooper => pr_cdcooper   --> Codigo da Cooperativa
-                               ,pr_qtddiaut => vr_qtdiaute   --> Quantidade de dias uteis
-                               ,pr_vlmoefix => vr_vlpoupan   --> Valor da taxa regra antiga poupanca
-                               ,pr_txmespop => vr_txmespop   --> Taxa do Mes
-                               ,pr_txdiapop => vr_txdiapop   --> Taxa do Dia
-                               ,pr_cdcritic => vr_cdcritic   --> Codigo de Erro
-                               ,pr_dscritic => vr_dscritic); --> Descricao de Erro
-           
-            IF vr_dscritic IS NOT NULL OR NVL(vr_cdcritic,0) <> 0 THEN
-              RAISE vr_exc_saida;
-            END IF;
-                                       
-          END IF;
           -- Inclusão do módulo e ação logado - Chamado 744573 - 27/09/2017
           GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'APLI0004.pc_poupanca');
           
@@ -4109,14 +4102,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
             
             IF vr_txofimes < vr_txmespop THEN
               vr_auxfimes := vr_txmespop;
+                vr_auxvapli := vr_aux_vlpoupan;
 
-              IF vr_tptaxcdi(vr_qtdtxtab) = 4 THEN
-                vr_auxvapli := vr_vlpoupnr;
               ELSE
-                vr_auxvapli := vr_vlpoupan;              
-              END IF;
-
-            ELSE
               vr_auxvapli := vr_vlcdimes;
               vr_auxfimes := vr_txofimes;
             END IF;            
@@ -4143,15 +4131,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
             END;
     
           ELSE
-            IF vr_tptaxcdi(vr_qtdtxtab) = 4 THEN
-              vr_auxvapli := vr_vlpoupnr;
-            ELSE
-              vr_auxvapli := vr_vlpoupan;              
-            END IF;
-              
             BEGIN
               UPDATE craptrd
-              SET    craptrd.vltrapli = vr_auxvapli
+                SET    craptrd.vltrapli = vr_aux_vlpoupan
                     ,craptrd.txofimes = vr_txmespop
                     ,craptrd.txofidia = vr_txdiapop
               WHERE  craptrd.rowid = vr_rowidtrd;
@@ -4163,6 +4145,65 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0004 AS
                                ||' com rowid:'||vr_rowidtrd||'. '||SQLERRM;
                 RAISE vr_exc_saida;
             END;
+            END IF;
+          
+            
+            ELSE
+           
+            pc_calcula_poupanca(pr_cdcooper => pr_cdcooper   --> Codigo da Cooperativa
+                               ,pr_qtddiaut => vr_qtdiaute   --> Quantidade de dias uteis
+                               ,pr_vlmoefix => vr_vlpoupan   --> Valor da taxa regra antiga poupanca
+                               ,pr_txmespop => vr_txmespop   --> Taxa do Mes
+                               ,pr_txdiapop => vr_txdiapop   --> Taxa do Dia
+                               ,pr_cdcritic => vr_cdcritic   --> Codigo de Erro
+                               ,pr_dscritic => vr_dscritic); --> Descricao de Erro
+           
+            IF vr_dscritic IS NOT NULL OR NVL(vr_cdcritic,0) <> 0 THEN
+              RAISE vr_exc_saida;
+            END IF;
+              
+            -- Inclusão do módulo e ação logado - Chamado 744573 - 27/09/2017
+            GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'APLI0004.pc_poupanca');
+            
+            IF vr_regexist THEN
+
+              vr_vltxadic := vr_txadical(vr_qtdtxtab);
+              vr_txofimes := ROUND(((vr_vlcdimes * vr_vltxadic) / 100),6);
+              vr_txofidia := ROUND(((POWER(1 + (vr_txofimes / 100),1 / vr_qtdiaute) - 1) * 100),6);
+              
+              BEGIN
+                UPDATE craptrd
+                SET    craptrd.vltrapli = vr_vlcdimes
+                      ,craptrd.txofimes = vr_txofimes
+                      ,craptrd.txofidia = vr_txofidia
+                WHERE  craptrd.rowid = vr_rowidtrd;
+              EXCEPTION
+                WHEN OTHERS THEN
+                  -- Descricao do erro na atualizacao de registros
+                  vr_dscritic := 'Erro ao atualizar registro na CRAPTRD - 7: vltrapli: '||vr_vlcdimes
+                                 ||', txofimes:'||vr_txofimes||', txofidia:'||vr_txofidia
+                                 ||' com rowid:'||vr_rowidtrd||'. '||SQLERRM;
+                  RAISE vr_exc_saida;
+              END;
+      
+            ELSE
+                
+            BEGIN
+              UPDATE craptrd
+                SET    craptrd.vltrapli = vr_vlpoupan
+                    ,craptrd.txofimes = vr_txmespop
+                    ,craptrd.txofidia = vr_txdiapop
+              WHERE  craptrd.rowid = vr_rowidtrd;
+            EXCEPTION
+              WHEN OTHERS THEN
+                -- Descricao do erro na atualizacao de registros
+                  vr_dscritic := 'Erro ao atualizar registro na CRAPTRD - 8: vltrapli: '||vr_vlpoupan
+                               ||', txofimes:'||vr_txmespop||', txofidia:'||vr_txdiapop
+                               ||' com rowid:'||vr_rowidtrd||'. '||SQLERRM;
+                RAISE vr_exc_saida;
+            END;
+          END IF;
+          
           END IF;
           
           vr_qtdtxtab := vr_qtdtxtab + 1;

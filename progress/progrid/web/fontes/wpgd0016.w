@@ -10,8 +10,11 @@ Alterações: 04/05/2009 - Utilizar cdcooper = 0 nas consultas (David).
       30/05/2016 - Ajustes navegaçao com a tela fornecedor wpgd0012c
                    PRJ229 - Melhorias OQS (Odirlei-AMcom)
 
-            28/11/2016 - Ajustes de carragamento de UF e cidades, SD - 563601
-                         (Jean Michel).
+      28/11/2016 - Ajustes de carragamento de UF e cidades, SD - 563601
+                   (Jean Michel).
+
+      22/05/2018 - #RITM0015402 - Remoção do format "x(9999999999)"  devido a erros de compilação
+	               na nova versão do PROGRESS. (Wagner/Sustentação). A pedidos do Fernando Klock. 
             
 ...............................................................................*/
 
@@ -119,8 +122,8 @@ DEFINE VARIABLE m-erros               AS CHARACTER                      NO-UNDO.
 DEFINE VARIABLE v-qtdeerro            AS INTEGER                        NO-UNDO.
 DEFINE VARIABLE v-descricaoerro       AS CHARACTER                      NO-UNDO.
 DEFINE VARIABLE v-identificacao       AS CHARACTER                      NO-UNDO.
-DEFINE VARIABLE vetorestados           AS CHAR FORMAT "x(2000)"          NO-UNDO.  
-DEFINE VARIABLE vetorcidades           AS CHAR FORMAT "x(99999999999)"          NO-UNDO.  
+DEFINE VARIABLE vetorestados          AS CHAR FORMAT "x(2000)"          NO-UNDO.  
+DEFINE VARIABLE vetorcidades          AS CHAR NO-UNDO.  
 
 /*** Declaração de BOs ***/
 DEFINE VARIABLE h-b1wpgd0016          AS HANDLE                         NO-UNDO.
@@ -575,23 +578,10 @@ PROCEDURE CriaListaEstados :
    
    IF FIRST-OF(crapmun.cdestado) THEN
     DO:
-        IF TRIM(vetorestados) <> "" AND TRIM(vetorestados) <> ? THEN
-          ASSIGN vetorestados = vetorestados + ",".
-
-        ASSIGN vetorestados = vetorestados + "~{cdestado:'" + TRIM(STRING(crapmun.cdestado))+ "'~}"
-               aux_contador = aux_contador + 1.
-    
-        IF aux_contador = 10 THEN
-          DO:
-            RUN RodaJavaScript("estados.push(" + vetorestados + ");").
-            ASSIGN aux_contador = 0
-                   vetorestados = "".
+		RUN RodaJavaScript("estados.push(~{cdestado:'" + TRIM(STRING(crapmun.cdestado))+ "'~});").
           END.
-      END.   
     END. /* for each */  
     
-  RUN RodaJavaScript("estados.push("  + vetorestados + ");").
-
 END PROCEDURE.
 
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE CriaListaCidades w-html 
@@ -606,25 +596,12 @@ PROCEDURE CriaListaCidades :
                              AND crapmun.cdcidade <> 0
                              AND TRIM(STRING(crapmun.cdcidade)) <> "" BY crapmun.dscidade:
    
-    IF TRIM(vetorcidades) <> "" AND TRIM(vetorcidades) <> ? THEN
-      ASSIGN vetorcidades = vetorcidades + ",".
-              
-    ASSIGN vetorcidades = vetorcidades + "~{cdestado:'" + TRIM(string(crapmun.cdestado))
+	RUN RodaJavaScript("cidades.push(~{cdestado:'" + TRIM(string(crapmun.cdestado))
                                        + "',dscidade:'" + TRIM(string(crapmun.dscidade))
-                                       + "',cdcidade:'" + TRIM(string(crapmun.cdcidade))+ "'~}"
-           aux_contador = aux_contador + 1.
-    
-    IF aux_contador = 20 AND (TRIM(vetorcidades) <> ? AND TRIM(vetorcidades) <> "") THEN
-      DO:
-        RUN RodaJavaScript("cidades.push(" + vetorcidades + ");").
-        ASSIGN aux_contador = 0
-               vetorcidades = "".
-      END.                                
+                                  + "',cdcidade:'" + TRIM(string(crapmun.cdcidade))+ "'~});").
     
   END. /* for each */ 
   
-  RUN RodaJavaScript("cidades.push(" + vetorcidades + ");").
-
 END PROCEDURE.
 
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE htmOffsets w-html  _WEB-HTM-OFFSETS
@@ -777,6 +754,7 @@ IF VALID-HANDLE(h-b1wpgd0016) THEN
       DO WITH FRAME {&FRAME-NAME}:
          IF opcao = "inclusao" THEN
             DO: 
+              
                 CREATE gnatfep.
                 ASSIGN
                     gnatfep.cdcooper = 0
@@ -1105,6 +1083,7 @@ IF REQUEST_METHOD = "POST":U THEN
                     
                     IF ab_unmap.aux_stdopcao = "i" THEN /* inclusao */
                         DO:
+                          
                             RUN local-assign-record ("inclusao"). 
                             IF msg-erro <> "" THEN
                                ASSIGN msg-erro-aux = 3. /* erros da validação de dados */
@@ -1284,7 +1263,7 @@ IF REQUEST_METHOD = "POST":U THEN
               END.
           END.
           ELSE DO: 
-            RUN RodaJavaScript("var cidades=new Array();cidades=[];").
+            RUN RodaJavaScript("var cidades=new Array();").
           END.
           RUN RodaJavaScript('alert("Atualizacao executada com sucesso.")').
           RUN RodaJavaScript('window.opener.Restaurar();').
@@ -1427,7 +1406,7 @@ ELSE /* Método GET */
                        RUN CriaListaCidades.
                     END.
                     ELSE 
-                      RUN RodaJavaScript("var cidades=new Array();cidades=[]").
+                      RUN RodaJavaScript("var cidades = new Array();").
                     
                     ASSIGN ab_unmap.aux_hdcidade = STRING(aux_hdcidade).
                     

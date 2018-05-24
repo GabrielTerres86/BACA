@@ -73,8 +73,8 @@ CREATE OR REPLACE PACKAGE CECRED."DDDA0001" AS
    ,quantidade INTEGER
   );
   
- MOTIVO_NOVO_TITULO_DDA  CONSTANT tbgen_notif_automatica_prm.cdmotivo_mensagem%TYPE := 10; 
- MOTIVO_NOVOS_TITULOS_DDA  CONSTANT tbgen_notif_automatica_prm.cdmotivo_mensagem%TYPE := 11; 
+ MOTIVO_NOVO_TITULO_DDA  CONSTANT tbgen_notif_automatica_prm.cdmotivo_mensagem%TYPE := 2; 
+ MOTIVO_NOVOS_TITULOS_DDA  CONSTANT tbgen_notif_automatica_prm.cdmotivo_mensagem%TYPE := 1; 
 
 
   /* Tipo de registro de Remessa DDA

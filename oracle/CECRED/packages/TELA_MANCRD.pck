@@ -301,7 +301,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANCRD AS
     Programa: pc_atualiza_cartao
     Sistema : Ayllos Web
     Autor   : Kelvin Souza Ott
-    Data    : Junho/2017                       Ultima atualizacao: 27/10/2017
+    Data    : Junho/2017                       Ultima atualizacao: 09/05/2018
     
     Dados referentes ao programa:
     
@@ -309,6 +309,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANCRD AS
     Objetivo  : Atualiza as informações do cartao
                     
     Alteracoes: 27/10/2017 - Efetuar ajustes e melhorias na tela (Lucas Ranghetti #742880)
+               
+                09/05/2018 - Ajuste realizado para nao mostrar critica indevidamente
+                             conforme solicitado no ticket PRB0040037. (Kelvin)
     ............................................................................. */
   
    -- Variaveis de log
@@ -353,7 +356,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANCRD AS
          AND crd.nrcrcard = pr_nrcrcard
          AND crd.nrctrcrd = pr_nrctrcrd;    
     rw_crawcrd cr_crawcrd%ROWTYPE;
-  
+    
+    -- Dados do Cartao
+    CURSOR cr_crapcrd(pr_cdcooper crapcop.cdcooper%TYPE
+                     ,pr_nrdconta crapass.nrdconta%TYPE
+                     ,pr_nrcrcard crawcrd.nrcrcard%TYPE
+                     ,pr_nrctrcrd crawcrd.nrctrcrd%TYPE) IS
+      SELECT crd.nrcpftit 
+            ,crd.cdadmcrd 
+            ,crd.flgdebit 
+            ,crd.nmtitcrd            
+        FROM crapcrd crd
+       WHERE crd.cdcooper = pr_cdcooper
+         AND crd.nrdconta = pr_nrdconta
+         AND crd.nrcrcard = pr_nrcrcard
+         AND crd.nrctrcrd = pr_nrctrcrd;    
+    rw_crapcrd cr_crapcrd%ROWTYPE;
+    
     -- Dados da Administradora
     CURSOR cr_crapadc(pr_cdcooper crapcop.cdcooper%TYPE
                      ,pr_cdadmcrd crawcrd.cdadmcrd%TYPE) IS
@@ -383,7 +402,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANCRD AS
                    ,pr_nrcrcard
                    ,pr_nrctrcrd);
       FETCH cr_crawcrd INTO rw_crawcrd;
-    CLOSE cr_crawcrd;    
+    CLOSE cr_crawcrd;   
+    
+    OPEN cr_crapcrd(vr_cdcooper
+                   ,pr_nrdconta
+                   ,pr_nrcrcard
+                   ,pr_nrctrcrd);
+      FETCH cr_crapcrd 
+        INTO rw_crapcrd;
+    CLOSE cr_crapcrd;
     
     IF pr_insitcrd = 7 THEN
        vr_insitcrd:= 4;
@@ -410,6 +437,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANCRD AS
     EXCEPTION
       WHEN OTHERS THEN
            vr_dsderror := 'TELA_MANCRD.PC_ATUALIZA_CARTAO: Erro ao atualizar a tabela crawcrd ' || SQLERRM;
+           RAISE vr_exc_erro;
+    END;
+    
+    BEGIN
+      UPDATE crapcrd crd
+         SET crd.nrcpftit = pr_nrcpftit
+            ,crd.cdadmcrd = pr_cdadmcrd
+            ,crd.flgdebit = pr_flgdebit
+            ,crd.nmtitcrd = upper(pr_nmtitcrd)
+       WHERE crd.nrdconta = pr_nrdconta
+         AND crd.nrcrcard = pr_nrcrcard
+         AND crd.cdcooper = vr_cdcooper;    
+    EXCEPTION
+      WHEN OTHERS THEN
+           vr_dsderror := 'TELA_MANCRD.PC_ATUALIZA_CARTAO: Erro ao atualizar a tabela crapcrd ' || SQLERRM;
            RAISE vr_exc_erro;
     END;
     
@@ -671,7 +713,124 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_MANCRD AS
                                 pr_dsdadatu => upper(pr_nmempres));  
       
     END IF;
-      
+    
+    IF pr_nrcpftit <> rw_crapcrd.nrcpftit THEN
+    
+      gene0001.pc_gera_log(pr_cdcooper => vr_cdcooper,
+                           pr_cdoperad => vr_cdoperad,
+                           pr_dscritic => '',
+                           pr_dsorigem => TRIM(GENE0001.vr_vet_des_origens(vr_idorigem)),
+                           pr_dstransa => 'CPF',
+                           pr_dttransa => TRUNC(SYSDATE),
+                           pr_flgtrans => 1,
+                           pr_hrtransa => GENE0002.fn_char_para_number(to_char(SYSDATE,'SSSSS')),
+                           pr_idseqttl => 0,
+                           pr_nmdatela => vr_nmdatela,
+                           pr_nrdconta => pr_nrdconta,
+                           pr_nrdrowid => vr_nrdrowid);
+
+      gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+                                pr_nmdcampo => 'nrcpftit',
+                                pr_dsdadant => rw_crapcrd.nrcpftit,
+                                pr_dsdadatu => pr_nrcpftit);
+    END IF;
+    
+    -- Logar alterações na adiministradora
+    IF pr_cdadmcrd <> rw_crapcrd.cdadmcrd THEN
+
+      -- Buscar descrição da adiministradora alterada
+      OPEN cr_crapadc(vr_cdcooper, 
+                      pr_cdadmcrd);
+      FETCH cr_crapadc INTO rw_crapadc;
+         
+      IF cr_crapadc%FOUND THEN
+        CLOSE cr_crapadc;
+        vr_nmresadm:= rw_crapadc.nmresadm;
+      ELSE 
+        CLOSE cr_crapadc;         
+      END IF;
+   
+      -- Buscar descrição da adiministradora antiga
+      OPEN cr_crapadc(vr_cdcooper, 
+                      rw_crapcrd.cdadmcrd);
+      FETCH cr_crapadc INTO rw_crapadc;
+   
+      IF cr_crapadc%FOUND THEN
+        CLOSE cr_crapadc;
+        vr_nmresadm_ant:= rw_crapadc.nmresadm;
+      ELSE 
+        CLOSE cr_crapadc;         
+      END IF;
+
+      gene0001.pc_gera_log(pr_cdcooper => vr_cdcooper,
+                           pr_cdoperad => vr_cdoperad,
+                           pr_dscritic => '',
+                           pr_dsorigem => TRIM(GENE0001.vr_vet_des_origens(vr_idorigem)),
+                           pr_dstransa => 'Administradora',
+                           pr_dttransa => TRUNC(SYSDATE),
+                           pr_flgtrans => 1,
+                           pr_hrtransa => GENE0002.fn_char_para_number(to_char(SYSDATE,'SSSSS')),
+                           pr_idseqttl => 0,
+                           pr_nmdatela => vr_nmdatela,
+                           pr_nrdconta => pr_nrdconta,
+                           pr_nrdrowid => vr_nrdrowid);
+
+      gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+                                pr_nmdcampo => 'cdadmcrd',
+                                pr_dsdadant => vr_nmresadm_ant,
+                                pr_dsdadatu => vr_nmresadm);
+               
+    END IF; 
+    
+    -- Logar alterações na função debito
+    IF pr_flgdebit <> rw_crapcrd.flgdebit THEN
+
+      gene0001.pc_gera_log(pr_cdcooper => vr_cdcooper,
+                           pr_cdoperad => vr_cdoperad,
+                           pr_dscritic => '',
+                           pr_dsorigem => TRIM(GENE0001.vr_vet_des_origens(vr_idorigem)),
+                           pr_dstransa => 'Funcao Debito',
+                           pr_dttransa => TRUNC(SYSDATE),
+                           pr_flgtrans => 1,
+                           pr_hrtransa => GENE0002.fn_char_para_number(to_char(SYSDATE,'SSSSS')),
+                           pr_idseqttl => 0,
+                           pr_nmdatela => vr_nmdatela,
+                           pr_nrdconta => pr_nrdconta,
+                           pr_nrdrowid => vr_nrdrowid);
+
+      gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+                                pr_nmdcampo => 'flgdebit',
+                                pr_dsdadant => CASE rw_crapcrd.flgdebit 
+                                         WHEN 1 THEN 'Sim' 
+                                         WHEN 0 THEN 'Nao' 
+                                         END,
+                                pr_dsdadatu => CASE pr_flgdebit 
+                                         WHEN 1 THEN 'Sim' 
+                                         WHEN 0 THEN 'Nao' 
+                                         END);
+                  
+    END IF;
+    
+    IF upper(trim(pr_nmtitcrd)) <> upper(trim(rw_crapcrd.nmtitcrd)) THEN
+   
+      gene0001.pc_gera_log(pr_cdcooper => vr_cdcooper,
+                           pr_cdoperad => vr_cdoperad,
+                           pr_dscritic => '',
+                           pr_dsorigem => TRIM(GENE0001.vr_vet_des_origens(vr_idorigem)),
+                           pr_dstransa => 'Nome do Plastico',
+                           pr_dttransa => TRUNC(SYSDATE),
+                           pr_flgtrans => 1,
+                           pr_hrtransa => GENE0002.fn_char_para_number(to_char(SYSDATE,'SSSSS')),
+                           pr_idseqttl => 0,
+                           pr_nmdatela => vr_nmdatela,
+                           pr_nrdconta => pr_nrdconta,
+                           pr_nrdrowid => vr_nrdrowid);
+
+      gene0001.pc_gera_log_item(pr_nrdrowid => vr_nrdrowid,
+                                pr_nmdcampo => 'nmtitcrd',
+                                pr_dsdadant => upper(rw_crapcrd.nmtitcrd),
+                                pr_dsdadatu => upper(pr_nmtitcrd));
+    END IF;   
   EXCEPTION 
     WHEN vr_exc_erro THEN
       ROLLBACK;

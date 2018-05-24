@@ -552,7 +552,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPC0001 AS
   --
   --  Programa: SSPC0001                        
   --  Autor   : Andrino Carlos de Souza Junior (RKAM)
-  --  Data    : Julho/2014                     Ultima Atualizacao: - 18/12/2017
+  --  Data    : Julho/2014                     Ultima Atualizacao: - 14/03/2018
   --
   --  Dados referentes ao programa:
   --
@@ -591,7 +591,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.SSPC0001 AS
   --  
   --             23/03/2018 - Alterado a referencia que era para a tabela CRAPLIM para a tabela CRAWLIM nos procedimentos 
   --                          Referentes a proposta. (Lindon Carlos Pecile - GFT)
-
+  --				
+  --             14/03/2018 - Inclusão nova tag no XML  <CEP_END_RES> na procedure pc_monta_cpf_cnpj_envio (Paulo Martins - Mout´s)
+  --                          
   ---------------------------------------------------------------------------------------------------------------
 
     -- Cursor sobre as pendencias financeiras existentes
@@ -5603,7 +5605,11 @@ PROCEDURE pc_monta_cpf_cnpj_envio(pr_xml  IN OUT XmlType,               --> XML 
                                   pr_cdpactra IN crapope.cdpactra%TYPE, --> PA de trabalho do operador
                                   pr_qthrsrpv IN PLS_INTEGER,           --> Quantidade de horas de reaproveitamento
                                   pr_dtconscr IN DATE,                  --> Data base para a consulta no SCR
+                                  pr_nrcep    IN crapavt.nrcepend%TYPE,  --> Cep
                                   pr_dscritic OUT VARCHAR2) IS           --> Texto de erro/critica encontrada
+
+                          
+                                  
   BEGIN
     -- Inclusão nome do módulo logado - 12/07/2018 - Chamado 663304
     GENE0001.pc_set_modulo(pr_module => 'SSPC0001', pr_action => 'SSPC0001.pc_monta_cpf_cnpj_envio');  
@@ -5629,6 +5635,8 @@ PROCEDURE pc_monta_cpf_cnpj_envio(pr_xml  IN OUT XmlType,               --> XML 
 
     -- Envia o PA e a quantidade de horas de reaproveitamento
     gene0007.pc_insere_tag(pr_xml => pr_xml, pr_tag_pai => 'CONSULTA',       pr_posicao => pr_contador, pr_tag_nova => 'CENTRO_CUSTO',pr_tag_cont => pr_cdpactra, pr_des_erro => pr_dscritic);
+    --Cep
+    gene0007.pc_insere_tag(pr_xml => pr_xml, pr_tag_pai => 'CONSULTA',       pr_posicao => pr_contador, pr_tag_nova => 'CEP_END_RES',pr_tag_cont => pr_nrcep, pr_des_erro => pr_dscritic);    
     gene0007.pc_insere_tag(pr_xml => pr_xml, pr_tag_pai => 'CONSULTA',       pr_posicao => pr_contador, pr_tag_nova => 'HORA_REAPROVEITAMENTO',pr_tag_cont => pr_qthrsrpv, pr_des_erro => pr_dscritic);
   END;
 
@@ -5696,7 +5704,8 @@ PROCEDURE pc_solicita_consulta_biro(pr_cdcooper IN  crapepr.cdcooper%TYPE, --> C
     -- Busca os dados dos avalistas terceiros
     CURSOR cr_crapavt IS
       SELECT crapavt.nrcpfcgc,
-             crapavt.inpessoa
+             crapavt.inpessoa,
+             crapavt.nrcepend
         FROM crapavt
        WHERE crapavt.cdcooper = pr_cdcooper
          AND crapavt.nrdconta = pr_nrdconta
@@ -5777,6 +5786,29 @@ PROCEDURE pc_solicita_consulta_biro(pr_cdcooper IN  crapepr.cdcooper%TYPE, --> C
          AND craprbi.inprodut = pr_inprodut
          AND craprbi.inpessoa = pr_inpessoa;
         
+    -- Cursor para buscar CEP tbcadast_pessoa                              
+      cursor c_cep(p_tppessoa in number,
+                   p_nrcpfcgc in number) is
+      select pe.nrcep 
+        from tbcadast_pessoa p,
+             tbcadast_pessoa_endereco pe
+       where p.idpessoa = pe.idpessoa
+         and p.tppessoa = p_tppessoa
+         and pe.tpendereco = decode(p.tppessoa,1,10,2,9)
+         and p.nrcpfcgc = p_nrcpfcgc
+         and nvl(pe.nrcep,0) > 0;
+
+    -- Cursor para buscar CEP Avalistas                              
+      cursor c_cep_avt(p_nrcpfcgc in number) is
+      select a.nrcepend 
+        from crapavt a 
+       where a.cdcooper = pr_cdcooper 
+         and a.nrdconta = pr_nrdconta
+         and a.nrctremp = pr_nrdocmto
+         and a.nrcpfcgc = p_nrcpfcgc
+         and nvl(a.nrcepend,0) > 0;         
+         
+        
     -- Monta o registro de data
     rw_crapdat btch0001.cr_crapdat%ROWTYPE;
 
@@ -5807,6 +5839,7 @@ PROCEDURE pc_solicita_consulta_biro(pr_cdcooper IN  crapepr.cdcooper%TYPE, --> C
     vr_dsprodut VARCHAR2(100);         --> Descricao do produto que sera utilizado
 
     vr_nrcpfcgc crapcbd.nrcpfcgc%TYPE; --> Numero do CPF/CGC da conta principal
+    vr_nrcepend tbcadast_pessoa_endereco.nrcep%TYPE; --> Número do Cep do titular da Conta
     vr_cdagenci crapass.cdagenci%TYPE; --> Codigo da agencia do cooperado
     vr_vllimcre crapass.vllimcre%TYPE; --> Valor do limite de credito cadastrado para o associado
     vr_vlemprst crawepr.vlemprst%TYPE; --> Valor total de emprestimo que o cooperado possui
@@ -5820,7 +5853,7 @@ PROCEDURE pc_solicita_consulta_biro(pr_cdcooper IN  crapepr.cdcooper%TYPE, --> C
     
     vr_nrdconta_scr crapcbd.nrdconta%TYPE := 0;--> Numero da conta do avalista utilizado no SCR
     vr_nrcpfcgc_scr crapcbd.nrcpfcgc%TYPE; --> Numero do CPF/CGC do avalista utilizado no SCR
-
+    vr_nrcepend_scr tbcadast_pessoa_endereco.nrcep%TYPE; --> Número do Cep SCR
     vr_nrdconta_av1 crapcbd.nrdconta%TYPE := 0;--> Numero da conta do avalista 1
     vr_nrcpfcgc_av1 crapcbd.nrcpfcgc%TYPE; --> Numero do CPF/CGC do avalista 1
     vr_cdagenci_av1 crapass.cdagenci%TYPE; --> Codigo da agencia do avalista 1
@@ -5830,6 +5863,8 @@ PROCEDURE pc_solicita_consulta_biro(pr_cdcooper IN  crapepr.cdcooper%TYPE, --> C
     vr_cdmodbir_av1 crapcbd.cdmodbir%TYPE; --> Modalidade do biro de consulta para o avalista 1
     vr_nrconbir_av1 crapcbd.nrconbir%TYPE; --> Numero da consulta do biro do avalista 1
     vr_nrseqdet_av1 crapcbd.nrseqdet%TYPE; --> Numero da sequencia da consulta do biro do avalista 1
+    vr_nrcepend_av1 crapavt.nrcepend%TYPE; --> Numero Cep do Endereco do avalista 1
+    
     
     vr_nrdconta_av2 crapcbd.nrdconta%TYPE := 0; --> Numero da conta do avalista 2
     vr_nrcpfcgc_av2 crapcbd.nrcpfcgc%TYPE; --> Numero do CPF/CGC do avalista 2
@@ -5840,9 +5875,11 @@ PROCEDURE pc_solicita_consulta_biro(pr_cdcooper IN  crapepr.cdcooper%TYPE, --> C
     vr_cdmodbir_av2 crapcbd.cdmodbir%TYPE; --> Modalidade do biro de consulta para o avalista 2
     vr_nrconbir_av2 crapcbd.nrconbir%TYPE; --> Numero da consulta do biro do avalista 2
     vr_nrseqdet_av2 crapcbd.nrseqdet%TYPE; --> Numero da sequencia da consulta do biro do avalista 2
+    vr_nrcepend_av2 crapavt.nrcepend%TYPE; --> Numero Cep do Endereco do avalista 2
     
     vr_nrdconta_cje crapcbd.nrdconta%TYPE; --> Numero da conta do conjuge
     vr_nrcpfcgc_cje crapcbd.nrcpfcgc%TYPE; --> Numero do CPF/CGC do conjuge
+    vr_nrcepend_cje tbcadast_pessoa_endereco.Nrcep%TYPE; --> Número do Cep do titular da Conta
 
     vr_cdbircon_pf  crapcbd.cdbircon%TYPE; --> Biro de consulta para pessoa fisica
     vr_cdmodbir_pf  crapcbd.cdmodbir%TYPE; --> Modalidade do biro de consulta para pessoa fisica
@@ -5897,6 +5934,12 @@ PROCEDURE pc_solicita_consulta_biro(pr_cdcooper IN  crapepr.cdcooper%TYPE, --> C
       RAISE vr_exc_saida;
     END IF;
     CLOSE cr_crapass;
+
+    --Busca Cep do Titular
+    vr_nrcepend := null;
+    open c_cep(vr_inpessoa,vr_nrcpfcgc);
+     fetch c_cep into vr_nrcepend;
+    close c_cep;
 
     -- Busca os dados de emprestimo
     IF pr_inprodut = 1 THEN
@@ -6026,6 +6069,12 @@ PROCEDURE pc_solicita_consulta_biro(pr_cdcooper IN  crapepr.cdcooper%TYPE, --> C
         RAISE vr_exc_saida;
       END IF;
       CLOSE cr_crapass;
+      --Buscar Cep
+      -- Se possuir conta, podes buscar da TBCADAST_PESSOA
+      vr_nrcepend_av1 := null;
+      open c_cep(vr_inpessoa_av1,vr_nrcpfcgc_av1);
+       fetch c_cep into vr_nrcepend_av1;
+      close c_cep;     
     END IF;
 
     -- Busca os dados do avalista 2 --
@@ -6041,6 +6090,12 @@ PROCEDURE pc_solicita_consulta_biro(pr_cdcooper IN  crapepr.cdcooper%TYPE, --> C
         RAISE vr_exc_saida;
       END IF;
       CLOSE cr_crapass;
+      --Buscar Cep
+      -- Se possuir conta, podes buscar da TBCADAST_PESSOA
+      vr_nrcepend_av2 := null;
+      open c_cep(vr_inpessoa_av2,vr_nrcpfcgc_av2);
+       fetch c_cep into vr_nrcepend_av2;
+      close c_cep;       
     END IF;
 
     -- Busca os avalistas terceiros
@@ -6049,9 +6104,11 @@ PROCEDURE pc_solicita_consulta_biro(pr_cdcooper IN  crapepr.cdcooper%TYPE, --> C
       IF nvl(vr_nrdconta_av1,0) = 0 AND vr_nrcpfcgc_av1 IS NULL THEN
         vr_nrcpfcgc_av1 := rw_crapavt.nrcpfcgc;
         vr_inpessoa_av1 := rw_crapavt.inpessoa;
+        vr_nrcepend_av1 := rw_crapavt.nrcepend; --Cep
       ELSIF nvl(vr_nrdconta_av2,0) = 0 THEN -- Se nao tiver avalista 2
         vr_nrcpfcgc_av2 := rw_crapavt.nrcpfcgc;
         vr_inpessoa_av2 := rw_crapavt.inpessoa;
+        vr_nrcepend_av2 := rw_crapavt.nrcepend; --Cep
       END IF;
     END LOOP;
     
@@ -6060,6 +6117,11 @@ PROCEDURE pc_solicita_consulta_biro(pr_cdcooper IN  crapepr.cdcooper%TYPE, --> C
       OPEN cr_crapcje;
       FETCH cr_crapcje INTO vr_nrdconta_cje, vr_nrcpfcgc_cje;
       CLOSE cr_crapcje;
+      --Busca Cep do Conjuge
+      vr_nrcepend_cje := null;
+      open c_cep(1,vr_nrcpfcgc_cje);--Pessoa Física 
+       fetch c_cep into vr_nrcepend_cje;
+      close c_cep;
     END IF;
 
     -- Se possuir alguma pessoa fisica
@@ -6307,6 +6369,7 @@ PROCEDURE pc_solicita_consulta_biro(pr_cdcooper IN  crapepr.cdcooper%TYPE, --> C
                                 pr_cdpactra => rw_crapope.cdpactra,
                                 pr_qthrsrpv => vr_qthrsrpv_pj,
                                 pr_dtconscr => NULL,
+                                pr_nrcep    => vr_nrcepend, --Cep 
                                 pr_dscritic => vr_dscritic);
 
         -- Incrementa o contador de enviados       
@@ -6356,6 +6419,7 @@ PROCEDURE pc_solicita_consulta_biro(pr_cdcooper IN  crapepr.cdcooper%TYPE, --> C
                                     pr_cdpactra => rw_crapope.cdpactra,
                                     pr_qthrsrpv => vr_qthrsrpv_pf,
                                     pr_dtconscr => NULL,
+                                    pr_nrcep    => vr_nrcepend, --Cep
                                     pr_dscritic => vr_dscritic);
 
             -- Incrementa o contador de enviados       
@@ -6454,6 +6518,7 @@ PROCEDURE pc_solicita_consulta_biro(pr_cdcooper IN  crapepr.cdcooper%TYPE, --> C
                                       pr_cdpactra => rw_crapope.cdpactra,
                                       pr_qthrsrpv => vr_qthrsrpv_pf,
                                       pr_dtconscr => NULL,
+                                      pr_nrcep    => vr_nrcepend_av1, --Cep
                                       pr_dscritic => vr_dscritic);
   
               -- define o biro e a modalidade de consulta do avalista 1
@@ -6469,6 +6534,7 @@ PROCEDURE pc_solicita_consulta_biro(pr_cdcooper IN  crapepr.cdcooper%TYPE, --> C
                                       pr_cdpactra => rw_crapope.cdpactra,
                                       pr_qthrsrpv => vr_qthrsrpv_pf,
                                       pr_dtconscr => NULL,
+                                      pr_nrcep    => vr_nrcepend_av1, --Cep
                                       pr_dscritic => vr_dscritic);
 
               -- define o biro e a modalidade de consulta do avalista 1
@@ -6545,6 +6611,7 @@ PROCEDURE pc_solicita_consulta_biro(pr_cdcooper IN  crapepr.cdcooper%TYPE, --> C
                                       pr_cdpactra => rw_crapope.cdpactra,
                                       pr_qthrsrpv => vr_qthrsrpv_pf,
                                       pr_dtconscr => NULL,
+                                      pr_nrcep    => vr_nrcepend_av2, --Cep
                                       pr_dscritic => vr_dscritic);
 
               -- define o biro e a modalidade de consulta do avalista 2
@@ -6559,6 +6626,7 @@ PROCEDURE pc_solicita_consulta_biro(pr_cdcooper IN  crapepr.cdcooper%TYPE, --> C
                                       pr_cdpactra => rw_crapope.cdpactra,
                                       pr_qthrsrpv => vr_qthrsrpv_pf,
                                       pr_dtconscr => NULL,
+                                      pr_nrcep    => vr_nrcepend_av2, --Cep
                                       pr_dscritic => vr_dscritic);
 
               -- define o biro e a modalidade de consulta do avalista 2
@@ -6616,6 +6684,7 @@ PROCEDURE pc_solicita_consulta_biro(pr_cdcooper IN  crapepr.cdcooper%TYPE, --> C
                                     pr_cdpactra => rw_crapope.cdpactra,
                                     pr_qthrsrpv => vr_qthrsrpv_pf,
                                     pr_dtconscr => NULL,
+                                    pr_nrcep    => vr_nrcepend_cje, --Cep
                                     pr_dscritic => vr_dscritic);
            
             -- Incrementa o contador de enviados       
@@ -6647,6 +6716,7 @@ PROCEDURE pc_solicita_consulta_biro(pr_cdcooper IN  crapepr.cdcooper%TYPE, --> C
           -- Sai quando o contador de SCR chegar a 4
           EXIT WHEN vr_contador_scr = 5;
           
+          vr_nrcepend := null;
           -- Se for a primeira execucao
           IF vr_contador_scr = 1 THEN
             -- Atualiza os dados com o conjuge
@@ -6654,6 +6724,7 @@ PROCEDURE pc_solicita_consulta_biro(pr_cdcooper IN  crapepr.cdcooper%TYPE, --> C
             vr_nrdconta_scr := pr_nrdconta;
             vr_nrcpfcgc_scr := vr_nrcpfcgc;
             vr_intippes_scr := 1; -- Titular
+            vr_nrcepend_scr := vr_nrcepend;
           ELSIF vr_contador_scr = 2 THEN -- Conjuge
             -- Envia o conjuge somente se ele nao for avalista
            IF nvl(vr_nrcpfcgc_cje,0) <> nvl(vr_nrcpfcgc_av1,0) AND   -- Se for avalista nao deve efetuar consulta novamente
@@ -6663,6 +6734,7 @@ PROCEDURE pc_solicita_consulta_biro(pr_cdcooper IN  crapepr.cdcooper%TYPE, --> C
               vr_nrdconta_scr := vr_nrdconta_cje;
               vr_nrcpfcgc_scr := vr_nrcpfcgc_cje;
               vr_intippes_scr := 3; -- Conjuge
+              vr_nrcepend_scr := vr_nrcepend_cje;
             ELSE
               vr_nrcpfcgc_scr := 0;
             END IF;
@@ -6672,12 +6744,14 @@ PROCEDURE pc_solicita_consulta_biro(pr_cdcooper IN  crapepr.cdcooper%TYPE, --> C
             vr_nrdconta_scr := vr_nrdconta_av1;
             vr_nrcpfcgc_scr := vr_nrcpfcgc_av1;
             vr_intippes_scr := 2; -- Avalista
+            vr_nrcepend_scr := vr_nrcepend_av1;
           ELSE
             -- Atualiza os dados com o avalista 2
             vr_inpessoa_scr := vr_inpessoa_av2;
             vr_nrdconta_scr := vr_nrdconta_av2;
             vr_nrcpfcgc_scr := vr_nrcpfcgc_av2;
             vr_intippes_scr := 2; -- Avalista
+            vr_nrcepend_scr := vr_nrcepend_av2;
           END IF;
           
           -- Verifica se eh pessoa fisica
@@ -6734,6 +6808,7 @@ PROCEDURE pc_solicita_consulta_biro(pr_cdcooper IN  crapepr.cdcooper%TYPE, --> C
                                     pr_cdpactra => rw_crapope.cdpactra,
                                     pr_qthrsrpv => vr_qthrsrpv_scr,
                                     pr_dtconscr => vr_dtconmax_scr,
+                                    pr_nrcep    => vr_nrcepend_scr, --Cep
                                     pr_dscritic => vr_dscritic);
 
             -- Incrementa o contador de enviados       
@@ -7091,8 +7166,10 @@ PROCEDURE pc_solicita_cons_bordero_biro(pr_cdcooper IN  crapcob.cdcooper%TYPE, -
              cob.cdtpinav, -- Codigo do tipo da inscricao do Avalista (0-nenhum/1-CPF/2-CNPJ)
              cob.nrinsava, -- Número de inscrição do Avalista (CPF/CNPJ)
              cob.dtvencto, -- Data de Vencimento do Título
-             cob.vltitulo --  valor do Título
-        FROM cecred.crapcob cob
+             cob.vltitulo, -- valor do Título
+             sab.nrcepsac  -- CEP Sacado 
+        FROM crapcob cob,
+             crapsab sab
        WHERE cob.flgregis > 0 -- Indicador de Registro CIP (0-Sem registro CIP/ 1-Registro Online/ 2-Registro offline)
          AND cob.incobran = 0 -- 0 cobrança em aberto.
          -- filtros paramétricos 
@@ -7101,7 +7178,10 @@ PROCEDURE pc_solicita_cons_bordero_biro(pr_cdcooper IN  crapcob.cdcooper%TYPE, -
          AND cob.nrdocmto = pr_nrdocmto
          and cob.cdbandoc = pr_cdbandoc
          and cob.nrdctabb = pr_nrdctabb
-         and cob.nrcnvcob = pr_nrcnvcob;
+         and cob.nrcnvcob = pr_nrcnvcob
+         AND sab.nrdconta = cob.nrdconta
+         AND sab.cdcooper = cob.cdcooper
+         AND sab.nrinssac = cob.nrinssac;
 
     -- Busca as tags para a consulta do biro
     CURSOR cr_crapmbr(pr_cdbircon crapmbr.cdbircon%TYPE,
@@ -7180,16 +7260,17 @@ PROCEDURE pc_solicita_cons_bordero_biro(pr_cdcooper IN  crapcob.cdcooper%TYPE, -
     vr_qtdiarpv_pj  PLS_INTEGER;           --> Quantidade de dias de reaproveitamento para pessoa juridica
 
     -- Variáveis para Retorno do Tìtulo
-    vr_nrdocmto cecred.crapcob.nrdocmto%TYPE;
-    vr_cdcooper cecred.crapcob.cdcooper%TYPE;
-    vr_nrdconta cecred.crapcob.nrdconta%TYPE;
-    vr_cdtpinsc cecred.crapcob.cdtpinsc%TYPE;
-    vr_nrinssac cecred.crapcob.nrinssac%TYPE;
-    vr_nrctasac cecred.crapcob.nrctasac%TYPE;
-    vr_cdtpinav cecred.crapcob.cdtpinav%TYPE;
-    vr_nrinsava cecred.crapcob.nrinsava%TYPE;   
-    vr_dtvencto cecred.crapcob.dtvencto%TYPE;
-    vr_vltitulo cecred.crapcob.vltitulo%TYPE;
+    vr_nrdocmto crapcob.nrdocmto%TYPE;
+    vr_cdcooper crapcob.cdcooper%TYPE;
+    vr_nrdconta crapcob.nrdconta%TYPE;
+    vr_cdtpinsc crapcob.cdtpinsc%TYPE;
+    vr_nrinssac crapcob.nrinssac%TYPE;
+    vr_nrctasac crapcob.nrctasac%TYPE;
+    vr_cdtpinav crapcob.cdtpinav%TYPE;
+    vr_nrinsava crapcob.nrinsava%TYPE;   
+    vr_dtvencto crapcob.dtvencto%TYPE;
+    vr_vltitulo crapcob.vltitulo%TYPE;
+    vr_nrcepsac crapsab.nrcepsac%TYPE;
     
     vr_dsprodut VARCHAR2(100);         --> Descricao do produto que sera utilizado
 
@@ -7217,7 +7298,8 @@ PROCEDURE pc_solicita_cons_bordero_biro(pr_cdcooper IN  crapcob.cdcooper%TYPE, -
                          vr_cdtpinav,
                          vr_nrinsava,
                          vr_dtvencto,
-                         vr_vltitulo;
+                         vr_vltitulo,
+                         vr_nrcepsac;
     IF cr_crapcob%NOTFOUND THEN
       vr_dscritic := 'Contrato de Título inexistente. Favor verificar!';
 
@@ -7377,7 +7459,7 @@ PROCEDURE pc_solicita_cons_bordero_biro(pr_cdcooper IN  crapcob.cdcooper%TYPE, -
     -- Atualiza o codigo da consulta na tabela de limite para o produto Título.
     /*    
     BEGIN
-      UPDATE cecred.crapsab
+      UPDATE crapsab
          SET nrconbir = vr_nrconbir
        WHERE cdcooper = pr_cdcooper
          AND nrdconta = pr_nrdconta
@@ -7442,6 +7524,7 @@ PROCEDURE pc_solicita_cons_bordero_biro(pr_cdcooper IN  crapcob.cdcooper%TYPE, -
                                 pr_cdpactra => rw_crapope.cdpactra,
                                 pr_qthrsrpv => vr_qthrsrpv_pj,
                                 pr_dtconscr => NULL,
+                                pr_nrcep    => vr_nrcepsac,
                                 pr_dscritic => vr_dscritic);
 
         -- Incrementa o contador de enviados
@@ -7491,6 +7574,7 @@ PROCEDURE pc_solicita_cons_bordero_biro(pr_cdcooper IN  crapcob.cdcooper%TYPE, -
                                     pr_cdpactra => rw_crapope.cdpactra,
                                     pr_qthrsrpv => vr_qthrsrpv_pf,
                                     pr_dtconscr => NULL,
+                                    pr_nrcep    => vr_nrcepsac,
                                     pr_dscritic => vr_dscritic);
 
             -- Incrementa o contador de enviados
@@ -7597,7 +7681,7 @@ PROCEDURE pc_solicita_cons_bordero_biro(pr_cdcooper IN  crapcob.cdcooper%TYPE, -
     -- AWAE: TODO: Atualizar quando for criado o campo DTCONBIR na tabela de Pagador (crapsab) 
     -- Atualiza a data da consulta na tabela de Pagador (crapsab)
     /*BEGIN
-      UPDATE cecred.crapsab
+      UPDATE crapsab
          SET dtconbir = (SELECT trunc(nvl(dtreapro, dtconbir))
                            FROM crapcbd
                           WHERE nrconbir = vr_nrconbir
@@ -7713,7 +7797,7 @@ PROCEDURE pc_solicita_cons_bordero_biro(pr_cdcooper IN  crapcob.cdcooper%TYPE, -
       -- AWAE: TODO: Atualizar quando for criado o campo NRCONBIR na tabela de Pagador (crapsab) 
       /*
       BEGIN
-      UPDATE cecred.crapsab
+      UPDATE crapsab
          SET nrconbir = nvl(vr_nrconbir, nrconbir)
        WHERE cdcooper = pr_cdcooper
          AND nrdconta = pr_nrdconta

@@ -164,6 +164,7 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0003 is
                                ,pr_des_erro   OUT VARCHAR2);                        --> Erros do processo
 
   PROCEDURE pc_servicos_oferecidos(pr_nrdconta IN crapass.nrdconta%TYPE         --> Numero da conta
+                                  ,pr_flgautom IN INTEGER                       --> Flag (0 - Todos / 1 - Apena automáticas)
                                   ,pr_xmllog   IN VARCHAR2                      --> XML com informações de LOG
                                   ,pr_cdcritic OUT PLS_INTEGER                  --> Código da crítica
                                   ,pr_dscritic OUT VARCHAR2                     --> Descrição da crítica
@@ -818,6 +819,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
   --
   --             12/04/2018 - Criar os documentos corretos ao duplicar uma conta 
   --                          (Lucas Ranghetti INC0012381)
+  --
+  --             12/04/2018 - Adicionado campo pr_flgautom na proc pc_servicos_oferecidos
+  --                          PRJ366 (Lombardi).
   ---------------------------------------------------------------------------------------------------------------
 
   CURSOR cr_tbchq_param_conta(pr_cdcooper crapcop.cdcooper%TYPE
@@ -5072,6 +5076,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
 
   -- Rotina para exibir os produtos disponiveis na tela ATENDA
   PROCEDURE pc_servicos_oferecidos(pr_nrdconta IN crapass.nrdconta%TYPE         --> Numero da conta
+                                  ,pr_flgautom IN INTEGER                       --> Flag (0 - Todos / 1 - Apena automáticas)
                                   ,pr_xmllog   IN VARCHAR2                      --> XML com informações de LOG
                                   ,pr_cdcritic OUT PLS_INTEGER                  --> Código da crítica
                                   ,pr_dscritic OUT VARCHAR2                     --> Descrição da crítica
@@ -5117,6 +5122,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
          AND tbcc_produto.cdproduto      = tbcc_produtos_coop.cdproduto
          -- Produtos que não devem ser exibidos
          AND tbcc_produto.cdproduto NOT IN (25)
+         AND ((pr_flgautom = 1
+         AND  tbcc_produto.cdproduto NOT IN (3,4,5,6,7,13,16,17,18,19,21,22,23,24,31,33,34,35,36,37,38,39,40,41)) 
+          OR pr_flgautom = 0)
        ORDER BY tbcc_produtos_coop.tpproduto,
                 tbcc_produtos_coop.nrordem_exibicao;
 
@@ -5890,6 +5898,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
          Alteracoes:	18/10/2017 - Correcao no extrato de creditos recebidos tela ATENDA - DEP. VISTA
                                      rotina pc_lista_cred_recebidos. SD 762694 (Carlos Rafael Tanholi)
 
+                        14/05/2018 - Ajustes para gravar o tpproduto na tabela tbcc_produtos_coop e retirar 
+                                     esse campo do where. Gravar o cdproduto na tabela de historicos.
+                                     PRJ366 (Lombardi).
+
       ............................................................................. */
 
       vr_cdproduto        tbcc_produtos_coop.cdproduto%TYPE; --> codigo so servico
@@ -5956,7 +5968,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
       -- Buscar todos os grupos selecionados
       CURSOR cr_cdprodutos(pr_cdcooper IN tbcc_produtos_coop.cdcooper%TYPE
                           ,pr_tpconta  IN tbcc_produtos_coop.tpconta%TYPE
-                          ,pr_inpessoa IN tbcc_produtos_coop.inpessoa%TYPE) IS
+                          ,pr_inpessoa IN tbcc_produtos_coop.inpessoa%TYPE
+                          ,pr_tpprodut IN tbcc_produtos_coop.tpproduto%TYPE) IS
         SELECT tpc.cdproduto
               ,tpc.vlminimo_adesao  
               ,tpc.vlmaximo_adesao  
@@ -5964,6 +5977,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
          WHERE tpc.cdcooper   = pr_cdcooper
            AND tpc.tpconta    = pr_tpconta
            AND tpc.inpessoa   = pr_inpessoa
+           AND tpc.tpproduto  = pr_tpprodut
            AND tpc.dtvigencia IS NULL;
       
       -- Tabela de memória
@@ -6000,7 +6014,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
       -- Buscar e guardar todos os produtos selecionados atualmente
       FOR rw_cdprodutos IN cr_cdprodutos(pr_cdcooper => pr_cdcooper
                                         ,pr_tpconta  => pr_tpconta
-                                        ,pr_inpessoa => pr_inpessoa) LOOP
+                                        ,pr_inpessoa => pr_inpessoa
+                                        ,pr_tpprodut => pr_tpproduto) LOOP
         -- Adiciona o registro 
         vr_tab_produto_old(rw_cdprodutos.cdproduto).vlminimo_adesao  := rw_cdprodutos.vlminimo_adesao;
         vr_tab_produto_old(rw_cdprodutos.cdproduto).vlmaximo_adesao  := rw_cdprodutos.vlmaximo_adesao;
@@ -6163,12 +6178,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
           BEGIN
             UPDATE tbcc_produtos_coop tpc
                SET tpc.dtvigencia = NULL -- Volta a data vigencia para null
+                  ,tpc.tpproduto = pr_tpproduto
                   ,tpc.vlminimo_adesao = vr_servico(2)
                   ,tpc.vlmaximo_adesao = vr_servico(3)
                   ,tpc.nrordem_exibicao = vr_servico(4)
              WHERE tpc.cdcooper  = pr_cdcooper
                AND tpc.tpconta   = pr_tpconta
-               AND tpc.tpproduto = pr_tpproduto
                AND tpc.inpessoa  = pr_inpessoa
                AND tpc.cdproduto = vr_servico(1);
           EXCEPTION
@@ -6241,6 +6256,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
                                         ,pr_cdcooper => pr_cdcooper
                                         ,pr_inpessoa => pr_inpessoa
                                         ,pr_cdtipcta => pr_tpconta
+                                        ,pr_cdprodut => vr_cdproduto
                                         ,pr_tpoperac => 2
                                         ,pr_dsvalant => NULL
                                         ,pr_dsvalnov => to_char(SYSDATE,'DD/MM/RRRR')
@@ -6278,6 +6294,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
                                         ,pr_cdcooper => pr_cdcooper
                                         ,pr_inpessoa => pr_inpessoa
                                         ,pr_cdtipcta => pr_tpconta
+                                        ,pr_cdprodut => vr_cdproduto
                                         ,pr_tpoperac => vr_tpoperac
                                         ,pr_dsvalant => NULL
                                         ,pr_dsvalnov => vr_cdproduto

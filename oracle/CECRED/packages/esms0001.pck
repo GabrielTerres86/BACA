@@ -55,11 +55,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.esms0001 AS
    Sigla   : CRED
   
    Autor   : Dionathan
-   Data    : 14/04/2016                        Ultima atualizacao: 29/11/2017
+   Data    : 14/04/2016                        Ultima atualizacao: 16/05/2018
    
    Objetivo  : Envio de SMS (Package Genérica)
   
-   Alteracoes: 
+   Alteracoes:    
      29/11/2017 - Padronização mensagens (crapcri, pc_gera_log (tbgen))
                 - Padronização erros comandos DDL
                 - Pc_set_modulo, cecred.pc_internal_exception
@@ -116,19 +116,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.esms0001 AS
                             ,pr_idlote_sms   OUT tbgen_sms_lote.idlote_sms%TYPE
                             ,pr_dscritic     OUT VARCHAR2) IS
     /*.............................................................................
-    Programa: pc_cria_lote_sms
-    Sistema : CECRED
-    Sigla   : EMPR
-    Autor   : Dionathan
+        Programa: pc_cria_lote_sms
+        Sistema : CECRED
+        Sigla   : EMPR
+        Autor   : Dionathan
     Data    : 02/05/2016                    Ultima atualizacao: 29/11/2017
     
-    Dados referentes ao programa:
+        Dados referentes ao programa:
     
-    Frequencia: Sempre que for chamado
+        Frequencia: Sempre que for chamado
     
-    Objetivo  : Criar um novo registro de lote de SMS para envio
+        Objetivo  : Criar um novo registro de lote de SMS para envio
     
-    Alteracoes:
+        Alteracoes:
        29/11/2017 - Padronização mensagens (crapcri, pc_gera_log (tbgen))
                   - Padronização erros comandos DDL
                   - Pc_set_modulo, cecred.pc_internal_exception
@@ -152,7 +152,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.esms0001 AS
                ,pr_dsagrupador)
      RETURNING idlote_sms
           INTO pr_idlote_sms;
-
+  
     -- Limpa nome do modulo logado - 29/11/2017 - Ch 788828    
     GENE0001.pc_set_modulo(pr_module => NULL, pr_action => NULL);
   EXCEPTION
@@ -186,7 +186,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.esms0001 AS
                           ,pr_dsmensagem  IN tbgen_sms_controle.dsmensagem%TYPE
                           ,pr_idsms      OUT tbgen_sms_controle.idsms%TYPE
                           ,pr_dscritic   OUT VARCHAR2) IS
-
+  
   /*---------------------------------------------------------------------------------------------------------------
    Programa: ESMS0001
    Sistema : Conta-Corrente - Cooperativa de Credito
@@ -208,7 +208,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.esms0001 AS
   BEGIN
     -- Inclui nome do modulo logado - 29/11/2017 - Ch 788828
     GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'ESMS0001.pc_escreve_sms');
-
+    
     INSERT INTO tbgen_sms_controle
                (idlote_sms
                ,idsms
@@ -242,13 +242,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.esms0001 AS
     WHEN OTHERS THEN
       -- No caso de erro de programa gravar tabela especifica de log - 29/11/2017 - Ch 788828 
       CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
-
+  
       vr_cdcritic := 1034;
       pr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'SMS no lote '|| pr_idlote_sms 
-                     ||'. Cdcooper:'||pr_cdcooper||', nrdconta:'||pr_nrdconta
+                     ||'. Cdcooper:'||pr_cdcooper||', nrdconta:'   ||pr_nrdconta
                      ||', idseqttl:'||pr_idseqttl||', dhenvio_sms:'||pr_dhenvio
-                     ||', nrddd:'||pr_nrddd||', nrtelefone:'||pr_nrtelefone
-                     ||', cdtarifa:'||pr_cdtarifa||', dsmensagem:'||pr_dsmensagem
+                     ||', nrddd:'   ||pr_nrddd   ||', nrtelefone:' ||pr_nrtelefone
+                     ||', cdtarifa:'||pr_cdtarifa||', dsmensagem:' ||pr_dsmensagem
                      ||'. ' || SQLERRM;
 
       --Grava tabela de log - Ch 788828
@@ -277,7 +277,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.esms0001 AS
     
         Objetivo  : Rotina para gerar o arquivo de remessa SMS -> ZENVIA
     
-        Alteracoes: 
+        Alteracoes:
           29/11/2017 - Padronização mensagens (crapcri, pc_gera_log (tbgen))
                      - Padronização erros comandos DDL
                      - Pc_set_modulo, cecred.pc_internal_exception
@@ -302,7 +302,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.esms0001 AS
       -- No caso de erro de programa gravar tabela especifica de log - 29/11/2017 - Ch 788828 
       CECRED.pc_internal_exception;
 
-      vr_cdcritic := 1056;
+      vr_cdcritic := 1056;  --1056 - Erro ao concluir lote de SMS.
       pr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||' idsituacao:P com idlote_sms:'||pr_idlote_sms
                      ||'. '||SQLERRM;
 
@@ -329,7 +329,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.esms0001 AS
    Sigla   : CRED
   
    Autor   : 
-   Data    :                         Ultima atualizacao: 29/11/2017
+   Data    :                         Ultima atualizacao: 16/05/2018
    
    Objetivo  : 
   
@@ -337,8 +337,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.esms0001 AS
      29/11/2017 - Padronização mensagens (crapcri, pc_gera_log (tbgen))
                 - Padronização erros comandos DDL
                 - Pc_set_modulo, cecred.pc_internal_exception
-                - Tratamento erros others
                  (Ana - Envolti - Chamado 788828)
+     16/05/2018 - Inclusão e tratamento da exception others
+                - Inclusão parâmetros no log
+                 (Ana - Envolti - Chamado PRB0040049)
   ---------------------------------------------------------------------------------------------------------------*/
   
   CURSOR cr_crapcrb IS
@@ -350,47 +352,73 @@ CREATE OR REPLACE PACKAGE BODY CECRED.esms0001 AS
   rw_crapcrb cr_crapcrb%ROWTYPE;
   cr_crapcrb_found BOOLEAN;
   
+  vr_dsparame      VARCHAR2(2000);
+  
   BEGIN
     -- Inclui nome do modulo logado - 29/11/2017 - Ch 788828
     GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'ESMS0001.pc_insere_evento_remessa_sms');
-
-    OPEN cr_crapcrb;
-    FETCH cr_crapcrb
-    INTO rw_crapcrb;
-      cr_crapcrb_found := cr_crapcrb%FOUND;
-    CLOSE cr_crapcrb;
+  
+    vr_dsparame := ' - pr_idtpreme:'||pr_idtpreme||
+                   ', pr_dtmvtolt:'||pr_dtmvtolt||
+                   ', pr_cdesteve:'||pr_cdesteve||
+                   ', pr_flerreve:'||pr_flerreve||
+                   ', pr_dslogeve:'||pr_dslogeve;
     
-    -- Cria um registro na CRAPCRB apenas para gerar log
-    IF NOT cr_crapcrb_found THEN
-      -- Rotina para solicitar o processo de envio / retorno dos arquivos dos Bureaux
-      cybe0002.pc_solicita_remessa(pr_dtmvtolt => TRUNC(pr_dtmvtolt)  --> Data da solicitação - Insere apenas 1 registro por dia, por isSO o TRUNC
-                                  ,pr_idtpreme => pr_idtpreme  --> Tipo da remessa
-                                  ,pr_dscritic => pr_dscritic); --> Retorno de crítica
-
+  OPEN cr_crapcrb;
+  FETCH cr_crapcrb
+  INTO rw_crapcrb;
+  cr_crapcrb_found := cr_crapcrb%FOUND;
+  CLOSE cr_crapcrb;
+  
+  -- Cria um registro na CRAPCRB apenas para gerar log
+  IF NOT cr_crapcrb_found THEN
+    -- Rotina para solicitar o processo de envio / retorno dos arquivos dos Bureaux
+    cybe0002.pc_solicita_remessa(pr_dtmvtolt => TRUNC(pr_dtmvtolt)  --> Data da solicitação - Insere apenas 1 registro por dia, por isSO o TRUNC
+                                ,pr_idtpreme => pr_idtpreme  --> Tipo da remessa
+                                ,pr_dscritic => pr_dscritic); --> Retorno de crítica
       IF pr_dscritic IS NOT NULL THEN
         --Grava tabela de log - Ch 788828
         pc_gera_log(pr_cdcooper      => 3,
                     pr_dstiplog      => 'E',
-                    pr_dscritic      => pr_dscritic,
-                    pr_cdcriticidade => 2,
+                    pr_dscritic      => pr_dscritic||vr_dsparame,
+                    pr_cdcriticidade => 0,
                     pr_cdmensagem    => nvl(vr_cdcritic,0),
-                    pr_ind_tipo_log  => 2);
-      END IF;
+                    pr_ind_tipo_log  => 3);
+  END IF;
       -- Inclui nome do modulo logado - 29/11/2017 - Ch 788828
       GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'ESMS0001.pc_insere_evento_remessa_sms');
-    
+  
     END IF;
 
-    -- Centralização da gravação dos Eventos da Remessa
-    cybe0002.pc_insere_evento_remessa(pr_idtpreme => pr_idtpreme   --> Tipo da remessa
-                                     ,pr_dtmvtolt => TRUNC(pr_dtmvtolt) --> Data da remessa
-                                     ,pr_nrseqarq => NULL          --> Sequencial do arquivo (Opcional)
-                                     ,pr_cdesteve => pr_cdesteve   --> Estágio do evento
-                                     ,pr_flerreve => pr_flerreve   --> Flag de evento de erro
-                                     ,pr_dslogeve => pr_dslogeve   --> Log do evento
-                                     ,pr_dscritic => pr_dscritic); --> Retorno de crítica
+  -- Centralização da gravação dos Eventos da Remessa
+  cybe0002.pc_insere_evento_remessa(pr_idtpreme => pr_idtpreme   --> Tipo da remessa
+                                   ,pr_dtmvtolt => TRUNC(pr_dtmvtolt) --> Data da remessa
+                                   ,pr_nrseqarq => NULL          --> Sequencial do arquivo (Opcional)
+                                   ,pr_cdesteve => pr_cdesteve   --> Estágio do evento
+                                   ,pr_flerreve => pr_flerreve   --> Flag de evento de erro
+                                   ,pr_dslogeve => pr_dslogeve   --> Log do evento
+                                   ,pr_dscritic => pr_dscritic); --> Retorno de crítica
   
     IF pr_dscritic IS NOT NULL THEN
+      --Grava tabela de log - Ch 788828
+      pc_gera_log(pr_cdcooper      => 3,
+                  pr_dstiplog      => 'E',
+                  pr_dscritic      => pr_dscritic||vr_dsparame,
+                  pr_cdcriticidade => 0,
+                  pr_cdmensagem    => nvl(vr_cdcritic,0),
+                  pr_ind_tipo_log  => 3);
+    END IF;
+  
+    -- Inclui nome do modulo logado - 29/11/2017 - Ch 788828
+    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
+  EXCEPTION
+    WHEN OTHERS THEN
+      -- No caso de erro de programa gravar tabela especifica de log - 29/11/2017 - Ch 788828 
+      CECRED.pc_internal_exception;
+
+      vr_cdcritic := 9999;
+      pr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'esms0001.pc_insere_evento_remessa_sms.'||sqlerrm||vr_dsparame;
+
       --Grava tabela de log - Ch 788828
       pc_gera_log(pr_cdcooper      => 3,
                   pr_dstiplog      => 'E',
@@ -398,10 +426,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.esms0001 AS
                   pr_cdcriticidade => 2,
                   pr_cdmensagem    => nvl(vr_cdcritic,0),
                   pr_ind_tipo_log  => 2);
-    END IF;
-  
-    -- Inclui nome do modulo logado - 29/11/2017 - Ch 788828
-    GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => NULL);
     
   END pc_insere_evento_remessa_sms;
   
@@ -410,13 +434,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.esms0001 AS
                           ,pr_idtpreme   IN tbgen_sms_lote.idtpreme%TYPE
                           ,pr_idoperac   IN VARCHAR2) RETURN VARCHAR2 IS
   BEGIN
-    RETURN to_char(pr_dtmvtolt, 'RRRRMMDD_HH24MISS') || '_' ||
-                   pr_idlote_sms || '_' ||
-                   pr_idtpreme ||
-                   CASE pr_idoperac
-                     WHEN idoperac_retorno -- Se for retono adiciona "_ret" no fim do nome
-                     THEN '_ret'
-                     END;
+  RETURN to_char(pr_dtmvtolt, 'RRRRMMDD_HH24MISS') || '_' ||
+                 pr_idlote_sms || '_' ||
+                 pr_idtpreme ||
+                 CASE pr_idoperac
+                   WHEN idoperac_retorno -- Se for retono adiciona "_ret" no fim do nome
+                   THEN '_ret'
+                   END;
   
   END fn_nome_arquivo;
   
@@ -436,7 +460,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.esms0001 AS
     --  Sistema  : AYLLOS
     --  Sigla    : CRED
     --  Autor    : Dionathan Henchel
-    --  Data     : Junho/2016                   Ultima atualizacao:
+    --  Data     : Junho/2016                   Ultima atualizacao: 16/05/2018
     --
     -- Dados referentes ao programa: 
     --
@@ -449,17 +473,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.esms0001 AS
     --               - Pc_set_modulo, cecred.pc_internal_exception
     --               - Tratamento erros others
     --                (Ana - Envolti - Chamado 788828)
+    --    16/05/2018 - Inclusão parâmetros no log
+    --                (Ana - Envolti - Chamado PRB0040049)
     ---------------------------------------------------------------------------------------------------------------
     DECLARE
     
       vr_arquivo_log VARCHAR2(1000); --> Diretório do log do FTP
-      vr_script_ftp VARCHAR2(1000); --> Script FTP
-      vr_comand_ftp VARCHAR2(4000); --> Comando montado do envio ao FTP
-      vr_typ_saida  VARCHAR2(3);    --> Saída de erro
+      vr_script_ftp  VARCHAR2(1000); --> Script FTP
+      vr_comand_ftp  VARCHAR2(4000); --> Comando montado do envio ao FTP
+      vr_typ_saida   VARCHAR2(3);    --> Saída de erro
+      vr_dsparame    VARCHAR2(2000);
     BEGIN
       -- Inclui nome do modulo logado - 29/11/2017 - Ch 788828
       GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'ESMS0001.pc_processa_arquivo_ftp');
-  
+
+      vr_dsparame := ' - pr_nmarquiv:'||pr_nmarquiv||
+                     ', pr_idoperac:'||pr_idoperac||
+                     ', pr_nmdireto:'||pr_nmdireto||
+                     ', pr_idenvseg:'||pr_idenvseg||
+                     ', pr_ftp_site:'||pr_ftp_site||
+                     ', pr_ftp_user:'||pr_ftp_user||
+                     ', pr_ftp_pass:'||pr_ftp_pass||
+                     ', pr_ftp_path:'||pr_ftp_path;
+
       --Chama script específico para conexão de ftp segura
       IF pr_idenvseg = 'S' THEN
         vr_script_ftp := gene0001.fn_param_sistema('CRED',0,'AUTBUR_SCRIPT_SFTP');
@@ -467,7 +503,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.esms0001 AS
         -- Buscar script para conexão FTP
         vr_script_ftp := gene0001.fn_param_sistema('CRED',0,'AUTBUR_SCRIPT_FTP');
       END IF;
-
+      
       -- Gera o diretório do arquivo de log
       vr_arquivo_log := gene0001.fn_diretorio(pr_tpdireto => 'C'
                                                ,pr_cdcooper => 3
@@ -499,17 +535,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.esms0001 AS
     EXCEPTION
       WHEN OTHERS THEN
         -- No caso de erro de programa gravar tabela especifica de log - 29/11/2017 - Ch 788828 
-      CECRED.pc_internal_exception;
+        CECRED.pc_internal_exception;
 
         -- Retorna o erro para a procedure chamadora
         vr_cdcritic := 9999;
-        pr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'esms0001.pc_processa_arquivo_ftp. '||SQLERRM;
+        pr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'esms0001.pc_processa_arquivo_ftp. '||SQLERRM||'. '||vr_dsparame;
 
         --Grava tabela de log mas não pára execução do programa - Ch 788828
         pc_gera_log(pr_cdcooper      => 3,
                     pr_dstiplog      => 'E',
                     pr_dscritic      => pr_dscritic,
-                    pr_cdcriticidade => 1,
+                    pr_cdcriticidade => 2,
                     pr_cdmensagem    => nvl(vr_cdcritic,0),
                     pr_ind_tipo_log  => 2);
     END;
@@ -517,31 +553,35 @@ CREATE OR REPLACE PACKAGE BODY CECRED.esms0001 AS
   END pc_processa_arquivo_ftp;
   
   PROCEDURE pc_dispacha_lotes_sms(pr_dscritic OUT VARCHAR2) IS
-  /*.............................................................................
+    /*.............................................................................
     
-      Programa: pc_dispacha_lotes_sms
-      Sistema : CECRED
-      Sigla   : EMPR
-      Autor   : Dionathan
-      Data    : 14/04/2016                    Ultima atualizacao: 29/11/2017
+        Programa: pc_dispacha_lotes_sms
+        Sistema : CECRED
+        Sigla   : EMPR
+        Autor   : Dionathan
+      Data    : 14/04/2016                    Ultima atualizacao: 16/05/2018
     
-      Dados referentes ao programa:
+        Dados referentes ao programa:
     
-      Frequencia: Sempre que for chamado
+        Frequencia: Sempre que for chamado
     
-      Objetivo  : Rotina para gerar o arquivo de remessa SMS e enviar para a ZENVIA
+        Objetivo  : Rotina para gerar o arquivo de remessa SMS e enviar para a ZENVIA
     
-      Alteracoes: 05/01/2017 - Alteração para que os arquivos gerados gravem o horário correto de 
-                               envio, obedecendo o horário cadastrado na tela PARMDA.
-                               Corrigido o tipo de layout utilizado. Parametrizado horário limite
-                               de envio para as 21:00h. SoftDesk 588454 (Aline).
+        Alteracoes: 05/01/2017 - Alteração para que os arquivos gerados gravem o horário correto de 
+                                 envio, obedecendo o horário cadastrado na tela PARMDA.
+                                 Corrigido o tipo de layout utilizado. Parametrizado horário limite
+                                 de envio para as 21:00h. SoftDesk 588454 (Aline).
 
                   29/11/2017 - Padronização mensagens (crapcri, pc_gera_log (tbgen))
                              - Padronização erros comandos DDL
                              - Pc_set_modulo, cecred.pc_internal_exception
                              - Tratamento erros others
                               (Ana - Envolti - Chamado 788828)
-  ..............................................................................*/
+
+                  16/05/2017 - Ajuste variáveis vr_dscritic e pr_dscritic
+                             - Inclusão parâmetros no log
+                              (Ana - Envolti - Chamado PRB0040049)
+    ..............................................................................*/
     
     -- Variável de críticas
     vr_dscritic VARCHAR2(10000);
@@ -555,6 +595,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.esms0001 AS
     vr_horaatual   VARCHAR2(10);
     vr_horacoop    VARCHAR2(10);
     vr_linha       VARCHAR2(1000);
+    vr_dsparame    VARCHAR2(2000);
     
     -- Declarando handle do Arquivo
     vr_nmarquiv    VARCHAR2(100);
@@ -574,7 +615,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.esms0001 AS
       FROM tbgen_sms_lote lot
           ,crappbc        pbc
      WHERE lot.idtpreme = pbc.idtpreme
-     AND lot.idsituacao = 'P';
+       AND lot.idsituacao = 'P';
     rw_lote cr_lote%ROWTYPE;
     
     -- Busca as mensagens pertencentes ao Lote
@@ -590,40 +631,46 @@ CREATE OR REPLACE PACKAGE BODY CECRED.esms0001 AS
   BEGIN
     -- Inclui nome do modulo logado - 29/11/2017 - Ch 788828
     GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'ESMS0001.pc_dispacha_lotes_sms');
-
+    
     FOR rw_lote IN cr_lote LOOP
       
       -- Gera o nome do arquivo
       vr_dhenvio := SYSDATE;
+
+      vr_dsparame := ' - pr_dtmvtolt:'||vr_dhenvio||
+                     ', pr_idlote_sms:'||rw_lote.idlote_sms||
+                     ', pr_idtpreme:'||rw_lote.idtpreme||
+                     ', pr_idoperac:'||idoperac_envio;
+      
       vr_nmarquiv := fn_nome_arquivo(pr_dtmvtolt   => vr_dhenvio
                                     ,pr_idlote_sms => rw_lote.idlote_sms
                                     ,pr_idtpreme   => rw_lote.idtpreme
                                     ,pr_idoperac   => idoperac_envio); -- Arquivo de envio
       
       --Verifica a hora    
-      vr_horalimite  :=  to_char(to_date('21:00', 'hh24:mi'), 'SSSSS');--Horário limite 21:00h
-      vr_horaatual := to_char(to_date(to_char(SYSDATE, 'hh24:mi'), 'hh24:mi'), 'SSSSS');
+      vr_horalimite := to_char(to_date('21:00', 'hh24:mi'), 'SSSSS');--Horário limite 21:00h
+      vr_horaatual  := to_char(to_date(to_char(SYSDATE, 'hh24:mi'), 'hh24:mi'), 'SSSSS');
   
-      OPEN cr_sms(pr_idlote_sms => rw_lote.idlote_sms);
-      FETCH cr_sms
-      INTO rw_sms;
-      CLOSE cr_sms;   
+     OPEN cr_sms(pr_idlote_sms => rw_lote.idlote_sms);
+     FETCH cr_sms
+     INTO rw_sms;
+     CLOSE cr_sms;   
       
-      vr_horacoop := to_char(to_date(to_char(rw_sms.dhenvio_sms, 'hh24:mi'), 'hh24:mi'), 'SSSSS');
-
-      --Se o horário no momento for menor que a hora parametrizada na cooperativa, envia no horário da cooperativa.
-      IF TO_NUMBER(vr_horaatual) < TO_NUMBER(vr_horacoop) THEN
-         vr_dhenvio := to_date(to_char(trunc(sysdate), 'DD/MM/YYYY') || ' '  || to_char(rw_sms.dhenvio_sms, 'hh24:mi'), 'DD/MM/YYYY HH24:MI:SS');
-      --Se o horário no momento for maior que 21:00h, envia amanhã no horário parametrizado pela cooperativa.   
-      ELSE IF TO_NUMBER(vr_horaatual) > TO_NUMBER(vr_horalimite) THEN
-              vr_dhenvio := to_date(to_char(trunc(sysdate+1), 'DD/MM/YYYY') || ' '  || to_char(rw_sms.dhenvio_sms, 'hh24:mi'), 'DD/MM/YYYY HH24:MI:SS');
-           END IF;
-      END IF;
-
+     vr_horacoop := to_char(to_date(to_char(rw_sms.dhenvio_sms, 'hh24:mi'), 'hh24:mi'), 'SSSSS');
+     
+     --Se o horário no momento for menor que a hora parametrizada na cooperativa, envia no horário da cooperativa.
+     IF TO_NUMBER(vr_horaatual) < TO_NUMBER(vr_horacoop) THEN
+        vr_dhenvio := to_date(to_char(trunc(sysdate), 'DD/MM/YYYY') || ' '  || to_char(rw_sms.dhenvio_sms, 'hh24:mi'), 'DD/MM/YYYY HH24:MI:SS');
+     --Se o horário no momento for maior que 21:00h, envia amanhã no horário parametrizado pela cooperativa.   
+     ELSE IF TO_NUMBER(vr_horaatual) > TO_NUMBER(vr_horalimite) THEN
+             vr_dhenvio := to_date(to_char(trunc(sysdate+1), 'DD/MM/YYYY') || ' '  || to_char(rw_sms.dhenvio_sms, 'hh24:mi'), 'DD/MM/YYYY HH24:MI:SS');
+          END IF;
+     END IF;
+      
       -- Fechar os arquivos
       GENE0001.pc_fecha_arquivo(pr_utlfileh => vr_arquivo_cfg);
       GENE0001.pc_fecha_arquivo(pr_utlfileh => vr_arquivo_rem);
-
+      
       -- Inclui nome do modulo logado - 29/11/2017 - Ch 788828
       GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'ESMS0001.pc_dispacha_lotes_sms');
 
@@ -639,13 +686,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.esms0001 AS
                                ,pr_ftp_pass => rw_lote.dspwdftp   --> Senha para acesso ao FTP
                                ,pr_ftp_path => rw_lote.dsdreftp   --> Pasta no FTP para envio do arquivo
                                ,pr_dscritic => vr_dscritic);      --> Retorno de crítica
-
+        
         --Já gravou tabela de log na pc_processa_arquivo_ftp - Ch 788828
         IF vr_dscritic IS NOT NULL THEN
           EXIT;
         END IF;
       END LOOP;
-
+      
       -- Inclui nome do modulo logado - 29/11/2017 - Ch 788828
       GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'ESMS0001.pc_dispacha_lotes_sms');
 
@@ -653,27 +700,30 @@ CREATE OR REPLACE PACKAGE BODY CECRED.esms0001 AS
       IF vr_dscritic IS NULL THEN
         
         BEGIN
-          UPDATE tbgen_sms_lote lot
-             SET lot.idsituacao = 'E' -- Em espera de Retorno
-                ,lot.dtmvtolt = vr_dhenvio
-           WHERE lot.idlote_sms = rw_lote.idlote_sms;
+        UPDATE tbgen_sms_lote lot
+           SET lot.idsituacao = 'E' -- Em espera de Retorno
+              ,lot.dtmvtolt = vr_dhenvio
+         WHERE lot.idlote_sms = rw_lote.idlote_sms;
         EXCEPTION
           WHEN OTHERS THEN
             -- No caso de erro de programa gravar tabela especifica de log - 29/11/2017 - Ch 788828 
             CECRED.pc_internal_exception;
-
+         
             vr_cdcritic := 1035;
-            pr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'tbgen_sms_lote: '||
+            vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'tbgen_sms_lote: '||
                            'idsituacao:E, dtmvtolt:'||vr_dhenvio||
                            ' com idlote_sms:'||rw_lote.idlote_sms||'. '||SQLERRM;
 
             --Grava tabela de log - Ch 788828
             pc_gera_log(pr_cdcooper      => 3,
                         pr_dstiplog      => 'E',
-                        pr_dscritic      => pr_dscritic,
-                        pr_cdcriticidade => 2,
-                        pr_cdmensagem    => nvl(vr_cdcritic,0),
+                        pr_dscritic      => vr_dscritic,
+                        pr_cdcriticidade => 0,
+                        pr_cdmensagem    => vr_cdcritic,
                         pr_ind_tipo_log  => 3);
+
+            vr_cdcritic := NULL;
+            vr_dscritic := NULL;
         END;
 
         esms0001.pc_insere_evento_remessa_sms(pr_idtpreme => rw_lote.idtpreme --> Bureaux passado
@@ -682,29 +732,32 @@ CREATE OR REPLACE PACKAGE BODY CECRED.esms0001 AS
                                              ,pr_flerreve => 0                --> Não houve erro
                                              ,pr_dslogeve => 'Arquivo de remessa '||vr_nmarquiv||'.txt  enviada com sucesso em '||to_char(SYSDATE,'dd/mm/yyyy')||' as '||to_char(SYSDATE,'hh24:mi:ss')
                                              ,pr_dscritic => pr_dscritic); --> Retorno de crítica
-
+         
       ELSE -- Se ocorreu erro cancela o lote
       
         BEGIN
-          UPDATE tbgen_sms_lote lot
-             SET lot.idsituacao = 'C' --Cancelado
-           WHERE lot.idlote_sms = rw_lote.idlote_sms;
+        UPDATE tbgen_sms_lote lot
+           SET lot.idsituacao = 'C' --Cancelado
+         WHERE lot.idlote_sms = rw_lote.idlote_sms;
         EXCEPTION
           WHEN OTHERS THEN
             -- No caso de erro de programa gravar tabela especifica de log - 29/11/2017 - Ch 788828 
             CECRED.pc_internal_exception;
-
+         
             vr_cdcritic := 1035;
-            pr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'tbgen_sms_lote: '||
+            vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'tbgen_sms_lote: '||
                            'idsituacao:C com idlote_sms:'||rw_lote.idlote_sms||'. '||SQLERRM;
 
             --Grava tabela de log - Ch 788828
             pc_gera_log(pr_cdcooper      => 3,
                         pr_dstiplog      => 'E',
-                        pr_dscritic      => pr_dscritic,
+                        pr_dscritic      => vr_dscritic,
                         pr_cdcriticidade => 2,
-                        pr_cdmensagem    => nvl(vr_cdcritic,0),
+                        pr_cdmensagem    => vr_cdcritic,
                         pr_ind_tipo_log  => 2);
+
+            vr_cdcritic := NULL;
+            vr_dscritic := NULL;
         END;
          
         esms0001.pc_insere_evento_remessa_sms(pr_idtpreme => rw_lote.idtpreme --> Bureaux passado
@@ -713,15 +766,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.esms0001 AS
                                              ,pr_flerreve => 1                --> Erro
                                              ,pr_dslogeve => 'Remessa '||rw_lote.idtpreme||' cancelada por movito de erro em '||to_char(SYSDATE,'dd/mm/yyyy')||' as '||to_char(SYSDATE,'hh24:mi:ss')
                                              ,pr_dscritic => pr_dscritic); --> Retorno de crítica
-
+        
         --Se ocorreu erro, já gravou tabela de log dentro da pc_insere_evento_remessa_sms - Ch 788828
       END IF;
-
+      
       -- Inclui nome do modulo logado - 29/11/2017 - Ch 788828
       GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'ESMS0001.pc_dispacha_lotes_sms');
 
     END LOOP;
-
+     
     -- Limpa nome do modulo logado - 29/11/2017 - Ch 788828    
     GENE0001.pc_set_modulo(pr_module => NULL, pr_action => NULL);
   EXCEPTION
@@ -731,8 +784,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.esms0001 AS
       -- No caso de erro de programa gravar tabela especifica de log - 29/11/2017 - Ch 788828 
       CECRED.pc_internal_exception;
 
-      vr_cdcritic := 1057;
-      pr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||' '||SQLERRM;
+      vr_cdcritic := 1057;  --1057 - Erro ao despachar lote de SMS
+      pr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||' '||SQLERRM||vr_dsparame;
 
       --Grava tabela de log - Ch 788828
       pc_gera_log(pr_cdcooper      => 3,
@@ -751,7 +804,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.esms0001 AS
         Sistema : CECRED
         Sigla   : EMPR
         Autor   : Dionathan
-        Data    : 14/04/2016                    Ultima atualizacao: 29/11/2017
+        Data    : 14/04/2016                    Ultima atualizacao: 16/05/2018
     
         Dados referentes ao programa:
     
@@ -763,12 +816,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.esms0001 AS
               26/10/2016 - Incluso verificação de existencia do arquivo, antes da abertura
                            do mesmo. Estavam ocorrendo erros no log de produção por tentar
                            abrir arquivos ainda não recebidos. (Renato Darosci - Supero)
-
+                           
               29/11/2017 - Padronização mensagens (crapcri, pc_gera_log (tbgen))
                          - Padronização erros comandos DDL
                          - Pc_set_modulo, cecred.pc_internal_exception
                          - Tratamento erros others
                           (Ana - Envolti - Chamado 788828)
+                          
+              16/05/2018 - Alterar campo recebido no arquivo paras atualizar status na tabela tbgen_sms_lote
+                         - No 1o layout, o status era recebido no 5o campo do arquivo de retorno.
+                         - No início de 2017, esse layout foi alterado e o status passou a ser 
+                           recebido no 6o campo do arquivo de retorno.
+                         - Ajuste variáveis vr_dscritic e pr_dscritic
+                         - Inclusão parâmetros no log
+                          (Ana - Envolti - Chamado PRB0040049)
     ..............................................................................*/
     
     -- Variável de críticas
@@ -783,8 +844,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.esms0001 AS
     -- Declarando handle do Arquivo
     vr_nmarquiv    VARCHAR2(200);
     vr_arquivo_ret utl_file.file_type;
-    vr_nmarqenc VARCHAR2(4000);        --> Lista de arquivos encontrados
-
+    vr_nmarqenc    VARCHAR2(4000);        --> Lista de arquivos encontrados
+    vr_dsparame    VARCHAR2(2000);
     -- Tabela de String
     vr_tab_string        gene0002.typ_split;
       
@@ -808,14 +869,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.esms0001 AS
   BEGIN
     -- Inclui nome do modulo logado - 29/11/2017 - Ch 788828
     GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'ESMS0001.pc_retorna_lotes_sms');
-
+    
     FOR rw_lote IN cr_lote LOOP
       
+      vr_dsparame := ' - pr_dtmvtolt:'||rw_lote.dtmvtolt||
+                     ', pr_idlote_sms:'||rw_lote.idlote_sms||
+                     ', pr_idtpreme:'||rw_lote.idtpreme||
+                     ', pr_idoperac:'||idoperac_retorno||
+                     ', pr_nmdireto:'||rw_lote.dsdirret||
+                     ', pr_idenvseg:'||rw_lote.idenvseg||
+                     ', pr_ftp_site:'||rw_lote.dssitftp||
+                     ', pr_ftp_user:'||rw_lote.dsusrftp||
+                     ', pr_ftp_pass:'||rw_lote.dspwdftp||
+                     ', pr_ftp_path:'||rw_lote.dsdrrftp;
+    
       vr_nmarquiv := fn_nome_arquivo(pr_dtmvtolt   => rw_lote.dtmvtolt
                                     ,pr_idlote_sms => rw_lote.idlote_sms
                                     ,pr_idtpreme   => rw_lote.idtpreme
                                     ,pr_idoperac   => idoperac_retorno) || '.txt'; -- Arquivo de retorno
-
+      
+      --Grava log na rotina chamada
       pc_processa_arquivo_ftp(pr_nmarquiv => vr_nmarquiv      --> Nome arquivo a receber
                              ,pr_idoperac => idoperac_retorno --> Envio de arquivo
                              ,pr_nmdireto => rw_lote.dsdirret||'/temp' --> Diretório do arquivos de retorno
@@ -838,7 +911,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.esms0001 AS
                                              ,pr_dscritic => pr_dscritic); --> Retorno de crítica
 
         --Se ocorreu erro, já gravou tabela de log dentro da pc_insere_evento_remessa_sms - Ch 788828
-
+        vr_cdcritic := NULL;
         vr_dscritic := NULL;
         CONTINUE;
       END IF;
@@ -851,17 +924,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.esms0001 AS
                                 ,pr_pesq     => vr_nmarquiv   --> Nome do arquivo (Chave de busca)
                                 ,pr_listarq  => vr_nmarqenc   --> Arquivo encontrado (Só deve encontrar 1 arquivo, pois a chave de busca já é o nome completo)
                                 ,pr_des_erro => pr_dscritic); --> Possível erro
-
+      
       -- Se ocorreu erro pula para o proximo lote
       IF pr_dscritic IS NOT NULL THEN
-
+         
         --Grava tabela de log mas não pára execução do programa - Ch 788828
         pc_gera_log(pr_cdcooper      => 3,
                     pr_dstiplog      => 'E',
-                    pr_dscritic      => pr_dscritic,
-                    pr_cdcriticidade => 1,
+                    pr_dscritic      => pr_dscritic||vr_dsparame,
+                    pr_cdcriticidade => 0,
                     pr_cdmensagem    => nvl(vr_cdcritic,0),
-                    pr_ind_tipo_log  => 1);
+                    pr_ind_tipo_log  => 3);
 
         esms0001.pc_insere_evento_remessa_sms(pr_idtpreme => rw_lote.idtpreme --> Bureaux passado
                                              ,pr_dtmvtolt => rw_lote.dtmvtolt --> Data passada
@@ -870,11 +943,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.esms0001 AS
                                              ,pr_dslogeve => 'Retorno do lote '||vr_nmarquiv||' cancelado por movito de erro em '||to_char(SYSDATE,'dd/mm/yyyy')||' as '||to_char(SYSDATE,'hh24:mi:ss') ||': '||vr_dscritic
                                              ,pr_dscritic => pr_dscritic); --> Retorno de crítica
 
+        vr_cdcritic := NULL;
         --Se ocorreu erro, já gravou tabela de log dentro da pc_insere_evento_remessa_sms - Ch 788828
         vr_dscritic := NULL;
         CONTINUE;
       END IF;
-
+      
       -- Inclui nome do modulo logado - 29/11/2017 - Ch 788828
       GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'ESMS0001.pc_retorna_lotes_sms');
       
@@ -892,17 +966,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.esms0001 AS
                               ,pr_tipabert => 'R'              --> Modo de abertura (R,W,A)
                               ,pr_utlfileh => vr_arquivo_ret   --> Handle do arquivo aberto
                               ,pr_des_erro => vr_dscritic);    --> Erro
-
+      
       -- Se ocorreu erro pula para o proximo lote
       IF vr_dscritic IS NOT NULL THEN
-
+         
         --Grava tabela de log mas não pára execução do programa - Ch 788828
         pc_gera_log(pr_cdcooper      => 3,
                     pr_dstiplog      => 'E',
-                    pr_dscritic      => vr_dscritic,
-                    pr_cdcriticidade => 1,
+                    pr_dscritic      => vr_dscritic||vr_dsparame,
+                    pr_cdcriticidade => 0,
                     pr_cdmensagem    => nvl(vr_cdcritic,0),
-                    pr_ind_tipo_log  => 1);
+                    pr_ind_tipo_log  => 3);
+
+        vr_cdcritic := NULL;
+        vr_dscritic := NULL;
 
         esms0001.pc_insere_evento_remessa_sms(pr_idtpreme => rw_lote.idtpreme --> Bureaux passado
                                              ,pr_dtmvtolt => rw_lote.dtmvtolt --> Data passada
@@ -947,29 +1024,35 @@ CREATE OR REPLACE PACKAGE BODY CECRED.esms0001 AS
             -- 8 - Erro
             -- 9 - Cancelado
                  
+            --Chamado PRB0040049 - Alterar campo recebido no arquivo a ser atualizado na tabela tbgen_sms_controle
+            --No 1o layout, o status era recebido no 5o campo do arquivo de retorno.
+            --No início de 2017, esse layout foi alterado e o status passou a ser enviado no 6o campo
             BEGIN
-              UPDATE tbgen_sms_controle sms
-                 SET sms.cdretorno = to_number(vr_tab_string(5)) -- Código do retorno
-               WHERE sms.idlote_sms = rw_lote.idlote_sms
-                 AND sms.idsms = to_number(vr_tab_string(3));
+            UPDATE tbgen_sms_controle sms
+                 SET sms.cdretorno = to_number(vr_tab_string(6)) -- Código do retorno
+             WHERE sms.idlote_sms = rw_lote.idlote_sms
+               AND sms.idsms = to_number(vr_tab_string(3));
             EXCEPTION
               WHEN OTHERS THEN
                 -- No caso de erro de programa gravar tabela especifica de log - 29/11/2017 - Ch 788828 
                 CECRED.pc_internal_exception;
 
                 vr_cdcritic := 1035;
-                pr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||' tbgen_sms_controle. '||
-                               'cdretorno:'||to_number(vr_tab_string(5))||
+                vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'tbgen_sms_controle. '||
+                               'cdretorno:'||vr_tab_string(6)||
                                ' com idlote_sms:'||rw_lote.idlote_sms||
-                               ', idsms:'||to_number(vr_tab_string(3))||'. '||SQLERRM;
+                               ', idsms:'||vr_tab_string(3)||'. '||SQLERRM;
 
                 --Grava tabela de log mas não pára execução do programa - Ch 788828
                 pc_gera_log(pr_cdcooper      => 3,
                             pr_dstiplog      => 'E',
-                            pr_dscritic      => pr_dscritic,
+                            pr_dscritic      => vr_dscritic,
                             pr_cdcriticidade => 2,
-                            pr_cdmensagem    => nvl(vr_cdcritic,0),
+                            pr_cdmensagem    => vr_cdcritic,
                             pr_ind_tipo_log  => 2);
+
+                vr_cdcritic := NULL;
+                vr_dscritic := NULL;
             END;
                 
           END LOOP; -- loop do arquivo
@@ -993,35 +1076,37 @@ CREATE OR REPLACE PACKAGE BODY CECRED.esms0001 AS
             vr_dscritic := NULL;
             CONTINUE;
         END;
-
+            
         -- Inclui nome do modulo logado - 29/11/2017 - Ch 788828
         GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'ESMS0001.pc_retorna_lotes_sms');
 
         BEGIN            
-          UPDATE tbgen_sms_lote lot
-             SET lot.idsituacao = 'R'
-                ,lot.dhretorno = SYSDATE
-           WHERE lot.idlote_sms = rw_lote.idlote_sms;
+        UPDATE tbgen_sms_lote lot
+           SET lot.idsituacao = 'R'
+              ,lot.dhretorno = SYSDATE
+         WHERE lot.idlote_sms = rw_lote.idlote_sms;
         EXCEPTION
           WHEN OTHERS THEN
             -- No caso de erro de programa gravar tabela especifica de log - 29/11/2017 - Ch 788828 
             CECRED.pc_internal_exception;
 
             vr_cdcritic := 1035;
-            pr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||' tbgen_sms_lote. '||
+            vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||' tbgen_sms_lote. '||
                            'idsituacao:R, dhretorno:'||SYSDATE||
                            ' com idlote_sms:'||rw_lote.idlote_sms||'. '||SQLERRM;
 
             --Grava tabela de log mas não pára execução do programa - Ch 788828
             pc_gera_log(pr_cdcooper      => 3,
                         pr_dstiplog      => 'E',
-                        pr_dscritic      => pr_dscritic,
+                        pr_dscritic      => vr_dscritic,
                         pr_cdcriticidade => 2,
-                        pr_cdmensagem    => nvl(vr_cdcritic,0),
+                        pr_cdmensagem    => vr_cdcritic,
                         pr_ind_tipo_log  => 2);
 
+            vr_cdcritic := NULL;
+            vr_dscritic := NULL;
         END;
-                
+        
         esms0001.pc_insere_evento_remessa_sms(pr_idtpreme => rw_lote.idtpreme --> Bureaux passado
                                              ,pr_dtmvtolt => rw_lote.dtmvtolt --> Data passada
                                              ,pr_cdesteve => 1                --> Agendamento
@@ -1031,7 +1116,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.esms0001 AS
 
         --Se ocorreu erro, já gravou tabela de log dentro da pc_insere_evento_remessa_sms - Ch 788828
       END IF; -- IF arquivo aberto          
-
+            
       -- Inclui nome do modulo logado - 29/11/2017 - Ch 788828
       GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'ESMS0001.pc_retorna_lotes_sms');
             
@@ -1057,7 +1142,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.esms0001 AS
       CECRED.pc_internal_exception;
 
       vr_cdcritic := 1060; --Erro ao processar retorno dos lotes de SMS
-      pr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||' '|| SQLERRM;
+      pr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||' '|| SQLERRM||vr_dsparame;
 
       --Grava tabela de log - Ch 788828
       pc_gera_log(pr_cdcooper      => 3,
@@ -1083,7 +1168,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.esms0001 AS
       Programa: pc_processa_retorno_sms
       Sistema : CECRED
       Autor   : Dionathan Henchel
-      Data    : Maio/15.                    Ultima atualizacao: 29/11/2017
+      Data    : Maio/15.                    Ultima atualizacao: 16/05/2018
 
       Dados referentes ao programa:
 
@@ -1098,9 +1183,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.esms0001 AS
                          - Padronização erros comandos DDL
                          - Pc_set_modulo, cecred.pc_internal_exception
                          - Tratamento erros others
+                         - Correção nome variável vr_cdhistor
                           (Ana - Envolti - Chamado 788828)
-                         - Correção noem variável vr_cdhistor
- 	 ..............................................................................*/																								
+              16/05/2018 - Criada exception vr_exc_saida:
+                           - Os erros desviavam pra essa exception mas a mesma não existia no programa, 
+                           - sendo assim, caía em others e parava a execução
+                           - Agora, com a exception tratada: 
+                             - Os logs são feitos dentro das rotinas chamadas ou na ocorrncia deste programa
+                             - Ex.: cdcritic = 1;
+                             - Criada a exception apenas para sair do programa e não cair em others
+                           - Inclusão parâmetros no log
+                          (Ana - Envolti - Chamado PRB0040049)
+ 	 .............................................................................*/																								
     
     vr_idsms tbgen_sms_controle.idsms%TYPE;
     
@@ -1113,6 +1207,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.esms0001 AS
     vr_cdcritic INTEGER;  --Codigo Critica
     vr_dscritic VARCHAR2(4000);  --Descricao Critica
     vr_tab_erro GENE0001.typ_tab_erro; --Tabela erros
+    vr_dsparame VARCHAR2(2000);
    
     -- Tratamento de erros
     vr_exc_saida EXCEPTION;
@@ -1152,12 +1247,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.esms0001 AS
   BEGIN
     -- Inclui nome do modulo logado - 29/11/2017 - Ch 788828
     GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'ESMS0001.pc_escreve_sms_debaut');
-    
+
+    vr_dsparame := ' - pr_cdcooper :'||pr_cdcooper  ||
+                   ', pr_nrdconta  :'||pr_nrdconta  ||
+                   ', pr_dsmensagem:'||pr_dsmensagem||
+                   ', pr_vlfatura  :'||pr_vlfatura  ||
+                   ', pr_idmotivo  :'||pr_idmotivo  ||
+                   ', pr_cdrefere  :'||pr_cdrefere  ||
+                   ', pr_cdhistor  :'||pr_cdhistor  ||
+                   ', pr_idlote_sms:'||pr_idlote_sms;
+  
     OPEN cr_debaut;
     FETCH cr_debaut
       INTO rw_debaut;
     CLOSE cr_debaut;
-
+    
     -- Se cooperativa não envia sms retorna sem gravar registro de sms
     IF rw_debaut.flgenvia_sms <> 1 THEN
       RETURN;
@@ -1167,16 +1271,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.esms0001 AS
     IF rw_debaut.nrtelefo IS NULL THEN
       RETURN;
     END IF;
-
+    
     -- Se ainda não criou lote
     IF pr_idlote_sms IS NULL THEN
       --Grava tbgen_sms_lote
+      --Grava log na rotina chamada
       esms0001.pc_cria_lote_sms(pr_cdproduto     => 10 -- Débito Automático 
                                ,pr_idtpreme      => 'SMSDEBAUT'
                                ,pr_idlote_sms    => pr_idlote_sms
                                ,pr_dsagrupador   => rw_debaut.nmrescop
                                ,pr_dscritic      => pr_dscritic);
-
+    
       IF pr_dscritic IS NOT NULL THEN
         --Ja gravou tabela de log dentro da pc_cria_lote_sms - Ch 788828
         RAISE vr_exc_saida;
@@ -1185,8 +1290,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.esms0001 AS
 
     -- Inclui nome do modulo logado - 29/11/2017 - Ch 788828
     GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'ESMS0001.pc_escreve_sms_debaut');
-
+  
     --Grava tbgen_sms_controle
+    --Grava log na rotina chamada
     esms0001.pc_escreve_sms(pr_idlote_sms => pr_idlote_sms
                            ,pr_cdcooper   => rw_debaut.cdcooper
                            ,pr_nrdconta   => rw_debaut.nrdconta
@@ -1198,12 +1304,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.esms0001 AS
                            ,pr_dsmensagem => pr_dsmensagem
                            ,pr_idsms      => vr_idsms
                            ,pr_dscritic   => pr_dscritic);
-
+                           
     IF pr_dscritic IS NOT NULL THEN
       --Já gravou tabela de log dentro pc_escreve_sms - Ch 788828
-      RAISE vr_exc_saida;
+        RAISE vr_exc_saida;
     END IF;
-
+    
     -- Inclui nome do modulo logado - 29/11/2017 - Ch 788828
     GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'ESMS0001.pc_escreve_sms_debaut');
     
@@ -1237,7 +1343,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.esms0001 AS
         --Grava tabela de log mas não pára execução do programa - Ch 788828
         pc_gera_log(pr_cdcooper      => 3,
                     pr_dstiplog      => 'E',
-                    pr_dscritic      => pr_dscritic,
+                    pr_dscritic      => pr_dscritic||'. '||vr_dsparame,
                     pr_cdcriticidade => 1,
                     pr_cdmensagem    => nvl(vr_cdcritic,0),
                     pr_ind_tipo_log  => 1);
@@ -1252,20 +1358,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.esms0001 AS
       FETCH btch0001.cr_crapdat INTO rw_crapdat;
       -- Se não encontrar
       IF btch0001.cr_crapdat%NOTFOUND THEN
-        CLOSE btch0001.cr_crapdat;
+         CLOSE btch0001.cr_crapdat;
         vr_cdcritic := 1; --Sistema sem data de movimento.
         vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
 
         --Grava tabela de log mas não pára execução do programa - Ch 788828
         pc_gera_log(pr_cdcooper      => 3,
                     pr_dstiplog      => 'E',
-                    pr_dscritic      => vr_dscritic,
+                    pr_dscritic      => vr_dscritic||'. Cooper:'||pr_cdcooper,
                     pr_cdcriticidade => 1,
                     pr_cdmensagem    => nvl(vr_cdcritic,0),
                     pr_ind_tipo_log  => 1);
+
+        vr_cdcritic := NULL;
+        vr_dscritic := NULL;
+
         RAISE vr_exc_saida;
       ELSE
-        CLOSE btch0001.cr_crapdat;
+         CLOSE btch0001.cr_crapdat;
       END IF;
       
       --Inicializar variavel retorno erro
@@ -1295,19 +1405,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.esms0001 AS
                                        ,pr_tab_erro => vr_tab_erro         --Tabela retorno erro
                                        ,pr_cdcritic => vr_cdcritic         --Codigo Critica
                                        ,pr_dscritic => vr_dscritic);       --Descricao Critica
-
+      
       --Chamado 788828 - 29/11/2017
       --Bloco estava após o end if
-      --Se ocorreu erro
-      IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-        --Se possui erro no vetor
-        IF vr_tab_erro.Count > 0 THEN
+    --Se ocorreu erro
+    IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+      --Se possui erro no vetor
+      IF vr_tab_erro.Count > 0 THEN
           vr_cdcritic:= vr_tab_erro(1).cdcritic;
-          pr_dscritic:= vr_tab_erro(1).dscritic;
-        ELSE
+        pr_dscritic:= vr_tab_erro(1).dscritic;
+      ELSE
           vr_cdcritic := 1058; --Nao foi possivel carregar a tarifa
-          pr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||' '||SQLERRM;
-        END IF;
+          pr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||' '||SQLERRM||'. '||vr_dsparame;
+      END IF;
 
         --Grava tabela de log mas não pára execução do programa - Ch 788828
         pc_gera_log(pr_cdcooper      => 3,
@@ -1316,9 +1426,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.esms0001 AS
                     pr_cdcriticidade => 1,
                     pr_cdmensagem    => nvl(vr_cdcritic,0),
                     pr_ind_tipo_log  => 1);
-        --Levantar Excecao
-        RAISE vr_exc_saida;
-      END IF;
+      --Levantar Excecao
+      RAISE vr_exc_saida;
+    END IF;
       -- Inclui nome do modulo logado - 29/11/2017 - Ch 788828
       GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'ESMS0001.pc_escreve_sms_debaut');
       
@@ -1366,21 +1476,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.esms0001 AS
         pc_gera_log(pr_cdcooper      => 3,
                     pr_dstiplog      => 'E',
                     pr_dscritic      => pr_dscritic,
-                    pr_cdcriticidade => 2,
+                    pr_cdcriticidade => 1,
                     pr_cdmensagem    => nvl(vr_cdcritic,0),
-                    pr_ind_tipo_log  => 2);
+                    pr_ind_tipo_log  => 1);
         RAISE vr_exc_saida;
     END;
   
     -- Limpa nome do modulo logado - 29/11/2017 - Ch 788828    
     GENE0001.pc_set_modulo(pr_module => NULL, pr_action => NULL);
   EXCEPTION
+    WHEN vr_exc_saida THEN    
+      --Os erros desviavam pra essa exception mas a mesma não existia no programa
+      --Agora, os logs são feitos dentro das rotinas chamadas ou na ocorrncia deste programa
+      --Ex.: cdcritic = 1;
+      --Criada a exception apenas para sair do programa e não cair em others
+      NULL;
     WHEN OTHERS THEN    
       -- No caso de erro de programa gravar tabela especifica de log - 29/11/2017 - Ch 788828 
       CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
 
       vr_cdcritic := 9999;
-      pr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'esms0001.pc_escreve_sms_debaut. '||SQLERRM;
+      pr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||'esms0001.pc_escreve_sms_debaut. '||SQLERRM||'. '||vr_dsparame;
 
       --Grava tabela de log - Ch 788828
       pc_gera_log(pr_cdcooper      => 3,
@@ -1437,12 +1553,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.esms0001 AS
                          - Pc_set_modulo, cecred.pc_internal_exception
                          - Tratamento erros others
                           (Ana - Envolti - Chamado 788828)
+              16/05/2018 - Inclusão parâmetros no log
+                          (Ana - Envolti - Chamado PRB0040049)
     ............................................................................ */
     --------------->> CURSORES <<----------------
     -------------->> VARIAVEIS <<----------------
     vr_idsms      INTEGER;
     vr_cdretorn   VARCHAR2(10);
     vr_Detail     VARCHAR2(1000);
+    vr_dsparame   VARCHAR2(2000);
     
     vr_dscritic   VARCHAR2(1000);
     vr_exc_erro   EXCEPTION;
@@ -1459,6 +1578,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.esms0001 AS
   BEGIN
     -- Inclui nome do modulo logado - 29/11/2017 - Ch 788828
     GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'ESMS0001.pc_atualiza_status_msg_soa');
+
+    vr_dsparame := ' - pr_idlotsms:'||pr_idlotsms;
     
     vr_xmldoc:= xmldom.newDOMDocument(pr_xmlrequi); 
     
@@ -1477,16 +1598,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.esms0001 AS
                               ,pr_nivel      => 0            --> Nível que será pesquisado
                               ,pr_list_nodos => vr_tab_campos--> PL Table com os nodos resgatados
                               ,pr_des_erro   => vr_dscritic);
-
+                      
       IF vr_dscritic IS NOT NULL THEN
-       --Grava tabela de log - Ch 788828
-       pc_gera_log(pr_cdcooper      => 3,
-                   pr_dstiplog      => 'E',
-                   pr_dscritic      => vr_dscritic,
-                   pr_cdcriticidade => 1,
-                   pr_cdmensagem    => nvl(vr_cdcritic,0),
-                   pr_ind_tipo_log  => 1,
-                   pr_nmarqlog      => vr_nmarqlog);
+        --Grava tabela de log - Ch 788828
+        pc_gera_log(pr_cdcooper      => 3,
+                    pr_dstiplog      => 'E',
+                    pr_dscritic      => vr_dscritic||', Lote:'||pr_idlotsms,
+                    pr_cdcriticidade => 0,
+                    pr_cdmensagem    => nvl(vr_cdcritic,0),
+                    pr_ind_tipo_log  => 3,
+                    pr_nmarqlog      => vr_nmarqlog);
       END IF;
       -- Inclui nome do modulo logado - 29/11/2017 - Ch 788828
       GENE0001.pc_set_modulo(pr_module => NULL ,pr_action => 'ESMS0001.pc_atualiza_status_msg_soa');
@@ -1498,12 +1619,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.esms0001 AS
         vr_cdretorn := vr_tab_campos(vr_idx)('StatusCode');  
         vr_Detail   := vr_tab_campos(vr_idx)('Detail');
         
+        vr_dsparame := vr_dsparame||
+                       ', vr_idsms:'   ||vr_idsms||
+                       ', vr_cdretorn:'||vr_cdretorn||
+                       ', vr_detail:'  ||vr_detail;
+        
         COBR0005.pc_atualiza_status_msg (pr_idlotsms   => pr_idlotsms  --> Numer do lote de SMS
                                         ,pr_idsms      => vr_idsms     --> Identificador do SMS
                                         ,pr_cdretorn   => vr_cdretorn  --> Código de retor
                                         ,pr_dsretorn   => vr_Detail    --> Detalhe do retorno
                                         ,pr_dscritic   => vr_dscritic);
-
+        
         IF vr_dscritic IS NOT NULL THEN
           RAISE vr_exc_erro;
         END IF;
@@ -1521,26 +1647,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.esms0001 AS
     WHEN vr_exc_erro THEN
       vr_nmarqlog := gene0001.fn_param_sistema( pr_nmsistem => 'CRED', 
                                                 pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE');
-
+    
       --Grava tabela de log - Ch 788828
       pc_gera_log(pr_cdcooper      => 3,
                   pr_dstiplog      => 'E',
-                  pr_dscritic      => vr_dscritic,
+                  pr_dscritic      => vr_dscritic||vr_dsparame,
                   pr_cdcriticidade => 1,
                   pr_cdmensagem    => nvl(vr_cdcritic,0),
-                  pr_ind_tipo_log  => 1,
-                  pr_nmarqlog      => vr_nmarqlog);
+                  pr_ind_tipo_log  => 1);
 
     WHEN OTHERS THEN
       -- No caso de erro de programa gravar tabela especifica de log - 29/11/2017 - Ch 788828 
       CECRED.pc_internal_exception;
-
+    
       vr_nmarqlog := gene0001.fn_param_sistema( pr_nmsistem => 'CRED', 
                                                 pr_cdacesso => 'NOME_ARQ_LOG_MESSAGE');
                                                 
       vr_cdcritic := 1059;  --Não foi possivel atualizar SMS
-      vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||' Lote:'||pr_idlotsms||'-'||vr_idsms
-                     ||'. '||SQLERRM;
+      vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic)||SQLERRM||vr_dsparame;
 
       --Grava tabela de log - Ch 788828
       pc_gera_log(pr_cdcooper      => 3,
@@ -1548,8 +1672,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.esms0001 AS
                   pr_dscritic      => vr_dscritic,
                   pr_cdcriticidade => 2,
                   pr_cdmensagem    => nvl(vr_cdcritic,0),
-                  pr_ind_tipo_log  => 2,
-                  pr_nmarqlog      => vr_nmarqlog);
+                  pr_ind_tipo_log  => 2);
 
   END pc_atualiza_status_msg_soa; 
 

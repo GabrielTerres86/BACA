@@ -445,6 +445,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
       20/12/2017 - Ajuste para considerar a data de liberação do bordero no cursor cr_crapcdb_dsc
                   (Adriano - SD 791712).       
 				  
+      03/04/2018 - Adicionado noti0001.pc_cria_notificacao       
+				  
 	  27/04/2018 - Utilizar a função fn_sequence para gerar o nrseqdig (Jonata - Mouts INC0011931).
 				              
   --------------------------------------------------------------------------------------------------------------*/
@@ -7423,6 +7425,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
   vr_dtprzmax         DATE;   -- Data prazo máximo
   vr_przmxcmp         NUMBER; -- Data prazo máximo
   
+  -- Objetos para armazenar as variáveis da notificação
+  vr_variaveis_notif NOTI0001.typ_variaveis_notif;
+  vr_notif_origem   tbgen_notif_automatica_prm.cdorigem_mensagem%TYPE := 8;
+  vr_notif_motivo   tbgen_notif_automatica_prm.cdmotivo_mensagem%TYPE := 1; 
+  
   -- Buscar Cooperativa
   CURSOR cr_crapcop(pr_cdcooper IN crapcop.cdcooper%TYPE) IS
     SELECT nmrescop
@@ -7885,7 +7892,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
       vr_vltotiofpri := NVL(vr_vltotiofpri,0) + NVL(vr_vliofpri,0);
       vr_vltotiofadi := NVL(vr_vltotiofadi,0) + NVL(vr_vliofadi,0);
       vr_vltotiofcpl := NVL(vr_vltotiofcpl,0) + NVL(vr_vliofcpl,0);
-      
 			-- Buscar custódia
 			OPEN cr_crapcst(pr_cdcooper => pr_cdcooper
 			               ,pr_nrdconta => pr_nrdconta
@@ -8510,6 +8516,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
       vr_cdcritic := 0;
       RAISE vr_exc_erro;
     END IF;
+    -- 
+    vr_variaveis_notif('#numbordero') := to_char(pr_nrborder);
+
+    -- Cria uma notificação
+    noti0001.pc_cria_notificacao(pr_cdorigem_mensagem => vr_notif_origem
+                                ,pr_cdmotivo_mensagem => vr_notif_motivo
+                                ,pr_cdcooper => pr_cdcooper
+                                ,pr_nrdconta => pr_nrdconta
+                                ,pr_variaveis => vr_variaveis_notif);    
     
     -- Efetua os inserts para apresentacao na tela VERLOG
     gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper

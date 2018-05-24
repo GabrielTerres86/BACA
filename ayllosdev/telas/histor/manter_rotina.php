@@ -6,6 +6,9 @@
  * OBJETIVO     : Rotina para alteração e inclusão cadastral da tela HISTOR
  * --------------
  * ALTERAÇÕES   :  05/12/2017 - Adicionado campo Ind. Monitoramento - Melhoria 458 - Antonio R. Jr (mouts)
+ *                 11/04/2018 - Incluído novo campo "Estourar a conta corrente" (inestocc)
+ *                              Diego Simas - AMcom
+ *                 16/05/2017 - Ajustes prj420 - Resolucao - Heitor (Mouts)
  * -------------- 
  */
 ?> 
@@ -38,6 +41,7 @@
 	$indcompl = (isset($_POST['indcompl'])) ? $_POST['indcompl'] : 0;
 	$indebcta = (isset($_POST['indebcta'])) ? $_POST['indebcta'] : 0;
 	$indoipmf = (isset($_POST['indoipmf'])) ? $_POST['indoipmf'] : 0;
+	$inestocc = (isset($_POST['inestocc'])) ? $_POST['inestocc'] : 0;
 
 	$inhistor = (isset($_POST['inhistor'])) ? $_POST['inhistor'] : 0;
 	$indebcre = (isset($_POST['indebcre'])) ? $_POST['indebcre'] : '';
@@ -67,6 +71,8 @@
 
 	$indebfol = (isset($_POST['indebfol'])) ? $_POST['indebfol'] : 0;
 	$txdoipmf = (isset($_POST['txdoipmf'])) ? $_POST['txdoipmf'] : 0;
+
+	$idmonpld = (isset($_POST['idmonpld'])) ? $_POST['idmonpld'] : 0;
 
     if ($cdhistor == 0 ) {
 		exibirErro('error','C&oacute;digo do hist&oacute;rico inv&aacute;lido.','Alerta - Ayllos',"focaCampoErro('cdhistor','frmHistorico');",false);
@@ -132,12 +138,20 @@
 		exibirErro('error','Gerencial a cr&eacute;dito inv&aacute;lido.','Alerta - Ayllos',"focaCampoErro('ingercre','frmHistorico');",false);
 	}
 	
+	if ($inestocc != 0 && $inestocc != 1) {
+		exibirErro('error','Estourar a Conta Corrente inv&aacute;lido.','Alerta - Ayllos',"focaCampoErro('inestocc','frmHistorico');",false);
+	}
+	
     if ($ingerdeb != 1 && $ingerdeb != 2 && $ingerdeb != 3) {
 		exibirErro('error','Gerencial a d&eacute;bito inv&aacute;lido.','Alerta - Ayllos',"focaCampoErro('ingerdeb','frmHistorico');",false);
 	}
 	
     if ($flgsenha != 0 && $flgsenha != 1) {
 		exibirErro('error','Solicita&ccedil;&atilde;o de senha  inv&aacute;lido.','Alerta - Ayllos',"focaCampoErro('flgsenha','frmHistorico');",false);
+	}
+
+	if ($idmonpld != 0 && $idmonpld != 1) {
+		exibirErro('error','Indicador para Monitoramento inv&aacute;lido.','Alerta - Ayllos',"focaCampoErro('idmonpld','frmHistorico');",false);
 	}
 
 	/*  Campos sem validacao:
@@ -200,6 +214,7 @@
 	$xml .= '       <tpctbcxa>'.$tpctbcxa.'</tpctbcxa>';
 
 	$xml .= '       <ingercre>'.$ingercre.'</ingercre>';
+	$xml .= '       <inestocc>'.$inestocc.'</inestocc>';
 	$xml .= '       <ingerdeb>'.$ingerdeb.'</ingerdeb>';
 	
 	$xml .= '       <cdgrphis>'.$cdgrupo_historico.'</cdgrphis>';
@@ -216,6 +231,9 @@
 
 	$xml .= '       <indebfol>'.$indebfol.'</indebfol>';
 	$xml .= '       <txdoipmf>'.$txdoipmf.'</txdoipmf>';
+	
+	$xml .= '       <idmonpld>'.$idmonpld.'</idmonpld>';
+	
 	$xml .= '	</Dados>';
 	$xml .= '</Root>';
 	
