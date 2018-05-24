@@ -420,7 +420,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.AGEN0001 IS
             ,TRIM(GENE0002.fn_mask_conta(lau.nrdconta)) AS dsdconta
 						,lau.cdtiptra
             ,'TED' AS dstiptra 
-            ,lau.hrtransa
+            ,gene0002.fn_converte_time_data(lau.hrtransa,'S') AS hrtransa
             ,lau.nrdocmto
             ,lau.insitlau
             , CASE lau.insitlau

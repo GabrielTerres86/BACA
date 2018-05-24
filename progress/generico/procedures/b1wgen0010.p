@@ -4742,12 +4742,12 @@ PROCEDURE cria_tt-consulta-blt.
          WHEN 2 THEN tt-consulta-blt.dsavisms = "Sem Linha Dig:".
      END CASE. 
      
-     CASE crapcob.cdmensag:
-       WHEN 0 THEN ASSIGN tt-consulta-blt.dsdinst1 = ' '.
-       WHEN 1 THEN ASSIGN tt-consulta-blt.dsdinst1 = 'MANTER DESCONTO ATE O VENCIMENTO'.
-       WHEN 2 THEN ASSIGN tt-consulta-blt.dsdinst1 = 'MANTER DESCONTO APOS O VENCIMENTO'.
-       OTHERWISE ASSIGN tt-consulta-blt.dsdinst1 = ' '.
-     END CASE.           
+     IF crapcob.cdmensag = 1 AND tt-consulta-blt.vldescto > 0 THEN
+        ASSIGN tt-consulta-blt.dsdinst1 = 'MANTER DESCONTO ATE O VENCIMENTO'.
+     ELSE IF crapcob.cdmensag = 2 THEN
+        ASSIGN tt-consulta-blt.dsdinst1 = 'MANTER DESCONTO APOS O VENCIMENTO'.
+     ELSE
+        ASSIGN tt-consulta-blt.dsdinst1 = ' '.
      
      IF (crapcob.tpjurmor <> 3) OR (crapcob.tpdmulta <> 3) THEN DO:
       
@@ -4771,11 +4771,19 @@ PROCEDURE cria_tt-consulta-blt.
      END.     
 
      IF crapcob.flgdprot = TRUE THEN
-        ASSIGN tt-consulta-blt.dsdinst3 = 'PROTESTAR APOS ' + STRING(crapcob.qtdiaprt) + ' DIAS CORRIDOS DO VENCIMENTO.'
+        ASSIGN tt-consulta-blt.dsdinst3 = 'PROTESTAR APOS ' + STRING(crapcob.qtdiaprt) + ' DIAS CORRIDOS DO VENCIMENTO' +
+                                          (IF tt-consulta-blt.dtvencto <> ? AND tt-consulta-blt.cdsituac = "V" THEN
+                                              ' ORIGINAL ' + STRING(tt-consulta-blt.dtvencto,'99/99/9999') + '.'
+                                           ELSE 
+                                              '.')
                tt-consulta-blt.dsdinst4 = '*** SERVICO DE PROTESTO SERA EFETUADO PELO BANCO DO BRASIL ***'.
                
      IF crapcob.flserasa = TRUE AND crapcob.qtdianeg > 0  THEN
-        ASSIGN tt-consulta-blt.dsdinst3 = 'NEGATIVAR NA SERASA APOS ' + STRING(crapcob.qtdianeg) + ' DIAS CORRIDOS DO VENCIMENTO.'
+        ASSIGN tt-consulta-blt.dsdinst3 = 'NEGATIVAR NA SERASA APOS ' + STRING(crapcob.qtdianeg) + ' DIAS CORRIDOS DO VENCIMENTO' +
+                                          (IF tt-consulta-blt.dtvencto <> ? AND tt-consulta-blt.cdsituac = "V" THEN
+                                              ' ORIGINAL ' + STRING(tt-consulta-blt.dtvencto,'99/99/9999') + '.'
+                                           ELSE 
+                                              '.')
                tt-consulta-blt.dsdinst4 = ' '.     
      
    END. /* Fim do DO TRANSACTION */
@@ -5639,13 +5647,6 @@ PROCEDURE proc_nosso_numero.
                tt-consulta-blt.insitpro = crapcob.insitpro
                tt-consulta-blt.flgcbdda = (IF aux_npc_cip = 1 THEN "S" ELSE "N").
 
-          CASE crapcob.cdmensag:
-             WHEN 0 THEN ASSIGN tt-consulta-blt.dsdinst1 = ' '.
-             WHEN 1 THEN ASSIGN tt-consulta-blt.dsdinst1 = 'MANTER DESCONTO ATE O VENCIMENTO'.
-             WHEN 2 THEN ASSIGN tt-consulta-blt.dsdinst1 = 'MANTER DESCONTO APOS O VENCIMENTO'.
-             OTHERWISE ASSIGN tt-consulta-blt.dsdinst1 = ' '.
-          END CASE.           
-           
           IF (crapcob.tpjurmor <> 3) OR (crapcob.tpdmulta <> 3) THEN DO:
             
             ASSIGN tt-consulta-blt.dsdinst2 = 'APOS VENCIMENTO, COBRAR: '.
@@ -5667,16 +5668,6 @@ PROCEDURE proc_nosso_numero.
                                                             
           END.
            
-
-          IF crapcob.flgdprot = TRUE THEN
-             ASSIGN tt-consulta-blt.dsdinst3 = 'PROTESTAR APOS ' + STRING(crapcob.qtdiaprt) + ' DIAS CORRIDOS DO VENCIMENTO.'
-                    tt-consulta-blt.dsdinst4 = '*** SERVICO DE PROTESTO SERA EFETUADO PELO BANCO DO BRASIL ***'.
-                    
-          IF crapcob.flserasa = TRUE AND crapcob.qtdianeg > 0  THEN
-             ASSIGN tt-consulta-blt.dsdinst3 = 'NEGATIVAR NA SERASA APOS ' + STRING(crapcob.qtdianeg) + ' DIAS CORRIDOS DO VENCIMENTO.'
-                    tt-consulta-blt.dsdinst4 = ' '.
-
-
            /* Tratamento para Negativaçao Serasa e Protesto */ 
            ASSIGN tt-consulta-blt.flserasa = crapcob.flserasa
                   tt-consulta-blt.qtdianeg = crapcob.qtdianeg
@@ -9405,6 +9396,29 @@ PROCEDURE calcula_multa_juros_boleto:
           WHEN  7 THEN tt-consulta-blt.dsdespec = "OUTR".
         END CASE.    
 
+        IF  tt-consulta-blt.cdmensag = 1 AND par_vldescut > 0 THEN
+            ASSIGN tt-consulta-blt.dsdinst1 = 'MANTER DESCONTO ATE O VENCIMENTO'.
+        ELSE IF tt-consulta-blt.cdmensag = 2 THEN
+            ASSIGN tt-consulta-blt.dsdinst1 = 'MANTER DESCONTO APOS O VENCIMENTO'.
+        ELSE
+            ASSIGN tt-consulta-blt.dsdinst1 = ' '.
+            
+        IF crapcob.flgdprot = TRUE THEN
+           ASSIGN tt-consulta-blt.dsdinst3 = 'PROTESTAR APOS ' + STRING(crapcob.qtdiaprt) + ' DIAS CORRIDOS DO VENCIMENTO' +
+                                             (IF tt-consulta-blt.dtvencto <> ? AND par_cridatut THEN
+                                                 ' ORIGINAL ' + STRING(tt-consulta-blt.dtvencto,'99/99/9999') + '.'
+                                              ELSE 
+                                                 '.')
+                  tt-consulta-blt.dsdinst4 = '*** SERVICO DE PROTESTO SERA EFETUADO PELO BANCO DO BRASIL ***'.
+                  
+        IF crapcob.flserasa = TRUE AND crapcob.qtdianeg > 0  THEN
+           ASSIGN tt-consulta-blt.dsdinst3 = 'NEGATIVAR NA SERASA APOS ' + STRING(crapcob.qtdianeg) + ' DIAS CORRIDOS DO VENCIMENTO' +
+                                             (IF tt-consulta-blt.dtvencto <> ? AND par_cridatut THEN
+                                                 ' ORIGINAL ' + STRING(tt-consulta-blt.dtvencto,'99/99/9999') + '.'
+                                              ELSE 
+                                                 '.')
+                  tt-consulta-blt.dsdinst4 = ' '.              
+
         IF NOT AVAIL(craptdb) THEN DO:
           FIND LAST craptdb 
               WHERE craptdb.cdcooper = tt-consulta-blt.cdcooper   AND
@@ -9428,12 +9442,8 @@ PROCEDURE calcula_multa_juros_boleto:
                                    OUTPUT aux_npc_cip).
 
         ASSIGN tt-consulta-blt.vldocmto_boleto  = par_vltitulo
-               tt-consulta-blt.vlcobrado_boleto = par_vltituut.
-        
-        IF aux_critdata THEN
-           ASSIGN tt-consulta-blt.dtvencto_boleto = par_dtmvtocd.
-        ELSE
-           ASSIGN tt-consulta-blt.dtvencto_boleto = par_dtvencto.
+               tt-consulta-blt.vlcobrado_boleto = IF par_cridatut THEN par_vltituut_atualizado ELSE 0
+               tt-consulta-blt.dtvencto_boleto  = par_dtvencut_atualizado.        
            
         IF aux_npc_cip = 1 THEN
           DO:
@@ -9449,7 +9459,7 @@ PROCEDURE calcula_multa_juros_boleto:
           DO:
               RUN p_calc_codigo_barras(INPUT tt-consulta-blt.cdbandoc,
                                        INPUT tt-consulta-blt.dtvencto_boleto,
-                                       INPUT tt-consulta-blt.vlcobrado_boleto,
+                                       INPUT par_vltituut_atualizado,
                                        INPUT tt-consulta-blt.nrcnvcob,
                                        INPUT tt-consulta-blt.nrnosnum,
                                        INPUT tt-consulta-blt.cdcartei,
