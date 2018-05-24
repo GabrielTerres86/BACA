@@ -552,7 +552,7 @@ ELSE IF par_cddopcao = "V" THEN
                                    '<flgativo>' + STRING(aux_flgativo) + '</flgativo>' + 
                                    '<flsitsms>' + STRING(aux_flsitsms) + '</flsitsms>' + 
                                    '<dsalerta>' + STRING(aux_dsalerta) + '</dsalerta>' +
-                                   '<fllindig>' + STRING(aux_fllindig) + '<fllindig/>'.
+                                   '<fllindig>' + STRING(aux_fllindig) + '</fllindig>'.
 
     CREATE xml_operacao.
     ASSIGN xml_operacao.dslinxml = '</dados>'.
