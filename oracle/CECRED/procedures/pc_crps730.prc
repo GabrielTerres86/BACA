@@ -124,10 +124,10 @@ create or replace procedure cecred.pc_crps730(pr_dscritic OUT VARCHAR2
     -- Envio centralizado de log de erro
     btch0001.pc_gera_log_batch(pr_cdcooper     => 3 -- Fixo?
                               ,pr_ind_tipo_log => pr_idtiplog
-                              ,pr_cdprograma   => 'CRPS729'
+                              ,pr_cdprograma   => 'CRPS730'
                               ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED', 3 /*pr_cdcooper*/, 'NOME_ARQ_LOG_MESSAGE')
                               ,pr_des_log      => to_char(sysdate,'hh24:mi:ss') || ' - '
-                                                          || 'CRPS729' || ' --> ' || vr_dstiplog
+                                                          || 'CRPS730' || ' --> ' || vr_dstiplog
                                                           || pr_dscritic );     
   EXCEPTION
     WHEN OTHERS THEN
@@ -260,122 +260,6 @@ create or replace procedure cecred.pc_crps730(pr_dscritic OUT VARCHAR2
 			WHEN pr_nrattrib = 100 THEN
 				pr_reg_linha.nmarquiv := pr_dsvalue;
     END CASE;
-    /*--
-    CASE
-      WHEN pr_nrattrib = 0 THEN
-        vr_tab_arquivo(pr_nrrow).campot01 := pr_dsvalue;
-      WHEN pr_nrattrib = 1 THEN
-        vr_tab_arquivo(pr_nrrow).campot02 := pr_dsvalue;
-      WHEN pr_nrattrib = 2 THEN
-        vr_tab_arquivo(pr_nrrow).campot03 := pr_dsvalue;
-      WHEN pr_nrattrib = 3 THEN
-        vr_tab_arquivo(pr_nrrow).campot04 := pr_dsvalue;
-      WHEN pr_nrattrib = 4 THEN
-        vr_tab_arquivo(pr_nrrow).campot05 := pr_dsvalue;
-      WHEN pr_nrattrib = 5 THEN
-        vr_tab_arquivo(pr_nrrow).campot06 := pr_dsvalue;
-      WHEN pr_nrattrib = 6 THEN
-        vr_tab_arquivo(pr_nrrow).campot07 := pr_dsvalue;
-      WHEN pr_nrattrib = 7 THEN
-        vr_tab_arquivo(pr_nrrow).campot08 := pr_dsvalue;
-      WHEN pr_nrattrib = 8 THEN
-        vr_tab_arquivo(pr_nrrow).campot09 := pr_dsvalue;
-      WHEN pr_nrattrib = 9 THEN
-        vr_tab_arquivo(pr_nrrow).campot10 := pr_dsvalue;
-      WHEN pr_nrattrib = 10 THEN
-        vr_tab_arquivo(pr_nrrow).campot11 := pr_dsvalue;
-      WHEN pr_nrattrib = 11 THEN
-        vr_tab_arquivo(pr_nrrow).campot12 := pr_dsvalue;
-      WHEN pr_nrattrib = 12 THEN
-        vr_tab_arquivo(pr_nrrow).campot13 := pr_dsvalue;
-      WHEN pr_nrattrib = 13 THEN
-        vr_tab_arquivo(pr_nrrow).campot14 := pr_dsvalue;
-      WHEN pr_nrattrib = 14 THEN
-        vr_tab_arquivo(pr_nrrow).campot15 := pr_dsvalue;
-      WHEN pr_nrattrib = 15 THEN
-        vr_tab_arquivo(pr_nrrow).campot16 := pr_dsvalue;
-      WHEN pr_nrattrib = 16 THEN
-        vr_tab_arquivo(pr_nrrow).campot17 := pr_dsvalue;
-      WHEN pr_nrattrib = 17 THEN
-        vr_tab_arquivo(pr_nrrow).campot18 := pr_dsvalue;
-      WHEN pr_nrattrib = 18 THEN
-        vr_tab_arquivo(pr_nrrow).campot19 := pr_dsvalue;
-      WHEN pr_nrattrib = 19 THEN
-        vr_tab_arquivo(pr_nrrow).campot20 := pr_dsvalue;
-      WHEN pr_nrattrib = 20 THEN
-        vr_tab_arquivo(pr_nrrow).campot21 := pr_dsvalue;
-      WHEN pr_nrattrib = 21 THEN
-        vr_tab_arquivo(pr_nrrow).campot22 := pr_dsvalue;
-      WHEN pr_nrattrib = 22 THEN
-        vr_tab_arquivo(pr_nrrow).campot23 := pr_dsvalue;
-      WHEN pr_nrattrib = 23 THEN
-        vr_tab_arquivo(pr_nrrow).campot24 := pr_dsvalue;
-      WHEN pr_nrattrib = 24 THEN
-        vr_tab_arquivo(pr_nrrow).campot25 := pr_dsvalue;
-      WHEN pr_nrattrib = 25 THEN
-        vr_tab_arquivo(pr_nrrow).campot26 := pr_dsvalue;
-      WHEN pr_nrattrib = 26 THEN
-        vr_tab_arquivo(pr_nrrow).campot27 := pr_dsvalue;
-      WHEN pr_nrattrib = 27 THEN
-        vr_tab_arquivo(pr_nrrow).campot28 := pr_dsvalue;
-      WHEN pr_nrattrib = 28 THEN
-        vr_tab_arquivo(pr_nrrow).campot29 := pr_dsvalue;
-      WHEN pr_nrattrib = 29 THEN
-        vr_tab_arquivo(pr_nrrow).campot30 := pr_dsvalue;
-      WHEN pr_nrattrib = 30 THEN
-        vr_tab_arquivo(pr_nrrow).campot31 := pr_dsvalue;
-      WHEN pr_nrattrib = 31 THEN
-        vr_tab_arquivo(pr_nrrow).campot32 := pr_dsvalue;
-      WHEN pr_nrattrib = 32 THEN
-        vr_tab_arquivo(pr_nrrow).campot33 := pr_dsvalue;
-      WHEN pr_nrattrib = 33 THEN
-        vr_tab_arquivo(pr_nrrow).campot34 := pr_dsvalue;
-      WHEN pr_nrattrib = 34 THEN
-        vr_tab_arquivo(pr_nrrow).campot35 := pr_dsvalue;
-      WHEN pr_nrattrib = 35 THEN
-        vr_tab_arquivo(pr_nrrow).campot36 := pr_dsvalue;
-      WHEN pr_nrattrib = 36 THEN
-        vr_tab_arquivo(pr_nrrow).campot37 := pr_dsvalue;
-      WHEN pr_nrattrib = 37 THEN
-        vr_tab_arquivo(pr_nrrow).campot38 := pr_dsvalue;
-      WHEN pr_nrattrib = 38 THEN
-        vr_tab_arquivo(pr_nrrow).campot39 := pr_dsvalue;
-      WHEN pr_nrattrib = 39 THEN
-        vr_tab_arquivo(pr_nrrow).campot40 := pr_dsvalue;
-      WHEN pr_nrattrib = 40 THEN
-        vr_tab_arquivo(pr_nrrow).campot41 := pr_dsvalue;
-      WHEN pr_nrattrib = 41 THEN
-        vr_tab_arquivo(pr_nrrow).campot42 := pr_dsvalue;
-      WHEN pr_nrattrib = 42 THEN
-        vr_tab_arquivo(pr_nrrow).campot43 := pr_dsvalue;
-      WHEN pr_nrattrib = 43 THEN
-        vr_tab_arquivo(pr_nrrow).campot44 := pr_dsvalue;
-      WHEN pr_nrattrib = 44 THEN
-        vr_tab_arquivo(pr_nrrow).campot45 := pr_dsvalue;
-      WHEN pr_nrattrib = 45 THEN
-        vr_tab_arquivo(pr_nrrow).campot46 := pr_dsvalue;
-      WHEN pr_nrattrib = 46 THEN
-        vr_tab_arquivo(pr_nrrow).campot47 := pr_dsvalue;
-      WHEN pr_nrattrib = 47 THEN
-        vr_tab_arquivo(pr_nrrow).campot48 := pr_dsvalue;
-      WHEN pr_nrattrib = 48 THEN
-        vr_tab_arquivo(pr_nrrow).campot49 := pr_dsvalue;
-      WHEN pr_nrattrib = 49 THEN
-        vr_tab_arquivo(pr_nrrow).campot50 := pr_dsvalue;
-      WHEN pr_nrattrib = 50 THEN
-        vr_tab_arquivo(pr_nrrow).campot51 := pr_dsvalue;
-      WHEN pr_nrattrib = 51 THEN
-        vr_tab_arquivo(pr_nrrow).campot52 := pr_dsvalue;
-      WHEN pr_nrattrib = 52 THEN
-        vr_tab_arquivo(pr_nrrow).campot53 := pr_dsvalue;
-      WHEN pr_nrattrib = 64 THEN
-        vr_tab_arquivo(pr_nrrow).campoh04 := pr_dsvalue;
-      WHEN pr_nrattrib = 68 THEN
-        vr_tab_arquivo(pr_nrrow).campoh08 := pr_dsvalue;
-      WHEN pr_nrattrib = 75 THEN
-        vr_tab_arquivo(pr_nrrow).campoh15 := pr_dsvalue;
-    END CASE;
-    --*/
   EXCEPTION
     WHEN OTHERS THEN
       pr_dscritic := 'Erro ao tentar atribuir o valor: ' || pr_nrattrib || '/' || pr_dsvalue || ': ' || SQLERRM;
@@ -761,8 +645,18 @@ create or replace procedure cecred.pc_crps730(pr_dscritic OUT VARCHAR2
                                      ,pr_dscritic          	 OUT VARCHAR2
                                      ) IS
   --
+
+    vr_nrseqarq INTEGER;
   BEGIN
     --
+    -- temporario RC7
+    vr_nrseqarq := fn_sequence(pr_nmtabela => 'TBCOBRAN_CONFIRMACAO_IEPTB'
+															 ,pr_nmdcampo => 'NRSEQARQ'
+															 ,pr_dsdchave => to_char(pr_cdcooper) || ';' || 
+                                               to_char(pr_dtmvtolt) || ';' ||
+                                               to_char(pr_cdcomarc) || ';' || 
+                                               to_char(pr_nrseqrem));
+
     INSERT INTO tbcobran_confirmacao_ieptb(cdcooper
                                           ,dtmvtolt
                                           ,cdcomarc
@@ -791,7 +685,7 @@ create or replace procedure cecred.pc_crps730(pr_dscritic OUT VARCHAR2
                                                   ,pr_dtmvtolt
                                                   ,pr_cdcomarc
                                                   ,pr_nrseqrem
-                                                  ,pr_nrseqarq
+                                                  ,vr_nrseqarq
                                                   ,pr_nrdconta
                                                   ,pr_nrcnvcob
                                                   ,pr_nrdocmto
@@ -847,6 +741,7 @@ create or replace procedure cecred.pc_crps730(pr_dscritic OUT VARCHAR2
                                  ) IS
     --
 	  vr_idretorno NUMBER;
+    vr_nrseqarq INTEGER;
 	  --
 	BEGIN
 		-- Gerar novo retorno usando a fn_sequence 
@@ -854,6 +749,15 @@ create or replace procedure cecred.pc_crps730(pr_dscritic OUT VARCHAR2
 															 ,pr_nmdcampo => 'IDRETORNO'
 															 ,pr_dsdchave => 'IDRETORNO'
 															 );
+                               
+    -- temporario RC7
+    vr_nrseqarq := fn_sequence(pr_nmtabela => 'TBCOBRAN_RETORNO_IEPTB'
+															 ,pr_nmdcampo => 'NRSEQARQ'
+															 ,pr_dsdchave => to_char(pr_cdcooper) || ';' || 
+                                               to_char(pr_dtmvtolt) || ';' ||
+                                               to_char(pr_cdcomarc) || ';' || 
+                                               to_char(pr_nrseqrem));
+                               
 		--
     INSERT INTO tbcobran_retorno_ieptb(cdcooper
                                       ,dtmvtolt
@@ -884,7 +788,7 @@ create or replace procedure cecred.pc_crps730(pr_dscritic OUT VARCHAR2
                                               ,pr_dtmvtolt
                                               ,pr_cdcomarc
                                               ,pr_nrseqrem
-                                              ,pr_nrseqarq
+                                              ,vr_nrseqarq
                                               ,pr_nrdconta
                                               ,pr_nrcnvcob
                                               ,pr_nrdocmto
@@ -1320,7 +1224,7 @@ create or replace procedure cecred.pc_crps730(pr_dscritic OUT VARCHAR2
 																		,pr_cdocorre            => 9                      -- IN
 																		,pr_dsmotivo            => '14'                   -- IN
 																		,pr_crapdat             => rw_crapdat             -- IN
-																		,pr_cdoperad            => 1                      -- IN
+																		,pr_cdoperad            => '1'                    -- IN
 																		,pr_vltarifa            => 0                      -- IN
 																		,pr_ret_nrremret        => vr_nrretcoo            -- OUT
 																		,pr_tab_lcm_consolidada => vr_tab_lcm_consolidada -- IN OUT
@@ -1440,7 +1344,7 @@ create or replace procedure cecred.pc_crps730(pr_dscritic OUT VARCHAR2
 																								,pr_cdocorre            => 24                     -- IN
 																								,pr_dsmotivo            => NULL                   -- IN
 																								,pr_crapdat             => rw_crapdat             -- IN
-																								,pr_cdoperad            => 1                      -- IN
+																								,pr_cdoperad            => '1'                    -- IN
 																								,pr_cdbanpag            => rw_crapcob.cdbcoctl    -- IN
 																								,pr_cdagepag            => rw_crapcob.cdagectl    -- IN
 																								,pr_ret_nrremret        => vr_nrretcoo            -- OUT
@@ -1543,7 +1447,7 @@ create or replace procedure cecred.pc_crps730(pr_dscritic OUT VARCHAR2
 							END IF;
 							--
 							paga0001.pc_cria_log_cobranca(pr_idtabcob => rw_crapcob.rowid
-																					 ,pr_cdoperad => 1
+																					 ,pr_cdoperad => '1'
 																					 ,pr_dtmvtolt => rw_crapcob.dtmvtolt
 																					 ,pr_dsmensag => 'Sustação Judicial (IEPTB).'
 																					 ,pr_des_erro => vr_des_erro
@@ -1586,7 +1490,7 @@ create or replace procedure cecred.pc_crps730(pr_dscritic OUT VARCHAR2
 																				,pr_cdocorre     => 89                                    -- IN
 																				,pr_dsmotivo     => vr_tab_arquivo(vr_index_reg).campot38 -- IN
 																				,pr_crapdat      => rw_crapdat                            -- IN
-																				,pr_cdoperad     => 1                                     -- IN
+																				,pr_cdoperad     => '1'                                   -- IN
 																				,pr_vltarifa     => 0                                     -- IN
 																				,pr_ret_nrremret => vr_nrretcoo                           -- OUT
 																				,pr_cdcritic     => vr_cdcritic                           -- OUT
@@ -1653,7 +1557,7 @@ create or replace procedure cecred.pc_crps730(pr_dscritic OUT VARCHAR2
 							END IF;
 							--
 							paga0001.pc_cria_log_cobranca(pr_idtabcob => rw_crapcob.rowid
-																					 ,pr_cdoperad => 1
+																					 ,pr_cdoperad => '1'
 																					 ,pr_dtmvtolt => rw_crapcob.dtmvtolt
 																					 ,pr_dsmensag => 'Devolvido pelo cartório por irregularidade - Sem custas (IEPTB).'
 																					 ,pr_des_erro => vr_des_erro
@@ -1697,7 +1601,7 @@ create or replace procedure cecred.pc_crps730(pr_dscritic OUT VARCHAR2
 																				,pr_cdocorre     => 89                                    -- IN
 																				,pr_dsmotivo     => vr_tab_arquivo(vr_index_reg).campot38 -- IN
 																				,pr_crapdat      => rw_crapdat                            -- IN
-																				,pr_cdoperad     => 1                                     -- IN
+																				,pr_cdoperad     => '1'                                   -- IN
 																				,pr_vltarifa     => 0                                     -- IN
 																				,pr_ret_nrremret => vr_nrretcoo                           -- OUT
 																				,pr_cdcritic     => vr_cdcritic                           -- OUT
@@ -1764,7 +1668,7 @@ create or replace procedure cecred.pc_crps730(pr_dscritic OUT VARCHAR2
 							END IF;
 							--
 							paga0001.pc_cria_log_cobranca(pr_idtabcob => rw_crapcob.rowid
-																					 ,pr_cdoperad => 1
+																					 ,pr_cdoperad => '1'
 																					 ,pr_dtmvtolt => rw_crapcob.dtmvtolt
 																					 ,pr_dsmensag => 'Devolvido pelo cartório por irregularidade - Com custas (IEPTB).'
 																					 ,pr_des_erro => vr_des_erro
@@ -1819,7 +1723,7 @@ create or replace procedure cecred.pc_crps730(pr_dscritic OUT VARCHAR2
 							END IF;
 							--
 							paga0001.pc_cria_log_cobranca(pr_idtabcob => rw_crapcob.rowid
-																					 ,pr_cdoperad => 1
+																					 ,pr_cdoperad => '1'
 																					 ,pr_dtmvtolt => rw_crapcob.dtmvtolt
 																					 ,pr_dsmensag => 'Liquidação em condicional (IEPTB).'
 																					 ,pr_des_erro => vr_des_erro
@@ -1875,7 +1779,7 @@ create or replace procedure cecred.pc_crps730(pr_dscritic OUT VARCHAR2
 							END IF;
 							--
 							paga0001.pc_cria_log_cobranca(pr_idtabcob => rw_crapcob.rowid
-																					 ,pr_cdoperad => 1
+																					 ,pr_cdoperad => '1'
 																					 ,pr_dtmvtolt => rw_crapcob.dtmvtolt
 																					 ,pr_dsmensag => 'Título aceito (IEPTB).'
 																					 ,pr_des_erro => vr_des_erro
@@ -1930,7 +1834,7 @@ create or replace procedure cecred.pc_crps730(pr_dscritic OUT VARCHAR2
 							END IF;
 							--
 							paga0001.pc_cria_log_cobranca(pr_idtabcob => rw_crapcob.rowid
-																					 ,pr_cdoperad => 1
+																					 ,pr_cdoperad => '1'
 																					 ,pr_dtmvtolt => rw_crapcob.dtmvtolt
 																					 ,pr_dsmensag => 'Edital, apenas estados da Bahia e Rio de Janeiro (IEPTB).'
 																					 ,pr_des_erro => vr_des_erro
@@ -1985,7 +1889,7 @@ create or replace procedure cecred.pc_crps730(pr_dscritic OUT VARCHAR2
 							END IF;
 							--
 							paga0001.pc_cria_log_cobranca(pr_idtabcob => rw_crapcob.rowid
-																					 ,pr_cdoperad => 1
+																					 ,pr_cdoperad => '1'
 																					 ,pr_dtmvtolt => rw_crapcob.dtmvtolt
 																					 ,pr_dsmensag => 'Protesto do banco cancelado (IEPTB).'
 																					 ,pr_des_erro => vr_des_erro
@@ -2040,7 +1944,7 @@ create or replace procedure cecred.pc_crps730(pr_dscritic OUT VARCHAR2
 							END IF;
 							--
 							paga0001.pc_cria_log_cobranca(pr_idtabcob => rw_crapcob.rowid
-																					 ,pr_cdoperad => 1
+																					 ,pr_cdoperad => '1'
 																					 ,pr_dtmvtolt => rw_crapcob.dtmvtolt
 																					 ,pr_dsmensag => 'Protesto já efetuado (IEPTB).'
 																					 ,pr_des_erro => vr_des_erro
@@ -2095,7 +1999,7 @@ create or replace procedure cecred.pc_crps730(pr_dscritic OUT VARCHAR2
 							END IF;
 							--
 							paga0001.pc_cria_log_cobranca(pr_idtabcob => rw_crapcob.rowid
-																					 ,pr_cdoperad => 1
+																					 ,pr_cdoperad => '1'
 																					 ,pr_dtmvtolt => rw_crapcob.dtmvtolt
 																					 ,pr_dsmensag => 'Protesto por edital (IEPTB).'
 																					 ,pr_des_erro => vr_des_erro
@@ -2150,7 +2054,7 @@ create or replace procedure cecred.pc_crps730(pr_dscritic OUT VARCHAR2
 							END IF;
 							--
 							paga0001.pc_cria_log_cobranca(pr_idtabcob => rw_crapcob.rowid
-																					 ,pr_cdoperad => 1
+																					 ,pr_cdoperad => '1'
 																					 ,pr_dtmvtolt => rw_crapcob.dtmvtolt
 																					 ,pr_dsmensag => 'Retirado por edital (IEPTB).'
 																					 ,pr_des_erro => vr_des_erro
@@ -2205,7 +2109,7 @@ create or replace procedure cecred.pc_crps730(pr_dscritic OUT VARCHAR2
 							END IF;
 							--
 							paga0001.pc_cria_log_cobranca(pr_idtabcob => rw_crapcob.rowid
-																					 ,pr_cdoperad => 1
+																					 ,pr_cdoperad => '1'
 																					 ,pr_dtmvtolt => rw_crapcob.dtmvtolt
 																					 ,pr_dsmensag => 'Protesto de terceiro cancelado (IEPTB).'
 																					 ,pr_des_erro => vr_des_erro
@@ -2260,7 +2164,7 @@ create or replace procedure cecred.pc_crps730(pr_dscritic OUT VARCHAR2
 							END IF;
 							--
 							paga0001.pc_cria_log_cobranca(pr_idtabcob => rw_crapcob.rowid
-																					 ,pr_cdoperad => 1
+																					 ,pr_cdoperad => '1'
 																					 ,pr_dtmvtolt => rw_crapcob.dtmvtolt
 																					 ,pr_dsmensag => 'Desistência do protesto por liquidação bancária (IEPTB).'
 																					 ,pr_des_erro => vr_des_erro
@@ -2315,7 +2219,7 @@ create or replace procedure cecred.pc_crps730(pr_dscritic OUT VARCHAR2
 							END IF;
 							--
 							paga0001.pc_cria_log_cobranca(pr_idtabcob => rw_crapcob.rowid
-																					 ,pr_cdoperad => 1
+																					 ,pr_cdoperad => '1'
 																					 ,pr_dtmvtolt => rw_crapcob.dtmvtolt
 																					 ,pr_dsmensag => 'Sustado definitivo (IEPTB).'
 																					 ,pr_des_erro => vr_des_erro
@@ -2370,7 +2274,7 @@ create or replace procedure cecred.pc_crps730(pr_dscritic OUT VARCHAR2
 							END IF;
 							--
 							paga0001.pc_cria_log_cobranca(pr_idtabcob => rw_crapcob.rowid
-																					 ,pr_cdoperad => 1
+																					 ,pr_cdoperad => '1'
 																					 ,pr_dtmvtolt => rw_crapcob.dtmvtolt
 																					 ,pr_dsmensag => 'Emissão da 2ª via do instrumento de protesto (IEPTB).'
 																					 ,pr_des_erro => vr_des_erro
@@ -2425,7 +2329,7 @@ create or replace procedure cecred.pc_crps730(pr_dscritic OUT VARCHAR2
 							END IF;
 							--
 							paga0001.pc_cria_log_cobranca(pr_idtabcob => rw_crapcob.rowid
-																					 ,pr_cdoperad => 1
+																					 ,pr_cdoperad => '1'
 																					 ,pr_dtmvtolt => rw_crapcob.dtmvtolt
 																					 ,pr_dsmensag => 'Cancelamento já efetuado anteriormente (IEPTB).'
 																					 ,pr_des_erro => vr_des_erro
@@ -2480,7 +2384,7 @@ create or replace procedure cecred.pc_crps730(pr_dscritic OUT VARCHAR2
 							END IF;
 							--
 							paga0001.pc_cria_log_cobranca(pr_idtabcob => rw_crapcob.rowid
-																					 ,pr_cdoperad => 1
+																					 ,pr_cdoperad => '1'
 																					 ,pr_dtmvtolt => rw_crapcob.dtmvtolt
 																					 ,pr_dsmensag => 'Cancelamento não efetuado (IEPTB).'
 																					 ,pr_des_erro => vr_des_erro
@@ -2560,7 +2464,7 @@ create or replace procedure cecred.pc_crps730(pr_dscritic OUT VARCHAR2
 																							 ,pr_cdocorre            => 23                                                         -- Codigo Ocorrencia -- REVISAR
 																							 ,pr_dsmotivo            => NULL                                                       -- Descricao Motivo -- REVISAR
 																							 ,pr_crapdat             => rw_crapdat                                                 -- Data movimento
-																							 ,pr_cdoperad            => 1                                                          -- Codigo Operador -- Revisar
+																							 ,pr_cdoperad            => '1'                                                          -- Codigo Operador -- Revisar
 																							 ,pr_ret_nrremret        => vr_nrretcoo                                                -- Numero Remessa Retorno Cooperado
 																							 ,pr_tab_lcm_consolidada => vr_tab_lcm_consolidada                                     -- Temptable dos lanamentos
 																							 ,pr_cdcritic            => vr_cdcritic                                                -- Codigo da critica
@@ -2626,7 +2530,7 @@ create or replace procedure cecred.pc_crps730(pr_dscritic OUT VARCHAR2
 																							 ,pr_cdocorre            => vr_cdocorre            -- IN
 																							 ,pr_dsmotivo            => vr_dsmotivo            -- IN
 																							 ,pr_crapdat             => rw_crapdat             -- IN
-																							 ,pr_cdoperad            => 1                      -- IN -- Fixo
+																							 ,pr_cdoperad            => '1'                      -- IN -- Fixo
 																							 ,pr_ret_nrremret        => vr_nrretcoo            -- OUT
 																							 ,pr_tab_lcm_consolidada => vr_tab_lcm_consolidada -- IN OUT
 																							 ,pr_cdhistor            => 2632                   -- IN -- Fixo
@@ -2706,7 +2610,7 @@ create or replace procedure cecred.pc_crps730(pr_dscritic OUT VARCHAR2
 						cobr0011.pc_processa_lancamento(pr_cdcooper => vr_tab_coop(vr_index_coop).cdcooper -- IN
 																					 ,pr_dtmvtolt => rw_crapcob.dtmvtolt                 -- IN
 																					 ,pr_cdagenci => 1                                   -- IN
-																					 ,pr_cdoperad => 1                                   -- IN
+																					 ,pr_cdoperad => '1'                                   -- IN
 																					 ,pr_cdhistor => 2635                                -- IN
 																					 ,pr_vllanmto => vr_tab_coop(vr_index_coop).vlcustas -- IN
 																					 ,pr_nmarqtxt => vr_nmarquiv                         -- IN
@@ -2729,7 +2633,7 @@ create or replace procedure cecred.pc_crps730(pr_dscritic OUT VARCHAR2
 						cobr0011.pc_processa_lancamento(pr_cdcooper => vr_tab_coop(vr_index_coop).cdcooper -- IN
 																					 ,pr_dtmvtolt => rw_crapcob.dtmvtolt                 -- IN
 																					 ,pr_cdagenci => 1                                   -- IN
-																					 ,pr_cdoperad => 1                                   -- IN
+																					 ,pr_cdoperad => '1'                                 -- IN
 																					 ,pr_cdhistor => 2643                                -- IN
 																					 ,pr_vllanmto => vr_tab_coop(vr_index_coop).vltarifa -- IN
 																					 ,pr_nmarqtxt => vr_nmarquiv                         -- IN
@@ -2875,11 +2779,15 @@ begin
 			RAISE vr_exc_erro;
 	END;
 	--
-	wprt0001.pc_obtem_retorno(pr_cdcooper => 3
-													 ,pr_cdbandoc => 85
-													 ,pr_dtmvtolt => vr_dtmvtolt
-													 ,pr_dscritic => pr_dscritic
-													 );
+  
+  -- temporario RC7
+  vr_dtmvtolt := trunc(SYSDATE);
+  
+--	wprt0001.pc_obtem_retorno(pr_cdcooper => 3
+--													 ,pr_cdbandoc => 85
+--													 ,pr_dtmvtolt => vr_dtmvtolt
+--													 ,pr_dscritic => pr_dscritic
+--													 );
 	--
 	IF pr_dscritic IS NOT NULL THEN
     --
@@ -2928,13 +2836,17 @@ begin
   -- Escrever o log no arquivo
   pc_controla_log_batch(1, to_char(SYSDATE, 'DD/MM/YYYY - HH24:MI:SS') || ' - pc_crps730 --> Finalizado o processamento dos retornos.'); -- Texto para escrita
   --
+	COMMIT;
+	--
 EXCEPTION
   WHEN vr_exc_erro THEN
     -- Incluído controle de Log
     pc_controla_log_batch(2, to_char(SYSDATE, 'DD/MM/YYYY - HH24:MI:SS') || ' - pc_crps730 --> ' || pr_dscritic);
+		ROLLBACK;
   WHEN OTHERS THEN
     -- Incluído controle de Log
     pc_controla_log_batch(2, to_char(SYSDATE, 'DD/MM/YYYY - HH24:MI:SS') || ' - pc_crps730 --> ' || SQLERRM);
+		ROLLBACK;
   --
 end pc_crps730;
 /

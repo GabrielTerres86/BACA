@@ -21,6 +21,7 @@ create or replace procedure cecred.pc_crps729(pr_dscritic OUT VARCHAR2
   -- Tipo de registro linha
   TYPE typ_reg_linha IS RECORD
     (ds_registro VARCHAR2(600)
+    ,cdcooper    crapcop.cdcooper%TYPE
     ,ds_rowid    VARCHAR2(400)
     );
   -- Tabela para tip de registro linha
@@ -31,7 +32,19 @@ create or replace procedure cecred.pc_crps729(pr_dscritic OUT VARCHAR2
   vr_cdprogra_cpl VARCHAR2(20) := 'PC_CRPS729';
   
   vr_exc_erro EXCEPTION;
+  -- Registro de Data
+  rw_crapdat    BTCH0001.cr_crapdat%ROWTYPE;  
   
+  -- Selecionar os dados da Cooperativa
+  CURSOR cr_crapcop (pr_cdcooper IN craptab.cdcooper%TYPE) IS
+    SELECT cop.cdcooper
+          ,cop.cdbcoctl
+          ,cop.cdagectl
+          ,cop.dsdircop
+    FROM crapcop cop
+    WHERE cop.cdcooper = pr_cdcooper;
+  rw_crapcop cr_crapcop%ROWTYPE;
+    
   -- Subrotinas
   -- Controla Controla log
   PROCEDURE pc_controla_log_batch(pr_idtiplog IN NUMBER   -- Tipo de Log
@@ -66,27 +79,95 @@ create or replace procedure cecred.pc_crps729(pr_dscritic OUT VARCHAR2
    END pc_controla_log_batch;
    
   -- Rotina que insere uma linha na tabela em memória
-  PROCEDURE pc_insere_linha(pr_linha IN VARCHAR2
+  PROCEDURE pc_insere_linha(pr_cdcooper IN crapcop.cdcooper%TYPE
                            ,pr_rowid IN VARCHAR2
+                           ,pr_linha IN VARCHAR2                           
                            ) IS
   BEGIN
     --
     vr_index_arq := vr_index_arq + 1;
     --
+    vr_tab_arquivo(vr_index_arq).cdcooper    := pr_cdcooper;
+    vr_tab_arquivo(vr_index_arq).ds_rowid    := pr_rowid;    
     vr_tab_arquivo(vr_index_arq).ds_registro := pr_linha;
-    vr_tab_arquivo(vr_index_arq).ds_rowid    := pr_rowid;
+
     --
   END pc_insere_linha;
   
   -- Atualiza o status dos títulos enviados para protesto
   PROCEDURE pc_atualiza_status_enviados(pr_rowid    IN  VARCHAR2
+                                       ,pr_cdcooper IN  crapcop.cdcooper%TYPE
                                        ,pr_dscritic OUT VARCHAR2
                                        ) IS
+    vr_cdcritic INTEGER;
+    vr_dscritic VARCHAR2(1000);
+    pr_nrremret crapret.nrremret%TYPE;                                     
+    vr_des_erro VARCHAR2(100);
   BEGIN
+    
+    OPEN cr_crapcop(pr_cdcooper => pr_cdcooper);
+    FETCH cr_crapcop INTO rw_crapcop;
+    CLOSE cr_crapcop;
+    
+    -- pc_crps729 só roda na Central
+    OPEN BTCH0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
+    FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
+    CLOSE BTCH0001.cr_crapdat;    
+  
     --
     UPDATE crapcob
        SET crapcob.insitcrt = 2 -- Entrada no cartório
+          ,crapcob.dtsitcrt = rw_crapdat.dtmvtolt
      WHERE crapcob.rowid = pr_rowid;
+     
+     PAGA0001.pc_cria_log_cobranca(pr_idtabcob => pr_rowid
+                                 , pr_cdoperad => '1'
+                                 , pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                 , pr_dsmensag => 'Titulo remetido ao cartorio'
+                                 , pr_des_erro => vr_des_erro
+                                 , pr_dscritic => vr_dscritic);
+     
+    /* Preparar Lote de Retorno Cooperado */
+    PAGA0001.pc_prep_retorno_cooperado (pr_idregcob => pr_rowid            --ROWID da cobranca
+                                       ,pr_cdocorre => 22                  --Codigo Ocorrencia
+                                       ,pr_dsmotivo => NULL                --Descricao Motivo
+                                       ,pr_dtmvtolt => rw_crapdat.dtmvtolt --Data Movimento
+                                       ,pr_cdoperad => '1'                 --Codigo Operador
+                                       ,pr_nrremret => pr_nrremret         --Numero Retorno
+                                       ,pr_cdcritic => vr_cdcritic         --Codigo Critica
+                                       ,pr_dscritic => vr_dscritic);       --Descricao Critica
+    --Se Ocorreu erro
+    IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+      --Levantar Excecao
+      RAISE vr_exc_erro;
+    END IF;     
+     
+    -- gera movimentação de retorno do titulo 
+		PAGA0001.pc_prepara_retorno_cooperativa(pr_idtabcob => pr_rowid
+                                           ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                           ,pr_dtocorre => rw_crapdat.dtmvtolt
+                                           ,pr_cdoperad => '1'
+                                           ,pr_vlabatim => 0
+                                           ,pr_vldescto => 0
+                                           ,pr_vljurmul => 0
+                                           ,pr_vlrpagto => 0
+                                           ,pr_vltarifa => 0
+                                           ,pr_flgdesct => FALSE
+                                           ,pr_flcredit => FALSE
+                                           ,pr_nrretcoo => pr_nrremret
+                                           ,pr_cdmotivo => NULL
+                                           ,pr_cdocorre => 22
+                                           ,pr_cdbanpag => rw_crapcop.cdbcoctl
+                                           ,pr_cdagepag => rw_crapcop.cdagectl
+                                           ,pr_cdcritic => vr_cdcritic
+                                           ,pr_dscritic => vr_dscritic
+                                           );
+
+    --Se Ocorreu erro
+    IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+      --Levantar Excecao
+      RAISE vr_exc_erro;
+    END IF;     
     --
   EXCEPTION
     WHEN OTHERS THEN
@@ -395,7 +476,7 @@ create or replace procedure cecred.pc_crps729(pr_dscritic OUT VARCHAR2
   PROCEDURE pc_gera_remessa(pr_dscritic OUT VARCHAR2
                            ) IS
     --
-    CURSOR cr_craprem IS
+    CURSOR cr_craprem (pr_dtmvtolt IN DATE) IS
       SELECT DISTINCT
              crapcob.cdcooper
             ,crapcob.nrcnvcob
@@ -438,12 +519,22 @@ create or replace procedure cecred.pc_crps729(pr_dscritic OUT VARCHAR2
             ,crapsab
             ,crapmun
             ,crapmun comarca
-       WHERE craprem.cdcooper = crapcob.cdcooper
+            ,crapcco
+            ,crapcre
+       WHERE crapcco.cdcooper > 0
+         AND crapcco.cddbanco = 85
+         AND crapcre.cdcooper = crapcco.cdcooper
+         AND crapcre.nrcnvcob = crapcco.nrconven
+         AND crapcre.dtmvtolt = pr_dtmvtolt
+         AND crapcre.intipmvt = 1
+         AND craprem.cdcooper = crapcre.cdcooper
+         AND craprem.nrcnvcob = crapcre.nrcnvcob
+         AND craprem.nrremret = crapcre.nrremret
+         AND craprem.cdcooper = crapcob.cdcooper
          AND craprem.nrcnvcob = crapcob.nrcnvcob
          AND craprem.nrdconta = crapcob.nrdconta
          AND craprem.nrdocmto = crapcob.nrdocmto
          AND crapdat.cdcooper = crapcob.cdcooper
-         AND crapdat.dtmvtolt = craprem.dtaltera
          AND crapban.cdbccxlt = crapcob.cdbandoc
          AND crapcop.cdcooper = crapcob.cdcooper
          AND crapass.nrdconta = crapcob.nrdconta
@@ -484,8 +575,13 @@ create or replace procedure cecred.pc_crps729(pr_dscritic OUT VARCHAR2
     vr_qtnumarq  := 0;
     vr_vlsomseg  := 0;
 		vr_index_arq := 0;
+    
+    -- buscar a data da Central para buscar o movimento de remessa
+    OPEN BTCH0001.cr_crapdat(pr_cdcooper => 3);
+    FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
+    CLOSE BTCH0001.cr_crapdat;            
     --
-    OPEN cr_craprem;
+    OPEN cr_craprem(pr_dtmvtolt => rw_crapdat.dtmvtolt);
     --
     LOOP
       --
@@ -498,6 +594,9 @@ create or replace procedure cecred.pc_crps729(pr_dscritic OUT VARCHAR2
           --
           vr_dsdlinha := NULL;
           --
+          -- temporario RC7
+          rw_craprem.dtmvtolt := to_char(SYSDATE, 'DDMMYYYY');
+          
           pc_gera_trailler_remessa(pr_cdbandoc => rw_craprem.cdbandoc -- IN
                                   ,pr_nmresbcc => rw_craprem.nmresbcc -- IN
                                   ,pr_dtmvtolt => rw_craprem.dtmvtolt -- IN
@@ -514,6 +613,7 @@ create or replace procedure cecred.pc_crps729(pr_dscritic OUT VARCHAR2
           ELSE
             --
             pc_insere_linha(pr_linha => vr_dsdlinha      -- IN
+                           ,pr_cdcooper => rw_craprem.cdcooper
                            ,pr_rowid => rw_craprem.rowid -- IN
                            );
             --
@@ -529,6 +629,10 @@ create or replace procedure cecred.pc_crps729(pr_dscritic OUT VARCHAR2
         vr_vlsomseg := 0;
         --
       END IF;
+      
+      -- temporario RC7
+      rw_craprem.dtmvtolt := to_char(SYSDATE, 'DDMMYYYY');
+      
       -- Se for o primeiro registro, gerar o cabeçalho
       IF vr_qtregist = 1 THEN
         --
@@ -556,6 +660,7 @@ create or replace procedure cecred.pc_crps729(pr_dscritic OUT VARCHAR2
         ELSE
           --
           pc_insere_linha(pr_linha => vr_dsdlinha      -- IN
+                         ,pr_cdcooper => rw_craprem.cdcooper
                          ,pr_rowid => rw_craprem.rowid -- IN
                          );
           --
@@ -601,9 +706,10 @@ create or replace procedure cecred.pc_crps729(pr_dscritic OUT VARCHAR2
         --
       ELSE
         --
-        pc_insere_linha(pr_linha => vr_dsdlinha      -- IN
-                       ,pr_rowid => rw_craprem.rowid -- IN
-                       );
+          pc_insere_linha(pr_linha => vr_dsdlinha      -- IN
+                         ,pr_cdcooper => rw_craprem.cdcooper
+                         ,pr_rowid => rw_craprem.rowid -- IN
+                         );
         --
       END IF;
       --
@@ -617,6 +723,9 @@ create or replace procedure cecred.pc_crps729(pr_dscritic OUT VARCHAR2
       --
       vr_dsdlinha := NULL;
       --
+      -- temporario RC7
+      rw_craprem.dtmvtolt := to_char(SYSDATE, 'DDMMYYYY');
+
       pc_gera_trailler_remessa(pr_cdbandoc => rw_craprem.cdbandoc -- IN
                               ,pr_nmresbcc => rw_craprem.nmresbcc -- IN
                               ,pr_dtmvtolt => rw_craprem.dtmvtolt -- IN
@@ -633,6 +742,7 @@ create or replace procedure cecred.pc_crps729(pr_dscritic OUT VARCHAR2
       ELSE
         --
         pc_insere_linha(pr_linha => vr_dsdlinha      -- IN
+                       ,pr_cdcooper => rw_craprem.cdcooper
                        ,pr_rowid => rw_craprem.rowid -- IN
                        );
         --
@@ -672,6 +782,7 @@ create or replace procedure cecred.pc_crps729(pr_dscritic OUT VARCHAR2
     vr_index_reg     NUMBER;
     --
     vr_exc_erro EXCEPTION;
+    vr_aux INTEGER;
     --
   BEGIN
     -- Incluido controle de Log inicio programa
@@ -696,10 +807,21 @@ create or replace procedure cecred.pc_crps729(pr_dscritic OUT VARCHAR2
       vr_nmarqtxt := cobr0011.fn_gera_nome_arquivo_remessa(pr_cdbandoc => 85          -- IN
                                                           ,pr_dtmvtolt => vr_dtmvtolt -- IN
                                                           );
+      -- temporario RC7                                                    
+      vr_nmarqtxt := cobr0011.fn_gera_nome_arquivo_remessa(pr_cdbandoc => 85          -- IN
+                                                          ,pr_dtmvtolt => SYSDATE -- IN
+       );
+      -- temporario RC7                                                  
+      vr_aux := fn_sequence(pr_nmtabela => 'IEPTB'
+                           ,pr_nmdcampo => 'NRSEQUENCIAL'
+                           ,pr_dsdchave => '1;' || to_char(SYSDATE,'YYYYMMDD'));
+                           
+      vr_nmarqtxt := REPLACE(vr_nmarqtxt,'181','18' || to_char(vr_aux,'fm0'));                           
+                                                                
       -- Diretório onde deverá gerar o arquivo de remessa
       --vr_nmdirtxt := '/micros/cecred/ieptb/remessa/';
       vr_nmdirtxt := gene0001.fn_param_sistema (pr_nmsistem => 'CRED'              -- IN
-                                               ,pr_cdcooper => 1                   -- IN
+                                               ,pr_cdcooper => 3                   -- IN
                                                ,pr_cdacesso => 'DIR_IEPTB_REMESSA' -- IN
                                                );
       -- Abre o arquivo de dados em modo de gravação
@@ -799,6 +921,7 @@ create or replace procedure cecred.pc_crps729(pr_dscritic OUT VARCHAR2
               END IF;
               --
               pc_atualiza_status_enviados(pr_rowid    => vr_tab_arquivo(vr_index_reg).ds_rowid -- IN
+                                         ,pr_cdcooper => vr_tab_arquivo(vr_index_reg).cdcooper
                                          ,pr_dscritic => pr_dscritic                           -- OUT
                                          );
               --
@@ -1122,7 +1245,7 @@ create or replace procedure cecred.pc_crps729(pr_dscritic OUT VARCHAR2
   PROCEDURE pc_gera_desistencia(pr_dscritic OUT VARCHAR2
                                ) IS
     --
-    CURSOR cr_craprem IS
+    CURSOR cr_craprem (pr_dtmvtolt IN date) IS
       SELECT lpad(crapcob.cdbandoc, 3, '0') cdbandoc                                                      -- Campo 02 - Header Arquivo
             ,rpad(crapban.nmresbcc, 40, ' ') nmresbcc                                                     -- Campo 03 - Header Arquivo
             ,to_char(crapdat.dtmvtolt, 'DDMMYYYY') dtmvtolt                                               -- Campo 04 - Header Arquivo
@@ -1136,6 +1259,8 @@ create or replace procedure cecred.pc_crps729(pr_dscritic OUT VARCHAR2
             ,lpad(crapcop.cdagectl, 4, '0') || lpad(crapcob.nrdconta, 8, '0') nrdconta                    -- Campo 08 - Transação
             ,lpad(crapcob.nrnosnum, 12, '0') nrnosnum                                                     -- Campo 09 - Transação
             ,crapcob.rowid
+            ,crapcob.cdcooper
+            ,crapdat.dtmvtolt dtmvtolt_dat
         FROM craprem
             ,crapcob
             ,crapdat
@@ -1143,12 +1268,22 @@ create or replace procedure cecred.pc_crps729(pr_dscritic OUT VARCHAR2
             ,crapcop
             ,crapsab
             ,tbcobran_confirmacao_ieptb
-       WHERE craprem.cdcooper                	   = crapcob.cdcooper
+            ,crapcco
+            ,crapcre
+       WHERE crapcco.cdcooper > 0
+         AND crapcco.cddbanco = 85
+         AND crapcre.cdcooper = crapcco.cdcooper
+         AND crapcre.nrcnvcob = crapcco.nrconven
+         AND crapcre.dtmvtolt = pr_dtmvtolt
+         AND crapcre.intipmvt = 1
+         AND craprem.cdcooper = crapcre.cdcooper
+         AND craprem.nrcnvcob = crapcre.nrcnvcob
+         AND craprem.nrremret = crapcre.nrremret            
+         AND craprem.cdcooper                	   = crapcob.cdcooper
          AND craprem.nrcnvcob                    = crapcob.nrcnvcob
          AND craprem.nrdconta                    = crapcob.nrdconta
          AND craprem.nrdocmto                    = crapcob.nrdocmto
          AND crapdat.cdcooper                    = crapcob.cdcooper
-         AND crapdat.dtmvtolt                    = craprem.dtaltera
          AND crapban.cdbccxlt                    = crapcob.cdbandoc
          AND crapcop.cdcooper                    = crapcob.cdcooper
          AND crapsab.cdcooper                    = crapcob.cdcooper
@@ -1176,6 +1311,8 @@ create or replace procedure cecred.pc_crps729(pr_dscritic OUT VARCHAR2
     vr_idgercab BOOLEAN;
     --
     vr_exc_erro EXCEPTION;
+    vr_des_erro VARCHAR2(100);
+    vr_dscritic VARCHAR2(1000);
     --
   BEGIN
     -- Incluido controle de Log inicio programa
@@ -1188,8 +1325,13 @@ create or replace procedure cecred.pc_crps729(pr_dscritic OUT VARCHAR2
 		vr_index_arq := 0;
 		--
 		vr_tab_arquivo.delete;
+
+    -- buscar a data da Central para buscar o movimento de remessa
+    OPEN BTCH0001.cr_crapdat(pr_cdcooper => 3);
+    FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
+    CLOSE BTCH0001.cr_crapdat;            
     --
-    OPEN cr_craprem;
+    OPEN cr_craprem(pr_dtmvtolt => rw_crapdat.dtmvtolt);    
     --
     LOOP
       --
@@ -1198,6 +1340,10 @@ create or replace procedure cecred.pc_crps729(pr_dscritic OUT VARCHAR2
       --
       IF vr_qtregist = 1 THEN
         -- Inicializa o arquivo de desistências
+        
+        -- temporario RC7
+        rw_craprem.dtmvtolt := to_char(SYSDATE, 'DDMMYYYY');
+
         pc_gera_header_arq_desist(pr_cdaprese => rw_craprem.cdbandoc -- IN
                                  ,pr_nmaprese => rw_craprem.nmresbcc -- IN
                                  ,pr_dtmvtolt => rw_craprem.dtmvtolt -- IN
@@ -1215,6 +1361,7 @@ create or replace procedure cecred.pc_crps729(pr_dscritic OUT VARCHAR2
         ELSE
           --
           pc_insere_linha(pr_linha => vr_dsdlinha      -- IN
+                         ,pr_cdcooper => rw_craprem.cdcooper
                          ,pr_rowid => rw_craprem.rowid -- IN
                          );
           --
@@ -1245,6 +1392,7 @@ create or replace procedure cecred.pc_crps729(pr_dscritic OUT VARCHAR2
           ELSE
             --
             pc_insere_linha(pr_linha => vr_dsdlinha      -- IN
+                           ,pr_cdcooper => rw_craprem.cdcooper
                            ,pr_rowid => rw_craprem.rowid -- IN
                            );
             --
@@ -1280,6 +1428,7 @@ create or replace procedure cecred.pc_crps729(pr_dscritic OUT VARCHAR2
         ELSE
           --
           pc_insere_linha(pr_linha => vr_dsdlinha      -- IN
+                         ,pr_cdcooper => rw_craprem.cdcooper
                          ,pr_rowid => rw_craprem.rowid -- IN
                          );
           --
@@ -1311,6 +1460,7 @@ create or replace procedure cecred.pc_crps729(pr_dscritic OUT VARCHAR2
       ELSE
         --
         pc_insere_linha(pr_linha => vr_dsdlinha      -- IN
+                       ,pr_cdcooper => rw_craprem.cdcooper
                        ,pr_rowid => rw_craprem.rowid -- IN
                        );
         --
@@ -1341,8 +1491,25 @@ create or replace procedure cecred.pc_crps729(pr_dscritic OUT VARCHAR2
       ELSE
         --
         pc_insere_linha(pr_linha => vr_dsdlinha      -- IN
+                       ,pr_cdcooper => rw_craprem.cdcooper
                        ,pr_rowid => rw_craprem.rowid -- IN
                        );
+
+        PAGA0001.pc_cria_log_cobranca(pr_idtabcob => rw_craprem.rowid
+                                    , pr_cdoperad => '1'
+                                    , pr_dtmvtolt => rw_craprem.dtmvtolt_dat
+                                    , pr_dsmensag => 'Solicitacao de cancelamento enviada ao cartorio'
+                                    , pr_des_erro => vr_des_erro
+                                    , pr_dscritic => vr_dscritic);                               
+                                    
+        -- LOG de processo
+        PAGA0001.pc_cria_log_cobranca(pr_idtabcob => rw_craprem.rowid --ROWID da Cobranca
+                                     ,pr_cdoperad => '1'   --Operador
+                                     ,pr_dtmvtolt => rw_craprem.dtmvtolt_dat   --Data movimento
+                                     ,pr_dsmensag => 'Aguardando o cancelamento do cartorio' --Descricao Mensagem
+                                     ,pr_des_erro => vr_des_erro   --Indicador erro
+                                     ,pr_dscritic => vr_dscritic); --Descricao erro
+                                    
         --
       END IF;
       --
@@ -1356,6 +1523,10 @@ create or replace procedure cecred.pc_crps729(pr_dscritic OUT VARCHAR2
       --
       vr_dsdlinha := NULL;
       --
+
+      -- temporario RC7
+      rw_craprem.dtmvtolt := to_char(SYSDATE, 'DDMMYYYY');
+      
       pc_gera_trail_arq_desist(pr_cdaprese => rw_craprem.cdbandoc -- IN
                               ,pr_nmaprese => rw_craprem.nmresbcc -- IN
                               ,pr_dtmvtolt => rw_craprem.dtmvtolt -- IN
@@ -1373,6 +1544,7 @@ create or replace procedure cecred.pc_crps729(pr_dscritic OUT VARCHAR2
       ELSE
         --
         pc_insere_linha(pr_linha => vr_dsdlinha      -- IN
+                       ,pr_cdcooper => rw_craprem.cdcooper
                        ,pr_rowid => rw_craprem.rowid -- IN
                        );
         --
@@ -1437,10 +1609,16 @@ create or replace procedure cecred.pc_crps729(pr_dscritic OUT VARCHAR2
       vr_nmarqtxt := cobr0011.fn_gera_nome_arq_desistencia(pr_cdbandoc => '85'        -- IN
                                                           ,pr_dtmvtolt => vr_dtmvtolt -- IN
                                                           );
+                                                          
+      -- temporario RC7                                                    
+      vr_nmarqtxt := cobr0011.fn_gera_nome_arq_desistencia(pr_cdbandoc => '85'        -- IN
+                                                          ,pr_dtmvtolt => SYSDATE -- IN
+                                                          );
+                                                          
       -- Diretório onde deverá gerar o arquivo de desistência
       --vr_nmdirtxt := '/micros/cecred/ieptb/remessa/';
       vr_nmdirtxt := gene0001.fn_param_sistema (pr_nmsistem => 'CRED'              -- IN
-                                               ,pr_cdcooper => 1                   -- IN
+                                               ,pr_cdcooper => 3                   -- IN
                                                ,pr_cdacesso => 'DIR_IEPTB_REMESSA' -- IN
                                                );
       -- Abre o arquivo de dados em modo de gravação
@@ -1898,7 +2076,7 @@ create or replace procedure cecred.pc_crps729(pr_dscritic OUT VARCHAR2
   PROCEDURE pc_gera_cancelamento(pr_dscritic OUT VARCHAR2
                                 ) IS
     --
-    CURSOR cr_craprem IS
+    CURSOR cr_craprem (pr_dtmvtolt IN date) IS
 		  SELECT lpad(crapcob.cdbandoc, 3, '0') cdbandoc                                                      -- Campo 02 - Header Arquivo
             ,rpad(crapban.nmresbcc, 40, ' ') nmresbcc                                                     -- Campo 03 - Header Arquivo
             ,to_char(crapdat.dtmvtolt, 'DDMMYYYY') dtmvtolt                                               -- Campo 04 - Header Arquivo
@@ -1912,6 +2090,8 @@ create or replace procedure cecred.pc_crps729(pr_dscritic OUT VARCHAR2
             ,lpad(crapcop.cdagectl, 4, '0') || lpad(crapcob.nrdconta, 8, '0') nrdconta                    -- Campo 08 - Transação
             ,lpad(crapcob.nrnosnum, 12, '0') nrnosnum                                                     -- Campo 09 - Transação
             ,crapcob.rowid
+            ,crapcob.cdcooper
+            ,crapdat.dtmvtolt dtmvtolt_dat
         FROM craprem
             ,crapcob
             ,crapdat
@@ -1919,12 +2099,22 @@ create or replace procedure cecred.pc_crps729(pr_dscritic OUT VARCHAR2
             ,crapcop
             ,crapsab
             ,tbcobran_retorno_ieptb
-       WHERE craprem.cdcooper                = crapcob.cdcooper
+            ,crapcco
+            ,crapcre
+       WHERE crapcco.cdcooper > 0
+         AND crapcco.cddbanco = 85
+         AND crapcre.cdcooper = crapcco.cdcooper
+         AND crapcre.nrcnvcob = crapcco.nrconven
+         AND crapcre.dtmvtolt = pr_dtmvtolt
+         AND crapcre.intipmvt = 1
+         AND craprem.cdcooper = crapcre.cdcooper
+         AND craprem.nrcnvcob = crapcre.nrcnvcob
+         AND craprem.nrremret = crapcre.nrremret
+         AND craprem.cdcooper                = crapcob.cdcooper
          AND craprem.nrcnvcob                = crapcob.nrcnvcob
          AND craprem.nrdconta                = crapcob.nrdconta
          AND craprem.nrdocmto                = crapcob.nrdocmto
          AND crapdat.cdcooper                = crapcob.cdcooper
-         AND crapdat.dtmvtolt                = craprem.dtaltera
          AND crapban.cdbccxlt                = crapcob.cdbandoc
          AND crapcop.cdcooper                = crapcob.cdcooper
          AND crapsab.cdcooper                = crapcob.cdcooper
@@ -1952,6 +2142,8 @@ create or replace procedure cecred.pc_crps729(pr_dscritic OUT VARCHAR2
     vr_idgercab BOOLEAN;
     --
     vr_exc_erro EXCEPTION;
+    vr_des_erro VARCHAR2(100);
+    vr_dscritic VARCHAR2(1000);
     --
   BEGIN
     -- Incluido controle de Log inicio programa
@@ -1964,8 +2156,13 @@ create or replace procedure cecred.pc_crps729(pr_dscritic OUT VARCHAR2
 		vr_index_arq := 0;
 		--
 		vr_tab_arquivo.delete;
+    
+    -- buscar a data da Central para buscar o movimento de remessa
+    OPEN BTCH0001.cr_crapdat(pr_cdcooper => 3);
+    FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
+    CLOSE BTCH0001.cr_crapdat;            
     --
-    OPEN cr_craprem;
+    OPEN cr_craprem(pr_dtmvtolt => rw_crapdat.dtmvtolt);
     --
     LOOP
       --
@@ -1974,6 +2171,10 @@ create or replace procedure cecred.pc_crps729(pr_dscritic OUT VARCHAR2
       --
       IF vr_qtregist = 1 THEN
         -- Inicializa o arquivo de cancelamentos
+        
+        -- temporario RC7
+        rw_craprem.dtmvtolt := to_char(SYSDATE, 'DDMMYYYY');
+        
         pc_gera_header_arq_cancel(pr_cdaprese => rw_craprem.cdbandoc -- IN
                                  ,pr_nmaprese => rw_craprem.nmresbcc -- IN
                                  ,pr_dtmvtolt => rw_craprem.dtmvtolt -- IN
@@ -1991,8 +2192,16 @@ create or replace procedure cecred.pc_crps729(pr_dscritic OUT VARCHAR2
         ELSE
           --
           pc_insere_linha(pr_linha => vr_dsdlinha      -- IN
+                         ,pr_cdcooper => rw_craprem.cdcooper
                          ,pr_rowid => rw_craprem.rowid -- IN
                          );
+                         
+          PAGA0001.pc_cria_log_cobranca(pr_idtabcob => rw_craprem.rowid
+                                      , pr_cdoperad => '1'
+                                      , pr_dtmvtolt => rw_craprem.dtmvtolt_dat
+                                      , pr_dsmensag => 'Exclusao de protesto enviada ao cartorio'
+                                      , pr_des_erro => vr_des_erro
+                                      , pr_dscritic => vr_dscritic);                                                        
           --
         END IF;
         --
@@ -2021,6 +2230,7 @@ create or replace procedure cecred.pc_crps729(pr_dscritic OUT VARCHAR2
           ELSE
             --
             pc_insere_linha(pr_linha => vr_dsdlinha      -- IN
+                           ,pr_cdcooper => rw_craprem.cdcooper
                            ,pr_rowid => rw_craprem.rowid -- IN
                            );
             --
@@ -2056,6 +2266,7 @@ create or replace procedure cecred.pc_crps729(pr_dscritic OUT VARCHAR2
         ELSE
           --
           pc_insere_linha(pr_linha => vr_dsdlinha      -- IN
+                         ,pr_cdcooper => rw_craprem.cdcooper
                          ,pr_rowid => rw_craprem.rowid -- IN
                          );
           --
@@ -2087,6 +2298,7 @@ create or replace procedure cecred.pc_crps729(pr_dscritic OUT VARCHAR2
       ELSE
         --
         pc_insere_linha(pr_linha => vr_dsdlinha      -- IN
+                       ,pr_cdcooper => rw_craprem.cdcooper
                        ,pr_rowid => rw_craprem.rowid -- IN
                        );
         --
@@ -2117,6 +2329,7 @@ create or replace procedure cecred.pc_crps729(pr_dscritic OUT VARCHAR2
       ELSE
         --
         pc_insere_linha(pr_linha => vr_dsdlinha      -- IN
+                       ,pr_cdcooper => rw_craprem.cdcooper
                        ,pr_rowid => rw_craprem.rowid -- IN
                        );
         --
@@ -2132,6 +2345,10 @@ create or replace procedure cecred.pc_crps729(pr_dscritic OUT VARCHAR2
       --
       vr_dsdlinha := NULL;
       --
+
+      -- temporario RC7
+      rw_craprem.dtmvtolt := to_char(SYSDATE, 'DDMMYYYY');
+
       pc_gera_trail_arq_cancel(pr_cdaprese => rw_craprem.cdbandoc -- IN
                               ,pr_nmaprese => rw_craprem.nmresbcc -- IN
                               ,pr_dtmvtolt => rw_craprem.dtmvtolt -- IN
@@ -2149,6 +2366,7 @@ create or replace procedure cecred.pc_crps729(pr_dscritic OUT VARCHAR2
       ELSE
         --
         pc_insere_linha(pr_linha => vr_dsdlinha      -- IN
+                       ,pr_cdcooper => rw_craprem.cdcooper
                        ,pr_rowid => rw_craprem.rowid -- IN
                        );
         --
@@ -2213,10 +2431,15 @@ create or replace procedure cecred.pc_crps729(pr_dscritic OUT VARCHAR2
       vr_nmarqtxt := cobr0011.fn_gera_nome_arq_cancelamento(pr_cdbandoc => '85'        -- IN
                                                            ,pr_dtmvtolt => vr_dtmvtolt -- IN
                                                            );
+      -- temporario RC7                                                     
+      vr_nmarqtxt := cobr0011.fn_gera_nome_arq_cancelamento(pr_cdbandoc => '85'        -- IN
+                                                           ,pr_dtmvtolt => SYSDATE -- IN
+                                                           );
+                                                           
       -- Diretório onde deverá gerar o arquivo de cancelamento
       --vr_nmdirtxt := '/micros/cecred/ieptb/remessa/';
       vr_nmdirtxt := gene0001.fn_param_sistema(pr_nmsistem => 'CRED'              -- IN
-                                              ,pr_cdcooper => 1                   -- IN
+                                              ,pr_cdcooper => 3                   -- IN
                                               ,pr_cdacesso => 'DIR_IEPTB_REMESSA' -- IN
                                               );
       -- Abre o arquivo de dados em modo de gravação
@@ -2412,7 +2635,7 @@ create or replace procedure cecred.pc_crps729(pr_dscritic OUT VARCHAR2
 	PROCEDURE pc_gera_cancelamento_ieptb(pr_dscritic OUT VARCHAR2
                                       ) IS
     --
-    CURSOR cr_craprem IS
+    CURSOR cr_craprem (pr_dtmvtolt IN DATE) IS
 		  SELECT lpad(crapcob.cdbandoc, 3, '0') cdbandoc                                                  -- Campo 02 - Header Arquivo
             ,rpad(crapban.nmresbcc, 40, ' ') nmresbcc                                                 -- Campo 03 - Header Arquivo
             ,to_char(crapdat.dtmvtolt, 'DDMMYYYY') dtmvtolt                                           -- Campo 04 - Header Arquivo
@@ -2433,12 +2656,22 @@ create or replace procedure cecred.pc_crps729(pr_dscritic OUT VARCHAR2
             ,crapcop
             ,crapsab
             ,tbcobran_retorno_ieptb
-       WHERE craprem.cdcooper                = crapcob.cdcooper
+            ,crapcco
+            ,crapcre
+       WHERE crapcco.cdcooper > 0
+         AND crapcco.cddbanco = 85
+         AND crapcre.cdcooper = crapcco.cdcooper
+         AND crapcre.nrcnvcob = crapcco.nrconven
+         AND crapcre.dtmvtolt = pr_dtmvtolt
+         AND crapcre.intipmvt = 1
+         AND craprem.cdcooper = crapcre.cdcooper
+         AND craprem.nrcnvcob = crapcre.nrcnvcob
+         AND craprem.nrremret = crapcre.nrremret
+         AND craprem.cdcooper                = crapcob.cdcooper
          AND craprem.nrcnvcob                = crapcob.nrcnvcob
          AND craprem.nrdconta                = crapcob.nrdconta
          AND craprem.nrdocmto                = crapcob.nrdocmto
          AND crapdat.cdcooper                = crapcob.cdcooper
-         --AND crapdat.dtmvtolt                = craprem.dtaltera
          AND crapban.cdbccxlt                = crapcob.cdbandoc
          AND crapcop.cdcooper                = crapcob.cdcooper
          AND crapsab.cdcooper                = crapcob.cdcooper
@@ -2485,8 +2718,13 @@ create or replace procedure cecred.pc_crps729(pr_dscritic OUT VARCHAR2
 		vr_index_arq := 0;
 		--
 		vr_tab_arquivo.delete;
+
+    -- buscar a data da Central para buscar o movimento de remessa
+    OPEN BTCH0001.cr_crapdat(pr_cdcooper => 3);
+    FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
+    CLOSE BTCH0001.cr_crapdat;            
     --
-    OPEN cr_craprem;
+    OPEN cr_craprem(pr_dtmvtolt => rw_crapdat.dtmvtolt);
     --
     LOOP
       --
@@ -2563,10 +2801,15 @@ create or replace procedure cecred.pc_crps729(pr_dscritic OUT VARCHAR2
 		vr_nmarqtxt := cobr0011.fn_gera_nome_arq_cancelamento(pr_cdbandoc => '85'        -- IN
 																												 ,pr_dtmvtolt => vr_dtmvtolt -- IN
 																												 );
+    -- temporario RC7                                                         
+		vr_nmarqtxt := cobr0011.fn_gera_nome_arq_cancelamento(pr_cdbandoc => '85'        -- IN
+																												 ,pr_dtmvtolt => SYSDATE -- IN
+																												 );
+                                                         
 		-- Diretório onde deverá gerar o arquivo de cancelamento
 		--vr_nmdirtxt := '/micros/cecred/ieptb/remessa/';
 		vr_nmdirtxt := gene0001.fn_param_sistema(pr_nmsistem => 'CRED'              -- IN
-																						,pr_cdcooper => 1                   -- IN
+																						,pr_cdcooper => 3                   -- IN
 																						,pr_cdacesso => 'DIR_IEPTB_REMESSA' -- IN
 																						);
 		-- Abre o arquivo de dados em modo de gravação
@@ -2684,14 +2927,18 @@ BEGIN
 	-- Escrever o log no arquivo
   pc_controla_log_batch(1, to_char(SYSDATE, 'DD/MM/YYYY - HH24:MI:SS') || ' - pc_crps729 --> Finalizado o processamento das remessas.'); -- Texto para escrita
   --
+	COMMIT;
+	--
 EXCEPTION
   WHEN vr_exc_erro THEN
     -- Incluído controle de Log
     pc_controla_log_batch(2, to_char(SYSDATE, 'DD/MM/YYYY - HH24:MI:SS') || ' - pc_crps729 --> ' || pr_dscritic);
+		ROLLBACK;
   WHEN OTHERS THEN
     -- Incluído controle de Log
 		pr_dscritic := SQLERRM;
     pc_controla_log_batch(2, to_char(SYSDATE, 'DD/MM/YYYY - HH24:MI:SS') || ' - pc_crps729 --> ' || SQLERRM);
+		ROLLBACK;
   --
 END pc_crps729;
 /
