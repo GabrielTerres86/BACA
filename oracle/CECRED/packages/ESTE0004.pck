@@ -66,6 +66,40 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0004 IS
   
   ---------------------------------------------------------------------------------------------------------------*/
 
+  FUNCTION fn_des_tpctrato(pr_tpctrato IN NUMBER) RETURN VARCHAR2 IS
+  /* ---------------------------------------------------------------------------------------------------------------
+
+      Programa : fn_des_tpctrato
+      Sistema  : Rotinas referentes a comunicaçao com a ESTEIRA de CREDITO da IBRATAN
+      Sigla    : CRED
+      Autor    : Paulo Penteado (Gft)
+      Data     : Abrir/2018.
+
+      Dados referentes ao programa:
+
+      Frequencia: Sempre que for chamado
+      Objetivo  : Rotina para retornar descrição do Tipo do contrato de Limite Desconto
+
+      Alteração : 30/04/2018 Criação (Paulo Penteado (GFT)) 
+
+  ---------------------------------------------------------------------------------------------------------------*/
+    vr_tpctrato VARCHAR2(100) := NULL;
+
+  BEGIN
+    SELECT CASE pr_tpctrato WHEN 1 THEN 'EMPRESTIMO'
+                            WHEN 2 THEN 'ALIENACAO FIDUCIARIA'
+                            WHEN 3 THEN 'HIPOTECA'
+                            WHEN 4 THEN 'APLICACAO FINANCEIRA'
+                            ELSE        NULL
+           END CASE
+    INTO   vr_tpctrato FROM dual;
+
+    RETURN vr_tpctrato;
+  EXCEPTION
+    WHEN OTHERS THEN
+         RETURN NULL;
+  END fn_des_tpctrato;
+
 
   --> Rotina responsavel por montar o objeto json para analise de limite de desconto de títulos
   PROCEDURE pc_gera_json_analise_lim(pr_cdcooper   IN crapass.cdcooper%TYPE   --> Codigo da cooperativa
@@ -148,7 +182,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0004 IS
           ,case when nvl(lim.nrctrmnt,0) = 0 then 'LM'
                 else                              'MJ'
            end tpproduto
-          ,ldc.tpctrato -- Tipo do contrato de Limite Desconto  (0-Generico/ 1-Aplicacao)
+          ,decode(ldc.tpctrato, 1, 4, 0) tpctrato -- Tipo do contrato de Limite Desconto  (0-Generico/ 1-Aplicacao)
+          ,decode(ldc.tpctrato, 1, 'APLICACAO FINANCEIRA', 'SEM GARANTIA') dsctrato
           ,0 cdfinemp -- finalidadeCodigo: Codigo Finalidade da Proposta de Empréstimo
           ,'' dsfinemp -- finalidadeDescricao: Descricao Finalidade da Proposta de Empréstimo
           ,lim.inconcje
@@ -411,7 +446,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0004 IS
     vr_dsdidade      VARCHAR2(100);
     vr_dstextab      craptab.dstextab%TYPE;
     vr_nmseteco      craptab.dstextab%TYPE;
-    vr_dstpgara      craptab.dstextab%TYPE;
     vr_dsquapro      VARCHAR2(100);
     vr_flgcolab      BOOLEAN;
     vr_cddcargo      tbcadast_colaborador.cdcooper%TYPE;
@@ -508,19 +542,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0004 IS
 
     vr_obj_generico.put('tipoProduto'           ,rw_crawlim.tpproduto);
     
-    /* Paulo Penteado (GFT): 02/03/2018 - Por hora iremos considerar as tags 
-       tipoGarantiaCodigo e tipoGarantiaDescricao como sendo 1 e 'LIMITE DESC TITUL0' até a liberaçao 
-       a alteraçao 404 ser liberada. Pois na 404 será criado o campo crapldc.tpctrato */
-    vr_obj_generico.put('tipoGarantiaCodigo'    ,rw_crawlim.tpctrato );
-    --> Buscar descriçao do tipo de garantia
-    vr_dstpgara  := 'LIMITE DESC TITUL0';
-                    /*tabe0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper,
-                                               pr_nmsistem => 'CRED',
-                                               pr_tptabela => 'GENERI', 
-                                               pr_cdempres => 0, 
-                                               pr_cdacesso => 'CTRATOEMPR', 
-                                               pr_tpregist => rw_crawlim.tpctrato);*/
-    vr_obj_generico.put('tipoGarantiaDescricao'    ,TRIM(vr_dstpgara) );
+    IF  rw_crawlim.tpctrato > 0 THEN
+        vr_obj_generico.put('tipoGarantiaCodigo'   , rw_crawlim.tpctrato );
+        vr_obj_generico.put('tipoGarantiaDescricao', rw_crawlim.dsctrato );
+    END IF;
 
     vr_obj_generico.put('debitoEm'    ,rw_crawlim.despagto );
     vr_obj_generico.put('liquidacao'  ,rw_crawlim.dsliquid!='0,0,0,0,0,0,0,0,0,0');
@@ -1369,7 +1394,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0004 IS
         ,lim.hrinclus
         ,ldc.cddlinha cdlcremp
         ,ldc.dsdlinha dslcremp
-        ,ldc.tpctrato -- Tipo do contrato de Limite Desconto (0-Generico/ 1-Aplicacao)
+        ,decode(ldc.tpctrato, 1, 4, 0) tpctrato -- Tipo do contrato de Limite Desconto (0-Generico/ 1-Aplicacao)
+        ,decode(ldc.tpctrato, 1, 'APLICACAO FINANCEIRA', 'SEM GARANTIA') dsctrato
         ,0 cdfinemp -- finalidadeCodigo: Codigo Finalidade da Proposta de Empréstimo
         ,'' dsfinemp -- finalidadeDescricao: Descricao Finalidade da Proposta de Empréstimo Paulo Penteado (GFT)teste pois parece que nao aceita nulo 
         ,lim.cdoperad
@@ -1486,7 +1512,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0004 IS
 
   -- Variaveis auxiliares
   vr_data_aux     date := null;
-  vr_dstpgara     craptab.dstextab%type;
   vr_dstextab     craptab.dstextab%type;
   vr_inusatab     boolean;
   vr_vlutiliz     number;
@@ -1576,16 +1601,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0004 IS
      --vr_obj_proposta.put('finalidadeDescricao'   ,rw_crawlim.dsfinemp);      
 
      vr_obj_proposta.put('tipoProduto'           ,rw_crawlim.tpproduto);
-     vr_obj_proposta.put('tipoGarantiaCodigo'    ,rw_crawlim.tpctrato );
-
-     --> Buscar desciçao do tipo de garantia
-     vr_dstpgara  := tabe0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
-                                               ,pr_nmsistem => 'CRED'
-                                               ,pr_tptabela => 'GENERI'
-                                               ,pr_cdempres => 0
-                                               ,pr_cdacesso => 'CTRATOEMPR'
-                                               ,pr_tpregist => rw_crawlim.tpctrato);
-     vr_obj_proposta.put('tipoGarantiaDescricao'    ,trim(vr_dstpgara) );
+     
+     IF  rw_crawlim.tpctrato > 0 THEN
+         vr_obj_proposta.put('tipoGarantiaCodigo'   , rw_crawlim.tpctrato );
+         vr_obj_proposta.put('tipoGarantiaDescricao', rw_crawlim.dsctrato );
+     END IF;
 
      --    Buscar dados do operador
      open  cr_crapope;
@@ -1704,7 +1724,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0004 IS
                                               ,pr_dtmvtolt => rw_crapdat.dtmvtolt
                                               ,pr_dtmvtopr => rw_crapdat.dtmvtopr
                                               ,pr_inproces => rw_crapdat.inproces
-                                              ,pr_idimpres => 2 --Gerar impressao do contrato do limite de desconto de titulo
+                                              ,pr_idimpres => 3 --Gerar impressao da proposta do limite de desconto de titulo
                                               ,pr_nrctrlim => pr_nrctrlim
                                               ,pr_dsiduser => vr_dsiduser
                                               ,pr_flgemail => 0
