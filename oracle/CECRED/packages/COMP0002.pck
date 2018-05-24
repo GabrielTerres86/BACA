@@ -367,7 +367,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
             END IF;
             
             vr_dsprotoc := vr_desc;
-
+            
 			*/
             
           WHEN pr_protocolo.cdtippro in(18, 19) THEN -- Agendamento de DARF / DAS
@@ -1387,7 +1387,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COMP0002 IS
       vr_cdsegmto  VARCHAR2(40);
       vr_dsdlinha  VARCHAR2(30000); 
       vr_dsdcanal  VARCHAR2(100);
-      
+    
       --> Buscar dados do conbenio
       CURSOR cr_crapcon (pr_cdcooper IN crapcon.cdcooper%type
                         ,pr_cdempcon IN crapcon.cdempcon%type
@@ -3929,9 +3929,9 @@ PROCEDURE pc_detalhe_comprovante(pr_cdcooper IN crappro.cdcooper%TYPE  --> Códig
                                   ,pr_cdorigem => pr_cdorigem
                                   ,pr_retxml =>   vr_retxml
                                   ,pr_dsretorn => pr_dsretorn);                                  
-                                  
-          pr_retxml := vr_retxml.getclobval();                                  
                                            
+          pr_retxml := vr_retxml.getclobval();                                  
+      
         WHEN pr_cdtippro = 24 THEN
           pc_detalhe_compr_pag_fgts(pr_cdcooper => pr_cdcooper
                                   ,pr_nrdconta => pr_nrdconta

@@ -122,7 +122,7 @@ DEF VAR aux_dstextab LIKE craptab.dstextab                             NO-UNDO.
 DEF VAR aux_dtmvtolt LIKE crapdat.dtmvtolt                             NO-UNDO.
 DEF VAR aux_vltitulo LIKE crapcob.vltitulo                             NO-UNDO.
 DEF VAR aux_npc_cip       AS INTE                                      NO-UNDO.
-DEF VAR aux_vldescto      AS DEC                       			   	   NO-UNDO.
+DEF VAR aux_vldescto      AS DEC                                                             NO-UNDO.
 
 /* determinando tipo de consulta */
 IF par_flgregis = 1 THEN
