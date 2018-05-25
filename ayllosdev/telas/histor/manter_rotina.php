@@ -6,6 +6,9 @@
  * OBJETIVO     : Rotina para alteração e inclusão cadastral da tela HISTOR
  * --------------
  * ALTERAÇÕES   :  05/12/2017 - Adicionado campo Ind. Monitoramento - Melhoria 458 - Antonio R. Jr (mouts)
+ *                 26/03/2018 - PJ 416 - BacenJud - Incluir o campo de inclusão do histórico no bloqueio judicial - Márcio - Mouts  
+ *                 05/04/2018 - PJ 416 - BacenJud - Incluido no XML de gravacao o valor operauto (operador do form senha) 
+ *                                                  para salvar no log - Mateus Z (Mouts)
  *                 11/04/2018 - Incluído novo campo "Estourar a conta corrente" (inestocc)
  *                              Diego Simas - AMcom
  *                 16/05/2017 - Ajustes prj420 - Resolucao - Heitor (Mouts)
@@ -60,6 +63,7 @@
 	$cdgrupo_historico = (isset($_POST['cdgrupo_historico'])) ? $_POST['cdgrupo_historico'] : 0;
 	
 	$flgsenha = (isset($_POST['flgsenha'])) ? $_POST['flgsenha'] : 0;
+	$indutblq = (isset($_POST['indutblq'])) ? $_POST['indutblq'] : '';
 	$cdprodut = (isset($_POST['cdprodut'])) ? $_POST['cdprodut'] : 0;
 	$cdagrupa = (isset($_POST['cdagrupa'])) ? $_POST['cdagrupa'] : 0;
 	$dsextrat = (isset($_POST['dsextrat'])) ? $_POST['dsextrat'] : '';
@@ -73,6 +77,9 @@
 	$txdoipmf = (isset($_POST['txdoipmf'])) ? $_POST['txdoipmf'] : 0;
 
 	$idmonpld = (isset($_POST['idmonpld'])) ? $_POST['idmonpld'] : 0;
+	
+	// PRJ 416 - Receber via POST o operador que autorizou via form senha
+	$operauto = (isset($_POST['operauto'])) ? $_POST['operauto'] : 0;
 
     if ($cdhistor == 0 ) {
 		exibirErro('error','C&oacute;digo do hist&oacute;rico inv&aacute;lido.','Alerta - Ayllos',"focaCampoErro('cdhistor','frmHistorico');",false);
@@ -153,6 +160,10 @@
 	if ($idmonpld != 0 && $idmonpld != 1) {
 		exibirErro('error','Indicador para Monitoramento inv&aacute;lido.','Alerta - Ayllos',"focaCampoErro('idmonpld','frmHistorico');",false);
 	}
+	
+	if ($indutblq != 'S' && $indutblq != 'N') {
+		exibirErro('error','Indicador de Considera para Bloqueio Judicial inv&aacute;lido.','Alerta - Ayllos',"focaCampoErro('indutblq','frmHistorico');",false);
+	}
 
 	/*  Campos sem validacao:
 			- nmestrut
@@ -220,6 +231,7 @@
 	$xml .= '       <cdgrphis>'.$cdgrupo_historico.'</cdgrphis>';
 	
 	$xml .= '       <flgsenha>'.$flgsenha.'</flgsenha>';
+	$xml .= '       <indutblq>'.$indutblq.'</indutblq>';
 	$xml .= '       <cdprodut>'.$cdprodut.'</cdprodut>';
 	$xml .= '       <cdagrupa>'.$cdagrupa.'</cdagrupa>';
 	$xml .= '       <dsextrat>'.$dsextrat.'</dsextrat>';
@@ -234,6 +246,8 @@
 	
 	$xml .= '       <idmonpld>'.$idmonpld.'</idmonpld>';
 	
+	// PRJ 416 - Passar via parametro o operador que autorizou, para que dentro da proc seja gravado log com esse valor
+	$xml .= '       <operauto>'.$operauto.'</operauto>';	
 	$xml .= '	</Dados>';
 	$xml .= '</Root>';
 	
