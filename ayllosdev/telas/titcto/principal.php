@@ -145,6 +145,11 @@ switch ($operacao) {
 
         $registros = $xmlObj->roottag->tags[0]->tags;
         $qtregist = $xmlObj->roottag->tags[0]->attributes['QTREGIST'];
+        
+        if ($qtregist == 0) {
+           echo 'showError("error","N&atilde;o h&aacute; registros para listar.","Alerta - Ayllos","unblockBackground();btnVoltar();");';
+           exit;
+        }
         break;
 }
 

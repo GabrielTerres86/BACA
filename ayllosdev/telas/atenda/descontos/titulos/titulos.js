@@ -2547,8 +2547,8 @@ function removerTituloResumo(){
         }
         bloqueiaFundo(divRotina);
 
-        //Remove a seleção do titulo
-        tituloSelecionadoResumo = null;
+        //Remove a seleção do titulo e seleciona a primeira linha
+        $("#divResumoBordero .divRegistrosTitulos .tituloRegistros tr").eq(1).click();
     }
     else{
         showError("error","Selecione um t&iacute;tulo para remover","Alerta - Ayllos","");

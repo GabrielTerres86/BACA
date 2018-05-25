@@ -63,14 +63,14 @@
 
 <?if($flgverbor){?>
 	<div id="divBotoes" style="width: 500px;">
-	<form class="formulario">
-		<fieldset>
-			<legend><? echo utf8ToHtml('Impressão') ?></legend>
+		<form class="formulario">
+			<fieldset>
+				<legend><? echo utf8ToHtml('Impressão') ?></legend>
 				<input type="button" class="botao" value="Voltar"  onClick="carregaBorderosTitulos();return false;" />
-				<input type="button" class="botao" value="T&iacute;tulo"  onClick="gerarImpressao(7,2,'no');return false;" />
+				<input type="button" class="botao" value="T&iacute;tulos"  onClick="gerarImpressao(7,2,'no');return false;" />
 				<input type="button" class="botao" value="Proposta"  onClick="gerarImpressao(6,2,'no');return false;" />
-		</fieldset>
-	</form>
+			</fieldset>
+		</form>
 	</div>
 <?}
 else{?>
