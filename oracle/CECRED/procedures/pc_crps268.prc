@@ -1,4 +1,4 @@
-ÔªøCREATE OR REPLACE PROCEDURE CECRED.pc_crps268(pr_cdcooper IN crapcop.cdcooper%TYPE
+CREATE OR REPLACE PROCEDURE CECRED.pc_crps268(pr_cdcooper IN crapcop.cdcooper%TYPE
                                              ,pr_flgresta IN PLS_INTEGER
                                              ,pr_stprogra OUT PLS_INTEGER
                                              ,pr_infimsol OUT PLS_INTEGER
@@ -8,18 +8,18 @@
   /* .............................................................................
 
    Programa: pc_crps268                      Antigo: fontes/crps268.p
-   Sistema : Conta-Corrente - Cooperativa de Cr√©dito
+   Sistema : Conta-Corrente - Cooperativa de CrÈdito
    Sigla   : CRED
    Autor   : Diego Simas (AMcom)
-   Data    : Abril/2018.                     Ultima atualiza√ß√£o:
+   Data    : Abril/2018.                     Ultima atualizaÁ„o:
 
    Dados referentes ao programa:
 
-   Frequ√™ncia: Di√°rio (Batch)
-   Objetivo  : Efetuar os d√©bitos referentes a seguros de vida em grupo.
+   FrequÍncia: Di·rio (Batch)
+   Objetivo  : Efetuar os dÈbitos referentes a seguros de vida em grupo.
 
-   Altera√ß√µes:
-               --HIST√ìRICO PROGRESS--
+   AlteraÁıes:
+               --HIST”RICO PROGRESS--
                30/06/2005 - Alimentado campo cdcooper das tabelas craplot
                             craplcm e crapavs (Diego).
 
@@ -32,34 +32,34 @@
                04/02/2015 - Ajuste para debitar a primeira parcela conforme a
                             a data dtprideb SD-235552 (Odirlei-AMcom).
 
-               04/03/2015 - Alterado valida√ß√£o para alterar a data de debito
+               04/03/2015 - Alterado validaÁ„o para alterar a data de debito
                             caso a data atual de bedito seja menor ou igual a
-                            data do movimento para garatir n√£o ser√° debitdo duas
+                            data do movimento para garatir n„o ser· debitdo duas
                             vezes (Odirlei-AMcom)
 
                12/06/2015 - Ajuste para debitar na renovacao do seguro de vida.
                             (James/Thiago)
 
-               --HIST√ìRICO ORACLE--
+               --HIST”RICO ORACLE--
                16/04/2018 - Migrado rotina/fonte progress para oracle.
                             Diego Simas (AMcom)
 
-               30/04/2018 - P450 - Implementa√ß√£o da procedure de controle de d√©bito em contas com atraso por inadimpl√™ncia;
-                                   Cancelamento autom√°tico de seguro para debitos n√£o efetuados;
-                                   Envio de mensagens para cooperados que tiveram seguros cancelados por inadimpl√™ncia.
+               30/04/2018 - P450 - ImplementaÁ„o da procedure de controle de dÈbito em contas com atraso por inadimplÍncia;
+                                   Cancelamento autom·tico de seguro para debitos n„o efetuados;
+                                   Envio de mensagens para cooperados que tiveram seguros cancelados por inadimplÍncia.
                             Marcel Kohls (AMcom)
 
   ............................................................................... */
 
   DECLARE
 
-      -- C√≥digo do programa
+      -- CÛdigo do programa
       vr_cdprogra crapprg.cdprogra%TYPE;
       -- Erro para parar a cadeia
       vr_exc_saida exception;
       -- Erro sem parar a cadeia
       vr_exc_fimprg exception;
-      ---------------- Cursores gen√©ricos ----------------
+      ---------------- Cursores genÈricos ----------------
 
       -- Busca dados da cooperativa --
       CURSOR cr_crapcop(pr_cdcooper IN craptab.cdcooper%TYPE) IS
@@ -68,8 +68,8 @@
         WHERE cop.cdcooper = pr_cdcooper;
       rw_crapcop cr_crapcop%ROWTYPE;
 
-      -- Cursor para buscar as informa√ß√µes para restart
-      -- e rowid para atualiza√ß√£o posterior
+      -- Cursor para buscar as informaÁıes para restart
+      -- e rowid para atualizaÁ„o posterior
       CURSOR cr_crapres IS
         SELECT res.dsrestar
               ,res.rowid
@@ -78,7 +78,7 @@
            AND res.cdprogra = vr_cdprogra;
       rw_crapres cr_crapres%ROWTYPE;
 
-      -------------- Cursores espec√≠ficos ----------------
+      -------------- Cursores especÌficos ----------------
 
       -- Busca dados do cadastro de seguros --
       CURSOR cr_crapseg(pr_cdcooper IN crapseg.cdcooper%TYPE,
@@ -100,6 +100,7 @@
               ,seg.qtprevig
               ,seg.qtprepag
               ,seg.tpseguro
+							,seg.dtfimvig
         FROM crapseg seg
         WHERE seg.cdcooper  = pr_cdcooper
           AND seg.nrdconta >= pr_nrdconta
@@ -150,49 +151,50 @@
           AND lot.nrdolote = pr_nrdolote;
       rw_craplot cr_craplot%ROWTYPE;
 
-      -------------- Vari√°veis e Tipos -------------------
+      -------------- Vari·veis e Tipos -------------------
 
-      -- Vari√°vel gen√©rica de calend√°rio com base no cursor da btch0001
+      -- Vari·vel genÈrica de calend·rio com base no cursor da btch0001
       rw_crapdat btch0001.cr_crapdat%ROWTYPE;
 
-      -- Vari√°veis para controle de restart
-      vr_nrctares crapseg.nrdconta%TYPE; --> N√∫mero da conta de restart
-      vr_dsrestar     VARCHAR2(4000);    --> String gen√©rica com informa√ß√µes para restart
-      vr_nrctrseg crapseg.nrdconta%TYPE; --> N√∫mero de contrato do seguro para restart
+      -- Vari·veis para controle de restart
+      vr_nrctares crapseg.nrdconta%TYPE; --> N˙mero da conta de restart
+      vr_dsrestar     VARCHAR2(4000);    --> String genÈrica com informaÁıes para restart
+      vr_nrctrseg crapseg.nrdconta%TYPE; --> N˙mero de contrato do seguro para restart
       vr_inrestar     INTEGER;           --> Indicador de Restart
 
-      vr_cdcritic crapcri.cdcritic%TYPE; --> C√≥digo da cr√≠tica
-      vr_dscritic     VARCHAR2(2000);    --> Descri√ß√£o da cr√≠tica
+      vr_cdcritic crapcri.cdcritic%TYPE; --> CÛdigo da crÌtica
+      vr_dscritic     VARCHAR2(2000);    --> DescriÁ„o da crÌtica
 
       vr_flgdebta     NUMBER;            --> Flag debita
-      vr_cdhistor     NUMBER;            --> C√≥digo Hist√≥rico
-      vr_dtdebito     DATE;              --> Data do D√©bito
-      vr_dtdeb28      DATE;              --> Data do D√©bito dia 28
-      podeDebitar     BOOLEAN;           --> Pode debitar o hist√≥rico
-      vr_rowidlcm     ROWID;             --> ROWID do lan√ßamento inserido na CRAPLCM
+      vr_cdhistor     NUMBER;            --> CÛdigo HistÛrico
+      vr_dtdebito     DATE;              --> Data do DÈbito
+      vr_dtdeb28      DATE;              --> Data do DÈbito dia 28
+      podeDebitar     BOOLEAN;           --> Pode debitar o histÛrico
+      vr_rowidlcm     ROWID;             --> ROWID do lanÁamento inserido na CRAPLCM
       vr_nmtabela     VARCHAR2(60);      --> Nome ta tabela retornado pela "pc_gerar_lancamento_conta"
-      vr_incrineg     INTEGER;           --> Indicador de cr√≠tica de neg√≥cio para uso com a "pc_gerar_lancamento_conta"
+      vr_incrineg     INTEGER;           --> Indicador de crÌtica de negÛcio para uso com a "pc_gerar_lancamento_conta"
+			vr_dtfimvig     DATE;              --> Data do fim de vigÍncia do seguro, para fins de cancelamento
 
       vr_dsseguro     VARCHAR2(50);
       vr_rowid_log    rowid;
 
     BEGIN
 
-      -- C√≥digo do programa
+      -- CÛdigo do programa
       vr_cdprogra := 'CRPS268';
-      -- Incluir nome do m√≥dulo logado
+      -- Incluir nome do mÛdulo logado
       GENE0001.pc_informa_acesso(pr_module => 'PC_CRPS268'
                                 ,pr_action => null);
 
-      -- Verifica se a cooperativa est√° cadastrada
+      -- Verifica se a cooperativa est· cadastrada
        OPEN cr_crapcop(pr_cdcooper => pr_cdcooper);
       FETCH cr_crapcop
        INTO rw_crapcop;
-      -- Se n√£o encontrar
+      -- Se n„o encontrar
       IF cr_crapcop%NOTFOUND THEN
-        -- Fechar o cursor pois haver√° raise
+        -- Fechar o cursor pois haver· raise
         CLOSE cr_crapcop;
-        -- Montar mensagem de cr√≠tica
+        -- Montar mensagem de crÌtica
         vr_cdcritic := 651;
         RAISE vr_exc_saida;
       ELSE
@@ -200,15 +202,15 @@
         CLOSE cr_crapcop;
       END IF;
 
-      -- Leitura do calend√°rio da cooperativa
+      -- Leitura do calend·rio da cooperativa
        OPEN btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
       FETCH btch0001.cr_crapdat
        INTO rw_crapdat;
-      -- Se n√£o encontrar
+      -- Se n„o encontrar
       IF btch0001.cr_crapdat%NOTFOUND THEN
         -- Fechar o cursor pois efetuaremos raise
         CLOSE btch0001.cr_crapdat;
-        -- Montar mensagem de cr√≠tica
+        -- Montar mensagem de crÌtica
         vr_cdcritic := 1;
         RAISE vr_exc_saida;
       ELSE
@@ -216,13 +218,13 @@
         CLOSE btch0001.cr_crapdat;
       END IF;
 
-      -- Valida√ß√µes iniciais do programa
+      -- ValidaÁıes iniciais do programa
       BTCH0001.pc_valida_iniprg(pr_cdcooper => pr_cdcooper
                                ,pr_flgbatch => 1
                                ,pr_cdprogra => vr_cdprogra
                                ,pr_infimsol => pr_infimsol
                                ,pr_cdcritic => vr_cdcritic);
-      -- Se a vari√°vel de erro √© <> 0
+      -- Se a vari·vel de erro È <> 0
       IF vr_cdcritic <> 0 THEN
         -- Envio centralizado de log de erro
         RAISE vr_exc_saida;
@@ -230,25 +232,25 @@
 
       -- Tratamento e retorno de valores de restart
       btch0001.pc_valida_restart(pr_cdcooper  => pr_cdcooper   --> Cooperativa conectada
-                                ,pr_cdprogra  => vr_cdprogra   --> C√≥digo do programa
+                                ,pr_cdprogra  => vr_cdprogra   --> CÛdigo do programa
                                 ,pr_flgresta  => pr_flgresta   --> Indicador de restart
-                                ,pr_nrctares  => vr_nrctares   --> N√∫mero da conta de restart
-                                ,pr_dsrestar  => vr_dsrestar   --> String gen√©rica com informa√ß√µes para restart
+                                ,pr_nrctares  => vr_nrctares   --> N˙mero da conta de restart
+                                ,pr_dsrestar  => vr_dsrestar   --> String genÈrica com informaÁıes para restart
                                 ,pr_inrestar  => vr_inrestar   --> Indicador de Restart
-                                ,pr_cdcritic  => vr_cdcritic   --> C√≥digo da cr√≠tica
-                                ,pr_des_erro  => vr_dscritic); --> Sa√≠da de erro
-      -- Se encontrou erro, gerar exce√ß√£o
+                                ,pr_cdcritic  => vr_cdcritic   --> CÛdigo da crÌtica
+                                ,pr_des_erro  => vr_dscritic); --> SaÌda de erro
+      -- Se encontrou erro, gerar exceÁ„o
       IF vr_dscritic IS NOT NULL OR vr_cdcritic IS NOT NULL THEN
         RAISE vr_exc_saida;
       END IF;
-      -- Se houver indicador de restart, mas n√£o veio conta
+      -- Se houver indicador de restart, mas n„o veio conta
       IF vr_inrestar > 0 AND vr_nrctares = 0  THEN
         -- Remover o indicador
         vr_inrestar := 0;
       END IF;
-      -- Se ainda houver indica√ß√£o de restart
+      -- Se ainda houver indicaÁ„o de restart
       IF vr_inrestar > 0 THEN
-        -- Converter a descri√ß√£o do restart que cont√©m o contrato de seguro
+        -- Converter a descriÁ„o do restart que contÈm o contrato de seguro
         vr_nrctrseg := gene0002.fn_char_para_number(vr_dsrestar);
       END IF;
 
@@ -258,11 +260,11 @@
         OPEN cr_crapres;
         FETCH cr_crapres
          INTO rw_crapres;
-        -- Se n√£o tiver encontrado
+        -- Se n„o tiver encontrado
         IF cr_crapres%NOTFOUND THEN
           -- Fechar o cursor e gerar erro
           CLOSE cr_crapres;
-          -- Montar mensagem de cr√≠tica
+          -- Montar mensagem de crÌtica
           vr_cdcritic := 151;
           vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
           RAISE vr_exc_saida;
@@ -271,7 +273,7 @@
           CLOSE cr_crapres;
         END IF;
       END IF;
-      -- IN√çCIO DO PROCESSAMENTO PRINCIPAL --
+      -- INÕCIO DO PROCESSAMENTO PRINCIPAL --
       FOR rw_crapseg IN cr_crapseg (pr_cdcooper => pr_cdcooper,
                                     pr_nrdconta => vr_nrctares,
                                     pr_nrctrseg => vr_nrctrseg,
@@ -281,21 +283,21 @@
 
         vr_flgdebta := 0;
 
-        -- Condi√ß√µes para verificar se ocorre o d√©bito do seguro de vida
-        -- Contrata√ß√£o do Seguro de Vida
+        -- CondiÁıes para verificar se ocorre o dÈbito do seguro de vida
+        -- ContrataÁ„o do Seguro de Vida
         IF rw_crapseg.dtprideb = rw_crapdat.dtmvtolt THEN
            vr_flgdebta := 1;
         ELSE
-          -- Renova√ß√£o do Seguro de Vida
+          -- RenovaÁ„o do Seguro de Vida
           IF to_char(rw_crapseg.dtrenova, 'MM') = to_char(rw_crapdat.dtmvtolt, 'MM') THEN
             -- Mensal
             IF to_char(rw_crapdat.dtmvtolt, 'MM') <> to_char(rw_crapdat.dtmvtopr, 'MM') THEN
-              -- Antecipa o d√©bito da parcela
+              -- Antecipa o dÈbito da parcela
               IF to_char(rw_crapseg.dtrenova, 'DD') <= to_char(rw_crapdat.dtultdia, 'DD') THEN
                 vr_flgdebta := 1;
               END IF;
             ELSE
-              -- Di√°rio
+              -- Di·rio
               IF to_char(rw_crapseg.dtrenova, 'DD') <= to_char(rw_crapdat.dtmvtolt, 'DD') THEN
                 vr_flgdebta := 1;
               END IF;
@@ -307,7 +309,7 @@
                 vr_flgdebta := 1;
               END IF;
             ELSE
-              -- Di√°rio - Vencimento da parcela
+              -- Di·rio - Vencimento da parcela
               IF rw_crapseg.dtdebito <= rw_crapdat.dtmvtolt THEN
                 vr_flgdebta := 1;
               END IF;
@@ -315,7 +317,7 @@
           END IF;
         END IF;
 
-        -- Condi√ß√£o para verificar se debita
+        -- CondiÁ„o para verificar se debita
         IF vr_flgdebta = 1 THEN
 
           -- Abre cursor associados
@@ -325,7 +327,7 @@
           INTO rw_crapass;
 
           IF cr_crapass%NOTFOUND THEN
-            -- Fechar o cursor pois haver√° raise
+            -- Fechar o cursor pois haver· raise
             CLOSE cr_crapass;
             -- Montar mensagem de critica
             -- 251 - Associado nao encontrado no crapass. ERRO DE SISTEMA.
@@ -343,10 +345,10 @@
           INTO rw_crapcsg;
 
           IF cr_crapcsg%NOTFOUND THEN
-            -- Fechar o cursor pois haver√° raise
+            -- Fechar o cursor pois haver· raise
             CLOSE cr_crapcsg;
-            -- Montar mensagem de cr√≠tica
-            -- 556 - Seguradora n√£o cadastrada.
+            -- Montar mensagem de crÌtica
+            -- 556 - Seguradora n„o cadastrada.
             vr_cdcritic := 556;
             RAISE vr_exc_saida;
           ELSE
@@ -358,8 +360,8 @@
 
           -- Parcela mensal
           IF vr_cdhistor = 0 THEN
-            -- Montar mensagem de cr√≠tica
-            -- 581 - Hist√≥rico n√£o cadastrado para esta seguradora.
+            -- Montar mensagem de crÌtica
+            -- 581 - HistÛrico n„o cadastrado para esta seguradora.
             vr_cdcritic := 581;
             RAISE vr_exc_saida;
           END IF;
@@ -371,11 +373,21 @@
 
           /* se nao puder debitar historico, entao cancela o contrato e avisa cooperado */
           IF podeDebitar = false THEN
-             -- marca contrato como cancelado
-             update crapseg
-                 set crapseg.dtfimvig = rw_crapdat.dtmvtolt, -- Data de fim de vigencia do seguro
-                     crapseg.dtcancel = rw_crapdat.dtmvtolt, -- Data de cancelamento
-                     crapseg.cdsitseg = 2 -- Situacao do seguro: 1 - Ativo 2 - Cancelado
+             IF (rw_crapseg.tpseguro = 3) THEN
+									vr_dtfimvig := rw_crapdat.dtmvtolt;
+							 ELSE
+								 vr_dtfimvig := rw_crapseg.dtfimvig;
+							 END IF;
+
+               update crapseg
+               set crapseg.dtfimvig = vr_dtfimvig, -- Data de fim de vigencia do seguro
+                   crapseg.dtcancel = rw_crapdat.dtmvtolt, -- Data de cancelamento
+                   crapseg.cdsitseg = 2, -- Situacao do seguro: 1 - Ativo 2 - Cancelado
+                   crapseg.cdmotcan = 12, -- cancelamento por inadimplencia (SEGU0001)
+                   crapseg.cdopeexc = 1,
+                   crapseg.cdageexc = rw_craplot.cdagenci,
+                   crapseg.dtinsexc = rw_crapdat.dtmvtolt,
+                   crapseg.cdopecnl = 1
                where crapseg.rowid = rw_crapseg.rowid;
 
                CASE rw_crapseg.tpseguro
@@ -419,7 +431,7 @@
              -- proximo registro
              continue;
           ELSE
-            -- Insere o lan√ßamento de d√©bito no valor do seguro
+            -- Insere o lanÁamento de dÈbito no valor do seguro
             BEGIN
               LANC0001.pc_gerar_lancamento_conta(pr_cdagenci => 1 -- rw_craplot.cdagenci
                                                 , pr_cdbccxlt => 100 -- rw_craplot.cdbccxlt
@@ -437,7 +449,7 @@
                                                  , pr_rowid    => vr_rowidlcm
                                                  , pr_nmtabela => vr_nmtabela
                                                  , pr_incrineg => vr_incrineg
-                                                 , pr_inprolot => 1  -- processa o lote na pr√≥pria procedure
+                                                 , pr_inprolot => 1  -- processa o lote na prÛpria procedure
                                                  , pr_tplotmov => 1
                                                  , pr_cdcritic => vr_cdcritic
                                                  , pr_dscritic => vr_dscritic);
@@ -447,29 +459,31 @@
                 RAISE vr_exc_saida;
               END IF;
 
-              -- Posiciona a capa de lote
-              OPEN cr_craplot(pr_cdcooper => pr_cdcooper,
-                              pr_dtmvtolt => rw_crapdat.dtmvtolt,
-                              pr_cdagenci => 1,
-                              pr_cdbccxlt => 100,
-                              pr_nrdolote => 4154);
-              FETCH cr_craplot
-              INTO rw_craplot;
+              IF rw_craplot.rowid IS NULL THEN
+								-- Posiciona a capa de lote
+								OPEN cr_craplot(pr_cdcooper => pr_cdcooper,
+																pr_dtmvtolt => rw_crapdat.dtmvtolt,
+																pr_cdagenci => 1,
+																pr_cdbccxlt => 100,
+																pr_nrdolote => 4154);
+								FETCH cr_craplot
+								INTO rw_craplot;
 
-              IF cr_craplot%NOTFOUND THEN
-                -- Fechar o cursor pois haver√° raise
-                CLOSE cr_craplot;
-                -- Montar mensagem de cr√≠tica
-                -- 1172 - Registro de lote n√£o encontrado.
-                vr_cdcritic := 1172;
-                RAISE vr_exc_saida;
-              END IF;
+								IF cr_craplot%NOTFOUND THEN
+									-- Fechar o cursor pois haver· raise
+									CLOSE cr_craplot;
+									-- Montar mensagem de crÌtica
+									-- 1172 - Registro de lote n„o encontrado.
+									vr_cdcritic := 1172;
+									RAISE vr_exc_saida;
+								END IF;
 
-              CLOSE cr_craplot;
+								CLOSE cr_craplot;
+							END IF;
             EXCEPTION
               WHEN OTHERS THEN
                 vr_dscritic := 'Erro ao  inserir  na tabela  craplcm.' || SQLERRM;
-                --Levantar Exce√ß√£o
+                --Levantar ExceÁ„o
                 RAISE vr_exc_saida;
             END;
 
@@ -505,14 +519,14 @@
                 RAISE vr_exc_saida;
             END;
 
-            -- N√£o √© necess√°rio validar e mudar a data de d√©bito se for o d√©bito
-            -- da primeira parcela ou se a data do d√©bito j√° esteja menor ou igual
-            -- a data de movimento para garantir que n√£o ir√° debitar duas vezes
+            -- N„o È necess·rio validar e mudar a data de dÈbito se for o dÈbito
+            -- da primeira parcela ou se a data do dÈbito j· esteja menor ou igual
+            -- a data de movimento para garantir que n„o ir· debitar duas vezes
             vr_dtdebito := null;
             vr_dtdeb28 := null;
 
             IF rw_crapseg.dtprideb <> rw_crapdat.dtmvtolt THEN
-              -- Se o d√©bito for dias 29, 30 ou 31, debitar√° sempre no dia 28
+              -- Se o dÈbito for dias 29, 30 ou 31, debitar· sempre no dia 28
               IF to_char(rw_crapseg.dtdebito,'DD') > 28 THEN
                 vr_dtdeb28 := '28'||to_char(rw_crapseg.dtdebito, '/MM/YYYY');
               END IF;
@@ -531,7 +545,7 @@
                                                     ,pr_des_erro => vr_dscritic);
               END IF;
               -- Altera o registro de seguro
-              -- Data de D√©bito para o dia 28
+              -- Data de DÈbito para o dia 28
               BEGIN
                 UPDATE crapseg SET
                        crapseg.dtdebito = vr_dtdebito
@@ -544,7 +558,7 @@
               END;
             END IF;
 
-            -- Efetua o cadastro do aviso de d√©bito em conta corrente.
+            -- Efetua o cadastro do aviso de dÈbito em conta corrente.
             BEGIN
               INSERT INTO crapavs(crapavs.cdagenci,
                                   crapavs.cdempres,
@@ -583,18 +597,18 @@
             EXCEPTION
               WHEN OTHERS THEN
                 vr_dscritic := 'Erro ao  inserir  na tabela  CRAPAVS. ' || SQLERRM;
-                --Levantar Exce√ß√£o
+                --Levantar ExceÁ„o
                 RAISE vr_exc_saida;
             END;
 
             -- Somente se a flag de restart estiver ativa
             IF pr_flgresta = 1 THEN
-              -- Salvar informa√ß√µes no banco de dados a cada registro processado
-              -- Atualizar a chave de restart caso aconte√ßa algo durante o processo
+              -- Salvar informaÁıes no banco de dados a cada registro processado
+              -- Atualizar a chave de restart caso aconteÁa algo durante o processo
               BEGIN
                 UPDATE crapres
-                   SET crapres.nrdconta = rw_crapseg.nrdconta              -- N√∫mero da conta
-                      ,crapres.dsrestar = LPAD(rw_crapseg.nrctrseg,10,'0') -- N√∫mero do contrato de seguro
+                   SET crapres.nrdconta = rw_crapseg.nrdconta              -- N˙mero da conta
+                      ,crapres.dsrestar = LPAD(rw_crapseg.nrctrseg,10,'0') -- N˙mero do contrato de seguro
                  WHERE crapres.rowid = rw_crapres.rowid;
               EXCEPTION
                 WHEN OTHERS THEN
@@ -602,7 +616,7 @@
                   vr_dscritic := 'Erro ao atualizar a tabela de Restart (CRAPRES) - Conta: '||rw_crapseg.nrdconta||
                                  ' CtrSeg:'||rw_crapseg.nrctrseg||'. Detalhes: '||sqlerrm;
                   RAISE vr_exc_saida;
-              END;              
+              END;
             END IF;
           END IF;
 
@@ -610,21 +624,21 @@
       END LOOP;
       -- FIM DO PROCESSAMENTO PRINCIPAL --
 
-      -- Retornar nome do m√≥dulo original, para que tire o action gerado pelo programa chamado acima
+      -- Retornar nome do mÛdulo original, para que tire o action gerado pelo programa chamado acima
       GENE0001.pc_informa_acesso(pr_module => 'PC_'||vr_cdprogra
                                 ,pr_action => NULL);
-      -- Testar sa√≠da de erro
+      -- Testar saÌda de erro
       IF vr_dscritic IS NOT NULL OR vr_cdcritic IS NOT NULL THEN
         RAISE vr_exc_saida;
       END IF;
 
-      -- Chamar rotina para elimina√ß√£o do restart para evitarmos
-      -- reprocessamento das aplica√ß√µes indevidamente
+      -- Chamar rotina para eliminaÁ„o do restart para evitarmos
+      -- reprocessamento das aplicaÁıes indevidamente
       btch0001.pc_elimina_restart(pr_cdcooper => pr_cdcooper   --> Cooperativa conectada
-                                 ,pr_cdprogra => vr_cdprogra   --> C√≥digo do programa
+                                 ,pr_cdprogra => vr_cdprogra   --> CÛdigo do programa
                                  ,pr_flgresta => pr_flgresta   --> Indicador de restart
-                                 ,pr_des_erro => vr_dscritic); --> Sa√≠da de erro
-      -- Testar sa√≠da de erro
+                                 ,pr_des_erro => vr_dscritic); --> SaÌda de erro
+      -- Testar saÌda de erro
       IF vr_dscritic IS NOT NULL THEN
         -- Sair do processo
         RAISE vr_exc_saida;
@@ -641,9 +655,9 @@
    EXCEPTION
 
     WHEN vr_exc_fimprg THEN
-      -- Se foi retornado apenas c√≥digo
+      -- Se foi retornado apenas cÛdigo
       IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
-        -- Buscar a descri√ß√£o
+        -- Buscar a descriÁ„o
         vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
       END IF;
       -- Se foi gerada critica para envio ao log
@@ -660,21 +674,21 @@
                                ,pr_cdprogra => vr_cdprogra
                                ,pr_infimsol => pr_infimsol
                                ,pr_stprogra => pr_stprogra);
-      -- Efetuar commit pois gravaremos o que foi processo at√© ent√£o
+      -- Efetuar commit pois gravaremos o que foi processo atÈ ent„o
       COMMIT;
     WHEN vr_exc_saida THEN
-      -- Se foi retornado apenas c√≥digo
+      -- Se foi retornado apenas cÛdigo
       IF vr_cdcritic > 0 AND vr_dscritic IS NULL THEN
-        -- Buscar a descri√ß√£o
+        -- Buscar a descriÁ„o
         vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
       END IF;
-      -- Devolvemos c√≥digo e critica encontradas
+      -- Devolvemos cÛdigo e critica encontradas
       pr_cdcritic := NVL(vr_cdcritic,0);
       pr_dscritic := vr_dscritic;
       -- Efetuar rollback
       ROLLBACK;
     WHEN OTHERS THEN
-      -- Efetuar retorno do erro n√£o tratado
+      -- Efetuar retorno do erro n„o tratado
       pr_cdcritic := 0;
       pr_dscritic := sqlerrm;
       -- Efetuar rollback
@@ -682,3 +696,4 @@
    END;
 
 END pc_crps268;
+/
