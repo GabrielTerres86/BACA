@@ -18,8 +18,12 @@
 
 
 <?php 
-$esta_protestado  =  (( $flgdprot == "yes" || $flgdprot == "YES" ) && ( $qtdiaprt > 0 )) ? 1 : 0;
-$esta_negativado  = ((( $flserasa == "yes" || $flserasa == "YES" ) || ( $qtdianeg > 0 )) && ($inserasa > 0)) ? 1 : 0;
+//$esta_protestado  =  (( $flgdprot == "yes" || $flgdprot == "YES" ) && ( $qtdiaprt > 0 )) ? 1 : 0;
+$esta_em_cartorio =  ( in_array($insitcrt, array('1','2','3') )) ? 1 : 0;
+$tem_inst_protest = (( strcasecmp($flgdprot, 'yes') == 0 ) && $qtdiaprt > 0 ) ? 1 : 0;
+$esta_protestado  =  ( $insitcrt == '5' ) ? 1 : 0;
+$esta_negativado  = ((( strcasecmp($flserasa, 'yes') == 0 ) || ( $qtdianeg > 0 )) && ($inserasa > 0)) ? 1 : 0;
+
 
 foreach( $registro as $r ) {
     // Por padrão vamos criar a opção da instrução em tela
@@ -74,13 +78,21 @@ foreach( $registro as $r ) {
 		} 
 	}
 	
-	if (($esta_protestado == 0) && ($esta_negativado == 0)){
-		// Não está Negativado no Serasa
-		if( getByTagName($r->tags,'cdocorre') == 41) { // Cancelar Instrução Automática de Protesto/Serasa
+	if ($esta_protestado == 0){
+		if( getByTagName($r->tags,'cdocorre') == 81) { // Excluir Protesto com Carta de Anuência Eletrônica
 			// Não criar a opção
 			$cria_opcao = 0;
 		} 
+		if ($esta_negativado == 0 && $esta_em_cartorio == 0){
+			// Não está Negativado no Serasa
+			if( getByTagName($r->tags,'cdocorre') == 41) { // Cancelar Instrução Automática de Protesto/Serasa
+				// Não criar a opção
+				$cria_opcao = 0;
+			} 
+		}
 	}	
+	
+    //$cria_opcao = 1;	
 	
 	if ($cria_opcao == 1) {?>
         <option value="<? echo getByTagName($r->tags,'cdocorre') ?>"><? echo getByTagName($r->tags,'cdocorre') ?> - <? echo getByTagName($r->tags,'dsocorre') ?></option>
