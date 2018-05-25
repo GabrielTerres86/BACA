@@ -10,6 +10,12 @@
   
     Alteracoes: 11/03/2016 - Homologacao e ajustes da conversao da tela
                              HISTOR para WEB (Douglas - Chamado 412552)
+                             
+                05/12/2017 - Melhoria 458 adicionado campo inmonpld - Antonio R. Jr (Mouts)
+
+				18/04/2018 - Incluído novo campo inestocc - Diego Simas (AMcom)
+        
+        16/05/2018 - Ajustes prj420 - Resolucao - Heitor (Mouts)
 .............................................................................*/
 
 DEF TEMP-TABLE tt-histor NO-UNDO
@@ -26,6 +32,7 @@ DEF TEMP-TABLE tt-histor NO-UNDO
     FIELD inautori AS INTE
     FIELD inclasse AS INTE
     FIELD incremes AS INTE
+    FIELD inmonpld AS INTE
     FIELD indcompl AS INTE
     FIELD indebcta AS INTE
     FIELD indebfol AS INTE
@@ -42,6 +49,8 @@ DEF TEMP-TABLE tt-histor NO-UNDO
     FIELD flgsenha AS INTE
     FIELD dsextrat AS CHAR
     FIELD vltarcsh AS DECI
+    FIELD cdgrphis AS INTE
+    FIELD dsgrphis AS CHAR
     FIELD cdprodut AS INTE
     FIELD dsprodut AS CHAR
     FIELD cdagrupa AS INTE
@@ -50,7 +59,9 @@ DEF TEMP-TABLE tt-histor NO-UNDO
     FIELD vltarayl AS DECI
     FIELD vltarcxo AS DECI
     FIELD vltarint AS DECI
-    FIELD txcpmfcc AS DECI.
+    FIELD txcpmfcc AS DECI
+    FIELD inestocc AS INTE
+	FIELD idmonpld AS INTE.
     
 DEF TEMP-TABLE tt-crapthi NO-UNDO
     FIELD cdcooper AS INTE
