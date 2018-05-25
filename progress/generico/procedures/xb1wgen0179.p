@@ -9,6 +9,17 @@
      Alteracoes: 10/03/2016 - Homologacao e ajustes da conversao da tela 
                               HISTOR para WEB (Douglas - Chamado 412552)
 
+		         06/12/2016 - P341-Automatização BACENJUD - Alterar a passagem 
+				              da descrição do departamento como parametro e 
+							  passar o o código (Renato Darosci)
+
+                 05/12/2017 - Melhoria 458 adicionado campo inmonpld - Antonio R. Jr (Mouts)
+                 
+                 12/04/2018 - Incluído novo campo "Estourar a conta corrente" (inestocc)
+                              Diego Simas - AMcom
+                              
+                 16/05/2018 - Ajustes prj420 - Resolucao - Heitor (Mouts)
+                              
 ............................................................................*/
 
 
@@ -20,7 +31,7 @@ DEF VAR aux_nrdcaixa AS INTE                                         NO-UNDO.
 DEF VAR aux_cdoperad AS CHAR                                         NO-UNDO.
 DEF VAR aux_nmdatela AS CHAR                                         NO-UNDO.
 DEF VAR aux_idorigem AS INTE                                         NO-UNDO.
-DEF VAR aux_dsdepart AS CHAR                                         NO-UNDO.
+DEF VAR aux_cddepart AS INTE                                         NO-UNDO.
 
 DEF VAR aux_cddopcao AS CHAR                                         NO-UNDO.
 DEF VAR aux_cdhistor AS INTE                                         NO-UNDO.    
@@ -47,6 +58,7 @@ DEF VAR aux_inautori AS INTE                                         NO-UNDO.
 DEF VAR aux_inavisar AS INTE                                         NO-UNDO.
 DEF VAR aux_inclasse AS INTE                                         NO-UNDO.
 DEF VAR aux_incremes AS INTE                                         NO-UNDO.
+DEF VAR aux_inmonpld AS INTE                                         NO-UNDO.
 DEF VAR aux_indcompl AS INTE                                         NO-UNDO.
 DEF VAR aux_indebcta AS INTE                                         NO-UNDO.
 DEF VAR aux_indoipmf AS INTE                                         NO-UNDO.
@@ -60,8 +72,9 @@ DEF VAR aux_tpctbccu AS INTE                                         NO-UNDO.
 DEF VAR aux_tplotmov AS INTE                                         NO-UNDO.
 DEF VAR aux_tpctbcxa AS INTE                                         NO-UNDO.
 DEF VAR aux_ingercre AS INTE                                         NO-UNDO.
+DEF VAR aux_inestocc AS INTE                                         NO-UNDO.
 DEF VAR aux_ingerdeb AS INTE                                         NO-UNDO.
-DEF VAR aux_flgsenha AS LOGI                                         NO-UNDO.
+DEF VAR aux_flgsenha AS INTE                                         NO-UNDO.
 DEF VAR aux_dsextrat AS CHAR                                         NO-UNDO.
 DEF VAR aux_vltarayl AS DECI                                         NO-UNDO.
 DEF VAR aux_vltarcxo AS DECI                                         NO-UNDO.
@@ -76,9 +89,12 @@ DEF VAR log_vltarcsh AS DECI                                         NO-UNDO.
 
 DEF VAR aux_cdagrupa AS INTE                                         NO-UNDO.
 DEF VAR aux_dsagrupa AS CHAR                                         NO-UNDO.
+DEF VAR aux_cdgrphis AS INTE                                         NO-UNDO.
 
 DEF VAR aux_cdprodut AS INTE                                         NO-UNDO.
 DEF VAR aux_dsprodut AS CHAR                                         NO-UNDO.
+
+DEF VAR aux_idmonpld AS INTE                                         NO-UNDO.
 
 { sistema/generico/includes/var_internet.i } 
 { sistema/generico/includes/supermetodos.i } 
@@ -98,7 +114,7 @@ PROCEDURE valores_entrada:
              WHEN "cdoperad" THEN aux_cdoperad = tt-param.valorCampo.
              WHEN "nmdatela" THEN aux_nmdatela = tt-param.valorCampo.
              WHEN "idorigem" THEN aux_idorigem = INTE(tt-param.valorCampo).
-             WHEN "dsdepart" THEN aux_dsdepart = tt-param.valorCampo.
+             WHEN "cddepart" THEN aux_cddepart = INTE(tt-param.valorCampo).
              WHEN "cddopcao" THEN aux_cddopcao = tt-param.valorCampo.
              WHEN "cdhistor" THEN aux_cdhistor = INTE(tt-param.valorCampo).
              WHEN "dshistor" THEN aux_dshistor = tt-param.valorCampo.
@@ -117,6 +133,7 @@ PROCEDURE valores_entrada:
              WHEN "inavisar" THEN aux_inavisar = INTE(tt-param.valorCampo).
              WHEN "inclasse" THEN aux_inclasse = INTE(tt-param.valorCampo).
              WHEN "incremes" THEN aux_incremes = INTE(tt-param.valorCampo).
+             WHEN "inmonpld" THEN aux_inmonpld = INTE(tt-param.valorCampo).
              WHEN "indcompl" THEN aux_indcompl = INTE(tt-param.valorCampo).
              WHEN "indebcta" THEN aux_indebcta = INTE(tt-param.valorCampo).
              WHEN "indoipmf" THEN aux_indoipmf = INTE(tt-param.valorCampo).
@@ -130,8 +147,9 @@ PROCEDURE valores_entrada:
              WHEN "tplotmov" THEN aux_tplotmov = INTE(tt-param.valorCampo).
              WHEN "tpctbcxa" THEN aux_tpctbcxa = INTE(tt-param.valorCampo).
              WHEN "ingercre" THEN aux_ingercre = INTE(tt-param.valorCampo).
+             WHEN "inestocc" THEN aux_inestocc = INTE(tt-param.valorCampo).
              WHEN "ingerdeb" THEN aux_ingerdeb = INTE(tt-param.valorCampo).
-             WHEN "flgsenha" THEN aux_flgsenha = LOGICAL(tt-param.valorCampo).
+             WHEN "flgsenha" THEN aux_flgsenha = INTE(tt-param.valorCampo).
              WHEN "dsextrat" THEN aux_dsextrat = tt-param.valorCampo.
              WHEN "vltarayl" THEN aux_vltarayl = DECI(tt-param.valorCampo).
              WHEN "vltarcxo" THEN aux_vltarcxo = DECI(tt-param.valorCampo).
@@ -149,7 +167,10 @@ PROCEDURE valores_entrada:
 
              WHEN "cdprodut" THEN aux_cdprodut = INTE(tt-param.valorCampo).
              WHEN "dsprodut" THEN aux_dsprodut = tt-param.valorCampo.
+             WHEN "cdgrphis" THEN aux_cdgrphis = INTE(tt-param.valorCampo).
 
+			 WHEN "idmonpld" THEN aux_idmonpld = INTE(tt-param.valorCampo).
+			 
          END CASE.
 
      END. /** Fim do FOR EACH tt-param **/
@@ -171,12 +192,13 @@ PROCEDURE Busca_Dados:
                      INPUT aux_nmdatela,                            
                      INPUT aux_idorigem,                            
                      INPUT aux_dtmvtolt,
-                     INPUT aux_dsdepart,                            
+                     INPUT aux_cddepart,                            
                      INPUT aux_cddopcao,                            
                      INPUT aux_cdhistor,                            
                      INPUT aux_dshistor,                            
                      INPUT aux_tpltmvpq,                       
                      INPUT aux_cdhinovo,                  
+                     INPUT aux_cdgrphis,
                      INPUT aux_nrregist,                            
                      INPUT aux_nriniseq,                            
                      INPUT TRUE,                                    
@@ -226,7 +248,7 @@ PROCEDURE Busca_Produto:
                      INPUT aux_cdoperad,    
                      INPUT aux_nmdatela,    
                      INPUT aux_idorigem,    
-                     INPUT aux_dsdepart,  
+                     INPUT aux_cddepart,  
                      INPUT aux_nrregist,                            
                      INPUT aux_nriniseq,                            
                      INPUT aux_cdprodut,
@@ -274,7 +296,7 @@ PROCEDURE Busca_Grupo:
                      INPUT aux_cdoperad,       
                      INPUT aux_nmdatela,       
                      INPUT aux_idorigem,       
-                     INPUT aux_dsdepart,       
+                     INPUT aux_cddepart,       
                      INPUT aux_nrregist,                            
                      INPUT aux_nriniseq,                            
                      INPUT aux_cdagrupa,       
@@ -335,6 +357,7 @@ PROCEDURE Grava_Dados:
                      INPUT aux_inavisar,     
                      INPUT aux_inclasse,     
                      INPUT aux_incremes,     
+                     INPUT aux_inmonpld, 
                      INPUT aux_indcompl,     
                      INPUT aux_indebcta,     
                      INPUT aux_indoipmf,     
@@ -351,7 +374,11 @@ PROCEDURE Grava_Dados:
                      INPUT aux_tpctbcxa,     
                      
                      INPUT aux_ingercre,     
+                     INPUT aux_inestocc,       
                      INPUT aux_ingerdeb,     
+                     
+                     INPUT aux_cdgrphis,
+                     
                      INPUT aux_flgsenha,     
                      INPUT aux_cdprodut,     
                      INPUT aux_cdagrupa,     
@@ -362,6 +389,7 @@ PROCEDURE Grava_Dados:
                      INPUT aux_vltarcsh,
                      INPUT aux_indebfol,
                      INPUT aux_txdoipmf,
+					 INPUT aux_idmonpld,
                     OUTPUT aux_nmdcampo,
                     OUTPUT TABLE tt-erro).   
                                              
@@ -481,3 +509,4 @@ PROCEDURE Gera_ImpressaoO:
         END.
 
 END PROCEDURE. /* Gera_ImpressaoO */
+
