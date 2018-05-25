@@ -167,6 +167,8 @@
 	<input type="button" class="botao" value="Confirmar Inclus&atilde;o" onClick="showConfirmacao('Confirma inclus&atilde;o do border&ocirc;?','Confirma&ccedil;&atilde;o - Ayllos','confirmarInclusao();','bloqueiaFundo(divRotina);','sim.gif','nao.gif');" />
 </div>
 <script type="text/javascript">
+	//Seleciona primeira linha ao entrar na tela
+    $("#divResumoBordero .divRegistrosTitulos .tituloRegistros tr").eq(1).click();
 	dscShowHideDiv("divOpcoesDaOpcao4","divOpcoesDaOpcao1;divOpcoesDaOpcao2;divOpcoesDaOpcao3;divOpcoesDaOpcao5");
 
 	// Muda o título da tela
