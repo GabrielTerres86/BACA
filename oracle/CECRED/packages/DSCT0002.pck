@@ -3683,7 +3683,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
 
             IF rw_crapcco.flgregis = 1 THEN
                par_tpcobran := 'R';
-               rel_tpcobran :=  'REGISTRISTRADA';
+               rel_tpcobran :=  'REGISTRADA';
             ELSE
                par_tpcobran := 'S';
                rel_tpcobran :=  'SEM REGISTRO';
