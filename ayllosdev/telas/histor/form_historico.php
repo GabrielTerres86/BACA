@@ -5,7 +5,11 @@
 	* DATA CRIAÇÃO : 30/09/2013
 	* OBJETIVO     : Formulario de alteração e inclusão dos históricos da Tela HISTOR
 	* --------------
-	* ALTERAÇÕES   :
+	* ALTERAÇÕES   : 24/02/2017 - Remocao dos caracteres "')?>" dos textos dos campos no form. (Jaison/James)
+	*				 05/12/2017 - Adicionado campo Ind. Monitoramento - Melhoria 458 - Antonio R. Jr (mouts)
+	*                11/04/2018 - Incluído novo campo "Estourar a conta corrente" (inestocc)
+    *                             Diego Simas - AMcom  
+	*                16/05/2017 - Ajustes prj420 - Resolucao - Heitor (Mouts)
 	* --------------
 	*/ 
 
@@ -46,7 +50,7 @@
 				<tr>
 					<td>
 						<label for="indebcre">D&eacute;bito/Cr&eacute;dito:</label>
-						<select name="indebcre" id="indebcre">
+						<select name="indebcre" id="indebcre" onchange="liberaMonitoramento(); return false;">
 							<option value="D">D&eacute;bito</option> 
 							<option value="C">Cr&eacute;dito</option> 
 						</select>
@@ -101,14 +105,14 @@
 					<td>
 						<label for="inautori">Ind. p/ autoriza&ccedil;&atilde;o d&eacute;bito:</label>
 						<select id="inautori" name="inautori">
-							<option value="1">Sim')?> </option>
+							<option value="1">Sim </option>
 							<option value="0">N&atilde;o </option>
 						</select>
 					</td>
 					<td>
 						<label for="inavisar">Ind. de aviso p/ d&eacute;bito:</label>
 						<select id="inavisar" name="inavisar">
-							<option value="1">Sim')?> </option>
+							<option value="1">Sim </option>
 							<option value="0">N&atilde;o </option>
 						</select>
 					</td>
@@ -117,24 +121,31 @@
 					<td>
 						<label for="indcompl">Indicador de Complemento:</label>
 						<select id="indcompl" name="indcompl">
-							<option value="1">Sim')?> </option>
+							<option value="1">Sim </option>
 							<option value="0">N&atilde;o </option>
 						</select>
 					</td>
 					<td>
 						<label for="indebcta">Ind. D&eacute;bito em Conta:</label>
 						<select id="indebcta" name="indebcta">
-							<option value="1">D&eacute;bito em conta')?> </option>
+							<option value="1">D&eacute;bito em conta </option>
 							<option value="0">N&atilde;o </option>
 						</select>
 					</td>
 				</tr>
 				<tr>
-					<td colspan="2">
+					<td>
 						<label for="incremes">Ind. p/Estat. Cr&eacute;dito do M&ecirc;s:</label>
 						<select id="incremes" name="incremes">
-							<option value="1">Soma na estat&iacute;istica')?> </option>
+							<option value="1">Soma na estat&iacute;stica </option>
 							<option value="0">N&atilde;o soma </option>
+						</select>
+					</td>
+					<td>
+						<label for="inmonpld">Ind. Monitoramento:</label>
+						<select id="inmonpld" name="inmonpld">
+							<option value="1">Sim </option>
+							<option value="0">N&atilde;o </option>
 						</select>
 					</td>
 				</tr>
@@ -157,7 +168,7 @@
 					<td colspan="2">
 						<label for="tpctbccu">Tipo de Contab. Centro Custo:</label>
 						<select id="tpctbccu" name="tpctbccu">
-							<option value="1">1 - Por centro de custo')?> </option>
+							<option value="1">1 - Por centro de custo </option>
 							<option value="0">0 - N&atilde;o </option>
 						</select>
 					</td>
@@ -166,13 +177,13 @@
 					<td colspan="2">
 						<label for="tpctbcxa" >Tipo Contab. Caixa:</label>
 						<select name="tpctbcxa" id="tpctbcxa">
-							<option value="0">0 - N&atilde;o tem tipo de contabiliza&ccedil;&atilde;o')?></option> 
-							<option value="1">1 - Contabiliza&ccedil;&atilde;o geral')?></option> 
-							<option value="2">2 - Contabiliza&ccedil;&atilde;o a d&eacute;bito por caixa')?></option> 
-							<option value="3">3 - Contabiliza&ccedil;&atilde;o a cr&eacute;dito por caixa')?></option> 
-							<option value="4">4 - Contabiliza&ccedil;&atilde;o a d&eacute;bito Banco do Brasil')?></option> 
-							<option value="5">5 - Contabiliza&ccedil;&atilde;o a cr&eacute;dito Banco do Brasil')?></option> 
-							<option value="6">6 - Contabiliza&ccedil;&atilde;o a d&eacute;bito Banco do Brasil')?></option> 
+							<option value="0">0 - N&atilde;o tem tipo de contabiliza&ccedil;&atilde;o</option> 
+							<option value="1">1 - Contabiliza&ccedil;&atilde;o geral</option> 
+							<option value="2">2 - Contabiliza&ccedil;&atilde;o a d&eacute;bito por caixa</option> 
+							<option value="3">3 - Contabiliza&ccedil;&atilde;o a cr&eacute;dito por caixa</option> 
+							<option value="4">4 - Contabiliza&ccedil;&atilde;o a d&eacute;bito Banco do Brasil</option> 
+							<option value="5">5 - Contabiliza&ccedil;&atilde;o a cr&eacute;dito Banco do Brasil</option> 
+							<option value="6">6 - Contabiliza&ccedil;&atilde;o a d&eacute;bito Banco do Brasil</option> 
 						</select>
 					</td>
 				</tr>
@@ -214,6 +225,15 @@
 						<input id="nrctatrd" name="nrctatrd" type="text"/>
 					</td>
 				</tr>
+				<tr class='estouraConta'>
+					<td colspan="2">
+						<label for="inestocc">Estourar a conta corrente:</label>
+						<select id="inestocc" name="inestocc">
+							<option value="0">0 - N&atilde;o</option>
+							<option value="1">1 - Sim</option>
+						</select>
+					</td>
+				</tr>
 			</table>
 		</fieldset>
 
@@ -245,6 +265,23 @@
 		</fieldset>
 
 		<!-- Fieldset para os campos de TARIFAS do historico -->
+		<fieldset id="fsetTarifas" name="fsetTarifas" style="padding-bottom:10px;">
+			
+			<legend>Situa&ccedil;&otilde;es de Conta</legend>
+
+			<table width="100%">
+				<tr>
+					<td>
+						<label for="cdgrupo_historico">Grupo de Hist&oacute;rico:</label>
+						<input name="cdgrupo_historico" id="cdgrupo_historico" type="text"/>
+						<a style="margin-top:0px;" href="#" onClick="controlaPesquisaGrupoHistorico('frmHistorico'); return false;"><img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif"/></a>
+						<input name="dsgrupo_historico" id="dsgrupo_historico" type="text"/>
+					</td>
+				<tr>
+			</table>
+		</fieldset>
+		
+		<!-- Fieldset para os campos de TARIFAS do historico -->
 		<fieldset id="fsetOutros" name="fsetOutros" style="padding-bottom:10px;">
 			
 			<legend>Outros</legend>
@@ -254,7 +291,7 @@
 					<td>
 						<label for="flgsenha">Solicitar Senha:</label>
 						<select id="flgsenha" name="flgsenha">
-							<option value="1">Sim')?> </option>
+							<option value="1">Sim </option>
 							<option value="0">N&atilde;o </option>
 						</select>
 					</td>
@@ -275,6 +312,15 @@
 						<input name="dsagrupa" id="dsagrupa" type="text"/>
 					</td>
 				<tr>
+				<tr>
+					<td>
+						<label for="idmonpld">Monitorar PLD:</label>
+						<select id="idmonpld" name="idmonpld">
+							<option value="1">Sim </option>
+							<option value="0">N&atilde;o </option>
+						</select>
+					</td>
+				</tr>
 			</table>
 		</fieldset>
 	</div>

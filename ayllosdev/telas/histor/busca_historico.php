@@ -6,8 +6,16 @@
  * OBJETIVO     : Rotina para buscar históricos do sistema - HISTOR
  * --------------
  * ALTERAÇÕES   : 10/03/2016 - Homologacao e Ajustes da conversao da tela HISTOR (Douglas - Chamado 412552)
- * -------------- 
  *
+ *                05/12/2016 - P341-Automatização BACENJUD - Alterar a passagem da descrição do 
+ *                             departamento como parametros e passar o o código (Renato Darosci)
+ *
+ *				  05/12/2017 - Adicionado campo Ind. Monitoramento - Melhoria 458 - Antonio R. Jr (mouts)
+ *
+ *                11/04/2018 - Incluído novo campo "Estourar a conta corrente" (inestocc)
+ *                             Diego Simas - AMcom  
+ *
+ *                16/05/2017 - Ajustes prj420 - Resolucao - Heitor (Mouts)
  * -------------- 
  */
 ?>
@@ -42,7 +50,7 @@
 	$xml .= '		<cdoperad>'.$glbvars['cdoperad'].'</cdoperad>';
 	$xml .= '		<nmdatela>'.$glbvars['nmdatela'].'</nmdatela>';	
 	$xml .= '		<idorigem>'.$glbvars['idorigem'].'</idorigem>';
-	$xml .= '       <dsdepart>'.$glbvars['dsdepart'].'</dsdepart>';	
+	$xml .= '       <cddepart>'.$glbvars['cddepart'].'</cddepart>';	
 	$xml .= '       <dtmvtolt>'.$glbvars['dtmvtolt'].'</dtmvtolt>';	
 	$xml .= '       <cddopcao>'.$cddopcao.'</cddopcao>';
 	$xml .= '       <cdhistor>'.$cdhistor.'</cdhistor>';
@@ -86,6 +94,7 @@
 	echo "$('#indcompl','#frmHistorico').val('" . getByTagName($historico,'indcompl') . "');";
 	echo "$('#indebcta','#frmHistorico').val('" . getByTagName($historico,'indebcta') . "');";
 	echo "$('#incremes','#frmHistorico').val('" . getByTagName($historico,'incremes') . "');";
+	echo "$('#inmonpld','#frmHistorico').val('" . getByTagName($historico,'inmonpld') . "');";
 	
 	// Dados Contabeis
 	echo "$('#cdhstctb','#frmHistorico').val('" . getByTagName($historico,'cdhstctb') . "');";
@@ -97,6 +106,10 @@
 	echo "$('#ingerdeb','#frmHistorico').val('" . getByTagName($historico,'ingerdeb') . "');";
 	echo "$('#nrctatrc','#frmHistorico').val('" . getByTagName($historico,'nrctatrc') . "');";
 	echo "$('#nrctatrd','#frmHistorico').val('" . getByTagName($historico,'nrctatrd') . "');";
+	if($cddopcao == 'A'){
+		echo "$('#inestocc','#frmHistorico').val('" . getByTagName($historico,'inestocc') . "');";		
+	}	
+	
 	
 	// LABEL - Tarifas
 	$vltarayl = number_format(str_replace(',','.',getByTagName($historico,'vltarayl')),2,',','.');
@@ -109,6 +122,11 @@
 	echo "$('#vltarint','#frmHistorico').val('" . $vltarint . "');";
 	echo "$('#vltarcsh','#frmHistorico').val('" . $vltarcsh . "');";
 	
+	// LABEL - Grupo de Histórico
+	$cdgrphis = (getByTagName($historico,'cdgrphis') == "0") ? "" : getByTagName($historico,'cdgrphis');
+	echo "$('#cdgrupo_historico','#frmHistorico').val('" . $cdgrphis . "');";
+	echo "$('#dsgrupo_historico','#frmHistorico').val('" . getByTagName($historico,'dsgrphis') . "');";
+	
 	// LABEL - Outros
 	$cdprodut = (getByTagName($historico,'cdprodut') == "0") ? "" : getByTagName($historico,'cdprodut');
 	$cdagrupa = (getByTagName($historico,'cdagrupa') == "0") ? "" : getByTagName($historico,'cdagrupa');
@@ -117,9 +135,10 @@
 	echo "$('#dsprodut','#frmHistorico').val('" . getByTagName($historico,'dsprodut') . "');";
 	echo "$('#cdagrupa','#frmHistorico').val('" . $cdagrupa . "');";
 	echo "$('#dsagrupa','#frmHistorico').val('" . getByTagName($historico,'dsagrupa') . "');";
+	echo "$('#idmonpld','#frmHistorico').val('" . getByTagName($historico,'idmonpld') . "');";
 	
 	
-
+	
 	if( $cddopcao == "X" ){
 		echo "$('input[type=\"text\"],select','#frmHistorico').desabilitaCampo().removeClass('campoErro');";
 		echo "$('#btSalvar').focus();";
