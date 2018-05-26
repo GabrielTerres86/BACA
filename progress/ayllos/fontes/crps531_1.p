@@ -335,7 +335,7 @@ DEF VAR aux_FinlddCli     AS CHAR                                   NO-UNDO.
 DEF VAR aux_NumCtrlLTR    AS CHAR                                   NO-UNDO.
 DEF VAR aux_ISPBLTR       AS CHAR                                   NO-UNDO.
 DEF VAR aux_IdentdPartCamr AS CHAR                                  NO-UNDO.
-DEF VAR aux_NumCtrlSTR          AS CHAR                                   NO-UNDO.
+DEF VAR aux_NumCtrlSTR    AS CHAR                                   NO-UNDO.
 DEF VAR aux_NumCtrlSLC    AS CHAR                                   NO-UNDO.
 DEF VAR aux_ISPBIF        AS CHAR                                   NO-UNDO.
 DEF VAR aux_TpInf         AS CHAR                                   NO-UNDO.
@@ -349,6 +349,11 @@ DEF VAR aux_CNPJNLiqdantCredtd AS CHAR                              NO-UNDO.
 DEF VAR aux_IdentLinhaBilat AS CHAR                                 NO-UNDO.
 DEF VAR aux_TpDebCred     AS CHAR                                   NO-UNDO.
 DEF VAR aux_insere_msg    AS CHAR                                   NO-UNDO.
+DEF VAR aux_NumCtrlCIROr  AS CHAR                                   NO-UNDO. /* SD 805540 - 14/02/2018 - Marcelo (Mouts) */
+DEF VAR aux_NumCtrlCIR    AS CHAR                                   NO-UNDO. /* SD 805540 - 14/02/2018 - Marcelo (Mouts) */
+DEF VAR aux_NumRemessaOr  AS CHAR                                   NO-UNDO. /* SD 805540 - 14/02/2018 - Marcelo (Mouts) */
+DEF VAR aux_AgIF          AS CHAR                                   NO-UNDO. /* SD 805540 - 14/02/2018 - Marcelo (Mouts) */
+DEF VAR aux_FinlddCIR     AS CHAR                                   NO-UNDO. /* SD 805540 - 14/02/2018 - Marcelo (Mouts) */
 
 DEF VAR aux_dtinispb      AS CHAR                                   NO-UNDO.                                              
 DEF VAR aux_TpPessoaCred  AS CHAR                                   NO-UNDO.
@@ -586,7 +591,6 @@ IF   NOT AVAIL crapdat THEN
          UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") +
                            " - " + glb_cdprogra + "' --> '"  + 
                            glb_dscritic + " >> log/proc_batch.log").
-
          RUN finaliza_paralelo.
          QUIT.
      END. 
@@ -915,7 +919,7 @@ FOR EACH crawarq NO-LOCK BY crawarq.nrsequen:
                                                                   " CodMsg em branco. Registro será desconsiderado." + " >> log/proc_batch.log").
                                 END.
                         ELSE
-                           IF aux_CodMsg = "STR0006R2" and (aux_FinlddCli <> "15" OR aux_CNPJ_CPFDeb<>"01027058000191") THEN
+                           IF aux_CodMsg = "STR0006R2" and (aux_FinlddCli <> "15" OR (aux_CNPJ_CPFDeb<>"01027058000191" AND aux_CNPJ_CPFDeb<>"1027058000191")) THEN
                             DO:
                                 
                                 UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") +
@@ -2213,6 +2217,14 @@ PROCEDURE importa_xml.
       ELSE
       IF  hNode:NAME = "STR0003R2" THEN
           RUN trata_numerario.
+      ELSE		  
+/* Inclusão tratamento mensagem SLC0001 - Mauricio - 03/11/2017 */
+      IF  hNode:NAME = "SLC0001" THEN
+          RUN trata_arquivo_slc.
+      ELSE
+           /* Inclusão tratamento mensagem LDL0024 - Alexandre (Mouts) - 12/12/2017 */
+      IF  hNode:NAME = "LDL0024" THEN
+          RUN trata_arquivo_ldl.  
       ELSE
       IF  hNode:NAME = "CIR0020" THEN /* SD 805540 - 14/02/2018 - Marcelo (Mouts) */
           RUN trata_numerario_cir0020.
@@ -2271,7 +2283,6 @@ PROCEDURE importa_xml.
                                                    ENTRY(1, aux_DtMovto, "-")), /* Data da mensagem */ 
                                         INPUT aux_CodMsg,                       /* Evento */ 
                                         INPUT aux_msgspb_xml).                    /* XML da mensagem */ 
- 
             END.
             ELSE
                 DO:
@@ -3679,7 +3690,7 @@ PROCEDURE trata_numerario_cir0020.
        ELSE
        IF hSubNode:NAME = "DtMovto" THEN
           ASSIGN aux_DtMovto = aux_descrica.
-            END.
+   END.
 
 END PROCEDURE.
 
@@ -6859,7 +6870,6 @@ PROCEDURE grava_mensagem_ted.
      
    DEF VAR aux_cderro AS INTE                                     NO-UNDO.
    DEF VAR aux_dserro AS CHAR                                     NO-UNDO.
-   
    
    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
 
