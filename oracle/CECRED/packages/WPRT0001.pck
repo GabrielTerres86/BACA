@@ -197,6 +197,37 @@ create or replace package body cecred.WPRT0001 is
     WHEN OTHERS THEN
       pr_dscritic := 'Não foi possivel buscar parametros do IEPTB: '||SQLERRM;
   END pc_carrega_param_ieptb;
+	
+	PROCEDURE pc_controla_log_batch(pr_idtiplog IN NUMBER   -- Tipo de Log
+                                 ,pr_dscritic IN VARCHAR2 -- Descrição do Log
+                                 ) IS
+    --
+    vr_dstiplog VARCHAR2(10);
+    --
+   BEGIN
+     -- Descrição do tipo de log
+     IF pr_idtiplog = 2 THEN
+       --
+       vr_dstiplog := 'ERRO: ';
+       --
+     ELSE
+       --
+       vr_dstiplog := 'ALERTA: ';
+       --
+     END IF;
+     -- Envio centralizado de log de erro
+     btch0001.pc_gera_log_batch(pr_cdcooper     => 3 -- Fixo?
+                               ,pr_ind_tipo_log => pr_idtiplog
+                               ,pr_cdprograma   => 'WPRT0001'
+                               ,pr_nmarqlog     => gene0001.fn_param_sistema('CRED', 3 /*pr_cdcooper*/, 'NOME_ARQ_LOG_MESSAGE')
+                               ,pr_des_log      => to_char(sysdate,'hh24:mi:ss') || ' - '
+                                                           || 'WPRT0001' || ' --> ' || vr_dstiplog
+                                                           || pr_dscritic );     
+   EXCEPTION
+     WHEN OTHERS THEN
+       -- No caso de erro de programa gravar tabela especifica de log  
+       CECRED.pc_internal_exception (pr_cdcooper => 3);                                                             
+   END pc_controla_log_batch;
   
   PROCEDURE pc_gera_log(pr_cdcooper      IN crapcop.cdcooper%TYPE,
                         pr_dscritic      IN VARCHAR2,
@@ -234,6 +265,49 @@ create or replace package body cecred.WPRT0001 is
                         ,pr_nrdconta => 0
                         ,pr_nrdrowid => vr_nrdrowid);
   END pc_gera_log;
+  
+  PROCEDURE pc_copia_arquivo(pr_arquivo        IN VARCHAR2  -- Local atual
+                            ,pr_cparquivo      IN VARCHAR2  -- Local copia
+                            ,pr_typ_saida  OUT VARCHAR2
+                            ,pr_des_saida  OUT VARCHAR2) IS
+  
+    
+  /* ..........................................................................
+    
+    Programa : pc_copia_arquivo        
+    Sistema  : 
+    Sigla    : CRED
+    Autor    : Augusto Henrique da Conceição (SUPERO)
+    Data     : Março/2018.                   Ultima atualizacao: 25/05/2018
+    
+    Dados referentes ao programa:
+    
+    Frequencia: ---
+    Objetivo  : 
+    
+    Alteração : 
+        
+  ..........................................................................*/  
+  BEGIN
+  DECLARE
+    vr_typ_saida VARCHAR2(3);
+
+    vr_exc_erro EXCEPTION;
+    vr_dscritic VARCHAR2(4000);
+    vr_cdcritic NUMBER;    
+    
+  BEGIN
+    GENE0001.pc_OScommand(pr_typ_comando => 'S'
+                         ,pr_des_comando => 'cp ' || pr_arquivo || ' ' || pr_cparquivo
+                         ,pr_flg_aguard  => 'S'
+                         ,pr_typ_saida   => pr_typ_saida
+                         ,pr_des_saida   => pr_des_saida);
+    EXCEPTION
+      WHEN OTHERS THEN
+        cecred.pc_internal_exception;
+  END;
+
+  END pc_copia_arquivo;
   
   PROCEDURE pc_atualiza_arquivo(pr_arquivo        IN VARCHAR2  -- Local atual
                                ,pr_nvarquivo      IN VARCHAR2  -- Novo local                
@@ -443,6 +517,7 @@ create or replace package body cecred.WPRT0001 is
                                 pr_ieptb_UserPass     IN VARCHAR2,
                                 pr_ieptb_resposta     IN VARCHAR2,
                                 pr_ieptb_erro         IN VARCHAR2,
+                                pr_ieptb_retorno      IN VARCHAR2,
                                 pr_arquivo            IN VARCHAR2,
                                 pr_emails_cobranca    IN VARCHAR2,
                                 pr_cdcritic           OUT crapcri.cdcritic%TYPE,
@@ -494,7 +569,7 @@ create or replace package body cecred.WPRT0001 is
                                             'SendIEPTB.pl';
   
     --Buscar parametros 
-    vr_dscomora := gene0001.fn_param_sistema('CRED', 3, 'SCRIPT_EXEC_SHELL');
+    vr_dscomora := gene0001.fn_param_sistema('CRED', 3, 'SCRIPT_EXEC_SHELL');   
     
     --Retorno do request
     vr_horaatua := to_char(SYSDATE, 'yymmddhh24miss');
@@ -516,18 +591,18 @@ create or replace package body cecred.WPRT0001 is
       vr_comando := vr_comando || ' --userCode=' || CHR(39) || pr_ieptb_userCode || CHR(39);
       vr_comando := vr_comando || ' --userPass=' || CHR(39) || pr_ieptb_userPass ||  CHR(39);
     END IF;
-    
-    -- Caso for arquivo de retorno ou confirmação não haverá dados para enviar
-    IF SUBSTR(vr_nmarquiv, 0, 1) = 'R' or SUBSTR(vr_nmarquiv, 0, 1) = 'C' THEN
+
+    -- Necessario testar 'CP', pois é ambiguo com 'C'    
+    IF SUBSTR(vr_nmarquiv, 0, 2) = 'CP' OR NOT (SUBSTR(vr_nmarquiv, 0, 1) = 'R' OR SUBSTR(vr_nmarquiv, 0, 1) = 'C') THEN
+      vr_comando := vr_comando || ' < ' || 
+                  REPLACE(pr_arquivo, 'coopd', 'coop');
+    ELSE -- Caso for arquivo de retorno ou confirmação não haverá dados para enviar
+      vr_comando := vr_comando || ' < ' || '/dev/null'; -- Hotfix para evitar loop de STDIN no perl
+    END IF;
       vr_comando := vr_comando || ' > ' ||
                     REPLACE(pr_ieptb_resposta || '/' || vr_arqreceb, 'coopd', 'coop');
                     --Remover os replaces do diretório COOPD
-    ELSE
-      vr_comando := vr_comando || ' < ' ||
-                    REPLACE(pr_arquivo, 'coopd', 'coop') || ' > ' ||
-                    REPLACE(pr_ieptb_resposta || '/' || vr_arqreceb, 'coopd', 'coop');
-                    --Remover os replaces do diretório COOPD
-    END IF;
+
   
     --Executar o comando no unix
     gene0001.pc_oscommand(pr_typ_comando => 'S'
@@ -544,16 +619,23 @@ create or replace package body cecred.WPRT0001 is
       END IF;
     END IF;
 
-    -- Pré processa o arquivo
-    pc_processa_retorno(pr_dsdireto => pr_ieptb_resposta
-                       ,pr_dsarquiv => vr_arqreceb
-                       ,pr_dscritic => pr_dscritic);
+    -- Pré processa o arquivo, contanto que não seja de retorno
+    IF SUBSTR(vr_nmarquiv, 0, 2) = 'CP' OR NOT (SUBSTR(vr_nmarquiv, 0, 1) = 'R' OR SUBSTR(vr_nmarquiv, 0, 1) = 'C') THEN
+      pc_processa_retorno(pr_dsdireto => pr_ieptb_resposta
+                         ,pr_dsarquiv => vr_arqreceb
+                         ,pr_dscritic => pr_dscritic);
+    ELSE -- Caso for de retorno cria uma copia no diretorio de arquivos de retorno
+      pc_copia_arquivo(pr_arquivo => pr_ieptb_resposta || '/' || vr_arqreceb
+                      ,pr_cparquivo => pr_ieptb_retorno || '/' || vr_nmarquiv
+                      ,pr_typ_saida => vr_typ_saida
+                      ,pr_des_saida => pr_dscritic);
+    END IF;
 
     -- Caso houver algum erro no retorno, enviaremos um e-mail e moveremos o arquivo para o diretório de erros
-    IF TRIM(pr_dscritic) IS NOT NULL THEN
+    IF TRIM(pr_dscritic) IS NOT NULL OR vr_typ_saida = 'ERR' THEN
        vr_des_assunto := 'CECRED - Erro no envio ao IEPTB';
-       vr_conteudo := 'Erro ao enviar o arquivo ' || pr_ieptb_resposta || '/' || pr_arquivo || '.' ||
-       '\nMotivo: ' || pr_dscritic;
+       vr_conteudo := '<html><body>Erro ao enviar o arquivo ' || pr_ieptb_resposta || '/' || pr_arquivo || '.' ||
+       '<br><b>Motivo(s):</b><br> ' || pr_dscritic || '</body></html>';
        --
        GENE0003.pc_solicita_email(pr_cdcooper        => pr_cdcooper    --> Cooperativa conectada
                                  ,pr_cdprogra        => '' --> Programa conectado
@@ -575,10 +657,8 @@ create or replace package body cecred.WPRT0001 is
                           ,pr_nvarquivo => vr_nvarquivo
                           ,pr_dscritic => pr_dscritic);
       -- Loga o erro
-      pc_gera_log(pr_cdcooper
-               ,'[IEPTB] ' || vr_conteudo
-               ,NULL
-               ,0);
+			pc_controla_log_batch(2, to_char(SYSDATE, 'DD/MM/YYYY - HH24:MI:SS') || ' - WPRT0001 - [IEPTB] ' || vr_conteudo); -- Texto para escrita
+      --
     ELSE
       -- Caso contrário, iremos apenas mover para o dirério /salvar
       vr_nvarquivo := vr_drsalvar || '/' || vr_nmarquiv;
@@ -586,11 +666,8 @@ create or replace package body cecred.WPRT0001 is
       pc_atualiza_arquivo(pr_arquivo => pr_ieptb_resposta || '/' || pr_arquivo
                           ,pr_nvarquivo => vr_nvarquivo
                           ,pr_dscritic => pr_dscritic);
-      -- Loga o registro enviado                        
-      pc_gera_log(pr_cdcooper
-               ,NULL
-               ,'[IEPTB] Envio do arquivo ' || pr_ieptb_resposta || '/' || pr_arquivo || ' ao CRA Nacional.'
-               ,1);
+      -- Loga o registro enviado
+			pc_controla_log_batch(1, to_char(SYSDATE, 'DD/MM/YYYY - HH24:MI:SS') || ' - WPRT0001 - [IEPTB] Envio do arquivo ' || pr_ieptb_resposta || '/' || pr_arquivo || ' ao CRA Nacional.'); -- Texto para escrita
     END IF;
     
     EXCEPTION
@@ -647,8 +724,14 @@ create or replace package body cecred.WPRT0001 is
     vr_mes VARCHAR2(2);
     vr_ano VARCHAR2(2);        
 
+    -- Registro de Data
+    rw_crapdat    BTCH0001.cr_crapdat%ROWTYPE;      
 
   BEGIN
+        
+    OPEN BTCH0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
+    FETCH BTCH0001.cr_crapdat INTO rw_crapdat;
+    CLOSE BTCH0001.cr_crapdat;      
         
     pc_carrega_param_ieptb(pr_cdcooper => pr_cdcooper
                           ,pr_ieptb_endereco => vr_ieptb_endereco
@@ -667,12 +750,21 @@ create or replace package body cecred.WPRT0001 is
       RAISE vr_exc_erro;
     END IF;                          
                           
+    vr_dia := to_char(rw_crapdat.dtmvtolt, 'dd');
+    vr_mes := to_char(rw_crapdat.dtmvtolt, 'mm');
+    vr_ano := to_char(rw_crapdat.dtmvtolt, 'yy');
+    
+    -- temporario
     vr_dia := to_char(SYSDATE, 'dd');
     vr_mes := to_char(SYSDATE, 'mm');
     vr_ano := to_char(SYSDATE, 'yy');
 
     --Buscar arquivos de remessa
     vr_pesq := 'B%%%' || vr_dia || vr_mes || '.' || vr_ano || '%';
+    
+    -- temporario RC7    
+    vr_pesq := 'B%%%' || vr_dia || vr_mes || '.' || '%';
+    
     --Buscar a lista de arquivos do diretorio
     gene0001.pc_lista_arquivos(pr_lista_arquivo => vr_tab_remessa
                               ,pr_path          => vr_ieptb_remessa
@@ -690,6 +782,7 @@ create or replace package body cecred.WPRT0001 is
                                ,pr_ieptb_UserPass => vr_ieptb_userPass
                                ,pr_ieptb_resposta => vr_ieptb_resposta
                                ,pr_ieptb_erro => vr_ieptb_erro
+                               ,pr_ieptb_retorno => vr_ieptb_retorno
                                ,pr_arquivo => vr_arquivo
                                ,pr_emails_cobranca => vr_emails_cobranca
                                ,pr_cdcritic => vr_cdcritic
@@ -714,7 +807,8 @@ create or replace package body cecred.WPRT0001 is
                                ,pr_ieptb_UserCode => vr_ieptb_userCode
                                ,pr_ieptb_UserPass => vr_ieptb_userPass
                                ,pr_ieptb_resposta => vr_ieptb_resposta
-                               ,pr_ieptb_erro => vr_ieptb_erro                              
+                               ,pr_ieptb_erro => vr_ieptb_erro
+                               ,pr_ieptb_retorno => vr_ieptb_retorno
                                ,pr_arquivo => vr_arquivo
                                ,pr_emails_cobranca => vr_emails_cobranca
                                ,pr_cdcritic => vr_cdcritic
@@ -739,7 +833,8 @@ create or replace package body cecred.WPRT0001 is
                                ,pr_ieptb_UserCode => vr_ieptb_userCode
                                ,pr_ieptb_UserPass => vr_ieptb_userPass
                                ,pr_ieptb_resposta => vr_ieptb_resposta
-                               ,pr_ieptb_erro => vr_ieptb_erro                              
+                               ,pr_ieptb_erro => vr_ieptb_erro
+                               ,pr_ieptb_retorno => vr_ieptb_retorno
                                ,pr_arquivo => vr_arquivo
                                ,pr_emails_cobranca => vr_emails_cobranca
                                ,pr_cdcritic => vr_cdcritic
@@ -758,17 +853,11 @@ create or replace package body cecred.WPRT0001 is
         
         pr_dscritic := vr_dscritic;
         
-        pc_gera_log(pr_cdcooper
-                   ,'[IEPTB] Erro ao enviar remessas: ' || vr_dscritic
-                   ,NULL
-                   ,0);
+        pc_controla_log_batch(2, to_char(SYSDATE, 'DD/MM/YYYY - HH24:MI:SS') || ' - WPRT0001 - [IEPTB] Erro ao enviar remessas: ' || vr_dscritic); -- Texto para escrita
       
       WHEN OTHERS THEN
         pr_dscritic := 'Não foi possivel enviar as remessas: '||SQLERRM;
-        pc_gera_log(pr_cdcooper
-                   ,'[IEPTB] ' || pr_dscritic
-                   ,NULL
-                   ,0);
+        pc_controla_log_batch(2, to_char(SYSDATE, 'DD/MM/YYYY - HH24:MI:SS') || ' - WPRT0001 - [IEPTB] ' || pr_dscritic); -- Texto para escrita
     END;
   END pc_enviar_remessa;
 
@@ -839,7 +928,8 @@ create or replace package body cecred.WPRT0001 is
                        ,pr_ieptb_UserPass => vr_ieptb_userPass
                        ,pr_ieptb_resposta => vr_ieptb_resposta
                        ,pr_emails_cobranca => vr_emails_cobranca
-                       ,pr_ieptb_erro => vr_ieptb_erro                      
+                       ,pr_ieptb_erro => vr_ieptb_erro
+                       ,pr_ieptb_retorno => vr_ieptb_retorno
                        ,pr_arquivo => vr_nmarqv
                        ,pr_cdcritic => vr_nmarqv
                        ,pr_dscritic => pr_dscritic);
@@ -857,7 +947,8 @@ create or replace package body cecred.WPRT0001 is
                        ,pr_ieptb_UserPass => vr_ieptb_userPass
                        ,pr_ieptb_resposta => vr_ieptb_resposta
                        ,pr_emails_cobranca => vr_emails_cobranca
-                       ,pr_ieptb_erro => vr_ieptb_erro                  
+                       ,pr_ieptb_erro => vr_ieptb_erro
+                       ,pr_ieptb_retorno => vr_ieptb_retorno
                        ,pr_arquivo => vr_nmarqv
                        ,pr_cdcritic => vr_nmarqv
                        ,pr_dscritic => pr_dscritic);
@@ -873,17 +964,11 @@ create or replace package body cecred.WPRT0001 is
       END IF;  
       
       pr_dscritic := vr_dscritic;
-      pc_gera_log(pr_cdcooper
-                 ,'[IEPTB] Erro ao enviar remessas: ' || vr_dscritic
-                 ,NULL
-                 ,0);
+      pc_controla_log_batch(2, to_char(SYSDATE, 'DD/MM/YYYY - HH24:MI:SS') || ' - WPRT0001 - [IEPTB] Erro ao enviar remessas: ' || vr_dscritic); -- Texto para escrita
     
     WHEN OTHERS THEN
       pr_dscritic := 'Não foi possivel enviar o arquivo de remessa: '||SQLERRM;
-      pc_gera_log(pr_cdcooper
-                 ,'[IEPTB] ' || pr_dscritic
-                 ,NULL
-                 ,0);
+      pc_controla_log_batch(2, to_char(SYSDATE, 'DD/MM/YYYY - HH24:MI:SS') || ' - WPRT0001 - [IEPTB] ' || pr_dscritic); -- Texto para escrita
   END;
 END pc_obtem_retorno;
 
