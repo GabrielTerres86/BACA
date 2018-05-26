@@ -174,7 +174,7 @@ PROCEDURE cria_dados_totvs:
                     ELSE
                     IF    crapttl.tpdocttl = "CN" THEN
                           ASSIGN aux_tpdocttl = "CN".
-                          
+                    
                     /* Sexo */
                     IF   crapttl.cdsexotl = 1 THEN
                          ASSIGN aux_dssexttl = "M".
@@ -443,7 +443,7 @@ PROCEDURE cria_dados_totvs:
                
        END. /*fim do juridica*/
 
-     UNIX VALUE ('/usr/bin/cp ' + aux_nmarquiv + ' /usr/local/cecred/bndes/xml/ 2>/dev/null').
+	 UNIX VALUE ('/usr/bin/cp ' + aux_nmarquiv + ' /usr/local/cecred/bndes/xml/ 2>/dev/null').
 
      UNIX SILENT VALUE ("rm " + aux_nmarquiv + " 2> /dev/null" ).
       

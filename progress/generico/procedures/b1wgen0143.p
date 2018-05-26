@@ -30,6 +30,10 @@
                 14/10/2016 - #536120 Melhoria da msg de log na rotina proc_crialog
                              e criacao de logtel para a opcao 
                              Refaz_regulariza (Carlos)
+
+                24/04/2018 - #853017 Permitir realizar o Refaz Regularização para 
+				             qualquer situação diferente de 0 (ainda não enviado). 
+							 (Wagner/Sustenção).							 
                              
 ............................................................................*/
 
@@ -978,7 +982,7 @@ PROCEDURE Refaz_Regulariza:
         IF  aux_dscritic <> "" OR aux_cdcritic <> 0 THEN
         UNDO LimpaData, LEAVE LimpaData.
 
-        IF crapneg.flgctitg = 1 THEN
+        IF crapneg.flgctitg <> 0 THEN
         DO:
             ASSIGN crapneg.flgctitg = 6
                    crapneg.dtfimest = par_dtmvtolt
@@ -987,7 +991,7 @@ PROCEDURE Refaz_Regulariza:
         END.
         ELSE
         DO:
-            ASSIGN aux_dscritic = "O cheque precisa estar com a situacao 1".
+            ASSIGN aux_dscritic = "O cheque precisa estar com a situacao diferente de 0 (zero)".
         END.
 
         RELEASE crapneg.
