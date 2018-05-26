@@ -1468,6 +1468,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.WEBS0001 IS
                  ,dsnivris = decode(pr_tpretest, 'M', nvl(pr_indrisco, lim.dsnivris), lim.dsnivris)
                  ,dtdscore = nvl(pr_dtdscore, nvl(lim.dtdscore,trunc(sysdate)))
                  ,dsdscore = nvl(pr_dsdscore, lim.dsdscore)
+                 ,nrinfcad = decode(pr_tpretest, 'M', nvl(pr_nrinfcad, lim.nrinfcad), lim.nrinfcad)
+                 ,nrgarope = decode(pr_tpretest, 'M', nvl(pr_nrgarope, lim.nrinfcad), lim.nrgarope)
+                 ,nrliquid = decode(pr_tpretest, 'M', nvl(pr_nrliquid, lim.nrinfcad), lim.nrliquid)
+                 ,nrpatlvr = decode(pr_tpretest, 'M', nvl(pr_nrparlvr, lim.nrinfcad), lim.nrpatlvr)
+                 ,nrperger = decode(pr_tpretest, 'M', nvl(pr_nrperger, lim.nrinfcad), lim.nrperger)
            where  lim.cdcooper = pr_cdcooper
            and    lim.nrdconta = pr_nrdconta
            and    lim.nrctrlim = pr_nrctrlim
