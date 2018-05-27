@@ -354,7 +354,7 @@
 				if ($cdadmcrd!=83&&$cdadmcrd!=85&&$cdadmcrd!=87):?>
 					<a id="continuaAprovacaoBTN" style="display:none "  class="botao" onclick="solicitaSenha(nrctrcrd) ;" ><? echo utf8ToHtml("Continuar Aprovação");?> </a>
 					<a  style="display:none " cdcooper="<?php echo $glbvars['cdcooper']; ?>" 
-					cdagenci="<?php echo $glbvars['cdoperad']; ?>" 
+					cdagenci="<?php echo $glbvars['cdpactra']; ?>" 
 					nrdcaixa="<?php echo $glbvars['nrdcaixa']; ?>" 
 					idorigem="<?php echo $glbvars['idorigem']; ?>" 
 					cdoperad="<?php echo $glbvars['cdoperad']; ?>"

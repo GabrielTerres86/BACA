@@ -259,7 +259,7 @@ $vllimmin = "0,00";
 
 	<?php if(!is_null($cartao)){?>
 		function enviarSolicitacao(){
-			var vllimmax  = <? echo strToNm($vllimmax);?>;
+			var vllimmax  = <? echo strToNm($vlsugmot);?>;
 			var vllimmin  = <? echo strToNm($vllimmin);?>;
 			var valorSugerido = parseFloat($("#vlsugmot").val().replace(/\./g,'').replace(",","."));
 			if (valorSugerido > 49500)
