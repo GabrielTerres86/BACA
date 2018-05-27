@@ -1543,7 +1543,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
     -- CURSORES
     -- Busca os dados da cooperativa selecionada
     CURSOR cr_crapcop(pr_nrdocnpj crapcop.nrdocnpj%TYPE) IS
-      SELECT cdcooper
       SELECT cdcooper,
              nmrescop
         FROM crapcop
@@ -1891,7 +1890,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
           IF (vr_cdmodali = 2 AND vr_tab_cooperado(vr_ind).vlsldapl = 0) OR -- Aplicacao
              (vr_cdmodali = 3 AND vr_tab_cooperado(vr_ind).vlsldppr = 0) THEN -- Poupanca
               continue;
-            END IF;
           END IF;
 
           -- Fim Pj 416
