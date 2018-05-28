@@ -76,23 +76,13 @@ INSERT INTO crapace
      WHERE cop.cdcooper IN (SELECT cdcooper FROM crapprm WHERE cdacesso = 'FL_VIRADA_BORDERO' AND dsvlrprm = 'P')
        AND ope.cdsitope = 1 
        AND cop.cdcooper = ope.cdcooper
-       AND trim(upper(ope.cdoperad)) IN ('1', --  super usuário
-                                         'F0030584',
-                                         'F0030521',
-                                         'F0030066',
-                                         'F0030688',
-                                         'F0030835',
-                                         'F0030513',
-                                         'F0031403',
-                                         'F0030978',
-                                         'F0020517',
-                                         'F0030542',
-                                         'F0031401',
-                                         'F0031089',
-                                         'F0031090',
-                                         'F0031810',
-                                         'F0031809',
-                                         'F0031803');
+       AND trim(upper(ope.cdoperad)) IN ('F0070109',
+                                         'F0070079',
+                                         'F0070379',
+                                         'F0070355',
+                                         'F0070331',
+                                         'F0070130',
+                                         'F0070372');
 
 -- Insere o registro de cadastro do programa
 INSERT INTO crapprg
