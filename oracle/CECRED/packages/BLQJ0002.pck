@@ -3557,6 +3557,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
       SELECT
             'Cooperativa: '||c.nmrescop||
             ' Conta: '||t2.nrdconta||
+            ' CPF/CNPJ: '||t.nrcpfcnpj||
+            ' Ofício: '||t2.dsoficio||                        
             ' Valor Monitorado: '||to_char(t2.vl_diferenca_bloqueio,'99,999,990.00')||
             ' Valor Bloqueado: '||to_char(nvl(t2.vloperacao,0),'99,999,990.00') Conta,
             c.cdcooper,
@@ -3646,6 +3648,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
    -- para atender as solicitações ou se vai encerrar as solicitações
    -- monitoradas
    IF to_number(to_char(sysdate, 'HH24MI')) > vr_hororario_encerramento THEN
+     
      -- Busca os dados do monitoramento
      FOR rw_monitoramento IN cr_monitoramento LOOP
       -- Atualiza na tabela de bloqueios
@@ -3717,7 +3720,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
                                ,pr_des_anexo       => vr_dsdircop||'/monitoramento.txt' --> Um ou mais anexos separados por ';' ou ','
                                ,pr_flg_remove_anex => 'S' --> Remover os anexos passados
                                ,pr_flg_log_batch   => 'N' --> Incluir no log a informação do anexo?
-                               ,pr_flg_enviar      => 'S' --> Enviar o e-mail na hora
+                               ,pr_flg_enviar      => 'N' --> Enviar o e-mail na hora
                                ,pr_des_erro        => vr_dscritic);          
    ELSE 
      -- Busca os dados do monitoramento
@@ -3893,7 +3896,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.BLQJ0002 AS
                                       ,pr_des_anexo       => NULL --> Um ou mais anexos separados por ';' ou ','
                                       ,pr_flg_remove_anex => 'N' --> Remover os anexos passados
                                       ,pr_flg_log_batch   => 'N' --> Incluir no log a informação do anexo?
-                                      ,pr_flg_enviar      => 'S' --> Enviar o e-mail na hora
+                                      ,pr_flg_enviar      => 'N' --> Enviar o e-mail na hora
                                       ,pr_des_erro        => vr_dscritic);          
          END IF;
          
