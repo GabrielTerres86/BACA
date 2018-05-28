@@ -9,7 +9,7 @@
 BEGIN
   dbms_scheduler.drop_job(job_name => 'CECRED.JBBLQJ_MONITORA_BLQ_JUD');
 END;
-/
+\
 
 BEGIN
   EXECUTE IMMEDIATE 'ALTER SESSION SET 
@@ -53,7 +53,7 @@ BEGIN
                                 auto_drop           => true,
                                 comments            => 'Job para monitoramento de bloqueios judiciais pendentes de conclusão');
 end;
-/
+\
 
 
 
