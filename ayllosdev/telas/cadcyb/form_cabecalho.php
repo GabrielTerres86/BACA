@@ -35,6 +35,7 @@
 		<select id="cdorigem" name="cdorigem" >
 			<option value="1"> <? echo utf8ToHtml("1 - Conta") ?> </option>
 			<option value="3"> <? echo utf8ToHtml("3 - Empr&eacute;stimos") ?> </option>
+			<option value="4"> <? echo utf8ToHtml("4 - Desconto de T&iacute;tulos") ?> </option>
 		</select>
 
 		<label for="nrdconta">Conta:</label>
@@ -42,7 +43,21 @@
 		
 		<label for="nrctremp">Contrato:</label>
 		<input type="text" id="nrctremp" name="nrctremp" value="<? echo $nrctremp ?>" />
+
+		<br style="clear:both" />
+
 		
+		<label for="nrborder">Bordero:</label>
+		<input type="text" id="nrborder" name="nrborder" value="" />
+
+		<label for="nrtitulo">T&iacute;tulo:</label>
+		<input type="text" id="nrtitulo" name="nrtitulo" />
+
+		
+
+		<a id="pesqtitulo" name="pesqtitulo" href="#" onClick="mostrarPesquisaBorderoPorTitulo();" ><img src="<?php echo $UrlImagens; ?>geral/ico_lupa.gif" width="14" height="14" border="0"></a>
+		
+
 		<br style="clear:both" />
 		
 		<label for="flgjudic">Judicial:</label>

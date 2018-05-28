@@ -79,6 +79,9 @@ function formataCabecalho() {
 	$('label[for="cdorigem"]','#frmCab').addClass('rotulo').css({'width':'80px'});
 	$('label[for="nrdconta"]','#frmCab').addClass('rotulo-linha').css({'width':'55px'});
 	$('label[for="nrctremp"]','#frmCab').addClass('rotulo-linha').css({'width':'68px'});
+
+	$('label[for="nrborder"]','#frmCab').addClass('rotulo').css({'width':'80px'});
+	$('label[for="nrtitulo"]','#frmCab').addClass('rotulo-linha').css({'width':'55px'});
 	
 	$('label[for="flgjudic"]','#frmCab').addClass('rotulo').css({'width':'80px'});
     $('label[for="flextjud"]','#frmCab').addClass('rotulo-linha').css({'width':'100px'});
@@ -96,7 +99,12 @@ function formataCabecalho() {
 
 	$('#cdorigem','#frmCab').css({'width':'125px'}).habilitaCampo(); 
 	$('#nrdconta','#frmCab').css({'width':'80px'}).habilitaCampo().setMask('INTEGER','zzzz.zzz-z','.-','');
-	$('#nrctremp','#frmCab').css({'width':'80px'}).habilitaCampo(); 
+	$('#nrctremp','#frmCab').css({'width':'80px'}).habilitaCampo();
+
+
+	$('#nrborder','#frmCab').css({'width':'125px'}).habilitaCampo(); 
+	$('#nrtitulo','#frmCab').css({'width':'80px'}).habilitaCampo(); 
+	
 
 	$('#flgjudic','#frmCab').css({'height':'14px','width':'16px','margin':'3px 0px 3px 3px'}).habilitaCheckbox().attr("checked", false);  
 	$('#flextjud','#frmCab').css({'height':'14px','width':'16px','margin':'3px 0px 3px 3px'}).habilitaCheckbox().attr("checked", false); 	
@@ -307,8 +315,20 @@ function validaOpcaoOrigem(){
 	$('#nrdconta','#frmCab').val('').habilitaCampo().focus();
 	if ( $('#cdorigem','#frmCab').val() == '1') {
 		$('#nrctremp','#frmCab').val('').desabilitaCampo();
+		$('#nrborder','#frmCab').val('').desabilitaCampo();
+		$('#nrtitulo','#frmCab').val('').desabilitaCampo();
+
+
+	} else if($('#cdorigem','#frmCab').val() == '4'){
+		$('#nrctremp','#frmCab').val('').desabilitaCampo();
+		$('#nrborder','#frmCab').val('').habilitaCampo();
+		$('#nrtitulo','#frmCab').val('').habilitaCampo();
+		
 	} else {
 		$('#nrctremp','#frmCab').val('').habilitaCampo();
+		$('#nrborder','#frmCab').val('').desabilitaCampo();
+		$('#nrtitulo','#frmCab').val('').desabilitaCampo();
+		
 	}	
 }
 
@@ -1134,6 +1154,23 @@ function mostrarPesquisaMotivoCin(){
 	//Exibir a pesquisa
 	mostraPesquisa("PARCYB", "PARCYB_BUSCAR_MOTIVOS_CIN", "Motivos CIN","100",filtros,colunas);
 }
+
+
+// Função para abrir a pesquisa de borderos, usando número do título
+function mostrarPesquisaBorderoPorTitulo(){
+	if( $('#nrtitulo','#frmCab').prop("disabled") ) {
+		return false;
+	}
+	//Definição dos filtros
+	// |;nrborder;;N;;N;nrborder|;nrtitulo;;N;;N;nrtitulo
+	var filtros	= "Conta;nrdconta;200px;S;;S;nrdconta";
+	//Campos que serão exibidos na tela
+	var colunas = 'Bordero;nrborder;20%;right|Titulo;nrtitulo;20%;left|Numero Documento;nrdocmto;20%;right|Valor;vltitulo;20%;right|Vencto;dtvencto;20%;right';			
+	//Exibir a pesquisa
+	mostraPesquisa("PARCYB", "PARCYB_BUSCAR_TITULOS_BORDERO", "Titulos e Bordero","100",filtros,colunas);
+}
+
+
 
 function limparCamposCabecalho(){
 	// Limpar os campos do formulário
