@@ -244,6 +244,7 @@ create or replace package cecred.cobr0011 is
 		                           );
 	-- Gera o lote e o lançamento
 	PROCEDURE pc_processa_lancamento(pr_cdcooper IN  craplot.cdcooper%TYPE
+		                              ,pr_nrdconta IN  tbfin_recursos_movimento.nrdconta%TYPE
 		                              ,pr_dtmvtolt IN  craplot.dtmvtolt%TYPE
 																	,pr_cdagenci IN  craplot.cdagenci%TYPE
 																	,pr_cdoperad IN  craplot.cdoperad%TYPE
@@ -290,6 +291,7 @@ create or replace package body cecred.cobr0011 IS
 	-- Tipo de registro cooperativa
 	TYPE typ_reg_coop IS RECORD
 		(cdcooper crapcop.cdcooper%TYPE
+		,nrdconta tbfin_recursos_movimento.nrdconta%TYPE
 		,vlpagmto NUMBER
 		);
 	-- Tabela de tipo cooperativa
@@ -326,6 +328,7 @@ create or replace package body cecred.cobr0011 IS
            ,crapcob.cdtitprt
            ,crapcob.dtdbaixa
            ,crapcob.dtsitcrt
+					 ,crapcob.nrdident
            ,crapcob.rowid
      FROM crapcob
     WHERE crapcob.ROWID = pr_rowid;
@@ -446,7 +449,6 @@ create or replace package body cecred.cobr0011 IS
 	FUNCTION fn_busca_dados_conta_destino(pr_idoption IN  NUMBER
 		                                   ) RETURN VARCHAR2 IS
 		--
-		vr_option   NUMBER := 7;
 		vr_dsvlrprm crapprm.dsvlrprm%TYPE;
 		vr_result   crapprm.dsvlrprm%TYPE;
 		vr_posini   NUMBER;
@@ -1051,7 +1053,10 @@ create or replace package body cecred.cobr0011 IS
     vr_dscritic VARCHAR2(4000);
     --Variaveis de Excecao
     vr_exc_erro EXCEPTION;
-
+    
+		--Tabelas de Memoria de Remessa
+    vr_tab_remessa_dda DDDA0001.typ_tab_remessa_dda;
+    vr_tab_retorno_dda DDDA0001.typ_tab_retorno_dda;
   BEGIN
     -- Inicializar variaveis retorno
     pr_cdcritic := NULL;
@@ -1109,7 +1114,7 @@ create or replace package body cecred.cobr0011 IS
     /* Preparar Lote de Retorno Cooperado */
     PAGA0001.pc_prep_retorno_cooperado (pr_idregcob => rw_crapcob.rowid    --ROWID da cobranca
                                        ,pr_cdocorre => pr_cdocorre         --Codigo Ocorrencia
-                                       ,pr_dsmotivo => NULL                --Descricao Motivo
+                                       ,pr_dsmotivo => pr_dsmotivo         --Descricao Motivo
                                        ,pr_dtmvtolt => pr_crapdat.dtmvtolt --Data Movimento
                                        ,pr_cdoperad => pr_cdoperad         --Codigo Operador
                                        ,pr_nrremret => pr_ret_nrremret     --Numero Remessa
@@ -1145,6 +1150,26 @@ create or replace package body cecred.cobr0011 IS
     IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
       --Levantar Excecao
       RAISE vr_exc_erro;
+    END IF;
+		-- se o boleto for DDA/NPC, baixar da CIP
+    IF rw_crapcob.nrdident > 0 THEN
+      -- Executa procedimentos do DDA-JD
+      DDDA0001.pc_procedimentos_dda_jd (pr_rowid_cob => rw_crapcob.rowid         --ROWID da Cobranca
+                                       ,pr_tpoperad => 'B'                       --Tipo Operacao
+                                       ,pr_tpdbaixa => '3'                       --Envio para protesto
+                                       ,pr_dtvencto => rw_crapcob.dtvencto       --Data Vencimento
+                                       ,pr_vldescto => rw_crapcob.vldescto       --Valor Desconto
+                                       ,pr_vlabatim => rw_crapcob.vlabatim       --Valor Abatimento
+                                       ,pr_flgdprot => rw_crapcob.flgdprot       --Flag Protesto
+                                       ,pr_tab_remessa_dda => vr_tab_remessa_dda --tabela remessa
+                                       ,pr_tab_retorno_dda => vr_tab_retorno_dda --Tabela memoria retorno DDA
+                                       ,pr_cdcritic => vr_cdcritic               --Codigo Critica
+                                       ,pr_dscritic => vr_dscritic);             --Descricao Critica
+                                       
+      IF TRIM(vr_dscritic) IS NOT NULL THEN
+        vr_dscritic := 'Erro ao realizar procedimento DDA: ' || vr_dscritic;
+        RAISE vr_exc_erro;
+      END IF;                                             
     END IF;
 		--
 	EXCEPTION
@@ -1218,6 +1243,9 @@ create or replace package body cecred.cobr0011 IS
     vr_nrremret  crapret.nrremret%type;
     vr_rowid_ret rowid;
     vr_nrseqreg  integer;
+		--Tabelas de Memoria de Remessa
+    vr_tab_remessa_dda DDDA0001.typ_tab_remessa_dda;
+    vr_tab_retorno_dda DDDA0001.typ_tab_retorno_dda;
     --
   BEGIN
     --Inicializar variaveis retorno
@@ -1255,7 +1283,8 @@ create or replace package body cecred.cobr0011 IS
     BEGIN
       UPDATE CRAPCOB
          SET crapcob.insitcrt = 4, /* sustado */
-             crapcob.dtsitcrt = pr_dtocorre
+             crapcob.dtsitcrt = pr_dtocorre,
+						 crapcob.dtbloque = NULL
        WHERE crapcob.rowid    = pr_idtabcob;
     EXCEPTION
       WHEN OTHERS THEN
@@ -1332,7 +1361,7 @@ create or replace package body cecred.cobr0011 IS
     FETCH cr_craprem INTO rw_craprem;
 
 		-- Criar Log Cobranca 
-		vr_dsmotivo:= 'Retirada de cartório';
+		vr_dsmotivo:= 'Retirado de cartório';
 		PAGA0001.pc_cria_log_cobranca(pr_idtabcob => rw_crapcob.rowid   --ROWID da Cobranca
 																 ,pr_cdoperad => pr_cdoperad        --Operador
 																 ,pr_dtmvtolt => pr_crapdat.dtmvtolt--Data movimento
@@ -1371,6 +1400,26 @@ create or replace package body cecred.cobr0011 IS
 		END IF;
 		--
 		CLOSE cr_craprem;
+		-- se boleto foi rejeitado pelo cartorio, atualizar situacao DDA/NPC
+    IF rw_crapcob.nrdident > 0 THEN
+      -- Executa procedimentos do DDA-JD
+      DDDA0001.pc_procedimentos_dda_jd (pr_rowid_cob => rw_crapcob.rowid         --ROWID da Cobranca
+                                       ,pr_tpoperad => 'A'                       --Tipo Operacao
+                                       ,pr_tpdbaixa => ''                        --Envio para protesto
+                                       ,pr_dtvencto => rw_crapcob.dtvencto       --Data Vencimento
+                                       ,pr_vldescto => rw_crapcob.vldescto       --Valor Desconto
+                                       ,pr_vlabatim => rw_crapcob.vlabatim       --Valor Abatimento
+                                       ,pr_flgdprot => rw_crapcob.flgdprot       --Flag Protesto
+                                       ,pr_tab_remessa_dda => vr_tab_remessa_dda --tabela remessa
+                                       ,pr_tab_retorno_dda => vr_tab_retorno_dda --Tabela memoria retorno DDA
+                                       ,pr_cdcritic => vr_cdcritic               --Codigo Critica
+                                       ,pr_dscritic => vr_dscritic);             --Descricao Critica
+                                       
+      IF TRIM(vr_dscritic) IS NOT NULL THEN
+        vr_dscritic := 'Erro ao realizar procedimento DDA: ' || vr_dscritic;
+        RAISE vr_exc_erro;
+      END IF;                                             
+    END IF;
     --
   EXCEPTION
     WHEN vr_exc_erro THEN
@@ -1970,7 +2019,9 @@ create or replace package body cecred.cobr0011 IS
     vr_dscritic VARCHAR2(4000);
     --Variaveis de Excecao
     vr_exc_erro EXCEPTION;
-
+    --Tabelas de Memoria de Remessa
+    vr_tab_remessa_dda DDDA0001.typ_tab_remessa_dda;
+    vr_tab_retorno_dda DDDA0001.typ_tab_retorno_dda;
   BEGIN
     -- Inicializar variaveis retorno
     pr_cdcritic := NULL;
@@ -2006,7 +2057,8 @@ create or replace package body cecred.cobr0011 IS
     BEGIN
       UPDATE CRAPCOB
          SET crapcob.insitcrt = 0,
-             crapcob.dtsitcrt = NULL
+             crapcob.dtsitcrt = NULL,
+						 crapcob.dtbloque = NULL
        WHERE crapcob.rowid  = pr_idtabcob;
     EXCEPTION
       WHEN OTHERS THEN
@@ -2014,6 +2066,26 @@ create or replace package body cecred.cobr0011 IS
         --Levantar Excecao
         RAISE vr_exc_erro;
     END;
+		
+		IF rw_crapcob.nrdident > 0 THEN
+      -- Executa procedimentos do DDA-JD
+      DDDA0001.pc_procedimentos_dda_jd (pr_rowid_cob => rw_crapcob.rowid         --ROWID da Cobranca
+                                       ,pr_tpoperad => 'A'                       --Tipo Operacao
+                                       ,pr_tpdbaixa => ''                       --Envio para protesto
+                                       ,pr_dtvencto => rw_crapcob.dtvencto       --Data Vencimento
+                                       ,pr_vldescto => rw_crapcob.vldescto       --Valor Desconto
+                                       ,pr_vlabatim => rw_crapcob.vlabatim       --Valor Abatimento
+                                       ,pr_flgdprot => rw_crapcob.flgdprot       --Flag Protesto
+                                       ,pr_tab_remessa_dda => vr_tab_remessa_dda --tabela remessa
+                                       ,pr_tab_retorno_dda => vr_tab_retorno_dda --Tabela memoria retorno DDA
+                                       ,pr_cdcritic => vr_cdcritic               --Codigo Critica
+                                       ,pr_dscritic => vr_dscritic);             --Descricao Critica
+                                       
+      IF TRIM(vr_dscritic) IS NOT NULL THEN
+        vr_dscritic := 'Erro ao realizar procedimento DDA: ' || vr_dscritic;
+        RAISE vr_exc_erro;
+      END IF;                                             
+    END IF;
 
     /* Preparar Lote de Retorno Cooperado */
     PAGA0001.pc_prep_retorno_cooperado (pr_idregcob => rw_crapcob.rowid    --ROWID da cobranca
@@ -2231,25 +2303,12 @@ create or replace package body cecred.cobr0011 IS
     --Fechar Cursor
     CLOSE cr_crapcob;
 
-    /* Gerar motivos de ocorrencia  */
-    PAGA0001.pc_proc_motivos_retorno (pr_idtabcob => pr_idtabcob   --Rowid da cobranca
-                                     ,pr_cdocorre => pr_cdocorre   --Codigo Ocorrencia
-                                     ,pr_dsmotivo => pr_dsmotivo   --Descricao Motivo
-                                     ,pr_dtmvtolt => pr_crapdat.dtmvtolt  --Data Movimentacao
-                                     ,pr_cdoperad => pr_cdoperad   --Codigo Operador
-                                     ,pr_cdcritic => vr_cdcritic   --Codigo Critica
-                                     ,pr_dscritic => vr_dscritic); --Descricao Critica
-    --Se ocorreu erro
-    IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-      --Levantar Excecao
-      RAISE vr_exc_erro;
-    END IF;
-
     /** Atualiza crapcob */
     BEGIN
       UPDATE CRAPCOB
          SET crapcob.insitcrt = 3, /* com remessa a cartório */
-             crapcob.dtsitcrt = pr_dtocorre
+             crapcob.dtsitcrt = pr_dtocorre,
+						 crapcob.dtbloque = pr_dtocorre
        WHERE crapcob.rowid    = pr_idtabcob;
     EXCEPTION
       WHEN OTHERS THEN
@@ -2300,7 +2359,7 @@ create or replace package body cecred.cobr0011 IS
     END IF;
 
 		-- Criar Log Cobranca
-		vr_dsmotivo:= 'Remessa a cartório';
+		vr_dsmotivo:= 'Confirmada entrada em cartório';
 		PAGA0001.pc_cria_log_cobranca(pr_idtabcob => rw_crapcob.rowid   --ROWID da Cobranca
 																 ,pr_cdoperad => pr_cdoperad        --Operador
 																 ,pr_dtmvtolt => pr_crapdat.dtmvtolt--Data movimento
@@ -2422,7 +2481,7 @@ create or replace package body cecred.cobr0011 IS
 																		,pr_cdocorre            => 89                     -- IN     -- Fixo
 																		,pr_dsmotivo            => '99'                   -- IN     -- Fixo
 																		,pr_crapdat             => rw_crapdat             -- IN
-																		,pr_cdoperad            => 1                      -- IN     -- Fixo
+																		,pr_cdoperad            => '1'                    -- IN     -- Fixo
 																		,pr_ret_nrremret        => vr_nrretcoo            -- OUT    -- Fixo
 																		,pr_tab_lcm_consolidada => vr_tab_lcm_consolidada -- IN OUT -- Fixo
 																		,pr_cdhistor            => 2634                   -- IN     -- Fixo
@@ -2441,7 +2500,7 @@ create or replace package body cecred.cobr0011 IS
 													 ,pr_cdagenci => 1           -- IN -- Fixo
 													 ,pr_cdbccxlt => 85          -- IN -- Fixo
 													 ,pr_nrdolote => 7200        -- IN -- Fixo
-													 ,pr_cdoperad => 1           -- IN -- Fixo
+													 ,pr_cdoperad => '1'         -- IN -- Fixo
 													 ,pr_nrdcaixa => 0           -- IN -- Fixo
 													 ,pr_tplotmov => 1           -- IN -- Fixo
 													 ,pr_cdhistor => 2639        -- IN -- Fixo
@@ -2627,6 +2686,7 @@ create or replace package body cecred.cobr0011 IS
 	END pc_processa_estorno;
 	-- Gera o lote e o lançamento
 	PROCEDURE pc_processa_lancamento(pr_cdcooper IN  craplot.cdcooper%TYPE
+		                              ,pr_nrdconta IN tbfin_recursos_movimento.nrdconta%TYPE
 		                              ,pr_dtmvtolt IN  craplot.dtmvtolt%TYPE
 																	,pr_cdagenci IN  craplot.cdagenci%TYPE
 																	,pr_cdoperad IN  craplot.cdoperad%TYPE
@@ -2831,7 +2891,7 @@ create or replace package body cecred.cobr0011 IS
 																					,dsinform
 																					,idlancto
 																					) VALUES(3                          -- cdcooper -- Fixo
-																									,rw_crapcop.nrctactl        -- nrdconta
+																									,pr_nrdconta                -- nrdconta conta recurso movimento
 																									,pr_craplot.dtmvtolt        -- dtmvtolt
 																									,vr_sqdoclan                -- nrdocmto
 																									,nvl(pr_craplot.nrseqdig,0) -- nrseqdig
@@ -2864,7 +2924,7 @@ create or replace package body cecred.cobr0011 IS
 		END;
 		-- Atualiza o saldo
 		pc_atualiza_saldo(pr_cdcooper => 3                   -- IN -- Fixo
-										 ,pr_nrdconta => rw_crapcop.nrctactl -- IN
+										 ,pr_nrdconta => pr_nrdconta         -- IN conta recurso movimento
 										 ,pr_dtmvtolt => pr_craplot.dtmvtolt -- IN
 										 ,pr_vllanmto => pr_vllanmto         -- IN
 										 ,pr_dsdebcre => rw_craphis.indebcre -- IN
@@ -2924,6 +2984,7 @@ create or replace package body cecred.cobr0011 IS
   END pc_gera_log;
 	-- Totaliza por cooperativa
 	PROCEDURE pc_totaliza_cooperativa(pr_cdcooper IN  crapcop.cdcooper%TYPE
+		                               ,pr_nrdconta IN  tbfin_recursos_movimento.nrdconta%TYPE
 		                               ,pr_vlpagmto IN  NUMBER
 		                               ,pr_dscritic OUT VARCHAR2
 		                               ) IS
@@ -2944,6 +3005,7 @@ create or replace package body cecred.cobr0011 IS
 					vr_achou := TRUE;
 					--
 					vr_tab_coop(vr_index_coop).vlpagmto := vr_tab_coop(vr_index_coop).vlpagmto + pr_vlpagmto;
+					vr_tab_coop(vr_index_coop).nrdconta := pr_nrdconta; -- conta recurso movimento
 					--
 				END IF;
 				-- Próximo registro
@@ -2957,6 +3019,7 @@ create or replace package body cecred.cobr0011 IS
 			--
 			vr_reg_coop.cdcooper := pr_cdcooper;
 			vr_reg_coop.vlpagmto := pr_vlpagmto;
+			vr_reg_coop.nrdconta := pr_nrdconta;
 			--
 			vr_tab_coop(vr_tab_coop.count()) := vr_reg_coop;
 			--
@@ -2984,6 +3047,7 @@ create or replace package body cecred.cobr0011 IS
 						,tri.vltitulo vlliquid
 						,tri.vlsaldo_titulo
 						,crapdat.dtmvtolt
+						,trm.nrdconta nrdconta_trm
 				FROM tbcobran_conciliacao_ieptb tci
 						,tbfin_recursos_movimento   trm
 						,tbcobran_retorno_ieptb     tri
@@ -3133,6 +3197,7 @@ create or replace package body cecred.cobr0011 IS
 			IF nvl(rw_conciliados.vlliquid, 0) > 0 THEN
 				--
 				pc_totaliza_cooperativa(pr_cdcooper => rw_conciliados.cdcooper         -- IN
+				                       ,pr_nrdconta => rw_conciliados.nrdconta_trm     -- Conta Recurso movimento
 															 ,pr_vlpagmto => nvl(rw_conciliados.vlliquid, 0) -- IN
 															 ,pr_dscritic => pr_dscritic                     -- OUT
 															 );
@@ -3154,11 +3219,13 @@ create or replace package body cecred.cobr0011 IS
 			WHILE vr_index_coop IS NOT NULL LOOP
 				--
 				IF nvl(vr_tab_coop(vr_index_coop).vlpagmto, 0) > 0 THEN
-					-- Gera lançamento histórico 2635
+					-- Gera lançamento histórico 2623
+					-- Repasse de liquidação dos boletos para as cooperativas
 					pc_processa_lancamento(pr_cdcooper => vr_tab_coop(vr_index_coop).cdcooper -- IN
+					                      ,pr_nrdconta => vr_tab_coop(vr_index_coop).nrdconta -- IN
 																,pr_dtmvtolt => rw_conciliados.dtmvtolt             -- IN
 																,pr_cdagenci => 1                                   -- IN
-																,pr_cdoperad => 1                                   -- IN
+																,pr_cdoperad => '1'                                 -- IN
 																,pr_cdhistor => 2623                                -- IN
 																,pr_vllanmto => vr_tab_coop(vr_index_coop).vlpagmto -- IN
 																,pr_nmarqtxt => ' '-- vr_nmarquiv                   -- IN
