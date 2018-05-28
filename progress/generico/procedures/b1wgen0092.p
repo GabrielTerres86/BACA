@@ -2,7 +2,7 @@
 
    Programa: b1wgen0092.p                  
    Autora  : André - DB1
-   Data    : 04/05/2011                        Ultima atualizacao: 26/03/2018
+   Data    : 04/05/2011                        Ultima atualizacao: 21/05/2018
     
    Dados referentes ao programa:
    
@@ -228,7 +228,9 @@
                            
               03/04/2018 - Adicionada chamada pc_valida_adesao_produto para verificar se o tipo de conta 
                            permite a contrataçao do produto. PRJ366 (Lombardi).
-                           
+
+              21/05/2018 - Alterada consulta da craplau na procedure bloqueia_lancamento para pegar apenas pendentes
+                           pois acontecia as vezes de trazer mais de um registro (Tiago).
 .............................................................................*/
 
 /*............................... DEFINICOES ................................*/
@@ -4266,7 +4268,8 @@ PROCEDURE bloqueia_lancamento:
                            craplau.nrdconta = par_nrdconta AND
                            craplau.dtmvtopg = par_dtmvtopg AND
                            craplau.nrdocmto = par_nrdocmto AND
-                           craplau.cdhistor = par_cdhistor
+                           craplau.cdhistor = par_cdhistor AND
+                           craplau.insitlau = 1 /*pendentes*/
                            EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
 
         IF NOT AVAIL craplau THEN
