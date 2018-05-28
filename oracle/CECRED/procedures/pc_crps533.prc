@@ -13,7 +13,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Guilherme/Supero
-   Data    : Dezembro/2009                   Ultima atualizacao: 13/04/2018
+   Data    : Dezembro/2009                   Ultima atualizacao: 08/05/2018
 
    Dados referentes ao programa:
 
@@ -307,7 +307,20 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
 					        o chamado SD813179 (Adriano).
 
                13/04/2018 - Removidas criticas 929 - COMPE SESSAO UNICA (Diego).
-                            
+               
+               04/05/2018 - Chamado #861675.
+                           Quando é realizado a devolução automaática deve ser chamado a rotina para criaçaõ da crapdev
+                           com insitdev = 1, pois neste programa já serã feito o lançamento de de volução do cheque 
+                           na conta do cooperado. Sendo assim, no crps264 não será feito a devlução em duplicidade, apenas
+                           será apresentado no relatório crrl219 que o mesmo já foi devolvido. (Wagner/Sustentação).
+                           
+               08/05/2018 - Efetuado manutenção para não enviar o relatório crrl564 a intranet. Ele não é mais usado
+                            pela área de negócio (Jonata - MOUTS SCTASK0012408)                           
+
+               28/05/2018 - ROLLBACK --> Chamado #861675.
+                           Tivemos que voltar versão devido a não estar enviando os cheques para BBC
+                           nestes casos, de devolução automática. (Wagner/Sustentação).
+                           
 ............................................................................. */
 
      DECLARE
@@ -870,7 +883,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                  RAISE vr_exc_erro;
              END;
            END IF; --vr_contareg = 1
-           
+
            -- iniciar variavel
            vr_flgeneri := FALSE;
            
@@ -1408,7 +1421,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                                      ,nvl(pr_cdoperad,' ')      --cdoperad
                                      ,nvl(pr_cdhistor,0)        --cdhistor
                                      ,'TCO'                     --cdpesqui
-                                     ,0                         --insitdev
+                                     ,0                         --insitdev -- deverá entrar como devolvido, após a correção para enviar para BBC
                                      ,nvl(rw_crapcop.cdbcoctl,0)--cdbanchq
                                      ,nvl(pr_cdagechq,0)        --cdagechq
                                      ,nvl(pr_nrctachq,0)        --nrctachq
@@ -1889,7 +1902,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                                          ,pr_dsparams  => null                --> Enviar como parametro apenas a agencia
                                          ,pr_dsarqsaid => vr_dircop_imp||'/'||vr_nmarqimp --> Arquivo final com codigo da agencia
                                          ,pr_qtcoluna  => 80                  --> 80 colunas
-                                         ,pr_flg_impri => 'S'                 --> Chamar a impress?o (Imprim.p)
+                                         ,pr_flg_impri => 'N'                 --> Chamar a impress?o (Imprim.p)
                                          ,pr_flg_gerar => 'N'                 --> gerar na hora
                                          ,pr_nmformul  => '80dh'              --> Nome do formulario para impress?o
                                          ,pr_dspathcop => vr_dircop_rlnsv     --> gerar copia no diretorio
@@ -3752,6 +3765,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                                                                 ,pr_cdprogra => pr_cdprogra
                                                                 ,pr_nrdrecid => 0
                                                                 ,pr_vlchqvlb => pr_vlchqvlb
+                                                                ,pr_insitdev => 0 --> deverá entrar como devolvido após a correção de envio para BBC.
                                                                 ,pr_cdcritic => vr_cdcritic
                                                                 ,pr_des_erro => vr_des_erro);
 
@@ -5821,7 +5835,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
        /* A partir de 16/04/2018 nao havera mais Cheque VLB - Projeto Compe Sessao Unica */  
        --Buscar informormacoes da craptab para valores vlb
        vr_dstextab_vlb:= '';
-	   vr_vlchqvlb:= 0;
+         vr_vlchqvlb:= 0;
 
        ----- Gravar informações vindas do cadastro da cooperativa ----
        -- Inicializar contador de arquivos processados
