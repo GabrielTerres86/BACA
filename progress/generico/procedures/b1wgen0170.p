@@ -797,6 +797,8 @@ PROCEDURE consulta-dados-crapcyc:
     DEF INPUT PARAM par_nriniseq AS INTE                               NO-UNDO.
     DEF INPUT PARAM par_cdassess AS INTE                               NO-UNDO.
     DEF INPUT PARAM par_cdmotcin AS INTE                               NO-UNDO.
+    DEF INPUT PARAM par_nrborder AS INTE                               NO-UNDO.
+    DEF INPUT PARAM par_nrtitulo AS INTE                               NO-UNDO.
 
     DEF OUTPUT PARAM par_qtregist AS INTE                              NO-UNDO.
     DEF OUTPUT PARAM TABLE FOR tt-crapcyc.
@@ -816,6 +818,9 @@ PROCEDURE consulta-dados-crapcyc:
     DEF VAR aux_nmopeinc AS CHAR                                       NO-UNDO.
     DEF VAR aux_nmassess AS CHAR                                       NO-UNDO.
     DEF VAR aux_dsmotcin AS CHAR                                       NO-UNDO.
+
+    DEF VAR aux_nrborder AS CHAR                                       NO-UNDO.
+    DEF VAR aux_nrtitulo AS CHAR                                       NO-UNDO.
 
     ASSIGN aux_nrregist = par_nrregist.
 
@@ -856,7 +861,22 @@ PROCEDURE consulta-dados-crapcyc:
                         IF  crapcyc.cdorigem = 1 THEN
                             ASSIGN aux_dsorigem = "Conta".
                         ELSE
+                        IF  crapcyc.cdorigem = 3 THEN
                             ASSIGN aux_dsorigem = "Emprestimo".
+                        ELSE
+                            ASSIGN aux_dsorigem = "Desconto de Titulo".
+
+
+                        /* AXAO */
+                        FIND FIRST tbdsct_titulo_cyber WHERE tbdsct_titulo_cyber.cdcooper = crapcyc.cdcooper
+                                                        AND tbdsct_titulo_cyber.nrdconta = crapcyc.nrdconta
+                                                        AND tbdsct_titulo_cyber.nrctrdsc = crapcyc.nrctremp
+                                                       NO-LOCK NO-ERROR.
+                        IF AVAIL tbdsct_titulo_cyber THEN
+                            ASSIGN  aux_nrborder = tbdsct_titulo_cyber.nrborder
+                                    aux_nrtitulo = tbdsct_titulo_cyber.nrtitulo.
+
+
 
                         FIND FIRST crapope WHERE crapope.cdcooper = crapcyc.cdcooper
                                              AND crapope.cdoperad = crapcyc.cdoperad
@@ -904,7 +924,11 @@ PROCEDURE consulta-dados-crapcyc:
                                tt-crapcyc.cdopeinc = aux_nmopeinc
                                tt-crapcyc.dtaltera = crapcyc.dtaltera
                                tt-crapcyc.nmassess = aux_nmassess
-                               tt-crapcyc.dsmotcin = aux_dsmotcin.
+                               tt-crapcyc.dsmotcin = aux_dsmotcin
+
+                               /* AXAO */
+                               tt-crapcyc.nrborder = aux_nrborder
+                               tt-crapcyc.nrtitulo = aux_nrtitulo.
                     END.                   
                 END.
 
@@ -941,11 +965,23 @@ PROCEDURE consulta-dados-crapcyc:
                         IF  (par_qtregist < par_nriniseq) OR
                             (par_qtregist > (par_nriniseq + par_nrregist)) THEN
                             NEXT.
-                    
+
                         IF  crapcyc.cdorigem = 1 THEN
                             ASSIGN aux_dsorigem = "Conta".
                         ELSE
+                        IF  crapcyc.cdorigem = 3 THEN
                             ASSIGN aux_dsorigem = "Emprestimo".
+                        ELSE
+                            ASSIGN aux_dsorigem = "Desconto de Titulo".
+
+                        /* AXAO */
+                        FIND FIRST tbdsct_titulo_cyber WHERE tbdsct_titulo_cyber.cdcooper = crapcyc.cdcooper
+                                                        AND tbdsct_titulo_cyber.nrdconta = crapcyc.nrdconta
+                                                        AND tbdsct_titulo_cyber.nrctrdsc = crapcyc.nrctremp
+                                                       NO-LOCK NO-ERROR.
+                        IF AVAIL tbdsct_titulo_cyber THEN
+                            ASSIGN  aux_nrborder = tbdsct_titulo_cyber.nrborder
+                                    aux_nrtitulo = tbdsct_titulo_cyber.nrtitulo.
                         
                         FIND FIRST crapope WHERE crapope.cdcooper = crapcyc.cdcooper
                                              AND crapope.cdoperad = crapcyc.cdoperad
@@ -993,7 +1029,9 @@ PROCEDURE consulta-dados-crapcyc:
                                tt-crapcyc.cdopeinc = aux_nmopeinc
                                tt-crapcyc.dtaltera = crapcyc.dtaltera
                                tt-crapcyc.nmassess = aux_nmassess
-                               tt-crapcyc.dsmotcin = aux_dsmotcin.
+                               tt-crapcyc.dsmotcin = aux_dsmotcin
+                               tt-crapcyc.nrborder = aux_nrborder
+                               tt-crapcyc.nrtitulo = aux_nrtitulo.
                     END.
                 END.
                 

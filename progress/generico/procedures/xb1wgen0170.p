@@ -296,6 +296,8 @@ PROCEDURE consulta-dados-crapcyc:
                                        INPUT aux_nriniseq,
                                        INPUT aux_cdassess,
                                        INPUT aux_cdmotcin,
+                                       INPUT aux_nrborder,
+                                       INPUT aux_nrtitulo,
                                       OUTPUT aux_qtregist,
                                       OUTPUT TABLE tt-crapcyc,
                                       OUTPUT TABLE tt-erro).

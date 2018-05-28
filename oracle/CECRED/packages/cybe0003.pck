@@ -100,6 +100,25 @@ CREATE OR REPLACE PACKAGE CECRED.CYBE0003 AS
                                   ,pr_retxml     IN OUT NOCOPY XMLType --> Arquivo de retorno do XML
                                   ,pr_nmdcampo  OUT VARCHAR2           --> Nome do campo com erro
                                   ,pr_des_erro  OUT VARCHAR2);         --> Erros do processo
+                                  
+  PROCEDURE pc_buscar_titulos_bordero (pr_nrdconta  IN crapass.nrdconta%TYPE --> Numero da Conta
+                                 ,pr_nrborder       IN craptdb.nrborder%TYPE --> Numero do Bordero
+                                 ,pr_xmllog        IN VARCHAR2             --> XML com informações de LOG
+                                 ,pr_cdcritic     OUT PLS_INTEGER          --> Código da crítica
+                                 ,pr_dscritic     OUT VARCHAR2             --> Descrição da crítica
+                                 ,pr_retxml        IN OUT NOCOPY XMLType   --> Arquivo de retorno do XML
+                                 ,pr_nmdcampo     OUT VARCHAR2             --> Nome do campo com erro
+                                 ,pr_des_erro     OUT VARCHAR2);           --> Erros do processo
+                                 
+                                 
+  PROCEDURE pc_buscar_tbdsct_titulo (pr_cdcooper IN crapass.cdcooper%TYPE --> Código da cooperativa
+                                     ,pr_nrdconta  IN crapass.nrdconta%TYPE --> Numero da Conta
+                                     ,pr_nrctremp IN crapcyc.nrctremp%TYPE --> Numero do contrato de desconto  
+                                     ,pr_tbdsct_nrctrdsc OUT tbdsct_titulo_cyber.nrctrdsc%TYPE --> Numero do contrato de desconto
+                                     ,pr_tbdsct_nrborder OUT tbdsct_titulo_cyber.nrborder%TYPE --> Numero do bordero
+                                     ,pr_tbdsct_nrtitulo OUT tbdsct_titulo_cyber.nrtitulo%TYPE --> Numero do titulo
+                                     ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
+                                     ,pr_dscritic OUT VARCHAR2);
 END CYBE0003;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0003 AS
@@ -974,6 +993,132 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CYBE0003 AS
         ROLLBACK;
     END;
   END pc_manter_param_histor;
+
+  PROCEDURE pc_buscar_titulos_bordero (pr_nrdconta  IN crapass.nrdconta%TYPE --> Numero da Conta
+                                 ,pr_nrborder  IN craptdb.nrborder%TYPE --> Numero do Bordero
+                                 ,pr_xmllog        IN VARCHAR2             --> XML com informações de LOG
+                                 ,pr_cdcritic     OUT PLS_INTEGER          --> Código da crítica
+                                 ,pr_dscritic     OUT VARCHAR2             --> Descrição da crítica
+                                 ,pr_retxml        IN OUT NOCOPY XMLType   --> Arquivo de retorno do XML
+                                 ,pr_nmdcampo     OUT VARCHAR2             --> Nome do campo com erro
+                                 ,pr_des_erro     OUT VARCHAR2) IS         --> Erros do processo
+    /*---------------------------------------------------------------------------------------------------------------------
+      Programa : pc_buscar_titulos_bordero
+      Sistema  : 
+      Sigla    : CRED
+      Autor    : Vitor Shimada Assanuma (GFT)
+      Data     : 26/05/2018
+      Frequencia: Sempre que for chamado
+      Objetivo  : Trazer todo os títulos de um número de conta e cooperativa específica
+    ---------------------------------------------------------------------------------------------------------------------*/
+    -- Exceção
+    vr_exc_erro  EXCEPTION;
+      
+    -- Variáveis de erro
+    vr_cdcritic crapcri.cdcritic%TYPE;
+    vr_dscritic crapcri.dscritic%TYPE;
+    
+    -- Variaveis de entrada vindas no xml
+    vr_cdcooper integer;
+    vr_cdoperad varchar2(100);
+    vr_nmdatela varchar2(100);
+    vr_nmeacao  varchar2(100);
+    vr_cdagenci varchar2(100);
+    vr_nrdcaixa varchar2(100);
+    vr_idorigem varchar2(100);
+    
+    -- Cursor dos titulos
+    CURSOR cr_craptdb(vr_cdcooper IN crapcop.cdcooper%TYPE) IS
+       SELECT tdb.*
+       FROM  craptdb tdb
+       WHERE tdb.nrdconta = pr_nrdconta
+         AND tdb.cdcooper = vr_cdcooper
+         AND tdb.nrborder = DECODE(pr_nrborder, NULL, tdb.nrborder, pr_nrborder);
+    rw_craptdb cr_craptdb%ROWTYPE;
+      
+    BEGIN
+       -- Leitura dos dados
+       gene0004.pc_extrai_dados(pr_xml       => pr_retxml
+                                ,pr_cdcooper => vr_cdcooper
+                                ,pr_nmdatela => vr_nmdatela
+                                ,pr_nmeacao  => vr_nmeacao
+                                ,pr_cdagenci => vr_cdagenci
+                                ,pr_nrdcaixa => vr_nrdcaixa
+                                ,pr_idorigem => vr_idorigem
+                                ,pr_cdoperad => vr_cdoperad
+                                ,pr_dscritic => vr_dscritic);
+
+      -- Criar cabecalho do XML
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root><titulos></titulos></Root>');
+                       
+      -- Abertura do cursor dos titulos
+      OPEN  cr_craptdb(vr_cdcooper);
+      LOOP
+        FETCH cr_craptdb INTO rw_craptdb;
+        EXIT WHEN cr_craptdb%NOTFOUND;
+        pr_retxml := XMLTYPE.appendChildXML(pr_retxml
+                                            ,'/Root/titulos'
+                                            ,XMLTYPE('<titulo>' 
+                                                   ||'  <nrborder>'||rw_craptdb.nrborder||'</nrborder>'
+                                                   ||'  <nrtitulo>'||rw_craptdb.nrtitulo||'</nrtitulo>'
+                                                   ||'  <nrdocmto>'||rw_craptdb.nrdocmto||'</nrdocmto>'
+                                                   ||'  <vltitulo>'||TO_CHAR(rw_craptdb.vltitulo,'999G999G990D00')||'</vltitulo>'
+                                                   ||'  <dtvencto>'||to_char(rw_craptdb.dtvencto,'dd/mm/rrrr')||'</dtvencto>'
+                                                   ||'  <nrdconta>'||rw_craptdb.nrdconta||'</nrdconta>'
+												                           ||'</titulo>'));
+      END LOOP;
+      
+      -- Fecha cursor
+      CLOSE cr_craptdb;                                                      
+                                
+  END pc_buscar_titulos_bordero;
+  
+  
+  
+  -- nrctrdsc nrborder nrtitulo
+    PROCEDURE pc_buscar_tbdsct_titulo (pr_cdcooper IN crapass.cdcooper%TYPE --> Código da cooperativa
+                                     ,pr_nrdconta  IN crapass.nrdconta%TYPE --> Numero da Conta
+                                     ,pr_nrctremp IN crapcyc.nrctremp%TYPE --> Numero do contrato de desconto  
+                                     ,pr_tbdsct_nrctrdsc OUT tbdsct_titulo_cyber.nrctrdsc%TYPE --> Numero do contrato de desconto
+                                     ,pr_tbdsct_nrborder OUT tbdsct_titulo_cyber.nrborder%TYPE --> Numero do bordero
+                                     ,pr_tbdsct_nrtitulo OUT tbdsct_titulo_cyber.nrtitulo%TYPE --> Numero do titulo
+                                     ,pr_cdcritic OUT PLS_INTEGER          --> Código da crítica
+                                     ,pr_dscritic OUT VARCHAR2) IS            --> Descrição da crítica
+                                   
+    /*---------------------------------------------------------------------------------------------------------------------
+      Programa : pc_buscar_tbdsct_titulo
+      Sistema  : 
+      Sigla    : CRED
+      Autor    : Alex Sandro (GFT)
+      Data     : 28/05/2018
+      Frequencia: Sempre que for chamado
+      Objetivo  : 
+    ---------------------------------------------------------------------------------------------------------------------*/
+    -- Exceção
+    vr_exc_erro  EXCEPTION;
+      
+    -- Variáveis de erro
+    vr_cdcritic crapcri.cdcritic%TYPE;
+    vr_dscritic crapcri.dscritic%TYPE;
+    
+    -- Cursor dos titulos
+    CURSOR cr_tbdsct_titulo_cyber IS
+       SELECT tbdsct.nrctrdsc, tbdsct.cdcooper, tbdsct.nrdconta, tbdsct.nrborder, tbdsct.nrtitulo
+       FROM tbdsct_titulo_cyber  tbdsct
+       WHERE tbdsct.cdcooper = pr_cdcooper
+       AND  tbdsct.nrdconta = pr_nrdconta
+       AND  tbdsct.nrctrdsc = pr_nrctremp;
+         
+    rw_tbdsct_titulo_cybe cr_tbdsct_titulo_cyber%ROWTYPE;
+      
+    BEGIN
+      
+    vr_dscritic := '';
+    
+    pr_tbdsct_nrborder := rw_tbdsct_titulo_cybe.nrborder;
+    pr_tbdsct_nrtitulo := rw_tbdsct_titulo_cybe.;
+                                
+  END pc_buscar_tbdsct_titulo;
 
 END CYBE0003;
 /
