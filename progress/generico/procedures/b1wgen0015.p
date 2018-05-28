@@ -36,7 +36,7 @@
 
     Programa: b1wgen0015.p
     Autor   : Evandro
-    Data    : Abril/2006                      Ultima Atualizacao: 08/02/2018
+    Data    : Abril/2006                      Ultima Atualizacao: 24/04/2018
     
     Dados referentes ao programa:
 
@@ -415,6 +415,11 @@
 
 	          30/01/2018 - Adicionado tratamento na valida-inclusao-conta-transferencia
                            para trocar a mensagem quando a origem for InternetBank (Anderson).
+						   
+			  24/04/2018 - Normalizandos criticas para que busque apenas da tabela crapcri
+						   tambem no "WHEN OTHERS THEN" para que nao mostre mais críticas
+						   que o usuário não precise enxergar e então gravando em log. 
+						   (SD 865935 - Kelvin)		   
 ..............................................................................*/
 
 { sistema/internet/includes/b1wnet0002tt.i }
@@ -9768,19 +9773,7 @@ PROCEDURE valida-inclusao-conta-transferencia:
           EMPTY TEMP-TABLE tt-erro.
 
           /* Se for InternetBank, monta critica mais adequada e grava no log a critica real */
-          IF par_idorigem = 3 AND 
-             aux_cdcritic <> 979 THEN /* 979 - Conta de transferencia ja cadastrada [possui tratamento dif. na operacao 80] */
-             DO:
-               ASSIGN aux_dsibcrit = "Conta não encontrada no Sistema CECRED".
                RUN gera_erro (INPUT par_cdcooper,
-                              INPUT par_cdagenci,
-                              INPUT par_nrdcaixa,
-                              INPUT 1,            /** Sequencia **/
-                              INPUT 0,            /** cdcritic  **/
-                              INPUT-OUTPUT aux_dsibcrit).
-             END.
-          ELSE
-             RUN gera_erro (INPUT par_cdcooper,
                             INPUT par_cdagenci,
                             INPUT par_nrdcaixa,
                             INPUT 1,            /** Sequencia **/
@@ -9800,8 +9793,8 @@ PROCEDURE valida-inclusao-conta-transferencia:
                                  OUTPUT aux_nrdrowid).
                                              
           RETURN "NOK".
-      
         END.
+        
       
     RETURN "OK".
     
