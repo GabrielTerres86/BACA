@@ -144,5 +144,7 @@
     var ordemInicial = new Array();
     table.formataTabela( ordemInicial, arrayLarguraInclusaoBordero, arrayAlinhaInclusaoBordero, '' );
 
+	//Seleciona primeira linha ao entrar na tela
+    $("#divResumoBordero .divRegistrosTitulos .tituloRegistros tr").eq(1).click();
 
 </script>

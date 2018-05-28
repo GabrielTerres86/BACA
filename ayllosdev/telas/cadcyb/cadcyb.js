@@ -1158,14 +1158,15 @@ function mostrarPesquisaMotivoCin(){
 
 // Função para abrir a pesquisa de borderos, usando número do título
 function mostrarPesquisaBorderoPorTitulo(){
+	var normNrconta = normalizaNumero($('#frmCab #nrdconta').val()) > 0 ? normalizaNumero($('#frmCab #nrdconta').val()) : '';
 	if( $('#nrtitulo','#frmCab').prop("disabled") ) {
 		return false;
 	}
 	//Definição dos filtros
 	// |;nrborder;;N;;N;nrborder|;nrtitulo;;N;;N;nrtitulo
-	var filtros	= "Conta;nrdconta;200px;S;;S;nrdconta";
+	var filtros	= "Numero do Bordero;nrborder;;N;;N;nrborder|Titulo;nrtitulo;;N;;N;nrtitulo|Numero Doc;nrdocmto;;N;;N;nrdocmto|Valor do Titulo;vltitulo;;N;;N;vltitulo|Dt Venc;dtvencto;;N;;N;dtvencto|Conta;nrdconta;200px;S;"+normNrconta+";S;nrdconta";
 	//Campos que serão exibidos na tela
-	var colunas = 'Bordero;nrborder;20%;right|Titulo;nrtitulo;20%;left|Numero Documento;nrdocmto;20%;right|Valor;vltitulo;20%;right|Vencto;dtvencto;20%;right';			
+	var colunas = 'Bordero;nrborder;20%;center|Titulo;nrtitulo;20%;center|Numero Documento;nrdocmto;20%;center|Valor;vltitulo;20%;center|Vencto;dtvencto;20%;center|Numero da Conta;nrdconta;0%;center;;N';			
 	//Exibir a pesquisa
 	mostraPesquisa("PARCYB", "PARCYB_BUSCAR_TITULOS_BORDERO", "Titulos e Bordero","100",filtros,colunas);
 }

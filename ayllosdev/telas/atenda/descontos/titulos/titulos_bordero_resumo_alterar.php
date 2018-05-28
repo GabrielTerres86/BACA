@@ -200,6 +200,9 @@
     var ordemInicial = new Array();
     table.formataTabela( ordemInicial, arrayLarguraInclusaoBordero, arrayAlinhaInclusaoBordero, '' );
 
+	//Seleciona primeira linha ao entrar na tela
+    $("#divResumoBordero .divRegistrosTitulos .tituloRegistros tr").eq(1).click();
+
     // //Atualizar a situacao da pagina anterior 
     $(".divRegistrosTitulosSelecionados .titulo-nao-analisado").each(function(){
      	//Pega a ID da linha e o valor novo da crítica
