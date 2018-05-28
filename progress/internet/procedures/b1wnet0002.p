@@ -165,7 +165,10 @@
                             ou arquivo de remessa enviado 
                             (Douglas - M271.3 Upload de Arquivo de Pagamento)
 
-               06/10/2017 - Criar a procedure obtem-acesso-anterior (David)
+               06/10/2017 - Criar a procedure obtem-acesso-anterior (David)	 
+               
+               04/04/2018 - Adicionada chamada pc_permite_lista_prod_tipo para verificar se o 
+                            tipo de conta permite a contrataçao dos produtos. PRJ366 (Lombardi).
                
 ..............................................................................*/
 
@@ -1019,6 +1022,48 @@ PROCEDURE gerenciar-operador.
                            
                     UNDO TRANSACAO, LEAVE TRANSACAO.       
                 END.
+
+            IF  par_geraflux = 1 THEN
+                DO:
+                    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+                    
+                    RUN STORED-PROCEDURE pc_valida_limite_operador aux_handproc = PROC-HANDLE NO-ERROR
+                                 (INPUT par_cdcooper,
+                                  INPUT par_nrdconta,
+                                  INPUT par_nrcpfope,
+                                  INPUT par_idseqttl,
+                                  INPUT par_vllbolet,
+                                  INPUT par_vllimtrf,
+                                  INPUT par_vllimted,
+                                  INPUT par_vllimvrb,
+                                  INPUT par_vllimflp,
+                                  OUTPUT ?,
+                                  OUTPUT 0).
+
+                    CLOSE STORED-PROC pc_valida_limite_operador aux_statproc = PROC-STATUS
+                        WHERE PROC-HANDLE = aux_handproc.
+                        
+                    ASSIGN aux_dscritic = pc_valida_limite_operador.pr_dscritic
+                                                    WHEN pc_valida_limite_operador.pr_dscritic <> ?
+                           aux_cdcritic = pc_valida_limite_operador.pr_cdcritic
+                                                    WHEN pc_valida_limite_operador.pr_cdcritic <> ?.
+
+                    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+                    IF  aux_cdcritic > 0 THEN
+                        DO:
+                            FIND crapcri WHERE crapcri.cdcritic = aux_cdcritic
+                                               NO-LOCK NO-ERROR.
+
+                            IF  AVAIL crapcri  THEN    
+                                DO:
+                                    ASSIGN aux_cdcritic = 0
+                                           aux_dscritic = crapcri.dscritic.                          
+                                           
+                                    UNDO TRANSACAO, LEAVE TRANSACAO. 
+                                END.
+                        END. 
+                END.
                         
             IF  par_desdacao = "ALTERAR"  THEN
                 DO:
@@ -1252,6 +1297,38 @@ PROCEDURE gerenciar-operador.
             
             END. /** Fim do FOR EACH tt-itens-menu **/
 
+            IF  par_geraflux = 1 THEN
+                DO:      
+                    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+                    
+                    RUN STORED-PROCEDURE pc_gera_msg_preposto aux_handproc = PROC-HANDLE NO-ERROR
+                                 (INPUT par_cdcooper,
+                                  INPUT par_nrdconta,
+                                  INPUT par_nrcpfope,
+                                  INPUT par_idseqttl,
+                                  INPUT par_vllbolet,
+                                  INPUT par_vllimtrf,
+                                  INPUT par_vllimted,
+                                  INPUT par_vllimvrb,
+                                  INPUT par_vllimflp,
+                                 OUTPUT ?).
+
+                    CLOSE STORED-PROC pc_gera_msg_preposto aux_statproc = PROC-STATUS
+                        WHERE PROC-HANDLE = aux_handproc.
+
+                    ASSIGN aux_dscritic = pc_gera_msg_preposto.pr_dscritic
+                              WHEN pc_gera_msg_preposto.pr_dscritic <> ?.
+                                
+                    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+                    
+                    IF  aux_dscritic <> "" THEN
+                        DO:
+                            ASSIGN aux_cdcritic = 0.
+                            
+                            UNDO TRANSACAO, LEAVE TRANSACAO.
+                        END.                        
+                END.
+
             IF  aux_dsdsenha <> ""  THEN
                 DO:
                     RUN sistema/generico/procedures/b1wgen0011.p PERSISTENT 
@@ -1289,84 +1366,9 @@ PROCEDURE gerenciar-operador.
                 END.
         END.
         
-        ASSIGN aux_flgtrans = FALSE.
+        ASSIGN aux_flgtrans = TRUE.
         
-    END. /** Fim do DO TRANSACTION - TRANSACAO **/
-    
-	TRANSACAO:
-    DO TRANSACTION ON ERROR UNDO TRANSACAO, LEAVE TRANSACAO:
-	
-		IF par_geraflux = 1 THEN
-		DO:
-	{ includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
-	RUN STORED-PROCEDURE pc_valida_limite_operador aux_handproc = PROC-HANDLE NO-ERROR
-							 (INPUT par_cdcooper,
-							  INPUT par_nrdconta,
-							  INPUT par_nrcpfope,
-							  INPUT par_idseqttl,
-							  INPUT par_vllbolet,
-							  INPUT par_vllimtrf,
-							  INPUT par_vllimted,
-							  INPUT par_vllimvrb,
-							  INPUT par_vllimflp,
-							  OUTPUT ?,
-							  OUTPUT 0).
-
-		CLOSE STORED-PROC pc_valida_limite_operador aux_statproc = PROC-STATUS
-			  WHERE PROC-HANDLE = aux_handproc.
-			  
-		ASSIGN aux_dscritic = pc_valida_limite_operador.pr_dscritic
-                                    WHEN pc_valida_limite_operador.pr_dscritic <> ?
-			   aux_cdcritic = pc_valida_limite_operador.pr_cdcritic
-                                    WHEN pc_valida_limite_operador.pr_cdcritic <> ?.
-
-		{ includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
-
-			IF  aux_cdcritic > 0 THEN
-				DO:
-					FIND crapcri WHERE crapcri.cdcritic = aux_cdcritic
-                                       NO-LOCK NO-ERROR.
-
-					IF AVAIL crapcri THEN
-					DO:
-						ASSIGN aux_dscritic = crapcri.dscritic.
-					END.
-				END.
-			ELSE
-				DO:
-					{ includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
-					 RUN STORED-PROCEDURE pc_gera_msg_preposto aux_handproc = PROC-HANDLE NO-ERROR
-											 (INPUT par_cdcooper,
-											  INPUT par_nrdconta,
-											  INPUT par_nrcpfope,
-											  INPUT par_idseqttl,
-											  INPUT par_vllbolet,
-											  INPUT par_vllimtrf,
-											  INPUT par_vllimted,
-											  INPUT par_vllimvrb,
-											  INPUT par_vllimflp,
-													  OUTPUT ?).
-
-						CLOSE STORED-PROC pc_gera_msg_preposto aux_statproc = PROC-STATUS
-							  WHERE PROC-HANDLE = aux_handproc.
-
-							ASSIGN aux_dscritic = pc_gera_msg_preposto.pr_dscritic
-											WHEN pc_gera_msg_preposto.pr_dscritic <> ?.
-											
-					{ includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
-					
-							IF aux_dscritic = "" THEN
-								DO:
-					ASSIGN aux_flgtrans = TRUE.
-								END.
-			
-						END.
-		END.
-		ELSE
-			DO:
-				ASSIGN aux_flgtrans = TRUE.
-				END.
-	END.
+    END. /** Fim do DO TRANSACTION - TRANSACAO **/    
 
     IF  NOT aux_flgtrans  THEN
         DO:
@@ -3117,9 +3119,13 @@ PROCEDURE permissoes-menu-mobile:
     
     DEF VAR aux_flgsittp AS LOGI                                    NO-UNDO.
     DEF VAR aux_flgaprov AS LOGI                                    NO-UNDO.
+    DEF VAR aux_flgdebau AS LOGI                                    NO-UNDO.
     DEF VAR aux_flgsitrc AS LOGI                                    NO-UNDO.
+    DEF VAR aux_flgaplic AS LOGI                                    NO-UNDO.
+    DEF VAR aux_flgresga AS LOGI                                    NO-UNDO.
     DEF VAR h-b1wgen0188 AS HANDLE                                  NO-UNDO.
     DEF VAR h-b1wgen0018 AS HANDLE                                  NO-UNDO.
+    DEF VAR aux_possuipr AS CHAR NO-UNDO.
     
     EMPTY TEMP-TABLE tt-erro.
     EMPTY TEMP-TABLE tt-itens-menu.
@@ -3192,6 +3198,60 @@ PROCEDURE permissoes-menu-mobile:
             DELETE PROCEDURE h-b1wgen0018.
     END.
     
+    /* buscar quantidade maxima de digitos aceitos para o convenio */
+    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
+    
+    RUN STORED-PROCEDURE pc_permite_lista_prod_tipo
+        aux_handproc = PROC-HANDLE NO-ERROR
+                                (INPUT "29,3,41", /* DEBITO AUTOMATICO, INCLUIR APLICACAO, RESGATAR APLICACAO */
+                                 INPUT crapass.cdtipcta,
+                                 INPUT par_cdcooper,
+                                 INPUT crapass.inpessoa,
+                                 OUTPUT "",  /* pr_possuipr */
+                                 OUTPUT 0,   /* pr_cdcritic */
+                                 OUTPUT ""). /* pr_dscritic */
+    
+    CLOSE STORED-PROC pc_permite_lista_prod_tipo
+          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+    
+    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+    
+    ASSIGN aux_possuipr = ""
+           aux_cdcritic = 0
+           aux_dscritic = ""
+           aux_possuipr = pc_permite_lista_prod_tipo.pr_possuipr                          
+                              WHEN pc_permite_lista_prod_tipo.pr_possuipr <> ?
+           aux_cdcritic = pc_permite_lista_prod_tipo.pr_cdcritic                          
+                              WHEN pc_permite_lista_prod_tipo.pr_cdcritic <> ?
+           aux_dscritic = pc_permite_lista_prod_tipo.pr_dscritic
+                              WHEN pc_permite_lista_prod_tipo.pr_dscritic <> ?.
+    
+    IF  aux_cdcritic <> 0 OR aux_dscritic <> "" THEN
+      DO:
+          RUN gera_erro (INPUT par_cdcooper,
+                         INPUT par_cdagenci,
+                         INPUT par_nrdcaixa,
+                         INPUT 1,            /** Sequencia **/
+                         INPUT aux_cdcritic,
+                         INPUT-OUTPUT aux_dscritic).
+                                  
+          RETURN "NOK".                
+      END.
+    
+    IF SUBSTRING(aux_possuipr,1,1) = "S" THEN
+      aux_flgdebau = TRUE.
+    ELSE
+      aux_flgdebau = FALSE.
+
+    IF SUBSTRING(aux_possuipr,3,1) = "S" THEN
+      aux_flgaplic = TRUE.
+    ELSE
+      aux_flgaplic = FALSE.
+    
+    IF SUBSTRING(aux_possuipr,5,1) = "S" THEN
+      aux_flgresga = TRUE.
+    ELSE
+      aux_flgresga = FALSE.
     
     CREATE tt-itens-menu-mobile.
     ASSIGN tt-itens-menu-mobile.cditemmn = 204. /*TRANSAÇOES PENDENTES*/
@@ -3204,6 +3264,26 @@ PROCEDURE permissoes-menu-mobile:
     CREATE tt-itens-menu-mobile.
     ASSIGN tt-itens-menu-mobile.cditemmn = 901. /*RECARGA DE CELULAR*/
            tt-itens-menu-mobile.flcreate = aux_flgsitrc.  
+    
+    CREATE tt-itens-menu-mobile.
+    ASSIGN tt-itens-menu-mobile.cditemmn = 902. /*DEBITO AUTOMATICO*/
+           tt-itens-menu-mobile.flcreate = aux_flgdebau.  
+    
+    IF aux_flgsitrc = FALSE AND 
+       aux_flgdebau = FALSE THEN
+        DO:
+            CREATE tt-itens-menu-mobile.
+            ASSIGN tt-itens-menu-mobile.cditemmn = 900. /*CONVENIENCIA*/
+                   tt-itens-menu-mobile.flcreate = FALSE.  
+        END.
+    
+    CREATE tt-itens-menu-mobile.
+    ASSIGN tt-itens-menu-mobile.cditemmn = 602. /*APLICACAO*/
+           tt-itens-menu-mobile.flcreate = aux_flgaplic.  
+    
+    CREATE tt-itens-menu-mobile.
+    ASSIGN tt-itens-menu-mobile.cditemmn = 603. /* RESGATE APLICACAO*/
+           tt-itens-menu-mobile.flcreate = aux_flgresga.  
     
     FIND FIRST crapopi WHERE crapopi.cdcooper = par_cdcooper AND
 							 crapopi.nrdconta = par_nrdconta NO-LOCK NO-ERROR. 
@@ -3579,13 +3659,13 @@ PROCEDURE permissoes-menu:
                       (INPUT par_cdcooper, /* Codigo da Cooperativa */
                        INPUT par_nrdconta, /* Numero da Conta */
                       OUTPUT 0,            /* Numero do Convenio */
+                      OUTPUT ?,            /* Data de adesao */
                       OUTPUT 0,            /* Convenio esta homologado */
                       OUTPUT 0,            /* Retorno para o Cooperado (1-Internet/2-FTP) */
                       OUTPUT 0,            /* Flag convenio homologado */
                       OUTPUT 0,            /* Flag enviou arquivo remessa */
                       OUTPUT 0,            /* Cód. da crítica */
                       OUTPUT "").          /* Descricao da critica */
-    
     
     CLOSE STORED-PROC pc_verifica_conv_pgto
           aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
@@ -4017,7 +4097,7 @@ END PROCEDURE.
 PROCEDURE organiza-nomes-titulares:
 
     DEF INPUT-OUTPUT PARAM TABLE FOR tt-titulares.
-    
+
     DEF VAR aux_contador AS INTE                                    NO-UNDO.
     DEF VAR aux_posinome AS INTE                                    NO-UNDO.
     DEF VAR aux_novonome AS CHAR                                    NO-UNDO.
