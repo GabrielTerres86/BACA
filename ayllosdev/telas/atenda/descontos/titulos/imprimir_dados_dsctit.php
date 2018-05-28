@@ -21,8 +21,10 @@
 				  12/09/2016 - Alteracao para chamar a rotina do Oracle na
 							   geracao da impressao. (Jaison/Daniel)
           
-          23/11/2016 - Alterado para atribuir variavel $dsiduser ao carregar variavel
-                       PRJ314 - Indexacao Centralizada (Odirlei-Amcom)
+                  23/11/2016 - Alterado para atribuir variavel $dsiduser ao carregar variavel
+                               PRJ314 - Indexacao Centralizada (Odirlei-Amcom)	
+
+                  28/05/2018 - Incluso impressoa Proposta (GFT)   
 
 	************************************************************************/ 
 
@@ -106,6 +108,7 @@
 	
     if ($idimpres == 1 || // COMPLETA
         $idimpres == 2 || // CONTRATO
+		$idimpres == 3 || // PROPOSTA
         $idimpres == 4 || // NOTA PROMISSORIA
         $idimpres == 7) { // BORDERO DE CHEQUES
         $xml  = "<Root>";

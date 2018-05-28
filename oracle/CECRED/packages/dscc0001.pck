@@ -1946,6 +1946,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
     vr_tab_dados_nota_pro      DSCT0002.typ_tab_dados_nota_pro;
     vr_tab_restri_apr_coo      DSCT0002.typ_tab_restri_apr_coo;
 
+    
+    vr_tab_dados_proposta      DSCT0002.typ_tab_dados_proposta;
+    vr_tab_emprestimos         EMPR0001.typ_tab_dados_epr;
+    vr_tab_grupo               GECO0001.typ_tab_crapgrp;
+    vr_tab_rating_hist         DSCT0002.typ_tab_rating_hist;
+
     vr_idxborde                PLS_INTEGER;
 
     ----------->>> VARIAVEIS <<<--------   
@@ -2085,6 +2091,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
             ,pr_tab_chq_bordero         => vr_tab_chq_bordero  
             ,pr_tab_bordero_restri      => vr_tab_bordero_restri
             ,pr_tab_sacado_nao_pagou    => vr_tab_sacado_nao_pagou  
+            ,pr_tab_dados_proposta      => vr_tab_dados_proposta
+            ,pr_tab_emprestimos         => vr_tab_emprestimos
+            ,pr_tab_grupo               => vr_tab_grupo
+            ,pr_tab_rating_hist         => vr_tab_rating_hist
             ,pr_cdcritic                => vr_cdcritic              
             ,pr_dscritic                => vr_dscritic);
 
@@ -2795,6 +2805,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCC0001 AS
       --> LIMITE DE DESCONTO
       ELSIF pr_idimpres IN ( 1,       --> COMPLETA 
                              2,       --> CONTRATO 
+                             3,       --> PROPOSTA
                              4 ) THEN --> NOTA PROMISSORIA
         DSCT0002.pc_gera_impressao_limite(pr_cdcooper => vr_cdcooper,
                                           pr_cdagecxa => vr_cdagenci,
