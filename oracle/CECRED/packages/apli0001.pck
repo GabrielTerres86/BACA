@@ -9497,7 +9497,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.APLI0001 AS
       --Se for Online
       IF pr_inproces = 1  THEN   /** ON-LINE **/
         --Saldo recebe saldo menos valor abono * percentual IR
-        vr_vlsdrdpp:= vr_vlsdrdpp - TRUNC((pr_vlabcpmf * nvl(pr_percenir, 0)/ 100),2);
+        vr_vlsdrdpp:= vr_vlsdrdpp - TRUNC((pr_vlabcpmf * pr_percenir/ 100),2);
         --Se o valor for negativo entao zera
         IF vr_vlsdrdpp < 0 THEN
           vr_vlsdrdpp:= 0;

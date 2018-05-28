@@ -2768,6 +2768,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DSCT0002 AS
     -- por esse motivo as PL TABLES vr_tab_conta_bloq, vr_tab_craplpp, vr_tab_craplrg, vr_tab_resgate
     -- e por questao de performace elas nao serao carregadas
 
+    -- Calculo do IR
+    vr_percenir:= GENE0002.fn_char_para_number(TABE0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
+                                                 ,pr_nmsistem => 'CRED'
+                                                 ,pr_tptabela => 'CONFIG'
+                                                 ,pr_cdempres => 0
+                                                 ,pr_cdacesso => 'PERCIRAPLI'
+                                                 ,pr_tpregist => 0));
+                                                     
+
     --Executar rotina consulta poupanca
     apli0001.pc_consulta_poupanca (pr_cdcooper => pr_cdcooper            --> Cooperativa
                                   ,pr_cdagenci => pr_cdagenci            --> Codigo da Agencia
