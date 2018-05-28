@@ -2,7 +2,7 @@
 
    Programa: b1wgen0012.p                  
    Autora  : Ze Eduardo
-   Data    : 20/11/2006                        Ultima atualizacao: 28/05/2018
+   Data    : 20/11/2006                        Ultima atualizacao: 13/04/2018
 
    Dados referentes ao programa:
 
@@ -219,9 +219,6 @@
                             Rotina gerar_digita (Tiago/Adriano #766582)      
 							
 			   13/04/2018 - Removidas validacoes de valor do cheque - COMPE SESSAO UNICA (Diego)          
-         
-         28/05/2018 - inc0016175 - Na rotina gerar_compel, rm comentado temporariamente 
-                      para realizar a operação posteriormente de forma manual (Carlos)
 ............................................................................. */
 
 DEF STREAM str_1.
@@ -2212,15 +2209,11 @@ PROCEDURE gerar_compel:
 
                     IF   aux_retorno <> "" THEN
                          DO:
-/* inc0016175 - rm comentado temporariamente para realizar a operação posteriormente de forma manual */
-                           ret_cdcritic = 0.
+                             ret_cdcritic = 678.
 
-/*                         ret_cdcritic = 678.
-
-                           UNIX SILENT VALUE("rm " + aux_dscooper + "arq/" +
+                             UNIX SILENT VALUE("rm " + aux_dscooper + "arq/" +
                                                 aux_nmarqdat  + " 2>/dev/null").
                              UNDO TRANS_1, LEAVE.
-*/
                          END.
                     ELSE 
                          /* move para o salvar */
