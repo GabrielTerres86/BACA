@@ -1847,7 +1847,38 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
       
       --> senao é manutencao  
       ELSE
-	      IF (rw_crapceb.flprotes = 1 AND pr_flprotes = 0) THEN
+	      IF (rw_crapceb.flprotes = 0 AND pr_flprotes = 1) THEN
+          
+          --> Gravar o log atenda - cobram - log, registrando o cancelamento do serviço de protesto
+          COBR0008.pc_gera_log_ceb 
+                          (pr_idorigem  => vr_idorigem,
+                           pr_cdcooper  => vr_cdcooper,
+                           pr_cdoperad  => vr_cdoperad,
+                           pr_nrdconta  => pr_nrdconta,
+                           pr_nrconven  => pr_nrconven,
+                           pr_dstransa  => 'Ativacao do servico de protesto',
+                           pr_insitceb_ant => nvl(rw_crapceb.insitceb,0), --Antes de alterar
+                           pr_insitceb  => vr_insitceb,
+                           pr_dscritic  => vr_dscritic);
+                           
+          -- Efetua os inserts para apresentacao na tela VERLOG
+          gene0001.pc_gera_log(pr_cdcooper => vr_cdcooper
+                            ,pr_cdoperad => vr_cdoperad
+                            ,pr_dscritic => ' '
+                            ,pr_dsorigem => gene0001.vr_vet_des_origens(vr_idorigem)
+                            ,pr_dstransa => 'Ativacao do servico de protesto'
+                            ,pr_dttransa => trunc(SYSDATE)
+                            ,pr_flgtrans => 1
+                            ,pr_hrtransa => to_char(SYSDATE,'SSSSS')
+                            ,pr_idseqttl => 1
+                            ,pr_nmdatela => 'ATENDA'
+                            ,pr_nrdconta => pr_nrdconta
+                            ,pr_nrdrowid => vr_nrdrowid);                 
+          IF vr_dscritic IS NOT NULL THEN
+            RAISE vr_exc_saida;
+          END IF;
+        
+	      ELSIF (rw_crapceb.flprotes = 1 AND pr_flprotes = 0) THEN
  
           --> Gravar o log atenda - cobram - log, registrando o cancelamento do serviço de protesto
           COBR0008.pc_gera_log_ceb 
@@ -1858,7 +1889,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_COBRAN IS
                            pr_nrconven  => pr_nrconven,
                            pr_dstransa  => 'Cancelamento do serviço de protesto',
                            pr_insitceb_ant => nvl(rw_crapceb.insitceb,0), --Antes de alterar
-                           pr_insitceb  => 1, -- 'ATIVO'
+                           pr_insitceb  => vr_insitceb,
                            pr_dscritic  => vr_dscritic);
                            
           -- Efetua os inserts para apresentacao na tela VERLOG
