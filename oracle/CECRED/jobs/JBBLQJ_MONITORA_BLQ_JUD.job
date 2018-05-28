@@ -1,17 +1,4 @@
-﻿/*   Criação do Job para rodar o programa BLQJ0002.pc_monitora_blq_jud - Responsavel em buscar os dados dos 
-      bloqueis judiciais que ainda não foram atendidos e verificar se houve depósito para efetuar os bloqueios (até as 17:30)
-	  Após as 17:30 a rotina irá atualizar os bloqueios judiciais com os valores que foram bloqueados durante o dia e excluir os dados da 
-	  tabela de monitoramento
-      PRJ416 - Bacenjud
-      
-*/
--- Se necessário segue o drop do job
-BEGIN
-  dbms_scheduler.drop_job(job_name => 'CECRED.JBBLQJ_MONITORA_BLQ_JUD');
-END;
-\
-
-BEGIN
+﻿BEGIN
   EXECUTE IMMEDIATE 'ALTER SESSION SET 
     nls_calendar = ''GREGORIAN''
     nls_comp = ''BINARY''
@@ -53,7 +40,7 @@ BEGIN
                                 auto_drop           => true,
                                 comments            => 'Job para monitoramento de bloqueios judiciais pendentes de conclusão');
 end;
-\
+
 
 
 
