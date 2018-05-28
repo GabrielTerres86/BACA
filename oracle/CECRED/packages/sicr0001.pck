@@ -86,6 +86,7 @@ create or replace package cecred.SICR0001 is
     TABLE OF typ_reg_agendamentos
     INDEX BY VARCHAR2(100);
 
+      vr_nrdolote_sms NUMBER := 0;
 
   /* Procedimento para buscar os lançamentos automáticos efetuados pela Internet e TAA*/
   PROCEDURE pc_obtem_agendamentos_debito( pr_cdcooper  IN crapcop.cdcooper%TYPE        --> Código da cooperativa
@@ -313,7 +314,7 @@ create or replace package body cecred.SICR0001 is
                       
                  17/07/2017 - Ajustes para permitir o agendamento de lancamentos da mesma
                               conta e referencia no mesmo dia(dtmvtolt) porem com valores
-                              diferentes (Lucas Ranghetti #684123)    
+                              diferentes (Lucas Ranghetti #684123)                      
                               
                  21/03/2018 - Verificar indice craplcm#3 antes de inserir na craplcm
                               (Lucas Ranghetti #INC0010966)
@@ -323,9 +324,9 @@ create or replace package body cecred.SICR0001 is
   vr_variaveis_notif NOTI0001.typ_variaveis_notif;
   
   /* CONSTANTES */
-  ORIGEM_AGEND_NAO_EFETIVADO CONSTANT tbgen_notif_automatica_prm.cdorigem_mensagem%TYPE := 3;
-  MOTIVO_SALDO_INSUFICIENTE  CONSTANT tbgen_notif_automatica_prm.cdmotivo_mensagem%TYPE := 8;
-  MOTIVO_LIMITE_EXCEDIDO     CONSTANT tbgen_notif_automatica_prm.cdmotivo_mensagem%TYPE := 9;
+  ORIGEM_TRANS_NAO_EFETIVADO CONSTANT tbgen_notif_automatica_prm.cdorigem_mensagem%TYPE := 5;
+  MOTIVO_SALDO_INSUFICIENTE  CONSTANT tbgen_notif_automatica_prm.cdmotivo_mensagem%TYPE := 4;
+  MOTIVO_LIMITE_EXCEDIDO     CONSTANT tbgen_notif_automatica_prm.cdmotivo_mensagem%TYPE := 5;
 
   /* Procedimento para buscar os lançamentos automáticos efetuados pela Internet e TAA*/
   PROCEDURE pc_obtem_agendamentos_debito( pr_cdcooper  IN crapcop.cdcooper%TYPE        --> Código da cooperativa
@@ -771,6 +772,10 @@ create or replace package body cecred.SICR0001 is
 
         END LOOP;
 
+      if nvl(vr_nrdolote_sms,0) <> 0 then 
+        ESMS0001.pc_conclui_lote_sms(pr_idlote_sms  => vr_nrdolote_sms
+                                      ,pr_dscritic    => vr_dscritic);
+       end if; 
 
         -- Retornando a tabela temporaria dos lancamentos atualizada
         pr_tab_agendamentos := vr_tab_aux;
@@ -1268,7 +1273,7 @@ create or replace package body cecred.SICR0001 is
       vr_dsinfor2     crappro.dsinform##1%TYPE;
       vr_dsinfor3     crappro.dsinform##1%TYPE;
       vr_dsprotoc     crappro.dsprotoc%TYPE;
-      vr_nrdolote_sms NUMBER;
+    
     
       -- Autenticação
       vr_dslitera crapaut.dslitera%TYPE;
@@ -1795,7 +1800,7 @@ create or replace package body cecred.SICR0001 is
                                           pr_cdrefere      => rw_crapatr.cdrefere,
                                           pr_cdhistor      => rw_crapatr.cdhistor,
                                           pr_tpdnotif      => 1 --> Apenas MSG IBank
-                                         ,pr_flfechar_lote => 1 -- Fechar
+                                         ,pr_flfechar_lote => 0 -- Fechar
                                          ,pr_idlote_sms    => vr_nrdolote_sms);
               END IF;
             
@@ -1885,7 +1890,7 @@ create or replace package body cecred.SICR0001 is
                                       ,pr_vlrmaxdb  => rw_crapatr.vlrmaxdb
                                       ,pr_cdrefere  => rw_crapatr.cdrefere
                                       ,pr_cdhistor  => rw_crapatr.cdhistor
-                                      ,pr_flfechar_lote => 1 -- Fechar
+                                      ,pr_flfechar_lote => 0 -- Fechar
                                       ,pr_idlote_sms   => vr_nrdolote_sms);
 
             BEGIN
@@ -2254,6 +2259,7 @@ create or replace package body cecred.SICR0001 is
         END IF;
       
       END LOOP;
+
     
     EXCEPTION
       WHEN vr_exc_saida THEN
@@ -2288,7 +2294,7 @@ create or replace package body cecred.SICR0001 is
                             ,pr_nrctacns  IN crapass.nrctacns%TYPE        --> Conta consórcio
                             ,pr_vllanaut  IN craplau.vllanaut%TYPE        --> Valor do lancemento
                             ,pr_cdagenci  IN crapass.cdagenci%TYPE        --> Agencia do cooperado PA
-                            ,pr_cdseqtel  IN craplau.cdseqtel%TYPE        --> Sequencial
+              ,pr_cdseqtel  IN craplau.cdseqtel%TYPE        --> Sequencial
                             ,pr_cdcritic OUT crapcri.cdcritic%TYPE        --> Codigo da critica de erro
                             ,pr_dscritic OUT VARCHAR2) IS                 --> descrição do erro se ocorrer
   ---------------------------------------------------------------------------------------------------------------

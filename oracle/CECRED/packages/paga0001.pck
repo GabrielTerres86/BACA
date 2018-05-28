@@ -316,6 +316,8 @@ CREATE OR REPLACE PACKAGE CECRED.PAGA0001 AS
   --Tipo de tabela de agendamento
   TYPE typ_tab_agendto IS TABLE OF typ_reg_agendto INDEX BY VARCHAR2(300);
 
+  vr_idlote_sms tbgen_sms_lote.idlote_sms%TYPE := 0;
+
   --Tipo de registro de lancamentos consolidados
   TYPE typ_reg_lcm_consolidada IS
     RECORD (cdcooper craplcm.cdcooper%type
@@ -12544,6 +12546,11 @@ PROCEDURE pc_efetua_debitos_paralelo (pr_cdcooper    IN crapcop.cdcooper%TYPE   
          vr_index_agendto:= vr_tab_agendto.NEXT(vr_index_agendto);
        END LOOP;
 
+	    if nvl(vr_idlote_sms,0) <> 0 then
+          ESMS0001.pc_conclui_lote_sms(pr_idlote_sms  => vr_idlote_sms
+                                    	,pr_dscritic    => vr_dscritic);
+       end if; 
+
     EXCEPTION
       WHEN vr_exc_erro THEN
         pr_cdcritic:= vr_cdcritic;
@@ -21419,7 +21426,7 @@ end;';
       vr_dsinfor2  crappro.dsinform##1%TYPE;
       vr_dsinfor3  crappro.dsinform##1%TYPE;
       vr_dsprotoc  crappro.dsprotoc%TYPE;
-      vr_idlote_sms tbgen_sms_lote.idlote_sms%TYPE;
+      
 
       -- Autenticação
       vr_dslitera  crapaut.dslitera%TYPE;
@@ -22153,7 +22160,7 @@ end;';
                                                 ,pr_cdrefere      => rw_crapatr.cdrefere
                                                 ,pr_cdhistor      => rw_crapatr.cdhistor
                                                 ,pr_tpdnotif      => 1 --> Apenas MSG IBank
-                                                ,pr_flfechar_lote => 1 -- Sempre fecha o lote a cada SMS
+                                                ,pr_flfechar_lote => 0 -- Sempre fecha o lote a cada SMS
                                                 ,pr_idlote_sms    => vr_idlote_sms
                                                 );
             
@@ -22318,7 +22325,7 @@ end;';
                                                   ,pr_vlrmaxdb      => rw_crapatr.vlrmaxdb
                                                   ,pr_cdrefere      => rw_crapatr.cdrefere
                                                   ,pr_cdhistor      => rw_crapatr.cdhistor
-                                                  ,pr_flfechar_lote => 1 -- Sempre fecha o lote a cada SMS
+                                                  ,pr_flfechar_lote => 0 -- Sempre fecha o lote a cada SMS
                                                   ,pr_idlote_sms    => vr_idlote_sms
                                                   );
               END IF;
