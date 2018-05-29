@@ -1102,8 +1102,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0004 AS
     vr_rw_craplot   craplot%ROWTYPE;
 
     -- saidas da craplcm
-    vr_rowid  ROWID;
-    vr_nmtabela VARCHAR2(100);
+    vr_retornos LANC0001.typ_reg_retorno; -- Record com os dados retornados pela "pc_gerar_lancamento_conta"
     vr_incrineg INTEGER;
   BEGIN
     -- Busca a data do sistema
@@ -1393,8 +1392,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0004 AS
                                             , pr_cdcooper => vr_cdcooper
                                             , pr_vllanmto => rw_tabela.vllancamento
                                             , pr_cdoperad => '1'
-                                            , pr_rowid => vr_rowid
-                                            , pr_nmtabela => vr_nmtabela
+                                            , pr_retorno  => vr_retornos
                                             , pr_incrineg => vr_incrineg
                                             , pr_cdcritic => vr_cdcritic
                                             , pr_dscritic => vr_dscritic
