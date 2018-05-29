@@ -612,8 +612,6 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps778 (pr_dscritic OUT VARCHAR2) IS     
             EXCEPTION
                 
               WHEN OTHERS THEN
-         
-                ROLLBACK;
 
                 vr_cdcritic := 0;
                 vr_dscritic := 'CRPS778: Erro ao carregar arquivo - ' || vr_tab_cratarq(vr_chave).nmarquiv 
@@ -625,7 +623,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps778 (pr_dscritic OUT VARCHAR2) IS     
                   pc_gerar_log(pr_cdcooper => rw_crapcoop.cdcooper,
                                 pr_dscdolog => vr_dscritic);
                 END IF;
-                 
+                
+				-- Efetuar rollback				  
+                ROLLBACK;
+
                 vr_chave := vr_tab_cratarq.NEXT(vr_chave);
                  
             END;
@@ -680,6 +681,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps778 (pr_dscritic OUT VARCHAR2) IS     
                                                             || ' dos logs('||vr_idprglog||'). (PC_CRPS778(1))'
                                         ,pr_idprglog => vr_idprglog);
        
+	       -- Efetuar rollback				  
+           ROLLBACK;
+
        END;
 				
      END LOOP; -- FOR rw_crapcoop

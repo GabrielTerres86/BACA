@@ -5,7 +5,7 @@ CREATE OR REPLACE PACKAGE CECRED.COBR0006 IS
   --  Sistema  : Procedimentos para  gerais da cobranca
   --  Sigla    : CRED
   --  Autor    : Odirlei Busana - AMcom
-  --  Data     : Novembro/2015.                   Ultima atualizacao: 29/12/2016 
+  --  Data     : Novembro/2015.                   Ultima atualizacao: 29/05/2016 
   --
   -- Dados referentes ao programa:
   --
@@ -23,6 +23,9 @@ CREATE OR REPLACE PACKAGE CECRED.COBR0006 IS
   --
   --	          16/05/2018 - Ajuste para que o insert do campo cdmensag nunca seja com o valor nulo.
   --                           Chamado INC0011898 - Gabriel (Mouts).
+  --
+  --	          29/05/2018 - Ajuste no comando que envia arquivos .LOG e .ERR para servidor ftp.
+  --                           Chamado INC0015743 - Gabriel (Mouts).
   --
   ---------------------------------------------------------------------------------------------------------------
     
@@ -16053,7 +16056,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     vr_diretorio_log VARCHAR2(4000);
     vr_diretorio_err VARCHAR2(4000);
     vr_dir_coop VARCHAR2(4000);
-    vr_dscomora VARCHAR2(1000);
     
     vr_serv_ftp VARCHAR2(100);
     vr_user_ftp VARCHAR2(100);
@@ -16118,8 +16120,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     -- Renomeia o Arquivo .REM para .ERR
     gene0001.pc_OScommand_Shell('mv ' || vr_diretorio_err || '/' || pr_nmarquiv || ' ' || 
                                 vr_diretorio_err || '/' || vr_nmarquivo_err); 
-           
-    vr_dscomora:= gene0001.fn_param_sistema('CRED',pr_cdcooper,'SCRIPT_EXEC_SHELL');
         
     -- Caminho script que envia/recebe via FTP os arquivos de custodia cheque
     vr_script_cust := GENE0001.fn_param_sistema(pr_nmsistem => 'CRED'
@@ -16142,7 +16142,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
                       '/' || TRIM(to_char(pr_nrdconta)) || '/RETORNO';                                                                              
             
     -- Copia Arquivo .ERR para Servidor FTP
-    vr_comando := vr_dscomora ||' perl_remoto ' || vr_script_cust || ' ' ||
+    vr_comando := vr_script_cust                                 || ' ' ||
     '-envia'                                                     || ' ' || 
     '-srv '         || vr_serv_ftp                               || ' ' || -- Servidor
     '-usr '         || vr_user_ftp                               || ' ' || -- Usuario
@@ -16166,7 +16166,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     END IF;                    
                            
     -- Copia Arquivo .LOG para Servidor FTP
-    vr_comando := vr_dscomora|| ' perl_remoto ' || vr_script_cust || ' ' ||
+    vr_comando := vr_script_cust                                 || ' ' ||
     '-envia'                                                     || ' ' || 
     '-srv '         || vr_serv_ftp                               || ' ' || -- Servidor
     '-usr '         || vr_user_ftp                               || ' ' || -- Usuario
