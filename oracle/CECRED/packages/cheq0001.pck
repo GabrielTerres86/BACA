@@ -3308,6 +3308,18 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
       RAISE vr_exc_saida;
     END IF;
     
+    -- Verificar se conta permite adesão do produto
+    CADA0006.pc_valida_adesao_produto(pr_cdcooper => vr_cdcooper
+                                     ,pr_nrdconta => pr_nrdconta
+                                     ,pr_cdprodut => 38 -- FOLHAS DE CHEQUE
+                                     ,pr_cdcritic => vr_cdcritic
+                                     ,pr_dscritic => vr_dscritic);
+    
+    IF vr_dscritic IS NOT NULL THEN
+      RAISE vr_exc_saida;
+    END IF;
+    
+    
     -- Busca a data do sistema
     OPEN btch0001.cr_crapdat(vr_cdcooper);
     FETCH btch0001.cr_crapdat INTO rw_crapdat;
