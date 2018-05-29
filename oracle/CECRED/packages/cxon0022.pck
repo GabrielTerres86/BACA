@@ -173,7 +173,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
   --  Sistema  : Procedimentos e funcoes das transacoes do caixa online
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Junho/2013.                   Ultima atualizacao: 16/04/2018
+  --  Data     : Junho/2013.                   Ultima atualizacao: 29/05/2018
   --
   -- Dados referentes ao programa:
   --
@@ -181,7 +181,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
   -- Objetivo  : Procedimentos e funcoes das transacoes do caixa online
   
   -- Alteracoes: 12/06/2014 - Transferencia e deposito entre cooperativas
-                           (Andre Santos - SUPERO).   
+                              (Andre Santos - SUPERO).   
                            
   --             10/07/2014 - Corrigido o retorno da procedure PC_REALIZA_TRANSFERENCIA. Não estava retornando o erro.
  
@@ -215,10 +215,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                  
                  12/12/2017 - Passar como texto o campo nrcartao na chamada da procedure 
                               pc_gera_log_ope_cartao (Lucas Ranghetti #810576)
-                14/02/2018 - Projeto Ligeirinho. Alterado para gravar na tabela de lotes (craplot) somente no final
-                            da execução do CRPS509 => INTERNET E TAA. (Fabiano Girardi AMcom)
+                 
+                 14/02/2018 - Projeto Ligeirinho. Alterado para gravar na tabela de lotes (craplot) somente no final
+                              da execução do CRPS509 => INTERNET E TAA. (Fabiano Girardi AMcom)
                
                  16/04/2018 - Ajuste para validar se cooperado não existe (Adriano - INC0012922).
+                 
+                 29/05/2018 - Alterado a inclusão na CRAPLCM para a Centralizadora de Lançamentos de Conta Corrente  
+                              PRJ450 - Diego Simas - AMcom 
+                 
   ---------------------------------------------------------------------------------------------------------------*/
 
   /* Busca dos dados da cooperativa */
@@ -4790,7 +4795,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
   --  Sistema  : Procedure para realizar deposito de cheques entre cooperativas
   --  Sigla    : CRED
   --  Autor    : Andre Santos - SUPERO
-  --  Data     : Junho/2014.                   Ultima atualizacao: 16/04/2018
+  --  Data     : Junho/2014.                   Ultima atualizacao: 29/05/2018
   --
   -- Dados referentes ao programa:
   --
@@ -4798,12 +4803,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
   -- Objetivo  : 
 
   -- Alteracoes: 26/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
-                        crapass, crapttl, crapjur 
-               (Adriano - P339).
+                              crapass, crapttl, crapjur 
+                              (Adriano - P339).
                
                  03/04/2018 - Substituido historico 1523 por 2658 - COMPE SESSAO UNICA (Diego).
                  
                  16/04/2018 - Ajuste para validar se cooperado não existe (Adriano - INC0012922).
+                 
+                 29/05/2018 - Alterado a inclusão na CRAPLCM para a Centralizadora de Lançamentos de Conta Corrente  
+                              PRJ450 - Diego Simas - AMcom 
+                 
   ---------------------------------------------------------------------------------------------------------------*/
   
   --Tipo de tabela para vetor literal
@@ -7321,7 +7330,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
   --  Sistema  : Procedure para realizar deposito de cheques entre cooperativas
   --  Sigla    : CRED
   --  Autor    : Andre Santos - SUPERO
-  --  Data     : Junho/2014.                   Ultima atualizacao: 16/04/2018
+  --  Data     : Junho/2014.                   Ultima atualizacao: 29/05/2018
   --
   -- Dados referentes ao programa:
   --
@@ -7329,12 +7338,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
   -- Objetivo  : 
 
   -- Alteracoes: 26/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
-                         crapass, crapttl, crapjur 
-                (Adriano - P339).
+                              crapass, crapttl, crapjur 
+                              (Adriano - P339).
                 
-                03/04/2018 - Substituido historico 1523 por 2658 - COMPE SESSAO UNICA (Diego).
+                 03/04/2018 - Substituido historico 1523 por 2658 - COMPE SESSAO UNICA (Diego).
                 
-                16/04/2018 - Ajuste para validar se cooperado não existe (Adriano - INC0012922).
+                 16/04/2018 - Ajuste para validar se cooperado não existe (Adriano - INC0012922).
+                 
+                 29/05/2018 - Alterado a inclusão na CRAPLCM para a Centralizadora de Lançamentos de Conta Corrente  
+                              PRJ450 - Diego Simas - AMcom 
+                 
   ---------------------------------------------------------------------------------------------------------------*/
   
   --Tipo de tabela para vetor literal
@@ -7877,6 +7890,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
   vr_aux_nrddigv3 crapchd.nrddigv3%TYPE;
   vr_aux_nrseqdig crapmdw.nrseqdig%TYPE;
   vr_nmsegntl crapttl.nmextttl%TYPE;
+  vr_rowidlcm          ROWID;        --> ROWID do lançamento inserido na CRAPLCM
+  vr_nmtabela          VARCHAR2(60); --> Nome ta tabela retornado pela "pc_gerar_lancamento_conta"
+  vr_incrineg          INTEGER;      --> Indicador de crítica de negócio para uso com a "pc_gerar_lancamento_conta"
     
   BEGIN
     
@@ -8526,68 +8542,54 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                  END IF;              
               CLOSE cr_existe_lcm1;
               
-              -- Chegou aqui eh porque nao existir lcm, entao cria registro de lcm
-              BEGIN
-                 INSERT INTO craplcm(cdcooper
-                                    ,dtmvtolt
-                                    ,cdagenci
-                                    ,cdbccxlt
-                                    ,dsidenti
-                                    ,nrdolote
-                                    ,nrdconta
-                                    ,nrdocmto
-                                    ,vllanmto
-                                    ,cdhistor
-                                    ,nrseqdig
-                                    ,nrdctabb
-                                    ,nrautdoc
-                                    ,cdpesqbb
-                                    ,nrdctitg
-                                    ,cdcoptfn
-                                    ,cdagetfn
-                                    ,nrterfin
-                                    ,cdoperad)
-                 VALUES (rw_cod_coop_dest.cdcooper
-                        ,rw_dat_cop.dtmvtolt
-                        ,1
-                        ,100
-                        ,pr_identifica
-                        ,vr_i_nro_lote
-                        ,pr_nro_conta
-                        ,TO_NUMBER(vr_c_docto)
-                        ,rw_verifica_mrw.vlchqcop
-                        ,1524 -- 386 - CR.TRF.CH.INT
-                        ,rw_consulta_lot.nrseqdig -- Já está encrementado + 1 no CURSOR cr_consulta_lot
-                        ,pr_nro_conta
-                        ,vr_p_ult_sequencia
-                        ,'CRAP22'
-                        ,vr_glb_dsdctitg
-                        ,rw_cod_coop_orig.cdcooper
-                        ,pr_cod_agencia
-                        ,pr_nro_caixa
-                        ,pr_cod_operador);              
-              EXCEPTION
-                 WHEN OTHERS THEN
-                    pr_cdcritic := 0;
-                    pr_dscritic := 'Erro ao inserir na CRAPLCM : '||sqlerrm;
+              -- Chamada a LANC0001 -- 8
+              LANC0001.pc_gerar_lancamento_conta(pr_cdcooper => rw_cod_coop_dest.cdcooper
+                                                ,pr_dtmvtolt => rw_dat_cop.dtmvtolt
+                                                ,pr_cdagenci => 1
+                                                ,pr_cdbccxlt => 100
+                                                ,pr_dsidenti => pr_identifica
+                                                ,pr_nrdolote => vr_i_nro_lote
+                                                ,pr_nrdconta => pr_nro_conta
+                                                ,pr_nrdocmto => TO_NUMBER(vr_c_docto)
+                                                ,pr_vllanmto => rw_verifica_mrw.vlchqcop
+                                                ,pr_cdhistor => 1524 -- 386 - CR.TRF.CH.INT
+                                                ,pr_nrseqdig => rw_consulta_lot.nrseqdig -- Já está encrementado + 1 no CURSOR cr_consulta_lot
+                                                ,pr_nrdctabb => pr_nro_conta
+                                                ,pr_nrautdoc => vr_p_ult_sequencia
+                                                ,pr_cdpesqbb => 'CRAP22'
+                                                ,pr_nrdctitg => vr_glb_dsdctitg
+                                                ,pr_cdcoptfn => rw_cod_coop_orig.cdcooper
+                                                ,pr_cdagetfn => pr_cod_agencia
+                                                ,pr_nrterfin => pr_nro_caixa
+                                                ,pr_cdoperad => pr_cod_operador
+                                                -- OUTPUT-- 
+                                                ,pr_rowid    => vr_rowidlcm
+                                                ,pr_nmtabela => vr_nmtabela
+                                                ,pr_incrineg => vr_incrineg
+                                                ,pr_cdcritic => vr_cdcritic
+                                                ,pr_dscritic => vr_dscritic); 
+                                                          
+              IF nvl(pr_cdcritic, 0) > 0 OR pr_dscritic IS NOT NULL THEN
+                pr_cdcritic := 0;
+                pr_dscritic := 'Erro ao inserir lançamento : '||sqlerrm;
                                   
-                    cxon0000.pc_cria_erro(pr_cdcooper => rw_cod_coop_orig.cdcooper
-                                         ,pr_cdagenci => pr_cod_agencia
-                                         ,pr_nrdcaixa => pr_nro_caixa
-                                         ,pr_cod_erro => pr_cdcritic
-                                         ,pr_dsc_erro => pr_dscritic
-                                         ,pr_flg_erro => TRUE
-                                         ,pr_cdcritic => vr_cdcritic
-                                         ,pr_dscritic => vr_dscritic);
-                    -- Levantar excecao
-                    IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-                       pr_cdcritic := vr_cdcritic;
-                       pr_dscritic := vr_dscritic; 
-                       RAISE vr_exc_erro;
-                    END IF;
+                cxon0000.pc_cria_erro(pr_cdcooper => rw_cod_coop_orig.cdcooper
+                                     ,pr_cdagenci => pr_cod_agencia
+                                     ,pr_nrdcaixa => pr_nro_caixa
+                                     ,pr_cod_erro => pr_cdcritic
+                                     ,pr_dsc_erro => pr_dscritic
+                                     ,pr_flg_erro => TRUE
+                                     ,pr_cdcritic => vr_cdcritic
+                                     ,pr_dscritic => vr_dscritic);
+                -- Levantar excecao
+                IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+                   pr_cdcritic := vr_cdcritic;
+                   pr_dscritic := vr_dscritic; 
+                   RAISE vr_exc_erro;
+                END IF;
 
-                    RAISE vr_exc_erro;
-              END;
+                RAISE vr_exc_erro;
+              END IF;
               
               vr_i_seq_386 := rw_consulta_lot.nrseqdig;
      
@@ -8726,73 +8728,58 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                  RAISE vr_exc_erro;
               END IF;            
            CLOSE cr_existe_lcm1;
-              
-           -- Chegou aqui eh porque nao existir lcm, entao cria registro de lcm
-           BEGIN
-              INSERT INTO craplcm(cdcooper
-                                 ,dtmvtolt
-                                 ,cdagenci
-                                 ,cdbccxlt
-                                 ,dsidenti
-                                 ,nrdolote
-                                 ,nrdconta
-                                 ,nrdocmto
-                                 ,vllanmto
-                                 ,cdhistor
-                                 ,nrseqdig
-                                 ,nrdctabb
-                                 ,nrautdoc
-                                 ,cdpesqbb
-                                 ,nrdctitg
-                                 ,cdcoptfn
-                                 ,cdagetfn
-                                 ,nrterfin
-                                 ,cdoperad)
-              VALUES (rw_cod_coop_dest.cdcooper
-                     ,rw_dat_cop.dtmvtolt
-                     ,1
-                     ,100
-                     ,pr_identifica
-                     ,vr_i_nro_lote
-                     ,pr_nro_conta
-                     ,TO_NUMBER(vr_c_docto)
-                     ,pr_typ_tab_chq(vr_index).vlcompel
-                   ,2658  /** DEP.CHQ.INTER **/
-                     ,rw_consulta_lot.nrseqdig -- Já está encrementado + 1 no CURSOR cr_consulta_lot
-                     ,pr_nro_conta
-                     ,vr_p_ult_sequencia
-                     ,'CRAP22'
-                     ,vr_glb_dsdctitg
-                     ,rw_cod_coop_orig.cdcooper
-                     ,pr_cod_agencia
-                     ,pr_nro_caixa
-                     ,pr_cod_operador);
+           
+           -- Chamada a LANC0001 -- 9
+           LANC0001.pc_gerar_lancamento_conta(pr_cdcooper => rw_cod_coop_dest.cdcooper
+                                             ,pr_dtmvtolt => rw_dat_cop.dtmvtolt
+                                             ,pr_cdagenci => 1
+                                             ,pr_cdbccxlt => 100
+                                             ,pr_dsidenti => pr_identifica
+                                             ,pr_nrdolote => vr_i_nro_lote
+                                             ,pr_nrdconta => pr_nro_conta
+                                             ,pr_nrdocmto => TO_NUMBER(vr_c_docto)
+                                             ,pr_vllanmto => pr_typ_tab_chq(vr_index).vlcompel
+                                             ,pr_cdhistor => 2658  -- DEP.CHQ.INTER 
+                                             ,pr_nrseqdig => rw_consulta_lot.nrseqdig -- Já está encrementado + 1 no CURSOR cr_consulta_lot
+                                             ,pr_nrdctabb => pr_nro_conta
+                                             ,pr_nrautdoc => vr_p_ult_sequencia
+                                             ,pr_cdpesqbb => 'CRAP22'
+                                             ,pr_nrdctitg => vr_glb_dsdctitg
+                                             ,pr_cdcoptfn => rw_cod_coop_orig.cdcooper
+                                             ,pr_cdagetfn => pr_cod_agencia
+                                             ,pr_nrterfin => pr_nro_caixa
+                                             ,pr_cdoperad => pr_cod_operador
+                                             -- OUTPUT-- 
+                                             ,pr_rowid    => vr_rowidlcm
+                                             ,pr_nmtabela => vr_nmtabela
+                                             ,pr_incrineg => vr_incrineg
+                                             ,pr_cdcritic => vr_cdcritic
+                                             ,pr_dscritic => vr_dscritic); 
+                                                       
+           IF nvl(pr_cdcritic, 0) > 0 OR pr_dscritic IS NOT NULL THEN
+             pr_cdcritic := 0;
+             pr_dscritic := 'Erro ao inserir lançamento : '||sqlerrm;
 
-                     -- Guarda o sequencial usado no lancamento
-                     pr_typ_tab_chq(vr_index).nrseqlcm := rw_consulta_lot.nrseqdig; -- Já está encrementado + 1 no CURSOR cr_consulta_lot
+             cxon0000.pc_cria_erro(pr_cdcooper => rw_cod_coop_orig.cdcooper
+                                  ,pr_cdagenci => pr_cod_agencia
+                                  ,pr_nrdcaixa => pr_nro_caixa
+                                  ,pr_cod_erro => pr_cdcritic
+                                  ,pr_dsc_erro => pr_dscritic
+                                  ,pr_flg_erro => TRUE
+                                  ,pr_cdcritic => vr_cdcritic
+                                  ,pr_dscritic => vr_dscritic);
+             -- Levantar excecao
+             IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+                pr_cdcritic := vr_cdcritic;
+                pr_dscritic := vr_dscritic; 
+                RAISE vr_exc_erro;
+             END IF;
 
-           EXCEPTION
-              WHEN OTHERS THEN
-                   pr_cdcritic := 0;
-                   pr_dscritic := 'Erro ao inserir na CRAPLCM : '||sqlerrm;
-
-                   cxon0000.pc_cria_erro(pr_cdcooper => rw_cod_coop_orig.cdcooper
-                                        ,pr_cdagenci => pr_cod_agencia
-                                        ,pr_nrdcaixa => pr_nro_caixa
-                                        ,pr_cod_erro => pr_cdcritic
-                                        ,pr_dsc_erro => pr_dscritic
-                                        ,pr_flg_erro => TRUE
-                                        ,pr_cdcritic => vr_cdcritic
-                                        ,pr_dscritic => vr_dscritic);
-                   -- Levantar excecao
-                   IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-                      pr_cdcritic := vr_cdcritic;
-                      pr_dscritic := vr_dscritic; 
-                      RAISE vr_exc_erro;
-                   END IF;
-
-                   RAISE vr_exc_erro;
-           END;
+             RAISE vr_exc_erro;
+           END IF;
+           
+           -- Guarda o sequencial usado no lancamento
+           pr_typ_tab_chq(vr_index).nrseqlcm := rw_consulta_lot.nrseqdig; -- Já está encrementado + 1 no CURSOR cr_consulta_lot
 
            -- Verifica se existe lote
            OPEN cr_existe_lot(rw_cod_coop_dest.cdcooper
@@ -9527,68 +9514,57 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                         END;
                                                                                                             
                         /* Pagamento Cheque */
-                        BEGIN
-                                           
-                           IF rw_verifica_fdc.tpcheque = 1  THEN
-                              vr_aux_cdhistor := 521;
-                           ELSE
-                              vr_aux_cdhistor := 26;
-                           END IF;
-
-                           INSERT INTO craplcm(cdcooper
-                                              ,dtmvtolt
-                                              ,cdagenci
-                                              ,cdbccxlt
-                                              ,dsidenti
-                                              ,nrdolote
-                                              ,nrdconta
-                                              ,nrdocmto
-                                              ,vllanmto
-                                              ,cdhistor
-                                              ,nrseqdig
-                                              ,nrdctabb
-                                              ,nrautdoc
-                                              ,cdpesqbb
-                                              ,nrdctitg)
-                           VALUES (rw_existe_lot2.cdcooper
-                                  ,rw_dat_cop.dtmvtolt
-                                  ,rw_existe_lot2.cdagenci
-                                  ,rw_existe_lot2.cdbccxlt
-                                  ,pr_identifica
-                                  ,rw_existe_lot2.nrdolote
-                                  ,rw_verifica_tco.nrdconta
-                                  ,TO_NUMBER(TO_CHAR(rw_verifica_mdw.nrcheque)||TO_CHAR(rw_verifica_mdw.nrddigc3))
-                                  ,rw_verifica_mdw.vlcompel
-                                  ,vr_aux_cdhistor
-                                  ,rw_existe_lot2.nrseqdig + 1 
-                                  ,rw_verifica_mdw.nrctabdb
-                                  ,rw_nrautdoc_mdw.nrautdoc
-                                  ,'CRAP22,'||rw_verifica_mdw.cdopelib
-                                  ,vr_dsdctitg
-                                  );
-                        EXCEPTION
-                           WHEN OTHERS THEN
-                                pr_cdcritic := 0;
-                                pr_dscritic := 'Erro ao inserir na CRAPLCM : '||sqlerrm;
+                        IF rw_verifica_fdc.tpcheque = 1  THEN
+                          vr_aux_cdhistor := 521;
+                        ELSE
+                          vr_aux_cdhistor := 26;
+                        END IF;
+                        
+                        -- Chamada a LANC0001 -- 10
+                        LANC0001.pc_gerar_lancamento_conta(pr_cdcooper => rw_existe_lot2.cdcooper 
+                                                          ,pr_dtmvtolt => rw_dat_cop.dtmvtolt
+                                                          ,pr_cdagenci => rw_existe_lot2.cdagenci
+                                                          ,pr_cdbccxlt => rw_existe_lot2.cdbccxlt
+                                                          ,pr_dsidenti => pr_identifica
+                                                          ,pr_nrdolote => rw_existe_lot2.nrdolote
+                                                          ,pr_nrdconta => rw_verifica_tco.nrdconta
+                                                          ,pr_nrdocmto => TO_NUMBER(TO_CHAR(rw_verifica_mdw.nrcheque)||TO_CHAR(rw_verifica_mdw.nrddigc3))
+                                                          ,pr_vllanmto => rw_verifica_mdw.vlcompel
+                                                          ,pr_cdhistor => vr_aux_cdhistor
+                                                          ,pr_nrseqdig => rw_existe_lot2.nrseqdig + 1 
+                                                          ,pr_nrdctabb => rw_verifica_mdw.nrctabdb
+                                                          ,pr_nrautdoc => rw_nrautdoc_mdw.nrautdoc
+                                                          ,pr_cdpesqbb => 'CRAP22,'||rw_verifica_mdw.cdopelib
+                                                          ,pr_nrdctitg => vr_dsdctitg
+                                                          -- OUTPUT-- 
+                                                          ,pr_rowid    => vr_rowidlcm
+                                                          ,pr_nmtabela => vr_nmtabela
+                                                          ,pr_incrineg => vr_incrineg
+                                                          ,pr_cdcritic => vr_cdcritic
+                                                          ,pr_dscritic => vr_dscritic); 
+                                                                    
+                        IF nvl(pr_cdcritic, 0) > 0 OR pr_dscritic IS NOT NULL THEN
+                          pr_cdcritic := 0;
+                          pr_dscritic := 'Erro ao inserir lançamento : '||sqlerrm;
                            
-                                cxon0000.pc_cria_erro(pr_cdcooper => rw_cod_coop_orig.cdcooper
-                                                     ,pr_cdagenci => pr_cod_agencia
-                                                     ,pr_nrdcaixa => pr_nro_caixa
-                                                     ,pr_cod_erro => pr_cdcritic
-                                                     ,pr_dsc_erro => pr_dscritic
-                                                     ,pr_flg_erro => TRUE
-                                                     ,pr_cdcritic => vr_cdcritic
-                                                     ,pr_dscritic => vr_dscritic);
-                                -- Levantar excecao
-                                IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-                                   pr_cdcritic := vr_cdcritic;
-                                   pr_dscritic := vr_dscritic; 
-                                   RAISE vr_exc_erro;
-                                END IF;
+                          cxon0000.pc_cria_erro(pr_cdcooper => rw_cod_coop_orig.cdcooper
+                                               ,pr_cdagenci => pr_cod_agencia
+                                               ,pr_nrdcaixa => pr_nro_caixa
+                                               ,pr_cod_erro => pr_cdcritic
+                                               ,pr_dsc_erro => pr_dscritic
+                                               ,pr_flg_erro => TRUE
+                                               ,pr_cdcritic => vr_cdcritic
+                                               ,pr_dscritic => vr_dscritic);
+                          -- Levantar excecao
+                          IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+                             pr_cdcritic := vr_cdcritic;
+                             pr_dscritic := vr_dscritic; 
+                             RAISE vr_exc_erro;
+                          END IF;
 
-                                RAISE vr_exc_erro;
-                        END;
-
+                          RAISE vr_exc_erro;
+                        END IF;
+                        
                         BEGIN
                            UPDATE craplot lot
                               SET lot.nrseqdig = lot.nrseqdig + 1
@@ -9683,67 +9659,58 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                          END;
                                                                                                             
                          /* Pagamento Cheque */
-                         BEGIN
-                                           
-                            IF  rw_verifica_fdc.tpcheque = 1  THEN
-                                vr_aux_cdhistor := 21;
-                            ELSE
-                                vr_aux_cdhistor := 26;
-                            END IF;
-
-                            INSERT INTO craplcm(cdcooper
-                                               ,dtmvtolt
-                                               ,cdagenci
-                                               ,cdbccxlt
-                                               ,dsidenti
-                                               ,nrdolote
-                                               ,nrdconta
-                                               ,nrdocmto
-                                               ,vllanmto
-                                               ,cdhistor
-                                               ,nrseqdig
-                                               ,nrdctabb
-                                               ,nrautdoc
-                                               ,cdpesqbb
-                                               ,nrdctitg)
-                            VALUES (rw_cod_coop_orig.cdcooper
-                                   ,rw_dat_cop.dtmvtolt
-                                   ,pr_cod_agencia
-                                   ,11
-                                   ,pr_identifica
-                                   ,vr_i_nro_lote
-                                   ,rw_verifica_mdw.nrctaaux
-                                   ,TO_NUMBER(TO_CHAR(rw_verifica_mdw.nrcheque)||TO_CHAR(rw_verifica_mdw.nrddigc3))
-                                   ,rw_verifica_mdw.vlcompel
-                                   ,vr_aux_cdhistor
-                                   ,rw_consulta_lot.nrseqdig -- Já está encrementado + 1 no CURSOR cr_consulta_lot
-                                   ,rw_verifica_mdw.nrctabdb
-                                   ,rw_nrautdoc_mdw.nrautdoc
-                                   ,'CRAP22,'||rw_verifica_mdw.cdopelib
-                                   ,vr_dsdctitg);
-                         EXCEPTION
-                            WHEN OTHERS THEN
-                                 pr_cdcritic := 0;
-                                 pr_dscritic := 'Erro ao inserir na CRAPLCM : '||sqlerrm;
                          
-                                 cxon0000.pc_cria_erro(pr_cdcooper => rw_cod_coop_orig.cdcooper
-                                                      ,pr_cdagenci => pr_cod_agencia
-                                                      ,pr_nrdcaixa => pr_nro_caixa
-                                                      ,pr_cod_erro => pr_cdcritic
-                                                      ,pr_dsc_erro => pr_dscritic
-                                                      ,pr_flg_erro => TRUE
-                                                      ,pr_cdcritic => vr_cdcritic
-                                                      ,pr_dscritic => vr_dscritic);
-                                 -- Levantar excecao
-                                 IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-                                    pr_cdcritic := vr_cdcritic;
-                                    pr_dscritic := vr_dscritic; 
-                                    RAISE vr_exc_erro;
-                                 END IF;
+                         IF  rw_verifica_fdc.tpcheque = 1  THEN
+                           vr_aux_cdhistor := 21;
+                         ELSE
+                           vr_aux_cdhistor := 26;
+                         END IF;
+                         
+                         -- Chamada a LANC0001 -- 11
+                         LANC0001.pc_gerar_lancamento_conta(pr_cdcooper => rw_cod_coop_orig.cdcooper
+                                                           ,pr_dtmvtolt => rw_dat_cop.dtmvtolt
+                                                           ,pr_cdagenci => pr_cod_agencia
+                                                           ,pr_cdbccxlt => 11
+                                                           ,pr_dsidenti => pr_identifica
+                                                           ,pr_nrdolote => vr_i_nro_lote
+                                                           ,pr_nrdconta => rw_verifica_mdw.nrctaaux
+                                                           ,pr_nrdocmto => TO_NUMBER(TO_CHAR(rw_verifica_mdw.nrcheque)||TO_CHAR(rw_verifica_mdw.nrddigc3)) 
+                                                           ,pr_vllanmto => rw_verifica_mdw.vlcompel
+                                                           ,pr_cdhistor => vr_aux_cdhistor
+                                                           ,pr_nrseqdig => rw_consulta_lot.nrseqdig -- Já está encrementado + 1 no CURSOR cr_consulta_lot
+                                                           ,pr_nrdctabb => rw_verifica_mdw.nrctabdb
+                                                           ,pr_nrautdoc => rw_nrautdoc_mdw.nrautdoc
+                                                           ,pr_cdpesqbb => 'CRAP22,'||rw_verifica_mdw.cdopelib
+                                                           ,pr_nrdctitg => vr_dsdctitg
+                                                           -- OUTPUT-- 
+                                                           ,pr_rowid    => vr_rowidlcm
+                                                           ,pr_nmtabela => vr_nmtabela
+                                                           ,pr_incrineg => vr_incrineg
+                                                           ,pr_cdcritic => vr_cdcritic
+                                                           ,pr_dscritic => vr_dscritic); 
+                                                                      
+                         IF nvl(pr_cdcritic, 0) > 0 OR pr_dscritic IS NOT NULL THEN
+                           pr_cdcritic := 0;
+                           pr_dscritic := 'Erro ao inserir na CRAPLCM : '||sqlerrm;
+                         
+                           cxon0000.pc_cria_erro(pr_cdcooper => rw_cod_coop_orig.cdcooper
+                                                ,pr_cdagenci => pr_cod_agencia
+                                                ,pr_nrdcaixa => pr_nro_caixa
+                                                ,pr_cod_erro => pr_cdcritic
+                                                ,pr_dsc_erro => pr_dscritic
+                                                ,pr_flg_erro => TRUE
+                                                ,pr_cdcritic => vr_cdcritic
+                                                ,pr_dscritic => vr_dscritic);
+                           -- Levantar excecao
+                           IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+                              pr_cdcritic := vr_cdcritic;
+                              pr_dscritic := vr_dscritic; 
+                              RAISE vr_exc_erro;
+                           END IF;
 
-                                 RAISE vr_exc_erro;
-                         END;
-
+                           RAISE vr_exc_erro;
+                         END IF;
+                         
                          BEGIN
                             UPDATE craplot lot
                                SET lot.nrseqdig = lot.nrseqdig + 1
