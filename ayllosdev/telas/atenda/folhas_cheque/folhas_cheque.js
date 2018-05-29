@@ -29,7 +29,7 @@ function carrega_lista() {
 }
 
 function solicitarTalonario () {
-	// Carrega conte�do da op��o atrav�s do Ajax
+	// Carrega conteúdo da opção através do Ajax
     $.ajax({
         type: 'POST',
         dataType: 'html',
@@ -40,7 +40,7 @@ function solicitarTalonario () {
         },
         error: function(objAjax, responseError, objExcept) {
             hideMsgAguardo();
-            showError('error', 'N&atilde;o foi poss�vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
+            showError('error', 'N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
         },
         success: function(response) {
 			try {
@@ -53,8 +53,34 @@ function solicitarTalonario () {
     });
 }
 
+function validarAcessoLista () {
+	// Carrega conteúdo da opção através do Ajax
+    $.ajax({
+        type: 'POST',
+        dataType: 'script',
+        url: UrlSite + 'telas/atenda/folhas_cheque/lista_cheques_acesso.php',
+        data: {
+            redirect: 'html_ajax'
+        },
+        error: function(objAjax, responseError, objExcept) {
+            hideMsgAguardo();
+            showError('error', 'N&atilde;o foi possível concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
+        },
+        success: function(response) {
+			try {
+                eval(response);
+				//carrega_lista();
+                return false;
+            } catch (error) {
+                showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'unblockBackground()');
+            }
+        }
+    });
+}
+
+
 function confirmaChequesNaoCompensados () {
-	showConfirmacao('Deseja visualizar a rela&ccedil;&atilde;o de cheques n&atilde;o compensados?','Confirma&ccedil;&atilde;o - Ayllos','carrega_lista();','blockBackground(parseInt($("#divRotina").css("z-index")))','sim.gif','nao.gif');
+	showConfirmacao('Deseja visualizar a rela&ccedil;&atilde;o de cheques n&atilde;o compensados?','Confirma&ccedil;&atilde;o - Ayllos','validarAcessoLista();','blockBackground(parseInt($("#divRotina").css("z-index")))','sim.gif','nao.gif');
 }
 
 function confirmaSolicitarTalonario () {
