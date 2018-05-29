@@ -4340,8 +4340,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                                                     , pr_nrseqdig => vr_tab_craplcm(vr_idxlcm).nrseqdig
                                                     , pr_cdcooper => vr_tab_craplcm(vr_idxlcm).cdcooper
                                                     , pr_vllanmto => vr_tab_craplcm(vr_idxlcm).vllanmto
-                                                    , pr_rowid => vr_rowid
-                                                    , pr_nmtabela => vr_nmtabela
+                                                    , pr_retorno  => vr_retornos
                                                     , pr_incrineg => vr_incrineg
                                                     , pr_cdcritic => vr_cdcritic
                                                     , pr_dscritic => vr_dscritic);
@@ -10695,8 +10694,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
       vr_qtdexec      INTEGER;
       
       -- saidas da craplcm
-      vr_rowid  ROWID;
-      vr_nmtabela VARCHAR2(100);
+      vr_retornos LANC0001.typ_reg_retorno;  -- Record com os dados retornados pela "pc_gerar_Lancamento_conta"
       vr_incrineg INTEGER;
       
       FUNCTION fn_inicia_exec(pr_cdcooper IN crapcop.cdcooper%TYPE) RETURN ROWID IS
