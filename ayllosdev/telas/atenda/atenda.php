@@ -1,7 +1,7 @@
 ﻿<?php
 /*******************************************************************************
  Fonte: atenda.php                                                
- Autor: David                                                     
+ Autor: David Kistner                                                    
  Data : Julho/2007                   Última Alteração: 08/08/2017
                                                                   
  Objetivo  : Mostrar tela ATENDA                                  
