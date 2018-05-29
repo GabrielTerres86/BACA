@@ -1,9 +1,9 @@
-﻿/*.................................................................................................
+/*.................................................................................................
    Programa: sistema/internet/fontes/InternetBank141.p
    Sistema : Internet - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Andre Santos - SUPERO
-   Data    : Junho/2015                        Ultima atualizacao: 27/01/2016
+   Data    : Junho/2015                        Ultima atualizacao: 12/05/2017
    
    Dados referentes ao programa:
    Frequencia: Sempre que for chamado (On-Line)
@@ -16,9 +16,12 @@
                10/12/2015 - Adicionado chamada da procedure pc_valid_repre_legal_trans para as 
                             operacoes 2 e 4. (Reinert)
                             
-               27/01/2016 - Ajustes nas chamadas a rotinas com novo parâmetro contendo o CPF
-                            do operador conectado e também troca de tags da quantidade de pagamento
+               27/01/2016 - Ajustes nas chamadas a rotinas com novo parametro contendo o CPF
+                            do operador conectado e tambem troca de tags da quantidade de pagamento
                             no pagamento por arquivo (Marcos-Supero)
+							
+			   12/05/2017 - Segunda fase da melhoria 342 (Kelvin). 
+         
 ................................................................................................*/
 
 { sistema/internet/includes/var_ibank.i    }
@@ -42,10 +45,11 @@ DEF INPUT  PARAM par_flgravar AS INTE                                  NO-UNDO.
 DEF INPUT  PARAM par_vltarapr AS DECI                                  NO-UNDO.
 DEF INPUT  PARAM par_xmldados AS LONGCHAR                              NO-UNDO.
 DEF INPUT  PARAM par_dssessao AS CHAR                                  NO-UNDO.
+DEF INPUT  PARAM par_iddspscp AS INTE                                  NO-UNDO.
 DEF OUTPUT PARAM xml_dsmsgerr AS CHAR                                  NO-UNDO.
 DEF OUTPUT PARAM TABLE FOR xml_operacao.
 
-/* Variáveis utilizadas para receber clob da rotina no oracle */
+/* Variaveis utilizadas para receber clob da rotina no oracle */
 DEF VAR xDoc          AS HANDLE   NO-UNDO.   
 DEF VAR xRoot         AS HANDLE   NO-UNDO.  
 DEF VAR xRoot2        AS HANDLE   NO-UNDO.
@@ -152,6 +156,7 @@ ELSE IF  par_tpoperac = 2 THEN DO: /* Valida selecao de registros para aprovacao
                           INPUT par_dtmvtolt,
                           INPUT par_lisrowid,
                           INPUT 1,
+                          INPUT par_nrcpfapr,
                           OUTPUT "",
                           OUTPUT "",
                           OUTPUT "").
@@ -181,7 +186,8 @@ ELSE IF  par_tpoperac = 2 THEN DO: /* Valida selecao de registros para aprovacao
     END.
     ELSE IF aux_des_reto = "OK" AND aux_dscritic <> "" THEN DO:
 
-        ASSIGN xml_dsmsgerr = "<dsmsg>" + aux_dscritic + "</dsmsg>".
+        ASSIGN xml_dsmsgerr = "<dsmsg>" + aux_dscritic + "</dsmsg>" + 
+                              "<idestour>1</idestour>".
         RETURN "NOK".
     END.
 
@@ -222,7 +228,7 @@ ELSE IF  par_tpoperac = 3 THEN DO: /* busca opcoes de debito */
 
 END.
 ELSE IF  par_tpoperac = 4 THEN DO: /* Aprovar registros selecionados */
-
+/*
     { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
     RUN STORED-PROCEDURE pc_valid_repre_legal_trans aux_handproc = PROC-HANDLE NO-ERROR
                          (INPUT par_cdcooper,
@@ -285,9 +291,42 @@ ELSE IF  par_tpoperac = 4 THEN DO: /* Aprovar registros selecionados */
     IF aux_dscritic <> "" THEN DO:
         ASSIGN xml_dsmsgerr = "<dsmsgerr>" + aux_dscritic + "</dsmsgerr>".
         RETURN "NOK".
+    END.   */
+    
+   { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+    RUN STORED-PROCEDURE pc_verifica_idastcjt_pfp aux_handproc = PROC-HANDLE NO-ERROR
+                         (INPUT par_cdcooper,   /*Codigo Cooperativa                       */
+                          INPUT par_nrdconta,   /*Conta do Associado                       */
+                          INPUT par_idseqttl,   /*Titularidade do Associado                */
+                          INPUT par_nrcpfapr,   /*pr_nrcpfope                              */
+                          INPUT "INTERNET",     /*Codigo Origem                            */
+                          INPUT par_lisrowid,   /* Lista de ROWIDS                         */                          
+                          INPUT par_flsolest,
+                          OUTPUT "",
+                          OUTPUT 0,             /*Codigo do erro                           */
+                          OUTPUT "").           /*Descricao do erro                        */
+
+    CLOSE STORED-PROC pc_verifica_idastcjt_pfp aux_statproc = PROC-STATUS
+          WHERE PROC-HANDLE = aux_handproc.
+
+    ASSIGN aux_cdcritic = 0
+           aux_dscritic = ""
+           aux_dsalerta = ""
+           aux_nrcpfcgc = 0
+           aux_cdcritic = pc_verifica_idastcjt_pfp.pr_cdcritic
+                          WHEN pc_verifica_idastcjt_pfp.pr_cdcritic <> ?
+           aux_dscritic = pc_verifica_idastcjt_pfp.pr_dscritic
+                          WHEN pc_verifica_idastcjt_pfp.pr_dscritic <> ?
+           aux_dsalerta = pc_verifica_idastcjt_pfp.pr_dsalerta
+                          WHEN pc_verifica_idastcjt_pfp.pr_dsalerta <> ?.
+  
+    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+    IF aux_dscritic <> "" THEN DO:
+        ASSIGN xml_dsmsgerr = "<dsmsgerr>" + aux_dscritic + "</dsmsgerr>".
+        RETURN "NOK".
     END.   
 
-    IF  aux_idastcjt = 1 THEN
+    /*IF  aux_idastcjt = 1 THEN
         DO:
             { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
             RUN STORED-PROCEDURE pc_cria_trans_pend_folha aux_handproc = PROC-HANDLE NO-ERROR
@@ -403,7 +442,7 @@ ELSE IF  par_tpoperac = 4 THEN DO: /* Aprovar registros selecionados */
                 ASSIGN xml_dsmsgerr = "<dsmsgerr>" + aux_dscritic + "</dsmsgerr>".
                 RETURN "NOK".
             END.
-        END.
+        END.*/
 
     CREATE xml_operacao.
     ASSIGN xml_operacao.dslinxml = "<dsmsg>" + aux_dsalerta + "</dsmsg>".
@@ -430,6 +469,7 @@ ELSE IF  par_tpoperac = 5 THEN DO: /* Validar arquivo de pagamentos */
                           INPUT par_dsdireto,
                           INPUT par_dssessao,
                           INPUT STRING(par_dtcredit),
+                          INPUT par_iddspscp,
                           OUTPUT "",
                           OUTPUT "").
     CLOSE STORED-PROC pc_valida_arq_folha_ib aux_statproc = PROC-STATUS
@@ -497,7 +537,8 @@ ELSE IF  par_tpoperac = 5 THEN DO: /* Validar arquivo de pagamentos */
                       xml_operacao146.dscpfcgc = STRING(xText:NODE-VALUE) WHEN xField:NAME = "dscpfcgc"
                       xml_operacao146.dscritic = STRING(xText:NODE-VALUE) WHEN xField:NAME = "dscritic"
                       xml_operacao146.dsorigem = STRING(xText:NODE-VALUE) WHEN xField:NAME = "dsorigem"
-                      xml_operacao146.vlrpagto = STRING(xText:NODE-VALUE) WHEN xField:NAME = "vlrpagto". 
+                      xml_operacao146.vlrpagto = STRING(xText:NODE-VALUE) WHEN xField:NAME = "vlrpagto"
+                      xml_operacao146.idanalis = STRING(xText:NODE-VALUE) WHEN xField:NAME = "idanalis".
             END. 
         END.
         SET-SIZE(ponteiro_xml) = 0. 
@@ -523,6 +564,7 @@ ELSE IF  par_tpoperac = 5 THEN DO: /* Validar arquivo de pagamentos */
                                      <dscritic>" + xml_operacao146.dscritic + "</dscritic>
                                      <dsorigem>" + xml_operacao146.dsorigem + "</dsorigem>
                                      <vlrpagto>" + xml_operacao146.vlrpagto + "</vlrpagto>
+                                     <idanalis>" + xml_operacao146.idanalis + "</idanalis>
                                      </critica>".                                     
        
     END.
@@ -794,6 +836,7 @@ ELSE IF  par_tpoperac = 11 THEN DO: /* Envio de pagamentos para aprovacao */
                           INPUT par_flgravar,
                           INPUT par_dsdireto,
                           INPUT par_dsarquiv,
+                          INPUT par_iddspscp,
                           OUTPUT 0,
                           OUTPUT "").
 
@@ -980,6 +1023,101 @@ ELSE IF  par_tpoperac = 13 THEN DO: /* Excluir lancamento permanentemente */
     ASSIGN xml_operacao.dslinxml = xml_req.
 
 END.
+ELSE IF  par_tpoperac = 14 THEN DO: /* Gerar arquivo de retorno */	
+  { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+    RUN STORED-PROCEDURE pc_gera_retorno_cooperado aux_handproc = PROC-HANDLE NO-ERROR
+                         (INPUT par_cdcooper,
+						  INPUT par_lisrowid,
+                          OUTPUT "",
+                          OUTPUT 0,
+                          OUTPUT "").
 
+    CLOSE STORED-PROC pc_gera_retorno_cooperado aux_statproc = PROC-STATUS
+          WHERE PROC-HANDLE = aux_handproc.
+
+    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+	
+	ASSIGN aux_cdcritic = 0
+           aux_dscritic = ""		   
+           aux_cdcritic = pc_gera_retorno_cooperado.pr_cdcritic
+                          WHEN pc_gera_retorno_cooperado.pr_cdcritic <> ?
+           aux_dscritic = pc_gera_retorno_cooperado.pr_dscritic
+                          WHEN pc_gera_retorno_cooperado.pr_dscritic <> ?.
+	
+    IF aux_cdcritic <> 0 OR aux_dscritic <> "" THEN DO:
+        ASSIGN xml_dsmsgerr = "<dsmsgerr>" + aux_dscritic + "</dsmsgerr>".
+        RETURN "NOK".
+    END.
+	
+	EMPTY TEMP-TABLE tt-arq-folha.
+	
+	/* Buscar o XML na tabela de retorno da procedure Progress */ 
+    ASSIGN xml_req = pc_gera_retorno_cooperado.pr_clob_ret. 
+	
+	/* Efetuar a leitura do XML*/ 
+	SET-SIZE(ponteiro_xml) = LENGTH(xml_req) + 1. 
+	PUT-STRING(ponteiro_xml,1) = xml_req. 
+	  
+    /* Inicializando objetos para leitura do XML */ 
+    CREATE X-DOCUMENT xDoc.    /* Vai conter o XML completo */ 
+    CREATE X-NODEREF  xRoot.   /* Vai conter a tag DADOS em diante */ 
+    CREATE X-NODEREF  xRoot2.  /* Vai conter a tag INF em diante */ 
+    CREATE X-NODEREF  xField.  /* Vai conter os campos dentro da tag INF */ 
+    CREATE X-NODEREF  xText.   /* Vai conter o texto que existe dentro da tag xField */ 
+	
+	IF ponteiro_xml <> ? THEN
+		DO:
+			xDoc:LOAD("MEMPTR",ponteiro_xml,FALSE). 
+			xDoc:GET-DOCUMENT-ELEMENT(xRoot).
+		
+			DO aux_cont_raiz = 1 TO xRoot:NUM-CHILDREN: 
+		
+			   xRoot:GET-CHILD(xRoot2,aux_cont_raiz).
+		
+			   IF xRoot2:SUBTYPE <> "ELEMENT" THEN 
+				  NEXT. 
+			   
+			   IF xRoot2:NUM-CHILDREN > 0 THEN
+				 CREATE tt-arq-folha.
+		
+			   DO aux_cont = 1 TO xRoot2:NUM-CHILDREN:
+				   
+				  xRoot2:GET-CHILD(xField,aux_cont).
+					  
+				  IF xField:SUBTYPE <> "ELEMENT" THEN 
+					 NEXT. 
+				  
+				  xField:GET-CHILD(xText,1).
+				  
+				  ASSIGN tt-arq-folha.cdseqlin = INT(xText:NODE-VALUE) WHEN xField:NAME = "cdseqlin"
+				         tt-arq-folha.dsdlinha = xText:NODE-VALUE WHEN xField:NAME = "dsdlinha".
+													 
+			   END. 
+				
+			END.
+		
+		SET-SIZE(ponteiro_xml) = 0. 
+  
+	END.
+	
+	/*Elimina os objetos criados*/
+	DELETE OBJECT xDoc. 
+	DELETE OBJECT xRoot. 
+	DELETE OBJECT xRoot2. 
+	DELETE OBJECT xField. 
+	DELETE OBJECT xText.
+	
+	FOR EACH tt-arq-folha NO-LOCK BY tt-arq-folha.cdseqlin:
+      	
+		CREATE xml_operacao.
+			 
+		ASSIGN xml_operacao.dslinxml = "<dados>" +
+										  "<cdseqlin>" + STRING(tt-arq-folha.cdseqlin)+ "</cdseqlin>" +										
+										  "<dsdlinha>" + tt-arq-folha.dsdlinha +  "</dsdlinha>" +
+										"</dados>".		 
+END.
+
+END.
 
 RETURN "OK".
+ 

@@ -734,7 +734,7 @@ ELSE IF par_cddopcao = "C" THEN
                                    '<flgativo>' + STRING(aux_flgativo) + '</flgativo>' + 
                                    '<idpacote>' + STRING(aux_idpacote) + '</idpacote>' + 
                                    '<dspacote>' + STRING(aux_dspacote) + '</dspacote>' + 
-                                   '<dhadesao>' + STRING(aux_dhadesao,"99/99/9999") + '</dhadesao>' + 
+                                   '<dhadesao>' + (IF aux_dhadesao <> ? THEN STRING(aux_dhadesao,"99/99/9999") ELSE '') + '</dhadesao>' + 
                                    '<idcontra>' + STRING(aux_idcontra) + '</idcontra>' + 
                                    '<vltarifa>' + STRING(aux_vltarifa,"zzz,zz9.99") + '</vltarifa>' +
                                    '<qtsmspct>' + STRING(aux_qtsmspct) + '</qtsmspct>' + 
