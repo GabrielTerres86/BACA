@@ -6053,13 +6053,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
           vr_tab_pagamento(vr_idx_pagto).dthrtari := rw_registros.dthortar;
           
           CASE 
-            WHEN NVL(rw_registros.dthordeb,'') = '' THEN vr_tab_pagamento(vr_idx_pagto).dthrdebi := ''; 
+            WHEN NVL(rw_registros.dthordeb,' ') = ' ' THEN vr_tab_pagamento(vr_idx_pagto).dthrdebi := ' '; 
             WHEN LENGTH(rw_registros.dthordeb) = 14 THEN vr_tab_pagamento(vr_idx_pagto).dthrdebi := rw_registros.dthordeb;
             ELSE vr_tab_pagamento(vr_idx_pagto).dthrdebi := rw_registros.dthordeb || ' 00:00';
           END CASE;
-          
+
           CASE 
-            WHEN NVL(rw_registros.dthorcre,'') = '' THEN vr_tab_pagamento(vr_idx_pagto).dthrcred := '';
+            WHEN NVL(rw_registros.dthorcre,' ') = ' ' THEN vr_tab_pagamento(vr_idx_pagto).dthrcred := ' ';
             WHEN LENGTH(rw_registros.dthorcre) = 14 THEN vr_tab_pagamento(vr_idx_pagto).dthrcred := rw_registros.dthorcre;
             ELSE vr_tab_pagamento(vr_idx_pagto).dthrcred := rw_registros.dthorcre || ' 00:00';
           END CASE;                    
@@ -7144,7 +7144,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
              RAISE vr_exc_erro;
            ELSE
              -- Gera critica, porem retorna como 'OK'
-             pr_dscritic := 'Não há saldo suficiente para a operação!';
+             pr_dscritic := 'Não há saldo suficiente para a operação! Deseja solicitar o estouro de conta ao seu Posto de Atendimento?';
            END IF;
 
          END IF;
@@ -7171,7 +7171,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.FOLH0002 AS
                                                    || '<vlsomado>'|| TO_CHAR((vr_vltotsel + vr_vltottar),'fm9g999g999g999g999g990d00', 'NLS_NUMERIC_CHARACTERS=,.') ||'</vlsomado>');
        
          --Caso tenha mensagem retorna
-         IF vr_dsmsgret IS NOT NULL THEN
+         IF vr_dsmsgret IS NOT NULL AND pr_dscritic IS NULL THEN
            GENE0002.pc_escreve_xml(pr_xml            => pr_retxml
                                   ,pr_texto_completo => vr_xml_temp
                                   ,pr_texto_novo     => '<mensagem><dsmsgret> ' || vr_dsmsgret || ' </dsmsgret></mensagem>');
