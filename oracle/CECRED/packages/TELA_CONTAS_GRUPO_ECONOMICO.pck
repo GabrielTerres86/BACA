@@ -26,6 +26,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_CONTAS_GRUPO_ECONOMICO IS
   PROCEDURE pc_tela_buscar_dados_integrant(pr_idgrupo      IN tbcc_grupo_economico.idgrupo%TYPE  --> Id do Grupo
                                           ,pr_listar_todos IN PLS_INTEGER                        --> Filtro de Consulta -> Listar todos os integrantes
                                           ,pr_nrdconta     IN tbcc_grupo_economico.nrdconta%TYPE --> Filtro de Consulta -> Numero da Conta
+                                          ,pr_contaref     IN tbcc_grupo_economico.nrdconta%TYPE --> Conta de referencia da consulta
                                           ,pr_xmllog       IN VARCHAR2                           --> XML com informações de LOG
                                           ,pr_cdcritic     OUT PLS_INTEGER                       --> Código da crítica
                                           ,pr_dscritic     OUT VARCHAR2                          --> Descrição da crítica
@@ -170,13 +171,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONTAS_GRUPO_ECONOMICO IS
       -- Cursor do Grupo Economico
       CURSOR cr_tbcc_grupo_economico(pr_cdcooper IN tbepr_estorno.cdcooper%TYPE,
                                      pr_nrdconta IN tbepr_estorno.nrdconta%TYPE) IS
-        SELECT idgrupo,
-               nmgrupo,
-               dsobservacao,
-               dtinclusao
-          FROM tbcc_grupo_economico
-         WHERE cdcooper = pr_cdcooper
-           AND nrdconta = pr_nrdconta;
+        SELECT ge.idgrupo,
+               ge.nmgrupo,
+               ge.dsobservacao,
+               ge.dtinclusao
+          FROM tbcc_grupo_economico ge
+     LEFT JOIN tbcc_grupo_economico_integ gei
+            ON gei.idgrupo = ge.idgrupo
+         WHERE ge.cdcooper = pr_cdcooper
+           AND (ge.nrdconta = pr_nrdconta 
+            OR gei.nrdconta = pr_nrdconta)
+            AND ROWNUM = 1;
+           
       rw_tbcc_grupo_economico cr_tbcc_grupo_economico%ROWTYPE;
            
       -- Variável de críticas
@@ -261,6 +267,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONTAS_GRUPO_ECONOMICO IS
   PROCEDURE pc_tela_buscar_dados_integrant(pr_idgrupo      IN  tbcc_grupo_economico.idgrupo%TYPE  --> Id do Grupo
                                           ,pr_listar_todos IN  PLS_INTEGER                        --> Filtro de Consulta -> Listar todos os integrantes
                                           ,pr_nrdconta     IN  tbcc_grupo_economico.nrdconta%TYPE --> Filtro de Consulta -> Numero da Conta
+                                          ,pr_contaref     IN  tbcc_grupo_economico.nrdconta%TYPE
                                           ,pr_xmllog       IN  VARCHAR2                           --> XML com informações de LOG
                                           ,pr_cdcritic     OUT PLS_INTEGER                       --> Código da crítica
                                           ,pr_dscritic     OUT VARCHAR2                          --> Descrição da crítica
@@ -318,8 +325,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONTAS_GRUPO_ECONOMICO IS
                AND ope_exc.cdoperad = tbcc_grupo_economico_integ.cdoperad_exclusao
              WHERE tbcc_grupo_economico_integ.idgrupo = pr_idgrupo
                AND (tbcc_grupo_economico_integ.dtexclusao IS NULL OR pr_listar_todos = 1)
-               AND (tbcc_grupo_economico_integ.nrdconta = pr_nrdconta OR pr_nrdconta = 0);
+               AND (tbcc_grupo_economico_integ.nrdconta = pr_nrdconta OR pr_nrdconta = 0)
+               ;
+
+      -- dados do grupo
+      CURSOR cr_tbcc_grupo_economico(pr_cdcooper IN tbcc_grupo_economico.cdcooper%TYPE,
+                                     pr_idgrupo IN tbcc_grupo_economico.idgrupo%TYPE) IS
+        SELECT ge.idgrupo,
+               ge.nmgrupo,
+               ge.dsobservacao,
+               ge.dtinclusao,
+               ge.nrdconta
+          FROM tbcc_grupo_economico ge
+         WHERE ge.cdcooper = pr_cdcooper
+           AND ge.idgrupo = pr_idgrupo;
            
+      rw_tbcc_grupo_economico cr_tbcc_grupo_economico%ROWTYPE;           
+
       -- Variável de críticas
       vr_cdcritic      crapcri.cdcritic%TYPE;
       vr_dscritic      VARCHAR2(10000);
@@ -336,8 +358,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONTAS_GRUPO_ECONOMICO IS
       vr_nrdcaixa        VARCHAR2(100);
       vr_idorigem        VARCHAR2(100);
       vr_contador        PLS_INTEGER := 0;
-          
-    BEGIN      
+
+      vr_vinclpai        VARCHAR2(50);
+      vr_dsctpvin        VARCHAR2(200);
+    BEGIN
       gene0004.pc_extrai_dados(pr_xml      => pr_retxml
                               ,pr_cdcooper => vr_cdcooper
                               ,pr_nmdatela => vr_nmdatela
@@ -351,7 +375,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONTAS_GRUPO_ECONOMICO IS
       IF vr_dscritic IS NOT NULL THEN
         RAISE vr_exc_saida;
       END IF;
-      
+
+      -- capturar dados do grupo
+      OPEN cr_tbcc_grupo_economico (pr_cdcooper  => vr_cdcooper
+                                   ,pr_idgrupo  => pr_idgrupo);
+      FETCH cr_tbcc_grupo_economico INTO rw_tbcc_grupo_economico;
+
+      -- Verifica se a retornou registro
+      IF cr_tbcc_grupo_economico%NOTFOUND THEN
+        CLOSE cr_tbcc_grupo_economico;
+        RAISE vr_exc_saida;
+      ELSE
+        CLOSE cr_tbcc_grupo_economico;
+        
+        IF rw_tbcc_grupo_economico.nrdconta != pr_contaref THEN
+           vr_vinclpai := ' com ' || gene0002.fn_mask_conta(pr_nrdconta => rw_tbcc_grupo_economico.nrdconta);
+        ELSE 
+          vr_vinclpai := '';
+        END IF;
+      END IF;
+            
       -- Criar cabeçalho do XML
       pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Dados/>');                        
                  
@@ -359,6 +402,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONTAS_GRUPO_ECONOMICO IS
       FOR rw_tbcc_grupo_economico_integ IN cr_tbcc_grupo_economico_integ(pr_idgrupo      => pr_idgrupo
                                                                         ,pr_listar_todos => pr_listar_todos
                                                                         ,pr_nrdconta     => NVL(pr_nrdconta,0)) LOOP
+
+        -- Evita adicionar registro da propria conta
+        IF rw_tbcc_grupo_economico_integ.nrdconta = pr_contaref THEN
+          CONTINUE;
+        END IF;
+                                                                        
+        -- inicia dados xml
         gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'Dados', pr_posicao => 0, pr_tag_nova => 'inf', pr_tag_cont => NULL, pr_des_erro => vr_dscritic);
         gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'idintegrante', pr_tag_cont => rw_tbcc_grupo_economico_integ.idintegrante, pr_des_erro => vr_dscritic);
 
@@ -375,11 +425,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONTAS_GRUPO_ECONOMICO IS
         gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'tppessoa_desc', pr_tag_cont => rw_tbcc_grupo_economico_integ.tppessoa_desc, pr_des_erro => vr_dscritic);
         
         -- Tipo de Vinculo do Integrante
+        IF rw_tbcc_grupo_economico_integ.nrdconta = rw_tbcc_grupo_economico.nrdconta THEN
+          vr_dsctpvin := fn_busca_tipo_vinculo(pr_tpvinculo => rw_tbcc_grupo_economico_integ.tpvinculo);
+        ELSE
+          vr_dsctpvin := fn_busca_tipo_vinculo(pr_tpvinculo => rw_tbcc_grupo_economico_integ.tpvinculo) || vr_vinclpai;
+        END IF;        
+        
         gene0007.pc_insere_tag(pr_xml => pr_retxml, 
                                pr_tag_pai => 'inf', 
                                pr_posicao => vr_contador, 
                                pr_tag_nova => 'tpvinculo_desc', 
-                               pr_tag_cont => fn_busca_tipo_vinculo(pr_tpvinculo => rw_tbcc_grupo_economico_integ.tpvinculo),
+                               pr_tag_cont => vr_dsctpvin,
                                pr_des_erro => vr_dscritic);
         
         gene0007.pc_insere_tag(pr_xml => pr_retxml, pr_tag_pai => 'inf', pr_posicao => vr_contador, pr_tag_nova => 'peparticipacao', pr_tag_cont => TO_CHAR(rw_tbcc_grupo_economico_integ.peparticipacao,'fm999g999g990d00'), pr_des_erro => vr_dscritic);
@@ -457,6 +513,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONTAS_GRUPO_ECONOMICO IS
            AND nrdconta = pr_nrdconta;
       rw_tbcc_grupo_economico cr_tbcc_grupo_economico%ROWTYPE;
           
+      -- Cursor dos dados do primeiro integrante, propria conta
+      CURSOR cr_crapass(pr_cdcooper IN crapass.cdcooper%TYPE
+                       ,pr_nrdconta IN crapass.nrdconta%TYPE) IS
+        SELECT inpessoa,
+               nmprimtl, 
+               nrcpfcgc
+          FROM crapass
+         WHERE cdcooper = pr_cdcooper
+           and nrdconta = pr_nrdconta;
+      rw_crapass cr_crapass%ROWTYPE;
+      
       -- Variável de críticas
       vr_cdcritic      crapcri.cdcritic%TYPE;
       vr_dscritic      VARCHAR2(10000);
@@ -473,6 +540,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONTAS_GRUPO_ECONOMICO IS
       vr_nrdcaixa        VARCHAR2(100);
       vr_idorigem        VARCHAR2(100);
       vr_nrdrowid        ROWID;
+      
+      vr_idgrupo         tbcc_grupo_economico.idgrupo%TYPE;
           
     BEGIN      
       gene0004.pc_extrai_dados(pr_xml      => pr_retxml
@@ -504,6 +573,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONTAS_GRUPO_ECONOMICO IS
         CLOSE cr_tbcc_grupo_economico;
         
         BEGIN
+          -- insere registro do grupo
           INSERT INTO tbcc_grupo_economico
                       (cdcooper
                       ,nrdconta
@@ -514,7 +584,45 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_CONTAS_GRUPO_ECONOMICO IS
                       ,pr_nrdconta
                       ,pr_nmgrupo
                       ,TRUNC(SYSDATE)
-                      ,pr_dsobservacao);
+                      ,pr_dsobservacao)
+               returning idgrupo
+                  into vr_idgrupo;
+                      
+          -- insere a conta do grupo como o primeiro integrante do grupo
+          OPEN cr_crapass (pr_cdcooper  => vr_cdcooper
+                          ,pr_nrdconta  => pr_nrdconta);
+          FETCH cr_crapass INTO rw_crapass;
+          
+          -- Verifica se a retornou registro para poder inserir integrante
+          IF cr_crapass%FOUND THEN
+            INSERT INTO tbcc_grupo_economico_integ
+                        (idgrupo
+                        ,nrcpfcgc
+                        ,cdcooper
+                        ,nrdconta
+                        ,tppessoa
+                        ,tpcarga
+                        ,tpvinculo
+                        ,peparticipacao
+                        ,dtinclusao
+                        ,cdoperad_inclusao
+                        ,nmintegrante)
+                 VALUES (vr_idgrupo
+                        ,rw_crapass.nrcpfcgc
+                        ,vr_cdcooper
+                        ,pr_nrdconta
+                        ,rw_crapass.inpessoa
+                        ,3 -- Cadastro Manual
+                        ,7 -- outros
+                        ,0 --pr_peparticipacao
+                        ,TRUNC(SYSDATE)
+                        ,1 --vr_cdoperad
+                        ,rw_crapass.nmprimtl
+                        );
+          END IF;
+          
+          CLOSE cr_crapass;
+          
         EXCEPTION
           WHEN OTHERS THEN
             vr_dscritic := 'Não foi possível inserir o grupo econômico. '||SQLERRM;
