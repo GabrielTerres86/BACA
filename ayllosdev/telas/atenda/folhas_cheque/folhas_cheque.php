@@ -1,16 +1,18 @@
 <?php 
 
-	//************************************************************************//
-	//*** Fonte: folhas_cheque.php                                         ***//
-	//*** Autor: David                                                     ***//
-	//*** Data : Fevereiro/2008               Ultima Alteracao: 23/05/2012 ***//
-	//***                                                                  ***//
-	//*** Objetivo  : Emitir lista de cheques compensados                  ***//
-	//***                                                                  ***//	 
-	//*** Alteracoes:                                                      ***//
-	//*** 23/05/2012 - Retirado atributo target do form frmCheques (Jorge).***//
-	//*** 09/07/2012 - Retirado campo "redirect" popup do form (Jorge).    ***//
-	//************************************************************************//
+	/************************************************************************
+	Fonte: folhas_cheque.php                                         
+	Autor: David                                                     
+	Data : Fevereiro/2008               Ultima Alteracao: 23/05/2012 
+	                                                                 
+	Objetivo  : Emitir lista de cheques compensados                  
+	                                                                 	 
+	Alteracoes:                                                      
+	23/05/2012 - Retirado atributo target do form frmCheques (Jorge).
+	09/07/2012 - Retirado campo "redirect" popup do form (Jorge).
+	25/05/2018 - Alterada pra ser uma tela com os botões "Cheques nao compensados"
+	             e "Solicitar Talonario". PRJ366 (Lombardi)
+	************************************************************************/
 	
 	session_start();
 	
@@ -41,6 +43,13 @@
 	
 	setVarSession("opcoesTela",$opcoesTela);
 		
+if (!in_array("@",$opcoesTela)) { // Executa primeira op&ccedil;&atilde;o da rotina que o operador tem permiss&atilde;o
+	echo '<script type="text/javascript">';
+	echo 'hideMsgAguardo();';
+	echo 'showError("error","Operador n&atilde;o possui permiss&atilde;o para acessar essa op&ccedil;&atilde;o.","Alerta - Ayllos","encerraRotina(false)");';
+	echo '</script>';
+	exit();
+}
 ?>
 <form action="<?php echo $UrlSite; ?>telas/atenda/folhas_cheque/lista_cheques.php" name="frmCheques" id="frmCheques" method="post">
 <input type="hidden" id="<?php echo $labelRot; ?>" class="SetFoco">
@@ -48,16 +57,46 @@
 <input type="hidden" name="nmprimtl" id="nmprimtl" value="">
 <input type="hidden" name="sidlogin" id="sidlogin" value="<?php echo $glbvars["sidlogin"]; ?>">
 </form>
+<table cellpadding="0" cellspacing="0" border="0" width="100%">
+	<tr>
+		<td align="center">		
+			<table border="0" cellpadding="0" cellspacing="0" width="350">
+				<tr>
+					<td>
+						<table width="100%" border="0" cellspacing="0" cellpadding="0">
+							<tr>
+								<td width="11"><img src="<?echo $UrlImagens; ?>background/tit_tela_esquerda.gif" width="11" height="21"></td>
+								<td id="<?php echo $labelRot; ?>" id="tdTitRotina" class="txtBrancoBold ponteiroDrag SetWindow SetFoco" background="<?echo $UrlImagens; ?>background/tit_tela_fundo.gif">FOLHAS DE CHEQUE</td>
+								<td width="12" id="tdTitTela" background="<?echo $UrlImagens; ?>background/tit_tela_fundo.gif"><a id="btSair" href="#" onClick="encerraRotina(true);return false;"><img src="<?echo $UrlImagens; ?>geral/excluir.jpg" width="12" height="12" border="0"></a></td>
+								<td width="8"><img src="<?echo $UrlImagens; ?>background/tit_tela_direita.gif" width="8" height="21"></td>
+							</tr>
+						</table>     
+					</td> 
+				</tr>    
+				<tr>
+					<td class="tdConteudoTela" align="center">	
+						<table width="100%" border="0" cellspacing="0" cellpadding="0">
+							<tr>
+								<td align="center" style="border: 2px solid #969FA9; background-color: #F4F3F0; padding: 2px;">
+									<div id="divConteudoOpcao" style="height: 80px;">
+										<div id="divBotoes" style="height:80px;">
+											<a href="#" class="botao" name="chequeNaoCompensados" id="chequeNaoCompensados" onClick="confirmaChequesNaoCompensados();">Cheques n&atilde;o compensados</a>
+											<div style="height: 10px;" />
+											<a href="#" class="botao" name="solicitarTalonario" id="solicitarTalonario" onClick="confirmaSolicitarTalonario();">Solicitar Talon&aacute;rio</a>
+										</div>
+									</div>
+								</td>
+							</tr>
+						</table>			    
+					</td> 
+				</tr>
+			</table>
+		</td>
+	</tr>
+</table>
+
 <script type="text/javascript">
-// Esconde mensagem de aguardo
 hideMsgAguardo();	
-
-<?php 	
-if (in_array("@",$opcoesTela)) { // Se operador possuir permiss&atilde;o, executa op&ccedil;&atilde;o Principal da rotina		
-	echo "showConfirmacao('Deseja visualizar a rela&ccedil;&atilde;o de cheques n&atilde;o compensados?','Confirma&ccedil;&atilde;o - Ayllos','carrega_lista();','encerraRotina(false)','sim.gif','nao.gif');";
-} else { // Executa primeira op&ccedil;&atilde;o da rotina que o operador tem permiss&atilde;o
-	echo "showError('error','Operador n&atilde;o possui permiss&atilde;o para acessar essa op&ccedil;&atilde;o.','Alerta - Ayllos','encerraRotina(false)');";
-}
-?>	
-
+	mostraRotina();	
+	bloqueiaFundo(divRotina);	
 </script>
