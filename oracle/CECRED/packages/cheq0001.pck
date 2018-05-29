@@ -28,6 +28,8 @@ CREATE OR REPLACE PACKAGE cecred.CHEQ0001 IS
   --                            para permitir inserir devolução já processada (pr_insitdev = 1).
   --                            Somente iremos usar o parametro para devoluções que não forem de taxas (<> 46).
   --                            (Wagner/Sustenção - Chamado #861675).
+  --
+  --                29/05/2018 - Inclusao de rotinas para baixa de arquivos CCF do FTP da ABBC. Chamado SCTASK0012791 (Heitor - Mouts)
   ---------------------------------------------------------------------------------------------------------------
 
   -- Definicao to tipo de array para teste da cdalinea na crepdev
@@ -214,6 +216,8 @@ CREATE OR REPLACE PACKAGE cecred.CHEQ0001 IS
 		                              ,pr_clobxmlc  OUT CLOB                  --XML com informações de LOG
 									  ,pr_des_erro  OUT VARCHAR2              --> Status erro
                                       ,pr_dscritic  OUT VARCHAR2);            --> Retorno de erro																			
+
+  PROCEDURE pc_busca_ccf_transabbc;
 
 END CHEQ0001;
 /
@@ -3192,5 +3196,244 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
     END;
   END pc_busca_talonarios_car;
             
+  PROCEDURE pc_download_ftp(pr_serv_ftp   IN VARCHAR2     --> Servidor FTP
+                           ,pr_user_ftp   IN VARCHAR2     --> Usuario
+                           ,pr_pass_ftp   IN VARCHAR2     --> Senha
+                           ,pr_nmarquiv   IN VARCHAR2     --> Nome do arquivo a ser buscado
+                           ,pr_dir_local  IN VARCHAR2     --> Diretorio local
+                           ,pr_dir_remoto IN VARCHAR2     --> diretorio remoto
+                           ,pr_script_ftp IN VARCHAR2     --> Script FTP
+                           ,pr_dscritic  OUT VARCHAR2) IS --> Descricao do erro
+  BEGIN
+  /* .............................................................................
+
+  Programa: pc_download_ftp
+  Sistema : Conciliacoes diarias e mensais.
+  Sigla   : CRED
+  Autor   : Lucas Afonso Lombardi Moreira
+  Data    : Setembro/15.                    Ultima atualizacao: --/--/----
+
+  Dados referentes ao programa:
+
+  Frequencia: Sempre que for chamado
+
+  Objetivo  : Faz download de arquivo em um servidor FTP.
+
+  Observacao: -----
+
+  Alteracoes:
+  ..............................................................................*/
+    DECLARE
+      vr_comand_ftp VARCHAR2(1000);
+      vr_typ_saida  VARCHAR2(3);
+      vr_exc_saida  EXCEPTION;
+    BEGIN
+
+      -- Preparar o comando de conexão e envio ao FTP
+      vr_comand_ftp := pr_script_ftp
+                    || ' -recebe'
+                    || ' -srv '          || pr_serv_ftp
+                    || ' -usr '          || pr_user_ftp
+                    || ' -pass '         || pr_pass_ftp
+                    || ' -arq '          || CHR(39) || pr_nmarquiv   || CHR(39)
+                    || ' -dir_local '    || CHR(39) || pr_dir_local  || CHR(39)
+                    || ' -dir_remoto '   || CHR(39) || pr_dir_remoto || CHR(39)
+                    || ' -log /usr/coop/cecred/log/ftp_transabbc.log';
+
+      -- Chama procedure de envio e recebimento via ftp
+      GENE0001.pc_OScommand(pr_typ_comando => 'S'
+                           ,pr_des_comando => vr_comand_ftp
+                           ,pr_flg_aguard  => 'S'
+                           ,pr_typ_saida   => vr_typ_saida
+                           ,pr_des_saida   => pr_dscritic);
+
+      -- Se ocorreu erro dar RAISE
+      IF vr_typ_saida = 'ERR' THEN
+        pr_dscritic:= 'Nao foi possivel executar comando unix. '||vr_comand_ftp ||
+                      ' - Erro: ' || pr_dscritic;
+        RAISE vr_exc_saida;
+      END IF;
+    EXCEPTION
+      WHEN vr_exc_saida THEN
+        ROLLBACK;
+      WHEN OTHERS THEN
+        pr_dscritic := 'Erro Geral: ' || SQLERRM;
+        ROLLBACK;
+    END;
+  END pc_download_ftp;
+  
+  PROCEDURE pc_busca_ccf_transabbc IS
+  BEGIN
+    /* .............................................................................
+
+     Programa: pc_busca_ccf_transabbc
+     Sistema : Conciliacoes diarias e mensais.
+     Sigla   : CRED
+     Autor   : Lucas Afonso Lombardi Moreira
+     Data    : Setembro/15.                    Ultima atualizacao: 22/06/2015
+
+     Dados referentes ao programa:
+
+     Frequencia: Diariamente.
+
+     Objetivo  : Conectar-se ao FTP da Transabbc e efetuar download de três
+                 arquivos diariamente.
+
+     Observacao: -----
+
+     Alteracoes:
+     ..............................................................................*/
+
+    DECLARE
+
+      -- Variável de críticas
+      vr_cdcritic crapcri.cdcritic%TYPE;
+      vr_dscritic  VARCHAR2(1000);
+      vr_comando   VARCHAR2(4000);
+      vr_typ_saida VARCHAR2(10);
+      vr_des_erro  VARCHAR2(2000);
+
+      -- Tratamento de erros
+      vr_exc_saida EXCEPTION;
+      
+      vr_serv_ftp    VARCHAR2(100);
+      vr_user_ftp    VARCHAR2(100);
+      vr_pass_ftp    VARCHAR2(100);
+      
+      vr_nmarquiv      VARCHAR2(100);
+      vr_dir_local     VARCHAR2(100);
+      vr_dir_remoto    VARCHAR2(100);
+
+      vr_script_ftp    VARCHAR2(600);
+
+      -- Cursor genérico de calendário
+      rw_crapdat BTCH0001.CR_CRAPDAT%ROWTYPE;
+
+      
+    BEGIN
+      -- Buscar a data do movimento
+      OPEN btch0001.cr_crapdat(3);
+      FETCH btch0001.cr_crapdat
+        INTO rw_crapdat;
+
+      -- Verificar se existe informação, e gerar erro caso não exista
+      IF btch0001.cr_crapdat%NOTFOUND THEN
+        -- Fechar o cursor
+        CLOSE btch0001.cr_crapdat;
+
+        -- Gerar exceção
+        vr_cdcritic := 1;
+        vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic);
+        RAISE vr_exc_saida;
+      END IF;
+      CLOSE btch0001.cr_crapdat;
+
+      -- Busca nome do servidor
+      vr_serv_ftp := GENE0001.fn_param_sistema(pr_nmsistem => 'CRED'
+                                              ,pr_cdcooper => '0'
+                                              ,pr_cdacesso => 'TRAN_BBC_SERV_FTP');
+      -- Busca nome de usuario
+      vr_user_ftp := GENE0001.fn_param_sistema(pr_nmsistem => 'CRED'
+                                              ,pr_cdcooper => '0'
+                                              ,pr_cdacesso => 'TRAN_BBC_USER_FTP');
+      -- Busca senha do usuario
+      vr_pass_ftp := GENE0001.fn_param_sistema(pr_nmsistem => 'CRED'
+                                              ,pr_cdcooper => '0'
+                                              ,pr_cdacesso => 'TRAN_BBC_PASS_FTP');
+
+      vr_dir_remoto := GENE0001.fn_param_sistema(pr_nmsistem => 'CRED'
+                                              ,pr_cdcooper => '0'
+                                              ,pr_cdacesso => 'TRAN_BBC_DIR_CCF');
+
+      vr_dir_local := GENE0001.fn_diretorio(pr_tpdireto => 'M' --> /micros
+                                            ,pr_cdcooper => 3   --> Cooperativa
+                                            ,pr_nmsubdir => 'abbc');
+
+      vr_script_ftp := gene0001.fn_param_sistema('CRED',0,'AUTBUR_SCRIPT_FTP');
+
+      -- Forma o nome do arquivo CCG627XX.YYY
+      --XX  -> Dia do movimento
+      --YYY -> Sequencial da remessa, sera sempre 001
+      vr_nmarquiv := 'CCF627' || to_char(rw_crapdat.dtmvtoan, 'DD') || '.001';
+
+      pc_download_ftp(pr_serv_ftp   => vr_serv_ftp
+                     ,pr_user_ftp   => vr_user_ftp
+                     ,pr_pass_ftp   => vr_pass_ftp
+                     ,pr_nmarquiv   => vr_nmarquiv
+                     ,pr_dir_local  => vr_dir_local
+                     ,pr_dir_remoto => vr_dir_remoto
+                     ,pr_script_ftp => vr_script_ftp
+                     ,pr_dscritic   => vr_dscritic);
+
+      -- Se ocorrer algum erro
+      IF vr_dscritic IS NOT NULL THEN
+         RAISE vr_exc_saida;
+      END IF;
+      
+      vr_nmarquiv := 'CCF.ZIP';
+
+      -- Executa o download do arquivo CCF.ZIP
+      pc_download_ftp(pr_serv_ftp   => vr_serv_ftp
+                     ,pr_user_ftp   => vr_user_ftp
+                     ,pr_pass_ftp   => vr_pass_ftp
+                     ,pr_nmarquiv   => vr_nmarquiv
+                     ,pr_dir_local  => vr_dir_local
+                     ,pr_dir_remoto => vr_dir_remoto
+                     ,pr_script_ftp => vr_script_ftp
+                     ,pr_dscritic   => vr_dscritic);
+
+      -- Se ocorrer algum erro
+      IF vr_dscritic IS NOT NULL THEN
+         RAISE vr_exc_saida;
+      END IF;
+      
+      /*  Executar Extracao do arquivo zip */
+      vr_comando:= 'unzip '||vr_dir_local||'/'||vr_nmarquiv ||' -d ' || vr_dir_local;
+
+      --Executar o comando no unix
+      GENE0001.pc_OScommand(pr_typ_comando => 'S'
+                           ,pr_des_comando => vr_comando
+                           ,pr_typ_saida   => vr_typ_saida
+                           ,pr_des_saida   => vr_des_erro);
+
+      --Se ocorreu erro dar RAISE
+      IF vr_typ_saida = 'ERR' THEN
+        vr_dscritic := 'Nao foi possivel executar comando unix. '||vr_comando||' - '||vr_des_erro;
+        RAISE vr_exc_saida;
+      END IF;
+      
+      vr_comando:= 'rm '||vr_dir_local ||'/'||vr_nmarquiv||' 1> /dev/null';
+
+      --Executar o comando no unix
+      GENE0001.pc_OScommand(pr_typ_comando => 'S'
+                           ,pr_des_comando => vr_comando
+                           ,pr_typ_saida   => vr_typ_saida
+                           ,pr_des_saida   => vr_des_erro);
+
+      -- Gravar os comandos no banco
+      COMMIT;
+    EXCEPTION
+      WHEN vr_exc_saida THEN
+
+        btch0001.pc_gera_log_batch(pr_cdcooper     => 3 --> Sempre na Cecred
+                                  ,pr_ind_tipo_log => 1
+                                  ,pr_des_log      => TO_CHAR(SYSDATE,'HH24:MI:SS') || 
+                                                      ' - CONV0001.PC_BUSCA_CCF_TRANSABBC Erro ao efetuar download dos arquivos: ' || vr_dscritic
+                                  ,pr_dstiplog   => 'E'
+                                  ,pr_cdprograma => 'CONV0001');
+        ROLLBACK;
+      WHEN OTHERS THEN
+
+        cecred.pc_internal_exception;
+      
+        btch0001.pc_gera_log_batch(pr_cdcooper     => 3 --> Sempre na Cecred
+                                  ,pr_ind_tipo_log => 1
+                                  ,pr_des_log      => TO_CHAR(SYSDATE,'HH24:MI:SS') || 
+                                                      ' - CONV0001.PC_BUSCA_CCF_TRANSABBC Erro ao efetuar download dos arquivos: ' || SQLERRM
+                                  ,pr_dstiplog   => 'E'
+                                  ,pr_cdprograma => 'CONV0001');
+        ROLLBACK;
+    END;
+  END pc_busca_ccf_transabbc;
 END CHEQ0001;
 /

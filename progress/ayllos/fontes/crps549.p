@@ -41,12 +41,16 @@
 			   18/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
 			                crapass, crapttl, crapjur 
 							(Adriano - P339).
+              
+         29/05/2018 - Alteracao no layout. Sera gerado respeitando o layout CCF607 da ABBC. 
+                      Chamado SCTASK0012791 (Heitor - Mouts)
 
 ..............................................................................*/
                   
 { includes/var_batch.i }
 
 DEF STREAM str_1.
+DEF STREAM str_2.
 
 DEF BUFFER crabneg   FOR crapneg.
 DEF BUFFER crabttl   FOR crapttl.
@@ -89,6 +93,7 @@ DEF VAR aux_flgctitg AS INT                                            NO-UNDO.
  
 DEF VAR aux_nmarqlog AS CHAR                                           NO-UNDO.
 DEF VAR aux_nmarqimp AS CHAR                                           NO-UNDO.
+DEF VAR aux_nmarqimp_607 AS CHAR                                       NO-UNDO.
 DEF VAR aux_nmextttl AS CHAR                                           NO-UNDO.
 DEF VAR aux_nmarqrel AS CHAR                                           NO-UNDO.
 
@@ -97,12 +102,16 @@ DEF VAR aux_inpessoa AS INTE                                           NO-UNDO.
 DEF VAR aux_cddifttl AS INTE                                           NO-UNDO.
 DEF VAR aux_nrcheque AS INTE                                           NO-UNDO.
 DEF VAR aux_idseqttl AS INTE                                           NO-UNDO.
+DEF VAR aux_idseqttl_607 AS INTE                                       NO-UNDO.
 DEF VAR aux_nrtextab AS INTE                                           NO-UNDO.
+DEF VAR aux_nrtextab_607 AS INTE                                       NO-UNDO.
 DEF VAR aux_qttpreg2 AS INTE                                           NO-UNDO.
 DEF VAR aux_qttpreg4 AS INTE                                           NO-UNDO.
 DEF VAR aux_qttpreg6 AS INTE                                           NO-UNDO.
+DEF VAR aux_qtreg607     AS INTE                                       NO-UNDO.
 DEF VAR aux_maxregis AS INTE                                           NO-UNDO.
 DEF VAR aux_tpregist AS INTE                                           NO-UNDO.
+DEF VAR aux_tpcomand     AS INTE                                       NO-UNDO.
 DEF VAR aux_nrdconta_arq LIKE crapass.nrdconta                         NO-UNDO.
 DEF VAR aux_cdagechq_arq LIKE crapcop.cdagectl                         NO-UNDO.
 
@@ -158,6 +167,7 @@ IF  glb_cdcritic > 0  THEN
 ASSIGN aux_dscooper = "/usr/coop/cecred/".
 
 RUN abre_arquivo.
+RUN abre_arquivo_607.
 
 IF  glb_cdcritic > 0  THEN
     DO:
@@ -234,6 +244,7 @@ FOR EACH crapcop
            (crapneg.flgctitg = 4 AND crapneg.dtfimest = ?)  THEN
             DO:
                 ASSIGN aux_tpregist = 4
+                       aux_tpcomand = 10
                        aux_inpessoa = crapass.inpessoa.
 
                 IF  crapass.inpessoa = 1  THEN
@@ -268,6 +279,7 @@ FOR EACH crapcop
                                ASSIGN aux_nrcpfcgc = crapttl.nrcpfcgc
                                       aux_nmextttl = crapttl.nmextttl
                                       aux_idseqttl = crapttl.idseqttl
+                                      aux_idseqttl_607 = crapttl.idseqttl
                                       aux_cddifttl = crapttl.idseqttl.
 
 
@@ -280,7 +292,8 @@ FOR EACH crapcop
                                        NO-LOCK NO-ERROR.
 
                                   IF  NOT AVAILABLE crabttl  THEN
-                                      ASSIGN aux_cddifttl = 0.
+                                      ASSIGN aux_cddifttl     = 0
+                                             aux_idseqttl_607 = 1.
                                END.
                                
                                ASSIGN aux_flgctitg = 1.       
@@ -302,7 +315,6 @@ FOR EACH crapcop
                                         w_criticas.nrcheque = crapneg.nrdocmto
                                         w_criticas.cdobserv = crapneg.cdobserv
                                         w_criticas.vlcheque = crapneg.vlestour.
-                                             
                             END.
                     
                     END. /*** Fim do FOR EACH crapttl ***/
@@ -312,6 +324,7 @@ FOR EACH crapcop
                                aux_nmextttl = crapass.nmprimtl
                                aux_idseqttl = 1
                                aux_cddifttl = 0
+                               aux_idseqttl_607 = 1
                                aux_flgctitg = 1. /**enviado**/
                                
                         RUN registro.
@@ -325,6 +338,7 @@ FOR EACH crapcop
            (crapneg.flgctitg = 4 AND crapneg.dtfimest <> ?)  THEN
             DO:
                 ASSIGN aux_tpregist = 2
+                       aux_tpcomand = 50
                        aux_inpessoa = crapass.inpessoa
                        aux_cddifttl = 0.
                 
@@ -348,7 +362,8 @@ FOR EACH crapcop
                                            NO-LOCK NO-ERROR.
                                            
                                    IF  NOT AVAILABLE crabttl  THEN
-                                       ASSIGN flg_containd  = TRUE.
+                                       ASSIGN flg_containd     = TRUE
+                                              aux_idseqttl_607 = 1.
                                 END.
     
                             
@@ -359,7 +374,8 @@ FOR EACH crapcop
                                     ASSIGN aux_nrcpfcgc = crapttl.nrcpfcgc
                                            aux_nmextttl = crapttl.nmextttl
                                            aux_idseqttl = crapttl.idseqttl  
-                                           aux_cddifttl = crapttl.idseqttl.
+                                           aux_cddifttl     = crapttl.idseqttl
+                                           aux_idseqttl_607 = crapttl.idseqttl.
                                            
                                     ASSIGN aux_flgctitg = 1. /**enviado**/
                                     RUN registro.
@@ -391,7 +407,8 @@ FOR EACH crapcop
                         ASSIGN aux_nrcpfcgc = crapass.nrcpfcgc
                                aux_nmextttl = crapass.nmprimtl
                                aux_idseqttl = 1
-                               aux_flgctitg = 1.   
+                               aux_flgctitg     = 1
+                               aux_idseqttl_607 = 1.   
                                
                         RUN registro.
                      END.
@@ -412,6 +429,7 @@ FOR EACH crapcop
 END. /** END do FOR EACH da CRAPCOP **/
 
 RUN fecha_arquivo.
+RUN fecha_arquivo_607.
 
 RUN rel_enviados. 
 
@@ -469,6 +487,34 @@ PROCEDURE abre_arquivo:
 
 END PROCEDURE.
 
+PROCEDURE abre_arquivo_607:
+     
+    FIND crabcop WHERE crabcop.cdcooper = 3 NO-LOCK NO-ERROR.
+    
+    ASSIGN aux_nrtextab_607 = 1 /* Inicialmente sera apenas 1 remessa por dia */
+           aux_nmarqimp_607 = "Z1" + /* Novo layout CCF607 para inclusao CCF */
+                              STRING(crabcop.cdbcoctl,"999") + 
+                              STRING(WEEKDAY(glb_dtmvtolt)) +
+                              STRING(aux_nrtextab_607,"99") + ".REM"
+           aux_qtreg607     = 1.
+       
+    OUTPUT STREAM str_2 TO VALUE("/usr/coop/cecred/arq/" + aux_nmarqimp_607).
+
+    /*** Header Novo Layout - CCF607 ***/
+    PUT STREAM str_2 FILL("0",3)            FORMAT "x(3)"        /* Identificacao Header - Fixo 000 */
+                     "CCF607"               FORMAT "x(6)"        /* Nome do arquivo - Fixo CCF607 */
+                     YEAR(glb_dtmvtolt)     FORMAT "9999"        /* Ano */
+                     MONTH(glb_dtmvtolt)    FORMAT "99"          /* Mes */
+                     DAY(glb_dtmvtolt)      FORMAT "99"          /* Dia */
+                     crabcop.cdbcoctl       FORMAT "999"         /* Codigo do Banco remetente do arquivo (085) */
+                     FILL("0",4)            FORMAT "x(4)"        /* Cesec processador - Uso exclusivo do executante */
+                     FILL(" ",161)          FORMAT "x(161)"      /* Filler */
+                     aux_nrtextab_607       FORMAT "99999"       /* Versao do arquivo, sequencial por data. Inicialmente sera 1 por dia */
+                     aux_qtreg607           FORMAT "9999999999"  /* Sequencial de arquivo, inicia em 1 no Header, com incremento de 1 por registro */
+                     SKIP.
+
+END PROCEDURE.
+
 PROCEDURE fecha_arquivo:
     
     /*** Trailer ***/
@@ -493,6 +539,7 @@ PROCEDURE fecha_arquivo:
         
         UNIX SILENT VALUE("rm " + aux_dscooper + "arq/"
                          + aux_nmarqimp + " 2>/dev/null"). 
+        
         RETURN.        
     END.
     
@@ -520,6 +567,55 @@ PROCEDURE fecha_arquivo:
     FIND CURRENT craptab NO-LOCK NO-ERROR.
     RELEASE craptab.
     
+END PROCEDURE.
+
+PROCEDURE fecha_arquivo_607:
+    
+    /*** Trailer Novo Layout - CCF607***/
+    ASSIGN aux_qtreg607 = aux_qtreg607 + 1.
+
+    PUT STREAM str_2 FILL("9",3)            FORMAT "x(3)"        /* Identificacao Trailer - Fixo 999 */
+                     "CCF607"               FORMAT "x(6)"        /* Nome do arquivo - Fixo CCF607 */
+                     YEAR(glb_dtmvtolt)     FORMAT "9999"        /* Ano */
+                     MONTH(glb_dtmvtolt)    FORMAT "99"          /* Mes */
+                     DAY(glb_dtmvtolt)      FORMAT "99"          /* Dia */
+                     crabcop.cdbcoctl       FORMAT "999"         /* Codigo do Banco remetente do arquivo (085) */
+                     FILL(" ",165)          FORMAT "x(165)"      /* Filler */
+                     aux_nrtextab_607       FORMAT "99999"       /* Versao do arquivo, sequencial por data. Inicialmente sera 1 por dia */
+                     aux_qtreg607           FORMAT "9999999999". /* Sequencial de arquivo, inicia em 1 no Header, com incremento de 1 por registro */
+
+    OUTPUT STREAM str_2 CLOSE.
+
+    /*** Se arquivo gerado so tem "Header" e "Trailer", entao elimina ***/
+    IF  aux_qtreg607 = 2  THEN DO:
+
+        UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") +
+                      " - Processar: CCF" +
+                      " - SERASA CCF - " + glb_cdprogra + '" --> "' + 
+                      "O arquivo " + aux_nmarqimp_607 + " estava sem " + 
+                      "registros e foi removido. >> " + aux_nmarqlog).
+
+        /* Remover tambem o novo arquivo CCF607 */
+        UNIX SILENT VALUE("rm " + aux_dscooper + "arq/"
+                         + aux_nmarqimp_607 + " 2>/dev/null").
+        RETURN.        
+    END.
+    
+    /* Novo arquivo CCF607 */
+    UNIX SILENT VALUE("ux2dos < " + aux_dscooper + "arq/" + aux_nmarqimp_607 +  
+                      ' | tr -d "\032"' +  
+                      " > /micros/cecred/abbc/" + aux_nmarqimp_607 + 
+                      " 2>/dev/null").
+    
+	/* Envia FTP ABBC */
+	UNIX SILENT VALUE('/usr/local/cecred/bin/ftpabbc_envia.pl' +
+                                    ' --arquivo="' +
+                                    '/micros/cecred/abbc/' + aux_nmarqimp_607 + '"').
+	
+	/* Novo arquivo CCF607 */
+    UNIX SILENT VALUE("mv " + aux_dscooper + "arq/" + aux_nmarqimp_607 +
+                      " " + aux_dscooper + "salvar 2>/dev/null"). 
+
 END PROCEDURE.
 
 PROCEDURE registro:
@@ -603,6 +699,37 @@ PROCEDURE registro:
                      FILL(" ",14)               FORMAT "x(14)"
                      SKIP.
     
+    ASSIGN aux_qtreg607 = aux_qtreg607 + 1.
+    
+    /*** Detalhe Novo arquivo CCF607 ***/
+    PUT STREAM str_2 "1"                                                     /* Tipo de detalhe, fixo 1 */
+                     aux_tpcomand               FORMAT "99"                  /* Tipo de comando, 10-Inclusao, 50-Exclusao */
+                     aux_nrcpfcgc               FORMAT "99999999999999"      /* Numero do CPF/CNPJ */
+                     crapcop.cdbcoctl           FORMAT "999"                 /* Codigo do banco (085) */
+                     crapcop.cdagectl           FORMAT "9999"                /* Codigo da agencia */
+                     aux_nrdconta_arq           FORMAT "999999999999"        /* Numero da conta */
+                     aux_nrcheque               FORMAT "999999"              /* Numero do cheque */
+                     aux_vlcheque               FORMAT "99999999999999999"   /* Valor do cheque */
+                     crapneg.cdobserv           FORMAT "99"                  /* Motivo da devolucao */
+                     YEAR(crapneg.dtiniest)     FORMAT "9999"                /* Data da devolucao */
+                     MONTH(crapneg.dtiniest)    FORMAT "99"                  /* Data da devolucao */
+                     DAY(crapneg.dtiniest)      FORMAT "99"                  /* Data da devolucao */
+                     aux_nmextttl               FORMAT "x(40)"               /* Nome do correntista */
+                     aux_idseqttl_607           FORMAT "99"                  /* Titularizacao */
+                     aux_inpessoa               FORMAT "99"                  /* Tipo de pessoa */
+                     YEAR(glb_dtmvtolt)         FORMAT "9999"                /* Data da inclusao */
+                     MONTH(glb_dtmvtolt)        FORMAT "99"                  /* Data da inclusao */
+                     DAY(glb_dtmvtolt)          FORMAT "99"                  /* Data da inclusao */
+                     "01"                                                    /* Sequencial de cheque do titular */
+                     "00000"                                                 /* Quantidade de ocorrencias */
+                     "00000000000000"                                        /* CNPJ Original */
+                     "00"                                                    /* Natureza Juridica */
+                     "000"                                                   /* Banco absorvedor */
+                     FILL(" ",38)               FORMAT "x(38)"               /* Filler */
+                     aux_nrtextab_607           FORMAT "99999"               /* Versao do arquivo, sequencial por data. Inicialmente sera 1 por dia */
+                     aux_qtreg607               FORMAT "9999999999"          /* Sequencial de arquivo, inicia em 1 no Header, com incremento de 1 por registro */
+                     SKIP.
+
     CREATE w_enviados.
     ASSIGN w_enviados.cdcooper = crapcop.cdcooper
            w_enviados.cdagenci = crapass.cdagenci
