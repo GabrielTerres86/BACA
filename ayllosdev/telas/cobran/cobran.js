@@ -1275,7 +1275,7 @@ function imprimirCartaAnuencia(){
     $('#dtcatanu', '#frmReport').val(dtcatanu);
 
     var action = $('#frmReport').attr('action');
-    var callafter = "$('input, select', '#frmReport,.classDisabled').desabilitaCampo();";
+    var callafter = "$('input, select', '#frmReport,.classDisabled').desabilitaCampo();estadoInicial();";
 
 	carregaImpressaoAyllos("frmReport", action, callafter);
 }
