@@ -632,6 +632,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
 
                 08/02/2018 - Inclusão da procedure PC_CALCULA_TARIFA
                              Marcelo Telles Coelho - Projeto 410 - IOF
+                             
+                29/05/2018 - P450 - Implementacao das chamadas a rotina de lancamento em conta, para controle dos
+                             lancamentos de historico.
+                            Marcel Kohls (AMcom)                             
   */
  
   ---------------------------------------------------------------------------------------------------------------
@@ -2739,6 +2743,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
       
       vr_flgerlog VARCHAR2(100) := NULL;
       
+      -- saidas para pc_gerar_lancamento_conta
+      vr_rowid  ROWID;
+      vr_nmtabela VARCHAR2(100);
+      vr_incrineg INTEGER;
+
       ---------------- SUB-ROTINAS ------------------
       -- Procedimento para inserir o lote e não deixar tabela lockada
       PROCEDURE pc_insere_lote (pr_cdcooper IN craplot.cdcooper%TYPE,
@@ -3182,74 +3191,50 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
 
           --Inserir Lancamento
           BEGIN
-            INSERT INTO craplcm
-               (craplcm.cdcooper
-               ,craplcm.dtmvtolt
-               ,craplcm.cdagenci
-               ,craplcm.cdbccxlt
-               ,craplcm.nrdolote
-               ,craplcm.dtrefere
-               ,craplcm.hrtransa
-               ,craplcm.cdoperad
-               ,craplcm.nrdconta
-               ,craplcm.nrdctabb
-               ,craplcm.nrdctitg
-               ,craplcm.nrseqdig
-               ,craplcm.nrsequni
-               ,craplcm.nrdocmto
-               ,craplcm.cdhistor
-               ,craplcm.vllanmto
-               ,craplcm.cdpesqbb
-               ,craplcm.cdbanchq
-               ,craplcm.cdagechq
-               ,craplcm.nrctachq
-               ,craplcm.cdcoptfn
-               ,craplcm.cdagetfn
-               ,craplcm.nrterfin
-               ,craplcm.nrautdoc
-               ,craplcm.dsidenti)
-            VALUES (pr_cdcooper
-                   ,rw_craplot.dtmvtolt
-                   ,pr_cdagenci
-                   ,pr_cdbccxlt
-                   ,pr_nrdolote
-                   ,rw_craplot.dtmvtolt
-                   ,GENE0002.fn_busca_time
-                   ,pr_cdoperad
-                   ,pr_nrdconta
-                   ,pr_nrdctabb
-                   ,pr_nrdctitg
-                   ,rw_craplot.nrseqdig
-                   ,vr_nrsequni
-                   ,vr_nrdocmto
-                   ,pr_cdhistor
-                   ,pr_vltarifa
-                   ,pr_cdpesqbb
-                   ,pr_cdbanchq
-                   ,pr_cdagechq
-                   ,pr_nrctachq
-                   ,pr_cdcoptfn
-                   ,pr_cdagetfn
-                   ,pr_nrterfin
-                   ,pr_nrautdoc
-                   ,pr_dsidenti)
-             RETURNING
-                craplcm.cdcooper
-               ,craplcm.dtmvtolt
-               ,craplcm.nrdconta
-               ,craplcm.cdhistor
-               ,craplcm.nrdocmto
-               ,craplcm.nrseqdig
-               ,craplcm.dtmvtolt
-               ,craplcm.vllanmto
-             INTO rw_craplcm.cdcooper
-               ,rw_craplcm.dtmvtolt
-               ,rw_craplcm.nrdconta
-               ,rw_craplcm.cdhistor
-               ,rw_craplcm.nrdocmto
-               ,rw_craplcm.nrseqdig
-               ,rw_craplcm.dtmvtolt
-               ,rw_craplcm.vllanmto;
+            LANC0001.pc_gerar_lancamento_conta( pr_cdagenci => pr_cdagenci
+                                              , pr_cdbccxlt => pr_cdbccxlt
+                                              , pr_cdhistor => pr_cdhistor
+                                              , pr_dtmvtolt => rw_craplot.dtmvtolt
+                                              , pr_dtrefere => rw_craplot.dtmvtolt
+                                              , pr_nrdconta => pr_nrdconta
+                                              , pr_nrdctabb => pr_nrdctabb
+                                              , pr_nrdctitg => pr_nrdctitg
+                                              , pr_nrdocmto => vr_nrdocmto
+                                              , pr_nrdolote => pr_nrdolote
+                                              , pr_nrseqdig => rw_craplot.nrseqdig
+                                              , pr_cdcooper => pr_cdcooper
+                                              , pr_vllanmto => pr_vltarifa
+                                              , pr_cdoperad => pr_cdoperad
+                                              , pr_hrtransa => GENE0002.fn_busca_time
+                                              , pr_nrsequni => vr_nrsequni
+                                              , pr_cdpesqbb => pr_cdpesqbb
+                                              , pr_cdbanchq => pr_cdbanchq
+                                              , pr_cdagechq => pr_cdagechq
+                                              , pr_nrctachq => pr_nrctachq
+                                              , pr_cdcoptfn => pr_cdcoptfn
+                                              , pr_cdagetfn => pr_cdagetfn 
+                                              , pr_nrterfin => pr_nrterfin
+                                              , pr_nrautdoc => pr_nrautdoc
+                                              , pr_dsidenti => pr_dsidenti
+                                              , pr_rowid => vr_rowid
+                                              , pr_nmtabela => vr_nmtabela
+                                              , pr_incrineg => vr_incrineg
+                                              , pr_cdcritic => vr_cdcritic
+                                              , pr_dscritic => vr_dscritic
+                                              );
+            IF vr_dscritic IS NOT NULL THEN
+               RAISE vr_exc_erro;
+            END IF;
+
+            -- atualiza valores do cursor                                              
+            rw_craplcm.cdcooper := pr_cdcooper;
+            rw_craplcm.dtmvtolt := rw_craplot.dtmvtolt;
+            rw_craplcm.nrdconta := pr_nrdconta;
+            rw_craplcm.cdhistor := pr_cdhistor;
+            rw_craplcm.nrdocmto := vr_nrdocmto;
+            rw_craplcm.nrseqdig := rw_craplot.nrseqdig;
+            rw_craplcm.vllanmto := pr_vltarifa;
+            
           EXCEPTION
             
           WHEN DUP_VAL_ON_INDEX THEN
