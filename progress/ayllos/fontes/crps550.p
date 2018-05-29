@@ -173,6 +173,7 @@ IF  NOT AVAILABLE crapcop  THEN
         RETURN.
     END.
 
+/* Baixar arquivos do FTP da ABBC */
 { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
 RUN STORED-PROCEDURE pc_busca_ccf_transabbc.
 
@@ -190,7 +191,7 @@ IF  ERROR-STATUS:ERROR  THEN DO:
 	RETURN.
 END.
 
-CLOSE STORED-PROCEDURE pc_crps680.
+CLOSE STORED-PROCEDURE pc_busca_ccf_transabbc.
 { includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }
 
 
