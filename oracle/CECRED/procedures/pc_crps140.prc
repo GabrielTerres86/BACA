@@ -454,6 +454,7 @@ BEGIN
        WHERE cl.cdcooper = ass.cdcooper
          AND cl.nrdconta = ass.nrdconta
          AND cl.cdcooper = pr_cdcooper
+         AND ass.cdagenci = decode(pr_cdagenci,0,ass.cdagenci,pr_cdagenci)
          AND cl.idseqttl = 1;
 
     -- Buscar dados de aplicações pessoa jurídica
@@ -465,7 +466,8 @@ BEGIN
             ,crapass ass
        WHERE cj.cdcooper = ass.cdcooper
          AND cj.nrdconta = ass.nrdconta
-         AND cj.cdcooper = pr_cdcooper;
+         AND cj.cdcooper = pr_cdcooper
+         AND ass.cdagenci = decode(pr_cdagenci,0,ass.cdagenci,pr_cdagenci);
     
     -- Dados das tabela de trabalho
     cursor cr_relwork(pr_cdcooper    tbgen_batch_relatorio_wrk.cdcooper%type  
