@@ -728,6 +728,7 @@
 			  14/12/2017 - SM Motor de Crédito - Interrupçao de Fluxo (Marcos-Supero)
 			  
               15/12/2017 - Inserção do campo idcobope. Inclusão do vinculo com a cobertura. PRJ404 (Lombardi)
+
               01/12/2017 - P410 - Alteracao Calculo IOF - incluir o Valor IOF complementar por atraso (Jean -Mout´s)
   
                           21/11/2017 - Inclusão do campo flgpreap na procedure altera-valor-proposta,
@@ -766,6 +767,8 @@
               
               13/04/2018 - Ajuste na procedure valida-dados-gerais para verificar se o tipo de conta
                            do cooperado permite adesao do produto 31 - Emprestimo. PRJ366 (Lombardi)
+
+              24/05/2018 - P450 - Ajuste na data anterior na proc_qualif_operacao (Guilherme/AMcom)
 
  ..............................................................................*/
 
@@ -4762,6 +4765,7 @@ PROCEDURE proc_qualif_operacao:
     DEF VAR par_vlsdeved          AS DECI                           NO-UNDO.
     DEF VAR par_vltotpre          AS DECI                           NO-UNDO.
     DEF VAR par_qtprecal          AS INTE                           NO-UNDO.
+    DEF VAR aux_dtmvtoan          AS DATE                           NO-UNDO.
 
     DEF BUFFER crabepr FOR crapepr.
 
@@ -4770,22 +4774,34 @@ PROCEDURE proc_qualif_operacao:
 
     ASSIGN par_dsctrliq = " " + par_dsctrliq.
 
+
+    FIND FIRST crapdat 
+         WHERE cdcooper = par_cdcooper
+       NO-LOCK NO-ERROR.
+
+    /* Se Mes do Dia diferente do Mes do dia de ontem,
+       assume dada do ultimo dia do mes anterior */
+    IF  MONTH(crapdat.dtmvtolt) <> MONTH(crapdat.dtmvtoan) THEN
+        ASSIGN aux_dtmvtoan = crapdat.dtultdma.
+    ELSE
+        ASSIGN aux_dtmvtoan = crapdat.dtmvtoan.
+
+
     DO  aux_contaliq = 1 TO NUM-ENTRIES(par_dsctrliq):
 		aux_qtd_dias_atraso = 0.
         aux_emp_a_liq = INTEGER(ENTRY(aux_contaliq,par_dsctrliq)).
 
         /* ADP                                                */
-        IF aux_emp_a_liq = par_nrdconta THEN
-            DO:
+        IF  aux_emp_a_liq = par_nrdconta THEN DO:
                 /* Ver se existe na central de risco          */
                 FIND FIRST crapris
                      WHERE crapris.cdcooper = par_cdcooper
                        AND crapris.nrdconta = par_nrdconta
-					   AND crapris.dtrefere = par_dtmvtoan
+                       AND crapris.dtrefere = aux_dtmvtoan
+                       AND crapris.inddocto = 1
                        AND crapris.cdorigem = 1
                        AND crapris.cdmodali = 101
                        AND crapris.nrctremp = aux_emp_a_liq
-                       AND crapris.inddocto = 1                       
                            NO-LOCK NO-ERROR.
                 IF  AVAIL crapris  THEN
                     DO:
@@ -4805,16 +4821,15 @@ PROCEDURE proc_qualif_operacao:
 
 				IF  AVAIL craplim THEN
 					DO:
-
 						/* LIMITE                                */
 						FIND FIRST crapris
 							 WHERE crapris.cdcooper = par_cdcooper
 							   AND crapris.nrdconta = par_nrdconta
-							   AND crapris.dtrefere = par_dtmvtoan
+                               AND crapris.dtrefere = aux_dtmvtoan
+                               AND crapris.inddocto = 1
 							   AND crapris.cdorigem = 1
 							   AND crapris.cdmodali = 201
 							   AND crapris.nrctremp = aux_emp_a_liq
-							   AND crapris.inddocto = 1							   
 								   NO-LOCK NO-ERROR.
 
 						IF AVAIL crapris THEN
@@ -4824,10 +4839,10 @@ PROCEDURE proc_qualif_operacao:
 						FIND FIRST crapris
 							 WHERE crapris.cdcooper = par_cdcooper
 							   AND crapris.nrdconta = par_nrdconta
-							   AND crapris.dtrefere = par_dtmvtoan
+                               AND crapris.dtrefere = aux_dtmvtoan
+                               AND crapris.inddocto = 1	
 							   AND crapris.cdorigem = 1
 							   AND crapris.cdmodali = 101
-							   AND crapris.inddocto = 1							   
 								   NO-LOCK NO-ERROR.
 
 						IF AVAIL crapris THEN
@@ -4845,11 +4860,11 @@ PROCEDURE proc_qualif_operacao:
         IF  AVAIL crabepr THEN DO:
 		FOR FIRST crapris FIELDS(qtdiaatr) 
             WHERE crapris.cdcooper = par_cdcooper 
+              AND crapris.dtrefere = aux_dtmvtoan
+              AND crapris.inddocto = 1
 			  AND crapris.nrdconta = par_nrdconta
-			  AND crapris.cdorigem = 3
 			  AND crapris.nrctremp = crabepr.nrctremp
-			  AND crapris.inddocto = 1
-			  AND crapris.dtrefere = par_dtmvtoan
+			  AND crapris.cdorigem = 3
               NO-LOCK: 
 				  ASSIGN aux_qtd_dias_atraso = crapris.qtdiaatr.
          END.
@@ -4857,15 +4872,13 @@ PROCEDURE proc_qualif_operacao:
 
 		/* Se contrato a liquidar já é um refinanciamento, força 
 		    qualificação mínima como "Renegociação" 
-		        Reginaldo (AMcom) - Mar/2018 
-		*/
+		        Reginaldo (AMcom) - Mar/2018                     */
 		IF crabepr.idquaprc > 1 THEN
 			ASSIGN aux_qtd_dias_atraso = MAXIMUM(aux_qtd_dias_atraso, 5).
 
 		IF aux_dias_atraso < aux_qtd_dias_atraso THEN
 		   aux_dias_atraso = aux_qtd_dias_atraso.
-
-             END.
+    END.
 
 	/* De 0 a 4 dias de atraso - Renovação de Crédito		         	    */ 
     IF  aux_dias_atraso < 5 THEN
