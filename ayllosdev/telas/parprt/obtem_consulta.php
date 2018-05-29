@@ -45,9 +45,9 @@
 	$qtdias_cancelamento 	= getByTagName($param->tags,'qtdias_cancelamento');
 	$flcancelamento 		= getByTagName($param->tags,'flcancelamento');
 	$ufs 					= getByTagName($param->tags,'dsuf');
-	$param_uf 				= explode(',', $ufs);
+	$param_uf 				= !empty($ufs) ? explode(',', $ufs) : "";
 	$cnaes 					= getByTagName($param->tags,'dscnae');
-	$cdscnaes 				= explode(',', $cnaes);
+	$cdscnaes 				= !empty($cnaes) ? explode(',', $cnaes) : "";
 
 	/*
 	// Montar o xml de Requisicao
