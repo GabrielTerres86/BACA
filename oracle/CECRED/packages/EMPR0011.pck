@@ -69,6 +69,23 @@ CREATE OR REPLACE PACKAGE CECRED.EMPR0011 IS
   -- Vetor para armazenamento
   vr_tab_craplcr typ_tab_craplcr;
   
+  PROCEDURE pc_calcula_saldo_projetado(pr_cdcooper            IN  crapepr.cdcooper%TYPE         --> Codigo da Cooperativa
+                                      ,pr_flgbatch            IN  BOOLEAN DEFAULT FALSE         --> Indica se o processo noturno estah rodando
+                                      ,pr_dtefetiv            IN  crapepr.dtmvtolt%TYPE         --> Data de Efetivação da Proposta
+                                      ,pr_datainicial         IN  DATE                          --> Data Inicial
+                                      ,pr_datafinal           IN  DATE                          --> Data Calculo
+                                      ,pr_nrparepr            IN  crappep.nrparepr%TYPE         --> Numero da Parcela
+                                      ,pr_dtvencto            IN  crappep.dtvencto%TYPE         --> Data de vencimento da parcela
+                                      ,pr_vlparepr_principal  IN  crappep.vlparepr%TYPE := 0    --> Valor da Parcela Principal
+                                      ,pr_vlrdtaxa            IN  craptxi.vlrdtaxa%TYPE         --> Taxa do CDI/TR
+                                      ,pr_dtdpagto            IN  crapepr.dtdpagto%TYPE         --> Data de Pagamento
+                                      ,pr_txmensal            IN  crapepr.txmensal%TYPE         --> Taxa Mensal do Emprestimo
+                                      ,pr_vlsprojt            IN  crapepr.vlsprojt%TYPE         --> Saldo Projetado
+                                      ,pr_tab_saldo_projetado IN OUT typ_tab_saldo_projetado    --> Tabela contendo os valores de Saldo Projetado
+                                      ,pr_tab_total_juros     IN OUT typ_tab_total_juros        --> Tabela contendo as parcelas
+                                      ,pr_cdcritic            OUT crapcri.cdcritic%TYPE         --> Codigo da critica
+                                      ,pr_dscritic            OUT crapcri.dscritic%TYPE);
+  
   PROCEDURE pc_calcula_prox_parcela_pos(pr_cdcooper        IN  crapepr.cdcooper%TYPE --> Codigo da Cooperativa
                                        ,pr_flgbatch        IN  BOOLEAN DEFAULT FALSE --> Indica se o processo noturno estah rodando
                                        ,pr_dtcalcul        IN  crapdat.dtmvtolt%TYPE --> Data do cálculo
