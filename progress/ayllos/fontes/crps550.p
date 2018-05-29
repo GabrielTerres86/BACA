@@ -369,9 +369,6 @@ PROCEDURE proc_processa_arquivo:
             /*** Verifica contagem dos registros ***/
             IF  aux_qtregist <> INT(SUBSTR(aux_setlinha,191,10))  THEN
                 ASSIGN glb_cdcritic = 504.
-            ELSE
-            IF  aux_qttpreg6 <> INT(SUBSTR(aux_setlinha,46,7))  THEN
-                ASSIGN glb_cdcritic = 504.
 
             IF  glb_cdcritic > 0  THEN DO:
                 RUN fontes/critic.p.
