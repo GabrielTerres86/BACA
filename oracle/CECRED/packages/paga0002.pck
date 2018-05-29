@@ -725,7 +725,7 @@ create or replace package body cecred.PAGA0002 is
   --  Sistema  : Conta-Corrente - Cooperativa de Credito
   --  Sigla    : CRED
   --  Autor    : Odirlei Busana - Amcom
-  --  Data     : Março/2014.                   Ultima atualizacao: 03/10/2017
+  --  Data     : Março/2014.                   Ultima atualizacao: 29/05/2018
   --
   -- Dados referentes ao programa:
   --
@@ -827,6 +827,10 @@ create or replace package body cecred.PAGA0002 is
   --
   --              11/12/2017 - Alterar campo flgcnvsi por tparrecd.
   --                           PRJ406-FGTS (Odirlei-AMcom)   
+  
+                  29/05/2018 - Alterar sumario para somente somar os nao efetivados 
+                               feitos no dia do debito, se ja foi cancelado nao vamos somar 
+                               (bater com informacoes do relatorio) (Lucas Ranghetti INC0016207)
   ---------------------------------------------------------------------------------------------------------------*/
 
   ----------------------> CURSORES <----------------------
@@ -8417,7 +8421,7 @@ create or replace package body cecred.PAGA0002 is
     --  Sistema  : Conta-Corrente - Cooperativa de Credito
     --  Sigla    : CRED
     --  Autor    : Tiago Machado Flor
-    --  Data     : Outubro/2016.                   Ultima atualizacao: 00/00/0000
+    --  Data     : Outubro/2016.                   Ultima atualizacao: 29/05/2018
     --
     --  Dados referentes ao programa:
     --
@@ -8427,6 +8431,9 @@ create or replace package body cecred.PAGA0002 is
     --  Alteração : 30/11/2016 Alterado query do sumario da tela debnet pra trazer
     --                         corretamente os resultados (Tiago/Elton SD566237)
     --
+                    29/05/2018 - Alterar sumario para somente somar os nao efetivados 
+                                 feitos no dia do debito, se ja foi cancelado nao vamos somar 
+                                 (bater com informacoes do relatorio) (Lucas Ranghetti INC0016207)
     -- ..........................................................................*/
 
     ---------------> CURSORES <-----------------
@@ -8530,15 +8537,19 @@ create or replace package body cecred.PAGA0002 is
                                           ,pr_insitlau => vr_insitlau
                                           ,pr_dtmvtopg => rw_crapdat.dtmvtolt) LOOP
 
-                CASE rw_craplau.insitlau
+                IF rw_craplau.insitlau = 1 THEN
+                  vr_qtdpendentes := vr_qtdpendentes + 1;
+                ELSIF rw_craplau.insitlau = 2 THEN
+                  vr_qtefetivados := vr_qtefetivados + 1;
+                ELSE 
+                  -- Somente somar os nao efetivados feitos no dia do debito, 
+                  -- se ja foi cancelado nao vamos somar 
+                  IF trunc(rw_craplau.dtrefatu) = rw_craplau.dtmvtopg THEN
+                    vr_qtnaoefetiva := vr_qtnaoefetiva + 1; 
+                  END IF;
+                END IF;
 
-                   WHEN 1 THEN vr_qtdpendentes := vr_qtdpendentes + 1;
-                   WHEN 2 THEN vr_qtefetivados := vr_qtefetivados + 1;
-                   ELSE vr_qtnaoefetiva := vr_qtnaoefetiva + 1;
-
-                END CASE;
-
-    END LOOP;
+              END LOOP;
 
           END LOOP;
 
