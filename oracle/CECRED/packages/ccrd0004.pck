@@ -1098,8 +1098,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0004 AS
     vr_nrdconta      crapass.nrdconta%TYPE; 
 
     -- controle de permissao de debito em craplcm
-    podeDebitar    BOOLEAN; 
+    vr_podedbta    BOOLEAN; 
     vr_rw_craplot   craplot%ROWTYPE;
+
+    -- saidas da craplcm
+    vr_rowid  ROWID;
+    vr_nmtabela VARCHAR2(100);
+    vr_incrineg INTEGER;
   BEGIN
     -- Busca a data do sistema
     OPEN btch0001.cr_crapdat(3); -- Utiliza a cooperativa da Cecred
@@ -1257,11 +1262,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0004 AS
       END IF;
 
       /* identifica se pode debitar na conta do cooperado */
-      podeDebitar := LANC0001.fn_pode_debitar(pr_cdcooper => vr_cdcooper,
+      vr_podedbta := LANC0001.fn_pode_debitar(pr_cdcooper => vr_cdcooper,
                                               pr_nrdconta => vr_nrdconta,
                                               pr_cdhistor => vr_cdhistor);
       /* se nao puder debitar historico */
-      IF podeDebitar = false THEN
+      IF vr_podedbta = false THEN
         continue;
       END IF;                                  
 
@@ -1374,23 +1379,26 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0004 AS
 
         -- insere o registro na tabela de lancamentos
         BEGIN
-          LANC0001.pc_incluir_lcto_lcm( pr_cdagenci => 1
-                                      , pr_cdbccxlt => 100
-                                      , pr_cdhistor => vr_cdhistor
-                                      , pr_dtmvtolt => rw_crapdat.dtmvtolt
-                                      , pr_dtrefere => rw_crapdat.dtmvtolt
-                                      , pr_nrdconta => vr_nrdconta
-                                      , pr_nrdctabb => vr_nrdconta
-                                      , pr_nrdctitg => gene0002.fn_mask(vr_nrdconta,'99999999')
-                                      , pr_nrdocmto => rw_craplot.nrseqdig
-                                      , pr_nrdolote => vr_nrdolote
-                                      , pr_nrseqdig => rw_craplot.nrseqdig
-                                      , pr_cdcooper => vr_cdcooper
-                                      , pr_vllanmto => rw_tabela.vllancamento
-                                      , pr_cdoperad => '1'
-                                      , pr_cdcritic => vr_cdcritic
-                                      , pr_dscritic => vr_dscritic
-                                      );
+          LANC0001.pc_gerar_lancamento_conta( pr_cdagenci => 1
+                                            , pr_cdbccxlt => 100
+                                            , pr_cdhistor => vr_cdhistor
+                                            , pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                            , pr_dtrefere => rw_crapdat.dtmvtolt
+                                            , pr_nrdconta => vr_nrdconta
+                                            , pr_nrdctabb => vr_nrdconta
+                                            , pr_nrdctitg => gene0002.fn_mask(vr_nrdconta,'99999999')
+                                            , pr_nrdocmto => rw_craplot.nrseqdig
+                                            , pr_nrdolote => vr_nrdolote
+                                            , pr_nrseqdig => rw_craplot.nrseqdig
+                                            , pr_cdcooper => vr_cdcooper
+                                            , pr_vllanmto => rw_tabela.vllancamento
+                                            , pr_cdoperad => '1'
+                                            , pr_rowid => vr_rowid
+                                            , pr_nmtabela => vr_nmtabela
+                                            , pr_incrineg => vr_incrineg
+                                            , pr_cdcritic => vr_cdcritic
+                                            , pr_dscritic => vr_dscritic
+                                            );
 /*          INSERT INTO craplcm
             (dtmvtolt,
              cdagenci,
