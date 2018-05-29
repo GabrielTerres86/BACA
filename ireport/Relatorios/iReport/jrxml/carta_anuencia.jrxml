@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Created with Jaspersoft Studio version 6.3.0.final using JasperReports Library version 6.3.0  -->
-<!-- 2018-02-21T13:25:32 -->
+<!-- 2018-05-23T17:25:18 -->
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="carta_anuencia" pageWidth="595" pageHeight="842" columnWidth="515" leftMargin="40" rightMargin="40" topMargin="20" bottomMargin="20" uuid="099b5fed-fa6d-4786-93fc-157639faf347">
 	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="NEW_DATAADAPTER.xml"/>
 	<property name="com.jaspersoft.studio.unit." value="pixel"/>
@@ -88,7 +88,7 @@
 		<band height="31" splitType="Stretch">
 			<textField>
 				<reportElement x="0" y="10" width="480" height="21" uuid="7ebb0566-d7e7-492d-9f9b-012ea8125206"/>
-				<textFieldExpression><![CDATA[$F{dscidade} + ", " +  (new SimpleDateFormat("dd")).format(new Date()) + " de " +  (new SimpleDateFormat("MM")).format(new Date())  + " de " +  (new SimpleDateFormat("yyyy")).format(new Date()) + "."]]></textFieldExpression>
+				<textFieldExpression><![CDATA[$F{dscidade} + ", " +  (new SimpleDateFormat("dd")).format(new Date()) + " de " +  (new SimpleDateFormat("MMMM", (new Locale("pt","BR")))).format(new Date())  + " de " +  (new SimpleDateFormat("yyyy")).format(new Date()) + "."]]></textFieldExpression>
 			</textField>
 		</band>
 	</title>
