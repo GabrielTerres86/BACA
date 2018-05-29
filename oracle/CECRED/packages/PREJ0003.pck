@@ -31,7 +31,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
    Programa: PREJ0003                        Antigo: Nao ha
    Sistema : Cred
    Sigla   : CRED
-   Autor   :Rangel Decker - AMCom
+   Autor   : Rangel Decker - AMCom
    Data    : Maio/2018                      Ultima atualizacao:
 
    Dados referentes ao programa:
@@ -81,16 +81,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
     --Busca contas correntes que estão na situação de prejuizo
     CURSOR cr_crapris (pr_cdcooper      crapris.cdcooper%TYPE,
                        pr_dtrefere      crapris.dtrefere%TYPE,
+                       pr_dtmvtolt      crapris.dtrefere%TYPE,
                        pr_valor_arrasto crapris.vldivida%TYPE) IS
       
       SELECT  ris.nrdconta,
-              trunc(sysdate)  dtinc_prejuizo,
+              pr_dtmvtolt  dtinc_prejuizo,
               ris.dtdrisco,
               pass.cdsitdct,
               ris.vldivida,
-              ris.dtrefere,
-             ((select dat.dtmvtolt from crapdat dat where dat.cdcooper =  ris.cdcooper) - ris.dtdrisco) dias_risco, 
-             ((select dat.dtmvtolt from crapdat dat where dat.cdcooper =  ris.cdcooper) - ris.dtinictr) dias_atraso 
+              ris.dtrefere
         FROM crapris ris,
              crapass pass
        WHERE ris.cdcooper  = pass.cdcooper
@@ -99,8 +98,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
        AND   ris.cdmodali  = 101  --ADP
        AND   ris.cdorigem  = 1    -- Conta Corrente
        AND   ris.innivris  = 9    -- Situação H  
-       AND  ((select dat.dtmvtolt from crapdat dat where dat.cdcooper =  ris.cdcooper) - ris.dtdrisco)> = 180  -- dias_risco
-       AND  ((select dat.dtmvtolt from crapdat dat where dat.cdcooper =  ris.cdcooper) - ris.dtinictr)> = 180  -- dias_risco       
+       AND  (pr_dtmvtolt - ris.dtdrisco) >= 180  -- dias_risco
+       AND   ris.qtdiaatr >=180 -- dias_atraso
        AND   ris.nrdconta  not in (SELECT epr.nrdconta
                                    FROM   crapepr epr 
                                    WHERE epr.cdcooper = ris.cdcooper 
@@ -126,13 +125,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
      vr_exc_saida exception;
      -- Erro sem parar a cadeia
      vr_exc_fimprg exception;
-     vr_tab_erro        gene0001.typ_tab_erro;
+     vr_tab_erro        gene0001.typ_tab_erro;
      
      vr_dtrefere_aux  DATE;
 
 
   BEGIN
-     -- Leitura do calendário da cooperativa
+
+      -- Leitura do calendário da cooperativa
       OPEN btch0001.cr_crapdat(pr_cdcooper => pr_cdcooper);
       FETCH btch0001.cr_crapdat
        INTO rw_crapdat;
@@ -177,7 +177,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PREJ0003 AS
   
 
     --Transfere as contas em prejuizo para a tabela HIST...
-    FOR rw_crapris IN cr_crapris(pr_cdcooper,vr_dtrefere_aux,vr_valor_arrasto) LOOP
+    FOR rw_crapris IN cr_crapris(pr_cdcooper
+                                ,vr_dtrefere_aux
+                                ,rw_crapdat.dtmvtolt
+                                ,vr_valor_arrasto) LOOP
       BEGIN
 
         INSERT INTO TBCC_PREJUIZO(cdcooper
