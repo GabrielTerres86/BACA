@@ -86,8 +86,12 @@ create or replace procedure cecred.pc_crps730(pr_dscritic OUT VARCHAR2
 	-- Tipo de registro cooperativa
 	TYPE typ_reg_coop IS RECORD
     (cdcooper crapcop.cdcooper%TYPE
-    ,vlcustas NUMBER
-		,vltarifa NUMBER
+    ,vlcustas        NUMBER
+		,vltarifa        NUMBER
+		,vlcustas_outros NUMBER
+		,vlcustas_sp     NUMBER
+		,vltarifa_outros NUMBER
+		,vltarifa_sp     NUMBER
 		);
 	-- Tabela de tipo cooperativa
 	TYPE typ_tab_coop IS TABLE OF typ_reg_coop INDEX BY PLS_INTEGER;
@@ -101,6 +105,8 @@ create or replace procedure cecred.pc_crps730(pr_dscritic OUT VARCHAR2
   rw_crapdat btch0001.cr_crapdat%ROWTYPE;
 	--
 	vr_dtmvtolt crapdat.dtmvtolt%TYPE;
+	--
+	texto CLOB;
   
   -- Subrotinas
   -- Controla Controla log
@@ -138,7 +144,7 @@ create or replace procedure cecred.pc_crps730(pr_dscritic OUT VARCHAR2
   -- Rotina que insere um valor numa linha da tabela em memória
   PROCEDURE pc_insere_valor(/*pr_nrrow    IN      NUMBER
                            ,*/pr_nrattrib IN      NUMBER
-                           ,pr_dsvalue  IN      VARCHAR2
+                           ,pr_dsvalue  IN      CLOB
                            ,pr_reg_linha IN OUT typ_reg_linha
                            ,pr_dscritic OUT     VARCHAR2
                            ) IS
@@ -336,6 +342,26 @@ create or replace procedure cecred.pc_crps730(pr_dscritic OUT VARCHAR2
           n2       := xmldom.item(nnm, 14); -- Campo 15
           campoh15 := xmldom.getNodeValue(n2);
           --
+					dbms_lob.createtemporary(texto, TRUE);
+					dbms_lob.OPEN(texto,dbms_lob.lob_readwrite);
+					--xmldom.WRITETOBUFFER(n,texto);
+					xmldom.writeToClob(n,texto);
+					--
+					pc_insere_valor(pr_nrattrib  => 52           -- IN
+												 ,pr_dsvalue   => texto        -- IN
+												 ,pr_reg_linha => vr_reg_linha -- IN OUT
+												 ,pr_dscritic  => pr_dscritic  -- OUT
+												 );
+					--
+					dbms_lob.close(texto);
+          dbms_lob.freetemporary(texto);
+					--
+					IF pr_dscritic IS NOT NULL THEN
+						--
+						RAISE vr_exc_erro;
+						--
+					END IF;
+					--
         ELSIF xmldom.getNodeName(n) = 'tr' THEN
           --
           --dbms_output.put_line('reg: ' || vr_tab_arquivo.count());
@@ -362,7 +388,22 @@ create or replace procedure cecred.pc_crps730(pr_dscritic OUT VARCHAR2
               --
             END IF;
             --
-          END LOOP;
+						dbms_lob.createtemporary(texto, TRUE);
+					  dbms_lob.OPEN(texto,dbms_lob.lob_readwrite);
+						--
+						--xmldom.WRITETOBUFFER(n2,texto);
+						xmldom.writeToClob(n,texto);
+						--
+						pc_insere_valor(pr_nrattrib  => 52           -- IN
+													 ,pr_dsvalue   => texto        -- IN
+													 ,pr_reg_linha => vr_reg_linha -- IN OUT
+													 ,pr_dscritic  => pr_dscritic  -- OUT
+													 );
+						--
+						dbms_lob.close(texto);
+            dbms_lob.freetemporary(texto);
+						--
+					END LOOP;
           --
           pc_insere_valor(/*pr_nrrow     => j            -- IN
                          ,*/pr_nrattrib  => 64           -- IN
@@ -818,6 +859,7 @@ create or replace procedure cecred.pc_crps730(pr_dscritic OUT VARCHAR2
 	
 	-- Totaliza por cooperativa
 	PROCEDURE pc_totaliza_cooperativa(pr_cdcooper IN  crapcop.cdcooper%TYPE
+		                               ,pr_cdfedera IN  VARCHAR2
 		                               ,pr_vlcustas IN  NUMBER
 																	 ,pr_vltarifa IN  NUMBER
 		                               ,pr_dscritic OUT VARCHAR2
@@ -841,6 +883,18 @@ create or replace procedure cecred.pc_crps730(pr_dscritic OUT VARCHAR2
 					vr_tab_coop(vr_index_coop).vlcustas := vr_tab_coop(vr_index_coop).vlcustas + pr_vlcustas;
 					vr_tab_coop(vr_index_coop).vltarifa := vr_tab_coop(vr_index_coop).vltarifa + pr_vltarifa;
 					--
+					IF pr_cdfedera = 'SP' THEN
+						--
+						vr_tab_coop(vr_index_coop).vlcustas_sp := vr_tab_coop(vr_index_coop).vlcustas_sp + pr_vlcustas;
+					  vr_tab_coop(vr_index_coop).vltarifa_sp := vr_tab_coop(vr_index_coop).vltarifa_sp + pr_vltarifa;
+						--
+					ELSE
+						--
+						vr_tab_coop(vr_index_coop).vlcustas_outros := vr_tab_coop(vr_index_coop).vlcustas_outros + pr_vlcustas;
+					  vr_tab_coop(vr_index_coop).vltarifa_outros := vr_tab_coop(vr_index_coop).vltarifa_outros + pr_vltarifa;
+						--
+					END IF;
+					--
 				END IF;
 				-- Próximo registro
 				vr_index_coop := vr_tab_coop.next(vr_index_coop);
@@ -854,6 +908,18 @@ create or replace procedure cecred.pc_crps730(pr_dscritic OUT VARCHAR2
 			vr_reg_coop.cdcooper := pr_cdcooper;
 			vr_reg_coop.vlcustas := pr_vlcustas;
 			vr_reg_coop.vltarifa := pr_vltarifa;
+			--
+			IF pr_cdfedera = 'SP' THEN
+				--
+				vr_reg_coop.vlcustas_sp := pr_vlcustas;
+				vr_reg_coop.vltarifa_sp := pr_vltarifa;
+				--
+			ELSE
+				--
+				vr_reg_coop.vlcustas_outros := pr_vlcustas;
+				vr_reg_coop.vltarifa_outros := pr_vltarifa;
+				--
+			END IF;
 			--
 			vr_tab_coop(vr_tab_coop.count()) := vr_reg_coop;
 			--
@@ -1546,7 +1612,7 @@ create or replace procedure cecred.pc_crps730(pr_dscritic OUT VARCHAR2
 																			 ,pr_vldemais_despes     => vr_vldemdes                                                -- IN
 																			 ,pr_vltitulo            => vr_vltitulo                                                -- IN
 																			 ,pr_vlsaldo_titulo      => vr_vlsaldot                                                -- IN
-																			 ,pr_dsregist            => NULL                                                       -- IN
+																			 ,pr_dsregist            => vr_tab_arquivo(vr_index_reg).campot53                      -- IN
 																			 ,pr_dscritic          	 => pr_dscritic                                                -- OUT
 																			 );
 							--
@@ -1657,7 +1723,7 @@ create or replace procedure cecred.pc_crps730(pr_dscritic OUT VARCHAR2
 																			 ,pr_vldemais_despes     => vr_vldemdes                                                -- IN
 																			 ,pr_vltitulo            => vr_vltitulo                                                -- IN
 																			 ,pr_vlsaldo_titulo      => vr_vlsaldot                                                -- IN
-																			 ,pr_dsregist            => NULL                                                       -- IN
+																			 ,pr_dsregist            => vr_tab_arquivo(vr_index_reg).campot53                      -- IN
 																			 ,pr_dscritic          	 => pr_dscritic                                                -- OUT
 																			 );
 							--
@@ -2429,7 +2495,7 @@ create or replace procedure cecred.pc_crps730(pr_dscritic OUT VARCHAR2
 																			 ,pr_vldemais_despes     => vr_vldemdes                                                -- IN
 																			 ,pr_vltitulo            => vr_vltitulo                                                -- IN
 																			 ,pr_vlsaldo_titulo      => vr_vlsaldot                                                -- IN
-																			 ,pr_dsregist            => NULL                                                       -- IN
+																			 ,pr_dsregist            => vr_tab_arquivo(vr_index_reg).campot53                      -- IN
 																			 ,pr_dscritic          	 => pr_dscritic                                                -- OUT
 																			 );
 							--
@@ -2438,6 +2504,15 @@ create or replace procedure cecred.pc_crps730(pr_dscritic OUT VARCHAR2
 								RAISE vr_exc_erro;
 								--
 							END IF;
+							--
+							paga0001.pc_cria_log_cobranca(pr_idtabcob => rw_crapcob.rowid
+																					 ,pr_cdoperad => '1'
+																					 ,pr_dtmvtolt => rw_crapcob.dtmvtolt
+																					 ,pr_dsmensag => 'Título registrado em cartório nr: ' || vr_tab_arquivo(vr_index_reg).campot31
+																					 ,pr_des_erro => vr_des_erro
+																					 ,pr_dscritic => pr_dscritic
+																					 );
+							--
 							-- Leitura do calendario da cooperativa
 							OPEN btch0001.cr_crapdat(pr_cdcooper => rw_crapcob.cdcooper);
 							FETCH btch0001.cr_crapdat
@@ -2530,7 +2605,7 @@ create or replace procedure cecred.pc_crps730(pr_dscritic OUT VARCHAR2
 																							 ,pr_cdocorre            => vr_cdocorre            -- IN
 																							 ,pr_dsmotivo            => vr_dsmotivo            -- IN
 																							 ,pr_crapdat             => rw_crapdat             -- IN
-																							 ,pr_cdoperad            => '1'                      -- IN -- Fixo
+																							 ,pr_cdoperad            => '1'                    -- IN -- Fixo
 																							 ,pr_ret_nrremret        => vr_nrretcoo            -- OUT
 																							 ,pr_tab_lcm_consolidada => vr_tab_lcm_consolidada -- IN OUT
 																							 ,pr_cdhistor            => 2632                   -- IN -- Fixo
@@ -2581,6 +2656,7 @@ create or replace procedure cecred.pc_crps730(pr_dscritic OUT VARCHAR2
 					END IF;
 					-- Totaliza por cooperativa
 					pc_totaliza_cooperativa(pr_cdcooper => rw_crapcob.cdcooper                       -- IN
+					                       ,pr_cdfedera => vr_tab_arquivo(vr_index_reg).campot30     -- IN
 																 ,pr_vlcustas => (vr_vlcuscar + vr_vlcusdis + vr_vldemdes) -- IN
 																 ,pr_vltarifa => vr_vlgraele                               -- IN
 																 ,pr_dscritic => vr_dscritic                               -- OUT
@@ -2604,18 +2680,19 @@ create or replace procedure cecred.pc_crps730(pr_dscritic OUT VARCHAR2
 			IF vr_tab_coop.COUNT() > 0 THEN
 				--
 				WHILE vr_index_coop IS NOT NULL LOOP
-					--
-					IF nvl(vr_tab_coop(vr_index_coop).vlcustas, 0) > 0 THEN
+					-- Lançamentos SP
+					IF nvl(vr_tab_coop(vr_index_coop).vlcustas_sp, 0) > 0 THEN
 						-- Gera lançamento histórico 2635
-						cobr0011.pc_processa_lancamento(pr_cdcooper => vr_tab_coop(vr_index_coop).cdcooper -- IN
-																					 ,pr_dtmvtolt => rw_crapcob.dtmvtolt                 -- IN
-																					 ,pr_cdagenci => 1                                   -- IN
-																					 ,pr_cdoperad => '1'                                   -- IN
-																					 ,pr_cdhistor => 2635                                -- IN
-																					 ,pr_vllanmto => vr_tab_coop(vr_index_coop).vlcustas -- IN
-																					 ,pr_nmarqtxt => vr_nmarquiv                         -- IN
-																					 ,pr_craplot  => rw_craplot                          -- OUT
-																					 ,pr_dscritic => pr_dscritic                         -- OUT
+						cobr0011.pc_processa_lancamento(pr_cdcooper => vr_tab_coop(vr_index_coop).cdcooper    -- IN
+						                               ,pr_nrdconta => 20000006                               -- IN
+																					 ,pr_dtmvtolt => rw_crapcob.dtmvtolt                    -- IN
+																					 ,pr_cdagenci => 1                                      -- IN
+																					 ,pr_cdoperad => '1'                                    -- IN
+																					 ,pr_cdhistor => 2635                                   -- IN
+																					 ,pr_vllanmto => vr_tab_coop(vr_index_coop).vlcustas_sp -- IN
+																					 ,pr_nmarqtxt => vr_nmarquiv                            -- IN
+																					 ,pr_craplot  => rw_craplot                             -- OUT
+																					 ,pr_dscritic => pr_dscritic                            -- OUT
 																					 );
 						--
 						IF pr_dscritic IS NOT NULL THEN
@@ -2624,21 +2701,22 @@ create or replace procedure cecred.pc_crps730(pr_dscritic OUT VARCHAR2
 							--
 						END IF;
 						--
-						vr_total_ieptb := nvl(vr_total_ieptb, 0) + nvl(vr_tab_coop(vr_index_coop).vlcustas, 0);
+						vr_total_ieptb := nvl(vr_total_ieptb, 0) + nvl(vr_tab_coop(vr_index_coop).vlcustas_sp, 0);
 						--
 					END IF;
 					--
-					IF nvl(vr_tab_coop(vr_index_coop).vltarifa, 0) > 0 THEN
+					IF nvl(vr_tab_coop(vr_index_coop).vltarifa_sp, 0) > 0 THEN
 						-- Gera lançamento históico 2643
-						cobr0011.pc_processa_lancamento(pr_cdcooper => vr_tab_coop(vr_index_coop).cdcooper -- IN
-																					 ,pr_dtmvtolt => rw_crapcob.dtmvtolt                 -- IN
-																					 ,pr_cdagenci => 1                                   -- IN
-																					 ,pr_cdoperad => '1'                                 -- IN
-																					 ,pr_cdhistor => 2643                                -- IN
-																					 ,pr_vllanmto => vr_tab_coop(vr_index_coop).vltarifa -- IN
-																					 ,pr_nmarqtxt => vr_nmarquiv                         -- IN
-																					 ,pr_craplot  => rw_craplot                          -- OUT
-																					 ,pr_dscritic => pr_dscritic                         -- OUT
+						cobr0011.pc_processa_lancamento(pr_cdcooper => vr_tab_coop(vr_index_coop).cdcooper    -- IN
+						                               ,pr_nrdconta => 20000006                               -- IN
+																					 ,pr_dtmvtolt => rw_crapcob.dtmvtolt                    -- IN
+																					 ,pr_cdagenci => 1                                      -- IN
+																					 ,pr_cdoperad => '1'                                    -- IN
+																					 ,pr_cdhistor => 2643                                   -- IN
+																					 ,pr_vllanmto => vr_tab_coop(vr_index_coop).vltarifa_sp -- IN
+																					 ,pr_nmarqtxt => vr_nmarquiv                            -- IN
+																					 ,pr_craplot  => rw_craplot                             -- OUT
+																					 ,pr_dscritic => pr_dscritic                            -- OUT
 																					 );
 						--
 						IF pr_dscritic IS NOT NULL THEN
@@ -2647,14 +2725,62 @@ create or replace procedure cecred.pc_crps730(pr_dscritic OUT VARCHAR2
 							--
 						END IF;
 						--
-						vr_total_ieptb := nvl(vr_total_ieptb, 0) + nvl(vr_tab_coop(vr_index_coop).vltarifa, 0);
+						vr_total_ieptb := nvl(vr_total_ieptb, 0) + nvl(vr_tab_coop(vr_index_coop).vltarifa_sp, 0);
+						--
+					END IF;
+					-- Lançamentos outros estados
+					IF nvl(vr_tab_coop(vr_index_coop).vlcustas_outros, 0) > 0 THEN
+						-- Gera lançamento histórico 2635
+						cobr0011.pc_processa_lancamento(pr_cdcooper => vr_tab_coop(vr_index_coop).cdcooper        -- IN
+						                               ,pr_nrdconta => 10000003                                   -- IN
+																					 ,pr_dtmvtolt => rw_crapcob.dtmvtolt                        -- IN
+																					 ,pr_cdagenci => 1                                          -- IN
+																					 ,pr_cdoperad => '1'                                        -- IN
+																					 ,pr_cdhistor => 2635                                       -- IN
+																					 ,pr_vllanmto => vr_tab_coop(vr_index_coop).vlcustas_outros -- IN
+																					 ,pr_nmarqtxt => vr_nmarquiv                                -- IN
+																					 ,pr_craplot  => rw_craplot                                 -- OUT
+																					 ,pr_dscritic => pr_dscritic                                -- OUT
+																					 );
+						--
+						IF pr_dscritic IS NOT NULL THEN
+							--
+							RAISE vr_exc_erro;
+							--
+						END IF;
+						--
+						vr_total_ieptb := nvl(vr_total_ieptb, 0) + nvl(vr_tab_coop(vr_index_coop).vlcustas_outros, 0);
+						--
+					END IF;
+					--
+					IF nvl(vr_tab_coop(vr_index_coop).vltarifa_outros, 0) > 0 THEN
+						-- Gera lançamento históico 2643
+						cobr0011.pc_processa_lancamento(pr_cdcooper => vr_tab_coop(vr_index_coop).cdcooper        -- IN
+						                               ,pr_nrdconta => 10000003                                   -- IN
+																					 ,pr_dtmvtolt => rw_crapcob.dtmvtolt                        -- IN
+																					 ,pr_cdagenci => 1                                          -- IN
+																					 ,pr_cdoperad => '1'                                        -- IN
+																					 ,pr_cdhistor => 2643                                       -- IN
+																					 ,pr_vllanmto => vr_tab_coop(vr_index_coop).vltarifa_outros -- IN
+																					 ,pr_nmarqtxt => vr_nmarquiv                                -- IN
+																					 ,pr_craplot  => rw_craplot                                 -- OUT
+																					 ,pr_dscritic => pr_dscritic                                -- OUT
+																					 );
+						--
+						IF pr_dscritic IS NOT NULL THEN
+							--
+							RAISE vr_exc_erro;
+							--
+						END IF;
+						--
+						vr_total_ieptb := nvl(vr_total_ieptb, 0) + nvl(vr_tab_coop(vr_index_coop).vltarifa_outros, 0);
 						--
 					END IF;
 					-- Próximo registro
 					vr_index_coop := vr_tab_coop.next(vr_index_coop);
 					--
 				END LOOP;
-				-- Envia a TED para o IRPTB com o total das custas e tarifas cobradas
+				-- Envia a TED para o IEPTB com o total das custas e tarifas cobradas
 			  IF nvl(vr_tot_sp_cra, 0) > 0 THEN
 					--
 					OPEN cr_conta(10000003
@@ -2836,7 +2962,7 @@ begin
   -- Escrever o log no arquivo
   pc_controla_log_batch(1, to_char(SYSDATE, 'DD/MM/YYYY - HH24:MI:SS') || ' - pc_crps730 --> Finalizado o processamento dos retornos.'); -- Texto para escrita
   --
-	COMMIT;
+--	COMMIT;
 	--
 EXCEPTION
   WHEN vr_exc_erro THEN
