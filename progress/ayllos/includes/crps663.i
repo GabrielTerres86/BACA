@@ -360,7 +360,8 @@ PROCEDURE efetua-debito-consorcio:
                                tt-obtem-consorcio.dscritic = glb_dscritic.
                 END.
             ELSE 
-            IF  crapass.cdsitdct = 3 OR 
+            IF  crapass.cdsitdct = 2 OR 
+                crapass.cdsitdct = 3 OR 
                 crapass.cdsitdct = 4 THEN
                 DO: 
                      ASSIGN glb_cdcritic = 64

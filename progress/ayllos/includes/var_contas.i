@@ -166,7 +166,7 @@ FORM SKIP(1)
                             HELP "Entre com o tipo de conta ou F7 para listar"
      tel_dstipcta           NO-LABEL
      crapass.cdsitdct AT 30 LABEL "Sit."
-        HELP "1-Em Uso,3-Em Prej.,4-Enc.Dem,5-Uso Imped.,7-Proc.Dem,8-Proc.Dem.Bacen"
+        HELP "1-Oper,2-Em Prej,3-Enc.COOP,4-Enc.Dem,5-Inop,7-Proc.Dem,8-Proc.Dem.Bacen"
      tel_dssitdct           NO-LABEL
      crapass.nrdctitg AT 57 LABEL "Conta/ITG"
      SKIP(2)

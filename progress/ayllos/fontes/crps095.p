@@ -267,7 +267,7 @@ FOR EACH crapass WHERE crapass.cdcooper  = glb_cdcooper AND
     END.  
         
     IF   crapass.vllimcre = 0  AND rel_vllimcrd = 0 AND
-         (NOT rel_flgeaval OR (rel_flgeaval AND crapass.cdsitdct = 3)) THEN
+         (NOT rel_flgeaval OR (rel_flgeaval AND (crapass.cdsitdct = 2 OR crapass.cdsitdct = 3))) THEN
          NEXT.
 
     ASSIGN tot_qtdconta = tot_qtdconta + 1

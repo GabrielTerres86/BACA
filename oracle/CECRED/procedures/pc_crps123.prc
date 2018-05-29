@@ -1626,7 +1626,7 @@ BEGIN
       END IF;
 
       -- VERIFICA SE CRITICA NÃO EXISTE E SITUACAO DA CONTA
-      IF vr_cdcritic = 0 AND rw_crapass.cdsitdct IN (3,4) THEN
+      IF vr_cdcritic = 0 AND rw_crapass.cdsitdct IN (2,3,4) THEN
 
         vr_cdcritic := 723;                                                   -- CONTA ENCERRADA
         vr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic); -- BUSCA DESCRICAO DA CRITICA

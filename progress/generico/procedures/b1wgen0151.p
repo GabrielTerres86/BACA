@@ -416,7 +416,8 @@ CPF diferente ou para outra cooperativa.” */
                                    NO-LOCK NO-ERROR.
 
                 IF  AVAIL crapass AND
-                          (crapass.cdsitdct = 3 OR
+                          (crapass.cdsitdct = 2 OR
+                           crapass.cdsitdct = 3 OR
                            crapass.cdsitdct = 4 OR
                            crapass.cdsitdct = 5) THEN
                     DO:

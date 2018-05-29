@@ -7,10 +7,16 @@
  * ALTERAÇÕES   : 21/09/2016 - Inclusão do filtro "Tipo de Limite" no cabecalho. Inclusão dos campos
  *                             "pcliqdez" e "qtdialiq" no formulario de regras. Projeto 300. (Lombardi)	
  *
- *                27/04/2018 - Alteração  da situação de "1,2,3,4,5,6,8,9" para "1,3,4,5,7,8". 
+ *                16/03/2018 - Inclusão de novo campo (Quantidade de Meses do novo limite após o cancelamento)
+ *                             Diego Simas (AMcom)
+ *                27/04/2018 - Campos para identificar e data de cancelamento por inadimplencia
+ *                             Marcel (AMcom)
+ *
+ *                27/04/2018 - Alteração  da situação de "1,2,3,4,5,6,8,9" para "1,2,3,4,5,7,8". 
  *                             Projeto 366. (Lombardi)
  * --------------
  */
+
 $(document).ready(function() {
 
 	estadoInicial();
@@ -153,9 +159,12 @@ function formataRegra(){
 		var rQtmaxren = $('label[for="qtmaxren"]');
 		var rQtdiaatr = $('label[for="qtdiaatr"]');
 		var rQtatracc = $('label[for="qtatracc"]');
+		var rQtmeslic = $('label[for="qtmeslic"]');   //Diego Simas (AMcom)
+		var rCnauinad = $('label[for="cnauinad"]');
+		var rQtdiatin = $('label[for="qtdiatin"]');
 		// Situacao da Conta		
 		var rDssitdop = $('label[for="dssitdop"]');		
-		var rDssitopt = $('label[for="sit1"], label[for="sit3"], label[for="sit4"], label[for="sit5"], label[for="sit7"], label[for="sit8"]');
+		var rDssitopt = $('label[for="sit1"], label[for="sit2"], label[for="sit3"], label[for="sit4"], label[for="sit5"], label[for="sit7"], label[for="sit8"]');
 		// Risco da Conta		
 		var rDsriscop = $('label[for="dsriscop"]');
 		var rDsrisopt = $('label[for="risA"], label[for="risB"], label[for="risC"], label[for="risD"], label[for="risE"], label[for="risF"], label[for="risG"], label[for="risH"]');
@@ -163,24 +172,35 @@ function formataRegra(){
 		var rNrrevcad = $('label[for="nrrevcad"]');
 		var rPcliqdez = $('label[for="pcliqdez"]');
 		var rQtdialiq = $('label[for="qtdialiq"]');
+		var rQtcarpag = $('label[for="qtcarpag"]');
+		var rQtaltlim = $('label[for="qtaltlim"]');
 
-		rVlmaxren.css({width:'200px'});
-		rQtdiaren.css({width:'200px'});
-		rQtmaxren.css({width:'200px'});
-		rQtdiaatr.css({width:'200px'});
-		rQtatracc.css({width:'200px'});		
-		rDssitdop.css({width:'200px'});
+	    //Diego Simas (AMcom)
+		rVlmaxren.css({width:'265px'});
+		rQtdiaren.css({width:'265px'});
+		rQtmeslic.css({width:'265px'});
+		rCnauinad.css({width:'265px'});
+		rQtdiatin.css({width:'265px'});
+		rQtmaxren.css({width:'265px'});
+		rQtdiaatr.css({width:'265px'});
+		rQtatracc.css({width:'265px'});
+		rDssitdop.css({width:'265px'});
 		rDssitopt.css({width:'19px'});		
-		rDsriscop.css({width:'200px'});
+		rDsriscop.css({width:'265px'});
 		rDsrisopt.css({width:'19px'});		
-		rQtmincta.css({width:'200px'});
-		rNrrevcad.css({width:'200px'});
-		rPcliqdez.css({width:'200px'});
-		rQtdialiq.css({width:'200px'});
+		rQtmincta.css({width:'265px'});
+		rNrrevcad.css({width:'265px'});
+		rPcliqdez.css({width:'265px'});
+		rQtdialiq.css({width:'265px'});
+		rQtcarpag.css({width:'265px'});
+		rQtaltlim.css({width:'265px'});
 
 		// Campos
 		var cVlmaxren = $('#vlmaxren');	
 		var cQtdiaren = $('#qtdiaren');	
+		var cQtmeslic = $('#qtmeslic'); //Diego Simas (AMcom)
+		var cCnauinad = $('#cnauinad');
+		var cQtdiatin = $('#qtdiatin');
 		var cQtmaxren = $('#qtmaxren');	
 		var cQtdiaatr = $('#qtdiaatr');	
 		var cQtatracc = $('#qtatracc');
@@ -191,12 +211,18 @@ function formataRegra(){
 		var cNrrevcad = $('#nrrevcad');	
 		var cPcliqdez = $('#pcliqdez');	
 		var cQtdialiq = $('#qtdialiq');	
+		var cQtcarpag = $('#qtcarpag');	
+		var cQtaltlim = $('#qtaltlim');	
 
 		cVlmaxren.addClass('campo').setMask('DECIMAL','zzz.zzz.zzz.zz9,99','.','');
 		cQtdiaren.addClass('campo').setMask('INTEGER','zzz9');
 		cQtmaxren.addClass('campo').setMask('INTEGER','zz9');
 		cQtdiaatr.addClass('campo').setMask('INTEGER','zz9');
 		cQtatracc.addClass('campo').setMask('INTEGER','zz9');		
+
+		cQtmeslic.addClass('campo').setMask('INTEGER','zz9');//Diego Simas (AMcom)
+		cCnauinad.css({width:'70px'});
+		cQtdiatin.addClass('campo').setMask('INTEGER','zz9');
 		cDssitopt.css({border:'0px'});
 		cDstipopt.css({border:'0px'});
 		cDsrisopt.css({border:'0px'});		
@@ -204,6 +230,8 @@ function formataRegra(){
 		cNrrevcad.css({width:'70px'});
 		cPcliqdez.css({width:'40px'}).addClass('campo').setMask('INTEGER','zz9');
 		cQtdialiq.css({width:'40px'}).addClass('campo').setMask('INTEGER','zzz9');		
+		cQtcarpag.css({width:'40px'}).addClass('campo').setMask('INTEGER','zzz9');
+		cQtaltlim.css({width:'40px'}).addClass('campo').setMask('INTEGER','zzz9');
 
 		highlightObjFocus($('#frmRegra'));
 		cTodosCampos = $('input[type="text"], select, input[type="checkbox"]','#frmRegra');
@@ -264,12 +292,58 @@ function formataRegra(){
 			if ( divError.css('display') == 'block' ) { return false; }
 
 			if ( e.keyCode == 13 || e.keyCode == 9 ) {	
+			    //Diego Simas (AMcom)
+				$('#qtmeslic','#frmRegra').focus();
+				return false;
+			}
+		});
+
+	    //Diego Simas (AMcom)
+		cQtmeslic.unbind('keypress').bind('keypress', function (e) {
+
+			if (divError.css('display') == 'block') {
+				return false;
+			}
+
+			if (e.keyCode == 13 || e.keyCode == 9) {
+				$('#cnauinad', '#frmRegra').focus();
+				return false;
+			}
+		});
+
+		cCnauinad.unbind('keypress').bind('keypress', function(e) {
+			if ( divError.css('display') == 'block' ) { return false; }
+
+			if (e.keyCode == 13 || e.keyCode == 9) {
+				if (cCnauinad.val() == '1') {
+					$('#qtdiatin','#frmRegra').focus();
+				} else {
+				$('#sit1','#frmRegra').focus();
+				}
+				return false;
+			}
+		});
+
+		cQtdiatin.unbind('keypress').bind('keypress', function(e) {
+			if ( divError.css('display') == 'block' ) { return false; }
+
+			if (e.keyCode == 13 || e.keyCode == 9) {
 				$('#sit1','#frmRegra').focus();
 				return false;
 			}	
 		});
 		
 		$('#sit1','#frmRegra').unbind('keypress').bind('keypress', function(e) {
+
+			if ( divError.css('display') == 'block' ) { return false; }
+
+			if ( e.keyCode == 13 || e.keyCode == 9 ) {	
+				$('#sit2','#frmRegra').focus();
+				return false;
+			}	
+		});
+		
+		$('#sit2','#frmRegra').unbind('keypress').bind('keypress', function(e) {
 
 			if ( divError.css('display') == 'block' ) { return false; }
 
@@ -424,7 +498,12 @@ function formataRegra(){
 			if ( divError.css('display') == 'block' ) { return false; }
 
 			if ( e.keyCode == 13 || e.keyCode == 9 ) {	
+				if(cPcliqdez.is(':visible')){
 				cPcliqdez.focus();
+				}
+				else{
+					$('#btSalvar','#divBotoes').click();
+				}
 				return false;
 			}	
 		});
@@ -440,6 +519,30 @@ function formataRegra(){
 		});
 		
 		cQtdialiq.unbind('keypress').bind('keypress', function(e) {
+
+			if ( divError.css('display') == 'block' ) { return false; }
+
+			if ( e.keyCode == 13 || e.keyCode == 9 ) {	
+				if(cQtcarpag.length>0){
+					cQtcarpag.focus();
+				}
+				else{
+				$('#btSalvar','#divBotoes').click();
+				}
+				return false;
+			}	
+		});
+
+		cQtcarpag.unbind('keypress').bind('keypress', function(e) {
+
+			if ( divError.css('display') == 'block' ) { return false; }
+
+			if ( e.keyCode == 13 || e.keyCode == 9 ) {	
+				cQtaltlim.focus();
+				return false;
+			}	
+		});
+		cQtaltlim.unbind('keypress').bind('keypress', function(e) {
 
 			if ( divError.css('display') == 'block' ) { return false; }
 
@@ -468,6 +571,9 @@ function controlaCampos(op, tplimite) {
 			$('#qtmaxren','#frmRegra').habilitaCampo();
 			$('#qtdiaatr','#frmRegra').habilitaCampo();
 			$('#qtatracc','#frmRegra').habilitaCampo();			
+            $('#qtmeslic', '#frmRegra').habilitaCampo(); //Diego Simas (AMcom)
+			$('#cnauinad', '#frmRegra').habilitaCampo();
+			$('#qtdiatin', '#frmRegra').habilitaCampo();
 			$("input[type=checkbox][name='dssitdop']",'#frmRegra').habilitaCampo();
 			$("input[type=checkbox][name='dstipcta']",'#frmRegra').habilitaCampo();
 			$("input[type=checkbox][name='dsriscop']",'#frmRegra').habilitaCampo();
@@ -475,8 +581,10 @@ function controlaCampos(op, tplimite) {
 			$('#nrrevcad','#frmRegra').habilitaCampo();
 			$('#pcliqdez','#frmRegra').habilitaCampo();
 			$('#qtdialiq','#frmRegra').habilitaCampo();
+			$('#qtcarpag','#frmRegra').habilitaCampo();
+			$('#qtaltlim','#frmRegra').habilitaCampo();
 			$('#vlmaxren','#frmRegra').focus();
-			trocaBotao('showConfirmacao(\'Confirma a operação?\',\'Confirma&ccedil;&atilde;o - Ayllos\',\'alteraRegra();\',\'btnVoltar();\',\'sim.gif\',\'nao.gif\')','btnVoltar()');
+			trocaBotao('showConfirmacao(\'Confirma a opera&ccedil;&atilde;o?\',\'Confirma&ccedil;&atilde;o - Ayllos\',\'alteraRegra();\',\'btnVoltar();\',\'sim.gif\',\'nao.gif\')','btnVoltar()');
 		break;
 		
 		default:
@@ -485,8 +593,11 @@ function controlaCampos(op, tplimite) {
 		break;		
 	}
 	
-	if (tplimite == 1)
+    if (tplimite == 1) {
 		$('.cmpstlim','#frmRegra').css({'display':'none'});
+    } else {
+        $('.cmpsLimCred', '#frmRegra').css({ 'display': 'none' });
+    }
 	
 	return false;	
 }
@@ -581,6 +692,9 @@ function alteraRegra() {
     var inpessoa = $('#inpessoa','#frmCab').val();
 	var vlmaxren = $('#vlmaxren','#frmRegra').val();
 	var qtdiaren = $('#qtdiaren','#frmRegra').val();
+	var qtmeslic = $('#qtmeslic', '#frmRegra').val(); //Diego Simas (AMcom)
+	var cnauinad = $('#cnauinad', '#frmRegra').val();
+	var qtdiatin = $('#qtdiatin', '#frmRegra').val();
 	var qtmaxren = $('#qtmaxren','#frmRegra').val();
 	var qtdiaatr = $('#qtdiaatr','#frmRegra').val();
 	var qtatracc = $('#qtatracc','#frmRegra').val();
@@ -588,6 +702,8 @@ function alteraRegra() {
 	var nrrevcad = $('#nrrevcad','#frmRegra').val();
 	var pcliqdez = $('#pcliqdez','#frmRegra').val();
 	var qtdialiq = $('#qtdialiq','#frmRegra').val();
+	var qtcarpag = $('#qtcarpag','#frmRegra').val();
+	var qtaltlim = $('#qtaltlim','#frmRegra').val();
 	
 	var dssitdop = $("input[type=checkbox][name='dssitdop']:checked");
     var vlsitdop = '';
@@ -611,6 +727,9 @@ function alteraRegra() {
 			inpessoa: inpessoa,
 			vlmaxren: vlmaxren,
 			qtdiaren: qtdiaren,
+			qtmeslic: qtmeslic,//Diego Simas (AMcom)
+			cnauinad: cnauinad,
+			qtdiatin: qtdiatin,
 			qtmaxren: qtmaxren,
 			qtdiaatr: qtdiaatr,
 			qtatracc: qtatracc,
@@ -620,6 +739,8 @@ function alteraRegra() {
 			qtdialiq: qtdialiq,
 			vlsitdop: vlsitdop,			
 			vlriscop: vlriscop,
+			qtcarpag: qtcarpag,
+			qtaltlim: qtaltlim,
 			redirect: "script_ajax"
 		},
 		error: function(objAjax,responseError,objExcept) {
@@ -636,4 +757,23 @@ function alteraRegra() {
 			}
 		}
 	});
+}
+
+function defineCamposCancAuto() {
+	if ($('#frmRegra #cnauinad').val() == '1'){
+		$("#frmRegra .cancelautoinad").show();
+	} else {
+		$("#frmRegra .cancelautoinad").hide();
+	}
+}
+
+function validaDiasAtraso() {
+	var qtdiatin = $('#frmRegra #qtdiatin').val();
+
+	if (parseInt(qtdiatin) <= 0 || qtdiatin.length == 0){
+		showError('error','Quantidade de dias N&atilde;o pode ser zero','Alerta - Ayllos','unblockBackground();');
+
+		$('#frmRegra #cnauinad').val('0');
+		$("#frmRegra .cancelautoinad").hide();
+	}
 }

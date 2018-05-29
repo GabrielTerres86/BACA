@@ -752,9 +752,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_INTEAS IS
         RAISE vr_prox_reg;
       END IF;
         
-      IF pr_cdsitdct IN (1, -- Em uso 
-                         3, -- Em prejuízo
-                         5  -- Em uso impeditivo
+      IF pr_cdsitdct IN (1, -- Operante 
+                         2, -- Em prejuízo
+                         3, -- Encerrada pela Cooperativa
+                         5  -- Inoperante
                          )THEN
         vr_idsitcnt := 'A';
       ELSIF pr_cdsitdct = 4 THEN -- Encerrada por demissão
