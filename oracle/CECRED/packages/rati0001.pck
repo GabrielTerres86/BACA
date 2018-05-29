@@ -645,6 +645,16 @@ CREATE OR REPLACE PACKAGE CECRED.rati0001 is
                                        ,pr_nrctrato     IN crapnrc.nrctrrat%TYPE --> Número do contrato de Rating
                                        ,pr_dscritic    OUT VARCHAR2);            --> Descrição de erro						   
                                     
+
+    
+  FUNCTION fn_valor_operacao(pr_cdcooper IN crapcop.cdcooper%TYPE --> Cooperativa conectada
+                            ,pr_nrdconta IN crapass.nrdconta%TYPE --> Conta do associado
+                            ,pr_tpctrato IN crapnrc.tpctrrat%TYPE --> Tipo do Rating
+                            ,pr_nrctrato IN crapnrc.nrctrrat%TYPE --> Número do contrato de Rating
+                            ) RETURN NUMBER;
+
+
+   FUNCTION fn_busca_descricao_situacao (pr_insitrat IN INTEGER) RETURN VARCHAR2;
 END RATI0001;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS
