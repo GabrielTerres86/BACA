@@ -1630,6 +1630,7 @@ PROCEDURE grava_dados_conta PRIVATE:
                                                 ,INPUT ""
                                                 ,INPUT crawepr.idfiniof
                                                 ,INPUT ""
+                                                ,INPUT "S" /* Gravar valor IOF parcelas no cadastro de Parcelas */
                                                 ,OUTPUT 0
                                                 ,OUTPUT 0
                                                 ,OUTPUT 0
@@ -1952,6 +1953,7 @@ PROCEDURE calcula_iof:
                                                  INPUT aux_dscatbem,      /* Bens em garantia */
                                                  INPUT (IF AVAILABLE crawepr THEN crawepr.idfiniof ELSE 0),  /* Indicador de financiamento de IOF e tarifa */
                                                  INPUT "0", /* passar assim para nao gerar erro no Oracle */
+                                                 INPUT "N",
                                                 OUTPUT 0, 
                                                 OUTPUT 0,
                                                 OUTPUT 0,
@@ -2057,6 +2059,32 @@ PROCEDURE calcula_parcelas_emprestimo:
             RETURN "NOK".
         END.
 
+    /* Buscar dados do associado e informações do pre aprovado */
+    FOR crapass FIELDS (inpessoa)
+                WHERE crapass.cdcooper = par_cdcooper 
+                  AND crapass.nrdconta = par_nrdconta 
+                      NO-LOCK: END.
+    
+    FOR crappre FIELDS(cdfinemp) 
+                WHERE crappre.cdcooper = par_cdcooper 
+                  AND crappre.inpessoa = crapass.inpessoa
+                      NO-LOCK: END.
+
+    IF NOT AVAIL crappre THEN
+       DO:
+           ASSIGN aux_cdcritic = 0
+                  aux_dscritic = "Parametros pre-aprovado nao cadastrado".
+        
+           RUN gera_erro (INPUT par_cdcooper,
+                          INPUT par_cdagenci,
+                          INPUT par_nrdcaixa,
+                          INPUT 1,
+                          INPUT aux_cdcritic,
+                          INPUT-OUTPUT aux_dscritic).
+           RETURN "NOK".
+       END.
+
+    /* Buscar pre-aprovado da conta */
     FOR crapcpa FIELDS(vlcalpar cdlcremp) WHERE crapcpa.cdcooper = par_cdcooper AND
                                        crapcpa.nrdconta = par_nrdconta AND
                                        crapcpa.iddcarga = aux_idcarga
@@ -2075,6 +2103,7 @@ PROCEDURE calcula_parcelas_emprestimo:
            RETURN "NOK".
        END.
 
+    /* Buscar linha de credito */
     FOR craplcr FIELDS(cdlcremp nrinipre nrfimpre)
                 WHERE craplcr.cdcooper = par_cdcooper     AND
                       craplcr.cdlcremp = crapcpa.cdlcremp
@@ -2114,6 +2143,7 @@ PROCEDURE calcula_parcelas_emprestimo:
                                               INPUT FALSE, /* par_flgerlog */
                                               INPUT 0,     /* par_nrctremp */
                                               INPUT crapcpa.cdlcremp,
+                                              INPUT crappre.cdfinemp,
                                               INPUT par_vlemprst,
                                               INPUT aux_qtpreemp,
                                               INPUT par_dtmvtolt,
@@ -2162,7 +2192,7 @@ PROCEDURE calcula_parcelas_emprestimo:
 
     RETURN "OK".
 
-END PROCEDURE. /* END calcula_emprestimo */
+END PROCEDURE. /* END calcula_parcelas_emprestimo */
 
 PROCEDURE calcula_taxa_emprestimo:
 

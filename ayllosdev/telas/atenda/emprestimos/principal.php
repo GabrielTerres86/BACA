@@ -597,6 +597,7 @@
 		$xml .= "		<flgerlog>true</flgerlog>";
 		$xml .= "		<nrctremp>0</nrctremp>";
 		$xml .= "		<cdlcremp>".$cdlcremp."</cdlcremp>";
+		$xml .= "		<cdfinemp>".$cdfinemp."</cdfinemp>";
 		$xml .= "		<vlemprst>".$vlempres."</vlemprst>";
 		$xml .= "		<qtparepr>".$qtparepr."</qtparepr>";
 		$xml .= "		<dtlibera>".$dtlibera."</dtlibera>";
@@ -916,6 +917,7 @@
 		$xml .= "   <dscatbem>".$dscatbem."</dscatbem>";
 		$xml .= "   <idfiniof>".$idfiniof."</idfiniof>";
 		$xml .= "   <dsctrliq>".$dsctrliq."</dsctrliq>";
+		$xml .= "   <idgravar>N</idgravar>";
 		$xml .= " </Dados>";
 		$xml .= "</Root>";
 

@@ -45,20 +45,6 @@ CREATE OR REPLACE PACKAGE CECRED.CCET0001 IS
                         ,pr_cdcritic      OUT INTEGER
                         ,pr_dscritic      OUT VARCHAR2);
 
-  -- Calcular IOF
-  PROCEDURE pc_calcula_iof(pr_cdcooper  IN crapcop.cdcooper%TYPE -- Cooperativa
-                          ,pr_dtmvtolt  IN crapdat.dtmvtolt%TYPE -- Data Movimento
-                          ,pr_vlemprst  IN crapepr.vlemprst%TYPE -- Valor emprestado
-                          ,pr_cdprogra  IN VARCHAR2              -- Programa chamador
-                          ,pr_cdlcremp  IN craplim.cddlinha%TYPE -- Linha de credio
-                          ,pr_inpessoa  IN crapass.inpessoa%TYPE
-                          ,pr_dtinivig  IN craplim.dtinivig%TYPE
-                          ,pr_qtdiavig  IN NUMBER
-                          ,pr_vllanmto OUT craplcm.vllanmto%TYPE -- Valor calculado com o iof
-                          ,pr_txccdiof OUT NUMBER -- Taxa do IOF
-                          ,pr_cdcritic OUT INTEGER
-                          ,pr_dscritic OUT VARCHAR2);
-
   -- CAlcular o valor da tarifa de cadastro
   PROCEDURE pc_calcula_tarifa_cadastro(pr_cdcooper  IN crapcop.cdcooper%TYPE -- Cooperativa
                                       ,pr_dtmvtolt  IN crapdat.dtmvtolt%TYPE -- Data Movimento
@@ -804,7 +790,6 @@ create or replace package body cecred.CCET0001 is
         END LOOP;
        
         vjuranox_fin := ROUND(((POWER((1 + vr_juros_fin),12)-1) * 100),5);
-        vr_juros_fin     := ROUND((vr_juros_fin * 100),5);
         vr_vlr_prestacao := ROUND(vr_vlr_prestacao,2);
         vr_vlr_financiado := ROUND(vr_vlr_financiado,2);
 
@@ -903,124 +888,6 @@ create or replace package body cecred.CCET0001 is
     END;
   END pc_juros_cet;  
 
-  -- Calcular IOF
-  PROCEDURE pc_calcula_iof(pr_cdcooper  IN crapcop.cdcooper%TYPE -- Cooperativa
-                          ,pr_dtmvtolt  IN crapdat.dtmvtolt%TYPE -- Data Movimento
-                          ,pr_vlemprst  IN crapepr.vlemprst%TYPE -- Valor emprestado
-                          ,pr_cdprogra  IN VARCHAR2              -- Programa chamador
-                          ,pr_cdlcremp  IN craplim.cddlinha%TYPE -- Linha de credio
-                          ,pr_inpessoa  IN crapass.inpessoa%TYPE
-                          ,pr_dtinivig  IN craplim.dtinivig%TYPE
-                          ,pr_qtdiavig  IN NUMBER
-                          ,pr_vllanmto OUT craplcm.vllanmto%TYPE -- Valor calculado com o iof
-                          ,pr_txccdiof OUT NUMBER -- Taxa do IOF
-                          ,pr_cdcritic OUT INTEGER
-                          ,pr_dscritic OUT VARCHAR2) IS 
-  BEGIN
-  /* .............................................................................
-
-  Programa: pc_calcula_iof                 
-  Sistema : Conta-Corrente - Cooperativa de Credito
-  Sigla   : CRED
-  Autor   : Lucas Ranghetti
-  Data    : Julho/2014                        Ultima atualizacao: 00/00/0000
-
-  Dados referentes ao programa:
-
-  Frequencia: Diaria - Sempre que for chamada
-  Objetivo  : Rotina para calcular o IOF
-
-  Alteracoes:                  
-  ............................................................................. */
-    DECLARE
-    
-      -- VARIAVEIS
-      vr_txccdiof NUMBER;
-      vr_dstextab VARCHAR2(500);
-      
-      -- Busca os dados da linha de credito
-      CURSOR cr_craplcr IS
-        SELECT flgtaiof 
-          FROM craplcr 
-         WHERE cdcooper = pr_cdcooper
-           AND cdlcremp = pr_cdlcremp;
-      rw_craplcr cr_craplcr%ROWTYPE;
-      
-      vr_qtdiavig NUMBER := 0;
-      vr_vliofcal NUMBER := 0;
-      vr_periofop NUMBER := 0;
-      
-    BEGIN
-      -- Busca o indicador de IOF na linha de credito
-      OPEN cr_craplcr;
-      FETCH cr_craplcr INTO rw_craplcr;
-      CLOSE cr_craplcr;  
-    
-      -- Se o indicador de IOF for isento, entao nao deve-se calcular
-      IF nvl(rw_craplcr.flgtaiof,1) = 0 THEN
-        vr_txccdiof := 0;
-      ELSE
-        -- Buscar taxa de iof
-        -- Buscar dados de CPMF na tabela de parametros
-        vr_dstextab := TABE0001.fn_busca_dstextab(pr_cdcooper => pr_cdcooper
-                                                 ,pr_nmsistem => 'CRED'
-                                                 ,pr_tptabela => 'USUARI'
-                                                 ,pr_cdempres => 11
-                                                 ,pr_cdacesso => 'VLIOFOPFIN'
-                                                 ,pr_tpregist => 1);
-
-        IF vr_dstextab IS NOT NULL THEN
-          -- Povoar as informacões conforme as regras da versão anterior
-          IF pr_dtmvtolt BETWEEN  TO_DATE(SUBSTR(vr_dstextab,1,10),'DD/MM/YYYY') AND 
-                                  TO_DATE(SUBSTR(vr_dstextab,12,10),'DD/MM/YYYY') THEN
-            vr_txccdiof := SUBSTR(vr_dstextab,23,14); --GENE0002.fn_char_para_number(SUBSTR(vr_dstextab,23,14));
-          ELSE
-            vr_txccdiof := 0;
-          END IF;
-        ELSE
-          -- Montar retorno de erro
-          pr_cdcritic := 915;
-          pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => 915);
-          RETURN;
-        END IF;
-
-      END IF;
-
-      -- Calcula o valor emprestado com a taxa de IOF
-      pr_vllanmto := ROUND(pr_vlemprst * vr_txccdiof,2);
-     
-      IF pr_dtinivig >= to_date('03/04/2017','DD/MM/YYYY') AND pr_vllanmto > 0 THEN
-      
-        IF pr_qtdiavig > 365 THEN
-          vr_qtdiavig := 365;
-        ELSE
-          vr_qtdiavig := pr_qtdiavig;
-        END IF;  
-            
-        IF pr_inpessoa = 1 THEN
-          -- IOF Operacacao PF
-          vr_periofop := vr_qtdiavig * 0.0082;
-        ELSE  
-          -- IOF Operacacao PJ
-          vr_periofop := vr_qtdiavig * 0.0041;
-        END IF;  
-
-        -- Calculo IOF Adicional
-        vr_vliofcal := ROUND((pr_vlemprst * vr_periofop) / 100,2); 
-        
-        pr_vllanmto := pr_vllanmto + vr_vliofcal;  
-   
-      END IF;      
-     
-    -- Caso ocorra erro
-    EXCEPTION
-      WHEN OTHERS THEN
-        pr_cdcritic := 0;
-        pr_dscritic := 'Erro pc_calcula_iof : ' || SQLERRM;
-        
-    END; 
-  END pc_calcula_iof;
-  
   -- Calcular a tarifa de cadastro 
   PROCEDURE pc_calcula_tarifa_cadastro(pr_cdcooper  IN crapcop.cdcooper%TYPE -- Cooperativa
                                       ,pr_dtmvtolt  IN crapdat.dtmvtolt%TYPE -- Data Movimento
@@ -2118,7 +1985,7 @@ create or replace package body cecred.CCET0001 is
         END LOOP;
          
         -- Buscar iof
-        EMPR0001.pc_calcula_iof_epr(pr_cdcooper        => pr_cdcooper
+        TIOF0001.pc_calcula_iof_epr(pr_cdcooper        => pr_cdcooper
                                    ,pr_nrdconta        => pr_nrdconta
                                    ,pr_nrctremp        => pr_nrctremp
                                    ,pr_dtmvtolt        => pr_dtmvtolt
@@ -2137,6 +2004,7 @@ create or replace package body cecred.CCET0001 is
                                    ,pr_dscatbem        => vr_dscatbem
                                    ,pr_idfiniof        => rw_dados.idfiniof
                                    ,pr_dsctrliq        => vr_dsctrliq
+                                   ,pr_idgravar        => 'N'
                                    ,pr_vlpreclc        => vr_vlpreclc
                                    ,pr_vliofpri        => vr_vliofpri
                                    ,pr_vliofadi        => vr_vliofadi
@@ -2808,7 +2676,7 @@ create or replace package body cecred.CCET0001 is
   Sistema : Conta-Corrente - Cooperativa de Credito
   Sigla   : CRED
   Autor   : Lucas R.
-  Data    : Setembro/2014                        Ultima atualizacao: 25/08/2017
+  Data    : Setembro/2014                        Ultima atualizacao: 12/04/2018
 
   Dados referentes ao programa:
 
@@ -2996,18 +2864,6 @@ create or replace package body cecred.CCET0001 is
       FETCH cr_dados INTO rw_dados;
       CLOSE cr_dados;
       
-      --Concatena as liquidacoes
-      pc_concatena_liquid(rw_dados.nrctrliq##1);
-      pc_concatena_liquid(rw_dados.nrctrliq##2);
-      pc_concatena_liquid(rw_dados.nrctrliq##3);
-      pc_concatena_liquid(rw_dados.nrctrliq##4);
-      pc_concatena_liquid(rw_dados.nrctrliq##5);
-      pc_concatena_liquid(rw_dados.nrctrliq##6);
-      pc_concatena_liquid(rw_dados.nrctrliq##7);
-      pc_concatena_liquid(rw_dados.nrctrliq##8);
-      pc_concatena_liquid(rw_dados.nrctrliq##9);
-      pc_concatena_liquid(rw_dados.nrctrliq##10);
-      
       -- Busca quantidade de dias da carencia
       EMPR0011.pc_busca_qtd_dias_carencia(pr_idcarencia => rw_dados.idcarenc
                                          ,pr_qtddias    => vr_qtdias_carencia
@@ -3017,9 +2873,9 @@ create or replace package body cecred.CCET0001 is
       vr_vlpreemp := pr_vlpreemp;
       
       -- Calcular o IOF     
-      EMPR0001.pc_calcula_iof_epr(pr_cdcooper        => pr_cdcooper
+      TIOF0001.pc_calcula_iof_epr(pr_cdcooper        => pr_cdcooper
                                  ,pr_nrdconta        => pr_nrdconta
-								                 ,pr_nrctremp        => pr_nrctremp
+                                 ,pr_nrctremp        => pr_nrctremp
                                  ,pr_dtmvtolt        => pr_dtmvtolt
                                  ,pr_inpessoa        => pr_inpessoa
                                  ,pr_cdfinemp        => rw_dados.cdfinemp
@@ -3035,6 +2891,7 @@ create or replace package body cecred.CCET0001 is
                                  ,pr_dscatbem        => pr_dscatbem
                                  ,pr_idfiniof        => pr_idfiniof
                                  ,pr_dsctrliq        => vr_dsctrliq
+                                 ,pr_idgravar        => 'N'
                                  ,pr_vlpreclc        => vr_vlpreclc
                                  ,pr_valoriof        => vr_vlrdoiof
                                  ,pr_vliofpri        => vr_vliofpri

@@ -46,7 +46,7 @@
     
     Programa: sistema/generico/procedures/b1wgen0084a.p
     Autor   : Gabriel
-    Data    : Setembro/2011               ultima Atualizacao: 27/11/2015
+    Data    : Setembro/2011               ultima Atualizacao: 10/05/2018
      
     Dados referentes ao programa:
    
@@ -167,6 +167,11 @@
                 27/11/2015 - Feito ajuste no tratamento para pagamento de boletos
                              de emprestimos. (Reinert)
 
+                31/10/2016 - Validação dentro do busca_registro_parcela para identificar
+				             parcelas ja liquidadas (AJFink - SD545719)
+
+                10/05/2018 - P410 - Ajustes IOF (Marcos-Envolti)                     
+
 ............................................................................. */
 
 { sistema/generico/includes/var_internet.i }
@@ -174,6 +179,7 @@
 { sistema/generico/includes/gera_log.i }
 { sistema/generico/includes/b1wgen0084tt.i }
 { sistema/generico/includes/b1wgen0084att.i }
+{ sistema/generico/includes/var_oracle.i }
 
 
 DEF STREAM str_1.
@@ -322,6 +328,8 @@ PROCEDURE busca_pagamentos_parcelas:
     DEF VAR aux_vlpagsld         AS DECI                            NO-UNDO.
     DEF VAR aux_vlsderel         AS DECI                            NO-UNDO.
     DEF VAR aux_vlsdvctr         AS DECI                            NO-UNDO.
+    DEF VAR aux_qtdiaiof         AS INTE                            NO-UNDO.
+
 
     DEF BUFFER crabhis_2 FOR craphis.
 
@@ -411,6 +419,7 @@ PROCEDURE busca_pagamentos_parcelas:
                                          OUTPUT tt-pagamentos-parcelas.vlmtapar,
                                          OUTPUT tt-pagamentos-parcelas.vljinpar,
                                          OUTPUT tt-pagamentos-parcelas.vlmrapar,
+                                         OUTPUT tt-pagamentos-parcelas.vliofcpl,
                                          OUTPUT tt-pagamentos-parcelas.vljinp59,
                                          OUTPUT tt-pagamentos-parcelas.vljinp60).
 
@@ -447,19 +456,81 @@ PROCEDURE busca_pagamentos_parcelas:
            IF   NOT par_dtmvtolt <= crawepr.dtlibera   THEN /* Se liberado */
                 DO:
                            /* Saldo devedor */
-                    ASSIGN tt-pagamentos-parcelas.vlsdvpar = crappep.vlsdvpar
+                    ASSIGN tt-pagamentos-parcelas.vlsdvpar = crappep.vlsdvpar.
+                
+                  /* \* Projeto 410 - Novo IOF *\
+                   \* Bens do contrato: 
+                        Faz o order by dscatbem pois "CASA" e "APARTAMENTO" reduzem as 3 aliquotas de IOF (principal, adicional e complementar) a zero.
+                        Já "MOTO" reduz apenas as alíquotas de IOF principal e complementar..
+                        Dessa forma, se tiver um bem que seja CASA ou APARTAMENTO, não precisa mais verificar os outros bens..*\
+
+                   ASSIGN aux_dscatbem = ?.
+                   FOR EACH crapbpr WHERE crapbpr.cdcooper = par_cdcooper 
+                                            AND crapbpr.nrdconta = par_nrdconta
+                                            AND crapbpr.nrctrpro = crappep.nrctremp
+                                            AND (crapbpr.dscatbem = "APARTAMENTO" OR 
+                                                 crapbpr.dscatbem = "CASA" OR 
+                                                 crapbpr.dscatbem = "MOTO") NO-LOCK BY crapbpr.dscatbem:
+                        ASSIGN aux_dscatbem = crapbpr.dscatbem.
+                        RETURN.
+                   END.
+
+                   ASSIGN aux_qtdiaiof = par_dtmvtolt - crappep.dtvencto.
+                   IF aux_qtdiaiof < 0 THEN
+                       ASSIGN aux_qtdiaiof = 0.
+                
+                   { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+                   RUN STORED-PROCEDURE pc_calcula_valor_iof_epr
+                   aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper     \* Código da cooperativa referente ao contrato de empréstimos *\
+                                                       ,INPUT par_nrdconta     \* Número da conta referente ao empréstimo *\
+                                                       ,INPUT crapepr.nrctremp \* Número do contrato de empréstimo *\
+                                                       ,INPUT tt-pagamentos-parcelas.vlsdvpar \*crapepr.vlsdeved*\     \* Valor do empréstimo para efeito de cálculo *\
+                                                       ,INPUT crapepr.vlemprst \* vltotope *\
+                                                       ,INPUT aux_dscatbem     \* Descrição da categoria do bem, valor default NULO  *\
+                                                       ,INPUT crapepr.cdlcremp     \* Linha de crédito do empréstimo *\
+                                                       ,INPUT crapepr.cdfinemp     \* Finalidade do crédito do empréstimo *\
+                                                       ,INPUT par_dtmvtolt     \* Data do movimento *\
+                                                       ,INPUT aux_qtdiaiof     \* Quantidade de dias em atraso *\
+                                                       ,OUTPUT 0               \* Valor do IOF principal *\
+                                                       ,OUTPUT 0               \* Valor do IOF adicional *\
+                                                       ,OUTPUT 0               \* Valor do IOF complementar *\
+                                                       ,OUTPUT 0               \* Valor da Taxa do IOF Principal *\
+                                                       ,OUTPUT 0               \* Possui imunidade tributária *\
+                                                       ,OUTPUT "").            \* Critica *\
+             
+                   \* Fechar o procedimento para buscarmos o resultado *\ 
+                   CLOSE STORED-PROC pc_calcula_valor_iof_epr
+
+                   aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+                   { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+        
+                   \* Se retornou erro *\
+                   ASSIGN aux_dscritic = ""
+                          aux_dscritic = pc_calcula_valor_iof_epr.pr_dscritic WHEN pc_calcula_valor_iof_epr.pr_dscritic <> ?.
+                   IF aux_dscritic <> "" THEN
+                     RETURN "NOK".
+                      
+                   \* Soma IOF complementar ao saldo, se tiver IOF complementar e não for imune *\
+                   ASSIGN tt-pagamentos-parcelas.vliofcpl = 0.
+                   IF pc_calcula_valor_iof_epr.pr_vliofcpl <> ? AND pc_calcula_valor_iof_epr.pr_flgimune <> ? AND pc_calcula_valor_iof_epr.pr_flgimune <= 0 THEN
+                     DO:
+                       ASSIGN tt-pagamentos-parcelas.vliofcpl = ROUND(DECI(pc_calcula_valor_iof_epr.pr_vliofcpl),2).
+                     END.*/
+					 
                 
                            /* Valor atual da parcela mais multa mais juros de mora */
-                           tt-pagamentos-parcelas.vlatrpag = 
+                   ASSIGN tt-pagamentos-parcelas.vlatrpag = 
                                       tt-pagamentos-parcelas.vlatupar + 
                                       tt-pagamentos-parcelas.vlmtapar + 
-                                      tt-pagamentos-parcelas.vlmrapar 
+                              tt-pagamentos-parcelas.vlmrapar +
+                              tt-pagamentos-parcelas.vliofcpl
                 
                            /* Saldo para relatorios */
-                           aux_vlsderel = aux_vlsderel + tt-pagamentos-parcelas.vlatupar
+                   aux_vlsderel = aux_vlsderel + tt-pagamentos-parcelas.vlatupar + tt-pagamentos-parcelas.vliofcpl
                 
                            /* Saldo devedor total do emprestimo */
-                           aux_vlsdeved = aux_vlsdeved + tt-pagamentos-parcelas.vlatrpag.
+                   aux_vlsdeved = aux_vlsdeved + tt-pagamentos-parcelas.vlatrpag + tt-pagamentos-parcelas.vliofcpl.
+                   
                 END.
        END.
 
@@ -613,9 +684,11 @@ PROCEDURE calcula_atraso_parcela:
     DEF OUTPUT PARAM par_vlmtapar AS DECI                           NO-UNDO.
     DEF OUTPUT PARAM par_vljinpar AS DECI                           NO-UNDO.
     DEF OUTPUT PARAM par_vlmrapar AS DECI                           NO-UNDO.
+    DEF OUTPUT PARAM par_vliofcpl AS DECI                           NO-UNDO.    
     DEF OUTPUT PARAM par_vljinp59 AS DECI                           NO-UNDO.
     DEF OUTPUT PARAM par_vljinp60 AS DECI                           NO-UNDO.
 
+    
     DEF          VAR aux_percmult AS DECI                           NO-UNDO.
     DEF          VAR aux_vlsldpar AS DECI                           NO-UNDO.
     DEF          VAR aux_qtdiasld AS DECI                           NO-UNDO.
@@ -631,6 +704,10 @@ PROCEDURE calcula_atraso_parcela:
     DEF          VAR aux_anovtolt AS INTE                           NO-UNDO.
     DEF          VAR aux_txdiaria AS DECI DECIMALS 10               NO-UNDO.
     DEF          VAR aux_conthist AS INTE                           NO-UNDO.
+    DEF		       VAR aux_dscritic AS CHAR                           NO-UNDO. 
+    DEF		       VAR aux_vlbasiof AS DECI                           NO-UNDO.
+    DEF          VAR aux_vliofcpg AS DECI                           NO-UNDO.
+    DEF          VAR aux_qtdiaiof AS INTEGER                        NO-UNDO.
 
     DEF BUFFER crabpep    FOR crappep.
     DEF BUFFER crabepr    FOR crapepr.
@@ -723,7 +800,8 @@ PROCEDURE calcula_atraso_parcela:
               
        ASSIGN aux_diavtolt = DAY(par_dtmvtolt)     
               aux_mesvtolt = MONTH(par_dtmvtolt)   
-              aux_anovtolt = YEAR(par_dtmvtolt).    
+              aux_anovtolt = YEAR(par_dtmvtolt)
+              aux_qtdiaiof = par_dtmvtolt - aux_dtmvtolt.    
 
        /* Calcular quantidade de dias para o saldo devedor */
        RUN sistema/generico/procedures/b1wgen0084.p PERSISTENT SET h-b1wgen0084.
@@ -804,41 +882,6 @@ PROCEDURE calcula_atraso_parcela:
                                         INPUT aux_qtdiasld,
                                         OUTPUT par_vljinpar).
        
-       /* calculado na include crps310.i */
-       /*
-       IF   aux_qtdiasld > 59   THEN
-            DO:
-                /* Considerando valor da parcela ate 59 dias */
-                RUN calcula_juros_normais_total (INPUT aux_vlsldpar,
-                                                 INPUT crabepr.txmensal,
-                                                 INPUT 59,
-                                                 OUTPUT par_vljinp59).
-                
-                /* Comentado por Irlan. Nao eh necessario calcular, basta subtrair
-                   par_vljinpar - par_vljinpar */
-                
-                /* Considerando valor da parcela retirando os 59 dias */
-
-                /*
-                RUN calcula_juros_normais_total (INPUT aux_vlsldpar + par_vljinp59,
-                                                 INPUT crabepr.txmensal,
-                                                 INPUT aux_qtdiasld - 59,
-                                                 OUTPUT par_vljinp60).
-                */
-
-                par_vljinp60 = par_vljinpar - par_vljinp59.
-
-            END.
-       
-       ELSE
-            DO:
-                /* Considerando valor da parcela ate 59 dias */
-                RUN calcula_juros_normais_total (INPUT aux_vlsldpar,
-                                                 INPUT crabepr.txmensal,
-                                                 INPUT aux_qtdiasld,
-                                                 OUTPUT par_vljinp59).
-            END.
-       */
        /* Valor atual parcela */
        ASSIGN par_vlatupar = crabpep.vlsdvpar + par_vljinpar.
 
@@ -858,16 +901,68 @@ PROCEDURE calcula_atraso_parcela:
                    
                    par_vlmrapar = crabpep.vlsdvsji * aux_txdiaria * aux_qtdiamor.
                                    
+                    /* Calcular IOF por atraso */	   
+                    /* Projeto 410 - Novo IOF */
+
+                   /* calcula valor base do IOF de acordo com valor principal (parcela - juros) */
+                   ASSIGN aux_vlbasiof = crabpep.vlsdvsji / (EXP((1 + crabepr.txmensal / 100 ), 
+                                                                    ( crabepr.qtpreemp -  crabpep.nrparepr + 1))).                   
+                   
+                   { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+                   RUN STORED-PROCEDURE pc_calcula_valor_iof_epr
+                   aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper     /* Código da cooperativa referente ao contrato de empréstimos */
+                                                       ,INPUT par_nrdconta     /* Número da conta referente ao empréstimo */
+                                                       ,INPUT par_nrctremp     /* Número do contrato de empréstimo */
+                                                       ,INPUT aux_vlbasiof     /*crapepr.vlsdeved*/     /* Valor do empréstimo para efeito de cálculo */
+                                                       ,INPUT crabepr.vlemprst /* vltotope */
+                                                       ,INPUT ""               /* Descrição da categoria do bem, valor default NULO  */
+                                                       ,INPUT crabepr.cdlcremp     /* Linha de crédito do empréstimo */
+                                                       ,INPUT crabepr.cdfinemp     /* Finalidade do crédito do empréstimo */
+                                                       ,INPUT par_dtmvtolt     /* Data do movimento */
+                                                       ,INPUT aux_qtdiaiof     /* Quantidade de dias em atraso */
+                                                       ,OUTPUT 0               /* Valor do IOF principal */
+                                                       ,OUTPUT 0               /* Valor do IOF adicional */
+                                                       ,OUTPUT 0               /* Valor do IOF complementar */
+                                                       ,OUTPUT 0               /* Valor da Taxa do IOF Principal */
+                                                       ,OUTPUT 0               /* Possui imunidade tributária */
+                                                       ,OUTPUT "").            /* Critica */
+             
+                   /* Fechar o procedimento para buscarmos o resultado */ 
+                   CLOSE STORED-PROC pc_calcula_valor_iof_epr
+
+                   aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+                   { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+        
+                   /* Se retornou erro */
+                   ASSIGN aux_dscritic = ""
+                          aux_dscritic = pc_calcula_valor_iof_epr.pr_dscritic WHEN pc_calcula_valor_iof_epr.pr_dscritic <> ?.
+                          
+
+                   IF aux_dscritic <> "" THEN
+                     UNDO Calcula , LEAVE Calcula.            
+/*                     RETURN "NOK".*/
+                     
+                     
+                   /* Soma IOF complementar ao saldo, se tiver IOF complementar e não for imune */
+                   ASSIGN par_vliofcpl = 0.
+                   IF pc_calcula_valor_iof_epr.pr_vliofcpl <> ? 
+				           AND pc_calcula_valor_iof_epr.pr_flgimune <> ? 
+				           AND pc_calcula_valor_iof_epr.pr_flgimune <= 0 THEN
+                     DO:
+                       ASSIGN par_vliofcpl = ROUND(DECI(pc_calcula_valor_iof_epr.pr_vliofcpl),2).
+                     END.
+                     
        /* Valor a pagar - multa e juros de mora  */
        ASSIGN  par_vlpagsld = IF   par_vlpagpar <> 0   THEN
                                    par_vlpagpar - (ROUND(par_vlmtapar,2) + 
-                                                   ROUND(par_vlmrapar,2))
+                                                                 ROUND(par_vlmrapar,2) +
+                                                                 ROUND(par_vliofcpl,2))
                               ELSE 
                                    par_vlatupar .
                   
        ASSIGN aux_flgtrans = TRUE.
 
-    END.
+    END. /* Calcula */
 
     IF   NOT aux_flgtrans  THEN
          DO:
@@ -1222,6 +1317,7 @@ PROCEDURE gera_pagamentos_parcelas:
              RETURN "NOK".
         END.
 
+        
     BLOCO_TRANSACAO:
     DO TRANSACTION ON ERROR UNDO, LEAVE:
 
@@ -1447,7 +1543,7 @@ PROCEDURE gera_pagamentos_parcelas:
             IF   crappep.inliquid = 1 /* liquidada */    THEN
                  DO:
                      ASSIGN aux_cdcritic = 0
-                            aux_dscritic = "Parcela ja liquidada.".
+                            aux_dscritic = "Parcela ja liquidada!".
 
                      UNDO BLOCO_TRANSACAO, LEAVE BLOCO_TRANSACAO.                    
                  END.
@@ -1564,7 +1660,6 @@ PROCEDURE gera_pagamentos_parcelas:
                                          INPUT STRING(tt-pagamentos-parcelas.vlpagpar)).
             END.
         END.
-    
 END PROCEDURE. /* gera pagamentos parcelas */
 
 PROCEDURE efetiva_pagamento_normal_parcela_craplem:
@@ -2079,6 +2174,9 @@ PROCEDURE efetiva_pagamento_atrasado_parcela_craplem:
     DEF OUTPUT PARAM par_loteatra AS INTE                           NO-UNDO.
     DEF OUTPUT PARAM par_lotemult AS INTE                           NO-UNDO.
     DEF OUTPUT PARAM par_lotepaga AS INTE                           NO-UNDO.
+    DEF OUTPUT PARAM par_vliofcpl AS DECI                           NO-UNDO.
+    DEF OUTPUT PARAM par_cdhisiof AS INTE                           NO-UNDO.
+    DEF OUTPUT PARAM par_loteiof  AS INTE                           NO-UNDO.
 
     DEF OUTPUT PARAM TABLE FOR tt-erro.
     
@@ -2086,6 +2184,7 @@ PROCEDURE efetiva_pagamento_atrasado_parcela_craplem:
     DEF          VAR aux_vlmtapar AS DECI                           NO-UNDO.
     DEF          VAR aux_vljinpar AS DECI                           NO-UNDO.
     DEF          VAR aux_vlmrapar AS DECI                           NO-UNDO.
+	  DEF          VAR aux_vliofcpl AS DECI                           NO-UNDO.
     DEF          VAR aux_vlpagpar AS DECI                           NO-UNDO.
     DEF          VAR aux_txdiaria AS DECI                           NO-UNDO.
     DEF          VAR aux_vljurmes AS DECI                           NO-UNDO.
@@ -2097,6 +2196,7 @@ PROCEDURE efetiva_pagamento_atrasado_parcela_craplem:
     DEF          VAR aux_anorefju AS INTE                           NO-UNDO.
     DEF          VAR aux_vlmuljur AS DECI                           NO-UNDO.
     DEF          VAR aux_flgtrans AS LOGI                           NO-UNDO.
+    DEF          VAR aux_nrseqdig AS INTE                           NO-UNDO.
     
 
     DEF          VAR h-b1wgen0134 AS HANDLE                         NO-UNDO.
@@ -2129,8 +2229,8 @@ PROCEDURE efetiva_pagamento_atrasado_parcela_craplem:
                                           OUTPUT aux_vlatupar,
                                           OUTPUT aux_vlmtapar,
                                           OUTPUT aux_vljinpar,
-                                          OUTPUT aux_vlmrapar).
-
+                                          OUTPUT aux_vlmrapar,
+										                      OUTPUT aux_vliofcpl).
     IF   RETURN-VALUE <> "OK"   THEN
          RETURN "NOK".    
 
@@ -2388,6 +2488,103 @@ PROCEDURE efetiva_pagamento_atrasado_parcela_craplem:
 
             END. /* IF   aux_vljinpar > 0  THEN */
 
+      /* Valor do IOF Complementar */
+       IF   aux_vliofcpl > 0  THEN
+            DO:                    
+                IF aux_floperac   THEN         /* Financiamento */
+                   ASSIGN aux_nrdolote = 600019.
+                ELSE
+                   ASSIGN aux_nrdolote = 600018. /* Emprestimo */
+
+                       ASSIGN aux_cdhistor = IF aux_floperac THEN
+                                                2312
+                                             ELSE
+                                                2311.
+              
+                RUN sistema/generico/procedures/b1wgen0134.p
+                    PERSISTENT SET h-b1wgen0134.
+
+                /* Cria o lancamento e atualizar o lote */
+                RUN cria_lancamento_lem_chave IN h-b1wgen0134
+                                        (INPUT par_cdcooper,
+                                         INPUT par_dtmvtolt,
+                                         INPUT par_cdagenci,
+                                         INPUT 100, /* cdbccxlt */
+                                         INPUT par_cdoperad,
+                                         INPUT par_cdpactra,
+                                         INPUT 5,   /* tplotmov */
+                                         INPUT aux_nrdolote,
+                                         INPUT par_nrdconta,
+                                         INPUT aux_cdhistor,
+                                         INPUT par_nrctremp,
+                                         INPUT aux_vliofcpl,
+                                         INPUT par_dtmvtolt,
+                                         INPUT crapepr.txjuremp,   
+                                         INPUT crappep.vlparepr,    
+                                         INPUT crappep.nrparepr,   
+                                         INPUT crappep.nrparepr,
+                                         INPUT TRUE,
+                                         INPUT TRUE,
+                                         INPUT par_nrseqava,
+                                                 INPUT par_idorigem,
+                                                 OUTPUT aux_nrseqdig).	
+
+                DELETE PROCEDURE h-b1wgen0134.
+
+                IF aux_floperac THEN /* Financiamento */
+                   ASSIGN aux_nrdolote = 600021.
+                ELSE                 /* Emprestimo */
+                   ASSIGN aux_nrdolote = 600020.
+                          
+                ASSIGN aux_cdhistor = IF aux_floperac THEN
+                                                2314 /* Financiamento */
+                                             ELSE
+                                                2313.
+                
+                ASSIGN par_vliofcpl = aux_vliofcpl
+                       par_cdhisiof = aux_cdhistor
+                       par_loteiof  = aux_nrdolote.
+                                                 
+				/* Atualizar valor pago do iof */
+                ASSIGN crappep.vlpagiof = crappep.vlpagiof + aux_vliofcpl.
+                                                 
+                 /* Projeto 410 - Gera lancamento de IOF complementar na TBGEN_IOF_LANCAMENTO - Jean (Mout´S) */
+                 { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+                 RUN STORED-PROCEDURE pc_insere_iof
+                 aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper     /* Código da cooperativa referente ao contrato de empréstimos */
+                                                     ,INPUT par_nrdconta     /* Número da conta referente ao empréstimo */
+                                                     ,INPUT par_dtmvtolt     /* data de movimento */
+                                                     ,INPUT 1                /* tipo de produto - 1 - Emprestimo */
+                                                     ,INPUT par_nrctremp     /* Número do contrato de empréstimo */
+                                                     ,INPUT ?                /* lancamento automatico */
+                                                     ,INPUT par_dtmvtolt     /* data de movimento LCM*/
+                                                     ,INPUT par_cdpactra     /* par_cdagenci - codigo da agencia  */
+                                                     ,INPUT 100              /* Codigo caixa*/
+                                                     ,INPUT aux_nrdolote      /* numero do lote */
+                                                     ,INPUT aux_nrseqdig     /* sequencia do lote */
+                                                     ,INPUT 0                /* iof principal */
+                                                     ,INPUT 0                /* iof adicional */
+                                                     ,INPUT aux_vliofcpl     /* iof complementar */
+                                                     ,INPUT 0                 /* flag IMUNE - fixo 0 pois se entrar aqui nao é imune */
+                                                     ,OUTPUT 0               /* codigo da critica */
+                                                     ,OUTPUT "").            /* Critica */
+           
+                 /* Fechar o procedimento para buscarmos o resultado */ 
+                 CLOSE STORED-PROC pc_insere_iof
+
+                 aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+                 { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+                 /* Se retornou erro */
+                 ASSIGN aux_dscritic = ""
+                        aux_dscritic = pc_insere_iof.pr_dscritic WHEN pc_insere_iof.pr_dscritic <> ?.
+                        
+
+                 IF aux_dscritic <> "" THEN
+                     UNDO EFETIVA , LEAVE EFETIVA.
+                                                 
+            END. /* IF   aux_vliofcpl > 0  THEN */
+            
        /* Lancamento de Valor Pago da Parcela */
        IF   aux_vlpagpar > 0 THEN 
             DO:
@@ -2460,7 +2657,7 @@ PROCEDURE efetiva_pagamento_atrasado_parcela_craplem:
                        par_lotepaga = aux_nrdolote.
                      
                 ASSIGN crappep.dtultpag = par_dtmvtolt
-                       crappep.vlpagpar = crappep.vlpagpar + aux_vlpagpar                    
+                       crappep.vlpagpar = crappep.vlpagpar + aux_vlpagpar /*+ aux_vliofcpl*/                   
                        crappep.vlsdvpar = ROUND (aux_vlatupar,2) - ROUND (aux_vlpagpar,2)                                                        
                        crappep.inliquid = 
                          IF  ROUND(aux_vlatupar,2) = ROUND (aux_vlpagpar,2) THEN
@@ -2469,7 +2666,7 @@ PROCEDURE efetiva_pagamento_atrasado_parcela_craplem:
                              0.
 
                 ASSIGN aux_vlmuljur     = aux_vlmtapar + aux_vljinpar + 
-                                          aux_vlmrapar
+                                          aux_vlmrapar + aux_vliofcpl
 
                        crappep.vlsdvsji = crappep.vlsdvsji - 
                          ( ROUND (par_vlpagpar,2) - ROUND(aux_vlmuljur,2) ).
@@ -2587,7 +2784,10 @@ PROCEDURE efetiva_pagamento_atrasado_parcela:
     DEF          VAR aux_lotepaga AS DECI                           NO-UNDO.
     DEF          VAR aux_flgtrans AS LOGI                           NO-UNDO.
     DEF          VAR aux_vlpagsld AS DECI                           NO-UNDO.
-
+    DEF          VAR aux_vliofcpl AS DECI                           NO-UNDO.
+    DEF          VAR aux_cdhisiof AS INTE                           NO-UNDO.
+    DEF          VAR aux_loteiof AS INTE                           NO-UNDO.
+    DEF          VAR aux_nrseqdig AS INTE                           NO-UNDO.
 
     EMPTY TEMP-TABLE tt-erro.
 
@@ -2625,15 +2825,19 @@ PROCEDURE efetiva_pagamento_atrasado_parcela:
                                                        OUTPUT aux_loteatra,
                                                        OUTPUT aux_lotemult,
                                                        OUTPUT aux_lotepaga,
+                                                       OUTPUT aux_vliofcpl,
+                                                       OUTPUT aux_cdhisiof,
+                                                       OUTPUT aux_loteiof,
                                                        OUTPUT TABLE tt-erro).
 
        IF   RETURN-VALUE <> "OK"   THEN
             UNDO EFETIVA , LEAVE EFETIVA.
 
+
        /* Valor da multa */
        IF   aux_vlrmulta > 0  THEN
-            DO:                           
-                /* Debita o pagamento da parcela da C/C */                                      
+            DO:
+                 /* Debita o pagamento da parcela da C/C */                                      
                 RUN cria_lancamento_cc (INPUT par_cdcooper,
                                         INPUT par_dtmvtolt,
                                         INPUT par_cdagenci,
@@ -2647,13 +2851,13 @@ PROCEDURE efetiva_pagamento_atrasado_parcela:
                                         INPUT par_nrparepr,
                                         INPUT par_nrctremp,
                                         INPUT par_nrseqava).
-                                              
+
             END. /* IF   aux_vlmtapar > 0  THEN */
        
        /* Pagamento de juros de mora */
        IF   aux_vlatraso > 0 AND aux_vlpagsld > 0 THEN
-            DO:
-                 /* Debita o pagamento da parcela da C/C */                                      
+            DO:                           
+                /* Debita o pagamento da parcela da C/C */                                      
                 RUN cria_lancamento_cc (INPUT par_cdcooper,
                                         INPUT par_dtmvtolt,
                                         INPUT par_cdagenci,
@@ -2667,9 +2871,28 @@ PROCEDURE efetiva_pagamento_atrasado_parcela:
                                         INPUT par_nrparepr,
                                         INPUT par_nrctremp,
                                         INPUT par_nrseqava).
-
+                                              
             END. /* IF   aux_vlmrapar > 0  THEN */
-       
+            
+
+       /* Projeto 410 - efetua o debito do IOF complementar de atraso */
+       IF aux_vliofcpl > 0 AND aux_vlpagsld >= 0 THEN DO:
+            /* Debita o pagamento da parcela da C/C */                                      
+            RUN cria_lancamento_cc (INPUT par_cdcooper,
+                                    INPUT par_dtmvtolt,
+                                    INPUT par_cdagenci,
+                                    INPUT 100, /* cdbccxlt */
+                                    INPUT par_cdoperad,
+                                    INPUT par_cdpactra,
+                                    INPUT aux_loteiof,
+                                    INPUT par_nrdconta,
+                                    INPUT aux_cdhisiof,
+                                    INPUT aux_vliofcpl,
+                                    INPUT par_nrparepr,
+                                    INPUT par_nrctremp,
+                                    INPUT par_nrseqava).
+        END.
+            
        /* Lancamento de Valor Pago da Parcela */
        IF   aux_vlpagsld > 0 THEN 
             DO:
@@ -2688,6 +2911,7 @@ PROCEDURE efetiva_pagamento_atrasado_parcela:
                                         INPUT par_nrctremp,
                                         INPUT par_nrseqava).
             END. 
+            
 
        ASSIGN aux_flgtrans = TRUE.
        
@@ -2744,6 +2968,7 @@ PROCEDURE valida_pagamento_atrasado_parcela:
     DEF OUTPUT PARAM par_vlmtapar AS DECI                           NO-UNDO.
     DEF OUTPUT PARAM par_vljinpar AS DECI                           NO-UNDO.
     DEF OUTPUT PARAM par_vlmrapar AS DECI                           NO-UNDO.
+    DEF OUTPUT PARAM par_vliofcpl AS DECI                           NO-UNDO.
 
     DEF VAR aux_flgtrans AS LOGI                                    NO-UNDO.
     DEF VAR aux_vlpagmin AS DECI                                    NO-UNDO.
@@ -2788,6 +3013,7 @@ PROCEDURE valida_pagamento_atrasado_parcela:
                                   OUTPUT par_vlmtapar,
                                   OUTPUT par_vljinpar,
                                   OUTPUT par_vlmrapar,
+                                  OUTPUT par_vliofcpl,
                                   OUTPUT aux_vljinp59,
                                   OUTPUT aux_vljinp60).
 
@@ -2820,6 +3046,7 @@ PROCEDURE valida_pagamento_atrasado_parcela:
                          /* Multa + jr.mora + minimo a pagar */
                          ASSIGN aux_valormin = ROUND(par_vlmtapar,2) + 
                                                ROUND(par_vlmrapar,2) + 
+                                               ROUND(par_vliofcpl,2) +
                                                ROUND(aux_vlpagmin,2).               
                      END. 
                 ELSE     /* Valor atual é menor que o minimo */
@@ -2827,6 +3054,7 @@ PROCEDURE valida_pagamento_atrasado_parcela:
                          /* Multa + jr.normais */
                          ASSIGN aux_valormin =  ROUND(par_vlmtapar,2) + 
                                                 ROUND(par_vlmrapar,2) + 
+                                                ROUND(par_vliofcpl,2) +
                                                 ROUND(par_vlatupar,2).                    
                      END.                  
             END.
@@ -2834,7 +3062,8 @@ PROCEDURE valida_pagamento_atrasado_parcela:
             DO:
                 /* Multa + jr.mora + qualquer valor de pagamento */
                 ASSIGN aux_valormin = ROUND(par_vlmtapar,2) + 
-                                      ROUND(par_vlmrapar,2) + 0.01. 
+                                      ROUND(par_vlmrapar,2) + 
+                                      ROUND(par_vliofcpl,2) + 0.01. 
             END.
 
        IF   ROUND(par_vlpagpar,2) < aux_valormin   THEN 
@@ -2848,7 +3077,7 @@ PROCEDURE valida_pagamento_atrasado_parcela:
             END.
 
        IF ROUND(par_vlpagpar,2) > ROUND(par_vlatupar,2) + ROUND(par_vlmtapar,2) + 
-                                  ROUND(par_vlmrapar,2) THEN
+                                  ROUND(par_vlmrapar,2) + ROUND(par_vliofcpl,2) THEN
           DO:             
               ASSIGN aux_cdcritic = 0
                      aux_dscritic = "Valor informado para pagamento maior que valor da parcela".
@@ -3555,6 +3784,15 @@ PROCEDURE busca_registro_parcela:
     IF   aux_cdcritic <> 0   THEN
          RETURN "NOK".
 
+    /* SD545719 inicio */
+	IF   crappep.inliquid = 1 /* liquidada */    THEN
+	DO:
+		 ASSIGN aux_cdcritic = 0
+				aux_dscritic = "Parcela ja liquidada!!".
+		 RETURN "NOK".
+	END.
+	/* SD545719 fim */
+
     RETURN "OK".
 
 END PROCEDURE. /* busca registro parcela */
@@ -3713,6 +3951,43 @@ PROCEDURE cria_lancamento_cc:
 
     DEF VAR aux_nrseqdig         AS INTE                                NO-UNDO.
 
+    RUN cria_lancamento_cc_chave(INPUT par_cdcooper
+                                ,INPUT par_dtmvtolt
+                                ,INPUT par_cdagenci
+                                ,INPUT par_cdbccxlt
+                                ,INPUT par_cdoperad
+                                ,INPUT par_cdpactra
+                                ,INPUT par_nrdolote
+                                ,INPUT par_nrdconta
+                                ,INPUT par_cdhistor
+                                ,INPUT par_vllanmto
+                                ,INPUT par_nrparepr
+                                ,INPUT par_nrctremp
+                                ,INPUT par_nrseqava
+                                ,OUTPUT aux_nrseqdig).
+
+    RETURN "OK".
+
+END PROCEDURE. /* cria lancamento cc */ 
+
+
+PROCEDURE cria_lancamento_cc_chave:
+
+    DEF INPUT PARAM par_cdcooper AS INTE                                NO-UNDO.
+    DEF INPUT PARAM par_dtmvtolt AS DATE                                NO-UNDO.
+    DEF INPUT PARAM par_cdagenci AS INTE                                NO-UNDO.
+    DEF INPUT PARAM par_cdbccxlt AS INTE                                NO-UNDO.
+    DEF INPUT PARAM par_cdoperad AS CHAR                                NO-UNDO.
+    DEF INPUT PARAM par_cdpactra AS INTE                                NO-UNDO.
+    DEF INPUT PARAM par_nrdolote AS INTE                                NO-UNDO.
+    DEF INPUT PARAM par_nrdconta AS INTE                                NO-UNDO.
+    DEF INPUT PARAM par_cdhistor AS INTE                                NO-UNDO.
+    DEF INPUT PARAM par_vllanmto AS DECI                                NO-UNDO.
+    DEF INPUT PARAM par_nrparepr AS INTE                                NO-UNDO.
+    DEF INPUT PARAM par_nrctremp AS INTE                                NO-UNDO.
+    DEF INPUT PARAM par_nrseqava AS INTE                                NO-UNDO.
+    DEF OUTPUT PARAM par_nrseqdig AS INTE                                NO-UNDO.
+
     DEF VAR h-b1craplot          AS HANDLE                              NO-UNDO.
 
     IF ROUND(par_vllanmto,2) > 0 THEN
@@ -3733,7 +4008,7 @@ PROCEDURE cria_lancamento_cc:
                                       INPUT par_vllanmto,
                                       INPUT TRUE,
                                       INPUT TRUE,
-                                     OUTPUT aux_nrseqdig,
+                                     OUTPUT par_nrseqdig,
                                      OUTPUT aux_cdcritic).
         
            DELETE PROCEDURE h-b1craplot.
@@ -3746,9 +4021,9 @@ PROCEDURE cria_lancamento_cc:
                   craplcm.nrdconta = par_nrdconta
                   craplcm.nrdctabb = par_nrdconta
                   craplcm.nrdctitg = STRING(par_nrdconta,"99999999")
-                  craplcm.nrdocmto = aux_nrseqdig
+                  craplcm.nrdocmto = par_nrseqdig
                   craplcm.cdhistor = par_cdhistor 
-                  craplcm.nrseqdig = aux_nrseqdig 
+                  craplcm.nrseqdig = par_nrseqdig 
                   craplcm.vllanmto = par_vllanmto
                   craplcm.cdcooper = par_cdcooper
                   craplcm.nrparepr = par_nrparepr

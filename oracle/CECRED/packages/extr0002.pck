@@ -12223,7 +12223,7 @@ END pc_consulta_ir_pj_trim;
   --  Sistema  : 
   --  Sigla    : CRED
   --  Autor    : Alisson C. Berrido - Amcom
-  --  Data     : Julho/2014                           Ultima atualizacao: 11/09/2017
+  --  Data     : Julho/2014                           Ultima atualizacao: 10/05/2018
   --
   -- Dados referentes ao programa:
   --
@@ -12251,6 +12251,8 @@ END pc_consulta_ir_pj_trim;
   --              25/05/2017 - Passagem do tpemprst. (Jaison/James - PRJ298)
   --
   --              11/09/2017 - Ajuste para retirar caracteres especiais ao gerar a tag dssubmod (Jonta - RKAM / 739433).             
+  --
+  --              10/05/2018 - P410 - Ajustes IOF (Marcos-Envolti)
   ---------------------------------------------------------------------------------------------------------------
   DECLARE
         -- Busca dos dados da cooperativa
@@ -12278,6 +12280,7 @@ END pc_consulta_ir_pj_trim;
                 ,crapepr.qtpreemp
                 ,crapepr.inprejuz
                 ,crapepr.vlaqiofc
+                ,crapepr.cdfinemp
           FROM crapepr crapepr
           WHERE crapepr.cdcooper = pr_cdcooper
           AND   crapepr.nrdconta = pr_nrdconta
@@ -12720,6 +12723,7 @@ END pc_consulta_ir_pj_trim;
                                     ,pr_nrctremp  => rw_crapepr.nrctremp   --> Numero do Contrato
                                     ,pr_dtmvtolt  => pr_dtmvtolt     --> Data do movimento para busca na tabela de IOF
                                     ,pr_cdlcremp => rw_crapepr.cdlcremp --> linha de credito emprestimo
+                                    ,pr_cdfinemp => rw_crapepr.cdfinemp --> Finalidade do credito
                                     ,pr_vlemprst => rw_crapepr.vlemprst
                                     ,pr_vltxiofpri => vr_vltxiofpri  --> Taxa de IOF principal
                                     ,pr_vltxiofadc => vr_vltxiofadc  --> Taxa de IOF adiciona                                    ,pr_vltxiofad => vr_vltxiofcpl  --> Taxa de IOF adicional
@@ -13134,14 +13138,14 @@ END pc_consulta_ir_pj_trim;
   --  Sistema  : 
   --  Sigla    : CRED
   --  Autor    : Jaison Fernando
-  --  Data     : Maio/2017                           Ultima atualizacao: 
+  --  Data     : Maio/2017                           Ultima atualizacao: 10/05/2018
   --
   -- Dados referentes ao programa:
   --
   -- Frequencia: -----
   -- Objetivo   : Procedure para Imprimir Extrato Emprestimo Pos-Fixado
   --
-  -- Alterações : 
+  -- Alterações : 10/05/2018 - P410 - AJustes IOF (Marcos-Envolti)
   ---------------------------------------------------------------------------------------------------------------
   DECLARE
         -- Buscar cadastro auxiliar de emprestimo
@@ -13160,6 +13164,7 @@ END pc_consulta_ir_pj_trim;
                 ,crapepr.qtpreemp
                 ,crapepr.inprejuz
                 ,crapepr.qttolatr
+                ,crapepr.cdfinemp
             FROM crapepr
            WHERE crapepr.cdcooper = pr_cdcooper
              AND crapepr.nrdconta = pr_nrdconta
@@ -13401,6 +13406,7 @@ END pc_consulta_ir_pj_trim;
                                     ,pr_nrctremp  => rw_crapepr.nrctremp   --> Numero do Contrato
                                     ,pr_dtmvtolt  => pr_dtmvtolt     --> Data do movimento para busca na tabela de IOF
                                     ,pr_cdlcremp => rw_crapepr.cdlcremp --> Linha de credito
+                                    ,pr_cdfinemp => rw_crapepr.cdfinemp --> Finalidade do credito
                                     ,pr_vlemprst => rw_crapepr.vlemprst
                                     ,pr_vltxiofpri => vr_vltxiofpri  --> Taxa de IOF principal
                                     ,pr_vltxiofadc => vr_vltxiofadc  --> Taxa de IOF adicional

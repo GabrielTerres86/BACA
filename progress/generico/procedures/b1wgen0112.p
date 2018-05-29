@@ -34,7 +34,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0112.p
     Autor   : Gabriel Capoia dos Santos (DB1)
-    Data    : Agosto/2011                        Ultima atualizacao: 02/03/2018
+    Data    : Agosto/2011                        Ultima atualizacao: 10/05/2018
 
     Objetivo  : Tranformacao BO tela IMPRES
 
@@ -230,8 +230,10 @@
 
                 02/03/2018 - Lucas Skroch (Supero TI) - Ajustes nos saldos de cobertura, judicial, total geral e total resgate
 
-    29/01/2018 - #770327 Chamada da rotina pc_lista_aplicacoes_car alterada para 
-                 pc_lista_demons_apli, rotina Gera_Impressao_Aplicacao (Carlos)
+                29/01/2018 - #770327 Chamada da rotina pc_lista_aplicacoes_car alterada para 
+                             pc_lista_demons_apli, rotina Gera_Impressao_Aplicacao (Carlos)
+
+                10/05/2018 - P410 - Ajustes IOF (Marcos-Envolti)
 
 ............................................................................*/
 
@@ -1813,6 +1815,7 @@ PROCEDURE imprime_extrato:
                                       INPUT  par_flgerlog,
                                       INPUT  par_nrctremp,
                                       INPUT  crapepr.cdlcremp,
+                                      INPUT  crapepr.cdfinemp,
                                       INPUT  crapepr.vlemprst,
                                       INPUT  crapepr.qtpreemp,
                                       INPUT  crapepr.dtmvtolt,

@@ -2678,8 +2678,9 @@ BEGIN
         vr_qtdias_carencia := vr_tab_carencia(rw_crawepr.idcarenc);
       END IF;
     
-     /* EMPR0001.pc_calcula_iof_epr(pr_cdcooper => pr_cdcooper                  
+     /* TIOF0001.pc_calcula_iof_epr(pr_cdcooper => pr_cdcooper                  
                                  ,pr_nrdconta => rw_crabepr.nrdconta          
+                                 ,pr_nrctremp => rw_crabepr.nrctremp    
                                  ,pr_dtmvtolt => rw_crapdat.dtmvtolt          
                                  ,pr_inpessoa => rw_crapass.inpessoa          
                                  ,pr_cdfinemp => rw_crabepr.cdfinemp
@@ -2692,6 +2693,7 @@ BEGIN
                                  ,pr_tpemprst => rw_crabepr.tpemprst          
                                  ,pr_dtcarenc        => rw_crawepr.dtcarenc
                                  ,pr_qtdias_carencia => vr_qtdias_carencia
+                                 ,pr_idgravar        => 'N'
                                  ,pr_vlpreclc => vr_vlpreclc
                                  ,pr_valoriof => vr_vliofaux                  
                                  ,pr_vliofpri => vr_vliofpri_tmp
