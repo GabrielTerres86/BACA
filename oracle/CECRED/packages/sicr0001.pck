@@ -1109,7 +1109,7 @@ create or replace package body cecred.SICR0001 is
       vr_variaveis_notif('#limite') := to_char(pr_vlrmaxdb,'fm999G999G990D00');  
       
       -- Cria uma notificação
-      NOTI0001.pc_cria_notificacao(pr_cdorigem_mensagem => ORIGEM_AGEND_NAO_EFETIVADO
+      NOTI0001.pc_cria_notificacao(pr_cdorigem_mensagem => ORIGEM_TRANS_NAO_EFETIVADO
                                   ,pr_cdmotivo_mensagem => vr_motivo_mensagem
                                   --,pr_dhenvio => SYSDATE
                                   ,pr_cdcooper => pr_cdcooper
