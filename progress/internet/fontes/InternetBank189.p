@@ -521,7 +521,7 @@ ELSE IF par_cddopcao = "V" THEN
                           WHEN pc_verifar_serv_sms.pr_dsalerta <> ?
            aux_idcontrato = pc_verifar_serv_sms.pr_idcontrato 
                           WHEN pc_verifar_serv_sms.pr_idcontrato <> ?               .
-    
+                          
     /* Verificar se coop permite enviar linha digitavel por email  */
     { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }    
 
@@ -552,7 +552,7 @@ ELSE IF par_cddopcao = "V" THEN
                                    '<flgativo>' + STRING(aux_flgativo) + '</flgativo>' + 
                                    '<flsitsms>' + STRING(aux_flsitsms) + '</flsitsms>' + 
                                    '<dsalerta>' + STRING(aux_dsalerta) + '</dsalerta>' +
-                                   '<fllindig>' + STRING(aux_fllindig) + '<fllindig/>'.
+                                   '<fllindig>' + STRING(aux_fllindig) + '</fllindig>'.
 
     CREATE xml_operacao.
     ASSIGN xml_operacao.dslinxml = '</dados>'.
@@ -734,7 +734,7 @@ ELSE IF par_cddopcao = "C" THEN
                                    '<flgativo>' + STRING(aux_flgativo) + '</flgativo>' + 
                                    '<idpacote>' + STRING(aux_idpacote) + '</idpacote>' + 
                                    '<dspacote>' + STRING(aux_dspacote) + '</dspacote>' + 
-                                   '<dhadesao>' + STRING(aux_dhadesao,"99/99/9999") + '</dhadesao>' + 
+                                   '<dhadesao>' + (IF aux_dhadesao <> ? THEN STRING(aux_dhadesao,"99/99/9999") ELSE '') + '</dhadesao>' + 
                                    '<idcontra>' + STRING(aux_idcontra) + '</idcontra>' + 
                                    '<vltarifa>' + STRING(aux_vltarifa,"zzz,zz9.99") + '</vltarifa>' +
                                    '<qtsmspct>' + STRING(aux_qtsmspct) + '</qtsmspct>' + 

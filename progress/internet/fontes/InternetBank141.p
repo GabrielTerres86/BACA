@@ -188,6 +188,10 @@ ELSE IF  par_tpoperac = 2 THEN DO: /* Valida selecao de registros para aprovacao
 
         ASSIGN xml_dsmsgerr = "<dsmsg>" + aux_dscritic + "</dsmsg>" + 
                               "<idestour>1</idestour>".
+                              
+        IF  LENGTH(xml_req) > 0  THEN                      
+            ASSIGN xml_dsmsgerr = xml_dsmsgerr + xml_req.            
+                              
         RETURN "NOK".
     END.
 
@@ -980,9 +984,15 @@ ELSE IF  par_tpoperac = 12 THEN DO: /* Busca informacoes de pagamento para alter
                                      "<nrcpfemp>" + xml_operacao141.nrcpfemp + "</nrcpfemp>" +
                                      "<cdorigem>" + xml_operacao141.cdorigem + "</cdorigem>" +
                                      "<vllancto>" + xml_operacao141.vllancto + "</vllancto>" +
-                                     "<dsrowlfp>" + xml_operacao141.dsrowlfp + "</dsrowlfp>" +
-                                     "<nmprimtl>" + xml_operacao141.nmprimtl + "</nmprimtl>" +                                            
-                                     "<idtpcont>" + xml_operacao141.idtpcont + "</idtpcont></lanctos>".                                       
+                                     "<dsrowlfp>" + xml_operacao141.dsrowlfp + "</dsrowlfp>". 
+                                     
+                                     IF xml_operacao141.nmprimtl = ? THEN
+                                        ASSIGN xml_operacao.dslinxml = xml_operacao.dslinxml + "<nmprimtl></nmprimtl>".
+                                    ELSE
+                                         ASSIGN  xml_operacao.dslinxml = xml_operacao.dslinxml + "<nmprimtl>" + xml_operacao141.nmprimtl + "</nmprimtl>".
+                                    
+                                    
+                                     ASSIGN  xml_operacao.dslinxml = xml_operacao.dslinxml + "<idtpcont>" + xml_operacao141.idtpcont + "</idtpcont></lanctos>".                                       
        
     END.
     
@@ -1094,10 +1104,10 @@ ELSE IF  par_tpoperac = 14 THEN DO: /* Gerar arquivo de retorno */
 													 
 			   END. 
 				
-			END.
-		
+END.
+
 		SET-SIZE(ponteiro_xml) = 0. 
-  
+
 	END.
 	
 	/*Elimina os objetos criados*/
