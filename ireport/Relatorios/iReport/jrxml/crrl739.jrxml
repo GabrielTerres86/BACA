@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Created with Jaspersoft Studio version 6.3.0.final using JasperReports Library version 6.3.0  -->
-<!-- 2018-04-10T13:26:38 -->
+<!-- 2018-05-30T17:36:14 -->
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="crrl739" language="groovy" pageWidth="842" pageHeight="700" orientation="Landscape" columnWidth="762" leftMargin="40" rightMargin="40" topMargin="50" bottomMargin="50" whenResourceMissingType="Empty" uuid="6386a198-a31e-4f65-936d-2bc9fe5ac907">
 	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="NEW_DATAADAPTER.xml"/>
 	<property name="com.jaspersoft.studio.unit." value="pixel"/>
@@ -160,7 +160,7 @@
 			</textField>
 			<textField>
 				<reportElement x="0" y="0" width="758" height="22" uuid="1d6b150c-de8f-40ad-8011-0db635963ad2"/>
-				<textFieldExpression><![CDATA[(new SimpleDateFormat("dd")).format(new Date()) + " de " +  (new SimpleDateFormat("MM")).format(new Date())  + " de " +  (new SimpleDateFormat("yyyy")).format(new Date()) + "."]]></textFieldExpression>
+				<textFieldExpression><![CDATA[(new SimpleDateFormat("dd")).format(new Date()) + " de " +  (new SimpleDateFormat("MMMM", (new Locale("pt","BR")))).format(new Date())  + " de " +  (new SimpleDateFormat("yyyy")).format(new Date()) + ". "]]></textFieldExpression>
 			</textField>
 		</band>
 	</title>
