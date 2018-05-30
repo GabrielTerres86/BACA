@@ -33,6 +33,7 @@ INSERT INTO crapprm (SELECT 'CRED',cdcooper,'FL_VIRADA_BORDERO','Guarda se uma c
 INSERT INTO crapprm (SELECT 'CRED',cdcooper,'PERCENTUAL_MULTA_DSCT','Percentual de multa sobre atraso de títulos descontados vencidos','2',NULL FROM crapcop where flgativo = 1);
 
 -- parâmetro de data do cálculo de juros (REMOVER ESTE PARÂMETRO DA IMPLEMENTAÇÃO!)
+/*
 INSERT INTO crapprm (nmsistem,cdcooper,cdacesso,dstexprm,dsvlrprm) 
   SELECT 
     'CRED',
@@ -41,7 +42,7 @@ INSERT INTO crapprm (nmsistem,cdcooper,cdacesso,dstexprm,dsvlrprm)
     'Data inicio para calculo de juros simples para títulos',
     '08/05/2018'
   FROM crapcop WHERE flgativo = 1;
-
+*/
 -- MENSAGERIA
 
 -- DSC0003
@@ -110,7 +111,7 @@ INSERT INTO crapaca (nrseqaca, nmdeacao, nmpackag, nmproced, lstparam, nrseqrdr)
      VALUES (SEQACA_NRSEQACA.NEXTVAL, 'ALTERAR_PROPOSTA_MANUTENCAO', 'TELA_ATENDA_DSCTO_TIT', 'pc_alterar_proposta_manute_web', 'pr_nrdconta,pr_nrctrlim,pr_tpctrlim,pr_vllimite,pr_cddlinha', (SELECT nrseqrdr FROM craprdr WHERE nmprogra = 'TELA_ATENDA_DESCTO'));
 
 INSERT INTO crapaca (nrseqaca, nmdeacao, nmpackag, nmproced, lstparam, nrseqrdr)
-     VALUES (SEQACA_NRSEQACA.NEXTVAL, 'CONTINGENCIA_IBRATAN', 'TELA_ATENDA_DSCTO_TIT', 'pc_contingencia_ibratan_web', '', (SELECT nrseqrdr FROM craprdr WHERE nmprogra = 'TELA_ATENDA_DESCTO'))
+     VALUES (SEQACA_NRSEQACA.NEXTVAL, 'CONTINGENCIA_IBRATAN', 'TELA_ATENDA_DSCTO_TIT', 'pc_contingencia_ibratan_web', '', (SELECT nrseqrdr FROM craprdr WHERE nmprogra = 'TELA_ATENDA_DESCTO'));
 
 -- APRDES
 INSERT INTO craprdr (nrseqrdr, nmprogra, dtsolici)

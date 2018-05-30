@@ -52,7 +52,7 @@ INSERT INTO craptel
            '', 
            2 
       FROM crapcop          
-     WHERE cdcooper IN (SELECT cdcooper FROM crapprm WHERE cdacesso = 'FL_VIRADA_BORDERO' AND dsvlrprm = 'P'); 
+     WHERE cdcooper IN (7,14); 
 
 -- Permissões de consulta para os usuários pré-definidos pela CECRED                       
 INSERT INTO crapace
@@ -74,7 +74,7 @@ INSERT INTO crapace
            2
       FROM crapcop cop,
            crapope ope
-     WHERE cop.cdcooper IN (SELECT cdcooper FROM crapprm WHERE cdacesso = 'FL_VIRADA_BORDERO' AND dsvlrprm = 'P')
+     WHERE cop.cdcooper IN (7,14)
        AND ope.cdsitope = 1 
        AND cop.cdcooper = ope.cdcooper
        AND trim(upper(ope.cdoperad)) IN ('1', -- super usuário
@@ -115,7 +115,7 @@ INSERT INTO crapace
            2
       FROM crapcop cop,
            crapope ope
-     WHERE cop.cdcooper IN (SELECT cdcooper FROM crapprm WHERE cdacesso = 'FL_VIRADA_BORDERO' AND dsvlrprm = 'P')
+     WHERE cop.cdcooper IN (7,14)
        AND ope.cdsitope = 1 
        AND cop.cdcooper = ope.cdcooper
        AND trim(upper(ope.cdoperad)) IN ('1', -- super usuário
@@ -171,7 +171,7 @@ INSERT INTO crapprg
            1,
            cdcooper
       FROM crapcop          
-     WHERE cdcooper IN (SELECT cdcooper FROM crapprm WHERE cdacesso = 'FL_VIRADA_BORDERO' AND dsvlrprm = 'P');
+     WHERE cdcooper IN (7,14);
 
 commit;
 end;

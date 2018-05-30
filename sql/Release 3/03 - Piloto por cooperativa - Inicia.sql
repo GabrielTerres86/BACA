@@ -8,7 +8,7 @@
 
 begin
 
-UPDATE crapprm SET dsvlrprm = 'P' WHERE cdacesso = 'FL_VIRADA_BORDERO' AND cdcooper IN (7,14);
+UPDATE crapprm SET dsvlrprm = '1' WHERE cdacesso = 'FL_VIRADA_BORDERO' AND cdcooper IN (7,14);
 
 -- Inclui a nova opção na tela TITCTO
 UPDATE craptel
