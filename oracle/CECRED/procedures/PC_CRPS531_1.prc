@@ -11,7 +11,7 @@ BEGIN
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Diego
-   Data    : Setembro/2009.                     Ultima atualizacao: 23/04/2018
+   Data    : Setembro/2009.                     Ultima atualizacao: 28/05/2018
 
    Dados referentes ao programa: Fonte extraido e adaptado para execucao em
                                  paralelo. Fonte original crps531.p.
@@ -247,6 +247,11 @@ BEGIN
 			   23/04/2018 - Ajuste para buscar corretamente a cooperativa (Adriano - Homol conversão).
 			   
 			   15/05/2018 - Bacenjud SM 1 - Heitor (Mouts)
+
+			   28/05/2018 - Ajustes efetuados:
+						    > Para pegar corretamente o número de controle
+							> Efetuar devolução para cooperativa coorreta
+							(Adriano - INC0016217 ).
 
              #######################################################
              ATENCAO!!! Ao incluir novas mensagens para recebimento,
@@ -4798,7 +4803,7 @@ END;
         vr_aux_nrdocmto := TO_NUMBER(SUBSTR(vr_aux_NumCtrlIF,LENGTH(vr_aux_NumCtrlIF) - 8,8));
       ELSIF LENGTH(vr_aux_NumCtrlRem) >= 7 THEN
         -- Gera devolucao com mesmo numero de documento da mensagem gerada pelo Legado
-        vr_aux_nrdocmto := TO_NUMBER(SUBSTR(vr_aux_NumCtrlRem,LENGTH(vr_aux_NumCtrlRem) - 7,7));
+        vr_aux_nrdocmto := TO_NUMBER(SUBSTR(vr_aux_NumCtrlRem,LENGTH(vr_aux_NumCtrlRem) - 7));
       END IF;
 
       -- Tratamentos conforme cada tipo de mensagem
@@ -6263,8 +6268,13 @@ END;
                                     ,pr_nmarqlog      => vr_nmarqlog);
 
 			  IF vr_aux_CodMsg = 'STR0006R2' and (vr_aux_FinlddCli <> '15' OR (vr_aux_CNPJ_CPFDeb<>'01027058000191' and vr_aux_CNPJ_CPFDeb<>'1027058000191')) THEN
-			  
-          /* Mensagem Invalida para o Tipo de Transacao ou Finalidade*/
+			
+			     -- Busca dados da Coope destino
+           OPEN cr_busca_coop(pr_cdagectl => vr_aux_AgCredtd);
+           FETCH cr_busca_coop INTO rw_crapcop_mensag;
+           CLOSE cr_busca_coop;
+		     
+            /* Mensagem Invalida para o Tipo de Transacao ou Finalidade*/
             vr_aux_codierro := 4;
             vr_aux_dsdehist := 'Mensagem Invalida para o Tipo de Transacao ou Finalidade.';
             vr_log_msgderro := vr_aux_dsdehist;
