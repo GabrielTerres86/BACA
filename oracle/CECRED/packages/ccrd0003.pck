@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0003 AS
   --  Sistema  : Rotinas genericas referente a tela de Cartões
   --  Sigla    : CCRD
   --  Autor    : Jean Michel - CECRED
-  --  Data     : Abril - 2014.                   Ultima atualizacao: 21/09/2017
+  --  Data     : Abril - 2014.                   Ultima atualizacao: 30/05/2018
   --
   -- Dados referentes ao programa:
   --
@@ -80,6 +80,9 @@ CREATE OR REPLACE PACKAGE CECRED.CCRD0003 AS
   --       
   --             13/04/2018 - Incluido o controle de execução de programa
   --                          Projeto Debitador Unico - Josiane Stiehler (AMcom)
+  --
+  --             30/05/2018 - Tratamento para Grupo de afinidade zerado 
+  --                          (Lucas Ranghetti SCTASK0014662)
   ---------------------------------------------------------------------------------------------------------------
 
   --Tipo de Registro para as faturas pendentes
@@ -6753,7 +6756,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
        Sistema : Conta-Corrente - Cooperativa de Credito
        Sigla   : CRED
        Autor   : Lucas Lunelli
-       Data    : Abril/2014.                     Ultima atualizacao: 21/09/2017
+       Data    : Abril/2014.                     Ultima atualizacao: 30/05/2018
 
        Dados referentes ao programa:
 
@@ -6890,6 +6893,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
 
                    23/08/2017 - Alterar o recebimento de informações de alteração de limites. 
                                 (Renato Darosci - Projeto 360)
+                   
+                   30/05/2018 - Tratamento para Grupo de afinidade zerado 
+                                (Lucas Ranghetti SCTASK0014662)
     ............................................................................ */
 
     DECLARE
@@ -9434,6 +9440,163 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                   END IF;
                 
                 ELSE
+                  
+                  if vr_cdgrafin = 0 then         
+                    -- Limpar as variáveis para evitar valores da iteração anterior
+                    rw_crapacb.cdadmcrd := 0;
+                    vr_cdgrafin := 0;
+                    vr_dddebito := 0;
+                    vr_vllimcrd := 0;
+                    vr_tpdpagto := 0;
+                    vr_flgdebcc := 0;
+                    
+                    -- Busca dados da agencia cooperado
+                    OPEN cr_crapass(pr_cdcooper => vr_cdcooper,
+                                    pr_nrdconta => vr_nrdconta);
+                    FETCH cr_crapass INTO rw_crapass;
+                    CLOSE cr_crapass;
+                    
+                    -- Verificar se o cursor está aberto
+                    IF cr_crawcrd_em_uso%ISOPEN THEN
+                      CLOSE cr_crawcrd_em_uso;
+                    END IF;
+                    
+                    -- Buscar o contrato que esteja em uso
+                    OPEN cr_crawcrd_em_uso(pr_cdcooper => vr_cdcooper -- pr_cdcooper
+                                          ,pr_nrdconta => vr_nrdconta -- pr_nrdconta
+                                          ,pr_nrcctitg => vr_nrdctitg -- pr_nrcctitg
+                                          ,pr_nrcpftit => vr_nrcpfcgc -- pr_nrcpftit
+                                          ,pr_flgprcrd => 1 );        -- pr_flgprcrd
+                    
+                    FETCH cr_crawcrd_em_uso INTO rw_crapacb.cdadmcrd
+                                                ,vr_dddebito
+                                                ,vr_vllimcrd
+                                                ,vr_tpdpagto
+                                                ,vr_flgdebcc;
+                    -- Se não encontrar registros
+                    IF cr_crawcrd_em_uso%NOTFOUND THEN
+                      -- Fechar o cursor
+                      CLOSE cr_crawcrd_em_uso;                    
+                      
+                      -- Buscar registro de solicitacao
+                      OPEN  cr_crawcrd_cdgrafin(vr_cdcooper                 -- pr_cdcooper
+                                               ,vr_nrdconta                 -- pr_nrdconta
+                                               ,NULL                        -- pr_nrcctitg
+                                               ,vr_nrcpfcgc                 -- pr_nrcpftit
+                                               ,2                             -- pr_insitcrd -- SOLICITADO
+                                               ,NULL);                        -- pr_flgprcrd
+                      FETCH cr_crawcrd_cdgrafin INTO rw_crapacb.cdadmcrd
+                                                   , vr_dddebito
+                                                   , vr_vllimcrd
+                                                   , vr_tpdpagto
+                                                   , vr_flgdebcc;
+                      -- Se não encontrar registros
+                      IF cr_crawcrd_cdgrafin%NOTFOUND THEN
+                        -- Fechar o cursor
+                        CLOSE cr_crawcrd_cdgrafin;                                     
+                      
+                        -- Buscar pelo CPF do titular
+                        OPEN  cr_crawcrd_cdgrafin(vr_cdcooper                          -- pr_cdcooper
+                                                 ,vr_nrdconta                          -- pr_nrdconta
+                                                 ,NULL                                 -- pr_nrcctitg
+                                                 ,vr_nrcpfcgc                          -- pr_nrcpftit
+                                                 ,3                                    -- pr_insitcrd -- LIBERADO
+                                                 ,NULL );                              -- pr_flgprcrd
+                        FETCH cr_crawcrd_cdgrafin INTO rw_crapacb.cdadmcrd
+                                                     , vr_dddebito
+                                                     , vr_vllimcrd
+                                                     , vr_tpdpagto
+                                                     , vr_flgdebcc;  
+                      
+                        -- Se não encontrar registros
+                        IF cr_crawcrd_cdgrafin%NOTFOUND THEN
+                          -- Fechar o cursor
+                          CLOSE cr_crawcrd_cdgrafin;
+                          
+                          -- Buscar cartão liberado do próprio
+                          OPEN  cr_crawcrd_cdgrafin(vr_cdcooper                          -- pr_cdcooper
+                                                   ,vr_nrdconta                          -- pr_nrdconta
+                                                   ,NULL                                 -- pr_nrcctitg
+                                                   ,NULL                                 -- pr_nrcpftit
+                                                   ,3                                    -- pr_insitcrd -- LIBERADO
+                                                   ,NULL );                              -- pr_flgprcrd
+                          FETCH cr_crawcrd_cdgrafin INTO rw_crapacb.cdadmcrd
+                                                       , vr_dddebito
+                                                       , vr_vllimcrd
+                                                       , vr_tpdpagto
+                                                       , vr_flgdebcc;  
+                          
+                          -- Se não encontrar registros
+                          IF cr_crawcrd_cdgrafin%NOTFOUND THEN
+                            -- Buscar cartão liberado que tenha um outro cancelado na mesma data ( Ou seja: Up/Downgrade)
+                            OPEN  cr_crawcrd_cancel(vr_cdcooper                 -- pr_cdcooper
+                                                   ,vr_nrdconta                 -- pr_nrdconta
+                                                   ,vr_nrdctitg   -- pr_nrcctitg
+                                                   ,3                           -- pr_insitcrd
+                                                   ,rw_crapdat.dtmvtolt);       -- pr_dtmvtolt
+                            FETCH cr_crawcrd_cancel INTO rw_crapacb.cdadmcrd
+                                                       , vr_dddebito
+                                                       , vr_vllimcrd
+                                                       , vr_tpdpagto
+                                                       , vr_flgdebcc;
+                            -- Se não encontrar registros
+                            IF cr_crawcrd_cancel%NOTFOUND THEN
+                              CLOSE cr_crawcrd_cancel;                          
+                              -- Buscar os dados do cartao
+                              OPEN cr_crawcrd_cdgrafin_conta(vr_cdcooper               -- pr_cdcooper
+                                                            ,vr_nrdconta               -- pr_nrdconta
+                                                            ,vr_nrdctitg               -- pr_nrcctitg
+                                                            ,rw_crapdat.dtmvtolt);     -- pr_dtmvtolt
+                              -- Buscar os dados                              
+                              FETCH cr_crawcrd_cdgrafin_conta INTO rw_crawcrd_cdgrafin_conta;
+                              IF cr_crawcrd_cdgrafin_conta%FOUND THEN
+                                CLOSE cr_crawcrd_cdgrafin_conta;
+                                -- Carrega os dados do cartao
+                                rw_crapacb.cdadmcrd := rw_crawcrd_cdgrafin_conta.cdadmcrd;
+                                vr_dddebito         := rw_crawcrd_cdgrafin_conta.dddebito;
+                                vr_vllimcrd         := rw_crawcrd_cdgrafin_conta.vllimcrd;
+                                vr_tpdpagto         := rw_crawcrd_cdgrafin_conta.tpdpagto;
+                                vr_flgdebcc         := rw_crawcrd_cdgrafin_conta.flgdebcc;                          
+                              ELSE
+                                CLOSE cr_crawcrd_cdgrafin_conta;
+                                
+                                IF cr_crawcrd_cdgrafin%ISOPEN THEN
+                                  CLOSE cr_crawcrd_cdgrafin;
+                                END IF;
+                                
+                                OPEN  cr_crawcrd_cdgrafin(vr_cdcooper                 -- pr_cdcooper
+                                                         ,vr_nrdconta                 -- pr_nrdconta
+                                                         ,vr_nrdctitg                 -- pr_nrcctitg
+                                                         ,NULL                        -- pr_nrcpftit
+                                                         ,NULL                        -- pr_insitcrd -- EM USO
+                                                         ,1);                         -- pr_flgprcrd
+                                FETCH cr_crawcrd_cdgrafin INTO rw_crapacb.cdadmcrd
+                                                             , vr_dddebito
+                                                             , vr_vllimcrd
+                                                             , vr_tpdpagto
+                                                             , vr_flgdebcc;                                                                                         
+                              END IF;
+                              
+                            ELSE
+                              CLOSE cr_crawcrd_cancel;
+                            END IF;
+                                                       
+                          END IF;
+                        END IF;
+                      END IF;
+                    END IF;                    
+                    
+                    -- Verificar se o cursor está aberto
+                    IF cr_crawcrd_em_uso%ISOPEN THEN
+                      CLOSE cr_crawcrd_em_uso;
+                    END IF;
+                    
+                    -- Fecha o cursor
+                    IF cr_crawcrd_cdgrafin%ISOPEN THEN
+                    CLOSE cr_crawcrd_cdgrafin;
+                    END IF;
+                  
+                  else                    
                   -- busca Codigo da Adminstradora com base no Cod. do Grupo de Afinidade
                   OPEN cr_crapacb(pr_cdgrafin => vr_cdgrafin);
                   FETCH cr_crapacb INTO rw_crapacb;
@@ -9452,7 +9615,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
                   END IF;
                   -- Fecha cursor de Grupo de Afinidade
                   CLOSE cr_crapacb;
-
+                  end if;
                 END IF;
                 
                 -- Verifica se houve rejeição do Tipo de Registro 2
