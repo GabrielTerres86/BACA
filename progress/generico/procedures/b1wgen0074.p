@@ -152,8 +152,8 @@
                              correspondente a tela CONTAS, OPCAO Conta Corrente                             
                              (Projeto 218 - Melhorias Tarifas (Carlos Rafael Tanholi)
                   
-				27/10/2015 - Inclusao de novo campo para a tela CONTAS,
-							 crapass.idastcjt (Jean Michel) 
+                27/10/2015 - Inclusao de novo campo para a tela CONTAS,
+                             crapass.idastcjt (Jean Michel) 
                              
                 07/12/2015 - Ajuste para deixar alterar normalmente o PA de
                              cooperados que possuem beneficios com status
@@ -167,8 +167,8 @@
                 22/12/2015 - Ajuste na data de abertura da conta
                              Chamado 373200 (Heitor - RKAM)
 
-				01/04/2016 - Retiradas consistências para exclusão de ITG na
-							 Credimilsul - SD 417127 (Rodrigo)
+                01/04/2016 - Retiradas consistências para exclusão de ITG na
+                             Credimilsul - SD 417127 (Rodrigo)
 
                 12/01/2016 - Remoção da manutenção do campo flgcrdpa e cdoplcpa
                              (Anderson).
@@ -183,26 +183,26 @@
                              PRJ207 - Esteira (Odirlei/AMcom)    
 
 
-	            01/08/2016 - Nao deixar alterar PA caso o processo do BI ainda
-				             estiver em execucao (Andrino - Chamado 495821)
+                01/08/2016 - Nao deixar alterar PA caso o processo do BI ainda
+                             estiver em execucao (Andrino - Chamado 495821)
                      
                 11/11/2016 - #511290 Correcao de como o sistema verifica se eh
                              abertura de conta ou mudanca do tipo da mesma, 
                              para solicitar talao de cheque para o cooperado 
                              (Carlos)
 				       
-				02/12/2016 - Tratamento bloqueio solicitacao conta ITG
-				             (Incorporacao Transposul). (Fabricio)
+                02/12/2016 - Tratamento bloqueio solicitacao conta ITG
+                             (Incorporacao Transposul). (Fabricio)
 
-               19/04/2017 - Alteraçao DSNACION pelo campo CDNACION.
-                            PRJ339 - CRM (Odirlei-AMcom)  
+                19/04/2017 - Alteraçao DSNACION pelo campo CDNACION.
+                             PRJ339 - CRM (Odirlei-AMcom)  
                              
-				20/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
-			                 crapass, crapttl, crapjur 
-							(Adriano - P339).
+                20/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+                             crapass, crapttl, crapjur 
+                             (Adriano - P339).
 
                 19/06/2017 - Ajuste para inclusao do novo tipo de situacao da conta
-  				             "Desligamento por determinação do BACEN" 
+                             "Desligamento por determinação do BACEN" 
                              (Jonata - RKAM P364).			
 
                 21/07/2017 - Alteraçao CDOEDTTL pelo campo IDORGEXP.
@@ -219,8 +219,8 @@
                              ou encerramento de conta ITG devido a migracao do BB.
                              (Jaison/Elton - M459)
 
-				14/11/2017 - Ajuste para nao permitir alterar situacao da conta quando 
-				             ja estiver com situacao = 4
+                14/11/2017 - Ajuste para nao permitir alterar situacao da conta quando 
+                             ja estiver com situacao = 4
                              (Jonata - RKAM P364).			   
 
                 14/11/2017 - Incluido campo  tt-conta-corr.dtadmiss. PRJ339-CRM(Odirlei-AMcom)
@@ -246,18 +246,20 @@
                            - Gravar historico de alteracao dos campos cdtipcta, 
                              cdsitdct e cdcatego. PRJ366 (Lombardi).	 
 
-               03/05/2018 - Alteracao nos codigos da situacao de conta (cdsitdct).
-                            PRJ366 (Lombardi).
+                03/05/2018 - Alteracao nos codigos da situacao de conta (cdsitdct).
+                             PRJ366 (Lombardi).
                               
-			   08/05/2018 - Caso operador altere opcao "Exigir Assinatura Conjunta em Autoatendimento"
-			                de SIM para NAO ou vice e versa, sera gravado log na tabela CRAPLGM. Esta 
-							alteracao pode ser feita na tela CONTAS, opção Conta Corrente. 
-							Chamado INC0013673 - Gabriel (Mouts).
+                08/05/2018 - Caso operador altere opcao "Exigir Assinatura Conjunta em Autoatendimento"
+                             de SIM para NAO ou vice e versa, sera gravado log na tabela CRAPLGM. Esta 
+                             alteracao pode ser feita na tela CONTAS, opção Conta Corrente. 
+                             Chamado INC0013673 - Gabriel (Mouts).
                               
-			   23/05/2018 - Incluida chamada para a procedure pc_verifica_lib_blq_pre_aprov para 
-			                verificar se deve ser liberado ou bloqueado pre aprovado para a conta 
-							com a nova situacao de conta. PRJ366 (Lombardi).
+                23/05/2018 - Incluida chamada para a procedure pc_verifica_lib_blq_pre_aprov para 
+                             verificar se deve ser liberado ou bloqueado pre aprovado para a conta 
+                             com a nova situacao de conta. PRJ366 (Lombardi).
 
+                30/05/2018 - Retirar solicitaçao automática de Conta ITG (Renato Darosci - Supero).
+                
 .............................................................................*/
 
 /*............................. DEFINICOES ..................................*/
@@ -3307,6 +3309,8 @@ PROCEDURE Grava_Dados_Altera:
                          END.                    
                 END.*/
                  
+              /*
+                 *** RETIRADA A SOLICITAÇAO AUTOMATICA DE CONTA ITG - RENATO - 30/05/2018 ***
               { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
 
               RUN STORED-PROCEDURE pc_busca_tipo_conta_itg
@@ -3355,7 +3359,7 @@ PROCEDURE Grava_Dados_Altera:
 
                     {&VERIFICA-ERRO}
 
-                 END.
+                 END.*/
 
               FOR EACH crapreq WHERE crapreq.cdcooper = par_cdcooper AND
                                      crapreq.cdagenci = par_cdagepac AND
