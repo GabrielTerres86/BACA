@@ -16,6 +16,7 @@
                              
                 05/12/2017 - Melhoria 458 adicionado campo inmonpld - Antonio R. Jr (Mouts)
         
+				30/05/2018 - Incluir campo inperdes (Rafael - Mouts)
 ............................................................................*/
 
 /*............................. DEFINICOES .................................*/
@@ -579,6 +580,10 @@ PROCEDURE Busca_Historico:
            tt-histor.ingercre = craphis.ingercre   
            tt-histor.ingerdeb = craphis.ingerdeb   
            tt-histor.dsextrat = craphis.dsextrat
+
+           /*Inicio 364 - SM 5*/
+           tt-histor.inperdes = craphis.inperdes
+           /*Fim 364 - SM 5*/
            tt-histor.flgsenha = IF craphis.flgsenha THEN
                                     1
                                 ELSE
@@ -836,6 +841,9 @@ PROCEDURE Grava_Dados:
 
     DEF  INPUT PARAM par_indebfol AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_txdoipmf AS INTE                           NO-UNDO.
+    /*364 - SM 5*/
+    DEF  INPUT PARAM par_inperdes AS INTE                           NO-UNDO.
+
     
     DEF OUTPUT PARAM par_nmdcampo AS CHAR                           NO-UNDO.
     DEF OUTPUT PARAM TABLE FOR tt-erro.
@@ -1242,6 +1250,7 @@ PROCEDURE Grava_Dados:
                                        INPUT aux_vltarcxo,
                                        INPUT aux_vltarint,
                                        INPUT aux_vltarcsh,
+                                       INPUT par_inperdes,
                                        INPUT 0). /* cdcoprep */
                      /* Codigo da cooperativa que esta replicando eh 0
                         esta alterando o historico */
@@ -1279,7 +1288,8 @@ PROCEDURE Grava_Dados:
                            craphis.cdagrupa  =  par_cdagrupa
                            craphis.dsextrat  =  CAPS(par_dsextrat)
                            craphis.flgsenha  =  aux_flgsenha
-                           craphis.cdgrphis  =  par_cdgrphis.
+                           craphis.cdgrphis  =  par_cdgrphis
+						   craphis.inperdes  =  par_inperdes.
     
                     /* Atualizar as informacoes das tarifas */
                     FIND FIRST crapthi WHERE crapthi.cdcooper = craphis.cdcooper
@@ -1533,7 +1543,8 @@ PROCEDURE Replica_Dados:
                                INPUT log_vltarayl,
                                INPUT log_vltarcxo,
                                INPUT log_vltarint,
-                               INPUT log_vltarcsh,
+                               INPUT log_vltarcsh, 
+                               INPUT craphis.inperdes,
                                INPUT par_cdcooper). /* cdcoprep */
             /* passar o codigo da cooperativa 
               que estamos replicando o historico */
@@ -2007,6 +2018,7 @@ PROCEDURE gera_item_log:
     DEF INPUT PARAM log_vltarint AS DECI                            NO-UNDO.
     DEF INPUT PARAM log_vltarcsh AS DECI                            NO-UNDO.
     /* Codigo da cooperativa que replicou os dados */
+    DEF INPUT PARAM log_inperdes AS INTE                            NO-UNDO.
     DEF INPUT PARAM par_cdcoprep AS INTE NO-UNDO.
 
     FOR FIRST b-craphis WHERE b-craphis.cdcooper = par_cdcooper
@@ -2268,6 +2280,22 @@ PROCEDURE gera_item_log:
                              ELSE
                                 "Nao"), 
                       INPUT (IF par_flgsenha = TRUE THEN
+                                "Sim"
+                             ELSE 
+                                "Nao")).
+
+
+    IF par_idmonpld <> b-craphis.idmonpld THEN
+        RUN gera_log (INPUT par_cdcooper,
+                      INPUT par_cdoperad,
+                      INPUT par_cdhistor,
+                      INPUT par_cdcoprep,
+                      INPUT "Monitoramento PLD",
+                      INPUT (IF b-craphis.idmonpld = 1 THEN
+                                "Sim" 
+                             ELSE
+                                "Nao"), 
+                      INPUT (IF par_idmonpld = 1 THEN
                                 "Sim"
                              ELSE 
                                 "Nao")).

@@ -11,6 +11,8 @@
  *                             departamento como parametros e passar o o código (Renato Darosci)
  *
  *				  05/12/2017 - Adicionado campo Ind. Monitoramento - Melhoria 458 - Antonio R. Jr (mouts)
+ * 
+ *				  30/05/2018 - Incluir campo inperdes (Rafael - Mouts)
  * -------------- 
  *
  * -------------- 
@@ -128,6 +130,10 @@
 	echo "$('#dsprodut','#frmHistorico').val('" . getByTagName($historico,'dsprodut') . "');";
 	echo "$('#cdagrupa','#frmHistorico').val('" . $cdagrupa . "');";
 	echo "$('#dsagrupa','#frmHistorico').val('" . getByTagName($historico,'dsagrupa') . "');";
+    
+	
+	echo "$('#inperdes','#frmHistorico').val('" . getByTagName($historico,'inperdes') . "');";
+	
 	
 	
 

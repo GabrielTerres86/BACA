@@ -12,6 +12,7 @@
                              HISTOR para WEB (Douglas - Chamado 412552)
                              
                 05/12/2017 - Melhoria 458 adicionado campo inmonpld - Antonio R. Jr (Mouts)
+				30/05/2018 - Incluir campo inperdes (Rafael - Mouts)
 .............................................................................*/
 
 DEF TEMP-TABLE tt-histor NO-UNDO
@@ -43,6 +44,9 @@ DEF TEMP-TABLE tt-histor NO-UNDO
     FIELD ingercre AS INTE
     FIELD ingerdeb AS INTE
     FIELD flgsenha AS INTE
+	
+    FIELD inperdes AS INTE
+    
     FIELD dsextrat AS CHAR
     FIELD vltarcsh AS DECI
     FIELD cdgrphis AS INTE

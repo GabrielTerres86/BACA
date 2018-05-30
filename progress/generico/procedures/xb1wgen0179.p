@@ -14,6 +14,7 @@
 							  passar o o código (Renato Darosci)
 
                  05/12/2017 - Melhoria 458 adicionado campo inmonpld - Antonio R. Jr (Mouts)
+				 30/05/2018 - Incluir campo inperdes (Rafael - Mouts)
 ............................................................................*/
 
 
@@ -87,6 +88,9 @@ DEF VAR aux_cdgrphis AS INTE                                         NO-UNDO.
 DEF VAR aux_cdprodut AS INTE                                         NO-UNDO.
 DEF VAR aux_dsprodut AS CHAR                                         NO-UNDO.
 
+
+DEF VAR aux_inperdes AS INTE                                         NO-UNDO.
+
 { sistema/generico/includes/var_internet.i } 
 { sistema/generico/includes/supermetodos.i } 
 { sistema/generico/includes/b1wgen0179tt.i }
@@ -158,6 +162,8 @@ PROCEDURE valores_entrada:
              WHEN "cdprodut" THEN aux_cdprodut = INTE(tt-param.valorCampo).
              WHEN "dsprodut" THEN aux_dsprodut = tt-param.valorCampo.
              WHEN "cdgrphis" THEN aux_cdgrphis = INTE(tt-param.valorCampo).
+             WHEN "inperdes" THEN aux_inperdes = INTE(tt-param.valorCampo).
+             
 
          END CASE.
 
@@ -376,6 +382,8 @@ PROCEDURE Grava_Dados:
                      INPUT aux_vltarcsh,
                      INPUT aux_indebfol,
                      INPUT aux_txdoipmf,
+                     INPUT aux_inperdes,
+
                     OUTPUT aux_nmdcampo,
                     OUTPUT TABLE tt-erro).   
                                              

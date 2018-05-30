@@ -7,6 +7,8 @@
 	* --------------
 	* ALTERAÇÕES   : 24/02/2017 - Remocao dos caracteres "')?>" dos textos dos campos no form. (Jaison/James)
 	*				 05/12/2017 - Adicionado campo Ind. Monitoramento - Melhoria 458 - Antonio R. Jr (mouts)
+	*
+    * 				 30/05/2018 - Incluir campo inperdes (Rafael - Mouts)
 	* --------------
 	*/ 
 
@@ -300,6 +302,23 @@
 						<input name="dsagrupa" id="dsagrupa" type="text"/>
 					</td>
 				<tr>
+				<tr>
+					
+					
+					
+					
+				    <!-- Inicio SM 5 - 364 - RMM -->
+					<td>
+						<label for="inperdes">Permitir Desligar Conta?</label>
+						<select id="inperdes" name="inperdes">
+							<option value="1">Sim </option>
+							<option value="0">N&atilde;o </option>
+						</select>
+						<!-- Campo hidden para salvar o operador que autorizou mudar o campo "Considerar para Bloquei Judicial" para "nao" -->
+						<!-- <input type="hidden" name="operauto" id="operauto" value=""> -->
+					</td>	
+                    <!-- Inicio SM 5 - 364 - RMM -->					
+				</tr>			    
 			</table>
 		</fieldset>
 	</div>

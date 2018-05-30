@@ -6,6 +6,9 @@
  * OBJETIVO     : Rotina para alteração e inclusão cadastral da tela HISTOR
  * --------------
  * ALTERAÇÕES   :  05/12/2017 - Adicionado campo Ind. Monitoramento - Melhoria 458 - Antonio R. Jr (mouts)
+ *
+ *				   30/05/2018 - Incluir campo inperdes (Rafael - Mouts)
+ *
  * -------------- 
  */
 ?> 
@@ -67,6 +70,10 @@
 
 	$indebfol = (isset($_POST['indebfol'])) ? $_POST['indebfol'] : 0;
 	$txdoipmf = (isset($_POST['txdoipmf'])) ? $_POST['txdoipmf'] : 0;
+
+	$inperdes = (isset($_POST['inperdes'])) ? $_POST['inperdes'] : 0;
+ 
+	
 
     if ($cdhistor == 0 ) {
 		exibirErro('error','C&oacute;digo do hist&oacute;rico inv&aacute;lido.','Alerta - Ayllos',"focaCampoErro('cdhistor','frmHistorico');",false);
@@ -139,6 +146,12 @@
     if ($flgsenha != 0 && $flgsenha != 1) {
 		exibirErro('error','Solicita&ccedil;&atilde;o de senha  inv&aacute;lido.','Alerta - Ayllos',"focaCampoErro('flgsenha','frmHistorico');",false);
 	}
+
+	if ($inperdes != 0 && $inperdes != 1) {
+		exibirErro('error','Indicador para Permitir Desligamento inv&aacute;lido.','Alerta - Ayllos',"focaCampoErro('inperdes','frmHistorico');",false);
+	}
+
+	
 
 	/*  Campos sem validacao:
 			- nmestrut
@@ -216,6 +229,9 @@
 
 	$xml .= '       <indebfol>'.$indebfol.'</indebfol>';
 	$xml .= '       <txdoipmf>'.$txdoipmf.'</txdoipmf>';
+	$xml .= '       <inperdes>'.$inperdes.'</inperdes>';    
+
+
 	$xml .= '	</Dados>';
 	$xml .= '</Root>';
 	
