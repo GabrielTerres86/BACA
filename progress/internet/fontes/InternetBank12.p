@@ -26,6 +26,8 @@
                05/09/2014 - Incluir retorno do campo cdhistor na tt-extrato_conta 
                             Chamado: 161899 - (Jonathan - RKAM)
                             
+               21/04/2018 - Alterar para retornar o campo idlstdom na chamada
+                            deste servico (Anderson - P285)
 ..............................................................................*/
     
 CREATE WIDGET-POOL.
@@ -169,7 +171,9 @@ IF  par_flglsext  THEN
                                    tt-extrato_conta.dsprotoc +
                                    "</dsprotoc><flgdetal>" +
                                    STRING(tt-extrato_conta.flgdetal) +                                
-                                   "</flgdetal></DADOS>".
+                                   "</flgdetal><idlstdom>" +
+                                   STRING(tt-extrato_conta.idlstdom) +
+                                   "</idlstdom></DADOS>".
         
         END. /** Fim do FOR EACH tt-extrato_conta **/
     END.
