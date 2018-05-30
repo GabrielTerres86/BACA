@@ -1,40 +1,42 @@
-<? 
+<?
 /*!
  * FONTE        : busca_tarifas_estorno.php
  * CRIAÇÃO      : Daniel Zimmermann
  * DATA CRIAÇÃO : 20/03/2013
  * OBJETIVO     : Rotina para buscar tarifas de determinada conta na tela ESTTAR
  * --------------
- * ALTERAÇÕES   : 
- * -------------- 
+ * ALTERAÇÕES   :
+ * --------------
  */
-?> 
+?>
 
-<?	
+<?
     session_start();
 	require_once('../../includes/config.php');
 	require_once('../../includes/funcoes.php');
 	require_once('../../includes/controla_secao.php');
 	require_once('../../class/xmlfile.php');
-	isPostMethod();		
+	isPostMethod();
 
 	// Inicializa
 	$retornoAposErro	= 'cCdhistor.focus();';
-	
+
 	// Recebe a operação que está sendo realizada
-	$nrdconta			= (isset($_POST['nrdconta'])) ? $_POST['nrdconta'] : 0 ; 
-	$cddopcap			= (isset($_POST['cddopcap'])) ? $_POST['cddopcap'] : 0 ; 
-	$dtinicio			= (isset($_POST['dtinicio'])) ? $_POST['dtinicio'] : 0 ; 
-	$dtafinal			= (isset($_POST['dtafinal'])) ? $_POST['dtafinal'] : 0 ; 
-	$cdhistor			= (isset($_POST['cdhistor'])) ? $_POST['cdhistor'] : 0 ; 
-	
+	$nrdconta			= (isset($_POST['nrdconta'])) ? $_POST['nrdconta'] : 0 ;
+	$cddopcap			= (isset($_POST['cddopcap'])) ? $_POST['cddopcap'] : 0 ;
+	$dtinicio			= (isset($_POST['dtinicio'])) ? $_POST['dtinicio'] : 0 ;
+	$dtafinal			= (isset($_POST['dtafinal'])) ? $_POST['dtafinal'] : 0 ;
+	$cdhistor			= (isset($_POST['cdhistor'])) ? $_POST['cdhistor'] : 0 ;
+
+  $cddopcap = ($cddopcap == 3 ? 1 : $cddopcap);
+
 	$procedure = 'lista_tarifas_estorno';
-	
-	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],'C')) <> '') {		
+
+	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],'C')) <> '') {
 		exibirErro('error',$msgError,'Alerta - Ayllos','',false);
 	}
 
-	// Monta o xml dinâmico de acordo com a operação 
+	// Monta o xml dinâmico de acordo com a operação
 	$xml  = '';
 	$xml .= '<Root>';
 	$xml .= '	<Cabecalho>';
@@ -46,8 +48,8 @@
 	$xml .= '		<cdagenci>'.$glbvars['cdagenci'].'</cdagenci>';
 	$xml .= '		<nrdcaixa>'.$glbvars['nrdcaixa'].'</nrdcaixa>';
 	$xml .= '		<cdoperad>'.$glbvars['cdoperad'].'</cdoperad>';
-	$xml .= '		<nmdatela>'.$glbvars['nmdatela'].'</nmdatela>';	
-	$xml .= '		<idorigem>'.$glbvars['idorigem'].'</idorigem>';	
+	$xml .= '		<nmdatela>'.$glbvars['nmdatela'].'</nmdatela>';
+	$xml .= '		<idorigem>'.$glbvars['idorigem'].'</idorigem>';
 	$xml .= '		<dtmvtolt>'.$glbvars['dtmvtolt'].'</dtmvtolt>';
 	$xml .= '		<nrdconta>'.$nrdconta.'</nrdconta>';
 	$xml .= '		<cddopcap>'.$cddopcap.'</cddopcap>';
@@ -60,7 +62,7 @@
 	$xmlResult = getDataXML($xml);
 	$xmlObjeto = getObjectXML($xmlResult);
 
-	//----------------------------------------------------------------------------------------------------------------------------------	
+	//----------------------------------------------------------------------------------------------------------------------------------
 	// Controle de Erros
 	//----------------------------------------------------------------------------------------------------------------------------------
 	if ( strtoupper($xmlObjeto->roottag->tags[0]->name) == "ERRO" ) {
@@ -69,15 +71,15 @@
 	}
 
 	$estorno 	= $xmlObjeto->roottag->tags[0]->tags;
-	
+
 	$vlrtotal = $xmlObjeto->roottag->tags[0]->attributes["VLRTOTAL"];
 	$qtregist = $xmlObjeto->roottag->tags[0]->attributes["QTREGIST"];
-	
-	echo '<form id="formTabEsttar" name="formTabEsttar" class="formulario" onSubmit="return false;" >';	
+
+	echo '<form id="formTabEsttar" name="formTabEsttar" class="formulario" onSubmit="return false;" >';
 	echo '	<div class="divRegistros">';
 	echo '		<table>';
 	echo '			<thead>';
-	echo '				<tr>';	
+	echo '				<tr>';
 	echo '					<th><input type="checkbox" name="checkTodos" id="checkTodos" value="no" style="float:none; height:16;"/></th>';
 	echo '					<th>'.utf8ToHtml('Data').'</th>';
 	echo '					<th>'.utf8ToHtml('Hist.').'</th>';
@@ -87,11 +89,11 @@
 	echo '					<th>'.utf8ToHtml('Motivo').'</th>';
 	echo '				</tr>';
 	echo '			</thead>';
-	echo '			<tbody>';	
-	
+	echo '			<tbody>';
+
 	$conta = 0;
-	foreach( $estorno as $r ) { 	
-	
+	foreach( $estorno as $r ) {
+
 		$conta++;
 		echo "<tr>";
 		echo	"<td id='tabflgcheck'>";
@@ -102,16 +104,16 @@
 		echo 				'<input type="hidden" name="cdlantar'.$conta.'" id="cdlantar'.$conta.'" value="'.getByTagName($r->tags,'cdlantar').'" />';
 		echo    "</td>";
 		echo	"<td id='tabcdhistor'><span>".getByTagName($r->tags,'cdhistor')."</span>";
-		echo                 getByTagName($r->tags,'cdhistor'); 
+		echo                 getByTagName($r->tags,'cdhistor');
 		echo    "</td>";
 		echo	"<td id='tabdshistor'><span>".getByTagName($r->tags,'dshistor')."</span>";
-		echo                 getByTagName($r->tags,'dshistor'); 
+		echo                 getByTagName($r->tags,'dshistor');
 		echo    "</td>";
 		echo	"<td id='tabnrdocmto'><span>".getByTagName($r->tags,'nrdocmto')."</span>";
-		echo                 getByTagName($r->tags,'nrdocmto'); 
+		echo                 getByTagName($r->tags,'nrdocmto');
 		echo    "</td>";
 		echo	"<td id='tabvltarifa'><span>".converteFloat(getByTagName($r->tags,'vltarifa'),'MOEDA')."</span>";
-		echo                 formataMoeda(getByTagName($r->tags,'vltarifa')); 
+		echo                 formataMoeda(getByTagName($r->tags,'vltarifa'));
 		echo 	'<input type="hidden" name="vltarifa'.$conta.'" id="vltarifa'.$conta.'" value="'.converteFloat(getByTagName($r->tags,'vltarifa'),'MOEDA').'" />';
 		echo	"</td>";
 		echo	"<td id='cdhisest'>";
@@ -120,91 +122,91 @@
 		echo 		'<a style="padding: 3px 0 0 3px;" href="#" onClick="pesquisaMotivo('.$conta.');return false;"><img class="lupa" name="lupa'.$conta.'" id="lupa'.$conta.'" src="'.$UrlImagens.'geral/ico_lupa.gif"/></a>';
 		echo    "</td>";
 		echo "</tr>";
-		
+
 		?>
 		<script>
-		
+
 			var qtd = 0;
 			var valor = 0;
 			var valor_aux = 0;
-			
+
 			$('<? echo '#flgcheck'.$conta;?>').unbind('click').bind('click',
 				function(e){
 					if( $(this).prop('checked') == true ){
 						$('<? echo '#dsmotest'.$conta;?>','#formTabEsttar').css("visibility","visible"); //.habilitaCampo();
-						$('<? echo '#lupa'.$conta;?>','#formTabEsttar').css("visibility","visible"); 
-						
+						$('<? echo '#lupa'.$conta;?>','#formTabEsttar').css("visibility","visible");
+
 						qtd = parseInt( $('#qtdselec','#formRodape').val() ) ;
 						qtd = qtd + 1;
 						$('#qtdselec','#formRodape').val(qtd);
-						
+
 						valor_aux = $('<? echo '#vltarifa'.$conta;?>','#formTabEsttar').val();
 						valor_aux  = number_format(parseFloat(valor_aux.replace(',','.')),2,',','');
-						
+
 						valor = $('#totselec','#formRodape').val();
-						
+
 						valor = number_format(parseFloat(valor.replace(',','.')),2,',','');
-						
+
 						valor =  converteMoedaFloat(valor) + converteMoedaFloat(valor_aux);
-						
+
 						valor = number_format(valor,2,',','');
-						
+
 						$('#totselec','#formRodape').val(valor);
-						
+
 					} else {
 						$('<? echo '#dsmotest'.$conta;?>','#formTabEsttar').css("visibility","hidden"); //desabilitaCampo();
 						$('<? echo '#dsmotest'.$conta;?>','#formTabEsttar').val('');
-						$('<? echo '#lupa'.$conta;?>','#formTabEsttar').css("visibility","hidden"); 
-						
+						$('<? echo '#lupa'.$conta;?>','#formTabEsttar').css("visibility","hidden");
+
 						qtd = $('#qtdselec','#formRodape').val() ;
 						qtd = qtd - 1;
 						$('#qtdselec','#formRodape').val(qtd) ;
-						
+
 						valor_aux = $('<? echo '#vltarifa'.$conta;?>','#formTabEsttar').val();
 						valor_aux  = number_format(parseFloat(valor_aux.replace(',','.')),2,',','');
-						
+
 						valor = $('#totselec','#formRodape').val();
-						
+
 						valor = number_format(parseFloat(valor.replace(',','.')),2,',','');
-						
+
 						valor =  converteMoedaFloat(valor) - converteMoedaFloat(valor_aux);
-						
+
 						valor = number_format(valor,2,',','');
-						
+
 						$('#totselec','#formRodape').val(valor);
-						
+
 					}
 				}
 			)
-					
-		
+
+
 		</script>
 		<?
-		
-	} 	
+
+	}
 	?>
 	<script>
 		$('#qtdtotal','#formRodape').val(<? echo $qtregist ?>);
-		
+
 		valor_aux = ('<? echo $vlrtotal ?>');
 		valor_aux = number_format(parseFloat(valor_aux.replace(',','.')),2,',','');
 		$('#vlrtotal','#formRodape').val(valor_aux);
-		
+
 	</script>
-		
+
 	<?
-			
+
 	echo '			</tbody>';
 	echo '		</table>';
 	echo '	</div>';
-	
+
 	echo 		'<input class="campo" type="hidden" name="cdmotest" id="cdmotest" />';
 	echo 		'<input class="campo" type="hidden" name="dsmotest" id="dsmotest" />';
-	
+
 	echo '</form>';
-	
-	
-	
+
+
+
 	echo 	"<form id='formRodape' class='formulario'>";
 	echo 		"<div id='rodapeTabEsttar'>";
 	echo 			"<table width='100%' style='border-top: 1px solid #777777;border-bottom: 1px solid #777777;margin-bottom: 5px;'>";
@@ -224,5 +226,5 @@
 	echo 			"</table>";
 	echo 		"</div>";
 	echo 	"</form>";
-	
+
 ?>
