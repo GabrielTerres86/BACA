@@ -2605,7 +2605,7 @@ create or replace procedure cecred.pc_crps730(pr_dscritic OUT VARCHAR2
 																							 ,pr_cdocorre            => vr_cdocorre            -- IN
 																							 ,pr_dsmotivo            => vr_dsmotivo            -- IN
 																							 ,pr_crapdat             => rw_crapdat             -- IN
-																							 ,pr_cdoperad            => '1'                    -- IN -- Fixo
+																							 ,pr_cdoperad            => '1'                      -- IN -- Fixo
 																							 ,pr_ret_nrremret        => vr_nrretcoo            -- OUT
 																							 ,pr_tab_lcm_consolidada => vr_tab_lcm_consolidada -- IN OUT
 																							 ,pr_cdhistor            => 2632                   -- IN -- Fixo
@@ -2953,6 +2953,24 @@ begin
 	                    ,pr_dscritic => pr_dscritic -- OUT
                       );
   --
+  IF pr_dscritic IS NOT NULL THEN
+    --
+    RAISE vr_exc_erro;
+    --
+  END IF;
+	
+	-- Executa a conciliação automática
+	tela_manprt.pc_gera_conciliacao_auto(pr_dscritic => pr_dscritic);
+	--
+  IF pr_dscritic IS NOT NULL THEN
+    --
+    RAISE vr_exc_erro;
+    --
+  END IF;
+	
+	-- Gera as movimentações
+	cobr0011.pc_gera_movimento_pagamento(pr_dscritic => pr_dscritic);
+	--
   IF pr_dscritic IS NOT NULL THEN
     --
     RAISE vr_exc_erro;
