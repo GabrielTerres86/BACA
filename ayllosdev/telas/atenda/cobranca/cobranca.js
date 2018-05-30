@@ -1427,11 +1427,19 @@ function acessaAba(id,cddopcao) {
 
     var flcooexp = ($("#flcooexp", "#frmConsulta").prop("checked") == true) ? 1 : 0;
     var flceeexp = ($("#flceeexp", "#frmConsulta").prop("checked") == true) ? 1 : 0;
+    var qtlimmip_val = $("#qtlimmip", "#frmConsulta").val();
+    var qtlimaxp_val = $("#qtlimaxp", "#frmConsulta").val();
 
     // Se NAO foi selecionado nem Cooperado e nem Cooperativa expede
-    if (id == 1 && flcooexp == 0 && flceeexp == 0) {
-        showError("error", "Campo Cooperativa Emite e Expede ou Cooperado Emite e Expede devem ser preenchidos", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')));acessaAba('0','" + cddopcao + "');");
-        return false;
+    if (id == 1) {
+        if (flcooexp == 0 && flceeexp == 0) {
+            showError("error", "Campo Cooperativa Emite e Expede ou Cooperado Emite e Expede devem ser preenchidos", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')));acessaAba('0','" + cddopcao + "');");
+            return false;
+        }
+        if (parseInt(qtlimaxp_val) < parseInt(qtlimmip_val)) {
+            showError("error", "Data maxima de Intervalo de Protesto nao pode ser menor que data minima.", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')));acessaAba('0','" + cddopcao + "');");
+            return false;
+        }
     }
 
     // Esconde as abas
