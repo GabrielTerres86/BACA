@@ -21,6 +21,8 @@
  * 26/06/2017 - Alteração de DDA para Boleto DDD e inclusão de Campo Pagador DDA, Prj. 340 (Jean Michel)
  *
  * 27/09/2017 - Receber o campo qtdiaprt, inserasa como parametro (Douglas - Chamado 754911)
+ *
+ * 30/05/2018 - Alterações referente ao PRJ352
  */
  
  	session_start();
@@ -44,6 +46,7 @@
 	$cdtpinsc   = $_POST['cdtpinsc'];
 	$nrinssac   = $_POST['nrinssac'];
 	$insitcrt   = $_POST['insitcrt'];
+	$dtvencto	= $_POST['dtvencto'];
 	
 	switch( $operacao ) {
 		case 'log':			$procedure = 'buca_log';			break;	
@@ -109,6 +112,33 @@
 	}
 	
 	$flgsacad = ($xmlObj->roottag->tags[0]->cdata == 0) ? "N" : "S";
+	
+	$nrdconta 	= $_POST['nrdconta'];
+	$nrcnvcob 	= $_POST['nrcnvcob'];
+	
+	$xml = "<Root>";
+	$xml .= " <Dados>";
+	$xml .= "   <cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
+	$xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
+	$xml .= "   <nrconven>".$nrcnvcob."</nrconven>";
+	$xml .= " </Dados>";
+	$xml .= "</Root>";
+	
+	$xmlResult = mensageria($xml, "COBRAN", "COBRAN_CONSULTA_LIMITE_DIAS", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	$xmlObj = getObjectXML($xmlResult);
+  
+	if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
+	  $msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
+	  if ($msgErro == "") {
+		  $msgErro = $xmlObj->roottag->tags[0]->cdata;
+	  }
+	  
+	  exibirErro('error',$msgErro,'Alerta - Ayllos','fechaRotina( $(\'#divRotina\') )', false);
+	  exit();
+	}
+			
+	$qtlimmip = $xmlObj->roottag->tags[0]->tags[0]->cdata;
+	$qtlimaxp = $xmlObj->roottag->tags[0]->tags[1]->cdata;
 	
 ?>
 

@@ -26,6 +26,7 @@
  * 14/07/2017 - Alteração para o cancelamento manual de produtos. Projeto 364 (Reinert)
  * 27/09/2017 - Adicionar o campo qtdiaprt, inserasa como parametro para a tela de instrucoes (Douglas - Chamado 754911)
  * 21/12/2017 - Adicionar validação para que sejam informados os campos de data inicial e final na opção "R" da tela (Douglas - Chamado 807531)
+ * 30/05/2018 - Alterações referente ao PRJ352
  */
 
 //Formulários e Tabela
@@ -1310,6 +1311,7 @@ function buscaConsulta(operacao) {
 			cdtpinsc: cdtpinsc,
 			nrinssac: nrinssac,
             insitcrt: insitcrt,
+			dtvencto: dtvencto,
             redirect: 'script_ajax'
         },
         error: function (objAjax, responseError, objExcept) {

@@ -24,6 +24,12 @@ $tem_inst_protest = (( strcasecmp($flgdprot, 'yes') == 0 ) && $qtdiaprt > 0 ) ? 
 $esta_protestado  =  ( $insitcrt == '5' ) ? 1 : 0;
 $esta_negativado  = ((( strcasecmp($flserasa, 'yes') == 0 ) || ( $qtdianeg > 0 )) && ($inserasa > 0)) ? 1 : 0;
 
+$vr_dtvencto = implode('-', array_reverse(explode('/', $dtvencto)));
+$vr_dtvencto = date('d/m/Y', strtotime($vr_dtvencto . ' + '.$qtlimaxp.' days'));
+
+$exec_inst_auto = strtotime($vr_dtvencto) > strtotime($glbvars['dtmvtolt']) ? 1 : 0;
+
+//var_dump($vr_dtvencto,$qtlimaxp,$exec_inst_auto);
 
 foreach( $registro as $r ) {
     // Por padrão vamos criar a opção da instrução em tela
@@ -90,7 +96,13 @@ foreach( $registro as $r ) {
 				$cria_opcao = 0;
 			} 
 		}
-	}	
+	}
+    if ($exec_inst_auto == 0){
+		if( getByTagName($r->tags,'cdocorre') == 80) { // Incluir Instrução Automática de Protesto
+			// Não criar a opção
+			$cria_opcao = 0;
+		} 
+	}
 	
     //$cria_opcao = 1;	
 	
