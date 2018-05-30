@@ -69,6 +69,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps160(pr_cdcooper IN crapcop.cdcooper%TY
                    05/03/2018 - Substituída verificacao do tipo de conta "IN (5,6,7,17,18)" para a 
                                 modalidade do tipo de conta igual a "2" ou "3". PRJ366 (Lombardi)
 
+                   30/05/2018 - Adicionada situacao 9. PRJ366 (Lombardi)
+
     ............................................................................ */
 
     DECLARE
@@ -177,7 +179,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps160(pr_cdcooper IN crapcop.cdcooper%TY
           AND cp.inpessoa = tpcta.inpessoa
           AND cp.cdtipcta = tpcta.cdtipo_conta
           AND (tpcta.cdmodalidade_tipo IN (2, 3)
-               OR cp.cdsitdct = 5);
+               OR cp.cdsitdct = 5
+               OR cp.cdsitdct = 9);
                
       -- Buscar as informações para restart e Rowid para atualização posterior
       CURSOR cr_crapres(pr_cdcooper IN crapres.cdcooper%TYPE

@@ -604,7 +604,7 @@ BEGIN
             ,ass.dtmvtolt
         from crapass ass
        where ass.nrcpfcgc = pr_nrcpfcgc
-         and ass.cdsitdct in (1,2,3,4,5);
+         and ass.cdsitdct in (1,2,3,4,5,9);
 
     -- Verifica se pre aprovado esta liberado
     CURSOR cr_param_conta (pr_cdcooper crapneg.cdcooper%TYPE

@@ -419,7 +419,8 @@ CPF diferente ou para outra cooperativa.” */
                           (crapass.cdsitdct = 2 OR
                            crapass.cdsitdct = 3 OR
                            crapass.cdsitdct = 4 OR
-                           crapass.cdsitdct = 5) THEN
+                           crapass.cdsitdct = 5 OR
+                           crapass.cdsitdct = 9) THEN
                     DO:
                         ASSIGN aux_cdcritic = 0
                                aux_dscritic = "Conta para transferencia esta encerrada."

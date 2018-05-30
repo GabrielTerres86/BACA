@@ -236,6 +236,8 @@
                              código da modalidade to tipo de conta igual a "2" ou "3".
                              PRJ366 (Lombardi).
 
+                30/05/2018 - Adicionada situacao 9. PRJ366 (Lombardi).
+
 ..............................................................................*/
                     
 { sistema/generico/includes/b1wgen0038tt.i }
@@ -3722,7 +3724,8 @@ PROCEDURE imprimir_proposta_seguro:
                 
                 IF  aux_cdmodali          = 2  OR
                     aux_cdmodali          = 3  OR
-                    tt-associado.cdsitdct = 5  THEN
+                    tt-associado.cdsitdct = 5  OR
+                    tt-associado.cdsitdct = 9  THEN
                     IF  aux_cdempres =  1   OR
                        (aux_cdempres =  4   AND
                        (tt-associado.cdagenci = 14   OR
