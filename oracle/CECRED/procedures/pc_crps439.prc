@@ -182,6 +182,7 @@ create or replace procedure cecred.pc_crps439(pr_cdcooper  in craptab.cdcooper%t
       from crapcop
      where cdcooper = pr_cdcooper;
   rw_crapcop     cr_crapcop%rowtype;
+	
   -- Buscar informações de seguros residenciais que ainda não foram debitados no mês
   CURSOR cr_crapseg (pr_cdcooper in crapseg.cdcooper%TYPE,
                      pr_nrctares in crapseg.nrdconta%TYPE,
@@ -216,6 +217,7 @@ create or replace procedure cecred.pc_crps439(pr_cdcooper  in craptab.cdcooper%t
             or crapseg.dtprideb = pr_dtmvtolt)
      order by dtmvtolt, cdagenci, cdbccxlt, nrdolote, nrdconta, nrctrseg;
   rw_crapseg     cr_crapseg%rowtype;
+	
   -- Buscar informações da seguradora
   cursor cr_crapcsg (pr_cdcooper in crapcsg.cdcooper%type,
                      pr_cdsegura in crapcsg.cdsegura%type) is
@@ -225,6 +227,7 @@ create or replace procedure cecred.pc_crps439(pr_cdcooper  in craptab.cdcooper%t
      where crapcsg.cdcooper = pr_cdcooper
        and crapcsg.cdsegura = pr_cdsegura;
   rw_crapcsg     cr_crapcsg%rowtype;
+	
   -- Buscar informações dos planos de seguro
   cursor cr_craptsg (pr_cdcooper in craptsg.cdcooper%type,
                      pr_tpplaseg in craptsg.tpplaseg%type,
@@ -239,6 +242,7 @@ create or replace procedure cecred.pc_crps439(pr_cdcooper  in craptab.cdcooper%t
        and craptsg.tpseguro = pr_tpseguro
        and craptsg.cdsegura = pr_cdsegura;
   rw_craptsg     cr_craptsg%rowtype;
+	
   -- Buscar informações do associado
   cursor cr_crapass (pr_cdcooper in crapass.cdcooper%type,
                      pr_nrdconta in crapass.nrdconta%type) is
@@ -256,6 +260,7 @@ create or replace procedure cecred.pc_crps439(pr_cdcooper  in craptab.cdcooper%t
        and crapass.nrdconta = pr_nrdconta
        AND crapass.idorgexp = org.idorgao_expedidor(+);
   rw_crapass     cr_crapass%rowtype;
+	
   -- Buscar informações de seguros
   cursor cr_crawseg (pr_cdcooper in crawseg.cdcooper%type,
                      pr_cdsegura in crawseg.cdsegura%type,
@@ -276,6 +281,7 @@ create or replace procedure cecred.pc_crps439(pr_cdcooper  in craptab.cdcooper%t
        and crawseg.nrdconta = pr_nrdconta
        and crawseg.nrctrseg = pr_nrctrseg;
   rw_crawseg     cr_crawseg%rowtype;
+	
   -- Capa dos lotes
   cursor cr_craplot (pr_cdcooper in craplot.cdcooper%type,
                      pr_dtmvtopr in craplot.dtmvtolt%type,
@@ -295,6 +301,7 @@ create or replace procedure cecred.pc_crps439(pr_cdcooper  in craptab.cdcooper%t
        and co.cdbccxlt = pr_cdbccxlt
        and co.nrdolote = pr_nrdolote;
   rw_craplot     cr_craplot%rowtype;
+	
   -- Buscar informações de seguros
   cursor cr_crapseg2 (pr_cdcooper in crapseg.cdcooper%type,
                       pr_dtmvtolt in crapseg.dtmvtolt%type) is
@@ -322,6 +329,7 @@ create or replace procedure cecred.pc_crps439(pr_cdcooper  in craptab.cdcooper%t
             or crapseg.dtcancel = pr_dtmvtolt)
        and nvl(crapseg.dtmvtolt, to_date('31122999','ddmmyyyy')) <> nvl(crapseg.dtcancel, to_date('31122999','ddmmyyyy'))
        and crapseg.tpseguro >= 11;
+			 
   -- Cadastro do titular da conta
   cursor cr_crapttl (pr_cdcooper in crapttl.cdcooper%type,
                      pr_nrdconta in crapttl.nrdconta%type) is
@@ -332,6 +340,7 @@ create or replace procedure cecred.pc_crps439(pr_cdcooper  in craptab.cdcooper%t
        and crapttl.idseqttl = 1
        and crapttl.tpdocttl = 'CI';
   rw_crapttl     cr_crapttl%rowtype;
+	
   -- Buscar o telefone fixo ou celular
   cursor cr_craptfc (pr_cdcooper in craptfc.cdcooper%type,
                      pr_nrdconta in craptfc.nrdconta%type) is
@@ -342,6 +351,7 @@ create or replace procedure cecred.pc_crps439(pr_cdcooper  in craptab.cdcooper%t
        and craptfc.tptelefo in (1,2)
      order by craptfc.progress_recid;
   rw_craptfc     cr_craptfc%rowtype;
+	
   -- Buscar o e-mail do titular
   cursor cr_crapcem (pr_cdcooper in crapcem.cdcooper%type,
                      pr_nrdconta in crapcem.nrdconta%type) is
@@ -352,6 +362,7 @@ create or replace procedure cecred.pc_crps439(pr_cdcooper  in craptab.cdcooper%t
        and crapcem.idseqttl = 1
      order by crapcem.progress_recid;
   rw_crapcem     cr_crapcem%rowtype;
+	
   -- Buscar o endereço de correspondência
   cursor cr_crapenc (pr_cdcooper in crapenc.cdcooper%type,
                      pr_nrdconta in crapenc.nrdconta%type,
@@ -408,8 +419,7 @@ create or replace procedure cecred.pc_crps439(pr_cdcooper  in craptab.cdcooper%t
   vr_indebito      crapseg.indebito%type;
   vr_dtdebito      crapseg.dtdebito%type;
   vr_dtprdebi      crapseg.dtdebito%type;
-	vr_nmtabela      VARCHAR2(60); -- Nome da tabela retornado pela "pc_gerar_lancamento_conta"
-	vr_rowidlcm      ROWID;        -- ROWID do lançamento inserido na CRAPLCM
+	vr_retornos      LANC0001.typ_reg_retorno; -- Retornos da procedure "pc_gerar_lancamento_conta"
 	vr_incrineg      INTEGER;      -- Indicador de crítica do negócio
 	vr_dtfimvig      DATE;         -- Data de fim da vigência do seguro (para fins de cancelamento automático)
   vr_dsseguro      varchar2(50);
@@ -722,70 +732,6 @@ begin
                                                       pr_nrdconta => rw_crapseg.nrdconta,
                                                       pr_cdhistor => rw_crapcsg.cdhstcas##2);
 
-    /* se nao puder debitar historico, entao cancela o contrato e avisa cooperado */
-    IF podeDebitar = false THEN
-         -- marca contrato como cancelado
-				 
-         IF (rw_crapseg.tpseguro = 3) THEN
-                vr_dtfimvig := rw_crapdat.dtmvtolt;
-             ELSE
-               vr_dtfimvig := rw_crapseg.dtfimvig;
-             END IF;
-
-             update crapseg
-               set crapseg.dtfimvig = vr_dtfimvig, -- Data de fim de vigencia do seguro
-                   crapseg.dtcancel = rw_crapdat.dtmvtolt, -- Data de cancelamento
-                   crapseg.cdsitseg = 2, -- Situacao do seguro: 1 - Ativo 2 - Cancelado
-                   crapseg.cdmotcan = 12, -- cancelamento por inadimplencia (SEGU0001)
-                   crapseg.cdopeexc = 1,
-                   crapseg.cdageexc = rw_craplot.cdagenci,
-                   crapseg.dtinsexc = rw_crapdat.dtmvtolt,
-                   crapseg.cdopecnl = 1
-               where crapseg.rowid = rw_crapseg.rowid;
-
-         CASE rw_crapseg.tpseguro
-            WHEN 1 THEN vr_dsseguro := 'Residencial';
-            WHEN 11 THEN vr_dsseguro:= 'Residencial';
-            WHEN 2 THEN vr_dsseguro := 'Auto';
-            WHEN 3 THEN vr_dsseguro := 'de Vida';
-            WHEN 4 THEN vr_dsseguro := 'Prestamista';
-            ELSE vr_dsseguro := '';
-          END CASE;
-
-       -- gera mensagem de aviso para o cooperado
-        GENE0003.pc_gerar_mensagem
-                   (pr_cdcooper => pr_cdcooper
-                   ,pr_nrdconta => rw_crapseg.nrdconta
-                   ,pr_idseqttl => 1          -- Primeiro titular da conta
-                   ,pr_cdprogra => 'CRPS439'  -- Programa
-                   ,pr_inpriori => 0          -- prioridade
-                   ,pr_dsdmensg => 'Cooperado, seu seguro '||vr_dsseguro||' foi cancelado por falta de pagamento. Dúvidas consulte seu posto de atendimento' -- corpo da mensagem
-                   ,pr_dsdassun => 'Aviso sobre seu seguro'         -- Assunto
-                   ,pr_dsdremet => rw_crapcop.nmrescop --nome cooperativa remetente
-                   ,pr_dsdplchv => 'emprestimo'
-                   ,pr_cdoperad => 1
-                   ,pr_cdcadmsg => 0
-                   ,pr_dscritic => vr_dscritic);
-
-        -- gera log do envio da mensagem
-        GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper
-                            ,pr_cdoperad => '1'
-                            ,pr_dscritic => vr_dscritic
-                            ,pr_dsorigem => 'AYLLOS' --vr_dsorigem
-                            ,pr_dstransa => 'Envio de mensagem de cancelamento de seguro por inadimplencia'
-                            ,pr_dttransa => trunc(SYSDATE)
-                            ,pr_flgtrans => 0
-                            ,pr_hrtransa => GENE0002.fn_busca_time
-                            ,pr_idseqttl => 1
-                            ,pr_nmdatela => 'crps439'
-                            ,pr_nrdconta => rw_crapseg.nrdconta
-                            ,pr_nrdrowid => vr_rowid_log
-                            );
-
-         commit;
-       -- proximo registro
-       continue;
-    END IF;
     -- Busca informações do associado
     open cr_crapass (pr_cdcooper,
                      rw_crapseg.nrdconta);
@@ -882,15 +828,75 @@ begin
                                           , pr_vllanmto => vr_vlpreseg
 																					, pr_inprolot => 1
 																					, pr_tplotmov => 1
-																					, pr_rowid    => vr_rowidlcm
-																					, pr_nmtabela => vr_nmtabela
+																					, pr_retorno  => vr_retornos
 																					, pr_incrineg => vr_incrineg
                                           , pr_cdcritic => vr_cdcritic
                                           , pr_dscritic => vr_dscritic);
 																					
 			IF nvl(pr_cdcritic, 0) > 0 OR pr_dscritic IS NOT NULL THEN
-				RAISE vr_exc_saida;
-			END IF;														
+				IF vr_incrineg = 0 THEN -- Erro de sistema/BD
+					RAISE vr_exc_saida;
+				ELSE -- Não foi possível debitar (crítica de negócio)			 
+					 IF (rw_crapseg.tpseguro = 3) THEN
+							vr_dtfimvig := rw_crapdat.dtmvtolt;
+					 ELSE
+						 vr_dtfimvig := rw_crapseg.dtfimvig;
+					 END IF;
+
+					 update crapseg
+						 set crapseg.dtfimvig = vr_dtfimvig, -- Data de fim de vigencia do seguro
+								 crapseg.dtcancel = rw_crapdat.dtmvtolt, -- Data de cancelamento
+								 crapseg.cdsitseg = 2, -- Situacao do seguro: 2 - Cancelado
+								 crapseg.cdmotcan = 12, -- cancelamento por inadimplencia (SEGU0001)
+								 crapseg.cdopeexc = 1,
+								 crapseg.cdageexc = rw_craplot.cdagenci,
+								 crapseg.dtinsexc = rw_crapdat.dtmvtolt,
+								 crapseg.cdopecnl = 1
+						 where crapseg.rowid = rw_crapseg.rowid;
+
+					 CASE rw_crapseg.tpseguro
+							WHEN 1 THEN vr_dsseguro := 'Residencial';
+							WHEN 11 THEN vr_dsseguro:= 'Residencial';
+							WHEN 2 THEN vr_dsseguro := 'Auto';
+							WHEN 3 THEN vr_dsseguro := 'de Vida';
+							WHEN 4 THEN vr_dsseguro := 'Prestamista';
+							ELSE vr_dsseguro := '';
+						END CASE;
+
+				 -- gera mensagem de aviso para o cooperado
+					GENE0003.pc_gerar_mensagem
+										 (pr_cdcooper => pr_cdcooper
+										 ,pr_nrdconta => rw_crapseg.nrdconta
+										 ,pr_idseqttl => 1          -- Primeiro titular da conta
+										 ,pr_cdprogra => 'CRPS439'  -- Programa
+										 ,pr_inpriori => 0          -- prioridade
+										 ,pr_dsdmensg => 'Cooperado, seu seguro '||vr_dsseguro||' foi cancelado por falta de pagamento. Dúvidas consulte seu posto de atendimento' -- corpo da mensagem
+										 ,pr_dsdassun => 'Aviso sobre seu seguro'         -- Assunto
+										 ,pr_dsdremet => rw_crapcop.nmrescop --nome cooperativa remetente
+										 ,pr_dsdplchv => 'emprestimo'
+										 ,pr_cdoperad => 1
+										 ,pr_cdcadmsg => 0
+										 ,pr_dscritic => vr_dscritic);
+
+					-- gera log do envio da mensagem
+					GENE0001.pc_gera_log(pr_cdcooper => pr_cdcooper
+															,pr_cdoperad => '1'
+															,pr_dscritic => vr_dscritic
+															,pr_dsorigem => 'AYLLOS' --vr_dsorigem
+															,pr_dstransa => 'Envio de mensagem de cancelamento de seguro por inadimplencia'
+															,pr_dttransa => trunc(SYSDATE)
+															,pr_flgtrans => 0
+															,pr_hrtransa => GENE0002.fn_busca_time
+															,pr_idseqttl => 1
+															,pr_nmdatela => 'crps439'
+															,pr_nrdconta => rw_crapseg.nrdconta
+															,pr_nrdrowid => vr_rowid_log
+															);
+					 
+				   -- proximo registro
+				   CONTINUE;
+			  END IF;
+			END IF;													
 							
 			IF rw_craplot.rowid IS NULL  THEN
 				-- Posiciona a capa de lote
