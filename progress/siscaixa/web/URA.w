@@ -78,7 +78,9 @@
                12/03/2018 - #856961 Correção das imagens das cooperativas na
                             rotina p_imprime_cabec, incluindo a Altovale, 
                             retirando as inativas e atualizando os novos 
-                            nomes (Acredicoop e Acentra) (Carlos)  
+                            nomes (Acredicoop e Acentra) (Carlos)
+               30/05/2018 - valida dscomple e concatena com tt-extrato_conta.dsextrat 
+			               (Alcemir Mout's - Prj. 467).							  
                             
 ------------------------------------------------------------------------*/
 /*           This .W file was created with AppBuilder.                  */
@@ -1091,10 +1093,16 @@ PROCEDURE p_extrato_mes:
                              BREAK BY tt-extrato_conta.nrdconta
                                       BY tt-extrato_conta.dtmvtolt
                                          BY tt-extrato_conta.nrsequen:
-
+                         
+						 
+						 IF tt-extrato_conta.dscomple <> ? THEN						 						
+						    aux_dscomple =  STRING(" - " + tt-extrato_conta.dscomple).    
+						 ELSE
+							aux_dscomple = "".
+						                           
                          aux_dsdlinha = STRING(tt-extrato_conta.dtmvtolt,
                                                "99/99/99") + " " +
-                                        STRING(tt-extrato_conta.dsextrat,
+                                        STRING(tt-extrato_conta.dsextrat + aux_dscomple,
                                                "x(21)") + " " +
                                         STRING(SUBSTR(tt-extrato_conta.dtliblan,2,5),
                                               "X(05)") + " " +

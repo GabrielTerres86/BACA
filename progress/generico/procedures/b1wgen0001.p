@@ -42,7 +42,7 @@
 
    Programa: b1wgen0001.p                  
    Autora  : Mirtes.
-   Data    : 12/09/2005                      Ultima atualizacao: 17/01/2018
+   Data    : 12/09/2005                      Ultima atualizacao: 30/05/2018
 
    Dados referentes ao programa:
 
@@ -422,6 +422,7 @@
                 21/04/2018 - Alterar tratamento do retorno da pc_consulta_extrato_car para
                              tratar o novo campo idlstdom (Anderson - P285)
 
+	            30/05/2018 - Carregado campo dscomple na tt-extrato_conta (Alcemir Mout's - Prj. 467).
 ..............................................................................*/
 
 { sistema/generico/includes/b1wgen0001tt.i }
@@ -685,7 +686,7 @@ PROCEDURE consulta-extrato:
                     ASSIGN tt-extrato_conta.dsprotoc = xText:NODE-VALUE WHEN xField:NAME = "dsprotoc".
                     ASSIGN tt-extrato_conta.flgdetal = INT(xText:NODE-VALUE) WHEN xField:NAME = "flgdetal".
                     ASSIGN tt-extrato_conta.idlstdom = INT(xText:NODE-VALUE) WHEN xField:NAME = "idlstdom".
-
+	                ASSIGN tt-extrato_conta.dscomple = xText:NODE-VALUE WHEN xField:NAME = "dscomple".
                 END. 
 
             END.

@@ -12,6 +12,7 @@
  * 004: [21/07/2016] Carlos R. - Correcao na forma de uso da variavel $extr. SD 479874.
  * 005: [05/08/2016] Carlos R. - Corrigi a variavel de controle de ordenação do extrato.
  * 006: [08/08/2016] Carlos R. - Correcao na forma de ordenação das colunas que nao obedeciam a ordenacao manual.
+ * 007: [30/05/2018] Concatenar dscomple (tags[31]) com historico (Alcemir Mout's - Prj. 467).
  */	
 ?>
 <div class="divRegistros">	
@@ -38,9 +39,8 @@
 
 			<?php for ($i = 1; $i < $qtExtrato; $i++) {   
 			
-				$dshistor = $extrato[$i]->tags[3]->cdata."-".$extrato[$i]->tags[4]->cdata."   ".$extrato[$i]->tags[21]->cdata; 
+			  $dshistor = $extrato[$i]->tags[3]->cdata."-".$extrato[$i]->tags[4]->cdata."  ".$extrato[$i]->tags[21]->cdata." ".$extrato[$i]->tags[31]->cdata; 
 				$dtliblan = $extrato[$i]->tags[7]->cdata;
-				
 				$mtdClick = "selecionaExtrato('".$dshistor."', '".$dtliblan."')";
 				?>
 
@@ -51,9 +51,9 @@
 						<?php echo $extrato[$i]->tags[1]->cdata; ?>
 					</td>
 						
-					<td><?php echo $extrato[$i]->tags[3]->cdata."-".$extrato[$i]->tags[4]->cdata." ".$extrato[$i]->tags[7]->cdata; ?></td>
+					<td><?php echo $extrato[$i]->tags[3]->cdata."-".$extrato[$i]->tags[4]->cdata." ".$extrato[$i]->tags[7]->cdata." ".$extrato[$i]->tags[31]->cdata; ?></td>                    					
 					
-					<td><?php echo $extrato[$i]->tags[5]->cdata; ?></td>
+          <td><?php echo $extrato[$i]->tags[5]->cdata; ?></td>
 					
 					<td><?php echo $extrato[$i]->tags[6]->cdata; ?></td>
 					

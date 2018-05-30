@@ -537,7 +537,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
 
     Programa: EXTR0002                           Antigo: sistema/generico/procedures/b1wgen0112.p
     Autor   : Gabriel Capoia dos Santos (DB1)
-    Data    : Agosto/2011                        Ultima atualizacao: 17/01/2018
+    Data    : Agosto/2011                        Ultima atualizacao: 30/05/2018
 
     Objetivo  : Tranformacao BO tela IMPRES
 
@@ -795,6 +795,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
         17/01/2018 - Ajustar chamada da rotina TARI0001.pc_carrega_dados_tar_vigente
                      pois haviam casos em que não estavamos entrando na rotina
                      na procedure pc_gera_tarifa_extrato (Lucas Ranghetti #787894)
+                     
+        30/05/2018 - Adicionado dscomple xml na pc_gera_impextdpv (Alcemir Mout's - Prj. 467).                     
         
   ---------------------------------------------------------------------------------------------------------------
 ..............................................................................*/
@@ -7051,6 +7053,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
   --
   --              28/09/2017 - Ajustado format da tag <vldiario> do relatorio crrl40
   --                           pois estava estourando (Tiago #724513)
+  --
+  --              30/05/2018 - Adicionado dscomple ao xml (Alcemir Mout's - Prj. 467).                              
   ---------------------------------------------------------------------------------------------------------------
   DECLARE                                
         /* Cursores Locais */
@@ -7102,6 +7106,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
         vr_vlblqjud NUMBER;
         vr_vldiario NUMBER;
         vr_idxcpa   PLS_INTEGER;
+        vr_dsextrat VARCHAR2(100);
         --Variaveis Controle Dados XMl
         vr_flghistor BOOLEAN:= FALSE;
         vr_flgcheque BOOLEAN:= FALSE;
@@ -7433,13 +7438,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
               IF nvl(vr_vldiario,0) = 0 THEN
                 vr_vldiario:= NULL;
               END IF;
-              
+              -- valida se o dscomple não esta vazio, caso não, concatena dscomple com dsextrat
+              IF (vr_tab_extrato_conta(vr_index_extrato).dscomple IS NOT NULL) OR 
+                  (TRIM(vr_tab_extrato_conta(vr_index_extrato).dscomple) <> '') THEN 
+                 vr_dsextrat := SUBSTR(vr_tab_extrato_conta(vr_index_extrato).dsextrat,1,21) || ' - ' ||
+                                SUBSTR(TRIM(vr_tab_extrato_conta(vr_index_extrato).dscomple),1,6);
+              ELSE 
+                 vr_dsextrat := SUBSTR(vr_tab_extrato_conta(vr_index_extrato).dsextrat,1,21);                                                                       
+              END IF;    
+                  
+                  
               --Montar texto
               vr_dstexto:= '<lancto>' ||
                  '<dtmvtolt>' || to_char(vr_tab_extrato_conta(vr_index_extrato).dtmvtolt,'DD/MM/YY') || '</dtmvtolt>' ||
                   '<dtliblan>' || SUBSTR(vr_dtliblan,1,5) || '</dtliblan>' ||
-                 '<dsextrat>' || SUBSTR(vr_tab_extrato_conta(vr_index_extrato).dsextrat,1,21) || '</dsextrat>' ||
-                 '<nrdocmto>' || SUBSTR(vr_tab_extrato_conta(vr_index_extrato).nrdocmto,1,12) || '</nrdocmto>' ||
+                  '<dsextrat>' || vr_dsextrat || '</dsextrat>' ||
+                  '<nrdocmto>' || SUBSTR(vr_tab_extrato_conta(vr_index_extrato).nrdocmto,1,12) || '</nrdocmto>' ||
                   '<vllanmto>' || to_char(vr_tab_extrato_conta(vr_index_extrato).vllanmto,'fm999999g990d00') || '</vllanmto>' ||
                   '<indebcre>' || vr_tab_extrato_conta(vr_index_extrato).indebcre || '</indebcre>' ||
                   '<vldiario>' || to_char(vr_vldiario,'fm9999999g990d00mi') || '</vldiario>' ||
