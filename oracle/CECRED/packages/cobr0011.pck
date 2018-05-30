@@ -244,7 +244,7 @@ create or replace package cecred.cobr0011 is
 		                           );
 	-- Gera o lote e o lançamento
 	PROCEDURE pc_processa_lancamento(pr_cdcooper IN  craplot.cdcooper%TYPE
-		                              ,pr_nrdconta IN  tbfin_recursos_movimento.nrdconta%TYPE
+                                  ,pr_nrdconta IN  tbfin_recursos_movimento.nrdconta%TYPE
 		                              ,pr_dtmvtolt IN  craplot.dtmvtolt%TYPE
 																	,pr_cdagenci IN  craplot.cdagenci%TYPE
 																	,pr_cdoperad IN  craplot.cdoperad%TYPE
@@ -264,9 +264,6 @@ create or replace package cecred.cobr0011 is
 	PROCEDURE pc_gera_movimento_pagamento(pr_dscritic OUT VARCHAR2
 		                                   );
   --
-	PROCEDURE pc_enviar_email_teds (pr_cdcooper IN crapcop.cdcooper%TYPE
-                                 ,pr_dscritic OUT VARCHAR2);
-	--
 END cobr0011;
 /
 create or replace package body cecred.cobr0011 IS
@@ -291,7 +288,7 @@ create or replace package body cecred.cobr0011 IS
 	-- Tipo de registro cooperativa
 	TYPE typ_reg_coop IS RECORD
 		(cdcooper crapcop.cdcooper%TYPE
-		,nrdconta tbfin_recursos_movimento.nrdconta%TYPE
+    ,nrdconta tbfin_recursos_movimento.nrdconta%TYPE
 		,vlpagmto NUMBER
 		);
 	-- Tabela de tipo cooperativa
@@ -328,7 +325,7 @@ create or replace package body cecred.cobr0011 IS
            ,crapcob.cdtitprt
            ,crapcob.dtdbaixa
            ,crapcob.dtsitcrt
-					 ,crapcob.nrdident
+           ,crapcob.nrdident
            ,crapcob.rowid
      FROM crapcob
     WHERE crapcob.ROWID = pr_rowid;
@@ -615,27 +612,41 @@ create or replace package body cecred.cobr0011 IS
           FROM crapban rb
         WHERE rb.nrispbif = pr_nrispbif;
        rw_crapban cr_crapban%ROWTYPE;
-       
-       -- Buscar informações da cooperativa
+
+      -- Buscar registro de saldo do dia atual das contas administradoras de recursos
+      CURSOR cr_tbfin_rec_sal(pr_cdcooper tbfin_recursos_saldo.cdcooper%TYPE
+                             ,pr_nrdconta tbfin_recursos_saldo.nrdconta%TYPE
+                             ,pr_dtmvtolt tbfin_recursos_saldo.dtmvtolt%TYPE) IS
+        SELECT rs.dtmvtolt
+              ,rs.vlsaldo_inicial
+              ,rs.vlsaldo_final
+          FROM tbfin_recursos_saldo rs
+         WHERE rs.cdcooper = pr_cdcooper
+           AND rs.nrdconta = pr_nrdconta
+           AND dtmvtolt = pr_dtmvtolt;
+      rw_tbfin_rec_sal cr_tbfin_rec_sal%ROWTYPE;
+
+
+      -- Buscar registro saldo do dia anterior das contas administradoras de recursos
+      CURSOR cr_tbfin_rec_sal_ant(pr_cdcooper tbfin_recursos_saldo.cdcooper%TYPE
+                             ,pr_nrdconta tbfin_recursos_saldo.nrdconta%TYPE
+                             ,pr_dtmvtolt tbfin_recursos_saldo.dtmvtolt%TYPE) IS
+        SELECT rs.vlsaldo_final
+          FROM tbfin_recursos_saldo rs
+         WHERE rs.cdcooper = pr_cdcooper
+           AND rs.nrdconta = pr_nrdconta
+           AND dtmvtolt = (pr_dtmvtolt - 1);
+      rw_tbfin_rec_sal_ant cr_tbfin_rec_sal_ant%ROWTYPE;
+      
+      -- Buscar informações da cooperativa
       CURSOR cr_crapcop (pr_cdcooper crapcop.cdcooper%TYPE) IS
-             SELECT c.nmrescop, c.flgoppag, c.flgopstr, c.cdagectl, c.nrctactl
+             SELECT c.nmrescop, c.flgoppag, c.flgopstr, c.cdagectl
              FROM crapcop c
              WHERE c.cdcooper = pr_cdcooper;
       rw_crapcop cr_crapcop%ROWTYPE;
       
-      --
-      CURSOR cr_craphis(pr_cdcooper craphis.cdcooper%TYPE
-                       ,pr_cdhistor craphis.cdhistor%TYPE
-                       ) IS
-        SELECT craphis.indebcre
-          FROM craphis
-         WHERE craphis.cdcooper = pr_cdcooper
-           AND craphis.cdhistor = pr_cdhistor; 
-      --
-      rw_craphis cr_craphis%ROWTYPE;
-      --
-
-      --      
+      ---
+      
       vr_cdcritic crapcri.cdcritic%TYPE;
       vr_exc_erro EXCEPTION;
       vr_exc_saida EXCEPTION;
@@ -652,6 +663,7 @@ create or replace package body cecred.cobr0011 IS
       vr_aux_nrseqdig VARCHAR2(500);
       vr_aux_dtmvtolt VARCHAR2(500);
       vr_aux_sal_ant tbfin_recursos_saldo.vlsaldo_final%type;      
+      vr_aux_cdhistor tbfin_recursos_movimento.cdhistor%type;
       
       vr_cddbanco INTEGER;
 
@@ -703,6 +715,7 @@ create or replace package body cecred.cobr0011 IS
                                   ,pr_nmdcampo => 'IDLANCTO'
                                   ,pr_dsdchave => 'IDLANCTO'
                                   );
+                                  
         -- retornar numero do documento
         pr_nrdocmto := vr_nrseqted;
         
@@ -762,7 +775,7 @@ create or replace package body cecred.cobr0011 IS
                ,rw_crapdat.dtmvtocd
                ,vr_nrctrlif
                ,vr_aux_nrseqdig
-               ,pr_cdhistor
+               ,vr_aux_cdhistor
                ,pr_vllanmto
                ,vr_cddbanco
                ,pr_nrcpfcgc
@@ -779,31 +792,68 @@ create or replace package body cecred.cobr0011 IS
              -- Sair da rotina
              RAISE vr_exc_saida;
           END;
-          
-          --
-          OPEN cr_craphis(pr_cdcooper => pr_cdcooper
-                         ,pr_cdhistor => pr_cdhistor);
-          --
-          FETCH cr_craphis INTO rw_craphis;
-          --
-          IF cr_craphis%NOTFOUND THEN
-            --
-            --vr_cdcritic := 0;
-            vr_dscritic := 'Contrapartida do histórico ' || pr_cdhistor || ' não encontrada!';
-            CLOSE cr_craphis;
-            RAISE vr_exc_erro;
-            --
+
+          OPEN cr_tbfin_rec_sal(pr_cdcooper => pr_cdcooper
+                                ,pr_nrdconta => pr_nrdconta
+                                ,pr_dtmvtolt => rw_crapdat.dtmvtocd);
+          FETCH cr_tbfin_rec_sal
+          INTO rw_tbfin_rec_sal;
+
+          -- Se encontrar
+          IF cr_tbfin_rec_sal%FOUND THEN
+            vr_aux_flgrecsal := TRUE;
           END IF;
-          --
-          CLOSE cr_craphis;
-          
-          -- Atualiza o saldo
-          COBR0011.pc_atualiza_saldo(pr_cdcooper => 3
-                           ,pr_nrdconta => rw_crapcop.nrctactl
-                           ,pr_dtmvtolt => rw_crapdat.dtmvtocd
-                           ,pr_vllanmto => pr_vllanmto
-                           ,pr_dsdebcre => rw_craphis.indebcre
-                           ,pr_dscritic => vr_dscritic);
+          CLOSE cr_tbfin_rec_sal;
+
+          -- Alterar saldo do dia, caso houver
+          IF vr_aux_flgrecsal THEN
+
+            BEGIN
+              UPDATE tbfin_recursos_saldo
+              SET vlsaldo_final = vlsaldo_final - pr_vllanmto
+              WHERE cdcooper = pr_cdcooper
+              AND nrdconta = pr_nrdconta;
+            EXCEPTION
+              WHEN OTHERS THEN
+                vr_dscritic := 'Erro ao editar a tabela tbfin_recursos_saldo --> ' || SQLERRM;
+               -- Sair da rotina
+               RAISE vr_exc_saida;
+            END;
+
+          -- Senão... Alterar saldo do dia anterior  
+          ELSE
+
+            OPEN cr_tbfin_rec_sal_ant(pr_cdcooper => pr_cdcooper
+                                    ,pr_nrdconta => pr_nrdconta
+                                    ,pr_dtmvtolt => rw_crapdat.dtmvtocd);
+            FETCH cr_tbfin_rec_sal_ant
+            INTO rw_tbfin_rec_sal_ant;
+            -- Se encontrar
+            IF cr_tbfin_rec_sal_ant%FOUND THEN
+              vr_aux_sal_ant := rw_tbfin_rec_sal_ant.vlsaldo_final;
+            END IF;
+            CLOSE cr_tbfin_rec_sal_ant;
+
+            BEGIN
+              INSERT INTO tbfin_recursos_saldo
+                 (cdcooper
+                  ,nrdconta
+                  ,dtmvtolt
+                  ,vlsaldo_inicial
+                  ,vlsaldo_final)
+              VALUES
+                 (pr_cdcooper
+                 ,pr_nrdconta
+                 ,rw_crapdat.dtmvtocd
+                 ,vr_aux_sal_ant
+                 ,(vr_aux_sal_ant - pr_vllanmto));
+            EXCEPTION
+              WHEN OTHERS THEN
+                vr_dscritic := 'Erro ao inserir na tabela tbfin_recursos_saldo --> ' || SQLERRM;
+               -- Sair da rotina
+               RAISE vr_exc_saida;
+            END;
+          END IF;
 
         ELSE
           vr_dscritic := 'Conta de administração de recursos não encontrada';
@@ -1054,9 +1104,9 @@ create or replace package body cecred.cobr0011 IS
     --Variaveis de Excecao
     vr_exc_erro EXCEPTION;
     
-		--Tabelas de Memoria de Remessa
+    --Tabelas de Memoria de Remessa
     vr_tab_remessa_dda DDDA0001.typ_tab_remessa_dda;
-    vr_tab_retorno_dda DDDA0001.typ_tab_retorno_dda;
+    vr_tab_retorno_dda DDDA0001.typ_tab_retorno_dda;   
   BEGIN
     -- Inicializar variaveis retorno
     pr_cdcritic := NULL;
@@ -1151,7 +1201,9 @@ create or replace package body cecred.cobr0011 IS
       --Levantar Excecao
       RAISE vr_exc_erro;
     END IF;
-		-- se o boleto for DDA/NPC, baixar da CIP
+		--
+        
+    -- se o boleto for DDA/NPC, baixar da CIP
     IF rw_crapcob.nrdident > 0 THEN
       -- Executa procedimentos do DDA-JD
       DDDA0001.pc_procedimentos_dda_jd (pr_rowid_cob => rw_crapcob.rowid         --ROWID da Cobranca
@@ -1171,7 +1223,7 @@ create or replace package body cecred.cobr0011 IS
         RAISE vr_exc_erro;
       END IF;                                             
     END IF;
-		--
+    
 	EXCEPTION
     WHEN vr_exc_erro THEN
       pr_cdcritic:= vr_cdcritic;
@@ -1243,10 +1295,9 @@ create or replace package body cecred.cobr0011 IS
     vr_nrremret  crapret.nrremret%type;
     vr_rowid_ret rowid;
     vr_nrseqreg  integer;
-		--Tabelas de Memoria de Remessa
+    --Tabelas de Memoria de Remessa
     vr_tab_remessa_dda DDDA0001.typ_tab_remessa_dda;
-    vr_tab_retorno_dda DDDA0001.typ_tab_retorno_dda;
-    --
+    vr_tab_retorno_dda DDDA0001.typ_tab_retorno_dda;       
   BEGIN
     --Inicializar variaveis retorno
     pr_cdcritic:= NULL;
@@ -1284,7 +1335,7 @@ create or replace package body cecred.cobr0011 IS
       UPDATE CRAPCOB
          SET crapcob.insitcrt = 4, /* sustado */
              crapcob.dtsitcrt = pr_dtocorre,
-						 crapcob.dtbloque = NULL
+             crapcob.dtbloque = NULL
        WHERE crapcob.rowid    = pr_idtabcob;
     EXCEPTION
       WHEN OTHERS THEN
@@ -1400,7 +1451,8 @@ create or replace package body cecred.cobr0011 IS
 		END IF;
 		--
 		CLOSE cr_craprem;
-		-- se boleto foi rejeitado pelo cartorio, atualizar situacao DDA/NPC
+    
+    -- se boleto foi rejeitado pelo cartorio, atualizar situacao DDA/NPC
     IF rw_crapcob.nrdident > 0 THEN
       -- Executa procedimentos do DDA-JD
       DDDA0001.pc_procedimentos_dda_jd (pr_rowid_cob => rw_crapcob.rowid         --ROWID da Cobranca
@@ -1420,7 +1472,7 @@ create or replace package body cecred.cobr0011 IS
         RAISE vr_exc_erro;
       END IF;                                             
     END IF;
-    --
+    
   EXCEPTION
     WHEN vr_exc_erro THEN
       pr_cdcritic:= vr_cdcritic;
@@ -2021,7 +2073,7 @@ create or replace package body cecred.cobr0011 IS
     vr_exc_erro EXCEPTION;
     --Tabelas de Memoria de Remessa
     vr_tab_remessa_dda DDDA0001.typ_tab_remessa_dda;
-    vr_tab_retorno_dda DDDA0001.typ_tab_retorno_dda;
+    vr_tab_retorno_dda DDDA0001.typ_tab_retorno_dda;      
   BEGIN
     -- Inicializar variaveis retorno
     pr_cdcritic := NULL;
@@ -2058,7 +2110,7 @@ create or replace package body cecred.cobr0011 IS
       UPDATE CRAPCOB
          SET crapcob.insitcrt = 0,
              crapcob.dtsitcrt = NULL,
-						 crapcob.dtbloque = NULL
+             crapcob.dtbloque = NULL
        WHERE crapcob.rowid  = pr_idtabcob;
     EXCEPTION
       WHEN OTHERS THEN
@@ -2066,8 +2118,8 @@ create or replace package body cecred.cobr0011 IS
         --Levantar Excecao
         RAISE vr_exc_erro;
     END;
-		
-		IF rw_crapcob.nrdident > 0 THEN
+
+    IF rw_crapcob.nrdident > 0 THEN
       -- Executa procedimentos do DDA-JD
       DDDA0001.pc_procedimentos_dda_jd (pr_rowid_cob => rw_crapcob.rowid         --ROWID da Cobranca
                                        ,pr_tpoperad => 'A'                       --Tipo Operacao
@@ -2085,7 +2137,7 @@ create or replace package body cecred.cobr0011 IS
         vr_dscritic := 'Erro ao realizar procedimento DDA: ' || vr_dscritic;
         RAISE vr_exc_erro;
       END IF;                                             
-    END IF;
+    END IF;    
 
     /* Preparar Lote de Retorno Cooperado */
     PAGA0001.pc_prep_retorno_cooperado (pr_idregcob => rw_crapcob.rowid    --ROWID da cobranca
@@ -2308,7 +2360,7 @@ create or replace package body cecred.cobr0011 IS
       UPDATE CRAPCOB
          SET crapcob.insitcrt = 3, /* com remessa a cartório */
              crapcob.dtsitcrt = pr_dtocorre,
-						 crapcob.dtbloque = pr_dtocorre
+             crapcob.dtbloque = pr_dtocorre
        WHERE crapcob.rowid    = pr_idtabcob;
     EXCEPTION
       WHEN OTHERS THEN
@@ -2686,7 +2738,7 @@ create or replace package body cecred.cobr0011 IS
 	END pc_processa_estorno;
 	-- Gera o lote e o lançamento
 	PROCEDURE pc_processa_lancamento(pr_cdcooper IN  craplot.cdcooper%TYPE
-		                              ,pr_nrdconta IN tbfin_recursos_movimento.nrdconta%TYPE
+                                  ,pr_nrdconta IN tbfin_recursos_movimento.nrdconta%TYPE
 		                              ,pr_dtmvtolt IN  craplot.dtmvtolt%TYPE
 																	,pr_cdagenci IN  craplot.cdagenci%TYPE
 																	,pr_cdoperad IN  craplot.cdoperad%TYPE
@@ -2984,7 +3036,7 @@ create or replace package body cecred.cobr0011 IS
   END pc_gera_log;
 	-- Totaliza por cooperativa
 	PROCEDURE pc_totaliza_cooperativa(pr_cdcooper IN  crapcop.cdcooper%TYPE
-		                               ,pr_nrdconta IN  tbfin_recursos_movimento.nrdconta%TYPE
+                                   ,pr_nrdconta IN  tbfin_recursos_movimento.nrdconta%TYPE
 		                               ,pr_vlpagmto IN  NUMBER
 		                               ,pr_dscritic OUT VARCHAR2
 		                               ) IS
@@ -3005,7 +3057,7 @@ create or replace package body cecred.cobr0011 IS
 					vr_achou := TRUE;
 					--
 					vr_tab_coop(vr_index_coop).vlpagmto := vr_tab_coop(vr_index_coop).vlpagmto + pr_vlpagmto;
-					vr_tab_coop(vr_index_coop).nrdconta := pr_nrdconta; -- conta recurso movimento
+          vr_tab_coop(vr_index_coop).nrdconta := pr_nrdconta; -- conta recurso movimento
 					--
 				END IF;
 				-- Próximo registro
@@ -3019,7 +3071,7 @@ create or replace package body cecred.cobr0011 IS
 			--
 			vr_reg_coop.cdcooper := pr_cdcooper;
 			vr_reg_coop.vlpagmto := pr_vlpagmto;
-			vr_reg_coop.nrdconta := pr_nrdconta;
+      vr_reg_coop.nrdconta := pr_nrdconta;
 			--
 			vr_tab_coop(vr_tab_coop.count()) := vr_reg_coop;
 			--
@@ -3047,13 +3099,18 @@ create or replace package body cecred.cobr0011 IS
 						,tri.vltitulo vlliquid
 						,tri.vlsaldo_titulo
 						,crapdat.dtmvtolt
-						,trm.nrdconta nrdconta_trm
+            ,trm.nrdconta nrdconta_trm
+						,crapcco.nrdolote
+						,crapcco.cdagenci
+						,crapcco.cdbccxlt
+						,crapcco.nrconven
 				FROM tbcobran_conciliacao_ieptb tci
 						,tbfin_recursos_movimento   trm
 						,tbcobran_retorno_ieptb     tri
 						,crapcob
 						,crapcop
 						,crapdat
+						,crapcco
 			 WHERE crapcob.cdcooper = crapcop.cdcooper
 			   AND crapcob.cdcooper = crapdat.cdcooper
          --AND crapcop.cdagectl = pr_cdagectl				 
@@ -3063,6 +3120,8 @@ create or replace package body cecred.cobr0011 IS
 				 AND crapcob.nrdocmto    = tri.nrdocmto
 				 AND tci.idrecurso_movto = trm.idlancto
 				 AND tci.idretorno_ieptb = tri.idretorno
+				 AND crapcco.cdcooper    = crapcob.cdcooper
+				 AND crapcco.nrconven    = crapcob.nrcnvcob
 				 AND tci.dtconcilicao    IS NOT NULL
 				 AND tri.dtconciliacao   IS NOT NULL
 				 AND tci.flgproc         = 0
@@ -3094,6 +3153,7 @@ create or replace package body cecred.cobr0011 IS
 		vr_index_coop NUMBER;
 		vr_nrretcoo   NUMBER;
 		vr_cdcritic   NUMBER;
+		vr_cdcritic2  INTEGER;
     vr_dscritic   VARCHAR2(4000);
 		vr_vloutcre   NUMBER;
 		--
@@ -3111,6 +3171,7 @@ create or replace package body cecred.cobr0011 IS
 			--
 			FETCH cr_conciliados INTO rw_conciliados;
 			EXIT WHEN cr_conciliados%NOTFOUND;
+      
 			--
 			IF rw_conciliados.vlsaldo_titulo > rw_conciliados.vlliquid THEN
 				--
@@ -3159,7 +3220,29 @@ create or replace package body cecred.cobr0011 IS
 									 ,pr_dscritic     =>  vr_dscritic
 									 ,pr_tpocorrencia => 2 -- Erro Tratado
 									 );
+			  --
+				RAISE vr_exc_erro;
+				--
 			END IF;
+      
+			PAGA0001.pc_realiza_lancto_cooperado(pr_cdcooper => rw_conciliados.cdcooper --Codigo Cooperativa
+																					,pr_dtmvtolt => rw_conciliados.dtmvtolt --Data Movimento
+																					,pr_cdagenci => rw_conciliados.cdagenci --Codigo Agencia
+																					,pr_cdbccxlt => rw_conciliados.cdbccxlt --Codigo banco caixa
+																					,pr_nrdolote => rw_conciliados.nrdolote --rw_crapcco.nrdolote --Numero do Lote
+																					,pr_cdpesqbb => rw_conciliados.nrconven --rw_crapcco.nrconven --Codigo Convenio
+																					,pr_cdcritic => vr_cdcritic         --Codigo Critica
+																					,pr_dscritic => vr_dscritic         --Descricao Critica
+																					,pr_tab_lcm_consolidada => vr_tab_lcm_consolidada        --Tabela Lancamentos
+																					);
+
+		 --Se ocorreu erro
+		 IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
+			 --Levantar Excecao
+			 RAISE vr_exc_erro;
+		 END IF;
+			--
+			vr_tab_lcm_consolidada.delete;
 			--
 			OPEN cr_crapret(pr_cdcooper => rw_conciliados.cdcooper
 										 ,pr_nrcnvcob => rw_conciliados.nrcnvcob
@@ -3197,7 +3280,7 @@ create or replace package body cecred.cobr0011 IS
 			IF nvl(rw_conciliados.vlliquid, 0) > 0 THEN
 				--
 				pc_totaliza_cooperativa(pr_cdcooper => rw_conciliados.cdcooper         -- IN
-				                       ,pr_nrdconta => rw_conciliados.nrdconta_trm     -- Conta Recurso movimento
+                               ,pr_nrdconta => rw_conciliados.nrdconta_trm     -- Conta Recurso movimento
 															 ,pr_vlpagmto => nvl(rw_conciliados.vlliquid, 0) -- IN
 															 ,pr_dscritic => pr_dscritic                     -- OUT
 															 );
@@ -3211,6 +3294,7 @@ create or replace package body cecred.cobr0011 IS
 			END IF;
 			--
 		END LOOP;
+
 		-- Gerar os lançamentos por cooperativa e na central
 		vr_index_coop := 0;
 		--
@@ -3219,10 +3303,10 @@ create or replace package body cecred.cobr0011 IS
 			WHILE vr_index_coop IS NOT NULL LOOP
 				--
 				IF nvl(vr_tab_coop(vr_index_coop).vlpagmto, 0) > 0 THEN
-					-- Gera lançamento histórico 2623
-					-- Repasse de liquidação dos boletos para as cooperativas
+					-- Gera lançamento histórico 2623 
+          -- Repasse de liquidação dos boletos para as cooperativas
 					pc_processa_lancamento(pr_cdcooper => vr_tab_coop(vr_index_coop).cdcooper -- IN
-					                      ,pr_nrdconta => vr_tab_coop(vr_index_coop).nrdconta -- IN
+                                ,pr_nrdconta => vr_tab_coop(vr_index_coop).nrdconta -- IN
 																,pr_dtmvtolt => rw_conciliados.dtmvtolt             -- IN
 																,pr_cdagenci => 1                                   -- IN
 																,pr_cdoperad => '1'                                 -- IN
@@ -3256,110 +3340,6 @@ create or replace package body cecred.cobr0011 IS
 		WHEN OTHERS THEN
 			pr_dscritic := 'Erro na pc_gera_movimento_pagamento: ' || SQLERRM;
 	END pc_gera_movimento_pagamento;
-	--
-	PROCEDURE pc_enviar_email_teds (pr_cdcooper IN crapcop.cdcooper%TYPE
-                                 ,pr_dscritic OUT VARCHAR2) IS
- 
-  vr_dsdiretorio VARCHAR2(500);
-  vr_arquivo VARCHAR2(500);
-
-  vr_cdcritic crapcri.cdcritic%TYPE;
-  vr_dscritic VARCHAR2(500);
-  vr_retxml xmltype;
-  vr_nmdcampo VARCHAR2(500);
-
-  vr_exc_erro EXCEPTION;
-      
-  vr_email_dest VARCHAR2(500);
-  vr_emails_cobranca tbcobran_param_protesto.dsemail_cobranca%TYPE;
-  vr_emails_ieptb tbcobran_param_protesto.dsemail_ieptb%TYPE;
-  
-  vr_des_assunto VARCHAR2(500);
-  vr_conteudo VARCHAR2(500);
-  BEGIN
-    
-    BEGIN
-      --
-      SELECT tpp.dsemail_cobranca, tpp.dsemail_ieptb
-        INTO vr_emails_cobranca, vr_emails_ieptb
-        FROM tbcobran_param_protesto tpp
-       WHERE tpp.cdcooper = pr_cdcooper;
-      --
-    EXCEPTION
-      WHEN OTHERS THEN
-        vr_dscritic := 'Não foi possível retornar os e-mails do protesto: ' || SQLERRM;
-    END;
-    
-    IF (vr_emails_cobranca IS NULL or vr_emails_ieptb IS NULL) THEN
-      vr_dscritic := 'O e-mail de cobrança ou o e-mail do IEPTB não foi configurado.';
-      RAISE vr_exc_erro;      
-    END IF;
-  
-    -- Busca o diretorio onde esta os arquivos Sicoob
-    vr_dsdiretorio := gene0001.fn_param_sistema(pr_nmsistem => 'CRED',
-                                                pr_cdacesso => 'ROOT_DOMICILIO')||'/relatorios';
-
-    TELA_MANPRT.pc_exporta_consulta_teds(pr_cdcooper => pr_cdcooper
-                                        ,pr_dtinicial => NULL
-                                        ,pr_dtfinal => NULL
-                                        ,pr_vlinicial => 0
-                                        ,pr_vlfinal => 0
-                                        ,pr_cartorio => NULL
-                                        ,pr_nrregist => 0
-                                        ,pr_nriniseq => 0
-                                        ,pr_xmllog => NULL
-                                        ,pr_flgcon => 0
-                                        ,pr_cdcritic => vr_cdcritic
-                                        ,pr_dscritic => vr_dscritic
-                                        ,pr_retxml => vr_retxml
-                                        ,pr_nmdcampo => vr_nmdcampo
-                                        ,pr_des_erro => vr_cdcritic);
-    
-    IF nvl(vr_cdcritic,0) <> 0 OR
-       TRIM(vr_dscritic) IS NOT NULL THEN
-      RAISE vr_exc_erro;
-    END IF;
-    
-    vr_arquivo := TRIM(vr_retxml.extract('/nmarqcsv/text()').getstringval());
-    vr_arquivo := vr_dsdiretorio || '/' || vr_arquivo;
-    
-    vr_des_assunto := 'CECRED - Extrato TEDs recebidas';
-    vr_conteudo := 'Segue em anexo as TEDs recebidas e não conciliadas.';
-    vr_email_dest := vr_emails_cobranca || ',' || vr_emails_ieptb;
-    
-    GENE0003.pc_solicita_email(pr_cdcooper        => pr_cdcooper    --> Cooperativa conectada
-                              ,pr_cdprogra        => '' --> Programa conectado
-                              ,pr_des_destino     => vr_email_dest --> Um ou mais detinatários separados por ';' ou ','
-                              ,pr_des_assunto     => vr_des_assunto --> Assunto do e-mail
-                              ,pr_des_corpo       => vr_conteudo    --> Corpo (conteudo) do e-mail
-                              ,pr_des_anexo       => vr_arquivo     --> Um ou mais anexos separados por ';' ou ','
-                              ,pr_flg_remove_anex => 'N'            --> Remover os anexos passados
-                              ,pr_flg_remete_coop => 'N'            --> Se o envio será do e-mail da Cooperativa
-                              ,pr_des_nome_reply  => NULL           --> Nome para resposta ao e-mail
-                              ,pr_des_email_reply => NULL           --> Endereço para resposta ao e-mail
-                              ,pr_flg_enviar      => 'S'            --> Enviar o e-mail na hora
-                              ,pr_flg_log_batch    => 'N'           --> Incluir inf. no log
-                              ,pr_des_erro        => vr_dscritic);  --> Descricao Erro
-                              
-    IF TRIM(vr_dscritic) IS NOT NULL THEN
-      RAISE vr_exc_erro;
-    END IF;
-    
-    EXCEPTION
-      WHEN vr_exc_erro THEN     
-        --> Buscar critica
-        IF nvl(vr_cdcritic,0) > 0 AND 
-          TRIM(vr_dscritic) IS NULL THEN
-          -- Busca descricao        
-          vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);        
-        END IF;  
-        
-        pr_dscritic := vr_dscritic;
-      
-      WHEN OTHERS THEN
-        pr_dscritic := 'Não foi possivel enviar o e-mail das TEDs não conciliadas: '||SQLERRM;
-
-  END pc_enviar_email_teds;
 	--
 end cobr0011;
 /
