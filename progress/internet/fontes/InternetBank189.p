@@ -57,6 +57,7 @@ DEF VAR aux_qtsmsusd        AS INT                                       NO-UNDO
 DEF VAR aux_dsmensag        AS CHAR                                      NO-UNDO.
 DEF VAR aux_flofesms        AS INT                                       NO-UNDO.
 DEF VAR aux_flpospac        AS INT                                       NO-UNDO.
+DEF VAR aux_fllindig        AS INT                                       NO-UNDO.
 DEF VAR aux_retxml          AS LONGCHAR                                  NO-UNDO.
 DEF VAR aux_dsmsgsemlinddig AS LONGCHAR                                  NO-UNDO.
 DEF VAR aux_dsmsgcomlinddig AS LONGCHAR                                  NO-UNDO.
@@ -520,6 +521,24 @@ ELSE IF par_cddopcao = "V" THEN
                           WHEN pc_verifar_serv_sms.pr_dsalerta <> ?
            aux_idcontrato = pc_verifar_serv_sms.pr_idcontrato 
                           WHEN pc_verifar_serv_sms.pr_idcontrato <> ?               .
+                          
+    /* Verificar se coop permite enviar linha digitavel por email  */
+    { includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }    
+
+    RUN STORED-PROCEDURE pc_verif_permite_lindigi
+        aux_handproc = PROC-HANDLE NO-ERROR
+                                ( INPUT par_cdcooper,
+                                 OUTPUT 0,            /* pr_flglinha_digitavel */ 
+                                 OUTPUT "").          /* pr_dscritic */
+
+    CLOSE STORED-PROC pc_verif_permite_lindigi
+          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+    { includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }
+
+    ASSIGN aux_fllindig = 0 
+           aux_fllindig = pc_verif_permite_lindigi.pr_flglinha_digitavel
+                              WHEN pc_verif_permite_lindigi.pr_flglinha_digitavel <> ?.                                 
     
     /* Se retornou numero de contrato é pq existe contrato ativo*/
     ASSIGN aux_flgativo = 0.
@@ -532,7 +551,8 @@ ELSE IF par_cddopcao = "V" THEN
     ASSIGN xml_operacao.dslinxml = '<flposcob>' + STRING(aux_flposcob) + '</flposcob>' + 
                                    '<flgativo>' + STRING(aux_flgativo) + '</flgativo>' + 
                                    '<flsitsms>' + STRING(aux_flsitsms) + '</flsitsms>' + 
-                                   '<dsalerta>' + STRING(aux_dsalerta) + '</dsalerta>'.
+                                   '<dsalerta>' + STRING(aux_dsalerta) + '</dsalerta>' +
+                                   '<fllindig>' + STRING(aux_fllindig) + '</fllindig>'.
 
     CREATE xml_operacao.
     ASSIGN xml_operacao.dslinxml = '</dados>'.
@@ -714,7 +734,7 @@ ELSE IF par_cddopcao = "C" THEN
                                    '<flgativo>' + STRING(aux_flgativo) + '</flgativo>' + 
                                    '<idpacote>' + STRING(aux_idpacote) + '</idpacote>' + 
                                    '<dspacote>' + STRING(aux_dspacote) + '</dspacote>' + 
-                                   '<dhadesao>' + STRING(aux_dhadesao,"99/99/9999") + '</dhadesao>' + 
+                                   '<dhadesao>' + (IF aux_dhadesao <> ? THEN STRING(aux_dhadesao,"99/99/9999") ELSE '') + '</dhadesao>' + 
                                    '<idcontra>' + STRING(aux_idcontra) + '</idcontra>' + 
                                    '<vltarifa>' + STRING(aux_vltarifa,"zzz,zz9.99") + '</vltarifa>' +
                                    '<qtsmspct>' + STRING(aux_qtsmspct) + '</qtsmspct>' + 

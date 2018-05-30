@@ -2442,6 +2442,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
     vr_flgimune PLS_INTEGER;
     vr_dscatbem VARCHAR2(100);
     vr_cdlcremp NUMBER;
+    vr_cdfinemp NUMBER;
 	  
    -- Cursor para bens do contrato: 
     /*Faz o order by dscatbem pois "CASA" e "APARTAMENTO" reduzem as 3 aliquotas de IOF (principal, adicional e complementar) a zero.
@@ -2450,7 +2451,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
     CURSOR cr_crapbpr(pr_cdcooper IN crapcop.cdcooper%TYPE
                      ,pr_nrdconta IN crapass.nrdconta%TYPE
                      ,pr_nrctremp IN crapepr.nrctremp%TYPE) IS      
-      SELECT b.dscatbem, t.cdlcremp
+      SELECT b.dscatbem, t.cdlcremp, t.cdfinemp
       FROM crapepr t
       INNER JOIN crapbpr b ON b.nrdconta = t.nrdconta AND b.cdcooper = t.cdcooper AND b.nrctrpro = t.nrctremp
       WHERE t.cdcooper = pr_cdcooper
@@ -2782,6 +2783,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
         IF cr_crapbpr%FOUND THEN
           vr_dscatbem := rw_crapbpr.dscatbem;
           vr_cdlcremp := rw_crapbpr.cdlcremp;
+          vr_cdfinemp := rw_crapbpr.cdfinemp;
         END IF;
         CLOSE cr_crapbpr;
         
@@ -2804,6 +2806,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RECP0001 IS
                                           ,pr_vlemprst => vr_vlparcel                            --> Valor do empréstimo para efeito de cálculo
                                           ,pr_dscatbem => vr_dscatbem                            --> Descrição da categoria do bem, valor default NULO 
                                           ,pr_cdlcremp => vr_cdlcremp                            --> Linha de crédito do empréstimo
+                                          ,pr_cdfinemp => vr_cdfinemp                            --> Finalidade do crédito 
                                           ,pr_dtmvtolt => BTCH0001.rw_crapdat.dtmvtolt           --> Data do movimento
                                           ,pr_qtdiaiof => vr_qtdiaiof                            --> Quantidade de dias em atraso
                                           ,pr_vliofpri => vr_vliofpri                            --> Valor do IOF principal

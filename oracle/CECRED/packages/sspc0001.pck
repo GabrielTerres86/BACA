@@ -5806,7 +5806,16 @@ PROCEDURE pc_solicita_consulta_biro(pr_cdcooper IN  crapepr.cdcooper%TYPE, --> C
          and a.nrdconta = pr_nrdconta
          and a.nrctremp = pr_nrdocmto
          and a.nrcpfcgc = p_nrcpfcgc
-         and nvl(a.nrcepend,0) > 0;         
+         and nvl(a.nrcepend,0) > 0;      
+         
+    -- Busca cep crapenc 
+      cursor c_crapenc(p_nrdconta in number) is
+      select e.nrcepend
+        from crapenc e
+       where e.cdcooper = pr_cdcooper
+         and e.nrdconta = p_nrdconta
+         and e.idseqttl = 1
+         ORDER BY decode(e.tpendass,10,1,2);
          
         
     -- Monta o registro de data
@@ -5939,6 +5948,11 @@ PROCEDURE pc_solicita_consulta_biro(pr_cdcooper IN  crapepr.cdcooper%TYPE, --> C
     vr_nrcepend := null;
     open c_cep(vr_inpessoa,vr_nrcpfcgc);
      fetch c_cep into vr_nrcepend;
+      if c_cep%notfound then
+       open c_crapenc(pr_nrdconta); 
+        fetch c_crapenc into vr_nrcepend;
+       close c_crapenc;
+      end if;
     close c_cep;
 
     -- Busca os dados de emprestimo
@@ -6073,7 +6087,13 @@ PROCEDURE pc_solicita_consulta_biro(pr_cdcooper IN  crapepr.cdcooper%TYPE, --> C
       -- Se possuir conta, podes buscar da TBCADAST_PESSOA
       vr_nrcepend_av1 := null;
       open c_cep(vr_inpessoa_av1,vr_nrcpfcgc_av1);
-       fetch c_cep into vr_nrcepend_av1;
+      fetch c_cep into vr_nrcepend_av1;
+      if c_cep%notfound then
+        --Tipo endereco(9-Comercial,10-Residencial,11-Progrid,12-Corresp)
+        open c_crapenc(vr_nrdconta_av1); 
+        fetch c_crapenc into vr_nrcepend_av1;
+        close c_crapenc;
+      end if;       
       close c_cep;     
     END IF;
 
@@ -6095,6 +6115,11 @@ PROCEDURE pc_solicita_consulta_biro(pr_cdcooper IN  crapepr.cdcooper%TYPE, --> C
       vr_nrcepend_av2 := null;
       open c_cep(vr_inpessoa_av2,vr_nrcpfcgc_av2);
        fetch c_cep into vr_nrcepend_av2;
+        if c_cep%notfound then
+         open c_crapenc(vr_nrdconta_av2); 
+          fetch c_crapenc into vr_nrcepend_av2;
+         close c_crapenc;
+        end if;       
       close c_cep;       
     END IF;
 

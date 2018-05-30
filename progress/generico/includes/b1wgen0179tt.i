@@ -12,6 +12,8 @@
                              HISTOR para WEB (Douglas - Chamado 412552)
                              
                 05/12/2017 - Melhoria 458 adicionado campo inmonpld - Antonio R. Jr (Mouts)
+				
+				26/03/2018 - PJ 416 - BacenJud - Incluir o campo de inclusão do histórico no bloqueio judicial - Márcio - Mouts 
 
 				18/04/2018 - Incluído novo campo inestocc - Diego Simas (AMcom)
         
@@ -47,6 +49,9 @@ DEF TEMP-TABLE tt-histor NO-UNDO
     FIELD ingercre AS INTE
     FIELD ingerdeb AS INTE
     FIELD flgsenha AS INTE
+	/*PJ 416 - Início*/
+    FIELD indutblq AS CHAR
+	/*PJ 416 - Fim*/
     FIELD dsextrat AS CHAR
     FIELD vltarcsh AS DECI
     FIELD cdgrphis AS INTE

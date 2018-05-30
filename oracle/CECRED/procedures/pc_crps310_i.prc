@@ -17,7 +17,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
      Sistema : Conta-Corrente - Cooperativa de Credito
      Sigla   : CRED
      Autor   : Deborah/Margarete
-     Data    : Maio/2001                       Ultima atualizacao: 14/05/2018
+     Data    : Maio/2001                       Ultima atualizacao: 28/05/2018
      
      Dados referentes ao programa:
 
@@ -306,6 +306,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                  14/05/2018 - Ajuste no controle de paralelismo por Agencia (PA), 
 				            - Incluido parametro de PA em query's - (Mario-AMcom)
 
+                 28/05/2018 - P450 - Corrigido data do risco para contratos menores que materialidade (Guilherme/AMcom)
 
   ............................................................................ */
 
@@ -4277,7 +4278,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                 vr_dtdrisco_upd := vr_dtrefere;
               ELSE
                 -- Utilizar a data do ultimo risco
-                vr_dtdrisco_upd := rw_crapris_last.dtdrisco;
+                IF rw_crapris.innivris <> rw_crapris_last.innivris THEN
+                  vr_dtdrisco_upd := vr_dtrefere;
+                ELSE                
+                  vr_dtdrisco_upd := rw_crapris_last.dtdrisco;
+                END IF;
               END IF;
             END IF;
           ELSE
@@ -4291,11 +4296,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
 
           -- APENAS MENOR QUE MATERIALIDADE
           IF rw_crapris.vldivida <= pr_vlarrasto THEN
-            -- O RISCO ATUAL É DIFERENTE DO RISCO PARA O QUAL ELE VAI?
-            IF rw_crapris.innivori <> vr_innivori   THEN
-              -- SE SIM, MUDA DATA DO RISCO
-              vr_dtdrisco_upd := vr_dtrefere;
-            END IF;
           -- M324
           vr_dttrfprj := PREJ0001.fn_regra_dtprevisao_prejuizo(pr_cdcooper,
                                                                vr_innivori,

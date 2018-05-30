@@ -46,7 +46,7 @@
     
     Programa: sistema/generico/procedures/b1wgen0084a.p
     Autor   : Gabriel
-    Data    : Setembro/2011               ultima Atualizacao: 27/11/2015
+    Data    : Setembro/2011               ultima Atualizacao: 10/05/2018
      
     Dados referentes ao programa:
    
@@ -169,6 +169,8 @@
 
                 31/10/2016 - Validação dentro do busca_registro_parcela para identificar
 				             parcelas ja liquidadas (AJFink - SD545719)
+
+                10/05/2018 - P410 - Ajustes IOF (Marcos-Envolti)                     
 
 ............................................................................. */
 
@@ -484,8 +486,9 @@ PROCEDURE busca_pagamentos_parcelas:
                                                        ,INPUT crapepr.nrctremp \* Número do contrato de empréstimo *\
                                                        ,INPUT tt-pagamentos-parcelas.vlsdvpar \*crapepr.vlsdeved*\     \* Valor do empréstimo para efeito de cálculo *\
                                                        ,INPUT crapepr.vlemprst \* vltotope *\
-                             ,INPUT aux_dscatbem     \* Descrição da categoria do bem, valor default NULO  *\
+                                                       ,INPUT aux_dscatbem     \* Descrição da categoria do bem, valor default NULO  *\
                                                        ,INPUT crapepr.cdlcremp     \* Linha de crédito do empréstimo *\
+                                                       ,INPUT crapepr.cdfinemp     \* Finalidade do crédito do empréstimo *\
                                                        ,INPUT par_dtmvtolt     \* Data do movimento *\
                                                        ,INPUT aux_qtdiaiof     \* Quantidade de dias em atraso *\
                                                        ,OUTPUT 0               \* Valor do IOF principal *\
@@ -912,10 +915,11 @@ PROCEDURE calcula_atraso_parcela:
                                                        ,INPUT par_nrctremp     /* Número do contrato de empréstimo */
                                                        ,INPUT aux_vlbasiof     /*crapepr.vlsdeved*/     /* Valor do empréstimo para efeito de cálculo */
                                                        ,INPUT crabepr.vlemprst /* vltotope */
-                                           ,INPUT ""               /* Descrição da categoria do bem, valor default NULO  */
+                                                       ,INPUT ""               /* Descrição da categoria do bem, valor default NULO  */
                                                        ,INPUT crabepr.cdlcremp     /* Linha de crédito do empréstimo */
+                                                       ,INPUT crabepr.cdfinemp     /* Finalidade do crédito do empréstimo */
                                                        ,INPUT par_dtmvtolt     /* Data do movimento */
-                                           ,INPUT aux_qtdiaiof     /* Quantidade de dias em atraso */
+                                                       ,INPUT aux_qtdiaiof     /* Quantidade de dias em atraso */
                                                        ,OUTPUT 0               /* Valor do IOF principal */
                                                        ,OUTPUT 0               /* Valor do IOF adicional */
                                                        ,OUTPUT 0               /* Valor do IOF complementar */

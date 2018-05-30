@@ -24,7 +24,7 @@
 
    Programa: b1wgen0002a.i                  
    Autor   : Tiago.
-   Data    : 06/03/2012                        Ultima atualizacao: 29/06/2015
+   Data    : 06/03/2012                        Ultima atualizacao: 10/05/2018
     
    Dados referentes ao programa:
 
@@ -59,6 +59,8 @@
                29/06/2015 - Projeto 215 - DV 3 (Daniel) 
                
                09/10/2015 - Incluir históricos de Estorno PP (Oscar).
+               
+               10/05/2018 - P410 - Ajustes IOF (Marcos-Envolti)
                
 ..............................................................................*/
 DEF VAR aux_flgtrans AS LOGI                                        NO-UNDO.
@@ -302,6 +304,7 @@ DO ON ERROR UNDO , LEAVE:
                                                         ,INPUT aux_vlbaseiof /* vr_vlbaseiof */
                                                         ,INPUT ""
                                                         ,INPUT crapepr.cdlcremp /* pr_cdlcremp */
+                                                        ,INPUT crapepr.cdfinemp /* pr_cdfinemp */
                                                         ,INPUT par_dtmvtolt /* pr_dtmvtolt */
                                                         ,INPUT aux_qtdiaiof /* vr_qtdiamor */
                                                         ,OUTPUT 0 /* pr_vliofpri */

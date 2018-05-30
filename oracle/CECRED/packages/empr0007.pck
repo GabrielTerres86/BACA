@@ -3994,7 +3994,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
       Sistema : CECRED
       Sigla   : EMPR
       Autor   : Lucas Reinert
-      Data    : Agosto/15.                    Ultima atualizacao: 30/03/2017
+      Data    : Agosto/15.                    Ultima atualizacao: 10/05/2018
 
       Dados referentes ao programa:
 
@@ -4027,6 +4027,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
                                
                   30/03/2017 - Inclusao do parametro pr_idarquiv e pr_idboleto para
                                incluir na tabela tbepr_cobranca. (P210.2 - Lombardi)
+                               
+                  10/05/2018 - P410 - Ajustes IOF (Marcos-Envolti)             
                                
   ..............................................................................*/
 
@@ -4096,7 +4098,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
 											 ,pr_nrctremp IN crapepr.nrctremp%TYPE) IS
 				SELECT epr.tpemprst,
                epr.dtdpagto,
-               epr.inprejuz
+               epr.inprejuz,
+               epr.cdfinemp
 				  FROM crapepr epr
 				 WHERE epr.cdcooper = pr_cdcooper
 				   AND epr.nrdconta = pr_nrdconta
@@ -4324,6 +4327,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
                                         ,pr_vlemprst => pr_vlparepr                            --> Valor do empréstimo para efeito de cálculo
                                         ,pr_dscatbem => vr_dscatbem                            --> Descrição da categoria do bem, valor default NULO 
                                         ,pr_cdlcremp => vr_cdlcremp                            --> Linha de crédito do empréstimo
+                                        ,pr_cdfinemp => rw_crapepr.cdfinemp                    --> Finalidade do empréstimo
                                         ,pr_dtmvtolt => pr_dtmvtolt                            --> Data do movimento
                                         ,pr_qtdiaiof => vr_qtdiaiof                            --> Quantidade de dias em atraso
                                         ,pr_vliofpri => vr_vliofpri                            --> Valor do IOF principal
@@ -5977,7 +5981,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
       Sistema : CECRED
       Sigla   : EMPR
       Autor   : Lucas Reinert
-      Data    : Setembro/15.                    Ultima atualizacao: --/--/----
+      Data    : Setembro/15.                    Ultima atualizacao: 10/05/2018
 
       Dados referentes ao programa:
 
@@ -5987,7 +5991,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
 
       Observacao: -----
 
-      Alteracoes: 
+      Alteracoes: 10/05/2018 - P410 - Ajustes IOF (Marcos-Envolti)
   ..............................................................................*/																								
 		DECLARE
 		  ------------------------------- VARIAVEIS ---------------------------------
@@ -6030,6 +6034,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
 							,epr.dtultpag
 							,epr.txjuremp
 							,lcr.txdiaria
+              ,epr.cdfinemp
 				  FROM crapepr epr,
 					     craplcr lcr
 				 WHERE epr.cdcooper = pr_cdcooper
@@ -6228,6 +6233,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EMPR0007 IS
                                         ,pr_vlemprst => pr_vlsdeved                            --> Valor do empréstimo para efeito de cálculo
                                         ,pr_dscatbem => vr_dscatbem                            --> Descrição da categoria do bem, valor default NULO 
                                         ,pr_cdlcremp => vr_cdlcremp                            --> Linha de crédito do empréstimo
+                                        ,pr_cdfinemp => rw_crapepr_tr.cdfinemp                 --> Finalidade do empréstimo
                                         ,pr_dtmvtolt => pr_dtmvtolt                            --> Data do movimento
                                         ,pr_qtdiaiof => vr_qtdiaiof                            --> Quantidade de dias em atraso
                                         ,pr_vliofpri => vr_vliofpri                            --> Valor do IOF principal

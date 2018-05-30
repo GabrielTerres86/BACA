@@ -501,7 +501,7 @@ FOR EACH tt-consulta-blt NO-LOCK:
                                    "<flgvenci>" + STRING(tt-consulta-blt.flgvenci) + "</flgvenci>" +
                                    "<vldocmto_boleto>" + STRING(tt-consulta-blt.vldocmto_boleto,"zzzzzzzzz9.99") + "</vldocmto_boleto>" +
                                    "<vlcobrado_boleto>" + STRING(tt-consulta-blt.vlcobrado_boleto,"zzzzzzzzz9.99") + "</vlcobrado_boleto>" +
-                                   "<dtvencto_boleto>" + STRING(tt-consulta-blt.dtvencto_boleto,"99/99/9999") + "</dtvencto_boleto>" +
+                                   "<dtvencto_boleto>" + STRING(tt-consulta-blt.dtvencto,"99/99/9999") + "</dtvencto_boleto>" +
                                    "<linhadigitavel>" + tt-consulta-blt.dslindig + "</linhadigitavel>" + 
                                    "<codigobarras>" + tt-consulta-blt.dscodbar + "</codigobarras>" +
                                    "<dsdespec>" + tt-consulta-blt.dsdespec + "</dsdespec>" +

@@ -12,7 +12,7 @@ create or replace procedure cecred.pc_crps616(pr_cdcooper  in craptab.cdcooper%t
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Gabriel
-   Data    : Agosto/2012                       Ultima atualizacao: 07/02/2018
+   Data    : Agosto/2012                       Ultima atualizacao: 10/05/2018
 
    Dados referentes ao programa:
 
@@ -59,6 +59,9 @@ create or replace procedure cecred.pc_crps616(pr_cdcooper  in craptab.cdcooper%t
 
                07/02/2018 - Projeto Ligeirinho - Incluindo paralelismo para melhorar a performance
                             da rotina (Fabiano B. Dias - AMcom)
+                            
+               10/05/2018 - P410 - Ajustes IOF (Marcos-Envolti)             
+                            
 ............................................................................. */
   -- Buscar os dados da cooperativa
   cursor cr_crapcop (pr_cdcooper in craptab.cdcooper%type) is
@@ -346,6 +349,7 @@ create or replace procedure cecred.pc_crps616(pr_cdcooper  in craptab.cdcooper%t
                          pr_nrdconta crapepr.nrdconta%type,
                          pr_nrctremp crapepr.nrctremp%type) is
          select crapepr.cdlcremp
+               ,crapepr.cdfinemp
          from   crapepr
          where  crapepr.cdcooper = pr_cdcooper
          and    crapepr.nrdconta = pr_nrdconta
@@ -460,6 +464,7 @@ create or replace procedure cecred.pc_crps616(pr_cdcooper  in craptab.cdcooper%t
                                         , pr_vlemprst => pr_vlsdvsji
                                         , pr_dscatbem => ''
                                         , pr_cdlcremp => rw_crapepr_lcr.cdlcremp
+                                        , pr_cdfinemp => rw_crapepr_lcr.cdfinemp
                                         , pr_dtmvtolt => pr_dtmvtolt
                                         , pr_qtdiaiof => vr_qtdiamor
                                         , pr_vliofpri => vr_vliofpri
@@ -1226,3 +1231,4 @@ exception
     rollback;
 
 end;
+/

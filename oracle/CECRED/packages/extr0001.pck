@@ -865,6 +865,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
           ,his.inhistor
           ,his.dshistor
           ,lcm.rowid
+          ,lcm.progress_recid -- PJ 416 - Bacenjud
+          ,his.indutblq       -- PJ 416 - Bacenjud
       FROM craplcm lcm
           ,craphis his
      WHERE lcm.cdcooper = his.cdcooper
@@ -1955,6 +1957,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
 	--
     --               08/12/2015 - Ajustado query da craplcm para melhor performace SD358495 (Odirlei-AMcom)
     --
+    --               16/04/2018 - PJ 416 - Considerar o saldo do bloqueio que está sendo monitorado
     DECLARE
       -- Descrição e código da critica
       vr_cdcritic crapcri.cdcritic%TYPE;
@@ -1978,6 +1981,24 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
       -- Flag selecionar crapsda
       vr_crapsda BOOLEAN;
       vr_lscdhist_ret     VARCHAR2(1000);
+      
+      -- Início - PJ 416 - Bacenjud
+      CURSOR CR_CONTA_MONITORADA IS
+        SELECT
+              C.VLSALDO,
+              C.IDPROGRES_RECID,
+              'S' IDCONTAMONITORADA
+         FROM 
+              TBBLQJ_MONITORA_ORDEM_BLOQ C 
+        WHERE
+              C.CDCOOPER = pr_cdcooper
+          AND C.NRDCONTA = pr_nrdconta
+          AND C.VLSALDO > 0;
+      
+      vr_saldo_monitoramento tbblqj_monitora_ordem_bloq.vlsaldo%type := 0;
+      vr_idprogress_recid    tbblqj_monitora_ordem_bloq.vlsaldo%type := 0;
+      vr_conta_monitorada    varchar2(1) := 'N';
+      -- Fim - PJ 416 - Bacenjud      
       
     BEGIN
       
@@ -2079,37 +2100,127 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
         pr_tab_sald(vr_ind).vlblqjud := vr_vlblqjud;
         pr_tab_sald(vr_ind).vlsdcota := rw_crapsda.vlsdcota;
       END IF;
-      -- Busca de todos os lançamentos
-      FOR rw_craplcm_ign IN cr_craplcm_ign(pr_cdcooper => pr_cdcooper           --> Cooperativa conectada
-                                          ,pr_nrdconta => pr_nrdconta           --> Número da conta
-                                          ,pr_dtiniper => rw_crapsda.dtmvtolt+1 --> Data do saldo da conta + 1 dia, para não trazer ele
-                                          ,pr_dtfimper => vr_dtrefere           --> Data movimento final processado acima
-                                  ,pr_cdhistor_ign => '289') LOOP      --> Lista com códigos de histórico a ignorar
-        -- Chama rotina que compõe o saldo do dia
-        pc_compor_saldo_dia(pr_vllanmto => rw_craplcm_ign.vllanmto
-                           ,pr_inhistor => rw_craplcm_ign.inhistor
-                           ,pr_vlsddisp => pr_tab_sald(vr_ind).vlsddisp
-                           ,pr_vlsdchsl => pr_tab_sald(vr_ind).vlsdchsl
-                           ,pr_vlsdbloq => pr_tab_sald(vr_ind).vlsdbloq
-                           ,pr_vlsdblpr => pr_tab_sald(vr_ind).vlsdblpr
-                           ,pr_vlsdblfp => pr_tab_sald(vr_ind).vlsdblfp
-                           ,pr_vlsdindi => pr_tab_sald(vr_ind).vlsdindi
-                           ,pr_des_reto => pr_des_reto
-                           ,pr_cdcritic => vr_cdcritic);
-        -- Se houve erro
-        IF pr_des_reto = 'NOK' THEN
-          -- Chamar rotina de gravação de erro
-          gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
-                               ,pr_cdagenci => pr_cdagenci
-                               ,pr_nrdcaixa => pr_nrdcaixa
-                               ,pr_nrsequen => 1 --> Fixo
-                               ,pr_cdcritic => vr_cdcritic --> Retornando na compor saldo
-                               ,pr_dscritic => vr_dscritic
-                               ,pr_tab_erro => pr_tab_erro);
-          -- Levantar exceção
-          RAISE vr_exc_erro;
-        END IF;
-      END LOOP; --> Fim leitura lançamentos
+      
+      -- Início PJ 4016 - Verificar se a consta está sendo monitorada no bloqueio Judicial e o valor do saldo
+      vr_saldo_monitoramento :=0;
+      vr_idprogress_recid    :=0;
+      vr_conta_monitorada    :='N';
+      
+      FOR RW_CONTA_MONITORADA IN CR_CONTA_MONITORADA LOOP
+        vr_saldo_monitoramento :=nvl(RW_CONTA_MONITORADA.VLSALDO,0);
+        vr_idprogress_recid    :=nvl(RW_CONTA_MONITORADA.IDPROGRES_RECID,0);
+        vr_conta_monitorada    :=RW_CONTA_MONITORADA.IDCONTAMONITORADA;
+      END LOOP;
+      --Fim PJ 416
+      
+      IF vr_conta_monitorada = 'N'THEN -- PJ 416 Verifica se a conta está sendo monitorada
+      -- Se a conta não estiver sendo monitorada, mantem a verificação dos lançamentos como era antes
+        -- Busca de todos os lançamentos
+        FOR rw_craplcm_ign IN cr_craplcm_ign(pr_cdcooper => pr_cdcooper           --> Cooperativa conectada
+                                            ,pr_nrdconta => pr_nrdconta           --> Número da conta
+                                            ,pr_dtiniper => rw_crapsda.dtmvtolt+1 --> Data do saldo da conta + 1 dia, para não trazer ele
+                                            ,pr_dtfimper => vr_dtrefere           --> Data movimento final processado acima
+                                    ,pr_cdhistor_ign => '289') LOOP      --> Lista com códigos de histórico a ignorar
+          -- Chama rotina que compõe o saldo do dia
+          pc_compor_saldo_dia(pr_vllanmto => rw_craplcm_ign.vllanmto
+                             ,pr_inhistor => rw_craplcm_ign.inhistor
+                             ,pr_vlsddisp => pr_tab_sald(vr_ind).vlsddisp
+                             ,pr_vlsdchsl => pr_tab_sald(vr_ind).vlsdchsl
+                             ,pr_vlsdbloq => pr_tab_sald(vr_ind).vlsdbloq
+                             ,pr_vlsdblpr => pr_tab_sald(vr_ind).vlsdblpr
+                             ,pr_vlsdblfp => pr_tab_sald(vr_ind).vlsdblfp
+                             ,pr_vlsdindi => pr_tab_sald(vr_ind).vlsdindi
+                             ,pr_des_reto => pr_des_reto
+                             ,pr_cdcritic => vr_cdcritic);
+          -- Se houve erro
+          IF pr_des_reto = 'NOK' THEN
+            -- Chamar rotina de gravação de erro
+            gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
+                                 ,pr_cdagenci => pr_cdagenci
+                                 ,pr_nrdcaixa => pr_nrdcaixa
+                                 ,pr_nrsequen => 1 --> Fixo
+                                 ,pr_cdcritic => vr_cdcritic --> Retornando na compor saldo
+                                 ,pr_dscritic => vr_dscritic
+                                 ,pr_tab_erro => pr_tab_erro);
+            -- Levantar exceção
+            RAISE vr_exc_erro;
+          END IF;
+        END LOOP; --> Fim leitura lançamentos
+      -- Início PJ 416 
+      ELSE
+      -- Se a conta estiver sendo monitorada, fazer:
+        -- Busca de todos os lançamentos
+        FOR rw_craplcm_ign IN cr_craplcm_ign(pr_cdcooper => pr_cdcooper           --> Cooperativa conectada
+                                            ,pr_nrdconta => pr_nrdconta           --> Número da conta
+                                            ,pr_dtiniper => rw_crapsda.dtmvtolt+1 --> Data do saldo da conta + 1 dia, para não trazer ele
+                                            ,pr_dtfimper => vr_dtrefere           --> Data movimento final processado acima
+                                    ,pr_cdhistor_ign => '289') LOOP      --> Lista com códigos de histórico a ignorar
+                                    
+          -- Verificar se o lançamento que está sendo realizado é de crédito, 
+          -- se é de um histórico que pode ser utilizado para bloqueio judicial
+          -- e se o progress_recid é maior que o último lançamento utilizado pelo monitoramento
+          IF rw_craplcm_ign.inhistor = 1 AND rw_craplcm_ign.indebcre = 'C' AND rw_craplcm_ign.indutblq = 'S' and rw_craplcm_ign.progress_recid > vr_idprogress_recid THEN
+          -- controlar o valor do lançamento em relação ao valor do saldo do monitoramento
+          
+            IF rw_craplcm_ign.vllanmto >= vr_saldo_monitoramento THEN
+              rw_craplcm_ign.vllanmto:= rw_craplcm_ign.vllanmto - vr_saldo_monitoramento;
+              vr_saldo_monitoramento:=0;
+              -- Chama rotina que compõe o saldo do dia
+              pc_compor_saldo_dia(pr_vllanmto => rw_craplcm_ign.vllanmto
+                                 ,pr_inhistor => rw_craplcm_ign.inhistor
+                                 ,pr_vlsddisp => pr_tab_sald(vr_ind).vlsddisp
+                                 ,pr_vlsdchsl => pr_tab_sald(vr_ind).vlsdchsl
+                                 ,pr_vlsdbloq => pr_tab_sald(vr_ind).vlsdbloq
+                                 ,pr_vlsdblpr => pr_tab_sald(vr_ind).vlsdblpr
+                                 ,pr_vlsdblfp => pr_tab_sald(vr_ind).vlsdblfp
+                                 ,pr_vlsdindi => pr_tab_sald(vr_ind).vlsdindi
+                                 ,pr_des_reto => pr_des_reto
+                                 ,pr_cdcritic => vr_cdcritic);
+              -- Se houve erro
+              IF pr_des_reto = 'NOK' THEN
+                -- Chamar rotina de gravação de erro
+                gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
+                                     ,pr_cdagenci => pr_cdagenci
+                                     ,pr_nrdcaixa => pr_nrdcaixa
+                                     ,pr_nrsequen => 1 --> Fixo
+                                     ,pr_cdcritic => vr_cdcritic --> Retornando na compor saldo
+                                     ,pr_dscritic => vr_dscritic
+                                     ,pr_tab_erro => pr_tab_erro);
+                -- Levantar exceção
+                RAISE vr_exc_erro;
+              END IF;
+            ELSE
+              vr_saldo_monitoramento:= vr_saldo_monitoramento - rw_craplcm_ign.vllanmto;
+            END IF;
+         
+          ELSE
+            -- Chama rotina que compõe o saldo do dia
+            pc_compor_saldo_dia(pr_vllanmto => rw_craplcm_ign.vllanmto
+                               ,pr_inhistor => rw_craplcm_ign.inhistor
+                               ,pr_vlsddisp => pr_tab_sald(vr_ind).vlsddisp
+                               ,pr_vlsdchsl => pr_tab_sald(vr_ind).vlsdchsl
+                               ,pr_vlsdbloq => pr_tab_sald(vr_ind).vlsdbloq
+                               ,pr_vlsdblpr => pr_tab_sald(vr_ind).vlsdblpr
+                               ,pr_vlsdblfp => pr_tab_sald(vr_ind).vlsdblfp
+                               ,pr_vlsdindi => pr_tab_sald(vr_ind).vlsdindi
+                               ,pr_des_reto => pr_des_reto
+                               ,pr_cdcritic => vr_cdcritic);
+            -- Se houve erro
+            IF pr_des_reto = 'NOK' THEN
+              -- Chamar rotina de gravação de erro
+              gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
+                                   ,pr_cdagenci => pr_cdagenci
+                                   ,pr_nrdcaixa => pr_nrdcaixa
+                                   ,pr_nrsequen => 1 --> Fixo
+                                   ,pr_cdcritic => vr_cdcritic --> Retornando na compor saldo
+                                   ,pr_dscritic => vr_dscritic
+                                   ,pr_tab_erro => pr_tab_erro);
+              -- Levantar exceção
+              RAISE vr_exc_erro;
+            END IF;
+          END IF;
+        END LOOP; --> Fim leitura lançamentos
+      END IF;
       /***********************************************************************/
       /** Se for feriado ou final de semana, os historicos abaixo devem ser **/
       /** entrar na contagem mesmo que a dtmvtolt do lancamento seja maior  **/
@@ -3439,7 +3550,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
           END IF;
           CLOSE cr_craplmt;
         END IF;
-        
+
         IF rw_craplcm.cdhistor IN (539,1015) THEN -- Transferência Intracoop Recebida
           pr_tab_extr(vr_ind_tab).nrseqlmt := rw_craplcm.nrdocmto;
           pr_tab_extr(vr_ind_tab).flgdetal := 1;
@@ -3595,7 +3706,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
       -- Historicos 'de-para' Cabal
       vr_cdhishcb VARCHAR2(4000);
 			-- Históricos operadoras de celular
-			vr_cdhisope VARCHAR2(4000);
+			vr_cdhisope VARCHAR2(4000);			
       -- Históricos Convênios par Pagamento
       vr_lshiscon VARCHAR2(4000) := '';
       --Flag valida se estar rodando no batch
@@ -3615,7 +3726,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
          WHERE crapass.cdcooper = pr_cdcooper
            AND crapass.nrdconta = pr_nrdconta;
       rw_crapass_age cr_crapass_age%ROWTYPE;
-      
+
     CURSOR cr_gnconve (pr_cdcooper IN craphis.cdcooper%TYPE) IS
       SELECT c.cdhisdeb
         FROM gnconve c
@@ -3778,12 +3889,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0001 AS
           vr_dtfimper := pr_dtfimper;
         END IF;
       END IF;
-      
+
       -- Buscar os históricas de operadoras de celular
       FOR rw_operadoras IN cr_operadoras LOOP
         vr_cdhisope := vr_cdhisope || ',' || rw_operadoras.cdhisdeb_cooperado;
       END LOOP;
-      
+
       vr_lshiscon := '1019';
       FOR rw_gnconve IN cr_gnconve (pr_cdcooper => pr_cdcooper) LOOP
         vr_lshiscon := vr_lshiscon || ',' || to_char(rw_gnconve.cdhisdeb);

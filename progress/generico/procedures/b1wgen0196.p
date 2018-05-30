@@ -439,6 +439,7 @@ PROCEDURE grava_dados:
                                             INPUT FALSE,      /* par_flgerlog */
                                             INPUT 0,          /* par_nrctremp */
                                             INPUT par_cdlcremp,
+                                            INPUT par_cdfinemp,
                                             INPUT par_vlemprst,
                                             INPUT 1,
                                             INPUT par_dtmvtolt,
@@ -962,6 +963,7 @@ END PROCEDURE. /* END grava_dados */
                                                 ,INPUT ""
                                                 ,INPUT crawepr.idfiniof
                                                 ,INPUT ""
+                                                ,INPUT "S" /* Gravar valor por parcela no cadastro de parcelas */
                                                 ,OUTPUT 0
                                                 ,OUTPUT 0
                                                 ,OUTPUT 0

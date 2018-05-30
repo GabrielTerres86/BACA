@@ -525,7 +525,7 @@ IF  par_idrelato = 1 OR
                                         "</dtcredit><dsmotivo>" +
                                         tt-consulta-blt.dsmotivo +
                                         "</dsmotivo>" +
-                                        "<dsorigem>" + tt-consulta-blt.dsorigem + "</dsorigem>" + 
+                                        "<dsorigem>" + tt-consulta-blt.dsorigem_proc + "</dsorigem>" + 
                                         "<dsorigem_proc>" + tt-consulta-blt.dsorigem_proc + "</dsorigem_proc>" +
                                         "<dtdocmto>" + STRING(tt-consulta-blt.dtdocmto, "99/99/9999") + "</dtdocmto>" + 
                                         "<nossonro>" + tt-consulta-blt.nossonro + "</nossonro>" + 

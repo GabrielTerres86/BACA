@@ -5,7 +5,7 @@ CREATE OR REPLACE PACKAGE CECRED.rati0001 is
   --  Sistema  : Rotinas para Rating dos Cooperados
   --  Sigla    : RATI
   --  Autor    : Alisson C. Berrido - AMcom
-  --  Data     : Maio/2013.                   Ultima atualizacao: 31/01/2018
+  --  Data     : Maio/2013.                   Ultima atualizacao: 29/05/2018
   --
   -- Dados referentes ao programa:
   --
@@ -166,6 +166,8 @@ CREATE OR REPLACE PACKAGE CECRED.rati0001 is
   --                         vai utilizar funcao generica da gene0002. Essa funcao ja le os parametros 
   --                         de formatacao numerica do banco de dados e converte adequadamente, evitando 
   --                         problemas ao executar a rati0001 por job. Heitor (Mouts)
+  --
+  --           29/05/2018 - Expostas as funções fn_valor_operacao e fn_busca_descricao_situacao (GFT)   
   ---------------------------------------------------------------------------------------------------------------
   -- Tipo de Tabela para dados provisao CL
   TYPE typ_tab_dsdrisco IS TABLE OF VARCHAR2(5) INDEX BY PLS_INTEGER;
@@ -729,6 +731,14 @@ CREATE OR REPLACE PACKAGE CECRED.rati0001 is
                                    ,pr_cdcooper IN NUMBER) --> Código da Cooperativa
                             RETURN INTEGER;
     
+  FUNCTION fn_valor_operacao(pr_cdcooper IN crapcop.cdcooper%TYPE --> Cooperativa conectada
+                            ,pr_nrdconta IN crapass.nrdconta%TYPE --> Conta do associado
+                            ,pr_tpctrato IN crapnrc.tpctrrat%TYPE --> Tipo do Rating
+                            ,pr_nrctrato IN crapnrc.nrctrrat%TYPE --> Número do contrato de Rating
+                            ) RETURN NUMBER;
+
+
+   FUNCTION fn_busca_descricao_situacao (pr_insitrat IN INTEGER) RETURN VARCHAR2;
 END RATI0001;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.RATI0001 IS

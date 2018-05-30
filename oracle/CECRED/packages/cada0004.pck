@@ -808,6 +808,20 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0004 is
                                     ,pr_nmdcampo OUT VARCHAR2               --> Nome do campo com erro
                                     ,pr_des_erro OUT VARCHAR2);             --> Descricao do Erro									
 
+PROCEDURE pc_obtem_cabecalho_atenda( pr_cdcooper IN crapcop.cdcooper%TYPE  --> Codigo da cooperativa
+                                      ,pr_cdagenci IN crapage.cdagenci%TYPE  --> Codigo de agencia
+                                      ,pr_nrdcaixa IN crapbcx.nrdcaixa%TYPE  --> Numero do caixa
+                                      ,pr_cdoperad IN crapope.cdoperad%TYPE  --> Codigo do operador
+                                      ,pr_nrdconta IN crapass.nrdconta%TYPE  --> Numero da conta
+                                      ,pr_nrdctitg IN crapass.nrdctitg%TYPE  --> Numero da conta itg
+                                      ,pr_dtinicio IN DATE                   --> Data de incio
+                                      ,pr_dtdfinal IN DATE                   --> data final
+                                      ,pr_idorigem IN INTEGER                --> Identificado de oriem
+                                      ---------- OUT --------
+                                      ,pr_tab_cabec OUT typ_tab_cabec                 --> Retorna dados do cabecalho da tela ATENDA
+                                      ,pr_des_reto       OUT VARCHAR2                 --> OK ou NOK
+                                      ,pr_tab_erro       OUT gene0001.typ_tab_erro);
+
 END CADA0004;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
@@ -2510,8 +2524,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     
     vr_dtrefere    := pr_rw_crapdat.dtultdma;
     vr_innivris    := 2;
-    vr_vlarrasto := SUBSTR(vr_dstextab,3,9);
-    
+    vr_vlarrasto := GENE0002.fn_char_para_number(SUBSTR(vr_dstextab,3,9));    
+
     -- buscar risco 
     OPEN cr_crapris (pr_cdcooper  => pr_cdcooper,
                      pr_nrdconta  => pr_nrdconta,

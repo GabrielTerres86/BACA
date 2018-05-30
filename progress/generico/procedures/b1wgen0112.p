@@ -34,7 +34,7 @@
 
     Programa: sistema/generico/procedures/b1wgen0112.p
     Autor   : Gabriel Capoia dos Santos (DB1)
-    Data    : Agosto/2011                        Ultima atualizacao: 02/03/2018
+    Data    : Agosto/2011                        Ultima atualizacao: 10/05/2018
 
     Objetivo  : Tranformacao BO tela IMPRES
 
@@ -211,7 +211,7 @@
                 
                 06/04/2016 - Incluida a procedure pc_verifica_pacote_tarifas para o 
                              Prj. Tarifas 218/2, na procedure Grava_Dados (Jean Michel).
-                             
+                                                      
                 02/08/2016 - Nao tratar parametro de isencao de extrato na cooperativa
                              quando cooperado possuir servico de extrato no pacote de 
                              tarifas (Diego).
@@ -230,8 +230,10 @@
 
                 02/03/2018 - Lucas Skroch (Supero TI) - Ajustes nos saldos de cobertura, judicial, total geral e total resgate
 
-    29/01/2018 - #770327 Chamada da rotina pc_lista_aplicacoes_car alterada para 
-                 pc_lista_demons_apli, rotina Gera_Impressao_Aplicacao (Carlos)
+                29/01/2018 - #770327 Chamada da rotina pc_lista_aplicacoes_car alterada para 
+                             pc_lista_demons_apli, rotina Gera_Impressao_Aplicacao (Carlos)
+
+                10/05/2018 - P410 - Ajustes IOF (Marcos-Envolti)
 
 ............................................................................*/
 
@@ -1333,20 +1335,20 @@ PROCEDURE Grava_Dados:
                     devera validar a qtd. de extratos isentos oferecidos pela cooperativa(parametro). 
                     Caso contrario, o cooperado tera direito apenas a qtd. disponibilizada no pacote */
                     IF   aux_flservic = 0 THEN
-                         DO:
-                             RUN sistema/generico/procedures/b1wgen0001.p
-                                 PERSISTENT SET h-b1wgen0001.
+                    DO:
+                        RUN sistema/generico/procedures/b1wgen0001.p
+                            PERSISTENT SET h-b1wgen0001.
         
-                             RUN verifica-tarifacao-extrato 
-                                 IN h-b1wgen0001(INPUT par_cdcooper,
-                                                 INPUT par_nrdconta,
-                                                 INPUT par_dtmvtolt,
-                                                 INPUT par_dtrefere,
-                                                 OUTPUT aux_inisenta,
-                                                 OUTPUT TABLE tt-erro).
+                        RUN verifica-tarifacao-extrato 
+                            IN h-b1wgen0001(INPUT par_cdcooper,
+                                            INPUT par_nrdconta,
+                                            INPUT par_dtmvtolt,
+                                            INPUT par_dtrefere,
+                                            OUTPUT aux_inisenta,
+                                            OUTPUT TABLE tt-erro).
         
-                             DELETE PROCEDURE h-b1wgen0001.
-                         END.
+                        DELETE PROCEDURE h-b1wgen0001.
+                    END.
                 
                 IF CAN-FIND(FIRST crapext WHERE
                                   crapext.cdcooper = par_cdcooper         AND
@@ -1813,6 +1815,7 @@ PROCEDURE imprime_extrato:
                                       INPUT  par_flgerlog,
                                       INPUT  par_nrctremp,
                                       INPUT  crapepr.cdlcremp,
+                                      INPUT  crapepr.cdfinemp,
                                       INPUT  crapepr.vlemprst,
                                       INPUT  crapepr.qtpreemp,
                                       INPUT  crapepr.dtmvtolt,

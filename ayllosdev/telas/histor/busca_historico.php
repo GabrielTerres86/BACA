@@ -12,6 +12,8 @@
  *
  *				  05/12/2017 - Adicionado campo Ind. Monitoramento - Melhoria 458 - Antonio R. Jr (mouts)
  *
+ *                05/04/2018 - Incluido no retorno o campo de histórico no bloqueio judicial (indutblq) - Mateus Z (Mouts)
+ *
  *                11/04/2018 - Incluído novo campo "Estourar a conta corrente" (inestocc)
  *                             Diego Simas - AMcom  
  *
@@ -136,6 +138,9 @@
 	echo "$('#cdagrupa','#frmHistorico').val('" . $cdagrupa . "');";
 	echo "$('#dsagrupa','#frmHistorico').val('" . getByTagName($historico,'dsagrupa') . "');";
 	echo "$('#idmonpld','#frmHistorico').val('" . getByTagName($historico,'idmonpld') . "');";
+	// Inicio PRJ 416 - Mostrar o valor (retornando do banco) do histórico no bloqueio judicial na tela
+	echo "$('#indutblq','#frmHistorico').val('" . getByTagName($historico,'indutblq') . "');";
+	// Fim PRJ 416
 	
 	
 	

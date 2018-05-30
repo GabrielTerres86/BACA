@@ -3076,16 +3076,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cobr0001 AS
       vr_auxcont     INTEGER := 0;
       vr_parcela_ant INTEGER;
       vr_parcela_atu INTEGER;
-      vr_rollout     INTEGER;
       vr_dscodbar    VARCHAR2(50);
       vr_lindigit    VARCHAR2(100);
       vr_dsdespec    VARCHAR2(10);
       vr_nrborder    craptdb.nrborder%TYPE;
-      vr_dtvencto_boleto DATE;
-      vr_vlcobrado_boleto crapcob.vltitulo%TYPE;
-      vr_vljuros_boleto   crapcob.vljurpag%TYPE;
-      vr_vlmulta_boleto   crapcob.vlmulpag%TYPE;
-      vr_vldescto_boleto  crapcob.vldescto%TYPE;
       vr_dsdinst1    VARCHAR2(200);
       vr_dsdinst2    VARCHAR2(200);      
       vr_dsdinst3    VARCHAR2(200);      
@@ -3279,129 +3273,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cobr0001 AS
         INDEX BY BINARY_INTEGER;
       /* Vetor para armazenar as informac?es de erro */
       vr_tab_nrdocmto typ_nrdocmto;
-      
-      PROCEDURE pc_calcula_multa_juros (pr_rw_crapcob IN OUT cr_all_parcelas%ROWTYPE
-                                       ,pr_dtvencto_calc OUT crapcob.dtvencto%TYPE -- Data de vencto atualizada
-                                       ,pr_vltitulo_calc OUT crapcob.vltitulo%TYPE -- Valor do titulo atualizado
-                                       ,pr_vlrmulta_calc OUT crapcob.vlrmulta%TYPE -- Contem o valor da multa calculado
-                                       ,pr_vlrjuros_calc OUT crapcob.vljurdia%TYPE -- Contem o valor do juros calculado
-                                       ,pr_cdcritic      OUT INTEGER
-                                       ,pr_dscritic      OUT VARCHAR2)
-        IS        
-
-          vr_vldescto       NUMBER := 0; 
-          vr_vlabatim       NUMBER := 0; 
-          vr_critica_data   BOOLEAN:= FALSE;
-          vr_vlfatura       NUMBER := 0;
-          vr_vlrjuros       NUMBER := 0;
-          vr_vlrmulta       NUMBER := 0;
-          vr_fltitven       NUMBER := 0;
-          
-          --Variaveis de erro
-          vr_exc_erro EXCEPTION;
-          vr_cdcritic crapcri.cdcritic%TYPE := 0;
-          vr_dscritic   VARCHAR2(4000) := NULL;
-          vr_tab_erro GENE0001.typ_tab_erro;
-    BEGIN
-          
-    BEGIN
-            /* Parametros de saida da cobranca registrada */
-            vr_vlrjuros := 0;
-            vr_vlrmulta := 0;
-            vr_vldescto := 0;
-            vr_vlabatim := 0;
-            vr_vlfatura := pr_rw_crapcob.vltitulo; 
-
-            /* trata o desconto */
-            /* se concede apos o vencimento */
-            IF pr_rw_crapcob.cdmensag = 2 THEN
-              --Valor Desconto
-              vr_vldescto:= pr_rw_crapcob.vldescto;
-              --Diminuir valor desconto do Valor Fatura
-              vr_vlfatura:= Nvl(vr_vlfatura,0) - vr_vldescto;
-            END IF;
-            /* utilizar o abatimento antes do calculo de juros/multa */
-            IF pr_rw_crapcob.vlabatim > 0 THEN
-              --Valor Abatimento
-              vr_vlabatim:= pr_rw_crapcob.vlabatim;
-              --Diminuir valor abatimento do Valor Fatura
-              vr_vlfatura:= Nvl(vr_vlfatura,0) - vr_vlabatim;
-            END IF;
-            
-            -- Limpar a tabela de erros
-            vr_tab_erro.DELETE;
-
-            --Verificar vencimento do titulo
-            cxon0014.pc_verifica_vencimento_titulo (pr_cod_cooper      => pr_cdcooper          --Codigo Cooperativa
-                                                   ,pr_cod_agencia     => 90                   --Codigo da Agencia
-                                                   ,pr_dt_agendamento  => NULL                 --Data Agendamento
-                                                   ,pr_dt_vencto       => pr_rw_crapcob.dtvencto  --Data Vencimento
-                                                   ,pr_critica_data    => vr_critica_data      --Critica na validacao
-                                                   ,pr_cdcritic        => vr_cdcritic          --Codigo da Critica
-                                                   ,pr_dscritic        => vr_dscritic          --Descricao da Critica
-                                                   ,pr_tab_erro        => vr_tab_erro);        --Tabela retorno erro
-            --Se ocorreu erro
-            IF vr_cdcritic IS NOT NULL OR vr_dscritic IS NOT NULL THEN
-              
-              IF vr_tab_erro.Count > 0 THEN
-                vr_dscritic:= vr_dscritic || ' ' || vr_tab_erro(vr_tab_erro.FIRST).dscritic;
-              ELSIF TRIM(vr_dscritic) IS NULL THEN
-                vr_dscritic:= gene0001.fn_busca_critica(vr_cdcritic);
-              END IF;
-
-              vr_dscritic:= 'Nao foi possivel verificar o vencimento do boleto. Erro: ' || vr_dscritic;
-                                  
-              --Levantar Excecao
-              RAISE vr_exc_erro;
-            END IF;
-              
-            --Retorna se está vencido ou não        
-            IF vr_critica_data = TRUE THEN
-              vr_fltitven := 1;   
-            ELSE
-              vr_fltitven := 2;        
-            END IF;
-
-            /* verifica se o titulo esta vencido */
-            IF vr_critica_data THEN
-
-              CXON0014.pc_calcula_vlr_titulo_vencido(pr_vltitulo => vr_vlfatura
-                                                    ,pr_tpdmulta => pr_rw_crapcob.tpdmulta
-                                                    ,pr_vlrmulta => pr_rw_crapcob.vlrmulta
-                                                    ,pr_tpjurmor => pr_rw_crapcob.tpjurmor
-                                                    ,pr_vljurdia => pr_rw_crapcob.vljurdia
-                                                    ,pr_qtdiavenc => (rw_crapdat.dtmvtocd - pr_rw_crapcob.dtvencto)
-                                                    ,pr_vlfatura => vr_vlfatura
-                                                    ,pr_vlrmulta_calc => vr_vlrmulta
-                                                    ,pr_vlrjuros_calc => vr_vlrjuros
-                                                    ,pr_dscritic =>  vr_dscritic);
-                                                    
-              pr_dtvencto_calc := rw_crapdat.dtmvtocd;                           
-              pr_vltitulo_calc := vr_vlfatura;           
-              pr_vlrmulta_calc := vr_vlrmulta;
-              pr_vlrjuros_calc := vr_vlrjuros;
-                  
-            ELSE
-              -- se concede apos vencto, ja calculou 
-              IF pr_rw_crapcob.cdmensag <> 2  THEN
-                --Valor Desconto
-                vr_vldescto:= pr_rw_crapcob.vldescto;
-                --Retirar o desconto da fatura
-                vr_vlfatura:= Nvl(vr_vlfatura,0) - vr_vldescto;
-              END IF;
-              
-              pr_dtvencto_calc := pr_rw_crapcob.dtvencto;
-              pr_vltitulo_calc := vr_vlfatura;     
-                       
-            END IF;
-          
-        EXCEPTION 
-          WHEN vr_exc_erro THEN
-            pr_cdcritic := 0;
-            pr_dscritic := 'Erro ao calcular juros e multa - COBR0001.pc_carrega_parcelas_carne: '||SQLERRM;
-        END;        
-        
-      END pc_calcula_multa_juros;
       
     BEGIN
 
@@ -3616,45 +3487,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cobr0001 AS
               FETCH cr_craptdb INTO rw_craptdb;              
               CLOSE cr_craptdb;
               
-              vr_nrborder := nvl(rw_craptdb.nrborder,0);
-              
-              pc_calcula_multa_juros(pr_rw_crapcob => rw_parcelas
-                                    ,pr_dtvencto_calc  => vr_dtvencto_boleto
-                                    ,pr_vltitulo_calc => vr_vlcobrado_boleto
-                                    ,pr_vlrjuros_calc  => vr_vljuros_boleto
-                                    ,pr_vlrmulta_calc  => vr_vlmulta_boleto
-                                    ,pr_cdcritic => vr_cdcritic
-                                    ,pr_dscritic => vr_dscritic);
-              
-              npcb0001.pc_verifica_rollout(pr_cdcooper => pr_cdcooper
-                                         , pr_dtmvtolt => rw_crapdat.dtmvtolt
-                                         , pr_vltitulo => rw_parcelas.vltitulo
-                                         , pr_tpdregra => 2 -- 2=pagamento
-                                         , pr_rollout  => vr_rollout );
-                                         
-              IF vr_rollout = 1 OR rw_parcelas.flgcbdda = 1 THEN
+              vr_nrborder := nvl(rw_craptdb.nrborder,0);              
 
-                cobr0005.pc_calc_codigo_barras(pr_dtvencto => rw_parcelas.dtvctori
-                                             , pr_cdbandoc => rw_parcelas.cdbandoc
-                                             , pr_vltitulo => rw_parcelas.vltitulo
-                                             , pr_nrcnvcob => rw_parcelas.nrcnvcob
-                                             , pr_nrcnvceb => 0
-                                             , pr_nrdconta => rw_parcelas.nrdconta
-                                             , pr_nrdocmto => rw_parcelas.nrdocmto
-                                             , pr_cdcartei => rw_parcelas.cdcartei
-                                             , pr_cdbarras => vr_dscodbar );
-              ELSE
-                
-                cobr0005.pc_calc_codigo_barras(pr_dtvencto => vr_dtvencto_boleto
-                                             , pr_cdbandoc => rw_parcelas.cdbandoc
-                                             , pr_vltitulo => vr_vlcobrado_boleto
-                                             , pr_nrcnvcob => rw_parcelas.nrcnvcob
-                                             , pr_nrcnvceb => 0
-                                             , pr_nrdconta => rw_parcelas.nrdconta
-                                             , pr_nrdocmto => rw_parcelas.nrdocmto
-                                             , pr_cdcartei => rw_parcelas.cdcartei
-                                             , pr_cdbarras => vr_dscodbar );             
-              END IF;
+              cobr0005.pc_calc_codigo_barras(pr_dtvencto => rw_parcelas.dtvencto
+                                           , pr_cdbandoc => rw_parcelas.cdbandoc
+                                           , pr_vltitulo => rw_parcelas.vltitulo
+                                           , pr_nrcnvcob => rw_parcelas.nrcnvcob
+                                           , pr_nrcnvceb => 0
+                                           , pr_nrdconta => rw_parcelas.nrdconta
+                                           , pr_nrdocmto => rw_parcelas.nrdocmto
+                                           , pr_cdcartei => rw_parcelas.cdcartei
+                                           , pr_cdbarras => vr_dscodbar );
               
               cobr0005.pc_calc_linha_digitavel(pr_cdbarras => vr_dscodbar
                                              , pr_lindigit => vr_lindigit);
@@ -3764,9 +3607,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cobr0001 AS
                                                      || '<flserasa>' || rw_parcelas.flserasa || '</flserasa>'
                                                      || '<qtdianeg>' || rw_parcelas.qtdianeg || '</qtdianeg>'
                                                      || '<inserasa>' || rw_parcelas.inserasa || '</inserasa>'
-                                                     || '<vldocmto_boleto>'  || rw_parcelas.vltitulo  || '</vldocmto_boleto>' 
-                                                     || '<vlcobrado_boleto>' || vr_vlcobrado_boleto || '</vlcobrado_boleto>'
-                                                     || '<dtvencto_boleto>'  || TO_CHAR(vr_dtvencto_boleto,'DD/MM/RRRR') || '</dtvencto_boleto>'
+                                                     || '<vldocmto_boleto>'  || rw_parcelas.vltitulo || '</vldocmto_boleto>' 
+                                                     || '<vlcobrado_boleto>' || rw_parcelas.vltitulo || '</vlcobrado_boleto>'
+                                                     || '<dtvencto_boleto>'  || to_char(rw_parcelas.dtvencto,'dd/mm/RRRR') || '</dtvencto_boleto>'
                                                      || '<linhadigitavel>'   || vr_lindigit         || '</linhadigitavel>'
                                                      || '<codigobarras>'     || vr_dscodbar         || '</codigobarras>'
                                                      || '<dsdespec>'         || vr_dsdespec         || '</dsdespec>'

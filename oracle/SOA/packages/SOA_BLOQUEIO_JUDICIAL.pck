@@ -13,7 +13,7 @@ CREATE OR REPLACE PACKAGE SOA.SOA_BLOQUEIO_JUDICIAL IS
   -- Objetivo  : Centralizar rotinas relacionadas ao WebService de Bloqueio Judicial
   --
   -- Alteracoes: 
-  --
+  -- 15/05/2018 - PJ 416 - Inclusão do parâmetro pr_vldiff na procedure pc_recebe_blq_desblq
   ---------------------------------------------------------------------------
   
   -- Efetuar o recebimento das solicitacoes de consulta de conta
@@ -36,9 +36,11 @@ CREATE OR REPLACE PACKAGE SOA.SOA_BLOQUEIO_JUDICIAL IS
                                 ,pr_vlordem       IN  NUMBER    -- Valor do bloqueio
                                 ,pr_dsprocesso    IN  VARCHAR2  -- Numero do processo
                                 ,pr_nmjuiz        IN  VARCHAR2  -- Juiz emissor
+                                ,pr_vldiff        IN  NUMBER DEFAULT 0 
                                 ,pr_idordem       OUT NUMBER    -- Sequencial do recebimento
                                 ,pr_cdcritic      OUT NUMBER    -- Codigo da critica
-                                ,pr_dscritic      OUT VARCHAR2);-- Texto de erro/critica encontrada
+                                ,pr_dscritic      OUT VARCHAR2  -- Texto de erro/critica encontrada
+                                );
 
   -- Efetuar o recebimento das solicitacoes de TED
   PROCEDURE pc_recebe_ted(pr_nrdocnpj_cop         IN NUMBER     -- CNPJ da cooperativa
@@ -124,9 +126,11 @@ CREATE OR REPLACE PACKAGE BODY SOA.SOA_BLOQUEIO_JUDICIAL IS
                                 ,pr_vlordem       IN  NUMBER       -- Valor do bloqueio
                                 ,pr_dsprocesso    IN  VARCHAR2     -- Numero do processo
                                 ,pr_nmjuiz        IN  VARCHAR2     -- Juiz emissor
+                                ,pr_vldiff        IN  NUMBER DEFAULT 0 -- SM PJ416                                
                                 ,pr_idordem       OUT NUMBER       -- Sequencial do recebimento
                                 ,pr_cdcritic      OUT NUMBER       -- Codigo da critica
-                                ,pr_dscritic      OUT VARCHAR2) IS -- Texto de erro/critica encontrada
+                                ,pr_dscritic      OUT VARCHAR2     -- Texto de erro/critica encontrada
+                                ) IS 
   BEGIN
     
     -- Chama a rotina original
@@ -143,7 +147,9 @@ CREATE OR REPLACE PACKAGE BODY SOA.SOA_BLOQUEIO_JUDICIAL IS
                                  ,pr_nmjuiz       => pr_nmjuiz    
                                  ,pr_idordem      => pr_idordem
                                  ,pr_cdcritic     => pr_cdcritic  
-                                 ,pr_dscritic     => pr_dscritic);    
+                                 ,pr_dscritic     => pr_dscritic
+                                 ,pr_vldiff       => pr_vldiff 
+                                 );    
     IF pr_dscritic IS NULL THEN
       pr_cdcritic := 0;
     ELSE
