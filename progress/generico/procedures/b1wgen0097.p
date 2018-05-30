@@ -306,6 +306,7 @@ PROCEDURE busca_dados_simulacao:
                                         INPUT  par_flgerlog,
                                         INPUT  0,
                                         INPUT  craplcr.cdlcremp,  
+                                        INPUT  crapfin.cdfinemp,
                                         INPUT  crapsim.vlemprst,  
                                         INPUT  crapsim.qtparepr,  
                                         INPUT  crapsim.dtmvtolt,
@@ -650,6 +651,7 @@ PROCEDURE grava_simulacao:
                                             INPUT  par_flgerlog,
                                             INPUT  0,
                                             INPUT  par_cdlcremp,  
+                                            INPUT  par_cdfinemp,
                                             INPUT  par_vlemprst,  
                                             INPUT  par_qtparepr,  
                                             INPUT  par_dtmvtolt,  
@@ -699,6 +701,7 @@ PROCEDURE grava_simulacao:
                                               INPUT "",     /* Bens em garantia */
                                               INPUT par_idfiniof,     /* Indicador de financiamento de IOF e tarifa */
                                               INPUT ?,
+                                              INPUT "N", 
                                              OUTPUT 0, /* Valor Calculado Parcela */
                                              OUTPUT 0, /* IOF */
                                              OUTPUT 0, /* IOF principal */

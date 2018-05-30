@@ -2,7 +2,7 @@
 
    Programa: xb1wgen0084.p
    Autor   : Gabriel
-   Data    : Maio/2011                           Ultima atualizacao: 28/10/2015
+   Data    : Maio/2011                           Ultima atualizacao: 10/05/2018
            
    Dados referentes ao programa:
    
@@ -24,6 +24,8 @@
                             
               28/10/2015 - Desenvolvimento do projeto 126. (James)
                             
+              10/05/2018 - P410 - Ajustes IOF (Marcos-Envolti)
+                            
 ........................................................................... */
 DEF VAR aux_cdcooper AS INTE                                          NO-UNDO.
 DEF VAR aux_cdagenci AS INTE                                          NO-UNDO.
@@ -36,6 +38,7 @@ DEF VAR aux_idseqttl AS INTE                                          NO-UNDO.
 DEF VAR aux_flgerlog AS LOGI                                          NO-UNDO.
 DEF VAR aux_nrctremp AS INTE                                          NO-UNDO.
 DEF VAR aux_cdlcremp AS INTE                                          NO-UNDO.
+DEF VAR aux_cdfinemp AS INTE                                          NO-UNDO.
 DEF VAR aux_vlemprst AS DECI                                          NO-UNDO.
 DEF VAR aux_qtparepr AS INTE                                          NO-UNDO.
 DEF VAR aux_dtlibera AS DATE                                          NO-UNDO.
@@ -99,6 +102,7 @@ PROCEDURE valores_entrada:
             WHEN "flgerlog" THEN aux_flgerlog = LOGICAL(tt-param.valorCampo).
             WHEN "nrctremp" THEN aux_nrctremp = INTE(tt-param.valorCampo).
             WHEN "cdlcremp" THEN aux_cdlcremp = INTE(tt-param.valorCampo).
+            WHEN "cdfinemp" THEN aux_cdfinemp = INTE(tt-param.valorCampo).
             WHEN "vlemprst" THEN aux_vlemprst = DEC(tt-param.valorCampo).
             WHEN "qtparepr" THEN aux_qtparepr = INTE(tt-param.valorCampo).
             WHEN "dtlibera" THEN aux_dtlibera = DATE(tt-param.valorCampo).
@@ -251,6 +255,7 @@ PROCEDURE busca_parcelas_proposta:
                                         INPUT aux_flgerlog,
                                         INPUT aux_nrctremp,
                                         INPUT aux_cdlcremp,
+                                        INPUT aux_cdfinemp,
                                         INPUT aux_vlemprst,
                                         INPUT aux_qtparepr,
                                         INPUT aux_dtlibera,
@@ -391,67 +396,6 @@ PROCEDURE grava_efetivacao_proposta:
 
 
 END PROCEDURE. /* grava efetivacao proposta */
- 
-
-/*****************************************************************************/
-/**      Procedure para calcular as parcelas do empréstimo                  **/
-/*****************************************************************************/
-PROCEDURE calcula_emprestimo:
-
-    RUN calcula_emprestimo IN hBo (INPUT aux_cdcooper,
-                                   INPUT aux_cdagenci,
-                                   INPUT aux_nrdcaixa,
-                                   INPUT aux_cdoperad,
-                                   INPUT aux_nmdatela,
-                                   INPUT aux_idorigem,
-                                   INPUT aux_nrdconta,
-                                   INPUT aux_idseqttl,
-                                   INPUT aux_cdlcremp,
-                                   INPUT aux_vlemprst,
-                                   INPUT aux_qtparepr,
-                                   INPUT aux_dtmvtolt,
-                                   INPUT aux_dtdpagto,
-                                   INPUT TRUE,
-                                   OUTPUT par_qtdiacar,
-                                   OUTPUT par_vlajuepr,
-                                   OUTPUT par_txdiaria,
-                                   OUTPUT par_txmensal,
-                                   OUTPUT par_vliofepr,
-                                   OUTPUT par_vlrtarif,
-                                   OUTPUT par_vllibera,
-                                   OUTPUT TABLE tt-parcelas-epr,
-                                   OUTPUT TABLE tt-erro).
-
-    IF   RETURN-VALUE <> "OK"  THEN
-         DO:
-             FIND FIRST tt-erro NO-LOCK NO-ERROR.
-         
-             IF  NOT AVAILABLE tt-erro  THEN
-                 DO:
-                     CREATE tt-erro.
-                     ASSIGN tt-erro.dscritic = "Nao foi possivel concluir a " +
-                                               "operacao.".
-                 END.
-                 
-             RUN piXmlSaida (INPUT TEMP-TABLE tt-erro:HANDLE,
-                             INPUT "Erro").
-         END.
-    ELSE 
-         DO:  
-             RUN piXmlNew.   
-             RUN piXmlAtributo (INPUT "qtdiacar", INPUT par_qtdiacar).
-             RUN piXmlAtributo (INPUT "vlajuepr", INPUT par_vlajuepr).
-             RUN piXmlAtributo (INPUT "txdiaria", INPUT par_txdiaria).
-             RUN piXmlAtributo (INPUT "txmensal", INPUT par_txmensal).
-             RUN piXmlAtributo (INPUT "vliofepr", INPUT par_vliofepr).
-             RUN piXmlAtributo (INPUT "vlrtarif", INPUT par_vlrtarif).
-             RUN piXmlAtributo (INPUT "vllibera", INPUT par_vllibera).
-             RUN piXmlExport (INPUT TEMP-TABLE tt-parcelas-epr:HANDLE,
-                              INPUT "Parcelas").                                   
-             RUN piXmlSave.   
-         END.
-
-END PROCEDURE. /* calcula emprestimo */
               
 PROCEDURE busca_desfazer_efetivacao_emprestimo:
 

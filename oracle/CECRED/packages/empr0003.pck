@@ -1900,7 +1900,7 @@ BEGIN
              END LOOP;
               
              -- Buscar iof
-             EMPR0001.pc_calcula_iof_epr( pr_cdcooper => pr_cdcooper
+             TIOF0001.pc_calcula_iof_epr( pr_cdcooper => pr_cdcooper
                                          ,pr_nrdconta => pr_nrdconta
                                          ,pr_nrctremp => pr_nrctremp
                                          ,pr_dtmvtolt => rw_crawepr.dtmvtolt
@@ -1919,6 +1919,7 @@ BEGIN
                                          ,pr_dscatbem => vr_dscatbem
                                          ,pr_idfiniof => rw_crawepr.idfiniof
                                          ,pr_dsctrliq => rw_crawepr.dsctrliq
+                                         ,pr_idgravar => 'N'
                                          ,pr_vlpreclc => vr_vlpreclc
                                          ,pr_vliofpri => vr_vliofpri
                                          ,pr_vliofadi => vr_vliofadi
@@ -2672,7 +2673,7 @@ BEGIN
              END LOOP;
               
              -- Buscar iof
-             EMPR0001.pc_calcula_iof_epr( pr_cdcooper => pr_cdcooper
+             TIOF0001.pc_calcula_iof_epr( pr_cdcooper => pr_cdcooper
                                          ,pr_nrdconta => pr_nrdconta
                                          ,pr_nrctremp => pr_nrctremp
                                          ,pr_dtmvtolt => rw_crawepr.dtmvtolt
@@ -2691,6 +2692,7 @@ BEGIN
                                          ,pr_dscatbem => vr_dscatbem
                                          ,pr_idfiniof => rw_crawepr.idfiniof
                                          ,pr_dsctrliq => rw_crawepr.dsctrliq
+                                         ,pr_idgravar => 'N'
                                          ,pr_vlpreclc => vr_vlpreclc
                                          ,pr_vliofpri => vr_vliofpri
                                          ,pr_vliofadi => vr_vliofadi

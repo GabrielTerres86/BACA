@@ -289,6 +289,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps149(pr_cdcooper IN crapcop.cdcooper%TY
           ,epr.vltarifa
           ,epr.vltariof
           ,epr.vliofepr
+          ,epr.vliofadc
        FROM crapepr epr 
       WHERE epr.cdcooper = pr_cdcooper 
         AND epr.dtmvtolt = pr_dtmvtolt
@@ -1509,7 +1510,7 @@ BEGIN
              ,rw_crabepr.nrdconta
              ,rw_crabepr.nrdconta
              ,GENE0002.fn_mask(rw_crabepr.nrdconta,'99999999')
-             ,rw_crabepr.nrctremp
+             ,GENE0002.fn_mask(rw_crabepr.nrctremp || TO_CHAR(sysdate,'SSSSS') || (nvl(rw_craplot.nrseqdig,0) + 1),'999999999999999') -- rw_crabepr.nrctremp
              ,15 -- CR.EMPRESTIMO
              ,nvl(rw_craplot.nrseqdig,0) + 1
              ,GENE0002.fn_mask(rw_crabepr.nrctremp,'99999999')
@@ -2066,7 +2067,7 @@ BEGIN
              ,rw_crapepr.nrdconta
              ,rw_crapepr.nrdconta
              ,GENE0002.fn_mask(rw_crapepr.nrdconta,'99999999')
-             ,GENE0002.fn_mask(rw_crapepr.nrctremp,'99999999')
+             ,GENE0002.fn_mask(rw_crapepr.nrctremp || TO_CHAR(sysdate,'SSSSS') || (nvl(rw_craplot.nrseqdig,0) + 1),'999999999999999') --GENE0002.fn_mask(rw_crapepr.nrctremp,'99999999')
              ,282 -- DB.EMPRESTIMO
              ,nvl(rw_craplot.nrseqdig,0) + 1
              ,GENE0002.fn_mask(rw_crabepr.nrctremp,'99999999')
@@ -2663,22 +2664,23 @@ BEGIN
       /* Busca o tipo de bem, para usar no cálculo da isenção (somente APARTAMENTO, CASA e MOTO). Pega somente o primeiro (já está ordenado), 
       pois se for "APARTAMENTO" ou "CASA", zera todos os valores de IOF (principal, adicional e complementar). Já se for "MOTO", 
       zera apenas IOF princial e complementar */
-      OPEN cr_crapbpr_iof(pr_cdcooper => pr_cdcooper, pr_nrdconta => rw_crabepr.nrdconta, pr_nrctremp => rw_crabepr.nrctremp);
+      /*OPEN cr_crapbpr_iof(pr_cdcooper => pr_cdcooper, pr_nrdconta => rw_crabepr.nrdconta, pr_nrctremp => rw_crabepr.nrctremp);
       FETCH cr_crapbpr_iof INTO rw_crapbpr_iof;
             
       vr_dscatbem := NULL;
       IF cr_crapbpr_iof%FOUND THEN
         vr_dscatbem := rw_crapbpr_iof.dscatbem || '|';
       END IF;
-      CLOSE cr_crapbpr_iof;
+      CLOSE cr_crapbpr_iof;*/
       
       -- Se for Pos-Fixado e existir carencia
       IF rw_crabepr.tpemprst = 2 AND vr_tab_carencia.EXISTS(rw_crawepr.idcarenc) THEN
         vr_qtdias_carencia := vr_tab_carencia(rw_crawepr.idcarenc);
       END IF;
     
-      EMPR0001.pc_calcula_iof_epr(pr_cdcooper => pr_cdcooper                  
+     /* TIOF0001.pc_calcula_iof_epr(pr_cdcooper => pr_cdcooper                  
                                  ,pr_nrdconta => rw_crabepr.nrdconta          
+                                 ,pr_nrctremp => rw_crabepr.nrctremp    
                                  ,pr_dtmvtolt => rw_crapdat.dtmvtolt          
                                  ,pr_inpessoa => rw_crapass.inpessoa          
                                  ,pr_cdfinemp => rw_crabepr.cdfinemp
@@ -2691,6 +2693,7 @@ BEGIN
                                  ,pr_tpemprst => rw_crabepr.tpemprst          
                                  ,pr_dtcarenc        => rw_crawepr.dtcarenc
                                  ,pr_qtdias_carencia => vr_qtdias_carencia
+                                 ,pr_idgravar        => 'N'
                                  ,pr_vlpreclc => vr_vlpreclc
                                  ,pr_valoriof => vr_vliofaux                  
                                  ,pr_vliofpri => vr_vliofpri_tmp
@@ -2703,6 +2706,11 @@ BEGIN
       IF vr_dscritic IS NOT NULL THEN                                        
         RAISE vr_exc_saida;
       END IF;
+      */
+      
+      vr_vliofaux     := nvl(rw_crabepr.vliofepr,0);
+      vr_vliofadi_tmp := nvl(rw_crabepr.vliofadc,0);
+      vr_vliofpri_tmp := vr_vliofaux - vr_vliofadi_tmp;
       
       -- compõe histórico
       
@@ -2784,7 +2792,7 @@ BEGIN
                ,rw_crabepr.nrdconta
                ,rw_crabepr.nrdconta
                ,GENE0002.FN_MASK(rw_crabepr.nrdconta,'99999999')
-               ,rw_crabepr.nrctremp
+               ,GENE0002.fn_mask(rw_crabepr.nrctremp || TO_CHAR(sysdate,'SSSSS') || (nvl(rw_craplot.nrseqdig,0) + 1),'999999999999999') --, rw_crabepr.nrctremp
                ,vr_cdhistor --322 -- IOF Sobre Emprestimo.
                ,nvl(rw_craplot.nrseqdig,0) + 1
                 -- controlar para que mantenha 14 posicoes para cada valor devido a 

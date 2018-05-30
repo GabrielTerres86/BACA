@@ -4570,12 +4570,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
     END IF;
     
     -- Buscar IOF
-    EMPR0001.pc_calcula_iof_epr(pr_cdcooper => pr_cdcooper
+    TIOF0001.pc_calcula_iof_epr(pr_cdcooper => pr_cdcooper
                                ,pr_nrdconta => pr_nrdconta
                                ,pr_dtmvtolt => rw_crapdat.dtmvtolt
                                ,pr_inpessoa => rw_crawepr.inpessoa
-                               ,pr_cdfinemp => rw_crawepr.cdfinemp
                                ,pr_cdlcremp => rw_crawepr.cdlcremp
+                               ,pr_cdfinemp => rw_crawepr.cdfinemp
                                ,pr_qtpreemp => rw_crawepr.qtpreemp
                                ,pr_vlpreemp => rw_crawepr.vlpreemp
                                ,pr_vlemprst => rw_crawepr.vlemprst
@@ -4584,6 +4584,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
                                ,pr_tpemprst => rw_crawepr.tpemprst
                                ,pr_dtcarenc => rw_crawepr.dtcarenc
                                ,pr_qtdias_carencia => vr_qtdias_carencia
+                               ,pr_dsctrliq => rw_crawepr.dsliquid
+                               ,pr_idgravar => 'N'
                                ,pr_vlpreclc => vr_vlpreclc
                                ,pr_valoriof => vr_valoriof
                                ,pr_vliofpri => vr_vliofpri

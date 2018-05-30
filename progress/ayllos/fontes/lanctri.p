@@ -1256,6 +1256,7 @@ DO WHILE TRUE:
                                        ,INPUT aux_dscatbem       /* Bens em garantia */
                                        ,INPUT crawepr.idfiniof   /* Indicador de financiamento de iof e tarifa */
                                        ,INPUT aux_par_dsctrliq   /* pr_dsctrliq */
+                                       ,INPUT "S"
                                        ,OUTPUT 0                 /* Valor calculado da Parcela */
                                        ,OUTPUT 0                 /* Retorno do valor do IOF */
                                        ,OUTPUT 0                 /* pr_vliofpri Valor calculado do iof principal */
@@ -1359,6 +1360,8 @@ DO WHILE TRUE:
              crabepr.dtinipag = ?
              crabepr.tpdescto = aux_tpdescto
              crabepr.vliofepr = aux_vltotiof
+             crabepr.vlpagiof = aux_vliofpri
+             crabepr.vliofadc = aux_vliofadi
              crabepr.cdcooper = glb_cdcooper.
 
       IF tel_cdlcremp = 100   THEN

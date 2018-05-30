@@ -767,8 +767,8 @@
               
               13/04/2018 - Ajuste na procedure valida-dados-gerais para verificar se o tipo de conta
                            do cooperado permite adesao do produto 31 - Emprestimo. PRJ366 (Lombardi)
-
-              24/05/2018 - P450 - Ajuste na data anterior na proc_qualif_operacao (Guilherme/AMcom)
+              
+			  24/05/2018 - P450 - Ajuste na data anterior na proc_qualif_operacao (Guilherme/AMcom)
 
  ..............................................................................*/
 
@@ -2427,6 +2427,7 @@ PROCEDURE obtem-propostas-emprestimo:
                                                        ,INPUT aux_dscatbem     /* Bens em garantia */
                                                        ,INPUT crawepr.idfiniof /* Indicador de financiamento de iof e tarifa */
                                                        ,INPUT tt-proposta-epr.dsctrliq /* pr_dsctrliq */
+                                                       ,INPUT "N" /* Nao gravar valor nas parcelas */
                                                        ,OUTPUT 0 /* Valor calculado da Parcel */
                                                        ,OUTPUT 0 /* Valor calculado com o iof (principal + adicional) */
                                                        ,OUTPUT 0 /* Valor calculado do iof principal */
@@ -3018,13 +3019,6 @@ PROCEDURE obtem-dados-proposta-emprestimo:
                        tt-proposta-epr.vliofepr = 0
 					   tt-proposta-epr.idfiniof = crawepr.idfiniof.
 
-					   DO i = 1 TO 10:
-						IF  crawepr.nrctrliq[i] > 0  THEN
-							tt-proposta-epr.dsctrliq = tt-proposta-epr.dsctrliq + 
-														(IF tt-proposta-epr.dsctrliq = "" THEN TRIM(STRING(crawepr.nrctrliq[i], "z,zzz,zz9"))
-														ELSE
-															", " + TRIM(STRING(crawepr.nrctrliq[i], "z,zzz,zz9"))).
-						END. /** Fim do DO ... TO **/
                        
 				IF  AVAIL crapepr THEN
                   DO:
@@ -3135,6 +3129,7 @@ PROCEDURE obtem-dados-proposta-emprestimo:
                                             ,INPUT aux_dscatbem         /* Bens em garantia */
                                             ,INPUT crawepr.idfiniof     /* Indicador de financiamento de IOF e tarifa */
                                             ,INPUT tt-proposta-epr.dsctrliq /* pr_dsctrliq */
+                                            ,INPUT "N" /* Nao gravar valor nas parcelas */
                                             ,OUTPUT 0 /* Valor calculado da Parcela */
                                             ,OUTPUT 0 /* Valor calculado com o iof (principal + adicional) */
                                             ,OUTPUT 0 /* Valor calculado do iof principal */
@@ -4425,6 +4420,7 @@ PROCEDURE valida-dados-gerais:
                                             INPUT par_flgerlog,
                                             INPUT par_nrctremp,
                                             INPUT par_cdlcremp,
+                                            INPUT par_cdfinemp,
                                             INPUT par_vlemprst,
                                             INPUT par_qtpreemp, /*par_qtparepr*/
                                             INPUT par_dtmvtolt,
@@ -4523,6 +4519,7 @@ PROCEDURE valida-dados-gerais:
                                                            ,INPUT aux_dscatbem     /* Bens em garantia */
                                                            ,INPUT par_idfiniof /* Indicador de financiamento de iof e tarifa */
                                                            ,INPUT "" /* pr_dsctrliq */
+                                                           ,INPUT "N" /* Nao gravar valor nas parcelas */
                                                            ,OUTPUT 0 /* Valor calculado da Parcela */
                                                            ,OUTPUT 0 /* Valor calculado com o iof (principal + adicional) */
                                                            ,OUTPUT 0 /* Valor calculado do iof principal */
@@ -4768,7 +4765,7 @@ PROCEDURE proc_qualif_operacao:
     DEF VAR par_vlsdeved          AS DECI                           NO-UNDO.
     DEF VAR par_vltotpre          AS DECI                           NO-UNDO.
     DEF VAR par_qtprecal          AS INTE                           NO-UNDO.
-    DEF VAR aux_dtmvtoan          AS DATE                           NO-UNDO.
+	DEF VAR aux_dtmvtoan          AS DATE                           NO-UNDO.
 
     DEF BUFFER crabepr FOR crapepr.
 
@@ -4881,7 +4878,7 @@ PROCEDURE proc_qualif_operacao:
 
 		IF aux_dias_atraso < aux_qtd_dias_atraso THEN
 		   aux_dias_atraso = aux_qtd_dias_atraso.
-    END.
+             END.
 
 	/* De 0 a 4 dias de atraso - Renovação de Crédito		         	    */ 
     IF  aux_dias_atraso < 5 THEN
@@ -8248,6 +8245,7 @@ PROCEDURE altera-valor-proposta:
                      INPUT par_flgerlog,
                      INPUT crawepr.nrctremp,
                      INPUT crawepr.cdlcremp,
+                     INPUT crawepr.cdfinemp,
                      INPUT crawepr.vlemprst,
                      INPUT crawepr.qtpreemp,
                      INPUT crawepr.dtlibera,
@@ -13627,6 +13625,7 @@ PROCEDURE recalcular_emprestimo:
                                                    INPUT TRUE,
                                                    INPUT crawepr.nrctremp,
                                                    INPUT crawepr.cdlcremp,
+                                                   INPUT crawepr.cdfinemp,
                                                    INPUT crawepr.vlemprst,
                                                    INPUT crawepr.qtpreemp,
                                                    INPUT crawepr.dtlibera,
