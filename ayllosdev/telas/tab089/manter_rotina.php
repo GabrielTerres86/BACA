@@ -6,7 +6,10 @@
  * DATA CRIAÇÃO : 15/01/2018
  * OBJETIVO     : Rotina para controlar as operações da tela TAB089
  * --------------
- * ALTERAÇÕES
+ * ALTERAÇÕES   :
+ *                30/05/2018 - Inclusão de campo de taxa de juros remuneratório de prejuízo (pctaxpre)
+ *                PRJ 450 - Diego Simas (AMcom)
+ *
  */
 
 session_start();
@@ -27,6 +30,7 @@ $vlempres = isset($_POST['vlempres']) ? $_POST['vlempres'] : 0;
 $pzmaxepr = isset($_POST['pzmaxepr']) ? $_POST['pzmaxepr'] : 0;
 $vlmaxest = isset($_POST['vlmaxest']) ? $_POST['vlmaxest'] : 0;
 $pcaltpar = isset($_POST['pcaltpar']) ? $_POST['pcaltpar'] : 0;
+$pctaxpre = isset($_POST['pctaxpre']) ? $_POST['pctaxpre'] : 0;
 $vltolemp = isset($_POST['vltolemp']) ? $_POST['vltolemp'] : 0;
 $qtdpaimo = isset($_POST['qtdpaimo']) ? $_POST['qtdpaimo'] : 0;
 $qtdpaaut = isset($_POST['qtdpaaut']) ? $_POST['qtdpaaut'] : 0;
@@ -63,6 +67,7 @@ if ($cdopcao == 'C') {
     $xml .= "   <vlmaxest>".str_replace(',','.', $vlmaxest)."</vlmaxest>";
                  
 	$xml .= "   <pcaltpar>".str_replace(',','.', $pcaltpar)."</pcaltpar>";
+    $xml .= "   <pctaxpre>".str_replace(',','.', $pctaxpre)."</pctaxpre>";
     $xml .= "   <vltolemp>".str_replace(',','.', $vltolemp)."</vltolemp>";
                  
 	$xml .= "   <qtdpaimo>".$qtdpaimo."</qtdpaimo>";
@@ -107,6 +112,7 @@ if ($cdopcao == 'C') {
         echo '$("#vlmaxest", "#frmTab089").val("' . getByTagName($r->tags, 'vlmaxest') . '");';
 		// NOVOS (2)
         echo '$("#pcaltpar", "#frmTab089").val("' . getByTagName($r->tags, 'pcaltpar') . '");';
+        echo '$("#pctaxpre", "#frmTab089").val("' . getByTagName($r->tags, 'pctaxpre') . '");';
         echo '$("#vltolemp", "#frmTab089").val("' . getByTagName($r->tags, 'vltolemp') . '");';
 		// NOVOS (5)
 		echo '$("#qtdpaimo", "#frmTab089").val("' . getByTagName($r->tags, 'qtdpaimo') . '");';

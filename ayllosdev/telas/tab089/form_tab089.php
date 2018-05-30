@@ -1,9 +1,13 @@
 <?php
 /* 
  * FONTE        : form_tab089.php
- * CRIAÇÃO      : Diego Simas/Reginaldo Silva/Letícia Terres - AMcom
- * DATA CRIAÇÃO : 12/01/2018
- * OBJETIVO     : Formulário de exibição da tela TAB089
+ * CRIAÃ‡ÃƒO      : Diego Simas/Reginaldo Silva/LetÃ­cia Terres - AMcom
+ * DATA CRIAÃ‡ÃƒO : 12/01/2018
+ * OBJETIVO     : FormulÃ¡rio de exibiÃ§Ã£o da tela TAB089
+ * ALTERAÃ‡Ã•ES   : 
+ *                 30/05/2018 - InclusÃ£o de campo de taxa de juros remuneratÃ³rio de prejuÃ­zo (pctaxpre)
+ *                 PRJ 450 - Diego Simas (AMcom)
+ *                  
  */
 ?>
 
@@ -49,6 +53,12 @@
 		
 		<label for="vltolemp" class='labelPri'>Toler&acirc;ncia por valor de empr&eacute;stimo:</label>
 		<input type="text" id="vltolemp" name="vltolemp" class="moeda" value="<?php echo $vltolemp == 0 ? '' : $vltolemp ?>" style="text-align:right;"/>
+		<br style="clear:both" />
+
+		<label for="pctaxpre" class='labelPri'>Taxa de juros remunerat&oacute;rio de preju&iacute;zo:</label>
+		<input type="text" id="pctaxpre" name="pctaxpre" class="moeda" value="<?php echo $pctaxpre == 0 ? '' : $pctaxpre ?>" maxlength="6" style="text-align:right;width:50px;"/>	
+		<label>&nbsp;%</label>
+		
     </fieldset>
 	
 	<fieldset>

@@ -4,7 +4,10 @@
  * DATA CRIAÇÃO : 12/01/2018
  * OBJETIVO     : Biblioteca de funções da tela TAB089
  * ---------------
- * ALTERAÇÕES
+ * ALTERAÇÕES   
+ *                30/05/2018 - Inclusão de campo de taxa de juros remuneratório de prejuízo (pctaxpre)
+ *                PRJ 450 - Diego Simas (AMcom)
+ *
  * ---------------
  */
 
@@ -123,6 +126,7 @@ function formataCampos() {
     cVlmaxest = $('#vlmaxest', '#frmTab089'); 
     cVltolemp = $('#vltolemp', '#frmTab089'); 
     cPcaltpar = $('#pcaltpar', '#frmTab089'); 
+    cPctaxpre = $('#pctaxpre', '#frmTab089');
 
     //Máscara para quantidade de dias
     cPrtlmult.css('width', '40px').setMask('INTEGER','zzz','','');
@@ -139,6 +143,7 @@ function formataCampos() {
     //Máscara para porcentagem
     cQtdibsem.css('width', '40px').setMask('INTEGER','zzz','','');
     cPcaltpar.css('width', '50px').setMask('DECIMAL','zzz,zz','','');
+    cPctaxpre.css('width', '50px').setMask('DECIMAL','zzz,zz','','');
     //Máscara para moedas (Valor Monetário)
     cVlempres.css('width', '100px').addClass('moeda').setMask('DECIMAL', 'zzz.zzz.zzz,zz', '', ''); 
     cVlmaxest.css('width', '100px').addClass('moeda').setMask('DECIMAL', 'zzz.zzz.zzz,zz', '', ''); 
@@ -217,10 +222,19 @@ function controlaFoco() {
 
     $('#vltolemp', '#frmTab089').unbind('keypress').bind('keypress', function(e) {
         if (e.keyCode == 9 || e.keyCode == 13) {
+            $('#pctaxpre', '#frmTab089').focus();
+            return false;
+        }
+    });
+
+    $('#pctaxpre', '#frmTab089').unbind('keypress').bind('keypress', function (e) {
+        if (e.keyCode == 9 || e.keyCode == 13) {
             $('#qtdpaimo', '#frmTab089').focus();
             return false;
         }
     });
+
+
 
 
     $('#qtdpaimo', '#frmTab089').unbind('keypress').bind('keypress', function(e) {
@@ -314,6 +328,7 @@ function manterRotina(cddopcao) {
     var cVlmaxest = normalizaNumero($('#vlmaxest', '#frmTab089').val());
     var cVltolemp = normalizaNumero($('#vltolemp', '#frmTab089').val());
     var cPcaltpar = normalizaNumero($('#pcaltpar', '#frmTab089').val());
+    var cPctaxpre = normalizaNumero($('#pctaxpre', '#frmTab089').val());
 
     var mensagem = 'Aguarde, efetuando solicita&ccedil;&atilde;o...';
     showMsgAguardo(mensagem);
@@ -340,6 +355,7 @@ function manterRotina(cddopcao) {
             vlmaxest : cVlmaxest,
             vltolemp : cVltolemp,
             pcaltpar : cPcaltpar,
+            pctaxpre : cPctaxpre,
             redirect: 'script_ajax'
         },
         error: function(objAjax, responseError, objExcept) {

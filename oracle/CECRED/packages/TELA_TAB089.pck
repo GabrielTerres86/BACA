@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_TAB089 IS
   --  Sistema  : Rotinas utilizadas pela Tela TAB089
   --  Sigla    : EMPR
   --  Autor    : Guilherme/AMcom
-  --  Data     : Janeiro/2018                 Ultima atualizacao:
+  --  Data     : Janeiro/2018                 Ultima atualizacao: 30/05/2018
   --
   -- Dados referentes ao programa:
   --
@@ -15,6 +15,8 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_TAB089 IS
   --
   -- Alteracoes:  12/01/2018 - Conversão Ayllos Web (Guilherme/AMcom)
   --
+  --              30/05/2018 - Inclusão de campo de taxa de juros remuneratório de prejuízo (pctaxpre)
+  --                           PRJ 450 - Diego Simas (AMcom)
   --
   ---------------------------------------------------------------------------
 
@@ -38,6 +40,7 @@ CREATE OR REPLACE PACKAGE CECRED.TELA_TAB089 IS
                        ,pr_vlmaxest  IN NUMBER
                        -- Novos Campos
                        ,pr_pcaltpar  IN NUMBER -- Alteração de parcela - PORCENTAGEM
+                       ,pr_pctaxpre  IN NUMBER -- Taxa de juros remuneratório de prejuízo - PORCENTAGEM
                        ,pr_vltolemp  IN NUMBER -- Tolerância por valor de empréstimo - REAIS
                        -- PROPOSTAS PA - Prazo de validade da análise para efetivação 
                        ,pr_qtdpaimo  IN INTEGER -- Imovel - Quantidade Dias PA Imovel
@@ -66,15 +69,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB089 IS
   --  Sistema  : Rotinas utilizadas pela Tela TAB089
   --  Sigla    : EMPR
   --  Autor    : Guilherme/AMcom
-  --  Data     : Janeiro/2018                 Ultima atualizacao:
+  --  Data     : Janeiro/2018                 Ultima atualizacao: 30/05/2018
   --
   -- Dados referentes ao programa:
   --
   -- Frequencia: -----
   -- Objetivo  : Centralizar rotinas relacionadas a Tela TAB089
   --
-  -- Alteracoes:  12/01/2018 - Conversão Ayllos Web (Guilherme/AMcom)
+  -- Alteracoes: 12/01/2018 - Conversão Ayllos Web (Guilherme/AMcom)
   --
+  --             30/05/2018 - Inclusão de campo de taxa de juros remuneratório de prejuízo (pctaxpre)
+  --                          PRJ 450 - Diego Simas (AMcom) 
   --
   ---------------------------------------------------------------------------
   PROCEDURE pc_consultar(pr_xmllog   IN VARCHAR2           --> XML com informações de LOG
@@ -89,7 +94,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB089 IS
         Sistema : CECRED
         Sigla   : EMPR
         Autor   : Guilherme/AMcom
-        Data    : Janeiro/2018                 Ultima atualizacao:
+        Data    : Janeiro/2018                 Ultima atualizacao: 30/05/2018
 
         Dados referentes ao programa:
 
@@ -99,7 +104,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB089 IS
 
         Observacao: -----
 
-        Alteracoes:
+        Alteracoes: 30/05/2018 - Inclusão de campo de taxa de juros remuneratório de prejuízo (pctaxpre)
+                    PRJ 450 - Diego Simas (AMcom)
+        
     ..............................................................................*/
       ----------->>> VARIAVEIS <<<--------
       -- Variável de críticas
@@ -120,6 +127,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB089 IS
       vr_pzmaxepr INTEGER :=0;
       vr_vlmaxest NUMBER  :=0;
       vr_pcaltpar NUMBER  :=0;
+      vr_pctaxpre NUMBER  :=0;
       vr_vltolemp NUMBER  :=0;
       vr_qtdpaimo INTEGER :=0; 
       vr_qtdpaaut INTEGER :=0;
@@ -197,6 +205,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB089 IS
         vr_qtdibaut := NVL(gene0002.fn_char_para_number(SUBSTR(vr_dstextab,93,3)),0);
         vr_qtdibapl := NVL(gene0002.fn_char_para_number(SUBSTR(vr_dstextab,97,3)),0);
         vr_qtdibsem := NVL(gene0002.fn_char_para_number(SUBSTR(vr_dstextab,101,3)),0);
+        vr_pctaxpre := NVL(gene0002.fn_char_para_number(SUBSTR(vr_dstextab,105,6)),0);
 
       END IF;
 
@@ -276,6 +285,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB089 IS
                                                     '999D00',
                                                     'NLS_NUMERIC_CHARACTERS='',.'''),
                              pr_des_erro => vr_dscritic);
+                             
+      gene0007.pc_insere_tag(pr_xml      => pr_retxml,
+                             pr_tag_pai  => 'inf',
+                             pr_posicao  => vr_auxconta,
+                             pr_tag_nova => 'pctaxpre',
+                             pr_tag_cont => to_char(vr_pctaxpre,
+                                                    '999D00',
+                                                    'NLS_NUMERIC_CHARACTERS='',.'''),
+                             pr_des_erro => vr_dscritic);                             
 
       gene0007.pc_insere_tag(pr_xml      => pr_retxml,
                              pr_tag_pai  => 'inf',
@@ -382,6 +400,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB089 IS
                        ,pr_vlmaxest  IN NUMBER
                        
                        ,pr_pcaltpar  IN NUMBER
+                       ,pr_pctaxpre  IN NUMBER
                        ,pr_vltolemp  IN NUMBER
                        
                        ,pr_qtdpaimo  IN INTEGER
@@ -406,7 +425,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB089 IS
         Sistema : CECRED
         Sigla   : EMPR
         Autor   : Guilherme/AMcom
-        Data    : Janeiro/2018                 Ultima atualizacao:
+        Data    : Janeiro/2018                 Ultima atualizacao: 30/05/2018
 
         Dados referentes ao programa:
 
@@ -416,7 +435,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB089 IS
 
         Observacao: -----
 
-        Alteracoes:
+        Alteracoes: 30/05/2018 - Inclusão de campo de taxa de juros remuneratório de prejuízo (pctaxpre)
+                                 PRJ 450 - Diego Simas (AMcom)
+        
     ..............................................................................*/
 
     -- Variável de críticas
@@ -446,6 +467,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB089 IS
     vr_pzmaxepr INTEGER :=0;
     vr_vlmaxest NUMBER  :=0;
     vr_pcaltpar NUMBER  :=0;
+    vr_pctaxpre NUMBER  :=0;
     vr_vltolemp NUMBER  :=0;
     vr_qtdpaimo INTEGER :=0; 
     vr_qtdpaaut INTEGER :=0;
@@ -531,6 +553,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB089 IS
       vr_qtdibaut := NVL(gene0002.fn_char_para_number(SUBSTR(vr_dstextab,93,3)),0);
       vr_qtdibapl := NVL(gene0002.fn_char_para_number(SUBSTR(vr_dstextab,97,3)),0);
       vr_qtdibsem := NVL(gene0002.fn_char_para_number(SUBSTR(vr_dstextab,101,3)),0);
+      vr_pctaxpre := NVL(gene0002.fn_char_para_number(SUBSTR(vr_dstextab,105,6)),0);
 
     END IF;
 
@@ -553,7 +576,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB089 IS
                    
                    to_char(pr_qtdibaut,   'FM000')       || ' ' ||
                    to_char(pr_qtdibapl,   'FM000')       || ' ' ||
-                   to_char(pr_qtdibsem,   'FM000')       ||'';
+                   to_char(pr_qtdibsem,   'FM000')       || ' ' ||
+                   to_char(pr_pctaxpre,   'FM000D00', 'NLS_NUMERIC_CHARACTERS='',.''') || '';
 
     BEGIN
       UPDATE craptab tab
@@ -646,6 +670,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB089 IS
                                     ' para ' || to_char(pr_pcaltpar,'FM000D00', 'NLS_NUMERIC_CHARACTERS='',.'''));
 
     END IF;
+    
+    IF vr_pctaxpre <> pr_pctaxpre THEN
+      --> gerar log da tela
+      pc_log_tab089(pr_cdcooper => vr_cdcooper,
+                    pr_cdoperad => vr_cdoperad,
+                    pr_dscdolog => 'Alterou % Taxa de juros remuneratorio de prejuizo de ' ||
+                                    to_char(vr_pctaxpre,'FM000D00', 'NLS_NUMERIC_CHARACTERS='',.''') ||
+                                    ' para ' || to_char(pr_pctaxpre,'FM000D00', 'NLS_NUMERIC_CHARACTERS='',.'''));
+
+    END IF;   
 
     IF vr_vltolemp <> pr_vltolemp THEN
 
@@ -767,4 +801,3 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_TAB089 IS
   END pc_alterar;
 
 END TELA_TAB089;
-/
