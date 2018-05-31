@@ -364,7 +364,7 @@ function formataCabecalho() {
         if (divError.css('display') == 'block') { return false; }
         if (cCddopcao.hasClass('campoTelaSemBorda')) { return false; }
 
-        trocaBotao('Avançar');
+        trocaBotao('Avan&ccedil;ar');
 
         //
         cddopcao = cCddopcao.val();
@@ -2442,7 +2442,7 @@ function btnVoltar() {
     if (cddopcao === 'C' && $('#frmTabela').length) {
         $('#' + frmTabela).remove();
         $('#divPesquisaRodape', '#divTela').remove();
-        trocaBotao('Avançar');
+        trocaBotao('Avan&ccedil;ar');
 
 		for(var x = 1; x < 8; x++) {
 			$('input, select', '#' + frmOpcao + ' fieldset:eq(' + x + ')').limpaFormulario();
