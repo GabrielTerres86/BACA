@@ -167,6 +167,7 @@ function btContinuar() {
     
     if (opcao == 'A') {
         $('#frmManCar').css('display', 'block');
+        controlaPesquisas('frmManCar');
     }
 }
 
