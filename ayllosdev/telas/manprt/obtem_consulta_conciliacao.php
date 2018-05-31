@@ -1,8 +1,8 @@
 <?
 /*!
  * FONTE        : obtem_consulta_conciliacao.php
- * CRIA��O      : Helinton Steffens (Supero)
- * DATA CRIA��O : 29/03/2018
+ * CRIAÇÃO      : Helinton Steffens (Supero)
+ * DATA CRIAÇÃO : 29/03/2018
  * OBJETIVO     : Capturar dados para tela MANPRT
  * -------------- 
  */ 
@@ -42,7 +42,7 @@
 	$xml .= "   <vlfinal>".$fimvlpro."</vlfinal>";
     $xml .= "   <nmrescop>".$nmrescop."</nmrescop>";
     $xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
-	$xml .= "   <cartorio>".$dscartor."</cartorio>";
+	$xml .= "   <cartorio></cartorio>";
 	$xml .= "   <nrregist>".$nrregist."</nrregist>";
 	$xml .= "   <nriniseq>".$nriniseq."</nriniseq>";
 	$xml .= " </Dados>";
@@ -50,8 +50,6 @@
 
 	$xmlResult = mensageria($xml, "TELA_MANPRT", "CONSULTA_CONCILIACAO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
 	$xmlObjeto = getObjectXML($xmlResult);
-
-	//print_r($xmlObjeto);
 	
 	if ( strtoupper($xmlObjeto->roottag->tags[0]->name) == 'ERRO' ) {
 	 	exibirErro('error',$xmlObjeto->roottag->tags[0]->cdata,'Alerta - Ayllos','',false);

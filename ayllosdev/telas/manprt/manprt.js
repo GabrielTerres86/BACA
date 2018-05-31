@@ -367,6 +367,17 @@ function formataOpcaoT() {
     cIndconci.css({ 'width': '160px' }).addClass('campo');
     cDscartor.css({ 'width': '130px' }).addClass('campo');
 
+    var date = new Date();
+    var now = ("0" + date.getDate()).slice(-2) + '/' + ("0" + (date.getMonth() + 1)).slice(-2) + '/' + date.getFullYear();
+
+    if (!cInidtpro.val()) {
+        cInidtpro.val(now);
+    }
+
+    if (!cFimdtpro.val()) {
+        cFimdtpro.val(now);
+    }
+
     layoutPadrao();
     return false;
 }
@@ -606,10 +617,10 @@ function formataTabelaTeds() {
     var arrayLargura = new Array();
     arrayLargura[0] = '210px';
     arrayLargura[1] = '120px';
-    arrayLargura[2] = '60px';
-    arrayLargura[3] = '65px';
-    arrayLargura[4] = '45px';
-    arrayLargura[5] = '90px';
+    arrayLargura[2] = '90px';
+    arrayLargura[3] = '80px';
+    arrayLargura[4] = '90px';
+    arrayLargura[5] = '50px';
     arrayLargura[6] = '50px';
 
     var arrayAlinha = new Array();
@@ -706,11 +717,13 @@ function formataTabelaConciliacoes() {
 
     var arrayAlinha = new Array();
     arrayAlinha[0] = 'center';
-    arrayAlinha[1] = 'center';
+    arrayAlinha[1] = 'right';
     arrayAlinha[2] = 'center';
     arrayAlinha[3] = 'center';
     arrayAlinha[4] = 'center';
-    arrayAlinha[5] = 'right';
+    arrayAlinha[5] = 'center';
+    arrayAlinha[6] = 'right';
+    arrayAlinha[7] = 'center';
 
 
     var metodoTabela = '';
@@ -856,32 +869,26 @@ function controlaPesquisaCartorio() {
 function selecionaTabela(tr) {
     registro = tr;
 
-    if (cddopcao == 'T'){
-        $('#dscartorio', '.complemento').html($('#nmcartorio', tr).val());
-        $('#nmremetente', '.complemento').html($('#nmremetente', tr).val());
-        $('#idlancto', '.complemento').html($('#idlancto', tr).val());
-        $('#cpfcnpj', '.complemento').html($('#cnpj_cpf', tr).val());
-        $('#cdbanpag', '.complemento').html($('#banco', tr).val() + '/' + $('#agencia', tr).val());
-        $('#nrconta', '.complemento').html($('#conta', tr).val());
-        $('#vlted', '.complemento').html($('#valor', tr).val());
-        $('#dtrecebimento', '.complemento').html($('#dtrecebimento', tr).val());
-        $('#dsstatus', '.complemento').html($('#status', tr).val());
-        $('#cdcidade', '.complemento').html($('#cidade', tr).val());
-        $('#cdestado', '.complemento').html($('#estado', tr).val());
-    } else if (cddopcao == 'C'){
-        var bancoAgencia = $('#banco', tr).val() + '/' + $('#agencia', tr).val();
+    $('#idlancto', '.complemento').val($('#idlancto', tr).val());
+    $('#dscartorio', '.complemento').html($('#nmcartorio', tr).val());
+    $('#nmremetente', '.complemento').html($('#nmremetente', tr).val());
+    $('#cpfcnpj', '.complemento').html($('#cnpj_cpf', tr).val());
+    $('#cdbanpag', '.complemento').html($('#banco', tr).val() + '/' + $('#agencia', tr).val());
+    $('#nrconta', '.complemento').html($('#conta', tr).val());
+    $('#vlted', '.complemento').html(number_format($('#valor', tr).val(), 2, ',', '.'));
+    $('#dtrecebimento', '.complemento').html($('#dtrecebimento', tr).val());
+    $('#dsstatus', '.complemento').html($('#status', tr).val());
+    $('#cdcidade', '.complemento').html($('#cidade', tr).val());
+    $('#cdestado', '.complemento').html($('#estado', tr).val());
+
+    if (cddopcao == 'C')  {
         $('#dscartorio', '.complemento').html($('#cartorio', tr).val());
-        $('#vlted', '.complemento').html($('#valorted', tr).val());
-        $('#cdbanpag', '.complemento').html(bancoAgencia);
-        $('#nrconta', '.complemento').html($('#cooperativa', tr).val());
-        $('#cdcidade', '.complemento').html($('#cidade', tr).val());
-        $('#cdestado', '.complemento').html($('#estado', tr).val());
         $('#cdcoope', '.complemento').html($('#cooperativa', tr).val());
-        $('#nrconve', '.complemento').html($('#convenio', tr).val());
-        $('#nrconta', '.complemento').html($('#conta', tr).val());
-        $('#vltitul', '.complemento').html($('#valortit', tr).val());
         $('#dtconcilacao', '.complemento').html($('#dataconc', tr).val());
-        $('#dtpagamento', '.complemento').html($('#datacomp', tr).val());
+        $('#nrconve', '.complemento').html($('#convenio', tr).val());
+        $('#vltitul', '.complemento').html(number_format($('#valortit', tr).val(), 2, ',', '.'));
+        $('#dtpagamento', '.complemento').html($('#dtmvtolt', tr).val());
+        $('#vlted', '.complemento').html(number_format($('#valorted', tr).val(), 2, ',', '.'));
     }
 
     return false;

@@ -40,10 +40,11 @@
 								  <input type="hidden" id="agencia" value="<? echo getByTagName($registro[$x]->tags,'cdagenci') ?>" />
 								  <input type="hidden" id="cidade" value="<? echo getByTagName($registro[$x]->tags,'dscidade') ?>" />
 								  <input type="hidden" id="estado" value="<? echo getByTagName($registro[$x]->tags,'cdestado') ?>" />
+								  <input type="hidden" id="dtmvtolt" value="<? echo getByTagName($registro[$x]->tags,'dtmvtolt') ?>" />
 
 						</td>
                         <td><span><? echo getByTagName($registro[$x]->tags,'vllanmto') ?></span>
-							      <? echo getByTagName($registro[$x]->tags,'vllanmto') ?>
+							      <? echo number_format(getByTagName($registro[$x]->tags,'vllanmto'), 2, ',', '.') ?>
 						</td>
                         <td><span><? echo getByTagName($registro[$x]->tags,'nmrescop') ?></span>
 							      <? echo getByTagName($registro[$x]->tags,'nmrescop') ?>
@@ -57,10 +58,10 @@
 							      <? echo getByTagName($registro[$x]->tags,'dtconcilicao') ?>
 						</td>
 						<td><span><? echo getByTagName($registro[$x]->tags,'vltitulo') ?></span>
-							      <? echo getByTagName($registro[$x]->tags,'vltitulo') ?>
+							      <? echo number_format(getByTagName($registro[$x]->tags,'vltitulo'), 2, ',', '.') ?>
 						</td>
-						<td><span><? echo getByTagName($registro[$x]->tags,'dtdproc') ?></span>
-							      <? echo getByTagName($registro[$x]->tags,'dtdproc') ?>
+						<td><span><? echo getByTagName($registro[$x]->tags,'dtmvtolt') ?></span>
+							      <? echo getByTagName($registro[$x]->tags,'dtmvtolt') ?>
 						</td>	
 					</tr>
 			<? } ?>	
@@ -193,10 +194,10 @@
 <script type="text/javascript">
 
 	$('a.paginacaoAnt').unbind('click').bind('click', function() {
-		controlaOperacao(<? echo "'".$operacao."','".($nriniseq - $nrregist)."','".$nrregist."'"; ?>);
+		realizaoConsultaConciliacao(<? echo ($nriniseq - $nrregist).",".$nrregist; ?>);
 	});
 	$('a.paginacaoProx').unbind('click').bind('click', function() {
-		controlaOperacao(<? echo "'".$operacao."','".($nriniseq + $nrregist)."','".$nrregist."'"; ?>);
+		realizaoConsultaConciliacao(<? echo ($nriniseq + $nrregist).",".$nrregist; ?>);
 	});	
 	
 	$('#divRegistros','#divTela').formataTabela();

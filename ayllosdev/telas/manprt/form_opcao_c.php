@@ -87,10 +87,10 @@
             <a id="lupaConta" style="padding: 3px 0 0 3px;" href="#" onClick="controlaPesquisa(1);return false;">
             <img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif" /></a> 
 
-            <label for="dscartor"><? echo utf8ToHtml('Cart&oacuterio de origem');  ?>:</label>
+            <!--<label for="dscartor"><? echo utf8ToHtml('Cart&oacuterio de origem');  ?>:</label>
             <input type="text" id="dscartor" name="dscartor" value="dscartor"/>
             <a id="lupaConta" style="padding: 3px 0 0 3px;" href="#" onClick="controlaPesquisaCartorio();return false;">
-            <img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif" /></a>
+            <img src="<? echo $UrlImagens; ?>geral/ico_lupa.gif" /></a>-->
 		</div>
 	</div>		
 </form>
