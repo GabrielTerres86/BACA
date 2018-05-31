@@ -83,7 +83,7 @@ if ($nmrotina == "imprimirTermoCancelamento" || $nmrotina == "imprimirTermoCance
 	}
 	// Da rotina COBRANCA / ATENDA - Cancelamento Protesto
 	else {
-		echo 'showConfirmacao("Deseja visualizar a impress&atilde;o?","Confirma&ccedil;&atilde;o - Ayllos","hideMsgAguardo();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));imprimirTermoAdesao(\"'.$flgregis.'\",\"'.$dsdtitul.'\",\"3\");","hideMsgAguardo();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));","sim.gif","nao.gif");';
+		echo 'showConfirmacao("Deseja visualizar a impress&atilde;o?","Confirma&ccedil;&atilde;o - Ayllos","hideMsgAguardo();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));imprimirTermoAdesao(\"'.$flgregis.'\",\"'.$dsdtitul.'\",\"3\");confirmaHabilitacaoSerasa(\'A\');","hideMsgAguardo();blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));","sim.gif","nao.gif");';
 	}
 
 	
