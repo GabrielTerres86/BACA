@@ -264,6 +264,9 @@ create or replace package cecred.cobr0011 is
 	PROCEDURE pc_gera_movimento_pagamento(pr_dscritic OUT VARCHAR2
 		                                   );
   --
+	PROCEDURE pc_enviar_email_teds (pr_cdcooper IN crapcop.cdcooper%TYPE
+                                 ,pr_dscritic OUT VARCHAR2);
+	--
 END cobr0011;
 /
 create or replace package body cecred.cobr0011 IS
@@ -3340,6 +3343,110 @@ create or replace package body cecred.cobr0011 IS
 		WHEN OTHERS THEN
 			pr_dscritic := 'Erro na pc_gera_movimento_pagamento: ' || SQLERRM;
 	END pc_gera_movimento_pagamento;
+	--
+	PROCEDURE pc_enviar_email_teds (pr_cdcooper IN crapcop.cdcooper%TYPE
+                                 ,pr_dscritic OUT VARCHAR2) IS
+ 
+  vr_dsdiretorio VARCHAR2(500);
+  vr_arquivo VARCHAR2(500);
+
+  vr_cdcritic crapcri.cdcritic%TYPE;
+  vr_dscritic VARCHAR2(500);
+  vr_retxml xmltype;
+  vr_nmdcampo VARCHAR2(500);
+
+  vr_exc_erro EXCEPTION;
+      
+  vr_email_dest VARCHAR2(500);
+  vr_emails_cobranca tbcobran_param_protesto.dsemail_cobranca%TYPE;
+  vr_emails_ieptb tbcobran_param_protesto.dsemail_ieptb%TYPE;
+  
+  vr_des_assunto VARCHAR2(500);
+  vr_conteudo VARCHAR2(500);
+  BEGIN
+    
+    BEGIN
+      --
+      SELECT tpp.dsemail_cobranca, tpp.dsemail_ieptb
+        INTO vr_emails_cobranca, vr_emails_ieptb
+        FROM tbcobran_param_protesto tpp
+       WHERE tpp.cdcooper = pr_cdcooper;
+      --
+    EXCEPTION
+      WHEN OTHERS THEN
+        vr_dscritic := 'Não foi possível retornar os e-mails do protesto: ' || SQLERRM;
+    END;
+    
+    IF (vr_emails_cobranca IS NULL or vr_emails_ieptb IS NULL) THEN
+      vr_dscritic := 'O e-mail de cobrança ou o e-mail do IEPTB não foi configurado.';
+      RAISE vr_exc_erro;      
+    END IF;
+  
+    -- Busca o diretorio onde esta os arquivos Sicoob
+    vr_dsdiretorio := gene0001.fn_param_sistema(pr_nmsistem => 'CRED',
+                                                pr_cdacesso => 'ROOT_DOMICILIO')||'/relatorios';
+
+    TELA_MANPRT.pc_exporta_consulta_teds(pr_cdcooper => pr_cdcooper
+                                        ,pr_dtinicial => NULL
+                                        ,pr_dtfinal => NULL
+                                        ,pr_vlinicial => 0
+                                        ,pr_vlfinal => 0
+                                        ,pr_cartorio => NULL
+                                        ,pr_nrregist => 0
+                                        ,pr_nriniseq => 0
+                                        ,pr_xmllog => NULL
+                                        ,pr_flgcon => 0
+                                        ,pr_cdcritic => vr_cdcritic
+                                        ,pr_dscritic => vr_dscritic
+                                        ,pr_retxml => vr_retxml
+                                        ,pr_nmdcampo => vr_nmdcampo
+                                        ,pr_des_erro => vr_cdcritic);
+    
+    IF nvl(vr_cdcritic,0) <> 0 OR
+       TRIM(vr_dscritic) IS NOT NULL THEN
+      RAISE vr_exc_erro;
+    END IF;
+    
+    vr_arquivo := TRIM(vr_retxml.extract('/nmarqcsv/text()').getstringval());
+    vr_arquivo := vr_dsdiretorio || '/' || vr_arquivo;
+    
+    vr_des_assunto := 'CECRED - Extrato TEDs recebidas';
+    vr_conteudo := 'Segue em anexo as TEDs recebidas e não conciliadas.';
+    vr_email_dest := vr_emails_cobranca || ',' || vr_emails_ieptb;
+    
+    GENE0003.pc_solicita_email(pr_cdcooper        => pr_cdcooper    --> Cooperativa conectada
+                              ,pr_cdprogra        => '' --> Programa conectado
+                              ,pr_des_destino     => vr_email_dest --> Um ou mais detinatários separados por ';' ou ','
+                              ,pr_des_assunto     => vr_des_assunto --> Assunto do e-mail
+                              ,pr_des_corpo       => vr_conteudo    --> Corpo (conteudo) do e-mail
+                              ,pr_des_anexo       => vr_arquivo     --> Um ou mais anexos separados por ';' ou ','
+                              ,pr_flg_remove_anex => 'N'            --> Remover os anexos passados
+                              ,pr_flg_remete_coop => 'N'            --> Se o envio será do e-mail da Cooperativa
+                              ,pr_des_nome_reply  => NULL           --> Nome para resposta ao e-mail
+                              ,pr_des_email_reply => NULL           --> Endereço para resposta ao e-mail
+                              ,pr_flg_enviar      => 'S'            --> Enviar o e-mail na hora
+                              ,pr_flg_log_batch    => 'N'           --> Incluir inf. no log
+                              ,pr_des_erro        => vr_dscritic);  --> Descricao Erro
+                              
+    IF TRIM(vr_dscritic) IS NOT NULL THEN
+      RAISE vr_exc_erro;
+    END IF;
+    
+    EXCEPTION
+      WHEN vr_exc_erro THEN     
+        --> Buscar critica
+        IF nvl(vr_cdcritic,0) > 0 AND 
+          TRIM(vr_dscritic) IS NULL THEN
+          -- Busca descricao        
+          vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);        
+        END IF;  
+        
+        pr_dscritic := vr_dscritic;
+      
+      WHEN OTHERS THEN
+        pr_dscritic := 'Não foi possivel enviar o e-mail das TEDs não conciliadas: '||SQLERRM;
+
+  END pc_enviar_email_teds;
 	--
 end cobr0011;
 /
