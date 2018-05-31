@@ -1,12 +1,12 @@
 <?php
 /*************************************************************************
 	Fonte: obtem_consulta.php                                               
-	Autor: André Clemer
-	Data : Abril/2018                         Última Alteração: --/--/----
+	Autor: Andrï¿½ Clemer
+	Data : Abril/2018                         ï¿½ltima Alteraï¿½ï¿½o: --/--/----
 																	
 	Objetivo  : Carrega os dados da tela MANCAR.
 																	
-	Alterações: 
+	Alteraï¿½ï¿½es: 
 				
 ***********************************************************************/
 
@@ -24,13 +24,19 @@ $cddopcao = (isset($_POST['cddopcao'])) ? $_POST['cddopcao'] : 'C';
 $nrregist = (isset($_POST["nrregist"])) ? $_POST["nrregist"] : 1;
 $nriniseq = (isset($_POST["nriniseq"])) ? $_POST["nriniseq"] : 1;
 
+$uf = (isset($_POST["uf"])) ? $_POST["uf"] : 0;
+$idcidade = (isset($_POST["idcidade"])) ? $_POST["idcidade"] : 0;
+$nrcpf_cnpj = (isset($_POST["nrcpf_cnpj"])) ? $_POST["nrcpf_cnpj"] : '';
+
 $xml  = "";
 $xml .= "<Root>";
 $xml .= " <Dados>";	
-$xml .= "   <nrcpf_cnpj></nrcpf_cnpj>";
+$xml .= "   <nrcpf_cnpj>".$nrcpf_cnpj."</nrcpf_cnpj>";
 $xml .= "   <nmcartorio></nmcartorio>";
 $xml .= "   <nrregist>".$nrregist."</nrregist>";
 $xml .= "   <nriniseq>".$nriniseq."</nriniseq>";
+$xml .= "   <uf>".$uf."</uf>";
+$xml .= "   <idcidade>".$idcidade."</idcidade>";
 $xml .= " </Dados>";
 $xml .= "</Root>";
 

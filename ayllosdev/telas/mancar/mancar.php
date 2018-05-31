@@ -1,25 +1,25 @@
 <?php
 	/*******************************************************************
 	Fonte      : mancar.php                                                		
-	Autor      : André Clemer
-	Data       : Abril/2018                 Última Alteração: --/--/----
+	Autor      : Andrï¿½ Clemer
+	Data       : Abril/2018                 ï¿½ltima Alteraï¿½ï¿½o: --/--/----
 	Objetivo   : Mostrar tela MANCAR.
-	Alterações : 
+	Alteraï¿½ï¿½es : 
 	*******************************************************************/
 	
 	session_start();
 	
-	// Includes para controle da session, variáveis globais de controle, e biblioteca de funções
+	// Includes para controle da session, variï¿½veis globais de controle, e biblioteca de funï¿½ï¿½es
 	require_once("../../includes/config.php");
 	require_once("../../includes/funcoes.php");	
 	require_once("../../includes/controla_secao.php");
 	require_once('../../class/xmlfile.php');
 	
 	
-	// Verifica se tela foi chamada pelo método POST
+	// Verifica se tela foi chamada pelo mï¿½todo POST
 	isPostMethod();
 	
-	// Carrega permissões do operador
+	// Carrega permissï¿½es do operador
 	include("../../includes/carrega_permissoes.php");
 ?>
 
@@ -94,6 +94,8 @@
 																				
 																				<? include('form_cabecalho.php'); ?>
 
+																				<? include('form_filtro.php'); ?>
+
 																				<? include('form_mancar.php'); ?>
 																				
 																				<div id="divFormulario"></div>
@@ -101,6 +103,7 @@
 																				<div id="divMsgAjuda"  style="margin-top:5px; margin-bottom :10px; display:none; text-align: center;" >
 																					<span></span>
 																					<a href="#" class="botao" id="btVoltar"  onClick="btnVoltar();return false;" style="text-align: right;">Voltar</a>
+																					<a href="#" class="botao" id="btContinuar" onclick="btContinuar(); return false;" ><? echo utf8ToHtml('Avan&ccedilar'); ?></a>
 																					<a href="#" class="botao" id="btAlterar" onClick="alterarDados();" style="text-align: right;">Alterar</a>
 																					<a href="#" class="botao" id="btIncluir" onClick="alterarDados();" style="text-align: right;">Incluir</a>
 																				</div>

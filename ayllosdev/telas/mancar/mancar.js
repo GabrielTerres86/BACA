@@ -1,11 +1,11 @@
 //*********************************************************************************************//
 //*** Fonte: mancar.js                                                 						***//
-//*** Autor: André Clemer                                            						***//
-//*** Data : Abril/2018                  Última Alteração: --/--/----  					    ***//
+//*** Autor: Andrï¿½ Clemer                                            						***//
+//*** Data : Abril/2018                  ï¿½ltima Alteraï¿½ï¿½o: --/--/----  					    ***//
 //***                                                                  						***//
-//*** Objetivo  : Biblioteca de funções da tela MANCAR                 						***//
+//*** Objetivo  : Biblioteca de funï¿½ï¿½es da tela MANCAR                 						***//
 //***                                                                  						***//	 
-//*** Alterações:                                                                           ***//	  
+//*** Alteraï¿½ï¿½es:                                                                           ***//	  
 //***                           									                        ***//
 //*********************************************************************************************//
 
@@ -16,6 +16,7 @@ var frmManCar = 'frmManCar';
 var cTodos;
 var cddopcao = 'C';
 var cTodosCabecalho;
+var cTodosFiltro;
 
 $(document).ready(function() {
 
@@ -36,17 +37,18 @@ $(document).ready(function() {
 });
 
 function estadoInicial() {
-
     $('#divTela').fadeTo(0, 0.1);
     $('#frmCab').css({'display': 'block'});
     $('#divMsgAjuda').css('display', 'none');
     $('#frmManCar').css('display', 'none');
     $('#divBotao').css('display', 'none');
+    $('#divFiltro').css('display', 'none');
     $('#divFormulario').html('');
 
     formataCabecalho();
 
     cTodosCabecalho.habilitaCampo();
+    
 
     removeOpacidade('divTela');
     unblockBackground();
@@ -89,7 +91,27 @@ function formataCabecalho() {
 
 
 function btnOK() {
-    carregarDados(1,20);
+    var cddopcao = $("#cddopcao", "#frmCab").val();
+
+    cTodosCabecalho.desabilitaCampo();
+    if (cddopcao == 'I') {
+        formataFormulario(cddopcao);
+    } else {
+        $('#divFiltro').css('display', 'block');
+        formataFormulario(cddopcao);
+        formataFiltro();
+    }
+}
+
+function formataFiltro() {    
+    cTodosFiltro = $('input[type="text"],input[type="checkbox"],select', '#divFiltro');
+    $('#divFiltro').css({ 'border': '1px solid #777', 'padding': '10px', 'min-height': '50px' });
+
+    cTodosFiltro.habilitaCampo();
+    $("#btVoltar", "#divMsgAjuda").show();
+    $("#btContinuar", "#divMsgAjuda").show();
+    $("#btAlterar", "#divMsgAjuda").hide();
+    $("#btIncluir", "#divMsgAjuda").hide();
 }
 
 function formataFormulario(cddopcao) {
@@ -101,28 +123,29 @@ function formataFormulario(cddopcao) {
     $('#btVoltar', '#divMsgAjuda').show();
     $("#btIncluir", "#divMsgAjuda").hide();
     $('#divMsgAjuda').css('display', 'block');
+    $('#divFormulario').css({ 'margin-top': '10px' });
 
-    //opção de alteração
+    //opï¿½ï¿½o de alteraï¿½ï¿½o
     if(cddopcao == 'A') {
-        $('#frmManCar').css('display', 'block');
         $('#divFormulario').css('display', 'block');
-
         cTodosFormulario.habilitaCampo();
+        controlaPesquisas('divFiltro');
         $("#btAlterar", "#divMsgAjuda").show();
     } else if (cddopcao == 'I') {
         $('#frmManCar').css('display', 'block');
         $('#divFormulario').css('display', 'none');
         $('#divCartorios, #divPesquisaRodape').css('display', 'none');
-
+        controlaPesquisas('frmManCar');
         cTodosFormulario.habilitaCampo();
         cTodosFormulario.val('');
         $('#flgativo').val(1);
         $("#btAlterar", "#divMsgAjuda").hide();
+        $("#btContinuar", "#divMsgAjuda").hide();
         $("#btIncluir", "#divMsgAjuda").show();
     } else {
         $('#frmManCar').css('display', 'none');
         $('#divFormulario').css('display', 'block');
-
+        controlaPesquisas('divFiltro');
         cTodosFormulario.desabilitaCampo();
         $("#btAlterar", "#divMsgAjuda").hide();
     }
@@ -130,9 +153,21 @@ function formataFormulario(cddopcao) {
     layoutPadrao();
 
     //cIdcidade.unbind('focus').bind('focus', function(e) {
-        controlaPesquisas();
+        ;
     //});
 
+}
+
+function btContinuar() {
+    var opcao = $("#cddopcao", "#frmCab").val();
+
+    carregarDados(1, 20);
+    cTodosFiltro.desabilitaCampo();
+    $("#btContinuar", "#divMsgAjuda").hide();
+    
+    if (opcao == 'A') {
+        $('#frmManCar').css('display', 'block');
+    }
 }
 
 function formataGridCartorios(opcao){
@@ -159,14 +194,14 @@ function formataGridCartorios(opcao){
     arrayAlinha[3] = 'center';    
 
     tabela.formataTabela( ordemInicial, arrayLargura, arrayAlinha);
-
+    
     if (opcao != 'E') {
         selecionaCartorio(opcao);
     }
 
     $('table > tbody > tr', divRegistro).click( function() {
 		selecionaCartorio(opcao);
-	});	
+	});
 
     return false;	
 }
@@ -177,9 +212,10 @@ function btnVoltar() {
 }
 
 function carregarDados(nriniseq,nrregist) {
-	
     var cddopcao = $("#cddopcao", "#frmCab").val();
-
+    var uf = $("#uf", "#frmOpcao").val();
+    var idcidade = $("#idcidade", "#frmOpcao").val();
+    var nrcpf_cnpj = $("#nrcpf_cnpj", "#frmOpcao").val();
 
     if ( $('table > tbody > tr', 'div.divRegistros').hasClass('corSelecao') ) { 
         if ($('#frmManCar').css('display') == 'block' && cddopcao != 'E'){
@@ -190,13 +226,7 @@ function carregarDados(nriniseq,nrregist) {
     // Mostra mensagem de aguardo
     showMsgAguardo("Aguarde, carregando informa&ccedil;&otilde;es ...");
 
-    if (cddopcao == 'I') {
-        hideMsgAguardo();
-        formataFormulario(cddopcao);
-        return false;
-    }
-
-    // Carrega conteúdo da opção através de ajax
+    // Carrega conteï¿½do da opï¿½ï¿½o atravï¿½s de ajax
     $.ajax({
         type: "POST",
         dataType: 'html',
@@ -205,6 +235,9 @@ function carregarDados(nriniseq,nrregist) {
             cddopcao: cddopcao,
             nriniseq: nriniseq,
             nrregist: nrregist,
+            uf: uf,
+            idcidade: idcidade,
+            nrcpf_cnpj: nrcpf_cnpj,
             redirect: "script_ajax" // Tipo de retorno do ajax
         },
         error: function(objAjax, responseError, objExcept) {
@@ -244,7 +277,7 @@ function grava_dados() {
     // Mostra mensagem de aguardo
     showMsgAguardo("Aguarde, enviando informa&ccedil;&otilde;es ...");
 
-    // Carrega conteúdo da opção através de ajax
+    // Carrega conteï¿½do da opï¿½ï¿½o atravï¿½s de ajax
     $.ajax({
         type: "POST",
         url: UrlSite + "telas/mancar/grava_dados.php",
@@ -277,7 +310,7 @@ function excluirCartorio(idcartorio) {
     // Mostra mensagem de aguardo
     showMsgAguardo("Aguarde, enviando informa&ccedil;&otilde;es ...");
 
-    // Carrega conteúdo da opção através de ajax
+    // Carrega conteï¿½do da opï¿½ï¿½o atravï¿½s de ajax
     $.ajax({
         type: "POST",
         url: UrlSite + "telas/mancar/grava_dados.php",
@@ -320,22 +353,20 @@ function selecionaCartorio(opcao) {
                 $('#dscidade', '#frmManCar').val($('#dscidade', self).val());
                 $('#flgativo', '#frmManCar').val($('#flgativo', self).val());
 			}else if(opcao == 'E'){
-				showConfirmacao('Você tem certeza de que deseja excluir este cartório?', 'Confirma&ccedil;&atilde;o - Ayllos', 'excluirCartorio(' + idcartorio + ');', 'voltaDiv();estadoInicial();', 'sim.gif', 'nao.gif');
+				showConfirmacao('Vocï¿½ tem certeza de que deseja excluir este cartï¿½rio?', 'Confirma&ccedil;&atilde;o - Ayllos', 'excluirCartorio(' + idcartorio + ');', 'voltaDiv();estadoInicial();', 'sim.gif', 'nao.gif');
 			}
 		}
 		
 	});
 
     if (! flgSelected && opcao == 'E') {
-        showError("error", "Favor selecionar o cartório que deseja excluir!", "Alerta - Ayllos", "");
+        showError("error", "Favor selecionar o cartï¿½rio que deseja excluir!", "Alerta - Ayllos", "");
     }
 	
 	return false;
 }
 
-function controlaPesquisas() {
-
-    var nmformul = 'frmManCar';
+function controlaPesquisas(nmformul) {
     var cdcooper = $('#cdcooper', '#' + nmformul).val();
     var cdestado = $('#cdestado', '#' + nmformul).val();
     var campoAnterior = '';
