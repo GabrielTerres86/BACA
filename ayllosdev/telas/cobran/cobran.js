@@ -2134,17 +2134,17 @@ function tipoOptionR() {
         var option = '';
 
         if (flgregis == 'yes') {
-            option = option + '<option value="5">5- Relatorio Beneficiario</option>';
-            option = option + '<option value="6">6- Relatorio Movimento de Cobranca Registrada</option>';
-            option = option + '<option value="7">7- Relatório analítico de envio de SMS</option>';
-            option = option + '<option value="8">8- Relatório de títulos cancelados</option>';
+            option = option + '<option value="5">5- Relat&oacute;rio Benefici&aacute;rio</option>';
+            option = option + '<option value="6">6- Relat&oacute;rio Movimento de Cobran&ccedil;a Registrada</option>';
+            option = option + '<option value="7">7- Relat&oacute;rio anal&iacute;tico de envio de SMS</option>';
+            option = option + '<option value="8">8- Relat&oacute;rio de t&iacute;tulos cancelados</option>';
             
 
         } else if (flgregis == 'no') {
-            option = option + '<option value="1">1- Gestao da carteira de cobranca sem registro - Por PA</option>';
-            option = option + '<option value="2">2- Gestao da carteira de cobranca sem registro - Por Cooperado</option>';
-            option = option + '<option value="3">3- Gestao da carteira de cobranca sem registro - Por Convenio</option>';
-            option = option + '<option value="4">4- Relatorio Movimento de liquidacoes - Francesa(S/ Registro)</option>';
+            option = option + '<option value="1">1- Gest&atilde;o da carteira de cobran&ccedil;a sem registro - Por PA</option>';
+            option = option + '<option value="2">2- Gest&atilde;o da carteira de cobran&ccedil;a sem registro - Por Cooperado</option>';
+            option = option + '<option value="3">3- Gest&atilde;o da carteira de cobran&ccedil;a sem registro - Por Convenio</option>';
+            option = option + '<option value="4">4- Relat&oacute;rio Movimento de liquida&ccedil;&otilde;es - Francesa(S/ Registro)</option>';
 
         }
 
@@ -2400,7 +2400,7 @@ function validaCampo(campo, valor) {
 
     // conta
     if (campo == 'nrdconta' && !validaNroConta(valor)) {
-        showError('error', 'Dígito errado.', 'Alerta - Ayllos', '$(\'#' + campo + '\',\'#frmOpcao\').focus();');
+        showError('error', 'D&iacute;gito errado.', 'Alerta - Ayllos', '$(\'#' + campo + '\',\'#frmOpcao\').focus();');
         return false;
     } else if (campo == 'nmprimtl' && valor == '') {
         showError('error', 'O campo deve ser preenchido.', 'Alerta - Ayllos', '$(\'#' + campo + '\',\'#frmOpcao\').focus();');
