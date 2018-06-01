@@ -1289,6 +1289,8 @@ create or replace procedure cecred.pc_crps729(pr_dscritic OUT VARCHAR2
          AND crapsab.cdcooper                    = crapcob.cdcooper
          AND crapsab.nrdconta                    = crapcob.nrdconta
          AND crapsab.nrinssac                    = crapcob.nrinssac
+         AND crapcco.cddbanco                    = crapcob.cdbandoc
+         AND crapcco.nrdctabb                    = crapcob.nrdctabb
          AND tbcobran_confirmacao_ieptb.cdcooper = craprem.cdcooper
          AND tbcobran_confirmacao_ieptb.nrdconta = craprem.nrdconta
          AND tbcobran_confirmacao_ieptb.nrcnvcob = craprem.nrcnvcob
@@ -1303,6 +1305,7 @@ create or replace procedure cecred.pc_crps729(pr_dscritic OUT VARCHAR2
     vr_arq_xml CLOB;
     --
     vr_cdcartor tbcobran_confirmacao_ieptb.cdcartorio%TYPE;
+		vr_cdcomarc tbcobran_confirmacao_ieptb.cdcomarc%TYPE;
     vr_qtregist NUMBER;
     vr_qtnumarq NUMBER;
     vr_dsdlinha VARCHAR2(600);
@@ -1371,18 +1374,18 @@ create or replace procedure cecred.pc_crps729(pr_dscritic OUT VARCHAR2
         --
       END IF;
       -- Verifica se precisa inicializar um novo cartório
-      IF nvl(vr_cdcartor, '0') <> rw_craprem.cdcartor THEN
+      IF (nvl(vr_cdcartor, 0) <> to_number(rw_craprem.cdcartor) OR (nvl(vr_cdcomarc, 0) <> to_number(rw_craprem.cdcomarc))) THEN
         -- Verifica se finaliza a remessa anterior
         IF vr_qtnumarq > 0 THEN
           --
           vr_dsdlinha := NULL;
           --
-          pc_gera_trail_cart_arq_desist(pr_cdcartor => rw_craprem.cdcartor -- IN
-                                       ,pr_qtdesist => 0                   -- IN
-                                       ,pr_cdmunici => rw_craprem.cdcomarc -- IN
-                                       ,pr_nrseqreg => vr_qtregist         -- IN
-                                       ,pr_dsheader => vr_dsdlinha         -- OUT
-                                       ,pr_dscritic => pr_dscritic         -- OUT
+          pc_gera_trail_cart_arq_desist(pr_cdcartor => vr_cdcartor -- IN
+                                       ,pr_qtdesist => 0           -- IN
+                                       ,pr_cdmunici => vr_cdcomarc -- IN
+                                       ,pr_nrseqreg => vr_qtregist -- IN
+                                       ,pr_dsheader => vr_dsdlinha -- OUT
+                                       ,pr_dscritic => pr_dscritic -- OUT
                                        );
           --
           IF pr_dscritic IS NOT NULL THEN
@@ -1403,9 +1406,10 @@ create or replace procedure cecred.pc_crps729(pr_dscritic OUT VARCHAR2
         END IF;
         --
         vr_qtnumarq := vr_qtnumarq + 1;
-        vr_vlsomseg := 0;
+        --vr_vlsomseg := 0;
         vr_idgercab := TRUE;
 				vr_cdcartor := rw_craprem.cdcartor;
+				vr_cdcomarc := rw_craprem.cdcomarc;
         --
       END IF;
       -- Se for o primeiro registro, gerar o cabeçalho
@@ -2751,7 +2755,7 @@ create or replace procedure cecred.pc_crps729(pr_dscritic OUT VARCHAR2
 				--
 			END IF;
 			-- Verifica se precisa inicializar um novo cartório
-      IF nvl(vr_cdcartor, '0') <> rw_craprem.cdcartor THEN
+      IF nvl(vr_cdcartor, 0) <> to_number(rw_craprem.cdcartor) THEN
         --
         IF vr_qtregist > 1 THEN
 					--

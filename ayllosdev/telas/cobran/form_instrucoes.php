@@ -25,11 +25,13 @@ $esta_protestado  =  ( $insitcrt == '5' ) ? 1 : 0;
 $esta_negativado  = ((( strcasecmp($flserasa, 'yes') == 0 ) || ( $qtdianeg > 0 )) && ($inserasa > 0)) ? 1 : 0;
 
 $vr_dtvencto = implode('-', array_reverse(explode('/', $dtvencto)));
-$vr_dtvencto = date('d/m/Y', strtotime($vr_dtvencto . ' + '.$qtlimaxp.' days'));
+$vr_dtmvtolt = implode('-', array_reverse(explode('/', $glbvars['dtmvtolt'])));
+$vr_dtvencto = strtotime($vr_dtvencto . ' + '.$qtlimaxp.' days');
+$vr_dtmvtolt = strtotime($vr_dtmvtolt);
 
-$exec_inst_auto = strtotime($vr_dtvencto) > strtotime($glbvars['dtmvtolt']) ? 1 : 0;
+$exec_inst_auto = $vr_dtvencto > $vr_dtmvtolt ? 1 : 0;
 
-//var_dump($vr_dtvencto,$qtlimaxp,$exec_inst_auto);
+//var_dump($vr_dtvencto,$vr_dtmvtolt,$qtlimaxp,$exec_inst_auto);
 
 foreach( $registro as $r ) {
     // Por padrão vamos criar a opção da instrução em tela

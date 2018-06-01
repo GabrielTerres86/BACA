@@ -648,6 +648,15 @@ create or replace package body cecred.cobr0011 IS
              WHERE c.cdcooper = pr_cdcooper;
       rw_crapcop cr_crapcop%ROWTYPE;
       
+			CURSOR cr_craphis(pr_cdcooper craphis.cdcooper%TYPE
+											 ,pr_cdhistor craphis.cdhistor%TYPE
+											 ) IS
+				SELECT craphis.indebcre
+					FROM craphis
+				 WHERE craphis.cdcooper = pr_cdcooper
+					 AND craphis.cdhistor = pr_cdhistor; 
+			--
+			rw_craphis cr_craphis%ROWTYPE;
       ---
       
       vr_cdcritic crapcri.cdcritic%TYPE;
@@ -668,7 +677,8 @@ create or replace package body cecred.cobr0011 IS
       vr_aux_sal_ant tbfin_recursos_saldo.vlsaldo_final%type;      
       vr_aux_cdhistor tbfin_recursos_movimento.cdhistor%type;
       
-      vr_cddbanco INTEGER;
+      vr_indebcre craphis.indebcre%TYPE;
+			vr_cddbanco INTEGER;
 
       -------------------- Programa Principal -----------------
       BEGIN        
@@ -706,6 +716,27 @@ create or replace package body cecred.cobr0011 IS
           vr_dscritic := 'Cooperativa nao esta operando no SPB.';
           RAISE vr_exc_erro;
         END IF;
+				
+				OPEN cr_craphis(pr_cdcooper => pr_cdcooper
+											 ,pr_cdhistor => pr_cdhistor
+											 );
+				--
+				FETCH cr_craphis INTO rw_craphis;
+				--
+				IF cr_craphis%NOTFOUND THEN
+					--
+					vr_cdcritic := 0;
+          vr_dscritic := 'Histórico não encontrado!';
+					--
+          RAISE vr_exc_erro;
+					--
+				ELSE
+					--
+					vr_indebcre := rw_craphis.indebcre;
+					--
+				END IF;
+				--
+				CLOSE cr_craphis;
         
         /* Busca a proxima sequencia do campo CRAPMAT.NRSEQTED */
         vr_nrseqted := fn_sequence( 'CRAPMAT'
@@ -722,16 +753,18 @@ create or replace package body cecred.cobr0011 IS
         -- retornar numero do documento
         pr_nrdocmto := vr_nrseqted;
         
-        /* Se alterar numero de controle, ajustar procedure atualiza-doc-ted */
+        /* Comentado em 31/05/2018
+				\* Se alterar numero de controle, ajustar procedure atualiza-doc-ted *\
         vr_nrctrlif := '1'||to_char(rw_crapdat.dtmvtocd,'RRMMDD')
                           ||to_char(rw_crapcop.cdagectl,'fm0000')
                           ||to_char(pr_nrdocmto,'fm00000000');
         
-        IF pr_origem = 1 THEN /* Origem BacenJud - Ayllos */
+        IF pr_origem = 1 THEN \* Origem BacenJud - Ayllos *\
           vr_nrctrlif := vr_nrctrlif ||'A';
-        ELSE /* Canal InternetBank */
+        ELSE \* Canal InternetBank *\
           vr_nrctrlif := vr_nrctrlif ||'I';
         END IF;
+				*/
 
         /* Verifica se a TED é destinada a uma conta administradora de recursos */
         OPEN cr_tbfin_rec_con(pr_cdcooper => pr_cdcooper
@@ -776,11 +809,11 @@ create or replace package body cecred.cobr0011 IS
                (pr_cdcooper
                ,pr_nrdconta
                ,rw_crapdat.dtmvtocd
-               ,vr_nrctrlif
+               ,pr_nrdocmto -- vr_nrctrlif
                ,vr_aux_nrseqdig
                ,vr_aux_cdhistor
+               ,vr_indebcre
                ,pr_vllanmto
-               ,vr_cddbanco
                ,pr_nrcpfcgc
                ,pr_nmtitula
                ,pr_intipcta
@@ -2434,8 +2467,9 @@ create or replace package body cecred.cobr0011 IS
     WHEN OTHERS THEN
       -- Erro
       pr_cdcritic:= 0;
-      pr_dscritic:= 'Erro na rotina PAGA0002.pc_proc_remessa_cartorio '||sqlerrm;
+      pr_dscritic:= 'Erro na rotina COBR0011.pc_proc_remessa_cartorio '||sqlerrm;
   END pc_proc_remessa_cartorio;
+	
 	-- Gera lançamentos de estorno
 	PROCEDURE pc_processa_estorno(pr_cdcooper IN  craplot.cdcooper%TYPE
 		                           ,pr_dtmvtolt IN  craplot.dtmvtolt%TYPE

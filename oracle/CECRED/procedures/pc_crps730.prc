@@ -109,6 +109,15 @@ create or replace procedure cecred.pc_crps730(pr_dscritic OUT VARCHAR2
 	texto CLOB;
   
   -- Subrotinas
+	-- Remove caracteres especiais
+	FUNCTION fun_remove_char_esp(pr_texto IN VARCHAR2
+		                          ) RETURN VARCHAR2 IS
+	BEGIN
+		--
+		RETURN translate(pr_texto,'ÑÁÉÍÓÚÀÈÌÒÙÂÊÎÔÛÃÕÄËÏÖÜÇñáéíóúàèìòùâêîôûãõäëïöüç.-!"''`#$%().:[/]{}¨+?;ºª°§&´*<>','NAEIOUAEIOUAEIOUAOAEIOUCnaeiouaeiouaeiouaoaeiouc');
+		--
+	END fun_remove_char_esp;
+	
   -- Controla Controla log
   PROCEDURE pc_controla_log_batch(pr_idtiplog IN NUMBER   -- Tipo de Log
                                  ,pr_dscritic IN VARCHAR2 -- Descrição do Log
@@ -954,11 +963,17 @@ create or replace procedure cecred.pc_crps730(pr_dscritic OUT VARCHAR2
             ,crapcob.vloutcre
             ,crapcob.vltitulo
             ,crapdat.dtmvtolt
+						,crapcco.cdagenci
+						,crapcco.cdbccxlt
+						,crapcco.nrdolote
         FROM crapcob
             ,crapcop
             ,crapdat
+						,crapcco
        WHERE crapcob.cdcooper = crapcop.cdcooper
          AND crapcob.cdcooper = crapdat.cdcooper
+				 AND crapcob.cdcooper = crapcco.cdcooper
+				 AND crapcob.nrcnvcob = crapcco.nrconven 
          AND crapcop.cdagectl = pr_cdagectl
          AND crapcob.nrdconta = pr_nrdconta
          AND crapcob.nrcnvcob = pr_nrcnvcob
@@ -1258,6 +1273,20 @@ create or replace procedure cecred.pc_crps730(pr_dscritic OUT VARCHAR2
 								RAISE vr_exc_erro;
 								--
 							END IF;
+							--
+							paga0001.pc_cria_log_cobranca(pr_idtabcob => rw_crapcob.rowid
+																					 ,pr_cdoperad => '1'
+																					 ,pr_dtmvtolt => rw_crapcob.dtmvtolt
+																					 ,pr_dsmensag => 'Título liquidado em cartório pendente de conciliação.'
+																					 ,pr_des_erro => vr_des_erro
+																					 ,pr_dscritic => pr_dscritic
+																					 );
+							--
+							IF vr_des_erro <> 'OK' THEN
+								--
+								RAISE vr_exc_erro;
+								--
+							END IF;
 						-- 2: Protestado (9)
 						WHEN vr_tab_arquivo(vr_index_reg).campot33 = '2' THEN
 							-- Seta o motivo e ocorrência a serem utilizados no débito de custas e tarifas da conta do cooperado
@@ -1297,6 +1326,33 @@ create or replace procedure cecred.pc_crps730(pr_dscritic OUT VARCHAR2
 																		,pr_cdcritic            => vr_cdcritic            -- OUT
 																		,pr_dscritic            => vr_dscritic            -- OUT
 																		);
+							--
+							IF pr_dscritic IS NOT NULL THEN
+								--
+								RAISE vr_exc_erro;
+								--
+							END IF;
+							--
+							IF vr_tab_lcm_consolidada.count() > 0 THEN
+								--
+								paga0001.pc_realiza_lancto_cooperado(pr_cdcooper            => rw_crapcob.cdcooper    -- IN
+																										,pr_dtmvtolt            => rw_crapcob.dtmvtolt    -- IN
+																										,pr_cdagenci            => rw_crapcob.cdagenci    -- IN
+																										,pr_cdbccxlt            => rw_crapcob.cdbccxlt    -- IN
+																										,pr_nrdolote            => rw_crapcob.nrdolote    -- IN
+																										,pr_cdpesqbb            => rw_crapcob.nrcnvcob    -- IN
+																										,pr_tab_lcm_consolidada => vr_tab_lcm_consolidada -- IN
+																										,pr_cdcritic            => vr_cdcritic            -- OUT
+																										,pr_dscritic            => vr_dscritic            -- OUT
+																										);
+								--
+								IF pr_dscritic IS NOT NULL THEN
+									--
+									RAISE vr_exc_erro;
+									--
+								END IF;
+								--
+							END IF;
 							--
 							OPEN cr_crapret(pr_cdcooper => rw_crapcob.cdcooper
 														 ,pr_nrcnvcob => rw_crapcob.nrcnvcob
@@ -1418,6 +1474,33 @@ create or replace procedure cecred.pc_crps730(pr_dscritic OUT VARCHAR2
 																								,pr_cdcritic            => vr_cdcritic            -- OUT
 																								,pr_dscritic            => vr_dscritic            -- OUT
 																								);
+							--
+							IF pr_dscritic IS NOT NULL THEN
+								--
+								RAISE vr_exc_erro;
+								--
+							END IF;
+							--
+							IF vr_tab_lcm_consolidada.count() > 0 THEN
+								--
+								paga0001.pc_realiza_lancto_cooperado(pr_cdcooper            => rw_crapcob.cdcooper    -- IN
+																										,pr_dtmvtolt            => rw_crapcob.dtmvtolt    -- IN
+																										,pr_cdagenci            => rw_crapcob.cdagenci    -- IN
+																										,pr_cdbccxlt            => rw_crapcob.cdbccxlt    -- IN
+																										,pr_nrdolote            => rw_crapcob.nrdolote    -- IN
+																										,pr_cdpesqbb            => rw_crapcob.nrcnvcob    -- IN
+																										,pr_tab_lcm_consolidada => vr_tab_lcm_consolidada -- IN
+																										,pr_cdcritic            => vr_cdcritic            -- OUT
+																										,pr_dscritic            => vr_dscritic            -- OUT
+																										);
+								--
+								IF pr_dscritic IS NOT NULL THEN
+									--
+									RAISE vr_exc_erro;
+									--
+								END IF;
+								--
+							END IF;
 							--
 							OPEN cr_crapret(pr_cdcooper => rw_crapcob.cdcooper
 														 ,pr_nrcnvcob => rw_crapcob.nrcnvcob
@@ -2529,11 +2612,13 @@ create or replace procedure cecred.pc_crps730(pr_dscritic OUT VARCHAR2
 								CLOSE btch0001.cr_crapdat;
 							END IF;
 							--
+							vr_tab_lcm_consolidada.delete;
+							--
 							cobr0011.pc_proc_remessa_cartorio(pr_cdcooper            => rw_crapcob.cdcooper                                        -- Codigo da cooperativa
 																							 ,pr_cdbanpag            => rw_crapcob.cdbcoctl
 																							 ,pr_cdagepag            => rw_crapcob.cdagectl
 																							 ,pr_idtabcob            => rw_crapcob.rowid                                           -- Rowid da Cobranca                                               
-																							 ,pr_dtocorre            => to_date(vr_tab_arquivo(vr_index_reg).campot37, 'ddmmyyyy') -- Data de Ocorrencia
+																							 ,pr_dtocorre            => rw_crapcob.dtmvtolt -- to_date(vr_tab_arquivo(vr_index_reg).campot37, 'ddmmyyyy') -- Data de Ocorrencia
 																							 ,pr_vltarifa            => 0                                                          -- Valor da tarifa -- REVISAR
 																							 ,pr_cdhistor            => 972                                                        -- Codigo do historico -- REVISAR
 																							 ,pr_cdocorre            => 23                                                         -- Codigo Ocorrencia -- REVISAR
@@ -2557,6 +2642,27 @@ create or replace procedure cecred.pc_crps730(pr_dscritic OUT VARCHAR2
 																		,pr_dscritic     =>  vr_dscritic
 																		,pr_tpocorrencia => 2 -- Erro Tratado
 																		);
+							END IF;
+							--
+							IF vr_tab_lcm_consolidada.count() > 0 THEN
+								--
+								paga0001.pc_realiza_lancto_cooperado(pr_cdcooper            => rw_crapcob.cdcooper    -- IN
+																										,pr_dtmvtolt            => rw_crapcob.dtmvtolt    -- IN
+																										,pr_cdagenci            => rw_crapcob.cdagenci    -- IN
+																										,pr_cdbccxlt            => rw_crapcob.cdbccxlt    -- IN
+																										,pr_nrdolote            => rw_crapcob.nrdolote    -- IN
+																										,pr_cdpesqbb            => rw_crapcob.nrcnvcob    -- IN
+																										,pr_tab_lcm_consolidada => vr_tab_lcm_consolidada -- IN
+																										,pr_cdcritic            => vr_cdcritic            -- OUT
+																										,pr_dscritic            => vr_dscritic            -- OUT
+																										);
+								--
+								IF pr_dscritic IS NOT NULL THEN
+									--
+									RAISE vr_exc_erro;
+									--
+								END IF;
+								--
 							END IF;
 							--
 						END IF;
@@ -2594,6 +2700,8 @@ create or replace procedure cecred.pc_crps730(pr_dscritic OUT VARCHAR2
 							CLOSE btch0001.cr_crapdat;
 						END IF;
 						--
+						vr_tab_lcm_consolidada.delete;
+						--
 						cobr0011.pc_proc_deb_tarifas_custas(pr_cdcooper            => rw_crapcob.cdcooper    -- IN
 																							 ,pr_idtabcob            => rw_crapcob.rowid       -- IN
 																							 ,pr_cdbanpag            => 0                      -- IN -- Fixo
@@ -2616,6 +2724,27 @@ create or replace procedure cecred.pc_crps730(pr_dscritic OUT VARCHAR2
 					IF vr_cdcritic IS NOT NULL AND vr_dscritic IS NOT NULL THEN
 						--
 						RAISE vr_exc_erro;
+						--
+					END IF;
+					--
+					IF vr_tab_lcm_consolidada.count() > 0 THEN
+						--
+						paga0001.pc_realiza_lancto_cooperado(pr_cdcooper            => rw_crapcob.cdcooper    -- IN
+																								,pr_dtmvtolt            => rw_crapcob.dtmvtolt    -- IN
+																								,pr_cdagenci            => rw_crapcob.cdagenci    -- IN
+																								,pr_cdbccxlt            => rw_crapcob.cdbccxlt    -- IN
+																								,pr_nrdolote            => rw_crapcob.nrdolote    -- IN
+																								,pr_cdpesqbb            => rw_crapcob.nrcnvcob    -- IN
+																								,pr_tab_lcm_consolidada => vr_tab_lcm_consolidada -- IN
+																								,pr_cdcritic            => vr_cdcritic            -- OUT
+																								,pr_dscritic            => vr_dscritic            -- OUT
+																								);
+						--
+						IF pr_dscritic IS NOT NULL THEN
+							--
+							RAISE vr_exc_erro;
+							--
+						END IF;
 						--
 					END IF;
 					-- Atualiza a confirmação/retorno
@@ -2673,6 +2802,7 @@ create or replace procedure cecred.pc_crps730(pr_dscritic OUT VARCHAR2
 				vr_index_reg := vr_tab_arquivo.next(vr_index_reg);
 				--
 			END LOOP;
+			
 			-- Gerar os lançamentos por cooperativa e na central
 			vr_index_coop := 0;
 			vr_total_ieptb := 0;
@@ -2805,7 +2935,7 @@ create or replace procedure cecred.pc_crps730(pr_dscritic OUT VARCHAR2
 																				,pr_cdageban => cobr0011.fn_busca_dados_conta_destino(pr_idoption => 2) -- IN -- Agencia destino
 																				,pr_nrctatrf => cobr0011.fn_busca_dados_conta_destino(pr_idoption => 3) -- IN -- Conta destino
 																				,pr_nmtitula => cobr0011.fn_busca_dados_conta_destino(pr_idoption => 4) -- IN -- Nome do titular destino
-																				,pr_nrcpfcgc => cobr0011.fn_busca_dados_conta_destino(pr_idoption => 5) -- IN -- CPF do titular destino
+																				,pr_nrcpfcgc => fun_remove_char_esp(pr_texto => cobr0011.fn_busca_dados_conta_destino(pr_idoption => 5)) -- IN -- CPF do titular destino
 																				,pr_intipcta => cobr0011.fn_busca_dados_conta_destino(pr_idoption => 6) -- IN -- Tipo de conta destino
 																				,pr_inpessoa => cobr0011.fn_busca_dados_conta_destino(pr_idoption => 7) -- IN -- Tipo de pessoa destino
 
@@ -2853,7 +2983,7 @@ create or replace procedure cecred.pc_crps730(pr_dscritic OUT VARCHAR2
 																				,pr_cdageban => cobr0011.fn_busca_dados_conta_destino(pr_idoption => 2) -- IN -- Agencia destino
 																				,pr_nrctatrf => cobr0011.fn_busca_dados_conta_destino(pr_idoption => 3) -- IN -- Conta destino
 																				,pr_nmtitula => cobr0011.fn_busca_dados_conta_destino(pr_idoption => 4) -- IN -- Nome do titular destino
-																				,pr_nrcpfcgc => cobr0011.fn_busca_dados_conta_destino(pr_idoption => 5) -- IN -- CPF do titular destino
+																				,pr_nrcpfcgc => fun_remove_char_esp(pr_texto => cobr0011.fn_busca_dados_conta_destino(pr_idoption => 5)) -- IN -- CPF do titular destino
 																				,pr_intipcta => cobr0011.fn_busca_dados_conta_destino(pr_idoption => 6) -- IN -- Tipo de conta destino
 																				,pr_inpessoa => cobr0011.fn_busca_dados_conta_destino(pr_idoption => 7) -- IN -- Tipo de pessoa destino
 
@@ -2960,7 +3090,7 @@ begin
   END IF;
 	
 	-- Executa a conciliação automática
-	tela_manprt.pc_gera_conciliacao_auto(pr_dscritic => pr_dscritic);
+	--tela_manprt.pc_gera_conciliacao_auto(pr_dscritic => pr_dscritic);
 	--
   IF pr_dscritic IS NOT NULL THEN
     --
@@ -2969,7 +3099,7 @@ begin
   END IF;
 	
 	-- Gera as movimentações
-	cobr0011.pc_gera_movimento_pagamento(pr_dscritic => pr_dscritic);
+	--cobr0011.pc_gera_movimento_pagamento(pr_dscritic => pr_dscritic);
 	--
   IF pr_dscritic IS NOT NULL THEN
     --
