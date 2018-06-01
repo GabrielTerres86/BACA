@@ -570,6 +570,7 @@ function btnContinuar() {
 	showMsgAguardo( mensagem );	
 
 	// Carrega dados da conta através de ajax
+
 	$.ajax({		
 		type: 'POST',
 		url	: UrlSite + 'telas/cadcyb/principal.php', 
@@ -788,12 +789,16 @@ function formataTabela() {
 	var ordemInicial = new Array();
 
 	var arrayLargura = new Array();
-	arrayLargura[0] = '70px';
+	arrayLargura[0] = '135px';
 	arrayLargura[1] = '62px';
 	arrayLargura[2] = '70px';
 	arrayLargura[3] = '61px';
 	arrayLargura[4] = '91px';
 	arrayLargura[5] = '54px';
+
+	// AXAO
+	//arrayLargura[6] = '70px';
+	//arrayLargura[7] = '70px';
 
 	var arrayAlinha = new Array();
 	arrayAlinha[0] = 'right';
@@ -802,6 +807,10 @@ function formataTabela() {
 	arrayAlinha[3] = 'center';
 	arrayAlinha[4] = 'center';
 	arrayAlinha[5] = 'center';
+
+	// AXAO
+	//arrayAlinha[6] = 'center';
+	//arrayAlinha[7] = 'center';
 	
 	tabela.formataTabela( ordemInicial, arrayLargura, arrayAlinha, '' );
 	
@@ -951,6 +960,8 @@ function formataTabelaConsulta() {
 	var divRegistro = $('div.divRegistros','#divConsulta');		
 	var tabela      = $('table', divRegistro );
 	var linha       = $('table > tbody > tr', divRegistro );
+
+	var mostraColunasDscto = $('#aux_cdorigem').val();
 	
 	$('#divConsulta').css({'margin-top':'4px'});
 	divRegistro.css({'height':'190px','padding-bottom':'2px'});
@@ -958,20 +969,33 @@ function formataTabelaConsulta() {
 	var ordemInicial = new Array();
 
 	var arrayLargura = new Array();
-	arrayLargura[0] = '70px';
+	arrayLargura[0] = '135px';
 	arrayLargura[1] = '62px';
 	arrayLargura[2] = '70px';
 	arrayLargura[3] = '61px';
 	arrayLargura[4] = '91px';
 	arrayLargura[5] = '54px';
 
+	// AXAO
+	if(mostraColunasDscto == 4){
+		arrayLargura[6] = '90px';
+		arrayLargura[7] = '88px';
+	}
+
 	var arrayAlinha = new Array();
-	arrayAlinha[0] = 'right';
+	arrayAlinha[0] = 'center';
 	arrayAlinha[1] = 'right';
 	arrayAlinha[2] = 'right';
 	arrayAlinha[3] = 'center';
 	arrayAlinha[4] = 'center';
 	arrayAlinha[5] = 'center';
+	
+	// AXAO
+	if(mostraColunasDscto == 4){
+		arrayAlinha[6] = 'center';
+		arrayAlinha[7] = 'center';
+	}
+	
 	
 	var metodoTabela = '';
 	

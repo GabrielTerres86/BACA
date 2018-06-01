@@ -27,7 +27,7 @@
 
 	$nrborder = (isset($_POST["nrborder"])) ? $_POST["nrborder"] : 0 ; 
 	$nrtitulo = (isset($_POST["nrtitulo"])) ? $_POST["nrtitulo"] : 0 ; 
-
+	
 	// Monta o xml dinâmico de acordo com a operação 
 	$xml  = "";
 	$xml .= "<Root>";
@@ -47,8 +47,10 @@
 	$xml .= "		<nriniseq>".$nriniseq."</nriniseq>";
 	$xml .= "		<cdassess>".$cdassess."</cdassess>";
 	$xml .= "		<cdmotcin>".$cdmotcin."</cdmotcin>";
+
 	$xml .= "		<nrborder>".$nrborder."</nrborder>";
 	$xml .= "		<nrtitulo>".$nrtitulo."</nrtitulo>";
+	
 	$xml .= "	</Dados>";
 	$xml .= "</Root>";
 	

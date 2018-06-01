@@ -27,6 +27,9 @@
 	$cdoperad = $_POST["cdoperad"];
 	$assessor = $_POST["assessor"];
 	$motivocin = $_POST["motivocin"];
+
+	$nrborder = $_POST["nrborder"];
+	$nrtitulo = $_POST["nrtitulo"];
 	
 ?>
 
@@ -58,10 +61,21 @@
 	<label for="flgehvip"><? echo utf8ToHtml("CIN:") ?></label>
 	<input name="flgehvip" id="flgehvip" type="text" value="<? echo $flgehvip; ?>" />
 	<br />
+
 	
 	<label for="dsmotcin"><? echo utf8ToHtml("Motivo CIN:") ?></label>
 	<input name="dsmotcin" id="dsmotcin" type="text" value="<? echo $motivocin; ?>" />
 	<br />
+
+	<!-- AXAO -->
+	<label for="nrborder"><? echo utf8ToHtml("Bordero:") ?></label>
+	<input name="nrborder" id="nrborder" type="text" value="<? echo $nrborder; ?>" />
+	<br />
+
+	<label for="nrtitulo"><? echo utf8ToHtml("Título:") ?></label>
+	<input name="nrtitulo" id="nrtitulo" type="text" value="<? echo $nrtitulo; ?>" />
+	<br />
+
 	
 	<label for="dsassess"><? echo utf8ToHtml("Assessoria:") ?></label>
 	<input name="dsassess" id="dsassess" type="text" value="<? echo $assessor; ?>" />

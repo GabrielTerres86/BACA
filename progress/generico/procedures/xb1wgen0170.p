@@ -52,6 +52,10 @@ DEF VAR aux_dsdircop AS CHAR                                           NO-UNDO.
 DEF VAR aux_dtenvcbr AS DATE                                           NO-UNDO. 
 DEF VAR aux_cdassess AS INTE                                           NO-UNDO. 
 DEF VAR aux_cdmotcin AS INTE                                           NO-UNDO. 
+DEF VAR aux_nrborder AS INTE                                           NO-UNDO. 
+DEF VAR aux_nrtitulo AS INTE                                           NO-UNDO. 
+
+
 
 { sistema/generico/includes/var_internet.i }
 { sistema/generico/includes/supermetodos.i }
