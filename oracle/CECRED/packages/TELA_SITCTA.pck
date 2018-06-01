@@ -660,7 +660,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_SITCTA IS
       
       -- Se foi alterado flag de impedimento de credito ou produto
       IF rw_situacao.inimpede_credito      <> pr_inimpede_credito      OR 
-         rw_situacao.incontratacao_produto <> pr_incontratacao_produto THEN
+        (rw_situacao.incontratacao_produto <> pr_incontratacao_produto AND 
+           ((rw_situacao.incontratacao_produto > 0 AND pr_incontratacao_produto = 0) OR
+            (rw_situacao.incontratacao_produto = 0 AND pr_incontratacao_produto > 0) ))   THEN
         -- Verifica se deve liberar ou desbloquear 
         -- pre aprovado para contas com essa situacao.
         IF pr_inimpede_credito = 1 OR pr_incontratacao_produto > 0 THEN
