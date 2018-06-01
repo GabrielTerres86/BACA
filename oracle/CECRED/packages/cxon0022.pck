@@ -94,9 +94,9 @@ CREATE OR REPLACE PACKAGE CECRED.cxon0022 AS
                                      ,pr_idagenda           IN INTEGER  --Indicador Agendamento
                                      ,pr_cdcoptfn           IN INTEGER  --Codigo Cooperativa
                                      ,pr_nrterfin           IN INTEGER  --Numero do terminal
-                   ,pr_flmobile           IN INTEGER  --Indicador Mobile
-                   ,pr_idtipcar           IN INTEGER  --Indicador Tipo Cartão Utilizado
-                   ,pr_nrcartao           IN NUMBER   --Numero Cartao                                     
+                                     ,pr_flmobile           IN INTEGER  --Indicador Mobile
+                                     ,pr_idtipcar           IN INTEGER  --Indicador Tipo Cartão Utilizado
+                                     ,pr_nrcartao           IN NUMBER   --Numero Cartao                                     
                                      ,pr_literal_autentica  OUT VARCHAR2 --Numero literal autenticacao
                                      ,pr_ult_seq_autentica  OUT INTEGER  --Sequencial autenticacao
                                      ,pr_nro_docto          OUT NUMBER   --Numero do Documento
@@ -2958,9 +2958,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
   vr_aux_nrseqdig crapmdw.nrseqdig%TYPE;  
   vr_aux_cdbandep crapfdc.cdbandep%TYPE;
   vr_aux_cdagedep crapfdc.cdagedep%TYPE;
-  vr_rowidlcm     ROWID;        --> ROWID do lançamento inserido na CRAPLCM
-  vr_nmtabela     VARCHAR2(60); --> Nome ta tabela retornado pela "pc_gerar_lancamento_conta"
-  vr_incrineg     INTEGER;      --> Indicador de crítica de negócio para uso com a "pc_gerar_lancamento_conta"
+  vr_nmtabela     VARCHAR2(60);             --> Nome ta tabela retornado pela "pc_gerar_lancamento_conta"
+  vr_incrineg     INTEGER;                  --> Indicador de crítica de negócio para uso com a "pc_gerar_lancamento_conta"
+  vr_tabretor     LANC0001.typ_reg_retorno; --> Tabela de retorno 
 
   -- Guardar registro dstextab
   vr_dstextab craptab.dstextab%TYPE;
@@ -3624,35 +3624,32 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
               CLOSE cr_existe_lcm1;
               
               -- Chamada a LANC0001 -- 1
-              LANC0001.pc_gerar_lancamento_conta(pr_cdcooper => rw_cod_coop_dest.cdcooper
-                                                ,pr_dtmvtolt => rw_dat_cop.dtmvtolt
-                                                ,pr_cdagenci => 1
-                                                ,pr_cdbccxlt => 100
-                                                ,pr_dsidenti => pr_identifica
-                                                ,pr_nrdolote => vr_i_nro_lote
-                                                ,pr_nrdconta => pr_nro_conta
-                                                ,pr_nrdocmto => TO_NUMBER(vr_c_docto)
-                                                ,pr_vllanmto => rw_verifica_mrw.vlchqcop
-                                                ,pr_cdhistor => 1524 -- 386 -- CR.TRF.CH.INT
-                                                ,pr_nrseqdig => rw_consulta_lot.nrseqdig -- Já está encrementado + 1 no CURSOR cr_consulta_lot
-                                                ,pr_nrdctabb => pr_nro_conta
-                                                ,pr_nrautdoc => vr_p_ult_sequencia
-                                                ,pr_cdpesqbb => 'CRAP22'
-                                                ,pr_nrdctitg => vr_glb_dsdctitg
-                                                ,pr_cdcoptfn => rw_cod_coop_orig.cdcooper
-                                                ,pr_cdagetfn => pr_cod_agencia
-                                                ,pr_nrterfin => pr_nro_caixa
-                                                ,pr_cdoperad => pr_cod_operador
+              LANC0001.pc_gerar_lancamento_conta(pr_cdcooper    => rw_cod_coop_dest.cdcooper
+                                                ,pr_dtmvtolt    => rw_dat_cop.dtmvtolt
+                                                ,pr_cdagenci    => 1
+                                                ,pr_cdbccxlt    => 100
+                                                ,pr_dsidenti    => pr_identifica
+                                                ,pr_nrdolote    => vr_i_nro_lote
+                                                ,pr_nrdconta    => pr_nro_conta
+                                                ,pr_nrdocmto    => TO_NUMBER(vr_c_docto)
+                                                ,pr_vllanmto    => rw_verifica_mrw.vlchqcop
+                                                ,pr_cdhistor    => 1524 -- 386 -- CR.TRF.CH.INT
+                                                ,pr_nrseqdig    => rw_consulta_lot.nrseqdig -- Já está encrementado + 1 no CURSOR cr_consulta_lot
+                                                ,pr_nrdctabb    => pr_nro_conta
+                                                ,pr_nrautdoc    => vr_p_ult_sequencia
+                                                ,pr_cdpesqbb    => 'CRAP22'
+                                                ,pr_nrdctitg    => vr_glb_dsdctitg
+                                                ,pr_cdcoptfn    => rw_cod_coop_orig.cdcooper
+                                                ,pr_cdagetfn    => pr_cod_agencia
+                                                ,pr_nrterfin    => pr_nro_caixa
+                                                ,pr_cdoperad    => pr_cod_operador
                                                 -- OUTPUT --
-                                                ,pr_rowid    => vr_rowidlcm
-                                                ,pr_nmtabela => vr_nmtabela
-                                                ,pr_incrineg => vr_incrineg
-                                                ,pr_cdcritic => vr_cdcritic
-                                                ,pr_dscritic => vr_dscritic); 
+                                                ,pr_tab_retorno => vr_tabretor
+                                                ,pr_incrineg    => vr_incrineg
+                                                ,pr_cdcritic    => vr_cdcritic
+                                                ,pr_dscritic    => vr_dscritic); 
                                                 
               IF nvl(pr_cdcritic, 0) > 0 OR pr_dscritic IS NOT NULL THEN
-                pr_cdcritic := 0;
-                pr_dscritic := 'Erro ao inserir lançamento : '||sqlerrm;
                                   
                 cxon0000.pc_cria_erro(pr_cdcooper => rw_cod_coop_orig.cdcooper
                                      ,pr_cdagenci => pr_cod_agencia
@@ -3831,15 +3828,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                                              ,pr_nrterfin => pr_nro_caixa
                                              ,pr_cdoperad => pr_cod_operador
                                              -- OUTPUT --
-                                             ,pr_rowid    => vr_rowidlcm
-                                             ,pr_nmtabela => vr_nmtabela
-                                             ,pr_incrineg => vr_incrineg
-                                             ,pr_cdcritic => vr_cdcritic
-                                             ,pr_dscritic => vr_dscritic); 
+                                             ,pr_tab_retorno => vr_tabretor
+                                             ,pr_incrineg    => vr_incrineg
+                                             ,pr_cdcritic    => vr_cdcritic
+                                             ,pr_dscritic    => vr_dscritic);  
                                                
            IF nvl(pr_cdcritic, 0) > 0 OR pr_dscritic IS NOT NULL THEN
-             pr_cdcritic := 0;
-             pr_dscritic := 'Erro ao inserir lançamento : '||sqlerrm;
                                   
              cxon0000.pc_cria_erro(pr_cdcooper => rw_cod_coop_orig.cdcooper
                                   ,pr_cdagenci => pr_cod_agencia
@@ -4473,17 +4467,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                                               ,pr_cdpesqbb => TO_CHAR('CRAP22,'||rw_verifica_mdw.cdopelib)
                                               ,pr_nrdctitg => vr_dsdctitg                                              
                                               -- OUTPUT --
-                                              ,pr_rowid    => vr_rowidlcm
-                                              ,pr_nmtabela => vr_nmtabela
-                                              ,pr_incrineg => vr_incrineg
-                                              ,pr_cdcritic => vr_cdcritic
-                                              ,pr_dscritic => vr_dscritic);
+                                              ,pr_tab_retorno => vr_tabretor
+                                              ,pr_incrineg    => vr_incrineg
+                                              ,pr_cdcritic    => vr_cdcritic
+                                              ,pr_dscritic    => vr_dscritic); 
             
             IF nvl(pr_cdcritic, 0) > 0 OR pr_dscritic IS NOT NULL THEN      
               
-              pr_cdcritic := 0;
-              pr_dscritic := 'Erro ao inserir lançamento : '||sqlerrm;
- 
               cxon0000.pc_cria_erro(pr_cdcooper => rw_cod_coop_orig.cdcooper
                                    ,pr_cdagenci => pr_cod_agencia
                                    ,pr_nrdcaixa => pr_nro_caixa
@@ -5317,10 +5307,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
   vr_aux_nrddigv2 crapchd.nrddigv2%TYPE;
   vr_aux_nrddigv3 crapchd.nrddigv3%TYPE;
   vr_aux_nrseqdig crapmdw.nrseqdig%TYPE;
-  vr_rowidlcm     ROWID;        --> ROWID do lançamento inserido na CRAPLCM
-  vr_nmtabela     VARCHAR2(60); --> Nome ta tabela retornado pela "pc_gerar_lancamento_conta"
-  vr_incrineg     INTEGER;      --> Indicador de crítica de negócio para uso com a "pc_gerar_lancamento_conta"
-
+  vr_nmtabela     VARCHAR2(60);             --> Nome ta tabela retornado pela "pc_gerar_lancamento_conta"
+  vr_incrineg     INTEGER;                  --> Indicador de crítica de negócio para uso com a "pc_gerar_lancamento_conta"
+  vr_tabretor     LANC0001.typ_reg_retorno; --> Tabela de retorno 
+  
   -- Guardar registro dstextab  
   vr_dstextab craptab.dstextab%TYPE;
 
@@ -6005,18 +5995,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                                                 ,pr_cdagetfn => pr_cod_agencia
                                                 ,pr_nrterfin => pr_nro_caixa
                                                 ,pr_cdoperad => pr_cod_operador
-                                                -- OUTPUT-- 
-                                                ,pr_rowid    => vr_rowidlcm
-                                                ,pr_nmtabela => vr_nmtabela
-                                                ,pr_incrineg => vr_incrineg
-                                                ,pr_cdcritic => vr_cdcritic
-                                                ,pr_dscritic => vr_dscritic); 
+                                                -- OUTPUT --
+                                                ,pr_tab_retorno => vr_tabretor
+                                                ,pr_incrineg    => vr_incrineg
+                                                ,pr_cdcritic    => vr_cdcritic
+                                                ,pr_dscritic    => vr_dscritic); 
                                                 
               IF nvl(pr_cdcritic, 0) > 0 OR pr_dscritic IS NOT NULL THEN
                 
-                pr_cdcritic := 0;
-                pr_dscritic := 'Erro ao inserir lançamento : '||sqlerrm;
-                                  
                 cxon0000.pc_cria_erro(pr_cdcooper => rw_cod_coop_orig.cdcooper
                                      ,pr_cdagenci => pr_cod_agencia
                                      ,pr_nrdcaixa => pr_nro_caixa
@@ -6196,18 +6182,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                                              ,pr_cdagetfn => pr_cod_agencia
                                              ,pr_nrterfin => pr_nro_caixa
                                              ,pr_cdoperad => pr_cod_operador
-                                             -- OUTPUT-- 
-                                             ,pr_rowid    => vr_rowidlcm
-                                             ,pr_nmtabela => vr_nmtabela
-                                             ,pr_incrineg => vr_incrineg
-                                             ,pr_cdcritic => vr_cdcritic
-                                             ,pr_dscritic => vr_dscritic); 
+                                             -- OUTPUT --
+                                             ,pr_tab_retorno => vr_tabretor
+                                             ,pr_incrineg    => vr_incrineg
+                                             ,pr_cdcritic    => vr_cdcritic
+                                             ,pr_dscritic    => vr_dscritic);  
                                                   
            IF nvl(pr_cdcritic, 0) > 0 OR pr_dscritic IS NOT NULL THEN
                   
-             pr_cdcritic := 0;
-             pr_dscritic := 'Erro ao inserir lançamento : '||sqlerrm;
-                                   
              cxon0000.pc_cria_erro(pr_cdcooper => rw_cod_coop_orig.cdcooper
                                   ,pr_cdagenci => pr_cod_agencia
                                   ,pr_nrdcaixa => pr_nro_caixa
@@ -6808,18 +6790,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                                                     ,pr_nrautdoc => rw_nrautdoc_mdw.nrautdoc
                                                     ,pr_cdpesqbb => 'CRAP22,'||rw_verifica_mdw.cdopelib
                                                     ,pr_nrdctitg => vr_dsdctitg
-                                                    -- OUTPUT-- 
-                                                    ,pr_rowid    => vr_rowidlcm
-                                                    ,pr_nmtabela => vr_nmtabela
-                                                    ,pr_incrineg => vr_incrineg
-                                                    ,pr_cdcritic => vr_cdcritic
-                                                    ,pr_dscritic => vr_dscritic); 
+                                                    -- OUTPUT --
+                                                    ,pr_tab_retorno => vr_tabretor
+                                                    ,pr_incrineg    => vr_incrineg
+                                                    ,pr_cdcritic    => vr_cdcritic
+                                                    ,pr_dscritic    => vr_dscritic); 
                                                               
                   IF nvl(pr_cdcritic, 0) > 0 OR pr_dscritic IS NOT NULL THEN
                               
-                    pr_cdcritic := 0;
-                    pr_dscritic := 'Erro ao inserir lançamento : '||sqlerrm;
-                                              
                     cxon0000.pc_cria_erro(pr_cdcooper => rw_cod_coop_orig.cdcooper
                                          ,pr_cdagenci => pr_cod_agencia
                                          ,pr_nrdcaixa => pr_nro_caixa
@@ -6996,18 +6974,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                                                                       ,pr_nrautdoc => rw_nrautdoc_mdw.nrautdoc
                                                                       ,pr_cdpesqbb => 'CRAP22,'||rw_verifica_mdw.cdopelib
                                                                       ,pr_nrdctitg => vr_dsdctitg
-                                                                      -- OUTPUT-- 
-                                                                      ,pr_rowid    => vr_rowidlcm
-                                                                      ,pr_nmtabela => vr_nmtabela
-                                                                      ,pr_incrineg => vr_incrineg
-                                                                      ,pr_cdcritic => vr_cdcritic
-                                                                      ,pr_dscritic => vr_dscritic); 
+                                                                      -- OUTPUT --
+                                                                      ,pr_tab_retorno => vr_tabretor
+                                                                      ,pr_incrineg    => vr_incrineg
+                                                                      ,pr_cdcritic    => vr_cdcritic
+                                                                      ,pr_dscritic    => vr_dscritic); 
                                                                                 
                                     IF nvl(pr_cdcritic, 0) > 0 OR pr_dscritic IS NOT NULL THEN
                                                 
-                                      pr_cdcritic := 0;
-                                      pr_dscritic := 'Erro ao inserir lançamento : '||sqlerrm;
-                                                                
                                       cxon0000.pc_cria_erro(pr_cdcooper => rw_cod_coop_orig.cdcooper
                                                            ,pr_cdagenci => pr_cod_agencia
                                                            ,pr_nrdcaixa => pr_nro_caixa
@@ -7890,9 +7864,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
   vr_aux_nrddigv3 crapchd.nrddigv3%TYPE;
   vr_aux_nrseqdig crapmdw.nrseqdig%TYPE;
   vr_nmsegntl crapttl.nmextttl%TYPE;
-  vr_rowidlcm          ROWID;        --> ROWID do lançamento inserido na CRAPLCM
-  vr_nmtabela          VARCHAR2(60); --> Nome ta tabela retornado pela "pc_gerar_lancamento_conta"
-  vr_incrineg          INTEGER;      --> Indicador de crítica de negócio para uso com a "pc_gerar_lancamento_conta"
+  vr_nmtabela          VARCHAR2(60);             --> Nome ta tabela retornado pela "pc_gerar_lancamento_conta"
+  vr_incrineg          INTEGER;                  --> Indicador de crítica de negócio para uso com a "pc_gerar_lancamento_conta"
+  vr_tabretor          LANC0001.typ_reg_retorno; --> Tabela de retorno 
     
   BEGIN
     
@@ -8562,17 +8536,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                                                 ,pr_cdagetfn => pr_cod_agencia
                                                 ,pr_nrterfin => pr_nro_caixa
                                                 ,pr_cdoperad => pr_cod_operador
-                                                -- OUTPUT-- 
-                                                ,pr_rowid    => vr_rowidlcm
-                                                ,pr_nmtabela => vr_nmtabela
-                                                ,pr_incrineg => vr_incrineg
-                                                ,pr_cdcritic => vr_cdcritic
-                                                ,pr_dscritic => vr_dscritic); 
+                                                -- OUTPUT --
+                                                ,pr_tab_retorno => vr_tabretor
+                                                ,pr_incrineg    => vr_incrineg
+                                                ,pr_cdcritic    => vr_cdcritic
+                                                ,pr_dscritic    => vr_dscritic); 
                                                           
               IF nvl(pr_cdcritic, 0) > 0 OR pr_dscritic IS NOT NULL THEN
-                pr_cdcritic := 0;
-                pr_dscritic := 'Erro ao inserir lançamento : '||sqlerrm;
-                                  
+                
                 cxon0000.pc_cria_erro(pr_cdcooper => rw_cod_coop_orig.cdcooper
                                      ,pr_cdagenci => pr_cod_agencia
                                      ,pr_nrdcaixa => pr_nro_caixa
@@ -8749,17 +8720,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                                              ,pr_cdagetfn => pr_cod_agencia
                                              ,pr_nrterfin => pr_nro_caixa
                                              ,pr_cdoperad => pr_cod_operador
-                                             -- OUTPUT-- 
-                                             ,pr_rowid    => vr_rowidlcm
-                                             ,pr_nmtabela => vr_nmtabela
-                                             ,pr_incrineg => vr_incrineg
-                                             ,pr_cdcritic => vr_cdcritic
-                                             ,pr_dscritic => vr_dscritic); 
+                                             -- OUTPUT --
+                                             ,pr_tab_retorno => vr_tabretor
+                                             ,pr_incrineg    => vr_incrineg
+                                             ,pr_cdcritic    => vr_cdcritic
+                                             ,pr_dscritic    => vr_dscritic);  
                                                        
            IF nvl(pr_cdcritic, 0) > 0 OR pr_dscritic IS NOT NULL THEN
-             pr_cdcritic := 0;
-             pr_dscritic := 'Erro ao inserir lançamento : '||sqlerrm;
-
+             
              cxon0000.pc_cria_erro(pr_cdcooper => rw_cod_coop_orig.cdcooper
                                   ,pr_cdagenci => pr_cod_agencia
                                   ,pr_nrdcaixa => pr_nro_caixa
@@ -9536,16 +9504,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                                                           ,pr_nrautdoc => rw_nrautdoc_mdw.nrautdoc
                                                           ,pr_cdpesqbb => 'CRAP22,'||rw_verifica_mdw.cdopelib
                                                           ,pr_nrdctitg => vr_dsdctitg
-                                                          -- OUTPUT-- 
-                                                          ,pr_rowid    => vr_rowidlcm
-                                                          ,pr_nmtabela => vr_nmtabela
-                                                          ,pr_incrineg => vr_incrineg
-                                                          ,pr_cdcritic => vr_cdcritic
-                                                          ,pr_dscritic => vr_dscritic); 
+                                                          -- OUTPUT --
+                                                          ,pr_tab_retorno => vr_tabretor
+                                                          ,pr_incrineg    => vr_incrineg
+                                                          ,pr_cdcritic    => vr_cdcritic
+                                                          ,pr_dscritic    => vr_dscritic); 
                                                                     
                         IF nvl(pr_cdcritic, 0) > 0 OR pr_dscritic IS NOT NULL THEN
-                          pr_cdcritic := 0;
-                          pr_dscritic := 'Erro ao inserir lançamento : '||sqlerrm;
                            
                           cxon0000.pc_cria_erro(pr_cdcooper => rw_cod_coop_orig.cdcooper
                                                ,pr_cdagenci => pr_cod_agencia
@@ -9682,17 +9647,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.cxon0022 AS
                                                            ,pr_nrautdoc => rw_nrautdoc_mdw.nrautdoc
                                                            ,pr_cdpesqbb => 'CRAP22,'||rw_verifica_mdw.cdopelib
                                                            ,pr_nrdctitg => vr_dsdctitg
-                                                           -- OUTPUT-- 
-                                                           ,pr_rowid    => vr_rowidlcm
-                                                           ,pr_nmtabela => vr_nmtabela
-                                                           ,pr_incrineg => vr_incrineg
-                                                           ,pr_cdcritic => vr_cdcritic
-                                                           ,pr_dscritic => vr_dscritic); 
+                                                           -- OUTPUT --
+                                                           ,pr_tab_retorno => vr_tabretor
+                                                           ,pr_incrineg    => vr_incrineg
+                                                           ,pr_cdcritic    => vr_cdcritic
+                                                           ,pr_dscritic    => vr_dscritic);  
                                                                       
                          IF nvl(pr_cdcritic, 0) > 0 OR pr_dscritic IS NOT NULL THEN
-                           pr_cdcritic := 0;
-                           pr_dscritic := 'Erro ao inserir na CRAPLCM : '||sqlerrm;
-                         
+                           
                            cxon0000.pc_cria_erro(pr_cdcooper => rw_cod_coop_orig.cdcooper
                                                 ,pr_cdagenci => pr_cod_agencia
                                                 ,pr_nrdcaixa => pr_nro_caixa
