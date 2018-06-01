@@ -400,7 +400,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps268(pr_cdcooper IN crapcop.cdcooper%TY
                          (pr_cdcooper => pr_cdcooper
                          ,pr_nrdconta => rw_crapseg.nrdconta
                          ,pr_idseqttl => 1          -- Primeiro titular da conta
-                         ,pr_cdprogra => 'CRPS439'  -- Programa
+                         ,pr_cdprogra => 'CRPS268'  -- Programa
                          ,pr_inpriori => 0          -- prioridade
                          ,pr_dsdmensg => 'Cooperado, seu seguro '||vr_dsseguro||' foi cancelado por falta de pagamento. D?vidas consulte seu posto de atendimento' -- corpo da mensagem
                          ,pr_dsdassun => 'Aviso sobre seu seguro'         -- Assunto

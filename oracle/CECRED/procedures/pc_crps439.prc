@@ -888,7 +888,7 @@ begin
                       ,pr_flgtrans => 0
                       ,pr_hrtransa => GENE0002.fn_busca_time
                       ,pr_idseqttl => 1
-                      ,pr_nmdatela => 'crps268'
+                      ,pr_nmdatela => 'crps439'
                       ,pr_nrdconta => rw_crapseg.nrdconta
                       ,pr_nrdrowid => vr_rowid_log
                       );                         
