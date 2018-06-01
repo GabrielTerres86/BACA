@@ -307,7 +307,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
 					        o chamado SD813179 (Adriano).
 
                13/04/2018 - Removidas criticas 929 - COMPE SESSAO UNICA (Diego).
-               
+                            
                04/05/2018 - Chamado #861675.
                            Quando é realizado a devolução automaática deve ser chamado a rotina para criaçaõ da crapdev
                            com insitdev = 1, pois neste programa já serã feito o lançamento de de volução do cheque 
@@ -316,6 +316,10 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                            
                08/05/2018 - Efetuado manutenção para não enviar o relatório crrl564 a intranet. Ele não é mais usado
                             pela área de negócio (Jonata - MOUTS SCTASK0012408)                           
+
+               28/05/2018 - ROLLBACK --> Chamado #861675.
+                           Tivemos que voltar versão devido a não estar enviando os cheques para BBC
+                           nestes casos, de devolução automática. (Wagner/Sustentação).
                            
 ............................................................................. */
 
@@ -1417,7 +1421,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                                      ,nvl(pr_cdoperad,' ')      --cdoperad
                                      ,nvl(pr_cdhistor,0)        --cdhistor
                                      ,'TCO'                     --cdpesqui
-                                     ,1                         --insitdev (Já entra como DEVOLVIDO, pois é feito o lcm já neste mesmo processo)
+                                     ,0                         --insitdev 
                                      ,nvl(rw_crapcop.cdbcoctl,0)--cdbanchq
                                      ,nvl(pr_cdagechq,0)        --cdagechq
                                      ,nvl(pr_nrctachq,0)        --nrctachq
@@ -3761,7 +3765,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps533 (pr_cdcooper IN crapcop.cdcooper%T
                                                                 ,pr_cdprogra => pr_cdprogra
                                                                 ,pr_nrdrecid => 0
                                                                 ,pr_vlchqvlb => pr_vlchqvlb
-                                                                ,pr_insitdev => 1 --> já irá gerar a devolução como DEVOLVIDA.
+                                                                ,pr_insitdev => 0 
                                                                 ,pr_cdcritic => vr_cdcritic
                                                                 ,pr_des_erro => vr_des_erro);
 
