@@ -130,6 +130,9 @@ BEGIN
               21/06/2017 - Removidas condições que validam o valor de cheque VLB e enviam
                            email para o SPB. PRJ367 - Compe Sessao Unica (Lombardi)
 
+              23/05/2018 - Alteração INSERT na craplcm e lot pelas chamadas da rotina LANC0001
+              Renato Cordeiro (AMcom)         
+
 ............................................................................. */
     DECLARE
     
@@ -533,6 +536,13 @@ BEGIN
     
     vr_indice  VARCHAR2(100);
 
+    vr_rowid     ROWID;
+    vr_nmtabela  VARCHAR2(100);
+    vr_incrineg  INTEGER;
+
+    vr_rw_craplot  lanc0001.cr_craplot%ROWTYPE;
+    vr_tab_retorno lanc0001.typ_reg_retorno;
+    
     --======================= SUBROTINAS INTERNAS ==========================       
 
     PROCEDURE pc_verifica_incorporacoes(pr_index INTEGER) IS
@@ -1415,6 +1425,22 @@ BEGIN
         vr_aux_nrdolote := vr_aux_nrdolot2;
   
         BEGIN
+          
+          lanc0001.pc_incluir_lote(pr_cdcooper => pr_cdcooper,
+                                   pr_dtmvtolt => rw_crapdat.dtmvtolt,
+                                   pr_cdagenci => vr_aux_cdagenci,
+                                   pr_cdbccxlt => vr_aux_cdbancob,
+                                   pr_nrdolote => vr_aux_nrdolote,
+                                   pr_tplotmov => vr_aux_tplotmov,
+                                   pr_rw_craplot => vr_rw_craplot,
+                                   pr_cdcritic   => pr_cdcritic,
+                                   pr_dscritic   => pr_dscritic
+                                   );
+           if (nvl(pr_cdcritic,0) <>0 or pr_dscritic is not null) then
+              RAISE vr_exc_saida;
+           end if;
+
+/*        
           INSERT INTO craplot
             (cdcooper
             ,dtmvtolt
@@ -1429,6 +1455,7 @@ BEGIN
             ,vr_aux_cdbancob
             ,vr_aux_nrdolote
             ,vr_aux_tplotmov);        
+*/
         EXCEPTION
           WHEN OTHERS THEN
             vr_dscritic := 'Erro ao inserir registro craplot (#1): '||sqlerrm;
@@ -1478,6 +1505,21 @@ BEGIN
             IF cr_craplot%NOTFOUND THEN
               CLOSE cr_craplot;
               BEGIN
+
+                lanc0001.pc_incluir_lote(pr_cdcooper => pr_cdcooper,
+                                   pr_dtmvtolt => rw_crapdat.dtmvtolt,
+                                   pr_cdagenci => vr_aux_cdagenci,
+                                   pr_cdbccxlt => vr_aux_cdbancob,
+                                   pr_nrdolote => vr_aux_nrdolote,
+                                   pr_tplotmov => vr_aux_tplotmov,
+                                   pr_rw_craplot => vr_rw_craplot,
+                                   pr_cdcritic   => pr_cdcritic,
+                                   pr_dscritic   => pr_dscritic
+                                   );
+                if (nvl(pr_cdcritic,0) <>0 or pr_dscritic is not null) then
+                   RAISE vr_exc_saida;
+                end if;
+/*
                 INSERT INTO craplot
                   (cdcooper
                   ,dtmvtolt
@@ -1492,6 +1534,7 @@ BEGIN
                   ,vr_aux_cdbancob
                   ,vr_aux_nrdolote
                   ,vr_aux_tplotmov);        
+*/
               EXCEPTION
                 WHEN OTHERS THEN
                   vr_dscritic := 'Erro ao inserir registro craplot (#2): '||sqlerrm;
@@ -1570,6 +1613,41 @@ BEGIN
       CLOSE cr_craplot;
 
       BEGIN
+        lanc0001.pc_gerar_lancamento_conta(
+           pr_cdcooper => pr_cdcooper,
+           pr_dtmvtolt => rw_crapdat.dtmvtolt,
+           pr_dtrefere => vr_aux_dtleiarq,
+           pr_cdagenci => vr_aux_cdagenci,
+           pr_cdbccxlt => vr_aux_cdbancob, 
+           pr_nrdolote => vr_aux_nrdolote,
+           pr_nrdconta => vr_aux_nrdconta,
+           pr_nrdctabb => vr_aux_nrdctabb,
+           pr_nrdocmto => vr_aux_nrdocmto,
+           pr_cdhistor => (case rw_crapfdc.tpcheque
+                           when 2 then 340 
+                           else 313
+                           end),
+           pr_vllanmto => vr_tab_linhas(i)('VLDOCMTO').numero,
+           pr_nrseqdig => vr_aux_nrseqarq,
+           pr_cdpesqbb => vr_aux_cdpesqbb,
+           pr_cdbanchq => vr_aux_cdbanchq,
+           pr_cdcmpchq => vr_aux_cdcmpchq,
+           pr_cdagechq => vr_aux_cdagechq,
+           pr_nrctachq => vr_aux_nrctachq,
+           pr_nrlotchq => vr_aux_nrlotchq,
+           pr_sqlotchq => vr_aux_sqlotchq,
+           pr_tab_retorno => vr_tab_retorno,
+--           pr_rowid => vr_rowid,
+  --         pr_nmtabela => vr_nmtabela,
+           pr_incrineg => vr_incrineg,
+           pr_cdcritic => pr_cdcritic,
+           pr_dscritic => pr_dscritic)
+           ;
+           if (nvl(pr_cdcritic,0) <>0 or pr_dscritic is not null) then
+              RAISE vr_exc_saida;
+           end if;
+
+/*
         INSERT INTO 
         craplcm (cdcooper,      dtmvtolt,      dtrefere,      cdagenci,      cdbccxlt,      nrdolote, 
                  nrdconta,      nrdctabb,      nrdocmto,      cdhistor,      
@@ -1586,7 +1664,9 @@ BEGIN
           WHEN OTHERS THEN
           vr_dscritic := 'Erro ao inserir registro craplcm (#1): '||sqlerrm;
           RAISE vr_exc_saida;
+*/
       END;
+
       BEGIN
         --atualizar craplot                
         UPDATE craplot

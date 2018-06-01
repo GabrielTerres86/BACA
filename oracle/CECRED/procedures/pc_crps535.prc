@@ -136,6 +136,8 @@ create or replace procedure cecred.pc_crps535(pr_cdcooper  in craptab.cdcooper%t
 
 			   11/04/2018 - Correção na nomenclatura do arquivo de contingência - COMPE SESSAO UNICA (Diego).
                
+               23/05/2018 - Alteração INSERT na craplcm e lot pelas chamadas da rotina LANC0001
+               Renato Cordeiro (AMcom)         
 ............................................................................. */
 
   -- Cursor genérico de calendário
@@ -534,8 +536,15 @@ create or replace procedure cecred.pc_crps535(pr_cdcooper  in craptab.cdcooper%t
   vr_nrdconta      craptco.nrdconta%TYPE;
   vr_cdagenci_ass      crapchd.cdagenci%TYPE;
   vr_cdcopaco      crapcop.cdcooper%type;
-  
+
+    vr_rowid     ROWID;
+    vr_nmtabela  VARCHAR2(100);
+    vr_incrineg  INTEGER;
+
   vr_nome_arq_log  VARCHAR2(1000);
+
+  vr_rw_craplot  lanc0001.cr_craplot%ROWTYPE;
+  vr_tab_retorno lanc0001.typ_reg_retorno;
 
   PROCEDURE pc_escreve_xml(pr_des_dados in VARCHAR2,
                            pr_idtipo    IN NUMBER) IS
@@ -1280,6 +1289,26 @@ BEGIN
         FETCH cr_craplot INTO rw_craplot;
         IF cr_craplot%NOTFOUND THEN -- Se nao existir insere a capa de lote
           BEGIN
+          lanc0001.pc_incluir_lote(pr_dtmvtolt => rw_crapdat.dtmvtolt,
+                                   pr_dtmvtopg => rw_crapdat.dtmvtopr,
+                                   pr_cdagenci => 1,
+                                   pr_cdbccxlt => 100,
+                                   pr_cdoperad => 1,
+                                   pr_nrdolote => 4650,
+                                   pr_tplotmov => 1,
+                                   pr_tpdmoeda => 1,
+                                   pr_cdcooper => pr_cdcooper,
+                                   pr_rw_craplot => vr_rw_craplot,
+                                   pr_cdcritic   => pr_cdcritic,
+                                   pr_dscritic   => pr_dscritic
+                                   );
+          if (nvl(pr_cdcritic,0) <>0 or pr_dscritic is not null) then
+             RAISE vr_exc_saida;
+          end if;
+
+          vr_rowid_craplot := vr_rw_craplot.ROWID;
+
+/*
             INSERT INTO craplot
               (dtmvtolt,
                dtmvtopg,
@@ -1301,6 +1330,7 @@ BEGIN
                1,
                pr_cdcooper)
              RETURNING ROWID INTO vr_rowid_craplot;
+*/
           EXCEPTION
             WHEN OTHERS THEN
               vr_dscritic := 'Erro ao inserir CRAPLOT: ' ||SQLERRM;
@@ -1349,31 +1379,66 @@ BEGIN
 
         -- insere o cheque na tabela de lancamentos
         BEGIN
+          
+          lanc0001.pc_gerar_lancamento_conta(
+          pr_dtmvtolt => rw_crapdat.dtmvtolt                   , 
+          pr_cdagenci => 1,
+          pr_cdbccxlt => 100, 
+          pr_nrdolote => 4650,
+          pr_nrdconta => vr_nrctachd, 
+          pr_nrdocmto => vr_nrcheque_tmp,
+          pr_cdhistor => vr_cdhistor, 
+          pr_nrseqdig => nvl(rw_craplot.nrseqdig,0) + 1,
+          pr_vllanmto => SUBSTR(vr_dstexto,34,17) / 100, 
+          pr_nrdctabb => vr_nrctachd,
+          pr_nrdctitg => gene0002.fn_mask(vr_nrctachd,'99999999'),
+          pr_cdpesqbb => vr_cdalinea,
+          pr_vldoipmf => 0,
+          pr_nrautdoc => 0, 
+          pr_nrsequni => 0,
+          pr_cdbanchq => rw_crapchd.cdbanchq, 
+          pr_cdcmpchq => rw_crapchd.cdcmpchq,
+          pr_cdagechq => rw_crapchd.cdagechq, 
+          pr_nrctachq => rw_crapchd.nrctachq,
+          pr_nrlotchq => 0, 
+          pr_sqlotchq => 0,
+          pr_cdcooper => pr_cdcooper, 
+          pr_dsidenti => 'CTL',
+          pr_cdcoptfn => vr_cdcoptfn,
+          pr_tab_retorno => vr_tab_retorno,
+          pr_incrineg => vr_incrineg,
+          pr_cdcritic => pr_cdcritic,
+          pr_dscritic => pr_dscritic)
+          ;
+          if (nvl(pr_cdcritic,0) <>0 or pr_dscritic is not null) then
+             RAISE vr_exc_saida;
+          end if;
+/*
           INSERT INTO craplcm
-            (dtmvtolt,
-             cdagenci,
-             cdbccxlt,
-             nrdolote,
-             nrdconta,
-             nrdocmto,
-             cdhistor,
-             nrseqdig,
-             vllanmto,
-             nrdctabb,
-             nrdctitg,
-             cdpesqbb,
-             vldoipmf,
-             nrautdoc,
-             nrsequni,
-             cdbanchq,
-             cdcmpchq,
-             cdagechq,
-             nrctachq,
-             nrlotchq,
-             sqlotchq,
-             cdcooper,
-             dsidenti,
-						 cdcoptfn)
+            (dtmvtolt,--
+             cdagenci,--
+             cdbccxlt,--
+             nrdolote,--
+             nrdconta,--
+             nrdocmto,--
+             cdhistor,--
+             nrseqdig,--
+             vllanmto,--
+             nrdctabb,--
+             nrdctitg,--
+             cdpesqbb,--
+             vldoipmf,--
+             nrautdoc,--
+             nrsequni,--
+             cdbanchq,--
+             cdcmpchq,--
+             cdagechq,--
+             nrctachq,--
+             nrlotchq,--
+             sqlotchq,--
+             cdcooper,--
+             dsidenti,--
+						 cdcoptfn)--
           VALUES
             (rw_crapdat.dtmvtolt,
              1,
@@ -1399,6 +1464,7 @@ BEGIN
              pr_cdcooper,
              'CTL',
 						 vr_cdcoptfn);
+*/
         EXCEPTION
           WHEN OTHERS THEN
             vr_dscritic := 'Erro ao inserir CRAPLCM: '||SQLERRM;

@@ -69,6 +69,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps277(pr_cdcooper IN crapcop.cdcooper%TY
 
                02/03/2017 - Incluido nas consultas da craplau 
                             craplau.dsorigem <> "ADIOFJUROS" (Lucas Ranghetti M338.1)
+
+              23/05/2018 - Alteração INSERT na craplcm e lot pelas chamadas da rotina LANC0001
+              Renato Cordeiro (AMcom)         
   ............................................................................. */
   
   ------------------------------- CURSORES ---------------------------------
@@ -225,6 +228,13 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps277(pr_cdcooper IN crapcop.cdcooper%TY
   vr_nrctares  INTEGER:= 0;
   vr_inrestar  INTEGER:= 0;
   vr_dsrestar  crapres.dsrestar%TYPE;
+
+  vr_rowid     ROWID;
+  vr_nmtabela  VARCHAR2(100);
+  vr_incrineg  INTEGER;
+
+  vr_rw_craplot  lanc0001.cr_craplot%ROWTYPE;
+  vr_tab_retorno lanc0001.typ_reg_retorno;
   
   vr_busca BOOLEAN := TRUE;
 BEGIN
@@ -349,6 +359,33 @@ BEGIN
       
         BEGIN
           --Inserir a capa do lote retornando informacoes para uso posterior
+
+          lanc0001.pc_incluir_lote(pr_cdcooper => pr_cdcooper,
+                                   pr_dtmvtolt => rw_crapdat.dtmvtopr,
+                                   pr_cdagenci => 1,
+                                   pr_cdbccxlt => 100,
+                                   pr_nrdolote => 8459,
+                                   pr_tplotmov => 1,
+                                   pr_nrseqdig => 0,
+                                   pr_cdoperad => 1,
+                                   pr_rw_craplot => vr_rw_craplot,
+                                   pr_cdcritic   => pr_cdcritic,
+                                   pr_dscritic   => pr_dscritic
+                                   );
+          if (nvl(pr_cdcritic,0) <>0 or pr_dscritic is not null) then
+             RAISE vr_exc_saida;
+          end if;
+
+          rw_craplot.cdcooper := vr_rw_craplot.cdcooper;
+          rw_craplot.dtmvtolt := vr_rw_craplot.dtmvtolt;
+          rw_craplot.cdagenci := vr_rw_craplot.cdagenci;
+          rw_craplot.cdbccxlt := vr_rw_craplot.cdbccxlt;
+          rw_craplot.nrdolote := vr_rw_craplot.nrdolote;
+          rw_craplot.tplotmov := vr_rw_craplot.tplotmov;
+          rw_craplot.nrseqdig := vr_rw_craplot.nrseqdig;
+          rw_craplot.rowid    := vr_rw_craplot.rowid;
+
+/*
           INSERT INTO craplot(cdcooper
                              ,dtmvtolt
                              ,cdagenci
@@ -381,6 +418,7 @@ BEGIN
                           ,rw_craplot.tplotmov
                           ,rw_craplot.nrseqdig
                           ,rw_craplot.rowid;
+*/
 
         EXCEPTION
           WHEN OTHERS THEN
@@ -425,7 +463,32 @@ BEGIN
 
       -- Cria Registro na CRAPLCM
       BEGIN
-        INSERT INTO craplcm(cdcooper
+        
+        lanc0001.pc_gerar_lancamento_conta(
+                    pr_cdcooper => pr_cdcooper
+                   ,pr_dtmvtolt => rw_craplot.dtmvtolt
+                   ,pr_cdagenci => rw_craplot.cdagenci
+                   ,pr_cdbccxlt => rw_craplot.cdbccxlt
+                   ,pr_nrdolote => rw_craplot.nrdolote
+                   ,pr_nrdconta => rw_craplau.nrdconta
+                   ,pr_nrdctabb => rw_craplau.nrdconta
+                   ,pr_nrdctitg => GENE0002.FN_MASK(rw_craplau.nrdconta, '99999999')
+                   ,pr_nrdocmto => vr_nrdocmto
+                   ,pr_cdhistor => rw_craplau.cdhistor
+                   ,pr_nrseqdig => rw_craplot.nrseqdig + 1
+                   ,pr_vllanmto => rw_craplau.vllanaut
+                   ,pr_tab_retorno => vr_tab_retorno
+                   ,pr_incrineg => vr_incrineg
+                   ,pr_cdcritic => pr_cdcritic
+                   ,pr_dscritic => pr_dscritic
+                   );
+
+           if (nvl(pr_cdcritic,0) <> 0 or pr_dscritic is not null) then
+              RAISE vr_exc_saida;
+           end if;
+
+/*      
+      INSERT INTO craplcm(cdcooper
                            ,dtmvtolt
                            ,cdagenci
                            ,cdbccxlt
@@ -449,7 +512,7 @@ BEGIN
                            ,rw_craplau.cdhistor
                            ,rw_craplot.nrseqdig + 1
                            ,rw_craplau.vllanaut);
-
+*/
       EXCEPTION
         WHEN OTHERS THEN
           vr_dscritic := 'Erro ao inserir na tabela craplcm. ' || SQLERRM;
@@ -488,8 +551,7 @@ BEGIN
                      ,pr_nrcrcard => rw_craplau.nrcrcard
                      ,pr_dtdebito => rw_crapdat.dtmvtopr );
       FETCH cr_crapdcd INTO rw_crapdcd;               
-                     
-                        
+
       IF cr_crapdcd%NOTFOUND THEN
         -- Fecha Cursor  
         CLOSE cr_crapdcd; 

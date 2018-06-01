@@ -53,7 +53,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps188(pr_cdcooper IN crapcop.cdcooper%TY
                30/05/2015 - Alterado a conversão da data lida da tabela CRAPTAB,
                             pois a tabela tem a data em formato DD/MM/AAAA e o programa
                             estava lendo como MM/DD/AAAA.  (Renato - Supero)
-                            
+
+              23/05/2018 - Alteração INSERT na craplcm e lot pelas chamadas da rotina LANC0001
+              Renato Cordeiro (AMcom)         
   ............................................................................. */
   
   ------------------------------- CURSORES ---------------------------------
