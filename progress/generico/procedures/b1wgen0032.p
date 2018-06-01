@@ -7,7 +7,7 @@
   | b1wgen0032.p/verifica-letras-seguranca | CADA0004.fn_verif_letras_seguranca     |
   | b1wgen0032.obtem-cartoes-magnetico     | CADA0004.pc_obtem_cartoes_magneticos   |
   | b1wgen0032.verifica-situacao-cartao    | CADA0004.fn_situacao_cartao_mag        |
-  
+  | b1wgen0032.bloquear-cartao-magnetico   | CADA0004.pc_bloquear_cartao_magnetico  |
   +----------------------------------------+----------------------------------------+
 
   TODA E QUALQUER ALTERACAO EFETUADA NESSE FONTE A PARTIR DE 20/NOV/2012 DEVERA
@@ -54,7 +54,7 @@
                 26/07/2010 - Permite a conta juridica 239.340-9 da Viacredi a 
                              receber mais de um cartao magnentico (Elton).             
                              
-                17/09/2010 - Bloquear solicitação de novo cartao magnético
+                17/09/2010 - Bloquear solicitaçao de novo cartao magnético
                              para PAC 5 Coop 2 - Transf.de Pac (Irlan).
                              
                 13/12/2011 - Saque com o cartao magnetico (Gabriel).
@@ -79,13 +79,13 @@
                              Alterar nrsencar para dssencar (Guilherme).
                              
                 07/11/2012 - Ajustar letras de seguranca para Internet (David).
-                           - Removido parametro do Nr. do cartão magnético
+                           - Removido parametro do Nr. do cartao magnético
                              da procedure 'grava-senha-letras' (Lucas).
                              
                 11/01/2013 - Alterada proc. 'verifica-senha-atual' para retornar
                              se o cooperado possui letras cadastradas (Lucas).
                 
-                13/08/2013 - Nova forma de chamar as agências, de PAC agora 
+                13/08/2013 - Nova forma de chamar as agencias, de PAC agora 
                              a escrita será PA (André Euzébio - Supero).  
                              
                 06/11/2013 - Criada proc. gravar-hist-cartmagope
@@ -118,7 +118,7 @@
                              (validar-entrega-cartao) para entrega-lo tambem
                              quando bloqueado (Carlos)
                              
-                21/01/2015 - Conversão da fn_sequence para procedure para não
+                21/01/2015 - Conversao da fn_sequence para procedure para nao
                              gerar cursores abertos no Oracle. (Dionathan)
                              
                 22/07/2015 - Remover procedures que nao sera mais utilizadas. (James)
@@ -131,20 +131,20 @@
                 17/12/2015 - Ajuste na validacao do cargo para representante/procurador 
                              (Jonathan - RKAM)
                              
-                24/02/2016 - Alteração na rotina de alteração de senha (Lucas Lunelli
+                24/02/2016 - Alteraçao na rotina de alteraçao de senha (Lucas Lunelli
                              - [PROJ290])    
                              
                 23/12/2015 - Ajustes para proj. 131. Assinatura Multipla.
                              (Jorge/David)             
 
-                17/06/2016 - Inclusão de campos de controle de vendas - M181 ( Rafael Maciel - RKAM)
+                17/06/2016 - Inclusao de campos de controle de vendas - M181 ( Rafael Maciel - RKAM)
 
-				07/12/2016 - P341-Automatização BACENJUD - Alterar o uso da descrição do
+                                07/12/2016 - P341-Automatizaçao BACENJUD - Alterar o uso da descriçao do
                              departamento passando a considerar o código (Renato Darosci)
 
-				19/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
-			                 crapass, crapttl, crapjur 
-							(Adriano - P339).
+                                19/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+                                         crapass, crapttl, crapjur 
+                                                        (Adriano - P339).
 
                 29/03/2018 - Chamar rotina pc_valida_adesao_produto na proc 
                              obtem-permissao-solicitacao. PRJ366 (Lombardi).
@@ -827,7 +827,7 @@ PROCEDURE obtem-permissao-solicitacao:
         DO: 
 
             /***********************************************************/
-            /** Bloquear solicitação de Cartao para o PAC 5 Coop 2    **/
+            /** Bloquear solicitaçao de Cartao para o PAC 5 Coop 2    **/
             /***********************************************************/
             
             IF  par_cdcooper = 2 THEN
@@ -1156,19 +1156,19 @@ PROCEDURE obtem-permissao-solicitacao:
                    tt-titular-magnetico.nmtitcrd = aux_nmtitcrd
                    tt-titular-magnetico.flusucar = FALSE.
                            
-            IF  crapass.inpessoa = 1 THEN			    
+            IF  crapass.inpessoa = 1 THEN                            
                 DO:
-				    FOR FIRST crapttl FIELDS(nmextttl)
-									  WHERE crapttl.cdcooper = crapass.cdcooper AND
-									        crapttl.nrdconta = crapass.nrdconta AND
-											crapttl.idseqttl = 2
-											NO-LOCK:
+                                    FOR FIRST crapttl FIELDS(nmextttl)
+                                                                          WHERE crapttl.cdcooper = crapass.cdcooper AND
+                                                                                crapttl.nrdconta = crapass.nrdconta AND
+                                                                                        crapttl.idseqttl = 2
+                                                                                        NO-LOCK:
 
-					END.
+                                        END.
 
-					IF AVAIL crapttl THEN
-					   DO:
-						   RUN corrige_segtl (INPUT crapttl.nmextttl,
+                                        IF AVAIL crapttl THEN
+                                           DO:
+                                                   RUN corrige_segtl (INPUT crapttl.nmextttl,
                                        OUTPUT aux_nmtitcrd).
 
                     RUN abreviar (INPUT aux_nmtitcrd,
@@ -1181,7 +1181,7 @@ PROCEDURE obtem-permissao-solicitacao:
                            tt-titular-magnetico.nmtitcrd = aux_nmtitcrd
                            tt-titular-magnetico.flusucar = FALSE.
 
-					   END.
+                                           END.
 
                 END.
         END.
@@ -1636,18 +1636,18 @@ PROCEDURE incluir-cartao-magnetico:
     DO TRANSACTION ON ERROR UNDO TRANSACAO, LEAVE TRANSACAO:
 
         /* Busca a proxima sequencia do campo CRAPMAT.NRSEQCAR */
-    	RUN STORED-PROCEDURE pc_sequence_progress
-    	aux_handproc = PROC-HANDLE NO-ERROR (INPUT "CRAPMAT"
-    										,INPUT "NRSEQCAR"
-    										,INPUT STRING(par_cdcooper)
-    										,INPUT "N"
-    										,"").
-    	
-    	CLOSE STORED-PROC pc_sequence_progress
-    	aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
-    			  
-    	ASSIGN aux_nrseqcar = INTE(pc_sequence_progress.pr_sequence)
-    						  WHEN pc_sequence_progress.pr_sequence <> ?.
+            RUN STORED-PROCEDURE pc_sequence_progress
+            aux_handproc = PROC-HANDLE NO-ERROR (INPUT "CRAPMAT"
+                                                                                    ,INPUT "NRSEQCAR"
+                                                                                    ,INPUT STRING(par_cdcooper)
+                                                                                    ,INPUT "N"
+                                                                                    ,"").
+            
+            CLOSE STORED-PROC pc_sequence_progress
+            aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+                              
+            ASSIGN aux_nrseqcar = INTE(pc_sequence_progress.pr_sequence)
+                                                      WHEN pc_sequence_progress.pr_sequence <> ?.
 
         ASSIGN aux_dtvalcar = DATE(MONTH(par_dtmvtolt),28,
                                    YEAR(par_dtmvtolt) + 5) + 5    
@@ -1943,149 +1943,58 @@ PROCEDURE bloquear-cartao-magnetico:
     DEF  INPUT PARAM par_nrdconta AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_idseqttl AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_dtmvtolt AS DATE                           NO-UNDO.
-    DEF  INPUT PARAM par_nrcartao AS DECI                           NO-UNDO.
+    DEF  INPUT PARAM par_nrcartao AS CHAR                           NO-UNDO.
     DEF  INPUT PARAM par_flgerlog AS LOGI                           NO-UNDO.
-            
+    
+    
+    DEF VAR aux_dscritic AS CHAR NO-UNDO.
+    DEF VAR aux_cdcritic AS INTE NO-UNDO.    
     DEF OUTPUT PARAM TABLE FOR tt-erro.
 
-    DEF VAR aux_flgtrans AS LOGI                                    NO-UNDO.
-    
-    DEF VAR aux_contador AS INTE                                    NO-UNDO.
-    
+
     EMPTY TEMP-TABLE tt-erro.
-    
-    ASSIGN aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
-           aux_dstransa = "Bloquear cartao magnetico"
-           aux_flgtrans = FALSE.
 
-    TRANSACAO:
-    
-    DO TRANSACTION ON ERROR UNDO TRANSACAO, LEAVE TRANSACAO:
-    
-        DO aux_contador = 1 TO 10:
-        
-            ASSIGN aux_dscritic = "".
-            
-            FIND crapcrm WHERE crapcrm.cdcooper = par_cdcooper AND
-                               crapcrm.nrdconta = par_nrdconta AND
-                               crapcrm.nrcartao = par_nrcartao
-                               EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+              
+   { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
 
-            IF  NOT AVAILABLE crapcrm  THEN
-                DO:
-                    IF  LOCKED crapcrm  THEN
-                        DO:
-                            aux_dscritic = "Registro do cartao magnetico esta" +
-                                           " sendo alterado.".
-                            PAUSE 1 NO-MESSAGE.
-                            NEXT.
-                        END.
-                    ELSE
-                        aux_dscritic = "Cartao magnetico nao cadastrado.".
-                END.
-        
-            LEAVE.
-            
-        END. /** Fim do DO .. TO **/
-        
-        IF  aux_dscritic <> ""  THEN
-            DO:
-                ASSIGN aux_cdcritic = 0.
+   RUN STORED-PROCEDURE pc_bloquear_cartao_magnetico
+         aux_handproc = PROC-HANDLE NO-ERROR
+                      (INPUT  par_cdcooper, 
+                       INPUT  par_cdagenci, 
+                       INPUT  par_nrdcaixa, 
+                       INPUT  par_cdoperad, 
+                       INPUT  par_nmdatela,
+                       INPUT  par_idorigem,
+                       INPUT  par_nrdconta, 
+                       INPUT  par_idseqttl, 
+                       INPUT  par_dtmvtolt,
+                       INPUT  par_nrcartao,
+                       INPUT  IF par_flgerlog THEN "S" ELSE "N", 
+                       
+                       OUTPUT 0,
+                       OUTPUT "",
+                       OUTPUT "").
+                       
+    CLOSE STORED-PROC pc_bloquear_cartao_magnetico 
+          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.   
+          
+   { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }  
+   
+     ASSIGN aux_cdcritic = pc_bloquear_cartao_magnetico.pr_cdcritic
+                             WHEN pc_bloquear_cartao_magnetico.pr_cdcritic <> ?
+           aux_dscritic  = pc_bloquear_cartao_magnetico.pr_dscritic 
+                             WHEN pc_bloquear_cartao_magnetico.pr_dscritic <> ?.
+ 
+     IF  aux_cdcritic <> 0   OR
+        aux_dscritic <> ""  THEN
+        DO:                                  
+            CREATE tt-erro.
+            ASSIGN tt-erro.cdcritic = aux_cdcritic
+                   tt-erro.dscritic = aux_dscritic.
 
-                RUN gera_erro (INPUT par_cdcooper,
-                               INPUT par_cdagenci,
-                               INPUT par_nrdcaixa,
-                               INPUT 1,            /** Sequencia **/
-                               INPUT aux_cdcritic,
-                               INPUT-OUTPUT aux_dscritic).
-                                   
-                UNDO TRANSACAO, LEAVE TRANSACAO.
-            END.
-        
-        IF  crapcrm.cdsitcar <> 2  THEN
-            DO:
-                ASSIGN aux_cdcritic = 538
-                       aux_dscritic = "".
-
-                RUN gera_erro (INPUT par_cdcooper,
-                               INPUT par_cdagenci,
-                               INPUT par_nrdcaixa,
-                               INPUT 1,            /** Sequencia **/
-                               INPUT aux_cdcritic,
-                               INPUT-OUTPUT aux_dscritic).
-                                   
-                UNDO TRANSACAO, LEAVE TRANSACAO.
-            END.
-
-        ASSIGN crapcrm.cdsitcar = 4
-               crapcrm.dtcancel = par_dtmvtolt
-               crapcrm.dttransa = par_dtmvtolt
-               crapcrm.hrtransa = TIME
-               crapcrm.cdoperad = par_cdoperad               
-               aux_flgtrans     = TRUE.
-    
-    END. /** Fim do DO TRANSACTION - TRANSACAO **/
-    
-    /** Verifica se transacao foi executada com sucesso **/
-    IF  NOT aux_flgtrans  THEN
-        DO:
-            FIND FIRST tt-erro NO-LOCK NO-ERROR.
-            
-            IF  NOT AVAILABLE tt-erro  THEN
-                DO:                
-                    ASSIGN aux_cdcritic = 0
-                           aux_dscritic = "Nao foi possivel bloquear o cartao" +
-                                          " magnetico.".
-
-                    RUN gera_erro (INPUT par_cdcooper,
-                                   INPUT par_cdagenci,
-                                   INPUT par_nrdcaixa,
-                                   INPUT 1,            /** Sequencia **/
-                                   INPUT aux_cdcritic,
-                                   INPUT-OUTPUT aux_dscritic).
-                END.
-                                                
-            IF  par_flgerlog  THEN
-                RUN proc_gerar_log (INPUT par_cdcooper,
-                                    INPUT par_cdoperad,
-                                    INPUT aux_dscritic,
-                                    INPUT aux_dsorigem,
-                                    INPUT aux_dstransa,
-                                    INPUT FALSE,
-                                    INPUT par_idseqttl,
-                                    INPUT par_nmdatela,
-                                    INPUT par_nrdconta,
-                                   OUTPUT aux_nrdrowid).
-                   
             RETURN "NOK".
         END.
-
-    IF  par_flgerlog  THEN
-        DO:
-            RUN proc_gerar_log (INPUT par_cdcooper,
-                                INPUT par_cdoperad,
-                                INPUT "",
-                                INPUT aux_dsorigem,
-                                INPUT aux_dstransa,
-                                INPUT TRUE,
-                                INPUT par_idseqttl,
-                                INPUT par_nmdatela,
-                                INPUT par_nrdconta,
-                               OUTPUT aux_nrdrowid).
-
-            /** Numero do Cartao Magnetico **/
-            RUN proc_gerar_log_item (INPUT aux_nrdrowid,
-                                     INPUT "nrcartao",
-                                     INPUT "",
-                                     INPUT STRING(par_nrcartao,
-                                                  "9999,9999,9999,9999")).
-                                     
-            /** Situacao do cartao **/
-            RUN proc_gerar_log_item (INPUT aux_nrdrowid,
-                                     INPUT "cdsitcar",
-                                     INPUT "2",
-                                     INPUT "4").
-        END.
+                            
 
     RETURN "OK".
     
@@ -3180,7 +3089,7 @@ PROCEDURE grava-senha-letras:
          - Nao devera permitir letras repetidas.
          - Nao devera permitir primeiras letras do nome, Ex.: "GUI".
          - Nao permitir 1a. letra do nome + 1a. letra dos sobrenomes, ex.: "GAS" - Guilherme Augusto Strube. 
-           Se o cooperado possuir apenas 1 sobrenome, esta validação não será efetuada, ex.:  "DV?"  - Diego Vicentini.
+           Se o cooperado possuir apenas 1 sobrenome, esta validaçao nao será efetuada, ex.:  "DV?"  - Diego Vicentini.
          - Nao permitir inicias do nome e sobrenomes, ex.: "GUI", "AUG" "STR".
 
         */
@@ -4321,11 +4230,11 @@ PROCEDURE valida_cartao:
         (YEAR(aux_dtvalida) = YEAR(par_dtmvtocd)    AND
          MONTH(aux_dtvalida) < MONTH(par_dtmvtocd)) THEN
          DO:
-             ASSIGN par_dscritic = "Cartão Vencido".
+             ASSIGN par_dscritic = "Cartao Vencido".
              RETURN "NOK".
          END.
 
-    /* São aceitos seguintes cartões:
+    /* Sao aceitos seguintes cartoes:
          BANCO: 756 - BANCOOB
        AGENCIA: NNN - AGENCIA DA COOPERATIVA NO BANCOOB
        
@@ -4351,7 +4260,7 @@ PROCEDURE valida_cartao:
 
     IF  NOT AVAIL crapcop  THEN
         DO:
-            ASSIGN par_dscritic = "Cartão Inválido.".
+            ASSIGN par_dscritic = "Cartao Inválido.".
             RETURN "NOK".
         END.
     
@@ -4388,7 +4297,7 @@ PROCEDURE valida_cartao:
 
     IF NOT AVAIL crapcrm THEN
     DO:
-        ASSIGN par_dscritic = "Cartão não cadastrado.".
+        ASSIGN par_dscritic = "Cartao nao cadastrado.".
         RETURN "NOK".
     END.
 
@@ -4396,15 +4305,15 @@ PROCEDURE valida_cartao:
     IF  crapcrm.cdsitcar <> 2  THEN
         DO:
             par_dscritic = IF  crapcrm.cdsitcar = 1  THEN
-                               "Cartão Inválido"
+                               "Cartao Inválido"
                            ELSE
                            IF  crapcrm.cdsitcar = 3  THEN
-                               "Cartão Cancelado"
+                               "Cartao Cancelado"
                            ELSE
                            IF  crapcrm.cdsitcar = 4  THEN
-                               "Cartão Bloqueado"
+                               "Cartao Bloqueado"
                            ELSE
-                               "Cartão Inválido".
+                               "Cartao Inválido".
 
             RETURN "NOK".
         END.
