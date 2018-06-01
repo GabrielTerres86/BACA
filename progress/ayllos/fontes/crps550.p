@@ -41,10 +41,14 @@
                             (Lucas R./Rodrigo)  
 
                29/11/2016 - Incorporacao Transulcred (Guilherme/SUPERO)
+               
+               29/05/2018 - Alteracao no layout. Sera gerado respeitando o layout CCF607 da ABBC. 
+                            Chamado SCTASK0012791 (Heitor - Mouts)
 
 ..............................................................................*/
 
 { includes/var_batch.i }
+{ sistema/generico/includes/var_oracle.i }
 
 DEF   VAR b1wgen0011   AS HANDLE                                       NO-UNDO.
 
@@ -73,14 +77,10 @@ DEF TEMP-TABLE crawarq                                                 NO-UNDO
     FIELD nrsequen AS INTE
     INDEX crawarq1 AS PRIMARY nmarquiv nrsequen.
 
-DEF VAR aux_qttpreg2 AS INTE                                           NO-UNDO.
-DEF VAR aux_qttpreg4 AS INTE                                           NO-UNDO.
-DEF VAR aux_qttpreg6 AS INTE                                           NO-UNDO.
 DEF VAR aux_qtregist AS INTE                                           NO-UNDO.
 DEF VAR aux_nrcheque AS INTE                                           NO-UNDO.
 DEF VAR aux_tpregist AS INTE                                           NO-UNDO.
 DEF VAR aux_nrdconta AS INTE                                           NO-UNDO.
-DEF VAR aux_nrsequen AS INTE                                           NO-UNDO.
 DEF VAR aux_contador AS INTE                                           NO-UNDO.
 DEF VAR aux_nrseqarq AS INTE                                           NO-UNDO.
 DEF VAR aux_cdmotivo AS INTE                                           NO-UNDO.
@@ -141,8 +141,8 @@ FORM
     WITH NO-BOX NO-LABELS WIDTH 132 FRAME f_cab_rejeitados.
 
 FORM 
-    aux_setlinha   FORMAT "x(173)"
-    WITH NO-BOX NO-LABELS WIDTH 173 FRAME f_linha.
+    aux_setlinha   FORMAT "x(200)"
+    WITH NO-BOX NO-LABELS WIDTH 200 FRAME f_linha.
 
 ASSIGN glb_cdprogra = "crps550"
        glb_flgbatch = FALSE.
@@ -173,12 +173,33 @@ IF  NOT AVAILABLE crapcop  THEN
         RETURN.
     END.
 
+/* Baixar arquivos do FTP da ABBC */
+{ includes/PLSQL_altera_session_antes.i &dboraayl={&scd_dboraayl} }
+RUN STORED-PROCEDURE pc_busca_ccf_transabbc.
+
+IF  ERROR-STATUS:ERROR  THEN DO:
+	DO  aux_qterrora = 1 TO ERROR-STATUS:NUM-MESSAGES:
+		ASSIGN aux_msgerora = aux_msgerora + 
+			   ERROR-STATUS:GET-MESSAGE(aux_qterrora) + " ".
+	END.
+		
+	UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") +
+					  " - " + glb_cdprogra + "' --> '"  +
+				 "Erro ao executar Stored Procedure: '" +
+				 aux_msgerora + "' >> log/proc_message.log").
+
+	RETURN.
+END.
+
+CLOSE STORED-PROCEDURE pc_busca_ccf_transabbc.
+{ includes/PLSQL_altera_session_depois.i &dboraayl={&scd_dboraayl} }
+
 
 EMPTY TEMP-TABLE crawarq.
 EMPTY TEMP-TABLE cratrej.
 
 /* SER00 + Cod Produto "999" + . + 3 digitos aleatorios */
-ASSIGN aux_nmarquiv = "/micros/cecred/serasa/SER00004.*"
+ASSIGN aux_nmarquiv = "/micros/cecred/abbc/CCF617* /micros/cecred/abbc/CCF627*"
        aux_dscooper = "/usr/coop/cecred/"
        aux_flgfirst = TRUE
        aux_contador = 0.
@@ -191,10 +212,15 @@ DO WHILE TRUE ON ERROR UNDO, LEAVE ON ENDKEY UNDO, LEAVE:
     SET STREAM str_1 aux_nmarquiv FORMAT "x(60)" .
 
     ASSIGN aux_contador = aux_contador + 1
-           aux_nmarqdat = aux_dscooper + "integra/SER00004" +
-                          STRING(DAY(glb_dtmvtolt),"99") +
-                          STRING(MONTH(glb_dtmvtolt),"99") +
+           aux_nmarqdat = aux_dscooper + IF aux_nmarquiv MATCHES("*CCF617*") THEN "integra/CCF617" +
                           STRING(YEAR(glb_dtmvtolt),"9999") +
+                          STRING(MONTH(glb_dtmvtolt),"99") +
+                          STRING(DAY(glb_dtmvtolt),"99") +
+                          STRING(aux_contador,"999")
+						                                                     ELSE "integra/CCF627" +
+                          STRING(YEAR(glb_dtmvtolt),"9999") +
+                          STRING(MONTH(glb_dtmvtolt),"99") +
+                          STRING(DAY(glb_dtmvtolt),"99") +
                           STRING(aux_contador,"999").
 
     UNIX SILENT VALUE("dos2ux " + aux_nmarquiv + " > " +
@@ -210,7 +236,7 @@ DO WHILE TRUE ON ERROR UNDO, LEAVE ON ENDKEY UNDO, LEAVE:
     SET STREAM str_2 aux_setlinha WITH FRAME f_linha.
 
     CREATE crawarq.
-    ASSIGN crawarq.nrsequen = INT(SUBSTR(aux_setlinha,52,4))
+    ASSIGN crawarq.nrsequen = aux_contador
            crawarq.nmarquiv = aux_nmarqdat
            aux_flgfirst     = FALSE.
 
@@ -228,35 +254,11 @@ IF  aux_flgfirst  THEN
         UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") +
                           " - Coop:" + STRING(crapcop.cdcooper,"99") +
                           " - Processar: CCF" +
-                          " - SER00004 - " + glb_cdprogra + "' --> '" +
+                          " - CCF617 - " + glb_cdprogra + "' --> '" +
                           glb_dscritic + " >> " + aux_nmarqlog).
 
         NEXT.
     END.
-
-FIND crabtab WHERE crabtab.cdcooper = crapcop.cdcooper AND
-                   crabtab.nmsistem = "CRED"           AND
-                   crabtab.tptabela = "GENERI"         AND
-                   crabtab.cdempres = 00               AND
-                   crabtab.cdacesso = "NRARQRTSER"     AND
-                   crabtab.tpregist = 001          
-                   EXCLUSIVE-LOCK NO-ERROR NO-WAIT. 
-
-IF  NOT AVAILABLE crabtab  THEN
-    DO:
-        ASSIGN glb_cdcritic = 393.
-        RUN fontes/critic.p.
-        
-        UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") +
-                          " - Coop:" + STRING(crapcop.cdcooper,"99") +
-                          " - Processar: CCF" +
-                          " - " + glb_cdprogra + "' --> '"  +
-                          glb_dscritic + " >> " + aux_nmarqlog).
-
-        NEXT.
-    END.    
-
-ASSIGN aux_nrsequen = INT(SUBSTR(crabtab.dstextab,01,05)).
 
 FIND FIRST craptab WHERE craptab.cdcooper = 3        AND
                          craptab.nmsistem = "CRED"   AND
@@ -278,96 +280,7 @@ IF  NOT AVAILABLE craptab  THEN
         NEXT.
     END.    
 
-FOR EACH crawarq BREAK BY crawarq.nrsequen:
-
-    IF  FIRST-OF(crawarq.nrsequen)  THEN DO:
-        IF  crawarq.nrsequen <> aux_nrsequen  THEN DO:
-            ASSIGN glb_cdcritic = 476.
-            RUN fontes/critic.p.
-
-            UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") +
-                          " - Coop:" + STRING(crapcop.cdcooper,"99") +
-                          " - Processar: CCF" +
-                          " - SER00004 - " + glb_cdprogra + 
-                          "' --> '"  +
-                          glb_dscritic + " " + "SEQ.SERASA " +
-                          STRING(crawarq.nrsequen) + 
-                          " " + "SEQ.COOP " + 
-                          STRING(aux_nrsequen) + " - " +
-                          "integra/err" + 
-                          SUBSTR(crawarq.nmarquiv,
-                                 R-INDEX(crawarq.nmarquiv,"/") + 1,
-                                 LENGTH(crawarq.nmarquiv)) +
-                          " >> " + aux_nmarqlog).
-
-            ASSIGN aux_nmarqimp = aux_dscooper + "arq/"
-                                  + glb_cdprogra +
-                                  "_ANEXO" + STRING(TIME).
-            OUTPUT STREAM str_3 TO VALUE(aux_nmarqimp).
-
-            PUT STREAM str_3 "ERRO DE SEQUENCIA no arquivo "
-                             "SER00004 da cooperativa "
-                             crapcop.nmrescop FORMAT "x(20)"
-                             " / DIA: "
-                             STRING(glb_dtmvtolt,"99/99/9999")
-                             FORMAT "x(17)"
-                             SKIP.
-
-            OUTPUT STREAM str_3 CLOSE.
-
-            /* Move para diretorio converte para utilizar na BO */
-            UNIX SILENT VALUE
-                 ("cp " + aux_nmarqimp + " " + aux_dscooper
-                  + "/converte" + " 2> /dev/null").
-
-            /* envio de email */ 
-            RUN sistema/generico/procedures/b1wgen0011.p
-                PERSISTENT SET b1wgen0011.
-
-            RUN enviar_email IN b1wgen0011
-                               (INPUT crapcop.cdcooper,
-                                INPUT glb_cdprogra,
-                                INPUT "willian@cecred.coop.br," +
-                                      "compe@cecred.coop.br",
-                                INPUT '"ERRO DE SEQUENCIA - "' +
-                                      '"SER00004 - "' +
-                                      crapcop.nmrescop,
-                                INPUT SUBSTRING(aux_nmarqimp, 5),
-                                INPUT FALSE).
-
-            DELETE PROCEDURE b1wgen0011.
-
-            /* remover arquivo criado de anexo */
-            UNIX SILENT VALUE("rm " + aux_nmarqimp +
-                              " 2>/dev/null").
-
-        END.
-    END.
-
-    IF  glb_cdcritic > 0  THEN
-        DO:
-            ASSIGN aux_nmarquiv = aux_dscooper + "integra/err" + 
-                                  SUBSTR(crawarq.nmarquiv,
-                                         R-INDEX(crawarq.nmarquiv,"/") + 1,
-                                         LENGTH(crawarq.nmarquiv)).
-
-            UNIX SILENT VALUE("mv " + crawarq.nmarquiv + " " +
-                              aux_nmarquiv).
-
-            UNIX SILENT VALUE("rm " + crawarq.nmarquiv + 
-                              ".q 2> /dev/null").
-
-            IF  LAST-OF(crawarq.nrsequen)  THEN
-                LEAVE.
-        END.
-
-END. /*** Fim do FOR EACH crawarq ***/
-
-IF  glb_cdcritic > 0  THEN
-    NEXT.
-
-ASSIGN SUBSTR(crabtab.dstextab,1,5) = STRING(crawarq.nrsequen + 1,"99999")
-       aux_flgfirst = FALSE.
+ASSIGN aux_flgfirst = FALSE.
 
 FOR EACH crawarq BREAK BY crawarq.nrsequen
                        BY crawarq.nmarquiv:  
@@ -386,7 +299,7 @@ FOR EACH crawarq BREAK BY crawarq.nrsequen
         UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") +
                           " - Coop:" + STRING(glb_cdcooper,"99") +
                           " - Processar: CCF" +
-                          " - SER00004 - " + glb_cdprogra + "' --> '"
+                          " - CCF617 - " + glb_cdprogra + "' --> '"
                           + glb_dscritic + " - " +
                           crawarq.nmarquiv + " >> " + aux_nmarqlog).
         END.
@@ -411,12 +324,16 @@ PROCEDURE proc_processa_arquivo:
     /*** Header ***/
     SET STREAM str_1 aux_setlinha WITH FRAME f_linha.
 
-    IF  INT(SUBSTR(aux_setlinha,31,1)) <> 0  THEN
+	IF  SUBSTR(aux_setlinha,1,3) <> "000"  THEN
         ASSIGN glb_cdcritic = 468.
    
-    IF  SUBSTR(aux_setlinha,32,12) <> "SERASA-ACHEI"  THEN
+    IF  SUBSTR(aux_setlinha,4,6) <> "CCF617"
+    AND SUBSTR(aux_setlinha,4,6) <> "CCF627" THEN
         ASSIGN glb_cdcritic = 887.
 
+	/*** CCF617 ***/
+	IF SUBSTR(aux_setlinha,4,6) = "CCF617" THEN
+	DO:
     IF  glb_cdcritic <> 0 THEN
         DO:
             INPUT STREAM str_1 CLOSE.
@@ -434,10 +351,9 @@ PROCEDURE proc_processa_arquivo:
             UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") +
                               " - Coop:" + STRING(crapcop.cdcooper,"99") +
                               " - Processar: CCF" +
-                              " - SER00004 - " + glb_cdprogra + "' --> '" +
+                              " - CCF617 - " + glb_cdprogra + "' --> '" +
                               glb_dscritic + " - " + aux_nmarquiv +
                               " >> " + aux_nmarqlog).
-            
             RETURN.
         END.
 
@@ -449,15 +365,9 @@ PROCEDURE proc_processa_arquivo:
                aux_qtregist = aux_qtregist + 1.
         
         /*** Trailer ***/ 
-        IF  INT(SUBSTR(aux_setlinha,31,1)) = 9  THEN DO:
-            /*** Verifica contagem dos tipos de registro ***/
-            IF  aux_qttpreg2 <> INT(SUBSTR(aux_setlinha,32,7))  THEN
-                ASSIGN glb_cdcritic = 504.
-            ELSE    
-            IF  aux_qttpreg4 <> INT(SUBSTR(aux_setlinha,39,7))  THEN
-                ASSIGN glb_cdcritic = 504.
-            ELSE
-            IF  aux_qttpreg6 <> INT(SUBSTR(aux_setlinha,46,7))  THEN
+        IF  SUBSTR(aux_setlinha,1,3) = "999"  THEN DO:
+            /*** Verifica contagem dos registros ***/
+            IF  aux_qtregist <> INT(SUBSTR(aux_setlinha,191,10))  THEN
                 ASSIGN glb_cdcritic = 504.
 
             IF  glb_cdcritic > 0  THEN DO:
@@ -466,7 +376,7 @@ PROCEDURE proc_processa_arquivo:
             UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") +
                               " - Coop:" + STRING(glb_cdcooper,"99") +
                               " - Processar: CCF" +
-                              " - SER00004 - " + glb_cdprogra + 
+                              " - CCF617 - " + glb_cdprogra + 
                               "' --> '" +
                               glb_dscritic + 
                               " - ARQUIVO PROCESSADO - " + 
@@ -479,35 +389,28 @@ PROCEDURE proc_processa_arquivo:
         ELSE
             DO:
                 /*** Detalhe ***/
-                ASSIGN aux_nrdconta = INT(SUBSTR(aux_setlinha,8,12))
-                       aux_nrcheque = INT(SUBSTR(aux_setlinha,20,6))
-                       aux_tpregist = INT(SUBSTR(aux_setlinha,31,1))
-                       aux_cdmotivo = INT(SUBSTR(aux_setlinha,32,2))
-                       aux_tppessoa = INT(SUBSTR(aux_setlinha,35,1))
-                       aux_nrcpfcgc = DECI(SUBSTR(aux_setlinha,36,14))
-                       aux_dtiniest = DATE(INT(SUBSTRING(aux_setlinha,52,2)),
-                                           INT(SUBSTRING(aux_setlinha,50,2)),
-                                           INT(SUBSTRING(aux_setlinha,54,4)))
-                       aux_vlcheque = DECI(SUBSTR(aux_setlinha,58,17)) / 100
-                       aux_nmextttl = TRIM(SUBSTR(aux_setlinha,75,40))
-                       aux_cdderros = TRIM(SUBSTR(aux_setlinha,115,45))
-                       aux_idseqttl = INT(SUBSTR(aux_setlinha,28,2)).
+				/* So processar registros da CECRED */
+                IF SUBSTR(aux_setlinha,18,3) <> "085" THEN
+                  NEXT.
+
+                ASSIGN aux_nrdconta = INT(SUBSTR(aux_setlinha,25,12))
+                       aux_nrcheque = INT(SUBSTR(aux_setlinha,37,6))
+                       aux_tpregist = INT(SUBSTR(aux_setlinha,2,2))
+                       aux_cdmotivo = INT(SUBSTR(aux_setlinha,60,2))
+                       aux_tppessoa = INT(SUBSTR(aux_setlinha,112,2))
+                       aux_nrcpfcgc = DECI(SUBSTR(aux_setlinha,4,14))
+                       aux_dtiniest = DATE(INT(SUBSTRING(aux_setlinha,66,2)),
+                                           INT(SUBSTRING(aux_setlinha,68,2)),
+                                           INT(SUBSTRING(aux_setlinha,62,4)))
+                       aux_vlcheque = DECI(SUBSTR(aux_setlinha,43,17)) / 100
+                       aux_nmextttl = TRIM(SUBSTR(aux_setlinha,70,40))
+                       aux_idseqttl = INT(SUBSTR(aux_setlinha,110,2)).
                                        
                 IF  aux_idseqttl = 0  THEN
                     aux_idseqttl = 1.
                     
-                /*** Contadores por Tipo de Registro ***/
-                IF  aux_tpregist = 2  THEN
-                    ASSIGN aux_qttpreg2 = aux_qttpreg2 + 1.
-                ELSE
-                IF  aux_tpregist = 4  THEN
-                    ASSIGN aux_qttpreg4 = aux_qttpreg4 + 1.
-                ELSE
-                IF  aux_tpregist = 6  THEN
-                    ASSIGN aux_qttpreg6 = aux_qttpreg6 + 1.
-                    
                 FIND crapcop WHERE crapcop.cdagectl = 
-                                   INT(SUBSTR(aux_setlinha,4,4))
+                                   INT(SUBSTR(aux_setlinha,21,4))
                                    NO-LOCK NO-ERROR.
 
                 IF  NOT AVAIL crapcop  THEN
@@ -519,7 +422,7 @@ PROCEDURE proc_processa_arquivo:
                                       " - Coop:" + 
                                       STRING(glb_cdcooper,"99") +
                                       " - Processar: CCF" +
-                                      " - SER00004 - " + 
+                                      " - CCF617 - " + 
                                       glb_cdprogra + "' --> '" +
                                       glb_dscritic + 
                                       " - CONTA/DV: " + 
@@ -572,7 +475,7 @@ PROCEDURE proc_processa_arquivo:
                     UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") +
                                   " - Coop:" + STRING(glb_cdcooper,"99") +
                                   " - Processar: CCF" +
-                                  " - SER00004 - " + 
+                                  " - CCF617 - " + 
                                   glb_cdprogra + "' --> '" +
                                   glb_dscritic + 
                                   " - CONTA/DV: " + 
@@ -584,8 +487,6 @@ PROCEDURE proc_processa_arquivo:
                     NEXT.
                 END.
                     
-                IF  aux_cdderros = ""  THEN 
-                    DO:
                         /*** Se registro detalhe foi processado com sucesso ***/
                         FIND crapneg WHERE 
                              crapneg.cdcooper = crapcop.cdcooper AND
@@ -599,8 +500,168 @@ PROCEDURE proc_processa_arquivo:
                         IF  AVAILABLE crapneg  THEN
                             ASSIGN crapneg.flgctitg = 2. 
                     END.
+		    END.  /*** Fim do DO WHILE TRUE ***/
+		END.
+	ELSE   /*** CCF627 ***/
+	DO:
+		IF  glb_cdcritic <> 0 THEN
+			DO:
+				INPUT STREAM str_1 CLOSE.
+				
+				RUN fontes/critic.p.
+				ASSIGN aux_nmarquiv = "integra/err" + 
+									  SUBSTR(crawarq.nmarquiv,
+											 R-INDEX(crawarq.nmarquiv,"/") + 1,
+											 LENGTH(crawarq.nmarquiv)).
+
+				UNIX SILENT VALUE("rm " + crawarq.nmarquiv + ".q 2> /dev/null").
+
+				UNIX SILENT VALUE("mv " + crawarq.nmarquiv + " " + aux_nmarquiv).
+
+				UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") +
+								  " - Coop:" + STRING(crapcop.cdcooper,"99") +
+								  " - Processar: CCF" +
+								  " - CCF627 - " + glb_cdprogra + "' --> '" +
+								  glb_dscritic + " - " + aux_nmarquiv +
+								  " >> " + aux_nmarqlog).
+				RETURN.
+			END. 
+
+		DO WHILE TRUE TRANSACTION ON ENDKEY UNDO, LEAVE:
+
+			SET STREAM str_1 aux_setlinha WITH FRAME f_linha.
+
+			ASSIGN glb_cdcritic = 0
+				   aux_qtregist = aux_qtregist + 1.
+			
+			/*** Trailer ***/ 
+			IF  SUBSTR(aux_setlinha,1,3) = "999"  THEN DO:
+				/*** Verifica contagem dos registros ***/
+				IF  aux_qtregist <> INT(SUBSTR(aux_setlinha,191,10))  THEN
+					ASSIGN glb_cdcritic = 504.
+
+				IF  glb_cdcritic > 0  THEN DO:
+					RUN fontes/critic.p.
+
+				UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") +
+								  " - Coop:" + STRING(glb_cdcooper,"99") +
+								  " - Processar: CCF" +
+								  " - CCF627 - " + glb_cdprogra + 
+								  "' --> '" +
+								  glb_dscritic + 
+								  " - ARQUIVO PROCESSADO - " + 
+								  aux_nmarquiv +
+								  " >> " + aux_nmarqlog).
+					
+					LEAVE.
+				END. 
+			END. 
                 ELSE
                     DO:
+					/*** Detalhe ***/
+					/* So processar registros tipo 1 */
+					IF SUBSTR(aux_setlinha,1,1) <> "1" THEN
+					  NEXT.
+
+					/* So processar registros da CECRED */
+					IF SUBSTR(aux_setlinha,18,3) <> "085" THEN
+					  NEXT.
+
+					ASSIGN aux_nrdconta = INT(SUBSTR(aux_setlinha,25,12))
+						   aux_nrcheque = INT(SUBSTR(aux_setlinha,37,6))
+						   aux_tpregist = INT(SUBSTR(aux_setlinha,2,2))
+						   aux_cdmotivo = INT(SUBSTR(aux_setlinha,60,2))
+						   aux_tppessoa = INT(SUBSTR(aux_setlinha,112,2))
+						   aux_nrcpfcgc = DECI(SUBSTR(aux_setlinha,4,14))
+						   aux_dtiniest = DATE(INT(SUBSTRING(aux_setlinha,66,2)),
+											   INT(SUBSTRING(aux_setlinha,68,2)),
+											   INT(SUBSTRING(aux_setlinha,62,4)))
+						   aux_vlcheque = DECI(SUBSTR(aux_setlinha,43,17)) / 100
+						   aux_nmextttl = TRIM(SUBSTR(aux_setlinha,70,40))
+						   aux_idseqttl = INT(SUBSTR(aux_setlinha,110,2))
+						   aux_cdderros = SUBSTR(aux_setlinha,183,3).
+
+					IF  aux_idseqttl = 0  THEN
+						aux_idseqttl = 1.
+
+					FIND crapcop WHERE crapcop.cdagectl = 
+									   INT(SUBSTR(aux_setlinha,21,4))
+									   NO-LOCK NO-ERROR.
+
+					IF  NOT AVAIL crapcop  THEN
+					DO:
+						ASSIGN glb_cdcritic = 651.
+						RUN fontes/critic.p.
+
+						UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") +
+										  " - Coop:" + 
+										  STRING(glb_cdcooper,"99") +
+										  " - Processar: CCF" +
+										  " - CCF627 - " + 
+										  glb_cdprogra + "' --> '" +
+										  glb_dscritic + 
+										  " - CONTA/DV: " + 
+										  STRING(aux_nrdconta,"zzzz,zzz,z") + 
+										  " - Registro " + 
+										  STRING(aux_qtregist,"9999999") +
+										  " - " + aux_nmarquiv + " >> " + 
+										  aux_nmarqlog).
+						
+						NEXT.
+					END. 
+					
+					/* se for uma das cooperativas migradas, 
+					  deve buscar a nova conta e coop */
+					IF crapcop.cdcooper =  4 OR
+					   crapcop.cdcooper = 15 OR
+					   crapcop.cdcooper = 17 THEN DO:
+
+					  /*verifica se é uma conta migrada da:
+						  concredi
+						  credimilsul
+						  transulcred */
+					  FIND FIRST craptco 
+						WHERE craptco.cdcopant = crapcop.cdcooper 
+						  AND craptco.nrctaant = aux_nrdconta 
+						  AND craptco.flgativo = TRUE
+						  NO-LOCK NO-ERROR.
+				
+					  /* se encontrar deve utilizar o novo
+						numero de conta na coop nova*/
+					  IF AVAIL(craptco) THEN DO:
+
+						/* Busca dados da nova Cooperativa */
+						FIND FIRST crapcop 
+							 WHERE crapcop.cdcooper = craptco.cdcooper
+								NO-LOCK NO-ERROR.
+						ASSIGN aux_nrdconta = craptco.nrdconta.
+						
+					  END.     
+					END. 
+
+					FIND crapass WHERE crapass.cdcooper = crapcop.cdcooper AND
+									   crapass.nrdconta = aux_nrdconta 
+									   NO-LOCK NO-ERROR.
+									   
+					IF  NOT AVAILABLE crapass  THEN DO:
+						ASSIGN glb_cdcritic = 9.
+						RUN fontes/critic.p.
+
+						UNIX SILENT VALUE("echo " + STRING(TIME,"HH:MM:SS") +
+									  " - Coop:" + STRING(glb_cdcooper,"99") +
+									  " - Processar: CCF" +
+									  " - CCF627 - " + 
+									  glb_cdprogra + "' --> '" +
+									  glb_dscritic + 
+									  " - CONTA/DV: " + 
+									  STRING(aux_nrdconta,"zzzz,zzz,z") + 
+									  " - Registro " + 
+									  STRING(aux_qtregist,"9999999") +
+									  " - " + aux_nmarquiv + " >> " + 
+									  aux_nmarqlog).
+						NEXT.
+					END. 
+						
                         /*** Se registro teve erro, atualiza para Reenviar ***/
                         FIND crapneg WHERE 
                              crapneg.cdcooper = crapcop.cdcooper AND
@@ -613,7 +674,7 @@ PROCEDURE proc_processa_arquivo:
                              USE-INDEX crapneg1 EXCLUSIVE-LOCK NO-ERROR.
                                           
                         IF  AVAILABLE crapneg  THEN
-                            ASSIGN crapneg.flgctitg = 4. /*** Reenviar ***/
+                            ASSIGN crapneg.flgctitg = 4.
                             
                         RUN cria_rejeitado.
                         
@@ -621,10 +682,9 @@ PROCEDURE proc_processa_arquivo:
                                aux_flgrejei = TRUE.
 
                     END.
+    END. /*** Fim do DO WHILE TRUE ***/
             END. 
            
-    END. /*** Fim do DO WHILE TRUE ***/
-     
     INPUT STREAM str_1 CLOSE.
    
     UNIX SILENT VALUE("rm " + crawarq.nmarquiv + ".q 2> /dev/null").
@@ -820,7 +880,7 @@ PROCEDURE procura_erro:
                              craptab.nmsistem = "CRED"       AND
                              craptab.tptabela = "GENERI"     AND
                              craptab.cdempres = 00           AND
-                             craptab.cdacesso = "CDERROSSER" AND
+                             craptab.cdacesso = "CDERROSSER617" AND
                              craptab.tpregist = aux_cddoerro  
                              NO-ERROR NO-WAIT.
                              

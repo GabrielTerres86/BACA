@@ -102,7 +102,10 @@
                 22/01/2018 - Incluido tratamento para geraçao de arquivos para o bancoob
                              (craphec ARQUIVOS BANCOOB) PRJ406-FGTS(Odirlei-Busana).
 
-				08/03/2018 - Removida DEVOLUCAO VLB - COMPE Sessao Unica (Diego).
+				        08/03/2018 - Removida DEVOLUCAO VLB - COMPE Sessao Unica (Diego).
+                
+                30/05/2018 - Ajustes na execucao do CCF, mudanca de horarios para o retorno.
+                             Chamado SCTASK0012791 - Heitor (Mouts)
 
 .............................................................................*/
 
@@ -3153,6 +3156,43 @@ PROCEDURE imp_arq:
                                
              RUN fontes/crps556.p.
          END.  */
+         
+         WHEN "IMP CCF" THEN
+         DO:
+             RUN atualiza_status_execucao (INPUT par_nmprgexe,
+                                           INPUT glb_dtmvtolt,
+                                           INPUT par_cdcooper).
+
+             RUN gera_log_execucao (INPUT par_nmprgexe + "(CRPS550)",
+                                    INPUT "Inicio execucao", 
+                                    INPUT par_cdcooper,
+                                    INPUT "(TODAS)").
+             RUN fontes/crps550.p.
+             RUN gera_log_execucao (INPUT par_nmprgexe + "(CRPS550)",
+                                    INPUT "Fim execucao", 
+                                    INPUT par_cdcooper,
+                                    INPUT "(TODAS)").
+             
+             RUN grava_dthr_proc(INPUT par_cdcooper,
+                                 INPUT glb_dtmvtolt,
+                                 INPUT TIME,
+                                 INPUT TRIM(par_nmprgexe)). 
+
+             /* Nao havera controle de importacao inicialmente
+             
+             ASSIGN aux_nmarqslv = "/usr/coop/cecred/salvar/CCF617" +
+                                                STRING(YEAR(glb_dtmvtolt),"9999") +
+                                                STRING(MONTH(glb_dtmvtolt),"99") +
+                                                STRING(DAY(glb_dtmvtolt),"99") +
+                                                "*".
+             /* CCF */ 
+             RUN retorna_arquivo_importado (INPUT aux_nmarqslv).
+             IF   RETURN-VALUE = "OK" THEN
+                  RUN grava_dthr_proc(INPUT par_cdcooper,
+                                      INPUT glb_dtmvtolt,
+                                      INPUT TIME,
+                                      INPUT TRIM(par_nmprgexe)). */
+         END.
 
          WHEN "IMP CONTRA-ORDEM/CCF" THEN
          DO:
@@ -3171,16 +3211,6 @@ PROCEDURE imp_arq:
                                         INPUT par_cdcooper,
                                         INPUT "(TODAS)").
                  
-                 RUN gera_log_execucao (INPUT par_nmprgexe + "(CRPS550)",
-                                        INPUT "Inicio execucao", 
-                                        INPUT par_cdcooper,
-                                        INPUT "(TODAS)").
-                 RUN fontes/crps550.p.
-                 RUN gera_log_execucao (INPUT par_nmprgexe + "(CRPS550)",
-                                        INPUT "Fim execucao", 
-                                        INPUT par_cdcooper,
-                                        INPUT "(TODAS)").
-    
                  /* Valida se importou os arquivos, caso contrario nao devera
                    gravar data e hora da ultima execucao, pois o programa devera 
                    tentar importar novamente */ 
@@ -3196,21 +3226,6 @@ PROCEDURE imp_arq:
                                           INPUT glb_dtmvtolt,
                                           INPUT TIME,
                                           INPUT TRIM(par_nmprgexe)). 
-                 ELSE
-                      DO:
-                          ASSIGN aux_nmarqslv = "/usr/coop/cecred/salvar/SER00004" +
-                                                STRING(DAY(glb_dtmvtolt),"99") +
-                                                STRING(MONTH(glb_dtmvtolt),"99") +
-                                                STRING(YEAR(glb_dtmvtolt),"9999") +
-                                                "*".
-                           /* CCF */ 
-                          RUN retorna_arquivo_importado (INPUT aux_nmarqslv).
-                          IF   RETURN-VALUE = "OK" THEN
-                               RUN grava_dthr_proc(INPUT par_cdcooper,
-                                                   INPUT glb_dtmvtolt,
-                                                   INPUT TIME,
-                                                   INPUT TRIM(par_nmprgexe)). 
-                      END.
                  /***** Fim da validacao de importacao do arquivo *********/
              END.
                       
