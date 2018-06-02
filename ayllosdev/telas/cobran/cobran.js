@@ -1214,7 +1214,7 @@ function selecionaTabela(tr) {
     $('[onclick^=geraCartaAnuencia]').length &&
         $('[onclick^=geraCartaAnuencia]').attr('id', 'btn_carta_anuencia');
 
-    if (insitcrt == 5) {
+    if (insitcrt == 5 && cdbandoc == 85) {
         $('#carta_anuencia', '#frmReport').habilitaCampo();
         $('#btn_carta_anuencia').removeClass('botaoDesativado').attr('onclick', 'geraCartaAnuencia(); return false;')
     } else {
