@@ -1312,6 +1312,7 @@ function buscaConsulta(operacao) {
 			nrinssac: nrinssac,
             insitcrt: insitcrt,
 			dtvencto: dtvencto,
+            cdufsaca: cdufsaca,
             redirect: 'script_ajax'
         },
         error: function (objAjax, responseError, objExcept) {

@@ -30,7 +30,6 @@ $vr_dtvencto = strtotime($vr_dtvencto . ' + '.$qtlimaxp.' days');
 $vr_dtmvtolt = strtotime($vr_dtmvtolt);
 
 $exec_inst_auto = $vr_dtvencto > $vr_dtmvtolt ? 1 : 0;
-
 //var_dump($vr_dtvencto,$vr_dtmvtolt,$qtlimaxp,$exec_inst_auto);
 
 foreach( $registro as $r ) {
@@ -45,6 +44,13 @@ foreach( $registro as $r ) {
 			// Não criar a opção
 			$cria_opcao = 0;
 		} 
+		// Verifica se o UF está cadastrado, caso não estiver, não permite instrução 81
+		if (!$ufCadastrado) {
+			if( getByTagName($r->tags,'cdocorre') == 81) { // Excluir Protesto com Carta de Anuência Eletrônica
+				// Não criar a opção
+				$cria_opcao = 0;
+			}
+		}
 	} else {
 		// Não está protestado
 		if( getByTagName($r->tags,'cdocorre') == 11) { // Sustar Protesto e Manter em Carteira
@@ -85,7 +91,7 @@ foreach( $registro as $r ) {
 			} 
 		} 
 	}
-	
+
 	if ($esta_protestado == 0){
 		if( getByTagName($r->tags,'cdocorre') == 81) { // Excluir Protesto com Carta de Anuência Eletrônica
 			// Não criar a opção

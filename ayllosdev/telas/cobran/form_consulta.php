@@ -47,6 +47,7 @@
 	$nrinssac   = $_POST['nrinssac'];
 	$insitcrt   = $_POST['insitcrt'];
 	$dtvencto	= $_POST['dtvencto'];
+	$cdufsaca   = $_POST['cdufsaca'];
 	
 	switch( $operacao ) {
 		case 'log':			$procedure = 'buca_log';			break;	
@@ -140,6 +141,30 @@
 	$qtlimmip = $xmlObj->roottag->tags[0]->tags[0]->cdata;
 	$qtlimaxp = $xmlObj->roottag->tags[0]->tags[1]->cdata;
 	
+	// Busca parametros
+	$xml = "<Root>";
+	$xml .= " <Dados>";
+	$xml .= "   <cdcooper>".$glbvars["cdcooper"]."</cdcooper>";
+	$xml .= " </Dados>";
+	$xml .= "</Root>";
+	
+	$xmlResult = mensageria($xml, "PARPRT", "PARPRT_CONSULTA", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	$xmlObj = getObjectXML($xmlResult);
+	$param = $xmlObj->roottag->tags[0]->tags[0];
+  
+	if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
+	  $msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
+	  if ($msgErro == "") {
+		  $msgErro = $xmlObj->roottag->tags[0]->cdata;
+	  }
+	  
+	  exibirErro('error',$msgErro,'Alerta - Ayllos','fechaRotina( $(\'#divRotina\') )', false);
+	  exit();
+	}
+			
+	$ufs = getByTagName($param->tags, 'dsuf');
+	$param_uf = !empty($ufs) ? explode(',', $ufs) : "";
+	$ufCadastrado = in_array($cdufsaca, $param_uf) != null;
 ?>
 
 <table cellpadding="0" cellspacing="0" border="0" >
