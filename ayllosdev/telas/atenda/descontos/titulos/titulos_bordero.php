@@ -57,6 +57,22 @@
 		exibeErro("Conta/dv inv&aacute;lida.");
 	}
 	
+	/* Verifica se está em contingencia */
+	$xml = "<Root>";
+	$xml .= " <Dados>";
+	$xml .= " </Dados>";
+	$xml .= "</Root>";
+	
+	$xmlResult = mensageria($xml,"TELA_ATENDA_DESCTO","CONTINGENCIA_IBRATAN", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+	$xmlObj = getClassXML($xmlResult);
+	$root = $xmlObj->roottag;
+	// Se ocorrer um erro, mostra crítica
+	if ($root->erro){
+		exibirErro('error',$root->erro->registro->dscritic->cdata,'Alerta - Ayllos','bloqueiaFundo(divRotina)');
+		exit;
+	}
+	$flctgest = $root->dados->flctgest;
+	
 	/*Verifica se o borderô deve ser utilizado no sistema novo ou no antigo*/
 	$xml = "<Root>";
 	$xml .= " <Dados>";
@@ -201,7 +217,7 @@
 		<?}?>
 		<input type="button" class="botao" value="Incluir" onClick="mostrarBorderoIncluir();return false;" style="<?php echo $dispI;?>"  />
 		<input type="button" class="botao" value="Consultar" <?php if ($qtBorderos == 0) { echo 'style="cursor: default;'.$dispC.'" onClick="return false;"'; } else { echo 'style="'.$dispC.'" onClick="mostraDadosBorderoDscTit(\'C\');return false;"'; } ?> />
-		<input type="button" class="botao" value="Rejeitar"  <?php if ($qtBorderos == 0) { echo 'style="cursor: default;'.$dispR.'" onClick="return false;"'; } else { echo 'style="'.$dispR.'" onClick="mostrarBorderoRejeitar();return false;"'; } ?> />
+		<input type="button" class="botao" value="Rejeitar"  <?php if ($qtBorderos == 0) { echo 'style="cursor: default;'.$dispR.'" onClick="return false;"'; } else { echo 'style="'.$dispR.'" onClick="mostrarBorderoRejeitar('.$flctgest.');return false;"'; } ?> />
 		<input type="button" class="botao" value="Alterar"  onClick="mostrarBorderoAlterar();return false;" style="<?php echo $dispI;?>" />
 		<input type="button" class="botao" value="Analisar" <?php if ($qtBorderos == 0) { echo 'style="cursor: default;'.$dispN.'" onClick="return false;"'; } else { echo 'style="'.$dispN.'" onClick="mostrarBorderoAnalisar();return false;"'; } ?> />
 		<input type="button" class="botao" value="Imprimir" <?php if ($qtBorderos == 0) { echo 'style="cursor: default;'.$dispM.'" onClick="return false;"'; } else { echo 'style="'.$dispM.'" onClick="mostraImprimirBordero();return false;"'; } ?> />

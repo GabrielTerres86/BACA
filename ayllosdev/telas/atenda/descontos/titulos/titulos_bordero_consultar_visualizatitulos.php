@@ -236,7 +236,7 @@
 										switch ($t->tags[14]->cdata){ 
 											case 0: echo "Aguardando An&aacute;lise";break;
 											case 1: echo "Aprovado";break;
-											case 2: echo "Reprovado";break;
+											case 2: echo "N&atilde;o Aprovado";break;
 											default: "------";break;
 										}
 									?>	
