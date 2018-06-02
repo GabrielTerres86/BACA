@@ -366,6 +366,17 @@ function formataOpcaoT() {
     cFimvlpro.css({ 'width': '50px' }).addClass('inteiro campo');
     cIndconci.css({ 'width': '160px' }).addClass('campo');
     cDscartor.css({ 'width': '130px' }).addClass('campo');
+	
+	var date = new Date();
+    var now = ("0" + date.getDate()).slice(-2) + '/' + ("0" + (date.getMonth() + 1)).slice(-2) + '/' + date.getFullYear();
+
+    if (!cInidtpro.val()) {
+        cInidtpro.val(now);
+    }
+
+    if (!cFimdtpro.val()) {
+        cFimdtpro.val(now);
+    }
 
     layoutPadrao();
     return false;
@@ -606,11 +617,10 @@ function formataTabelaTeds() {
     var arrayLargura = new Array();
     arrayLargura[0] = '210px';
     arrayLargura[1] = '120px';
-    arrayLargura[2] = '60px';
-    arrayLargura[3] = '65px';
-    arrayLargura[4] = '45px';
-    arrayLargura[5] = '90px';
-    arrayLargura[6] = '50px';
+    arrayLargura[2] = '90px';
+    arrayLargura[3] = '80px';
+    arrayLargura[4] = '90px';
+    arrayLargura[5] = '50px';
 
     var arrayAlinha = new Array();
     arrayAlinha[0] = 'center';
@@ -706,11 +716,13 @@ function formataTabelaConciliacoes() {
 
     var arrayAlinha = new Array();
     arrayAlinha[0] = 'center';
-    arrayAlinha[1] = 'center';
+    arrayAlinha[1] = 'right';
     arrayAlinha[2] = 'center';
     arrayAlinha[3] = 'center';
     arrayAlinha[4] = 'center';
-    arrayAlinha[5] = 'right';
+    arrayAlinha[5] = 'center';
+    arrayAlinha[6] = 'right';
+    arrayAlinha[7] = 'center';
 
 
     var metodoTabela = '';
@@ -855,18 +867,28 @@ function controlaPesquisaCartorio() {
 
 function selecionaTabela(tr) {
     registro = tr;
+	
+	$('#idlancto', '.complemento').val($('#idlancto', tr).val());
+	$('#dscartorio', '.complemento').html($('#nmcartorio', tr).val());
+	$('#nmremetente', '.complemento').html($('#nmremetente', tr).val());
+	$('#cpfcnpj', '.complemento').html($('#cnpj_cpf', tr).val());
+	$('#cdbanpag', '.complemento').html($('#banco', tr).val() + '/' + $('#agencia', tr).val());
+	$('#nrconta', '.complemento').html($('#conta', tr).val());
+	$('#vlted', '.complemento').html(number_format($('#valor', tr).val(), 2, ',', '.'));
+	$('#dtrecebimento', '.complemento').html($('#dtrecebimento', tr).val());
+	$('#dsstatus', '.complemento').html($('#status', tr).val());
+	$('#cdcidade', '.complemento').html($('#cidade', tr).val());
+	$('#cdestado', '.complemento').html($('#estado', tr).val());
 
-    $('#idlancto', '.complemento').val($('#idlancto', tr).val());
-    $('#dscartorio', '.complemento').html($('#nmcartorio', tr).val());
-    $('#nmremetente', '.complemento').html($('#nmremetente', tr).val());
-    $('#cpfcnpj', '.complemento').html($('#cnpj_cpf', tr).val());
-    $('#cdbanpag', '.complemento').html($('#banco', tr).val() + '/' + $('#agencia', tr).val());
-    $('#nrconta', '.complemento').html($('#conta', tr).val());
-    $('#vlted', '.complemento').html($('#valor', tr).val());
-    $('#dtrecebimento', '.complemento').html($('#dtrecebimento', tr).val());
-    $('#dsstatus', '.complemento').html($('#status', tr).val());
-    $('#cdcidade', '.complemento').html($('#cidade', tr).val());
-    $('#cdestado', '.complemento').html($('#estado', tr).val());
+	if (cddopcao == 'C')  {
+		$('#dscartorio', '.complemento').html($('#cartorio', tr).val());
+		$('#cdcoope', '.complemento').html($('#cooperativa', tr).val());
+		$('#dtconcilacao', '.complemento').html($('#dataconc', tr).val());
+		$('#nrconve', '.complemento').html($('#convenio', tr).val());
+		$('#vltitul', '.complemento').html(number_format($('#valortit', tr).val(), 2, ',', '.'));
+		$('#dtpagamento', '.complemento').html($('#dtmvtolt', tr).val());
+		$('#vlted', '.complemento').html(number_format($('#valorted', tr).val(), 2, ',', '.'));
+	}
 
     return false;
 }
@@ -966,7 +988,10 @@ function verificaCheckbox(elem, valorCheckbox) {
 }
 
 function validaConciliacao() {
-    showConfirmacao('Confirma a concilia&ccedil;&atilde;o?', 'MANPRT', "pedeSenhaCoordenador(2, 'efetuaConciliacao();', 'fechaRotina($(\"#divRotina\"))')", 'estadoInicial();', 'sim.gif', 'nao.gif');
+    //showConfirmacao('Confirma a concilia&ccedil;&atilde;o?', 'MANPRT', "pedeSenhaCoordenador(2, 'efetuaConciliacao();', 'fechaRotina($(\"#divRotina\"))')", 'estadoInicial();', 'sim.gif', 'nao.gif');
+	//pedeSenhaCoordenador(2, 'efetuaConciliacao();', 'fechaRotina($(\"#divRotina\"))')
+	showConfirmacao('Confirma a concilia&ccedil;&atilde;o?', 'MANPRT', "efetuaConciliacao();", 'estadoInicial();', 'sim.gif', 'nao.gif');
+
     /* parcial, não será feito, caso, volte, descomentar bloco abaixo: */
     // if (converteMoedaFloat($('#vltitulos').val()) < converteMoedaFloat($('#vltotal').val())) {
     //     var msg = 'O somat&oacute;rio dos valores dos t&iacute;tulos &eacute; inferior ao da TED. A concilia&ccedil;&atilde;o ser&aacute; realizada de forma parcial.<br>Confirma a concilia&ccedil;&atilde;o?';
