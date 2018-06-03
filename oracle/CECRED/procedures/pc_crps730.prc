@@ -3039,11 +3039,11 @@ begin
   -- temporario RC7
   vr_dtmvtolt := trunc(SYSDATE);
   
---	wprt0001.pc_obtem_retorno(pr_cdcooper => 3
---													 ,pr_cdbandoc => 85
---													 ,pr_dtmvtolt => vr_dtmvtolt
---													 ,pr_dscritic => pr_dscritic
---													 );
+	/*wprt0001.pc_obtem_retorno(pr_cdcooper => 3
+													 ,pr_cdbandoc => 85
+													 ,pr_dtmvtolt => vr_dtmvtolt
+													 ,pr_dscritic => pr_dscritic
+													 );*/
 	--
 	IF pr_dscritic IS NOT NULL THEN
     --
@@ -3090,7 +3090,7 @@ begin
   END IF;
 	
 	-- Executa a conciliação automática
-	--tela_manprt.pc_gera_conciliacao_auto(pr_dscritic => pr_dscritic);
+	tela_manprt.pc_gera_conciliacao_auto(pr_dscritic => pr_dscritic);
 	--
   IF pr_dscritic IS NOT NULL THEN
     --
@@ -3099,7 +3099,7 @@ begin
   END IF;
 	
 	-- Gera as movimentações
-	--cobr0011.pc_gera_movimento_pagamento(pr_dscritic => pr_dscritic);
+	cobr0011.pc_gera_movimento_pagamento(pr_dscritic => pr_dscritic);
 	--
   IF pr_dscritic IS NOT NULL THEN
     --

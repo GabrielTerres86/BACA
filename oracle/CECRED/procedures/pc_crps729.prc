@@ -544,8 +544,8 @@ create or replace procedure cecred.pc_crps729(pr_dscritic OUT VARCHAR2
          AND crapsab.cdcooper = crapcob.cdcooper
          AND crapsab.nrdconta = crapcob.nrdconta
          AND crapsab.nrinssac = crapcob.nrinssac
-         AND crapsab.nmcidsac = crapmun.dscidade (+)
-         AND crapsab.cdufsaca = crapmun.cdestado (+)
+         AND trim(upper(crapsab.nmcidsac)) = crapmun.dscidade (+)
+	       AND trim(upper(crapsab.cdufsaca)) = crapmun.cdestado (+)
          AND crapmun.cdcomarc = LPAD(comarca.cdufibge, 2, '0') || LPAD(comarca.cdcidbge, 5, '0')
          AND crapenc.tpendass = 9 -- Comercial
          AND crapcob.cdbandoc = 85
@@ -2923,11 +2923,13 @@ BEGIN
 	                          ,pr_dscritic => pr_dscritic -- OUT
 														);
   --
+	/*
 	IF pr_dscritic IS NOT NULL THEN
     --
     RAISE vr_exc_erro;
     --
   END IF;
+	*/
 	-- Escrever o log no arquivo
   pc_controla_log_batch(1, to_char(SYSDATE, 'DD/MM/YYYY - HH24:MI:SS') || ' - pc_crps729 --> Finalizado o processamento das remessas.'); -- Texto para escrita
   --

@@ -9991,7 +9991,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     --Proximo Registro
     FETCH cr_crapret INTO rw_crapret;
     --Se nao encontrou
-    IF cr_crapret%FOUND THEN
+    IF cr_crapret%NOTFOUND THEN
       -- Fechar o cursor
       CLOSE cr_crapret;
       -- Gerar o retorno para o cooperado 

@@ -811,7 +811,7 @@ create or replace package body cecred.cobr0011 IS
                ,rw_crapdat.dtmvtocd
                ,pr_nrdocmto -- vr_nrctrlif
                ,vr_aux_nrseqdig
-               ,vr_aux_cdhistor
+               ,pr_cdhistor -- vr_aux_cdhistor
                ,vr_indebcre
                ,pr_vllanmto
                ,pr_nrcpfcgc
@@ -1220,7 +1220,8 @@ create or replace package body cecred.cobr0011 IS
                                            ,pr_vldescto => 0
                                            ,pr_vljurmul => 0
                                            ,pr_vlrpagto => 0
-                                           ,pr_vltarifa => pr_vltarifa
+                                           ,pr_vltarifa => 0
+																					 ,pr_vloutdes => pr_vltarifa
                                            ,pr_flgdesct => FALSE
                                            ,pr_flcredit => FALSE
                                            ,pr_nrretcoo => pr_ret_nrremret
@@ -1397,6 +1398,16 @@ create or replace package body cecred.cobr0011 IS
         RAISE vr_exc_erro;
       END IF;
     END IF;
+		
+		PAGA0001.pc_prep_tt_lcm_consolidada (pr_idtabcob => rw_crapcob.rowid --ROWID da cobranca
+																				,pr_cdocorre => pr_cdocorre      --Codigo Ocorrencia /* 24. Retir. Cartor. */
+																				,pr_tplancto => 'T'              --Tipo Lancamento  /* tplancto = "C" Cartorio */
+																				,pr_vltarifa => 0                --Valor Tarifa
+																				,pr_cdhistor => 0                --Codigo Historico
+																				,pr_cdmotivo => NULL             --Codigo motivo
+																				,pr_tab_lcm_consolidada => pr_tab_lcm_consolidada --Tabela de Lancamentos
+																				,pr_cdcritic => vr_cdcritic      --Codigo Critica
+																				,pr_dscritic => vr_dscritic);    --Descricao Critica
 
     /* Preparar Lote de Retorno Cooperado */
     PAGA0001.pc_prep_retorno_cooperado (pr_idregcob => rw_crapcob.rowid    --ROWID da cobranca
@@ -1421,7 +1432,8 @@ create or replace package body cecred.cobr0011 IS
                                            ,pr_vldescto => 0
                                            ,pr_vljurmul => 0
                                            ,pr_vlrpagto => 0
-                                           ,pr_vltarifa => pr_vltarifa
+                                           ,pr_vltarifa => 0
+																					 ,pr_vloutdes => pr_vltarifa
                                            ,pr_flgdesct => FALSE
                                            ,pr_flcredit => FALSE
                                            ,pr_nrretcoo => pr_ret_nrremret
@@ -1674,7 +1686,8 @@ create or replace package body cecred.cobr0011 IS
                                            ,pr_vldescto => 0
                                            ,pr_vljurmul => 0
                                            ,pr_vlrpagto => 0
-                                           ,pr_vltarifa => pr_vltarifa
+                                           ,pr_vltarifa => 0
+																					 ,pr_vloutdes => pr_vltarifa
                                            ,pr_flgdesct => FALSE
                                            ,pr_flcredit => FALSE
                                            ,pr_nrretcoo => pr_ret_nrremret
@@ -2198,7 +2211,8 @@ create or replace package body cecred.cobr0011 IS
                                            ,pr_vldescto => 0
                                            ,pr_vljurmul => 0
                                            ,pr_vlrpagto => 0
-                                           ,pr_vltarifa => pr_vltarifa
+                                           ,pr_vltarifa => 0
+																					 ,pr_vloutdes => pr_vltarifa
                                            ,pr_flgdesct => FALSE
                                            ,pr_flcredit => FALSE
                                            ,pr_nrretcoo => pr_ret_nrremret
@@ -2404,6 +2418,16 @@ create or replace package body cecred.cobr0011 IS
         --Levantar Excecao
         RAISE vr_exc_erro;
     END;
+		
+		PAGA0001.pc_prep_tt_lcm_consolidada (pr_idtabcob => rw_crapcob.rowid --ROWID da cobranca
+																				,pr_cdocorre => pr_cdocorre      --Codigo Ocorrencia /* 24. Retir. Cartor. */
+																				,pr_tplancto => 'T'              --Tipo Lancamento  /* tplancto = "C" Cartorio */
+																				,pr_vltarifa => 0                --Valor Tarifa
+																				,pr_cdhistor => 0                --Codigo Historico
+																				,pr_cdmotivo => NULL             --Codigo motivo
+																				,pr_tab_lcm_consolidada => pr_tab_lcm_consolidada --Tabela de Lancamentos
+																				,pr_cdcritic => vr_cdcritic      --Codigo Critica
+																				,pr_dscritic => vr_dscritic);    --Descricao Critica
 
     /* Preparar Lote de Retorno Cooperado */
     PAGA0001.pc_prep_retorno_cooperado (pr_idregcob => rw_crapcob.rowid    --ROWID da cobranca
@@ -2428,7 +2452,8 @@ create or replace package body cecred.cobr0011 IS
                                            ,pr_vldescto => 0
                                            ,pr_vljurmul => 0
                                            ,pr_vlrpagto => 0
-                                           ,pr_vltarifa => pr_vltarifa
+                                           ,pr_vltarifa => 0
+																					 ,pr_vloutdes => pr_vltarifa
                                            ,pr_flgdesct => FALSE
                                            ,pr_flcredit => FALSE
                                            ,pr_nrretcoo => pr_ret_nrremret
@@ -2467,9 +2492,8 @@ create or replace package body cecred.cobr0011 IS
     WHEN OTHERS THEN
       -- Erro
       pr_cdcritic:= 0;
-      pr_dscritic:= 'Erro na rotina COBR0011.pc_proc_remessa_cartorio '||sqlerrm;
+      pr_dscritic:= 'Erro na rotina PAGA0002.pc_proc_remessa_cartorio '||sqlerrm;
   END pc_proc_remessa_cartorio;
-	
 	-- Gera lançamentos de estorno
 	PROCEDURE pc_processa_estorno(pr_cdcooper IN  craplot.cdcooper%TYPE
 		                           ,pr_dtmvtolt IN  craplot.dtmvtolt%TYPE
@@ -3141,6 +3165,7 @@ create or replace package body cecred.cobr0011 IS
 						,crapcco.cdagenci
 						,crapcco.cdbccxlt
 						,crapcco.nrconven
+						,tci.rowid
 				FROM tbcobran_conciliacao_ieptb tci
 						,tbfin_recursos_movimento   trm
 						,tbcobran_retorno_ieptb     tri
@@ -3329,6 +3354,18 @@ create or replace package body cecred.cobr0011 IS
 				END IF;
 				--
 			END IF;
+			--
+			BEGIN
+				--
+				UPDATE tbcobran_conciliacao_ieptb tci
+				   SET tci.flgproc = 1
+				 WHERE tci.rowid = rw_conciliados.rowid;
+				--
+			EXCEPTION
+				WHEN OTHERS THEN
+					pr_dscritic := 'Erro ao atualizar a conciliacao: ' || SQLERRM;
+					RAISE vr_exc_erro;
+			END;
 			--
 		END LOOP;
 

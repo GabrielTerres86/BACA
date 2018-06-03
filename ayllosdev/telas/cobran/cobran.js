@@ -1585,8 +1585,10 @@ function formataInstrucoes(operacao) {
 }
 
 function buscaCampo() {
-
+	
     var cdinstru = $('#cdinstru', '#frmConsulta').val();
+	var nrdconta = $('#nrdconta', 'tr.corSelecao').val();
+	var nrcnvcob = $('#nrcnvcob', 'tr.corSelecao').val();
     var mensagem = 'Aguarde, buscando dados ...';
     showMsgAguardo(mensagem);
 
@@ -1596,6 +1598,8 @@ function buscaCampo() {
         url: UrlSite + 'telas/cobran/form_campo.php',
         data: {
             cdinstru: cdinstru,
+			nrdconta: nrdconta,
+			nrcnvcob: nrcnvcob,
             redirect: 'script_ajax'
         },
         error: function (objAjax, responseError, objExcept) {
