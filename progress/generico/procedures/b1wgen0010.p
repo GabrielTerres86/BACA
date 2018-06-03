@@ -4447,6 +4447,13 @@ PROCEDURE cria_tt-consulta-blt.
                                        ELSE
                                           tt-consulta-blt.dssituac.
 
+	 IF NOT tt-consulta-blt.flgdprot = FALSE AND crapcob.insitcrt <> 0 THEN
+	 DO:
+		CASE crapcob.insitcrt:
+           WHEN 3 THEN ASSIGN tt-consulta-blt.dssituac =
+                              tt-consulta-blt.dssituac + "/EM CARTORIO".
+        END CASE.
+	 END.
 
      IF crapcob.inserasa <> 0 THEN
      DO:
