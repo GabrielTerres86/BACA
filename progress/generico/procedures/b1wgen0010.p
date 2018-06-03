@@ -4447,7 +4447,10 @@ PROCEDURE cria_tt-consulta-blt.
                                        ELSE
                                           tt-consulta-blt.dssituac.
 
-	 IF NOT tt-consulta-blt.flgdprot = FALSE AND crapcob.insitcrt <> 0 THEN
+	 IF crapcob.incobran = 5 AND
+	    crapcob.dtdpagto <> ? AND
+		NOT tt-consulta-blt.flgdprot = FALSE AND
+		crapcob.insitcrt <> 0 THEN
 	 DO:
 		CASE crapcob.insitcrt:
            WHEN 3 THEN ASSIGN tt-consulta-blt.dssituac =
