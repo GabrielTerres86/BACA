@@ -67,6 +67,7 @@ var dsdregis = "";  // Variavel para armazenar os valores dos titulares
 var nrconven = 0;   // Variavel para guardar o convenio no inclui-altera.php
 var mensagem = "Deseja efetuar impress&atilde;o do termo de ades&atilde;o ?"; // Mensagem de confirmacao de impressao
 var callafterCobranca = '';
+var gFlginclu = false;
 
 // Numero do convenio que deve ser impresso
 var nrconven_imprimir = 0; 
@@ -262,6 +263,8 @@ function realizaExclusao(inapurac) {
 
 // Exibe a opcao de Consulta ou Habilitacao
 function consulta(cddopcao, nrconven, dsorgarq, flginclu, flgregis, cddbanco) {
+
+    gFlginclu = flginclu == 'true';
 
     var nrcnvceb = $("#nrcnvceb", "#divConteudoOpcao").val();
     var insitceb = $("#insitceb", "#divConteudoOpcao").val();
@@ -611,7 +614,7 @@ function cancelaSustaBoletos(fltipo, cddopcao) { // 0 = cancela | 1 = susta
 function confirmaInativacaoProtesto(cddopcao) {
     var blnchecked = $("#flprotes", "#divOpcaoConsulta").prop("checked");
     var flprotes_old = $("#flprotes", "#divConteudoOpcao").val();
-    flprotes_old = flprotes_old == '' ? "NAO" : flprotes_old;
+    flprotes_old = flprotes_old == '' || gFlginclu ? "NAO" : flprotes_old;
     var flprotes_new = blnchecked ? "SIM" : "NAO";
 
     // Se foi habilitado/desabilitado o indicador
