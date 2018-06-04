@@ -989,7 +989,7 @@ function verificaCheckbox(elem, valorCheckbox) {
 }
 
 function validaConciliacao() {
-    showConfirmacao('Confirma a concilia&ccedil;&atilde;o?', 'MANPRT', "pedeSenhaCoordenador(2, 'efetuaConciliacao();', 'fechaRotina($(\"#divRotina\"))')", 'estadoInicial();', 'sim.gif', 'nao.gif');
+    showConfirmacao('Confirma a concilia&ccedil;&atilde;o?', 'Confirma&ccedil;&atilde;o - Ayllos', "efetuaConciliacao();", ' blockBackground(parseInt($("#divRotina").css("z-index")))', 'sim.gif', 'nao.gif');
     /* parcial, não será feito, caso, volte, descomentar bloco abaixo: */
     // if (converteMoedaFloat($('#vltitulos').val()) < converteMoedaFloat($('#vltotal').val())) {
     //     var msg = 'O somat&oacute;rio dos valores dos t&iacute;tulos &eacute; inferior ao da TED. A concilia&ccedil;&atilde;o ser&aacute; realizada de forma parcial.<br>Confirma a concilia&ccedil;&atilde;o?';

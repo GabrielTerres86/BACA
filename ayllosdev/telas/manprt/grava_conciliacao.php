@@ -49,17 +49,7 @@ $xmlObj = getObjectXML($xmlResult);
 
 // Se ocorrer um erro, mostra crítica
 if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") {
-
-    $msgErro = $xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata;
-
-    $nmdcampo = $xmlObj->roottag->tags[0]->attributes["NMDCAMPO"];
-
-    if(empty ($nmdcampo)){
-        $nmdcampo = "opcao";
-    }
-
-    exibirErro('error',utf8_encode($msgErro),'Alerta - Ayllos','controlaFoco(\''.$nmdcampo.'\');',false);
-
+	exibirErro('error',utf8_encode($xmlObj->roottag->tags[0]->tags[0]->tags[4]->cdata),'Alerta - Ayllos',"bloqueiaFundo($('#divRotina'));",false);
 }
 
-exibirErro('inform','Opera&ccedil;&atilde;o efetuada com sucesso.','Alerta - Ayllos','controlaVoltar();', false);
+exibirErro('inform','Opera&ccedil;&atilde;o efetuada com sucesso.','Alerta - Ayllos','estadoInicial();', false);
