@@ -75,6 +75,8 @@ DEF VAR aux_nmarqmat AS CHAR                                           NO-UNDO.
 DEF VAR aux_nmarqter AS CHAR                                           NO-UNDO.
 DEF VAR tel_cdcooper AS CHAR        FORMAT "x(12)"           VIEW-AS COMBO-BOX
                                                        INNER-LINES 11  NO-UNDO.
+DEF VAR tel_cdcooper_A AS CHAR      FORMAT "x(12)"           VIEW-AS COMBO-BOX
+                                                       INNER-LINES 11  NO-UNDO.
 DEF VAR tel_datafina AS DATE        FORMAT "99/99/9999"                NO-UNDO.
 DEF VAR tel_datainic AS DATE        FORMAT "99/99/9999"                NO-UNDO.
 DEF VAR tel_emailbat AS CHAR        FORMAT "x(300)"                    NO-UNDO.
@@ -143,7 +145,7 @@ FORM tel_datainic AT 03 LABEL "Data Inicial"
      SKIP(1)
      WITH ROW 8 COLUMN 2 SIDE-LABELS OVERLAY NO-BOX FRAME f_datas.
 
-FORM tel_cdcooper    AT 07 LABEL "Cooperativa"
+FORM tel_cdcooper_A    AT 07 LABEL "Cooperativa"
                            HELP "Selecione a Cooperativa"
      SKIP                       
      tel_nrdconta    AT 07  AUTO-RETURN     LABEL "Conta/dv"
@@ -194,6 +196,18 @@ DEF FRAME f_cratdoc
 ON RETURN OF tel_cdcooper DO:
 
     ASSIGN tel_cdcooper = tel_cdcooper:SCREEN-VALUE IN FRAME f_cooperativas
+           aux_contador = 0.
+
+    IF   glb_cddopcao = "B"   THEN
+         APPLY "TAB".
+    ELSE
+         APPLY "GO".
+
+END.
+
+ON RETURN OF tel_cdcooper_A DO:
+
+    ASSIGN tel_cdcooper_A = tel_cdcooper_A:SCREEN-VALUE IN FRAME f_altera_baixa
            aux_contador = 0.
 
     IF   glb_cddopcao = "B"   THEN
@@ -474,19 +488,22 @@ DO WHILE TRUE:
       DO:
           RUN alimenta-selection (INPUT FALSE).
 
-          ASSIGN tel_cdcooper:LIST-ITEM-PAIRS IN FRAME f_altera_baixa = aux_nmcooper
-                 tel_cdcooper = STRING(glb_cdcooper).
+          ASSIGN tel_cdcooper_A:LIST-ITEM-PAIRS IN FRAME f_altera_baixa = aux_nmcooper
+                 tel_cdcooper_A = STRING(glb_cdcooper).
           
           IF glb_cdcooper = 3 THEN DO:
             DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
-               UPDATE tel_cdcooper                    
+
+               UPDATE tel_cdcooper_A                    
                       WITH FRAME f_altera_baixa.
                
                LEAVE.
             END.
           END.
           ELSE
-            tel_cdcooper = STRING(glb_cdcooper).
+            tel_cdcooper_A = STRING(glb_cdcooper).
+
+          ASSIGN tel_cdcooper = tel_cdcooper_A.
           
           IF INT(tel_cdcooper) <> 0 THEN   
           DO:
