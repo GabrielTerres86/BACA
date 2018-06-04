@@ -825,19 +825,23 @@ PROCEDURE pc_obtem_cabecalho_atenda( pr_cdcooper IN crapcop.cdcooper%TYPE  --> C
                                       ,pr_des_reto       OUT VARCHAR2                 --> OK ou NOK
                                       ,pr_tab_erro       OUT gene0001.typ_tab_erro);		
 									  
-PROCEDURE pc_obtem_cabecalho_atenda( pr_cdcooper IN crapcop.cdcooper%TYPE  --> Codigo da cooperativa
-                                      ,pr_cdagenci IN crapage.cdagenci%TYPE  --> Codigo de agencia
-                                      ,pr_nrdcaixa IN crapbcx.nrdcaixa%TYPE  --> Numero do caixa
-                                      ,pr_cdoperad IN crapope.cdoperad%TYPE  --> Codigo do operador
-                                      ,pr_nrdconta IN crapass.nrdconta%TYPE  --> Numero da conta
-                                      ,pr_nrdctitg IN crapass.nrdctitg%TYPE  --> Numero da conta itg
-                                      ,pr_dtinicio IN DATE                   --> Data de incio
-                                      ,pr_dtdfinal IN DATE                   --> data final
-                                      ,pr_idorigem IN INTEGER                --> Identificado de oriem
-                                      ---------- OUT --------
-                                      ,pr_tab_cabec OUT typ_tab_cabec                 --> Retorna dados do cabecalho da tela ATENDA
-                                      ,pr_des_reto       OUT VARCHAR2                 --> OK ou NOK
-                                      ,pr_tab_erro       OUT gene0001.typ_tab_erro);
+
+  PROCEDURE pc_bloquear_cartao_magnetico( pr_cdcooper IN crapcop.cdcooper%TYPE  --> Codigo da cooperativa
+                                         ,pr_cdagenci IN crapage.cdagenci%TYPE  --> Codigo de agencia
+                                         ,pr_nrdcaixa IN crapbcx.nrdcaixa%TYPE  --> Numero do caixa
+                                         ,pr_cdoperad IN crapope.cdoperad%TYPE  --> Codigo do operador
+                                         ,pr_nmdatela IN VARCHAR2  --> Nome da tela
+                                         ,pr_idorigem IN INTEGER                --> Identificado de oriem
+                                         ,pr_nrdconta IN crapass.nrdconta%TYPE  --> Numero da conta
+                                         ,pr_idseqttl IN crapttl.idseqttl%TYPE  --> sequencial do titular
+                                         ,pr_dtmvtolt IN DATE                   --> Data do movimento
+                                         ,pr_nrcartao IN VARCHAR2               --crapcrm.nrcartao%TYPE  --> Numero do cartão
+                                         ,pr_flgerlog IN VARCHAR2               --> identificador se deve gerar log S-Sim e N-Nao
+
+                                        ------ OUT ------
+                                         ,pr_cdcritic  OUT PLS_INTEGER
+                                         ,pr_dscritic  OUT VARCHAR2
+                                         ,pr_des_reto  OUT VARCHAR2 );           --> OK ou NOK
 									  							                 
 
 END CADA0004;
