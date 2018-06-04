@@ -1548,10 +1548,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
             2381 - TRANSFERENCIA EMPRESTIMO PP P/ PREJUIZO
             2396 - TRANSFERENCIA FINANCIAMENTO PP P/ PREJUIZO
             2401 - TRANSFERENCIA EMPRESTIMO TR P/ PREJUIZO
+            2402 - REVERSAO JUROS +60 EMPRESTIMO TR P/ PREJUIZO
+            2406 - REVERSAO JUROS +60 FINANCIAMENTO TR P/ PREJUIZO
+            2405 - TRANSFERENCIA EMP/ FIN TR SUSPEITA DE FRAUDE
+            2403 - ESTORNO TRANSFERENCIA EMPRESTIMO TR P/ PREJUIZO
+            2404 - ESTORNO DE REVERSAO JUROS +60 TR P/ PREJUIZO
+            2407 - ESTORNO DE REVERSAO JUROS +60 TR P/ PREJUIZO
+            
 
           */
           IF rw_craplem.cdhistor IN
-             (88, 91, 92, 93, 94, 95, 120, 277, 349, 353, 392, 393, 507, 2381,2396,2401) THEN
+             (88, 91, 92, 93, 94, 95, 120, 277, 349, 353, 392, 393, 507, 2381,2396,2401,2402,2406,2405) THEN
             -- Zerar quantidade paga
             vr_qtprepag := 0;
             -- Garantir que não haja divisão por zero
@@ -1598,7 +1605,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
            2401 - TRANSFERENCIA EMPRESTIMO TR P/ PREJUIZO
           
           */
-          IF rw_craplem.cdhistor IN (91, 92, 94, 277, 349, 353, 392, 393,  2381, 2396,2401) THEN
+          IF rw_craplem.cdhistor IN (91, 92, 94, 277, 349, 353, 392, 393,  2381, 2396,2401,2402,2406,2405) THEN
             -- Guardar data do ultimo pagamento
             pr_dtultpag := rw_craplem.dtmvtolt;
             -- Se houver saldo devedor
@@ -1684,7 +1691,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.empr0001 AS
             -- 441 JUROS S/ATRAS
             -- 443 MULTA S/ATRAS
             -- 507 EST.TRF.COTAS
-          ELSIF rw_craplem.cdhistor IN (88, 395, 441, 443, 507) THEN
+          ELSIF rw_craplem.cdhistor IN (88, 395, 441, 443, 507,2403,2404,2407) THEN
             -- Se ainda houver saldo devedor
             IF pr_vlsdeved > 0 THEN
               -- Se o dia do lançamento for inferior ao dia de pagamento enviado

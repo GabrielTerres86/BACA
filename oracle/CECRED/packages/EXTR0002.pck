@@ -3116,14 +3116,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
           END LOOP;  
         END IF;                             
         /* Desprezando historicos de concessao de credito com juros a apropriar e lancamendo para desconto */                                   
-        IF rw_craplem.cdhistor IN (1032,1033,1034,1035,1048,1049,2566,2567) THEN
+        IF rw_craplem.cdhistor IN (1032,1033,1034,1035,1048,1049,2566,2567,2388,2473,2389,2390,2475,2392,2474,2393,2394,2476) THEN
           --Proximo registro
           CONTINUE;
         END IF;
         /* Desprezando historicos de concessao de credito com juros a apropriar e lancamendo para desconto */
         -- rmm desconsiderar pagamentos prejuizo (2390,2392,2388,2475)        
         IF rw_crapepr.tpemprst = 1 AND rw_craplem.cdhistor IN --(2390,2392,2388,2475,2391,2395) 
-          (2386,2388,2473,2389,2390,2475,2391,2387,2392,2474,2393,2394,2476,2395) THEN
+          (2386,2388,2473,2389,2390,2475,2391,2387,2392,2474,2393,2394,2476,2395,2701,2702) THEN
           CONTINUE;          
         END IF;
         --
@@ -13905,6 +13905,7 @@ END pc_consulta_ir_pj_trim;
         --Tabela de Memoria de Emprestimos
         vr_tab_dados_epr        empr0001.typ_tab_dados_epr; 
         vr_tab_extrato_epr      typ_tab_extrato_epr; 
+        vr_type_aux              typ_reg_extrato_epr;
         vr_tab_extrato_epr_novo typ_tab_extrato_epr_novo; 
         vr_tab_extrato_epr_aux  typ_tab_extrato_epr_aux; 
         -- Cursor genérico de calendário
@@ -14370,27 +14371,34 @@ END pc_consulta_ir_pj_trim;
                 vr_flgctepr:= FALSE;
               END IF; 
               
+              FOR V_IND_TP IN vr_tab_extrato_epr.first .. vr_tab_extrato_epr.COUNT LOOP
+                FOR V_IND_TP_AUX IN vr_tab_extrato_epr.first .. vr_tab_extrato_epr.COUNT - V_IND_TP LOOP
+                  
+                  IF (to_number(to_char(vr_tab_extrato_epr(V_IND_TP_AUX + 1).dtmvtolt,'yyyymmdd')) < 
+                      to_number(to_char(vr_tab_extrato_epr(V_IND_TP_AUX).dtmvtolt,'yyyymmdd')) AND 
+                      vr_tab_extrato_epr(V_IND_TP_AUX).dthrtran IS NULL) OR 
+                     (to_number(to_char(vr_tab_extrato_epr(V_IND_TP_AUX + 1).dthrtran,'yyyymmddHHMISS')) < 
+                      to_number(to_char(vr_tab_extrato_epr(V_IND_TP_AUX).dthrtran,'yyyymmddHHMISS')) AND
+                      vr_tab_extrato_epr(V_IND_TP_AUX).dthrtran IS NOT NULL) THEN
+                    -- ORDERNANDO O TYPE
+                    vr_type_aux := vr_tab_extrato_epr(V_IND_TP_AUX);
+                    vr_tab_extrato_epr(V_IND_TP_AUX) := vr_tab_extrato_epr(V_IND_TP_AUX + 1);
+                    vr_tab_extrato_epr(V_IND_TP_AUX + 1) := vr_type_aux;
+                  END IF;
+                  --   
+                END LOOP;  
+              END LOOP;            
               --Preparar a tabela conforme break-by
               vr_tab_extrato_epr_novo.DELETE;
               vr_index_extrato:= vr_tab_extrato_epr.FIRST;
               WHILE vr_index_extrato IS NOT NULL LOOP
-                IF vr_tab_extrato_epr(vr_index_extrato).dthrtran IS NOT NULL THEN
                 --Montar novo indice conforme break-by
-                  vr_index_novo:= LPAD(vr_tab_extrato_epr(vr_index_extrato).nrdconta,10,'0')||
-                                  vr_tab_extrato_epr(vr_index_extrato).nranomes||
-                                  TO_CHAR(vr_tab_extrato_epr(vr_index_extrato).dthrtran,'YYYYMMDD hhmiss')|| 
-                                  LPAD(vr_tab_extrato_epr(vr_index_extrato).cdhistor,10,'0')||
-                                  LPAD(vr_tab_extrato_epr(vr_index_extrato).nrdocmto,10,'0')||
-                                  LPAD(vr_tab_extrato_epr(vr_index_extrato).nrdolote,10,'0');  
-                ELSE
-                  --Montar novo indice conforme break-by
                 vr_index_novo:= LPAD(vr_tab_extrato_epr(vr_index_extrato).nrdconta,10,'0')||
                                 vr_tab_extrato_epr(vr_index_extrato).nranomes||
                                 TO_CHAR(vr_tab_extrato_epr(vr_index_extrato).dtmvtolt,'YYYYMMDD')|| 
                                 LPAD(vr_tab_extrato_epr(vr_index_extrato).cdhistor,10,'0')||
                                 LPAD(vr_tab_extrato_epr(vr_index_extrato).nrdocmto,10,'0')||
                                 LPAD(vr_tab_extrato_epr(vr_index_extrato).nrdolote,10,'0');  
-                END IF;
                  
                 --Copiar de uma tabela para outra
                 vr_tab_extrato_epr_novo(vr_index_novo):= vr_tab_extrato_epr(vr_index_extrato);
@@ -14446,12 +14454,13 @@ END pc_consulta_ir_pj_trim;
                   --Debito  
                   IF vr_tab_extrato_epr_novo(vr_index_novo).indebcre = 'D' THEN
                     --Se Possui Saldo
-                    IF vr_tab_extrato_epr_novo(vr_index_novo).flgsaldo THEN
+                    IF vr_tab_extrato_epr_novo(vr_index_novo).flgsaldo AND
+                      vr_tab_extrato_epr_novo(vr_index_novo).cdhistor not in (2403,2404,2407)  THEN
                       --Saldo Devedor
                       vr_vlsaldod:= nvl(vr_vlsaldod,0) + vr_tab_extrato_epr_novo(vr_index_novo).vllanmto;
                     END IF;    
                   ELSIF vr_tab_extrato_epr_novo(vr_index_novo).indebcre = 'C' AND
-                        vr_tab_extrato_epr_novo(vr_index_novo).cdhistor not in (349,2391,2401,2402,2403,2404,2405,2406,2407) THEN --<> 349 THEN
+                        vr_tab_extrato_epr_novo(vr_index_novo).cdhistor not in (349,2401,2402,2405,2406) THEN --<> 349 THEN
                     --Se Possui Saldo
                     IF vr_tab_extrato_epr_novo(vr_index_novo).flgsaldo THEN
                       --Saldo Devedor

@@ -441,15 +441,45 @@ BEGIN
                 vr_cdcritic := 0;
                 vr_dscritic := 'Falha ao inserir LCM - '||sqlerrm;
                 raise vr_exc_erro;
-              END IF;          
-            END IF;                                         
+              END IF; 
+            END IF;                                                                
 
           IF rw_crapepr.txjuremp <> rw_crapepr.vltaxa_juros THEN
             rw_crapepr.txjuremp := rw_crapepr.vltaxa_juros;
             vr_inusatab := TRUE;
           ELSE
             vr_inusatab := FALSE;
-          END IF;                  
+          END IF;     
+          --
+          empr0001.pc_cria_lancamento_lem(pr_cdcooper => pr_cdcooper
+                                         ,pr_dtmvtolt => rw_crapdat.dtmvtolt
+                                         ,pr_cdagenci => pr_cdagenci
+                                         ,pr_cdbccxlt => 100
+                                         ,pr_cdoperad => pr_cdoperad
+                                         ,pr_cdpactra => pr_cdagenci
+                                         ,pr_tplotmov => 5
+                                         ,pr_nrdolote => 600029
+                                         ,pr_nrdconta => rw_crapepr.nrdconta
+                                         ,pr_cdhistor => 2701 -- pagamento
+                                         ,pr_nrctremp => rw_crapepr.nrctremp
+                                         ,pr_vllanmto => vr_vldpagto
+                                         ,pr_dtpagemp => rw_crapdat.dtmvtolt
+                                         ,pr_txjurepr => 0
+                                         ,pr_vlpreemp => 0
+                                         ,pr_nrsequni => 0
+                                         ,pr_nrparepr => 0
+                                         ,pr_flgincre => true
+                                         ,pr_flgcredi => false
+                                         ,pr_nrseqava => 0
+                                         ,pr_cdorigem => 7 -- batch
+                                         ,pr_cdcritic => vr_cdcritic
+                                         ,pr_dscritic => vr_dscritic);
+                                                               
+          IF vr_dscritic IS NOT NULL THEN
+            vr_dscritic := 'Ocorreu erro ao retornar gravação LEM (pagamento): ' || vr_dscritic;
+            RAISE vr_exc_erro;
+          END IF;                       
+            
         END IF;
         --
         -- Variavel de valor utilizada para realizar as quebras de pagamentos
