@@ -476,7 +476,7 @@ create or replace procedure cecred.pc_crps439(pr_cdcooper  in craptab.cdcooper%t
   vr_cdoedptl      tbgen_orgao_expedidor.cdorgao_expedidor%TYPE;
   vr_cdufresd      varchar2(2);
   vr_tpmovmto      number(1);
-  vr_cdmovmto      varchar2(1);
+  vr_cdmovmto      varchar2(2);
   vr_dtcancel      varchar2(8);
   vr_nrtelefo      varchar2(28);
   vr_dsdemail      crapcem.dsdemail%type;
