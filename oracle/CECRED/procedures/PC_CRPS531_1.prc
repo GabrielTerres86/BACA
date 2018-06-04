@@ -11,7 +11,7 @@ BEGIN
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Diego
-   Data    : Setembro/2009.                     Ultima atualizacao: 30/05/2018
+   Data    : Setembro/2009.                     Ultima atualizacao: 04/06/2018
 
    Dados referentes ao programa: Fonte extraido e adaptado para execucao em
                                  paralelo. Fonte original crps531.p.
@@ -252,10 +252,13 @@ BEGIN
 						    > Para pegar corretamente o número de controle
 							> Efetuar devolução para cooperativa coorreta
 							(Adriano - INC0016217 ).
-
+              
          30/05/2018 - Ajustes para retirar a validação de IFs incorporadas, pois
                       como foram desatividas, deverá gearar devolução pela cooperativa central
                       (Adriano)
+
+			  04/06/2018 - Ajuste para colocar o uppper na leitura da tabela craptvl, pois está impactando
+			               na performance do programa (Adriano - INC0016439).
 
              #######################################################
              ATENCAO!!! Ao incluir novas mensagens para recebimento,
@@ -481,7 +484,7 @@ BEGIN
         FROM craptvl
        WHERE craptvl.cdcooper = pr_cdcooper
          AND craptvl.tpdoctrf = 3
-         AND craptvl.idopetrf = pr_idopetrf;
+         AND UPPER(craptvl.idopetrf) = UPPER(pr_idopetrf);
     rw_craptvl cr_craptvl%ROWTYPE;
 
     /* Buscar dados do banco */
