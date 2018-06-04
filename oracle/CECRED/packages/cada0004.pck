@@ -808,7 +808,37 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0004 is
                                     ,pr_dscritic OUT VARCHAR2               --> Descrição da crítica
                                     ,pr_retxml   IN OUT NOCOPY xmltype      --> Arquivo de retorno do XML
                                     ,pr_nmdcampo OUT VARCHAR2               --> Nome do campo com erro
-                                    ,pr_des_erro OUT VARCHAR2);             --> Descricao do Erro                  
+                                    ,pr_des_erro OUT VARCHAR2);             --> Descricao do Erro 
+									
+									
+PROCEDURE pc_obtem_cabecalho_atenda( pr_cdcooper IN crapcop.cdcooper%TYPE  --> Codigo da cooperativa
+                                      ,pr_cdagenci IN crapage.cdagenci%TYPE  --> Codigo de agencia
+                                      ,pr_nrdcaixa IN crapbcx.nrdcaixa%TYPE  --> Numero do caixa
+                                      ,pr_cdoperad IN crapope.cdoperad%TYPE  --> Codigo do operador
+                                      ,pr_nrdconta IN crapass.nrdconta%TYPE  --> Numero da conta
+                                      ,pr_nrdctitg IN crapass.nrdctitg%TYPE  --> Numero da conta itg
+                                      ,pr_dtinicio IN DATE                   --> Data de incio
+                                      ,pr_dtdfinal IN DATE                   --> data final
+                                      ,pr_idorigem IN INTEGER                --> Identificado de oriem
+                                      ---------- OUT --------
+                                      ,pr_tab_cabec OUT typ_tab_cabec                 --> Retorna dados do cabecalho da tela ATENDA
+                                      ,pr_des_reto       OUT VARCHAR2                 --> OK ou NOK
+                                      ,pr_tab_erro       OUT gene0001.typ_tab_erro);		
+									  
+PROCEDURE pc_obtem_cabecalho_atenda( pr_cdcooper IN crapcop.cdcooper%TYPE  --> Codigo da cooperativa
+                                      ,pr_cdagenci IN crapage.cdagenci%TYPE  --> Codigo de agencia
+                                      ,pr_nrdcaixa IN crapbcx.nrdcaixa%TYPE  --> Numero do caixa
+                                      ,pr_cdoperad IN crapope.cdoperad%TYPE  --> Codigo do operador
+                                      ,pr_nrdconta IN crapass.nrdconta%TYPE  --> Numero da conta
+                                      ,pr_nrdctitg IN crapass.nrdctitg%TYPE  --> Numero da conta itg
+                                      ,pr_dtinicio IN DATE                   --> Data de incio
+                                      ,pr_dtdfinal IN DATE                   --> data final
+                                      ,pr_idorigem IN INTEGER                --> Identificado de oriem
+                                      ---------- OUT --------
+                                      ,pr_tab_cabec OUT typ_tab_cabec                 --> Retorna dados do cabecalho da tela ATENDA
+                                      ,pr_des_reto       OUT VARCHAR2                 --> OK ou NOK
+                                      ,pr_tab_erro       OUT gene0001.typ_tab_erro);
+									  							                 
 
 END CADA0004;
 /
@@ -12799,5 +12829,213 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     END;
     
   END pc_retorna_cartao_valido;
+
+
+ PROCEDURE pc_bloquear_cartao_magnetico( pr_cdcooper IN crapcop.cdcooper%TYPE  --> Codigo da cooperativa
+                                         ,pr_cdagenci IN crapage.cdagenci%TYPE  --> Codigo de agencia
+                                         ,pr_nrdcaixa IN crapbcx.nrdcaixa%TYPE  --> Numero do caixa
+                                         ,pr_cdoperad IN crapope.cdoperad%TYPE  --> Codigo do operador
+                                         ,pr_nmdatela IN VARCHAR2  --> Nome da tela
+                                         ,pr_idorigem IN INTEGER                --> Identificado de oriem
+                                         ,pr_nrdconta IN crapass.nrdconta%TYPE  --> Numero da conta
+                                         ,pr_idseqttl IN crapttl.idseqttl%TYPE  --> sequencial do titular
+                                         ,pr_dtmvtolt IN DATE                   --> Data do movimento
+                                         ,pr_nrcartao IN VARCHAR2               --crapcrm.nrcartao%TYPE  --> Numero do cartão
+                                         ,pr_flgerlog IN VARCHAR2               --> identificador se deve gerar log S-Sim e N-Nao
+
+                                        ------ OUT ------
+                                         ,pr_cdcritic  OUT PLS_INTEGER
+                                         ,pr_dscritic  OUT VARCHAR2 
+                                         ,pr_des_reto  OUT VARCHAR2 ) IS           --> OK ou NOK
+
+     
+  /* ..........................................................................
+    --
+    --  Programa : pc_bloquear_cartao_magnetico        Antiga: b1wgen0032.p/bloquear-cartao-magnetico
+    --  Sistema  : Conta-Corrente - Cooperativa de Credito
+    --  Sigla    : CRED
+    --  Autor    : Rangel Decker (Amcom)
+    --  Data     : Maio/2018.                   Ultima atualizacao: 
+    --
+    --  Dados referentes ao programa:
+    --
+    --   Frequencia: Sempre que for chamado
+    --   Objetivo  : Procedure para bloquear cartão magnetico do associado
+    --
+    --  Alteração : 
+    -- ..........................................................................*/
+    
+    ---------------> CURSORES <----------------- 
+    --> buscar cartoes magneticos
+    CURSOR cr_crapcrm ( pr_cdcooper  crapcrm.cdcooper%TYPE,
+                        pr_nrdconta  crapcrm.nrdconta%TYPE,
+                        pr_nrcartao  crapcrm.nrcartao%TYPE) IS
+      SELECT crapcrm.cdsitcar
+            ,crapcrm.dtvalcar
+            ,crapcrm.dtcancel
+            ,crapcrm.nmtitcrd
+            ,crapcrm.nrcartao
+            ,crapcrm.tpusucar
+            ,crapcrm.dtemscar
+        FROM crapcrm
+       WHERE crapcrm.cdcooper = pr_cdcooper
+         AND crapcrm.nrdconta = pr_nrdconta
+         AND crapcrm.nrcartao = pr_nrcartao;
+    
+    -- buscar operador     
+    CURSOR cr_crapope IS
+      SELECT cddepart
+        FROM crapope
+       WHERE crapope.cdcooper = pr_cdcooper
+         AND UPPER(crapope.cdoperad) = UPPER(pr_cdoperad);
+    rw_crapope cr_crapope%ROWTYPE;
+    
+    --------------> VARIAVEIS <-----------------    
+    vr_cdcritic INTEGER;
+    vr_dscritic VARCHAR2(1000);
+    vr_exc_erro EXCEPTION;
+    
+    vr_dsorigem VARCHAR2(50);
+    vr_dstransa VARCHAR2(200);
+    vr_tpcarcta INTEGER;
+    vr_dssitcar VARCHAR2(200);
+    vr_idx      INTEGER;
+    vr_nrdrowid  ROWID;
+    vr_rowid_log ROWID;
+    vr_tab_erro gene0001.typ_tab_erro;
+   
+     
+    
+  BEGIN
+    vr_dsorigem := gene0001.vr_vet_des_origens(pr_idorigem);
+    vr_dstransa := 'Bloquear cartao magnetico';
+
+    
+    --> buscar cartoes magneticos
+    FOR rw_crapcrm IN cr_crapcrm ( pr_cdcooper => pr_cdcooper, 
+                                   pr_nrdconta => pr_nrdconta,
+                                   pr_nrcartao => pr_nrcartao) LOOP
+      
+      -- se não estiver ativo e valido
+      IF rw_crapcrm.cdsitcar <> 2  THEN
+         vr_cdcritic:=538;
+         vr_dscritic:=NULL;
+         RAISE vr_exc_erro;
+      END IF;      
+      
+      BEGIN
+        UPDATE crapcrm
+        SET    crapcrm.cdsitcar = 4,
+               crapcrm.dtcancel = pr_dtmvtolt,
+               crapcrm.dttransa = pr_dtmvtolt,
+               crapcrm.hrtransa = gene0002.fn_busca_time,
+               crapcrm.cdoperad = pr_cdoperad 
+        WHERE  crapcrm.cdcooper  = pr_cdcooper
+        AND    crapcrm.nrdconta  = pr_nrdconta
+        AND    crapcrm.nrcartao  = pr_nrcartao; 
+      
+      EXCEPTION
+        WHEN OTHERS THEN
+          vr_cdcritic := 0;
+          vr_dscritic := 'Nao foi possivel bloquear o cartao magnetico.' ||SQLERRM;
+          RAISE vr_exc_erro;
+          
+      END;
+                                           
+    END LOOP; --> Fim Loop crpcrm
+    
+    -- Se foi solicitado log
+    IF pr_flgerlog = 'S' THEN
+      -- Gerar LOG
+      gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper
+                          ,pr_cdoperad => pr_cdoperad
+                          ,pr_dscritic => NULL
+                          ,pr_dsorigem => vr_dsorigem --> Origem enviada
+                          ,pr_dstransa => vr_dstransa
+                          ,pr_dttransa => pr_dtmvtolt
+                          ,pr_flgtrans => 1
+                          ,pr_hrtransa => gene0002.fn_busca_time
+                          ,pr_idseqttl => pr_idseqttl
+                          ,pr_nmdatela => pr_nmdatela
+                          ,pr_nrdconta => pr_nrdconta
+                          ,pr_nrdrowid => vr_nrdrowid);
+    END IF;
+    COMMIT;
+    pr_des_reto := 'OK';
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+      -- Gerar rotina de gravação de erro
+      gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
+                           ,pr_cdagenci => pr_cdagenci
+                           ,pr_nrdcaixa => pr_nrdcaixa
+                           ,pr_nrsequen => 1 --> Fixo
+                           ,pr_cdcritic => vr_cdcritic
+                           ,pr_dscritic => vr_dscritic
+                           ,pr_tab_erro => vr_tab_erro);
+        
+      -- Se foi solicitado log
+      IF pr_flgerlog = 'S' THEN
+        -- Gerar LOG
+        gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper
+                            ,pr_cdoperad => pr_cdoperad
+                            ,pr_dscritic => vr_dscritic
+                            ,pr_dsorigem => vr_dsorigem --> Origem enviada
+                            ,pr_dstransa => vr_dstransa
+                            ,pr_dttransa => pr_dtmvtolt
+                            ,pr_flgtrans => 0 --> FALSE
+                            ,pr_hrtransa => gene0002.fn_busca_time
+                            ,pr_idseqttl => pr_idseqttl
+                            ,pr_nmdatela => pr_nmdatela
+                            ,pr_nrdconta => pr_nrdconta
+                            ,pr_nrdrowid => vr_nrdrowid);
+
+      END IF;      
+      pr_des_reto := 'NOK';
+      
+    WHEN OTHERS THEN
+      vr_cdcritic := 0;
+      vr_dscritic := 'Erro pc_obtem_cartoes_magneticos:'||SQLERRM;
+      -- Gerar rotina de gravação de erro
+      gene0001.pc_gera_erro(pr_cdcooper => pr_cdcooper
+                           ,pr_cdagenci => pr_cdagenci
+                           ,pr_nrdcaixa => pr_nrdcaixa
+                           ,pr_nrsequen => 1 --> Fixo
+                           ,pr_cdcritic => vr_cdcritic
+                           ,pr_dscritic => vr_dscritic
+                           ,pr_tab_erro => vr_tab_erro);
+        
+      -- Se foi solicitado log
+      IF pr_flgerlog = 'S' THEN
+        -- Gerar LOG
+        gene0001.pc_gera_log(pr_cdcooper => pr_cdcooper
+                            ,pr_cdoperad => pr_cdoperad
+                            ,pr_dscritic => vr_dscritic
+                            ,pr_dsorigem => vr_dsorigem --> Origem enviada
+                            ,pr_dstransa => vr_dstransa
+                            ,pr_dttransa => pr_dtmvtolt
+                            ,pr_flgtrans => 0 --> FALSE
+                            ,pr_hrtransa => gene0002.fn_busca_time
+                            ,pr_idseqttl => pr_idseqttl
+                            ,pr_nmdatela => pr_nmdatela
+                            ,pr_nrdconta => pr_nrdconta
+                            ,pr_nrdrowid => vr_nrdrowid);
+      
+        /** Numero do Cartao Magnetico **/
+        gene0001.pc_gera_log_item(pr_nrdrowid => vr_rowid_log
+                                 ,pr_nmdcampo => 'nrcartao'
+                                 ,pr_dsdadant => ' '
+                                 ,pr_dsdadatu => gene0002.fn_mask(pr_nrcartao,'9999,9999,9999,9999'));
+                                 
+        /** Situacao do cartao **/     
+        gene0001.pc_gera_log_item(pr_nrdrowid => vr_rowid_log
+                                  ,pr_nmdcampo => 'cdsitcar'
+                                  ,pr_dsdadant => '2'
+                                  ,pr_dsdadatu => '4');                                 
+                            
+      END IF;
+      pr_des_reto := 'NOK';
+
+  END pc_bloquear_cartao_magnetico;
   
 END CADA0004;
+/
