@@ -39,7 +39,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps778 (pr_dscritic OUT VARCHAR2) IS     
       SELECT cop.cdcooper
             ,cop.nmrescop
             ,cop.dsdircop
-      FROM crapcop cop
+       FROM crapcop cop
       WHERE cop.cdcooper <> 3
         AND cop.flgativo = 1
       ORDER BY cop.cdcooper;
@@ -75,7 +75,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps778 (pr_dscritic OUT VARCHAR2) IS     
     vr_cdprogra     CONSTANT crapprg.cdprogra%TYPE := 'CRPS778';
       
     -- Tratamento de erros
-    vr_exc_erro      EXCEPTION;				
+    vr_exc_erro     EXCEPTION;				
     vr_cdcritic     crapcri.cdcritic%TYPE;
     vr_dscritic     VARCHAR2(4000);
     vr_typ_saida    VARCHAR2(3);
@@ -108,28 +108,28 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps778 (pr_dscritic OUT VARCHAR2) IS     
     vr_cddbanco    INTEGER;
     vr_hrtransa    INTEGER;
     vr_nrprotoc    VARCHAR2(200);
-	idx INTEGER;
+    idx            INTEGER;
 	  
-	--Enquanto nao existir operador "ftp", deverá usar o Internet
+    --Enquanto nao existir operador "ftp", deverá usar o Internet
     vr_cdoperad     crapope.cdoperad%TYPE := '996'; 
     
     vr_dscomand     VARCHAR2(4000);
     vr_typ_said     VARCHAR2(500);    
                   
-	--Variaveis novas em funcao da pc_identifica_arq_cnab    
+    --Variaveis novas em funcao da pc_identifica_arq_cnab    
     vr_rec_rejeita  COBR0006.typ_tab_rejeita;   --> Dados invalidados    
     vr_nrdconta     crapass.nrdconta%TYPE;
 
     vr_nomdojob  CONSTANT VARCHAR2(100) := 'jbcobran_crps778';
     vr_flgerlog  BOOLEAN := FALSE;
     
-	--Variavel para envio de e-mail e gravar log
+    --Variavel para envio de e-mail e gravar log
     vr_idprglog     tbgen_prglog.idprglog%TYPE := 0;
 
     --------------------------- SUBROTINAS INTERNAS --------------------------
     PROCEDURE pc_gerar_log(pr_cdcooper crapcop.cdcooper%TYPE,
                            pr_dscdolog VARCHAR2)IS
-      vr_dscdolog VARCHAR2(4000);
+                           vr_dscdolog VARCHAR2(4000);
     BEGIN
     
       vr_dscdolog := to_char(SYSDATE,'DD/MM/RRRR HH24:MI:SS')||' - '||vr_cdprogra ||' -> '||pr_dscdolog;
@@ -248,7 +248,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps778 (pr_dscritic OUT VARCHAR2) IS     
         
       BEGIN
 			
-		vr_cdcritic := 0;
+        vr_cdcritic := 0;
         vr_dscritic := NULL;	
 					
         -- Leitura do calendário da cooperativa
@@ -271,8 +271,8 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps778 (pr_dscritic OUT VARCHAR2) IS     
           
         -- Busca o diretorio da cooperativa conectada
         vr_caminho_cooper := gene0001.fn_diretorio(pr_tpdireto => 'C' --> Usr/Coop
-                                                   ,pr_cdcooper => rw_crapcoop.cdcooper
-                                                   ,pr_nmsubdir => '');
+                                                  ,pr_cdcooper => rw_crapcoop.cdcooper
+                                                  ,pr_nmsubdir => '');
                                              
         -- Setando os diretorios auxiliares
         vr_caminho_arq     := vr_caminho_cooper||'/upload/ftp';							
@@ -343,60 +343,60 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps778 (pr_dscritic OUT VARCHAR2) IS     
           -- carrega informacoes na cratarq
           FOR vr_ind IN vr_tab_arquivo.first .. vr_tab_arquivo.last LOOP
             
-			BEGIN
+            BEGIN
               
-			  vr_cdcritic := 0;
-		      vr_dscritic := NULL;
-			  vr_rec_rejeita.delete;
+              vr_cdcritic := 0;
+              vr_dscritic := NULL;
+              vr_rec_rejeita.delete;
 			  
-			  -- Monta a chave da temp-table
-			  vr_chave := rpad(vr_tab_arquivo(vr_ind),55,'#')|| lpad(rw_crapcoop.cdcooper,2,'0')||lpad(vr_ind,4,'0');
+              -- Monta a chave da temp-table
+              vr_chave := rpad(vr_tab_arquivo(vr_ind),55,'#')|| lpad(rw_crapcoop.cdcooper,2,'0')||lpad(vr_ind,4,'0');
               
-			  -- alterar permissao do arquivo
-			  gene0001.pc_OScommand_Shell(pr_des_comando => 'chmod 666 '||
-			   											     vr_caminho_arq || '/' || 
-															 vr_tab_arquivo(vr_ind));     
+              -- alterar permissao do arquivo
+              gene0001.pc_OScommand_Shell(pr_des_comando => 'chmod 666 '||
+                                          vr_caminho_arq || '/' || 
+                                          vr_tab_arquivo(vr_ind));     
                                                                                    
-			  -- Abre o arquivo em modo de leitura
-			  gene0001.pc_abre_arquivo (pr_nmcaminh => vr_caminho_arq || '/' || 
-													   vr_tab_arquivo(vr_ind)    --> Diretório do arquivo
-									   ,pr_tipabert => 'R'                       --> Modo de abertura (R,W,A)
-									   ,pr_utlfileh => vr_input_file             --> Handle do arquivo aberto
-									   ,pr_des_erro => vr_dscritic);             --> Descricao do erro
+              -- Abre o arquivo em modo de leitura
+              gene0001.pc_abre_arquivo (pr_nmcaminh => vr_caminho_arq || '/' || 
+                                                       vr_tab_arquivo(vr_ind)    --> Diretório do arquivo
+                                       ,pr_tipabert => 'R'                       --> Modo de abertura (R,W,A)
+                                       ,pr_utlfileh => vr_input_file             --> Handle do arquivo aberto
+                                       ,pr_des_erro => vr_dscritic);             --> Descricao do erro
 		                                  
-			  -- Se retornou erro
-			  IF  vr_dscritic IS NOT NULL  THEN
-			    -- Registrar Log;
-				pc_gerar_log(pr_cdcooper => rw_crapcoop.cdcooper,
-						     pr_dscdolog => 'Erro ao abrir arquivo ' || vr_tab_arquivo(vr_ind) || '--> ' || vr_dscritic);
+              -- Se retornou erro
+              IF  vr_dscritic IS NOT NULL  THEN
+                -- Registrar Log;
+                pc_gerar_log(pr_cdcooper => rw_crapcoop.cdcooper,
+                             pr_dscdolog => 'Erro ao abrir arquivo ' || vr_tab_arquivo(vr_ind) || '--> ' || vr_dscritic);
                                                
-				-- Ignora arquivo, pula para o próximo                                           
-				CONTINUE;
+                -- Ignora arquivo, pula para o próximo                                           
+                CONTINUE;
                   
-			  END IF;
+              END IF;
 
-			  -- Verifica se o arquivo esta aberto
-			  IF  utl_file.IS_OPEN(vr_input_file) THEN
-			    --Fechar o arquivo para pc_identifica_arq ler e identificar o tipo, banco e conta
-				utl_file.fclose(vr_input_file);
+              -- Verifica se o arquivo esta aberto
+              IF  utl_file.IS_OPEN(vr_input_file) THEN
+                --Fechar o arquivo para pc_identifica_arq ler e identificar o tipo, banco e conta
+                utl_file.fclose(vr_input_file);
                 
-				-- Rafael: identificar arquivo cnab
-				cobr0006.pc_identifica_arq_cnab(pr_cdcooper => rw_crapcoop.cdcooper
-											  , pr_nmarqint => vr_caminho_arq || '/' || vr_tab_arquivo(vr_ind)    --> Diretório do arquivo
-											  , pr_tparquiv => vr_tparquiv
-											  , pr_cddbanco => vr_cddbanco
-											  , pr_nrdconta => vr_nrdconta
-											  , pr_rec_rejeita => vr_rec_rejeita
-											  , pr_cdcritic => vr_cdcritic
-											  , pr_dscritic => vr_dscritic
-											  , pr_des_reto => vr_des_reto);
+                -- Rafael: identificar arquivo cnab
+                cobr0006.pc_identifica_arq_cnab(pr_cdcooper => rw_crapcoop.cdcooper
+                                              , pr_nmarqint => vr_caminho_arq || '/' || vr_tab_arquivo(vr_ind)    --> Diretório do arquivo
+                                              , pr_tparquiv => vr_tparquiv
+                                              , pr_cddbanco => vr_cddbanco
+                                              , pr_nrdconta => vr_nrdconta
+                                              , pr_rec_rejeita => vr_rec_rejeita
+                                              , pr_cdcritic => vr_cdcritic
+                                              , pr_dscritic => vr_dscritic
+                                              , pr_des_reto => vr_des_reto);
                                               
-				-- carrega a temp-table com a lista de arquivos que devem ser processados e dados do header                                                        
-				vr_tab_cratarq(vr_chave).nmarquiv := vr_tab_arquivo(vr_ind);
-				vr_tab_cratarq(vr_chave).nrsequen := to_number(vr_ind);
-				vr_tab_cratarq(vr_chave).nrdconta := vr_nrdconta;
+                -- carrega a temp-table com a lista de arquivos que devem ser processados e dados do header                                                        
+                vr_tab_cratarq(vr_chave).nmarquiv := vr_tab_arquivo(vr_ind);
+                vr_tab_cratarq(vr_chave).nrsequen := to_number(vr_ind);
+                vr_tab_cratarq(vr_chave).nrdconta := vr_nrdconta;
                 
-			  END IF;
+              END IF;
 
             EXCEPTION   
                 
@@ -404,12 +404,12 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps778 (pr_dscritic OUT VARCHAR2) IS     
 
                 vr_cdcritic := 0;
                 vr_dscritic := 'CRPS778: Erro ao carregar lista de arquivos - ' || dbms_utility.format_error_backtrace
-                               ||' - '|| dbms_utility.format_error_stack;
-                IF vr_dscritic IS NOT NULL THEN
+                                ||' - '|| dbms_utility.format_error_stack;
+                IF TRIM(vr_dscritic) IS NOT NULL THEN
                   -- Envio centralizado de log de erro               
                   -- Gera log 
                   pc_gerar_log(pr_cdcooper => rw_crapcoop.cdcooper,
-                                pr_dscdolog => vr_dscritic);
+                               pr_dscdolog => vr_dscritic);
                 END IF;   
 
             END;
@@ -426,7 +426,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps778 (pr_dscritic OUT VARCHAR2) IS     
                                    ,pr_cdcritic    => vr_cdcritic             --> Codigo da critica
                                    ,pr_dscritic    => vr_dscritic);           --> Descrição da critica
             
-			END IF;                                   
+            END IF;                                   
 
           END LOOP;
 					
@@ -442,172 +442,169 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps778 (pr_dscritic OUT VARCHAR2) IS     
  
             BEGIN
          
-			  vr_cdcritic := 0;
-			  vr_dscritic := NULL;
+              vr_cdcritic := 0;
+              vr_dscritic := NULL;
         
-			  -- Sai quando nao houver mais registros na vr_tab_cratarq
-			  EXIT WHEN vr_chave IS NULL;
+              -- Sai quando nao houver mais registros na vr_tab_cratarq
+              EXIT WHEN vr_chave IS NULL;
             
-			  vr_tab_rejeita.delete;
-			  vr_tab_crawrej.delete;
+              vr_tab_rejeita.delete;
+              vr_tab_crawrej.delete;
             
-			  --> Identificar arquivo CNAB
-			  COBR0006.pc_identifica_arq_cnab(pr_cdcooper    => rw_crapcoop.cdcooper       --> Codigo da cooperativa
-											 ,pr_nmarqint    => vr_caminho_arq || '/' ||vr_tab_cratarq(vr_chave).nmarquiv --> Nome do arquivo
-											 ,pr_tparquiv    => vr_tparquiv                --> Tipo do arquivo
-											 ,pr_cddbanco    => vr_cddbanco                --> Codigo do banco
-											 ,pr_nrdconta    => vr_nrdconta                --> Recebe nrdconta
-											 ,pr_rec_rejeita => vr_tab_rejeita             --> Tabela com rejeitados
-											 ,pr_cdcritic    => vr_cdcritic                --> Código da critica
-											 ,pr_dscritic    => vr_dscritic                --> Descrição da critica
-											 ,pr_des_reto    => vr_des_reto);              --> Retorno OK/NOK                                    
+              --> Identificar arquivo CNAB
+              COBR0006.pc_identifica_arq_cnab(pr_cdcooper    => rw_crapcoop.cdcooper       --> Codigo da cooperativa
+                                             ,pr_nmarqint    => vr_caminho_arq || '/' ||vr_tab_cratarq(vr_chave).nmarquiv --> Nome do arquivo
+                                             ,pr_tparquiv    => vr_tparquiv                --> Tipo do arquivo
+                                             ,pr_cddbanco    => vr_cddbanco                --> Codigo do banco
+                                             ,pr_nrdconta    => vr_nrdconta                --> Recebe nrdconta
+                                             ,pr_rec_rejeita => vr_tab_rejeita             --> Tabela com rejeitados
+                                             ,pr_cdcritic    => vr_cdcritic                --> Código da critica
+                                             ,pr_dscritic    => vr_dscritic                --> Descrição da critica
+                                             ,pr_des_reto    => vr_des_reto);              --> Retorno OK/NOK                                    
 
-			  -- Se retornou erro
-			  IF vr_des_reto <> 'OK'  THEN                                            
+              -- Se retornou erro
+              IF vr_des_reto <> 'OK'  THEN                                            
                  
-				pc_trata_rejeicao_arq(pr_rec_rejeita => vr_tab_rejeita                     --> Tabela com rejeitados
-								     ,pr_tab_crawrej => vr_tab_crawrej                     --> Tabela com rejeitados
-								     ,pr_cdcooper    => rw_crapcoop.cdcooper               --> Cooperativa
-									 ,pr_nrdconta    => vr_nrdconta                        --> Numero da conta
-									 ,pr_nmarquiv    => vr_tab_cratarq(vr_chave).nmarquiv  --> Informacoes do arquivo a ser tratado
-									 ,pr_cdoperad    => vr_cdoperad                        --> Codigo do operador
-									 ,pr_cdcritic    => vr_cdcritic                        --> Codigo da critica
-									 ,pr_dscritic    => vr_dscritic);                      --> Descrição da critica
+                pc_trata_rejeicao_arq(pr_rec_rejeita => vr_tab_rejeita                     --> Tabela com rejeitados
+                                     ,pr_tab_crawrej => vr_tab_crawrej                     --> Tabela com rejeitados
+                                     ,pr_cdcooper    => rw_crapcoop.cdcooper               --> Cooperativa
+                                     ,pr_nrdconta    => vr_nrdconta                        --> Numero da conta
+                                     ,pr_nmarquiv    => vr_tab_cratarq(vr_chave).nmarquiv  --> Informacoes do arquivo a ser tratado
+                                     ,pr_cdoperad    => vr_cdoperad                        --> Codigo do operador
+                                     ,pr_cdcritic    => vr_cdcritic                        --> Codigo da critica
+                                     ,pr_dscritic    => vr_dscritic);                      --> Descrição da critica
             
-				vr_chave := vr_tab_cratarq.NEXT(vr_chave);
-				CONTINUE;                   
+                vr_chave := vr_tab_cratarq.NEXT(vr_chave);
+                CONTINUE;                   
   					  	                                                  
-			  END IF;
+              END IF;
             
-			  -- Apenas permitr layout CNAB
-			  IF NOT (vr_tparquiv = 'CNAB240' AND vr_cddbanco = 1 )       AND
-				 NOT (vr_tparquiv = 'CNAB240' AND vr_cddbanco = 85)       AND
-				 NOT (vr_tparquiv = 'CNAB400' AND vr_cddbanco = 85)       THEN
-			    -- Gera log
-				pc_gerar_log(pr_cdcooper => rw_crapcoop.cdcooper,
-							pr_dscdolog => 'Arquivo: '|| vr_tab_cratarq(vr_chave).nmarquiv||
-											': '       || 'Formato de arquivo invalido.');               
+              -- Apenas permitr layout CNAB
+              IF NOT (vr_tparquiv = 'CNAB240' AND vr_cddbanco = 1 )       AND
+                 NOT (vr_tparquiv = 'CNAB240' AND vr_cddbanco = 85)       AND
+                 NOT (vr_tparquiv = 'CNAB400' AND vr_cddbanco = 85)       THEN
+                -- Gera log
+                pc_gerar_log(pr_cdcooper => rw_crapcoop.cdcooper,
+                             pr_dscdolog => 'Arquivo: '|| vr_tab_cratarq(vr_chave).nmarquiv||
+                                            ': '       || 'Formato de arquivo invalido.');               
                            
-				pc_trata_rejeicao_arq(pr_rec_rejeita => vr_tab_rejeita                    --> Tabela com rejeitados
-									 ,pr_tab_crawrej => vr_tab_crawrej                     --> Tabela com rejeitados
-									 ,pr_cdcooper    => rw_crapcoop.cdcooper               --> Cooperativa
-									 ,pr_nrdconta    => vr_nrdconta                        --> Numero da conta
-									 ,pr_nmarquiv    => vr_tab_cratarq(vr_chave).nmarquiv  --> Informacoes do arquivo a ser tratado
-									 ,pr_cdoperad    => vr_cdoperad                        --> Codigo do operador
-									 ,pr_cdcritic    => vr_cdcritic                        --> Codigo da critica
-									 ,pr_dscritic    => vr_dscritic);                      --> Descrição da critica
+                pc_trata_rejeicao_arq(pr_rec_rejeita => vr_tab_rejeita                    --> Tabela com rejeitados
+                                     ,pr_tab_crawrej => vr_tab_crawrej                     --> Tabela com rejeitados
+                                     ,pr_cdcooper    => rw_crapcoop.cdcooper               --> Cooperativa
+                                     ,pr_nrdconta    => vr_nrdconta                        --> Numero da conta
+                                     ,pr_nmarquiv    => vr_tab_cratarq(vr_chave).nmarquiv  --> Informacoes do arquivo a ser tratado
+                                     ,pr_cdoperad    => vr_cdoperad                        --> Codigo do operador
+                                     ,pr_cdcritic    => vr_cdcritic                        --> Codigo da critica
+                                     ,pr_dscritic    => vr_dscritic);                      --> Descrição da critica
 
-				vr_chave := vr_tab_cratarq.NEXT(vr_chave);
-				CONTINUE;
-			  END IF;
+                vr_chave := vr_tab_cratarq.NEXT(vr_chave);
+                CONTINUE;
+              END IF;
             
-			  --> Processar arquivo conforme o seu layout 
-			  IF vr_tparquiv = 'CNAB240' AND
-				 vr_cddbanco = 1         THEN
+              --> Processar arquivo conforme o seu layout 
+              IF vr_tparquiv = 'CNAB240' AND
+                 vr_cddbanco = 1         THEN
                  
-				COBR0006.pc_intarq_remes_cnab240_001(pr_cdcooper  => rw_crapcoop.cdcooper  --> Codigo da cooperativa
-													,pr_nrdconta  => vr_tab_cratarq(vr_chave).nrdconta   --> Numero da conta do cooperado
-													,pr_nmarquiv  => vr_caminho_arq || '/' ||vr_tab_cratarq(vr_chave).nmarquiv   --> Nome do arquivo a ser importado               
-													,pr_idorigem  => 1                     --> Identificador de origem
-													,pr_dtmvtolt  => rw_crapdat.dtmvtolt   --> Data do movimento
-													,pr_cdoperad  => vr_cdoperad           --> Codigo do operador
-													,pr_nmdatela  => vr_cdprogra           --> Nome da Tela
-													,pr_tab_crawrej => vr_tab_crawrej      --> Registros rejeitados
-													,pr_hrtransa  => vr_hrtransa   --> Hora da transacao
-													,pr_nrprotoc  => vr_nrprotoc   --> Numero do Protocolo
-													,pr_des_reto  => vr_des_reto   --> OK ou NOK
-													,pr_cdcritic  => vr_cdcritic   --> Codigo de critica
-													,pr_dscritic  => vr_dscritic); --> Descricao da critica
+                COBR0006.pc_intarq_remes_cnab240_001(pr_cdcooper  => rw_crapcoop.cdcooper  --> Codigo da cooperativa
+                                                    ,pr_nrdconta  => vr_tab_cratarq(vr_chave).nrdconta   --> Numero da conta do cooperado
+                                                    ,pr_nmarquiv  => vr_caminho_arq || '/' ||vr_tab_cratarq(vr_chave).nmarquiv   --> Nome do arquivo a ser importado               
+                                                    ,pr_idorigem  => 1                     --> Identificador de origem
+                                                    ,pr_dtmvtolt  => rw_crapdat.dtmvtolt   --> Data do movimento
+                                                    ,pr_cdoperad  => vr_cdoperad           --> Codigo do operador
+                                                    ,pr_nmdatela  => vr_cdprogra           --> Nome da Tela
+                                                    ,pr_tab_crawrej => vr_tab_crawrej      --> Registros rejeitados
+                                                    ,pr_hrtransa  => vr_hrtransa   --> Hora da transacao
+                                                    ,pr_nrprotoc  => vr_nrprotoc   --> Numero do Protocolo
+                                                    ,pr_des_reto  => vr_des_reto   --> OK ou NOK
+                                                    ,pr_cdcritic  => vr_cdcritic   --> Codigo de critica
+                                                    ,pr_dscritic  => vr_dscritic); --> Descricao da critica
                  
-			  ELSIF vr_tparquiv = 'CNAB240' AND
-					vr_cddbanco = 85        THEN
+              ELSIF vr_tparquiv = 'CNAB240' AND
+                    vr_cddbanco = 85        THEN
                     
-				COBR0006.pc_intarq_remes_cnab240_085(pr_cdcooper  => rw_crapcoop.cdcooper  --> Codigo da cooperativa
-													,pr_nrdconta  => vr_tab_cratarq(vr_chave).nrdconta   --> Numero da conta do cooperado
-													,pr_nmarquiv  => vr_caminho_arq || '/' ||vr_tab_cratarq(vr_chave).nmarquiv   --> Nome do arquivo a ser importado               
-													,pr_idorigem  => 1                     --> Identificador de origem
-													,pr_dtmvtolt  => rw_crapdat.dtmvtolt   --> Data do movimento
-													,pr_cdoperad  => vr_cdoperad           --> Codigo do operador
-													,pr_nmdatela  => vr_cdprogra           --> Nome da Tela
-													,pr_tab_crawrej => vr_tab_crawrej --> Registros rejeitados
-													,pr_hrtransa  => vr_hrtransa   --> Hora da transacao
-													,pr_nrprotoc  => vr_nrprotoc   --> Numero do Protocolo
-													,pr_des_reto  => vr_des_reto   --> OK ou NOK
-													,pr_cdcritic  => vr_cdcritic   --> Codigo de critica
-													,pr_dscritic  => vr_dscritic); --> Descricao da critica
+                COBR0006.pc_intarq_remes_cnab240_085(pr_cdcooper  => rw_crapcoop.cdcooper  --> Codigo da cooperativa
+                                                    ,pr_nrdconta  => vr_tab_cratarq(vr_chave).nrdconta   --> Numero da conta do cooperado
+                                                    ,pr_nmarquiv  => vr_caminho_arq || '/' ||vr_tab_cratarq(vr_chave).nmarquiv   --> Nome do arquivo a ser importado               
+                                                    ,pr_idorigem  => 1                     --> Identificador de origem
+                                                    ,pr_dtmvtolt  => rw_crapdat.dtmvtolt   --> Data do movimento
+                                                    ,pr_cdoperad  => vr_cdoperad           --> Codigo do operador
+                                                    ,pr_nmdatela  => vr_cdprogra           --> Nome da Tela
+                                                    ,pr_tab_crawrej => vr_tab_crawrej --> Registros rejeitados
+                                                    ,pr_hrtransa  => vr_hrtransa   --> Hora da transacao
+                                                    ,pr_nrprotoc  => vr_nrprotoc   --> Numero do Protocolo
+                                                    ,pr_des_reto  => vr_des_reto   --> OK ou NOK
+                                                    ,pr_cdcritic  => vr_cdcritic   --> Codigo de critica
+                                                    ,pr_dscritic  => vr_dscritic); --> Descricao da critica
                   
               
-			  ELSIF vr_tparquiv = 'CNAB400' AND
-					vr_cddbanco = 85        THEN
+              ELSIF vr_tparquiv = 'CNAB400' AND
+                    vr_cddbanco = 85        THEN
                     
-				COBR0006.pc_intarq_remes_cnab400_085(pr_cdcooper  => rw_crapcoop.cdcooper  --> Codigo da cooperativa
-													,pr_nrdconta  => vr_tab_cratarq(vr_chave).nrdconta   --> Numero da conta do cooperado
-													,pr_nmarquiv  => vr_caminho_arq || '/' ||vr_tab_cratarq(vr_chave).nmarquiv   --> Nome do arquivo a ser importado               
-													,pr_idorigem  => 1                     --> Identificador de origem
-													,pr_dtmvtolt  => rw_crapdat.dtmvtolt   --> Data do movimento
-													,pr_cdoperad  => vr_cdoperad           --> Codigo do operador
-													,pr_nmdatela  => vr_cdprogra           --> Nome da Tela
-													,pr_tab_crawrej => vr_tab_crawrej --> Registros rejeitados
-													,pr_hrtransa  => vr_hrtransa --> Hora da transacao
-													,pr_nrprotoc  => vr_nrprotoc --> Numero do Protocolo
-													,pr_des_reto  => vr_des_reto --> OK ou NOK
-													,pr_cdcritic  => vr_cdcritic --> Codigo de critica
-													,pr_dscritic  => vr_dscritic);    
+                COBR0006.pc_intarq_remes_cnab400_085(pr_cdcooper  => rw_crapcoop.cdcooper  --> Codigo da cooperativa
+                                                    ,pr_nrdconta  => vr_tab_cratarq(vr_chave).nrdconta   --> Numero da conta do cooperado
+                                                    ,pr_nmarquiv  => vr_caminho_arq || '/' ||vr_tab_cratarq(vr_chave).nmarquiv   --> Nome do arquivo a ser importado               
+                                                    ,pr_idorigem  => 1                     --> Identificador de origem
+                                                    ,pr_dtmvtolt  => rw_crapdat.dtmvtolt   --> Data do movimento
+                                                    ,pr_cdoperad  => vr_cdoperad           --> Codigo do operador
+                                                    ,pr_nmdatela  => vr_cdprogra           --> Nome da Tela
+                                                    ,pr_tab_crawrej => vr_tab_crawrej --> Registros rejeitados
+                                                    ,pr_hrtransa  => vr_hrtransa --> Hora da transacao
+                                                    ,pr_nrprotoc  => vr_nrprotoc --> Numero do Protocolo
+                                                    ,pr_des_reto  => vr_des_reto --> OK ou NOK
+                                                    ,pr_cdcritic  => vr_cdcritic --> Codigo de critica
+                                                    ,pr_dscritic  => vr_dscritic);    
                 
-			  END IF;
+              END IF;
   		      
-			  -- Se retornou erro
-			  IF vr_des_reto <> 'OK'  THEN                                            
+              -- Se retornou erro
+              IF vr_des_reto <> 'OK'  THEN                                            
                  
-				pc_trata_rejeicao_arq(pr_rec_rejeita => vr_tab_rejeita                    --> Tabela com rejeitados
-							 		 ,pr_tab_crawrej => vr_tab_crawrej                     --> Tabela com rejeitados
-						 			 ,pr_cdcooper    => rw_crapcoop.cdcooper               --> Cooperativa
-									 ,pr_nrdconta    => vr_nrdconta                        --> Numero da conta
-									 ,pr_nmarquiv    => vr_tab_cratarq(vr_chave).nmarquiv  --> Informacoes do arquivo a ser tratado
-									 ,pr_cdoperad    => vr_cdoperad                        --> Codigo do operador
-									 ,pr_cdcritic    => vr_cdcritic                        --> Codigo da critica
-									 ,pr_dscritic    => vr_dscritic);                      --> Descrição da critica
+                pc_trata_rejeicao_arq(pr_rec_rejeita => vr_tab_rejeita                    --> Tabela com rejeitados
+                                     ,pr_tab_crawrej => vr_tab_crawrej                     --> Tabela com rejeitados
+                                     ,pr_cdcooper    => rw_crapcoop.cdcooper               --> Cooperativa
+                                     ,pr_nrdconta    => vr_nrdconta                        --> Numero da conta
+                                     ,pr_nmarquiv    => vr_tab_cratarq(vr_chave).nmarquiv  --> Informacoes do arquivo a ser tratado
+                                     ,pr_cdoperad    => vr_cdoperad                        --> Codigo do operador
+                                     ,pr_cdcritic    => vr_cdcritic                        --> Codigo da critica
+                                     ,pr_dscritic    => vr_dscritic);                      --> Descrição da critica
 
-				vr_chave := vr_tab_cratarq.NEXT(vr_chave);
-				CONTINUE;                   
+                vr_chave := vr_tab_cratarq.NEXT(vr_chave);
+                CONTINUE;                   
   					  	                                                  
-			  END IF;                       
+              END IF;                       
               
-			  -- Move o Arquivo UNIX para o "salvar"
-			  vr_dscomand := 'mv -f '|| vr_caminho_arq || '/' || vr_tab_cratarq(vr_chave).nmarquiv || ' ' || 
-							  vr_caminho_cooper || '/salvar';
+              -- Move o Arquivo UNIX para o "salvar"
+              vr_dscomand := 'mv -f '|| vr_caminho_arq || '/' || vr_tab_cratarq(vr_chave).nmarquiv || ' ' || 
+                              vr_caminho_cooper || '/salvar';
                                              
-			  -- Executa comando
-			  gene0001.pc_oscommand_shell(pr_des_comando => vr_dscomand,
-										  pr_typ_saida   => vr_typ_said,
-			 							  pr_des_saida   => vr_dscritic);
+              -- Executa comando
+              gene0001.pc_oscommand_shell(pr_des_comando => vr_dscomand,
+                                          pr_typ_saida   => vr_typ_said,
+                                          pr_des_saida   => vr_dscritic);
             
-			  -- Verificar retorno de erro
-			  IF NVL(vr_typ_said, ' ') = 'ERR' THEN
+              -- Verificar retorno de erro
+              IF NVL(vr_typ_said, ' ') = 'ERR' THEN
               
-				-- O comando shell executou com erro
-				vr_cdcritic := 0;        
+                -- O comando shell executou com erro
+                vr_cdcritic := 0;        
               
-				-- Gera log
-				pc_gerar_log(pr_cdcooper => rw_crapcoop.cdcooper,
-							pr_dscdolog => 'Arquivo: '|| vr_tab_cratarq(vr_chave).nmarquiv||
-											': '       || vr_cdcritic||'-'||
-											'Erro ao mover arquivo ' || vr_tab_cratarq(vr_chave).nmarquiv || 
-											' para o salvar: ' || vr_dscritic); 
+                -- Gera log
+                pc_gerar_log(pr_cdcooper => rw_crapcoop.cdcooper,
+                             pr_dscdolog => 'Arquivo: '|| vr_tab_cratarq(vr_chave).nmarquiv||
+                                            ': '       || vr_cdcritic||'-'||
+                                            'Erro ao mover arquivo ' || vr_tab_cratarq(vr_chave).nmarquiv || 
+                                            ' para o salvar: ' || vr_dscritic); 
                                             
-				-- Erro ja esta sendo logado na procedure
-				vr_cdcritic := 0;
-				vr_dscritic := '';
-				vr_chave := vr_tab_cratarq.NEXT(vr_chave);
-				CONTINUE; 
+                -- Erro ja esta sendo logado na procedure
+                vr_cdcritic := 0;
+                vr_dscritic := '';
+                vr_chave := vr_tab_cratarq.NEXT(vr_chave);
+                CONTINUE; 
               
-			  END IF;
-             
-		  	  -- Busca próxima chave de arquivos
-		  	  vr_chave := vr_tab_cratarq.NEXT(vr_chave);
-  		        
-			  -- Efetuar commit por arquivo
-			  COMMIT;
+              END IF;
+
+              -- Efetuar commit por arquivo
+              COMMIT;
 
             EXCEPTION
                 
@@ -617,71 +614,88 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps778 (pr_dscritic OUT VARCHAR2) IS     
                 vr_dscritic := 'CRPS778: Erro ao carregar arquivo - ' || vr_tab_cratarq(vr_chave).nmarquiv 
                                ||' - '|| dbms_utility.format_error_backtrace
                                ||' - '|| dbms_utility.format_error_stack;
-                IF vr_dscritic IS NOT NULL THEN
+                IF TRIM(vr_dscritic) IS NOT NULL THEN
                   -- Envio centralizado de log de erro               
                   -- Gera log 
                   pc_gerar_log(pr_cdcooper => rw_crapcoop.cdcooper,
-                                pr_dscdolog => vr_dscritic);
+                               pr_dscdolog => vr_dscritic);
                 END IF;
                 
-				-- Efetuar rollback				  
+                -- Efetuar rollback				  
                 ROLLBACK;
 
-                vr_chave := vr_tab_cratarq.NEXT(vr_chave);
-                 
             END;
-		       
+		                  
+            IF TRIM(vr_dscritic) IS NOT NULL THEN
+              
+              pc_trata_rejeicao_arq(pr_rec_rejeita => vr_tab_rejeita                     --> Tabela com rejeitados
+                                   ,pr_tab_crawrej => vr_tab_crawrej                     --> Tabela com rejeitados
+                                   ,pr_cdcooper    => rw_crapcoop.cdcooper               --> Cooperativa
+                                   ,pr_nrdconta    => vr_nrdconta                        --> Numero da conta
+                                   ,pr_nmarquiv    => vr_tab_cratarq(vr_chave).nmarquiv  --> Informacoes do arquivo a ser tratado
+                                   ,pr_cdoperad    => vr_cdoperad                        --> Codigo do operador
+                                   ,pr_cdcritic    => vr_cdcritic                        --> Codigo da critica
+                                   ,pr_dscritic    => vr_dscritic);                      --> Descrição da critica
+
+            END IF;
+            
+            vr_chave := vr_tab_cratarq.NEXT(vr_chave);
+
           END LOOP; -- Loop por arquivo
              
         END IF; --Fim da importação dos arquivos
                     
-       EXCEPTION
-         WHEN vr_exc_erro THEN
+      EXCEPTION
+        WHEN vr_exc_erro THEN
             
-            -- Verifica se houve código de erro
-            vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic, vr_dscritic);
+          -- Verifica se houve código de erro
+          vr_dscritic := gene0001.fn_busca_critica(vr_cdcritic, vr_dscritic);
 						
-            IF vr_dscritic IS NOT NULL THEN
-             -- Envio centralizado de log de erro							 
-             -- Gera log 
-             pc_gerar_log(pr_cdcooper => rw_crapcoop.cdcooper,
-                          pr_dscdolog => vr_dscritic);
-           END IF;
+          IF TRIM(vr_dscritic) IS NOT NULL THEN
+            -- Envio centralizado de log de erro							 
+            -- Gera log 
+            pc_gerar_log(pr_cdcooper => rw_crapcoop.cdcooper,
+                         pr_dscdolog => vr_dscritic);
+          END IF;
 						
-           vr_cdcritic := 0;
-           vr_dscritic := NULL;
+          vr_cdcritic := 0;
+          vr_dscritic := NULL;
             
-           -- Efetuar rollback				  
-           ROLLBACK;
+          -- Efetuar rollback				  
+          ROLLBACK;
              
-         WHEN OTHERS THEN
+        WHEN OTHERS THEN
 
-           pc_controla_log_batch(pr_dstiplog      => 'E'
-                                ,pr_dscritic      => vr_dscritic);
+          pr_dscritic := 'CRPS778: Erro ao executar arquivos FTP da Cooperativa - ' || 
+                          rw_crapcoop.nmrescop                ||' - '||
+                          dbms_utility.format_error_backtrace ||' - '||
+                          dbms_utility.format_error_stack;
 
-           pr_dscritic := sqlerrm;
-           
-           cecred.pc_log_programa(pr_dstiplog      => 'E'
-                                 ,pr_cdprograma    => vr_cdprogra
-                                 ,pr_cdcooper      => rw_crapcoop.cdcooper
-                                 ,pr_tpexecucao    => 2
-                                 ,pr_tpocorrencia  => 2
-                                 ,pr_cdcriticidade => 1
-                                 ,pr_cdmensagem    => 0
-                                 ,pr_dsmensagem    => pr_dscritic || ', cdcooper: ' || rw_crapcoop.cdcooper 
-                                                      || ', nrdconta: ' || vr_nrdconta || ' (PC_CRPS778(1))'
-                                 ,pr_idprglog      => vr_idprglog);
+          pc_controla_log_batch(pr_dstiplog       => 'E'
+                               ,pr_dscritic       => pr_dscritic);
 
-           cobr0009.pc_notifica_cobranca(pr_dsassunt => 'CRPS778 - Falha ao Integrar'
-                                                            || ' arquivos de cobrança via FTP'
-                                        ,pr_dsmensag => 'Ocorreu falha ao integrar arquivos'
-                                                            || ' de cobranca via FTP.'
-                                                            || ' Entre em contato com a área de'
-                                                            || ' Sustentação de Sistemas para analise' 
-                                                            || ' dos logs('||vr_idprglog||'). (PC_CRPS778(1))'
-                                        ,pr_idprglog => vr_idprglog);
+          cecred.pc_log_programa(pr_dstiplog      => 'E'
+                                ,pr_cdprograma    => vr_cdprogra
+                                ,pr_cdcooper      => rw_crapcoop.cdcooper
+                                ,pr_tpexecucao    => 2
+                                ,pr_tpocorrencia  => 2
+                                ,pr_cdcriticidade => 1
+                                ,pr_cdmensagem    => 0
+                                ,pr_dsmensagem    => pr_dscritic || ', cdcooper: '          || 
+                                                     rw_crapcoop.cdcooper || ', nrdconta: ' || 
+                                                     vr_nrdconta || ' (PC_CRPS778(1))'
+                                ,pr_idprglog      => vr_idprglog);
+
+          cobr0009.pc_notifica_cobranca(pr_dsassunt => 'CRPS778 - Falha ao Integrar'
+                                                        || ' arquivos de cobrança via FTP'
+                                       ,pr_dsmensag => 'Ocorreu falha ao integrar arquivos'
+                                                        || ' de cobranca via FTP.'
+                                                        || ' Entre em contato com a área de'
+                                                        || ' Sustentação de Sistemas para analise' 
+                                                        || ' dos logs('||vr_idprglog||'). (PC_CRPS778(1))'
+                                       ,pr_idprglog => vr_idprglog);
        
-	       -- Efetuar rollback				  
+           -- Efetuar rollback				  
            ROLLBACK;
 
        END;
@@ -700,14 +714,16 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps778 (pr_dscritic OUT VARCHAR2) IS     
          
        btch0001.pc_log_internal_exception(3);
 
-       -- Efetuar retorno do erro nao tratado
-       pr_dscritic := sqlerrm;
+
+       pr_dscritic := 'CRPS778: Erro na execucao do programa - '  ||
+                       dbms_utility.format_error_backtrace ||' - '||
+                       dbms_utility.format_error_stack;
 
        -- Log de erro de execucao
        vr_flgerlog := TRUE;
        pc_controla_log_batch(pr_dstiplog => 'E',
                              pr_dscritic => pr_dscritic);
-       
+
        cecred.pc_log_programa(pr_dstiplog      => 'E'
                              ,pr_cdprograma    => vr_cdprogra
                              ,pr_cdcooper      => rw_crapcoop.cdcooper
@@ -715,8 +731,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps778 (pr_dscritic OUT VARCHAR2) IS     
                              ,pr_tpocorrencia  => 2
                              ,pr_cdcriticidade => 1
                              ,pr_cdmensagem    => 0
-                             ,pr_dsmensagem    => pr_dscritic || ', cdcooper: ' || rw_crapcoop.cdcooper 
-                                                  || ', nrdconta: ' || vr_nrdconta || ' (PC_CRPS778(2))'
+                             ,pr_dsmensagem    => pr_dscritic || ', cdcooper: ' || 
+                                                  rw_crapcoop.cdcooper || ', nrdconta: ' || 
+                                                  vr_nrdconta || ' (PC_CRPS778(2))'
                              ,pr_idprglog      => vr_idprglog);
 
        cobr0009.pc_notifica_cobranca(pr_dsassunt => 'CRPS778 - Falha ao Integrar'
