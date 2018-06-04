@@ -1,0 +1,180 @@
+<?php
+/* !
+ * FONTE        : manter_rotina.php
+ * CRIACAO      : Luis Fernando - (GFT)
+ * DATA CRIACAO : 21/05/2018
+ * OBJETIVO     : Rotina para manter as operações da tela COBTIT
+ * --------------
+ */
+
+session_start();
+require_once('../../includes/config.php');
+require_once('../../includes/funcoes.php');
+require_once('../../includes/controla_secao.php');
+require_once('../../class/xmlfile.php');
+isPostMethod();
+
+
+
+$operacao = $_POST["operacao"];
+$nrdconta = isset($_POST["nrdconta"]) ? $_POST["nrdconta"] : '';
+$nrcpfcgc = isset($_POST["nrcpfcgc"]) ? $_POST["nrcpfcgc"] : '';
+$qtregist = isset($_POST["qtregist"]) ? $_POST["qtregist"] : 15;
+$nriniseq = isset($_POST["nriniseq"]) ? $_POST["nriniseq"] : 1;
+$dtvencto = isset($_POST["dtvencto"]) ? $_POST["dtvencto"] : '';
+$nrborder = isset($_POST["nrborder"]) ? $_POST["nrborder"] : '';
+$nrcpfava = isset($_POST["nrcpfava"]) ? $_POST["nrcpfava"] : '';
+
+if (!isset($operacao) || $operacao=='') {
+    exibeErro(htmlentities('Opera&ccedil;&atilde;o n&atilde;o encontrada'));
+}
+
+switch ($operacao){
+    case "BUSCAR_ASSOCIADO":
+        $xml = "<Root>";
+        $xml .= " <Dados>";
+        $xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
+        $xml .= "   <nrcpfcgc>".$nrcpfcgc."</nrcpfcgc>";
+        $xml .= " </Dados>";
+        $xml .= "</Root>";
+
+        $xmlResult = mensageria($xml,"DSCT0003","DSCT0003_BUSCAR_ASSOCIADO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+        $xmlObj = getClassXML($xmlResult);
+        $root = $xmlObj->roottag;
+        // Se ocorrer um erro, mostra crítica
+        $json = array();
+        if ($root->erro){
+            $json['status'] = 'erro';
+            $json['mensagem'] = utf8_encode($root->erro->registro->dscritic);
+        }
+        else{
+            $json['status'] = 'sucesso';
+            $json['nrdconta'] = utf8_encode($root->dados->associado->nrdconta->cdata);
+            $json['nrcpfcgc'] = utf8_encode($root->dados->associado->nrcpfcgc->cdata);
+            $json['nmprimtl'] = utf8_encode($root->dados->associado->nmprimtl->cdata);
+        }        
+        echo json_encode($json);
+    break;
+    case "BUSCAR_BORDEROS":
+        $xml = "<Root>";
+        $xml .= " <Dados>";
+        $xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
+        $xml .= " </Dados>";
+        $xml .= "</Root>";
+
+        $xmlResult = mensageria($xml,"COBTIT","BUSCAR_BORDEROS_VENCIDOS", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+        $xmlObj = getClassXML($xmlResult);
+        $root = $xmlObj->roottag;
+        // Se ocorrer um erro, mostra crítica
+        $dados = $root->dados;
+        $json = array();
+        if ($root->erro){
+            $json['status'] = 'erro';
+            $json['mensagem'] = utf8_encode($root->erro->registro->dscritic);
+        }
+        else{
+            ob_start();
+            require_once("tab_borderos.php");
+            $html = ob_get_clean();
+            $json['status'] = 'sucesso';
+            $json['html'] = $html;
+        }        
+        echo json_encode($json);
+    break;
+    case "LISTAR_FERIADOS":
+        $dtfinal = DateTime::createFromFormat("d/m/Y",$glbvars["dtmvtolt"]);
+        $dtfinal = $dtfinal->add(new DateInterval('P1Y'));
+
+        $xml = "<Root>";
+        $xml .= " <Dados>";
+        $xml .= "   <dtmvtolt>".$glbvars["dtmvtolt"]."</dtmvtolt>";
+        $xml .= "   <dtfinal>".$dtfinal->format("d/m/Y")."</dtfinal>";
+        $xml .= " </Dados>";
+        $xml .= "</Root>";
+
+        $xmlResult = mensageria($xml,"COBTIT","LISTAR_FERIADOS", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+        $xmlObj = getClassXML($xmlResult);
+        $root = $xmlObj->roottag;
+        // Se ocorrer um erro, mostra crítica
+        $dados = $root->dados;
+
+        $json = array();
+        if ($root->erro){
+            $json['status'] = 'erro';
+            $json['mensagem'] = utf8_encode($root->erro->registro->dscritic);
+        }
+        else{
+            $feriados = array();
+            foreach($root->dados->find("inf") as $f){
+                $feriados[] = $f->yyyymmdd->cdata;
+            }
+            $json['status'] = 'sucesso';
+            $json['feriados'] = $feriados;
+        }        
+        echo json_encode($json);
+    break;
+    case "LISTAR_TITULOS":
+        $xml = "<Root>";
+        $xml .= " <Dados>";
+        $xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
+        $xml .= "   <nrborder>".$nrborder."</nrborder>";
+        $xml .= "   <dtvencto>".$dtvencto."</dtvencto>";
+        $xml .= " </Dados>";
+        $xml .= "</Root>";
+
+        $xmlResult = mensageria($xml,"COBTIT","LISTAR_TITULOS", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+        $xmlObj = getClassXML($xmlResult);
+        $root = $xmlObj->roottag;
+        // Se ocorrer um erro, mostra crítica
+        $dados = $root->dados;
+
+        $json = array();
+        if ($root->erro){
+            $json['status'] = 'erro';
+            $json['mensagem'] = utf8_encode($root->erro->registro->dscritic);
+        }
+        else{
+            ob_start();
+            require_once("tab_titulos.php");
+            $html = ob_get_clean();
+            $json['status'] = 'sucesso';
+            $json['html'] = $html;
+        }
+        echo json_encode($json);
+    break;
+    case "GERAR_BOLETO":
+        $nrtitulo = $_POST["nrtitulo"];
+        $titulos = '';
+        foreach($nrtitulo as $k=>$v){
+            $titulos .= $v."=".converteFloat($_POST["vlpagar"][$v]).";";
+        }
+
+        $xml = "<Root>";
+        $xml .= " <Dados>";
+        $xml .= "   <nrdconta>".$nrdconta."</nrdconta>";
+        $xml .= "   <nrborder>".$nrborder."</nrborder>";
+        $xml .= "   <nrtitulo>".$titulos."</nrtitulo>";
+        $xml .= "   <dtvencto>".$dtvencto."</dtvencto>";
+        $xml .= "   <nrcpfava>".$nrcpfava."</nrcpfava>";
+        $xml .= " </Dados>";
+        $xml .= "</Root>";
+
+        $xmlResult = mensageria($xml,"COBTIT","GERAR_BOLETO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+        $xmlObj = getClassXML($xmlResult);
+        $root = $xmlObj->roottag;
+
+        // Se ocorrer um erro, mostra crítica
+        $json = array();
+        if ($root->erro){
+            $json['status'] = 'erro';
+            $json['mensagem'] = utf8_encode($root->erro->registro->dscritic);
+        }
+        else{
+            $boleto = $root->dados->boleto;
+            $json['status'] = 'sucesso';
+            $json['mensagem'] = 'Boleto n&ordm; '.$boleto->nrdocmto.' gerado com sucesso com <br/> o valor R$ '.formataMoeda($boleto->vltitulo);
+        }
+        echo json_encode($json);
+    break;
+}
+?>
