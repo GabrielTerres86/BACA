@@ -159,8 +159,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
                   12/12/2017 - Projeto 410 - Incluir o tratamento para o IOF por atraso - (Jean / MOut´S)
                   
                   20/03/2018 - #INC0010628 Não considerar contratos que foram para prejuízo (Carlos)
+
+                  05/04/2018 - Novos campos criados para mandar ao motor de crédito 
+                               Referente a avais cruzados. Diego Simas (AMcom)
                   
                   27/04/2018 - Removida funcao fn_des_cdsitdct. PRJ366 (Lombardi)
+
+                  24/05/2018 - Projeto Regulatório de Crédito - Inclusão de cpf/cnpj no objeto contasAvalizadas
+                               Campo documentoAval - Diego Simas - AMcom
+
   ---------------------------------------------------------------------------------------------------------------*/
   
   --> Funcao para CPF/CNPJ
@@ -959,6 +966,96 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
     END;
   END;
   
+  --> Rotina para retornar total de prestações que o avalista tem
+  --> e também retornar a quantidade de contrato em que é avalista
+  --> Diego Simas (AMcom)
+  PROCEDURE pc_resumo_aval(pr_cdcooper    IN crapepr.cdcooper%TYPE --> Código da cooperativa
+                          ,pr_nrdconta    IN crapepr.nrdconta%TYPE --> Numero da conta do emprestimo
+                          ,pr_vltprava   OUT crapepr.vlpreemp%TYPE --> Valor total das prestações em que o cooperado é avalista
+                          ,pr_qtconava   OUT NUMBER                --> Quantidade de contratos em que o cooperado é avalista
+                          ,pr_cdcritic   OUT crapcri.cdcritic%TYPE --> Código de critica encontrada
+                          ,pr_dscritic   OUT VARCHAR2              --Descrição da crítica
+                          ,pr_nmdcampo   OUT VARCHAR2              --Nome do Campo
+                          ,pr_des_erro   OUT VARCHAR2) IS          --> Retorno de erro
+  /* ..........................................................................
+
+        Programa : pc_resumo_aval
+        Sistema  : Conta-Corrente - Cooperativa de Credito
+        Sigla    : CRED
+        Autor    : Diego Simas (AMcom)
+        Data     : Abril/2018.                    Ultima atualizacao: 
+
+        Dados referentes a procedure:
+
+        Frequencia: Sempre que for chamado
+        Objetivo  : Rotina responsavel por buscar dados do avalista
+
+        Alteração : 
+        
+    ..........................................................................*/                           
+    
+      -- Selecionar informações do avalista
+      -- Cursor para pegar quantidade de contratos e o valor total
+      -- das prestações em que o cooperado é avalista    
+      CURSOR cr_crapavl (pr_cdcooper crapass.cdcooper%TYPE,
+                         pr_nrdconta crapass.nrdconta%TYPE)IS
+      SELECT SUM(emp.vlpreemp) total_prestacoes, 
+             COUNT(DISTINCT ava.nrctravd) qtd_contratos
+        FROM crapavl ava, 
+             crapepr emp
+       WHERE ava.cdcooper = pr_cdcooper
+         AND ava.nrdconta = pr_nrdconta
+         AND emp.cdcooper = ava.cdcooper
+         AND emp.nrdconta = ava.nrctaavd
+         AND emp.nrctremp = ava.nrctravd
+         AND emp.inliquid = 0;
+      rw_crapavl cr_crapavl%ROWTYPE;
+
+      -- Variáveis de Exceção
+      vr_exc_erro  EXCEPTION;
+      vr_exc_saida EXCEPTION;
+
+      -- Variável para tratar mensagem erro
+      vr_des_erro VARCHAR2(4000);
+      vr_cdcritic PLS_INTEGER;
+      vr_dscritic VARCHAR2(4000);
+
+  BEGIN
+      
+    OPEN cr_crapavl(pr_cdcooper => pr_cdcooper,
+                    pr_nrdconta => pr_nrdconta);
+
+    FETCH cr_crapavl INTO rw_crapavl;
+
+    IF cr_crapavl%NOTFOUND THEN
+        -- Fecha cursor
+        CLOSE cr_crapavl;       
+        pr_vltprava := 0;
+        pr_qtconava := 0;
+     ELSE
+        -- Fecha cursor
+        CLOSE cr_crapavl;
+        pr_vltprava := rw_crapavl.total_prestacoes;
+        pr_qtconava := rw_crapavl.qtd_contratos;
+     END IF;
+     
+     pr_des_erro := 'OK';
+
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+      pr_des_erro := 'NOK';
+      -- Erro
+      pr_cdcritic := vr_cdcritic;
+      pr_dscritic := vr_dscritic;
+    WHEN OTHERS THEN
+      pr_des_erro := 'NOK';
+      -- Erro
+      pr_cdcritic:= 0;
+      pr_dscritic:= 'Erro na pc_resumo_aval --> '|| SQLERRM;  
+    
+  END pc_resumo_aval;
+
+  
   PROCEDURE pc_gera_json_pessoa_ass(pr_cdcooper IN crapass.cdcooper%TYPE
                                    ,pr_nrdconta IN crapass.nrdconta%TYPE
                                    ,pr_nrctremp IN crapepr.nrctremp%TYPE
@@ -991,14 +1088,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
                     21/12/2017 - Ajustar tratamento de erro, para que a mensagem seja exibida em tela
                                - Ajustar passagem de parametro cdcritic e dscritic 
                                (Douglas - Chamado 819146)
+
+                    24/05/2018 - Projeto Regulatório de Crédito - Inclusão de cpf/cnpj no objeto contasAvalizadas
+                                 Campo documentoAval - Diego Simas - AMcom
+
     ..........................................................................*/
     DECLARE
       -- Variáveis para exceções
       vr_cdcritic PLS_INTEGER;
       vr_dscritic VARCHAR2(4000);
+      vr_nmdcampo VARCHAR2(100);
       vr_exc_saida EXCEPTION;
-			vr_des_reto VARCHAR2(3);
-			vr_tab_erro GENE0001.typ_tab_erro;
+	  vr_des_reto VARCHAR2(3);
+	  vr_tab_erro GENE0001.typ_tab_erro;
+      vr_des_erro VARCHAR2(10);
+      vr_exc_erro EXCEPTION;
     
       -- Declarar objetos Json necessários:
       vr_obj_generico  json := json();
@@ -1075,6 +1179,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
       vr_qtdiaat2 INTEGER := 0;
       vr_idcarga  tbepr_carga_pre_aprv.idcarga%TYPE;
       vr_maior_nratrmai NUMBER(25,10);
+      vr_vltprava crapepr.vlpreemp%TYPE;
+      vr_qtconava INTEGER := 0;
       vr_vlblqapl NUMBER(18,2);
       vr_vlblqpou NUMBER(18,2);
       vr_vlbloque NUMBER(18,2);
@@ -1496,6 +1602,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
            AND lim.insitlim = 2; -- Ativo
       rw_craplim_chqesp cr_craplim_chqesp%ROWTYPE;
     
+      -- Cursor para pegar os contratos em que o cooperado é avalista
+      -- Diego Simas (AMcom)
+      CURSOR cr_crapavl_contas (pr_cdcooper crapass.cdcooper%TYPE,
+                                pr_nrdconta crapass.nrdconta%TYPE)IS
+      SELECT ass.nrdconta conta, 
+             ass.nmprimtl nome,
+             ass.nrcpfcgc documento,
+             emp.nrctremp contrato
+        FROM crapavl ava, 
+             crapass ass,        
+             crapepr emp
+       WHERE ava.cdcooper = pr_cdcooper
+         AND ava.nrdconta = pr_nrdconta
+         AND emp.cdcooper = ava.cdcooper
+         AND emp.nrdconta = ava.nrctaavd
+         AND emp.nrctremp = ava.nrctravd
+         AND emp.inliquid = 0
+         AND ass.cdcooper = emp.cdcooper
+          AND ass.nrdconta = emp.nrdconta;
+      rw_crapavl_contas cr_crapavl_contas%ROWTYPE;
+
       -- Buscar ultimas ocorrências de Cheques Devolvidos
       CURSOR cr_crapneg_cheq(pr_qtmeschq IN INTEGER) IS
         SELECT dtiniest
@@ -3156,6 +3283,53 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
       vr_obj_generic2.put('valorAvalistaAtraso'
                          ,este0001.fn_decimal_ibra(vr_ava_vlsdeved));
 												 
+      -- INÍCIO AVAIS CRUZADOS                   
+      -- Buscar a quantidade de contratos e o valor total
+      -- das prestações, de contratos ativos, em que o cooperado é avalista
+      -- Diego Simas (AMcom)
+      pc_resumo_aval(pr_cdcooper => pr_cdcooper   --Cooperativa
+                    ,pr_nrdconta => pr_nrdconta   --Conta
+                    ,pr_vltprava => vr_vltprava   --Valor total das prestações do aval
+                    ,pr_qtconava => vr_qtconava   --Quantidade de contratos do aval
+                    ,pr_cdcritic => vr_cdcritic   --Código da crítica
+                    ,pr_dscritic => vr_dscritic   --Descrição da crítica
+                    ,pr_nmdcampo => vr_nmdcampo   --Nome do campo de retorno
+                    ,pr_des_erro => vr_des_erro); --Retorno OK;NOK
+                                      
+      IF vr_des_erro <> 'OK'      OR
+         nvl(vr_cdcritic,0) <> 0  OR
+           vr_dscritic IS NOT NULL  THEN
+           RAISE vr_exc_erro;
+      END IF;
+      
+      -- Cria informação totalPrestacoesAvalista
+      vr_obj_generic2.put('totalPrestacoesAvalista'
+                         ,este0001.fn_decimal_ibra(vr_vltprava));
+      -- Cria informação qtdContratosAvalista
+      vr_obj_generic2.put('qtdContratosAvalista'
+                         ,(vr_qtconava > 0));
+
+      -- Montar objeto para Aval Cruzado
+      -- Criar objeto para contas e contratos avalizados
+      vr_lst_generic3 := json_list();
+      
+      -- Efetuar laço para trazer todos os registros
+      FOR rw_crapavl_contas IN cr_crapavl_contas(pr_cdcooper, pr_nrdconta) LOOP
+        -- Criar objeto para as contas avalizadas e enviar suas informações
+        vr_obj_generic3 := json();
+        vr_obj_generic3.put('contaAval', rw_crapavl_contas.conta);
+        vr_obj_generic3.put('nomeAval', rw_crapavl_contas.nome);
+        vr_obj_generic3.put('documentoAval', rw_crapavl_contas.documento);
+        vr_obj_generic3.put('contratoAval', rw_crapavl_contas.contrato);
+        -- Adicionar contas avalizadas na lista
+        vr_lst_generic3.append(vr_obj_generic3.to_json_value());
+      END LOOP; -- Final da leitura das operações
+
+      -- Adicionar o array contasAvalizadas no objeto informações adicionais
+      vr_obj_generic2.put('contasAvalizadas', vr_lst_generic3);
+      -- Diego Simas (AMcom) 
+      -- FIM AVAIS CRUZADOS
+
 			--Verificar se usa tabela juros
 			vr_dstextab:= TABE0001.fn_busca_dstextab (pr_cdcooper => pr_cdcooper
 																							 ,pr_nmsistem => 'CRED'

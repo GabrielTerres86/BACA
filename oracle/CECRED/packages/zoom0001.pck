@@ -6,7 +6,7 @@ CREATE OR REPLACE PACKAGE CECRED.ZOOM0001 AS
     Sistema  : Rotinas genericas referente a zoom de pesquisa
     Sigla    : ZOOM
     Autor    : Adriano Marchi
-    Data     : 30/11/2015.                   Ultima atualizacao: 12/04/2018
+    Data     : 30/11/2015.                   Ultima atualizacao: 15/05/2018
   
    Dados referentes ao programa:
   
@@ -36,6 +36,8 @@ CREATE OR REPLACE PACKAGE CECRED.ZOOM0001 AS
 			   20/03/2018 - Inclusão de rotina pc_consiste_limite - Daniel(AMcom).
 
 			   12/04/2018 - Inclusão da rotina pc_busca_motivo_demissao	   
+
+		       15/05/2018 - Criado a rotina pc_consulta_contratos_ativos - Diego Simas - AMcom
 
   ---------------------------------------------------------------------------------------------------------------*/
   
@@ -580,6 +582,15 @@ PROCEDURE pc_consultar_limite_adp(pr_cdcooper IN NUMBER             --> Cooperat
                                    ,pr_nmdcampo  OUT VARCHAR2               -- Nome do Campo
                                    ,pr_des_erro  OUT VARCHAR2);   							                               
                                                                                                           
+  PROCEDURE pc_consulta_contratos_ativos(pr_cdcooper  IN crapass.cdcooper%TYPE
+                                        ,pr_nrdconta  IN crapass.nrdconta%TYPE  
+                                        ,pr_xmllog    IN VARCHAR2                --XML com informações de LOG
+                                        ,pr_cdcritic  OUT PLS_INTEGER            --Código da crítica
+                                        ,pr_dscritic  OUT VARCHAR2               --Descrição da crítica
+                                        ,pr_retxml    IN OUT NOCOPY XMLType      --Arquivo de retorno do XML
+                                        ,pr_nmdcampo  OUT VARCHAR2               --Nome do Campo
+                                        ,pr_des_erro  OUT VARCHAR2);             --> Erros do processo
+
 END ZOOM0001;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.ZOOM0001 AS
@@ -8167,6 +8178,189 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ZOOM0001 AS
                                      '<Root><Erro>' || pr_cdcritic||'-'||pr_dscritic || '</Erro></Root>');
 
   END pc_busca_crapldc;
+
+  PROCEDURE pc_consulta_contratos_ativos(pr_cdcooper  IN crapass.cdcooper%TYPE
+                                        ,pr_nrdconta  IN crapass.nrdconta%TYPE  
+                                        ,pr_xmllog    IN VARCHAR2                --XML com informações de LOG
+                                        ,pr_cdcritic  OUT PLS_INTEGER            --Código da crítica
+                                        ,pr_dscritic  OUT VARCHAR2               --Descrição da crítica
+                                        ,pr_retxml    IN OUT NOCOPY XMLType      --Arquivo de retorno do XML
+                                        ,pr_nmdcampo  OUT VARCHAR2               --Nome do Campo
+                                        ,pr_des_erro  OUT VARCHAR2)IS            --Saida OK/NOK
+
+  /*---------------------------------------------------------------------------------------------------------------
+
+    Programa : pc_consulta_contratos_ativos
+    Sistema  : Conta-Corrente - Cooperativa de Credito
+    Sigla    : CRED
+    Autor    : Diego Simas
+    Data     : Maio/2018                          Ultima atualizacao:
+
+    Dados referentes ao programa:
+
+    Frequencia: -----
+    Objetivo   : Pesquisa que retorna os contratos ativos do coooperado.
+
+    Alterações :
+
+    -------------------------------------------------------------------------------------------------------------*/
+    
+    -- CURSORES --
+    CURSOR cr_crapepr(pr_cdcooper IN crapass.cdcooper%TYPE
+                     ,pr_nrdconta IN crapass.nrdconta%TYPE) IS
+      SELECT c.nrctremp 
+            ,c.dtmvtolt  
+            ,c.vlemprst 
+            ,c.qtpreemp
+            ,c.vlpreemp
+            ,c.cdlcremp
+            ,c.cdfinemp 
+        FROM crapepr c 
+       WHERE c.nrdconta = pr_nrdconta 
+         AND c.cdcooper = pr_cdcooper
+         AND c.inliquid = 0
+    ORDER BY c.nrctremp;            
+    rw_crapepr cr_crapepr%ROWTYPE;  
+
+    --Variaveis de Criticas
+    vr_cdcritic INTEGER;
+    vr_dscritic VARCHAR2(4000);
+    vr_des_reto VARCHAR2(3);
+
+    --Tabela de Erros
+    vr_tab_erro gene0001.typ_tab_erro;
+    --Tabela de linhas de crédito
+    vr_tab_linhas typ_tab_linhas;
+
+    -- Variaveis de log
+    vr_cdcooper crapcop.cdcooper%TYPE;
+    vr_cdoperad VARCHAR2(100);
+    vr_nmdatela VARCHAR2(100);
+    vr_nmeacao  VARCHAR2(100);
+    vr_cdagenci VARCHAR2(100);
+    vr_nrdcaixa VARCHAR2(100);
+    vr_idorigem VARCHAR2(100);
+
+    --Variaveis Locais
+    vr_qtregist INTEGER := 0;
+    vr_clob     CLOB;
+    vr_xml_temp VARCHAR2(32726) := '';
+    vr_qtdreg   INTEGER;
+
+    --Variaveis de Indice
+    vr_index PLS_INTEGER;
+
+    --Variaveis de Excecoes
+    vr_exc_ok    EXCEPTION;
+    vr_exc_erro  EXCEPTION;
+
+  BEGIN
+    --limpar tabela erros
+    vr_tab_erro.DELETE;
+
+    --Limpar tabela dados
+    vr_tab_linhas.DELETE;
+
+    --Inicializar Variaveis
+    vr_cdcritic := 0;
+    vr_dscritic := NULL;    
+    vr_qtdreg := 0;
+
+    -- Recupera dados de log para consulta posterior
+    gene0004.pc_extrai_dados(pr_xml      => pr_retxml
+                            ,pr_cdcooper => vr_cdcooper
+                            ,pr_nmdatela => vr_nmdatela
+                            ,pr_nmeacao  => vr_nmeacao
+                            ,pr_cdagenci => vr_cdagenci
+                            ,pr_nrdcaixa => vr_nrdcaixa
+                            ,pr_idorigem => vr_idorigem
+                            ,pr_cdoperad => vr_cdoperad
+                            ,pr_dscritic => vr_dscritic);
+
+    -- Verifica se houve erro recuperando informacoes de log
+    IF vr_dscritic IS NOT NULL THEN
+      RAISE vr_exc_erro;
+    END IF;
+
+    -- Monta documento XML de ERRO
+    dbms_lob.createtemporary(vr_clob, TRUE);
+    dbms_lob.open(vr_clob, dbms_lob.lob_readwrite);
+
+    -- Criar cabeçalho do XML
+    gene0002.pc_escreve_xml(pr_xml            => vr_clob
+                           ,pr_texto_completo => vr_xml_temp
+                           ,pr_texto_novo     => '<?xml version="1.0" encoding="ISO-8859-1"?><Root><linhas>');
+    
+    -- Loop principal que traz os contratos ativos de emprestimos do cooperado                       
+    FOR rw_crapepr IN cr_crapepr(pr_cdcooper => pr_cdcooper
+                                ,pr_nrdconta => pr_nrdconta) LOOP
+      gene0002.pc_escreve_xml(pr_xml            => vr_clob
+                             ,pr_texto_completo => vr_xml_temp
+                             ,pr_texto_novo     => '<linha>'||
+                                                   '  <nrctremp>'||rw_crapepr.nrctremp||'</nrctremp>'||
+                                                   '  <dtmvtolt>'||TO_CHAR(rw_crapepr.dtmvtolt, 'DD/MM/YYYY')||'</dtmvtolt>'||                                                  
+                                                   '  <vlemprst>'||TO_CHAR(rw_crapepr.vlemprst)||'</vlemprst>'||
+                                                   '  <qtpreemp>'||rw_crapepr.qtpreemp||'</qtpreemp>'||
+                                                   '  <vlpreemp>'||TO_CHAR(rw_crapepr.vlpreemp,'FM999G999G990D90', 'nls_numeric_characters='',.''')||'</vlpreemp>'||
+                                                   '  <cdlcremp>'||rw_crapepr.cdlcremp||'</cdlcremp>'||
+                                                   '  <cdfinemp>'||rw_crapepr.cdfinemp||'</cdfinemp>'||
+                                                   '</linha>');
+       vr_qtdreg := vr_qtdreg + 1;
+    END LOOP;  
+    
+    -- Encerrar a tag raiz
+    gene0002.pc_escreve_xml(pr_xml            => vr_clob
+                           ,pr_texto_completo => vr_xml_temp
+                           ,pr_texto_novo     => '</linhas></Root>'
+                           ,pr_fecha_xml      => TRUE);
+
+    -- Atualiza o XML de retorno
+    pr_retxml := xmltype(vr_clob);
+
+    -- Insere atributo na tag banco com a quantidade de registros
+    gene0007.pc_gera_atributo(pr_xml   => pr_retxml           --> XML que irá receber o novo atributo
+                             ,pr_tag   => 'linhas'            --> Nome da TAG XML
+                             ,pr_atrib => 'qtregist'          --> Nome do atributo
+                             ,pr_atval => vr_qtdreg           --> Valor do atributo
+                             ,pr_numva => 0                   --> Número da localização da TAG na árvore XML
+                             ,pr_des_erro => vr_dscritic);    --> Descrição de erros
+
+    -- Libera a memoria do CLOB
+    dbms_lob.close(vr_clob);
+
+    --Se ocorreu erro
+    IF vr_dscritic IS NOT NULL THEN
+      RAISE vr_exc_erro;
+    END IF;
+
+    --Retorno
+    pr_des_erro:= 'OK';
+
+  EXCEPTION
+    WHEN vr_exc_erro THEN
+      -- Retorno não OK
+      pr_des_erro:= 'NOK';
+
+      -- Erro
+      pr_cdcritic:= vr_cdcritic;
+      pr_dscritic:= vr_dscritic;
+
+      -- Existe para satisfazer exigência da interface.
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_cdcritic||'-'||pr_dscritic || '</Erro></Root>');
+    WHEN OTHERS THEN
+      -- Retorno não OK
+      pr_des_erro:= 'NOK';
+
+      -- Erro
+      pr_cdcritic:= 0;
+      pr_dscritic:= 'Erro na pc_busca_qualif_oper_web --> '|| SQLERRM;
+
+      -- Existe para satisfazer exigência da interface.
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_cdcritic||'-'||pr_dscritic || '</Erro></Root>');
+
+  END pc_consulta_contratos_ativos;
 
     
 END ZOOM0001;
