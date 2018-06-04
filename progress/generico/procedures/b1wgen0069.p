@@ -21,13 +21,16 @@
                 
                 03/08/2015 - Adicionado validacao para nao permitir faturamento anterior
                              a data inicial das atividades conforme solicitado no chamado
-                             304923 (Kelvin).		 		    	
-
+                             304923 (Kelvin).
+                                       
                 11/08/2017 - Incluído o número do cpf ou cnpj na tabela crapdoc.
                              Projeto 339 - CRM. (Lombardi)
                       
                 22/09/2017 - Adicionar tratamento para caso o inpessoa for juridico gravar 
                              o idseqttl como zero (Luacas Ranghetti #756813)
+                                       
+                13/02/2018 - Ajustes na geraçao de pendencia de digitalizaçao.
+                             PRJ366 - tipo de conta (Odirlei-AMcom)
                                        
 .............................................................................*/
 
@@ -317,6 +320,7 @@ PROCEDURE Grava_Dados:
     DEF VAR aux_anoftbru AS INTE                                    NO-UNDO.
     DEF VAR aux_mesftbru AS INTE                                    NO-UNDO.
     DEF VAR aux_idseqttl AS INT                                     NO-UNDO.
+    DEF VAR h-b1wgen0137 AS HANDLE                                  NO-UNDO.
 
     ASSIGN
         aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
@@ -397,53 +401,25 @@ PROCEDURE Grava_Dados:
         IF  par_cddopcao = "I" OR
             par_cddopcao = "A" THEN
             DO:
-                ContadorDoc12: DO aux_contador = 1 TO 10:
             
-                    FIND FIRST crapdoc WHERE crapdoc.cdcooper = par_cdcooper AND
-                                       crapdoc.nrdconta = par_nrdconta AND
-                                       crapdoc.tpdocmto = 12            AND
-                                       crapdoc.dtmvtolt = par_dtmvtolt AND
-                                       crapdoc.idseqttl = aux_idseqttl AND
-                                       crapdoc.nrcpfcgc = crapass.nrcpfcgc
-                                       EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+                IF NOT VALID-HANDLE(h-b1wgen0137) THEN
+                    RUN sistema/generico/procedures/b1wgen0137.p 
+                    PERSISTENT SET h-b1wgen0137.
         
-                    IF NOT AVAILABLE crapdoc THEN
-                        DO:
-                            IF LOCKED(crapdoc) THEN
-                                DO:
-                                    IF aux_contador = 10 THEN
-                                        DO:
-                                            ASSIGN aux_cdcritic = 341.
-                                            LEAVE ContadorDoc12.
-                                        END.
-                                    ELSE 
-                                        DO: 
-                                            PAUSE 1 NO-MESSAGE.
-                                            NEXT.
-                                        END.
-                                END.
-                            ELSE
-                                DO: 
-                                    CREATE crapdoc.
-                                    ASSIGN crapdoc.cdcooper = par_cdcooper
-                                           crapdoc.nrdconta = par_nrdconta
-                                           crapdoc.flgdigit = FALSE
-                                           crapdoc.dtmvtolt = par_dtmvtolt
-                                           crapdoc.tpdocmto = 12
-                                           crapdoc.idseqttl = aux_idseqttl		
-                                           crapdoc.nrcpfcgc = crapass.nrcpfcgc.
-                                    VALIDATE crapdoc.        
-                                    LEAVE ContadorDoc12.
-                                END.
-                        END.
-                    ELSE
-                        DO:
-                            ASSIGN crapdoc.flgdigit = FALSE
-                                   crapdoc.dtmvtolt = par_dtmvtolt.
+                RUN gera_pend_digitalizacao IN h-b1wgen0137                    
+                          ( INPUT par_cdcooper,
+                            INPUT par_nrdconta,
+                            INPUT aux_idseqttl,
+                            INPUT crapass.nrcpfcgc,
+                            INPUT par_dtmvtolt,
+                            INPUT "12", 
+                            INPUT par_cdoperad,
+                           OUTPUT aux_cdcritic,
+                           OUTPUT aux_dscritic).
+
+                IF  VALID-HANDLE(h-b1wgen0137) THEN
+                  DELETE OBJECT h-b1wgen0137.
         
-                            LEAVE ContadorDoc12.
-                        END.
-                END.
             END.
 
         IF  aux_dscritic <> "" OR aux_cdcritic <> 0 THEN

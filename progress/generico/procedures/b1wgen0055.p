@@ -169,8 +169,11 @@
 							 que nao esteja cadastrada no sistema, conforme solicitado no chamado
 							 849651. (Kelvin)
 
+                13/02/2018 - Ajustes na geraçao de pendencia de digitalizaçao.
+                             PRJ366 - tipo de conta (Odirlei-AMcom)             
+                             
                 13/03/2018 - Substituir verificacao "cdtipcta = 6,7,17,18"  pela verificacao 
-                             da modalidade do tipo de conta. PRJ366 (Lombardi).
+                             da modalidade do tipo de conta. PRJ366 (Lombardi).						 
 
                 24/04/2018 - Gravar historico de inclusao e alteracao de titular. PRJ366 (Lombardi).
 .............................................................................*/
@@ -1392,6 +1395,7 @@ PROCEDURE Grava_Dados:
     DEF VAR h-b1wgen0077 AS HANDLE                                  NO-UNDO.
     DEF VAR h-b1wgen0072 AS HANDLE                                  NO-UNDO.
     DEF VAR h-b1wgen0110 AS HANDLE                                  NO-UNDO.
+    DEF VAR h-b1wgen0137 AS HANDLE                                  NO-UNDO.
     DEF VAR aux_msgconta AS CHARACTER                               NO-UNDO.
     DEF VAR aux_msgalert AS CHARACTER                               NO-UNDO.
     DEF VAR aux_dsrotina AS CHARACTER                               NO-UNDO.
@@ -1427,62 +1431,132 @@ PROCEDURE Grava_Dados:
             DO:
                 /* Gerar pendencia de CPF */
                 IF  par_inpessoa = 1 THEN
-                RUN cria_pendencia_digidoc( INPUT par_cdcooper, 
-                                            INPUT par_nrdconta, 
-                                            INPUT par_dtmvtolt, 
-                                            INPUT 1, 
-                                            INPUT par_idseqttl,
-                                            INPUT par_nrcpfcgc,
-                                           OUTPUT aux_cdcritic).
+                DO:
+                   IF NOT VALID-HANDLE(h-b1wgen0137) THEN
+                       RUN sistema/generico/procedures/b1wgen0137.p 
+                       PERSISTENT SET h-b1wgen0137.
 
-                /* Gerar pendencia de carteira de identificacao */
-                IF  par_inpessoa = 1 THEN
-                RUN cria_pendencia_digidoc( INPUT par_cdcooper, 
+                   RUN gera_pend_digitalizacao IN h-b1wgen0137                    
+                              ( INPUT par_cdcooper,
                                             INPUT par_nrdconta, 
-                                            INPUT par_dtmvtolt, 
-                                            INPUT 2, 
                                             INPUT par_idseqttl,
                                             INPUT par_nrcpfcgc,
-                                           OUTPUT aux_cdcritic).
+                                INPUT par_dtmvtolt, 
+                                /*
+                                    1 - CPF - CADASTRO DE PESSOAS FISICAS
+                                    2 - CARTEIRA IDENTIFICAÇAO
+                                    5 - COMPROVANTE DE RENDA                                    
+                                */
+                                INPUT "1;2;5", 
+                                INPUT par_cdoperad,
+                               OUTPUT aux_cdcritic,
+                               OUTPUT aux_dscritic).
 
-                /* Gerar pendencia de comprovante de endereço */
-                RUN cria_pendencia_digidoc( INPUT par_cdcooper, 
-                                            INPUT par_nrdconta, 
-                                            INPUT par_dtmvtolt, 
-                                            INPUT 3, 
-                                            INPUT par_idseqttl,
-                                            INPUT par_nrcpfcgc,
-                                           OUTPUT aux_cdcritic).
+                   IF  VALID-HANDLE(h-b1wgen0137) THEN
+                      DELETE OBJECT h-b1wgen0137.
+                      
+                   IF par_idseqttl > 1 THEN   
+                   DO:
+                       IF NOT VALID-HANDLE(h-b1wgen0137) THEN
+                           RUN sistema/generico/procedures/b1wgen0137.p 
+                           PERSISTENT SET h-b1wgen0137.
+                          
+                       RUN gera_pend_digitalizacao IN h-b1wgen0137                    
+                                  ( INPUT par_cdcooper,
+                                    INPUT par_nrdconta, 
+                                    INPUT par_idseqttl,
+                                    INPUT par_nrcpfcgc,
+                                    INPUT par_dtmvtolt, 
+                                    /*
+                                        58 - Termo de Alteraçao de Titularidade
+                                    */
+                                    INPUT "58", 
+                                    INPUT par_cdoperad,
+                                   OUTPUT aux_cdcritic,
+                                   OUTPUT aux_dscritic).
+
+                       IF  VALID-HANDLE(h-b1wgen0137) THEN
+                          DELETE OBJECT h-b1wgen0137.
+                   
+                   END.
 
                 /* Gerar pendencia de estado civil */
                 IF  CAN-DO("2,3,4,8,9,11,12", STRING(par_cdestcvl)) AND
                     par_inpessoa = 1 THEN
-                    RUN cria_pendencia_digidoc( INPUT par_cdcooper, 
-                                                INPUT par_nrdconta, 
-                                                INPUT par_dtmvtolt, 
-                                                INPUT 4, 
-                                                INPUT par_idseqttl,
-                                                INPUT par_nrcpfcgc,
-                                               OUTPUT aux_cdcritic).
+                   DO: 
+                     IF NOT VALID-HANDLE(h-b1wgen0137) THEN
+                         RUN sistema/generico/procedures/b1wgen0137.p 
+                         PERSISTENT SET h-b1wgen0137.
+                        
+                     RUN gera_pend_digitalizacao IN h-b1wgen0137                    
+                                ( INPUT par_cdcooper,
+                                  INPUT par_nrdconta, 
+                                  INPUT par_idseqttl,
+                                  INPUT par_nrcpfcgc,
+                                  INPUT par_dtmvtolt, 
+                                  /*
+                                      4 - COMPROVANTE DE ESTADO CIVIL
+                                  */
+                                  INPUT "4", 
+                                  INPUT par_cdoperad,
+                                 OUTPUT aux_cdcritic,
+                                 OUTPUT aux_dscritic).
                 
-                /* Gerar pendencia de comprovante de renda */
-                IF  par_inpessoa = 1 THEN
-                RUN cria_pendencia_digidoc( INPUT par_cdcooper, 
+                     IF  VALID-HANDLE(h-b1wgen0137) THEN
+                        DELETE OBJECT h-b1wgen0137.
+                   END.     
+                   
+                   IF par_inhabmen = 1 THEN /*Menor habilitado*/
+                   DO:
+                     IF NOT VALID-HANDLE(h-b1wgen0137) THEN
+                         RUN sistema/generico/procedures/b1wgen0137.p 
+                         PERSISTENT SET h-b1wgen0137.
+                        
+                     RUN gera_pend_digitalizacao IN h-b1wgen0137                    
+                                ( INPUT par_cdcooper,
                                             INPUT par_nrdconta, 
-                                            INPUT par_dtmvtolt, 
-                                            INPUT 5,
                                             INPUT par_idseqttl,
                                             INPUT par_nrcpfcgc,
-                                           OUTPUT aux_cdcritic).
+                                  INPUT par_dtmvtolt, 
+                                  /*
+                                      59 - Documento de Emancipaçao 
+                                  */
+                                  INPUT "59", 
+                                  INPUT par_cdoperad,
+                                 OUTPUT aux_cdcritic,
+                                 OUTPUT aux_dscritic).
 
-                /* Gerar pendencia de cartao assinatura */
-                RUN cria_pendencia_digidoc( INPUT par_cdcooper, 
+                     IF  VALID-HANDLE(h-b1wgen0137) THEN
+                        DELETE OBJECT h-b1wgen0137.
+                   
+                   END.
+                   
+                   
+                END.
+                
+                /* Demais pendencias */
+                IF NOT VALID-HANDLE(h-b1wgen0137) THEN
+                   RUN sistema/generico/procedures/b1wgen0137.p 
+                   PERSISTENT SET h-b1wgen0137.
+                  
+                RUN gera_pend_digitalizacao IN h-b1wgen0137                    
+                          ( INPUT par_cdcooper,
                                             INPUT par_nrdconta, 
-                                            INPUT par_dtmvtolt, 
-                                            INPUT 6,
                                             INPUT par_idseqttl,
                                             INPUT par_nrcpfcgc,
-                                           OUTPUT aux_cdcritic).
+                            INPUT par_dtmvtolt, 
+                            /*
+                                3 - COMPROVANTE DE ENDEREÇO
+                                6 - CARTAO DE ASSINATURA
+                            */
+                            INPUT "3;6", 
+                            INPUT par_cdoperad,
+                           OUTPUT aux_cdcritic,
+                           OUTPUT aux_dscritic).
+
+                IF  VALID-HANDLE(h-b1wgen0137) THEN
+                  DELETE OBJECT h-b1wgen0137.
+
 
                 /* Removido a criação da doc conforme solicitado no chamado 372880*/
                /* RUN cria_pendencia_digidoc( INPUT par_cdcooper, 
@@ -1773,54 +1847,24 @@ PROCEDURE Grava_Dados:
            par_cdoedttl <> aux_cdorgexp     OR
            par_dtemdttl <> crapttl.dtemdttl THEN
             DO:
-                ContadorDoc2: DO aux_contador = 1 TO 10:
     
-                    FIND FIRST crapdoc WHERE crapdoc.cdcooper = par_cdcooper AND
-                                       crapdoc.nrdconta = par_nrdconta AND
-                                       crapdoc.tpdocmto = 2            AND
-                                       crapdoc.dtmvtolt = par_dtmvtolt AND
-                                       crapdoc.idseqttl = par_idseqttl AND
-                                       crapdoc.nrcpfcgc = par_nrcpfcgc
-                                       EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
-    
-                    IF NOT AVAILABLE crapdoc THEN
-                        DO:
-                            IF LOCKED(crapdoc) THEN
-                                DO:
-                                    IF aux_contador = 10 THEN
-                                        DO:
-                                            ASSIGN aux_cdcritic = 341.
-                                            LEAVE ContadorDoc2.
-                                        END.
-                                    ELSE 
-                                        DO: 
-                                            PAUSE 1 NO-MESSAGE.
-                                            NEXT ContadorDoc2.
-                                        END.
-                                END.
-                            ELSE
-                                DO:
+                IF NOT VALID-HANDLE(h-b1wgen0137) THEN
+                    RUN sistema/generico/procedures/b1wgen0137.p 
+                    PERSISTENT SET h-b1wgen0137.
                                     
-                                    CREATE crapdoc.
-                                    ASSIGN crapdoc.cdcooper = par_cdcooper
-                                           crapdoc.nrdconta = par_nrdconta
-                                           crapdoc.flgdigit = FALSE
-                                           crapdoc.dtmvtolt = par_dtmvtolt
-                                           crapdoc.tpdocmto = 2
-                                           crapdoc.idseqttl = par_idseqttl
-                                           crapdoc.nrcpfcgc = par_nrcpfcgc.
-                                    VALIDATE crapdoc.        
-                                    LEAVE ContadorDoc2.
-                                END.
-                        END.
-                    ELSE
-                        DO:
-                            ASSIGN crapdoc.flgdigit = FALSE
-                                   crapdoc.dtmvtolt = par_dtmvtolt.
+                RUN gera_pend_digitalizacao IN h-b1wgen0137                    
+                          ( INPUT par_cdcooper,
+                            INPUT par_nrdconta,
+                            INPUT par_idseqttl,
+                            INPUT par_nrcpfcgc,
+                            INPUT par_dtmvtolt,
+                            INPUT "2", /* CARTEIRA IDENTIFICAÇAO */
+                            INPUT par_cdoperad,
+                           OUTPUT aux_cdcritic,
+                           OUTPUT aux_dscritic).
 
-                            LEAVE ContadorDoc2.
-                        END.
-                END. /* LEAVE ContadorDoc2. */
+                IF  VALID-HANDLE(h-b1wgen0137) THEN
+                  DELETE OBJECT h-b1wgen0137.                
                 
             END. /* If par_tpdocttl <> crapttl.tpdocttl */
         
@@ -1830,56 +1874,51 @@ PROCEDURE Grava_Dados:
         IF par_cdestcvl <> crapttl.cdestcvl AND par_cdestcvl <> 1 THEN
             DO:
             
-                ContadorDoc4: DO aux_contador = 1 TO 10:
-    
-                    FIND FIRST crapdoc WHERE crapdoc.cdcooper = par_cdcooper AND
-                                       crapdoc.nrdconta = par_nrdconta AND
-                                       crapdoc.tpdocmto = 4            AND
-                                       crapdoc.dtmvtolt = par_dtmvtolt AND
-                                       crapdoc.idseqttl = par_idseqttl AND 
-                                       crapdoc.nrcpfcgc = par_nrcpfcgc
-                                       EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
-    
-                    IF NOT AVAILABLE crapdoc THEN
-                        DO:
-                            IF LOCKED(crapdoc) THEN
-                                DO:
-                                    IF aux_contador = 10 THEN
-                                        DO:
-                                            ASSIGN aux_cdcritic = 341.
-                                            LEAVE ContadorDoc4.
-                                        END.
-                                    ELSE 
-                                        DO: 
-                                            PAUSE 1 NO-MESSAGE.
-                                            NEXT ContadorDoc4.
-                                        END.
-                                END.
-                            ELSE
-                                DO:
-                                    
-                                    CREATE crapdoc.
-                                    ASSIGN crapdoc.cdcooper = par_cdcooper
-                                           crapdoc.nrdconta = par_nrdconta
-                                           crapdoc.flgdigit = FALSE
-                                           crapdoc.dtmvtolt = par_dtmvtolt
-                                           crapdoc.idseqttl = par_idseqttl
-                                           crapdoc.tpdocmto = 4
-                                           crapdoc.nrcpfcgc = par_nrcpfcgc.
-                                    VALIDATE crapdoc.
-                                    LEAVE ContadorDoc4.
-                                END.
-                        END.
-                    ELSE
-                        DO:
-                            ASSIGN crapdoc.flgdigit = FALSE
-                                   crapdoc.dtmvtolt = par_dtmvtolt.
+                IF NOT VALID-HANDLE(h-b1wgen0137) THEN
+                    RUN sistema/generico/procedures/b1wgen0137.p 
+                    PERSISTENT SET h-b1wgen0137.
+                  
+                RUN gera_pend_digitalizacao IN h-b1wgen0137                    
+                          ( INPUT par_cdcooper,
+                            INPUT par_nrdconta,
+                            INPUT par_idseqttl,
+                            INPUT par_nrcpfcgc,
+                            INPUT par_dtmvtolt,
+                            INPUT "4", /* COMPROVANTE DE ESTADO CIVIL */
+                            INPUT par_cdoperad,
+                           OUTPUT aux_cdcritic,
+                           OUTPUT aux_dscritic).
 
-                            LEAVE ContadorDoc4.
-                        END.
-                END. /* LEAVE ContadorDoc4. */                
-
+                IF  VALID-HANDLE(h-b1wgen0137) THEN
+                  DELETE OBJECT h-b1wgen0137.     
+    
             END. /* IF par_cdestcvl <> crapttl.cdestcvl */
+    
+        IF par_inhabmen <> crapttl.inhabmen AND par_inhabmen = 1 THEN /*Menor habilitado*/
+                                DO:
+             IF NOT VALID-HANDLE(h-b1wgen0137) THEN
+                 RUN sistema/generico/procedures/b1wgen0137.p 
+                 PERSISTENT SET h-b1wgen0137.
+                
+             RUN gera_pend_digitalizacao IN h-b1wgen0137                    
+                        ( INPUT par_cdcooper,
+                          INPUT par_nrdconta,
+                          INPUT par_idseqttl,
+                          INPUT par_nrcpfcgc,
+                          INPUT par_dtmvtolt,
+                          /*
+                              59 - Documento de Emancipaçao 
+                          */
+                          INPUT "59", 
+                          INPUT par_cdoperad,
+                         OUTPUT aux_cdcritic,
+                         OUTPUT aux_dscritic).
+                                    
+             IF  VALID-HANDLE(h-b1wgen0137) THEN
+                DELETE OBJECT h-b1wgen0137.
+
+                        END.
+
             END. /* inpessoa = 1 */
 
         IF aux_cdcritic <> 0 THEN
@@ -4872,6 +4911,7 @@ PROCEDURE Valida_Alteracao:
 END PROCEDURE.
 
 /* Criar as pendencias do digidoc */
+/* Substituido por rotina oracle 
 PROCEDURE cria_pendencia_digidoc:
 
     DEF INPUT  PARAM par_cdcooper AS INTE                        NO-UNDO.
@@ -4935,7 +4975,7 @@ PROCEDURE cria_pendencia_digidoc:
         ASSIGN par_cdcritic = aux_cdcritic.
 
 END PROCEDURE.
-
+*/
 /*................................. FUNCTIONS ...............................*/
 FUNCTION BuscaUltimoTtl RETURNS INTEGER
     ( INPUT par_cdcooper AS INTEGER,

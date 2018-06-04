@@ -2476,6 +2476,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
     
                      12/04/2018 - Criar os documentos corretos ao duplicar uma conta 
                                   (Lucas Ranghetti INC0012381)
+    --
+    --               19/02/2018 - Ajustes na criação de pendencia de digitalização.
+    --                            PRJ366 - Ajustes tpconta (Odirlei-AMcom)
     -- .............................................................................*/
 
       -- Cursor sobre a tabela de associados
@@ -2562,7 +2565,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
       vr_criestcv BOOLEAN;
       vr_idseqttl INTEGER;
       vr_tpdocmto INTEGER;
-      
+
       -- Variaveis para a duplicacao da conta
       vr_numero VARCHAR2(10);
       vr_nrdconta crapass.nrdconta%TYPE;
@@ -3064,37 +3067,30 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
         -- Pessoa juridica vamos gravar como zero a titularidade
         IF rw_crapass.inpessoa <> 1 THEN
           vr_idseqttl:= 0;
-          ELSE
+        ELSE
           vr_idseqttl:= 1;        
-          END IF;  
+        END IF;  
           
         -- Insere na tabela de documentos digitalizados - GED
-        BEGIN
-          INSERT INTO crapdoc
-            (cdcooper,
-             nrdconta,
-             flgdigit,
-             dtmvtolt,
-             tpdocmto,
-             idseqttl,
-             nrcpfcgc,
-             cdoperad)
-           VALUES
-            (pr_cdcooper,
-             pr_nrdconta_dst,
-             0,
-             rw_crapdat.dtmvtolt,
-             x,
-             vr_idseqttl,
-             rw_crapass.nrcpfcgc,
-             nvl(pr_cdoperad,' '));
-        EXCEPTION
-          WHEN OTHERS THEN
-            vr_dscritic := 'Erro ao inserir na CRAPDOC: '||SQLERRM;
+        DIGI0001.pc_gera_pend_digitalizacao( pr_cdcooper  => pr_cdcooper         --> Codigo da cooperativa 
+                                          ,pr_nrdconta  => pr_nrdconta_dst     --> Nr. da conta
+                                          ,pr_idseqttl  => vr_idseqttl                   --> Indicador de titular
+                                          ,pr_nrcpfcgc  => rw_crapass.nrcpfcgc --> Numero do CPF/CNPJ
+                                          ,pr_dtmvtolt  => rw_crapdat.dtmvtolt --> Data do movimento
+                                          ,pr_lstpdoct  => x                   --> lista de Tipo do documento separados por ;
+                                          ,pr_cdoperad  => nvl(pr_cdoperad,' ')--> Codigo do operador
+                                          ,pr_cdcritic  => vr_cdcritic         --> Codigo da critica
+                                          ,pr_dscritic  => vr_dscritic);       --> Descricao da critica
+      
+            
+        IF nvl(vr_cdcritic,0) > 0 OR
+           TRIM(vr_dscritic) IS NOT NULL THEN
             RAISE vr_exc_saida;
-        END;
-      END LOOP;
+          END IF;  
           
+          
+      END LOOP;
+
       -- Tabela de controle de documentos digitalizados, Contrato Abertura de Conta      
         -- Pessoa juridica vamos gravar como zero a titularidade
         IF rw_crapass.inpessoa <> 1 THEN
@@ -3106,30 +3102,22 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
         END IF;
                 
       -- Insere na tabela de documentos digitalizados - GED
-      BEGIN
-        INSERT INTO crapdoc
-          (cdcooper,
-           nrdconta,
-           flgdigit,
-           dtmvtolt,
-           tpdocmto,
-           idseqttl,
-           nrcpfcgc,
-           cdoperad)
-         VALUES
-          (pr_cdcooper,
-           pr_nrdconta_dst,
-           0,
-           rw_crapdat.dtmvtolt,
-           vr_tpdocmto,
-           vr_idseqttl,
-           rw_crapass.nrcpfcgc,
-           nvl(pr_cdoperad,' '));
-      EXCEPTION
-        WHEN OTHERS THEN
-          vr_dscritic := 'Erro ao inserir na CRAPDOC: '||SQLERRM;
+	  DIGI0001.pc_gera_pend_digitalizacao( pr_cdcooper  => pr_cdcooper         --> Codigo da cooperativa 
+                                          ,pr_nrdconta  => pr_nrdconta_dst     --> Nr. da conta
+                                          ,pr_idseqttl  => vr_idseqttl                   --> Indicador de titular
+                                          ,pr_nrcpfcgc  => rw_crapass.nrcpfcgc --> Numero do CPF/CNPJ
+                                          ,pr_dtmvtolt  => rw_crapdat.dtmvtolt --> Data do movimento
+                                          ,pr_lstpdoct  => vr_tpdocmto         --> lista de Tipo do documento separados por ;
+                                          ,pr_cdoperad  => nvl(pr_cdoperad,' ')--> Codigo do operador
+                                          ,pr_cdcritic  => vr_cdcritic         --> Codigo da critica
+                                          ,pr_dscritic  => vr_dscritic);       --> Descricao da critica
+      
+            
+        IF nvl(vr_cdcritic,0) > 0 OR
+           TRIM(vr_dscritic) IS NOT NULL THEN
             RAISE vr_exc_saida;
-      END;
+        END IF;    
+      
 
       -- Se for pessoa fisica, cria o primeiro titular
       IF rw_crapass.inpessoa = 1 THEN
@@ -3332,29 +3320,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
             RAISE vr_exc_saida;
         END;
 
-        BEGIN
-          INSERT INTO crapdoc
-            (cdcooper,
-             nrdconta,
-             flgdigit,
-             dtmvtolt,
-             tpdocmto,
-             idseqttl,
-             nrcpfcgc)
-           VALUES
-            (pr_cdcooper,
-             pr_nrdconta_dst,
-             0,
-             rw_crapdat.dtmvtolt,
-             22,
-             1,
-             rw_crapass.nrcpfcgc);
-        EXCEPTION
-          WHEN OTHERS THEN
-            vr_dscritic := 'Erro ao inserir na CRAPDOC: '||SQLERRM;
-            RAISE vr_exc_saida;
-        END;
-        
       ELSE -- Se for PJ
         -- Insere a tabela de pessoas juridicas
         BEGIN
@@ -5050,7 +5015,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
       END IF;
         CLOSE cr_crapseg_prest;
         RETURN 'S'; -- Retorna como produto aderido
-        
+
       END IF;
 
       RETURN NULL;
@@ -6108,8 +6073,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
         -- Se ocorrer erro 
         IF vr_dscritic IS NOT NULL THEN
           RAISE vr_exc_saida;
-      END IF;
-      
+        END IF;
+        
       END IF;
       
       IF pr_servicos IS NOT NULL THEN
@@ -9317,7 +9282,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0003 IS
                           ,pr_cdtipcta => rw_craptab.tpdconta);
     
         FETCH cr_tipo_conta INTO rw_tipconta_ant;
-        
+    
         -- fechar o cursor
         CLOSE cr_tipo_conta;
         

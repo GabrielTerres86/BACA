@@ -234,6 +234,11 @@
                              procedure que busca pela descricao do tipo de conta.
                              PRJ366 (Lombardi).
 
+                08/03/2018 - Inclusao de geraçao de pendencia de digitalizaçao 58.
+                             PRJ366 - tipo de conta (Odirlei-AMcom)
+                                          
+
+
                 22/03/2018 - Substituidas verificacoes onde o tipo de conta (cdtipcta) estava fixo. 
                              PRJ366 (Lombardi).							 
 
@@ -3202,7 +3207,7 @@ PROCEDURE Grava_Dados_Altera:
     DEF  INPUT PARAM par_cdcatego AS INTE							NO-UNDO.
 	DEF  INPUT PARAM par_idseqttl AS INTE                           NO-UNDO.
 	DEF  INPUT PARAM aux_dsorigem AS CHAR                           NO-UNDO.
-	
+
   	DEF PARAM BUFFER crabass FOR crapass.
 
     DEF OUTPUT PARAM par_cdcritic AS INTE                           NO-UNDO.
@@ -4812,6 +4817,7 @@ PROCEDURE Grava_Dados_Exclui:
     DEF VAR aux_returnvl AS CHAR                                    NO-UNDO.
     DEF VAR aux_idseqttl AS INTE                                    NO-UNDO.
     DEF VAR aux_dstransa AS CHAR                                    NO-UNDO.
+    DEF VAR h-b1wgen0137 AS HANDLE                                  NO-UNDO.
 
     DEF BUFFER crabttl FOR crapttl.
     DEF BUFFER brapttl FOR crapttl.
@@ -5440,6 +5446,27 @@ PROCEDURE Grava_Dados_Exclui:
                                 INPUT par_nmdatela,
                                 INPUT par_nrdconta, 
                                OUTPUT aux_nrdrowid).
+                               
+            
+            /* Gerar pendencia para a conta */
+            IF NOT VALID-HANDLE(h-b1wgen0137) THEN
+               RUN sistema/generico/procedures/b1wgen0137.p 
+               PERSISTENT SET h-b1wgen0137.
+              
+            RUN gera_pend_digitalizacao IN h-b1wgen0137                    
+                      ( INPUT par_cdcooper,
+                        INPUT par_nrdconta,
+                        INPUT 1,
+                        INPUT crabass.nrcpfcgc,
+                        INPUT par_dtmvtolt,
+                        INPUT "58", /* Termo de Alteraçao de Titularidade */
+                        INPUT par_cdoperad,
+                       OUTPUT aux_cdcritic,
+                       OUTPUT aux_dscritic).
+
+            IF  VALID-HANDLE(h-b1wgen0137) THEN
+              DELETE OBJECT h-b1wgen0137.                       
+                               
         END.
 
         ASSIGN aux_returnvl = "OK".
