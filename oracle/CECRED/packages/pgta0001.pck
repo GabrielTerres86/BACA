@@ -3589,7 +3589,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
        vr_utlfileh    VARCHAR2(4000);
        vr_origem_arq  VARCHAR2(4000);
        vr_destino_arq VARCHAR2(4000);
-       
+
        --Agrupa os parametros - 15/12/2017 - Chamado 779415 
        vr_dsparame VARCHAR2(4000);
 
@@ -3598,7 +3598,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
          GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'PGTA0001.pc_processar_arq_pgto'); 
          
          --Ajuste mensagem de erro - 15/12/2017 - Chamado 779415
-         vr_dsparame := '  pr_cdcooper:' || pr_cdcooper || 
+         vr_dsparame := 'pr_cdcooper:'   || pr_cdcooper || 
                         ' ,pr_nrdconta:' || pr_nrdconta || 
                         ' ,pr_nrconven:' || pr_nrconven || 
                         ' ,pr_nmarquiv:' || pr_nmarquiv ||
@@ -3710,19 +3710,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
                -- Ajuste mensagem de erro - 15/12/2017 - Chamado 779415 
                vr_cdcritic := 1034;
                vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) ||
-                                ' - cdcooper:' || pr_cdcooper || 
-                                 ' ,nrdconta:' || pr_nrdconta ||
-                                 ' ,nrconven:' || pr_nrconven || 
-                                 ' ,intipmvt:' || 2           ||
-                                 ' ,nrremret:' || vr_nrremret || 
-                                 ' ,dtmvtolt:' || pr_dtmvtolt ||
-                                 ' ,nmarquiv:' || vr_nmarquiv ||
-                                 ' ,idorigem:' || pr_idorigem ||
-                                 ' ,dtdgerac:' || TRUNC(SYSDATE) || 
-                                 ' ,hrdgerac:' || to_char(SYSDATE,'HH24MISS') ||
-                                 ' ,insithpt:' || 1           || 
-                                 ' ,cdoperad:' || pr_cdoperad ||
-                                 ' ,tabela craphpt erro:' ||SQLERRM;
+                              'craphpt:' || 
+                              ' cdcooper:'  || pr_cdcooper || 
+                              ' ,nrdconta:' || pr_nrdconta ||
+                              ' ,nrconven:' || pr_nrconven || 
+                              ' ,intipmvt:' || 2           ||
+                              ' ,nrremret:' || vr_nrremret || 
+                              ' ,dtmvtolt:' || pr_dtmvtolt ||
+                              ' ,nmarquiv:' || vr_nmarquiv ||
+                              ' ,idorigem:' || pr_idorigem ||
+                              ' ,dtdgerac:' || TRUNC(SYSDATE) || 
+                              ' ,hrdgerac:' || to_char(SYSDATE,'HH24MISS') ||
+                              ' ,insithpt:' || 1           || 
+                              ' ,cdoperad:' || pr_cdoperad ||
+                              '. ' ||SQLERRM;
                --Levantar Excecao
                RAISE vr_exc_critico;
          END;
@@ -3836,7 +3837,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
                                               ,pr_flcontig     => vr_flcontig
                                               ,pr_des_erro      => vr_des_erro       
                                               ,pr_cdcritic      => vr_cdcritic       
-                                              ,pr_dscritic      => vr_dscritic);    
+                                              ,pr_dscritic      => vr_dscritic);     
               -- Incluido nome do módulo logado - 15/12/2017 - Chamado 779415
               GENE0001.pc_set_modulo(pr_module => NULL, pr_action => 'PGTA0001.pc_processar_arq_pgto'); 
                                                    
@@ -4119,32 +4120,33 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
                   -- Ajuste mensagem de erro - 15/12/2017 - Chamado 779415 
                   vr_cdcritic := 1034;
                   vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) ||
-                                ' - cdcooper:' || rw_crapdpt.cdcooper || 
-                                 ' ,nrdconta:' || rw_crapdpt.nrdconta ||
-                                 ' ,nrconven:' || rw_crapdpt.nrconven || 
-                                 ' ,intipmvt:' || 2                   ||
-                                 ' ,nrremret:' || vr_nrremret         || 
-                                 ' ,nrseqarq:' || rw_crapdpt.nrseqarq ||
-                                 ' ,cdtipmvt:' || rw_crapdpt.cdtipmvt ||
-                                 ' ,cdinsmvt:' || rw_crapdpt.cdinsmvt ||
-                                 ' ,dscodbar:' || rw_crapdpt.dscodbar || 
-                                 ' ,nmcedent:' || rw_crapdpt.nmcedent ||
-                                 ' ,dtvencto:' || rw_crapdpt.dtvencto || 
-                                 ' ,vltitulo:' || rw_crapdpt.vltitulo ||
-                                 ' ,vldescto:' || rw_crapdpt.vldescto || 
-                                 ' ,vlacresc:' || rw_crapdpt.vlacresc ||
-                                 ' ,dtdpagto:' || rw_crapdpt.dtdpagto || 
-                                 ' ,vldpagto:' || rw_crapdpt.vldpagto ||
-                                 ' ,dsusoemp:' || rw_crapdpt.dsusoemp || 
-                                 ' ,dsnosnum:' || rw_crapdpt.dsnosnum ||
-                                 ' ,cdocorre:' || vr_cdocorre         || 
-                                 ' ,dtmvtopg:' || rw_crapdpt.dtmvtopg ||
-                                 ' ,intipreg:' || rw_crapdpt.intipreg || 
-                                 ' ,tpmvtorg:' || rw_crapdpt.intipmvt ||
-                                 ' ,nrmvtorg:' || rw_crapdpt.nrremret || 
-                                 ' ,nrarqorg:' || rw_crapdpt.nrseqarq ||
-                                 ' ,idlancto:' || vr_idlancto         || 
-                                 ' ,tabela crapdpt erro:' ||SQLERRM;
+                                'crapdpt:' || 
+                                ' cdcooper:' || rw_crapdpt.cdcooper || 
+                                ', nrdconta:' || rw_crapdpt.nrdconta ||
+                                ', nrconven:' || rw_crapdpt.nrconven || 
+                                ', intipmvt:' || 2                   ||
+                                ', nrremret:' || vr_nrremret         || 
+                                ', nrseqarq:' || rw_crapdpt.nrseqarq ||
+                                ', cdtipmvt:' || rw_crapdpt.cdtipmvt ||
+                                ', cdinsmvt:' || rw_crapdpt.cdinsmvt ||
+                                ', dscodbar:' || rw_crapdpt.dscodbar || 
+                                ', nmcedent:' || rw_crapdpt.nmcedent ||
+                                ', dtvencto:' || rw_crapdpt.dtvencto || 
+                                ', vltitulo:' || rw_crapdpt.vltitulo ||
+                                ', vldescto:' || rw_crapdpt.vldescto || 
+                                ', vlacresc:' || rw_crapdpt.vlacresc ||
+                                ', dtdpagto:' || rw_crapdpt.dtdpagto || 
+                                ', vldpagto:' || rw_crapdpt.vldpagto ||
+                                ', dsusoemp:' || rw_crapdpt.dsusoemp || 
+                                ', dsnosnum:' || rw_crapdpt.dsnosnum ||
+                                ', cdocorre:' || vr_cdocorre         || 
+                                ', dtmvtopg:' || rw_crapdpt.dtmvtopg ||
+                                ', intipreg:' || rw_crapdpt.intipreg || 
+                                ', tpmvtorg:' || rw_crapdpt.intipmvt ||
+                                ', nrmvtorg:' || rw_crapdpt.nrremret || 
+                                ', nrarqorg:' || rw_crapdpt.nrseqarq ||
+                                ', idlancto:' || vr_idlancto         || 
+                                '. ' ||SQLERRM;
                   --Levantar Excecao
                   RAISE vr_exc_critico;
             END;
@@ -4160,22 +4162,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
                  AND dpt.nrdconta = rw_crapdpt.nrdconta
                  AND dpt.cdcooper = rw_crapdpt.cdcooper;
             EXCEPTION
-              WHEN OTHERS THEN
+               WHEN OTHERS THEN
                 -- No caso de erro de programa gravar tabela especifica de log - 15/12/2017 - Chamado 779415 
                 CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
                 -- Ajuste mensagem de erro - 15/12/2017 - Chamado 779415 
                 vr_cdcritic := 1035;
                 vr_dscritic := gene0001.fn_busca_critica(pr_cdcritic => vr_cdcritic) ||
-                               ' - idlancto:' || vr_idlancto || 
-                               ' ,nrseqarq:' || rw_crapdpt.nrseqarq ||
-                               ' ,nrremret:' || rw_crapdpt.nrremret || 
-                               ' ,intipmvt:' || rw_crapdpt.intipmvt ||
-                               ' ,nrconven:' || rw_crapdpt.nrconven || 
-                               ' ,nrdconta:' || rw_crapdpt.nrdconta ||
-                               ' ,cdcooper:' || rw_crapdpt.cdcooper || 
-                               ' ,tabela crapdpt erro:' ||SQLERRM;
+                               'crapdpt:'    ||
+                               ' idlancto:'  || vr_idlancto || 
+                               ', nrseqarq:' || rw_crapdpt.nrseqarq ||
+                               ', nrremret:' || rw_crapdpt.nrremret || 
+                               ', intipmvt:' || rw_crapdpt.intipmvt ||
+                               ', nrconven:' || rw_crapdpt.nrconven || 
+                               ', nrdconta:' || rw_crapdpt.nrdconta ||
+                               ', cdcooper:' || rw_crapdpt.cdcooper || 
+                               '. ' ||SQLERRM;
                 --Levantar Excecao
-                RAISE vr_exc_critico;
+                  RAISE vr_exc_critico;
             END;
 
          END LOOP;
@@ -4202,7 +4205,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
          -- RAISE, e consequentemente, um ROLLBACK, perdendo as informações.
          vr_cdcritic := 0;
          vr_dscritic := '';
-         
+
        -- Incluido nome do módulo logado - 15/12/2017 - Chamado 779415
        GENE0001.pc_set_modulo(pr_module => NULL, pr_action => NULL);
      EXCEPTION
@@ -4211,8 +4214,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
          -- Atualiza campo de erro
          pr_cdcritic := NVL(vr_cdcritic,0);
          pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic, vr_dscritic) ||
-                       ' - ' || vr_dsparame ||
-                       ' ,PGTA0001.pc_processar_arq_pgto' ;
+                       ' ' || vr_dsparame;
          -- Gerar o LOG do erro que aconteceu durante o processamento
          PGTA0001.pc_gera_log_arq_pgto(pr_cdcooper => pr_cdcooper
                                       ,pr_nrdconta => pr_nrdconta
@@ -4234,8 +4236,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
          -- Atualiza campo de erro
          pr_cdcritic := 9999;
          pr_dscritic:= gene0001.fn_busca_critica(pr_cdcritic => pr_cdcritic) ||
-                       ' - ' || vr_dsparame ||
-                       ' ,PGTA0001.pc_processar_arq_pgto erro:' ||sqlerrm; 
+                       'PGTA0001.pc_processar_arq_pgto' || 
+                       '. ' || sqlerrm ||
+                       '. ' || vr_dsparame; 
          
          cecred.pc_internal_exception(pr_cdcooper => pr_cdcooper
                                      ,pr_compleme => pr_dscritic);
@@ -4318,7 +4321,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.PGTA0001 IS
     -- Objetivo  : Cadastrar o agendamento do Pagamento do Titulo
 
     -- Alteracoes: 16/03/2017 - Ajustado a criacao do lote para gravar o codigo do PA (Douglas)
-	--
+    --
     --             18/12/2017 - Efetuado alteração para controle de lock (Jonata - Mouts).
     ---------------------------------------------------------------------------------------------------------------
     DECLARE
