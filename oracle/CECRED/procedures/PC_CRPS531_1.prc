@@ -11,7 +11,7 @@ BEGIN
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Diego
-   Data    : Setembro/2009.                     Ultima atualizacao: 28/05/2018
+   Data    : Setembro/2009.                     Ultima atualizacao: 30/05/2018
 
    Dados referentes ao programa: Fonte extraido e adaptado para execucao em
                                  paralelo. Fonte original crps531.p.
@@ -252,6 +252,10 @@ BEGIN
 						    > Para pegar corretamente o número de controle
 							> Efetuar devolução para cooperativa coorreta
 							(Adriano - INC0016217 ).
+
+         30/05/2018 - Ajustes para retirar a validação de IFs incorporadas, pois
+                      como foram desatividas, deverá gearar devolução pela cooperativa central
+                      (Adriano)
 
              #######################################################
              ATENCAO!!! Ao incluir novas mensagens para recebimento,
@@ -6268,13 +6272,13 @@ END;
                                     ,pr_nmarqlog      => vr_nmarqlog);
 
 			  IF vr_aux_CodMsg = 'STR0006R2' and (vr_aux_FinlddCli <> '15' OR (vr_aux_CNPJ_CPFDeb<>'01027058000191' and vr_aux_CNPJ_CPFDeb<>'1027058000191')) THEN
-			  
+			
 			     -- Busca dados da Coope destino
            OPEN cr_busca_coop(pr_cdagectl => vr_aux_AgCredtd);
            FETCH cr_busca_coop INTO rw_crapcop_mensag;
            CLOSE cr_busca_coop;
 		     
-          /* Mensagem Invalida para o Tipo de Transacao ou Finalidade*/
+            /* Mensagem Invalida para o Tipo de Transacao ou Finalidade*/
             vr_aux_codierro := 4;
             vr_aux_dsdehist := 'Mensagem Invalida para o Tipo de Transacao ou Finalidade.';
             vr_log_msgderro := vr_aux_dsdehist;
@@ -6866,9 +6870,10 @@ END;
               vr_aux_dtintegr := vr_tab_estad_crise(rw_crapcop_mensag.cdcooper).dtintegr;
               vr_aux_inestcri := vr_tab_estad_crise(rw_crapcop_mensag.cdcooper).inestcri;
             END IF;
-          -- IFs incorporadas foram desativadas(crapcop.flgativo = FALSE)
+            
+          /* IFs incorporadas foram desativadas(crapcop.flgativo = FALSE)
           ELSE
-             -- Tratamento incorporacao CONCREDI e CREDIMILSUL */
+             -- Tratamento incorporacao CONCREDI e CREDIMILSUL 
              IF to_number(vr_aux_AgCredtd) = 103 THEN
                vr_aux_cdageinc := to_number(vr_aux_AgCredtd);
                vr_aux_AgCredtd := '0101';
@@ -6880,6 +6885,7 @@ END;
              OPEN cr_busca_coop(pr_cdagectl => vr_aux_AgCredtd);
              FETCH cr_busca_coop INTO rw_crapcop_mensag;
              CLOSE cr_busca_coop;
+             */
           END IF;
 
           -- Se houve erro
