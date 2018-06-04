@@ -114,6 +114,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
        -- Variaveis de controle de DBA SCHEDULER JOB LOG      
        vr_dsplsql         VARCHAR2(2000);
        vr_jobname         VARCHAR2(100);  
+       vr_idprglog_cobr0009 tbgen_prglog.idprglog%TYPE;
 
     -- Controla Controla log em banco de dados
     PROCEDURE pc_controla_log_programa(pr_dstiplog     IN VARCHAR2, -- Tipo de Log
@@ -137,11 +138,30 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
                                                  ' ,pr_nmtelant: ' || pr_nmtelant ||
                                                  ' ,pr_cdcooperprog: ' || pr_cdcooperprog,
                              pr_idprglog      => vr_idprglog);
+      vr_idprglog_cobr0009 := vr_idprglog;
     EXCEPTION
       WHEN OTHERS THEN
         -- No caso de erro de programa gravar tabela especifica de log  
         CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);                                                             
     END pc_controla_log_programa;
+
+    procedure pc_captura_registra_log(pr_dsmensag in varchar2) is
+      --
+      /*captura as informações da exceção e grava o log*/
+      --
+      vr_dscritic varchar2(4000);
+      --
+    begin
+      --
+      vr_dscritic := pr_dsmensag
+                   ||dbms_utility.format_error_backtrace
+            ||' - '||dbms_utility.format_error_stack;
+      --
+      pc_controla_log_programa(pr_dstiplog      => 'E'
+                              ,pr_tpocorrencia  => 2
+                              ,pr_dscritic      => vr_dscritic);
+      --
+    end pc_captura_registra_log;
 
     --> Procedimento para geração do arquivo de devolução DVC605
     PROCEDURE pc_gerar_arq_devolucao(pr_cdcooper  IN crapcop.cdcooper%TYPE
@@ -271,6 +291,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
              
          EXCEPTION
            WHEN OTHERS THEN
+             pc_captura_registra_log(pr_dsmensag => 'pc_gerar_arq_devolucao.MONTAR HEADER:');
+             cobr0009.pc_notifica_cobranca(pr_dsassunt => 'PC_CRPS538_2 - Falha ao gerar arquivo de devolução'
+                                          ,pr_dsmensag => 'Ocorreu falhar ao gerar arquivo de devolução.'
+                                                        ||' Entre em contato com a área de Sustentação de Sistemas para analise dos logs('||vr_idprglog_cobr0009||'). (PC_CRPS538_2(1))'
+                                          ,pr_idprglog => vr_idprglog_cobr0009);
              -- No caso de erro de programa gravar tabela especifica de log
              CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper); 
              vr_dscritic := 'Montar Header do arquivo de devolucao - '||SQLERRM;
@@ -323,6 +348,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
          GENE0001.pc_informa_acesso(pr_module => vr_cdprogra, pr_action => NULL);
        EXCEPTION
          WHEN OTHERS THEN
+           pc_captura_registra_log(pr_dsmensag => 'pc_gerar_arq_devolucao.MONTAR LINHA DETALHE:');
+           cobr0009.pc_notifica_cobranca(pr_dsassunt => 'PC_CRPS538_2 - Falha ao gerar arquivo de devolução'
+                                        ,pr_dsmensag => 'Ocorreu falhar ao gerar arquivo de devolução.'
+                                                      ||' Entre em contato com a área de Sustentação de Sistemas para analise dos logs('||vr_idprglog_cobr0009||'). (PC_CRPS538_2(2))'
+                                        ,pr_idprglog => vr_idprglog_cobr0009);
            -- No caso de erro de programa gravar tabela especifica de log
            CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper); 
            vr_dscritic := 'Montar linha detalhe do arquivo de devolucao - '||SQLERRM;
@@ -357,6 +387,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
            GENE0001.pc_informa_acesso(pr_module => vr_cdprogra, pr_action => NULL);
          EXCEPTION
            WHEN OTHERS THEN
+             pc_captura_registra_log(pr_dsmensag => 'pc_gerar_arq_devolucao.MONTAR TRAILER:');
+             cobr0009.pc_notifica_cobranca(pr_dsassunt => 'PC_CRPS538_2 - Falha ao gerar arquivo de devolução'
+                                          ,pr_dsmensag => 'Ocorreu falhar ao gerar arquivo de devolução.'
+                                                        ||' Entre em contato com a área de Sustentação de Sistemas para analise dos logs('||vr_idprglog_cobr0009||'). (PC_CRPS538_2(3))'
+                                          ,pr_idprglog => vr_idprglog_cobr0009);
              -- No caso de erro de programa gravar tabela especifica de log
              CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper); 
              vr_dscritic := 'Montar Trailer do arquivo de devolucao - '||SQLERRM;
@@ -405,6 +440,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
        pr_dscritic := vr_dscritic;
        pr_cdcritic := vr_cdcritic;
      WHEN OTHERS THEN
+       pc_captura_registra_log(pr_dsmensag => 'pc_gerar_arq_devolucao:');
+       cobr0009.pc_notifica_cobranca(pr_dsassunt => 'PC_CRPS538_2 - Falha ao gerar arquivo de devolução'
+                                    ,pr_dsmensag => 'Ocorreu falhar ao gerar arquivo de devolução.'
+                                                  ||' Entre em contato com a área de Sustentação de Sistemas para analise dos logs('||vr_idprglog_cobr0009||'). (PC_CRPS538_2(4))'
+                                    ,pr_idprglog => vr_idprglog_cobr0009);
        -- No caso de erro de programa gravar tabela especifica de log
        CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper); 
        --Variavel de erro recebe erro ocorrido
@@ -540,6 +580,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
         pr_dscritic := vr_dscritic;
         pr_cdcritic := vr_cdcritic;
       WHEN OTHERS THEN
+        pc_captura_registra_log(pr_dsmensag => 'pc_gera_relatorio_574:');
+        cobr0009.pc_notifica_cobranca(pr_dsassunt => 'PC_CRPS538_2 - Falha ao gerar relatório 574'
+                                     ,pr_dsmensag => 'Ocorreu falhar ao gerar relatório 574.'
+                                                   ||' Entre em contato com a área de Sustentação de Sistemas para analise dos logs('||vr_idprglog_cobr0009||'). (PC_CRPS538_2(5))'
+                                     ,pr_idprglog => vr_idprglog_cobr0009);
         -- No caso de erro de programa gravar tabela especifica de log
         CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper); 
         --Variavel de erro recebe erro ocorrido
@@ -610,6 +655,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
         pr_dscritic := vr_dscritic;
         pr_cdcritic := vr_cdcritic;
       WHEN OTHERS THEN
+        pc_captura_registra_log(pr_dsmensag => 'pc_gera_arq_cooperado:');
+        cobr0009.pc_notifica_cobranca(pr_dsassunt => 'PC_CRPS538_2 - Falha ao gerar arquivo de retorno do cooperado'
+                                     ,pr_dsmensag => 'Ocorreu falhar ao gerar arquivo de retorno do cooperado.'
+                                                   ||' Entre em contato com a área de Sustentação de Sistemas para analise dos logs('||vr_idprglog_cobr0009||'). (PC_CRPS538_2(6))'
+                                     ,pr_idprglog => vr_idprglog_cobr0009);
         -- No caso de erro de programa gravar tabela especifica de log
         CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper); 
         --Variavel de erro recebe erro ocorrido
@@ -658,6 +708,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
                        ' - cdtipope: '   || pr_cdtipope    ||
                        ' - cdprogra: '   || pr_cdprogra;
       WHEN OTHERS THEN
+        pc_captura_registra_log(pr_dsmensag => 'pc_verifica_ja_executou:');
+        cobr0009.pc_notifica_cobranca(pr_dsassunt => 'PC_CRPS538_2 - Falha ao verificar execução processo'
+                                     ,pr_dsmensag => 'Ocorreu falhar ao verificar execução processo.'
+                                                   ||' Entre em contato com a área de Sustentação de Sistemas para analise dos logs('||vr_idprglog_cobr0009||'). (PC_CRPS538_2(7))'
+                                     ,pr_idprglog => vr_idprglog_cobr0009);
         -- No caso de erro de programa gravar tabela especifica de log
         CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper); 
         --Variavel de erro recebe erro ocorrido
@@ -749,6 +804,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
         pr_cdcritic := vr_cdcritic;
         pr_dscritic := vr_dscritic;
       WHEN OTHERS THEN
+        pc_captura_registra_log(pr_dsmensag => 'pc_posiciona_dat:');
+        cobr0009.pc_notifica_cobranca(pr_dsassunt => 'PC_CRPS538_2 - Falha ao posicionar data do processo'
+                                     ,pr_dsmensag => 'Ocorreu falhar ao posicionar data do processo.'
+                                                   ||' Entre em contato com a área de Sustentação de Sistemas para analise dos logs('||vr_idprglog_cobr0009||'). (PC_CRPS538_2(8))'
+                                     ,pr_idprglog => vr_idprglog_cobr0009);
         -- No caso de erro de programa gravar tabela especifica de log  
         CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);   
         --Variavel de erro recebe erro ocorrido
@@ -853,6 +913,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
         pr_cdcritic:= vr_cdcritic;
         pr_dscritic:= vr_dscritic;
       WHEN OTHERS THEN
+        pc_captura_registra_log(pr_dsmensag => 'pc_detalhe_execucao:');
+        cobr0009.pc_notifica_cobranca(pr_dsassunt => 'PC_CRPS538_2 - Falha ao detalhar processamento'
+                                     ,pr_dsmensag => 'Ocorreu falhar ao detalhar processamento.'
+                                                   ||' Entre em contato com a área de Sustentação de Sistemas para analise dos logs('||vr_idprglog_cobr0009||'). (PC_CRPS538_2(9))'
+                                     ,pr_idprglog => vr_idprglog_cobr0009);
         -- No caso de erro de programa gravar tabela especifica de log  
         CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);   
         --Variavel de erro recebe erro ocorrido
@@ -910,6 +975,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
         pr_cdcritic:= vr_cdcritic;
         pr_dscritic:= vr_dscritic;
       WHEN OTHERS THEN
+        pc_captura_registra_log(pr_dsmensag => 'pc_cria_job:');
+        cobr0009.pc_notifica_cobranca(pr_dsassunt => 'PC_CRPS538_2 - Falha ao criar job'
+                                     ,pr_dsmensag => 'Ocorreu falhar ao criar job.'
+                                                   ||' Entre em contato com a área de Sustentação de Sistemas para analise dos logs('||vr_idprglog_cobr0009||'). (PC_CRPS538_2(10))'
+                                     ,pr_idprglog => vr_idprglog_cobr0009);
         -- No caso de erro de programa gravar tabela especifica de log  
         CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);   
         --Variavel de erro recebe erro ocorrido
@@ -1071,6 +1141,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
         pr_cdcritic:= vr_cdcritic;
         pr_dscritic:= vr_dscritic;
       WHEN OTHERS THEN
+        pc_captura_registra_log(pr_dsmensag => 'pc_controle_coop_especifica:');
+        cobr0009.pc_notifica_cobranca(pr_dsassunt => 'PC_CRPS538_2 - Falha no controle do processo'
+                                     ,pr_dsmensag => 'Ocorreu falhar no controle do processo.'
+                                                   ||' Entre em contato com a área de Sustentação de Sistemas para analise dos logs('||vr_idprglog_cobr0009||'). (PC_CRPS538_2(11))'
+                                     ,pr_idprglog => vr_idprglog_cobr0009);
         -- No caso de erro de programa gravar tabela especifica de log  
         CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);   
         --Variavel de erro recebe erro ocorrido
@@ -1175,6 +1250,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
         pr_cdcritic:= vr_cdcritic;
         pr_dscritic:= vr_dscritic;
       WHEN OTHERS THEN
+        pc_captura_registra_log(pr_dsmensag => 'pc_controle_execucao:');
+        cobr0009.pc_notifica_cobranca(pr_dsassunt => 'PC_CRPS538_2 - Falha no controle do processo'
+                                     ,pr_dsmensag => 'Ocorreu falhar no controle do processo.'
+                                                   ||' Entre em contato com a área de Sustentação de Sistemas para analise dos logs('||vr_idprglog_cobr0009||'). (PC_CRPS538_2(12))'
+                                     ,pr_idprglog => vr_idprglog_cobr0009);
         -- No caso de erro de programa gravar tabela especifica de log  
         CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);
         --Variavel de erro recebe erro ocorrido
@@ -1232,6 +1312,11 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS538_2(pr_flavaexe IN VARCHAR2         
         pr_dscritic := gene0001.fn_busca_critica(pr_cdcritic, vr_dscritic);
         pc_controla_log_programa('E', 2, pr_dscritic);
       WHEN OTHERS THEN
+        pc_captura_registra_log(pr_dsmensag => 'Falha geral:');
+        cobr0009.pc_notifica_cobranca(pr_dsassunt => 'PC_CRPS538_2 - Falha no processo'
+                                     ,pr_dsmensag => 'Ocorreu falhar no processo.'
+                                                   ||' Entre em contato com a área de Sustentação de Sistemas para analise dos logs('||vr_idprglog_cobr0009||'). (PC_CRPS538_2(14))'
+                                     ,pr_idprglog => vr_idprglog_cobr0009);
         -- No caso de erro de programa gravar tabela especifica de log  
         CECRED.pc_internal_exception (pr_cdcooper => pr_cdcooper);   
         -- Efetuar retorno do erro não tratado
