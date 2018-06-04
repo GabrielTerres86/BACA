@@ -308,6 +308,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
 
                  28/05/2018 - P450 - Corrigido data do risco para contratos menores que materialidade (Guilherme/AMcom)
 
+                 04/06/2018 - P450 - Atualização Data do Risco (Guilherme/AMcom)
+
   ............................................................................ */
 
     DECLARE
@@ -4181,6 +4183,16 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
         
         
         
+        -- Regra para carga de data para o cursor
+        -- Se for rotina mensal - Daniel(AMcom)
+        IF to_char(pr_rw_crapdat.dtmvtoan, 'MM') <> to_char(pr_rw_crapdat.dtmvtolt, 'MM') THEN
+          -- Utilizar o final do mês como data
+          vr_dtrefere_aux := pr_rw_crapdat.dtultdma;
+        ELSE
+          -- Utilizar a data atual
+          vr_dtrefere_aux := pr_rw_crapdat.dtmvtoan;
+        END IF;        
+        
         
         -- Busca de todos os riscos Doctos 3020/3030
         -- com valor superior ao de arrasto e data igual a de referência
@@ -4243,18 +4255,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
           -- Atualizar a data com a data do mais elevado
           --vr_dtdrisco_upd := vr_dtdrisco;
           -- Efetuar atualização do risco em processo cfme os valores encontrados acima
-
-
           /*************************/
-          -- Regra para carga de data para o cursor
-          -- Se for rotina mensal - Daniel(AMcom)
-          IF to_char(pr_rw_crapdat.dtmvtoan, 'MM') <> to_char(pr_rw_crapdat.dtmvtolt, 'MM') THEN
-            -- Utilizar o final do mês como data
-            vr_dtrefere_aux := pr_rw_crapdat.dtultdma;
-          ELSE
-            -- Utilizar a data atual
-            vr_dtrefere_aux := pr_rw_crapdat.dtmvtoan;
-          END IF;
 
           -- Busca dos dados do ultimo risco de origem 1
           OPEN cr_crapris_last(pr_nrdconta => rw_crapris.nrdconta
@@ -4278,11 +4279,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
                 vr_dtdrisco_upd := vr_dtrefere;
               ELSE
                 -- Utilizar a data do ultimo risco
-                IF rw_crapris.innivris <> rw_crapris_last.innivris THEN
-                  vr_dtdrisco_upd := vr_dtrefere;
-                ELSE                
                   vr_dtdrisco_upd := rw_crapris_last.dtdrisco;
-                END IF;
               END IF;
             END IF;
           ELSE
