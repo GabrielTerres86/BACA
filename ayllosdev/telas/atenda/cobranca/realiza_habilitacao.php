@@ -167,7 +167,7 @@
 						"blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));'.($flgimpri == "1" ? "confirmaImpressao('".$flgregis."','');" : $metodo ).'");';
 	}
 	else
-	if ($flgimpri == 1) {  // Se tem o PDF a mostrar entao chama fun��o para mostrar PDF do impresso gerado no browser
+	if ($flgimpri == 1 || ((int)$flprotes && (int)$flprotes !== $flproalt)) {  // Se tem o PDF a mostrar entao chama função para mostrar PDF do impresso gerado no browser
 		echo 'confirmaImpressao("'.$flgregis.'","");';
 	} 
 	else {	
