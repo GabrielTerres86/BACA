@@ -308,7 +308,7 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS310_I(pr_cdcooper   IN crapcop.cdcoope
 
                  28/05/2018 - P450 - Corrigido data do risco para contratos menores que materialidade (Guilherme/AMcom)
 
-                 04/06/2018 - P450 - Atualização Data do Risco (Guilherme/AMcom)
+                 04/06/2018 - P450 - Atualização da Data do Risco (Guilherme/AMcom)
 
   ............................................................................ */
 
