@@ -86,6 +86,7 @@ create or replace package cecred.SICR0001 is
     TABLE OF typ_reg_agendamentos
     INDEX BY VARCHAR2(100);
 
+	 vr_nrdolote_sms NUMBER := 0;
 
   /* Procedimento para buscar os lançamentos automáticos efetuados pela Internet e TAA*/
   PROCEDURE pc_obtem_agendamentos_debito( pr_cdcooper  IN crapcop.cdcooper%TYPE        --> Código da cooperativa
@@ -771,6 +772,11 @@ create or replace package body cecred.SICR0001 is
 
         END LOOP;
 
+		if nvl(vr_nrdolote_sms,0) <> 0 then 
+        ESMS0001.pc_conclui_lote_sms(pr_idlote_sms  => vr_nrdolote_sms
+                                      ,pr_dscritic    => vr_dscritic);
+       end if; 
+
 
         -- Retornando a tabela temporaria dos lancamentos atualizada
         pr_tab_agendamentos := vr_tab_aux;
@@ -1268,7 +1274,7 @@ create or replace package body cecred.SICR0001 is
       vr_dsinfor2     crappro.dsinform##1%TYPE;
       vr_dsinfor3     crappro.dsinform##1%TYPE;
       vr_dsprotoc     crappro.dsprotoc%TYPE;
-      vr_nrdolote_sms NUMBER;
+      --vr_nrdolote_sms NUMBER;
     
       -- Autenticação
       vr_dslitera crapaut.dslitera%TYPE;
@@ -1795,7 +1801,7 @@ create or replace package body cecred.SICR0001 is
                                           pr_cdrefere      => rw_crapatr.cdrefere,
                                           pr_cdhistor      => rw_crapatr.cdhistor,
                                           pr_tpdnotif      => 1 --> Apenas MSG IBank
-                                         ,pr_flfechar_lote => 1 -- Fechar
+                                         ,pr_flfechar_lote => 0 -- Fechar
                                          ,pr_idlote_sms    => vr_nrdolote_sms);
               END IF;
             
@@ -1885,7 +1891,7 @@ create or replace package body cecred.SICR0001 is
                                       ,pr_vlrmaxdb  => rw_crapatr.vlrmaxdb
                                       ,pr_cdrefere  => rw_crapatr.cdrefere
                                       ,pr_cdhistor  => rw_crapatr.cdhistor
-                                      ,pr_flfechar_lote => 1 -- Fechar
+                                      ,pr_flfechar_lote => 0 -- Fechar
                                       ,pr_idlote_sms   => vr_nrdolote_sms);
 
             BEGIN
