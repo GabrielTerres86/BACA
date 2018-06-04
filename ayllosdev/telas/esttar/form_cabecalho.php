@@ -8,6 +8,7 @@
  * ALTERAÇÕES   : 15/08/2013 - Alteração da sigla PAC para PA (Carlos).
  * --------------
  */
+
 ?>
 
 <style>
@@ -37,6 +38,7 @@
 	<select id="cddopcap" name="cddopcap" style="width: 200px;">
 		<option value="1"><? echo utf8ToHtml('1 - ESTORNO') ?> </option> 
 		<option value="2"><? echo utf8ToHtml('2 - BAIXA') ?> </option>
+		<option value="3"><? echo utf8ToHtml('3 - SUSPENSÃO') ?> </option>
 	</select>
 	
 	<br style="clear:both" />

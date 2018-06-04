@@ -78,7 +78,7 @@
 		exibirErro('error',$msgErro,'Alerta - Ayllos',$retornoAposErro,false);
 	}
 	
-	echo 'showError("inform","Estorno/Baixa efetuados com sucesso.","Notifica&ccedil;&atilde;o - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));estadoInicial();");';		
+	echo 'showError("inform","Estorno/Baixa/Suspens&atilde;o efetuados com sucesso.","Notifica&ccedil;&atilde;o - Ayllos","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));estadoInicial();");';
 	
 			
 ?>

@@ -156,6 +156,8 @@
                 19/03/2018 - Procedure lista-tipo-conta deletada pois nao sera mais usada. 
                              Alteracao para buscar descricao do tipo de conta do Oracle.
                              PRJ366 (Lombardi).
+                10/05/2018 - Incluido o tratamento de estorno e geração da tarifa quando for suspensão de tarifa.
+                             Projeto Debitador Unico -- Josiane Stiehler (AMcom)
 ............................................................................*/
 
 { sistema/generico/includes/b1wgen0004tt.i }
@@ -4599,6 +4601,9 @@ PROCEDURE busca-associado-reltar:
     
     IF aux_des_erro = "NOK"  THEN
         DO:
+            ASSIGN aux_cdcritic = 0
+				   aux_dscritic = "Tipo de conta inexistente!".
+
             RUN gera_erro (INPUT par_cdcooper,        
                            INPUT par_cdagenci,
                            INPUT 1, /* nrdcaixa  */
@@ -8012,6 +8017,9 @@ PROCEDURE busca-associado:
 
     IF aux_des_erro = "NOK"  THEN
         DO:
+            ASSIGN aux_cdcritic = 0
+				   aux_dscritic = "Tipo de conta inexistente!".
+
             RUN gera_erro (INPUT par_cdcooper,        
                            INPUT par_cdagenci,
                            INPUT 1, /* nrdcaixa  */
@@ -8088,6 +8096,8 @@ PROCEDURE estorno-baixa-tarifa:
     ASSIGN aux_dsorigem = TRIM(ENTRY(par_idorigem,des_dorigens,","))
            aux_dstransa = IF par_cddopcap = 1 THEN 
                              "Estorno de tarifa."
+                          ELSE IF par_cddopcap = 3 THEN 
+                             "Suspensao de tarifa." 
                            ELSE
                              "Baixa de tarifa.".
 
@@ -8126,13 +8136,16 @@ PROCEDURE estorno-baixa-tarifa:
                     END.
                 ELSE
                     DO:
-                        IF par_cddopcap = 1 THEN /* 1 - Estorno */
+                        IF par_cddopcap = 1 OR
+                           par_cddopcap = 3 THEN /* 1 - Estorno  3- Suspensão*/
                             DO:
                                 ASSIGN craplat.insitlat = 4 /* Estornado */
                                        craplat.cdmotest = aux_cdmotest 
                                        craplat.dtdestor = par_dtmvtolt
                                        craplat.cdopeest = par_cdoperad.
 
+                                ASSIGN aux_cdhistor = craplat.cdhistor.
+                                
                                 FIND crapfco WHERE crapfco.cdfvlcop =  craplat.cdfvlcop
                                                                        NO-LOCK NO-ERROR.
 
@@ -8197,6 +8210,45 @@ PROCEDURE estorno-baixa-tarifa:
                                         END.
                                       END.
                                 END.
+                                IF par_cddopcap = 3 THEN /* 3- Suspensão*/
+                                   DO:
+                                    FIND FIRST crapdat WHERE crapdat.cdcooper = par_cdcooper NO-LOCK NO-ERROR NO-WAIT.
+                                    /* CRAPLAT*/
+                                    RUN cria_lan_auto_tarifa(INPUT par_cdcooper,
+                                                             INPUT par_nrdconta,
+                                                             INPUT crapdat.dtmvtopr,
+                                                             INPUT craplat.cdhistor,
+                                                             INPUT craplat.vltarifa,
+                                                             INPUT par_cdoperad,
+                                                             INPUT craplat.cdagenci,
+                                                             INPUT craplat.cdbccxlt,    /* cdbccxlt */
+                                                             INPUT craplat.nrdolote,    /* nrdolote */
+                                                             INPUT craplat.tpdolote,    /* tpdolote */
+                                                             INPUT craplat.nrdocmto,    /* nrdocmto */
+                                                             INPUT craplat.nrdconta,    /* nrdctabb */
+                                                             INPUT craplat.nrdctitg,    /* nrdctitg */
+                                                             INPUT 'ESTTAR',            /* cdpesqbb */
+                                                             INPUT craplat.cdbanchq,    /* cdbanchq */
+                                                             INPUT craplat.cdagechq,    /* cdagechq */
+                                                             INPUT craplat.nrctachq,    /* nrctachq */
+                                                             INPUT FALSE,               /* flgaviso */
+                                                             INPUT 0,                   /* tpdaviso */
+                                                             INPUT craplat.cdfvlcop,    /* cdfaixav */
+                                                             INPUT par_inproces,        /* inproces */
+                                                             OUTPUT TABLE tt-erro).
+
+
+                                    ASSIGN aux_dscritic = "".
+
+                                    /* Buscar Critica */
+                                    FIND FIRST tt-erro NO-LOCK NO-ERROR.
+                                    IF AVAIL(tt-erro) THEN
+                                       DO:
+                                        ASSIGN aux_dscritic = tt-erro.dscritic.
+                                                                                  
+                                      END.
+
+                                END.
 
                             END.
                         ELSE /* 2 - Baixa */
@@ -8205,6 +8257,9 @@ PROCEDURE estorno-baixa-tarifa:
                                        craplat.cdmotest = aux_cdmotest 
                                        craplat.dtdestor = par_dtmvtolt
                                        craplat.cdopeest = par_cdoperad.
+
+                                ASSIGN aux_cdhistor = craplat.cdhistor.
+
                             END.
                     END.
     
@@ -8241,7 +8296,7 @@ PROCEDURE estorno-baixa-tarifa:
                     RUN proc_gerar_log_item (INPUT aux_nrdrowid,
                                              INPUT "cdhistor",
                                              INPUT "",
-                                             INPUT craplat.cdhistor).
+                                             INPUT aux_cdhistor).
                     
                     RUN proc_gerar_log_item (INPUT aux_nrdrowid,
                                              INPUT "dtdestor",

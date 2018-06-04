@@ -28,6 +28,8 @@
 	$dtafinal			= (isset($_POST['dtafinal'])) ? $_POST['dtafinal'] : 0 ; 
 	$cdhistor			= (isset($_POST['cdhistor'])) ? $_POST['cdhistor'] : 0 ; 
 	
+  $cddopcap = ($cddopcap == 3 ? 1 : $cddopcap);
+
 	$procedure = 'lista_tarifas_estorno';
 	
 	if (($msgError = validaPermissao($glbvars['nmdatela'],$glbvars['nmrotina'],'C')) <> '') {		

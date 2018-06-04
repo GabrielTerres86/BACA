@@ -2956,7 +2956,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
   --              14/10/2015 - Incluir o tratamento de pagamento de avalista 
   --                           que foi esquecido na migração para o Oracle. (Oscar)
   --
-  --              15/08/2017 - Inclusao do campo qtdiacal e historicos do Pos-Fixado. (Jaison/James - PRJ298) 
+  --              15/08/2017 - Inclusao do campo qtdiacal e historicos do Pos-Fixado. (Jaison/James - PRJ298)
   --
   --              03/04/2018 - M324 ajuste na configuração de extrato para emprestimo (Rafael Monteiro - Mouts)
   ---------------------------------------------------------------------------------------------------------------
@@ -7055,6 +7055,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
   --
   --              28/09/2017 - Ajustado format da tag <vldiario> do relatorio crrl40
   --                           pois estava estourando (Tiago #724513)
+  --
+  --              14/05/2018 - Aumentado o tamanho das variáveis de indice para 24 posicoes
+  --                           para ordenacao dos extratos, projeto Debitador Unico (Elton-AMcom)
+  --
   ---------------------------------------------------------------------------------------------------------------
   DECLARE                                
         /* Cursores Locais */
@@ -7124,8 +7128,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
         vr_dstexto    VARCHAR2(32600);
         vr_dstexto40  VARCHAR2(32600);
         --Variaveis para indices
-        vr_index_extrato     VARCHAR2(12);
-        vr_index_extrato_aux VARCHAR2(12);
+        vr_index_extrato     VARCHAR2(24);
+        vr_index_extrato_aux VARCHAR2(24);
         vr_index_cheque      PLS_INTEGER;
         vr_index_deposito    PLS_INTEGER;
         --Variaveis de Erro
@@ -13701,7 +13705,7 @@ END pc_consulta_ir_pj_trim;
                   FETCH cr_crappep_taxa INTO rw_crappep_taxa;
                   IF cr_crappep_taxa%FOUND THEN
                     vr_dsvltaxa := to_char(rw_crappep_taxa.vltaxatu,'fm990d00')||'%';  
-                  END IF;                    
+                END IF;  
                   CLOSE cr_crappep_taxa;
                 END IF;  
                 
@@ -15896,7 +15900,7 @@ END pc_consulta_ir_pj_trim;
           --Levantar Excecao
           RAISE vr_exc_erro;
         END IF; 
-         
+
 
         --Atribuir Descricao da Origem
         vr_dsorigem:= GENE0001.vr_vet_des_origens(pr_idorigem);
