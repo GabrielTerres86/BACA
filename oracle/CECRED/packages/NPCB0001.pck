@@ -461,6 +461,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
       Alteração : 31/07/2017 - Ajustado rotina para buscar a faixa de rollout
                                completa de todas as datas. (Rafael)            
         
+                  21/05/2018 - Inclusão de formatação para identificar casas decimais no parametro
+                               que indica a faixa de rollout. (INC0013085 - AJFink)
+
     ..........................................................................*/
     -----------> CURSORES <-----------
     ----------> VARIAVEIS <-----------
@@ -533,7 +536,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
         IF vr_index MOD 2 = 0 THEN 
           IF pr_dtmvtolt >= to_date(vr_tab_campos(vr_index-1),'DD/MM/RRRR')  THEN
             --> Validar valor
-            IF pr_vltitulo >= gene0002.fn_char_para_number(vr_tab_campos(vr_index)) THEN
+            --IF pr_vltitulo >= gene0002.fn_char_para_number(vr_tab_campos(vr_index)) THEN
+            IF pr_vltitulo >= to_number(vr_tab_campos(vr_index),'999999d99','NLS_NUMERIC_CHARACTERS = ''.,''') THEN
               --> Retornar 1 - ja esta na faixa de rollout
               RETURN 1;
             END IF;
@@ -568,6 +572,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
                                convivencia tambem é por faixa de DATA e VALOR
                                (Douglas - Chamado 823963)
         
+                  21/05/2018 - Inclusão de formatação para identificar casas decimais no parametro
+                               que indica a faixa de rollout. (INC0013085 - AJFink)
+
     ..........................................................................*/
     -----------> CURSORES <-----------
     ----------> VARIAVEIS <-----------
@@ -621,7 +628,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.NPCB0001 is
         IF vr_index MOD 2 = 0 THEN 
           IF pr_dtmvtolt >= to_date(vr_tab_campos(vr_index-1),'DD/MM/RRRR')  THEN
             --> Validar valor
-            IF pr_vltitulo >= gene0002.fn_char_para_number(vr_tab_campos(vr_index)) THEN
+            --IF pr_vltitulo >= gene0002.fn_char_para_number(vr_tab_campos(vr_index)) THEN
+            IF pr_vltitulo >= to_number(vr_tab_campos(vr_index),'999999d99','NLS_NUMERIC_CHARACTERS = ''.,''') THEN
               --> Retornar 0 - acabou período de convivência
               RETURN 0;
             END IF;

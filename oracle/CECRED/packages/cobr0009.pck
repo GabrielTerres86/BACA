@@ -40,6 +40,10 @@ CREATE OR REPLACE PACKAGE CECRED.COBR0009 IS
                                      ,pr_des_erro  OUT VARCHAR2
                                      ,pr_dscritic  OUT VARCHAR2);                                                                   
 
+  procedure pc_notifica_cobranca(pr_dsassunt in  varchar2
+                                ,pr_dsmensag in  varchar2
+                                ,pr_idprglog in  tbgen_prglog.idprglog%type);
+
 END COBR0009;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.COBR0009 is
@@ -58,6 +62,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0009 is
    Alteração : Ajuste realizado para melhorar o desempenho na busca da configuracao
                e na busca do nome do beneficiario, conforme solicitado no chamado 573538
                (Kelvin).
+
+               21/05/2018 - Inclusão da procedure pc_notifica_cobranca. (INC0013085 - AJFink)
+
   ---------------------------------------------------------------------------------------------------------------*/
          
   PROCEDURE pc_busca_config_nome_blt(pr_cdcooper IN crapass.cdcooper%TYPE -- Cód. cooperativa
@@ -858,6 +865,85 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0009 is
                                                    ' - ' || 'COBR0009' ||
                                                    ' --> ' || pr_dscritic);                                  
   END pc_atualiza_email_pagador;  
+
+  procedure pc_notifica_cobranca(pr_dsassunt in  varchar2
+                                ,pr_dsmensag in  varchar2
+                                ,pr_idprglog in  tbgen_prglog.idprglog%type) is
+    --
+    vr_dsendere crapsle.dsendere%type;
+    vr_des_erro varchar2(32000) := null;
+    vr_idprglog tbgen_prglog.idprglog%type := pr_idprglog;
+    --
+    pragma autonomous_transaction;
+    --
+  begin
+    --
+    begin
+      --
+      vr_dsendere := gene0001.fn_param_sistema('CRED',3,'EMAIL_NOTIFICA_COBRAN');
+      --
+      if trim(vr_dsendere) is not null then
+        -- Solicitar o e-mail
+        gene0003.pc_solicita_email(pr_cdcooper      => 3/*cecred*/         --> Cooperativa conectada
+                                  ,pr_cdprogra      => null                --> Programa conectado
+                                  ,pr_des_destino   => vr_dsendere         --> Um ou mais detinatários separados por ';' ou ','
+                                  ,pr_des_assunto   => pr_dsassunt         --> Assunto do e-mail
+                                  ,pr_des_corpo     => pr_dsmensag         --> Corpo (conteudo) do e-mail
+                                  ,pr_des_anexo     => null                --> Um ou mais anexos separados por ';
+                                  ,pr_flg_enviar  => 'S'
+                                  ,pr_des_erro    => vr_des_erro);
+        --
+        if trim(vr_des_erro) is not null then
+          -- Gerar log
+          cecred.pc_log_programa(pr_dstiplog      => 'E'
+                                ,pr_cdprograma    => 'COBR0009'
+                                ,pr_cdcooper      => 3
+                                ,pr_tpexecucao    => 2 --job
+                                ,pr_tpocorrencia  => 2
+                                ,pr_cdcriticidade => 1
+                                ,pr_cdmensagem    => 0
+                                ,pr_dsmensagem    => 'Erro ao enviar e-mail: '||vr_des_erro
+                                ,pr_idprglog      => vr_idprglog
+                                ,pr_nmarqlog      => NULL);
+          --
+        end if;
+        --
+      end if;
+      --
+    exception
+      when others then
+        declare
+          /*captura as informações da exceção e grava o log*/
+          --
+          vr_dscritic varchar2(4000);
+          --
+        begin
+          --
+          vr_dscritic := 'COBR0009.pc_notifica_cobranca:'
+                       ||dbms_utility.format_error_backtrace
+                ||' - '||dbms_utility.format_error_stack;
+          --
+          cecred.pc_log_programa(pr_dstiplog      => 'E'
+                                ,pr_cdprograma    => 'COBR0009'
+                                ,pr_cdcooper      => 3
+                                ,pr_tpexecucao    => 2 --job
+                                ,pr_tpocorrencia  => 2
+                                ,pr_cdcriticidade => 1
+                                ,pr_cdmensagem    => 0
+                                ,pr_dsmensagem    => vr_dscritic
+                                ,pr_idprglog      => vr_idprglog
+                                ,pr_nmarqlog      => NULL);
+          --
+        exception
+          when others then
+            null;
+        end;
+    --
+    end;
+    --
+    commit;
+    --
+  end pc_notifica_cobranca;
   
 END COBR0009;
 /
