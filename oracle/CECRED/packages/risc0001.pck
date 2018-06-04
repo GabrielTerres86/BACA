@@ -103,6 +103,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
   --
   --             27/04/2017 - Nas linhas de reversao verificar se é uma data util,(pc_risco_k, pc_risco_t)
   --                          (Tiago/Thiago SD 589074).
+  --
+  --             26/02/2018 - Tabela CRAPTIP substituida pela TBCC_TIPO_CONTA. PRJ366 (Lombardi).
   ---------------------------------------------------------------------------------------------------------------
 
   -- constantes para geracao de arquivos contabeis
@@ -111,15 +113,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
 
   vr_dtrefris DATE;
 
-  type typ_reg_craptip is record
-       (cdtipcta  craptip.cdtipcta%type,
-        dstipcta  craptip.dstipcta%type,
-        cdcooper  craptip.cdcooper%type);
+  type typ_reg_tipo_conta is record
+       (cdtipcta  tbcc_tipo_conta.cdtipo_conta%type,
+        dstipcta  tbcc_tipo_conta.dstipo_conta%type,
+        inpessoa  tbcc_tipo_conta.inpessoa%type);
 
-  type typ_tab_craptip is table of typ_reg_craptip
+  type typ_tab_tipo_conta is table of typ_reg_tipo_conta
   index by varchar2(15); --cdcooper(10) + cdtipcta(+)
 
-  vr_tab_craptip typ_tab_craptip;
+  vr_tab_tipo_conta typ_tab_tipo_conta;
 
 
 
@@ -140,17 +142,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
       INDEX BY BINARY_INTEGER;
 
   TYPE typ_decimal_pfpj IS RECORD(
-     valorpf NUMBER(25, 2) := 0
-     ,dscpf   VARCHAR(1000)
+      valorpf NUMBER(25, 2) := 0
+     ,dscpf   VARCHAR(25)
      ,valorpj NUMBER(25, 2) := 0
-     ,dscpj   VARCHAR(1000)
-     ,nrctacrd NUMBER
-     ,nrctadeb NUMBER
-     ,cdagenci NUMBER);
+     ,dscpj   VARCHAR(25));
 
   TYPE typ_arr_decimal_pfpj
     IS TABLE OF typ_decimal_pfpj
-   INDEX BY BINARY_INTEGER;
+      INDEX BY BINARY_INTEGER;
 
 
   -- Relatorio
@@ -374,29 +373,31 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
   END fn_normaliza_jurosa60;
 
   PROCEDURE pc_calcula_juros_60k(par_cdcooper IN crapris.cdcooper%TYPE
-                                 ,par_dtrefere IN crapris.dtrefere%TYPE
-                                 ,par_cdmodali IN crapris.cdmodali%TYPE
-                                 ,par_dtinicio IN crapris.dtinictr%TYPE
-                                 ,pr_tabvljur1 IN OUT typ_arr_decimal_pfpj    --> TR - Modalidade 299 - Por PA.
-                                 ,pr_tabvljur2 IN OUT typ_arr_decimal_pfpj    --> TR - Modalidade 499 - Por PA.
-                                 ,pr_tabvljur3 IN OUT typ_arr_decimal_pfpj    --> PP - Modalidade 299 - Por PA.
-                                 ,pr_tabvljur4 IN OUT typ_arr_decimal_pfpj    --> PP - Modalidade 499 - Por PA.
-                                 ,pr_tabvljur5 IN OUT typ_arr_decimal_pfpj    --> PP – Cessao - Por PA.
-                                 ,pr_tabvljur6 IN OUT typ_arr_decimal_pfpj    --> POS - Modalidade 299 - Por PA.
-                                 ,pr_tabvljur7 IN OUT typ_arr_decimal_pfpj    --> POS - Modalidade 499 - Por PA.
-                                 ,pr_vlrjuros  OUT typ_decimal_pfpj           --> TR - Modalidade 299 - Por Tipo pessoa.
-                                 ,pr_finjuros  OUT typ_decimal_pfpj           --> TR - Modalidade 499 - Por Tipo pessoa.
-                                 ,pr_vlrjuros2 OUT typ_decimal_pfpj           --> PP - Modalidade 299 - Por Tipo pessoa.
-                                 ,pr_finjuros2 OUT typ_decimal_pfpj           --> PP - Modalidade 499 - Por Tipo pessoa.
-                                 ,pr_vlrjuros3 OUT typ_decimal_pfpj           --> PP – Cessao - Por Tipo pessoa.
-                                 ,pr_vlrjuros6 OUT typ_decimal_pfpj           --> POS - Modalidade 299 - Por Tipo pessoa.
-                                 ,pr_finjuros6 OUT typ_decimal_pfpj           --> POS - Modalidade 499 - Por Tipo pessoa.
-                                 ,pr_juros38_df OUT typ_decimal_pfpj           --> 0038 -Data Futura Juros sobre limite de credito utilizado ou (crps249) provisao juros ch. especial
-                                 ,pr_juros38_da OUT typ_decimal_pfpj           --> 0038 -Data Atual  Juros sobre limite de credito utilizado ou (crps249) provisao juros ch. especial
-                                 ,pr_vlrjrtxs        IN OUT typ_arr_decimal_pfpj           --> Diversos historicos Taxas e Juros contas em ADP
-                                 ,pr_tabvljuros38_df IN OUT typ_arr_decimal_pfpj    --> Data Futura 0038 – Juros sobre limite de credito  - Por PA.
-                                 ,pr_tabvljuros38_da IN OUT typ_arr_decimal_pfpj    --> Data Atual  0038 – Juros sobre limite de credito  - Por PA.
-                                 ,pr_tabvlrjrtxs     IN OUT typ_arr_decimal_pfpj    --> Diversos historicos Taxas e Juros contas em ADP   - Por PA.
+                                ,par_dtrefere IN crapris.dtrefere%TYPE
+                                ,par_cdmodali IN crapris.cdmodali%TYPE
+                                ,par_dtinicio IN crapris.dtinictr%TYPE
+                                ,pr_tabvljur1 IN OUT typ_arr_decimal_pfpj    --> TR - Modalidade 299 - Por PA.
+                                ,pr_tabvljur2 IN OUT typ_arr_decimal_pfpj    --> TR - Modalidade 499 - Por PA.
+                                ,pr_tabvljur3 IN OUT typ_arr_decimal_pfpj    --> PP - Modalidade 299 - Por PA.
+                                ,pr_tabvljur4 IN OUT typ_arr_decimal_pfpj    --> PP - Modalidade 499 - Por PA.
+                                ,pr_tabvljur5 IN OUT typ_arr_decimal_pfpj    --> PP – Cessao - Por PA.
+                                ,pr_tabvljur6 IN OUT typ_arr_decimal_pfpj    --> POS - Modalidade 299 - Por PA.
+                                ,pr_tabvljur7 IN OUT typ_arr_decimal_pfpj    --> POS - Modalidade 499 - Por PA.
+                                ,pr_vlrjuros  OUT typ_decimal_pfpj           --> TR - Modalidade 299 - Por Tipo pessoa.
+                                ,pr_finjuros  OUT typ_decimal_pfpj           --> TR - Modalidade 499 - Por Tipo pessoa.
+                                ,pr_vlrjuros2 OUT typ_decimal_pfpj           --> PP - Modalidade 299 - Por Tipo pessoa.
+                                ,pr_finjuros2 OUT typ_decimal_pfpj           --> PP - Modalidade 499 - Por Tipo pessoa.
+                                ,pr_vlrjuros3 OUT typ_decimal_pfpj           --> PP – Cessao - Por Tipo pessoa.
+                                ,pr_vlrjuros6 OUT typ_decimal_pfpj           --> POS - Modalidade 299 - Por Tipo pessoa.
+                                ,pr_finjuros6 OUT typ_decimal_pfpj           --> POS - Modalidade 499 - Por Tipo pessoa.
+                                ,pr_juros38_df OUT typ_decimal_pfpj           --> 0038 -Data Futura Juros sobre limite de credito utilizado ou (crps249) provisao juros ch. especial
+                                ,pr_juros38_da OUT typ_decimal_pfpj           --> 0038 -Data Atual  Juros sobre limite de credito utilizado ou (crps249) provisao juros ch. especial
+                                ,pr_taxas37    OUT typ_decimal_pfpj           --> 0037 -Taxa sobre saldo em c/c negativo
+                                ,pr_juros57    OUT typ_decimal_pfpj           --> 0057 -Juros sobre saque de deposito bloqueado
+                                ,pr_tabvljuros38_df IN OUT typ_arr_decimal_pfpj    --> Data Futura 0038 – Juros sobre limite de credito    - Por PA.
+                                ,pr_tabvljuros38_da IN OUT typ_arr_decimal_pfpj    --> Data Atual  0038 – Juros sobre limite de credito    - Por PA.
+                                ,pr_tabvltaxas37    IN OUT typ_arr_decimal_pfpj    --> 37 – Taxa sobre saldo em c/c negativo - Por PA.
+                                ,pr_tabvljuros57    IN OUT typ_arr_decimal_pfpj    --> 57 – Juros sobre saque de deposito bloqueado- Por PA.
                                 ) IS
   -- ..........................................................................
   --
@@ -405,7 +406,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
   --  Sistema  : Rotinas genericas para RISCO
   --  Sigla    : RISC
   --  Autor    : ?????
-  --  Data     : ?????                         Ultima atualizacao: 18/04/2018
+  --  Data     : ?????                         Ultima atualizacao: 03/10/2017
   --
   --  Dados referentes ao programa:
   --
@@ -417,10 +418,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
   --
   --               03/10/2017 - Inclusao do produto Pos-Fixado. (Jaison/James - PRJ298)
   --
-  --               18/04/2018 - Ajuste para buscar valores de juros,taxas,mora etc... de contas
+  --               18/04/2018 - P450 - Ajuste para buscar valores de juros,taxas,mora etc... de contas
   --                            correntes negativas e caso possuir com limites de credito estourado
-  --                            Projeto Ligeirinho Contrataçao de Credito (Rangel Decker) AMCom
-  -- .............................................................................
+  --                            Projeto Contrataçao de Credito (Rangel Decker) AMCom
+  -- ......................................................................................................
+
 
     CURSOR cr_crapvri_jur(pr_cdcooper IN crapris.cdcooper%TYPE
                          ,pr_nrdconta IN crapris.nrdconta%TYPE
@@ -501,108 +503,77 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
          AND ces.nrctremp = pr_nrctremp;
 
     vr_vljurctr          NUMBER;
-    vr_indexage          NUMBER;
     vr_crapvri_jur_found BOOLEAN := FALSE;
     vr_diascalc          INTEGER := 0;
     contador             INTEGER := 0;
     vr_fleprces          INTEGER := 0;
-
     vr_dtmvtolt          DATE;
     vr_dtcorte_prm       DATE;
 
+
     --Busca conta corrente em ADP saldo negativo e se houver limite estourado (Rangel Decker AMcom)
     CURSOR cr_conta_negativa (pr_cdcooper IN crapris.cdcooper%TYPE) IS
-      SELECT ris.nrdconta
-            ,ris.qtdiaatr
-            ,ris.vldivida
-            ,ris.dtinictr
-      FROM   crapris ris
-      WHERE ris.cdcooper = pr_cdcooper
-      AND  ris.dtrefere  = par_dtrefere
-      AND  ris.vldivida  > 0
-      AND  ris.cdmodali =101
-      AND  ris.qtdiaatr >=60;
-
+      SELECT  ris.nrdconta
+           ,DECODE(ass.inpessoa,3,2,ass.inpessoa) inpessoa /* Tratamento para Pessoa Administrativa considerar com PJ*/
+           ,ris.qtdiaatr
+           ,ris.vldivida
+           ,ris.dtinictr
+      FROM crapass ass
+          ,crapris ris
+      WHERE ris.cdcooper = ass.cdcooper
+       AND ris.nrdconta  = ass.nrdconta
+       AND ris.cdcooper  = pr_cdcooper
+       AND ris.dtrefere  = par_dtrefere
+      -- AND ris.inddocto  = 1 -- Docto 3020
+       AND ris.vldivida  > 0
+       AND ris.cdmodali =101
+       AND ris.qtdiaatr >=60;
 
     --Retorna os laçamentos de taxas cobradas na situação de conta negativa (Rangel Decker AMcom)
-   CURSOR cr_conta_juros60 (pr_cdcooper IN craplcm.cdcooper%TYPE,
+    CURSOR cr_conta_juros60 (pr_cdcooper IN craplcm.cdcooper%TYPE,
                              pr_nrdconta IN craplcm.nrdconta%TYPE,
                              pr_datacorte  IN craplcm.dtmvtolt%TYPE) IS
-    SELECT periodo
-           ,cdhistor
-           ,cdagenci
-           ,inpessoa
-           ,sum(vllanmto) vllanmto
-           ,descricao
-           ,nrctacrd
-           ,nrctadeb
-           ,indexagenc
-     FROM (SELECT 'DF' periodo
-                  ,sld.nrdconta
-                  ,sld.dtrefere dtmvtolt
-                  ,DECODE(pas.inpessoa,3,2,pas.inpessoa) inpessoa /* Tratamento para Pessoa Administrativa considerar com PJ*/
-                  ,pas.cdagenci
-                  ,sld.vljuresp vllanmto
-                  ,his.nrctacrd
-                  ,his.nrctadeb
-                  ,CASE  DECODE(pas.inpessoa,3,2,pas.inpessoa)
-                   WHEN 1 THEN
-                    his.cdhistor||' '||his.dsexthst ||'- pessoa fisica" '
-                   WHEN 2 THEN
-                    his.cdhistor||' '||his.dsexthst ||'- pessoa juridica" '
-                  END descricao
-                 ,his.cdhistor
-                 ,TO_NUMBER(pas.cdagenci||99||his.cdhistor) indexagenc
-             FROM crapsld sld,
-                  craphis his,
-                  crapass pas
-             WHERE sld.cdcooper   = pr_cdcooper
-             AND   sld.nrdconta   = pr_nrdconta
-             AND   his.cdcooper   = sld.cdcooper
-             AND   his.cdhistor   = 38
-             AND   his.inconta_redutora = 1 -- Historico marcado para estar no arquivo contabil
-             AND   pas.cdcooper   = sld.cdcooper
-             AND   pas.nrdconta   = sld.nrdconta
-             AND   sld.vljuresp > 0
-       UNION
-        SELECT DISTINCT
-                 'DA' periodo
-                 ,lcm.nrdconta
-                 ,lcm.dtmvtolt
-                 ,DECODE(pas.inpessoa,3,2,pas.inpessoa) inpessoa /* Tratamento para Pessoa Administrativa considerar com PJ*/
-                 ,pas.cdagenci
-                 ,lcm.vllanmto
-                 ,his.nrctacrd
-                 ,his.nrctadeb
-                 ,CASE  DECODE(pas.inpessoa,3,2,pas.inpessoa)
-                   WHEN 1 THEN
-                    his.cdhistor||' '||his.dsexthst ||'- pessoa fisica" '
-                   WHEN 2 THEN
-                    his.cdhistor||' '||his.dsexthst ||'- pessoa juridica" '
-                  END descricao
-                 ,his.cdhistor
-                 ,TO_NUMBER(pas.cdagenci||99||his.cdhistor) indexagenc
-            FROM craplcm lcm
-                ,crapass pas
-                ,craphis his
-            WHERE lcm.cdcooper = pas.cdcooper
-            AND lcm.nrdconta   = pas.nrdconta
-            AND lcm.cdcooper   = his.cdcooper
-            AND lcm.cdhistor   = his.cdhistor
-            AND lcm.cdcooper   = pr_cdcooper
-            AND lcm.nrdconta   = pr_nrdconta
-            AND lcm.dtmvtolt  > pr_datacorte  -- BETWEEN pr_dataini AND pr_datafim
-            AND   his.inconta_redutora = 1 -- Historico marcado para estar no arquivo contabil
-            )
-      GROUP BY  periodo
-               ,cdhistor
-               ,cdagenci
-               ,inpessoa
-               ,descricao
-               ,nrctacrd
-               ,nrctadeb
-               ,indexagenc
-     ORDER BY periodo ,cdhistor,inpessoa ,cdagenci asc ;
+
+      SELECT /*+ index (lcm CRAPLCM##CRAPLCM2) */
+            'DF' periodo
+            ,s.nrdconta
+            ,s.dtrefere dtmvtolt
+            ,a.cdagenci
+            ,s.vljuresp vllanmto
+            ,h.cdhistor
+            ,h.dshistor
+       FROM crapsld s,
+            craphis h,
+            crapass a
+       WHERE s.cdcooper = pr_cdcooper
+       AND s.nrdconta   = pr_nrdconta
+       AND h.cdcooper   = s.cdcooper
+       AND h.cdhistor   = 38
+       AND a.cdcooper   = s.cdcooper
+       AND a.nrdconta   = s.nrdconta
+       AND s.vljuresp > 0
+      UNION
+       SELECT /*+ index (lcm CRAPLCM##CRAPLCM2) */
+            'DA' periodo
+            ,lcm.nrdconta
+            ,lcm.dtmvtolt
+            ,ass.cdagenci
+            ,lcm.vllanmto
+            ,his.cdhistor
+            ,his.dshistor
+       FROM craplcm lcm
+           ,crapass ass
+           ,craphis his
+      WHERE lcm.cdcooper = ass.cdcooper
+      AND lcm.nrdconta  = ass.nrdconta
+      AND lcm.cdcooper = his.cdcooper
+      AND lcm.cdhistor  = his.cdhistor
+      AND lcm.cdcooper  = pr_cdcooper
+      AND lcm.nrdconta  = pr_nrdconta
+      AND lcm.dtmvtolt  > pr_datacorte  -- BETWEEN pr_dataini AND pr_datafim
+      AND his.indebcre ='D'
+      AND his.cdhistor in(38,37,57);
+
 
 
   BEGIN
@@ -623,8 +594,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
     pr_juros38_da.valorpf:=0;
     pr_juros38_da.valorpj:=0;
 
-   -- pr_vlrjrtxs.valorpf:=0;
-    --pr_vlrjrtxs.valorpj:=0;
+    pr_taxas37.valorpf:=0;
+    pr_taxas37.valorpj:=0;
+
+    pr_juros57.valorpf:=0;
+    pr_juros57.valorpj:=0;
+
 
     FOR rw_crapris_jur IN cr_crapris_jur(par_cdcooper,
                                          par_dtrefere,
@@ -869,9 +844,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
       END IF;
     END LOOP;
 
-
-    --Soma de valor juros e taxas de contas correntes inadimplentes (Rangel Decker AMcom)
+     --Soma de valor juros e taxas de contas correntes inadimplentes (Rangel Decker AMcom)
     IF par_cdmodali = 999 THEN
+
        --Buscar a data de corte
        vr_dtcorte_prm := TO_DATE(GENE0001.fn_param_sistema (pr_cdcooper => 0
                                                            ,pr_nmsistem => 'CRED'
@@ -884,26 +859,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
                                                     pr_nrdconta   => rw_conta_negativa.nrdconta,
                                                     pr_datacorte  => vr_dtcorte_prm) LOOP
 
-             IF rw_conta_juros60.inpessoa = 1 THEN  --Pessoa Fisica
+
+                IF rw_conta_negativa.inpessoa = 1 THEN  --Pessoa Fisica
                    -- 0038 - JUROS SOBRE LIMITE DE CREDITO UTILIZADO OU
-                   --(CRPS249) PROVISAO JUROS CH. ESPECIAL Data Futura DF
-                   IF rw_conta_juros60.cdhistor = 38 THEN
-                      IF  rw_conta_juros60.periodo ='DF' THEN
-                          pr_juros38_df.valorpf := pr_juros38_df.valorpf +rw_conta_juros60.vllanmto;
+                   --(CRPS249) PROVISAO JUROS CH. ESPECIAL
+                    IF rw_conta_juros60.cdhistor = 38 AND rw_conta_juros60.periodo ='DF' THEN
+                       pr_juros38_df.valorpf := pr_juros38_df.valorpf +rw_conta_juros60.vllanmto;
 
-                          IF pr_tabvljuros38_df.exists(rw_conta_juros60.cdagenci) THEN
-                             pr_tabvljuros38_df(rw_conta_juros60.cdagenci).valorpf := NVL(pr_tabvljuros38_df(rw_conta_juros60.cdagenci).valorpf,0) +  rw_conta_juros60.vllanmto;
-                          ELSE
-                             pr_tabvljuros38_df(rw_conta_juros60.cdagenci).valorpf := rw_conta_juros60.vllanmto;
-                          END IF;
-                          pr_juros38_df.dscpf    :=rw_conta_juros60.descricao;
-                          pr_juros38_df.nrctacrd :=rw_conta_juros60.nrctacrd;
-                          pr_juros38_df.nrctadeb :=rw_conta_juros60.nrctadeb;
-                     END IF;
+                        IF pr_tabvljuros38_df.exists(rw_conta_juros60.cdagenci) THEN
+                           pr_tabvljuros38_df(rw_conta_juros60.cdagenci).valorpf := NVL(pr_tabvljuros38_df(rw_conta_juros60.cdagenci).valorpf,0) +  rw_conta_juros60.vllanmto;
+                        ELSE
+                           pr_tabvljuros38_df(rw_conta_juros60.cdagenci).valorpf := rw_conta_juros60.vllanmto;
+                        END IF;
+                    END IF;
 
-                     -- 0038 - JUROS SOBRE LIMITE DE CREDITO UTILIZADO OU
-                     --(CRPS249) PROVISAO JUROS CH. ESPECIAL  DA
-                     IF  rw_conta_juros60.periodo ='DA' THEN
+                    -- 0038 - JUROS SOBRE LIMITE DE CREDITO UTILIZADO OU
+                    --(CRPS249) PROVISAO JUROS CH. ESPECIAL
+                    IF rw_conta_juros60.cdhistor = 38 AND rw_conta_juros60.periodo ='DA' THEN
                        pr_juros38_da.valorpf := pr_juros38_da.valorpf +rw_conta_juros60.vllanmto;
 
                         IF pr_tabvljuros38_da.exists(rw_conta_juros60.cdagenci) THEN
@@ -911,52 +883,47 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
                         ELSE
                            pr_tabvljuros38_da(rw_conta_juros60.cdagenci).valorpf := rw_conta_juros60.vllanmto;
                         END IF;
-                         pr_juros38_da.dscpf    :=rw_conta_juros60.descricao;
-                         pr_juros38_da.nrctacrd :=rw_conta_juros60.nrctacrd;
-                         pr_juros38_da.nrctadeb :=rw_conta_juros60.nrctadeb;
+
                     END IF;
-                  ELSE
 
-                     --Todos os historicos de lançamento marcadas pessoa fisica 38 que tem tratativa diferenciada
-                     IF pr_vlrjrtxs.exists(rw_conta_juros60.cdhistor) THEN
-                        pr_vlrjrtxs(rw_conta_juros60.cdhistor).valorpf := NVL(pr_vlrjrtxs(rw_conta_juros60.cdhistor).valorpf,0) +  rw_conta_juros60.vllanmto;
-                     ELSE
-                        pr_vlrjrtxs(rw_conta_juros60.cdhistor).valorpf := rw_conta_juros60.vllanmto;
-                     END IF;
+                    IF rw_conta_juros60.cdhistor = 37 THEN
+                       pr_taxas37.valorpf := pr_taxas37.valorpf +rw_conta_juros60.vllanmto;
 
+                       IF pr_tabvltaxas37.exists(rw_conta_juros60.cdagenci) THEN
+                          pr_tabvltaxas37(rw_conta_juros60.cdagenci).valorpf := NVL(pr_tabvltaxas37(rw_conta_juros60.cdagenci).valorpf,0) +  rw_conta_juros60.vllanmto;
+                       ELSE
+                          pr_tabvltaxas37(rw_conta_juros60.cdagenci).valorpf := rw_conta_juros60.vllanmto;
+                       END IF;
+                    END IF;
 
-                     IF pr_tabvlrjrtxs.exists(rw_conta_juros60.indexagenc) THEN
-                      pr_tabvlrjrtxs(rw_conta_juros60.indexagenc).valorpf := NVL(pr_tabvlrjrtxs(rw_conta_juros60.indexagenc).valorpf,0) +  rw_conta_juros60.vllanmto;
-                     ELSE
-                        pr_tabvlrjrtxs(rw_conta_juros60.indexagenc).valorpf := rw_conta_juros60.vllanmto;
-                     END IF;
-                      pr_vlrjrtxs(rw_conta_juros60.cdhistor).dscpf    :=rw_conta_juros60.descricao;
-                      pr_vlrjrtxs(rw_conta_juros60.cdhistor).nrctacrd :=rw_conta_juros60.nrctacrd;
-                      pr_vlrjrtxs(rw_conta_juros60.cdhistor).nrctadeb :=rw_conta_juros60.nrctadeb;
+                    IF rw_conta_juros60.cdhistor = 57 THEN
+                       pr_juros57.valorpf := pr_juros57.valorpf +rw_conta_juros60.vllanmto;
+
+                       IF pr_tabvljuros57.exists(rw_conta_juros60.cdagenci) THEN
+                          pr_tabvljuros57(rw_conta_juros60.cdagenci).valorpf := NVL(pr_tabvljuros57(rw_conta_juros60.cdagenci).valorpf,0) +  rw_conta_juros60.vllanmto;
+                       ELSE
+                          pr_tabvljuros57(rw_conta_juros60.cdagenci).valorpf := rw_conta_juros60.vllanmto;
+                       END IF;
+
+                    END IF;
 
                 END IF;
-             END IF;
 
-             IF rw_conta_juros60.inpessoa = 2  THEN --Pessoa Juridica
-                 -- 0038 - JUROS SOBRE LIMITE DE CREDITO UTILIZADO OU
-                 --(CRPS249) PROVISAO JUROS CH. ESPECIAL  DF
-                   IF rw_conta_juros60.cdhistor = 38 THEN
-                     IF  rw_conta_juros60.periodo ='DF' THEN
-                          pr_juros38_df.valorpj := pr_juros38_df.valorpj +rw_conta_juros60.vllanmto;
+                IF rw_conta_negativa.inpessoa = 2  THEN --Pessoa Juridica
+                   -- 0038 - JUROS SOBRE LIMITE DE CREDITO UTILIZADO OU
+                   --(CRPS249) PROVISAO JUROS CH. ESPECIAL
+                   IF rw_conta_juros60.cdhistor = 38  AND rw_conta_juros60.periodo ='DF' THEN
+                       pr_juros38_df.valorpj := pr_juros38_df.valorpj +rw_conta_juros60.vllanmto;
 
-                          IF pr_tabvljuros38_df.exists(rw_conta_juros60.cdagenci) THEN
-                             pr_tabvljuros38_df(rw_conta_juros60.cdagenci).valorpj := NVL(pr_tabvljuros38_df(rw_conta_juros60.cdagenci).valorpj,0) +  rw_conta_juros60.vllanmto;
-                          ELSE
-                             pr_tabvljuros38_df(rw_conta_juros60.cdagenci).valorpj := rw_conta_juros60.vllanmto;
-                          END IF;
-                          pr_juros38_df.dscpj    :=rw_conta_juros60.descricao;
-                          pr_juros38_df.nrctacrd :=rw_conta_juros60.nrctacrd;
-                          pr_juros38_df.nrctadeb :=rw_conta_juros60.nrctadeb;
-                     END IF;
+                        IF pr_tabvljuros38_df.exists(rw_conta_juros60.cdagenci) THEN
+                           pr_tabvljuros38_df(rw_conta_juros60.cdagenci).valorpj := NVL(pr_tabvljuros38_df(rw_conta_juros60.cdagenci).valorpj,0) +  rw_conta_juros60.vllanmto;
+                        ELSE
+                           pr_tabvljuros38_df(rw_conta_juros60.cdagenci).valorpj := rw_conta_juros60.vllanmto;
+                        END IF;
 
-                     -- 0038 - JUROS SOBRE LIMITE DE CREDITO UTILIZADO OU
-                     --(CRPS249) PROVISAO JUROS CH. ESPECIAL DA
-                     IF  rw_conta_juros60.periodo ='DA' THEN
+                    END IF;
+
+                    IF rw_conta_juros60.cdhistor = 38  AND rw_conta_juros60.periodo ='DA' THEN
                        pr_juros38_da.valorpj := pr_juros38_da.valorpj +rw_conta_juros60.vllanmto;
 
                         IF pr_tabvljuros38_da.exists(rw_conta_juros60.cdagenci) THEN
@@ -964,35 +931,41 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
                         ELSE
                            pr_tabvljuros38_da(rw_conta_juros60.cdagenci).valorpj := rw_conta_juros60.vllanmto;
                         END IF;
-                         pr_juros38_da.dscpj    :=rw_conta_juros60.descricao;
-                         pr_juros38_da.nrctacrd :=rw_conta_juros60.nrctacrd;
-                         pr_juros38_da.nrctadeb :=rw_conta_juros60.nrctadeb;
-                     END IF;
-                   ELSE
-                     --Todos lançamentos marcados para pessoa juridica exceto 38 que tem tratativa diferenciada
-                     IF pr_vlrjrtxs.exists(rw_conta_juros60.cdhistor) THEN
-                        pr_vlrjrtxs(rw_conta_juros60.cdhistor).valorpj := NVL(pr_vlrjrtxs(rw_conta_juros60.cdhistor).valorpj,0) +  rw_conta_juros60.vllanmto;
-                     ELSE
-                        pr_vlrjrtxs(rw_conta_juros60.cdhistor).valorpj := rw_conta_juros60.vllanmto;
-                     END IF;
-
-                     IF pr_tabvlrjrtxs.exists(rw_conta_juros60.indexagenc) THEN
-                        pr_tabvlrjrtxs(rw_conta_juros60.indexagenc).valorpj := NVL(pr_tabvlrjrtxs(rw_conta_juros60.indexagenc).valorpj,0) +  rw_conta_juros60.vllanmto;
-                     ELSE
-                        pr_tabvlrjrtxs(rw_conta_juros60.indexagenc).valorpj := rw_conta_juros60.vllanmto;
-                     END IF;
-                      pr_vlrjrtxs(rw_conta_juros60.cdhistor).dscpj    :=rw_conta_juros60.descricao;
-                      pr_vlrjrtxs(rw_conta_juros60.cdhistor).nrctacrd :=rw_conta_juros60.nrctacrd;
-                      pr_vlrjrtxs(rw_conta_juros60.cdhistor).nrctadeb :=rw_conta_juros60.nrctadeb;
 
                     END IF;
 
-             END IF;
-          END LOOP;
+
+
+                    IF rw_conta_juros60.cdhistor = 37 THEN
+                       pr_taxas37.valorpj := pr_taxas37.valorpj +rw_conta_juros60.vllanmto;
+
+                       IF pr_tabvltaxas37.exists(rw_conta_juros60.cdagenci) THEN
+                          pr_tabvltaxas37(rw_conta_juros60.cdagenci).valorpj := NVL(pr_tabvltaxas37(rw_conta_juros60.cdagenci).valorpj,0) +  rw_conta_juros60.vllanmto;
+                       ELSE
+                          pr_tabvltaxas37(rw_conta_juros60.cdagenci).valorpj := rw_conta_juros60.vllanmto;
+                       END IF;
+
+                    END IF;
+
+                    IF rw_conta_juros60.cdhistor = 57 THEN
+                       pr_juros57.valorpj := pr_juros57.valorpj +rw_conta_juros60.vllanmto;
+
+                       IF pr_tabvljuros57.exists(rw_conta_juros60.cdagenci) THEN
+                          pr_tabvljuros57(rw_conta_juros60.cdagenci).valorpj := NVL(pr_tabvljuros57(rw_conta_juros60.cdagenci).valorpj,0) +  rw_conta_juros60.vllanmto;
+                       ELSE
+                          pr_tabvljuros57(rw_conta_juros60.cdagenci).valorpj := rw_conta_juros60.vllanmto;
+                       END IF;
+
+                    END IF;
+
+                END IF;
+
+           END LOOP;
 
         END LOOP;
 
      END IF;
+
 
   END pc_calcula_juros_60k;
 
@@ -1053,7 +1026,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
 
      09/02/2018 - Ajuste para contemplar o Juros 60 para o produto Pos Fixado. (James)
 
-     21/03/2018 - Ajuste para exibir valores de juros,taxas,mora etc... de contas
+     21/03/2018 - P450 - Ajuste para exibir valores de juros,taxas,mora etc... de contas
                   correntes negativas e caso possuir com limites de credito estourado (Rangel Decker) AMcom
 
   ............................................................................. */
@@ -1255,16 +1228,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
          AND ces.nrdconta = pr_nrdconta
          AND ces.nrctremp = pr_nrctremp;
 
-     -->Lista de Historicos marcados para estarem no arquivo
-    CURSOR cr_craphis (pr_cdcooper  craphis.cdhistor%TYPE) IS
-      SELECT  his.cdhistor,
-              99||his.cdhistor indexhist
-      FROM    craphis his
-      WHERE his.cdcooper = pr_cdcooper
-      AND   his.indebcre ='D'
-      AND   his.inconta_redutora = 1
-      ORDER BY his.cdhistor;
-
     /*****************************  VARIAVEIS  ****************************/
     vr_exc_erro          EXCEPTION;
     vr_file_erro         EXCEPTION;
@@ -1337,19 +1300,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
 
     vr_juros38df_calc    typ_decimal_pfpj;
     vr_juros38da_calc    typ_decimal_pfpj;
+    vr_taxas37_calc      typ_decimal_pfpj;
+    vr_juros57_calc      typ_decimal_pfpj;
 
     vr_juros38df          typ_decimal_pfpj;
     vr_juros38da          typ_decimal_pfpj;
-    vr_jrtxs              typ_decimal_pfpj;
+    vr_taxas37            typ_decimal_pfpj;
+    vr_juros57            typ_decimal_pfpj;
 
     --Somatorio das Agencias
-    vr_tabvljuros38df     typ_arr_decimal_pfpj;
-    vr_tabvljuros38da     typ_arr_decimal_pfpj;
-    vr_tabvljrtxs         typ_arr_decimal_pfpj;
-
-    --Diversos Historicos
-    vr_tabhistoricos         typ_arr_decimal_pfpj;
-
+    vr_tabvltaxas37        typ_arr_decimal_pfpj;
+    vr_tabvljuros57        typ_arr_decimal_pfpj;
+    vr_tabvljuros38df      typ_arr_decimal_pfpj;
+    vr_tabvljuros38da      typ_arr_decimal_pfpj;
 
     vr_rel_dsdrisco      typ_arr_decimal;
     vr_rel_percentu      typ_arr_decimal;
@@ -1880,7 +1843,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
       -- Emprestimos sem Crapepr devem ser desconsiderados
       IF rw_crapris.cdorigem = 3 THEN
 
-
         -- Buscar dados de emprestimo
         OPEN cr_crapepr(rw_crapris.cdcooper,
                         rw_crapris.nrdconta,
@@ -1889,7 +1851,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
 
         -- Se nao encontrou, continua
         IF cr_crapepr%NOTFOUND THEN
-
 
           --verifica se eh uma operacao do BNDES
           OPEN cr_crapebn(rw_crapris.cdcooper,
@@ -1908,10 +1869,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
 
         END IF;
 
-        IF (cr_crapepr%ISOPEN) THEN
-         -- Fecha o curso para continuar
-         CLOSE cr_crapepr;
-        END IF;
+        -- Fecha o curso para continuar
+        CLOSE cr_crapepr;
 
       --> Verificar se é um emprestimo de cessao de credito
       OPEN cr_cessao (pr_cdcooper => rw_crapris.cdcooper,
@@ -2010,7 +1969,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
               vr_vlag1721_pos(rw_crapris.cdagenci).valor := vr_vlag1721_pos(rw_crapris.cdagenci).valor + vr_vlpreatr;
             ELSE
               vr_vlag1721_pos(rw_crapris.cdagenci).valor := vr_vlpreatr;
-            END IF;
+          END IF;
 
 
           END IF;
@@ -2050,7 +2009,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
               vr_vlag1723_pos(rw_crapris.cdagenci).valor := vr_vlag1723_pos(rw_crapris.cdagenci).valor + vr_vlpreatr;
             ELSE
               vr_vlag1723_pos(rw_crapris.cdagenci).valor := vr_vlpreatr;
-            END IF;
+          END IF;
           END IF;
         END IF;
       END IF;  -- FIM - EMPRESTIMOS
@@ -2122,7 +2081,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
               vr_vlag1731_1_pos(rw_crapris.cdagenci).valor := vr_vlag1731_1_pos(rw_crapris.cdagenci).valor + vr_vlpreatr;
             ELSE
               vr_vlag1731_1_pos(rw_crapris.cdagenci).valor := vr_vlpreatr;
-            END IF;
+          END IF;
           END IF;
 
         ELSE  -- Pessoa Juridica
@@ -2191,7 +2150,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
                 vr_vlag1731_2_pos(rw_crapris.cdagenci).valor := vr_vlag1731_2_pos(rw_crapris.cdagenci).valor + vr_vlpreatr;
               ELSE
                 vr_vlag1731_2_pos(rw_crapris.cdagenci).valor := vr_vlpreatr;
-              END IF;
+          END IF;
             END IF;
 
           ELSE -- Se for operacao do BNDES
@@ -2413,23 +2372,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
     vr_finjuros6.valorpf := 0;
     vr_finjuros6.valorpj := 0;
 
-   /* vr_juros38df.valorpf  :=0;
+    vr_juros38df.valorpf  :=0;
     vr_juros38df.valorpj  :=0;
     vr_juros38da.valorpf  :=0;
     vr_juros38da.valorpj  :=0;
-    vr_juros38da.nrctacrd :=0;
-    vr_juros38da.nrctadeb :=0;
-    vr_juros38da.dscpf    :='';
-    vr_juros38da.dscpj    :='';
+    vr_taxas37.valorpf    :=0;
+    vr_taxas37.valorpj    :=0;
+    vr_juros57.valorpf    :=0;
+    vr_juros57.valorpj    :=0;
 
-    vr_jrtxs.valorpf  :=0;
-    vr_jrtxs.valorpj  :=0;
-    vr_jrtxs.valorpf  :=0;
-    vr_jrtxs.valorpj  :=0;
-    vr_jrtxs.nrctacrd :=0;
-    vr_jrtxs.nrctadeb :=0;
-    vr_jrtxs.dscpf    :='';
-    vr_jrtxs.dscpj    :=''; */
 
 
     pc_calcula_juros_60k ( par_cdcooper => pr_cdcooper
@@ -2449,14 +2400,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
                           ,pr_finjuros2 => vr_finjur_calc2   --> PP - Modalidade 499 - Por Tipo pessoa.
                           ,pr_vlrjuros3 => vr_vldjur_calc3   --> PP – Cessao - Por Tipo pessoa.
                           ,pr_vlrjuros6 => vr_vldjur_calc6   --> POS - Modalidade 299 - Por Tipo pessoa.
-                          ,pr_finjuros6 => vr_finjur_calc6  --> POS - Modalidade 499 - Por Tipo pessoa.
+                          ,pr_finjuros6 => vr_finjur_calc6   --> POS - Modalidade 499 - Por Tipo pessoa.
                           ,pr_juros38_df => vr_juros38df_calc   --> Data Futura 0038 -Juros sobre limite de credito utilizado ou (crps249) provisao juros ch. especial
                           ,pr_juros38_da => vr_juros38da_calc   --> Data Atual 0038 -Juros sobre limite de credito utilizado ou (crps249) provisao juros ch. especial
-                          ,pr_vlrjrtxs   => vr_tabhistoricos         --> Diversos historicos Taxas e Juros contas em ADP
-                          ,pr_tabvljuros38_df =>vr_tabvljuros38df   --> Data Futura 0038 – Juros sobre limite de credito  - Por PA.
-                          ,pr_tabvljuros38_da =>vr_tabvljuros38da   --> Data Atual  0038 – Juros sobre limite de credito  - Por PA.
-                          ,pr_tabvlrjrtxs     =>vr_tabvljrtxs);     --> Diversos historicos Taxas e Juros contas em ADP   - Por PA.
-
+                          ,pr_taxas37   => vr_taxas37_calc      --> 0037 -Taxa sobre saldo em c/c negativo
+                          ,pr_juros57    => vr_juros57_calc     --> 0057 -Juros sobre saque de deposito bloqueado
+                          ,pr_tabvljuros38_df => vr_tabvljuros38df -->Data Futura 38 – Juros sobre limite de credito - Por PA.
+                          ,pr_tabvljuros38_da => vr_tabvljuros38da --> Data Atual  0038 – Juros sobre limite de credito    - Por PA.
+                          ,pr_tabvltaxas37 => vr_tabvltaxas37      --> 37 – Taxa sobre saldo em c/c negativo - Por PA.
+                          ,pr_tabvljuros57 => vr_tabvljuros57);    --> 57 – Juros sobre saque de deposito bloqueado- Por PA.
 
 
     -- Acumula retornos da pc_calcula_juros_60k
@@ -2498,10 +2450,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
                          ,pr_finjuros6 => vr_finjur_calc6     --> POS - Modalidade 499 - Por Tipo pessoa.
                          ,pr_juros38_df  => vr_juros38df_calc  --> Data Futura 0038 -Juros sobre limite de credito utilizado ou (crps249) provisao juros ch. especial
                          ,pr_juros38_da  => vr_juros38da_calc  --> Data Atual  0038 -Juros sobre limite de credito utilizado ou (crps249) provisao juros ch. especial
-                         ,pr_vlrjrtxs    => vr_tabhistoricos         --> Diversos historicos Taxas e Juros contas em ADP
-                         ,pr_tabvljuros38_df =>vr_tabvljuros38df   --> Data Futura 0038 – Juros sobre limite de credito  - Por PA.
-                         ,pr_tabvljuros38_da =>vr_tabvljuros38da   --> Data Atual  0038 – Juros sobre limite de credito  - Por PA.
-                         ,pr_tabvlrjrtxs     =>vr_tabvljrtxs);     --> Diversos historicos Taxas e Juros contas em ADP   - Por PA.
+                         ,pr_taxas37     => vr_taxas37_calc      --> 0037 -Taxa sobre saldo em c/c negativo
+                         ,pr_juros57     => vr_juros57_calc     --> 0057 -Juros sobre saque de deposito bloqueado
+                         ,pr_tabvljuros38_df => vr_tabvljuros38df -->Data Futura 38 – Juros sobre limite de credito - Por PA.
+                         ,pr_tabvljuros38_da => vr_tabvljuros38da --> Data Atual  0038 – Juros sobre limite de credito    - Por PA.
+                         ,pr_tabvltaxas37 => vr_tabvltaxas37    --> 37 – Taxa sobre saldo em c/c negativo - Por PA.
+                         ,pr_tabvljuros57 => vr_tabvljuros57);    --> 57 – Juros sobre saque de deposito bloqueado- Por PA.
 
 
     -- Acumula retornos da pc_calcula_juros_60k
@@ -2523,6 +2477,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
     vr_vldjuros3.valorpf := vr_vldjuros3.valorpf + vr_vldjur_calc3.valorpf;
     vr_vldjuros3.valorpj := vr_vldjuros3.valorpj + vr_vldjur_calc3.valorpj;
 
+
     pc_calcula_juros_60k (par_cdcooper => pr_cdcooper
                           ,par_dtrefere => vr_dtrefere
                           ,par_cdmodali => 999              --> Conta Corrente
@@ -2541,12 +2496,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
                           ,pr_vlrjuros3 => vr_vldjur_calc3   --> PP – Cessao - Por Tipo pessoa.
                           ,pr_vlrjuros6 => vr_vldjur_calc6   --> POS - Modalidade 299 - Por Tipo pessoa.
                           ,pr_finjuros6 => vr_finjur_calc6  --> POS - Modalidade 499 - Por Tipo pessoa.
-                          ,pr_juros38_df      => vr_juros38df_calc --> Data Futura 0038 -Juros sobre limite de credito utilizado ou (crps249) provisao juros ch. especial
-                          ,pr_juros38_da      => vr_juros38da_calc --> Data Atual  0038 -Juros sobre limite de credito utilizado ou (crps249) provisao juros ch. especial
-                          ,pr_vlrjrtxs        => vr_tabhistoricos         --> Diversos historicos Taxas e Juros contas em ADP
-                          ,pr_tabvljuros38_df =>vr_tabvljuros38df   --> Data Futura 0038 – Juros sobre limite de credito  - Por PA.
-                          ,pr_tabvljuros38_da =>vr_tabvljuros38da   --> Data Atual  0038 – Juros sobre limite de credito  - Por PA.
-                          ,pr_tabvlrjrtxs     =>vr_tabvljrtxs);     --> Diversos historicos Taxas e Juros contas em ADP   - Por PA.
+                          ,pr_juros38_df   => vr_juros38df_calc --> Data Futura 0038 -Juros sobre limite de credito utilizado ou (crps249) provisao juros ch. especial
+                          ,pr_juros38_da   => vr_juros38da_calc --> Data Atual  0038 -Juros sobre limite de credito utilizado ou (crps249) provisao juros ch. especial
+                          ,pr_taxas37   => vr_taxas37_calc      --> 0037 -Taxa sobre saldo em c/c negativo
+                          ,pr_juros57    => vr_juros57_calc     --> 0057 -Juros sobre saque de deposito bloqueado
+                          ,pr_tabvljuros38_df => vr_tabvljuros38df  --> 0038 – Juros sobre limite de credito    - Por PA.
+                          ,pr_tabvljuros38_da => vr_tabvljuros38da  --> 0038 – Juros sobre limite de credito    - Por PA.
+                          ,pr_tabvltaxas37 => vr_tabvltaxas37    --> 37 – Taxa sobre saldo em c/c negativo - Por PA.
+                          ,pr_tabvljuros57 => vr_tabvljuros57);    --> 57 – Juros sobre saque de deposito bloqueado- Por PA.
 
     -- Acumula retornos da pc_calcula_juros_60k
     vr_vldjuros.valorpf  := vr_vldjuros.valorpf  + vr_vldjur_calc.valorpf;
@@ -2563,13 +2520,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
     vr_vldjuros3.valorpj := vr_vldjuros3.valorpj + vr_vldjur_calc3.valorpj;
 
   --Conta Corrente
-    vr_juros38df.valorpj  := vr_juros38df.valorpj + vr_juros38df_calc.valorpj;
-    vr_juros38df.valorpf  := vr_juros38df.valorpf + vr_juros38df_calc.valorpf;
-    vr_juros38da.valorpj  := vr_juros38da.valorpj + vr_juros38da_calc.valorpj;
-    vr_juros38da.valorpf  := vr_juros38da.valorpf + vr_juros38da_calc.valorpf;
-    vr_jrtxs.valorpj      := vr_jrtxs.valorpj;  --+ vr_vlrjrtxs_calc.valorpj;
-    vr_jrtxs.valorpf      := vr_jrtxs.valorpf; -- + vr_vlrjrtxs_calc.valorpf;
-
+    vr_juros38df.valorpj := vr_juros38df.valorpj + vr_juros38df_calc.valorpj;
+    vr_juros38df.valorpf := vr_juros38df.valorpf + vr_juros38df_calc.valorpf;
+    vr_juros38da.valorpj := vr_juros38da.valorpj + vr_juros38da_calc.valorpj;
+    vr_juros38da.valorpf := vr_juros38da.valorpf + vr_juros38da_calc.valorpf;
+    vr_taxas37.valorpj := vr_taxas37.valorpj + vr_taxas37_calc.valorpj;
+    vr_taxas37.valorpf := vr_taxas37.valorpf + vr_taxas37_calc.valorpf;
+    vr_juros57.valorpj := vr_juros57.valorpj + vr_juros57_calc.valorpj;
+    vr_juros57.valorpf := vr_juros57.valorpf + vr_juros57_calc.valorpf;
 
     vr_contador := 1;
     WHILE vr_contador <= 16 LOOP
@@ -2758,10 +2716,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
     IF vr_juros38da.valorpf <> 0   THEN
        -- Monta a linha de cabeçalho
        vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
-                      TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ','||vr_juros38da_calc.nrctacrd||','||vr_juros38da_calc.nrctadeb||','||
+                      TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',7014,5341,' ||
                       TRIM(to_char(vr_juros38da.valorpf, '99999999999990.00')) ||
                       ',1434,' ||
-                      '"(risco) Rendas a apropriar adto a depositantes -Hist.'||vr_juros38da_calc.dscpf;
+                      '"(risco) Rendas a apropriar adto a depositantes - Hist. 0038 Juros sobre limite de credito utilizado - pessoa fisica"';
 
         -- Gravar Linha
         pc_gravar_linha(vr_linhadet);
@@ -2788,10 +2746,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
 
         -- REVERSÃO
         vr_linhadet := TRIM(vr_con_dtmovime) || ',' ||
-                       TRIM(to_char(vr_dtmovime, 'ddmmyy'))|| ','||vr_juros38da_calc.nrctacrd||','||vr_juros38da_calc.nrctadeb||','||
+                       TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',5341,7014,' ||
                        TRIM(to_char(vr_juros38da.valorpf, '99999999999990.00')) ||
                        ',1434,' ||
-                       '"(risco) Reversão rendas a apropriar adto a depositantes -Hist.'||vr_juros38da_calc.dscpf;
+                       '"(risco) Reversão rendas a apropriar adto a depositantes - Hist. 0038 Juros sobre limite de credito utilizado - pessoa fisica"';
 
          -- Gravar Linha
          pc_gravar_linha(vr_linhadet);
@@ -2823,10 +2781,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
     IF vr_juros38da.valorpj <> 0  THEN
        -- Monta a linha de cabeçalho
        vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
-                      TRIM(to_char(vr_dtmvtolt, 'ddmmyy'))|| ','||vr_juros38da_calc.nrctacrd||','||vr_juros38da_calc.nrctadeb||','||
+                      TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',7015,5342,' ||
                       TRIM(to_char(vr_juros38da.valorpj, '99999999999990.00')) ||
                       ',1434,' ||
-                      '"(risco) Rendas a apropriar adto a depositantes -Hist.'||vr_juros38da_calc.dscpj;
+                      '"(risco) Rendas a apropriar adto a depositantes - Hist. 0038 Juros sobre limite de credito utilizado - pessoa juridica"';
 
         -- Gravar Linha
         pc_gravar_linha(vr_linhadet);
@@ -2854,10 +2812,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
 
         -- REVERSÃO
         vr_linhadet := TRIM(vr_con_dtmovime) || ',' ||
-                       TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ','||vr_juros38da_calc.nrctacrd||','||vr_juros38da_calc.nrctadeb||','||
+                       TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',5342,7015,' ||
                        TRIM(to_char(vr_juros38da.valorpj, '99999999999990.00')) ||
                        ',1434,' ||
-                       '"(risco) Reversão rendas a apropriar adto a depositantes -Hist.'||vr_juros38da_calc.dscpj;
+                       '"(risco) Reversão rendas a apropriar adto a depositantes - Hist. 0038 Juros sobre limite de credito utilizado - pessoa juridica"';
          -- Gravar Linha
          pc_gravar_linha(vr_linhadet);
 
@@ -2883,15 +2841,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
 
    END IF;
 
+
     --0038 - JUROS SOBRE LIMITE DE CREDITO UTILIZADO OU (CRPS249) PROVISAO JUROS CH. ESPECIAL
     --PESSOA FISICA DF
     IF vr_juros38df.valorpf <> 0  THEN
        -- Monta a linha de cabeçalho
        vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
-                      TRIM(to_char(vr_dtmvtolt, 'ddmmyy'))|| ','||vr_juros38df_calc.nrctacrd||','||vr_juros38df_calc.nrctadeb||','||
+                      TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',7014,1802,' ||
                       TRIM(to_char(vr_juros38df.valorpf, '99999999999990.00')) ||
                       ',1434,' ||
-                      '"(risco) Rendas a apropriar adto a depositantes -Hist.'||vr_juros38df_calc.dscpf;
+                      '"(risco) Rendas a apropriar adto a depositantes - Hist. 0038 Juros sobre limite de credito utilizado - pessoa fisica"';
 
         -- Gravar Linha
         pc_gravar_linha(vr_linhadet);
@@ -2918,10 +2877,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
 
         -- REVERSÃO
         vr_linhadet := TRIM(vr_con_dtmovime) || ',' ||
-                       TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ','||vr_juros38df_calc.nrctacrd||','||vr_juros38df_calc.nrctadeb||','||
+                       TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',1802,7014,' ||
                        TRIM(to_char(vr_juros38df.valorpf, '99999999999990.00')) ||
                        ',1434,' ||
-                       '"(risco) Reversão rendas a apropriar adto a depositantes -Hist.'||vr_juros38df_calc.dscpf;
+                       '"(risco) Reversão rendas a apropriar adto a depositantes - Hist. 0038 Juros sobre limite de credito utilizado - pessoa fisica"';
 
          -- Gravar Linha
          pc_gravar_linha(vr_linhadet);
@@ -2953,10 +2912,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
     IF vr_juros38df.valorpj <> 0  THEN
        -- Monta a linha de cabeçalho
        vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
-                      TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ','||vr_juros38df_calc.nrctacrd||','||vr_juros38df_calc.nrctadeb||','||
+                      TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',7015,1802,' ||
                       TRIM(to_char(vr_juros38df.valorpj, '99999999999990.00')) ||
                       ',1434,' ||
-                      '"(risco) Rendas a apropriar adto a depositantes -Hist.'||vr_juros38df_calc.dscpj;
+                      '"(risco) Rendas a apropriar adto a depositantes - Hist. 0038 Juros sobre limite de credito utilizado - pessoa juridica"';
 
         -- Gravar Linha
         pc_gravar_linha(vr_linhadet);
@@ -2984,10 +2943,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
 
         -- REVERSÃO
         vr_linhadet := TRIM(vr_con_dtmovime) || ',' ||
-                       TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ','||vr_juros38df_calc.nrctacrd||','||vr_juros38df_calc.nrctadeb||','||
+                       TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',1802,7015,' ||
                        TRIM(to_char(vr_juros38df.valorpj, '99999999999990.00')) ||
                        ',1434,' ||
-                       '"(risco) Reversão rendas a apropriar adto a depositantes -Hist.'||vr_juros38df_calc.dscpj;
+                       '"(risco) Reversão rendas a apropriar adto a depositantes - Hist. 0038 Juros sobre limite de credito utilizado - pessoa juridica"';
          -- Gravar Linha
          pc_gravar_linha(vr_linhadet);
 
@@ -3013,101 +2972,97 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
 
    END IF;
 
-    --Lançamentos de historicos parametrizados
-    FOR rw_craphis IN  cr_craphis(pr_cdcooper) LOOP
-     IF  vr_tabhistoricos.exists(rw_craphis.cdhistor)
-     AND vr_tabhistoricos(rw_craphis.cdhistor).valorpf <>0 THEN
-       dbms_output.put_line('Historico PF'||rw_craphis.cdhistor);
+    --0037 -TAXA SOBRE SALDO EM C/C NEGATIVO PESSOA FISICA
+    IF vr_taxas37.valorpf <> 0  THEN
        -- Monta a linha de cabeçalho
        vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
-                      TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ','||vr_tabhistoricos(rw_craphis.cdhistor).nrctacrd||','||vr_tabhistoricos(rw_craphis.cdhistor).nrctadeb||','||
-                      TRIM(to_char(vr_tabhistoricos(rw_craphis.cdhistor).valorpf, '99999999999990.00')) ||
+                      TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',7012,5510,' ||
+                      TRIM(to_char(vr_taxas37.valorpf, '99999999999990.00')) ||
                       ',1434,' ||
-                      '"(risco) Rendas a apropriar adto a depositantes -Hist.'||vr_tabhistoricos(rw_craphis.cdhistor).dscpf;
+                      '"(risco) Rendas a apropriar adto a depositantes - Hist. 0037 Taxa saldo em c/c negativa - pessoa fisica"';
 
         -- Gravar Linha
         pc_gravar_linha(vr_linhadet);
-        FOR rw_crapage  IN  cr_crapage (pr_cdcooper) LOOP
-           IF  vr_tabvljrtxs.exists(rw_crapage.cdagenci||rw_craphis.indexhist)
-           AND vr_tabvljrtxs(rw_crapage.cdagenci||rw_craphis.indexhist).valorpf <> 0 THEN
-             vr_linhadet := TRIM(to_char(rw_crapage.cdagenci,  '009')) || ',' ||
-                            TRIM(to_char(vr_tabvljrtxs(rw_crapage.cdagenci||rw_craphis.indexhist).valorpf,'99999999999990.00'));
-             -- Gravar Linha
-             pc_gravar_linha(vr_linhadet);
-           END IF;
-         END LOOP;
 
-        FOR rw_crapage  IN  cr_crapage (pr_cdcooper) LOOP
-           IF  vr_tabvljrtxs.exists(rw_crapage.cdagenci||rw_craphis.indexhist)
-           AND vr_tabvljrtxs(rw_crapage.cdagenci||rw_craphis.indexhist).valorpf <> 0 THEN
-             vr_linhadet := TRIM(to_char(rw_crapage.cdagenci,  '009')) || ',' ||
-                            TRIM(to_char(vr_tabvljrtxs(rw_crapage.cdagenci||rw_craphis.indexhist).valorpf,'99999999999990.00'));
+        FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+           IF  vr_tabvltaxas37.exists(vr_contador)
+           AND vr_tabvltaxas37(vr_contador).valorpf <> 0 THEN
+             vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc,  '009')) || ',' ||
+                            TRIM(to_char(vr_tabvltaxas37(vr_contador).valorpf,'99999999999990.00'));
              -- Gravar Linha
              pc_gravar_linha(vr_linhadet);
            END IF;
-         END LOOP;
+        END LOOP;
+
+        FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+           IF  vr_tabvltaxas37.exists(vr_contador)
+           AND vr_tabvltaxas37(vr_contador).valorpf <> 0 THEN
+             vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc,  '009')) || ',' ||
+                            TRIM(to_char(vr_tabvltaxas37(vr_contador).valorpf,'99999999999990.00'));
+             -- Gravar Linha
+             pc_gravar_linha(vr_linhadet);
+           END IF;
+        END LOOP;
 
         -- REVERSÃO
         vr_linhadet := TRIM(vr_con_dtmovime) || ',' ||
-                       TRIM(to_char(vr_dtmovime, 'ddmmyy'))|| ','||vr_tabhistoricos(rw_craphis.cdhistor).nrctadeb||','||vr_tabhistoricos(rw_craphis.cdhistor).nrctacrd||','||
-                       TRIM(to_char(vr_tabhistoricos(rw_craphis.cdhistor).valorpf, '99999999999990.00')) ||
+                       TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',5510,7012,' ||
+                       TRIM(to_char(vr_taxas37.valorpf, '99999999999990.00')) ||
                        ',1434,' ||
-                       '"(risco) Reversão rendas a apropriar adto a depositantes -Hist.'||vr_tabhistoricos(rw_craphis.cdhistor).dscpf;
+                       '"(risco) Reversao rendas a apropriar adto a depositantes - Hist. 0037 Taxa saldo em c/c negativa - pessoa fisica"';
 
-        -- Gravar Linha
+         -- Gravar Linha
          pc_gravar_linha(vr_linhadet);
 
-        FOR rw_crapage  IN  cr_crapage (pr_cdcooper) LOOP
-           IF  vr_tabvljrtxs.exists(rw_crapage.cdagenci||rw_craphis.indexhist)
-           AND vr_tabvljrtxs(rw_crapage.cdagenci||rw_craphis.indexhist).valorpf <> 0 THEN
-             vr_linhadet := TRIM(to_char(rw_crapage.cdagenci,  '009')) || ',' ||
-                            TRIM(to_char(vr_tabvljrtxs(rw_crapage.cdagenci||rw_craphis.indexhist).valorpf,'99999999999990.00'));
+         FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+           IF  vr_tabvltaxas37.exists(vr_contador)
+           AND vr_tabvltaxas37(vr_contador).valorpf <> 0 THEN
+             vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc,  '009')) || ',' ||
+                            TRIM(to_char(vr_tabvltaxas37(vr_contador).valorpf,'99999999999990.00'));
              -- Gravar Linha
              pc_gravar_linha(vr_linhadet);
            END IF;
          END LOOP;
 
-        FOR rw_crapage  IN  cr_crapage (pr_cdcooper) LOOP
-           IF  vr_tabvljrtxs.exists(rw_crapage.cdagenci||rw_craphis.indexhist)
-           AND vr_tabvljrtxs(rw_crapage.cdagenci||rw_craphis.indexhist).valorpf <> 0 THEN
-             vr_linhadet := TRIM(to_char(rw_crapage.cdagenci,  '009')) || ',' ||
-                            TRIM(to_char(vr_tabvljrtxs(rw_crapage.cdagenci||rw_craphis.indexhist).valorpf,'99999999999990.00'));
+         FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+           IF  vr_tabvltaxas37.exists(vr_contador)
+           AND vr_tabvltaxas37(vr_contador).valorpf <> 0 THEN
+             vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc,  '009')) || ',' ||
+                            TRIM(to_char(vr_tabvltaxas37(vr_contador).valorpf,'99999999999990.00'));
              -- Gravar Linha
              pc_gravar_linha(vr_linhadet);
            END IF;
          END LOOP;
 
+   END IF;
 
-     END IF;
-     IF  vr_tabhistoricos.exists(rw_craphis.cdhistor)
-     AND vr_tabhistoricos(rw_craphis.cdhistor).valorpj <>0 THEN
-      dbms_output.put_line('Historico PJ'||rw_craphis.cdhistor);
+    --0037 -TAXA SOBRE SALDO EM C/C NEGATIVO PESSOA JURIDICA
+    IF vr_taxas37.valorpj <> 0  THEN
        -- Monta a linha de cabeçalho
        vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
-                      TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ','||vr_tabhistoricos(rw_craphis.cdhistor).nrctacrd||','||vr_tabhistoricos(rw_craphis.cdhistor).nrctadeb||','||
-                      TRIM(to_char(vr_tabhistoricos(rw_craphis.cdhistor).valorpj, '99999999999990.00')) ||
+                      TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',7013,5511,' ||
+                      TRIM(to_char(vr_taxas37.valorpj, '99999999999990.00')) ||
                       ',1434,' ||
-                      '"(risco) Rendas a apropriar adto a depositantes -Hist.'||vr_tabhistoricos(rw_craphis.cdhistor).dscpj;
+                      '"(risco) Rendas a apropriar adto a depositantes - Hist. 0037 Taxa saldo em c/c negativa - pessoa juridica"';
 
         -- Gravar Linha
         pc_gravar_linha(vr_linhadet);
 
-        FOR rw_crapage  IN  cr_crapage (pr_cdcooper) LOOP
-           IF  vr_tabvljrtxs.exists(rw_crapage.cdagenci||rw_craphis.indexhist)
-           AND vr_tabvljrtxs(rw_crapage.cdagenci||rw_craphis.indexhist).valorpj <> 0 THEN
-             vr_linhadet := TRIM(to_char(rw_crapage.cdagenci,  '009')) || ',' ||
-                            TRIM(to_char(vr_tabvljrtxs(rw_crapage.cdagenci||rw_craphis.indexhist).valorpj,'99999999999990.00'));
+         FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+           IF  vr_tabvltaxas37.exists(vr_contador)
+           AND vr_tabvltaxas37(vr_contador).valorpj <> 0 THEN
+             vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc,  '009')) || ',' ||
+                            TRIM(to_char(vr_tabvltaxas37(vr_contador).valorpj,'99999999999990.00'));
              -- Gravar Linha
              pc_gravar_linha(vr_linhadet);
            END IF;
          END LOOP;
 
-
-        FOR rw_crapage  IN  cr_crapage (pr_cdcooper) LOOP
-           IF  vr_tabvljrtxs.exists(rw_crapage.cdagenci||rw_craphis.indexhist)
-           AND vr_tabvljrtxs(rw_crapage.cdagenci||rw_craphis.indexhist).valorpj <> 0 THEN
-             vr_linhadet := TRIM(to_char(rw_crapage.cdagenci,  '009')) || ',' ||
-                            TRIM(to_char(vr_tabvljrtxs(rw_crapage.cdagenci||rw_craphis.indexhist).valorpj,'99999999999990.00'));
+         FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+           IF  vr_tabvltaxas37.exists(vr_contador)
+           AND vr_tabvltaxas37(vr_contador).valorpj <> 0 THEN
+             vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc,  '009')) || ',' ||
+                            TRIM(to_char(vr_tabvltaxas37(vr_contador).valorpj,'99999999999990.00'));
              -- Gravar Linha
              pc_gravar_linha(vr_linhadet);
            END IF;
@@ -3116,38 +3071,165 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
 
         -- REVERSÃO
         vr_linhadet := TRIM(vr_con_dtmovime) || ',' ||
-                       TRIM(to_char(vr_dtmovime, 'ddmmyy'))|| ','||vr_tabhistoricos(rw_craphis.cdhistor).nrctadeb||','||vr_tabhistoricos(rw_craphis.cdhistor).nrctacrd||','||
-                       TRIM(to_char(vr_tabhistoricos(rw_craphis.cdhistor).valorpj, '99999999999990.00')) ||
+                       TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',5511,7013,' ||
+                       TRIM(to_char(vr_taxas37.valorpj, '99999999999990.00')) ||
                        ',1434,' ||
-                       '"(risco) Reversão rendas a apropriar adto a depositantes -Hist.'||vr_tabhistoricos(rw_craphis.cdhistor).dscpj;
+                       '"(risco) Reversao rendas a apropriar adto a depositantes - Hist. 0037 Taxa saldo em c/c negativa - pessoa juridica"';
+
+
+         -- Gravar Linha
+         pc_gravar_linha(vr_linhadet);
+
+         FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+           IF  vr_tabvltaxas37.exists(vr_contador)
+           AND vr_tabvltaxas37(vr_contador).valorpj <> 0 THEN
+             vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc,  '009')) || ',' ||
+                            TRIM(to_char(vr_tabvltaxas37(vr_contador).valorpj,'99999999999990.00'));
+             -- Gravar Linha
+             pc_gravar_linha(vr_linhadet);
+           END IF;
+         END LOOP;
+
+         FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+           IF  vr_tabvltaxas37.exists(vr_contador)
+           AND vr_tabvltaxas37(vr_contador).valorpj <> 0 THEN
+             vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc,  '009')) || ',' ||
+                            TRIM(to_char(vr_tabvltaxas37(vr_contador).valorpj,'99999999999990.00'));
+             -- Gravar Linha
+             pc_gravar_linha(vr_linhadet);
+           END IF;
+         END LOOP;
+   END IF;
+
+
+    --0057 -JUROS SOBRE SAQUE DE DEPOSITO BLOQUEADO   PESSOA FISICA
+    IF vr_juros57.valorpf <> 0  THEN
+       -- Monta a linha de cabeçalho
+       vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
+                      TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',7012,5510,' ||
+                      TRIM(to_char(vr_juros57.valorpf, '99999999999990.00')) ||
+                      ',1434,' ||
+                      '"(risco) Rendas a apropriar adto a depositantes - Hist. 0057 Juros sobre saque deposito bloqueado - pessoa fisica"';
+
+        -- Gravar Linha
+        pc_gravar_linha(vr_linhadet);
+
+        FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+           IF  vr_tabvljuros57.exists(vr_contador)
+           AND vr_tabvljuros57(vr_contador).valorpf <> 0 THEN
+             vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc,  '009')) || ',' ||
+                            TRIM(to_char(vr_tabvljuros57(vr_contador).valorpf,'99999999999990.00'));
+             -- Gravar Linha
+             pc_gravar_linha(vr_linhadet);
+           END IF;
+        END LOOP;
+
+        FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+           IF  vr_tabvljuros57.exists(vr_contador)
+           AND vr_tabvljuros57(vr_contador).valorpf <> 0 THEN
+             vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc,  '009')) || ',' ||
+                            TRIM(to_char(vr_tabvljuros57(vr_contador).valorpf,'99999999999990.00'));
+             -- Gravar Linha
+             pc_gravar_linha(vr_linhadet);
+           END IF;
+        END LOOP;
+
+        -- REVERSÃO
+        vr_linhadet := TRIM(vr_con_dtmovime) || ',' ||
+                       TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',5510,7012,' ||
+                       TRIM(to_char(vr_juros57.valorpf, '99999999999990.00')) ||
+                       ',1434,' ||
+                       '"(risco) Reversao rendas a apropriar adto a depositantes - Hist. 0057 Juros sobre saque deposito bloqueado - pessoa fisica"';
 
         -- Gravar Linha
          pc_gravar_linha(vr_linhadet);
 
-        FOR rw_crapage  IN  cr_crapage (pr_cdcooper) LOOP
-           IF  vr_tabvljrtxs.exists(rw_crapage.cdagenci||rw_craphis.indexhist)
-           AND vr_tabvljrtxs(rw_crapage.cdagenci||rw_craphis.indexhist).valorpj <> 0 THEN
-             vr_linhadet := TRIM(to_char(rw_crapage.cdagenci,  '009')) || ',' ||
-                            TRIM(to_char(vr_tabvljrtxs(rw_crapage.cdagenci||rw_craphis.indexhist).valorpj,'99999999999990.00'));
+         FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+           IF  vr_tabvljuros57.exists(vr_contador)
+           AND vr_tabvljuros57(vr_contador).valorpf <> 0 THEN
+             vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc,  '009')) || ',' ||
+                            TRIM(to_char(vr_tabvljuros57(vr_contador).valorpf,'99999999999990.00'));
+             -- Gravar Linha
+             pc_gravar_linha(vr_linhadet);
+           END IF;
+         END LOOP;
+
+         FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+           IF  vr_tabvljuros57.exists(vr_contador)
+           AND vr_tabvljuros57(vr_contador).valorpf <> 0 THEN
+             vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc,  '009')) || ',' ||
+                            TRIM(to_char(vr_tabvljuros57(vr_contador).valorpf,'99999999999990.00'));
              -- Gravar Linha
              pc_gravar_linha(vr_linhadet);
            END IF;
          END LOOP;
 
 
-        FOR rw_crapage  IN  cr_crapage (pr_cdcooper) LOOP
-           IF  vr_tabvljrtxs.exists(rw_crapage.cdagenci||rw_craphis.indexhist)
-           AND vr_tabvljrtxs(rw_crapage.cdagenci||rw_craphis.indexhist).valorpj <> 0 THEN
-             vr_linhadet := TRIM(to_char(rw_crapage.cdagenci,  '009')) || ',' ||
-                            TRIM(to_char(vr_tabvljrtxs(rw_crapage.cdagenci||rw_craphis.indexhist).valorpj,'99999999999990.00'));
+   END IF;
+
+    --0057 -JUROS SOBRE SAQUE DE DEPOSITO BLOQUEADO   PESSOA JURIDICA
+    IF vr_juros57.valorpj <> 0  THEN
+       -- Monta a linha de cabeçalho
+       vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
+                      TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',7013,5511,' ||
+                      TRIM(to_char(vr_juros57.valorpj, '99999999999990.00')) ||
+                      ',1434,' ||
+                      '"(risco) Rendas a apropriar adto a depositantes - Hist. 0057 Juros sobre saque deposito bloqueado - pessoa juridica"';
+
+        -- Gravar Linha
+        pc_gravar_linha(vr_linhadet);
+
+        FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+           IF  vr_tabvljuros57.exists(vr_contador)
+           AND vr_tabvljuros57(vr_contador).valorpj <> 0 THEN
+             vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc,  '009')) || ',' ||
+                            TRIM(to_char(vr_tabvljuros57(vr_contador).valorpj,'99999999999990.00'));
              -- Gravar Linha
              pc_gravar_linha(vr_linhadet);
            END IF;
          END LOOP;
 
+         FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+           IF  vr_tabvljuros57.exists(vr_contador)
+           AND vr_tabvljuros57(vr_contador).valorpj <> 0 THEN
+             vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc,  '009')) || ',' ||
+                            TRIM(to_char(vr_tabvljuros57(vr_contador).valorpj,'99999999999990.00'));
+             -- Gravar Linha
+             pc_gravar_linha(vr_linhadet);
+           END IF;
+         END LOOP;
 
-     END IF;
-    END LOOP;
+        -- REVERSÃO
+        vr_linhadet := TRIM(vr_con_dtmovime) || ',' ||
+                       TRIM(to_char(vr_dtmovime, 'ddmmyy')) || ',5511,7013,' ||
+                       TRIM(to_char(vr_juros57.valorpj, '99999999999990.00')) ||
+                       ',1434,' ||
+                       '"(risco) Reversao rendas a apropriar adto a depositantes - Hist. 0057 Juros sobre saque deposito bloqueado - pessoa juridica"';
+
+         -- Gravar Linha
+         pc_gravar_linha(vr_linhadet);
+
+         FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+           IF  vr_tabvljuros57.exists(vr_contador)
+           AND vr_tabvljuros57(vr_contador).valorpj <> 0 THEN
+             vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc,  '009')) || ',' ||
+                            TRIM(to_char(vr_tabvljuros57(vr_contador).valorpj,'99999999999990.00'));
+             -- Gravar Linha
+             pc_gravar_linha(vr_linhadet);
+           END IF;
+         END LOOP;
+
+         FOR vr_contador IN vr_cdccuage.first .. vr_cdccuage.last LOOP
+           IF  vr_tabvljuros57.exists(vr_contador)
+           AND vr_tabvljuros57(vr_contador).valorpj <> 0 THEN
+             vr_linhadet := TRIM(to_char(vr_cdccuage(vr_contador).dsc,  '009')) || ',' ||
+                            TRIM(to_char(vr_tabvljuros57(vr_contador).valorpj,'99999999999990.00'));
+             -- Gravar Linha
+             pc_gravar_linha(vr_linhadet);
+           END IF;
+         END LOOP;
+
+   END IF;
 
 
     -- EMPRESTIMOS EM ATRASO PESSOA FISICA
@@ -3278,7 +3360,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
       END LOOP;
     END IF;
 
-    -- FINANCIAMENTOS EM ATRASO - PESSOA FISICA
+    -- FINAN CIAMENTOS EM ATRASO - PESSOA FISICA
     IF vr_finjuros.valorpf <> 0 THEN
       vr_linhadet := TRIM(vr_con_dtmvtolt) || ',' ||
                      TRIM(to_char(vr_dtmvtolt, 'ddmmyy')) || ',7026,5560,' ||
@@ -7790,21 +7872,25 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
       vr_nrdrowid ROWID;
       -- Informações negativas da conta
       CURSOR cr_crapneg IS
-        SELECT cdhisest
-              ,cdobserv
-              ,nrseqdig
-              ,dtiniest
-              ,dtfimest
-              ,qtdiaest
-              ,vlestour
-              ,nrdctabb
-              ,nrdocmto
-              ,vllimcre
-              ,cdtctant
-              ,cdtctatu
+        SELECT crapneg.cdhisest
+              ,crapneg.cdobserv
+              ,crapneg.nrseqdig
+              ,crapneg.dtiniest
+              ,crapneg.dtfimest
+              ,crapneg.qtdiaest
+              ,crapneg.vlestour
+              ,crapneg.nrdctabb
+              ,crapneg.nrdocmto
+              ,crapneg.vllimcre
+              ,crapneg.cdtctant
+              ,crapneg.cdtctatu
+              ,crapass.inpessoa
           FROM crapneg
-         WHERE cdcooper = pr_cdcooper
-           AND nrdconta = pr_nrdconta;
+              ,crapass
+         WHERE crapneg.cdcooper = pr_cdcooper
+           AND crapneg.nrdconta = pr_nrdconta
+           AND crapass.cdcooper = crapneg.cdcooper
+           AND crapass.nrdconta = crapneg.nrdconta;
       -- Variaveis genéricas para preenchimento da pltable
       vr_cdhisest VARCHAR2(30);
       vr_dsobserv crapali.dsalinea%type;
@@ -7821,23 +7907,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
       rw_crapali cr_crapali%ROWTYPE;
 
       -- Busca do cadastro de tipo de contas
-      CURSOR cr_craptip
+      CURSOR cr_tipo_conta
                        IS
-        SELECT dstipcta,
-               cdcooper,
-               cdtipcta
-          FROM craptip;
+        SELECT tipcta.dstipo_conta dstipcta,
+               tipcta.inpessoa inpessoa,
+               tipcta.cdtipo_conta cdtipcta
+          FROM tbcc_tipo_conta tipcta;
     BEGIN
 
       -- popular temp table de contas se estiver vazia
-      IF vr_tab_craptip.COUNT = 0 THEN
+      IF vr_tab_tipo_conta.COUNT = 0 THEN
 
-        FOR rw_craptip IN cr_craptip LOOP
+        FOR rw_tipo_conta IN cr_tipo_conta LOOP
           -- definir index
-          vr_idx := lpad(rw_craptip.cdcooper,10,'0')||lpad(rw_craptip.cdtipcta,5,'0');
-          vr_tab_craptip(vr_idx).cdcooper := rw_craptip.cdcooper;
-          vr_tab_craptip(vr_idx).cdtipcta := rw_craptip.cdtipcta;
-          vr_tab_craptip(vr_idx).dstipcta := rw_craptip.dstipcta;
+          vr_idx := rw_tipo_conta.inpessoa||lpad(rw_tipo_conta.cdtipcta,5,'0');
+          vr_tab_tipo_conta(vr_idx).inpessoa := rw_tipo_conta.inpessoa;
+          vr_tab_tipo_conta(vr_idx).cdtipcta := rw_tipo_conta.cdtipcta;
+          vr_tab_tipo_conta(vr_idx).dstipcta := rw_tipo_conta.dstipcta;
         END LOOP;
 
       END IF;
@@ -7890,23 +7976,23 @@ CREATE OR REPLACE PACKAGE BODY CECRED.RISC0001 IS
         -- Para o histórico 2
         IF rw_crapneg.cdhisest = 2 THEN
           -- Buscaremos o cadastro de tipo de conta anterior
-          vr_idx := lpad(pr_cdcooper,10,'0')||lpad(rw_crapneg.cdtctant,5,'0');
+          vr_idx := lpad(rw_crapneg.inpessoa,10,'0')||lpad(rw_crapneg.cdtctant,5,'0');
           -- Se não encontrar
-          IF NOT vr_tab_craptip.exists(vr_idx) THEN
+          IF NOT vr_tab_tipo_conta.exists(vr_idx) THEN
             vr_dscodant := rw_crapneg.cdtctant;
           ELSE
             -- Usamos a descrição dele
-            vr_dscodant := vr_tab_craptip(vr_idx).dstipcta;
+            vr_dscodant := vr_tab_tipo_conta(vr_idx).dstipcta;
           END IF;
 
           -- Buscaremos o cadastro de tipo de conta para a atual
           vr_idx := lpad(pr_cdcooper,10,'0')||lpad(rw_crapneg.cdtctatu,5,'0');
           -- Se não encontrar
-          IF NOT vr_tab_craptip.exists(vr_idx) THEN
+          IF NOT vr_tab_tipo_conta.exists(vr_idx) THEN
             vr_dscodatu := rw_crapneg.cdtctatu;
           ELSE
             -- Usamos a descrição dele
-            vr_dscodatu := vr_tab_craptip(vr_idx).dstipcta;
+            vr_dscodatu := vr_tab_tipo_conta(vr_idx).dstipcta;
           END IF;
         END IF;
         -- Para o histórico 3
