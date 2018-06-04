@@ -10,6 +10,8 @@
 	*                11/04/2018 - Incluído novo campo "Estourar a conta corrente" (inestocc)
     *                             Diego Simas - AMcom  
 	*                16/05/2017 - Ajustes prj420 - Resolucao - Heitor (Mouts)
+	*
+	*                15/05/2018 - 364 - Sm 5 - Incluir campo inperdes Rafael (Mouts)
 	* --------------
 	*/ 
 
@@ -320,6 +322,18 @@
 							<option value="0">N&atilde;o </option>
 						</select>
 					</td>
+
+				    <!-- Inicio SM 5 - 364 - RMM -->
+					<td>
+						<label for="inperdes">Permitir Desligar Conta?</label>
+						<select id="inperdes" name="inperdes">
+							<option value="1">Sim </option>
+							<option value="0">N&atilde;o </option>
+						</select>
+						<!-- Campo hidden para salvar o operador que autorizou mudar o campo "Considerar para Bloquei Judicial" para "nao" -->
+						<!-- <input type="hidden" name="operauto" id="operauto" value=""> -->
+					</td>	
+                    <!-- Inicio SM 5 - 364 - RMM -->					
 				</tr>
 			</table>
 		</fieldset>

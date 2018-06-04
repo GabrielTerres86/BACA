@@ -15,7 +15,10 @@
 
 				18/04/2018 - Incluído novo campo inestocc - Diego Simas (AMcom)
         
-        16/05/2018 - Ajustes prj420 - Resolucao - Heitor (Mouts)
+                16/05/2018 - Ajustes prj420 - Resolucao - Heitor (Mouts)
+                
+                15/05/2018 - 364 - SM 5- Incluir campo inperdes - Rafael Mouts
+
 .............................................................................*/
 
 DEF TEMP-TABLE tt-histor NO-UNDO
@@ -47,6 +50,9 @@ DEF TEMP-TABLE tt-histor NO-UNDO
     FIELD ingercre AS INTE
     FIELD ingerdeb AS INTE
     FIELD flgsenha AS INTE
+    /*INICIO 364 SM 5*/
+    FIELD inperdes AS INTE
+    /*FIM 364 SM 5*/
     FIELD dsextrat AS CHAR
     FIELD vltarcsh AS DECI
     FIELD cdgrphis AS INTE

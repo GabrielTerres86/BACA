@@ -9,6 +9,8 @@
  *                 11/04/2018 - Incluído novo campo "Estourar a conta corrente" (inestocc)
  *                              Diego Simas - AMcom
  *                 16/05/2017 - Ajustes prj420 - Resolucao - Heitor (Mouts)
+ *
+ *                 15/05/2018 - 364 - Sm5 - Incluir campo inperdes - Rafael (Mouts)
  * -------------- 
  */
 ?> 
@@ -72,6 +74,7 @@
 	$indebfol = (isset($_POST['indebfol'])) ? $_POST['indebfol'] : 0;
 	$txdoipmf = (isset($_POST['txdoipmf'])) ? $_POST['txdoipmf'] : 0;
 
+	$inperdes = (isset($_POST['inperdes'])) ? $_POST['inperdes'] : 0;
 	$idmonpld = (isset($_POST['idmonpld'])) ? $_POST['idmonpld'] : 0;
 
     if ($cdhistor == 0 ) {
@@ -153,6 +156,11 @@
 	if ($idmonpld != 0 && $idmonpld != 1) {
 		exibirErro('error','Indicador para Monitoramento inv&aacute;lido.','Alerta - Ayllos',"focaCampoErro('idmonpld','frmHistorico');",false);
 	}
+	if ($inperdes != 0 && $inperdes != 1) {
+		exibirErro('error','Indicador para Permitir Desligamento inv&aacute;lido.','Alerta - Ayllos',"focaCampoErro('inperdes','frmHistorico');",false);
+	}
+
+	
 
 	/*  Campos sem validacao:
 			- nmestrut
@@ -231,7 +239,8 @@
 
 	$xml .= '       <indebfol>'.$indebfol.'</indebfol>';
 	$xml .= '       <txdoipmf>'.$txdoipmf.'</txdoipmf>';
-	
+	$xml .= '       <inperdes>'.$inperdes.'</inperdes>';    
+
 	$xml .= '       <idmonpld>'.$idmonpld.'</idmonpld>';
 	
 	$xml .= '	</Dados>';

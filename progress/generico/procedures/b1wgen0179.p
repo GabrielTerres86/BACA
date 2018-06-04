@@ -21,6 +21,7 @@
         
                 16/05/2018 - Ajustes prj420 - Resolucao - Heitor (Mouts)
         
+                15/05/2018 - 364 - SM 5 - Ajuste para considerar o novo parâmetro inperdes (Rafael - Mouts).
 ............................................................................*/
 
 /*............................. DEFINICOES .................................*/
@@ -588,6 +589,10 @@ PROCEDURE Busca_Historico:
                                     0
            tt-histor.ingerdeb = craphis.ingerdeb   
            tt-histor.dsextrat = craphis.dsextrat
+
+           /*Inicio 364 - SM 5*/
+           tt-histor.inperdes = craphis.inperdes
+           /*Fim 364 - SM 5*/
            tt-histor.flgsenha = IF craphis.flgsenha THEN
                                     1
                                 ELSE
@@ -848,7 +853,9 @@ PROCEDURE Grava_Dados:
 
     DEF  INPUT PARAM par_indebfol AS INTE                           NO-UNDO.
     DEF  INPUT PARAM par_txdoipmf AS INTE                           NO-UNDO.
-    
+    /*364 - SM 5*/
+    DEF  INPUT PARAM par_inperdes AS INTE                           NO-UNDO.
+
 	DEF  INPUT PARAM par_idmonpld AS INTE                           NO-UNDO.
     
     DEF OUTPUT PARAM par_nmdcampo AS CHAR                           NO-UNDO.
@@ -1263,6 +1270,7 @@ PROCEDURE Grava_Dados:
                                        INPUT aux_vltarcxo,
                                        INPUT aux_vltarint,
                                        INPUT aux_vltarcsh,
+                                       INPUT par_inperdes,
                                        INPUT 0,
 									   INPUT par_idmonpld). /* cdcoprep */
                      /* Codigo da cooperativa que esta replicando eh 0
@@ -1303,7 +1311,8 @@ PROCEDURE Grava_Dados:
                            craphis.dsextrat  =  CAPS(par_dsextrat)
                            craphis.flgsenha  =  aux_flgsenha
                            craphis.cdgrphis  =  par_cdgrphis
-						   craphis.idmonpld  =  par_idmonpld.
+                           craphis.idmonpld  =  par_idmonpld
+                           craphis.inperdes  =  par_inperdes.
     
                     /* Atualizar as informacoes das tarifas */
                     FIND FIRST crapthi WHERE crapthi.cdcooper = craphis.cdcooper
@@ -1559,6 +1568,7 @@ PROCEDURE Replica_Dados:
                                INPUT log_vltarcxo,
                                INPUT log_vltarint,
                                INPUT log_vltarcsh,
+                               INPUT craphis.inperdes,
                                INPUT par_cdcooper,
 							   INPUT craphis.idmonpld). /* cdcoprep */
             /* passar o codigo da cooperativa 
@@ -2034,6 +2044,7 @@ PROCEDURE gera_item_log:
     DEF INPUT PARAM log_vltarint AS DECI                            NO-UNDO.
     DEF INPUT PARAM log_vltarcsh AS DECI                            NO-UNDO.
     /* Codigo da cooperativa que replicou os dados */
+    DEF INPUT PARAM log_inperdes AS INTE                            NO-UNDO.
     DEF INPUT PARAM par_cdcoprep AS INTE                            NO-UNDO.
 	DEF INPUT PARAM par_idmonpld AS INTE                            NO-UNDO.
 
@@ -2314,6 +2325,15 @@ PROCEDURE gera_item_log:
                                 "Sim"
                              ELSE 
                                 "Nao")).
+
+    IF log_inperdes <> b-craphis.inperdes THEN
+       RUN gera_log (INPUT par_cdcooper,
+                     INPUT par_cdoperad,
+                     INPUT par_cdhistor,
+                     INPUT par_cdcoprep,
+                     INPUT "Indicador de permissao desligamento",
+                     INPUT b-craphis.inperdes,
+                     INPUT log_inperdes).
        
     IF par_idmonpld <> b-craphis.idmonpld THEN
         RUN gera_log (INPUT par_cdcooper,

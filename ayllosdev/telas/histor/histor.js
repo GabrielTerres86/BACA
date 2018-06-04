@@ -12,6 +12,8 @@
  *                             Diego Simas - AMcom
  *
  *                16/05/2017 - Ajustes prj420 - Resolucao - Heitor (Mouts)
+ *
+ *                15/05/2018 - 364 - Sm 5 - Incluir campo inperdes Rafael (Mouts)
  * --------------
  */
 
@@ -225,6 +227,7 @@ function formataCadastroHistorico() {
     $('label[for="cdprodut"]', '#frmHistorico').addClass('rotulo').css({ 'width': '100px' });
     $('label[for="cdagrupa"]', '#frmHistorico').addClass('rotulo').css({ 'width': '100px' });
 	$('label[for="idmonpld"]', '#frmHistorico').addClass('rotulo').css({ 'width': '100px' });
+    $('label[for="inperdes"]', '#frmHistorico').addClass('rotulo').css({ 'width': '190px' });
 
 	// CAMPOS - Outros
     $('#flgsenha', '#frmHistorico').css({ 'width': '60px' });
@@ -233,6 +236,8 @@ function formataCadastroHistorico() {
     $('#cdagrupa', '#frmHistorico').css({ 'width': '60px' }).attr('maxlength', '5').setMask('INTEGER', 'zzzzz', '', '');
     $('#dsagrupa', '#frmHistorico').css({ 'width': '350px' }).desabilitaCampo();
 	$('#idmonpld', '#frmHistorico').css({ 'width': '60px' });
+    $('#inperdes', '#frmHistorico').css({ 'width': '60px' });
+
 	
     $('input[type="text"],select', '#frmHistorico').desabilitaCampo().limpaFormulario().removeClass('campoErro');
 	
@@ -418,7 +423,10 @@ function liberaCadastro() {
     $('#ingercre', '#frmHistorico').val("1");
     $('#ingerdeb', '#frmHistorico').val("1");
     $('#flgsenha', '#frmHistorico').val("1");
-	$('#idmonpld', '#frmHistorico').val("1");
+    $('#idmonpld', '#frmHistorico').val("1");
+	$('#inperdes', '#frmHistorico').val("0");
+
+
 	
 	// Adicionar foco no primeiro campo
     $("#cdhistor", "#frmHistorico").habilitaCampo().val("").focus();
@@ -1523,6 +1531,8 @@ function manterRotina() {
     var txdoipmf = $('#txdoipmf', '#frmHistorico').val();
 	
 	var idmonpld = $('#idmonpld', '#frmHistorico').val();
+    var inperdes = $('#inperdes', '#frmHistorico').val();
+
 	
 	
 	$.ajax({		
@@ -1568,6 +1578,8 @@ function manterRotina() {
 				  vltarcsh : vltarcsh,
 				  indebfol : indebfol,
 				  txdoipmf : txdoipmf,
+				  inperdes : inperdes, 
+
 				  idmonpld : idmonpld,
 				  redirect : 'script_ajax'
 				  

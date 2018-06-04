@@ -16,6 +16,8 @@
  *                             Diego Simas - AMcom  
  *
  *                16/05/2017 - Ajustes prj420 - Resolucao - Heitor (Mouts)
+ *
+ *                15/05/2018 - 364 - Sm 5 - Incluir campo inperdes Rafael (Mouts)
  * -------------- 
  */
 ?>
@@ -136,6 +138,10 @@
 	echo "$('#cdagrupa','#frmHistorico').val('" . $cdagrupa . "');";
 	echo "$('#dsagrupa','#frmHistorico').val('" . getByTagName($historico,'dsagrupa') . "');";
 	echo "$('#idmonpld','#frmHistorico').val('" . getByTagName($historico,'idmonpld') . "');";
+	
+	// Inicio SM 5 - 364 - RMM  - inperdes
+	echo "$('#inperdes','#frmHistorico').val('" . getByTagName($historico,'inperdes') . "');";
+	// Fim SM 5 - 364 - RMM  - inperdes
 	
 	
 	

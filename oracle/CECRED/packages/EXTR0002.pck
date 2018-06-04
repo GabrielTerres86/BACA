@@ -4089,6 +4089,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
               ,craphis.dshistor
               ,craphis.indebcre
               ,craphis.cdhistor
+              ,craphis.inperdes
         FROM craphis craphis
         WHERE craphis.cdcooper = pr_cdcooper       
         AND   craphis.cdhistor = pr_cdhistor;                      
@@ -4768,6 +4769,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
           --Proximo Registro
           CONTINUE;
         END IF; 
+
+        IF rw_craphis.inperdes = 1 AND (pr_nmdatela LIKE 'MATRIC' OR pr_nmdatela LIKE 'CONTAS') THEN
+          CONTINUE;
+        END IF;        
         --Tipo Historico
         IF rw_craphis.inhistor IN (1,2,3,4,5) THEN 
           --Valor Lancamento Automatico
