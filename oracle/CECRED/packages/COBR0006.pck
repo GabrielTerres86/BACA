@@ -16031,7 +16031,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       Alteracoes: 13/02/2017 - Ajuste para alterar o diretório destino para os arquivos rejeitados
                                e efetuar corretamente o comando para envio do arquivo ao ftp
 				                      (Andrei - Mouts).        
-                                    
+                  29/05/2018 - Ajuste para mover arquivos para pasta FTP e melhoria no script.
+				               Gabriel (Mouts) - Chamado INC0015743.                   
+
     .................................................................................*/
     
     -- Busca dados da Cooperativa
@@ -16043,10 +16045,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     
     -- Nome do Arquivo .ERR
     vr_nmarquivo_err VARCHAR2(4000);
-    
-    -- Nome do Arquivo .LOG
-    vr_nmarquivo_log VARCHAR2(4000);
-     
+
     vr_exc_erro EXCEPTION; 
     vr_nrdrowid ROWID;
     
@@ -16079,10 +16078,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     
     -- Monta nome do Arquivo de Erro (.ERR)
     vr_nmarquivo_err := REPLACE(UPPER(pr_nmarquiv),'.REM','.ERR');
-    
-    -- Monta nome do Arquivo de Log (.LOG)
-    vr_nmarquivo_log := REPLACE(UPPER(pr_nmarquiv),'.REM','.LOG');
-    
+
     -- Busca nome resumido da cooperativa
     OPEN cr_crapcop(pr_cdcooper => pr_cdcooper);
     FETCH cr_crapcop INTO rw_crapcop;
@@ -16102,20 +16098,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
     -- Diretório da Cooperativa
     vr_dir_coop := gene0001.fn_diretorio(pr_tpdireto => 'C' --> /usr/coop
                                         ,pr_cdcooper => pr_cdcooper);
-    
-    -- Diretório do arquivo de Log (.LOG)
-    vr_diretorio_log := gene0001.fn_diretorio(pr_tpdireto => 'C' --> /usr/coop
-                                             ,pr_cdcooper => pr_cdcooper
-                                             ,pr_nmsubdir => '/arq') ;                                   
-        
+     
     -- Diretório do arquivo de Erro (.ERR)
     vr_diretorio_err := gene0001.fn_diretorio(pr_tpdireto => 'C' --> /usr/coop
                                              ,pr_cdcooper => pr_cdcooper
                                              ,pr_nmsubdir => '/upload/ftp') ;  
-      
-    -- Renomeia o Arquivo .REM para .LOG
-    gene0001.pc_OScommand_Shell('cp ' || vr_diretorio_err || '/' || pr_nmarquiv || ' ' || 
-                                vr_diretorio_log || '/' || vr_nmarquivo_log);  
       
     -- Renomeia o Arquivo .REM para .ERR
     gene0001.pc_OScommand_Shell('mv ' || vr_diretorio_err || '/' || pr_nmarquiv || ' ' || 
@@ -16164,36 +16151,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0006 IS
       vr_dscritic:= 'Nao foi possivel executar comando unix. '||vr_comando;
       RAISE vr_exc_erro;
     END IF;                    
-                           
-    -- Copia Arquivo .LOG para Servidor FTP
-    vr_comando := vr_script_cust                                 || ' ' ||
-    '-envia'                                                     || ' ' || 
-    '-srv '         || vr_serv_ftp                               || ' ' || -- Servidor
-    '-usr '         || vr_user_ftp                               || ' ' || -- Usuario
-    '-pass '        || vr_pass_ftp                               || ' ' || -- Senha
-    '-arq '         || CHR(39) || vr_nmarquivo_log || CHR(39)    || ' ' || -- .LOG
-    '-dir_local '   || vr_diretorio_log                          || ' ' || -- /usr/coop/<cooperativa>/arq
-    '-dir_remoto '  || vr_dir_retorno                            || ' ' || -- /<coop>/<conta do cooperado>/RETORNO 
-    '-salvar '      || vr_dir_coop || '/salvar'                  || ' ' || -- /usr/coop/<cooperativa>/salvar 
-    '-log '         || vr_dir_coop || '/log/cbr_por_arquivo.log';          -- /usr/coop/<cooperativa>/log/cst_por_arquivo.log
-      
-    GENE0001.pc_OScommand(pr_typ_comando => 'S'
-                         ,pr_des_comando => vr_comando
-                         ,pr_typ_saida   => vr_typ_saida
-                         ,pr_des_saida   => pr_dscritic
-                         ,pr_flg_aguard  => 'S');
-                           
-    -- Se ocorreu erro dar RAISE
-    IF vr_typ_saida = 'ERR' THEN
-      vr_dscritic:= 'Nao foi possivel executar comando unix. '||vr_comando;
-      RAISE vr_exc_erro;
-    END IF;
-   
+
     -- Verifica Qual a Origem
     CASE pr_idorigem 
       WHEN 1 THEN vr_dsorigem := 'AYLLOS';
       WHEN 3 THEN vr_dsorigem := 'INTERNET';
-      WHEN 3 THEN vr_dsorigem := 'FTP';
+      WHEN 7 THEN vr_dsorigem := 'FTP';
       ELSE vr_dsorigem := ' ';
     END CASE; 
       
