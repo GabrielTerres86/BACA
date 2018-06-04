@@ -132,6 +132,7 @@
 * 105: [05/03/2018] Incluido campo idcobope na parametrizacao do fonte efetiva_proposta. (PRJ404 - Reinert)
 * 106: [13/04/2018] Adicionadas funcoes validaValorAdesaoProdutoEmp e senhaCoordenador para validar valor do produto pelo tipo de conta. PRJ366 (Lombardi)
 * 107: [20/04/2018] P410 - Não permitir selecionar Financia IOF para Portabilidade (Marcos-Envolti)
+* 108: [23/05/2018] Adicionado campo idquapro na validacao de dados gerais e validaValorAdesaoProdutoEmp. Verificacao da GAROPC. PRJ366 (Lombardi)
  * ##############################################################################
  FONTE SENDO ALTERADO - DUVIDAS FALAR COM DANIEL OU JAMES
  * ##############################################################################
@@ -3992,7 +3993,7 @@ function verificaObs(operacao) {
 }
 
 function atualizaArray(novaOp, cdcooper) {
-	if (novaOp == 'I_DADOS_AVAL' || novaOp == 'A_DADOS_AVAL' || novaOp == 'V_VALOR')
+	if (novaOp == 'I_DADOS_AVAL' || novaOp == 'A_DADOS_AVAL' || novaOp == 'V_VALOR' || novaOp == 'I_GAROPC' || novaOp == 'A_GAROPC')
 		validaValorAdesaoProdutoEmp(novaOp, cdcooper);
     else {
     showMsgAguardo('Aguarde, validando dados ...');
@@ -5111,6 +5112,7 @@ function validaDadosGerais() {
     var idcarenc = $('#idcarenc', '#frmNovaProp').val();
     var dtcarenc = $('#dtcarenc', '#frmNovaProp').val();
     var idfiniof = $('#idfiniof', '#frmNovaProp').val();
+    var idquapro = $('#idquapro', '#frmNovaProp').val();
 
     var tpaltera = (operacao == 'A_VALOR') ? '2' : '1';
 
@@ -5163,7 +5165,7 @@ function validaDadosGerais() {
             inconfi2: inconfi2, percetop: percetop,
             cdmodali: cdmodali, idcobope: idcobope,
             idcarenc: idcarenc, dtcarenc: dtcarenc,
-            idfiniof: idfiniof,
+            idfiniof: idfiniof, idquapro: idquapro,
             redirect: 'script_ajax'
         },
         error: function(objAjax, responseError, objExcept) {
@@ -9851,6 +9853,7 @@ function validaValorAdesaoProdutoEmp(operacao,cdcooper) {
     var dsctrliq = $('#dsctrliq', '#frmNovaProp').val();
     var vlemprst = $('#vlemprst', '#frmNovaProp').val();
     var cdfinemp = $('#cdfinemp', '#frmNovaProp').val();
+    var idquapro = $('#idquapro', '#frmNovaProp').val();
 	
 	$.ajax({
 		type: 'POST',
@@ -9863,6 +9866,7 @@ function validaValorAdesaoProdutoEmp(operacao,cdcooper) {
 			dsctrliq: dsctrliq,
 			operacao: operacao,
 			cdcooper: cdcooper,
+			idquapro: idquapro,
 			vlemprst_antigo: vlemprst_antigo,
 			dsctrliq_antigo: dsctrliq_antigo,
 			redirect: 'script_ajax'

@@ -161,6 +161,8 @@
                11/02/2014 - Remover a criacao do emprestimo no CYBER (James)
                
                05/11/2015 - Caso algum registro da crapass esteja lockado gera erro (Lombardi)
+                               
+               29/05/2018 - Alterados codigos de situacao "crabass.cdsitdct". PRJ366 (Lombardi).
 ............................................................................*/
 
 DEF VAR   aux_vlalipmf      AS    DECIMAL                      NO-UNDO.
@@ -346,6 +348,7 @@ DO WHILE TRUE ON ENDKEY UNDO, LEAVE ON ERROR UNDO, RETURN:
                                crabass.cdcooper  = glb_cdcooper AND
                                crabass.nrcadast  = aux_nrdconta AND
                                crabass.nrdconta <> crapass.nrdconta AND
+                               crabass.cdsitdct <> 2 AND
                                crabass.cdsitdct <> 3,
                           FIRST crabttl WHERE
                                 crabttl.cdcooper = glb_cdcooper     AND

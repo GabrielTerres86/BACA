@@ -2956,7 +2956,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
   --              14/10/2015 - Incluir o tratamento de pagamento de avalista 
   --                           que foi esquecido na migração para o Oracle. (Oscar)
   --
-  --              15/08/2017 - Inclusao do campo qtdiacal e historicos do Pos-Fixado. (Jaison/James - PRJ298)
+  --              15/08/2017 - Inclusao do campo qtdiacal e historicos do Pos-Fixado. (Jaison/James - PRJ298) 
   --
   --              03/04/2018 - M324 ajuste na configuração de extrato para emprestimo (Rafael Monteiro - Mouts)
   ---------------------------------------------------------------------------------------------------------------
@@ -3782,6 +3782,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
   -- 
   --              23/01/2017 - Ajustes para arrecadacao de FGTS/DAE. PRJ406 - FGTS
   --                           (Odirlei-AMcom)
+  --
+  --              20/02/2018 - Alterada validação cdtipcta IN (1,2,...) para verificacao se permite
+  --                           o produto 38 (Folhas de Cheque). PRJ366 (Lombardi).
+  -- 
+  --              07/05/2018 - Verificacao de impedimento de talionario atraves da proc 
+  --                           pc_ind_impede_talonario. PRJ366 (Lombardi)
+  -- 
   ---------------------------------------------------------------------------------------------------------------
   DECLARE
       -- Busca dos dados do associado
@@ -3795,7 +3802,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
               ,crapass.cdcooper
               ,crapass.cdagenci
               ,crapass.cdtipcta
-              ,crapass.cdsitdct
         FROM crapass crapass
         WHERE crapass.cdcooper = pr_cdcooper
         AND   crapass.nrdconta = pr_nrdconta;
@@ -4440,6 +4446,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
       vr_dscedent VARCHAR(300);
       vr_idlstdom NUMBER;
       vr_incancel INTEGER;
+      vr_possuipr VARCHAR2(1);				  
+      vr_inimpede_talionario INTEGER;
       --Variaveis para uso na craptab
       vr_dstextab    craptab.dstextab%TYPE;
       vr_lshistor    craptab.dstextab%TYPE;
@@ -4555,8 +4563,31 @@ CREATE OR REPLACE PACKAGE BODY CECRED.EXTR0002 AS
         END IF;  
         --Fechar Cursor
         CLOSE cr_crapsld;
+        
+        CADA0006.pc_permite_produto_tipo(pr_cdprodut => 38
+                                        ,pr_cdtipcta => rw_crapass.cdtipcta
+                                        ,pr_cdcooper => pr_cdcooper
+                                        ,pr_inpessoa => rw_crapass.inpessoa
+                                        ,pr_possuipr => vr_possuipr
+                                        ,pr_cdcritic => vr_cdcritic
+                                        ,pr_dscritic => vr_dscritic);
+        
+        IF vr_cdcritic > 0 AND vr_dscritic IS NOT NULL THEN
+          --Levantar Excecao Saida com Sucesso
+          RAISE vr_exc_erro;
+        END IF;
+        		
+        CADA0006.pc_ind_impede_talonario(pr_cdcooper => pr_cdcooper
+                                        ,pr_nrdconta => pr_nrdconta
+                                        ,pr_inimpede_talionario => vr_inimpede_talionario
+                                        ,pr_des_erro => vr_des_reto
+                                        ,pr_dscritic => vr_dscritic);
+        IF vr_des_reto = 'NOK' THEN
+          RAISE vr_exc_erro;
+        END IF;
+        
         /*  Nao calcula programados para quem movimenta com talao de cheques  */
-        IF rw_crapass.cdtipcta IN (1,2,3,4,8,9,10,11,12,13,14,15) AND rw_crapass.cdsitdct = 1 THEN
+        IF vr_possuipr = 'S' AND vr_inimpede_talionario = 0 THEN
           --Sem Lancamentos futuros
           pr_tab_totais_futuros(1).vllautom:= 0;
           --Levantar Excecao Saida com Sucesso
@@ -13705,7 +13736,7 @@ END pc_consulta_ir_pj_trim;
                   FETCH cr_crappep_taxa INTO rw_crappep_taxa;
                   IF cr_crappep_taxa%FOUND THEN
                     vr_dsvltaxa := to_char(rw_crappep_taxa.vltaxatu,'fm990d00')||'%';  
-                END IF;  
+                  END IF;                    
                   CLOSE cr_crappep_taxa;
                 END IF;  
                 
@@ -14396,7 +14427,7 @@ END pc_consulta_ir_pj_trim;
               vr_tab_extrato_epr_novo.DELETE;
               vr_index_extrato:= vr_tab_extrato_epr.FIRST;
               WHILE vr_index_extrato IS NOT NULL LOOP
-                --Montar novo indice conforme break-by
+                  --Montar novo indice conforme break-by
                 vr_index_novo:= LPAD(vr_tab_extrato_epr(vr_index_extrato).nrdconta,10,'0')||
                                 vr_tab_extrato_epr(vr_index_extrato).nranomes||
                                 TO_CHAR(vr_tab_extrato_epr(vr_index_extrato).dtmvtolt,'YYYYMMDD')|| 
@@ -15900,7 +15931,7 @@ END pc_consulta_ir_pj_trim;
           --Levantar Excecao
           RAISE vr_exc_erro;
         END IF; 
-
+         
 
         --Atribuir Descricao da Origem
         vr_dsorigem:= GENE0001.vr_vet_des_origens(pr_idorigem);

@@ -378,6 +378,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_SITCTA IS
       -- Variável de críticas
       vr_cdcritic crapcri.cdcritic%TYPE; --> Cód. Erro
       vr_dscritic VARCHAR2(1000); --> Desc. Erro
+      vr_des_erro VARCHAR2(10);
     
       -- Tratamento de erros
       vr_exc_saida EXCEPTION;
@@ -421,6 +422,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_SITCTA IS
           FROM tbcc_grupo_situacao_cta grp
          WHERE grp.cdsituacao = pr_cdsituacao
            AND grp.cdcooper   = pr_cdcooper;
+      
+      -- Busca tipo de conta
+      CURSOR cr_crapass (pr_cdcooper IN crapass.cdcooper%TYPE
+                        ,pr_cdsitdct IN crapass.cdsitdct%TYPE) IS
+        SELECT ass.nrdconta
+          FROM crapass ass
+         WHERE ass.cdcooper = pr_cdcooper
+           AND ass.cdsitdct = pr_cdsitdct;
+      rw_crapass cr_crapass%ROWTYPE;
       
     BEGIN
       
@@ -646,6 +656,43 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_SITCTA IS
           EXIT WHEN vr_cdgrupo = vr_tab_grupo_new.LAST();
           vr_cdgrupo := vr_tab_grupo_new.NEXT(vr_cdgrupo);
       END LOOP;
+      END IF;
+      
+      -- Se foi alterado flag de impedimento de credito ou produto
+      IF rw_situacao.inimpede_credito      <> pr_inimpede_credito      OR 
+        (rw_situacao.incontratacao_produto <> pr_incontratacao_produto AND 
+           ((rw_situacao.incontratacao_produto > 0 AND pr_incontratacao_produto = 0) OR
+            (rw_situacao.incontratacao_produto = 0 AND pr_incontratacao_produto > 0) ))   THEN
+        -- Verifica se deve liberar ou desbloquear 
+        -- pre aprovado para contas com essa situacao.
+        IF pr_inimpede_credito = 1 OR pr_incontratacao_produto > 0 THEN
+          -- Desbloquear
+          UPDATE tbepr_param_conta param
+             SET param.flglibera_pre_aprv  = 0  -- liberado
+                ,param.idmotivo            = 66
+                ,param.dtatualiza_pre_aprv = TRUNC(SYSDATE)
+           WHERE param.cdcooper            = vr_cdcooper
+             AND param.flglibera_pre_aprv  = 1  -- Apenas os que estão liberados
+             AND EXISTS (SELECT 1
+                           FROM crapass ass
+                          WHERE ass.cdcooper = param.cdcooper
+                            AND ass.nrdconta = param.nrdconta
+                            AND ass.cdsitdct = pr_cdsituacao); 
+        ELSE
+          -- Liberar
+          UPDATE tbepr_param_conta param
+             SET param.flglibera_pre_aprv = 1  -- liberado
+                ,param.idmotivo           = NULL
+                ,param.dtatualiza_pre_aprv = TRUNC(SYSDATE)
+           WHERE param.cdcooper           = vr_cdcooper
+             AND param.flglibera_pre_aprv = 0  -- Apenas os que estão bloqueados
+             AND param.idmotivo           = 66 -- Pelo motivo 66
+             AND EXISTS (SELECT 1
+                           FROM crapass ass
+                          WHERE ass.cdcooper = param.cdcooper
+                            AND ass.nrdconta = param.nrdconta
+                            AND ass.cdsitdct = pr_cdsituacao); 
+        END IF;
       END IF;
       
       -- Criar cabecalho do XML

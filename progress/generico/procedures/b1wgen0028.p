@@ -534,6 +534,9 @@
                            - Chamar rotina pc_valida_adesao_produto e pc_valida_valor_de_adesao na 
                              proc valida_nova_proposta. PRJ366 (Lombardi).
                 
+               04/05/2018 - Alteracao nos codigos da situacao de conta (cdsitdct).
+                            PRJ366 (Lombardi).
+                
 ..............................................................................*/
 
 { sistema/generico/includes/b1wgen0001tt.i }
@@ -1334,10 +1337,11 @@ PROCEDURE carrega_dados_inclusao:
          END.
     ELSE
     IF   crapass.cdsitdct <> 1   AND
-         crapass.cdsitdct <> 6   AND
-         ((crapass.cdsitdct <> 5   AND
-          par_idorigem <> 1)    OR
-         (crapass.cdsitdct = 5    AND 
+       (((crapass.cdsitdct <> 5  OR
+          crapass.cdsitdct <> 9) AND
+          par_idorigem <> 1)     OR
+        ((crapass.cdsitdct = 5   OR
+          crapass.cdsitdct = 9)  AND 
           par_idorigem = 1))   /** Deve permitir inserir cartão, mas apenas se for PURO DÉBITO **/
           THEN
          DO:
@@ -1979,7 +1983,7 @@ PROCEDURE valida_nova_proposta:
          END.
 
     /* Contas na situação 5 devem permitir cartão apenas PURO DÉBITO */
-    IF crapass.cdsitdct = 5 AND (crapadc.cdadmcrd <> 16 AND crapadc.cdadmcrd <> 17) THEN
+    IF (crapass.cdsitdct = 5 OR crapass.cdsitdct = 9) AND (crapadc.cdadmcrd <> 16 AND crapadc.cdadmcrd <> 17) THEN
         DO:
             ASSIGN aux_cdcritic = 0
                    aux_dscritic = "Situacao da conta permite apenas cartoes de debito.".
@@ -5623,8 +5627,7 @@ PROCEDURE libera_cartao:
         
        IF par_inconfir = 1   THEN
           DO:
-             IF crapass.cdsitdct <> 1   AND
-                crapass.cdsitdct <> 6   THEN
+             IF crapass.cdsitdct <> 1   THEN
                 DO:
                     CREATE tt-msg-confirma.
 
@@ -6216,8 +6219,7 @@ PROCEDURE valida_entrega_cartao:
 
 
         
-            IF   crapass.cdsitdct <> 1   AND
-                 crapass.cdsitdct <> 6   THEN
+            IF   crapass.cdsitdct <> 1   THEN
                  DO:
                      CREATE tt-msg-confirma.
                      ASSIGN tt-msg-confirma.dsmensag = 
@@ -6347,8 +6349,7 @@ PROCEDURE valida_entrega_cartao_bancoob:
     ELSE
        ASSIGN par_flpurcrd = FALSE.
     
-    IF crapass.cdsitdct <> 1   AND
-       crapass.cdsitdct <> 6   THEN
+    IF crapass.cdsitdct <> 1   THEN
        DO:
            CREATE tt-msg-confirma.
            ASSIGN tt-msg-confirma.dsmensag = 
@@ -9612,10 +9613,10 @@ PROCEDURE verifica_acesso_2via:
     IF  RETURN-VALUE = "NOK"  THEN
         RETURN "NOK".
 
-    IF  crapass.cdsitdct <> 1 AND crapass.cdsitdct <> 6  THEN
+    IF  crapass.cdsitdct <> 1  THEN
         DO:
             ASSIGN aux_cdcritic = 0
-                   aux_dscritic = (IF  crapass.cdsitdct = 5  THEN
+                   aux_dscritic = (IF  crapass.cdsitdct = 5 OR crapass.cdsitdct = 9 THEN
                                        "Conta nao aprovada"
                                    ELSE
                                        "Conta encerrada") +
@@ -11772,8 +11773,7 @@ PROCEDURE carrega_dados_renovacao:
          SUBSTRING(aux_possuipr,5,1) = "N" THEN /* Cartao Crédito Empresarial */
          aux_cdcritic = 332.
     ELSE
-    IF   crapass.cdsitdct <> 1   AND
-         crapass.cdsitdct <> 6   THEN
+    IF   crapass.cdsitdct <> 1   THEN
          aux_cdcritic = 332.
     ELSE
     IF   CAN-DO("5,6,7,8",STRING(crapass.cdsitdtl))   THEN

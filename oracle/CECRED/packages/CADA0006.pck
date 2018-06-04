@@ -1,11 +1,11 @@
 CREATE OR REPLACE PACKAGE CECRED.CADA0006 is
  /* ---------------------------------------------------------------------------------------------------------------
   
-    Programa : CADA0004
+    Programa : CADA0006
     Sistema  : Rotinas para detalhes de cadastros
     Sigla    : CADA
-    Autor    : Odirlei Busana - AMcom
-    Data     : Agosto/2015.                   Ultima atualizacao: 25/04/2017
+    Autor    : Lombardi
+    Data     : Janeiro/2018.                   Ultima atualizacao: 04/06/2018
   
    Dados referentes ao programa:
   
@@ -43,6 +43,14 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0006 is
                                    ,pr_cdcritic OUT crapcri.cdcritic%TYPE --> Codigo Erro
                                    ,pr_dscritic OUT crapcri.dscritic%TYPE); --> Descricao Erro 
                                    
+  -- Verificar se a situacao de conta permite o produto
+  PROCEDURE pc_permite_produto_situacao(pr_cdprodut  IN tbcc_produto.cdproduto%TYPE --> Codigo do produto
+                                        ,pr_cdcooper  IN tbcc_situacao_conta_coop.cdcooper%TYPE --> Código da cooperativa
+                                       ,pr_cdsitdct  IN tbcc_situacao_conta_coop.cdsituacao%TYPE --> Codigo da situacao
+                                       ,pr_possuipr OUT VARCHAR2 --> possui produto
+                                        ,pr_cdcritic OUT crapcri.cdcritic%TYPE --> Codigo Erro
+                                        ,pr_dscritic OUT crapcri.dscritic%TYPE); --> Descricao Erro  
+  
   -- Verificar se o tipo de conta permite lista de produtos
   PROCEDURE pc_permite_lista_prod_tipo(pr_lsprodut  IN VARCHAR2 --> Codigo do produto
                                       ,pr_cdtipcta  IN tbcc_tipo_conta.cdtipo_conta%TYPE --> Codigo do produto
@@ -98,12 +106,17 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0006 is
                                    ,pr_des_erro     OUT VARCHAR2 --> Código da crítica
                                    ,pr_dscritic     OUT VARCHAR2); --> Descrição da crítica
                                    
+  PROCEDURE pc_descricao_situacao_conta(pr_cdsituacao  IN tbcc_situacao_conta.cdsituacao%TYPE --> codigo da situacao de conta
+                                       ,pr_dssituacao OUT tbcc_situacao_conta.dssituacao%TYPE --> descricao da situacao de conta
+                                       ,pr_des_erro   OUT VARCHAR2 --> Código da crítica
+                                       ,pr_dscritic   OUT VARCHAR2); --> Descrição da crítica
+  
   PROCEDURE pc_busca_modalidade_tipo(pr_inpessoa           IN tbcc_tipo_conta.inpessoa%TYPE --> tipo de pessoa
                                     ,pr_cdtipo_conta       IN tbcc_tipo_conta.cdtipo_conta%TYPE --> codigo do tipo de conta
                                     ,pr_cdmodalidade_tipo OUT INTEGER --> descricao do tipo de conta
                                     ,pr_des_erro          OUT VARCHAR2 --> Código da crítica
                                     ,pr_dscritic          OUT VARCHAR2); --> Descrição da crítica
-                                    
+                                   
   PROCEDURE pc_valida_tipo_conta_coop(pr_cdcooper      IN tbcc_tipo_conta_coop.cdcooper%TYPE --> Codigo da cooperativa
                                      ,pr_inpessoa      IN tbcc_tipo_conta_coop.inpessoa%TYPE --> tipo de pessoa
                                      ,pr_cdtipo_conta  IN tbcc_tipo_conta_coop.cdtipo_conta%TYPE --> codigo do tipo de conta
@@ -136,6 +149,24 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0006 is
                                    ,pr_des_erro     OUT VARCHAR2 --> Código da crítica
                                    ,pr_dscritic     OUT VARCHAR2); --> Descrição da crítica
                                     
+  PROCEDURE pc_ind_impede_credito(pr_cdcooper  IN crapass.cdcooper%TYPE --> Código da cooperativa
+                                 ,pr_nrdconta  IN crapass.nrdconta%TYPE --> Código da conta
+                                 ,pr_inimpede_credito OUT tbcc_situacao_conta_coop.inimpede_credito%TYPE --> indicador de impedimento
+                                 ,pr_des_erro OUT VARCHAR2 --> Código da crítica                             de operacao de credito.
+                                 ,pr_dscritic OUT VARCHAR2); --> Descrição da crítica
+                                 
+  PROCEDURE pc_ind_impede_talonario(pr_cdcooper  IN crapass.cdcooper%TYPE --> Código da cooperativa
+                                   ,pr_nrdconta  IN crapass.nrdconta%TYPE --> Código da conta
+                                   ,pr_inimpede_talionario OUT tbcc_situacao_conta_coop.inimpede_talionario%TYPE --> indicador de impedimento
+                                   ,pr_des_erro OUT VARCHAR2 --> Código da crítica                                   para retirada de talionarios
+                                   ,pr_dscritic OUT VARCHAR2); --> Descrição da crítica
+                                   
+  PROCEDURE pr_ind_contratacao_produto(pr_cdcooper  IN crapass.cdcooper%TYPE --> Código da cooperativa
+                                      ,pr_nrdconta  IN crapass.nrdconta%TYPE --> Código da conta
+                                      ,pr_incontratacao_produto OUT tbcc_situacao_conta_coop.incontratacao_produto%TYPE --> indicador de impedimento para 
+                                      ,pr_des_erro OUT VARCHAR2 --> Código da crítica                                       contratacao de produtos e serviços
+                                      ,pr_dscritic OUT VARCHAR2); --> Descrição da crítica
+                                      
   PROCEDURE pc_valida_grupo_historico(pr_cdgrupo_historico IN tbcc_grupo_historico.cdgrupo_historico%TYPE --> codigo do tipo de conta
                                      ,pr_flggphis         OUT VARCHAR2 --> flag existe grupo de historico (0-Nao/1-Sim)
                                      ,pr_des_erro         OUT VARCHAR2 --> Código da crítica
@@ -176,7 +207,7 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0006 is
                                   ,pr_solcoord OUT INTEGER               --> Solicita senha coordenador
                                   ,pr_cdcritic OUT crapcri.cdcritic%TYPE --> Codigo Erro
                                   ,pr_dscritic OUT crapcri.dscritic%TYPE); --> Descricao Erro
-                                  
+  
   PROCEDURE pc_valida_valor_de_adesao(pr_cdcooper  IN crapass.cdcooper%TYPE --> Cooperativa
                                      ,pr_nrdconta  IN crapass.nrdconta%TYPE --> Situacao
                                      ,pr_cdprodut  IN tbcc_produto.cdproduto%TYPE --> Codigo do operador
@@ -196,7 +227,7 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0006 is
                                        ,pr_retxml IN OUT NOCOPY XMLType --> Arquivo de retorno do XML
                                        ,pr_nmdcampo  OUT VARCHAR2 --> Nome do campo com erro
                                        ,pr_des_erro  OUT VARCHAR2); --> Erros do processo
-                                       
+                                        
   PROCEDURE pc_valida_valor_adesao_web(pr_nrdconta   IN crapass.nrdconta%TYPE --> Situacao
                                       ,pr_cdprodut   IN tbcc_produto.cdproduto%TYPE --> Codigo do operador
                                       ,pr_vlcontra   IN VARCHAR2               --> Valor contratado
@@ -224,9 +255,28 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0006 is
                                ,pr_dsvalant    IN tbcc_conta_historico.dsvalor_anterior%TYPE --> Valor anterior
                                ,pr_dsvalnov    IN tbcc_conta_historico.dsvalor_novo%TYPE     --> Valor novo
                                ,pr_cdoperad    IN tbcc_conta_historico.cdoperad_altera%TYPE  --> Código do operador da ação
-                               ,pr_dscritic   OUT VARCHAR2                                   --> Retornar Critica 
-                                );
+                               ,pr_dscritic   OUT VARCHAR2);                                 --> Retornar Critica 
 
+  --> Procedure para retornar as opçoes do dominio para o Ayllos WEB.
+  PROCEDURE pc_lista_situacoes_conta_web(pr_xmllog   IN VARCHAR2             --> XML com informações de LOG
+                                        ,pr_cdcritic OUT PLS_INTEGER         --> Código da crítica
+                                        ,pr_dscritic OUT VARCHAR2            --> Descrição da crítica
+                                        ,pr_retxml   IN OUT NOCOPY XMLType   --> Arquivo de retorno do XML
+                                        ,pr_nmdcampo OUT VARCHAR2            --> Nome do campo com erro
+                                        ,pr_des_erro OUT VARCHAR2);          --> Erros do processo
+
+  PROCEDURE pc_valor_min_capital(pr_cdcooper          IN tbcc_tipo_conta_coop.cdcooper%TYPE --> codigo da cooperativa
+                                ,pr_inpessoa          IN tbcc_tipo_conta_coop.inpessoa%TYPE --> tipo de pessoa
+                                ,pr_cdtipo_conta      IN tbcc_tipo_conta_coop.cdtipo_conta%TYPE --> codigo do tipo de conta
+                                ,pr_vlminimo_capital OUT tbcc_tipo_conta_coop.vlminimo_capital%TYPE --> valor minimo de capital
+                                ,pr_des_erro         OUT VARCHAR2 --> Código da crítica
+                                ,pr_dscritic         OUT VARCHAR2); --> Descrição da crítica
+  
+  PROCEDURE pc_verifica_lib_blq_pre_aprov(pr_cdcooper  IN tbcc_situacao_conta_coop.cdcooper%TYPE --> codigo da cooperativa
+                                         ,pr_nrdconta  IN tbepr_param_conta.nrdconta%TYPE --> Numero da conta
+                                         ,pr_cdsitdct  IN tbcc_situacao_conta_coop.cdsituacao%TYPE --> codigo da situacao
+                                         ,pr_des_erro OUT VARCHAR2 --> Código da crítica
+                                         ,pr_dscritic OUT VARCHAR2); --> Descrição da crítica
 END CADA0006;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.CADA0006 IS
@@ -463,8 +513,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0006 IS
                          ,pr_cdtipcta IN crapass.cdtipcta%TYPE
                          ,pr_inpessoa IN crapass.inpessoa%TYPE)IS
         SELECT pro.cdproduto
-              ,prc.vlminimo_adesao
-              ,prc.vlmaximo_adesao
               ,pro.idfaixa_valor
           FROM tbcc_produto pro
               ,tbcc_produtos_coop prc
@@ -472,6 +520,20 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0006 IS
            AND prc.cdcooper = pr_cdcooper
            AND prc.tpconta = pr_cdtipcta
            AND prc.inpessoa = pr_inpessoa;
+      
+      -- Buscar a configuração do produto na conta destino
+      CURSOR cr_proddest(pr_cdcooper IN crapcop.cdcooper%TYPE
+                        ,pr_cdtipcta IN crapass.cdtipcta%TYPE
+                        ,pr_inpessoa IN crapass.inpessoa%TYPE
+                        ,pr_cdprodut IN tbcc_produto.cdproduto%TYPE) IS
+        SELECT prc.vlminimo_adesao
+             , prc.vlmaximo_adesao
+          FROM tbcc_produtos_coop prc
+         WHERE prc.cdcooper  = pr_cdcooper
+           AND prc.tpconta   = pr_cdtipcta
+           AND prc.inpessoa  = pr_inpessoa
+           AND prc.cdproduto = pr_cdprodut;
+      rw_proddest   cr_proddest%ROWTYPE;
       
     BEGIN
       -- loop pelos produtos do tipo de conta origem
@@ -515,10 +577,18 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0006 IS
               RAISE vr_exc_saida;
             END IF;
           
+            -- Buscar o valor minimo e maximo para o produto no tipo de conta destino
+            OPEN  cr_proddest(pr_cdcooper => pr_cdcooper
+                             ,pr_cdtipcta => pr_tipcta_des
+                             ,pr_inpessoa => pr_inpessoa
+                             ,pr_cdprodut => rw_produtos.cdproduto);
+            FETCH cr_proddest INTO rw_proddest;
+            CLOSE cr_proddest;
+            
             -- Verifica se o valor contratado para o produto está de acordo
             IF vr_vlcontra IS NOT NULL AND
-              (vr_vlcontra < rw_produtos.vlminimo_adesao OR
-               vr_vlcontra > rw_produtos.vlmaximo_adesao) THEN
+              (vr_vlcontra < rw_proddest.vlminimo_adesao OR
+               vr_vlcontra > rw_proddest.vlmaximo_adesao) THEN
               vr_dscritic := 'Conta ' || gene0002.fn_mask_conta(pr_nrdconta) || ' nao atende aos requisitos do tipo de conta destino.';
               RAISE vr_exc_saida;
             END IF;
@@ -639,13 +709,122 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0006 IS
           pr_cdcritic := vr_cdcritic;
           pr_dscritic := vr_dscritic;
         END IF;
-        ROLLBACK;
       WHEN OTHERS THEN
         pr_cdcritic := vr_cdcritic;
         pr_dscritic := 'Erro geral na rotina pc_permite_produto_tipo: ' || SQLERRM;
-        ROLLBACK;
     END;
   END pc_permite_produto_tipo;
+  
+  /*****************************************************************************/
+  /**               Procedure permite produto situacao de conta               **/
+  /*****************************************************************************/
+  
+  PROCEDURE pc_permite_produto_situacao(pr_cdprodut  IN tbcc_produto.cdproduto%TYPE --> Codigo do produto
+                                        ,pr_cdcooper  IN tbcc_situacao_conta_coop.cdcooper%TYPE --> Código da cooperativa
+                                        ,pr_cdsitdct  IN tbcc_situacao_conta_coop.cdsituacao%TYPE --> Codigo da situacao
+                                        ,pr_possuipr OUT VARCHAR2 --> possui produto
+                                        ,pr_cdcritic OUT crapcri.cdcritic%TYPE --> Codigo Erro
+                                        ,pr_dscritic OUT crapcri.dscritic%TYPE) IS --> Descricao Erro  
+    /* .............................................................................
+    
+        Programa: pc_permite_produto_situacao
+        Sistema : CECRED
+        Sigla   : EMPR
+        Autor   : Lombardi
+        Data    : Janeiro/18.                    Ultima atualizacao: --/--/----
+    
+        Dados referentes ao programa:
+    
+        Frequencia: Sempre que for chamado
+    
+        Objetivo  : Rotina para verificar se a situacao de conta permite o produto
+    
+        Observacao: -----
+    
+        Alteracoes:
+    ..............................................................................*/
+  BEGIN
+    DECLARE
+      
+      -- Variaveis auxiliares
+      vr_inconprd INTEGER;
+      vr_inimpcre INTEGER;
+      
+      -- Variável de críticas
+      vr_cdcritic crapcri.cdcritic%TYPE; --> Cód. Erro
+      vr_dscritic VARCHAR2(1000); --> Desc. Erro
+    
+      -- Tratamento de erros
+      vr_exc_saida EXCEPTION;
+      
+      -- Verifica se existe o produto para o tipo de conta
+      CURSOR cr_situacao(pr_cdcooper IN tbcc_situacao_conta_coop.cdcooper%TYPE
+                        ,pr_cdsitdct IN tbcc_situacao_conta_coop.cdsituacao%TYPE)IS
+        SELECT sit.incontratacao_produto inconprd
+              ,sit.inimpede_credito      inimpcre
+          FROM tbcc_situacao_conta_coop sit
+         WHERE sit.cdcooper = pr_cdcooper
+           AND sit.cdsituacao = pr_cdsitdct;
+      rw_situacao cr_situacao%ROWTYPE;
+      
+    BEGIN
+      
+      pr_possuipr := 'S';
+      
+      -- Verifica se existe o produto para o tipo de conta
+      OPEN cr_situacao(pr_cdcooper => pr_cdcooper
+                      ,pr_cdsitdct => pr_cdsitdct);
+      FETCH cr_situacao INTO rw_situacao;
+      
+      -- se existir
+      IF cr_situacao%FOUND THEN
+        vr_inconprd := rw_situacao.inconprd;
+        vr_inimpcre := rw_situacao.inimpcre;
+      ELSE
+        vr_dscritic := 'Situacao nao encontrada.'; -- Não permite produto
+        RAISE vr_exc_saida;
+      END IF;
+      
+      CLOSE cr_situacao;
+      
+      IF vr_inconprd = 1 OR
+        (vr_inconprd = 2 AND pr_cdprodut <> 6) THEN -- Cobrança Bancária
+        pr_possuipr := 'N';
+        vr_dscritic := 'Situacao de Conta nao permite adesao ao produto.';
+        RAISE vr_exc_saida;
+      END IF;
+      
+      IF vr_inimpcre = 1 AND 
+         pr_cdprodut IN (4  -- CARTÃO DE CRÉDITO
+                        ,13 -- LIMITE DE CRÉDITO
+                        ,21 -- CARTÃO CRÉDITO CECRED
+                        ,24 -- CARTÃO CREDITO EMPRESARIAL
+                        ,25 -- PRE APROVADO
+                        ,31 -- EMPRÉSTIMOS 
+                        ,34 -- BORDERO DE CHEQUES
+                        ,35 -- BORDEROS DE TÍTULOS
+                        ,36 -- LIMITE DE DESCONTO DE CHEQUE
+                        ,37 -- LIMITE DE DESCONTO DE TITULO
+                        ) THEN
+        pr_possuipr := 'N';
+        vr_dscritic := 'Situacao de Conta nao permite produtos de credito.';
+        RAISE vr_exc_saida;
+      END IF;
+      
+    EXCEPTION
+      WHEN vr_exc_saida THEN
+        IF vr_cdcritic <> 0 THEN
+          pr_cdcritic := vr_cdcritic;
+          pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+        ELSE
+          pr_cdcritic := vr_cdcritic;
+          pr_dscritic := vr_dscritic;
+        END IF;
+      WHEN OTHERS THEN
+        pr_cdcritic := vr_cdcritic;
+        pr_dscritic := 'Erro geral na rotina pc_permite_produto_situacao: ' || SQLERRM;
+    END;
+  END pc_permite_produto_situacao;
   
   /*****************************************************************************/
   /**                 Procedure permite produto tipo de conta                 **/
@@ -714,7 +893,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0006 IS
       FOR idx IN vr_tab_cdprodut.first..vr_tab_cdprodut.last LOOP
         
         pc_permite_produto_tipo(pr_cdprodut => to_number(vr_tab_cdprodut(idx))
-                               ,pr_cdtipcta => pr_cdtipcta
+                               ,pr_cdtipcta => pr_cdtipcta	
                                ,pr_cdcooper => pr_cdcooper
                                ,pr_inpessoa => pr_inpessoa
                                ,pr_possuipr => vr_possuipr
@@ -842,7 +1021,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0006 IS
           FROM crapcot t
          WHERE t.cdcooper = pr_cdcooper
            AND t.nrdconta = pr_nrdconta;
-           
+      
       -- Cursor sobre a tabela de associados
       CURSOR cr_crapass (pr_cdcooper IN crapcop.cdcooper%TYPE
                         ,pr_nrdconta IN crapass.nrdconta%TYPE) IS
@@ -883,7 +1062,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0006 IS
          WHERE cdcooper = pr_cdcooper
            AND nrdconta = pr_nrdconta
            AND cdsitpla = 1;
-           
+      
       -- buscar o valor das parcelas de poupança programada contratadas
       CURSOR cr_craprpp (pr_cdcooper IN crapcop.cdcooper%TYPE
                         ,pr_nrdconta IN crapass.nrdconta%TYPE
@@ -959,7 +1138,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0006 IS
            AND craplim.nrdconta = pr_nrdconta
            AND craplim.tpctrlim = 3  -- TITULOS
            AND craplim.insitlim = 2; -- Ativo
-           
+      
       -- Buscar empréstimos não liquidados
       CURSOR cr_crapepr (pr_cdcooper IN crapass.cdcooper%TYPE
                         ,pr_nrdconta IN crapass.nrdconta%TYPE) IS
@@ -990,13 +1169,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0006 IS
         CLOSE cr_crawcrd_bb;
         
       ELSIF pr_cdprodut = 12 THEN -- Integralização de capital
-        
+      
         -- buscar valor referente a integralização de capital
         OPEN  cr_crapcot(pr_cdcooper => pr_cdcooper
-                       ,pr_nrdconta => pr_nrdconta);
+                        ,pr_nrdconta => pr_nrdconta);
         FETCH cr_crapcot INTO pr_vlcontra;
         CLOSE cr_crapcot;
-        
+      
       ELSIF pr_cdprodut = 13 THEN -- Limite de crédito
         -- Abre a tabela de associados
         OPEN  cr_crapass(pr_cdcooper => pr_cdcooper
@@ -1015,10 +1194,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0006 IS
       ELSIF pr_cdprodut = 15 THEN -- Planos de Cotas
         -- buscar o valor de Planos de cotas contratados
         OPEN  cr_crappla(pr_cdcooper => pr_cdcooper
-                       ,pr_nrdconta => pr_nrdconta);
+                        ,pr_nrdconta => pr_nrdconta);
         FETCH cr_crappla INTO pr_vlcontra;
         CLOSE cr_crappla;
-
+      
       ELSIF pr_cdprodut = 16 THEN -- Poupança Programada
         -- buscar o valor das parcelas de poupança programada contratadas
         OPEN cr_craprpp(pr_cdcooper => pr_cdcooper
@@ -1033,7 +1212,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0006 IS
                        ,pr_nrdconta => pr_nrdconta);
         FETCH cr_crawcrd INTO pr_vlcontra;
         CLOSE cr_crawcrd;
-        
+      
       ELSIF pr_cdprodut = 31 THEN -- Empréstimo e Financiamento
         
         -- Buscar registros da DAT
@@ -1874,6 +2053,88 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0006 IS
     END;
   END pc_descricao_tipo_conta;
   
+  PROCEDURE pc_descricao_situacao_conta(pr_cdsituacao  IN tbcc_situacao_conta.cdsituacao%TYPE --> codigo da situacao de conta
+                                       ,pr_dssituacao OUT tbcc_situacao_conta.dssituacao%TYPE --> descricao da situacao de conta
+                                       ,pr_des_erro   OUT VARCHAR2 --> Código da crítica
+                                       ,pr_dscritic   OUT VARCHAR2) IS --> Descrição da crítica
+    /* .............................................................................
+    
+        Programa: pc_descricao_situacao_conta
+        Sistema : CECRED
+        Sigla   : EMPR
+        Autor   : Lombardi
+        Data    : Dezembro/17.                    Ultima atualizacao: --/--/----
+    
+        Dados referentes ao programa:
+    
+        Frequencia: Sempre que for chamado
+    
+        Objetivo  : Rotina para buscar descricao da situacao de conta.
+    
+        Observacao: -----
+    
+        Alteracoes:
+    ..............................................................................*/
+  BEGIN
+    DECLARE
+    
+      -- Variável de críticas
+      vr_cdcritic crapcri.cdcritic%TYPE; --> Cód. Erro
+      vr_dscritic VARCHAR2(1000); --> Desc. Erro
+    
+      -- Tratamento de erros
+      vr_exc_saida EXCEPTION;
+      
+      -- Busca situacao da conta
+      CURSOR cr_situacao(pr_cdsituacao IN tbcc_situacao_conta.cdsituacao%TYPE) IS
+        SELECT sit.dssituacao
+          FROM tbcc_situacao_conta sit
+         WHERE sit.cdsituacao = pr_cdsituacao;
+      rw_situacao cr_situacao%ROWTYPE;
+      
+    BEGIN
+      
+      -- Incluir nome do módulo logado
+      GENE0001.pc_informa_acesso(pr_module => 'CADA0006'
+                                ,pr_action => null);
+      
+      pr_des_erro := 'NOK';
+      
+      -- Verifica tipo de conta
+      IF pr_cdsituacao = 0 THEN
+        vr_dscritic := 'Código da situação de conta inválido.';
+        RAISE vr_exc_saida;
+      END IF;
+      
+      -- Busca tipo de conta
+      OPEN cr_situacao(pr_cdsituacao  => pr_cdsituacao);
+      FETCH cr_situacao INTO rw_situacao;
+      
+      IF cr_situacao%NOTFOUND THEN
+        CLOSE cr_situacao;
+        vr_dscritic := 'Situação não encontrada.';
+        RAISE vr_exc_saida;
+      END IF;
+      CLOSE cr_situacao;
+      
+      -- Retorna descricao do tipo de conta
+      pr_dssituacao := rw_situacao.dssituacao;
+      pr_des_erro := 'OK';
+      
+    EXCEPTION
+      WHEN vr_exc_saida THEN
+        IF vr_cdcritic <> 0 THEN
+          pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+        ELSE
+          pr_dscritic := vr_dscritic;
+        END IF;
+        ROLLBACK;
+      WHEN OTHERS THEN
+        pr_dscritic := 'Erro geral na rotina pc_descricao_tipo_conta: ' || SQLERRM;
+        ROLLBACK;
+    END;
+  END pc_descricao_situacao_conta;
+  
   PROCEDURE pc_busca_modalidade_tipo(pr_inpessoa           IN tbcc_tipo_conta.inpessoa%TYPE --> tipo de pessoa
                                     ,pr_cdtipo_conta       IN tbcc_tipo_conta.cdtipo_conta%TYPE --> codigo do tipo de conta
                                     ,pr_cdmodalidade_tipo OUT INTEGER --> descricao do tipo de conta
@@ -2253,7 +2514,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0006 IS
   
   PROCEDURE pc_busca_tipo_conta_itg(pr_inpessoa      IN tbcc_tipo_conta.inpessoa%TYPE --> tipo de pessoa
                                    ,pr_cdtipo_conta  IN tbcc_tipo_conta.cdtipo_conta%TYPE --> tipo de conta
-                                   ,pr_indconta_itg OUT tbcc_tipo_conta.indconta_itg%TYPE --> lista de tipos de conta
+                                   ,pr_indconta_itg OUT tbcc_tipo_conta.indconta_itg%TYPE --> indicador conta itg
                                    ,pr_des_erro     OUT VARCHAR2 --> Código da crítica
                                    ,pr_dscritic     OUT VARCHAR2) IS --> Descrição da crítica
     /* .............................................................................
@@ -2436,6 +2697,250 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0006 IS
         ROLLBACK;
     END;
   END pc_lista_tipo_conta_itg;
+  
+  PROCEDURE pc_ind_impede_credito(pr_cdcooper  IN crapass.cdcooper%TYPE --> Código da cooperativa
+                                 ,pr_nrdconta  IN crapass.nrdconta%TYPE --> Código da conta
+                                 ,pr_inimpede_credito OUT tbcc_situacao_conta_coop.inimpede_credito%TYPE --> indicador de impedimento
+                                 ,pr_des_erro OUT VARCHAR2 --> Código da crítica                             de operacao de credito.
+                                 ,pr_dscritic OUT VARCHAR2) IS --> Descrição da crítica
+    /* .............................................................................
+    
+        Programa: pc_ind_impede_credito
+        Sistema : CECRED 
+        Sigla   : EMPR
+        Autor   : Lombardi
+        Data    : Fevereiro/18.                    Ultima atualizacao: --/--/----
+        
+        Dados referentes ao programa:
+        
+        Frequencia: Sempre que for chamado
+        
+        Objetivo  : Rotina para retornar o indicador de impedimento de operacao de credito.
+        
+        Observacao: -----
+    
+        Alteracoes:
+    ..............................................................................*/
+  BEGIN
+    DECLARE
+    
+      -- Variável de críticas
+      vr_cdcritic crapcri.cdcritic%TYPE; --> Cód. Erro
+      vr_dscritic VARCHAR2(1000); --> Desc. Erro
+    
+      -- Tratamento de erros
+      vr_exc_saida EXCEPTION;
+      
+      -- Busca tipo de conta TBCC_SITUACAO_CONTA_COOP
+      CURSOR cr_situacao(pr_cdcooper IN crapass.cdcooper%TYPE
+                        ,pr_nrdconta IN crapass.nrdconta%TYPE) IS
+        SELECT sit.inimpede_credito
+          FROM tbcc_situacao_conta_coop sit
+              ,crapass ass
+         WHERE ass.cdcooper = pr_cdcooper
+           AND ass.nrdconta = pr_nrdconta
+           AND ass.cdcooper = sit.cdcooper
+           AND ass.cdsitdct = sit.cdsituacao;
+      rw_situacao cr_situacao%ROWTYPE;
+      
+    BEGIN
+      
+      -- Incluir nome do módulo logado
+      GENE0001.pc_informa_acesso(pr_module => 'CADA0006'
+                                ,pr_action => null);
+      
+      pr_des_erro := 'NOK';
+      
+      -- Busca tipo de conta
+      OPEN cr_situacao(pr_cdcooper => pr_cdcooper
+                      ,pr_nrdconta => pr_nrdconta);
+      FETCH cr_situacao INTO rw_situacao;
+      
+      IF cr_situacao%FOUND THEN
+        pr_inimpede_credito := rw_situacao.inimpede_credito;
+      ELSE
+        vr_dscritic := 'Situação não encontrado.';
+        RAISE vr_exc_saida;
+      END IF;
+      
+      pr_des_erro := 'OK';
+      
+    EXCEPTION
+      WHEN vr_exc_saida THEN
+        IF vr_cdcritic <> 0 THEN
+          pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+        ELSE
+          pr_dscritic := vr_dscritic;
+        END IF;
+        ROLLBACK;
+      WHEN OTHERS THEN
+        pr_dscritic := 'Erro geral na rotina pc_ind_impede_credito: ' || SQLERRM;
+        ROLLBACK;
+    END;
+  END pc_ind_impede_credito;
+  
+  PROCEDURE pc_ind_impede_talonario(pr_cdcooper  IN crapass.cdcooper%TYPE --> Código da cooperativa
+                                   ,pr_nrdconta  IN crapass.nrdconta%TYPE --> Código da conta
+                                   ,pr_inimpede_talionario OUT tbcc_situacao_conta_coop.inimpede_talionario%TYPE --> indicador de impedimento
+                                   ,pr_des_erro OUT VARCHAR2 --> Código da crítica                                   para retirada de talionarios
+                                   ,pr_dscritic OUT VARCHAR2) IS --> Descrição da crítica
+    /* .............................................................................
+    
+        Programa: pc_ind_impede_talonario
+        Sistema : CECRED 
+        Sigla   : EMPR
+        Autor   : Lombardi
+        Data    : Fevereiro/18.                    Ultima atualizacao: --/--/----
+        
+        Dados referentes ao programa:
+        
+        Frequencia: Sempre que for chamado
+        
+        Objetivo  : Rotina para retornar o indicador de impedimento para retirada de talionarios.
+        
+        Observacao: -----
+    
+        Alteracoes:
+    ..............................................................................*/
+  BEGIN
+    DECLARE
+    
+      -- Variável de críticas
+      vr_cdcritic crapcri.cdcritic%TYPE; --> Cód. Erro
+      vr_dscritic VARCHAR2(1000); --> Desc. Erro
+    
+      -- Tratamento de erros
+      vr_exc_saida EXCEPTION;
+      
+      -- Busca tipo de conta TBCC_SITUACAO_CONTA_COOP
+      CURSOR cr_situacao(pr_cdcooper IN crapass.cdcooper%TYPE
+                        ,pr_nrdconta IN crapass.nrdconta%TYPE) IS
+        SELECT sit.inimpede_talionario
+          FROM tbcc_situacao_conta_coop sit
+              ,crapass ass
+         WHERE ass.cdcooper = pr_cdcooper
+           AND ass.nrdconta = pr_nrdconta
+           AND ass.cdcooper = sit.cdcooper
+           AND ass.cdsitdct = sit.cdsituacao;
+      rw_situacao cr_situacao%ROWTYPE;
+      
+    BEGIN
+      
+      -- Incluir nome do módulo logado
+      GENE0001.pc_informa_acesso(pr_module => 'CADA0006'
+                                ,pr_action => null);
+      
+      pr_des_erro := 'NOK';
+      
+      -- Busca tipo de conta
+      OPEN cr_situacao(pr_cdcooper => pr_cdcooper
+                      ,pr_nrdconta => pr_nrdconta);
+      FETCH cr_situacao INTO rw_situacao;
+      
+      IF cr_situacao%FOUND THEN
+        pr_inimpede_talionario := rw_situacao.inimpede_talionario;
+      ELSE
+        vr_dscritic := 'Situação não encontrado.';
+        RAISE vr_exc_saida;
+      END IF;
+      
+      pr_des_erro := 'OK';
+      
+    EXCEPTION
+      WHEN vr_exc_saida THEN
+        IF vr_cdcritic <> 0 THEN
+          pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+        ELSE
+          pr_dscritic := vr_dscritic;
+        END IF;
+        ROLLBACK;
+      WHEN OTHERS THEN
+        pr_dscritic := 'Erro geral na rotina pc_ind_impede_talonario: ' || SQLERRM;
+        ROLLBACK;
+    END;
+  END pc_ind_impede_talonario;
+  
+  PROCEDURE pr_ind_contratacao_produto(pr_cdcooper  IN crapass.cdcooper%TYPE --> Código da cooperativa
+                                      ,pr_nrdconta  IN crapass.nrdconta%TYPE --> Código da conta
+                                      ,pr_incontratacao_produto OUT tbcc_situacao_conta_coop.incontratacao_produto%TYPE --> indicador de impedimento para 
+                                      ,pr_des_erro OUT VARCHAR2 --> Código da crítica                                       contratacao de produtos e serviços
+                                      ,pr_dscritic OUT VARCHAR2) IS --> Descrição da crítica
+    /* .............................................................................
+    
+        Programa: pc_ind_contratacao_produto
+        Sistema : CECRED 
+        Sigla   : EMPR
+        Autor   : Lombardi
+        Data    : Fevereiro/18.                    Ultima atualizacao: --/--/----
+        
+        Dados referentes ao programa:
+        
+        Frequencia: Sempre que for chamado
+        
+        Objetivo  : Rotina para retornar o indicador de impedimento para contratacao de produtos 
+                    e serviços (0-Nao impede/1-Todos/2-Todos exceto emissao de boletos)
+        
+        Observacao: -----
+    
+        Alteracoes:
+    ..............................................................................*/
+  BEGIN
+    DECLARE
+    
+      -- Variável de críticas
+      vr_cdcritic crapcri.cdcritic%TYPE; --> Cód. Erro
+      vr_dscritic VARCHAR2(1000); --> Desc. Erro
+    
+      -- Tratamento de erros
+      vr_exc_saida EXCEPTION;
+      
+      -- Busca tipo de conta TBCC_SITUACAO_CONTA_COOP
+      CURSOR cr_situacao(pr_cdcooper IN crapass.cdcooper%TYPE
+                        ,pr_nrdconta IN crapass.nrdconta%TYPE) IS
+        SELECT sit.incontratacao_produto
+          FROM tbcc_situacao_conta_coop sit
+              ,crapass ass
+         WHERE ass.cdcooper = pr_cdcooper
+           AND ass.nrdconta = pr_nrdconta
+           AND ass.cdcooper = sit.cdcooper
+           AND ass.cdsitdct = sit.cdsituacao;
+      rw_situacao cr_situacao%ROWTYPE;
+      
+    BEGIN
+      
+      -- Incluir nome do módulo logado
+      GENE0001.pc_informa_acesso(pr_module => 'CADA0006'
+                                ,pr_action => null);
+      
+      pr_des_erro := 'NOK';
+      
+      -- Busca situacao de conta
+      OPEN cr_situacao(pr_cdcooper => pr_cdcooper
+                      ,pr_nrdconta => pr_nrdconta);
+      FETCH cr_situacao INTO rw_situacao;
+      
+      IF cr_situacao%FOUND THEN
+        pr_incontratacao_produto := rw_situacao.incontratacao_produto;
+      ELSE
+        vr_dscritic := 'Situação não encontrado.';
+        RAISE vr_exc_saida;
+      END IF;
+      
+      pr_des_erro := 'OK';
+      
+    EXCEPTION
+      WHEN vr_exc_saida THEN
+        IF vr_cdcritic <> 0 THEN
+          pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+        ELSE
+          pr_dscritic := vr_dscritic;
+        END IF;
+        ROLLBACK;
+      WHEN OTHERS THEN
+        pr_dscritic := 'Erro geral na rotina pr_ind_contratacao_produto: ' || SQLERRM;
+        ROLLBACK;
+    END;
+  END pr_ind_contratacao_produto;
   
   PROCEDURE pc_valida_grupo_historico(pr_cdgrupo_historico IN tbcc_grupo_historico.cdgrupo_historico%TYPE --> codigo do tipo de conta
                                      ,pr_flggphis         OUT VARCHAR2 --> flag existe grupo de historico (0-Nao/1-Sim)
@@ -2738,6 +3243,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0006 IS
                         ,pr_nrdconta IN crapass.nrdconta%TYPE) IS
         SELECT ass.cdtipcta
               ,ass.inpessoa
+              ,ass.cdsitdct
           FROM crapass ass
          WHERE ass.cdcooper = pr_cdcooper
            AND ass.nrdconta = pr_nrdconta;
@@ -2755,6 +3261,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0006 IS
       END IF;
       -- Fechar cursor
       CLOSE cr_crapass;
+      
+      -- Verifica se a situacao de conta permite a contratação do produto
+      pc_permite_produto_situacao(pr_cdprodut => pr_cdprodut
+                                 ,pr_cdcooper => pr_cdcooper
+                                 ,pr_cdsitdct => rw_crapass.cdsitdct
+                                 ,pr_possuipr => vr_possuipr
+                                 ,pr_cdcritic => vr_cdcritic
+                                 ,pr_dscritic => vr_dscritic);
+      -- Se ocorrer erro
+      IF vr_cdcritic > 0 OR vr_dscritic IS NOT NULL THEN
+        RAISE vr_exc_saida;
+      END IF;
+      
+      vr_possuipr := '';
+      
       -- Verifica se o tipo de conta permite a contratação do produto
       pc_permite_produto_tipo(pr_cdprodut => pr_cdprodut
                              ,pr_cdtipcta => rw_crapass.cdtipcta
@@ -3080,7 +3601,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0006 IS
          vr_vlcontra <= rw_produto.vlmaximo_adesao THEN 
         RETURN;
       ELSE -- Se nao gera critica
-        IF pr_idorigem NOT IN(1,5) THEN
+        IF pr_idorigem NOT IN(1,5) THEN 
            vr_dscritic := 'Valor contratado deve estar entre ' || to_char(rw_produto.vlminimo_adesao,'FM999G999G990D00') || 
                                                          ' e ' || to_char(rw_produto.vlmaximo_adesao,'FM999G999G990D00') || '.';
         ELSE
@@ -3182,8 +3703,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0006 IS
            -- Desconsidera o valor dos emprestimos marcados para liquidacao
            AND (TRIM(pr_dsctrliq) IS NULL
             OR TO_CHAR(t.nrctremp) NOT IN (SELECT regexp_substr(TRIM(pr_dsctrliq), '[^,]+', 1, LEVEL) item
-                                             FROM dual
-                                       CONNECT BY LEVEL <= regexp_count(TRIM(pr_dsctrliq), '[^,]+')));
+                                   FROM dual
+                            CONNECT BY LEVEL <= regexp_count(TRIM(pr_dsctrliq), '[^,]+')));
       
 		  -- Cursor da data
       rw_crapdat BTCH0001.cr_crapdat%ROWTYPE;
@@ -3696,5 +4217,316 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0006 IS
       pr_dscritic := 'Erro ao gravar TBCC_CONTA_HISTORICO: '||SQLERRM; 
   END pc_grava_dados_hist;
   
+  --> Procedure para retornar as opçoes do dominio para o Ayllos WEB.
+  PROCEDURE pc_lista_situacoes_conta_web(pr_xmllog   IN VARCHAR2             --> XML com informações de LOG
+                                        ,pr_cdcritic OUT PLS_INTEGER         --> Código da crítica
+                                        ,pr_dscritic OUT VARCHAR2            --> Descrição da crítica
+                                        ,pr_retxml   IN OUT NOCOPY XMLType   --> Arquivo de retorno do XML
+                                        ,pr_nmdcampo OUT VARCHAR2            --> Nome do campo com erro
+                                        ,pr_des_erro OUT VARCHAR2) IS        --> Erros do processo
+  /* ..........................................................................
+  --
+  --  Programa : pc_lista_situacoes_conta_web
+  --  Sistema  : Conta-Corrente - Cooperativa de Credito
+  --  Sigla    : CRED
+  --  Autor    : Lombardi
+  --  Data     : Agosto/2017.                   Ultima atualizacao:
+  --
+  --  Dados referentes ao programa:
+  --
+  --   Frequencia: Sempre que for chamado
+  --   Objetivo  : Procedure para retornar as situacoes de conta para o Ayllos WEB.
+  --
+  --
+  --   Alteração :
+  -- ..........................................................................*/
+
+    ------------------> CURSORES <----------------
+
+    CURSOR cr_situacao IS
+      SELECT cdsituacao
+            ,dssituacao
+        FROM tbcc_situacao_conta
+       ORDER BY cdsituacao;
+
+    -----------------> VARIAVEIS <-----------------
+    
+    vr_exc_erro     EXCEPTION;
+    vr_dscritic     VARCHAR2(4000);
+    
+    -----------------> SUBPROGRAMAS <--------------
+
+  BEGIN
+    
+    -- Criar cabecalho do XML
+    pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root><situacoes></situacoes></Root>');
+    
+    FOR rw_situacao IN cr_situacao LOOP
+      -- Registros
+      pr_retxml := XMLTYPE.appendChildXML(pr_retxml
+                                         ,'/Root/situacoes'
+                                         ,XMLTYPE('<situacao>'
+                                                ||'  <cdsituacao>' || rw_situacao.cdsituacao || '</cdsituacao>'
+                                                ||'  <dssituacao>' || rw_situacao.dssituacao || '</dssituacao>'
+                                                ||'</situacao>'));
+    END LOOP;
+
+  EXCEPTION
+    WHEN vr_exc_erro  THEN
+      pr_dscritic := vr_dscritic;
+      pr_des_erro := 'NOK';
+      -- Carregar XML padrão para variável de retorno não utilizada.
+      -- Existe para satisfazer exigência da interface.
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+    WHEN OTHERS THEN
+      pr_dscritic := 'Erro nao tratado ao carregar dominio:'||SQLERRM;
+      pr_des_erro := 'NOK';
+      -- Carregar XML padrão para variável de retorno não utilizada.
+      -- Existe para satisfazer exigência da interface.
+      pr_retxml := XMLType.createXML('<?xml version="1.0" encoding="ISO-8859-1" ?> ' ||
+                                     '<Root><Erro>' || pr_dscritic || '</Erro></Root>');
+  END pc_lista_situacoes_conta_web;
+
+  PROCEDURE pc_valor_min_capital(pr_cdcooper          IN tbcc_tipo_conta_coop.cdcooper%TYPE --> codigo da cooperativa
+                                ,pr_inpessoa          IN tbcc_tipo_conta_coop.inpessoa%TYPE --> tipo de pessoa
+                                ,pr_cdtipo_conta      IN tbcc_tipo_conta_coop.cdtipo_conta%TYPE --> codigo do tipo de conta
+                                ,pr_vlminimo_capital OUT tbcc_tipo_conta_coop.vlminimo_capital%TYPE --> descricao do tipo de conta
+                                ,pr_des_erro         OUT VARCHAR2 --> Código da crítica
+                                ,pr_dscritic         OUT VARCHAR2) IS --> Descrição da crítica
+    /* .............................................................................
+    
+        Programa: pc_valor_min_capital
+        Sistema : CECRED
+        Sigla   : EMPR
+        Autor   : Lombardi
+        Data    : Dezembro/17.                    Ultima atualizacao: --/--/----
+    
+        Dados referentes ao programa:
+    
+        Frequencia: Sempre que for chamado
+    
+        Objetivo  : Rotina para buscar descricao do tipo de conta.
+    
+        Observacao: -----
+    
+        Alteracoes:
+    ..............................................................................*/
+  BEGIN
+    DECLARE
+    
+      -- Variável de críticas
+      vr_cdcritic crapcri.cdcritic%TYPE; --> Cód. Erro
+      vr_dscritic VARCHAR2(1000); --> Desc. Erro
+    
+      -- Tratamento de erros
+      vr_exc_saida EXCEPTION;
+      
+      -- Busca tipo de conta
+      CURSOR cr_crapcop(pr_cdcooper IN crapcop.cdcooper%TYPE) IS
+        SELECT 1
+          FROM crapcop cop
+         WHERE cop.cdcooper = pr_cdcooper;
+      rw_crapcop cr_crapcop%ROWTYPE;
+      
+      -- Busca tipo de conta
+      CURSOR cr_tipo_conta(pr_cdcooper IN tbcc_tipo_conta_coop.cdcooper%TYPE
+                          ,pr_inpessoa IN tbcc_tipo_conta_coop.inpessoa%TYPE
+                          ,pr_tpconta  IN tbcc_tipo_conta_coop.cdtipo_conta%TYPE) IS
+        SELECT cta.vlminimo_capital
+          FROM tbcc_tipo_conta_coop cta
+         WHERE cta.cdcooper = pr_cdcooper
+           AND cta.inpessoa = pr_inpessoa
+           AND cta.cdtipo_conta = pr_tpconta;
+      rw_tipo_conta cr_tipo_conta%ROWTYPE;
+      
+    BEGIN
+      
+      -- Incluir nome do módulo logado
+      GENE0001.pc_informa_acesso(pr_module => 'CADA0006'
+                                ,pr_action => null);
+      
+      pr_des_erro := 'NOK';
+      
+      OPEN cr_crapcop(pr_cdcooper);
+      FETCH cr_crapcop INTO rw_crapcop;
+      -- Verifica tipo de conta
+      IF cr_crapcop%NOTFOUND THEN
+        vr_dscritic := 'Código da cooperativa inválido.';
+        RAISE vr_exc_saida;
+      END IF;
+      
+      -- Verifica tipo de pessoa
+      IF pr_inpessoa = 0 THEN
+        vr_dscritic := 'Tipo de pessoa inválido.';
+        RAISE vr_exc_saida;
+      END IF;
+      
+      -- Verifica tipo de conta
+      IF pr_cdtipo_conta = 0 THEN
+        vr_dscritic := 'Código do tipo de conta inválido.';
+        RAISE vr_exc_saida;
+      END IF;
+      
+      -- Busca tipo de conta
+      OPEN cr_tipo_conta(pr_cdcooper => pr_cdcooper
+                        ,pr_inpessoa => pr_inpessoa
+                        ,pr_tpconta  => pr_cdtipo_conta);
+      FETCH cr_tipo_conta INTO rw_tipo_conta;
+      
+      IF cr_tipo_conta%NOTFOUND THEN
+        CLOSE cr_tipo_conta;
+        vr_dscritic := 'Tipo de conta não encontrado.';
+        RAISE vr_exc_saida;
+      END IF;
+      CLOSE cr_tipo_conta;
+      
+      -- Retorna descricao do tipo de conta
+      pr_vlminimo_capital := rw_tipo_conta.vlminimo_capital;
+      pr_des_erro := 'OK';
+      
+    EXCEPTION
+      WHEN vr_exc_saida THEN
+        IF vr_cdcritic <> 0 THEN
+          pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+        ELSE
+          pr_dscritic := vr_dscritic;
+        END IF;
+        ROLLBACK;
+      WHEN OTHERS THEN
+        pr_dscritic := 'Erro geral na rotina pc_valor_min_capital: ' || SQLERRM;
+        ROLLBACK;
+    END;
+  END pc_valor_min_capital;
+  
+  PROCEDURE pc_verifica_lib_blq_pre_aprov(pr_cdcooper  IN tbcc_situacao_conta_coop.cdcooper%TYPE --> codigo da cooperativa
+                                         ,pr_nrdconta  IN tbepr_param_conta.nrdconta%TYPE --> Numero da conta
+                                         ,pr_cdsitdct  IN tbcc_situacao_conta_coop.cdsituacao%TYPE --> codigo da situacao
+                                         ,pr_des_erro OUT VARCHAR2 --> Código da crítica
+                                         ,pr_dscritic OUT VARCHAR2) IS --> Descrição da crítica
+    /* .............................................................................
+    
+        Programa: pc_verifica_lib_blq_pre_aprov
+        Sistema : CECRED
+        Sigla   : EMPR
+        Autor   : Lombardi
+        Data    : Dezembro/17.                    Ultima atualizacao: --/--/----
+    
+        Dados referentes ao programa:
+    
+        Frequencia: Sempre que for chamado
+    
+        Objetivo  : Rotina para buscar descricao do tipo de conta.
+    
+        Observacao: -----
+    
+        Alteracoes: 01/06/2018 - Ajustar regra de bloqueio do pré-aprovado e ajustar
+                                 tratamentos de erro. (Renato - Supero)
+    ..............................................................................*/
+  BEGIN
+    DECLARE
+    
+      -- Variável de críticas
+      vr_cdcritic crapcri.cdcritic%TYPE; --> Cód. Erro
+      vr_dscritic VARCHAR2(1000); --> Desc. Erro
+    
+      -- Tratamento de erros
+      vr_exc_saida EXCEPTION;
+      
+      -- Variáveis auxiliares
+      vr_possuipr VARCHAR2(1);
+      
+    BEGIN
+      
+      -- Incluir nome do módulo logado
+      GENE0001.pc_informa_acesso(pr_module => 'CADA0006'
+                                ,pr_action => null);
+      
+      pr_des_erro := 'NOK';
+      
+      -- Verifica se a situação permite pre aprovado
+      pc_permite_produto_situacao(pr_cdprodut => 25
+                                 ,pr_cdcooper => pr_cdcooper
+                                 ,pr_cdsitdct => pr_cdsitdct
+                                 ,pr_possuipr => vr_possuipr
+                                 ,pr_cdcritic => vr_cdcritic
+                                 ,pr_dscritic => vr_dscritic);
+      
+      -- Se ocorrer erro diferente de produto nao permitido
+      IF vr_possuipr <> 'N' AND vr_dscritic IS NOT NULL THEN
+         RAISE vr_exc_saida;
+      END IF;
+      
+      -- Se permitir
+      IF vr_possuipr = 'S' THEN
+          BEGIN
+            -- Libera pre aprovado
+            UPDATE tbepr_param_conta param
+               SET param.flglibera_pre_aprv = 1
+                  ,param.idmotivo = NULL
+                  ,param.dtatualiza_pre_aprv = TRUNC(SYSDATE)
+             WHERE param.cdcooper = pr_cdcooper
+               AND param.nrdconta = pr_nrdconta
+             AND param.flglibera_pre_aprv = 0 -- Não liberado...
+             AND param.idmotivo = 66;         -- ... e com motivo 66 (bloqueio por situação de conta)
+          EXCEPTION
+            WHEN OTHERS THEN
+            vr_dscritic := 'Erro ao liberar pre-aprovado: '||SQLERRM;
+              RAISE vr_exc_saida;
+          END;
+      ELSE
+        BEGIN
+          -- Bloqueado pre aprovado
+          UPDATE tbepr_param_conta param
+             SET param.flglibera_pre_aprv = 0
+                ,param.idmotivo = 66
+                ,param.dtatualiza_pre_aprv = TRUNC(SYSDATE)
+           WHERE param.cdcooper = pr_cdcooper
+             AND param.nrdconta = pr_nrdconta
+             AND param.flglibera_pre_aprv = 1;  -- Liberado
+             
+          -- Se nenhum registro foi alterado, deve ser incluso o bloqueio
+          IF SQL%ROWCOUNT = 0 THEN
+            BEGIN
+              INSERT INTO tbepr_param_conta(cdcooper
+                                           ,nrdconta
+                                           ,flglibera_pre_aprv
+                                           ,dtatualiza_pre_aprv
+                                           ,idmotivo)
+                                     VALUES(pr_cdcooper    -- cdcooper
+                                           ,pr_nrdconta    -- nrdconta
+                                           ,0              -- flglibera_pre_aprv
+                                           ,TRUNC(SYSDATE) -- dtatualiza_pre_aprv
+                                           ,66 );          -- idmotivo
+        EXCEPTION
+          WHEN OTHERS THEN
+                vr_dscritic := 'Erro incluir bloqueio pre-aprovado: '||SQLERRM;
+                RAISE vr_exc_saida;
+            END;
+          END IF;
+        
+        EXCEPTION
+          WHEN OTHERS THEN
+            vr_dscritic := 'Erro ao bloquear pre-aprovado: '||SQLERRM;
+            RAISE vr_exc_saida;
+        END;
+      END IF;
+      
+      pr_des_erro := 'OK';
+      
+    EXCEPTION
+      WHEN vr_exc_saida THEN
+        IF vr_cdcritic <> 0 THEN
+          pr_dscritic := GENE0001.fn_busca_critica(pr_cdcritic => vr_cdcritic);
+        ELSE
+          pr_dscritic := vr_dscritic;
+        END IF;
+        ROLLBACK;
+      WHEN OTHERS THEN
+        pr_dscritic := 'Erro geral na rotina pc_verifica_lib_blq_pre_aprov: ' || SQLERRM;
+        ROLLBACK;
+    END;
+  END pc_verifica_lib_blq_pre_aprov;
+
 END CADA0006;
 /

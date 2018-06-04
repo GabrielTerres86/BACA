@@ -541,10 +541,14 @@
                            em "Situacao de acesso a conta via internet".
                            (Jorge/David) Projeto 131 - Multipla Assinatura PJ
 
-			  13/09/2017 - Ajuste para retirar o uso de campos removidos da tabela
+		       	  13/09/2017 - Ajuste para retirar o uso de campos removidos da tabela
 			                     crapass, crapttl, crapjur (Adriano - P339).
 
-		       	  06/03/2018 - Ajuste para buscar a descricao do tipo de conta do oracle. PRJ366 (Lombardi)
+              06/03/2018 - Ajuste para buscar a descricao do tipo de conta do oracle. 
+                           PRJ366 (Lombardi).
+
+              30/04/2018 - Ajuste para buscar a descricao da situacao de conta do 
+                           oracle. PRJ366 (Lombardi).
 
 ............................................................................. */
 
@@ -616,6 +620,7 @@ DEF        VAR aux_vlparepr AS DEC                                     NO-UNDO.
 DEF        VAR aux_vlsaldod AS DEC                                     NO-UNDO.
 DEF        VAR aux_flgconso AS LOGI                                    NO-UNDO.
 DEF        VAR aux_dstipcta AS CHAR                                    NO-UNDO.
+DEF        VAR aux_dssituacao AS CHAR                                  NO-UNDO.
 DEF        VAR aux_des_erro AS CHAR                                    NO-UNDO.
 
 DEF        VAR aux_vlsldrgt AS DEC                                     NO-UNDO.
@@ -1740,7 +1745,7 @@ DO WHILE TRUE:
                     
     IF   crapass.cdtipcta > 0   THEN
          DO:
-
+            
             { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
              RUN STORED-PROCEDURE pc_descricao_tipo_conta
                aux_handproc = PROC-HANDLE NO-ERROR
@@ -1766,19 +1771,19 @@ DO WHILE TRUE:
                                     WHEN pc_descricao_tipo_conta.pr_dscritic <> ?.
      
              IF aux_des_erro = "NOK"  THEN
-                  DO:
+                DO:
                     glb_dscritic = aux_dscritic.
                     BELL.
                     MESSAGE glb_dscritic.
                     glb_cdcritic = 0.
                     NEXT.
-                                 END.
+                END.
              
              ASSIGN tel_dstipcta = STRING(crapass.cdtipcta,"z9") + " - " + aux_dstipcta.
-
-                  END.
-             ELSE
-                  tel_dstipcta = STRING(crapass.cdtipcta,"z9").
+             
+         END.
+    ELSE
+         tel_dstipcta = STRING(crapass.cdtipcta,"z9").
 
     IF   crapass.inpessoa = 1 THEN
          ASSIGN tel_nrcpfcgc = STRING(crapass.nrcpfcgc,"99999999999")
@@ -1840,25 +1845,33 @@ DO WHILE TRUE:
    /* IF  tel_nrramfon = ""  THEN
         ASSIGN tel_nrramfon = STRING (craptfc.nrtelefo) .  dani*/
 
+    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }    
+    RUN STORED-PROCEDURE pc_descricao_situacao_conta
+      aux_handproc = PROC-HANDLE NO-ERROR
+                              (INPUT crapass.cdsitdct, /* pr_cdsituacao */
+                              OUTPUT "",               /* pr_dssituacao */
+                              OUTPUT "",               /* pr_des_erro   */
+                              OUTPUT "").              /* pr_dscritic   */
         
-    tel_dssitdct = STRING(crapass.cdsitdct,"9") + " " +
-                   IF crapass.cdsitdct = 1
-                   THEN "NORMAL"
-                   ELSE IF crapass.cdsitdct = 2
-                        THEN "ENCERRADA P/ASSOCIADO"
-                        ELSE IF crapass.cdsitdct = 3
-                             THEN "ENCERRADA P/COOP"
-                             ELSE IF crapass.cdsitdct = 4
-                                  THEN "ENCERRADA P/DEMISSAO"
-                                  ELSE IF crapass.cdsitdct = 5
-                                       THEN "NAO APROVADA"
-                                       ELSE
-                                            IF crapass.cdsitdct = 6 
-                                            THEN "NORMAL - SEM TALAO"
+    CLOSE STORED-PROC pc_descricao_situacao_conta
+          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+    
+    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+
+    ASSIGN aux_dssituacao = ""
+           aux_des_erro = ""
+           aux_dscritic = ""
+           aux_dssituacao = pc_descricao_situacao_conta.pr_dssituacao 
+                           WHEN pc_descricao_situacao_conta.pr_dssituacao <> ?
+           aux_des_erro = pc_descricao_situacao_conta.pr_des_erro
+                           WHEN pc_descricao_situacao_conta.pr_des_erro <> ?
+           aux_dscritic = pc_descricao_situacao_conta.pr_dscritic
+                           WHEN pc_descricao_situacao_conta.pr_dscritic <> ?.
+    
+    IF aux_des_erro = "NOK"  THEN
+       tel_dssitdct = STRING(crapass.cdsitdct,"9") + " ".
                                             ELSE
-                                                IF crapass.cdsitdct = 9
-                                                THEN "ENCERRADA P/OUTRO MOTIVO"
-                                                ELSE "".
+       tel_dssitdct = STRING(crapass.cdsitdct,"9") + " " + aux_dssituacao.
 
     /**** Magui passa para o item OCORRENCIAS  ****/
     /* Procurar registro de devolucoes de cheques */

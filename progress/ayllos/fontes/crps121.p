@@ -72,6 +72,9 @@
                             
                28/10/2013 - Alterado totalizador de 99 para 999. (Reinert)
                             
+               02/05/2018 - Alterada verificacao crapass.cdtipcta = "2,4,9,11,13,15"
+                            pela chamada da proc pc_permite_produto_tipo. PRJ366 (Lombardi)
+                            
 ............................................................................. */
 
 DEF STREAM str_1.  /*  Para relatorio geral de saldos  */
@@ -157,6 +160,10 @@ DEF        VAR crl_agnvllim AS DECIMAL                               NO-UNDO.
 DEF        VAR crl_agnsdbtl AS DECIMAL                               NO-UNDO.
 DEF        VAR crl_agnsdstl AS DECIMAL                               NO-UNDO.
 
+DEF        VAR aux_possuipr AS CHAR                                  NO-UNDO.
+DEF        VAR aux_cdcritic AS INTE                                  NO-UNDO.
+DEF        VAR aux_dscritic AS CHAR                                  NO-UNDO.
+
 DEF        VAR aux_lsconta3 AS CHAR                                  NO-UNDO.
 /**** Variavies do proc_conta_integracao ****/
 DEF VAR aux_ctpsqitg LIKE craplcm.nrdctabb                           NO-UNDO.
@@ -170,6 +177,7 @@ DEF BUFFER crabass5 FOR crapass.
 { includes/var_atenda.i "new" }
 { includes/var_cpmf.i } 
 { includes/proc_conta_integracao.i }
+{ sistema/generico/includes/var_oracle.i }
 
 FOR LAST crapage FIELDS (cdagenci)
                  WHERE crapage.cdcooper = glb_cdcooper
@@ -672,10 +680,50 @@ FOR EACH crapage WHERE crapage.cdcooper = glb_cdcooper NO-LOCK:
              rel_vlsddisp < 0   THEN
              DO:
                  ASSIGN aux_flgnegat = TRUE
-                        aux_flgimprm = TRUE
-                        aux_flgespec = IF  CAN-DO("2,4,9,11,13,15",
-                                                     STRING(crapass.cdtipcta))
-                                       THEN TRUE
+                        aux_flgimprm = TRUE.
+                 
+                 { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+                 
+                 RUN STORED-PROCEDURE pc_permite_produto_tipo
+                 aux_handproc = PROC-HANDLE NO-ERROR (INPUT 13,               /* Codigo do produto */
+                                                      INPUT crapass.cdtipcta, /* Tipo de conta */
+                                                      INPUT crapass.cdcooper, /* Cooperativa */
+                                                      INPUT crapass.inpessoa, /* Tipo de pessoa */
+                                                     OUTPUT "",   /* Possui produto */
+                                                     OUTPUT 0,   /* Codigo da crítica */
+                                                     OUTPUT "").  /* Descriçao da crítica */
+                 
+                 CLOSE STORED-PROC pc_permite_produto_tipo
+                       aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+
+                 { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+                 
+                 ASSIGN aux_possuipr = ""
+                        aux_cdcritic = 0
+                        aux_dscritic = ""
+                        aux_possuipr = pc_permite_produto_tipo.pr_possuipr 
+                                       WHEN pc_permite_produto_tipo.pr_possuipr <> ?
+                        aux_cdcritic = pc_permite_produto_tipo.pr_cdcritic 
+                                       WHEN pc_permite_produto_tipo.pr_cdcritic <> ?
+                        aux_dscritic = pc_permite_produto_tipo.pr_dscritic
+                                       WHEN pc_permite_produto_tipo.pr_dscritic <> ?.
+                 
+                 IF aux_cdcritic > 0 OR aux_dscritic <> ""  THEN
+                      DO:
+                         ASSIGN glb_cdcritic = aux_cdcritic
+                                glb_dscritic = aux_dscritic.
+                         
+                         RUN fontes/critic.p.
+                         UNIX SILENT VALUE("echo " +
+                              STRING(TIME,"HH:MM:SS") + " - " +
+                              glb_cdprogra + "' --> '" + glb_dscritic +
+                              "CONTA = " + STRING(tel_nrdconta) +
+                              " >> log/proc_batch.log").
+                         glb_cdcritic = 0.
+                         RETURN.
+                      END.
+                 
+                 ASSIGN aux_flgespec = IF aux_possuipr = "S" THEN TRUE
                                        ELSE FALSE.
 
                  IF   aux_flgespec THEN

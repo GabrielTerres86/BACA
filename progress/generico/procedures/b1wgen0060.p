@@ -24,14 +24,17 @@
                             (Adriano).
 
                02/08/2016 - Inclusao insitage 3-Temporariamente Indisponivel.
-                            (Jaison/Anderson)                                             
+                            (Jaison/Anderson)   
 
                19/06/2017 - Ajuste para inclusao do novo tipo de situacao da conta
-  				             "Desligamento por determinação do BACEN" 
-							( Jonata - RKAM P364).							
+                            "Desligamento por determinação do BACEN" 
+                            ( Jonata - RKAM P364).										
 
                14/03/2018 - Ajuste para buscar a descricao do tipo de conta do 
                             oracle. PRJ366 (Lombardi).							
+
+               04/05/2018 - Ajuste para buscar a descricao da situacao de conta do 
+                            oracle. PRJ366 (Lombardi).
 
 .............................................................................*/
 
@@ -689,21 +692,31 @@ FUNCTION BuscaSituacaoConta RETURNS LOGICAL
       OUTPUT par_dssitdct AS CHARACTER,
       OUTPUT par_dscritic AS CHARACTER ):
 
-    CASE par_cdsitdct:
-        WHEN 1 THEN ASSIGN par_dssitdct = "NORMAL".
-        WHEN 2 THEN ASSIGN par_dssitdct = "ENCERRADA PELO ASSOCIADO".
-        WHEN 3 THEN ASSIGN par_dssitdct = "ENCERRADA PELA COOP".
-        WHEN 4 THEN ASSIGN par_dssitdct = "ENCERRADA PELA DEMISSAO".
-        WHEN 5 THEN ASSIGN par_dssitdct = "NAO APROVADA".
-        WHEN 6 THEN ASSIGN par_dssitdct = "NORMAL - SEM TALAO".
-        WHEN 7 THEN ASSIGN par_dssitdct = "EM PROC. DEMISSAO".
-		WHEN 8 THEN ASSIGN par_dssitdct = "EM PROC. DEM. BACEN".
-        WHEN 9 THEN ASSIGN par_dssitdct = "ENCERRADA P/ OUTRO MOTIVO".
+    DEF VAR aux_des_erro AS CHAR          NO-UNDO.
+    
+    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+    
+    RUN STORED-PROCEDURE pc_descricao_situacao_conta
+    aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdsitdct, /* pr_cdsituacao */
+                                        OUTPUT "",           /* pr_dssituacao */
+                                        OUTPUT "",           /* pr_des_erro   */
+                                        OUTPUT "").          /* pr_dscritic   */
+    
+    CLOSE STORED-PROC pc_descricao_situacao_conta
+          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+    
+    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+    
+    ASSIGN par_dssitdct = ""
+           aux_des_erro = ""
+           par_dssitdct = UPPER(pc_descricao_situacao_conta.pr_dssituacao)
+                          WHEN pc_descricao_situacao_conta.pr_dssituacao <> ?
+           aux_des_erro = pc_descricao_situacao_conta.pr_des_erro 
+                          WHEN pc_descricao_situacao_conta.pr_des_erro <> ?.
 		
-        OTHERWISE 
+    IF aux_des_erro = "NOK" THEN 
             ASSIGN par_dssitdct = ""
                    par_dscritic = "Situacao de Conta Inexistente.".
-    END CASE.
 
     RETURN (par_dssitdct <> "").
         

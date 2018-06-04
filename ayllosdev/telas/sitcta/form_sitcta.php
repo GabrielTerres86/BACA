@@ -7,7 +7,7 @@
 
   Objetivo  : Mostrar valores da SITCTA.
 
-  Alterações: 
+  Alterações: 17/05/2018 - Adicionada linha 6901. PRJ366 (Lombardi) 
   
 
  * ********************************************************************* */
@@ -57,14 +57,14 @@
 		<input type="checkbox" id="idimpede_credito" name="idimpede_credito" <? echo $somenteConsulta ? 'disabled' : '';?> <? echo getByTagName($xmlSituacao->tags,'inimpede_credito') == 1 ? 'checked' : ''; ?> />
 		<div style="text-align: left; margin-left: 30px;">		
 			<? echo utf8ToHtml( "Impede opera&ccedil;&otilde;es de cr&eacute;dito (cart&atilde;o, empr&eacute;stimo, limite de cr&eacute;dito, limite de desconto, ".
-								"border&ocirc;, pr&eacute;-aprovado), exceto linhas 100, 800, 900 ou se a classifica&ccedil;&atilde;o da opera&ccedil;&atilde;o ".
+								"border&ocirc;, pr&eacute;-aprovado), exceto linhas 100, 800, 900 e 6901 ou se a classifica&ccedil;&atilde;o da opera&ccedil;&atilde;o ".
 								"for renova&ccedil;&atilde;o ou composi&ccedil;&atilde;o de d&iacute;vida"); ?>
 		</div>
 		<br style="clear:both" />
 		
 		<input type="checkbox" id="idimpede_talionario" name="idimpede_talionario" <? echo $somenteConsulta ? 'disabled' : '';?> <? echo getByTagName($xmlSituacao->tags,'inimpede_talionario') == 1 ? 'checked' : ''; ?> >
 		<div style="text-align: left; margin-left: 30px;">		
-			<? echo utf8ToHtml("Impede retirada de talion&aacute;rio"); ?>
+			<? echo utf8ToHtml("Impede retirada de talon&aacute;rio"); ?>
 		</div>
 		<br style="clear:both" />
 		

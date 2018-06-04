@@ -256,6 +256,12 @@
 							alteracao pode ser feita na tela CONTAS, opção Conta Corrente. 
 							Chamado INC0013673 - Gabriel (Mouts).
 
+			   23/05/2018 - Incluida chamada para a procedure pc_verifica_lib_blq_pre_aprov para 
+			                verificar se deve ser liberado ou bloqueado pre aprovado para a conta 
+							com a nova situacao de conta. PRJ366 (Lombardi).
+
+                30/05/2018 - Retirar solicitaçao automática de Conta ITG (Renato Darosci - Supero).
+                
 .............................................................................*/
 
 /*............................. DEFINICOES ..................................*/
@@ -1138,7 +1144,6 @@ PROCEDURE Valida_Dados_Altera:
                     LEAVE ValidaAltera.
             END.
         
-        /* Esta funcionalidade nao será tratada nesta primeira liberaçao
         IF crapass.cdsitdct <> par_cdsitdct THEN
             DO:
                 { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} } 
@@ -1171,7 +1176,7 @@ PROCEDURE Valida_Dados_Altera:
                 
                 IF par_cdcritic <> 0 OR par_dscritic <> "" THEN
                     LEAVE ValidaAltera.
-            END.	  */
+            END.
         
         IF  NOT VALID-HANDLE(h-b1wgen0060) THEN
             RUN sistema/generico/procedures/b1wgen0060.p
@@ -1788,7 +1793,7 @@ PROCEDURE Valida_Dados_Altera:
 
         /* O associado esta no SPC ou no CCF, exige situacao da conta <> 1 */
         IF (par_inadimpl = 1 OR par_inlbacen = 1) AND
-           (par_cdsitdct = 1 OR par_cdsitdct = 6) THEN
+           (par_cdsitdct = 1) THEN
             DO:
                ASSIGN par_dscritic = "Situacao invalida. Cooperado no SPC/CCF."
                       par_nmdcampo = "cdsitdct".
@@ -3207,7 +3212,7 @@ PROCEDURE Grava_Dados_Altera:
     DEF  INPUT PARAM par_cdcatego AS INTE							NO-UNDO.
 	DEF  INPUT PARAM par_idseqttl AS INTE                           NO-UNDO.
 	DEF  INPUT PARAM aux_dsorigem AS CHAR                           NO-UNDO.
-
+	
   	DEF PARAM BUFFER crabass FOR crapass.
 
     DEF OUTPUT PARAM par_cdcritic AS INTE                           NO-UNDO.
@@ -3337,6 +3342,8 @@ PROCEDURE Grava_Dados_Altera:
                          END.                    
                 END.*/
                  
+              /*
+                 *** RETIRADA A SOLICITAÇAO AUTOMATICA DE CONTA ITG - RENATO - 30/05/2018 ***
               { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
               
               RUN STORED-PROCEDURE pc_busca_tipo_conta_itg
@@ -3385,7 +3392,7 @@ PROCEDURE Grava_Dados_Altera:
 
                     {&VERIFICA-ERRO}
 
-                 END.
+                 END.*/
 
               FOR EACH crapreq WHERE crapreq.cdcooper = par_cdcooper AND
                                      crapreq.cdagenci = par_cdagepac AND
@@ -3852,6 +3859,35 @@ PROCEDURE Grava_Dados_Altera:
 
               END. /* ContadorNeg */
 
+              { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl}}
+              
+              /* Efetuar a chamada da rotina Oracle */ 
+              RUN STORED-PROCEDURE pc_verifica_lib_blq_pre_aprov 
+                  aux_handproc = PROC-HANDLE NO-ERROR (INPUT par_cdcooper, /* pr_cdcooper */
+                                                       INPUT par_nrdconta, /* pr_nrdconta */
+                                                       INPUT par_cdsitdct, /* pr_cdsitdct */
+                                                       OUTPUT "",          /* pr_des_erro */
+                                                       OUTPUT "").         /* pr_dscritic */
+              
+              /* Fechar o procedimento para buscarmos o resultado */ 
+              CLOSE STORED-PROC pc_verifica_lib_blq_pre_aprov
+                  aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
+              
+              { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} } 
+              
+              /* Busca possíveis erros */ 
+              ASSIGN aux_des_erro = ""
+                     par_dscritic = ""
+                     aux_des_erro = pc_verifica_lib_blq_pre_aprov.pr_des_erro 
+                                    WHEN pc_verifica_lib_blq_pre_aprov.pr_des_erro <> ?
+                     par_dscritic = pc_verifica_lib_blq_pre_aprov.pr_dscritic 
+                                    WHEN pc_verifica_lib_blq_pre_aprov.pr_dscritic <> ?.
+              
+              IF aux_des_erro = "NOK" THEN
+                 DO:	 
+                     UNDO GravaAltera, LEAVE GravaAltera.
+                 END.
+              
               IF par_cdcritic <> 0 THEN
                  UNDO GravaAltera, LEAVE GravaAltera.
 
@@ -5610,7 +5646,7 @@ PROCEDURE Grava_Dados_Encerra:
              END.
         
         IF  crabass.cdsitdct <> 4 AND aux_inctaitg = 1 THEN
-            ASSIGN crapass.cdsitdct = 6.
+            ASSIGN crapass.cdsitdct = 1.
                
         ASSIGN crabass.flgctitg = 3.
         

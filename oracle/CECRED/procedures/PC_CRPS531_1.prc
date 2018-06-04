@@ -248,11 +248,13 @@ BEGIN
 			   
 			   15/05/2018 - Bacenjud SM 1 - Heitor (Mouts)
 
+			   18/05/2018 - Ajuste para gerar criticas em contas encerradas (CRAPASS.CDSITDCT = 4)
+
 			   28/05/2018 - Ajustes efetuados:
 						    > Para pegar corretamente o número de controle
 							> Efetuar devolução para cooperativa coorreta
 							(Adriano - INC0016217 ).
-              
+
          30/05/2018 - Ajustes para retirar a validação de IFs incorporadas, pois
                       como foram desatividas, deverá gearar devolução pela cooperativa central
                       (Adriano)
@@ -907,6 +909,10 @@ BEGIN
           pr_dscritic := 'Conta informada invalida.';
           RETURN;
         ELSIF rw_crapass.dtelimin IS NOT NULL THEN
+          pr_cdcritic := 1;  /* Conta encerrada */
+          RETURN;
+        ELSIF vr_aux_CodMsg IN('PAG0108R2','PAG0143R2')-- TED
+        AND rw_crapass.cdsitdct = 4  THEN
           pr_cdcritic := 1;  /* Conta encerrada */
           RETURN;
         ELSE
@@ -6275,13 +6281,13 @@ END;
                                     ,pr_nmarqlog      => vr_nmarqlog);
 
 			  IF vr_aux_CodMsg = 'STR0006R2' and (vr_aux_FinlddCli <> '15' OR (vr_aux_CNPJ_CPFDeb<>'01027058000191' and vr_aux_CNPJ_CPFDeb<>'1027058000191')) THEN
-			
+			  
 			     -- Busca dados da Coope destino
            OPEN cr_busca_coop(pr_cdagectl => vr_aux_AgCredtd);
            FETCH cr_busca_coop INTO rw_crapcop_mensag;
            CLOSE cr_busca_coop;
 		     
-            /* Mensagem Invalida para o Tipo de Transacao ou Finalidade*/
+          /* Mensagem Invalida para o Tipo de Transacao ou Finalidade*/
             vr_aux_codierro := 4;
             vr_aux_dsdehist := 'Mensagem Invalida para o Tipo de Transacao ou Finalidade.';
             vr_log_msgderro := vr_aux_dsdehist;

@@ -159,6 +159,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
                   12/12/2017 - Projeto 410 - Incluir o tratamento para o IOF por atraso - (Jean / MOut´S)
                   
                   20/03/2018 - #INC0010628 Não considerar contratos que foram para prejuízo (Carlos)
+                  
+                  27/04/2018 - Removida funcao fn_des_cdsitdct. PRJ366 (Lombardi)
   ---------------------------------------------------------------------------------------------------------------*/
   
   --> Funcao para CPF/CNPJ
@@ -626,51 +628,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
     WHEN OTHERS THEN
       RETURN NULL;
   END fn_des_cdtipcta;
-  
-  --> Rotina para retornar descrição de situacao da conta
-  FUNCTION fn_des_cdsitdct (pr_cdsitdct  IN NUMBER) --> Codigo de situacao da conta
-                            RETURN VARCHAR2 IS 
-  /* ..........................................................................
-    
-      Programa : fn_des_cdsitdct        
-      Sistema  : Conta-Corrente - Cooperativa de Credito
-      Sigla    : CRED
-      Autor    : Odirlei Busana(Amcom)
-      Data     : Maio/2017.                   Ultima atualizacao: 04/05/2017
-    
-      Dados referentes ao programa:
-    
-      Frequencia: Sempre que for chamado
-      Objetivo  : Rotina para retornar descrição de situacao da conta
-    
-      Alteração : 
-        
-    ..........................................................................*/
-    -----------> CURSORES <-----------    
-    
-    -----------> VARIAVEIS <-----------   
-    vr_dssitcta VARCHAR2(100) := NULL;
-    
-  BEGIN
-    
-    SELECT CASE pr_cdsitdct 
-             WHEN  1 THEN 'Nor'
-             WHEN  2 THEN 'Enc.Ass'
-             WHEN  3 THEN 'Enc.COOP'
-             WHEN  4 THEN 'Enc.Dem'
-             WHEN  5 THEN 'Nao aprov'
-             WHEN  6 THEN 'S/Tal'
-             WHEN  9 THEN 'Outr'
-             ELSE NULL
-           END CASE  
-      INTO vr_dssitcta FROM dual;         
-      
-      RETURN vr_dssitcta;
-        
-  EXCEPTION
-    WHEN OTHERS THEN
-      RETURN NULL;
-  END fn_des_cdsitdct;
   
   --> Rotina para retornar descrição de indicador
   FUNCTION fn_des_incasprp (pr_incasprp  IN NUMBER) --> Codigo indicador
@@ -3967,9 +3924,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
       Objetivo  : Rotina responsavel por montar o objeto json para analise.
     
       Alteração : 19/10/2017 - Enviar um novo campo "valorPrestLiquidacao". (Lombardi)
-
-	              23/11/2017 - Alterações para o projeto 404. (Lombardi)
-      
+        
+                  23/11/2017 - Alterações para o projeto 404. (Lombardi)
+        
                   23/11/2017 - Alterações para o projeto 404. (Lombardi)
         
     ..........................................................................*/
@@ -4307,7 +4264,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
     vr_dsquapro      VARCHAR2(100);
     vr_flgcolab      BOOLEAN;
     vr_cddcargo      tbcadast_colaborador.cdcooper%TYPE;
-    vr_qtdiarpv      INTEGER;
+		vr_qtdiarpv      INTEGER;
     vr_vlpreclc      NUMBER := 0;                -- Parcela calcula
     vr_valoriof      NUMBER;
     vr_vliofpri      NUMBER;
@@ -4556,7 +4513,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
         vr_obj_generico.put('bemEmGarantia', vr_lst_generic2);
       END IF;
     END IF;  
-   
+
     -- Busca quantidade de dias da carencia
     IF rw_crawepr.tpemprst = 2 AND nvl(rw_crawepr.idcarenc,0) > 0 THEN
       EMPR0011.pc_busca_qtd_dias_carencia(pr_idcarencia => rw_crawepr.idcarenc
@@ -4597,7 +4554,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
       RAISE vr_exc_erro;
     END IF;    
        
-    
+
     vr_obj_generico.put('operacao', rw_crawepr.dsoperac); 
     vr_obj_generico.put('CETValor', este0001.fn_decimal_ibra(nvl(rw_crawepr.percetop,0)));
     vr_obj_generico.put('IOFValor', este0001.fn_decimal_ibra(nvl(vr_valoriof,0)));

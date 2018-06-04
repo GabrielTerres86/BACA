@@ -6,6 +6,9 @@
  * OBJETIVO     : Rotina para busca da regra da tela CADPRE
  * --------------
  * ALTERAÇÕES   : 11/07/2016 - Adicionados novos campos para a fase 3 do projeto de Pre aprovado. (Lombardi)
+ *
+ *                27/04/2018 - Alteração  da situação de "1,2,3,4,5,6,8,9" para "1,2,3,4,5,7,8,9". 
+ *                             Projeto 366. (Lombardi)
  * -------------- 
  */
 
@@ -49,7 +52,7 @@
 	$regra = $xmlObjeto->roottag->tags[0];
 	$riscos = $xmlObjeto->roottag->tags[1]->tags;
 	
-    $arrsitua = array('1','2','3','4','5','6','8','9');
+    $arrsitua = array('1','2','3','4','5','7','8','9');
     $arrsitbd = explode(";", getByTagName($regra->tags,'dssitdop')); // Transforma em array
     $arrlsali = explode(";", getByTagName($regra->tags,'dslstali')); // Transforma em array
 ?>
@@ -64,8 +67,7 @@
 
     <?php
         foreach ($arrsitbd as $flgsitua) {
-            $codsitua = array_search($flgsitua, $arrsitua); // Verifica o indice do array atravez do valor passado
-            echo "$('#sit" . $codsitua . "','#frmRegra').attr('checked', 'checked');";
+            echo "$('#sit" . $flgsitua . "','#frmRegra').attr('checked', 'checked');";
         }
     ?>
 

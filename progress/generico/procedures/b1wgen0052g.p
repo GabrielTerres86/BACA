@@ -160,7 +160,7 @@
                 17/07/2017 - Alteraçao CDOEDTTL pelo campo IDORGEXP.
                              PRJ339 - CRM (Odirlei-AMcom)  	
 
-				11/08/2017 - Incluído o número do cpf ou cnpj na tabela crapdoc.
+                11/08/2017 - Incluído o número do cpf ou cnpj na tabela crapdoc.
                              Projeto 339 - CRM. (Lombardi)	
 
 
@@ -175,7 +175,7 @@
                              que nao estao na tela. PRJ339 - CRM (Odirlei-AMcom)
 
                 12/03/2018 - Alterado de forma que o tipo de conta nao seja mais fixo e sim 
-                             parametrizado através da tela CADPAR. PRJ366 (Lombardi).							 
+                             parametrizado através da tela CADPAR. PRJ366 (Lombardi).
 
                 13/02/2018 - Ajustes na geraçao de pendencia de digitalizaçao.
                              PRJ366 - tipo de conta (Odirlei-AMcom)             
@@ -184,6 +184,9 @@
                 24/04/2018 - Adicionado campo cdcatego na inclusao de nova conta.
                            - Gravar historico de inclusao dos campos cdtipcta,
                              cdsitdct e cdcatego. PRJ366 (Lombardi).
+
+                04/05/2018 - Alteracao nos codigos da situacao de conta (cdsitdct). 
+                             PRJ366 (Lombardi).		
 
 .............................................................................*/
                                                      
@@ -897,7 +900,7 @@ PROCEDURE Altera PRIVATE :
             (par_cdmotdem <> crabass.cdmotdem) THEN
             /* busca motivo demissão */
               { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
-                            
+
                 /* Efetuar a chamada a rotina Oracle */ 
                 RUN STORED-PROCEDURE prc_busca_motivo_demissao
                 aux_handproc = PROC-HANDLE NO-ERROR 
@@ -907,7 +910,7 @@ PROCEDURE Altera PRIVATE :
                    ,OUTPUT ""           /* pr_dsmotdem --> Descriçao Motivo Demissao */
                    ,OUTPUT 0            /* pr_cdcritic --> Codigo da critica)   */
                    ,OUTPUT "" ).        /* pr_dscritic --> Descriçao da critica).  */
-                                        
+
                 /* Fechar o procedimento para buscarmos o resultado */ 
                 CLOSE STORED-PROC prc_busca_motivo_demissao
                 aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc. 
@@ -4419,7 +4422,7 @@ PROCEDURE Inclui PRIVATE :
                        crabass.nmttlrfb = SUBSTR(par_nmttlrfb,1,200) 
                        crabass.inconrfb = par_inconrfb 
                        crabass.hrinicad = par_hrinicad 
-                       crabass.cdsitdct = 6  /* Normal S/Talao */
+                       crabass.cdsitdct = 1  /* Em uso */
                        crabass.cdtipcta = INT(crappco.dsconteu)  /* Normal Convenio */
                        /* Inicio - Alteracoes referentes a M181 - Rafael Maciel (RKAM) */
                        crabass.cdopeori = par_cdoperad

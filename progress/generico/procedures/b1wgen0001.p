@@ -409,10 +409,10 @@
 							 
                 10/07/2016 - inclusão do campo vllimcpa na tabela tt-saldos  (M441 - Roberto Holz (Mouts))
 
-                18/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
-                             crapass, crapttl, crapjur 
-                             (Adriano - P339).
-                             
+				18/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+			                 crapass, crapttl, crapjur 
+							(Adriano - P339).
+
                 17/01/2018 - Ajustar chamada da rotina carrega_dados_tarifa_vigente
                              pois haviam casos em que nao estavamos entrando na rotina
                              na procedure gera-tarifa-extrato (Lucas Ranghetti #787894)
@@ -421,6 +421,8 @@
 
                 21/04/2018 - Alterar tratamento do retorno da pc_consulta_extrato_car para
                              tratar o novo campo idlstdom (Anderson - P285)
+
+                03/05/2018 - Alterado para buscar descricao da situacao de conta do oracle. PRJ366 (Lombardi).
 
 ..............................................................................*/
 
@@ -1476,47 +1478,47 @@ PROCEDURE gera-tarifa-extrato:
     /** Lista apenas para impres.p atenda/extrato exceto crps029.p **/
    
     IF  par_dtrefere < ( crapdat.dtmvtocd - 30 ) THEN /* Periodo */
-        DO:
-            IF par_nrterfin <> 0 THEN /* TAA */ 
-                DO:
-                    ASSIGN aux_tipotari = 9.
+            DO:
+                IF par_nrterfin <> 0 THEN /* TAA */ 
+                    DO:
+						  ASSIGN aux_tipotari = 9.
 
-                    IF crapass.inpessoa = 1 THEN /* Fisica */
-                        ASSIGN aux_cdbattar = "EXTPETAAPF".
-                    ELSE
-                        ASSIGN aux_cdbattar = "EXTPETAAPJ".
-                END.
+                        IF crapass.inpessoa = 1 THEN /* Fisica */
+                            ASSIGN aux_cdbattar = "EXTPETAAPF".
+                        ELSE
+                            ASSIGN aux_cdbattar = "EXTPETAAPJ".
+                    END.
+                ELSE
+                    DO:
+						  ASSIGN aux_tipotari = 8.
+
+                        IF crapass.inpessoa = 1 THEN /* Fisica */
+                            ASSIGN aux_cdbattar = "EXTPEPREPF".
+                        ELSE
+                            ASSIGN aux_cdbattar = "EXTPEPREPJ".
+                    END. 
+            END.
             ELSE
-                DO:
-                    ASSIGN aux_tipotari = 8.
+            DO:
+                IF par_nrterfin <> 0 THEN /* TAA */ 
+                    DO:
+						  ASSIGN aux_tipotari = 7.
 
-                    IF crapass.inpessoa = 1 THEN /* Fisica */
-                        ASSIGN aux_cdbattar = "EXTPEPREPF".
-                    ELSE
-                        ASSIGN aux_cdbattar = "EXTPEPREPJ".
-                END. 
-        END.
-    ELSE
-        DO:
-            IF par_nrterfin <> 0 THEN /* TAA */ 
-                DO:
-                    ASSIGN aux_tipotari = 7.
+                        IF crapass.inpessoa = 1 THEN /* Fisica */
+                            ASSIGN aux_cdbattar = "EXTMETAAPF".
+                        ELSE
+                            ASSIGN aux_cdbattar = "EXTMETAAPJ".
+                    END.
+                ELSE
+                    DO:
+						  ASSIGN aux_tipotari = 6.
 
-                    IF crapass.inpessoa = 1 THEN /* Fisica */
-                        ASSIGN aux_cdbattar = "EXTMETAAPF".
-                    ELSE
-                        ASSIGN aux_cdbattar = "EXTMETAAPJ".
-                END.
-            ELSE
-                DO:
-                    ASSIGN aux_tipotari = 6.
-
-                    IF crapass.inpessoa = 1 THEN /* Fisica */
-                        ASSIGN aux_cdbattar = "EXTMEPREPF".
-                    ELSE
-                        ASSIGN aux_cdbattar = "EXTMEPREPJ".
-                END.
-        END.
+                        IF crapass.inpessoa = 1 THEN /* Fisica */
+                            ASSIGN aux_cdbattar = "EXTMEPREPF".
+                        ELSE
+                            ASSIGN aux_cdbattar = "EXTMEPREPJ".
+                    END.
+            END.
 
     IF  par_flgtarif  THEN
         DO:
@@ -6418,7 +6420,7 @@ FUNCTION fgetdstipcta RETURNS CHARACTER (INPUT p-cdcooper AS INTEGER):
     DEF VAR aux_dstipcta AS CHAR                              NO-UNDO.
     DEF VAR aux_des_erro AS CHAR                              NO-UNDO.
     DEF VAR aux_dscritic AS CHAR                              NO-UNDO.
-
+    
     { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
     
     RUN STORED-PROCEDURE pc_descricao_tipo_conta
@@ -6445,21 +6447,43 @@ FUNCTION fgetdstipcta RETURNS CHARACTER (INPUT p-cdcooper AS INTEGER):
     
     IF aux_des_erro = "NOK"  THEN
         RETURN STRING(crapass.cdtipcta,"z9").
-
+    
     RETURN STRING(crapass.cdtipcta,"z9") + " - " + aux_dstipcta.
 
 END FUNCTION.
 
 FUNCTION fgetdssitdct RETURNS CHARACTER:
-DEFINE VARIABLE dsSitDct AS CHARACTER  NO-UNDO.
+DEFINE VARIABLE aux_dssitcta AS CHARACTER  NO-UNDO.
+DEFINE VARIABLE aux_des_erro AS CHARACTER  NO-UNDO.
+DEFINE VARIABLE aux_dscritic AS CHARACTER  NO-UNDO.
 
-    ASSIGN dsSitDct = "NORMAL,ENCERRADA P/ASSOCIADO,ENCERRADA P/COOP,ENCERRADA ~P/DEMISSAO,NAO APROVADA,NORMAL - SEM TALAO,,,ENCERRADA P/OUTRO MOTIVO".
+    { includes/PLSQL_altera_session_antes_st.i &dboraayl={&scd_dboraayl} }
+    
+    RUN STORED-PROCEDURE pc_descricao_situacao_conta
+    aux_handproc = PROC-HANDLE NO-ERROR (INPUT crapass.cdsitdct, /* pr_cdsituacao */
+                                        OUTPUT "",               /* pr_dssituacao */
+                                        OUTPUT "",               /* pr_des_erro   */
+                                        OUTPUT "").              /* pr_dscritic   */
+    
+    CLOSE STORED-PROC pc_descricao_situacao_conta
+          aux_statproc = PROC-STATUS WHERE PROC-HANDLE = aux_handproc.
+    
+    { includes/PLSQL_altera_session_depois_st.i &dboraayl={&scd_dboraayl} }
+    
+    ASSIGN aux_dssitcta = ""
+           aux_des_erro = ""
+           aux_dscritic = ""
+           aux_dssitcta = pc_descricao_situacao_conta.pr_dssituacao 
+                          WHEN pc_descricao_situacao_conta.pr_dssituacao <> ?
+           aux_des_erro = pc_descricao_situacao_conta.pr_des_erro 
+                          WHEN pc_descricao_situacao_conta.pr_des_erro <> ?
+           aux_dscritic = pc_descricao_situacao_conta.pr_dscritic
+                          WHEN pc_descricao_situacao_conta.pr_dscritic <> ?.
 
-    RETURN STRING(crapass.cdsitdct,"9") + " " + 
-           IF   crapass.cdsitdct > 0 
-           AND  crapass.cdsitdct <= NUM-ENTRIES(dsSitDct) 
-           THEN  ENTRY(crapass.cdsitdct,dsSitDct)
-           ELSE "".
+    IF aux_des_erro = "NOK" THEN 
+        aux_dssitcta = "".
+
+    RETURN STRING(crapass.cdsitdct,"9") + " " + UPPER(aux_dssitcta).
 
 END FUNCTION.
 

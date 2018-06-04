@@ -45,6 +45,7 @@
  * 034: [05/03/2018] Inclusão do campo idcobope no array arrayStatusApprov. PRJ404 (Reinert)
  * 035: [13/04/2018] Adicionada verificacao se Tipo de Conta permite empréstimo. PRJ366 (Lombardi).
  * 036: [12/04/2018] P410 - Melhorias/Ajustes IOF (Marcos-Envolti)
+ * 037: [16/05/2018] Alterada frase de retorno da verificacao do Tipo de Conta. PRJ366 (Lombardi)
 
  */
 
@@ -161,7 +162,7 @@
 			
 			// Se ocorrer um erro, mostra crítica
 			if (strtoupper($xmlObj->roottag->tags[0]->name) == "ERRO") { 
-				exibirErro('inform','Tipo de Conta n&atilde;o permite empr&eacute;stimo. Ser&aacute; permitido apenas inclus&atilde;o de propostas de CDC.','Alerta - Ayllos',"bloqueiaFundo(divRotina);",true);
+				exibirErro('inform','Conta n&atilde;o permite empr&eacute;stimo. Permitido apenas inclus&atilde;o de propostas de CDC e linhas 100, 800, 900 e 6901.','Alerta - Ayllos',"bloqueiaFundo(divRotina);",true);
 			}
 		}
 		

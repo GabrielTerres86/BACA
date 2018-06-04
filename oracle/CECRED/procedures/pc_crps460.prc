@@ -113,6 +113,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS460(pr_cdcooper  IN craptab.cdcooper%T
 			                crapass, crapttl, crapjur 
 							(Adriano - P339).
 
+               30/04/2018 - Buscar descricao de situacao pela procedure pc_descricao_situacao_conta.
+                            Permite talonario pela procedure pc_ind_impede_talonario. PRJ366 (Lombardi).
 
 ............................................................................. */
 
@@ -205,6 +207,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS460(pr_cdcooper  IN craptab.cdcooper%T
 
   -- Variáveis relativas aos arquivos
   vr_tab_cdrelato  typ_cdrelatos;
+  
+  vr_inimpede_talionario tbcc_situacao_conta_coop.inimpede_talionario%TYPE;
   
   --------------------------------------------------------------------------------
   -- Gerar talonario
@@ -495,6 +499,8 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS460(pr_cdcooper  IN craptab.cdcooper%T
     vr_typ_said      VARCHAR2(50);
     vr_des_erro      VARCHAR2(2000);
     
+    vr_dssituacao    tbcc_situacao_conta.dssituacao%TYPE;
+    
     -- Verifica o digito da conta
     FUNCTION fn_ver_contaitg(pr_nrdctitg IN VARCHAR2) RETURN NUMBER IS 
     BEGIN
@@ -755,9 +761,18 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS460(pr_cdcooper  IN craptab.cdcooper%T
       
       -- Se não encontrar crítica
       IF vr_cdcritic = 0 THEN 
-        -- Verifica a situação da conta
-        IF rw_crapreq.cdsitdct <> 1 THEN
-          vr_cdcritic := 64;
+        
+        CADA0006.pc_ind_impede_talonario(pr_cdcooper => pr_cdcooper
+                                ,pr_nrdconta => rw_crapreq.nrdconta
+                                ,pr_inimpede_talionario => vr_inimpede_talionario
+                                ,pr_des_erro => vr_des_erro
+                                ,pr_dscritic => vr_dscritic);
+        IF vr_des_erro = 'NOK' THEN
+          RAISE vr_exc_saida;
+        END IF;
+        -- Se nao houver impedimento para retirada de talionarios
+        IF vr_inimpede_talionario = 1 THEN 
+          vr_cdcritic := 18;
         -- Verifica a situação do titular
         ELSIF rw_crapreq.cdsitdtl IN (5,6,7,8) THEN
           vr_cdcritic := 695;
@@ -1421,26 +1436,14 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS460(pr_cdcooper  IN craptab.cdcooper%T
           vr_relat433(vr_nrindice).dstipcta := to_char(rw_crapreq.cdtipcta,'00')||'-'||rw_craptip.dstipcta;
         END IF;
         
-        -- Inicializa a variável com o valor comum de toda a lógica do IF abaixo
-        vr_dssitdct := to_char(rw_crapreq.cdsitdct,'0')||'-';
-        
-        -- Verifica o codigo da situacao da conta
-        IF rw_crapreq.cdsitdct = 1  THEN
-          vr_dssitdct := vr_dssitdct||'NORMAL';
-        ELSIF rw_crapreq.cdsitdct = 2 THEN
-          vr_dssitdct := vr_dssitdct||'ENC.P/ASSOCIADO';
-        ELSIF rw_crapreq.cdsitdct = 3 THEN
-          vr_dssitdct := vr_dssitdct||'ENC. PELA COOP';
-        ELSIF rw_crapreq.cdsitdct = 4 THEN
-          vr_dssitdct := vr_dssitdct||'ENC.P/DEMISSAO';
-        ELSIF rw_crapreq.cdsitdct = 5 THEN
-          vr_dssitdct := vr_dssitdct||'NAO APROVADA';
-        ELSIF rw_crapreq.cdsitdct = 6 THEN
-          vr_dssitdct := vr_dssitdct||'NORMAL S/TALAO';
-        ELSIF rw_crapreq.cdsitdct = 9 THEN
-          vr_dssitdct := vr_dssitdct||'ENC.P/O MOTIVO';
-        ELSE
+        cada0006.pc_descricao_situacao_conta(pr_cdsituacao => rw_crapreq.cdsitdct
+                                            ,pr_dssituacao => vr_dssituacao
+                                            ,pr_des_erro   => vr_des_erro
+                                            ,pr_dscritic   => vr_dscritic);
+        IF vr_des_erro = 'NOK' THEN
           vr_dssitdct := NULL;
+        ELSE
+          vr_dssitdct := to_char(rw_crapreq.cdsitdct,'0')||'-'||vr_dssituacao;
         END IF;
         
         -- Valor para o relatório
