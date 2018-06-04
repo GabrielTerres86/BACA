@@ -2744,8 +2744,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
       vr_flgerlog VARCHAR2(100) := NULL;
       
       -- saidas para pc_gerar_lancamento_conta
-      vr_rowid  ROWID;
-      vr_nmtabela VARCHAR2(100);
+      vr_tab_retorno LANC0001.typ_reg_retorno;
       vr_incrineg INTEGER;
 
       ---------------- SUB-ROTINAS ------------------
@@ -3216,8 +3215,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TARI0001 AS
                                               , pr_nrterfin => pr_nrterfin
                                               , pr_nrautdoc => pr_nrautdoc
                                               , pr_dsidenti => pr_dsidenti
-                                              , pr_rowid => vr_rowid
-                                              , pr_nmtabela => vr_nmtabela
+                                              , pr_tab_retorno => vr_tab_retorno
                                               , pr_incrineg => vr_incrineg
                                               , pr_cdcritic => vr_cdcritic
                                               , pr_dscritic => vr_dscritic
