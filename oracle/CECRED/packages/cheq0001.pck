@@ -236,7 +236,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
     Sistema  : Rotinas focadas no sistema de Cheques
     Sigla    : GENE
     Autor    : Marcos Ernani Martini - Supero
-    Data     : Maio/2013.                   Ultima atualizacao: 24/11/2017
+    Data     : Maio/2013.                   Ultima atualizacao: 01/04/2018
 
    Dados referentes ao programa:
   
@@ -267,6 +267,9 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
                      
               24/11/2017 - Quando usar a opcao todos e filtrar pelo nr cheque
                            deve ordenar a lista pelo numero do cheque (Tiago/Adriano)
+                     
+              01/04/2018 - Ajuste para utilizar cursor com union, para validar se já existe
+                            crapdev criada (Jonata - MOUTS SD 859822).                           
                      
   --------------------------------------------------------------------------------------------------------------- */
 
@@ -334,7 +337,7 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Deborah/Edson
-   Data    : Outubro/94.                     Ultima atualizacao: 21/06/2017
+   Data    : Outubro/94.                     Ultima atualizacao: 01/04/2018
 
    Dados referentes ao programa:
 
@@ -418,6 +421,9 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
                             
                21/06/2017 - Remoção de 2 condições que tratam o envio de e-mail referente
                             a cheques VLB. PRJ367 - Compe Sessao Unica (Lombardi)
+                            
+               01/04/2018 - Ajuste para utilizar cursor com union, para validar se já existe
+                            crapdev criada (Jonata - MOUTS SD 859822).
 ............................................................................. */
     DECLARE
 
@@ -917,19 +923,29 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
        ELSIF pr_inchqdev = 2 OR  pr_inchqdev = 4  THEN
 
          --Selecionar devolucoes de cheques
-         OPEN cr_crapdev (pr_cdcooper => pr_cdcooper
+         OPEN cr_crapdev_union (pr_cdcooper => pr_cdcooper
                          ,pr_cdbanchq => vr_aux_cdbanchq
                          ,pr_cdagechq => pr_cdagechq
                          ,pr_nrctachq => pr_nrctachq
                          ,pr_nrcheque => pr_nrdocmto
-                         ,pr_cdhistor => 46);
+                               ,pr_cdhistor => pr_cdhistor);
          --Posicionar no proximo registro
-         FETCH cr_crapdev INTO rw_crapdev;
+         FETCH cr_crapdev_union INTO rw_crapdev_union;
          --Se encontrou
-         IF cr_crapdev%FOUND THEN
+         IF cr_crapdev_union%FOUND THEN
+           
+           --Fechar cursor
+           CLOSE cr_crapdev_union;
+         
            pr_cdcritic:= 415;
            --sair da rotina
            RAISE vr_exc_sair;
+         
+         ELSE
+           
+           --Fechar cursor
+           CLOSE cr_crapdev_union;
+         
          END IF;
 
          /* Se não for uma das alineas listadas insere devolução historico 46 */
@@ -984,9 +1000,6 @@ CREATE OR REPLACE PACKAGE BODY cecred.CHEQ0001 AS
                RAISE vr_exc_erro;
            END;
          END IF; --IF NOT fn_existe_alinea(pr_cdalinea) THEN
-         --Fechar Cursor
-         CLOSE cr_crapdev;
-
 
        ELSIF pr_inchqdev = 3  THEN  /* Transferencia */
 

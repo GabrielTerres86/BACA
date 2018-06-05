@@ -1,7 +1,7 @@
 /***********************************************************************
  Fonte: lcredi.js                                                  
  Autor: Andrei - RKAM
- Data : JULHO/2016                Última Alteração: 10/10/2017
+ Data : JULHO/2016                Última Alteração: 28/05/2018
                                                                    
  Objetivo  : Cadastro de servicos ofertados na tela LCREDI
                                                                    	 
@@ -12,6 +12,8 @@
                            (Jaison/James - PRJ298)
 
  			  10/10/2017 - Inclusao do campos % Mínimo Garantia e adicionado opção 4 no campo Modelo. (Lombardi - PRJ404)
+
+              28/05/2018 - Aumentado o limite de 3 para 4 o campo Grupo. (Andrey Formigari- Mout's)
 						  
 ************************************************************************/
 
@@ -237,7 +239,7 @@ function formataFormularioConsulta() {
     $('#txmensal', '#frmConsulta').css({ 'width': '100px', 'text-align': 'right' }).addClass('porcento_6').attr('maxlength', '10').desabilitaCampo();
     $('#txdiaria', '#frmConsulta').css({ 'width': '100px', 'text-align': 'right' }).addClass('porcento_7').attr('maxlength', '11').desabilitaCampo();
     $('#txbaspre', '#frmConsulta').css({ 'width': '100px', 'text-align': 'right' }).addClass('porcento_n').attr('maxlength', '6').desabilitaCampo();
-    $('#nrgrplcr', '#frmConsulta').css({ 'width': '100px', 'text-align': 'right' }).addClass('inteiro').attr('maxlength', '3').desabilitaCampo();
+    $('#nrgrplcr', '#frmConsulta').css({ 'width': '100px', 'text-align': 'right' }).addClass('inteiro').attr('maxlength', '4').desabilitaCampo();
     $('#qtcarenc', '#frmConsulta').css({ 'width': '100px', 'text-align': 'right' }).desabilitaCampo().addClass('inteiro').attr('maxlength', '5').setMask("INTEGER", "zzzzz", "", "");
     $('#perjurmo', '#frmConsulta').css({ 'width': '100px', 'text-align': 'right' }).addClass('porcento_6').attr('maxlength', '10').desabilitaCampo();
     $('#vlmaxass', '#frmConsulta').css({ 'width': '140px', 'text-align': 'right' }).desabilitaCampo().addClass('inteiro').attr('maxlength', '14').setMask("DECIMAL", "zzz.zzz.zz9,99", "", "");
