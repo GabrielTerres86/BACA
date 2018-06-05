@@ -1019,6 +1019,10 @@ PROCEDURE atualiza_browser:
               ASSIGN aux_dstpdcto = "DOCUMENTO SÓCIOS/ADMINISTRADORES".
           WHEN 55 THEN
               ASSIGN aux_dstpdcto = "DECLARACAO SIMPLES NACIONAL".          
+          WHEN 58 THEN
+              ASSIGN aux_dstpdcto = "TERMO DE ALTERAÇAO DE TITULARIDADE".    
+          WHEN 59 THEN
+              ASSIGN aux_dstpdcto = "DOCUMENTO DE EMANCIPACAO".                  
           OTHERWISE
               ASSIGN aux_dstpdcto = "Nao definido".
       END CASE.

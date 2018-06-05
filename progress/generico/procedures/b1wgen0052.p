@@ -1999,6 +1999,31 @@ PROCEDURE Grava_Dados:
                                           DELETE OBJECT h-b1wgen0137. 
                                                                                   
                                     END.
+                                    
+                                IF par_inhabmen = 1 THEN /*Menor habilitado*/
+                                   DO:
+                                     IF NOT VALID-HANDLE(h-b1wgen0137) THEN
+                                         RUN sistema/generico/procedures/b1wgen0137.p 
+                                         PERSISTENT SET h-b1wgen0137.
+                                        
+                                     RUN gera_pend_digitalizacao IN h-b1wgen0137                    
+                                                ( INPUT par_cdcooper,
+                                                  INPUT par_nrdconta, 
+                                                  INPUT par_idseqttl,
+                                                  INPUT aux_nrcpfcgc,
+                                                  INPUT par_dtmvtolt, 
+                                                  /*
+                                                      59 - Documento de Emancipaçao 
+                                                  */
+                                                  INPUT "59", 
+                                                    INPUT par_cdoperad,
+                                                   OUTPUT aux_cdcritic,
+                                                   OUTPUT aux_dscritic).
+
+                                        IF  VALID-HANDLE(h-b1wgen0137) THEN
+                                          DELETE OBJECT h-b1wgen0137. 
+                                                                                  
+                                    END.
                                 
 
                                 /* responsaveis  */
