@@ -70,6 +70,26 @@ $nmrotina = $_POST["nmrotina"];
                                                         <td width="150px" align="right" class="txtNormalBold">Data quitação da dívida:</td>
                                                         <td><input name="dtcatanu" id="dtcatanu" type="text" class="campo data" style="width:150px;"/></td>			
                                                     </tr>
+													<tr style="display:none" id="linhaRepresentantes">
+														<td colspan="2">
+															<fieldset>
+																<legend>Representantes</legend>
+																<table width="100%" border="0" cellspacing="3" cellpadding="0">
+																	<tr style="display:none">
+																		<td>																			
+																			<div>
+																				<label style="width:143px;">Nome:</label>
+																				<input name="nomrepres[]" type="text" class="campo nome" style="width:150px;" disabled readonly />
+																				<label style="width:143px;">CPF:</label>
+																				<input name="cpfrepres[]" type="text" class="campo cpf" style="width:150px;" disabled readonly />
+																				<img onclick="excluirRepresentante(this);" src="http://aylloshomol2.cecred.coop.br/imagens/geral/panel-error_16x16.gif" style="width: 16px;height: 16px;margin-top: 4px;margin-left: 5px;display: inline;">
+																			</div>
+																		</td>
+																	</tr>
+																</table>
+															</fieldset>
+														</td>
+                                                    </tr>
                                                                 
                                                 </table>	
                                             </fieldset>	
@@ -77,8 +97,9 @@ $nmrotina = $_POST["nmrotina"];
 										
 
 										<div id= "botao"> <!-- $('#divTestemunhas').css('display','none');$('#divImpressoes').css('display','block');  -->
-											<input type="image" id="btVoltar"  src="<? echo $UrlImagens; ?>botoes/voltar.gif"    onClick="fechaRotina($('#divRotina'));"/>	
-											<input type="image" id="btConfirmar"  src="<? echo $UrlImagens; ?>botoes/continuar.gif" onClick="imprimirCartaAnuencia();"/>	
+											<a href="#" class="botao" id="btNovoRepresentante" onClick="adicionarNovoRepresentante(this);">Incluir representante</a>
+											<a href="#" class="botao" id="btVoltar" onClick="fechaRotina($('#divRotina'));">Voltar</a>
+											<a href="#" class="botao" id="btConfirmar" onClick="imprimirCartaAnuencia();">Continuar</a>
 										</div>
                                     </div>
 								</td>
@@ -96,6 +117,38 @@ $nmrotina = $_POST["nmrotina"];
 	<input type="hidden" name="nrdocmto" id="nrdocmto">
 	<input type="hidden" name="cdbandoc" id="cdbandoc">
 	<input type="hidden" name="dtcatanu" id="dtcatanu">
+	<input type="hidden" name="nmrepres" id="nmrepres">
 	<input type="hidden" name="sidlogin" id="sidlogin" value="<?php echo $glbvars["sidlogin"]; ?>">
 </form>
-
+<script>
+	function adicionarNovoRepresentante(btn) {
+		var linha = $('#linhaRepresentantes');
+		
+		linha.show();
+		
+		var tb = linha.find('table');
+		var tr = tb.find('tr').first();
+		var clone = tr.clone();
+		
+		tb.append(clone);
+		clone.show();
+		clone.find('input').prop('disabled', false).prop('readonly', false);
+		
+		if (tb.find('tr:visible').length > 4) {
+			$(btn).hide();
+		}
+		
+	}
+	
+	function excluirRepresentante(el) {
+		$(el).closest('tr').remove();
+		
+		if (!$('#linhaRepresentantes table tr:visible').length) {
+			$('#linhaRepresentantes').hide();
+		}
+		
+		if ($('#linhaRepresentantes table tr:visible').length <= 4) {
+			$('#btNovoRepresentante').show();
+		}
+	}
+</script>

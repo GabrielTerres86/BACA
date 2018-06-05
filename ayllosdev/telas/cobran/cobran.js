@@ -213,6 +213,7 @@ function manterRotina(operacao) {
     var vlabatim = $('#vlabatim', '#frmCampo').val();
     var dtvencto = $('#dtvencto', '#frmCampo').val();
     var vldescto = $('#vldescto', '#frmCampo').val();
+    var qtdiaprt = $('#qtdiaprt', '#frmCampo').val();
 
     var nmarqint = '';
 
@@ -299,6 +300,7 @@ function manterRotina(operacao) {
             vrsarqvs: vrsarqvs,
             arquivos: arquivos,
             vldescto: vldescto,
+            qtdiaprt: qtdiaprt,
             redirect: 'script_ajax'
         },
         error: function (objAjax, responseError, objExcept) {
@@ -1268,12 +1270,38 @@ function dataPagamentoDivida() {
 function imprimirCartaAnuencia(){
     var nrdconta = normalizaNumero($('#nrdconta', '#' + frmOpcao).val());
 	var dtcatanu = $('#dtcatanu', '#frmDataPag').val();
+	var nmrepres = [];
+	var msgErro = '';
+
+	if (!dtcatanu) {
+	    msgErro = 'Data quita&ccedil;&atilde;o da d&iacute;vida deve ser preenchido';
+	}
+
+	$('[name="nomrepres[]"]:visible', '#frmDataPag').each(function(i){
+		var el = $(this),
+			nome = el.val(),
+			cpf  = el.next().next().val();
+
+		if (nome && cpf) {
+			nmrepres[i] = nome + ' com CPF: ' + cpf;
+		}else {
+			msgErro = 'Nome dos representantes e CPF obrigat&oacute;rios';
+        }
+    });
+
+	if (msgErro) {
+		showError('error', msgErro, 'Alerta - Ayllos', '');
+        return false;
+	}
+
+
     $('input,select', '#frmReport').habilitaCampo();
     $('#cdcooper', '#frmReport').val(cdcooper);
     $('#nrdconta', '#frmReport').val(nrdconta);
     $('#nrdocmto', '#frmReport').val(nrdocmto);
     $('#cdbandoc', '#frmReport').val(cdbandoc);
     $('#dtcatanu', '#frmReport').val(dtcatanu);
+    $('#nmrepres', '#frmReport').val(nmrepres.join(', '));
 
     var action = $('#frmReport').attr('action');
     var callafter = "$('input, select', '#frmReport,.classDisabled').desabilitaCampo();fechaRotina($(\'#divRotina\'));";

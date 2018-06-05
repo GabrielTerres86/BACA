@@ -28,10 +28,15 @@
 		exit();	
 	}	
 
-	$nrdconta = (isset($_POST['nrdconta'])) ? $_POST['nrdconta'] : 0;
-	$nrdocmto = (isset($_POST['nrdocmto'])) ? $_POST['nrdocmto'] : 0;
-	$cdbancoc = (isset($_POST['cdbandoc'])) ? $_POST['cdbandoc'] : 0;
-	$dtcatanu = (isset($_POST['dtcatanu'])) ? $_POST['dtcatanu'] : '';
+	$nrdconta = ( isset($_POST['nrdconta'])) ? $_POST['nrdconta'] : 0;
+	$nrdocmto = ( isset($_POST['nrdocmto'])) ? $_POST['nrdocmto'] : 0;
+	$cdbancoc = ( isset($_POST['cdbandoc'])) ? $_POST['cdbandoc'] : 0;
+	$dtcatanu = ( isset($_POST['dtcatanu'])) ? $_POST['dtcatanu'] : '';
+	$nmrepres = (!empty($_POST['nmrepres'])) ? $_POST['nmrepres'] : '';
+	
+	if ($nmrepres) {
+		$nmrepres = 'neste ato representado(a) pelo(s) sócio(s) ' . $nmrepres;
+	}
 	
 	// Montar o xml de Requisicao
 	$xml  = "";
@@ -42,6 +47,7 @@
 	$xml .= "   <nrdocmto>".$nrdocmto."</nrdocmto>";
 	$xml .= "   <cdbancoc>".$cdbancoc."</cdbancoc>";
 	$xml .= "   <dtcatanu>".$dtcatanu."</dtcatanu>";
+	$xml .= "   <nmrepres>".$nmrepres."</nmrepres>";
 	$xml .= "   <dtmvtolt>".$glbvars['dtmvtolt']."</dtmvtolt>";
 	$xml .= " </Dados>";
 	$xml .= "</Root>";
