@@ -402,6 +402,33 @@ END PROCEDURE.
 /* _UIB-CODE-BLOCK-END */
 &ANALYZE-RESUME
 
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE gera-erro w-html 
+
+/* procedure para gerar erro em tela 
+   pois a include que era usada {include/i-erro.i} 
+   ja esperava variaveis carregas entao foi trazido a logica
+   pra ca e eliminado o uso da include, as outras procedures
+   referentes a erro estao na include bo-erro1.i*/
+PROCEDURE gera-erro:
+
+    DEF INPUT PARAM par_cdcooper AS INTEGER                         NO-UNDO.
+    DEF INPUT PARAM par_cdagenci AS INTEGER                         NO-UNDO.
+    DEF INPUT PARAM par_cdbccxlt AS INTEGER                         NO-UNDO.
+
+    FIND FIRST craperr 
+         WHERE craperr.cdcooper = par_cdcooper AND
+               craperr.cdagenci = par_cdagenci AND 
+               craperr.nrdcaixa = par_cdbccxlt NO-LOCK NO-ERROR.
+
+    IF AVAIL craperr THEN 
+       DO:
+        {&out} "<script>window.open('mensagem.p','werro','height=220,width=400,scrollbars=yes,alwaysRaised=true')</script>".
+       END.
+
+END PROCEDURE.
+&ANALYZE-RESUME
+
+{dbo/bo-erro1.i}
 &ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE process-web-request w-html 
 PROCEDURE process-web-request :
 /*------------------------------------------------------------------------
@@ -419,6 +446,8 @@ PROCEDURE process-web-request :
    * procedure.  Running outputHeader precludes setting any additional cookie
    * information.
    */ 
+   
+   
   RUN outputHeader.
   {include/i-global.i}
     
@@ -644,13 +673,25 @@ PROCEDURE process-web-request :
  
   /* REQUEST-METHOD = GET */ 
   ELSE DO:
+  
+  
     /* This is the first time that the form has been called. Just return the
      * form.  Move 'RUN outputHeader.' here if you are going to simulate
      * another Web request. */ 
 
     IF GET-VALUE("v_sangria") <> "" THEN
     DO:
+    
         RUN dbo/b1crap00.p PERSISTENT SET h-b1crap00.
+
+        RUN valida-transacao IN h-b1crap00(INPUT v_coop,
+                                           INPUT int(v_pac),
+                                           INPUT int(v_caixa)).
+                      
+        IF  RETURN-VALUE = "NOK" THEN DO:
+            {include/i-erro.i}
+        END.
+        ELSE DO:
 
         RUN verifica-sangria-caixa IN h-b1crap00 (INPUT v_coop,
                                                   INPUT INT(v_pac),
@@ -678,6 +719,7 @@ PROCEDURE process-web-request :
             {&OUT}
                  '<script> window.location = "crap002.html" </script>'.
         END.
+    END.
     END.
    
     /* STEP 1 -
@@ -716,4 +758,5 @@ END PROCEDURE.
 
 /* _UIB-CODE-BLOCK-END */
 &ANALYZE-RESUME
+
 

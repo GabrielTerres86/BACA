@@ -20,6 +20,10 @@
 
                25/05/2016 - Incluir TRIM na gravacao da variavel "operador" pois
                             nao deve gravar com espacos (Lucas Ranghetti #455482)
+                            
+               20/04/2018 - liberaçao do caixa online mesmo com processo batch noturno executando
+                            Fabio Adriano (AMcom)
+                            
 ............................................................................ */
 
 &ANALYZE-SUSPEND _VERSION-NUMBER AB_v9r12 GUI adm2
@@ -448,8 +452,8 @@ PROCEDURE process-web-request :
         END.
         ELSE DO:
 
-           
-            RUN valida-transacao IN h-b1crap00(INPUT crapcop.nmrescop,
+            /* 20/04/2018 liberaçao do caixa online mesmo com processo batch noturno executando */
+            RUN valida-transacao2 IN h-b1crap00(INPUT crapcop.nmrescop,
                                                INPUT INT(get-value("user_pac")),
                                                INPUT INT(get-value("user_cx"))).
 

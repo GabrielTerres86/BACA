@@ -4,7 +4,7 @@
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Mirtes.
-   Data    : Marco/2001                      Ultima atualizacao: 12/12/2013
+   Data    : Marco/2001                      Ultima atualizacao: 10/05/2018
 
    Dados referentes ao programa:
 
@@ -48,6 +48,9 @@
                     
                27/06/2016 - Tratamentos para utilizaçao do Cartao CECRED e 
                             PinPad Novo (Lucas Lunelli - [PROJ290])
+                    
+               10/05/2018 - Alteraçoes para usar as rotinas mesmo com o processo 
+                            norturno rodando (Douglas Pagel - AMcom)
                     
 ............................................................................ */
 
@@ -698,8 +701,8 @@ PROCEDURE process-web-request :
 
      END.
      ELSE 
-        DO:
-           RUN valida-transacao IN h-b1crap00(INPUT v_coop,
+        DO: /*Alteraçoes para usar as rotinas mesmo com o processo norturno rodando*/ 
+           RUN valida-transacao2 IN h-b1crap00(INPUT v_coop,
                                              INPUT int(v_pac),
                                              INPUT int(v_caixa)).
     

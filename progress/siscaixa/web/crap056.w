@@ -9,6 +9,9 @@ Alteracoes:  21/12/2011 - Inclusao de parametro na rotina valida-saldo-conta
 
 			 06/02/2018 - Adicionado novo historico. (SD 838581 - Kelvin)
                                         
+            18/05/2018 - Alteraçoes para usar as rotinas mesmo com o processo 
+                          norturno rodando (Douglas Pagel - AMcom)
+                                        
                                         
 ***************************************************************************/
 &ANALYZE-SUSPEND _VERSION-NUMBER AB_v9r12 GUI adm2
@@ -568,7 +571,7 @@ PROCEDURE process-web-request :
 
             RUN dbo/b1crap00.p PERSISTENT SET h_b1crap00.
 
-            RUN valida-transacao IN h_b1crap00(INPUT v_coop,
+            RUN valida-transacao2 IN h_b1crap00(INPUT v_coop,
                                                INPUT v_pac, 
                                                INPUT v_caixa).
 

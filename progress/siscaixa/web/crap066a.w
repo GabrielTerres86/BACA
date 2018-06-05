@@ -12,6 +12,7 @@
    Objetivo  : Lançamento de cheques (adaptacao da rotina 51 + lanchq)
 
    Alteracoes: 29/07/2011 - Adaptado da rotina 51 (Guilherme).
+               23/05/2018 - Alterado para chamar a procedure valida-transacao2 - Everton Deserto(AMCom).
                             
 ............................................................................ */
 
@@ -564,7 +565,7 @@ PROCEDURE process-web-request :
 
          
          RUN dbo/b1crap00.p PERSISTENT SET h-b1crap00.
-         RUN valida-transacao IN h-b1crap00(INPUT v_coop,
+         RUN valida-transacao2 IN h-b1crap00(INPUT v_coop,   /*23/05/2018 - Alterado para chamar a procedure valida-transacao2 - Everton Deserto(AMCom)*/
                                             INPUT v_pac,
                                             INPUT v_caixa).
          DELETE PROCEDURE h-b1crap00.

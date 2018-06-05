@@ -413,7 +413,7 @@ PROCEDURE valida-caixa-aberto:
     /* Verifica se o caixa ja foi aberto hoje, nao pode por enquanto
        e necessario alterar o programa do boletim */
     FIND LAST crapbcx WHERE crapbcx.cdcooper = crapcop.cdcooper     AND
-                            crapbcx.dtmvtolt = crapdat.dtmvtolt     AND
+                            crapbcx.dtmvtolt = crapdat.dtmvtocd     AND
                             crapbcx.cdagenci = p-cod-agencia        AND
                             crapbcx.nrdcaixa = p-nro-caixa          AND
                             crapbcx.cdopecxa <> p-cod-operador      AND
@@ -435,7 +435,7 @@ PROCEDURE valida-caixa-aberto:
     
     /* Verifica se Usuario abriu caixa em outro terminal */
     FIND first crapbcx WHERE crapbcx.cdcooper = crapcop.cdcooper    AND
-                             crapbcx.dtmvtolt = crapdat.dtmvtolt    AND
+                             crapbcx.dtmvtolt = crapdat.dtmvtocd    AND
                              crapbcx.cdopecxa = p-cod-operador      AND
                              crapbcx.cdsitbcx = 1 
                              USE-INDEX crapbcx3 NO-LOCK NO-ERROR.

@@ -4,7 +4,7 @@
    Sistema : Caixa On-line
    Sigla   : CRED   
    Autor   : Mirtes.
-   Data    : Marco/2001                      Ultima atualizacao: 17/04/2017
+   Data    : Marco/2001                      Ultima atualizacao: 25/05/2017
 
    Dados referentes ao programa:
 
@@ -86,6 +86,9 @@
 
                16/03/2018 - Substituida verificacao "cdtipcta = 6,7" pela
                             modalidade do tipo de conta igual a 3. PRJ366 (Lombardi).
+                            
+               25/05/2018 - Alteraçoes para usar as rotinas mesmo com o processo 
+                      norturno rodando (Douglas Pagel - AMcom)
 
 ............................................................................ */
 /*-------------------------------------------------------------------------*/
@@ -1326,7 +1329,7 @@ PROCEDURE valida-deposito-com-captura:
          ASSIGN  aux_tpdmovto = 1.
     
     IF   CAN-FIND(crapchd WHERE crapchd.cdcooper = crapcop.cdcooper     AND
-                                crapchd.dtmvtolt = crapdat.dtmvtolt     AND
+                                crapchd.dtmvtolt = crapdat.dtmvtocd     AND
                                 crapchd.cdcmpchq = p-cdcmpchq           AND
                                 crapchd.cdbanchq = p-cdbanchq           AND
                                 crapchd.cdagechq = p-cdagechq           AND
@@ -1374,7 +1377,7 @@ PROCEDURE valida-deposito-com-captura:
      
      FOR EACH w-compel NO-LOCK:   /* Verifica Lancamento Existente */
          FIND crapchd WHERE crapchd.cdcooper = crapcop.cdcooper     AND
-                            crapchd.dtmvtolt = crapdat.dtmvtolt     AND
+                            crapchd.dtmvtolt = crapdat.dtmvtocd     AND
                             crapchd.cdcmpchq = w-compel.cdcmpchq    AND
                             crapchd.cdbanchq = w-compel.cdbanchq    AND
                             crapchd.cdagechq = w-compel.cdagechq    AND
@@ -1707,7 +1710,7 @@ PROCEDURE atualiza-deposito-com-captura:
     ASSIGN c-docto-salvo = STRING(TIME).
   
     FIND craplot WHERE craplot.cdcooper = crapcop.cdcooper  AND
-                       craplot.dtmvtolt = crapdat.dtmvtolt  AND
+                       craplot.dtmvtolt = crapdat.dtmvtocd  AND
                        craplot.cdagenci = p-cod-agencia     AND
                        craplot.cdbccxlt = 11                AND  /* Fixo */
                        craplot.nrdolote = i-nro-lote 
@@ -1717,7 +1720,7 @@ PROCEDURE atualiza-deposito-com-captura:
          DO:
              CREATE craplot.
              ASSIGN craplot.cdcooper = crapcop.cdcooper
-                    craplot.dtmvtolt = crapdat.dtmvtolt
+                    craplot.dtmvtolt = crapdat.dtmvtocd
                     craplot.cdagenci = p-cod-agencia   
                     craplot.cdbccxlt = 11              
                     craplot.nrdolote = i-nro-lote
@@ -1781,7 +1784,7 @@ PROCEDURE atualiza-deposito-com-captura:
                       
                       CREATE craplcm.
                       ASSIGN craplcm.cdcooper = crapcop.cdcooper
-                             craplcm.dtmvtolt = crapdat.dtmvtolt
+                             craplcm.dtmvtolt = crapdat.dtmvtocd
                              craplcm.cdagenci = p-cod-agencia
                              craplcm.cdbccxlt = 11
                              craplcm.dsidenti = p-identifica
@@ -1814,7 +1817,7 @@ PROCEDURE atualiza-deposito-com-captura:
                            DO:
                                CREATE craplcm.
                                ASSIGN craplcm.cdcooper = crapcop.cdcooper
-                                      craplcm.dtmvtolt = crapdat.dtmvtolt
+                                      craplcm.dtmvtolt = crapdat.dtmvtocd
                                       craplcm.cdagenci = p-cod-agencia
                                       craplcm.cdbccxlt  = 11
                                       craplcm.dsidenti = p-identifica
@@ -1834,7 +1837,7 @@ PROCEDURE atualiza-deposito-com-captura:
                            DO:
                                CREATE craplci.
                                ASSIGN craplci.cdcooper = crapcop.cdcooper
-                                      craplci.dtmvtolt = crapdat.dtmvtolt
+                                      craplci.dtmvtolt = crapdat.dtmvtocd
                                       craplci.cdagenci = p-cod-agencia
                                       craplci.cdbccxlt = 11
                                       craplci.nrdolote = i-nro-lote
@@ -1850,17 +1853,17 @@ PROCEDURE atualiza-deposito-com-captura:
                                     crapsli.cdcooper = crapcop.cdcooper     AND
                                     crapsli.nrdconta = aux_nrdconta         AND
                                     MONTH(crapsli.dtrefere) = 
-                                                   MONTH(crapdat.dtmvtolt)  AND
+                                                   MONTH(crapdat.dtmvtocd)  AND
                                     YEAR(crapsli.dtrefere) = 
-                                                   YEAR(crapdat.dtmvtolt) 
+                                                   YEAR(crapdat.dtmvtocd) 
                                     EXCLUSIVE-LOCK NO-ERROR.
                                IF   NOT AVAIL crapsli   THEN
                                     DO:
                                         ASSIGN aux_dtrefere =  
-                                           ((DATE(MONTH(crapdat.dtmvtolt),
-                                               28,YEAR(crapdat.dtmvtolt)) + 4) -
-                                            DAY(DATE(MONTH(crapdat.dtmvtolt),28,
-                                               YEAR(crapdat.dtmvtolt)) + 4)).
+                                           ((DATE(MONTH(crapdat.dtmvtocd),
+                                               28,YEAR(crapdat.dtmvtocd)) + 4) -
+                                            DAY(DATE(MONTH(crapdat.dtmvtocd),28,
+                                               YEAR(crapdat.dtmvtocd)) + 4)).
            
                                         CREATE crapsli.
                                         ASSIGN crapsli.cdcooper =
@@ -1890,7 +1893,7 @@ PROCEDURE atualiza-deposito-com-captura:
                            crapmdw.cdagenci = p-cod-agencia     AND
                            crapmdw.nrdcaixa = p-nro-caixa       NO-LOCK:
         FIND crapchd WHERE crapchd.cdcooper = crapcop.cdcooper  AND
-                           crapchd.dtmvtolt = crapdat.dtmvtolt  AND
+                           crapchd.dtmvtolt = crapdat.dtmvtocd  AND
                            crapchd.cdcmpchq = crapmdw.cdcmpchq  AND
                            crapchd.cdbanchq = crapmdw.cdbanchq  AND
                            crapchd.cdagechq = crapmdw.cdagechq  AND
@@ -1924,7 +1927,7 @@ PROCEDURE atualiza-deposito-com-captura:
                crapchd.cdoperad = p-cod-operador
                crapchd.cdsitatu = 1
                crapchd.dsdocmc7 = crapmdw.dsdocmc7
-               crapchd.dtmvtolt = crapdat.dtmvtolt
+               crapchd.dtmvtolt = crapdat.dtmvtocd
                crapchd.inchqcop = IF crapmdw.nrctaaux > 0 THEN 1 ELSE 0
                crapchd.insitchq = 0
                crapchd.cdtipchq = crapmdw.cdtipchq
@@ -1951,7 +1954,7 @@ PROCEDURE atualiza-deposito-com-captura:
                                                    INPUT p-cod-agencia,
                                                    INPUT p-nro-caixa,
                                                    INPUT p-cod-operador,
-                                                   INPUT crapdat.dtmvtolt,
+                                                   INPUT crapdat.dtmvtocd,
                                                    INPUT 1). /**Inclusao**/ 
         DELETE PROCEDURE h_b1crap00.
         
@@ -1990,7 +1993,7 @@ PROCEDURE atualiza-deposito-com-captura:
            c-literal[1] = TRIM(crapcop.nmrescop) +  " - " + 
                                                  TRIM(crapcop.nmextcop) 
            c-literal[2]  = " "
-           c-literal[3]  = STRING(crapdat.dtmvtolt,"99/99/99") + " " + 
+           c-literal[3]  = STRING(crapdat.dtmvtocd,"99/99/99") + " " + 
                            STRING(TIME,"HH:MM:SS") +  " PA  " + 
                            STRING(p-cod-agencia,"999") + "  CAIXA: " + 
                            STRING(p-nro-caixa,"Z99") + "/" +

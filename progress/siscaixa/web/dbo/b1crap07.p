@@ -4,7 +4,7 @@
    Sistema : Caixa On-line
    Sigla   : CRED   
    Autor   : Mirtes.
-   Data    : Marco/2001                      Ultima atualizacao: 16/12/2013.
+   Data    : Marco/2001                      Ultima atualizacao: 02/05/2018.
 
    Dados referentes ao programa:
 
@@ -23,6 +23,10 @@
                             abertura-boletim-caixa. (Fabricio)
                             
                16/12/2013 - Adicionado validate para tabela crapbcx (Tiago).
+               
+               02/05/2018 - Utilizaçao do caixa on-line mesmo se o processo 
+                            batch (noturno) estiver executando (Fabio Adriano - AMcom)
+                            
 ............................................................................ */
 
 /*--------------------------------------------------------------------*/
@@ -52,14 +56,14 @@ PROCEDURE abertura-boletim-caixa:
                              NO-LOCK NO-ERROR.
 
     FIND FIRST crapbcx WHERE crapbcx.cdcooper = crapcop.cdcooper    AND
-                             crapbcx.dtmvtolt = crapdat.dtmvtolt    AND
+               crapbcx.dtmvtolt = crapdat.dtmvtocd    AND
                              crapbcx.cdopecxa = p-cod-operador      AND
                              crapbcx.cdsitbcx = 1 
                              USE-INDEX crapbcx3 NO-LOCK NO-ERROR.
                    
     IF  AVAIL crapbcx  THEN 
         DO:
-            ASSIGN i-cod-erro  = 703
+            ASSIGN i-cod-erro  = 703 /*Operador nao pode abrir mais de um boletim de caixa.*/
                    c-desc-erro = " ".           
             RUN cria-erro (INPUT p-cooper,
                            INPUT p-cod-agencia,
@@ -71,7 +75,7 @@ PROCEDURE abertura-boletim-caixa:
         END.     
 
     FIND LAST crapbcx WHERE crapbcx.cdcooper = crapcop.cdcooper     AND
-                            crapbcx.dtmvtolt = crapdat.dtmvtolt     AND
+                            crapbcx.dtmvtolt = crapdat.dtmvtocd     AND
                             crapbcx.cdagenci = p-cod-agencia        AND
                             crapbcx.nrdcaixa = p-nro-caixa 
                             USE-INDEX crapbcx1 NO-LOCK NO-ERROR.
@@ -81,13 +85,14 @@ PROCEDURE abertura-boletim-caixa:
             FIND FIRST crapbcx WHERE crapbcx.cdcooper = crapcop.cdcooper    AND
                                      crapbcx.cdagenci = p-cod-agencia       AND
                                      crapbcx.nrdcaixa = p-nro-caixa         AND
-                                     crapbcx.dtmvtolt < crapdat.dtmvtolt    
+                                     crapbcx.dtmvtolt < crapdat.dtmvtocd    
                                      USE-INDEX crapbcx5 NO-LOCK NO-ERROR.
+                  
         END.
         
     IF  NOT AVAIL crapbcx THEN 
         DO: 
-            ASSIGN i-cod-erro  = 701
+            ASSIGN i-cod-erro  = 701  /*Boletim de caixa nao encontrado.*/
                    c-desc-erro = " " .       
             RUN cria-erro (INPUT p-cooper,
                            INPUT p-cod-agencia,
@@ -101,7 +106,7 @@ PROCEDURE abertura-boletim-caixa:
     IF  crapbcx.cdsitbcx <> 2  THEN 
         DO:
 
-            ASSIGN i-cod-erro  = 704
+            ASSIGN i-cod-erro  = 704  /*Boletim de caixa nao esta fechado*/
                    c-desc-erro = " ".       
             IF  crapbcx.cdopecxa <> p-cod-operador THEN 
                 DO: 
@@ -120,7 +125,7 @@ PROCEDURE abertura-boletim-caixa:
         
     IF  crapbcx.vldsdfin <> p-valor-saldo-inicial  THEN 
         DO:
-            ASSIGN i-cod-erro  = 700
+            ASSIGN i-cod-erro  = 700  /*Saldo inicial nao confere*/
                    c-desc-erro = " " .       
             RUN cria-erro (INPUT p-cooper,
                            INPUT p-cod-agencia,
@@ -131,7 +136,7 @@ PROCEDURE abertura-boletim-caixa:
         END.
         
     IF  crapbcx.cdopecxa = p-cod-operador   AND
-        crapbcx.dtmvtolt = crapdat.dtmvtolt THEN
+        crapbcx.dtmvtolt = crapdat.dtmvtocd THEN
         DO:
             /* Operador nao pode abrir caixa no mesmo dia */
             ASSIGN i-cod-erro  = 703
@@ -150,13 +155,13 @@ PROCEDURE abertura-boletim-caixa:
     IF  RETURN-VALUE = "NOK" THEN
         RETURN "NOK".
    
-    IF  crapbcx.dtmvtolt <> crapdat.dtmvtolt THEN
+    IF  crapbcx.dtmvtolt <> crapdat.dtmvtocd THEN   
         ASSIGN i-nrseqdig = 1.
     ELSE
         ASSIGN i-nrseqdig = crapbcx.nrseqdig + 1.
 
     FIND crapbcx WHERE crapbcx.cdcooper = crapcop.cdcooper  AND
-                       crapbcx.dtmvtolt = crapdat.dtmvtolt  AND
+                       crapbcx.dtmvtolt = crapdat.dtmvtocd  AND
                        crapbcx.cdagenci = p-cod-agencia     AND
                        crapbcx.nrdcaixa = p-nro-caixa       AND
                        crapbcx.nrseqdig = i-nrseqdig 
@@ -164,7 +169,7 @@ PROCEDURE abertura-boletim-caixa:
          
     IF  AVAIL crapbcx THEN 
         DO:
-            ASSIGN i-cod-erro  = 92
+            ASSIGN i-cod-erro  = 92  /* Lancamento ja existe */
                    c-desc-erro = " " .       
             RUN cria-erro (INPUT p-cooper,
                            INPUT p-cod-agencia,
@@ -178,7 +183,7 @@ PROCEDURE abertura-boletim-caixa:
     /* -- Atualizacao ---*/
     CREATE crapbcx.
     ASSIGN crapbcx.cdcooper = crapcop.cdcooper 
-           crapbcx.dtmvtolt = crapdat.dtmvtolt
+           crapbcx.dtmvtolt = crapdat.dtmvtocd
            crapbcx.cdagenci = p-cod-agencia
            crapbcx.nrdcaixa = p-nro-caixa
            crapbcx.nrseqdig = i-nrseqdig
@@ -217,18 +222,20 @@ PROCEDURE saldo-inicial-boletim:
     FIND FIRST crapbcx WHERE crapbcx.cdcooper = crapcop.cdcooper    AND
                              crapbcx.cdagenci = p-cod-agencia       AND
                              crapbcx.nrdcaixa = p-nro-caixa         AND
-                             crapbcx.dtmvtolt = crapdat.dtmvtolt    AND
+                             crapbcx.dtmvtolt = crapdat.dtmvtocd    AND
                              crapbcx.cdsitbcx = 2  
                              USE-INDEX crapbcx5 NO-LOCK NO-ERROR.
+               
                
     IF  NOT AVAIL crapbcx THEN  
         DO:
             FIND FIRST crapbcx WHERE crapbcx.cdcooper = crapcop.cdcooper    AND
                                      crapbcx.cdagenci = p-cod-agencia       AND
                                      crapbcx.nrdcaixa = p-nro-caixa         AND
-                                     crapbcx.dtmvtolt < crapdat.dtmvtolt    AND
+                                 crapbcx.dtmvtolt < crapdat.dtmvtocd    AND
                                      crapbcx.cdsitbcx = 2 
                                      USE-INDEX crapbcx5 NO-LOCK NO-ERROR.
+             
         END.
 
     IF  AVAIL crapbcx  THEN 
@@ -237,7 +244,7 @@ PROCEDURE saldo-inicial-boletim:
         END.
     ELSE 
         DO:
-            ASSIGN i-cod-erro  = 701
+            ASSIGN i-cod-erro  = 701   /* Boletim de caixa nao encontrado */
                    c-desc-erro = " ".           
             RUN cria-erro (INPUT p-cooper,
                            INPUT p-cod-agencia,

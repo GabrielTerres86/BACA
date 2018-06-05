@@ -414,7 +414,7 @@ PROCEDURE process-web-request :
   {include/i-global.i}
   ASSIGN glb_cdcooper = crapcop.cdcooper
          glb_nmrescop = crapcop.nmrescop
-         glb_dtmvtolt = crapdat.dtmvtolt
+         glb_dtmvtolt = (IF crapdat.inproces = 1 THEN crapdat.dtmvtolt ELSE crapdat.dtmvtocd)
          glb_dtmvtopr = crapdat.dtmvtopr
          glb_dtmvtoan = crapdat.dtmvtoan
          glb_cdagenci = INTE(get-value("user_pac"))
@@ -448,7 +448,7 @@ PROCEDURE process-web-request :
     {include/assignfields.i}
 
     RUN dbo/b1crap00.p PERSISTENT SET h-b1crap00.
-    RUN valida-transacao IN h-b1crap00(INPUT v_coop,
+    RUN valida-transacao2 IN h-b1crap00(INPUT v_coop,
                                        INPUT int(v_pac),
                                        INPUT int(v_caixa)).
     DELETE PROCEDURE h-b1crap00.

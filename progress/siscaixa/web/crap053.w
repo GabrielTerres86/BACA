@@ -4,7 +4,7 @@
    Sistema : Caixa On-line
    Sigla   : CRED   
    Autor   : Mirtes.
-   Data    : Marco/2001                      Ultima atualizacao: 28/10/2015.
+   Data    : Marco/2001                      Ultima atualizacao: 18/05/2018.
 
    Dados referentes ao programa:
 
@@ -42,6 +42,9 @@
                             Inclusao do VALIDATE ( Andre Euzebio / SUPERO)
                
                28/10/2015 - #318705 Retirado o parametro p-flgdebcc (Carlos)
+               
+               18/05/2018 - Alteraçoes para usar as rotinas mesmo com o processo 
+                      norturno rodando (Douglas Pagel - AMcom)
 ............................................................................ */
 
 &ANALYZE-SUSPEND _VERSION-NUMBER AB_v9r12 GUI adm2
@@ -467,7 +470,7 @@ PROCEDURE process-web-request :
 
 
         RUN dbo/b1crap00.p PERSISTENT SET h-b1crap00.
-        RUN valida-transacao IN h-b1crap00(INPUT v_coop,
+        RUN valida-transacao2 IN h-b1crap00(INPUT v_coop,
                                            INPUT v_pac, INPUT v_caixa).
         DELETE PROCEDURE h-b1crap00.
 

@@ -58,6 +58,9 @@
 
 				01/12/2017 - Retirado leituras na craplcm e craplct (Jonata - RKAM P364).
 
+        14/05/2018 - Alteraçoes para usar as rotinas mesmo com o processo 
+                      norturno rodando (Douglas Pagel - AMcom)
+
 -----------------------------------------------------------------------------*/
 
 {dbo/bo-erro1.i}
@@ -117,6 +120,8 @@ PROCEDURE valida-lancamento-boletim:
     FIND FIRST crapdat WHERE crapdat.cdcooper = crapcop.cdcooper
                              NO-LOCK NO-ERROR.
 
+    IF crapdat.inproces = 1 THEN
+    DO:
     FIND  LAST crapbcx WHERE crapbcx.cdcooper = crapcop.cdcooper    AND
                              crapbcx.dtmvtolt = crapdat.dtmvtolt    AND
                              crapbcx.cdagenci = p-cod-agencia       AND
@@ -124,6 +129,17 @@ PROCEDURE valida-lancamento-boletim:
                              crapbcx.cdopecxa = p-cod-operador      AND
                              crapbcx.cdsitbcx = 1           
                              NO-LOCK NO-ERROR. 
+    END.
+    ELSE DO:
+        FIND  LAST crapbcx WHERE crapbcx.cdcooper = crapcop.cdcooper    AND
+                                 crapbcx.dtmvtolt = crapdat.dtmvtocd    AND
+                                 crapbcx.cdagenci = p-cod-agencia       AND
+                                 crapbcx.nrdcaixa = p-nro-caixa         AND
+                                 crapbcx.cdopecxa = p-cod-operador      AND
+                                 crapbcx.cdsitbcx = 1           
+                                 NO-LOCK NO-ERROR.
+                             
+    END.
                              
     IF  NOT AVAIL crapbcx  THEN 
         DO:
@@ -558,6 +574,8 @@ PROCEDURE grava-lancamento-boletim:
     ASSIGN in99 = 0.
     DO WHILE TRUE:
     
+        IF crapdat.inproces = 1 THEN
+        DO:
         FIND LAST crapbcx WHERE crapbcx.cdcooper = crapcop.cdcooper     AND
                                 crapbcx.dtmvtolt = crapdat.dtmvtolt     AND
                                 crapbcx.cdagenci = p-cod-agencia        AND
@@ -565,6 +583,16 @@ PROCEDURE grava-lancamento-boletim:
                                 crapbcx.cdopecxa = p-cod-operador       AND
                                 crapbcx.cdsitbcx = 1  
                                 EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+        END.
+        ELSE DO:
+            FIND LAST crapbcx WHERE crapbcx.cdcooper = crapcop.cdcooper     AND
+                                    crapbcx.dtmvtolt = crapdat.dtmvtocd     AND
+                                    crapbcx.cdagenci = p-cod-agencia        AND
+                                    crapbcx.nrdcaixa = p-nro-caixa          AND
+                                    crapbcx.cdopecxa = p-cod-operador       AND
+                                    crapbcx.cdsitbcx = 1  
+                                    EXCLUSIVE-LOCK NO-ERROR NO-WAIT.
+        END.
       
         ASSIGN in99 = in99 + 1.
         IF  NOT AVAILABLE crapbcx THEN  
@@ -950,7 +978,7 @@ PROCEDURE grava-lancamento-boletim:
 						craplcx.cdagenci = p-cod-agencia
 						craplcx.nrdcaixa = p-nro-caixa
 						craplcx.cdopecxa = p-cod-operador
-						craplcx.dtmvtolt = crapdat.dtmvtolt
+						craplcx.dtmvtolt = IF crapdat.inproces = 1 THEN crapdat.dtmvtolt ELSE crapdat.dtmvtocd
 						craplcx.cdhistor = 2065					         
 						craplcx.dsdcompl = "Agencia: " + STRING(p-cod-agencia,"999") + " Conta/DV: " + STRING(p-conta,"99999999")
 						craplcx.nrdocmto = i-nro-docto
@@ -1087,7 +1115,7 @@ PROCEDURE grava-lancamento-boletim:
 						craplcx.cdagenci = p-cod-agencia
 						craplcx.nrdcaixa = p-nro-caixa
 						craplcx.cdopecxa = p-cod-operador
-						craplcx.dtmvtolt = crapdat.dtmvtolt
+						craplcx.dtmvtolt = IF crapdat.inproces = 1 THEN crapdat.dtmvtolt ELSE crapdat.dtmvtocd
 						craplcx.cdhistor = 2083					         
 						craplcx.dsdcompl = "Agencia: " + STRING(p-cod-agencia,"999") + " Conta/DV: " + STRING(p-conta,"99999999")
 						craplcx.nrdocmto = i-nro-docto
@@ -1105,7 +1133,7 @@ PROCEDURE grava-lancamento-boletim:
        
 	     CREATE craplcx.
 		 ASSIGN craplcx.cdcooper = crapcop.cdcooper
-	 		    craplcx.dtmvtolt = crapdat.dtmvtolt
+	 		    craplcx.dtmvtolt = IF crapdat.inproces = 1 THEN crapdat.dtmvtolt ELSE crapdat.dtmvtocd
 	 		    craplcx.cdagenci = p-cod-agencia
 	 		    craplcx.nrdcaixa = p-nro-caixa
 	 		    craplcx.cdopecxa = p-cod-operador
@@ -1146,7 +1174,7 @@ PROCEDURE grava-lancamento-boletim:
             ASSIGN c-literal[1] = TRIM(crapcop.nmrescop) +  " - " + 
                                   TRIM(crapcop.nmextcop) 
                    c-literal[2] = " "
-                   c-literal[3] = STRING(crapdat.dtmvtolt,"99/99/99") + " " +
+                   c-literal[3] = STRING(IF crapdat.inproces = 1 THEN crapdat.dtmvtolt ELSE crapdat.dtmvtocd,"99/99/99") + " " +
                                   STRING(TIME,"HH:MM:SS")     +  " PA " + 
                                   STRING(p-cod-agencia,"999") + 
                                   "  CAIXA: " +
@@ -1400,7 +1428,7 @@ PROCEDURE grava-lancamento-boletim:
       ASSIGN c-literal[1]  = trim(crapcop.nmrescop) + 
       " - " + TRIM(crapcop.nmextcop) 
            c-literal[2]  = " "
-           c-literal[3]  = string(crapdat.dtmvtolt,"99/99/99") +
+           c-literal[3]  = string(IF crapdat.inproces = 1 THEN crapdat.dtmvtolt ELSE crapdat.dtmvtocd,"99/99/99") +
             " " + STRING(TIME,"HH:MM:SS") +  " PAC " + 
                            string(p-cod-agencia,"999") +
                             "  CAIXA: " + STRING(p-nro-caixa,"Z99") + "/" +
@@ -1445,7 +1473,7 @@ PROCEDURE grava-lancamento-boletim:
       ASSIGN c-literal[1]  = trim(crapcop.nmrescop) + 
       " - " + TRIM(crapcop.nmextcop) 
            c-literal[2]  = " "
-           c-literal[3]  = string(crapdat.dtmvtolt,"99/99/99") +
+           c-literal[3]  = string(IF crapdat.inproces = 1 THEN crapdat.dtmvtolt ELSE crapdat.dtmvtocd,"99/99/99") +
             " " + STRING(TIME,"HH:MM:SS") +  " PAC " + 
                            string(p-cod-agencia,"999") +
                             "  CAIXA: " + STRING(p-nro-caixa,"Z99") + "/" +
@@ -1759,6 +1787,8 @@ PROCEDURE valida-existencia-boletim:
                      
     IF  p-nro-docto > 0 THEN 
         DO:
+            IF crapdat.inproces = 1 THEN
+                DO:
             FIND FIRST craplcx WHERE craplcx.cdcooper = crapcop.cdcooper    AND
                                      craplcx.dtmvtolt = crapdat.dtmvtolt    AND
                                      craplcx.cdagenci = p-cod-agencia       AND
@@ -1767,6 +1797,17 @@ PROCEDURE valida-existencia-boletim:
                                      craplcx.nrdocmto = p-nro-docto         AND
                                      craplcx.cdhistor = p-cod-histor
                                      USE-INDEX craplcx2 NO-LOCK NO-ERROR.
+                END.
+                ELSE DO:
+                    FIND FIRST craplcx WHERE craplcx.cdcooper = crapcop.cdcooper    AND
+                                             craplcx.dtmvtolt = crapdat.dtmvtocd    AND
+                                             craplcx.cdagenci = p-cod-agencia       AND
+                                             craplcx.nrdcaixa = p-nro-caixa         AND
+                                             craplcx.cdopecxa = p-cod-operador      AND
+                                             craplcx.nrdocmto = p-nro-docto         AND
+                                             craplcx.cdhistor = p-cod-histor
+                                             USE-INDEX craplcx2 NO-LOCK NO-ERROR.
+                END.
                                      
             IF  AVAIL craplcx THEN 
                 DO: 

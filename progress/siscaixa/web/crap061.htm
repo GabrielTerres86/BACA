@@ -72,6 +72,9 @@
              31/01/2017 - Validar corretamente a conta beneficiaria CRAPASS (Lucas Ranghetti #603860)
 			 
 			 15/03/2018 - Aumentado o tamanho do campo v_nrsequniC de 7 caracteres para 9 (Tiago #INC0010516)
+			 
+			 04/05/2018 - Possibilidade de usar caixa on-line mesmo com o processo batch (noturno) executando 
+			              (Fabio Adriano - Amcom)
 -->
 
 <html>
@@ -486,7 +489,7 @@
           IF NOT VALID-HANDLE(h-b1crap00) THEN
              RUN dbo/b1crap00.p PERSISTENT SET h-b1crap00.
        
-          RUN valida-transacao IN h-b1crap00(INPUT v_coop,
+          RUN valida-transacao2 IN h-b1crap00(INPUT v_coop,
                                              INPUT v_pac,
                                              INPUT v_caixa).
        
@@ -894,7 +897,7 @@
                                                                                    crapass.nrdconta = INT(v_conta) 
                                                                                    NO-LOCK NO-ERROR.
                                                     
-                                                          IF  NOT AVAIL crapass THEN
+                                                          IF NOT AVAIL crapass THEN
                                                              LEAVE.
                                                     
                                                           IF AVAIL crapass THEN 

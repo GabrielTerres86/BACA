@@ -4,7 +4,7 @@
    Sistema : Caixa On-line
    Sigla   : CRED   
    Autor   : Mirtes.
-   Data    : Marco/2001                      Ultima atualizacao: 11/06/2014
+   Data    : Marco/2001                      Ultima atualizacao: 18/05/2018
 
    Dados referentes ao programa:
 
@@ -91,6 +91,9 @@
                
                11/06/2014 - Somente emitir a crítica 950 apenas se a 
                             crapfdc.dtlibtic >= data do movimento (SD. 163588 - Lunelli)
+                             
+               18/05/2018 - Alteraçoes para usar as rotinas mesmo com o processo 
+                      norturno rodando (Douglas Pagel - AMcom)
                              
 ............................................................................ */
 /*----------------------------------------------------------------------*/
@@ -1800,7 +1803,7 @@ PROCEDURE valida-pagto-cheque:
          
          FOR EACH craplcm WHERE craplcm.cdcooper  = crapsld.cdcooper    AND
                                 craplcm.nrdconta  = crapsld.nrdconta    AND
-                                craplcm.dtmvtolt  = crapdat.dtmvtolt    AND
+                                craplcm.dtmvtolt  = crapdat.dtmvtocd    AND
                                 craplcm.cdhistor <> 289             
                                 USE-INDEX craplcm2 NO-LOCK:
 
@@ -1842,7 +1845,7 @@ PROCEDURE valida-pagto-cheque:
     END. /* Fim if avail crapfdc */
 
     FIND craplcm WHERE craplcm.cdcooper = crapcop.cdcooper  AND
-                       craplcm.dtmvtolt = crapdat.dtmvtolt  AND
+                       craplcm.dtmvtolt = crapdat.dtmvtocd  AND
                        craplcm.cdagenci = p-cod-agencia     AND
                        craplcm.cdbccxlt = 11                AND /* Fixo */
                        craplcm.nrdolote = i-nro-lote        AND
@@ -1883,7 +1886,7 @@ PROCEDURE valida-pagto-cheque:
             IF  AVAIL craptco  THEN
             DO:
                 FIND craplcm WHERE craplcm.cdcooper = craptco.cdcooper          AND /* coop nova */
-                                   craplcm.dtmvtolt = crapdat.dtmvtolt          AND
+                                   craplcm.dtmvtolt = crapdat.dtmvtocd          AND
                                    craplcm.cdagenci = craptco.cdagenci          AND
                                    craplcm.cdbccxlt = 100                       AND /* Fixo */
                                    craplcm.nrdolote = 205000 + craptco.cdagenci AND
@@ -1939,7 +1942,7 @@ PROCEDURE valida-pagto-cheque:
             IF  AVAIL craptco  THEN
             DO:
                 FIND craplcm WHERE craplcm.cdcooper = craptco.cdcooper          AND /* coop nova */
-                                   craplcm.dtmvtolt = crapdat.dtmvtolt          AND
+                                   craplcm.dtmvtolt = crapdat.dtmvtocd          AND
                                    craplcm.cdagenci = craptco.cdagenci          AND
                                    craplcm.cdbccxlt = 100                       AND /* Fixo */
                                    craplcm.nrdolote = 205000 + craptco.cdagenci AND
@@ -2218,7 +2221,7 @@ PROCEDURE atualiza-pagto-cheque:
     IF   p-aux-indevchq > 0  THEN  
          DO:
              RUN dbo/pcrap10.p (INPUT p-cooper,
-                                INPUT crapdat.dtmvtolt,
+                                INPUT (IF crapdat.inproces = 1 THEN crapdat.dtmvtolt ELSE crapdat.dtmvtocd),
                                 INPUT aux_cdbccxlt,
                                 INPUT p-aux-indevchq,
                                 INPUT aux_nrdconta,
@@ -2251,7 +2254,7 @@ PROCEDURE atualiza-pagto-cheque:
     
              IF   NOT CAN-FIND(crapdev WHERE 
                                crapdev.cdcooper = crapcop.cdcooper      AND
-                               crapdev.dtmvtolt = crapdat.dtmvtolt      AND
+                               crapdev.dtmvtolt = crapdat.dtmvtocd      AND
                                crapdev.nrdconta = aux_nrdconta          AND
                                crapdev.nrdctabb = inte(p-nro-conta)     AND
                                crapdev.nrcheque = i_cheque              AND
@@ -2261,7 +2264,7 @@ PROCEDURE atualiza-pagto-cheque:
                                                   ELSE 78)              THEN 
                   DO:
                       CREATE crapdev.
-                      ASSIGN crapdev.dtmvtolt = crapdat.dtmvtolt
+                      ASSIGN crapdev.dtmvtolt = (IF crapdat.inproces = 1 THEN crapdat.dtmvtolt ELSE crapdat.dtmvtocd)
                              crapdev.cdbccxlt = aux_cdbccxlt
                              crapdev.nrdconta = aux_nrdconta
                              crapdev.nrdctabb = p-nro-conta
@@ -2283,7 +2286,7 @@ PROCEDURE atualiza-pagto-cheque:
          END.                      
     
     FIND craplot WHERE craplot.cdcooper = crapcop.cdcooper  AND
-                       craplot.dtmvtolt = crapdat.dtmvtolt  AND
+                       craplot.dtmvtolt = crapdat.dtmvtocd  AND
                        craplot.cdagenci = p-cod-agencia     AND
                        craplot.cdbccxlt = 11                AND  /* Fixo */
                        craplot.nrdolote = i-nro-lote 
@@ -2292,7 +2295,7 @@ PROCEDURE atualiza-pagto-cheque:
     IF   NOT AVAIL craplot   THEN 
          DO:
              CREATE craplot.
-             ASSIGN craplot.dtmvtolt = crapdat.dtmvtolt
+             ASSIGN craplot.dtmvtolt = crapdat.dtmvtocd
                     craplot.cdagenci = p-cod-agencia   
                     craplot.cdbccxlt = 11              
                     craplot.nrdolote = i-nro-lote
@@ -2437,13 +2440,13 @@ PROCEDURE atualiza-pagto-cheque:
                                   (IF crapfdc.incheque = 2 THEN 7
                                   ELSE 0)).
                                   
-    ASSIGN crapfdc.dtliqchq = crapdat.dtmvtolt
+    ASSIGN crapfdc.dtliqchq = crapdat.dtmvtocd
            crapfdc.cdoperad = p-cod-operador
            crapfdc.vlcheque = p-valor.
     
     /*--- Verifica se Lancamento ja Existe ---*/
     FIND FIRST craplcm WHERE craplcm.cdcooper = crapcop.cdcooper        AND
-                             craplcm.dtmvtolt = crapdat.dtmvtolt        AND
+                             craplcm.dtmvtolt = crapdat.dtmvtocd        AND
                              craplcm.cdagenci = p-cod-agencia           AND
                              craplcm.cdbccxlt = 11                      AND
                              craplcm.nrdolote = i-nro-lote              AND
@@ -2464,7 +2467,7 @@ PROCEDURE atualiza-pagto-cheque:
          END.
           
     FIND FIRST craplcm WHERE craplcm.cdcooper = crapcop.cdcooper    AND
-                             craplcm.dtmvtolt = crapdat.dtmvtolt    AND
+                             craplcm.dtmvtolt = crapdat.dtmvtocd    AND
                              craplcm.cdagenci = p-cod-agencia       AND
                              craplcm.cdbccxlt  = 11                 AND
                              craplcm.nrdolote = i-nro-lote          AND
@@ -2491,7 +2494,7 @@ PROCEDURE atualiza-pagto-cheque:
                          OUTPUT glb_stsnrcal).
     
     CREATE craplcm.
-    ASSIGN craplcm.dtmvtolt = crapdat.dtmvtolt
+    ASSIGN craplcm.dtmvtolt = (IF crapdat.inproces = 1 THEN crapdat.dtmvtolt ELSE crapdat.dtmvtocd)
            craplcm.cdagenci = p-cod-agencia
            craplcm.cdbccxlt = 11
            craplcm.nrdolote = i-nro-lote
@@ -2555,7 +2558,7 @@ PROCEDURE atualiza-pagto-cheque:
                     crapchd.cdoperad = p-cod-operador
                     crapchd.cdsitatu = 1
                     crapchd.dsdocmc7 = crapfdc.dsdocmc7
-                    crapchd.dtmvtolt = crapdat.dtmvtolt
+                    crapchd.dtmvtolt = (IF crapdat.inproces = 1 THEN crapdat.dtmvtolt ELSE crapdat.dtmvtocd)
                     crapchd.inchqcop = 1  /* Cheque da Cooperativa */
                     crapchd.insitchq = 0
                     crapchd.cdtipchq = INTEGER(SUBSTR(crapfdc.dsdocmc7,20,1))
@@ -2751,7 +2754,7 @@ PROCEDURE atualiza-pagto-cheque-migrado:
     IF   p-aux-indevchq > 0  THEN  
          DO:
              RUN dbo/pcrap10.p (INPUT p-nmcooper,
-                                INPUT crapdat.dtmvtolt,
+                                INPUT (IF crapdat.inproces = 1 THEN crapdat.dtmvtolt ELSE crapdat.dtmvtocd),
                                 INPUT aux_cdbccxlt,
                                 INPUT p-aux-indevchq,
                                 INPUT aux_nrdconta,
@@ -2784,7 +2787,7 @@ PROCEDURE atualiza-pagto-cheque-migrado:
     
              IF   NOT CAN-FIND(crapdev WHERE 
                                crapdev.cdcooper = crabcop.cdcooper      AND
-                               crapdev.dtmvtolt = crapdat.dtmvtolt      AND
+                               crapdev.dtmvtolt = crapdat.dtmvtocd      AND
                                crapdev.nrdconta = aux_nrdconta          AND
                                crapdev.nrdctabb = inte(p-nro-conta)     AND
                                crapdev.nrcheque = i_cheque              AND
@@ -2794,7 +2797,7 @@ PROCEDURE atualiza-pagto-cheque-migrado:
                                                   ELSE 78)              THEN 
                   DO:
                       CREATE crapdev.
-                      ASSIGN crapdev.dtmvtolt = crapdat.dtmvtolt
+                      ASSIGN crapdev.dtmvtolt = (IF crapdat.inproces = 1 THEN crapdat.dtmvtolt ELSE crapdat.dtmvtocd)
                              crapdev.cdbccxlt = aux_cdbccxlt
                              crapdev.nrdconta = aux_nrdconta
                              crapdev.nrdctabb = p-nro-conta
@@ -2948,14 +2951,14 @@ PROCEDURE atualiza-pagto-cheque-migrado:
                                   (IF crapfdc.incheque = 2 THEN 7
                                   ELSE 0)).
                                   
-    ASSIGN crapfdc.dtliqchq = crapdat.dtmvtolt
+    ASSIGN crapfdc.dtliqchq = (IF crapdat.inproces = 1 THEN crapdat.dtmvtolt ELSE crapdat.dtmvtocd)
            crapfdc.cdoperad = "1" /* SUPER-USUARIO na migracao */
            crapfdc.vlcheque = p-valor.
     
     
     /* Verifica se o lote ja Existe na copperativa atual */
     FIND craplot WHERE craplot.cdcooper = crapcop.cdcooper  AND
-                       craplot.dtmvtolt = crapdat.dtmvtolt  AND
+                       craplot.dtmvtolt = crapdat.dtmvtocd  AND
                        craplot.cdagenci = p-cod-agencia     AND
                        craplot.cdbccxlt = 11                AND  /* Fixo */
                        craplot.nrdolote = i-nro-lote 
@@ -2964,7 +2967,7 @@ PROCEDURE atualiza-pagto-cheque-migrado:
     IF   NOT AVAIL craplot   THEN 
          DO:
              CREATE craplot.
-             ASSIGN craplot.dtmvtolt = crapdat.dtmvtolt
+             ASSIGN craplot.dtmvtolt = (IF crapdat.inproces = 1 THEN crapdat.dtmvtolt ELSE crapdat.dtmvtocd)
                     craplot.cdagenci = p-cod-agencia   
                     craplot.cdbccxlt = 11              
                     craplot.nrdolote = i-nro-lote
@@ -2978,7 +2981,7 @@ PROCEDURE atualiza-pagto-cheque-migrado:
     
     /*--- Verifica se Lancamento ja Existe na cooperativa atual ---*/
     FIND FIRST craplcm WHERE craplcm.cdcooper = crapcop.cdcooper        AND
-                             craplcm.dtmvtolt = crapdat.dtmvtolt        AND
+                             craplcm.dtmvtolt = crapdat.dtmvtocd        AND
                              craplcm.cdagenci = p-cod-agencia           AND
                              craplcm.cdbccxlt = 11                      AND
                              craplcm.nrdolote = i-nro-lote              AND
@@ -2999,7 +3002,7 @@ PROCEDURE atualiza-pagto-cheque-migrado:
          END.
           
     FIND FIRST craplcm WHERE craplcm.cdcooper = crapcop.cdcooper AND
-                             craplcm.dtmvtolt = crapdat.dtmvtolt AND
+                             craplcm.dtmvtolt = crapdat.dtmvtocd AND
                              craplcm.cdagenci = p-cod-agencia    AND
                              craplcm.cdbccxlt = 11               AND
                              craplcm.nrdolote = i-nro-lote       AND
@@ -3027,7 +3030,7 @@ PROCEDURE atualiza-pagto-cheque-migrado:
     
     /* Criar o lancamento na cooperativa nova */
     CREATE craplcm.
-    ASSIGN craplcm.dtmvtolt = crapdat.dtmvtolt
+    ASSIGN craplcm.dtmvtolt = (IF crapdat.inproces = 1 THEN crapdat.dtmvtolt ELSE crapdat.dtmvtocd)
            craplcm.cdagenci = p-cod-agencia
            craplcm.cdbccxlt = 11
            craplcm.nrdolote = i-nro-lote
@@ -3091,7 +3094,7 @@ PROCEDURE atualiza-pagto-cheque-migrado:
                     crapchd.cdoperad = p-cod-operador
                     crapchd.cdsitatu = 1
                     crapchd.dsdocmc7 = crapfdc.dsdocmc7
-                    crapchd.dtmvtolt = crapdat.dtmvtolt
+                    crapchd.dtmvtolt = (IF crapdat.inproces = 1 THEN crapdat.dtmvtolt ELSE crapdat.dtmvtocd)
                     crapchd.inchqcop = 1  /* Cheque da Cooperativa */
                     crapchd.insitchq = 0  
                     crapchd.cdtipchq = INTEGER(SUBSTR(crapfdc.dsdocmc7,20,1))
@@ -3263,7 +3266,7 @@ PROCEDURE atualiza-pagto-cheque-migrado-host:
       
     /* Validar para criar o lancamento ao fim da procedure */
     FIND LAST crapbcx WHERE crapbcx.cdcooper = crapcop.cdcooper  AND
-                            crapbcx.dtmvtolt = crapdat.dtmvtolt  AND
+                            crapbcx.dtmvtolt = crapdat.dtmvtocd  AND
                             crapbcx.cdagenci = p-cod-agencia     AND
                             crapbcx.nrdcaixa = p-nro-caixa       AND
                             crapbcx.cdopecxa = p-cod-operador    AND
@@ -3309,7 +3312,7 @@ PROCEDURE atualiza-pagto-cheque-migrado-host:
     IF   p-aux-indevchq > 0  THEN  
          DO:
              RUN dbo/pcrap10.p (INPUT p-cooper,
-                                INPUT crapdat.dtmvtolt,
+                                INPUT (IF crapdat.inproces = 1 THEN crapdat.dtmvtolt ELSE crapdat.dtmvtocd),
                                 INPUT aux_cdbccxlt,
                                 INPUT p-aux-indevchq,
                                 INPUT aux_nrdconta,
@@ -3342,7 +3345,7 @@ PROCEDURE atualiza-pagto-cheque-migrado-host:
     
              IF   NOT CAN-FIND(crapdev WHERE 
                                crapdev.cdcooper = crapcop.cdcooper      AND
-                               crapdev.dtmvtolt = crapdat.dtmvtolt      AND
+                               crapdev.dtmvtolt = crapdat.dtmvtocd      AND
                                crapdev.nrdconta = aux_nrdconta          AND
                                crapdev.nrdctabb = inte(p-nro-conta)     AND
                                crapdev.nrcheque = i_cheque              AND
@@ -3352,7 +3355,7 @@ PROCEDURE atualiza-pagto-cheque-migrado-host:
                                                   ELSE 78)              THEN 
                   DO:
                       CREATE crapdev.
-                      ASSIGN crapdev.dtmvtolt = crapdat.dtmvtolt
+                      ASSIGN crapdev.dtmvtolt = (IF crapdat.inproces = 1 THEN crapdat.dtmvtolt ELSE crapdat.dtmvtocd)
                              crapdev.cdbccxlt = aux_cdbccxlt
                              crapdev.nrdconta = aux_nrdconta
                              crapdev.nrdctabb = p-nro-conta
@@ -3506,7 +3509,7 @@ PROCEDURE atualiza-pagto-cheque-migrado-host:
                                   (IF crapfdc.incheque = 2 THEN 7
                                   ELSE 0)).
                                   
-    ASSIGN crapfdc.dtliqchq = crapdat.dtmvtolt
+    ASSIGN crapfdc.dtliqchq = crapdat.dtmvtocd
            crapfdc.cdoperad = "1" /* SUPER-USUARIO para migracao */
            crapfdc.vlcheque = p-valor.
     
@@ -3521,7 +3524,7 @@ PROCEDURE atualiza-pagto-cheque-migrado-host:
     IF  AVAIL craptco  THEN
     DO:
         FIND craplot WHERE craplot.cdcooper = craptco.cdcooper  AND
-                           craplot.dtmvtolt = crapdat.dtmvtolt  AND
+                           craplot.dtmvtolt = crapdat.dtmvtocd  AND
                            craplot.cdagenci = craptco.cdagenci  AND
                            craplot.cdbccxlt = 100               AND  /* Fixo */
                            craplot.nrdolote = 205000 + craptco.cdagenci 
@@ -3530,7 +3533,7 @@ PROCEDURE atualiza-pagto-cheque-migrado-host:
         IF   NOT AVAIL craplot   THEN 
              DO:
                  CREATE craplot.
-                 ASSIGN craplot.dtmvtolt = crapdat.dtmvtolt
+                 ASSIGN craplot.dtmvtolt = (IF crapdat.inproces = 1 THEN crapdat.dtmvtolt ELSE crapdat.dtmvtocd)
                         craplot.cdagenci = craptco.cdagenci
                         craplot.cdcooper = craptco.cdcooper
                         craplot.cdbccxlt = 100
@@ -3593,7 +3596,7 @@ PROCEDURE atualiza-pagto-cheque-migrado-host:
     
     CREATE craplcm.
     ASSIGN craplcm.cdcooper = craplot.cdcooper
-           craplcm.dtmvtolt = crapdat.dtmvtolt
+           craplcm.dtmvtolt = (IF crapdat.inproces = 1 THEN crapdat.dtmvtolt ELSE crapdat.dtmvtocd)
            craplcm.cdagenci = craplot.cdagenci
            craplcm.cdbccxlt = craplot.cdbccxlt
            craplcm.nrdolote = craplot.nrdolote
@@ -3657,7 +3660,7 @@ PROCEDURE atualiza-pagto-cheque-migrado-host:
                     crapchd.cdoperad = p-cod-operador
                     crapchd.cdsitatu = 1
                     crapchd.dsdocmc7 = crapfdc.dsdocmc7
-                    crapchd.dtmvtolt = crapdat.dtmvtolt
+                    crapchd.dtmvtolt = (IF crapdat.inproces = 1 THEN crapdat.dtmvtolt ELSE crapdat.dtmvtocd)
                     crapchd.inchqcop = 1  /* Cheque da Cooperativa */
                     crapchd.insitchq = 0
                     crapchd.cdtipchq = INTEGER(SUBSTR(crapfdc.dsdocmc7,20,1))
@@ -3719,7 +3722,7 @@ PROCEDURE atualiza-pagto-cheque-migrado-host:
     
     /* Utilizado como base bcaixal.i */
     CREATE craplcx.
-    ASSIGN craplcx.dtmvtolt = crapdat.dtmvtolt
+    ASSIGN craplcx.dtmvtolt = (IF crapdat.inproces = 1 THEN crapdat.dtmvtolt ELSE crapdat.dtmvtocd)
            craplcx.cdagenci = p-cod-agencia
            craplcx.nrdcaixa = p-nro-caixa
            craplcx.cdopecxa = p-cod-operador
