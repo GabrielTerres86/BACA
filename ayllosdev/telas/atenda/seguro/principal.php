@@ -15,9 +15,9 @@
 				  21/11/2017 - Ajuste para controle das mensagens de alerta referente a seguro (Jonata - RKAM P364).
 
 				  22/11/2017 - Ajuste para permitir apenas consulta de acordo com a situação da conta (Jonata - RKAM p364).
-				  
+
 				  12/12/2017 - Correção de merge efetuado erroneamente (Jonata - RKAM p364).
-				  
+
  */
 session_start();
 
@@ -186,7 +186,7 @@ if ($flgNovo == false) {    // FAZ O QUE SEMPRE FEZ
             arraySeguroCasa['cdufresd'] = '<?php echo getByTagName($seguros,'cdufresd'); ?>';
 
             arraySeguroCasa['tpendcor'] = '<?php echo getByTagName($seguros,'tpendcor'); ?>';
-		
+
 	</script><?
     }else if($operacao == 'SEGUR'){
         $seguradoras  = $xmlObjeto->roottag->tags[0]->tags;
@@ -288,7 +288,6 @@ if ($flgNovo == false) {    // FAZ O QUE SEMPRE FEZ
 
 	}
     else if($operacao == ''){ // TELA PRINCIPAL DE SEGUROS
-
         // Monta o xml de requisição
         $xml  		= "";
         $xml 	   .= "<Root>";

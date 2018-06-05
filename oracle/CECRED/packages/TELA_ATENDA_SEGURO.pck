@@ -145,7 +145,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_SEGURO IS
                 pois como haverá consulta em tabela nova disponível somente no Oracle, não 
                 poderemos utilizá-la na BO33.
 
-    Alteracoes: 
+    Alteracoes: 05/06/2018 - Alterado pc_busca_seguros para listar descricao de motivo
+                             de cancelamento.
+                             (Marcel Kohls - AMCom)
     ..............................................................................*/
 
     DECLARE
@@ -226,6 +228,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_SEGURO IS
                                         ,txpartic_3    AS "txpartic_3"
                                         ,txpartic_4    AS "txpartic_4"
                                         ,txpartic_5    AS "txpartic_5"
+                                        ,dsmotcan      AS "dsMotcan"
                                     FROM (SELECT decode(seg.tpseguro,1,''CASA''
                                                                    ,11,''CASA''
                                                                     ,2,''AUTO''
@@ -274,6 +277,19 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_SEGURO IS
                                                 ,seg.txpartic##3                                     txpartic_3
                                                 ,seg.txpartic##4                                     txpartic_4
                                                 ,seg.txpartic##5                                     txpartic_5
+                                                ,decode(seg.cdmotcan,1,''Nao Interesse pelo Seguro''
+                                                                    ,2,''Desligamento da Empresa (Estipulante)''
+                                                                    ,3,''Falecimento''
+                                                                    ,4,''Outros''
+                                                                    ,5,''Alteracao de endereco''
+                                                                    ,6,''Alteracao de plano''
+                                                                    ,7,''Venda do imovel''
+                                                                    ,8,''Insuficiencia de saldo''
+                                                                    ,9,''Encerramento de conta''
+                                                                    ,10,''Insatisfação''
+                                                                    ,11,''Perdido para a concorrência''
+                                                                    ,12,''Insuf. saldo e/ou Inadimplencia (autom.)''
+                                                                    ,'' '')                        dsMotcan
                                             FROM crapseg seg
                                                 ,crapcsg csg
                                                 ,crawseg wseg
@@ -336,6 +352,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_SEGURO IS
                                                 ,0                                                          txpartic_3
                                                 ,0                                                          txpartic_4
                                                 ,0                                                          txpartic_5
+                                                ,'' ''                                                      dsmotcan
                                                 
                                             FROM tbseg_contratos segNov
                                                 ,crapcsg         csg
