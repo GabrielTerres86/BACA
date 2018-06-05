@@ -133,6 +133,7 @@ $nmrotina = $_POST["nmrotina"];
 		tb.append(clone);
 		clone.show();
 		clone.find('input').prop('disabled', false).prop('readonly', false);
+		clone.find('input.cpf').setMask('INTEGER', '999.999.999-99', '.-', '');
 		
 		if (tb.find('tr:visible').length > 4) {
 			$(btn).hide();
