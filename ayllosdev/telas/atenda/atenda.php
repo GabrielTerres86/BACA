@@ -1,8 +1,8 @@
 ﻿<?php
 /*******************************************************************************
  Fonte: atenda.php                                                
- Autor: David                                                     
- Data : Julho/2007                   Última Alteração: 05/12/2017
+ Autor: David Kistner                                                    
+ Data : Julho/2007                   Última Alteração: 08/08/2017
                                                                   
  Objetivo  : Mostrar tela ATENDA                                  
                                                                   
@@ -68,7 +68,9 @@
                           PRJ339-CRM(Odirlei-AMcom) 
 
 			 05/12/2017 - Adicionada div divUsoGAROPC para poder chamar a tela GAROPC.
-                          Projeto 404 (Lombardi).
+                          Projeto 404 (Lombardi).	 
+
+             30/05/2018 - Correção de "labelRot32" para "labelRot33". Cláudio (CISCorporate)
 //**************************************************************************/
 session_start();
 // Includes para controle da session, variáveis globais de controle, e biblioteca de funções
@@ -430,7 +432,7 @@ setVarSession("rotinasTela", $rotinasTela);
 																							</div>
 																							
 																							<div class="bloco_line" onMouseOver="focoRotina(33, true);" onMouseOut="focoRotina(33, false);">
-																						     <a tabindex="40" name="40" class="txtNormalBold SetFocus" id="labelRot32">&nbsp;</a>
+																						     <a tabindex="40" name="40" class="txtNormalBold SetFocus" id="labelRot33">&nbsp;</a>
 																						     <p id="valueRot33" class="txtNormal">&nbsp;</p>
 																							</div>
 																						  </div>

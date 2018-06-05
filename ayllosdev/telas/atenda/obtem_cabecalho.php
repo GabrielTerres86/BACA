@@ -114,6 +114,8 @@
 
 				 01/12/2017 - Permitir acesso a produtos para contas demitidas (Joanta - RKAM P364).
 
+				 30/05/2018 - Inclusão do campo "Situação Previdência". Cláudio (CISCorporate)
+
  * ********************************************************************************** */
 
 	session_start();	
@@ -188,6 +190,7 @@ $xmlGetDadosAtenda .= "		<dtfimper>" . date("d/m/Y") . "</dtfimper>";
 $xmlGetDadosAtenda .= "		<nmdatela>" . $glbvars["nmdatela"] . "</nmdatela>";
 $xmlGetDadosAtenda .= "		<idorigem>" . $glbvars["idorigem"] . "</idorigem>";
 $xmlGetDadosAtenda .= "		<inproces>" . $glbvars["inproces"] . "</inproces>";
+
 if ($flgerlog) {
         $xmlGetDadosAtenda .= "		<flgerlog>S</flgerlog>";
 } else {
@@ -404,8 +407,6 @@ if (isset($cabecalho[23]->cdata) && $cabecalho[23]->cdata == "1") {
     $xmlGetFolha = getObjectXML($xmlResult);
     $flgfolha = $xmlGetFolha->roottag->tags[0]->cdata;
 }
-		
-	
 		
 	// Mostra resumo de dados das rotinas (saldos, situações, etc) ...
 	$contRotina = 0;	
@@ -657,7 +658,6 @@ if (isset($cabecalho[23]->cdata) && $cabecalho[23]->cdata == "1") {
                 break;
             }
 			case "DESABILITAR OPERACOES": {
-			
 				$nomeRotina = "Desabilitar Operacoes";
                 $urlRotina = "liberar_bloquear";
                 $strValue = "";	
@@ -669,6 +669,27 @@ if (isset($cabecalho[23]->cdata) && $cabecalho[23]->cdata == "1") {
                 $urlRotina = "valores_a_devolver";
                 $strValue = ( isset($valores[21]->cdata) ) ? number_format(str_replace(",", ".", $valores[21]->cdata), 2, ",", ".") : '';
 				$telaPermitadaAcessoBacen = 1;
+				break;
+			}
+			case "SITUACAO_PREVIDENCIA": {
+                $urlRotina = "";
+				$telaPermitadaAcessoBacen = 0;
+				$nomeRotina = " ";						
+				$strValue = " ";
+				if ((isset($valores[22]->cdata)) AND ($valores[22]->cdata!=""))  {
+					$nomeRotina = "Situa&ccedil;&atilde;o da Previd&ecirc;ncia"; 
+					switch ($valores[22]->cdata) {
+						case "0":
+							$strValue = "INATIVA";
+							break;
+						case "1":
+							$strValue = "ATIVA";
+							break;
+						case "2":
+							$strValue = "PENDENTE";
+							break;
+					}
+				}
 				break;
 			}
 			default: {
@@ -720,7 +741,6 @@ if (isset($cabecalho[23]->cdata) && $cabecalho[23]->cdata == "1") {
 		$contRotina++;
 	}	
 	
-
 	// Flag para acesso a rotinas
 	echo 'flgAcessoRotina = true;';
 	
@@ -741,8 +761,10 @@ echo 'cdclcnae = "' . $vr_cdclcnae  . '";';
 	$flgMsgAnota = false;
 	
 	if ($glbvars["nmrotina"] == "") {
+
 		// Monta HTML para mostrar mensagens de alerta
 		if (count($mensagens) > 0 && $flgProdutos != 'true') {	
+
 			$flgMsgAnota = true;
 			
 			echo 'var strHTML = \'<table width="445" border="0" cellpadding="1" cellspacing="2">\';';

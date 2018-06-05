@@ -68,7 +68,8 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0004 is
                 flgbloqt INTEGER,
                 vllimite_saque tbtaa_limite_saque.vllimite_saque%TYPE,
                 pacote_tarifa BOOLEAN,
-                vldevolver NUMBER(32,8));
+                vldevolver NUMBER(32,8),
+                insituacprvd tbprevidencia_conta.insituac%TYPE);
   TYPE typ_tab_valores_conta IS TABLE OF typ_rec_valores_conta
     INDEX BY PLS_INTEGER;
   
@@ -6317,6 +6318,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     vr_vlsldppr     NUMBER   := 0;
     vr_vllimite     NUMBER   := 0;
     vr_qtfolhas     INTEGER  := 0;
+    vr_insituacprvd NUMBER := NULL;
     vr_vllimite_saque NUMBER := 0;
     vr_dssitura     VARCHAR2(100) := NULL;
     vr_dssitnet     VARCHAR2(100) := NULL;
@@ -6764,6 +6766,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     -- por esse motivo as PL TABLES vr_tab_conta_bloq, vr_tab_craplpp, vr_tab_craplrg, vr_tab_resgate 
     -- e por questao de performace elas nao serao carregadas
     
+   BEGIN
+      SELECT 
+        insituac
+      INTO
+        vr_insituacprvd
+      FROM
+        tbprevidencia_conta
+      WHERE
+        cdcooper = pr_cdcooper
+        AND nrdconta = pr_nrdconta;
+    EXCEPTION WHEN NO_DATA_FOUND THEN
+    vr_insituacprvd := NULL;
+    END;
+
+    
     --Executar rotina consulta poupanca
     apli0001.pc_consulta_poupanca (pr_cdcooper => pr_cdcooper            --> Cooperativa 
                                   ,pr_cdagenci => pr_cdagenci            --> Codigo da Agencia
@@ -7037,6 +7054,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     pr_tab_valores_conta(vr_idxval).flgbloqt := vr_flgbloqt;
     pr_tab_valores_conta(vr_idxval).vllimite_saque := nvl(vr_vllimite_saque,0);
     pr_tab_valores_conta(vr_idxval).vldevolver := nvl(vr_vldevolver,0);
+    pr_tab_valores_conta(vr_idxval).insituacprvd := vr_insituacprvd;
     
     /* Busca o pacote tarifas */
     OPEN cr_pacotes_tarifas;
@@ -7407,6 +7425,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
                                          ELSE 'no'
                                        END)   ||'</pacote_tarifa>'||
                         '<vldevolver>'|| vr_tab_valores_conta(i).vldevolver ||'</vldevolver>'||
+                        '<insituacprvd>'|| vr_tab_valores_conta(i).insituacprvd ||'</insituacprvd>'||
                         '</Registro>');                                               
                                                                      
                                                                      
