@@ -1,11 +1,11 @@
 <?php
 	/*!
 	 * FONTE        : altera_administradora.php
-	 * CRIAï¿½ï¿½O      : Jean Michel
-	 * DATA CRIAï¿½ï¿½O : Marco/2014
-	 * OBJETIVO     : Efetua Downgrade ou Upgrade de administradora de cartï¿½es
+	 * CRIAÇÃO      : Jean Michel
+	 * DATA CRIAÇÃO : Marco/2014
+	 * OBJETIVO     : Efetua Downgrade ou Upgrade de administradora de cartões
 	 * --------------
-	 * ALTERAï¿½ï¿½ES   : Incluso regra para efetuar reload da tela de cartoes (Daniel)
+	 * ALTERAÇÕES   : Incluso regra para efetuar reload da tela de cartoes (Daniel)
 	 * --------------
 	 * 000: ----- 
 	 */
@@ -20,12 +20,12 @@
 	
 	$funcaoAposErro = 'bloqueiaFundo(divRotina);';
 	
-	// Verifica permissï¿½o
+	// Verifica permissão
 	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"N")) <> "") {
 		exibirErro('error',$msgError,'Alerta - Ayllos',$funcaoAposErro,false);
 	}	
 	
-	// Verifica se os parï¿½metros necessï¿½rios foram informados
+	// Verifica se os parâmetros necessários foram informados
 	if (!isset($_POST["nrdconta"]) || !isset($_POST["codaadmi"]) || !isset($_POST["codnadmi"]) || !isset($_POST["nrcrcard"])) {
 		exibirErro('error','Par&acirc;metros incorretos.','Alerta - Ayllos',$funcaoAposErro,false);
 	}	
@@ -34,16 +34,15 @@
 	$codaadmi = $_POST["codaadmi"];
 	$codnadmi = $_POST["codnadmi"];
 	$nrcrcard = $_POST["nrcrcard"];
-	$nrctrcrd = $_POST['nrctrcrd'];
 
-	// Verifica se nï¿½mero da conta ï¿½ um inteiro vï¿½lido
+	// Verifica se número da conta é um inteiro válido
 	if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Ayllos',$funcaoAposErro,false);
 	if (!validaInteiro($codaadmi)) exibirErro('error','Antiga administradora inv&aacute;lida.','Alerta - Ayllos',$funcaoAposErro,false);
 	if (!validaInteiro($codnadmi)) exibirErro('error','Nova administradora inv&aacute;lida.','Alerta - Ayllos',$funcaoAposErro,false);
 	if (!validaInteiro($nrcrcard)) exibirErro('error','Cart&atilde; inv&aacute;lido.','Alerta - Ayllos',$funcaoAposErro,false);
 	
 	
-    // Monta o xml de requisiï¿½ï¿½o
+    // Monta o xml de requisição
 	$xmlSetCartao  = "";
 	$xmlSetCartao .= "<Root>";
 	$xmlSetCartao .= "	<Cabecalho>";
@@ -65,25 +64,13 @@
 	$xmlSetCartao .= "	</Dados>";
 	$xmlSetCartao .= "</Root>";
 
-	//xml envio esteira
-	$bancoobXML = "<Root>";
-	$bancoobXML .= " <Dados>";
-	$bancoobXML .= "   <nrdconta>".$nrdconta."</nrdconta>";
-	$bancoobXML .= "   <nrctrcrd>".$nrctrcrd."</nrctrcrd>";
-	$bancoobXML .= "   <dtmvtolt>".$glbvars["dtmvtolt"]."</dtmvtolt>";
-	$bancoobXML .= " </Dados>";
-	$bancoobXML .= "</Root>";
-
-	$admresult = mensageria($bancoobXML, "ATENDA_CRD", "INCLUIR_PROPOSTA_ESTEIRA", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
-	$procXML = simplexml_load_string($admresult);
-	echo "/* Encaminhado para a esteira  $bancoobXML */";
 	// Executa script para envio do XML
 	$xmlResult = getDataXML($xmlSetCartao);
 
     // Cria objeto para classe de tratamento de XML
 	$xmlObjCartao = getObjectXML($xmlResult);
 		
-	// Se ocorrer um erro, mostra crï¿½tica
+	// Se ocorrer um erro, mostra crítica
 	if (strtoupper($xmlObjCartao->roottag->tags[0]->name) == "ERRO") {
 		exibirErro('error',$xmlObjCartao->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos',$funcaoAposErro,false);	
 	}else{

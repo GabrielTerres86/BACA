@@ -1,22 +1,23 @@
 <?
 /*!
  * FONTE        : validar_novo.php
- * CRIAï¿½ï¿½O      : Guilherme
- * DATA CRIAï¿½ï¿½O : Marco/2008
- * OBJETIVO     : Validar Novo Cartï¿½o de Crï¿½dito - rotina de Cartï¿½o de Crï¿½dito da tela ATENDA
+ * CRIAÇÃO      : Guilherme
+ * DATA CRIAÇÃO : Marco/2008
+ * OBJETIVO     : Validar Novo Cartão de Crédito - rotina de Cartão de Crédito da tela ATENDA
  * --------------
- * ALTERAï¿½ï¿½ES   :
+ * ALTERAÇÕES   :
  * --------------
- * 000: [03/11/2010] David       (CECRED) : Adaptaï¿½ï¿½es para Cartï¿½o PJ
- * 001: [10/05/2011] Rodolpho    (DB1) : Adaptaï¿½ï¿½es para o formulï¿½rio genï¿½rico de avalistas
+ * 000: [03/11/2010] David       (CECRED) : Adaptações para Cartão PJ
+ * 001: [10/05/2011] Rodolpho    (DB1) : Adaptações para o formulário genérico de avalistas
  * 002: [01/04/2013] Adriano     (CECRED) : Incluido os parametros idorigem, nmdatela, cdoperad na chamada da procedure valida_nova_proposta
  * 003: [02/05/2014] Jean Michel (CECRED) : Incluido novos parametros para cartoes bancoob
  * 004: [23/10/2014] Vanessa     (CECRED) : Retirada da tela avalista conforme SD 204632
  * 005: [23/10/2014] Vanessa     (CECRED) : Obrigar o Preecnhimeto do campo forma de Pagamento SD 236434
  * 006: [09/10/2015] James		 (CECRED) : Desenvolvimento do projeto 126.
  * 007: [17/06/2016] Rafael M.   (RKAM)   : - M181 - Alterar o CDAGENCI para passar o CDPACTRA
- * 008: [29/06/2016] Kelvin      (CECRED) : Ajuste para que o campo "Plastico da Empresa" seja obrigatï¿½rio. SD 476461
+ * 008: [29/06/2016] Kelvin      (CECRED) : Ajuste para que o campo "Plastico da Empresa" seja obrigatório. SD 476461
  * 009: [09/12/2016] Kelvin		 (CECRED) : Ajuste realizado conforme solicitado no chamado 574068. 										  
+ * 010: [29/03/2018] Lombardi	 (CECRED) : Ajuste para chamar a rotina de senha do coordenador. PRJ366.
  */
 ?>
 
@@ -30,12 +31,12 @@
 	
 	$funcaoAposErro = 'bloqueiaFundo(divRotina);';
 	
-	// Verifica permissï¿½o
+	// Verifica permissão
 	if (($msgError = validaPermissao($glbvars["nmdatela"],$glbvars["nmrotina"],"N")) <> "") {
 		exibirErro('error',$msgError,'Alerta - Ayllos',$funcaoAposErro,false);
 	}	
 	
-	// Verifica se os parï¿½metros necessï¿½rios foram informados
+	// Verifica se os parâmetros necessários foram informados
 	if (!isset($_POST["nrdconta"]) ||
 	    !isset($_POST["inpessoa"]) ||
         !isset($_POST["dsgraupr"]) ||
@@ -74,22 +75,22 @@
 	//Bloqueado solicitacao de novo cartao para cooperativa transulcred SD 574068
 	if($glbvars["cdcooper"] == 17) exibirErro('error','Solicita&ccedil;&atilde;o n&atilde;o autorizada.','Alerta - Ayllos',$funcaoAposErro,false);
 	
-	// Verifica se nï¿½mero da conta ï¿½ um inteiro vï¿½lido
+	// Verifica se número da conta é um inteiro válido
 	if (!validaInteiro($nrdconta)) exibirErro('error','Conta/dv inv&aacute;lida.','Alerta - Ayllos',$funcaoAposErro,false);
 	
-	// Verifica se tipo de pessoa ï¿½ um inteiro vï¿½lido
+	// Verifica se tipo de pessoa é um inteiro válido
 	if (!validaInteiro($inpessoa)) exibirErro('error','Tipo de pessoa inv&aacute;lida.','Alerta - Ayllos',$funcaoAposErro,false);
 	
-	// Verifica se valor do limite ï¿½ um decimal vï¿½lido
+	// Verifica se valor do limite é um decimal válido
 	if (!validaDecimal($vllimpro)) exibirErro('error','Valor do Limite de Cr&eacute;dito inv&aacute;lido ERRO.','Alerta - Ayllos',$funcaoAposErro,false);
 	
-	// Verifica se valor do limite ï¿½ um decimal vï¿½lido
+	// Verifica se valor do limite é um decimal válido
 	if (!validaDecimal($vllimdeb)) exibirErro('error','Valor do Limite de D&eacute;bito inv&aacute;lido.','Alerta - Ayllos',$funcaoAposErro,false);
 
-	// Verifica se valor do limite ï¿½ um decimal vï¿½lido
+	// Verifica se valor do limite é um decimal válido
 	if (!validaInteiro($nrcpfcgc)) exibirErro('error','N&uacute;mero de CPF inv&aacute;lido.','Alerta - Ayllos',$funcaoAposErro,false);
 	
-	// Verifica se data de nascimento ï¿½ uma data vï¿½lida
+	// Verifica se data de nascimento é uma data válida
 	if (!validaData($dtnasccr)) exibirErro('error','Data de nascimento inv&aacute;lida.','Alerta - Ayllos',$funcaoAposErro,false);
 	
 	// Verifica se a forma de pagamento foi selecionada
@@ -98,7 +99,7 @@
 	// Verifica se a empresa do plastico foi informada
 	if (empty($nmempres) && $inpessoa == 2) exibirErro('error','Empresa do Plastico deve ser informada.','Alerta - Ayllos',$funcaoAposErro,false);
 	
-    // Monta o xml de requisiï¿½ï¿½o
+    // Monta o xml de requisição
 	$xmlSetCartao  = "";
 	$xmlSetCartao .= "<Root>";
 	$xmlSetCartao .= "	<Cabecalho>";
@@ -135,25 +136,26 @@
     // Cria objeto para classe de tratamento de XML
 	$xmlObjCartao = getObjectXML($xmlResult);
 
-	// Se ocorrer um erro, mostra crï¿½tica
+	// Se ocorrer um erro, mostra crítica
 	if (strtoupper($xmlObjCartao->roottag->tags[0]->name) == "ERRO") {
-	//if(false){
 		exibirErro('error',$xmlObjCartao->roottag->tags[0]->tags[0]->tags[4]->cdata,'Alerta - Ayllos',$funcaoAposErro,false);	
 	} 	
 
-	// Mostra se Bo retornar mensagem de atualizaï¿½ï¿½o de cadastro
+	// Mostra se Bo retornar mensagem de atualização de cadastro
 	$idconfir = $xmlObjCartao->roottag->tags[0]->tags[0]->tags[0]->cdata;
 	$dsmensag = $xmlObjCartao->roottag->tags[0]->tags[0]->tags[1]->cdata;
+	$solcoord = $xmlObjCartao->roottag->tags[0]->attributes["SOLCOORD"];
+	
+	$executar = "";
 	
 	if ($inpessoa <> "1") {
 	
-		echo 'habilitaAvalista(true);';
-		echo 'hideMsgAguardo();';
-		echo 'bloqueiaFundo(divRotina,\'nrctaav1\',\'frmNovoCartao\',false);';		
+		$executar .= "habilitaAvalista(true);";
+		$executar .= "hideMsgAguardo();";
+		$executar .= "bloqueiaFundo(divRotina,\"nrctaav1\",\"frmNovoCartao\",false);";		
 		
-		// Mostra mensagem de confirmaï¿½ï¿½o para finalizar a operaï¿½ï¿½o
-		echo "showConfirmacao('".((trim($dsmensag) <> "" && !($dsmensag == "0") )? $dsmensag."<br><br>" : "")."Deseja cadastrar a proposta de novo cart&atilde;o de cr&eacute;dito?','Confirma&ccedil;&atilde;o - Ayllos','cadastrarNovoCartao()','bloqueiaFundo(divRotina)','sim.gif','nao.gif');";		
-		exit();
+		// Mostra mensagem de confirmação para finalizar a operação
+		$executar .= "showConfirmacao(\"".(trim($dsmensag) <> "" ? $dsmensag."<br><br>" : "")."Deseja cadastrar a proposta de novo cart&atilde;o de cr&eacute;dito?\",\"Confirma&ccedil;&atilde;o - Ayllos\",\"cadastrarNovoCartao()\",\"bloqueiaFundo(divRotina)\",\"sim.gif\",\"nao.gif\");";
 		
 	} else {
 	   
@@ -165,15 +167,29 @@
 		echo 'bloqueiaFundo(divRotina,\'nrctaav1\',\'frmNovoCartao\',false);';*/
 		
 		// Esconde mensagem de aguardo
-		echo 'hideMsgAguardo();';
-		echo 'bloqueiaFundo(divRotina);';
-		echo 'showConfirmacao("Deseja cadastrar a proposta de novo cart&atilde;o de cr&eacute;dito?","Confirma&ccedil;&atilde;o - Ayllos","cadastrarNovoCartao()","blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')))","sim.gif","nao.gif");';
+		$executar .= "hideMsgAguardo();";
+		$executar .= "bloqueiaFundo(divRotina);";
+		$executar .= "showConfirmacao(\"Deseja cadastrar a proposta de novo cart&atilde;o de cr&eacute;dito?\",\"Confirma&ccedil;&atilde;o - Ayllos\",\"cadastrarNovoCartao()\",\"blockBackground(parseInt($(\\\"#divRotina\\\").css(\\\"z-index\\\")))\",\"sim.gif\",\"nao.gif\");";
 		
 
-		// Mostra a mensagem de informaï¿½ï¿½o para verificar atualizaï¿½ï¿½o cadastral se for adm BB
-		if ($idconfir == 1 && $dsmensag != 0) {
-			echo 'showError("inform","'.$dsmensag.'","Alerta - Ayllos","bloqueiaFundo(divRotina,\'nrctaav1\',\'frmNovoCartao\',false)");';		
+		// Mostra a mensagem de informação para verificar atualização cadastral se for adm BB
+		if ($idconfir == 1) {
+			$executar .= "showError(\"inform\",\"".$dsmensag."\",\"Alerta - Ayllos\",\"bloqueiaFundo(divRotina,\\\"nrctaav1\\\",\\\"frmNovoCartao\\\",false)\");";
 		} 	
+		} 	
+	
+	//echo 'alert(\''.$executar.'\');'; exit();
+	// Se ocorrer um erro, mostra crítica
+	if (strtoupper($xmlObjCartao->roottag->tags[1]->name) == "ERRO") {
+		
+		$executar = str_replace("\"","\\\"", str_replace("\\", "\\\\", $executar));
+		$executar = str_replace("\"","\\\"", str_replace("\\", "\\\\", $executar));
+		$executar = str_replace("\"","\\\"", str_replace("\\", "\\\\", $executar));
+		
+		exibirErro("error",$xmlObjCartao->roottag->tags[1]->tags[0]->tags[4]->cdata,"Alerta - Ayllos", ($solcoord == 1 ? "senhaCoordenador(\\\"".$executar."\\\");" : ""),false);
+		
+	} else {
+		echo $executar;
 	}
 	
 ?>

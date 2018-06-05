@@ -113,10 +113,6 @@
 						</select>
 					</td>
 				</tr>
-				<tr>
-					<td><label for="dsjustificativa"><? echo utf8ToHtml('Justificativa:') ?></label></td>
-					<td><input type="text" name="dsjustificativa" id="dsjustificativa" class="campo" style="width:252px" /></td>
-				</tr>	
 			</table>
 			
 			<div id="divBotoes" >
