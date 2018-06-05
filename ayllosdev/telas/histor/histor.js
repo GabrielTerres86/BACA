@@ -8,8 +8,11 @@
  *                07/02/2017 - #552068 Aumento da largura da tabela para comportar os dados corretamente 
  *                             Retirada a coluna de CPMF na função formataTabelaConsulta (Carlos)
  *				  05/12/2017 - Adicionado novo campo Ind. Monitaoramento - Melhoria 458 - Antonio R. Jr (mouts)
+ *                26/03/2018 - PJ 416 - BacenJud - Incluir o campo de inclusão do histórico no bloqueio judicial - Márcio - Mouts
+ *                05/04/2018 - PJ 416 - BacenJud - Inclusão do form de senha para confirmação de alteração do bloqueio judicial - Mateus Z (Mouts)
  *                11/04/2018 - Incluído novo campo "Estourar a conta corrente" (inestocc)
  *                             Diego Simas - AMcom
+ *                16/05/2017 - Ajustes prj420 - Resolucao - Heitor (Mouts)
  * --------------
  */
 
@@ -140,6 +143,9 @@ function formataCadastroHistorico() {
     $('label[for="dsexthst"]', '#frmHistorico').addClass('rotulo').css({ 'width': '120px' });
     $('label[for="dsextrat"]', '#frmHistorico').addClass('rotulo').css({ 'width': '120px' });
     $('label[for="nmestrut"]', '#frmHistorico').addClass('rotulo').css({ 'width': '120px' });
+	//PJ 416 - Início		
+    $('label[for="indutblq"]', '#frmHistorico').addClass('rotulo').css({ 'width': '200px' }); 
+	//PJ 416 - Fim
 	
 	// CAMPOS - Dados Gerais
     $('#cdhistor', '#frmHistorico').css({ 'width': '60px' }).setMask('INTEGER', 'z.zzz', '.', '');
@@ -150,7 +156,9 @@ function formataCadastroHistorico() {
     $('#inhistor', '#frmHistorico').css({ 'width': '60px' }).attr('maxlength', '2').setMask('INTEGER', 'zz', '', '');
     $('#dsexthst', '#frmHistorico').css({ 'width': '455px' }).attr('maxlength', '50');
     $('#dsextrat', '#frmHistorico').css({ 'width': '200px' }).attr('maxlength', '21');
-    $('#nmestrut', '#frmHistorico').css({ 'width': '125px' }).attr('maxlength', '15');
+    $('#nmestrut', '#frmHistorico').css({ 'width': '200px' }).attr('maxlength', '32');
+	// PJ416
+    $('#indutblq', '#frmHistorico').css({ 'width': '50px' }).attr('maxlength', '1'); 
 	
 	
 	// LABEL - Indicadores
@@ -222,6 +230,7 @@ function formataCadastroHistorico() {
     $('label[for="flgsenha"]', '#frmHistorico').addClass('rotulo').css({ 'width': '100px' });
     $('label[for="cdprodut"]', '#frmHistorico').addClass('rotulo').css({ 'width': '100px' });
     $('label[for="cdagrupa"]', '#frmHistorico').addClass('rotulo').css({ 'width': '100px' });
+	$('label[for="idmonpld"]', '#frmHistorico').addClass('rotulo').css({ 'width': '100px' });
 
 	// CAMPOS - Outros
     $('#flgsenha', '#frmHistorico').css({ 'width': '60px' });
@@ -229,6 +238,7 @@ function formataCadastroHistorico() {
     $('#dsprodut', '#frmHistorico').css({ 'width': '350px' }).desabilitaCampo();
     $('#cdagrupa', '#frmHistorico').css({ 'width': '60px' }).attr('maxlength', '5').setMask('INTEGER', 'zzzzz', '', '');
     $('#dsagrupa', '#frmHistorico').css({ 'width': '350px' }).desabilitaCampo();
+	$('#idmonpld', '#frmHistorico').css({ 'width': '60px' });
 	
     $('input[type="text"],select', '#frmHistorico').desabilitaCampo().limpaFormulario().removeClass('campoErro');
 	
@@ -414,6 +424,9 @@ function liberaCadastro() {
     $('#ingercre', '#frmHistorico').val("1");
     $('#ingerdeb', '#frmHistorico').val("1");
     $('#flgsenha', '#frmHistorico').val("1");	
+	$('#idmonpld', '#frmHistorico').val("1");
+	//PJ 416
+    $('#indutblq', '#frmHistorico').val("S");
 	
 	// Adicionar foco no primeiro campo
     $("#cdhistor", "#frmHistorico").habilitaCampo().val("").focus();
@@ -795,10 +808,23 @@ function controlaCamposCadastroHistorico() {
     $("#flgsenha", "#frmHistorico").unbind('keypress').bind('keypress', function (e) {
 		if (e.keyCode == 9 || e.keyCode == 13) {
 			// Setar foco no proximo campo
+			// PJ 416 - Início
+            //$("#cdprodut", "#frmHistorico").focus();
+            $("#indutblq", "#frmHistorico").focus();	
+			// PJ 416 Fim
+            return false;
+        }
+    });
+	//PJ 416 - Início
+    //Define ação para ENTER e TAB no campo solicitar senha
+    $("#indutblq", "#frmHistorico").unbind('keypress').bind('keypress', function (e) {
+        if (e.keyCode == 9 || e.keyCode == 13) {
+            // Setar foco no proximo campo
             $("#cdprodut", "#frmHistorico").focus();
 			return false;
 		}
     });	
+	//PJ 416 - Fim
 	
     // Acao para quando alterar o valor do campo
 	$("#cdprodut", "#frmHistorico").unbind('change').bind('change', function () {
@@ -839,6 +865,14 @@ function controlaCamposCadastroHistorico() {
     $("#cdagrupa", "#frmHistorico").unbind('keypress').bind('keypress', function (e) {
 		if (e.keyCode == 9 || e.keyCode == 13) {
 			// Finaliza o cadastro
+			$('#idmonpld', '#frmHistorico').focus();
+			return false;
+		}
+    });	
+	
+    $("#idmonpld", "#frmHistorico").unbind('keypress').bind('keypress', function (e) {
+		if (e.keyCode == 9 || e.keyCode == 13) {
+			// Finaliza o cadastro
 			$('#btSalvar', '#divBotoes').focus();
 			return false;
 		}
@@ -868,6 +902,17 @@ function controlaCamposCadastroHistorico() {
 			}			
 		}		
 	});	
+
+	$("#indutblq", "#frmHistorico").unbind('change').bind('change', function () {
+
+    	indutblq = $("#indutblq", "#frmHistorico").val();
+
+    	if(indutblq == 'N'){
+    		mostraSenha();
+    	}
+		
+		return false;
+	});
 }
 
 /**
@@ -1497,6 +1542,7 @@ function manterRotina() {
 	var cdgrupo_historico  = $('#cdgrupo_historico','#frmHistorico').val();
 
 	var flgsenha  = $('#flgsenha','#frmHistorico').val();
+	var indutblq  = $('#indutblq','#frmHistorico').val();
 	var cdprodut  = $('#cdprodut','#frmHistorico').val();
 	var cdagrupa  = $('#cdagrupa','#frmHistorico').val();
 	var dsextrat  = $('#dsextrat','#frmHistorico').val();
@@ -1509,6 +1555,10 @@ function manterRotina() {
     var indebfol = $('#indebfol', '#frmHistorico').val();
     var txdoipmf = $('#txdoipmf', '#frmHistorico').val();
 	
+	var idmonpld = $('#idmonpld', '#frmHistorico').val();
+	
+	// PRJ 416 
+    var operauto = $('#operauto', '#frmHistorico').val();	
 	
 	$.ajax({		
         type: 'POST',
@@ -1544,6 +1594,7 @@ function manterRotina() {
 				  ingerdeb : ingerdeb,
 				  cdgrupo_historico: cdgrupo_historico,
 				  flgsenha : flgsenha,
+				  indutblq : indutblq,	
 				  cdprodut : cdprodut,
 				  cdagrupa : cdagrupa,
 				  dsextrat : dsextrat,
@@ -1553,6 +1604,8 @@ function manterRotina() {
 				  vltarcsh : vltarcsh,
 				  indebfol : indebfol,
 				  txdoipmf : txdoipmf,
+				  idmonpld : idmonpld,
+				  operauto : operauto,
 				  redirect : 'script_ajax'
 				  
 				},
@@ -1572,3 +1625,168 @@ function manterRotina() {
 				}
 	});
 }
+
+// Inicio PRJ 416
+function mostraSenha() {
+
+	showMsgAguardo('Aguarde, abrindo ...');
+
+	// Executa script de confirmação através de ajax
+	$.ajax({
+		type: 'POST',
+		dataType: 'html',
+		url: UrlSite + 'telas/histor/senha.php',
+		data: {
+			redirect: 'html_ajax'
+			},
+		error: function(objAjax,responseError,objExcept) {
+			hideMsgAguardo();
+			showError('error','Não foi possível concluir a requisição.','Alerta - Ayllos',"unblockBackground()");
+		},
+		success: function(response) {
+			$('#divRotina').html(response);
+			buscaSenha();
+			return false;
+		}
+	});
+	return false;
+
+}
+
+function buscaSenha() {
+
+	hideMsgAguardo();		
+		
+	showMsgAguardo('Aguarde, abrindo ...');
+
+	$.ajax({		
+		type: 'POST',
+		dataType: 'html',
+		url: UrlSite + 'telas/histor/form_senha.php', 
+		data: {
+			redirect: 'script_ajax'			
+			}, 
+        error: function (objAjax, responseError, objExcept) {
+			hideMsgAguardo();
+            showError('error', 'Não foi possível concluir a requisição.', 'Alerta - Ayllos', "unblockBackground();");
+		},
+        success: function (response) {
+		
+            if (response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1) {
+				try {
+					$('#divConteudoSenha').html(response);
+					exibeRotina($('#divRotina'));
+					formataSenha();
+                    $('#codsenha', '#frmSenha').unbind('keydown').bind('keydown', function (e) {
+                        if (divError.css('display') == 'block') { return false; }
+						// Se é a tecla ENTER, 
+                        if (e.keyCode == 13) {
+							validarSenha();
+							return false;			
+						} 
+					});
+					return false;
+                } catch (error) {
+					hideMsgAguardo();
+                    showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'unblockBackground()');
+				}
+			} else {
+				try {
+                    eval(response);
+                } catch (error) {
+					hideMsgAguardo();
+                    showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'unblockBackground()');
+				}
+			}
+		}				
+	});
+	
+	return false;
+}
+
+function formataSenha() {
+
+	highlightObjFocus($('#frmSenha'));
+
+    rOperador = $('label[for="operauto"]', '#frmSenha');
+    rSenha = $('label[for="codsenha"]', '#frmSenha');
+	
+    rOperador.addClass('rotulo').css({ 'width': '165px' });
+    rSenha.addClass('rotulo').css({ 'width': '165px' });
+
+    cOperador = $('#operauto', '#frmSenha');
+    cSenha = $('#codsenha', '#frmSenha');
+	
+    cOperador.addClass('campo').css({ 'width': '100px' }).attr('maxlength', '10');
+    cSenha.addClass('campo').css({ 'width': '100px' }).attr('maxlength', '10');
+	
+    $('#divConteudoRotina').css({ 'width': '400px', 'height': '120px' });
+
+	// centraliza a divRotina
+    $('#divRotina').css({ 'width': '425px' });
+    $('#divConteudoSenha').css({ 'width': '400px' });
+	$('#divRotina').centralizaRotinaH();
+	$('#divRotina').css({ 'top': '300px' });
+	
+	hideMsgAguardo();		
+    bloqueiaFundo($('#divRotina'));
+	cOperador.focus();
+	
+	return false;
+}
+
+function validarSenha() {
+		
+	hideMsgAguardo();		
+	
+	// Situacao
+    operauto = $('#operauto', '#frmSenha').val();
+    var codsenha = $('#codsenha', '#frmSenha').val();
+	
+    showMsgAguardo('Aguarde, validando dados ...');
+
+	$.ajax({		
+        type: 'POST',
+        async: true,
+        url: UrlSite + 'telas/histor/valida_senha.php',
+			data: {
+            operauto: operauto,
+            codsenha: codsenha,
+            redirect: 'script_ajax'
+			}, 
+        error: function (objAjax, responseError, objExcept) {
+				hideMsgAguardo();
+            showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', '');
+			},
+        success: function (response) {
+				try {
+					eval(response);
+					// se não ocorreu erro, vamos gravar as alçterações
+                if (response.indexOf('showError("error"') == -1 && response.indexOf('XML error:') == -1 && response.indexOf('#frmErro') == -1) {
+                    
+                    // Salvar em um campo hidden qual operador que autorizou a alteração do campo bloqueio juridico para "nao"
+                	salvarOperadorAutorizou(operauto);
+
+                    fechaRotina($('#divRotina'));
+
+                }
+					return false;
+            } catch (error) {
+					hideMsgAguardo();
+                showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', '');
+				}
+			}
+		});	
+		
+	return false;
+}
+
+function fecharFormSenha(){
+	$('#indutblq', '#frmHistorico').val("S");
+	fechaRotina($('#divRotina'));
+}
+
+function salvarOperadorAutorizou(operauto){
+	$('#operauto', '#frmHistorico').val(operauto);
+}
+// Fim PRJ 416
