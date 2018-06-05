@@ -5,7 +5,7 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0004 is
     Sistema  : Rotinas para detalhes de cadastros
     Sigla    : CADA
     Autor    : Odirlei Busana - AMcom
-    Data     : Agosto/2015.                   Ultima atualizacao: 12/12/2017
+    Data     : Agosto/2015.                   Ultima atualizacao: 03/04/2018
   
    Dados referentes ao programa:
   
@@ -39,6 +39,8 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0004 is
 
                  12/12/2017 - Alterar para varchar2 o campo nrcartao na procedure 
                               pc_gera_log_ope_cartao (Lucas Ranghetti #810576)
+
+                 03/04/2018 - Adicionado NOTI0001.pc_cria_notificacao
   ---------------------------------------------------------------------------------------------------------------*/
   
   ---------------------------- ESTRUTURAS DE REGISTRO ---------------------
@@ -806,6 +808,20 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0004 is
                                     ,pr_nmdcampo OUT VARCHAR2               --> Nome do campo com erro
                                     ,pr_des_erro OUT VARCHAR2);             --> Descricao do Erro									
 
+PROCEDURE pc_obtem_cabecalho_atenda( pr_cdcooper IN crapcop.cdcooper%TYPE  --> Codigo da cooperativa
+                                      ,pr_cdagenci IN crapage.cdagenci%TYPE  --> Codigo de agencia
+                                      ,pr_nrdcaixa IN crapbcx.nrdcaixa%TYPE  --> Numero do caixa
+                                      ,pr_cdoperad IN crapope.cdoperad%TYPE  --> Codigo do operador
+                                      ,pr_nrdconta IN crapass.nrdconta%TYPE  --> Numero da conta
+                                      ,pr_nrdctitg IN crapass.nrdctitg%TYPE  --> Numero da conta itg
+                                      ,pr_dtinicio IN DATE                   --> Data de incio
+                                      ,pr_dtdfinal IN DATE                   --> data final
+                                      ,pr_idorigem IN INTEGER                --> Identificado de oriem
+                                      ---------- OUT --------
+                                      ,pr_tab_cabec OUT typ_tab_cabec                 --> Retorna dados do cabecalho da tela ATENDA
+                                      ,pr_des_reto       OUT VARCHAR2                 --> OK ou NOK
+                                      ,pr_tab_erro       OUT gene0001.typ_tab_erro);
+
 END CADA0004;
 /
 CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
@@ -815,7 +831,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
   --  Sistema  : Rotinas para detalhes de cadastros
   --  Sigla    : CADA
   --  Autor    : Odirlei Busana - AMcom
-  --  Data     : Agosto/2015.                   Ultima atualizacao: 12/12/2017
+  --  Data     : Agosto/2015.                   Ultima atualizacao: 03/04/2018
   --
   -- Dados referentes ao programa:
   --
@@ -873,6 +889,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
   --
   --                12/12/2017 - Alterar para varchar2 o campo nrcartao na procedure 
   --                             pc_gera_log_ope_cartao (Lucas Ranghetti #810576)
+  --
+  --               03/04/2018 - Adicionado NOTI0001.pc_cria_notificacao
 ---------------------------------------------------------------------------------------------------------------
 
 
@@ -2506,7 +2524,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     
     vr_dtrefere    := pr_rw_crapdat.dtultdma;
     vr_innivris    := 2;
-    vr_vlarrasto := SUBSTR(vr_dstextab,3,9);
+    vr_vlarrasto := GENE0002.fn_char_para_number(SUBSTR(vr_dstextab,3,9));    
     
     -- buscar risco 
     OPEN cr_crapris (pr_cdcooper  => pr_cdcooper,
@@ -3993,9 +4011,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
   /******************************************************************************/
   /**       Funcao para buscar descrição do tipo de conta do cooperado         **/
   /******************************************************************************/
-  FUNCTION fn_dstipcta(pr_cdcooper IN crapcop.cdcooper%TYPE,  --> Codigo da cooperativa
-                       pr_cdtipcta IN crapass.cdtipcta%TYPE,  --> Tipo de conta
-                       pr_cdbcochq IN crapass.cdbcochq%TYPE ) --> Banco para emissao de cheques do cooperado.
+  FUNCTION fn_dstipcta(pr_inpessoa IN tbcc_tipo_conta.inpessoa%TYPE,  --> Tipo de pessoa
+                       pr_cdtipcta IN tbcc_tipo_conta.cdtipo_conta%TYPE)  --> Tipo de conta
                        RETURN VARCHAR2 IS
   
     /* ..........................................................................
@@ -4013,56 +4030,32 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     --
     --  Alteração : 22/10/2015 - Conversão Progress -> Oracle (Odirlei)
     --
-    --
+    --              20/02/2018 - Busca a descrição do tipo de conta da tabela
+    --                           TBCC_TIPO_CONTA. PRJ366 (Lombardi).
     -- ..........................................................................*/
     
     --------------> CURSOR <---------------
-    CURSOR cr_craptip IS
-      SELECT craptip.dstipcta
-        FROM craptip
-       WHERE craptip.cdcooper = pr_cdcooper
-         AND craptip.cdtipcta = pr_cdtipcta;
-     rw_craptip cr_craptip%ROWTYPE;
-     vr_dstipcta VARCHAR2(100) := NULL;    
+    CURSOR cr_tipo_conta IS
+      SELECT tpcta.dstipo_conta
+        FROM tbcc_tipo_conta tpcta
+       WHERE tpcta.inpessoa = pr_inpessoa
+         AND tpcta.cdtipo_conta = pr_cdtipcta;
+    rw_tipo_conta cr_tipo_conta%ROWTYPE;
      
+     vr_dstipcta VARCHAR2(100) := NULL;    
   BEGIN
     -- Buscar descrição do tipo de conta
-    OPEN cr_craptip;
-    FETCH cr_craptip INTO rw_craptip;
+    OPEN cr_tipo_conta;
+    FETCH cr_tipo_conta INTO rw_tipo_conta;
     
-    IF cr_craptip%FOUND THEN
-      CLOSE cr_craptip;
-      
-      -- Tratar descrições dos tipos
-      CASE pr_cdtipcta
-        WHEN 8 THEN
-          vr_dstipcta:= pr_cdtipcta ||' - Normal Conv';
-        WHEN 9 THEN
-          vr_dstipcta:= pr_cdtipcta ||' - Espec. Conv';
-        WHEN 10 THEN
-          vr_dstipcta:= pr_cdtipcta ||' - Cj. Conv';  
-        WHEN 11 THEN
-          vr_dstipcta:= pr_cdtipcta ||' - Cj.Esp.Conv';   
-        ELSE
-           vr_dstipcta:= pr_cdtipcta ||' - '|| rw_craptip.dstipcta;
-        END CASE;
-        
-        -- Tratar tipos por banco
-        IF pr_cdtipcta IN (8,9,10,11) THEN
-          IF pr_cdbcochq = 756 THEN
-            vr_dstipcta:= vr_dstipcta ||'-BCB';
-          ELSE
-            vr_dstipcta:= vr_dstipcta ||'-CTR';
-          END IF;
-        END IF;
-        
+    IF cr_tipo_conta%FOUND THEN
+      CLOSE cr_tipo_conta;
+      vr_dstipcta := pr_cdtipcta || ' - ' || rw_tipo_conta.dstipo_conta;
         RETURN vr_dstipcta;
-        
     ELSE
-      CLOSE cr_craptip;
+      CLOSE cr_tipo_conta;
       RETURN pr_cdtipcta;
     END IF;
-    
     
   END fn_dstipcta;  
   
@@ -4260,6 +4253,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     --              18/12/2017 - Inclusao da leitura do parametro para apresentar a mensagem de fatura
     --                           de cartao de credito em atraso (Anderson).
     -- 
+    --              20/02/2018 - Alteracao da verificação de tipos de conta individuais, pela 
+    --                           verificação da categoria da conta. PRJ366 (Lombardi).
+    --              
     -- ..........................................................................*/
     
     ---------------> CURSORES <----------------
@@ -4282,7 +4278,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
              crapass.flgctitg,
              crapass.idimprtr,
              crapass.idastcjt,
-             crapass.cdsitdct
+             crapass.cdsitdct,
+             crapass.cdcatego
         FROM crapass
        WHERE crapass.cdcooper = pr_cdcooper
          AND crapass.nrdconta = pr_nrdconta;
@@ -5563,8 +5560,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     
     --> Verifica Se Tipo de Conta Individual e possui mais de um Titular 
     IF rw_crapass.inpessoa = 1  THEN
-      IF vr_qttitula > 1 AND 
-         rw_crapass.cdtipcta IN (1,2,7,8,9,12,13,18) THEN
+      IF vr_qttitula > 1 AND rw_crapass.cdcatego = 1 THEN
         --> Incluir na temptable
         pc_cria_registro_msg(pr_dsmensag             => 'Tipo de conta nao permite MAIS DE UM TITULAR.',
                              pr_tab_mensagens_atenda => pr_tab_mensagens_atenda);
@@ -5959,18 +5955,21 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     --  Alteração : 22/10/2015 - Conversão Progress -> Oracle (Odirlei)
     --
     --              01/12/2015 - Carregar o campo cdclcnae da crapass (Jaison/Andrino)
-	                
-					25/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
-			                     crapass, crapttl, crapjur 
-							    (Adriano - P339).
-
-					23/06/2017 - Ajuste para inclusao do novo tipo de situacao da conta
-  				                 "Desligamento por determinação do BACEN" 
-							     ( Jonata - RKAM P364).	
-
-                    20/09/2017 - Ajuste nome do segundo titular para concatenar e/ou.
-                                 PRJ339 - CRM(Odirlei-AMcom) 
-
+	 --              
+	--              25/04/2017 - Ajuste para retirar o uso de campos removidos da tabela
+	--                           crapass, crapttl, crapjur 
+	--		                     (Adriano - P339).
+    --              
+	--	            23/06/2017 - Ajuste para inclusao do novo tipo de situacao da conta
+  	--                           "Desligamento por determinação do BACEN" 
+	--                           ( Jonata - RKAM P364).	
+    --              
+    --              20/09/2017 - Ajuste nome do segundo titular para concatenar e/ou.
+    --                           PRJ339 - CRM(Odirlei-AMcom) 
+    --              
+    --              20/09/2017 - Ajuste nos parametros da procedure fn_dstipcta
+    --                           PRJ366 (Lombardi)
+    --              
     -- ..........................................................................*/
     
     ---------------> CURSORES <----------------
@@ -6111,9 +6110,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     pr_tab_cabec(vr_idxcab).cdsecext := rw_crapass.cdsecext;
     pr_tab_cabec(vr_idxcab).indnivel := rw_crapass.indnivel;
     
-    pr_tab_cabec(vr_idxcab).dstipcta := fn_dstipcta (pr_cdcooper => pr_cdcooper,  --> Codigo da cooperativa
-                                                     pr_cdtipcta => rw_crapass.cdtipcta,  --> Tipo de conta
-                                                     pr_cdbcochq => rw_crapass.cdbcochq ); --> Banco para emissao de cheques do cooperado.
+    pr_tab_cabec(vr_idxcab).dstipcta := fn_dstipcta (pr_inpessoa => rw_crapass.inpessoa,  --> Codigo da cooperativa
+                                                     pr_cdtipcta => rw_crapass.cdtipcta); --> Tipo de conta
     
     pr_tab_cabec(vr_idxcab).dssitdct := fn_dssitdct(pr_cdsitdct => rw_crapass.cdsitdct);  --> Codigo da situacao da conta;
     pr_tab_cabec(vr_idxcab).cdsitdct := rw_crapass.cdsitdct; 
@@ -8710,11 +8708,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     --                           e 'FINTRFTEDS' para utilizar a rotina padrao da TABE0001
     --                           (Douglas - Chamado 454248)
     --
-    --              14/11/2016 - Ajustado para ler o cdorigem da gene0001 e não utilizar 
+    --  Alteração : 14/11/2016 - Ajustado para ler o cdorigem da gene0001 e não utilizar 
     --                           ifs no programa(Odirlei-AMcom)  
-
-                    12/12/2017 - Alterar para para varchar2 o campo nrcartao
-                                 (Lucas Ranghetti #810576) 
+	--
+    --  Alteração : 12/12/2017 - Alterar para para varchar2 o campo nrcartao
+    --                           (Lucas Ranghetti #810576)
+	--							 
+	--  Alteração : 03/04/2018 - Alterar para o "Tipo de aprovacao" para "Saque com cartao CECRED"
+    --                           (Andrey Formigari - Mouts #845782)
      ............................................................................*/
 
     -- Cursor para retornar o nome do banco
@@ -8809,7 +8810,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
         gene0001.pc_gera_log_item(pr_nrdrowid => vr_rowid_log
                                  ,pr_nmdcampo => 'Tipo de aprovacao'
                                  ,pr_dsdadant => ' '
-                                 ,pr_dsdadatu => 'Cecred');
+                                 ,pr_dsdadatu => 'Aprovado por senha');
       END IF;
       
       -- Gera o log dos itens para numero do cartao
@@ -11924,6 +11925,11 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     
     vr_exc_erro EXCEPTION;
 
+    -- Objetos para armazenar as variáveis da notificação
+    vr_variaveis_notif NOTI0001.typ_variaveis_notif;
+    vr_notif_origem   tbgen_notif_automatica_prm.cdorigem_mensagem%TYPE;
+    vr_notif_motivo   tbgen_notif_automatica_prm.cdmotivo_mensagem%TYPE; 
+
   BEGIN
 
 		-- Verifica cooperativa
@@ -12000,6 +12006,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
                             'Em caso de dúvidas relacionadas a atualização cadastral, entre em '     ||
                             'contato com seu Posto de Atendimento ou através do SAC da cooperativa, '||
                             'pelo 0800 647 2200 ou e-mail sac@cecred.coop.br.';
+
+             vr_notif_origem   := 7;
+             vr_notif_motivo   := 1;
+
            ELSE
              vr_dsmensag := 'Cooperado,' ||
                             '</br></br>' ||
@@ -12020,6 +12030,12 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
                             'contato pelo SAC 0800 647 2200 ou através do e-mail '                   ||
                             'sac@cecred.coop.br, todos os dias (incluindo domingos e feriados), '    ||
                             'das 6h às 22h.';
+
+             vr_notif_origem   := 7;
+             vr_notif_motivo   := 2;
+             vr_variaveis_notif('#qtmeatel') := to_char(vr_qtmeatel);
+             vr_variaveis_notif('#lstfones') := vr_lstfones;
+
            END IF;
 
            -- CRIAR A MENSAGEM NA CONTA DO COOPERADO
@@ -12042,6 +12058,15 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
            
            COMMIT; -- COMMITAR A MENSAGEM NA BASE
            pr_dscritic := vr_dsmensag;
+		   --
+           -- Cria uma notificação
+           noti0001.pc_cria_notificacao(pr_cdorigem_mensagem => vr_notif_origem
+                                       ,pr_cdmotivo_mensagem => vr_notif_motivo
+                                       ,pr_cdcooper => pr_cdcooper
+                                       ,pr_nrdconta => pr_nrdconta
+                                       ,pr_idseqttl => 1 -- fixo Primeiro titular
+                                       ,pr_variaveis => vr_variaveis_notif);               
+           --     
 
          END IF;
 
