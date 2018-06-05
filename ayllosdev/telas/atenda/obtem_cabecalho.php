@@ -405,6 +405,8 @@ if (isset($cabecalho[23]->cdata) && $cabecalho[23]->cdata == "1") {
     $flgfolha = $xmlGetFolha->roottag->tags[0]->cdata;
 }
 		
+	
+		
 	// Mostra resumo de dados das rotinas (saldos, situações, etc) ...
 	$contRotina = 0;	
 	for ($i = 0; $i < count($rotinasTela); $i++) {
@@ -739,10 +741,8 @@ echo 'cdclcnae = "' . $vr_cdclcnae  . '";';
 	$flgMsgAnota = false;
 	
 	if ($glbvars["nmrotina"] == "") {
-
 		// Monta HTML para mostrar mensagens de alerta
 		if (count($mensagens) > 0 && $flgProdutos != 'true') {	
-
 			$flgMsgAnota = true;
 			
 			echo 'var strHTML = \'<table width="445" border="0" cellpadding="1" cellspacing="2">\';';
