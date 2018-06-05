@@ -45,6 +45,10 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS184 (pr_cdcooper IN crapcop.cdcooper%T
                28/09/2015 - Conversão Progress >> Oracle PL-Sql (Vanessa) 
 
                06/04/2018 - Paralelismo - Projeto Ligeirinho (Fabiano B. Dias - AMcom)									 
+
+               30/05/2018 - Projeto Ligeirinho  - Retirado os parâmetros pr_cdagenci e pr_idparale
+                            da chamada da rotina pc_crps280_i que foi retirado o paralelismo
+                            (Josiane Stiehler - AMcom)									 
 ............................................................................. */
 
    DECLARE
@@ -148,8 +152,6 @@ CREATE OR REPLACE PROCEDURE CECRED.PC_CRPS184 (pr_cdcooper IN crapcop.cdcooper%T
                   ,pr_cdprogra   => vr_cdprogra         --> Codigo programa conectado
                   ,pr_dsdircop   => rw_crapcop.dsdircop --> Diretório base da cooperativa
                   ----
-                  ,pr_cdagenci  => 0                    --> Código da agência, utilizado no paralelismo
-                  ,pr_idparale  => 0                    --> Identificador do job executando em paralelo.
                   ,pr_flgresta  => 0                    --> Flag padrão para utilização de restart
                   ,pr_stprogra  => vr_stprogra          --> Saída de termino da execução
                   ,pr_infimsol  => vr_infimsol          --> Saída de termino da solicitação,                                               
