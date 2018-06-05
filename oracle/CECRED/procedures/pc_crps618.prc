@@ -1178,7 +1178,7 @@ create or replace procedure cecred.pc_crps618(pr_cdcooper in  craptab.cdcooper%t
       --
       pc_processa_carga_normal(pr_cdcooper_in => pr_cdcooper_in
                               ,pr_rw_crapdat => pr_rw_crapdat
-                              ,pr_nrdconta_in => 0);
+                              ,pr_nrdconta_in => pr_nrdconta_in);
       --
     exception
       when others then
