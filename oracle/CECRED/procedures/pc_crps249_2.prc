@@ -12,7 +12,7 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249_2(pr_cdcooper  IN crapcop.cdcooper
    Sistema : Conta-Corrente - Cooperativa de Credito
    Sigla   : CRED
    Autor   : Odair
-   Data    : Novembro/98                         Ultima atualizacao: 20/09/20017
+   Data    : Novembro/98                         Ultima atualizacao: 30/05/20018
 
    Dados referentes ao programa:
 
@@ -31,8 +31,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249_2(pr_cdcooper  IN crapcop.cdcooper
 
                22/02/2013 - Conversão Progress >> Oracle PL/Sql (Daniel - Supero)
                
-               20/09/2017 - Ajustar para contabilizar a tarifa dos convenios proprios 
-                            no PA do cooperado ou se for TAA no PA do TAA (Lucas Ranghetti #689991)
+               30/05/2018 - Ajustar para contabilizar a tarifa dos convenios proprios 
+                            no PA do cooperado ou se for TAA no PA do TAA 
+                            (Lucas Ranghetti #TASK0011641)
 ............................................................................. */
   -- Variável para armazenar o nome do programa
   vr_cdprogra      crapprg.cdprogra%type;
@@ -47,9 +48,9 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249_2(pr_cdcooper  IN crapcop.cdcooper
   
   CURSOR cr_craplft IS 
     SELECT DECODE(lft.cdagenci,
-                  90, NVL(ass.cdagenci, lft.cdagenci),
-                  91, NVL(DECODE(lft.cdagetfn,0,NULL,lft.cdagetfn), ass.cdagenci),
-                  lft.cdagenci) cdagenci_fatura,
+                  90,ass.cdagenci,
+                  91,ass.cdagenci,
+                  nvl(ass.cdagenci,lft.cdagenci)) cdagenci_fatura,
            lft.cdagenci,
        SUM(lft.vllanmto) vllanmto,
        COUNT(lft.vllanmto) qtlanmto
@@ -58,12 +59,12 @@ CREATE OR REPLACE PROCEDURE CECRED.pc_crps249_2(pr_cdcooper  IN crapcop.cdcooper
  WHERE lft.cdcooper = pr_cdcooper
    AND lft.dtmvtolt = pr_dtmvtolt
    AND lft.cdhistor = pr_cdhistor
-   AND ass.cdcooper = lft.cdcooper
-   AND ass.nrdconta = lft.nrdconta
+   AND ass.cdcooper(+) = lft.cdcooper
+   AND ass.nrdconta(+) = lft.nrdconta
    GROUP BY DECODE(lft.cdagenci,
-                  90, NVL(ass.cdagenci, lft.cdagenci),
-                  91, NVL(DECODE(lft.cdagetfn,0,NULL,lft.cdagetfn), ass.cdagenci),
-                  lft.cdagenci),
+                   90,ass.cdagenci,
+                   91,ass.cdagenci,
+                   nvl(ass.cdagenci,lft.cdagenci)),
             lft.cdagenci
    ORDER BY 1;
  
