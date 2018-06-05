@@ -176,5 +176,92 @@ switch ($operacao){
         }
         echo json_encode($json);
     break;
+    case "BUSCAR_BOLETOS":
+        $cdagenci = (isset($_POST['cdagenci'])) ? $_POST['cdagenci'] : 0;
+        $dtbaixai = (isset($_POST['dtbaixai'])) ? $_POST['dtbaixai'] : '';
+        $dtbaixaf = (isset($_POST['dtbaixaf'])) ? $_POST['dtbaixaf'] : '';
+        $dtemissi = (isset($_POST['dtemissi'])) ? $_POST['dtemissi'] : '';
+        $dtemissf = (isset($_POST['dtemissf'])) ? $_POST['dtemissf'] : '';
+        $dtvencti = (isset($_POST['dtvencti'])) ? $_POST['dtvencti'] : '';
+        $dtvenctf = (isset($_POST['dtvenctf'])) ? $_POST['dtvenctf'] : '';
+        $dtpagtoi = (isset($_POST['dtpagtoi'])) ? $_POST['dtpagtoi'] : '';
+        $dtpagtof = (isset($_POST['dtpagtof'])) ? $_POST['dtpagtof'] : '';
+
+        $xml .= "<Root>";
+        $xml .= " <Dados>";
+        $xml .= "   <cdagenci>" . $cdagenci . "</cdagenci>";
+        $xml .= "   <nrborder>" . $nrborder . "</nrborder>";
+        $xml .= "   <nrdconta>" . $nrdconta . "</nrdconta>";
+        $xml .= "   <dtbaixai>" . $dtbaixai . "</dtbaixai>";
+        $xml .= "   <dtbaixaf>" . $dtbaixaf . "</dtbaixaf>";
+        $xml .= "   <dtemissi>" . $dtemissi . "</dtemissi>";
+        $xml .= "   <dtemissf>" . $dtemissf . "</dtemissf>";
+        $xml .= "   <dtvencti>" . $dtvencti . "</dtvencti>";
+        $xml .= "   <dtvenctf>" . $dtvenctf . "</dtvenctf>";
+        $xml .= "   <dtpagtoi>" . $dtpagtoi . "</dtpagtoi>";
+        $xml .= "   <dtpagtof>" . $dtpagtof . "</dtpagtof>";
+        $xml .= "   <nriniseq>" . $nriniseq . "</nriniseq>";
+        $xml .= "   <nrregist>" . $nrregist . "</nrregist>";
+        $xml .= " </Dados>";
+        $xml .= "</Root>";
+
+        // Chamada mensageria
+        $xmlResult = mensageria($xml, "COBTIT", "BUSCAR_BOLETOS", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+        $xmlObj = getClassXML($xmlResult);
+        $root = $xmlObj->roottag;
+        $dados = $root->dados;
+
+        // Se ocorrer um erro, mostra crítica
+        $json = array();
+        if ($root->erro){
+            $json['status'] = 'erro';
+            $json['mensagem'] = utf8_encode($root->erro->registro->dscritic);
+        }else{
+            ob_start();
+            require_once("manutencao/tab_boletos.php");
+            $html = ob_get_clean();
+            $json['status'] = 'sucesso';
+            $json['html'] = $html;
+        }
+        echo json_encode($json);
+    break;
+    case "BAIXAR_BOLETO":
+        $nrdocmto = (isset($_POST['nrdocmto'])) ? $_POST['nrdocmto'] : 0;
+        $nrctacob = (isset($_POST['nrctacob'])) ? $_POST['nrctacob'] : '';
+        $nrcnvcob = (isset($_POST['nrcnvcob'])) ? $_POST['nrcnvcob'] : '';
+        $dsjustif = (isset($_POST['dsjustif'])) ? utf8_decode($_POST['dsjustif']) : '';
+        $dtmvtolt = $glbvars["dtmvtolt"];
+        
+        $xml .= "<Root>";
+        $xml .= " <Dados>";
+        $xml .= "   <nrdconta>" . $nrdconta . "</nrdconta>";
+        $xml .= "   <nrborder>" . $nrborder . "</nrborder>";
+        $xml .= "   <nrctacob>" . $nrctacob . "</nrctacob>";
+        $xml .= "   <nrcnvcob>" . $nrcnvcob . "</nrcnvcob>";
+        $xml .= "   <nrdocmto>" . $nrdocmto . "</nrdocmto>";
+        $xml .= "   <dtmvtolt>" . $dtmvtolt . "</dtmvtolt>";
+        $xml .= "   <dsjustif><![CDATA[" . $dsjustif . "]]></dsjustif>";
+        $xml .= " </Dados>";
+        $xml .= "</Root>";
+        
+        $xmlResult = mensageria($xml, "COBTIT", "EFETUAR_BAIXA_BOLETO", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+        $xmlObj = getClassXML($xmlResult);
+        $root = $xmlObj->roottag;
+        $dados = $root->dados;
+
+        // Se ocorrer um erro, mostra crítica
+        $json = array();
+        if ($root->erro){
+            $json['status'] = 'erro';
+            $json['mensagem'] = utf8_encode($root->erro->registro->dscritic);
+        }else{
+            ob_start();
+            require_once("manutencao/tab_boletos.php");
+            $html = ob_get_clean();
+            $json['status'] = 'sucesso';
+            $json['mensagem'] = 'Boleto n&#186;'.$nrdocmto.' baixado com Sucesso';
+        }
+        echo json_encode($json);
+    break;
 }
 ?>
