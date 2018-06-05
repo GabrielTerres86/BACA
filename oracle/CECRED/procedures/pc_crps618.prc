@@ -600,8 +600,17 @@ create or replace procedure cecred.pc_crps618(pr_cdcooper in  craptab.cdcooper%t
             ,crapcco cco
             ,crapcop cop
         where 
+          --deve existir o pagador na base do cooperado
+              exists (
+                      select 1
+                      from crapsab sab
+                      where sab.cdcooper = cob.cdcooper+0
+                        and sab.nrdconta = cob.nrdconta+0
+                        and sab.nrinssac = cob.nrinssac+0
+                     )
+          --
           --Se titulo Cooperativa/EE e nao foi enviado ainda para a PG, nao enviar ao DDA 
-              not (cob.inemiten = 3 and cob.inemiexp <> 2)
+          and not (cob.inemiten = 3 and cob.inemiexp <> 2)
           and cob.flgregis = 1 /*cobranca registrada*/
           and cob.incobran = 0 /*aberto*/
           and cob.dtdpagto is null /*sem data de pagamento*/
@@ -646,6 +655,15 @@ create or replace procedure cecred.pc_crps618(pr_cdcooper in  craptab.cdcooper%t
           and cco.cdcooper = cop.cdcooper+0
           --
           and cop.cdcooper = cob.cdcooper+0
+          --
+          --deve existir o pagador na base do cooperado
+          and exists (
+                      select 1
+                      from crapsab sab
+                      where sab.cdcooper = cob.cdcooper+0
+                        and sab.nrdconta = cob.nrdconta+0
+                        and sab.nrinssac = cob.nrinssac+0
+                     )
           --
           --Se titulo Cooperativa/EE e nao foi enviado ainda para a PG, nao enviar ao DDA 
           and not (cob.inemiten = 3 and cob.inemiexp <> 2)
@@ -894,6 +912,15 @@ create or replace procedure cecred.pc_crps618(pr_cdcooper in  craptab.cdcooper%t
         where cop.cdbcoctl = cco.cddbanco+0 /*somente do banco controlador da cooperativa singular*/
           and cop.cdcooper = cco.cdcooper+0
           --
+          --deve existir o pagador na base do cooperado
+          and exists (
+                      select 1
+                      from crapsab sab
+                      where sab.cdcooper = cob.cdcooper+0
+                        and sab.nrdconta = cob.nrdconta+0
+                        and sab.nrinssac = cob.nrinssac+0
+                     )
+          --
           and cco.flgregis = 1 /*convenios de cobranca com registro*/
           and cco.nrconven = cob.nrcnvcob+0
           and cco.cdcooper = cob.cdcooper+0
@@ -938,6 +965,15 @@ create or replace procedure cecred.pc_crps618(pr_cdcooper in  craptab.cdcooper%t
           and cco.cdcooper = cop.cdcooper+0
           --
           and cop.cdcooper = cob.cdcooper+0
+          --
+          --deve existir o pagador na base do cooperado
+          and exists (
+                      select 1
+                      from crapsab sab
+                      where sab.cdcooper = cob.cdcooper+0
+                        and sab.nrdconta = cob.nrdconta+0
+                        and sab.nrinssac = cob.nrinssac+0
+                     )
           --
           --Se titulo Cooperativa/EE e nao foi enviado ainda para a PG, nao enviar ao DDA 
           and not (cob.inemiten = 3 and cob.inemiexp <> 2)
