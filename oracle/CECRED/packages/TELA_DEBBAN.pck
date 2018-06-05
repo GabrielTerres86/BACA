@@ -76,15 +76,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_DEBBAN IS
   --  Sistema  : Rotinas utilizadas pela Tela DEBBAN
   --  Sigla    : COBR
   --  Autor    : Odirlei Busana - AMcom
-  --  Data     : Janeiro - 2018.                   Ultima atualizacao:
+  --  Data     : Janeiro - 2018.                   Ultima atualizacao: 29/05/2018
   --
   -- Dados referentes ao programa:
   --
   -- Frequencia: -----
   -- Objetivo  : Centralizar rotinas relacionadas a Tela DEBBAN
   --
-  -- Alteracoes:
-  --
+  -- Alteracoes: 29/05/2018 - Alterar sumario para somente somar os nao efetivados 
+                              feitos no dia do debito, se ja foi cancelado nao vamos somar 
+                              (bater com informacoes do relatorio) (Lucas Ranghetti INC0016207)
+ 
   ---------------------------------------------------------------------------*/
   
   --> Rotina para retornar os agendamentos de debito do bancoob
@@ -342,14 +344,16 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_DEBBAN IS
       Sistema  : Conta-Corrente - Cooperativa de Credito
       Sigla    : CRED
       Autor    : Odirlei Busana - AMcom
-      Data     : Janeiro/2018.                   Ultima atualizacao: 00/00/0000
+      Data     : Janeiro/2018.                   Ultima atualizacao: 29/05/2018
     
       Dados referentes ao programa:
     
        Frequencia: Sempre que for chamado
        Objetivo  : Procedure utilizada sumarizar os agendamentos DEBBAN
     
-       Alteração : 
+       Alteração : 29/05/2018 - Alterar sumario para somente somar os nao efetivados 
+                                feitos no dia do debito, se ja foi cancelado nao vamos somar 
+                                (bater com informacoes do relatorio) (Lucas Ranghetti INC0016207)
     
      ..........................................................................*/
     
@@ -446,13 +450,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_DEBBAN IS
                                     ,pr_insitlau => vr_insitlau
                                     ,pr_dtmvtopg => rw_crapdat.dtmvtolt) LOOP
 
-          CASE rw_craplau.insitlau
-
-             WHEN 1 THEN vr_qtdpendentes := vr_qtdpendentes + 1; 
-             WHEN 2 THEN vr_qtefetivados := vr_qtefetivados + 1;
-             ELSE vr_qtnaoefetiva := vr_qtnaoefetiva + 1; 
-
-          END CASE;
+          IF rw_craplau.insitlau = 1 THEN
+            vr_qtdpendentes := vr_qtdpendentes + 1;
+          ELSIF rw_craplau.insitlau = 2 THEN
+            vr_qtefetivados := vr_qtefetivados + 1;
+          ELSE 
+            -- Somente somar os nao efetivados feitos no dia do debito, 
+            -- se ja foi cancelado nao vamos somar
+            IF trunc(rw_craplau.dtrefatu) = rw_craplau.dtmvtopg THEN
+              vr_qtnaoefetiva := vr_qtnaoefetiva + 1; 
+            END IF;
+          END IF;
                                         
         END LOOP;
 
