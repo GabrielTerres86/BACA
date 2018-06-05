@@ -90,7 +90,7 @@ DEFINE VAR aux_nmprimtl LIKE crapass.nmprimtl                          NO-UNDO.
 DEFINE VAR aux_nrdrowid AS ROWID                                       NO-UNDO.
 DEFINE VAR aux_qtdpende AS INT                                         NO-UNDO.
 DEFINE VAR aux_dstpdcto AS CHAR                                        NO-UNDO.
-
+                                                         
 /* variaveis para impressao */
 DEF VAR tel_dsimprim AS CHAR        FORMAT "x(8)" INIT "Imprimir"      NO-UNDO.
 DEF VAR tel_dscancel AS CHAR        FORMAT "x(8)" INIT "Cancelar"      NO-UNDO.
@@ -560,7 +560,7 @@ DO WHILE TRUE:
                          
                        DISPLAY tel_nmprimtl
                        WITH FRAME f_altera_baixa.
-        END.
+                    END.
                   ELSE
                     DO:
                          FIND FIRST crapttl 
@@ -570,7 +570,7 @@ DO WHILE TRUE:
                      IF AVAILABLE crapass THEN
                         DO:
                            tel_nmprimtl = crapttl.nmextttl.
-
+                             
                            DISPLAY tel_nmprimtl
                            WITH FRAME f_altera_baixa.
                         END. 
@@ -1017,6 +1017,10 @@ PROCEDURE atualiza_browser:
               ASSIGN aux_dstpdcto = "DOCUMENTO SÓCIOS/ADMINISTRADORES".
           WHEN 55 THEN
               ASSIGN aux_dstpdcto = "DECLARACAO SIMPLES NACIONAL".          
+          WHEN 58 THEN
+              ASSIGN aux_dstpdcto = "TERMO DE ALTERAÇAO DE TITULARIDADE".    
+          WHEN 59 THEN
+              ASSIGN aux_dstpdcto = "DOCUMENTO DE EMANCIPACAO".                  
           OTHERWISE
               ASSIGN aux_dstpdcto = "Nao definido".
       END CASE.

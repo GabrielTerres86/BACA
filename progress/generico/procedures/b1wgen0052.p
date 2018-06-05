@@ -1761,7 +1761,7 @@ PROCEDURE Grava_Dados:
     
                                         IF  par_inpessoa = 1 THEN
                                             DO:
-                                                
+                                            
                                                 IF NOT VALID-HANDLE(h-b1wgen0137) THEN
                                                     RUN sistema/generico/procedures/b1wgen0137.p 
                                                     PERSISTENT SET h-b1wgen0137.
@@ -1780,13 +1780,13 @@ PROCEDURE Grava_Dados:
                                                 IF  VALID-HANDLE(h-b1wgen0137) THEN
                                                   DELETE OBJECT h-b1wgen0137.
                                                 
-                                                    END.
+                                            END.
                                         ELSE
                                             DO:
                                                 IF NOT VALID-HANDLE(h-b1wgen0137) THEN
                                                     RUN sistema/generico/procedures/b1wgen0137.p 
                                                     PERSISTENT SET h-b1wgen0137.
-                                                
+                                                  
                                                 RUN gera_pend_digitalizacao IN h-b1wgen0137                    
                                                           ( INPUT par_cdcooper,
                                                             INPUT par_nrdconta,
@@ -1801,8 +1801,8 @@ PROCEDURE Grava_Dados:
                                                 IF  VALID-HANDLE(h-b1wgen0137) THEN
                                                   DELETE OBJECT h-b1wgen0137.
                                                 
-                                                    END.
                                             END.
+                                    END.
                                 
                                 /* Se o CPF/CGC foi alterado, vamos atualizar o campos crapavt.nrcpfcgc */
                                 IF  par_nrcpfcgc <> crapass.nrcpfcgc THEN
@@ -1857,11 +1857,11 @@ PROCEDURE Grava_Dados:
                                     IF  crapass.dtdemiss <> ? AND
                                         par_dtdemiss = ? THEN
                                         DO:
-                
+                                        
                                             IF NOT VALID-HANDLE(h-b1wgen0137) THEN
                                                 RUN sistema/generico/procedures/b1wgen0137.p 
                                                 PERSISTENT SET h-b1wgen0137.
-            
+                                              
                                             RUN gera_pend_digitalizacao IN h-b1wgen0137                    
                                                       ( INPUT par_cdcooper,
                                                         INPUT par_nrdconta,
@@ -1872,11 +1872,11 @@ PROCEDURE Grava_Dados:
                                                         INPUT par_cdoperad,
                                                        OUTPUT aux_cdcritic,
                                                        OUTPUT aux_dscritic).
-                                        
+
                                             IF  VALID-HANDLE(h-b1wgen0137) THEN
                                               DELETE OBJECT h-b1wgen0137.
                                                                                         
-                                                    END.
+                                        END.
 
                                 IF  par_inpessoa = 1 THEN
                                     DO:                                    
@@ -1886,7 +1886,7 @@ PROCEDURE Grava_Dados:
                                             IF NOT VALID-HANDLE(h-b1wgen0137) THEN
                                                 RUN sistema/generico/procedures/b1wgen0137.p 
                                                 PERSISTENT SET h-b1wgen0137.
-
+                                              
                                             RUN gera_pend_digitalizacao IN h-b1wgen0137                    
                                                       ( INPUT par_cdcooper,
                                                         INPUT par_nrdconta,
@@ -1897,10 +1897,10 @@ PROCEDURE Grava_Dados:
                                                         INPUT par_cdoperad,
                                                        OUTPUT aux_cdcritic,
                                                        OUTPUT aux_dscritic).
-    
+
                                             IF  VALID-HANDLE(h-b1wgen0137) THEN
                                               DELETE OBJECT h-b1wgen0137.
-                                        
+                                              
                                             
                                             
                                         END.
@@ -1914,7 +1914,7 @@ PROCEDURE Grava_Dados:
                                                     IF NOT VALID-HANDLE(h-b1wgen0137) THEN
                                                         RUN sistema/generico/procedures/b1wgen0137.p 
                                                         PERSISTENT SET h-b1wgen0137.
-        
+                                                      
                                                     RUN gera_pend_digitalizacao IN h-b1wgen0137                    
                                                               ( INPUT par_cdcooper,
                                                                 INPUT par_nrdconta,
@@ -1925,7 +1925,7 @@ PROCEDURE Grava_Dados:
                                                                 INPUT par_cdoperad,
                                                                OUTPUT aux_cdcritic,
                                                                OUTPUT aux_dscritic).
-            
+
                                                     IF  VALID-HANDLE(h-b1wgen0137) THEN
                                                       DELETE OBJECT h-b1wgen0137.
                                                     
@@ -1951,7 +1951,7 @@ PROCEDURE Grava_Dados:
                                 IF NOT VALID-HANDLE(h-b1wgen0137) THEN
                                     RUN sistema/generico/procedures/b1wgen0137.p 
                                     PERSISTENT SET h-b1wgen0137.
-                                       
+                                  
                                 RUN gera_pend_digitalizacao IN h-b1wgen0137                    
                                           ( INPUT par_cdcooper,
                                             INPUT par_nrdconta,
@@ -1969,10 +1969,10 @@ PROCEDURE Grava_Dados:
                                             INPUT par_cdoperad,
                                            OUTPUT aux_cdcritic,
                                            OUTPUT aux_dscritic).
-                                       
+
                                 IF  VALID-HANDLE(h-b1wgen0137) THEN
                                   DELETE OBJECT h-b1wgen0137.
-                                   
+                                
 
                                 /* Gerar pendencia de estado civil */
                                 /* Gerar pendencia de conjuge */
@@ -1981,7 +1981,7 @@ PROCEDURE Grava_Dados:
                                         IF NOT VALID-HANDLE(h-b1wgen0137) THEN
                                             RUN sistema/generico/procedures/b1wgen0137.p 
                                             PERSISTENT SET h-b1wgen0137.
-
+                                          
                                         RUN gera_pend_digitalizacao IN h-b1wgen0137                    
                                                   ( INPUT par_cdcooper,
                                                     INPUT par_nrdconta,
@@ -1994,11 +1994,36 @@ PROCEDURE Grava_Dados:
                                                     INPUT par_cdoperad,
                                                    OUTPUT aux_cdcritic,
                                                    OUTPUT aux_dscritic).
-    
+
                                         IF  VALID-HANDLE(h-b1wgen0137) THEN
                                           DELETE OBJECT h-b1wgen0137. 
+                                                                                  
+                                    END.
+                                
+                                IF par_inhabmen = 1 THEN /*Menor habilitado*/
+                                   DO:
+                                     IF NOT VALID-HANDLE(h-b1wgen0137) THEN
+                                         RUN sistema/generico/procedures/b1wgen0137.p 
+                                         PERSISTENT SET h-b1wgen0137.
+                                        
+                                     RUN gera_pend_digitalizacao IN h-b1wgen0137                    
+                                                ( INPUT par_cdcooper,
+                                                  INPUT par_nrdconta, 
+                                                  INPUT par_idseqttl,
+                                                  INPUT aux_nrcpfcgc,
+                                                  INPUT par_dtmvtolt, 
+                                                  /*
+                                                      59 - Documento de Emancipaçao 
+                                                  */
+                                                  INPUT "59", 
+                                                    INPUT par_cdoperad,
+                                                   OUTPUT aux_cdcritic,
+                                                   OUTPUT aux_dscritic).
 
-                                                                END.
+                                        IF  VALID-HANDLE(h-b1wgen0137) THEN
+                                          DELETE OBJECT h-b1wgen0137. 
+                                                                                  
+                                    END.
                                 
 
                                 /* responsaveis  */
@@ -2043,7 +2068,7 @@ PROCEDURE Grava_Dados:
                                 IF NOT VALID-HANDLE(h-b1wgen0137) THEN
                                     RUN sistema/generico/procedures/b1wgen0137.p 
                                     PERSISTENT SET h-b1wgen0137.
-
+                                  
                                 RUN gera_pend_digitalizacao IN h-b1wgen0137                    
                                           ( INPUT par_cdcooper,
                                             INPUT par_nrdconta,
@@ -2059,10 +2084,10 @@ PROCEDURE Grava_Dados:
                                             INPUT par_cdoperad,
                                            OUTPUT aux_cdcritic,
                                            OUTPUT aux_dscritic).
-                                       
+
                                 IF  VALID-HANDLE(h-b1wgen0137) THEN
                                   DELETE OBJECT h-b1wgen0137.
-                                   
+                                
                             END. /* Fim do juridica */
                     END. /* Fim da opcao I */
             END. /* if par_cddopcao = "A,X,I" */
