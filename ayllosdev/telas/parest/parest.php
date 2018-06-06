@@ -35,7 +35,7 @@ include("../../includes/carrega_permissoes.php");
         <script type="text/javascript" src="../../scripts/mascara.js"></script>
         <script type="text/javascript" src="../../scripts/menu.js"></script>
         <script type="text/javascript" src="../../includes/pesquisa/pesquisa.js"></script>
-        <script type="text/javascript" src="parest.js"></script>
+        <script type="text/javascript" src="parest.js?param=<?php echo rand();?>"></script>
     </head>
     <body>
         <table width="100%" border="0" cellpadding="0" cellspacing="0">
