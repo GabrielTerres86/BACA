@@ -13,6 +13,9 @@ CREATE OR REPLACE PACKAGE CECRED.COBR0007 IS
   -- Objetivo  : Rotinas para instruçoes bancárias - Cob. Registrada 
   --
   --  Alteracoes:
+  --
+  --    16/02/2018 - Ref. História KE00726701-36 - Inclusão de Filtro e Parâmetro por Tipo de Pessoa na TAB052
+  --                (Gustavo Sene - GFT)    
   ---------------------------------------------------------------------------------------------------------------
     
   -- Procedure para gerar o protesto do titulo
@@ -276,6 +279,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
   --
   --              23/06/2017 - Na rotina pc_inst_alt_dados_arq_rem_085 foi alterado para fechar o cursor correto
   --                           pois estava ocasionando erro (Tiago/Rodrigo #698180)
+  ---------------------------------------------------------------------------------------------------------------
   
   04/10/2017 - #751605 Alteradas as rotinas "pc_inst_canc_sms" e "pc_inst_envio_sms". Na de cancelamento, 
                removida a chamada da rotina de validação "pc_efetua_val_recusa_padrao" pois não faz sentido 
@@ -618,7 +622,6 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
         vr_dscritic:= 'Este tipo de instrução é permitida apenas em dias úteis no horário das '||
                        vr_tab_limite(vr_tab_limite.FIRST).hrinipag ||' até '||
                        vr_tab_limite(vr_tab_limite.FIRST).hrfimpag ||'.';
-                       
         --Levantar Excecao
         RAISE vr_exc_erro;
       END IF;
@@ -758,6 +761,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     --          27/10/2017 - Não validar Desconto de Titulo no envio de SMS
 	--						 (Andrey Formigari - Mouts) SD: 740630
     --
+    --          16/02/2018 - Ref. História KE00726701-36 - Inclusão de Filtro e Parâmetro por Tipo de Pessoa na TAB052
+    --                      (Gustavo Sene - GFT)    
     -- ...........................................................................................
 
   BEGIN
@@ -766,6 +771,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
       rw_crapcop COBR0007.cr_crapcop%ROWTYPE;
       --Registro de Cobranca
       rw_crapcob COBR0007.cr_crapcob%ROWTYPE;
+      --Dados do Associado
+      rw_crapass COBR0007.cr_crapass%ROWTYPE;      
       
       --Selecionar informacoes dos titulos do bordero
       CURSOR cr_craptdb (pr_cdcooper IN craptdb.cdcooper%type
@@ -1023,11 +1030,31 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
             END IF;
         END IF;
         -------------------------------------------------
-        IF (rw_crapcob.flgregis = 1) THEN
-          vr_cdacesso := 'LIMDESCTITCR';
-        ELSE
-          vr_cdacesso := 'LIMDESCTIT';
-        END IF;
+
+        open  cr_crapass(pr_cdcooper => rw_crapcob.cdcooper
+                        ,pr_nrdconta => rw_crapcob.nrdconta);
+        fetch cr_crapass into rw_crapass;
+        if    cr_crapass%notfound then
+              vr_cdcritic:= 0;
+              vr_dscritic:= 'Associado nao cadastrado.';
+              close cr_crapass;
+              raise vr_exc_erro;
+        end   if;
+        close cr_crapass;
+      
+        if    rw_crapass.inpessoa = 1 then -- Pessoa Física
+              if    rw_crapcob.flgregis = 1 then -- Cobrança Com Registro
+                    vr_cdacesso := 'LIMDESCTITCRPF';
+              elsif rw_crapcob.flgregis = 0 then -- Cobrança Sem Registro
+                    vr_cdacesso := 'LIMDESCTITPF';
+              end if;
+        elsif rw_crapass.inpessoa = 2 then -- Pessoa Jurídica
+              if    rw_crapcob.flgregis = 1 then -- Cobrança Com Registro
+                    vr_cdacesso := 'LIMDESCTITCRPJ';
+              elsif rw_crapcob.flgregis = 0 then -- Cobrança Sem Registro
+                    vr_cdacesso := 'LIMDESCTITPJ';
+              end if;
+        end   if;
 
         open cr_craptab(rw_crapcob.cdcooper,vr_cdacesso);
         fetch cr_craptab into vr_qtdiacar;
