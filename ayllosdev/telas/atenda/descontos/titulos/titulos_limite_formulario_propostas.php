@@ -314,6 +314,7 @@
 			if(flctgmot){
 				informarRating('divDscTit_Renda',"dscShowHideDiv('divDscTit_Observacao;divBotoesObs','divDadosRating;divBotoesRenda')","dscShowHideDiv('divDscTit_Renda;divBotoesRenda','divDadosRating');","carregaLimitesTitulosPropostas()");
 			}else{
+				fncRatingSuccess = 'carregaLimitesTitulosPropostas()';
 				dscShowHideDiv('divDscTit_Observacao;divBotoesObs','divDscTit_Renda;divBotoesRenda');
 			}
 		}else if (operacao == 'C') {

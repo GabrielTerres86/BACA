@@ -41,6 +41,7 @@
  * 025: [26/04/2018] Leonardo Oliveira (GFT): Ajuste nos valores retornados ao buscar propostas.
  * 026: [26/04/2018] Vitor Shimada Assanuma (GFT): Ajuste na funcao de chamada da proposta e manutencao
  * 027: [14/05/2018] Vitor Shimada Assanuma (GFT): Criacao da funcao mostrarBorderoPagar(), pagarTitulosVencidos() e efetuarPagamentoTitulosVencidos()
+ * 028: [02/06/2018] Vitor Shimada Assanuma (GFT): Criacao da funcao calculaValoresResumoBordero() para calculo do resumo dos valores do bordero
  */
 
  // variaveis propostas
@@ -2523,6 +2524,7 @@ function removerTituloResumo(){
 
         //Remove a seleção do titulo e seleciona a primeira linha
         $("#divResumoBordero .divRegistrosTitulos .tituloRegistros tr").eq(1).click();
+        calculaValoresResumoBordero();
     }
     else{
         showError("error","Selecione um t&iacute;tulo para remover","Alerta - Ayllos","");
@@ -2597,6 +2599,24 @@ function confirmarAlteracao(){
     }
     
     return false;
+}
+
+function calculaValoresResumoBordero(){
+    var valorSomaResumo  = 0;
+    var qtdTitulosResumo = 0;
+    var valorTemp;
+    $("#divResumoBordero #divTitulos .divRegistrosTitulos tr[id^='titulo_']").each(function(){
+        //Atualiza o valor
+        valorTemp = $(this).find(".tit-bord-res-vl").contents().get(1).nodeValue;
+        valorSomaResumo += converteMoedaFloat(valorTemp);
+
+        //Atualiza a quantidade
+        qtdTitulosResumo += 1;
+    });
+
+    //Atualiza os campos
+    $("#divBotoesTitulosLimite .tit-bord-res-qtd").text(qtdTitulosResumo);
+    $("#divBotoesTitulosLimite .tit-bord-res-vltot").text(number_format(valorSomaResumo,2,',','.'));
 }
 
 function confirmarResgate(){
@@ -3226,7 +3246,7 @@ function efetuarPagamentoTitulosVencidos(fl_avalista, arr_titulos){
                 hideMsgAguardo();
                 console.log(response);
                 if (response == 1)
-                    showError('inform','T&iacute;tulos pagos com sucesso!','Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));voltaDiv(3,2,4,\'DESCONTO DE TÍTULOS - BORDERÔS\');');
+                    showError('inform','T&iacute;tulos pagos com sucesso!','Alerta - Ayllos','blockBackground(parseInt($(\'#divRotina\').css(\'z-index\')));carregaBorderosTitulos();voltaDiv(3,2,4,\'DESCONTO DE TÍTULOS - BORDERÔS\');');
                 else{
                     showError("error", "N&atilde;o foi poss&iacute;vel concluir os pagamentos", "Alerta - Ayllos", "blockBackground(parseInt($('#divRotina').css('z-index')))");      
                 }

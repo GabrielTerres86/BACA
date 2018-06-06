@@ -227,7 +227,7 @@
 										case 0: echo "Pendente";break; 
 										case 1: echo "Resgatado";break; 
 										case 2: echo "Pago";break; 
-										case 3: echo "Vencido";break; 
+										case 3: echo "Pago ap&oacute;s Vencimento";break; 
 										case 4: echo "Liberado";break; 
 										default: "------";break; }
 								?></td>
