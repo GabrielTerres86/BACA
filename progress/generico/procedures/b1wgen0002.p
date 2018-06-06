@@ -4871,16 +4871,16 @@ PROCEDURE proc_qualif_operacao:
               NO-LOCK: 
                   ASSIGN aux_qtd_dias_atraso = crapris.qtdiaatr.
             END.
+          /* Se contrato a liquidar já é um refinanciamento, força 
+             qualificação mínima como "Renegociação" 
+             Reginaldo (AMcom) - Mar/2018                     */
+          IF  crabepr.idquaprc > 1 THEN
+              ASSIGN aux_qtd_dias_atraso = MAXIMUM(aux_qtd_dias_atraso, 5).
+
         END.
 
-		/* Se contrato a liquidar já é um refinanciamento, força 
-		    qualificação mínima como "Renegociação" 
-		        Reginaldo (AMcom) - Mar/2018                     */
-        IF  crabepr.idquaprc > 1 THEN
-            ASSIGN aux_qtd_dias_atraso = MAXIMUM(aux_qtd_dias_atraso, 5).
-
-        IF  aux_dias_atraso < aux_qtd_dias_atraso THEN
-            aux_dias_atraso = aux_qtd_dias_atraso.
+      IF  aux_dias_atraso < aux_qtd_dias_atraso THEN
+          aux_dias_atraso = aux_qtd_dias_atraso.
     END.
 
 	/* De 0 a 4 dias de atraso - Renovação de Crédito		            */
