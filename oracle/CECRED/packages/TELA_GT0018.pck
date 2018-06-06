@@ -683,8 +683,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_GT0018 IS
         --> Atualizar registro
         BEGIN
           UPDATE crapscn scn
-             SET scn.cdempcon = pr_cdempcon,
-                 scn.dsnomres = pr_nmrescon,
+             SET scn.cdempcon = nvl(pr_cdempcon,0),
+                 scn.dsnomres = nvl(pr_nmrescon,' '),
                  scn.cdsegmto = pr_cdsegmto
            WHERE scn.rowid = rw_crapscn.rowid;
         EXCEPTION
