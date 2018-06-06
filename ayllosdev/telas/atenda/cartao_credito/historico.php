@@ -92,7 +92,8 @@ $counter = count($response->Dados->inf );
 														<? if(isset($dsprotocolo) && strlen($dsprotocolo)>0){ ?> </a><?}?>
 													</td>
 													<td><?php echo utf8ToHtml($tem->dtmvtolt); ?> </td>
-													<td style="    width: 87px;"><?php echo utf8ToHtml($tem->retorno); ?> </td>
+													
+													<td style="    width: 87px;"><?php echo str_replace("&atilde;","a",utf8ToHtml(str_replace("Ã£","a", $tem->retorno))); ?> </td>
 													</tr>
 													<?
 													}

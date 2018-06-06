@@ -39,7 +39,7 @@ if (strtoupper($xmlObject->roottag->tags[0]->name) == "ERRO") {
 	exit();
 }else{
 	echo" /* \n $admresult \n */";
-	echo 'showError("inform"," '.utf8ToHtml("Solicitação enviada para a Esteira de Crédito.").' ","Alerta - Ayllos","voltaDiv(0,1,4); bloqueiaFundo(divRotina,\'nrctaav1\',\'frmNovoCartao\',false);");';
+	echo 'showError("inform"," '.utf8ToHtml("Categoria alterada com sucesso.").' ","Alerta - Ayllos","voltaDiv(0,1,4); bloqueiaFundo(divRotina,\'nrctaav1\',\'frmNovoCartao\',false);");';
 }
 echo '  acessaOpcaoAba('.count($glbvars["opcoesTela"]).',0,"'.$glbvars["opcoesTela"][0].'");';
 
