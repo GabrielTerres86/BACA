@@ -5,7 +5,7 @@ CREATE OR REPLACE PACKAGE CECRED.COBR0007 IS
   --  Sistema  : Procedimentos gerais para execucao de inetrucoes de baixa
   --  Sigla    : CRED
   --  Autor    : Douglas Quisinski
-  --  Data     : Janeiro/2016                     Ultima atualizacao:
+  --  Data     : Janeiro/2016                     Ultima atualizacao: 06/06/2018
   --
   -- Dados referentes ao programa:
   --
@@ -15,7 +15,8 @@ CREATE OR REPLACE PACKAGE CECRED.COBR0007 IS
   --  Alteracoes:
   --
   --    16/02/2018 - Ref. História KE00726701-36 - Inclusão de Filtro e Parâmetro por Tipo de Pessoa na TAB052
-  --                (Gustavo Sene - GFT)    
+  --                (Gustavo Sene - GFT) 
+  --
   ---------------------------------------------------------------------------------------------------------------
     
   -- Procedure para gerar o protesto do titulo
@@ -763,6 +764,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
     --
     --          16/02/2018 - Ref. História KE00726701-36 - Inclusão de Filtro e Parâmetro por Tipo de Pessoa na TAB052
     --                      (Gustavo Sene - GFT)    
+	--
+	--          06/06/2018 - Validar se o titulo esta negativado, caso esteja não deixar alterar a data de vencimento (Chamado 844126).
+    --                      (Alcemir Mout's).   
+
     -- ...........................................................................................
 
   BEGIN
@@ -793,6 +798,27 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
       rw_craptdb cr_craptdb%ROWTYPE;
 
       rw_crapcco COBR0007.cr_crapcco%ROWTYPE;
+
+
+	    -- verificar negativação serasa
+      CURSOR cr_tbcobran_his_neg_serasa (pr_cdcooper IN craptdb.cdcooper%type
+                        ,pr_nrdconta IN craptdb.nrdconta%type
+                        ,pr_nrdctabb IN craptdb.nrdctabb%type
+                        ,pr_nrcnvcob IN craptdb.nrcnvcob%type
+                        ,pr_nrdocmto IN craptdb.nrdocmto%type) IS
+      
+           select max(thns.inserasa) inserasa 
+             from  tbcobran_his_neg_serasa thns 
+            where thns.cdcooper=pr_cdcooper and
+                  thns.nrdconta=pr_nrdconta and
+                  thns.nrdocmto=pr_nrdocmto and
+                  thns.nrsequencia=(select max(thns1.nrsequencia)
+                                      from tbcobran_his_neg_serasa thns1 
+                                     where thns1.cdcooper=thns.cdcooper and
+                                           thns1.nrdconta=thns.nrdconta and
+                                           thns1.nrdocmto=thns.nrdocmto);
+      rw_tbcobran_his_neg_serasa cr_tbcobran_his_neg_serasa%ROWTYPE;
+
 
 	  CURSOR cr_craptab(pr_cdcooper IN craptab.cdcooper%TYPE           --> Cooperativa
                        ,pr_cdacesso IN craptab.cdacesso%TYPE) IS       --> Texto de parâmetros
@@ -874,6 +900,29 @@ CREATE OR REPLACE PACKAGE BODY CECRED.COBR0007 IS
 
       --Se encontrar
       IF cr_crapcob%FOUND THEN
+	   
+
+	    --------- Validar Serasa ----------
+        IF pr_cdinstru in ('06','09') THEN
+           OPEN cr_tbcobran_his_neg_serasa(pr_cdcooper => pr_cdcooper
+                                          ,pr_nrdctabb => rw_crapcco.nrdctabb
+                                          ,pr_nrdconta => pr_nrdconta
+                                          ,pr_nrcnvcob => pr_nrcnvcob
+                                          ,pr_nrdocmto => pr_nrdocmto);
+           --Posicionar no proximo registro
+           FETCH cr_tbcobran_his_neg_serasa INTO rw_tbcobran_his_neg_serasa;
+           CLOSE cr_tbcobran_his_neg_serasa;
+
+           --1=Pendente Envio, 2=Solicitacao enviada, 3=Pendente Cancelamento, 4=Pendente Envio Cancel, 5-Negativada, 6=Recusada Serasa 7=Acao Judicial. 
+           IF rw_tbcobran_his_neg_serasa.inserasa  in (1,2,3,4,5,6,7) THEN
+              vr_cdcritic:= 0;
+              vr_dscritic:= 'Operação não efetuada. O Titulo tem pendências no serasa.';
+              RAISE vr_exc_erro;
+
+           END IF;
+        END IF;
+
+
         ------------------- Validacao Horarios -------------------
         IF pr_cdinstru = '02' THEN
           -- Titulos BB possuem horario limite de comando da instrucao,
