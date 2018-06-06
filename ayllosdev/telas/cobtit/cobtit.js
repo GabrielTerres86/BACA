@@ -589,6 +589,7 @@ function buscaBorderos(ini,qnt,callback) {
 
 
 function gerarBoleto() {
+    showMsgAguardo('Aguarde, buscando dados ...');
     // Executa script através de ajax
     $.ajax({
         type: 'POST',
@@ -605,6 +606,7 @@ function gerarBoleto() {
             showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;atilde;o.', 'Alerta - Ayllos', "unblockBackground()");
         },
         success: function(response) {
+            hideMsgAguardo();
             $('#divRotina').html(response);
             $('#divRotina').css('width', '650px');
             exibeRotina($('#divRotina'));
@@ -705,6 +707,7 @@ function habilitaAvalista(valor) {
 }
 
 function listaTitulos(){
+    nomeForm = "telaGerarBoleto";
     if(!$("#rdvencto1").prop("checked") && !$("#rdvencto2").prop("checked")){
         showError('error', 'Selecione a data de vencimento.', 'Alerta - Ayllos', 'bloqueiaFundo(divRotina)');
         return false;
@@ -719,6 +722,19 @@ function listaTitulos(){
             data = $("#dtvencto").val();
         }
     }
+
+    /*Valida se Avalista está selecionado*/
+    if($("#rdsacado2").prop("checked")){
+        if($('#nrcpfava',"#"+nomeForm).val()==''){
+            showError('error', 'Selecione um avalista.', 'Alerta - Ayllos', "bloqueiaFundo(divRotina)");
+            return false;
+        }
+    }
+    else if(!$("#rdsacado1").prop("checked")){
+        showError('error', 'Selecione um avalista.', 'Alerta - Ayllos', "bloqueiaFundo(divRotina)");
+        return false;
+    }
+
     showMsgAguardo('Aguarde, buscando dados ...');
     $.ajax({
         type: 'POST',
@@ -971,7 +987,7 @@ function montarFormConsultaTelefone(nriniseq, nrregist) {
         dataType: 'html',
         url: UrlSite + 'telas/cobtit/consultas/tab_consulta_telefone.php',
         data: {
-            nrdconta: normalizaNumero($('#nrdconta', '#frmBorderos').val()),
+            nrdconta: normalizaNumero(nrdconta),
             nriniseq: nriniseq,
             nrregist: nrregist,
             redirect: 'script_ajax'
@@ -1081,7 +1097,7 @@ function montarFormConsultaEmail(nriniseq, nrregist) {
         dataType: 'html',
         url: UrlSite + 'telas/cobtit/consultas/tab_consulta_email.php',
         data: {
-            nrdconta: normalizaNumero($('#nrdconta', '#frmBorderos').val()),
+            nrdconta: normalizaNumero(nrdconta),
             nriniseq: nriniseq,
             nrregist: nrregist,
             redirect: 'script_ajax'
@@ -1175,6 +1191,17 @@ function controlaPesquisaPac() {
 
 }
 
+function chamaRotinaManutencao(){
+    estadoInicial();
+    $('#cddopcao', '#frmCab').val("M").habilitaCampo();
+    controlaOpcao();
+    $("#nrdconta","#"+nomeForm).val(nrdconta);
+    $("#nrborder","#"+nomeForm).val(nrborder);
+    $("#cdagenci","#"+nomeForm).val(0);
+    continuarM();
+
+}
+
 // Botão Enviar E-mail
 function enviarEmail() {
 
@@ -1202,7 +1229,6 @@ function enviarEmail() {
 }
 
 function buscarDetalheEnvio() {
-
     $.ajax({
         type: 'POST',
         dataType: 'html',
