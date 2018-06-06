@@ -1,4 +1,4 @@
-/*.............................................................................
+ï»¿/*.............................................................................
 
    Programa: xb1wgen0028.p
    Autor   : Guilherme
@@ -23,17 +23,17 @@
                             
                28/10/2010 - Adaptacao para PJ (David).             
                
-               25/11/2010 - Inclusão temporariamente do parametro flgliber
+               25/11/2010 - InclusÄƒo temporariamente do parametro flgliber
                             (Transferencia do PAC5 Acredi) (Irlan)
                             
                22/03/2011 - Adicionado procedures de opcao de encerramento
                             de cartao de credito (Jorge).
                             
-               27/04/2011 - CEP integrado. Inclusão de parametros adicionais
+               27/04/2011 - CEP integrado. InclusÄƒo de parametros adicionais
                             nrender, complen, nrcxaps para avalistas em: 
                             cadastra_novo_cartao, altera_limcred_cartao, 
                             efetua_entrega2via_cartao, renova_cartao, 
-                            grava_dados_habilitacao. (André - DB1)
+                            grava_dados_habilitacao. (AndrÃ© - DB1)
 
                15/07/2011 - Inclusao da procedure extrato_cartao_bradesco
                             Impressao do Extrato Cecred Visa em PDF
@@ -46,7 +46,7 @@
                20/04/2012 - Incluido procedure gera_impressao_contrato_bb.
                             (David Kruger). 
                             
-               10/07/2012 - Incluído passagem de parâmetro nmextttl na procedure
+               10/07/2012 - IncluÃ­do passagem de parÃ¢metro nmextttl na procedure
                             "cadastra_novo_cartao" (Guilherme Maba).
                             
                05/12/2012 - Incluido novo parametro na verifica_acesso_2via
@@ -57,7 +57,7 @@
                             aux_cdoperad na chamada da valida_nova_proposta
                             (Adriano). 
                             
-               03/04/2013 - Inclusão de novas procedures p/ tratamento de
+               03/04/2013 - InclusÄƒo de novas procedures p/ tratamento de
                             cartoes bancoob (Jean Michel). 
                             
                20/05/2014 - Inclusao da procedure "valida_entrega_cartao_bancoob".
@@ -79,16 +79,16 @@
                02/10/2014 - Incluso parametro aux_bthabipj na procedure carrega_dados_inclusao 
                              (Vanessa) 
                              
-               09/04/2015 - #272659 Adicionado alerta para bloqueio de cartão BB (Carlos)
+               09/04/2015 - #272659 Adicionado alerta para bloqueio de cartÄƒo BB (Carlos)
                
                23/06/2015 - Inclusao procedure "grava_dados_cartao_nao_gerado".
                             (James)
                             
                29/07/215 - Inclusao procedure "verifica_acesso_tela_taa". (James)             
 			   
-			   06/12/2016 - P341-Automatização BACENJUD - Alterar a passagem 
-			                da descrição do departamento como parametro e 
-							passar o código (Renato Darosci)           
+			   06/12/2016 - P341-AutomatizaÃ§Äƒo BACENJUD - Alterar a passagem 
+			                da descriÃ§Äƒo do departamento como parametro e 
+							passar o cÃ³digo (Renato Darosci)           
               
                29/03/2018 - Ajustes na proc valida_nova_proposta pra retornar flag
                             aux_solcoord e sempre retornar a temp-table erro.
@@ -554,6 +554,7 @@ PROCEDURE valida_nova_proposta:
                                      INPUT aux_nrdoccrd,
                                      INPUT aux_dsrepinc,
                                      INPUT aux_dsrepres,
+                                     INPUT aux_flgdebit,
                                     OUTPUT aux_solcoord,
                                     OUTPUT TABLE tt-msg-confirma, 
                                     OUTPUT TABLE tt-erro).
@@ -578,7 +579,7 @@ PROCEDURE valida_nova_proposta:
             RUN piXmlExport (INPUT TEMP-TABLE tt-msg-confirma:HANDLE,
                         INPUT "Mensagem").
             RUN piXmlAtributo (INPUT "solcoord",INPUT STRING(aux_solcoord)).
-
+            
             FIND FIRST tt-erro NO-LOCK NO-ERROR.
             IF AVAILABLE tt-erro  THEN
                 RUN piXmlExport (INPUT TEMP-TABLE tt-erro:HANDLE,
@@ -1515,7 +1516,7 @@ PROCEDURE altera_limcred_cartao:
 END PROCEDURE.
 
 /***************************************************************
-        Carregar dados para alteração da data de vencimento
+        Carregar dados para alteraÃ§Äƒo da data de vencimento
 ****************************************************************/
 PROCEDURE carrega_dados_dtvencimento_cartao:
     
@@ -1555,7 +1556,7 @@ PROCEDURE carrega_dados_dtvencimento_cartao:
 END PROCEDURE.
 
 /***************************************************************
-        Carregar dados para alteração da data de vencimento - 2a via
+        Carregar dados para alteraÃ§Äƒo da data de vencimento - 2a via
 ****************************************************************/
 PROCEDURE carrega_dados_dtvencimento_cartao_2via:
     
@@ -1596,7 +1597,7 @@ END PROCEDURE.
 
 
 /*************************************************************
-        Efetuar a alteração da data de vencimento do cartão
+        Efetuar a alteraÃ§Äƒo da data de vencimento do cartÄƒo
 *************************************************************/
 PROCEDURE altera_dtvencimento_cartao:
     
@@ -1677,7 +1678,7 @@ PROCEDURE verifica_acesso_2via:
 END PROCEDURE.
 
 /**********************************************************************
-        Carregar os motivos da solicitação da segunda via
+        Carregar os motivos da solicitaÃ§Äƒo da segunda via
 ***********************************************************************/
 PROCEDURE carrega_dados_solicitacao2via_cartao:
 
