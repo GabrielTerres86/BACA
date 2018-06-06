@@ -3307,7 +3307,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.ESTE0002 IS
                          ,este0001.fn_decimal_ibra(vr_vltprava));
       -- Cria informação qtdContratosAvalista
       vr_obj_generic2.put('qtdContratosAvalista'
-                         ,(vr_qtconava > 0));
+                         ,vr_qtconava);
 
       -- Montar objeto para Aval Cruzado
       -- Criar objeto para contas e contratos avalizados
