@@ -31,7 +31,7 @@ if ($dsprotocolo) {
     $xml .= "</Root>";
 
     // craprdr / crapaca 
-    $xmlResult = mensageria($xml, "CONPRO", "CONPRO_GERA_ARQ", $glbvars["cdcooper"], $glbvars["cdagenci"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
+    $xmlResult = mensageria($xml, "CONPRO", "CONPRO_GERA_ARQ", $glbvars["cdcooper"], $glbvars["cdpactra"], $glbvars["nrdcaixa"], $glbvars["idorigem"], $glbvars["cdoperad"], "</Root>");
     $xmlObjeto = getObjectXML($xmlResult);
 
     // Se ocorrer um erro, mostra crítica
@@ -72,7 +72,9 @@ if ($dsprotocolo) {
               foreach ($registros as $r) {
                 $dsoperacao = wordwrap(getByTagName($r->tags, 'operacao'),50, "<br/>\n");
                 if (getByTagName($r->tags, 'dsprotocolo')) {
-                  $dsoperacao = '<a href="#" onclick="abreProtocoloAcionamento(\''.getByTagName($r->tags, 'dsprotocolo').'\');" style="font-size: inherit">'.$dsoperacao.'</a>';
+                  //$dsoperacao = '<a href="#" onclick="abreProtocoloAcionamento(\''.getByTagName($r->tags, 'dsprotocolo').'\');" style="font-size: inherit">'.$dsoperacao.'</a>';
+				  $click = 'abreIbrat(\''. getByTagName($r->tags, 'dsprotocolo') .'\')';
+				  $dsoperacao = '<a href="#" onclick="'.$click.'" style="font-size: inherit">'.$dsoperacao.'</a>';
                 }
                 ?>
                 <tr>
@@ -98,7 +100,14 @@ if ($dsprotocolo) {
       </form>
 	<?php  
 			// Efetua formatação do layout da tabela Desabilita campo opção
-			echo "<script>formataBusca(); cTodosFiltroAciona.desabilitaCampo();$('#btContinuar', '#divBotoes').hide();</script>";
+			echo "<script>
+			
+			function abreIbrat(protocolo){
+				var urlibratan = 'https://wf-cecredtest.ibratan.com.br/ibracred-workflow/api/process_result/' + protocolo +'/pdf';
+				window.open(urlibratan);
+			}
+			
+			formataBusca(); cTodosFiltroAciona.desabilitaCampo();$('#btContinuar', '#divBotoes').hide();</script>";
 		}
 	
 	?>
