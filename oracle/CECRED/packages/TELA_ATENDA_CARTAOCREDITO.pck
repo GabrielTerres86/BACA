@@ -2398,6 +2398,54 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_ATENDA_CARTAOCREDITO IS
         RAISE vr_exc_saida;
       END IF;
       
+      gene0001.pc_informa_acesso(pr_module => vr_nmdatela,
+                                 pr_action => vr_nmeacao);
+      
+      -- Por padrao, nao eh piloto;
+      vr_retorno := 0;
+      
+      -- Verificar se está ativo o parametro de PA piloto.
+      vr_param := GENE0001.fn_param_sistema(pr_nmsistem => 'CRED'
+                                           ,pr_cdcooper => pr_cdcooper
+                                           ,pr_cdacesso => 'BANCOOB_USA_PA_PILOTO');      
+      
+      vr_usa_pilo := nvl(trim(vr_param),0);
+      BEGIN
+        vr_usa_pilo := nvl(trim(vr_param),0);
+      EXCEPTION
+        WHEN OTHERS THEN
+          vr_usa_pilo := 0;
+      END;
+      
+      IF vr_usa_pilo = 1 THEN
+        
+        -- Verificar qual o PA piloto, passando a cooperativa.
+        vr_param := GENE0001.fn_param_sistema(pr_nmsistem => 'CRED'
+                                             ,pr_cdcooper => pr_cdcooper
+                                             ,pr_cdacesso => 'BANCOOB_PILOTO_WS_PA');
+        BEGIN
+          vr_papiloto := nvl(trim(vr_param),0);
+        EXCEPTION
+          WHEN OTHERS THEN
+            vr_papiloto := 0;
+        END;
+          
+        -- Se for o PA piloto, ativa parametro
+        IF (pr_cdagenci = vr_papiloto) and (vr_papiloto > 0) THEN
+          vr_retorno := 1;
+        END IF;
+      ELSE
+        --Se não estiver ativo, ok, liberado para todo mundo
+        vr_retorno := 1;
+      END IF;      
+
+      -- Para teste em homol, inverter valor
+      IF vr_retorno = 1 THEN
+        vr_retorno := 0;  
+      ELSE  
+        vr_retorno := 1;
+      END IF;
+
       pr_retxml := XMLTYPE.CREATEXML('<?xml version="1.0" encoding="ISO-8859-1" ?><Root/>');
 
       GENE0007.pc_insere_tag(pr_xml      => pr_retxml
