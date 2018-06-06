@@ -53,6 +53,7 @@ function estadoInicial() {
     // Aplicar Formatação
     controlaLayout();
 
+
 }
 
 function controlaLayout() {
@@ -111,6 +112,7 @@ function formataFiltros() {
     rInsitest = $('label[for="insitest"]', '#' + frmConpro);
     rInsitefe = $('label[for="insitefe"]', '#' + frmConpro);
     rinsitapr = $('label[for="insitapr"]', '#' + frmConpro);
+    rtpproduto = $('label[for="tpproduto"]', '#' + frmConpro);
 
     rNrdconta.css('width', '100px');
     rNrctremp.css('width', '177px');
@@ -120,6 +122,7 @@ function formataFiltros() {
     rInsitest.css('width', '100px');
     rInsitefe.css('width', '117px');
     rinsitapr.css('width', '130px');
+    rtpproduto.css('width', '100px');
 
     cNrdconta = $('#nrdconta', '#' + frmConpro);
     cNrctremp = $('#nrctremp', '#' + frmConpro);
@@ -129,6 +132,7 @@ function formataFiltros() {
     cInsitest = $('#insitest', '#' + frmConpro);
     cInsitefe = $('#insitefe', '#' + frmConpro);
     cinsitapr = $('#insitapr', '#' + frmConpro);
+    ctpproduto = $('#tpproduto', '#' + frmConpro);
 
     cNrdconta.addClass('conta pesquisa').css({'width': '80px'});
     cNrctremp.addClass('contrato3').css({'width': '80px'});
@@ -139,6 +143,7 @@ function formataFiltros() {
     cInsitest.css({'width': '160px'});
     cInsitefe.css({'width': '80px'});
     cinsitapr.css({'width': '130px'});
+    ctpproduto.css({'width': '130px'});
 
     cTodosFiltro.habilitaCampo();
 
@@ -151,8 +156,9 @@ function formataFiltrosAciona() {
     rNrctremp = $('label[for="nrctremp"]', '#' + frmAciona);
 	rDtinicio = $('label[for="dtinicio"]', '#' + frmAciona);
     rDtafinal = $('label[for="dtafinal"]', '#' + frmAciona);
+    rtpproduto = $('label[for="tp"]', '#' + frmAciona);
 
-    rNrdconta.css('width', '130px');
+    rNrdconta.css('width', '100px');
     rNrctremp.css('width', '130px');
 	rDtinicio.css('width', '130px');
     rDtafinal.css('width', '130px');
@@ -173,6 +179,11 @@ function formataFiltrosAciona() {
 }
 
 function controlaFoco() {
+
+    $(".acionamentoTpproduto").change(function(param){
+        $("#nrdconta , #frmAciona").focus();
+        
+    });
 
     $('#cddopcao', '#frmCab').unbind('keypress').bind('keypress', function(e) {
         if (e.keyCode == 9 || e.keyCode == 13) {
@@ -285,16 +296,27 @@ function LiberaCampos() {
 	cTodosCabecalho.desabilitaCampo();
 	
 	if ( $('#cddopcao', '#frmCab').val() == 'A' ) {
-		
+        
 		$('#frmAciona').css({'display': 'block'});
-		$('#nrdconta', '#frmAciona').focus();
+		$('#tpproduto', '#frmAciona').focus();
+        $('#tpproduto', '#frmAciona').click();
 		$('#divBotoes', '#frmAciona').css({'display': 'block'});
 		$("#btContinuar", "#divBotoes").show();
 
 	} else {
+        $("#tpproduto").val("9");
+        if($('#cddopcao', '#frmCab').val() == 'C'){
+            $(".tpproduto").show();
+            $("#tpproduto ").focus();
+            alteraProduto(null);
+            
+        }else if($('#cddopcao', '#frmCab').val() == 'R'){
+            $(".tpproduto").hide();
+            alteraProduto(3);
+        }
 
 		$('#frmConpro').css({'display': 'block'});
-		$('#nrdconta', '#frmConpro').focus();
+		$('#tpproduto', '#frmConpro').focus();
 		$('#divBotoes', '#frmConpro').css({'display': 'block'});
 		$("#btContinuar", "#divBotoes").show();
 
@@ -312,6 +334,11 @@ function controlaOperacao() {
 	
     switch (operacao) {
         case 'C': // Consulta
+            var tpprd = $("#tpproduto").val();
+            if(tpprd == 9){
+                 showError('error', 'Por favor, selecione o tipo produto. ', 'Alerta - Ayllos', '');
+                return false;    
+            }
             manterRotina(1,100);
             return false;
             break;
@@ -350,6 +377,7 @@ function manterRotina(nriniseq, nrregist) {
     var insitest = $('#insitest', '#' + frmConpro).val();
     var insitefe = $('#insitefe', '#' + frmConpro).val();
     var insitapr = $('#insitapr', '#' + frmConpro).val();
+    var tpproduto = $('#tpproduto', '#' + frmConpro).val();
 
     var cddopcao = $('#cddopcao', '#' + frmCab).val();
 
@@ -369,6 +397,7 @@ function manterRotina(nriniseq, nrregist) {
             insitapr: insitapr,
             nriniseq: nriniseq,
             nrregist: nrregist,
+            tpproduto: tpproduto,
             redirect: 'script_ajax'
         },
         error: function(objAjax, responseError, objExcept) {
@@ -380,10 +409,11 @@ function manterRotina(nriniseq, nrregist) {
         
                 eval(response);
                 $('#divPesquisaRodape', '#divResultado').formataRodapePesquisa();
+                
                 return false;
             } catch (error) {
                 hideMsgAguardo();
-                showError('error', '2 N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'estadoInicial();');
+                showError('error', 'N&atilde;o foi poss&iacute;vel concluir a requisi&ccedil;&atilde;o.', 'Alerta - Ayllos', 'estadoInicial();');
             }
         }
     });
@@ -394,8 +424,10 @@ function manterRotina(nriniseq, nrregist) {
 
 
 function formataResultado() {
-
-    var divRegistro = $('div.divRegistros', '#divResultado');
+	
+	var tpProdutoSelecionado = $('#tpproduto', '#' + frmConpro).val();
+	
+	var divRegistro = $('div.divRegistros', '#divResultado');
     var tabela = $('table', divRegistro);
 
     divRegistro.css({ 'height': '250px' });
@@ -413,23 +445,6 @@ function formataResultado() {
     var ordemInicial = new Array();
     //ordemInicial = [[3,0]]; // 4a coluna, ascendente
 
-    var arrayLargura = new Array();
-
-    arrayLargura[0] = '25px';
-    arrayLargura[1] = '60px';
-    arrayLargura[2] = '60px';
-    arrayLargura[3] = '110px';
-    arrayLargura[4] = '50px';
-    arrayLargura[5] = '40px';
-    arrayLargura[6] = '60px';
-    arrayLargura[7] = '50px';
-    arrayLargura[8] = '65px';
-    arrayLargura[9] = '70px';
-    arrayLargura[10] = '55px';
-    arrayLargura[11] = '50px';
-    arrayLargura[12] = '60px';
-    arrayLargura[13] = '65px';
-
     var arrayAlinha = new Array();
     arrayAlinha[0] = 'center';
     arrayAlinha[1] = 'right';
@@ -446,10 +461,46 @@ function formataResultado() {
     arrayAlinha[12] = 'center';
     arrayAlinha[13] = 'center';
     arrayAlinha[14] = 'center';
+	
+	var arrayLargura = new Array();
 
     var metodoTabela = '';
+	
+    if(tpProdutoSelecionado.toString() == 4){
+		//Altera o Titulo do cabeçalho
+		$(".hr_title_valor_proposta ").text("Valor Limite");
+		$(".hr_title_efetivada ").text("Aprovada");
+		
+		arrayLargura[0] = '25px';
+		arrayLargura[1] = '85px';
+		arrayLargura[2] = '85px';
+		arrayLargura[3] = '110px';
+		arrayLargura[4] = '60px';
+		arrayLargura[5] = '140px';
+		arrayLargura[6] = '140px';
+		arrayLargura[7] = '70px';
+		arrayLargura[8] = '140px';
 
-    tabela.formataTabela(ordemInicial, arrayLargura, arrayAlinha, metodoTabela);
+		
+    }
+	else{
+		arrayLargura[0] = '25px';
+		arrayLargura[1] = '60px';
+		arrayLargura[2] = '60px';
+		arrayLargura[3] = '110px';
+		arrayLargura[4] = '50px';
+		arrayLargura[5] = '40px';
+		arrayLargura[6] = '60px';
+		arrayLargura[7] = '50px';
+		arrayLargura[8] = '65px';
+		arrayLargura[9] = '70px';
+		arrayLargura[10] = '55px';
+		arrayLargura[11] = '50px';
+		arrayLargura[12] = '60px';
+		arrayLargura[13] = '65px';
+	}
+	
+	tabela.formataTabela(ordemInicial, arrayLargura, arrayAlinha, metodoTabela);
 
     hideMsgAguardo();
 
@@ -473,6 +524,8 @@ function buscaAcionamentos() {
 
     var cddopcao = $('#cddopcao', '#' + frmCab).val();
 
+    var tpproduto =  $('#tpproduto', '#frmAciona' ).val();
+    
     if (nrdconta == 0 || nrdconta == '') {
         showError('error', 'Numero da Conta deve ser Informado.', 'Alerta - Ayllos', "$('#nrdconta', '#frmAciona').focus();");
         return false;
@@ -497,8 +550,9 @@ function buscaAcionamentos() {
             cddopcao: cddopcao,
             nrdconta: nrdconta,
             nrctremp: nrctremp,
-			      dtinicio: dtinicio,
-			      dtafinal: dtafinal,
+            dtinicio: dtinicio,
+            dtafinal: dtafinal,
+            tpproduto: tpproduto,
             redirect: 'html_ajax'
         },
         error: function(objAjax, responseError, objExcept) {
@@ -857,6 +911,22 @@ function abreProtocoloAcionamento(dsprotocolo) {
         }
     });
 
+}
+
+function alteraProduto(prd){
+    
+    populaSelect('insitapr',parecer[prd]);
+    populaSelect('insitest',situacoes[prd]);
+    $("#nrdconta",'#frmConpro').focus();
+   
+
+}
+
+function populaSelect(id, dataset){
+    $("#"+id).empty();       
+    for(var data in dataset ){
+        $('#'+id).append('<option value="'+data+'" '+(data.toString() == "9" ? "selected='selected'":"")+'>'+dataset[data]+'</option>');
+    }
 }
 
 
