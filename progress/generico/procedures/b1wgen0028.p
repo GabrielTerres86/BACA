@@ -2613,6 +2613,10 @@ PROCEDURE valida_nova_proposta:
                      crawcrd.cdadmcrd <= 80          AND
                      crawcrd.cdadmcrd >= 10 NO-LOCK:
                    
+                IF   crawcrd.insitcrd = 6 /* Proposta cancelada */ AND 
+                     crawcrd.nrcctitg = 0 /* Apenas proposta, ainda nao foi pro bancoob */ THEN
+                     NEXT.
+                   
                 IF   crawcrd.cdadmcrd = crapadc.cdadmcrd  THEN
                      DO:
                         
@@ -17524,7 +17528,7 @@ PROCEDURE contrato_cecred_bdn_visa:
                                        
              RETURN "NOK".        
         END.
-        
+    
     CREATE tt-bdn_visa_cecred.
     ASSIGN tt-bdn_visa_cecred.nmcartao = aux_nmcartao
            tt-bdn_visa_cecred.dssubsti = aux_dssubsti
@@ -18287,7 +18291,7 @@ PROCEDURE busca_dddebito:
 						 craptlc.dddebito <> 27 /*Removido vencimento para o dia 27 SD: 636445*/ NO-LOCK:
 
             ASSIGN aux[craptlc.dddebito] = craptlc.dddebito.
-          
+            
           END. 
       END.
   ELSE
@@ -24495,7 +24499,7 @@ PROCEDURE verifica-pa-piloto-ws-bancob:
    DEF  INPUT PARAM par_cdagenci LIKE crapage.cdagenci                NO-UNDO.
     
    DEF OUTPUT PARAM par_flpiloto AS LOGICAL.   
-
+   
    /* Verificar se esta configurado para funcionar apenas no piloto */
    FIND FIRST crapprm 
         WHERE crapprm.cdcooper = 0            AND
