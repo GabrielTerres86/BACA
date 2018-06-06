@@ -78,9 +78,11 @@ $nmrotina = $_POST["nmrotina"];
 																	<tr style="display:none">
 																		<td>																			
 																			<div>
-																				<label style="width:143px;">Nome:</label>
+																				<label style="width:73px;">Nome:</label>
 																				<input name="nomrepres[]" type="text" class="campo nome" style="width:150px;" disabled readonly />
-																				<label style="width:143px;">CPF:</label>
+																				<label style="width:73px;">RG:</label>
+																				<input name="nrrgrepres[]" type="text" class="campo rg" style="width:150px;" disabled readonly />
+																				<label style="width:73px;">CPF:</label>
 																				<input name="cpfrepres[]" type="text" class="campo cpf" style="width:150px;" disabled readonly />
 																				<img onclick="excluirRepresentante(this);" src="http://aylloshomol2.cecred.coop.br/imagens/geral/panel-error_16x16.gif" style="width: 16px;height: 16px;margin-top: 4px;margin-left: 5px;display: inline;">
 																			</div>

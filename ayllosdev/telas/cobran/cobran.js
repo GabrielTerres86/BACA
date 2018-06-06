@@ -1278,15 +1278,16 @@ function imprimirCartaAnuencia(){
 	}
 
 	$('[name="nomrepres[]"]:visible', '#frmDataPag').each(function(i){
-		var el = $(this),
+	    var el = $(this),
 			nome = el.val(),
-			cpf  = el.next().next().val();
+			rg   = el.next().next(),
+			cpf  = rg.next().next();
 
-		if (nome && cpf) {
-			nmrepres[i] = nome + ' com CPF: ' + cpf;
-		}else {
-			msgErro = 'Nome dos representantes e CPF obrigat&oacute;rios';
-        }
+	    if (nome && cpf.val() && rg.val()) {
+	        nmrepres[i] = nome + ' com RG: ' + rg.val() + ' e CPF: ' + cpf.val();
+	    }else {
+	        msgErro = 'Nome dos representantes, RG e CPF s&atilde;o obrigat&oacute;rios';
+	    }
     });
 
 	if (msgErro) {
