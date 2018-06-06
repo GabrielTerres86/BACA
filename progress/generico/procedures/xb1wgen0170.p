@@ -12,6 +12,8 @@
    
                01/09/2015 - Adicionado os campos de assessoria e motivo CIN
                             (Douglas - Melhoria 12)
+                            
+               04/06/2018 - Projeto 403 - Envio de titulos descontados para a Cyber (Lucas Lazari - GFT)  
    
 .............................................................................*/
 
@@ -82,6 +84,8 @@ FOR EACH tt-param:
             WHEN "idorigem" THEN aux_idorigem = INTE(tt-param.valorCampo).
             WHEN "nrdconta" THEN aux_nrdconta = INTE(tt-param.valorCampo).
             WHEN "nrctremp" THEN aux_nrctremp = INTE(tt-param.valorCampo).
+            WHEN "nrborder" THEN aux_nrborder = INTE(tt-param.valorCampo).
+            WHEN "nrtitulo" THEN aux_nrtitulo = INTE(tt-param.valorCampo).
             WHEN "cdorigem" THEN aux_cdorigem = INTE(tt-param.valorCampo).
             WHEN "flgjudic" THEN aux_flgjudic = LOGICAL(tt-param.valorCampo).
             WHEN "flextjud" THEN aux_flextjud = LOGICAL(tt-param.valorCampo).
@@ -130,6 +134,8 @@ PROCEDURE valida-cadcyb:
                              INPUT aux_nrctremp,
                              INPUT aux_cdorigem,
                              INPUT aux_cddopcao,
+                             INPUT aux_nrborder,
+                             INPUT aux_nrtitulo,
                             OUTPUT aux_flgmsger,
                             OUTPUT TABLE tt-crapcyc,
                             OUTPUT TABLE tt-erro).

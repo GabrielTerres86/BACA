@@ -22,6 +22,8 @@
 	$operacao = (isset($_POST["operacao"])) ? $_POST["operacao"] : ""; 
 	$nrdconta = (isset($_POST["nrdconta"])) ? $_POST["nrdconta"] : 0 ; 
 	$nrctremp = (isset($_POST["nrctremp"])) ? $_POST["nrctremp"] : 0 ; 
+	$nrborder = (isset($_POST["nrborder"])) ? $_POST["nrborder"] : 0 ; 
+	$nrtitulo = (isset($_POST["nrtitulo"])) ? $_POST["nrtitulo"] : 0 ; 
 	$cdorigem = (isset($_POST["cdorigem"])) ? $_POST["cdorigem"] : 0 ; 
 	$flgjudic = $_POST["flgjudic"];
 	$flextjud = $_POST["flextjud"];
@@ -53,6 +55,8 @@
 	$xmlContrato .= "		<nrctremp>".$nrctremp."</nrctremp>";
 	$xmlContrato .= "		<cdorigem>".$cdorigem."</cdorigem>";
 	$xmlContrato .= "		<cddopcao>".$operacao."</cddopcao>";
+	$xmlContrato .= "		<nrborder>".$nrborder."</nrborder>";
+	$xmlContrato .= "		<nrtitulo>".$nrtitulo."</nrtitulo>";
 	$xmlContrato .= "	</Dados>";
 	$xmlContrato .= "</Root>";
 

@@ -47,7 +47,6 @@
 	$xml .= "		<nriniseq>".$nriniseq."</nriniseq>";
 	$xml .= "		<cdassess>".$cdassess."</cdassess>";
 	$xml .= "		<cdmotcin>".$cdmotcin."</cdmotcin>";
-
 	$xml .= "		<nrborder>".$nrborder."</nrborder>";
 	$xml .= "		<nrtitulo>".$nrtitulo."</nrtitulo>";
 	

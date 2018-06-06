@@ -32,7 +32,7 @@
     
   Programa: b1wgen0168.p
   Autor(a): James Prust Junior
-  Data    : 14/08/2013                         Ultima atualizacao: 06/03/2014
+  Data    : 14/08/2013                         Ultima atualizacao: 22/11/2017
 
   Dados referentes ao programa:
 
@@ -61,6 +61,13 @@
                            
               06/03/2014 - Ajuste para somente atualizar caso nao tiver 
                            baixado (James)
+
+      			  22/11/2017 - Inclusao de informacoes na geracao do log codigo 77
+            						   data proc. atualiza_data_manutencao_cadastro. 
+            						   (SD 773399) - Carlos Rafael Tanholi.	
+
+              04/06/2018 - Projeto 403 - Envio de titulos descontados para a Cyber (Lucas Lazari - GFT) 
+              
 .............................................................................*/
 { sistema/generico/includes/b1wgen0168tt.i }
 
@@ -196,7 +203,10 @@ PROCEDURE atualiza_data_manutencao_cadastro:
                                  crapcyb.cdorigem = 2 )                 OR
                                 (crapcyb.cdcooper = tt-crapcyb.cdcooper AND
                                  crapcyb.nrdconta = tt-crapcyb.nrdconta AND
-                                 crapcyb.cdorigem = 3))
+                                 crapcyb.cdorigem = 3)                  OR
+                                (crapcyb.cdcooper = tt-crapcyb.cdcooper AND
+                                 crapcyb.nrdconta = tt-crapcyb.nrdconta AND
+                                 crapcyb.cdorigem = 4))
                                NO-LOCK:
 
             Contador: DO aux_contador = 1 TO 10:
@@ -213,7 +223,8 @@ PROCEDURE atualiza_data_manutencao_cadastro:
                           DO:
                               IF aux_contador = 10 THEN
                                  DO:
-                                     ASSIGN par_cdcritic = 77.
+                                     ASSIGN par_cdcritic = 77
+									        par_dscritic = "(CRAPCYB - BO168)".
                                      LEAVE Contador.
                                  END.
                               ELSE

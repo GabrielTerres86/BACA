@@ -67,15 +67,13 @@
 	<input name="dsmotcin" id="dsmotcin" type="text" value="<? echo $motivocin; ?>" />
 	<br />
 
-	<!-- AXAO -->
-	<label for="nrborder"><? echo utf8ToHtml("Bordero:") ?></label>
+	<label for="nrborder"><? echo utf8ToHtml("Borderô:") ?></label>
 	<input name="nrborder" id="nrborder" type="text" value="<? echo $nrborder; ?>" />
 	<br />
 
 	<label for="nrtitulo"><? echo utf8ToHtml("Título:") ?></label>
 	<input name="nrtitulo" id="nrtitulo" type="text" value="<? echo $nrtitulo; ?>" />
 	<br />
-
 	
 	<label for="dsassess"><? echo utf8ToHtml("Assessoria:") ?></label>
 	<input name="dsassess" id="dsassess" type="text" value="<? echo $assessor; ?>" />
