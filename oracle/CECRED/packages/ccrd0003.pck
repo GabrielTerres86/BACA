@@ -7489,7 +7489,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CCRD0003 AS
            AND atu.nrdconta          = pr_nrdconta
            AND atu.nrconta_cartao    = pr_nrctacrd
            AND atu.vllimite_alterado = pr_vllimalt
-           AND atu.tpsituacao        = 2;    /* Enviado ao Bancoob */
+           AND atu.tpsituacao        = 2    /* Enviado ao Bancoob */
+           AND atu.cdcanal           = 14;  /* SAS */
       rw_atulimi   cr_atulimi%ROWTYPE;
       
       -- Buscar o parametro de envio de SMS de cada cooperativa para o produto CARTAO DE CREDITO
