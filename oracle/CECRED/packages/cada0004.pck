@@ -2507,7 +2507,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     
     vr_dtrefere    := pr_rw_crapdat.dtultdma;
     vr_innivris    := 2;
-    vr_vlarrasto := SUBSTR(vr_dstextab,3,9);
+    vr_vlarrasto := GENE0002.fn_char_para_number(SUBSTR(vr_dstextab,3,9));    
     
     -- buscar risco 
     OPEN cr_crapris (pr_cdcooper  => pr_cdcooper,
