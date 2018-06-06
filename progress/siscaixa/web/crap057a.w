@@ -21,6 +21,8 @@
                30/10/2006 - Controle para exclusao das instancias das BO's
                             (Evandro).
 
+               06/06/2018 - Melhorias relacionadas aos locks de tabela 
+                            crapmdw, crapmrw (Tiago INC0015047)
 ............................................................................ */
 
      { dbo/bo-erro1.i }
@@ -731,7 +733,7 @@ PROCEDURE process-web-request :
                                                   crapmdw.cdagenci
                                                   = INT(v_pac)        AND
                                                   crapmdw.nrdcaixa = 
-                                                  INT(v_caixa):
+                                                  INT(v_caixa) NO-LOCK:
       
                                              ASSIGN de-saldo-cheque =
                                                     de-saldo-cheque +
