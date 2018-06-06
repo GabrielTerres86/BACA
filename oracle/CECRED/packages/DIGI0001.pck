@@ -20,7 +20,7 @@ CREATE OR REPLACE PACKAGE CECRED.DIGI0001 AS
                                       ,pr_nrseqdoc  IN crapdoc.nrseqdoc%TYPE DEFAULT 0 --> Numero seq. do documento quando houver(Ex. Sequencial do Bem)
                                       ,pr_cdcritic  OUT PLS_INTEGER                    --> Codigo da critica
                                       ,pr_dscritic  OUT VARCHAR2 );                    --> Descricao da critica
-
+                                      
   PROCEDURE pc_grava_pend_digitalizacao( pr_cdcooper  IN crapdoc.cdcooper%TYPE --> Codigo da cooperativa 
                                         ,pr_nrdconta  IN crapdoc.nrdconta%TYPE --> Nr. da conta
                                         ,pr_idseqttl  IN crapdoc.idseqttl%TYPE --> Indicador de titular
@@ -462,6 +462,65 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DIGI0001 AS
     
   END pc_gera_pend_digitalizacao;    
   
+  FUNCTION fn_valida_doc_renda(  pr_cdcooper  IN crapdoc.cdcooper%TYPE --> Nr. da conta
+                                ,pr_nrdconta  IN crapdoc.nrdconta%TYPE --> Código do produto
+                                ,pr_idseqttl  IN crapdoc.idseqttl%TYPE --> Indicador de titular
+                                ,pr_nrcpfcgc  IN crapdoc.nrcpfcgc%TYPE --> Numero do CPF/CNPJ
+                                ,pr_dtmvtolt  IN crapdoc.dtmvtolt%TYPE --> Data do movimento
+                                ,pr_tpdocmto  IN crapdoc.tpdocmto%TYPE --> Tipo do documento
+                                ,pr_cdoperad  IN crapdoc.cdoperad%TYPE --> Codigo do operador
+                                ,pr_cdmodtip  IN INTEGER               --> Motivo do tipo de modalidade de conta
+                                )  RETURN BOOLEAN IS    
+                                      
+
+    /* .............................................................................
+    Programa: fn_valida_doc_renda
+    Sistema : Ayllos Web
+    Autor   : Odirlei Busana - AMcom
+    Data    : junho/2018                 Ultima atualizacao:
+
+    Dados referentes ao programa:
+
+    Frequencia: Sempre que for chamado
+
+    Objetivo  : Rotina para validar a geracao da documento de comprovante de renda.
+
+    Alteracoes: -----
+    ..............................................................................*/
+
+    ---------------> CURSORES <-----------------
+    
+    
+    BEGIN
+    
+      --> para modalidade Conta salario e aplicacao nao deve gerar pendencia
+      IF pr_cdmodtip IN (2,3) THEN
+        --> Caso exista algum registro ja gerado no dia, deve ser excluido,
+        --> evitando a geração de pendencia, principalmente qnd a conta é gerada com tipo de conta 8-normal
+        --> e em seguida alterada para tipo de conta salario
+        BEGIN
+          DELETE crapdoc doc
+           WHERE doc.cdcooper = pr_cdcooper
+             AND doc.dtmvtolt = pr_dtmvtolt
+             AND doc.tpdocmto = pr_tpdocmto
+             AND doc.nrdconta = pr_nrdconta 
+             AND doc.idseqttl = pr_idseqttl
+             AND doc.flgdigit = 0
+             AND doc.tpbxapen = 0;
+        EXCEPTION 
+          WHEN OTHERS THEN
+            RETURN FALSE; 
+        END;
+        
+        RETURN FALSE;     
+      END IF;
+    
+      RETURN TRUE;
+    EXCEPTION
+      WHEN OTHERS THEN
+        RETURN TRUE;  
+    END fn_valida_doc_renda;  
+  
   PROCEDURE pc_grava_pend_digitalizacao( pr_cdcooper  IN crapdoc.cdcooper%TYPE --> Nr. da conta
                                         ,pr_nrdconta  IN crapdoc.nrdconta%TYPE --> Código do produto
                                         ,pr_idseqttl  IN crapdoc.idseqttl%TYPE --> Indicador de titular
@@ -562,6 +621,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DIGI0001 AS
     
     
     vr_idseqttl      INTEGER;
+    vr_fldigita      BOOLEAN;
     -------------> SUB-ROTINAS <----------------    
       
   BEGIN
@@ -589,8 +649,17 @@ CREATE OR REPLACE PACKAGE BODY CECRED.DIGI0001 AS
     --> VALIDAR CRIAÇÃO DA PENDENCIA
     --> 5 - Comprovante de renda
     IF pr_tpdocmto = 5 THEN
+      vr_fldigita := fn_valida_doc_renda(  pr_cdcooper  => pr_cdcooper  --> Nr. da conta
+                                          ,pr_nrdconta  => pr_nrdconta --> Código do produto
+                                          ,pr_idseqttl  => pr_idseqttl --> Indicador de titular
+                                          ,pr_nrcpfcgc  => pr_nrcpfcgc --> Numero do CPF/CNPJ
+                                          ,pr_dtmvtolt  => pr_dtmvtolt --> Data do movimento
+                                          ,pr_tpdocmto  => pr_tpdocmto --> Tipo do documento
+                                          ,pr_cdoperad  => pr_cdoperad --> Codigo do operador
+                                          ,pr_cdmodtip  => rw_crapass.cdmodalidade_tipo); --> Motivo do tipo de modalidade de conta
+      
       --> para modalidade Conta salario e aplicacao nao deve gerar pendencia
-      IF rw_crapass.cdmodalidade_tipo IN (2,3) THEN
+      IF vr_fldigita = FALSE THEN
         RAISE vr_exc_return;      
       END IF;    
     END IF;
