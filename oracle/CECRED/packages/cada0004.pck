@@ -41,6 +41,9 @@ CREATE OR REPLACE PACKAGE CECRED.CADA0004 is
                               pc_gera_log_ope_cartao (Lucas Ranghetti #810576)
 
                  03/04/2018 - Adicionado NOTI0001.pc_cria_notificacao
+                 
+                 05/06/2018 - Inclusão do campo vr_insituacprvd no retorno da 
+                              pc_carrega_dados_atenda (Claudio CIS Corporate)
   ---------------------------------------------------------------------------------------------------------------*/
   
   ---------------------------- ESTRUTURAS DE REGISTRO ---------------------
@@ -899,6 +902,10 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
   --                             pc_gera_log_ope_cartao (Lucas Ranghetti #810576)
   --
   --               03/04/2018 - Adicionado NOTI0001.pc_cria_notificacao
+  --
+  --               05/06/2018 - Inclusão do campo vr_insituacprvd no retorno da 
+  --                            pc_carrega_dados_atenda (Claudio CIS Corporate)
+
 ---------------------------------------------------------------------------------------------------------------
 
 
@@ -6232,6 +6239,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     -- 
 	--             03/12/2017 - Eliminado cursor da craplcm, não será usado (Jonata - RKAM P364).                 
     -- 
+	--             05/06/2017 - Recuperar informacoes de previdencia (Claudio - CIS Corporate).                 
+    -- 
     -- ..........................................................................*/
     
     ---------------> CURSORES <-----------------
@@ -6266,6 +6275,13 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
          AND dtcancelamento IS NULL;
     rw_pacotes_tarifas cr_pacotes_tarifas%ROWTYPE;
     
+    --> Buscar informacao previdencia
+    CURSOR cr_tbprevidencia_conta IS
+      SELECT tbprevidencia_conta.insituac 
+        FROM tbprevidencia_conta
+       WHERE tbprevidencia_conta.cdcooper = pr_cdcooper
+         AND tbprevidencia_conta.nrdconta = pr_nrdconta;
+    rw_tbprevidencia_conta cr_tbprevidencia_conta%ROWTYPE; 
     
     --------------> TempTable <-----------------
     vr_tab_saldos             EXTR0001.typ_tab_saldos;
@@ -6773,20 +6789,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.CADA0004 IS
     -- por esse motivo as PL TABLES vr_tab_conta_bloq, vr_tab_craplpp, vr_tab_craplrg, vr_tab_resgate 
     -- e por questao de performace elas nao serao carregadas
     
-   BEGIN
-      SELECT 
-        insituac
-      INTO
-        vr_insituacprvd
-      FROM
-        tbprevidencia_conta
-      WHERE
-        cdcooper = pr_cdcooper
-        AND nrdconta = pr_nrdconta;
-    EXCEPTION WHEN NO_DATA_FOUND THEN
-    vr_insituacprvd := NULL;
-    END;
+    -- Previdencia
+    OPEN cr_tbprevidencia_conta;
+    FETCH cr_tbprevidencia_conta INTO rw_tbprevidencia_conta;
 
+    IF cr_tbprevidencia_conta%FOUND THEN
+      vr_insituacprvd := rw_tbprevidencia_conta.insituac;
+    END IF;
+    CLOSE cr_tbprevidencia_conta;
     
     --Executar rotina consulta poupanca
     apli0001.pc_consulta_poupanca (pr_cdcooper => pr_cdcooper            --> Cooperativa 
