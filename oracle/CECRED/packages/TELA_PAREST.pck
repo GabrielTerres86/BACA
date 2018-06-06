@@ -315,13 +315,14 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PAREST IS
                                      pr_tag_nova => 'incomite',
                                      pr_tag_cont => vr_tab_crapcop(vr_ind_crapcop).incomite,
                                      pr_des_erro => vr_dscritic);
+            END IF;
+            
               gene0007.pc_insere_tag(pr_xml      => pr_retxml,
                                      pr_tag_pai  => 'inf',
                                      pr_posicao  => vr_auxconta,
                                      pr_tag_nova => 'nmregmpj',
                                      pr_tag_cont => vr_tab_crapcop(vr_ind_crapcop).nmregmpj,
                                      pr_des_erro => vr_dscritic);
-            END IF;
             
             gene0007.pc_insere_tag(pr_xml      => pr_retxml,
                                    pr_tag_pai  => 'inf',
@@ -570,6 +571,9 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PAREST IS
                                          pr_cdacesso => 'REGRA_ANL_IBRA_CRD') nmregmpf,
                GENE0001.fn_param_sistema(pr_nmsistem => 'CRED',
                                          pr_cdcooper => cop.cdcooper,
+                                         pr_cdacesso => 'REGRA_ANL_IBRA_CRD_PJ') nmregmpj,                          
+               GENE0001.fn_param_sistema(pr_nmsistem => 'CRED',
+                                         pr_cdcooper => cop.cdcooper,
                                          pr_cdacesso => 'TIME_RESP_MOTOR_CRD') qtsstime,
                GENE0001.fn_param_sistema(pr_nmsistem => 'CRED',
                                          pr_cdcooper => cop.cdcooper,
@@ -652,6 +656,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PAREST IS
           pr_tab_crapcop(vr_ind_crapcop_crd).contigen := rw_crapcop_crd.contigencia;
           pr_tab_crapcop(vr_ind_crapcop_crd).anlautom := rw_crapcop_crd.analise_autom;
           pr_tab_crapcop(vr_ind_crapcop_crd).nmregmpf := rw_crapcop_crd.nmregmpf;
+          pr_tab_crapcop(vr_ind_crapcop_crd).nmregmpj := rw_crapcop_crd.nmregmpj;
           pr_tab_crapcop(vr_ind_crapcop_crd).qtsstime := rw_crapcop_crd.qtsstime;
           pr_tab_crapcop(vr_ind_crapcop_crd).qtmeschq := rw_crapcop_crd.qtmeschq;
           pr_tab_crapcop(vr_ind_crapcop_crd).qtmesest := rw_crapcop_crd.qtmesest;
@@ -779,6 +784,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PAREST IS
         vr_cd_contigen := 'CONTIGENCIA_ESTEIRA_CRD'; 
         vr_cd_anlautom := 'ANALISE_OBRIG_MOTOR_CRD';
         vr_cd_nmregmpf := 'REGRA_ANL_IBRA_CRD';
+        vr_cd_nmregmpj := 'REGRA_ANL_IBRA_CRD_PJ';
         vr_cd_qtsstime := 'TIME_RESP_MOTOR_CRD';
         vr_cd_qtmeschq := 'QTD_MES_HIST_DEVCHQ_CRD';
         vr_cd_qtmesest := 'QTD_MES_HIST_EST_CRD';
@@ -804,6 +810,8 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PAREST IS
               RAISE vr_exc_saida;
           END;
           
+        END IF;
+        
           IF NVL(pr_tlcooper, 0) <> 0 THEN
           
             BEGIN
@@ -818,7 +826,7 @@ CREATE OR REPLACE PACKAGE BODY CECRED.TELA_PAREST IS
                 --Sair do programa
                 RAISE vr_exc_saida;
             END;
-          END IF;
+          
         END IF;
         
         BEGIN
